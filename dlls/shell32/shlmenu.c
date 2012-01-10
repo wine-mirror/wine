@@ -1275,7 +1275,7 @@ HRESULT WINAPI CDefFolderMenu_Create2(LPCITEMIDLIST pidlFolder, HWND hwnd, UINT 
     }
     else
         folder_pidl=ILClone(pidlFolder);
-    system_menu = (IContextMenu*)ISvItemCm_Constructor(psf,folder_pidl,(const LPCITEMIDLIST*)apidl,cidl);
+    system_menu = (IContextMenu*)ItemMenu_Constructor(psf,folder_pidl,(const LPCITEMIDLIST*)apidl,cidl);
     hres= SHELL_CreateContextMenu(hwnd,system_menu,psf,folder_pidl,apidl,cidl,ahkeys,nKeys,&IID_IContextMenu,(void**)ppcm);
     IContextMenu_Release(system_menu);
     ILFree(folder_pidl);
@@ -1300,7 +1300,7 @@ HRESULT WINAPI SHCreateDefaultContextMenu(const DEFCONTEXTMENU *pdcm, REFIID rii
         folder_pidl=ILClone(pdcm->pidlFolder);
     if(pdcm->cKeys==0)
         FIXME("Loading shell extensions using IQueryAssociations not yet supported\n");
-    system_menu = (IContextMenu*)ISvItemCm_Constructor(folder,folder_pidl,(const LPCITEMIDLIST*)pdcm->apidl,pdcm->cidl);
+    system_menu = (IContextMenu*)ItemMenu_Constructor(folder,folder_pidl,(const LPCITEMIDLIST*)pdcm->apidl,pdcm->cidl);
     ret = SHELL_CreateContextMenu(pdcm->hwnd,system_menu,folder,folder_pidl,(LPCITEMIDLIST*)pdcm->apidl,pdcm->cidl,pdcm->aKeys,pdcm->cKeys,riid,ppv);
     IContextMenu_Release(system_menu);
     ILFree(folder_pidl);

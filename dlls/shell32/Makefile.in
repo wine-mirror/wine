@@ -46,9 +46,8 @@ C_SRCS = \
 	shlfsbind.c \
 	shlmenu.c \
 	shlview.c \
+	shlview_cmenu.c \
 	shpolicy.c \
-	shv_bg_cmenu.c \
-	shv_item_cmenu.c \
 	systray.c \
 	trash.c \
 	xdg.c

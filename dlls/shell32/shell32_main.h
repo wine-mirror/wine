@@ -78,8 +78,8 @@ LPDATAOBJECT	IDataObject_Constructor(HWND hwndOwner, LPCITEMIDLIST myPidl, LPCIT
 LPENUMFORMATETC	IEnumFORMATETC_Constructor(UINT, const FORMATETC []) DECLSPEC_HIDDEN;
 
 LPCLASSFACTORY	IClassFactory_Constructor(REFCLSID) DECLSPEC_HIDDEN;
-IContextMenu2 *	ISvItemCm_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl, const LPCITEMIDLIST *aPidls, UINT uItemCount) DECLSPEC_HIDDEN;
-IContextMenu2 *	ISvBgCm_Constructor(LPSHELLFOLDER pSFParent, BOOL bDesktop) DECLSPEC_HIDDEN;
+IContextMenu2 *	ItemMenu_Constructor(IShellFolder*, LPCITEMIDLIST, const LPCITEMIDLIST*, UINT) DECLSPEC_HIDDEN;
+IContextMenu2 *	BackgroundMenu_Constructor(IShellFolder*, BOOL) DECLSPEC_HIDDEN;
 LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI IFSFolder_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv) DECLSPEC_HIDDEN;

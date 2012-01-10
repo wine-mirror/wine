@@ -1,7 +1,8 @@
 /*
  *	IContextMenu for items in the shellview
  *
- * Copyright 1998, 2000 Juergen Schmied <juergen.schmied@debitel.net>
+ * Copyright 1998-2000 Juergen Schmied <juergen.schmied@debitel.net>,
+ *                                     <juergen.schmied@metronet.de>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -42,7 +43,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-
 typedef struct
 {
     IContextMenu2 IContextMenu2_iface;
@@ -51,28 +51,32 @@ typedef struct
     UINT verb_offset;
 } ContextMenu;
 
-/**************************************************************************
-*  IContextMenu Implementation
-*/
 typedef struct
 {
     ContextMenu     menu;
-
     LPITEMIDLIST    pidl;       /* root pidl */
     LPITEMIDLIST    *apidl;     /* array of child pidls */
     UINT            cidl;
     BOOL            bAllValues;
-} ItemCmImpl;
+} ItemMenu;
 
-static inline ItemCmImpl *impl_from_IContextMenu2(IContextMenu2 *iface)
+static inline ItemMenu *impl_from_IContextMenu2_Item(IContextMenu2 *iface)
 {
-    return CONTAINING_RECORD(iface, ItemCmImpl, menu.IContextMenu2_iface);
+    return CONTAINING_RECORD(iface, ItemMenu, menu.IContextMenu2_iface);
 }
 
-/**************************************************************************
-* ISvItemCm_CanRenameItems()
-*/
-static BOOL ISvItemCm_CanRenameItems(ItemCmImpl *This)
+typedef struct
+{
+    ContextMenu menu;
+    BOOL desktop;
+} BackgroundMenu;
+
+static inline BackgroundMenu *impl_from_IContextMenu2_Back(IContextMenu2 *iface)
+{
+    return CONTAINING_RECORD(iface, BackgroundMenu, menu.IContextMenu2_iface);
+}
+
+static BOOL ItemMenu_CanRenameItems(ItemMenu *This)
 {
     DWORD attr;
 
@@ -86,12 +90,9 @@ static BOOL ISvItemCm_CanRenameItems(ItemCmImpl *This)
     return attr & SFGAO_CANRENAME;
 }
 
-/**************************************************************************
-*  ISvItemCm_fnQueryInterface
-*/
-static HRESULT WINAPI ISvItemCm_fnQueryInterface(IContextMenu2 *iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI ItemMenu_QueryInterface(IContextMenu2 *iface, REFIID riid, LPVOID *ppvObj)
 {
-	ItemCmImpl *This = impl_from_IContextMenu2(iface);
+	ItemMenu *This = impl_from_IContextMenu2_Item(iface);
 
 	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
@@ -118,12 +119,9 @@ static HRESULT WINAPI ISvItemCm_fnQueryInterface(IContextMenu2 *iface, REFIID ri
 	return E_NOINTERFACE;
 }
 
-/**************************************************************************
-*  ISvItemCm_fnAddRef
-*/
-static ULONG WINAPI ISvItemCm_fnAddRef(IContextMenu2 *iface)
+static ULONG WINAPI ItemMenu_AddRef(IContextMenu2 *iface)
 {
-	ItemCmImpl *This = impl_from_IContextMenu2(iface);
+	ItemMenu *This = impl_from_IContextMenu2_Item(iface);
 	ULONG refCount = InterlockedIncrement(&This->menu.ref);
 
 	TRACE("(%p)->(count=%u)\n", This, refCount - 1);
@@ -131,12 +129,9 @@ static ULONG WINAPI ISvItemCm_fnAddRef(IContextMenu2 *iface)
 	return refCount;
 }
 
-/**************************************************************************
-*  ISvItemCm_fnRelease
-*/
-static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu2 *iface)
+static ULONG WINAPI ItemMenu_Release(IContextMenu2 *iface)
 {
-	ItemCmImpl *This = impl_from_IContextMenu2(iface);
+	ItemMenu *This = impl_from_IContextMenu2_Item(iface);
 	ULONG refCount = InterlockedDecrement(&This->menu.ref);
 
 	TRACE("(%p)->(count=%i)\n", This, refCount + 1);
@@ -158,10 +153,7 @@ static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu2 *iface)
 	return refCount;
 }
 
-/**************************************************************************
-* ISvItemCm_fnQueryContextMenu()
-*/
-static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
+static HRESULT WINAPI ItemMenu_QueryContextMenu(
 	IContextMenu2 *iface,
 	HMENU hmenu,
 	UINT indexMenu,
@@ -169,7 +161,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
 	UINT idCmdLast,
 	UINT uFlags)
 {
-    ItemCmImpl *This = impl_from_IContextMenu2(iface);
+    ItemMenu *This = impl_from_IContextMenu2_Item(iface);
     INT uIDMax;
 
     TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
@@ -212,7 +204,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
         if(uFlags & ~CMF_CANRENAME)
             RemoveMenu(hmenu, FCIDM_SHVIEW_RENAME, MF_BYCOMMAND);
         else
-            EnableMenuItem(hmenu, FCIDM_SHVIEW_RENAME, MF_BYCOMMAND | ISvItemCm_CanRenameItems(This) ? MFS_ENABLED : MFS_DISABLED);
+            EnableMenuItem(hmenu, FCIDM_SHVIEW_RENAME, MF_BYCOMMAND | ItemMenu_CanRenameItems(This) ? MFS_ENABLED : MFS_DISABLED);
 
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, uIDMax-idCmdFirst);
     }
@@ -225,7 +217,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
 *  for folders only
 */
 
-static void DoOpenExplore(ItemCmImpl *This, HWND hwnd, LPCSTR verb)
+static void DoOpenExplore(ItemMenu *This, HWND hwnd, LPCSTR verb)
 {
 	UINT i, bFolderFound = FALSE;
 	LPITEMIDLIST	pidlFQ;
@@ -264,7 +256,7 @@ static void DoOpenExplore(ItemCmImpl *This, HWND hwnd, LPCSTR verb)
  *
  * deletes the currently selected items
  */
-static void DoDelete(ItemCmImpl *This)
+static void DoDelete(ItemMenu *This)
 {
 	ISFHelper * psfhlp;
 
@@ -281,7 +273,7 @@ static void DoDelete(ItemCmImpl *This)
  *
  * copies the currently selected items into the clipboard
  */
-static BOOL DoCopyOrCut(ItemCmImpl *This, HWND hwnd, BOOL bCut)
+static BOOL DoCopyOrCut(ItemMenu *This, HWND hwnd, BOOL bCut)
 {
 	LPSHELLBROWSER	lpSB;
 	LPSHELLVIEW	lpSV;
@@ -322,7 +314,7 @@ static BOOL CALLBACK Properties_AddPropSheetCallback(HPROPSHEETPAGE hpage, LPARA
 /**************************************************************************
  * DoOpenProperties
  */
-static void DoOpenProperties(ItemCmImpl *This, HWND hwnd)
+static void DoOpenProperties(ItemMenu *This, HWND hwnd)
 {
 	static const UINT MAX_PROP_PAGES = 99;
 	static const WCHAR wszFolder[] = {'F','o','l','d','e','r', 0};
@@ -423,14 +415,11 @@ static void DoOpenProperties(ItemCmImpl *This, HWND hwnd)
 	    FIXME("No property pages found.\n");
 }
 
-/**************************************************************************
-* ISvItemCm_fnInvokeCommand()
-*/
-static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
+static HRESULT WINAPI ItemMenu_InvokeCommand(
 	IContextMenu2 *iface,
 	LPCMINVOKECOMMANDINFO lpcmi)
 {
-    ItemCmImpl *This = impl_from_IContextMenu2(iface);
+    ItemMenu *This = impl_from_IContextMenu2_Item(iface);
 
     if (lpcmi->cbSize != sizeof(CMINVOKECOMMANDINFO))
         FIXME("Is an EX structure\n");
@@ -511,10 +500,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
     return S_OK;
 }
 
-/**************************************************************************
-*  ISvItemCm_fnGetCommandString()
-*/
-static HRESULT WINAPI ISvItemCm_fnGetCommandString(
+static HRESULT WINAPI ItemMenu_GetCommandString(
 	IContextMenu2 *iface,
 	UINT_PTR idCommand,
 	UINT uFlags,
@@ -522,7 +508,7 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	LPSTR lpszName,
 	UINT uMaxNameLen)
 {
-	ItemCmImpl *This = impl_from_IContextMenu2(iface);
+	ItemMenu *This = impl_from_IContextMenu2_Item(iface);
 
 	HRESULT  hr = E_INVALIDARG;
 
@@ -567,18 +553,17 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 }
 
 /**************************************************************************
-* ISvItemCm_fnHandleMenuMsg()
 * NOTES
 *  should be only in IContextMenu2 and IContextMenu3
 *  is nevertheless called from word95
 */
-static HRESULT WINAPI ISvItemCm_fnHandleMenuMsg(
+static HRESULT WINAPI ItemMenu_HandleMenuMsg(
 	IContextMenu2 *iface,
 	UINT uMsg,
 	WPARAM wParam,
 	LPARAM lParam)
 {
-	ItemCmImpl *This = impl_from_IContextMenu2(iface);
+	ItemMenu *This = impl_from_IContextMenu2_Item(iface);
 
 	TRACE("(%p)->(msg=%x wp=%lx lp=%lx)\n",This, uMsg, wParam, lParam);
 
@@ -587,20 +572,20 @@ static HRESULT WINAPI ISvItemCm_fnHandleMenuMsg(
 
 static const IContextMenu2Vtbl ItemContextMenuVtbl =
 {
-	ISvItemCm_fnQueryInterface,
-	ISvItemCm_fnAddRef,
-	ISvItemCm_fnRelease,
-	ISvItemCm_fnQueryContextMenu,
-	ISvItemCm_fnInvokeCommand,
-	ISvItemCm_fnGetCommandString,
-	ISvItemCm_fnHandleMenuMsg
+    ItemMenu_QueryInterface,
+    ItemMenu_AddRef,
+    ItemMenu_Release,
+    ItemMenu_QueryContextMenu,
+    ItemMenu_InvokeCommand,
+    ItemMenu_GetCommandString,
+    ItemMenu_HandleMenuMsg
 };
 
-IContextMenu2 *ISvItemCm_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPCITEMIDLIST *apidl, UINT cidl)
-{	ItemCmImpl* cm;
+IContextMenu2 *ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPCITEMIDLIST *apidl, UINT cidl)
+{	ItemMenu* cm;
 	UINT  u;
 
-	cm = HeapAlloc(GetProcessHeap(), 0, sizeof(ItemCmImpl));
+	cm = HeapAlloc(GetProcessHeap(), 0, sizeof(ItemMenu));
 	cm->menu.IContextMenu2_iface.lpVtbl = &ItemContextMenuVtbl;
 	cm->menu.ref = 1;
 	cm->menu.verb_offset = 0;
@@ -620,4 +605,369 @@ IContextMenu2 *ISvItemCm_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, c
 	TRACE("(%p)\n",cm);
 
 	return &cm->menu.IContextMenu2_iface;
+}
+
+/* Background menu implementation */
+static HRESULT WINAPI BackgroundMenu_QueryInterface(IContextMenu2 *iface, REFIID riid, void **ppvObj)
+{
+    BackgroundMenu *This = impl_from_IContextMenu2_Back(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObj);
+
+    *ppvObj = NULL;
+
+    if(IsEqualIID(riid, &IID_IUnknown) ||
+       IsEqualIID(riid, &IID_IContextMenu) ||
+       IsEqualIID(riid, &IID_IContextMenu2))
+    {
+        *ppvObj = This;
+    }
+    else if(IsEqualIID(riid, &IID_IShellExtInit))  /*IShellExtInit*/
+    {
+        FIXME("-- LPSHELLEXTINIT pointer requested\n");
+    }
+
+    if(*ppvObj)
+    {
+	IUnknown_AddRef((IUnknown*)*ppvObj);
+	TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
+	return S_OK;
+    }
+
+    TRACE("-- Interface: E_NOINTERFACE\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI BackgroundMenu_AddRef(IContextMenu2 *iface)
+{
+    BackgroundMenu *This = impl_from_IContextMenu2_Back(iface);
+    ULONG ref = InterlockedIncrement(&This->menu.ref);
+    TRACE("(%p)->(%u)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI BackgroundMenu_Release(IContextMenu2 *iface)
+{
+    BackgroundMenu *This = impl_from_IContextMenu2_Back(iface);
+    ULONG ref = InterlockedDecrement(&This->menu.ref);
+
+    TRACE("(%p)->(%u)\n", This, ref);
+
+    if (!ref)
+    {
+        if (This->menu.parent)
+            IShellFolder_Release(This->menu.parent);
+
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI BackgroundMenu_QueryContextMenu(
+	IContextMenu2 *iface,
+	HMENU hMenu,
+	UINT indexMenu,
+	UINT idCmdFirst,
+	UINT idCmdLast,
+	UINT uFlags)
+{
+    BackgroundMenu *This = impl_from_IContextMenu2_Back(iface);
+    HMENU hMyMenu;
+    UINT idMax;
+    HRESULT hr;
+
+    TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",
+          This, hMenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
+
+    This->menu.verb_offset = idCmdFirst;
+
+    hMyMenu = LoadMenuA(shell32_hInstance, "MENU_002");
+    if (uFlags & CMF_DEFAULTONLY)
+    {
+        HMENU ourMenu = GetSubMenu(hMyMenu,0);
+        UINT oldDef = GetMenuDefaultItem(hMenu,TRUE,GMDI_USEDISABLED);
+        UINT newDef = GetMenuDefaultItem(ourMenu,TRUE,GMDI_USEDISABLED);
+        if (newDef != oldDef)
+            SetMenuDefaultItem(hMenu,newDef,TRUE);
+        if (newDef!=0xFFFFFFFF)
+            hr =  MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, newDef+1);
+        else
+            hr =  MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, 0);
+    }
+    else
+    {
+        idMax = Shell_MergeMenus (hMenu, GetSubMenu(hMyMenu,0), indexMenu,
+                                  idCmdFirst, idCmdLast, MM_SUBMENUSHAVEIDS);
+        hr =  MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, idMax-idCmdFirst);
+    }
+    DestroyMenu(hMyMenu);
+
+    TRACE("(%p)->returning 0x%x\n",This,hr);
+    return hr;
+}
+
+static void DoNewFolder(BackgroundMenu *This, IShellView *psv)
+{
+	ISFHelper * psfhlp;
+	WCHAR wszName[MAX_PATH];
+
+	IShellFolder_QueryInterface(This->menu.parent, &IID_ISFHelper, (LPVOID*)&psfhlp);
+	if (psfhlp)
+	{
+	  LPITEMIDLIST pidl;
+	  ISFHelper_GetUniqueName(psfhlp, wszName, MAX_PATH);
+	  ISFHelper_AddFolder(psfhlp, 0, wszName, &pidl);
+
+	  if(psv)
+	  {
+	    /* if we are in a shellview do labeledit */
+	    IShellView_SelectItem(psv,
+                    pidl,(SVSI_DESELECTOTHERS | SVSI_EDIT | SVSI_ENSUREVISIBLE
+                    |SVSI_FOCUSED|SVSI_SELECT));
+	  }
+	  SHFree(pidl);
+
+	  ISFHelper_Release(psfhlp);
+	}
+}
+
+static BOOL DoPaste(BackgroundMenu *This)
+{
+	BOOL bSuccess = FALSE;
+	IDataObject * pda;
+
+	TRACE("\n");
+
+	if(SUCCEEDED(OleGetClipboard(&pda)))
+	{
+	  STGMEDIUM medium;
+	  FORMATETC formatetc;
+
+	  TRACE("pda=%p\n", pda);
+
+	  /* Set the FORMATETC structure*/
+	  InitFormatEtc(formatetc, RegisterClipboardFormatW(CFSTR_SHELLIDLISTW), TYMED_HGLOBAL);
+
+	  /* Get the pidls from IDataObject */
+	  if(SUCCEEDED(IDataObject_GetData(pda,&formatetc,&medium)))
+          {
+	    LPITEMIDLIST * apidl;
+	    LPITEMIDLIST pidl;
+	    IShellFolder *psfFrom = NULL, *psfDesktop;
+
+	    LPIDA lpcida = GlobalLock(medium.u.hGlobal);
+	    TRACE("cida=%p\n", lpcida);
+
+	    apidl = _ILCopyCidaToaPidl(&pidl, lpcida);
+
+	    /* bind to the source shellfolder */
+	    SHGetDesktopFolder(&psfDesktop);
+	    if(psfDesktop)
+	    {
+	      IShellFolder_BindToObject(psfDesktop, pidl, NULL, &IID_IShellFolder, (LPVOID*)&psfFrom);
+	      IShellFolder_Release(psfDesktop);
+	    }
+
+	    if (psfFrom)
+	    {
+	      /* get source and destination shellfolder */
+	      ISFHelper *psfhlpdst, *psfhlpsrc;
+	      IShellFolder_QueryInterface(This->menu.parent, &IID_ISFHelper, (LPVOID*)&psfhlpdst);
+	      IShellFolder_QueryInterface(psfFrom, &IID_ISFHelper, (LPVOID*)&psfhlpsrc);
+
+	      /* do the copy/move */
+	      if (psfhlpdst && psfhlpsrc)
+	      {
+	        ISFHelper_CopyItems(psfhlpdst, psfFrom, lpcida->cidl, (LPCITEMIDLIST*)apidl);
+		/* FIXME handle move
+		ISFHelper_DeleteItems(psfhlpsrc, lpcida->cidl, apidl);
+		*/
+	      }
+	      if(psfhlpdst) ISFHelper_Release(psfhlpdst);
+	      if(psfhlpsrc) ISFHelper_Release(psfhlpsrc);
+	      IShellFolder_Release(psfFrom);
+	    }
+
+	    _ILFreeaPidl(apidl, lpcida->cidl);
+	    SHFree(pidl);
+
+	    /* release the medium*/
+	    ReleaseStgMedium(&medium);
+	  }
+	  IDataObject_Release(pda);
+	}
+#if 0
+	HGLOBAL  hMem;
+
+	OpenClipboard(NULL);
+	hMem = GetClipboardData(CF_HDROP);
+
+	if(hMem)
+	{
+          char * pDropFiles = GlobalLock(hMem);
+	  if(pDropFiles)
+	  {
+	    int len, offset = sizeof(DROPFILESTRUCT);
+
+	    while( pDropFiles[offset] != 0)
+	    {
+	      len = strlen(pDropFiles + offset);
+	      TRACE("%s\n", pDropFiles + offset);
+	      offset += len+1;
+	    }
+	  }
+	  GlobalUnlock(hMem);
+	}
+	CloseClipboard();
+#endif
+	return bSuccess;
+}
+
+static HRESULT WINAPI BackgroundMenu_InvokeCommand(
+	IContextMenu2 *iface,
+	LPCMINVOKECOMMANDINFO lpcmi)
+{
+        BackgroundMenu *This = impl_from_IContextMenu2_Back(iface);
+        LPSHELLBROWSER lpSB;
+	LPSHELLVIEW lpSV = NULL;
+	HWND hWndSV = 0;
+
+	TRACE("(%p)->(invcom=%p verb=%p wnd=%p)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);
+
+	/* get the active IShellView */
+	if((lpSB = (LPSHELLBROWSER)SendMessageA(lpcmi->hwnd, CWM_GETISHELLBROWSER,0,0)))
+	{
+	  if(SUCCEEDED(IShellBrowser_QueryActiveShellView(lpSB, &lpSV)))
+	  {
+	    IShellView_GetWindow(lpSV, &hWndSV);
+	  }
+	}
+
+	  if(HIWORD(lpcmi->lpVerb))
+	  {
+	    TRACE("%s\n",lpcmi->lpVerb);
+
+	    if (! strcmp(lpcmi->lpVerb,CMDSTR_NEWFOLDERA))
+	    {
+                DoNewFolder(This, lpSV);
+	    }
+	    else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWLISTA))
+	    {
+	      if(hWndSV) SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_LISTVIEW,0),0 );
+	    }
+	    else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWDETAILSA))
+	    {
+	      if(hWndSV) SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_REPORTVIEW,0),0 );
+	    }
+	    else
+	    {
+	      FIXME("please report: unknown verb %s\n",lpcmi->lpVerb);
+	    }
+	  }
+	  else
+	  {
+	    switch(LOWORD(lpcmi->lpVerb)-This->menu.verb_offset)
+	    {
+	      case FCIDM_SHVIEW_REFRESH:
+	        if (lpSV) IShellView_Refresh(lpSV);
+	        break;
+
+	      case FCIDM_SHVIEW_NEWFOLDER:
+                DoNewFolder(This, lpSV);
+		break;
+
+	      case FCIDM_SHVIEW_INSERT:
+                DoPaste(This);
+	        break;
+
+	      case FCIDM_SHVIEW_PROPERTIES:
+		if (This->desktop) {
+		    ShellExecuteA(lpcmi->hwnd, "open", "rundll32.exe shell32.dll,Control_RunDLL desk.cpl", NULL, NULL, SW_SHOWNORMAL);
+		} else {
+		    FIXME("launch item properties dialog\n");
+		}
+		break;
+
+	      default:
+	        /* if it's an id just pass it to the parent shv */
+	        if (hWndSV) SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(LOWORD(lpcmi->lpVerb), 0),0 );
+		break;
+	    }
+	  }
+
+        if (lpSV)
+	  IShellView_Release(lpSV);	/* QueryActiveShellView does AddRef */
+
+	return S_OK;
+}
+
+static HRESULT WINAPI BackgroundMenu_GetCommandString(
+	IContextMenu2 *iface,
+	UINT_PTR idCommand,
+	UINT uFlags,
+	UINT* lpReserved,
+	LPSTR lpszName,
+	UINT uMaxNameLen)
+{
+        BackgroundMenu *This = impl_from_IContextMenu2_Back(iface);
+
+	TRACE("(%p)->(idcom=%lx flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
+
+	/* test the existence of the menu items, the file dialog enables
+	   the buttons according to this */
+	if (uFlags == GCS_VALIDATEA)
+	{
+	  if(HIWORD(idCommand))
+	  {
+	    if (!strcmp((LPSTR)idCommand, CMDSTR_VIEWLISTA) ||
+	        !strcmp((LPSTR)idCommand, CMDSTR_VIEWDETAILSA) ||
+	        !strcmp((LPSTR)idCommand, CMDSTR_NEWFOLDERA))
+	    {
+	      return S_OK;
+	    }
+	  }
+	}
+
+	FIXME("unknown command string\n");
+	return E_FAIL;
+}
+
+static HRESULT WINAPI BackgroundMenu_HandleMenuMsg(
+	IContextMenu2 *iface,
+	UINT uMsg,
+	WPARAM wParam,
+	LPARAM lParam)
+{
+    BackgroundMenu *This = impl_from_IContextMenu2_Back(iface);
+    FIXME("(%p)->(msg=%x wp=%lx lp=%lx)\n",This, uMsg, wParam, lParam);
+    return E_NOTIMPL;
+}
+
+static const IContextMenu2Vtbl BackgroundContextMenuVtbl =
+{
+    BackgroundMenu_QueryInterface,
+    BackgroundMenu_AddRef,
+    BackgroundMenu_Release,
+    BackgroundMenu_QueryContextMenu,
+    BackgroundMenu_InvokeCommand,
+    BackgroundMenu_GetCommandString,
+    BackgroundMenu_HandleMenuMsg
+};
+
+IContextMenu2 *BackgroundMenu_Constructor(IShellFolder *parent, BOOL desktop)
+{
+    BackgroundMenu *cm;
+
+    cm = HeapAlloc(GetProcessHeap(), 0, sizeof(*cm));
+    cm->menu.IContextMenu2_iface.lpVtbl = &BackgroundContextMenuVtbl;
+    cm->menu.ref = 1;
+    cm->menu.parent = parent;
+    cm->menu.verb_offset = 0;
+
+    cm->desktop = desktop;
+    if (parent) IShellFolder_AddRef(parent);
+
+    TRACE("(%p)->()\n", cm);
+    return &cm->menu.IContextMenu2_iface;
 }

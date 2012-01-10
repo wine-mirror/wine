@@ -744,7 +744,7 @@ IShellFolder_fnGetUIObjectOf (IShellFolder2 * iface,
         }
 
         if (IsEqualIID (riid, &IID_IContextMenu) && (cidl >= 1)) {
-            pObj = (LPUNKNOWN) ISvItemCm_Constructor ((IShellFolder *) iface,
+            pObj = (LPUNKNOWN) ItemMenu_Constructor ((IShellFolder *) iface,
              This->pidlRoot, apidl, cidl);
             hr = S_OK;
         } else if (IsEqualIID (riid, &IID_IDataObject) && (cidl >= 1)) {

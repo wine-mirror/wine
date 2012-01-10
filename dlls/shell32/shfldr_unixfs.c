@@ -1167,7 +1167,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetUIObjectOf(IShellFolder2* ifac
     }
     
     if (IsEqualIID(&IID_IContextMenu, riid)) {
-        *ppvOut = ISvItemCm_Constructor((IShellFolder*)iface, This->m_pidlLocation, apidl, cidl);
+        *ppvOut = ItemMenu_Constructor((IShellFolder*)iface, This->m_pidlLocation, apidl, cidl);
         return S_OK;
     } else if (IsEqualIID(&IID_IDataObject, riid)) {
         *ppvOut = IDataObject_Constructor(hwndOwner, This->m_pidlLocation, apidl, cidl);
