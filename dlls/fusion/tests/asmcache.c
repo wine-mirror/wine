@@ -1306,12 +1306,22 @@ static void test_QueryAssemblyInfo(void)
     ok(info.cchBuf == lstrlenW(asmpath) + 1,
        "Expected %d, got %d\n", lstrlenW(asmpath) + 1, info.cchBuf);
 
-    /* short buffer */
+    /* short buffer, QUERYASMINFO_FLAG_VALIDATE */
     memset(&info, 0, sizeof(info));
     lstrcpyW(name, wine);
     lstrcatW(name, commasep);
     lstrcatW(name, otherver);
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
+                                          name, &info);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "got %08x\n", hr);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED, "got %08x\n", info.dwAssemblyFlags);
+
+    /* short buffer, QUERYASMINFO_FLAG_GETSIZE */
+    memset(&info, 0, sizeof(info));
+    lstrcpyW(name, wine);
+    lstrcatW(name, commasep);
+    lstrcatW(name, otherver);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
     ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "got %08x\n", hr);
     ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED, "got %08x\n", info.dwAssemblyFlags);
