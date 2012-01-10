@@ -1366,45 +1366,6 @@ static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 }
 
 
-BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib)
-{
-    XRenderPictFormat *pict_format;
-    ColorShifts shifts;
-    const DWORD *bitfields;
-    static const DWORD bitfields_32[3] = {0xff0000, 0x00ff00, 0x0000ff};
-    static const DWORD bitfields_16[3] = {0x7c00, 0x03e0, 0x001f};
-
-
-    /* When XRender is not around we can only use the screen_depth and when needed we perform depth conversion
-     * in software. Further we also return the screen depth for paletted formats or TrueColor formats with a low
-     * number of bits because XRender can't handle paletted formats and 8-bit TrueColor does not exist for XRender. */
-    if (!X11DRV_XRender_Installed || bits_pixel <= 8)
-        return FALSE;
-
-    if(dib->dsBmih.biCompression == BI_BITFIELDS)
-        bitfields = dib->dsBitfields;
-    else if(bits_pixel == 24 || bits_pixel == 32)
-        bitfields = bitfields_32;
-    else
-        bitfields = bitfields_16;
-
-    X11DRV_PALETTE_ComputeColorShifts(&shifts, bitfields[0], bitfields[1], bitfields[2]);
-    pict_format = pict_formats[get_xrender_format_from_color_shifts(dib->dsBm.bmBitsPixel, &shifts)];
-
-    /* Common formats should be in our picture format table. */
-    if (!pict_format)
-    {
-        TRACE("Unhandled dibsection format bpp=%d, redMask=%x, greenMask=%x, blueMask=%x\n",
-              dib->dsBm.bmBitsPixel, bitfields[0], bitfields[1], bitfields[2]);
-        return FALSE;
-    }
-
-    physBitmap->depth = pict_format->depth;
-    physBitmap->trueColor = TRUE;
-    physBitmap->color_shifts = shifts;
-    return TRUE;
-}
-
 /************************************************************************
  *   UploadGlyph
  *
@@ -2814,11 +2775,6 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 
 void X11DRV_XRender_Finalize(void)
 {
-}
-
-BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib)
-{
-    return FALSE;
 }
 
 #endif /* SONAME_LIBXRENDER */

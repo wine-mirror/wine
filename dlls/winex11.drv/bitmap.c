@@ -234,11 +234,6 @@ BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap )
 
     if (physBitmap)
     {
-        DIBSECTION dib;
-
-        if (GetObjectW( hbitmap, sizeof(dib), &dib ) == sizeof(dib))
-            X11DRV_DIB_DeleteDIBSection( physBitmap, &dib );
-
         if (physBitmap->glxpixmap)
             destroy_glxpixmap( gdi_display, physBitmap->glxpixmap );
         wine_tsx11_lock();

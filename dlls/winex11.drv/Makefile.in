@@ -11,10 +11,6 @@ C_SRCS = \
 	clipboard.c \
 	codepage.c \
 	desktop.c \
-	dib.c \
-	dib_convert.c \
-	dib_dst_swap.c \
-	dib_src_swap.c \
 	event.c \
 	graphics.c \
 	ime.c \

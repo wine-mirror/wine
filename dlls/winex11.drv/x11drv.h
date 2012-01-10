@@ -120,21 +120,7 @@ typedef struct
     XID          glxpixmap;
     int          depth;             /* depth of the X pixmap */
     ColorShifts  color_shifts;      /* color shifts of the X pixmap */
-    /* the following fields are only used for DIB section bitmaps */
-    int          status, p_status;  /* mapping status */
-    XImage      *image;             /* cached XImage */
-    int         *colorMap;          /* color map info */
-    int          nColorMap;
     BOOL         trueColor;
-    BOOL         topdown;
-    CRITICAL_SECTION lock;          /* GDI access lock */
-    enum x11drv_shm_mode shm_mode;
-#ifdef HAVE_LIBXXSHM
-    XShmSegmentInfo shminfo;        /* shared memory segment info */
-#endif
-    struct list   entry;            /* Entry in global DIB list */
-    BYTE         *base;             /* Base address */
-    SIZE_T        size;             /* Size in bytes */
 } X_PHYSBITMAP;
 
   /* X physical font */
@@ -183,8 +169,6 @@ extern BOOL X11DRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                           INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_CopyBitmap( HBITMAP src, HBITMAP dst ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap ) DECLSPEC_HIDDEN;
-extern HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap,
-                                        BITMAPINFO *bmi, UINT usage ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW dfeproc, LPARAM lp ) DECLSPEC_HIDDEN;
@@ -267,8 +251,6 @@ extern void X11DRV_FONT_Init( int log_pixels_x, int log_pixels_y ) DECLSPEC_HIDD
 extern void X11DRV_XInput2_Init(void) DECLSPEC_HIDDEN;
 
 extern HBITMAP create_brush_bitmap( X11DRV_PDEVICE *physDev, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
-extern XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth ) DECLSPEC_HIDDEN;
-extern void X11DRV_DIB_DestroyXImage( XImage *image ) DECLSPEC_HIDDEN;
 extern X_PHYSBITMAP *X11DRV_get_phys_bitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern X_PHYSBITMAP *X11DRV_init_phys_bitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_create_phys_bitmap( HBITMAP hbitmap, const BITMAP *bitmap, int depth,
@@ -301,7 +283,6 @@ extern int client_side_antialias_with_render DECLSPEC_HIDDEN;
 extern int using_client_side_fonts DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *X11DRV_XRender_Init(void) DECLSPEC_HIDDEN;
 extern void X11DRV_XRender_Finalize(void) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib) DECLSPEC_HIDDEN;
 
 extern Drawable get_glxdrawable(X11DRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
 extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap) DECLSPEC_HIDDEN;
@@ -321,147 +302,6 @@ extern void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event ) DECL
 extern void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event ) DECLSPEC_HIDDEN;
 extern void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event ) DECLSPEC_HIDDEN;
 extern void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event ) DECLSPEC_HIDDEN;
-
-/* exported dib functions for now */
-
-/* DIB Section sync state */
-enum { DIB_Status_None, DIB_Status_InSync, DIB_Status_GdiMod, DIB_Status_AppMod };
-
-typedef struct {
-    void (*Convert_5x5_asis)(int width, int height,
-                             const void* srcbits, int srclinebytes,
-                             void* dstbits, int dstlinebytes);
-    void (*Convert_555_reverse)(int width, int height,
-                                const void* srcbits, int srclinebytes,
-                                void* dstbits, int dstlinebytes);
-    void (*Convert_555_to_565_asis)(int width, int height,
-                                    const void* srcbits, int srclinebytes,
-                                    void* dstbits, int dstlinebytes);
-    void (*Convert_555_to_565_reverse)(int width, int height,
-                                       const void* srcbits, int srclinebytes,
-                                       void* dstbits, int dstlinebytes);
-    void (*Convert_555_to_888_asis)(int width, int height,
-                                    const void* srcbits, int srclinebytes,
-                                    void* dstbits, int dstlinebytes);
-    void (*Convert_555_to_888_reverse)(int width, int height,
-                                       const void* srcbits, int srclinebytes,
-                                       void* dstbits, int dstlinebytes);
-    void (*Convert_555_to_0888_asis)(int width, int height,
-                                     const void* srcbits, int srclinebytes,
-                                     void* dstbits, int dstlinebytes);
-    void (*Convert_555_to_0888_reverse)(int width, int height,
-                                        const void* srcbits, int srclinebytes,
-                                        void* dstbits, int dstlinebytes);
-    void (*Convert_5x5_to_any0888)(int width, int height,
-                                   const void* srcbits, int srclinebytes,
-                                   WORD rsrc, WORD gsrc, WORD bsrc,
-                                   void* dstbits, int dstlinebytes,
-                                   DWORD rdst, DWORD gdst, DWORD bdst);
-    void (*Convert_565_reverse)(int width, int height,
-                                const void* srcbits, int srclinebytes,
-                                void* dstbits, int dstlinebytes);
-    void (*Convert_565_to_555_asis)(int width, int height,
-                                    const void* srcbits, int srclinebytes,
-                                    void* dstbits, int dstlinebytes);
-    void (*Convert_565_to_555_reverse)(int width, int height,
-                                       const void* srcbits, int srclinebytes,
-                                       void* dstbits, int dstlinebytes);
-    void (*Convert_565_to_888_asis)(int width, int height,
-                                    const void* srcbits, int srclinebytes,
-                                    void* dstbits, int dstlinebytes);
-    void (*Convert_565_to_888_reverse)(int width, int height,
-                                       const void* srcbits, int srclinebytes,
-                                       void* dstbits, int dstlinebytes);
-    void (*Convert_565_to_0888_asis)(int width, int height,
-                                     const void* srcbits, int srclinebytes,
-                                     void* dstbits, int dstlinebytes);
-    void (*Convert_565_to_0888_reverse)(int width, int height,
-                                        const void* srcbits, int srclinebytes,
-                                        void* dstbits, int dstlinebytes);
-    void (*Convert_888_asis)(int width, int height,
-                             const void* srcbits, int srclinebytes,
-                             void* dstbits, int dstlinebytes);
-    void (*Convert_888_reverse)(int width, int height,
-                                const void* srcbits, int srclinebytes,
-                                void* dstbits, int dstlinebytes);
-    void (*Convert_888_to_555_asis)(int width, int height,
-                                    const void* srcbits, int srclinebytes,
-                                    void* dstbits, int dstlinebytes);
-    void (*Convert_888_to_555_reverse)(int width, int height,
-                                       const void* srcbits, int srclinebytes,
-                                       void* dstbits, int dstlinebytes);
-    void (*Convert_888_to_565_asis)(int width, int height,
-                                    const void* srcbits, int srclinebytes,
-                                    void* dstbits, int dstlinebytes);
-    void (*Convert_888_to_565_reverse)(int width, int height,
-                                       const void* srcbits, int srclinebytes,
-                                       void* dstbits, int dstlinebytes);
-    void (*Convert_888_to_0888_asis)(int width, int height,
-                                     const void* srcbits, int srclinebytes,
-                                     void* dstbits, int dstlinebytes);
-    void (*Convert_888_to_0888_reverse)(int width, int height,
-                                        const void* srcbits, int srclinebytes,
-                                        void* dstbits, int dstlinebytes);
-    void (*Convert_rgb888_to_any0888)(int width, int height,
-                                      const void* srcbits, int srclinebytes,
-                                      void* dstbits, int dstlinebytes,
-                                      DWORD rdst, DWORD gdst, DWORD bdst);
-    void (*Convert_bgr888_to_any0888)(int width, int height,
-                                      const void* srcbits, int srclinebytes,
-                                      void* dstbits, int dstlinebytes,
-                                      DWORD rdst, DWORD gdst, DWORD bdst);
-    void (*Convert_0888_asis)(int width, int height,
-                              const void* srcbits, int srclinebytes,
-                              void* dstbits, int dstlinebytes);
-    void (*Convert_0888_reverse)(int width, int height,
-                                 const void* srcbits, int srclinebytes,
-                                 void* dstbits, int dstlinebytes);
-    void (*Convert_0888_any)(int width, int height,
-                             const void* srcbits, int srclinebytes,
-                             DWORD rsrc, DWORD gsrc, DWORD bsrc,
-                             void* dstbits, int dstlinebytes,
-                             DWORD rdst, DWORD gdst, DWORD bdst);
-    void (*Convert_0888_to_555_asis)(int width, int height,
-                                     const void* srcbits, int srclinebytes,
-                                     void* dstbits, int dstlinebytes);
-    void (*Convert_0888_to_555_reverse)(int width, int height,
-                                        const void* srcbits, int srclinebytes,
-                                        void* dstbits, int dstlinebytes);
-    void (*Convert_0888_to_565_asis)(int width, int height,
-                                     const void* srcbits, int srclinebytes,
-                                     void* dstbits, int dstlinebytes);
-    void (*Convert_0888_to_565_reverse)(int width, int height,
-                                        const void* srcbits, int srclinebytes,
-                                        void* dstbits, int dstlinebytes);
-    void (*Convert_any0888_to_5x5)(int width, int height,
-                                   const void* srcbits, int srclinebytes,
-                                   DWORD rsrc, DWORD gsrc, DWORD bsrc,
-                                   void* dstbits, int dstlinebytes,
-                                   WORD rdst, WORD gdst, WORD bdst);
-    void (*Convert_0888_to_888_asis)(int width, int height,
-                                     const void* srcbits, int srclinebytes,
-                                     void* dstbits, int dstlinebytes);
-    void (*Convert_0888_to_888_reverse)(int width, int height,
-                                        const void* srcbits, int srclinebytes,
-                                        void* dstbits, int dstlinebytes);
-    void (*Convert_any0888_to_rgb888)(int width, int height,
-                                      const void* srcbits, int srclinebytes,
-                                      DWORD rsrc, DWORD gsrc, DWORD bsrc,
-                                      void* dstbits, int dstlinebytes);
-    void (*Convert_any0888_to_bgr888)(int width, int height,
-                                      const void* srcbits, int srclinebytes,
-                                      DWORD rsrc, DWORD gsrc, DWORD bsrc,
-                                      void* dstbits, int dstlinebytes);
-} dib_conversions;
-
-extern const dib_conversions dib_normal DECLSPEC_HIDDEN, dib_src_byteswap DECLSPEC_HIDDEN, dib_dst_byteswap DECLSPEC_HIDDEN;
-
-extern INT X11DRV_DIB_MaskToShift(DWORD mask) DECLSPEC_HIDDEN;
-extern INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev,INT) DECLSPEC_HIDDEN;
-extern INT X11DRV_DIB_Lock(X_PHYSBITMAP *,INT) DECLSPEC_HIDDEN;
-extern void X11DRV_DIB_Unlock(X_PHYSBITMAP *,BOOL) DECLSPEC_HIDDEN;
-
-extern void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib) DECLSPEC_HIDDEN;
 
 /**************************************************************************
  * X11 GDI driver
