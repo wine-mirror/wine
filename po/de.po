@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-08 16:10+0100\n"
+"PO-Revision-Date: 2012-01-10 23:39+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -1305,11 +1305,11 @@ msgstr "Benutzerbenachrichtigung"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr "Online Zertifikationsstatusprotokoll"
+msgstr "Online-Certificate-Status-Protocol"
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
-msgstr "Ausgeber des Zertifikationsautorität"
+msgstr "Zertifizierungsstellen Emittent"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
@@ -1745,7 +1745,7 @@ msgstr "Verzeichnisdienst für E-Mail Replikation"
 
 #: crypt32.rc:165 cryptui.rc:142
 msgid "Certificate Request Agent"
-msgstr "Dienst für Zertifikationsanforderung"
+msgstr "Dienst für Zertifikatsanforderung"
 
 #: crypt32.rc:166 cryptui.rc:138
 msgid "Lifetime Signing"
@@ -1834,7 +1834,7 @@ msgstr "Subjekt Typ="
 #: crypt32.rc:195
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr "Zertifikationsautorität"
+msgstr "CA"
 
 #: crypt32.rc:196
 msgid "End Entity"
@@ -1868,7 +1868,7 @@ msgstr "OCSP"
 
 #: crypt32.rc:203
 msgid "CA Issuers"
-msgstr "Ausgeber des Zertifikationsautorität"
+msgstr "CA Emittent"
 
 #: crypt32.rc:204
 msgid "Unknown Access Method"
@@ -1908,7 +1908,7 @@ msgstr "Kompromittierung des Schlüssels"
 
 #: crypt32.rc:213
 msgid "CA Compromise"
-msgstr "Kompromittierung der Zertifikationsautorität"
+msgstr "CA Infekt"
 
 #: crypt32.rc:214
 msgid "Affiliation Changed"
@@ -2008,15 +2008,15 @@ msgstr "Signatur"
 
 #: crypt32.rc:238
 msgid "SSL CA"
-msgstr "SSL Zertifikationsautorität"
+msgstr "SSL CA"
 
 #: crypt32.rc:239
 msgid "S/MIME CA"
-msgstr "S/MIME Zertifikationsautorität"
+msgstr "S/MIME CA"
 
 #: crypt32.rc:240
 msgid "Signature CA"
-msgstr "Zertifikationsautorität der Signatur"
+msgstr "Signatur CA"
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
@@ -2092,7 +2092,7 @@ msgstr "&Zertifikat anzeigen"
 
 #: cryptui.rc:215
 msgid "Certificate &status:"
-msgstr "Zertifizierungs&status:"
+msgstr "Zertifikats&status:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
@@ -5073,7 +5073,7 @@ msgstr "Unbekannte Revision\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels\n"
-msgstr "Inkompatible Revisionslevels\n"
+msgstr "Inkompatible Revisionsstufen\n"
 
 #: winerror.mc:1941
 msgid "Invalid owner\n"
@@ -5085,7 +5085,7 @@ msgstr "Ungültige primäre Gruppe\n"
 
 #: winerror.mc:1951
 msgid "No impersonation token\n"
-msgstr "Kein Imitat-Token\n"
+msgstr "Kein Imitationstoken\n"
 
 #: winerror.mc:1956
 msgid "Can't disable mandatory group\n"
@@ -5229,7 +5229,7 @@ msgstr "Ungültige Gruppen-Attribute\n"
 
 #: winerror.mc:2131
 msgid "Bad impersonation level\n"
-msgstr "Fehlerhaftes Imitat-Level\n"
+msgstr "Fehlerhaftes Imitationsstufe\n"
 
 #: winerror.mc:2136
 msgid "Can't open anonymous security token\n"
@@ -5649,7 +5649,7 @@ msgstr "Keine paged Systemressourcen\n"
 
 #: winerror.mc:2661
 msgid "No working set quota\n"
-msgstr "Keine Quota für Working Set\n"
+msgstr "Keine Arbeitsbedarfsquote\n"
 
 #: winerror.mc:2666
 msgid "No page file quota\n"
@@ -6041,7 +6041,7 @@ msgstr "Unbekannter Authentifizierungsdienst\n"
 
 #: winerror.mc:3156
 msgid "Unknown authentication level\n"
-msgstr "Unbekanntes Authentifizierungslevel\n"
+msgstr "Unbekanntes Authentifizierungsebene\n"
 
 #: winerror.mc:3161
 msgid "Invalid authentication identity\n"
@@ -6221,7 +6221,7 @@ msgstr "Account abgelaufen\n"
 
 #: winerror.mc:3381
 msgid "Redirector has open handles\n"
-msgstr "Redirektor hat offene Handles\n"
+msgstr "Redirector hat offene Handles\n"
 
 #: winerror.mc:3386
 msgid "Printer driver already installed\n"
@@ -6325,11 +6325,11 @@ msgstr "Bindung unvollständig\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure\n"
-msgstr "RPC Kommunikations-Fehler\n"
+msgstr "RPC Kommunikationsausfall\n"
 
 #: winerror.mc:3516
 msgid "Unsupported authorisation level\n"
-msgstr "Nicht unterstütztes Autorisierungslevel\n"
+msgstr "Nicht unterstützte Berechtigungsstufe\n"
 
 #: winerror.mc:3521
 msgid "No principal name registered\n"
@@ -7033,7 +7033,7 @@ msgstr "Uhr"
 
 #: oleacc.rc:89
 msgid "split button"
-msgstr "Trenn Schaltfläche"
+msgstr "Split-Knopf"
 
 #: oleacc.rc:90 ipconfig.rc:33
 msgid "IP address"
@@ -7277,7 +7277,7 @@ msgstr "Datenbits"
 
 #: serialui.rc:36
 msgid "Stop Bits"
-msgstr "Stoppbits"
+msgstr "Stopp-Bits"
 
 #: setupapi.rc:36
 msgid "Copying Files..."
@@ -8120,9 +8120,8 @@ msgid ""
 msgstr ""
 "Im Verzeichnis befindet sich bereits ein Ordner namens '%1'.\n"
 "\n"
-"Wenn die Dateien im Zielordner die gleichen Namen haben, wie die im "
-"ausgewählten Ordner, werden sie ersetzt.\n"
-"\n"
+"Wenn die Dateien im Zielordner die gleichen Namen haben,\n"
+"wie die im ausgewählten Ordner, werden sie ersetzt.\n"
 "Möchten sie trotzdem fortfahren?"
 
 #: shell32.rc:248
@@ -8771,8 +8770,8 @@ msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
 msgstr ""
-"Der Befehl kann nicht auf ein selbst öffnendes Gerät angewandt werden. Warten "
-"Sie, bis das Gerät geschlossen wurde und versuchen Sie es erneut."
+"Der Befehl kann nicht auf ein selbst öffnendes Gerät angewandt werden. "
+"Warten Sie, bis das Gerät geschlossen wurde und versuchen Sie es erneut."
 
 #: winmm.rc:99
 msgid ""
@@ -9468,7 +9467,9 @@ msgstr ""
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
-msgstr "HELP zeigt die Hilfe an.\n"
+msgstr ""
+"HELP <Kommando> zeigt eine kurze Hilfe zu einem Thema.\n"
+"HELP ohne Argumente zeigt alle CMD Kommandos.\n"
 
 #: cmd.rc:94
 msgid ""
@@ -9502,12 +9503,9 @@ msgstr ""
 "LABEL wird benutzt, um die Laufwerksbezeichnung festzulegen.\n"
 "\n"
 "Syntax: LABEL [Laufwerk:]\n"
-"\n"
-"Der Befehl wartet auf die Eingabe einer neuen Bezeichnung für das "
-"angegebene\n"
-"Laufwerk. Sie können sich auch die Laufwerksbezeichnung mit dem VOL - "
-"Befehl\n"
-"anzeigen lassen.\n"
+"Der Befehl wartet auf die Eingabe einer neuen Bezeichnung für das\n"
+"angegebene Laufwerk. Sie können sich auch die Laufwerksbezeichnung\n"
+"mit dem VOL - Befehl anzeigen lassen.\n"
 
 #: cmd.rc:103
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
@@ -9531,11 +9529,9 @@ msgstr ""
 "Dateisystem.\n"
 "\n"
 "Ist das zu verschiebende Objekt ein Verzeichnis, dann werden alle Dateien "
-"und\n"
-"Unterverzeichnisse unterhalb des Objektes genauso verschoben.\n"
+"und Unterverzeichnisse unterhalb des Objektes genauso verschoben.\n"
 "\n"
-"MOVE schlägt fehl, wenn die alte und die neue Position auf verschiedenen "
-"DOS\n"
+"MOVE schlägt fehl, wenn die alte und die neue Position auf verschiedenen DOS "
 "Laufwerken sind.\n"
 
 #: cmd.rc:122
@@ -9553,9 +9549,8 @@ msgstr ""
 "PATH ändert oder zeigt den CMD Suchpfad an.\n"
 "\n"
 "Nach der Eingabe von PATH, wird die aktuelle PATH Einstellung angezeigt\n"
-"(nach dem Start wird der Wert aus der Registry genommen). Um die\n"
-"Einstellungen zu ändern, muss nach dem PATH Befehl der neue Wert angegeben\n"
-"werden\n"
+"(ursprünglich aus der Registry). Um die Einstellungen zu ändern, muss\n"
+"nach dem PATH Befehl der neue Wert angegeben werden\n"
 "\n"
 "Es ist auch möglich den PATH mit Hilfe der PATH Umgebungsvariable zu\n"
 "modifizieren. Zum Beispiel:\n"
@@ -9616,8 +9611,8 @@ msgstr ""
 "einen Größerzeichen (>) ist (genau wie der PROMPT $p$g Befehl).\n"
 "\n"
 "Der Prompt kann auch geändert werden durch das Ändern der PROMPT\n"
-"Umgebungsvariable, so hat der Befehl 'SET PROMPT=text' die gleiche\n"
-"Auswirkung wie 'PROMPT text'.\n"
+"Umgebungsvariable, so hat der Befehl 'SET PROMPT=Text' die gleiche\n"
+"Auswirkung wie 'PROMPT Text'.\n"
 
 #: cmd.rc:153
 msgid ""
@@ -9667,22 +9662,19 @@ msgstr ""
 "\n"
 "SET ohne Parameter zeigt alle aktuellen Umgebungsvariablen an.\n"
 "\n"
-"Um eine Umgebungsvariable zu erschaffen oder zu ändern, ist der Syntax "
-"nötig:\n"
+"Um eine Umgebungsvariable zu erstellen oder zu ändern, ist der Syntax:\n"
 "\n"
 "SET <Variable>=<Wert>\n"
 "\n"
-"Wobei <Variable> und <Wert> Zeichenketten sind. Es dürfen keine Leerzeichen "
-"vor\n"
-"dem Gleichheitszeichen sein, noch darf der Variablenname Leerzeichen "
+"Wobei <Variable> und <Wert> Zeichenketten sind. Es dürfen keine Leerzeichen\n"
+"vor dem Gleichheitszeichen sein, noch darf der Variablenname Leerzeichen\n"
 "enthalten.\n"
 "\n"
 "In Wine werden die Umgebungsvariablen des darunterliegenden Betriebssystems\n"
-"mit in die Win32 Umgebung eingebunden, deshalb gibt es gewöhnlich mehr "
-"Werte\n"
-"als es sie in einer ursprünglichen Win32 Realisierung gäbe. Anmerkung: Es "
-"ist\n"
-"nicht möglich die Umgebungsvariablen des Betriebssystems vom CMD aus zu\n"
+"mit in die Win32 Umgebung eingebunden, deshalb gibt es gewöhnlich mehr\n"
+"Werte als es sie in einer ursprünglichen Win32 Realisierung gäbe. Anmerkung: "
+"Es\n"
+"ist nicht möglich die Umgebungsvariablen des Betriebssystems vom CMD aus zu\n"
 "beeinflussen.\n"
 
 #: cmd.rc:183
@@ -9771,9 +9763,8 @@ msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <Verzeichnisname> speichert das aktuelle\n"
-"Verzeichnis auf einem Stack und wechselt das Arbeitsverzeichnis\n"
-"zu dem angegebenen.\n"
+"PUSHD <Verzeichnisname> speichert das aktuelle Verzeichnis auf einem\n"
+"Stack und wechselt das Arbeitsverzeichnis zu dem angegebenen.\n"
 
 #: cmd.rc:223
 msgid ""
@@ -10394,7 +10385,7 @@ msgstr "&Fußzeile:"
 
 #: notepad.rc:104
 msgid "Margins (millimeters)"
-msgstr "Ränder (Millimeter):"
+msgstr "Ränder (Millimeter)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -11469,17 +11460,15 @@ msgstr ""
 "/M[inimized] Starte das Programm minimiert.\n"
 "/MAX[imized] Starte das Programm maximiert.\n"
 "/R[estored]  Starte das Programm normal (weder minimiert noch maximiert).\n"
-"/W[ait]      Wartet bis das gestartete Programm sich beendet,\n"
-"\t     dann beendet sich start mit dessen Exitcode des Programmes.\n"
-"/Unix        Nutze einen Unix Dateinamen und starte die Datei wie der "
-"Explorer.\n"
+"/W[ait]      Wartet bis das gestartete Programm sich beendet, dannbeendet "
+"sich start mit dessen Exitcode des Programmes.\n"
+"/Unix        Einen Unix Dateinamen wie mit dem Explorer öffnen.\n"
 "/ProgIDOpen  Öffne ein Dokument mit der folgenden progID.\n"
 "/L           Zeigt die Endbenutzerlizenz an.\n"
 "/?           Zeigt die Hilfe an und beendet sich.\n"
 "\n"
 "start.exe Version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start kommt ABSOLUT OHNE GARANTIE; für detaillierte Informationen, starte es "
-"mit der /L Option.\n"
+"Start kommt ABSOLUT OHNE GARANTIE; für Details starte es mit der /L Option.\n"
 "Dies ist freie Software, und du bist Eingeladen, es unter bestimmten\n"
 "Bedingungen weiter zu verbreiten; führe 'start /L' für mehr Details aus.\n"
 
@@ -13266,10 +13255,9 @@ msgid ""
 "                           try to setup the current terminal as a Wine "
 "console.\n"
 msgstr ""
-"  --backend={user|curses}  Auswahl von ‚user‘ erstellt ein neues Fenster,\n"
-"                            ‚curses‘ versucht das aktuelle Terminal als "
-"Wine-\n"
-"                            Konsole einzurichten.\n"
+"  --backend={user|curses}   Auswahl von ‚user‘ erstellt ein neues Fenster,\n"
+"                            ‚curses‘ versucht das aktuelle Terminal als Wine-"
+"Konsole einzurichten.\n"
 
 #: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
@@ -14198,8 +14186,9 @@ msgstr ""
 "[/H]  Kopiere auch versteckte und Systemdateien.\n"
 "[/C]  Nach Fehlern den Kopiervorgang fortsetzen.\n"
 "[/A]  Nur Dateien mit Archivbit kopieren.\n"
-"[/M]  Nur Dateien mit Archivbit kopieren, danach Archivbit löschen.\n"
-"[/D | /D:M-T-J] Kopiere neue Dateien und Dateien, die neuer als das\n"
+"[/M]  Nur Dateien mit Archivbit kopieren, danach\n"
+"\tdas Archivbit löschen.\n"
+"[/D | /D:M-T-J] Kopiere neue Dateien oder Dateien, die neuer als das\n"
 "\t\tangegebene Datum sind. Wird kein Datum angegeben, werden nur\n"
 "\t\tQuelldateien kopiert, die neuer sind als die Zieldatei.\n"
 "\n"
