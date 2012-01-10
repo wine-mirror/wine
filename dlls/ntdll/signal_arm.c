@@ -577,7 +577,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         rec->ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
-        WINE_ERR( "Got unexpected trap %ld\n", TRAP_sig(context) );
+        ERR("Got unexpected trap %ld\n", TRAP_sig(context));
         rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
