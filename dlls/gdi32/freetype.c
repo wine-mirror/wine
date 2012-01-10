@@ -4988,7 +4988,7 @@ static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
         else
             ret = pFT_Get_Char_Index(font->ft_face, (unsigned char)buf);
         TRACE("%04x (%02x) -> ret %d def_used %d\n", glyph, buf, ret, default_used);
-        return get_GSUB_vert_glyph(font,ret);
+        return ret;
     }
 
     if(font->ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL)
@@ -5001,7 +5001,7 @@ static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
     }
     else glyphId = pFT_Get_Char_Index(font->ft_face, glyph);
 
-    return get_GSUB_vert_glyph(font,glyphId);
+    return glyphId;
 }
 
 /*************************************************************
@@ -6373,7 +6373,10 @@ static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font,
     *linked_font = font;
 
     if((*glyph = get_glyph_index(font, c)))
+    {
+        *glyph = get_GSUB_vert_glyph(font, *glyph);
         return TRUE;
+    }
 
     LIST_FOR_EACH_ENTRY(child_font, &font->child_fonts, CHILD_FONT, entry)
     {
@@ -6384,6 +6387,7 @@ static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font,
         if(!child_font->font->ft_face)
             continue;
         g = get_glyph_index(child_font->font, c);
+        g = get_GSUB_vert_glyph(child_font->font, g);
         if(g)
         {
             *glyph = g;

@@ -4070,13 +4070,14 @@ todo_wine
     DeleteFile(ttf_name);
 }
 
-static void check_vertical_font(const char *name, BOOL *installed, BOOL *selected, GLYPHMETRICS *gm)
+static void check_vertical_font(const char *name, BOOL *installed, BOOL *selected, GLYPHMETRICS *gm, WORD *gi)
 {
     LOGFONTA lf;
     HFONT hfont, hfont_prev;
     HDC hdc;
     char facename[100];
     DWORD ret;
+    static const WCHAR str[] = { 0x2025 };
 
     *installed = is_truetype_font_installed(name);
 
@@ -4112,6 +4113,9 @@ static void check_vertical_font(const char *name, BOOL *installed, BOOL *selecte
     if (!*selected)
         memset(gm, 0, sizeof *gm);
 
+    ret = pGetGlyphIndicesW(hdc, str, 1, gi, 0);
+    ok(ret != GDI_ERROR, "GetGlyphIndicesW failed\n");
+
     SelectObject(hdc, hfont_prev);
     DeleteObject(hfont);
     ReleaseDC(NULL, hdc);
@@ -4123,10 +4127,11 @@ static void test_vertical_font(void)
     int num;
     BOOL ret, installed, selected;
     GLYPHMETRICS gm;
+    WORD hgi, vgi;
 
-    if (!pAddFontResourceExA || !pRemoveFontResourceExA)
+    if (!pAddFontResourceExA || !pRemoveFontResourceExA || !pGetGlyphIndicesW)
     {
-        win_skip("AddFontResourceExA is not available on this platform\n");
+        win_skip("AddFontResourceExA or GetGlyphIndicesW is not available on this platform\n");
         return;
     }
 
@@ -4139,19 +4144,21 @@ static void test_vertical_font(void)
     num = pAddFontResourceExA(ttf_name, FR_PRIVATE, 0);
     ok(num == 2, "AddFontResourceExA should add 2 fonts from vertical.ttf\n");
 
-    check_vertical_font("@WineTestVertical", &installed, &selected, &gm);
+    check_vertical_font("@WineTestVertical", &installed, &selected, &gm, &hgi);
     ok(installed, "@WineTestVertical is not installed\n");
     ok(selected, "@WineTestVertical is not selected\n");
     ok(gm.gmBlackBoxX > gm.gmBlackBoxY,
        "gmBlackBoxX(%u) should be greater than gmBlackBoxY(%u) if horizontal\n",
        gm.gmBlackBoxX, gm.gmBlackBoxY);
 
-    check_vertical_font("@@WineTestVertical", &installed, &selected, &gm);
+    check_vertical_font("@@WineTestVertical", &installed, &selected, &gm, &vgi);
     ok(installed, "@@WineTestVertical is not installed\n");
     ok(selected, "@@WineTestVertical is not selected\n");
     ok(gm.gmBlackBoxX < gm.gmBlackBoxY,
        "gmBlackBoxX(%u) should be less than gmBlackBoxY(%u) if vertical\n",
        gm.gmBlackBoxX, gm.gmBlackBoxY);
+
+    ok(hgi == vgi, "different glyph h:%u v:%u\n", hgi, vgi);
 
     ret = pRemoveFontResourceExA(ttf_name, FR_PRIVATE, 0);
     ok(ret, "RemoveFontResourceEx() error %d\n", GetLastError());
