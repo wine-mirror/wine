@@ -207,7 +207,7 @@ static HRESULT WINAPI IDirect3DVolume8Impl_GetDesc(IDirect3DVolume8 *iface, D3DV
 
     desc->Format = d3dformat_from_wined3dformat(wined3d_desc.format);
     desc->Type = wined3d_desc.resource_type;
-    desc->Usage = wined3d_desc.usage;
+    desc->Usage = wined3d_desc.usage & WINED3DUSAGE_MASK;
     desc->Pool = wined3d_desc.pool;
     desc->Size = wined3d_desc.size;
     desc->Width = wined3d_desc.width;
