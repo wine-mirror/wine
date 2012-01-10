@@ -152,9 +152,9 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand, ULONG_PTR dwD
         lpwh->ofsData = sizeof(WINHELP) + nlen;
     } else
         lpwh->ofsData = 0;
-    WINE_TRACE("Sending[%u]: cmd=%u data=%08x fn=%s\n",
-               lpwh->size, lpwh->command, lpwh->data,
-               lpwh->ofsFilename ? (LPSTR)lpwh + lpwh->ofsFilename : "");
+    TRACE("Sending[%u]: cmd=%u data=%08x fn=%s\n",
+          lpwh->size, lpwh->command, lpwh->data,
+          lpwh->ofsFilename ? (LPSTR)lpwh + lpwh->ofsFilename : "");
 
     return SendMessageA(hDest, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
 }
