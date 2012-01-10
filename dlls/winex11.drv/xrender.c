@@ -46,8 +46,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(xrender);
 
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-static BOOL X11DRV_XRender_Installed = FALSE;
-
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
 
@@ -364,6 +362,7 @@ static int load_xrender_formats(void)
 const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 {
     int event_base, i;
+    BOOL ok;
 
     using_client_side_fonts = client_side_with_render || client_side_with_core;
 
@@ -395,9 +394,9 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 #undef LOAD_FUNCPTR
 
     wine_tsx11_lock();
-    X11DRV_XRender_Installed = pXRenderQueryExtension(gdi_display, &event_base, &xrender_error_base);
+    ok = pXRenderQueryExtension(gdi_display, &event_base, &xrender_error_base);
     wine_tsx11_unlock();
-    if (!X11DRV_XRender_Installed) return NULL;
+    if (!ok) return NULL;
 
     TRACE("Xrender is up and running error_base = %d\n", xrender_error_base);
     if(!load_xrender_formats()) /* This fails in buggy versions of libXrender.so */
@@ -405,14 +404,12 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
         ERR_(winediag)("Wine has detected that you probably have a buggy version "
                        "of libXrender.  Because of this client side font rendering "
                        "will be disabled.  Please upgrade this library.\n");
-        X11DRV_XRender_Installed = FALSE;
         return NULL;
     }
 
     if (!visual->red_mask || !visual->green_mask || !visual->blue_mask)
     {
         WARN("one or more of the colour masks are 0, disabling XRENDER. Try running in 16-bit mode or higher.\n");
-        X11DRV_XRender_Installed = FALSE;
         return NULL;
     }
 
@@ -897,7 +894,7 @@ static AA_Type get_antialias_type( HDC hdc, BOOL subpixel, BOOL hinter )
     WORD flags;
     UINT font_smoothing_type, font_smoothing_orientation;
 
-    if (X11DRV_XRender_Installed && subpixel &&
+    if (subpixel &&
         SystemParametersInfoW( SPI_GETFONTSMOOTHINGTYPE, 0, &font_smoothing_type, 0) &&
         font_smoothing_type == FE_FONTSMOOTHINGCLEARTYPE)
     {
@@ -1072,9 +1069,6 @@ static int GetCacheEntry( HDC hdc, LFANDSIZE *plfsz )
         }
 
         if (!font_smoothing) entry->aa_default = AA_None;
-
-        /* we can't support subpixel without xrender */
-        if (!X11DRV_XRender_Installed && entry->aa_default > AA_Grey) entry->aa_default = AA_Grey;
     }
     else
         entry->aa_default = AA_None;
@@ -1699,7 +1693,7 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     int render_op = PictOpOver;
     XRenderColor col;
 
-    if (!X11DRV_XRender_Installed || !physdev->x11dev->has_gdi_font)
+    if (!physdev->x11dev->has_gdi_font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pExtTextOut );
         return dev->funcs->pExtTextOut( dev, x, y, flags, lprect, wstr, count, lpDx );
@@ -2133,8 +2127,6 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         return dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
     }
 
-    if (!X11DRV_XRender_Installed) goto x11drv_fallback;
-
     /* XRender is of no use for color -> mono */
     if (physdev_dst->format == WXR_FORMAT_MONO && physdev_src->format != WXR_FORMAT_MONO)
         goto x11drv_fallback;
@@ -2196,8 +2188,6 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
     Pixmap src_pixmap;
     Picture src_pict, mask_pict = 0;
     BOOL use_repeat;
-
-    if (!X11DRV_XRender_Installed) goto x11drv_fallback;
 
     if (hbitmap)
     {
@@ -2310,12 +2300,6 @@ static DWORD xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct 
     Pixmap src_pixmap;
     BOOL use_repeat;
 
-    if (!X11DRV_XRender_Installed)
-    {
-        dev = GET_NEXT_PHYSDEV( dev, pBlendImage );
-        return dev->funcs->pBlendImage( dev, info, bits, src, dst, func );
-    }
-
     format = get_xrender_format_from_bitmapinfo( info );
     if (!(func.AlphaFormat & AC_SRC_ALPHA))
         format = get_format_without_alpha( format );
@@ -2385,7 +2369,7 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     double xscale, yscale;
     BOOL use_repeat;
 
-    if (!X11DRV_XRender_Installed || src_dev->funcs != dst_dev->funcs)
+    if (src_dev->funcs != dst_dev->funcs)
     {
         dst_dev = GET_NEXT_PHYSDEV( dst_dev, pAlphaBlend );
         return dst_dev->funcs->pAlphaBlend( dst_dev, dst, src_dev, src, blendfn );
@@ -2484,7 +2468,6 @@ static BOOL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG n
     const GRADIENT_RECT *rect = grad_array;
     POINT pt[2];
 
-    if (!X11DRV_XRender_Installed) goto fallback;
     if (!pXRenderCreateLinearGradient) goto fallback;
 
     /* <= 16-bpp uses dithering */
@@ -2582,7 +2565,6 @@ static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct b
     Picture src_pict, dst_pict;
     XRenderPictureAttributes pa;
 
-    if (!X11DRV_XRender_Installed) goto x11drv_fallback;
     if (!pattern) goto x11drv_fallback;
     if (physdev->format == WXR_FORMAT_MONO) goto x11drv_fallback;
 
