@@ -2283,7 +2283,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 /* This call just uploads data, the caller is responsible for binding the
  * correct texture. */
 /* Context activation is done by the caller. */
-static void surface_upload_data(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
+static void surface_upload_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         const struct wined3d_format *format, const RECT *src_rect, UINT src_pitch, const POINT *dst_point,
         BOOL srgb, const struct wined3d_bo_address *data)
 {
@@ -2293,6 +2293,12 @@ static void surface_upload_data(const struct wined3d_surface *surface, const str
     TRACE("surface %p, gl_info %p, format %s, src_rect %s, src_pitch %u, dst_point %s, srgb %#x, data {%#x:%p}.\n",
             surface, gl_info, debug_d3dformat(format->id), wine_dbgstr_rect(src_rect), src_pitch,
             wine_dbgstr_point(dst_point), srgb, data->buffer_object, data->addr);
+
+    if (surface->flags & SFLAG_LOCKED)
+    {
+        WARN("Uploading a surface that is currently mapped, setting SFLAG_PIN_SYSMEM.\n");
+        surface->flags |= SFLAG_PIN_SYSMEM;
+    }
 
     if (format->heightscale != 1.0f && format->heightscale != 0.0f)
         update_h *= format->heightscale;
