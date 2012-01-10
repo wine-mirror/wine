@@ -453,24 +453,32 @@ sym_not_found:
 }
 
 /* Helper function to convert from a color packed in a 32-bit integer to a XRenderColor */
-static void get_xrender_color( XRenderPictFormat *pf, int src_color, XRenderColor *dst_color )
+static void get_xrender_color( struct xrender_physdev *physdev, COLORREF src_color, XRenderColor *dst_color )
 {
-    if(pf->direct.redMask)
-        dst_color->red = ((src_color >> pf->direct.red) & pf->direct.redMask) * 65535/pf->direct.redMask;
-    else
-       dst_color->red = 0;
+    if (src_color & (1 << 24))  /* PALETTEINDEX */
+    {
+        HPALETTE pal = GetCurrentObject( physdev->dev.hdc, OBJ_PAL );
+        PALETTEENTRY pal_ent;
 
-    if(pf->direct.greenMask)
-        dst_color->green = ((src_color >> pf->direct.green) & pf->direct.greenMask) * 65535/pf->direct.greenMask;
+        if (!GetPaletteEntries( pal, LOWORD(src_color), 1, &pal_ent ))
+            GetPaletteEntries( pal, 0, 1, &pal_ent );
+        dst_color->red   = pal_ent.peRed   * 257;
+        dst_color->green = pal_ent.peGreen * 257;
+        dst_color->blue  = pal_ent.peBlue  * 257;
+    }
     else
-        dst_color->green = 0;
+    {
+        if (src_color >> 16 == 0x10ff) src_color = 0; /* DIBINDEX */
 
-    if(pf->direct.blueMask)
-        dst_color->blue = ((src_color >> pf->direct.blue) & pf->direct.blueMask) * 65535/pf->direct.blueMask;
+        dst_color->red   = GetRValue( src_color ) * 257;
+        dst_color->green = GetGValue( src_color ) * 257;
+        dst_color->blue  = GetBValue( src_color ) * 257;
+    }
+
+    if (physdev->format == WXR_FORMAT_MONO && !dst_color->red && !dst_color->green && !dst_color->blue)
+        dst_color->alpha = 0;
     else
-        dst_color->blue = 0;
-
-    dst_color->alpha = 0xffff;
+        dst_color->alpha = 0xffff;
 }
 
 static enum wxr_format get_xrender_format_from_color_shifts(int depth, ColorShifts *shifts)
@@ -1681,10 +1689,8 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                                    const RECT *lprect, LPCWSTR wstr, UINT count, const INT *lpDx )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
-    XGCValues xgcval;
     gsCacheEntry *entry;
     gsCacheEntryFormat *formatEntry;
-    int textPixel, backgroundPixel;
     AA_Type aa_type = AA_None;
     unsigned int idx;
     Picture pict, tile_pict = 0;
@@ -1699,33 +1705,26 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         return dev->funcs->pExtTextOut( dev, x, y, flags, lprect, wstr, count, lpDx );
     }
 
-    xgcval.function = GXcopy;
-    xgcval.background = physdev->x11dev->backgroundPixel;
-    xgcval.fill_style = FillSolid;
-    wine_tsx11_lock();
-    XChangeGC( gdi_display, physdev->x11dev->gc, GCFunction | GCBackground | GCFillStyle, &xgcval );
-    wine_tsx11_unlock();
-
-    if(physdev->x11dev->depth == 1) {
-        if((physdev->x11dev->textPixel & 0xffffff) == 0) {
-	    textPixel = 0;
-	    backgroundPixel = 1;
-	} else {
-	    textPixel = 1;
-	    backgroundPixel = 0;
-	}
-    } else {
-        textPixel = physdev->x11dev->textPixel;
-	backgroundPixel = physdev->x11dev->backgroundPixel;
-    }
+    get_xrender_color( physdev, GetTextColor( physdev->dev.hdc ), &col );
+    pict = get_xrender_picture( physdev, 0, (flags & ETO_CLIPPED) ? lprect : NULL );
 
     if(flags & ETO_OPAQUE)
     {
+        XRenderColor bg;
+
+        if (physdev->format == WXR_FORMAT_MONO)
+            /* use the inverse of the text color */
+            bg.red = bg.green = bg.blue = bg.alpha = ~col.alpha;
+        else
+            get_xrender_color( physdev, GetBkColor( physdev->dev.hdc ), &bg );
+
         wine_tsx11_lock();
-        XSetForeground( gdi_display, physdev->x11dev->gc, backgroundPixel );
-        XFillRectangle( gdi_display, physdev->x11dev->drawable, physdev->x11dev->gc,
-                        physdev->x11dev->dc_rect.left + lprect->left, physdev->x11dev->dc_rect.top + lprect->top,
-                        lprect->right - lprect->left, lprect->bottom - lprect->top );
+        set_xrender_transformation( pict, 1, 1, 0, 0 );
+        pXRenderFillRectangle( gdi_display, PictOpSrc, pict, &bg,
+                               physdev->x11dev->dc_rect.left + lprect->left,
+                               physdev->x11dev->dc_rect.top + lprect->top,
+                               lprect->right - lprect->left,
+                               lprect->bottom - lprect->top );
         wine_tsx11_unlock();
     }
 
@@ -1758,7 +1757,6 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
           physdev->x11dev->dc_rect.left + x, physdev->x11dev->dc_rect.top + y);
 
     elts = HeapAlloc(GetProcessHeap(), 0, sizeof(XGlyphElt16) * count);
-    pict = get_xrender_picture( physdev, 0, (flags & ETO_CLIPPED) ? lprect : NULL );
 
     /* There's a bug in XRenderCompositeText that ignores the xDst and yDst parameters.
        So we pass zeros to the function and move to our starting position using the first
@@ -1769,12 +1767,11 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     offset.x = offset.y = 0;
     current.x = current.y = 0;
 
-    get_xrender_color(physdev->pict_format, physdev->x11dev->textPixel, &col);
     tile_pict = get_tile_pict(physdev->format, &col);
 
     /* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
      */
-    if((physdev->format == WXR_FORMAT_MONO) && (textPixel == 0))
+    if (physdev->format == WXR_FORMAT_MONO && col.red == 0 && col.green == 0 && col.blue == 0)
         render_op = PictOpOutReverse; /* This gives us 'black' text */
 
     for(idx = 0; idx < count; idx++)
@@ -2027,8 +2024,8 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     {
         XRenderColor fg, bg;
 
-        get_xrender_color( physdev_dst->pict_format, physdev_dst->x11dev->textPixel, &fg );
-        get_xrender_color( physdev_dst->pict_format, physdev_dst->x11dev->backgroundPixel, &bg );
+        get_xrender_color( physdev_dst, GetTextColor( physdev_dst->dev.hdc ), &fg );
+        get_xrender_color( physdev_dst, GetBkColor( physdev_dst->dev.hdc ), &bg );
         fg.alpha = bg.alpha = 0;
 
         xrender_mono_blit( src_pict, dst_pict, physdev_dst->format, &fg, &bg,
