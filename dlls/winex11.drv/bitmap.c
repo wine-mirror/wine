@@ -125,8 +125,7 @@ HBITMAP X11DRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 /***********************************************************************
  *           X11DRV_create_phys_bitmap
  */
-BOOL X11DRV_create_phys_bitmap( HBITMAP hbitmap, const BITMAP *bitmap, int depth,
-                                int true_color, const ColorShifts *shifts )
+X_PHYSBITMAP *X11DRV_create_phys_bitmap( HBITMAP hbitmap, const BITMAP *bitmap, int depth )
 {
     X_PHYSBITMAP *physBitmap;
 
@@ -135,16 +134,12 @@ BOOL X11DRV_create_phys_bitmap( HBITMAP hbitmap, const BITMAP *bitmap, int depth
     {
         WARN( "Trying to create invalid pixmap %dx%d planes %d bpp %d\n",
               bitmap->bmWidth, bitmap->bmHeight, bitmap->bmPlanes, bitmap->bmBitsPixel );
-        return FALSE;
+        return NULL;
     }
 
-    TRACE( "(%p) %dx%d %d bpp\n", hbitmap, bitmap->bmWidth, bitmap->bmHeight, bitmap->bmBitsPixel );
-
-    if (!(physBitmap = X11DRV_init_phys_bitmap( hbitmap ))) return FALSE;
+    if (!(physBitmap = X11DRV_init_phys_bitmap( hbitmap ))) return NULL;
 
     physBitmap->depth = depth;
-    physBitmap->trueColor = true_color;
-    if (true_color) physBitmap->color_shifts = *shifts;
 
     wine_tsx11_lock();
     physBitmap->pixmap = XCreatePixmap( gdi_display, root_window,
@@ -161,9 +156,11 @@ BOOL X11DRV_create_phys_bitmap( HBITMAP hbitmap, const BITMAP *bitmap, int depth
     {
         WARN("Can't create Pixmap\n");
         HeapFree( GetProcessHeap(), 0, physBitmap );
-        return FALSE;
+        return NULL;
     }
-    return TRUE;
+    TRACE( "(%p) %dx%d %d bpp -> %lx\n",
+           hbitmap, bitmap->bmWidth, bitmap->bmHeight, bitmap->bmBitsPixel, physBitmap->pixmap );
+    return physBitmap;
 }
 
 
@@ -177,15 +174,22 @@ BOOL X11DRV_create_phys_bitmap( HBITMAP hbitmap, const BITMAP *bitmap, int depth
 BOOL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
     BITMAP bitmap;
+    X_PHYSBITMAP *phys_bitmap;
 
     if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
 
     if (bitmap.bmBitsPixel == 1)
-        return X11DRV_create_phys_bitmap( hbitmap, &bitmap, 1, FALSE, NULL );
-
-    return X11DRV_create_phys_bitmap( hbitmap, &bitmap, screen_depth,
-                                      (visual->class == TrueColor || visual->class == DirectColor),
-                                      &X11DRV_PALETTE_default_shifts );
+    {
+        if (!(phys_bitmap = X11DRV_create_phys_bitmap( hbitmap, &bitmap, 1 ))) return FALSE;
+        phys_bitmap->trueColor = FALSE;
+    }
+    else
+    {
+        if (!(phys_bitmap = X11DRV_create_phys_bitmap( hbitmap, &bitmap, screen_depth ))) return FALSE;
+        phys_bitmap->trueColor = (visual->class == TrueColor || visual->class == DirectColor);
+        phys_bitmap->color_shifts = X11DRV_PALETTE_default_shifts;
+    }
+    return TRUE;
 }
 
 
@@ -205,6 +209,7 @@ BOOL X11DRV_CopyBitmap( HBITMAP src, HBITMAP dst )
     if (!(phys_dst = X11DRV_init_phys_bitmap( dst ))) return FALSE;
 
     phys_dst->depth = phys_src->depth;
+    phys_dst->format = phys_src->format;
     phys_dst->trueColor = phys_src->trueColor;
     if (phys_dst->trueColor) phys_dst->color_shifts = phys_src->color_shifts;
 

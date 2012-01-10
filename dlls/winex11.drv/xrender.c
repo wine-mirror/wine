@@ -482,35 +482,6 @@ static void get_xrender_color( struct xrender_physdev *physdev, COLORREF src_col
         dst_color->alpha = 0xffff;
 }
 
-static enum wxr_format get_xrender_format_from_color_shifts(int depth, ColorShifts *shifts)
-{
-    int redMask, greenMask, blueMask;
-    unsigned int i;
-
-    if (depth == 1) return WXR_FORMAT_MONO;
-
-    /* physDevs of a depth <=8, don't have color_shifts set and XRender can't handle those except for 1-bit */
-    if (!shifts) return default_format;
-
-    redMask   = shifts->physicalRed.max << shifts->physicalRed.shift;
-    greenMask = shifts->physicalGreen.max << shifts->physicalGreen.shift;
-    blueMask  = shifts->physicalBlue.max << shifts->physicalBlue.shift;
-
-    /* Try to locate a format which matches the specification of the dibsection. */
-    for(i = 0; i < WXR_NB_FORMATS; i++)
-    {
-        if( depth     == wxr_formats_template[i].depth &&
-            redMask   == (wxr_formats_template[i].redMask << wxr_formats_template[i].red) &&
-            greenMask == (wxr_formats_template[i].greenMask << wxr_formats_template[i].green) &&
-            blueMask  == (wxr_formats_template[i].blueMask << wxr_formats_template[i].blue) )
-            return i;
-    }
-
-    /* This should not happen because when we reach 'shifts' must have been set and we only allows shifts which are backed by X */
-    ERR("No XRender format found for %u %08x/%08x/%08x\n", depth, redMask, greenMask, blueMask);
-    return WXR_INVALID_FORMAT;
-}
-
 static enum wxr_format get_xrender_format_from_bitmapinfo( const BITMAPINFO *info )
 {
     if (info->bmiHeader.biPlanes != 1) return WXR_INVALID_FORMAT;
@@ -1301,19 +1272,40 @@ static BOOL xrenderdrv_CopyBitmap( HBITMAP src, HBITMAP dst )
  */
 static BOOL xrenderdrv_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
-    enum wxr_format format;
+    enum wxr_format format = WXR_INVALID_FORMAT;
+    X_PHYSBITMAP *phys_bitmap;
     BITMAP bitmap;
 
     if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
 
-    format = get_bitmap_format( bitmap.bmBitsPixel );
+    if (bitmap.bmBitsPixel == 1)
+    {
+        if (!(phys_bitmap = X11DRV_create_phys_bitmap( hbitmap, &bitmap, 1 ))) return FALSE;
+        phys_bitmap->format = WXR_FORMAT_MONO;
+        phys_bitmap->trueColor = FALSE;
+    }
+    else
+    {
+        format = get_bitmap_format( bitmap.bmBitsPixel );
 
-    if (pict_formats[format])
-        return X11DRV_create_phys_bitmap( hbitmap, &bitmap, pict_formats[format]->depth,
-                                          TRUE, &wxr_color_shifts[format] );
-
-    dev = GET_NEXT_PHYSDEV( dev, pCreateBitmap );
-    return dev->funcs->pCreateBitmap( dev, hbitmap );
+        if (pict_formats[format])
+        {
+            if (!(phys_bitmap = X11DRV_create_phys_bitmap( hbitmap, &bitmap, pict_formats[format]->depth )))
+                return FALSE;
+            phys_bitmap->format = format;
+            phys_bitmap->trueColor = TRUE;
+            phys_bitmap->color_shifts = wxr_color_shifts[format];
+        }
+        else
+        {
+            if (!(phys_bitmap = X11DRV_create_phys_bitmap( hbitmap, &bitmap, screen_depth )))
+                return FALSE;
+            phys_bitmap->format = WXR_INVALID_FORMAT;
+            phys_bitmap->trueColor = (visual->class == TrueColor || visual->class == DirectColor);
+            phys_bitmap->color_shifts = X11DRV_PALETTE_default_shifts;
+        }
+    }
+    return TRUE;
 }
 
 /****************************************************************************
@@ -1337,8 +1329,8 @@ static HBITMAP xrenderdrv_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
     if (ret)
     {
         free_xrender_picture( physdev );
-        physdev->format = get_xrender_format_from_color_shifts( physdev->x11dev->depth,
-                                                                physdev->x11dev->color_shifts );
+        if (hbitmap == BITMAP_stock_phys_bitmap.hbitmap) physdev->format = WXR_FORMAT_MONO;
+        else physdev->format = X11DRV_get_phys_bitmap(hbitmap)->format;
         physdev->pict_format = pict_formats[physdev->format];
     }
     return ret;
@@ -2192,7 +2184,7 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
     {
         if (!(bitmap = X11DRV_get_phys_bitmap( hbitmap ))) return ERROR_INVALID_HANDLE;
         physdev = NULL;
-        dst_format = get_xrender_format_from_color_shifts( bitmap->depth, &bitmap->color_shifts );
+        dst_format = bitmap->format;
     }
     else
     {
@@ -2558,11 +2550,11 @@ static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct b
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
     X_PHYSBITMAP *physbitmap;
-    enum wxr_format format;
     BOOL delete_bitmap = FALSE;
     BITMAP bm;
     HBITMAP bitmap;
     Pixmap pixmap;
+    XRenderPictFormat *pict_format;
     Picture src_pict, dst_pict;
     XRenderPictureAttributes pa;
 
@@ -2577,8 +2569,8 @@ static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct b
         delete_bitmap = TRUE;
     }
 
-    format = get_xrender_format_from_color_shifts( physbitmap->depth, &physbitmap->color_shifts );
-    if (format == WXR_FORMAT_MONO || !pict_formats[format]) goto x11drv_fallback;
+    if (physbitmap->format == WXR_FORMAT_MONO) goto x11drv_fallback;
+    if (!(pict_format = pict_formats[physbitmap->format])) goto x11drv_fallback;
 
     GetObjectW( bitmap, sizeof(bm), &bm );
 
@@ -2587,7 +2579,7 @@ static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct b
                             physdev->pict_format->depth );
 
     pa.repeat = RepeatNone;
-    src_pict = pXRenderCreatePicture(gdi_display, physbitmap->pixmap, pict_formats[format], CPRepeat, &pa);
+    src_pict = pXRenderCreatePicture(gdi_display, physbitmap->pixmap, pict_format, CPRepeat, &pa);
     dst_pict = pXRenderCreatePicture(gdi_display, pixmap, physdev->pict_format, CPRepeat, &pa);
 
     xrender_blit( PictOpSrc, src_pict, 0, dst_pict, 0, 0, 0, 0, 1.0, 1.0, bm.bmWidth, bm.bmHeight );
