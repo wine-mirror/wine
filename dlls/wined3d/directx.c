@@ -2809,13 +2809,13 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     device = wined3d_guess_card(gl_info, gl_renderer_str, &gl_vendor, &card_vendor);
     TRACE_(d3d_caps)("FOUND (fake) card: 0x%x (vendor id), 0x%x (device id)\n", card_vendor, device);
 
-    gl_info->wrap_lookup[WINED3DTADDRESS_WRAP - WINED3DTADDRESS_WRAP] = GL_REPEAT;
-    gl_info->wrap_lookup[WINED3DTADDRESS_MIRROR - WINED3DTADDRESS_WRAP] =
+    gl_info->wrap_lookup[WINED3D_TADDRESS_WRAP - WINED3D_TADDRESS_WRAP] = GL_REPEAT;
+    gl_info->wrap_lookup[WINED3D_TADDRESS_MIRROR - WINED3D_TADDRESS_WRAP] =
             gl_info->supported[ARB_TEXTURE_MIRRORED_REPEAT] ? GL_MIRRORED_REPEAT_ARB : GL_REPEAT;
-    gl_info->wrap_lookup[WINED3DTADDRESS_CLAMP - WINED3DTADDRESS_WRAP] = GL_CLAMP_TO_EDGE;
-    gl_info->wrap_lookup[WINED3DTADDRESS_BORDER - WINED3DTADDRESS_WRAP] =
+    gl_info->wrap_lookup[WINED3D_TADDRESS_CLAMP - WINED3D_TADDRESS_WRAP] = GL_CLAMP_TO_EDGE;
+    gl_info->wrap_lookup[WINED3D_TADDRESS_BORDER - WINED3D_TADDRESS_WRAP] =
             gl_info->supported[ARB_TEXTURE_BORDER_CLAMP] ? GL_CLAMP_TO_BORDER_ARB : GL_REPEAT;
-    gl_info->wrap_lookup[WINED3DTADDRESS_MIRRORONCE - WINED3DTADDRESS_WRAP] =
+    gl_info->wrap_lookup[WINED3D_TADDRESS_MIRROR_ONCE - WINED3D_TADDRESS_WRAP] =
             gl_info->supported[ATI_TEXTURE_MIRROR_ONCE] ? GL_MIRROR_CLAMP_TO_EDGE_ATI : GL_REPEAT;
 
     /* Make sure there's an active HDC else the WGL extensions will fail */

@@ -1278,9 +1278,9 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     for (i = 0 ; i <  MAX_COMBINED_SAMPLERS; ++i)
     {
         TRACE("Setting up default samplers states for sampler %u.\n", i);
-        state->sampler_states[i][WINED3D_SAMP_ADDRESS_U] = WINED3DTADDRESS_WRAP;
-        state->sampler_states[i][WINED3D_SAMP_ADDRESS_V] = WINED3DTADDRESS_WRAP;
-        state->sampler_states[i][WINED3D_SAMP_ADDRESS_W] = WINED3DTADDRESS_WRAP;
+        state->sampler_states[i][WINED3D_SAMP_ADDRESS_U] = WINED3D_TADDRESS_WRAP;
+        state->sampler_states[i][WINED3D_SAMP_ADDRESS_V] = WINED3D_TADDRESS_WRAP;
+        state->sampler_states[i][WINED3D_SAMP_ADDRESS_W] = WINED3D_TADDRESS_WRAP;
         state->sampler_states[i][WINED3D_SAMP_BORDER_COLOR] = 0;
         state->sampler_states[i][WINED3D_SAMP_MAG_FILTER] = WINED3DTEXF_POINT;
         state->sampler_states[i][WINED3D_SAMP_MIN_FILTER] = WINED3DTEXF_POINT;

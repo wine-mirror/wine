@@ -167,9 +167,9 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
         }
         /* Initialise the state of the texture object to the OpenGL defaults,
          * not the D3D defaults. */
-        gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3DTADDRESS_WRAP;
-        gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3DTADDRESS_WRAP;
-        gl_tex->states[WINED3DTEXSTA_ADDRESSW] = WINED3DTADDRESS_WRAP;
+        gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3D_TADDRESS_WRAP;
+        gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_WRAP;
+        gl_tex->states[WINED3DTEXSTA_ADDRESSW] = WINED3D_TADDRESS_WRAP;
         gl_tex->states[WINED3DTEXSTA_BORDERCOLOR] = 0;
         gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_LINEAR;
         gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT; /* GL_NEAREST_MIPMAP_LINEAR */
@@ -237,22 +237,22 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
 
 /* GL locking is done by the caller */
 static void apply_wrap(const struct wined3d_gl_info *gl_info, GLenum target,
-        WINED3DTEXTUREADDRESS d3d_wrap, GLenum param, BOOL cond_np2)
+        enum wined3d_texture_address d3d_wrap, GLenum param, BOOL cond_np2)
 {
     GLint gl_wrap;
 
-    if (d3d_wrap < WINED3DTADDRESS_WRAP || d3d_wrap > WINED3DTADDRESS_MIRRORONCE)
+    if (d3d_wrap < WINED3D_TADDRESS_WRAP || d3d_wrap > WINED3D_TADDRESS_MIRROR_ONCE)
     {
-        FIXME("Unrecognized or unsupported WINED3DTEXTUREADDRESS %#x.\n", d3d_wrap);
+        FIXME("Unrecognized or unsupported texture address mode %#x.\n", d3d_wrap);
         return;
     }
 
     /* Cubemaps are always set to clamp, regardless of the sampler state. */
     if (target == GL_TEXTURE_CUBE_MAP_ARB
-            || (cond_np2 && d3d_wrap == WINED3DTADDRESS_WRAP))
+            || (cond_np2 && d3d_wrap == WINED3D_TADDRESS_WRAP))
         gl_wrap = GL_CLAMP_TO_EDGE;
     else
-        gl_wrap = gl_info->wrap_lookup[d3d_wrap - WINED3DTADDRESS_WRAP];
+        gl_wrap = gl_info->wrap_lookup[d3d_wrap - WINED3D_TADDRESS_WRAP];
 
     TRACE("Setting param %#x to %#x for target %#x.\n", param, gl_wrap, target);
     glTexParameteri(target, param, gl_wrap);
@@ -635,8 +635,8 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
             glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             checkGLcall("glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)");
             LEAVE_GL();
-            gl_tex->states[WINED3DTEXSTA_ADDRESSU]      = WINED3DTADDRESS_CLAMP;
-            gl_tex->states[WINED3DTEXSTA_ADDRESSV]      = WINED3DTADDRESS_CLAMP;
+            gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3D_TADDRESS_CLAMP;
+            gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_CLAMP;
             gl_tex->states[WINED3DTEXSTA_MAGFILTER]     = WINED3DTEXF_POINT;
             gl_tex->states[WINED3DTEXSTA_MINFILTER]     = WINED3DTEXF_POINT;
             gl_tex->states[WINED3DTEXSTA_MIPFILTER]     = WINED3DTEXF_NONE;

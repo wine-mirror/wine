@@ -1519,7 +1519,7 @@ struct wined3d_gl_info
     DWORD reserved_glsl_constants;
     DWORD quirks;
     BOOL supported[WINED3D_GL_EXT_COUNT];
-    GLint wrap_lookup[WINED3DTADDRESS_MIRRORONCE - WINED3DTADDRESS_WRAP + 1];
+    GLint wrap_lookup[WINED3D_TADDRESS_MIRROR_ONCE - WINED3D_TADDRESS_WRAP + 1];
 
     struct wined3d_fbo_ops fbo_ops;
 #define USE_GL_FUNC(type, pfn, ext, replace) type pfn;

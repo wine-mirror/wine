@@ -612,15 +612,14 @@ enum wined3d_texture_op
     WINED3D_TOP_LERP                        = 26,
 };
 
-typedef enum _WINED3DTEXTUREADDRESS
+enum wined3d_texture_address
 {
-    WINED3DTADDRESS_WRAP                    = 1,
-    WINED3DTADDRESS_MIRROR                  = 2,
-    WINED3DTADDRESS_CLAMP                   = 3,
-    WINED3DTADDRESS_BORDER                  = 4,
-    WINED3DTADDRESS_MIRRORONCE              = 5,
-    WINED3DTADDRESS_FORCE_DWORD             = 0x7fffffff
-} WINED3DTEXTUREADDRESS;
+    WINED3D_TADDRESS_WRAP                   = 1,
+    WINED3D_TADDRESS_MIRROR                 = 2,
+    WINED3D_TADDRESS_CLAMP                  = 3,
+    WINED3D_TADDRESS_BORDER                 = 4,
+    WINED3D_TADDRESS_MIRROR_ONCE            = 5,
+};
 
 typedef enum _WINED3DTRANSFORMSTATETYPE
 {
