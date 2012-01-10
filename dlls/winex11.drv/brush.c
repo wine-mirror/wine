@@ -112,17 +112,21 @@ static Pixmap BRUSH_DitherColor( COLORREF color, int depth)
     Pixmap pixmap;
     GC gc = get_bitmap_gc(depth);
 
+    wine_tsx11_lock();
     if (!ditherImage)
     {
-        ditherImage = X11DRV_DIB_CreateXImage( MATRIX_SIZE, MATRIX_SIZE, depth );
-        if (!ditherImage) 
+        ditherImage = XCreateImage( gdi_display, visual, depth, ZPixmap, 0,
+                                    NULL, MATRIX_SIZE, MATRIX_SIZE, 32, 0 );
+        if (!ditherImage)
         {
+            wine_tsx11_unlock();
             ERR("Could not create dither image\n");
             return 0;
         }
+        ditherImage->data = HeapAlloc( GetProcessHeap(), 0,
+                                       ditherImage->height * ditherImage->bytes_per_line );
     }
 
-    wine_tsx11_lock();
     if (color != prevColor)
     {
 	int r = GetRValue( color ) * DITHER_LEVELS;
