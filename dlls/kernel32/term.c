@@ -177,15 +177,14 @@ static BOOL TERM_bind_libcurses(void)
 
     if (!(nc_handle = wine_dlopen(ncname, RTLD_NOW, NULL, 0)))
     {
-        WINE_MESSAGE("Wine cannot find the " CURSES_NAME " library (%s).\n",
-                     ncname);
+        MESSAGE("Wine cannot find the " CURSES_NAME " library (%s).\n", ncname);
         return FALSE;
     }
 
 #define LOAD_FUNCPTR(f)                                      \
     if((p_##f = wine_dlsym(nc_handle, #f, NULL, 0)) == NULL) \
     {                                                        \
-        WINE_WARN("Can't find symbol %s\n", #f);             \
+        WARN("Can't find symbol %s\n", #f);                  \
         goto sym_not_found;                                  \
     }
 
@@ -199,7 +198,7 @@ static BOOL TERM_bind_libcurses(void)
     return TRUE;
 
 sym_not_found:
-    WINE_MESSAGE(
+    MESSAGE(
       "Wine cannot find certain functions that it needs inside the "
        CURSES_NAME "\nlibrary.  To enable Wine to use " CURSES_NAME
       " please upgrade your " CURSES_NAME "\nlibraries\n");
