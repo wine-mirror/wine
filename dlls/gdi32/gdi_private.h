@@ -174,7 +174,6 @@ static inline INT GDI_ROUND(double val)
 typedef struct tagBITMAPOBJ
 {
     GDIOBJHDR           header;
-    BITMAP              bitmap;
     DIBSECTION          dib;
     SIZE                size;   /* For SetBitmapDimension() */
     RGBQUAD            *color_table;  /* DIB color table if <= 8bpp (always 1 << bpp in size) */

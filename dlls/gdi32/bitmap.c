@@ -71,13 +71,13 @@ BOOL nulldrv_CopyBitmap( HBITMAP src, HBITMAP dst )
     BITMAPOBJ *src_bmp = GDI_GetObjPtr( src, OBJ_BITMAP );
 
     if (!src_bmp) return FALSE;
-    if (src_bmp->bitmap.bmBits)
+    if (src_bmp->dib.dsBm.bmBits)
     {
         BITMAPOBJ *dst_bmp = GDI_GetObjPtr( dst, OBJ_BITMAP );
-        int stride = get_dib_stride( dst_bmp->bitmap.bmWidth, dst_bmp->bitmap.bmBitsPixel );
-        dst_bmp->bitmap.bmBits = HeapAlloc( GetProcessHeap(), 0, dst_bmp->bitmap.bmHeight * stride );
-        if (dst_bmp->bitmap.bmBits)
-            memcpy( dst_bmp->bitmap.bmBits, src_bmp->bitmap.bmBits, dst_bmp->bitmap.bmHeight * stride );
+        int stride = get_dib_stride( dst_bmp->dib.dsBm.bmWidth, dst_bmp->dib.dsBm.bmBitsPixel );
+        dst_bmp->dib.dsBm.bmBits = HeapAlloc( GetProcessHeap(), 0, dst_bmp->dib.dsBm.bmHeight * stride );
+        if (dst_bmp->dib.dsBm.bmBits)
+            memcpy( dst_bmp->dib.dsBm.bmBits, src_bmp->dib.dsBm.bmBits, dst_bmp->dib.dsBm.bmHeight * stride );
         else
             ret = FALSE;
         GDI_ReleaseObj( dst );
@@ -293,8 +293,8 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
         return 0;
     }
 
-    bmpobj->bitmap = bm;
-    bmpobj->bitmap.bmBits = NULL;
+    bmpobj->dib.dsBm = bm;
+    bmpobj->dib.dsBm.bmBits = NULL;
     bmpobj->funcs = &null_driver;
 
     if (!(hbitmap = alloc_gdi_handle( &bmpobj->header, OBJ_BITMAP, &bitmap_funcs )))
@@ -336,14 +336,14 @@ LONG WINAPI GetBitmapBits(
 
     if (!bmp) return 0;
 
-    dst_stride = get_bitmap_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
-    ret = max = dst_stride * bmp->bitmap.bmHeight;
+    dst_stride = get_bitmap_stride( bmp->dib.dsBm.bmWidth, bmp->dib.dsBm.bmBitsPixel );
+    ret = max = dst_stride * bmp->dib.dsBm.bmHeight;
     if (!bits) goto done;
     if (count > max) count = max;
     ret = count;
 
     src.visrect.left = 0;
-    src.visrect.right = bmp->bitmap.bmWidth;
+    src.visrect.right = bmp->dib.dsBm.bmWidth;
     src.visrect.top = 0;
     src.visrect.bottom = (count + dst_stride - 1) / dst_stride;
     src.x = src.y = 0;
@@ -415,23 +415,23 @@ LONG WINAPI SetBitmapBits(
 	count = -count;
     }
 
-    src_stride = get_bitmap_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
-    count = min( count, src_stride * bmp->bitmap.bmHeight );
+    src_stride = get_bitmap_stride( bmp->dib.dsBm.bmWidth, bmp->dib.dsBm.bmBitsPixel );
+    count = min( count, src_stride * bmp->dib.dsBm.bmHeight );
 
-    dst_stride = get_dib_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+    dst_stride = get_dib_stride( bmp->dib.dsBm.bmWidth, bmp->dib.dsBm.bmBitsPixel );
 
     src.visrect.left   = src.x = 0;
     src.visrect.top    = src.y = 0;
-    src.visrect.right  = src.width = bmp->bitmap.bmWidth;
+    src.visrect.right  = src.width = bmp->dib.dsBm.bmWidth;
     src.visrect.bottom = src.height = (count + src_stride - 1 ) / src_stride;
     dst = src;
 
     if (count % src_stride)
     {
         HRGN last_row;
-        int extra_pixels = ((count % src_stride) << 3) / bmp->bitmap.bmBitsPixel;
+        int extra_pixels = ((count % src_stride) << 3) / bmp->dib.dsBm.bmBitsPixel;
 
-        if ((count % src_stride << 3) % bmp->bitmap.bmBitsPixel)
+        if ((count % src_stride << 3) % bmp->dib.dsBm.bmBitsPixel)
             FIXME( "Unhandled partial pixel\n" );
         clip = CreateRectRgn( src.visrect.left, src.visrect.top,
                               src.visrect.right, src.visrect.bottom - 1 );
@@ -442,8 +442,8 @@ LONG WINAPI SetBitmapBits(
     }
 
     TRACE("(%p, %d, %p) %dx%d %d bpp fetched height: %d\n",
-          hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-          bmp->bitmap.bmBitsPixel, src.height );
+          hbitmap, count, bits, bmp->dib.dsBm.bmWidth, bmp->dib.dsBm.bmHeight,
+          bmp->dib.dsBm.bmBitsPixel, src.height );
 
     if (src_stride == dst_stride)
     {
@@ -469,7 +469,7 @@ LONG WINAPI SetBitmapBits(
     /* query the color info */
     info->bmiHeader.biSize          = sizeof(info->bmiHeader);
     info->bmiHeader.biPlanes        = 1;
-    info->bmiHeader.biBitCount      = bmp->bitmap.bmBitsPixel;
+    info->bmiHeader.biBitCount      = bmp->dib.dsBm.bmBitsPixel;
     info->bmiHeader.biCompression   = BI_RGB;
     info->bmiHeader.biXPelsPerMeter = 0;
     info->bmiHeader.biYPelsPerMeter = 0;
@@ -482,7 +482,7 @@ LONG WINAPI SetBitmapBits(
 
     if (!err || err == ERROR_BAD_FORMAT)
     {
-        info->bmiHeader.biWidth     = bmp->bitmap.bmWidth;
+        info->bmiHeader.biWidth     = bmp->dib.dsBm.bmWidth;
         info->bmiHeader.biHeight    = -dst.height;
         info->bmiHeader.biSizeImage = dst.height * dst_stride;
         err = bmp->funcs->pPutImage( NULL, hbitmap, clip, info, &src_bits, &src, &dst, SRCCOPY );
@@ -506,24 +506,24 @@ static void set_initial_bitmap_bits( HBITMAP hbitmap, BITMAPOBJ *bmp )
     struct gdi_image_bits bits;
     struct bitblt_coords src, dst;
 
-    if (!bmp->bitmap.bmBits) return;
+    if (!bmp->dib.dsBm.bmBits) return;
     if (bmp->funcs->pPutImage == nulldrv_PutImage) return;
 
     get_ddb_bitmapinfo( bmp, src_info );
 
-    bits.ptr = bmp->bitmap.bmBits;
+    bits.ptr = bmp->dib.dsBm.bmBits;
     bits.is_copy = FALSE;
     bits.free = NULL;
     bits.param = NULL;
 
     src.x      = 0;
     src.y      = 0;
-    src.width  = bmp->bitmap.bmWidth;
-    src.height = bmp->bitmap.bmHeight;
+    src.width  = bmp->dib.dsBm.bmWidth;
+    src.height = bmp->dib.dsBm.bmHeight;
     src.visrect.left   = 0;
     src.visrect.top    = 0;
-    src.visrect.right  = bmp->bitmap.bmWidth;
-    src.visrect.bottom = bmp->bitmap.bmHeight;
+    src.visrect.right  = bmp->dib.dsBm.bmWidth;
+    src.visrect.bottom = bmp->dib.dsBm.bmHeight;
     dst = src;
 
     copy_bitmapinfo( dst_info, src_info );
@@ -651,8 +651,8 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
         dc->dirty = 0;
         dc->vis_rect.left   = 0;
         dc->vis_rect.top    = 0;
-        dc->vis_rect.right  = bitmap->bitmap.bmWidth;
-        dc->vis_rect.bottom = bitmap->bitmap.bmHeight;
+        dc->vis_rect.right  = bitmap->dib.dsBm.bmWidth;
+        dc->vis_rect.bottom = bitmap->dib.dsBm.bmHeight;
         GDI_ReleaseObj( handle );
         DC_InitDC( dc );
         GDI_dec_ref_count( ret );
@@ -688,7 +688,7 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
 
     if (!(bmp = free_gdi_handle( handle ))) return FALSE;
 
-    HeapFree( GetProcessHeap(), 0, bmp->bitmap.bmBits );
+    HeapFree( GetProcessHeap(), 0, bmp->dib.dsBm.bmBits );
     return HeapFree( GetProcessHeap(), 0, bmp );
 }
 
@@ -706,8 +706,9 @@ static INT BITMAP_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
     if (!buffer) ret = sizeof(BITMAP);
     else if (count >= sizeof(BITMAP))
     {
-        memcpy( buffer, &bmp->bitmap, sizeof(BITMAP) );
-        ((BITMAP *) buffer)->bmBits = NULL;
+        BITMAP *bitmap = buffer;
+        *bitmap = bmp->dib.dsBm;
+        bitmap->bmBits = NULL;
         ret = sizeof(BITMAP);
     }
     GDI_ReleaseObj( handle );

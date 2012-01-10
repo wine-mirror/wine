@@ -693,8 +693,8 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
     dst.visrect.left   = 0;
     dst.visrect.top    = 0;
-    dst.visrect.right  = bitmap->bitmap.bmWidth;
-    dst.visrect.bottom = bitmap->bitmap.bmHeight;
+    dst.visrect.right  = bitmap->dib.dsBm.bmWidth;
+    dst.visrect.bottom = bitmap->dib.dsBm.bmHeight;
 
     src.visrect.left   = 0;
     src.visrect.top    = 0;
@@ -961,10 +961,10 @@ static int fill_query_info( BITMAPINFO *info, BITMAPOBJ *bmp )
     BITMAPINFOHEADER header;
 
     header.biSize   = info->bmiHeader.biSize; /* Ensure we don't overwrite the original size when we copy back */
-    header.biWidth  = bmp->bitmap.bmWidth;
-    header.biHeight = bmp->bitmap.bmHeight;
+    header.biWidth  = bmp->dib.dsBm.bmWidth;
+    header.biHeight = bmp->dib.dsBm.bmHeight;
     header.biPlanes = 1;
-    header.biBitCount = bmp->bitmap.bmBitsPixel;
+    header.biBitCount = bmp->dib.dsBm.bmBitsPixel;
 
     switch (header.biBitCount)
     {
@@ -995,7 +995,7 @@ static int fill_query_info( BITMAPINFO *info, BITMAPOBJ *bmp )
     else
         info->bmiHeader = header;
 
-    return abs(bmp->bitmap.bmHeight);
+    return bmp->dib.dsBm.bmHeight;
 }
 
 /************************************************************************
@@ -1146,10 +1146,10 @@ void fill_default_color_table( BITMAPINFO *info )
 void get_ddb_bitmapinfo( BITMAPOBJ *bmp, BITMAPINFO *info )
 {
     info->bmiHeader.biSize          = sizeof(info->bmiHeader);
-    info->bmiHeader.biWidth         = bmp->bitmap.bmWidth;
-    info->bmiHeader.biHeight        = -bmp->bitmap.bmHeight;
+    info->bmiHeader.biWidth         = bmp->dib.dsBm.bmWidth;
+    info->bmiHeader.biHeight        = -bmp->dib.dsBm.bmHeight;
     info->bmiHeader.biPlanes        = 1;
-    info->bmiHeader.biBitCount      = bmp->bitmap.bmBitsPixel;
+    info->bmiHeader.biBitCount      = bmp->dib.dsBm.bmBitsPixel;
     info->bmiHeader.biCompression   = BI_RGB;
     info->bmiHeader.biXPelsPerMeter = 0;
     info->bmiHeader.biYPelsPerMeter = 0;
@@ -1229,8 +1229,8 @@ INT WINAPI GetDIBits(
 
     src.visrect.left   = 0;
     src.visrect.top    = 0;
-    src.visrect.right  = bmp->bitmap.bmWidth;
-    src.visrect.bottom = bmp->bitmap.bmHeight;
+    src.visrect.right  = bmp->dib.dsBm.bmWidth;
+    src.visrect.bottom = bmp->dib.dsBm.bmHeight;
 
     dst.visrect.left   = 0;
     dst.visrect.top    = 0;
@@ -1548,10 +1548,6 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
 
     if (!bmp->dib.dsBm.bmBits) goto error;
 
-    bmp->bitmap = bmp->dib.dsBm;
-    bmp->bitmap.bmWidthBytes = get_bitmap_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
-    bmp->bitmap.bmBits = NULL;
-
     if (!(ret = alloc_gdi_handle( &bmp->header, OBJ_BITMAP, &dib_funcs ))) goto error;
 
     if (bits) *bits = bmp->dib.dsBm.bmBits;
@@ -1626,8 +1622,8 @@ static HGDIOBJ DIB_SelectObject( HGDIOBJ handle, HDC hdc )
         dc->dirty = 0;
         dc->vis_rect.left   = 0;
         dc->vis_rect.top    = 0;
-        dc->vis_rect.right  = bitmap->bitmap.bmWidth;
-        dc->vis_rect.bottom = bitmap->bitmap.bmHeight;
+        dc->vis_rect.right  = bitmap->dib.dsBm.bmWidth;
+        dc->vis_rect.bottom = bitmap->dib.dsBm.bmHeight;
         GDI_ReleaseObj( handle );
         DC_InitDC( dc );
         GDI_dec_ref_count( ret );

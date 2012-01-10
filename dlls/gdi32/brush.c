@@ -73,8 +73,8 @@ void cache_pattern_bits( PHYSDEV physdev, struct brush_pattern *pattern )
 
     src.visrect.left   = src.x = 0;
     src.visrect.top    = src.y = 0;
-    src.visrect.right  = src.width = bmp->bitmap.bmWidth;
-    src.visrect.bottom = src.height = bmp->bitmap.bmHeight;
+    src.visrect.right  = src.width = bmp->dib.dsBm.bmWidth;
+    src.visrect.bottom = src.height = bmp->dib.dsBm.bmHeight;
     if (bmp->funcs->pGetImage( NULL, pattern->bitmap, info, &bits, &src ))
     {
         HeapFree( GetProcessHeap(), 0, info );
@@ -101,8 +101,8 @@ static BOOL copy_bitmap( struct brush_pattern *brush, HBITMAP bitmap )
 
     if (!is_bitmapobj_dib( bmp ))
     {
-        if ((brush->bitmap = CreateBitmap( bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-                                           bmp->bitmap.bmPlanes, bmp->bitmap.bmBitsPixel, NULL )))
+        if ((brush->bitmap = CreateBitmap( bmp->dib.dsBm.bmWidth, bmp->dib.dsBm.bmHeight,
+                                           bmp->dib.dsBm.bmPlanes, bmp->dib.dsBm.bmBitsPixel, NULL )))
         {
             if (bmp->funcs->pCopyBitmap( bitmap, brush->bitmap ))
             {
