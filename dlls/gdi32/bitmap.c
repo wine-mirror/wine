@@ -135,78 +135,34 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
  */
 HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 {
-    HBITMAP hbmpRet = 0;
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *bi = (BITMAPINFO *)buffer;
+    DIBSECTION dib;
 
-    TRACE("(%p,%d,%d) =\n", hdc, width, height);
+    TRACE("(%p,%d,%d)\n", hdc, width, height);
 
     if (GetObjectType( hdc ) != OBJ_MEMDC)
+        return CreateBitmap( width, height,
+                             GetDeviceCaps(hdc, PLANES), GetDeviceCaps(hdc, BITSPIXEL), NULL );
+
+    switch (GetObjectW( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(dib), &dib ))
     {
-        hbmpRet = CreateBitmap(width, height,
-                               GetDeviceCaps(hdc, PLANES),
-                               GetDeviceCaps(hdc, BITSPIXEL),
-                               NULL);
+    case sizeof(BITMAP): /* A device-dependent bitmap is selected in the DC */
+        return CreateBitmap( width, height, dib.dsBm.bmPlanes, dib.dsBm.bmBitsPixel, NULL );
+
+    case sizeof(DIBSECTION): /* A DIB section is selected in the DC */
+        bi->bmiHeader = dib.dsBmih;
+        bi->bmiHeader.biWidth  = width;
+        bi->bmiHeader.biHeight = height;
+        if (dib.dsBmih.biCompression == BI_BITFIELDS)  /* copy the color masks */
+            memcpy(bi->bmiColors, dib.dsBitfields, sizeof(dib.dsBitfields));
+        else if (dib.dsBmih.biBitCount <= 8)  /* copy the color table */
+            GetDIBColorTable(hdc, 0, 256, bi->bmiColors);
+        return CreateDIBSection( hdc, bi, DIB_RGB_COLORS, NULL, NULL, 0 );
+
+    default:
+        return 0;
     }
-    else  /* Memory DC */
-    {
-        DIBSECTION dib;
-        HBITMAP bitmap = GetCurrentObject( hdc, OBJ_BITMAP );
-        INT size = GetObjectW( bitmap, sizeof(dib), &dib );
-
-        if (!size) return 0;
-
-        if (size == sizeof(BITMAP))
-        {
-            /* A device-dependent bitmap is selected in the DC */
-            hbmpRet = CreateBitmap(width, height,
-                                   dib.dsBm.bmPlanes,
-                                   dib.dsBm.bmBitsPixel,
-                                   NULL);
-        }
-        else
-        {
-            /* A DIB section is selected in the DC */
-            BITMAPINFO *bi;
-            void *bits;
-
-            /* Allocate memory for a BITMAPINFOHEADER structure and a
-               color table. The maximum number of colors in a color table
-               is 256 which corresponds to a bitmap with depth 8.
-               Bitmaps with higher depths don't have color tables. */
-            bi = HeapAlloc(GetProcessHeap(), 0, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
-
-            if (bi)
-            {
-                bi->bmiHeader.biSize          = sizeof(bi->bmiHeader);
-                bi->bmiHeader.biWidth         = width;
-                bi->bmiHeader.biHeight        = height;
-                bi->bmiHeader.biPlanes        = dib.dsBmih.biPlanes;
-                bi->bmiHeader.biBitCount      = dib.dsBmih.biBitCount;
-                bi->bmiHeader.biCompression   = dib.dsBmih.biCompression;
-                bi->bmiHeader.biSizeImage     = 0;
-                bi->bmiHeader.biXPelsPerMeter = dib.dsBmih.biXPelsPerMeter;
-                bi->bmiHeader.biYPelsPerMeter = dib.dsBmih.biYPelsPerMeter;
-                bi->bmiHeader.biClrUsed       = dib.dsBmih.biClrUsed;
-                bi->bmiHeader.biClrImportant  = dib.dsBmih.biClrImportant;
-
-                if (bi->bmiHeader.biCompression == BI_BITFIELDS)
-                {
-                    /* Copy the color masks */
-                    CopyMemory(bi->bmiColors, dib.dsBitfields, 3 * sizeof(DWORD));
-                }
-                else if (bi->bmiHeader.biBitCount <= 8)
-                {
-                    /* Copy the color table */
-                    GetDIBColorTable(hdc, 0, 256, bi->bmiColors);
-                }
-
-                hbmpRet = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
-                HeapFree(GetProcessHeap(), 0, bi);
-            }
-        }
-    }
-
-    TRACE("\t\t%p\n", hbmpRet);
-    return hbmpRet;
 }
 
 
