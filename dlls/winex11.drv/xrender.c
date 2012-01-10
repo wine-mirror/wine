@@ -158,6 +158,7 @@ struct xrender_physdev
 {
     struct gdi_physdev dev;
     X11DRV_PDEVICE    *x11dev;
+    HRGN               region;
     enum wxr_format    format;
     int                cache_index;
     BOOL               update_clip;
@@ -622,29 +623,29 @@ static Picture get_xrender_picture( struct xrender_physdev *dev, HRGN clip_rgn, 
         wine_tsx11_unlock();
         TRACE( "Allocing pict=%lx dc=%p drawable=%08lx\n",
                dev->pict, dev->dev.hdc, dev->x11dev->drawable );
-        dev->update_clip = (dev->x11dev->region != 0);
+        dev->update_clip = (dev->region != 0);
     }
 
     if (clip_rect)
     {
         HRGN rgn = CreateRectRgnIndirect( clip_rect );
         if (clip_rgn) CombineRgn( rgn, rgn, clip_rgn, RGN_AND );
-        if (dev->x11dev->region) CombineRgn( rgn, rgn, dev->x11dev->region, RGN_AND );
+        if (dev->region) CombineRgn( rgn, rgn, dev->region, RGN_AND );
         update_xrender_clipping( dev, rgn );
         DeleteObject( rgn );
     }
     else if (clip_rgn)
     {
-        if (dev->x11dev->region)
+        if (dev->region)
         {
             HRGN rgn = CreateRectRgn( 0, 0, 0, 0 );
-            CombineRgn( rgn, clip_rgn, dev->x11dev->region, RGN_AND );
+            CombineRgn( rgn, clip_rgn, dev->region, RGN_AND );
             update_xrender_clipping( dev, rgn );
             DeleteObject( rgn );
         }
         else update_xrender_clipping( dev, clip_rgn );
     }
-    else if (dev->update_clip) update_xrender_clipping( dev, dev->x11dev->region );
+    else if (dev->update_clip) update_xrender_clipping( dev, dev->region );
 
     dev->update_clip = (clip_rect || clip_rgn);  /* have to update again if we are using a custom region */
     return dev->pict;
@@ -1361,6 +1362,7 @@ static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
 
+    physdev->region = rgn;
     physdev->update_clip = TRUE;
 
     dev = GET_NEXT_PHYSDEV( dev, pSetDeviceClipping );
@@ -2033,7 +2035,7 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     }
     else /* color -> color (can be at different depths) or mono -> mono */
     {
-        if (physdev_dst->x11dev->depth == 32 && physdev_src->x11dev->depth < 32)
+        if (physdev_dst->pict_format->depth == 32 && physdev_src->pict_format->depth < 32)
             mask_pict = get_no_alpha_mask();
 
         xrender_blit( PictOpSrc, src_pict, mask_pict, dst_pict,
@@ -2148,7 +2150,7 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         XSetSubwindowMode( gdi_display, tmpGC, IncludeInferiors );
         XSetGraphicsExposures( gdi_display, tmpGC, False );
         tmp_pixmap = XCreatePixmap( gdi_display, root_window, tmp.visrect.right - tmp.visrect.left,
-                                    tmp.visrect.bottom - tmp.visrect.top, physdev_dst->x11dev->depth );
+                                    tmp.visrect.bottom - tmp.visrect.top, physdev_dst->pict_format->depth );
         wine_tsx11_unlock();
 
         xrender_stretch_blit( physdev_src, physdev_dst, tmp_pixmap, src, &tmp );
@@ -2244,8 +2246,10 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
                 gc = XCreateGC( gdi_display, physdev->x11dev->drawable, 0, NULL );
                 XSetSubwindowMode( gdi_display, gc, IncludeInferiors );
                 XSetGraphicsExposures( gdi_display, gc, False );
-                tmp_pixmap = XCreatePixmap( gdi_display, root_window, tmp.visrect.right - tmp.visrect.left,
-                                            tmp.visrect.bottom - tmp.visrect.top, physdev->x11dev->depth );
+                tmp_pixmap = XCreatePixmap( gdi_display, root_window,
+                                            tmp.visrect.right - tmp.visrect.left,
+                                            tmp.visrect.bottom - tmp.visrect.top,
+                                            physdev->pict_format->depth );
                 wine_tsx11_unlock();
 
                 xrender_put_image( src_pixmap, src_pict, mask_pict, NULL, physdev->pict_format,
