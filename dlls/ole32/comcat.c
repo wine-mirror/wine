@@ -596,7 +596,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_IsClassOfCategories(
     struct class_categories *categories;
     HKEY key;
 
-    if (WINE_TRACE_ON(ole)) {
+    if (TRACE_ON(ole)) {
 	ULONG count;
 	TRACE("CLSID: %s Implemented %u\n",debugstr_guid(rclsid),cImplemented);
 	for (count = 0; count < cImplemented; ++count)
