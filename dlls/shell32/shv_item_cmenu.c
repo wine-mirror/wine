@@ -260,29 +260,6 @@ static void DoOpenExplore(ItemCmImpl *This, HWND hwnd, LPCSTR verb)
 }
 
 /**************************************************************************
-* DoRename
-*/
-static void DoRename(ItemCmImpl *This, HWND hwnd)
-{
-	LPSHELLBROWSER	lpSB;
-	LPSHELLVIEW	lpSV;
-
-	TRACE("(%p)->(wnd=%p)\n",This, hwnd);
-
-	/* get the active IShellView */
-	if ((lpSB = (LPSHELLBROWSER)SendMessageA(hwnd, CWM_GETISHELLBROWSER,0,0)))
-	{
-	  if(SUCCEEDED(IShellBrowser_QueryActiveShellView(lpSB, &lpSV)))
-	  {
-	    TRACE("(sv=%p)\n",lpSV);
-	    IShellView_SelectItem(lpSV, This->apidl[0],
-              SVSI_DESELECTOTHERS|SVSI_EDIT|SVSI_ENSUREVISIBLE|SVSI_FOCUSED|SVSI_SELECT);
-	    IShellView_Release(lpSV);
-	  }
-	}
-}
-
-/**************************************************************************
  * DoDelete
  *
  * deletes the currently selected items
@@ -479,9 +456,25 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
             DoOpenExplore(This, lpcmi->hwnd, "open");
             break;
         case FCIDM_SHVIEW_RENAME:
-            TRACE("Verb FCIDM_SHVIEW_RENAME\n");
-            DoRename(This, lpcmi->hwnd);
+        {
+            IShellBrowser *browser;
+
+            /* get the active IShellView */
+            browser = (IShellBrowser*)SendMessageA(lpcmi->hwnd, CWM_GETISHELLBROWSER, 0, 0);
+            if (browser)
+            {
+                IShellView *view;
+
+                if(SUCCEEDED(IShellBrowser_QueryActiveShellView(browser, &view)))
+                {
+                    TRACE("(shellview=%p)\n", view);
+                    IShellView_SelectItem(view, This->apidl[0],
+                         SVSI_DESELECTOTHERS|SVSI_EDIT|SVSI_ENSUREVISIBLE|SVSI_FOCUSED|SVSI_SELECT);
+                    IShellView_Release(view);
+                }
+            }
             break;
+        }
         case FCIDM_SHVIEW_DELETE:
             TRACE("Verb FCIDM_SHVIEW_DELETE\n");
             DoDelete(This);
