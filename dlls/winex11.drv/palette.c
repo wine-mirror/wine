@@ -882,39 +882,26 @@ static inline BOOL colour_is_brighter(RGBQUAD c1, RGBQUAD c2)
 COLORREF X11DRV_PALETTE_GetColor( X11DRV_PDEVICE *physDev, COLORREF color )
 {
     HPALETTE             hPal = GetCurrentObject(physDev->dev.hdc, OBJ_PAL );
-    unsigned char        spec_type = color >> 24;
-    unsigned             idx = color & 0xffff;
     PALETTEENTRY         entry;
-    RGBQUAD              quad;
 
-    switch(spec_type)
+    if (color & (1 << 24))  /* PALETTEINDEX */
     {
-      case 2:  /* PALETTERGB */
-        idx = GetNearestPaletteIndex( hPal, color );
-        /* fall through to PALETTEINDEX */
-
-      case 1: /* PALETTEINDEX */
-        if (!GetPaletteEntries( hPal, idx, 1, &entry ))
-        {
-            WARN("PALETTEINDEX(%x) : idx %d is out of bounds, assuming black\n", color, idx);
-            return 0;
-        }
+        unsigned int idx = LOWORD(color);
+        if (!GetPaletteEntries( hPal, idx, 1, &entry )) return 0;
         return RGB( entry.peRed, entry.peGreen, entry.peBlue );
-
-      case 0x10: /* DIBINDEX */
-        if( GetDIBColorTable( physDev->dev.hdc, idx, 1, &quad ) != 1 ) {
-            WARN("DIBINDEX(%x) : idx %d is out of bounds, assuming black\n", color , idx);
-            return 0;
-        }
-        return RGB( quad.rgbRed, quad.rgbGreen, quad.rgbBlue );
-
-      default:
-        color &= 0xffffff;
-        /* fall through to RGB */
-
-      case 0: /* RGB */
-        return color;
     }
+
+    if (color >> 24 == 2)  /* PALETTERGB */
+    {
+        unsigned int idx = GetNearestPaletteIndex( hPal, color & 0xffffff );
+        if (!GetPaletteEntries( hPal, idx, 1, &entry )) return 0;
+        return RGB( entry.peRed, entry.peGreen, entry.peBlue );
+    }
+
+    if (color >> 16 == 0x10ff)  /* DIBINDEX */
+        return 0;
+
+    return color & 0xffffff;
 }
 
 /***********************************************************************
@@ -926,7 +913,6 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 {
     WORD 		 index = 0;
     HPALETTE 		 hPal = GetCurrentObject(physDev->dev.hdc, OBJ_PAL );
-    unsigned char	 spec_type = color >> 24;
     int *mapping = palette_get_mapping( hPal );
     PALETTEENTRY entry;
     ColorShifts *shifts = &X11DRV_PALETTE_default_shifts;
@@ -939,47 +925,35 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
         /* there is no colormap limitation; we are going to have to compute
          * the pixel value from the visual information stored earlier
 	 */
+	unsigned long red, green, blue;
 
-	unsigned 	long red, green, blue;
-	unsigned	idx = color & 0xffff;
-
-	switch(spec_type)
+        if (color & (1 << 24))  /* PALETTEINDEX */
         {
-          case 0x10: /* DIBINDEX */
-            color = X11DRV_PALETTE_GetColor( physDev, color );
-            break;
-                
-          case 1: /* PALETTEINDEX */
+            unsigned int idx = LOWORD( color );
+
             if (!GetPaletteEntries( hPal, idx, 1, &entry ))
             {
                 WARN("PALETTEINDEX(%x) : idx %d is out of bounds, assuming black\n", color, idx);
                 return 0;
             }
             if (mapping) return mapping[idx];
-            color = RGB( entry.peRed, entry.peGreen, entry.peBlue );
-	    break;
-
-	  default:
-	    color &= 0xffffff;
-	    /* fall through to RGB */
-
-	  case 0: /* RGB */
-	    if (physDev->depth == 1)
-	    {
-                int white = 1;
-                RGBQUAD table[2];
-
-                if (GetDIBColorTable( physDev->dev.hdc, 0, 2, table ) == 2)
-                {
-                    if(!colour_is_brighter(table[1], table[0])) white = 0;
-                }
-		return (((color >> 16) & 0xff) +
-			((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? white : 1 - white;
-	    }
-
-	}
-
-        red = GetRValue(color); green = GetGValue(color); blue = GetBValue(color);
+            red   = entry.peRed;
+            green = entry.peGreen;
+            blue  = entry.peBlue;
+        }
+        else if (color >> 16 == 0x10ff)  /* DIBINDEX */
+        {
+            return 0;
+        }
+        else  /* RGB */
+        {
+            if (physDev->depth == 1)
+                return (((color >> 16) & 0xff) +
+                        ((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? 1 : 0;
+            red   = GetRValue( color );
+            green = GetGValue( color );
+            blue  = GetBValue( color );
+        }
 
         if (X11DRV_PALETTE_Graymax)
         {
@@ -1013,51 +987,33 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
         if (!mapping)
             WARN("Palette %p is not realized\n", hPal);
 
-	switch(spec_type)	/* we have to peruse DC and system palette */
-    	{
-	    default:
-		color &= 0xffffff;
-		/* fall through to RGB */
+        if (color & (1 << 24))  /* PALETTEINDEX */
+        {
+            index = LOWORD( color );
+            if (!GetPaletteEntries( hPal, index, 1, &entry ))
+                WARN("PALETTEINDEX(%x) : index %i is out of bounds\n", color, index);
+            else if (mapping) index = mapping[index];
+        }
+        else if (color >> 24 == 2)  /* PALETTERGB */
+        {
+            index = GetNearestPaletteIndex( hPal, color );
+            if (mapping) index = mapping[index];
+        }
+        else if (color >> 16 == 0x10ff)  /* DIBINDEX */
+        {
+            return 0;
+        }
+        else  /* RGB */
+        {
+            if (physDev->depth == 1)
+                return (((color >> 16) & 0xff) +
+                        ((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? 1 : 0;
 
-       	    case 0:  /* RGB */
-		if (physDev->depth == 1)
-		{
-                    int white = 1;
-                    RGBQUAD table[2];
-
-                    if (GetDIBColorTable( physDev->dev.hdc, 0, 2, table ) == 2)
-                    {
-                        if(!colour_is_brighter(table[1], table[0]))
-                            white = 0;
-                    }
-                    return (((color >> 16) & 0xff) +
-			    ((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? white : 1 - white;
-		}
-
-                EnterCriticalSection( &palette_cs );
-	    	index = X11DRV_SysPaletteLookupPixel( color, FALSE);
-                if (X11DRV_PALETTE_PaletteToXPixel) index = X11DRV_PALETTE_PaletteToXPixel[index];
-                LeaveCriticalSection( &palette_cs );
-
-		/* TRACE(palette,"RGB(%lx) -> pixel %i\n", color, index);
-		 */
-	    	break;
-       	    case 1:  /* PALETTEINDEX */
-		index = color & 0xffff;
-                if (!GetPaletteEntries( hPal, index, 1, &entry ))
-		    WARN("PALETTEINDEX(%x) : index %i is out of bounds\n", color, index);
-		else if (mapping) index = mapping[index];
-
-		/*  TRACE(palette,"PALETTEINDEX(%04x) -> pixel %i\n", (WORD)color, index);
-		 */
-		break;
-            case 2:  /* PALETTERGB */
-                index = GetNearestPaletteIndex( hPal, color );
-                if (mapping) index = mapping[index];
-		/* TRACE(palette,"PALETTERGB(%lx) -> pixel %i\n", color, index);
-		 */
-		break;
-	}
+            EnterCriticalSection( &palette_cs );
+            index = X11DRV_SysPaletteLookupPixel( color & 0xffffff, FALSE);
+            if (X11DRV_PALETTE_PaletteToXPixel) index = X11DRV_PALETTE_PaletteToXPixel[index];
+            LeaveCriticalSection( &palette_cs );
+        }
     }
     return index;
 }
