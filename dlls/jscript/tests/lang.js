@@ -839,8 +839,8 @@ for(tmp in obj1.nonexistent)
     ok(false, "for(tmp in obj1.nonexistent) called with tmp = " + tmp);
 ok(!("nonexistent" in obj1), "nonexistent added to obj1 by for..in loop");
 
-var i, j;
 
+var i, j;
 
 tmp = "";
 i = 0;
@@ -896,6 +896,26 @@ for(j in [1,2,3]) {
 }
 ok(tmp === "1234", "tmp = " + tmp);
 
+tmp = 0;
+for(var iter in [1,2,3]) {
+    tmp += +iter;
+    continue;
+}
+ok(tmp === 3, "tmp = " + tmp);
+
+tmp = false;
+for(var iter in [1,2,3]) {
+    switch(+iter) {
+    case 1:
+        tmp = true;
+        try {
+            continue;
+        }finally {}
+    default:
+        continue;
+    }
+}
+ok(tmp, "tmp = " + tmp);
 
 ok((void 1) === undefined, "(void 1) !== undefined");
 

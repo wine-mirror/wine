@@ -1237,18 +1237,15 @@ static HRESULT compile_forin_statement(compiler_ctx_t *ctx, forin_statement_t *s
 
 static HRESULT pop_to_stat(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx)
 {
-    statement_ctx_t *iter = ctx->stat_ctx;
     unsigned stack_pop = 0;
+    statement_ctx_t *iter;
 
-    while(iter) {
+    for(iter = ctx->stat_ctx; iter != stat_ctx; iter = iter->next) {
         if(iter->using_scope && !push_instr(ctx, OP_pop_scope))
             return E_OUTOFMEMORY;
         if(iter->using_except && !push_instr(ctx, OP_pop_except))
             return E_OUTOFMEMORY;
         stack_pop += iter->stack_use;
-        if(iter == stat_ctx)
-            break;
-        iter = iter->next;
     }
 
     /* FIXME: optimize */
@@ -1308,7 +1305,7 @@ static HRESULT compile_break_statement(compiler_ctx_t *ctx, branch_statement_t *
     if(stat->identifier)
         return push_instr(ctx, OP_label) ? S_OK : E_OUTOFMEMORY; /* FIXME */
 
-    hres = pop_to_stat(ctx, pop_ctx);
+    hres = pop_to_stat(ctx, pop_ctx->next);
     if(FAILED(hres))
         return hres;
 
