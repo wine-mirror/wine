@@ -1702,7 +1702,7 @@ exit:
     }
 }
 
-static HRESULT WINMM_BeginPlaying(WINMM_Device *device)
+static MMRESULT WINMM_BeginPlaying(WINMM_Device *device)
 {
     HRESULT hr;
 
@@ -1719,11 +1719,11 @@ static HRESULT WINMM_BeginPlaying(WINMM_Device *device)
         if(FAILED(hr) && hr != AUDCLNT_E_NOT_STOPPED){
             device->stopped = TRUE;
             WARN("Start failed: %08x\n", hr);
-            return hr;
+            return MMSYSERR_ERROR;
         }
     }
 
-    return S_OK;
+    return MMSYSERR_NOERROR;
 }
 
 static LRESULT WINMM_Pause(HWAVE hwave)
@@ -2577,7 +2577,7 @@ UINT WINAPI waveOutUnprepareHeader(HWAVEOUT hWaveOut,
 UINT WINAPI waveOutWrite(HWAVEOUT hWaveOut, WAVEHDR *header, UINT uSize)
 {
     WINMM_Device *device;
-    HRESULT hr;
+    MMRESULT mr;
 
     TRACE("(%p, %p, %u)\n", hWaveOut, header, uSize);
 
@@ -2598,7 +2598,6 @@ UINT WINAPI waveOutWrite(HWAVEOUT hWaveOut, WAVEHDR *header, UINT uSize)
 
     if(device->acm_handle){
         ACMSTREAMHEADER *ash = (ACMSTREAMHEADER*)header->reserved;
-        MMRESULT mr;
 
         ash->cbSrcLength = header->dwBufferLength;
         mr = acmStreamConvert(device->acm_handle, ash, 0);
@@ -2625,15 +2624,11 @@ UINT WINAPI waveOutWrite(HWAVEOUT hWaveOut, WAVEHDR *header, UINT uSize)
     header->dwFlags &= ~WHDR_DONE;
     header->dwFlags |= WHDR_INQUEUE;
 
-    hr = WINMM_BeginPlaying(device);
-    if(FAILED(hr)){
-        LeaveCriticalSection(&device->lock);
-        return MMSYSERR_ERROR;
-    }
+    mr = WINMM_BeginPlaying(device);
 
     LeaveCriticalSection(&device->lock);
 
-    return MMSYSERR_NOERROR;
+    return mr;
 }
 
 /**************************************************************************
@@ -2683,7 +2678,7 @@ UINT WINAPI waveOutReset(HWAVEOUT hWaveOut)
 UINT WINAPI waveOutRestart(HWAVEOUT hWaveOut)
 {
     WINMM_Device *device;
-    HRESULT hr;
+    MMRESULT mr;
 
     TRACE("(%p)\n", hWaveOut);
 
@@ -2694,15 +2689,11 @@ UINT WINAPI waveOutRestart(HWAVEOUT hWaveOut)
 
     device->stopped = TRUE;
 
-    hr = WINMM_BeginPlaying(device);
-    if(FAILED(hr)){
-        LeaveCriticalSection(&device->lock);
-        return MMSYSERR_ERROR;
-    }
+    mr = WINMM_BeginPlaying(device);
 
     LeaveCriticalSection(&device->lock);
 
-    return MMSYSERR_NOERROR;
+    return mr;
 }
 
 /**************************************************************************
@@ -3255,7 +3246,7 @@ UINT WINAPI waveInReset(HWAVEIN hWaveIn)
 UINT WINAPI waveInStart(HWAVEIN hWaveIn)
 {
     WINMM_Device *device;
-    HRESULT hr;
+    MMRESULT mr;
 
     TRACE("(%p)\n", hWaveIn);
 
@@ -3264,15 +3255,11 @@ UINT WINAPI waveInStart(HWAVEIN hWaveIn)
     if(!WINMM_ValidateAndLock(device))
         return MMSYSERR_INVALHANDLE;
 
-    hr = WINMM_BeginPlaying(device);
-    if(FAILED(hr)){
-        LeaveCriticalSection(&device->lock);
-        return MMSYSERR_ERROR;
-    }
+    mr = WINMM_BeginPlaying(device);
 
     LeaveCriticalSection(&device->lock);
 
-    return MMSYSERR_NOERROR;
+    return mr;
 }
 
 /**************************************************************************
