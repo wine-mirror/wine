@@ -344,9 +344,9 @@ MSVCP_bool* CDECL ios_base_Sync_func(void)
 
 /* ?_Tidy@ios_base@std@@AAAXXZ */
 /* ?_Tidy@ios_base@std@@AEAAXXZ */
-void CDECL ios_base_Tidy(ios_base *this)
+void CDECL ios_base_Tidy(void)
 {
-    FIXME("(%p) stub\n", this);
+    FIXME("stub\n");
 }
 
 /* ?bad@ios_base@std@@QBE_NXZ */
@@ -454,10 +454,9 @@ IOSB_fmtflags __thiscall ios_base_flags_get(const ios_base *this)
 
 /* ?getloc@ios_base@std@@QBE?AVlocale@2@XZ */
 /* ?getloc@ios_base@std@@QEBA?AVlocale@2@XZ */
-DEFINE_THISCALL_WRAPPER(ios_base_getloc, 4)
-locale __thiscall ios_base_getloc(const ios_base *this)
+DEFINE_THISCALL_WRAPPER(ios_base_getloc, 8)
+locale* __thiscall ios_base_getloc(const ios_base *this, locale *ret)
 {
-    locale ret = { NULL };
     FIXME("(%p) stub\n", this);
     return ret;
 }
@@ -473,10 +472,9 @@ MSVCP_bool __thiscall ios_base_good(const ios_base *this)
 
 /* ?imbue@ios_base@std@@QAE?AVlocale@2@ABV32@@Z */
 /* ?imbue@ios_base@std@@QEAA?AVlocale@2@AEBV32@@Z */
-DEFINE_THISCALL_WRAPPER(ios_base_imbue, 8)
-locale __thiscall ios_base_imbue(ios_base *this, const locale *loc)
+DEFINE_THISCALL_WRAPPER(ios_base_imbue, 12)
+locale* __thiscall ios_base_imbue(ios_base *this, locale *ret, const locale *loc)
 {
-    locale ret = { NULL };
     FIXME("(%p %p) stub\n", this, loc);
     return ret;
 }
@@ -706,11 +704,10 @@ char __thiscall basic_ios_char_fill_get(basic_ios_char *this)
 
 /* ?imbue@?$basic_ios@DU?$char_traits@D@std@@@std@@QAE?AVlocale@2@ABV32@@Z */
 /* ?imbue@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAA?AVlocale@2@AEBV32@@Z */
-DEFINE_THISCALL_WRAPPER(basic_ios_char_imbue, 4)
-locale __thiscall basic_ios_char_imbue(basic_ios_char *this)
+DEFINE_THISCALL_WRAPPER(basic_ios_char_imbue, 12)
+locale *__thiscall basic_ios_char_imbue(basic_ios_char *this, locale *ret, const locale *loc)
 {
-    locale ret = { NULL };
-    FIXME("(%p) stub\n", this);
+    FIXME("(%p %p %p) stub\n", this, ret, loc);
     return ret;
 }
 
@@ -1194,10 +1191,9 @@ void __thiscall basic_streambuf_char_gbump(basic_streambuf_char *this, int off)
 
 /* ?getloc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QBE?AVlocale@2@XZ */
 /* ?getloc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEBA?AVlocale@2@XZ */
-DEFINE_THISCALL_WRAPPER(basic_streambuf_char_getloc, 4)
-locale __thiscall basic_streambuf_char_getloc(const basic_streambuf_char *this)
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_getloc, 8)
+locale* __thiscall basic_streambuf_char_getloc(const basic_streambuf_char *this, locale *ret)
 {
-    locale ret = { 0 }; /* FIXME */
     FIXME("(%p) stub\n", this);
     return ret;
 }
@@ -1274,10 +1270,9 @@ char* __thiscall basic_streambuf_char_pptr(const basic_streambuf_char *this)
 
 /* ?pubimbue@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AVlocale@2@ABV32@@Z */
 /* ?pubimbue@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AVlocale@2@AEBV32@@Z */
-DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubimbue, 8)
-locale __thiscall basic_streambuf_char_pubimbue(basic_streambuf_char *this, const locale *loc)
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubimbue, 12)
+locale* __thiscall basic_streambuf_char_pubimbue(basic_streambuf_char *this, locale *ret, const locale *loc)
 {
-    locale ret = { 0 }; /* FIXME */
     FIXME("(%p %p) stub\n", this, loc);
     return ret;
 }

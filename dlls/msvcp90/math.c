@@ -412,8 +412,8 @@ const BOOLEAN std_Num_float_base_traps = TRUE;
 /* ??4_Num_float_base@std@@QEAAAEAU01@AEBU01@@Z -> public: struct std::_Num_float_base & __ptr64 __cdecl std::_Num_float_base::operator=(struct std::_Num_float_base const & __ptr64) __ptr64 */
 /* ??4_Num_int_base@std@@QAEAAU01@ABU01@@Z -> public: struct std::_Num_int_base & __thiscall std::_Num_int_base::operator=(struct std::_Num_int_base const &) */
 /* ??4_Num_int_base@std@@QEAAAEAU01@AEBU01@@Z -> public: struct std::_Num_int_base & __ptr64 __cdecl std::_Num_int_base::operator=(struct std::_Num_int_base const & __ptr64) __ptr64 */
-DEFINE_THISCALL_WRAPPER( std_Num_base_op_assign, 4 )
-std_Num_base * __thiscall std_Num_base_op_assign( std_Num_base *this )
+DEFINE_THISCALL_WRAPPER( std_Num_base_op_assign, 8 )
+std_Num_base * __thiscall std_Num_base_op_assign( std_Num_base *this, std_Num_base *right )
 {
     return this;
 }
@@ -808,8 +808,8 @@ WCHAR __cdecl std_numeric_limits_wchar_t_signaling_NaN(void) { return 0; }
 /* ??4?$_Ctraits@N@std@@QEAAAEAV01@AEBV01@@Z -> public: class std::_Ctraits<double> & __ptr64 __cdecl std::_Ctraits<double>::operator=(class std::_Ctraits<double> const & __ptr64) __ptr64 */
 /* ??4?$_Ctraits@O@std@@QAEAAV01@ABV01@@Z -> public: class std::_Ctraits<long double> & __thiscall std::_Ctraits<long double>::operator=(class std::_Ctraits<long double> const &) */
 /* ??4?$_Ctraits@O@std@@QEAAAEAV01@AEBV01@@Z -> public: class std::_Ctraits<long double> & __ptr64 __cdecl std::_Ctraits<long double>::operator=(class std::_Ctraits<long double> const & __ptr64) __ptr64 */
-DEFINE_THISCALL_WRAPPER( std_Ctraits_op_assign, 4 )
-std_Ctraits * __thiscall std_Ctraits_op_assign( std_Ctraits *this )
+DEFINE_THISCALL_WRAPPER( std_Ctraits_op_assign, 8 )
+std_Ctraits * __thiscall std_Ctraits_op_assign( std_Ctraits *this, std_Ctraits *right )
 {
     return this;
 }

@@ -2476,10 +2476,9 @@ MSVCP_size_t __cdecl MSVCP_basic_string_wchar_Pdif(String_iterator_wchar i1, Str
 /* ?get_allocator@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA?AV?$allocator@_W@2@XZ */
 /* ?get_allocator@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE?AV?$allocator@G@2@XZ */
 /* ?get_allocator@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA?AV?$allocator@G@2@XZ */
-DEFINE_THISCALL_WRAPPER(basic_string_wchar_get_allocator, 4)
-allocator __thiscall basic_string_wchar_get_allocator(const basic_string_wchar *this)
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_get_allocator, 8)
+allocator* __thiscall basic_string_wchar_get_allocator(const basic_string_wchar *this, allocator *ret)
 {
-    allocator ret = {0};
     TRACE("%p\n", this);
     return ret;
 }

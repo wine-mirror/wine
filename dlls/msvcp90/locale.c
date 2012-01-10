@@ -3093,21 +3093,21 @@ int __thiscall MSVCP_num_get_wchar__Hexdig(num_get_wchar *this, wchar_t dig, wch
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAPAX@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAPEAX@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_void,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_void,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_void(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, void **pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, void **pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAPAX@Z */
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAPEAX@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_get_void,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_get_void,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_get_void(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, void **pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, void **pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
@@ -3115,11 +3115,11 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_get_void(const num_get_wchar
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAO@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAN@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAN@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_double,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_double,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_double(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, double *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, double *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
@@ -3127,171 +3127,171 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_double(const num_get_
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAO@Z */
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAN@Z */
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAN@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_get_double,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_get_double,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_get_double(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, double *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, double *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAM@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAM@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_float,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_float,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_float(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, float *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, float *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAM@Z */
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAM@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_get_float,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_get_float,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_get_float(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, float *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, float *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAA_K@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEA_K@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_uint64,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_uint64,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_uint64(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, ULONGLONG *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, ULONGLONG *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAA_K@Z */
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEA_K@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_get_uint64,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_get_uint64,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_get_uint64(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, ULONGLONG *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, ULONGLONG *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAA_J@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEA_J@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_int64,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_int64,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_int64(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, LONGLONG *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, LONGLONG *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAA_J@Z */
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEA_J@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_get_int64,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_get_int64,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_get_int64(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, LONGLONG *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, LONGLONG *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAK@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAK@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_ulong,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_ulong,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_ulong(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, ULONG *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, ULONG *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAK@Z */
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAK@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_get_ulong,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_get_ulong,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_get_ulong(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, ULONG *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, ULONG *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAJ@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAJ@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_long,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_long,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_long(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, LONG *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, LONG *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAJ@Z */
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAJ@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_get_long,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_get_long,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_get_long(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, LONG *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, LONG *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAI@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAI@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_uint,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_uint,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_uint(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, unsigned int *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, unsigned int *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAI@Z */
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAI@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_get_uint,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_get_uint,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_get_uint(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, unsigned int *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, unsigned int *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAG@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAG@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_ushort,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_ushort,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_ushort(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, unsigned short *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, unsigned short *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAG@Z */
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAG@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_get_ushort,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_get_ushort,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_get_ushort(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, unsigned short *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, unsigned short *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAA_N@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEA_N@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_bool,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_bool,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_bool(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, MSVCP_bool *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, MSVCP_bool *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAA_N@Z */
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEA_N@Z */
-DEFINE_THISCALL_WRAPPER(num_get_wchar_get_bool,28)
+DEFINE_THISCALL_WRAPPER(num_get_wchar_get_bool,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_get_bool(const num_get_wchar *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar *first, istreambuf_iterator_wchar *last, struct _ios_base *base, int *state, MSVCP_bool *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, struct _ios_base *base, int *state, MSVCP_bool *pval)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, first, last, base, state, pval);
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, state, pval);
     return ret;
 }
 
