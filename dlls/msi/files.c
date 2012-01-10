@@ -331,6 +331,8 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         if (!file->Component->Enabled) continue;
 
         if (file->state != msifs_hashmatch &&
+            file->state != msifs_skipped &&
+            (file->state != msifs_present || !msi_get_property_int( package->db, szInstalled, 0 )) &&
             (rc = ready_media( package, file->IsCompressed, mi )))
         {
             ERR("Failed to ready media for %s\n", debugstr_w(file->File));
