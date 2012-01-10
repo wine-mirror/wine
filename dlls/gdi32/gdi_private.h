@@ -175,12 +175,16 @@ typedef struct tagBITMAPOBJ
 {
     GDIOBJHDR           header;
     BITMAP              bitmap;
+    DIBSECTION          dib;
     SIZE                size;   /* For SetBitmapDimension() */
-    const struct gdi_dc_funcs *funcs; /* DC function table */
-    /* For device-independent bitmaps: */
-    DIBSECTION         *dib;
     RGBQUAD            *color_table;  /* DIB color table if <= 8bpp (always 1 << bpp in size) */
+    const struct gdi_dc_funcs *funcs; /* DC function table */
 } BITMAPOBJ;
+
+static inline BOOL is_bitmapobj_dib( const BITMAPOBJ *bmp )
+{
+    return bmp->dib.dsBmih.biSize != 0;
+}
 
 /* bidi.c */
 

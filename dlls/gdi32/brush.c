@@ -99,7 +99,7 @@ static BOOL copy_bitmap( struct brush_pattern *brush, HBITMAP bitmap )
 
     if (!bmp) return FALSE;
 
-    if (!bmp->dib)
+    if (!is_bitmapobj_dib( bmp ))
     {
         if ((brush->bitmap = CreateBitmap( bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
                                            bmp->bitmap.bmPlanes, bmp->bitmap.bmBitsPixel, NULL )))
@@ -121,11 +121,11 @@ static BOOL copy_bitmap( struct brush_pattern *brush, HBITMAP bitmap )
     }
 
     info = HeapAlloc( GetProcessHeap(), 0,
-                      get_dib_info_size( (BITMAPINFO *)&bmp->dib->dsBmih, DIB_RGB_COLORS ));
+                      get_dib_info_size( (BITMAPINFO *)&bmp->dib.dsBmih, DIB_RGB_COLORS ));
     if (!info) goto done;
-    info->bmiHeader = bmp->dib->dsBmih;
+    info->bmiHeader = bmp->dib.dsBmih;
     if (info->bmiHeader.biCompression == BI_BITFIELDS)
-        memcpy( &info->bmiHeader + 1, bmp->dib->dsBitfields, sizeof(bmp->dib->dsBitfields) );
+        memcpy( &info->bmiHeader + 1, bmp->dib.dsBitfields, sizeof(bmp->dib.dsBitfields) );
     else if (info->bmiHeader.biClrUsed)
         memcpy( &info->bmiHeader + 1, bmp->color_table, info->bmiHeader.biClrUsed * sizeof(RGBQUAD) );
     if (!(brush->bits.ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage )))
@@ -133,7 +133,7 @@ static BOOL copy_bitmap( struct brush_pattern *brush, HBITMAP bitmap )
         HeapFree( GetProcessHeap(), 0, info );
         goto done;
     }
-    memcpy( brush->bits.ptr, bmp->dib->dsBm.bmBits, info->bmiHeader.biSizeImage );
+    memcpy( brush->bits.ptr, bmp->dib.dsBm.bmBits, info->bmiHeader.biSizeImage );
     brush->bits.is_copy = TRUE;
     brush->bits.free = free_heap_bits;
     brush->info = info;

@@ -287,19 +287,15 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
     }
 
     /* Create the BITMAPOBJ */
-    if (!(bmpobj = HeapAlloc( GetProcessHeap(), 0, sizeof(*bmpobj) )))
+    if (!(bmpobj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*bmpobj) )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
     }
 
-    bmpobj->size.cx = 0;
-    bmpobj->size.cy = 0;
     bmpobj->bitmap = bm;
     bmpobj->bitmap.bmBits = NULL;
     bmpobj->funcs = &null_driver;
-    bmpobj->dib = NULL;
-    bmpobj->color_table = NULL;
 
     if (!(hbitmap = alloc_gdi_handle( &bmpobj->header, OBJ_BITMAP, &bitmap_funcs )))
     {

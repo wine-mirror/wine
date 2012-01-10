@@ -160,7 +160,7 @@ void init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *
 
 BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_flags flags)
 {
-    if (!bmp->dib)
+    if (!is_bitmapobj_dib( bmp ))
     {
         BITMAPINFO info;
 
@@ -174,8 +174,8 @@ BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_f
         }
         init_dib_info_from_bitmapinfo( dib, &info, bmp->bitmap.bmBits, flags );
     }
-    else init_dib_info( dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields,
-                        bmp->color_table, bmp->dib->dsBm.bmBits, flags );
+    else init_dib_info( dib, &bmp->dib.dsBmih, bmp->dib.dsBitfields,
+                        bmp->color_table, bmp->dib.dsBm.bmBits, flags );
     return TRUE;
 }
 
