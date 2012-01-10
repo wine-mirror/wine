@@ -266,13 +266,9 @@ extern void X11DRV_BITMAP_Init(void) DECLSPEC_HIDDEN;
 extern void X11DRV_FONT_Init( int log_pixels_x, int log_pixels_y ) DECLSPEC_HIDDEN;
 extern void X11DRV_XInput2_Init(void) DECLSPEC_HIDDEN;
 
-extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
 extern HBITMAP create_brush_bitmap( X11DRV_PDEVICE *physDev, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth ) DECLSPEC_HIDDEN;
 extern void X11DRV_DIB_DestroyXImage( XImage *image ) DECLSPEC_HIDDEN;
-extern HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp) DECLSPEC_HIDDEN;
-extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc) DECLSPEC_HIDDEN;
-extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc ) DECLSPEC_HIDDEN;
 extern X_PHYSBITMAP *X11DRV_get_phys_bitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern X_PHYSBITMAP *X11DRV_init_phys_bitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_create_phys_bitmap( HBITMAP hbitmap, const BITMAP *bitmap, int depth,

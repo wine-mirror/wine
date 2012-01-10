@@ -902,6 +902,114 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(Display *display, UINT wForma
 }
 
 
+/***********************************************************************
+ *           bitmap_info_size
+ *
+ * Return the size of the bitmap info structure including color table.
+ */
+static int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
+{
+    unsigned int colors, size, masks = 0;
+
+    if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+    {
+        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)info;
+        colors = (core->bcBitCount <= 8) ? 1 << core->bcBitCount : 0;
+        return sizeof(BITMAPCOREHEADER) + colors *
+             ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBTRIPLE) : sizeof(WORD));
+    }
+    else  /* assume BITMAPINFOHEADER */
+    {
+        colors = info->bmiHeader.biClrUsed;
+        if (!colors && (info->bmiHeader.biBitCount <= 8))
+            colors = 1 << info->bmiHeader.biBitCount;
+        if (info->bmiHeader.biCompression == BI_BITFIELDS) masks = 3;
+        size = max( info->bmiHeader.biSize, sizeof(BITMAPINFOHEADER) + masks * sizeof(DWORD) );
+        return size + colors * ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBQUAD) : sizeof(WORD));
+    }
+}
+
+
+/***********************************************************************
+ *           create_dib_from_bitmap
+ *
+ *  Allocates a packed DIB and copies the bitmap data into it.
+ */
+static HGLOBAL create_dib_from_bitmap(HBITMAP hBmp)
+{
+    BITMAP bmp;
+    HDC hdc;
+    HGLOBAL hPackedDIB;
+    LPBYTE pPackedDIB;
+    LPBITMAPINFOHEADER pbmiHeader;
+    unsigned int cDataSize, cPackedSize, OffsetBits;
+    int nLinesCopied;
+
+    if (!GetObjectW( hBmp, sizeof(bmp), &bmp )) return 0;
+
+    /*
+     * A packed DIB contains a BITMAPINFO structure followed immediately by
+     * an optional color palette and the pixel data.
+     */
+
+    /* Calculate the size of the packed DIB */
+    cDataSize = abs( bmp.bmHeight ) * (((bmp.bmWidth * bmp.bmBitsPixel + 31) / 8) & ~3);
+    cPackedSize = sizeof(BITMAPINFOHEADER)
+                  + ( (bmp.bmBitsPixel <= 8) ? (sizeof(RGBQUAD) * (1 << bmp.bmBitsPixel)) : 0 )
+                  + cDataSize;
+    /* Get the offset to the bits */
+    OffsetBits = cPackedSize - cDataSize;
+
+    /* Allocate the packed DIB */
+    TRACE("\tAllocating packed DIB of size %d\n", cPackedSize);
+    hPackedDIB = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE /*| GMEM_ZEROINIT*/,
+                             cPackedSize );
+    if ( !hPackedDIB )
+    {
+        WARN("Could not allocate packed DIB!\n");
+        return 0;
+    }
+
+    /* A packed DIB starts with a BITMAPINFOHEADER */
+    pPackedDIB = GlobalLock(hPackedDIB);
+    pbmiHeader = (LPBITMAPINFOHEADER)pPackedDIB;
+
+    /* Init the BITMAPINFOHEADER */
+    pbmiHeader->biSize = sizeof(BITMAPINFOHEADER);
+    pbmiHeader->biWidth = bmp.bmWidth;
+    pbmiHeader->biHeight = bmp.bmHeight;
+    pbmiHeader->biPlanes = 1;
+    pbmiHeader->biBitCount = bmp.bmBitsPixel;
+    pbmiHeader->biCompression = BI_RGB;
+    pbmiHeader->biSizeImage = 0;
+    pbmiHeader->biXPelsPerMeter = pbmiHeader->biYPelsPerMeter = 0;
+    pbmiHeader->biClrUsed = 0;
+    pbmiHeader->biClrImportant = 0;
+
+    /* Retrieve the DIB bits from the bitmap and fill in the
+     * DIB color table if present */
+    hdc = GetDC( 0 );
+    nLinesCopied = GetDIBits(hdc,                       /* Handle to device context */
+                             hBmp,                      /* Handle to bitmap */
+                             0,                         /* First scan line to set in dest bitmap */
+                             bmp.bmHeight,              /* Number of scan lines to copy */
+                             pPackedDIB + OffsetBits,   /* [out] Address of array for bitmap bits */
+                             (LPBITMAPINFO) pbmiHeader, /* [out] Address of BITMAPINFO structure */
+                             0);                        /* RGB or palette index */
+    GlobalUnlock(hPackedDIB);
+    ReleaseDC( 0, hdc );
+
+    /* Cleanup if GetDIBits failed */
+    if (nLinesCopied != bmp.bmHeight)
+    {
+        TRACE("\tGetDIBits returned %d. Actual lines=%d\n", nLinesCopied, bmp.bmHeight);
+        GlobalFree(hPackedDIB);
+        hPackedDIB = 0;
+    }
+    return hPackedDIB;
+}
+
+
 /**************************************************************************
  *                      X11DRV_CLIPBOARD_RenderSynthesizedDIB
  *
@@ -925,13 +1033,7 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedDIB(Display *display)
         /* Render source if required */
         if (lpSource->hData || X11DRV_CLIPBOARD_RenderFormat(display, lpSource))
         {
-            HDC hdc;
-            HGLOBAL hData;
-
-            hdc = GetDC(NULL);
-            hData = X11DRV_DIB_CreateDIBFromBitmap(hdc, lpSource->hData);
-            ReleaseDC(NULL, hdc);
-
+            HGLOBAL hData = create_dib_from_bitmap( lpSource->hData );
             if (hData)
             {
                 X11DRV_CLIPBOARD_InsertClipboardData(CF_DIB, hData, 0, NULL, TRUE);
@@ -1219,8 +1321,6 @@ static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *display, Window w, At
  */
 static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom prop)
 {
-    HWND hwnd;
-    HDC hdc;
     LPBYTE lpdata;
     unsigned long cbytes;
     Pixmap *pPixmap;
@@ -1228,13 +1328,55 @@ static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom p
 
     if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
     {
+        HDC hdcMem;
+        X_PHYSBITMAP *physBitmap;
+        Pixmap orig_pixmap;
+        HBITMAP hBmp = 0;
+        Window root;
+        int x,y;               /* Unused */
+        unsigned border_width; /* Unused */
+        unsigned int depth, width, height;
+
         pPixmap = (Pixmap *) lpdata;
 
-        hwnd = GetOpenClipboardWindow();
-        hdc = GetDC(hwnd);
+        /* Get the Pixmap dimensions and bit depth */
+        wine_tsx11_lock();
+        if (!XGetGeometry(gdi_display, *pPixmap, &root, &x, &y, &width, &height,
+                          &border_width, &depth)) depth = 0;
+        wine_tsx11_unlock();
+        if (!pixmap_formats[depth]) return 0;
 
-        hClipData = X11DRV_DIB_CreateDIBFromPixmap(*pPixmap, hdc);
-        ReleaseDC(hwnd, hdc);
+        TRACE("\tPixmap properties: width=%d, height=%d, depth=%d\n",
+              width, height, depth);
+
+        /*
+         * Create an HBITMAP with the same dimensions and BPP as the pixmap,
+         * and make it a container for the pixmap passed.
+         */
+        if (!(hBmp = CreateBitmap( width, height, 1, pixmap_formats[depth]->bits_per_pixel, NULL )))
+            return 0;
+
+        /* force bitmap to be owned by a screen DC */
+        hdcMem = CreateCompatibleDC( 0 );
+        SelectObject( hdcMem, SelectObject( hdcMem, hBmp ));
+        DeleteDC( hdcMem );
+
+        physBitmap = X11DRV_get_phys_bitmap( hBmp );
+
+        /* swap the new pixmap in */
+        orig_pixmap = physBitmap->pixmap;
+        physBitmap->pixmap = *pPixmap;
+
+        /*
+         * Create a packed DIB from the Pixmap wrapper bitmap created above.
+         * A packed DIB contains a BITMAPINFO structure followed immediately by
+         * an optional color palette and the pixel data.
+         */
+        hClipData = create_dib_from_bitmap( hBmp );
+
+        /* we can now get rid of the HBITMAP and its original pixmap */
+        physBitmap->pixmap = orig_pixmap;
+        DeleteObject(hBmp);
 
         /* Free the retrieved property data */
         HeapFree(GetProcessHeap(), 0, lpdata);
@@ -1276,7 +1418,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportImageBmp(Display *display, Window w, Atom p
                 DIB_RGB_COLORS
                 );
 
-            hClipData = X11DRV_DIB_CreateDIBFromBitmap(hdc, hbmp);
+            hClipData = create_dib_from_bitmap( hbmp );
 
             DeleteObject(hbmp);
             ReleaseDC(0, hdc);
@@ -1599,7 +1741,7 @@ static HANDLE X11DRV_CLIPBOARD_ExportString(Display *display, Window requestor, 
 static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor, Atom aTarget, Atom rprop,
     LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
-    HDC hdc;
+    HDC hdc, memdc;
     HANDLE hData;
     unsigned char* lpData;
 
@@ -1611,10 +1753,34 @@ static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor
 
     if (!lpdata->drvData) /* If not already rendered */
     {
-        /* For convert from packed DIB to Pixmap */
+        /* Create a DDB from the DIB */
+
+        Pixmap pixmap = 0;
+        X_PHYSBITMAP *physBitmap;
+        HBITMAP hBmp;
+        LPBITMAPINFO pbmi;
+
         hdc = GetDC(0);
-        lpdata->drvData = (UINT) X11DRV_DIB_CreatePixmapFromDIB(lpdata->hData, hdc);
-        ReleaseDC(0, hdc);
+        pbmi = GlobalLock( lpdata->hData );
+        hBmp = CreateDIBitmap( hdc, &pbmi->bmiHeader, CBM_INIT,
+                               (LPBYTE)pbmi + bitmap_info_size( pbmi, DIB_RGB_COLORS ),
+                               pbmi, DIB_RGB_COLORS );
+        GlobalUnlock( lpdata->hData );
+
+        /* make sure it's owned by x11drv */
+        memdc = CreateCompatibleDC( hdc );
+        SelectObject( memdc, hBmp );
+        DeleteDC( memdc );
+
+        /* clear the physBitmap so that we can steal its pixmap */
+        if ((physBitmap = X11DRV_get_phys_bitmap( hBmp )))
+        {
+            pixmap = physBitmap->pixmap;
+            physBitmap->pixmap = 0;
+        }
+        DeleteObject( hBmp );
+        ReleaseDC( 0, hdc );
+        lpdata->drvData = pixmap;
     }
 
     *lpBytes = sizeof(Pixmap); /* pixmap is a 32bit value */
