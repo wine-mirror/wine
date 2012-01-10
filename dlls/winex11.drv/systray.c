@@ -367,7 +367,7 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     struct tray_icon *icon = NULL;
     BOOL ret;
 
-    WINE_TRACE("hwnd=%p, msg=0x%x\n", hwnd, msg);
+    TRACE("hwnd=%p, msg=0x%x\n", hwnd, msg);
 
     /* set the icon data for the window from the data passed into CreateWindow */
     if (msg == WM_NCCREATE)
@@ -661,17 +661,17 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
 {
     struct tray_icon  *icon;
 
-    WINE_TRACE("id=0x%x, hwnd=%p\n", nid->uID, nid->hWnd);
+    TRACE("id=0x%x, hwnd=%p\n", nid->uID, nid->hWnd);
 
     if ((icon = get_icon(nid->hWnd, nid->uID)))
     {
-        WINE_WARN("duplicate tray icon add, buggy app?\n");
+        WARN("duplicate tray icon add, buggy app?\n");
         return FALSE;
     }
 
     if (!(icon = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*icon))))
     {
-        WINE_ERR("out of memory\n");
+        ERR("out of memory\n");
         return FALSE;
     }
 
