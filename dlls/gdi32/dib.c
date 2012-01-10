@@ -1486,11 +1486,8 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     HBITMAP ret = 0;
-    DC *dc;
-    BOOL bDesktopDC = FALSE;
     DIBSECTION *dib;
     BITMAPOBJ *bmp;
-    RGBQUAD *color_table = NULL;
     void *mapBits = NULL;
 
     if (bits) *bits = NULL;
@@ -1502,7 +1499,8 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
         WARN( "%u planes not properly supported\n", info->bmiHeader.biPlanes );
     }
 
-    if (!(dib = HeapAlloc( GetProcessHeap(), 0, sizeof(*dib) ))) return 0;
+    if (!(bmp = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*bmp) ))) return 0;
+    if (!(dib = HeapAlloc( GetProcessHeap(), 0, sizeof(*dib) ))) goto error;
 
     TRACE("format (%d,%d), planes %d, bpp %d, %s, size %d %s\n",
           info->bmiHeader.biWidth, info->bmiHeader.biHeight,
@@ -1519,14 +1517,17 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     dib->dsBm.bmBits       = NULL;
     dib->dsBmih            = info->bmiHeader;
 
+    bmp->funcs = &dib_driver;
+    bmp->dib = dib;
+
     if (info->bmiHeader.biBitCount <= 8)  /* build the color table */
     {
         if (usage == DIB_PAL_COLORS && !fill_color_table_from_pal_colors( info, hdc ))
             goto error;
         dib->dsBmih.biClrUsed = info->bmiHeader.biClrUsed;
-        if (!(color_table = HeapAlloc( GetProcessHeap(), 0, dib->dsBmih.biClrUsed * sizeof(RGBQUAD) )))
+        if (!(bmp->color_table = HeapAlloc( GetProcessHeap(), 0, dib->dsBmih.biClrUsed*sizeof(RGBQUAD) )))
             goto error;
-        memcpy( color_table, info->bmiColors, dib->dsBmih.biClrUsed * sizeof(RGBQUAD) );
+        memcpy( bmp->color_table, info->bmiColors, dib->dsBmih.biClrUsed * sizeof(RGBQUAD) );
     }
 
     /* set dsBitfields values */
@@ -1572,46 +1573,21 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
 
     if (!dib->dsBm.bmBits) goto error;
 
-    /* If the reference hdc is null, take the desktop dc */
-    if (hdc == 0)
-    {
-        hdc = CreateCompatibleDC(0);
-        bDesktopDC = TRUE;
-    }
+    bmp->bitmap = dib->dsBm;
+    bmp->bitmap.bmWidthBytes = get_bitmap_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
+    bmp->bitmap.bmBits = NULL;
 
-    if (!(dc = get_dc_ptr( hdc ))) goto error;
+    if (!(ret = alloc_gdi_handle( &bmp->header, OBJ_BITMAP, &dib_funcs ))) goto error;
 
-    /* create Device Dependent Bitmap and add DIB pointer */
-    ret = CreateBitmap( dib->dsBm.bmWidth, dib->dsBm.bmHeight, 1,
-                        (info->bmiHeader.biBitCount == 1) ? 1 : GetDeviceCaps(hdc, BITSPIXEL), NULL );
-
-    if (ret && ((bmp = GDI_GetObjPtr(ret, OBJ_BITMAP))))
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pCreateDIBSection );
-        bmp->dib = dib;
-        bmp->header.funcs = &dib_funcs;
-        bmp->funcs = physdev->funcs;
-        bmp->color_table = color_table;
-        GDI_ReleaseObj( ret );
-
-        if (!physdev->funcs->pCreateDIBSection( physdev, ret, info, usage ))
-        {
-            DeleteObject( ret );
-            ret = 0;
-        }
-    }
-
-    release_dc_ptr( dc );
-    if (bDesktopDC) DeleteDC( hdc );
-    if (ret && bits) *bits = dib->dsBm.bmBits;
+    if (bits) *bits = dib->dsBm.bmBits;
     return ret;
 
 error:
-    if (bDesktopDC) DeleteDC( hdc );
     if (section) UnmapViewOfFile( mapBits );
-    else if (!offset) VirtualFree( dib->dsBm.bmBits, 0, MEM_RELEASE );
-    HeapFree( GetProcessHeap(), 0, color_table );
+    else VirtualFree( dib->dsBm.bmBits, 0, MEM_RELEASE );
+    HeapFree( GetProcessHeap(), 0, bmp->color_table );
     HeapFree( GetProcessHeap(), 0, dib );
+    HeapFree( GetProcessHeap(), 0, bmp );
     return 0;
 }
 
