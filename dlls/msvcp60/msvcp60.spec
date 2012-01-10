@@ -705,14 +705,14 @@
 @ stub -arch=win64 ??0?$codecvt@GDH@std@@QEAA@AEBV_Locinfo@1@_K@Z
 @ stub -arch=win32 ??0?$codecvt@GDH@std@@QAE@I@Z
 @ stub -arch=win64 ??0?$codecvt@GDH@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0?$collate@D@std@@QAE@ABV_Locinfo@1@I@Z
-@ stub -arch=win64 ??0?$collate@D@std@@QEAA@AEBV_Locinfo@1@_K@Z
-@ stub -arch=win32 ??0?$collate@D@std@@QAE@I@Z
-@ stub -arch=win64 ??0?$collate@D@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0?$collate@G@std@@QAE@ABV_Locinfo@1@I@Z
-@ stub -arch=win64 ??0?$collate@G@std@@QEAA@AEBV_Locinfo@1@_K@Z
-@ stub -arch=win32 ??0?$collate@G@std@@QAE@I@Z
-@ stub -arch=win64 ??0?$collate@G@std@@QEAA@_K@Z
+@ stub -arch=win32 ??0?$collate@D@std@@QAE@ABV_Locinfo@1@I@Z # don't forward to msvcp90
+@ stub -arch=win64 ??0?$collate@D@std@@QEAA@AEBV_Locinfo@1@_K@Z # don't forward to msvcp90
+@ stub -arch=win32 ??0?$collate@D@std@@QAE@I@Z # don't forward to msvcp90
+@ stub -arch=win64 ??0?$collate@D@std@@QEAA@_K@Z # don't forward to msvcp90
+@ stub -arch=win32 ??0?$collate@G@std@@QAE@ABV_Locinfo@1@I@Z # don't forward to msvcp90
+@ stub -arch=win64 ??0?$collate@G@std@@QEAA@AEBV_Locinfo@1@_K@Z # don't forward to msvcp90
+@ stub -arch=win32 ??0?$collate@G@std@@QAE@I@Z # don't forward to msvcp90
+@ stub -arch=win64 ??0?$collate@G@std@@QEAA@_K@Z # don't forward to msvcp90
 @ stub -arch=win32 ??0?$complex@M@std@@QAE@ABM0@Z
 @ stub -arch=win64 ??0?$complex@M@std@@QEAA@AEBM0@Z
 @ stub -arch=win32 ??0?$complex@M@std@@QAE@ABV?$complex@N@1@@Z
@@ -731,14 +731,14 @@
 @ stub -arch=win64 ??0?$complex@O@std@@QEAA@AEBV?$complex@M@1@@Z
 @ stub -arch=win32 ??0?$complex@O@std@@QAE@ABV?$complex@N@1@@Z
 @ stub -arch=win64 ??0?$complex@O@std@@QEAA@AEBV?$complex@N@1@@Z
-@ stub -arch=win32 ??0?$ctype@D@std@@QAE@ABV_Locinfo@1@I@Z
-@ stub -arch=win64 ??0?$ctype@D@std@@QEAA@AEBV_Locinfo@1@_K@Z
-@ stub -arch=win32 ??0?$ctype@D@std@@QAE@PBF_NI@Z
-@ stub -arch=win64 ??0?$ctype@D@std@@QEAA@PEBF_N_K@Z
-@ stub -arch=win32 ??0?$ctype@G@std@@QAE@ABV_Locinfo@1@I@Z
-@ stub -arch=win64 ??0?$ctype@G@std@@QEAA@AEBV_Locinfo@1@_K@Z
-@ stub -arch=win32 ??0?$ctype@G@std@@QAE@I@Z
-@ stub -arch=win64 ??0?$ctype@G@std@@QEAA@_K@Z
+@ stub -arch=win32 ??0?$ctype@D@std@@QAE@ABV_Locinfo@1@I@Z # don't forward to msvcp90
+@ stub -arch=win64 ??0?$ctype@D@std@@QEAA@AEBV_Locinfo@1@_K@Z # don't forward to msvcp90
+@ stub -arch=win32 ??0?$ctype@D@std@@QAE@PBF_NI@Z # don't forward to msvcp90
+@ stub -arch=win64 ??0?$ctype@D@std@@QEAA@PEBF_N_K@Z # don't forward to msvcp90
+@ stub -arch=win32 ??0?$ctype@G@std@@QAE@ABV_Locinfo@1@I@Z # don't forward to msvcp90
+@ stub -arch=win64 ??0?$ctype@G@std@@QEAA@AEBV_Locinfo@1@_K@Z # don't forward to msvcp90
+@ stub -arch=win32 ??0?$ctype@G@std@@QAE@I@Z # don't forward to msvcp90
+@ stub -arch=win64 ??0?$ctype@G@std@@QEAA@_K@Z # don't forward to msvcp90
 @ stub -arch=win32 ??0?$messages@D@std@@QAE@ABV_Locinfo@1@I@Z
 @ stub -arch=win64 ??0?$messages@D@std@@QEAA@AEBV_Locinfo@1@_K@Z
 @ stub -arch=win32 ??0?$messages@D@std@@QAE@I@Z
@@ -797,12 +797,12 @@
 @ stub -arch=win64 ??0?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEAA@_K@Z
 @ stub -arch=win32 ??0?$numpunct@D@std@@QAE@ABV_Locinfo@1@I@Z
 @ stub -arch=win64 ??0?$numpunct@D@std@@QEAA@AEBV_Locinfo@1@_K@Z
-@ stub -arch=win32 ??0?$numpunct@D@std@@QAE@I@Z
-@ stub -arch=win64 ??0?$numpunct@D@std@@QEAA@_K@Z
+@ stub -arch=win32 ??0?$numpunct@D@std@@QAE@I@Z # don't forward to msvcp90
+@ stub -arch=win64 ??0?$numpunct@D@std@@QEAA@_K@Z # don't forward to msvcp90
 @ stub -arch=win32 ??0?$numpunct@G@std@@QAE@ABV_Locinfo@1@I@Z
 @ stub -arch=win64 ??0?$numpunct@G@std@@QEAA@AEBV_Locinfo@1@_K@Z
-@ stub -arch=win32 ??0?$numpunct@G@std@@QAE@I@Z
-@ stub -arch=win64 ??0?$numpunct@G@std@@QEAA@_K@Z
+@ stub -arch=win32 ??0?$numpunct@G@std@@QAE@I@Z # don't forward to msvcp90
+@ stub -arch=win64 ??0?$numpunct@G@std@@QEAA@_K@Z # don't forward to msvcp90
 @ stub -arch=win32 ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z
 @ stub -arch=win64 ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z
 @ stub -arch=win32 ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@I@Z
@@ -859,8 +859,8 @@
 @ stub -arch=win64 ??0bad_typeid@std@@QEAA@PEBD@Z
 @ stub -arch=win32 ??0codecvt_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0codecvt_base@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0ctype_base@std@@QAE@I@Z
-@ stub -arch=win64 ??0ctype_base@std@@QEAA@_K@Z
+@ stub -arch=win32 ??0ctype_base@std@@QAE@I@Z # don't forward to msvcp90
+@ stub -arch=win64 ??0ctype_base@std@@QEAA@_K@Z # don't forward to msvcp90
 @ stub -arch=win32 ??0domain_error@std@@QAE@ABV01@@Z
 @ stub -arch=win64 ??0domain_error@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0domain_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
@@ -1057,8 +1057,8 @@
 @ stub -arch=win64 ??1bad_typeid@std@@UEAA@XZ
 @ stub -arch=win32 ??1codecvt_base@std@@UAE@XZ
 @ stub -arch=win64 ??1codecvt_base@std@@UEAA@XZ
-@ stub -arch=win32 ??1ctype_base@std@@UAE@XZ
-@ stub -arch=win64 ??1ctype_base@std@@UEAA@XZ
+@ stub -arch=win32 ??1ctype_base@std@@UAE@XZ # don't forward to msvcp90
+@ stub -arch=win64 ??1ctype_base@std@@UEAA@XZ # don't forward to msvcp90
 @ stub -arch=win32 ??1domain_error@std@@UAE@XZ
 @ stub -arch=win64 ??1domain_error@std@@UEAA@XZ
 @ stub -arch=win32 ??1facet@locale@std@@UAE@XZ  # don't forward to msvcp90
@@ -1189,44 +1189,44 @@
 @ stub -arch=win64 ??4?$complex@O@std@@QEAAAEAV01@AEBO@Z
 @ stub -arch=win32 ??4?$complex@O@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4?$complex@O@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@C@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@C@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@C@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@C@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@D@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@D@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@D@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@D@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@E@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@E@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@E@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@E@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@F@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@F@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@F@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@F@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@G@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@G@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@G@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@G@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@H@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@H@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@H@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@H@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@I@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@I@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@I@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@I@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@J@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@J@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@J@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@J@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@K@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@K@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@K@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@K@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@M@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@M@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@M@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@M@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@N@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@N@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@N@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@N@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@O@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@O@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@O@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@O@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4?$numeric_limits@_N@std@@QAEAAV01@ABV01@@Z(ptr) msvcp90.??4?$numeric_limits@_N@std@@QAEAAV01@ABV01@@Z
-@ cdecl -arch=win64 ??4?$numeric_limits@_N@std@@QEAAAEAV01@AEBV01@@Z(ptr) msvcp90.??4?$numeric_limits@_N@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@C@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@C@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@C@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@C@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@D@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@D@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@D@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@D@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@E@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@E@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@E@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@E@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@F@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@F@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@F@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@F@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@G@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@G@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@G@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@G@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@H@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@H@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@H@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@H@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@I@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@I@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@I@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@I@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@J@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@J@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@J@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@J@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@K@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@K@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@K@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@K@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@M@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@M@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@M@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@M@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@N@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@N@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@N@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@N@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@O@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@O@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@O@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@O@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@_N@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@_N@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4?$numeric_limits@_N@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4?$numeric_limits@_N@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??4Init@ios_base@std@@QAEAAV012@ABV012@@Z
 @ stub -arch=win64 ??4Init@ios_base@std@@QEAAAEAV012@AEBV012@@Z
 @ stub -arch=win32 ??4_Locinfo@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4_Locinfo@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??4_Lockit@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4_Lockit@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=win32 ??4_Num_base@std@@QAEAAU01@ABU01@@Z(ptr) msvcp90.??4_Num_base@std@@QAEAAU01@ABU01@@Z
-@ cdecl -arch=win64 ??4_Num_base@std@@QEAAAEAU01@AEBU01@@Z(ptr) msvcp90.??4_Num_base@std@@QEAAAEAU01@AEBU01@@Z
-@ thiscall -arch=win32 ??4_Num_float_base@std@@QAEAAU01@ABU01@@Z(ptr) msvcp90.??4_Num_float_base@std@@QAEAAU01@ABU01@@Z
-@ cdecl -arch=win64 ??4_Num_float_base@std@@QEAAAEAU01@AEBU01@@Z(ptr) msvcp90.??4_Num_float_base@std@@QEAAAEAU01@AEBU01@@Z
-@ thiscall -arch=win32 ??4_Num_int_base@std@@QAEAAU01@ABU01@@Z(ptr) msvcp90.??4_Num_int_base@std@@QAEAAU01@ABU01@@Z
-@ cdecl -arch=win64 ??4_Num_int_base@std@@QEAAAEAU01@AEBU01@@Z(ptr) msvcp90.??4_Num_int_base@std@@QEAAAEAU01@AEBU01@@Z
+@ thiscall -arch=win32 ??4_Num_base@std@@QAEAAU01@ABU01@@Z(ptr ptr) msvcp90.??4_Num_base@std@@QAEAAU01@ABU01@@Z
+@ cdecl -arch=win64 ??4_Num_base@std@@QEAAAEAU01@AEBU01@@Z(ptr ptr) msvcp90.??4_Num_base@std@@QEAAAEAU01@AEBU01@@Z
+@ thiscall -arch=win32 ??4_Num_float_base@std@@QAEAAU01@ABU01@@Z(ptr ptr) msvcp90.??4_Num_float_base@std@@QAEAAU01@ABU01@@Z
+@ cdecl -arch=win64 ??4_Num_float_base@std@@QEAAAEAU01@AEBU01@@Z(ptr ptr) msvcp90.??4_Num_float_base@std@@QEAAAEAU01@AEBU01@@Z
+@ thiscall -arch=win32 ??4_Num_int_base@std@@QAEAAU01@ABU01@@Z(ptr ptr) msvcp90.??4_Num_int_base@std@@QAEAAU01@ABU01@@Z
+@ cdecl -arch=win64 ??4_Num_int_base@std@@QEAAAEAU01@AEBU01@@Z(ptr ptr) msvcp90.??4_Num_int_base@std@@QEAAAEAU01@AEBU01@@Z
 @ stub -arch=win32 ??4_Timevec@std@@QAEAAV01@ABV01@@Z  # don't forward to msvcp90
 @ stub -arch=win64 ??4_Timevec@std@@QEAAAEAV01@AEBV01@@Z  # don't forward to msvcp90
 @ stub -arch=win32 ??4_Winit@std@@QAEAAV01@ABV01@@Z
@@ -1767,7 +1767,7 @@
 # extern ??_7?$basic_fstream@GU?$char_traits@G@std@@@std@@6B@
 # extern ??_7?$basic_ifstream@DU?$char_traits@D@std@@@std@@6B@
 # extern ??_7?$basic_ifstream@GU?$char_traits@G@std@@@std@@6B@
-# extern ??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@ msvcp90.??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@  # don't forward to msvcp90
+# extern ??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@ # don't forward to msvcp90
 # extern ??_7?$basic_ios@GU?$char_traits@G@std@@@std@@6B@
 # extern ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@
 # extern ??_7?$basic_iostream@GU?$char_traits@G@std@@@std@@6B@
@@ -1777,11 +1777,11 @@
 # extern ??_7?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@
 # extern ??_7?$basic_ofstream@DU?$char_traits@D@std@@@std@@6B@
 # extern ??_7?$basic_ofstream@GU?$char_traits@G@std@@@std@@6B@
-# extern ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ msvcp90.??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@  # don't forward to msvcp90
+# extern ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ # don't forward to msvcp90
 # extern ??_7?$basic_ostream@GU?$char_traits@G@std@@@std@@6B@
 # extern ??_7?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@
 # extern ??_7?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@
-# extern ??_7?$basic_streambuf@DU?$char_traits@D@std@@@std@@6B@ msvcp90.??_7?$basic_streambuf@DU?$char_traits@D@std@@@std@@6B@  # don't forward to msvcp90
+# extern ??_7?$basic_streambuf@DU?$char_traits@D@std@@@std@@6B@ # don't forward to msvcp90
 # extern ??_7?$basic_streambuf@GU?$char_traits@G@std@@@std@@6B@
 # extern ??_7?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@
 # extern ??_7?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@
@@ -1789,10 +1789,10 @@
 # extern ??_7?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@
 # extern ??_7?$codecvt@DDH@std@@6B@
 # extern ??_7?$codecvt@GDH@std@@6B@
-# extern ??_7?$collate@D@std@@6B@
-# extern ??_7?$collate@G@std@@6B@
-# extern ??_7?$ctype@D@std@@6B@
-# extern ??_7?$ctype@G@std@@6B@
+# extern ??_7?$collate@D@std@@6B@ # don't forward to msvcp90
+# extern ??_7?$collate@G@std@@6B@ # don't forward to msvcp90
+# extern ??_7?$ctype@D@std@@6B@ # don't forward to msvcp90
+# extern ??_7?$ctype@G@std@@6B@ # don't forward to msvcp90
 # extern ??_7?$messages@D@std@@6B@
 # extern ??_7?$messages@G@std@@6B@
 # extern ??_7?$money_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@
@@ -1807,8 +1807,8 @@
 # extern ??_7?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@
 # extern ??_7?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@
 # extern ??_7?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@
-# extern ??_7?$numpunct@D@std@@6B@
-# extern ??_7?$numpunct@G@std@@6B@
+# extern ??_7?$numpunct@D@std@@6B@ # don't forward to msvcp90
+# extern ??_7?$numpunct@G@std@@6B@ # don't forward to msvcp90
 # extern ??_7?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@
 # extern ??_7?$time_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@
 # extern ??_7?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@
@@ -1819,7 +1819,7 @@
 # extern ??_7bad_exception@std@@6B@
 # extern ??_7bad_typeid@std@@6B@
 # extern ??_7codecvt_base@std@@6B@
-# extern ??_7ctype_base@std@@6B@
+# extern ??_7ctype_base@std@@6B@ # don't forward to msvcp90
 # extern ??_7domain_error@std@@6B@
 # extern ??_7facet@locale@std@@6B@
 # extern ??_7ios_base@std@@6B@ msvcp90.??_7ios_base@std@@6B@  # don't forward to msvcp90
@@ -1921,20 +1921,20 @@
 @ stub -arch=win64 ??_F?$codecvt@DDH@std@@QEAAXXZ
 @ stub -arch=win32 ??_F?$codecvt@GDH@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$codecvt@GDH@std@@QEAAXXZ
-@ stub -arch=win32 ??_F?$collate@D@std@@QAEXXZ
-@ stub -arch=win64 ??_F?$collate@D@std@@QEAAXXZ
-@ stub -arch=win32 ??_F?$collate@G@std@@QAEXXZ
-@ stub -arch=win64 ??_F?$collate@G@std@@QEAAXXZ
+@ stub -arch=win32 ??_F?$collate@D@std@@QAEXXZ # don't forward to msvcp90
+@ stub -arch=win64 ??_F?$collate@D@std@@QEAAXXZ # don't forward to msvcp90
+@ stub -arch=win32 ??_F?$collate@G@std@@QAEXXZ # don't forward to msvcp90
+@ stub -arch=win64 ??_F?$collate@G@std@@QEAAXXZ # don't forward to msvcp90
 @ stub -arch=win32 ??_F?$complex@M@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$complex@M@std@@QEAAXXZ
 @ stub -arch=win32 ??_F?$complex@N@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$complex@N@std@@QEAAXXZ
 @ stub -arch=win32 ??_F?$complex@O@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$complex@O@std@@QEAAXXZ
-@ stub -arch=win32 ??_F?$ctype@D@std@@QAEXXZ
-@ stub -arch=win64 ??_F?$ctype@D@std@@QEAAXXZ
-@ stub -arch=win32 ??_F?$ctype@G@std@@QAEXXZ
-@ stub -arch=win64 ??_F?$ctype@G@std@@QEAAXXZ
+@ stub -arch=win32 ??_F?$ctype@D@std@@QAEXXZ # don't forward to msvcp90
+@ stub -arch=win64 ??_F?$ctype@D@std@@QEAAXXZ # don't forward to msvcp90
+@ stub -arch=win32 ??_F?$ctype@G@std@@QAEXXZ # don't forward to msvcp90
+@ stub -arch=win64 ??_F?$ctype@G@std@@QEAAXXZ # don't forward to msvcp90
 @ stub -arch=win32 ??_F?$messages@D@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$messages@D@std@@QEAAXXZ
 @ stub -arch=win32 ??_F?$messages@G@std@@QAEXXZ
@@ -1963,10 +1963,10 @@
 @ stub -arch=win64 ??_F?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ??_F?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEAAXXZ
-@ stub -arch=win32 ??_F?$numpunct@D@std@@QAEXXZ
-@ stub -arch=win64 ??_F?$numpunct@D@std@@QEAAXXZ
-@ stub -arch=win32 ??_F?$numpunct@G@std@@QAEXXZ
-@ stub -arch=win64 ??_F?$numpunct@G@std@@QEAAXXZ
+@ stub -arch=win32 ??_F?$numpunct@D@std@@QAEXXZ # don't forward to msvcp90
+@ stub -arch=win64 ??_F?$numpunct@D@std@@QEAAXXZ # don't forward to msvcp90
+@ stub -arch=win32 ??_F?$numpunct@G@std@@QAEXXZ # don't forward to msvcp90
+@ stub -arch=win64 ??_F?$numpunct@G@std@@QEAAXXZ # don't forward to msvcp90
 @ stub -arch=win32 ??_F?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ??_F?$time_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QAEXXZ
@@ -1987,8 +1987,8 @@
 @ stub -arch=win64 ??_Fbad_typeid@std@@QEAAXXZ
 @ stub -arch=win32 ??_Fcodecvt_base@std@@QAEXXZ
 @ stub -arch=win64 ??_Fcodecvt_base@std@@QEAAXXZ
-@ stub -arch=win32 ??_Fctype_base@std@@QAEXXZ
-@ stub -arch=win64 ??_Fctype_base@std@@QEAAXXZ
+@ stub -arch=win32 ??_Fctype_base@std@@QAEXXZ # don't forward to msvcp90
+@ stub -arch=win64 ??_Fctype_base@std@@QEAAXXZ # don't forward to msvcp90
 @ stub -arch=win32 ??_Ffacet@locale@std@@QAEXXZ  # don't forward to msvcp90
 @ stub -arch=win64 ??_Ffacet@locale@std@@QEAAXXZ  # don't forward to msvcp90
 @ stub -arch=win32 ??_Fmessages_base@std@@QAEXXZ
@@ -2222,7 +2222,7 @@
 @ stub -arch=win32 ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAPAD0PAH001@Z  # don't forward to msvcp90
 @ stub -arch=win64 ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXPEAPEAD0PEAH001@Z  # don't forward to msvcp90
 @ stub -arch=win32 ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXXZ  # don't forward to msvcp90
-@ stub -arch=win64 ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXXZ
+@ stub -arch=win64 ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXXZ # don't forward to msvcp90
 @ stub -arch=win32 ?_Init@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXPAPAG0PAH001@Z
 @ stub -arch=win64 ?_Init@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXPEAPEAG0PEAH001@Z
 @ stub -arch=win32 ?_Init@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXXZ
@@ -2235,14 +2235,14 @@
 @ stub -arch=win64 ?_Init@?$codecvt@DDH@std@@IEAAXAEBV_Locinfo@2@@Z
 @ stub -arch=win32 ?_Init@?$codecvt@GDH@std@@IAEXABV_Locinfo@2@@Z
 @ stub -arch=win64 ?_Init@?$codecvt@GDH@std@@IEAAXAEBV_Locinfo@2@@Z
-@ stub -arch=win32 ?_Init@?$collate@D@std@@IAEXABV_Locinfo@2@@Z
-@ stub -arch=win64 ?_Init@?$collate@D@std@@IEAAXAEBV_Locinfo@2@@Z
-@ stub -arch=win32 ?_Init@?$collate@G@std@@IAEXABV_Locinfo@2@@Z
-@ stub -arch=win64 ?_Init@?$collate@G@std@@IEAAXAEBV_Locinfo@2@@Z
-@ stub -arch=win32 ?_Init@?$ctype@D@std@@IAEXABV_Locinfo@2@@Z
-@ stub -arch=win64 ?_Init@?$ctype@D@std@@IEAAXAEBV_Locinfo@2@@Z
-@ stub -arch=win32 ?_Init@?$ctype@G@std@@IAEXABV_Locinfo@2@@Z
-@ stub -arch=win64 ?_Init@?$ctype@G@std@@IEAAXAEBV_Locinfo@2@@Z
+@ stub -arch=win32 ?_Init@?$collate@D@std@@IAEXABV_Locinfo@2@@Z # don't forward to msvcp90
+@ stub -arch=win64 ?_Init@?$collate@D@std@@IEAAXAEBV_Locinfo@2@@Z # don't forward to msvcp90
+@ stub -arch=win32 ?_Init@?$collate@G@std@@IAEXABV_Locinfo@2@@Z # don't forward to msvcp90
+@ stub -arch=win64 ?_Init@?$collate@G@std@@IEAAXAEBV_Locinfo@2@@Z # don't forward to msvcp90
+@ stub -arch=win32 ?_Init@?$ctype@D@std@@IAEXABV_Locinfo@2@@Z # don't forward to msvcp90
+@ stub -arch=win64 ?_Init@?$ctype@D@std@@IEAAXAEBV_Locinfo@2@@Z # don't forward to msvcp90
+@ stub -arch=win32 ?_Init@?$ctype@G@std@@IAEXABV_Locinfo@2@@Z # don't forward to msvcp90
+@ stub -arch=win64 ?_Init@?$ctype@G@std@@IEAAXAEBV_Locinfo@2@@Z # don't forward to msvcp90
 @ stub -arch=win32 ?_Init@?$messages@D@std@@IAEXABV_Locinfo@2@@Z
 @ stub -arch=win64 ?_Init@?$messages@D@std@@IEAAXAEBV_Locinfo@2@@Z
 @ stub -arch=win32 ?_Init@?$messages@G@std@@IAEXABV_Locinfo@2@@Z
@@ -2501,8 +2501,8 @@
 # extern ?cin@std@@3V?$basic_istream@DU?$char_traits@D@std@@@1@A
 @ stub -arch=win32 ?classic@locale@std@@SAABV12@XZ  # don't forward to msvcp90
 @ stub -arch=win64 ?classic@locale@std@@SAAEBV12@XZ  # don't forward to msvcp90
-@ stub -arch=win32 ?classic_table@?$ctype@D@std@@KAPBFXZ
-@ stub -arch=win64 ?classic_table@?$ctype@D@std@@KAPEBFXZ
+@ stub -arch=win32 ?classic_table@?$ctype@D@std@@KAPBFXZ # don't forward to msvcp90
+@ stub -arch=win64 ?classic_table@?$ctype@D@std@@KAPEBFXZ # don't forward to msvcp90
 @ stub -arch=win32 ?clear@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXF@Z
 @ stub -arch=win64 ?clear@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAXF@Z
 @ stub -arch=win32 ?clear@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXH_N@Z  # don't forward to msvcp90
@@ -2564,10 +2564,10 @@
 @ cdecl -arch=win64 ?compare@?$char_traits@D@std@@SAHPEBD0_K@Z(ptr ptr long) msvcp90.?compare@?$char_traits@D@std@@SAHPEBD0_K@Z
 @ cdecl -arch=win32 ?compare@?$char_traits@G@std@@SAHPBG0I@Z(ptr ptr long) msvcp90.?compare@?$char_traits@G@std@@SAHPBG0I@Z
 @ cdecl -arch=win64 ?compare@?$char_traits@G@std@@SAHPEBG0_K@Z(ptr ptr long) msvcp90.?compare@?$char_traits@G@std@@SAHPEBG0_K@Z
-@ stub -arch=win32 ?compare@?$collate@D@std@@QBEHPBD000@Z
-@ stub -arch=win64 ?compare@?$collate@D@std@@QEBAHPEBD000@Z
-@ stub -arch=win32 ?compare@?$collate@G@std@@QBEHPBG000@Z
-@ stub -arch=win64 ?compare@?$collate@G@std@@QEBAHPEBG000@Z
+@ stub -arch=win32 ?compare@?$collate@D@std@@QBEHPBD000@Z # don't forward to msvcp90
+@ stub -arch=win64 ?compare@?$collate@D@std@@QEBAHPEBD000@Z # don't forward to msvcp90
+@ stub -arch=win32 ?compare@?$collate@G@std@@QBEHPBG000@Z # don't forward to msvcp90
+@ stub -arch=win64 ?compare@?$collate@G@std@@QEBAHPEBG000@Z # don't forward to msvcp90
 @ stub -arch=win32 ?conj@std@@YA?AV?$complex@M@1@ABV21@@Z
 @ stub -arch=win64 ?conj@std@@YA?AV?$complex@M@1@AEBV21@@Z
 @ stub -arch=win32 ?conj@std@@YA?AV?$complex@N@1@ABV21@@Z
@@ -2620,10 +2620,10 @@
 @ stub -arch=win64 ?decimal_point@?$_Mpunct@D@std@@QEBADXZ
 @ stub -arch=win32 ?decimal_point@?$_Mpunct@G@std@@QBEGXZ
 @ stub -arch=win64 ?decimal_point@?$_Mpunct@G@std@@QEBAGXZ
-@ stub -arch=win32 ?decimal_point@?$numpunct@D@std@@QBEDXZ
-@ stub -arch=win64 ?decimal_point@?$numpunct@D@std@@QEBADXZ
-@ stub -arch=win32 ?decimal_point@?$numpunct@G@std@@QBEGXZ
-@ stub -arch=win64 ?decimal_point@?$numpunct@G@std@@QEBAGXZ
+@ stub -arch=win32 ?decimal_point@?$numpunct@D@std@@QBEDXZ # don't forward to msvcp90
+@ stub -arch=win64 ?decimal_point@?$numpunct@D@std@@QEBADXZ # don't forward to msvcp90
+@ stub -arch=win32 ?decimal_point@?$numpunct@G@std@@QBEGXZ # don't forward to msvcp90
+@ stub -arch=win64 ?decimal_point@?$numpunct@G@std@@QEBAGXZ # don't forward to msvcp90
 @ cdecl ?denorm_min@?$numeric_limits@C@std@@SACXZ() msvcp90.?denorm_min@?$numeric_limits@C@std@@SACXZ
 @ cdecl ?denorm_min@?$numeric_limits@D@std@@SADXZ() msvcp90.?denorm_min@?$numeric_limits@D@std@@SADXZ
 @ cdecl ?denorm_min@?$numeric_limits@E@std@@SAEXZ() msvcp90.?denorm_min@?$numeric_limits@E@std@@SAEXZ
@@ -2645,10 +2645,10 @@
 @ stub -arch=win64 ?do_close@?$messages@D@std@@MEBAXH@Z
 @ stub -arch=win32 ?do_close@?$messages@G@std@@MBEXH@Z
 @ stub -arch=win64 ?do_close@?$messages@G@std@@MEBAXH@Z
-@ stub -arch=win32 ?do_compare@?$collate@D@std@@MBEHPBD000@Z
-@ stub -arch=win64 ?do_compare@?$collate@D@std@@MEBAHPEBD000@Z
-@ stub -arch=win32 ?do_compare@?$collate@G@std@@MBEHPBG000@Z
-@ stub -arch=win64 ?do_compare@?$collate@G@std@@MEBAHPEBG000@Z
+@ stub -arch=win32 ?do_compare@?$collate@D@std@@MBEHPBD000@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_compare@?$collate@D@std@@MEBAHPEBD000@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_compare@?$collate@G@std@@MBEHPBG000@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_compare@?$collate@G@std@@MEBAHPEBG000@Z # don't forward to msvcp90
 @ stub -arch=win32 ?do_curr_symbol@?$_Mpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?do_curr_symbol@?$_Mpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win32 ?do_curr_symbol@?$_Mpunct@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
@@ -2661,18 +2661,18 @@
 @ stub -arch=win64 ?do_decimal_point@?$_Mpunct@D@std@@MEBADXZ
 @ stub -arch=win32 ?do_decimal_point@?$_Mpunct@G@std@@MBEGXZ
 @ stub -arch=win64 ?do_decimal_point@?$_Mpunct@G@std@@MEBAGXZ
-@ stub -arch=win32 ?do_decimal_point@?$numpunct@D@std@@MBEDXZ
-@ stub -arch=win64 ?do_decimal_point@?$numpunct@D@std@@MEBADXZ
-@ stub -arch=win32 ?do_decimal_point@?$numpunct@G@std@@MBEGXZ
-@ stub -arch=win64 ?do_decimal_point@?$numpunct@G@std@@MEBAGXZ
+@ stub -arch=win32 ?do_decimal_point@?$numpunct@D@std@@MBEDXZ # don't forward to msvcp90
+@ stub -arch=win64 ?do_decimal_point@?$numpunct@D@std@@MEBADXZ # don't forward to msvcp90
+@ stub -arch=win32 ?do_decimal_point@?$numpunct@G@std@@MBEGXZ # don't forward to msvcp90
+@ stub -arch=win64 ?do_decimal_point@?$numpunct@G@std@@MEBAGXZ # don't forward to msvcp90
 @ stub -arch=win32 ?do_encoding@?$codecvt@GDH@std@@MBEHXZ
 @ stub -arch=win64 ?do_encoding@?$codecvt@GDH@std@@MEBAHXZ
 @ stub -arch=win32 ?do_encoding@codecvt_base@std@@MBEHXZ
 @ stub -arch=win64 ?do_encoding@codecvt_base@std@@MEBAHXZ
-@ stub -arch=win32 ?do_falsename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?do_falsename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win32 ?do_falsename@?$numpunct@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
-@ stub -arch=win64 ?do_falsename@?$numpunct@G@std@@MEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
+@ stub -arch=win32 ?do_falsename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win64 ?do_falsename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win32 ?do_falsename@?$numpunct@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win64 ?do_falsename@?$numpunct@G@std@@MEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ # don't forward to msvcp90
 @ stub -arch=win32 ?do_frac_digits@?$_Mpunct@D@std@@MBEHXZ
 @ stub -arch=win64 ?do_frac_digits@?$_Mpunct@D@std@@MEBAHXZ
 @ stub -arch=win32 ?do_frac_digits@?$_Mpunct@G@std@@MBEHXZ
@@ -2753,22 +2753,22 @@
 @ stub -arch=win64 ?do_grouping@?$_Mpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win32 ?do_grouping@?$_Mpunct@G@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?do_grouping@?$_Mpunct@G@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win32 ?do_grouping@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?do_grouping@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win32 ?do_grouping@?$numpunct@G@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?do_grouping@?$numpunct@G@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win32 ?do_hash@?$collate@D@std@@MBEJPBD0@Z
-@ stub -arch=win64 ?do_hash@?$collate@D@std@@MEBAJPEBD0@Z
-@ stub -arch=win32 ?do_hash@?$collate@G@std@@MBEJPBG0@Z
-@ stub -arch=win64 ?do_hash@?$collate@G@std@@MEBAJPEBG0@Z
+@ stub -arch=win32 ?do_grouping@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win64 ?do_grouping@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win32 ?do_grouping@?$numpunct@G@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win64 ?do_grouping@?$numpunct@G@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win32 ?do_hash@?$collate@D@std@@MBEJPBD0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_hash@?$collate@D@std@@MEBAJPEBD0@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_hash@?$collate@G@std@@MBEJPBG0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_hash@?$collate@G@std@@MEBAJPEBG0@Z # don't forward to msvcp90
 @ stub -arch=win32 ?do_in@?$codecvt@DDH@std@@MBEHAAHPBD1AAPBDPAD3AAPAD@Z
 @ stub -arch=win64 ?do_in@?$codecvt@DDH@std@@MEBAHAEAHPEBD1AEAPEBDPEAD3AEAPEAD@Z
 @ stub -arch=win32 ?do_in@?$codecvt@GDH@std@@MBEHAAHPBD1AAPBDPAG3AAPAG@Z
 @ stub -arch=win64 ?do_in@?$codecvt@GDH@std@@MEBAHAEAHPEBD1AEAPEBDPEAG3AEAPEAG@Z
-@ stub -arch=win32 ?do_is@?$ctype@G@std@@MBEPBGPBG0PAF@Z
-@ stub -arch=win64 ?do_is@?$ctype@G@std@@MEBAPEBGPEBG0PEAF@Z
-@ stub -arch=win32 ?do_is@?$ctype@G@std@@MBE_NFG@Z
-@ stub -arch=win64 ?do_is@?$ctype@G@std@@MEBA_NFG@Z
+@ stub -arch=win32 ?do_is@?$ctype@G@std@@MBEPBGPBG0PAF@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_is@?$ctype@G@std@@MEBAPEBGPEBG0PEAF@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_is@?$ctype@G@std@@MBE_NFG@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_is@?$ctype@G@std@@MEBA_NFG@Z # don't forward to msvcp90
 @ stub -arch=win32 ?do_length@?$codecvt@DDH@std@@MBEHAAHPBD1I@Z
 @ stub -arch=win64 ?do_length@?$codecvt@DDH@std@@MEBAHAEAHPEBD1_K@Z
 @ stub -arch=win32 ?do_length@?$codecvt@GDH@std@@MBEHAAHPBG1I@Z
@@ -2777,10 +2777,10 @@
 @ stub -arch=win64 ?do_max_length@?$codecvt@GDH@std@@MEBAHXZ
 @ stub -arch=win32 ?do_max_length@codecvt_base@std@@MBEHXZ
 @ stub -arch=win64 ?do_max_length@codecvt_base@std@@MEBAHXZ
-@ stub -arch=win32 ?do_narrow@?$ctype@G@std@@MBEDGD@Z
-@ stub -arch=win64 ?do_narrow@?$ctype@G@std@@MEBADGD@Z
-@ stub -arch=win32 ?do_narrow@?$ctype@G@std@@MBEPBGPBG0DPAD@Z
-@ stub -arch=win64 ?do_narrow@?$ctype@G@std@@MEBAPEBGPEBG0DPEAD@Z
+@ stub -arch=win32 ?do_narrow@?$ctype@G@std@@MBEDGD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_narrow@?$ctype@G@std@@MEBADGD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_narrow@?$ctype@G@std@@MBEPBGPBG0DPAD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_narrow@?$ctype@G@std@@MEBAPEBGPEBG0DPEAD@Z # don't forward to msvcp90
 @ stub -arch=win32 ?do_neg_format@?$_Mpunct@D@std@@MBE?AUpattern@money_base@2@XZ
 @ stub -arch=win64 ?do_neg_format@?$_Mpunct@D@std@@MEBA?AUpattern@money_base@2@XZ
 @ stub -arch=win32 ?do_neg_format@?$_Mpunct@G@std@@MBE?AUpattern@money_base@2@XZ
@@ -2845,46 +2845,46 @@
 @ stub -arch=win64 ?do_put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@PEBUtm@@DD@Z
 @ stub -arch=win32 ?do_put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AAVios_base@2@PBUtm@@DD@Z
 @ stub -arch=win64 ?do_put@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@PEBUtm@@DD@Z
-@ stub -arch=win32 ?do_scan_is@?$ctype@G@std@@MBEPBGFPBG0@Z
-@ stub -arch=win64 ?do_scan_is@?$ctype@G@std@@MEBAPEBGFPEBG0@Z
-@ stub -arch=win32 ?do_scan_not@?$ctype@G@std@@MBEPBGFPBG0@Z
-@ stub -arch=win64 ?do_scan_not@?$ctype@G@std@@MEBAPEBGFPEBG0@Z
+@ stub -arch=win32 ?do_scan_is@?$ctype@G@std@@MBEPBGFPBG0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_scan_is@?$ctype@G@std@@MEBAPEBGFPEBG0@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_scan_not@?$ctype@G@std@@MBEPBGFPBG0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_scan_not@?$ctype@G@std@@MEBAPEBGFPEBG0@Z # don't forward to msvcp90
 @ stub -arch=win32 ?do_thousands_sep@?$_Mpunct@D@std@@MBEDXZ
 @ stub -arch=win64 ?do_thousands_sep@?$_Mpunct@D@std@@MEBADXZ
 @ stub -arch=win32 ?do_thousands_sep@?$_Mpunct@G@std@@MBEGXZ
 @ stub -arch=win64 ?do_thousands_sep@?$_Mpunct@G@std@@MEBAGXZ
-@ stub -arch=win32 ?do_thousands_sep@?$numpunct@D@std@@MBEDXZ
-@ stub -arch=win64 ?do_thousands_sep@?$numpunct@D@std@@MEBADXZ
-@ stub -arch=win32 ?do_thousands_sep@?$numpunct@G@std@@MBEGXZ
-@ stub -arch=win64 ?do_thousands_sep@?$numpunct@G@std@@MEBAGXZ
-@ stub -arch=win32 ?do_tolower@?$ctype@D@std@@MBEDD@Z
-@ stub -arch=win64 ?do_tolower@?$ctype@D@std@@MEBADD@Z
-@ stub -arch=win32 ?do_tolower@?$ctype@D@std@@MBEPBDPADPBD@Z
-@ stub -arch=win64 ?do_tolower@?$ctype@D@std@@MEBAPEBDPEADPEBD@Z
-@ stub -arch=win32 ?do_tolower@?$ctype@G@std@@MBEGG@Z
-@ stub -arch=win64 ?do_tolower@?$ctype@G@std@@MEBAGG@Z
-@ stub -arch=win32 ?do_tolower@?$ctype@G@std@@MBEPBGPAGPBG@Z
-@ stub -arch=win64 ?do_tolower@?$ctype@G@std@@MEBAPEBGPEAGPEBG@Z
-@ stub -arch=win32 ?do_toupper@?$ctype@D@std@@MBEDD@Z
-@ stub -arch=win64 ?do_toupper@?$ctype@D@std@@MEBADD@Z
-@ stub -arch=win32 ?do_toupper@?$ctype@D@std@@MBEPBDPADPBD@Z
-@ stub -arch=win64 ?do_toupper@?$ctype@D@std@@MEBAPEBDPEADPEBD@Z
-@ stub -arch=win32 ?do_toupper@?$ctype@G@std@@MBEGG@Z
-@ stub -arch=win64 ?do_toupper@?$ctype@G@std@@MEBAGG@Z
-@ stub -arch=win32 ?do_toupper@?$ctype@G@std@@MBEPBGPAGPBG@Z
-@ stub -arch=win64 ?do_toupper@?$ctype@G@std@@MEBAPEBGPEAGPEBG@Z
-@ stub -arch=win32 ?do_transform@?$collate@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PBD0@Z
-@ stub -arch=win64 ?do_transform@?$collate@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PEBD0@Z
-@ stub -arch=win32 ?do_transform@?$collate@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PBG0@Z
-@ stub -arch=win64 ?do_transform@?$collate@G@std@@MEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PEBG0@Z
-@ stub -arch=win32 ?do_truename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?do_truename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win32 ?do_truename@?$numpunct@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
-@ stub -arch=win64 ?do_truename@?$numpunct@G@std@@MEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
-@ stub -arch=win32 ?do_widen@?$ctype@G@std@@MBEGD@Z
-@ stub -arch=win64 ?do_widen@?$ctype@G@std@@MEBAGD@Z
-@ stub -arch=win32 ?do_widen@?$ctype@G@std@@MBEPBDPBD0PAG@Z
-@ stub -arch=win64 ?do_widen@?$ctype@G@std@@MEBAPEBDPEBD0PEAG@Z
+@ stub -arch=win32 ?do_thousands_sep@?$numpunct@D@std@@MBEDXZ # don't forward to msvcp90
+@ stub -arch=win64 ?do_thousands_sep@?$numpunct@D@std@@MEBADXZ # don't forward to msvcp90
+@ stub -arch=win32 ?do_thousands_sep@?$numpunct@G@std@@MBEGXZ # don't forward to msvcp90
+@ stub -arch=win64 ?do_thousands_sep@?$numpunct@G@std@@MEBAGXZ # don't forward to msvcp90
+@ stub -arch=win32 ?do_tolower@?$ctype@D@std@@MBEDD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_tolower@?$ctype@D@std@@MEBADD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_tolower@?$ctype@D@std@@MBEPBDPADPBD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_tolower@?$ctype@D@std@@MEBAPEBDPEADPEBD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_tolower@?$ctype@G@std@@MBEGG@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_tolower@?$ctype@G@std@@MEBAGG@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_tolower@?$ctype@G@std@@MBEPBGPAGPBG@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_tolower@?$ctype@G@std@@MEBAPEBGPEAGPEBG@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_toupper@?$ctype@D@std@@MBEDD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_toupper@?$ctype@D@std@@MEBADD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_toupper@?$ctype@D@std@@MBEPBDPADPBD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_toupper@?$ctype@D@std@@MEBAPEBDPEADPEBD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_toupper@?$ctype@G@std@@MBEGG@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_toupper@?$ctype@G@std@@MEBAGG@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_toupper@?$ctype@G@std@@MBEPBGPAGPBG@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_toupper@?$ctype@G@std@@MEBAPEBGPEAGPEBG@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_transform@?$collate@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PBD0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_transform@?$collate@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PEBD0@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_transform@?$collate@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PBG0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_transform@?$collate@G@std@@MEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PEBG0@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_truename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win64 ?do_truename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win32 ?do_truename@?$numpunct@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win64 ?do_truename@?$numpunct@G@std@@MEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win32 ?do_widen@?$ctype@G@std@@MBEGD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_widen@?$ctype@G@std@@MEBAGD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?do_widen@?$ctype@G@std@@MBEPBDPBD0PAG@Z # don't forward to msvcp90
+@ stub -arch=win64 ?do_widen@?$ctype@G@std@@MEBAPEBDPEBD0PEAG@Z # don't forward to msvcp90
 @ stub -arch=win32 ?eback@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ  # don't forward to msvcp90
 @ stub -arch=win64 ?eback@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBAPEADXZ  # don't forward to msvcp90
 @ stub -arch=win32 ?eback@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEPAGXZ
@@ -2974,10 +2974,10 @@
 @ stub -arch=win64 ?exp@std@@YA?AV?$complex@O@1@AEBV21@@Z
 @ stub -arch=win32 ?fail@ios_base@std@@QBE_NXZ  # don't forward to msvcp90
 @ stub -arch=win64 ?fail@ios_base@std@@QEBA_NXZ  # don't forward to msvcp90
-@ stub -arch=win32 ?falsename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?falsename@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win32 ?falsename@?$numpunct@G@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
-@ stub -arch=win64 ?falsename@?$numpunct@G@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
+@ stub -arch=win32 ?falsename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win64 ?falsename@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win32 ?falsename@?$numpunct@G@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win64 ?falsename@?$numpunct@G@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ # don't forward to msvcp90
 @ stub -arch=win32 ?fill@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEDD@Z  # don't forward to msvcp90
 @ stub -arch=win64 ?fill@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAADD@Z  # don't forward to msvcp90
 @ stub -arch=win32 ?fill@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEDXZ  # don't forward to msvcp90
@@ -3230,20 +3230,20 @@
 @ stub -arch=win64 ?grouping@?$_Mpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win32 ?grouping@?$_Mpunct@G@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?grouping@?$_Mpunct@G@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win32 ?grouping@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?grouping@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win32 ?grouping@?$numpunct@G@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?grouping@?$numpunct@G@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win32 ?hash@?$collate@D@std@@QBEJPBD0@Z
-@ stub -arch=win64 ?hash@?$collate@D@std@@QEBAJPEBD0@Z
-@ stub -arch=win32 ?hash@?$collate@G@std@@QBEJPBG0@Z
-@ stub -arch=win64 ?hash@?$collate@G@std@@QEBAJPEBG0@Z
+@ stub -arch=win32 ?grouping@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win64 ?grouping@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win32 ?grouping@?$numpunct@G@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win64 ?grouping@?$numpunct@G@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win32 ?hash@?$collate@D@std@@QBEJPBD0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?hash@?$collate@D@std@@QEBAJPEBD0@Z # don't forward to msvcp90
+@ stub -arch=win32 ?hash@?$collate@G@std@@QBEJPBG0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?hash@?$collate@G@std@@QEBAJPEBG0@Z # don't forward to msvcp90
 # extern ?id@?$codecvt@DDH@std@@2V0locale@2@A
 # extern ?id@?$codecvt@GDH@std@@2V0locale@2@A
-# extern ?id@?$collate@D@std@@2V0locale@2@A
-# extern ?id@?$collate@G@std@@2V0locale@2@A
-# extern ?id@?$ctype@D@std@@2V0locale@2@A
-# extern ?id@?$ctype@G@std@@2V0locale@2@A
+@ extern ?id@?$collate@D@std@@2V0locale@2@A msvcp90.?id@?$collate@D@std@@2V0locale@2@A
+@ extern ?id@?$collate@G@std@@2V0locale@2@A msvcp90.?id@?$collate@G@std@@2V0locale@2@A
+@ extern ?id@?$ctype@D@std@@2V0locale@2@A msvcp90.?id@?$ctype@D@std@@2V0locale@2@A
+@ extern ?id@?$ctype@G@std@@2V0locale@2@A msvcp90.?id@?$ctype@G@std@@2V0locale@2@A
 # extern ?id@?$messages@D@std@@2V0locale@2@A
 # extern ?id@?$messages@G@std@@2V0locale@2@A
 # extern ?id@?$money_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@2V0locale@2@A
@@ -3258,8 +3258,8 @@
 # extern ?id@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@2V0locale@2@A
 # extern ?id@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@2V0locale@2@A
 # extern ?id@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@2V0locale@2@A
-# extern ?id@?$numpunct@D@std@@2V0locale@2@A
-# extern ?id@?$numpunct@G@std@@2V0locale@2@A
+@ extern ?id@?$numpunct@D@std@@2V0locale@2@A msvcp90.?id@?$numpunct@D@std@@2V0locale@2@A
+@ extern ?id@?$numpunct@G@std@@2V0locale@2@A msvcp90.?id@?$numpunct@G@std@@2V0locale@2@A
 # extern ?id@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@2V0locale@2@A
 # extern ?id@?$time_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@2V0locale@2@A
 # extern ?id@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@2V0locale@2@A
@@ -3361,14 +3361,14 @@
 @ stub -arch=win64 ?ipfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAA_N_N@Z
 @ stub -arch=win32 ?ipfx@?$basic_istream@GU?$char_traits@G@std@@@std@@QAE_N_N@Z
 @ stub -arch=win64 ?ipfx@?$basic_istream@GU?$char_traits@G@std@@@std@@QEAA_N_N@Z
-@ stub -arch=win32 ?is@?$ctype@D@std@@QBEPBDPBD0PAF@Z
-@ stub -arch=win64 ?is@?$ctype@D@std@@QEBAPEBDPEBD0PEAF@Z
-@ stub -arch=win32 ?is@?$ctype@D@std@@QBE_NFD@Z
-@ stub -arch=win64 ?is@?$ctype@D@std@@QEBA_NFD@Z
-@ stub -arch=win32 ?is@?$ctype@G@std@@QBEPBGPBG0PAF@Z
-@ stub -arch=win64 ?is@?$ctype@G@std@@QEBAPEBGPEBG0PEAF@Z
-@ stub -arch=win32 ?is@?$ctype@G@std@@QBE_NFG@Z
-@ stub -arch=win64 ?is@?$ctype@G@std@@QEBA_NFG@Z
+@ stub -arch=win32 ?is@?$ctype@D@std@@QBEPBDPBD0PAF@Z # don't forward to msvcp90
+@ stub -arch=win64 ?is@?$ctype@D@std@@QEBAPEBDPEBD0PEAF@Z # don't forward to msvcp90
+@ stub -arch=win32 ?is@?$ctype@D@std@@QBE_NFD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?is@?$ctype@D@std@@QEBA_NFD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?is@?$ctype@G@std@@QBEPBGPBG0PAF@Z # don't forward to msvcp90
+@ stub -arch=win64 ?is@?$ctype@G@std@@QEBAPEBGPEBG0PEAF@Z # don't forward to msvcp90
+@ stub -arch=win32 ?is@?$ctype@G@std@@QBE_NFG@Z # don't forward to msvcp90
+@ stub -arch=win64 ?is@?$ctype@G@std@@QEBA_NFG@Z # don't forward to msvcp90
 @ stub -arch=win32 ?is_open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QBE_NXZ
 @ stub -arch=win64 ?is_open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEBA_NXZ
 @ stub -arch=win32 ?is_open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QBE_NXZ
@@ -3467,14 +3467,14 @@
 @ stub -arch=win64 ?narrow@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBADDD@Z  # don't forward to msvcp90
 @ stub -arch=win32 ?narrow@?$basic_ios@GU?$char_traits@G@std@@@std@@QBEDGD@Z
 @ stub -arch=win64 ?narrow@?$basic_ios@GU?$char_traits@G@std@@@std@@QEBADGD@Z
-@ stub -arch=win32 ?narrow@?$ctype@D@std@@QBEDDD@Z
-@ stub -arch=win64 ?narrow@?$ctype@D@std@@QEBADDD@Z
-@ stub -arch=win32 ?narrow@?$ctype@D@std@@QBEPBDPBD0DPAD@Z
-@ stub -arch=win64 ?narrow@?$ctype@D@std@@QEBAPEBDPEBD0DPEAD@Z
-@ stub -arch=win32 ?narrow@?$ctype@G@std@@QBEDGD@Z
-@ stub -arch=win64 ?narrow@?$ctype@G@std@@QEBADGD@Z
-@ stub -arch=win32 ?narrow@?$ctype@G@std@@QBEPBGPBG0DPAD@Z
-@ stub -arch=win64 ?narrow@?$ctype@G@std@@QEBAPEBGPEBG0DPEAD@Z
+@ stub -arch=win32 ?narrow@?$ctype@D@std@@QBEDDD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?narrow@?$ctype@D@std@@QEBADDD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?narrow@?$ctype@D@std@@QBEPBDPBD0DPAD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?narrow@?$ctype@D@std@@QEBAPEBDPEBD0DPEAD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?narrow@?$ctype@G@std@@QBEDGD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?narrow@?$ctype@G@std@@QEBADGD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?narrow@?$ctype@G@std@@QBEPBGPBG0DPAD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?narrow@?$ctype@G@std@@QEBAPEBGPEBG0DPEAD@Z # don't forward to msvcp90
 @ stub -arch=win32 ?neg_format@?$_Mpunct@D@std@@QBE?AUpattern@money_base@2@XZ
 @ stub -arch=win64 ?neg_format@?$_Mpunct@D@std@@QEBA?AUpattern@money_base@2@XZ
 @ stub -arch=win32 ?neg_format@?$_Mpunct@G@std@@QBE?AUpattern@money_base@2@XZ
@@ -3900,14 +3900,14 @@
 @ stub -arch=win64 ?sbumpc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHXZ  # don't forward to msvcp90
 @ stub -arch=win32 ?sbumpc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEGXZ
 @ stub -arch=win64 ?sbumpc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAGXZ
-@ stub -arch=win32 ?scan_is@?$ctype@D@std@@QBEPBDFPBD0@Z
-@ stub -arch=win64 ?scan_is@?$ctype@D@std@@QEBAPEBDFPEBD0@Z
-@ stub -arch=win32 ?scan_is@?$ctype@G@std@@QBEPBGFPBG0@Z
-@ stub -arch=win64 ?scan_is@?$ctype@G@std@@QEBAPEBGFPEBG0@Z
-@ stub -arch=win32 ?scan_not@?$ctype@D@std@@QBEPBDFPBD0@Z
-@ stub -arch=win64 ?scan_not@?$ctype@D@std@@QEBAPEBDFPEBD0@Z
-@ stub -arch=win32 ?scan_not@?$ctype@G@std@@QBEPBGFPBG0@Z
-@ stub -arch=win64 ?scan_not@?$ctype@G@std@@QEBAPEBGFPEBG0@Z
+@ stub -arch=win32 ?scan_is@?$ctype@D@std@@QBEPBDFPBD0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?scan_is@?$ctype@D@std@@QEBAPEBDFPEBD0@Z # don't forward to msvcp90
+@ stub -arch=win32 ?scan_is@?$ctype@G@std@@QBEPBGFPBG0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?scan_is@?$ctype@G@std@@QEBAPEBGFPEBG0@Z # don't forward to msvcp90
+@ stub -arch=win32 ?scan_not@?$ctype@D@std@@QBEPBDFPBD0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?scan_not@?$ctype@D@std@@QEBAPEBDFPEBD0@Z # don't forward to msvcp90
+@ stub -arch=win32 ?scan_not@?$ctype@G@std@@QBEPBGFPBG0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?scan_not@?$ctype@G@std@@QEBAPEBGFPEBG0@Z # don't forward to msvcp90
 @ stub -arch=win32 ?seekg@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV12@JW4seekdir@ios_base@2@@Z
 @ stub -arch=win64 ?seekg@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@V?$fpos@H@2@@Z
 @ stub -arch=win32 ?seekg@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV12@V?$fpos@H@2@@Z
@@ -4124,10 +4124,10 @@
 @ stub -arch=win32 ?sync@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHXZ
 @ stub -arch=win64 ?sync@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAHXZ
 @ stub ?sync_with_stdio@ios_base@std@@SA_N_N@Z  # don't forward to msvcp90
-@ stub -arch=win32 ?table@?$ctype@D@std@@IBEPBFXZ
-@ stub -arch=win64 ?table@?$ctype@D@std@@IEBAPEBFXZ
-# extern -arch=win32 ?table_size@?$ctype@D@std@@2IB
-# extern -arch=win64 ?table_size@?$ctype@D@std@@2_KB
+@ stub -arch=win32 ?table@?$ctype@D@std@@IBEPBFXZ # don't forward to msvcp90
+@ stub -arch=win64 ?table@?$ctype@D@std@@IEBAPEBFXZ # don't forward to msvcp90
+@ extern -arch=win32 ?table_size@?$ctype@D@std@@2IB msvcp90.?table_size@?$ctype@D@std@@2IB
+@ extern -arch=win64 ?table_size@?$ctype@D@std@@2_KB msvcp90.?table_size@?$ctype@D@std@@2_KB
 @ stub -arch=win32 ?tellg@?$basic_istream@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@XZ
 @ stub -arch=win64 ?tellg@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@XZ
 @ stub -arch=win32 ?tellg@?$basic_istream@GU?$char_traits@G@std@@@std@@QAE?AV?$fpos@H@2@XZ
@@ -4140,10 +4140,10 @@
 @ stub -arch=win64 ?thousands_sep@?$_Mpunct@D@std@@QEBADXZ
 @ stub -arch=win32 ?thousands_sep@?$_Mpunct@G@std@@QBEGXZ
 @ stub -arch=win64 ?thousands_sep@?$_Mpunct@G@std@@QEBAGXZ
-@ stub -arch=win32 ?thousands_sep@?$numpunct@D@std@@QBEDXZ
-@ stub -arch=win64 ?thousands_sep@?$numpunct@D@std@@QEBADXZ
-@ stub -arch=win32 ?thousands_sep@?$numpunct@G@std@@QBEGXZ
-@ stub -arch=win64 ?thousands_sep@?$numpunct@G@std@@QEBAGXZ
+@ stub -arch=win32 ?thousands_sep@?$numpunct@D@std@@QBEDXZ # don't forward to msvcp90
+@ stub -arch=win64 ?thousands_sep@?$numpunct@D@std@@QEBADXZ # don't forward to msvcp90
+@ stub -arch=win32 ?thousands_sep@?$numpunct@G@std@@QBEGXZ # don't forward to msvcp90
+@ stub -arch=win64 ?thousands_sep@?$numpunct@G@std@@QEBAGXZ # don't forward to msvcp90
 @ stub -arch=win32 ?tie@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEPAV?$basic_ostream@DU?$char_traits@D@std@@@2@PAV32@@Z  # don't forward to msvcp90
 @ stub -arch=win64 ?tie@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAPEAV?$basic_ostream@DU?$char_traits@D@std@@@2@PEAV32@@Z  # don't forward to msvcp90
 @ stub -arch=win32 ?tie@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEPAV?$basic_ostream@DU?$char_traits@D@std@@@2@XZ  # don't forward to msvcp90
@@ -4160,30 +4160,30 @@
 @ cdecl -arch=win64 ?to_int_type@?$char_traits@D@std@@SAHAEBD@Z(ptr) msvcp90.?to_int_type@?$char_traits@D@std@@SAHAEBD@Z
 @ cdecl -arch=win32 ?to_int_type@?$char_traits@G@std@@SAGABG@Z(ptr) msvcp90.?to_int_type@?$char_traits@G@std@@SAGABG@Z
 @ cdecl -arch=win64 ?to_int_type@?$char_traits@G@std@@SAGAEBG@Z(ptr) msvcp90.?to_int_type@?$char_traits@G@std@@SAGAEBG@Z
-@ stub -arch=win32 ?tolower@?$ctype@D@std@@QBEDD@Z
-@ stub -arch=win64 ?tolower@?$ctype@D@std@@QEBADD@Z
-@ stub -arch=win32 ?tolower@?$ctype@D@std@@QBEPBDPADPBD@Z
-@ stub -arch=win64 ?tolower@?$ctype@D@std@@QEBAPEBDPEADPEBD@Z
-@ stub -arch=win32 ?tolower@?$ctype@G@std@@QBEGG@Z
-@ stub -arch=win64 ?tolower@?$ctype@G@std@@QEBAGG@Z
-@ stub -arch=win32 ?tolower@?$ctype@G@std@@QBEPBGPAGPBG@Z
-@ stub -arch=win64 ?tolower@?$ctype@G@std@@QEBAPEBGPEAGPEBG@Z
-@ stub -arch=win32 ?toupper@?$ctype@D@std@@QBEDD@Z
-@ stub -arch=win64 ?toupper@?$ctype@D@std@@QEBADD@Z
-@ stub -arch=win32 ?toupper@?$ctype@D@std@@QBEPBDPADPBD@Z
-@ stub -arch=win64 ?toupper@?$ctype@D@std@@QEBAPEBDPEADPEBD@Z
-@ stub -arch=win32 ?toupper@?$ctype@G@std@@QBEGG@Z
-@ stub -arch=win64 ?toupper@?$ctype@G@std@@QEBAGG@Z
-@ stub -arch=win32 ?toupper@?$ctype@G@std@@QBEPBGPAGPBG@Z
-@ stub -arch=win64 ?toupper@?$ctype@G@std@@QEBAPEBGPEAGPEBG@Z
-@ stub -arch=win32 ?transform@?$collate@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PBD0@Z
-@ stub -arch=win64 ?transform@?$collate@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PEBD0@Z
-@ stub -arch=win32 ?transform@?$collate@G@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PBG0@Z
-@ stub -arch=win64 ?transform@?$collate@G@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PEBG0@Z
-@ stub -arch=win32 ?truename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?truename@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win32 ?truename@?$numpunct@G@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
-@ stub -arch=win64 ?truename@?$numpunct@G@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
+@ stub -arch=win32 ?tolower@?$ctype@D@std@@QBEDD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?tolower@?$ctype@D@std@@QEBADD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?tolower@?$ctype@D@std@@QBEPBDPADPBD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?tolower@?$ctype@D@std@@QEBAPEBDPEADPEBD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?tolower@?$ctype@G@std@@QBEGG@Z # don't forward to msvcp90
+@ stub -arch=win64 ?tolower@?$ctype@G@std@@QEBAGG@Z # don't forward to msvcp90
+@ stub -arch=win32 ?tolower@?$ctype@G@std@@QBEPBGPAGPBG@Z # don't forward to msvcp90
+@ stub -arch=win64 ?tolower@?$ctype@G@std@@QEBAPEBGPEAGPEBG@Z # don't forward to msvcp90
+@ stub -arch=win32 ?toupper@?$ctype@D@std@@QBEDD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?toupper@?$ctype@D@std@@QEBADD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?toupper@?$ctype@D@std@@QBEPBDPADPBD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?toupper@?$ctype@D@std@@QEBAPEBDPEADPEBD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?toupper@?$ctype@G@std@@QBEGG@Z # don't forward to msvcp90
+@ stub -arch=win64 ?toupper@?$ctype@G@std@@QEBAGG@Z # don't forward to msvcp90
+@ stub -arch=win32 ?toupper@?$ctype@G@std@@QBEPBGPAGPBG@Z # don't forward to msvcp90
+@ stub -arch=win64 ?toupper@?$ctype@G@std@@QEBAPEBGPEAGPEBG@Z # don't forward to msvcp90
+@ stub -arch=win32 ?transform@?$collate@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PBD0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?transform@?$collate@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PEBD0@Z # don't forward to msvcp90
+@ stub -arch=win32 ?transform@?$collate@G@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PBG0@Z # don't forward to msvcp90
+@ stub -arch=win64 ?transform@?$collate@G@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PEBG0@Z # don't forward to msvcp90
+@ stub -arch=win32 ?truename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win64 ?truename@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win32 ?truename@?$numpunct@G@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ # don't forward to msvcp90
+@ stub -arch=win64 ?truename@?$numpunct@G@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ # don't forward to msvcp90
 @ stub -arch=win32 ?uflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ
 @ stub -arch=win64 ?uflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ
 @ stub -arch=win32 ?uflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGXZ
@@ -4225,14 +4225,14 @@
 @ stub -arch=win64 ?widen@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBADD@Z  # don't forward to msvcp90
 @ stub -arch=win32 ?widen@?$basic_ios@GU?$char_traits@G@std@@@std@@QBEGD@Z
 @ stub -arch=win64 ?widen@?$basic_ios@GU?$char_traits@G@std@@@std@@QEBAGD@Z
-@ stub -arch=win32 ?widen@?$ctype@D@std@@QBEDD@Z
-@ stub -arch=win64 ?widen@?$ctype@D@std@@QEBADD@Z
-@ stub -arch=win32 ?widen@?$ctype@D@std@@QBEPBDPBD0PAD@Z
-@ stub -arch=win64 ?widen@?$ctype@D@std@@QEBAPEBDPEBD0PEAD@Z
-@ stub -arch=win32 ?widen@?$ctype@G@std@@QBEGD@Z
-@ stub -arch=win64 ?widen@?$ctype@G@std@@QEBAGD@Z
-@ stub -arch=win32 ?widen@?$ctype@G@std@@QBEPBDPBD0PAG@Z
-@ stub -arch=win64 ?widen@?$ctype@G@std@@QEBAPEBDPEBD0PEAG@Z
+@ stub -arch=win32 ?widen@?$ctype@D@std@@QBEDD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?widen@?$ctype@D@std@@QEBADD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?widen@?$ctype@D@std@@QBEPBDPBD0PAD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?widen@?$ctype@D@std@@QEBAPEBDPEBD0PEAD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?widen@?$ctype@G@std@@QBEGD@Z # don't forward to msvcp90
+@ stub -arch=win64 ?widen@?$ctype@G@std@@QEBAGD@Z # don't forward to msvcp90
+@ stub -arch=win32 ?widen@?$ctype@G@std@@QBEPBDPBD0PAG@Z # don't forward to msvcp90
+@ stub -arch=win64 ?widen@?$ctype@G@std@@QEBAPEBDPEBD0PEAG@Z # don't forward to msvcp90
 @ stub -arch=win32 ?width@ios_base@std@@QAEHH@Z  # don't forward to msvcp90
 @ stub -arch=win64 ?width@ios_base@std@@QEAA_J_J@Z  # don't forward to msvcp90
 @ stub -arch=win32 ?width@ios_base@std@@QBEHXZ  # don't forward to msvcp90
@@ -4274,9 +4274,9 @@
 @ stub _FSinh
 @ extern _FSnan msvcp90._FSnan
 # extern _FXbig
-@ stub _Getcoll
-@ stub _Getctype
-@ stub _Getcvt
+@ cdecl _Getcoll() msvcp90._Getcoll
+@ cdecl _Getctype() msvcp90._Getctype
+@ cdecl _Getcvt() msvcp90._Getcvt
 @ extern _Hugeval msvcp90._Hugeval
 @ extern _Inf msvcp90._Inf
 @ stub _LCosh
@@ -4292,7 +4292,7 @@
 @ stub _LSinh
 @ extern _LSnan msvcp90._LSnan
 # extern _LXbig
-@ stub _Mbrtowc
+@ cdecl _Mbrtowc(ptr ptr long ptr ptr) msvcp90._Mbrtowc
 @ extern _Nan msvcp90._Nan
 @ stub _Poly
 # extern _Rteps
@@ -4301,11 +4301,11 @@
 @ stub _Stod
 @ stub _Stof
 @ stub _Stold
-@ stub _Strcoll
+@ cdecl _Strcoll(ptr ptr ptr ptr ptr) msvcp90._Strcoll
 @ stub _Strxfrm
-@ stub _Tolower
-@ stub _Toupper
-@ stub _Wcrtomb
+@ cdecl _Tolower(long ptr) msvcp90._Tolower
+@ cdecl _Toupper(long ptr) msvcp90._Toupper
+@ cdecl _Wcrtomb(ptr long ptr ptr) msvcp90._Wcrtomb
 # extern _Xbig
 @ stub __Wcrtomb_lk
 @ cdecl btowc(long) msvcrt.btowc
