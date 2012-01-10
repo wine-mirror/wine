@@ -787,7 +787,7 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                               if (*pos++ != '-') isError = TRUE;
                           }
 
-                          /* Parse the arg : Day */
+                          /* Parse the arg : Year */
                           if (!isError) {
                               st.wYear = _wtol(pos);
                               while (*pos && isdigit(*pos)) pos++;
