@@ -2030,7 +2030,10 @@ HRESULT navigate_new_window(HTMLWindow *window, IUri *uri, const WCHAR *name, IH
     IWebBrowser2_put_Visible(web_browser, VARIANT_TRUE);
     IWebBrowser2_Release(web_browser);
 
-    *ret = new_window;
+    if(ret)
+        *ret = new_window;
+    else
+        IHTMLWindow2_Release(new_window);
     return S_OK;
 }
 

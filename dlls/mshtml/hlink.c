@@ -28,6 +28,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "binding.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -82,6 +83,9 @@ static HRESULT WINAPI HlinkTarget_Navigate(IHlinkTarget *iface, DWORD grfHLNF, L
         FIXME("Unsupported grfHLNF=%08x\n", grfHLNF);
     if(pwzJumpLocation)
         FIXME("JumpLocation not supported\n");
+
+    if(!This->doc_obj->client)
+        return navigate_new_window(This->window, This->window->uri, NULL, NULL);
 
     return IOleObject_DoVerb(&This->IOleObject_iface, OLEIVERB_SHOW, NULL, NULL, -1, NULL, NULL);
 }
