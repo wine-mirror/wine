@@ -263,7 +263,7 @@ static BOOL is_assembly_installed( IAssemblyCache *cache, const WCHAR *display_n
     memset( &info, 0, sizeof(info) );
     info.cbAssemblyInfo = sizeof(info);
     hr = IAssemblyCache_QueryAssemblyInfo( cache, QUERYASMINFO_FLAG_GETSIZE, display_name, &info );
-    if (FAILED( hr ))
+    if (hr != HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER ))
     {
         TRACE("QueryAssemblyInfo returned 0x%08x\n", hr);
         return FALSE;
