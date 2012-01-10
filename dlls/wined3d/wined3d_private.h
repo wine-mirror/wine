@@ -2510,14 +2510,14 @@ const char *debug_fbostatus(GLenum status) DECLSPEC_HIDDEN;
 const char *debug_glerror(GLenum error) DECLSPEC_HIDDEN;
 const char *debug_d3dbasis(WINED3DBASISTYPE basis) DECLSPEC_HIDDEN;
 const char *debug_d3ddegree(enum wined3d_degree_type order) DECLSPEC_HIDDEN;
-const char *debug_d3dtop(WINED3DTEXTUREOP d3dtop) DECLSPEC_HIDDEN;
+const char *debug_d3dtop(enum wined3d_texture_op d3dtop) DECLSPEC_HIDDEN;
 void dump_color_fixup_desc(struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 const char *debug_surflocation(DWORD flag) DECLSPEC_HIDDEN;
 
 BOOL is_invalid_op(const struct wined3d_state *state, int stage,
-        WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3) DECLSPEC_HIDDEN;
+        enum wined3d_texture_op op, DWORD arg1, DWORD arg2, DWORD arg3) DECLSPEC_HIDDEN;
 void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
-        BOOL is_alpha, int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3,
+        BOOL is_alpha, int stage, enum wined3d_texture_op op, DWORD arg1, DWORD arg2, DWORD arg3,
         INT texture_idx, DWORD dst) DECLSPEC_HIDDEN;
 void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords,
         BOOL transformed, enum wined3d_format_id coordtype, BOOL ffp_can_disable_proj) DECLSPEC_HIDDEN;

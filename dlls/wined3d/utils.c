@@ -2227,38 +2227,40 @@ const char *debug_d3dtexturestate(enum wined3d_texture_stage_state state)
     }
 }
 
-const char* debug_d3dtop(WINED3DTEXTUREOP d3dtop) {
-    switch (d3dtop) {
+const char *debug_d3dtop(enum wined3d_texture_op d3dtop)
+{
+    switch (d3dtop)
+    {
 #define D3DTOP_TO_STR(u) case u: return #u
-        D3DTOP_TO_STR(WINED3DTOP_DISABLE);
-        D3DTOP_TO_STR(WINED3DTOP_SELECTARG1);
-        D3DTOP_TO_STR(WINED3DTOP_SELECTARG2);
-        D3DTOP_TO_STR(WINED3DTOP_MODULATE);
-        D3DTOP_TO_STR(WINED3DTOP_MODULATE2X);
-        D3DTOP_TO_STR(WINED3DTOP_MODULATE4X);
-        D3DTOP_TO_STR(WINED3DTOP_ADD);
-        D3DTOP_TO_STR(WINED3DTOP_ADDSIGNED);
-        D3DTOP_TO_STR(WINED3DTOP_ADDSIGNED2X);
-        D3DTOP_TO_STR(WINED3DTOP_SUBTRACT);
-        D3DTOP_TO_STR(WINED3DTOP_ADDSMOOTH);
-        D3DTOP_TO_STR(WINED3DTOP_BLENDDIFFUSEALPHA);
-        D3DTOP_TO_STR(WINED3DTOP_BLENDTEXTUREALPHA);
-        D3DTOP_TO_STR(WINED3DTOP_BLENDFACTORALPHA);
-        D3DTOP_TO_STR(WINED3DTOP_BLENDTEXTUREALPHAPM);
-        D3DTOP_TO_STR(WINED3DTOP_BLENDCURRENTALPHA);
-        D3DTOP_TO_STR(WINED3DTOP_PREMODULATE);
-        D3DTOP_TO_STR(WINED3DTOP_MODULATEALPHA_ADDCOLOR);
-        D3DTOP_TO_STR(WINED3DTOP_MODULATECOLOR_ADDALPHA);
-        D3DTOP_TO_STR(WINED3DTOP_MODULATEINVALPHA_ADDCOLOR);
-        D3DTOP_TO_STR(WINED3DTOP_MODULATEINVCOLOR_ADDALPHA);
-        D3DTOP_TO_STR(WINED3DTOP_BUMPENVMAP);
-        D3DTOP_TO_STR(WINED3DTOP_BUMPENVMAPLUMINANCE);
-        D3DTOP_TO_STR(WINED3DTOP_DOTPRODUCT3);
-        D3DTOP_TO_STR(WINED3DTOP_MULTIPLYADD);
-        D3DTOP_TO_STR(WINED3DTOP_LERP);
+        D3DTOP_TO_STR(WINED3D_TOP_DISABLE);
+        D3DTOP_TO_STR(WINED3D_TOP_SELECT_ARG1);
+        D3DTOP_TO_STR(WINED3D_TOP_SELECT_ARG2);
+        D3DTOP_TO_STR(WINED3D_TOP_MODULATE);
+        D3DTOP_TO_STR(WINED3D_TOP_MODULATE_2X);
+        D3DTOP_TO_STR(WINED3D_TOP_MODULATE_4X);
+        D3DTOP_TO_STR(WINED3D_TOP_ADD);
+        D3DTOP_TO_STR(WINED3D_TOP_ADD_SIGNED);
+        D3DTOP_TO_STR(WINED3D_TOP_ADD_SIGNED_2X);
+        D3DTOP_TO_STR(WINED3D_TOP_SUBTRACT);
+        D3DTOP_TO_STR(WINED3D_TOP_ADD_SMOOTH);
+        D3DTOP_TO_STR(WINED3D_TOP_BLEND_DIFFUSE_ALPHA);
+        D3DTOP_TO_STR(WINED3D_TOP_BLEND_TEXTURE_ALPHA);
+        D3DTOP_TO_STR(WINED3D_TOP_BLEND_FACTOR_ALPHA);
+        D3DTOP_TO_STR(WINED3D_TOP_BLEND_TEXTURE_ALPHA_PM);
+        D3DTOP_TO_STR(WINED3D_TOP_BLEND_CURRENT_ALPHA);
+        D3DTOP_TO_STR(WINED3D_TOP_PREMODULATE);
+        D3DTOP_TO_STR(WINED3D_TOP_MODULATE_ALPHA_ADD_COLOR);
+        D3DTOP_TO_STR(WINED3D_TOP_MODULATE_COLOR_ADD_ALPHA);
+        D3DTOP_TO_STR(WINED3D_TOP_MODULATE_INVALPHA_ADD_COLOR);
+        D3DTOP_TO_STR(WINED3D_TOP_MODULATE_INVCOLOR_ADD_ALPHA);
+        D3DTOP_TO_STR(WINED3D_TOP_BUMPENVMAP);
+        D3DTOP_TO_STR(WINED3D_TOP_BUMPENVMAP_LUMINANCE);
+        D3DTOP_TO_STR(WINED3D_TOP_DOTPRODUCT3);
+        D3DTOP_TO_STR(WINED3D_TOP_MULTIPLY_ADD);
+        D3DTOP_TO_STR(WINED3D_TOP_LERP);
 #undef D3DTOP_TO_STR
         default:
-            FIXME("Unrecognized %u WINED3DTOP\n", d3dtop);
+            FIXME("Unrecognized texture op %#x.\n", d3dtop);
             return "unrecognized";
     }
 }
@@ -2478,17 +2480,22 @@ const char *debug_surflocation(DWORD flag) {
 }
 
 BOOL is_invalid_op(const struct wined3d_state *state, int stage,
-        WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3)
+        enum wined3d_texture_op op, DWORD arg1, DWORD arg2, DWORD arg3)
 {
-    if (op == WINED3DTOP_DISABLE) return FALSE;
-    if (state->textures[stage]) return FALSE;
+    if (op == WINED3D_TOP_DISABLE)
+        return FALSE;
+    if (state->textures[stage])
+        return FALSE;
 
     if ((arg1 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
-            && op != WINED3DTOP_SELECTARG2) return TRUE;
+            && op != WINED3D_TOP_SELECT_ARG2)
+        return TRUE;
     if ((arg2 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
-            && op != WINED3DTOP_SELECTARG1) return TRUE;
+            && op != WINED3D_TOP_SELECT_ARG1)
+        return TRUE;
     if ((arg3 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
-            && (op == WINED3DTOP_MULTIPLYADD || op == WINED3DTOP_LERP)) return TRUE;
+            && (op == WINED3D_TOP_MULTIPLY_ADD || op == WINED3D_TOP_LERP))
+        return TRUE;
 
     return FALSE;
 }
@@ -2859,7 +2866,8 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
 #define ARG1 0x01
 #define ARG2 0x02
 #define ARG0 0x04
-    static const unsigned char args[WINED3DTOP_LERP + 1] = {
+    static const unsigned char args[WINED3D_TOP_LERP + 1] =
+    {
         /* undefined                        */  0,
         /* D3DTOP_DISABLE                   */  0,
         /* D3DTOP_SELECTARG1                */  ARG1,
@@ -2899,10 +2907,10 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
         const struct wined3d_texture *texture;
 
         settings->op[i].padding = 0;
-        if (state->texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3DTOP_DISABLE)
+        if (state->texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_DISABLE)
         {
-            settings->op[i].cop = WINED3DTOP_DISABLE;
-            settings->op[i].aop = WINED3DTOP_DISABLE;
+            settings->op[i].cop = WINED3D_TOP_DISABLE;
+            settings->op[i].aop = WINED3D_TOP_DISABLE;
             settings->op[i].carg0 = settings->op[i].carg1 = settings->op[i].carg2 = ARG_UNUSED;
             settings->op[i].aarg0 = settings->op[i].aarg1 = settings->op[i].aarg2 = ARG_UNUSED;
             settings->op[i].color_fixup = COLOR_FIXUP_IDENTITY;
@@ -2958,10 +2966,11 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
             carg0 = ARG_UNUSED;
             carg2 = ARG_UNUSED;
             carg1 = WINED3DTA_CURRENT;
-            cop = WINED3DTOP_SELECTARG1;
+            cop = WINED3D_TOP_SELECT_ARG1;
         }
 
-        if(cop == WINED3DTOP_DOTPRODUCT3) {
+        if (cop == WINED3D_TOP_DOTPRODUCT3)
+        {
             /* A dotproduct3 on the colorop overwrites the alphaop operation and replicates
              * the color result to the alpha component of the destination
              */
@@ -2990,26 +2999,26 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
 
                 if (surf->CKeyFlags & WINEDDSD_CKSRCBLT && !surf->resource.format->alpha_mask)
                 {
-                    if (aop == WINED3DTOP_DISABLE)
+                    if (aop == WINED3D_TOP_DISABLE)
                     {
                        aarg1 = WINED3DTA_TEXTURE;
-                       aop = WINED3DTOP_SELECTARG1;
+                       aop = WINED3D_TOP_SELECT_ARG1;
                     }
-                    else if (aop == WINED3DTOP_SELECTARG1 && aarg1 != WINED3DTA_TEXTURE)
+                    else if (aop == WINED3D_TOP_SELECT_ARG1 && aarg1 != WINED3DTA_TEXTURE)
                     {
                         if (state->render_states[WINED3D_RS_ALPHABLENDENABLE])
                         {
                             aarg2 = WINED3DTA_TEXTURE;
-                            aop = WINED3DTOP_MODULATE;
+                            aop = WINED3D_TOP_MODULATE;
                         }
                         else aarg1 = WINED3DTA_TEXTURE;
                     }
-                    else if (aop == WINED3DTOP_SELECTARG2 && aarg2 != WINED3DTA_TEXTURE)
+                    else if (aop == WINED3D_TOP_SELECT_ARG2 && aarg2 != WINED3DTA_TEXTURE)
                     {
                         if (state->render_states[WINED3D_RS_ALPHABLENDENABLE])
                         {
                             aarg1 = WINED3DTA_TEXTURE;
-                            aop = WINED3DTOP_MODULATE;
+                            aop = WINED3D_TOP_MODULATE;
                         }
                         else aarg2 = WINED3DTA_TEXTURE;
                     }
@@ -3022,7 +3031,7 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
                aarg0 = ARG_UNUSED;
                aarg2 = ARG_UNUSED;
                aarg1 = WINED3DTA_CURRENT;
-               aop = WINED3DTOP_SELECTARG1;
+               aop = WINED3D_TOP_SELECT_ARG1;
         }
 
         if (carg1 == WINED3DTA_TEXTURE || carg2 == WINED3DTA_TEXTURE || carg0 == WINED3DTA_TEXTURE

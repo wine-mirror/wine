@@ -2038,7 +2038,7 @@ static void get_src_and_opr(DWORD arg, BOOL is_alpha, GLenum* source, GLenum* op
 
 /* Setup the texture operations texture stage states */
 static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
-        BOOL isAlpha, int Stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3)
+        BOOL isAlpha, int Stage, enum wined3d_texture_op op, DWORD arg1, DWORD arg2, DWORD arg3)
 {
     GLenum src1, src2, src3;
     GLenum opr1, opr2, opr3;
@@ -2092,7 +2092,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
     if (is_invalid_op(state, Stage, op, arg1, arg2, arg3))
     {
         arg1 = WINED3DTA_CURRENT;
-        op = WINED3DTOP_SELECTARG1;
+        op = WINED3D_TOP_SELECT_ARG1;
     }
 
     if (isAlpha && !state->textures[Stage] && arg1 == WINED3DTA_TEXTURE)
@@ -2122,8 +2122,9 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             src3_target = GL_SOURCE3_RGB_NV;
             opr3_target = GL_OPERAND3_RGB_NV;
         }
-        switch (op) {
-            case WINED3DTOP_DISABLE: /* Only for alpha */
+        switch (op)
+        {
+            case WINED3D_TOP_DISABLE: /* Only for alpha */
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_REPLACE");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, GL_PREVIOUS_EXT);
@@ -2143,11 +2144,12 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 glTexEnvi(GL_TEXTURE_ENV, opr3_target, opr);
                 checkGLcall("GL_TEXTURE_ENV, opr3_target, opr");
                 break;
-                case WINED3DTOP_SELECTARG1:                                          /* = a1 * 1 + 0 * 0 */
-                case WINED3DTOP_SELECTARG2:                                          /* = a2 * 1 + 0 * 0 */
+                case WINED3D_TOP_SELECT_ARG1:                                          /* = a1 * 1 + 0 * 0 */
+                case WINED3D_TOP_SELECT_ARG2:                                          /* = a2 * 1 + 0 * 0 */
                     glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                     checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
-                    if (op == WINED3DTOP_SELECTARG1) {
+                    if (op == WINED3D_TOP_SELECT_ARG1)
+                    {
                         glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
                         checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
                         glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -2172,7 +2174,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                     checkGLcall("GL_TEXTURE_ENV, opr3_target, opr");
                     break;
 
-            case WINED3DTOP_MODULATE:
+            case WINED3D_TOP_MODULATE:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD"); /* Add = a0*a1 + a2*a3 */
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2194,7 +2196,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
-            case WINED3DTOP_MODULATE2X:
+            case WINED3D_TOP_MODULATE_2X:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD"); /* Add = a0*a1 + a2*a3 */
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2216,7 +2218,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 2);
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 2");
                 break;
-            case WINED3DTOP_MODULATE4X:
+            case WINED3D_TOP_MODULATE_4X:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD"); /* Add = a0*a1 + a2*a3 */
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2239,7 +2241,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 4");
                 break;
 
-            case WINED3DTOP_ADD:
+            case WINED3D_TOP_ADD:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2262,7 +2264,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
 
-            case WINED3DTOP_ADDSIGNED:
+            case WINED3D_TOP_ADD_SIGNED:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2285,7 +2287,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
 
-            case WINED3DTOP_ADDSIGNED2X:
+            case WINED3D_TOP_ADD_SIGNED_2X:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2308,7 +2310,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 2");
                 break;
 
-            case WINED3DTOP_ADDSMOOTH:
+            case WINED3D_TOP_ADD_SMOOTH:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2337,7 +2339,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
 
-            case WINED3DTOP_BLENDDIFFUSEALPHA:
+            case WINED3D_TOP_BLEND_DIFFUSE_ALPHA:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2359,7 +2361,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
-            case WINED3DTOP_BLENDTEXTUREALPHA:
+            case WINED3D_TOP_BLEND_TEXTURE_ALPHA:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2381,7 +2383,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
-            case WINED3DTOP_BLENDFACTORALPHA:
+            case WINED3D_TOP_BLEND_FACTOR_ALPHA:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2403,7 +2405,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
-            case WINED3DTOP_BLENDTEXTUREALPHAPM:
+            case WINED3D_TOP_BLEND_TEXTURE_ALPHA_PM:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2425,7 +2427,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
-            case WINED3DTOP_MODULATEALPHA_ADDCOLOR:
+            case WINED3D_TOP_MODULATE_ALPHA_ADD_COLOR:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");  /* Add = a0*a1 + a2*a3 */
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);        /*   a0 = src1/opr1    */
@@ -2451,7 +2453,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
-            case WINED3DTOP_MODULATECOLOR_ADDALPHA:
+            case WINED3D_TOP_MODULATE_COLOR_ADD_ALPHA:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2477,7 +2479,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
-            case WINED3DTOP_MODULATEINVALPHA_ADDCOLOR:
+            case WINED3D_TOP_MODULATE_INVALPHA_ADD_COLOR:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2505,7 +2507,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
-            case WINED3DTOP_MODULATEINVCOLOR_ADDALPHA:
+            case WINED3D_TOP_MODULATE_INVCOLOR_ADD_ALPHA:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2537,7 +2539,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
-            case WINED3DTOP_MULTIPLYADD:
+            case WINED3D_TOP_MULTIPLY_ADD:
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
                 checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src3);
@@ -2560,11 +2562,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
 
-            case WINED3DTOP_BUMPENVMAP:
-            {
-            }
-
-            case WINED3DTOP_BUMPENVMAPLUMINANCE:
+            case WINED3D_TOP_BUMPENVMAP:
+            case WINED3D_TOP_BUMPENVMAP_LUMINANCE:
                 FIXME("Implement bump environment mapping in GL_NV_texture_env_combine4 path\n");
 
             default:
@@ -2580,7 +2579,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
 
     Handled = TRUE; /* Again, assume handled */
     switch (op) {
-        case WINED3DTOP_DISABLE: /* Only for alpha */
+        case WINED3D_TOP_DISABLE: /* Only for alpha */
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_REPLACE);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_REPLACE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, GL_PREVIOUS_EXT);
@@ -2590,7 +2589,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-        case WINED3DTOP_SELECTARG1:
+        case WINED3D_TOP_SELECT_ARG1:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_REPLACE);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_REPLACE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2600,7 +2599,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-        case WINED3DTOP_SELECTARG2:
+        case WINED3D_TOP_SELECT_ARG2:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_REPLACE);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_REPLACE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src2);
@@ -2610,7 +2609,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-        case WINED3DTOP_MODULATE:
+        case WINED3D_TOP_MODULATE:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2624,7 +2623,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-        case WINED3DTOP_MODULATE2X:
+        case WINED3D_TOP_MODULATE_2X:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2638,7 +2637,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 2);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 2");
             break;
-        case WINED3DTOP_MODULATE4X:
+        case WINED3D_TOP_MODULATE_4X:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2652,7 +2651,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 4);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 4");
             break;
-        case WINED3DTOP_ADD:
+        case WINED3D_TOP_ADD:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2666,7 +2665,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-        case WINED3DTOP_ADDSIGNED:
+        case WINED3D_TOP_ADD_SIGNED:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2680,7 +2679,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-        case WINED3DTOP_ADDSIGNED2X:
+        case WINED3D_TOP_ADD_SIGNED_2X:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2694,7 +2693,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 2);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 2");
             break;
-        case WINED3DTOP_SUBTRACT:
+        case WINED3D_TOP_SUBTRACT:
             if (gl_info->supported[ARB_TEXTURE_ENV_COMBINE])
             {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_SUBTRACT);
@@ -2714,7 +2713,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             }
             break;
 
-        case WINED3DTOP_BLENDDIFFUSEALPHA:
+        case WINED3D_TOP_BLEND_DIFFUSE_ALPHA:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2732,7 +2731,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-        case WINED3DTOP_BLENDTEXTUREALPHA:
+        case WINED3D_TOP_BLEND_TEXTURE_ALPHA:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2750,7 +2749,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-        case WINED3DTOP_BLENDFACTORALPHA:
+        case WINED3D_TOP_BLEND_FACTOR_ALPHA:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2768,7 +2767,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-        case WINED3DTOP_BLENDCURRENTALPHA:
+        case WINED3D_TOP_BLEND_CURRENT_ALPHA:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2786,7 +2785,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-        case WINED3DTOP_DOTPRODUCT3:
+        case WINED3D_TOP_DOTPRODUCT3:
             if (gl_info->supported[ARB_TEXTURE_ENV_DOT3])
             {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA_ARB);
@@ -2810,7 +2809,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-        case WINED3DTOP_LERP:
+        case WINED3D_TOP_LERP:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
@@ -2828,7 +2827,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-        case WINED3DTOP_ADDSMOOTH:
+        case WINED3D_TOP_ADD_SMOOTH:
             if (gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
             {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
@@ -2856,7 +2855,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             } else
                 Handled = FALSE;
                 break;
-        case WINED3DTOP_BLENDTEXTUREALPHAPM:
+        case WINED3D_TOP_BLEND_TEXTURE_ALPHA_PM:
             if (gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
             {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
@@ -2878,7 +2877,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             } else
                 Handled = FALSE;
                 break;
-        case WINED3DTOP_MODULATEALPHA_ADDCOLOR:
+        case WINED3D_TOP_MODULATE_ALPHA_ADD_COLOR:
             if (gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
             {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
@@ -2906,7 +2905,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             } else
                 Handled = FALSE;
                 break;
-        case WINED3DTOP_MODULATECOLOR_ADDALPHA:
+        case WINED3D_TOP_MODULATE_COLOR_ADD_ALPHA:
             if (gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
             {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
@@ -2934,7 +2933,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             } else
                 Handled = FALSE;
                 break;
-        case WINED3DTOP_MODULATEINVALPHA_ADDCOLOR:
+        case WINED3D_TOP_MODULATE_INVALPHA_ADD_COLOR:
             if (gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
             {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
@@ -2962,7 +2961,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             } else
                 Handled = FALSE;
                 break;
-        case WINED3DTOP_MODULATEINVCOLOR_ADDALPHA:
+        case WINED3D_TOP_MODULATE_INVCOLOR_ADD_ALPHA:
             if (gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
             {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
@@ -2996,7 +2995,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             } else
                 Handled = FALSE;
                 break;
-        case WINED3DTOP_MULTIPLYADD:
+        case WINED3D_TOP_MULTIPLY_ADD:
             if (gl_info->supported[ATI_TEXTURE_ENV_COMBINE3])
             {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
@@ -3018,8 +3017,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             } else
                 Handled = FALSE;
                 break;
-        case WINED3DTOP_BUMPENVMAPLUMINANCE:
-        case WINED3DTOP_BUMPENVMAP:
+        case WINED3D_TOP_BUMPENVMAP_LUMINANCE:
+        case WINED3D_TOP_BUMPENVMAP:
             if (gl_info->supported[NV_TEXTURE_SHADER2])
             {
                 /* Technically texture shader support without register combiners is possible, but not expected to occur
@@ -3043,18 +3042,20 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 op2 = state->texture_states[Stage][WINED3D_TSS_ALPHA_OP];
 
             /* Note: If COMBINE4 in effect can't go back to combine! */
-            switch (op2) {
-                case WINED3DTOP_ADDSMOOTH:
-                case WINED3DTOP_BLENDTEXTUREALPHAPM:
-                case WINED3DTOP_MODULATEALPHA_ADDCOLOR:
-                case WINED3DTOP_MODULATECOLOR_ADDALPHA:
-                case WINED3DTOP_MODULATEINVALPHA_ADDCOLOR:
-                case WINED3DTOP_MODULATEINVCOLOR_ADDALPHA:
-                case WINED3DTOP_MULTIPLYADD:
+            switch (op2)
+            {
+                case WINED3D_TOP_ADD_SMOOTH:
+                case WINED3D_TOP_BLEND_TEXTURE_ALPHA_PM:
+                case WINED3D_TOP_MODULATE_ALPHA_ADD_COLOR:
+                case WINED3D_TOP_MODULATE_COLOR_ADD_ALPHA:
+                case WINED3D_TOP_MODULATE_INVALPHA_ADD_COLOR:
+                case WINED3D_TOP_MODULATE_INVCOLOR_ADD_ALPHA:
+                case WINED3D_TOP_MULTIPLY_ADD:
                     /* Ignore those implemented in both cases */
-                    switch (op) {
-                        case WINED3DTOP_SELECTARG1:
-                        case WINED3DTOP_SELECTARG2:
+                    switch (op)
+                    {
+                        case WINED3D_TOP_SELECT_ARG1:
+                        case WINED3D_TOP_SELECT_ARG2:
                             combineOK = FALSE;
                             Handled   = FALSE;
                             break;
@@ -3200,26 +3201,26 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
                  *
                  * What to do with multitexturing? So far no app has been found that uses color keying with
                  * multitexturing */
-                if (op == WINED3DTOP_DISABLE)
+                if (op == WINED3D_TOP_DISABLE)
                 {
                     arg1 = WINED3DTA_TEXTURE;
-                    op = WINED3DTOP_SELECTARG1;
+                    op = WINED3D_TOP_SELECT_ARG1;
                 }
-                else if(op == WINED3DTOP_SELECTARG1 && arg1 != WINED3DTA_TEXTURE)
+                else if (op == WINED3D_TOP_SELECT_ARG1 && arg1 != WINED3DTA_TEXTURE)
                 {
                     if (state->render_states[WINED3D_RS_ALPHABLENDENABLE])
                     {
                         arg2 = WINED3DTA_TEXTURE;
-                        op = WINED3DTOP_MODULATE;
+                        op = WINED3D_TOP_MODULATE;
                     }
                     else arg1 = WINED3DTA_TEXTURE;
                 }
-                else if(op == WINED3DTOP_SELECTARG2 && arg2 != WINED3DTA_TEXTURE)
+                else if (op == WINED3D_TOP_SELECT_ARG2 && arg2 != WINED3DTA_TEXTURE)
                 {
                     if (state->render_states[WINED3D_RS_ALPHABLENDENABLE])
                     {
                         arg1 = WINED3DTA_TEXTURE;
-                        op = WINED3DTOP_MODULATE;
+                        op = WINED3D_TOP_MODULATE;
                     }
                     else arg2 = WINED3DTA_TEXTURE;
                 }

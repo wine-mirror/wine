@@ -1072,7 +1072,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     stateblock->device->stateBlock->state.lowest_disabled_stage = MAX_TEXTURES - 1;
     for (i = 0; i < MAX_TEXTURES - 1; ++i)
     {
-        if (stateblock->device->stateBlock->state.texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3DTOP_DISABLE)
+        if (stateblock->device->stateBlock->state.texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_DISABLE)
         {
             stateblock->device->stateBlock->state.lowest_disabled_stage = i;
             break;
@@ -1254,10 +1254,10 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     {
         TRACE("Setting up default texture states for texture Stage %u.\n", i);
         memcpy(&state->transforms[WINED3DTS_TEXTURE0 + i], identity, sizeof(identity));
-        state->texture_states[i][WINED3D_TSS_COLOR_OP] = i ? WINED3DTOP_DISABLE : WINED3DTOP_MODULATE;
+        state->texture_states[i][WINED3D_TSS_COLOR_OP] = i ? WINED3D_TOP_DISABLE : WINED3D_TOP_MODULATE;
         state->texture_states[i][WINED3D_TSS_COLOR_ARG1] = WINED3DTA_TEXTURE;
         state->texture_states[i][WINED3D_TSS_COLOR_ARG2] = WINED3DTA_CURRENT;
-        state->texture_states[i][WINED3D_TSS_ALPHA_OP] = i ? WINED3DTOP_DISABLE : WINED3DTOP_SELECTARG1;
+        state->texture_states[i][WINED3D_TSS_ALPHA_OP] = i ? WINED3D_TOP_DISABLE : WINED3D_TOP_SELECT_ARG1;
         state->texture_states[i][WINED3D_TSS_ALPHA_ARG1] = WINED3DTA_TEXTURE;
         state->texture_states[i][WINED3D_TSS_ALPHA_ARG2] = WINED3DTA_CURRENT;
         state->texture_states[i][WINED3D_TSS_BUMPENV_MAT00] = 0;

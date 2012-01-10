@@ -5881,22 +5881,24 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
     arg1 = get_argreg(buffer, 1, stage, dw_arg1);
     arg2 = get_argreg(buffer, 2, stage, dw_arg2);
 
-    switch(op) {
-        case WINED3DTOP_DISABLE:
-            if (!stage) shader_addline(buffer, "MOV %s%s, fragment.color.primary;\n", dstreg, dstmask);
+    switch (op)
+    {
+        case WINED3D_TOP_DISABLE:
+            if (!stage)
+                shader_addline(buffer, "MOV %s%s, fragment.color.primary;\n", dstreg, dstmask);
             break;
 
-        case WINED3DTOP_SELECTARG2:
+        case WINED3D_TOP_SELECT_ARG2:
             arg1 = arg2;
             /* FALLTHROUGH */
-        case WINED3DTOP_SELECTARG1:
+        case WINED3D_TOP_SELECT_ARG1:
             shader_addline(buffer, "MOV %s%s, %s;\n", dstreg, dstmask, arg1);
             break;
 
-        case WINED3DTOP_MODULATE4X:
+        case WINED3D_TOP_MODULATE_4X:
             mul = 2;
             /* FALLTHROUGH */
-        case WINED3DTOP_MODULATE2X:
+        case WINED3D_TOP_MODULATE_2X:
             mul *= 2;
             if (!strcmp(dstreg, "result.color"))
             {
@@ -5904,11 +5906,11 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
                 mul_final_dest = TRUE;
             }
             /* FALLTHROUGH */
-        case WINED3DTOP_MODULATE:
+        case WINED3D_TOP_MODULATE:
             shader_addline(buffer, "MUL %s%s, %s, %s;\n", dstreg, dstmask, arg1, arg2);
             break;
 
-        case WINED3DTOP_ADDSIGNED2X:
+        case WINED3D_TOP_ADD_SIGNED_2X:
             mul = 2;
             if (!strcmp(dstreg, "result.color"))
             {
@@ -5916,41 +5918,41 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
                 mul_final_dest = TRUE;
             }
             /* FALLTHROUGH */
-        case WINED3DTOP_ADDSIGNED:
+        case WINED3D_TOP_ADD_SIGNED:
             shader_addline(buffer, "SUB arg2, %s, const.w;\n", arg2);
             arg2 = "arg2";
             /* FALLTHROUGH */
-        case WINED3DTOP_ADD:
+        case WINED3D_TOP_ADD:
             shader_addline(buffer, "ADD_SAT %s%s, %s, %s;\n", dstreg, dstmask, arg1, arg2);
             break;
 
-        case WINED3DTOP_SUBTRACT:
+        case WINED3D_TOP_SUBTRACT:
             shader_addline(buffer, "SUB_SAT %s%s, %s, %s;\n", dstreg, dstmask, arg1, arg2);
             break;
 
-        case WINED3DTOP_ADDSMOOTH:
+        case WINED3D_TOP_ADD_SMOOTH:
             shader_addline(buffer, "SUB arg1, const.x, %s;\n", arg1);
             shader_addline(buffer, "MAD_SAT %s%s, arg1, %s, %s;\n", dstreg, dstmask, arg2, arg1);
             break;
 
-        case WINED3DTOP_BLENDCURRENTALPHA:
+        case WINED3D_TOP_BLEND_CURRENT_ALPHA:
             arg0 = get_argreg(buffer, 0, stage, WINED3DTA_CURRENT);
             shader_addline(buffer, "LRP %s%s, %s.w, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
             break;
-        case WINED3DTOP_BLENDFACTORALPHA:
+        case WINED3D_TOP_BLEND_FACTOR_ALPHA:
             arg0 = get_argreg(buffer, 0, stage, WINED3DTA_TFACTOR);
             shader_addline(buffer, "LRP %s%s, %s.w, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
             break;
-        case WINED3DTOP_BLENDTEXTUREALPHA:
+        case WINED3D_TOP_BLEND_TEXTURE_ALPHA:
             arg0 = get_argreg(buffer, 0, stage, WINED3DTA_TEXTURE);
             shader_addline(buffer, "LRP %s%s, %s.w, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
             break;
-        case WINED3DTOP_BLENDDIFFUSEALPHA:
+        case WINED3D_TOP_BLEND_DIFFUSE_ALPHA:
             arg0 = get_argreg(buffer, 0, stage, WINED3DTA_DIFFUSE);
             shader_addline(buffer, "LRP %s%s, %s.w, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
             break;
 
-        case WINED3DTOP_BLENDTEXTUREALPHAPM:
+        case WINED3D_TOP_BLEND_TEXTURE_ALPHA_PM:
             arg0 = get_argreg(buffer, 0, stage, WINED3DTA_TEXTURE);
             shader_addline(buffer, "SUB arg0.w, const.x, %s.w;\n", arg0);
             shader_addline(buffer, "MAD_SAT %s%s, %s, arg0.w, %s;\n", dstreg, dstmask, arg2, arg1);
@@ -5958,22 +5960,22 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
 
         /* D3DTOP_PREMODULATE ???? */
 
-        case WINED3DTOP_MODULATEINVALPHA_ADDCOLOR:
+        case WINED3D_TOP_MODULATE_INVALPHA_ADD_COLOR:
             shader_addline(buffer, "SUB arg0.w, const.x, %s;\n", arg1);
             shader_addline(buffer, "MAD_SAT %s%s, arg0.w, %s, %s;\n", dstreg, dstmask, arg2, arg1);
             break;
-        case WINED3DTOP_MODULATEALPHA_ADDCOLOR:
+        case WINED3D_TOP_MODULATE_ALPHA_ADD_COLOR:
             shader_addline(buffer, "MAD_SAT %s%s, %s.w, %s, %s;\n", dstreg, dstmask, arg1, arg2, arg1);
             break;
-        case WINED3DTOP_MODULATEINVCOLOR_ADDALPHA:
+        case WINED3D_TOP_MODULATE_INVCOLOR_ADD_ALPHA:
             shader_addline(buffer, "SUB arg0, const.x, %s;\n", arg1);
             shader_addline(buffer, "MAD_SAT %s%s, arg0, %s, %s.w;\n", dstreg, dstmask, arg2, arg1);
             break;
-        case WINED3DTOP_MODULATECOLOR_ADDALPHA:
+        case WINED3D_TOP_MODULATE_COLOR_ADD_ALPHA:
             shader_addline(buffer, "MAD_SAT %s%s, %s, %s, %s.w;\n", dstreg, dstmask, arg1, arg2, arg1);
             break;
 
-        case WINED3DTOP_DOTPRODUCT3:
+        case WINED3D_TOP_DOTPRODUCT3:
             mul = 4;
             if (!strcmp(dstreg, "result.color"))
             {
@@ -5985,17 +5987,17 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
             shader_addline(buffer, "DP3_SAT %s%s, arg1, arg2;\n", dstreg, dstmask);
             break;
 
-        case WINED3DTOP_MULTIPLYADD:
+        case WINED3D_TOP_MULTIPLY_ADD:
             shader_addline(buffer, "MAD_SAT %s%s, %s, %s, %s;\n", dstreg, dstmask, arg1, arg2, arg0);
             break;
 
-        case WINED3DTOP_LERP:
+        case WINED3D_TOP_LERP:
             /* The msdn is not quite right here */
             shader_addline(buffer, "LRP %s%s, %s, %s, %s;\n", dstreg, dstmask, arg0, arg1, arg2);
             break;
 
-        case WINED3DTOP_BUMPENVMAP:
-        case WINED3DTOP_BUMPENVMAPLUMINANCE:
+        case WINED3D_TOP_BUMPENVMAP:
+        case WINED3D_TOP_BUMPENVMAP_LUMINANCE:
             /* Those are handled in the first pass of the shader(generation pass 1 and 2) already */
             break;
 
@@ -6029,8 +6031,10 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     GLint pos;
 
     /* Find out which textures are read */
-    for(stage = 0; stage < MAX_TEXTURES; stage++) {
-        if(settings->op[stage].cop == WINED3DTOP_DISABLE) break;
+    for (stage = 0; stage < MAX_TEXTURES; ++stage)
+    {
+        if (settings->op[stage].cop == WINED3D_TOP_DISABLE)
+            break;
         arg0 = settings->op[stage].carg0 & WINED3DTA_SELECTMASK;
         arg1 = settings->op[stage].carg1 & WINED3DTA_SELECTMASK;
         arg2 = settings->op[stage].carg2 & WINED3DTA_SELECTMASK;
@@ -6038,17 +6042,23 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
         if(arg1 == WINED3DTA_TEXTURE) tex_read[stage] = TRUE;
         if(arg2 == WINED3DTA_TEXTURE) tex_read[stage] = TRUE;
 
-        if(settings->op[stage].cop == WINED3DTOP_BLENDTEXTUREALPHA) tex_read[stage] = TRUE;
-        if(settings->op[stage].cop == WINED3DTOP_BLENDTEXTUREALPHAPM) tex_read[stage] = TRUE;
-        if(settings->op[stage].cop == WINED3DTOP_BUMPENVMAP) {
+        if (settings->op[stage].cop == WINED3D_TOP_BLEND_TEXTURE_ALPHA)
+            tex_read[stage] = TRUE;
+        if (settings->op[stage].cop == WINED3D_TOP_BLEND_TEXTURE_ALPHA_PM)
+            tex_read[stage] = TRUE;
+        if (settings->op[stage].cop == WINED3D_TOP_BUMPENVMAP)
+        {
             bump_used[stage] = TRUE;
             tex_read[stage] = TRUE;
         }
-        if(settings->op[stage].cop == WINED3DTOP_BUMPENVMAPLUMINANCE) {
+        if (settings->op[stage].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
+        {
             bump_used[stage] = TRUE;
             tex_read[stage] = TRUE;
             luminance_used[stage] = TRUE;
-        } else if(settings->op[stage].cop == WINED3DTOP_BLENDFACTORALPHA) {
+        }
+        else if (settings->op[stage].cop == WINED3D_TOP_BLEND_FACTOR_ALPHA)
+        {
             tfactor_used = TRUE;
         }
 
@@ -6061,7 +6071,8 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
             tempreg_used = TRUE;
         }
 
-        if(settings->op[stage].aop == WINED3DTOP_DISABLE) continue;
+        if (settings->op[stage].aop == WINED3D_TOP_DISABLE)
+            continue;
         arg0 = settings->op[stage].aarg0 & WINED3DTA_SELECTMASK;
         arg1 = settings->op[stage].aarg1 & WINED3DTA_SELECTMASK;
         arg2 = settings->op[stage].aarg2 & WINED3DTA_SELECTMASK;
@@ -6126,8 +6137,10 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
         shader_addline(&buffer, "KIL fragment.texcoord[7];\n");
 
     /* Generate texture sampling instructions) */
-    for(stage = 0; stage < MAX_TEXTURES && settings->op[stage].cop != WINED3DTOP_DISABLE; stage++) {
-        if(!tex_read[stage]) continue;
+    for (stage = 0; stage < MAX_TEXTURES && settings->op[stage].cop != WINED3D_TOP_DISABLE; ++stage)
+    {
+        if (!tex_read[stage])
+            continue;
 
         switch(settings->op[stage].tex_type) {
             case tex_1d:                    textype = "1D";     break;
@@ -6138,12 +6151,11 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
             default: textype = "unexpected_textype";   break;
         }
 
-        if(settings->op[stage].cop == WINED3DTOP_BUMPENVMAP ||
-           settings->op[stage].cop == WINED3DTOP_BUMPENVMAPLUMINANCE) {
+        if (settings->op[stage].cop == WINED3D_TOP_BUMPENVMAP
+                || settings->op[stage].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
             sat = "";
-        } else {
+        else
             sat = "_SAT";
-        }
 
         if(settings->op[stage].projected == proj_none) {
             instr = "TEX";
@@ -6155,9 +6167,10 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
             instr = "TXP";
         }
 
-        if(stage > 0 &&
-           (settings->op[stage - 1].cop == WINED3DTOP_BUMPENVMAP ||
-            settings->op[stage - 1].cop == WINED3DTOP_BUMPENVMAPLUMINANCE)) {
+        if (stage > 0
+                && (settings->op[stage - 1].cop == WINED3D_TOP_BUMPENVMAP
+                || settings->op[stage - 1].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE))
+        {
             shader_addline(&buffer, "SWZ arg1, bumpmat%u, x, z, 0, 0;\n", stage - 1);
             shader_addline(&buffer, "DP3 ret.x, arg1, tex%u;\n", stage - 1);
             shader_addline(&buffer, "SWZ arg1, bumpmat%u, y, w, 0, 0;\n", stage - 1);
@@ -6179,8 +6192,9 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
             }
 
             shader_addline(&buffer, "%s%s tex%u, ret, texture[%u], %s;\n",
-                           instr, sat, stage, stage, textype);
-            if(settings->op[stage - 1].cop == WINED3DTOP_BUMPENVMAPLUMINANCE) {
+                    instr, sat, stage, stage, textype);
+            if (settings->op[stage - 1].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
+            {
                 shader_addline(&buffer, "MAD_SAT ret.x, tex%u.z, luminance%u.x, luminance%u.y;\n",
                                stage - 1, stage - 1, stage - 1);
                 shader_addline(&buffer, "MUL tex%u, tex%u, ret.x;\n", stage, stage);
@@ -6203,32 +6217,33 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     /* Generate the main shader */
     for (stage = 0; stage < MAX_TEXTURES; ++stage)
     {
-        if (settings->op[stage].cop == WINED3DTOP_DISABLE)
+        if (settings->op[stage].cop == WINED3D_TOP_DISABLE)
         {
-            if (!stage) final_combiner_src = "fragment.color.primary";
+            if (!stage)
+                final_combiner_src = "fragment.color.primary";
             break;
         }
 
-        if(settings->op[stage].cop == WINED3DTOP_SELECTARG1 &&
-           settings->op[stage].aop == WINED3DTOP_SELECTARG1) {
+        if (settings->op[stage].cop == WINED3D_TOP_SELECT_ARG1
+                && settings->op[stage].aop == WINED3D_TOP_SELECT_ARG1)
             op_equal = settings->op[stage].carg1 == settings->op[stage].aarg1;
-        } else if(settings->op[stage].cop == WINED3DTOP_SELECTARG1 &&
-                  settings->op[stage].aop == WINED3DTOP_SELECTARG2) {
+        else if (settings->op[stage].cop == WINED3D_TOP_SELECT_ARG1
+                && settings->op[stage].aop == WINED3D_TOP_SELECT_ARG2)
             op_equal = settings->op[stage].carg1 == settings->op[stage].aarg2;
-        } else if(settings->op[stage].cop == WINED3DTOP_SELECTARG2 &&
-                  settings->op[stage].aop == WINED3DTOP_SELECTARG1) {
+        else if (settings->op[stage].cop == WINED3D_TOP_SELECT_ARG2
+                && settings->op[stage].aop == WINED3D_TOP_SELECT_ARG1)
             op_equal = settings->op[stage].carg2 == settings->op[stage].aarg1;
-        } else if(settings->op[stage].cop == WINED3DTOP_SELECTARG2 &&
-                  settings->op[stage].aop == WINED3DTOP_SELECTARG2) {
+        else if (settings->op[stage].cop == WINED3D_TOP_SELECT_ARG2
+                && settings->op[stage].aop == WINED3D_TOP_SELECT_ARG2)
             op_equal = settings->op[stage].carg2 == settings->op[stage].aarg2;
-        } else {
-            op_equal = settings->op[stage].aop   == settings->op[stage].cop &&
-                       settings->op[stage].carg0 == settings->op[stage].aarg0 &&
-                       settings->op[stage].carg1 == settings->op[stage].aarg1 &&
-                       settings->op[stage].carg2 == settings->op[stage].aarg2;
-        }
+        else
+            op_equal = settings->op[stage].aop   == settings->op[stage].cop
+                    && settings->op[stage].carg0 == settings->op[stage].aarg0
+                    && settings->op[stage].carg1 == settings->op[stage].aarg1
+                    && settings->op[stage].carg2 == settings->op[stage].aarg2;
 
-        if(settings->op[stage].aop == WINED3DTOP_DISABLE) {
+        if (settings->op[stage].aop == WINED3D_TOP_DISABLE)
+        {
             gen_ffp_instr(&buffer, stage, TRUE, FALSE, settings->op[stage].dst,
                           settings->op[stage].cop, settings->op[stage].carg0,
                           settings->op[stage].carg1, settings->op[stage].carg2);
@@ -6337,7 +6352,8 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
             new_desc->num_textures_used = 0;
             for (i = 0; i < gl_info->limits.texture_stages; ++i)
             {
-                if(settings.op[i].cop == WINED3DTOP_DISABLE) break;
+                if (settings.op[i].cop == WINED3D_TOP_DISABLE)
+                    break;
                 new_desc->num_textures_used = i;
             }
 

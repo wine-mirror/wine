@@ -34,8 +34,9 @@ static void nvts_activate_dimensions(const struct wined3d_state *state, DWORD st
 {
     BOOL bumpmap = FALSE;
 
-    if (stage > 0 && (state->texture_states[stage - 1][WINED3D_TSS_COLOR_OP] == WINED3DTOP_BUMPENVMAPLUMINANCE
-            || state->texture_states[stage - 1][WINED3D_TSS_COLOR_OP] == WINED3DTOP_BUMPENVMAP))
+    if (stage > 0
+            && (state->texture_states[stage - 1][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_BUMPENVMAP_LUMINANCE
+            || state->texture_states[stage - 1][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_BUMPENVMAP))
     {
         bumpmap = TRUE;
         context->texShaderBumpMap |= (1 << stage);
@@ -133,7 +134,7 @@ static void get_src_and_opr_nvrc(DWORD stage, DWORD arg, BOOL is_alpha, GLenum* 
 }
 
 void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state, BOOL is_alpha,
-        int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx, DWORD dst)
+        int stage, enum wined3d_texture_op op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx, DWORD dst)
 {
     struct tex_op_args tex_op_args = {{0}, {0}, {0}};
     GLenum portion = is_alpha ? GL_ALPHA : GL_RGB;
@@ -148,7 +149,7 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
     if (is_invalid_op(state, stage, op, arg1, arg2, arg3))
     {
         arg1 = WINED3DTA_CURRENT;
-        op = WINED3DTOP_SELECTARG1;
+        op = WINED3D_TOP_SELECT_ARG1;
     }
 
     get_src_and_opr_nvrc(stage, arg1, is_alpha, &tex_op_args.input[0],
@@ -166,9 +167,9 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
     }
 
     /* This is called by a state handler which has the gl lock held and a context for the thread */
-    switch(op)
+    switch (op)
     {
-        case WINED3DTOP_DISABLE:
+        case WINED3D_TOP_DISABLE:
             /* Only for alpha */
             if (!is_alpha)
                 ERR("Shouldn't be called for WINED3D_TSS_COLOR_OP (WINED3DTOP_DISABLE).\n");
@@ -183,16 +184,15 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        GL_DISCARD_NV, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
             break;
 
-        case WINED3DTOP_SELECTARG1:
-        case WINED3DTOP_SELECTARG2:
+        case WINED3D_TOP_SELECT_ARG1:
+        case WINED3D_TOP_SELECT_ARG2:
             /* Input, arg*1 */
-            if (op == WINED3DTOP_SELECTARG1) {
+            if (op == WINED3D_TOP_SELECT_ARG1)
                 GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                            tex_op_args.input[0], tex_op_args.mapping[0], tex_op_args.component_usage[0]));
-            } else {
+            else
                 GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                            tex_op_args.input[1], tex_op_args.mapping[1], tex_op_args.component_usage[1]));
-            }
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_B_NV,
                        GL_ZERO, GL_UNSIGNED_INVERT_NV, portion));
 
@@ -201,9 +201,9 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        GL_DISCARD_NV, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
             break;
 
-        case WINED3DTOP_MODULATE:
-        case WINED3DTOP_MODULATE2X:
-        case WINED3DTOP_MODULATE4X:
+        case WINED3D_TOP_MODULATE:
+        case WINED3D_TOP_MODULATE_2X:
+        case WINED3D_TOP_MODULATE_4X:
             /* Input, arg1*arg2 */
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                        tex_op_args.input[0], tex_op_args.mapping[0], tex_op_args.component_usage[0]));
@@ -211,21 +211,20 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        tex_op_args.input[1], tex_op_args.mapping[1], tex_op_args.component_usage[1]));
 
             /* Output */
-            if (op == WINED3DTOP_MODULATE) {
+            if (op == WINED3D_TOP_MODULATE)
                 GL_EXTCALL(glCombinerOutputNV(target, portion, output, GL_DISCARD_NV,
                            GL_DISCARD_NV, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
-            } else if (op == WINED3DTOP_MODULATE2X) {
+            else if (op == WINED3D_TOP_MODULATE_2X)
                 GL_EXTCALL(glCombinerOutputNV(target, portion, output, GL_DISCARD_NV,
                            GL_DISCARD_NV, GL_SCALE_BY_TWO_NV, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
-            } else if (op == WINED3DTOP_MODULATE4X) {
+            else if (op == WINED3D_TOP_MODULATE_4X)
                 GL_EXTCALL(glCombinerOutputNV(target, portion, output, GL_DISCARD_NV,
                            GL_DISCARD_NV, GL_SCALE_BY_FOUR_NV, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
-            }
             break;
 
-        case WINED3DTOP_ADD:
-        case WINED3DTOP_ADDSIGNED:
-        case WINED3DTOP_ADDSIGNED2X:
+        case WINED3D_TOP_ADD:
+        case WINED3D_TOP_ADD_SIGNED:
+        case WINED3D_TOP_ADD_SIGNED_2X:
             /* Input, arg1*1+arg2*1 */
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                        tex_op_args.input[0], tex_op_args.mapping[0], tex_op_args.component_usage[0]));
@@ -237,19 +236,18 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        GL_ZERO, GL_UNSIGNED_INVERT_NV, portion));
 
             /* Output */
-            if (op == WINED3DTOP_ADD) {
+            if (op == WINED3D_TOP_ADD)
                 GL_EXTCALL(glCombinerOutputNV(target, portion, GL_DISCARD_NV, GL_DISCARD_NV,
                            output, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
-            } else if (op == WINED3DTOP_ADDSIGNED) {
+            else if (op == WINED3D_TOP_ADD_SIGNED)
                 GL_EXTCALL(glCombinerOutputNV(target, portion, GL_DISCARD_NV, GL_DISCARD_NV,
                            output, GL_NONE, GL_BIAS_BY_NEGATIVE_ONE_HALF_NV, GL_FALSE, GL_FALSE, GL_FALSE));
-            } else if (op == WINED3DTOP_ADDSIGNED2X) {
+            else if (op == WINED3D_TOP_ADD_SIGNED_2X)
                 GL_EXTCALL(glCombinerOutputNV(target, portion, GL_DISCARD_NV, GL_DISCARD_NV,
                            output, GL_SCALE_BY_TWO_NV, GL_BIAS_BY_NEGATIVE_ONE_HALF_NV, GL_FALSE, GL_FALSE, GL_FALSE));
-            }
             break;
 
-        case WINED3DTOP_SUBTRACT:
+        case WINED3D_TOP_SUBTRACT:
             /* Input, arg1*1+-arg2*1 */
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                        tex_op_args.input[0], tex_op_args.mapping[0], tex_op_args.component_usage[0]));
@@ -265,7 +263,7 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        output, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
             break;
 
-        case WINED3DTOP_ADDSMOOTH:
+        case WINED3D_TOP_ADD_SMOOTH:
             /* Input, arg1*1+(1-arg1)*arg2 */
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                        tex_op_args.input[0], tex_op_args.mapping[0], tex_op_args.component_usage[0]));
@@ -281,24 +279,30 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        output, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
             break;
 
-        case WINED3DTOP_BLENDDIFFUSEALPHA:
-        case WINED3DTOP_BLENDTEXTUREALPHA:
-        case WINED3DTOP_BLENDFACTORALPHA:
-        case WINED3DTOP_BLENDTEXTUREALPHAPM:
-        case WINED3DTOP_BLENDCURRENTALPHA:
+        case WINED3D_TOP_BLEND_DIFFUSE_ALPHA:
+        case WINED3D_TOP_BLEND_TEXTURE_ALPHA:
+        case WINED3D_TOP_BLEND_FACTOR_ALPHA:
+        case WINED3D_TOP_BLEND_TEXTURE_ALPHA_PM:
+        case WINED3D_TOP_BLEND_CURRENT_ALPHA:
         {
             GLenum alpha_src = GL_PRIMARY_COLOR_NV;
-            if (op == WINED3DTOP_BLENDDIFFUSEALPHA) alpha_src = d3dta_to_combiner_input(WINED3DTA_DIFFUSE, stage, texture_idx);
-            else if (op == WINED3DTOP_BLENDTEXTUREALPHA) alpha_src = d3dta_to_combiner_input(WINED3DTA_TEXTURE, stage, texture_idx);
-            else if (op == WINED3DTOP_BLENDFACTORALPHA) alpha_src = d3dta_to_combiner_input(WINED3DTA_TFACTOR, stage, texture_idx);
-            else if (op == WINED3DTOP_BLENDTEXTUREALPHAPM) alpha_src = d3dta_to_combiner_input(WINED3DTA_TEXTURE, stage, texture_idx);
-            else if (op == WINED3DTOP_BLENDCURRENTALPHA) alpha_src = d3dta_to_combiner_input(WINED3DTA_CURRENT, stage, texture_idx);
-            else FIXME("Unhandled WINED3DTOP %s, shouldn't happen\n", debug_d3dtop(op));
+            if (op == WINED3D_TOP_BLEND_DIFFUSE_ALPHA)
+                alpha_src = d3dta_to_combiner_input(WINED3DTA_DIFFUSE, stage, texture_idx);
+            else if (op == WINED3D_TOP_BLEND_TEXTURE_ALPHA)
+                alpha_src = d3dta_to_combiner_input(WINED3DTA_TEXTURE, stage, texture_idx);
+            else if (op == WINED3D_TOP_BLEND_FACTOR_ALPHA)
+                alpha_src = d3dta_to_combiner_input(WINED3DTA_TFACTOR, stage, texture_idx);
+            else if (op == WINED3D_TOP_BLEND_TEXTURE_ALPHA_PM)
+                alpha_src = d3dta_to_combiner_input(WINED3DTA_TEXTURE, stage, texture_idx);
+            else if (op == WINED3D_TOP_BLEND_CURRENT_ALPHA)
+                alpha_src = d3dta_to_combiner_input(WINED3DTA_CURRENT, stage, texture_idx);
+            else
+                FIXME("Unhandled texture op %s, shouldn't happen.\n", debug_d3dtop(op));
 
             /* Input, arg1*alpha_src+arg2*(1-alpha_src) */
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                        tex_op_args.input[0], tex_op_args.mapping[0], tex_op_args.component_usage[0]));
-            if (op == WINED3DTOP_BLENDTEXTUREALPHAPM)
+            if (op == WINED3D_TOP_BLEND_TEXTURE_ALPHA_PM)
             {
                 GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_B_NV,
                            GL_ZERO, GL_UNSIGNED_INVERT_NV, portion));
@@ -317,7 +321,7 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
             break;
         }
 
-        case WINED3DTOP_MODULATEALPHA_ADDCOLOR:
+        case WINED3D_TOP_MODULATE_ALPHA_ADD_COLOR:
             /* Input, arg1_alpha*arg2_rgb+arg1_rgb*1 */
             if (is_alpha)
                 ERR("Only supported for WINED3D_TSS_COLOR_OP (WINED3DTOP_MODULATEALPHA_ADDCOLOR).\n");
@@ -335,7 +339,7 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        output, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
             break;
 
-        case WINED3DTOP_MODULATECOLOR_ADDALPHA:
+        case WINED3D_TOP_MODULATE_COLOR_ADD_ALPHA:
             /* Input, arg1_rgb*arg2_rgb+arg1_alpha*1 */
             if (is_alpha)
                 ERR("Only supported for WINED3D_TSS_COLOR_OP (WINED3DTOP_MODULATECOLOR_ADDALPHA).\n");
@@ -353,7 +357,7 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        output, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
             break;
 
-        case WINED3DTOP_MODULATEINVALPHA_ADDCOLOR:
+        case WINED3D_TOP_MODULATE_INVALPHA_ADD_COLOR:
             /* Input, (1-arg1_alpha)*arg2_rgb+arg1_rgb*1 */
             if (is_alpha)
                 ERR("Only supported for WINED3D_TSS_COLOR_OP (WINED3DTOP_MODULATEINVALPHA_ADDCOLOR).\n");
@@ -371,7 +375,7 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        output, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
             break;
 
-        case WINED3DTOP_MODULATEINVCOLOR_ADDALPHA:
+        case WINED3D_TOP_MODULATE_INVCOLOR_ADD_ALPHA:
             /* Input, (1-arg1_rgb)*arg2_rgb+arg1_alpha*1 */
             if (is_alpha)
                 ERR("Only supported for WINED3D_TSS_COLOR_OP (WINED3DTOP_MODULATEINVCOLOR_ADDALPHA).\n");
@@ -389,7 +393,7 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        output, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
             break;
 
-        case WINED3DTOP_DOTPRODUCT3:
+        case WINED3D_TOP_DOTPRODUCT3:
             /* Input, arg1 . arg2 */
             /* FIXME: DX7 uses a different calculation? */
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
@@ -402,7 +406,7 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        GL_DISCARD_NV, GL_NONE, GL_NONE, GL_TRUE, GL_FALSE, GL_FALSE));
             break;
 
-        case WINED3DTOP_MULTIPLYADD:
+        case WINED3D_TOP_MULTIPLY_ADD:
             /* Input, arg3*1+arg1*arg2 */
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                        tex_op_args.input[2], tex_op_args.mapping[2], tex_op_args.component_usage[2]));
@@ -418,7 +422,7 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        output, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
             break;
 
-        case WINED3DTOP_LERP:
+        case WINED3D_TOP_LERP:
             /* Input, arg3*arg1+(1-arg3)*arg2 */
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
                        tex_op_args.input[2], tex_op_args.mapping[2], tex_op_args.component_usage[2]));
@@ -434,8 +438,8 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
                        output, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE));
             break;
 
-        case WINED3DTOP_BUMPENVMAPLUMINANCE:
-        case WINED3DTOP_BUMPENVMAP:
+        case WINED3D_TOP_BUMPENVMAP_LUMINANCE:
+        case WINED3D_TOP_BUMPENVMAP:
             if (gl_info->supported[NV_TEXTURE_SHADER])
             {
                 /* The bump map stage itself isn't exciting, just read the texture. But tell the next stage to
@@ -454,7 +458,7 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
             }
 
         default:
-            FIXME("Unhandled WINED3DTOP: stage %d, is_alpha %d, op %s (%#x), arg1 %#x, arg2 %#x, arg3 %#x, texture_idx %d\n",
+            FIXME("Unhandled texture op: stage %d, is_alpha %d, op %s (%#x), arg1 %#x, arg2 %#x, arg3 %#x, texture_idx %d.\n",
                   stage, is_alpha, debug_d3dtop(op), op, arg1, arg2, arg3, texture_idx);
     }
 
@@ -557,8 +561,8 @@ static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_s
      */
     if (gl_info->supported[NV_TEXTURE_SHADER2])
     {
-        BOOL usesBump = (state->texture_states[stage][WINED3D_TSS_COLOR_OP] == WINED3DTOP_BUMPENVMAPLUMINANCE
-                || state->texture_states[stage][WINED3D_TSS_COLOR_OP] == WINED3DTOP_BUMPENVMAP);
+        BOOL usesBump = (state->texture_states[stage][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_BUMPENVMAP_LUMINANCE
+                || state->texture_states[stage][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_BUMPENVMAP);
         BOOL usedBump = !!(context->texShaderBumpMap & 1 << (stage + 1));
         if (usesBump != usedBump)
         {

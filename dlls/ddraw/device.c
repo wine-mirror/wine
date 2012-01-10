@@ -2550,21 +2550,18 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
             wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3D_TSS_ALPHA_ARG1, &alphaarg1);
             wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3D_TSS_ALPHA_ARG2, &alphaarg2);
 
-            if (colorop == WINED3DTOP_SELECTARG1 && colorarg1 == WINED3DTA_TEXTURE &&
-                alphaop == WINED3DTOP_SELECTARG1 && alphaarg1 == WINED3DTA_TEXTURE)
-            {
+            if (colorop == WINED3D_TOP_SELECT_ARG1 && colorarg1 == WINED3DTA_TEXTURE
+                    && alphaop == WINED3D_TOP_SELECT_ARG1 && alphaarg1 == WINED3DTA_TEXTURE)
                 *lpdwRenderState = D3DTBLEND_DECAL;
-            }
-            else if (colorop == WINED3DTOP_SELECTARG1 && colorarg1 == WINED3DTA_TEXTURE &&
-                alphaop == WINED3DTOP_MODULATE && alphaarg1 == WINED3DTA_TEXTURE && alphaarg2 == WINED3DTA_CURRENT)
-            {
+            else if (colorop == WINED3D_TOP_SELECT_ARG1 && colorarg1 == WINED3DTA_TEXTURE
+                    && alphaop == WINED3D_TOP_MODULATE
+                    && alphaarg1 == WINED3DTA_TEXTURE && alphaarg2 == WINED3DTA_CURRENT)
                 *lpdwRenderState = D3DTBLEND_DECALALPHA;
-            }
-            else if (colorop == WINED3DTOP_MODULATE && colorarg1 == WINED3DTA_TEXTURE && colorarg2 == WINED3DTA_CURRENT &&
-                alphaop == WINED3DTOP_MODULATE && alphaarg1 == WINED3DTA_TEXTURE && alphaarg2 == WINED3DTA_CURRENT)
-            {
+            else if (colorop == WINED3D_TOP_MODULATE
+                    && colorarg1 == WINED3DTA_TEXTURE && colorarg2 == WINED3DTA_CURRENT
+                    && alphaop == WINED3D_TOP_MODULATE
+                    && alphaarg1 == WINED3DTA_TEXTURE && alphaarg2 == WINED3DTA_CURRENT)
                 *lpdwRenderState = D3DTBLEND_MODULATEALPHA;
-            }
             else
             {
                 struct wined3d_texture *tex = NULL;
@@ -2591,12 +2588,11 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
                     wined3d_texture_decref(tex);
                 }
 
-                if (!(colorop == WINED3DTOP_MODULATE && colorarg1 == WINED3DTA_TEXTURE && colorarg2 == WINED3DTA_CURRENT &&
-                      alphaop == (tex_alpha ? WINED3DTOP_SELECTARG1 : WINED3DTOP_SELECTARG2) &&
-                      alphaarg1 == WINED3DTA_TEXTURE && alphaarg2 == WINED3DTA_CURRENT))
-                {
-                    ERR("Unexpected texture stage state setup, returning D3DTBLEND_MODULATE - likely erroneous\n");
-                }
+                if (!(colorop == WINED3D_TOP_MODULATE
+                        && colorarg1 == WINED3DTA_TEXTURE && colorarg2 == WINED3DTA_CURRENT
+                        && alphaop == (tex_alpha ? WINED3D_TOP_SELECT_ARG1 : WINED3D_TOP_SELECT_ARG2)
+                        && alphaarg1 == WINED3DTA_TEXTURE && alphaarg2 == WINED3DTA_CURRENT))
+                    ERR("Unexpected texture stage state setup, returning D3DTBLEND_MODULATE - likely erroneous.\n");
 
                 *lpdwRenderState = D3DTBLEND_MODULATE;
             }
@@ -2897,10 +2893,10 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
 
                     if (tex_alpha)
                         wined3d_device_set_texture_stage_state(This->wined3d_device,
-                                0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG1);
+                                0, WINED3D_TSS_ALPHA_OP, WINED3D_TOP_SELECT_ARG1);
                     else
                         wined3d_device_set_texture_stage_state(This->wined3d_device,
-                                0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG2);
+                                0, WINED3D_TSS_ALPHA_OP, WINED3D_TOP_SELECT_ARG2);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
                             0, WINED3D_TSS_ALPHA_ARG1, WINED3DTA_TEXTURE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
@@ -2910,19 +2906,19 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
                             0, WINED3D_TSS_COLOR_ARG2, WINED3DTA_CURRENT);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3D_TSS_COLOR_OP, WINED3DTOP_MODULATE);
+                            0, WINED3D_TSS_COLOR_OP, WINED3D_TOP_MODULATE);
                     break;
                 }
 
                 case D3DTBLEND_ADD:
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3D_TSS_COLOR_OP, WINED3DTOP_ADD);
+                            0, WINED3D_TSS_COLOR_OP, WINED3D_TOP_ADD);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
                             0, WINED3D_TSS_COLOR_ARG1, WINED3DTA_TEXTURE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
                             0, WINED3D_TSS_COLOR_ARG2, WINED3DTA_CURRENT);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG2);
+                            0, WINED3D_TSS_ALPHA_OP, WINED3D_TOP_SELECT_ARG2);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
                             0, WINED3D_TSS_ALPHA_ARG2, WINED3DTA_CURRENT);
                     break;
@@ -2937,9 +2933,9 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
                             0, WINED3D_TSS_ALPHA_ARG2, WINED3DTA_CURRENT);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3D_TSS_COLOR_OP, WINED3DTOP_MODULATE);
+                            0, WINED3D_TSS_COLOR_OP, WINED3D_TOP_MODULATE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_MODULATE);
+                            0, WINED3D_TSS_ALPHA_OP, WINED3D_TOP_MODULATE);
                     break;
 
                 case D3DTBLEND_COPY:
@@ -2949,20 +2945,20 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
                             0, WINED3D_TSS_ALPHA_ARG1, WINED3DTA_TEXTURE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3D_TSS_COLOR_OP, WINED3DTOP_SELECTARG1);
+                            0, WINED3D_TSS_COLOR_OP, WINED3D_TOP_SELECT_ARG1);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG1);
+                            0, WINED3D_TSS_ALPHA_OP, WINED3D_TOP_SELECT_ARG1);
                     break;
 
                 case D3DTBLEND_DECALALPHA:
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3D_TSS_COLOR_OP, WINED3DTOP_BLENDTEXTUREALPHA);
+                            0, WINED3D_TSS_COLOR_OP, WINED3D_TOP_BLEND_TEXTURE_ALPHA);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
                             0, WINED3D_TSS_COLOR_ARG1, WINED3DTA_TEXTURE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
                             0, WINED3D_TSS_COLOR_ARG2, WINED3DTA_CURRENT);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG2);
+                            0, WINED3D_TSS_ALPHA_OP, WINED3D_TOP_SELECT_ARG2);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
                             0, WINED3D_TSS_ALPHA_ARG2, WINED3DTA_CURRENT);
                     break;
@@ -4766,10 +4762,10 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
         /* Arg 1/2 are already set to WINED3DTA_TEXTURE/WINED3DTA_CURRENT in case of D3DTBLEND_MODULATE */
         if (tex_alpha)
             wined3d_device_set_texture_stage_state(This->wined3d_device,
-                    0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG1);
+                    0, WINED3D_TSS_ALPHA_OP, WINED3D_TOP_SELECT_ARG1);
         else
             wined3d_device_set_texture_stage_state(This->wined3d_device,
-                    0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG2);
+                    0, WINED3D_TSS_ALPHA_OP, WINED3D_TOP_SELECT_ARG2);
     }
 
     wined3d_mutex_unlock();
