@@ -61,13 +61,11 @@ static BOOL source_matches_volume(MSIMEDIAINFO *mi, LPCWSTR source_root)
     PathStripToRootW(root);
     PathAddBackslashW(root);
 
-    if (!GetVolumeInformationW(root, volume_name, MAX_PATH + 1,
-                               NULL, NULL, NULL, NULL, 0))
+    if (!GetVolumeInformationW(root, volume_name, MAX_PATH + 1, NULL, NULL, NULL, NULL, 0))
     {
-        ERR("Failed to get volume information\n");
+        WARN("failed to get volume information for %s (%u)\n", debugstr_w(root), GetLastError());
         return FALSE;
     }
-
     return !strcmpiW( mi->volume_label, volume_name );
 }
 
