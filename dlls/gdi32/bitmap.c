@@ -566,7 +566,7 @@ static BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, PHYSDEV physdev )
 
     if (!(bitmap = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return FALSE;
 
-    if (!bitmap->dib && bitmap->funcs != physdev->funcs)
+    if (bitmap->funcs != physdev->funcs)
     {
         /* we can only change from the null driver to some other driver */
         if (bitmap->funcs == &null_driver)
@@ -634,7 +634,7 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
         old_physdev = pop_dc_driver( &dc->physDev );
 
     physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
-    if (bitmap->dib || physdev->funcs == &null_driver)
+    if (physdev->funcs == &null_driver)
     {
         physdev = dc->dibdrv;
         if (physdev) push_dc_driver( &dc->physDev, physdev, physdev->funcs );
@@ -701,26 +701,6 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
     if (!(bmp = free_gdi_handle( handle ))) return FALSE;
 
     HeapFree( GetProcessHeap(), 0, bmp->bitmap.bmBits );
-
-    if (bmp->dib)
-    {
-        DIBSECTION *dib = bmp->dib;
-
-        if (dib->dsBm.bmBits)
-        {
-            if (dib->dshSection)
-            {
-                SYSTEM_INFO SystemInfo;
-                GetSystemInfo( &SystemInfo );
-                UnmapViewOfFile( (char *)dib->dsBm.bmBits -
-                                 (dib->dsOffset % SystemInfo.dwAllocationGranularity) );
-            }
-            else if (!dib->dsOffset)
-                VirtualFree(dib->dsBm.bmBits, 0L, MEM_RELEASE );
-        }
-        HeapFree(GetProcessHeap(), 0, dib);
-        HeapFree(GetProcessHeap(), 0, bmp->color_table);
-    }
     return HeapFree( GetProcessHeap(), 0, bmp );
 }
 
@@ -730,30 +710,13 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
  */
 static INT BITMAP_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    INT ret;
+    INT ret = 0;
     BITMAPOBJ *bmp = GDI_GetObjPtr( handle, OBJ_BITMAP );
 
     if (!bmp) return 0;
 
     if (!buffer) ret = sizeof(BITMAP);
-    else if (count < sizeof(BITMAP)) ret = 0;
-    else if (bmp->dib)
-    {
-	if (count >= sizeof(DIBSECTION))
-	{
-            DIBSECTION *dib = buffer;
-            *dib = *bmp->dib;
-            dib->dsBmih.biHeight = abs( dib->dsBmih.biHeight );
-            ret = sizeof(DIBSECTION);
-	}
-	else /* if (count >= sizeof(BITMAP)) */
-        {
-            DIBSECTION *dib = bmp->dib;
-            memcpy( buffer, &dib->dsBm, sizeof(BITMAP) );
-            ret = sizeof(BITMAP);
-	}
-    }
-    else
+    else if (count >= sizeof(BITMAP))
     {
         memcpy( buffer, &bmp->bitmap, sizeof(BITMAP) );
         ((BITMAP *) buffer)->bmBits = NULL;

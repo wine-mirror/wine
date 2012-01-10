@@ -72,6 +72,19 @@
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 
 
+static HGDIOBJ DIB_SelectObject( HGDIOBJ handle, HDC hdc );
+static INT DIB_GetObject( HGDIOBJ handle, INT count, LPVOID buffer );
+static BOOL DIB_DeleteObject( HGDIOBJ handle );
+
+static const struct gdi_obj_funcs dib_funcs =
+{
+    DIB_SelectObject,  /* pSelectObject */
+    DIB_GetObject,     /* pGetObjectA */
+    DIB_GetObject,     /* pGetObjectW */
+    NULL,              /* pUnrealizeObject */
+    DIB_DeleteObject   /* pDeleteObject */
+};
+
 /***********************************************************************
  *           bitmap_info_size
  *
@@ -1576,6 +1589,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pCreateDIBSection );
         bmp->dib = dib;
+        bmp->header.funcs = &dib_funcs;
         bmp->funcs = physdev->funcs;
         bmp->color_table = color_table;
         GDI_ReleaseObj( ret );
@@ -1599,4 +1613,136 @@ error:
     HeapFree( GetProcessHeap(), 0, color_table );
     HeapFree( GetProcessHeap(), 0, dib );
     return 0;
+}
+
+
+/***********************************************************************
+ *           DIB_SelectObject
+ */
+static HGDIOBJ DIB_SelectObject( HGDIOBJ handle, HDC hdc )
+{
+    HGDIOBJ ret;
+    BITMAPOBJ *bitmap;
+    DC *dc;
+    PHYSDEV physdev = NULL, old_physdev = NULL, pathdev = NULL;
+
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
+
+    if (GetObjectType( hdc ) != OBJ_MEMDC)
+    {
+        ret = 0;
+        goto done;
+    }
+    ret = dc->hBitmap;
+    if (handle == dc->hBitmap) goto done;  /* nothing to do */
+
+    if (!(bitmap = GDI_GetObjPtr( handle, OBJ_BITMAP )))
+    {
+        ret = 0;
+        goto done;
+    }
+
+    if (bitmap->header.selcount)
+    {
+        WARN( "Bitmap already selected in another DC\n" );
+        GDI_ReleaseObj( handle );
+        ret = 0;
+        goto done;
+    }
+
+    if (dc->physDev->funcs == &path_driver) pathdev = pop_dc_driver( &dc->physDev );
+
+    old_physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
+    physdev = dc->dibdrv;
+    if (old_physdev != dc->dibdrv)
+    {
+        if (physdev) push_dc_driver( &dc->physDev, physdev, physdev->funcs );
+        else
+        {
+            if (!dib_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL )) goto done;
+            dc->dibdrv = physdev = dc->physDev;
+        }
+    }
+
+    if (!physdev->funcs->pSelectBitmap( physdev, handle ))
+    {
+        GDI_ReleaseObj( handle );
+        ret = 0;
+    }
+    else
+    {
+        dc->hBitmap = handle;
+        GDI_inc_ref_count( handle );
+        dc->dirty = 0;
+        dc->vis_rect.left   = 0;
+        dc->vis_rect.top    = 0;
+        dc->vis_rect.right  = bitmap->bitmap.bmWidth;
+        dc->vis_rect.bottom = bitmap->bitmap.bmHeight;
+        GDI_ReleaseObj( handle );
+        DC_InitDC( dc );
+        GDI_dec_ref_count( ret );
+    }
+
+ done:
+    if(!ret)
+    {
+        if (old_physdev && old_physdev != dc->dibdrv) pop_dc_driver( &dc->physDev );
+    }
+    if (pathdev) push_dc_driver( &dc->physDev, pathdev, pathdev->funcs );
+    release_dc_ptr( dc );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           DIB_GetObject
+ */
+static INT DIB_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
+{
+    INT ret = 0;
+    BITMAPOBJ *bmp = GDI_GetObjPtr( handle, OBJ_BITMAP );
+
+    if (!bmp) return 0;
+
+    if (!buffer) ret = sizeof(BITMAP);
+    else if (count >= sizeof(DIBSECTION))
+    {
+        DIBSECTION *dib = buffer;
+        *dib = *bmp->dib;
+        dib->dsBmih.biHeight = abs( dib->dsBmih.biHeight );
+        ret = sizeof(DIBSECTION);
+    }
+    else if (count >= sizeof(BITMAP))
+    {
+        BITMAP *bitmap = buffer;
+        *bitmap = bmp->dib->dsBm;
+        ret = sizeof(BITMAP);
+    }
+
+    GDI_ReleaseObj( handle );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           DIB_DeleteObject
+ */
+static BOOL DIB_DeleteObject( HGDIOBJ handle )
+{
+    BITMAPOBJ *bmp;
+
+    if (!(bmp = free_gdi_handle( handle ))) return FALSE;
+
+    if (bmp->dib->dshSection)
+    {
+        SYSTEM_INFO SystemInfo;
+        GetSystemInfo( &SystemInfo );
+        UnmapViewOfFile( (char *)bmp->dib->dsBm.bmBits -
+                         (bmp->dib->dsOffset % SystemInfo.dwAllocationGranularity) );
+    }
+    else VirtualFree( bmp->dib->dsBm.bmBits, 0, MEM_RELEASE );
+
+    HeapFree(GetProcessHeap(), 0, bmp->dib);
+    HeapFree(GetProcessHeap(), 0, bmp->color_table);
+    return HeapFree( GetProcessHeap(), 0, bmp );
 }
