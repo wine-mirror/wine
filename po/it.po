@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-03 21:32+0100\n"
+"PO-Revision-Date: 2012-01-10 17:08+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -8406,7 +8406,7 @@ msgstr "L'handle del dispositivo specificato non è valido."
 
 #: winmm.rc:34
 msgid "There is no driver installed on your system!"
-msgstr "Non è presente nessun driver installato nel sistema!"
+msgstr "Nessun driver è presente nel sistema!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -13114,9 +13114,8 @@ msgid "&Color"
 msgstr "C&olore"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " Configurazione "
+msgstr "Configurazione"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
