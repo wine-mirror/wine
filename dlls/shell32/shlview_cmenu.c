@@ -66,7 +66,7 @@ static inline ContextMenu *impl_from_IContextMenu2(IContextMenu2 *iface)
     return CONTAINING_RECORD(iface, ContextMenu, IContextMenu2_iface);
 }
 
-static HRESULT WINAPI ItemMenu_QueryInterface(IContextMenu2 *iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI ContextMenu_QueryInterface(IContextMenu2 *iface, REFIID riid, LPVOID *ppvObj)
 {
     ContextMenu *This = impl_from_IContextMenu2(iface);
 
@@ -95,7 +95,7 @@ static HRESULT WINAPI ItemMenu_QueryInterface(IContextMenu2 *iface, REFIID riid,
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ItemMenu_AddRef(IContextMenu2 *iface)
+static ULONG WINAPI ContextMenu_AddRef(IContextMenu2 *iface)
 {
     ContextMenu *This = impl_from_IContextMenu2(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
@@ -103,7 +103,7 @@ static ULONG WINAPI ItemMenu_AddRef(IContextMenu2 *iface)
     return ref;
 }
 
-static ULONG WINAPI ItemMenu_Release(IContextMenu2 *iface)
+static ULONG WINAPI ContextMenu_Release(IContextMenu2 *iface)
 {
     ContextMenu *This = impl_from_IContextMenu2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -553,9 +553,9 @@ static HRESULT WINAPI ItemMenu_HandleMenuMsg(
 
 static const IContextMenu2Vtbl ItemContextMenuVtbl =
 {
-    ItemMenu_QueryInterface,
-    ItemMenu_AddRef,
-    ItemMenu_Release,
+    ContextMenu_QueryInterface,
+    ContextMenu_AddRef,
+    ContextMenu_Release,
     ItemMenu_QueryContextMenu,
     ItemMenu_InvokeCommand,
     ItemMenu_GetCommandString,
@@ -590,62 +590,6 @@ IContextMenu2 *ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, co
 }
 
 /* Background menu implementation */
-static HRESULT WINAPI BackgroundMenu_QueryInterface(IContextMenu2 *iface, REFIID riid, void **ppvObj)
-{
-    ContextMenu *This = impl_from_IContextMenu2(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObj);
-
-    *ppvObj = NULL;
-
-    if(IsEqualIID(riid, &IID_IUnknown) ||
-       IsEqualIID(riid, &IID_IContextMenu) ||
-       IsEqualIID(riid, &IID_IContextMenu2))
-    {
-        *ppvObj = This;
-    }
-    else if(IsEqualIID(riid, &IID_IShellExtInit))  /*IShellExtInit*/
-    {
-        FIXME("-- LPSHELLEXTINIT pointer requested\n");
-    }
-
-    if(*ppvObj)
-    {
-	IContextMenu2_AddRef(iface);
-	TRACE("-- Interface: (%p)->(%p)\n", ppvObj, *ppvObj);
-	return S_OK;
-    }
-
-    TRACE("-- Interface: E_NOINTERFACE\n");
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI BackgroundMenu_AddRef(IContextMenu2 *iface)
-{
-    ContextMenu *This = impl_from_IContextMenu2(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%u)\n", This, ref);
-    return ref;
-}
-
-static ULONG WINAPI BackgroundMenu_Release(IContextMenu2 *iface)
-{
-    ContextMenu *This = impl_from_IContextMenu2(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p)->(%u)\n", This, ref);
-
-    if (!ref)
-    {
-        if (This->parent)
-            IShellFolder_Release(This->parent);
-
-        HeapFree(GetProcessHeap(), 0, This);
-    }
-
-    return ref;
-}
-
 static HRESULT WINAPI BackgroundMenu_QueryContextMenu(
 	IContextMenu2 *iface,
 	HMENU hMenu,
@@ -927,9 +871,9 @@ static HRESULT WINAPI BackgroundMenu_HandleMenuMsg(
 
 static const IContextMenu2Vtbl BackgroundContextMenuVtbl =
 {
-    BackgroundMenu_QueryInterface,
-    BackgroundMenu_AddRef,
-    BackgroundMenu_Release,
+    ContextMenu_QueryInterface,
+    ContextMenu_AddRef,
+    ContextMenu_Release,
     BackgroundMenu_QueryContextMenu,
     BackgroundMenu_InvokeCommand,
     BackgroundMenu_GetCommandString,
