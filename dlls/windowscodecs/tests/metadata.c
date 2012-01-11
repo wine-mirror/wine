@@ -124,7 +124,7 @@ static void test_metadata_unknown(void)
     load_stream((IUnknown*)reader, metadata_unknown, sizeof(metadata_unknown));
 
     hr = IWICMetadataReader_GetEnumerator(reader, &enumerator);
-    todo_wine ok(hr == S_OK, "GetEnumerator failed, hr=%x\n", hr);
+    ok(hr == S_OK, "GetEnumerator failed, hr=%x\n", hr);
 
     if (SUCCEEDED(hr))
     {

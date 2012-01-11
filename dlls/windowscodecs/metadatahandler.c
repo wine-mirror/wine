@@ -68,6 +68,9 @@ static void MetadataHandler_FreeItems(MetadataHandler *This)
     HeapFree(GetProcessHeap(), 0, This->items);
 }
 
+static HRESULT MetadataHandlerEnum_Create(MetadataHandler *parent, DWORD index,
+    IWICEnumMetadataItem **ppIEnumMetadataItem);
+
 static HRESULT WINAPI MetadataHandler_QueryInterface(IWICMetadataWriter *iface, REFIID iid,
     void **ppv)
 {
@@ -164,8 +167,9 @@ static HRESULT WINAPI MetadataHandler_GetValue(IWICMetadataWriter *iface,
 static HRESULT WINAPI MetadataHandler_GetEnumerator(IWICMetadataWriter *iface,
     IWICEnumMetadataItem **ppIEnumMetadata)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIEnumMetadata);
-    return E_NOTIMPL;
+    MetadataHandler *This = impl_from_IWICMetadataWriter(iface);
+    TRACE("(%p,%p)\n", iface, ppIEnumMetadata);
+    return MetadataHandlerEnum_Create(This, 0, ppIEnumMetadata);
 }
 
 static HRESULT WINAPI MetadataHandler_SetValue(IWICMetadataWriter *iface,
@@ -341,6 +345,189 @@ HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, IUnknown *pUnkO
     IWICMetadataWriter_Release(&This->IWICMetadataWriter_iface);
 
     return hr;
+}
+
+typedef struct MetadataHandlerEnum {
+    IWICEnumMetadataItem IWICEnumMetadataItem_iface;
+    LONG ref;
+    MetadataHandler *parent;
+    DWORD index;
+} MetadataHandlerEnum;
+
+static inline MetadataHandlerEnum *impl_from_IWICEnumMetadataItem(IWICEnumMetadataItem *iface)
+{
+    return CONTAINING_RECORD(iface, MetadataHandlerEnum, IWICEnumMetadataItem_iface);
+}
+
+static HRESULT WINAPI MetadataHandlerEnum_QueryInterface(IWICEnumMetadataItem *iface, REFIID iid,
+    void **ppv)
+{
+    MetadataHandlerEnum *This = impl_from_IWICEnumMetadataItem(iface);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICEnumMetadataItem, iid))
+    {
+        *ppv = &This->IWICEnumMetadataItem_iface;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI MetadataHandlerEnum_AddRef(IWICEnumMetadataItem *iface)
+{
+    MetadataHandlerEnum *This = impl_from_IWICEnumMetadataItem(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI MetadataHandlerEnum_Release(IWICEnumMetadataItem *iface)
+{
+    MetadataHandlerEnum *This = impl_from_IWICEnumMetadataItem(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        IWICMetadataWriter_Release(&This->parent->IWICMetadataWriter_iface);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI MetadataHandlerEnum_Next(IWICEnumMetadataItem *iface,
+    ULONG celt, PROPVARIANT *rgeltSchema, PROPVARIANT *rgeltId,
+    PROPVARIANT *rgeltValue, ULONG *pceltFetched)
+{
+    MetadataHandlerEnum *This = impl_from_IWICEnumMetadataItem(iface);
+    ULONG new_index;
+    HRESULT hr=S_FALSE;
+    int i;
+
+    TRACE("(%p,%i)\n", iface, celt);
+
+    EnterCriticalSection(&This->parent->lock);
+
+    if (This->index >= This->parent->item_count)
+    {
+        *pceltFetched = 0;
+        LeaveCriticalSection(&This->parent->lock);
+        return S_FALSE;
+    }
+
+    new_index = min(This->parent->item_count, This->index + celt);
+    *pceltFetched = new_index - This->index;
+
+    if (rgeltSchema)
+    {
+        for (i=0; SUCCEEDED(hr) && i < *pceltFetched; i++)
+            hr = PropVariantCopy(&rgeltSchema[i], &This->parent->items[i+This->index].schema);
+    }
+
+    for (i=0; SUCCEEDED(hr) && i < *pceltFetched; i++)
+        hr = PropVariantCopy(&rgeltId[i], &This->parent->items[i+This->index].id);
+
+    if (rgeltValue)
+    {
+        for (i=0; SUCCEEDED(hr) && i < *pceltFetched; i++)
+            hr = PropVariantCopy(&rgeltValue[i], &This->parent->items[i+This->index].value);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        This->index = new_index;
+    }
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    return hr;
+}
+
+static HRESULT WINAPI MetadataHandlerEnum_Skip(IWICEnumMetadataItem *iface,
+    ULONG celt)
+{
+    MetadataHandlerEnum *This = impl_from_IWICEnumMetadataItem(iface);
+
+    EnterCriticalSection(&This->parent->lock);
+
+    This->index += celt;
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MetadataHandlerEnum_Reset(IWICEnumMetadataItem *iface)
+{
+    MetadataHandlerEnum *This = impl_from_IWICEnumMetadataItem(iface);
+
+    EnterCriticalSection(&This->parent->lock);
+
+    This->index = 0;
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MetadataHandlerEnum_Clone(IWICEnumMetadataItem *iface,
+    IWICEnumMetadataItem **ppIEnumMetadataItem)
+{
+    MetadataHandlerEnum *This = impl_from_IWICEnumMetadataItem(iface);
+    HRESULT hr;
+
+    EnterCriticalSection(&This->parent->lock);
+
+    hr = MetadataHandlerEnum_Create(This->parent, This->index, ppIEnumMetadataItem);
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    return hr;
+}
+
+static const IWICEnumMetadataItemVtbl MetadataHandlerEnum_Vtbl = {
+    MetadataHandlerEnum_QueryInterface,
+    MetadataHandlerEnum_AddRef,
+    MetadataHandlerEnum_Release,
+    MetadataHandlerEnum_Next,
+    MetadataHandlerEnum_Skip,
+    MetadataHandlerEnum_Reset,
+    MetadataHandlerEnum_Clone
+};
+
+static HRESULT MetadataHandlerEnum_Create(MetadataHandler *parent, DWORD index,
+    IWICEnumMetadataItem **ppIEnumMetadataItem)
+{
+    MetadataHandlerEnum *This;
+
+    *ppIEnumMetadataItem = NULL;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataHandlerEnum));
+    if (!This) return E_OUTOFMEMORY;
+
+    IWICMetadataWriter_AddRef(&parent->IWICMetadataWriter_iface);
+
+    This->IWICEnumMetadataItem_iface.lpVtbl = &MetadataHandlerEnum_Vtbl;
+    This->ref = 1;
+    This->parent = parent;
+    This->index = index;
+
+    *ppIEnumMetadataItem = &This->IWICEnumMetadataItem_iface;
+
+    return S_OK;
 }
 
 static HRESULT LoadUnknownMetadata(IStream *input, const GUID *preferred_vendor,
