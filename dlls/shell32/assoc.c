@@ -36,7 +36,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 /**************************************************************************
- *  IQueryAssociations {SHELL32}
+ *  IQueryAssociations
  *
  * DESCRIPTION
  *  This object provides a layer of abstraction over the system registry in
@@ -71,7 +71,7 @@ static inline IQueryAssociationsImpl *impl_from_IQueryAssociations(IQueryAssocia
 }
 
 /**************************************************************************
- *  IQueryAssociations_QueryInterface {SHLWAPI}
+ *  IQueryAssociations_QueryInterface
  *
  * See IUnknown_QueryInterface.
  */
@@ -100,7 +100,7 @@ static HRESULT WINAPI IQueryAssociations_fnQueryInterface(
 }
 
 /**************************************************************************
- *  IQueryAssociations_AddRef {SHLWAPI}
+ *  IQueryAssociations_AddRef
  *
  * See IUnknown_AddRef.
  */
@@ -115,7 +115,7 @@ static ULONG WINAPI IQueryAssociations_fnAddRef(IQueryAssociations *iface)
 }
 
 /**************************************************************************
- *  IQueryAssociations_Release {SHLWAPI}
+ *  IQueryAssociations_Release
  *
  * See IUnknown_Release.
  */
@@ -138,7 +138,7 @@ static ULONG WINAPI IQueryAssociations_fnRelease(IQueryAssociations *iface)
 }
 
 /**************************************************************************
- *  IQueryAssociations_Init {SHLWAPI}
+ *  IQueryAssociations_Init
  *
  * Initialise an IQueryAssociations object.
  *
@@ -374,7 +374,7 @@ static HRESULT ASSOC_ReturnData(LPWSTR out, DWORD *outlen, LPCWSTR data,
 }
 
 /**************************************************************************
- *  IQueryAssociations_GetString {SHLWAPI}
+ *  IQueryAssociations_GetString
  *
  * Get a file association string from the registry.
  *
@@ -599,7 +599,7 @@ get_friendly_name_fail:
 }
 
 /**************************************************************************
- *  IQueryAssociations_GetKey {SHLWAPI}
+ *  IQueryAssociations_GetKey
  *
  * Get a file association key from the registry.
  *
@@ -629,7 +629,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetKey(
 }
 
 /**************************************************************************
- *  IQueryAssociations_GetData {SHLWAPI}
+ *  IQueryAssociations_GetData
  *
  * Get the data for a file association key from the registry.
  *
@@ -661,7 +661,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetData(
 }
 
 /**************************************************************************
- *  IQueryAssociations_GetEnum {SHLWAPI}
+ *  IQueryAssociations_GetEnum
  *
  * Not yet implemented in native Win32.
  *
