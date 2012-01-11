@@ -174,7 +174,7 @@
 @ stub CM_Run_Detection
 @ stub CM_Run_Detection_Ex
 @ stdcall CM_Set_Class_Registry_PropertyA(ptr long ptr long long ptr)
-@ stub CM_Set_Class_Registry_PropertyW
+@ stdcall CM_Set_Class_Registry_PropertyW(ptr long ptr long long ptr)
 @ stub CM_Set_DevNode_Problem
 @ stub CM_Set_DevNode_Problem_Ex
 @ stub CM_Set_DevNode_Registry_PropertyA

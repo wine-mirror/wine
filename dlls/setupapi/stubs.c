@@ -388,6 +388,16 @@ CONFIGRET WINAPI CM_Set_Class_Registry_PropertyA(LPGUID class, ULONG prop, PVOID
 }
 
 /***********************************************************************
+ *      CM_Set_Class_Registry_PropertyW (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Set_Class_Registry_PropertyW(LPGUID class, ULONG prop, PVOID buf, ULONG len,
+                                                 ULONG flags, HMACHINE machine)
+{
+    FIXME("%p %u %p %u 0x%08x %p: stub\n", class, prop, buf, len, flags, machine);
+    return CR_FAILURE;
+}
+
+/***********************************************************************
  *              SetupLogFileW  (SETUPAPI.@)
  */
 BOOL WINAPI SetupLogFileW(
