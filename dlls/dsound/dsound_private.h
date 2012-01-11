@@ -49,7 +49,6 @@ typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct IDirectSoundCaptureImpl       IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
 typedef struct IDirectSoundNotifyImpl        IDirectSoundNotifyImpl;
-typedef struct IDirectSoundCaptureNotifyImpl IDirectSoundCaptureNotifyImpl;
 typedef struct IDirectSound3DListenerImpl    IDirectSound3DListenerImpl;
 typedef struct IDirectSound3DBufferImpl      IDirectSound3DBufferImpl;
 typedef struct IKsBufferPropertySetImpl      IKsBufferPropertySetImpl;
@@ -248,15 +247,14 @@ struct DirectSoundCaptureDevice
 struct IDirectSoundCaptureBufferImpl
 {
     IDirectSoundCaptureBuffer8          IDirectSoundCaptureBuffer8_iface;
+    IDirectSoundNotify                  IDirectSoundNotify_iface;
     LONG                                numIfaces; /* "in use interfaces" refcount */
-    LONG                                ref;
+    LONG                                ref, refn;
     /* IDirectSoundCaptureBuffer fields */
     DirectSoundCaptureDevice*           device;
     LPDSCBUFFERDESC                     pdscbd;
     DWORD                               flags;
-
-    /* IDirectSoundCaptureNotifyImpl fields */
-    IDirectSoundCaptureNotifyImpl*      notify;
+    /* IDirectSoundNotify fields */
     LPDSBPOSITIONNOTIFY                 notifies;
     int                                 nrofnotifies;
 };

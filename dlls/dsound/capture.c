@@ -64,69 +64,59 @@ static void capturebuffer_destroy(IDirectSoundCaptureBufferImpl *This)
     /* remove from DirectSoundCaptureDevice */
     This->device->capture_buffer = NULL;
 
-    if (This->notify)
-        IDirectSoundNotify_Release((LPDIRECTSOUNDNOTIFY)This->notify);
-
     HeapFree(GetProcessHeap(), 0, This->notifies);
     HeapFree(GetProcessHeap(), 0, This);
     TRACE("(%p) released\n", This);
 }
 
-/*****************************************************************************
- * IDirectSoundCaptureNotify implementation structure
- */
-struct IDirectSoundCaptureNotifyImpl
-{
-    /* IUnknown fields */
-    const IDirectSoundNotifyVtbl       *lpVtbl;
-    LONG                                ref;
-    IDirectSoundCaptureBufferImpl*      dscb;
-};
-
 /*******************************************************************************
  * IDirectSoundNotify
  */
+static inline struct IDirectSoundCaptureBufferImpl *impl_from_IDirectSoundNotify(IDirectSoundNotify *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectSoundCaptureBufferImpl, IDirectSoundNotify_iface);
+}
+
 static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(IDirectSoundNotify *iface, REFIID riid,
         void **ppobj)
 {
-    IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
-    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundNotify(iface);
 
-    if (This->dscb == NULL) {
-	WARN("invalid parameter\n");
-	return E_INVALIDARG;
-    }
+    TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj);
 
-    return IDirectSoundCaptureBuffer_QueryInterface((LPDIRECTSOUNDCAPTUREBUFFER)This->dscb, riid, ppobj);
+    return IDirectSoundCaptureBuffer_QueryInterface(&This->IDirectSoundCaptureBuffer8_iface, riid, ppobj);
 }
 
 static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(IDirectSoundNotify *iface)
 {
-    IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
-    ULONG ref = InterlockedIncrement(&(This->ref));
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundNotify(iface);
+    ULONG ref = InterlockedIncrement(&This->refn);
+
     TRACE("(%p) ref was %d\n", This, ref - 1);
+
+    if(ref == 1)
+        InterlockedIncrement(&This->numIfaces);
+
     return ref;
 }
 
 static ULONG WINAPI IDirectSoundNotifyImpl_Release(IDirectSoundNotify *iface)
 {
-    IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
-    ULONG ref = InterlockedDecrement(&(This->ref));
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundNotify(iface);
+    ULONG ref = InterlockedDecrement(&This->refn);
+
     TRACE("(%p) ref was %d\n", This, ref + 1);
 
-    if (!ref) {
-	This->dscb->notify=NULL;
-	IDirectSoundCaptureBuffer_Release((LPDIRECTSOUNDCAPTUREBUFFER)This->dscb);
-	HeapFree(GetProcessHeap(),0,This);
-	TRACE("(%p) released\n", This);
-    }
+    if (!ref && !InterlockedDecrement(&This->numIfaces))
+        capturebuffer_destroy(This);
+
     return ref;
 }
 
 static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(IDirectSoundNotify *iface,
         DWORD howmuch, const DSBPOSITIONNOTIFY *notify)
 {
-    IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundNotify(iface);
     TRACE("(%p,0x%08x,%p)\n",This,howmuch,notify);
 
     if (howmuch > 0 && notify == NULL) {
@@ -144,23 +134,23 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(IDirectSou
     if (howmuch > 0) {
 	/* Make an internal copy of the caller-supplied array.
 	 * Replace the existing copy if one is already present. */
-	if (This->dscb->notifies)
-	    This->dscb->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-		This->dscb->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
+        if (This->notifies)
+            This->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->notifies,
+                    howmuch * sizeof(DSBPOSITIONNOTIFY));
 	else
-	    This->dscb->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-		howmuch * sizeof(DSBPOSITIONNOTIFY));
+            This->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    howmuch * sizeof(DSBPOSITIONNOTIFY));
 
-	if (This->dscb->notifies == NULL) {
+        if (!This->notifies) {
 	    WARN("out of memory\n");
 	    return DSERR_OUTOFMEMORY;
 	}
-	CopyMemory(This->dscb->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
-	This->dscb->nrofnotifies = howmuch;
+        CopyMemory(This->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
+        This->nrofnotifies = howmuch;
     } else {
-        HeapFree(GetProcessHeap(), 0, This->dscb->notifies);
-        This->dscb->notifies = NULL;
-        This->dscb->nrofnotifies = 0;
+        HeapFree(GetProcessHeap(), 0, This->notifies);
+        This->notifies = NULL;
+        This->nrofnotifies = 0;
     }
 
     return S_OK;
@@ -173,30 +163,6 @@ static const IDirectSoundNotifyVtbl dscnvt =
     IDirectSoundNotifyImpl_Release,
     IDirectSoundNotifyImpl_SetNotificationPositions
 };
-
-static HRESULT IDirectSoundCaptureNotifyImpl_Create(
-    IDirectSoundCaptureBufferImpl *dscb,
-    IDirectSoundCaptureNotifyImpl **pdscn)
-{
-    IDirectSoundCaptureNotifyImpl * dscn;
-    TRACE("(%p,%p)\n",dscb,pdscn);
-
-    dscn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dscn));
-
-    if (dscn == NULL) {
-	WARN("out of memory\n");
-	return DSERR_OUTOFMEMORY;
-    }
-
-    dscn->ref = 0;
-    dscn->lpVtbl = &dscnvt;
-    dscn->dscb = dscb;
-    dscb->notify = dscn;
-    IDirectSoundCaptureBuffer_AddRef((LPDIRECTSOUNDCAPTUREBUFFER)dscb);
-
-    *pdscn = dscn;
-    return DS_OK;
-}
 
 
 static const char * const captureStateString[] = {
@@ -219,7 +185,6 @@ static HRESULT WINAPI IDirectSoundCaptureBufferImpl_QueryInterface(IDirectSoundC
         REFIID riid, void **ppobj)
 {
     IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
-    HRESULT hres;
 
     TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
 
@@ -230,22 +195,16 @@ static HRESULT WINAPI IDirectSoundCaptureBufferImpl_QueryInterface(IDirectSoundC
 
     *ppobj = NULL;
 
-    if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
-	if (!This->notify){
-	    hres = IDirectSoundCaptureNotifyImpl_Create(This, &This->notify);
-	    if(FAILED(hres))
-		return hres;
-	}
-
-        IDirectSoundNotify_AddRef((LPDIRECTSOUNDNOTIFY)This->notify);
-        *ppobj = This->notify;
-        return DS_OK;
-    }
-
     if ( IsEqualGUID( &IID_IDirectSoundCaptureBuffer, riid ) ||
          IsEqualGUID( &IID_IDirectSoundCaptureBuffer8, riid ) ) {
 	IDirectSoundCaptureBuffer8_AddRef(iface);
         *ppobj = iface;
+        return S_OK;
+    }
+
+    if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
+        IDirectSoundNotify_AddRef(&This->IDirectSoundNotify_iface);
+        *ppobj = &This->IDirectSoundNotify_iface;
         return S_OK;
     }
 
@@ -707,9 +666,9 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
 
         This->numIfaces = 0;
         This->ref = 0;
+        This->refn = 0;
         This->device = device;
         This->device->capture_buffer = This;
-        This->notify = NULL;
         This->nrofnotifies = 0;
 
         This->pdscbd = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
@@ -724,6 +683,7 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
         }
 
         This->IDirectSoundCaptureBuffer8_iface.lpVtbl = &dscbvt;
+        This->IDirectSoundNotify_iface.lpVtbl = &dscnvt;
 
         err = IMMDevice_Activate(device->mmdevice, &IID_IAudioClient,
                 CLSCTX_INPROC_SERVER, NULL, (void**)&device->client);
