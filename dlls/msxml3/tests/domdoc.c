@@ -5000,11 +5000,11 @@ todo_wine {
     hr = IObjectWithSite_SetSite(obj_site, &testsite.IUnknown_iface);
     EXPECT_HR(hr, S_OK);
 
-todo_wine{
     CHECK_CALLED(site_qi_IServiceProvider);
-
+todo_wine
     CHECK_CALLED(sp_queryservice_SID_SBindHost);
     CHECK_CALLED(sp_queryservice_SID_SContainerDispatch_htmldoc2);
+todo_wine {
     CHECK_CALLED(sp_queryservice_SID_secmgr_htmldoc2);
     CHECK_CALLED(sp_queryservice_SID_secmgr_xmldomdoc);
     /* this one isn't very reliable
@@ -5019,11 +5019,23 @@ todo_wine{
 }
     IObjectWithSite_Release(obj_site);
 
+    /* try to set site another time */
+
+    /* to be removed once IObjectWithSite is properly separated */
+    SET_EXPECT(site_qi_IServiceProvider);
+    SET_EXPECT(sp_queryservice_SID_SContainerDispatch_htmldoc2);
+
+    hr = IObjectWithSite_SetSite(obj_site2, &testsite.IUnknown_iface);
+    EXPECT_HR(hr, S_OK);
+
     todo_wine EXPECT_REF(xhr, 1);
     IXMLHttpRequest_Release(xhr);
 
     /* still works after request is released */
+
+    /* to be removed once IObjectWithSite is properly separated */
     SET_EXPECT(site_qi_IServiceProvider);
+    SET_EXPECT(sp_queryservice_SID_SContainerDispatch_htmldoc2);
 
     hr = IObjectWithSite_SetSite(obj_site2, &testsite.IUnknown_iface);
     EXPECT_HR(hr, S_OK);

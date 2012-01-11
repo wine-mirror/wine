@@ -33,10 +33,16 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
+#include "wininet.h"
+#include "winreg.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtml.h"
 #include "msxml6.h"
 #include "objsafe.h"
+#include "docobj.h"
+#include "shlwapi.h"
 
 #include "msxml_private.h"
 
@@ -72,6 +78,7 @@ typedef struct
     /* request */
     BINDVERB verb;
     BSTR custom;
+    BSTR siteurl;
     BSTR url;
     BOOL async;
     struct list reqheaders;
@@ -767,6 +774,7 @@ static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
             IUnknown_Release( This->site );
 
         SysFreeString(This->custom);
+        SysFreeString(This->siteurl);
         SysFreeString(This->url);
         SysFreeString(This->user);
         SysFreeString(This->password);
@@ -906,7 +914,22 @@ static HRESULT WINAPI httprequest_open(IXMLHTTPRequest *iface, BSTR method, BSTR
         return E_FAIL;
     }
 
-    This->url = SysAllocString(url);
+    /* try to combine with site url */
+    if (This->siteurl && PathIsRelativeW(url))
+    {
+        DWORD len = INTERNET_MAX_URL_LENGTH;
+        WCHAR *fullW = heap_alloc(len*sizeof(WCHAR));
+
+        hr = UrlCombineW(This->siteurl, url, fullW, &len, 0);
+        if (hr == S_OK)
+        {
+            TRACE("combined url %s\n", debugstr_w(fullW));
+            This->url = SysAllocString(fullW);
+        }
+        heap_free(fullW);
+    }
+    else
+        This->url = SysAllocString(url);
 
     VariantInit(&is_async);
     hr = VariantChangeType(&is_async, &async, 0, VT_BOOL);
@@ -1324,6 +1347,8 @@ static HRESULT WINAPI httprequest_ObjectWithSite_GetSite( IObjectWithSite *iface
 static HRESULT WINAPI httprequest_ObjectWithSite_SetSite( IObjectWithSite *iface, IUnknown *punk )
 {
     httprequest *This = impl_from_IObjectWithSite(iface);
+    IServiceProvider *provider;
+    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", iface, punk);
 
@@ -1334,6 +1359,23 @@ static HRESULT WINAPI httprequest_ObjectWithSite_SetSite( IObjectWithSite *iface
         IUnknown_Release( This->site );
 
     This->site = punk;
+
+    hr = IUnknown_QueryInterface(This->site, &IID_IServiceProvider, (void**)&provider);
+    if (hr == S_OK)
+    {
+        IHTMLDocument2 *doc;
+
+        hr = IServiceProvider_QueryService(provider, &SID_SContainerDispatch, &IID_IHTMLDocument2, (void**)&doc);
+        if (hr == S_OK)
+        {
+            SysFreeString(This->siteurl);
+
+            hr = IHTMLDocument2_get_URL(doc, &This->siteurl);
+            IHTMLDocument2_Release(doc);
+            TRACE("host url %s, 0x%08x\n", debugstr_w(This->siteurl), hr);
+        }
+        IServiceProvider_Release(provider);
+    }
 
     return S_OK;
 }
@@ -1426,7 +1468,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
     req->async = FALSE;
     req->verb = -1;
     req->custom = NULL;
-    req->url = req->user = req->password = NULL;
+    req->url = req->siteurl = req->user = req->password = NULL;
 
     req->state = READYSTATE_UNINITIALIZED;
     req->sink = NULL;
