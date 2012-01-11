@@ -6020,8 +6020,12 @@ void get_drawable_size_backbuffer(const struct wined3d_context *context, UINT *w
 LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL unicode,
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc)
 {
+    wined3d_mutex_lock();
+
     if (device->filter_messages)
     {
+        wined3d_mutex_unlock();
+
         TRACE("Filtering message: window %p, message %#x, wparam %#lx, lparam %#lx.\n",
                 window, message, wparam, lparam);
         if (unicode)
@@ -6042,6 +6046,8 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
     {
         device->device_parent->ops->mode_changed(device->device_parent);
     }
+
+    wined3d_mutex_unlock();
 
     if (unicode)
         return CallWindowProcW(proc, window, message, wparam, lparam);
