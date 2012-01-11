@@ -39,6 +39,9 @@ typedef struct MetadataHandler {
     LONG ref;
     IWICPersistStream IWICPersistStream_iface;
     const MetadataHandlerVtbl *vtable;
+    MetadataItem *items;
+    DWORD item_count;
+    CRITICAL_SECTION lock;
 } MetadataHandler;
 
 static inline MetadataHandler *impl_from_IWICMetadataWriter(IWICMetadataWriter *iface)
@@ -49,6 +52,20 @@ static inline MetadataHandler *impl_from_IWICMetadataWriter(IWICMetadataWriter *
 static inline MetadataHandler *impl_from_IWICPersistStream(IWICPersistStream *iface)
 {
     return CONTAINING_RECORD(iface, MetadataHandler, IWICPersistStream_iface);
+}
+
+static void MetadataHandler_FreeItems(MetadataHandler *This)
+{
+    int i;
+
+    for (i=0; i<This->item_count; i++)
+    {
+        PropVariantClear(&This->items[i].schema);
+        PropVariantClear(&This->items[i].id);
+        PropVariantClear(&This->items[i].value);
+    }
+
+    HeapFree(GetProcessHeap(), 0, This->items);
 }
 
 static HRESULT WINAPI MetadataHandler_QueryInterface(IWICMetadataWriter *iface, REFIID iid,
@@ -100,6 +117,9 @@ static ULONG WINAPI MetadataHandler_Release(IWICMetadataWriter *iface)
 
     if (ref == 0)
     {
+        MetadataHandler_FreeItems(This);
+        This->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->lock);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -248,8 +268,28 @@ static HRESULT WINAPI MetadataHandler_GetSizeMax(IWICPersistStream *iface,
 static HRESULT WINAPI MetadataHandler_LoadEx(IWICPersistStream *iface,
     IStream *pIStream, const GUID *pguidPreferredVendor, DWORD dwPersistOptions)
 {
-    FIXME("(%p,%p,%s,%x): stub\n", iface, pIStream, debugstr_guid(pguidPreferredVendor), dwPersistOptions);
-    return E_NOTIMPL;
+    MetadataHandler *This = impl_from_IWICPersistStream(iface);
+    HRESULT hr;
+    MetadataItem *new_items=NULL;
+    DWORD item_count=0;
+
+    TRACE("(%p,%p,%s,%x)\n", iface, pIStream, debugstr_guid(pguidPreferredVendor), dwPersistOptions);
+
+    EnterCriticalSection(&This->lock);
+
+    hr = This->vtable->fnLoad(pIStream, pguidPreferredVendor, dwPersistOptions,
+        &new_items, &item_count);
+
+    if (SUCCEEDED(hr))
+    {
+        MetadataHandler_FreeItems(This);
+        This->items = new_items;
+        This->item_count = item_count;
+    }
+
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI MetadataHandler_SaveEx(IWICPersistStream *iface,
@@ -290,6 +330,11 @@ HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, IUnknown *pUnkO
     This->IWICPersistStream_iface.lpVtbl = &MetadataHandler_PersistStream_Vtbl;
     This->ref = 1;
     This->vtable = vtable;
+    This->items = NULL;
+    This->item_count = 0;
+
+    InitializeCriticalSection(&This->lock);
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MetadataHandler.lock");
 
     hr = IWICMetadataWriter_QueryInterface(&This->IWICMetadataWriter_iface, iid, ppv);
 
@@ -301,8 +346,47 @@ HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, IUnknown *pUnkO
 static HRESULT LoadUnknownMetadata(IStream *input, const GUID *preferred_vendor,
     DWORD persist_options, MetadataItem **items, DWORD *item_count)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    MetadataItem *result;
+    STATSTG stat;
+    BYTE *data;
+    ULONG bytesread;
+
+    TRACE("\n");
+
+    hr = IStream_Stat(input, &stat, STATFLAG_NONAME);
+    if (FAILED(hr))
+        return hr;
+
+    data = HeapAlloc(GetProcessHeap(), 0, stat.cbSize.QuadPart);
+    if (!data) return E_OUTOFMEMORY;
+
+    hr = IStream_Read(input, data, stat.cbSize.QuadPart, &bytesread);
+    if (FAILED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, data);
+        return hr;
+    }
+
+    result = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataItem));
+    if (FAILED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, data);
+        return E_OUTOFMEMORY;
+    }
+
+    PropVariantInit(&result[0].schema);
+    PropVariantInit(&result[0].id);
+    PropVariantInit(&result[0].value);
+
+    result[0].value.vt = VT_BLOB;
+    result[0].value.blob.cbSize = bytesread;
+    result[0].value.blob.pBlobData = data;
+
+    *items = result;
+    *item_count = 1;
+
+    return S_OK;
 }
 
 static const MetadataHandlerVtbl UnknownMetadataReader_Vtbl = {

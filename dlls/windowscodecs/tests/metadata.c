@@ -100,7 +100,7 @@ static void load_stream(IUnknown *reader, const char *data, int data_size)
     if (SUCCEEDED(hr))
     {
         hr = IWICPersistStream_LoadEx(persist, stream, NULL, WICPersistOptionsDefault);
-        todo_wine ok(hr == S_OK, "LoadEx failed, hr=%x\n", hr);
+        ok(hr == S_OK, "LoadEx failed, hr=%x\n", hr);
 
         IWICPersistStream_Release(persist);
     }
