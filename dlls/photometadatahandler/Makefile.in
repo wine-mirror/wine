@@ -1,0 +1,8 @@
+MODULE = photometadatahandler.dll
+
+C_SRCS = \
+	main.c
+
+RC_SRCS = photometadatahandler.rc
+
+@MAKE_DLL_RULES@

@@ -15228,6 +15228,7 @@ wine_fn_config_dll opengl32 enable_opengl32 implib
 wine_fn_config_test dlls/opengl32/tests opengl32_test
 wine_fn_config_dll pdh enable_pdh implib
 wine_fn_config_test dlls/pdh/tests pdh_test
+wine_fn_config_dll photometadatahandler enable_photometadatahandler
 wine_fn_config_dll pidgen enable_pidgen
 wine_fn_config_dll powrprof enable_powrprof implib
 wine_fn_config_dll printui enable_printui
