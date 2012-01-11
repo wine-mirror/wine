@@ -949,7 +949,7 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     bits[0] = 0;
 
     stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, &gpbm);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     if (stat == Ok)
     {
@@ -979,7 +979,7 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     bits[0] = 0;
 
     stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, &gpbm);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     if (stat == Ok)
     {
@@ -1007,7 +1007,7 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     bits[0] = 0;
 
     stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, &gpbm);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     if (stat == Ok)
     {

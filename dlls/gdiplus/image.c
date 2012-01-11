@@ -3526,6 +3526,7 @@ GpStatus WINGDIPAPI GdipGetEncoderParameterListSize(GpImage *image,
 GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBitmap** bitmap)
 {
     BITMAP bm;
+    DIBSECTION dib;
     GpStatus retval;
     PixelFormat format;
     BitmapData lockeddata;
@@ -3550,6 +3551,36 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
         case 8:
             format = PixelFormat8bppIndexed;
             break;
+        case 16:
+        {
+            if (GetObjectA(hbm, sizeof(dib), &dib) == sizeof(dib))
+            {
+                if (dib.dsBitfields[0] == 0x7c00 &&
+                    dib.dsBitfields[1] == 0x3e0 &&
+                    dib.dsBitfields[2] == 0x1f)
+                {
+                    format = PixelFormat16bppRGB555;
+                }
+                else if (dib.dsBitfields[0] == 0xf800 &&
+                    dib.dsBitfields[1] == 0x7e0 &&
+                    dib.dsBitfields[2] == 0x1f)
+                {
+                    format = PixelFormat16bppRGB565;
+                }
+                else
+                {
+                    FIXME("unrecognized bitfields %x,%x,%x\n", dib.dsBitfields[0],
+                        dib.dsBitfields[1], dib.dsBitfields[2]);
+                    return InvalidParameter;
+                }
+            }
+            else
+            {
+                FIXME("unimplemented for 16-bit ddb\n");
+                return InvalidParameter;
+            }
+            break;
+        }
         case 24:
             format = PixelFormat24bppRGB;
             break;
