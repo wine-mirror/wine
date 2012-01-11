@@ -151,6 +151,31 @@ static const char *debugstr_nsacstr(const nsACString *nsstr)
     return debugstr_a(data);
 }
 
+static nsresult return_wstr_nsacstr(nsACString *ret_str, const WCHAR *str, int len)
+{
+    char *stra;
+    int lena;
+
+    TRACE("returning %s\n", debugstr_wn(str, len));
+
+    if(!*str) {
+        nsACString_SetData(ret_str, "");
+        return NS_OK;
+    }
+
+    lena = WideCharToMultiByte(CP_ACP, 0, str, len, NULL, 0, NULL, NULL);
+    stra = heap_alloc(lena+1);
+    if(!stra)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    WideCharToMultiByte(CP_ACP, 0, str, len, stra, lena, NULL, NULL);
+    stra[lena] = 0;
+
+    nsACString_SetData(ret_str, stra);
+    heap_free(stra);
+    return NS_OK;
+}
+
 HRESULT nsuri_to_url(LPCWSTR nsuri, BOOL ret_empty, BSTR *ret)
 {
     const WCHAR *ptr = nsuri;
@@ -2543,39 +2568,49 @@ static nsresult NSAPI nsURL_SetQuery(nsIURL *iface, const nsACString *aQuery)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURL_GetDirectory(nsIURL *iface, nsACString *aDirectory)
+static nsresult get_uri_path(nsWineURI *This, BSTR *path, const WCHAR **file, const WCHAR **ext)
 {
-    nsWineURI *This = impl_from_nsIURL(iface);
-    char *dir = NULL;
-    WCHAR *ptr;
-    BSTR path;
+    const WCHAR *ptr;
     HRESULT hres;
-
-    TRACE("(%p)->(%p)\n", This, aDirectory);
 
     if(!ensure_uri(This))
         return NS_ERROR_UNEXPECTED;
 
-    hres = IUri_GetPath(This->uri, &path);
+    hres = IUri_GetPath(This->uri, path);
     if(FAILED(hres))
         return NS_ERROR_FAILURE;
 
-    ptr = strrchrW(path, '/');
-    if(ptr) {
-        if(ptr[1])
-            *ptr = 0;
-        dir = heap_strdupWtoA(path);
-        if(!dir) {
-            SysFreeString(path);
-            return NS_ERROR_OUT_OF_MEMORY;
-        }
+    for(ptr = *path + SysStringLen(*path)-1; ptr > *path && *ptr != '/' && *ptr != '\\'; ptr--);
+    if(*ptr == '/' || *ptr == '\\')
+        ptr++;
+    *file = ptr;
+
+    if(ext) {
+        ptr = strrchrW(ptr, '.');
+        if(!ptr)
+            ptr = *path + SysStringLen(*path);
+        *ext = ptr;
     }
 
-    SysFreeString(path);
-    TRACE("ret %s\n", debugstr_a(dir));
-    nsACString_SetData(aDirectory, dir ? dir : "");
-    heap_free(dir);
     return NS_OK;
+}
+
+static nsresult NSAPI nsURL_GetDirectory(nsIURL *iface, nsACString *aDirectory)
+{
+    nsWineURI *This = impl_from_nsIURL(iface);
+    const WCHAR *file;
+    BSTR path;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, aDirectory);
+
+    nsres = get_uri_path(This, &path, &file, NULL);
+    if(NS_FAILED(nsres))
+        return nsres;
+
+    nsres = return_wstr_nsacstr(aDirectory, path, file-path);
+    SysFreeString(path);
+    return nsres;
 }
 
 static nsresult NSAPI nsURL_SetDirectory(nsIURL *iface, const nsACString *aDirectory)
