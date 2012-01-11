@@ -101,7 +101,7 @@ interface IWICMetadataReader : IUnknown
     HRESULT GetValue(
         [in] const PROPVARIANT *pvarSchema,
         [in] const PROPVARIANT *pvarId,
-        [in, out, unique] const PROPVARIANT *pvarValue);
+        [in, out, unique] PROPVARIANT *pvarValue);
 
     HRESULT GetEnumerator(
         [out] IWICEnumMetadataItem **ppIEnumMetadata);
