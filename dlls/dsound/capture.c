@@ -56,12 +56,10 @@ struct IDirectSoundCaptureNotifyImpl
 };
 
 /*******************************************************************************
- *		IDirectSoundCaptureNotify
+ * IDirectSoundNotify
  */
-static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_QueryInterface(
-    LPDIRECTSOUNDNOTIFY iface,
-    REFIID riid,
-    LPVOID *ppobj)
+static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(IDirectSoundNotify *iface, REFIID riid,
+        void **ppobj)
 {
     IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -74,7 +72,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_QueryInterface(
     return IDirectSoundCaptureBuffer_QueryInterface((LPDIRECTSOUNDCAPTUREBUFFER)This->dscb, riid, ppobj);
 }
 
-static ULONG WINAPI IDirectSoundCaptureNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY iface)
+static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(IDirectSoundNotify *iface)
 {
     IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
@@ -82,7 +80,7 @@ static ULONG WINAPI IDirectSoundCaptureNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY ifa
     return ref;
 }
 
-static ULONG WINAPI IDirectSoundCaptureNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface)
+static ULONG WINAPI IDirectSoundNotifyImpl_Release(IDirectSoundNotify *iface)
 {
     IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
@@ -97,10 +95,8 @@ static ULONG WINAPI IDirectSoundCaptureNotifyImpl_Release(LPDIRECTSOUNDNOTIFY if
     return ref;
 }
 
-static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
-    LPDIRECTSOUNDNOTIFY iface,
-    DWORD howmuch,
-    LPCDSBPOSITIONNOTIFY notify)
+static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(IDirectSoundNotify *iface,
+        DWORD howmuch, const DSBPOSITIONNOTIFY *notify)
 {
     IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
     TRACE("(%p,0x%08x,%p)\n",This,howmuch,notify);
@@ -144,10 +140,10 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
 
 static const IDirectSoundNotifyVtbl dscnvt =
 {
-    IDirectSoundCaptureNotifyImpl_QueryInterface,
-    IDirectSoundCaptureNotifyImpl_AddRef,
-    IDirectSoundCaptureNotifyImpl_Release,
-    IDirectSoundCaptureNotifyImpl_SetNotificationPositions,
+    IDirectSoundNotifyImpl_QueryInterface,
+    IDirectSoundNotifyImpl_AddRef,
+    IDirectSoundNotifyImpl_Release,
+    IDirectSoundNotifyImpl_SetNotificationPositions
 };
 
 static HRESULT IDirectSoundCaptureNotifyImpl_Create(
