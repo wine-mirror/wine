@@ -2662,14 +2662,19 @@ static nsresult NSAPI nsURL_SetFileName(nsIURL *iface, const nsACString *aFileNa
 static nsresult NSAPI nsURL_GetFileBaseName(nsIURL *iface, nsACString *aFileBaseName)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
+    const WCHAR *file, *ext;
+    BSTR path;
+    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, aFileBaseName);
 
-    if(This->nsurl)
-        return nsIURL_GetFileBaseName(This->nsurl, aFileBaseName);
+    nsres = get_uri_path(This, &path, &file, &ext);
+    if(NS_FAILED(nsres))
+        return nsres;
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsres = return_wstr_nsacstr(aFileBaseName, file, ext-file);
+    SysFreeString(path);
+    return nsres;
 }
 
 static nsresult NSAPI nsURL_SetFileBaseName(nsIURL *iface, const nsACString *aFileBaseName)
