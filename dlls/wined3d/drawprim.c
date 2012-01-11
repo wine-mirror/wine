@@ -834,7 +834,7 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
          */
         ERR("Vertex stride is not a multiple of sizeof(GLfloat)\n");
     }
-    if (info->basis != WINED3DBASIS_BEZIER)
+    if (info->basis != WINED3D_BASIS_BEZIER)
         FIXME("Basis is %s, how to handle this?\n", debug_d3dbasis(info->basis));
     if (info->degree != WINED3D_DEGREE_CUBIC)
         FIXME("Degree is %s, how to handle this?\n", debug_d3ddegree(info->degree));

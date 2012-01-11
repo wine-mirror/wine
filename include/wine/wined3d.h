@@ -641,13 +641,12 @@ enum wined3d_transform_state
 
 #define WINED3D_TS_WORLD_MATRIX(index)                          (enum wined3d_transform_state)(index + 256)
 
-typedef enum _WINED3DBASISTYPE
+enum wined3d_basis_type
 {
-    WINED3DBASIS_BEZIER                     = 0,
-    WINED3DBASIS_BSPLINE                    = 1,
-    WINED3DBASIS_INTERPOLATE                = 2,
-    WINED3DBASIS_FORCE_DWORD                = 0x7fffffff
-} WINED3DBASISTYPE;
+    WINED3D_BASIS_BEZIER                    = 0,
+    WINED3D_BASIS_BSPLINE                   = 1,
+    WINED3D_BASIS_INTERPOLATE               = 2,
+};
 
 typedef enum _WINED3DCUBEMAP_FACES
 {
@@ -1583,7 +1582,7 @@ struct wined3d_rect_patch_info
     UINT width;
     UINT height;
     UINT stride;
-    WINED3DBASISTYPE basis;
+    enum wined3d_basis_type basis;
     enum wined3d_degree_type degree;
 };
 
@@ -1591,7 +1590,7 @@ struct wined3d_tri_patch_info
 {
     UINT start_vertex_offset;
     UINT vertex_count;
-    WINED3DBASISTYPE basis;
+    enum wined3d_basis_type basis;
     enum wined3d_degree_type degree;
 };
 

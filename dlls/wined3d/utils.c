@@ -2398,11 +2398,13 @@ const char *debug_glerror(GLenum error) {
     }
 }
 
-const char *debug_d3dbasis(WINED3DBASISTYPE basis) {
-    switch(basis) {
-        case WINED3DBASIS_BEZIER:       return "WINED3DBASIS_BEZIER";
-        case WINED3DBASIS_BSPLINE:      return "WINED3DBASIS_BSPLINE";
-        case WINED3DBASIS_INTERPOLATE:  return "WINED3DBASIS_INTERPOLATE";
+const char *debug_d3dbasis(enum wined3d_basis_type basis)
+{
+    switch (basis)
+    {
+        case WINED3D_BASIS_BEZIER:      return "WINED3D_BASIS_BEZIER";
+        case WINED3D_BASIS_BSPLINE:     return "WINED3D_BASIS_BSPLINE";
+        case WINED3D_BASIS_INTERPOLATE: return "WINED3D_BASIS_INTERPOLATE";
         default:                        return "unrecognized";
     }
 }
