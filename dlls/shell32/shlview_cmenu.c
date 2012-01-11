@@ -877,11 +877,14 @@ static const IContextMenu3Vtbl BackgroundContextMenuVtbl =
     ContextMenu_HandleMenuMsg2
 };
 
-IContextMenu2 *BackgroundMenu_Constructor(IShellFolder *parent, BOOL desktop)
+HRESULT BackgroundMenu_Constructor(IShellFolder *parent, BOOL desktop, REFIID riid, void **pObj)
 {
     ContextMenu *This;
+    HRESULT hr;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+
     This->IContextMenu3_iface.lpVtbl = &BackgroundContextMenuVtbl;
     This->ref = 1;
     This->parent = parent;
@@ -895,6 +898,8 @@ IContextMenu2 *BackgroundMenu_Constructor(IShellFolder *parent, BOOL desktop)
     This->desktop = desktop;
     if (parent) IShellFolder_AddRef(parent);
 
-    TRACE("(%p)\n", This);
-    return (IContextMenu2*)&This->IContextMenu3_iface;
+    hr = IContextMenu3_QueryInterface(&This->IContextMenu3_iface, riid, pObj);
+    IContextMenu3_Release(&This->IContextMenu3_iface);
+
+    return hr;
 }

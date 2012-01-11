@@ -1018,7 +1018,6 @@ static void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL 
 	BOOL	fExplore = FALSE;
 	HWND	hwndTree = 0;
 	LPCONTEXTMENU	pContextMenu = NULL;
-	IContextMenu2 *pCM = NULL;
 	CMINVOKECOMMANDINFO	cmi;
 
 	TRACE("(%p)->(0x%08x 0x%08x 0x%08x) stub\n",This, x, y, bDefault);
@@ -1093,9 +1092,11 @@ static void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL 
 	}
 	else	/* background context menu */
 	{
+	  IContextMenu2 *pCM;
+
 	  hMenu = CreatePopupMenu();
 
-	  pCM = BackgroundMenu_Constructor(This->pSFParent, FALSE);
+	  BackgroundMenu_Constructor(This->pSFParent, FALSE, &IID_IContextMenu2, (void**)&pCM);
 	  IContextMenu2_QueryContextMenu(pCM, hMenu, 0, FCIDM_SHVIEWFIRST, FCIDM_SHVIEWLAST, 0);
 
 	  uCommand = TrackPopupMenu( hMenu, TPM_LEFTALIGN | TPM_RETURNCMD,x,y,0,This->hWnd,NULL);
@@ -2049,10 +2050,7 @@ static HRESULT WINAPI IShellView_fnGetItemObject(IShellView2 *iface, UINT uItem,
     case SVGIO_BACKGROUND:
 
         if (IsEqualIID(&IID_IContextMenu, riid))
-        {
-            *ppvOut = BackgroundMenu_Constructor(This->pSFParent, FALSE);
-            hr = S_OK;
-        }
+            return BackgroundMenu_Constructor(This->pSFParent, FALSE, riid, ppvOut);
         else
             FIXME("unsupported interface requested %s\n", debugstr_guid(riid));
 
