@@ -850,9 +850,12 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         }
         if (physDevSrc->depth == 1)
         {
+            int text_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, GetTextColor(physDevDst->dev.hdc) );
+            int bkgnd_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, GetBkColor(physDevDst->dev.hdc) );
+
             wine_tsx11_lock();
-            XSetBackground( gdi_display, physDevDst->gc, physDevDst->textPixel );
-            XSetForeground( gdi_display, physDevDst->gc, physDevDst->backgroundPixel );
+            XSetBackground( gdi_display, physDevDst->gc, text_pixel );
+            XSetForeground( gdi_display, physDevDst->gc, bkgnd_pixel );
             XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
             XCopyPlane( gdi_display, physDevSrc->drawable,
                         physDevDst->drawable, physDevDst->gc,
@@ -881,15 +884,18 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
            to color or vice versa, the foreground and background color of
            the device context are used.  In fact, it also applies to the
            case when it is converted from mono to mono. */
+        int text_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, GetTextColor(physDevDst->dev.hdc) );
+        int bkgnd_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, GetBkColor(physDevDst->dev.hdc) );
+
         if (X11DRV_PALETTE_XPixelToPalette && physDevDst->depth != 1)
         {
-            XSetBackground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[physDevDst->textPixel] );
-            XSetForeground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[physDevDst->backgroundPixel]);
+            XSetBackground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[text_pixel] );
+            XSetForeground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[bkgnd_pixel]);
         }
         else
         {
-            XSetBackground( gdi_display, gc, physDevDst->textPixel );
-            XSetForeground( gdi_display, gc, physDevDst->backgroundPixel );
+            XSetBackground( gdi_display, gc, text_pixel );
+            XSetForeground( gdi_display, gc, bkgnd_pixel );
         }
         XCopyPlane( gdi_display, physDevSrc->drawable, src_pixmap, gc,
                     physDevSrc->dc_rect.left + src->visrect.left,

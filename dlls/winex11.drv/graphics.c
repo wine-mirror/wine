@@ -274,13 +274,13 @@ BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors )
 	 * We need to swap foreground and background because
 	 * Windows does it the wrong way...
 	 */
-	val.foreground = physDev->backgroundPixel;
-	val.background = physDev->textPixel;
+	val.foreground = X11DRV_PALETTE_ToPhysical( physDev, GetBkColor(physDev->dev.hdc) );
+	val.background = X11DRV_PALETTE_ToPhysical( physDev, GetTextColor(physDev->dev.hdc) );
     }
     else
     {
 	val.foreground = physDev->brush.pixel;
-	val.background = physDev->backgroundPixel;
+	val.background = X11DRV_PALETTE_ToPhysical( physDev, GetBkColor(physDev->dev.hdc) );
     }
     if (fMapColors && X11DRV_PALETTE_XPixelToPalette)
     {
@@ -399,7 +399,7 @@ static BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev )
 	val.foreground = physDev->pen.pixel;
 	val.function   = X11DRV_XROPfunction[rop2-1];
     }
-    val.background = physDev->backgroundPixel;
+    val.background = X11DRV_PALETTE_ToPhysical( physDev, GetBkColor(physDev->dev.hdc) );
     val.fill_style = FillSolid;
     val.line_width = physDev->pen.width;
     if (val.line_width <= 1) {
@@ -463,8 +463,8 @@ BOOL X11DRV_SetupGCForText( X11DRV_PDEVICE *physDev )
 	XGCValues val;
 
 	val.function   = GXcopy;  /* Text is always GXcopy */
-	val.foreground = physDev->textPixel;
-	val.background = physDev->backgroundPixel;
+	val.foreground = X11DRV_PALETTE_ToPhysical( physDev, GetTextColor(physDev->dev.hdc) );
+	val.background = X11DRV_PALETTE_ToPhysical( physDev, GetBkColor(physDev->dev.hdc) );
 	val.fill_style = FillSolid;
 	val.font       = xfs->fid;
 
@@ -1492,29 +1492,6 @@ fallback:
     dev = GET_NEXT_PHYSDEV( dev, pGradientFill );
     return dev->funcs->pGradientFill( dev, vert_array, nvert, grad_array, ngrad, mode );
 }
-
-/**********************************************************************
- *          X11DRV_SetBkColor
- */
-COLORREF X11DRV_SetBkColor( PHYSDEV dev, COLORREF color )
-{
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-
-    physDev->backgroundPixel = X11DRV_PALETTE_ToPhysical( physDev, color );
-    return color;
-}
-
-/**********************************************************************
- *          X11DRV_SetTextColor
- */
-COLORREF X11DRV_SetTextColor( PHYSDEV dev, COLORREF color )
-{
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-
-    physDev->textPixel = X11DRV_PALETTE_ToPhysical( physDev, color );
-    return color;
-}
-
 
 static unsigned char *get_icm_profile( unsigned long *size )
 {

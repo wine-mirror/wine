@@ -43,6 +43,7 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     BOOL restore_region = FALSE;
     unsigned int i;
+    int pixel;
     fontObject*		pfo = XFONT_GetFontObject( physDev->font );
     XFontStruct*	font;
     BOOL		rotated = FALSE;
@@ -70,8 +71,9 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
     if (flags & ETO_OPAQUE)
     {
+	pixel = X11DRV_PALETTE_ToPhysical( physDev, GetBkColor(physDev->dev.hdc) );
         wine_tsx11_lock();
-        XSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
+        XSetForeground( gdi_display, physDev->gc, pixel );
         XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
                         physDev->dc_rect.left + lprect->left, physDev->dc_rect.top + lprect->top,
                         lprect->right - lprect->left, lprect->bottom - lprect->top );
@@ -97,8 +99,9 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         goto END;
     }
 
+    pixel = X11DRV_PALETTE_ToPhysical( physDev, GetTextColor(physDev->dev.hdc) );
     wine_tsx11_lock();
-    XSetForeground( gdi_display, physDev->gc, physDev->textPixel );
+    XSetForeground( gdi_display, physDev->gc, pixel );
     wine_tsx11_unlock();
     if(!rotated)
     {
