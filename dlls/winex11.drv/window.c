@@ -2272,10 +2272,7 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
     escape.dc_rect.top          = win_rect->top - top_rect->top;
     escape.dc_rect.right        = win_rect->right - top_rect->left;
     escape.dc_rect.bottom       = win_rect->bottom - top_rect->top;
-    escape.drawable_rect.left   = top_rect->left;
-    escape.drawable_rect.top    = top_rect->top;
-    escape.drawable_rect.right  = top_rect->right;
-    escape.drawable_rect.bottom = top_rect->bottom;
+    escape.drawable_rect        = *top_rect;
 
     if (top == hwnd)
     {
