@@ -86,7 +86,7 @@ static D3DCOLOR get_surface_color(IDirectDrawSurface7 *surface, UINT x, UINT y)
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
 
-    hr = IDirectDrawSurface7_Lock(surface, &rect, &surface_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+    hr = IDirectDrawSurface7_Lock(surface, &rect, &surface_desc, DDLOCK_READONLY, NULL);
     ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
     if (FAILED(hr))
         return 0xdeadbeef;

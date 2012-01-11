@@ -585,7 +585,7 @@ static void test_clipper_blt(void)
     hr = IDirectDrawSurface4_Blt(dst_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to clear destination surface, hr %#x.\n", hr);
 
-    hr = IDirectDrawSurface4_Lock(src_surface, NULL, &surface_desc, 0, NULL);
+    hr = IDirectDrawSurface4_Lock(src_surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
     ok(SUCCEEDED(hr), "Failed to lock source surface, hr %#x.\n", hr);
     ((DWORD *)surface_desc.lpSurface)[0] = 0xff0000ff;
     ((DWORD *)surface_desc.lpSurface)[1] = 0xff00ff00;
