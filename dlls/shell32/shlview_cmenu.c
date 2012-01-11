@@ -66,20 +66,6 @@ static inline ContextMenu *impl_from_IContextMenu2(IContextMenu2 *iface)
     return CONTAINING_RECORD(iface, ContextMenu, IContextMenu2_iface);
 }
 
-static BOOL ItemMenu_CanRenameItems(ContextMenu *This)
-{
-    DWORD attr;
-
-    TRACE("(%p)\n", This);
-
-    /* can't rename more than one item at a time*/
-    if (!This->apidl || This->cidl > 1) return FALSE;
-
-    attr = SFGAO_CANRENAME;
-    IShellFolder_GetAttributesOf(This->parent, 1, (LPCITEMIDLIST*)This->apidl, &attr);
-    return attr & SFGAO_CANRENAME;
-}
-
 static HRESULT WINAPI ItemMenu_QueryInterface(IContextMenu2 *iface, REFIID riid, LPVOID *ppvObj)
 {
     ContextMenu *This = impl_from_IContextMenu2(iface);
@@ -189,7 +175,22 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
         if(uFlags & ~CMF_CANRENAME)
             RemoveMenu(hmenu, FCIDM_SHVIEW_RENAME, MF_BYCOMMAND);
         else
-            EnableMenuItem(hmenu, FCIDM_SHVIEW_RENAME, MF_BYCOMMAND | ItemMenu_CanRenameItems(This) ? MFS_ENABLED : MFS_DISABLED);
+        {
+            UINT enable = MF_BYCOMMAND;
+
+            /* can't rename more than one item at a time*/
+            if (!This->apidl || This->cidl > 1)
+                enable |= MFS_DISABLED;
+            else
+            {
+                DWORD attr = SFGAO_CANRENAME;
+
+                IShellFolder_GetAttributesOf(This->parent, 1, (LPCITEMIDLIST*)This->apidl, &attr);
+                enable |= (attr & SFGAO_CANRENAME) ? MFS_ENABLED : MFS_DISABLED;
+            }
+
+            EnableMenuItem(hmenu, FCIDM_SHVIEW_RENAME, enable);
+        }
 
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, uIDMax-idCmdFirst);
     }
