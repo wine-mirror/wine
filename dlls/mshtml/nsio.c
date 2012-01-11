@@ -59,7 +59,6 @@ struct  nsWineURI {
     LONG ref;
 
     nsIURI *nsuri;
-    nsIURL *nsurl;
     NSContainer *container;
     windowref_t *window_ref;
     nsChannelBSC *channel_bsc;
@@ -1792,8 +1791,6 @@ static nsrefcnt NSAPI nsURI_Release(nsIURL *iface)
             windowref_release(This->window_ref);
         if(This->container)
             nsIWebBrowserChrome_Release(&This->container->nsIWebBrowserChrome_iface);
-        if(This->nsurl)
-            nsIURL_Release(This->nsurl);
         if(This->nsuri)
             nsIURI_Release(This->nsuri);
         if(This->uri)
@@ -2644,18 +2641,7 @@ static nsresult NSAPI nsURL_GetFileName(nsIURL *iface, nsACString *aFileName)
 static nsresult NSAPI nsURL_SetFileName(nsIURL *iface, const nsACString *aFileName)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
-
-    TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFileName));
-
-    if(!This->is_mutable)
-        return NS_ERROR_UNEXPECTED;
-
-    if(This->nsurl) {
-        invalidate_uri(This);
-        return nsIURL_SetFileName(This->nsurl, aFileName);
-    }
-
-    FIXME("default action not implemented\n");
+    FIXME("(%p)->(%s)\n", This, debugstr_nsacstr(aFileName));
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -2680,18 +2666,7 @@ static nsresult NSAPI nsURL_GetFileBaseName(nsIURL *iface, nsACString *aFileBase
 static nsresult NSAPI nsURL_SetFileBaseName(nsIURL *iface, const nsACString *aFileBaseName)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
-
-    TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFileBaseName));
-
-    if(!This->is_mutable)
-        return NS_ERROR_UNEXPECTED;
-
-    if(This->nsurl) {
-        invalidate_uri(This);
-        return nsIURL_SetFileBaseName(This->nsurl, aFileBaseName);
-    }
-
-    FIXME("default action not implemented\n");
+    FIXME("(%p)->(%s)\n", This, debugstr_nsacstr(aFileBaseName));
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -2707,44 +2682,21 @@ static nsresult NSAPI nsURL_GetFileExtension(nsIURL *iface, nsACString *aFileExt
 static nsresult NSAPI nsURL_SetFileExtension(nsIURL *iface, const nsACString *aFileExtension)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
-
-    TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFileExtension));
-
-    if(!This->is_mutable)
-        return NS_ERROR_UNEXPECTED;
-
-    if(This->nsurl) {
-        invalidate_uri(This);
-        return nsIURL_SetFileExtension(This->nsurl, aFileExtension);
-    }
-
-    FIXME("default action not implemented\n");
+    FIXME("(%p)->(%s)\n", This, debugstr_nsacstr(aFileExtension));
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsURL_GetCommonBaseSpec(nsIURL *iface, nsIURI *aURIToCompare, nsACString *_retval)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
-
-    TRACE("(%p)->(%p %p)\n", This, aURIToCompare, _retval);
-
-    if(This->nsurl)
-        return nsIURL_GetCommonBaseSpec(This->nsurl, aURIToCompare, _retval);
-
-    FIXME("default action not implemented\n");
+    FIXME("(%p)->(%p %p)\n", This, aURIToCompare, _retval);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsURL_GetRelativeSpec(nsIURL *iface, nsIURI *aURIToCompare, nsACString *_retval)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
-
-    TRACE("(%p)->(%p %p)\n", This, aURIToCompare, _retval);
-
-    if(This->nsurl)
-        return nsIURL_GetRelativeSpec(This->nsurl, aURIToCompare, _retval);
-
-    FIXME("default action not implemented\n");
+    FIXME("(%p)->(%p %p)\n", This, aURIToCompare, _retval);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -2878,9 +2830,6 @@ static nsresult create_nsuri(IUri *iuri, nsIURI *nsuri, HTMLWindow *window, NSCo
 
     IUri_AddRef(iuri);
     ret->uri = iuri;
-
-    if(nsuri)
-        nsIURI_QueryInterface(nsuri, &IID_nsIURL, (void**)&ret->nsurl);
 
     TRACE("retval=%p\n", ret);
     *_retval = ret;
