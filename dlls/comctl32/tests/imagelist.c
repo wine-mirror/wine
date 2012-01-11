@@ -1089,6 +1089,59 @@ static void test_imagelist_storage(void)
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
     iml_clear_stream_data();
+
+    himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR4|ILC_MASK, 2, 99);
+    ok(himl != 0, "ImageList_Create failed\n");
+    check_iml_data(himl, BMP_CX, BMP_CX, 0, 3, 100, BMP_CX * 4, BMP_CX, ILC_COLOR4|ILC_MASK,
+                   "init 2 grow 99");
+    icon = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
+    ok( ImageList_AddIcon(himl, icon) == 0,"failed to add icon\n");
+    ok( ImageList_AddIcon(himl, icon) == 1,"failed to add icon\n");
+    check_iml_data(himl, BMP_CX, BMP_CX, 2, 3, 100, BMP_CX * 4, BMP_CX, ILC_COLOR4|ILC_MASK,
+                   "init 2 grow 99 2 icons");
+    ok( ImageList_AddIcon(himl, icon) == 2,"failed to add icon\n");
+    DestroyIcon( icon );
+    check_iml_data(himl, BMP_CX, BMP_CX, 3, 104, 100, BMP_CX * 4, BMP_CX * 104/4, ILC_COLOR4|ILC_MASK,
+                   "init 2 grow 99 3 icons");
+    ok( ImageList_Remove(himl, -1) == TRUE,"failed to remove icon\n");
+    check_iml_data(himl, BMP_CX, BMP_CX, 0, 100, 100, BMP_CX * 4, BMP_CX * 100/4, ILC_COLOR4|ILC_MASK,
+                   "init 2 grow 99 empty");
+    ok( ImageList_SetImageCount(himl, 22) == TRUE,"failed to set image count\n");
+    check_iml_data(himl, BMP_CX, BMP_CX, 22, 23, 100, BMP_CX * 4, BMP_CX * 24/4, ILC_COLOR4|ILC_MASK,
+                   "init 2 grow 99 set count 22");
+    ok( ImageList_SetImageCount(himl, 0) == TRUE,"failed to set image count\n");
+    check_iml_data(himl, BMP_CX, BMP_CX, 0, 1, 100, BMP_CX * 4, BMP_CX, ILC_COLOR4|ILC_MASK,
+                   "init 2 grow 99 set count 0");
+    ok( ImageList_SetImageCount(himl, 42) == TRUE,"failed to set image count\n");
+    check_iml_data(himl, BMP_CX, BMP_CX, 42, 43, 100, BMP_CX * 4, BMP_CX * 44/4, ILC_COLOR4|ILC_MASK,
+                   "init 2 grow 99 set count 42");
+    ret = ImageList_Destroy(himl);
+    ok(ret, "ImageList_Destroy failed\n");
+    iml_clear_stream_data();
+
+    himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR4|ILC_MASK, 2, 65536+12);
+    ok(himl != 0, "ImageList_Create failed\n");
+    check_iml_data(himl, BMP_CX, BMP_CX, 0, 3, 12, BMP_CX * 4, BMP_CX, ILC_COLOR4|ILC_MASK,
+                   "init 2 grow 65536+12");
+    ret = ImageList_Destroy(himl);
+    ok(ret, "ImageList_Destroy failed\n");
+    iml_clear_stream_data();
+
+    himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR4|ILC_MASK, 2, 65535);
+    ok(himl != 0, "ImageList_Create failed\n");
+    check_iml_data(himl, BMP_CX, BMP_CX, 0, 3, 0, BMP_CX * 4, BMP_CX, ILC_COLOR4|ILC_MASK,
+                   "init 2 grow 65535");
+    ret = ImageList_Destroy(himl);
+    ok(ret, "ImageList_Destroy failed\n");
+    iml_clear_stream_data();
+
+    himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR4|ILC_MASK, 2, -20);
+    ok(himl != 0, "ImageList_Create failed\n");
+    check_iml_data(himl, BMP_CX, BMP_CX, 0, 3, 4, BMP_CX * 4, BMP_CX, ILC_COLOR4|ILC_MASK,
+                   "init 2 grow -20");
+    ret = ImageList_Destroy(himl);
+    ok(ret, "ImageList_Destroy failed\n");
+    iml_clear_stream_data();
 }
 
 static void test_shell_imagelist(void)

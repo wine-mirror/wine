@@ -771,7 +771,14 @@ ImageList_Create (INT cx, INT cy, UINT flags,
     if (FAILED(ImageListImpl_CreateInstance(NULL, &IID_IImageList, (void **)&himl)))
         return NULL;
 
-    cGrow = (cGrow < 4) ? 4 : (cGrow + 3) & ~3;
+    cGrow = (WORD)((max( cGrow, 1 ) + 3) & ~3);
+
+    if (cGrow > 256)
+    {
+        /* Windows doesn't limit the size here, but X11 doesn't let use allocate such huge bitmaps */
+        WARN( "grow %d too large, limiting to 256\n", cGrow );
+        cGrow = 256;
+    }
 
     himl->cx        = cx;
     himl->cy        = cy;
@@ -2352,7 +2359,7 @@ ImageList_Remove (HIMAGELIST himl, INT i)
 	    return TRUE;
 	}
 
-        himl->cMaxImage = himl->cInitial + himl->cGrow - 1;
+        himl->cMaxImage = himl->cGrow;
         himl->cCurImage = 0;
         for (nCount = 0; nCount < MAX_OVERLAYIMAGE; nCount++)
              himl->nOvlIdx[nCount] = -1;
@@ -2563,7 +2570,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
         return -1;
 
     if (nIndex == -1) {
-        if (himl->cCurImage + 1 > himl->cMaxImage)
+        if (himl->cCurImage + 1 >= himl->cMaxImage)
             IMAGELIST_InternalExpandBitmaps(himl, 1);
 
         nIndex = himl->cCurImage;
@@ -2848,14 +2855,8 @@ ImageList_SetImageCount (HIMAGELIST himl, UINT iImageCount)
 
     if (!is_valid(himl))
 	return FALSE;
-    if (himl->cMaxImage > iImageCount)
-    {
-        himl->cCurImage = iImageCount;
-        /* TODO: shrink the bitmap when cMaxImage-cCurImage>cGrow ? */
-	return TRUE;
-    }
 
-    nNewCount = iImageCount + himl->cGrow;
+    nNewCount = iImageCount + 1;
     nCopyCount = min(himl->cCurImage, iImageCount);
 
     hdcBitmap = CreateCompatibleDC (0);
