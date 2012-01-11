@@ -184,15 +184,17 @@ static const char * const captureStateString[] = {
 
 
 /*******************************************************************************
- *		IDirectSoundCaptureBuffer
+ * IDirectSoundCaptureBuffer
  */
-static HRESULT WINAPI
-IDirectSoundCaptureBufferImpl_QueryInterface(
-    LPDIRECTSOUNDCAPTUREBUFFER8 iface,
-    REFIID riid,
-    LPVOID* ppobj )
+static inline IDirectSoundCaptureBufferImpl *impl_from_IDirectSoundCaptureBuffer8(IDirectSoundCaptureBuffer8 *iface)
 {
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+    return CONTAINING_RECORD(iface, IDirectSoundCaptureBufferImpl, IDirectSoundCaptureBuffer8_iface);
+}
+
+static HRESULT WINAPI IDirectSoundCaptureBufferImpl_QueryInterface(IDirectSoundCaptureBuffer8 *iface,
+        REFIID riid, void **ppobj)
+{
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     HRESULT hres;
 
     TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
@@ -219,28 +221,28 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
     if ( IsEqualGUID( &IID_IDirectSoundCaptureBuffer, riid ) ||
          IsEqualGUID( &IID_IDirectSoundCaptureBuffer8, riid ) ) {
 	IDirectSoundCaptureBuffer8_AddRef(iface);
-	*ppobj = This;
-	return NO_ERROR;
+        *ppobj = iface;
+        return S_OK;
     }
 
     FIXME("(%p,%s,%p) unsupported GUID\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI
-IDirectSoundCaptureBufferImpl_AddRef( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
+static ULONG WINAPI IDirectSoundCaptureBufferImpl_AddRef(IDirectSoundCaptureBuffer8 *iface)
 {
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     ULONG ref = InterlockedIncrement(&(This->ref));
+
     TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
-static ULONG WINAPI
-IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
+static ULONG WINAPI IDirectSoundCaptureBufferImpl_Release(IDirectSoundCaptureBuffer8 *iface)
 {
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     ULONG ref = InterlockedDecrement(&(This->ref));
+
     TRACE("(%p) ref was %d\n", This, ref + 1);
 
     if (!ref) {
@@ -273,12 +275,10 @@ IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
     return ref;
 }
 
-static HRESULT WINAPI
-IDirectSoundCaptureBufferImpl_GetCaps(
-    LPDIRECTSOUNDCAPTUREBUFFER8 iface,
-    LPDSCBCAPS lpDSCBCaps )
+static HRESULT WINAPI IDirectSoundCaptureBufferImpl_GetCaps(IDirectSoundCaptureBuffer8 *iface,
+        DSCBCAPS *lpDSCBCaps)
 {
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     TRACE( "(%p,%p)\n", This, lpDSCBCaps );
 
     if (lpDSCBCaps == NULL) {
@@ -305,13 +305,11 @@ IDirectSoundCaptureBufferImpl_GetCaps(
     return DS_OK;
 }
 
-static HRESULT WINAPI
-IDirectSoundCaptureBufferImpl_GetCurrentPosition(
-    LPDIRECTSOUNDCAPTUREBUFFER8 iface,
-    LPDWORD lpdwCapturePosition,
-    LPDWORD lpdwReadPosition )
+static HRESULT WINAPI IDirectSoundCaptureBufferImpl_GetCurrentPosition(IDirectSoundCaptureBuffer8 *iface,
+        DWORD *lpdwCapturePosition, DWORD *lpdwReadPosition)
 {
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
+
     TRACE( "(%p,%p,%p)\n", This, lpdwCapturePosition, lpdwReadPosition );
 
     if (This->device == NULL) {
@@ -341,17 +339,13 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
     return DS_OK;
 }
 
-static HRESULT WINAPI
-IDirectSoundCaptureBufferImpl_GetFormat(
-    LPDIRECTSOUNDCAPTUREBUFFER8 iface,
-    LPWAVEFORMATEX lpwfxFormat,
-    DWORD dwSizeAllocated,
-    LPDWORD lpdwSizeWritten )
+static HRESULT WINAPI IDirectSoundCaptureBufferImpl_GetFormat(IDirectSoundCaptureBuffer8 *iface,
+        WAVEFORMATEX *lpwfxFormat, DWORD dwSizeAllocated, DWORD *lpdwSizeWritten)
 {
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     HRESULT hres = DS_OK;
-    TRACE( "(%p,%p,0x%08x,%p)\n", This, lpwfxFormat, dwSizeAllocated,
-        lpdwSizeWritten );
+
+    TRACE("(%p,%p,0x%08x,%p)\n", This, lpwfxFormat, dwSizeAllocated, lpdwSizeWritten);
 
     if (This->device == NULL) {
         WARN("invalid parameter: This->device == NULL\n");
@@ -378,12 +372,11 @@ IDirectSoundCaptureBufferImpl_GetFormat(
     return hres;
 }
 
-static HRESULT WINAPI
-IDirectSoundCaptureBufferImpl_GetStatus(
-    LPDIRECTSOUNDCAPTUREBUFFER8 iface,
-    LPDWORD lpdwStatus )
+static HRESULT WINAPI IDirectSoundCaptureBufferImpl_GetStatus(IDirectSoundCaptureBuffer8 *iface,
+        DWORD *lpdwStatus)
 {
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
+
     TRACE( "(%p, %p), thread is %04x\n", This, lpdwStatus, GetCurrentThreadId() );
 
     if (This->device == NULL) {
@@ -416,32 +409,23 @@ IDirectSoundCaptureBufferImpl_GetStatus(
     return DS_OK;
 }
 
-static HRESULT WINAPI
-IDirectSoundCaptureBufferImpl_Initialize(
-    LPDIRECTSOUNDCAPTUREBUFFER8 iface,
-    LPDIRECTSOUNDCAPTURE lpDSC,
-    LPCDSCBUFFERDESC lpcDSCBDesc )
+static HRESULT WINAPI IDirectSoundCaptureBufferImpl_Initialize(IDirectSoundCaptureBuffer8 *iface,
+        IDirectSoundCapture *lpDSC, const DSCBUFFERDESC *lpcDSCBDesc)
 {
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
 
     FIXME( "(%p,%p,%p): stub\n", This, lpDSC, lpcDSCBDesc );
 
     return DS_OK;
 }
 
-static HRESULT WINAPI
-IDirectSoundCaptureBufferImpl_Lock(
-    LPDIRECTSOUNDCAPTUREBUFFER8 iface,
-    DWORD dwReadCusor,
-    DWORD dwReadBytes,
-    LPVOID* lplpvAudioPtr1,
-    LPDWORD lpdwAudioBytes1,
-    LPVOID* lplpvAudioPtr2,
-    LPDWORD lpdwAudioBytes2,
-    DWORD dwFlags )
+static HRESULT WINAPI IDirectSoundCaptureBufferImpl_Lock(IDirectSoundCaptureBuffer8 *iface,
+        DWORD dwReadCusor, DWORD dwReadBytes, void **lplpvAudioPtr1, DWORD *lpdwAudioBytes1,
+        void **lplpvAudioPtr2, DWORD *lpdwAudioBytes2, DWORD dwFlags)
 {
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     HRESULT hres = DS_OK;
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+
     TRACE( "(%p,%08u,%08u,%p,%p,%p,%p,0x%08x) at %d\n", This, dwReadCusor,
         dwReadBytes, lplpvAudioPtr1, lpdwAudioBytes1, lplpvAudioPtr2,
         lpdwAudioBytes2, dwFlags, GetTickCount() );
@@ -489,13 +473,11 @@ IDirectSoundCaptureBufferImpl_Lock(
     return hres;
 }
 
-static HRESULT WINAPI
-IDirectSoundCaptureBufferImpl_Start(
-    LPDIRECTSOUNDCAPTUREBUFFER8 iface,
-    DWORD dwFlags )
+static HRESULT WINAPI IDirectSoundCaptureBufferImpl_Start(IDirectSoundCaptureBuffer8 *iface,
+        DWORD dwFlags)
 {
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     HRESULT hres;
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
 
     TRACE( "(%p,0x%08x)\n", This, dwFlags );
 
@@ -535,12 +517,12 @@ IDirectSoundCaptureBufferImpl_Start(
     return DS_OK;
 }
 
-static HRESULT WINAPI
-IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
+static HRESULT WINAPI IDirectSoundCaptureBufferImpl_Stop(IDirectSoundCaptureBuffer8 *iface)
 {
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     HRESULT hres;
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
-    TRACE( "(%p)\n", This );
+
+    TRACE("(%p)\n", This);
 
     if (This->device == NULL) {
         WARN("invalid parameter: This->device == NULL\n");
@@ -570,16 +552,12 @@ IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
     return DS_OK;
 }
 
-static HRESULT WINAPI
-IDirectSoundCaptureBufferImpl_Unlock(
-    LPDIRECTSOUNDCAPTUREBUFFER8 iface,
-    LPVOID lpvAudioPtr1,
-    DWORD dwAudioBytes1,
-    LPVOID lpvAudioPtr2,
-    DWORD dwAudioBytes2 )
+static HRESULT WINAPI IDirectSoundCaptureBufferImpl_Unlock(IDirectSoundCaptureBuffer8 *iface,
+        void *lpvAudioPtr1, DWORD dwAudioBytes1, void *lpvAudioPtr2, DWORD dwAudioBytes2)
 {
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     HRESULT hres = DS_OK;
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+
     TRACE( "(%p,%p,%08u,%p,%08u)\n", This, lpvAudioPtr1, dwAudioBytes1,
         lpvAudioPtr2, dwAudioBytes2 );
 
@@ -597,15 +575,10 @@ IDirectSoundCaptureBufferImpl_Unlock(
     return hres;
 }
 
-static HRESULT WINAPI
-IDirectSoundCaptureBufferImpl_GetObjectInPath(
-    LPDIRECTSOUNDCAPTUREBUFFER8 iface,
-    REFGUID rguidObject,
-    DWORD dwIndex,
-    REFGUID rguidInterface,
-    LPVOID* ppObject )
+static HRESULT WINAPI IDirectSoundCaptureBufferImpl_GetObjectInPath(IDirectSoundCaptureBuffer8 *iface,
+        REFGUID rguidObject, DWORD dwIndex, REFGUID rguidInterface, void **ppObject)
 {
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
 
     FIXME( "(%p,%s,%u,%s,%p): stub\n", This, debugstr_guid(rguidObject),
         dwIndex, debugstr_guid(rguidInterface), ppObject );
@@ -613,13 +586,10 @@ IDirectSoundCaptureBufferImpl_GetObjectInPath(
     return DS_OK;
 }
 
-static HRESULT WINAPI
-IDirectSoundCaptureBufferImpl_GetFXStatus(
-    LPDIRECTSOUNDCAPTUREBUFFER8 iface,
-    DWORD dwFXCount,
-    LPDWORD pdwFXStatus )
+static HRESULT WINAPI IDirectSoundCaptureBufferImpl_GetFXStatus(IDirectSoundCaptureBuffer8 *iface,
+        DWORD dwFXCount, DWORD *pdwFXStatus)
 {
-    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+    IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
 
     FIXME( "(%p,%u,%p): stub\n", This, dwFXCount, pdwFXStatus );
 
@@ -748,7 +718,7 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
             return DSERR_OUTOFMEMORY;
         }
 
-        This->lpVtbl = &dscbvt;
+        This->IDirectSoundCaptureBuffer8_iface.lpVtbl = &dscbvt;
 
         err = IMMDevice_Activate(device->mmdevice, &IID_IAudioClient,
                 CLSCTX_INPROC_SERVER, NULL, (void**)&device->client);
@@ -857,8 +827,7 @@ static ULONG DirectSoundCaptureDevice_Release(
         LeaveCriticalSection(&DSOUND_capturers_lock);
 
         if (device->capture_buffer)
-            IDirectSoundCaptureBufferImpl_Release(
-		(LPDIRECTSOUNDCAPTUREBUFFER8) device->capture_buffer);
+            IDirectSoundCaptureBufferImpl_Release(&device->capture_buffer->IDirectSoundCaptureBuffer8_iface);
 
         if(device->mmdevice)
             IMMDevice_Release(device->mmdevice);

@@ -247,13 +247,10 @@ struct DirectSoundCaptureDevice
  */
 struct IDirectSoundCaptureBufferImpl
 {
-    /* IUnknown fields */
-    const IDirectSoundCaptureBuffer8Vtbl *lpVtbl;
+    IDirectSoundCaptureBuffer8          IDirectSoundCaptureBuffer8_iface;
     LONG                                ref;
-
-    /* IDirectSoundCaptureBufferImpl fields */
+    /* IDirectSoundCaptureBuffer fields */
     DirectSoundCaptureDevice*           device;
-    /* FIXME: don't need this */
     LPDSCBUFFERDESC                     pdscbd;
     DWORD                               flags;
 
