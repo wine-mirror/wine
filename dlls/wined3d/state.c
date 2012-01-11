@@ -3266,7 +3266,7 @@ static void transform_texture(struct wined3d_context *context, const struct wine
     generated = (state->texture_states[texUnit][WINED3D_TSS_TEXCOORD_INDEX] & 0xffff0000) != WINED3DTSS_TCI_PASSTHRU;
     coordIdx = min(state->texture_states[texUnit][WINED3D_TSS_TEXCOORD_INDEX & 0x0000ffff], MAX_TEXTURES - 1);
 
-    set_texture_matrix(&state->transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
+    set_texture_matrix(&state->transforms[WINED3D_TS_TEXTURE0 + texUnit].u.m[0][0],
             state->texture_states[texUnit][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS],
             generated, context->last_was_rhw,
             device->strided_streams.use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx))
@@ -3520,7 +3520,7 @@ static void tex_coordindex(struct wined3d_context *context, const struct wined3d
     }
 
     /* Update the texture matrix. */
-    if (!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stage)))
+    if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + stage)))
         transform_texture(context, state, STATE_TEXTURESTAGE(stage, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS));
 
     if (!isStateDirty(context, STATE_VDECL) && context->namedArraysLoaded)
@@ -3746,14 +3746,14 @@ static void transform_world(struct wined3d_context *context, const struct wined3
         /* In the general case, the view matrix is the identity matrix */
         if (context->swapchain->device->view_ident)
         {
-            glLoadMatrixf(&state->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
+            glLoadMatrixf(&state->transforms[WINED3D_TS_WORLD_MATRIX(0)].u.m[0][0]);
             checkGLcall("glLoadMatrixf");
         }
         else
         {
-            glLoadMatrixf(&state->transforms[WINED3DTS_VIEW].u.m[0][0]);
+            glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW].u.m[0][0]);
             checkGLcall("glLoadMatrixf");
-            glMultMatrixf(&state->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
+            glMultMatrixf(&state->transforms[WINED3D_TS_WORLD_MATRIX(0)].u.m[0][0]);
             checkGLcall("glMultMatrixf");
         }
     }
@@ -3763,17 +3763,15 @@ static void clipplane(struct wined3d_context *context, const struct wined3d_stat
 {
     UINT index = state_id - STATE_CLIPPLANE(0);
 
-    if (isStateDirty(context, STATE_TRANSFORM(WINED3DTS_VIEW)) || index >= context->gl_info->limits.clipplanes)
-    {
+    if (isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_VIEW)) || index >= context->gl_info->limits.clipplanes)
         return;
-    }
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
 
     /* Clip Plane settings are affected by the model view in OpenGL, the View transform in direct3d */
     if (!use_vs(state))
-        glLoadMatrixf(&state->transforms[WINED3DTS_VIEW].u.m[0][0]);
+        glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW].u.m[0][0]);
     else
         /* with vertex shaders, clip planes are not transformed in direct3d,
          * in OpenGL they are still transformed by the model view.
@@ -3793,7 +3791,7 @@ static void clipplane(struct wined3d_context *context, const struct wined3d_stat
 
 static void transform_worldex(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    UINT matrix = state_id - STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0));
+    UINT matrix = state_id - STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0));
     GLenum glMat;
     TRACE("Setting world matrix %d\n", matrix);
 
@@ -3801,9 +3799,10 @@ static void transform_worldex(struct wined3d_context *context, const struct wine
     {
         WARN("Unsupported blend matrix set\n");
         return;
-    } else if(isStateDirty(context, STATE_TRANSFORM(WINED3DTS_VIEW))) {
-        return;
     }
+
+    if (isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_VIEW)))
+        return;
 
     /* GL_MODELVIEW0_ARB:  0x1700
      * GL_MODELVIEW1_ARB:  0x850a
@@ -3823,14 +3822,14 @@ static void transform_worldex(struct wined3d_context *context, const struct wine
      * incorrectly it has to be multiplied into every GL modelview matrix. */
     if (context->swapchain->device->view_ident)
     {
-        glLoadMatrixf(&state->transforms[WINED3DTS_WORLDMATRIX(matrix)].u.m[0][0]);
+        glLoadMatrixf(&state->transforms[WINED3D_TS_WORLD_MATRIX(matrix)].u.m[0][0]);
         checkGLcall("glLoadMatrixf");
     }
     else
     {
-        glLoadMatrixf(&state->transforms[WINED3DTS_VIEW].u.m[0][0]);
+        glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW].u.m[0][0]);
         checkGLcall("glLoadMatrixf");
-        glMultMatrixf(&state->transforms[WINED3DTS_WORLDMATRIX(matrix)].u.m[0][0]);
+        glMultMatrixf(&state->transforms[WINED3D_TS_WORLD_MATRIX(matrix)].u.m[0][0]);
         checkGLcall("glMultMatrixf");
     }
 }
@@ -3872,8 +3871,8 @@ static void state_vertexblend(struct wined3d_context *context, const struct wine
                 unsigned int i;
                 for (i = 1; i < gl_info->limits.blends; ++i)
                 {
-                    if (!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(i))))
-                        transform_worldex(context, state, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(i)));
+                    if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(i))))
+                        transform_worldex(context, state, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(i)));
                 }
                 device->vertexBlendUsed = TRUE;
             }
@@ -3905,7 +3904,7 @@ static void transform_view(struct wined3d_context *context, const struct wined3d
 
     glMatrixMode(GL_MODELVIEW);
     checkGLcall("glMatrixMode(GL_MODELVIEW)");
-    glLoadMatrixf(&state->transforms[WINED3DTS_VIEW].u.m[0][0]);
+    glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW].u.m[0][0]);
     checkGLcall("glLoadMatrixf(...)");
 
     /* Reset lights. TODO: Call light apply func */
@@ -3935,16 +3934,16 @@ static void transform_view(struct wined3d_context *context, const struct wined3d
 
     /* Call the world matrix state, this will apply the combined WORLD + VIEW matrix
      * No need to do it here if the state is scheduled for update. */
-    if (!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))))
-        transform_world(context, state, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)));
+    if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0))))
+        transform_world(context, state, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0)));
 
     /* Avoid looping over a number of matrices if the app never used the functionality */
     if (context->swapchain->device->vertexBlendUsed)
     {
         for (k = 1; k < gl_info->limits.blends; ++k)
         {
-            if (!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(k))))
-                transform_worldex(context, state, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(k)));
+            if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(k))))
+                transform_worldex(context, state, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(k)));
         }
     }
 }
@@ -4011,7 +4010,7 @@ static void transform_projection(struct wined3d_context *context, const struct w
         glLoadMatrixd(projection);
         checkGLcall("glLoadMatrixd");
 
-        glMultMatrixf(&state->transforms[WINED3DTS_PROJECTION].u.m[0][0]);
+        glMultMatrixf(&state->transforms[WINED3D_TS_PROJECTION].u.m[0][0]);
         checkGLcall("glLoadMatrixf");
     }
 }
@@ -4538,9 +4537,9 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
         /* TODO: Move this mainly to the viewport state and only apply when
          * the vp has changed or transformed / untransformed was switched. */
         if (wasrhw != context->last_was_rhw
-                && !isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION))
+                && !isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION))
                 && !isStateDirty(context, STATE_VIEWPORT))
-            transform_projection(context, state, STATE_TRANSFORM(WINED3DTS_PROJECTION));
+            transform_projection(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
         /* World matrix needs reapplication here only if we're switching between rhw and non-rhw
          * mode.
          *
@@ -4552,9 +4551,9 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
          * World and view matrix go into the same gl matrix, so only apply them when neither is
          * dirty
          */
-        if (transformed != wasrhw && !isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)))
-                && !isStateDirty(context, STATE_TRANSFORM(WINED3DTS_VIEW)))
-            transform_world(context, state, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)));
+        if (transformed != wasrhw && !isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0)))
+                && !isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_VIEW)))
+            transform_world(context, state, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0)));
         if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_COLORVERTEX)))
             state_colormat(context, state, STATE_RENDER(WINED3D_RS_COLORVERTEX));
         if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_LIGHTING)))
@@ -4604,10 +4603,10 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
                  * fixed function processing. So make sure we leave the fixed
                  * function vertex processing states back in a sane state
                  * before switching to shaders. */
-                if (!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION)))
-                    transform_projection(context, state, STATE_TRANSFORM(WINED3DTS_PROJECTION));
-                if (!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))))
-                    transform_world(context, state, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)));
+                if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
+                    transform_projection(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
+                if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0))))
+                    transform_world(context, state, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0)));
             }
             updateFog = TRUE;
 
@@ -4644,7 +4643,7 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
 
         for (i = 0; i < MAX_TEXTURES; ++i)
         {
-            if (!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + i)))
+            if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + i)))
                 transform_texture(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS));
         }
     }
@@ -4682,8 +4681,8 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
 
 static void viewport_vertexpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION)))
-        transform_projection(context, state, STATE_TRANSFORM(WINED3DTS_PROJECTION));
+    if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
+        transform_projection(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
     if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE)))
         state_pscale(context, state, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE));
     /* Update the position fixup. */
@@ -4709,7 +4708,7 @@ static void light(struct wined3d_context *context, const struct wined3d_state *s
         /* Light settings are affected by the model view in OpenGL, the View transform in direct3d*/
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
-        glLoadMatrixf(&state->transforms[WINED3DTS_VIEW].u.m[0][0]);
+        glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW].u.m[0][0]);
 
         /* Diffuse: */
         colRGBA[0] = lightInfo->OriginalParms.diffuse.r;
@@ -5136,272 +5135,272 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     /* Viewport */
     { STATE_VIEWPORT,                                     { STATE_VIEWPORT,                                     viewport_vertexpart }, WINED3D_GL_EXT_NONE             },
       /* Transform states follow                    */
-    { STATE_TRANSFORM(WINED3DTS_VIEW),                    { STATE_TRANSFORM(WINED3DTS_VIEW),                    transform_view      }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_PROJECTION),              { STATE_TRANSFORM(WINED3DTS_PROJECTION),              transform_projection}, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE0),                { STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE1),                { STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE2),                { STATE_TEXTURESTAGE(2, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE3),                { STATE_TEXTURESTAGE(3, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE4),                { STATE_TEXTURESTAGE(4, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE5),                { STATE_TEXTURESTAGE(5, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE6),                { STATE_TEXTURESTAGE(6, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE7),                { STATE_TEXTURESTAGE(7, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  0)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  0)),        transform_world     }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  1)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  1)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  2)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  2)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  3)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  3)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  4)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  4)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  5)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  5)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  6)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  6)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  7)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  7)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  8)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  8)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  9)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  9)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 10)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 10)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 11)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 11)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 12)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 12)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 13)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 13)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 14)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 14)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 15)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 15)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 16)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 16)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 17)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 17)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 18)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 18)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 19)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 19)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 20)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 20)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 21)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 21)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 22)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 22)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 23)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 23)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 24)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 24)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 25)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 25)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 26)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 26)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 27)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 27)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 28)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 28)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 29)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 29)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 30)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 30)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 31)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 31)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 32)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 32)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 33)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 33)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 34)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 34)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 35)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 35)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 36)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 36)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 37)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 37)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 38)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 38)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 39)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 39)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 40)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 40)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 41)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 41)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 42)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 42)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 43)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 43)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 44)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 44)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 45)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 45)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 46)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 46)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 47)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 47)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 48)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 48)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 49)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 49)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 50)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 50)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 51)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 51)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 52)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 52)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 53)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 53)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 54)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 54)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 55)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 55)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 56)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 56)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 57)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 57)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 58)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 58)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 59)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 59)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 60)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 60)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 61)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 61)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 62)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 62)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 63)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 63)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 64)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 64)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 65)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 65)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 66)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 66)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 67)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 67)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 68)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 68)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 69)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 69)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 70)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 70)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 71)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 71)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 72)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 72)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 73)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 73)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 74)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 74)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 75)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 75)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 76)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 76)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 77)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 77)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 78)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 78)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 79)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 79)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 80)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 80)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 81)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 81)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 82)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 82)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 83)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 83)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 84)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 84)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 85)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 85)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 86)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 86)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 87)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 87)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 88)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 88)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 89)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 89)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 90)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 90)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 91)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 91)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 92)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 92)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 93)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 93)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 94)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 94)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 95)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 95)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 96)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 96)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 97)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 97)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 98)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 98)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 99)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX( 99)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(100)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(100)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(101)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(101)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(102)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(102)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(103)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(103)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(104)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(104)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(105)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(105)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(106)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(106)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(107)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(107)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(108)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(108)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(109)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(109)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(110)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(110)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(111)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(111)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(112)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(112)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(113)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(113)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(114)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(114)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(115)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(115)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(116)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(116)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(117)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(117)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(118)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(118)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(119)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(119)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(120)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(120)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(121)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(121)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(122)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(122)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(123)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(123)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(124)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(124)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(125)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(125)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(126)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(126)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(127)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(127)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(128)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(128)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(129)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(129)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(130)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(130)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(131)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(131)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(132)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(132)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(133)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(133)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(134)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(134)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(135)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(135)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(136)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(136)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(137)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(137)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(138)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(138)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(139)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(139)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(140)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(140)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(141)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(141)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(142)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(142)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(143)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(143)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(144)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(144)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(145)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(145)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(146)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(146)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(147)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(147)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(148)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(148)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(149)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(149)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(150)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(150)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(151)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(151)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(152)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(152)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(153)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(153)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(154)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(154)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(155)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(155)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(156)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(156)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(157)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(157)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(158)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(158)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(159)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(159)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(160)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(160)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(161)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(161)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(162)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(162)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(163)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(163)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(164)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(164)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(165)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(165)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(166)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(166)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(167)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(167)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(168)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(168)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(169)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(169)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(170)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(170)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(171)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(171)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(172)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(172)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(173)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(173)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(174)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(174)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(175)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(175)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(176)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(176)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(177)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(177)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(178)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(178)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(179)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(179)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(180)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(180)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(181)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(181)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(182)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(182)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(183)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(183)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(184)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(184)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(185)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(185)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(186)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(186)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(187)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(187)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(188)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(188)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(189)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(189)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(190)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(190)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(191)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(191)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(192)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(192)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(193)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(193)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(194)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(194)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(195)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(195)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(196)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(196)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(197)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(197)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(198)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(198)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(199)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(199)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(200)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(200)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(201)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(201)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(202)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(202)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(203)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(203)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(204)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(204)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(205)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(205)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(206)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(206)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(207)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(207)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(208)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(208)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(209)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(209)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(210)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(210)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(211)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(211)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(212)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(212)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(213)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(213)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(214)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(214)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(215)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(215)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(216)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(216)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(217)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(217)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(218)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(218)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(219)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(219)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(220)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(220)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(221)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(221)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(222)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(222)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(223)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(223)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(224)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(224)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(225)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(225)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(226)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(226)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(227)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(227)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(228)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(228)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(229)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(229)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(230)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(230)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(231)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(231)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(232)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(232)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(233)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(233)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(234)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(234)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(235)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(235)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(236)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(236)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(237)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(237)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(238)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(238)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(239)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(239)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(240)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(240)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(241)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(241)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(242)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(242)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(243)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(243)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(244)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(244)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(245)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(245)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(246)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(246)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(247)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(247)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(248)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(248)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(249)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(249)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(250)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(250)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(251)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(251)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(252)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(252)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(253)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(253)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(254)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(254)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
-    { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255)),        transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_VIEW),                   { STATE_TRANSFORM(WINED3D_TS_VIEW),                   transform_view      }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_PROJECTION),             { STATE_TRANSFORM(WINED3D_TS_PROJECTION),             transform_projection}, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_TEXTURE0),               { STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_TEXTURE1),               { STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_TEXTURE2),               { STATE_TEXTURESTAGE(2, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_TEXTURE3),               { STATE_TEXTURESTAGE(3, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_TEXTURE4),               { STATE_TEXTURESTAGE(4, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_TEXTURE5),               { STATE_TEXTURESTAGE(5, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_TEXTURE6),               { STATE_TEXTURESTAGE(6, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_TEXTURE7),               { STATE_TEXTURESTAGE(7, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL            }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  0)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  0)),      transform_world     }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  1)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  1)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  2)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  2)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  3)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  3)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  4)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  4)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  5)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  5)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  6)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  6)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  7)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  7)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  8)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  8)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  9)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(  9)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 10)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 10)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 11)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 11)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 12)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 12)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 13)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 13)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 14)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 14)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 15)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 15)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 16)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 16)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 17)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 17)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 18)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 18)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 19)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 19)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 20)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 20)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 21)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 21)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 22)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 22)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 23)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 23)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 24)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 24)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 25)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 25)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 26)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 26)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 27)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 27)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 28)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 28)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 29)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 29)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 30)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 30)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 31)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 31)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 32)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 32)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 33)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 33)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 34)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 34)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 35)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 35)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 36)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 36)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 37)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 37)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 38)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 38)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 39)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 39)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 40)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 40)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 41)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 41)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 42)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 42)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 43)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 43)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 44)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 44)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 45)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 45)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 46)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 46)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 47)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 47)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 48)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 48)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 49)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 49)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 50)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 50)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 51)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 51)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 52)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 52)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 53)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 53)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 54)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 54)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 55)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 55)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 56)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 56)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 57)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 57)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 58)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 58)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 59)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 59)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 60)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 60)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 61)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 61)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 62)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 62)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 63)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 63)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 64)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 64)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 65)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 65)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 66)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 66)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 67)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 67)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 68)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 68)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 69)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 69)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 70)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 70)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 71)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 71)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 72)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 72)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 73)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 73)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 74)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 74)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 75)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 75)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 76)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 76)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 77)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 77)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 78)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 78)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 79)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 79)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 80)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 80)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 81)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 81)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 82)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 82)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 83)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 83)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 84)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 84)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 85)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 85)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 86)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 86)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 87)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 87)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 88)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 88)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 89)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 89)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 90)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 90)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 91)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 91)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 92)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 92)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 93)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 93)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 94)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 94)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 95)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 95)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 96)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 96)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 97)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 97)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 98)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 98)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 99)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX( 99)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(100)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(100)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(101)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(101)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(102)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(102)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(103)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(103)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(104)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(104)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(105)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(105)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(106)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(106)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(107)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(107)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(108)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(108)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(109)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(109)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(110)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(110)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(111)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(111)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(112)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(112)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(113)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(113)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(114)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(114)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(115)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(115)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(116)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(116)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(117)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(117)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(118)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(118)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(119)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(119)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(120)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(120)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(121)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(121)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(122)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(122)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(123)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(123)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(124)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(124)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(125)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(125)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(126)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(126)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(127)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(127)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(128)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(128)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(129)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(129)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(130)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(130)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(131)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(131)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(132)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(132)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(133)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(133)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(134)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(134)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(135)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(135)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(136)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(136)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(137)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(137)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(138)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(138)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(139)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(139)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(140)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(140)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(141)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(141)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(142)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(142)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(143)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(143)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(144)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(144)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(145)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(145)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(146)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(146)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(147)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(147)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(148)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(148)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(149)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(149)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(150)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(150)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(151)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(151)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(152)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(152)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(153)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(153)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(154)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(154)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(155)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(155)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(156)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(156)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(157)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(157)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(158)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(158)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(159)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(159)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(160)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(160)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(161)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(161)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(162)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(162)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(163)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(163)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(164)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(164)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(165)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(165)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(166)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(166)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(167)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(167)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(168)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(168)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(169)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(169)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(170)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(170)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(171)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(171)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(172)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(172)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(173)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(173)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(174)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(174)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(175)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(175)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(176)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(176)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(177)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(177)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(178)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(178)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(179)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(179)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(180)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(180)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(181)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(181)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(182)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(182)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(183)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(183)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(184)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(184)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(185)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(185)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(186)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(186)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(187)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(187)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(188)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(188)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(189)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(189)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(190)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(190)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(191)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(191)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(192)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(192)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(193)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(193)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(194)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(194)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(195)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(195)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(196)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(196)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(197)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(197)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(198)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(198)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(199)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(199)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(200)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(200)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(201)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(201)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(202)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(202)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(203)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(203)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(204)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(204)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(205)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(205)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(206)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(206)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(207)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(207)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(208)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(208)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(209)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(209)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(210)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(210)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(211)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(211)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(212)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(212)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(213)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(213)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(214)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(214)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(215)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(215)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(216)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(216)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(217)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(217)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(218)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(218)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(219)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(219)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(220)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(220)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(221)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(221)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(222)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(222)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(223)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(223)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(224)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(224)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(225)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(225)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(226)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(226)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(227)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(227)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(228)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(228)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(229)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(229)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(230)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(230)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(231)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(231)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(232)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(232)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(233)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(233)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(234)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(234)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(235)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(235)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(236)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(236)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(237)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(237)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(238)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(238)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(239)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(239)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(240)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(240)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(241)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(241)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(242)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(242)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(243)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(243)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(244)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(244)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(245)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(245)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(246)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(246)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(247)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(247)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(248)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(248)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(249)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(249)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(250)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(250)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(251)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(251)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(252)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(252)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(253)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(253)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(254)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(254)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
+    { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(255)),      { STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(255)),      transform_worldex   }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), transform_texture   }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), transform_texture   }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(2, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(2, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), transform_texture   }, WINED3D_GL_EXT_NONE             },
@@ -5691,16 +5690,16 @@ static void prune_invalid_states(struct StateEntry *state_table, const struct wi
         state_table[i].apply = state_undefined;
     }
 
-    start = STATE_TRANSFORM(WINED3DTS_TEXTURE0 + gl_info->limits.texture_stages);
-    last = STATE_TRANSFORM(WINED3DTS_TEXTURE0 + MAX_TEXTURES - 1);
+    start = STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + gl_info->limits.texture_stages);
+    last = STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + MAX_TEXTURES - 1);
     for (i = start; i <= last; ++i)
     {
         state_table[i].representative = 0;
         state_table[i].apply = state_undefined;
     }
 
-    start = STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(gl_info->limits.blends));
-    last = STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255));
+    start = STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(gl_info->limits.blends));
+    last = STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(255));
     for (i = start; i <= last; ++i)
     {
         state_table[i].representative = 0;

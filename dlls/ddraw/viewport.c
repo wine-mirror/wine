@@ -45,7 +45,7 @@ static void update_clip_space(IDirect3DDeviceImpl *device,
 
     multiply_matrix(&projection, &clip_space, &device->legacy_projection);
     hr = wined3d_device_set_transform(device->wined3d_device,
-            WINED3DTS_PROJECTION, (struct wined3d_matrix *)&projection);
+            WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
     if (SUCCEEDED(hr))
         device->legacy_clipspace = clip_space;
 }
@@ -434,7 +434,7 @@ IDirect3DViewportImpl_TransformVertices(IDirect3DViewport3 *iface,
     wined3d_device_get_transform(This->active_device->wined3d_device,
             D3DTRANSFORMSTATE_VIEW, (struct wined3d_matrix *)&view_mat);
     wined3d_device_get_transform(This->active_device->wined3d_device,
-            WINED3DTS_WORLDMATRIX(0), (struct wined3d_matrix *)&world_mat);
+            WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)&world_mat);
     multiply_matrix(&mat, &view_mat, &world_mat);
     multiply_matrix(&mat, &This->active_device->legacy_projection, &mat);
 

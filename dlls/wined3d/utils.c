@@ -2265,27 +2265,30 @@ const char *debug_d3dtop(enum wined3d_texture_op d3dtop)
     }
 }
 
-const char* debug_d3dtstype(WINED3DTRANSFORMSTATETYPE tstype) {
-    switch (tstype) {
+const char *debug_d3dtstype(enum wined3d_transform_state tstype)
+{
+    switch (tstype)
+    {
 #define TSTYPE_TO_STR(tstype) case tstype: return #tstype
-    TSTYPE_TO_STR(WINED3DTS_VIEW);
-    TSTYPE_TO_STR(WINED3DTS_PROJECTION);
-    TSTYPE_TO_STR(WINED3DTS_TEXTURE0);
-    TSTYPE_TO_STR(WINED3DTS_TEXTURE1);
-    TSTYPE_TO_STR(WINED3DTS_TEXTURE2);
-    TSTYPE_TO_STR(WINED3DTS_TEXTURE3);
-    TSTYPE_TO_STR(WINED3DTS_TEXTURE4);
-    TSTYPE_TO_STR(WINED3DTS_TEXTURE5);
-    TSTYPE_TO_STR(WINED3DTS_TEXTURE6);
-    TSTYPE_TO_STR(WINED3DTS_TEXTURE7);
-    TSTYPE_TO_STR(WINED3DTS_WORLDMATRIX(0));
+    TSTYPE_TO_STR(WINED3D_TS_VIEW);
+    TSTYPE_TO_STR(WINED3D_TS_PROJECTION);
+    TSTYPE_TO_STR(WINED3D_TS_TEXTURE0);
+    TSTYPE_TO_STR(WINED3D_TS_TEXTURE1);
+    TSTYPE_TO_STR(WINED3D_TS_TEXTURE2);
+    TSTYPE_TO_STR(WINED3D_TS_TEXTURE3);
+    TSTYPE_TO_STR(WINED3D_TS_TEXTURE4);
+    TSTYPE_TO_STR(WINED3D_TS_TEXTURE5);
+    TSTYPE_TO_STR(WINED3D_TS_TEXTURE6);
+    TSTYPE_TO_STR(WINED3D_TS_TEXTURE7);
+    TSTYPE_TO_STR(WINED3D_TS_WORLD_MATRIX(0));
 #undef TSTYPE_TO_STR
     default:
-        if (tstype > 256 && tstype < 512) {
-            FIXME("WINED3DTS_WORLDMATRIX(%u). 1..255 not currently supported\n", tstype);
-            return ("WINED3DTS_WORLDMATRIX > 0");
+        if (tstype > 256 && tstype < 512)
+        {
+            FIXME("WINED3D_TS_WORLD_MATRIX(%u). 1..255 not currently supported.\n", tstype);
+            return ("WINED3D_TS_WORLD_MATRIX > 0");
         }
-        FIXME("Unrecognized %u WINED3DTS\n", tstype);
+        FIXME("Unrecognized transform state %#x.\n", tstype);
         return "unrecognized";
     }
 }

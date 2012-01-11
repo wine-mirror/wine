@@ -621,26 +621,25 @@ enum wined3d_texture_address
     WINED3D_TADDRESS_MIRROR_ONCE            = 5,
 };
 
-typedef enum _WINED3DTRANSFORMSTATETYPE
+enum wined3d_transform_state
 {
-    WINED3DTS_VIEW                          = 2,
-    WINED3DTS_PROJECTION                    = 3,
-    WINED3DTS_TEXTURE0                      = 16,
-    WINED3DTS_TEXTURE1                      = 17,
-    WINED3DTS_TEXTURE2                      = 18,
-    WINED3DTS_TEXTURE3                      = 19,
-    WINED3DTS_TEXTURE4                      = 20,
-    WINED3DTS_TEXTURE5                      = 21,
-    WINED3DTS_TEXTURE6                      = 22,
-    WINED3DTS_TEXTURE7                      = 23,
-    WINED3DTS_WORLD                         = 256, /*WINED3DTS_WORLDMATRIX(0)*/
-    WINED3DTS_WORLD1                        = 257,
-    WINED3DTS_WORLD2                        = 258,
-    WINED3DTS_WORLD3                        = 259,
-    WINED3DTS_FORCE_DWORD                   = 0x7fffffff
-} WINED3DTRANSFORMSTATETYPE;
+    WINED3D_TS_VIEW                         = 2,
+    WINED3D_TS_PROJECTION                   = 3,
+    WINED3D_TS_TEXTURE0                     = 16,
+    WINED3D_TS_TEXTURE1                     = 17,
+    WINED3D_TS_TEXTURE2                     = 18,
+    WINED3D_TS_TEXTURE3                     = 19,
+    WINED3D_TS_TEXTURE4                     = 20,
+    WINED3D_TS_TEXTURE5                     = 21,
+    WINED3D_TS_TEXTURE6                     = 22,
+    WINED3D_TS_TEXTURE7                     = 23,
+    WINED3D_TS_WORLD                        = 256, /* WINED3D_TS_WORLD_MATRIX(0) */
+    WINED3D_TS_WORLD1                       = 257,
+    WINED3D_TS_WORLD2                       = 258,
+    WINED3D_TS_WORLD3                       = 259,
+};
 
-#define WINED3DTS_WORLDMATRIX(index)                            (WINED3DTRANSFORMSTATETYPE)(index + 256)
+#define WINED3D_TS_WORLD_MATRIX(index)                          (enum wined3d_transform_state)(index + 256)
 
 typedef enum _WINED3DBASISTYPE
 {
@@ -2148,7 +2147,7 @@ HRESULT __cdecl wined3d_device_get_texture(const struct wined3d_device *device,
 HRESULT __cdecl wined3d_device_get_texture_stage_state(const struct wined3d_device *device,
         UINT stage, enum wined3d_texture_stage_state state, DWORD *value);
 HRESULT __cdecl wined3d_device_get_transform(const struct wined3d_device *device,
-        WINED3DTRANSFORMSTATETYPE state, struct wined3d_matrix *matrix);
+        enum wined3d_transform_state state, struct wined3d_matrix *matrix);
 HRESULT __cdecl wined3d_device_get_vertex_declaration(const struct wined3d_device *device,
         struct wined3d_vertex_declaration **declaration);
 struct wined3d_shader * __cdecl wined3d_device_get_vertex_shader(const struct wined3d_device *device);
@@ -2164,7 +2163,7 @@ ULONG __cdecl wined3d_device_incref(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_init_3d(struct wined3d_device *device, struct wined3d_swapchain_desc *swapchain_desc);
 HRESULT __cdecl wined3d_device_init_gdi(struct wined3d_device *device, struct wined3d_swapchain_desc *swapchain_desc);
 HRESULT __cdecl wined3d_device_multiply_transform(struct wined3d_device *device,
-        WINED3DTRANSFORMSTATETYPE state, const struct wined3d_matrix *matrix);
+        enum wined3d_transform_state state, const struct wined3d_matrix *matrix);
 HRESULT __cdecl wined3d_device_present(const struct wined3d_device *device, const RECT *src_rect,
         const RECT *dst_rect, HWND dst_window_override, const RGNDATA *dirty_region);
 HRESULT __cdecl wined3d_device_process_vertices(struct wined3d_device *device,
@@ -2220,7 +2219,7 @@ HRESULT __cdecl wined3d_device_set_texture(struct wined3d_device *device, UINT s
 HRESULT __cdecl wined3d_device_set_texture_stage_state(struct wined3d_device *device,
         UINT stage, enum wined3d_texture_stage_state state, DWORD value);
 HRESULT __cdecl wined3d_device_set_transform(struct wined3d_device *device,
-        WINED3DTRANSFORMSTATETYPE state, const struct wined3d_matrix *matrix);
+        enum wined3d_transform_state state, const struct wined3d_matrix *matrix);
 HRESULT __cdecl wined3d_device_set_vertex_declaration(struct wined3d_device *device,
         struct wined3d_vertex_declaration *declaration);
 HRESULT __cdecl wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader);

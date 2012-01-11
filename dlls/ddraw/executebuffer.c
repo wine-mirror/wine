@@ -320,7 +320,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
                 wined3d_device_get_transform(lpDevice->wined3d_device,
                         D3DTRANSFORMSTATE_PROJECTION, (struct wined3d_matrix *)&proj_mat);
                 wined3d_device_get_transform(lpDevice->wined3d_device,
-                        WINED3DTS_WORLDMATRIX(0), (struct wined3d_matrix *)&world_mat);
+                        WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)&world_mat);
 
 		for (i = 0; i < count; i++) {
 		    LPD3DPROCESSVERTICES ci = (LPD3DPROCESSVERTICES) instr;

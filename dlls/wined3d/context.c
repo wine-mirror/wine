@@ -1771,7 +1771,7 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
     {
         if (sampler < MAX_TEXTURES)
         {
-            context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + sampler));
+            context_invalidate_state(context, STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + sampler));
             context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP));
         }
         context_invalidate_state(context, STATE_SAMPLER(sampler));
@@ -1826,7 +1826,7 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
     checkGLcall("glMatrixMode(GL_MODELVIEW)");
     glLoadIdentity();
     checkGLcall("glLoadIdentity()");
-    context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)));
+    context_invalidate_state(context, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0)));
 
     context->last_was_rhw = TRUE;
     context_invalidate_state(context, STATE_VDECL); /* because of last_was_rhw = TRUE */
@@ -1846,7 +1846,7 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
 
     context->blit_w = width; context->blit_h = height;
     context_invalidate_state(context, STATE_VIEWPORT);
-    context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_PROJECTION));
+    context_invalidate_state(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
 }
 
 static inline BOOL is_rt_mask_onscreen(DWORD rt_mask)
@@ -1980,7 +1980,7 @@ static void context_set_render_offscreen(struct wined3d_context *context, BOOL o
     if (context->render_offscreen == offscreen) return;
 
     context_invalidate_state(context, STATE_POINTSPRITECOORDORIGIN);
-    context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_PROJECTION));
+    context_invalidate_state(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
     context_invalidate_state(context, STATE_VIEWPORT);
     context_invalidate_state(context, STATE_SCISSORRECT);
     context_invalidate_state(context, STATE_FRONTFACE);

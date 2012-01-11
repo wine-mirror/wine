@@ -1432,15 +1432,15 @@ IDirect3DDeviceImpl_1_SetMatrix(IDirect3DDevice *iface,
 
     if (D3DMatHandle == This->world)
         wined3d_device_set_transform(This->wined3d_device,
-                WINED3DTS_WORLDMATRIX(0), (struct wined3d_matrix *)D3DMatrix);
+                WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)D3DMatrix);
 
     if (D3DMatHandle == This->view)
         wined3d_device_set_transform(This->wined3d_device,
-                WINED3DTS_VIEW, (struct wined3d_matrix *)D3DMatrix);
+                WINED3D_TS_VIEW, (struct wined3d_matrix *)D3DMatrix);
 
     if (D3DMatHandle == This->proj)
         wined3d_device_set_transform(This->wined3d_device,
-                WINED3DTS_PROJECTION, (struct wined3d_matrix *)D3DMatrix);
+                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)D3DMatrix);
 
     wined3d_mutex_unlock();
 
@@ -3231,13 +3231,22 @@ IDirect3DDeviceImpl_7_SetTransform(IDirect3DDevice7 *iface,
 
     TRACE("iface %p, state %#x, matrix %p.\n", iface, TransformStateType, Matrix);
 
-    switch(TransformStateType)
+    switch (TransformStateType)
     {
-        case D3DTRANSFORMSTATE_WORLD :  type = WINED3DTS_WORLDMATRIX(0); break;
-        case D3DTRANSFORMSTATE_WORLD1:  type = WINED3DTS_WORLDMATRIX(1); break;
-        case D3DTRANSFORMSTATE_WORLD2:  type = WINED3DTS_WORLDMATRIX(2); break;
-        case D3DTRANSFORMSTATE_WORLD3:  type = WINED3DTS_WORLDMATRIX(3); break;
-        default:                        type = TransformStateType;
+        case D3DTRANSFORMSTATE_WORLD:
+            type = WINED3D_TS_WORLD_MATRIX(0);
+            break;
+        case D3DTRANSFORMSTATE_WORLD1:
+            type = WINED3D_TS_WORLD_MATRIX(1);
+            break;
+        case D3DTRANSFORMSTATE_WORLD2:
+            type = WINED3D_TS_WORLD_MATRIX(2);
+            break;
+        case D3DTRANSFORMSTATE_WORLD3:
+            type = WINED3D_TS_WORLD_MATRIX(3);
+            break;
+        default:
+            type = TransformStateType;
     }
 
     if (!Matrix)
@@ -3292,7 +3301,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_SetTransform(IDirect3DDevice3 *iface
         wined3d_mutex_lock();
         multiply_matrix(&projection, &This->legacy_clipspace, matrix);
         hr = wined3d_device_set_transform(This->wined3d_device,
-                WINED3DTS_PROJECTION, (struct wined3d_matrix *)&projection);
+                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
         if (SUCCEEDED(hr))
             This->legacy_projection = *matrix;
         wined3d_mutex_unlock();
@@ -3343,11 +3352,20 @@ IDirect3DDeviceImpl_7_GetTransform(IDirect3DDevice7 *iface,
 
     switch(TransformStateType)
     {
-        case D3DTRANSFORMSTATE_WORLD :  type = WINED3DTS_WORLDMATRIX(0); break;
-        case D3DTRANSFORMSTATE_WORLD1:  type = WINED3DTS_WORLDMATRIX(1); break;
-        case D3DTRANSFORMSTATE_WORLD2:  type = WINED3DTS_WORLDMATRIX(2); break;
-        case D3DTRANSFORMSTATE_WORLD3:  type = WINED3DTS_WORLDMATRIX(3); break;
-        default:                        type = TransformStateType;
+        case D3DTRANSFORMSTATE_WORLD:
+            type = WINED3D_TS_WORLD_MATRIX(0);
+            break;
+        case D3DTRANSFORMSTATE_WORLD1:
+            type = WINED3D_TS_WORLD_MATRIX(1);
+            break;
+        case D3DTRANSFORMSTATE_WORLD2:
+            type = WINED3D_TS_WORLD_MATRIX(2);
+            break;
+        case D3DTRANSFORMSTATE_WORLD3:
+            type = WINED3D_TS_WORLD_MATRIX(3);
+            break;
+        default:
+            type = TransformStateType;
     }
 
     if(!Matrix)
@@ -3446,11 +3464,20 @@ IDirect3DDeviceImpl_7_MultiplyTransform(IDirect3DDevice7 *iface,
 
     switch(TransformStateType)
     {
-        case D3DTRANSFORMSTATE_WORLD :  type = WINED3DTS_WORLDMATRIX(0); break;
-        case D3DTRANSFORMSTATE_WORLD1:  type = WINED3DTS_WORLDMATRIX(1); break;
-        case D3DTRANSFORMSTATE_WORLD2:  type = WINED3DTS_WORLDMATRIX(2); break;
-        case D3DTRANSFORMSTATE_WORLD3:  type = WINED3DTS_WORLDMATRIX(3); break;
-        default:                        type = TransformStateType;
+        case D3DTRANSFORMSTATE_WORLD:
+            type = WINED3D_TS_WORLD_MATRIX(0);
+            break;
+        case D3DTRANSFORMSTATE_WORLD1:
+            type = WINED3D_TS_WORLD_MATRIX(1);
+            break;
+        case D3DTRANSFORMSTATE_WORLD2:
+            type = WINED3D_TS_WORLD_MATRIX(2);
+            break;
+        case D3DTRANSFORMSTATE_WORLD3:
+            type = WINED3D_TS_WORLD_MATRIX(3);
+            break;
+        default:
+            type = TransformStateType;
     }
 
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
@@ -3501,7 +3528,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_MultiplyTransform(IDirect3DDevice3 *
         multiply_matrix(&tmp, &This->legacy_projection, matrix);
         multiply_matrix(&projection, &This->legacy_clipspace, &tmp);
         hr = wined3d_device_set_transform(This->wined3d_device,
-                WINED3DTS_PROJECTION, (struct wined3d_matrix *)&projection);
+                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
         if (SUCCEEDED(hr))
             This->legacy_projection = tmp;
         wined3d_mutex_unlock();

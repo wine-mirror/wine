@@ -817,7 +817,7 @@ extern int num_lock DECLSPEC_HIDDEN;
   (vec)[3] = D3DCOLOR_A(dw); \
 } while(0)
 
-#define HIGHEST_TRANSFORMSTATE WINED3DTS_WORLDMATRIX(255) /* Highest value in WINED3DTRANSFORMSTATETYPE */
+#define HIGHEST_TRANSFORMSTATE WINED3D_TS_WORLD_MATRIX(255) /* Highest value in wined3d_transform_state. */
 
 /* Checking of API calls */
 /* --------------------- */
@@ -964,9 +964,9 @@ extern glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT] DECLSPEC
 #define STATE_IS_PIXELSHADER(a) ((a) == STATE_PIXELSHADER)
 
 #define STATE_TRANSFORM(a) (STATE_PIXELSHADER + (a))
-#define STATE_IS_TRANSFORM(a) ((a) >= STATE_TRANSFORM(1) && (a) <= STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255)))
+#define STATE_IS_TRANSFORM(a) ((a) >= STATE_TRANSFORM(1) && (a) <= STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(255)))
 
-#define STATE_STREAMSRC (STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255)) + 1)
+#define STATE_STREAMSRC (STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(255)) + 1)
 #define STATE_IS_STREAMSRC(a) ((a) == STATE_STREAMSRC)
 #define STATE_INDEXBUFFER (STATE_STREAMSRC + 1)
 #define STATE_IS_INDEXBUFFER(a) ((a) == STATE_INDEXBUFFER)
@@ -2504,7 +2504,7 @@ const char *debug_d3dsamplerstate(enum wined3d_sampler_state state) DECLSPEC_HID
 const char *debug_d3dstate(DWORD state) DECLSPEC_HIDDEN;
 const char *debug_d3dtexturefiltertype(WINED3DTEXTUREFILTERTYPE filter_type) DECLSPEC_HIDDEN;
 const char *debug_d3dtexturestate(enum wined3d_texture_stage_state state) DECLSPEC_HIDDEN;
-const char *debug_d3dtstype(WINED3DTRANSFORMSTATETYPE tstype) DECLSPEC_HIDDEN;
+const char *debug_d3dtstype(enum wined3d_transform_state tstype) DECLSPEC_HIDDEN;
 const char *debug_d3dpool(WINED3DPOOL pool) DECLSPEC_HIDDEN;
 const char *debug_fbostatus(GLenum status) DECLSPEC_HIDDEN;
 const char *debug_glerror(GLenum error) DECLSPEC_HIDDEN;

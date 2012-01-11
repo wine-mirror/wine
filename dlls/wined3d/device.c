@@ -1798,7 +1798,7 @@ HRESULT CDECL wined3d_device_get_stream_source_freq(const struct wined3d_device 
 }
 
 HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
-        WINED3DTRANSFORMSTATETYPE d3dts, const struct wined3d_matrix *matrix)
+        enum wined3d_transform_state d3dts, const struct wined3d_matrix *matrix)
 {
     TRACE("device %p, state %s, matrix %p.\n",
             device, debug_d3dtstype(d3dts), matrix);
@@ -1832,10 +1832,10 @@ HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
      * In OpenGL, camera and world space is combined into GL_MODELVIEW
      * matrix.  The Projection matrix stay projection matrix. */
 
-    if (d3dts == WINED3DTS_VIEW)
+    if (d3dts == WINED3D_TS_VIEW)
         device->view_ident = !memcmp(matrix, identity, 16 * sizeof(float));
 
-    if (d3dts < WINED3DTS_WORLDMATRIX(device->adapter->gl_info.limits.blends))
+    if (d3dts < WINED3D_TS_WORLD_MATRIX(device->adapter->gl_info.limits.blends))
         device_invalidate_state(device, STATE_TRANSFORM(d3dts));
 
     return WINED3D_OK;
@@ -1843,7 +1843,7 @@ HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
 }
 
 HRESULT CDECL wined3d_device_get_transform(const struct wined3d_device *device,
-        WINED3DTRANSFORMSTATETYPE state, struct wined3d_matrix *matrix)
+        enum wined3d_transform_state state, struct wined3d_matrix *matrix)
 {
     TRACE("device %p, state %s, matrix %p.\n", device, debug_d3dtstype(state), matrix);
 
@@ -1853,7 +1853,7 @@ HRESULT CDECL wined3d_device_get_transform(const struct wined3d_device *device,
 }
 
 HRESULT CDECL wined3d_device_multiply_transform(struct wined3d_device *device,
-        WINED3DTRANSFORMSTATETYPE state, const struct wined3d_matrix *matrix)
+        enum wined3d_transform_state state, const struct wined3d_matrix *matrix)
 {
     const struct wined3d_matrix *mat = NULL;
     struct wined3d_matrix temp;
@@ -3249,9 +3249,9 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     } else doClip = FALSE;
     dest_ptr = ((char *)buffer_get_sysmem(dest, gl_info)) + dwDestIndex * get_flexible_vertex_size(DestFVF);
 
-    wined3d_device_get_transform(device, WINED3DTS_VIEW, &view_mat);
-    wined3d_device_get_transform(device, WINED3DTS_PROJECTION, &proj_mat);
-    wined3d_device_get_transform(device, WINED3DTS_WORLDMATRIX(0), &world_mat);
+    wined3d_device_get_transform(device, WINED3D_TS_VIEW, &view_mat);
+    wined3d_device_get_transform(device, WINED3D_TS_PROJECTION, &proj_mat);
+    wined3d_device_get_transform(device, WINED3D_TS_WORLD_MATRIX(0), &world_mat);
 
     TRACE("View mat:\n");
     TRACE("%f %f %f %f\n", view_mat.u.s._11, view_mat.u.s._12, view_mat.u.s._13, view_mat.u.s._14);
