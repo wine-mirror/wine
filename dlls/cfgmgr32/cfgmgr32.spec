@@ -56,7 +56,7 @@
 @ stub CM_Get_Depth_Ex
 @ stub CM_Get_DevNode_Registry_PropertyA
 @ stub CM_Get_DevNode_Registry_PropertyW
-@ stub CM_Get_DevNode_Registry_Property_ExA
+@ stdcall CM_Get_DevNode_Registry_Property_ExA(long long ptr ptr ptr long ptr) setupapi.CM_Get_DevNode_Registry_Property_ExA
 @ stdcall CM_Get_DevNode_Registry_Property_ExW(long long ptr ptr ptr long ptr) setupapi.CM_Get_DevNode_Registry_Property_ExW
 @ stub CM_Get_DevNode_Status
 @ stub CM_Get_DevNode_Status_Ex
