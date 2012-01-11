@@ -1776,9 +1776,13 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
     if(snd_pcm_prepare(This->pcm_handle) < 0)
         WARN("snd_pcm_prepare failed\n");
 
-    This->last_pos_frames = 0;
+    if(This->dataflow == eRender){
+        This->written_frames = 0;
+        This->last_pos_frames = 0;
+    }else{
+        This->written_frames += This->held_frames;
+    }
     This->held_frames = 0;
-    This->written_frames = 0;
     This->lcl_offs_frames = 0;
 
     LeaveCriticalSection(&This->lock);
