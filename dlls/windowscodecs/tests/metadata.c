@@ -100,7 +100,7 @@ static void load_stream(IUnknown *reader, const char *data, int data_size)
     if (SUCCEEDED(hr))
     {
         hr = IWICPersistStream_LoadEx(persist, stream, NULL, WICPersistOptionsDefault);
-        ok(hr == S_OK, "LoadEx failed, hr=%x\n", hr);
+        todo_wine ok(hr == S_OK, "LoadEx failed, hr=%x\n", hr);
 
         IWICPersistStream_Release(persist);
     }
@@ -118,13 +118,13 @@ static void test_metadata_unknown(void)
 
     hr = CoCreateInstance(&CLSID_WICUnknownMetadataReader, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICMetadataReader, (void**)&reader);
-    todo_wine ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
+    ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
     if (FAILED(hr)) return;
 
     load_stream((IUnknown*)reader, metadata_unknown, sizeof(metadata_unknown));
 
     hr = IWICMetadataReader_GetEnumerator(reader, &enumerator);
-    ok(hr == S_OK, "GetEnumerator failed, hr=%x\n", hr);
+    todo_wine ok(hr == S_OK, "GetEnumerator failed, hr=%x\n", hr);
 
     if (SUCCEEDED(hr))
     {

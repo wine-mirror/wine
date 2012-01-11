@@ -18,6 +18,7 @@ C_SRCS = \
 	info.c \
 	jpegformat.c \
 	main.c \
+	metadatahandler.c \
 	palette.c \
 	pngformat.c \
 	propertybag.c \

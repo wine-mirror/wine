@@ -64,4 +64,27 @@ extern HRESULT IcoDibDecoder_CreateInstance(BmpDecoder **ppDecoder) DECLSPEC_HID
 extern void BmpDecoder_GetWICDecoder(BmpDecoder *This, IWICBitmapDecoder **ppDecoder) DECLSPEC_HIDDEN;
 extern void BmpDecoder_FindIconMask(BmpDecoder *This, ULONG *mask_offset, int *topdown) DECLSPEC_HIDDEN;
 
+typedef struct _MetadataItem
+{
+    PROPVARIANT schema;
+    PROPVARIANT id;
+    PROPVARIANT value;
+} MetadataItem;
+
+typedef struct _MetadataHandlerVtbl
+{
+    int is_writer;
+    const CLSID *clsid;
+    HRESULT (*fnLoad)(IStream *stream, const GUID *preferred_vendor,
+        DWORD persist_options, MetadataItem **items, DWORD *item_count);
+    HRESULT (*fnSave)(IStream *stream, DWORD persist_options,
+        const MetadataItem *items, DWORD item_count);
+    HRESULT (*fnGetSizeMax)(const MetadataItem *items, DWORD item_count,
+        ULARGE_INTEGER *size);
+} MetadataHandlerVtbl;
+
+extern HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, IUnknown *pUnkOuter, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
+
+extern HRESULT UnknownMetadataReader_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
+
 #endif /* WINCODECS_PRIVATE_H */
