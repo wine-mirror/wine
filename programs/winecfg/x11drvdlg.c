@@ -55,17 +55,6 @@ static const WCHAR x11_driverW[] = {'X','1','1',' ','D','r','i','v','e','r',0};
 static const WCHAR default_resW[] = {'8','0','0','x','6','0','0',0};
 
 
-static struct SHADERMODE
-{
-  UINT displayStrID;
-  const char* settingStr;
-} const D3D_VS_Modes[] = {
-  {IDS_SHADER_MODE_HARDWARE,  "hardware"},
-  {IDS_SHADER_MODE_NONE,      "none"},
-  {0, 0}
-};
-
-
 int updating_ui;
 
 /* convert the x11 desktop key to the new explorer config */
@@ -124,7 +113,6 @@ static void update_gui_for_desktop_mode(HWND dialog)
 
 static void init_dialog(HWND dialog)
 {
-    unsigned int it;
     char* buf;
 
     convert_x11_desktop_key();
@@ -154,31 +142,6 @@ static void init_dialog(HWND dialog)
 	CheckDlgButton(dialog, IDC_ENABLE_DECORATED, BST_CHECKED);
     else
 	CheckDlgButton(dialog, IDC_ENABLE_DECORATED, BST_UNCHECKED);
-    HeapFree(GetProcessHeap(), 0, buf);
-
-
-    SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_RESETCONTENT, 0, 0);
-    for (it = 0; 0 != D3D_VS_Modes[it].displayStrID; ++it) {
-      SendDlgItemMessageW (dialog, IDC_D3D_VSHADER_MODE, CB_ADDSTRING, 0,
-          (LPARAM)load_string (D3D_VS_Modes[it].displayStrID));
-    }  
-    buf = get_reg_key(config_key, keypath("Direct3D"), "VertexShaderMode", "hardware"); 
-    for (it = 0; NULL != D3D_VS_Modes[it].settingStr; ++it) {
-      if (strcmp(buf, D3D_VS_Modes[it].settingStr) == 0) {
-	SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_SETCURSEL, it, 0);
-	break ;
-      }
-    }
-    if (NULL == D3D_VS_Modes[it].settingStr) {
-      WINE_ERR("Invalid Direct3D VertexShader Mode read from registry (%s)\n", buf);
-    }
-    HeapFree(GetProcessHeap(), 0, buf);
-
-    buf = get_reg_key(config_key, keypath("Direct3D"), "PixelShaderMode", "enabled");
-    if (!strcmp(buf, "enabled"))
-      CheckDlgButton(dialog, IDC_D3D_PSHADER_MODE, BST_CHECKED);
-    else
-      CheckDlgButton(dialog, IDC_D3D_PSHADER_MODE, BST_UNCHECKED);
     HeapFree(GetProcessHeap(), 0, buf);
 
     updating_ui = FALSE;
@@ -272,18 +235,6 @@ static void on_fullscreen_grab_clicked(HWND dialog)
         set_reg_key(config_key, keypath("X11 Driver"), "GrabFullscreen", "N");
 }
 
-static void on_d3d_vshader_mode_changed(HWND dialog) {
-  int selected_mode = SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_GETCURSEL, 0, 0);  
-  set_reg_key(config_key, keypath("Direct3D"), "VertexShaderMode",
-      D3D_VS_Modes[selected_mode].settingStr); 
-}
-
-static void on_d3d_pshader_mode_clicked(HWND dialog) {
-    if (IsDlgButtonChecked(dialog, IDC_D3D_PSHADER_MODE) == BST_CHECKED)
-        set_reg_key(config_key, keypath("Direct3D"), "PixelShaderMode", "enabled");
-    else
-        set_reg_key(config_key, keypath("Direct3D"), "PixelShaderMode", "disabled");
-}
 static INT read_logpixels_reg(void)
 {
     DWORD dwLogPixels;
@@ -434,15 +385,11 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         case IDC_ENABLE_MANAGED: on_enable_managed_clicked(hDlg); break;
                         case IDC_ENABLE_DECORATED: on_enable_decorated_clicked(hDlg); break;
 			case IDC_FULLSCREEN_GRAB:  on_fullscreen_grab_clicked(hDlg); break;
-		        case IDC_D3D_PSHADER_MODE: on_d3d_pshader_mode_clicked(hDlg); break;
 		    }
 		    break;
 		}
 		case CBN_SELCHANGE: {
 		    SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
-		    switch (LOWORD(wParam)) {
-		    case IDC_D3D_VSHADER_MODE: on_d3d_vshader_mode_changed(hDlg); break;
-		    }
 		    break;
 		}
 		    

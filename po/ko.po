@@ -46,8 +46,8 @@ msgstr "지원  정보(&S)"
 msgid "&Modify..."
 msgstr "고치기(&M)..."
 
-#: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:202
-#: winecfg.rc:239 wordpad.rc:245
+#: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
+#: winecfg.rc:228 wordpad.rc:245
 msgid "&Remove"
 msgstr "제거(&R)"
 
@@ -66,7 +66,7 @@ msgstr "지원 정보"
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: taskmgr.rc:521 winecfg.rc:205 winecfg.rc:215 wineconsole.rc:131
 #: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
 #: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
 #: wordpad.rc:246
@@ -148,8 +148,8 @@ msgstr "설치(&I)"
 #: notepad.rc:115 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
 #: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
-#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
-#: winecfg.rc:227 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
+#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:206
+#: winecfg.rc:216 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
 #: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
 #: wordpad.rc:247
 msgid "Cancel"
@@ -519,7 +519,7 @@ msgstr "글꼴(&F):"
 msgid "Font St&yle:"
 msgstr "글꼴 스타일(&Y):"
 
-#: comdlg32.rc:253 comdlg32.rc:430 winecfg.rc:291
+#: comdlg32.rc:253 comdlg32.rc:430 winecfg.rc:280
 msgid "&Size:"
 msgstr "크기(&S):"
 
@@ -535,7 +535,7 @@ msgstr "취소선(&K)"
 msgid "&Underline"
 msgstr "밑줄(&U)"
 
-#: comdlg32.rc:263 winecfg.rc:289
+#: comdlg32.rc:263 winecfg.rc:278
 msgid "&Color:"
 msgstr "색상(&C):"
 
@@ -704,7 +704,7 @@ msgstr "시작(&F):"
 msgid "&to:"
 msgstr "끝(&T):"
 
-#: comdlg32.rc:410 winecfg.rc:297
+#: comdlg32.rc:410 winecfg.rc:286
 msgid "Si&ze:"
 msgstr "크기(&Z):"
 
@@ -2183,7 +2183,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "파일 이름(&F):"
 
-#: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:306
+#: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
 msgstr "찾기(&R)..."
 
@@ -6589,7 +6589,7 @@ msgstr "하이퍼링크"
 msgid "Hyperlink Information"
 msgstr "하이퍼링크 정보"
 
-#: mshtml.rc:41 winecfg.rc:247
+#: mshtml.rc:41 winecfg.rc:236
 msgid "&Type:"
 msgstr "형식(&T):"
 
@@ -7215,7 +7215,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "비트"
 
-#: sane.rc:34 winecfg.rc:185
+#: sane.rc:34 winecfg.rc:174
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -7741,7 +7741,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "열기(&O):"
 
-#: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245
+#: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
 msgid "&Browse..."
 msgstr "찾기(&B)"
@@ -7786,7 +7786,7 @@ msgstr "원래 위치"
 msgid "Date deleted"
 msgstr "지워진 날짜"
 
-#: shell32.rc:153 winecfg.rc:98 winefile.rc:103
+#: shell32.rc:153 winecfg.rc:92 winefile.rc:103
 msgctxt "display name"
 msgid "Desktop"
 msgstr "바탕화면"
@@ -8184,7 +8184,7 @@ msgstr "Wine 라이센스"
 msgid "Trash"
 msgstr "휴지통"
 
-#: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:90 winefile.rc:100
+#: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:84 winefile.rc:100
 msgid "Error"
 msgstr "오류"
 
@@ -9227,7 +9227,7 @@ msgstr "아날로그(&L)"
 msgid "Digi&tal"
 msgstr "디지털(&T)"
 
-#: clock.rc:32 notepad.rc:50 winecfg.rc:300 winefile.rc:64 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:64 wordpad.rc:81
 msgid "&Font..."
 msgstr "글꼴(&F)..."
 
@@ -12329,7 +12329,7 @@ msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr ""
 "Wine 설정  %s 이 업데이트되는 중입니다,  잠시만 기다려주시기 바랍니다..."
 
-#: winecfg.rc:138
+#: winecfg.rc:132
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -12341,23 +12341,23 @@ msgstr ""
 "서 이 프로그램을 재배포 또는 수정할 수 있습니다. 라이센스의 버전은 2.1 또는 "
 "(선택적으로) 그 이후 버전을 따르면 됩니다."
 
-#: winecfg.rc:140
+#: winecfg.rc:134
 msgid "Windows registration information"
 msgstr "윈도우즈 등록 정보 "
 
-#: winecfg.rc:141
+#: winecfg.rc:135
 msgid "&Owner:"
 msgstr "소유자(&O):"
 
-#: winecfg.rc:143
+#: winecfg.rc:137
 msgid "Organi&zation:"
 msgstr "단체(&Z):"
 
-#: winecfg.rc:151
+#: winecfg.rc:145
 msgid "Application settings"
 msgstr "응용프로그램 설정 "
 
-#: winecfg.rc:152
+#: winecfg.rc:146
 msgid ""
 "Wine can mimic different Windows versions for each application.  This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
@@ -12367,67 +12367,55 @@ msgstr ""
 "이 탭은 라이브러리 탭, 그래픽 탭과 연결되어 있어서, 이들 탭을 이용하여 시스"
 "템 전체 또는 프로그램별로 설정이 가능합니다."
 
-#: winecfg.rc:156
+#: winecfg.rc:150
 msgid "&Add application..."
 msgstr "어플리케이션 추가(&A)..."
 
-#: winecfg.rc:157
+#: winecfg.rc:151
 msgid "&Remove application"
 msgstr "어플리케이션 제거(&R)"
 
-#: winecfg.rc:158
+#: winecfg.rc:152
 msgid "&Windows Version:"
 msgstr "윈도우즈 버젼(&W):"
 
-#: winecfg.rc:166
+#: winecfg.rc:160
 msgid "Window settings"
 msgstr "창 설정"
 
-#: winecfg.rc:167
+#: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "전체 화면 창에서 자동으로 마우스 잡기(&M)"
 
-#: winecfg.rc:168
+#: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
 msgstr "창관리자가 Wine창을 꾸미도록 함(&D)"
 
-#: winecfg.rc:169
+#: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
 msgstr "창관리자가 Wine창을 관리하도록 함(&W)"
 
-#: winecfg.rc:170
+#: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
 msgstr "가상 데스크탑 흉내내기(&E)"
 
-#: winecfg.rc:172
+#: winecfg.rc:166
 msgid "Desktop &size:"
 msgstr "데스크탑 크기(&S):"
 
-#: winecfg.rc:177
-msgid "Direct3D"
-msgstr "다이렉트 3D "
-
-#: winecfg.rc:178
-msgid "&Vertex Shader Support: "
-msgstr "버텍스 쉐이더 지원(&V): "
-
-#: winecfg.rc:180
-msgid "Allow &Pixel Shader (if supported by hardware)"
-msgstr "(만약 하드웨어에서 지원할 경우 ) 픽셀 쉐이더 허용(&P)"
-
-#: winecfg.rc:182
+#: winecfg.rc:171
 msgid "Screen resolution"
 msgstr "화면 해상도 "
 
-#: winecfg.rc:186
+#: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
 
-#: winecfg.rc:193
+#: winecfg.rc:182
 msgid "DLL overrides"
 msgstr "DLL 덮어쓰기 "
 
-#: winecfg.rc:194
+#: winecfg.rc:183
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -12436,154 +12424,154 @@ msgstr ""
 "동적 링크 라이브러리는 개별적으로 내장(Wine에 의해 제공)이나 네이티브(윈도우"
 "즈나 프로그램에 의해 제공)으로 지정될수 있습니다."
 
-#: winecfg.rc:196
+#: winecfg.rc:185
 msgid "&New override for library:"
 msgstr "새로 덮어쓸 라이브러리(&N):"
 
-#: winecfg.rc:198 wordpad.rc:244
+#: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
 msgstr "더하기(&A)"
 
-#: winecfg.rc:199
+#: winecfg.rc:188
 msgid "Existing &overrides:"
 msgstr "현재 덮어쓰기 목록(&O):"
 
-#: winecfg.rc:201
+#: winecfg.rc:190
 msgid "&Edit..."
 msgstr "고치기(&E)..."
 
-#: winecfg.rc:207
+#: winecfg.rc:196
 msgid "Edit Override"
 msgstr "덮어쓰기 고치기"
 
-#: winecfg.rc:210
+#: winecfg.rc:199
 msgid "Load order"
 msgstr "불러오기 순서 "
 
-#: winecfg.rc:211
+#: winecfg.rc:200
 msgid "&Builtin (Wine)"
 msgstr "내장(&B)(Wine)"
 
-#: winecfg.rc:212
+#: winecfg.rc:201
 msgid "&Native (Windows)"
 msgstr "네이티브(&N)(Win)"
 
-#: winecfg.rc:213
+#: winecfg.rc:202
 msgid "Bui&ltin then Native"
 msgstr "내장, 네이티브(&L)"
 
-#: winecfg.rc:214
+#: winecfg.rc:203
 msgid "Nati&ve then Builtin"
 msgstr "네이티브, 내장(&V)"
 
-#: winecfg.rc:215
+#: winecfg.rc:204
 msgid "&Disable"
 msgstr "사용하지 않음(&D)"
 
-#: winecfg.rc:222
+#: winecfg.rc:211
 msgid "Select Drive Letter"
 msgstr "드라이브 문자 선택"
 
-#: winecfg.rc:234
+#: winecfg.rc:223
 msgid "Drive mappings"
 msgstr "드라이브 연결 "
 
-#: winecfg.rc:235
+#: winecfg.rc:224
 msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
 "연결 관리자가 연결하는 데 실패함, 이 드라이브 설정을 수정될 수 없습니다."
 
-#: winecfg.rc:238
+#: winecfg.rc:227
 msgid "&Add..."
 msgstr "추가(&A)..."
 
-#: winecfg.rc:240
+#: winecfg.rc:229
 msgid "Auto&detect"
 msgstr "자동찾기(&D)"
 
-#: winecfg.rc:243
+#: winecfg.rc:232
 msgid "&Path:"
 msgstr "경로(&P):"
 
-#: winecfg.rc:250 winecfg.rc:35
+#: winecfg.rc:239 winecfg.rc:35
 msgid "Show &Advanced"
 msgstr "추가옵션 보이기(&A)"
 
-#: winecfg.rc:251
+#: winecfg.rc:240
 msgid "De&vice:"
 msgstr "장치(&V):"
 
-#: winecfg.rc:253
+#: winecfg.rc:242
 msgid "Bro&wse..."
 msgstr "찾아보기(&W)..."
 
-#: winecfg.rc:255
+#: winecfg.rc:244
 msgid "&Label:"
 msgstr "라벨(&L):"
 
-#: winecfg.rc:257
+#: winecfg.rc:246
 msgid "S&erial:"
 msgstr "시리얼(&E):"
 
-#: winecfg.rc:260
+#: winecfg.rc:249
 msgid "Show &dot files"
 msgstr "숨은 파일 보이기(&D)"
 
-#: winecfg.rc:267
+#: winecfg.rc:256
 msgid "Driver diagnostics"
 msgstr "드라이버 진단 "
 
-#: winecfg.rc:269
+#: winecfg.rc:258
 msgid "Defaults"
 msgstr "기본 "
 
-#: winecfg.rc:270
+#: winecfg.rc:259
 msgid "Output device:"
 msgstr "출력 장치:"
 
-#: winecfg.rc:271
+#: winecfg.rc:260
 msgid "Voice output device:"
 msgstr "음성 출력 장치:"
 
-#: winecfg.rc:272
+#: winecfg.rc:261
 msgid "Input device:"
 msgstr "입력 장치:"
 
-#: winecfg.rc:273
+#: winecfg.rc:262
 msgid "Voice input device:"
 msgstr "음성 입력 장치:"
 
-#: winecfg.rc:278
+#: winecfg.rc:267
 msgid "&Test Sound"
 msgstr "소리 테스트(&T)"
 
-#: winecfg.rc:285
+#: winecfg.rc:274
 msgid "Appearance"
 msgstr "외양"
 
-#: winecfg.rc:286
+#: winecfg.rc:275
 msgid "&Theme:"
 msgstr "테마(&T):"
 
-#: winecfg.rc:288
+#: winecfg.rc:277
 msgid "&Install theme..."
 msgstr "테마 설치(&I)..."
 
-#: winecfg.rc:293
+#: winecfg.rc:282
 msgid "It&em:"
 msgstr "목록(&E):"
 
-#: winecfg.rc:295
+#: winecfg.rc:284
 msgid "C&olor:"
 msgstr "색상(&O):"
 
-#: winecfg.rc:301
+#: winecfg.rc:290
 msgid "Folders"
 msgstr "폴더"
 
-#: winecfg.rc:304
+#: winecfg.rc:293
 msgid "&Link to:"
 msgstr "연결 위치(&L):"
 
@@ -12647,19 +12635,19 @@ msgstr "연결 위치"
 msgid "Wine configuration for %s"
 msgstr "%s를 위한 Wine 설정"
 
-#: winecfg.rc:87
+#: winecfg.rc:81
 msgid "Selected driver: %s"
 msgstr "선택된 드라이버: %s"
 
-#: winecfg.rc:88
+#: winecfg.rc:82
 msgid "(None)"
 msgstr "(없음)"
 
-#: winecfg.rc:89
+#: winecfg.rc:83
 msgid "Audio test failed!"
 msgstr "오디오 테스트 실패!"
 
-#: winecfg.rc:91
+#: winecfg.rc:85
 msgid "(System default)"
 msgstr "(시스템 기본)"
 
@@ -12712,35 +12700,26 @@ msgid "Select an executable file"
 msgstr "실행 파일 선택"
 
 #: winecfg.rc:66
-msgid "Hardware"
-msgstr "하드웨어"
-
-#: winecfg.rc:67
-msgctxt "vertex shader mode"
-msgid "None"
-msgstr "없음"
-
-#: winecfg.rc:72
 msgid "Autodetect..."
 msgstr "자동으로 찾기..."
 
-#: winecfg.rc:73
+#: winecfg.rc:67
 msgid "Local hard disk"
 msgstr "연결된 하드 디스크"
 
-#: winecfg.rc:74
+#: winecfg.rc:68
 msgid "Network share"
 msgstr "네트워크 공유"
 
-#: winecfg.rc:75
+#: winecfg.rc:69
 msgid "Floppy disk"
 msgstr "플로피 디스크"
 
-#: winecfg.rc:76
+#: winecfg.rc:70
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:77
+#: winecfg.rc:71
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -12751,11 +12730,11 @@ msgstr ""
 "각 드라이브는 반드시 A~Z까지의 문자를 가집니다, 그래서 당신은 26개보다 더 많"
 "이 추가할 수 없습니다"
 
-#: winecfg.rc:78
+#: winecfg.rc:72
 msgid "System drive"
 msgstr "시스템 드라이브"
 
-#: winecfg.rc:79
+#: winecfg.rc:73
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -12767,16 +12746,16 @@ msgstr ""
 "대부분의 윈도우 프로그램은 C드라이브가 있다고 예상하고,  없으면 다운될것입니"
 "다. 만약 당신이 계속 진행하기를 원한다면 반드시 다시 만드십시오!"
 
-#: winecfg.rc:80
+#: winecfg.rc:74
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "문자"
 
-#: winecfg.rc:81
+#: winecfg.rc:75
 msgid "Drive Mapping"
 msgstr "드라이브 할당"
 
-#: winecfg.rc:82
+#: winecfg.rc:76
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -12786,127 +12765,127 @@ msgstr ""
 "\n"
 "드라이브 탭에서 '추가'를 클릭해서 만드는 것을 잊지 마십시오!\n"
 
-#: winecfg.rc:96
+#: winecfg.rc:90
 msgid "Controls Background"
 msgstr "컨트롤 배경"
 
-#: winecfg.rc:97
+#: winecfg.rc:91
 msgid "Controls Text"
 msgstr "컨트롤 문자"
 
-#: winecfg.rc:99
+#: winecfg.rc:93
 msgid "Menu Background"
 msgstr "메뉴 배경"
 
-#: winecfg.rc:100
+#: winecfg.rc:94
 msgid "Menu Text"
 msgstr "메뉴 문자"
 
-#: winecfg.rc:101
+#: winecfg.rc:95
 msgid "Scrollbar"
 msgstr "목록바"
 
-#: winecfg.rc:102
+#: winecfg.rc:96
 msgid "Selection Background"
 msgstr "선택된 배경"
 
-#: winecfg.rc:103
+#: winecfg.rc:97
 msgid "Selection Text"
 msgstr "선택된 문자"
 
-#: winecfg.rc:104
+#: winecfg.rc:98
 msgid "ToolTip Background"
 msgstr "도구팁 배경"
 
-#: winecfg.rc:105
+#: winecfg.rc:99
 msgid "ToolTip Text"
 msgstr "도구팁 문자"
 
-#: winecfg.rc:106
+#: winecfg.rc:100
 msgid "Window Background"
 msgstr "창 배경"
 
-#: winecfg.rc:107
+#: winecfg.rc:101
 msgid "Window Text"
 msgstr "창 문자"
 
-#: winecfg.rc:108
+#: winecfg.rc:102
 msgid "Active Title Bar"
 msgstr "활성된 제목 막대"
 
-#: winecfg.rc:109
+#: winecfg.rc:103
 msgid "Active Title Text"
 msgstr "활성된 제목 문자"
 
-#: winecfg.rc:110
+#: winecfg.rc:104
 msgid "Inactive Title Bar"
 msgstr "비활성된 제목 막대"
 
-#: winecfg.rc:111
+#: winecfg.rc:105
 msgid "Inactive Title Text"
 msgstr "비활성된 제목 문자"
 
-#: winecfg.rc:112
+#: winecfg.rc:106
 msgid "Message Box Text"
 msgstr "메세지 상자 텍스트"
 
-#: winecfg.rc:113
+#: winecfg.rc:107
 msgid "Application Workspace"
 msgstr "어플리케이션 작업공간"
 
-#: winecfg.rc:114
+#: winecfg.rc:108
 msgid "Window Frame"
 msgstr "창 프레임"
 
-#: winecfg.rc:115
+#: winecfg.rc:109
 msgid "Active Border"
 msgstr "활성화된 창틀"
 
-#: winecfg.rc:116
+#: winecfg.rc:110
 msgid "Inactive Border"
 msgstr "비 활성화된 창틀"
 
-#: winecfg.rc:117
+#: winecfg.rc:111
 msgid "Controls Shadow"
 msgstr "컨트롤 그함지"
 
-#: winecfg.rc:118
+#: winecfg.rc:112
 msgid "Gray Text"
 msgstr "회색 문자"
 
-#: winecfg.rc:119
+#: winecfg.rc:113
 msgid "Controls Highlight"
 msgstr "컨트롤 하이라이트"
 
-#: winecfg.rc:120
+#: winecfg.rc:114
 msgid "Controls Dark Shadow"
 msgstr "컨트롤 어두운 그림자"
 
-#: winecfg.rc:121
+#: winecfg.rc:115
 msgid "Controls Light"
 msgstr "컨트롤 밝음"
 
-#: winecfg.rc:122
+#: winecfg.rc:116
 msgid "Controls Alternate Background"
 msgstr "컨트롤 바뀔때 배경"
 
-#: winecfg.rc:123
+#: winecfg.rc:117
 msgid "Hot Tracked Item"
 msgstr "핫 트랙된 아이템"
 
-#: winecfg.rc:124
+#: winecfg.rc:118
 msgid "Active Title Bar Gradient"
 msgstr "활성화된 제목 바 색깔 변화"
 
-#: winecfg.rc:125
+#: winecfg.rc:119
 msgid "Inactive Title Bar Gradient"
 msgstr "비활성화된 제목바 색깔 변화"
 
-#: winecfg.rc:126
+#: winecfg.rc:120
 msgid "Menu Highlight"
 msgstr "메뉴 하이라이트"
 
-#: winecfg.rc:127
+#: winecfg.rc:121
 msgid "Menu Bar"
 msgstr "메뉴바"
 

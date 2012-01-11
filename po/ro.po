@@ -47,8 +47,8 @@ msgstr "Informații a&sistență..."
 msgid "&Modify..."
 msgstr "&Modifică..."
 
-#: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:202
-#: winecfg.rc:239 wordpad.rc:245
+#: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
+#: winecfg.rc:228 wordpad.rc:245
 msgid "&Remove"
 msgstr "&Elimină"
 
@@ -67,7 +67,7 @@ msgstr "Informații de asistență"
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: taskmgr.rc:521 winecfg.rc:205 winecfg.rc:215 wineconsole.rc:131
 #: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
 #: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
 #: wordpad.rc:246
@@ -151,8 +151,8 @@ msgstr "&Instalează"
 #: notepad.rc:115 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
 #: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
-#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
-#: winecfg.rc:227 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
+#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:206
+#: winecfg.rc:216 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
 #: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
 #: wordpad.rc:247
 msgid "Cancel"
@@ -525,7 +525,7 @@ msgstr "&Font:"
 msgid "Font St&yle:"
 msgstr "&Stil font:"
 
-#: comdlg32.rc:253 comdlg32.rc:430 winecfg.rc:291
+#: comdlg32.rc:253 comdlg32.rc:430 winecfg.rc:280
 msgid "&Size:"
 msgstr "Mărime:"
 
@@ -541,7 +541,7 @@ msgstr "&Linie mijloc"
 msgid "&Underline"
 msgstr "&Subliniat"
 
-#: comdlg32.rc:263 winecfg.rc:289
+#: comdlg32.rc:263 winecfg.rc:278
 msgid "&Color:"
 msgstr "Culoare:"
 
@@ -710,7 +710,7 @@ msgstr "&de la:"
 msgid "&to:"
 msgstr "&la:"
 
-#: comdlg32.rc:410 winecfg.rc:297
+#: comdlg32.rc:410 winecfg.rc:286
 msgid "Si&ze:"
 msgstr "Mărime:"
 
@@ -2324,7 +2324,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "Nume &fișier:"
 
-#: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:306
+#: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
 msgstr "&Navighează"
 
@@ -7076,7 +7076,7 @@ msgstr "Hiperlegătură"
 msgid "Hyperlink Information"
 msgstr "Informații de hiperlegătură"
 
-#: mshtml.rc:41 winecfg.rc:247
+#: mshtml.rc:41 winecfg.rc:236
 msgid "&Type:"
 msgstr "&Tipul:"
 
@@ -7684,7 +7684,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34 winecfg.rc:185
+#: sane.rc:34 winecfg.rc:174
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -8253,7 +8253,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "&Deschide:"
 
-#: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245
+#: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
 msgid "&Browse..."
 msgstr "Navi&gare"
@@ -8303,7 +8303,7 @@ msgstr "Locația originală"
 msgid "Date deleted"
 msgstr "Data ștergerii"
 
-#: shell32.rc:153 winecfg.rc:98 winefile.rc:103
+#: shell32.rc:153 winecfg.rc:92 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -8724,7 +8724,7 @@ msgstr "Licența Wine"
 msgid "Trash"
 msgstr "Gunoi"
 
-#: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:90 winefile.rc:100
+#: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:84 winefile.rc:100
 msgid "Error"
 msgstr "Eroare"
 
@@ -9806,7 +9806,7 @@ msgstr "Ana&logic"
 msgid "Digi&tal"
 msgstr "Digi&tal"
 
-#: clock.rc:32 notepad.rc:50 winecfg.rc:300 winefile.rc:64 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:64 wordpad.rc:81
 msgid "&Font..."
 msgstr "&Font..."
 
@@ -13016,7 +13016,7 @@ msgstr "Wine"
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "Actualizez configurația Wine în %s, așteptați..."
 
-#: winecfg.rc:138
+#: winecfg.rc:132
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -13028,25 +13028,25 @@ msgstr ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 
-#: winecfg.rc:140
+#: winecfg.rc:134
 #, fuzzy
 msgid "Windows registration information"
 msgstr " Informații de înregistrare Windows "
 
-#: winecfg.rc:141
+#: winecfg.rc:135
 msgid "&Owner:"
 msgstr "&Deținătorul:"
 
-#: winecfg.rc:143
+#: winecfg.rc:137
 msgid "Organi&zation:"
 msgstr "Organi&zația:"
 
-#: winecfg.rc:151
+#: winecfg.rc:145
 #, fuzzy
 msgid "Application settings"
 msgstr " Setări pentru aplicații "
 
-#: winecfg.rc:152
+#: winecfg.rc:146
 msgid ""
 "Wine can mimic different Windows versions for each application.  This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
@@ -13057,71 +13057,58 @@ msgstr ""
 "„Setări de fereastră” și permite schimbarea setărilor globale sau pe "
 "aplicație în această subfereastră."
 
-#: winecfg.rc:156
+#: winecfg.rc:150
 msgid "&Add application..."
 msgstr "&Adaugă o aplicație"
 
-#: winecfg.rc:157
+#: winecfg.rc:151
 msgid "&Remove application"
 msgstr "&Șterge aplicația"
 
-#: winecfg.rc:158
+#: winecfg.rc:152
 msgid "&Windows Version:"
 msgstr "Versiunea &Windows:"
 
-#: winecfg.rc:166
+#: winecfg.rc:160
 #, fuzzy
 msgid "Window settings"
 msgstr " Setări de fereastră "
 
-#: winecfg.rc:167
+#: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "Automatically capture the &mouse in full-screen windows"
 
-#: winecfg.rc:168
+#: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
 msgstr "Permite administratorului de ferestre să &decoreze ferestrele"
 
-#: winecfg.rc:169
+#: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
 msgstr "Permite administratorului de ferestre să &administreze ferestrele"
 
-#: winecfg.rc:170
+#: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
 msgstr "&Emulează un ecran virtual"
 
-#: winecfg.rc:172
+#: winecfg.rc:166
 msgid "Desktop &size:"
 msgstr "Mărime ecran:"
 
-#: winecfg.rc:177
-#, fuzzy
-msgid "Direct3D"
-msgstr " Direct3D "
-
-#: winecfg.rc:178
-msgid "&Vertex Shader Support: "
-msgstr "Suport de vertex shader: "
-
-#: winecfg.rc:180
-msgid "Allow &Pixel Shader (if supported by hardware)"
-msgstr "Permite pixel shader (dacă este oferit de hardware)"
-
-#: winecfg.rc:182
+#: winecfg.rc:171
 #, fuzzy
 msgid "Screen resolution"
 msgstr " Rezoluție ecran "
 
-#: winecfg.rc:186
+#: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
 
-#: winecfg.rc:193
+#: winecfg.rc:182
 #, fuzzy
 msgid "DLL overrides"
 msgstr " Suprascrieri DLL "
 
-#: winecfg.rc:194
+#: winecfg.rc:183
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -13130,61 +13117,61 @@ msgstr ""
 "DLL-urile (Dynamic Link Libraries) pot fi setate individual ca builtin "
 "(furnizate de Wine) sau native (din Windows sau furnizate de aplicație)."
 
-#: winecfg.rc:196
+#: winecfg.rc:185
 msgid "&New override for library:"
 msgstr "Suprascriere nouă pentru librăria:"
 
-#: winecfg.rc:198 wordpad.rc:244
+#: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
 msgstr "&Adaugă"
 
-#: winecfg.rc:199
+#: winecfg.rc:188
 msgid "Existing &overrides:"
 msgstr "Suprascrieri existente:"
 
-#: winecfg.rc:201
+#: winecfg.rc:190
 msgid "&Edit..."
 msgstr "&Editează"
 
-#: winecfg.rc:207
+#: winecfg.rc:196
 msgid "Edit Override"
 msgstr "Editează suprascrierea"
 
-#: winecfg.rc:210
+#: winecfg.rc:199
 #, fuzzy
 msgid "Load order"
 msgstr " Ordinea de încărcare "
 
-#: winecfg.rc:211
+#: winecfg.rc:200
 msgid "&Builtin (Wine)"
 msgstr "&Builtin (Wine)"
 
-#: winecfg.rc:212
+#: winecfg.rc:201
 msgid "&Native (Windows)"
 msgstr "&Native (Windows)"
 
-#: winecfg.rc:213
+#: winecfg.rc:202
 msgid "Bui&ltin then Native"
 msgstr "Bui&ltin apoi Native"
 
-#: winecfg.rc:214
+#: winecfg.rc:203
 msgid "Nati&ve then Builtin"
 msgstr "Nati&ve apoi Builtin"
 
-#: winecfg.rc:215
+#: winecfg.rc:204
 msgid "&Disable"
 msgstr "&Dezactivează"
 
-#: winecfg.rc:222
+#: winecfg.rc:211
 msgid "Select Drive Letter"
 msgstr "Selecția literei de disc"
 
-#: winecfg.rc:234
+#: winecfg.rc:223
 #, fuzzy
 msgid "Drive mappings"
 msgstr " Mapare de discuri "
 
-#: winecfg.rc:235
+#: winecfg.rc:224
 msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
@@ -13192,99 +13179,99 @@ msgstr ""
 "A eșuat conectarea la managerul de montare, configurația discurilor nu poate "
 "fi schimbată."
 
-#: winecfg.rc:238
+#: winecfg.rc:227
 msgid "&Add..."
 msgstr "&Adaugă"
 
-#: winecfg.rc:240
+#: winecfg.rc:229
 msgid "Auto&detect"
 msgstr "&Detectează"
 
-#: winecfg.rc:243
+#: winecfg.rc:232
 msgid "&Path:"
 msgstr "&Calea:"
 
-#: winecfg.rc:250 winecfg.rc:35
+#: winecfg.rc:239 winecfg.rc:35
 msgid "Show &Advanced"
 msgstr "Afișează opțiunile a&vansate"
 
-#: winecfg.rc:251
+#: winecfg.rc:240
 msgid "De&vice:"
 msgstr "De&vice:"
 
-#: winecfg.rc:253
+#: winecfg.rc:242
 msgid "Bro&wse..."
 msgstr "Navighează"
 
-#: winecfg.rc:255
+#: winecfg.rc:244
 msgid "&Label:"
 msgstr "&Etichetă:"
 
-#: winecfg.rc:257
+#: winecfg.rc:246
 msgid "S&erial:"
 msgstr "N&umăr de serie:"
 
-#: winecfg.rc:260
+#: winecfg.rc:249
 msgid "Show &dot files"
 msgstr "Afișează &fișierele ascunse"
 
-#: winecfg.rc:267
+#: winecfg.rc:256
 #, fuzzy
 msgid "Driver diagnostics"
 msgstr " Driver Diagnostics "
 
-#: winecfg.rc:269
+#: winecfg.rc:258
 #, fuzzy
 msgid "Defaults"
 msgstr " Defaults "
 
-#: winecfg.rc:270
+#: winecfg.rc:259
 msgid "Output device:"
 msgstr "Output device:"
 
-#: winecfg.rc:271
+#: winecfg.rc:260
 msgid "Voice output device:"
 msgstr "Voice output device:"
 
-#: winecfg.rc:272
+#: winecfg.rc:261
 msgid "Input device:"
 msgstr "Input device:"
 
-#: winecfg.rc:273
+#: winecfg.rc:262
 msgid "Voice input device:"
 msgstr "Voice input device:"
 
-#: winecfg.rc:278
+#: winecfg.rc:267
 msgid "&Test Sound"
 msgstr "&Testează sunetul"
 
-#: winecfg.rc:285
+#: winecfg.rc:274
 #, fuzzy
 msgid "Appearance"
 msgstr " Aspect "
 
-#: winecfg.rc:286
+#: winecfg.rc:275
 msgid "&Theme:"
 msgstr "Tematică:"
 
-#: winecfg.rc:288
+#: winecfg.rc:277
 msgid "&Install theme..."
 msgstr "Instalează o tematică"
 
-#: winecfg.rc:293
+#: winecfg.rc:282
 msgid "It&em:"
 msgstr "Element:"
 
-#: winecfg.rc:295
+#: winecfg.rc:284
 msgid "C&olor:"
 msgstr "Culoare:"
 
-#: winecfg.rc:301
+#: winecfg.rc:290
 #, fuzzy
 msgid "Folders"
 msgstr "Dosarul de sistem"
 
-#: winecfg.rc:304
+#: winecfg.rc:293
 msgid "&Link to:"
 msgstr "Leagă la:"
 
@@ -13349,11 +13336,11 @@ msgstr "Legat la"
 msgid "Wine configuration for %s"
 msgstr "Setări Wine pentru %s"
 
-#: winecfg.rc:87
+#: winecfg.rc:81
 msgid "Selected driver: %s"
 msgstr ""
 
-#: winecfg.rc:88
+#: winecfg.rc:82
 #, fuzzy
 msgid "(None)"
 msgstr ""
@@ -13362,11 +13349,11 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Niciuna"
 
-#: winecfg.rc:89
+#: winecfg.rc:83
 msgid "Audio test failed!"
 msgstr ""
 
-#: winecfg.rc:91
+#: winecfg.rc:85
 #, fuzzy
 msgid "(System default)"
 msgstr "Calea de sistem"
@@ -13421,41 +13408,27 @@ msgid "Select an executable file"
 msgstr "Selectează un fișier executabil"
 
 #: winecfg.rc:66
-msgid "Hardware"
-msgstr "Hardware"
-
-#: winecfg.rc:67
-#, fuzzy
-msgctxt "vertex shader mode"
-msgid "None"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Fără\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Niciuna"
-
-#: winecfg.rc:72
 #, fuzzy
 msgid "Autodetect..."
 msgstr "Detectează automat"
 
-#: winecfg.rc:73
+#: winecfg.rc:67
 msgid "Local hard disk"
 msgstr "Hard disk local"
 
-#: winecfg.rc:74
+#: winecfg.rc:68
 msgid "Network share"
 msgstr "Resursă din rețea"
 
-#: winecfg.rc:75
+#: winecfg.rc:69
 msgid "Floppy disk"
 msgstr "Dischetă"
 
-#: winecfg.rc:76
+#: winecfg.rc:70
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:77
+#: winecfg.rc:71
 #, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
@@ -13467,11 +13440,11 @@ msgstr ""
 "Fiecare unitate trebuie să aibă o literă de la A la Z associată cu ea. Acest "
 "fapt limitează numărul de unități la 26."
 
-#: winecfg.rc:78
+#: winecfg.rc:72
 msgid "System drive"
 msgstr "Unitate de sistem"
 
-#: winecfg.rc:79
+#: winecfg.rc:73
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -13484,17 +13457,17 @@ msgstr ""
 "termina în mod neașteptat! Dacă executați stergerea nu uitați să recreați "
 "unitatea C!"
 
-#: winecfg.rc:80
+#: winecfg.rc:74
 #, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Litera"
 
-#: winecfg.rc:81
+#: winecfg.rc:75
 msgid "Drive Mapping"
 msgstr "Mapare disc"
 
-#: winecfg.rc:82
+#: winecfg.rc:76
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -13504,127 +13477,127 @@ msgstr ""
 "\n"
 "Nu uitați să o adăugați în subfereastra „Mapare de discuri”!\n"
 
-#: winecfg.rc:96
+#: winecfg.rc:90
 msgid "Controls Background"
 msgstr "Fundal controale"
 
-#: winecfg.rc:97
+#: winecfg.rc:91
 msgid "Controls Text"
 msgstr "Text controale"
 
-#: winecfg.rc:99
+#: winecfg.rc:93
 msgid "Menu Background"
 msgstr "Fundal meniu"
 
-#: winecfg.rc:100
+#: winecfg.rc:94
 msgid "Menu Text"
 msgstr "Text meniu"
 
-#: winecfg.rc:101
+#: winecfg.rc:95
 msgid "Scrollbar"
 msgstr "Bare de defilare"
 
-#: winecfg.rc:102
+#: winecfg.rc:96
 msgid "Selection Background"
 msgstr "Fundal selecție"
 
-#: winecfg.rc:103
+#: winecfg.rc:97
 msgid "Selection Text"
 msgstr "Text selecție"
 
-#: winecfg.rc:104
+#: winecfg.rc:98
 msgid "ToolTip Background"
 msgstr "Fundal baloane de ajutor"
 
-#: winecfg.rc:105
+#: winecfg.rc:99
 msgid "ToolTip Text"
 msgstr "Text baloane de ajutor"
 
-#: winecfg.rc:106
+#: winecfg.rc:100
 msgid "Window Background"
 msgstr "Fundal fereastră"
 
-#: winecfg.rc:107
+#: winecfg.rc:101
 msgid "Window Text"
 msgstr "Text fereastră"
 
-#: winecfg.rc:108
+#: winecfg.rc:102
 msgid "Active Title Bar"
 msgstr "Bară de titlu activă"
 
-#: winecfg.rc:109
+#: winecfg.rc:103
 msgid "Active Title Text"
 msgstr "Text bară de titlu activă"
 
-#: winecfg.rc:110
+#: winecfg.rc:104
 msgid "Inactive Title Bar"
 msgstr "Bară de titlu inactivă"
 
-#: winecfg.rc:111
+#: winecfg.rc:105
 msgid "Inactive Title Text"
 msgstr "Text bară de titlu inactivă"
 
-#: winecfg.rc:112
+#: winecfg.rc:106
 msgid "Message Box Text"
 msgstr "Text casetă de mesaje"
 
-#: winecfg.rc:113
+#: winecfg.rc:107
 msgid "Application Workspace"
 msgstr "Spațiul de lucru al aplicației"
 
-#: winecfg.rc:114
+#: winecfg.rc:108
 msgid "Window Frame"
 msgstr "Cadru de fereastră"
 
-#: winecfg.rc:115
+#: winecfg.rc:109
 msgid "Active Border"
 msgstr "Margini active"
 
-#: winecfg.rc:116
+#: winecfg.rc:110
 msgid "Inactive Border"
 msgstr "Margini inactive"
 
-#: winecfg.rc:117
+#: winecfg.rc:111
 msgid "Controls Shadow"
 msgstr "Umbră pentru controale"
 
-#: winecfg.rc:118
+#: winecfg.rc:112
 msgid "Gray Text"
 msgstr "Text gri"
 
-#: winecfg.rc:119
+#: winecfg.rc:113
 msgid "Controls Highlight"
 msgstr "Evidențiere controale"
 
-#: winecfg.rc:120
+#: winecfg.rc:114
 msgid "Controls Dark Shadow"
 msgstr "Umbră întunecată pentru controale"
 
-#: winecfg.rc:121
+#: winecfg.rc:115
 msgid "Controls Light"
 msgstr "Lumină pentru controale"
 
-#: winecfg.rc:122
+#: winecfg.rc:116
 msgid "Controls Alternate Background"
 msgstr "Fundal alternativ pentru controale"
 
-#: winecfg.rc:123
+#: winecfg.rc:117
 msgid "Hot Tracked Item"
 msgstr "Element cu urmărire fierbinte"
 
-#: winecfg.rc:124
+#: winecfg.rc:118
 msgid "Active Title Bar Gradient"
 msgstr "Gradient bară de titlu activă"
 
-#: winecfg.rc:125
+#: winecfg.rc:119
 msgid "Inactive Title Bar Gradient"
 msgstr "Gradient bară de titlu inactivă"
 
-#: winecfg.rc:126
+#: winecfg.rc:120
 msgid "Menu Highlight"
 msgstr "Evidențiere meniu"
 
-#: winecfg.rc:127
+#: winecfg.rc:121
 msgid "Menu Bar"
 msgstr "Bară de meniu"
 

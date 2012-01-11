@@ -154,10 +154,6 @@
 #define IDC_FULLSCREEN_GRAB             1102
 #define IDC_USE_TAKE_FOCUS              1103
 #define IDC_DOUBLE_BUFFER               1104
-#define IDC_D3D_VSHADER_MODE            1105
-#define IDC_D3D_PSHADER_MODE            1106
-#define IDS_SHADER_MODE_HARDWARE        8100
-#define IDS_SHADER_MODE_NONE            8101
 
 #define IDC_RES_TRACKBAR                1107
 #define IDC_RES_DPIEDIT                 1108
