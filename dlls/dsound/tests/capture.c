@@ -379,8 +379,6 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
                                                 (void **)&(state.notify));
     ok((rc==DS_OK)&&(state.notify!=NULL),
        "IDirectSoundCaptureBuffer_QueryInterface() failed: %08x\n", rc);
-    if (rc!=DS_OK)
-	return;
 
     for (i = 0; i < NOTIFICATIONS; i++) {
 	state.posnotify[i].dwOffset = (i * state.size) + state.size - 1;
@@ -390,27 +388,19 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
     rc=IDirectSoundNotify_SetNotificationPositions(state.notify,NOTIFICATIONS,
                                                    state.posnotify);
     ok(rc==DS_OK,"IDirectSoundNotify_SetNotificationPositions() failed: %08x\n", rc);
-    if (rc!=DS_OK)
-	return;
 
     ref=IDirectSoundNotify_Release(state.notify);
     ok(ref==0,"IDirectSoundNotify_Release(): has %d references, should have "
        "0\n",ref);
-    if (ref!=0)
-	return;
 
     if (record) {
 	rc=IDirectSoundCaptureBuffer_Start(dscbo,DSCBSTART_LOOPING);
 	ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Start() failed: %08x\n", rc);
-	if (rc!=DS_OK)
-	    return;
 
 	rc=IDirectSoundCaptureBuffer_GetStatus(dscbo,&status);
 	ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetStatus() failed: %08x\n", rc);
 	ok(status==(DSCBSTATUS_CAPTURING|DSCBSTATUS_LOOPING),
            "GetStatus: bad status: %x\n",status);
-	if (rc!=DS_OK)
-	    return;
 
 	/* wait for the notifications */
 	for (i = 0; i < (NOTIFICATIONS * 2); i++) {
@@ -428,8 +418,6 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
 
 	rc=IDirectSoundCaptureBuffer_Stop(dscbo);
 	ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Stop() failed: %08x\n", rc);
-	if (rc!=DS_OK)
-	    return;
     }
 }
 
