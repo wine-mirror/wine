@@ -2626,14 +2626,19 @@ static nsresult NSAPI nsURL_SetDirectory(nsIURL *iface, const nsACString *aDirec
 static nsresult NSAPI nsURL_GetFileName(nsIURL *iface, nsACString *aFileName)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
+    const WCHAR *file;
+    BSTR path;
+    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, aFileName);
 
-    if(This->nsurl)
-        return nsIURL_GetFileName(This->nsurl, aFileName);
+    nsres = get_uri_path(This, &path, &file, NULL);
+    if(NS_FAILED(nsres))
+        return nsres;
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsres = return_wstr_nsacstr(aFileName, file, -1);
+    SysFreeString(path);
+    return nsres;
 }
 
 static nsresult NSAPI nsURL_SetFileName(nsIURL *iface, const nsACString *aFileName)
