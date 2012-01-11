@@ -666,6 +666,68 @@ static void test_enumerate(void)
     ok(rc==DS_OK,"DirectSoundCaptureEnumerateA() failed: %08x\n", rc);
 }
 
+static void test_COM(void)
+{
+    IDirectSoundCapture *dsc = (IDirectSoundCapture*)0xdeadbeef;
+    IDirectSoundCaptureBuffer *buffer = (IDirectSoundCaptureBuffer*)0xdeadbeef;
+    IDirectSoundNotify *notify;
+    DSCBUFFERDESC bufdesc;
+    WAVEFORMATEX wfx;
+    HRESULT hr;
+    ULONG refcount;
+
+    hr = pDirectSoundCaptureCreate(NULL, &dsc, (IUnknown*)0xdeadbeef);
+    ok(hr == DSERR_NOAGGREGATION,
+       "DirectSoundCaptureCreate failed: %08x, expected DSERR_NOAGGREGATION\n", hr);
+    ok(dsc == (IDirectSoundCapture*)0xdeadbeef, "dsc = %p\n", dsc);
+
+    hr = pDirectSoundCaptureCreate(NULL, &dsc, NULL);
+    if (hr == DSERR_NODRIVER) {
+        skip("No driver\n");
+        return;
+    }
+    ok(hr == DS_OK, "DirectSoundCaptureCreate failed: %08x, expected DS_OK\n", hr);
+
+    init_format(&wfx, WAVE_FORMAT_PCM, 44100, 16, 1);
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize = sizeof(bufdesc);
+    bufdesc.dwBufferBytes = wfx.nAvgBytesPerSec;
+    bufdesc.lpwfxFormat = &wfx;
+
+    hr = IDirectSoundCapture_CreateCaptureBuffer(dsc, &bufdesc, &buffer, (IUnknown*)0xdeadbeef);
+    ok(hr == DSERR_NOAGGREGATION,
+       "IDirectSoundCapture_CreateCaptureBuffer failed: %08x, expected DSERR_NOAGGREGATION\n", hr);
+    ok(buffer == (IDirectSoundCaptureBuffer*)0xdeadbeef, "buffer = %p\n", buffer);
+
+    hr = IDirectSoundCapture_CreateCaptureBuffer(dsc, &bufdesc, &buffer, NULL);
+    ok(hr == DS_OK, "IDirectSoundCapture_CreateCaptureBuffer failed: %08x, expected DS_OK\n", hr);
+
+    /* IDirectSoundCaptureBuffer and IDirectSoundNotify have separate refcounts */
+    IDirectSoundCaptureBuffer_AddRef(buffer);
+    refcount = IDirectSoundCaptureBuffer_AddRef(buffer);
+    ok(refcount == 3, "IDirectSoundCaptureBuffer refcount is %u, expected 3\n", refcount);
+    hr = IDirectSoundCaptureBuffer_QueryInterface(buffer, &IID_IDirectSoundNotify, (void**)&notify);
+    ok(hr == DS_OK, "IDirectSoundCapture_QueryInterface failed: %08x, expected DS_OK\n", hr);
+    refcount = IDirectSoundNotify_AddRef(notify);
+    ok(refcount == 2, "IDirectSoundNotify refcount is %u, expected 2\n", refcount);
+    IDirectSoundCaptureBuffer_AddRef(buffer);
+    refcount = IDirectSoundCaptureBuffer_Release(buffer);
+    ok(refcount == 3, "IDirectSoundCaptureBuffer refcount is %u, expected 3\n", refcount);
+
+    /* Release IDirectSoundCaptureBuffer while keeping IDirectSoundNotify alive */
+    while (IDirectSoundCaptureBuffer_Release(buffer) > 0);
+    refcount = IDirectSoundNotify_AddRef(notify);
+    ok(refcount == 3, "IDirectSoundNotify refcount is %u, expected 3\n", refcount);
+    refcount = IDirectSoundCaptureBuffer_AddRef(buffer);
+    ok(refcount == 1, "IDirectSoundCaptureBuffer refcount is %u, expected 1\n", refcount);
+
+    while (IDirectSoundNotify_Release(notify) > 0);
+    refcount = IDirectSoundCaptureBuffer_Release(buffer);
+    ok(refcount == 0, "IDirectSoundCaptureBuffer refcount is %u, expected 0\n", refcount);
+    refcount = IDirectSoundCapture_Release(dsc);
+    ok(refcount == 0, "IDirectSoundCapture refcount is %u, expected 0\n", refcount);
+}
+
 START_TEST(capture)
 {
     HMODULE hDsound;
@@ -685,6 +747,7 @@ START_TEST(capture)
         return;
     }
 
+    test_COM();
     test_capture();
     test_enumerate();
 
