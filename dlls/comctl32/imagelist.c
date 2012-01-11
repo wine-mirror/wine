@@ -775,7 +775,7 @@ ImageList_Create (INT cx, INT cy, UINT flags,
 
     if (cGrow > 256)
     {
-        /* Windows doesn't limit the size here, but X11 doesn't let use allocate such huge bitmaps */
+        /* Windows doesn't limit the size here, but X11 doesn't let us allocate such huge bitmaps */
         WARN( "grow %d too large, limiting to 256\n", cGrow );
         cGrow = 256;
     }
