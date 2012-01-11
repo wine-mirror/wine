@@ -184,17 +184,17 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
     hints.ai_family = AF_INET;
 
     ret = getaddrinfo( name, NULL, &hints, &res );
-    heap_free( name );
     if (ret != 0)
     {
         TRACE("failed to get IPv4 address of %s (%s), retrying with IPv6\n", debugstr_w(lpszServerName), gai_strerror(ret));
         hints.ai_family = AF_INET6;
         ret = getaddrinfo( name, NULL, &hints, &res );
-        if (ret != 0)
-        {
-            TRACE("failed to get address of %s (%s)\n", debugstr_w(lpszServerName), gai_strerror(ret));
-            return FALSE;
-        }
+    }
+    heap_free( name );
+    if (ret != 0)
+    {
+        TRACE("failed to get address of %s (%s)\n", debugstr_w(lpszServerName), gai_strerror(ret));
+        return FALSE;
     }
     if (*sa_len < res->ai_addrlen)
     {
