@@ -1065,6 +1065,11 @@ static HRESULT WINAPI IDirectSoundCaptureImpl_CreateCaptureBuffer(IDirectSoundCa
 
     TRACE( "(%p,%p,%p,%p)\n",iface,lpcDSCBufferDesc,lplpDSCaptureBuffer,pUnk);
 
+    if (pUnk) {
+        WARN("invalid parameter: pUnk != NULL\n");
+        return DSERR_NOAGGREGATION;
+    }
+
     if (lpcDSCBufferDesc == NULL) {
 	WARN("invalid parameter: lpcDSCBufferDesc == NULL)\n");
 	return DSERR_INVALIDPARAM;
@@ -1270,7 +1275,6 @@ HRESULT WINAPI DirectSoundCaptureCreate(LPCGUID lpcGUID, IDirectSoundCapture **p
 
     if (pUnkOuter) {
 	WARN("invalid parameter: pUnkOuter != NULL\n");
-        *ppDSC = NULL;
         return DSERR_NOAGGREGATION;
     }
 
