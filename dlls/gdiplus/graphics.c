@@ -2528,15 +2528,38 @@ GpStatus WINGDIPAPI GdipDrawImagePointRectI(GpGraphics *graphics, GpImage *image
 GpStatus WINGDIPAPI GdipDrawImagePoints(GpGraphics *graphics, GpImage *image,
     GDIPCONST GpPointF *dstpoints, INT count)
 {
-    FIXME("(%p, %p, %p, %d): stub\n", graphics, image, dstpoints, count);
-    return NotImplemented;
+    UINT width, height;
+
+    TRACE("(%p, %p, %p, %d)\n", graphics, image, dstpoints, count);
+
+    if(!image)
+        return InvalidParameter;
+
+    GdipGetImageWidth(image, &width);
+    GdipGetImageHeight(image, &height);
+
+    return GdipDrawImagePointsRect(graphics, image, dstpoints, count, 0, 0,
+        width, height, UnitPixel, NULL, NULL, NULL);
 }
 
 GpStatus WINGDIPAPI GdipDrawImagePointsI(GpGraphics *graphics, GpImage *image,
     GDIPCONST GpPoint *dstpoints, INT count)
 {
-    FIXME("(%p, %p, %p, %d): stub\n", graphics, image, dstpoints, count);
-    return NotImplemented;
+    GpPointF ptf[3];
+
+    TRACE("(%p, %p, %p, %d)\n", graphics, image, dstpoints, count);
+
+    if (count != 3 || !dstpoints)
+        return InvalidParameter;
+
+    ptf[0].X = (REAL)dstpoints[0].X;
+    ptf[0].Y = (REAL)dstpoints[0].Y;
+    ptf[1].X = (REAL)dstpoints[1].X;
+    ptf[1].Y = (REAL)dstpoints[1].Y;
+    ptf[2].X = (REAL)dstpoints[2].X;
+    ptf[2].Y = (REAL)dstpoints[2].Y;
+
+    return GdipDrawImagePoints(graphics, image, ptf, count);
 }
 
 GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image,
