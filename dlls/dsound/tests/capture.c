@@ -177,7 +177,7 @@ EXIT:
        "should have 0\n", ref);
 }
 
-static void IDirectSoundCapture_tests(void)
+static void test_capture(void)
 {
     HRESULT rc;
     LPDIRECTSOUNDCAPTURE dsco=NULL;
@@ -659,7 +659,7 @@ EXIT:
     return TRUE;
 }
 
-static void capture_tests(void)
+static void test_enumerate(void)
 {
     HRESULT rc;
     rc=pDirectSoundCaptureEnumerateA(&dscenum_callback,NULL);
@@ -673,25 +673,21 @@ START_TEST(capture)
     CoInitialize(NULL);
 
     hDsound = LoadLibrary("dsound.dll");
-    if (hDsound)
-    {
-
-        pDirectSoundCaptureCreate=(void*)GetProcAddress(hDsound,
-            "DirectSoundCaptureCreate");
-        pDirectSoundCaptureEnumerateA=(void*)GetProcAddress(hDsound,
-            "DirectSoundCaptureEnumerateA");
-        if (pDirectSoundCaptureCreate && pDirectSoundCaptureEnumerateA)
-        {
-            IDirectSoundCapture_tests();
-            capture_tests();
-        }
-        else
-            skip("capture test skipped\n");
-
-        FreeLibrary(hDsound);
-    }
-    else
+    if (!hDsound) {
         skip("dsound.dll not found!\n");
+        return;
+    }
 
+    pDirectSoundCaptureCreate = (void*)GetProcAddress(hDsound, "DirectSoundCaptureCreate");
+    pDirectSoundCaptureEnumerateA = (void*)GetProcAddress(hDsound, "DirectSoundCaptureEnumerateA");
+    if (!pDirectSoundCaptureCreate || !pDirectSoundCaptureEnumerateA) {
+        skip("capture test skipped\n");
+        return;
+    }
+
+    test_capture();
+    test_enumerate();
+
+    FreeLibrary(hDsound);
     CoUninitialize();
 }
