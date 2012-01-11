@@ -248,6 +248,7 @@ struct DirectSoundCaptureDevice
 struct IDirectSoundCaptureBufferImpl
 {
     IDirectSoundCaptureBuffer8          IDirectSoundCaptureBuffer8_iface;
+    LONG                                numIfaces; /* "in use interfaces" refcount */
     LONG                                ref;
     /* IDirectSoundCaptureBuffer fields */
     DirectSoundCaptureDevice*           device;

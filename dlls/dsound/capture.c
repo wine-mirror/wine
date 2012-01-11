@@ -44,6 +44,34 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
 
+static void capturebuffer_destroy(IDirectSoundCaptureBufferImpl *This)
+{
+    if (This->device->state == STATE_CAPTURING)
+        This->device->state = STATE_STOPPING;
+
+    HeapFree(GetProcessHeap(),0, This->pdscbd);
+
+    if (This->device->client) {
+        IAudioClient_Release(This->device->client);
+        This->device->client = NULL;
+    }
+
+    if (This->device->capture) {
+        IAudioCaptureClient_Release(This->device->capture);
+        This->device->capture = NULL;
+    }
+
+    /* remove from DirectSoundCaptureDevice */
+    This->device->capture_buffer = NULL;
+
+    if (This->notify)
+        IDirectSoundNotify_Release((LPDIRECTSOUNDNOTIFY)This->notify);
+
+    HeapFree(GetProcessHeap(), 0, This->notifies);
+    HeapFree(GetProcessHeap(), 0, This);
+    TRACE("(%p) released\n", This);
+}
+
 /*****************************************************************************
  * IDirectSoundCaptureNotify implementation structure
  */
@@ -228,46 +256,26 @@ static HRESULT WINAPI IDirectSoundCaptureBufferImpl_QueryInterface(IDirectSoundC
 static ULONG WINAPI IDirectSoundCaptureBufferImpl_AddRef(IDirectSoundCaptureBuffer8 *iface)
 {
     IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
-    ULONG ref = InterlockedIncrement(&(This->ref));
+    ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref was %d\n", This, ref - 1);
+
+    if(ref == 1)
+        InterlockedIncrement(&This->numIfaces);
+
     return ref;
 }
 
 static ULONG WINAPI IDirectSoundCaptureBufferImpl_Release(IDirectSoundCaptureBuffer8 *iface)
 {
     IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
-    ULONG ref = InterlockedDecrement(&(This->ref));
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref was %d\n", This, ref + 1);
 
-    if (!ref) {
-        TRACE("deleting object\n");
-        if (This->device->state == STATE_CAPTURING)
-            This->device->state = STATE_STOPPING;
+    if (!ref && !InterlockedDecrement(&This->numIfaces))
+        capturebuffer_destroy(This);
 
-        HeapFree(GetProcessHeap(),0, This->pdscbd);
-
-        if (This->device->client) {
-            IAudioClient_Release(This->device->client);
-            This->device->client = NULL;
-        }
-
-        if (This->device->capture) {
-            IAudioCaptureClient_Release(This->device->capture);
-            This->device->capture = NULL;
-        }
-
-        /* remove from DirectSoundCaptureDevice */
-        This->device->capture_buffer = NULL;
-
-        if (This->notify)
-            IDirectSoundNotify_Release((LPDIRECTSOUNDNOTIFY)This->notify);
-
-        HeapFree(GetProcessHeap(), 0, This->notifies);
-        HeapFree( GetProcessHeap(), 0, This );
-        TRACE("(%p) released\n", This);
-    }
     return ref;
 }
 
@@ -697,7 +705,8 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
         LPBYTE newbuf;
         DWORD buflen;
 
-        This->ref = 1;
+        This->numIfaces = 0;
+        This->ref = 0;
         This->device = device;
         This->device->capture_buffer = This;
         This->notify = NULL;
@@ -771,6 +780,7 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
         device->buflen = buflen;
     }
 
+    IDirectSoundCaptureBuffer_AddRef(&This->IDirectSoundCaptureBuffer8_iface);
     *ppobj = This;
 
     TRACE("returning DS_OK\n");
