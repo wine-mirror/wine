@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct
 {
-    IContextMenu2 IContextMenu2_iface;
+    IContextMenu3 IContextMenu3_iface;
     LONG ref;
 
     IShellFolder* parent;
@@ -61,22 +61,23 @@ typedef struct
     BOOL desktop;
 } ContextMenu;
 
-static inline ContextMenu *impl_from_IContextMenu2(IContextMenu2 *iface)
+static inline ContextMenu *impl_from_IContextMenu3(IContextMenu3 *iface)
 {
-    return CONTAINING_RECORD(iface, ContextMenu, IContextMenu2_iface);
+    return CONTAINING_RECORD(iface, ContextMenu, IContextMenu3_iface);
 }
 
-static HRESULT WINAPI ContextMenu_QueryInterface(IContextMenu2 *iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI ContextMenu_QueryInterface(IContextMenu3 *iface, REFIID riid, LPVOID *ppvObj)
 {
-    ContextMenu *This = impl_from_IContextMenu2(iface);
+    ContextMenu *This = impl_from_IContextMenu3(iface);
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObj);
 
     *ppvObj = NULL;
 
-    if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IContextMenu) ||
-        IsEqualIID(riid, &IID_IContextMenu2))
+    if (IsEqualIID(riid, &IID_IUnknown)      ||
+        IsEqualIID(riid, &IID_IContextMenu)  ||
+        IsEqualIID(riid, &IID_IContextMenu2) ||
+        IsEqualIID(riid, &IID_IContextMenu3))
     {
         *ppvObj = This;
     }
@@ -87,7 +88,7 @@ static HRESULT WINAPI ContextMenu_QueryInterface(IContextMenu2 *iface, REFIID ri
 
     if(*ppvObj)
     {
-        IContextMenu2_AddRef(iface);
+        IContextMenu3_AddRef(iface);
         return S_OK;
     }
 
@@ -95,17 +96,17 @@ static HRESULT WINAPI ContextMenu_QueryInterface(IContextMenu2 *iface, REFIID ri
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ContextMenu_AddRef(IContextMenu2 *iface)
+static ULONG WINAPI ContextMenu_AddRef(IContextMenu3 *iface)
 {
-    ContextMenu *This = impl_from_IContextMenu2(iface);
+    ContextMenu *This = impl_from_IContextMenu3(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
     TRACE("(%p)->(%u)\n", This, ref);
     return ref;
 }
 
-static ULONG WINAPI ContextMenu_Release(IContextMenu2 *iface)
+static ULONG WINAPI ContextMenu_Release(IContextMenu3 *iface)
 {
-    ContextMenu *This = impl_from_IContextMenu2(iface);
+    ContextMenu *This = impl_from_IContextMenu3(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(%u)\n", This, ref);
@@ -125,14 +126,14 @@ static ULONG WINAPI ContextMenu_Release(IContextMenu2 *iface)
 }
 
 static HRESULT WINAPI ItemMenu_QueryContextMenu(
-	IContextMenu2 *iface,
+	IContextMenu3 *iface,
 	HMENU hmenu,
 	UINT indexMenu,
 	UINT idCmdFirst,
 	UINT idCmdLast,
 	UINT uFlags)
 {
-    ContextMenu *This = impl_from_IContextMenu2(iface);
+    ContextMenu *This = impl_from_IContextMenu3(iface);
     INT uIDMax;
 
     TRACE("(%p)->(%p %d 0x%x 0x%x 0x%x )\n", This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
@@ -400,10 +401,10 @@ static void DoOpenProperties(ContextMenu *This, HWND hwnd)
 }
 
 static HRESULT WINAPI ItemMenu_InvokeCommand(
-	IContextMenu2 *iface,
+	IContextMenu3 *iface,
 	LPCMINVOKECOMMANDINFO lpcmi)
 {
-    ContextMenu *This = impl_from_IContextMenu2(iface);
+    ContextMenu *This = impl_from_IContextMenu3(iface);
 
     if (lpcmi->cbSize != sizeof(CMINVOKECOMMANDINFO))
         FIXME("Is an EX structure\n");
@@ -485,14 +486,14 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
 }
 
 static HRESULT WINAPI ItemMenu_GetCommandString(
-	IContextMenu2 *iface,
+	IContextMenu3 *iface,
 	UINT_PTR idCommand,
 	UINT uFlags,
 	UINT* lpReserved,
 	LPSTR lpszName,
 	UINT uMaxNameLen)
 {
-	ContextMenu *This = impl_from_IContextMenu2(iface);
+	ContextMenu *This = impl_from_IContextMenu3(iface);
 	HRESULT hr = E_INVALIDARG;
 
 	TRACE("(%p)->(%lx flags=%x %p name=%p len=%x)\n", This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
@@ -540,18 +541,23 @@ static HRESULT WINAPI ItemMenu_GetCommandString(
 *  should be only in IContextMenu2 and IContextMenu3
 *  is nevertheless called from word95
 */
-static HRESULT WINAPI ItemMenu_HandleMenuMsg(
-	IContextMenu2 *iface,
-	UINT uMsg,
-	WPARAM wParam,
-	LPARAM lParam)
+static HRESULT WINAPI ContextMenu_HandleMenuMsg(IContextMenu3 *iface, UINT msg,
+    WPARAM wParam, LPARAM lParam)
 {
-    ContextMenu *This = impl_from_IContextMenu2(iface);
-    TRACE("(%p)->(0x%x 0x%lx 0x%lx)\n", This, uMsg, wParam, lParam);
+    ContextMenu *This = impl_from_IContextMenu3(iface);
+    FIXME("(%p)->(0x%x 0x%lx 0x%lx): stub\n", This, msg, wParam, lParam);
     return E_NOTIMPL;
 }
 
-static const IContextMenu2Vtbl ItemContextMenuVtbl =
+static HRESULT WINAPI ContextMenu_HandleMenuMsg2(IContextMenu3 *iface, UINT msg,
+    WPARAM wParam, LPARAM lParam, LRESULT *result)
+{
+    ContextMenu *This = impl_from_IContextMenu3(iface);
+    FIXME("(%p)->(0x%x 0x%lx 0x%lx %p): stub\n", This, msg, wParam, lParam, result);
+    return E_NOTIMPL;
+}
+
+static const IContextMenu3Vtbl ItemContextMenuVtbl =
 {
     ContextMenu_QueryInterface,
     ContextMenu_AddRef,
@@ -559,7 +565,8 @@ static const IContextMenu2Vtbl ItemContextMenuVtbl =
     ItemMenu_QueryContextMenu,
     ItemMenu_InvokeCommand,
     ItemMenu_GetCommandString,
-    ItemMenu_HandleMenuMsg
+    ContextMenu_HandleMenuMsg,
+    ContextMenu_HandleMenuMsg2
 };
 
 IContextMenu2 *ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPCITEMIDLIST *apidl, UINT cidl)
@@ -568,7 +575,7 @@ IContextMenu2 *ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, co
     UINT u;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
-    This->IContextMenu2_iface.lpVtbl = &ItemContextMenuVtbl;
+    This->IContextMenu3_iface.lpVtbl = &ItemContextMenuVtbl;
     This->ref = 1;
     This->verb_offset = 0;
     This->parent = parent;
@@ -586,19 +593,19 @@ IContextMenu2 *ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, co
 
     TRACE("(%p)\n", This);
 
-    return &This->IContextMenu2_iface;
+    return (IContextMenu2*)&This->IContextMenu3_iface;
 }
 
 /* Background menu implementation */
 static HRESULT WINAPI BackgroundMenu_QueryContextMenu(
-	IContextMenu2 *iface,
+	IContextMenu3 *iface,
 	HMENU hMenu,
 	UINT indexMenu,
 	UINT idCmdFirst,
 	UINT idCmdLast,
 	UINT uFlags)
 {
-    ContextMenu *This = impl_from_IContextMenu2(iface);
+    ContextMenu *This = impl_from_IContextMenu3(iface);
     HMENU hMyMenu;
     UINT idMax;
     HRESULT hr;
@@ -752,10 +759,10 @@ static BOOL DoPaste(ContextMenu *This)
 }
 
 static HRESULT WINAPI BackgroundMenu_InvokeCommand(
-	IContextMenu2 *iface,
+	IContextMenu3 *iface,
 	LPCMINVOKECOMMANDINFO lpcmi)
 {
-    ContextMenu *This = impl_from_IContextMenu2(iface);
+    ContextMenu *This = impl_from_IContextMenu3(iface);
     IShellBrowser *browser;
     IShellView *view = NULL;
     HWND hWnd = NULL;
@@ -828,14 +835,14 @@ static HRESULT WINAPI BackgroundMenu_InvokeCommand(
 }
 
 static HRESULT WINAPI BackgroundMenu_GetCommandString(
-	IContextMenu2 *iface,
+	IContextMenu3 *iface,
 	UINT_PTR idCommand,
 	UINT uFlags,
 	UINT* lpReserved,
 	LPSTR lpszName,
 	UINT uMaxNameLen)
 {
-        ContextMenu *This = impl_from_IContextMenu2(iface);
+        ContextMenu *This = impl_from_IContextMenu3(iface);
 
 	TRACE("(%p)->(idcom=%lx flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
 
@@ -858,18 +865,7 @@ static HRESULT WINAPI BackgroundMenu_GetCommandString(
 	return E_FAIL;
 }
 
-static HRESULT WINAPI BackgroundMenu_HandleMenuMsg(
-	IContextMenu2 *iface,
-	UINT uMsg,
-	WPARAM wParam,
-	LPARAM lParam)
-{
-    ContextMenu *This = impl_from_IContextMenu2(iface);
-    FIXME("(%p)->(msg=%x wp=%lx lp=%lx)\n",This, uMsg, wParam, lParam);
-    return E_NOTIMPL;
-}
-
-static const IContextMenu2Vtbl BackgroundContextMenuVtbl =
+static const IContextMenu3Vtbl BackgroundContextMenuVtbl =
 {
     ContextMenu_QueryInterface,
     ContextMenu_AddRef,
@@ -877,7 +873,8 @@ static const IContextMenu2Vtbl BackgroundContextMenuVtbl =
     BackgroundMenu_QueryContextMenu,
     BackgroundMenu_InvokeCommand,
     BackgroundMenu_GetCommandString,
-    BackgroundMenu_HandleMenuMsg
+    ContextMenu_HandleMenuMsg,
+    ContextMenu_HandleMenuMsg2
 };
 
 IContextMenu2 *BackgroundMenu_Constructor(IShellFolder *parent, BOOL desktop)
@@ -885,7 +882,7 @@ IContextMenu2 *BackgroundMenu_Constructor(IShellFolder *parent, BOOL desktop)
     ContextMenu *This;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
-    This->IContextMenu2_iface.lpVtbl = &BackgroundContextMenuVtbl;
+    This->IContextMenu3_iface.lpVtbl = &BackgroundContextMenuVtbl;
     This->ref = 1;
     This->parent = parent;
     This->verb_offset = 0;
@@ -899,5 +896,5 @@ IContextMenu2 *BackgroundMenu_Constructor(IShellFolder *parent, BOOL desktop)
     if (parent) IShellFolder_AddRef(parent);
 
     TRACE("(%p)\n", This);
-    return &This->IContextMenu2_iface;
+    return (IContextMenu2*)&This->IContextMenu3_iface;
 }
