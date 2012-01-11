@@ -530,10 +530,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetUIObjectOf (IShellFolder2 * iface,
     if (IsEqualIID (riid, &IID_IContextMenu))
     {
         if (cidl > 0)
-        {
-            pObj = (LPUNKNOWN) ItemMenu_Constructor( (IShellFolder *) iface, This->pidlRoot, apidl, cidl);
-            hr = S_OK;
-        }
+            return ItemMenu_Constructor((IShellFolder*)iface, This->pidlRoot, apidl, cidl, riid, ppvOut);
         else
             return BackgroundMenu_Constructor((IShellFolder*)iface, TRUE, riid, ppvOut);
     }

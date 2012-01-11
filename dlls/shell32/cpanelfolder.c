@@ -600,8 +600,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetUIObjectOf(IShellFolder2 *iface, HWN
 	*ppvOut = NULL;
 
 	if (IsEqualIID(riid, &IID_IContextMenu) &&(cidl >= 1)) {
-	    pObj = (LPUNKNOWN) ItemMenu_Constructor((IShellFolder *) iface, This->pidlRoot, apidl, cidl);
-	    hr = S_OK;
+	    return ItemMenu_Constructor((IShellFolder*)iface, This->pidlRoot, apidl, cidl, riid, ppvOut);
 	} else if (IsEqualIID(riid, &IID_IDataObject) &&(cidl >= 1)) {
 	    pObj = (LPUNKNOWN) IDataObject_Constructor(hwndOwner, This->pidlRoot, apidl, cidl);
 	    hr = S_OK;

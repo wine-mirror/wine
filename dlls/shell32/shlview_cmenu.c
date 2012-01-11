@@ -569,12 +569,16 @@ static const IContextMenu3Vtbl ItemContextMenuVtbl =
     ContextMenu_HandleMenuMsg2
 };
 
-IContextMenu2 *ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPCITEMIDLIST *apidl, UINT cidl)
+HRESULT ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPCITEMIDLIST *apidl, UINT cidl,
+    REFIID riid, void **pObj)
 {
     ContextMenu* This;
-    UINT u;
+    HRESULT hr;
+    int i;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+
     This->IContextMenu3_iface.lpVtbl = &ItemContextMenuVtbl;
     This->ref = 1;
     This->verb_offset = 0;
@@ -588,12 +592,13 @@ IContextMenu2 *ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, co
 
     This->desktop = FALSE;
 
-    for(u = 0; u < cidl; u++)
-       This->allvalues &= (_ILIsValue(apidl[u]) ? 1 : 0);
+    for (i = 0; i < cidl; i++)
+       This->allvalues &= (_ILIsValue(apidl[i]) ? 1 : 0);
 
-    TRACE("(%p)\n", This);
+    hr = IContextMenu3_QueryInterface(&This->IContextMenu3_iface, riid, pObj);
+    IContextMenu3_Release(&This->IContextMenu3_iface);
 
-    return (IContextMenu2*)&This->IContextMenu3_iface;
+    return hr;
 }
 
 /* Background menu implementation */
