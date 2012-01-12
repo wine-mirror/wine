@@ -50,6 +50,7 @@ static const IID IID_IUriObj = {0x4b364760,0x9f51,0x11df,{0x98,0x1c,0x08,0x00,0x
 typedef struct {
     IUri                IUri_iface;
     IUriBuilderFactory  IUriBuilderFactory_iface;
+    IPersistStream      IPersistStream_iface;
 
     LONG ref;
 
@@ -4213,8 +4214,11 @@ static HRESULT WINAPI Uri_QueryInterface(IUri *iface, REFIID riid, void **ppv)
         TRACE("(%p)->(IID_IUri %p)\n", This, ppv);
         *ppv = &This->IUri_iface;
     }else if(IsEqualGUID(&IID_IUriBuilderFactory, riid)) {
-        TRACE("(%p)->(IID_IUriBuilderFactory %p)\n", This, riid);
+        TRACE("(%p)->(IID_IUriBuilderFactory %p)\n", This, ppv);
         *ppv = &This->IUriBuilderFactory_iface;
+    }else if(IsEqualGUID(&IID_IPersistStream, riid)) {
+        TRACE("(%p)->(IID_IPersistStream %p)\n", This, ppv);
+        *ppv = &This->IPersistStream_iface;
     }else if(IsEqualGUID(&IID_IUriObj, riid)) {
         TRACE("(%p)->(IID_IUriObj %p)\n", This, ppv);
         *ppv = This;
@@ -5095,11 +5099,81 @@ static const IUriBuilderFactoryVtbl UriBuilderFactoryVtbl = {
     UriBuilderFactory_CreateInitializedIUriBuilder
 };
 
+static inline Uri* impl_from_IPersistStream(IPersistStream *iface)
+{
+    return CONTAINING_RECORD(iface, Uri, IPersistStream_iface);
+}
+
+static HRESULT WINAPI PersistStream_QueryInterface(IPersistStream *iface, REFIID riid, void **ppvObject)
+{
+    Uri *This = impl_from_IPersistStream(iface);
+    return IUri_QueryInterface(&This->IUri_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI PersistStream_AddRef(IPersistStream *iface)
+{
+    Uri *This = impl_from_IPersistStream(iface);
+    return IUri_AddRef(&This->IUri_iface);
+}
+
+static ULONG WINAPI PersistStream_Release(IPersistStream *iface)
+{
+    Uri *This = impl_from_IPersistStream(iface);
+    return IUri_Release(&This->IUri_iface);
+}
+
+static HRESULT WINAPI PersistStream_GetClassID(IPersistStream *iface, CLSID *pClassID)
+{
+    Uri *This = impl_from_IPersistStream(iface);
+    FIXME("(%p)->(%p)\n", This, pClassID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStream_IsDirty(IPersistStream *iface)
+{
+    Uri *This = impl_from_IPersistStream(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream *pStm)
+{
+    Uri *This = impl_from_IPersistStream(iface);
+    FIXME("(%p)->(%p)\n", This, pStm);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStream_Save(IPersistStream *iface, IStream *pStm, BOOL fClearDirty)
+{
+    Uri *This = impl_from_IPersistStream(iface);
+    FIXME("(%p)->(%p %x)\n", This, pStm, fClearDirty);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStream_GetSizeMax(IPersistStream *iface, ULARGE_INTEGER *pcbSize)
+{
+    Uri *This = impl_from_IPersistStream(iface);
+    FIXME("(%p)->(%p)\n", This, pcbSize);
+    return E_NOTIMPL;
+}
+
+static const IPersistStreamVtbl PersistStreamVtbl = {
+    PersistStream_QueryInterface,
+    PersistStream_AddRef,
+    PersistStream_Release,
+    PersistStream_GetClassID,
+    PersistStream_IsDirty,
+    PersistStream_Load,
+    PersistStream_Save,
+    PersistStream_GetSizeMax
+};
+
 static Uri* create_uri_obj(void) {
     Uri *ret = heap_alloc_zero(sizeof(Uri));
     if(ret) {
         ret->IUri_iface.lpVtbl = &UriVtbl;
         ret->IUriBuilderFactory_iface.lpVtbl = &UriBuilderFactoryVtbl;
+        ret->IPersistStream_iface.lpVtbl = &PersistStreamVtbl;
         ret->ref = 1;
     }
 
