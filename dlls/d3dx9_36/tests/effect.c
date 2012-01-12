@@ -789,6 +789,48 @@ struct test_effect_parameter_value_result test_effect_parameter_value_result_obj
     {"p_2",   {"p_2",   NULL, D3DXPC_OBJECT, D3DXPT_PIXELSHADER,  0, 0, 2, 0, 0, 0, 2 * sizeof(LPDIRECT3DPIXELSHADER9)},  0},
 };
 
+/*
+ * fxc.exe /Tfx_2_0
+ */
+#if 0
+float3 f3 = {-3.1, 153.2, 283.3};
+float3 f3min = {-31.1, -31.2, -31.3};
+float3 f3max = {320.1, 320.2, 320.3};
+float4 f4 = {-4.1, 154.2, 284.3, 34.4};
+float4 f4min = {-41.1, -41.2, -41.3, -41.4};
+float4 f4max = {420.1, 42.20, 420.3, 420.4};
+technique t { pass p { } }
+#endif
+static const DWORD test_effect_parameter_value_blob_special[] =
+{
+0xfeff0901, 0x00000150, 0x00000000, 0x00000003, 0x00000001, 0x0000002c, 0x00000000, 0x00000000,
+0x00000003, 0x00000001, 0xc0466666, 0x43193333, 0x438da666, 0x00000003, 0x00003366, 0x00000003,
+0x00000001, 0x0000005c, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0xc1f8cccd, 0xc1f9999a,
+0xc1fa6666, 0x00000006, 0x696d3366, 0x0000006e, 0x00000003, 0x00000001, 0x00000090, 0x00000000,
+0x00000000, 0x00000003, 0x00000001, 0x43a00ccd, 0x43a0199a, 0x43a02666, 0x00000006, 0x616d3366,
+0x00000078, 0x00000003, 0x00000001, 0x000000c8, 0x00000000, 0x00000000, 0x00000004, 0x00000001,
+0xc0833333, 0x431a3333, 0x438e2666, 0x4209999a, 0x00000003, 0x00003466, 0x00000003, 0x00000001,
+0x000000fc, 0x00000000, 0x00000000, 0x00000004, 0x00000001, 0xc2246666, 0xc224cccd, 0xc2253333,
+0xc225999a, 0x00000006, 0x696d3466, 0x0000006e, 0x00000003, 0x00000001, 0x00000134, 0x00000000,
+0x00000000, 0x00000004, 0x00000001, 0x43d20ccd, 0x4228cccd, 0x43d22666, 0x43d23333, 0x00000006,
+0x616d3466, 0x00000078, 0x00000002, 0x00000070, 0x00000002, 0x00000074, 0x00000006, 0x00000001,
+0x00000001, 0x00000001, 0x00000004, 0x00000020, 0x00000000, 0x00000000, 0x00000034, 0x00000050,
+0x00000000, 0x00000000, 0x00000068, 0x00000084, 0x00000000, 0x00000000, 0x0000009c, 0x000000b8,
+0x00000000, 0x00000000, 0x000000d0, 0x000000ec, 0x00000000, 0x00000000, 0x00000108, 0x00000124,
+0x00000000, 0x00000000, 0x00000148, 0x00000000, 0x00000001, 0x00000140, 0x00000000, 0x00000000,
+0x00000000, 0x00000000,
+};
+
+struct test_effect_parameter_value_result test_effect_parameter_value_result_special[] =
+{
+    {"f3",    {"f3",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12},  10},
+    {"f3min", {"f3min", NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12},  22},
+    {"f3max", {"f3max", NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12},  35},
+    {"f4",    {"f4",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16},  48},
+    {"f4min", {"f4min", NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16},  61},
+    {"f4max", {"f4max", NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16},  75},
+};
+
 #define ADD_PARAMETER_VALUE(x) {\
     test_effect_parameter_value_blob_ ## x,\
     sizeof(test_effect_parameter_value_blob_ ## x),\
@@ -808,6 +850,7 @@ test_effect_parameter_value_data[] =
     ADD_PARAMETER_VALUE(float),
     ADD_PARAMETER_VALUE(int),
     ADD_PARAMETER_VALUE(object),
+    ADD_PARAMETER_VALUE(special),
 };
 
 #undef ADD_PARAMETER_VALUE
