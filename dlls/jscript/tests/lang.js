@@ -842,34 +842,37 @@ ok(!("nonexistent" in obj1), "nonexistent added to obj1 by for..in loop");
 
 var i, j;
 
-tmp = "";
-i = 0;
-while(true) {
-    tmp += "1";
-    for(i = 1; i < 3; i++) {
-        switch(i) {
-        case 1:
-            tmp += "2";
-            continue;
-        case 2:
-            tmp += "3";
-            try {
-                throw null;
-            }finally {
-                tmp += "4";
-                break;
+/* Previous versions have broken finally block implementation */
+if(ScriptEngineMinorVersion() >= 8) {
+    tmp = "";
+    i = 0;
+    while(true) {
+        tmp += "1";
+        for(i = 1; i < 3; i++) {
+            switch(i) {
+            case 1:
+                tmp += "2";
+                continue;
+            case 2:
+                tmp += "3";
+                try {
+                    throw null;
+                }finally {
+                    tmp += "4";
+                    break;
+                }
+            default:
+                ok(false, "unexpected state");
             }
-        default:
-            ok(false, "unexpected state");
+            tmp += "5";
         }
-        tmp += "5";
+        with({prop: "6"}) {
+            tmp += prop;
+            break;
+        }
     }
-    with({prop: "6"}) {
-        tmp += prop;
-        break;
-    }
+    ok(tmp === "123456", "tmp = " + tmp);
 }
-ok(tmp === "123456", "tmp = " + tmp);
 
 tmp = "";
 i = 0;
