@@ -240,9 +240,9 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateDevice(IDirect3DRM* iface, DWORD wid
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
 
-    FIXME("(%p/%p)->(%d,%d,%p): stub\n", iface, This, width, height, ppDevice);
+    FIXME("(%p/%p)->(%u,%u,%p): partial stub\n", iface, This, width, height, ppDevice);
 
-    return E_NOTIMPL;
+    return Direct3DRMDevice_create((IUnknown**)ppDevice);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateDeviceFromSurface(IDirect3DRM* iface, LPGUID pGUID, LPDIRECTDRAW pDD, LPDIRECTDRAWSURFACE pDDSBack, LPDIRECT3DRMDEVICE * ppDevice)
@@ -616,9 +616,9 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateDevice(IDirect3DRM2* iface, DWORD w
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
 
-    FIXME("(%p/%p)->(%d,%d,%p): stub\n", iface, This, width, height, ppDevice);
+    FIXME("(%p/%p)->(%u,%u,%p): partial stub\n", iface, This, width, height, ppDevice);
 
-    return E_NOTIMPL;
+    return Direct3DRMDevice_create((IUnknown**)ppDevice);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromSurface(IDirect3DRM2* iface, LPGUID pGUID,
