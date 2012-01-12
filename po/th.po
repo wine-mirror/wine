@@ -574,10 +574,14 @@ msgid "&Hue:"
 msgstr "&H:"
 
 #: comdlg32.rc:290
+#, fuzzy
+msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&S:"
 
 #: comdlg32.rc:292
+#, fuzzy
+msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&L:"
 

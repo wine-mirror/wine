@@ -587,10 +587,14 @@ msgid "&Hue:"
 msgstr "&Нијанса:"
 
 #: comdlg32.rc:290
+#, fuzzy
+msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Засићење:"
 
 #: comdlg32.rc:292
+#, fuzzy
+msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Осветљење:"
 

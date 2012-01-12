@@ -591,10 +591,12 @@ msgid "&Hue:"
 msgstr ""
 
 #: comdlg32.rc:290
+msgctxt "Saturation"
 msgid "&Sat:"
 msgstr ""
 
 #: comdlg32.rc:292
+msgctxt "Luminance"
 msgid "&Lum:"
 msgstr ""
 

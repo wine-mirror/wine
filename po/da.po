@@ -590,10 +590,14 @@ msgid "&Hue:"
 msgstr "&Intensitet:"
 
 #: comdlg32.rc:290
+#, fuzzy
+msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Farvemætning:"
 
 #: comdlg32.rc:292
+#, fuzzy
+msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Lysstyrke:"
 

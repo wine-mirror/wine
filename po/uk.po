@@ -582,10 +582,14 @@ msgid "&Hue:"
 msgstr "Від&тінок:"
 
 #: comdlg32.rc:290
+#, fuzzy
+msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Контраст:"
 
 #: comdlg32.rc:292
+#, fuzzy
+msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Яскравість:"
 

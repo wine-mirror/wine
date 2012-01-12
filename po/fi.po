@@ -602,10 +602,14 @@ msgid "&Hue:"
 msgstr "&Sävy:"
 
 #: comdlg32.rc:290
+#, fuzzy
+msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Kyll:"
 
 #: comdlg32.rc:292
+#, fuzzy
+msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "K&irkk:"
 

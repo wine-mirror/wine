@@ -577,10 +577,14 @@ msgid "&Hue:"
 msgstr "色调(&E)："
 
 #: comdlg32.rc:290
+#, fuzzy
+msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "饱和度(&S)："
 
 #: comdlg32.rc:292
+#, fuzzy
+msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "亮度(&L)："
 

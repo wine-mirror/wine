@@ -586,10 +586,14 @@ msgid "&Hue:"
 msgstr "Ti&nt:"
 
 #: comdlg32.rc:290
+#, fuzzy
+msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Intensiteit:"
 
 #: comdlg32.rc:292
+#, fuzzy
+msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Helderheid:"
 
