@@ -108,7 +108,7 @@ static const CHAR test_valA[] = "testVal";
 static BOOL strict_dispid_check;
 static const char *test_name = "(null)";
 static IDispatch *script_disp;
-static int invoke_version = 2;
+static int invoke_version;
 static IActiveScriptError *script_error;
 
 /* Returns true if the user interface is in English. Note that this does not
@@ -1680,6 +1680,7 @@ START_TEST(run)
     if(!check_jscript()) {
         win_skip("Broken engine, probably too old\n");
     }else if(argc > 2) {
+        invoke_version = 2;
         run_from_file(argv[2]);
     }else {
         trace("invoke version 0\n");
