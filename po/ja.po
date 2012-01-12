@@ -10906,7 +10906,7 @@ msgstr "グループ `%s' を削除しますか?"
 msgid "Delete program `%s'?"
 msgstr "プログラム `%s' を削除しますか?"
 
-#: progman.rc:67 winhlp32.rc:82
+#: progman.rc:67
 msgid "Not implemented"
 msgstr "未実装"
 
@@ -13396,7 +13396,7 @@ msgstr "unixfs"
 msgid "Shell"
 msgstr "シェル"
 
-#: winefile.rc:105
+#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
 msgstr "未実装"
 
@@ -13590,10 +13590,6 @@ msgstr "索引"
 #: winhlp32.rc:105
 msgid "Search"
 msgstr "検索"
-
-#: winhlp32.rc:107
-msgid "Not implemented yet"
-msgstr "未実装"
 
 #: winhlp32.rc:78
 msgid "Wine Help"

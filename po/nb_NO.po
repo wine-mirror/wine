@@ -11198,7 +11198,7 @@ msgstr "Slette gruppen '%s'?"
 msgid "Delete program `%s'?"
 msgstr "Slette programmet '%s'?"
 
-#: progman.rc:67 winhlp32.rc:82
+#: progman.rc:67
 msgid "Not implemented"
 msgstr "Ikke implementert"
 
@@ -13749,7 +13749,7 @@ msgstr "Unix-filsystem"
 msgid "Shell"
 msgstr "Skall"
 
-#: winefile.rc:105
+#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
 msgstr "Ikke implementert ennå"
 
@@ -13954,10 +13954,6 @@ msgstr "Innhold"
 #: winhlp32.rc:105
 msgid "Search"
 msgstr "Søk"
-
-#: winhlp32.rc:107
-msgid "Not implemented yet"
-msgstr "Ikke laget ennå"
 
 #: winhlp32.rc:78
 msgid "Wine Help"

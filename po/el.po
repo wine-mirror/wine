@@ -10550,7 +10550,7 @@ msgstr ""
 msgid "Delete program `%s'?"
 msgstr ""
 
-#: progman.rc:67 winhlp32.rc:82
+#: progman.rc:67
 msgid "Not implemented"
 msgstr ""
 
@@ -12951,7 +12951,7 @@ msgstr ""
 msgid "Shell"
 msgstr ""
 
-#: winefile.rc:105
+#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
 msgstr ""
 
@@ -13146,11 +13146,6 @@ msgstr ""
 #, fuzzy
 msgid "Search"
 msgstr "&Αναζήτηση"
-
-#: winhlp32.rc:107
-#, fuzzy
-msgid "Not implemented yet"
-msgstr "Το αρχείο δε βρέθηκε"
 
 #: winhlp32.rc:78
 msgid "Wine Help"

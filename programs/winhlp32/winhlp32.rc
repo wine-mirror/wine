@@ -79,7 +79,7 @@ STID_WINE_HELP, 	"Wine Help"
 STID_WHERROR, 		"ERROR"
 STID_WARNING,  		"WARNING"
 STID_INFO,  		"Information"
-STID_NOT_IMPLEMENTED, 	"Not implemented"
+STID_NOT_IMPLEMENTED, 	"Not yet implemented"
 STID_HLPFILE_ERROR_s, 	"Error while reading the help file `%s'"
 STID_INDEX, 		"&Index"
 STID_CONTENTS,		"Summary"
@@ -104,7 +104,7 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "MS Shell Dlg"
 CAPTION "Search"
 {
-    LTEXT  "Not implemented yet", -1, 10, 10, 180, 150
+    LTEXT  "Not yet implemented", -1, 10, 10, 180, 150
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL

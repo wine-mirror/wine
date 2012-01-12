@@ -10931,7 +10931,7 @@ msgstr "Ta bort gruppen '%s'?"
 msgid "Delete program `%s'?"
 msgstr "Ta bort programmet '%s'?"
 
-#: progman.rc:67 winhlp32.rc:82
+#: progman.rc:67
 msgid "Not implemented"
 msgstr "Ej implementerat"
 
@@ -13461,7 +13461,7 @@ msgstr "unixfs"
 msgid "Shell"
 msgstr "Skal"
 
-#: winefile.rc:105
+#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
 msgstr "Inte implementerat ännu"
 
@@ -13658,10 +13658,6 @@ msgstr "Index"
 #: winhlp32.rc:105
 msgid "Search"
 msgstr "Sök"
-
-#: winhlp32.rc:107
-msgid "Not implemented yet"
-msgstr "Inte implementerat ännu"
 
 #: winhlp32.rc:78
 msgid "Wine Help"

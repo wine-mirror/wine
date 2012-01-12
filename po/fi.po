@@ -10862,7 +10862,7 @@ msgstr ""
 msgid "Delete program `%s'?"
 msgstr ""
 
-#: progman.rc:67 winhlp32.rc:82
+#: progman.rc:67
 msgid "Not implemented"
 msgstr "Ei käytettävissä"
 
@@ -13360,7 +13360,7 @@ msgstr ""
 msgid "Shell"
 msgstr ""
 
-#: winefile.rc:105
+#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
 #, fuzzy
 msgid "Not yet implemented"
 msgstr "Ei käytettävissä"
@@ -13566,11 +13566,6 @@ msgstr "&Sisällys"
 #, fuzzy
 msgid "Search"
 msgstr "&Etsi"
-
-#: winhlp32.rc:107
-#, fuzzy
-msgid "Not implemented yet"
-msgstr "Ei käytettävissä"
 
 #: winhlp32.rc:78
 msgid "Wine Help"

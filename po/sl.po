@@ -11009,7 +11009,7 @@ msgstr "Ali ste prepričani, da želite izbrisati skupino `%s' ?"
 msgid "Delete program `%s'?"
 msgstr "Ali ste prepričani, da želite izbrisati program `%s'?"
 
-#: progman.rc:67 winhlp32.rc:82
+#: progman.rc:67
 msgid "Not implemented"
 msgstr "Ni podprto"
 
@@ -13555,7 +13555,7 @@ msgstr "unixfs"
 msgid "Shell"
 msgstr "Lupina"
 
-#: winefile.rc:105
+#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
 msgstr "Ni še podprto"
 
@@ -13755,10 +13755,6 @@ msgstr "Indeks"
 #: winhlp32.rc:105
 msgid "Search"
 msgstr "Iskanje"
-
-#: winhlp32.rc:107
-msgid "Not implemented yet"
-msgstr "Ni (še) na voljo"
 
 #: winhlp32.rc:78
 msgid "Wine Help"

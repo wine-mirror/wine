@@ -10980,7 +10980,7 @@ msgstr "Eliminare il gruppo `%s' ?"
 msgid "Delete program `%s'?"
 msgstr "Eliminare `%s' ?"
 
-#: progman.rc:67 winhlp32.rc:82
+#: progman.rc:67
 msgid "Not implemented"
 msgstr "Non implementato"
 
@@ -13487,7 +13487,7 @@ msgstr "unix fs"
 msgid "Shell"
 msgstr "Terminale"
 
-#: winefile.rc:105
+#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
 msgstr "Non ancora implementato"
 
@@ -13681,10 +13681,6 @@ msgstr "Indice"
 #: winhlp32.rc:105
 msgid "Search"
 msgstr "Cerca"
-
-#: winhlp32.rc:107
-msgid "Not implemented yet"
-msgstr "Non implementato."
 
 #: winhlp32.rc:78
 msgid "Wine Help"

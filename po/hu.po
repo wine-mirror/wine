@@ -11083,7 +11083,7 @@ msgstr "Biztosan törölni kívánja a következő csoportot: `%s'?"
 msgid "Delete program `%s'?"
 msgstr "Biztosan törölni kívánja a következő elemet: `%s'?"
 
-#: progman.rc:67 winhlp32.rc:82
+#: progman.rc:67
 msgid "Not implemented"
 msgstr "Nincs implementálva"
 
@@ -13591,7 +13591,7 @@ msgstr ""
 msgid "Shell"
 msgstr ""
 
-#: winefile.rc:105
+#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
 #, fuzzy
 msgid "Not yet implemented"
 msgstr "Nincs implementálva"
@@ -13802,11 +13802,6 @@ msgstr "&Tartalom"
 #, fuzzy
 msgid "Search"
 msgstr "&Keresés"
-
-#: winhlp32.rc:107
-#, fuzzy
-msgid "Not implemented yet"
-msgstr "Nincs implementálva"
 
 #: winhlp32.rc:78
 msgid "Wine Help"

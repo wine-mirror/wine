@@ -11234,7 +11234,7 @@ msgstr "'%s' grubu silinsin mi?"
 msgid "Delete program `%s'?"
 msgstr "'%s' programı silinsin mi?"
 
-#: progman.rc:67 winhlp32.rc:82
+#: progman.rc:67
 #, fuzzy
 msgid "Not implemented"
 msgstr ""
@@ -13733,7 +13733,7 @@ msgstr "unixfs"
 msgid "Shell"
 msgstr "Kabuk"
 
-#: winefile.rc:105
+#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
 msgstr "Henüz tamamlanmadı"
 
@@ -13945,15 +13945,6 @@ msgstr ""
 "&Ara\n"
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
 "&Bul"
-
-#: winhlp32.rc:107
-#, fuzzy
-msgid "Not implemented yet"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Henüz Tanımlanmadı\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Henüz tamamlanmadı"
 
 #: winhlp32.rc:78
 msgid "Wine Help"

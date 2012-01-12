@@ -11511,7 +11511,7 @@ msgstr "Se șterge grupul „%s” ?"
 msgid "Delete program `%s'?"
 msgstr "Se șterge programul „%s” ?"
 
-#: progman.rc:67 winhlp32.rc:82
+#: progman.rc:67
 msgid "Not implemented"
 msgstr "Neimplementat"
 
@@ -14071,7 +14071,7 @@ msgstr "director unix"
 msgid "Shell"
 msgstr "Shell"
 
-#: winefile.rc:105
+#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
 msgstr "Neimplementat încă"
 
@@ -14276,10 +14276,6 @@ msgstr "Index"
 #: winhlp32.rc:105
 msgid "Search"
 msgstr "Căutare"
-
-#: winhlp32.rc:107
-msgid "Not implemented yet"
-msgstr "Încă neimplementată"
 
 #: winhlp32.rc:78
 msgid "Wine Help"

@@ -10694,7 +10694,7 @@ msgstr ""
 msgid "Delete program `%s'?"
 msgstr ""
 
-#: progman.rc:67 winhlp32.rc:82
+#: progman.rc:67
 msgid "Not implemented"
 msgstr "Not implemented"
 
@@ -13113,7 +13113,7 @@ msgstr ""
 msgid "Shell"
 msgstr ""
 
-#: winefile.rc:105
+#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
 msgstr "Not yet implemented"
 
@@ -13307,10 +13307,6 @@ msgstr "Index"
 #: winhlp32.rc:105
 msgid "Search"
 msgstr "Search"
-
-#: winhlp32.rc:107
-msgid "Not implemented yet"
-msgstr "Not implemented yet"
 
 #: winhlp32.rc:78
 msgid "Wine Help"

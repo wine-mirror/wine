@@ -10840,7 +10840,7 @@ msgstr "是否删除程序组 `%s' ？"
 msgid "Delete program `%s'?"
 msgstr "是否删除程序组 `%s' ?"
 
-#: progman.rc:67 winhlp32.rc:82
+#: progman.rc:67
 #, fuzzy
 msgid "Not implemented"
 msgstr ""
@@ -13323,7 +13323,7 @@ msgstr ""
 msgid "Shell"
 msgstr ""
 
-#: winefile.rc:105
+#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
 #, fuzzy
 msgid "Not yet implemented"
 msgstr ""
@@ -13530,10 +13530,6 @@ msgstr "索引"
 #: winhlp32.rc:105
 msgid "Search"
 msgstr "搜索"
-
-#: winhlp32.rc:107
-msgid "Not implemented yet"
-msgstr "尚未实现"
 
 #: winhlp32.rc:78
 msgid "Wine Help"
