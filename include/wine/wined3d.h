@@ -648,16 +648,15 @@ enum wined3d_basis_type
     WINED3D_BASIS_INTERPOLATE               = 2,
 };
 
-typedef enum _WINED3DCUBEMAP_FACES
+enum wined3d_cubemap_face
 {
-    WINED3DCUBEMAP_FACE_POSITIVE_X          = 0,
-    WINED3DCUBEMAP_FACE_NEGATIVE_X          = 1,
-    WINED3DCUBEMAP_FACE_POSITIVE_Y          = 2,
-    WINED3DCUBEMAP_FACE_NEGATIVE_Y          = 3,
-    WINED3DCUBEMAP_FACE_POSITIVE_Z          = 4,
-    WINED3DCUBEMAP_FACE_NEGATIVE_Z          = 5,
-    WINED3DCUBEMAP_FACE_FORCE_DWORD         = 0xffffffff
-} WINED3DCUBEMAP_FACES;
+    WINED3D_CUBEMAP_FACE_POSITIVE_X         = 0,
+    WINED3D_CUBEMAP_FACE_NEGATIVE_X         = 1,
+    WINED3D_CUBEMAP_FACE_POSITIVE_Y         = 2,
+    WINED3D_CUBEMAP_FACE_NEGATIVE_Y         = 3,
+    WINED3D_CUBEMAP_FACE_POSITIVE_Z         = 4,
+    WINED3D_CUBEMAP_FACE_NEGATIVE_Z         = 5,
+};
 
 typedef enum _WINED3DTEXTUREFILTERTYPE
 {
@@ -1986,7 +1985,7 @@ struct wined3d_device_parent_ops
     void (__cdecl *mode_changed)(struct wined3d_device_parent *device_parent);
     HRESULT (__cdecl *create_surface)(struct wined3d_device_parent *device_parent, void *container_parent,
             UINT width, UINT height, enum wined3d_format_id format_id, DWORD usage, WINED3DPOOL pool,
-            UINT level, WINED3DCUBEMAP_FACES face, struct wined3d_surface **surface);
+            UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface);
     HRESULT (__cdecl *create_rendertarget)(struct wined3d_device_parent *device_parent, void *container_parent,
             UINT width, UINT height, enum wined3d_format_id format_id, enum wined3d_multisample_type multisample_type,
             DWORD multisample_quality, BOOL lockable, struct wined3d_surface **surface);

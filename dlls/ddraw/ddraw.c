@@ -5333,7 +5333,7 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 
 static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
-        WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, struct wined3d_surface **surface)
+        WINED3DPOOL pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
 {
     struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
     IDirectDrawSurfaceImpl *surf = NULL;
@@ -5345,31 +5345,32 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
             device_parent, container_parent, width, height, format, usage, pool, level, face, surface);
 
     searchcaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
-    switch(face)
+    switch (face)
     {
-        case WINED3DCUBEMAP_FACE_POSITIVE_X:
+        case WINED3D_CUBEMAP_FACE_POSITIVE_X:
             TRACE("Asked for positive x\n");
             if (searchcaps.dwCaps2 & DDSCAPS2_CUBEMAP)
             {
                 searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
             }
             surf = ddraw->tex_root; break;
-        case WINED3DCUBEMAP_FACE_NEGATIVE_X:
+        case WINED3D_CUBEMAP_FACE_NEGATIVE_X:
             TRACE("Asked for negative x\n");
             searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX; break;
-        case WINED3DCUBEMAP_FACE_POSITIVE_Y:
+        case WINED3D_CUBEMAP_FACE_POSITIVE_Y:
             TRACE("Asked for positive y\n");
             searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEY; break;
-        case WINED3DCUBEMAP_FACE_NEGATIVE_Y:
+        case WINED3D_CUBEMAP_FACE_NEGATIVE_Y:
             TRACE("Asked for negative y\n");
             searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEY; break;
-        case WINED3DCUBEMAP_FACE_POSITIVE_Z:
+        case WINED3D_CUBEMAP_FACE_POSITIVE_Z:
             TRACE("Asked for positive z\n");
             searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEZ; break;
-        case WINED3DCUBEMAP_FACE_NEGATIVE_Z:
+        case WINED3D_CUBEMAP_FACE_NEGATIVE_Z:
             TRACE("Asked for negative z\n");
             searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEZ; break;
-        default: {ERR("Unexpected cube face\n");} /* Stupid compiler */
+        default:
+            ERR("Unexpected cube face.\n");
     }
 
     if (!surf)
