@@ -1159,7 +1159,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_QueryInterface(IDirect3DRMMesh
                                                                  REFIID riid, void** ppvObject)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
-    return IDirect3DRMMeshBuilder_QueryInterface(&This->IDirect3DRMMeshBuilder3_iface, riid, ppvObject);
+    return IDirect3DRMMeshBuilder2_QueryInterface(&This->IDirect3DRMMeshBuilder2_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI IDirect3DRMMeshBuilder3Impl_AddRef(IDirect3DRMMeshBuilder3* iface)
