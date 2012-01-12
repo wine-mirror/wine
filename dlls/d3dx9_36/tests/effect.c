@@ -1570,6 +1570,38 @@ static void test_effect_parameter_value_GetTestGroup(const struct test_effect_pa
     test_effect_parameter_value_GetMatrixTransposeArray(res, effect, res_value, parameter, i);
 }
 
+static void test_effect_parameter_value_ResetValue(const struct test_effect_parameter_value_result *res,
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+{
+    const D3DXPARAMETER_DESC *res_desc = &res->desc;
+    LPCSTR res_full_name = res->full_name;
+    HRESULT hr;
+
+    if (res_desc->Class == D3DXPC_SCALAR
+            || res_desc->Class == D3DXPC_VECTOR
+            || res_desc->Class == D3DXPC_MATRIX_ROWS)
+    {
+        hr = effect->lpVtbl->SetValue(effect, parameter, res_value, res_desc->Bytes);
+        ok(hr == D3D_OK, "%u - %s: SetValue failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+    }
+    else
+    {
+        /* nothing to do */
+        switch (res_desc->Type)
+        {
+            case D3DXPT_PIXELSHADER:
+            case D3DXPT_VERTEXSHADER:
+            case D3DXPT_TEXTURE2D:
+            case D3DXPT_STRING:
+                break;
+
+            default:
+                ok(0, "Type is %u, this should not happen!\n", res_desc->Type);
+                break;
+        }
+    }
+}
+
 static void test_effect_parameter_value(IDirect3DDevice9 *device)
 {
     UINT i;
@@ -1642,6 +1674,8 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     "%u - %s: Warning: Array size to small\n", i, res_full_name);
 
             test_effect_parameter_value_GetTestGroup(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_value_GetTestGroup(&res[k], effect, &blob[res_value_offset], parameter, i);
 
             /* SetBool */
             bvalue = 1;
@@ -1658,6 +1692,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
+            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
         }
 
         count = effect->lpVtbl->Release(effect);
