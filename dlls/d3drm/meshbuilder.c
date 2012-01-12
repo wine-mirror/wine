@@ -772,15 +772,10 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetTextureCoordinates(IDirect3
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    FIXME("(%p)->(%d,%p,%p): stub\n", This, index, u, v);
+    TRACE("(%p)->(%d,%p,%p)\n", This, index, u, v);
 
-    if (index >= This->nb_coords2d)
-        return D3DRMERR_NOTFOUND;
-
-    *u = This->pCoords2d[index].u;
-    *v = This->pCoords2d[index].v;
-
-    return D3DRM_OK;
+    return IDirect3DRMMeshBuilder2_GetTextureCoordinates(&This->IDirect3DRMMeshBuilder3_iface,
+                                                         index, u, v);
 }
 
 static int WINAPI IDirect3DRMMeshBuilder2Impl_AddVertex(IDirect3DRMMeshBuilder2* iface,
@@ -1579,9 +1574,15 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetTextureCoordinates(IDirect3
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    FIXME("(%p)->(%d,%p,%p): stub\n", This, index, u, v);
+    TRACE("(%p)->(%d,%p,%p)\n", This, index, u, v);
 
-    return E_NOTIMPL;
+    if (index >= This->nb_coords2d)
+        return D3DRMERR_NOTFOUND;
+
+    *u = This->pCoords2d[index].u;
+    *v = This->pCoords2d[index].v;
+
+    return D3DRM_OK;
 }
 
 
