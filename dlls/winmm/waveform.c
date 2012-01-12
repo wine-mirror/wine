@@ -920,7 +920,7 @@ static MMRESULT WINMM_MapDevice(WINMM_OpenInfo *info, BOOL is_out)
 static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
         WINMM_OpenInfo *info)
 {
-    WAVEFORMATEX *closer_fmt = NULL, fmt, *passed_fmt;
+    WAVEFORMATEX fmt, *passed_fmt;
     LRESULT ret = MMSYSERR_NOMEM;
     HRESULT hr;
 
@@ -967,21 +967,14 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
     }else
         passed_fmt = info->format;
 
-    hr = IAudioClient_IsFormatSupported(device->client,
-            AUDCLNT_SHAREMODE_SHARED, passed_fmt, &closer_fmt);
-    if(closer_fmt)
-        CoTaskMemFree(closer_fmt);
-    if(FAILED(hr) && hr != AUDCLNT_E_UNSUPPORTED_FORMAT){
-        WARN("IsFormatSupported failed: %08x\n", hr);
-        ret = hr2mmr(hr);
-        goto error;
-    }
-    if(hr == S_FALSE || hr == AUDCLNT_E_UNSUPPORTED_FORMAT){
-        ret = WAVERR_BADFORMAT;
-        goto error;
-    }
     if(info->flags & WAVE_FORMAT_QUERY){
-        ret = MMSYSERR_NOERROR;
+        WAVEFORMATEX *closer_fmt = NULL;
+
+        hr = IAudioClient_IsFormatSupported(device->client,
+                AUDCLNT_SHAREMODE_SHARED, passed_fmt, &closer_fmt);
+        if(closer_fmt)
+            CoTaskMemFree(closer_fmt);
+        ret = hr == S_FALSE ? WAVERR_BADFORMAT : hr2mmr(hr);
         goto error;
     }
 
@@ -990,7 +983,8 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
             AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
             10 * 100000, 50000, passed_fmt, &device->parent->session);
     if(FAILED(hr)){
-        WARN("Initialize failed: %08x\n", hr);
+        if(hr != AUDCLNT_E_UNSUPPORTED_FORMAT)
+            WARN("Initialize failed: %08x\n", hr);
         ret = hr2mmr(hr);
         goto error;
     }
