@@ -1845,14 +1845,20 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetVertices(IDirect3DRMMeshBui
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetVertices(IDirect3DRMMeshBuilder3* iface,
-                                                              DWORD IndexFirst, LPDWORD count,
-                                                              LPD3DVECTOR vector)
+                                                              DWORD IndexFirst, LPDWORD vcount,
+                                                              LPD3DVECTOR vertices)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
+    DWORD count = This->nb_vertices - IndexFirst;
 
-    FIXME("(%p)->(%u,%p,%p): stub\n", This, IndexFirst, count, vector);
+    TRACE("(%p)->(%u,%p,%p)\n", This, IndexFirst, vcount, vertices);
 
-    return E_NOTIMPL;
+    if (vcount)
+        *vcount = count;
+    if (vertices && This->nb_vertices)
+        memcpy(vertices, This->pVertices + IndexFirst, count * sizeof(D3DVECTOR));
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetNormals(IDirect3DRMMeshBuilder3* iface,

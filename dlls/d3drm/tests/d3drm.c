@@ -208,8 +208,8 @@ static void test_MeshBuilder3(void)
     ok(val == 3, "Wrong number of faces %d (must be 3)\n", val);
 
     hr = IDirect3DRMMeshBuilder3_GetVertices(pMeshBuilder3, 0, &val1, NULL);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
-    todo_wine ok(val1 == 4, "Wrong number of vertices %d (must be 4)\n", val1);
+    ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
+    ok(val1 == 4, "Wrong number of vertices %d (must be 4)\n", val1);
 
     valu = 1.23f;
     valv = 3.21f;
