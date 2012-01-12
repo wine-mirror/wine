@@ -1407,11 +1407,9 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
         goto exit;
     }
 
-    if(max_channels > 2){
-        FIXME("Don't know what to do with %u channels, pretending there's "
-                "only 2 channels\n", max_channels);
+    if(max_channels > 2)
         fmt->Format.nChannels = 2;
-    }else
+    else
         fmt->Format.nChannels = max_channels;
 
     fmt->dwChannelMask = get_channel_mask(fmt->Format.nChannels);
