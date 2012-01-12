@@ -644,7 +644,7 @@ static void test_aggregation(void)
             &IID_IUnknown, (void**)&unk);
     ok(hres == CLASS_E_NOAGGREGATION || broken(E_INVALIDARG) /* win2k */,
        "CoCreateInstance failed: %08x, expected CLASS_E_NOAGGREGATION\n", hres);
-    ok(!unk, "unk = %p\n", unk);
+    ok(!unk || broken(unk != NULL), "unk = %p\n", unk);
 }
 
 static BOOL check_jscript(void)
