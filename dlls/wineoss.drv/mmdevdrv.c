@@ -1501,7 +1501,12 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
         return AUDCLNT_E_BUFFER_OPERATION_PENDING;
     }
 
-    This->written_frames = 0;
+    if(This->dataflow == eRender){
+        This->written_frames = 0;
+    }else{
+        This->written_frames += This->held_frames;
+    }
+    This->lcl_offs_frames = 0;
     This->inbuf_frames = 0;
     This->held_frames = 0;
 
