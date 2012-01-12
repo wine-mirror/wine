@@ -16,13 +16,22 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "d3drm.h"
+#define COBJMACROS
+#include <d3drm.h>
+#include <initguid.h>
 
 #include "wine/test.h"
 
 static HMODULE d3drm_handle = 0;
 
 static HRESULT (WINAPI * pDirect3DRMCreate)(LPDIRECT3DRM* ppDirect3DRM);
+
+#define CHECK_REFCOUNT(obj,rc) \
+    { \
+        int rc_new = rc; \
+        int count = get_refcount( (IUnknown *)obj ); \
+        ok(count == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, count); \
+    }
 
 #define D3DRM_GET_PROC(func) \
     p ## func = (void*)GetProcAddress(d3drm_handle, #func); \
@@ -45,6 +54,12 @@ static BOOL InitFunctionPtrs(void)
     D3DRM_GET_PROC(Direct3DRMCreate)
 
     return TRUE;
+}
+
+static int get_refcount(IUnknown *object)
+{
+    IUnknown_AddRef( object );
+    return IUnknown_Release( object );
 }
 
 static char data_bad_version[] =
@@ -236,11 +251,13 @@ static void test_Frame(void)
 
     hr = IDirect3DRM_CreateFrame(pD3DRM, NULL, &pFrameC);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
+    CHECK_REFCOUNT(pFrameC, 1);
 
     pFrameTmp = (void*)0xdeadbeef;
     hr = IDirect3DRMFrame_GetParent(pFrameC, &pFrameTmp);
     todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
     todo_wine ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
+    CHECK_REFCOUNT(pFrameC, 1);
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameC, &pArray);
@@ -264,6 +281,8 @@ static void test_Frame(void)
 
     hr = IDirect3DRMFrame_AddChild(pFrameP1, pFrameC);
     todo_wine ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
+    CHECK_REFCOUNT(pFrameP1, 1);
+    todo_wine CHECK_REFCOUNT(pFrameC, 2);
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP1, &pArray);
@@ -279,6 +298,7 @@ static void test_Frame(void)
     hr = IDirect3DRMFrame_GetParent(pFrameC, &pFrameTmp);
     todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
     todo_wine ok(pFrameTmp == pFrameP1, "pFrameTmp = %p\n", pFrameTmp);
+    todo_wine CHECK_REFCOUNT(pFrameP1, 2);
 
     /* Add child to second parent */
     hr = IDirect3DRM_CreateFrame(pD3DRM, NULL, &pFrameP2);
@@ -286,6 +306,7 @@ static void test_Frame(void)
 
     hr = IDirect3DRMFrame_AddChild(pFrameP2, pFrameC);
     todo_wine ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
+    todo_wine CHECK_REFCOUNT(pFrameC, 2);
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
@@ -311,10 +332,13 @@ static void test_Frame(void)
     hr = IDirect3DRMFrame_GetParent(pFrameC, &pFrameTmp);
     todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
     todo_wine ok(pFrameTmp == pFrameP2, "pFrameTmp = %p\n", pFrameTmp);
+    todo_wine CHECK_REFCOUNT(pFrameP2, 2);
+    todo_wine CHECK_REFCOUNT(pFrameC, 2);
 
     /* Add child again */
     hr = IDirect3DRMFrame_AddChild(pFrameP2, pFrameC);
     todo_wine ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
+    todo_wine CHECK_REFCOUNT(pFrameC, 2);
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
@@ -329,6 +353,7 @@ static void test_Frame(void)
     /* Delete child */
     hr = IDirect3DRMFrame_DeleteChild(pFrameP2, pFrameC);
     todo_wine ok(hr == D3DRM_OK, "Cannot delete child frame (hr = %x)\n", hr);
+    CHECK_REFCOUNT(pFrameC, 1);
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
