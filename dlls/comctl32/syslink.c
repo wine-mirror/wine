@@ -94,7 +94,6 @@ typedef struct
     COLORREF  TextColor;    /* Color of the text */
     COLORREF  LinkColor;    /* Color of links */
     COLORREF  VisitedColor; /* Color of visited links */
-    COLORREF  BackColor;    /* Background color, set on creation */
     WCHAR     BreakChar;    /* Break Character for the current font */
     BOOL      IgnoreReturn; /* (infoPtr->Style & LWS_IGNORERETURN) on creation */
 } SYSLINK_INFO;
@@ -819,11 +818,13 @@ static LRESULT SYSLINK_Draw (const SYSLINK_INFO *infoPtr, HDC hdc)
     HFONT hOldFont;
     COLORREF OldTextColor, OldBkColor;
     HBRUSH hBrush;
+    UINT text_flags = ETO_CLIPPED;
+    UINT mode = GetBkMode( hdc );
 
     hOldFont = SelectObject(hdc, infoPtr->Font);
     OldTextColor = SetTextColor(hdc, infoPtr->TextColor);
-    OldBkColor = SetBkColor(hdc, infoPtr->BackColor);
-    
+    OldBkColor = SetBkColor(hdc, comctl32_color.clrWindow);
+
     GetClientRect(infoPtr->Self, &rc);
     rc.right -= SL_RIGHTMARGIN + SL_LEFTMARGIN;
     rc.bottom -= SL_BOTTOMMARGIN + SL_TOPMARGIN;
@@ -832,9 +833,13 @@ static LRESULT SYSLINK_Draw (const SYSLINK_INFO *infoPtr, HDC hdc)
 
     hBrush = (HBRUSH)SendMessageW(infoPtr->Notify, WM_CTLCOLORSTATIC,
                                   (WPARAM)hdc, (LPARAM)infoPtr->Self);
-    if (!hBrush)
-        hBrush = CreateSolidBrush(infoPtr->BackColor);
-    FillRect(hdc, &rc, hBrush);
+    if (!(infoPtr->Style & LWS_TRANSPARENT))
+    {
+        FillRect(hdc, &rc, hBrush);
+        if (GetBkMode( hdc ) == OPAQUE) text_flags |= ETO_OPAQUE;
+    }
+    else SetBkMode( hdc, TRANSPARENT );
+
     DeleteObject(hBrush);
 
     for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
@@ -863,7 +868,7 @@ static LRESULT SYSLINK_Draw (const SYSLINK_INFO *infoPtr, HDC hdc)
             while(n > 0)
             {
                 tx += bl->nSkip;
-                ExtTextOutW(hdc, bl->rc.left, bl->rc.top, ETO_OPAQUE | ETO_CLIPPED, &bl->rc, tx, bl->nChars, NULL);
+                ExtTextOutW(hdc, bl->rc.left, bl->rc.top, text_flags, &bl->rc, tx, bl->nChars, NULL);
                 if((Current->Type == slLink) && (Current->u.Link.state & LIS_FOCUSED) && infoPtr->HasFocus)
                 {
                     COLORREF PrevTextColor;
@@ -881,7 +886,7 @@ static LRESULT SYSLINK_Draw (const SYSLINK_INFO *infoPtr, HDC hdc)
     SetBkColor(hdc, OldBkColor);
     SetTextColor(hdc, OldTextColor);
     SelectObject(hdc, hOldFont);
-    
+    SetBkMode(hdc, mode);
     return 0;
 }
 
@@ -1549,6 +1554,17 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         return SYSLINK_Paint (infoPtr, (HDC)wParam);
 
     case WM_ERASEBKGND:
+        if (!(infoPtr->Style & LWS_TRANSPARENT))
+        {
+            HDC hdc = (HDC)wParam;
+            HBRUSH brush = CreateSolidBrush( comctl32_color.clrWindow );
+            RECT rect;
+
+            GetClipBox( hdc, &rect );
+            FillRect( hdc, &rect, brush );
+            DeleteObject( brush );
+            return 1;
+        }
         return 0;
 
     case WM_SETCURSOR:
@@ -1731,8 +1747,6 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         infoPtr->TextColor = comctl32_color.clrWindowText;
         infoPtr->LinkColor = comctl32_color.clrHighlight;
         infoPtr->VisitedColor = comctl32_color.clrHighlight;
-        infoPtr->BackColor = infoPtr->Style & LWS_TRANSPARENT ?
-                             comctl32_color.clrWindow : comctl32_color.clrBtnFace;
         infoPtr->BreakChar = ' ';
         infoPtr->IgnoreReturn = infoPtr->Style & LWS_IGNORERETURN;
         TRACE("SysLink Ctrl creation, hwnd=%p\n", hwnd);
@@ -1750,8 +1764,6 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
 
     case WM_SYSCOLORCHANGE:
         COMCTL32_RefreshSysColors();
-        if (infoPtr->Style & LWS_TRANSPARENT)
-            infoPtr->BackColor = comctl32_color.clrWindow;
         return 0;
 
     default:
