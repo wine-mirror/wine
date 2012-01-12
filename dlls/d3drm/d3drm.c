@@ -249,27 +249,29 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateDeviceFromSurface(IDirect3DRM* iface
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
 
-    FIXME("(%p/%p)->(%s,%p,%p,%p): stub\n", iface, This, debugstr_guid(pGUID), pDD, pDDSBack, ppDevice);
+    FIXME("(%p/%p)->(%s,%p,%p,%p): partial stub\n", iface, This, debugstr_guid(pGUID), pDD,
+          pDDSBack, ppDevice);
 
-    return E_NOTIMPL;
+    return Direct3DRMDevice_create((IUnknown**)ppDevice);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateDeviceFromD3D(IDirect3DRM* iface, LPDIRECT3D pD3D, LPDIRECT3DDEVICE pD3DDev, LPDIRECT3DRMDEVICE * ppDevice)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
 
-    FIXME("(%p/%p)->(%p,%p,%p): stub\n", iface, This, pD3D, pD3DDev, ppDevice);
+    FIXME("(%p/%p)->(%p,%p,%p): partial stub\n", iface, This, pD3D, pD3DDev, ppDevice);
 
-    return E_NOTIMPL;
+    return Direct3DRMDevice_create((IUnknown**)ppDevice);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateDeviceFromClipper(IDirect3DRM* iface, LPDIRECTDRAWCLIPPER pDDClipper, LPGUID pGUID, int width, int height, LPDIRECT3DRMDEVICE * ppDevice)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
 
-    FIXME("(%p/%p)->(%p,%s,%d,%d,%p): stub\n", iface, This, pDDClipper, debugstr_guid(pGUID), width, height, ppDevice);
+    FIXME("(%p/%p)->(%p,%s,%d,%d,%p): partial stub\n", iface, This, pDDClipper,
+          debugstr_guid(pGUID), width, height, ppDevice);
 
-    return E_NOTIMPL;
+    return Direct3DRMDevice_create((IUnknown**)ppDevice);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateTextureFromSurface(IDirect3DRM* iface, LPDIRECTDRAWSURFACE pDDS, LPDIRECT3DRMTEXTURE * ppTexture)
@@ -629,9 +631,10 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromSurface(IDirect3DRM2* ifa
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
 
-    FIXME("(%p/%p)->(%s,%p,%p,%p): stub\n", iface, This, debugstr_guid(pGUID), pDD, pDDSBack, ppDevice);
+    FIXME("(%p/%p)->(%s,%p,%p,%p): partial stub\n", iface, This, debugstr_guid(pGUID),
+          pDD, pDDSBack, ppDevice);
 
-    return E_NOTIMPL;
+    return Direct3DRMDevice_create((IUnknown**)ppDevice);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromD3D(IDirect3DRM2* iface, LPDIRECT3D2 pD3D,
@@ -640,9 +643,9 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromD3D(IDirect3DRM2* iface, 
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
 
-    FIXME("(%p/%p)->(%p,%p,%p): stub\n", iface, This, pD3D, pD3DDev, ppDevice);
+    FIXME("(%p/%p)->(%p,%p,%p): partial stub\n", iface, This, pD3D, pD3DDev, ppDevice);
 
-    return E_NOTIMPL;
+    return Direct3DRMDevice_create((IUnknown**)ppDevice);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromClipper(IDirect3DRM2* iface,
@@ -652,10 +655,10 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateDeviceFromClipper(IDirect3DRM2* ifa
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
 
-    FIXME("(%p/%p)->(%p,%s,%d,%d,%p): stub\n", iface, This, pDDClipper, debugstr_guid(pGUID), width,
-                                               height, ppDevice);
+    FIXME("(%p/%p)->(%p,%s,%d,%d,%p): partial stub\n", iface, This, pDDClipper,
+          debugstr_guid(pGUID), width, height, ppDevice);
 
-    return E_NOTIMPL;
+    return Direct3DRMDevice_create((IUnknown**)ppDevice);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateTextureFromSurface(IDirect3DRM2* iface,
