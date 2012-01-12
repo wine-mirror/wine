@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSUNION
+
 #include "urlmon_main.h"
 #include "wine/debug.h"
 
@@ -5132,8 +5134,8 @@ static HRESULT WINAPI PersistStream_GetClassID(IPersistStream *iface, CLSID *pCl
 static HRESULT WINAPI PersistStream_IsDirty(IPersistStream *iface)
 {
     Uri *This = impl_from_IPersistStream(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", This);
+    return S_FALSE;
 }
 
 static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream *pStm)
@@ -5143,18 +5145,168 @@ static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream *pStm)
     return E_NOTIMPL;
 }
 
+struct persist_uri {
+    DWORD size;
+    DWORD unk1[2];
+    DWORD create_flags;
+    DWORD unk2[3];
+    DWORD fields_no;
+    BYTE data[1];
+};
+
+static inline BYTE* persist_stream_add_strprop(Uri *This, BYTE *p, DWORD type, DWORD len, WCHAR *data)
+{
+    len *= sizeof(WCHAR);
+    *(DWORD*)p = type;
+    p += sizeof(DWORD);
+    *(DWORD*)p = len+sizeof(WCHAR);
+    p += sizeof(DWORD);
+    memcpy(p, data, len);
+    p += len;
+    *(WCHAR*)p = 0;
+    return p+sizeof(WCHAR);
+}
+
 static HRESULT WINAPI PersistStream_Save(IPersistStream *iface, IStream *pStm, BOOL fClearDirty)
 {
     Uri *This = impl_from_IPersistStream(iface);
-    FIXME("(%p)->(%p %x)\n", This, pStm, fClearDirty);
-    return E_NOTIMPL;
+    ULARGE_INTEGER size;
+    struct persist_uri *data;
+    BYTE *p;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %x)\n", This, pStm, fClearDirty);
+
+    if(!pStm)
+        return E_INVALIDARG;
+
+    hres = IPersistStream_GetSizeMax(&This->IPersistStream_iface, &size);
+    if(FAILED(hres))
+        return hres;
+
+    data = heap_alloc_zero(size.u.LowPart);
+    if(!data)
+        return E_OUTOFMEMORY;
+
+    data->size = size.u.LowPart;
+    data->create_flags = This->create_flags;
+
+    data->fields_no = 1;
+    p = persist_stream_add_strprop(This, data->data, Uri_PROPERTY_RAW_URI,
+            SysStringLen(This->raw_uri), This->raw_uri);
+    if(This->scheme_type!=URL_SCHEME_HTTP && This->scheme_type!=URL_SCHEME_HTTPS
+            && This->scheme_type!=URL_SCHEME_FTP) {
+        hres = IStream_Write(pStm, data, data->size-2, NULL);
+        heap_free(data);
+        return hres;
+    }
+
+    if(This->fragment_len) {
+        data->fields_no++;
+        p = persist_stream_add_strprop(This, p, Uri_PROPERTY_FRAGMENT,
+                This->fragment_len, This->canon_uri+This->fragment_start);
+    }
+
+    if(This->host_len) {
+        data->fields_no++;
+        if(This->host_type == Uri_HOST_IPV6)
+            p = persist_stream_add_strprop(This, p, Uri_PROPERTY_HOST,
+                    This->host_len-2, This->canon_uri+This->host_start+1);
+        else
+            p = persist_stream_add_strprop(This, p, Uri_PROPERTY_HOST,
+                    This->host_len, This->canon_uri+This->host_start);
+    }
+
+    if(This->userinfo_split > -1) {
+        data->fields_no++;
+        p = persist_stream_add_strprop(This, p, Uri_PROPERTY_PASSWORD,
+                This->userinfo_len-This->userinfo_split-1,
+                This->canon_uri+This->userinfo_start+This->userinfo_split+1);
+    }
+
+    if(This->path_len) {
+        data->fields_no++;
+        p = persist_stream_add_strprop(This, p, Uri_PROPERTY_PATH,
+                This->path_len, This->canon_uri+This->path_start);
+    }
+
+    if(This->has_port) {
+        data->fields_no++;
+        *(DWORD*)p = Uri_PROPERTY_PORT;
+        p += sizeof(DWORD);
+        *(DWORD*)p = sizeof(DWORD);
+        p += sizeof(DWORD);
+        *(DWORD*)p = This->port;
+        p += sizeof(DWORD);
+    }
+
+    if(This->query_len) {
+        data->fields_no++;
+        p = persist_stream_add_strprop(This, p, Uri_PROPERTY_QUERY,
+                This->query_len, This->canon_uri+This->query_start);
+    }
+
+    if(This->scheme_len) {
+        data->fields_no++;
+        p = persist_stream_add_strprop(This, p, Uri_PROPERTY_SCHEME_NAME,
+                This->scheme_len, This->canon_uri+This->scheme_start);
+    }
+
+    if(This->userinfo_start>-1 && This->userinfo_split!=0) {
+        data->fields_no++;
+        if(This->userinfo_split > -1)
+            p = persist_stream_add_strprop(This, p, Uri_PROPERTY_USER_NAME,
+                    This->userinfo_split, This->canon_uri+This->userinfo_start);
+        else
+            p = persist_stream_add_strprop(This, p, Uri_PROPERTY_USER_NAME,
+                    This->userinfo_len, This->canon_uri+This->userinfo_start);
+    }
+
+    hres = IStream_Write(pStm, data, data->size-2, NULL);
+    heap_free(data);
+    return hres;
 }
 
 static HRESULT WINAPI PersistStream_GetSizeMax(IPersistStream *iface, ULARGE_INTEGER *pcbSize)
 {
     Uri *This = impl_from_IPersistStream(iface);
-    FIXME("(%p)->(%p)\n", This, pcbSize);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pcbSize);
+
+    if(!pcbSize)
+        return E_INVALIDARG;
+
+    pcbSize->u.LowPart = 2+(SysStringLen(This->raw_uri)+1)*sizeof(WCHAR)
+        + 2*sizeof(DWORD) + sizeof(struct persist_uri);
+    pcbSize->u.HighPart = 0;
+    if(This->scheme_type!=URL_SCHEME_HTTP && This->scheme_type!=URL_SCHEME_HTTPS
+            && This->scheme_type!=URL_SCHEME_FTP)
+        return S_OK;
+
+    if(This->fragment_len)
+        pcbSize->u.LowPart += (This->fragment_len+1)*sizeof(WCHAR) + 2*sizeof(DWORD);
+    if(This->host_len) {
+        if(This->host_type == Uri_HOST_IPV6)
+            pcbSize->u.LowPart += (This->host_len-1)*sizeof(WCHAR) + 2*sizeof(DWORD);
+        else
+            pcbSize->u.LowPart += (This->host_len+1)*sizeof(WCHAR) + 2*sizeof(DWORD);
+    }
+    if(This->userinfo_split > -1)
+        pcbSize->u.LowPart += (This->userinfo_len-This->userinfo_split)*sizeof(WCHAR) + 2*sizeof(DWORD);
+    if(This->path_len)
+        pcbSize->u.LowPart += (This->path_len+1)*sizeof(WCHAR) + 2*sizeof(DWORD);
+    if(This->has_port)
+        pcbSize->u.LowPart += 3*sizeof(DWORD);
+    if(This->query_len)
+        pcbSize->u.LowPart += (This->query_len+1)*sizeof(WCHAR) + 2*sizeof(DWORD);
+    if(This->scheme_len)
+        pcbSize->u.LowPart += (This->scheme_len+1)*sizeof(WCHAR) + 2*sizeof(DWORD);
+    if(This->userinfo_start>-1 && This->userinfo_split!=0) {
+        if(This->userinfo_split > -1)
+            pcbSize->u.LowPart += (This->userinfo_split+1)*sizeof(WCHAR) + 2*sizeof(DWORD);
+        else
+            pcbSize->u.LowPart += (This->userinfo_len+1)*sizeof(WCHAR) + 2*sizeof(DWORD);
+    }
+    return S_OK;
 }
 
 static const IPersistStreamVtbl PersistStreamVtbl = {
