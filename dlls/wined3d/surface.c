@@ -764,7 +764,8 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
             return WINED3DERR_INVALIDCALL;
     }
 
-    surface->flags |= SFLAG_INSYSMEM;
+    if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+        surface->flags |= SFLAG_LOST;
 
     return WINED3D_OK;
 }
@@ -5568,15 +5569,8 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
 {
     TRACE("surface %p, new location %#x, w %u, h %u.\n", surface, location, w, h);
 
-    if (location & ~SFLAG_LOCATIONS)
+    if (location & ~(SFLAG_LOCATIONS | SFLAG_LOST))
         FIXME("Invalid location (%#x) specified.\n", location);
-
-    if (!(surface->flags & SFLAG_ALLOCATED))
-        location &= ~SFLAG_INTEXTURE;
-    if (!(surface->rb_resolved))
-        location &= ~SFLAG_INRB_RESOLVED;
-    if (!(surface->rb_multisample))
-        location &= ~SFLAG_INRB_MULTISAMPLE;
 
     if (((surface->flags & SFLAG_INTEXTURE) && !(location & SFLAG_INTEXTURE))
             || (!(surface->flags & SFLAG_INTEXTURE) && (location & SFLAG_INTEXTURE)))
@@ -5590,7 +5584,7 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
 
     surface->ds_current_size.cx = w;
     surface->ds_current_size.cy = h;
-    surface->flags &= ~SFLAG_LOCATIONS;
+    surface->flags &= ~(SFLAG_LOCATIONS | SFLAG_LOST);
     surface->flags |= location;
 }
 
@@ -5631,13 +5625,32 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         return;
     }
 
+    if (surface->flags & SFLAG_LOST)
+    {
+        TRACE("Surface was discarded, no need copy data.\n");
+        switch (location)
+        {
+            case SFLAG_INTEXTURE:
+                surface_prepare_texture(surface, context, FALSE);
+                break;
+            case SFLAG_INRB_MULTISAMPLE:
+                surface_prepare_rb(surface, context->gl_info, TRUE);
+                break;
+            case SFLAG_INDRAWABLE:
+                /* Nothing to do */
+                break;
+            default:
+                FIXME("Unhandled location %#x", location);
+        }
+        surface->flags &= ~SFLAG_LOST;
+        surface->flags |= location;
+        surface->ds_current_size.cx = surface->resource.width;
+        surface->ds_current_size.cy = surface->resource.height;
+        return;
+    }
+
     if (!(surface->flags & SFLAG_LOCATIONS))
     {
-        /* This mostly happens when a depth / stencil is used without being
-         * cleared first. In principle we could upload from sysmem, or
-         * explicitly clear before first usage. For the moment there don't
-         * appear to be a lot of applications depending on this, so a FIXME
-         * should do. */
         FIXME("No up to date depth stencil location.\n");
         surface->flags |= location;
         surface->ds_current_size.cx = surface->resource.width;

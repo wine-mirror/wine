@@ -2179,11 +2179,6 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
                              SFLAG_INRB_MULTISAMPLE | \
                              SFLAG_INRB_RESOLVED)
 
-#define SFLAG_DS_DISCARDED  (SFLAG_INTEXTURE        | \
-                             SFLAG_INDRAWABLE       | \
-                             SFLAG_INRB_MULTISAMPLE | \
-                             SFLAG_INRB_RESOLVED)
-
 typedef enum {
     NO_CONVERSION,
     CONVERT_PALETTED,
