@@ -634,11 +634,6 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
             IntersectRect(&r, &draw_rect, &current_rect);
             if (!EqualRect(&r, &draw_rect))
                 surface_load_ds_location(ds, context, location);
-
-            if (state->render_states[WINED3D_RS_ZWRITEENABLE])
-            {
-                surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
-            }
         }
     }
 
@@ -647,6 +642,14 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
         context_release(context);
         WARN("Unable to apply draw state, skipping draw.\n");
         return;
+    }
+
+    if (device->fb.depth_stencil && state->render_states[WINED3D_RS_ZWRITEENABLE])
+    {
+        struct wined3d_surface *ds = device->fb.depth_stencil;
+        DWORD location = context->render_offscreen ? ds->draw_binding : SFLAG_INDRAWABLE;
+
+        surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
     }
 
     if ((!context->gl_info->supported[WINED3D_GL_VERSION_2_0]

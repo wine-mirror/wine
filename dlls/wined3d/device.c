@@ -600,7 +600,7 @@ static BOOL is_full_clear(const struct wined3d_surface *target, const RECT *draw
 }
 
 static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context *context,
-        DWORD location, const RECT *draw_rect, UINT rect_count, const RECT *clear_rect)
+        DWORD location, const RECT *draw_rect, UINT rect_count, const RECT *clear_rect, RECT *out_rect)
 {
     RECT current_rect, r;
 
@@ -615,7 +615,7 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
     if (EqualRect(&r, draw_rect))
     {
         /* current_rect ⊇ draw_rect, modify only. */
-        surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
+        SetRect(out_rect, 0, 0, ds->ds_current_size.cx, ds->ds_current_size.cy);
         return;
     }
 
@@ -626,7 +626,7 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
         if (!clear_rect)
         {
             /* Full clear, modify only. */
-            surface_modify_ds_location(ds, location, draw_rect->right, draw_rect->bottom);
+            *out_rect = *draw_rect;
             return;
         }
 
@@ -634,14 +634,14 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
         if (EqualRect(&r, draw_rect))
         {
             /* clear_rect ⊇ draw_rect, modify only. */
-            surface_modify_ds_location(ds, location, draw_rect->right, draw_rect->bottom);
+            *out_rect = *draw_rect;
             return;
         }
     }
 
     /* Full load. */
     surface_load_ds_location(ds, context, location);
-    surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
+    SetRect(out_rect, 0, 0, ds->ds_current_size.cx, ds->ds_current_size.cy);
 }
 
 /* Do not call while under the GL lock. */
@@ -656,6 +656,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
     GLbitfield clear_mask = 0;
     BOOL render_offscreen;
     unsigned int i;
+    RECT ds_rect;
 
     /* When we're clearing parts of the drawable, make sure that the target surface is well up to date in the
      * drawable. After the clear we'll mark the drawable up to date, so we have to make sure that this is true
@@ -701,7 +702,8 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
 
         if (!render_offscreen && fb->depth_stencil != device->onscreen_depth_stencil)
             device_switch_onscreen_ds(device, context, fb->depth_stencil);
-        prepare_ds_clear(fb->depth_stencil, context, location, draw_rect, rect_count, clear_rect);
+        prepare_ds_clear(fb->depth_stencil, context, location,
+                draw_rect, rect_count, clear_rect, &ds_rect);
     }
 
     if (!context_apply_clear_state(context, device, rt_count, fb))
@@ -732,7 +734,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
     {
         DWORD location = render_offscreen ? fb->depth_stencil->draw_binding : SFLAG_INDRAWABLE;
 
-        surface_modify_location(fb->depth_stencil, location, TRUE);
+        surface_modify_ds_location(fb->depth_stencil, location, ds_rect.right, ds_rect.bottom);
 
         glDepthMask(GL_TRUE);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ZWRITEENABLE));
