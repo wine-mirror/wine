@@ -220,6 +220,138 @@ static void test_MeshBuilder3(void)
     IDirect3DRM_Release(pD3DRM3);
 }
 
+static void test_Frame(void)
+{
+    HRESULT hr;
+    LPDIRECT3DRM pD3DRM;
+    LPDIRECT3DRMFRAME pFrameC;
+    LPDIRECT3DRMFRAME pFrameP1;
+    LPDIRECT3DRMFRAME pFrameP2;
+    LPDIRECT3DRMFRAME pFrameTmp;
+    LPDIRECT3DRMFRAMEARRAY pArray;
+    DWORD count;
+
+    hr = pDirect3DRMCreate(&pD3DRM);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRM_CreateFrame(pD3DRM, NULL, &pFrameC);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
+
+    pFrameTmp = (void*)0xdeadbeef;
+    hr = IDirect3DRMFrame_GetParent(pFrameC, &pFrameTmp);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
+    todo_wine ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
+
+    pArray = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameC, &pArray);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    todo_wine ok(pArray != NULL, "pArray = %p\n", pArray);
+    if (pArray)
+    {
+        count = IDirect3DRMFrameArray_GetSize(pArray);
+        ok(count == 0, "count = %u\n", count);
+        IDirect3DRMFrameArray_Release(pArray);
+    }
+
+    /* Add child to first parent */
+    hr = IDirect3DRM_CreateFrame(pD3DRM, NULL, &pFrameP1);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
+
+    pFrameTmp = (void*)0xdeadbeef;
+    hr = IDirect3DRMFrame_GetParent(pFrameP1, &pFrameTmp);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
+    todo_wine ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
+
+    hr = IDirect3DRMFrame_AddChild(pFrameP1, pFrameC);
+    todo_wine ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
+
+    pArray = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameP1, &pArray);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    if (pArray)
+    {
+        count = IDirect3DRMFrameArray_GetSize(pArray);
+        ok(count == 1, "count = %u\n", count);
+        IDirect3DRMFrameArray_Release(pArray);
+    }
+
+    pFrameTmp = (void*)0xdeadbeef;
+    hr = IDirect3DRMFrame_GetParent(pFrameC, &pFrameTmp);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
+    todo_wine ok(pFrameTmp == pFrameP1, "pFrameTmp = %p\n", pFrameTmp);
+
+    /* Add child to second parent */
+    hr = IDirect3DRM_CreateFrame(pD3DRM, NULL, &pFrameP2);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRMFrame_AddChild(pFrameP2, pFrameC);
+    todo_wine ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
+
+    pArray = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    if (pArray)
+    {
+        count = IDirect3DRMFrameArray_GetSize(pArray);
+        ok(count == 1, "count = %u\n", count);
+        IDirect3DRMFrameArray_Release(pArray);
+    }
+
+    pArray = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameP1, &pArray);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    if (pArray)
+    {
+        count = IDirect3DRMFrameArray_GetSize(pArray);
+        ok(count == 0, "count = %u\n", count);
+        IDirect3DRMFrameArray_Release(pArray);
+    }
+
+    pFrameTmp = (void*)0xdeadbeef;
+    hr = IDirect3DRMFrame_GetParent(pFrameC, &pFrameTmp);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
+    todo_wine ok(pFrameTmp == pFrameP2, "pFrameTmp = %p\n", pFrameTmp);
+
+    /* Add child again */
+    hr = IDirect3DRMFrame_AddChild(pFrameP2, pFrameC);
+    todo_wine ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
+
+    pArray = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    if (pArray)
+    {
+        count = IDirect3DRMFrameArray_GetSize(pArray);
+        ok(count == 1, "count = %u\n", count);
+        IDirect3DRMFrameArray_Release(pArray);
+    }
+
+    /* Delete child */
+    hr = IDirect3DRMFrame_DeleteChild(pFrameP2, pFrameC);
+    todo_wine ok(hr == D3DRM_OK, "Cannot delete child frame (hr = %x)\n", hr);
+
+    pArray = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    if (pArray)
+    {
+        count = IDirect3DRMFrameArray_GetSize(pArray);
+        ok(count == 0, "count = %u\n", count);
+        IDirect3DRMFrameArray_Release(pArray);
+    }
+
+    pFrameTmp = (void*)0xdeadbeef;
+    hr = IDirect3DRMFrame_GetParent(pFrameC, &pFrameTmp);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
+    todo_wine ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
+
+    IDirect3DRMMeshBuilder_Release(pFrameC);
+    IDirect3DRMMeshBuilder_Release(pFrameP1);
+    IDirect3DRMMeshBuilder_Release(pFrameP2);
+
+    IDirect3DRM_Release(pD3DRM);
+}
+
 START_TEST(d3drm)
 {
     if (!InitFunctionPtrs())
@@ -227,6 +359,7 @@ START_TEST(d3drm)
 
     test_MeshBuilder();
     test_MeshBuilder3();
+    test_Frame();
 
     FreeLibrary(d3drm_handle);
 }
