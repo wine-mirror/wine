@@ -174,23 +174,23 @@ static void test_MeshBuilder3(void)
     info.lpMemory = data_bad_version;
     info.dSize = strlen(data_bad_version);
     hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder3, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
-    todo_wine ok(hr == D3DRMERR_BADFILE, "Should have returned D3DRMERR_BADFILE (hr = %x)\n", hr);
+    ok(hr == D3DRMERR_BADFILE, "Should have returned D3DRMERR_BADFILE (hr = %x)\n", hr);
 
     info.lpMemory = data_no_mesh;
     info.dSize = strlen(data_no_mesh);
     hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder3, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
-    todo_wine ok(hr == D3DRMERR_NOTFOUND, "Should have returned D3DRMERR_NOTFOUND (hr = %x)\n", hr);
+    ok(hr == D3DRMERR_NOTFOUND, "Should have returned D3DRMERR_NOTFOUND (hr = %x)\n", hr);
 
     info.lpMemory = data_ok;
     info.dSize = strlen(data_ok);
     hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder3, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
-    todo_wine ok(hr == D3DRM_OK, "Cannot load mesh data (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Cannot load mesh data (hr = %x)\n", hr);
 
     val = IDirect3DRMMeshBuilder_GetVertexCount(pMeshBuilder3);
-    todo_wine ok(val == 4, "Wrong number of vertices %d (must be 4)\n", val);
+    ok(val == 4, "Wrong number of vertices %d (must be 4)\n", val);
 
     val = IDirect3DRMMeshBuilder_GetFaceCount(pMeshBuilder3);
-    todo_wine ok(val == 3, "Wrong number of faces %d (must be 3)\n", val);
+    ok(val == 3, "Wrong number of faces %d (must be 3)\n", val);
 
     hr = IDirect3DRMMeshBuilder3_GetVertices(pMeshBuilder3, 0, &val1, NULL);
     todo_wine ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);

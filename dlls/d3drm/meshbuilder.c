@@ -461,219 +461,14 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetClassName(IDirect3DRMMeshBu
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_Load(IDirect3DRMMeshBuilder2* iface,
                                                        LPVOID filename, LPVOID name,
                                                        D3DRMLOADOPTIONS loadflags,
-                                                       D3DRMLOADTEXTURECALLBACK cb, LPVOID pArg)
+                                                       D3DRMLOADTEXTURECALLBACK cb, LPVOID arg)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
-    DXFILELOADOPTIONS load_options;
-    LPDIRECTXFILE pDXFile = NULL;
-    LPDIRECTXFILEENUMOBJECT pEnumObject = NULL;
-    LPDIRECTXFILEDATA pData = NULL;
-    LPDIRECTXFILEOBJECT pObject = NULL;
-    LPDIRECTXFILEDATA pData2 = NULL;
-    const GUID* pGuid;
-    DWORD size;
-    Header* pHeader;
-    LPBYTE ptr;
-    HRESULT hr;
-    HRESULT ret = D3DRMERR_BADOBJECT;
 
-    FIXME("(%p)->(%p,%p,%x,%p,%p): partial stub\n", This, filename, name, loadflags, cb, pArg);
+    TRACE("(%p)->(%p,%p,%x,%p,%p): partial stub\n", This, filename, name, loadflags, cb, arg);
 
-    /* First free allocated buffers of previous mesh data */
-    HeapFree(GetProcessHeap(), 0, This->pVertices);
-    This->pVertices = NULL;
-    HeapFree(GetProcessHeap(), 0, This->pNormals);
-    This->pNormals = NULL;
-    HeapFree(GetProcessHeap(), 0, This->pFaceData);
-    This->pFaceData = NULL;
-    HeapFree(GetProcessHeap(), 0, This->pCoords2d);
-    This->pCoords2d = NULL;
-
-    if (loadflags == D3DRMLOAD_FROMMEMORY)
-    {
-        load_options = DXFILELOAD_FROMMEMORY;
-    }
-    else
-    {
-        FIXME("Load options %d not supported yet\n", loadflags);
-        return E_NOTIMPL;
-    }
-
-    hr = DirectXFileCreate(&pDXFile);
-    if (hr != DXFILE_OK)
-        goto end;
-
-    hr = IDirectXFile_RegisterTemplates(pDXFile, templates, strlen(templates));
-    if (hr != DXFILE_OK)
-        goto end;
-
-    hr = IDirectXFile_CreateEnumObject(pDXFile, filename, load_options, &pEnumObject);
-    if (hr != DXFILE_OK)
-        goto end;
-
-    hr = IDirectXFileEnumObject_GetNextDataObject(pEnumObject, &pData);
-    if (hr != DXFILE_OK)
-        goto end;
-
-    hr = IDirectXFileData_GetType(pData, &pGuid);
-    if (hr != DXFILE_OK)
-        goto end;
-
-    TRACE("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
-
-    if (!IsEqualGUID(pGuid, &TID_DXFILEHeader))
-    {
-        ret = D3DRMERR_BADFILE;
-        goto end;
-    }
-
-    hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&pHeader);
-    if ((hr != DXFILE_OK) || (size != sizeof(Header)))
-        goto end;
-
-    TRACE("Version is %d %d %d\n", pHeader->major, pHeader->minor, pHeader->flags);
-
-    /* Version must be 1.0.x */
-    if ((pHeader->major != 1) || (pHeader->minor != 0))
-    {
-        ret = D3DRMERR_BADFILE;
-        goto end;
-    }
-
-    IDirectXFileData_Release(pData);
-    pData = NULL;
-
-    hr = IDirectXFileEnumObject_GetNextDataObject(pEnumObject, &pData);
-    if (hr != DXFILE_OK)
-    {
-        ret = D3DRMERR_NOTFOUND;
-        goto end;
-    }
-
-    hr = IDirectXFileData_GetType(pData, &pGuid);
-    if (hr != DXFILE_OK)
-        goto end;
-
-    TRACE("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
-
-    if (!IsEqualGUID(pGuid, &TID_D3DRMMesh))
-    {
-        ret = D3DRMERR_NOTFOUND;
-        goto end;
-    }
-
-    hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&ptr);
-    if (hr != DXFILE_OK)
-        goto end;
-
-    This->nb_vertices = *(DWORD*)ptr;
-    This->nb_faces = *(DWORD*)(ptr + sizeof(DWORD) + This->nb_vertices * sizeof(D3DVECTOR));
-    This->face_data_size = size - sizeof(DWORD) - This->nb_vertices * sizeof(D3DVECTOR) - sizeof(DWORD);
-
-    TRACE("Mesh: nb_vertices = %d, nb_faces = %d, face_data_size = %d\n", This->nb_vertices, This->nb_faces, This->face_data_size);
-
-    This->pVertices = HeapAlloc(GetProcessHeap(), 0, This->nb_vertices * sizeof(D3DVECTOR));
-    memcpy(This->pVertices, ptr + sizeof(DWORD), This->nb_vertices * sizeof(D3DVECTOR));
-
-    This->pFaceData = HeapAlloc(GetProcessHeap(), 0, This->face_data_size);
-    memcpy(This->pFaceData, ptr + sizeof(DWORD) + This->nb_vertices * sizeof(D3DVECTOR) + sizeof(DWORD), This->face_data_size);
-
-    while (1)
-    {
-        hr =  IDirectXFileData_GetNextObject(pData, &pObject);
-        if (hr == DXFILEERR_NOMOREOBJECTS)
-        {
-	    FIXME("no more object\n");
-            break;
-        }
-        if (hr != DXFILE_OK)
-           goto end;
-
-            hr = IDirectXFileObject_QueryInterface(pObject, &IID_IDirectXFileData, (void**)&pData2);
-        IDirectXFileObject_Release(pObject);
-        if (hr != DXFILE_OK)
-            goto end;
-
-        hr = IDirectXFileData_GetType(pData2, &pGuid);
-        if (hr != DXFILE_OK)
-        {
-            IDirectXFileData_Release(pData2);
-            goto end;
-        }
-
-        FIXME("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
-
-        if (!IsEqualGUID(pGuid, &TID_D3DRMMeshNormals))
-        {
-            DWORD tmp;
-
-            hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&ptr);
-            if (hr != DXFILE_OK)
-                goto end;
-
-            This->nb_normals = *(DWORD*)ptr;
-            tmp = *(DWORD*)(ptr + sizeof(DWORD) + This->nb_normals * sizeof(D3DVECTOR));
-
-            FIXME("MeshNormals: nb_normals = %d, nb_faces_normals = %d\n", This->nb_normals, tmp);
-
-            This->pNormals = HeapAlloc(GetProcessHeap(), 0, This->nb_normals * sizeof(D3DVECTOR));
-            memcpy(This->pNormals, ptr + sizeof(DWORD), This->nb_normals * sizeof(D3DVECTOR));
-        }
-        else if(!IsEqualGUID(pGuid, &TID_D3DRMMeshTextureCoords))
-        {
-            hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&ptr);
-            if (hr != DXFILE_OK)
-                goto end;
-
-            This->nb_coords2d = *(DWORD*)ptr;
-
-            FIXME("MeshTextureCoords: nb_coords2d = %d\n", This->nb_coords2d);
-
-            This->pCoords2d = HeapAlloc(GetProcessHeap(), 0, This->nb_coords2d * sizeof(Coords2d));
-            memcpy(This->pCoords2d, ptr + sizeof(DWORD), This->nb_coords2d * sizeof(Coords2d));
-
-        }
-        else if(!IsEqualGUID(pGuid, &TID_D3DRMMeshMaterialList))
-        {
-            FIXME("MeshMaterialList not supported yet, ignoring...\n");
-        }
-	else
-        {
-            FIXME("Unknown GUID %s, ignoring...\n", debugstr_guid(pGuid));
-        }
-
-        IDirectXFileData_Release(pData2);
-    }
-
-    ret = D3DRM_OK;
-
-end:
-    if (pData)
-        IDirectXFileData_Release(pData);
-    if (pEnumObject)
-        IDirectXFileEnumObject_Release(pEnumObject);
-    if (pDXFile)
-        IDirectXFile_Release(pDXFile);
-
-    if (ret != D3DRM_OK)
-    {
-        /* Clean mesh data */
-        This->nb_vertices = 0;
-        This->nb_normals = 0;
-        This->nb_faces = 0;
-        This->face_data_size = 0;
-        This->nb_coords2d = 0;
-        HeapFree(GetProcessHeap(), 0, This->pVertices);
-        This->pVertices = NULL;
-        HeapFree(GetProcessHeap(), 0, This->pNormals);
-        This->pNormals = NULL;
-        HeapFree(GetProcessHeap(), 0, This->pFaceData);
-        This->pFaceData = NULL;
-        HeapFree(GetProcessHeap(), 0, This->pCoords2d);
-        This->pCoords2d = NULL;
-    }
-
-    return ret;
+    return IDirect3DRMMeshBuilder3_Load(&This->IDirect3DRMMeshBuilder3_iface, filename, name,
+                                        loadflags, (D3DRMLOADTEXTURE3CALLBACK)cb, arg);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_Save(IDirect3DRMMeshBuilder2* iface,
@@ -1279,10 +1074,216 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
                                                        D3DRMLOADTEXTURE3CALLBACK cb, LPVOID arg)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
+    DXFILELOADOPTIONS load_options;
+    LPDIRECTXFILE pDXFile = NULL;
+    LPDIRECTXFILEENUMOBJECT pEnumObject = NULL;
+    LPDIRECTXFILEDATA pData = NULL;
+    LPDIRECTXFILEOBJECT pObject = NULL;
+    LPDIRECTXFILEDATA pData2 = NULL;
+    const GUID* pGuid;
+    DWORD size;
+    Header* pHeader;
+    LPBYTE ptr;
+    HRESULT hr;
+    HRESULT ret = D3DRMERR_BADOBJECT;
 
-    FIXME("(%p)->(%p,%p,%u,%p,%p): stub\n", This, filename, name, loadflags, cb, arg);
+    FIXME("(%p)->(%p,%p,%x,%p,%p): partial stub\n", This, filename, name, loadflags, cb, arg);
 
-    return E_NOTIMPL;
+    /* First free allocated buffers of previous mesh data */
+    HeapFree(GetProcessHeap(), 0, This->pVertices);
+    This->pVertices = NULL;
+    HeapFree(GetProcessHeap(), 0, This->pNormals);
+    This->pNormals = NULL;
+    HeapFree(GetProcessHeap(), 0, This->pFaceData);
+    This->pFaceData = NULL;
+    HeapFree(GetProcessHeap(), 0, This->pCoords2d);
+    This->pCoords2d = NULL;
+
+    if (loadflags == D3DRMLOAD_FROMMEMORY)
+    {
+        load_options = DXFILELOAD_FROMMEMORY;
+    }
+    else
+    {
+        FIXME("Load options %d not supported yet\n", loadflags);
+        return E_NOTIMPL;
+    }
+
+    hr = DirectXFileCreate(&pDXFile);
+    if (hr != DXFILE_OK)
+        goto end;
+
+    hr = IDirectXFile_RegisterTemplates(pDXFile, templates, strlen(templates));
+    if (hr != DXFILE_OK)
+        goto end;
+
+    hr = IDirectXFile_CreateEnumObject(pDXFile, filename, load_options, &pEnumObject);
+    if (hr != DXFILE_OK)
+        goto end;
+
+    hr = IDirectXFileEnumObject_GetNextDataObject(pEnumObject, &pData);
+    if (hr != DXFILE_OK)
+        goto end;
+
+    hr = IDirectXFileData_GetType(pData, &pGuid);
+    if (hr != DXFILE_OK)
+        goto end;
+
+    TRACE("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
+
+    if (!IsEqualGUID(pGuid, &TID_DXFILEHeader))
+    {
+        ret = D3DRMERR_BADFILE;
+        goto end;
+    }
+
+    hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&pHeader);
+    if ((hr != DXFILE_OK) || (size != sizeof(Header)))
+        goto end;
+
+    TRACE("Version is %d %d %d\n", pHeader->major, pHeader->minor, pHeader->flags);
+
+    /* Version must be 1.0.x */
+    if ((pHeader->major != 1) || (pHeader->minor != 0))
+    {
+        ret = D3DRMERR_BADFILE;
+        goto end;
+    }
+
+    IDirectXFileData_Release(pData);
+    pData = NULL;
+
+    hr = IDirectXFileEnumObject_GetNextDataObject(pEnumObject, &pData);
+    if (hr != DXFILE_OK)
+    {
+        ret = D3DRMERR_NOTFOUND;
+        goto end;
+    }
+
+    hr = IDirectXFileData_GetType(pData, &pGuid);
+    if (hr != DXFILE_OK)
+        goto end;
+
+    TRACE("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
+
+    if (!IsEqualGUID(pGuid, &TID_D3DRMMesh))
+    {
+        ret = D3DRMERR_NOTFOUND;
+        goto end;
+    }
+
+    hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&ptr);
+    if (hr != DXFILE_OK)
+        goto end;
+
+    This->nb_vertices = *(DWORD*)ptr;
+    This->nb_faces = *(DWORD*)(ptr + sizeof(DWORD) + This->nb_vertices * sizeof(D3DVECTOR));
+    This->face_data_size = size - sizeof(DWORD) - This->nb_vertices * sizeof(D3DVECTOR) - sizeof(DWORD);
+
+    TRACE("Mesh: nb_vertices = %d, nb_faces = %d, face_data_size = %d\n", This->nb_vertices, This->nb_faces, This->face_data_size);
+
+    This->pVertices = HeapAlloc(GetProcessHeap(), 0, This->nb_vertices * sizeof(D3DVECTOR));
+    memcpy(This->pVertices, ptr + sizeof(DWORD), This->nb_vertices * sizeof(D3DVECTOR));
+
+    This->pFaceData = HeapAlloc(GetProcessHeap(), 0, This->face_data_size);
+    memcpy(This->pFaceData, ptr + sizeof(DWORD) + This->nb_vertices * sizeof(D3DVECTOR) + sizeof(DWORD), This->face_data_size);
+
+    while (1)
+    {
+        hr =  IDirectXFileData_GetNextObject(pData, &pObject);
+        if (hr == DXFILEERR_NOMOREOBJECTS)
+        {
+            FIXME("no more object\n");
+            break;
+        }
+        if (hr != DXFILE_OK)
+           goto end;
+
+            hr = IDirectXFileObject_QueryInterface(pObject, &IID_IDirectXFileData, (void**)&pData2);
+        IDirectXFileObject_Release(pObject);
+        if (hr != DXFILE_OK)
+            goto end;
+
+        hr = IDirectXFileData_GetType(pData2, &pGuid);
+        if (hr != DXFILE_OK)
+        {
+            IDirectXFileData_Release(pData2);
+            goto end;
+        }
+
+        FIXME("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
+
+        if (!IsEqualGUID(pGuid, &TID_D3DRMMeshNormals))
+        {
+            DWORD tmp;
+
+            hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&ptr);
+            if (hr != DXFILE_OK)
+                goto end;
+
+            This->nb_normals = *(DWORD*)ptr;
+            tmp = *(DWORD*)(ptr + sizeof(DWORD) + This->nb_normals * sizeof(D3DVECTOR));
+
+            FIXME("MeshNormals: nb_normals = %d, nb_faces_normals = %d\n", This->nb_normals, tmp);
+
+            This->pNormals = HeapAlloc(GetProcessHeap(), 0, This->nb_normals * sizeof(D3DVECTOR));
+            memcpy(This->pNormals, ptr + sizeof(DWORD), This->nb_normals * sizeof(D3DVECTOR));
+        }
+        else if(!IsEqualGUID(pGuid, &TID_D3DRMMeshTextureCoords))
+        {
+            hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&ptr);
+            if (hr != DXFILE_OK)
+                goto end;
+
+            This->nb_coords2d = *(DWORD*)ptr;
+
+            FIXME("MeshTextureCoords: nb_coords2d = %d\n", This->nb_coords2d);
+
+            This->pCoords2d = HeapAlloc(GetProcessHeap(), 0, This->nb_coords2d * sizeof(Coords2d));
+            memcpy(This->pCoords2d, ptr + sizeof(DWORD), This->nb_coords2d * sizeof(Coords2d));
+
+        }
+        else if(!IsEqualGUID(pGuid, &TID_D3DRMMeshMaterialList))
+        {
+            FIXME("MeshMaterialList not supported yet, ignoring...\n");
+        }
+        else
+        {
+            FIXME("Unknown GUID %s, ignoring...\n", debugstr_guid(pGuid));
+        }
+
+        IDirectXFileData_Release(pData2);
+    }
+
+    ret = D3DRM_OK;
+
+end:
+    if (pData)
+        IDirectXFileData_Release(pData);
+    if (pEnumObject)
+        IDirectXFileEnumObject_Release(pEnumObject);
+    if (pDXFile)
+        IDirectXFile_Release(pDXFile);
+
+    if (ret != D3DRM_OK)
+    {
+        /* Clean mesh data */
+        This->nb_vertices = 0;
+        This->nb_normals = 0;
+        This->nb_faces = 0;
+        This->face_data_size = 0;
+        This->nb_coords2d = 0;
+        HeapFree(GetProcessHeap(), 0, This->pVertices);
+        This->pVertices = NULL;
+        HeapFree(GetProcessHeap(), 0, This->pNormals);
+        This->pNormals = NULL;
+        HeapFree(GetProcessHeap(), 0, This->pFaceData);
+        This->pFaceData = NULL;
+        HeapFree(GetProcessHeap(), 0, This->pCoords2d);
+        This->pCoords2d = NULL;
+    }
+
+    return ret;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Save(IDirect3DRMMeshBuilder3* iface,
