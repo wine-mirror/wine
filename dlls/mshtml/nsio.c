@@ -58,7 +58,6 @@ struct  nsWineURI {
 
     LONG ref;
 
-    nsIURI *nsuri;
     NSContainer *container;
     windowref_t *window_ref;
     nsChannelBSC *channel_bsc;
@@ -140,7 +139,7 @@ BOOL compare_ignoring_frag(IUri *uri1, IUri *uri2)
     return ret;
 }
 
-static nsresult create_nsuri(IUri*,nsIURI*,HTMLWindow*,NSContainer*,nsWineURI**);
+static nsresult create_nsuri(IUri*,HTMLWindow*,NSContainer*,nsWineURI**);
 
 static const char *debugstr_nsacstr(const nsACString *nsstr)
 {
@@ -1766,7 +1765,7 @@ static nsresult NSAPI nsURI_QueryInterface(nsIURL *iface, nsIIDRef riid, void **
     }
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
-    return This->nsuri ? nsIURI_QueryInterface(This->nsuri, riid, result) : NS_NOINTERFACE;
+    return NS_NOINTERFACE;
 }
 
 static nsrefcnt NSAPI nsURI_AddRef(nsIURL *iface)
@@ -1791,8 +1790,6 @@ static nsrefcnt NSAPI nsURI_Release(nsIURL *iface)
             windowref_release(This->window_ref);
         if(This->container)
             nsIWebBrowserChrome_Release(&This->container->nsIWebBrowserChrome_iface);
-        if(This->nsuri)
-            nsIURI_Release(This->nsuri);
         if(This->uri)
             IUri_Release(This->uri);
         heap_free(This);
@@ -1848,13 +1845,7 @@ static nsresult NSAPI nsURI_SetSpec(nsIURL *iface, const nsACString *aSpec)
 static nsresult NSAPI nsURI_GetPrePath(nsIURL *iface, nsACString *aPrePath)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
-
-    TRACE("(%p)->(%p)\n", This, aPrePath);
-
-    if(This->nsuri)
-        return nsIURI_GetPrePath(This->nsuri, aPrePath);
-
-    FIXME("default action not implemented\n");
+    FIXME("(%p)->(%p)\n", This, aPrePath);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -2255,7 +2246,6 @@ static nsresult NSAPI nsURI_SchemeIs(nsIURL *iface, const char *scheme, PRBool *
 static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
-    nsIURI *nsuri = NULL;
     nsWineURI *wine_uri;
     nsresult nsres;
 
@@ -2264,15 +2254,7 @@ static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
     if(!ensure_uri(This))
         return NS_ERROR_UNEXPECTED;
 
-    if(This->nsuri) {
-        nsres = nsIURI_Clone(This->nsuri, &nsuri);
-        if(NS_FAILED(nsres)) {
-            WARN("Clone failed: %08x\n", nsres);
-            return nsres;
-        }
-    }
-
-    nsres = create_nsuri(This->uri, nsuri, This->window_ref ? This->window_ref->window : NULL, This->container, &wine_uri);
+    nsres = create_nsuri(This->uri, This->window_ref ? This->window_ref->window : NULL, This->container, &wine_uri);
     if(NS_FAILED(nsres)) {
         WARN("create_nsuri failed: %08x\n", nsres);
         return nsres;
@@ -2347,13 +2329,7 @@ static nsresult NSAPI nsURI_GetAsciiHost(nsIURL *iface, nsACString *aAsciiHost)
 static nsresult NSAPI nsURI_GetOriginCharset(nsIURL *iface, nsACString *aOriginCharset)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
-
-    TRACE("(%p)->(%p)\n", This, aOriginCharset);
-
-    if(This->nsuri)
-        return nsIURI_GetOriginCharset(This->nsuri, aOriginCharset);
-
-    FIXME("default action not implemented\n");
+    FIXME("(%p)->(%p)\n", This, aOriginCharset);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -2450,7 +2426,7 @@ static nsresult NSAPI nsURI_CloneIgnoreRef(nsIURL *iface, nsIURI **_retval)
     if(!uri)
         return NS_ERROR_FAILURE;
 
-    nsres = create_nsuri(uri, NULL, This->window_ref ? This->window_ref->window : NULL, This->container, &wine_uri);
+    nsres = create_nsuri(uri, This->window_ref ? This->window_ref->window : NULL, This->container, &wine_uri);
     IUri_Release(uri);
     if(NS_FAILED(nsres)) {
         WARN("create_nsuri failed: %08x\n", nsres);
@@ -2815,14 +2791,13 @@ static const nsIStandardURLVtbl nsStandardURLVtbl = {
     nsStandardURL_Init
 };
 
-static nsresult create_nsuri(IUri *iuri, nsIURI *nsuri, HTMLWindow *window, NSContainer *container, nsWineURI **_retval)
+static nsresult create_nsuri(IUri *iuri, HTMLWindow *window, NSContainer *container, nsWineURI **_retval)
 {
     nsWineURI *ret = heap_alloc_zero(sizeof(nsWineURI));
 
     ret->nsIURL_iface.lpVtbl = &nsURLVtbl;
     ret->nsIStandardURL_iface.lpVtbl = &nsStandardURLVtbl;
     ret->ref = 1;
-    ret->nsuri = nsuri;
     ret->is_mutable = TRUE;
 
     set_uri_nscontainer(ret, container);
@@ -2847,7 +2822,7 @@ HRESULT create_doc_uri(HTMLWindow *window, WCHAR *url, nsWineURI **ret)
     if(FAILED(hres))
         return hres;
 
-    nsres = create_nsuri(iuri, NULL, window, window->doc_obj->nscontainer, &uri);
+    nsres = create_nsuri(iuri, window, window->doc_obj->nscontainer, &uri);
     IUri_Release(iuri);
     if(NS_FAILED(nsres))
         return E_FAIL;
@@ -2904,7 +2879,7 @@ HRESULT create_redirect_nschannel(const WCHAR *url, nsChannel *orig_channel, nsC
 
     if(orig_channel->uri->window_ref)
         window = orig_channel->uri->window_ref->window;
-    nsres = create_nsuri(iuri, NULL, window, NULL, &uri);
+    nsres = create_nsuri(iuri, window, NULL, &uri);
     IUri_Release(iuri);
     if(NS_FAILED(nsres))
         return E_FAIL;
@@ -3178,7 +3153,6 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     WCHAR new_spec[INTERNET_MAX_URL_LENGTH];
     HTMLWindow *window = NULL;
     const char *spec = NULL;
-    nsIURI *uri = NULL;
     IUri *urlmon_uri;
     nsresult nsres;
     HRESULT hres;
@@ -3218,16 +3192,10 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
             WARN("CreateUri failed: %08x\n", hres);
     }
 
-    nsres = nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, &uri);
-    if(NS_FAILED(nsres))
-        TRACE("NewURI failed: %08x\n", nsres);
+    if(FAILED(hres))
+        return nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, _retval);
 
-    if(FAILED(hres)) {
-        *_retval = uri;
-        return nsres;
-    }
-
-    nsres = create_nsuri(urlmon_uri, uri, window, NULL, &wine_uri);
+    nsres = create_nsuri(urlmon_uri, window, NULL, &wine_uri);
     IUri_Release(urlmon_uri);
     if(base_wine_uri)
         nsIURI_Release(&base_wine_uri->nsIURL_iface);
