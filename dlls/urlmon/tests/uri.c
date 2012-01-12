@@ -206,6 +206,31 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE},
         }
     },
+    {   "HtTpS://www.winehq.org/tests/..?query=x&return=y", 0, S_OK, FALSE,
+        {
+            {"https://www.winehq.org/?query=x&return=y",S_OK,FALSE},
+            {"www.winehq.org",S_OK,FALSE},
+            {"https://www.winehq.org/?query=x&return=y",S_OK,FALSE},
+            {"winehq.org",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"www.winehq.org",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/?query=x&return=y",S_OK,FALSE},
+            {"?query=x&return=y",S_OK,FALSE},
+            {"HtTpS://www.winehq.org/tests/..?query=x&return=y",S_OK,FALSE},
+            {"https",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {443,S_OK,FALSE},
+            {URL_SCHEME_HTTPS,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE},
+        }
+    },
     {   "hTTp://us%45r%3Ainfo@examp%4CE.com:80/path/a/b/./c/../%2E%2E/Forbidden'<|> Characters", 0, S_OK, FALSE,
         {
             {"http://usEr%3Ainfo@example.com/path/a/Forbidden'%3C%7C%3E%20Characters",S_OK,FALSE},
@@ -4365,6 +4390,31 @@ static const uri_properties uri_tests[] = {
             {Uri_HOST_UNKNOWN,S_OK},
             {0,S_FALSE},
             {URL_SCHEME_MK,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "gopher://test.winehq.org:151/file.txt",0,S_OK,FALSE,
+        {
+            {"gopher://test.winehq.org:151/file.txt",S_OK},
+            {"test.winehq.org:151",S_OK},
+            {"gopher://test.winehq.org:151/file.txt",S_OK},
+            {"winehq.org",S_OK},
+            {".txt",S_OK},
+            {"",S_FALSE},
+            {"test.winehq.org",S_OK},
+            {"",S_FALSE},
+            {"/file.txt",S_OK},
+            {"/file.txt",S_OK},
+            {"",S_FALSE},
+            {"gopher://test.winehq.org:151/file.txt",S_OK},
+            {"gopher",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {151,S_OK},
+            {URL_SCHEME_GOPHER,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
     },
@@ -10603,6 +10653,152 @@ static void test_CreateURLMoniker(void)
     }
 }
 
+static int add_default_flags(DWORD flags) {
+    if(!(flags & Uri_CREATE_NO_CANONICALIZE))
+        flags |= Uri_CREATE_CANONICALIZE;
+    if(!(flags & Uri_CREATE_NO_DECODE_EXTRA_INFO))
+        flags |= Uri_CREATE_DECODE_EXTRA_INFO;
+    if(!(flags & Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES))
+        flags |= Uri_CREATE_CRACK_UNKNOWN_SCHEMES;
+    if(!(flags & Uri_CREATE_NO_PRE_PROCESS_HTML_URI))
+        flags |= Uri_CREATE_PRE_PROCESS_HTML_URI;
+    if(!(flags & Uri_CREATE_IE_SETTINGS))
+        flags |= Uri_CREATE_NO_IE_SETTINGS;
+
+    return flags;
+}
+
+static void test_IPersistStream(void)
+{
+    int i, props_order[Uri_PROPERTY_DWORD_LAST+1] = { 0 };
+
+    props_order[Uri_PROPERTY_RAW_URI] = 1;
+    props_order[Uri_PROPERTY_FRAGMENT] = 2;
+    props_order[Uri_PROPERTY_HOST] = 3;
+    props_order[Uri_PROPERTY_PASSWORD] = 4;
+    props_order[Uri_PROPERTY_PATH] = 5;
+    props_order[Uri_PROPERTY_PORT] = 6;
+    props_order[Uri_PROPERTY_QUERY] = 7;
+    props_order[Uri_PROPERTY_SCHEME_NAME] = 8;
+    props_order[Uri_PROPERTY_USER_NAME] = 9;
+
+    for(i=0; i<sizeof(uri_tests)/sizeof(*uri_tests); i++) {
+        const uri_properties *test = uri_tests+i;
+        LPWSTR uriW;
+        IUri *uri;
+        IPersistStream *persist_stream;
+        IStream *stream;
+        DWORD props, props_no, dw_data[6];
+        WCHAR str_data[1024];
+        ULARGE_INTEGER size, max_size;
+        LARGE_INTEGER no_off;
+        HRESULT hr;
+
+        if(test->create_todo || test->create_expected!=S_OK)
+            continue;
+
+        uriW = a2w(test->uri);
+        hr = pCreateUri(uriW, test->create_flags, 0, &uri);
+        ok(hr == S_OK, "%d) CreateUri failed 0x%08x, expected S_OK..\n", i, hr);
+
+        hr = IUri_QueryInterface(uri, &IID_IPersistStream, (void**)&persist_stream);
+        ok(hr == S_OK, "%d) QueryInterface failed 0x%08x, expected S_OK.\n", i, hr);
+
+        hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        ok(hr == S_OK, "CreateStreamOnHGlobal failed 0x%08x.\n", hr);
+        hr = IPersistStream_IsDirty(persist_stream);
+        ok(hr == S_FALSE, "%d) IsDirty returned 0x%08x, expected S_FALSE.\n", i, hr);
+        hr = IPersistStream_Save(persist_stream, stream, FALSE);
+        ok(hr == S_OK, "%d) Save failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IPersistStream_IsDirty(persist_stream);
+        ok(hr == S_FALSE, "%d) IsDirty returned 0x%08x, expected S_FALSE.\n", i, hr);
+        no_off.QuadPart = 0;
+        hr = IStream_Seek(stream, no_off, STREAM_SEEK_CUR, &size);
+        ok(hr == S_OK, "%d) Seek failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IStream_Seek(stream, no_off, STREAM_SEEK_SET, NULL);
+        ok(hr == S_OK, "%d) Seek failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IPersistStream_GetSizeMax(persist_stream, &max_size);
+        ok(hr == S_OK, "%d) GetSizeMax failed 0x%08x, expected S_OK.\n", i, hr);
+        ok(U(size).LowPart+2 == U(max_size).LowPart,
+                "%d) Written data size is %d, max_size %d.\n",
+                i, U(size).LowPart, U(max_size).LowPart);
+
+        hr = IStream_Read(stream, (void*)dw_data, sizeof(DWORD), NULL);
+        ok(hr == S_OK, "%d) Read failed 0x%08x, expected S_OK.\n", i, hr);
+        ok(dw_data[0]-2 == U(size).LowPart, "%d) Structure size is %d, expected %d\n",
+                i, dw_data[0]-2, U(size).LowPart);
+        hr = IStream_Read(stream, (void*)dw_data, 6*sizeof(DWORD), NULL);
+        ok(hr == S_OK, "%d) Read failed 0x%08x, expected S_OK.\n", i, hr);
+        ok(dw_data[0] == 0, "%d) Incorrect value %x, expected 0 (unknown).\n", i, dw_data[0]);
+        ok(dw_data[1] == 0, "%d) Incorrect value %x, expected 0 (unknown).\n", i, dw_data[1]);
+        ok(dw_data[2] == add_default_flags(test->create_flags),
+                "%d) Incorrect value %x, expected %x (creation flags).\n",
+                i, dw_data[2], add_default_flags(test->create_flags));
+        ok(dw_data[3] == 0, "%d) Incorrect value %x, expected 0 (unknown).\n", i, dw_data[3]);
+        ok(dw_data[4] == 0, "%d) Incorrect value %x, expected 0 (unknown).\n", i, dw_data[4]);
+        ok(dw_data[5] == 0, "%d) Incorrect value %x, expected 0 (unknown).\n", i, dw_data[5]);
+
+        props_no = 0;
+        for(props=0; props<=Uri_PROPERTY_DWORD_LAST; props++) {
+            if(!props_order[props])
+                continue;
+
+            if(props <= Uri_PROPERTY_STRING_LAST) {
+                if(test->str_props[props].expected == S_OK)
+                    props_no++;
+            } else {
+                if(test->dword_props[props-Uri_PROPERTY_DWORD_START].expected == S_OK)
+                    props_no++;
+            }
+        }
+        if(test->dword_props[Uri_PROPERTY_SCHEME-Uri_PROPERTY_DWORD_START].value != URL_SCHEME_HTTP
+                && test->dword_props[Uri_PROPERTY_SCHEME-Uri_PROPERTY_DWORD_START].value != URL_SCHEME_FTP
+                && test->dword_props[Uri_PROPERTY_SCHEME-Uri_PROPERTY_DWORD_START].value != URL_SCHEME_HTTPS)
+            props_no = 1;
+
+        hr = IStream_Read(stream, (void*)&props, sizeof(DWORD), NULL);
+        ok(hr == S_OK, "%d) Read failed 0x%08x, expected S_OK.\n", i, hr);
+        ok(props == props_no, "%d) Properties no is %d, expected %d.\n", i, props, props_no);
+
+        dw_data[2] = 0;
+        dw_data[3] = -1;
+        while(props) {
+            hr = IStream_Read(stream, (void*)dw_data, 2*sizeof(DWORD), NULL);
+            ok(hr == S_OK, "%d) Read failed 0x%08x, expected S_OK.\n", i, hr);
+            props--;
+            ok(dw_data[2]<props_order[dw_data[0]],
+                    "%d) Incorrect properties order (%d, %d)\n",
+                    i, dw_data[0], dw_data[3]);
+            dw_data[2] = props_order[dw_data[0]];
+            dw_data[3] = dw_data[0];
+
+            if(dw_data[0]<=Uri_PROPERTY_STRING_LAST) {
+                const uri_str_property *prop = test->str_props+dw_data[0];
+                hr = IStream_Read(stream, (void*)str_data, dw_data[1], NULL);
+                ok(hr == S_OK, "%d) Read failed 0x%08x, expected S_OK.\n", i, hr);
+                ok(!strcmp_aw(prop->value, str_data) || broken(prop->broken_value && !strcmp_aw(prop->broken_value, str_data)),
+                        "%d) Expected %s but got %s (%d).\n", i, prop->value, wine_dbgstr_w(str_data), dw_data[0]);
+            } else if(dw_data[0]>=Uri_PROPERTY_DWORD_START && dw_data[0]<=Uri_PROPERTY_DWORD_LAST) {
+                const uri_dword_property *prop = test->dword_props+dw_data[0]-Uri_PROPERTY_DWORD_START;
+                ok(dw_data[1] == sizeof(DWORD), "%d) Size of dword property is %d (%d)\n", i, dw_data[1], dw_data[0]);
+                hr = IStream_Read(stream, (void*)&dw_data[1], sizeof(DWORD), NULL);
+                ok(hr == S_OK, "%d) Read failed 0x%08x, expected S_OK.\n", i, hr);
+                ok(prop->value == dw_data[1], "%d) Expected %d but got %d (%d).\n", i, prop->value, dw_data[1], dw_data[0]);
+            } else {
+                ok(FALSE, "%d) Incorrect property type (%d)\n", i, dw_data[0]);
+                break;
+            }
+        }
+        ok(props == 0, "%d) No all properties were processed %d. Next property type: %d\n",
+                i, props, dw_data[0]);
+
+        IStream_Release(stream);
+        IPersistStream_Release(persist_stream);
+        IUri_Release(uri);
+        heap_free(uriW);
+    }
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -10716,6 +10912,9 @@ START_TEST(uri) {
 
     trace("test CreateURLMoniker...\n");
     test_CreateURLMoniker();
+
+    trace("test IPersistStream...\n");
+    test_IPersistStream();
 
     unregister_protocols();
 }
