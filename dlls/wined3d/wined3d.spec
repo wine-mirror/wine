@@ -211,7 +211,6 @@
 @ cdecl wined3d_surface_releasedc(ptr ptr)
 @ cdecl wined3d_surface_restore(ptr)
 @ cdecl wined3d_surface_set_color_key(ptr long ptr)
-@ cdecl wined3d_surface_set_format(ptr long)
 @ cdecl wined3d_surface_set_mem(ptr ptr)
 @ cdecl wined3d_surface_set_overlay_position(ptr long long)
 @ cdecl wined3d_surface_set_palette(ptr ptr)

@@ -3378,30 +3378,6 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_surface_set_format(struct wined3d_surface *surface, enum wined3d_format_id format_id)
-{
-    const struct wined3d_format *format = wined3d_get_format(&surface->resource.device->adapter->gl_info, format_id);
-
-    TRACE("surface %p, format %s.\n", surface, debug_d3dformat(format_id));
-
-    if (surface->resource.format->id != WINED3DFMT_UNKNOWN)
-    {
-        FIXME("The format of the surface must be WINED3DFORMAT_UNKNOWN.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    surface->resource.size = wined3d_format_calculate_size(format, surface->resource.device->surface_alignment,
-            surface->pow2Width, surface->pow2Height);
-    surface->flags |= (WINED3DFMT_D16_LOCKABLE == format_id) ? SFLAG_LOCKABLE : 0;
-    surface->resource.format = format;
-
-    TRACE("size %u, byte_count %u\n", surface->resource.size, format->byte_count);
-    TRACE("glFormat %#x, glInternal %#x, glType %#x.\n",
-            format->glFormat, format->glInternal, format->glType);
-
-    return WINED3D_OK;
-}
-
 static void convert_r32_float_r16_float(const BYTE *src, BYTE *dst,
         DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
 {

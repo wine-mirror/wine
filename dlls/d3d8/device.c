@@ -932,6 +932,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
     struct wined3d_resource_desc wined3d_desc;
     struct wined3d_resource *wined3d_resource;
     UINT src_w, src_h;
+    HRESULT hr;
 
     TRACE("iface %p, src_surface %p, src_rects %p, rect_count %u, dst_surface %p, dst_points %p.\n",
             iface, pSourceSurface, pSourceRects, cRects, pDestinationSurface, pDestPoints);
@@ -961,7 +962,13 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
     else if (WINED3DFMT_UNKNOWN == destFormat)
     {
         TRACE("(%p) : Converting destination surface from WINED3DFMT_UNKNOWN to the source format\n", iface);
-        wined3d_surface_set_format(Dest->wined3d_surface, srcFormat);
+        if (FAILED(hr = wined3d_surface_update_desc(Dest->wined3d_surface, wined3d_desc.width, wined3d_desc.height,
+                srcFormat, wined3d_desc.multisample_type, wined3d_desc.multisample_quality)))
+        {
+            WARN("Failed to update surface desc, hr %#x.\n", hr);
+            wined3d_mutex_unlock();
+            return hr;
+        }
     }
 
     /* Quick if complete copy ... */
