@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-10 23:29+0100\n"
+"PO-Revision-Date: 2012-01-12 21:08+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -41,7 +41,7 @@ msgstr ""
 
 #: appwiz.rc:64
 msgid "&Support Info"
-msgstr "Inf&ormations de support..."
+msgstr "Inf&ormations de support"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -238,7 +238,7 @@ msgstr "Options de compression"
 
 #: avifil32.rc:42
 msgid "&Choose a stream:"
-msgstr "&Sélectionnez un flux :"
+msgstr "&Sélectionnez un flux :"
 
 #: avifil32.rc:45 wordpad.rc:73
 msgid "&Options..."
@@ -254,7 +254,7 @@ msgstr "images"
 
 #: avifil32.rc:49
 msgid "Current format:"
-msgstr "Format actuel :"
+msgstr "Format actuel :"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
@@ -349,7 +349,7 @@ msgstr "&Descendre"
 
 #: comctl32.rc:86
 msgid "A&vailable buttons:"
-msgstr "Boutons &disponibles :"
+msgstr "Boutons &disponibles :"
 
 #: comctl32.rc:88
 msgid "&Add ->"
@@ -361,7 +361,7 @@ msgstr "<- E&nlever"
 
 #: comctl32.rc:90
 msgid "&Toolbar buttons:"
-msgstr "&Boutons de la barre d'outils :"
+msgstr "&Boutons de la barre d'outils :"
 
 #: comctl32.rc:39
 msgid "Separator"
@@ -396,7 +396,7 @@ msgstr "&Nom de fichier :"
 
 #: comdlg32.rc:157 comdlg32.rc:179
 msgid "&Directories:"
-msgstr "&Répertoires"
+msgstr "&Répertoires :"
 
 #: comdlg32.rc:160 comdlg32.rc:182
 msgid "List Files of &Type:"
@@ -445,19 +445,19 @@ msgstr "&Pages"
 
 #: comdlg32.rc:206 comdlg32.rc:228
 msgid "&Setup"
-msgstr "&Configurer..."
+msgstr "&Configurer"
 
 #: comdlg32.rc:207
 msgid "&From:"
-msgstr "&De :"
+msgstr "&De :"
 
 #: comdlg32.rc:208
 msgid "&To:"
-msgstr "&à :"
+msgstr "&à :"
 
 #: comdlg32.rc:209
 msgid "Print &Quality:"
-msgstr "&Qualité d'impression :"
+msgstr "&Qualité d'impression :"
 
 #: comdlg32.rc:211
 msgid "Print to Fi&le"
@@ -505,11 +505,11 @@ msgstr "Papier"
 
 #: comdlg32.rc:235
 msgid "Si&ze"
-msgstr "&Taille :"
+msgstr "&Taille"
 
 #: comdlg32.rc:236
 msgid "&Source"
-msgstr "&Source :"
+msgstr "&Source"
 
 #: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
@@ -517,15 +517,15 @@ msgstr "Police"
 
 #: comdlg32.rc:247
 msgid "&Font:"
-msgstr "&Police :"
+msgstr "&Police :"
 
 #: comdlg32.rc:250
 msgid "Font St&yle:"
-msgstr "St&yle :"
+msgstr "St&yle :"
 
 #: comdlg32.rc:253 comdlg32.rc:430 winecfg.rc:280
 msgid "&Size:"
-msgstr "T&aille :"
+msgstr "T&aille :"
 
 #: comdlg32.rc:260
 msgid "Effects"
@@ -541,7 +541,7 @@ msgstr "&Souligné"
 
 #: comdlg32.rc:263 winecfg.rc:278
 msgid "&Color:"
-msgstr "&Couleur :"
+msgstr "&Couleur :"
 
 #: comdlg32.rc:266
 msgid "Sample"
@@ -553,7 +553,7 @@ msgstr "ÀàCcÇçEeÉéÈèÊêIiÏïÎîLlUuÙù12"
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
-msgstr "Sc&ript :"
+msgstr "Sc&ript :"
 
 #: comdlg32.rc:276
 msgid "Color"
@@ -588,13 +588,11 @@ msgid "&Hue:"
 msgstr "&Teinte :"
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Satur. :"
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Lum. :"
@@ -682,7 +680,7 @@ msgstr "Emplacement :"
 
 #: comdlg32.rc:368 comdlg32.rc:406
 msgid "Comment:"
-msgstr "Commentaire :"
+msgstr "Commentaire :"
 
 #: comdlg32.rc:371
 msgid "Copies"
@@ -690,7 +688,7 @@ msgstr "Copies"
 
 #: comdlg32.rc:372
 msgid "Number of &copies:"
-msgstr "Nombre de copies :"
+msgstr "Nombre de copies :"
 
 #: comdlg32.rc:374
 msgid "C&ollate"
@@ -714,11 +712,11 @@ msgstr "&à :"
 
 #: comdlg32.rc:410 winecfg.rc:286
 msgid "Si&ze:"
-msgstr "Tai&lle :"
+msgstr "Tai&lle :"
 
 #: comdlg32.rc:412
 msgid "&Source:"
-msgstr "Source :"
+msgstr "Source :"
 
 #: comdlg32.rc:417
 msgid "P&ortrait"
@@ -766,15 +764,15 @@ msgstr "&Imprimante..."
 
 #: comdlg32.rc:456
 msgid "Look &in:"
-msgstr "&Rechercher dans"
+msgstr "&Rechercher dans :"
 
 #: comdlg32.rc:462
 msgid "File &name:"
-msgstr "&Nom du fichier :"
+msgstr "&Nom du fichier :"
 
 #: comdlg32.rc:465
 msgid "Files of &type:"
-msgstr "Fichiers du &type :"
+msgstr "Fichiers du &type :"
 
 #: comdlg32.rc:468
 msgid "Open as &read-only"
@@ -2079,7 +2077,7 @@ msgstr "&Déclaration de l'émetteur"
 
 #: cryptui.rc:197
 msgid "&Show:"
-msgstr "&Afficher :"
+msgstr "&Afficher :"
 
 #: cryptui.rc:202
 msgid "&Edit Properties..."
@@ -2103,7 +2101,7 @@ msgstr "&Voir le certificat"
 
 #: cryptui.rc:215
 msgid "Certificate &status:"
-msgstr "É&tat du certificat :"
+msgstr "É&tat du certificat :"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
@@ -2115,11 +2113,11 @@ msgstr "&Infos complémentaires"
 
 #: cryptui.rc:236
 msgid "&Friendly name:"
-msgstr "&Nom convivial :"
+msgstr "&Nom convivial :"
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
-msgstr "&Nom :"
+msgstr "&Description :"
 
 #: cryptui.rc:240
 msgid "Certificate purposes"
@@ -2135,7 +2133,7 @@ msgstr "&Désactiver tous les rôles prévus pour ce certificat"
 
 #: cryptui.rc:245
 msgid "Enable &only the following purposes for this certificate:"
-msgstr "N'activer &que les rôles suivants pour ce certificat :"
+msgstr "N'activer &que les rôles suivants pour ce certificat :"
 
 #: cryptui.rc:250
 msgid "Add &Purpose..."
@@ -2149,7 +2147,7 @@ msgstr "Ajouter un rôle"
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
 msgstr ""
-"Adjoindre l'identifiant d'objet (OIS) au rôle de certificat à ajouter :"
+"Adjoindre l'identifiant d'objet (OIS) au rôle de certificat à ajouter :"
 
 #: cryptui.rc:265 cryptui.rc:66
 msgid "Select Certificate Store"
@@ -2157,7 +2155,7 @@ msgstr "Sélectionnez le magasin de certificats"
 
 #: cryptui.rc:268
 msgid "Select the certificate store you want to use:"
-msgstr "Sélectionnez le magasin de certificats à utiliser :"
+msgstr "Sélectionnez le magasin de certificats à utiliser :"
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
@@ -2197,7 +2195,7 @@ msgstr ""
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
-msgstr "&Nom du fichier :"
+msgstr "&Nom du fichier :"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
@@ -2239,7 +2237,7 @@ msgstr "Sélectionner &automatiquement un magasin de certificats"
 
 #: cryptui.rc:312
 msgid "&Place all certificates in the following store:"
-msgstr "Placer tous les certificats dans le &magasin suivant :"
+msgstr "Placer tous les certificats dans le &magasin suivant :"
 
 #: cryptui.rc:322
 msgid "Completing the Certificate Import Wizard"
@@ -2252,7 +2250,7 @@ msgstr ""
 
 #: cryptui.rc:326 cryptui.rc:440
 msgid "You have specified the following settings:"
-msgstr "Vous avez spécifié les paramètres suivants :"
+msgstr "Vous avez spécifié les paramètres suivants :"
 
 #: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
@@ -2260,7 +2258,7 @@ msgstr "Certificats"
 
 #: cryptui.rc:337
 msgid "I&ntended purpose:"
-msgstr "&Rôle prévu :"
+msgstr "&Rôle prévu :"
 
 #: cryptui.rc:341
 msgid "&Import..."
@@ -2301,7 +2299,7 @@ msgstr ""
 
 #: cryptui.rc:358
 msgid "&Certificate purposes:"
-msgstr "&Rôles du certificat :"
+msgstr "&Rôles du certificat :"
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
@@ -2346,7 +2344,7 @@ msgstr ""
 
 #: cryptui.rc:382
 msgid "Do you wish to export the private key?"
-msgstr "Voulez-vous exporter la clé privée ?"
+msgstr "Voulez-vous exporter la clé privée ?"
 
 #: cryptui.rc:383
 msgid "&Yes, export the private key"
@@ -2358,11 +2356,11 @@ msgstr "&Non, ne pas exporter la clé privée"
 
 #: cryptui.rc:396
 msgid "&Confirm password:"
-msgstr "&Confirmez le mot de passe :"
+msgstr "&Confirmez le mot de passe :"
 
 #: cryptui.rc:404
 msgid "Select the format you want to use:"
-msgstr "Sélectionnez le format à utiliser :"
+msgstr "Sélectionnez le format à utiliser :"
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (.cer)"
@@ -2370,7 +2368,7 @@ msgstr "Binaire codé &DER X.509 (*.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr "Binaire codé Ba&se64 X.509 (.cer) :"
+msgstr "Binaire codé Ba&se64 X.509 (.cer) :"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
@@ -3269,15 +3267,15 @@ msgstr "À &propos d'Internet Explorer"
 
 #: ieframe.rc:87
 msgid "Open URL"
-msgstr "Open URL"
+msgstr "Ouvrir une URL"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr "Spécifiez l'URL que vous désirez ouvrir dans Internet Explorer :"
+msgstr "Spécifiez l'URL à ouvrir dans Internet Explorer"
 
 #: ieframe.rc:91
 msgid "Open:"
-msgstr "Ouvrir :"
+msgstr "Ouvrir :"
 
 #: ieframe.rc:67
 msgctxt "home page"
@@ -3314,7 +3312,7 @@ msgstr "Page d'accueil"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr "Vous pouvez spécifier l'adresse à utiliser comme page d'accueil :"
+msgstr "Vous pouvez choisir l'adresse à utiliser comme page d'accueil."
 
 #: inetcpl.rc:50
 msgid "&Current page"
@@ -6621,11 +6619,11 @@ msgstr "&Enregistrer sous..."
 
 #: msacm32.rc:39
 msgid "&Format:"
-msgstr "&Format :"
+msgstr "&Format :"
 
 #: msacm32.rc:44
 msgid "&Attributes:"
-msgstr "&Attributs :"
+msgstr "&Attributs :"
 
 #: mshtml.rc:37
 msgid "Hyperlink"
@@ -6709,32 +6707,32 @@ msgid ""
 msgstr ""
 "Programme d'installation Windows %s\n"
 "\n"
-"Usage :\n"
+"Usage :\n"
 "msiexec commande {paramètre obligatoire} [paramètre optionnel]\n"
 "\n"
-"Installer un produit :\n"
+"Installer un produit :\n"
 "\t/i {paquet|code_produit} [propriété]\n"
 "\t/package {paquet|code_produit} [propriété]\n"
 "\t/a paquet [propriété]\n"
-"Réparer une installation :\n"
+"Réparer une installation :\n"
 "\t/f[p|o|e|d|c|a|u|m|s|v] {paquet|code_produit}\n"
-"Désinstaller un produit :\n"
+"Désinstaller un produit :\n"
 "\t/uninstall {paquet|code_produit} [propriété]\n"
 "\t/x {paquet|code_produit} [propriété]\n"
-"Publier un produit :\n"
+"Publier un produit :\n"
 "\t/j[u|m] paquet [/t transformation] [/g id_langue]\n"
-"Appliquer un patch :\n"
+"Appliquer un patch :\n"
 "\t/p paquet_correctif [propriété]\n"
 "\t/p paquet_correctif /a paquet [propriété]\n"
 "Modificateurs de journalisation et d'interface utilisateur pour les "
-"commandes ci-dessus :\n"
+"commandes ci-dessus :\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] fichier_journal\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
-"Enregistrer le service MSI :\n"
+"Enregistrer le service MSI :\n"
 "\t/y\n"
-"Annuler l'enregistrement du service MSI :\n"
+"Annuler l'enregistrement du service MSI :\n"
 "\t/z\n"
-"Afficher cette aide :\n"
+"Afficher cette aide :\n"
 "\t/help\n"
 "\t/?\n"
 
@@ -7145,7 +7143,7 @@ msgstr "Coller le &lien"
 
 #: oledlg.rc:83
 msgid "&As:"
-msgstr "&Comme :"
+msgstr "&Comme :"
 
 #: oledlg.rc:90
 msgid "&Display As Icon"
@@ -8343,11 +8341,11 @@ msgstr "&Plus de fenêtres..."
 
 #: wineps.rc:28
 msgid "Paper Si&ze:"
-msgstr "&Taille du papier :"
+msgstr "&Taille du papier :"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr "Recto-verso :"
+msgstr "Recto-verso :"
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
@@ -9325,7 +9323,7 @@ msgstr ""
 "Syntaxe :\n"
 "ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [lecteur:][chemin]"
 "[nomFichier]\n"
-"\t     [/S [/D]]\n"
+"       [/S [/D]]\n"
 "\n"
 "où\n"
 "\n"
@@ -9588,7 +9586,7 @@ msgstr ""
 "le réglage, faites suivre la commande PATH par la nouvelle valeur.\n"
 "\n"
 "Il est aussi possible de modifier le PATH en utilisant la variable\n"
-"d'environnement PATH, par exemple :\n"
+"d'environnement PATH, par exemple :\n"
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
@@ -9634,7 +9632,7 @@ msgstr ""
 "directement)\n"
 "apparaît au début de la ligne quand cmd attend une entrée texte.\n"
 "\n"
-"Les chaînes de caractères suivantes ont une signification spéciale :\n"
+"Les chaînes de caractères suivantes ont une signification spéciale :\n"
 "\n"
 "$$    Signe dollar        $_    Saut de ligne       $b    Barre verticale "
 "(|)\n"
@@ -9700,7 +9698,7 @@ msgstr ""
 "\n"
 "SET sans paramètre affiche l'environnement courant.\n"
 "\n"
-"Pour créer et modifier une variable d'environnement, la syntaxe est :\n"
+"Pour créer et modifier une variable d'environnement, la syntaxe est :\n"
 "\n"
 "SET <variable>=<valeur>\n"
 "\n"
@@ -9757,7 +9755,7 @@ msgid ""
 "The verify flag has no function in Wine.\n"
 msgstr ""
 "VERIFY est utilisé pour positionner, effacer ou tester l'indicateur de "
-"vérification. Les formes suivantes sont correctes :\n"
+"vérification. Les formes suivantes sont correctes :\n"
 "\n"
 "VERIFY ON\tPositionne l'indicateur\n"
 "VERIFY OFF\tEfface l'indicateur\n"
@@ -9966,7 +9964,8 @@ msgstr ""
 "XCOPY\t\tCopie des fichiers ou répertoires sources vers une destination\n"
 "EXIT\t\tQuitte CMD\n"
 "\n"
-"Entrez HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
+"Entrez HELP <commande> pour plus d'informations sur les commandes ci-"
+"dessus.\n"
 
 #: cmd.rc:291
 msgid "Are you sure"
@@ -10129,7 +10128,7 @@ msgstr "Explorateur de Wine"
 
 #: explorer.rc:29
 msgid "Location:"
-msgstr "Emplacement :"
+msgstr "Emplacement :"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -10426,7 +10425,7 @@ msgstr "Mise en page"
 
 #: notepad.rc:99
 msgid "&Header:"
-msgstr "&En-tête :"
+msgstr "&En-tête :"
 
 #: notepad.rc:101
 msgid "&Footer:"
@@ -10446,7 +10445,7 @@ msgstr "&Haut :"
 
 #: notepad.rc:123
 msgid "Encoding:"
-msgstr "Codage"
+msgstr "Codage :"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -10658,7 +10657,7 @@ msgstr "Interface"
 
 #: oleview.rc:183
 msgid "IID:"
-msgstr "IID :"
+msgstr "IID :"
 
 #: oleview.rc:186
 msgid "&View Type Info"
@@ -10666,7 +10665,7 @@ msgstr "&Afficher les informations de type"
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
-msgstr "IPersist Interface Viewer"
+msgstr "Visionneur d'interface IPersist"
 
 #: oleview.rc:194 oleview.rc:206
 msgid "Class Name:"
@@ -10674,7 +10673,7 @@ msgstr "Nom de classe :"
 
 #: oleview.rc:196 oleview.rc:208
 msgid "CLSID:"
-msgstr "CLSID :"
+msgstr "CLSID :"
 
 #: oleview.rc:203
 msgid "IPersistStream Interface Viewer"
@@ -11096,7 +11095,7 @@ msgid ""
 "REG [ ADD | DELETE | QUERY ]\n"
 "REG command /?\n"
 msgstr ""
-"La syntaxe de cette commande est :\n"
+"La syntaxe de cette commande est :\n"
 "\n"
 "REG [ ADD | DELETE | QUERY ]\n"
 "REG commande /?\n"
@@ -11799,7 +11798,7 @@ msgstr "Gestionnaire des tâches"
 
 #: taskmgr.rc:355
 msgid "&New Task..."
-msgstr "&Nouvelle tâche"
+msgstr "&Nouvelle tâche..."
 
 #: taskmgr.rc:368
 msgid "&Show processes from all users"
@@ -12557,11 +12556,11 @@ msgstr "Informations d'enregistrement de Windows"
 
 #: winecfg.rc:135
 msgid "&Owner:"
-msgstr "&Propriétaire:"
+msgstr "&Propriétaire :"
 
 #: winecfg.rc:137
 msgid "Organi&zation:"
-msgstr "&Organisation:"
+msgstr "&Organisation :"
 
 #: winecfg.rc:145
 msgid "Application settings"
@@ -12588,7 +12587,7 @@ msgstr "&Supprimer une application"
 
 #: winecfg.rc:152
 msgid "&Windows Version:"
-msgstr "Version de &Windows :"
+msgstr "Version de &Windows :"
 
 #: winecfg.rc:160
 msgid "Window settings"
@@ -12608,11 +12607,11 @@ msgstr "Permettre au gestionnaire de fenêtres de &contrôler les fenêtres"
 
 #: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
-msgstr "Émuler un bureau virtuel"
+msgstr "É&muler un bureau virtuel"
 
 #: winecfg.rc:166
 msgid "Desktop &size:"
-msgstr "Taille du bureau:"
+msgstr "&Taille du bureau :"
 
 #: winecfg.rc:171
 msgid "Screen resolution"
@@ -12639,7 +12638,7 @@ msgstr ""
 
 #: winecfg.rc:185
 msgid "&New override for library:"
-msgstr "&Nouveau remplacement pour :"
+msgstr "&Nouveau remplacement pour :"
 
 #: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
@@ -12647,11 +12646,11 @@ msgstr "A&jouter"
 
 #: winecfg.rc:188
 msgid "Existing &overrides:"
-msgstr "Remplacements existants :"
+msgstr "Remplacements existants :"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "&Modifier"
+msgstr "&Modifier..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12703,11 +12702,11 @@ msgstr "&Ajouter..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "&Détection automatique..."
+msgstr "&Détection automatique"
 
 #: winecfg.rc:232
 msgid "&Path:"
-msgstr "&Chemin :"
+msgstr "&Chemin :"
 
 #: winecfg.rc:239 winecfg.rc:35
 msgid "Show &Advanced"
@@ -12715,7 +12714,7 @@ msgstr "Montrer les paramètres a&vancés"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr "&Périphérique :"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12723,11 +12722,11 @@ msgstr "&Parcourir..."
 
 #: winecfg.rc:244
 msgid "&Label:"
-msgstr "É&tiquette :"
+msgstr "É&tiquette :"
 
 #: winecfg.rc:246
 msgid "S&erial:"
-msgstr "N° de &série :"
+msgstr "N° de &série :"
 
 #: winecfg.rc:249
 msgid "Show &dot files"
@@ -12767,7 +12766,7 @@ msgstr "Apparence"
 
 #: winecfg.rc:275
 msgid "&Theme:"
-msgstr "&Thème :"
+msgstr "&Thème :"
 
 #: winecfg.rc:277
 msgid "&Install theme..."
@@ -12775,11 +12774,11 @@ msgstr "&Installer un thème..."
 
 #: winecfg.rc:282
 msgid "It&em:"
-msgstr "Élé&ment :"
+msgstr "Élé&ment :"
 
 #: winecfg.rc:284
 msgid "C&olor:"
-msgstr "Couleu&r :"
+msgstr "Couleu&r :"
 
 #: winecfg.rc:290
 msgid "Folders"
@@ -12787,7 +12786,7 @@ msgstr "Dossiers"
 
 #: winecfg.rc:293
 msgid "&Link to:"
-msgstr "&Lier à :"
+msgstr "&Lier à :"
 
 #: winecfg.rc:31
 msgid "Libraries"
@@ -12831,7 +12830,7 @@ msgstr "Configuration de Wine"
 
 #: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
-msgstr "Fichiers de thèmes (*.msstyles; *.theme)"
+msgstr "Fichiers de thèmes (*.msstyles ; *.theme)"
 
 #: winecfg.rc:44
 msgid "Select a theme file"
@@ -13151,7 +13150,7 @@ msgstr "Historique des commandes"
 
 #: wineconsole.rc:73
 msgid "&Number of recalled commands :"
-msgstr "&Nombre de commandes mémorisées :"
+msgstr "&Nombre de commandes mémorisées :"
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
@@ -13175,11 +13174,11 @@ msgstr "Taille mémoire tampon écran"
 
 #: wineconsole.rc:101
 msgid "&Width :"
-msgstr "&Largeur :"
+msgstr "&Largeur :"
 
 #: wineconsole.rc:104
 msgid "&Height :"
-msgstr "Ha&uteur :"
+msgstr "Ha&uteur :"
 
 #: wineconsole.rc:108
 msgid "Window size"
@@ -13187,11 +13186,11 @@ msgstr "Taille de la fenêtre"
 
 #: wineconsole.rc:109
 msgid "W&idth :"
-msgstr "La&rgeur :"
+msgstr "La&rgeur :"
 
 #: wineconsole.rc:112
 msgid "H&eight :"
-msgstr "Hau&teur :"
+msgstr "Hau&teur :"
 
 #: wineconsole.rc:116
 msgid "End of program"
@@ -13296,10 +13295,10 @@ msgid ""
 "Options:\n"
 msgstr ""
 "\n"
-"Usage :\n"
+"Usage :\n"
 "  wineconsole [options] <commande>\n"
 "\n"
-"Options :\n"
+"Options :\n"
 
 #: wineconsole.rc:49
 msgid ""
@@ -13659,7 +13658,7 @@ msgstr "Félicitations !"
 
 #: winemine.rc:76
 msgid "Please enter your name"
-msgstr "Veuillez saisir votre nom :"
+msgstr "Veuillez saisir votre nom"
 
 #: winemine.rc:84
 msgid "Custom Game"
