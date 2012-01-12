@@ -5578,6 +5578,16 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
     if (!(surface->rb_multisample))
         location &= ~SFLAG_INRB_MULTISAMPLE;
 
+    if (((surface->flags & SFLAG_INTEXTURE) && !(location & SFLAG_INTEXTURE))
+            || (!(surface->flags & SFLAG_INTEXTURE) && (location & SFLAG_INTEXTURE)))
+    {
+        if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
+        {
+            TRACE("Passing to container.\n");
+            wined3d_texture_set_dirty(surface->container.u.texture, TRUE);
+        }
+    }
+
     surface->ds_current_size.cx = w;
     surface->ds_current_size.cy = h;
     surface->flags &= ~SFLAG_LOCATIONS;
