@@ -744,6 +744,51 @@ struct test_effect_parameter_value_result test_effect_parameter_value_result_int
     {"i44_2", {"i44_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 4, 2, 0, 0, 0, 128}, 699},
 };
 
+/*
+ * fxc.exe /Tfx_2_0
+ */
+#if 0
+string s = "test";
+string s_2[2] = {"test1", "test2"};
+texture2D tex;
+Vertexshader v;
+Vertexshader v_2[2];
+Pixelshader p;
+Pixelshader p_2[2];
+technique t { pass p { } }
+#endif
+static const DWORD test_effect_parameter_value_blob_object[] =
+{
+0xfeff0901, 0x00000100, 0x00000000, 0x00000004, 0x00000004, 0x0000001c, 0x00000000, 0x00000000,
+0x00000001, 0x00000002, 0x00000073, 0x00000004, 0x00000004, 0x00000040, 0x00000000, 0x00000002,
+0x00000002, 0x00000003, 0x00000004, 0x00325f73, 0x00000007, 0x00000004, 0x00000060, 0x00000000,
+0x00000000, 0x00000004, 0x00000004, 0x00786574, 0x00000010, 0x00000004, 0x00000080, 0x00000000,
+0x00000000, 0x00000005, 0x00000002, 0x00000076, 0x00000010, 0x00000004, 0x000000a4, 0x00000000,
+0x00000002, 0x00000006, 0x00000007, 0x00000004, 0x00325f76, 0x0000000f, 0x00000004, 0x000000c4,
+0x00000000, 0x00000000, 0x00000008, 0x00000002, 0x00000070, 0x0000000f, 0x00000004, 0x000000e8,
+0x00000000, 0x00000002, 0x00000009, 0x0000000a, 0x00000004, 0x00325f70, 0x00000002, 0x00000070,
+0x00000002, 0x00000074, 0x00000007, 0x00000001, 0x00000007, 0x0000000b, 0x00000004, 0x00000018,
+0x00000000, 0x00000000, 0x00000024, 0x00000038, 0x00000000, 0x00000000, 0x00000048, 0x0000005c,
+0x00000000, 0x00000000, 0x00000068, 0x0000007c, 0x00000000, 0x00000000, 0x00000088, 0x0000009c,
+0x00000000, 0x00000000, 0x000000ac, 0x000000c0, 0x00000000, 0x00000000, 0x000000cc, 0x000000e0,
+0x00000000, 0x00000000, 0x000000f8, 0x00000000, 0x00000001, 0x000000f0, 0x00000000, 0x00000000,
+0x0000000a, 0x00000000, 0x00000009, 0x00000000, 0x0000000a, 0x00000000, 0x00000008, 0x00000000,
+0x00000006, 0x00000000, 0x00000007, 0x00000000, 0x00000005, 0x00000000, 0x00000004, 0x00000000,
+0x00000002, 0x00000006, 0x74736574, 0x00000031, 0x00000003, 0x00000006, 0x74736574, 0x00000032,
+0x00000001, 0x00000005, 0x74736574, 0x00000000,
+};
+
+struct test_effect_parameter_value_result test_effect_parameter_value_result_object[] =
+{
+    {"s",     {"s",     NULL, D3DXPC_OBJECT, D3DXPT_STRING,       0, 0, 0, 0, 0, 0, sizeof(LPCSTR)},                      0},
+    {"s_2",   {"s_2",   NULL, D3DXPC_OBJECT, D3DXPT_STRING,       0, 0, 2, 0, 0, 0, 2 * sizeof(LPCSTR)},                  0},
+    {"tex",   {"tex",   NULL, D3DXPC_OBJECT, D3DXPT_TEXTURE2D,    0, 0, 0, 0, 0, 0, sizeof(LPDIRECT3DBASETEXTURE9)},      0},
+    {"v",     {"v",     NULL, D3DXPC_OBJECT, D3DXPT_VERTEXSHADER, 0, 0, 0, 0, 0, 0, sizeof(LPDIRECT3DVERTEXSHADER9)},     0},
+    {"v_2",   {"v_2",   NULL, D3DXPC_OBJECT, D3DXPT_VERTEXSHADER, 0, 0, 2, 0, 0, 0, 2 * sizeof(LPDIRECT3DVERTEXSHADER9)}, 0},
+    {"p",     {"p",     NULL, D3DXPC_OBJECT, D3DXPT_PIXELSHADER,  0, 0, 0, 0, 0, 0, sizeof(LPDIRECT3DPIXELSHADER9)},      0},
+    {"p_2",   {"p_2",   NULL, D3DXPC_OBJECT, D3DXPT_PIXELSHADER,  0, 0, 2, 0, 0, 0, 2 * sizeof(LPDIRECT3DPIXELSHADER9)},  0},
+};
+
 #define ADD_PARAMETER_VALUE(x) {\
     test_effect_parameter_value_blob_ ## x,\
     sizeof(test_effect_parameter_value_blob_ ## x),\
@@ -762,6 +807,7 @@ test_effect_parameter_value_data[] =
 {
     ADD_PARAMETER_VALUE(float),
     ADD_PARAMETER_VALUE(int),
+    ADD_PARAMETER_VALUE(object),
 };
 
 #undef ADD_PARAMETER_VALUE
@@ -797,6 +843,31 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
         {
             ok(value[l] == 0xabababab, "%u - %s: GetValue value[%u] failed, got %#x, expected %#x\n",
                     i, res_full_name, l, value[l], 0xabababab);
+        }
+    }
+    else if (res_desc->Class == D3DXPC_OBJECT)
+    {
+        switch (res_desc->Type)
+        {
+            case D3DXPT_PIXELSHADER:
+            case D3DXPT_VERTEXSHADER:
+            case D3DXPT_TEXTURE2D:
+                ok(hr == D3D_OK, "%u - %s: GetValue failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+
+                for (l = 0; l < (res_desc->Elements ? res_desc->Elements : 1); ++l)
+                {
+                    IUnknown *unk = *((IUnknown **)value + l);
+                    if (unk) IUnknown_Release(unk);
+                }
+                break;
+
+            case D3DXPT_STRING:
+                ok(hr == D3D_OK, "%u - %s: GetValue failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                break;
+
+            default:
+                ok(0, "Type is %u, this should not happen!\n", res_desc->Type);
+                break;
         }
     }
     else
