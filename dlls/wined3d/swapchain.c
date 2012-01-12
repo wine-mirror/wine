@@ -170,7 +170,7 @@ HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapc
                 wine_dbgstr_rect(&dst_rect));
     }
 
-    return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, 0, NULL, WINED3DTEXF_POINT);
+    return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
 }
 
 HRESULT CDECL wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
@@ -476,9 +476,9 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
          * which is exactly what we want :-)
          */
         if (swapchain->desc.windowed)
-            MapWindowPoints(NULL, swapchain->win_handle, (LPPOINT)&destRect, 2);
+            MapWindowPoints(NULL, swapchain->win_handle, (POINT *)&destRect, 2);
         wined3d_surface_blt(swapchain->back_buffers[0], &destRect,
-                &cursor, NULL, WINEDDBLT_KEYSRC, NULL, WINED3DTEXF_POINT);
+                &cursor, NULL, WINEDDBLT_KEYSRC, NULL, WINED3D_TEXF_POINT);
     }
 
     if (swapchain->device->logo_surface)
@@ -488,7 +488,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
 
         /* Blit the logo into the upper left corner of the drawable. */
         wined3d_surface_blt(swapchain->back_buffers[0], &rect, src_surface, &rect,
-                 WINEDDBLT_KEYSRC, NULL, WINED3DTEXF_POINT);
+                 WINEDDBLT_KEYSRC, NULL, WINED3D_TEXF_POINT);
     }
 
     TRACE("Presenting HDC %p.\n", context->hdc);

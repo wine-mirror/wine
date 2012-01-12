@@ -255,7 +255,7 @@ static HRESULT WINAPI IDirect3DTexture9Impl_SetAutoGenFilterType(IDirect3DTextur
     TRACE("iface %p, filter_type %#x.\n", iface, FilterType);
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_set_autogen_filter_type(This->wined3d_texture, (WINED3DTEXTUREFILTERTYPE)FilterType);
+    hr = wined3d_texture_set_autogen_filter_type(This->wined3d_texture, (enum wined3d_texture_filter_type)FilterType);
     wined3d_mutex_unlock();
 
     return hr;

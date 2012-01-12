@@ -4470,12 +4470,12 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
 
     for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
     {
-        if (state->sampler_states[i][WINED3D_SAMP_MIN_FILTER] == WINED3DTEXF_NONE)
+        if (state->sampler_states[i][WINED3D_SAMP_MIN_FILTER] == WINED3D_TEXF_NONE)
         {
             WARN("Sampler state %u has minfilter D3DTEXF_NONE, returning D3DERR_UNSUPPORTEDTEXTUREFILTER\n", i);
             return WINED3DERR_UNSUPPORTEDTEXTUREFILTER;
         }
-        if (state->sampler_states[i][WINED3D_SAMP_MAG_FILTER] == WINED3DTEXF_NONE)
+        if (state->sampler_states[i][WINED3D_SAMP_MAG_FILTER] == WINED3D_TEXF_NONE)
         {
             WARN("Sampler state %u has magfilter D3DTEXF_NONE, returning D3DERR_UNSUPPORTEDTEXTUREFILTER\n", i);
             return WINED3DERR_UNSUPPORTEDTEXTUREFILTER;
@@ -4484,18 +4484,18 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
         texture = state->textures[i];
         if (!texture || texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING) continue;
 
-        if (state->sampler_states[i][WINED3D_SAMP_MAG_FILTER] != WINED3DTEXF_POINT)
+        if (state->sampler_states[i][WINED3D_SAMP_MAG_FILTER] != WINED3D_TEXF_POINT)
         {
             WARN("Non-filterable texture and mag filter enabled on samper %u, returning E_FAIL\n", i);
             return E_FAIL;
         }
-        if (state->sampler_states[i][WINED3D_SAMP_MIN_FILTER] != WINED3DTEXF_POINT)
+        if (state->sampler_states[i][WINED3D_SAMP_MIN_FILTER] != WINED3D_TEXF_POINT)
         {
             WARN("Non-filterable texture and min filter enabled on samper %u, returning E_FAIL\n", i);
             return E_FAIL;
         }
-        if (state->sampler_states[i][WINED3D_SAMP_MIP_FILTER] != WINED3DTEXF_NONE
-                && state->sampler_states[i][WINED3D_SAMP_MIP_FILTER] != WINED3DTEXF_POINT)
+        if (state->sampler_states[i][WINED3D_SAMP_MIP_FILTER] != WINED3D_TEXF_NONE
+                && state->sampler_states[i][WINED3D_SAMP_MIP_FILTER] != WINED3D_TEXF_POINT)
         {
             WARN("Non-filterable texture and mip filter enabled on samper %u, returning E_FAIL\n", i);
             return E_FAIL;

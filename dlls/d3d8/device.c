@@ -976,7 +976,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
     {
         RECT rect = {0, 0, src_w, src_h};
         wined3d_surface_blt(Dest->wined3d_surface, &rect,
-                Source->wined3d_surface, &rect, 0, NULL, WINED3DTEXF_POINT);
+                Source->wined3d_surface, &rect, 0, NULL, WINED3D_TEXF_POINT);
     }
     else
     {
@@ -992,7 +992,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
                         pDestPoints[i].x + w, pDestPoints[i].y + h};
 
                 wined3d_surface_blt(Dest->wined3d_surface, &dst_rect,
-                        Source->wined3d_surface, &pSourceRects[i], 0, NULL, WINED3DTEXF_POINT);
+                        Source->wined3d_surface, &pSourceRects[i], 0, NULL, WINED3D_TEXF_POINT);
             }
         }
         else
@@ -1004,7 +1004,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
                 RECT dst_rect = {0, 0, w, h};
 
                 wined3d_surface_blt(Dest->wined3d_surface, &dst_rect,
-                        Source->wined3d_surface, &pSourceRects[i], 0, NULL, WINED3DTEXF_POINT);
+                        Source->wined3d_surface, &pSourceRects[i], 0, NULL, WINED3D_TEXF_POINT);
             }
         }
     }

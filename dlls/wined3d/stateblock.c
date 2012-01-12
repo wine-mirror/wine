@@ -1282,9 +1282,9 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
         state->sampler_states[i][WINED3D_SAMP_ADDRESS_V] = WINED3D_TADDRESS_WRAP;
         state->sampler_states[i][WINED3D_SAMP_ADDRESS_W] = WINED3D_TADDRESS_WRAP;
         state->sampler_states[i][WINED3D_SAMP_BORDER_COLOR] = 0;
-        state->sampler_states[i][WINED3D_SAMP_MAG_FILTER] = WINED3DTEXF_POINT;
-        state->sampler_states[i][WINED3D_SAMP_MIN_FILTER] = WINED3DTEXF_POINT;
-        state->sampler_states[i][WINED3D_SAMP_MIP_FILTER] = WINED3DTEXF_NONE;
+        state->sampler_states[i][WINED3D_SAMP_MAG_FILTER] = WINED3D_TEXF_POINT;
+        state->sampler_states[i][WINED3D_SAMP_MIN_FILTER] = WINED3D_TEXF_POINT;
+        state->sampler_states[i][WINED3D_SAMP_MIP_FILTER] = WINED3D_TEXF_NONE;
         state->sampler_states[i][WINED3D_SAMP_MIPMAP_LOD_BIAS] = 0;
         state->sampler_states[i][WINED3D_SAMP_MAX_MIP_LEVEL] = 0;
         state->sampler_states[i][WINED3D_SAMP_MAX_ANISOTROPY] = 1;

@@ -73,7 +73,7 @@ static HRESULT ddraw_surface_update_frontbuffer(IDirectDrawSurfaceImpl *surface,
             return DD_OK;
 
         return wined3d_surface_blt(surface->ddraw->wined3d_frontbuffer, rect,
-                surface->wined3d_surface, rect, 0, NULL, WINED3DTEXF_POINT);
+                surface->wined3d_surface, rect, 0, NULL, WINED3D_TEXF_POINT);
     }
 
     if (FAILED(hr = wined3d_surface_getdc(surface->wined3d_surface, &surface_dc)))
@@ -1269,7 +1269,7 @@ static HRESULT WINAPI ddraw_surface1_Flip(IDirectDrawSurface *iface, IDirectDraw
 
 static HRESULT ddraw_surface_blt_clipped(IDirectDrawSurfaceImpl *dst_surface, const RECT *dst_rect_in,
         IDirectDrawSurfaceImpl *src_surface, const RECT *src_rect_in, DWORD flags,
-        const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
+        const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_surface *wined3d_src_surface = src_surface ? src_surface->wined3d_surface : NULL;
     RECT src_rect, dst_rect;
@@ -1441,7 +1441,7 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
      * surfaces. So far no blitting operations using surfaces in the bltfx
      * struct are supported anyway. */
     hr = ddraw_surface_blt_clipped(This, DestRect, Src, SrcRect,
-            Flags, (WINEDDBLTFX *)DDBltFx, WINED3DTEXF_LINEAR);
+            Flags, (WINEDDBLTFX *)DDBltFx, WINED3D_TEXF_LINEAR);
 
     wined3d_mutex_unlock();
     switch(hr)
@@ -3880,7 +3880,7 @@ static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD d
         hr = ddraw_surface_update_frontbuffer(src, rsrc, TRUE);
     if (SUCCEEDED(hr))
         hr = wined3d_surface_blt(This->wined3d_surface, &dst_rect,
-                src->wined3d_surface, rsrc, flags, NULL, WINED3DTEXF_POINT);
+                src->wined3d_surface, rsrc, flags, NULL, WINED3D_TEXF_POINT);
     if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
         hr = ddraw_surface_update_frontbuffer(This, &dst_rect, FALSE);
     wined3d_mutex_unlock();

@@ -53,7 +53,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
 
     texture->layer_count = layer_count;
     texture->level_count = level_count;
-    texture->filter_type = (usage & WINED3DUSAGE_AUTOGENMIPMAP) ? WINED3DTEXF_LINEAR : WINED3DTEXF_NONE;
+    texture->filter_type = (usage & WINED3DUSAGE_AUTOGENMIPMAP) ? WINED3D_TEXF_LINEAR : WINED3D_TEXF_NONE;
     texture->lod = 0;
     texture->texture_rgb.dirty = TRUE;
     texture->texture_srgb.dirty = TRUE;
@@ -171,9 +171,9 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
         gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_WRAP;
         gl_tex->states[WINED3DTEXSTA_ADDRESSW] = WINED3D_TADDRESS_WRAP;
         gl_tex->states[WINED3DTEXSTA_BORDERCOLOR] = 0;
-        gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_LINEAR;
-        gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT; /* GL_NEAREST_MIPMAP_LINEAR */
-        gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_LINEAR; /* GL_NEAREST_MIPMAP_LINEAR */
+        gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_LINEAR;
+        gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT; /* GL_NEAREST_MIPMAP_LINEAR */
+        gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_LINEAR; /* GL_NEAREST_MIPMAP_LINEAR */
         gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL] = 0;
         gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = 1;
         if (context->gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
@@ -315,11 +315,11 @@ void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
         GLint gl_value;
 
         state = sampler_states[WINED3D_SAMP_MAG_FILTER];
-        if (state > WINED3DTEXF_ANISOTROPIC)
+        if (state > WINED3D_TEXF_ANISOTROPIC)
             FIXME("Unrecognized or unsupported MAGFILTER* value %d.\n", state);
 
         gl_value = wined3d_gl_mag_filter(texture->mag_lookup,
-                min(max(state, WINED3DTEXF_POINT), WINED3DTEXF_LINEAR));
+                min(max(state, WINED3D_TEXF_POINT), WINED3D_TEXF_LINEAR));
         TRACE("ValueMAG=%#x setting MAGFILTER to %#x.\n", state, gl_value);
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, gl_value);
 
@@ -336,16 +336,16 @@ void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
         gl_tex->states[WINED3DTEXSTA_MINFILTER] = sampler_states[WINED3D_SAMP_MIN_FILTER];
         gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL] = sampler_states[WINED3D_SAMP_MAX_MIP_LEVEL];
 
-        if (gl_tex->states[WINED3DTEXSTA_MINFILTER] > WINED3DTEXF_ANISOTROPIC
-            || gl_tex->states[WINED3DTEXSTA_MIPFILTER] > WINED3DTEXF_ANISOTROPIC)
+        if (gl_tex->states[WINED3DTEXSTA_MINFILTER] > WINED3D_TEXF_ANISOTROPIC
+            || gl_tex->states[WINED3DTEXSTA_MIPFILTER] > WINED3D_TEXF_ANISOTROPIC)
         {
             FIXME("Unrecognized or unsupported MIN_FILTER value %#x MIP_FILTER value %#x.\n",
                   gl_tex->states[WINED3DTEXSTA_MINFILTER],
                   gl_tex->states[WINED3DTEXSTA_MIPFILTER]);
         }
         gl_value = wined3d_gl_min_mip_filter(texture->min_mip_lookup,
-                min(max(sampler_states[WINED3D_SAMP_MIN_FILTER], WINED3DTEXF_POINT), WINED3DTEXF_LINEAR),
-                min(max(sampler_states[WINED3D_SAMP_MIP_FILTER], WINED3DTEXF_NONE), WINED3DTEXF_LINEAR));
+                min(max(sampler_states[WINED3D_SAMP_MIN_FILTER], WINED3D_TEXF_POINT), WINED3D_TEXF_LINEAR),
+                min(max(sampler_states[WINED3D_SAMP_MIP_FILTER], WINED3D_TEXF_NONE), WINED3D_TEXF_LINEAR));
 
         TRACE("ValueMIN=%#x, ValueMIP=%#x, setting MINFILTER to %#x.\n",
               sampler_states[WINED3D_SAMP_MIN_FILTER],
@@ -355,7 +355,7 @@ void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
 
         if (!cond_np2)
         {
-            if (gl_tex->states[WINED3DTEXSTA_MIPFILTER] == WINED3DTEXF_NONE)
+            if (gl_tex->states[WINED3DTEXSTA_MIPFILTER] == WINED3D_TEXF_NONE)
                 gl_value = texture->lod;
             else if (gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL] >= texture->level_count)
                 gl_value = texture->level_count - 1;
@@ -373,9 +373,9 @@ void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
         }
     }
 
-    if ((gl_tex->states[WINED3DTEXSTA_MAGFILTER] != WINED3DTEXF_ANISOTROPIC
-         && gl_tex->states[WINED3DTEXSTA_MINFILTER] != WINED3DTEXF_ANISOTROPIC
-         && gl_tex->states[WINED3DTEXSTA_MIPFILTER] != WINED3DTEXF_ANISOTROPIC)
+    if ((gl_tex->states[WINED3DTEXSTA_MAGFILTER] != WINED3D_TEXF_ANISOTROPIC
+            && gl_tex->states[WINED3DTEXSTA_MINFILTER] != WINED3D_TEXF_ANISOTROPIC
+            && gl_tex->states[WINED3DTEXSTA_MIPFILTER] != WINED3D_TEXF_ANISOTROPIC)
             || cond_np2)
         aniso = 1;
     else
@@ -524,7 +524,7 @@ DWORD CDECL wined3d_texture_get_level_count(const struct wined3d_texture *textur
 }
 
 HRESULT CDECL wined3d_texture_set_autogen_filter_type(struct wined3d_texture *texture,
-        WINED3DTEXTUREFILTERTYPE filter_type)
+        enum wined3d_texture_filter_type filter_type)
 {
     FIXME("texture %p, filter_type %s stub!\n", texture, debug_d3dtexturefiltertype(filter_type));
 
@@ -539,7 +539,7 @@ HRESULT CDECL wined3d_texture_set_autogen_filter_type(struct wined3d_texture *te
     return WINED3D_OK;
 }
 
-WINED3DTEXTUREFILTERTYPE CDECL wined3d_texture_get_autogen_filter_type(const struct wined3d_texture *texture)
+enum wined3d_texture_filter_type CDECL wined3d_texture_get_autogen_filter_type(const struct wined3d_texture *texture)
 {
     TRACE("texture %p.\n", texture);
 
@@ -637,9 +637,9 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
             LEAVE_GL();
             gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3D_TADDRESS_CLAMP;
             gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_CLAMP;
-            gl_tex->states[WINED3DTEXSTA_MAGFILTER]     = WINED3DTEXF_POINT;
-            gl_tex->states[WINED3DTEXSTA_MINFILTER]     = WINED3DTEXF_POINT;
-            gl_tex->states[WINED3DTEXSTA_MIPFILTER]     = WINED3DTEXF_NONE;
+            gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_POINT;
+            gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT;
+            gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_NONE;
         }
     }
 

@@ -658,18 +658,17 @@ enum wined3d_cubemap_face
     WINED3D_CUBEMAP_FACE_NEGATIVE_Z         = 5,
 };
 
-typedef enum _WINED3DTEXTUREFILTERTYPE
+enum wined3d_texture_filter_type
 {
-    WINED3DTEXF_NONE                        = 0,
-    WINED3DTEXF_POINT                       = 1,
-    WINED3DTEXF_LINEAR                      = 2,
-    WINED3DTEXF_ANISOTROPIC                 = 3,
-    WINED3DTEXF_FLATCUBIC                   = 4,
-    WINED3DTEXF_GAUSSIANCUBIC               = 5,
-    WINED3DTEXF_PYRAMIDALQUAD               = 6,
-    WINED3DTEXF_GAUSSIANQUAD                = 7,
-    WINED3DTEXF_FORCE_DWORD                 = 0x7fffffff
-} WINED3DTEXTUREFILTERTYPE;
+    WINED3D_TEXF_NONE                       = 0,
+    WINED3D_TEXF_POINT                      = 1,
+    WINED3D_TEXF_LINEAR                     = 2,
+    WINED3D_TEXF_ANISOTROPIC                = 3,
+    WINED3D_TEXF_FLAT_CUBIC                 = 4,
+    WINED3D_TEXF_GAUSSIAN_CUBIC             = 5,
+    WINED3D_TEXF_PYRAMIDAL_QUAD             = 6,
+    WINED3D_TEXF_GAUSSIAN_QUAD              = 7,
+};
 
 typedef enum _WINED3DRESOURCETYPE
 {
@@ -2300,7 +2299,7 @@ ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
 
 HRESULT __cdecl wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
-        const WINEDDBLTFX *blt_fx, WINED3DTEXTUREFILTERTYPE filter);
+        const WINEDDBLTFX *blt_fx, enum wined3d_texture_filter_type filter);
 HRESULT __cdecl wined3d_surface_create(struct wined3d_device *device, UINT width, UINT height,
         enum wined3d_format_id format_id, UINT level, DWORD usage, WINED3DPOOL pool,
         enum wined3d_multisample_type multisample_type, DWORD multisample_quality, WINED3DSURFTYPE surface_type,
@@ -2379,7 +2378,7 @@ HRESULT __cdecl wined3d_texture_create_cube(struct wined3d_device *device, UINT 
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);
 ULONG __cdecl wined3d_texture_decref(struct wined3d_texture *texture);
 void __cdecl wined3d_texture_generate_mipmaps(struct wined3d_texture *texture);
-WINED3DTEXTUREFILTERTYPE __cdecl wined3d_texture_get_autogen_filter_type(const struct wined3d_texture *texture);
+enum wined3d_texture_filter_type __cdecl wined3d_texture_get_autogen_filter_type(const struct wined3d_texture *texture);
 DWORD __cdecl wined3d_texture_get_level_count(const struct wined3d_texture *texture);
 DWORD __cdecl wined3d_texture_get_lod(const struct wined3d_texture *texture);
 void * __cdecl wined3d_texture_get_parent(const struct wined3d_texture *texture);
@@ -2390,7 +2389,7 @@ struct wined3d_resource * __cdecl wined3d_texture_get_sub_resource(struct wined3
 ULONG __cdecl wined3d_texture_incref(struct wined3d_texture *texture);
 void __cdecl wined3d_texture_preload(struct wined3d_texture *texture);
 HRESULT __cdecl wined3d_texture_set_autogen_filter_type(struct wined3d_texture *texture,
-        WINED3DTEXTUREFILTERTYPE filter_type);
+        enum wined3d_texture_filter_type filter_type);
 DWORD __cdecl wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod);
 DWORD __cdecl wined3d_texture_set_priority(struct wined3d_texture *texture, DWORD priority);
 

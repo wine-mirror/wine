@@ -2354,16 +2354,16 @@ static HRESULT IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
     {
         case D3DRENDERSTATE_TEXTUREMAG:
         {
-            WINED3DTEXTUREFILTERTYPE tex_mag;
+            enum wined3d_texture_filter_type tex_mag;
 
             hr = wined3d_device_get_sampler_state(This->wined3d_device, 0, WINED3D_SAMP_MAG_FILTER, &tex_mag);
 
             switch (tex_mag)
             {
-                case WINED3DTEXF_POINT:
+                case WINED3D_TEXF_POINT:
                     *Value = D3DFILTER_NEAREST;
                     break;
-                case WINED3DTEXF_LINEAR:
+                case WINED3D_TEXF_LINEAR:
                     *Value = D3DFILTER_LINEAR;
                     break;
                 default:
@@ -2375,8 +2375,8 @@ static HRESULT IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
 
         case D3DRENDERSTATE_TEXTUREMIN:
         {
-            WINED3DTEXTUREFILTERTYPE tex_min;
-            WINED3DTEXTUREFILTERTYPE tex_mip;
+            enum wined3d_texture_filter_type tex_min;
+            enum wined3d_texture_filter_type tex_mip;
 
             hr = wined3d_device_get_sampler_state(This->wined3d_device,
                     0, WINED3D_SAMP_MIN_FILTER, &tex_min);
@@ -2390,16 +2390,16 @@ static HRESULT IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
 
             switch (tex_min)
             {
-                case WINED3DTEXF_POINT:
+                case WINED3D_TEXF_POINT:
                     switch (tex_mip)
                     {
-                        case WINED3DTEXF_NONE:
+                        case WINED3D_TEXF_NONE:
                             *Value = D3DFILTER_NEAREST;
                             break;
-                        case WINED3DTEXF_POINT:
+                        case WINED3D_TEXF_POINT:
                             *Value = D3DFILTER_MIPNEAREST;
                             break;
-                        case WINED3DTEXF_LINEAR:
+                        case WINED3D_TEXF_LINEAR:
                             *Value = D3DFILTER_LINEARMIPNEAREST;
                             break;
                         default:
@@ -2408,16 +2408,16 @@ static HRESULT IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
                             break;
                     }
                     break;
-                case WINED3DTEXF_LINEAR:
+                case WINED3D_TEXF_LINEAR:
                     switch (tex_mip)
                     {
-                        case WINED3DTEXF_NONE:
+                        case WINED3D_TEXF_NONE:
                             *Value = D3DFILTER_LINEAR;
                             break;
-                        case WINED3DTEXF_POINT:
+                        case WINED3D_TEXF_POINT:
                             *Value = D3DFILTER_MIPLINEAR;
                             break;
-                        case WINED3DTEXF_LINEAR:
+                        case WINED3D_TEXF_LINEAR:
                             *Value = D3DFILTER_LINEARMIPLINEAR;
                             break;
                         default:
@@ -2664,22 +2664,22 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
          */
         case D3DRENDERSTATE_TEXTUREMAG:
         {
-            WINED3DTEXTUREFILTERTYPE tex_mag;
+            enum wined3d_texture_filter_type tex_mag;
 
             switch (Value)
             {
                 case D3DFILTER_NEAREST:
                 case D3DFILTER_MIPNEAREST:
                 case D3DFILTER_LINEARMIPNEAREST:
-                    tex_mag = WINED3DTEXF_POINT;
+                    tex_mag = WINED3D_TEXF_POINT;
                     break;
                 case D3DFILTER_LINEAR:
                 case D3DFILTER_MIPLINEAR:
                 case D3DFILTER_LINEARMIPLINEAR:
-                    tex_mag = WINED3DTEXF_LINEAR;
+                    tex_mag = WINED3D_TEXF_LINEAR;
                     break;
                 default:
-                    tex_mag = WINED3DTEXF_POINT;
+                    tex_mag = WINED3D_TEXF_POINT;
                     ERR("Unhandled texture mag %d !\n",Value);
                     break;
             }
@@ -2690,40 +2690,40 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
 
         case D3DRENDERSTATE_TEXTUREMIN:
         {
-            WINED3DTEXTUREFILTERTYPE tex_min;
-            WINED3DTEXTUREFILTERTYPE tex_mip;
+            enum wined3d_texture_filter_type tex_min;
+            enum wined3d_texture_filter_type tex_mip;
 
-            switch ((D3DTEXTUREFILTER) Value)
+            switch ((D3DTEXTUREFILTER)Value)
             {
                 case D3DFILTER_NEAREST:
-                    tex_min = WINED3DTEXF_POINT;
-                    tex_mip = WINED3DTEXF_NONE;
+                    tex_min = WINED3D_TEXF_POINT;
+                    tex_mip = WINED3D_TEXF_NONE;
                     break;
                 case D3DFILTER_LINEAR:
-                    tex_min = WINED3DTEXF_LINEAR;
-                    tex_mip = WINED3DTEXF_NONE;
+                    tex_min = WINED3D_TEXF_LINEAR;
+                    tex_mip = WINED3D_TEXF_NONE;
                     break;
                 case D3DFILTER_MIPNEAREST:
-                    tex_min = WINED3DTEXF_POINT;
-                    tex_mip = WINED3DTEXF_POINT;
+                    tex_min = WINED3D_TEXF_POINT;
+                    tex_mip = WINED3D_TEXF_POINT;
                     break;
                 case D3DFILTER_MIPLINEAR:
-                    tex_min = WINED3DTEXF_LINEAR;
-                    tex_mip = WINED3DTEXF_POINT;
+                    tex_min = WINED3D_TEXF_LINEAR;
+                    tex_mip = WINED3D_TEXF_POINT;
                     break;
                 case D3DFILTER_LINEARMIPNEAREST:
-                    tex_min = WINED3DTEXF_POINT;
-                    tex_mip = WINED3DTEXF_LINEAR;
+                    tex_min = WINED3D_TEXF_POINT;
+                    tex_mip = WINED3D_TEXF_LINEAR;
                     break;
                 case D3DFILTER_LINEARMIPLINEAR:
-                    tex_min = WINED3DTEXF_LINEAR;
-                    tex_mip = WINED3DTEXF_LINEAR;
+                    tex_min = WINED3D_TEXF_LINEAR;
+                    tex_mip = WINED3D_TEXF_LINEAR;
                     break;
 
                 default:
                     ERR("Unhandled texture min %d !\n",Value);
-                    tex_min = WINED3DTEXF_POINT;
-                    tex_mip = WINED3DTEXF_NONE;
+                    tex_min = WINED3D_TEXF_POINT;
+                    tex_mip = WINED3D_TEXF_NONE;
                     break;
             }
 
@@ -4889,9 +4889,15 @@ IDirect3DDeviceImpl_7_GetTextureStageState(IDirect3DDevice7 *iface,
             {
                 switch(*State)
                 {
-                    case WINED3DTEXF_NONE: *State = D3DTFP_NONE; break;
-                    case WINED3DTEXF_POINT: *State = D3DTFP_POINT; break;
-                    case WINED3DTEXF_LINEAR: *State = D3DTFP_LINEAR; break;
+                    case WINED3D_TEXF_NONE:
+                        *State = D3DTFP_NONE;
+                        break;
+                    case WINED3D_TEXF_POINT:
+                        *State = D3DTFP_POINT;
+                        break;
+                    case WINED3D_TEXF_LINEAR:
+                        *State = D3DTFP_LINEAR;
+                        break;
                     default:
                         ERR("Unexpected mipfilter value %#x\n", *State);
                         *State = D3DTFP_NONE;
@@ -4905,11 +4911,21 @@ IDirect3DDeviceImpl_7_GetTextureStageState(IDirect3DDevice7 *iface,
             {
                 switch(*State)
                 {
-                    case WINED3DTEXF_POINT: *State = D3DTFG_POINT; break;
-                    case WINED3DTEXF_LINEAR: *State = D3DTFG_LINEAR; break;
-                    case WINED3DTEXF_ANISOTROPIC: *State = D3DTFG_ANISOTROPIC; break;
-                    case WINED3DTEXF_FLATCUBIC: *State = D3DTFG_FLATCUBIC; break;
-                    case WINED3DTEXF_GAUSSIANCUBIC: *State = D3DTFG_GAUSSIANCUBIC; break;
+                    case WINED3D_TEXF_POINT:
+                            *State = D3DTFG_POINT;
+                            break;
+                    case WINED3D_TEXF_LINEAR:
+                            *State = D3DTFG_LINEAR;
+                            break;
+                    case WINED3D_TEXF_ANISOTROPIC:
+                            *State = D3DTFG_ANISOTROPIC;
+                            break;
+                    case WINED3D_TEXF_FLAT_CUBIC:
+                            *State = D3DTFG_FLATCUBIC;
+                            break;
+                    case WINED3D_TEXF_GAUSSIAN_CUBIC:
+                            *State = D3DTFG_GAUSSIANCUBIC;
+                            break;
                     default:
                         ERR("Unexpected wined3d mag filter value %#x\n", *State);
                         *State = D3DTFG_POINT;
@@ -5019,13 +5035,19 @@ IDirect3DDeviceImpl_7_SetTextureStageState(IDirect3DDevice7 *iface,
             {
                 switch(State)
                 {
-                    case D3DTFP_NONE: State = WINED3DTEXF_NONE; break;
-                    case D3DTFP_POINT: State = WINED3DTEXF_POINT; break;
+                    case D3DTFP_NONE:
+                        State = WINED3D_TEXF_NONE;
+                        break;
+                    case D3DTFP_POINT:
+                        State = WINED3D_TEXF_POINT;
+                        break;
                     case 0: /* Unchecked */
-                    case D3DTFP_LINEAR: State = WINED3DTEXF_LINEAR; break;
+                    case D3DTFP_LINEAR:
+                        State = WINED3D_TEXF_LINEAR;
+                        break;
                     default:
                         ERR("Unexpected mipfilter value %d\n", State);
-                        State = WINED3DTEXF_NONE;
+                        State = WINED3D_TEXF_NONE;
                         break;
                 }
                 break;
@@ -5036,14 +5058,24 @@ IDirect3DDeviceImpl_7_SetTextureStageState(IDirect3DDevice7 *iface,
             {
                 switch(State)
                 {
-                    case D3DTFG_POINT: State = WINED3DTEXF_POINT; break;
-                    case D3DTFG_LINEAR: State = WINED3DTEXF_LINEAR; break;
-                    case D3DTFG_FLATCUBIC: State = WINED3DTEXF_FLATCUBIC; break;
-                    case D3DTFG_GAUSSIANCUBIC: State = WINED3DTEXF_GAUSSIANCUBIC; break;
-                    case D3DTFG_ANISOTROPIC: State = WINED3DTEXF_ANISOTROPIC; break;
+                    case D3DTFG_POINT:
+                        State = WINED3D_TEXF_POINT;
+                        break;
+                    case D3DTFG_LINEAR:
+                        State = WINED3D_TEXF_LINEAR;
+                        break;
+                    case D3DTFG_FLATCUBIC:
+                        State = WINED3D_TEXF_FLAT_CUBIC;
+                        break;
+                    case D3DTFG_GAUSSIANCUBIC:
+                        State = WINED3D_TEXF_GAUSSIAN_CUBIC;
+                        break;
+                    case D3DTFG_ANISOTROPIC:
+                        State = WINED3D_TEXF_ANISOTROPIC;
+                        break;
                     default:
                         ERR("Unexpected d3d7 mag filter type %d\n", State);
-                        State = WINED3DTEXF_POINT;
+                        State = WINED3D_TEXF_POINT;
                         break;
                 }
                 break;
@@ -6150,7 +6182,7 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
             RECT dst_rect = {point.x, point.y, point.x + src_w, point.y + src_h};
 
             if (FAILED(hr = wined3d_surface_blt(dest_level->wined3d_surface, &dst_rect,
-                    src_level->wined3d_surface, &src_rect, 0, NULL, WINED3DTEXF_POINT)))
+                    src_level->wined3d_surface, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
                 ERR("Blit failed, hr %#x.\n", hr);
 
             ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;

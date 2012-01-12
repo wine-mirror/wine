@@ -157,22 +157,22 @@ void wined3d_rb_free(void *ptr) DECLSPEC_HIDDEN;
 
 struct min_lookup
 {
-    GLenum mip[WINED3DTEXF_LINEAR + 1];
+    GLenum mip[WINED3D_TEXF_LINEAR + 1];
 };
 
-extern const struct min_lookup minMipLookup[WINED3DTEXF_LINEAR + 1] DECLSPEC_HIDDEN;
-extern const struct min_lookup minMipLookup_noFilter[WINED3DTEXF_LINEAR + 1] DECLSPEC_HIDDEN;
-extern const struct min_lookup minMipLookup_noMip[WINED3DTEXF_LINEAR + 1] DECLSPEC_HIDDEN;
-extern const GLenum magLookup[WINED3DTEXF_LINEAR + 1] DECLSPEC_HIDDEN;
-extern const GLenum magLookup_noFilter[WINED3DTEXF_LINEAR + 1] DECLSPEC_HIDDEN;
+extern const struct min_lookup minMipLookup[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
+extern const struct min_lookup minMipLookup_noFilter[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
+extern const struct min_lookup minMipLookup_noMip[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
+extern const GLenum magLookup[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
+extern const GLenum magLookup_noFilter[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
 
-static inline GLenum wined3d_gl_mag_filter(const GLenum mag_lookup[], WINED3DTEXTUREFILTERTYPE mag_filter)
+static inline GLenum wined3d_gl_mag_filter(const GLenum mag_lookup[], enum wined3d_texture_filter_type mag_filter)
 {
     return mag_lookup[mag_filter];
 }
 
 static inline GLenum wined3d_gl_min_mip_filter(const struct min_lookup min_mip_lookup[],
-        WINED3DTEXTUREFILTERTYPE min_filter, WINED3DTEXTUREFILTERTYPE mip_filter)
+        enum wined3d_texture_filter_type min_filter, enum wined3d_texture_filter_type mip_filter)
 {
     return min_mip_lookup[min_filter].mip[mip_filter];
 }
@@ -1925,7 +1925,7 @@ struct wined3d_texture
     UINT level_count;
     float pow2_matrix[16];
     UINT lod;
-    WINED3DTEXTUREFILTERTYPE filter_type;
+    enum wined3d_texture_filter_type filter_type;
     LONG bind_count;
     DWORD sampler;
     DWORD flags;
@@ -2126,7 +2126,7 @@ void get_drawable_size_backbuffer(const struct wined3d_context *context, UINT *w
 void get_drawable_size_fbo(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 
 void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3d_context *context,
-        const RECT *src_rect, const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter) DECLSPEC_HIDDEN;
+        const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
 void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) DECLSPEC_HIDDEN;
 
 /* Surface flags: */
@@ -2497,7 +2497,7 @@ const char *debug_d3dprimitivetype(enum wined3d_primitive_type primitive_type) D
 const char *debug_d3drenderstate(enum wined3d_render_state state) DECLSPEC_HIDDEN;
 const char *debug_d3dsamplerstate(enum wined3d_sampler_state state) DECLSPEC_HIDDEN;
 const char *debug_d3dstate(DWORD state) DECLSPEC_HIDDEN;
-const char *debug_d3dtexturefiltertype(WINED3DTEXTUREFILTERTYPE filter_type) DECLSPEC_HIDDEN;
+const char *debug_d3dtexturefiltertype(enum wined3d_texture_filter_type filter_type) DECLSPEC_HIDDEN;
 const char *debug_d3dtexturestate(enum wined3d_texture_stage_state state) DECLSPEC_HIDDEN;
 const char *debug_d3dtstype(enum wined3d_transform_state tstype) DECLSPEC_HIDDEN;
 const char *debug_d3dpool(WINED3DPOOL pool) DECLSPEC_HIDDEN;
