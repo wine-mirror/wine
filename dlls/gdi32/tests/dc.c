@@ -54,6 +54,41 @@ static void dump_region(HRGN hrgn)
     HeapFree( GetProcessHeap(), 0, data );
 }
 
+static void test_dc_values(void)
+{
+    HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    COLORREF color;
+
+    ok( hdc != NULL, "CreateDC failed\n" );
+    color = SetBkColor( hdc, 0x12345678 );
+    ok( color == 0xffffff, "initial color %08x\n", color );
+    color = GetBkColor( hdc );
+    ok( color == 0x12345678, "wrong color %08x\n", color );
+    color = SetBkColor( hdc, 0xffffffff );
+    ok( color == 0x12345678, "wrong color %08x\n", color );
+    color = GetBkColor( hdc );
+    ok( color == 0xffffffff, "wrong color %08x\n", color );
+    color = SetBkColor( hdc, 0 );
+    ok( color == 0xffffffff, "wrong color %08x\n", color );
+    color = GetBkColor( hdc );
+    ok( color == 0, "wrong color %08x\n", color );
+
+    color = SetTextColor( hdc, 0xffeeddcc );
+    ok( color == 0, "initial color %08x\n", color );
+    color = GetTextColor( hdc );
+    ok( color == 0xffeeddcc, "wrong color %08x\n", color );
+    color = SetTextColor( hdc, 0xffffffff );
+    ok( color == 0xffeeddcc, "wrong color %08x\n", color );
+    color = GetTextColor( hdc );
+    ok( color == 0xffffffff, "wrong color %08x\n", color );
+    color = SetTextColor( hdc, 0 );
+    ok( color == 0xffffffff, "wrong color %08x\n", color );
+    color = GetTextColor( hdc );
+    ok( color == 0, "wrong color %08x\n", color );
+
+    DeleteDC( hdc );
+}
+
 static void test_savedc_2(void)
 {
     HWND hwnd;
@@ -999,6 +1034,7 @@ static void test_printer_dc(void)
 START_TEST(dc)
 {
     pSetLayout = (void *)GetProcAddress( GetModuleHandle("gdi32.dll"), "SetLayout");
+    test_dc_values();
     test_savedc();
     test_savedc_2();
     test_GdiConvertToDevmodeW();

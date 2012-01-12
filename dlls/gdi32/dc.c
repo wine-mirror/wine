@@ -853,12 +853,8 @@ COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
     if (dc)
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetBkColor );
-        color = physdev->funcs->pSetBkColor( physdev, color );
-        if (color != CLR_INVALID)
-        {
-            ret = dc->backgroundColor;
-            dc->backgroundColor = color;
-        }
+        ret = dc->backgroundColor;
+        dc->backgroundColor = physdev->funcs->pSetBkColor( physdev, color );
         release_dc_ptr( dc );
     }
     return ret;
@@ -894,12 +890,8 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
     if (dc)
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetTextColor );
-        color = physdev->funcs->pSetTextColor( physdev, color );
-        if (color != CLR_INVALID)
-        {
-            ret = dc->textColor;
-            dc->textColor = color;
-        }
+        ret = dc->textColor;
+        dc->textColor = physdev->funcs->pSetTextColor( physdev, color );
         release_dc_ptr( dc );
     }
     return ret;
