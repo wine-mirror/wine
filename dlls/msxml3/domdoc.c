@@ -2767,14 +2767,11 @@ static HRESULT WINAPI domdoc_setProperty(
     }
     else if (lstrcmpiW(p, PropertySelectionNamespacesW) == 0)
     {
+        xmlChar *nsStr = (xmlChar*)This->properties->selectNsStr;
+        struct list *pNsList;
         VARIANT varStr;
         HRESULT hr;
         BSTR bstr;
-        xmlChar *pTokBegin, *pTokEnd, *pTokInner;
-        xmlChar *nsStr = (xmlChar*)This->properties->selectNsStr;
-        xmlXPathContextPtr ctx;
-        struct list *pNsList;
-        select_ns_entry* pNsEntry = NULL;
 
         V_VT(&varStr) = VT_EMPTY;
         if (V_VT(&var) != VT_BSTR)
@@ -2793,20 +2790,30 @@ static HRESULT WINAPI domdoc_setProperty(
         heap_free(nsStr);
         nsStr = xmlchar_from_wchar(bstr);
 
-        TRACE("Setting SelectionNamespaces property to: %s\n", nsStr);
+        TRACE("property value: \"%s\"\n", debugstr_w(bstr));
 
         This->properties->selectNsStr = nsStr;
         This->properties->selectNsStr_len = xmlStrlen(nsStr);
         if (bstr && *bstr)
         {
+            xmlChar *pTokBegin, *pTokEnd, *pTokInner;
+            select_ns_entry* ns_entry = NULL;
+            xmlXPathContextPtr ctx;
+
             ctx = xmlXPathNewContext(This->node.node->doc);
             pTokBegin = nsStr;
+
+            /* skip leading spaces */
+            while (*pTokBegin == ' '  || *pTokBegin == '\n' ||
+                   *pTokBegin == '\t' || *pTokBegin == '\r')
+                ++pTokBegin;
+
             for (; *pTokBegin; pTokBegin = pTokEnd)
             {
-                if (pNsEntry != NULL)
-                    memset(pNsEntry, 0, sizeof(select_ns_entry));
+                if (ns_entry)
+                    memset(ns_entry, 0, sizeof(select_ns_entry));
                 else
-                    pNsEntry = heap_alloc_zero(sizeof(select_ns_entry));
+                    ns_entry = heap_alloc_zero(sizeof(select_ns_entry));
 
                 while (*pTokBegin == ' ')
                     ++pTokBegin;
@@ -2831,7 +2838,7 @@ static HRESULT WINAPI domdoc_setProperty(
                 }
                 else if (*pTokBegin == ':')
                 {
-                    pNsEntry->prefix = ++pTokBegin;
+                    ns_entry->prefix = ++pTokBegin;
                     for (pTokInner = pTokBegin; pTokInner != pTokEnd && *pTokInner != '='; ++pTokInner)
                         ;
 
@@ -2843,7 +2850,7 @@ static HRESULT WINAPI domdoc_setProperty(
                         continue;
                     }
 
-                    pNsEntry->prefix_end = *pTokInner;
+                    ns_entry->prefix_end = *pTokInner;
                     *pTokInner = 0;
                     ++pTokInner;
 
@@ -2851,25 +2858,25 @@ static HRESULT WINAPI domdoc_setProperty(
                         ((*pTokInner == '\'' && *(pTokEnd-1) == '\'') ||
                          (*pTokInner == '"' && *(pTokEnd-1) == '"')))
                     {
-                        pNsEntry->href = ++pTokInner;
-                        pNsEntry->href_end = *(pTokEnd-1);
+                        ns_entry->href = ++pTokInner;
+                        ns_entry->href_end = *(pTokEnd-1);
                         *(pTokEnd-1) = 0;
-                        list_add_tail(pNsList, &pNsEntry->entry);
+                        list_add_tail(pNsList, &ns_entry->entry);
                         /*let libxml figure out if they're valid from here ;)*/
-                        if (xmlXPathRegisterNs(ctx, pNsEntry->prefix, pNsEntry->href) != 0)
+                        if (xmlXPathRegisterNs(ctx, ns_entry->prefix, ns_entry->href) != 0)
                         {
                             hr = E_FAIL;
                         }
-                        pNsEntry = NULL;
+                        ns_entry = NULL;
                         continue;
                     }
                     else
                     {
                         WARN("Syntax error in xmlns string: %s\n\tat token: %s\n",
                               wine_dbgstr_w(bstr), wine_dbgstr_an((const char*)pTokInner, pTokEnd-pTokInner));
-                        list_add_tail(pNsList, &pNsEntry->entry);
+                        list_add_tail(pNsList, &ns_entry->entry);
 
-                        pNsEntry = NULL;
+                        ns_entry = NULL;
                         hr = E_FAIL;
                         continue;
                     }
@@ -2880,7 +2887,7 @@ static HRESULT WINAPI domdoc_setProperty(
                     continue;
                 }
             }
-            heap_free(pNsEntry);
+            heap_free(ns_entry);
             xmlXPathFreeContext(ctx);
         }
 

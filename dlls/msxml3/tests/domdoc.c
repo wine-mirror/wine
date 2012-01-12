@@ -5480,8 +5480,41 @@ static void test_whitespace(void)
     free_bstrs();
 }
 
-static void test_XPath(void)
+typedef struct {
+    const GUID *clsid;
+    const char *name;
+    const char *ns;
+    HRESULT hr;
+} selection_ns_t;
+
+/* supposed to be tested with szExampleXML */
+static const selection_ns_t selection_ns_data[] = {
+    { &CLSID_DOMDocument,   "CLSID_DOMDocument",   "\txmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+    { &CLSID_DOMDocument,   "CLSID_DOMDocument",   "\n\rxmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+    { &CLSID_DOMDocument,   "CLSID_DOMDocument",   " xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+
+    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2",  "\txmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2",  "\n\rxmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2",  " xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+
+    { &CLSID_DOMDocument30, "CLSID_DOMDocument30", "\txmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+    { &CLSID_DOMDocument30, "CLSID_DOMDocument30", "\n\rxmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+    { &CLSID_DOMDocument30, "CLSID_DOMDocument30", " xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+
+    { &CLSID_DOMDocument40, "CLSID_DOMDocument40", "\txmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+    { &CLSID_DOMDocument40, "CLSID_DOMDocument40", "\n\rxmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+    { &CLSID_DOMDocument40, "CLSID_DOMDocument40", " xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+
+    { &CLSID_DOMDocument60, "CLSID_DOMDocument60", "\txmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+    { &CLSID_DOMDocument60, "CLSID_DOMDocument60", "\n\rxmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+    { &CLSID_DOMDocument60, "CLSID_DOMDocument60", " xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'", S_OK },
+
+    { NULL }
+};
+
+void test_XPath(void)
 {
+    const selection_ns_t *ptr = selection_ns_data;
     VARIANT var;
     VARIANT_BOOL b;
     IXMLDOMDocument2 *doc;
@@ -5498,7 +5531,8 @@ static void test_XPath(void)
     doc = create_document(&IID_IXMLDOMDocument2);
     if (!doc) return;
 
-    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szExampleXML), &b));
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szExampleXML), &b);
+    EXPECT_HR(hr, S_OK);
     ok(b == VARIANT_TRUE, "failed to load XML string\n");
 
     /* switch to XPath */
@@ -5711,8 +5745,47 @@ static void test_XPath(void)
     IXMLDOMNode_Release(rootNode);
     IXMLDOMNodeList_Release(list);
     IXMLDOMDocument_Release(doc2);
-
     IXMLDOMDocument2_Release(doc);
+
+    while (ptr->clsid)
+    {
+        hr = CoCreateInstance(ptr->clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void**)&doc);
+        if (hr != S_OK)
+        {
+            win_skip("can't create instance of %s\n", ptr->name);
+            ptr++;
+            continue;
+        }
+
+        hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szExampleXML), &b);
+        EXPECT_HR(hr, S_OK);
+        ok(b == VARIANT_TRUE, "failed to load, %s\n", ptr->name);
+
+        hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XPath"));
+        EXPECT_HR(hr, S_OK);
+
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = _bstr_(ptr->ns);
+
+        hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), var);
+        ok(hr == ptr->hr, "got 0x%08x, for %s, %s\n", hr, ptr->name, ptr->ns);
+
+        V_VT(&var) = VT_EMPTY;
+        hr = IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var);
+        EXPECT_HR(hr, S_OK);
+        ok(V_VT(&var) == VT_BSTR, "got wrong property type %d\n", V_VT(&var));
+        ok(!lstrcmpW(V_BSTR(&var), _bstr_(ptr->ns)), "got wrong value %s\n", wine_dbgstr_w(V_BSTR(&var)));
+        VariantClear(&var);
+
+        hr = IXMLDOMDocument2_selectNodes(doc, _bstr_("root//test:c"), &list);
+        EXPECT_HR(hr, S_OK);
+        if (hr == S_OK)
+            expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
+
+        IXMLDOMDocument2_Release(doc);
+        ptr++;
+    }
+
     free_bstrs();
 }
 
