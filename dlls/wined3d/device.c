@@ -5200,69 +5200,6 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
     device_invalidate_state(device, STATE_STREAMSRC);
 }
 
-static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
-        const struct wined3d_swapchain_desc *swapchain_desc)
-{
-    struct wined3d_device *device = surface->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-
-    /* Reallocate proper memory for the front and back buffer and adjust their sizes */
-    if (surface->flags & SFLAG_DIBSECTION)
-    {
-        DeleteDC(surface->hDC);
-        DeleteObject(surface->dib.DIBsection);
-        surface->dib.bitmap_data = NULL;
-        surface->resource.allocatedMemory = NULL;
-        surface->flags &= ~SFLAG_DIBSECTION;
-    }
-    surface->resource.width = swapchain_desc->backbuffer_width;
-    surface->resource.height = swapchain_desc->backbuffer_height;
-    if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[ARB_TEXTURE_RECTANGLE]
-            || gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
-    {
-        surface->pow2Width = swapchain_desc->backbuffer_width;
-        surface->pow2Height = swapchain_desc->backbuffer_height;
-    }
-    else
-    {
-        surface->pow2Width = surface->pow2Height = 1;
-        while (surface->pow2Width < swapchain_desc->backbuffer_width)
-            surface->pow2Width <<= 1;
-        while (surface->pow2Height < swapchain_desc->backbuffer_height)
-            surface->pow2Height <<= 1;
-    }
-
-    if (!(surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL))
-        surface->resource.format = wined3d_get_format(gl_info, swapchain_desc->backbuffer_format);
-    surface->resource.multisample_type = swapchain_desc->multisample_type;
-    surface->resource.multisample_quality = swapchain_desc->multisample_quality;
-
-    if (device->d3d_initialized)
-        surface->resource.resource_ops->resource_unload(&surface->resource);
-
-    if (surface->pow2Width != swapchain_desc->backbuffer_width
-            || surface->pow2Height != swapchain_desc->backbuffer_height)
-    {
-        surface->flags |= SFLAG_NONPOW2;
-    }
-    else
-    {
-        surface->flags &= ~SFLAG_NONPOW2;
-    }
-    HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
-    surface->resource.allocatedMemory = NULL;
-    surface->resource.heapMemory = NULL;
-    surface->resource.size = wined3d_surface_get_pitch(surface) * surface->pow2Width;
-
-    /* Put all surfaces into sysmem - the drawable might disappear if the backbuffer was rendered
-     * to a FBO */
-    if (!surface_init_sysmem(surface))
-    {
-        return E_OUTOFMEMORY;
-    }
-    return WINED3D_OK;
-}
-
 static BOOL is_display_mode_supported(const struct wined3d_device *device,
         const struct wined3d_swapchain_desc *swapchain_desc)
 {
@@ -5580,7 +5517,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     {
         UINT i;
 
-        hr = updateSurfaceDesc(swapchain->front_buffer, &swapchain->desc);
+        hr = wined3d_surface_update_desc(swapchain->front_buffer, swapchain->desc.backbuffer_width,
+                swapchain->desc.backbuffer_height, swapchain->desc.backbuffer_format,
+                swapchain->desc.multisample_type, swapchain->desc.multisample_quality);
         if (FAILED(hr))
         {
             wined3d_swapchain_decref(swapchain);
@@ -5589,7 +5528,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
         for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
         {
-            hr = updateSurfaceDesc(swapchain->back_buffers[i], &swapchain->desc);
+            hr = wined3d_surface_update_desc(swapchain->back_buffers[i], swapchain->desc.backbuffer_width,
+                    swapchain->desc.backbuffer_height, swapchain->desc.backbuffer_format,
+                    swapchain->desc.multisample_type, swapchain->desc.multisample_quality);
             if (FAILED(hr))
             {
                 wined3d_swapchain_decref(swapchain);
@@ -5598,7 +5539,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
         if (device->auto_depth_stencil)
         {
-            hr = updateSurfaceDesc(device->auto_depth_stencil, &swapchain->desc);
+            hr = wined3d_surface_update_desc(device->auto_depth_stencil, swapchain->desc.backbuffer_width,
+                    swapchain->desc.backbuffer_height, device->auto_depth_stencil->resource.format->id,
+                    swapchain->desc.multisample_type, swapchain->desc.multisample_quality);
             if (FAILED(hr))
             {
                 wined3d_swapchain_decref(swapchain);

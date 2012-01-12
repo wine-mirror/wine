@@ -217,6 +217,7 @@
 @ cdecl wined3d_surface_set_palette(ptr ptr)
 @ cdecl wined3d_surface_set_priority(ptr long)
 @ cdecl wined3d_surface_unmap(ptr)
+@ cdecl wined3d_surface_update_desc(ptr long long long long long)
 @ cdecl wined3d_surface_update_overlay(ptr ptr ptr ptr long ptr)
 @ cdecl wined3d_surface_update_overlay_z_order(ptr long ptr)
 

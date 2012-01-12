@@ -4580,7 +4580,7 @@ static void set_surface_desc_test(void)
     hr = IDirectDrawSurface3_GetSurfaceDesc(surface3, &ddsd);
     ok(SUCCEEDED(hr), "GetSurfaceDesc failed, hr %#x.\n", hr);
     ok(ddsd.dwWidth == 8, "SetSurfaceDesc: Expected width 8, got %u.\n", ddsd.dwWidth);
-    todo_wine ok(ddsd.dwHeight == 16, "SetSurfaceDesc: Expected height 16, got %u.\n", ddsd.dwHeight);
+    ok(ddsd.dwHeight == 16, "SetSurfaceDesc: Expected height 16, got %u.\n", ddsd.dwHeight);
 
     /* Pitch and width can be set, but only together, and only with LPSURFACE. They must not be 0 */
     reset_ddsd(&ddsd);
@@ -4612,9 +4612,9 @@ static void set_surface_desc_test(void)
     reset_ddsd(&ddsd);
     hr = IDirectDrawSurface3_GetSurfaceDesc(surface3, &ddsd);
     ok(SUCCEEDED(hr), "GetSurfaceDesc failed, hr %#x.\n", hr);
-    todo_wine ok(ddsd.dwWidth == 16, "SetSurfaceDesc: Expected width 8, got %u.\n", ddsd.dwWidth);
-    todo_wine ok(ddsd.dwHeight == 16, "SetSurfaceDesc: Expected height 16, got %u.\n", ddsd.dwHeight);
-    todo_wine ok(U1(ddsd).lPitch == 16 * 4, "SetSurfaceDesc: Expected pitch 64, got %u.\n", U1(ddsd).lPitch);
+    ok(ddsd.dwWidth == 16, "SetSurfaceDesc: Expected width 8, got %u.\n", ddsd.dwWidth);
+    ok(ddsd.dwHeight == 16, "SetSurfaceDesc: Expected height 16, got %u.\n", ddsd.dwHeight);
+    ok(U1(ddsd).lPitch == 16 * 4, "SetSurfaceDesc: Expected pitch 64, got %u.\n", U1(ddsd).lPitch);
 
     /* The pitch must be 32 bit aligned and > 0, but is not verified for sanity otherwise
      *

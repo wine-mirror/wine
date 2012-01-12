@@ -2334,6 +2334,9 @@ HRESULT __cdecl wined3d_surface_set_overlay_position(struct wined3d_surface *sur
 HRESULT __cdecl wined3d_surface_set_palette(struct wined3d_surface *surface, struct wined3d_palette *palette);
 DWORD __cdecl wined3d_surface_set_priority(struct wined3d_surface *surface, DWORD new_priority);
 HRESULT __cdecl wined3d_surface_unmap(struct wined3d_surface *surface);
+HRESULT __cdecl wined3d_surface_update_desc(struct wined3d_surface *surface,
+        UINT width, UINT height, enum wined3d_format_id format_id,
+        enum wined3d_multisample_type multisample_type, UINT multisample_quality);
 HRESULT __cdecl wined3d_surface_update_overlay(struct wined3d_surface *surface, const RECT *src_rect,
         struct wined3d_surface *dst_surface, const RECT *dst_rect, DWORD flags, const WINEDDOVERLAYFX *fx);
 HRESULT __cdecl wined3d_surface_update_overlay_z_order(struct wined3d_surface *surface,

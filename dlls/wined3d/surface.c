@@ -3314,6 +3314,70 @@ HRESULT CDECL wined3d_surface_update_overlay(struct wined3d_surface *surface, co
     return WINED3D_OK;
 }
 
+HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
+        UINT width, UINT height, enum wined3d_format_id format_id,
+        enum wined3d_multisample_type multisample_type, UINT multisample_quality)
+{
+    struct wined3d_device *device = surface->resource.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
+    UINT resource_size = wined3d_format_calculate_size(format, device->surface_alignment, width, height);
+
+    TRACE("surface %p, width %u, height %u, format %s, multisample_type %#x, multisample_quality %u.\n",
+            surface, width, height, debug_d3dformat(format_id), multisample_type, multisample_type);
+
+    if (!resource_size)
+        return WINED3DERR_INVALIDCALL;
+
+    if (device->d3d_initialized)
+        surface->resource.resource_ops->resource_unload(&surface->resource);
+
+    if (surface->flags & SFLAG_DIBSECTION)
+    {
+        DeleteDC(surface->hDC);
+        DeleteObject(surface->dib.DIBsection);
+        surface->dib.bitmap_data = NULL;
+        surface->flags &= ~SFLAG_DIBSECTION;
+    }
+
+    surface->flags &= ~(SFLAG_LOCATIONS | SFLAG_USERPTR);
+    surface->resource.allocatedMemory = NULL;
+    HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
+    surface->resource.heapMemory = NULL;
+
+    surface->resource.width = width;
+    surface->resource.height = height;
+    if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[ARB_TEXTURE_RECTANGLE]
+            || gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
+    {
+        surface->pow2Width = width;
+        surface->pow2Height = height;
+    }
+    else
+    {
+        surface->pow2Width = surface->pow2Height = 1;
+        while (surface->pow2Width < width)
+            surface->pow2Width <<= 1;
+        while (surface->pow2Height < height)
+            surface->pow2Height <<= 1;
+    }
+
+    if (surface->pow2Width != width || surface->pow2Height != height)
+        surface->flags |= SFLAG_NONPOW2;
+    else
+        surface->flags &= ~SFLAG_NONPOW2;
+
+    surface->resource.format = format;
+    surface->resource.multisample_type = multisample_type;
+    surface->resource.multisample_quality = multisample_quality;
+    surface->resource.size = resource_size;
+
+    if (!surface_init_sysmem(surface))
+        return E_OUTOFMEMORY;
+
+    return WINED3D_OK;
+}
+
 HRESULT CDECL wined3d_surface_set_format(struct wined3d_surface *surface, enum wined3d_format_id format_id)
 {
     const struct wined3d_format *format = wined3d_get_format(&surface->resource.device->adapter->gl_info, format_id);
