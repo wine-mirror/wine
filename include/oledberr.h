@@ -29,6 +29,10 @@
 
 #define DB_E_ERRORSOCCURRED                 0x80040e21
 
+#define DB_E_BADSTORAGEFLAG                 0x80040e26
+#define DB_E_BADCOMPAREOP                   0x80040e27
+#define DB_E_BADSTATUSVALUE                 0x80040e28
+
 #define DB_E_DATAOVERFLOW                   0x80040e57
 
 #define DB_S_ERRORSOCCURRED                 0x00040eda
