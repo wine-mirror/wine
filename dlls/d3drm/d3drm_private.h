@@ -27,5 +27,6 @@ HRESULT Direct3DRM_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMDevice_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
+HRESULT Direct3DRMViewport_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
 
 #endif /* __D3DRM_PRIVATE_INCLUDED__ */

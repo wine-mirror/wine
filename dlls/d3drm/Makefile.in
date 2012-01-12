@@ -8,7 +8,8 @@ C_SRCS = \
 	device.c \
 	frame.c \
 	math.c \
-	meshbuilder.c
+	meshbuilder.c \
+	viewport.c
 
 RC_SRCS = version.rc
 
