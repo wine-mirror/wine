@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-12 22:13+0300\n"
+"PO-Revision-Date: 2012-01-16 21:21+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Virtaal 0.7.1-rc1\n"
+"X-Generator: Virtaal 0.7.1\n"
 "X-Project-Style: default\n"
 
 #: appwiz.rc:55
@@ -43,7 +43,7 @@ msgstr ""
 
 #: appwiz.rc:64
 msgid "&Support Info"
-msgstr "&Priežiūros informacija..."
+msgstr "&Priežiūros informacija"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -2359,12 +2359,11 @@ msgstr "&DER-užkoduotas X.509 (.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr "Ba&se64-užkoduotas X.509 (.cer)"
+msgstr "Ba&se64-užkoduotas X.509 (.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
-msgstr ""
-"&Kriptografinio pranešimo sintaksės standarto/PKCS #7 pranešimas (.p7b):"
+msgstr "&Kriptografinio pranešimo sintaksės standarto/PKCS #7 pranešimas (.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
@@ -3452,7 +3451,7 @@ msgstr "Reikalingas objektas"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
-msgstr "Automatizacijos serveriui nepavyko sukurti objekto"
+msgstr "Automatizavimo serveriui nepavyko sukurti objekto"
 
 #: jscript.rc:30
 msgid "Object doesn't support this property or method"
@@ -5326,7 +5325,7 @@ msgstr "Nepavyko apsimesti\n"
 
 #: winerror.mc:2246
 msgid "Invalid transaction state\n"
-msgstr "Neteisinga tranzakcijos būsena\n"
+msgstr "Neteisinga transakcijos būsena\n"
 
 #: winerror.mc:2251
 msgid "Security DB commit failure\n"
@@ -5830,7 +5829,7 @@ msgstr "Nepavyko sukurti\n"
 
 #: winerror.mc:2881
 msgid "Temporary directory not writable\n"
-msgstr "Į laikinajį katalogą negalima rašyti\n"
+msgstr "Į laikinąjį katalogą negalima rašyti\n"
 
 #: winerror.mc:2886
 msgid "Installation platform not supported\n"
@@ -6760,7 +6759,7 @@ msgstr "Kon&figūruoti..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&Apie..."
+msgstr "&Apie"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7772,7 +7771,7 @@ msgstr "&Atverti:"
 #: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
 msgid "&Browse..."
-msgstr "&Parinkti"
+msgstr "&Parinkti..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
@@ -10509,7 +10508,7 @@ msgstr "At&naujinti\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
-msgstr "&Apie OLE žiūrykę"
+msgstr "&Apie OLE žiūryklę"
 
 #: oleview.rc:79
 msgid "&Save as..."
@@ -12574,7 +12573,7 @@ msgstr "&Pridėti..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Automatiškai &aptikti..."
+msgstr "Automatiškai &aptikti"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -13019,7 +13018,6 @@ msgid "Command history"
 msgstr "Komandų istorija"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
 msgstr "Prisimintų &komandų skaičius:"
 
@@ -13044,12 +13042,10 @@ msgid "Buffer zone"
 msgstr "Buferio dydis"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
 msgstr "&Plotis:"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
 msgstr "&Aukštis:"
 
@@ -13058,12 +13054,10 @@ msgid "Window size"
 msgstr "Lango dydis"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
 msgstr "P&lotis:"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
 msgstr "A&ukštis:"
 
