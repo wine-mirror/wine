@@ -98,6 +98,36 @@ static inline BOOL get_bool(LPCVOID data)
     return (*(BOOL *)data) ? TRUE : FALSE;
 }
 
+static void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indata, D3DXPARAMETER_TYPE intype)
+{
+    switch (outtype)
+    {
+        case D3DXPT_FLOAT:
+            *(FLOAT *)outdata = get_float(intype, indata);
+            break;
+
+        case D3DXPT_BOOL:
+            *(BOOL *)outdata = get_bool(indata);
+            break;
+
+        case D3DXPT_INT:
+            *(INT *)outdata = get_int(intype, indata);
+            break;
+
+        case D3DXPT_PIXELSHADER:
+        case D3DXPT_VERTEXSHADER:
+        case D3DXPT_TEXTURE2D:
+        case D3DXPT_STRING:
+            *(INT *)outdata = 0x12345678;
+            break;
+
+        default:
+            ok(0, "Unhandled type %x.\n", outtype);
+            *(INT *)outdata = 0;
+            break;
+    }
+}
+
 static const char effect_desc[] =
 "Technique\n"
 "{\n"
@@ -1522,6 +1552,24 @@ static void test_effect_parameter_value_GetMatrixTransposeArray(const struct tes
     }
 }
 
+static void test_effect_parameter_value_GetTestGroup(const struct test_effect_parameter_value_result *res,
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+{
+    test_effect_parameter_value_GetValue(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetBool(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetBoolArray(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetInt(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetIntArray(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetFloat(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetFloatArray(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetVector(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetVectorArray(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetMatrix(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetMatrixArray(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetMatrixTranspose(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetMatrixTransposeArray(res, effect, res_value, parameter, i);
+}
+
 static void test_effect_parameter_value(IDirect3DDevice9 *device)
 {
     UINT i;
@@ -1554,6 +1602,8 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             UINT res_value_offset = res[k].value_offset;
             D3DXHANDLE parameter;
             D3DXPARAMETER_DESC pdesc;
+            BOOL bvalue;
+            DWORD expected_value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
 
             parameter = effect->lpVtbl->GetParameterByName(effect, NULL, res_full_name);
             ok(parameter != NULL, "%u - %s: GetParameterByName failed\n", i, res_full_name);
@@ -1591,19 +1641,23 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     (res_desc->Elements ? res_desc->Bytes / 4 / res_desc->Elements : 0),
                     "%u - %s: Warning: Array size to small\n", i, res_full_name);
 
-            test_effect_parameter_value_GetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetBool(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetBoolArray(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetInt(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetIntArray(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetFloat(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetFloatArray(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetVector(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetVectorArray(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetMatrix(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetMatrixArray(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetMatrixTranspose(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetMatrixTransposeArray(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_value_GetTestGroup(&res[k], effect, &blob[res_value_offset], parameter, i);
+
+            /* SetBool */
+            bvalue = 1;
+            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            hr = effect->lpVtbl->SetBool(effect, parameter, bvalue);
+            if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
+            {
+                set_number(expected_value, res_desc->Type, &bvalue, D3DXPT_BOOL);
+                ok(hr == D3D_OK, "%u - %s: SetBool failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+            }
+            else
+            {
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBool failed, got %#x, expected %#x\n",
+                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+            }
+            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
         }
 
         count = effect->lpVtbl->Release(effect);
