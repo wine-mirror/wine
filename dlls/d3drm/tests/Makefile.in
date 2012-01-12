@@ -1,4 +1,5 @@
 TESTDLL   = d3drm.dll
+IMPORTS   = dxguid
 
 C_SRCS = \
 	d3drm.c \
