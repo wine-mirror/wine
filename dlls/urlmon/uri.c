@@ -5034,47 +5034,19 @@ static inline Uri* impl_from_IUriBuilderFactory(IUriBuilderFactory *iface)
 static HRESULT WINAPI UriBuilderFactory_QueryInterface(IUriBuilderFactory *iface, REFIID riid, void **ppv)
 {
     Uri *This = impl_from_IUriBuilderFactory(iface);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IUriBuilderFactory_iface;
-    }else if(IsEqualGUID(&IID_IUriBuilderFactory, riid)) {
-        TRACE("(%p)->(IID_IUriBuilderFactory %p)\n", This, ppv);
-        *ppv = &This->IUriBuilderFactory_iface;
-    }else if(IsEqualGUID(&IID_IUri, riid)) {
-        TRACE("(%p)->(IID_IUri %p)\n", This, ppv);
-        *ppv = &This->IUri_iface;
-    }else {
-        TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return IUri_QueryInterface(&This->IUri_iface, riid, ppv);
 }
 
 static ULONG WINAPI UriBuilderFactory_AddRef(IUriBuilderFactory *iface)
 {
     Uri *This = impl_from_IUriBuilderFactory(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    return ref;
+    return IUri_AddRef(&This->IUri_iface);
 }
 
 static ULONG WINAPI UriBuilderFactory_Release(IUriBuilderFactory *iface)
 {
     Uri *This = impl_from_IUriBuilderFactory(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    if(!ref)
-        destory_uri_obj(This);
-
-    return ref;
+    return IUri_Release(&This->IUri_iface);
 }
 
 static HRESULT WINAPI UriBuilderFactory_CreateIUriBuilder(IUriBuilderFactory *iface,
