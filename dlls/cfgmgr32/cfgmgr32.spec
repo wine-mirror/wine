@@ -53,7 +53,7 @@
 @ stub CM_Get_Class_Name_ExA
 @ stub CM_Get_Class_Name_ExW
 @ stdcall CM_Get_Class_Registry_PropertyA(ptr long ptr ptr long long ptr) setupapi.CM_Get_Class_Registry_PropertyA
-@ stub CM_Get_Class_Registry_PropertyW
+@ stdcall CM_Get_Class_Registry_PropertyW(ptr long ptr ptr long long ptr) setupapi.CM_Get_Class_Registry_PropertyW
 @ stub CM_Get_Depth
 @ stub CM_Get_Depth_Ex
 @ stub CM_Get_DevNode_Registry_PropertyA
