@@ -5137,8 +5137,13 @@ static ULONG WINAPI PersistStream_Release(IPersistStream *iface)
 static HRESULT WINAPI PersistStream_GetClassID(IPersistStream *iface, CLSID *pClassID)
 {
     Uri *This = impl_from_IPersistStream(iface);
-    FIXME("(%p)->(%p)\n", This, pClassID);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pClassID);
+
+    if(!pClassID)
+        return E_INVALIDARG;
+
+    *pClassID = CLSID_CUri;
+    return S_OK;
 }
 
 static HRESULT WINAPI PersistStream_IsDirty(IPersistStream *iface)
