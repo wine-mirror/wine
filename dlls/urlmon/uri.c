@@ -4264,6 +4264,8 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
     HRESULT hres;
     TRACE("(%p %s)->(%d %p %x)\n", This, debugstr_w(This->canon_uri), uriProp, pbstrProperty, dwFlags);
 
+    if(!This->create_flags)
+        return E_UNEXPECTED;
     if(!pbstrProperty)
         return E_POINTER;
 
@@ -4554,6 +4556,8 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     HRESULT hres;
     TRACE("(%p %s)->(%d %p %x)\n", This, debugstr_w(This->canon_uri), uriProp, pcchProperty, dwFlags);
 
+    if(!This->create_flags)
+        return E_UNEXPECTED;
     if(!pcchProperty)
         return E_INVALIDARG;
 
@@ -4689,6 +4693,8 @@ static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DW
 
     TRACE("(%p %s)->(%d %p %x)\n", This, debugstr_w(This->canon_uri), uriProp, pcchProperty, dwFlags);
 
+    if(!This->create_flags)
+        return E_UNEXPECTED;
     if(!pcchProperty)
         return E_INVALIDARG;
 
@@ -4931,6 +4937,8 @@ static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
     Uri *This = impl_from_IUri(iface);
     TRACE("(%p %s)->(%p)\n", This, debugstr_w(This->canon_uri), pdwProperties);
 
+    if(!This->create_flags)
+        return E_UNEXPECTED;
     if(!pdwProperties)
         return E_INVALIDARG;
 
@@ -4981,6 +4989,8 @@ static HRESULT WINAPI Uri_IsEqual(IUri *iface, IUri *pUri, BOOL *pfEqual)
 
     TRACE("(%p %s)->(%p %p)\n", This, debugstr_w(This->canon_uri), pUri, pfEqual);
 
+    if(!This->create_flags)
+        return E_UNEXPECTED;
     if(!pfEqual)
         return E_POINTER;
 
@@ -5172,7 +5182,7 @@ static HRESULT WINAPI PersistStream_Save(IPersistStream *iface, IStream *pStm, B
     Uri *This = impl_from_IPersistStream(iface);
     ULARGE_INTEGER size;
     struct persist_uri *data;
-    BYTE *p;
+    BYTE *p = NULL;
     HRESULT hres;
 
     TRACE("(%p)->(%p %x)\n", This, pStm, fClearDirty);
@@ -5191,9 +5201,11 @@ static HRESULT WINAPI PersistStream_Save(IPersistStream *iface, IStream *pStm, B
     data->size = size.u.LowPart;
     data->create_flags = This->create_flags;
 
-    data->fields_no = 1;
-    p = persist_stream_add_strprop(This, data->data, Uri_PROPERTY_RAW_URI,
-            SysStringLen(This->raw_uri), This->raw_uri);
+    if(This->create_flags) {
+        data->fields_no = 1;
+        p = persist_stream_add_strprop(This, data->data, Uri_PROPERTY_RAW_URI,
+                SysStringLen(This->raw_uri), This->raw_uri);
+    }
     if(This->scheme_type!=URL_SCHEME_HTTP && This->scheme_type!=URL_SCHEME_HTTPS
             && This->scheme_type!=URL_SCHEME_FTP) {
         hres = IStream_Write(pStm, data, data->size-2, NULL);
@@ -5275,9 +5287,12 @@ static HRESULT WINAPI PersistStream_GetSizeMax(IPersistStream *iface, ULARGE_INT
     if(!pcbSize)
         return E_INVALIDARG;
 
-    pcbSize->u.LowPart = 2+(SysStringLen(This->raw_uri)+1)*sizeof(WCHAR)
-        + 2*sizeof(DWORD) + sizeof(struct persist_uri);
+    pcbSize->u.LowPart = 2+sizeof(struct persist_uri);
     pcbSize->u.HighPart = 0;
+    if(This->create_flags)
+        pcbSize->u.LowPart += (SysStringLen(This->raw_uri)+1)*sizeof(WCHAR) + 2*sizeof(DWORD);
+    else /* there's no place for fields no */
+        pcbSize->u.LowPart -= sizeof(DWORD);
     if(This->scheme_type!=URL_SCHEME_HTTP && This->scheme_type!=URL_SCHEME_HTTPS
             && This->scheme_type!=URL_SCHEME_FTP)
         return S_OK;
@@ -6036,6 +6051,8 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
         Uri *uri;
 
         if((uri = get_uri_obj(pIUri))) {
+            if(!uri->create_flags)
+                return E_UNEXPECTED;
             IUri_AddRef(pIUri);
             ret->uri = uri;
 
