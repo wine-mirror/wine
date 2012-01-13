@@ -237,6 +237,10 @@ size_t        __cdecl wcstombs(char*,const wchar_t*,size_t);
 errno_t       __cdecl wcstombs_s(size_t*,char*,size_t,const wchar_t*,size_t);
 __msvcrt_ulong __cdecl wcstoul(const wchar_t*,wchar_t**,int);
 int           __cdecl wctomb(char*,wchar_t);
+__int64       __cdecl _wcstoi64(const wchar_t*,wchar_t**,int);
+__int64       __cdecl _wcstoi64_l(const wchar_t*,wchar_t**,int,_locale_t);
+unsigned __int64 __cdecl _wcstoui64(const wchar_t*,wchar_t**,int);
+unsigned __int64 __cdecl _wcstoui64_l(const wchar_t*,wchar_t**,int,_locale_t);
 #endif /* _WSTDLIB_DEFINED */
 
 typedef void (__cdecl *_invalid_parameter_handler)(const wchar_t*, const wchar_t*, const wchar_t*, unsigned, uintptr_t);
