@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-10 17:08+0100\n"
+"PO-Revision-Date: 2012-01-13 12:10+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -41,7 +41,7 @@ msgstr ""
 
 #: appwiz.rc:64
 msgid "&Support Info"
-msgstr "Informazioni di &supporto..."
+msgstr "Informazioni di &supporto"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -50,7 +50,7 @@ msgstr "&Modifica..."
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
 msgid "&Remove"
-msgstr "&Rimuovi..."
+msgstr "&Rimuovi"
 
 #: appwiz.rc:72
 msgid "Support Information"
@@ -213,7 +213,7 @@ msgstr "Tutti i file (*.*)"
 
 #: appwiz.rc:43
 msgid "&Modify/Remove"
-msgstr "&Modifica/Rimuovi..."
+msgstr "&Modifica/Rimuovi"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -587,13 +587,11 @@ msgid "&Hue:"
 msgstr "&Tinta:"
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Sat:"
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Lum:"
@@ -804,8 +802,8 @@ msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
-"Il file non esiste\n"
-"Creare il file"
+"Il file non esiste.\n"
+"Creare il file?"
 
 #: comdlg32.rc:32
 msgid ""
@@ -969,7 +967,7 @@ msgid ""
 "Please enter a value between 1 and %d."
 msgstr ""
 "Questo alto numero di copie non è supportato dalla stampante.\n"
-"Inserire un valore compreso tra 1 e %d"
+"Inserire un valore compreso tra 1 e %d."
 
 #: comdlg32.rc:63
 msgid "A printer error occurred."
@@ -1944,7 +1942,7 @@ msgstr "Disponibili"
 
 #: crypt32.rc:220
 msgid "Not Available"
-msgstr "Non disponibili"
+msgstr "Non disponibile"
 
 #: crypt32.rc:221
 msgid "Meets Criteria="
@@ -2198,7 +2196,7 @@ msgstr "Nome del &file:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "&Naviga"
+msgstr "&Naviga..."
 
 #: cryptui.rc:294
 msgid ""
@@ -3234,7 +3232,7 @@ msgstr "S&tampa..."
 
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
-msgstr "An&teprima di stampa..."
+msgstr "An&teprima di stampa"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -3417,7 +3415,7 @@ msgstr "Configura il browser Internet di Wine e le relative impostazioni"
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
-msgstr "Impostazioni di sicurezza per la zona:"
+msgstr "Impostazioni di sicurezza per la zona: "
 
 #: inetcpl.rc:31
 msgid "Custom"
@@ -6770,7 +6768,7 @@ msgstr "Con&figura..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&Informazioni..."
+msgstr "&Informazioni"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7512,6 +7510,7 @@ msgid "Resource Failures"
 msgstr "Fallimenti della risorsa"
 
 #: shdoclc.rc:198
+#, fuzzy
 msgid "Dump Tracking Info"
 msgstr "Informazioni di Dump Tracking"
 
@@ -7722,7 +7721,7 @@ msgstr "&Esci"
 
 #: shell32.rc:127
 msgid "&About Control Panel"
-msgstr "&Informazioni sul Pannello di Controllo"
+msgstr "&Informazioni sul Pannello di controllo"
 
 #: shell32.rc:283 shell32.rc:298
 msgid "Browse for Folder"
@@ -7783,7 +7782,7 @@ msgstr "&Apri:"
 #: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
 msgid "&Browse..."
-msgstr "&Naviga"
+msgstr "&Naviga..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
@@ -8212,13 +8211,15 @@ msgstr ""
 "sotto i termini della GNU Lesser General Public License come pubblicata "
 "dalla Free Software Foundation; sia la versione 2.1 della LGPL, sia (a tua "
 "scelta) una versione più nuova.\n"
+"\n"
 "Questo programma è distribuito nella speranza che sia utile, ma SENZA ALCUNA "
-"GARANZIA; pure senza la garanzia implicita di COMMERCIABILTÀ o ADEGUATEZZA "
+"GARANZIA; pure senza la garanzia implicita di COMMERCIABILITÀ o ADEGUATEZZA  "
 "PER UN PARTICOLARE SCOPO. Leggere la GNU Lesser General Public License per "
 "più informazioni.\n"
+"\n"
 "Dovresti aver ricevuto una copia della GNU Lesser General Public License "
 "insieme a questo programma; altrimenti, scrivi alla Free Software "
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
+"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:266
 msgid "Wine License"
@@ -8640,9 +8641,9 @@ msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
-"Si sono verificati degli errori in più di un dispositivo. Specificare ogni "
-"comando e dispositivo separatamente per determinare quale dispositivo ha "
-"causato l'errore"
+"Si sono verificati errori in più di un dispositivo. Specificare ogni comando "
+"e dispositivo separatamente per determinare quali dispositivi hanno causato "
+"l'errore."
 
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
@@ -9135,7 +9136,7 @@ msgstr "Non intenzionato ad agire"
 
 #: wldap32.rc:81
 msgid "Loop Detected"
-msgstr "Trovato Loop"
+msgstr "Trovato loop"
 
 #: wldap32.rc:87
 msgid "Sort Control Missing"
@@ -9333,7 +9334,7 @@ msgstr "&Sempre in primo piano"
 
 #: clock.rc:42
 msgid "&About Clock"
-msgstr "&Informazioni sull'Orologio..."
+msgstr "&Informazioni sull'Orologio"
 
 #: clock.rc:48
 msgid "Clock"
@@ -9371,7 +9372,7 @@ msgstr "CHDIR <dir> cambia la cartella predefinita attuale.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS pulisce la schermata della console\n"
+msgstr "CLS pulisce la schermata della console.\n"
 
 #: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
@@ -9608,7 +9609,8 @@ msgstr ""
 "\n"
 "Il prompt può essere cambiato anche alterando la variabile d'ambiente "
 "PROMPT,\n"
-"perciò il comando 'SET PROMPT=testo' ha lo stesso effetto di 'PROMPT testo'\n"
+"perciò il comando 'SET PROMPT=testo' ha lo stesso effetto di 'PROMPT "
+"testo'.\n"
 
 #: cmd.rc:153
 msgid ""
@@ -9733,7 +9735,7 @@ msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
-"ENDLOCAL termina la localizzazione dei cambiamenti dell'ambiente in un file "
+"ENDLOCAL termina la localizzazione dei cambiamenti dell'ambiente in un file\n"
 "batch che erano stati introdotti da un precedente SETLOCAL.\n"
 
 #: cmd.rc:217
@@ -9746,14 +9748,12 @@ msgid ""
 "settings are restored.\n"
 msgstr ""
 "SETLOCAL inizia la localizzazione dei cambiamenti dell'ambiente in un file\n"
-" batch.\n"
+"batch.\n"
 "\n"
-"I cambiamenti dell'ambiente fatti dopo un SETLOCAL sono limitati al file "
-"batch e\n"
-"sono mantenuti fino al prossimo ENDLOCAL incontrato (o alla fine del file, \n"
-"qualunque venga prima), al cui punto le precendenti impostazioni "
-"dell'ambiente\n"
-"sono ripristinate.\n"
+"I cambiamenti dell'ambiente fatti dopo un SETLOCAL sono limitati al file\n"
+"batch e sono mantenuti fino al prossimo ENDLOCAL incontrato (o alla fine\n"
+"del file, qualunque venga prima), al cui punto le precedenti impostazioni\n"
+"dell'ambiente sono ripristinate.\n"
 
 #: cmd.rc:220
 msgid ""
@@ -10368,7 +10368,7 @@ msgstr "&Contenuti\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "&Informazioni sul Blocco Note"
+msgstr "&Informazioni su Blocco note"
 
 #: notepad.rc:97
 msgid "Page Setup"
@@ -10424,10 +10424,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"Il file '%s'\n"
-"non esiste\n"
+"Il file '%s' non esiste.\n"
 "\n"
-" Creare un nuovo file ?"
+"Creare un nuovo file?"
 
 #: notepad.rc:79
 msgid ""
@@ -10435,10 +10434,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Il file '%s'\n"
-"è stato modificato\n"
+"Il file '%s' è stato modificato.\n"
 "\n"
-" Salvare le modifiche ?"
+"Salvare le modifiche?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
@@ -10482,7 +10480,7 @@ msgstr "&Mostra TypeLib..."
 
 #: oleview.rc:32
 msgid "&System Configuration"
-msgstr "Configurazione di &Sistema..."
+msgstr "Configurazione di &sistema"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -10558,7 +10556,7 @@ msgstr "&Aggiorna\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
-msgstr "&Su OleView"
+msgstr "&Informazioni su OleView"
 
 #: oleview.rc:79
 msgid "&Save as..."
@@ -10870,7 +10868,7 @@ msgstr "&Sovrapponi\tShift+F5"
 
 #: progman.rc:48
 msgid "&Side by side\tShift+F4"
-msgstr "&A&ffianca\tShift+F4"
+msgstr "&Affianca\tShift+F4"
 
 #: progman.rc:49
 msgid "&Arrange Icons"
@@ -10878,7 +10876,7 @@ msgstr "&Disponi icone"
 
 #: progman.rc:54
 msgid "&About Program Manager"
-msgstr "&Informazioni sul Gestore di Programmi"
+msgstr "&Informazioni sul Gestore di programmi"
 
 #: progman.rc:100
 msgid "Program &group"
@@ -11002,7 +11000,7 @@ msgstr ""
 
 #: progman.rc:74
 msgid "Help not available."
-msgstr "Guida non disponibile"
+msgstr "Guida non disponibile."
 
 #: progman.rc:75
 msgid "Unknown feature in %s"
@@ -11014,7 +11012,7 @@ msgstr "Il file `%s' esiste. Non sovrascritto."
 
 #: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
-msgstr "Salvare il gruppo come `%s' per non sovrascrivere i file originali"
+msgstr "Salvare il gruppo come `%s' per non sovrascrivere i file originali."
 
 #: progman.rc:80
 msgid "Programs"
@@ -11149,7 +11147,7 @@ msgstr "&Rimuovi dai Preferiti..."
 
 #: regedit.rc:79
 msgid "&About Registry Editor"
-msgstr "&Informazioni sull'editor del Registro"
+msgstr "&Informazioni sull'Editor di registro"
 
 #: regedit.rc:88
 msgid "Modify Binary Data..."
@@ -11245,7 +11243,7 @@ msgstr "Contiene i comandi per modificare valori o chiavi"
 
 #: regedit.rc:136
 msgid "Contains commands for customising the registry window"
-msgstr "Contiene i comandi per personalizzare la finestra del Registro"
+msgstr "Contiene i comandi per personalizzare la finestra del registro"
 
 #: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
@@ -11255,7 +11253,7 @@ msgstr "Contiene i comandi per accedere alle chiavi usate frequentemente"
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
-"Contiene i comandi per visualizzare la Guida e informazioni sull'editor del "
+"Contiene i comandi per visualizzare la Guida e informazioni sull'editor di "
 "Registro"
 
 #: regedit.rc:139
@@ -11268,7 +11266,7 @@ msgstr "Dati"
 
 #: regedit.rc:129
 msgid "Registry Editor"
-msgstr "Editor del Registro"
+msgstr "Editor di registro"
 
 #: regedit.rc:191
 msgid "Import Registry File"
@@ -11304,7 +11302,7 @@ msgstr "(%d sconosciuto)"
 
 #: regedit.rc:160
 msgid "Quits the registry editor"
-msgstr "Esce dall'editor del Registro"
+msgstr "Esce dall'editor di registro"
 
 #: regedit.rc:161
 msgid "Adds keys to the favorites list"
@@ -11678,7 +11676,7 @@ msgstr "&Porta davanti"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"
-msgstr "&Sul Gestore dei Processi"
+msgstr "&Informazioni sul Gestore dei processi"
 
 #: taskmgr.rc:120 taskmgr.rc:356
 msgid "&Switch To"
@@ -12123,11 +12121,11 @@ msgstr "Non si aggiorna automaticamente"
 
 #: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
-msgstr "Affianca le finestre orizzontalmente sulla scrivania "
+msgstr "Affianca le finestre orizzontalmente sulla scrivania"
 
 #: taskmgr.rc:206
 msgid "Tiles the windows vertically on the desktop"
-msgstr "Affianca le finestre verticalmente sulla scrivania "
+msgstr "Affianca le finestre verticalmente sulla scrivania"
 
 #: taskmgr.rc:207
 msgid "Minimizes the windows"
@@ -12636,7 +12634,7 @@ msgstr "Aggiungi..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Rileva automaticamente..."
+msgstr "&Rileva automaticamente"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -12756,7 +12754,7 @@ msgstr "Audio"
 
 #: winecfg.rc:40
 msgid "About"
-msgstr "Riguardo a"
+msgstr "Informazioni"
 
 #: winecfg.rc:41
 msgid "Wine configuration"
@@ -12796,7 +12794,7 @@ msgstr "Test dell'audio fallito!"
 
 #: winecfg.rc:85
 msgid "(System default)"
-msgstr "(valore predefinito di sistema) "
+msgstr "(valore predefinito di sistema)"
 
 #: winecfg.rc:51
 msgid ""
@@ -12860,7 +12858,7 @@ msgstr "Condivisione rete"
 
 #: winecfg.rc:69
 msgid "Floppy disk"
-msgstr "Floppy disk"
+msgstr "Disco floppy"
 
 #: winecfg.rc:70
 msgid "CD-ROM"
@@ -13242,12 +13240,13 @@ msgstr ""
 "  --backend={user|curses}  Scegliere user farà aprire una nuova finestra, "
 "curses proverà\n"
 "                            a inizializzare il terminale corrente come una "
-"console Wine\n"
+"console Wine.\n"
 
 #: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
-"  <comando>                 Il programma di Wine da lanciare in una console\n"
+"  <comando>                 Il programma di Wine da lanciare in una "
+"console.\n"
 
 #: wineconsole.rc:51
 msgid ""
@@ -13260,7 +13259,7 @@ msgstr ""
 "\n"
 "Esempio:\n"
 "  wineconsole cmd\n"
-"Avvia il prompt dei comandi di Wine in una console Wine\n"
+"Avvia il prompt dei comandi di Wine in una console Wine.\n"
 "\n"
 
 #: winedbg.rc:42
@@ -13333,7 +13332,7 @@ msgstr "&Disco"
 
 #: winefile.rc:45
 msgid "Connect &Network Drive..."
-msgstr "Connetti u&nità di rete"
+msgstr "Connetti u&nità di rete..."
 
 #: winefile.rc:46
 msgid "&Disconnect Network Drive"
@@ -13552,7 +13551,7 @@ msgstr "&Esperto"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "&Personalizza"
+msgstr "&Personalizza..."
 
 #: winemine.rc:44
 msgid "&Fastest Times"
@@ -13664,7 +13663,7 @@ msgstr "Sempre in primo &piano"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Informazioni su..."
+msgstr "&Informazioni sulla Guida di Wine"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -13817,7 +13816,7 @@ msgstr "&Giallo di PostThat\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
-msgstr "&Riguardo a Wine Wordpad"
+msgstr "&Informazioni su Wordpad di Wine"
 
 #: wordpad.rc:130
 msgid "Automatic"
@@ -14148,11 +14147,10 @@ msgstr ""
 "\n"
 "[/I]  Assume una cartella se la destinazione non esiste e sono copiati 2 o\n"
 "\tpiù file.\n"
-"[/S]  Copia le cartelle e le sottocartelle..\n"
+"[/S]  Copia le cartelle e le sottocartelle.\n"
 "[/E]  Copia le cartelle e le sottocartelle, incluse quelle vuote.\n"
 "[/Q]  Non mostra i nomi durante la copia, modalità silenziosa.\n"
-"[/F]  Mostra i nomi completi della sorgente e della destinazione durante la\n"
-"\tcopia.\n"
+"[/F]  Mostra i nomi completi di sorgente e destinazione durante la copia.\n"
 "[/L]  Simula l'operazione, mostrando i nomi che sarebbero copiati.\n"
 "[/W]  Chiede conferma prima di iniziare l'operazione di copia.\n"
 "[/T]  Crea la struttura di cartelle vuote ma non copia i file.\n"
@@ -14161,7 +14159,7 @@ msgstr ""
 "[/P]  Chiede conferma per ogni file sorgente prima di copiare.\n"
 "[/N]  Copia usando i nomi abbreviati.\n"
 "[/U]  Copia solo files che sono già presenti nella destinazione.\n"
-"[/R]  Sovrascrive ogni file che abbia l'attributo Sola Lettura.\n"
+"[/R]  Sovrascrive ogni file che abbia l'attributo Sola lettura.\n"
 "[/H]  Include i file nascosti e di sistema nella copia.\n"
 "[/C]  Continua anche se accade un errore durante la copia.\n"
 "[/A]  Copia solo i file che abbiano l'attributo Archivio.\n"
@@ -14170,5 +14168,5 @@ msgstr ""
 "[/D | /D:m-g-a] Copia i nuovi file o quelli modificati dopo la data "
 "fornita.\n"
 "\t\tSe nessuna data è stata fornita, copia solo se la destinazione è più\n"
-"\t\tvecchia della sorgente\n"
+"\t\tvecchia della sorgente.\n"
 "\n"
