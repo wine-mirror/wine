@@ -10695,6 +10695,8 @@ static void test_IPersistStream(void)
         WCHAR str_data[1024];
         ULARGE_INTEGER size, max_size;
         LARGE_INTEGER no_off;
+        CLSID curi;
+        BSTR raw_uri;
         HRESULT hr;
 
         if(test->create_todo || test->create_expected!=S_OK)
@@ -10794,6 +10796,30 @@ static void test_IPersistStream(void)
         }
         ok(props == 0, "%d) No all properties were processed %d. Next property type: %d\n",
                 i, props, dw_data[0]);
+
+        IPersistStream_Release(persist_stream);
+        IUri_Release(uri);
+
+        hr = IStream_Seek(stream, no_off, STREAM_SEEK_SET, NULL);
+        ok(hr == S_OK, "%d) Seek failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IPersistStream_GetClassID(persist_stream, &curi);
+        ok(hr == S_OK, "%d) GetClassID failed 0x%08x, expected S_OK.\n", i, hr);
+        ok(IsEqualCLSID(&curi, &CLSID_CUri), "%d) GetClassID returned incorrect CLSID.\n", i);
+        hr = CoCreateInstance(&curi, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+                &IID_IUri, (void**)&uri);
+        ok(hr == S_OK, "%d) Error creating uninitialized Uri: 0x%08x.\n", i, hr);
+        hr = IUri_QueryInterface(uri, &IID_IPersistStream, (void**)&persist_stream);
+        ok(hr == S_OK, "%d) QueryInterface failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IPersistStream_Load(persist_stream, stream);
+        ok(hr == S_OK, "%d) Load failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IUri_GetRawUri(uri, &raw_uri);
+        ok(hr == S_OK, "%d) GetRawUri failed 0x%08x, expected S_OK.\n", i, hr);
+        ok(!strcmp_aw(test->str_props[Uri_PROPERTY_RAW_URI].value, raw_uri)
+                || broken(test->str_props[Uri_PROPERTY_RAW_URI].broken_value
+                    && !strcmp_aw(test->str_props[Uri_PROPERTY_RAW_URI].broken_value, raw_uri)),
+                "%d) Expected %s but got %s.\n", i, test->str_props[Uri_PROPERTY_RAW_URI].value,
+                wine_dbgstr_w(raw_uri));
+        SysFreeString(raw_uri);
 
         IStream_Release(stream);
         IPersistStream_Release(persist_stream);
@@ -11008,10 +11034,10 @@ START_TEST(uri) {
     trace("test CreateURLMoniker...\n");
     test_CreateURLMoniker();
 
+    CoInitialize(NULL);
+
     trace("test IPersistStream...\n");
     test_IPersistStream();
-
-    CoInitialize(NULL);
 
     trace("test uninitialized Uri...\n");
     test_UninitializedUri();
