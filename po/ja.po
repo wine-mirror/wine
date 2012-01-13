@@ -12993,7 +12993,8 @@ msgid "Command history"
 msgstr "コマンド履歴"
 
 #: wineconsole.rc:73
-msgid "&Number of recalled commands :"
+#, fuzzy
+msgid "&Number of recalled commands:"
 msgstr "記憶するコマンド数(&N) :"
 
 #: wineconsole.rc:76
@@ -13017,11 +13018,13 @@ msgid "Buffer zone"
 msgstr "バッファ サイズ"
 
 #: wineconsole.rc:101
-msgid "&Width :"
+#, fuzzy
+msgid "&Width:"
 msgstr "幅(&W) :"
 
 #: wineconsole.rc:104
-msgid "&Height :"
+#, fuzzy
+msgid "&Height:"
 msgstr "高さ(&H) :"
 
 #: wineconsole.rc:108
@@ -13029,11 +13032,13 @@ msgid "Window size"
 msgstr "ウィンドウ サイズ"
 
 #: wineconsole.rc:109
-msgid "W&idth :"
+#, fuzzy
+msgid "W&idth:"
 msgstr "幅(&I) :"
 
 #: wineconsole.rc:112
-msgid "H&eight :"
+#, fuzzy
+msgid "H&eight:"
 msgstr "高さ(&E) :"
 
 #: wineconsole.rc:116

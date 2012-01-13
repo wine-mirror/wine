@@ -12938,7 +12938,8 @@ msgid "Command history"
 msgstr "명령 히스토리"
 
 #: wineconsole.rc:73
-msgid "&Number of recalled commands :"
+#, fuzzy
+msgid "&Number of recalled commands:"
 msgstr "다시 부르는 명령의 갯수(&N):"
 
 #: wineconsole.rc:76
@@ -12962,11 +12963,13 @@ msgid "Buffer zone"
 msgstr "버퍼 존"
 
 #: wineconsole.rc:101
-msgid "&Width :"
+#, fuzzy
+msgid "&Width:"
 msgstr "너비(&W) :"
 
 #: wineconsole.rc:104
-msgid "&Height :"
+#, fuzzy
+msgid "&Height:"
 msgstr "높이(&H) :"
 
 #: wineconsole.rc:108
@@ -12974,11 +12977,13 @@ msgid "Window size"
 msgstr "창 크기"
 
 #: wineconsole.rc:109
-msgid "W&idth :"
+#, fuzzy
+msgid "W&idth:"
 msgstr "너비(&I) :"
 
 #: wineconsole.rc:112
-msgid "H&eight :"
+#, fuzzy
+msgid "H&eight:"
 msgstr "높이(&E) :"
 
 #: wineconsole.rc:116

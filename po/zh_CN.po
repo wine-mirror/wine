@@ -12903,7 +12903,8 @@ msgid "Command history"
 msgstr "命令历史"
 
 #: wineconsole.rc:73
-msgid "&Number of recalled commands :"
+#, fuzzy
+msgid "&Number of recalled commands:"
 msgstr "最大记录命令数："
 
 #: wineconsole.rc:76
@@ -12928,11 +12929,13 @@ msgid "Buffer zone"
 msgstr "缓冲区"
 
 #: wineconsole.rc:101
-msgid "&Width :"
+#, fuzzy
+msgid "&Width:"
 msgstr "宽度(&W)："
 
 #: wineconsole.rc:104
-msgid "&Height :"
+#, fuzzy
+msgid "&Height:"
 msgstr "高度(&H)："
 
 #: wineconsole.rc:108
@@ -12940,11 +12943,13 @@ msgid "Window size"
 msgstr "窗口大小"
 
 #: wineconsole.rc:109
-msgid "W&idth :"
+#, fuzzy
+msgid "W&idth:"
 msgstr "宽度(&I)："
 
 #: wineconsole.rc:112
-msgid "H&eight :"
+#, fuzzy
+msgid "H&eight:"
 msgstr "高度(&E)："
 
 #: wineconsole.rc:116

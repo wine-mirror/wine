@@ -13019,7 +13019,8 @@ msgid "Command history"
 msgstr "Komandų istorija"
 
 #: wineconsole.rc:73
-msgid "&Number of recalled commands :"
+#, fuzzy
+msgid "&Number of recalled commands:"
 msgstr "Prisimintų &komandų skaičius:"
 
 #: wineconsole.rc:76
@@ -13043,11 +13044,13 @@ msgid "Buffer zone"
 msgstr "Buferio dydis"
 
 #: wineconsole.rc:101
-msgid "&Width :"
+#, fuzzy
+msgid "&Width:"
 msgstr "&Plotis:"
 
 #: wineconsole.rc:104
-msgid "&Height :"
+#, fuzzy
+msgid "&Height:"
 msgstr "&Aukštis:"
 
 #: wineconsole.rc:108
@@ -13055,11 +13058,13 @@ msgid "Window size"
 msgstr "Lango dydis"
 
 #: wineconsole.rc:109
-msgid "W&idth :"
+#, fuzzy
+msgid "W&idth:"
 msgstr "P&lotis:"
 
 #: wineconsole.rc:112
-msgid "H&eight :"
+#, fuzzy
+msgid "H&eight:"
 msgstr "A&ukštis:"
 
 #: wineconsole.rc:116

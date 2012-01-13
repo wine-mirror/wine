@@ -12734,7 +12734,7 @@ msgid "Command history"
 msgstr ""
 
 #: wineconsole.rc:73
-msgid "&Number of recalled commands :"
+msgid "&Number of recalled commands:"
 msgstr ""
 
 #: wineconsole.rc:76
@@ -12758,24 +12758,24 @@ msgid "Buffer zone"
 msgstr "Buffer zone"
 
 #: wineconsole.rc:101
-msgid "&Width :"
+msgid "&Width:"
 msgstr ""
 
 #: wineconsole.rc:104
-msgid "&Height :"
-msgstr "&Height :"
+msgid "&Height:"
+msgstr "&Height:"
 
 #: wineconsole.rc:108
 msgid "Window size"
 msgstr "Window size"
 
 #: wineconsole.rc:109
-msgid "W&idth :"
+msgid "W&idth:"
 msgstr ""
 
 #: wineconsole.rc:112
-msgid "H&eight :"
-msgstr "H&eight :"
+msgid "H&eight:"
+msgstr "H&eight:"
 
 #: wineconsole.rc:116
 msgid "End of program"

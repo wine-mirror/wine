@@ -13140,7 +13140,8 @@ msgid "Command history"
 msgstr "Zgodovina ukazov"
 
 #: wineconsole.rc:73
-msgid "&Number of recalled commands :"
+#, fuzzy
+msgid "&Number of recalled commands:"
 msgstr "&Št. zapomnjenih ukazov:"
 
 #: wineconsole.rc:76
@@ -13165,11 +13166,13 @@ msgid "Buffer zone"
 msgstr "Velikost medpomnilnika"
 
 #: wineconsole.rc:101
-msgid "&Width :"
+#, fuzzy
+msgid "&Width:"
 msgstr "&Širina :"
 
 #: wineconsole.rc:104
-msgid "&Height :"
+#, fuzzy
+msgid "&Height:"
 msgstr "&Višina :"
 
 #: wineconsole.rc:108
@@ -13177,11 +13180,13 @@ msgid "Window size"
 msgstr "Velikost okna"
 
 #: wineconsole.rc:109
-msgid "W&idth :"
+#, fuzzy
+msgid "W&idth:"
 msgstr "Ši&rina :"
 
 #: wineconsole.rc:112
-msgid "H&eight :"
+#, fuzzy
+msgid "H&eight:"
 msgstr "V&išina :"
 
 #: wineconsole.rc:116

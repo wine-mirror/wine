@@ -13344,7 +13344,8 @@ msgid "Command history"
 msgstr "Komut geçmişi"
 
 #: wineconsole.rc:73
-msgid "&Number of recalled commands :"
+#, fuzzy
+msgid "&Number of recalled commands:"
 msgstr "Çağrılabilecek komut &sayısı:"
 
 #: wineconsole.rc:76
@@ -13369,11 +13370,13 @@ msgid "Buffer zone"
 msgstr "Tampon bölge"
 
 #: wineconsole.rc:101
-msgid "&Width :"
+#, fuzzy
+msgid "&Width:"
 msgstr "&Genişlik :"
 
 #: wineconsole.rc:104
-msgid "&Height :"
+#, fuzzy
+msgid "&Height:"
 msgstr "&Yükseklik :"
 
 #: wineconsole.rc:108
@@ -13381,11 +13384,13 @@ msgid "Window size"
 msgstr "Pencere boyutu"
 
 #: wineconsole.rc:109
-msgid "W&idth :"
+#, fuzzy
+msgid "W&idth:"
 msgstr "G&enişlik :"
 
 #: wineconsole.rc:112
-msgid "H&eight :"
+#, fuzzy
+msgid "H&eight:"
 msgstr "Y&ükseklik :"
 
 #: wineconsole.rc:116

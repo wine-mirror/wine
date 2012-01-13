@@ -13650,7 +13650,8 @@ msgid "Command history"
 msgstr "Istoric comenzi"
 
 #: wineconsole.rc:73
-msgid "&Number of recalled commands :"
+#, fuzzy
+msgid "&Number of recalled commands:"
 msgstr "&Număr de comenzi reapelate :"
 
 #: wineconsole.rc:76
@@ -13675,11 +13676,13 @@ msgid "Buffer zone"
 msgstr "Zonă tampon"
 
 #: wineconsole.rc:101
-msgid "&Width :"
+#, fuzzy
+msgid "&Width:"
 msgstr "Lăți&me :"
 
 #: wineconsole.rc:104
-msgid "&Height :"
+#, fuzzy
+msgid "&Height:"
 msgstr "Î&nălțime :"
 
 #: wineconsole.rc:108
@@ -13687,11 +13690,13 @@ msgid "Window size"
 msgstr "Dimensiune fereastră"
 
 #: wineconsole.rc:109
-msgid "W&idth :"
+#, fuzzy
+msgid "W&idth:"
 msgstr "Lăț&ime :"
 
 #: wineconsole.rc:112
-msgid "H&eight :"
+#, fuzzy
+msgid "H&eight:"
 msgstr "Înălțim&e :"
 
 #: wineconsole.rc:116

@@ -13230,7 +13230,8 @@ msgid "Command history"
 msgstr "Historie příkazů"
 
 #: wineconsole.rc:73
-msgid "&Number of recalled commands :"
+#, fuzzy
+msgid "&Number of recalled commands:"
 msgstr "&Počet znovuvolaných příkazů :"
 
 #: wineconsole.rc:76
@@ -13255,11 +13256,13 @@ msgid "Buffer zone"
 msgstr "Oblast zásobníku"
 
 #: wineconsole.rc:101
-msgid "&Width :"
+#, fuzzy
+msgid "&Width:"
 msgstr "Šíř&ka :"
 
 #: wineconsole.rc:104
-msgid "&Height :"
+#, fuzzy
+msgid "&Height:"
 msgstr "&Výška :"
 
 #: wineconsole.rc:108
@@ -13267,11 +13270,13 @@ msgid "Window size"
 msgstr "Velikost okna"
 
 #: wineconsole.rc:109
-msgid "W&idth :"
+#, fuzzy
+msgid "W&idth:"
 msgstr "Šíř&ka :"
 
 #: wineconsole.rc:112
-msgid "H&eight :"
+#, fuzzy
+msgid "H&eight:"
 msgstr "Výšk&a :"
 
 #: wineconsole.rc:116
