@@ -4235,8 +4235,8 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_get_char_do_get_float)
             VTABLE_ADD_FUNC(num_get_char_do_get_uint64)
             VTABLE_ADD_FUNC(num_get_char_do_get_int64)
-            VTABLE_ADD_FUNC(num_get_char_do_get_long)
             VTABLE_ADD_FUNC(num_get_char_do_get_ulong)
+            VTABLE_ADD_FUNC(num_get_char_do_get_long)
             VTABLE_ADD_FUNC(num_get_char_do_get_uint)
             VTABLE_ADD_FUNC(num_get_char_do_get_ushort)
             VTABLE_ADD_FUNC(num_get_char_do_get_bool));
@@ -4259,8 +4259,8 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_get_wchar_do_get_float)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_uint64)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_int64)
-            VTABLE_ADD_FUNC(num_get_wchar_do_get_long)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_ulong)
+            VTABLE_ADD_FUNC(num_get_wchar_do_get_long)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_uint)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_ushort)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_bool));
