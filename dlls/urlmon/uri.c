@@ -5320,16 +5320,23 @@ static const IPersistStreamVtbl PersistStreamVtbl = {
     PersistStream_GetSizeMax
 };
 
-static Uri* create_uri_obj(void) {
+HRESULT Uri_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
+{
     Uri *ret = heap_alloc_zero(sizeof(Uri));
-    if(ret) {
-        ret->IUri_iface.lpVtbl = &UriVtbl;
-        ret->IUriBuilderFactory_iface.lpVtbl = &UriBuilderFactoryVtbl;
-        ret->IPersistStream_iface.lpVtbl = &PersistStreamVtbl;
-        ret->ref = 1;
-    }
 
-    return ret;
+    TRACE("(%p %p)\n", pUnkOuter, ppobj);
+
+    *ppobj = ret;
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->IUri_iface.lpVtbl = &UriVtbl;
+    ret->IUriBuilderFactory_iface.lpVtbl = &UriBuilderFactoryVtbl;
+    ret->IPersistStream_iface.lpVtbl = &PersistStreamVtbl;
+    ret->ref = 1;
+
+    *ppobj = &ret->IUri_iface;
+    return S_OK;
 }
 
 /***********************************************************************
@@ -5387,10 +5394,10 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     if(dwFlags & ~supported_flags)
         FIXME("Ignoring unsupported flag(s) %x\n", dwFlags & ~supported_flags);
 
-    ret = create_uri_obj();
-    if(!ret) {
+    hr = Uri_Construct(NULL, (void**)&ret);
+    if(FAILED(hr)) {
         *ppURI = NULL;
-        return E_OUTOFMEMORY;
+        return hr;
     }
 
     /* Explicitly set the default flags if it doesn't cause a flag conflict. */
@@ -5547,10 +5554,10 @@ static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_fla
         return hr;
     }
 
-    ret = create_uri_obj();
-    if(!ret) {
+    hr = Uri_Construct(NULL, (void**)&ret);
+    if(FAILED(hr)) {
         *uri = NULL;
-        return E_OUTOFMEMORY;
+        return hr;
     }
 
     hr = generate_uri(builder, &data, ret, create_flags);
@@ -6115,10 +6122,10 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
 
         parse_uri(&data, 0);
 
-        ret = create_uri_obj();
-        if(!ret) {
+        hr = Uri_Construct(NULL, (void**)&ret);
+        if(FAILED(hr)) {
             *result = NULL;
-            return E_OUTOFMEMORY;
+            return hr;
         }
 
         if(extras & COMBINE_URI_FORCE_FLAG_USE) {
@@ -6319,12 +6326,12 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
 
         generate_raw_uri(&data, data.uri, raw_flags);
 
-        ret = create_uri_obj();
-        if(!ret) {
+        hr = Uri_Construct(NULL, (void**)&ret);
+        if(FAILED(hr)) {
             SysFreeString(data.uri);
             heap_free(path);
             *result = NULL;
-            return E_OUTOFMEMORY;
+            return hr;
         }
 
         if(flags & URL_DONT_SIMPLIFY)

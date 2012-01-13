@@ -47,6 +47,7 @@ extern HRESULT FtpProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj) DECLSPE
 extern HRESULT GopherProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj) DECLSPEC_HIDDEN;
 extern HRESULT MkProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj) DECLSPEC_HIDDEN;
 extern HRESULT MimeFilter_Construct(IUnknown *pUnkOuter, LPVOID *ppobj) DECLSPEC_HIDDEN;
+extern HRESULT Uri_Construct(IUnknown *pUnkOuter, LPVOID *ppobj) DECLSPEC_HIDDEN;
 
 extern BOOL WINAPI URLMON_DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI URLMON_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv) DECLSPEC_HIDDEN;
@@ -54,6 +55,7 @@ extern HRESULT WINAPI URLMON_DllRegisterServer(void) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI URLMON_DllUnregisterServer(void) DECLSPEC_HIDDEN;
 
 extern GUID const CLSID_PSFactoryBuffer DECLSPEC_HIDDEN;
+extern GUID const CLSID_CUri DECLSPEC_HIDDEN;
 
 /**********************************************************************
  * Dll lifetime tracking declaration for urlmon.dll

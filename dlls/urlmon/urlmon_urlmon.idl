@@ -101,3 +101,10 @@ coclass PSFactoryBuffer { interface IPSFactoryBuffer; }
     uuid(8f6b0360-b80d-11d0-a9b3-006097942311)
 ]
 coclass DeCompMimeFilter { interface IInternetProtocol; interface IInternetProtocolSink; }
+
+[
+    helpstring("CUri"),
+    threading(apartment),
+    uuid(df2fce13-25ec-45bb-9d4c-cecd47c2430c)
+]
+coclass CUri { interface IUri; }
