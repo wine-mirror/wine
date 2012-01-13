@@ -265,6 +265,7 @@ typedef struct
     LPWSTR  password;
     INTERNET_PORT hostPort; /* the final destination port of the request */
     INTERNET_PORT serverPort; /* the port of the server we directly connect to */
+    DWORD connect_timeout;
 } http_session_t;
 
 #define HDR_ISREQUEST		0x0001
@@ -305,6 +306,7 @@ typedef struct
     LPWSTR rawHeaders;
     netconn_t *netconn;
     DWORD security_flags;
+    DWORD connect_timeout;
     LPWSTR version;
     LPWSTR statusText;
     DWORD bytesToWrite;
@@ -515,7 +517,7 @@ VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
                            DWORD dwStatusInfoLength) DECLSPEC_HIDDEN;
 BOOL INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto, WCHAR *foundProxy, DWORD *foundProxyLen) DECLSPEC_HIDDEN;
 
-DWORD create_netconn(BOOL,server_t*,DWORD,netconn_t**) DECLSPEC_HIDDEN;
+DWORD create_netconn(BOOL, server_t *, DWORD, DWORD, netconn_t **) DECLSPEC_HIDDEN;
 void free_netconn(netconn_t*) DECLSPEC_HIDDEN;
 void NETCON_unload(void) DECLSPEC_HIDDEN;
 DWORD NETCON_secure_connect(netconn_t *connection, LPWSTR hostname) DECLSPEC_HIDDEN;

@@ -497,7 +497,7 @@ static DWORD init_openssl(void)
 #endif
 }
 
-DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, netconn_t **ret)
+DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, DWORD timeout, netconn_t **ret)
 {
     netconn_t *netconn;
     int result, flag;
@@ -526,9 +526,39 @@ DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, netcon
     assert(server->addr_len);
     result = netconn->socketFD = socket(server->addr.ss_family, SOCK_STREAM, 0);
     if(result != -1) {
+        flag = 1;
+        ioctlsocket(netconn->socketFD, FIONBIO, &flag);
         result = connect(netconn->socketFD, (struct sockaddr*)&server->addr, server->addr_len);
         if(result == -1)
+        {
+            if (sock_get_error(errno) == WSAEINPROGRESS) {
+                struct pollfd pfd;
+                int res;
+
+                pfd.fd = netconn->socketFD;
+                pfd.events = POLLOUT;
+                res = poll(&pfd, 1, timeout);
+                if (!res)
+                {
+                    closesocket(netconn->socketFD);
+                    heap_free(netconn);
+                    return ERROR_INTERNET_CANNOT_CONNECT;
+                }
+                else if (res > 0)
+                {
+                    int err;
+                    socklen_t len = sizeof(err);
+                    if (!getsockopt(netconn->socketFD, SOL_SOCKET, SO_ERROR, &err, &len) && !err)
+                        result = 0;
+                }
+            }
+        }
+        if(result == -1)
             closesocket(netconn->socketFD);
+        else {
+            flag = 0;
+            ioctlsocket(netconn->socketFD, FIONBIO, &flag);
+        }
     }
     if(result == -1) {
         heap_free(netconn);

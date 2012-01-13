@@ -3048,6 +3048,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
 
     request->netconn_stream.data_stream.vtbl = &netconn_stream_vtbl;
     request->data_stream = &request->netconn_stream.data_stream;
+    request->connect_timeout = session->connect_timeout;
 
     InitializeCriticalSection( &request->read_section );
     request->read_section.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": http_request_t.read_section");
@@ -4597,7 +4598,7 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
                           server->addr_str,
                           strlen(server->addr_str)+1);
 
-    res = create_netconn(is_https, server, request->security_flags, &netconn);
+    res = create_netconn(is_https, server, request->security_flags, request->connect_timeout, &netconn);
     server_release(server);
     if(res != ERROR_SUCCESS) {
         ERR("create_netconn failed: %u\n", res);
@@ -5541,6 +5542,7 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         session->password = heap_strdupW(lpszPassword);
     session->serverPort = serverPort;
     session->hostPort = serverPort;
+    session->connect_timeout = INFINITE;
 
     /* Don't send a handle created callback if this handle was created with InternetOpenUrl */
     if (!(session->hdr.dwInternalFlags & INET_OPENURL))
