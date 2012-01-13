@@ -108,7 +108,7 @@ static const AMOVIESETUP_PIN amfQTDPin[] =
 static const AMOVIESETUP_FILTER amfQTV =
 {   &CLSID_QTVDecoder,
     wQTVName,
-    MERIT_NORMAL,
+    MERIT_NORMAL-1,
     2,
     amfQTVPin
 };
@@ -116,7 +116,7 @@ static const AMOVIESETUP_FILTER amfQTV =
 static const AMOVIESETUP_FILTER amfQTD =
 {   &CLSID_QTSplitter,
     wQTDName,
-    MERIT_NORMAL,
+    MERIT_NORMAL-1,
     3,
     amfQTDPin
 };
