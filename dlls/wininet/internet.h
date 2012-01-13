@@ -266,6 +266,8 @@ typedef struct
     INTERNET_PORT hostPort; /* the final destination port of the request */
     INTERNET_PORT serverPort; /* the port of the server we directly connect to */
     DWORD connect_timeout;
+    DWORD send_timeout;
+    DWORD receive_timeout;
 } http_session_t;
 
 #define HDR_ISREQUEST		0x0001
@@ -307,6 +309,8 @@ typedef struct
     netconn_t *netconn;
     DWORD security_flags;
     DWORD connect_timeout;
+    DWORD send_timeout;
+    DWORD receive_timeout;
     LPWSTR version;
     LPWSTR statusText;
     DWORD bytesToWrite;
@@ -529,7 +533,7 @@ BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available) DECLSP
 BOOL NETCON_is_alive(netconn_t*) DECLSPEC_HIDDEN;
 LPCVOID NETCON_GetCert(netconn_t *connection) DECLSPEC_HIDDEN;
 int NETCON_GetCipherStrength(netconn_t*) DECLSPEC_HIDDEN;
-DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, int value) DECLSPEC_HIDDEN;
+DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, DWORD value) DECLSPEC_HIDDEN;
 int sock_get_error(int) DECLSPEC_HIDDEN;
 
 extern void URLCacheContainers_CreateDefaults(void) DECLSPEC_HIDDEN;

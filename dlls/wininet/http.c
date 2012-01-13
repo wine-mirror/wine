@@ -2182,26 +2182,19 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
         return ERROR_SUCCESS;
     }
     case INTERNET_OPTION_CONNECT_TIMEOUT:
-        if (size != sizeof(DWORD))
-            return ERROR_INVALID_PARAMETER;
-
+        if (!buffer || size != sizeof(DWORD)) return ERROR_INVALID_PARAMETER;
         req->connect_timeout = *(DWORD *)buffer;
         return ERROR_SUCCESS;
 
     case INTERNET_OPTION_SEND_TIMEOUT:
+        if (!buffer || size != sizeof(DWORD)) return ERROR_INVALID_PARAMETER;
+        req->send_timeout = *(DWORD *)buffer;
+        return ERROR_SUCCESS;
+
     case INTERNET_OPTION_RECEIVE_TIMEOUT:
-        TRACE("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT\n");
-
-        if (size != sizeof(DWORD))
-            return ERROR_INVALID_PARAMETER;
-
-        if(!req->netconn) {
-            FIXME("unsupported without active connection\n");
-            return ERROR_SUCCESS;
-        }
-
-        return NETCON_set_timeout(req->netconn, option == INTERNET_OPTION_SEND_TIMEOUT,
-                    *(DWORD*)buffer);
+        if (!buffer || size != sizeof(DWORD)) return ERROR_INVALID_PARAMETER;
+        req->receive_timeout = *(DWORD *)buffer;
+        return ERROR_SUCCESS;
 
     case INTERNET_OPTION_USERNAME:
         heap_free(req->session->userName);
@@ -3063,6 +3056,8 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     request->netconn_stream.data_stream.vtbl = &netconn_stream_vtbl;
     request->data_stream = &request->netconn_stream.data_stream;
     request->connect_timeout = session->connect_timeout;
+    request->send_timeout = session->send_timeout;
+    request->receive_timeout = session->receive_timeout;
 
     InitializeCriticalSection( &request->read_section );
     request->read_section.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": http_request_t.read_section");
@@ -3970,6 +3965,7 @@ static DWORD HTTP_SecureProxyConnect(http_request_t *request)
 
     TRACE("full request -> %s\n", debugstr_an( ascii_req, len ) );
 
+    NETCON_set_timeout( request->netconn, TRUE, request->send_timeout );
     res = NETCON_send( request->netconn, ascii_req, len, 0, &cnt );
     heap_free( ascii_req );
     if (res != ERROR_SUCCESS)
@@ -4798,6 +4794,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
                               INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
 
+        NETCON_set_timeout( request->netconn, TRUE, request->send_timeout );
         res = NETCON_send(request->netconn, ascii_req, len, 0, &cnt);
         heap_free( ascii_req );
         if(res != ERROR_SUCCESS) {
@@ -5473,6 +5470,26 @@ static DWORD HTTPSESSION_QueryOption(object_header_t *hdr, DWORD option, void *b
         *size = sizeof(DWORD);
         *(DWORD *)buffer = ses->connect_timeout;
         return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_SEND_TIMEOUT:
+        TRACE("INTERNET_OPTION_SEND_TIMEOUT\n");
+
+        if (*size < sizeof(DWORD))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *size = sizeof(DWORD);
+        *(DWORD *)buffer = ses->send_timeout;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_RECEIVE_TIMEOUT:
+        TRACE("INTERNET_OPTION_RECEIVE_TIMEOUT\n");
+
+        if (*size < sizeof(DWORD))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *size = sizeof(DWORD);
+        *(DWORD *)buffer = ses->receive_timeout;
+        return ERROR_SUCCESS;
     }
 
     return INET_QueryOption(hdr, option, buffer, size, unicode);
@@ -5497,7 +5514,20 @@ static DWORD HTTPSESSION_SetOption(object_header_t *hdr, DWORD option, void *buf
     }
     case INTERNET_OPTION_CONNECT_TIMEOUT:
     {
+        if (!buffer || size != sizeof(DWORD)) return ERROR_INVALID_PARAMETER;
         ses->connect_timeout = *(DWORD *)buffer;
+        return ERROR_SUCCESS;
+    }
+    case INTERNET_OPTION_SEND_TIMEOUT:
+    {
+        if (!buffer || size != sizeof(DWORD)) return ERROR_INVALID_PARAMETER;
+        ses->send_timeout = *(DWORD *)buffer;
+        return ERROR_SUCCESS;
+    }
+    case INTERNET_OPTION_RECEIVE_TIMEOUT:
+    {
+        if (!buffer || size != sizeof(DWORD)) return ERROR_INVALID_PARAMETER;
+        ses->receive_timeout = *(DWORD *)buffer;
         return ERROR_SUCCESS;
     }
     default: break;
@@ -5573,6 +5603,8 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     session->serverPort = serverPort;
     session->hostPort = serverPort;
     session->connect_timeout = INFINITE;
+    session->send_timeout = INFINITE;
+    session->receive_timeout = INFINITE;
 
     /* Don't send a handle created callback if this handle was created with InternetOpenUrl */
     if (!(session->hdr.dwInternalFlags & INET_OPENURL))
@@ -5645,6 +5677,7 @@ static INT HTTP_GetResponseHeaders(http_request_t *request, BOOL clear)
     if(!request->netconn)
         goto lend;
 
+    NETCON_set_timeout( request->netconn, FALSE, request->receive_timeout );
     do {
         static const WCHAR szHundred[] = {'1','0','0',0};
         /*

@@ -927,24 +927,29 @@ int NETCON_GetCipherStrength(netconn_t *connection)
 #endif
 }
 
-DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, int value)
+DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, DWORD value)
 {
     int result;
     struct timeval tv;
 
     /* value is in milliseconds, convert to struct timeval */
-    tv.tv_sec = value / 1000;
-    tv.tv_usec = (value % 1000) * 1000;
-
+    if (value == INFINITE)
+    {
+        tv.tv_sec = 0;
+        tv.tv_usec = 0;
+    }
+    else
+    {
+        tv.tv_sec = value / 1000;
+        tv.tv_usec = (value % 1000) * 1000;
+    }
     result = setsockopt(connection->socketFD, SOL_SOCKET,
                         send ? SO_SNDTIMEO : SO_RCVTIMEO, (void*)&tv,
                         sizeof(tv));
-
     if (result == -1)
     {
         WARN("setsockopt failed (%s)\n", strerror(errno));
         return sock_get_error(errno);
     }
-
     return ERROR_SUCCESS;
 }
