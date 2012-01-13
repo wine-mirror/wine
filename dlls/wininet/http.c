@@ -2151,6 +2151,13 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             return ERROR_SUCCESS;
         }
     }
+    case INTERNET_OPTION_CONNECT_TIMEOUT:
+        if (*size < sizeof(DWORD))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *size = sizeof(DWORD);
+        *(DWORD *)buffer = req->connect_timeout;
+        return ERROR_SUCCESS;
     }
 
     return INET_QueryOption(hdr, option, buffer, size, unicode);
@@ -2174,6 +2181,13 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
             req->netconn->security_flags = flags;
         return ERROR_SUCCESS;
     }
+    case INTERNET_OPTION_CONNECT_TIMEOUT:
+        if (size != sizeof(DWORD))
+            return ERROR_INVALID_PARAMETER;
+
+        req->connect_timeout = *(DWORD *)buffer;
+        return ERROR_SUCCESS;
+
     case INTERNET_OPTION_SEND_TIMEOUT:
     case INTERNET_OPTION_RECEIVE_TIMEOUT:
         TRACE("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT\n");
@@ -5438,6 +5452,8 @@ static void HTTPSESSION_Destroy(object_header_t *hdr)
 
 static DWORD HTTPSESSION_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
+    http_session_t *ses = (http_session_t *)hdr;
+
     switch(option) {
     case INTERNET_OPTION_HANDLE_TYPE:
         TRACE("INTERNET_OPTION_HANDLE_TYPE\n");
@@ -5447,6 +5463,15 @@ static DWORD HTTPSESSION_QueryOption(object_header_t *hdr, DWORD option, void *b
 
         *size = sizeof(DWORD);
         *(DWORD*)buffer = INTERNET_HANDLE_TYPE_CONNECT_HTTP;
+        return ERROR_SUCCESS;
+    case INTERNET_OPTION_CONNECT_TIMEOUT:
+        TRACE("INTERNET_OPTION_CONNECT_TIMEOUT\n");
+
+        if (*size < sizeof(DWORD))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *size = sizeof(DWORD);
+        *(DWORD *)buffer = ses->connect_timeout;
         return ERROR_SUCCESS;
     }
 
@@ -5468,6 +5493,11 @@ static DWORD HTTPSESSION_SetOption(object_header_t *hdr, DWORD option, void *buf
     {
         heap_free(ses->password);
         if (!(ses->password = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        return ERROR_SUCCESS;
+    }
+    case INTERNET_OPTION_CONNECT_TIMEOUT:
+    {
+        ses->connect_timeout = *(DWORD *)buffer;
         return ERROR_SUCCESS;
     }
     default: break;
