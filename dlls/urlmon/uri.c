@@ -5153,13 +5153,6 @@ static HRESULT WINAPI PersistStream_IsDirty(IPersistStream *iface)
     return S_FALSE;
 }
 
-static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream *pStm)
-{
-    Uri *This = impl_from_IPersistStream(iface);
-    FIXME("(%p)->(%p)\n", This, pStm);
-    return E_NOTIMPL;
-}
-
 struct persist_uri {
     DWORD size;
     DWORD unk1[2];
@@ -5168,6 +5161,69 @@ struct persist_uri {
     DWORD fields_no;
     BYTE data[1];
 };
+
+static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream *pStm)
+{
+    Uri *This = impl_from_IPersistStream(iface);
+    struct persist_uri *data;
+    parse_data parse;
+    DWORD size;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, pStm);
+
+    if(This->create_flags)
+        return E_UNEXPECTED;
+    if(!pStm)
+        return E_INVALIDARG;
+
+    hr = IStream_Read(pStm, &size, sizeof(DWORD), NULL);
+    if(FAILED(hr))
+        return hr;
+    data = heap_alloc(size);
+    if(!data)
+        return E_OUTOFMEMORY;
+    hr = IStream_Read(pStm, &data->unk1, size-sizeof(DWORD)-2, NULL);
+    if(FAILED(hr))
+        return hr;
+
+    if(size < sizeof(struct persist_uri)) {
+        heap_free(data);
+        return S_OK;
+    }
+
+    if(*(DWORD*)data->data != Uri_PROPERTY_RAW_URI) {
+        heap_free(data);
+        ERR("Can't find raw_uri\n");
+        return E_UNEXPECTED;
+    }
+
+    This->raw_uri = SysAllocString((WCHAR*)(data->data+sizeof(DWORD)*2));
+    if(!This->raw_uri) {
+        heap_free(data);
+        return E_OUTOFMEMORY;
+    }
+    This->create_flags = data->create_flags;
+    heap_free(data);
+    TRACE("%x %s\n", This->create_flags, debugstr_w(This->raw_uri));
+
+    memset(&parse, 0, sizeof(parse_data));
+    parse.uri = This->raw_uri;
+    if(!parse_uri(&parse, This->create_flags)) {
+        SysFreeString(This->raw_uri);
+        This->create_flags = 0;
+        return E_UNEXPECTED;
+    }
+
+    hr = canonicalize_uri(&parse, This, This->create_flags);
+    if(FAILED(hr)) {
+        SysFreeString(This->raw_uri);
+        This->create_flags = 0;
+        return hr;
+    }
+
+    return S_OK;
+}
 
 static inline BYTE* persist_stream_add_strprop(Uri *This, BYTE *p, DWORD type, DWORD len, WCHAR *data)
 {
