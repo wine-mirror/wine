@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
+"PO-Revision-Date: 2012-01-13 00:29-0200\n"
+"Last-Translator: Gustavo Henrique Milaré <gugamilare@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Portuguese (Brazil)\n"
 "MIME-Version: 1.0\n"
@@ -116,7 +116,6 @@ msgid "Wine Gecko Installer"
 msgstr "Instalador Wine Gecko"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -126,12 +125,13 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"O Wine não pôde encontrar o pacote Gecko que é necessário para aplicações "
+"O Wine não pôde encontrar o pacote Gecko que é necessário para aplicativos "
 "com HTML embutido funcionarem corretamente. O Wine pode automaticamente "
 "efetuar o download e instalá-lo para você.\n"
 "\n"
-"Nota: é recomendável usar os pacotes da sua distribuição ao invés disso.\n"
-"Veja http://wiki.winehq.org/Gecko para mais detalhes."
+"Nota: é recomendável usar os pacotes da sua distribuição em vez disso. Veja "
+"<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
+"para mais detalhes."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -166,7 +166,7 @@ msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
-"Permite a instalação de novo software, ou a remoção de software existente no "
+"Permite a instalação de novo software ou a remoção de software existente no "
 "seu computador."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
@@ -211,9 +211,8 @@ msgid "All files (*.*)"
 msgstr "Todos os arquivos (*.*)"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "&Modificar/Remover..."
+msgstr "&Modificar/Remover"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -228,6 +227,8 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
+"Inesperada soma de verificação do arquivo descarregado. Abortando instalação "
+"do arquivo corrompido."
 
 #: avifil32.rc:39
 msgid "Compress options"
@@ -235,7 +236,7 @@ msgstr "Opções de compressão"
 
 #: avifil32.rc:42
 msgid "&Choose a stream:"
-msgstr "&Escolha a stream:"
+msgstr "Escolha uma &stream:"
 
 #: avifil32.rc:45 wordpad.rc:73
 msgid "&Options..."
@@ -334,7 +335,7 @@ msgstr "R&estaurar"
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
 #: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
-msgstr "&Ajuda"
+msgstr "Aj&uda"
 
 #: comctl32.rc:84
 msgid "Move &Up"
@@ -358,21 +359,16 @@ msgstr "<- &Remover"
 
 #: comctl32.rc:90
 msgid "&Toolbar buttons:"
-msgstr "&Botões da barra de ferramentas:"
+msgstr "B&otões da barra de ferramentas:"
 
 #: comctl32.rc:39
 msgid "Separator"
 msgstr "Separador"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Nenhum\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Nenhuma"
+msgstr "Nenhuma"
 
 #: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54
 #: wordpad.rc:169
@@ -394,7 +390,7 @@ msgstr "Abrir"
 
 #: comdlg32.rc:154 comdlg32.rc:176
 msgid "File &Name:"
-msgstr "Nome do &Arquivo:"
+msgstr "&Nome do Arquivo:"
 
 #: comdlg32.rc:157 comdlg32.rc:179
 msgid "&Directories:"
@@ -467,7 +463,7 @@ msgstr "Imprimir para Arquivo"
 
 #: comdlg32.rc:212
 msgid "Condensed"
-msgstr "C&ondensado"
+msgstr "Condensar"
 
 #: comdlg32.rc:218 comdlg32.rc:389
 msgid "Print Setup"
@@ -483,7 +479,7 @@ msgstr "&Impressora Padrão"
 
 #: comdlg32.rc:223
 msgid "[none]"
-msgstr "[none]"
+msgstr "[nenhuma]"
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
@@ -511,7 +507,7 @@ msgstr "&Tamanho"
 
 #: comdlg32.rc:236
 msgid "&Source"
-msgstr "&Fonte de Alimentação"
+msgstr "&Fonte"
 
 #: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
@@ -527,7 +523,7 @@ msgstr "&Estilo da Fonte:"
 
 #: comdlg32.rc:253 comdlg32.rc:430 winecfg.rc:280
 msgid "&Size:"
-msgstr "&Tamanho:"
+msgstr "Taman&ho:"
 
 #: comdlg32.rc:260
 msgid "Effects"
@@ -575,7 +571,7 @@ msgstr "Colorido|Sólid&o"
 
 #: comdlg32.rc:282
 msgid "&Red:"
-msgstr "Ver&melho:"
+msgstr "Ver&m.:"
 
 #: comdlg32.rc:284
 msgid "&Green:"
@@ -615,7 +611,7 @@ msgstr "Procurar"
 
 #: comdlg32.rc:313 comdlg32.rc:332
 msgid "Fi&nd What:"
-msgstr "&Procurar:"
+msgstr "Pr&ocurar:"
 
 #: comdlg32.rc:315 comdlg32.rc:336
 msgid "Match &Whole Word Only"
@@ -639,7 +635,7 @@ msgstr "A&baixo"
 
 #: comdlg32.rc:321 comdlg32.rc:339
 msgid "&Find Next"
-msgstr "&Procurar"
+msgstr "&Procurar próxima"
 
 #: comdlg32.rc:329
 msgid "Replace"
@@ -704,7 +700,7 @@ msgstr "Pá&ginas"
 
 #: comdlg32.rc:380
 msgid "&Selection"
-msgstr "Seleção"
+msgstr "&Seleção"
 
 #: comdlg32.rc:383
 msgid "&from:"
@@ -787,14 +783,12 @@ msgid "&Open"
 msgstr "&Abrir"
 
 #: comdlg32.rc:481
-#, fuzzy
 msgid "File name:"
-msgstr "&Nome do arquivo:"
+msgstr "Nome do arquivo:"
 
 #: comdlg32.rc:484
-#, fuzzy
 msgid "Files of type:"
-msgstr "Arquivos do &tipo:"
+msgstr "Arquivos do tipo:"
 
 #: comdlg32.rc:29
 msgid "File not found"
@@ -802,7 +796,7 @@ msgstr "Arquivo não encontrado"
 
 #: comdlg32.rc:30
 msgid "Please verify that the correct file name was given"
-msgstr "Por favor verifique se foi fornecido o nome correto do arquivo"
+msgstr "Por favor, verifique se foi fornecido o nome correto do arquivo"
 
 #: comdlg32.rc:31
 msgid ""
@@ -858,7 +852,7 @@ msgstr "Detalhes"
 
 #: comdlg32.rc:45
 msgid "Browse to Desktop"
-msgstr "Área de Trabalho"
+msgstr "Navegar para Área de Trabalho"
 
 #: comdlg32.rc:109
 msgid "Regular"
@@ -945,13 +939,12 @@ msgid "Unreadable Entry"
 msgstr "Entrada Ilegível"
 
 #: comdlg32.rc:54
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Este valor não se encaixa na faixa de páginas.\n"
-"Por favor insira um valor entre %d e %d."
+"Por favor, insira um valor entre %1!d! e %2!d!."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -963,12 +956,11 @@ msgid ""
 "Please reenter margins."
 msgstr ""
 "As margens estão fora das medidas do papel.\n"
-"Por favor reinsira as margens."
+"Por favor, reinsira as margens."
 
 #: comdlg32.rc:60
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "O número de cópias não pode ter valor vazio."
+msgstr "O campo 'Número de cópias' não pode ser vazio."
 
 #: comdlg32.rc:62
 msgid ""
@@ -976,7 +968,7 @@ msgid ""
 "Please enter a value between 1 and %d."
 msgstr ""
 "Esta quantidade de cópias é muito grande para a sua impressora.\n"
-"Por favor insira um valor entre 1 e %d."
+"Por favor, insira um valor entre 1 e %d."
 
 #: comdlg32.rc:63
 msgid "A printer error occurred."
@@ -984,20 +976,15 @@ msgstr "Ocorreu um erro de impressão."
 
 #: comdlg32.rc:64
 msgid "No default printer defined."
-msgstr "Não existe uma impressora padrão."
+msgstr "Nenhuma impressora padrão definida."
 
 #: comdlg32.rc:65
 msgid "Cannot find the printer."
 msgstr "Não é possível encontrar uma impressora."
 
 #: comdlg32.rc:66 progman.rc:73
-#, fuzzy
 msgid "Out of memory."
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Sem memória.\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Memória insuficiente."
+msgstr "Memória insuficiente."
 
 #: comdlg32.rc:67
 msgid "An error occurred."
@@ -1014,12 +1001,11 @@ msgid ""
 msgstr ""
 "Antes de realizar tarefas relacionadas com a impressora tais como "
 "configuração de páginas ou imprimir um documento, é necessário instalar uma "
-"impressora. Por favor instale uma e tente novamente."
+"impressora. Por favor, instale uma e tente novamente."
 
 #: comdlg32.rc:137
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Selecione o tamanho da fonte entre %d e %d pontos."
+msgstr "Selecione o tamanho da fonte entre %1!d! e %2!d! pontos."
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
@@ -1164,7 +1150,7 @@ msgstr "mm"
 
 #: credui.rc:42
 msgid "&User name:"
-msgstr "Nome de &usuário:"
+msgstr "&Nome de usuário:"
 
 #: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
@@ -1307,16 +1293,14 @@ msgid "Unstructured Address"
 msgstr "Endereço Desestruturado"
 
 #: crypt32.rc:51
-#, fuzzy
 msgid "S/MIME Capabilities"
-msgstr "Capacidades SMIME"
+msgstr "Capacidades S/MIME"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
 msgstr "Preferir Dados Assinados"
 
 #: crypt32.rc:53 cryptdlg.rc:31
-#, fuzzy
 msgctxt "Certification Practice Statement"
 msgid "CPS"
 msgstr "CPS"
@@ -1426,9 +1410,8 @@ msgid "Initials"
 msgstr "Iniciais"
 
 #: crypt32.rc:80
-#, fuzzy
 msgid "Surname"
-msgstr "Nome de Usuário"
+msgstr "Sobrenome"
 
 #: crypt32.rc:81
 msgid "Domain Component"
@@ -1508,15 +1491,15 @@ msgstr "Cross-Certificate Distribution Points"
 
 #: crypt32.rc:100
 msgid "Application Policies"
-msgstr "Políticas da Aplicação"
+msgstr "Políticas do Aplicativo"
 
 #: crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr "Mapeamento das Políticas da Aplicação"
+msgstr "Mapeamento das Políticas da Aplicativo"
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
-msgstr "Restrições da Política da Aplicação"
+msgstr "Restrições da Política da Aplicativo"
 
 #: crypt32.rc:103
 msgid "CMC Data"
@@ -1583,13 +1566,8 @@ msgid "CA Encryption Certificate"
 msgstr "Certificado de Encriptação CA"
 
 #: crypt32.rc:119 cryptui.rc:145
-#, fuzzy
 msgid "Key Recovery Agent"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Agente Recuperador de Chaves\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Agente de Recuperação de Chave"
+msgstr "Agente de Recuperação de Chaves"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
@@ -1708,89 +1686,44 @@ msgid "Encrypting File System"
 msgstr "Encriptando Sistema de Arquivos"
 
 #: crypt32.rc:149 cryptui.rc:130
-#, fuzzy
 msgid "Windows Hardware Driver Verification"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Verificação de Driver de Hardware Windows\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Verificação de Driver de Hardware do Windows"
+msgstr "Verificação de Driver de Hardware do Windows"
 
 #: crypt32.rc:150 cryptui.rc:131
-#, fuzzy
 msgid "Windows System Component Verification"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Verificação de Componentes de Sistema Windows\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Verificação de Componente de Sistema do Windows"
+msgstr "Verificação de Componentes de Sistema do Windows"
 
 #: crypt32.rc:151 cryptui.rc:132
-#, fuzzy
 msgid "OEM Windows System Component Verification"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Verificação de Componentes de Sistema Windows OEM\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Verificação de Componente de Sistema do Windows OEM"
+msgstr "Verificação de Componentes de Sistema do Windows OEM"
 
 #: crypt32.rc:152 cryptui.rc:133
-#, fuzzy
 msgid "Embedded Windows System Component Verification"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Verificação de Componentes de Sistema Windows Embebida\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Verificação de Componente de Sistema do Windows Embebido"
+msgstr "Verificação de Componentes de Sistema do Windows Embebido"
 
 #: crypt32.rc:153 cryptui.rc:140
-#, fuzzy
 msgid "Key Pack Licenses"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Licenças de Pacotes de Chaves\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Key Pack Licenses"
+msgstr "Licenças de Pacotes de Chaves"
 
 #: crypt32.rc:154 cryptui.rc:141
-#, fuzzy
 msgid "License Server Verification"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Verificação de Licença de Servidor\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"License Server Verification"
+msgstr "Verificação de Servidor de Licença"
 
 #: crypt32.rc:155 cryptui.rc:143
-#, fuzzy
 msgid "Smart Card Logon"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Logon Smart Card\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Logon de Smart Card"
+msgstr "Logon de Smart Card"
 
 #: crypt32.rc:156 cryptui.rc:139
-#, fuzzy
 msgid "Digital Rights"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Direitos Digitais\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Direito Digital"
+msgstr "Direitos Digitais"
 
 #: crypt32.rc:157 cryptui.rc:135
 msgid "Qualified Subordination"
 msgstr "Subordinação Qualificada"
 
 #: crypt32.rc:158 cryptui.rc:136
-#, fuzzy
 msgid "Key Recovery"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Recuperação de chaves\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Recuperação de Chaves"
+msgstr "Recuperação de Chaves"
 
 #: crypt32.rc:159 cryptui.rc:137
 msgid "Document Signing"
@@ -1810,34 +1743,19 @@ msgstr "Assinador de Lista Raiz"
 
 #: crypt32.rc:163
 msgid "All application policies"
-msgstr "Políticas para todas as aplicações"
+msgstr "Políticas para todos os aplicativos"
 
 #: crypt32.rc:164 cryptui.rc:146
-#, fuzzy
 msgid "Directory Service Email Replication"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Replicação do Diretório de Serviço E-mail\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Directory Service Email Replication"
+msgstr "Replicação do Diretório de Serviço de E-mail"
 
 #: crypt32.rc:165 cryptui.rc:142
-#, fuzzy
 msgid "Certificate Request Agent"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Agente de Requisição de Certificados\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Agente de Requerimento de Certificado"
+msgstr "Agente de Solicitação de Certificados"
 
 #: crypt32.rc:166 cryptui.rc:138
-#, fuzzy
 msgid "Lifetime Signing"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Assinatura de Tempo de Vida\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Assinatura de Lifetime"
+msgstr "Assinatura para a Vida Toda"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
@@ -1873,7 +1791,7 @@ msgstr "KeyID="
 
 #: crypt32.rc:183
 msgid "Certificate Issuer"
-msgstr "Emissor do Certificado: "
+msgstr "Emissor do Certificado"
 
 #: crypt32.rc:184
 msgid "Certificate Serial Number="
@@ -1920,7 +1838,6 @@ msgid "Subject Type="
 msgstr "Tipo de Sujeito="
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "Certificate Authority"
 msgid "CA"
 msgstr "CA"
@@ -1934,14 +1851,9 @@ msgid "Path Length Constraint="
 msgstr "Restrição de Tamanho de Caminho="
 
 #: crypt32.rc:198
-#, fuzzy
 msgctxt "path length"
 msgid "None"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Nenhum\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Nenhuma"
+msgstr "Nenhuma"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
@@ -1956,7 +1868,6 @@ msgid "Access Method="
 msgstr "Método de Acesso="
 
 #: crypt32.rc:202
-#, fuzzy
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr "OCSP"
@@ -2114,44 +2025,40 @@ msgid "Signature CA"
 msgstr "CA de Assinatura"
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
-msgstr "Políticas de Certificados"
+msgstr "Política de Certificado"
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
-msgstr "Identificador da Chave de Autoridade"
+msgstr "Identificador da Chave de Autoridade: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Informação da Política de Certificado"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Id da Política de Certificado="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Qualificador"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Referência de Aviso"
 
 #: cryptdlg.rc:35
-#, fuzzy
 msgid "Organization="
-msgstr "Organização"
+msgstr "Organização="
 
 #: cryptdlg.rc:36
-#, fuzzy
 msgid "Notice Number="
-msgstr "Número de Série do Certificado="
+msgstr "Número de Aviso="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Texto de Aviso="
 
 #: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
 msgid "General"
@@ -2182,9 +2089,8 @@ msgid "Certification Path"
 msgstr "Caminho de Certificação"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "&Caminho de Certificação"
+msgstr "Caminho de certificação"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
@@ -2226,9 +2132,10 @@ msgstr "D&esativar todos os propósitos para este certificado"
 msgid "Enable &only the following purposes for this certificate:"
 msgstr "A&tivar apenas os seguintes propósitos para este certificado:"
 
+# Ellipsis removed - not enough space in button
 #: cryptui.rc:250
 msgid "Add &Purpose..."
-msgstr "Adicionar &Propósito..."
+msgstr "Adicionar &Propósito"
 
 #: cryptui.rc:254
 msgid "Add Purpose"
@@ -2262,7 +2169,6 @@ msgid "Welcome to the Certificate Import Wizard"
 msgstr "Bem-vindo ao Assistente de Importação de Certificados"
 
 #: cryptui.rc:283
-#, fuzzy
 msgid ""
 "This wizard helps you import certificates, certificate revocation lists, and "
 "certificate trust lists from a file to a certificate store.\n"
@@ -2274,14 +2180,20 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Este assistente lhe ajudará a importar certificados, listas de revogação de "
+"certificados e listas de certificados confiáveis de um arquivo para um "
+"conjunto de certificados.\n"
+"\n"
 "Um certificado pode ser usado para identificá-lo ou ao computador usado na "
 "comunicação. Também pode ser usado para autenticação e para assinar "
 "mensagens. Conjuntos de certificados são coleções de certificados, listas de "
-"revogação de certificados e listas de certificados confiáveis."
+"revogação de certificados e listas de certificados confiáveis.\n"
+"\n"
+"Para continuar, clique em Avançar."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
-msgstr "&Nome do arquivo:"
+msgstr "Nome do &arquivo:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
@@ -2394,7 +2306,6 @@ msgid "Welcome to the Certificate Export Wizard"
 msgstr "Bem-vindo ao Assistente de Exportação de Certificados"
 
 #: cryptui.rc:373
-#, fuzzy
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2406,10 +2317,16 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Este assistente lhe ajudará a exportar certificados, listas de revogação de "
+"certificados e listas de certificados confiáveis de um conjunto de "
+"certificados para um arquivo.\n"
+"\n"
 "Um certificado pode ser usado para identificá-lo ou ao computador usado na "
 "comunicação. Também pode ser usado para autenticação e para assinar "
 "mensagens. Conjuntos de certificados são coleções de certificados, listas de "
-"revogação de certificados e listas de certificados confiáveis."
+"revogação de certificados e listas de certificados confiáveis.\n"
+"\n"
+"Para continuar, clique em Avançar."
 
 #: cryptui.rc:381
 msgid ""
@@ -2465,7 +2382,7 @@ msgstr "Incl&uir todos os certificados no caminho de certificação se possível
 
 #: cryptui.rc:417
 msgid "&Enable strong encryption"
-msgstr "&Ativar criptografia forte"
+msgstr "Ativar criptografia &forte"
 
 #: cryptui.rc:419
 msgid "Delete the private &key if the export is successful"
@@ -2565,7 +2482,7 @@ msgstr "Valor"
 
 #: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
 msgid "<All>"
-msgstr "<Todos>"
+msgstr "<Tudo>"
 
 #: cryptui.rc:47
 msgid "Version 1 Fields Only"
@@ -2608,9 +2525,8 @@ msgid "Public key"
 msgstr "Chave Pública"
 
 #: cryptui.rc:58
-#, fuzzy
 msgid "%1 (%2!d! bits)"
-msgstr "%s (%d bits)"
+msgstr "%1 (%2!d! bits)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -2634,7 +2550,7 @@ msgstr "Propriedades do Certificado"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr "Por favor insira um OID na forma 1.2.3.4"
+msgstr "Por favor, insira um OID na forma 1.2.3.4"
 
 #: cryptui.rc:65
 msgid "The OID you entered already exists."
@@ -2642,14 +2558,14 @@ msgstr "O OID inserido já existe."
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
-msgstr "Por favor selecione um conjunto de certificados."
+msgstr "Por favor, selecione um conjunto de certificados."
 
 #: cryptui.rc:69
 msgid ""
 "The file contains objects that do not match the given criteria.  Please "
 "select another file."
 msgstr ""
-"O arquivo contém objetos que não correspondem ao critério dado. Por favor "
+"O arquivo contém objetos que não correspondem ao critério dado. Por favor, "
 "selecione outro arquivo."
 
 #: cryptui.rc:70
@@ -2698,12 +2614,12 @@ msgstr "Mensagens CMS/PKCS #7 (*.spc; *.p7b)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
-msgstr "Por favor selecione um arquivo."
+msgstr "Por favor, selecione um arquivo."
 
 #: cryptui.rc:82
 msgid "The file format is not recognized.  Please select another file."
 msgstr ""
-"O formato do arquivo não é reconhecido. Por favor selecione outro arquivo."
+"O formato do arquivo não é reconhecido. Por favor, selecione outro arquivo."
 
 #: cryptui.rc:83
 msgid "Could not open "
@@ -2715,7 +2631,7 @@ msgstr "Determinado pelo programa"
 
 #: cryptui.rc:85
 msgid "Please select a store"
-msgstr "Por favor selecione um conjunto"
+msgstr "Por favor, selecione um conjunto"
 
 #: cryptui.rc:86
 msgid "Certificate Store Selected"
@@ -2751,7 +2667,7 @@ msgstr "A importação foi bem sucedida."
 
 #: cryptui.rc:97
 msgid "The import failed."
-msgstr "A importação falhou."
+msgstr "Falha na importação."
 
 #: cryptui.rc:98
 msgid "Arial"
@@ -2987,7 +2903,7 @@ msgstr "A exportação foi bem sucedida."
 
 #: cryptui.rc:166
 msgid "The export failed."
-msgstr "A exportação falhou."
+msgstr "Falha na exportação."
 
 #: cryptui.rc:167
 msgid "Export Private Key"
@@ -3038,127 +2954,117 @@ msgid "Default MidiOut Device"
 msgstr "Dispositivo padrão MidiOut"
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "Con&figurar..."
+msgstr "Configurar Dispositivos"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Reiniciar"
 
 #: dinput.rc:48
-#, fuzzy
 msgid "Player"
-msgstr "I&niciar"
+msgstr "Tocador"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "Dispositi&vo"
+msgstr "Dispositivo"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "Ativação"
+msgstr "Ações"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "Unidades"
+msgstr "Mapeamento"
 
+# Word 'show' ignored - not enough space
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Já designado\n"
+msgstr "Designados Primeiro"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Ativação"
+msgstr "Ação"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "&Objeto"
+msgstr "Objeto"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Configurações Padrão"
+msgstr "Configurações Regionais"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr ""
+msgstr "%1!u!MB usados, %2!u!MB disponíveis"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Ocidental"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Europeu Central"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Cirílico"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Verde"
+msgstr "Grego"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Turquês"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "Hebreu"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Arábico"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Báltico"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamita"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Tailandês"
 
 #: gdi32.rc:35
-#, fuzzy
 msgid "Japanese"
-msgstr "painel"
+msgstr "Japonês"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "CHINÊS_GB2312"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "Hangul"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "CHINÊS_BIG5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Hangul(Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Símbolo"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
@@ -3190,39 +3096,36 @@ msgstr "Transferindo"
 
 #: gphoto2.rc:43
 msgid "Transferring... Please Wait"
-msgstr "Transferindo... Por favor espere"
+msgstr "Transferindo... Por favor, aguarde"
 
 #: gphoto2.rc:48
 msgid "Connecting to camera"
-msgstr "Contectando à câmera"
+msgstr "Conectando à câmera"
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
-msgstr "Contectando à câmera... Por favor espere"
+msgstr "Conectando à câmera... Por favor, aguarde"
 
 #: hhctrl.rc:56
 msgid "S&ync"
-msgstr ""
+msgstr "Sin&cronizar"
 
 #: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "&Voltar"
 
 #: hhctrl.rc:58
-#, fuzzy
 msgid "&Forward"
-msgstr "Avançar"
+msgstr "&Avançar"
 
 #: hhctrl.rc:59
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
-msgstr "Início"
+msgstr "&Início"
 
 #: hhctrl.rc:60
-#, fuzzy
 msgid "&Stop"
-msgstr "Parar"
+msgstr "&Parar"
 
 #: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
@@ -3238,16 +3141,11 @@ msgstr "&Conteúdo"
 
 #: hhctrl.rc:29
 msgid "I&ndex"
-msgstr "&Índice"
+msgstr "Í&ndice"
 
 #: hhctrl.rc:30 notepad.rc:52
-#, fuzzy
 msgid "&Search"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Pesquisar\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Pesquisa"
+msgstr "&Localizar"
 
 #: hhctrl.rc:31
 msgid "Favor&ites"
@@ -3255,11 +3153,11 @@ msgstr "&Favoritos"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "Esconder A&bas"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "Mostrar A&bas"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -3274,20 +3172,14 @@ msgid "Stop"
 msgstr "Parar"
 
 #: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
-#, fuzzy
 msgid "Refresh"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Recarregar\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Atualizar"
+msgstr "Recarregar"
 
 #: hhctrl.rc:43 ieframe.rc:63
 msgid "Back"
 msgstr "Voltar"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
 msgstr "Início"
@@ -3332,20 +3224,15 @@ msgstr "Salvar &como..."
 
 #: ieframe.rc:35
 msgid "Print &format..."
-msgstr "Imprimir &formato..."
+msgstr "I&mprimir formato..."
 
 #: ieframe.rc:36
 msgid "Pr&int..."
 msgstr "&Imprimir..."
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Pré visualizar...\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Vizualizar impressão..."
+msgstr "&Vizualizar impressão..."
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -3368,9 +3255,8 @@ msgid "&Add to Favorites..."
 msgstr "&Adicionar aos Favoritos..."
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "&Sobre o Internet Explorer..."
+msgstr "&Sobre o Internet Explorer"
 
 #: ieframe.rc:87
 msgid "Open URL"
@@ -3385,10 +3271,9 @@ msgid "Open:"
 msgstr "Abrir:"
 
 #: ieframe.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
-msgstr "Início"
+msgstr "Página Inicial"
 
 #: ieframe.rc:68 winhlp32.rc:66
 msgid "Print..."
@@ -3399,29 +3284,24 @@ msgid "Address"
 msgstr "Endereço"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "Propriedades de %s"
+msgstr "Localizando %s"
 
 #: ieframe.rc:79
-#, fuzzy
 msgid "Start downloading %s"
-msgstr "Fazendo o download de %s..."
+msgstr "Iniciando o download de %s"
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "Fazendo o download..."
+msgstr "Fazendo o download de %s"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "Propriedades de %s"
+msgstr "Requisitando %s"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr " Página inicial "
+msgstr "Página inicial"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3440,32 +3320,32 @@ msgid "&Blank page"
 msgstr "Página em &branco"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr " Browsing history "
+msgstr "Histórico de navegação"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr "You can delete cached pages, cookies and other data."
+msgstr "Você pode excluir caches de páginas, cookies e outros dados."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr "Delete &files..."
+msgstr "E&xcluir arquivos..."
 
 #: inetcpl.rc:57
 msgid "&Settings..."
-msgstr "&Settings..."
+msgstr "&Configurações..."
 
 #: inetcpl.rc:65
-#, fuzzy
 msgid "Delete browsing history"
-msgstr " Browsing history "
+msgstr "Excluir histórico de navegação"
 
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
+"Arquivos temporários da Internet\n"
+"Copias em cache das páginas web, imagens e certificados."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3473,24 +3353,33 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"Cookies\n"
+"Arquivos salvos no seu computador pelas páginas web, que guardam "
+"preferências de usuário e informação de login, entre outros."
 
 #: inetcpl.rc:72
 msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"Histórico\n"
+"Lista de sites web que foram acessados."
 
 #: inetcpl.rc:74
 msgid ""
 "Form data\n"
 "Usernames and other information you have entered into forms."
 msgstr ""
+"Dados de formulário\n"
+"Nomes de usuário e outras informações que foram colocadas nos formulários."
 
 #: inetcpl.rc:76
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
+"Senhas\n"
+"Senhas salvas que foram colocadas em formulários."
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -3522,43 +3411,35 @@ msgstr "Configurações da Internet"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
-msgstr "Configurar o Wine Internet Browser e opções relacionadas"
+msgstr "Configurar o navegador de Internet do Wine e opções relacionadas"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Salvar alterações ao sair\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Salvar configurações ao sair"
+msgstr "Opções de segurança para a zona: "
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "Personalizar"
+msgstr "Personalizada"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Muito baixa"
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "&Baixa"
+msgstr "Baixa"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Média"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Elevada"
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "&Alta"
+msgstr "Alta"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3573,9 +3454,8 @@ msgid "Subscript out of range"
 msgstr "Subscript fora de alcance"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "Objeto esperado"
+msgstr "Objeto requerido"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -3615,15 +3495,15 @@ msgstr "Constante de string não terminada"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "Não pode haver 'break' fora de um loop"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "Não pode haver 'continue' fora de um loop"
 
 #: jscript.rc:40
 msgid "Conditional compilation is turned off"
-msgstr ""
+msgstr "Compilação condicional está desligada"
 
 #: jscript.rc:43
 msgid "Number expected"
@@ -3654,9 +3534,8 @@ msgid "Boolean object expected"
 msgstr "Objeto boleano esperado"
 
 #: jscript.rc:48
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Não é possível completar\n"
+msgstr "Não é possível excluir '|'"
 
 #: jscript.rc:49
 msgid "VBArray object expected"
@@ -3675,9 +3554,8 @@ msgid "URI to be encoded contains invalid characters"
 msgstr "URI a ser codificado contém caracteres inválidos"
 
 #: jscript.rc:52
-#, fuzzy
 msgid "URI to be decoded is incorrect"
-msgstr "URI a ser codificado contém caracteres inválidos"
+msgstr "URI a ser codificado está incorreto"
 
 #: jscript.rc:54
 msgid "Array length must be a finite positive integer"
@@ -4017,7 +3895,7 @@ msgstr "Overflow no buffer\n"
 
 #: winerror.mc:441
 msgid "No more search handles\n"
-msgstr "Não há mais handles de procura\n"
+msgstr "Não há mais handles de busca\n"
 
 #: winerror.mc:446
 msgid "Invalid target handle\n"
@@ -4204,7 +4082,6 @@ msgid "Signal pending\n"
 msgstr "Sinal pendente\n"
 
 #: winerror.mc:681
-#, fuzzy
 msgid "Max system-wide thread count reached\n"
 msgstr "Número máximo de threads no sistema atingido\n"
 
@@ -4426,12 +4303,11 @@ msgstr "Read/WriteProcessMemory parcialmente completo\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted\n"
-msgstr ""
+msgstr "O oplock não foi garantido\n"
 
 #: winerror.mc:961
-#, fuzzy
 msgid "Invalid oplock message received\n"
-msgstr "Nome de mensagem inválido\n"
+msgstr "Mensagem inválida de oplock recebida\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
@@ -4518,9 +4394,8 @@ msgid "Invalid key\n"
 msgstr "Chave inválida\n"
 
 #: winerror.mc:1071
-#, fuzzy
 msgid "Can't open registry key\n"
-msgstr "Não é possível ler chave de registro\n"
+msgstr "Não é possível abrir a chave de registro\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key\n"
@@ -4576,7 +4451,7 @@ msgstr "Controle de serviço inválido\n"
 
 #: winerror.mc:1141
 msgid "Service request timeout\n"
-msgstr "Tempo expirado no pedido de serviço\n"
+msgstr "Tempo limite no pedido de serviço\n"
 
 #: winerror.mc:1146
 msgid "Cannot create service thread\n"
@@ -4608,7 +4483,7 @@ msgstr "O serviço não existe\n"
 
 #: winerror.mc:1181
 msgid "Service cannot accept control message\n"
-msgstr "O serviço não consegue aceitar a mensagem de controle\n"
+msgstr "O serviço não pode aceitar a mensagem de controle\n"
 
 #: winerror.mc:1186
 msgid "Service not active\n"
@@ -4660,7 +4535,7 @@ msgstr "O serviço já existe\n"
 
 #: winerror.mc:1246
 msgid "System running last-known-good config\n"
-msgstr "O sistema está rodando a última configuração boa conhecida\n"
+msgstr "O sistema está usando a última boa configuração conhecida\n"
 
 #: winerror.mc:1251
 msgid "Service dependency deleted\n"
@@ -4684,21 +4559,19 @@ msgstr "Conta de serviço diferente\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected\n"
-msgstr ""
+msgstr "Falha de driver não pode ser detectada\n"
 
 #: winerror.mc:1281
-#, fuzzy
 msgid "Process abort cannot be detected\n"
-msgstr "Processo abortado\n"
+msgstr "Interrupção de processo não pode ser detectada\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service\n"
-msgstr ""
+msgstr "Nenhuma informação de recuperação para o serviço\n"
 
 #: winerror.mc:1291
-#, fuzzy
 msgid "Service not implemented by exe\n"
-msgstr "Impressão não implementada"
+msgstr "Serviço não implementado por exe\n"
 
 #: winerror.mc:1296
 msgid "End of media\n"
@@ -4758,7 +4631,7 @@ msgstr "Sem tradução Unicode\n"
 
 #: winerror.mc:1366
 msgid "DLL init failed\n"
-msgstr "Inicialização do DLL falhou\n"
+msgstr "Falha na inicialização do DLL\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress\n"
@@ -4877,110 +4750,96 @@ msgid "DLL not found\n"
 msgstr "DLL não encontrado\n"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles\n"
-msgstr "Não há mais handles de procura\n"
+msgstr "Não há mais handles de usuário\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls\n"
-msgstr ""
+msgstr "Mensagem só pode ser usada em chamadas sincronizadas\n"
 
 #: winerror.mc:1526
 msgid "The source element is empty\n"
-msgstr ""
+msgstr "O elemento fonte está vazio\n"
 
 #: winerror.mc:1531
-#, fuzzy
 msgid "The destination element is full\n"
-msgstr "A operação foi completada com sucesso\n"
+msgstr "O elemento de destino está cheio\n"
 
 #: winerror.mc:1536
-#, fuzzy
 msgid "The element address is invalid\n"
-msgstr "O handle do dispositivo especificado é inválido."
+msgstr "O endereço do elemento é inválido\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present\n"
-msgstr ""
+msgstr "A revista não está presente\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization\n"
-msgstr ""
+msgstr "O dispositivo requer reinicialização\n"
 
 #: winerror.mc:1551
-#, fuzzy
 msgid "The device requires cleaning\n"
-msgstr "O serviço %s está iniciando.\n"
+msgstr "O dispositivo necessita de limpeza.\n"
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open\n"
-msgstr "A impressora está aberta; "
+msgstr "A porta do dispositivo está aberta\n"
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected\n"
-msgstr "Pipe não conectado\n"
+msgstr "O dispositivo não está conectado\n"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found\n"
-msgstr "Entrada não encontrada\n"
+msgstr "Elemento não encontrado\n"
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found\n"
-msgstr "Caminho não encontrado\n"
+msgstr "Nenhuma correspondência encontrada\n"
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found\n"
-msgstr "Procedimento não encontrado\n"
+msgstr "Propriedade não encontrada\n"
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found\n"
-msgstr "Caminho não encontrado\n"
+msgstr "Ponto não encontrado\n"
 
 #: winerror.mc:1586
-#, fuzzy
 msgid "No running tracking service\n"
-msgstr "Serviço de autorização desconhecido\n"
+msgstr "Nenhum serviço de rastreamento rodando\n"
 
 #: winerror.mc:1591
-#, fuzzy
 msgid "No such volume ID\n"
-msgstr "Não existe esse usuário\n"
+msgstr "Não existe esta ID de volume\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced\n"
-msgstr ""
+msgstr "Incapaz de remover o arquivo a ser substituído\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place\n"
-msgstr ""
+msgstr "Incapaz de mover o arquivo substituto ao seu lugar\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed\n"
-msgstr ""
+msgstr "Falha ao mover o arquivo substituto\n"
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted\n"
-msgstr "Nome de rede excluído\n"
+msgstr "O journal está sendo excluído\n"
 
 #: winerror.mc:1616
-#, fuzzy
 msgid "The journal is not active\n"
-msgstr "Serviço não ativo\n"
+msgstr "O journal não está ativo\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found\n"
-msgstr ""
+msgstr "Arquivo correspondente em potencial encontrado\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted\n"
-msgstr ""
+msgstr "A entrada do journal foi excluída\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name\n"
@@ -5128,7 +4987,7 @@ msgstr "Conexão abortada\n"
 
 #: winerror.mc:1816
 msgid "Please retry operation\n"
-msgstr "Por favor tente a operação novamente\n"
+msgstr "Por favor, tente a operação novamente\n"
 
 #: winerror.mc:1821
 msgid "Connection count limit reached\n"
@@ -5175,32 +5034,28 @@ msgid "No more local devices\n"
 msgstr "Não há mais dispositivos locais\n"
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist\n"
-msgstr "Dispositivo não existe\n"
+msgstr "O site não existe\n"
 
 #: winerror.mc:1881
-#, fuzzy
 msgid "The domain controller already exists\n"
-msgstr "O domínio já existe\n"
+msgstr "O controlador de domínio já existe\n"
 
 #: winerror.mc:1886
-#, fuzzy
 msgid "Supported only when connected\n"
-msgstr "Pipe não conectado\n"
+msgstr "Suportado apenas quando conectado\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed\n"
-msgstr ""
+msgstr "Realizar operação mesmo que nada tenha mudado\n"
 
 #: winerror.mc:1896
-#, fuzzy
 msgid "The user profile is invalid\n"
-msgstr "O handle do dispositivo especificado é inválido."
+msgstr "O perfil do usuário é inválido\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
-msgstr ""
+msgstr "Não suportado em Small Business Server\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned\n"
@@ -5579,18 +5434,16 @@ msgid "Licence quota exceeded\n"
 msgstr "Quota de licença excedida\n"
 
 #: winerror.mc:2381
-#, fuzzy
 msgid "Wrong target name\n"
-msgstr "Nenhum nome de entrada\n"
+msgstr "Nome de destino errado\n"
 
 #: winerror.mc:2386
-#, fuzzy
 msgid "Mutual authentication failed\n"
-msgstr "Identidade de autenticação inválida\n"
+msgstr "Falha na autenticação mútua\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server\n"
-msgstr ""
+msgstr "Desvio de tempo entre cliente e servidor\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle\n"
@@ -5657,9 +5510,8 @@ msgid "Private dialog index\n"
 msgstr "Índice de diálogo privado\n"
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found\n"
-msgstr "Listbox ID não encontrado\n"
+msgstr "ID de caixa de listagem não encontrada\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters\n"
@@ -5722,18 +5574,16 @@ msgid "Hook procedure not installed\n"
 msgstr "Procedimento de hook não instalado\n"
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message\n"
-msgstr "Mensagem de listbox inválida\n"
+msgstr "Mensagem de caixa de listagem inválida\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "LB_SETCOUNT inválido enviado\n"
 
 #: winerror.mc:2566
-#, fuzzy
 msgid "No tab stops on this list box\n"
-msgstr "Nenhuma tabulação nesta listbox\n"
+msgstr "Nenhuma tabulação nesta caixa de listagem\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread\n"
@@ -5748,9 +5598,8 @@ msgid "Window has no system menu\n"
 msgstr "A janela não tem nenhum menu de sistema\n"
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style\n"
-msgstr "Estilo de caixa de mensagens inválido\n"
+msgstr "Estilo de caixa de mensagem inválido\n"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter\n"
@@ -5801,7 +5650,6 @@ msgid "No system resources\n"
 msgstr "Nenhum recurso de sistema\n"
 
 #: winerror.mc:2651
-#, fuzzy
 msgid "No non-paged system resources\n"
 msgstr "Nenhum recurso de sistema não paginado\n"
 
@@ -5814,7 +5662,6 @@ msgid "No working set quota\n"
 msgstr "Sem quota de conjunto de trabalho\n"
 
 #: winerror.mc:2666
-#, fuzzy
 msgid "No page file quota\n"
 msgstr "Sem quota para arquivo de páginas\n"
 
@@ -5827,28 +5674,24 @@ msgid "Menu item not found\n"
 msgstr "Item do menu não encontrado\n"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle\n"
-msgstr "Handle de alvo inválido\n"
+msgstr "Handle de teclado inválido\n"
 
 #: winerror.mc:2686
-#, fuzzy
 msgid "Hook type not allowed\n"
-msgstr "Tipo de logono não atribuído\n"
+msgstr "Tipo de hook não permitido\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
-msgstr ""
+msgstr "Estação de janela interativa requerida\n"
 
 #: winerror.mc:2696
-#, fuzzy
 msgid "Timeout\n"
-msgstr "Tempo excedido"
+msgstr "Tempo limite atingido\n"
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle\n"
-msgstr "Handle de menu inválido\n"
+msgstr "Handle de monitor inválido\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -5867,213 +5710,180 @@ msgid "Event log file changed\n"
 msgstr "Arquivo de log de eventos alterado\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
-msgstr "Nome de serviço inválido\n"
+msgstr "Falha no serviço de instalação.\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user\n"
-msgstr "Programas de Instalação"
+msgstr "Instalação interrompida pelo usuário\n"
 
 #: winerror.mc:2736
-#, fuzzy
 msgid "Installation failure\n"
-msgstr "Falha na partição\n"
+msgstr "Falha na instalação\n"
 
 #: winerror.mc:2741
-#, fuzzy
 msgid "Installation suspended\n"
-msgstr "Programas de Instalação"
+msgstr "Instalação suspensa\n"
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product\n"
-msgstr "Porta desconhecida\n"
+msgstr "Produto desconhecido\n"
 
 #: winerror.mc:2751
-#, fuzzy
 msgid "Unknown feature\n"
-msgstr "Recurso desconhecido em %s"
+msgstr "Recurso desconhecido\n"
 
 #: winerror.mc:2756
-#, fuzzy
 msgid "Unknown component\n"
-msgstr "Porta desconhecida\n"
+msgstr "Componente desconhecido\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property\n"
-msgstr "Porta desconhecida\n"
+msgstr "Propriedade desconhecida\n"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state\n"
-msgstr "Handle inválido\n"
+msgstr "Handle de estado inválido\n"
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration\n"
-msgstr "Configuração do Wine"
+msgstr "Configuração ruim\n"
 
 #: winerror.mc:2776
 msgid "Index is missing\n"
-msgstr ""
+msgstr "Índice está faltando\n"
 
 #: winerror.mc:2781
-#, fuzzy
 msgid "Installation source is missing\n"
-msgstr "faltando fonte de instalação para característica"
+msgstr "A fonte de instalação está faltando\n"
 
 #: winerror.mc:2786
-#, fuzzy
 msgid "Wrong installation package version\n"
-msgstr "Versão de pacote de serialização errada\n"
+msgstr "Versão de pacote de instalação errada\n"
 
 #: winerror.mc:2791
-#, fuzzy
 msgid "Product uninstalled\n"
-msgstr "Procedimento de hook não instalado\n"
+msgstr "Produto desinstalado\n"
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax\n"
-msgstr "Sintaxe de nome inválida\n"
+msgstr "Sintaxe de consulta inválida\n"
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field\n"
-msgstr "Tempo inválido\n"
+msgstr "Campo inválido\n"
 
 #: winerror.mc:2806
-#, fuzzy
 msgid "Device removed\n"
-msgstr "O dispositivo já foi lembrado\n"
+msgstr "Dispositivo removido\n"
 
 #: winerror.mc:2811
-#, fuzzy
 msgid "Installation already running\n"
-msgstr "O serviço já está rodando\n"
+msgstr "A instalação já está em andamento\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
-msgstr ""
+msgstr "Falha ao abrir pacote de instalação\n"
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid\n"
-msgstr "Programas de Instalação"
+msgstr "Pacote de instalação é inválido\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed\n"
-msgstr ""
+msgstr "Falha na interface de usuário do instalador\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file\n"
-msgstr ""
+msgstr "Falha ao abrir arquivo de log da instalação\n"
 
 #: winerror.mc:2836
-#, fuzzy
 msgid "Installation language not supported\n"
-msgstr "Operação não suportada\n"
+msgstr "Linguagem de instalação não suportada\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply\n"
-msgstr ""
+msgstr "Falha ao aplicar transformação de instalação\n"
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected\n"
-msgstr "Programas de Instalação"
+msgstr "Pacote de instalação rejeitado\n"
 
 #: winerror.mc:2851
-#, fuzzy
 msgid "Function could not be called\n"
-msgstr "Limite de conexões atingido\n"
+msgstr "A função não pôde ser chamada\n"
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed\n"
-msgstr "Função esperada"
+msgstr "Falha na função\n"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table\n"
-msgstr "Tag inválida\n"
+msgstr "Tabela inválida\n"
 
 #: winerror.mc:2866
-#, fuzzy
 msgid "Data type mismatch\n"
-msgstr "Tipo de máquina diferente\n"
+msgstr "Tipo de dados diferente\n"
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type\n"
 msgstr "Tipo não suportado\n"
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed\n"
-msgstr "Falha ao abrir\n"
+msgstr "Falha ao criar\n"
 
 #: winerror.mc:2881
-#, fuzzy
 msgid "Temporary directory not writable\n"
-msgstr "Arquivo ou diretório corrompido\n"
+msgstr "Diretório temporário não gravável\n"
 
 #: winerror.mc:2886
-#, fuzzy
 msgid "Installation platform not supported\n"
-msgstr "Operação não suportada\n"
+msgstr "Plataforma de instalação não suportada\n"
 
 #: winerror.mc:2891
-#, fuzzy
 msgid "Installer not used\n"
-msgstr "Interface não encontrada\n"
+msgstr "Instalador não usado\n"
 
 #: winerror.mc:2896
-#, fuzzy
 msgid "Failed to open the patch package\n"
-msgstr "Falha ao abrir '%s'\n"
+msgstr "Falha ao abrir o pacote de patch\n"
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package\n"
-msgstr "Tag inválida\n"
+msgstr "Pacote de patch inválido\n"
 
 #: winerror.mc:2906
-#, fuzzy
 msgid "Unsupported patch package\n"
-msgstr "Tipo não suportado\n"
+msgstr "Pacote de patch não suportado\n"
 
 #: winerror.mc:2911
-#, fuzzy
 msgid "Another version is installed\n"
-msgstr "O driver da impressora já está instalado\n"
+msgstr "Outra versão está instalada\n"
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line\n"
-msgstr "Comando GW inválido\n"
+msgstr "Linha de comando inválida\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
-msgstr ""
+msgstr "Instalação remota não permitida\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install\n"
-msgstr ""
+msgstr "Reinicializando após instalação sucedida\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding\n"
-msgstr "String binding inválido\n"
+msgstr "Vínculo de texto inválido\n"
 
 #: winerror.mc:2936
 msgid "Wrong kind of binding\n"
-msgstr "Tipo de binding errado\n"
+msgstr "Tipo de vínculo errado\n"
 
 #: winerror.mc:2941
 msgid "Invalid binding\n"
-msgstr "Binding inválido\n"
+msgstr "Vínculo inválido\n"
 
 #: winerror.mc:2946
 msgid "RPC protocol sequence not supported\n"
@@ -6173,7 +5983,7 @@ msgstr "Falha na chamada RPC\n"
 
 #: winerror.mc:3066
 msgid "RPC call failed and didn't execute\n"
-msgstr "Falha na chamada RPC, e não foi executada\n"
+msgstr "A chamada RPC falhou e não foi executada\n"
 
 #: winerror.mc:3071
 msgid "RPC protocol error\n"
@@ -6460,7 +6270,6 @@ msgid "Invalid printer command\n"
 msgstr "Comando de impressora inválido\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type\n"
 msgstr "Tipo de dados inválido\n"
 
@@ -6633,92 +6442,76 @@ msgid "Invalid driver\n"
 msgstr "Driver inválido\n"
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set\n"
-msgstr "Objeto inválido\n"
+msgstr "Conjunto de resolvedor de objeto inválido\n"
 
 #: winerror.mc:3651
-#, fuzzy
 msgid "Incomplete RPC send\n"
-msgstr "Nome incompleto\n"
+msgstr "Envio de RPC incompleto\n"
 
 #: winerror.mc:3656
-#, fuzzy
 msgid "Invalid asynchronous RPC handle\n"
-msgstr "Handle de hook inválido\n"
+msgstr "Handle de RPC assíncrono inválido\n"
 
 #: winerror.mc:3661
-#, fuzzy
 msgid "Invalid asynchronous RPC call\n"
-msgstr "Handle de hook inválido\n"
+msgstr "Chamada de RPC assíncrono inválido\n"
 
 #: winerror.mc:3666
-#, fuzzy
 msgid "RPC pipe closed\n"
-msgstr "Pipe fechado\n"
+msgstr "Pipe RPC fechado\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe\n"
-msgstr ""
+msgstr "Erro de disciplina no pipe RPC\n"
 
 #: winerror.mc:3676
-#, fuzzy
 msgid "No data on RPC pipe\n"
-msgstr "Não é erro de RPC\n"
+msgstr "Não há dados no pipe RPC\n"
 
 #: winerror.mc:3681
-#, fuzzy
 msgid "No site name available\n"
-msgstr "Nenhum contexto de segurança disponível\n"
+msgstr "Nenhum nome de site disponível\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed\n"
-msgstr ""
+msgstr "O arquivo não pode ser acessado\n"
 
 #: winerror.mc:3691
-#, fuzzy
 msgid "The filename cannot be resolved\n"
-msgstr "O nome de usuário não foi encontrado\n"
+msgstr "O nome de arquivo não pode ser resolvido\n"
 
 #: winerror.mc:3696
-#, fuzzy
 msgid "RPC entry type mismatch\n"
-msgstr "Tipo de máquina diferente\n"
+msgstr "Tipo de entrada RPC diferente\n"
 
 #: winerror.mc:3701
-#, fuzzy
 msgid "Not all objects could be exported\n"
-msgstr "Nem todos os objetos estão por exportar\n"
+msgstr "Nem todos os objetos puderam ser exportados\n"
 
 #: winerror.mc:3706
-#, fuzzy
 msgid "The interface could not be exported\n"
-msgstr "O nome de usuário não foi encontrado\n"
+msgstr "A interface não pôde ser exportada\n"
 
 #: winerror.mc:3711
-#, fuzzy
 msgid "The profile could not be added\n"
-msgstr "O nome de usuário não foi encontrado\n"
+msgstr "O perfil não pôde ser adicionado\n"
 
 #: winerror.mc:3716
-#, fuzzy
 msgid "The profile element could not be added\n"
-msgstr "O nome de usuário não foi encontrado\n"
+msgstr "O elemento de perfil não pôde ser adicionado\n"
 
 #: winerror.mc:3721
-#, fuzzy
 msgid "The profile element could not be removed\n"
-msgstr "O nome de usuário não foi encontrado\n"
+msgstr "O elemento de perfil não pôde ser removido\n"
 
 #: winerror.mc:3726
-#, fuzzy
 msgid "The group element could not be added\n"
-msgstr "O nome de usuário não foi encontrado\n"
+msgstr "O elemento de grupo não pôde ser adicionado\n"
 
 #: winerror.mc:3731
-#, fuzzy
 msgid "The group element could not be removed\n"
-msgstr "O nome de usuário não foi encontrado\n"
+msgstr "O elemento de grupo não pôde ser removido\n"
 
 #: winerror.mc:3736
 msgid "The username could not be found\n"
@@ -6746,7 +6539,7 @@ msgstr "Configurar porta LPT"
 
 #: localui.rc:51
 msgid "Timeout (seconds)"
-msgstr "Tempo expirado (segundos)"
+msgstr "Tempo limite (segundos)"
 
 #: localui.rc:52
 msgid "&Transmission Retry:"
@@ -6780,7 +6573,7 @@ msgstr "Entre a senha da rede"
 
 #: mpr.rc:35 wininet.rc:37 wininet.rc:57
 msgid "Please enter your username and password:"
-msgstr "Por favor, entre como o nome de usuário e a senha:"
+msgstr "Por favor, entre com nome de usuário e senha:"
 
 #: mpr.rc:36 wininet.rc:38
 msgid "Proxy"
@@ -6867,7 +6660,6 @@ msgid "insert disk %s"
 msgstr "insira disco %s"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -6902,22 +6694,22 @@ msgstr ""
 "Windows Installer %s\n"
 "\n"
 "Modo de usar:\n"
-"msiexec command {required parameter} [optional parameter]\n"
+"msiexec comando {parâmetro requisitado} [parâmetro opcional]\n"
 "\n"
 "Instalar um produto:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
-"\t/a package [property]\n"
+"\t/i {pacote|códigodoproduto} [propriedade]\n"
+"\t/pacote {pacote|códigodoproduto} [propriedade]\n"
+"\t/a pacote [propriedade]\n"
 "Reparar uma instalação:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {pacote|códigodoproduto}\n"
 "Desinstalar um produto:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
+"\t/uninstall {pacote|códigodoproduto} [propriedade]\n"
+"\t/x {pacote|códigodoproduto} [propriedade]\n"
 "Anunciar um produto:\n"
-"\t/j[u|m] package [/t transform] [/g languageid]\n"
+"\t/j[u|m] pacote [/t transform] [/g languageid]\n"
 "Aplicar um patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
+"\t/p pacotedepatch [propriedade]\n"
+"\t/p pacotedepatch /a pacote [propriedade]\n"
 "Modificadores Log e UI para os comandos acima:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
@@ -6959,7 +6751,7 @@ msgid ""
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
 "Wine MS-RLE codificador/decodificador de vídeo\n"
-"Copyright 2002 por Michael Günnewig"
+"Direitos autorais 2002 por Michael Günnewig"
 
 #: msvfw32.rc:30
 msgid "Video Compression"
@@ -6975,7 +6767,7 @@ msgstr "Con&figurar..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&Sobre..."
+msgstr "&Sobre"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -6983,16 +6775,15 @@ msgstr "&Qualidade de compressão:"
 
 #: msvfw32.rc:46
 msgid "&Key Frame Every"
-msgstr "&Imagem chave todos os"
+msgstr "&Imagem Chave a Cada"
 
 #: msvfw32.rc:50
 msgid "&Data Rate"
-msgstr "&Cadência de dados"
+msgstr "Taxa de &Dados"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "KB/sec"
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -7124,7 +6915,7 @@ msgstr "célula"
 
 #: oleacc.rc:57
 msgid "link"
-msgstr "link"
+msgstr "atalho"
 
 #: oleacc.rc:58
 msgid "help balloon"
@@ -7329,11 +7120,11 @@ msgstr "Origem:"
 #: oledlg.rc:79 shdoclc.rc:47 shdoclc.rc:79 shdoclc.rc:92 shdoclc.rc:132
 #: shdoclc.rc:159 shdoclc.rc:183 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
-msgstr "Co&lar"
+msgstr "C&olar"
 
 #: oledlg.rc:81
 msgid "Paste &Link"
-msgstr "Colar &Link"
+msgstr "Colar a&talho"
 
 #: oledlg.rc:83
 msgid "&As:"
@@ -7341,7 +7132,7 @@ msgstr "&Como:"
 
 #: oledlg.rc:90
 msgid "&Display As Icon"
-msgstr "&Mostrar como Ícone"
+msgstr "&Mostrar como ícone"
 
 #: oledlg.rc:92
 msgid "Change &Icon..."
@@ -7447,7 +7238,7 @@ msgstr "Escaneando"
 
 #: sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr "ESCANEANDO... Por Favor Espere"
+msgstr "Escaneando... Por favor, aguarde"
 
 #: sane.rc:31
 msgctxt "unit: pixels"
@@ -7475,9 +7266,8 @@ msgid "us"
 msgstr "µs"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "Propriedades de %s"
+msgstr "Configurações para %s"
 
 #: serialui.rc:28
 msgid "Baud Rate"
@@ -7524,9 +7314,8 @@ msgid "Copy manufacturer's files from:"
 msgstr "Copiar arquivos do fabricante de:"
 
 #: setupapi.rc:28
-#, fuzzy
 msgid "The file '%1' on %2 is needed"
-msgstr "O arquivo '%s' em %s é necessário"
+msgstr "O arquivo '%1' em %2 é necessário"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -7546,11 +7335,11 @@ msgstr "&Avançar"
 
 #: shdoclc.rc:41
 msgid "&Save Background As..."
-msgstr "&Salvar fundo como..."
+msgstr "&Salvar Fundo como..."
 
 #: shdoclc.rc:42
 msgid "Set As Back&ground"
-msgstr "D&efinir como fundo"
+msgstr "D&efinir como Fundo"
 
 #: shdoclc.rc:43
 msgid "&Copy Background"
@@ -7558,20 +7347,15 @@ msgstr "&Copiar Fundo"
 
 #: shdoclc.rc:44
 msgid "Set as &Desktop Item"
-msgstr "Definir como &item da Área de Trabalho"
+msgstr "Definir como &Item da Área de Trabalho"
 
 #: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
-#, fuzzy
 msgid "Select &All"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Selecionar &tudo\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Selecionar &Tudo"
+msgstr "Selecionar &Tudo"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
-msgstr "Criar ata&lho"
+msgstr "Criar Ata&lho"
 
 #: shdoclc.rc:50 shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Add to &Favorites..."
@@ -7579,7 +7363,7 @@ msgstr "Adicionar aos &Favoritos..."
 
 #: shdoclc.rc:51
 msgid "&View Source"
-msgstr "Ver código &fonte"
+msgstr "Ver Código Fo&nte"
 
 #: shdoclc.rc:53
 msgid "&Encoding"
@@ -7599,7 +7383,7 @@ msgstr "A&brir link numa nova janela"
 
 #: shdoclc.rc:65 shdoclc.rc:126 shdoclc.rc:148 shdoclc.rc:172
 msgid "Save Target &As..."
-msgstr "&Salvar link como..."
+msgstr "&Salvar Alvo Como..."
 
 #: shdoclc.rc:66 shdoclc.rc:127 shdoclc.rc:149 shdoclc.rc:173
 msgid "&Print Target"
@@ -7635,13 +7419,8 @@ msgstr "Definir como &item da Área de Trabalho..."
 
 #: shdoclc.rc:76 shdoclc.rc:90 shdoclc.rc:114 shdoclc.rc:156 shdoclc.rc:180
 #: user32.rc:57 wordpad.rc:101
-#, fuzzy
 msgid "Cu&t"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Cortar\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Recortar"
+msgstr "Recor&tar"
 
 #: shdoclc.rc:77 shdoclc.rc:91 shdoclc.rc:115 shdoclc.rc:130 shdoclc.rc:157
 #: shdoclc.rc:181 shell32.rc:99 user32.rc:58 wineconsole.rc:29 winhlp32.rc:37
@@ -7658,17 +7437,12 @@ msgid "P&roperties"
 msgstr "&Propriedades"
 
 #: shdoclc.rc:88 user32.rc:55
-#, fuzzy
 msgid "&Undo"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Desfazer\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Voltar"
+msgstr "&Desfazer"
 
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
-msgstr "&Limpar"
+msgstr "&Excluir"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -7768,7 +7542,7 @@ msgstr "Dump LayoutRects"
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
-msgstr "Memory Monitor"
+msgstr "Monitor de Memória"
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
@@ -7844,22 +7618,17 @@ msgstr "Wine Internet Explorer"
 
 #: shdoclc.rc:30
 msgid "&w&bPage &p"
-msgstr ""
+msgstr "&w&bPágina &p"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
-#, fuzzy
 msgid "Lar&ge Icons"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Ícones grandes\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Ícones &grandes"
+msgstr "Ícones &Grandes"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:120 shell32.rc:160 taskmgr.rc:66
 #: taskmgr.rc:111 taskmgr.rc:253
 msgid "S&mall Icons"
-msgstr "Ícones &pequenos"
+msgstr "Ícones &Pequenos"
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:121 shell32.rc:161
 msgid "&List"
@@ -7896,11 +7665,11 @@ msgstr "Auto organi&zar"
 
 #: shell32.rc:57
 msgid "Line up Icons"
-msgstr "Alin&har ícones"
+msgstr "Alinhar ícones"
 
 #: shell32.rc:62
 msgid "Paste as Link"
-msgstr "Colar a&talho"
+msgstr "Colar A&talho"
 
 #: shell32.rc:64 progman.rc:97 wordpad.rc:210
 msgid "New"
@@ -7912,21 +7681,20 @@ msgstr "&Pasta"
 
 #: shell32.rc:67
 msgid "New &Link"
-msgstr "&Atalho"
+msgstr "Novo A&talho"
 
 #: shell32.rc:71
 msgid "Properties"
 msgstr "Propriedades"
 
 #: shell32.rc:82
-#, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&Restaurar"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "&Apagar"
 
 #: shell32.rc:95
 msgid "E&xplore"
@@ -7946,18 +7714,12 @@ msgstr "&Renomear"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
 #: winhlp32.rc:34 wordpad.rc:37
-#, fuzzy
 msgid "E&xit"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Sai&r\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Sair"
+msgstr "Sai&r"
 
 #: shell32.rc:127
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "&Sobre o Painel de Controle..."
+msgstr "&Sobre o Painel de Controle"
 
 #: shell32.rc:283 shell32.rc:298
 msgid "Browse for Folder"
@@ -7981,7 +7743,7 @@ msgstr "&Sim"
 
 #: shell32.rc:320
 msgid "Yes to &all"
-msgstr "Sim a &todos"
+msgstr "Sim para &todos"
 
 #: shell32.rc:321 shlwapi.rc:44 user32.rc:83
 msgid "&No"
@@ -8008,8 +7770,8 @@ msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
-"Digite o nome do programa, pasta, documento, ou endereço Internet que o Wine "
-"irá abri-lo."
+"Digite o nome do programa, pasta, documento ou endereço de Internet que o "
+"Wine irá abri-lo."
 
 #: shell32.rc:348
 msgid "&Open:"
@@ -8018,7 +7780,7 @@ msgstr "&Abrir:"
 #: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
 msgid "&Browse..."
-msgstr "&Procurar"
+msgstr "&Procurar..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
@@ -8061,14 +7823,9 @@ msgid "Date deleted"
 msgstr "Data de exclusão"
 
 #: shell32.rc:153 winecfg.rc:92 winefile.rc:103
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Área de trabalho\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Área de Trabalho"
+msgstr "Área de Trabalho"
 
 #: shell32.rc:154 regedit.rc:200
 msgid "My Computer"
@@ -8135,14 +7892,9 @@ msgid "My Videos"
 msgstr "Meus Vídeos"
 
 #: shell32.rc:208
-#, fuzzy
 msgctxt "directory"
 msgid "Desktop"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Área de trabalho\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Área de Trabalho"
+msgstr "Área de Trabalho"
 
 #: shell32.rc:209
 msgid "NetHood"
@@ -8226,7 +7978,7 @@ msgstr "Contatos"
 
 #: shell32.rc:229 winefile.rc:116
 msgid "Links"
-msgstr "Links"
+msgstr "Atalhos"
 
 #: shell32.rc:230
 msgid "Pictures\\Slide Shows"
@@ -8294,7 +8046,7 @@ msgstr "Usuários"
 
 #: shell32.rc:243
 msgid "OEM Links"
-msgstr "OEM Links"
+msgstr "Atalhos OEM"
 
 #: shell32.rc:246
 msgid "AppData\\LocalLow"
@@ -8371,9 +8123,8 @@ msgstr ""
 "Esta pasta já contém uma pasta chamada '%1'.\n"
 "\n"
 "Se os arquivos da pasta de destino tiverem os mesmos nomes que os arquivos\n"
-"na pasta selecionada, eles serão sobrescritos. Deseja mover ou copiar a "
-"pasta\n"
-"mesmo assim?"
+"na pasta selecionada, eles serão sobrescritos. Deseja mover ou copiar a\n"
+"pasta mesmo assim?"
 
 #: shell32.rc:248
 msgid "New Folder"
@@ -8402,44 +8153,40 @@ msgstr ""
 "Não existe um programa Windows configurado para abrir este tipo de arquivo."
 
 #: shell32.rc:256
-#, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "Você tem certeza que deseja excluir '%1'?"
+msgstr "Você tem certeza que deseja excluir '%1' permanentemente?"
 
 #: shell32.rc:257
-#, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "Você tem certeza que deseja excluir estes %1 itens?"
+msgstr "Você tem certeza que deseja excluir estes %1 itens permanentemente?"
 
 #: shell32.rc:258
-#, fuzzy
 msgid "Confirm deletion"
-msgstr "Confirmar exclusão de arquivo"
+msgstr "Confirmar exclusão"
 
 #: shell32.rc:259
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Arquivo já existe.\n"
+"Um arquivo já existe no caminho %1.\n"
+"\n"
 "Gostaria de substituí-lo?"
 
 #: shell32.rc:260
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Arquivo já existe.\n"
-"Gostaria de substituí-lo?"
+"Uma pasta já existe no caminho %1.\n"
+"\n"
+"Gostaria de substituí-la?"
 
 #: shell32.rc:261
-#, fuzzy
 msgid "Confirm overwrite"
-msgstr "Confirmar sobrescrever arquivo"
+msgstr "Confirmar sobrescrever"
 
 #: shell32.rc:278
 msgid ""
@@ -8457,10 +8204,10 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"O Wine é software livre; você pode redistribui-lo e/ou modificá-lo sob os "
-"termos da GNU Lesser General Public License tal como publicado pela Free "
-"Software Foundation; seja a versão 2.1 da Licença, ou (por sua escolha) "
-"outra versão mais recente.\n"
+"O Wine é software livre; você pode redistribui-lo e/ou modificá-lo nos "
+"termos da GNU Lesser General Public License conforme publicado pela Free "
+"Software Foundation; tanto na versão 2.1 desta licença ou (à sua escolha) "
+"qualquer versão posterior.\n"
 "\n"
 "O Wine é distribuído na esperança de que seja útil, mas SEM QUALQUER "
 "GARANTIA; nem sequer a garantia implícita de MERCANTIBILIDADE ou FEITO PARA "
@@ -8488,30 +8235,25 @@ msgid "Don't show me th&is message again"
 msgstr "Não &mostrar esta mensagem novamente"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld bytes"
+msgstr "%d bytes"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
-msgstr " hr"
+msgstr " h"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
 msgstr " min"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr " seg"
+msgstr " s"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
-#, fuzzy
 msgctxt "window"
 msgid "&Restore"
 msgstr "&Restaurar"
@@ -8541,13 +8283,12 @@ msgid "&About Wine"
 msgstr "&Sobre o Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl-F4"
-msgstr "&Fechar\tAlt-F4"
+msgstr "&Fechar\tCtrl-F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl-F6"
-msgstr ""
+msgstr "&Próximo\tCtrl-F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -8595,26 +8336,23 @@ msgstr "&Salvar esta senha (inseguro)"
 
 #: wininet.rc:54
 msgid "Authentication Required"
-msgstr "Autenticação necessária"
+msgstr "Autenticação Requerida"
 
 #: wininet.rc:58
 msgid "Server"
 msgstr "Servidor"
 
 #: wininet.rc:74
-#, fuzzy
 msgid "Security Warning"
-msgstr "Segurança"
+msgstr "Aviso de Segurança"
 
 #: wininet.rc:77
-#, fuzzy
 msgid "There is a problem with the certificate for this site."
-msgstr "Nota: A chave privada para este certificado não é exportável."
+msgstr "Há um problema com o certificado para este site."
 
 #: wininet.rc:79
-#, fuzzy
 msgid "Do you want to continue anyway?"
-msgstr "Deseja simular a reinicialização do Windows?"
+msgstr "Deseja continuar mesmo assim?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -8622,21 +8360,21 @@ msgstr "Conexão LAN"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
-msgstr ""
+msgstr "O certificado é entrega por um editor desconhecido ou desconfiável."
 
 #: wininet.rc:27
-#, fuzzy
 msgid "The date on the certificate is invalid."
-msgstr "Nota: A chave privada para este certificado não é exportável."
+msgstr "A data do certificado é inválida."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
-msgstr ""
+msgstr "O nome no certificado não corresponde ao site."
 
 #: wininet.rc:29
 msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr ""
+"Há pelo menos um problema de segurança não especificado com este certificado."
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -8659,25 +8397,24 @@ msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
 msgstr ""
-"O dispositivo especificado já está em uso. Aguarde até que seja liberado, e "
-"então tente novamente."
+"O dispositivo especificado já está em uso. Aguarde até que seja liberado e "
+"tente novamente."
 
 #: winmm.rc:33
 msgid "The specified device handle is invalid."
 msgstr "O handle do dispositivo especificado é inválido."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "Não há nenhum driver instalado em seu sistema !\n"
+msgstr "Não há nenhum driver instalado em seu sistema!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
 msgstr ""
-"Não há memória disponível suficiente para essa tarefa. Feche uma ou mais "
-"aplicações para aumentar a memória disponível, e então tente novamente."
+"Não há memória disponível suficiente para esta tarefa. Feche um ou mais "
+"aplicativos para aumentar a memória disponível e tente novamente."
 
 #: winmm.rc:36
 msgid ""
@@ -8700,7 +8437,6 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "Um parâmetro inválido foi passado para uma função do sistema."
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -8714,7 +8450,7 @@ msgid ""
 "device, or wait until the data is finished playing."
 msgstr ""
 "Não é possível executar esta operação enquando os dados de mídia estiverem "
-"tocando. Reinicie o dispositivo, ou aguarde até o término da execução."
+"tocando. Reinicie o dispositivo ou aguarde até o término da execução."
 
 #: winmm.rc:44
 msgid ""
@@ -8722,7 +8458,7 @@ msgid ""
 "header, and then try again."
 msgstr ""
 "O cabeçalho do wave não está preparado. Use a função Preparar para preparar "
-"o cabeçalho, e então tente novamente."
+"o cabeçalho e tente novamente."
 
 #: winmm.rc:45
 msgid ""
@@ -8730,7 +8466,7 @@ msgid ""
 "and then try again."
 msgstr ""
 "Não é possível abrir o dispositivo sem utilizar a flag WAVE_ALLOWSYNC. Use a "
-"flag, e então tente novamente."
+"flag e tente novamente."
 
 #: winmm.rc:48
 msgid ""
@@ -8738,14 +8474,14 @@ msgid ""
 "header, and then try again."
 msgstr ""
 "O cabeçalho MIDI não está preparado. Use a função Preparar para preparar o "
-"cabeçalho, e então tente novamente."
+"cabeçalho e tente novamente."
 
 #: winmm.rc:50
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
-"O mapa MIDI não foi encontrado. Talvez seja um problema com o driver, ou o "
+"O mapa MIDI não foi encontrado. Talvez seja um problema com o driver ou o "
 "arquivo MIDIMAP.CFG pode estar corrompido ou faltando."
 
 #: winmm.rc:51
@@ -8754,7 +8490,7 @@ msgid ""
 "transmitted, and then try again."
 msgstr ""
 "A porta está transmitindo dados para o dispositivo. Aguarde até os dados "
-"terminarem de ser transmitidos, e então tente novamente."
+"terminarem de ser transmitidos e tente novamente."
 
 #: winmm.rc:52
 msgid ""
@@ -8770,7 +8506,7 @@ msgid ""
 "Windows SYSTEM directory, and then try again."
 msgstr ""
 "A configuração atual do MIDI está corrompida. Copie o arquivo original "
-"MIDIMAP.CFG para o diretório Windows SYSTEM, e então tente novamente."
+"MIDIMAP.CFG para o diretório Windows SYSTEM e tente novamente."
 
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
@@ -8804,7 +8540,7 @@ msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
 msgstr ""
-"O nome do dispositivo já está sendo usado como um alias por esta aplicação. "
+"O nome do dispositivo já está sendo usado como um alias por este aplicativo. "
 "Use um alias único."
 
 #: winmm.rc:63
@@ -8831,7 +8567,7 @@ msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr ""
-"O comando especificado requer como parâmetro uma string de caracters. Por "
+"O comando especificado requer como parâmetro uma cadeia de caracteres. Por "
 "favor, forneça-a."
 
 #: winmm.rc:67
@@ -8856,7 +8592,7 @@ msgstr ""
 
 #: winmm.rc:70
 msgid "The specified command requires a parameter. Please supply one."
-msgstr "O comando especificado requer um parâmetro. Por favor forneça-o."
+msgstr "O comando especificado requer um parâmetro. Por favor, forneça-o."
 
 #: winmm.rc:71
 msgid "The MCI device you are using does not support the specified command."
@@ -8894,7 +8630,6 @@ msgstr ""
 "especificado."
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -8937,15 +8672,15 @@ msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
 msgstr ""
-"O dispositivo especificado está sendo fechado agora. Aguarde alguns "
-"segundos, e então tente novamente."
+"O dispositivo especificado está sendo fechado agora. Aguarde alguns segundos "
+"e tente novamente."
 
 #: winmm.rc:84
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr ""
-"O alias especificado já está sendo utilizado nesta aplicação. Use um alias "
+"O alias especificado já está sendo utilizado neste aplicativo. Use um alias "
 "único."
 
 #: winmm.rc:85
@@ -8982,7 +8717,7 @@ msgid ""
 "supply one."
 msgstr ""
 "A aspa-dupla de fechamento está faltando para o valor do parâmetro. Por "
-"favor forneça uma."
+"favor, forneça uma."
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
@@ -8996,7 +8731,7 @@ msgid ""
 "may be corrupt, or not in the correct format."
 msgstr ""
 "O arquivo espeficidado não pode ser tocado no dispositivo MCI especificado. "
-"O arquivo pode estar corrompido, ou não estar no formato correto."
+"O arquivo pode estar corrompido ou não estar no formato correto."
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
@@ -9005,7 +8740,7 @@ msgstr "Um bloco de parâmetro nulo foi passado para o MCI.."
 #: winmm.rc:93
 msgid "Cannot save an unnamed file. Supply a filename."
 msgstr ""
-"Não é possível salvar um arquivo sem nome. Por favor forneça um nome de "
+"Não é possível salvar um arquivo sem nome. Por favor, forneça um nome de "
 "arquivo."
 
 #: winmm.rc:94
@@ -9028,7 +8763,7 @@ msgid ""
 "sequence, and then try again."
 msgstr ""
 "Não é possível descarregar os comandos na ordem especificada. Corrija a "
-"sequência dos comandos, e então tente novamente."
+"sequência dos comandos e tente novamente."
 
 #: winmm.rc:98
 msgid ""
@@ -9036,8 +8771,7 @@ msgid ""
 "the device is closed, and then try again."
 msgstr ""
 "Não é possível descarregar o comando especificado em um dispositivo aberto "
-"automanticamente. Aguarde até o dispositivo ser fechado, e então tente "
-"novamente."
+"automanticamente. Aguarde até o dispositivo ser fechado e tente novamente."
 
 #: winmm.rc:99
 msgid ""
@@ -9074,16 +8808,16 @@ msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
 msgstr ""
-"Não é possível acessar o arquivo especificado ou o dispositivo MCI porque a "
-"aplicação não pode mudar de diretório."
+"Não é possível acessar o arquivo especificado ou o dispositivo MCI porque o "
+"aplicativo não pode mudar de diretório."
 
 #: winmm.rc:104
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
 msgstr ""
-"Não posso acessar o arquivo especificado ou o dispositivo MCI porque a "
-"aplicação não pode mudar de drive."
+"Não é possível acessar o arquivo especificado ou o dispositivo MCI porque o "
+"aplicativo não pode mudar o drive."
 
 #: winmm.rc:105
 msgid "Specify a device or driver name that is less than 79 characters."
@@ -9101,7 +8835,7 @@ msgstr ""
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
-"O comando especificado requer um parâmetro inteiro. Por favor forneça um."
+"O comando especificado requer um parâmetro inteiro. Por favor, forneça um."
 
 #: winmm.rc:108
 msgid ""
@@ -9109,7 +8843,7 @@ msgid ""
 "until a wave device is free, and then try again."
 msgstr ""
 "Todos os dispositivos wave que podem tocar arquivos no formato atual estão "
-"em uso. Aguarde até um dispositivo wave ficar ocioso e então tente novamente."
+"em uso. Aguarde até um dispositivo wave ficar ocioso e tente novamente."
 
 #: winmm.rc:109
 msgid ""
@@ -9117,7 +8851,7 @@ msgid ""
 "until the device is free, and then try again."
 msgstr ""
 "Não é possível definir o dispositivo wave atual para tocar porque está em "
-"uso. Aguarde até o dispositivo ficar ocioso e então tente novamente."
+"uso. Aguarde até o dispositivo ficar ocioso e tente novamente."
 
 #: winmm.rc:110
 msgid ""
@@ -9125,7 +8859,7 @@ msgid ""
 "Wait until a wave device is free, and then try again."
 msgstr ""
 "Todos os dispositivos wave que podem gravar arquivos no formato atual estão "
-"em uso. Aguarde até o dispositivo wave ficar ocioso, e então tente novamente."
+"em uso. Aguarde até o dispositivo wave ficar ocioso e tente novamente."
 
 #: winmm.rc:111
 msgid ""
@@ -9133,7 +8867,7 @@ msgid ""
 "until the device is free, and then try again."
 msgstr ""
 "Não foi possivel definir o dispositivo wave corrente para gravar porque ele "
-"está em uso. Aguarde até ele ficar livre, e então tente novamente."
+"está em uso. Aguarde até ele ficar livre e tente novamente."
 
 #: winmm.rc:112
 msgid "Any compatible waveform playback device may be used."
@@ -9222,8 +8956,8 @@ msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
 msgstr ""
-"Todos os temporizadores de multimídia estão sendo utilizados por outras "
-"aplicações. Feche uma dessas aplicações, então tente novamente."
+"Todos os temporizadores de multimídia estão sendo utilizados por outros "
+"aplicativos. Feche um destes aplicativos e tente novamente."
 
 #: winmm.rc:128
 msgid "The system doesn't have a current MIDI port specified."
@@ -9251,7 +8985,7 @@ msgid ""
 "check your disk or network connection."
 msgstr ""
 "Não é possível ler o arquivo especificado. Certifique-se que o arquivo ainda "
-"está presente, ou verifique seu disco ou conecção de rede."
+"está presente ou verifique seu disco ou conexão de rede."
 
 #: winmm.rc:121
 msgid ""
@@ -9331,7 +9065,7 @@ msgstr "Extensão Crítica Indisponível"
 
 #: wldap32.rc:40
 msgid "Confidentiality Required"
-msgstr "Confidencialidade Necessária"
+msgstr "Confidencialidade Requerida"
 
 #: wldap32.rc:43
 msgid "No Such Attribute"
@@ -9363,7 +9097,7 @@ msgstr "Objeto Não Encontrado"
 
 #: wldap32.rc:60
 msgid "Alias Problem"
-msgstr "Problema de Abreviatura"
+msgstr "Problema de Alias"
 
 #: wldap32.rc:61
 msgid "Invalid DN Syntax"
@@ -9375,7 +9109,7 @@ msgstr "É Leaf"
 
 #: wldap32.rc:63
 msgid "Alias Dereference Problem"
-msgstr "Problema na Referência da Abreviatura"
+msgstr "Problema na Referência de Alias"
 
 #: wldap32.rc:75
 msgid "Inappropriate Authentication"
@@ -9423,11 +9157,11 @@ msgstr "Violação da Classe de Objeto"
 
 #: wldap32.rc:93
 msgid "Not allowed on Non-leaf"
-msgstr "Não Permitido em Non-leaf"
+msgstr "Não permitido em Non-leaf"
 
 #: wldap32.rc:94
 msgid "Not allowed on RDN"
-msgstr "Não Permitido em RDN"
+msgstr "Não permitido em RDN"
 
 #: wldap32.rc:95
 msgid "Already Exists"
@@ -9435,7 +9169,7 @@ msgstr "Já Existe"
 
 #: wldap32.rc:96
 msgid "No Object Class Mods"
-msgstr "Sem modificações de Classe de Objeto"
+msgstr "Sem Mods de Classe de Objeto"
 
 #: wldap32.rc:97
 msgid "Results Too Large"
@@ -9463,7 +9197,7 @@ msgstr "Erro de Codificação"
 
 #: wldap32.rc:111
 msgid "Decoding Error"
-msgstr "Erro de Descodificação"
+msgstr "Erro de Decodificação"
 
 #: wldap32.rc:112
 msgid "Timeout"
@@ -9507,7 +9241,7 @@ msgstr "Nenhum resultado presente na mensagem"
 
 #: wldap32.rc:122
 msgid "More results returned"
-msgstr "Mais resultados devolvidos"
+msgstr "Mais resultados retornados"
 
 #: wldap32.rc:123
 msgid "Loop while handling referrals"
@@ -9526,9 +9260,8 @@ msgstr ""
 "\n"
 
 #: attrib.rc:28 cmd.rc:302
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s : Arquivo Não Encontrado\n"
+msgstr "%1: Arquivo Não Encontrado\n"
 
 #: attrib.rc:47
 msgid ""
@@ -9551,6 +9284,25 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - Exibe ou altera os atributos do arquivo.\n"
+"\n"
+"Sintaxe:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [unidade:][caminho]"
+"[arquivo]\n"
+"       [/S [/D]]\n"
+"\n"
+"Onde:\n"
+"\n"
+"  +   Define um atributo.\n"
+"  -   Limpa um atributo.\n"
+"  R   Atributo de arquivo somente-leitura.\n"
+"  A   Atributo de arquivo.\n"
+"  S   Atributo de arquivo de sistema.\n"
+"  H   Atribute de arquivo oculto.\n"
+"  [unidade:][caminho][nomedearquivo]\n"
+"      Especifica um ou mais arquivos para o attrib processar.\n"
+"  /S  Processa os arquivos correspondentes na pasta atual e  nas subpastas.\n"
+"  /D  Processa também as pastas.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -9566,7 +9318,7 @@ msgstr "&Fonte..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
-msgstr "&Sem barra de título"
+msgstr "Sem &Barra de Título"
 
 #: clock.rc:36
 msgid "&Seconds"
@@ -9578,12 +9330,11 @@ msgstr "&Data"
 
 #: clock.rc:39 taskmgr.rc:43 taskmgr.rc:141
 msgid "&Always on Top"
-msgstr "&Sempre visível"
+msgstr "Sempre &Visível"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "&Sobre Clock..."
+msgstr "&Sobre o Relógio"
 
 #: clock.rc:48
 msgid "Clock"
@@ -9600,55 +9351,47 @@ msgid ""
 "called procedure are inherited by the caller.\n"
 msgstr ""
 "CALL <arquivo_de_lote> é usado dentro de um arquivo de lote para executar\n"
-"comando de outro arquivo de lote. Quando o arquivo existe, o controle "
-"retorna\n"
-"ao arquivo que o chamou. O comando CALL pode passar parâmetros ao "
-"procedimento\n"
-"chamado.\n"
+"comando de outro arquivo de lote. Quando o arquivo existe, o controle\n"
+"retorna ao arquivo que o chamou. O comando CALL pode passar parâmetros ao\n"
+"procedimento chamado.\n"
 "\n"
-"Mudanças no diretório padrão, variáveis de ambiente, etc, feitas dentro\n"
-"do procedimente chamado são herdados pelo chamador.\n"
+"Mudanças no diretório padrão, variáveis de ambiente, etc, feitas dentro do\n"
+"procedimento chamado são herdados pelo chamador.\n"
 
 #: cmd.rc:40
-#, fuzzy
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
-msgstr "Ajuda do comando CD\n"
+msgstr ""
+"CD <dir> é a abreviação de CHDIR. Ela altera o atual diretório padrão.\n"
 
 #: cmd.rc:41
-#, fuzzy
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "Ajuda do comando CHDIR\n"
+msgstr "CHDIR <dir> altera o atual diretório padrão.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
 msgstr "CLS limpa a tela do console\n"
 
 #: cmd.rc:45
-#, fuzzy
 msgid "COPY <filename> copies a file.\n"
-msgstr "Ajuda do comando COPY\n"
+msgstr "COPY <nomedearquivo> copia um arquivo.\n"
 
 #: cmd.rc:46
-#, fuzzy
 msgid "CTTY changes the input/output device.\n"
-msgstr "Ajuda do comando CTTY\n"
+msgstr "CTTY altera o dispositivo de entrada/saída.\n"
 
 #: cmd.rc:47
-#, fuzzy
 msgid "DATE shows or changes the system date.\n"
-msgstr "Ajuda do comando DATE\n"
+msgstr "DATE mostra ou altera a data do sistema.\n"
 
 #: cmd.rc:48
-#, fuzzy
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "Ajuda do comando DEL\n"
+msgstr "DEL <nomedearquivo> exclui um arquivo ou conjunto de arquivos.\n"
 
 #: cmd.rc:49
-#, fuzzy
 msgid "DIR lists the contents of a directory.\n"
-msgstr "Ajuda do comando DIR\n"
+msgstr "DIR lista os conteúdos de um diretório.\n"
 
 #: cmd.rc:59
 msgid ""
@@ -9661,19 +9404,19 @@ msgid ""
 "default). The ECHO OFF command can be prevented from displaying by\n"
 "preceding it with an @ sign.\n"
 msgstr ""
-"ECHO <string> mostra a <string> no dispositivo terminal atual.\n"
+"ECHO <texto> exibe o <texto> no dispositivo terminal atual.\n"
 "\n"
-"ECHO ON ativa a exibição de todos os comandos subsequentes em um\n"
-"arquivo de lote no terminal antes deles serem executados.\n"
+"ECHO ON ativa a exibição de todos os comandos subsequentes em um arquivo de\n"
+"lote no terminal antes deles serem executados.\n"
 "\n"
 "ECHO OFF desativa o efeito de um comando ECHO ON (ECHO é OFF por padrão).\n"
-"O comando ECHO OFF pode ser impedido de ser mostrado colocando-se um\n"
-"símbolo @ precedendo o mesmo.\n"
+"O comando ECHO OFF pode ser impedido de ser mostrado colocando-se um "
+"símbolo\n"
+"@ precedendo o mesmo.\n"
 
 #: cmd.rc:61
-#, fuzzy
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "Ajuda do comando ERASE\n"
+msgstr "ERASE <nomedearquivo> exclui um arquivo ou conjunto de arquivos.\n"
 
 #: cmd.rc:69
 msgid ""
@@ -9689,8 +9432,8 @@ msgstr ""
 "\n"
 "Sintaxe: FOR %variável IN (conjunto) DO comando\n"
 "\n"
-"No cmd, não existe a necessidade de usar dois sinais % no\n"
-"comando FOR nos arquivos de lote.\n"
+"No cmd do wine, não há necessidade de usar dois sinais % ao usar FOR\n"
+"em um arquivo de lote.\n"
 
 #: cmd.rc:81
 msgid ""
@@ -9709,25 +9452,22 @@ msgstr ""
 "do arquivo de lote.\n"
 "\n"
 "O rótulo que será o destino do comando GOTO pode ter até 255 caracteres\n"
-"mas não pode incluir espaços (diferentemente de outros sistemas "
-"operacionais).\n"
-"Se dois ou mais rótulos forem identicos no arquivo de lote, o primeiro "
-"deles\n"
-"será sempre executado. A tentativa de usar o GOTO para um rótulo "
-"inexistente\n"
-"termina a execução do arquivo de lote.\n"
+"mas não pode incluir espaços (diferentemente de outros sistemas\n"
+"operacionais). Se dois ou mais rótulos forem idênticos no arquivo de lote,\n"
+"o primeiro deles sempre será executado. A tentativa de usar o GOTO para\n"
+"um rótulo inexistente finaliza a execução do arquivo de lote.\n"
 "\n"
 "GOTO não tem efeito quando usando interativamente.\n"
 
 #: cmd.rc:84
-#, fuzzy
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
-msgstr "Ajuda do comando HELP\n"
+msgstr ""
+"HELP <comando> mostra uma breve ajuda em um tópico\n"
+"HELP sem argumentos mostra todos os comandos CMD embutidos.\n"
 
 #: cmd.rc:94
-#, fuzzy
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9744,8 +9484,8 @@ msgstr ""
 "IF [NOT] texto1==texto2 comando\n"
 "IF [NOT] ERRORLEVEL número comando\n"
 "\n"
-"Na segunda forma do comando, texto1 e texto2 devem estar usando aspas.\n"
-"A comparação não diferencia maiúsculas de minusculas.\n"
+"Na segunda forma do comando, texto1 e texto2 devem estar entre aspas\n"
+"duplas. A comparação não diferencia maiúsculas de minúsculas.\n"
 
 #: cmd.rc:100
 msgid ""
@@ -9762,14 +9502,12 @@ msgstr ""
 "especificado. Você pode mostrar o rótulo do disco com o comando VOL.\n"
 
 #: cmd.rc:103
-#, fuzzy
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "Ajuda do comando MD\n"
+msgstr "MD <nome> é a abreviação de MKDIR. Ela cria um subdiretório.\n"
 
 #: cmd.rc:104
-#, fuzzy
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "Ajuda do comando MKDIR\n"
+msgstr "MKDIR <nome> cria um subdiretório.\n"
 
 #: cmd.rc:111
 msgid ""
@@ -9781,12 +9519,11 @@ msgid ""
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
-"MOVE realoca um arquivo ou diretório em um novo ponto no sistema de "
+"MOVE realoca um arquivo ou diretório em um novo ponto no sistema de\n"
 "arquivos.\n"
 "\n"
-"Se o item sendo movido é um diretório então todos os arquivos e "
-"subdiretórios\n"
-"abaixo do item são movidos com o mesmo.\n"
+"Se o item sendo movido é um diretório então todos os arquivos e\n"
+"subdiretórios abaixo do item são movidos com o mesmo.\n"
 "\n"
 "MOVE falhará se o local antigo e o novo local estão em diferentes unidades.\n"
 
@@ -9802,13 +9539,11 @@ msgid ""
 "variable, for example:\n"
 "PATH %PATH%;c:\\temp\n"
 msgstr ""
-"PATH mostra ou permite mudar o caminho de procura de programas do cmd.\n"
+"PATH mostra ou permite mudar o caminho de busca de programas do cmd.\n"
 "\n"
-"Digitando PATH mostrará a atual configuração do comando PATH (inicialmente "
-"este\n"
-"valor é especificado no arquivo wine.conf). Para mudar as configurações, "
-"digite\n"
-"novos valores no comando PATH.\n"
+"Digitando PATH mostrará a atual configuração do comando PATH (inicialmente\n"
+"este valor é especificado no arquivo wine.conf). Para mudar as\n"
+" configurações, digite novos valores no comando PATH.\n"
 "\n"
 "Também é possível modificar o comando PATH usando a variável de ambiente "
 "PATH,\n"
@@ -9816,21 +9551,19 @@ msgstr ""
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
-#, fuzzy
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE mostra a seguinte mensagem na tela 'Pressione Enter para continuar'\n"
-"e aguarda que o usuário pressione a tecla Enter. Isto é útil principalmente\n"
-"em arquivos de lote para permitir ao usuário ler a saída de um comando "
-"anterior\n"
-"antes que a tela sofra um rolamento.\n"
+"PAUSE mostra um mensagem na tela pedindo ao usuário para pressionar uma "
+"tecla.\n"
+"\n"
+"Isto é útil principalmente em arquivos em lote para permitir ao usuário ler\n"
+"a saída de um comando anterior antes que ele role para fora da tela.\n"
 
 #: cmd.rc:149
-#, fuzzy
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9852,12 +9585,12 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgstr ""
-"PROMPT configura o 'prompt' da linha de comando.\n"
+"PROMPT configura o 'prompt' da linha de comandos.\n"
 "\n"
 "O texto seguindo o comando PROMPT (e os espaços imediatamente depois)\n"
-"aparecem no começo da linha enquanto o cmd está aguardando por comandos.\n"
+"aparecem no começo da linha enquanto o cmd está aguardando uma entrada.\n"
 "\n"
-"Os seguintes caracteres tem um significado especial, conforme mostrado:\n"
+"Os seguintes cadeias de caracteres tem o significado especial mostrado:\n"
 "\n"
 "$$    Cifrão ($)          $_    Avanço de linha     $b    Símbolo pipe (|)\n"
 "$d    Data atual          $e    Código de escape    $g    Sinal de maior "
@@ -9865,41 +9598,39 @@ msgstr ""
 "$l    Sinal de menor (<)  $n    Unidade atual       $p    Caminho atual\n"
 "$q    Sinal de igual (=)  $t    Hora atual          $v    Versão do cmd\n"
 "\n"
-"Note que digitando o comando PROMPT sem parâmetros reconfigura o padrão,\n"
-"que é a letra da unidade atual seguida pelo diretório e um sinal de maior\n"
+"Note que entrar no comando PROMPT sem parâmetros reconfigura o prompt ao\n"
+"padrão, que é o diretório atual (que inclui a letra do drive atual) seguido\n"
+"de um sinal de maior (>).\n"
 "(equivalente a um comando PROMPT $p$g).\n"
 "\n"
-"O 'prompt' também pode ser mudado alterando a variável PROMPT, assim,\n"
-"o comando 'SET PROMPT=texto' tem o mesmo efeito que 'PROMPT texto'\n"
+"O 'prompt' também pode ser mudado alterando a variável de ambiente PROMPT;\n"
+"assim, o comando 'SET PROMPT=texto' tem o mesmo efeito que 'PROMPT texto'\n"
 
 #: cmd.rc:153
 msgid ""
 "A command line beginning REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
-"Uma linha de comando iniciando com REM (seguindo de um espaço) não faz\n"
-"ação alguma, e os carateres usando são considerados comentários em um\n"
-"arquivo de lote\n"
+"Uma linha de comando iniciando com REM (seguindo de um espaço)\n"
+"não faz ação alguma e os caracteres usando são considerados\n"
+"comentários em um arquivo de lote\n"
 
 #: cmd.rc:156
-#, fuzzy
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "Ajuda do comando REN\n"
+msgstr ""
+"REN <nomedearquivo> é a abreviação de RENAME. Ela renomeia um arquivo.\n"
 
 #: cmd.rc:157
-#, fuzzy
 msgid "RENAME <filename> renames a file.\n"
-msgstr "Ajuda do comando RENAME\n"
+msgstr "RENAME <nomedearquivo> renomeia um arquivo.\n"
 
 #: cmd.rc:159
-#, fuzzy
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr "Ajuda do comando RD\n"
+msgstr "RD <dir> é a abreviação de RMDIR. Ela exclui um subdiretório.\n"
 
 #: cmd.rc:160
-#, fuzzy
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr "Ajuda do comando RMDIR\n"
+msgstr "RMDIR <dir> exclui um subdiretório.\n"
 
 #: cmd.rc:178
 msgid ""
@@ -9920,20 +9651,21 @@ msgid ""
 "many more values than in a native Win32 implementation. Note that it is\n"
 "not possible to affect the operating system environment from within cmd.\n"
 msgstr ""
-"SET mostra ou muda as variável de ambiente de cmd.\n"
+"SET mostra ou altera as variável de ambiente de cmd.\n"
 "\n"
-"SET sem parêmtros mostra todas as variável de ambiente atuais\n"
+"SET sem parâmetros mostra todas as variável de ambiente atuais.\n"
 "\n"
 "Para criar ou modificar variável de ambiente, a sintaxe é:\n"
 "\n"
 "SET <variável>=<valor>\n"
 "\n"
-"sendo que <variável> e <valor> são textos. Não devem existir espaços\n"
-"antes do sinal de igualdade, nem a variável pode conter espaços.\n"
+"onde <variável> e <valor> são textos. Não devem existir espaços antes do\n"
+"sinal de igualdade e o nome da variável não pode conter espaços.\n"
 "\n"
-"No Wine, o ambiente do sistema operacional é incluido no ambiente Win32,\n"
-"onde sempre haverá mais valores que em um sistema Win32 nativo. Note que\n"
-"não é possível afetar o ambiente do sistema operacional a partir do cmd.\n"
+"No Wine, o ambiente do sistema operacional é incluído no ambiente Win32,\n"
+"onde geralmente haverá muito mais valores que em uma implementação Win32\n"
+"nativa. Note que não é possível afetar o ambiente do sistema operacional de\n"
+"dentro do cmd.\n"
 
 #: cmd.rc:183
 msgid ""
@@ -9942,17 +9674,16 @@ msgid ""
 "if called from the command line.\n"
 msgstr ""
 "SHIFT é usado em arquivos de lote para remover um parâmetro que inicia a\n"
-"lista, assim então o parâmentro2 sobrepôe o parametro1 e assim por diante.\n"
-"Isto não tem efeito se chamado a partir da linha de comando.\n"
+"lista de forma que o parâmentro2 sobrepõe o parametro1 e assim por diante.\n"
+"Isto não tem efeito se chamado a partir da linha de comandos.\n"
 
 #: cmd.rc:185
-#, fuzzy
 msgid "TIME sets or shows the current system time.\n"
-msgstr "Ajuda do comando TIME\n"
+msgstr "TIME ajusta ou mostra a hora atual do sistema.\n"
 
 #: cmd.rc:187
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
-msgstr "Configura o título da janela do cmd, e a sintaxe é TITLE [texto]\n"
+msgstr "Configura o título da janela do cmd, a sintaxe é TITLE [texto]\n"
 
 #: cmd.rc:191
 msgid ""
@@ -9977,25 +9708,25 @@ msgstr ""
 "\n"
 "VERIFY ON\tConfigura o flag\n"
 "VERIFY OFF\tLimpa o flag\n"
-"VERIFY\t\tMostra ON ou OFF qdo apropriado.\n"
+"VERIFY\t\tMostra ON ou OFF como apropriado.\n"
 "\n"
 "O flag de verificação não tem função no Wine.\n"
 
 #: cmd.rc:203
-#, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
-msgstr "VER mostra a versão em execução do cmd.\n"
+msgstr "VER mostra a versão do cmd em execução.\n"
 
 #: cmd.rc:205
-#, fuzzy
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "Ajuda do comando VOL\n"
+msgstr "VOL mostra o rótulo de volume de um dispositivo de disco.\n"
 
 #: cmd.rc:209
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
+"ENDLOCAL termina a localização das mudanças de ambiente num arquivo de lote\n"
+"que foram introduzidas por um SETLOCAL precedente.\n"
 
 #: cmd.rc:217
 msgid ""
@@ -10006,18 +9737,26 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL inicia a localização das mudanças de ambiente num arquivo de lote.\n"
+"\n"
+"Mudanças de ambiente feitas depois de um SETLOCAL são locais ao arquivo de\n"
+"lote e são preservadas até que o próximo ENDLOCAL é encontrado (ou ao final\n"
+"do arquivo, o que vier primeiro). Neste ponto, as configurações de ambiente\n"
+"anteriores são restauradas.\n"
 
 #: cmd.rc:220
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
+"PUSHD <nomedediretório> salva o diretório atual numa pilha e então altera o\n"
+"diretório atual para o que foi fornecido.\n"
 
 #: cmd.rc:223
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
-msgstr ""
+msgstr "POPD muda o diretório atual ao último que foi salvo com PUSHD.\n"
 
 #: cmd.rc:231
 msgid ""
@@ -10030,6 +9769,14 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC mostra ou modifica associações de extensão de arquivo\n"
+"\n"
+"Sintaxe: ASSOC [.ext[=[tipoDeArquivo]]]\n"
+"\n"
+"ASSOC sem parâmetros mostra as associações de arquivo atuais.\n"
+"Se usada apenas com uma extensão de arquivo, exibe a associação atual.\n"
+"Se nenhum tipo de arquivo for especificado depois do sinal de igualdade,\n"
+"remove a associação atual, se houver.\n"
 
 #: cmd.rc:242
 msgid ""
@@ -10044,10 +9791,22 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE mostra ou altera os comandos de abertura associados aos tipos de\n"
+"arquivo\n"
+"\n"
+"Sintaxe: FTYPE [tipoDeArquivo[=[comandoDeAbertura]]]\n"
+"\n"
+"Sem parâmetros, mostra os tipos de arquivo para os quais comandos de\n"
+"abertura estão definidos atualmente.\n"
+"Se usado apenas com um tipo de arquivo, exibe o comando de abertura\n"
+"associado, se houver.\n"
+"Se não for especificado nenhum comando de abertura após o sinal de\n"
+"igualdade, remove o comando de abertura associado ao tipo de arquivo\n"
+"especificado.\n"
 
 #: cmd.rc:244
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr ""
+msgstr "MORE exibe a saida dos arquivos ou saídas encadeadas em páginas.\n"
 
 #: cmd.rc:248
 msgid ""
@@ -10055,17 +9814,20 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
+"CHOICE exibe um texto e aguarda até que o Usuário pressione uma tecla\n"
+"permitida de uma lista de seleção.\n"
+"CHOICE é principalmente usado para construir um menu de seleção num arquivo\n"
+"de lote.\n"
 
 #: cmd.rc:252
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
-"EXIT termina a sessão de comando atual e retorna ao sistema operacional\n"
-"ou shell que tenha invocado o cmd.\n"
+"EXIT termina a sessão de comando atual e retorna ao sistema operacional ou\n"
+"shell que tenha invocado o cmd.\n"
 
 #: cmd.rc:289
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10105,37 +9867,45 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
-"CMD - os comando internos são:\n"
-"ATTRIB\t\tMostra ou troca atributos de arquivo DOS\n"
+"Os comando embutidos do CMD são:\n"
+"ASSOC\t\tMostra ou modifica associações de extensões de arquivo\n"
+"ATTRIB\t\tExibe ou altera atributos de arquivo DOS\n"
 "CALL\t\tInvoca um arquivo de lote dentro de outro\n"
-"CD (CHDIR)\tMuda o diretório padrão atual\n"
+"CD (CHDIR)\tAltera o diretório padrão atual\n"
+"CHOICE\t\tAguarda que seja pressionada uma tecla de uma lista de seleção\n"
 "CLS\t\tLimpa a tela do console\n"
 "COPY\t\tCopia arquivos\n"
-"CTTY\t\tMuda o dispositivo de entrada/saída\n"
-"DATE\t\tMostra ou muda a data do sistema\n"
-"DEL (ERASE)\tApaga um arquivo ou conjunto de arquivos\n"
-"DIR\t\tMostra o conteúdo de um diretórios\n"
-"ECHO\t\tCopia texto diretamente na saída do console\n"
-"HELP\t\tMostra breves detalhes de um tópico\n"
+"CTTY\t\tAltera o dispositivo de entrada/saída\n"
+"DATE\t\tMostra ou altera a data do sistema\n"
+"DEL (ERASE)\tExclui um arquivo ou conjunto de arquivos\n"
+"DIR\t\tLista os conteúdos de um diretório\n"
+"ECHO\t\tCopia texto diretamente para a saída do console\n"
+"ENDLOCAL\tTermina as mudanças de ambiente num arquivo de lote\n"
+"FTYPE\t\tMostra ou altera comandos de abertura associados a tipos de "
+"arquivo\n"
+"HELP\t\tMostra uma breve ajuda em um tópico\n"
 "MD (MKDIR)\tCria um subdiretório\n"
-"MORE\t\tDisplay output in pages\n"
-"MOVE\t\tMove um arquivo, conjunto de arquivos ou uma árvore de diretórios\n"
-"PATH\t\tConfigira o caminho de procura\n"
+"MORE\t\tExibe a saída em páginas\n"
+"MOVE\t\tMove um arquivo, conjunto de arquivos ou árvore de diretórios\n"
+"PATH\t\tConfigura o caminho de busca\n"
+"PAUSE\t\tSuspende a execução de um arquivo de lote\n"
 "POPD\t\tRestores the directory to the last one saved with PUSHD\n"
-"PROMPT\t\tMuda o prompt de comando\n"
+"PROMPT\t\tAltera o prompt de comando\n"
 "PUSHD\t\tChanges to a new directory, saving the current one\n"
 "REN (RENAME)\tRenomeia um arquivo\n"
 "RD (RMDIR)\tApaga um subdiretório\n"
 "SET\t\tConfigura ou mostra variáveis de ambiente\n"
+"SETLOCAL\tInicia as mudanças de ambiente num arquivo de lote\n"
 "TIME\t\tConfigura ou mostra a hora atual do sistema\n"
 "TITLE\t\tConfigura o título da janela de comando CMD\n"
 "TYPE\t\tMostra o conteúdo de um arquivo texto\n"
 "VER\t\tMostra a versão atual do CMD\n"
 "VOL\t\tMostra o rótulo do volume de uma unidade de disco\n"
+"XCOPY\t\tCopia arquivos ou árvores de diretórios para um destino\n"
 "EXIT\t\tFecha o CMD\n"
 "\n"
-"Entre HELP <comando> para maiores informações sobre alguns dos comandos "
-"acima\n"
+"Entre HELP <comando> para mais informações sobre um dos comandos\n"
+"acima.\n"
 
 #: cmd.rc:291
 msgid "Are you sure"
@@ -10152,19 +9922,16 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "Associação de arquivo faltando para a extensão %s\n"
+msgstr "Associação de arquivo faltando para a extensão %1\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "Nenhum comando de abertura associado ao tipo de arquivo '%s'\n"
+msgstr "Nenhum comando de abertura associado ao tipo de arquivo '%1'\n"
 
 #: cmd.rc:296
-#, fuzzy
 msgid "Overwrite %1"
-msgstr "Sobrescrever %s"
+msgstr "Sobrescrever %1"
 
 #: cmd.rc:297
 msgid "More..."
@@ -10183,23 +9950,20 @@ msgid "Syntax error\n"
 msgstr "Erro de sintaxe\n"
 
 #: cmd.rc:303
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "Sem ajuda disponível para %s\n"
+msgstr "Sem ajuda disponível para %1\n"
 
 #: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr "Alvo para GOTO não encontrado\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "A Data Atual é %s\n"
+msgstr "A Data Atual é %1\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "A Hora Atual é %s\n"
+msgstr "A Hora Atual é %1\n"
 
 #: cmd.rc:307
 msgid "Enter new date: "
@@ -10210,14 +9974,12 @@ msgid "Enter new time: "
 msgstr "Entre nova hora: "
 
 #: cmd.rc:309
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "Variável de ambiente %s não definida\n"
+msgstr "Variável de ambiente %1 não definida\n"
 
 #: cmd.rc:310 xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "Falha ao abrir '%s'\n"
+msgstr "Falha ao abrir '%1'\n"
 
 #: cmd.rc:311
 msgid "Cannot call batch label outside of a batch script\n"
@@ -10226,22 +9988,19 @@ msgstr "Não pode chamar um rótulo batch fora de um script batch\n"
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr "T"
 
 #: cmd.rc:313
-#, fuzzy
 msgid "%1, Delete"
-msgstr "%s, Excluir"
+msgstr "%1, Excluir"
 
 #: cmd.rc:314
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "Echo é %s\n"
+msgstr "O eco é %1\n"
 
 #: cmd.rc:315
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "Verify é %s\n"
+msgstr "A verificação é %1\n"
 
 #: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
@@ -10252,36 +10011,32 @@ msgid "Parameter error\n"
 msgstr "Erro de parâmetro\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Volume no drive %c é %s\n"
-"O Número de Série do Volume é %04x-%04x\n"
+"Número de Volume de Série é %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:319
 msgid "Volume label (11 characters, ENTER for none)?"
-msgstr "Rótulo do Volume (11 characters, ENTER for none)?"
+msgstr "Rótulo do Volume (11 caracteres, ENTER para nenhum)?"
 
 #: cmd.rc:320
 msgid "PATH not found\n"
 msgstr "PATH não encontrado\n"
 
 #: cmd.rc:321
-#, fuzzy
 msgid "Press any key to continue... "
-msgstr "Pressione a tecla Enter para continuar: "
+msgstr "Pressione qualquer tecla para continuar... "
 
 #: cmd.rc:322
 msgid "Wine Command Prompt"
 msgstr "Prompt de Comando Wine"
 
 #: cmd.rc:323
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "CMD Versão %s\n"
+msgstr "Versão do CMD %1!S!\n"
 
 #: cmd.rc:324
 msgid "More? "
@@ -10293,107 +10048,107 @@ msgstr "A linha de entrada é muito longa.\n"
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "O volume na unidade %1!c! é %2\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "O volume na unidade %1!c! não tem rótulo.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "Ferramenta de Diagnóstico do DirectX"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr ""
+msgstr "Uso: dxdiag [/whql:off | /whql:on] [/t arquivo | /x arquivo]"
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
-msgstr "Wine Internet Explorer"
+msgstr "Wine Explorer"
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "Localização"
+msgstr "Localização:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "Modo de usar: hostname\n"
 
 #: hostname.rc:28
-#, fuzzy
 msgid "Error: Invalid option '%c'.\n"
-msgstr "Erro: Nome de chave inválido\n"
+msgstr "Erro: Opção inválida '%c'.\n"
 
 #: hostname.rc:29
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
+"Erro: Alterar o nome do sistema hospedeiro não é possível com o utilitário "
+"hostname.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr ""
+msgstr "Modo de usar: ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr ""
+"Erro: Parâmetros de linha de comando desconhecidos ou inválidos "
+"especificados\n"
 
 #: ipconfig.rc:29
 msgid "%1 adapter %2\n"
-msgstr ""
+msgstr "Adaptador %1 %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
+msgstr "Ethernet"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr ""
+msgstr "Sufixo DNS específico da conexão"
 
 #: ipconfig.rc:34
 msgid "Hostname"
-msgstr ""
+msgstr "Nome do hospedeiro"
 
 #: ipconfig.rc:35
 msgid "Node type"
-msgstr ""
+msgstr "Tipo de nó"
 
 #: ipconfig.rc:36
 msgid "Broadcast"
-msgstr ""
+msgstr "Broadcast"
 
 #: ipconfig.rc:37
 msgid "Peer-to-peer"
-msgstr ""
+msgstr "Ponto-a-ponto"
 
 #: ipconfig.rc:38
 msgid "Mixed"
-msgstr ""
+msgstr "Misturado"
 
 #: ipconfig.rc:39
 msgid "Hybrid"
-msgstr ""
+msgstr "Híbrido"
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
-msgstr ""
+msgstr "Roteamento de IP habilitado"
 
 #: ipconfig.rc:42
 msgid "Physical address"
-msgstr ""
+msgstr "Endereço físico"
 
 #: ipconfig.rc:43
 msgid "DHCP enabled"
-msgstr ""
+msgstr "DHCP habilitado"
 
 #: ipconfig.rc:46
 msgid "Default gateway"
-msgstr ""
+msgstr "Gateway padrão"
 
 #: net.rc:27
-#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -10405,12 +10160,11 @@ msgid ""
 msgstr ""
 "A sintaxe deste comando é:\n"
 "\n"
-"NET HELP comando\n"
+"NET comando [argumentos]\n"
 "    -ou-\n"
 "NET comando /HELP\n"
 "\n"
-"   Os comandos disponíveis são:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
+"Onde 'comando' é um entre HELP, START, STOP ou USE.\n"
 
 #: net.rc:28
 msgid ""
@@ -10421,6 +10175,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"A sintaxe deste comando é:\n"
+"\n"
+"NET START [serviço]\n"
+"\n"
+"Exibe a lista de serviços em execução se 'serviço' é omitido. Caso contrário "
+"'serviço' é o nome do serviço a ser iniciado.\n"
 
 #: net.rc:29
 msgid ""
@@ -10430,16 +10190,19 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"A sintaxe deste comando é:\n"
+"\n"
+"NET STOP [serviço]\n"
+"\n"
+"Onde 'serviço' é o nome do serviço a ser parado.\n"
 
 #: net.rc:30
-#, fuzzy
 msgid "Stopping dependent service: %1\n"
-msgstr "Parando o serviço dependente: %s\n"
+msgstr "Parando o serviço dependente: %1\n"
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "Não foi possível parar o serviço %s\n"
+msgstr "Não foi possível parar o serviço %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -10450,34 +10213,28 @@ msgid "Could not get handle to service.\n"
 msgstr "Não foi possível entregar o handle ao serviço.\n"
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "O serviço %s está iniciando.\n"
+msgstr "O serviço %1 está iniciando.\n"
 
 #: net.rc:35
-#, fuzzy
 msgid "The %1 service was started successfully.\n"
-msgstr "O serviço %s iniciou com sucesso.\n"
+msgstr "O serviço %1 iniciou com sucesso.\n"
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "O serviço %s falhou ao iniciar.\n"
+msgstr "O serviço %1 falhou ao iniciar.\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "O serviço %s está parando.\n"
+msgstr "O serviço %1 está parando.\n"
 
 #: net.rc:38
-#, fuzzy
 msgid "The %1 service was stopped successfully.\n"
-msgstr "O serviço %s parou com sucesso.\n"
+msgstr "O serviço %1 parou com sucesso.\n"
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "O serviço %s falhou ao parar.\n"
+msgstr "Falha ao parar o serviço %1.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -10494,52 +10251,40 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-#, fuzzy
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%s      %s      %s      Recursos disponíveis: %lu\n"
+msgstr "%1      %2      %3      Recursos disponíveis: %4!u!\n"
 
 #: net.rc:45
-#, fuzzy
 msgid "Paused"
-msgstr "&Pausa"
+msgstr "Pausado"
 
 #: net.rc:46
-#, fuzzy
 msgid "Disconnected"
-msgstr "Pipe conectado\n"
+msgstr "Desconectado"
 
 #: net.rc:47
-#, fuzzy
 msgid "A network error occurred"
-msgstr "Ocorreu um erro de impressão."
+msgstr "Ocorreu um erro na rede"
 
 #: net.rc:48
-#, fuzzy
 msgid "Connection is being made"
-msgstr "A conexão está ativa\n"
+msgstr "A conexão está sendo estabelecida"
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Conectando a %s"
+msgstr "Reconectando"
 
 #: net.rc:40
-#, fuzzy
 msgid "The following services are running:\n"
-msgstr "Serviços dependentes estão rodando\n"
+msgstr "Os seguintes serviços estão rodando:\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Novo\tCtrl+N"
 
 #: notepad.rc:28 wordpad.rc:29
-#, fuzzy
 msgid "&Open...\tCtrl+O"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"A&brir...\tCtrl+O\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Abrir...\tCtrl+O"
+msgstr "&Abrir...\tCtrl+O"
 
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
@@ -10547,15 +10292,15 @@ msgstr "&Salvar\tCtrl+S"
 
 #: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
-msgstr "&Imprimir...\tCtrl+P"
+msgstr "Im&primir...\tCtrl+P"
 
 #: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
-msgstr "C&onfigurar página..."
+msgstr "&Configurar página..."
 
 #: notepad.rc:34
 msgid "P&rinter Setup..."
-msgstr "Configurar i&mpressora..."
+msgstr "Configurar &impressão..."
 
 #: notepad.rc:38 regedit.rc:40 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
@@ -10566,49 +10311,29 @@ msgid "&Undo\tCtrl+Z"
 msgstr "&Desfazer\tCtrl+Z"
 
 #: notepad.rc:41 wordpad.rc:44
-#, fuzzy
 msgid "Cu&t\tCtrl+X"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Recortar\tCtrl+X\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Cor&tar\tCtrl+X"
+msgstr "Recor&tar\tCtrl+X"
 
 #: notepad.rc:42 wordpad.rc:45
-#, fuzzy
 msgid "&Copy\tCtrl+C"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Copiar\tCtrl+C\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"C&opiar\tCtrl+C"
+msgstr "&Copiar\tCtrl+C"
 
 #: notepad.rc:43 wordpad.rc:46
-#, fuzzy
 msgid "&Paste\tCtrl+V"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"C&olar\tCtrl+V\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Colar\tCtrl+V"
+msgstr "C&olar\tCtrl+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:90 regedit.rc:106
 #: winefile.rc:29
-#, fuzzy
 msgid "&Delete\tDel"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"E&xcluir\tDel\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Excluir\tDel"
+msgstr "&Excluir\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
-msgstr "Selecionar &tudo"
+msgstr "Selecionar &tudo\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
-msgstr "&Data/Hora\tF5"
+msgstr "&Hora/Data\tF5"
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
@@ -10616,25 +10341,19 @@ msgstr "&Quebrar automática de linha"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr "&Localizar..."
+msgstr "&Localizar...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
 msgstr "Localizar &próxima\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
-#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Substituir...\tCtrl+H\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Substitui&r...\tCtrl+H"
+msgstr "&Substituir...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "&Conteúdo"
+msgstr "&Conteúdo\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -10653,9 +10372,8 @@ msgid "&Footer:"
 msgstr "&Rodapé:"
 
 #: notepad.rc:104
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "&Margens (milímetros):"
+msgstr "Margens (milímetros):"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10683,11 +10401,11 @@ msgstr "ERRO"
 
 #: notepad.rc:71
 msgid "Untitled"
-msgstr "(sem nome)"
+msgstr "Sem nome"
 
 #: notepad.rc:74
 msgid "Text files (*.txt)"
-msgstr "Arquivos texto (*.txt)"
+msgstr "Arquivos de texto (*.txt)"
 
 #: notepad.rc:77
 msgid ""
@@ -10695,10 +10413,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"Arquivo '%s'\n"
-"não existe\n"
+"O arquivo '%s' não existe\n"
 "\n"
-" Você deseja criar um novo arquivo?"
+"Você deseja criar um novo arquivo?"
 
 #: notepad.rc:79
 msgid ""
@@ -10706,14 +10423,13 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Arquivo '%s'\n"
-"foi modificado\n"
+"O arquivo '%s' foi modificado\n"
 "\n"
-" Gostaria de salvar as alterações?"
+"Gostaria de salvar as alterações?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
-msgstr "'%s' não pode ser encontrado."
+msgstr "'%s' não pôde ser encontrado."
 
 #: notepad.rc:82
 msgid "Unicode (UTF-16)"
@@ -10724,12 +10440,10 @@ msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 big-endian)"
 
 #: notepad.rc:84
-#, fuzzy
 msgid "Unicode (UTF-8)"
-msgstr "Unicode (UTF-16)"
+msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:91
-#, fuzzy
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -10738,9 +10452,9 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
+"%1\n"
 "Este arquivo contém caracteres Unicode que serão perdidos se\n"
-"for salvo na codificação %s.\n"
+"for salvo na codificação %2.\n"
 "Para manter estes caracteres, clique em Cancelar e depois selecione\n"
 "uma das opções Unicode na lista de Codificações.\n"
 "Continuar?"
@@ -10754,9 +10468,8 @@ msgid "&View TypeLib..."
 msgstr "&Ver TypeLib..."
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "&Configuração do sistema..."
+msgstr "&Configuração do sistema"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -10772,33 +10485,31 @@ msgstr "Flag &CoCreateInstance"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "Servidor &interno ao processo"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "&Handler interno ao processo"
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "Erro Local"
+msgstr "Servidor &local"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "&Remover..."
+msgstr "Servidor &remoto"
 
 #: oleview.rc:47
 msgid "View &Type information"
-msgstr "Ver &Informação de tipo"
+msgstr "Ver Informação de &Tipo"
 
 #: oleview.rc:49
 msgid "Create &Instance"
-msgstr "Criar I&nstância"
+msgstr "Criar &Instância"
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
-msgstr "Criar In&stância Em..."
+msgstr "Criar Instância &em..."
 
 #: oleview.rc:51
 msgid "&Release Instance"
@@ -10810,7 +10521,7 @@ msgstr "Copiar C&LSID para a Área de Transferência"
 
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
-msgstr "Copiar tag &HTML para a Área de Transferência"
+msgstr "Copiar Tag &HTML para a Área de Transferência"
 
 #: oleview.rc:60
 msgid "&Expert mode"
@@ -10825,13 +10536,8 @@ msgid "&Toolbar"
 msgstr "&Barra de Ferramentas"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:68
-#, fuzzy
 msgid "&Status Bar"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Barra de s&tatus\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Barra de &Status"
+msgstr "Barra de &Status"
 
 #: oleview.rc:67 regedit.rc:69 winefile.rc:82
 msgid "&Refresh\tF5"
@@ -10839,7 +10545,7 @@ msgstr "&Atualizar\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
-msgstr "&Sobre OleView"
+msgstr "&Sobre o OleView"
 
 #: oleview.rc:79
 msgid "&Save as..."
@@ -10871,7 +10577,7 @@ msgstr "&Ativar COM Distribuídos"
 
 #: oleview.rc:170
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr "Ativar Conexões &Remotas (Win95 apenas)"
+msgstr "Ativar Conexões &Remotas (apenas Win95)"
 
 #: oleview.rc:171
 msgid ""
@@ -10930,7 +10636,6 @@ msgid "version 1.0"
 msgstr "versão 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 msgstr "Arquivos TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
@@ -10997,25 +10702,23 @@ msgstr "Atualizar todas as listas"
 
 #: oleview.rc:122
 msgid "Display program information, version number and copyright"
-msgstr "Mostrar informação do programa, versão e direitos de autor"
+msgstr "Mostrar informação do programa, versão e direitos autorais"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "Pedir um servidor interno ao processo ao chamar CoGetClassObject"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "Pedir um handler interno ao processo ao chamar CoGetClassObject"
 
 #: oleview.rc:115
-#, fuzzy
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr "Usar CLSCTX_LOCAL_SERVER quando chamar CoGetClassObject"
+msgstr "Pedir um servidor local ao chamar CoGetClassObject"
 
 #: oleview.rc:116
-#, fuzzy
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr "Usar CLSCTX_LOCAL_SERVER quando chamar CoGetClassObject"
+msgstr "Pedir um servidor remoto ao chamar CoGetClassObject"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
@@ -11039,7 +10742,7 @@ msgstr "Todos os objetos"
 
 #: oleview.rc:133
 msgid "Application IDs"
-msgstr "IDs da aplicação"
+msgstr "IDs dos Aplicativos"
 
 #: oleview.rc:134
 msgid "Type Libraries"
@@ -11078,9 +10781,8 @@ msgid "bytes"
 msgstr "bytes"
 
 #: oleview.rc:148
-#, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr "LoadTypeLib( %s ) falhou ($%x)"
+msgstr "LoadTypeLib( %1 ) falhou ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
@@ -11088,7 +10790,7 @@ msgstr "Interfaces Herdadas"
 
 #: oleview.rc:124
 msgid "Save as an .IDL or .H file"
-msgstr "Salvar arquivo como .IDL ou .H"
+msgstr "Salvar como um arquivo .IDL ou .H"
 
 #: oleview.rc:125
 msgid "Close window"
@@ -11104,7 +10806,7 @@ msgstr "&Novo..."
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
-msgstr "A&brir\tEnter"
+msgstr "&Abrir\tEnter"
 
 #: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
@@ -11115,18 +10817,16 @@ msgid "&Copy...\tF8"
 msgstr "&Copiar...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "Propri&edades...\tAlt+Enter"
+msgstr "&Propriedades...\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
-msgstr "&Executar..."
+msgstr "E&xecutar..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "Sai&r do Windows..."
+msgstr "&Sair do Windows"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
@@ -11137,22 +10837,12 @@ msgid "&Arrange automatically"
 msgstr "&Auto organizar"
 
 #: progman.rc:43
-#, fuzzy
 msgid "&Minimize on run"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Minimizar na execução\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Minimizar durante o uso"
+msgstr "&Minimizar durante o uso"
 
 #: progman.rc:44 winefile.rc:73
-#, fuzzy
 msgid "&Save settings on exit"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Salvar alterações ao sair\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Salvar configurações ao sair"
+msgstr "Salvar &configurações ao sair"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
 msgid "&Windows"
@@ -11171,9 +10861,8 @@ msgid "&Arrange Icons"
 msgstr "&Organizar ícones"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Gerenciador de programas"
+msgstr "&Sobre o Gerenciador de programas"
 
 #: progman.rc:100
 msgid "Program &group"
@@ -11221,7 +10910,7 @@ msgstr "Atributos de programa"
 
 #: progman.rc:169 progman.rc:209
 msgid "&Command line:"
-msgstr "&Linha de comando:"
+msgstr "&Linha de comandos:"
 
 #: progman.rc:171
 msgid "&Working directory:"
@@ -11412,9 +11101,8 @@ msgid "&Multi String Value"
 msgstr "Valor de palavras &múltiplas"
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "Valor &Texto"
+msgstr "Valor &Texto Expansível"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -11426,7 +11114,7 @@ msgstr "&Copiar nome da chave"
 
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 msgid "&Find...\tCtrl+F"
-msgstr "Locali&zar...\tCtrl+F"
+msgstr "&Localizar...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -11450,7 +11138,7 @@ msgstr "&Sobre o Editor do Registro"
 
 #: regedit.rc:88
 msgid "Modify Binary Data..."
-msgstr ""
+msgstr "Modificar Dados Binários..."
 
 #: regedit.rc:215
 msgid "Export registry"
@@ -11576,18 +11264,16 @@ msgid "Export Registry File"
 msgstr "Exportar Arquivo de Registro"
 
 #: regedit.rc:193
-#, fuzzy
 msgid "Registry files (*.reg)"
 msgstr "Arquivos de Registro (*.reg)"
 
 #: regedit.rc:194
-#, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Arquivos de Registro Win9x/NT4 (REGEDIT4)"
 
 #: regedit.rc:201
 msgid "(Default)"
-msgstr "(Omissão)"
+msgstr "(Padrão)"
 
 #: regedit.rc:202
 msgid "(value not set)"
@@ -11680,7 +11366,7 @@ msgstr "Imprime todo ou parte do registro."
 
 #: regedit.rc:155
 msgid "Displays program information, version number and copyright"
-msgstr "Exibe informações do programa, número da versão e copyright."
+msgstr "Exibe informações do programa, número da versão e direitos autorais"
 
 #: regedit.rc:178
 msgid "Can't query value '%s'"
@@ -11731,7 +11417,6 @@ msgid "Exports selected branch of the registry to a text file"
 msgstr "Exporta o ramo do registro selecionado para um arquivo de texto"
 
 #: start.rc:46
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -11755,30 +11440,31 @@ msgid ""
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
 msgstr ""
-"Inicia um programa, ou abre um documento no programa normalmente usado para "
+"Inicia um programa ou abre um documento no programa normalmente usado para "
 "arquivos com determinado sufixo.\n"
 "Uso:\n"
 "start [opções] arquivo_de_programa [argumentos...]\n"
-"start [opções] arquivo_de_documento.ext\n"
+"start [opções] arquivo_de_documento\n"
 "\n"
-"Options:\n"
+"Opções:\n"
 "/M[inimized] Inicia o programa minimizado.\n"
 "/MAX[imized] Inicia o programa maximizado.\n"
 "/R[estored]  Inicia o programa normalmente (sem minimizar nem maximizar).\n"
 "/W[ait]      Aguarda que o programa iniciado termine e então retorna\n"
-"\t\tseu valor de saída (exit code).\n"
-"/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Mostra a licença ao usuário.\n"
+"\t\tseu valor de saída.\n"
+"/Unix        Usa um nome de arquivo Unix e inicia o arquivo como windows\n"
+"explorer.\n"
+"/ProgIDOpen  Abre um  documento usando o seguinte progID.\n"
+"/L           Exibe a licença do usuário.\n"
+"/?           Mostra essa ajuda e sai.\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start não vem com ABSOLUTAMENTE NENHUMA GARANTIA; para detalhes execute com "
-"a opção /L.\n"
-"Este é um software livre (free software), e você é bem-vindo a redistribuí-"
-"lo sob\n"
-"certas condições; execute 'start /L' para detalhes.\n"
+"Start não vem com ABSOLUTAMENTE NENHUMA GARANTIA; para detalhes, execute\n"
+"com a opção /L.\n"
+"Este é um software livre e você é bem-vindo a redistribuí-lo sob certas\n"
+"condições; execute 'start /L' para detalhes.\n"
 
 #: start.rc:64
-#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -11798,19 +11484,19 @@ msgid ""
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
 "start.exe versão 0.2 Copyright (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
+"Este programa é software livre; você pode redistribui-lo e/ou modificá-lo\n"
+"nos termos da GNU Lesser General Public License conforme publicado pela\n"
+"Free Software Foundation; tanto na versão 2.1 desta licença ou (à sua\n"
+"escolha) qualquer versão posterior.\n"
 "\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-"GNU Lesser Public License for more details.\n"
+"Este programa é distribuído na esperança de que seja útil, mas SEM QUALQUER\n"
+"GARANTIA; nem sequer a garantia implícita de MERCANTIBILIDADE ou FEITO PARA\n"
+"UM PROPÓSITO ESPECÍFICO. Veja a GNU Lesser General Public License para mais\n"
+"detalhes.\n"
 "\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
+"Você deve ter recebido uma cópia da GNU Lesser General Public License com\n"
+"este programa; senão, escreva à Free Software Foundation, Inc., 51\n"
+"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
 "\n"
 "Veja o arquivo COPYING.LIB para informação sobre a licença.\n"
 
@@ -11832,65 +11518,64 @@ msgstr ""
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
 msgstr ""
+"Modo de usar: taskkill [/?] [/f] [/im NomedoProcesso | /pid IDdoProcesso]\n"
 
 #: taskkill.rc:28
-#, fuzzy
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "Erro: Parâmetros da linha de comandos inválidos\n"
+msgstr "Erro: Opção da linha de comando desconhecida ou inválida.\n"
 
 #: taskkill.rc:29
-#, fuzzy
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "Erro: Parâmetros da linha de comandos inválidos\n"
+msgstr "Erro: Parâmetro da linha de comando inválido.\n"
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr ""
+msgstr "Erro: Uma das opções /im ou /pid deve ser especificada.\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Erro: Parâmetros da linha de comandos inválidos\n"
+msgstr "Erro: Opção %1 necessita de um parâmetro da linha de comando.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr ""
+msgstr "Erro: As opções /im e /pid são mutuamente exclusivas.\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
+"Mensagem de fechamento enviada para as janelas do processo\n"
+"com PID %1!u!.\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
+"Mensagem de fechamento enviada para as janelas do processo\n"
+"\"%1\" com PID %2!u!.\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr ""
+msgstr "Processo com PID %1!u! foi finalizado à força.\n"
 
 #: taskkill.rc:36
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr ""
+msgstr "Processo \"%1\" com PID %2!u! foi finalizado à força.\n"
 
 #: taskkill.rc:37
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "Erro: Incapaz de adicionar chaves à máquina remota\n"
+msgstr "Erro: Não foi possível encontrar o processo \"%1\".\n"
 
 #: taskkill.rc:38
-#, fuzzy
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "Erro: Incapaz de adicionar chaves à máquina remota\n"
+msgstr "Erro: Incapaz de enumerar a lista de processos.\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "Erro: Incapaz de adicionar chaves à máquina remota\n"
+msgstr "Erro: Incapaz de finalizar o processo \"%1\".\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr ""
+msgstr "Erro: Auto-finalização do processo não é permitida.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -11918,7 +11603,7 @@ msgstr "&Atualizar agora"
 
 #: taskmgr.rc:55
 msgid "&Update Speed"
-msgstr "&Frequência de atualização"
+msgstr "&Frequência de Atualização"
 
 #: taskmgr.rc:57 taskmgr.rc:158
 msgid "&High"
@@ -11942,11 +11627,11 @@ msgstr "&Selecionar colunas..."
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
-msgstr "&Histórico do CPU"
+msgstr "&Histórico da CPU"
 
 #: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
-msgstr "&Um gráfico, todos os CPUs"
+msgstr "&Um Gráfico, Todas as CPUs"
 
 #: taskmgr.rc:73 taskmgr.rc:260
 msgid "One Graph &Per CPU"
@@ -11957,13 +11642,8 @@ msgid "&Show Kernel Times"
 msgstr "&Mostrar tempos do kernel"
 
 #: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:79
-#, fuzzy
 msgid "Tile &Horizontally"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Organizar &Horizontalmente\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Lado a lado &horizontalmente"
+msgstr "Organizar &Horizontalmente"
 
 #: taskmgr.rc:81 taskmgr.rc:97 taskmgr.rc:124
 msgid "Tile &Vertically"
@@ -11975,11 +11655,11 @@ msgstr "&Minimizar"
 
 #: taskmgr.rc:84 taskmgr.rc:100 taskmgr.rc:127
 msgid "&Cascade"
-msgstr "&Em cascata"
+msgstr "&Em Cascata"
 
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
-msgstr "&Trazer para a frente"
+msgstr "&Trazer para a Frente"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"
@@ -12003,32 +11683,25 @@ msgstr "&Terminar Processo"
 
 #: taskmgr.rc:150
 msgid "End Process &Tree"
-msgstr "Terminar Árvore de &Processo"
+msgstr "Terminar &Árvore de Processos"
 
 #: taskmgr.rc:152 winedbg.rc:29
-#, fuzzy
 msgid "&Debug"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Depurar\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Depuração"
+msgstr "&Depurar"
 
 #: taskmgr.rc:154
 msgid "Set &Priority"
-msgstr "D&efinir Prioridade"
+msgstr "Definir &Prioridade"
 
 #: taskmgr.rc:156
 msgid "&Realtime"
 msgstr "&Tempo Real"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
 msgstr "A&cima do Normal"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
 msgstr "Aba&ixo do Normal"
 
@@ -12038,7 +11711,7 @@ msgstr "Definir &Afinidade..."
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
-msgstr "Edi&tar canais de depuração..."
+msgstr "Editar &Canais de Depuração..."
 
 #: taskmgr.rc:342 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
@@ -12050,34 +11723,29 @@ msgstr "&Nova Tarefa..."
 
 #: taskmgr.rc:368
 msgid "&Show processes from all users"
-msgstr "&Mostrar Processos de todos os utilizadores"
+msgstr "&Mostrar Processos de todos os usuários"
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "CPU usage"
-msgstr "Utilização CPU"
+msgstr "Uso da CPU"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "MEM usage"
-msgstr "Memória"
+msgstr "Uso de Memória"
 
 #: taskmgr.rc:378
 msgid "Totals"
 msgstr "Totais"
 
 #: taskmgr.rc:379
-#, fuzzy
 msgid "Commit charge (K)"
-msgstr "Carga de Commit (K)"
+msgstr "Carga de commit (K)"
 
 #: taskmgr.rc:380
-#, fuzzy
 msgid "Physical memory (K)"
-msgstr "Memória Física (K)"
+msgstr "Memória física (K)"
 
 #: taskmgr.rc:381
-#, fuzzy
 msgid "Kernel memory (K)"
 msgstr "Memória kernel (K)"
 
@@ -12118,14 +11786,12 @@ msgid "Nonpaged"
 msgstr "Não paginada"
 
 #: taskmgr.rc:418
-#, fuzzy
 msgid "CPU usage history"
-msgstr "Histórico de utilização da CPU"
+msgstr "Histórico de uso da CPU"
 
 #: taskmgr.rc:419
-#, fuzzy
 msgid "Memory usage history"
-msgstr "Histórico de Utilização da Memória Física"
+msgstr "Histórico de Uso da Memória Física"
 
 #: taskmgr.rc:432 taskmgr.rc:327
 msgid "Debug Channels"
@@ -12140,7 +11806,7 @@ msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
 msgstr ""
-"A Afinidade do Processador controla em que CPUs o processo é permitido de "
+"A Afinidade do Processador controla em que CPUs o processo será permitido "
 "executar."
 
 #: taskmgr.rc:450
@@ -12300,7 +11966,7 @@ msgstr "&Tempo da CPU"
 
 #: taskmgr.rc:533
 msgid "&Memory Usage"
-msgstr "U&so de Memória"
+msgstr "Uso de &Memória"
 
 #: taskmgr.rc:535
 msgid "Memory Usage &Delta"
@@ -12320,11 +11986,11 @@ msgstr "&Objetos de USUÁRIO"
 
 #: taskmgr.rc:543 taskmgr.rc:281
 msgid "I/O Reads"
-msgstr "Leituras I/O"
+msgstr "Leituras E/S"
 
 #: taskmgr.rc:545 taskmgr.rc:282
 msgid "I/O Read Bytes"
-msgstr "Leituras I/O em Bytes"
+msgstr "Leituras E/SO em Bytes"
 
 #: taskmgr.rc:547
 msgid "&Session ID"
@@ -12368,19 +12034,19 @@ msgstr "Objetos GDI"
 
 #: taskmgr.rc:567 taskmgr.rc:293
 msgid "I/O Writes"
-msgstr "Escritas I/O"
+msgstr "Gravações E/S"
 
 #: taskmgr.rc:569 taskmgr.rc:294
 msgid "I/O Write Bytes"
-msgstr "Escritas I/O em Bytes"
+msgstr "Gravações E/S em Bytes"
 
 #: taskmgr.rc:571 taskmgr.rc:295
 msgid "I/O Other"
-msgstr "Outros I/O"
+msgstr "Outros E/S"
 
 #: taskmgr.rc:573 taskmgr.rc:296
 msgid "I/O Other Bytes"
-msgstr "Outros I/O em Bytes"
+msgstr "Outros E/S em Bytes"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
@@ -12426,15 +12092,15 @@ msgstr "Mostra informação sobre cada tarefa"
 
 #: taskmgr.rc:196
 msgid "Updates the display twice per second"
-msgstr "Atualiza duas vezes por segundo"
+msgstr "Atualiza a tela duas vezes por segundo"
 
 #: taskmgr.rc:197
 msgid "Updates the display every two seconds"
-msgstr "Atualiza a cada dois segundos"
+msgstr "Atualiza a tela a cada dois segundos"
 
 #: taskmgr.rc:198
 msgid "Updates the display every four seconds"
-msgstr "Atualiza a cada quatro segundos"
+msgstr "Atualiza a tela a cada quatro segundos"
 
 #: taskmgr.rc:203
 msgid "Does not automatically update"
@@ -12470,7 +12136,7 @@ msgstr "Mostra os tópicos de ajuda do Gerenciador de Tarefas"
 
 #: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
-msgstr "Mostra informação sobre o programa, versão e direitos de autor"
+msgstr "Mostra informação sobre o programa, versão e direitos autorais"
 
 #: taskmgr.rc:213
 msgid "Exits the Task Manager application"
@@ -12498,11 +12164,11 @@ msgstr "Cada CPU tem o seu gráfico de histórico"
 
 #: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
-msgstr "Coloca a tarefa no fundo e muda o foco para ela"
+msgstr "Traz a tarefa para a frente e muda o foco para ela"
 
 #: taskmgr.rc:227
 msgid "Tells the selected tasks to close"
-msgstr "Termina as tarefas selecionadas"
+msgstr "Pede que as tarefas selecionadas se fechem"
 
 #: taskmgr.rc:228
 msgid "Switches the focus to the process of the selected task"
@@ -12518,7 +12184,7 @@ msgstr "Remove o processo do sistema"
 
 #: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
-msgstr "Remove o processo e os seus descendentes do sistema"
+msgstr "Remove este processo e todos os seus descendentes do sistema"
 
 #: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
@@ -12526,7 +12192,7 @@ msgstr "Anexa o depurador a este processo"
 
 #: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
-msgstr "Controla em que processadores o processo ficará autorizado a rodar"
+msgstr "Controla em que processadores o processo será permitido executar"
 
 #: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
@@ -12554,7 +12220,7 @@ msgstr "Coloca o processo na classe de prioridade Baixa"
 
 #: taskmgr.rc:247
 msgid "Controls Debug Channels"
-msgstr "Controla os canais de Depuração"
+msgstr "Controla os Canais de Depuração"
 
 #: taskmgr.rc:264
 msgid "Performance"
@@ -12562,16 +12228,15 @@ msgstr "Desempenho"
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
-msgstr "Utilização da CPU: %3d%%"
+msgstr "Uso da CPU: %3d%%"
 
 #: taskmgr.rc:266
 msgid "Processes: %d"
 msgstr "Processos: %d"
 
 #: taskmgr.rc:267
-#, fuzzy
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "Utilização da memória: %dK / %dK"
+msgstr "Uso da memória: %1!u!kB / %2!u!kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -12591,15 +12256,15 @@ msgstr "Tempo de CPU"
 
 #: taskmgr.rc:276
 msgid "Mem Usage"
-msgstr "Utilização de Memória"
+msgstr "Uso de Memória"
 
 #: taskmgr.rc:277
 msgid "Mem Delta"
-msgstr "Intervalo de Memória"
+msgstr "Delta de Memória"
 
 #: taskmgr.rc:278
 msgid "Peak Mem Usage"
-msgstr "Pico de Utilização de Memória"
+msgstr "Pico de Uso de Memória"
 
 #: taskmgr.rc:279
 msgid "Page Faults"
@@ -12619,7 +12284,7 @@ msgstr "Nome de Usuário"
 
 #: taskmgr.rc:285
 msgid "PF Delta"
-msgstr "Intervalo de PF"
+msgstr "Delta de PF"
 
 #: taskmgr.rc:286
 msgid "VM Size"
@@ -12663,14 +12328,14 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
-"AVISO: Terminar um processo pode causar resultados indesejá-\n"
+"AVISO: Finalizar um processo pode causar resultados indesejá-\n"
 "veis, incluindo perda de dados e instabilidade do sistema.\n"
 "O processo não vai poder salvar seus estado ou dados antes\n"
-"de terminar. Tem certeza que deseja terminar o processo?"
+"de finalizar. Tem certeza que deseja finalizar o processo?"
 
 #: taskmgr.rc:311
 msgid "Unable to Terminate Process"
-msgstr "Incapaz de Terminar o Processo"
+msgstr "Incapaz de Finalizar o Processo"
 
 #: taskmgr.rc:313
 msgid ""
@@ -12748,7 +12413,7 @@ msgstr "&Pan"
 
 #: view.rc:35
 msgid "&Scale to Window"
-msgstr "Ajustar a &janela"
+msgstr "Ajustar à &janela"
 
 #: view.rc:37
 msgid "&Left"
@@ -12760,7 +12425,7 @@ msgstr "&Direita"
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
-msgstr "Visualizador Regular de Metafiles"
+msgstr "Visualizador de Metafiles Regulares"
 
 #: wineboot.rc:28
 msgid "Waiting for Program"
@@ -12768,7 +12433,7 @@ msgstr "Esperando o programa"
 
 #: wineboot.rc:32
 msgid "Terminate Process"
-msgstr "Terminar Processo"
+msgstr "Finalizar Processo"
 
 #: wineboot.rc:33
 msgid ""
@@ -12799,14 +12464,13 @@ msgid ""
 "option) any later version."
 msgstr ""
 "Este programa é software livre; você pode redistribui-lo e/ou modificá-lo "
-"nos termos da GNU Lesser General Public License (LGPL) conforme publicado "
-"pela Free Software Foundation; tanto na versão 2.1 desta licença ou (à sua "
-"escolha) qualquer versão posterior."
+"nos termos da GNU Lesser General Public License conforme publicado pela Free "
+"Software Foundation; tanto na versão 2.1 desta licença ou (à sua escolha) "
+"qualquer versão posterior."
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Informações de registro do Windows "
+msgstr "Informações de registro do Windows"
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12817,9 +12481,8 @@ msgid "Organi&zation:"
 msgstr "&Organização:"
 
 #: winecfg.rc:145
-#, fuzzy
 msgid "Application settings"
-msgstr " Configurações de Aplicativo"
+msgstr "Configurações de Aplicativo"
 
 #: winecfg.rc:146
 msgid ""
@@ -12844,13 +12507,12 @@ msgid "&Windows Version:"
 msgstr "Versão do &Windows:"
 
 #: winecfg.rc:160
-#, fuzzy
 msgid "Window settings"
-msgstr " Configurações de Janela "
+msgstr "Configurações de Janela"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatically capture the &mouse in full-screen windows"
+msgstr "Capturar o &mouse automaticamente em janelas em tela-cheia"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -12858,7 +12520,7 @@ msgstr "Permitir que o gerenciador de janelas &decore as janelas"
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
-msgstr "Permitir que o gerenciador de janelas controle as &janelas"
+msgstr "Permitir que o gerenciador de janelas &controle as janelas"
 
 #: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
@@ -12869,18 +12531,16 @@ msgid "Desktop &size:"
 msgstr "Tamanho da Tela:"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " &Resolução da Tela "
+msgstr "Resolução da Tela"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Este é um texto exemplo usando Tahoma 10 pontos"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "DLL overrides"
-msgstr " Substituição de DLL "
+msgstr "Substituições de DLL"
 
 #: winecfg.rc:183
 msgid ""
@@ -12913,9 +12573,8 @@ msgid "Edit Override"
 msgstr "Editar Substituição"
 
 #: winecfg.rc:199
-#, fuzzy
 msgid "Load order"
-msgstr " Ordem de Carregamento "
+msgstr "Ordem de Carregamento"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -12942,9 +12601,8 @@ msgid "Select Drive Letter"
 msgstr "Selecione a Letra"
 
 #: winecfg.rc:223
-#, fuzzy
 msgid "Drive mappings"
-msgstr " &Mapeamentos de unidade "
+msgstr "Mapeamentos de unidades"
 
 #: winecfg.rc:224
 msgid ""
@@ -12984,46 +12642,43 @@ msgstr "&Rótulo:"
 
 #: winecfg.rc:246
 msgid "S&erial:"
-msgstr "S&erial:"
+msgstr "&Serial:"
 
 #: winecfg.rc:249
 msgid "Show &dot files"
-msgstr "Mostrar arquivos com &ponto"
+msgstr "&Mostrar arquivos com ponto"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr "Diagnósticos de driver"
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr "Padrões"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr "Dispositivo de saída:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr "Dispositivo de saída de voz:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr "Dispositivo de entrada:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr "Dispositivo de entrada de voz:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
 msgstr "&Testar Som"
 
 #: winecfg.rc:274
-#, fuzzy
 msgid "Appearance"
-msgstr " Aparência "
+msgstr "Aparência"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -13042,13 +12697,12 @@ msgid "C&olor:"
 msgstr "C&or:"
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
-msgstr "Pasta"
+msgstr "Pastas"
 
 #: winecfg.rc:293
 msgid "&Link to:"
-msgstr "&Link para:"
+msgstr "&Atalho para:"
 
 #: winecfg.rc:31
 msgid "Libraries"
@@ -13059,13 +12713,12 @@ msgid "Drives"
 msgstr "Unidades"
 
 #: winecfg.rc:33
-#, fuzzy
 msgid "Select the Unix target directory, please."
-msgstr "Por favor, selecione o diretório unix alvo."
+msgstr "Por favor, selecione o diretório Unix alvo."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
-msgstr "Ocult&ar"
+msgstr "&Ocultar"
 
 #: winecfg.rc:36
 msgid "(No Theme)"
@@ -13105,7 +12758,7 @@ msgstr "Pasta"
 
 #: winecfg.rc:46
 msgid "Links to"
-msgstr "Link para"
+msgstr "Atalho para"
 
 #: winecfg.rc:42
 msgid "Wine configuration for %s"
@@ -13113,26 +12766,19 @@ msgstr "Configuração do Wine para %s"
 
 #: winecfg.rc:81
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Driver selecionado: %s"
 
 #: winecfg.rc:82
-#, fuzzy
 msgid "(None)"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Nenhum\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"Nenhuma"
+msgstr "(Nenhum)"
 
 #: winecfg.rc:83
-#, fuzzy
 msgid "Audio test failed!"
-msgstr "Falha na reinicialização do disco rígido\n"
+msgstr "Falha no teste de áudio!"
 
 #: winecfg.rc:85
-#, fuzzy
 msgid "(System default)"
-msgstr "Caminho do Sistema"
+msgstr "(Padrão do sistema)"
 
 #: winecfg.rc:51
 msgid ""
@@ -13171,7 +12817,6 @@ msgid "Default Settings"
 msgstr "Configurações Padrão"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Programas Wine (*.exe,*.exe.so)"
 
@@ -13184,9 +12829,8 @@ msgid "Select an executable file"
 msgstr "Selecione um arquivo executável"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect..."
-msgstr "Autodetectar"
+msgstr "Auto detectar..."
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -13205,7 +12849,6 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:71
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -13214,7 +12857,7 @@ msgstr ""
 "Não é possível adicionar mais unidades.\n"
 "\n"
 "Cada unidade deve ter uma letra, de A a Z, então não é possível ter mais que "
-"26"
+"26."
 
 #: winecfg.rc:72
 msgid "System drive"
@@ -13227,20 +12870,19 @@ msgid ""
 "Most Windows applications expect drive C to exist, and will die messily if "
 "it doesn't. If you proceed remember to recreate it!"
 msgstr ""
-"Tem certeza que deseja apaga a unidade C?\n"
+"Tem certeza que deseja excluir a unidade C?\n"
 "\n"
-"A maior parte das aplicações Windows esperam que a unidade C exista, e irá "
-"danificar-se se não existir. Se continuar lembre-se de recriar a unidade!"
+"A maior parte dos aplicativos Windows esperam que a unidade C exista e não "
+"funcionarão caso contrário. Se continuar, lembre-se de recriá-la!"
 
 #: winecfg.rc:74
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Letra"
 
 #: winecfg.rc:75
 msgid "Drive Mapping"
-msgstr "Unidades"
+msgstr "Mapeamento de Unidades"
 
 #: winecfg.rc:76
 msgid ""
@@ -13414,7 +13056,7 @@ msgstr "Edição rápida"
 
 #: wineconsole.rc:70
 msgid "&enable"
-msgstr "&Habilitado"
+msgstr "&habilitar"
 
 #: wineconsole.rc:72
 msgid "Command history"
@@ -13434,12 +13076,11 @@ msgstr "&Fonte"
 
 #: wineconsole.rc:86
 msgid "&Color"
-msgstr "&Cores"
+msgstr "&Cor"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " Configuração "
+msgstr "Configuração"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
@@ -13511,7 +13152,7 @@ msgstr "&Pesquisar"
 
 #: wineconsole.rc:36
 msgid "Setup - Default settings"
-msgstr "Setup - configurações padrões"
+msgstr "Setup - Configurações padrão"
 
 #: wineconsole.rc:37
 msgid "Setup - Current settings"
@@ -13526,9 +13167,8 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "Tamanho do buffer de tela deve ser maior ou igual ao da janela"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "Cada caracter tem %ld pixels de largura por %ld pixels de altura"
+msgstr "Cada caractere tem %1!u! pixels de largura por %2!u! pixels de altura"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -13567,31 +13207,27 @@ msgid ""
 "Options:\n"
 msgstr ""
 "\n"
-"Uso:\n"
+"Modo de usar:\n"
 "  wineconsole [opções] <comando>\n"
 "\n"
 "Opções:\n"
 
 #: wineconsole.rc:49
-#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
 "                           try to setup the current terminal as a Wine "
 "console.\n"
 msgstr ""
-"  --backend={user|curses}  A opção user vai abrir uma nova janela e curses "
-"vai\n"
-"                            tentar configurar o terminal actual como um "
-"console do Wine\n"
+"  --backend={user|curses}  A opção user abrirá uma nova janela e curses\n"
+"                            tentará configurar o terminal atual como um\n"
+"                            console do Wine\n"
 
 #: wineconsole.rc:50
-#, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <comando>                 O programa Wine a ser aberto no console\n"
+msgstr "  <comando>                O programa Wine a ser aberto no console\n"
 
 #: wineconsole.rc:51
-#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
@@ -13602,23 +13238,22 @@ msgstr ""
 "\n"
 "Exemplo:\n"
 "  wineconsole cmd\n"
-"Inicializa a linha de comandos do Wine numa console do Wine\n"
+"Inicializa a linha de comandos do Wine num console do Wine\n"
 "\n"
 
 #: winedbg.rc:42
 msgid "Program Error"
-msgstr "Erro no programa"
+msgstr "Erro do Programa"
 
 #: winedbg.rc:47
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
 msgstr ""
-"O programa %s encontrou um problema sério e precisa ser encerrado. Pedimos "
-"desculpa pelo incômodo."
+"O programa %s encontrou um problema sério e precisa ser fechado. Pedimos "
+"desculpa pela inconveniência."
 
 #: winedbg.rc:53
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -13627,19 +13262,20 @@ msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
 msgstr ""
-"Isto pode ter sido causado por um problema no programa ou no Wine. Pode-se "
-"visitar http://appdb.winehq.org para dicas de como rodar esta aplicativo.\n"
+"Isto pode ter sido causado por um problema no programa ou no Wine. Você pode "
+"visitar o <a href=\"http://appdb.winehq.org\">Banco de Dados de Aplicativos "
+"</a> para dicas de como rodar este aplicativo.\n"
 "\n"
-"Se este problema não existe no Windows e não foi relatado ainda você pode "
-"fazê-lo em http://bugs.winehq.org."
+"Se este problema não existe no Windows e não foi relatado ainda, você pode "
+"<a href=\"http://wiki.winehq.org/Bugs\">reportar o problema</a>."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
-msgstr "Erro num programa no Wine"
+msgstr "Travamento num programa no Wine"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
-msgstr "Erros Internos - recebidos parâmetros inválidos"
+msgstr "Erros Internos - parâmetros inválidos recebidos"
 
 #: winedbg.rc:37
 msgid "(unidentified)"
@@ -13647,41 +13283,39 @@ msgstr "(não identificado)"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
-msgstr "A&brir\tEnter"
+msgstr "&Abrir\tEnter"
 
 #: winefile.rc:30
 msgid "Re&name..."
 msgstr "Re&nomear..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "Propri&edades...\tAlt+Enter"
+msgstr "Propri&edades\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
-msgstr "Exec&utar..."
+msgstr "E&xecutar..."
 
 #: winefile.rc:35
 msgid "Cr&eate Directory..."
-msgstr "Criar &pasta..."
+msgstr "Criar &Pasta..."
 
 #: winefile.rc:38 winemine.rc:46
 msgid "E&xit\tAlt+X"
-msgstr "Sai&r\tAlt+X"
+msgstr "&Sair\tAlt+X"
 
 #: winefile.rc:44
 msgid "&Disk"
 msgstr "&Disco"
 
 #: winefile.rc:45
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "Con&ectar unidade de rede"
+msgstr "&Conectar Unidade de Rede"
 
 #: winefile.rc:46
 msgid "&Disconnect Network Drive"
-msgstr "De&sconectar unidade de rede"
+msgstr "&Desconectar Unidade de Rede"
 
 #: winefile.rc:52
 msgid "&Name"
@@ -13708,9 +13342,8 @@ msgid "Sort by &Date"
 msgstr "Classi&ficar por data"
 
 #: winefile.rc:60
-#, fuzzy
 msgid "Filter by&..."
-msgstr "Classificar p&or..."
+msgstr "Filtrar p&or..."
 
 #: winefile.rc:67
 msgid "&Drivebar"
@@ -13718,24 +13351,23 @@ msgstr "Barra de &unidades"
 
 #: winefile.rc:70
 msgid "F&ull Screen\tCtrl+Shift+S"
-msgstr "Tela cheia\tCtrl+Shift+S"
+msgstr "&Tela Cheia\tCtrl+Shift+S"
 
 #: winefile.rc:77
 msgid "New &Window"
-msgstr "&Nova janela"
+msgstr "&Nova Janela"
 
 #: winefile.rc:78
 msgid "Cascading\tCtrl+F5"
-msgstr "&Em cascata\tCtrl+F5"
+msgstr "&Em Cascata\tCtrl+F5"
 
 #: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
-msgstr "Lado a lado &verticalmente\tCtrl+F4"
+msgstr "Organizar &Verticalmente\tCtrl+F4"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "Gerenciador de Arquivos do Wine"
+msgstr "&Sobre o Gerenciador de Arquivos do Wine"
 
 #: winefile.rc:128
 msgid "Select destination"
@@ -13743,10 +13375,9 @@ msgstr "Selecionar destino"
 
 #: winefile.rc:141
 msgid "By File Type"
-msgstr "Por tipo de arquivo"
+msgstr "Por Tipo de Arquivo"
 
 #: winefile.rc:146
-#, fuzzy
 msgid "File type"
 msgstr "Tipo de arquivo"
 
@@ -13768,23 +13399,23 @@ msgstr "&Outros arquivos"
 
 #: winefile.rc:155
 msgid "Show Hidden/&System Files"
-msgstr "&Mostrar arquivos ocultos/sistema"
+msgstr "&Mostrar Arquivos Ocultos/Sistema"
 
 #: winefile.rc:166
 msgid "&File Name:"
-msgstr "&Nome do arquivo:"
+msgstr "&Nome do Arquivo:"
 
 #: winefile.rc:168
 msgid "Full &Path:"
-msgstr "&Localização Completa:"
+msgstr "&Caminho Completa:"
 
 #: winefile.rc:170
 msgid "Last Change:"
-msgstr "Última alteração:"
+msgstr "Última Alteração:"
 
 #: winefile.rc:174
 msgid "Cop&yright:"
-msgstr "Direitos de autor:"
+msgstr "Direitos de Autor:"
 
 #: winefile.rc:176
 msgid "Size:"
@@ -13807,9 +13438,8 @@ msgid "&Compressed"
 msgstr "&Comprimido"
 
 #: winefile.rc:184
-#, fuzzy
 msgid "Version information"
-msgstr "&Informação de versão"
+msgstr "Informação de versão"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -13817,7 +13447,7 @@ msgstr "Aplicando configurações de fonte"
 
 #: winefile.rc:94
 msgid "Error while selecting new font."
-msgstr "Erro al selecionar nova fonte."
+msgstr "Erro ao selecionar nova fonte."
 
 #: winefile.rc:99
 msgid "Wine File Manager"
@@ -13856,28 +13486,27 @@ msgid "Index/Inode"
 msgstr "Índice/Inode"
 
 #: winefile.rc:120
-#, fuzzy
 msgid "%1 of %2 free"
-msgstr "%s de %s livre"
+msgstr "%1 de %2 livre"
 
 #: winefile.rc:121
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:122
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:123
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "&Jogo"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -13885,7 +13514,7 @@ msgstr "&Novo\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "Pontos de &Interrogação"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -13893,7 +13522,7 @@ msgstr "&Principiante"
 
 #: winemine.rc:40
 msgid "&Advanced"
-msgstr "&Intermediário"
+msgstr "&Avançado"
 
 #: winemine.rc:41
 msgid "&Expert"
@@ -13901,24 +13530,21 @@ msgstr "&Experiente"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "Personali&zar..."
+msgstr "Personali&zado..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
 msgstr "&Melhores tempos"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&Sobre o Wine"
+msgstr "&Sobre o WineMine"
 
 #: winemine.rc:56
 msgid "Fastest Times"
-msgstr "Melhores tempos"
+msgstr "Melhores Tempos"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
 msgstr "Melhores tempos"
 
@@ -13928,7 +13554,7 @@ msgstr "Principiante"
 
 #: winemine.rc:60
 msgid "Advanced"
-msgstr "Intermediário"
+msgstr "Avançado"
 
 #: winemine.rc:61
 msgid "Expert"
@@ -13940,20 +13566,19 @@ msgstr "Parabéns!"
 
 #: winemine.rc:76
 msgid "Please enter your name"
-msgstr "Por favor, indique o seu nome"
+msgstr "Por favor, escreva seu nome"
 
 #: winemine.rc:84
 msgid "Custom Game"
-msgstr "Jogo personalizado"
+msgstr "Jogo Personalizado"
 
 #: winemine.rc:86
 msgid "Rows"
 msgstr "Linhas"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "C&oluna"
+msgstr "Colunas"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -13973,7 +13598,7 @@ msgstr "Copyright 2000 Joshua Thielen"
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
-msgstr "&Configurar Impressora..."
+msgstr "&Configurar Impressão..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
@@ -13981,7 +13606,7 @@ msgstr "&Anotar..."
 
 #: winhlp32.rc:41
 msgid "&Bookmark"
-msgstr "In&dicador"
+msgstr "&Marcador de Página"
 
 #: winhlp32.rc:42
 msgid "&Define..."
@@ -14008,9 +13633,8 @@ msgid "Large"
 msgstr "Grande"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "&Ajuda na ajuda"
+msgstr "&Ajuda na ajuda\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -14018,7 +13642,7 @@ msgstr "Sempre &visível"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Informações..."
+msgstr "&Sobre a Ajuda Wine"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -14034,7 +13658,7 @@ msgstr "Índice"
 
 #: winhlp32.rc:105
 msgid "Search"
-msgstr "Procura"
+msgstr "Localizar"
 
 #: winhlp32.rc:78
 msgid "Wine Help"
@@ -14042,7 +13666,7 @@ msgstr "Ajuda Wine"
 
 #: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
-msgstr "Erro encontrado na leitura do arquivo de ajuda '%s'"
+msgstr "Erro ao ler o arquivo de ajuda `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
@@ -14050,7 +13674,7 @@ msgstr "Sumário"
 
 #: winhlp32.rc:84
 msgid "&Index"
-msgstr "&Conteúdo"
+msgstr "&Índice"
 
 #: winhlp32.rc:88
 msgid "Help files (*.hlp)"
@@ -14087,7 +13711,7 @@ msgstr "&Selecionar tudo\tCtrl+A"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"
-msgstr "&Localizar próxima\tF3"
+msgstr "Localizar &próxima\tF3"
 
 #: wordpad.rc:54
 msgid "Read-&only"
@@ -14103,7 +13727,7 @@ msgstr "E&xtras"
 
 #: wordpad.rc:59
 msgid "Selection &info"
-msgstr "&Informação da selecção"
+msgstr "&Informação da seleção"
 
 #: wordpad.rc:60
 msgid "Character &format"
@@ -14143,7 +13767,7 @@ msgstr "&Data e hora..."
 
 #: wordpad.rc:79
 msgid "F&ormat"
-msgstr "F&ormatar"
+msgstr "&Formatar"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
@@ -14155,7 +13779,7 @@ msgstr "&Parágrafo..."
 
 #: wordpad.rc:84
 msgid "&Tabs..."
-msgstr "T&abulação..."
+msgstr "&Tabulação..."
 
 #: wordpad.rc:85
 msgid "Backgroun&d"
@@ -14166,13 +13790,12 @@ msgid "&System\tCtrl+1"
 msgstr "&Sistema\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
-msgstr "&PostThat amarelo\tCtrl+2"
+msgstr "&Amarelo pálido\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
-msgstr "&Sobre Wine Wordpad"
+msgstr "&Sobre o Wine Wordpad"
 
 #: wordpad.rc:130
 msgid "Automatic"
@@ -14192,7 +13815,7 @@ msgstr "Novo tipo de documento"
 
 #: wordpad.rc:221
 msgid "Paragraph format"
-msgstr "Parágrafo"
+msgstr "Formato de parágrafo"
 
 #: wordpad.rc:224
 msgid "Indentation"
@@ -14220,7 +13843,7 @@ msgstr "Tabulações"
 
 #: wordpad.rc:242
 msgid "Tab stops"
-msgstr "Marca de tabulação"
+msgstr "Marcas de tabulação"
 
 #: wordpad.rc:248
 msgid "Remove al&l"
@@ -14228,19 +13851,19 @@ msgstr "Remover &todos"
 
 #: wordpad.rc:256
 msgid "Line wrapping"
-msgstr "Moldar o texto"
+msgstr "Moldagem de texto"
 
 #: wordpad.rc:257
 msgid "&No line wrapping"
-msgstr "&Sem moldagem"
+msgstr "&Sem moldagem de texto"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
-msgstr "&Moldar à janela"
+msgstr "Moldar texto pela bor&da da janela"
 
 #: wordpad.rc:259
 msgid "Wrap text by the &margin"
-msgstr "Moldar pela &régua"
+msgstr "Moldar texto pela &margem"
 
 #: wordpad.rc:260
 msgid "Toolbars"
@@ -14275,9 +13898,8 @@ msgid "Unicode text document"
 msgstr "Documento de texto Unicode"
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "Arquivos de impressora (*.PRN)"
+msgstr "Arquivos de impressora (*.prn)"
 
 #: wordpad.rc:150
 msgid "Center"
@@ -14293,27 +13915,28 @@ msgstr "Rich text"
 
 #: wordpad.rc:163
 msgid "Next page"
-msgstr "Próxima página"
+msgstr "Próxima"
 
 #: wordpad.rc:164
 msgid "Previous page"
-msgstr "Página anterior"
+msgstr "Anterior"
 
+# Abreviated due to small space available
 #: wordpad.rc:165
 msgid "Two pages"
-msgstr "Duas páginas"
+msgstr "Duas pág."
 
 #: wordpad.rc:166
 msgid "One page"
-msgstr "Uma página"
+msgstr "Uma pág."
 
 #: wordpad.rc:167
 msgid "Zoom in"
-msgstr ""
+msgstr "Mais zoom"
 
 #: wordpad.rc:168
 msgid "Zoom out"
-msgstr ""
+msgstr "Menos zoom"
 
 #: wordpad.rc:170
 msgid "Page"
@@ -14324,23 +13947,20 @@ msgid "Pages"
 msgstr "Páginas"
 
 #: wordpad.rc:172
-#, fuzzy
 msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "cm"
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
-msgstr "in"
+msgstr "pol"
 
 #: wordpad.rc:174
 msgid "inch"
-msgstr "inch"
+msgstr "polegada"
 
 #: wordpad.rc:175
-#, fuzzy
 msgctxt "unit: point"
 msgid "pt"
 msgstr "pt"
@@ -14355,7 +13975,7 @@ msgstr "Salvar as alterações de '%s'?"
 
 #: wordpad.rc:182
 msgid "Finished searching the document."
-msgstr "Acabou a pesquisa do documento."
+msgstr "Pesquisa do documento concluída."
 
 #: wordpad.rc:183
 msgid "Failed to load the RichEdit library."
@@ -14366,7 +13986,7 @@ msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
 msgstr ""
-"Foi escolhido salvar em formato de texto simples, o que vai anular todas as "
+"Você escolheu salvar em formato de texto simples, o que vai anular todas as "
 "formatações. Tem a certeza que deseja fazer isto?"
 
 #: wordpad.rc:187
@@ -14383,7 +14003,7 @@ msgstr "Não foi possível salvar o arquivo."
 
 #: wordpad.rc:190
 msgid "You do not have access to save the file."
-msgstr "Não tem permissões para salvar o arquivo."
+msgstr "Você não tem acesso para salvar o arquivo."
 
 #: wordpad.rc:191
 msgid "Could not open the file."
@@ -14391,7 +14011,7 @@ msgstr "Não foi possível abrir o arquivo."
 
 #: wordpad.rc:192
 msgid "You do not have access to open the file."
-msgstr "Não tem permissões para abrir o arquivo."
+msgstr "Você não tem acesso para abrir o arquivo."
 
 #: wordpad.rc:193
 msgid "Printing not implemented"
@@ -14403,61 +14023,53 @@ msgstr "Não é possível adicionar mais de 32 tabulações."
 
 #: write.rc:27
 msgid "Starting Wordpad failed"
-msgstr "Falhou ao iniciar o Wordpad"
+msgstr "Falha ao iniciar o Wordpad"
 
 #: xcopy.rc:27
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Número de parâmetros inválido - Use xcopy /? para ajuda\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
-msgstr "Parâmetro inválido '%s' -  Use xcopy /? para ajuda\n"
+msgstr "Parâmetro inválido '%1' -  Use xcopy /? para ajuda\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
 msgstr "Pressione <Enter> para iniciar a cópia\n"
 
 #: xcopy.rc:30
-#, fuzzy
 msgid "%1!d! file(s) would be copied\n"
-msgstr "%d arquivo(s) seriam copiado(s)\n"
+msgstr "%1!d! arquivo(s) seriam copiado(s)\n"
 
 #: xcopy.rc:31
-#, fuzzy
 msgid "%1!d! file(s) copied\n"
-msgstr "%d arquivo(s) copiado(s)\n"
+msgstr "%1!d! arquivo(s) copiado(s)\n"
 
 #: xcopy.rc:34
-#, fuzzy
 msgid ""
 "Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"'%s' é um arquivo ou diretório\n"
+"'%1' é um arquivo ou diretório\n"
 "no alvo?\n"
-"(A - Arquivo, D - Directório)\n"
+"(A - Arquivo, D - Diretório)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s? (Sim|Não)\n"
+msgstr "%1? (Sim|Não)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Reescrever %s? (Sim|Não|Tudo)\n"
+msgstr "Sobrescrever %s? (Sim|Não|Tudo)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "Falha ao copiar '%s' para '%s' com r/c %d\n"
+msgstr "Falha ao copiar '%1' para '%2' com r/c %3!d!\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%1'\n"
-msgstr "Falha a ler '%s'\n"
+msgstr "Falha durante a leitura de '%1'\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
@@ -14470,7 +14082,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:77
-#, fuzzy
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -14505,7 +14116,7 @@ msgid ""
 "\t\tthan source.\n"
 "\n"
 msgstr ""
-"XCOPY - Copia arquivos ou diretórios para um destino\n"
+"XCOPY - Copia arquivos ou árvores de diretório para um destino.\n"
 "\n"
 "Sintaxe:\n"
 "XCOPY fonte [destino] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
@@ -14513,27 +14124,28 @@ msgstr ""
 "\n"
 "Onde:\n"
 "\n"
-"[/I]  Assume diretório se o destino não existe e está copiando 2 ou\n"
-"\tmais arquivos\n"
-"[/S]  Copiar diretórios e subdiretórios\n"
-"[/E]  Copiar diretórios e subdiretórios, incluindo os vazios\n"
+"[/I]  Assumir diretório se o destino não existe e está copiando dois ou\n"
+"\tmais arquivos.\n"
+"[/S]  Copiar diretórios e subdiretórios.\n"
+"[/E]  Copiar diretórios e subdiretórios, incluindo os vazios.\n"
 "[/Q]  Não mostrar nomes durante a cópia, ie modo silencioso.\n"
-"[/F]  Mostrar por completo os nomes de fonte e destino durante a cópia\n"
-"[/L]  Simular a operação, mostrando os nomes que seriam copiados\n"
-"[/W]  Alerta antes de iniciar a operação de cópia\n"
-"[/T]  Cria a estrutura de diretórios mas não copia arquivos\n"
-"[/Y]  Omitir alertas ao sobrescrever arquivos\n"
-"[/-Y] Alertar ao sobrescrever arquivos\n"
-"[/P]  Alertar antes de cada arquivo ser copiado\n"
-"[/N]  Copiar usando nomes pequenos\n"
-"[/U]  Copiar apenas arquivos que já existem no destino\n"
-"[/R]  Reescrever quaisquer arquivos de somente leitura\n"
-"[/H]  Incluir arquivos ocultos e de sistema na cópia\n"
-"[/C]  Continuar mesmo que ocorra um erro durante a cópia\n"
-"[/A]  Copiar apenas arquivos com atributo de arquivo\n"
+"[/F]  Mostrar por completo os nomes de fonte e destino durante a cópia.\n"
+"[/L]  Simular a operação, mostrando os nomes que seriam copiados.\n"
+"[/W]  Alerta antes de iniciar a operação de cópia.\n"
+"[/T]  Cria a estrutura de diretórios vazia mas não copia arquivos.\n"
+"[/Y]  Omite alertas ao sobrescrever arquivos.\n"
+"[/-Y] Alerta ao sobrescrever arquivos.\n"
+"[/P]  Alerta antes de cada arquivo ser copiado.\n"
+"[/N]  Copiar usando nomes pequenos.\n"
+"[/U]  Copiar apenas arquivos que já existem no destino.\n"
+"[/R]  Sobrescrever quaisquer arquivos de somente leitura.\n"
+"[/H]  Incluir arquivos ocultos e de sistema na cópia.\n"
+"[/C]  Continuar mesmo que ocorra um erro durante a cópia.\n"
+"[/A]  Copiar apenas arquivos com atributo de arquivo.\n"
 "[/M]  Copiar apenas arquivos com atributo de arquivo, removendo\n"
-"\to atributo de arquivo\n"
-"[/D | /D:m-d-y] Copiar novos arquivos ou os alterados após a data fornecida\n"
+"\to atributo de arquivo.\n"
+"[/D | /D:m-d-y] Copiar novos arquivos ou os alterados após a data "
+"fornecida.\n"
 "\t\tSe nenhuma data for fornecida, apenas copiar se o destino\n"
-"\t\tfor mais antigo que a fonte\n"
+"\t\tfor mais antigo que a fonte.\n"
 "\n"
