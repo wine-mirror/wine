@@ -37,6 +37,125 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 /* Parts of npapi.h */
 
+#define NP_VERSION_MAJOR 0
+#define NP_VERSION_MINOR 25
+
+typedef unsigned char NPBool;
+typedef INT16 NPError;
+typedef INT16 NPReason;
+typedef char *NPMIMEType;
+
+typedef struct _NPP {
+    void *pdata;
+    void *ndata;
+} NPP_t, *NPP;
+
+typedef struct _NPStream {
+    void *pdata;
+    void *ndata;
+    const char *url;
+    UINT32 end;
+    UINT32 lastmodified;
+    void *notifyData;
+    const char *headers;
+} NPStream;
+
+typedef struct _NPSavedData {
+    INT32 len;
+    void *buf;
+} NPSavedData;
+
+typedef struct _NPRect {
+    UINT16 top;
+    UINT16 left;
+    UINT16 bottom;
+    UINT16 right;
+} NPRect;
+
+typedef enum {
+    NPFocusNext = 0,
+    NPFocusPrevious = 1
+} NPFocusDirection;
+
+#define NP_ABI_MASK 0
+
+typedef enum {
+    NPPVpluginNameString = 1,
+    NPPVpluginDescriptionString,
+    NPPVpluginWindowBool,
+    NPPVpluginTransparentBool,
+    NPPVjavaClass,
+    NPPVpluginWindowSize,
+    NPPVpluginTimerInterval,
+    NPPVpluginScriptableInstance = (10 | NP_ABI_MASK),
+    NPPVpluginScriptableIID = 11,
+    NPPVjavascriptPushCallerBool = 12,
+    NPPVpluginKeepLibraryInMemory = 13,
+    NPPVpluginNeedsXEmbed = 14,
+    NPPVpluginScriptableNPObject = 15,
+    NPPVformValue = 16,
+    NPPVpluginUrlRequestsDisplayedBool = 17,
+    NPPVpluginWantsAllNetworkStreams = 18,
+    NPPVpluginNativeAccessibleAtkPlugId = 19,
+    NPPVpluginCancelSrcStream = 20,
+    NPPVSupportsAdvancedKeyHandling = 21
+} NPPVariable;
+
+typedef enum {
+    NPNVxDisplay = 1,
+    NPNVxtAppContext,
+    NPNVnetscapeWindow,
+    NPNVjavascriptEnabledBool,
+    NPNVasdEnabledBool,
+    NPNVisOfflineBool,
+    NPNVserviceManager = (10 | NP_ABI_MASK),
+    NPNVDOMElement     = (11 | NP_ABI_MASK),
+    NPNVDOMWindow      = (12 | NP_ABI_MASK),
+    NPNVToolkit        = (13 | NP_ABI_MASK),
+    NPNVSupportsXEmbedBool = 14,
+    NPNVWindowNPObject = 15,
+    NPNVPluginElementNPObject = 16,
+    NPNVSupportsWindowless = 17,
+    NPNVprivateModeBool = 18,
+    NPNVsupportsAdvancedKeyHandling = 21
+} NPNVariable;
+
+typedef enum {
+    NPWindowTypeWindow = 1,
+    NPWindowTypeDrawable
+} NPWindowType;
+
+typedef struct _NPWindow {
+    void *window;
+    INT32 x;
+    INT32 y;
+    UINT32 width;
+    UINT32 height;
+    NPRect clipRect;
+    NPWindowType type;
+} NPWindow;
+
+typedef struct _NPFullPrint {
+    NPBool pluginPrinted;
+    NPBool printOne;
+    void *platformPrint;
+} NPFullPrint;
+
+typedef struct _NPEmbedPrint {
+    NPWindow window;
+    void *platformPrint;
+} NPEmbedPrint;
+
+typedef struct _NPPrint {
+    UINT16 mode;
+    union {
+        NPFullPrint fullPrint;
+        NPEmbedPrint embedPrint;
+    } print;
+} NPPrint;
+
+typedef HRGN NPRegion;
+
 #define NPERR_BASE                         0
 #define NPERR_NO_ERROR                    (NPERR_BASE + 0)
 #define NPERR_GENERIC_ERROR               (NPERR_BASE + 1)
