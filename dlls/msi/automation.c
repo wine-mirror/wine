@@ -1239,6 +1239,28 @@ static HRESULT DatabaseImpl_Invoke(
     return S_OK;
 }
 
+static HRESULT create_database(MSIHANDLE msiHandle, IDispatch **dispatch)
+{
+    AutomationObject *database;
+    HRESULT hr;
+
+    TRACE("(%d %p)\n", msiHandle, dispatch);
+
+    database = msi_alloc(sizeof(AutomationObject));
+    if (!database) return E_OUTOFMEMORY;
+
+    hr = init_automation_object(database, msiHandle, &DIID_Database, DatabaseImpl_Invoke, NULL);
+    if (hr != S_OK)
+    {
+        msi_free(database);
+        return hr;
+    }
+
+    *dispatch = &database->IDispatch_iface;
+
+    return hr;
+}
+
 static HRESULT SessionImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -1253,7 +1275,6 @@ static HRESULT SessionImpl_Invoke(
     SessionObject *session = (SessionObject*)This;
     WCHAR *szString;
     DWORD dwLen;
-    IDispatch *pDispatch = NULL;
     MSIHANDLE msiHandle;
     LANGID langId;
     UINT ret;
@@ -1344,8 +1365,10 @@ static HRESULT SessionImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
                 if ((msiHandle = MsiGetActiveDatabase(This->msiHandle)))
                 {
-                    if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Database, DatabaseImpl_Invoke, NULL, 0)))
-                        V_DISPATCH(pVarResult) = pDispatch;
+                    IDispatch *dispatch;
+
+                    if (SUCCEEDED(hr = create_database(msiHandle, &dispatch)))
+                        V_DISPATCH(pVarResult) = dispatch;
                     else
                         ERR("Failed to create Database object, hresult 0x%08x\n", hr);
                 }
@@ -1707,8 +1730,7 @@ static HRESULT InstallerImpl_OpenDatabase(WORD wFlags,
         goto done;
     }
 
-    hr = create_automation_object(hdb, NULL, (LPVOID *)&dispatch,
-                                  &DIID_Database, DatabaseImpl_Invoke, NULL, 0);
+    hr = create_database(hdb, &dispatch);
     if (SUCCEEDED(hr))
         V_DISPATCH(pVarResult) = dispatch;
 
