@@ -103,37 +103,6 @@ typedef struct {
     IDispatch *installer;
 } SessionObject;
 
-/* Load type info so we don't have to process GetIDsOfNames */
-HRESULT load_type_info(IDispatch *iface, ITypeInfo **pptinfo, REFIID clsid, LCID lcid)
-{
-    HRESULT hr;
-    LPTYPELIB pLib = NULL;
-    LPTYPEINFO pInfo = NULL;
-    static const WCHAR szMsiServer[] = {'m','s','i','s','e','r','v','e','r','.','t','l','b'};
-
-    TRACE("(%p)->(%s,%d)\n", iface, debugstr_guid(clsid), lcid);
-
-    /* Load registered type library */
-    hr = LoadRegTypeLib(&LIBID_WindowsInstaller, 1, 0, lcid, &pLib);
-    if (FAILED(hr)) {
-        hr = LoadTypeLib(szMsiServer, &pLib);
-        if (FAILED(hr)) {
-            ERR("Could not load msiserver.tlb\n");
-            return hr;
-        }
-    }
-
-    /* Get type information for object */
-    hr = ITypeLib_GetTypeInfoOfGuid(pLib, clsid, &pInfo);
-    ITypeLib_Release(pLib);
-    if (FAILED(hr)) {
-        ERR("Could not load ITypeInfo for %s\n", debugstr_guid(clsid));
-        return hr;
-    }
-    *pptinfo = pInfo;
-    return S_OK;
-}
-
 static inline AutomationObject *impl_from_IProvideMultipleClassInfo( IProvideMultipleClassInfo *iface )
 {
     return CONTAINING_RECORD(iface, AutomationObject, IProvideMultipleClassInfo_iface);
@@ -142,6 +111,37 @@ static inline AutomationObject *impl_from_IProvideMultipleClassInfo( IProvideMul
 static inline AutomationObject *impl_from_IDispatch( IDispatch *iface )
 {
     return CONTAINING_RECORD(iface, AutomationObject, IDispatch_iface);
+}
+
+/* Load type info so we don't have to process GetIDsOfNames */
+HRESULT load_type_info(IDispatch *iface, ITypeInfo **pptinfo, REFIID clsid, LCID lcid)
+{
+    static const WCHAR msiserverW[] = {'m','s','i','s','e','r','v','e','r','.','t','l','b',0};
+    ITypeInfo *ti = NULL;
+    ITypeLib *lib = NULL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, %d)\n", iface, debugstr_guid(clsid), lcid);
+
+    /* Load registered type library */
+    hr = LoadRegTypeLib(&LIBID_WindowsInstaller, 1, 0, lcid, &lib);
+    if (FAILED(hr)) {
+        hr = LoadTypeLib(msiserverW, &lib);
+        if (FAILED(hr)) {
+            ERR("Could not load msiserver.tlb\n");
+            return hr;
+        }
+    }
+
+    /* Get type information for object */
+    hr = ITypeLib_GetTypeInfoOfGuid(lib, clsid, &ti);
+    ITypeLib_Release(lib);
+    if (FAILED(hr)) {
+        ERR("Could not load ITypeInfo for %s\n", debugstr_guid(clsid));
+        return hr;
+    }
+    *pptinfo = ti;
+    return S_OK;
 }
 
 /* Macro to get pointer to private object data */
