@@ -2410,10 +2410,29 @@ static HRESULT InstallerImpl_Invoke(
     }
 }
 
-/* Wrapper around create_automation_object to create an installer object. */
-HRESULT create_msiserver(IUnknown *pOuter, LPVOID *ppObj)
+HRESULT create_msiserver(IUnknown *outer, void **ppObj)
 {
-    return create_automation_object(0, pOuter, ppObj, &DIID_Installer, InstallerImpl_Invoke, NULL, 0);
+    AutomationObject *installer;
+    HRESULT hr;
+
+    TRACE("(%p %p)\n", outer, ppObj);
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    installer = msi_alloc(sizeof(AutomationObject));
+    if (!installer) return E_OUTOFMEMORY;
+
+    hr = init_automation_object(installer, 0, &DIID_Installer, InstallerImpl_Invoke, NULL);
+    if (hr != S_OK)
+    {
+        msi_free(installer);
+        return hr;
+    }
+
+    *ppObj = &installer->IDispatch_iface;
+
+    return hr;
 }
 
 HRESULT create_session(MSIHANDLE msiHandle, IDispatch *installer, IDispatch **disp)
