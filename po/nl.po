@@ -1965,7 +1965,7 @@ msgstr "Non-Repudiatie"
 
 #: crypt32.rc:226
 msgid "Key Encipherment"
-msgstr "sleutel codering"
+msgstr "Sleutel codering"
 
 #: crypt32.rc:227
 msgid "Data Encipherment"
@@ -4270,7 +4270,7 @@ msgstr "Niet meer data beschikbaar\n"
 
 #: winerror.mc:906
 msgid "Cannot use Copy API\n"
-msgstr "Kan de Copy API niet gebuiken\n"
+msgstr "Kan de Copy API niet gebruiken\n"
 
 #: winerror.mc:911
 msgid "Directory name invalid\n"
