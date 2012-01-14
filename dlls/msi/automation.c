@@ -50,13 +50,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 typedef struct AutomationObject AutomationObject;
 
 struct AutomationObject {
-    /*
-     * VTables - We provide IDispatch, IProvideClassInfo, IProvideClassInfo2, IProvideMultipleClassInfo
-     */
-    const IDispatchVtbl *lpVtbl;
-    const IProvideMultipleClassInfoVtbl *lpvtblIProvideMultipleClassInfo;
-
-    /* Object reference count */
+    IDispatch IDispatch_iface;
+    IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
     LONG ref;
 
     /* Clsid for this class and it's appropriate ITypeInfo object */
@@ -82,6 +77,8 @@ struct AutomationObject {
      * data structures (or NULL) */
     void (*funcFree)(AutomationObject* This);
 };
+
+static HRESULT create_list_enumerator(IUnknown*, void**, AutomationObject*, ULONG);
 
 /*
  * ListEnumerator - IEnumVARIANT implementation for MSI automation lists.
@@ -109,11 +106,6 @@ typedef struct {
     /* The parent Installer object */
     IDispatch *pInstaller;
 } SessionData;
-
-/* VTables */
-static const struct IDispatchVtbl AutomationObject_Vtbl;
-static const struct IProvideMultipleClassInfoVtbl AutomationObject_IProvideMultipleClassInfo_Vtbl;
-static const struct IEnumVARIANTVtbl ListEnumerator_Vtbl;
 
 /* Load type info so we don't have to process GetIDsOfNames */
 HRESULT load_type_info(IDispatch *iface, ITypeInfo **pptinfo, REFIID clsid, LCID lcid)
@@ -146,75 +138,14 @@ HRESULT load_type_info(IDispatch *iface, ITypeInfo **pptinfo, REFIID clsid, LCID
     return S_OK;
 }
 
-/* Create the automation object, placing the result in the pointer ppObj. The automation object is created
- * with the appropriate clsid and invocation function. */
-static HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter, void **ppObj, REFIID clsid,
-        HRESULT (*funcInvoke)(AutomationObject*,DISPID,REFIID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,UINT*),
-        void (*funcFree)(AutomationObject*), SIZE_T sizetPrivateData)
+static inline AutomationObject *impl_from_IProvideMultipleClassInfo( IProvideMultipleClassInfo *iface )
 {
-    AutomationObject *object;
-    HRESULT hr;
-
-    TRACE("(%d,%p,%p,%s,%p,%p,%ld)\n", msiHandle, pUnkOuter, ppObj, debugstr_guid(clsid), funcInvoke, funcFree, sizetPrivateData);
-
-    if( pUnkOuter )
-        return CLASS_E_NOAGGREGATION;
-
-    object = msi_alloc_zero( sizeof(AutomationObject) + sizetPrivateData );
-
-    /* Set all the VTable references */
-    object->lpVtbl = &AutomationObject_Vtbl;
-    object->lpvtblIProvideMultipleClassInfo = &AutomationObject_IProvideMultipleClassInfo_Vtbl;
-    object->ref = 1;
-
-    /* Store data that was passed */
-    object->msiHandle = msiHandle;
-    object->clsid = (LPCLSID)clsid;
-    object->funcInvoke = funcInvoke;
-    object->funcFree = funcFree;
-
-    /* Load our TypeInfo so we don't have to process GetIDsOfNames */
-    object->iTypeInfo = NULL;
-    hr = load_type_info((IDispatch *)object, &object->iTypeInfo, clsid, 0x0);
-    if (FAILED(hr)) {
-        msi_free( object );
-        return hr;
-    }
-
-    *ppObj = object;
-
-    return S_OK;
+    return CONTAINING_RECORD(iface, AutomationObject, IProvideMultipleClassInfo_iface);
 }
 
-/* Create a list enumerator, placing the result in the pointer ppObj.  */
-static HRESULT create_list_enumerator(IUnknown *pUnkOuter, LPVOID *ppObj, AutomationObject *pObj, ULONG ulPos)
+static inline AutomationObject *impl_from_IDispatch( IDispatch *iface )
 {
-    ListEnumerator *object;
-
-    TRACE("(%p,%p,%p,%uld)\n", pUnkOuter, ppObj, pObj, ulPos);
-
-    if( pUnkOuter )
-        return CLASS_E_NOAGGREGATION;
-
-    object = msi_alloc_zero( sizeof(ListEnumerator) );
-
-    /* Set all the VTable references */
-    object->IEnumVARIANT_iface.lpVtbl = &ListEnumerator_Vtbl;
-    object->ref = 1;
-
-    /* Store data that was passed */
-    object->ulPos = ulPos;
-    object->pObj = pObj;
-    if (pObj) IDispatch_AddRef((IDispatch *)pObj);
-
-    *ppObj = object;
-    return S_OK;
-}
-
-/* Macros to get pointer to AutomationObject from the other VTables. */
-static inline AutomationObject *obj_from_IProvideMultipleClassInfo( IProvideMultipleClassInfo *iface )
-{
-    return (AutomationObject *)((char*)iface - FIELD_OFFSET(AutomationObject, lpvtblIProvideMultipleClassInfo));
+    return CONTAINING_RECORD(iface, AutomationObject, IDispatch_iface);
 }
 
 /* Macro to get pointer to private object data */
@@ -227,10 +158,9 @@ static inline void *private_data( AutomationObject *This )
  * AutomationObject methods
  */
 
-/*** IUnknown methods ***/
 static HRESULT WINAPI AutomationObject_QueryInterface(IDispatch* iface, REFIID riid, void** ppvObject)
 {
-    AutomationObject *This = (AutomationObject *)iface;
+    AutomationObject *This = impl_from_IDispatch(iface);
 
     TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
 
@@ -239,30 +169,28 @@ static HRESULT WINAPI AutomationObject_QueryInterface(IDispatch* iface, REFIID r
 
     *ppvObject = 0;
 
-    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDispatch) || IsEqualGUID(riid, This->clsid))
-        *ppvObject = This;
+    if (IsEqualGUID(riid, &IID_IUnknown)  ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, This->clsid))
+        *ppvObject = &This->IDispatch_iface;
     else if (IsEqualGUID(riid, &IID_IProvideClassInfo) ||
              IsEqualGUID(riid, &IID_IProvideClassInfo2) ||
              IsEqualGUID(riid, &IID_IProvideMultipleClassInfo))
-        *ppvObject = &This->lpvtblIProvideMultipleClassInfo;
+        *ppvObject = &This->IProvideMultipleClassInfo_iface;
     else
     {
-        TRACE("() : asking for unsupported interface %s\n",debugstr_guid(riid));
+        TRACE("() : asking for unsupported interface %s\n", debugstr_guid(riid));
         return E_NOINTERFACE;
     }
 
-    /*
-     * Query Interface always increases the reference count by one when it is
-     * successful
-     */
-    IClassFactory_AddRef(iface);
+    IDispatch_AddRef(iface);
 
     return S_OK;
 }
 
 static ULONG WINAPI AutomationObject_AddRef(IDispatch* iface)
 {
-    AutomationObject *This = (AutomationObject *)iface;
+    AutomationObject *This = impl_from_IDispatch(iface);
 
     TRACE("(%p/%p)\n", iface, This);
 
@@ -271,7 +199,7 @@ static ULONG WINAPI AutomationObject_AddRef(IDispatch* iface)
 
 static ULONG WINAPI AutomationObject_Release(IDispatch* iface)
 {
-    AutomationObject *This = (AutomationObject *)iface;
+    AutomationObject *This = impl_from_IDispatch(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p/%p)\n", iface, This);
@@ -287,12 +215,11 @@ static ULONG WINAPI AutomationObject_Release(IDispatch* iface)
     return ref;
 }
 
-/*** IDispatch methods ***/
 static HRESULT WINAPI AutomationObject_GetTypeInfoCount(
         IDispatch* iface,
         UINT* pctinfo)
 {
-    AutomationObject *This = (AutomationObject *)iface;
+    AutomationObject *This = impl_from_IDispatch(iface);
 
     TRACE("(%p/%p)->(%p)\n", iface, This, pctinfo);
     *pctinfo = 1;
@@ -305,7 +232,7 @@ static HRESULT WINAPI AutomationObject_GetTypeInfo(
         LCID lcid,
         ITypeInfo** ppTInfo)
 {
-    AutomationObject *This = (AutomationObject *)iface;
+    AutomationObject *This = impl_from_IDispatch(iface);
     TRACE("(%p/%p)->(%d,%d,%p)\n", iface, This, iTInfo, lcid, ppTInfo);
 
     ITypeInfo_AddRef(This->iTypeInfo);
@@ -321,7 +248,7 @@ static HRESULT WINAPI AutomationObject_GetIDsOfNames(
         LCID lcid,
         DISPID* rgDispId)
 {
-    AutomationObject *This = (AutomationObject *)iface;
+    AutomationObject *This = impl_from_IDispatch(iface);
     HRESULT hr;
     TRACE("(%p/%p)->(%p,%p,%d,%d,%p)\n", iface, This, riid, rgszNames, cNames, lcid, rgDispId);
 
@@ -354,7 +281,7 @@ static HRESULT WINAPI AutomationObject_Invoke(
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr)
 {
-    AutomationObject *This = (AutomationObject *)iface;
+    AutomationObject *This = impl_from_IDispatch(iface);
     HRESULT hr;
     unsigned int uArgErr;
     VARIANT varResultDummy;
@@ -441,7 +368,7 @@ static HRESULT WINAPI AutomationObject_Invoke(
     return hr;
 }
 
-static const struct IDispatchVtbl AutomationObject_Vtbl =
+static const struct IDispatchVtbl AutomationObjectVtbl =
 {
     AutomationObject_QueryInterface,
     AutomationObject_AddRef,
@@ -456,37 +383,37 @@ static const struct IDispatchVtbl AutomationObject_Vtbl =
  * IProvideMultipleClassInfo methods
  */
 
-static HRESULT WINAPI AutomationObject_IProvideMultipleClassInfo_QueryInterface(
+static HRESULT WINAPI ProvideMultipleClassInfo_QueryInterface(
   IProvideMultipleClassInfo* iface,
   REFIID     riid,
   VOID**     ppvoid)
 {
-    AutomationObject *This = obj_from_IProvideMultipleClassInfo(iface);
-    return AutomationObject_QueryInterface((IDispatch *)This, riid, ppvoid);
+    AutomationObject *This = impl_from_IProvideMultipleClassInfo(iface);
+    return IDispatch_QueryInterface(&This->IDispatch_iface, riid, ppvoid);
 }
 
-static ULONG WINAPI AutomationObject_IProvideMultipleClassInfo_AddRef(IProvideMultipleClassInfo* iface)
+static ULONG WINAPI ProvideMultipleClassInfo_AddRef(IProvideMultipleClassInfo* iface)
 {
-    AutomationObject *This = obj_from_IProvideMultipleClassInfo(iface);
-    return AutomationObject_AddRef((IDispatch *)This);
+    AutomationObject *This = impl_from_IProvideMultipleClassInfo(iface);
+    return IDispatch_AddRef(&This->IDispatch_iface);
 }
 
-static ULONG WINAPI AutomationObject_IProvideMultipleClassInfo_Release(IProvideMultipleClassInfo* iface)
+static ULONG WINAPI ProvideMultipleClassInfo_Release(IProvideMultipleClassInfo* iface)
 {
-    AutomationObject *This = obj_from_IProvideMultipleClassInfo(iface);
-    return AutomationObject_Release((IDispatch *)This);
+    AutomationObject *This = impl_from_IProvideMultipleClassInfo(iface);
+    return IDispatch_Release(&This->IDispatch_iface);
 }
 
-static HRESULT WINAPI AutomationObject_IProvideMultipleClassInfo_GetClassInfo(IProvideMultipleClassInfo* iface, ITypeInfo** ppTI)
+static HRESULT WINAPI ProvideMultipleClassInfo_GetClassInfo(IProvideMultipleClassInfo* iface, ITypeInfo** ppTI)
 {
-    AutomationObject *This = obj_from_IProvideMultipleClassInfo(iface);
+    AutomationObject *This = impl_from_IProvideMultipleClassInfo(iface);
     TRACE("(%p/%p)->(%p)\n", iface, This, ppTI);
-    return load_type_info((IDispatch *)This, ppTI, This->clsid, 0);
+    return load_type_info(&This->IDispatch_iface, ppTI, This->clsid, 0);
 }
 
-static HRESULT WINAPI AutomationObject_IProvideMultipleClassInfo_GetGUID(IProvideMultipleClassInfo* iface, DWORD dwGuidKind, GUID* pGUID)
+static HRESULT WINAPI ProvideMultipleClassInfo_GetGUID(IProvideMultipleClassInfo* iface, DWORD dwGuidKind, GUID* pGUID)
 {
-    AutomationObject *This = obj_from_IProvideMultipleClassInfo(iface);
+    AutomationObject *This = impl_from_IProvideMultipleClassInfo(iface);
     TRACE("(%p/%p)->(%d,%s)\n", iface, This, dwGuidKind, debugstr_guid(pGUID));
 
     if (dwGuidKind != GUIDKIND_DEFAULT_SOURCE_DISP_IID)
@@ -497,16 +424,16 @@ static HRESULT WINAPI AutomationObject_IProvideMultipleClassInfo_GetGUID(IProvid
     }
 }
 
-static HRESULT WINAPI AutomationObject_GetMultiTypeInfoCount(IProvideMultipleClassInfo* iface, ULONG* pcti)
+static HRESULT WINAPI ProvideMultipleClassInfo_GetMultiTypeInfoCount(IProvideMultipleClassInfo* iface, ULONG* pcti)
 {
-    AutomationObject *This = obj_from_IProvideMultipleClassInfo(iface);
+    AutomationObject *This = impl_from_IProvideMultipleClassInfo(iface);
 
     TRACE("(%p/%p)->(%p)\n", iface, This, pcti);
     *pcti = 1;
     return S_OK;
 }
 
-static HRESULT WINAPI AutomationObject_GetInfoOfIndex(IProvideMultipleClassInfo* iface,
+static HRESULT WINAPI ProvideMultipleClassInfo_GetInfoOfIndex(IProvideMultipleClassInfo* iface,
         ULONG iti,
         DWORD dwFlags,
         ITypeInfo** pptiCoClass,
@@ -515,7 +442,7 @@ static HRESULT WINAPI AutomationObject_GetInfoOfIndex(IProvideMultipleClassInfo*
         IID* piidPrimary,
         IID* piidSource)
 {
-    AutomationObject *This = obj_from_IProvideMultipleClassInfo(iface);
+    AutomationObject *This = impl_from_IProvideMultipleClassInfo(iface);
 
     TRACE("(%p/%p)->(%d,%d,%p,%p,%p,%p,%p)\n", iface, This, iti, dwFlags, pptiCoClass, pdwTIFlags, pcdispidReserved, piidPrimary, piidSource);
 
@@ -523,7 +450,7 @@ static HRESULT WINAPI AutomationObject_GetInfoOfIndex(IProvideMultipleClassInfo*
         return E_INVALIDARG;
 
     if (dwFlags & MULTICLASSINFO_GETTYPEINFO)
-        load_type_info((IDispatch *)This, pptiCoClass, This->clsid, 0);
+        load_type_info(&This->IDispatch_iface, pptiCoClass, This->clsid, 0);
 
     if (dwFlags & MULTICLASSINFO_GETNUMRESERVEDDISPIDS)
     {
@@ -542,16 +469,54 @@ static HRESULT WINAPI AutomationObject_GetInfoOfIndex(IProvideMultipleClassInfo*
     return S_OK;
 }
 
-static const IProvideMultipleClassInfoVtbl AutomationObject_IProvideMultipleClassInfo_Vtbl =
+static const IProvideMultipleClassInfoVtbl ProvideMultipleClassInfoVtbl =
 {
-    AutomationObject_IProvideMultipleClassInfo_QueryInterface,
-    AutomationObject_IProvideMultipleClassInfo_AddRef,
-    AutomationObject_IProvideMultipleClassInfo_Release,
-    AutomationObject_IProvideMultipleClassInfo_GetClassInfo,
-    AutomationObject_IProvideMultipleClassInfo_GetGUID,
-    AutomationObject_GetMultiTypeInfoCount,
-    AutomationObject_GetInfoOfIndex
+    ProvideMultipleClassInfo_QueryInterface,
+    ProvideMultipleClassInfo_AddRef,
+    ProvideMultipleClassInfo_Release,
+    ProvideMultipleClassInfo_GetClassInfo,
+    ProvideMultipleClassInfo_GetGUID,
+    ProvideMultipleClassInfo_GetMultiTypeInfoCount,
+    ProvideMultipleClassInfo_GetInfoOfIndex
 };
+
+/* Create the automation object, placing the result in the pointer ppObj. The automation object is created
+ * with the appropriate clsid and invocation function. */
+static HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter, void **ppObj, REFIID clsid,
+        HRESULT (*funcInvoke)(AutomationObject*,DISPID,REFIID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,UINT*),
+        void (*funcFree)(AutomationObject*), SIZE_T sizetPrivateData)
+{
+    AutomationObject *object;
+    HRESULT hr;
+
+    TRACE("(%d,%p,%p,%s,%p,%p,%ld)\n", msiHandle, pUnkOuter, ppObj, debugstr_guid(clsid), funcInvoke, funcFree, sizetPrivateData);
+
+    if( pUnkOuter )
+        return CLASS_E_NOAGGREGATION;
+
+    object = msi_alloc_zero( sizeof(AutomationObject) + sizetPrivateData );
+
+    object->IDispatch_iface.lpVtbl = &AutomationObjectVtbl;
+    object->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
+    object->ref = 1;
+
+    object->msiHandle = msiHandle;
+    object->clsid = (LPCLSID)clsid;
+    object->funcInvoke = funcInvoke;
+    object->funcFree = funcFree;
+
+    /* Load our TypeInfo so we don't have to process GetIDsOfNames */
+    object->iTypeInfo = NULL;
+    hr = load_type_info(&object->IDispatch_iface, &object->iTypeInfo, clsid, 0x0);
+    if (FAILED(hr)) {
+        msi_free( object );
+        return hr;
+    }
+
+    *ppObj = object;
+
+    return S_OK;
+}
 
 /*
  * ListEnumerator methods
@@ -562,7 +527,6 @@ static inline ListEnumerator *impl_from_IEnumVARIANT(IEnumVARIANT* iface)
     return CONTAINING_RECORD(iface, ListEnumerator, IEnumVARIANT_iface);
 }
 
-/*** IUnknown methods ***/
 static HRESULT WINAPI ListEnumerator_QueryInterface(IEnumVARIANT* iface, REFIID riid,
         void** ppvObject)
 {
@@ -605,14 +569,12 @@ static ULONG WINAPI ListEnumerator_Release(IEnumVARIANT* iface)
 
     if (!ref)
     {
-        if (This->pObj) IDispatch_Release((IDispatch *)This->pObj);
+        if (This->pObj) IDispatch_Release(&This->pObj->IDispatch_iface);
         msi_free(This);
     }
 
     return ref;
 }
-
-/* IEnumVARIANT methods */
 
 static HRESULT WINAPI ListEnumerator_Next(IEnumVARIANT* iface, ULONG celt, VARIANT* rgVar,
         ULONG* pCeltFetched)
@@ -700,6 +662,31 @@ static const struct IEnumVARIANTVtbl ListEnumerator_Vtbl =
     ListEnumerator_Reset,
     ListEnumerator_Clone
 };
+
+/* Create a list enumerator, placing the result in the pointer ppObj.  */
+static HRESULT create_list_enumerator(IUnknown *outer, void **ppObj, AutomationObject *aut_obj, ULONG pos)
+{
+    ListEnumerator *object;
+
+    TRACE("(%p, %p, %p, %uld)\n", outer, ppObj, aut_obj, pos);
+
+    if( outer )
+        return CLASS_E_NOAGGREGATION;
+
+    object = msi_alloc( sizeof(ListEnumerator) );
+
+    /* Set all the VTable references */
+    object->IEnumVARIANT_iface.lpVtbl = &ListEnumerator_Vtbl;
+    object->ref = 1;
+
+    /* Store data that was passed */
+    object->ulPos = pos;
+    object->pObj = aut_obj;
+    if (aut_obj) IDispatch_AddRef(&aut_obj->IDispatch_iface);
+
+    *ppObj = object;
+    return S_OK;
+}
 
 /*
  * Individual Object Invocation Functions
@@ -1637,7 +1624,7 @@ static HRESULT InstallerImpl_OpenPackage(AutomationObject* This,
         goto done;
     }
 
-    hr = create_session(hpkg, (IDispatch *)This, &dispatch);
+    hr = create_session(hpkg, &This->IDispatch_iface, &dispatch);
     if (SUCCEEDED(hr))
         V_DISPATCH(pVarResult) = dispatch;
 
