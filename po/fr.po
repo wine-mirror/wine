@@ -130,7 +130,7 @@ msgstr ""
 "applications incorporant du HTML puissent fonctionner correctement.\n"
 "Wine peut automatiquement le télécharger et l'installer pour vous.\n"
 "\n"
-"Note : il est recommandé d'utiliser le paquet de votre distribution."
+"Note : il est recommandé d'utiliser le paquet de votre distribution. "
 "Consultez <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/"
 "Gecko</a> pour plus de détails."
 
@@ -3371,7 +3371,7 @@ msgid ""
 "List of websites you have accessed."
 msgstr ""
 "Historique\n"
-"Liste des sites web accédés."
+"Liste des sites web visités."
 
 #: inetcpl.rc:74
 msgid ""
@@ -4274,7 +4274,7 @@ msgstr "Aucune autre donnée n'est disponible\n"
 
 #: winerror.mc:906
 msgid "Cannot use Copy API\n"
-msgstr "L'API Copy ne peut pas être utilisée\n"
+msgstr "L'API de copie est inutilisable\n"
 
 #: winerror.mc:911
 msgid "Directory name invalid\n"
@@ -4523,7 +4523,7 @@ msgstr "Le processus s'est arrêté brutalement\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed\n"
-msgstr "Dépendances du service non démarrées/ables\n"
+msgstr "Échec de démarrage des dépendances du service\n"
 
 #: winerror.mc:1221
 msgid "Service login failed\n"
@@ -6546,7 +6546,7 @@ msgstr "Ajouter un port local"
 
 #: localui.rc:39
 msgid "&Enter the port name to add:"
-msgstr "&Saisisser le nom du port à ajouter :"
+msgstr "&Saisissez le nom du port à ajouter :"
 
 #: localui.rc:48
 msgid "Configure LPT Port"
