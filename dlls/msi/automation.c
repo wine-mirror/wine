@@ -74,29 +74,23 @@ struct AutomationObject {
     autoFreeFunc funcFree;
 };
 
-static HRESULT create_list_enumerator(IUnknown*, void**, AutomationObject*, ULONG);
+typedef struct {
+    AutomationObject autoobj;
+    int count;
+    VARIANT *data;
+} ListObject;
 
-/*
- * ListEnumerator - IEnumVARIANT implementation for MSI automation lists.
- */
+static HRESULT create_list_enumerator(ListObject*, void**);
 
+/* ListEnumerator - IEnumVARIANT implementation for MSI automation lists */
 typedef struct {
     IEnumVARIANT IEnumVARIANT_iface;
     LONG ref;
 
     /* Current position and pointer to AutomationObject that stores actual data */
-    ULONG ulPos;
-    AutomationObject *pObj;
+    ULONG pos;
+    ListObject *list;
 } ListEnumerator;
-
-/*
- * Structures for additional data required by specific automation objects
- */
-
-typedef struct {
-    ULONG ulCount;
-    VARIANT *pVars;
-} ListData;
 
 typedef struct {
     AutomationObject autoobj;
@@ -144,16 +138,7 @@ HRESULT load_type_info(IDispatch *iface, ITypeInfo **pptinfo, REFIID clsid, LCID
     return S_OK;
 }
 
-/* Macro to get pointer to private object data */
-static inline void *private_data( AutomationObject *This )
-{
-    return This + 1;
-}
-
-/*
- * AutomationObject methods
- */
-
+/* AutomationObject methods */
 static HRESULT WINAPI AutomationObject_QueryInterface(IDispatch* iface, REFIID riid, void** ppvObject)
 {
     AutomationObject *This = impl_from_IDispatch(iface);
@@ -479,17 +464,17 @@ static const IProvideMultipleClassInfoVtbl ProvideMultipleClassInfoVtbl =
 /* Create the automation object, placing the result in the pointer ppObj. The automation object is created
  * with the appropriate clsid and invocation function. */
 static HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter, void **ppObj, REFIID clsid,
-        autoInvokeFunc invokeFunc, autoFreeFunc freeFunc, SIZE_T sizetPrivateData)
+        autoInvokeFunc invokeFunc, autoFreeFunc freeFunc)
 {
     AutomationObject *object;
     HRESULT hr;
 
-    TRACE("(%d,%p,%p,%s,%p,%p,%ld)\n", msiHandle, pUnkOuter, ppObj, debugstr_guid(clsid), invokeFunc, freeFunc, sizetPrivateData);
+    TRACE("(%d,%p,%p,%s,%p,%p)\n", msiHandle, pUnkOuter, ppObj, debugstr_guid(clsid), invokeFunc, freeFunc);
 
     if( pUnkOuter )
         return CLASS_E_NOAGGREGATION;
 
-    object = msi_alloc_zero( sizeof(AutomationObject) + sizetPrivateData );
+    object = msi_alloc_zero(sizeof(AutomationObject));
 
     object->IDispatch_iface.lpVtbl = &AutomationObjectVtbl;
     object->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
@@ -553,15 +538,18 @@ static HRESULT WINAPI ListEnumerator_QueryInterface(IEnumVARIANT* iface, REFIID 
 
     *ppvObject = 0;
 
-    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IEnumVARIANT))
-        *ppvObject = This;
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IEnumVARIANT))
+    {
+        *ppvObject = &This->IEnumVARIANT_iface;
+    }
     else
     {
         TRACE("() : asking for unsupported interface %s\n",debugstr_guid(riid));
         return E_NOINTERFACE;
     }
 
-    IClassFactory_AddRef(iface);
+    IEnumVARIANT_AddRef(iface);
     return S_OK;
 }
 
@@ -583,7 +571,7 @@ static ULONG WINAPI ListEnumerator_Release(IEnumVARIANT* iface)
 
     if (!ref)
     {
-        if (This->pObj) IDispatch_Release(&This->pObj->IDispatch_iface);
+        if (This->list) IDispatch_Release(&This->list->autoobj.IDispatch_iface);
         msi_free(This);
     }
 
@@ -591,29 +579,26 @@ static ULONG WINAPI ListEnumerator_Release(IEnumVARIANT* iface)
 }
 
 static HRESULT WINAPI ListEnumerator_Next(IEnumVARIANT* iface, ULONG celt, VARIANT* rgVar,
-        ULONG* pCeltFetched)
+        ULONG* fetched)
 {
     ListEnumerator *This = impl_from_IEnumVARIANT(iface);
-    ListData *data = private_data(This->pObj);
-    ULONG idx, local;
+    ULONG i, local;
 
-    TRACE("(%p,%uld,%p,%p)\n", iface, celt, rgVar, pCeltFetched);
+    TRACE("(%p, %uld, %p, %p)\n", iface, celt, rgVar, fetched);
 
-    if (pCeltFetched != NULL)
-        *pCeltFetched = 0;
+    if (fetched) *fetched = 0;
 
-    if (rgVar == NULL)
+    if (!rgVar)
         return S_FALSE;
 
     for (local = 0; local < celt; local++)
         VariantInit(&rgVar[local]);
 
-    for (idx = This->ulPos, local = 0; idx < data->ulCount && local < celt; idx++, local++)
-        VariantCopy(&rgVar[local], &data->pVars[idx]);
+    for (i = This->pos, local = 0; i < This->list->count && local < celt; i++, local++)
+        VariantCopy(&rgVar[local], &This->list->data[i]);
 
-    if (pCeltFetched != NULL)
-        *pCeltFetched = local;
-    This->ulPos = idx;
+    if (fetched) *fetched = local;
+    This->pos = i;
 
     return (local < celt) ? S_FALSE : S_OK;
 }
@@ -621,16 +606,16 @@ static HRESULT WINAPI ListEnumerator_Next(IEnumVARIANT* iface, ULONG celt, VARIA
 static HRESULT WINAPI ListEnumerator_Skip(IEnumVARIANT* iface, ULONG celt)
 {
     ListEnumerator *This = impl_from_IEnumVARIANT(iface);
-    ListData *data = private_data(This->pObj);
 
     TRACE("(%p,%uld)\n", iface, celt);
 
-    This->ulPos += celt;
-    if (This->ulPos >= data->ulCount)
+    This->pos += celt;
+    if (This->pos >= This->list->count)
     {
-        This->ulPos = data->ulCount;
+        This->pos = This->list->count;
         return S_FALSE;
     }
+
     return S_OK;
 }
 
@@ -640,7 +625,7 @@ static HRESULT WINAPI ListEnumerator_Reset(IEnumVARIANT* iface)
 
     TRACE("(%p)\n", iface);
 
-    This->ulPos = 0;
+    This->pos = 0;
     return S_OK;
 }
 
@@ -655,7 +640,7 @@ static HRESULT WINAPI ListEnumerator_Clone(IEnumVARIANT* iface, IEnumVARIANT **p
         return S_FALSE;
 
     *ppEnum = NULL;
-    hr = create_list_enumerator(NULL, (LPVOID *)ppEnum, This->pObj, 0);
+    hr = create_list_enumerator(This->list, (LPVOID *)ppEnum);
     if (FAILED(hr))
     {
         if (*ppEnum)
@@ -678,25 +663,22 @@ static const struct IEnumVARIANTVtbl ListEnumerator_Vtbl =
 };
 
 /* Create a list enumerator, placing the result in the pointer ppObj.  */
-static HRESULT create_list_enumerator(IUnknown *outer, void **ppObj, AutomationObject *aut_obj, ULONG pos)
+static HRESULT create_list_enumerator(ListObject *list, void **ppObj)
 {
     ListEnumerator *object;
 
-    TRACE("(%p, %p, %p, %uld)\n", outer, ppObj, aut_obj, pos);
+    TRACE("(%p, %p)\n", list, ppObj);
 
-    if( outer )
-        return CLASS_E_NOAGGREGATION;
-
-    object = msi_alloc( sizeof(ListEnumerator) );
+    object = msi_alloc(sizeof(ListEnumerator));
 
     /* Set all the VTable references */
     object->IEnumVARIANT_iface.lpVtbl = &ListEnumerator_Vtbl;
     object->ref = 1;
 
     /* Store data that was passed */
-    object->ulPos = pos;
-    object->pObj = aut_obj;
-    if (aut_obj) IDispatch_AddRef(&aut_obj->IDispatch_iface);
+    object->pos = 0;
+    object->list = list;
+    if (list) IDispatch_AddRef(&list->autoobj.IDispatch_iface);
 
     *ppObj = object;
     return S_OK;
@@ -989,19 +971,16 @@ static HRESULT ListImpl_Invoke(
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr)
 {
-    ListData *data = private_data(This);
-    HRESULT hr;
-    VARIANTARG varg0;
+    ListObject *list = (ListObject*)This;
     IUnknown *pUnk = NULL;
-
-    VariantInit(&varg0);
+    HRESULT hr;
 
     switch (dispIdMember)
     {
          case DISPID_LIST__NEWENUM:
              if (wFlags & DISPATCH_METHOD) {
                  V_VT(pVarResult) = VT_UNKNOWN;
-                 if (SUCCEEDED(hr = create_list_enumerator(NULL, (LPVOID *)&pUnk, This, 0)))
+                 if (SUCCEEDED(hr = create_list_enumerator(list, (LPVOID *)&pUnk)))
                      V_UNKNOWN(pVarResult) = pUnk;
                  else
                      ERR("Failed to create IEnumVARIANT object, hresult 0x%08x\n", hr);
@@ -1011,11 +990,14 @@ static HRESULT ListImpl_Invoke(
 
          case DISPID_LIST_ITEM:
              if (wFlags & DISPATCH_PROPERTYGET) {
-                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                VARIANTARG index;
+
+                VariantInit(&index);
+                hr = DispGetParam(pDispParams, 0, VT_I4, &index, puArgErr);
                 if (FAILED(hr)) return hr;
-                if (V_I4(&varg0) < 0 || V_I4(&varg0) >= data->ulCount)
+                if (V_I4(&index) < 0 || V_I4(&index) >= list->count)
                     return DISP_E_BADINDEX;
-                VariantCopy(pVarResult, &data->pVars[V_I4(&varg0)]);
+                VariantCopy(pVarResult, &list->data[V_I4(&index)]);
             }
             else return DISP_E_MEMBERNOTFOUND;
             break;
@@ -1023,7 +1005,7 @@ static HRESULT ListImpl_Invoke(
          case DISPID_LIST_COUNT:
             if (wFlags & DISPATCH_PROPERTYGET) {
                 V_VT(pVarResult) = VT_I4;
-                V_I4(pVarResult) = data->ulCount;
+                V_I4(pVarResult) = list->count;
             }
             else return DISP_E_MEMBERNOTFOUND;
             break;
@@ -1032,19 +1014,97 @@ static HRESULT ListImpl_Invoke(
             return DISP_E_MEMBERNOTFOUND;
     }
 
-    VariantClear(&varg0);
-
     return S_OK;
 }
 
 static void ListImpl_Free(AutomationObject *This)
 {
-    ListData *data = private_data(This);
-    ULONG idx;
+    ListObject *list = (ListObject*)This;
+    int i;
 
-    for (idx=0; idx<data->ulCount; idx++)
-        VariantClear(&data->pVars[idx]);
-    msi_free(data->pVars);
+    for (i = 0; i < list->count; i++)
+        VariantClear(&list->data[i]);
+    msi_free(list->data);
+}
+
+static HRESULT get_products_count(const WCHAR *product, int *len)
+{
+    int i = 0;
+
+    while (1)
+    {
+        WCHAR dataW[GUID_SIZE];
+        UINT ret;
+
+        /* all or related only */
+        if (product)
+            ret = MsiEnumRelatedProductsW(product, 0, i, dataW);
+        else
+            ret = MsiEnumProductsW(i, dataW);
+
+        if (ret == ERROR_NO_MORE_ITEMS) break;
+
+        if (ret != ERROR_SUCCESS)
+            return DISP_E_EXCEPTION;
+
+        i++;
+    }
+
+    *len = i;
+
+    return S_OK;
+}
+
+static HRESULT create_list(const WCHAR *product, IDispatch **dispatch)
+{
+    ListObject *list;
+    HRESULT hr;
+    int i;
+
+    list = msi_alloc_zero(sizeof(ListObject));
+    if (!list) return E_OUTOFMEMORY;
+
+    hr = init_automation_object(&list->autoobj, 0, &DIID_StringList, ListImpl_Invoke, ListImpl_Free);
+    if (hr != S_OK)
+    {
+        msi_free(list);
+        return hr;
+    }
+
+    *dispatch = &list->autoobj.IDispatch_iface;
+
+    hr = get_products_count(product, &list->count);
+    if (hr != S_OK)
+    {
+        IDispatch_Release(*dispatch);
+        return hr;
+    }
+
+    list->data = msi_alloc(list->count*sizeof(VARIANT));
+    if (!list->data)
+    {
+        IDispatch_Release(*dispatch);
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < list->count; i++)
+    {
+        WCHAR dataW[GUID_SIZE];
+        UINT ret;
+
+        /* all or related only */
+        if (product)
+            ret = MsiEnumRelatedProductsW(product, 0, i, dataW);
+        else
+            ret = MsiEnumProductsW(i, dataW);
+
+        if (ret == ERROR_NO_MORE_ITEMS) break;
+
+        V_VT(&list->data[i]) = VT_BSTR;
+        V_BSTR(&list->data[i]) = SysAllocString(dataW);
+    }
+
+    return S_OK;
 }
 
 static HRESULT ViewImpl_Invoke(
@@ -1087,7 +1147,7 @@ static HRESULT ViewImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
                 if ((ret = MsiViewFetch(This->msiHandle, &msiHandle)) == ERROR_SUCCESS)
                 {
-                    if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Record, RecordImpl_Invoke, NULL, 0)))
+                    if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Record, RecordImpl_Invoke, NULL)))
                         V_DISPATCH(pVarResult) = pDispatch;
                     else
                         ERR("Failed to create Record object, hresult 0x%08x\n", hr);
@@ -1186,7 +1246,7 @@ static HRESULT DatabaseImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
                 if ((ret = MsiGetSummaryInformationW(This->msiHandle, NULL, V_I4(&varg0), &msiHandle)) == ERROR_SUCCESS)
                 {
-                    hr = create_automation_object(msiHandle, NULL, (LPVOID *)&pDispatch, &DIID_SummaryInfo, SummaryInfoImpl_Invoke, NULL, 0);
+                    hr = create_automation_object(msiHandle, NULL, (LPVOID *)&pDispatch, &DIID_SummaryInfo, SummaryInfoImpl_Invoke, NULL);
                     if (SUCCEEDED(hr))
                         V_DISPATCH(pVarResult) = pDispatch;
                     else
@@ -1209,7 +1269,7 @@ static HRESULT DatabaseImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
                 if ((ret = MsiDatabaseOpenViewW(This->msiHandle, V_BSTR(&varg0), &msiHandle)) == ERROR_SUCCESS)
                 {
-                    if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_View, ViewImpl_Invoke, NULL, 0)))
+                    if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_View, ViewImpl_Invoke, NULL)))
                         V_DISPATCH(pVarResult) = pDispatch;
                     else
                         ERR("Failed to create View object, hresult 0x%08x\n", hr);
@@ -1605,7 +1665,7 @@ static HRESULT InstallerImpl_CreateRecord(WORD wFlags,
         return DISP_E_EXCEPTION;
 
     hr = create_automation_object(hrec, NULL, (LPVOID*)&dispatch,
-                                  &DIID_Record, RecordImpl_Invoke, NULL, 0);
+                                  &DIID_Record, RecordImpl_Invoke, NULL);
     if (SUCCEEDED(hr))
         V_DISPATCH(pVarResult) = dispatch;
 
@@ -2178,157 +2238,52 @@ done:
     return hr;
 }
 
-static void cleanup_products(IDispatch* dispatch, ULONG count)
-{
-    UINT i;
-    ListData* ldata = private_data((AutomationObject *)dispatch);
-
-    for (i = 0; i < count - 1; i++)
-        VariantClear(&ldata->pVars[i]);
-
-    ldata->ulCount = 0;
-    msi_free(ldata->pVars);
-
-    IDispatch_Release(dispatch);
-}
-
-static HRESULT InstallerImpl_Products(WORD wFlags,
+static HRESULT InstallerImpl_Products(WORD flags,
                                       DISPPARAMS* pDispParams,
-                                      VARIANT* pVarResult,
+                                      VARIANT* result,
                                       EXCEPINFO* pExcepInfo,
                                       UINT* puArgErr)
 {
-    UINT ret;
-    HRESULT hr;
-    ULONG idx = 0;
-    ListData *ldata;
     IDispatch *dispatch;
-    WCHAR product[GUID_SIZE];
+    HRESULT hr;
 
-    if (!(wFlags & DISPATCH_PROPERTYGET))
+    if (!(flags & DISPATCH_PROPERTYGET))
         return DISP_E_MEMBERNOTFOUND;
 
-    /* Find number of products. */
-    while ((ret = MsiEnumProductsW(idx, product)) == ERROR_SUCCESS)
-        idx++;
-
-    if (ret != ERROR_NO_MORE_ITEMS)
-        return DISP_E_EXCEPTION;
-
-    V_VT(pVarResult) = VT_DISPATCH;
-    hr = create_automation_object(0, NULL, (LPVOID*)&dispatch,
-                                  &DIID_StringList, ListImpl_Invoke,
-                                  ListImpl_Free, sizeof(ListData));
+    hr = create_list(NULL, &dispatch);
     if (FAILED(hr))
         return hr;
 
-    V_DISPATCH(pVarResult) = dispatch;
+    V_VT(result) = VT_DISPATCH;
+    V_DISPATCH(result) = dispatch;
 
-    /* Save product strings. */
-    ldata = private_data((AutomationObject *)dispatch);
-    ldata->ulCount = 0;
-    ldata->pVars = msi_alloc_zero(sizeof(VARIANT) * idx);
-    if (!ldata->pVars)
-    {
-        IDispatch_Release(dispatch);
-        return E_OUTOFMEMORY;
-    }
-
-    ldata->ulCount = idx;
-    for (idx = 0; idx < ldata->ulCount; idx++)
-    {
-        ret = MsiEnumProductsW(idx, product);
-        if (ret != ERROR_SUCCESS)
-        {
-            cleanup_products(dispatch, idx - 1);
-            return DISP_E_EXCEPTION;
-        }
-
-        VariantInit(&ldata->pVars[idx]);
-        V_VT(&ldata->pVars[idx]) = VT_BSTR;
-        V_BSTR(&ldata->pVars[idx]) = SysAllocString(product);
-    }
-
-    return S_OK;
+    return hr;
 }
 
-static HRESULT InstallerImpl_RelatedProducts(WORD wFlags,
+static HRESULT InstallerImpl_RelatedProducts(WORD flags,
                                              DISPPARAMS* pDispParams,
-                                             VARIANT* pVarResult,
+                                             VARIANT* result,
                                              EXCEPINFO* pExcepInfo,
                                              UINT* puArgErr)
 {
-    UINT ret;
-    ULONG idx;
-    HRESULT hr;
-    ListData *ldata;
-    VARIANTARG varg0;
     IDispatch* dispatch;
-    WCHAR product[GUID_SIZE];
+    VARIANTARG related;
+    HRESULT hr;
 
-    if (!(wFlags & DISPATCH_PROPERTYGET))
+    if (!(flags & DISPATCH_PROPERTYGET))
         return DISP_E_MEMBERNOTFOUND;
 
-    VariantInit(&varg0);
-    hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+    VariantInit(&related);
+    hr = DispGetParam(pDispParams, 0, VT_BSTR, &related, puArgErr);
     if (FAILED(hr))
         return hr;
 
-    /* Find number of related products. */
-    idx = 0;
-    do
-    {
-        ret = MsiEnumRelatedProductsW(V_BSTR(&varg0), 0, idx, product);
-        if (ret == ERROR_SUCCESS)
-            idx++;
-    } while (ret == ERROR_SUCCESS);
+    hr = create_list(V_BSTR(&related), &dispatch);
+    VariantClear(&related);
 
-    if (ret != ERROR_NO_MORE_ITEMS)
-    {
-        hr = DISP_E_EXCEPTION;
-        goto done;
-    }
+    V_VT(result) = VT_DISPATCH;
+    V_DISPATCH(result) = dispatch;
 
-    V_VT(pVarResult) = VT_DISPATCH;
-
-    hr = create_automation_object(0, NULL, (LPVOID*)&dispatch,
-                                  &DIID_StringList, ListImpl_Invoke,
-                                  ListImpl_Free, sizeof(ListData));
-    if (FAILED(hr))
-        goto done;
-
-    V_DISPATCH(pVarResult) = dispatch;
-
-    /* Save product strings. */
-    ldata = private_data((AutomationObject *)dispatch);
-    ldata->pVars = msi_alloc(sizeof(VARIANT) * idx);
-    if (!ldata->pVars)
-    {
-        IDispatch_Release(dispatch);
-        hr = E_OUTOFMEMORY;
-        goto done;
-    }
-
-    ldata->ulCount = idx;
-    for (idx = 0; idx < ldata->ulCount; idx++)
-    {
-        ret = MsiEnumRelatedProductsW(V_BSTR(&varg0), 0, idx, product);
-        if (ret != ERROR_SUCCESS)
-        {
-            cleanup_products(dispatch, idx - 1);
-            hr = DISP_E_EXCEPTION;
-            goto done;
-        }
-
-        VariantInit(&ldata->pVars[idx]);
-        V_VT(&ldata->pVars[idx]) = VT_BSTR;
-        V_BSTR(&ldata->pVars[idx]) = SysAllocString(product);
-    }
-
-    hr = S_OK;
-
-done:
-    VariantClear(&varg0);
     return hr;
 }
 
