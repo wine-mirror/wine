@@ -557,7 +557,7 @@ static HRESULT LoadUnknownMetadata(IStream *input, const GUID *preferred_vendor,
     }
 
     result = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataItem));
-    if (FAILED(hr))
+    if (!result)
     {
         HeapFree(GetProcessHeap(), 0, data);
         return E_OUTOFMEMORY;
