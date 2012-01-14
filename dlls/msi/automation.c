@@ -49,6 +49,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 typedef struct AutomationObject AutomationObject;
 
+typedef HRESULT (*autoInvokeFunc)(AutomationObject* This,
+    DISPID dispIdMember, REFIID riid, LCID lcid, WORD flags, DISPPARAMS* pDispParams,
+    VARIANT* result, EXCEPINFO* ei, UINT* arg_err);
+
+typedef void (*autoFreeFunc)(AutomationObject* This);
+
 struct AutomationObject {
     IDispatch IDispatch_iface;
     IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
@@ -62,20 +68,10 @@ struct AutomationObject {
     MSIHANDLE msiHandle;
 
     /* A function that is called from AutomationObject::Invoke, specific to this type of object. */
-    HRESULT (*funcInvoke)(
-        AutomationObject* This,
-        DISPID dispIdMember,
-        REFIID riid,
-        LCID lcid,
-        WORD wFlags,
-        DISPPARAMS* pDispParams,
-        VARIANT* pVarResult,
-        EXCEPINFO* pExcepInfo,
-        UINT* puArgErr);
-
+    autoInvokeFunc funcInvoke;
     /* A function that is called from AutomationObject::Release when the object is being freed to free any private
      * data structures (or NULL) */
-    void (*funcFree)(AutomationObject* This);
+    autoFreeFunc funcFree;
 };
 
 static HRESULT create_list_enumerator(IUnknown*, void**, AutomationObject*, ULONG);
@@ -103,9 +99,9 @@ typedef struct {
 } ListData;
 
 typedef struct {
-    /* The parent Installer object */
-    IDispatch *pInstaller;
-} SessionData;
+    AutomationObject autoobj;
+    IDispatch *installer;
+} SessionObject;
 
 /* Load type info so we don't have to process GetIDsOfNames */
 HRESULT load_type_info(IDispatch *iface, ITypeInfo **pptinfo, REFIID clsid, LCID lcid)
@@ -483,13 +479,12 @@ static const IProvideMultipleClassInfoVtbl ProvideMultipleClassInfoVtbl =
 /* Create the automation object, placing the result in the pointer ppObj. The automation object is created
  * with the appropriate clsid and invocation function. */
 static HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter, void **ppObj, REFIID clsid,
-        HRESULT (*funcInvoke)(AutomationObject*,DISPID,REFIID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,UINT*),
-        void (*funcFree)(AutomationObject*), SIZE_T sizetPrivateData)
+        autoInvokeFunc invokeFunc, autoFreeFunc freeFunc, SIZE_T sizetPrivateData)
 {
     AutomationObject *object;
     HRESULT hr;
 
-    TRACE("(%d,%p,%p,%s,%p,%p,%ld)\n", msiHandle, pUnkOuter, ppObj, debugstr_guid(clsid), funcInvoke, funcFree, sizetPrivateData);
+    TRACE("(%d,%p,%p,%s,%p,%p,%ld)\n", msiHandle, pUnkOuter, ppObj, debugstr_guid(clsid), invokeFunc, freeFunc, sizetPrivateData);
 
     if( pUnkOuter )
         return CLASS_E_NOAGGREGATION;
@@ -502,8 +497,8 @@ static HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter
 
     object->msiHandle = msiHandle;
     object->clsid = (LPCLSID)clsid;
-    object->funcInvoke = funcInvoke;
-    object->funcFree = funcFree;
+    object->funcInvoke = invokeFunc;
+    object->funcFree = freeFunc;
 
     /* Load our TypeInfo so we don't have to process GetIDsOfNames */
     object->iTypeInfo = NULL;
@@ -516,6 +511,25 @@ static HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter
     *ppObj = object;
 
     return S_OK;
+}
+
+static HRESULT init_automation_object(AutomationObject *This, MSIHANDLE msiHandle, REFIID clsid,
+        autoInvokeFunc invokeFunc, autoFreeFunc freeFunc)
+{
+    TRACE("(%p, %d, %s, %p, %p)\n", This, msiHandle, debugstr_guid(clsid), invokeFunc, freeFunc);
+
+    This->IDispatch_iface.lpVtbl = &AutomationObjectVtbl;
+    This->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
+    This->ref = 1;
+
+    This->msiHandle = msiHandle;
+    This->clsid = (LPCLSID)clsid;
+    This->funcInvoke = invokeFunc;
+    This->funcFree   = freeFunc;
+
+    /* Load our TypeInfo so we don't have to process GetIDsOfNames */
+    This->iTypeInfo = NULL;
+    return load_type_info(&This->IDispatch_iface, &This->iTypeInfo, clsid, 0);
 }
 
 /*
@@ -1236,7 +1250,7 @@ static HRESULT SessionImpl_Invoke(
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr)
 {
-    SessionData *data = private_data(This);
+    SessionObject *session = (SessionObject*)This;
     WCHAR *szString;
     DWORD dwLen;
     IDispatch *pDispatch = NULL;
@@ -1255,8 +1269,8 @@ static HRESULT SessionImpl_Invoke(
         case DISPID_SESSION_INSTALLER:
             if (wFlags & DISPATCH_PROPERTYGET) {
                 V_VT(pVarResult) = VT_DISPATCH;
-                IDispatch_AddRef(data->pInstaller);
-                V_DISPATCH(pVarResult) = data->pInstaller;
+                IDispatch_AddRef(session->installer);
+                V_DISPATCH(pVarResult) = session->installer;
             }
             else return DISP_E_MEMBERNOTFOUND;
             break;
@@ -2402,11 +2416,23 @@ HRESULT create_msiserver(IUnknown *pOuter, LPVOID *ppObj)
     return create_automation_object(0, pOuter, ppObj, &DIID_Installer, InstallerImpl_Invoke, NULL, 0);
 }
 
-/* Wrapper around create_automation_object to create a session object. */
-HRESULT create_session(MSIHANDLE msiHandle, IDispatch *pInstaller, IDispatch **pDispatch)
+HRESULT create_session(MSIHANDLE msiHandle, IDispatch *installer, IDispatch **disp)
 {
-    HRESULT hr = create_automation_object(msiHandle, NULL, (LPVOID)pDispatch, &DIID_Session, SessionImpl_Invoke, NULL, sizeof(SessionData));
-    if (SUCCEEDED(hr) && pDispatch && *pDispatch)
-        ((SessionData *)private_data((AutomationObject *)*pDispatch))->pInstaller = pInstaller;
+    SessionObject *session;
+    HRESULT hr;
+
+    session = msi_alloc(sizeof(SessionObject));
+    if (!session) return E_OUTOFMEMORY;
+
+    hr = init_automation_object(&session->autoobj, msiHandle, &DIID_Session, SessionImpl_Invoke, NULL);
+    if (hr != S_OK)
+    {
+        msi_free(session);
+        return hr;
+    }
+
+    session->installer = installer;
+    *disp = &session->autoobj.IDispatch_iface;
+
     return hr;
 }
