@@ -5681,7 +5681,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
                 /* Nothing to do */
                 break;
             default:
-                FIXME("Unhandled location %#x", location);
+                FIXME("Unhandled location %#x\n", location);
         }
         surface->flags &= ~SFLAG_LOST;
         surface->flags |= location;
