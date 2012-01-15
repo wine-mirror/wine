@@ -774,7 +774,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetTextureCoordinates(IDirect3
 
     TRACE("(%p)->(%d,%p,%p)\n", This, index, u, v);
 
-    return IDirect3DRMMeshBuilder2_GetTextureCoordinates(&This->IDirect3DRMMeshBuilder3_iface,
+    return IDirect3DRMMeshBuilder3_GetTextureCoordinates(&This->IDirect3DRMMeshBuilder3_iface,
                                                          index, u, v);
 }
 
