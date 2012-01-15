@@ -1433,6 +1433,8 @@ sub source_scan_directory($$$$)
 	$name =~ s+(/|\.[^.]*)$++;
 	if ($opt_target_type == $TT_DLL) {
 	  $name = canonize($name).".dll";
+	} elsif ($opt_target_type == $TT_LIB) {
+	  $name = "lib".canonize($name).".a";
 	} else {
 	  $name = canonize($name).".exe";
 	}
@@ -1546,6 +1548,12 @@ sub source_scan_directory($$$$)
       }
     } elsif ($target_name =~ /\.lib$/) {
       $target_name =~ s/(.*)\.lib/lib$1.a/;
+      @$target[$T_NAME]=$target_name;
+      @$target[$T_TYPE]=$TT_LIB;
+      push @local_depends,"$target_name";
+      push @local_libs,$target_name;
+      push @{@$target[$T_ARFLAGS]},("rc");
+    } elsif ($target_name =~ /\.a$/) {
       @$target[$T_NAME]=$target_name;
       @$target[$T_TYPE]=$TT_LIB;
       push @local_depends,"$target_name";
@@ -2630,7 +2638,7 @@ sub usage()
   print STDERR "Usage: winemaker [--nobanner] [--backup|--nobackup] [--nosource-fix]\n";
   print STDERR "                 [--lower-none|--lower-all|--lower-uppercase]\n";
   print STDERR "                 [--lower-include|--nolower-include] [--mfc|--nomfc]\n";
-  print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll]\n";
+  print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll|--lib]\n";
   print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Pdir] [-idll] [-Ldir] [-llibrary]\n";
   print STDERR "                 [--nodlls] [--nomsvcrt] [--interactive] [--single-target name]\n";
   print STDERR "                 [--generated-files|--nogenerated-files]\n";
@@ -2690,6 +2698,8 @@ while (@ARGV>0) {
   # 'Source'-based method options
   } elsif ($arg eq "--dll") {
     $opt_target_type=$TT_DLL;
+  } elsif ($arg eq "--lib") {
+    $opt_target_type=$TT_LIB;
   } elsif ($arg eq "--guiexe" or $arg eq "--windows") {
     $opt_target_type=$TT_GUIEXE;
   } elsif ($arg eq "--cuiexe" or $arg eq "--console") {

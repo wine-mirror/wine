@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINEMAKER 1 "April 2010" "@PACKAGE_STRING@" "Wine Developers Manual"
+.TH WINEMAKER 1 "Januar 2012" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 winemaker \- Erzeugt eine Buildumgebung um Windows Programme unter Unix zu kompilieren
 .SH ÜBERSICHT
@@ -17,7 +17,7 @@ winemaker \- Erzeugt eine Buildumgebung um Windows Programme unter Unix zu kompi
 ]
 .br
   [
-.BR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll "
+.BR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll " "| " "--lib "
 ]
 .br
   [
@@ -118,7 +118,10 @@ Diese Option ist Standard.
 Gibt den Typ(Konsole) der zu erstellenden Anwendung an.
 .TP
 .B --dll
-winemaker wird im Zweifelsfall annehmen, dass es sich um eine Bibliothek handelt.
+winemaker wird im Zweifelsfall annehmen, dass es sich um eine DLL handelt.
+.TP
+.B --lib
+winemaker wird im Zweifelsfall annehmen, dass es sich um eine statische Bibliothek handelt.
 .TP
 .B --mfc
 Teilt winemaker mit, dass es sich um MFC-basierten Quellcode handelt.

@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINEMAKER 1 "Sep 2009" "@PACKAGE_STRING@" "Wine Developers Manual"
+.TH WINEMAKER 1 "Jan 2012" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 winemaker \- generate a build infrastructure for compiling Windows programs on Unix
 .SH SYNOPSIS
@@ -17,7 +17,7 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 ]
 .br
   [
-.BR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll "
+.BR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll " "| " "--lib "
 ]
 .br
   [
@@ -120,8 +120,13 @@ unknown type, it should assume that it is a console application.
 .TP
 .B --dll
 This option tells winemaker that whenever it finds a target of unknown type,
-i.e. for which it does not know whether it is an executable or a library,
-it should assume it is a library.
+i.e. for which it does not know whether it is an executable, a dll, or a static library,
+it should assume it is a dll.
+.TP
+.B --lib
+This option tells winemaker that whenever it finds a target of unknown type,
+i.e. for which it does not know whether it is an executable, a dll, or a static library,
+it should assume it is a static library.
 .TP
 .B --mfc
 Specifies that the targets are MFC based. In such a case winemaker adapts
