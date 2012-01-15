@@ -288,7 +288,7 @@ msgstr "&Mete èn Oûve"
 
 #: comctl32.rc:55 comctl32.rc:69 comdlg32.rc:301 user32.rc:86
 msgid "Help"
-msgstr "Help"
+msgstr ""
 
 #: comctl32.rc:62
 msgid "Wizard"
@@ -483,7 +483,7 @@ msgstr "Sicrirece &specifike"
 
 #: comdlg32.rc:229 comdlg32.rc:415 comdlg32.rc:434 wineps.rc:31
 msgid "Orientation"
-msgstr "Orientation"
+msgstr ""
 
 #: comdlg32.rc:230
 msgid "Po&rtrait"
@@ -2137,9 +2137,8 @@ msgid "Enable &only the following purposes for this certificate:"
 msgstr ""
 
 #: cryptui.rc:250
-#, fuzzy
 msgid "Add &Purpose..."
-msgstr "&Browse..."
+msgstr ""
 
 #: cryptui.rc:254
 msgid "Add Purpose"
@@ -2921,9 +2920,8 @@ msgid "Device"
 msgstr ""
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "Informåcion"
+msgstr ""
 
 #: dinput.rc:51
 msgid "Mapping"
@@ -2934,9 +2932,8 @@ msgid "Show Assigned First"
 msgstr ""
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Informåcion"
+msgstr ""
 
 #: dinput.rc:35
 msgid "Object"
@@ -3653,9 +3650,8 @@ msgid "Sharing violation\n"
 msgstr ""
 
 #: winerror.mc:191
-#, fuzzy
 msgid "Lock violation\n"
-msgstr "Informåcion"
+msgstr ""
 
 #: winerror.mc:196
 msgid "Wrong disk\n"
@@ -4056,9 +4052,8 @@ msgid "Resource in use\n"
 msgstr ""
 
 #: winerror.mc:696
-#, fuzzy
 msgid "Cancel violation\n"
-msgstr "Informåcion"
+msgstr ""
 
 #: winerror.mc:701
 msgid "Atomic locks not supported\n"
@@ -5719,9 +5714,8 @@ msgid "Invalid handle state\n"
 msgstr ""
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration\n"
-msgstr "Informåcion"
+msgstr ""
 
 #: winerror.mc:2776
 msgid "Index is missing\n"
@@ -6966,9 +6960,8 @@ msgid "diagram"
 msgstr ""
 
 #: oleacc.rc:81
-#, fuzzy
 msgid "animation"
-msgstr "Informåcion"
+msgstr ""
 
 #: oleacc.rc:82
 msgid "equation"
@@ -7238,9 +7231,8 @@ msgid "Copying Files..."
 msgstr ""
 
 #: setupapi.rc:42
-#, fuzzy
 msgid "Destination:"
-msgstr "Informåcion"
+msgstr ""
 
 #: setupapi.rc:49
 #, fuzzy
@@ -7714,11 +7706,11 @@ msgstr "Å dfait di %s"
 
 #: shell32.rc:333
 msgid "Wine &license"
-msgstr "Wine &license"
+msgstr ""
 
 #: shell32.rc:338
 msgid "Running on %s"
-msgstr "Running on %s"
+msgstr ""
 
 #: shell32.rc:339
 msgid "Wine was brought to you by:"
@@ -7729,17 +7721,15 @@ msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
-"Type the name of a program, folder, document, or Internet resource, and Wine "
-"will open it for you."
 
 #: shell32.rc:348
 msgid "&Open:"
-msgstr "&Open:"
+msgstr ""
 
 #: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
 msgid "&Browse..."
-msgstr "&Browse..."
+msgstr ""
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
@@ -7960,9 +7950,8 @@ msgid "Status"
 msgstr ""
 
 #: shell32.rc:149
-#, fuzzy
 msgid "Location"
-msgstr "Informåcion"
+msgstr ""
 
 #: shell32.rc:150
 msgid "Model"
@@ -8244,11 +8233,11 @@ msgstr "&Passer hute"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr "&Try Again"
+msgstr ""
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr "&Continue"
+msgstr ""
 
 #: user32.rc:91
 #, fuzzy
@@ -9664,9 +9653,8 @@ msgid "Wine Explorer"
 msgstr ""
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "Informåcion"
+msgstr ""
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -10035,9 +10023,8 @@ msgid "&View TypeLib..."
 msgstr ""
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "Informåcion"
+msgstr ""
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -10336,9 +10323,8 @@ msgid "Implementation"
 msgstr ""
 
 #: oleview.rc:140
-#, fuzzy
 msgid "Activation"
-msgstr "Informåcion"
+msgstr ""
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
@@ -11984,9 +11970,8 @@ msgid "&Owner:"
 msgstr ""
 
 #: winecfg.rc:137
-#, fuzzy
 msgid "Organi&zation:"
-msgstr "Informåcion"
+msgstr ""
 
 #: winecfg.rc:145
 msgid "Application settings"
@@ -12248,9 +12233,8 @@ msgid "About"
 msgstr ""
 
 #: winecfg.rc:41
-#, fuzzy
 msgid "Wine configuration"
-msgstr "Informåcion"
+msgstr ""
 
 #: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
@@ -12582,9 +12566,8 @@ msgid "&Color"
 msgstr ""
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr "Informåcion"
+msgstr ""
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
@@ -12859,9 +12842,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "&Tchwezi totafwait"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "&Informåcion..."
+msgstr ""
 
 #: winefile.rc:128
 msgid "Select destination"
@@ -12939,9 +12921,8 @@ msgid "&Compressed"
 msgstr ""
 
 #: winefile.rc:184
-#, fuzzy
 msgid "Version information"
-msgstr "Informåcion"
+msgstr ""
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -13150,7 +13131,7 @@ msgstr "Todi &Visibe"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Informåcion..."
+msgstr ""
 
 #: winhlp32.rc:64
 #, fuzzy
@@ -13312,9 +13293,8 @@ msgid "&Pale yellow\tCtrl+2"
 msgstr "&Tchwezi totafwait"
 
 #: wordpad.rc:93
-#, fuzzy
 msgid "&About Wine Wordpad"
-msgstr "&Informåcion..."
+msgstr ""
 
 #: wordpad.rc:130
 msgid "Automatic"
