@@ -61,6 +61,12 @@ coclass KnownFolderManager { interface IKnownFolderManager; }
 ] coclass QueryAssociations { interface IQueryAssociations; }
 
 [
+    helpstring("Manage Application associations"),
+    threading(apartment),
+    uuid(591209c7-767b-42b2-9fba-44ee4615f2c7)
+] coclass ApplicationAssociationRegistration { interface IApplicationAssociationRegistration; }
+
+[
     helpstring("Shell Drag and Drop Helper"),
     threading(apartment),
     uuid(4657278a-411b-11d2-839a-00c04fd918d0)

@@ -28,6 +28,7 @@
 #include "objbase.h"
 #include "shlguid.h"
 #include "shlwapi.h"
+#include "shobjidl.h"
 #include "shell32_main.h"
 #include "ver.h"
 #include "wine/unicode.h"
@@ -64,6 +65,13 @@ typedef struct
   HKEY hkeySource;
   HKEY hkeyProgID;
 } IQueryAssociationsImpl;
+
+typedef struct
+{
+  IApplicationAssociationRegistration IApplicationAssociationRegistration_iface;
+  LONG ref;
+} IApplicationAssociationRegistrationImpl;
+
 
 static inline IQueryAssociationsImpl *impl_from_IQueryAssociations(IQueryAssociations *iface)
 {
@@ -711,6 +719,114 @@ static const IQueryAssociationsVtbl IQueryAssociations_vtbl =
 };
 
 /**************************************************************************
+ * IApplicationAssociationRegistration implementation
+ */
+static inline IApplicationAssociationRegistrationImpl *impl_from_IApplicationAssociationRegistration(IApplicationAssociationRegistration *iface)
+{
+  return CONTAINING_RECORD(iface, IApplicationAssociationRegistrationImpl, IApplicationAssociationRegistration_iface);
+}
+
+static HRESULT WINAPI ApplicationAssociationRegistration_QueryInterface(
+                        IApplicationAssociationRegistration* iface, REFIID riid, LPVOID *ppv)
+{
+    IApplicationAssociationRegistrationImpl *This = impl_from_IApplicationAssociationRegistration(iface);
+
+    TRACE("(%p, %s, %p)\n",This, debugstr_guid(riid), ppv);
+
+    if (ppv == NULL)
+        return E_POINTER;
+
+    if (IsEqualGUID(&IID_IUnknown, riid) ||
+        IsEqualGUID(&IID_IApplicationAssociationRegistration, riid)) {
+        *ppv = &This->IApplicationAssociationRegistration_iface;
+        IUnknown_AddRef((IUnknown*)*ppv);
+        TRACE("returning IApplicationAssociationRegistration: %p\n", *ppv);
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    FIXME("(%p)->(%s %p) interface not supported\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ApplicationAssociationRegistration_AddRef(IApplicationAssociationRegistration *iface)
+{
+    IApplicationAssociationRegistrationImpl *This = impl_from_IApplicationAssociationRegistration(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI ApplicationAssociationRegistration_Release(IApplicationAssociationRegistration *iface)
+{
+    IApplicationAssociationRegistrationImpl *This = impl_from_IApplicationAssociationRegistration(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref) {
+        SHFree(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI ApplicationAssociationRegistration_QueryCurrentDefault(IApplicationAssociationRegistration* This, LPCWSTR query,
+                                                                             ASSOCIATIONTYPE type, ASSOCIATIONLEVEL level, LPWSTR *association)
+{
+    FIXME("(%p)->(%s, %d, %d, %p)\n", This, debugstr_w(query), type, level, association);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ApplicationAssociationRegistration_QueryAppIsDefault(IApplicationAssociationRegistration* This, LPCWSTR query,
+                                                                           ASSOCIATIONTYPE type, ASSOCIATIONLEVEL level, LPCWSTR appname, BOOL *is_default)
+{
+    FIXME("(%p)->(%s, %d, %d, %s, %p)\n", This, debugstr_w(query), type, level, debugstr_w(appname), is_default);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ApplicationAssociationRegistration_QueryAppIsDefaultAll(IApplicationAssociationRegistration* This, ASSOCIATIONLEVEL level,
+                                                                              LPCWSTR appname, BOOL *is_default)
+{
+    FIXME("(%p)->(%d, %s, %p)\n", This, level, debugstr_w(appname), is_default);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ApplicationAssociationRegistration_SetAppAsDefault(IApplicationAssociationRegistration* This, LPCWSTR appname,
+                                                                         LPCWSTR set, ASSOCIATIONTYPE set_type)
+{
+    FIXME("(%p)->(%s, %s, %d)\n", This, debugstr_w(appname), debugstr_w(set), set_type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ApplicationAssociationRegistration_SetAppAsDefaultAll(IApplicationAssociationRegistration* This, LPCWSTR appname)
+{
+    FIXME("(%p)->(%s)\n", This, debugstr_w(appname));
+    return E_NOTIMPL;
+}
+
+
+static HRESULT WINAPI ApplicationAssociationRegistration_ClearUserAssociations(IApplicationAssociationRegistration* This)
+{
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+
+static const IApplicationAssociationRegistrationVtbl IApplicationAssociationRegistration_vtbl =
+{
+    ApplicationAssociationRegistration_QueryInterface,
+    ApplicationAssociationRegistration_AddRef,
+    ApplicationAssociationRegistration_Release,
+    ApplicationAssociationRegistration_QueryCurrentDefault,
+    ApplicationAssociationRegistration_QueryAppIsDefault,
+    ApplicationAssociationRegistration_QueryAppIsDefaultAll,
+    ApplicationAssociationRegistration_SetAppAsDefault,
+    ApplicationAssociationRegistration_SetAppAsDefaultAll,
+    ApplicationAssociationRegistration_ClearUserAssociations
+};
+
+/**************************************************************************
  *  IQueryAssociations_Constructor [internal]
  *
  * Construct a new IQueryAssociations object.
@@ -730,4 +846,31 @@ HRESULT WINAPI QueryAssociations_Constructor(IUnknown *pUnkOuter, REFIID riid, L
     if (FAILED(ret = IUnknown_QueryInterface((IUnknown *)this, riid, ppOutput))) SHFree( this );
     TRACE("returning %p\n", *ppOutput);
     return ret;
+}
+
+/**************************************************************************
+ * ApplicationAssociationRegistration_Constructor [internal]
+ *
+ * Construct a IApplicationAssociationRegistration object.
+ */
+HRESULT WINAPI ApplicationAssociationRegistration_Constructor(IUnknown *outer, REFIID riid, LPVOID *ppv)
+{
+    IApplicationAssociationRegistrationImpl *This;
+    HRESULT hr;
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    if (!(This = SHAlloc(sizeof(*This))))
+        return E_OUTOFMEMORY;
+
+    This->IApplicationAssociationRegistration_iface.lpVtbl = &IApplicationAssociationRegistration_vtbl;
+    This->ref = 0;
+
+    hr = IUnknown_QueryInterface(&This->IApplicationAssociationRegistration_iface, riid, ppv);
+    if (FAILED(hr))
+        SHFree(This);
+
+    TRACE("returning 0x%x with %p\n", hr, *ppv);
+    return hr;
 }
