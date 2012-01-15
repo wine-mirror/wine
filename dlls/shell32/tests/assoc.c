@@ -54,6 +54,9 @@ static void test_IQueryAssociations_QueryInterface(void)
         IUnknown_Release(unk);
     }
 
+    hr = IUnknown_QueryInterface(qa, &IID_IUnknown, NULL);
+    ok(hr == E_POINTER, "got 0x%x (expected E_POINTER)\n", hr);
+
     IQueryAssociations_Release(qa);
 }
 

@@ -84,6 +84,9 @@ static HRESULT WINAPI IQueryAssociations_fnQueryInterface(
 
   TRACE("(%p,%s,%p)\n",This, debugstr_guid(riid), ppvObj);
 
+  if (ppvObj == NULL)
+      return E_POINTER;
+
   *ppvObj = NULL;
 
   if (IsEqualIID(riid, &IID_IUnknown) ||
