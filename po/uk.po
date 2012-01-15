@@ -2208,7 +2208,7 @@ msgstr ""
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
-msgstr "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+msgstr ""
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
@@ -2353,15 +2353,15 @@ msgstr "Виберіть формат, який ви хочете викорис
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (.cer)"
-msgstr "&DER-encoded X.509 (.cer)"
+msgstr ""
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr "Ba&se64-encoded X.509 (.cer):"
+msgstr ""
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
-msgstr "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+msgstr ""
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
@@ -2857,11 +2857,11 @@ msgstr "Вказаний файл вже існує.  Ви хочете його
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr "DER-Encoded Binary X.509 (*.cer)"
+msgstr ""
 
 #: cryptui.rc:154
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr "Base64-Encoded X.509 (*.cer)"
+msgstr ""
 
 #: cryptui.rc:157
 msgid "CMS/PKCS #7 Messages (*.p7b)"
@@ -3326,26 +3326,24 @@ msgid "&Blank page"
 msgstr "По&рожня сторінка"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr " Browsing history "
+msgstr ""
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr "You can delete cached pages, cookies and other data."
+msgstr ""
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr "Delete &files..."
+msgstr ""
 
 #: inetcpl.rc:57
 msgid "&Settings..."
-msgstr "&Settings..."
+msgstr ""
 
 #: inetcpl.rc:65
-#, fuzzy
 msgid "Delete browsing history"
-msgstr " Browsing history "
+msgstr ""
 
 #: inetcpl.rc:68
 msgid ""
@@ -6595,7 +6593,7 @@ msgstr "Вся Мережа"
 
 #: msacm32.rc:27
 msgid "Sound Selection"
-msgstr "Sound Selection"
+msgstr ""
 
 #: msacm32.rc:36
 msgid "&Save As..."
@@ -7240,12 +7238,12 @@ msgstr "СКАНУВАННЯ... Зачекайте"
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"
-msgstr "px"
+msgstr ""
 
 #: sane.rc:32
 msgctxt "unit: bits"
 msgid "b"
-msgstr "b"
+msgstr ""
 
 #: sane.rc:34 winecfg.rc:174
 msgctxt "unit: dots/inch"
@@ -8332,7 +8330,7 @@ msgstr "&Розмір паперу:"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr "Duplex:"
+msgstr ""
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
@@ -9849,12 +9847,12 @@ msgstr "Ви впевнені"
 #: cmd.rc:292 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
-msgstr "Y"
+msgstr ""
 
 #: cmd.rc:293 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
-msgstr "N"
+msgstr ""
 
 #: cmd.rc:294
 #, fuzzy
@@ -9931,7 +9929,7 @@ msgstr "Не можу викликати мітку пакету за межам
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr ""
 
 #: cmd.rc:313
 #, fuzzy
@@ -10073,7 +10071,7 @@ msgstr "Передача"
 
 #: ipconfig.rc:37
 msgid "Peer-to-peer"
-msgstr "Peer-to-peer"
+msgstr ""
 
 #: ipconfig.rc:38
 msgid "Mixed"
@@ -10438,7 +10436,7 @@ msgstr "&Об'єкт"
 
 #: oleview.rc:39
 msgid "&CoCreateInstance Flag"
-msgstr "&CoCreateInstance Flag"
+msgstr ""
 
 #: oleview.rc:41
 msgid "&In-process server"
@@ -10548,7 +10546,7 @@ msgstr ""
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
-msgstr "Default Interface Viewer"
+msgstr ""
 
 #: oleview.rc:181
 msgid "Interface"
@@ -10564,7 +10562,7 @@ msgstr "&Дивитись дані про тип"
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
-msgstr "IPersist Interface Viewer"
+msgstr ""
 
 #: oleview.rc:194 oleview.rc:206
 msgid "Class Name:"
@@ -10576,7 +10574,7 @@ msgstr "CLSID:"
 
 #: oleview.rc:203
 msgid "IPersistStream Interface Viewer"
-msgstr "IPersistStream Interface Viewer"
+msgstr ""
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
@@ -12480,7 +12478,7 @@ msgstr " Параметри вікна "
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatically capture the &mouse in full-screen windows"
+msgstr ""
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -12620,30 +12618,28 @@ msgid "Show &dot files"
 msgstr "Показати &файли, що починаються з крапки"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr ""
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
@@ -13024,11 +13020,11 @@ msgstr "Сплив. меню"
 
 #: wineconsole.rc:67
 msgid "&Control"
-msgstr "&Control"
+msgstr ""
 
 #: wineconsole.rc:68
 msgid "S&hift"
-msgstr "S&hift"
+msgstr ""
 
 #: wineconsole.rc:69
 msgid "Quick edit"
@@ -13403,7 +13399,7 @@ msgstr "Останні зміни:"
 
 #: winefile.rc:174
 msgid "Cop&yright:"
-msgstr "Cop&yright:"
+msgstr ""
 
 #: winefile.rc:176
 msgid "Size:"
@@ -13582,7 +13578,7 @@ msgstr "WineMine"
 
 #: winemine.rc:28
 msgid "Nobody"
-msgstr "Nobody"
+msgstr ""
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
