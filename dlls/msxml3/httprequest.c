@@ -502,7 +502,7 @@ static void add_response_header(httprequest *This, const WCHAR *data, int len)
     /* new header */
     TRACE("got header %s:%s\n", debugstr_w(header), debugstr_w(value));
 
-    entry = heap_alloc(sizeof(*header));
+    entry = heap_alloc(sizeof(*entry));
     entry->header = header;
     entry->value  = value;
     list_add_head(&This->respheaders, &entry->entry);
