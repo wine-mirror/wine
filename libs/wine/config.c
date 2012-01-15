@@ -456,7 +456,6 @@ const char *wine_get_build_id(void)
 /* exec a binary using the preloader if requested; helper for wine_exec_wine_binary */
 static void preloader_exec( char **argv, int use_preloader )
 {
-#ifdef linux
     if (use_preloader)
     {
         static const char preloader[] = "wine-preloader";
@@ -483,7 +482,6 @@ static void preloader_exec( char **argv, int use_preloader )
         free( new_argv );
         free( full_name );
     }
-#endif
     execv( argv[0], argv );
 }
 
@@ -494,7 +492,12 @@ void wine_exec_wine_binary( const char *name, char **argv, const char *env_var )
     int use_preloader;
 
     if (!name) name = argv0_name;  /* no name means default loader */
+
+#ifdef linux
     use_preloader = !strendswith( name, "wineserver" );
+#else
+    use_preloader = 0;
+#endif
 
     if ((ptr = strrchr( name, '/' )))
     {
