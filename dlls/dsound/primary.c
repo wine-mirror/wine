@@ -1123,7 +1123,7 @@ static HRESULT WINAPI PrimaryBufferImpl_QueryInterface(IDirectSoundBuffer *iface
         void **ppobj)
 {
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
-        DirectSoundDevice *device = This->device;
+
 	TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppobj);
 
 	if (ppobj == NULL) {
@@ -1159,16 +1159,9 @@ static HRESULT WINAPI PrimaryBufferImpl_QueryInterface(IDirectSoundBuffer *iface
 	}
 
         if ( IsEqualGUID( &IID_IDirectSound3DListener, riid ) ) {
-		if (!device->listener)
-			IDirectSound3DListenerImpl_Create(device, &device->listener);
-		if (device->listener) {
-			*ppobj = device->listener;
-			IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)*ppobj);
-			return S_OK;
-		}
-
-		WARN("IID_IDirectSound3DListener failed\n");
-		return E_NOINTERFACE;
+                *ppobj = &This->IDirectSound3DListener_iface;
+                IDirectSound3DListener_AddRef(&This->IDirectSound3DListener_iface);
+                return S_OK;
 	}
 
 	if ( IsEqualGUID( &IID_IKsPropertySet, riid ) ) {
@@ -1226,10 +1219,31 @@ HRESULT primarybuffer_create(DirectSoundDevice *device, IDirectSoundBufferImpl *
 	}
 
         dsb->ref = 1;
+        dsb->ref3D = 0;
         dsb->numIfaces = 1;
 	dsb->device = device;
 	dsb->IDirectSoundBuffer8_iface.lpVtbl = (IDirectSoundBuffer8Vtbl *)&dspbvt;
+        dsb->IDirectSound3DListener_iface.lpVtbl = &ds3dlvt;
 	dsb->dsbd = *dsbd;
+
+        /* IDirectSound3DListener */
+        device->ds3dl.dwSize = sizeof(DS3DLISTENER);
+        device->ds3dl.vPosition.x = 0.0;
+        device->ds3dl.vPosition.y = 0.0;
+        device->ds3dl.vPosition.z = 0.0;
+        device->ds3dl.vVelocity.x = 0.0;
+        device->ds3dl.vVelocity.y = 0.0;
+        device->ds3dl.vVelocity.z = 0.0;
+        device->ds3dl.vOrientFront.x = 0.0;
+        device->ds3dl.vOrientFront.y = 0.0;
+        device->ds3dl.vOrientFront.z = 1.0;
+        device->ds3dl.vOrientTop.x = 0.0;
+        device->ds3dl.vOrientTop.y = 1.0;
+        device->ds3dl.vOrientTop.z = 0.0;
+        device->ds3dl.flDistanceFactor = DS3D_DEFAULTDISTANCEFACTOR;
+        device->ds3dl.flRolloffFactor = DS3D_DEFAULTROLLOFFFACTOR;
+        device->ds3dl.flDopplerFactor = DS3D_DEFAULTDOPPLERFACTOR;
+        device->ds3dl_need_recalc = TRUE;
 
 	TRACE("Created primary buffer at %p\n", dsb);
 	TRACE("(formattag=0x%04x,chans=%d,samplerate=%d,"

@@ -49,7 +49,6 @@ typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct IDirectSoundCaptureImpl       IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
 typedef struct IDirectSoundNotifyImpl        IDirectSoundNotifyImpl;
-typedef struct IDirectSound3DListenerImpl    IDirectSound3DListenerImpl;
 typedef struct IDirectSound3DBufferImpl      IDirectSound3DBufferImpl;
 typedef struct IKsBufferPropertySetImpl      IKsBufferPropertySetImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
@@ -105,7 +104,6 @@ struct DirectSoundDevice
     normfunc normfunction;
 
     /* DirectSound3DListener fields */
-    IDirectSound3DListenerImpl*	listener;
     DS3DLISTENER                ds3dl;
     BOOL                        ds3dl_need_recalc;
 
@@ -167,8 +165,9 @@ HRESULT DirectSoundDevice_VerifyCertification(DirectSoundDevice * device,
 struct IDirectSoundBufferImpl
 {
     IDirectSoundBuffer8         IDirectSoundBuffer8_iface;
+    IDirectSound3DListener      IDirectSound3DListener_iface; /* only primary buffer */
     LONG                        numIfaces; /* "in use interfaces" refcount */
-    LONG                        ref;
+    LONG                        ref, ref3D;
     /* IDirectSoundBufferImpl fields */
     DirectSoundDevice*          device;
     RTL_RWLOCK                  lock;
@@ -213,6 +212,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     IDirectSoundBufferImpl **ppdsb,
     IDirectSoundBufferImpl *pdsb) DECLSPEC_HIDDEN;
 void secondarybuffer_destroy(IDirectSoundBufferImpl *This) DECLSPEC_HIDDEN;
+const IDirectSound3DListenerVtbl ds3dlvt DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * DirectSoundCaptureDevice implementation structure
@@ -258,22 +258,6 @@ struct IDirectSoundCaptureBufferImpl
     LPDSBPOSITIONNOTIFY                 notifies;
     int                                 nrofnotifies;
 };
-
-/*****************************************************************************
- *  IDirectSound3DListener implementation structure
- */
-struct IDirectSound3DListenerImpl
-{
-    /* IUnknown fields */
-    const IDirectSound3DListenerVtbl *lpVtbl;
-    LONG                        ref;
-    /* IDirectSound3DListenerImpl fields */
-    DirectSoundDevice*          device;
-};
-
-HRESULT IDirectSound3DListenerImpl_Create(
-    DirectSoundDevice           *device,
-    IDirectSound3DListenerImpl **pdsl) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  *  IKsBufferPropertySet implementation structure
