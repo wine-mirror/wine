@@ -1440,8 +1440,12 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
 
     if(This->event)
         if(!CreateTimerQueueTimer(&This->timer, g_timer_q,
-                    ca_period_cb, This, 0, This->period_ms, 0))
-            ERR("Unable to create timer: %u\n", GetLastError());
+                    ca_period_cb, This, 0, This->period_ms, 0)){
+            This->timer = NULL;
+            OSSpinLockUnlock(&This->lock);
+            WARN("Unable to create timer: %u\n", GetLastError());
+            return E_OUTOFMEMORY;
+        }
 
     This->playing = StateInTransition;
 
@@ -1467,6 +1471,8 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
     ACImpl *This = impl_from_IAudioClient(iface);
     AudioTimeStamp tstamp;
     OSStatus sc;
+    HANDLE event = NULL;
+    BOOL wait = FALSE;
 
     TRACE("(%p)\n", This);
 
@@ -1487,9 +1493,13 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
         return S_OK;
     }
 
-    if(This->timer && This->timer != INVALID_HANDLE_VALUE){
-        DeleteTimerQueueTimer(g_timer_q, This->timer, INVALID_HANDLE_VALUE);
+    if(This->timer){
+        event = CreateEventW(NULL, TRUE, FALSE, NULL);
+        wait = !DeleteTimerQueueTimer(g_timer_q, This->timer, event);
         This->timer = NULL;
+        if(wait)
+            WARN("DeleteTimerQueueTimer error %u\n", GetLastError());
+        wait = wait && GetLastError() == ERROR_IO_PENDING;
     }
 
     This->playing = StateInTransition;
@@ -1505,6 +1515,10 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
         WARN("GetCurrentTime failed: %lx\n", sc);
 
     OSSpinLockUnlock(&This->lock);
+
+    if(event && wait)
+        WaitForSingleObject(event, INFINITE);
+    CloseHandle(event);
 
     sc = AudioQueueFlush(This->aqueue);
     if(sc != noErr)
