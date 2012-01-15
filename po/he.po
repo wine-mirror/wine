@@ -9346,9 +9346,8 @@ msgstr ""
 "\n"
 
 #: attrib.rc:28 cmd.rc:302
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s: File Not Found\n"
+msgstr "%1: File Not Found\n"
 
 #: attrib.rc:47
 msgid ""
@@ -9536,7 +9535,6 @@ msgstr ""
 "HELP without an argument shows all CMD built-in commands.\n"
 
 #: cmd.rc:94
-#, fuzzy
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9549,9 +9547,9 @@ msgid ""
 msgstr ""
 "IF is used to conditionally execute a command.\n"
 "\n"
-"Syntax:\tIF [NOT] EXIST filename command\n"
-"IF [NOT] string1==string2 command\n"
-"IF [NOT] ERRORLEVEL number command\n"
+"Syntax: IF [NOT] EXIST filename command\n"
+"        IF [NOT] string1==string2 command\n"
+"        IF [NOT] ERRORLEVEL number command\n"
 "\n"
 "In the second form of the command, string1 and string2 must be in double\n"
 "quotes. The comparison is not case-sensitive.\n"
@@ -9619,20 +9617,18 @@ msgstr ""
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
-#, fuzzy
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE displays a message on the screen 'Press Return key to continue'\n"
-"and waits for the user to press the Return key. It is mainly useful in\n"
-"batch files to allow the user to read the output of a previous command\n"
-"before it scrolls off the screen.\n"
+"PAUSE displays a message on the screen asking the user to press a key.\n"
+"\n"
+"It is mainly useful in batch files to allow the user to read the output\n"
+"of a previous command before it scrolls off the screen.\n"
 
 #: cmd.rc:149
-#, fuzzy
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9672,7 +9668,7 @@ msgstr ""
 "(like a command PROMPT $p$g).\n"
 "\n"
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
-"so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
+"so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 
 #: cmd.rc:153
 msgid ""
@@ -9875,7 +9871,6 @@ msgstr ""
 "to the operating system or shell from which you invoked cmd.\n"
 
 #: cmd.rc:289
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9916,6 +9911,7 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "CMD built-in commands are:\n"
+"ASSOC\t\tShow or modify file extension associations\n"
 "ATTRIB\t\tShow or change DOS file attributes\n"
 "CALL\t\tInvoke a batch file from inside another\n"
 "CD (CHDIR)\tChange current default directory\n"
@@ -9928,14 +9924,16 @@ msgstr ""
 "DIR\t\tList the contents of a directory\n"
 "ECHO\t\tCopy text directly to the console output\n"
 "ENDLOCAL\tEnd localization of environment changes in a batch file\n"
+"FTYPE\t\tShow or modify open commands associated with file types\n"
 "HELP\t\tShow brief help details on a topic\n"
 "MD (MKDIR)\tCreate a subdirectory\n"
 "MORE\t\tDisplay output in pages\n"
 "MOVE\t\tMove a file, set of files or directory tree\n"
 "PATH\t\tSet or show the search path\n"
-"POPD\t\tRestores the directory to the last one saved with PUSHD\n"
+"PAUSE\t\tSuspend execution of a batch file\n"
+"POPD\t\tRestore the directory to the last one saved with PUSHD\n"
 "PROMPT\t\tChange the command prompt\n"
-"PUSHD\t\tChanges to a new directory, saving the current one\n"
+"PUSHD\t\tChange to a new directory, saving the current one\n"
 "REN (RENAME)\tRename a file\n"
 "RD (RMDIR)\tDelete a subdirectory\n"
 "SET\t\tSet or show environment variables\n"
@@ -9945,9 +9943,10 @@ msgstr ""
 "TYPE\t\tType the contents of a text file\n"
 "VER\t\tShow the current version of CMD\n"
 "VOL\t\tShow the volume label of a disk device\n"
+"XCOPY\t\tCopy source files or directory trees to a destination\n"
 "EXIT\t\tClose down CMD\n"
 "\n"
-"Enter HELP <command> for further information on any of the above commands\n"
+"Enter HELP <command> for further information on any of the above commands.\n"
 
 #: cmd.rc:291
 msgid "Are you sure"
@@ -9964,19 +9963,16 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "File association missing for extension %s\n"
+msgstr "File association missing for extension %1\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "No open command associated with file type '%s'\n"
+msgstr "No open command associated with file type '%1'\n"
 
 #: cmd.rc:296
-#, fuzzy
 msgid "Overwrite %1"
-msgstr "Overwrite %s"
+msgstr "Overwrite %1"
 
 #: cmd.rc:297
 msgid "More..."
@@ -9995,23 +9991,20 @@ msgid "Syntax error\n"
 msgstr "Syntax error\n"
 
 #: cmd.rc:303
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "No help available for %s\n"
+msgstr "No help available for %1\n"
 
 #: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr "Target to GOTO not found\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "Current Date is %s\n"
+msgstr "Current Date is %1\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "Current Time is %s\n"
+msgstr "Current Time is %1\n"
 
 #: cmd.rc:307
 msgid "Enter new date: "
@@ -10022,14 +10015,12 @@ msgid "Enter new time: "
 msgstr "Enter new time: "
 
 #: cmd.rc:309
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "Environment variable %s not defined\n"
+msgstr "Environment variable %1 not defined\n"
 
 #: cmd.rc:310 xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "Failed to open '%s'\n"
+msgstr "Failed to open '%1'\n"
 
 #: cmd.rc:311
 msgid "Cannot call batch label outside of a batch script\n"
@@ -10041,19 +10032,16 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:313
-#, fuzzy
 msgid "%1, Delete"
-msgstr "%s, Delete"
+msgstr "%1, Delete"
 
 #: cmd.rc:314
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "Echo is %s\n"
+msgstr "Echo is %1\n"
 
 #: cmd.rc:315
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "Verify is %s\n"
+msgstr "Verify is %1\n"
 
 #: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
@@ -10064,13 +10052,11 @@ msgid "Parameter error\n"
 msgstr "Parameter error\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Volume in drive %c is %s\n"
-"Volume Serial Number is %04x-%04x\n"
+"Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -10082,18 +10068,16 @@ msgid "PATH not found\n"
 msgstr "PATH not found\n"
 
 #: cmd.rc:321
-#, fuzzy
 msgid "Press any key to continue... "
-msgstr "Press Return key to continue: "
+msgstr "Press any key to continue... "
 
 #: cmd.rc:322
 msgid "Wine Command Prompt"
 msgstr "Wine Command Prompt"
 
 #: cmd.rc:323
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "CMD Version %s\n"
+msgstr "CMD Version %1!S!\n"
 
 #: cmd.rc:324
 msgid "More? "
@@ -10152,9 +10136,8 @@ msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr "Error: Unknown or invalid command line parameters specified\n"
 
 #: ipconfig.rc:29
-#, fuzzy
 msgid "%1 adapter %2\n"
-msgstr "%s adapter %s\n"
+msgstr "%1 adapter %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -10205,7 +10188,6 @@ msgid "Default gateway"
 msgstr "Default gateway"
 
 #: net.rc:27
-#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -10217,12 +10199,11 @@ msgid ""
 msgstr ""
 "The syntax of this command is:\n"
 "\n"
-"NET HELP command\n"
+"NET command [arguments]\n"
 "    -or-\n"
 "NET command /HELP\n"
 "\n"
-"   Commands available are:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
+"Where 'command' is one of HELP, START, STOP or USE.\n"
 
 #: net.rc:28
 msgid ""
@@ -10233,6 +10214,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"NET START [service]\n"
+"\n"
+"Displays the list of running services if 'service' is omitted. Otherwise "
+"'service' is the name of the service to start.\n"
 
 #: net.rc:29
 msgid ""
@@ -10242,16 +10229,19 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"NET STOP service\n"
+"\n"
+"Where 'service' is the name of the service to stop.\n"
 
 #: net.rc:30
-#, fuzzy
 msgid "Stopping dependent service: %1\n"
-msgstr "Stopping dependent service: %s\n"
+msgstr "Stopping dependent service: %1\n"
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "Could not stop service %s\n"
+msgstr "Could not stop service %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -10262,34 +10252,28 @@ msgid "Could not get handle to service.\n"
 msgstr "Could not get handle to service.\n"
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "The %s service is starting.\n"
+msgstr "The %1 service is starting.\n"
 
 #: net.rc:35
-#, fuzzy
 msgid "The %1 service was started successfully.\n"
-msgstr "The %s service was started successfully.\n"
+msgstr "The %1 service was started successfully.\n"
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "The %s service failed to start.\n"
+msgstr "The %1 service failed to start.\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "The %s service is stopping.\n"
+msgstr "The %1 service is stopping.\n"
 
 #: net.rc:38
-#, fuzzy
 msgid "The %1 service was stopped successfully.\n"
-msgstr "The %s service was stopped successfully.\n"
+msgstr "The %1 service was stopped successfully.\n"
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "The %s service failed to stop.\n"
+msgstr "The %1 service failed to stop.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -10306,9 +10290,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-#, fuzzy
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%s      %s      %s      Open resources: %lu\n"
+msgstr "%1      %2      %3      Open resources: %4!u!\n"
 
 #: net.rc:45
 msgid "Paused"
@@ -10331,9 +10314,8 @@ msgid "Reconnecting"
 msgstr "Reconnecting"
 
 #: net.rc:40
-#, fuzzy
 msgid "The following services are running:\n"
-msgstr "The %s service is starting.\n"
+msgstr "The following services are running:\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -11590,49 +11572,42 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr "Error: One of options /im or /pid must be specified.\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Error: Option %s expects a command line parameter.\n"
+msgstr "Error: Option %1 expects a command line parameter.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "Error: Options /im and /pid are mutually exclusive.\n"
 
 #: taskkill.rc:33
-#, fuzzy
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
-msgstr "Close message sent to top-level windows of process with PID %u.\n"
+msgstr "Close message sent to top-level windows of process with PID %1!u!.\n"
 
 #: taskkill.rc:34
-#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+"Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 
 #: taskkill.rc:35
-#, fuzzy
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "Process with PID %u was forcibly terminated.\n"
+msgstr "Process with PID %1!u! was forcibly terminated.\n"
 
 #: taskkill.rc:36
-#, fuzzy
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "Process \"%s\" with PID %u was forcibly terminated.\n"
+msgstr "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
 
 #: taskkill.rc:37
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "Error: Could not find process \"%s\".\n"
+msgstr "Error: Could not find process \"%1\".\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
 msgstr "Error: Unable to enumerate the process list.\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "Error: Unable to terminate process \"%s\".\n"
+msgstr "Error: Unable to terminate process \"%1\".\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
@@ -13361,7 +13336,6 @@ msgstr ""
 "Options:\n"
 
 #: wineconsole.rc:49
-#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
@@ -13370,17 +13344,15 @@ msgid ""
 msgstr ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
-"                            try to setup the current terminal as a Wine "
-"console\n"
+"                           try to setup the current terminal as a Wine "
+"console.\n"
 
 #: wineconsole.rc:50
-#, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
-"  <command>                 The Wine program to launch in the console\n"
+"  <command>                The Wine program to launch in the console.\n"
 
 #: wineconsole.rc:51
-#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
@@ -13391,7 +13363,7 @@ msgstr ""
 "\n"
 "Example:\n"
 "  wineconsole cmd\n"
-"Starts the Wine command prompt in a Wine console\n"
+"Starts the Wine command prompt in a Wine console.\n"
 "\n"
 
 #: winedbg.rc:42
@@ -14189,54 +14161,46 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Invalid number of parameters - Use xcopy /? for help\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
-msgstr "Invalid parameter '%s' -  Use xcopy /? for help\n"
+msgstr "Invalid parameter '%1' -  Use xcopy /? for help\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
 msgstr "Press <enter> to begin copying\n"
 
 #: xcopy.rc:30
-#, fuzzy
 msgid "%1!d! file(s) would be copied\n"
-msgstr "%d file(s) would be copied\n"
+msgstr "%1!d! file(s) would be copied\n"
 
 #: xcopy.rc:31
-#, fuzzy
 msgid "%1!d! file(s) copied\n"
-msgstr "%d file(s) copied\n"
+msgstr "%1!d! file(s) copied\n"
 
 #: xcopy.rc:34
-#, fuzzy
 msgid ""
 "Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"Is '%s' a filename or directory\n"
+"Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s? (Yes|No)\n"
+msgstr "%1? (Yes|No)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Overwrite %s? (Yes|No|All)\n"
+msgstr "Overwrite %1? (Yes|No|All)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "Copying of '%s' to '%s' failed with r/c %d\n"
+msgstr "Copying of '%1' to '%2' failed with r/c %3!d!\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%1'\n"
-msgstr "Failed during reading of '%s'\n"
+msgstr "Failed during reading of '%1'\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
@@ -14249,7 +14213,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:77
-#, fuzzy
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -14284,35 +14247,35 @@ msgid ""
 "\t\tthan source.\n"
 "\n"
 msgstr ""
-"XCOPY - Copies source files or directory trees to a destination\n"
+"XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
 "Syntax:\n"
-"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
 "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
 "\n"
 "Where:\n"
 "\n"
 "[/I]  Assume directory if destination does not exist and copying two or\n"
-"\tmore files\n"
-"[/S]  Copy directories and subdirectories\n"
-"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"\tmore files.\n"
+"[/S]  Copy directories and subdirectories.\n"
+"[/E]  Copy directories and subdirectories, including any empty ones.\n"
 "[/Q]  Do not list names during copy, ie quiet.\n"
-"[/F]  Show full source and destination names during copy\n"
-"[/L]  Simulate operation, showing names which would be copied\n"
-"[/W]  Prompts before beginning the copy operation\n"
-"[/T]  Creates empty directory structure but does not copy files\n"
-"[/Y]  Suppress prompting when overwriting files\n"
-"[/-Y] Enable prompting when overwriting files\n"
-"[/P]  Prompts on each source file before copying\n"
-"[/N]  Copy using short names\n"
-"[/U]  Copy only files which already exist in destination\n"
-"[/R]  Overwrite any read only files\n"
-"[/H]  Include hidden and system files in the copy\n"
-"[/C]  Continue even if an error occurs during the copy\n"
-"[/A]  Only copy files with archive attribute set\n"
-"[/M]  Only copy files with archive attribute set, removes\n"
-"\tarchive attribute\n"
+"[/F]  Show full source and destination names during copy.\n"
+"[/L]  Simulate operation, showing names which would be copied.\n"
+"[/W]  Prompts before beginning the copy operation.\n"
+"[/T]  Creates empty directory structure but does not copy files.\n"
+"[/Y]  Suppress prompting when overwriting files.\n"
+"[/-Y] Enable prompting when overwriting files.\n"
+"[/P]  Prompts on each source file before copying.\n"
+"[/N]  Copy using short names.\n"
+"[/U]  Copy only files which already exist in destination.\n"
+"[/R]  Overwrite any read only files.\n"
+"[/H]  Include hidden and system files in the copy.\n"
+"[/C]  Continue even if an error occurs during the copy.\n"
+"[/A]  Only copy files with archive attribute set.\n"
+"[/M]  Only copy files with archive attribute set, removes the\n"
+"\tarchive attribute.\n"
 "[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
 "\t\tIf no date is supplied, only copy if destination is older\n"
-"\t\tthan source\n"
+"\t\tthan source.\n"
 "\n"
