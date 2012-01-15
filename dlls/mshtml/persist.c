@@ -77,10 +77,8 @@ void set_current_uri(HTMLWindow *window, IUri *uri)
         window->uri = NULL;
     }
 
-    if(window->url) {
-        SysFreeString(window->url);
-        window->url = NULL;
-    }
+    SysFreeString(window->url);
+    window->url = NULL;
 
     if(!uri)
         return;
