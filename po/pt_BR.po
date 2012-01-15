@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-13 00:29-0200\n"
+"PO-Revision-Date: 2012-01-15 01:45-0200\n"
 "Last-Translator: Gustavo Henrique Milaré <gugamilare@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Portuguese (Brazil)\n"
@@ -41,7 +41,7 @@ msgstr ""
 
 #: appwiz.rc:64
 msgid "&Support Info"
-msgstr "&Informação de Suporte..."
+msgstr "&Informação de Suporte"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -256,11 +256,11 @@ msgstr "Formato atual:"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
-msgstr "Formato wave: %s"
+msgstr "Formato de onda: %s"
 
 #: avifil32.rc:28
 msgid "Waveform"
-msgstr "Formato wave"
+msgstr "Formato de onda"
 
 #: avifil32.rc:29
 msgid "All multimedia files"
@@ -402,7 +402,7 @@ msgstr "Listar Arquivos do &Tipo:"
 
 #: comdlg32.rc:162 comdlg32.rc:184
 msgid "Dri&ves:"
-msgstr "Dri&ves:"
+msgstr "&Unidades:"
 
 #: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:179
 msgid "&Read Only"
@@ -571,7 +571,7 @@ msgstr "Colorido|Sólid&o"
 
 #: comdlg32.rc:282
 msgid "&Red:"
-msgstr "Ver&m.:"
+msgstr "Ver&m:"
 
 #: comdlg32.rc:284
 msgid "&Green:"
@@ -586,13 +586,11 @@ msgid "&Hue:"
 msgstr "Mat&iz:"
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "Sa&t:"
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Lum:"
@@ -804,7 +802,7 @@ msgid ""
 "Do you want to create file?"
 msgstr ""
 "Arquivo não existe\n"
-"Você gostaria de cria-lo"
+"Você gostaria de criá-lo?"
 
 #: comdlg32.rc:32
 msgid ""
@@ -816,7 +814,7 @@ msgstr ""
 
 #: comdlg32.rc:33
 msgid "Invalid character(s) in path"
-msgstr "Caracter(es) inválidos no caminho"
+msgstr "Caractere(s) inválidos no caminho"
 
 #: comdlg32.rc:34
 msgid ""
@@ -896,7 +894,7 @@ msgstr "Roxo"
 
 #: comdlg32.rc:123 wordpad.rc:120
 msgid "Teal"
-msgstr "Azul-petróleo"
+msgstr "Azul petróleo"
 
 #: comdlg32.rc:124 wordpad.rc:121
 msgid "Gray"
@@ -1254,7 +1252,7 @@ msgstr "Extensões de Certificados"
 
 #: crypt32.rc:41
 msgid "Next Update Location"
-msgstr "Localização da próxima actualização"
+msgstr "Localização da próxima atualização"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
@@ -1443,7 +1441,7 @@ msgstr "Nome Principal"
 
 #: crypt32.rc:88
 msgid "Windows Product Update"
-msgstr "Actualização de Produto Windows"
+msgstr "Atualização de Produto do Windows"
 
 #: crypt32.rc:89
 msgid "Enrollment Name Value Pair"
@@ -1575,7 +1573,7 @@ msgstr "Informação do Template do Certificado"
 
 #: crypt32.rc:121
 msgid "Enterprise Root OID"
-msgstr "Enterprise Root OID"
+msgstr "OID de Raiz de Empresa"
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
@@ -1595,7 +1593,7 @@ msgstr "Forçar Política Encadeada de Certificados"
 
 #: crypt32.rc:126
 msgid "Transaction Id"
-msgstr "Id da transacção"
+msgstr "Id da transação"
 
 #: crypt32.rc:127
 msgid "Sender Nonce"
@@ -1787,7 +1785,7 @@ msgstr "Certificados Desconfiáveis"
 
 #: crypt32.rc:182
 msgid "KeyID="
-msgstr "KeyID="
+msgstr "ID de Chave="
 
 #: crypt32.rc:183
 msgid "Certificate Issuer"
@@ -2417,12 +2415,12 @@ msgid ""
 "This root certificate is not trusted.  To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
-"Este certificado raíz não é confiável. Para ficar confiável, adicione-o ao "
-"conjunto de certificados raíz confiáveis do seu sistema."
+"Este certificado raiz não é confiável. Para ficar confiável, adicione-o ao "
+"conjunto de certificados raiz confiáveis do seu sistema."
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr "Este certificado não foi validado num certificado raíz confiável."
+msgstr "Este certificado não foi validado num certificado raiz confiável."
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
@@ -2530,7 +2528,7 @@ msgstr "%1 (%2!d! bits)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
-msgstr "SHA1 hash"
+msgstr "Soma SHA1"
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
@@ -2585,7 +2583,7 @@ msgid ""
 "Certificate stores are collections of certificates, certificate revocation "
 "lists, and certificate trust lists."
 msgstr ""
-"Os Conjuntos de Certificados são colecões de certificados, listas de "
+"Os Conjuntos de Certificados são coleções de certificados, listas de "
 "revogação de certificados e listas de certificados confiáveis."
 
 #: cryptui.rc:74
@@ -2763,10 +2761,10 @@ msgid ""
 "certification authorities it issued, will no longer be trusted.\n"
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
-"Os certificados emitidos por esta autoridade de certificação raíz ou "
+"Os certificados emitidos por esta autoridade de certificação raiz ou "
 "quaisquer autoridades de certificação por ela emitidas não serão "
 "consideradas confiáveis de agora em diante.\n"
-"Tem certeza que deseja remover este certificado raíz confiável?"
+"Tem certeza que deseja remover este certificado raiz confiável?"
 
 #: cryptui.rc:114
 msgid ""
@@ -2774,10 +2772,10 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
-"Os certificados emitidos por estas autoridades de certificação raíz ou "
+"Os certificados emitidos por estas autoridades de certificação raiz ou "
 "quaisquer autoridades de certificação por elas emitidas não serão "
 "consideradas confiáveis de agora em diante.\n"
-"Tem certeza que deseja remover estes certificados raíz confiáveis?"
+"Tem certeza que deseja remover estes certificados raiz confiáveis?"
 
 #: cryptui.rc:115
 msgid ""
@@ -3232,7 +3230,7 @@ msgstr "&Imprimir..."
 
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
-msgstr "&Vizualizar impressão..."
+msgstr "Visualizar impressão"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -3531,7 +3529,7 @@ msgstr "'|' é indefinido"
 
 #: jscript.rc:47
 msgid "Boolean object expected"
-msgstr "Objeto boleano esperado"
+msgstr "Objeto booleano esperado"
 
 #: jscript.rc:48
 msgid "Cannot delete '|'"
@@ -3563,7 +3561,7 @@ msgstr "Tamanho do vetor tem que ser um inteiro finito positivo"
 
 #: jscript.rc:55
 msgid "Array object expected"
-msgstr "Objeto Array esperado"
+msgstr "Objeto Vetor esperado"
 
 #: winerror.mc:26
 msgid "Success\n"
@@ -3591,7 +3589,7 @@ msgstr "Acesso negado\n"
 
 #: winerror.mc:56
 msgid "Invalid handle\n"
-msgstr "Handle inválido\n"
+msgstr "Manipulador inválido\n"
 
 #: winerror.mc:61
 msgid "Memory trashed\n"
@@ -3607,7 +3605,7 @@ msgstr "Bloco inválido\n"
 
 #: winerror.mc:76
 msgid "Bad environment\n"
-msgstr "Ambiente imprório\n"
+msgstr "Ambiente impróprio\n"
 
 #: winerror.mc:81
 msgid "Bad format\n"
@@ -3787,7 +3785,7 @@ msgstr "Tipo impróprio para um dispositivo\n"
 
 #: winerror.mc:301
 msgid "Bad network name\n"
-msgstr "Nome imprório de rede\n"
+msgstr "Nome impróprio de rede\n"
 
 #: winerror.mc:306
 msgid "Too many network names\n"
@@ -3891,7 +3889,7 @@ msgstr "Falha ao abrir\n"
 
 #: winerror.mc:431
 msgid "Buffer overflow\n"
-msgstr "Overflow no buffer\n"
+msgstr "Transbordamento de dados\n"
 
 #: winerror.mc:441
 msgid "No more search handles\n"
@@ -3899,7 +3897,7 @@ msgstr "Não há mais handles de busca\n"
 
 #: winerror.mc:446
 msgid "Invalid target handle\n"
-msgstr "Handle de alvo inválido\n"
+msgstr "Manipulador de alvo inválido\n"
 
 #: winerror.mc:451
 msgid "Invalid IOCTL\n"
@@ -3907,11 +3905,11 @@ msgstr "IOCTL Inválido\n"
 
 #: winerror.mc:456
 msgid "Invalid verify switch\n"
-msgstr "Switch de verificação inválido\n"
+msgstr "Interruptor de verificação inválido\n"
 
 #: winerror.mc:461
 msgid "Bad driver level\n"
-msgstr "Nível imprório para um driver\n"
+msgstr "Nível impróprio para um driver\n"
 
 #: winerror.mc:466
 msgid "Call not implemented\n"
@@ -3955,7 +3953,7 @@ msgstr "Processo filho não completou\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle\n"
-msgstr "Uso inválido de handle de acesso direto\n"
+msgstr "Uso inválido de manipulador de acesso direto\n"
 
 #: winerror.mc:521
 msgid "Negative seek\n"
@@ -4143,7 +4141,7 @@ msgstr "O EXE %1 está marcado como inválido\n"
 
 #: winerror.mc:756
 msgid "Bad EXE format for %1\n"
-msgstr "Formato EXE imprório para %1\n"
+msgstr "Formato EXE impróprio para %1\n"
 
 #: winerror.mc:761
 msgid "Iterated data exceeds 64k in %1\n"
@@ -4179,7 +4177,7 @@ msgstr "Cadeia de realocação excede o limite de segmento em %1\n"
 
 #: winerror.mc:801
 msgid "Infinite loop in relocation chain in %1\n"
-msgstr "Loop infinito em cadeia de realocação em %1\n"
+msgstr "Laço infinito em cadeia de realocação em %1\n"
 
 #: winerror.mc:806
 msgid "Environment variable not found\n"
@@ -4207,7 +4205,7 @@ msgstr "Número de sinal inválido\n"
 
 #: winerror.mc:836
 msgid "Error setting signal handler\n"
-msgstr "Erro ao criar handler do sinal\n"
+msgstr "Erro ao criar manipulador do sinal\n"
 
 #: winerror.mc:841
 msgid "Segment locked\n"
@@ -4251,11 +4249,11 @@ msgstr "Sessão cancelada\n"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name\n"
-msgstr "Nome de atributo extendido inválido\n"
+msgstr "Nome de atributo estendido inválido\n"
 
 #: winerror.mc:896
 msgid "Extended attribute list inconsistent\n"
-msgstr "Lista de atributos extendida inconsistente\n"
+msgstr "Lista de atributos estendida inconsistente\n"
 
 #: winerror.mc:901
 msgid "No more data available\n"
@@ -4271,23 +4269,23 @@ msgstr "Nome de diretório inválido\n"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit\n"
-msgstr "Atributos extendidos não couberam\n"
+msgstr "Atributos estendidos não couberam\n"
 
 #: winerror.mc:921
 msgid "Extended attribute file corrupt\n"
-msgstr "Arquivo de atributos extendido corrompido\n"
+msgstr "Arquivo de atributos estendido corrompido\n"
 
 #: winerror.mc:926
 msgid "Extended attribute table full\n"
-msgstr "Tabela de atributos extendida cheia\n"
+msgstr "Tabela de atributos estendida cheia\n"
 
 #: winerror.mc:931
 msgid "Invalid extended attribute handle\n"
-msgstr "Handle de atributo extendido inválido\n"
+msgstr "Manipulação de atributo estendido inválido\n"
 
 #: winerror.mc:936
 msgid "Extended attributes not supported\n"
-msgstr "Atributos extendidos não suportados\n"
+msgstr "Atributos estendidos não suportados\n"
 
 #: winerror.mc:941
 msgid "Mutex not owned by caller\n"
@@ -4319,7 +4317,7 @@ msgstr "Endereço inválido\n"
 
 #: winerror.mc:976
 msgid "Arithmetic overflow\n"
-msgstr "Overflow aritmético\n"
+msgstr "Transbordamento aritmético\n"
 
 #: winerror.mc:981
 msgid "Pipe connected\n"
@@ -4331,7 +4329,7 @@ msgstr "Pipe escutando\n"
 
 #: winerror.mc:991
 msgid "Extended attribute access denied\n"
-msgstr "Acesso a atributos extendidos negado\n"
+msgstr "Acesso a atributos estendidos negado\n"
 
 #: winerror.mc:996
 msgid "I/O operation aborted\n"
@@ -4355,7 +4353,7 @@ msgstr "Erro de troca\n"
 
 #: winerror.mc:1021
 msgid "Stack overflow\n"
-msgstr "Overflow da pilha\n"
+msgstr "Transbordamento da pilha\n"
 
 #: winerror.mc:1026
 msgid "Invalid message\n"
@@ -4431,11 +4429,11 @@ msgstr "Sem espaço de log no registro\n"
 
 #: winerror.mc:1116
 msgid "Registry key has subkeys\n"
-msgstr "Chave de registro tem subchaves\n"
+msgstr "Chave de registro tem sub-chaves\n"
 
 #: winerror.mc:1121
 msgid "Subkey must be volatile\n"
-msgstr "Subchave tem de ser volátil\n"
+msgstr "Sub-chave tem de ser volátil\n"
 
 #: winerror.mc:1126
 msgid "Notify change request in progress\n"
@@ -4519,7 +4517,7 @@ msgstr "Falha no login ao serviço\n"
 
 #: winerror.mc:1226
 msgid "Service start-hang\n"
-msgstr "Service start-hang\n"
+msgstr "Trava no início do serviço\n"
 
 #: winerror.mc:1231
 msgid "Invalid service lock\n"
@@ -4751,7 +4749,7 @@ msgstr "DLL não encontrado\n"
 
 #: winerror.mc:1516
 msgid "Out of user handles\n"
-msgstr "Não há mais handles de usuário\n"
+msgstr "Não há mais manipuladores de usuário\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls\n"
@@ -4779,7 +4777,7 @@ msgstr "O dispositivo requer reinicialização\n"
 
 #: winerror.mc:1551
 msgid "The device requires cleaning\n"
-msgstr "O dispositivo necessita de limpeza.\n"
+msgstr "O dispositivo necessita de limpeza\n"
 
 #: winerror.mc:1556
 msgid "The device door is open\n"
@@ -4875,7 +4873,7 @@ msgstr "Não é um container\n"
 
 #: winerror.mc:1671
 msgid "Extended error\n"
-msgstr "Erro extendido\n"
+msgstr "Erro estendido\n"
 
 #: winerror.mc:1676
 msgid "Invalid group name\n"
@@ -4943,7 +4941,7 @@ msgstr "Conexão recusada\n"
 
 #: winerror.mc:1761
 msgid "Connection gracefully closed\n"
-msgstr "Conexão fechada graceosamente\n"
+msgstr "Conexão fechada graciosamente\n"
 
 #: winerror.mc:1766
 msgid "Address already associated with transport endpoint\n"
@@ -5375,7 +5373,7 @@ msgstr "Grupo local já existente\n"
 
 #: winerror.mc:2301 winerror.mc:2326
 msgid "Logon type not granted\n"
-msgstr "Tipo de logono não atribuído\n"
+msgstr "Tipo de logon não atribuído\n"
 
 #: winerror.mc:2306
 msgid "Too many secrets\n"
@@ -5447,27 +5445,27 @@ msgstr "Desvio de tempo entre cliente e servidor\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle\n"
-msgstr "Handle de janela inválido\n"
+msgstr "Manipulador de janela inválido\n"
 
 #: winerror.mc:2401
 msgid "Invalid menu handle\n"
-msgstr "Handle de menu inválido\n"
+msgstr "Manipulador de menu inválido\n"
 
 #: winerror.mc:2406
 msgid "Invalid cursor handle\n"
-msgstr "Handle de cursor inválido\n"
+msgstr "Manipulador de cursor inválido\n"
 
 #: winerror.mc:2411
 msgid "Invalid accelerator table handle\n"
-msgstr "Handle de tabela aceleradora inválido\n"
+msgstr "Manipulador de tabela aceleradora inválido\n"
 
 #: winerror.mc:2416
 msgid "Invalid hook handle\n"
-msgstr "Handle de hook inválido\n"
+msgstr "Manipulador de hook inválido\n"
 
 #: winerror.mc:2421
 msgid "Invalid DWP handle\n"
-msgstr "Handle DWP inválido\n"
+msgstr "Manipulador DWP inválido\n"
 
 #: winerror.mc:2426
 msgid "Can't create top-level child window\n"
@@ -5503,7 +5501,7 @@ msgstr "Índice inválido\n"
 
 #: winerror.mc:2466
 msgid "Invalid icon handle\n"
-msgstr "Handle de ícone inválido\n"
+msgstr "Manipulador de ícone inválido\n"
 
 #: winerror.mc:2471
 msgid "Private dialog index\n"
@@ -5559,7 +5557,7 @@ msgstr "Procedimento de filtro inválido\n"
 
 #: winerror.mc:2536
 msgid "Hook procedure needs module handle\n"
-msgstr "Procedimento de hook necessita de handle de módulo\n"
+msgstr "Procedimento de gancho necessita de descritor de módulo\n"
 
 #: winerror.mc:2541
 msgid "Global-only hook procedure\n"
@@ -5571,7 +5569,7 @@ msgstr "Journal hook já ativado\n"
 
 #: winerror.mc:2551
 msgid "Hook procedure not installed\n"
-msgstr "Procedimento de hook não instalado\n"
+msgstr "Procedimento de gancho não instalado\n"
 
 #: winerror.mc:2556
 msgid "Invalid list box message\n"
@@ -5631,7 +5629,7 @@ msgstr "Não é uma janela MDI filha\n"
 
 #: winerror.mc:2626
 msgid "Popup menu already active\n"
-msgstr "O menu popup já está ativo\n"
+msgstr "O menu de contexto já está ativo\n"
 
 #: winerror.mc:2631
 msgid "No scrollbars\n"
@@ -5675,11 +5673,11 @@ msgstr "Item do menu não encontrado\n"
 
 #: winerror.mc:2681
 msgid "Invalid keyboard handle\n"
-msgstr "Handle de teclado inválido\n"
+msgstr "Manipulador de teclado inválido\n"
 
 #: winerror.mc:2686
 msgid "Hook type not allowed\n"
-msgstr "Tipo de hook não permitido\n"
+msgstr "Tipo de gancho não permitido\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
@@ -5691,7 +5689,7 @@ msgstr "Tempo limite atingido\n"
 
 #: winerror.mc:2701
 msgid "Invalid monitor handle\n"
-msgstr "Handle de monitor inválido\n"
+msgstr "Manipulador de monitor inválido\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -5743,7 +5741,7 @@ msgstr "Propriedade desconhecida\n"
 
 #: winerror.mc:2766
 msgid "Invalid handle state\n"
-msgstr "Handle de estado inválido\n"
+msgstr "Manipulador de estado inválido\n"
 
 #: winerror.mc:2771
 msgid "Bad configuration\n"
@@ -5947,7 +5945,7 @@ msgstr "Interface desconhecida\n"
 
 #: winerror.mc:3021
 msgid "No bindings\n"
-msgstr "Nenhum binding\n"
+msgstr "Nenhum vínculo\n"
 
 #: winerror.mc:3026
 msgid "No protocol sequences\n"
@@ -5995,11 +5993,11 @@ msgstr "Sintaxe de transferência não suportada\n"
 
 #: winerror.mc:3086
 msgid "Invalid tag\n"
-msgstr "Tag inválida\n"
+msgstr "Etiqueta inválida\n"
 
 #: winerror.mc:3091
 msgid "Invalid array bounds\n"
-msgstr "Limites do array inválidos\n"
+msgstr "Limites do vetor inválidos\n"
 
 #: winerror.mc:3096
 msgid "No entry name\n"
@@ -6043,7 +6041,7 @@ msgstr "Número do procedimento fora dos limites\n"
 
 #: winerror.mc:3146
 msgid "Binding has no authentication data\n"
-msgstr "Binding não tem dados de autenticação\n"
+msgstr "Vínculo não tem dados de autenticação\n"
 
 #: winerror.mc:3151
 msgid "Unknown authentication service\n"
@@ -6139,11 +6137,11 @@ msgstr "Divisão-por-zero em ponto flutuante\n"
 
 #: winerror.mc:3266
 msgid "Floating-point underflow\n"
-msgstr "Underflow em ponto flutuante\n"
+msgstr "Insuficiência de ponto flutuante\n"
 
 #: winerror.mc:3271
 msgid "Floating-point overflow\n"
-msgstr "Overflow em ponto flutuante\n"
+msgstr "Transbordamento em ponto flutuante\n"
 
 #: winerror.mc:3276
 msgid "No more entries\n"
@@ -6151,23 +6149,23 @@ msgstr "Sem mais entradas\n"
 
 #: winerror.mc:3281
 msgid "Character translation table open failed\n"
-msgstr "Falha na abertura da tabela de tradução de carateres\n"
+msgstr "Falha na abertura da tabela de tradução de caracteres\n"
 
 #: winerror.mc:3286
 msgid "Character translation table file too small\n"
-msgstr "Arquivo da tabela de tradução de carateres muito pequeno\n"
+msgstr "Arquivo da tabela de tradução de caracteres muito pequeno\n"
 
 #: winerror.mc:3291
 msgid "Null context handle\n"
-msgstr "Handle de contexto nulo\n"
+msgstr "Manipulador de contexto nulo\n"
 
 #: winerror.mc:3296
 msgid "Context handle damaged\n"
-msgstr "Handle de contexto danificado\n"
+msgstr "Manipulador de contexto danificado\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch\n"
-msgstr "Binding handle mismatch\n"
+msgstr "Vínculo do handle diferente\n"
 
 #: winerror.mc:3306
 msgid "Cannot get call handle\n"
@@ -6279,11 +6277,11 @@ msgstr "Ambiente inválido\n"
 
 #: winerror.mc:3441
 msgid "No more bindings\n"
-msgstr "Sem mais bindings\n"
+msgstr "Sem mais vínculos\n"
 
 #: winerror.mc:3446
 msgid "Can't logon with interdomain trust account\n"
-msgstr "Não é possível logar com conta confiável interdomínio\n"
+msgstr "Não é possível logar com conta confiável inter domínio\n"
 
 #: winerror.mc:3451
 msgid "Can't logon with workstation trust account\n"
@@ -6331,7 +6329,7 @@ msgstr "Chamada RPC cancelada\n"
 
 #: winerror.mc:3506
 msgid "Binding incomplete\n"
-msgstr "Binding incompleto\n"
+msgstr "Vínculo incompleto\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure\n"
@@ -6451,7 +6449,7 @@ msgstr "Envio de RPC incompleto\n"
 
 #: winerror.mc:3656
 msgid "Invalid asynchronous RPC handle\n"
-msgstr "Handle de RPC assíncrono inválido\n"
+msgstr "Manipulador de RPC assíncrono inválido\n"
 
 #: winerror.mc:3661
 msgid "Invalid asynchronous RPC call\n"
@@ -6811,7 +6809,7 @@ msgstr "barra de rolagem"
 
 #: oleacc.rc:31
 msgid "grip"
-msgstr "grip"
+msgstr "alça"
 
 #: oleacc.rc:32
 msgid "sound"
@@ -6823,7 +6821,7 @@ msgstr "cursor"
 
 #: oleacc.rc:34
 msgid "caret"
-msgstr "caret"
+msgstr "circunflexo"
 
 #: oleacc.rc:35
 msgid "alert"
@@ -6967,23 +6965,23 @@ msgstr "texto"
 
 #: oleacc.rc:70
 msgid "push button"
-msgstr "push button"
+msgstr "botão"
 
 #: oleacc.rc:71
 msgid "check button"
-msgstr "check button"
+msgstr "botão de seleção"
 
 #: oleacc.rc:72
 msgid "radio button"
-msgstr "radio button"
+msgstr "botão de opção"
 
 #: oleacc.rc:73
 msgid "combo box"
-msgstr "combo box"
+msgstr "caixa de combinação"
 
 #: oleacc.rc:74
 msgid "drop down"
-msgstr "drop down"
+msgstr "lista suspensa"
 
 #: oleacc.rc:75
 msgid "progress bar"
@@ -6991,19 +6989,19 @@ msgstr "barra de progresso"
 
 #: oleacc.rc:76
 msgid "dial"
-msgstr "dial"
+msgstr "discar"
 
 #: oleacc.rc:77
 msgid "hot key field"
-msgstr "hot key field"
+msgstr "campo com atalho de teclado"
 
 #: oleacc.rc:78
 msgid "slider"
-msgstr "slider"
+msgstr "controle deslizante"
 
 #: oleacc.rc:79
 msgid "spin box"
-msgstr "spin box"
+msgstr "botão de seta"
 
 #: oleacc.rc:80
 msgid "diagram"
@@ -7019,15 +7017,15 @@ msgstr "equação"
 
 #: oleacc.rc:83
 msgid "drop down button"
-msgstr "drop down button"
+msgstr "botão de lista suspensa"
 
 #: oleacc.rc:84
 msgid "menu button"
-msgstr "menu button"
+msgstr "botão de menu"
 
 #: oleacc.rc:85
 msgid "grid drop down button"
-msgstr "grid drop down button"
+msgstr "botão de grade suspensa"
 
 #: oleacc.rc:86
 msgid "white space"
@@ -7035,7 +7033,7 @@ msgstr "espaço em branco"
 
 #: oleacc.rc:87
 msgid "page tab list"
-msgstr "page tab list"
+msgstr "lista de guias de página"
 
 #: oleacc.rc:88
 msgid "clock"
@@ -7043,7 +7041,7 @@ msgstr "relógio"
 
 #: oleacc.rc:89
 msgid "split button"
-msgstr "split button"
+msgstr "botão de divisão"
 
 #: oleacc.rc:90 ipconfig.rc:33
 msgid "IP address"
@@ -7051,7 +7049,7 @@ msgstr "endereço IP"
 
 #: oleacc.rc:91
 msgid "outline button"
-msgstr "outline button"
+msgstr "botão de contorno"
 
 #: oleaut32.rc:27 oleview.rc:144
 msgid "True"
@@ -7253,7 +7251,7 @@ msgstr "b"
 #: sane.rc:34 winecfg.rc:174
 msgctxt "unit: dots/inch"
 msgid "dpi"
-msgstr "dpi"
+msgstr "ppp"
 
 #: sane.rc:35
 msgctxt "unit: percent"
@@ -7502,43 +7500,43 @@ msgstr "R&ecomeçar"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
-msgstr "Trace Tags"
+msgstr "Etiqueta de Rastreio"
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
-msgstr "Resource Failures"
+msgstr "Falhas de Recurso"
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
-msgstr "Dump Tracking Info"
+msgstr "Informação de Rastreamento de Despejo"
 
 #: shdoclc.rc:199
 msgid "Debug Break"
-msgstr "Debug Break"
+msgstr "Parada do Depurador"
 
 #: shdoclc.rc:200
 msgid "Debug View"
-msgstr "Debug View"
+msgstr "Visualização do Depurador"
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
-msgstr "Dump Tree"
+msgstr "Despejar Árvore"
 
 #: shdoclc.rc:202
 msgid "Dump Lines"
-msgstr "Dump Lines"
+msgstr "Despejar Linhas"
 
 #: shdoclc.rc:203
 msgid "Dump DisplayTree"
-msgstr "Dump DisplayTree"
+msgstr "Despejar Árvore de Visualização"
 
 #: shdoclc.rc:204
 msgid "Dump FormatCaches"
-msgstr "Dump FormatCaches"
+msgstr "Despejar Caches de Formato"
 
 #: shdoclc.rc:205
 msgid "Dump LayoutRects"
-msgstr "Dump LayoutRects"
+msgstr "Despejar Retângulo de Leiaute"
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
@@ -7546,19 +7544,19 @@ msgstr "Monitor de Memória"
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
-msgstr "Performance Meters"
+msgstr "Indicadores de Performance"
 
 #: shdoclc.rc:208
 msgid "Save HTML"
-msgstr "Save HTML"
+msgstr "Salvar HTML"
 
 #: shdoclc.rc:210
 msgid "&Browse View"
-msgstr "&Browse View"
+msgstr "Vista &Navegar"
 
 #: shdoclc.rc:211
 msgid "&Edit View"
-msgstr "&Edit View"
+msgstr "Vista &Editar"
 
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
@@ -7962,7 +7960,7 @@ msgstr "Documentos\\Meus Vídeos"
 
 #: shell32.rc:227
 msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
-msgstr "Configurações locais\\Dados de aplicativos\\Microsoft\\CD Burning"
+msgstr "Configurações locais\\Dados de aplicativos\\Microsoft\\Queima de CDs"
 
 #: shell32.rc:218
 msgid "Program Files (x86)"
@@ -8014,7 +8012,7 @@ msgstr "Microsoft\\Windows\\Bibliotecas"
 
 #: shell32.rc:235
 msgid "Microsoft\\Windows\\Ringtones"
-msgstr "Microsoft\\Windows\\Ringtones"
+msgstr "Microsoft\\Windows\\Toques de celular"
 
 #: shell32.rc:236
 msgid "Music\\Sample Music"
@@ -8449,7 +8447,7 @@ msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
-"Não é possível executar esta operação enquando os dados de mídia estiverem "
+"Não é possível executar esta operação enquanto os dados de mídia estiverem "
 "tocando. Reinicie o dispositivo ou aguarde até o término da execução."
 
 #: winmm.rc:44
@@ -8692,7 +8690,7 @@ msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
 msgstr ""
-"O driver de dispositivo já está em uso. Para compartilha-lo, use o parâmetro "
+"O driver de dispositivo já está em uso. Para compartilhá-lo, use o parâmetro "
 "'shareable' para cada comando 'open'."
 
 #: winmm.rc:87
@@ -8716,8 +8714,8 @@ msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
 msgstr ""
-"A aspa-dupla de fechamento está faltando para o valor do parâmetro. Por "
-"favor, forneça uma."
+"Está faltando um aspa dupla fechando o valor do parâmetro. Por favor, "
+"forneça uma."
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
@@ -8730,12 +8728,12 @@ msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
 msgstr ""
-"O arquivo espeficidado não pode ser tocado no dispositivo MCI especificado. "
+"O arquivo especificado não pode ser tocado no dispositivo MCI especificado. "
 "O arquivo pode estar corrompido ou não estar no formato correto."
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
-msgstr "Um bloco de parâmetro nulo foi passado para o MCI.."
+msgstr "Um bloco de parâmetro nulo foi passado para o MCI."
 
 #: winmm.rc:93
 msgid "Cannot save an unnamed file. Supply a filename."
@@ -8771,7 +8769,7 @@ msgid ""
 "the device is closed, and then try again."
 msgstr ""
 "Não é possível descarregar o comando especificado em um dispositivo aberto "
-"automanticamente. Aguarde até o dispositivo ser fechado e tente novamente."
+"automaticamente. Aguarde até o dispositivo ser fechado e tente novamente."
 
 #: winmm.rc:99
 msgid ""
@@ -8866,7 +8864,7 @@ msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Não foi possivel definir o dispositivo wave corrente para gravar porque ele "
+"Não foi possível definir o dispositivo wave corrente para gravar porque ele "
 "está em uso. Aguarde até ele ficar livre e tente novamente."
 
 #: winmm.rc:112
@@ -9371,7 +9369,7 @@ msgstr "CHDIR <dir> altera o atual diretório padrão.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS limpa a tela do console\n"
+msgstr "CLS limpa a tela do console.\n"
 
 #: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
@@ -9498,8 +9496,8 @@ msgstr ""
 "LABEL é usado para rotular um volume do disco.\n"
 "\n"
 "Sintaxe: LABEL [drive:]\n"
-"O comando LABEL irá aguardar que vc informe o novo rótulo para o drive\n"
-"especificado. Você pode mostrar o rótulo do disco com o comando VOL.\n"
+"O comando LABEL pedirá um novo rótulo para a unidade especificada.\n"
+"Você pode mostrar o rótulo do disco com o comando VOL.\n"
 
 #: cmd.rc:103
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
@@ -9604,7 +9602,7 @@ msgstr ""
 "(equivalente a um comando PROMPT $p$g).\n"
 "\n"
 "O 'prompt' também pode ser mudado alterando a variável de ambiente PROMPT;\n"
-"assim, o comando 'SET PROMPT=texto' tem o mesmo efeito que 'PROMPT texto'\n"
+"assim, o comando 'SET PROMPT=texto' tem o mesmo efeito que 'PROMPT texto'.\n"
 
 #: cmd.rc:153
 msgid ""
@@ -9613,7 +9611,7 @@ msgid ""
 msgstr ""
 "Uma linha de comando iniciando com REM (seguindo de um espaço)\n"
 "não faz ação alguma e os caracteres usando são considerados\n"
-"comentários em um arquivo de lote\n"
+"comentários em um arquivo de lote.\n"
 
 #: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
@@ -9674,7 +9672,8 @@ msgid ""
 "if called from the command line.\n"
 msgstr ""
 "SHIFT é usado em arquivos de lote para remover um parâmetro que inicia a\n"
-"lista de forma que o parâmentro2 sobrepõe o parametro1 e assim por diante.\n"
+"lista, de forma que o parâmetro 2 sobrepõe o parâmetro 1 e assim por "
+"diante.\n"
 "Isto não tem efeito se chamado a partir da linha de comandos.\n"
 
 #: cmd.rc:185
@@ -9690,8 +9689,8 @@ msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
-"TYPE <arquivo> copia <arquvo> para o dispositivo console (ou outro, se\n"
-"redirecionado). Nehuma verificação é feita se o arquivo pode ser lido.\n"
+"TYPE <arquivo> copia <arquivo> para o dispositivo console (ou outro, se\n"
+"redirecionado). Nenhuma verificação é feita se o arquivo pode ser lido.\n"
 
 #: cmd.rc:200
 msgid ""
@@ -9806,7 +9805,8 @@ msgstr ""
 
 #: cmd.rc:244
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr "MORE exibe a saida dos arquivos ou saídas encadeadas em páginas.\n"
+msgstr ""
+"MORE exibe em páginas a saída dos arquivos ou de entradas encadeadas.\n"
 
 #: cmd.rc:248
 msgid ""
@@ -9828,6 +9828,7 @@ msgstr ""
 "shell que tenha invocado o cmd.\n"
 
 #: cmd.rc:289
+#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9889,9 +9890,9 @@ msgstr ""
 "MOVE\t\tMove um arquivo, conjunto de arquivos ou árvore de diretórios\n"
 "PATH\t\tConfigura o caminho de busca\n"
 "PAUSE\t\tSuspende a execução de um arquivo de lote\n"
-"POPD\t\tRestores the directory to the last one saved with PUSHD\n"
+"POPD\t\tRestaura o diretório ao último salvo com o PUSHD\n"
 "PROMPT\t\tAltera o prompt de comando\n"
-"PUSHD\t\tChanges to a new directory, saving the current one\n"
+"PUSHD\t\tMuda para um novo diretório, salvando o atual\n"
 "REN (RENAME)\tRenomeia um arquivo\n"
 "RD (RMDIR)\tApaga um subdiretório\n"
 "SET\t\tConfigura ou mostra variáveis de ambiente\n"
@@ -9983,7 +9984,7 @@ msgstr "Falha ao abrir '%1'\n"
 
 #: cmd.rc:311
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "Não pode chamar um rótulo batch fora de um script batch\n"
+msgstr "Não pode chamar um rótulo de lote fora de um script de lote\n"
 
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
@@ -10146,7 +10147,7 @@ msgstr "DHCP habilitado"
 
 #: ipconfig.rc:46
 msgid "Default gateway"
-msgstr "Gateway padrão"
+msgstr "Porta de ligação padrão"
 
 #: net.rc:27
 msgid ""
@@ -10373,7 +10374,7 @@ msgstr "&Rodapé:"
 
 #: notepad.rc:104
 msgid "Margins (millimeters)"
-msgstr "Margens (milímetros):"
+msgstr "Margens (milímetros)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10489,7 +10490,7 @@ msgstr "Servidor &interno ao processo"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr "&Handler interno ao processo"
+msgstr "&Manipulador interno ao processo"
 
 #: oleview.rc:43
 msgid "&Local server"
@@ -10521,7 +10522,7 @@ msgstr "Copiar C&LSID para a Área de Transferência"
 
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
-msgstr "Copiar Tag &HTML para a Área de Transferência"
+msgstr "Copiar Etiqueta &HTML para a Área de Transferência"
 
 #: oleview.rc:60
 msgid "&Expert mode"
@@ -10657,7 +10658,7 @@ msgstr "Iniciar o Editor de Registro do Wine"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
-msgstr "Sair do aplicativo. Pede para salvar alterações."
+msgstr "Sair do aplicativo. Pede para salvar alterações"
 
 #: oleview.rc:108
 msgid "Create an instance of the selected object"
@@ -11222,26 +11223,26 @@ msgstr "Editar Multi-frase"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
-msgstr "Contém comandos para trabalhar com o Registro inteiro."
+msgstr "Contém comandos para trabalhar com o Registro inteiro"
 
 #: regedit.rc:135
 msgid "Contains commands for editing values or keys"
-msgstr "Contém comandos para edição de valores ou chaves."
+msgstr "Contém comandos para edição de valores ou chaves"
 
 #: regedit.rc:136
 msgid "Contains commands for customising the registry window"
-msgstr "Contém comandos para personalização da janela do Registro."
+msgstr "Contém comandos para personalização da janela do Registro"
 
 #: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
-msgstr "Contém comandos para acessar chaves frequentemente usadas."
+msgstr "Contém comandos para acessar chaves frequentemente usadas"
 
 #: regedit.rc:138
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
 "Contém comandos para exibição da ajuda e informações sobre o Editor do "
-"Registro."
+"Registro"
 
 #: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
@@ -11289,52 +11290,52 @@ msgstr "(desconhecido %d)"
 
 #: regedit.rc:160
 msgid "Quits the registry editor"
-msgstr "Encerra o Editor do Registro."
+msgstr "Encerra o Editor do Registro"
 
 #: regedit.rc:161
 msgid "Adds keys to the favorites list"
-msgstr "Adiciona chaves a lista de favoritos."
+msgstr "Adiciona chaves a lista de favoritos"
 
 #: regedit.rc:162
 msgid "Removes keys from the favorites list"
-msgstr "Remove chaves da lista de favoritos."
+msgstr "Remove chaves da lista de favoritos"
 
 #: regedit.rc:163
 msgid "Shows or hides the status bar"
-msgstr "Mostra ou oculta a barra de status."
+msgstr "Mostra ou oculta a barra de status"
 
 #: regedit.rc:164
 msgid "Change position of split between two panes"
-msgstr "Altera a posição da divisão entre os painéis."
+msgstr "Altera a posição da divisão entre os painéis"
 
 #: regedit.rc:165
 msgid "Refreshes the window"
-msgstr "Atualiza a janela."
+msgstr "Atualiza a janela"
 
 #: regedit.rc:166
 msgid "Deletes the selection"
-msgstr "Exclui a selecão."
+msgstr "Exclui a seleção"
 
 #: regedit.rc:167
 msgid "Renames the selection"
-msgstr "Renomeia a selecão."
+msgstr "Renomeia a seleção"
 
 #: regedit.rc:168
 msgid "Copies the name of the selected key to the clipboard"
-msgstr "Copia o nome da chave selecionada para a Área de transferência."
+msgstr "Copia o nome da chave selecionada para a Área de transferência"
 
 #: regedit.rc:169
 msgid "Finds a text string in a key, value or data"
-msgstr "Localiza um texto em uma chave, valor ou dado."
+msgstr "Localiza um texto em uma chave, valor ou dado"
 
 #: regedit.rc:170
 msgid "Finds next occurrence of text specified in previous search"
 msgstr ""
-"Localiza a próxima ocorrência do texto especificado na pesquisa anterior."
+"Localiza a próxima ocorrência do texto especificado na pesquisa anterior"
 
 #: regedit.rc:144
 msgid "Modifies the value's data"
-msgstr "Modifica os dados do valor."
+msgstr "Modifica os dados do valor"
 
 #: regedit.rc:145
 msgid "Adds a new key"
@@ -11342,27 +11343,27 @@ msgstr "Adiciona uma nova chave"
 
 #: regedit.rc:146
 msgid "Adds a new string value"
-msgstr "Adiciona um novo valor texto."
+msgstr "Adiciona um novo valor texto"
 
 #: regedit.rc:147
 msgid "Adds a new binary value"
-msgstr "Adiciona um novo valor binário."
+msgstr "Adiciona um novo valor binário"
 
 #: regedit.rc:148
 msgid "Adds a new double word value"
-msgstr "Adiciona um novo valor DWORD."
+msgstr "Adiciona um novo valor palavra dupla"
 
 #: regedit.rc:150
 msgid "Imports a text file into the registry"
-msgstr "Importa um arquivo texto para o registro."
+msgstr "Importa um arquivo texto para o registro"
 
 #: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
-msgstr "Exporta todo ou parte do registro para um arquivo texto."
+msgstr "Exporta todo ou parte do registro para um arquivo texto"
 
 #: regedit.rc:153
 msgid "Prints all or part of the registry"
-msgstr "Imprime todo ou parte do registro."
+msgstr "Imprime todo ou parte do registro"
 
 #: regedit.rc:155
 msgid "Displays program information, version number and copyright"
@@ -11370,19 +11371,19 @@ msgstr "Exibe informações do programa, número da versão e direitos autorais"
 
 #: regedit.rc:178
 msgid "Can't query value '%s'"
-msgstr "Não pode consultar o valor '%s'"
+msgstr "Não é possível consultar o valor '%s'"
 
 #: regedit.rc:179
 msgid "Can't edit keys of this type (%u)"
-msgstr "Não pode editar chaves deste tipo (%u)"
+msgstr "Não é possível editar chaves deste tipo (%u)"
 
 #: regedit.rc:180
 msgid "Value is too big (%u)"
-msgstr "Valor é muito grande (%u)"
+msgstr "O valor é muito grande (%u)"
 
 #: regedit.rc:181
 msgid "Confirm Value Delete"
-msgstr "Confirmar exclusão de valor"
+msgstr "Confirmar Exclusão de Valor"
 
 #: regedit.rc:182
 msgid "Are you sure you want to delete value '%s'?"
@@ -11394,7 +11395,7 @@ msgstr "Chave de busca '%s' não encontrada"
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
-msgstr "Tem a certeza que deseja excluir estes valores?"
+msgstr "Tem certeza que deseja excluir estes valores?"
 
 #: regedit.rc:184
 msgid "New Key #%d"
@@ -11406,7 +11407,7 @@ msgstr "Novo valor #%d"
 
 #: regedit.rc:177
 msgid "Can't query key '%s'"
-msgstr "Não pode consultar a chave '%s'"
+msgstr "Não é possível consultar a chave '%s'"
 
 #: regedit.rc:149
 msgid "Adds a new multi string value"
@@ -11751,7 +11752,7 @@ msgstr "Memória kernel (K)"
 
 #: taskmgr.rc:382 taskmgr.rc:290
 msgid "Handles"
-msgstr "Handles"
+msgstr "Manipuladores"
 
 #: taskmgr.rc:383 taskmgr.rc:291
 msgid "Threads"
@@ -11990,7 +11991,7 @@ msgstr "Leituras E/S"
 
 #: taskmgr.rc:545 taskmgr.rc:282
 msgid "I/O Read Bytes"
-msgstr "Leituras E/SO em Bytes"
+msgstr "Leituras E/S em Bytes"
 
 #: taskmgr.rc:547
 msgid "&Session ID"
@@ -12022,7 +12023,7 @@ msgstr "Prioridade &Base"
 
 #: taskmgr.rc:561
 msgid "&Handle Count"
-msgstr "Número de &Handles"
+msgstr "Número de &Manipuladores"
 
 #: taskmgr.rc:563
 msgid "&Thread Count"
@@ -12076,7 +12077,7 @@ msgstr "Esconder o Gerenciador de Tarefas quando está minimizado"
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
 msgstr ""
 "Forçar o Gerenciador de Tarefas a atualizar agora, independentemente da "
-"velocidade de atualização definida."
+"velocidade de atualização definida"
 
 #: taskmgr.rc:193
 msgid "Displays tasks by using large icons"
@@ -12292,11 +12293,11 @@ msgstr "Tamanho da Memória Virtual"
 
 #: taskmgr.rc:287
 msgid "Paged Pool"
-msgstr "Pool Paginada"
+msgstr "Reserva Paginada"
 
 #: taskmgr.rc:288
 msgid "NP Pool"
-msgstr "NP Pool"
+msgstr "Reserva Não Paginada"
 
 #: taskmgr.rc:289
 msgid "Base Pri"
@@ -12328,8 +12329,8 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
-"AVISO: Finalizar um processo pode causar resultados indesejá-\n"
-"veis, incluindo perda de dados e instabilidade do sistema.\n"
+"AVISO: Finalizar um processo pode causar resultados indesejáveis,\n"
+"incluindo perda de dados e instabilidade do sistema.\n"
 "O processo não vai poder salvar seus estado ou dados antes\n"
 "de finalizar. Tem certeza que deseja finalizar o processo?"
 
@@ -12548,8 +12549,8 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"As bibliotecas de dinâmicas (DLLs) podem ser especificadas individualmente "
-"como embutidas (fornecidas pelo Wine) ou nativas (tiradas do Windows ou "
+"As bibliotecas dinâmicas podem ser especificadas individualmente como "
+"embutidas (fornecidas pelo Wine) ou nativas (tiradas do Windows ou "
 "fornecidas pelo aplicativo)."
 
 #: winecfg.rc:185
@@ -12618,7 +12619,7 @@ msgstr "&Adicionar..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Auto&detectar"
+msgstr "Auto &Detectar"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -12630,11 +12631,11 @@ msgstr "&Avançado"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "Dispositi&vo"
+msgstr "Dispositi&vo:"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
-msgstr "Nave&gar"
+msgstr "Nave&gar..."
 
 #: winecfg.rc:244
 msgid "&Label:"
@@ -13000,7 +13001,7 @@ msgstr "Fundo Alternativo do Botão"
 
 #: winecfg.rc:117
 msgid "Hot Tracked Item"
-msgstr "Hot Tracked Item"
+msgstr "Elemento Ativo"
 
 #: winecfg.rc:118
 msgid "Active Title Bar Gradient"
@@ -13040,7 +13041,7 @@ msgstr "Controle"
 
 #: wineconsole.rc:66
 msgid "Popup menu"
-msgstr "Popup menu"
+msgstr "Menu de contexto"
 
 #: wineconsole.rc:67
 msgid "&Control"
@@ -13064,7 +13065,7 @@ msgstr "Histórico de comandos"
 
 #: wineconsole.rc:73
 msgid "&Number of recalled commands :"
-msgstr "&Número de comandos rechamados :"
+msgstr "&Número de comandos memorizados :"
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
@@ -13221,11 +13222,11 @@ msgid ""
 msgstr ""
 "  --backend={user|curses}  A opção user abrirá uma nova janela e curses\n"
 "                            tentará configurar o terminal atual como um\n"
-"                            console do Wine\n"
+"                            console do Wine.\n"
 
 #: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <comando>                O programa Wine a ser aberto no console\n"
+msgstr "  <comando>                O programa Wine a ser aberto no console.\n"
 
 #: wineconsole.rc:51
 msgid ""
@@ -13238,7 +13239,7 @@ msgstr ""
 "\n"
 "Exemplo:\n"
 "  wineconsole cmd\n"
-"Inicializa a linha de comandos do Wine num console do Wine\n"
+"Inicializa a linha de comandos do Wine num console do Wine.\n"
 "\n"
 
 #: winedbg.rc:42
@@ -13311,7 +13312,7 @@ msgstr "&Disco"
 
 #: winefile.rc:45
 msgid "Connect &Network Drive..."
-msgstr "&Conectar Unidade de Rede"
+msgstr "&Conectar Unidade de Rede..."
 
 #: winefile.rc:46
 msgid "&Disconnect Network Drive"
@@ -13924,11 +13925,11 @@ msgstr "Anterior"
 # Abreviated due to small space available
 #: wordpad.rc:165
 msgid "Two pages"
-msgstr "Duas pág."
+msgstr "Duas pág"
 
 #: wordpad.rc:166
 msgid "One page"
-msgstr "Uma pág."
+msgstr "Uma pág"
 
 #: wordpad.rc:167
 msgid "Zoom in"
@@ -14061,7 +14062,7 @@ msgstr "%1? (Sim|Não)\n"
 
 #: xcopy.rc:36
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Sobrescrever %s? (Sim|Não|Tudo)\n"
+msgstr "Sobrescrever %1? (Sim|Não|Tudo)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
