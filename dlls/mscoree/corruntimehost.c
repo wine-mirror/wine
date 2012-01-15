@@ -609,14 +609,10 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
     }
 
 cleanup:
-    if(filenameA)
-        HeapFree(GetProcessHeap(), 0, filenameA);
-    if(classA)
-        HeapFree(GetProcessHeap(), 0, classA);
-    if(argsA)
-        HeapFree(GetProcessHeap(), 0, argsA);
-    if(methodA)
-        HeapFree(GetProcessHeap(), 0, methodA);
+    HeapFree(GetProcessHeap(), 0, filenameA);
+    HeapFree(GetProcessHeap(), 0, classA);
+    HeapFree(GetProcessHeap(), 0, argsA);
+    HeapFree(GetProcessHeap(), 0, methodA);
 
     return hr;
 }
