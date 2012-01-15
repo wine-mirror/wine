@@ -23,6 +23,7 @@
 
 #include "shlwapi.h"
 #include "shlguid.h"
+#include "shobjidl.h"
 
 #include "wine/test.h"
 
@@ -61,11 +62,47 @@ static void test_IQueryAssociations_QueryInterface(void)
 }
 
 
+static void test_IApplicationAssociationRegistration_QueryInterface(void)
+{
+    IApplicationAssociationRegistration *appreg;
+    IApplicationAssociationRegistration *appreg2;
+    IUnknown *unk;
+    HRESULT hr;
+
+    /* this works since Vista */
+    hr = CoCreateInstance(&CLSID_ApplicationAssociationRegistration, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IApplicationAssociationRegistration, (LPVOID*)&appreg);
+
+    if (FAILED(hr)) {
+        skip("IApplicationAssociationRegistration not created: 0x%x\n", hr);
+        return;
+    }
+
+    hr = IUnknown_QueryInterface(appreg, &IID_IApplicationAssociationRegistration, (void**)&appreg2);
+    ok(hr == S_OK, "QueryInterface (IApplicationAssociationRegistration) returned 0x%x\n", hr);
+    if (SUCCEEDED(hr)) {
+        IUnknown_Release(appreg2);
+    }
+
+    hr = IUnknown_QueryInterface(appreg, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryInterface (IUnknown) returned 0x%x\n", hr);
+    if (SUCCEEDED(hr)) {
+        IUnknown_Release(unk);
+    }
+
+    hr = IUnknown_QueryInterface(appreg, &IID_IUnknown, NULL);
+    ok(hr == E_POINTER, "got 0x%x (expected E_POINTER)\n", hr);
+
+    IApplicationAssociationRegistration_Release(appreg);
+}
+
+
 START_TEST(assoc)
 {
     CoInitialize(NULL);
 
     test_IQueryAssociations_QueryInterface();
+    test_IApplicationAssociationRegistration_QueryInterface();
 
     CoUninitialize();
 }
