@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
@@ -567,8 +568,8 @@ static HRESULT LoadUnknownMetadata(IStream *input, const GUID *preferred_vendor,
     PropVariantInit(&result[0].value);
 
     result[0].value.vt = VT_BLOB;
-    result[0].value.blob.cbSize = bytesread;
-    result[0].value.blob.pBlobData = data;
+    result[0].value.u.blob.cbSize = bytesread;
+    result[0].value.u.blob.pBlobData = data;
 
     *items = result;
     *item_count = 1;
