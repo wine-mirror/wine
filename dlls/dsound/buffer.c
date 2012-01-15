@@ -900,8 +900,8 @@ HRESULT IDirectSoundBufferImpl_Create(
 
 	TRACE("Created buffer at %p\n", dsb);
 
-	dsb->ref = 1;
-	dsb->numIfaces = 1;
+	dsb->ref = 0;
+	dsb->numIfaces = 0;
 	dsb->device = device;
 	dsb->IDirectSoundBuffer8_iface.lpVtbl = &dsbvt;
 	dsb->iks = NULL;
@@ -1012,6 +1012,7 @@ HRESULT IDirectSoundBufferImpl_Create(
 		}
 	}
 
+        IDirectSoundBuffer8_AddRef(&dsb->IDirectSoundBuffer8_iface);
 	*pdsb = dsb;
 	return err;
 }

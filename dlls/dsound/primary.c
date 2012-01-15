@@ -1218,9 +1218,9 @@ HRESULT primarybuffer_create(DirectSoundDevice *device, IDirectSoundBufferImpl *
 		return DSERR_OUTOFMEMORY;
 	}
 
-        dsb->ref = 1;
+        dsb->ref = 0;
         dsb->ref3D = 0;
-        dsb->numIfaces = 1;
+        dsb->numIfaces = 0;
 	dsb->device = device;
 	dsb->IDirectSoundBuffer8_iface.lpVtbl = (IDirectSoundBuffer8Vtbl *)&dspbvt;
         dsb->IDirectSound3DListener_iface.lpVtbl = &ds3dlvt;
@@ -1253,6 +1253,7 @@ HRESULT primarybuffer_create(DirectSoundDevice *device, IDirectSoundBufferImpl *
                 device->pwfx->nBlockAlign, device->pwfx->wBitsPerSample,
                 device->pwfx->cbSize);
 
+        IDirectSoundBuffer_AddRef(&dsb->IDirectSoundBuffer8_iface);
 	*ppdsb = dsb;
 	return S_OK;
 }
