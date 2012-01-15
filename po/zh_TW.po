@@ -40,7 +40,7 @@ msgstr "技術支援(&S)..."
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
-msgstr "&Modify..."
+msgstr ""
 
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
@@ -159,7 +159,7 @@ msgstr "允許你安裝新軟件, 和從你的電腦裡刪除現有程式."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
-msgstr "Applications"
+msgstr ""
 
 #: appwiz.rc:32
 msgid ""
@@ -549,7 +549,7 @@ msgstr "範例"
 
 #: comdlg32.rc:267
 msgid "AaBbYyZz"
-msgstr "AaBbYyZz"
+msgstr ""
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
@@ -7471,7 +7471,7 @@ msgstr "速度"
 
 #: serialui.rc:30
 msgid "Parity"
-msgstr "Parity"
+msgstr ""
 
 #: serialui.rc:32
 msgid "Flow Control"
@@ -11893,7 +11893,7 @@ msgstr "I/O 讀取量"
 
 #: taskmgr.rc:547
 msgid "&Session ID"
-msgstr "&Session ID"
+msgstr ""
 
 #: taskmgr.rc:549
 msgid "User &Name"
@@ -11909,11 +11909,11 @@ msgstr "虛擬內存大小(&V)"
 
 #: taskmgr.rc:555
 msgid "Pa&ged Pool"
-msgstr "Pa&ged Pool"
+msgstr ""
 
 #: taskmgr.rc:557
 msgid "N&on-paged Pool"
-msgstr "N&on-paged Pool"
+msgstr ""
 
 #: taskmgr.rc:559
 msgid "Base P&riority"
@@ -12427,7 +12427,7 @@ msgstr " 螢幕解析度(&R) "
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "This is a sample text using 10 point Tahoma"
+msgstr ""
 
 #: winecfg.rc:182
 #, fuzzy
@@ -12503,8 +12503,6 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
-"edited."
 
 #: winecfg.rc:227
 msgid "&Add..."
@@ -12524,7 +12522,7 @@ msgstr "顯示進階選項(&A)"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr ""
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12543,30 +12541,28 @@ msgid "Show &dot files"
 msgstr "顯示隱藏檔案(&d)"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr ""
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
