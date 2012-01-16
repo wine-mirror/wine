@@ -1716,6 +1716,11 @@ then
     *i[[3456789]]86*) WINE_TRY_CFLAGS([-fno-omit-frame-pointer]) ;;
   esac
 
+  dnl mingw uses Windows 64-bit types, not Unix ones
+  case $host in
+    x86_64-*mingw32*|x86_64-*cygwin*) WINE_TRY_CFLAGS([-Wno-format]) ;;
+  esac
+
   dnl Check for noisy string.h
   saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -Wpointer-arith -Werror"
