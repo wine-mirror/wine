@@ -1083,9 +1083,15 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
         *ppdsb = NULL;
         return DSERR_OUTOFMEMORY;
     }
+
+    RtlAcquireResourceShared(&pdsb->lock, TRUE);
+
     CopyMemory(dsb, pdsb, sizeof(*dsb));
 
     dsb->pwfx = DSOUND_CopyFormat(pdsb->pwfx);
+
+    RtlReleaseResource(&pdsb->lock);
+
     if (dsb->pwfx == NULL) {
         HeapFree(GetProcessHeap(),0,dsb);
         *ppdsb = NULL;
