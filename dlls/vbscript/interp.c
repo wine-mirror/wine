@@ -260,7 +260,7 @@ static HRESULT stack_push(exec_ctx_t *ctx, VARIANT *v)
     if(ctx->stack_size == ctx->top) {
         VARIANT *new_stack;
 
-        new_stack = heap_realloc(ctx->stack, ctx->stack_size*2);
+        new_stack = heap_realloc(ctx->stack, ctx->stack_size*2*sizeof(*ctx->stack));
         if(!new_stack) {
             VariantClear(v);
             return E_OUTOFMEMORY;
