@@ -943,7 +943,7 @@ UINT WINAPI GetKeyboardLayoutList(INT nBuff, HKL *layouts)
             rc = RegEnumKeyW(hKeyKeyboard, count, szKeyName, 9);
             if (rc == ERROR_SUCCESS)
             {
-                layout = (HKL)strtoulW(szKeyName,NULL,16);
+                layout = (HKL)(ULONG_PTR)strtoulW(szKeyName,NULL,16);
                 if (baselayout != 0 && layout == (HKL)baselayout)
                     baselayout = 0; /* found in the registry do not add again */
                 if (nBuff && layouts)
