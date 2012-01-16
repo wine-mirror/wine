@@ -10871,6 +10871,26 @@ static void test_IPersistStream(void)
             U(max_size).LowPart += 3*sizeof(DWORD);
         ok(dw_data[2] == U(max_size).LowPart, "%d) Incorrect value %d, expected %d (PersistStream size).\n",
                 i, dw_data[2], U(max_size).LowPart);
+        IMarshal_Release(marshal);
+        IUri_Release(uri);
+
+        hr = IStream_Seek(stream, no_off, STREAM_SEEK_SET, NULL);
+        ok(hr == S_OK, "%d) Seek failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = CoCreateInstance(&curi, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+                &IID_IUri, (void**)&uri);
+        ok(hr == S_OK, "%d) Error creating uninitialized Uri: 0x%08x.\n", i, hr);
+        hr = IUri_QueryInterface(uri, &IID_IMarshal, (void**)&marshal);
+        ok(hr == S_OK, "%d) QueryInterface failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IMarshal_UnmarshalInterface(marshal, stream, &IID_IUri, (void**)&uri);
+        ok(hr == S_OK, "%d) UnmarshalInterface failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IUri_GetRawUri(uri, &raw_uri);
+        ok(hr == S_OK, "%d) GetRawUri failed 0x%08x, expected S_OK.\n", i, hr);
+        ok(!strcmp_aw(test->str_props[Uri_PROPERTY_RAW_URI].value, raw_uri)
+                || broken(test->str_props[Uri_PROPERTY_RAW_URI].broken_value
+                    && !strcmp_aw(test->str_props[Uri_PROPERTY_RAW_URI].broken_value, raw_uri)),
+                "%d) Expected %s but got %s.\n", i, test->str_props[Uri_PROPERTY_RAW_URI].value,
+                wine_dbgstr_w(raw_uri));
+        SysFreeString(raw_uri);
 
         IMarshal_Release(marshal);
         IStream_Release(stream);
