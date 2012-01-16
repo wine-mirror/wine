@@ -492,7 +492,7 @@ static HRESULT WINAPI QTVDecoder_DecideBufferSize(TransformFilter *tf, IMemAlloc
         ppropInputRequest->cbAlign = 1;
 
     if (ppropInputRequest->cbBuffer < This->outputSize)
-            ppropInputRequest->cbBuffer = This->outputSize;
+            ppropInputRequest->cbBuffer = This->outputSize + ppropInputRequest->cbAlign;
 
     if (!ppropInputRequest->cBuffers)
         ppropInputRequest->cBuffers = 1;
