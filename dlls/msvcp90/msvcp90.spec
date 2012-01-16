@@ -2397,7 +2397,7 @@
 @ cdecl -arch=win64 ?_Grow@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAA_N_K_N@Z(ptr long long) basic_string_wchar_grow
 @ thiscall -arch=win32 ?_Hexdig@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABEHDDDD@Z(ptr long long long long) MSVCP_num_get_char__Hexdig
 @ cdecl -arch=win64 ?_Hexdig@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAHDDDD@Z(ptr long long long long) MSVCP_num_get_char__Hexdig
-@ cdecl -arch=win32 ?_Hexdig@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABEHGGGG@Z(ptr long long long long) MSVCP_num_get_wchar__Hexdig
+@ thiscall -arch=win32 ?_Hexdig@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABEHGGGG@Z(ptr long long long long) MSVCP_num_get_wchar__Hexdig
 @ cdecl -arch=win64 ?_Hexdig@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBAHGGGG@Z(ptr long long long long) MSVCP_num_get_wchar__Hexdig
 @ thiscall -arch=win32 ?_Hexdig@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABEH_W000@Z(ptr long long long long) MSVCP_num_get_wchar__Hexdig
 @ cdecl -arch=win64 ?_Hexdig@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAH_W000@Z(ptr long long long long) MSVCP_num_get_wchar__Hexdig
@@ -4055,7 +4055,7 @@
 @ cdecl -arch=win64 ?get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEA_K@Z(ptr ptr ptr ptr ptr ptr ptr) num_get_char_get_uint64
 @ thiscall -arch=win32 ?get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAA_N@Z(ptr ptr ptr long ptr long ptr ptr ptr) num_get_char_get_bool
 @ cdecl -arch=win64 ?get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEA_N@Z(ptr ptr ptr ptr ptr ptr ptr) num_get_char_get_bool
-@ thiscall -arch=win32 ?get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAAG@(ptr ptr ptr long ptr long ptr ptr ptr) num_get_wchar_get_ushort
+@ thiscall -arch=win32 ?get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAAG@Z(ptr ptr ptr long ptr long ptr ptr ptr) num_get_wchar_get_ushort
 @ cdecl -arch=win64 ?get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AEAVios_base@2@AEAHAEAG@Z(ptr ptr ptr ptr ptr ptr ptr) num_get_wchar_get_ushort
 @ thiscall -arch=win32 ?get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAAI@Z(ptr ptr ptr long ptr long ptr ptr ptr) num_get_wchar_get_uint
 @ cdecl -arch=win64 ?get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AEAVios_base@2@AEAHAEAI@Z(ptr ptr ptr ptr ptr ptr ptr) num_get_wchar_get_uint
