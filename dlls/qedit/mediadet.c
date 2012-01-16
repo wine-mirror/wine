@@ -396,7 +396,7 @@ static HRESULT GetSplitter(MediaDetImpl *This)
         if (FAILED(hr))
         {
             VariantClear(&var);
-            goto retry;
+            continue;
         }
 
         hr = IGraphBuilder_AddFilter(This->graph, splitter,
