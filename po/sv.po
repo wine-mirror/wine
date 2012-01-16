@@ -45,7 +45,7 @@ msgstr "&Supportinfo..."
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
-msgstr "&Modify..."
+msgstr ""
 
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
@@ -547,11 +547,11 @@ msgstr "Test"
 
 #: comdlg32.rc:267
 msgid "AaBbYyZz"
-msgstr "AaBbYyZz"
+msgstr ""
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
-msgstr "Scr&ipt:"
+msgstr ""
 
 #: comdlg32.rc:276
 msgid "Color"
@@ -732,7 +732,7 @@ msgstr "Utskriftsformat"
 
 #: comdlg32.rc:432
 msgid "&Tray:"
-msgstr "&Tray:"
+msgstr ""
 
 #: comdlg32.rc:435 wineps.rc:32
 msgid "&Portrait"
@@ -890,7 +890,7 @@ msgstr "Oliv"
 
 #: comdlg32.rc:121 wordpad.rc:118
 msgid "Navy"
-msgstr "Navy"
+msgstr ""
 
 #: comdlg32.rc:122 wordpad.rc:119
 msgid "Purple"
@@ -898,7 +898,7 @@ msgstr "Lila"
 
 #: comdlg32.rc:123 wordpad.rc:120
 msgid "Teal"
-msgstr "Teal"
+msgstr ""
 
 #: comdlg32.rc:124 wordpad.rc:121
 msgid "Gray"
@@ -914,7 +914,7 @@ msgstr "Röd"
 
 #: comdlg32.rc:127 wordpad.rc:124
 msgid "Lime"
-msgstr "Lime"
+msgstr ""
 
 #: comdlg32.rc:128 wordpad.rc:125
 msgid "Yellow"
@@ -1234,7 +1234,7 @@ msgstr "Certifikatpolicyer"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr "Subject Key Identifier"
+msgstr ""
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
@@ -1250,7 +1250,7 @@ msgstr "Utökad nyckelanvändning"
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
-msgstr "Authority Information Access"
+msgstr ""
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
@@ -1278,7 +1278,7 @@ msgstr "Innehållstyp"
 
 #: crypt32.rc:46
 msgid "Message Digest"
-msgstr "Message Digest"
+msgstr ""
 
 #: crypt32.rc:47
 msgid "Signing Time"
@@ -1316,7 +1316,7 @@ msgstr "Användarmeddelande"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr "On-line Certificate Status Protocol"
+msgstr ""
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
@@ -1437,7 +1437,7 @@ msgstr "CA-version"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
-msgstr "Cross CA Version"
+msgstr ""
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
@@ -1577,15 +1577,15 @@ msgstr "Agent för nyckelåterställande"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
-msgstr "Certificate Template Information"
+msgstr ""
 
 #: crypt32.rc:121
 msgid "Enterprise Root OID"
-msgstr "Enterprise Root OID"
+msgstr ""
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
-msgstr "Dummy Signer"
+msgstr ""
 
 #: crypt32.rc:123
 msgid "Encrypted Private Key"
@@ -1605,11 +1605,11 @@ msgstr "Transaktions-Id"
 
 #: crypt32.rc:127
 msgid "Sender Nonce"
-msgstr "Sender Nonce"
+msgstr ""
 
 #: crypt32.rc:128
 msgid "Recipient Nonce"
-msgstr "Recipient Nonce"
+msgstr ""
 
 #: crypt32.rc:129
 msgid "Reg Info"
@@ -1737,7 +1737,7 @@ msgstr "Dokumentsignering"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
-msgstr "IP security IKE intermediate"
+msgstr ""
 
 #: crypt32.rc:161 cryptui.rc:129
 msgid "File Recovery"
@@ -1841,7 +1841,7 @@ msgstr "Okänd nyckelanvändning"
 
 #: crypt32.rc:194
 msgid "Subject Type="
-msgstr "Subject Type="
+msgstr ""
 
 #: crypt32.rc:195
 #, fuzzy
@@ -2217,11 +2217,11 @@ msgstr "Standard för kryptografisk meddelandesyntax/PKCS #7-meddelande (.p7b)"
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
-msgstr "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
+msgstr ""
 
 #: cryptui.rc:300
 msgid "Microsoft Serialized Certificate Store (.sst)"
-msgstr "Microsoft Serialized Certificate Store (.sst)"
+msgstr ""
 
 #: cryptui.rc:308
 msgid ""
@@ -2371,7 +2371,7 @@ msgstr "&Inkludera alla certifikat i certifieringssökvägen om möjligt"
 
 #: cryptui.rc:413
 msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
-msgstr "&Personal Information Exchange/PKCS #12 (.pfx)"
+msgstr ""
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
@@ -2592,7 +2592,7 @@ msgstr "X.509-certifikat (*.cer; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
-msgstr "Personal Information Exchange (*.pfx; *.p12)"
+msgstr ""
 
 #: cryptui.rc:76 cryptui.rc:155
 msgid "Certificate Revocation List (*.crl)"
@@ -2604,7 +2604,7 @@ msgstr "Lista över betrodda certifikat (*.stl)"
 
 #: cryptui.rc:78
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr "Microsoft Serialized Certificate Store (*.sst)"
+msgstr ""
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
@@ -2656,7 +2656,7 @@ msgstr "CMS/PKCS #7-meddelande"
 
 #: cryptui.rc:94
 msgid "Personal Information Exchange"
-msgstr "Personal Information Exchange"
+msgstr ""
 
 #: cryptui.rc:96
 msgid "The import was successful."
@@ -2873,7 +2873,7 @@ msgstr "CMS/PKCS #7-meddelanden (*.p7b)"
 
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
-msgstr "Personal Information Exchange (*.pfx)"
+msgstr ""
 
 #: cryptui.rc:159
 msgid "Serialized Certificate Store (*.sst)"
@@ -3723,7 +3723,7 @@ msgstr "Filslut\n"
 
 #: winerror.mc:211 winerror.mc:436
 msgid "Disk full\n"
-msgstr "Disk full\n"
+msgstr ""
 
 #: winerror.mc:216
 msgid "Request not supported\n"
@@ -4087,7 +4087,7 @@ msgstr "Ogiltig sökväg\n"
 
 #: winerror.mc:676
 msgid "Signal pending\n"
-msgstr "Signal pending\n"
+msgstr ""
 
 #: winerror.mc:681
 msgid "Max system-wide thread count reached\n"
@@ -4103,7 +4103,7 @@ msgstr "Resursen används\n"
 
 #: winerror.mc:696
 msgid "Cancel violation\n"
-msgstr "Cancel violation\n"
+msgstr ""
 
 #: winerror.mc:701
 msgid "Atomic locks not supported\n"
@@ -7104,7 +7104,7 @@ msgstr "Skapa från fil"
 
 #: oledlg.rc:65
 msgid "&Add Control..."
-msgstr "&Add Control..."
+msgstr ""
 
 #: oledlg.rc:66
 msgid "Display As Icon"
@@ -7120,7 +7120,7 @@ msgstr "Fil:"
 
 #: oledlg.rc:75
 msgid "Paste Special"
-msgstr "Paste Special"
+msgstr ""
 
 #: oledlg.rc:78 setupapi.rc:40
 msgid "Source:"
@@ -7496,11 +7496,11 @@ msgstr "Spola tillbaka"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
-msgstr "Trace Tags"
+msgstr ""
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
-msgstr "Resource Failures"
+msgstr ""
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
@@ -7508,11 +7508,11 @@ msgstr ""
 
 #: shdoclc.rc:199
 msgid "Debug Break"
-msgstr "Debug Break"
+msgstr ""
 
 #: shdoclc.rc:200
 msgid "Debug View"
-msgstr "Debug View"
+msgstr ""
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
@@ -8303,7 +8303,7 @@ msgstr "&Stoppa"
 
 #: user32.rc:80
 msgid "&Retry"
-msgstr "&Retry"
+msgstr ""
 
 #: user32.rc:81
 msgid "&Ignore"
@@ -12605,7 +12605,7 @@ msgstr "Visa &avancerat"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr ""
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12624,30 +12624,28 @@ msgid "Show &dot files"
 msgstr "Visa &punktfiler"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr ""
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
@@ -13005,7 +13003,7 @@ msgstr "Menyrad"
 
 #: wineconsole.rc:60
 msgid "Cursor size"
-msgstr "Cursor size"
+msgstr ""
 
 #: wineconsole.rc:61
 msgid "&Small"
@@ -13025,11 +13023,11 @@ msgstr "Control"
 
 #: wineconsole.rc:66
 msgid "Popup menu"
-msgstr "Popup menu"
+msgstr ""
 
 #: wineconsole.rc:67
 msgid "&Control"
-msgstr "&Control"
+msgstr ""
 
 #: wineconsole.rc:68
 msgid "S&hift"
@@ -13037,24 +13035,23 @@ msgstr "S&hift"
 
 #: wineconsole.rc:69
 msgid "Quick edit"
-msgstr "Quick edit"
+msgstr ""
 
 #: wineconsole.rc:70
 msgid "&enable"
-msgstr "&enable"
+msgstr ""
 
 #: wineconsole.rc:72
 msgid "Command history"
 msgstr "Kommandohistorik"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
-msgstr "&Number of recalled commands :"
+msgstr ""
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
-msgstr "&Remove doubles"
+msgstr ""
 
 #: wineconsole.rc:84
 msgid "&Font"
@@ -13071,7 +13068,7 @@ msgstr " Konfiguration "
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
-msgstr "Buffer zone"
+msgstr ""
 
 #: wineconsole.rc:101
 #, fuzzy
@@ -13099,11 +13096,11 @@ msgstr "H&öjd :"
 
 #: wineconsole.rc:116
 msgid "End of program"
-msgstr "End of program"
+msgstr ""
 
 #: wineconsole.rc:117
 msgid "&Close console"
-msgstr "&Close console"
+msgstr ""
 
 #: wineconsole.rc:119
 msgid "Edition"
@@ -13115,11 +13112,11 @@ msgstr "Konsollparametrar"
 
 #: wineconsole.rc:128
 msgid "Retain these settings for later sessions"
-msgstr "Retain these settings for later sessions"
+msgstr ""
 
 #: wineconsole.rc:129
 msgid "Modify only current session"
-msgstr "Modify only current session"
+msgstr ""
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"
