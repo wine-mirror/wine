@@ -774,7 +774,7 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
 
         hFile = parser_generate_command_file("echo Modules:", "info share",
                                              "echo Threads:", "info threads",
-                                             "backtrace", "detach", NULL);
+                                             "kill", NULL);
     }
     else if (!strcmp(argv[0], "--minidump"))
     {
@@ -839,7 +839,16 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
 
 static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
 {
-    if (pcs == dbg_curr_process)
+    if (kill)
+    {
+        DWORD exit_code = 0;
+
+        if (pcs == dbg_curr_process && dbg_curr_thread->in_exception)
+            exit_code = dbg_curr_thread->excpt_record.ExceptionCode;
+
+        TerminateProcess(pcs->handle, exit_code);
+    }
+    else if (pcs == dbg_curr_process)
     {
         /* remove all set breakpoints in debuggee code */
         break_set_xpoints(FALSE);
@@ -852,10 +861,6 @@ static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
             SetThreadContext(dbg_curr_thread->handle, &dbg_context);
             ContinueDebugEvent(dbg_curr_pid, dbg_curr_tid, DBG_CONTINUE);
         }
-    }
-    if (kill)
-    {
-        TerminateProcess(pcs->handle, 0);
     }
     else
     {
