@@ -807,7 +807,7 @@ static int wait_reply( void *cookie )
         ret = read( ntdll_get_thread_data()->wait_fd[0], &reply, sizeof(reply) );
         if (ret == sizeof(reply))
         {
-            if (!reply.cookie) break;  /* thread got killed */
+            if (!reply.cookie) abort_thread( reply.signaled );  /* thread got killed */
             if (wine_server_get_ptr(reply.cookie) == cookie) return reply.signaled;
             /* we stole another reply, wait for the real one */
             signaled = wait_reply( cookie );
@@ -826,8 +826,6 @@ static int wait_reply( void *cookie )
         if (errno == EINTR) continue;
         server_protocol_perror("wakeup read");
     }
-    /* the server closed the connection; time to die... */
-    abort_thread(0);
 }
 
 

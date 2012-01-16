@@ -986,7 +986,7 @@ void kill_thread( struct thread *thread, int violent_death )
     if (thread->wait)
     {
         while (thread->wait) end_wait( thread );
-        send_thread_wakeup( thread, 0, STATUS_PENDING );
+        send_thread_wakeup( thread, 0, thread->exit_code );
         /* if it is waiting on the socket, we don't need to send a SIGQUIT */
         violent_death = 0;
     }
