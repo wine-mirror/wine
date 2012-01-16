@@ -347,16 +347,10 @@ UINT WINAPI MsiGetTargetPathW( MSIHANDLE hInstall, LPCWSTR szFolder,
     return MSI_GetTargetPath( hInstall, szFolder, &path, pcchPathBuf );
 }
 
-static WCHAR *get_source_root( MSIDATABASE *db )
+static WCHAR *get_source_root( MSIPACKAGE *package )
 {
-    WCHAR *path, *p;
-
-    if ((path = msi_dup_property( db, szSourceDir ))) return path;
-    if ((path = msi_dup_property( db, szDatabase )))
-    {
-        if ((p = strrchrW( path, '\\' ))) p[1] = 0;
-    }
-    return path;
+    msi_set_sourcedir_props( package, FALSE );
+    return msi_dup_property( package->db, szSourceDir );
 }
 
 WCHAR *msi_resolve_source_folder( MSIPACKAGE *package, const WCHAR *name, MSIFOLDER **folder )
@@ -372,7 +366,7 @@ WCHAR *msi_resolve_source_folder( MSIPACKAGE *package, const WCHAR *name, MSIFOL
     /* special resolving for root dir */
     if (!strcmpW( name, szTargetDir ) && !f->ResolvedSource)
     {
-        f->ResolvedSource = get_source_root( package->db );
+        f->ResolvedSource = get_source_root( package );
     }
     if (folder) *folder = f;
     if (f->ResolvedSource)
@@ -388,7 +382,7 @@ WCHAR *msi_resolve_source_folder( MSIPACKAGE *package, const WCHAR *name, MSIFOL
     p = msi_resolve_source_folder( package, parent, NULL );
 
     if (package->WordCount & msidbSumInfoSourceTypeCompressed)
-        path = get_source_root( package->db );
+        path = get_source_root( package );
     else if (package->WordCount & msidbSumInfoSourceTypeSFN)
         path = msi_build_directory_name( 3, p, f->SourceShortPath, NULL );
     else
