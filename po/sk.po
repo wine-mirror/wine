@@ -540,11 +540,11 @@ msgstr "Vzorka"
 
 #: comdlg32.rc:267
 msgid "AaBbYyZz"
-msgstr "AaBbYyZz"
+msgstr ""
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
-msgstr "Scr&ipt:"
+msgstr ""
 
 #: comdlg32.rc:276
 msgid "Color"
@@ -685,7 +685,7 @@ msgstr "Počet &kópií:"
 
 #: comdlg32.rc:374
 msgid "C&ollate"
-msgstr "C&ollate"
+msgstr ""
 
 #: comdlg32.rc:379
 msgid "Pa&ges"
@@ -721,11 +721,11 @@ msgstr "Na ší&rku"
 
 #: comdlg32.rc:423
 msgid "Setup Page"
-msgstr "Setup Page"
+msgstr ""
 
 #: comdlg32.rc:432
 msgid "&Tray:"
-msgstr "&Tray:"
+msgstr ""
 
 #: comdlg32.rc:435 wineps.rc:32
 msgid "&Portrait"
@@ -733,27 +733,27 @@ msgstr "Na výš&ku"
 
 #: comdlg32.rc:437
 msgid "Borders"
-msgstr "Borders"
+msgstr ""
 
 #: comdlg32.rc:438
 msgid "L&eft:"
-msgstr "L&eft:"
+msgstr ""
 
 #: comdlg32.rc:440 notepad.rc:109
 msgid "&Right:"
-msgstr "&Right:"
+msgstr ""
 
 #: comdlg32.rc:442
 msgid "T&op:"
-msgstr "T&op:"
+msgstr ""
 
 #: comdlg32.rc:444 notepad.rc:111
 msgid "&Bottom:"
-msgstr "&Bottom:"
+msgstr ""
 
 #: comdlg32.rc:448
 msgid "P&rinter..."
-msgstr "P&rinter..."
+msgstr ""
 
 #: comdlg32.rc:456
 msgid "Look &in:"
@@ -867,7 +867,7 @@ msgstr "Čierna"
 
 #: comdlg32.rc:118 wordpad.rc:115
 msgid "Maroon"
-msgstr "Maroon"
+msgstr ""
 
 #: comdlg32.rc:119 wordpad.rc:116
 msgid "Green"
@@ -887,7 +887,7 @@ msgstr ""
 
 #: comdlg32.rc:123 wordpad.rc:120
 msgid "Teal"
-msgstr "Teal"
+msgstr ""
 
 #: comdlg32.rc:124 wordpad.rc:121
 msgid "Gray"
@@ -7760,11 +7760,11 @@ msgstr "O programe %s"
 
 #: shell32.rc:333
 msgid "Wine &license"
-msgstr "Wine &license"
+msgstr ""
 
 #: shell32.rc:338
 msgid "Running on %s"
-msgstr "Running on %s"
+msgstr ""
 
 #: shell32.rc:339
 msgid "Wine was brought to you by:"
@@ -7775,17 +7775,15 @@ msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
-"Type the name of a program, folder, document, or Internet resource, and Wine "
-"will open it for you."
 
 #: shell32.rc:348
 msgid "&Open:"
-msgstr "&Open:"
+msgstr ""
 
 #: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
 msgid "&Browse..."
-msgstr "&Browse..."
+msgstr ""
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
@@ -8291,15 +8289,15 @@ msgstr "&Ignorovať"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr "&Try Again"
+msgstr ""
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr "&Continue"
+msgstr ""
 
 #: user32.rc:91
 msgid "Select Window"
-msgstr "Select Window"
+msgstr ""
 
 #: user32.rc:69
 msgid "&More Windows..."
@@ -8311,7 +8309,7 @@ msgstr "&Veľkosť papiera:"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr "Duplex:"
+msgstr ""
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
