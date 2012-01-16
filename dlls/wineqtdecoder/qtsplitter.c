@@ -233,6 +233,7 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *punkout, HRESULT *phr)
         *phr = E_OUTOFMEMORY;
         return NULL;
     }
+    ZeroMemory(This,sizeof(*This));
 
     BaseFilter_Init(&This->filter, &QT_Vtbl, &CLSID_QTSplitter, (DWORD_PTR)(__FILE__ ": QTSplitter.csFilter"), &BaseFuncTable);
 
@@ -250,7 +251,6 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *punkout, HRESULT *phr)
     This->pInputPin.pin.refCount = 1;
     This->pInputPin.pin.pConnectedTo = NULL;
     This->pInputPin.pin.pCritSec = &This->filter.csFilter;
-    ZeroMemory(&This->pInputPin.pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
     *phr = S_OK;
     return obj;
 }
