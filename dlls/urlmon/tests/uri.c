@@ -10691,6 +10691,7 @@ static void test_IPersistStream(void)
         IUri *uri;
         IPersistStream *persist_stream;
         IStream *stream;
+        IMarshal *marshal;
         DWORD props, props_no, dw_data[6];
         WCHAR str_data[1024];
         ULARGE_INTEGER size, max_size;
@@ -10821,6 +10822,57 @@ static void test_IPersistStream(void)
                 wine_dbgstr_w(raw_uri));
         SysFreeString(raw_uri);
 
+        hr = IUri_QueryInterface(uri, &IID_IMarshal, (void**)&marshal);
+        ok(hr == S_OK, "%d) QueryInterface(IID_IMarshal) failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IStream_Seek(stream, no_off, STREAM_SEEK_SET, NULL);
+        ok(hr == S_OK, "%d) Seek failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IMarshal_MarshalInterface(marshal, stream, &IID_IUri, (void*)uri,
+                MSHCTX_DIFFERENTMACHINE, NULL, MSHLFLAGS_NORMAL);
+        ok(hr == E_INVALIDARG, "%d) MarshalInterface returned 0x%08x, expected E_INVALIDARG.\n", i, hr);
+        hr = IMarshal_MarshalInterface(marshal, stream, &IID_IUri, (void*)uri,
+                MSHCTX_CROSSCTX, NULL, MSHLFLAGS_NORMAL);
+        ok(hr == E_INVALIDARG, "%d) MarshalInterface returned 0x%08x, expected E_INVALIDARG.\n", i, hr);
+        hr = IMarshal_MarshalInterface(marshal, stream, &IID_IUri, (void*)uri,
+                MSHCTX_LOCAL, NULL, MSHLFLAGS_TABLESTRONG);
+        ok(hr == E_INVALIDARG, "%d) MarshalInterface returned 0x%08x, expected E_INVALIDARG.\n", i, hr);
+        hr = IMarshal_MarshalInterface(marshal, stream, &IID_IUri, (void*)uri,
+                MSHCTX_LOCAL, NULL, MSHLFLAGS_TABLEWEAK);
+        ok(hr == E_INVALIDARG, "%d) MarshalInterface returned 0x%08x, expected E_INVALIDARG.\n", i, hr);
+        hr = IMarshal_MarshalInterface(marshal, stream, &IID_IUri, (void*)uri,
+                MSHCTX_LOCAL, NULL, MSHLFLAGS_NOPING);
+        ok(hr == E_INVALIDARG, "%d) MarshalInterface returned 0x%08x, expected E_INVALIDARG.\n", i, hr);
+        hr = IMarshal_MarshalInterface(marshal, stream, &IID_IUri, (void*)uri,
+                MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
+        ok(hr == S_OK, "%d) MarshalInterface failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IMarshal_GetUnmarshalClass(marshal, &IID_IUri, (void*)uri,
+                MSHCTX_CROSSCTX, NULL, MSHLFLAGS_NORMAL, &curi);
+        ok(hr == E_INVALIDARG, "%d) GetUnmarshalClass returned 0x%08x, expected E_INVALIDARG.\n", i, hr);
+        hr = IMarshal_GetUnmarshalClass(marshal, &IID_IUri, (void*)uri,
+                MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL, &curi);
+        ok(hr == S_OK, "%d) GetUnmarshalClass failed 0x%08x, expected S_OK.\n", i, hr);
+        ok(IsEqualCLSID(&curi, &CLSID_CUri), "%d) GetUnmarshalClass returned incorrect CLSID.\n", i);
+
+        hr = IStream_Seek(stream, no_off, STREAM_SEEK_CUR, &size);
+        ok(hr == S_OK, "%d) Seek failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IStream_Seek(stream, no_off, STREAM_SEEK_SET, NULL);
+        ok(hr == S_OK, "%d) Seek failed 0x%08x, expected S_OK.\n", i, hr);
+        hr = IStream_Read(stream, (void*)dw_data, 3*sizeof(DWORD), NULL);
+        ok(hr == S_OK, "%d) Read failed 0x%08x, expected S_OK.\n", i, hr);
+        ok(dw_data[0]-2 == U(size).LowPart, "%d) Structure size is %d, expected %d\n",
+                i, dw_data[0]-2, U(size).LowPart);
+        ok(dw_data[1] == MSHCTX_LOCAL, "%d) Incorrect value %d, expected MSHCTX_LOCAL.\n",
+                i, dw_data[1]);
+        ok(dw_data[2] == dw_data[0]-8, "%d) Incorrect value %d, expected %d (PersistStream size).\n",
+                i, dw_data[2], dw_data[0]-8);
+        if(!test->str_props[Uri_PROPERTY_PATH].value[0] &&
+                (test->dword_props[Uri_PROPERTY_SCHEME-Uri_PROPERTY_DWORD_START].value == URL_SCHEME_HTTP
+                 || test->dword_props[Uri_PROPERTY_SCHEME-Uri_PROPERTY_DWORD_START].value == URL_SCHEME_FTP
+                 || test->dword_props[Uri_PROPERTY_SCHEME-Uri_PROPERTY_DWORD_START].value == URL_SCHEME_HTTPS))
+            U(max_size).LowPart += 3*sizeof(DWORD);
+        ok(dw_data[2] == U(max_size).LowPart, "%d) Incorrect value %d, expected %d (PersistStream size).\n",
+                i, dw_data[2], U(max_size).LowPart);
+
+        IMarshal_Release(marshal);
         IStream_Release(stream);
         IPersistStream_Release(persist_stream);
         IUri_Release(uri);
