@@ -550,7 +550,7 @@ msgstr "Vzorec"
 
 #: comdlg32.rc:267
 msgid "AaBbYyZz"
-msgstr "AaBbYyZz"
+msgstr ""
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
@@ -3297,7 +3297,7 @@ msgstr "&O programu Internet Explorer ..."
 
 #: ieframe.rc:87
 msgid "Open URL"
-msgstr "Open URL"
+msgstr ""
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
@@ -7350,7 +7350,7 @@ msgstr "Cilj:"
 
 #: setupapi.rc:49
 msgid "Files Needed"
-msgstr "Files Needed"
+msgstr ""
 
 #: setupapi.rc:52
 msgid ""
@@ -8388,7 +8388,7 @@ msgstr "Veli&kost papirja:"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr "Duplex:"
+msgstr ""
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
@@ -8400,11 +8400,11 @@ msgstr "&Shrani geslo (nezaščiteno)"
 
 #: wininet.rc:54
 msgid "Authentication Required"
-msgstr "Authentication Required"
+msgstr ""
 
 #: wininet.rc:58
 msgid "Server"
-msgstr "Server"
+msgstr ""
 
 #: wininet.rc:74
 #, fuzzy
@@ -9996,7 +9996,7 @@ msgstr "Klic paketne oznake zunaj paketnega skripta ni mogoč\n"
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr ""
 
 #: cmd.rc:313
 #, fuzzy
@@ -12520,10 +12520,6 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"This program is free software; you can redistribute it and/or modify it "
-"under the terms of the GNU Lesser General Public License as published by the "
-"Free Software Foundation; either version 2.1 of the License, or (at your "
-"option) any later version."
 
 #: winecfg.rc:134
 #, fuzzy
@@ -12573,7 +12569,7 @@ msgstr " Nastavitve oken "
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatically capture the &mouse in full-screen windows"
+msgstr ""
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -12695,7 +12691,7 @@ msgstr "Pokaži &napredno"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr ""
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12714,30 +12710,28 @@ msgid "Show &dot files"
 msgstr "Pokaži &datoteke s piko"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr ""
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
