@@ -207,7 +207,7 @@ msgid "Programs (*.exe)"
 msgstr "Programe (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
-#: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
+#: oleview.rc:101 progman.rc:79 regedit.rc:195 winedbg.rc:39 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "Toate fișierele (*.*)"
 
@@ -375,8 +375,8 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Niciuna"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54
-#: wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
+#: winedbg.rc:71 wordpad.rc:169
 msgid "Close"
 msgstr "Închide"
 
@@ -7070,7 +7070,7 @@ msgstr "Toată rețeaua"
 msgid "Sound Selection"
 msgstr "Sound Selection"
 
-#: msacm32.rc:36
+#: msacm32.rc:36 winedbg.rc:72
 msgid "&Save As..."
 msgstr "&Salvează ca"
 
@@ -10923,7 +10923,7 @@ msgstr "EROARE"
 msgid "Untitled"
 msgstr "(fără titlu)"
 
-#: notepad.rc:74
+#: notepad.rc:74 winedbg.rc:38
 msgid "Text files (*.txt)"
 msgstr "Toate fișierele text (*.txt)"
 
@@ -13850,11 +13850,11 @@ msgstr ""
 "Pornește caseta de comandă pentru Wine într-o consolă Wine\n"
 "\n"
 
-#: winedbg.rc:42
+#: winedbg.rc:45
 msgid "Program Error"
 msgstr "Eroare de program"
 
-#: winedbg.rc:47
+#: winedbg.rc:50
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13862,15 +13862,12 @@ msgstr ""
 "Programul %s a întâmpinat o problemă gravă și trebuie să se închidă. Ne "
 "cerem scuze pentru neplăcerile create."
 
-#: winedbg.rc:53
+#: winedbg.rc:54
 #, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
-"Database</a> for tips about running this application.\n"
-"\n"
-"If this problem is not present under Windows and has not been reported yet, "
-"you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
+"Database</a> for tips about running this application."
 msgstr ""
 "Cauza poate fi o problemă în program sau o deficiență în Wine. Puteți "
 "consulta http://appdb.winehq.org pentru sugestii privind executarea acestei "
@@ -13878,6 +13875,24 @@ msgstr ""
 "\n"
 "Dacă această problemă nu este prezentă în Windows și nu a fost raportată "
 "încă, o puteți raporta la http://bugs.winehq.org."
+
+#: winedbg.rc:57
+#, fuzzy
+msgid "Show &Details"
+msgstr "&Detalii"
+
+#: winedbg.rc:62
+#, fuzzy
+msgid "Program Error Details"
+msgstr "Eroare de program"
+
+#: winedbg.rc:69
+msgid ""
+"If this problem is not present under Windows and has not been reported yet, "
+"you can save the detailed information to a file using the \"Save As\" "
+"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"and attach that file to the report."
+msgstr ""
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13890,6 +13905,11 @@ msgstr "Erori interne - s-au recepționat parametri nevalizi"
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(neidentificat)"
+
+#: winedbg.rc:40
+#, fuzzy
+msgid "Saving failed"
+msgstr "Deschide fișier"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"

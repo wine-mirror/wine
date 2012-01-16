@@ -207,7 +207,7 @@ msgid "Programs (*.exe)"
 msgstr "Programas (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
-#: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
+#: oleview.rc:101 progman.rc:79 regedit.rc:195 winedbg.rc:39 winhlp32.rc:87
 #, fuzzy
 msgid "All files (*.*)"
 msgstr ""
@@ -380,8 +380,8 @@ msgstr ""
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
 "Nenhuma"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54
-#: wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
+#: winedbg.rc:71 wordpad.rc:169
 msgid "Close"
 msgstr "Fechar"
 
@@ -6863,7 +6863,7 @@ msgstr "Toda a rede"
 msgid "Sound Selection"
 msgstr "Selecção de som"
 
-#: msacm32.rc:36
+#: msacm32.rc:36 winedbg.rc:72
 msgid "&Save As..."
 msgstr "&Gravar como..."
 
@@ -10704,7 +10704,7 @@ msgstr "ERRO"
 msgid "Untitled"
 msgstr "(sem nome)"
 
-#: notepad.rc:74
+#: notepad.rc:74 winedbg.rc:38
 msgid "Text files (*.txt)"
 msgstr "Ficheiros de texto (*.txt)"
 
@@ -13631,11 +13631,11 @@ msgstr ""
 "Arranca a linha de comandos do Wine numa consola Wine\n"
 "\n"
 
-#: winedbg.rc:42
+#: winedbg.rc:45
 msgid "Program Error"
 msgstr "Erro no programa"
 
-#: winedbg.rc:47
+#: winedbg.rc:50
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13643,15 +13643,12 @@ msgstr ""
 "O programa %s encontrou um problema sério e precisa ser encerrado. Pedimos "
 "desculpa pelo incómodo."
 
-#: winedbg.rc:53
+#: winedbg.rc:54
 #, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
-"Database</a> for tips about running this application.\n"
-"\n"
-"If this problem is not present under Windows and has not been reported yet, "
-"you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
+"Database</a> for tips about running this application."
 msgstr ""
 "Isto pode ter sido causado por um problema no programa ou no Wine. Pode "
 "querer visitar http://appdb.winehq.org para dicas de como correr esta "
@@ -13659,6 +13656,24 @@ msgstr ""
 "\n"
 "Se este problema não existe no Windows e não foi reportado ainda você pode "
 "fazê-lo em http://bugs.winehq.org."
+
+#: winedbg.rc:57
+#, fuzzy
+msgid "Show &Details"
+msgstr "&Detalhes"
+
+#: winedbg.rc:62
+#, fuzzy
+msgid "Program Error Details"
+msgstr "Erro no programa"
+
+#: winedbg.rc:69
+msgid ""
+"If this problem is not present under Windows and has not been reported yet, "
+"you can save the detailed information to a file using the \"Save As\" "
+"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"and attach that file to the report."
+msgstr ""
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13671,6 +13686,11 @@ msgstr "Erros Internos - recebidos parâmetros inválidos"
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(não identificado)"
+
+#: winedbg.rc:40
+#, fuzzy
+msgid "Saving failed"
+msgstr "Abertura falhou\n"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"

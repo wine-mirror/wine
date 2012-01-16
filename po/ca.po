@@ -207,7 +207,7 @@ msgid "Programs (*.exe)"
 msgstr "Programes (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
-#: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
+#: oleview.rc:101 progman.rc:79 regedit.rc:195 winedbg.rc:39 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "Tots els fitxers (*.*)"
 
@@ -371,8 +371,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Cap"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54
-#: wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
+#: winedbg.rc:71 wordpad.rc:169
 msgid "Close"
 msgstr "Tanca"
 
@@ -6619,7 +6619,7 @@ msgstr "Tota la Xarxa"
 msgid "Sound Selection"
 msgstr "Selecció de So"
 
-#: msacm32.rc:36
+#: msacm32.rc:36 winedbg.rc:72
 msgid "&Save As..."
 msgstr "Anomena i &Desa..."
 
@@ -10439,7 +10439,7 @@ msgstr "ERROR"
 msgid "Untitled"
 msgstr "Sense títol"
 
-#: notepad.rc:74
+#: notepad.rc:74 winedbg.rc:38
 msgid "Text files (*.txt)"
 msgstr "Fitxers de text (*.txt)"
 
@@ -13305,11 +13305,11 @@ msgstr ""
 "Inicia la línea d'ordres en una consola del Wine.\n"
 "\n"
 
-#: winedbg.rc:42
+#: winedbg.rc:45
 msgid "Program Error"
 msgstr "Error de Programa"
 
-#: winedbg.rc:47
+#: winedbg.rc:50
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13317,14 +13317,12 @@ msgstr ""
 "El programa %s ha trobat un problema greu i necessita tancar-se. Sentim les "
 "molèsties."
 
-#: winedbg.rc:53
+#: winedbg.rc:54
+#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
-"Database</a> for tips about running this application.\n"
-"\n"
-"If this problem is not present under Windows and has not been reported yet, "
-"you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
+"Database</a> for tips about running this application."
 msgstr ""
 "Això pot ser causat per un problema en el programa o una deficiència en el "
 "Wine. És possible que vulgueu comprovar el <a href=\"http://appdb.winehq.org"
@@ -13334,6 +13332,24 @@ msgstr ""
 "Si aquest problema no està present en el Windows i encara no s'ha reportat, "
 "podeu <a href=\"http://wiki.winehq.org/Bugs\">presentar un informe d'error</"
 "a>."
+
+#: winedbg.rc:57
+#, fuzzy
+msgid "Show &Details"
+msgstr "&Detalls"
+
+#: winedbg.rc:62
+#, fuzzy
+msgid "Program Error Details"
+msgstr "Error de Programa"
+
+#: winedbg.rc:69
+msgid ""
+"If this problem is not present under Windows and has not been reported yet, "
+"you can save the detailed information to a file using the \"Save As\" "
+"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"and attach that file to the report."
+msgstr ""
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13346,6 +13362,11 @@ msgstr "Errors interns - paràmetres invàlids rebuts"
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(no identificat)"
+
+#: winedbg.rc:40
+#, fuzzy
+msgid "Saving failed"
+msgstr "La creació ha fallat\n"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"

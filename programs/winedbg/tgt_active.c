@@ -667,6 +667,16 @@ static BOOL str2int(const char* str, DWORD_PTR* val)
     return str < ptr && !*ptr;
 }
 
+static HANDLE create_temp_file(void)
+{
+    static const WCHAR prefixW[] = {'w','d','b',0};
+    WCHAR path[MAX_PATH], name[MAX_PATH];
+
+    if (!GetTempPathW( MAX_PATH, path ) || !GetTempFileNameW( path, prefixW, 0, name ))
+        return INVALID_HANDLE_VALUE;
+    return CreateFileW( name, GENERIC_READ|GENERIC_WRITE|DELETE, FILE_SHARE_DELETE,
+                        NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, 0 );
+}
 
 /******************************************************************
  *		dbg_active_attach
@@ -754,7 +764,7 @@ enum dbg_start    dbg_active_launch(int argc, char* argv[])
  */
 enum dbg_start dbg_active_auto(int argc, char* argv[])
 {
-    HANDLE              hFile;
+    HANDLE input, output = INVALID_HANDLE_VALUE;
     enum dbg_start      ds = start_error_parse;
 
     DBG_IVAR(BreakOnDllLoad) = 0;
@@ -766,25 +776,37 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
         msgbox_res_id(NULL, IDS_INVALID_PARAMS, IDS_AUTO_CAPTION, MB_OK);
         return ds;
     }
-    if (!display_crash_dialog()) {
+
+    switch (display_crash_dialog())
+    {
+    case ID_DEBUG:
+        AllocConsole();
         dbg_init_console();
         dbg_start_interactive(INVALID_HANDLE_VALUE);
         return start_ok;
+    case ID_DETAILS:
+        dbg_houtput = output = create_temp_file();
+        break;
     }
 
-    hFile = parser_generate_command_file("echo Modules:", "info share",
-                                         "echo Threads:", "info threads",
-                                         "kill", NULL);
-    if (hFile == INVALID_HANDLE_VALUE) return start_error_parse;
-
-    dbg_houtput = GetStdHandle(STD_ERROR_HANDLE);
+    input = parser_generate_command_file("echo Modules:", "info share",
+                                         "echo Threads:", "info threads", NULL);
+    if (input == INVALID_HANDLE_VALUE) return start_error_parse;
 
     if (dbg_curr_process->active_debuggee)
         dbg_active_wait_for_first_exception();
 
     dbg_interactiveP = TRUE;
-    parser_handle(hFile);
+    parser_handle(input);
 
+    if (output != INVALID_HANDLE_VALUE)
+    {
+        display_crash_details( output );
+        CloseHandle( output );
+    }
+
+    CloseHandle( input );
+    dbg_curr_process->process_io->close_process(dbg_curr_process, TRUE);
     return start_ok;
 }
 

@@ -22,6 +22,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "commctrl.h"
+#include "commdlg.h"
 #include "shellapi.h"
 #include "psapi.h"
 
@@ -30,7 +31,11 @@
 
 #include "resource.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
+
 #define MAX_PROGRAM_NAME_LENGTH 80
+
+static char *crash_log;
 
 int msgbox_res_id(HWND hwnd, UINT textId, UINT captionId, UINT uType)
 {
@@ -97,6 +102,18 @@ static void set_bold_font(HWND hDlg)
     SendDlgItemMessageW(hDlg, IDC_STATIC_TXT1, WM_SETFONT, (WPARAM)g_hBoldFont, TRUE);
 }
 
+static void set_fixed_font( HWND dlg, UINT id )
+{
+    HFONT hfont = (HFONT)SendDlgItemMessageW( dlg, id, WM_GETFONT, 0, 0);
+    LOGFONTW font;
+
+    GetObjectW(hfont, sizeof(LOGFONTW), &font);
+    font.lfPitchAndFamily = FIXED_PITCH;
+    font.lfFaceName[0] = 0;
+    hfont = CreateFontIndirectW(&font);
+    SendDlgItemMessageW( dlg, id, WM_SETFONT, (WPARAM)hfont, TRUE );
+}
+
 static void set_message_with_filename(HWND hDlg)
 {
     WCHAR originalText[1000];
@@ -108,7 +125,82 @@ static void set_message_with_filename(HWND hDlg)
     SetDlgItemTextW(hDlg, IDC_STATIC_TXT1, newText);
 }
 
-static INT_PTR WINAPI DlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static void load_crash_log( HANDLE file )
+{
+    DWORD len, pos = 0, size = 65536;
+
+    crash_log = HeapAlloc( GetProcessHeap(), 0, size );
+    SetFilePointer( file, 0, NULL, FILE_BEGIN );
+    while (ReadFile( file, crash_log + pos, size - pos - 1, &len, NULL ) && len)
+    {
+        pos += len;
+        break;
+        if (pos == size - 1) crash_log = HeapReAlloc( GetProcessHeap(), 0, crash_log, size *= 2 );
+    }
+    crash_log[pos] = 0;
+}
+
+static void save_crash_log( HWND hwnd )
+{
+    OPENFILENAMEW save;
+    HANDLE handle;
+    DWORD err, written;
+    WCHAR *p, path[MAX_PATH], buffer[1024];
+    static const WCHAR default_name[] = { 'b','a','c','k','t','r','a','c','e','.','t','x','t',0 };
+    static const WCHAR default_ext[] = { 't','x','t',0 };
+    static const WCHAR txt_files[] = { '*','.','t','x','t',0 };
+    static const WCHAR all_files[] = { '*','.','*',0 };
+
+    memset( &save, 0, sizeof(save) );
+    lstrcpyW( path, default_name );
+
+    LoadStringW( GetModuleHandleW(0), IDS_TEXT_FILES, buffer, sizeof(buffer) );
+    p = buffer + lstrlenW(buffer) + 1;
+    lstrcpyW(p, txt_files);
+    p += lstrlenW(p) + 1;
+    LoadStringW( GetModuleHandleW(0), IDS_ALL_FILES, p, sizeof(buffer) - (p - buffer) );
+    p += lstrlenW(p) + 1;
+    lstrcpyW(p, all_files);
+    p += lstrlenW(p) + 1;
+    *p = '\0';
+
+    save.lStructSize = sizeof(OPENFILENAMEW);
+    save.hwndOwner   = hwnd;
+    save.hInstance   = GetModuleHandleW(0);
+    save.lpstrFilter = buffer;
+    save.lpstrFile   = path;
+    save.nMaxFile    = MAX_PATH;
+    save.Flags       = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT |
+                       OFN_HIDEREADONLY | OFN_ENABLESIZING;
+    save.lpstrDefExt = default_ext;
+
+    if (!GetSaveFileNameW( &save )) return;
+    handle = CreateFileW( save.lpstrFile, GENERIC_WRITE, FILE_SHARE_READ,
+                        NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0 );
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        if (!WriteFile( handle, crash_log, strlen(crash_log), &written, NULL ))
+            err = GetLastError();
+        else if (written != strlen(crash_log))
+            err = GetLastError();
+        else
+        {
+            CloseHandle( handle );
+            return;
+        }
+        CloseHandle( handle );
+        DeleteFileW( save.lpstrFile );
+    }
+    else err = GetLastError();
+
+    LoadStringW( GetModuleHandleW(0), IDS_SAVE_ERROR, buffer, sizeof(buffer)/sizeof(WCHAR) );
+    FormatMessageW( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                    NULL, err, 0, (LPWSTR)&p, 0, NULL);
+    MessageBoxW( 0, p, buffer, MB_OK | MB_ICONERROR);
+    LocalFree( p );
+}
+
+static INT_PTR WINAPI crash_dlg_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     static const WCHAR openW[] = {'o','p','e','n',0};
     switch (msg)
@@ -157,6 +249,7 @@ static INT_PTR WINAPI DlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             case IDOK:
             case IDCANCEL:
             case ID_DEBUG:
+            case ID_DETAILS:
                 EndDialog(hwnd, LOWORD(wParam));
                 return TRUE;
         }
@@ -165,12 +258,49 @@ static INT_PTR WINAPI DlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-BOOL display_crash_dialog(void)
+static INT_PTR WINAPI details_dlg_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    static const WCHAR openW[] = {'o','p','e','n',0};
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        set_fixed_font( hwnd, IDC_CRASH_TXT );
+        SetDlgItemTextA( hwnd, IDC_CRASH_TXT, crash_log );
+        return TRUE;
+
+    case WM_NOTIFY:
+        switch (((NMHDR *)lparam)->code)
+        {
+        case NM_CLICK:
+        case NM_RETURN:
+            if (wparam == IDC_STATIC_TXT2)
+                ShellExecuteW( NULL, openW, ((NMLINK *)lparam)->item.szUrl, NULL, NULL, SW_SHOW );
+            break;
+        }
+        break;
+
+    case WM_COMMAND:
+        switch (LOWORD(wparam))
+        {
+        case ID_SAVEAS:
+            save_crash_log( hwnd );
+            break;
+        case IDOK:
+        case IDCANCEL:
+            EndDialog(hwnd, LOWORD(wparam));
+            break;
+        }
+        return TRUE;
+    }
+    return FALSE;
+}
+
+int display_crash_dialog(void)
 {
     static const WCHAR winedeviceW[] = {'w','i','n','e','d','e','v','i','c','e','.','e','x','e',0};
     static const INITCOMMONCONTROLSEX init = { sizeof(init), ICC_LINK_CLASS };
 
-    INT_PTR result;
     /* dbg_curr_process->handle is not set */
     HANDLE hProcess;
 
@@ -182,10 +312,11 @@ BOOL display_crash_dialog(void)
     CloseHandle(hProcess);
     if (!strcmpW( g_ProgramName, winedeviceW )) return TRUE;
     InitCommonControlsEx( &init );
-    result = DialogBoxW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_CRASH_DLG), NULL, DlgProc);
-    if (result == ID_DEBUG) {
-        AllocConsole();
-        return FALSE;
-    }
-    return TRUE;
+    return DialogBoxW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_CRASH_DLG), NULL, crash_dlg_proc);
+}
+
+int display_crash_details( HANDLE logfile )
+{
+    load_crash_log( logfile );
+    return DialogBoxW( GetModuleHandleW(0), MAKEINTRESOURCEW(IDD_DETAILS_DLG), 0, details_dlg_proc );
 }

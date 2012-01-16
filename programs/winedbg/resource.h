@@ -22,15 +22,22 @@
 #include <winuser.h>
 
 #define IDD_CRASH_DLG   100
+#define IDD_DETAILS_DLG 101
 
 #define IDC_STATIC_BG   100
 #define IDC_STATIC_TXT1 101
 #define IDC_STATIC_TXT2 102
+#define IDC_CRASH_TXT   103
 
 #define IDM_DEBUG_POPUP 100
 
 #define ID_DEBUG        200
+#define ID_DETAILS      201
+#define ID_SAVEAS       202
 
 #define IDS_AUTO_CAPTION      16
 #define IDS_INVALID_PARAMS    17
 #define IDS_UNIDENTIFIED      18
+#define IDS_TEXT_FILES        19
+#define IDS_ALL_FILES         20
+#define IDS_SAVE_ERROR        21

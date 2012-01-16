@@ -207,7 +207,7 @@ msgid "Programs (*.exe)"
 msgstr "Programma's (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
-#: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
+#: oleview.rc:101 progman.rc:79 regedit.rc:195 winedbg.rc:39 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "Alle bestanden (*.*)"
 
@@ -371,8 +371,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Geen"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54
-#: wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
+#: winedbg.rc:71 wordpad.rc:169
 msgid "Close"
 msgstr "Sluiten"
 
@@ -6616,7 +6616,7 @@ msgstr "Gehele netwerk"
 msgid "Sound Selection"
 msgstr "Geluidskeuze"
 
-#: msacm32.rc:36
+#: msacm32.rc:36 winedbg.rc:72
 msgid "&Save As..."
 msgstr "&Opslaan als..."
 
@@ -10432,7 +10432,7 @@ msgstr "FOUT"
 msgid "Untitled"
 msgstr "Naamloos"
 
-#: notepad.rc:74
+#: notepad.rc:74 winedbg.rc:38
 msgid "Text files (*.txt)"
 msgstr "Tekstbestanden (*.txt)"
 
@@ -13309,11 +13309,11 @@ msgstr ""
 "Start de Wine command prompt in een Wine console.\n"
 "\n"
 
-#: winedbg.rc:42
+#: winedbg.rc:45
 msgid "Program Error"
 msgstr "Programma Fout"
 
-#: winedbg.rc:47
+#: winedbg.rc:50
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13321,14 +13321,12 @@ msgstr ""
 "Het programma %s is een serieus probleem tegengekomen en moet afgesloten "
 "worden. Excuses voor het ongemak."
 
-#: winedbg.rc:53
+#: winedbg.rc:54
+#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
-"Database</a> for tips about running this application.\n"
-"\n"
-"If this problem is not present under Windows and has not been reported yet, "
-"you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
+"Database</a> for tips about running this application."
 msgstr ""
 "Dit kan veroorzaakt worden door een probleem in het programma of een fout in "
 "Wine. U kunt zoeken op <a href=\"http://appdb.winehq.org\">Application "
@@ -13336,6 +13334,24 @@ msgstr ""
 "\n"
 "Als dit probleem niet optreedt onder Windows en nog niet is gerapporteerd, "
 "dan kunt u <a href=\"http://wiki.winehq.org/Bugs\">een bug rapporteren</a>."
+
+#: winedbg.rc:57
+#, fuzzy
+msgid "Show &Details"
+msgstr "&Details"
+
+#: winedbg.rc:62
+#, fuzzy
+msgid "Program Error Details"
+msgstr "Programma Fout"
+
+#: winedbg.rc:69
+msgid ""
+"If this problem is not present under Windows and has not been reported yet, "
+"you can save the detailed information to a file using the \"Save As\" "
+"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"and attach that file to the report."
+msgstr ""
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13348,6 +13364,11 @@ msgstr "Interne fouten - foutieve parameters ontvangen"
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(onbekend)"
+
+#: winedbg.rc:40
+#, fuzzy
+msgid "Saving failed"
+msgstr "Openen mislukt\n"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"

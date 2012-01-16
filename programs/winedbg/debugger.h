@@ -309,7 +309,8 @@ extern void             break_restart_execution(int count);
 extern int              break_add_condition(int bpnum, struct expr* exp);
 
   /* crashdlg.c */
-extern BOOL             display_crash_dialog(void);
+extern int              display_crash_dialog(void);
+extern int              display_crash_details(HANDLE logfile);
 extern int              msgbox_res_id(HWND hwnd, UINT textId, UINT captionId, UINT uType);
 
   /* dbg.y */

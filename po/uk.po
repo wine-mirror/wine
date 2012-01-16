@@ -203,7 +203,7 @@ msgid "Programs (*.exe)"
 msgstr "Програми (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
-#: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
+#: oleview.rc:101 progman.rc:79 regedit.rc:195 winedbg.rc:39 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "Всі файли (*.*)"
 
@@ -367,8 +367,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Немає"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54
-#: wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
+#: winedbg.rc:71 wordpad.rc:169
 msgid "Close"
 msgstr "Закрити"
 
@@ -6605,7 +6605,7 @@ msgstr "Вся Мережа"
 msgid "Sound Selection"
 msgstr ""
 
-#: msacm32.rc:36
+#: msacm32.rc:36 winedbg.rc:72
 msgid "&Save As..."
 msgstr "Зберегти &як..."
 
@@ -10367,7 +10367,7 @@ msgstr "ПОМИЛКА"
 msgid "Untitled"
 msgstr "Без назви"
 
-#: notepad.rc:74
+#: notepad.rc:74 winedbg.rc:38
 msgid "Text files (*.txt)"
 msgstr "Текстові файли (*.txt)"
 
@@ -13237,11 +13237,11 @@ msgstr ""
 "Запуск командного рядка Wine в консолі Wine\n"
 "\n"
 
-#: winedbg.rc:42
+#: winedbg.rc:45
 msgid "Program Error"
 msgstr "Помилка програми"
 
-#: winedbg.rc:47
+#: winedbg.rc:50
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13249,15 +13249,12 @@ msgstr ""
 "В програмі %s сталась серйозна помилка. Програма повинна бути закрита. "
 "Вибачте за незручності."
 
-#: winedbg.rc:53
+#: winedbg.rc:54
 #, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
-"Database</a> for tips about running this application.\n"
-"\n"
-"If this problem is not present under Windows and has not been reported yet, "
-"you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
+"Database</a> for tips about running this application."
 msgstr ""
 "Це могло бути викликане проблемою в програмі або недоробкою в Wine. Ви "
 "можете відвідати http://appdb.winehq.org та пошукати поради щодо запуску "
@@ -13265,6 +13262,24 @@ msgstr ""
 "\n"
 "Якщо ця проблема не присутня під Windows і ще не була зареєстрована, ви "
 "можете повідомити про неї на http://bugs.winehq.org."
+
+#: winedbg.rc:57
+#, fuzzy
+msgid "Show &Details"
+msgstr "&Детально"
+
+#: winedbg.rc:62
+#, fuzzy
+msgid "Program Error Details"
+msgstr "Помилка програми"
+
+#: winedbg.rc:69
+msgid ""
+"If this problem is not present under Windows and has not been reported yet, "
+"you can save the detailed information to a file using the \"Save As\" "
+"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"and attach that file to the report."
+msgstr ""
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13277,6 +13292,11 @@ msgstr "Внутрішні помилки - отримані невірні па
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(не визначено)"
+
+#: winedbg.rc:40
+#, fuzzy
+msgid "Saving failed"
+msgstr "Помилка створення\n"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"

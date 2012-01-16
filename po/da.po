@@ -206,7 +206,7 @@ msgid "Programs (*.exe)"
 msgstr "Programmer (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
-#: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
+#: oleview.rc:101 progman.rc:79 regedit.rc:195 winedbg.rc:39 winhlp32.rc:87
 #, fuzzy
 msgid "All files (*.*)"
 msgstr ""
@@ -375,8 +375,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Ingen"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54
-#: wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
+#: winedbg.rc:71 wordpad.rc:169
 msgid "Close"
 msgstr "Luk"
 
@@ -6745,7 +6745,7 @@ msgstr "Hele netværket"
 msgid "Sound Selection"
 msgstr "Lyd valg"
 
-#: msacm32.rc:36
+#: msacm32.rc:36 winedbg.rc:72
 msgid "&Save As..."
 msgstr "Gem &som..."
 
@@ -10591,7 +10591,7 @@ msgstr ""
 msgid "Untitled"
 msgstr "(ikke-navngivet)"
 
-#: notepad.rc:74
+#: notepad.rc:74 winedbg.rc:38
 msgid "Text files (*.txt)"
 msgstr "Tekst filer (*.txt)"
 
@@ -13496,11 +13496,11 @@ msgstr ""
 "Starter Wine kommandoprompten i en Wine konsol\n"
 "\n"
 
-#: winedbg.rc:42
+#: winedbg.rc:45
 msgid "Program Error"
 msgstr "Program Fejl"
 
-#: winedbg.rc:47
+#: winedbg.rc:50
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13508,15 +13508,12 @@ msgstr ""
 "Programmet %s er stødt på et alvorligt problem, og er nød til at lukke. Vi "
 "beklager ulejligheden."
 
-#: winedbg.rc:53
+#: winedbg.rc:54
 #, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
-"Database</a> for tips about running this application.\n"
-"\n"
-"If this problem is not present under Windows and has not been reported yet, "
-"you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
+"Database</a> for tips about running this application."
 msgstr ""
 "Dette kan være forårsaget af et problem i programmet, eller en mangel i "
 "Wine. Du kan evt. tjekke http://appdb.winehq.org for tips til at køre dette "
@@ -13524,6 +13521,24 @@ msgstr ""
 "\n"
 "Hvis dette problem ikke er til stede under Windows, og ikke har været "
 "rapporteret endnu, kan du indberette det til http://bugs.winehq.org."
+
+#: winedbg.rc:57
+#, fuzzy
+msgid "Show &Details"
+msgstr "&Detaljer"
+
+#: winedbg.rc:62
+#, fuzzy
+msgid "Program Error Details"
+msgstr "Program Fejl"
+
+#: winedbg.rc:69
+msgid ""
+"If this problem is not present under Windows and has not been reported yet, "
+"you can save the detailed information to a file using the \"Save As\" "
+"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"and attach that file to the report."
+msgstr ""
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13536,6 +13551,11 @@ msgstr "Interne fejl - ugyldige parametre modtaget."
 #: winedbg.rc:37
 msgid "(unidentified)"
 msgstr "(Uidentificerede)"
+
+#: winedbg.rc:40
+#, fuzzy
+msgid "Saving failed"
+msgstr "Åbning mislykkede\n"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
