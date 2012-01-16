@@ -219,7 +219,7 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
         if (NtQueryInformationThread(csw->hThread, ThreadBasicInformation, &info,
                                      sizeof(info), NULL) == STATUS_SUCCESS)
         {
-            curr_switch = (unsigned long)info.TebBaseAddress + FIELD_OFFSET(TEB, WOW32Reserved);
+            curr_switch = (DWORD_PTR)info.TebBaseAddress + FIELD_OFFSET(TEB, WOW32Reserved);
             if (!sw_read_mem(csw, curr_switch, &p, sizeof(p)))
             {
                 WARN("Can't read TEB:WOW32Reserved\n");
@@ -339,13 +339,13 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
                 }
 
                 TRACE("Got a 16 bit stack switch:"
-                      "\n\tframe32: %08lx"
+                      "\n\tframe32: %p"
                       "\n\tedx:%08x ecx:%08x ebp:%08x"
                       "\n\tds:%04x es:%04x fs:%04x gs:%04x"
                       "\n\tcall_from_ip:%08x module_cs:%04x relay=%08x"
                       "\n\tentry_ip:%04x entry_point:%08x"
                       "\n\tbp:%04x ip:%04x cs:%04x\n",
-                      (unsigned long)frame16.frame32,
+                      frame16.frame32,
                       frame16.edx, frame16.ecx, frame16.ebp,
                       frame16.ds, frame16.es, frame16.fs, frame16.gs,
                       frame16.callfrom_ip, frame16.module_cs, frame16.relay,
