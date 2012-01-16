@@ -255,6 +255,7 @@ extern	struct dbg_thread*	dbg_curr_thread;
 extern	DWORD_PTR	        dbg_curr_tid;
 extern  CONTEXT 	        dbg_context;
 extern  BOOL                    dbg_interactiveP;
+extern  HANDLE                  dbg_houtput;
 
 struct dbg_internal_var
 {
@@ -419,6 +420,7 @@ extern void             dbg_wait_next_exception(DWORD cont, int count, int mode)
 extern enum dbg_start   dbg_active_attach(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_launch(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_auto(int argc, char* argv[]);
+extern enum dbg_start   dbg_active_minidump(int argc, char* argv[]);
 extern void             dbg_active_wait_for_first_exception(void);
 extern BOOL             dbg_attach_debuggee(DWORD pid, BOOL cofe);
 
