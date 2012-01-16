@@ -296,14 +296,14 @@ static unsigned alloc_label(compile_ctx_t *ctx)
     if(!ctx->labels_size) {
         ctx->labels = heap_alloc(8 * sizeof(*ctx->labels));
         if(!ctx->labels)
-            return -1;
+            return 0;
         ctx->labels_size = 8;
     }else if(ctx->labels_size == ctx->labels_cnt) {
         unsigned *new_labels;
 
         new_labels = heap_realloc(ctx->labels, 2*ctx->labels_size*sizeof(*ctx->labels));
         if(!new_labels)
-            return -1;
+            return 0;
 
         ctx->labels = new_labels;
         ctx->labels_size *= 2;
@@ -491,7 +491,7 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
 
 static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
 {
-    unsigned cnd_jmp, endif_label = -1;
+    unsigned cnd_jmp, endif_label = 0;
     elseif_decl_t *elseif_decl;
     HRESULT hres;
 
@@ -509,7 +509,7 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
 
     if(stat->else_stat || stat->elseifs) {
         endif_label = alloc_label(ctx);
-        if(endif_label == -1)
+        if(!endif_label)
             return E_OUTOFMEMORY;
 
         hres = push_instr_addr(ctx, OP_jmp, endif_label);
@@ -545,7 +545,7 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
             return hres;
     }
 
-    if(endif_label != -1)
+    if(endif_label)
         label_set_addr(ctx, endif_label);
     return S_OK;
 }
@@ -567,7 +567,7 @@ static HRESULT compile_while_statement(compile_ctx_t *ctx, while_statement_t *st
         return E_OUTOFMEMORY;
 
     prev_label = ctx->while_end_label;
-    if(stat->stat.type != STAT_WHILE && (ctx->while_end_label = alloc_label(ctx)) == -1)
+    if(stat->stat.type != STAT_WHILE && !(ctx->while_end_label = alloc_label(ctx)))
         return E_OUTOFMEMORY;
 
     hres = compile_statement(ctx, stat->body);
@@ -596,7 +596,7 @@ static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *
     start_addr = ctx->instr_cnt;
 
     prev_label = ctx->while_end_label;
-    if((ctx->while_end_label = alloc_label(ctx)) == -1)
+    if(!(ctx->while_end_label = alloc_label(ctx)))
         return E_OUTOFMEMORY;
 
     hres = compile_statement(ctx, stat->body);
@@ -663,7 +663,7 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
 
     prev_label = ctx->for_end_label;
     ctx->for_end_label = alloc_label(ctx);
-    if(ctx->for_end_label == -1)
+    if(!ctx->for_end_label)
         return E_OUTOFMEMORY;
 
     step_instr = push_instr(ctx, OP_step);
@@ -811,7 +811,7 @@ static HRESULT compile_function_statement(compile_ctx_t *ctx, function_statement
 
 static HRESULT compile_exitdo_statement(compile_ctx_t *ctx)
 {
-    if(ctx->while_end_label == -1) {
+    if(!ctx->while_end_label) {
         FIXME("Exit Do outside Do Loop\n");
         return E_FAIL;
     }
@@ -821,7 +821,7 @@ static HRESULT compile_exitdo_statement(compile_ctx_t *ctx)
 
 static HRESULT compile_exitfor_statement(compile_ctx_t *ctx)
 {
-    if(ctx->for_end_label == -1) {
+    if(!ctx->for_end_label) {
         FIXME("Exit For outside For Loop\n");
         return E_FAIL;
     }
@@ -831,7 +831,7 @@ static HRESULT compile_exitfor_statement(compile_ctx_t *ctx)
 
 static HRESULT compile_exitsub_statement(compile_ctx_t *ctx)
 {
-    if(ctx->sub_end_label == -1) {
+    if(!ctx->sub_end_label) {
         FIXME("Exit Sub outside Sub?\n");
         return E_FAIL;
     }
@@ -841,7 +841,7 @@ static HRESULT compile_exitsub_statement(compile_ctx_t *ctx)
 
 static HRESULT compile_exitfunc_statement(compile_ctx_t *ctx)
 {
-    if(ctx->func_end_label == -1) {
+    if(!ctx->func_end_label) {
         FIXME("Exit Function outside Function?\n");
         return E_FAIL;
     }
@@ -851,7 +851,7 @@ static HRESULT compile_exitfunc_statement(compile_ctx_t *ctx)
 
 static HRESULT compile_exitprop_statement(compile_ctx_t *ctx)
 {
-    if(ctx->prop_end_label == -1) {
+    if(!ctx->prop_end_label) {
         FIXME("Exit Property outside Property?\n");
         return E_FAIL;
     }
@@ -961,21 +961,21 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
 
     func->code_off = ctx->instr_cnt;
 
-    ctx->while_end_label = -1;
-    ctx->for_end_label = -1;
-    ctx->sub_end_label = -1;
-    ctx->func_end_label = -1;
-    ctx->prop_end_label = -1;
+    ctx->while_end_label = 0;
+    ctx->for_end_label = 0;
+    ctx->sub_end_label = 0;
+    ctx->func_end_label = 0;
+    ctx->prop_end_label = 0;
 
     switch(func->type) {
     case FUNC_FUNCTION:
         ctx->func_end_label = alloc_label(ctx);
-        if(ctx->func_end_label == -1)
-            return E_OUTOFMEMORY; /* FIXME ! */
+        if(!ctx->func_end_label)
+            return E_OUTOFMEMORY;
         break;
     case FUNC_SUB:
         ctx->sub_end_label = alloc_label(ctx);
-        if(ctx->sub_end_label == -1)
+        if(!ctx->sub_end_label)
             return E_OUTOFMEMORY;
         break;
     case FUNC_PROPGET:
@@ -983,7 +983,7 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
     case FUNC_PROPSET:
     case FUNC_DEFGET:
         ctx->prop_end_label = alloc_label(ctx);
-        if(ctx->prop_end_label == -1)
+        if(!ctx->prop_end_label)
             return E_OUTOFMEMORY;
         break;
     case FUNC_GLOBAL:
@@ -998,14 +998,14 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
     if(FAILED(hres))
         return hres;
 
-    assert(ctx->while_end_label == -1);
-    assert(ctx->for_end_label == -1);
+    assert(!ctx->while_end_label);
+    assert(!ctx->for_end_label);
 
-    if(ctx->sub_end_label != -1)
+    if(ctx->sub_end_label)
         label_set_addr(ctx, ctx->sub_end_label);
-    if(ctx->func_end_label != -1)
+    if(ctx->func_end_label)
         label_set_addr(ctx, ctx->func_end_label);
-    if(ctx->prop_end_label != -1)
+    if(ctx->prop_end_label)
         label_set_addr(ctx, ctx->prop_end_label);
 
     if(!push_instr(ctx, OP_ret))
