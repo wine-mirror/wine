@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-15 17:18+0100\n"
+"PO-Revision-Date: 2012-01-16 23:35+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -13080,7 +13080,6 @@ msgid "Command history"
 msgstr "Befehlsspeicher"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
 msgstr "&Anzahl der Puffer:"
 
@@ -13105,28 +13104,24 @@ msgid "Buffer zone"
 msgstr "Fensterpuffergröße"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
-msgstr "&Breite :"
+msgstr "&Breite:"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
-msgstr "&Höhe :"
+msgstr "&Höhe:"
 
 #: wineconsole.rc:108
 msgid "Window size"
 msgstr "Fenstergröße"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
-msgstr "B&reite :"
+msgstr "B&reite:"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
-msgstr "Höh&e :"
+msgstr "Höh&e:"
 
 #: wineconsole.rc:116
 msgid "End of program"
