@@ -53,6 +53,7 @@ typedef struct {
     IUri                IUri_iface;
     IUriBuilderFactory  IUriBuilderFactory_iface;
     IPersistStream      IPersistStream_iface;
+    IMarshal            IMarshal_iface;
 
     LONG ref;
 
@@ -4221,6 +4222,9 @@ static HRESULT WINAPI Uri_QueryInterface(IUri *iface, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IPersistStream, riid)) {
         TRACE("(%p)->(IID_IPersistStream %p)\n", This, ppv);
         *ppv = &This->IPersistStream_iface;
+    }else if(IsEqualGUID(&IID_IMarshal, riid)) {
+        TRACE("(%p)->(IID_IMarshal %p)\n", This, ppv);
+        *ppv = &This->IMarshal_iface;
     }else if(IsEqualGUID(&IID_IUriObj, riid)) {
         TRACE("(%p)->(IID_IUriObj %p)\n", This, ppv);
         *ppv = This;
@@ -5238,28 +5242,10 @@ static inline BYTE* persist_stream_add_strprop(Uri *This, BYTE *p, DWORD type, D
     return p+sizeof(WCHAR);
 }
 
-static HRESULT WINAPI PersistStream_Save(IPersistStream *iface, IStream *pStm, BOOL fClearDirty)
+static inline void persist_stream_save(Uri *This, IStream *pStm, BOOL marshal, struct persist_uri *data)
 {
-    Uri *This = impl_from_IPersistStream(iface);
-    ULARGE_INTEGER size;
-    struct persist_uri *data;
     BYTE *p = NULL;
-    HRESULT hres;
 
-    TRACE("(%p)->(%p %x)\n", This, pStm, fClearDirty);
-
-    if(!pStm)
-        return E_INVALIDARG;
-
-    hres = IPersistStream_GetSizeMax(&This->IPersistStream_iface, &size);
-    if(FAILED(hres))
-        return hres;
-
-    data = heap_alloc_zero(size.u.LowPart);
-    if(!data)
-        return E_OUTOFMEMORY;
-
-    data->size = size.u.LowPart;
     data->create_flags = This->create_flags;
 
     if(This->create_flags) {
@@ -5268,11 +5254,8 @@ static HRESULT WINAPI PersistStream_Save(IPersistStream *iface, IStream *pStm, B
                 SysStringLen(This->raw_uri), This->raw_uri);
     }
     if(This->scheme_type!=URL_SCHEME_HTTP && This->scheme_type!=URL_SCHEME_HTTPS
-            && This->scheme_type!=URL_SCHEME_FTP) {
-        hres = IStream_Write(pStm, data, data->size-2, NULL);
-        heap_free(data);
-        return hres;
-    }
+            && This->scheme_type!=URL_SCHEME_FTP)
+        return;
 
     if(This->fragment_len) {
         data->fields_no++;
@@ -5301,6 +5284,10 @@ static HRESULT WINAPI PersistStream_Save(IPersistStream *iface, IStream *pStm, B
         data->fields_no++;
         p = persist_stream_add_strprop(This, p, Uri_PROPERTY_PATH,
                 This->path_len, This->canon_uri+This->path_start);
+    } else if(marshal) {
+        WCHAR no_path = '/';
+        data->fields_no++;
+        p = persist_stream_add_strprop(This, p, Uri_PROPERTY_PATH, 1, &no_path);
     }
 
     if(This->has_port) {
@@ -5334,6 +5321,29 @@ static HRESULT WINAPI PersistStream_Save(IPersistStream *iface, IStream *pStm, B
             p = persist_stream_add_strprop(This, p, Uri_PROPERTY_USER_NAME,
                     This->userinfo_len, This->canon_uri+This->userinfo_start);
     }
+}
+
+static HRESULT WINAPI PersistStream_Save(IPersistStream *iface, IStream *pStm, BOOL fClearDirty)
+{
+    Uri *This = impl_from_IPersistStream(iface);
+    struct persist_uri *data;
+    ULARGE_INTEGER size;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %x)\n", This, pStm, fClearDirty);
+
+    if(!pStm)
+        return E_INVALIDARG;
+
+    hres = IPersistStream_GetSizeMax(&This->IPersistStream_iface, &size);
+    if(FAILED(hres))
+        return hres;
+
+    data = heap_alloc_zero(size.u.LowPart);
+    if(!data)
+        return E_OUTOFMEMORY;
+    data->size = size.u.LowPart;
+    persist_stream_save(This, pStm, FALSE, data);
 
     hres = IStream_Write(pStm, data, data->size-2, NULL);
     heap_free(data);
@@ -5396,6 +5406,242 @@ static const IPersistStreamVtbl PersistStreamVtbl = {
     PersistStream_GetSizeMax
 };
 
+static inline Uri* impl_from_IMarshal(IMarshal *iface)
+{
+    return CONTAINING_RECORD(iface, Uri, IMarshal_iface);
+}
+
+static HRESULT WINAPI Marshal_QueryInterface(IMarshal *iface, REFIID riid, void **ppvObject)
+{
+    Uri *This = impl_from_IMarshal(iface);
+    return IUri_QueryInterface(&This->IUri_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI Marshal_AddRef(IMarshal *iface)
+{
+    Uri *This = impl_from_IMarshal(iface);
+    return IUri_AddRef(&This->IUri_iface);
+}
+
+static ULONG WINAPI Marshal_Release(IMarshal *iface)
+{
+    Uri *This = impl_from_IMarshal(iface);
+    return IUri_Release(&This->IUri_iface);
+}
+
+static HRESULT WINAPI Marshal_GetUnmarshalClass(IMarshal *iface, REFIID riid, void *pv,
+        DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, CLSID *pCid)
+{
+    Uri *This = impl_from_IMarshal(iface);
+    TRACE("(%p)->(%s %p %x %p %x %p)\n", This, debugstr_guid(riid), pv,
+            dwDestContext, pvDestContext, mshlflags, pCid);
+
+    if(!pCid || (dwDestContext!=MSHCTX_LOCAL && dwDestContext!=MSHCTX_NOSHAREDMEM
+                && dwDestContext!=MSHCTX_INPROC))
+        return E_INVALIDARG;
+
+    *pCid = CLSID_CUri;
+    return S_OK;
+}
+
+struct inproc_marshal_uri {
+    DWORD size;
+    DWORD mshlflags;
+    DWORD unk[4]; /* process identifier? */
+    Uri *uri;
+};
+
+static HRESULT WINAPI Marshal_GetMarshalSizeMax(IMarshal *iface, REFIID riid, void *pv,
+        DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, DWORD *pSize)
+{
+    Uri *This = impl_from_IMarshal(iface);
+    ULARGE_INTEGER size;
+    HRESULT hres;
+    TRACE("(%p)->(%s %p %x %p %x %p)\n", This, debugstr_guid(riid), pv,
+            dwDestContext, pvDestContext, mshlflags, pSize);
+
+    if(!pSize || (dwDestContext!=MSHCTX_LOCAL && dwDestContext!=MSHCTX_NOSHAREDMEM
+                && dwDestContext!=MSHCTX_INPROC))
+        return E_INVALIDARG;
+
+    if(dwDestContext == MSHCTX_INPROC) {
+        *pSize = sizeof(struct inproc_marshal_uri);
+        return S_OK;
+    }
+
+    hres = IPersistStream_GetSizeMax(&This->IPersistStream_iface, &size);
+    if(FAILED(hres))
+        return hres;
+    if(!This->path_len && (This->scheme_type==URL_SCHEME_HTTP
+                || This->scheme_type==URL_SCHEME_HTTPS
+                || This->scheme_type==URL_SCHEME_FTP))
+        size.u.LowPart += 3*sizeof(DWORD);
+    *pSize = size.u.LowPart+2*sizeof(DWORD);
+    return S_OK;
+}
+
+static HRESULT WINAPI Marshal_MarshalInterface(IMarshal *iface, IStream *pStm, REFIID riid,
+        void *pv, DWORD dwDestContext, void *pvDestContext, DWORD mshlflags)
+{
+    Uri *This = impl_from_IMarshal(iface);
+    DWORD *data;
+    DWORD size;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %s %p %x %p %x)\n", This, pStm, debugstr_guid(riid), pv,
+            dwDestContext, pvDestContext, mshlflags);
+
+    if(!pStm || mshlflags!=MSHLFLAGS_NORMAL || (dwDestContext!=MSHCTX_LOCAL
+                && dwDestContext!=MSHCTX_NOSHAREDMEM && dwDestContext!=MSHCTX_INPROC))
+        return E_INVALIDARG;
+
+    if(dwDestContext == MSHCTX_INPROC) {
+        struct inproc_marshal_uri data;
+
+        data.size = sizeof(data);
+        data.mshlflags = MSHCTX_INPROC;
+        data.unk[0] = 0;
+        data.unk[1] = 0;
+        data.unk[2] = 0;
+        data.unk[3] = 0;
+        data.uri = This;
+
+        hres = IStream_Write(pStm, &data, data.size, NULL);
+        if(FAILED(hres))
+            return hres;
+
+        IUri_AddRef(&This->IUri_iface);
+        return S_OK;
+    }
+
+    hres = IMarshal_GetMarshalSizeMax(iface, riid, pv, dwDestContext,
+            pvDestContext, mshlflags, &size);
+    if(FAILED(hres))
+        return hres;
+
+    data = heap_alloc_zero(size);
+    if(!data)
+        return E_OUTOFMEMORY;
+
+    data[0] = size;
+    data[1] = dwDestContext;
+    data[2] = size-2*sizeof(DWORD);
+    persist_stream_save(This, pStm, TRUE, (struct persist_uri*)(data+2));
+
+    hres = IStream_Write(pStm, data, data[0]-2, NULL);
+    heap_free(data);
+    return hres;
+}
+
+static HRESULT WINAPI Marshal_UnmarshalInterface(IMarshal *iface,
+        IStream *pStm, REFIID riid, void **ppv)
+{
+    Uri *This = impl_from_IMarshal(iface);
+    DWORD header[2];
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %s %p)\n", This, pStm, debugstr_guid(riid), ppv);
+
+    if(This->create_flags)
+        return E_UNEXPECTED;
+    if(!pStm || !riid || !ppv)
+        return E_INVALIDARG;
+
+    hres = IStream_Read(pStm, header, sizeof(header), NULL);
+    if(FAILED(hres))
+        return hres;
+
+    if(header[1]!=MSHCTX_LOCAL && header[1]!=MSHCTX_NOSHAREDMEM
+            && header[1]!=MSHCTX_INPROC)
+        return E_UNEXPECTED;
+
+    if(header[1] == MSHCTX_INPROC) {
+        struct inproc_marshal_uri data;
+        parse_data parse;
+
+        hres = IStream_Read(pStm, data.unk, sizeof(data)-2*sizeof(DWORD), NULL);
+        if(FAILED(hres))
+            return hres;
+
+        This->raw_uri = SysAllocString(data.uri->raw_uri);
+        if(!This->raw_uri) {
+            return E_OUTOFMEMORY;
+        }
+
+        memset(&parse, 0, sizeof(parse_data));
+        parse.uri = This->raw_uri;
+
+        if(!parse_uri(&parse, data.uri->create_flags))
+            return E_INVALIDARG;
+
+        hres = canonicalize_uri(&parse, This, data.uri->create_flags);
+        if(FAILED(hres))
+            return hres;
+
+        This->create_flags = data.uri->create_flags;
+        IUri_Release(&data.uri->IUri_iface);
+
+        return IUri_QueryInterface(&This->IUri_iface, riid, ppv);
+    }
+
+    hres = IPersistStream_Load(&This->IPersistStream_iface, pStm);
+    if(FAILED(hres))
+        return hres;
+
+    return IUri_QueryInterface(&This->IUri_iface, riid, ppv);
+}
+
+static HRESULT WINAPI Marshal_ReleaseMarshalData(IMarshal *iface, IStream *pStm)
+{
+    Uri *This = impl_from_IMarshal(iface);
+    LARGE_INTEGER off;
+    DWORD header[2];
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, pStm);
+
+    if(!pStm)
+        return E_INVALIDARG;
+
+    hres = IStream_Read(pStm, header, 2*sizeof(DWORD), NULL);
+    if(FAILED(hres))
+        return hres;
+
+    if(header[1] == MSHCTX_INPROC) {
+        struct inproc_marshal_uri data;
+
+        hres = IStream_Read(pStm, data.unk, sizeof(data)-2*sizeof(DWORD), NULL);
+        if(FAILED(hres))
+            return hres;
+
+        IUri_Release(&data.uri->IUri_iface);
+        return S_OK;
+    }
+
+    off.u.LowPart = header[0]-sizeof(header)-2;
+    off.u.HighPart = 0;
+    return IStream_Seek(pStm, off, STREAM_SEEK_CUR, NULL);
+}
+
+static HRESULT WINAPI Marshal_DisconnectObject(IMarshal *iface, DWORD dwReserved)
+{
+    Uri *This = impl_from_IMarshal(iface);
+    TRACE("(%p)->(%x)\n", This, dwReserved);
+    return S_OK;
+}
+
+static const IMarshalVtbl MarshalVtbl = {
+    Marshal_QueryInterface,
+    Marshal_AddRef,
+    Marshal_Release,
+    Marshal_GetUnmarshalClass,
+    Marshal_GetMarshalSizeMax,
+    Marshal_MarshalInterface,
+    Marshal_UnmarshalInterface,
+    Marshal_ReleaseMarshalData,
+    Marshal_DisconnectObject
+};
+
 HRESULT Uri_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 {
     Uri *ret = heap_alloc_zero(sizeof(Uri));
@@ -5409,6 +5655,7 @@ HRESULT Uri_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
     ret->IUri_iface.lpVtbl = &UriVtbl;
     ret->IUriBuilderFactory_iface.lpVtbl = &UriBuilderFactoryVtbl;
     ret->IPersistStream_iface.lpVtbl = &PersistStreamVtbl;
+    ret->IMarshal_iface.lpVtbl = &MarshalVtbl;
     ret->ref = 1;
 
     *ppobj = &ret->IUri_iface;
