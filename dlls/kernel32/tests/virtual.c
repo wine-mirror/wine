@@ -38,6 +38,8 @@ static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
 static UINT   (WINAPI *pGetWriteWatch)(DWORD,LPVOID,SIZE_T,LPVOID*,ULONG_PTR*,ULONG*);
 static UINT   (WINAPI *pResetWriteWatch)(LPVOID,SIZE_T);
 static NTSTATUS (WINAPI *pNtAreMappedFilesTheSame)(PVOID,PVOID);
+static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
+static DWORD (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
 
 /* ############################### */
 
@@ -778,12 +780,6 @@ static void test_MapViewOfFile(void)
     ok( VirtualFree(addr, 0, MEM_RELEASE), "VirtualFree failed\n" );
 }
 
-static DWORD (WINAPI *pNtMapViewOfSection)( HANDLE handle, HANDLE process, PVOID *addr_ptr,
-                                            ULONG zero_bits, SIZE_T commit_size,
-                                            const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
-                                            ULONG inherit, ULONG alloc_type, ULONG protect );
-static DWORD (WINAPI *pNtUnmapViewOfSection)( HANDLE process, PVOID addr );
-
 static void test_NtMapViewOfSection(void)
 {
     HANDLE hProcess;
@@ -798,8 +794,6 @@ static void test_NtMapViewOfSection(void)
     SIZE_T size, result;
     LARGE_INTEGER offset;
 
-    pNtMapViewOfSection = (void *)GetProcAddress( GetModuleHandle("ntdll.dll"), "NtMapViewOfSection" );
-    pNtUnmapViewOfSection = (void *)GetProcAddress( GetModuleHandle("ntdll.dll"), "NtUnmapViewOfSection" );
     if (!pNtMapViewOfSection || !pNtUnmapViewOfSection)
     {
         win_skip( "NtMapViewOfSection not available\n" );
@@ -1943,6 +1937,59 @@ static BOOL is_compatible_access(DWORD map_prot, DWORD view_prot)
     return (view_prot & access) == view_prot;
 }
 
+static void *map_view_of_file(HANDLE handle, DWORD access)
+{
+    NTSTATUS status;
+    LARGE_INTEGER offset;
+    SIZE_T count;
+    ULONG protect;
+    BOOL exec;
+    void *addr;
+
+    if (!pNtMapViewOfSection) return NULL;
+
+    count = 0;
+    offset.u.LowPart  = 0;
+    offset.u.HighPart = 0;
+
+    exec = access & FILE_MAP_EXECUTE;
+    access &= ~FILE_MAP_EXECUTE;
+
+    if (access == FILE_MAP_COPY)
+    {
+        if (exec)
+            protect = PAGE_EXECUTE_WRITECOPY;
+        else
+            protect = PAGE_WRITECOPY;
+    }
+    else if (access & FILE_MAP_WRITE)
+    {
+        if (exec)
+            protect = PAGE_EXECUTE_READWRITE;
+        else
+            protect = PAGE_READWRITE;
+    }
+    else if (access & FILE_MAP_READ)
+    {
+        if (exec)
+            protect = PAGE_EXECUTE_READ;
+        else
+            protect = PAGE_READONLY;
+    }
+    else protect = PAGE_NOACCESS;
+
+    addr = NULL;
+    status = pNtMapViewOfSection(handle, GetCurrentProcess(), &addr, 0, 0, &offset,
+                                 &count, 1 /* ViewShare */, 0, protect);
+    if (status)
+    {
+        /* for simplicity */
+        SetLastError(ERROR_ACCESS_DENIED);
+        addr = NULL;
+    }
+    return addr;
+}
+
 static void test_mapping(void)
 {
     static const DWORD page_prot[] =
@@ -1988,13 +2035,13 @@ static void test_mapping(void)
         { FILE_MAP_EXECUTE | SECTION_MAP_EXECUTE | FILE_MAP_READ | FILE_MAP_WRITE, PAGE_EXECUTE_READWRITE }, /* 0x2e */
         { FILE_MAP_EXECUTE | SECTION_MAP_EXECUTE | FILE_MAP_READ | FILE_MAP_WRITE | FILE_MAP_COPY, PAGE_EXECUTE_READWRITE } /* 0x2f */
     };
-    void *base;
+    void *base, *nt_base;
     DWORD i, j, k, ret, old_prot, prev_prot;
     SYSTEM_INFO si;
     char temp_path[MAX_PATH];
     char file_name[MAX_PATH];
     HANDLE hfile, hmap;
-    MEMORY_BASIC_INFORMATION info;
+    MEMORY_BASIC_INFORMATION info, nt_info;
 
     GetSystemInfo(&si);
     trace("system page size %#x\n", si.dwPageSize);
@@ -2053,8 +2100,29 @@ static void test_mapping(void)
 
         for (j = 0; j < sizeof(view)/sizeof(view[0]); j++)
         {
+            nt_base = map_view_of_file(hmap, view[j].access);
+            if (nt_base)
+            {
+                SetLastError(0xdeadbeef);
+                ret = VirtualQuery(nt_base, &nt_info, sizeof(nt_info));
+                ok(ret, "%d: VirtualQuery failed %d\n", j, GetLastError());
+                UnmapViewOfFile(nt_base);
+            }
+
             SetLastError(0xdeadbeef);
             base = MapViewOfFile(hmap, view[j].access, 0, 0, 0);
+
+            /* FIXME: completely remove the condition below once Wine is fixed */
+            if (!nt_base != !base)
+            todo_wine
+            /* Vista+ supports FILE_MAP_EXECUTE properly, earlier versions don't */
+            ok(!nt_base == !base ||
+               broken((view[j].access & FILE_MAP_EXECUTE) && !nt_base != !base),
+               "%d: (%04x/%04x) NT %p kernel %p\n", j, page_prot[i], view[j].access, nt_base, base);
+            else
+            ok(!nt_base == !base ||
+               broken((view[j].access & FILE_MAP_EXECUTE) && !nt_base != !base),
+               "%d: (%04x/%04x) NT %p kernel %p\n", j, page_prot[i], view[j].access, nt_base, base);
 
             if (!is_compatible_access(page_prot[i], view[j].access))
             {
@@ -2095,6 +2163,33 @@ static void test_mapping(void)
             ok(info.AllocationProtect == info.Protect, "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, info.AllocationProtect, info.Protect);
             ok(info.State == MEM_COMMIT, "%d: (%04x) got %#x, expected MEM_COMMIT\n", j, view[j].access, info.State);
             ok(info.Type == MEM_MAPPED, "%d: (%04x) got %#x, expected MEM_MAPPED\n", j, view[j].access, info.Type);
+
+            if (nt_base && base)
+            {
+                ok(nt_info.RegionSize == info.RegionSize, "%d: (%04x) got %#lx != expected %#lx\n", j, view[j].access, nt_info.RegionSize, info.RegionSize);
+                /* FIXME: completely remove the condition below once Wine is fixed */
+                if (nt_info.Protect != info.Protect)
+                todo_wine
+                ok(nt_info.Protect == info.Protect /* Vista+ */ ||
+                   broken(nt_info.AllocationProtect == PAGE_EXECUTE_WRITECOPY && info.Protect == PAGE_NOACCESS), /* XP */
+                   "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, nt_info.Protect, info.Protect);
+                else
+                ok(nt_info.Protect == info.Protect /* Vista+ */ ||
+                   broken(nt_info.AllocationProtect == PAGE_EXECUTE_WRITECOPY && info.Protect == PAGE_NOACCESS), /* XP */
+                   "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, nt_info.Protect, info.Protect);
+                /* FIXME: completely remove the condition below once Wine is fixed */
+                if (nt_info.AllocationProtect != info.AllocationProtect)
+                todo_wine
+                ok(nt_info.AllocationProtect == info.AllocationProtect /* Vista+ */ ||
+                   broken(nt_info.AllocationProtect == PAGE_EXECUTE_WRITECOPY && info.Protect == PAGE_NOACCESS), /* XP */
+                   "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, nt_info.AllocationProtect, info.AllocationProtect);
+                else
+                ok(nt_info.AllocationProtect == info.AllocationProtect /* Vista+ */ ||
+                   broken(nt_info.AllocationProtect == PAGE_EXECUTE_WRITECOPY && info.Protect == PAGE_NOACCESS), /* XP */
+                   "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, nt_info.AllocationProtect, info.AllocationProtect);
+                ok(nt_info.State == info.State, "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, nt_info.State, info.State);
+                ok(nt_info.Type == info.Type, "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, nt_info.Type, info.Type);
+            }
 
             prev_prot = info.Protect;
 
@@ -2197,6 +2292,9 @@ START_TEST(virtual)
     pResetWriteWatch = (void *) GetProcAddress(hkernel32, "ResetWriteWatch");
     pNtAreMappedFilesTheSame = (void *)GetProcAddress( GetModuleHandle("ntdll.dll"),
                                                        "NtAreMappedFilesTheSame" );
+    pNtMapViewOfSection = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtMapViewOfSection");
+    pNtUnmapViewOfSection = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtUnmapViewOfSection");
+
     test_mapping();
     test_CreateFileMapping_protection();
     test_VirtualAlloc_protection();
