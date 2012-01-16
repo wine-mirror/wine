@@ -39,8 +39,9 @@ msgstr ""
 "склад, виберіть її зі списку та натисніть Змінити/Видалити."
 
 #: appwiz.rc:64
-msgid "&Support Info"
-msgstr "&Дані підтримки..."
+#, fuzzy
+msgid "&Support Information"
+msgstr "Дані підтримки"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."

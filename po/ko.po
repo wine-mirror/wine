@@ -39,8 +39,9 @@ msgstr ""
 "프로그램을 지우려면 , 추가/삭제 목록에서 선택하십시오.."
 
 #: appwiz.rc:64
-msgid "&Support Info"
-msgstr "지원  정보(&S)"
+#, fuzzy
+msgid "&Support Information"
+msgstr "지원 정보"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."

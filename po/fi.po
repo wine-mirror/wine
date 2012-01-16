@@ -36,8 +36,13 @@ msgid ""
 msgstr ""
 
 #: appwiz.rc:64
-msgid "&Support Info"
+#, fuzzy
+msgid "&Support Information"
 msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"Tiedoitus\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"Tietoja"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 #, fuzzy

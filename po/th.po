@@ -35,8 +35,9 @@ msgid ""
 msgstr ""
 
 #: appwiz.rc:64
-msgid "&Support Info"
-msgstr ""
+#, fuzzy
+msgid "&Support Information"
+msgstr "รายละเอียด"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."

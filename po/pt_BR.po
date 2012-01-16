@@ -40,8 +40,9 @@ msgstr ""
 "clique em Adicionar/Remover."
 
 #: appwiz.rc:64
-msgid "&Support Info"
-msgstr "&Informação de Suporte"
+#, fuzzy
+msgid "&Support Information"
+msgstr "Informação de Suporte"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."

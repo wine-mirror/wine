@@ -44,8 +44,9 @@ msgstr ""
 "Usuń."
 
 #: appwiz.rc:64
-msgid "&Support Info"
-msgstr "&Informacje o wsparciu..."
+#, fuzzy
+msgid "&Support Information"
+msgstr "Informacje o wsparciu"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."

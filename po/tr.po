@@ -37,8 +37,9 @@ msgid ""
 msgstr ""
 
 #: appwiz.rc:64
-msgid "&Support Info"
-msgstr ""
+#, fuzzy
+msgid "&Support Information"
+msgstr "Bilgi"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 #, fuzzy
@@ -590,13 +591,11 @@ msgid "&Hue:"
 msgstr ""
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr ""
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr ""

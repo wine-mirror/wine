@@ -35,8 +35,9 @@ msgid ""
 msgstr "下列軟件可以自動卸載. 按'添加/刪除'可卸載選定程式或者調整已安裝部件."
 
 #: appwiz.rc:64
-msgid "&Support Info"
-msgstr "技術支援(&S)..."
+#, fuzzy
+msgid "&Support Information"
+msgstr "技術支援資訊"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."

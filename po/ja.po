@@ -40,8 +40,9 @@ msgstr ""
 "除] をクリックしてください。"
 
 #: appwiz.rc:64
-msgid "&Support Info"
-msgstr "サポート情報(&S)"
+#, fuzzy
+msgid "&Support Information"
+msgstr "サポート情報"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."

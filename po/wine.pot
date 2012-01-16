@@ -32,7 +32,7 @@ msgid ""
 msgstr ""
 
 #: appwiz.rc:64
-msgid "&Support Info"
+msgid "&Support Information"
 msgstr ""
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87

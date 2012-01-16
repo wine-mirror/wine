@@ -41,8 +41,9 @@ msgstr ""
 "המותקנים, יש לבחור בה מהרשימה וללחוץ על שינוי/הסרה."
 
 #: appwiz.rc:64
-msgid "&Support Info"
-msgstr "&פרטי תמיכה..."
+#, fuzzy
+msgid "&Support Information"
+msgstr "פרטי תמיכה"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."

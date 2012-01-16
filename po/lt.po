@@ -42,8 +42,9 @@ msgstr ""
 "spauskite „Pakeisti/pašalinti“."
 
 #: appwiz.rc:64
-msgid "&Support Info"
-msgstr "&Priežiūros informacija"
+#, fuzzy
+msgid "&Support Information"
+msgstr "Priežiūros informacija"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -2363,7 +2364,8 @@ msgstr "Ba&se64-užkoduotas X.509 (.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
-msgstr "&Kriptografinio pranešimo sintaksės standarto/PKCS #7 pranešimas (.p7b)"
+msgstr ""
+"&Kriptografinio pranešimo sintaksės standarto/PKCS #7 pranešimas (.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
