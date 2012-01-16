@@ -467,6 +467,7 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
     do
     {
         LONGLONG tStart=0, tStop=0;
+        LONGLONG mStart=0, mStop=0;
         float time;
 
         GetMovieNextInterestingTime(This->pQTMovie, nextTimeStep, 0, NULL, movie_time, 1, &next_time, NULL);
@@ -484,6 +485,9 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
 
         TRACE("In loop at time %ld\n",movie_time);
         TRACE("In Next time %ld\n",next_time);
+
+        mStart = movie_time;
+        mStop = next_time;
 
         time = (float)movie_time / tr.scale;
         tStart = time * 10000000;
@@ -539,11 +543,8 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
 
             IMediaSample_SetActualDataLength(sample, frames * pvi->nBlockAlign);
 
-            IMediaSample_SetMediaTime(sample, &tStart, &tStop);
-            if (tStart)
-                IMediaSample_SetTime(sample, &tStart, &tStop);
-            else
-                IMediaSample_SetTime(sample, NULL, NULL);
+            IMediaSample_SetMediaTime(sample, &mStart, &mStop);
+            IMediaSample_SetTime(sample, &tStart, &tStop);
 
             hr = OutputQueue_Receive(This->pAudio_Pin->queue, sample);
             TRACE("Audio Delivered (%x)\n",hr);
@@ -597,11 +598,8 @@ audio_error:
 
                 IMediaSample_SetActualDataLength(sample, This->outputSize);
 
-                IMediaSample_SetMediaTime(sample, &tStart, &tStop);
-                if (tStart)
-                    IMediaSample_SetTime(sample, &tStart, &tStop);
-                else
-                    IMediaSample_SetTime(sample, NULL, NULL);
+                IMediaSample_SetMediaTime(sample, &mStart, &mStop);
+                IMediaSample_SetTime(sample, &tStart, &tStop);
 
                 hr = OutputQueue_Receive(This->pVideo_Pin->queue, sample);
                 TRACE("Video Delivered (%x)\n",hr);
