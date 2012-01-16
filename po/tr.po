@@ -247,11 +247,11 @@ msgstr "&Seçenekler..."
 
 #: avifil32.rc:46
 msgid "&Interleave every"
-msgstr "&Interleave every"
+msgstr ""
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
-msgstr "frames"
+msgstr ""
 
 #: avifil32.rc:49
 msgid "Current format:"
@@ -279,7 +279,7 @@ msgstr "ses"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
-msgstr "Wine AVI-default-filehandler"
+msgstr ""
 
 #: avifil32.rc:34
 msgid "uncompressed"
@@ -587,19 +587,19 @@ msgstr "&Mavi:"
 
 #: comdlg32.rc:288
 msgid "&Hue:"
-msgstr "&Hue:"
+msgstr ""
 
 #: comdlg32.rc:290
 #, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr "&Sat:"
+msgstr ""
 
 #: comdlg32.rc:292
 #, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
-msgstr "&Lum:"
+msgstr ""
 
 #: comdlg32.rc:302
 msgid "&Add to Custom Colors"
@@ -1844,10 +1844,9 @@ msgid "Subject Type="
 msgstr ""
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr "A"
+msgstr ""
 
 #: crypt32.rc:196
 msgid "End Entity"
@@ -2941,9 +2940,8 @@ msgid "Player"
 msgstr "Yürüt"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "De&vice:"
+msgstr ""
 
 #: dinput.rc:50
 #, fuzzy
@@ -7009,7 +7007,7 @@ msgstr "Sıkıştırma &Kalitesi:"
 
 #: msvfw32.rc:46
 msgid "&Key Frame Every"
-msgstr "&Key Frame Every"
+msgstr ""
 
 #: msvfw32.rc:50
 msgid "&Data Rate"
@@ -8036,11 +8034,11 @@ msgstr "%s Hakkında"
 
 #: shell32.rc:333
 msgid "Wine &license"
-msgstr "Wine &license"
+msgstr ""
 
 #: shell32.rc:338
 msgid "Running on %s"
-msgstr "Running on %s"
+msgstr ""
 
 #: shell32.rc:339
 msgid "Wine was brought to you by:"
@@ -8587,11 +8585,11 @@ msgstr "Y&oksay"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr "&Try Again"
+msgstr ""
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr "&Continue"
+msgstr ""
 
 #: user32.rc:91
 msgid "Select Window"
@@ -10132,12 +10130,12 @@ msgstr ""
 #: cmd.rc:292 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
-msgstr "Y"
+msgstr ""
 
 #: cmd.rc:293 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
-msgstr "N"
+msgstr ""
 
 #: cmd.rc:294
 msgid "File association missing for extension %1\n"
@@ -10207,7 +10205,7 @@ msgstr ""
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr ""
 
 #: cmd.rc:313
 #, fuzzy
@@ -10250,7 +10248,7 @@ msgstr ""
 
 #: cmd.rc:322
 msgid "Wine Command Prompt"
-msgstr "Wine Command Prompt"
+msgstr ""
 
 #: cmd.rc:323
 msgid "CMD Version %1!S!\n"
@@ -12061,15 +12059,13 @@ msgstr "Hata Ayıklama Kanalları"
 
 #: taskmgr.rc:443
 msgid "Processor Affinity"
-msgstr "Processor Affinity"
+msgstr ""
 
 #: taskmgr.rc:448
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
 msgstr ""
-"The Processor Affinity setting controls which CPUs the process will be "
-"allowed to execute on."
 
 #: taskmgr.rc:450
 msgid "CPU 0"
@@ -12712,10 +12708,6 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"This program is free software; you can redistribute it and/or modify it "
-"under the terms of the GNU Lesser General Public License as published by the "
-"Free Software Foundation; either version 2.1 of the License, or (at your "
-"option) any later version."
 
 #: winecfg.rc:134
 #, fuzzy
@@ -12764,11 +12756,11 @@ msgstr " Pencere ayarları "
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatically capture the &mouse in full-screen windows"
+msgstr ""
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr "Allow the window manager to &decorate the windows"
+msgstr ""
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
@@ -12789,7 +12781,7 @@ msgstr " Screen &Resolution "
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "This is a sample text using 10 point Tahoma"
+msgstr ""
 
 #: winecfg.rc:182
 #, fuzzy
@@ -12866,8 +12858,6 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
-"edited."
 
 #: winecfg.rc:227
 msgid "&Add..."
@@ -12887,7 +12877,7 @@ msgstr "Gelişmiş Ayarlar"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr ""
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12906,34 +12896,32 @@ msgid "Show &dot files"
 msgstr "Noktayla başlayan dosyaları göster"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr ""
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
-msgstr "&Test Sound"
+msgstr ""
 
 #: winecfg.rc:274
 #, fuzzy
@@ -13325,7 +13313,7 @@ msgstr "Açılır menü"
 
 #: wineconsole.rc:67
 msgid "&Control"
-msgstr "&Control"
+msgstr ""
 
 #: wineconsole.rc:68
 msgid "S&hift"
@@ -13337,7 +13325,7 @@ msgstr "Hızlı düzenle"
 
 #: wineconsole.rc:70
 msgid "&enable"
-msgstr "&enable"
+msgstr ""
 
 #: wineconsole.rc:72
 msgid "Command history"
