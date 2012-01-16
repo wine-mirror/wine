@@ -148,7 +148,7 @@ static unsigned push_instr(compile_ctx_t *ctx, vbsop_t op)
 
         new_instr = heap_realloc(ctx->code->instrs, ctx->instr_size*2*sizeof(instr_t));
         if(!new_instr)
-            return -1;
+            return 0;
 
         ctx->code->instrs = new_instr;
         ctx->instr_size *= 2;
@@ -163,7 +163,7 @@ static HRESULT push_instr_int(compile_ctx_t *ctx, vbsop_t op, LONG arg)
     unsigned ret;
 
     ret = push_instr(ctx, op);
-    if(ret == -1)
+    if(!ret)
         return E_OUTOFMEMORY;
 
     instr_ptr(ctx, ret)->arg1.lng = arg;
@@ -175,7 +175,7 @@ static HRESULT push_instr_uint(compile_ctx_t *ctx, vbsop_t op, unsigned arg)
     unsigned ret;
 
     ret = push_instr(ctx, op);
-    if(ret == -1)
+    if(!ret)
         return E_OUTOFMEMORY;
 
     instr_ptr(ctx, ret)->arg1.uint = arg;
@@ -187,7 +187,7 @@ static HRESULT push_instr_addr(compile_ctx_t *ctx, vbsop_t op, unsigned arg)
     unsigned ret;
 
     ret = push_instr(ctx, op);
-    if(ret == -1)
+    if(!ret)
         return E_OUTOFMEMORY;
 
     instr_ptr(ctx, ret)->arg1.uint = arg;
@@ -204,7 +204,7 @@ static HRESULT push_instr_str(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg)
         return E_OUTOFMEMORY;
 
     instr = push_instr(ctx, op);
-    if(instr == -1)
+    if(!instr)
         return E_OUTOFMEMORY;
 
     instr_ptr(ctx, instr)->arg1.str = str;
@@ -221,7 +221,7 @@ static HRESULT push_instr_double(compile_ctx_t *ctx, vbsop_t op, double arg)
         return E_OUTOFMEMORY;
 
     instr = push_instr(ctx, op);
-    if(instr == -1)
+    if(!instr)
         return E_OUTOFMEMORY;
 
     *d = arg;
@@ -264,7 +264,7 @@ static HRESULT push_instr_bstr(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg)
         return E_OUTOFMEMORY;
 
     instr = push_instr(ctx, op);
-    if(instr == -1)
+    if(!instr)
         return E_OUTOFMEMORY;
 
     instr_ptr(ctx, instr)->arg1.bstr = bstr;
@@ -281,7 +281,7 @@ static HRESULT push_instr_bstr_uint(compile_ctx_t *ctx, vbsop_t op, const WCHAR 
         return E_OUTOFMEMORY;
 
     instr = push_instr(ctx, op);
-    if(instr == -1)
+    if(!instr)
         return E_OUTOFMEMORY;
 
     instr_ptr(ctx, instr)->arg1.bstr = bstr;
@@ -394,7 +394,7 @@ static HRESULT compile_unary_expression(compile_ctx_t *ctx, unary_expression_t *
     if(FAILED(hres))
         return hres;
 
-    return push_instr(ctx, op) == -1 ? E_OUTOFMEMORY : S_OK;
+    return push_instr(ctx, op) ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT compile_binary_expression(compile_ctx_t *ctx, binary_expression_t *expr, vbsop_t op)
@@ -409,7 +409,7 @@ static HRESULT compile_binary_expression(compile_ctx_t *ctx, binary_expression_t
     if(FAILED(hres))
         return hres;
 
-    return push_instr(ctx, op) == -1 ? E_OUTOFMEMORY : S_OK;
+    return push_instr(ctx, op) ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
@@ -428,7 +428,7 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
     case EXPR_DOUBLE:
         return push_instr_double(ctx, OP_double, ((double_expression_t*)expr)->value);
     case EXPR_EMPTY:
-        return push_instr(ctx, OP_empty) != -1 ? S_OK : E_OUTOFMEMORY;
+        return push_instr(ctx, OP_empty) ? S_OK : E_OUTOFMEMORY;
     case EXPR_EQUAL:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_equal);
     case EXPR_EQV:
@@ -450,7 +450,7 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
     case EXPR_LTEQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_lteq);
     case EXPR_ME:
-        return push_instr(ctx, OP_me) != -1 ? S_OK : E_OUTOFMEMORY;
+        return push_instr(ctx, OP_me) ? S_OK : E_OUTOFMEMORY;
     case EXPR_MEMBER:
         return compile_member_expression(ctx, (member_expression_t*)expr, TRUE);
     case EXPR_MOD:
@@ -466,9 +466,9 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
     case EXPR_NOT:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_not);
     case EXPR_NOTHING:
-        return push_instr(ctx, OP_nothing) != -1 ? S_OK : E_OUTOFMEMORY;
+        return push_instr(ctx, OP_nothing) ? S_OK : E_OUTOFMEMORY;
     case EXPR_NULL:
-        return push_instr(ctx, OP_null) != -1 ? S_OK : E_OUTOFMEMORY;
+        return push_instr(ctx, OP_null) ? S_OK : E_OUTOFMEMORY;
     case EXPR_OR:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_or);
     case EXPR_STRING:
@@ -500,7 +500,7 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
         return hres;
 
     cnd_jmp = push_instr(ctx, OP_jmp_false);
-    if(cnd_jmp == -1)
+    if(!cnd_jmp)
         return E_OUTOFMEMORY;
 
     hres = compile_statement(ctx, stat->if_stat);
@@ -525,7 +525,7 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
             return hres;
 
         cnd_jmp = push_instr(ctx, OP_jmp_false);
-        if(cnd_jmp == -1)
+        if(!cnd_jmp)
             return E_OUTOFMEMORY;
 
         hres = compile_statement(ctx, elseif_decl->stat);
@@ -563,7 +563,7 @@ static HRESULT compile_while_statement(compile_ctx_t *ctx, while_statement_t *st
         return hres;
 
     jmp_end = push_instr(ctx, stat->stat.type == STAT_UNTIL ? OP_jmp_true : OP_jmp_false);
-    if(jmp_end == -1)
+    if(!jmp_end)
         return E_OUTOFMEMORY;
 
     prev_label = ctx->while_end_label;
@@ -637,7 +637,7 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
         return hres;
 
     instr = push_instr(ctx, OP_assign_ident);
-    if(instr == -1)
+    if(!instr)
         return E_OUTOFMEMORY;
     instr_ptr(ctx, instr)->arg1.bstr = identifier;
 
@@ -645,7 +645,7 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     if(FAILED(hres))
         return hres;
 
-    if(push_instr(ctx, OP_val) == -1)
+    if(!push_instr(ctx, OP_val))
         return E_OUTOFMEMORY;
 
     if(stat->step_expr) {
@@ -653,7 +653,7 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
         if(FAILED(hres))
             return hres;
 
-        if(push_instr(ctx, OP_val) == -1)
+        if(!push_instr(ctx, OP_val))
             return E_OUTOFMEMORY;
     }else {
         hres = push_instr_int(ctx, OP_short, 1);
@@ -667,7 +667,7 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
         return E_OUTOFMEMORY;
 
     step_instr = push_instr(ctx, OP_step);
-    if(step_instr == -1)
+    if(!step_instr)
         return E_OUTOFMEMORY;
     instr_ptr(ctx, step_instr)->arg2.bstr = identifier;
     instr_ptr(ctx, step_instr)->arg1.uint = ctx->for_end_label;
@@ -677,7 +677,7 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
         return hres;
 
     instr = push_instr(ctx, OP_incc);
-    if(instr == -1)
+    if(!instr)
         return E_OUTOFMEMORY;
     instr_ptr(ctx, instr)->arg1.bstr = identifier;
 
@@ -920,7 +920,7 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             hres = compile_assign_statement(ctx, (assign_statement_t*)stat, TRUE);
             break;
         case STAT_STOP:
-            hres = push_instr(ctx, OP_stop) == -1 ? E_OUTOFMEMORY : S_OK;
+            hres = push_instr(ctx, OP_stop) ? S_OK : E_OUTOFMEMORY;
             break;
         case STAT_UNTIL:
         case STAT_WHILE:
@@ -1008,7 +1008,7 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
     if(ctx->prop_end_label != -1)
         label_set_addr(ctx, ctx->prop_end_label);
 
-    if(push_instr(ctx, OP_ret) == -1)
+    if(!push_instr(ctx, OP_ret))
         return E_OUTOFMEMORY;
 
     resolve_labels(ctx, func->code_off);
@@ -1373,7 +1373,7 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
         return NULL;
     }
 
-    ctx->instr_cnt = 0;
+    ctx->instr_cnt = 1;
     ctx->instr_size = 32;
     vbsheap_init(&ret->heap);
 
