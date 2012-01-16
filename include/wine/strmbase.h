@@ -232,6 +232,7 @@ typedef struct TransformFilter
 	IPin **ppPins;
 	ULONG npins;
 	AM_MEDIA_TYPE pmt;
+	CRITICAL_SECTION csReceive;
 
 	const struct TransformFilterFuncTable * pFuncsTable;
 	QualityControlImpl qcimpl;
