@@ -584,13 +584,11 @@ msgid "&Hue:"
 msgstr "색상(&H):"
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "채도(&S):"
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "명도(&L):"
