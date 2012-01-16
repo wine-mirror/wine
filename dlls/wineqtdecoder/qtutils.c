@@ -126,7 +126,6 @@ typedef struct {
 HRESULT AccessPixelBufferPixels( CVPixelBufferRef pixelBuffer, LPBYTE pbDstStream)
 {
     LPBYTE pPixels = NULL;
-    LPBYTE out = NULL;
     size_t bytesPerRow = 0, height = 0, width = 0;
     OSType actualType;
     int i;
@@ -143,9 +142,11 @@ HRESULT AccessPixelBufferPixels( CVPixelBufferRef pixelBuffer, LPBYTE pbDstStrea
     height = CVPixelBufferGetHeight(pixelBuffer);
     width = CVPixelBufferGetWidth(pixelBuffer);
 
-    for (out = pbDstStream, i = 0; i < height; i++)
+    for (i = 1; i <= height; i++)
     {
         int j;
+        LPBYTE out = pbDstStream + ((height - i) * width * 3);
+
         for (j = 0; j < width; j++)
         {
             *((DWORD*)out) = (((ARGBPixelPtr)pPixels)[j].r) << 16

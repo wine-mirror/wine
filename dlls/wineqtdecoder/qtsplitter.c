@@ -767,12 +767,13 @@ static HRESULT QT_Process_Video_Track(QTSplitter* filter, Track trk)
     pvi = (VIDEOINFOHEADER *)amt.pbFormat;
     pvi->bmiHeader.biSize = sizeof (BITMAPINFOHEADER);
     pvi->bmiHeader.biWidth = outputWidth;
-    pvi->bmiHeader.biHeight = -outputHeight;
+    pvi->bmiHeader.biHeight = outputHeight;
     pvi->bmiHeader.biPlanes = 1;
     pvi->bmiHeader.biBitCount = 24;
     pvi->bmiHeader.biCompression = BI_RGB;
+    pvi->bmiHeader.biSizeImage = outputWidth * outputHeight * outputDepth;
 
-    filter->outputSize = outputWidth * outputHeight * outputDepth;
+    filter->outputSize = pvi->bmiHeader.biSizeImage;
     amt.lSampleSize = 0;
 
     pixelBufferOptions = CFDictionaryCreateMutable(NULL, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);

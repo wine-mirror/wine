@@ -442,8 +442,6 @@ static HRESULT WINAPI QTVDecoder_SetMediaType(TransformFilter *tf, PIN_DIRECTION
         bmi->biCompression =  BI_RGB;
         bmi->biBitCount =  24;
         outpmt->subtype = MEDIASUBTYPE_RGB24;
-        if (bmi->biHeight > 0)
-            bmi->biHeight = -bmi->biHeight;
 
         return S_OK;
     }
