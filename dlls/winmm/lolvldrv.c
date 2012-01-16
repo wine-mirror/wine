@@ -531,7 +531,7 @@ static void MMDRV_Init(void)
 
     TRACE("()\n");
 
-    init_hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    init_hr = CoInitialize(NULL);
 
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
             CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);

@@ -464,12 +464,12 @@ static HRESULT WINMM_InitMMDevice(EDataFlow flow, IMMDevice *device,
 }
 
 static HRESULT WINMM_EnumDevices(WINMM_MMDevice **devices, UINT *devcount,
-        EDataFlow flow)
+        EDataFlow flow, IMMDeviceEnumerator *devenum)
 {
     IMMDeviceCollection *devcoll;
     HRESULT hr;
 
-    hr = IMMDeviceEnumerator_EnumAudioEndpoints(g_devenum, flow,
+    hr = IMMDeviceEnumerator_EnumAudioEndpoints(devenum, flow,
             DEVICE_STATE_ACTIVE, &devcoll);
     if(FAILED(hr))
         return hr;
@@ -494,7 +494,7 @@ static HRESULT WINMM_EnumDevices(WINMM_MMDevice **devices, UINT *devcount,
         count = 0;
 
         /* make sure that device 0 is the default device */
-        hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(g_devenum,
+        hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum,
                 flow, eConsole, &def_dev);
         if(SUCCEEDED(hr)){
             WINMM_InitMMDevice(flow, def_dev, &(*devices)[0], 0);
@@ -528,27 +528,39 @@ static HRESULT WINMM_EnumDevices(WINMM_MMDevice **devices, UINT *devcount,
 
 static HRESULT WINMM_InitMMDevices(void)
 {
-    HRESULT hr;
+    HRESULT hr, init_hr;
+    IMMDeviceEnumerator *devenum = NULL;
+
+    if(g_outmmdevices_count || g_inmmdevices_count)
+        return S_FALSE;
+
+    init_hr = CoInitialize(NULL);
 
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
-            CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&g_devenum);
+            CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);
     if(FAILED(hr))
-        return hr;
+        goto exit;
 
-    hr = WINMM_EnumDevices(&g_out_mmdevices, &g_outmmdevices_count, eRender);
+    hr = WINMM_EnumDevices(&g_out_mmdevices, &g_outmmdevices_count, eRender, devenum);
     if(FAILED(hr)){
         g_outmmdevices_count = 0;
         g_inmmdevices_count = 0;
-        return hr;
+        goto exit;
     }
 
-    hr = WINMM_EnumDevices(&g_in_mmdevices, &g_inmmdevices_count, eCapture);
+    hr = WINMM_EnumDevices(&g_in_mmdevices, &g_inmmdevices_count, eCapture, devenum);
     if(FAILED(hr)){
         g_inmmdevices_count = 0;
-        return hr;
+        goto exit;
     }
 
-    return S_OK;
+exit:
+    if(devenum)
+        IMMDeviceEnumerator_Release(devenum);
+    if(SUCCEEDED(init_hr))
+        CoUninitialize();
+
+    return hr;
 }
 
 static inline BOOL WINMM_IsMapper(UINT device)
@@ -2040,10 +2052,19 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
         return 1;
     }
 
+    hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&g_devenum);
+    if(FAILED(hr)){
+        ERR("CoCreateInstance failed: %08x\n", hr);
+        CoUninitialize();
+        return 1;
+    }
+
     g_devices_hwnd = CreateWindowW(messageW, NULL, 0, 0, 0, 0, 0,
             HWND_MESSAGE, NULL, NULL, NULL);
     if(!g_devices_hwnd){
         ERR("CreateWindow failed: %d\n", GetLastError());
+        IMMDeviceEnumerator_Release(g_devenum);
         CoUninitialize();
         return 1;
     }
@@ -2075,6 +2096,8 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
     }
 
     DestroyWindow(g_devices_hwnd);
+
+    IMMDeviceEnumerator_Release(g_devenum);
 
     CoUninitialize();
 
@@ -2140,7 +2163,8 @@ static BOOL WINMM_StartDevicesThread(void)
  */
 UINT WINAPI waveOutGetNumDevs(void)
 {
-    if(!WINMM_StartDevicesThread())
+    HRESULT hr = WINMM_InitMMDevices();
+    if(FAILED(hr))
         return 0;
 
     TRACE("count: %u\n", g_outmmdevices_count);
@@ -2158,9 +2182,6 @@ UINT WINAPI waveOutGetDevCapsA(UINT_PTR uDeviceID, LPWAVEOUTCAPSA lpCaps,
     UINT 		ret;
 
     TRACE("(%lu, %p, %u)\n", uDeviceID, lpCaps, uSize);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     if(!lpCaps)
         return MMSYSERR_INVALPARAM;
@@ -2189,10 +2210,12 @@ UINT WINAPI waveOutGetDevCapsW(UINT_PTR uDeviceID, LPWAVEOUTCAPSW lpCaps,
 			       UINT uSize)
 {
     WAVEOUTCAPSW mapper_caps, *caps;
+    HRESULT hr;
 
     TRACE("(%lu, %p, %u)\n", uDeviceID, lpCaps, uSize);
 
-    if(!WINMM_StartDevicesThread())
+    hr = WINMM_InitMMDevices();
+    if(FAILED(hr))
         return MMSYSERR_ERROR;
 
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
@@ -2784,7 +2807,8 @@ UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
  */
 UINT WINAPI waveInGetNumDevs(void)
 {
-    if(!WINMM_StartDevicesThread())
+    HRESULT hr = WINMM_InitMMDevices();
+    if(FAILED(hr))
         return 0;
 
     TRACE("count: %u\n", g_inmmdevices_count);
@@ -2798,10 +2822,12 @@ UINT WINAPI waveInGetNumDevs(void)
 UINT WINAPI waveInGetDevCapsW(UINT_PTR uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
 {
     WAVEINCAPSW mapper_caps, *caps;
+    HRESULT hr;
 
     TRACE("(%lu, %p, %u)\n", uDeviceID, lpCaps, uSize);
 
-    if(!WINMM_StartDevicesThread())
+    hr = WINMM_InitMMDevices();
+    if(FAILED(hr))
         return MMSYSERR_ERROR;
 
     if(!lpCaps)
@@ -2842,9 +2868,6 @@ UINT WINAPI waveInGetDevCapsA(UINT_PTR uDeviceID, LPWAVEINCAPSA lpCaps, UINT uSi
     WAVEINCAPSW wicW;
 
     TRACE("(%lu, %p, %u)\n", uDeviceID, lpCaps, uSize);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     if(!lpCaps)
         return MMSYSERR_INVALPARAM;
@@ -3155,9 +3178,12 @@ UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
 
 UINT WINAPI mixerGetNumDevs(void)
 {
+    HRESULT hr;
+
     TRACE("\n");
 
-    if(!WINMM_StartDevicesThread())
+    hr = WINMM_InitMMDevices();
+    if(FAILED(hr))
         return 0;
 
     return g_outmmdevices_count + g_inmmdevices_count;
@@ -3199,10 +3225,12 @@ UINT WINAPI mixerGetDevCapsW(UINT_PTR uDeviceID, LPMIXERCAPSW lpCaps, UINT uSize
 {
     WINMM_MMDevice *mmdevice;
     MIXERCAPSW caps;
+    HRESULT hr;
 
     TRACE("(%lu, %p, %u)\n", uDeviceID, lpCaps, uSize);
 
-    if(!WINMM_StartDevicesThread())
+    hr = WINMM_InitMMDevices();
+    if(FAILED(hr))
         return MMSYSERR_ERROR;
 
     if(!lpCaps)
@@ -3241,11 +3269,13 @@ UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
 {
     WINMM_MMDevice *mmdevice;
     MMRESULT mr;
+    HRESULT hr;
 
     TRACE("(%p, %d, %lx, %lx, %x)\n", lphMix, uDeviceID, dwCallback,
             dwInstance, fdwOpen);
 
-    if(!WINMM_StartDevicesThread())
+    hr = WINMM_InitMMDevices();
+    if(FAILED(hr))
         return MMSYSERR_ERROR;
 
     if(!lphMix)
@@ -3289,10 +3319,12 @@ UINT WINAPI mixerClose(HMIXER hMix)
 UINT WINAPI mixerGetID(HMIXEROBJ hmix, LPUINT lpid, DWORD fdwID)
 {
     WINMM_MMDevice *mmdevice;
+    HRESULT hr;
 
     TRACE("(%p, %p, %x)\n", hmix, lpid, fdwID);
 
-    if(!WINMM_StartDevicesThread())
+    hr = WINMM_InitMMDevices();
+    if(FAILED(hr))
         return MMSYSERR_ERROR;
 
     if(!lpid)
@@ -3315,10 +3347,12 @@ UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdW
 				    DWORD fdwDetails)
 {
     WINMM_ControlDetails details;
+    HRESULT hr;
 
     TRACE("(%p, %p, %x)\n", hmix, lpmcdW, fdwDetails);
 
-    if(!WINMM_StartDevicesThread())
+    hr = WINMM_InitMMDevices();
+    if(FAILED(hr))
         return MMSYSERR_ERROR;
 
     if(!lpmcdW)
@@ -3500,10 +3534,12 @@ UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlcW,
 				  DWORD fdwControls)
 {
     WINMM_MMDevice *mmdevice;
+    HRESULT hr;
 
     TRACE("(%p, %p, %08x)\n", hmix, lpmlcW, fdwControls);
 
-    if(!WINMM_StartDevicesThread())
+    hr = WINMM_InitMMDevices();
+    if(FAILED(hr))
         return MMSYSERR_ERROR;
 
     if(fdwControls & ~(MIXER_GETLINECONTROLSF_ALL |
@@ -3716,10 +3752,12 @@ UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpmliW, DWORD fdwInfo
 {
     UINT mmdev_index;
     WINMM_MMDevice *mmdevice;
+    HRESULT hr;
 
     TRACE("(%p, %p, %x)\n", hmix, lpmliW, fdwInfo);
 
-    if(!WINMM_StartDevicesThread())
+    hr = WINMM_InitMMDevices();
+    if(FAILED(hr))
         return MMSYSERR_ERROR;
 
     if(!lpmliW || lpmliW->cbStruct < sizeof(MIXERLINEW))
