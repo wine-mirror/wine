@@ -287,7 +287,7 @@ msgstr "ช่วยเหลีอ"
 
 #: comctl32.rc:62
 msgid "Wizard"
-msgstr "Wizard"
+msgstr ""
 
 #: comctl32.rc:65
 msgid "< &Back"
@@ -515,11 +515,11 @@ msgstr "ขนาด:"
 
 #: comdlg32.rc:260
 msgid "Effects"
-msgstr "Effects"
+msgstr ""
 
 #: comdlg32.rc:261
 msgid "Stri&keout"
-msgstr "Stri&keout"
+msgstr ""
 
 #: comdlg32.rc:262
 msgid "&Underline"
@@ -539,7 +539,7 @@ msgstr "AฺBCกขฃ"
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
-msgstr "Scr&ipt:"
+msgstr ""
 
 #: comdlg32.rc:276
 msgid "Color"
@@ -547,7 +547,7 @@ msgstr "สี"
 
 #: comdlg32.rc:279
 msgid "&Basic Colors:"
-msgstr "&Basic Colors:"
+msgstr ""
 
 #: comdlg32.rc:280
 msgid "&Custom Colors:"
@@ -9983,7 +9983,7 @@ msgstr "หัว:"
 
 #: notepad.rc:101
 msgid "&Footer:"
-msgstr "&Footer:"
+msgstr ""
 
 #: notepad.rc:104
 #, fuzzy
