@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 /*
  * AutomationObject - "base" class for all automation objects. For each interface, we implement Invoke function
- *                    called from AutomationObject::Invoke, and pass this function to create_automation_object.
+ *                    called from AutomationObject::Invoke.
  */
 
 typedef struct AutomationObject AutomationObject;
@@ -80,7 +80,10 @@ typedef struct {
     VARIANT *data;
 } ListObject;
 
+static HRESULT create_database(MSIHANDLE, IDispatch**);
 static HRESULT create_list_enumerator(ListObject*, void**);
+static HRESULT create_summaryinfo(MSIHANDLE, IDispatch**);
+static HRESULT create_view(MSIHANDLE, IDispatch**);
 
 /* ListEnumerator - IEnumVARIANT implementation for MSI automation lists */
 typedef struct {
@@ -460,43 +463,6 @@ static const IProvideMultipleClassInfoVtbl ProvideMultipleClassInfoVtbl =
     ProvideMultipleClassInfo_GetMultiTypeInfoCount,
     ProvideMultipleClassInfo_GetInfoOfIndex
 };
-
-/* Create the automation object, placing the result in the pointer ppObj. The automation object is created
- * with the appropriate clsid and invocation function. */
-static HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter, void **ppObj, REFIID clsid,
-        autoInvokeFunc invokeFunc, autoFreeFunc freeFunc)
-{
-    AutomationObject *object;
-    HRESULT hr;
-
-    TRACE("(%d,%p,%p,%s,%p,%p)\n", msiHandle, pUnkOuter, ppObj, debugstr_guid(clsid), invokeFunc, freeFunc);
-
-    if( pUnkOuter )
-        return CLASS_E_NOAGGREGATION;
-
-    object = msi_alloc_zero(sizeof(AutomationObject));
-
-    object->IDispatch_iface.lpVtbl = &AutomationObjectVtbl;
-    object->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
-    object->ref = 1;
-
-    object->msiHandle = msiHandle;
-    object->clsid = (LPCLSID)clsid;
-    object->funcInvoke = invokeFunc;
-    object->funcFree = freeFunc;
-
-    /* Load our TypeInfo so we don't have to process GetIDsOfNames */
-    object->iTypeInfo = NULL;
-    hr = load_type_info(&object->IDispatch_iface, &object->iTypeInfo, clsid, 0x0);
-    if (FAILED(hr)) {
-        msi_free( object );
-        return hr;
-    }
-
-    *ppObj = object;
-
-    return S_OK;
-}
 
 static HRESULT init_automation_object(AutomationObject *This, MSIHANDLE msiHandle, REFIID clsid,
         autoInvokeFunc invokeFunc, autoFreeFunc freeFunc)
@@ -960,6 +926,26 @@ static HRESULT RecordImpl_Invoke(
     return S_OK;
 }
 
+HRESULT create_record(MSIHANDLE msiHandle, IDispatch **disp)
+{
+    AutomationObject *record;
+    HRESULT hr;
+
+    record = msi_alloc(sizeof(*record));
+    if (!record) return E_OUTOFMEMORY;
+
+    hr = init_automation_object(record, msiHandle, &DIID_Record, RecordImpl_Invoke, NULL);
+    if (hr != S_OK)
+    {
+        msi_free(record);
+        return hr;
+    }
+
+    *disp = &record->IDispatch_iface;
+
+    return hr;
+}
+
 static HRESULT ListImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
@@ -1119,7 +1105,6 @@ static HRESULT ViewImpl_Invoke(
         UINT* puArgErr)
 {
     MSIHANDLE msiHandle;
-    IDispatch *pDispatch = NULL;
     UINT ret;
     VARIANTARG varg0, varg1;
     HRESULT hr;
@@ -1147,8 +1132,10 @@ static HRESULT ViewImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
                 if ((ret = MsiViewFetch(This->msiHandle, &msiHandle)) == ERROR_SUCCESS)
                 {
-                    if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_Record, RecordImpl_Invoke, NULL)))
-                        V_DISPATCH(pVarResult) = pDispatch;
+                    IDispatch *dispatch = NULL;
+
+                    if (SUCCEEDED(hr = create_record(msiHandle, &dispatch)))
+                        V_DISPATCH(pVarResult) = dispatch;
                     else
                         ERR("Failed to create Record object, hresult 0x%08x\n", hr);
                 }
@@ -1225,8 +1212,8 @@ static HRESULT DatabaseImpl_Invoke(
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr)
 {
+    IDispatch *dispatch = NULL;
     MSIHANDLE msiHandle;
-    IDispatch *pDispatch = NULL;
     UINT ret;
     VARIANTARG varg0, varg1;
     HRESULT hr;
@@ -1246,9 +1233,9 @@ static HRESULT DatabaseImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
                 if ((ret = MsiGetSummaryInformationW(This->msiHandle, NULL, V_I4(&varg0), &msiHandle)) == ERROR_SUCCESS)
                 {
-                    hr = create_automation_object(msiHandle, NULL, (LPVOID *)&pDispatch, &DIID_SummaryInfo, SummaryInfoImpl_Invoke, NULL);
+                    hr = create_summaryinfo(msiHandle, &dispatch);
                     if (SUCCEEDED(hr))
-                        V_DISPATCH(pVarResult) = pDispatch;
+                        V_DISPATCH(pVarResult) = dispatch;
                     else
                         ERR("Failed to create SummaryInfo object: 0x%08x\n", hr);
                 }
@@ -1269,8 +1256,8 @@ static HRESULT DatabaseImpl_Invoke(
                 V_VT(pVarResult) = VT_DISPATCH;
                 if ((ret = MsiDatabaseOpenViewW(This->msiHandle, V_BSTR(&varg0), &msiHandle)) == ERROR_SUCCESS)
                 {
-                    if (SUCCEEDED(hr = create_automation_object(msiHandle, NULL, (LPVOID*)&pDispatch, &DIID_View, ViewImpl_Invoke, NULL)))
-                        V_DISPATCH(pVarResult) = pDispatch;
+                    if (SUCCEEDED(hr = create_view(msiHandle, &dispatch)))
+                        V_DISPATCH(pVarResult) = dispatch;
                     else
                         ERR("Failed to create View object, hresult 0x%08x\n", hr);
                 }
@@ -1297,28 +1284,6 @@ static HRESULT DatabaseImpl_Invoke(
     VariantClear(&varg0);
 
     return S_OK;
-}
-
-static HRESULT create_database(MSIHANDLE msiHandle, IDispatch **dispatch)
-{
-    AutomationObject *database;
-    HRESULT hr;
-
-    TRACE("(%d %p)\n", msiHandle, dispatch);
-
-    database = msi_alloc(sizeof(AutomationObject));
-    if (!database) return E_OUTOFMEMORY;
-
-    hr = init_automation_object(database, msiHandle, &DIID_Database, DatabaseImpl_Invoke, NULL);
-    if (hr != S_OK)
-    {
-        msi_free(database);
-        return hr;
-    }
-
-    *dispatch = &database->IDispatch_iface;
-
-    return hr;
 }
 
 static HRESULT SessionImpl_Invoke(
@@ -1664,8 +1629,7 @@ static HRESULT InstallerImpl_CreateRecord(WORD wFlags,
     if (!hrec)
         return DISP_E_EXCEPTION;
 
-    hr = create_automation_object(hrec, NULL, (LPVOID*)&dispatch,
-                                  &DIID_Record, RecordImpl_Invoke, NULL);
+    hr = create_record(hrec, &dispatch);
     if (SUCCEEDED(hr))
         V_DISPATCH(pVarResult) = dispatch;
 
@@ -2429,6 +2393,70 @@ HRESULT create_session(MSIHANDLE msiHandle, IDispatch *installer, IDispatch **di
 
     session->installer = installer;
     *disp = &session->autoobj.IDispatch_iface;
+
+    return hr;
+}
+
+static HRESULT create_database(MSIHANDLE msiHandle, IDispatch **dispatch)
+{
+    AutomationObject *database;
+    HRESULT hr;
+
+    TRACE("(%d %p)\n", msiHandle, dispatch);
+
+    database = msi_alloc(sizeof(AutomationObject));
+    if (!database) return E_OUTOFMEMORY;
+
+    hr = init_automation_object(database, msiHandle, &DIID_Database, DatabaseImpl_Invoke, NULL);
+    if (hr != S_OK)
+    {
+        msi_free(database);
+        return hr;
+    }
+
+    *dispatch = &database->IDispatch_iface;
+
+    return hr;
+}
+
+static HRESULT create_view(MSIHANDLE msiHandle, IDispatch **dispatch)
+{
+    AutomationObject *view;
+    HRESULT hr;
+
+    TRACE("(%d %p)\n", msiHandle, dispatch);
+
+    view = msi_alloc(sizeof(AutomationObject));
+    if (!view) return E_OUTOFMEMORY;
+
+    hr = init_automation_object(view, msiHandle, &DIID_View, ViewImpl_Invoke, NULL);
+    if (hr != S_OK)
+    {
+        msi_free(view);
+        return hr;
+    }
+
+    *dispatch = &view->IDispatch_iface;
+
+    return hr;
+}
+
+static HRESULT create_summaryinfo(MSIHANDLE msiHandle, IDispatch **disp)
+{
+    AutomationObject *info;
+    HRESULT hr;
+
+    info = msi_alloc(sizeof(*info));
+    if (!info) return E_OUTOFMEMORY;
+
+    hr = init_automation_object(info, msiHandle, &DIID_SummaryInfo, SummaryInfoImpl_Invoke, NULL);
+    if (hr != S_OK)
+    {
+        msi_free(info);
+        return hr;
+    }
+
+    *disp = &info->IDispatch_iface;
 
     return hr;
 }
