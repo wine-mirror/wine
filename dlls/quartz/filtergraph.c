@@ -160,6 +160,7 @@ typedef struct _IFilterGraphImpl {
     IMediaEventSink IMediaEventSink_iface;
     IGraphConfig IGraphConfig_iface;
     IMediaPosition IMediaPosition_iface;
+    IObjectWithSite IObjectWithSite_iface;
     const IUnknownVtbl * IInner_vtbl;
     /* IAMGraphStreams */
     /* IAMStats */
@@ -204,6 +205,7 @@ typedef struct _IFilterGraphImpl {
     REFERENCE_TIME pause_time;
     LONGLONG stop_position;
     LONG recursioncount;
+    IUnknown *pSite;
 } IFilterGraphImpl;
 
 static HRESULT Filtergraph_QueryInterface(IFilterGraphImpl *This,
@@ -261,6 +263,9 @@ static HRESULT WINAPI FilterGraphInner_QueryInterface(IUnknown * iface,
     } else if (IsEqualGUID(&IID_IMediaPosition, riid)) {
         *ppvObj = &This->IMediaPosition_iface;
         TRACE("   returning IMediaPosition interface (%p)\n", *ppvObj);
+    } else if (IsEqualGUID(&IID_IObjectWithSite, riid)) {
+        *ppvObj = &This->IObjectWithSite_iface;
+        TRACE("   returning IObjectWithSite interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IFilterMapper, riid)) {
         TRACE("   requesting IFilterMapper interface from aggregated filtermapper (%p)\n", *ppvObj);
         return IUnknown_QueryInterface(This->punkFilterMapper2, riid, ppvObj);
@@ -326,6 +331,8 @@ static ULONG WINAPI FilterGraphInner_Release(IUnknown * iface)
 
         IFilterMapper2_Release(This->pFilterMapper2);
         IUnknown_Release(This->punkFilterMapper2);
+
+        if (This->pSite) IUnknown_Release(This->pSite);
 
 	CloseHandle(This->hEventCompletion);
 	EventsQueue_Destroy(&This->evqueue);
@@ -1020,6 +1027,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         IPin** ppins;
         IPin* ppinfilter = NULL;
         IBaseFilter* pfilter = NULL;
+        IAMGraphBuilderCallback *callback = NULL;
 
         hr = GetFilterInfo(pMoniker, &clsid, &var);
         IMoniker_Release(pMoniker);
@@ -1033,10 +1041,40 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
             goto error;
         }
 
+        if (This->pSite)
+        {
+            IUnknown_QueryInterface(This->pSite, &IID_IAMGraphBuilderCallback, (LPVOID*)&callback);
+            if (callback)
+            {
+                HRESULT rc;
+                rc = IAMGraphBuilderCallback_SelectedFilter(callback, pMoniker);
+                if (FAILED(rc))
+                {
+                    TRACE("Filter rejected by IAMGraphBuilderCallback_SelectedFilter\n");
+                    IUnknown_Release(callback);
+                    goto error;
+                }
+            }
+        }
+
         hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&pfilter);
         if (FAILED(hr)) {
             WARN("Unable to create filter (%x), trying next one\n", hr);
             goto error;
+        }
+
+        if (callback)
+        {
+            HRESULT rc;
+            rc = IAMGraphBuilderCallback_CreatedFilter(callback, pfilter);
+            IUnknown_Release(callback);
+            if (FAILED(rc))
+            {
+                IBaseFilter_Release(pfilter);
+                pfilter = NULL;
+                TRACE("Filter rejected by IAMGraphBuilderCallback_CreatedFilter\n");
+                goto error;
+            }
         }
 
         hr = IFilterGraph2_AddFilter(iface, pfilter, V_UNION(&var, bstrVal));
@@ -2766,6 +2804,71 @@ static const IMediaPositionVtbl IMediaPosition_VTable =
     MediaPosition_get_Rate,
     MediaPosition_CanSeekForward,
     MediaPosition_CanSeekBackward
+};
+
+static inline IFilterGraphImpl *impl_from_IObjectWithSite(IObjectWithSite *iface)
+{
+    return CONTAINING_RECORD(iface, IFilterGraphImpl, IObjectWithSite_iface);
+}
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI ObjectWithSite_QueryInterface(IObjectWithSite* iface, REFIID riid, void** ppvObj)
+{
+    IFilterGraphImpl *This = impl_from_IObjectWithSite( iface );
+
+    TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
+    return Filtergraph_QueryInterface(This, riid, ppvObj);
+}
+
+static ULONG WINAPI ObjectWithSite_AddRef(IObjectWithSite *iface)
+{
+    IFilterGraphImpl *This = impl_from_IObjectWithSite( iface );
+
+    TRACE("(%p/%p)->()\n", This, iface);
+    return Filtergraph_AddRef(This);
+}
+
+static ULONG WINAPI ObjectWithSite_Release(IObjectWithSite *iface)
+{
+    IFilterGraphImpl *This = impl_from_IObjectWithSite( iface );
+
+    TRACE("(%p/%p)->()\n", This, iface);
+    return Filtergraph_Release(This);
+}
+
+/*** IObjectWithSite methods ***/
+
+static HRESULT WINAPI ObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *pUnkSite)
+{
+    IFilterGraphImpl *This = impl_from_IObjectWithSite( iface );
+
+    TRACE("(%p/%p)->()\n", This, iface);
+    if (This->pSite) IUnknown_Release(This->pSite);
+    This->pSite = pUnkSite;
+    IUnknown_AddRef(This->pSite);
+    return S_OK;
+}
+
+static HRESULT WINAPI ObjectWithSite_GetSite(IObjectWithSite *iface, REFIID riid, PVOID *ppvSite)
+{
+    IFilterGraphImpl *This = impl_from_IObjectWithSite( iface );
+
+    TRACE("(%p/%p)->(%s)\n", This, iface,debugstr_guid(riid));
+
+    *ppvSite = NULL;
+    if (!This->pSite)
+        return E_FAIL;
+    else
+        return IUnknown_QueryInterface(This->pSite, riid, ppvSite);
+}
+
+static const IObjectWithSiteVtbl IObjectWithSite_VTable =
+{
+    ObjectWithSite_QueryInterface,
+    ObjectWithSite_AddRef,
+    ObjectWithSite_Release,
+    ObjectWithSite_SetSite,
+    ObjectWithSite_GetSite,
 };
 
 static HRESULT GetTargetInterface(IFilterGraphImpl* pGraph, REFIID riid, LPVOID* ppvObj)
@@ -5506,6 +5609,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->IMediaEventSink_iface.lpVtbl = &IMediaEventSink_VTable;
     fimpl->IGraphConfig_iface.lpVtbl = &IGraphConfig_VTable;
     fimpl->IMediaPosition_iface.lpVtbl = &IMediaPosition_VTable;
+    fimpl->IObjectWithSite_iface.lpVtbl = &IObjectWithSite_VTable;
     fimpl->ref = 1;
     fimpl->ppFiltersInGraph = NULL;
     fimpl->pFilterNames = NULL;
@@ -5523,6 +5627,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->EcCompleteCount = 0;
     fimpl->refClockProvider = NULL;
     fimpl->state = State_Stopped;
+    fimpl->pSite = NULL;
     EventsQueue_Init(&fimpl->evqueue);
     InitializeCriticalSection(&fimpl->cs);
     fimpl->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IFilterGraphImpl.cs");
