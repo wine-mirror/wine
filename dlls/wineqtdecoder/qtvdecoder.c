@@ -179,7 +179,7 @@ static void trackingCallback(
         return;
     }
 
-    EnterCriticalSection(&This->tf.filter.csFilter);
+    EnterCriticalSection(&This->tf.csReceive);
     hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
     if (FAILED(hr)) {
         ERR("Unable to get delivery buffer (%x)\n", hr);
@@ -230,12 +230,12 @@ static void trackingCallback(
         IMediaSample_SetTime(pOutSample, &tStart, &tStop);
     }
 
-    LeaveCriticalSection(&This->tf.filter.csFilter);
     hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);
 
 error:
+    LeaveCriticalSection(&This->tf.csReceive);
     if (pOutSample)
         IMediaSample_Release(pOutSample);
 
@@ -278,7 +278,6 @@ static HRESULT WINAPI QTVDecoder_Receive(TransformFilter *tf, IMediaSample *pSam
     OSStatus err = noErr;
     LONGLONG tStart, tStop;
 
-    EnterCriticalSection(&This->tf.filter.csFilter);
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
@@ -316,7 +315,6 @@ static HRESULT WINAPI QTVDecoder_Receive(TransformFilter *tf, IMediaSample *pSam
     hr = This->decodeHR;
 
 error:
-    LeaveCriticalSection(&This->tf.filter.csFilter);
     return hr;
 }
 
