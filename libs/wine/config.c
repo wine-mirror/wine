@@ -217,12 +217,12 @@ static void init_server_dir( dev_t dev, ino_t ino )
     sprintf( server_dir, "%s%u%s", server_root_prefix, uid, server_dir_prefix );
     p = server_dir + strlen(server_dir);
 
-    if (sizeof(dev) > sizeof(unsigned long) && dev > ~0UL)
+    if (dev != (unsigned long)dev)
         p += sprintf( p, "%lx%08lx-", (unsigned long)((unsigned long long)dev >> 32), (unsigned long)dev );
     else
         p += sprintf( p, "%lx-", (unsigned long)dev );
 
-    if (sizeof(ino) > sizeof(unsigned long) && ino > ~0UL)
+    if (ino != (unsigned long)ino)
         sprintf( p, "%lx%08lx", (unsigned long)((unsigned long long)ino >> 32), (unsigned long)ino );
     else
         sprintf( p, "%lx", (unsigned long)ino );
