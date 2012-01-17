@@ -552,11 +552,11 @@ msgstr "Eșantion"
 
 #: comdlg32.rc:267
 msgid "AaBbYyZz"
-msgstr "AaBbYyZz"
+msgstr ""
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
-msgstr "Scr&ipt:"
+msgstr ""
 
 #: comdlg32.rc:276
 msgid "Color"
@@ -7068,7 +7068,7 @@ msgstr "Toată rețeaua"
 
 #: msacm32.rc:27
 msgid "Sound Selection"
-msgstr "Sound Selection"
+msgstr ""
 
 #: msacm32.rc:36 winedbg.rc:72
 msgid "&Save As..."
@@ -13037,10 +13037,6 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"This program is free software; you can redistribute it and/or modify it "
-"under the terms of the GNU Lesser General Public License as published by the "
-"Free Software Foundation; either version 2.1 of the License, or (at your "
-"option) any later version."
 
 #: winecfg.rc:134
 #, fuzzy
@@ -13090,7 +13086,7 @@ msgstr " Setări de fereastră "
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatically capture the &mouse in full-screen windows"
+msgstr ""
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -13115,7 +13111,7 @@ msgstr " Rezoluție ecran "
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "This is a sample text using 10 point Tahoma"
+msgstr ""
 
 #: winecfg.rc:182
 #, fuzzy
@@ -13230,30 +13226,28 @@ msgid "Show &dot files"
 msgstr "Afișează &fișierele ascunse"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr ""
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
