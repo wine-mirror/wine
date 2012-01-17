@@ -38,9 +38,6 @@ typedef struct {
     LONG ref;
 } IDirect3DRMDeviceImpl;
 
-static const struct IDirect3DRMDevice2Vtbl Direct3DRMDevice2_Vtbl;
-static const struct IDirect3DRMDevice3Vtbl Direct3DRMDevice3_Vtbl;
-
 static inline IDirect3DRMDeviceImpl *impl_from_IDirect3DRMDevice2(IDirect3DRMDevice2 *iface)
 {
     return CONTAINING_RECORD(iface, IDirect3DRMDeviceImpl, IDirect3DRMDevice2_iface);
@@ -49,31 +46,6 @@ static inline IDirect3DRMDeviceImpl *impl_from_IDirect3DRMDevice2(IDirect3DRMDev
 static inline IDirect3DRMDeviceImpl *impl_from_IDirect3DRMDevice3(IDirect3DRMDevice3 *iface)
 {
     return CONTAINING_RECORD(iface, IDirect3DRMDeviceImpl, IDirect3DRMDevice3_iface);
-}
-
-HRESULT Direct3DRMDevice_create(REFIID riid, IUnknown** ppObj)
-{
-    IDirect3DRMDeviceImpl* object;
-
-    TRACE("(%p)\n", ppObj);
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMDeviceImpl));
-    if (!object)
-    {
-        ERR("Out of memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    object->IDirect3DRMDevice2_iface.lpVtbl = &Direct3DRMDevice2_Vtbl;
-    object->IDirect3DRMDevice3_iface.lpVtbl = &Direct3DRMDevice3_Vtbl;
-    object->ref = 1;
-
-    if (IsEqualGUID(riid, &IID_IDirect3DRMFrame3))
-        *ppObj = (IUnknown*)&object->IDirect3DRMDevice3_iface;
-    else
-        *ppObj = (IUnknown*)&object->IDirect3DRMDevice2_iface;
-
-    return S_OK;
 }
 
 /*** IUnknown methods ***/
@@ -1021,3 +993,28 @@ static const struct IDirect3DRMDevice3Vtbl Direct3DRMDevice3_Vtbl =
     IDirect3DRMDevice3Impl_GetStateChangeOptions,
     IDirect3DRMDevice3Impl_SetStateChangeOptions
 };
+
+HRESULT Direct3DRMDevice_create(REFIID riid, IUnknown** ppObj)
+{
+    IDirect3DRMDeviceImpl* object;
+
+    TRACE("(%p)\n", ppObj);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMDeviceImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->IDirect3DRMDevice2_iface.lpVtbl = &Direct3DRMDevice2_Vtbl;
+    object->IDirect3DRMDevice3_iface.lpVtbl = &Direct3DRMDevice3_Vtbl;
+    object->ref = 1;
+
+    if (IsEqualGUID(riid, &IID_IDirect3DRMFrame3))
+        *ppObj = (IUnknown*)&object->IDirect3DRMDevice3_iface;
+    else
+        *ppObj = (IUnknown*)&object->IDirect3DRMDevice2_iface;
+
+    return S_OK;
+}
