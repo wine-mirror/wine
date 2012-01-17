@@ -369,12 +369,12 @@ SHORT WINAPI DECLSPEC_HOTPATCH GetAsyncKeyState( INT key )
 
     if ((ret = USER_Driver->pGetAsyncKeyState( key )) == -1)
     {
-        if (thread_info->key_state)
-        {
-            if (GetTickCount() - thread_info->key_state_time < 50)
-                return (thread_info->key_state[key] & 0x80) ? 0x8000 : 0;
-        }
-        else thread_info->key_state = HeapAlloc( GetProcessHeap(), 0, 256 );
+        if (thread_info->key_state &&
+            !(thread_info->key_state[key] & 0xc0) &&
+            GetTickCount() - thread_info->key_state_time < 50)
+            return 0;
+
+        if (!thread_info->key_state) thread_info->key_state = HeapAlloc( GetProcessHeap(), 0, 256 );
 
         ret = 0;
         SERVER_START_REQ( get_key_state )
