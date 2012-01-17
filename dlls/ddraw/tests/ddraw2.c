@@ -54,6 +54,24 @@ static D3DCOLOR get_surface_color(IDirectDrawSurface *surface, UINT x, UINT y)
     return color;
 }
 
+static HRESULT CALLBACK enum_z_fmt(GUID *guid, char *description, char *name,
+        D3DDEVICEDESC *hal_desc, D3DDEVICEDESC *hel_desc, void *ctx)
+{
+    DWORD *z_depth = ctx;
+
+    if (!IsEqualGUID(&IID_IDirect3DHALDevice, guid))
+        return D3DENUMRET_OK;
+
+    if (hal_desc->dwDeviceZBufferBitDepth & DDBD_32)
+        *z_depth = 32;
+    else if (hal_desc->dwDeviceZBufferBitDepth & DDBD_24)
+        *z_depth = 24;
+    else if (hal_desc->dwDeviceZBufferBitDepth & DDBD_16)
+        *z_depth = 16;
+
+    return DDENUMRET_OK;
+}
+
 static IDirectDraw2 *create_ddraw(void)
 {
     IDirectDraw2 *ddraw2;
@@ -69,6 +87,107 @@ static IDirectDraw2 *create_ddraw(void)
         return NULL;
 
     return ddraw2;
+}
+
+static IDirect3DDevice2 *create_device(IDirectDraw2 *ddraw, HWND window, DWORD coop_level)
+{
+    IDirectDrawSurface *surface, *ds;
+    IDirect3DDevice2 *device = NULL;
+    DDSURFACEDESC surface_desc;
+    DWORD z_depth = 0;
+    IDirect3D2 *d3d;
+    HRESULT hr;
+
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, coop_level);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
+    surface_desc.dwWidth = 640;
+    surface_desc.dwHeight = 480;
+
+    hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    if (coop_level & DDSCL_NORMAL)
+    {
+        IDirectDrawClipper *clipper;
+
+        hr = IDirectDraw2_CreateClipper(ddraw, 0, &clipper, NULL);
+        ok(SUCCEEDED(hr), "Failed to create clipper, hr %#x.\n", hr);
+        hr = IDirectDrawClipper_SetHWnd(clipper, 0, window);
+        ok(SUCCEEDED(hr), "Failed to set clipper window, hr %#x.\n", hr);
+        hr = IDirectDrawSurface_SetClipper(surface, clipper);
+        ok(SUCCEEDED(hr), "Failed to set surface clipper, hr %#x.\n", hr);
+        IDirectDrawClipper_Release(clipper);
+    }
+
+    hr = IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d);
+    if (FAILED(hr))
+    {
+        IDirectDrawSurface_Release(surface);
+        return NULL;
+    }
+
+    hr = IDirect3D2_EnumDevices(d3d, enum_z_fmt, &z_depth);
+    ok(SUCCEEDED(hr), "Failed to enumerate z-formats, hr %#x.\n", hr);
+    if (FAILED(hr) || !z_depth)
+    {
+        IDirect3D2_Release(d3d);
+        IDirectDrawSurface_Release(surface);
+        return NULL;
+    }
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    surface_desc.dwZBufferBitDepth = z_depth;
+    surface_desc.dwWidth = 640;
+    surface_desc.dwHeight = 480;
+    hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &ds, NULL);
+    ok(SUCCEEDED(hr), "Failed to create depth buffer, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        IDirect3D2_Release(d3d);
+        IDirectDrawSurface_Release(surface);
+        return NULL;
+    }
+
+    hr = IDirectDrawSurface_AddAttachedSurface(surface, ds);
+    ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(ds);
+    if (FAILED(hr))
+    {
+        IDirect3D2_Release(d3d);
+        IDirectDrawSurface_Release(surface);
+        return NULL;
+    }
+
+    hr = IDirect3D2_CreateDevice(d3d, &IID_IDirect3DHALDevice, surface, &device);
+    IDirect3D2_Release(d3d);
+    IDirectDrawSurface_Release(surface);
+    if (FAILED(hr))
+        return NULL;
+
+    return device;
+}
+
+static HRESULT CALLBACK restore_callback(IDirectDrawSurface *surface, DDSURFACEDESC *desc, void *context)
+{
+    HRESULT hr = IDirectDrawSurface_Restore(surface);
+    ok(SUCCEEDED(hr), "Failed to restore surface, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(surface);
+
+    return DDENUMRET_OK;
+}
+
+static HRESULT restore_surfaces(IDirectDraw2 *ddraw)
+{
+    return IDirectDraw2_EnumSurfaces(ddraw, DDENUMSURFACES_ALL | DDENUMSURFACES_DOESEXIST,
+            NULL, NULL, restore_callback);
 }
 
 static void test_coop_level_create_device_window(void)
@@ -367,8 +486,136 @@ static void test_clipper_blt(void)
     IDirectDraw2_Release(ddraw);
 }
 
+static void test_coop_level_d3d_state(void)
+{
+    D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    D3DMATERIALHANDLE background_handle;
+    IDirectDrawSurface *rt, *surface;
+    IDirect3DMaterial2 *background;
+    IDirect3DViewport2 *viewport;
+    IDirect3DDevice2 *device;
+    D3DMATERIAL material;
+    IDirectDraw2 *ddraw;
+    D3DVIEWPORT2 vp;
+    IDirect3D2 *d3d;
+    D3DCOLOR color;
+    DWORD value;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create ddraw object, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        IDirectDraw2_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    hr = IDirect3D2_CreateViewport(d3d, &viewport, NULL);
+    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
+    hr = IDirect3D2_CreateMaterial(d3d, &background, NULL);
+    ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
+    IDirect3D2_Release(d3d);
+
+    hr = IDirect3DDevice2_AddViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to add viewport, hr %#x.\n", hr);
+    memset(&vp, 0, sizeof(vp));
+    vp.dwSize = sizeof(vp);
+    vp.dwX = 0;
+    vp.dwY = 0;
+    vp.dwWidth = 640;
+    vp.dwHeight = 480;
+    vp.dvClipX = -1.0f;
+    vp.dvClipY =  1.0f;
+    vp.dvClipWidth = 2.0f;
+    vp.dvClipHeight = 2.0f;
+    vp.dvMinZ = 0.0f;
+    vp.dvMaxZ = 1.0f;
+    hr = IDirect3DViewport2_SetViewport2(viewport, &vp);
+    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+
+    memset(&material, 0, sizeof(material));
+    material.dwSize = sizeof(material);
+    U1(U(material).diffuse).r = 1.0f;
+    U2(U(material).diffuse).g = 0.0f;
+    U3(U(material).diffuse).b = 0.0f;
+    U4(U(material).diffuse).a = 1.0f;
+    hr = IDirect3DMaterial2_SetMaterial(background, &material);
+    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
+    hr = IDirect3DMaterial2_GetHandle(background, device, &background_handle);
+    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+    hr = IDirect3DViewport2_SetBackground(viewport, background_handle);
+    ok(SUCCEEDED(hr), "Failed to set viewport background, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_ZENABLE, &value);
+    ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
+    ok(!!value, "Got unexpected z-enable state %#x.\n", value);
+    hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, &value);
+    ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
+    ok(!value, "Got unexpected alpha blend enable state %#x.\n", value);
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(rt);
+    ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    hr = restore_surfaces(ddraw);
+    ok(SUCCEEDED(hr), "Failed to restore surfaces, hr %#x.\n", hr);
+
+    memset(&material, 0, sizeof(material));
+    material.dwSize = sizeof(material);
+    U1(U(material).diffuse).r = 0.0f;
+    U2(U(material).diffuse).g = 1.0f;
+    U3(U(material).diffuse).b = 0.0f;
+    U4(U(material).diffuse).a = 1.0f;
+    hr = IDirect3DMaterial2_SetMaterial(background, &material);
+    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_GetRenderTarget(device, &surface);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(surface == rt, "Got unexpected surface %p.\n", surface);
+    hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_ZENABLE, &value);
+    ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
+    todo_wine ok(!!value, "Got unexpected z-enable state %#x.\n", value);
+    hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, &value);
+    ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
+    todo_wine ok(!!value, "Got unexpected alpha blend enable state %#x.\n", value);
+    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    todo_wine ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice2_DeleteViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to delete viewport, hr %#x.\n", hr);
+    IDirect3DMaterial2_Release(background);
+    IDirect3DViewport2_Release(viewport);
+    IDirectDrawSurface_Release(surface);
+    IDirectDrawSurface_Release(rt);
+    IDirect3DDevice2_Release(device);
+    IDirectDraw2_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     test_coop_level_create_device_window();
     test_clipper_blt();
+    test_coop_level_d3d_state();
 }
