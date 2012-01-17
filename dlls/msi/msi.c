@@ -651,6 +651,7 @@ static UINT determine_patch_sequence( MSIPACKAGE *package, DWORD count, MSIPATCH
             }
             break;
         }
+        case MSIPATCH_DATATYPE_XMLPATH:
         case MSIPATCH_DATATYPE_XMLBLOB:
         {
             VARIANT_BOOL b;
@@ -669,7 +670,16 @@ static UINT determine_patch_sequence( MSIPACKAGE *package, DWORD count, MSIPATCH
             }
 
             s = SysAllocString( info[i].szPatchData );
-            hr = IXMLDOMDocument_loadXML( desc, s, &b );
+            if (info[i].ePatchDataType == MSIPATCH_DATATYPE_XMLPATH)
+            {
+                VARIANT src;
+
+                V_VT(&src) = VT_BSTR;
+                V_BSTR(&src) = s;
+                hr = IXMLDOMDocument_load( desc, src, &b );
+            }
+            else
+                hr = IXMLDOMDocument_loadXML( desc, s, &b );
             SysFreeString( s );
             if ( hr != S_OK )
             {
@@ -692,7 +702,7 @@ static UINT determine_patch_sequence( MSIPACKAGE *package, DWORD count, MSIPATCH
         }
         default:
         {
-            FIXME("patch data type %u not supported\n", info[i].ePatchDataType);
+            FIXME("unknown patch data type %u\n", info[i].ePatchDataType);
             info[i].dwOrder = i;
             info[i].uStatus = ERROR_SUCCESS;
             break;
