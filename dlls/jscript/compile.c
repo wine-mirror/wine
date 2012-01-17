@@ -922,6 +922,11 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
     return compile_expression_noret(ctx, expr, NULL);
 }
 
+static inline BOOL is_loop_statement(statement_type_t type)
+{
+    return type == STAT_FOR || type == STAT_FORIN || type == STAT_WHILE;
+}
+
 /* ECMA-262 3rd Edition    12.1 */
 static HRESULT compile_block_statement(compiler_ctx_t *ctx, statement_t *iter)
 {
@@ -1265,18 +1270,43 @@ static HRESULT compile_continue_statement(compiler_ctx_t *ctx, branch_statement_
     statement_ctx_t *pop_ctx;
     HRESULT hres;
 
-    for(pop_ctx = ctx->stat_ctx; pop_ctx; pop_ctx = pop_ctx->next) {
-        if(pop_ctx->continue_label)
-            break;
-    }
+    if(stat->identifier) {
+        statement_t *label_stat;
+        statement_ctx_t *iter;
 
-    if(!pop_ctx) {
-        WARN("continue outside loop\n");
-        return JS_E_INVALID_CONTINUE;
-    }
+        pop_ctx = NULL;
 
-    if(stat->identifier)
-        return push_instr(ctx, OP_label) ? S_OK : E_OUTOFMEMORY; /* FIXME */
+        for(iter = ctx->stat_ctx; iter; iter = iter->next) {
+            if(iter->continue_label)
+                pop_ctx = iter;
+            if(iter->labelled_stat && !strcmpW(iter->labelled_stat->identifier, stat->identifier))
+                break;
+        }
+
+        if(!iter) {
+            WARN("Label not found\n");
+            return JS_E_LABEL_NOT_FOUND;
+        }
+
+        /* Labelled continue are allowed only on loops */
+        for(label_stat = iter->labelled_stat->statement;
+            label_stat->type == STAT_LABEL;
+            label_stat = ((labelled_statement_t*)label_stat)->statement);
+        if(!is_loop_statement(label_stat->type)) {
+            WARN("Label is not a loop\n");
+            return JS_E_INVALID_CONTINUE;
+        }
+    }else {
+        for(pop_ctx = ctx->stat_ctx; pop_ctx; pop_ctx = pop_ctx->next) {
+            if(pop_ctx->continue_label)
+                break;
+        }
+
+        if(!pop_ctx) {
+            WARN("continue outside loop\n");
+            return JS_E_INVALID_CONTINUE;
+        }
+    }
 
     hres = pop_to_stat(ctx, pop_ctx);
     if(FAILED(hres))
