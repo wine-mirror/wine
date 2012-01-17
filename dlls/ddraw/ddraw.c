@@ -759,6 +759,9 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, HWND window, BOOL 
 static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd, DWORD cooplevel)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
+    struct wined3d_stateblock *stateblock;
+    struct wined3d_surface *rt, *ds;
+    BOOL restore_state = FALSE;
     HWND window;
     HRESULT hr;
 
@@ -914,9 +917,65 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
         wined3d_device_set_multithreaded(This->wined3d_device);
 
     if (This->wined3d_swapchain)
+    {
+        if (DefaultSurfaceType != SURFACE_GDI)
+        {
+            restore_state = TRUE;
+
+            if (FAILED(hr = wined3d_stateblock_create(This->wined3d_device, WINED3DSBT_ALL, &stateblock)))
+            {
+                ERR("Failed to create stateblock, hr %#x.\n", hr);
+                wined3d_mutex_unlock();
+                return hr;
+            }
+
+            if (FAILED(hr = wined3d_stateblock_capture(stateblock)))
+            {
+                ERR("Failed to capture stateblock, hr %#x.\n", hr);
+                wined3d_stateblock_decref(stateblock);
+                wined3d_mutex_unlock();
+                return hr;
+            }
+
+            wined3d_device_get_render_target(This->wined3d_device, 0, &rt);
+            if (rt == This->wined3d_frontbuffer)
+            {
+                wined3d_surface_decref(rt);
+                rt = NULL;
+            }
+
+            wined3d_device_get_depth_stencil(This->wined3d_device, &ds);
+        }
+
         ddraw_destroy_swapchain(This);
+    }
+
     if (FAILED(hr = ddraw_create_swapchain(This, This->dest_window, !(cooplevel & DDSCL_FULLSCREEN))))
         ERR("Failed to create swapchain, hr %#x.\n", hr);
+
+    if (restore_state)
+    {
+        if (ds)
+        {
+            wined3d_device_set_depth_stencil(This->wined3d_device, ds);
+            wined3d_surface_decref(ds);
+        }
+
+        if (rt)
+        {
+            wined3d_device_set_render_target(This->wined3d_device, 0, rt, FALSE);
+            wined3d_surface_decref(rt);
+        }
+
+        hr = wined3d_stateblock_apply(stateblock);
+        wined3d_stateblock_decref(stateblock);
+        if (FAILED(hr))
+        {
+            ERR("Failed to apply stateblock, hr %#x.\n", hr);
+            wined3d_mutex_unlock();
+            return hr;
+        }
+    }
 
     /* Unhandled flags */
     if(cooplevel & DDSCL_ALLOWREBOOT)

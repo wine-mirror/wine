@@ -593,14 +593,14 @@ static void test_coop_level_d3d_state(void)
     ok(surface == rt, "Got unexpected surface %p.\n", surface);
     hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_ZENABLE, &value);
     ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
-    todo_wine ok(!!value, "Got unexpected z-enable state %#x.\n", value);
+    ok(!!value, "Got unexpected z-enable state %#x.\n", value);
     hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, &value);
     ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
-    todo_wine ok(!!value, "Got unexpected alpha blend enable state %#x.\n", value);
+    ok(!!value, "Got unexpected alpha blend enable state %#x.\n", value);
     hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
     ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
     color = get_surface_color(rt, 320, 240);
-    todo_wine ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
 
     hr = IDirect3DDevice2_DeleteViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to delete viewport, hr %#x.\n", hr);
