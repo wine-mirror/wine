@@ -1493,9 +1493,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
         TRACE("Releasing depth/stencil buffer %p.\n", surface);
 
         device->fb.depth_stencil = NULL;
-        if (wined3d_surface_decref(surface)
-                && surface != device->auto_depth_stencil)
-            ERR("Something is still holding a reference to depth/stencil buffer %p.\n", surface);
+        wined3d_surface_decref(surface);
     }
 
     if (device->auto_depth_stencil)
