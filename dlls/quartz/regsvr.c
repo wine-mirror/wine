@@ -881,7 +881,7 @@ static struct regsvr_filter const filter_list[] = {
     {   &CLSID_AviSplitter,
 	&CLSID_LegacyAmFilterCategory,
 	{'A','V','I',' ','S','p','l','i','t','t','e','r',0},
-	0x600000,
+	0x5ffff0,
 	{   {   0,
 		{   { &MEDIATYPE_Stream, &MEDIASUBTYPE_Avi },
 		    { NULL }
@@ -898,7 +898,7 @@ static struct regsvr_filter const filter_list[] = {
     {   &CLSID_MPEG1Splitter,
         &CLSID_LegacyAmFilterCategory,
         {'M','P','E','G','-','I',' ','S','t','r','e','a','m',' ','S','p','l','i','t','t','e','r',0},
-        0x600000,
+        0x5ffff0,
         {   {   0,
                 {   { &MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1Audio },
                     { &MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1Video },
@@ -987,7 +987,7 @@ static struct regsvr_filter const filter_list[] = {
     {   &CLSID_AVIDec,
 	&CLSID_LegacyAmFilterCategory,
 	{'A','V','I',' ','D','e','c','o','m','p','r','e','s','s','o','r',0},
-	0x600000,
+	0x5ffff0,
 	{   {   0,
 		{   { &MEDIATYPE_Video, &GUID_NULL },
 		    { NULL }
@@ -1016,7 +1016,7 @@ static struct regsvr_filter const filter_list[] = {
     {   &CLSID_ACMWrapper,
 	&CLSID_LegacyAmFilterCategory,
 	{'A','C','M',' ','W','r','a','p','p','e','r',0},
-	0x600000,
+	0x5ffff0,
 	{   {   0,
 		{   { &MEDIATYPE_Audio, &GUID_NULL },
 		    { NULL }
