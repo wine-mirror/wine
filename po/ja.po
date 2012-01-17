@@ -85,7 +85,7 @@ msgstr "発行元:"
 
 #: appwiz.rc:78 winefile.rc:172
 msgid "Version:"
-msgstr "Version:"
+msgstr ""
 
 #: appwiz.rc:79
 msgid "Contact:"
@@ -101,7 +101,7 @@ msgstr "サポート電話:"
 
 #: appwiz.rc:82
 msgid "Readme:"
-msgstr "Readme:"
+msgstr ""
 
 #: appwiz.rc:83
 msgid "Product Updates:"
@@ -276,7 +276,7 @@ msgstr "音声"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
-msgstr "Wine AVI-default-filehandler"
+msgstr ""
 
 #: avifil32.rc:34
 msgid "uncompressed"
@@ -547,7 +547,7 @@ msgstr "サンプル"
 
 #: comdlg32.rc:267
 msgid "AaBbYyZz"
-msgstr "AaBbYyZz"
+msgstr ""
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
@@ -716,7 +716,7 @@ msgstr "サイズ(&Z):"
 
 #: comdlg32.rc:412
 msgid "&Source:"
-msgstr "&Source:"
+msgstr ""
 
 #: comdlg32.rc:417
 msgid "P&ortrait"
@@ -2205,11 +2205,11 @@ msgstr ""
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
-msgstr "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+msgstr ""
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
-msgstr "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
+msgstr ""
 
 #: cryptui.rc:300
 msgid "Microsoft Serialized Certificate Store (.sst)"
@@ -2351,15 +2351,15 @@ msgstr "形式を選択してください:"
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (.cer)"
-msgstr "&DER-encoded X.509 (.cer)"
+msgstr ""
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr "Ba&se64-encoded X.509 (.cer):"
+msgstr ""
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
-msgstr "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+msgstr ""
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
@@ -2367,7 +2367,7 @@ msgstr "可能ならば証明パス中のすべての証明書を含める(&I)"
 
 #: cryptui.rc:413
 msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
-msgstr "&Personal Information Exchange/PKCS #12 (.pfx)"
+msgstr ""
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
@@ -2585,7 +2585,7 @@ msgstr "X.509 証明書 (*.cer; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
-msgstr "Personal Information Exchange (*.pfx; *.p12)"
+msgstr ""
 
 #: cryptui.rc:76 cryptui.rc:155
 msgid "Certificate Revocation List (*.crl)"
@@ -2601,7 +2601,7 @@ msgstr "Microsoft シリアル化された証明書ストア (*.sst)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr "CMS/PKCS #7 Messages (*.spc; *.p7b)"
+msgstr ""
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -2645,11 +2645,11 @@ msgstr "証明書失効リスト"
 
 #: cryptui.rc:93
 msgid "CMS/PKCS #7 Message"
-msgstr "CMS/PKCS #7 Message"
+msgstr ""
 
 #: cryptui.rc:94
 msgid "Personal Information Exchange"
-msgstr "Personal Information Exchange"
+msgstr ""
 
 #: cryptui.rc:96
 msgid "The import was successful."
@@ -2850,19 +2850,19 @@ msgstr "指定した名前はすでに存在します。ファイルを置き換
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr "DER-Encoded Binary X.509 (*.cer)"
+msgstr ""
 
 #: cryptui.rc:154
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr "Base64-Encoded X.509 (*.cer)"
+msgstr ""
 
 #: cryptui.rc:157
 msgid "CMS/PKCS #7 Messages (*.p7b)"
-msgstr "CMS/PKCS #7 Messages (*.p7b)"
+msgstr ""
 
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
-msgstr "Personal Information Exchange (*.pfx)"
+msgstr ""
 
 #: cryptui.rc:159
 msgid "Serialized Certificate Store (*.sst)"
@@ -7743,11 +7743,11 @@ msgstr "Wine ライセンス(&L)"
 
 #: shell32.rc:338
 msgid "Running on %s"
-msgstr "Running on %s"
+msgstr ""
 
 #: shell32.rc:339
 msgid "Wine was brought to you by:"
-msgstr "Wine was brought to you by:"
+msgstr ""
 
 #: shell32.rc:347
 msgid ""
@@ -8293,7 +8293,7 @@ msgstr "続ける(&C)"
 
 #: user32.rc:91
 msgid "Select Window"
-msgstr "Select Window"
+msgstr ""
 
 #: user32.rc:69
 msgid "&More Windows..."
@@ -9992,7 +9992,7 @@ msgstr "CMD バージョン %1!S!\n"
 
 #: cmd.rc:324
 msgid "More? "
-msgstr "More? "
+msgstr ""
 
 #: cmd.rc:325
 msgid "The input line is too long.\n"
@@ -10384,15 +10384,15 @@ msgstr "'%s' は見つかりませんでした"
 
 #: notepad.rc:82
 msgid "Unicode (UTF-16)"
-msgstr "Unicode (UTF-16)"
+msgstr ""
 
 #: notepad.rc:83
 msgid "Unicode (UTF-16 big-endian)"
-msgstr "Unicode (UTF-16 big-endian)"
+msgstr ""
 
 #: notepad.rc:84
 msgid "Unicode (UTF-8)"
-msgstr "Unicode (UTF-8)"
+msgstr ""
 
 #: notepad.rc:91
 msgid ""
@@ -12403,10 +12403,6 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"This program is free software; you can redistribute it and/or modify it "
-"under the terms of the GNU Lesser General Public License as published by the "
-"Free Software Foundation; either version 2.1 of the License, or (at your "
-"option) any later version."
 
 #: winecfg.rc:134
 msgid "Windows registration information"
@@ -12476,7 +12472,7 @@ msgstr "画面の解像度(&R)"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "This is a sample text using 10 point Tahoma"
+msgstr ""
 
 #: winecfg.rc:182
 msgid "DLL overrides"
@@ -12568,7 +12564,7 @@ msgstr "詳細を表示(&A)"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr ""
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12984,11 +12980,11 @@ msgstr "ポップアップ"
 
 #: wineconsole.rc:67
 msgid "&Control"
-msgstr "&Control"
+msgstr ""
 
 #: wineconsole.rc:68
 msgid "S&hift"
-msgstr "S&hift"
+msgstr ""
 
 #: wineconsole.rc:69
 msgid "Quick edit"
@@ -13450,7 +13446,7 @@ msgstr "変更日"
 
 #: winefile.rc:115
 msgid "Index/Inode"
-msgstr "Index/Inode"
+msgstr ""
 
 #: winefile.rc:120
 msgid "%1 of %2 free"
@@ -13557,7 +13553,7 @@ msgstr "WineMine"
 
 #: winemine.rc:28
 msgid "Nobody"
-msgstr "Nobody"
+msgstr ""
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
