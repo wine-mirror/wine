@@ -476,8 +476,15 @@ static void test_clipper_blt(void)
     HWND window;
     DDBLTFX fx;
     HRESULT hr;
+    DWORD *ptr;
     DWORD ret;
 
+    static const DWORD src_data[] =
+    {
+        0xff0000ff, 0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffffff, 0xffffffff,
+        0xff0000ff, 0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffffff, 0xffffffff,
+        0xff0000ff, 0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffffff, 0xffffffff,
+    };
     static const D3DCOLOR expected1[] =
     {
         0x000000ff, 0x0000ff00, 0x00000000, 0x00000000,
@@ -587,17 +594,18 @@ static void test_clipper_blt(void)
 
     hr = IDirectDrawSurface4_Lock(src_surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
     ok(SUCCEEDED(hr), "Failed to lock source surface, hr %#x.\n", hr);
-    ((DWORD *)surface_desc.lpSurface)[0] = 0xff0000ff;
-    ((DWORD *)surface_desc.lpSurface)[1] = 0xff00ff00;
-    ((DWORD *)surface_desc.lpSurface)[2] = 0xffff0000;
-    ((DWORD *)surface_desc.lpSurface)[3] = 0xffffffff;
+    ok(surface_desc.lPitch == 2560, "Got unexpected surface pitch %u.\n", surface_desc.lPitch);
+    ptr = surface_desc.lpSurface;
+    memcpy(&ptr[   0], &src_data[ 0], 6 * sizeof(DWORD));
+    memcpy(&ptr[ 640], &src_data[ 6], 6 * sizeof(DWORD));
+    memcpy(&ptr[1280], &src_data[12], 6 * sizeof(DWORD));
     hr = IDirectDrawSurface4_Unlock(src_surface, NULL);
     ok(SUCCEEDED(hr), "Failed to unlock source surface, hr %#x.\n", hr);
 
     hr = IDirectDrawSurface4_SetClipper(dst_surface, clipper);
     ok(SUCCEEDED(hr), "Failed to set clipper, hr %#x.\n", hr);
 
-    SetRect(&src_rect, 0, 0, 4, 1);
+    SetRect(&src_rect, 1, 1, 5, 2);
     hr = IDirectDrawSurface4_Blt(dst_surface, NULL, src_surface, &src_rect, DDBLT_WAIT, NULL);
     ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
     for (i = 0; i < 4; ++i)
