@@ -199,6 +199,7 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
         if (d3d)
         {
             device_impl = impl_from_IDirect3DDevice7(d3d);
+            device_impl->from_surface = TRUE;
             *obj = &device_impl->IDirect3DDevice_iface;
             TRACE("(%p) Returning IDirect3DDevice interface at %p\n", This, *obj);
             return S_OK;

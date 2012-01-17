@@ -179,6 +179,13 @@ IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
         TRACE("(%p) Returning IDirect3DDevice7 interface at %p\n", This, *obj);
     }
 
+    /* DirectDrawSurface */
+    else if (IsEqualGUID(&IID_IDirectDrawSurface, refiid) && This->from_surface)
+    {
+        *obj = &This->target->IDirectDrawSurface_iface;
+        TRACE("Returning IDirectDrawSurface interface %p.\n", *obj);
+    }
+
     /* Unknown interface */
     else
     {
