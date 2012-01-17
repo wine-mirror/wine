@@ -35,6 +35,8 @@ typedef struct _statement_ctx_t {
     unsigned break_label;
     unsigned continue_label;
 
+    const labelled_statement_t *labelled_stat;
+
     struct _statement_ctx_t *next;
 } statement_ctx_t;
 
@@ -1356,6 +1358,21 @@ static HRESULT compile_with_statement(compiler_ctx_t *ctx, with_statement_t *sta
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    12.10 */
+static HRESULT compile_labelled_statement(compiler_ctx_t *ctx, labelled_statement_t *stat)
+{
+    statement_ctx_t stat_ctx = {0, FALSE, FALSE, 0, 0, stat}, *iter;
+
+    for(iter = ctx->stat_ctx; iter; iter = iter->next) {
+        if(iter->labelled_stat && !strcmpW(iter->labelled_stat->identifier, stat->identifier)) {
+            WARN("Label %s redefined\n", debugstr_w(stat->identifier));
+            return JS_E_LABEL_REDEFINED;
+        }
+    }
+
+    return compile_statement(ctx, &stat_ctx, stat->statement);
+}
+
 /* ECMA-262 3rd Edition    12.13 */
 static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t *stat)
 {
@@ -1569,7 +1586,7 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx,
         hres = compile_if_statement(ctx, (if_statement_t*)stat);
         break;
     case STAT_LABEL:
-        hres = push_instr(ctx, OP_label) ? S_OK : E_OUTOFMEMORY; /* FIXME */
+        hres = compile_labelled_statement(ctx, (labelled_statement_t*)stat);
         break;
     case STAT_RETURN:
         hres = compile_return_statement(ctx, (expression_statement_t*)stat);

@@ -3511,66 +3511,70 @@ msgid "Can't have 'continue' outside of loop"
 msgstr ""
 
 #: jscript.rc:40
+msgid "Label redefined"
+msgstr ""
+
+#: jscript.rc:41
 msgid "Conditional compilation is turned off"
 msgstr "La compilació condicional està desactivada"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Number expected"
 msgstr "S'esperava un nombre"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Function expected"
 msgstr "S'esperava una funció"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "'[object]' is not a date object"
 msgstr "'[objecte]' no és un objecte de data"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Object expected"
 msgstr "S'esperava un objecte"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Illegal assignment"
 msgstr "Assignació il·legal"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "'|' is undefined"
 msgstr "'|' no està definit"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Boolean object expected"
 msgstr "S'esperava un objecte booleà"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Cannot delete '|'"
 msgstr "No es pot suprimir '|'"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "VBArray object expected"
 msgstr "S'esperava un objecte VBArray"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "JScript object expected"
 msgstr "S'esperava un objecte JScript"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Syntax error in regular expression"
 msgstr "Error de sintaxi en l'expressió regular"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI per a codificar conté caràcters invàlids"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "URI to be decoded is incorrect"
 msgstr "URI per a descodificar és incorrecte"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Array length must be a finite positive integer"
 msgstr "Longitud del vector ha de ser un enter positiu finit"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Array object expected"
 msgstr "S'esperava un objecte Array"
 
