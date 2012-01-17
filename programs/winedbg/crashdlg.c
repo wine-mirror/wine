@@ -134,7 +134,6 @@ static void load_crash_log( HANDLE file )
     while (ReadFile( file, crash_log + pos, size - pos - 1, &len, NULL ) && len)
     {
         pos += len;
-        break;
         if (pos == size - 1) crash_log = HeapReAlloc( GetProcessHeap(), 0, crash_log, size *= 2 );
     }
     crash_log[pos] = 0;
