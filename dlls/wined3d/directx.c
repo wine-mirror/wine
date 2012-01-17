@@ -3762,8 +3762,8 @@ static BOOL CheckSurfaceCapability(const struct wined3d_adapter *adapter,
 
     /* If opengl can't process the format natively, the blitter may be able to convert it */
     if (adapter->blitter->blit_supported(&adapter->gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-            NULL, WINED3DPOOL_DEFAULT, 0, check_format,
-            NULL, WINED3DPOOL_DEFAULT, 0, adapter_format))
+            NULL, WINED3D_POOL_DEFAULT, 0, check_format,
+            NULL, WINED3D_POOL_DEFAULT, 0, adapter_format))
     {
         TRACE_(d3d_caps)("[OK]\n");
         return TRUE;

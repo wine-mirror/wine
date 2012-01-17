@@ -1182,7 +1182,7 @@ static const struct wined3d_resource_ops buffer_resource_ops =
 };
 
 static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device *device,
-        UINT size, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, GLenum bind_hint,
+        UINT size, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, GLenum bind_hint,
         const char *data, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -1222,7 +1222,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
     {
         TRACE("Not creating a vbo because GL_ARB_vertex_buffer is not supported\n");
     }
-    else if(buffer->resource.pool == WINED3DPOOL_SYSTEMMEM)
+    else if(buffer->resource.pool == WINED3D_POOL_SYSTEM_MEM)
     {
         TRACE("Not creating a vbo because the vertex buffer is in system memory\n");
     }
@@ -1284,7 +1284,7 @@ HRESULT CDECL wined3d_buffer_create(struct wined3d_device *device, struct wined3
     FIXME("Ignoring access flags (pool)\n");
 
     hr = buffer_init(object, device, desc->byte_width, desc->usage, WINED3DFMT_UNKNOWN,
-            WINED3DPOOL_MANAGED, GL_ARRAY_BUFFER_ARB, data, parent, parent_ops);
+            WINED3D_POOL_MANAGED, GL_ARRAY_BUFFER_ARB, data, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize buffer, hr %#x.\n", hr);
@@ -1300,7 +1300,7 @@ HRESULT CDECL wined3d_buffer_create(struct wined3d_device *device, struct wined3
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_buffer_create_vb(struct wined3d_device *device, UINT size, DWORD usage, WINED3DPOOL pool,
+HRESULT CDECL wined3d_buffer_create_vb(struct wined3d_device *device, UINT size, DWORD usage, enum wined3d_pool pool,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
 {
     struct wined3d_buffer *object;
@@ -1309,11 +1309,11 @@ HRESULT CDECL wined3d_buffer_create_vb(struct wined3d_device *device, UINT size,
     TRACE("device %p, size %u, usage %#x, pool %#x, parent %p, parent_ops %p, buffer %p.\n",
             device, size, usage, pool, parent, parent_ops, buffer);
 
-    if (pool == WINED3DPOOL_SCRATCH)
+    if (pool == WINED3D_POOL_SCRATCH)
     {
         /* The d3d9 tests shows that this is not allowed. It doesn't make much
          * sense anyway, SCRATCH buffers wouldn't be usable anywhere. */
-        WARN("Vertex buffer in WINED3DPOOL_SCRATCH requested, returning WINED3DERR_INVALIDCALL.\n");
+        WARN("Vertex buffer in WINED3D_POOL_SCRATCH requested, returning WINED3DERR_INVALIDCALL.\n");
         *buffer = NULL;
         return WINED3DERR_INVALIDCALL;
     }
@@ -1341,7 +1341,7 @@ HRESULT CDECL wined3d_buffer_create_vb(struct wined3d_device *device, UINT size,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_buffer_create_ib(struct wined3d_device *device, UINT size, DWORD usage, WINED3DPOOL pool,
+HRESULT CDECL wined3d_buffer_create_ib(struct wined3d_device *device, UINT size, DWORD usage, enum wined3d_pool pool,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
 {
     struct wined3d_buffer *object;

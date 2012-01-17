@@ -237,7 +237,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
         FIXME("Implement DXGI<->wined3d usage conversion\n");
 
         hr = wined3d_surface_create(device->wined3d_device, desc->Width, desc->Height,
-                wined3dformat_from_dxgi_format(desc->Format), 0, desc->Usage, WINED3DPOOL_DEFAULT,
+                wined3dformat_from_dxgi_format(desc->Format), 0, desc->Usage, WINED3D_POOL_DEFAULT,
                 desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3D_MULTISAMPLE_NONE,
                 desc->SampleDesc.Quality, SURFACE_OPENGL, 0, texture, &d3d10_texture2d_wined3d_parent_ops,
                 &texture->wined3d_surface);
@@ -448,7 +448,7 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_devic
     FIXME("Implement DXGI<->wined3d usage conversion.\n");
 
     hr = wined3d_texture_create_3d(device->wined3d_device, desc->Width, desc->Height, desc->Depth,
-            desc->MipLevels, desc->Usage, wined3dformat_from_dxgi_format(desc->Format), WINED3DPOOL_DEFAULT,
+            desc->MipLevels, desc->Usage, wined3dformat_from_dxgi_format(desc->Format), WINED3D_POOL_DEFAULT,
             texture, &d3d10_texture3d_wined3d_parent_ops, &texture->wined3d_texture);
     if (FAILED(hr))
     {

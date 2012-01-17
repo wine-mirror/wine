@@ -951,7 +951,7 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
     }
 
     hr = wined3d_surface_create(device, bm.bmWidth, bm.bmHeight, WINED3DFMT_B5G6R5_UNORM, 0, 0,
-            WINED3DPOOL_DEFAULT, WINED3D_MULTISAMPLE_NONE, 0, SURFACE_OPENGL, WINED3D_SURFACE_MAPPABLE,
+            WINED3D_POOL_DEFAULT, WINED3D_MULTISAMPLE_NONE, 0, SURFACE_OPENGL, WINED3D_SURFACE_MAPPABLE,
             NULL, &wined3d_null_parent_ops, &device->logo_surface);
     if (FAILED(hr))
     {
@@ -3721,8 +3721,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
         return WINED3D_OK;
     }
 
-    /* SetTexture isn't allowed on textures in WINED3DPOOL_SCRATCH */
-    if (texture && texture->resource.pool == WINED3DPOOL_SCRATCH)
+    if (texture && texture->resource.pool == WINED3D_POOL_SCRATCH)
     {
         WARN("Rejecting attempt to set scratch texture.\n");
         return WINED3DERR_INVALIDCALL;
@@ -4621,7 +4620,7 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
             device, src_surface, wine_dbgstr_rect(src_rect),
             dst_surface, wine_dbgstr_point(dst_point));
 
-    if (src_surface->resource.pool != WINED3DPOOL_SYSTEMMEM || dst_surface->resource.pool != WINED3DPOOL_DEFAULT)
+    if (src_surface->resource.pool != WINED3D_POOL_SYSTEM_MEM || dst_surface->resource.pool != WINED3D_POOL_DEFAULT)
     {
         WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning WINED3DERR_INVALIDCALL\n",
                 src_surface, dst_surface);
@@ -4775,9 +4774,9 @@ HRESULT CDECL wined3d_device_color_fill(struct wined3d_device *device,
             device, surface, wine_dbgstr_rect(rect),
             color->r, color->g, color->b, color->a);
 
-    if (surface->resource.pool != WINED3DPOOL_DEFAULT && surface->resource.pool != WINED3DPOOL_SYSTEMMEM)
+    if (surface->resource.pool != WINED3D_POOL_DEFAULT && surface->resource.pool != WINED3D_POOL_SYSTEM_MEM)
     {
-        FIXME("call to colorfill with non WINED3DPOOL_DEFAULT or WINED3DPOOL_SYSTEMMEM surface\n");
+        WARN("Color-fill not allowed on %s surfaces.\n", debug_d3dpool(surface->resource.pool));
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -5187,7 +5186,7 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
     {
         TRACE("Checking resource %p for eviction.\n", resource);
 
-        if (resource->pool == WINED3DPOOL_MANAGED)
+        if (resource->pool == WINED3D_POOL_MANAGED)
         {
             TRACE("Evicting %p.\n", resource);
             resource->resource_ops->resource_unload(resource);

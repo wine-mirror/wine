@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
 static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined3d_texture_ops *texture_ops,
         UINT layer_count, UINT level_count, enum wined3d_resource_type resource_type, struct wined3d_device *device,
-        DWORD usage, const struct wined3d_format *format, WINED3DPOOL pool, void *parent,
+        DWORD usage, const struct wined3d_format *format, enum wined3d_pool pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, const struct wined3d_resource_ops *resource_ops)
 {
     HRESULT hr;
@@ -159,7 +159,7 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
         glGenTextures(1, &gl_tex->name);
         checkGLcall("glGenTextures");
         TRACE("Generated texture %d.\n", gl_tex->name);
-        if (texture->resource.pool == WINED3DPOOL_DEFAULT)
+        if (texture->resource.pool == WINED3D_POOL_DEFAULT)
         {
             /* Tell OpenGL to try and keep this texture in video ram (well mostly). */
             GLclampf tmp = 0.9f;
@@ -487,7 +487,7 @@ DWORD CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod)
 
     /* The d3d9:texture test shows that SetLOD is ignored on non-managed
      * textures. The call always returns 0, and GetLOD always returns 0. */
-    if (texture->resource.pool != WINED3DPOOL_MANAGED)
+    if (texture->resource.pool != WINED3D_POOL_MANAGED)
     {
         TRACE("Ignoring SetLOD on %s texture, returning 0.\n", debug_d3dpool(texture->resource.pool));
         return 0;
@@ -758,7 +758,7 @@ static const struct wined3d_resource_ops texture2d_resource_ops =
 };
 
 static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_length, UINT levels,
-        struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
+        struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -776,7 +776,7 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (!gl_info->supported[ARB_TEXTURE_CUBE_MAP] && pool != WINED3DPOOL_SCRATCH)
+    if (!gl_info->supported[ARB_TEXTURE_CUBE_MAP] && pool != WINED3D_POOL_SCRATCH)
     {
         WARN("(%p) : Tried to create not supported cube texture.\n", texture);
         return WINED3DERR_INVALIDCALL;
@@ -877,7 +877,7 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
 }
 
 static HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT height, UINT levels,
-        struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
+        struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -1148,7 +1148,7 @@ static const struct wined3d_resource_ops texture3d_resource_ops =
 
 static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, UINT height,
         UINT depth, UINT levels, struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id,
-        WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops)
+        enum wined3d_pool pool, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
@@ -1242,7 +1242,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, U
 }
 
 HRESULT CDECL wined3d_texture_create_2d(struct wined3d_device *device, UINT width, UINT height,
-        UINT level_count, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, void *parent,
+        UINT level_count, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
     struct wined3d_texture *object;
@@ -1278,7 +1278,7 @@ HRESULT CDECL wined3d_texture_create_2d(struct wined3d_device *device, UINT widt
 }
 
 HRESULT CDECL wined3d_texture_create_3d(struct wined3d_device *device, UINT width, UINT height, UINT depth,
-        UINT level_count, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, void *parent,
+        UINT level_count, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
     struct wined3d_texture *object;
@@ -1314,7 +1314,7 @@ HRESULT CDECL wined3d_texture_create_3d(struct wined3d_device *device, UINT widt
 }
 
 HRESULT CDECL wined3d_texture_create_cube(struct wined3d_device *device, UINT edge_length,
-        UINT level_count, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, void *parent,
+        UINT level_count, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
     struct wined3d_texture *object;

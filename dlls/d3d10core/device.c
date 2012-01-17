@@ -1364,7 +1364,7 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 
 static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
-        WINED3DPOOL pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
+        enum wined3d_pool pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
 {
     struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
     struct d3d10_texture2d *texture;
@@ -1492,7 +1492,7 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
 
 static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
-        WINED3DPOOL pool, DWORD usage, struct wined3d_volume **volume)
+        enum wined3d_pool pool, DWORD usage, struct wined3d_volume **volume)
 {
     HRESULT hr;
 

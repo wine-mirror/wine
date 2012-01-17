@@ -192,7 +192,7 @@ typedef struct IDirect3DVolume9Impl
 } IDirect3DVolume9Impl;
 
 HRESULT volume_init(IDirect3DVolume9Impl *volume, IDirect3DDevice9Impl *device, UINT width, UINT height,
-        UINT depth, DWORD usage, enum wined3d_format_id format, WINED3DPOOL pool) DECLSPEC_HIDDEN;
+        UINT depth, DWORD usage, enum wined3d_format_id format, enum wined3d_pool pool) DECLSPEC_HIDDEN;
 
 /* ------------------- */
 /* IDirect3DSwapChain9 */

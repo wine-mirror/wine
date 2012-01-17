@@ -520,7 +520,7 @@ static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
     struct wined3d_resource_desc desc;
 
     wined3d_resource_get_desc(resource, &desc);
-    if (desc.pool == WINED3DPOOL_DEFAULT)
+    if (desc.pool == WINED3D_POOL_DEFAULT)
     {
         IDirect3DSurface9 *surface;
 
@@ -1079,7 +1079,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_ColorFill(IDirect3DDevice9Ex *iface,
 
     /* This method is only allowed with surfaces that are render targets, or
      * offscreen plain surfaces in D3DPOOL_DEFAULT. */
-    if (!(desc.usage & WINED3DUSAGE_RENDERTARGET) && desc.pool != WINED3DPOOL_DEFAULT)
+    if (!(desc.usage & WINED3DUSAGE_RENDERTARGET) && desc.pool != WINED3D_POOL_DEFAULT)
     {
         wined3d_mutex_unlock();
         WARN("Surface is not a render target, or not a stand-alone D3DPOOL_DEFAULT surface\n");
@@ -3102,7 +3102,7 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 
 static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
-        WINED3DPOOL pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
+        enum wined3d_pool pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
 {
     struct IDirect3DDevice9Impl *device = device_from_device_parent(device_parent);
     IDirect3DSurface9Impl *d3d_surface;
@@ -3113,7 +3113,7 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
             "\tpool %#x, level %u, face %u, surface %p.\n",
             device_parent, container_parent, width, height, format, usage, pool, level, face, surface);
 
-    if (pool == WINED3DPOOL_DEFAULT && !(usage & D3DUSAGE_DYNAMIC))
+    if (pool == WINED3D_POOL_DEFAULT && !(usage & D3DUSAGE_DYNAMIC))
         lockable = FALSE;
 
     hr = IDirect3DDevice9Impl_CreateSurface(device, width, height,
@@ -3203,7 +3203,7 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
 
 static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
-        WINED3DPOOL pool, DWORD usage, struct wined3d_volume **volume)
+        enum wined3d_pool pool, DWORD usage, struct wined3d_volume **volume)
 {
     struct IDirect3DDevice9Impl *device = device_from_device_parent(device_parent);
     IDirect3DVolume9Impl *object;

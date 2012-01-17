@@ -532,7 +532,7 @@ static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
     struct wined3d_resource_desc desc;
 
     wined3d_resource_get_desc(resource, &desc);
-    if (desc.pool == WINED3DPOOL_DEFAULT)
+    if (desc.pool == WINED3D_POOL_DEFAULT)
     {
         IDirect3DSurface8 *surface;
 
@@ -937,8 +937,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
     TRACE("iface %p, src_surface %p, src_rects %p, rect_count %u, dst_surface %p, dst_points %p.\n",
             iface, pSourceSurface, pSourceRects, cRects, pDestinationSurface, pDestPoints);
 
-    /* Check that the source texture is in WINED3DPOOL_SYSTEMMEM and the
-     * destination texture is in WINED3DPOOL_DEFAULT. */
+    /* Check that the source texture is in WINED3D_POOL_SYSTEM_MEM and the
+     * destination texture is in WINED3D_POOL_DEFAULT. */
 
     wined3d_mutex_lock();
     wined3d_resource = wined3d_surface_get_resource(Source->wined3d_surface);
@@ -2812,7 +2812,7 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 
 static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
-        WINED3DPOOL pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
+        enum wined3d_pool pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
 {
     IDirect3DDevice8Impl *device = device_from_device_parent(device_parent);
     IDirect3DSurface8Impl *d3d_surface;
@@ -2824,7 +2824,8 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
             device_parent, container_parent, width, height, format, usage, pool, level, face, surface);
 
 
-    if (pool == WINED3DPOOL_DEFAULT && !(usage & WINED3DUSAGE_DYNAMIC)) lockable = FALSE;
+    if (pool == WINED3D_POOL_DEFAULT && !(usage & WINED3DUSAGE_DYNAMIC))
+        lockable = FALSE;
 
     hr = IDirect3DDevice8Impl_CreateSurface(device, width, height,
             d3dformat_from_wined3dformat(format), lockable, FALSE /* Discard */, level,
@@ -2912,7 +2913,7 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
 
 static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
-        WINED3DPOOL pool, DWORD usage, struct wined3d_volume **volume)
+        enum wined3d_pool pool, DWORD usage, struct wined3d_volume **volume)
 {
     IDirect3DDevice8Impl *device = device_from_device_parent(device_parent);
     IDirect3DVolume8Impl *object;

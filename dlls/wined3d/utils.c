@@ -2346,18 +2346,18 @@ const char *debug_d3dstate(DWORD state)
     return wine_dbg_sprintf("UNKNOWN_STATE(%#x)", state);
 }
 
-const char *debug_d3dpool(WINED3DPOOL pool)
+const char *debug_d3dpool(enum wined3d_pool pool)
 {
     switch (pool)
     {
 #define POOL_TO_STR(p) case p: return #p
-        POOL_TO_STR(WINED3DPOOL_DEFAULT);
-        POOL_TO_STR(WINED3DPOOL_MANAGED);
-        POOL_TO_STR(WINED3DPOOL_SYSTEMMEM);
-        POOL_TO_STR(WINED3DPOOL_SCRATCH);
+        POOL_TO_STR(WINED3D_POOL_DEFAULT);
+        POOL_TO_STR(WINED3D_POOL_MANAGED);
+        POOL_TO_STR(WINED3D_POOL_SYSTEM_MEM);
+        POOL_TO_STR(WINED3D_POOL_SCRATCH);
 #undef  POOL_TO_STR
         default:
-            FIXME("Unrecognized %u WINED3DPOOL!\n", pool);
+            FIXME("Unrecognized pool %#x.\n", pool);
             return "unrecognized";
     }
 }
@@ -3347,8 +3347,8 @@ void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected,
 }
 
 const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
-        const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
-        const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
+        const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
+        const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
     static const struct blit_shader * const blitters[] =
     {

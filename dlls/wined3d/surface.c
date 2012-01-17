@@ -522,7 +522,7 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
 
 static BOOL surface_need_pbo(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
-    if (surface->resource.pool == WINED3DPOOL_SYSTEMMEM)
+    if (surface->resource.pool == WINED3D_POOL_SYSTEM_MEM)
         return FALSE;
     if (!(surface->flags & SFLAG_DYNLOCK))
         return FALSE;
@@ -720,7 +720,7 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
          *    Blts. Some apps (e.g. Swat 3) create textures with a Height of
          *    16 and a Width > 3000 and blt 16x16 letter areas from them to
          *    the render target. */
-        if (surface->resource.pool == WINED3DPOOL_DEFAULT || surface->resource.pool == WINED3DPOOL_MANAGED)
+        if (surface->resource.pool == WINED3D_POOL_DEFAULT || surface->resource.pool == WINED3D_POOL_MANAGED)
         {
             WARN("Unable to allocate a surface which exceeds the maximum OpenGL texture size.\n");
             return WINED3DERR_NOTAVAILABLE;
@@ -1230,14 +1230,14 @@ static void surface_blt_fbo(const struct wined3d_device *device, enum wined3d_te
 }
 
 static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
-        const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
-        const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
+        const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
+        const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
     if ((wined3d_settings.offscreen_rendering_mode != ORM_FBO) || !gl_info->fbo_ops.glBlitFramebuffer)
         return FALSE;
 
     /* Source and/or destination need to be on the GL side */
-    if (src_pool == WINED3DPOOL_SYSTEMMEM || dst_pool == WINED3DPOOL_SYSTEMMEM)
+    if (src_pool == WINED3D_POOL_SYSTEM_MEM || dst_pool == WINED3D_POOL_SYSTEM_MEM)
         return FALSE;
 
     switch (blit_op)
@@ -1803,7 +1803,7 @@ static void surface_unload(struct wined3d_resource *resource)
 
     TRACE("surface %p.\n", surface);
 
-    if (resource->pool == WINED3DPOOL_DEFAULT)
+    if (resource->pool == WINED3D_POOL_DEFAULT)
     {
         /* Default pool resources are supposed to be destroyed before Reset is called.
          * Implicit resources stay however. So this means we have an implicit render target
@@ -2731,7 +2731,7 @@ HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
 
     TRACE("surface %p, srgb %#x.\n", surface, srgb);
 
-    if (surface->resource.pool == WINED3DPOOL_SCRATCH)
+    if (surface->resource.pool == WINED3D_POOL_SCRATCH)
     {
         ERR("Not supported on scratch surfaces.\n");
         return WINED3DERR_INVALIDCALL;
@@ -3604,7 +3604,7 @@ static struct wined3d_surface *surface_convert_format(struct wined3d_surface *so
     }
 
     wined3d_surface_create(source->resource.device, source->resource.width,
-            source->resource.height, to_fmt, 0 /* level */, 0 /* usage */, WINED3DPOOL_SCRATCH,
+            source->resource.height, to_fmt, 0 /* level */, 0 /* usage */, WINED3D_POOL_SCRATCH,
             WINED3D_MULTISAMPLE_NONE /* TODO: Multisampled conversion */, 0 /* MultiSampleQuality */,
             source->surface_type, WINED3D_SURFACE_MAPPABLE | WINED3D_SURFACE_DISCARD,
             NULL /* parent */, &wined3d_null_parent_ops, &ret);
@@ -3743,7 +3743,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
             WARN("Map rect %s is misaligned for %ux%u blocks.\n",
                     wine_dbgstr_rect(rect), format->block_width, format->block_height);
 
-            if (surface->resource.pool == WINED3DPOOL_DEFAULT)
+            if (surface->resource.pool == WINED3D_POOL_DEFAULT)
                 return WINED3DERR_INVALIDCALL;
         }
     }
@@ -3991,7 +3991,7 @@ void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB 
 
         surface_load(surface, srgb == SRGB_SRGB ? TRUE : FALSE);
 
-        if (surface->resource.pool == WINED3DPOOL_DEFAULT)
+        if (surface->resource.pool == WINED3D_POOL_DEFAULT)
         {
             /* Tell opengl to try and keep this texture in video ram (well mostly) */
             GLclampf tmp;
@@ -5370,7 +5370,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
             flags, DDBltFx, debug_d3dtexturefiltertype(filter));
 
     /* Get the swapchain. One of the surfaces has to be a primary surface */
-    if (dst_surface->resource.pool == WINED3DPOOL_SYSTEMMEM)
+    if (dst_surface->resource.pool == WINED3D_POOL_SYSTEM_MEM)
     {
         WARN("Destination is in sysmem, rejecting gl blt\n");
         return WINED3DERR_INVALIDCALL;
@@ -5381,7 +5381,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
 
     if (src_surface)
     {
-        if (src_surface->resource.pool == WINED3DPOOL_SYSTEMMEM)
+        if (src_surface->resource.pool == WINED3D_POOL_SYSTEM_MEM)
         {
             WARN("Src is in sysmem, rejecting gl blt\n");
             return WINED3DERR_INVALIDCALL;
@@ -6351,15 +6351,15 @@ static void ffp_blit_unset(const struct wined3d_gl_info *gl_info)
 }
 
 static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
-        const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
-        const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
+        const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
+        const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
     enum complex_fixup src_fixup;
 
     switch (blit_op)
     {
         case WINED3D_BLIT_OP_COLOR_BLIT:
-            if (src_pool == WINED3DPOOL_SYSTEMMEM || dst_pool == WINED3DPOOL_SYSTEMMEM)
+            if (src_pool == WINED3D_POOL_SYSTEM_MEM || dst_pool == WINED3D_POOL_SYSTEM_MEM)
                 return FALSE;
 
             src_fixup = get_complex_fixup(src_format->color_fixup);
@@ -6392,7 +6392,7 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
             return FALSE;
 
         case WINED3D_BLIT_OP_COLOR_FILL:
-            if (dst_pool == WINED3DPOOL_SYSTEMMEM)
+            if (dst_pool == WINED3D_POOL_SYSTEM_MEM)
                 return FALSE;
 
             if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
@@ -6474,8 +6474,8 @@ static void cpu_blit_unset(const struct wined3d_gl_info *gl_info)
 }
 
 static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
-        const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
-        const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
+        const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
+        const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
     if (blit_op == WINED3D_BLIT_OP_COLOR_FILL)
     {
@@ -7182,7 +7182,7 @@ const struct blit_shader cpu_blit =  {
 static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE surface_type, UINT alignment,
         UINT width, UINT height, UINT level, enum wined3d_multisample_type multisample_type,
         UINT multisample_quality, struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id,
-        WINED3DPOOL pool, DWORD flags, void *parent, const struct wined3d_parent_ops *parent_ops)
+        enum wined3d_pool pool, DWORD flags, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
@@ -7202,7 +7202,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
      * Levels need to be checked too, since they all affect what can be done. */
     switch (pool)
     {
-        case WINED3DPOOL_SCRATCH:
+        case WINED3D_POOL_SCRATCH:
             if (!lockable)
             {
                 FIXME("Called with a pool of SCRATCH and a lockable of FALSE "
@@ -7211,17 +7211,17 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
             }
             break;
 
-        case WINED3DPOOL_SYSTEMMEM:
+        case WINED3D_POOL_SYSTEM_MEM:
             if (!lockable)
                 FIXME("Called with a pool of SYSTEMMEM and a lockable of FALSE, this is acceptable but unexpected.\n");
             break;
 
-        case WINED3DPOOL_MANAGED:
+        case WINED3D_POOL_MANAGED:
             if (usage & WINED3DUSAGE_DYNAMIC)
                 FIXME("Called with a pool of MANAGED and a usage of DYNAMIC which are mutually exclusive.\n");
             break;
 
-        case WINED3DPOOL_DEFAULT:
+        case WINED3D_POOL_DEFAULT:
             if (lockable && !(usage & (WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
                 WARN("Creating a lockable surface with a POOL of DEFAULT, that doesn't specify DYNAMIC usage.\n");
             break;
@@ -7231,7 +7231,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
             break;
     };
 
-    if (usage & WINED3DUSAGE_RENDERTARGET && pool != WINED3DPOOL_DEFAULT)
+    if (usage & WINED3DUSAGE_RENDERTARGET && pool != WINED3D_POOL_DEFAULT)
         FIXME("Trying to create a render target that isn't in the default pool.\n");
 
     /* FIXME: Check that the format is supported by the device. */
@@ -7321,7 +7321,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
 }
 
 HRESULT CDECL wined3d_surface_create(struct wined3d_device *device, UINT width, UINT height,
-        enum wined3d_format_id format_id, UINT level, DWORD usage, WINED3DPOOL pool,
+        enum wined3d_format_id format_id, UINT level, DWORD usage, enum wined3d_pool pool,
         enum wined3d_multisample_type multisample_type, DWORD multisample_quality, WINED3DSURFTYPE surface_type,
         DWORD flags, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface)
 {

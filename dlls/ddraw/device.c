@@ -4372,7 +4372,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
         TRACE("Growing index buffer to %u bytes\n", size);
 
         hr = wined3d_buffer_create_ib(This->wined3d_device, size, WINED3DUSAGE_DYNAMIC /* Usage */,
-                WINED3DPOOL_DEFAULT, NULL, &ddraw_null_wined3d_parent_ops, &buffer);
+                WINED3D_POOL_DEFAULT, NULL, &ddraw_null_wined3d_parent_ops, &buffer);
         if (FAILED(hr))
         {
             ERR("(%p) IWineD3DDevice::CreateIndexBuffer failed with hr = %08x\n", This, hr);
@@ -7055,7 +7055,7 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
 
     /* Create an index buffer, it's needed for indexed drawing */
     hr = wined3d_buffer_create_ib(ddraw->wined3d_device, 0x40000 /* Length. Don't know how long it should be */,
-            WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DPOOL_DEFAULT, NULL,
+            WINED3DUSAGE_DYNAMIC /* Usage */, WINED3D_POOL_DEFAULT, NULL,
             &ddraw_null_wined3d_parent_ops, &device->indexbuffer);
     if (FAILED(hr))
     {

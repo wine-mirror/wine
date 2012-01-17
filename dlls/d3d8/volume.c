@@ -276,7 +276,7 @@ static const struct wined3d_parent_ops d3d8_volume_wined3d_parent_ops =
 };
 
 HRESULT volume_init(IDirect3DVolume8Impl *volume, IDirect3DDevice8Impl *device, UINT width, UINT height,
-        UINT depth, DWORD usage, enum wined3d_format_id format, WINED3DPOOL pool)
+        UINT depth, DWORD usage, enum wined3d_format_id format, enum wined3d_pool pool)
 {
     HRESULT hr;
 

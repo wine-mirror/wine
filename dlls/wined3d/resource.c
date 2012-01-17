@@ -41,20 +41,20 @@ struct private_data
     DWORD size;
 };
 
-static DWORD resource_access_from_pool(WINED3DPOOL pool)
+static DWORD resource_access_from_pool(enum wined3d_pool pool)
 {
     switch (pool)
     {
-        case WINED3DPOOL_DEFAULT:
+        case WINED3D_POOL_DEFAULT:
             return WINED3D_RESOURCE_ACCESS_GPU;
 
-        case WINED3DPOOL_MANAGED:
+        case WINED3D_POOL_MANAGED:
             return WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU;
 
-        case WINED3DPOOL_SYSTEMMEM:
+        case WINED3D_POOL_SYSTEM_MEM:
             return WINED3D_RESOURCE_ACCESS_CPU;
 
-        case WINED3DPOOL_SCRATCH:
+        case WINED3D_POOL_SCRATCH:
             return WINED3D_RESOURCE_ACCESS_SCRATCH;
 
         default:
@@ -79,7 +79,7 @@ static void resource_check_usage(DWORD usage)
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
         enum wined3d_resource_type type, const struct wined3d_format *format,
         enum wined3d_multisample_type multisample_type, UINT multisample_quality,
-        DWORD usage, WINED3DPOOL pool, UINT width, UINT height, UINT depth, UINT size,
+        DWORD usage, enum wined3d_pool pool, UINT width, UINT height, UINT depth, UINT size,
         void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_resource_ops *resource_ops)
 {
@@ -123,7 +123,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
             + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
 
     /* Check that we have enough video ram left */
-    if (pool == WINED3DPOOL_DEFAULT)
+    if (pool == WINED3D_POOL_DEFAULT)
     {
         if (size > wined3d_device_get_available_texture_mem(device))
         {
@@ -147,7 +147,7 @@ void resource_cleanup(struct wined3d_resource *resource)
 
     TRACE("Cleaning up resource %p.\n", resource);
 
-    if (resource->pool == WINED3DPOOL_DEFAULT)
+    if (resource->pool == WINED3D_POOL_DEFAULT)
     {
         TRACE("Decrementing device memory pool by %u.\n", resource->size);
         adapter_adjust_memory(resource->device->adapter, 0 - resource->size);

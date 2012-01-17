@@ -5432,7 +5432,7 @@ HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
 {
     const DDSURFACEDESC2 *desc = &surface->surface_desc;
     enum wined3d_format_id format;
-    WINED3DPOOL pool;
+    enum wined3d_pool pool;
     UINT levels;
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
@@ -5440,12 +5440,12 @@ HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
     else
         levels = 1;
 
-    /* DDSCAPS_SYSTEMMEMORY textures are in WINED3DPOOL_SYSTEMMEM.
+    /* DDSCAPS_SYSTEMMEMORY textures are in WINED3D_POOL_SYSTEM_MEM.
      * Should I forward the MANAGED cap to the managed pool? */
     if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
-        pool = WINED3DPOOL_SYSTEMMEM;
+        pool = WINED3D_POOL_SYSTEM_MEM;
     else
-        pool = WINED3DPOOL_DEFAULT;
+        pool = WINED3D_POOL_DEFAULT;
 
     format = PixelFormat_DD2WineD3D(&surface->surface_desc.u4.ddpfPixelFormat);
     if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
@@ -5459,7 +5459,7 @@ HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
 HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
         DDSURFACEDESC2 *desc, UINT mip_level, UINT version)
 {
-    WINED3DPOOL pool = WINED3DPOOL_DEFAULT;
+    enum wined3d_pool pool = WINED3D_POOL_DEFAULT;
     DWORD flags = WINED3D_SURFACE_MAPPABLE;
     enum wined3d_format_id format;
     DWORD usage = 0;
@@ -5505,11 +5505,11 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
     {
-        pool = WINED3DPOOL_SYSTEMMEM;
+        pool = WINED3D_POOL_SYSTEM_MEM;
     }
     else if (desc->ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE)
     {
-        pool = WINED3DPOOL_MANAGED;
+        pool = WINED3D_POOL_MANAGED;
         /* Managed textures have the system memory flag set. */
         desc->ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
     }

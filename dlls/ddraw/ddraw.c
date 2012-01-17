@@ -5392,7 +5392,7 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 
 static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
-        WINED3DPOOL pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
+        enum wined3d_pool pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
 {
     struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
     IDirectDrawSurfaceImpl *surf = NULL;
@@ -5496,7 +5496,7 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
         flags |= WINED3D_SURFACE_MAPPABLE;
 
     hr = wined3d_surface_create(ddraw->wined3d_device, width, height, format, 0,
-            WINED3DUSAGE_RENDERTARGET, WINED3DPOOL_DEFAULT, multisample_type, multisample_quality,
+            WINED3DUSAGE_RENDERTARGET, WINED3D_POOL_DEFAULT, multisample_type, multisample_quality,
             DefaultSurfaceType, flags, ddraw, &ddraw_frontbuffer_parent_ops, surface);
     if (SUCCEEDED(hr))
         ddraw->wined3d_frontbuffer = *surface;
@@ -5514,7 +5514,7 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
 
 static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
-        WINED3DPOOL pool, DWORD usage, struct wined3d_volume **volume)
+        enum wined3d_pool pool, DWORD usage, struct wined3d_volume **volume)
 {
     TRACE("device_parent %p, container_parent %p, width %u, height %u, depth %u, "
             "format %#x, pool %#x, usage %#x, volume %p.\n",

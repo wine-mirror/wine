@@ -266,7 +266,7 @@ static const struct wined3d_resource_ops volume_resource_ops =
 };
 
 static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device *device, UINT width,
-        UINT height, UINT depth, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
+        UINT height, UINT depth, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -300,7 +300,7 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
 }
 
 HRESULT CDECL wined3d_volume_create(struct wined3d_device *device, UINT width, UINT height,
-        UINT depth, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, void *parent,
+        UINT depth, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_volume **volume)
 {
     struct wined3d_volume *object;
