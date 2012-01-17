@@ -40,9 +40,8 @@ msgstr ""
 "нажмите кнопку Изменить/Удалить."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "Сведения о поддержке"
+msgstr "&Сведения о поддержке"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -587,13 +586,11 @@ msgid "&Hue:"
 msgstr "О&ттенок:"
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr "&Контраст:"
+msgstr "&Насыщенность:"
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Яркость:"
@@ -3499,12 +3496,11 @@ msgstr "Выражение 'continue' не может находится вне 
 
 #: jscript.rc:40
 msgid "Label redefined"
-msgstr ""
+msgstr "Метка переопределена"
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
-msgstr "Файл не найден"
+msgstr "Метка не найдена"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
@@ -8402,9 +8398,8 @@ msgid "The specified device handle is invalid."
 msgstr "Указанный идентификатор устройства (device handle) неверен."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "В системе не установлен драйвер!\n"
+msgstr "В системе не установлено ни одного драйвера!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -13037,21 +13032,18 @@ msgid "&Color"
 msgstr "&Цвет"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " Настройка "
+msgstr "Конфигурация"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
 msgstr "Зона буфера"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
 msgstr "&Ширина:"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
 msgstr "&Высота:"
 
@@ -13060,12 +13052,10 @@ msgid "Window size"
 msgstr "Размер окна"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
 msgstr "Ш&ирина:"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
 msgstr "В&ысота:"
 
@@ -13218,7 +13208,6 @@ msgstr ""
 "Приносим извинения за неудобство."
 
 #: winedbg.rc:54
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -13226,21 +13215,15 @@ msgid ""
 msgstr ""
 "Ошибка могла быть вызвана проблемой в программе или недоработкой в Wine. Вы "
 "можете посетить <a href=\"http://appdb.winehq.org\">Application Database</a> "
-"и поискать советы о запуске этой программы.\n"
-"\n"
-"Если эта проблема не присутствует под Windows и ещё не была "
-"зарегистрирована, вы можете сообщить <a href=\"http://wiki.winehq.org/Bugs"
-"\">cообщить об ошибке</a>."
+"и поискать советы о запуске этой программы."
 
 #: winedbg.rc:57
-#, fuzzy
 msgid "Show &Details"
-msgstr "&Таблица"
+msgstr "Показать &подробно"
 
 #: winedbg.rc:62
-#, fuzzy
 msgid "Program Error Details"
-msgstr "Программная ошибка"
+msgstr "Подробности об ошибке"
 
 #: winedbg.rc:69
 msgid ""
@@ -13249,6 +13232,10 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"Если эта проблема отсутствует в Windows и о ней еще никто не сообщил, вы "
+"можете сохранить подробную информация в файл с помощью кнопки \"Сохранить как"
+"\", затем <a href=\"http://wiki.winehq.org/Bugs\">сообщить об ошибке</a> и "
+"приложить этот файл к отчету."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13263,9 +13250,8 @@ msgid "(unidentified)"
 msgstr "(не определено)"
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "Создание не удалось\n"
+msgstr "Ошибка при сохранении"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
