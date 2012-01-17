@@ -1159,8 +1159,12 @@ static ULONG WINAPI IKsPropertySetImpl_Release(IKsPropertySet *iface)
 
     TRACE("(%p) ref was %d\n", This, ref + 1);
 
-    if (!ref && !InterlockedDecrement(&This->numIfaces))
-        secondarybuffer_destroy(This);
+    if (!ref && !InterlockedDecrement(&This->numIfaces)) {
+        if (is_primary_buffer(This))
+            primarybuffer_destroy(This);
+        else
+            secondarybuffer_destroy(This);
+    }
     return ref;
 }
 

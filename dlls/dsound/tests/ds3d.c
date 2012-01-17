@@ -1213,15 +1213,13 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
                             !(dscaps.dwFlags & DSCAPS_EMULDRIVER),1.0,0,
                             listener,0,0,FALSE,0);
 
-                todo_wine {
-                    temp_buffer = NULL;
-                    rc=IDirectSound3DListener_QueryInterface(listener,
-                    &IID_IKsPropertySet,(LPVOID *)&temp_buffer);
-                    ok(rc==DS_OK && temp_buffer!=NULL,
-                    "IDirectSound3DListener_QueryInterface didn't handle IKsPropertySet: ret = %08x\n", rc);
-                    if(temp_buffer)
-                        IKsPropertySet_Release(temp_buffer);
-                }
+                temp_buffer = NULL;
+                rc = IDirectSound3DListener_QueryInterface(listener, &IID_IKsPropertySet,
+                        (void **)&temp_buffer);
+                ok(rc==DS_OK && temp_buffer!=NULL,
+                        "IDirectSound3DListener_QueryInterface didn't handle IKsPropertySet: ret = %08x\n", rc);
+                if(temp_buffer)
+                    IKsPropertySet_Release(temp_buffer);
             }
 
             /* Testing the reference counting */
@@ -1230,15 +1228,12 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
                "references, should have 0\n",ref);
         }
 
-        todo_wine {
-            temp_buffer = NULL;
-            rc=IDirectSoundBuffer_QueryInterface(primary,
-            &IID_IKsPropertySet,(LPVOID *)&temp_buffer);
-            ok(rc==DS_OK && temp_buffer!=NULL,
-            "IDirectSoundBuffer_QueryInterface didn't handle IKsPropertySet on primary buffer: ret = %08x\n", rc);
-            if(temp_buffer)
-                IKsPropertySet_Release(temp_buffer);
-        }
+        temp_buffer = NULL;
+        rc = IDirectSoundBuffer_QueryInterface(primary, &IID_IKsPropertySet, (void **)&temp_buffer);
+        ok(rc==DS_OK && temp_buffer!=NULL,
+                "IDirectSoundBuffer_QueryInterface didn't handle IKsPropertySet on primary buffer: ret = %08x\n", rc);
+        if(temp_buffer)
+            IKsPropertySet_Release(temp_buffer);
 
         /* Testing the reference counting */
         ref=IDirectSoundBuffer_Release(primary);

@@ -1165,8 +1165,9 @@ static HRESULT WINAPI PrimaryBufferImpl_QueryInterface(IDirectSoundBuffer *iface
 	}
 
 	if ( IsEqualGUID( &IID_IKsPropertySet, riid ) ) {
-		FIXME("app requested IKsPropertySet on primary buffer\n");
-		return E_NOINTERFACE;
+                *ppobj = &This->IKsPropertySet_iface;
+                IKsPropertySet_AddRef(&This->IKsPropertySet_iface);
+                return S_OK;
 	}
 
 	FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
@@ -1220,10 +1221,12 @@ HRESULT primarybuffer_create(DirectSoundDevice *device, IDirectSoundBufferImpl *
 
         dsb->ref = 0;
         dsb->ref3D = 0;
+        dsb->refiks = 0;
         dsb->numIfaces = 0;
 	dsb->device = device;
 	dsb->IDirectSoundBuffer8_iface.lpVtbl = (IDirectSoundBuffer8Vtbl *)&dspbvt;
         dsb->IDirectSound3DListener_iface.lpVtbl = &ds3dlvt;
+        dsb->IKsPropertySet_iface.lpVtbl = &iksbvt;
 	dsb->dsbd = *dsbd;
 
         /* IDirectSound3DListener */
