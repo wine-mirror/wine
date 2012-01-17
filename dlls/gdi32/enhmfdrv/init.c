@@ -109,8 +109,8 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     EMFDRV_PaintRgn,                 /* pPaintRgn */
     EMFDRV_PatBlt,                   /* pPatBlt */
     EMFDRV_Pie,                      /* pPie */
-    NULL,                            /* pPolyBezier */
-    NULL,                            /* pPolyBezierTo */
+    EMFDRV_PolyBezier,               /* pPolyBezier */
+    EMFDRV_PolyBezierTo,             /* pPolyBezierTo */
     NULL,                            /* pPolyDraw */
     EMFDRV_PolyPolygon,              /* pPolyPolygon */
     EMFDRV_PolyPolyline,             /* pPolyPolyline */

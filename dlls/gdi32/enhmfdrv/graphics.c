@@ -451,6 +451,26 @@ BOOL EMFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
     return EMFDRV_Polylinegon( dev, pt, count, EMR_POLYGON );
 }
 
+/**********************************************************************
+ *          EMFDRV_PolyBezier
+ */
+BOOL EMFDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
+{
+    if(EMFDRV_Polylinegon16( dev, pts, count, EMR_POLYBEZIER16 ))
+        return TRUE;
+    return EMFDRV_Polylinegon( dev, pts, count, EMR_POLYBEZIER );
+}
+
+/**********************************************************************
+ *          EMFDRV_PolyBezierTo
+ */
+BOOL EMFDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
+{
+    if(EMFDRV_Polylinegon16( dev, pts, count, EMR_POLYBEZIERTO16 ))
+        return TRUE;
+    return EMFDRV_Polylinegon( dev, pts, count, EMR_POLYBEZIERTO );
+}
+
 
 /**********************************************************************
  *          EMFDRV_PolyPolylinegon

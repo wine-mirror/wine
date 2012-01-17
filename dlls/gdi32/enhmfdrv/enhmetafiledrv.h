@@ -94,6 +94,8 @@ extern BOOL     EMFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                             INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
+extern BOOL     EMFDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count ) DECLSPEC_HIDDEN;
+extern BOOL     EMFDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polys) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
