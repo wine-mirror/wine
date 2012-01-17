@@ -37,32 +37,9 @@ typedef struct {
     LONG ref;
 } IDirect3DRMViewportImpl;
 
-static const struct IDirect3DRMViewportVtbl Direct3DRMViewport_Vtbl;
-
 static inline IDirect3DRMViewportImpl *impl_from_IDirect3DRMViewport(IDirect3DRMViewport *iface)
 {
     return CONTAINING_RECORD(iface, IDirect3DRMViewportImpl, IDirect3DRMViewport_iface);
-}
-
-HRESULT Direct3DRMViewport_create(IUnknown** ppObj)
-{
-    IDirect3DRMViewportImpl* object;
-
-    TRACE("(%p)\n", ppObj);
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMViewportImpl));
-    if (!object)
-    {
-        ERR("Out of memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    object->IDirect3DRMViewport_iface.lpVtbl = &Direct3DRMViewport_Vtbl;
-    object->ref = 1;
-
-    *ppObj = (IUnknown*)object;
-
-    return S_OK;
 }
 
 /*** IUnknown methods ***/
@@ -506,3 +483,24 @@ static const struct IDirect3DRMViewportVtbl Direct3DRMViewport_Vtbl =
     IDirect3DRMViewportImpl_GetProjection,
     IDirect3DRMViewportImpl_GetDirect3DViewport
 };
+
+HRESULT Direct3DRMViewport_create(IUnknown** ppObj)
+{
+    IDirect3DRMViewportImpl* object;
+
+    TRACE("(%p)\n", ppObj);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMViewportImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->IDirect3DRMViewport_iface.lpVtbl = &Direct3DRMViewport_Vtbl;
+    object->ref = 1;
+
+    *ppObj = (IUnknown*)object;
+
+    return S_OK;
+}
