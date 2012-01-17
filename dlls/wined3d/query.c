@@ -251,12 +251,12 @@ ULONG CDECL wined3d_query_decref(struct wined3d_query *query)
          * deleting the query will obviously leak it, but that's still better
          * than potentially deleting a different query with the same id in this
          * context, and (still) leaking the actual query. */
-        if (query->type == WINED3DQUERYTYPE_EVENT)
+        if (query->type == WINED3D_QUERY_TYPE_EVENT)
         {
             struct wined3d_event_query *event_query = query->extendedData;
             if (event_query) wined3d_event_query_destroy(event_query);
         }
-        else if (query->type == WINED3DQUERYTYPE_OCCLUSION)
+        else if (query->type == WINED3D_QUERY_TYPE_OCCLUSION)
         {
             struct wined3d_occlusion_query *oq = query->extendedData;
 
@@ -412,7 +412,7 @@ static HRESULT wined3d_event_query_ops_get_data(struct wined3d_query *query,
     return S_OK;
 }
 
-WINED3DQUERYTYPE CDECL wined3d_query_get_type(const struct wined3d_query *query)
+enum wined3d_query_type CDECL wined3d_query_get_type(const struct wined3d_query *query)
 {
     TRACE("query %p.\n", query);
 
@@ -547,13 +547,13 @@ static const struct wined3d_query_ops occlusion_query_ops =
     wined3d_occlusion_query_ops_issue,
 };
 
-static HRESULT query_init(struct wined3d_query *query, struct wined3d_device *device, WINED3DQUERYTYPE type)
+static HRESULT query_init(struct wined3d_query *query, struct wined3d_device *device, enum wined3d_query_type type)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     switch (type)
     {
-        case WINED3DQUERYTYPE_OCCLUSION:
+        case WINED3D_QUERY_TYPE_OCCLUSION:
             TRACE("Occlusion query.\n");
             if (!gl_info->supported[ARB_OCCLUSION_QUERY])
             {
@@ -571,7 +571,7 @@ static HRESULT query_init(struct wined3d_query *query, struct wined3d_device *de
             ((struct wined3d_occlusion_query *)query->extendedData)->context = NULL;
             break;
 
-        case WINED3DQUERYTYPE_EVENT:
+        case WINED3D_QUERY_TYPE_EVENT:
             TRACE("Event query.\n");
             if (!wined3d_event_query_supported(gl_info))
             {
@@ -591,18 +591,18 @@ static HRESULT query_init(struct wined3d_query *query, struct wined3d_device *de
             }
             break;
 
-        case WINED3DQUERYTYPE_VCACHE:
-        case WINED3DQUERYTYPE_RESOURCEMANAGER:
-        case WINED3DQUERYTYPE_VERTEXSTATS:
-        case WINED3DQUERYTYPE_TIMESTAMP:
-        case WINED3DQUERYTYPE_TIMESTAMPDISJOINT:
-        case WINED3DQUERYTYPE_TIMESTAMPFREQ:
-        case WINED3DQUERYTYPE_PIPELINETIMINGS:
-        case WINED3DQUERYTYPE_INTERFACETIMINGS:
-        case WINED3DQUERYTYPE_VERTEXTIMINGS:
-        case WINED3DQUERYTYPE_PIXELTIMINGS:
-        case WINED3DQUERYTYPE_BANDWIDTHTIMINGS:
-        case WINED3DQUERYTYPE_CACHEUTILIZATION:
+        case WINED3D_QUERY_TYPE_VCACHE:
+        case WINED3D_QUERY_TYPE_RESOURCE_MANAGER:
+        case WINED3D_QUERY_TYPE_VERTEX_STATS:
+        case WINED3D_QUERY_TYPE_TIMESTAMP:
+        case WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT:
+        case WINED3D_QUERY_TYPE_TIMESTAMP_FREQ:
+        case WINED3D_QUERY_TYPE_PIPELINE_TIMINGS:
+        case WINED3D_QUERY_TYPE_INTERFACE_TIMINGS:
+        case WINED3D_QUERY_TYPE_VERTEX_TIMINGS:
+        case WINED3D_QUERY_TYPE_PIXEL_TIMINGS:
+        case WINED3D_QUERY_TYPE_BANDWIDTH_TIMINGS:
+        case WINED3D_QUERY_TYPE_CACHE_UTILIZATION:
         default:
             FIXME("Unhandled query type %#x.\n", type);
             return WINED3DERR_NOTAVAILABLE;
@@ -617,7 +617,7 @@ static HRESULT query_init(struct wined3d_query *query, struct wined3d_device *de
 }
 
 HRESULT CDECL wined3d_query_create(struct wined3d_device *device,
-        WINED3DQUERYTYPE type, struct wined3d_query **query)
+        enum wined3d_query_type type, struct wined3d_query **query)
 {
     struct wined3d_query *object;
     HRESULT hr;

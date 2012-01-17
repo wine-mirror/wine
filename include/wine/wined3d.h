@@ -688,23 +688,23 @@ enum wined3d_pool
     WINED3D_POOL_SCRATCH                    = 3,
 };
 
-typedef enum _WINED3DQUERYTYPE
+enum wined3d_query_type
 {
-    WINED3DQUERYTYPE_VCACHE                 = 4,
-    WINED3DQUERYTYPE_RESOURCEMANAGER        = 5,
-    WINED3DQUERYTYPE_VERTEXSTATS            = 6,
-    WINED3DQUERYTYPE_EVENT                  = 8,
-    WINED3DQUERYTYPE_OCCLUSION              = 9,
-    WINED3DQUERYTYPE_TIMESTAMP              = 10,
-    WINED3DQUERYTYPE_TIMESTAMPDISJOINT      = 11,
-    WINED3DQUERYTYPE_TIMESTAMPFREQ          = 12,
-    WINED3DQUERYTYPE_PIPELINETIMINGS        = 13,
-    WINED3DQUERYTYPE_INTERFACETIMINGS       = 14,
-    WINED3DQUERYTYPE_VERTEXTIMINGS          = 15,
-    WINED3DQUERYTYPE_PIXELTIMINGS           = 16,
-    WINED3DQUERYTYPE_BANDWIDTHTIMINGS       = 17,
-    WINED3DQUERYTYPE_CACHEUTILIZATION       = 18
-} WINED3DQUERYTYPE;
+    WINED3D_QUERY_TYPE_VCACHE               = 4,
+    WINED3D_QUERY_TYPE_RESOURCE_MANAGER     = 5,
+    WINED3D_QUERY_TYPE_VERTEX_STATS         = 6,
+    WINED3D_QUERY_TYPE_EVENT                = 8,
+    WINED3D_QUERY_TYPE_OCCLUSION            = 9,
+    WINED3D_QUERY_TYPE_TIMESTAMP            = 10,
+    WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT   = 11,
+    WINED3D_QUERY_TYPE_TIMESTAMP_FREQ       = 12,
+    WINED3D_QUERY_TYPE_PIPELINE_TIMINGS     = 13,
+    WINED3D_QUERY_TYPE_INTERFACE_TIMINGS    = 14,
+    WINED3D_QUERY_TYPE_VERTEX_TIMINGS       = 15,
+    WINED3D_QUERY_TYPE_PIXEL_TIMINGS        = 16,
+    WINED3D_QUERY_TYPE_BANDWIDTH_TIMINGS    = 17,
+    WINED3D_QUERY_TYPE_CACHE_UTILIZATION    = 18
+};
 
 #define WINED3DISSUE_BEGIN                                      (1 << 1)
 #define WINED3DISSUE_END                                        (1 << 0)
@@ -2248,11 +2248,11 @@ HRESULT __cdecl wined3d_palette_set_entries(struct wined3d_palette *palette,
         DWORD flags, DWORD start, DWORD count, const PALETTEENTRY *entries);
 
 HRESULT __cdecl wined3d_query_create(struct wined3d_device *device,
-        WINED3DQUERYTYPE type, struct wined3d_query **query);
+        enum wined3d_query_type type, struct wined3d_query **query);
 ULONG __cdecl wined3d_query_decref(struct wined3d_query *query);
 HRESULT __cdecl wined3d_query_get_data(struct wined3d_query *query, void *data, UINT data_size, DWORD flags);
 UINT __cdecl wined3d_query_get_data_size(const struct wined3d_query *query);
-WINED3DQUERYTYPE __cdecl wined3d_query_get_type(const struct wined3d_query *query);
+enum wined3d_query_type __cdecl wined3d_query_get_type(const struct wined3d_query *query);
 ULONG __cdecl wined3d_query_incref(struct wined3d_query *query);
 HRESULT __cdecl wined3d_query_issue(struct wined3d_query *query, DWORD flags);
 

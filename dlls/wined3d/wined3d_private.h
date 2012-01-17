@@ -2365,7 +2365,7 @@ struct wined3d_query
     const struct wined3d_query_ops *query_ops;
     struct wined3d_device *device;
     enum query_state         state;
-    WINED3DQUERYTYPE         type;
+    enum wined3d_query_type type;
     DWORD data_size;
     void                     *extendedData;
 };
