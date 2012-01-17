@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-16 23:35+0100\n"
+"PO-Revision-Date: 2012-01-17 21:58+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -40,9 +40,8 @@ msgstr ""
 "Liste aus und klicken Sie auf Ändern/Entfernen."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "Informationen"
+msgstr "&Supportinformationen"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -300,7 +299,7 @@ msgstr "&Hilfe"
 
 #: comctl32.rc:62
 msgid "Wizard"
-msgstr "Wizard"
+msgstr "Assistent"
 
 #: comctl32.rc:65
 msgid "< &Back"
@@ -1011,7 +1010,7 @@ msgstr "&Speichern"
 
 #: comdlg32.rc:139
 msgid "Save &in:"
-msgstr "Speichern &unter:"
+msgstr "Speichern &in:"
 
 #: comdlg32.rc:140
 msgid "Save"
@@ -2158,11 +2157,11 @@ msgstr "&Physikalischen Speicher anzeigen"
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
-msgstr "Importassistent für die Zertifikatsverwaltung"
+msgstr "Zertifikat Importassistent"
 
 #: cryptui.rc:280
 msgid "Welcome to the Certificate Import Wizard"
-msgstr "Willkommen"
+msgstr "Willkommen beim Zertifikat Importassistent"
 
 #: cryptui.rc:283
 msgid ""
@@ -2232,7 +2231,7 @@ msgstr "&Alle Zertifikate im folgendem Zertifikatsspeicher speichern:"
 
 #: cryptui.rc:322
 msgid "Completing the Certificate Import Wizard"
-msgstr "Fertigstellen des Assistenten"
+msgstr "Fertigstellung des Zertifikat Importassistenten"
 
 #: cryptui.rc:324
 msgid "You have successfully completed the Certificate Import Wizard."
@@ -2293,11 +2292,11 @@ msgstr "&Zertifikatszwecke:"
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
 msgid "Certificate Export Wizard"
-msgstr "Exportassistent für die Zertifikatsverwaltung"
+msgstr "Zertifikat Exportassistent"
 
 #: cryptui.rc:370
 msgid "Welcome to the Certificate Export Wizard"
-msgstr "Willkommen"
+msgstr "Willkommen beim Zertifikat Exportassistent"
 
 #: cryptui.rc:373
 msgid ""
@@ -2383,7 +2382,7 @@ msgstr "Priva&ten Schlüssel löschen wenn der Export erfolgreich war"
 
 #: cryptui.rc:436
 msgid "Completing the Certificate Export Wizard"
-msgstr "Fertigstellen des Assistenten"
+msgstr "Fertigstellung des Zertifikat Exportassistenten"
 
 #: cryptui.rc:438
 msgid "You have successfully completed the Certificate Export Wizard."
@@ -3494,12 +3493,11 @@ msgstr "Unerwartetes 'continue' außerhalb der Schleife"
 
 #: jscript.rc:40
 msgid "Label redefined"
-msgstr ""
+msgstr "Label neu definiert"
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
-msgstr "Datei nicht gefunden"
+msgstr "Label nicht gefunden"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
@@ -8213,14 +8211,14 @@ msgid ""
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
 "Wine ist freie Software; Sie dürfen sie unter den Bedingungen der GNU Lesser "
-"General Public License, welche von der Free Software Foundation "
-"veröffentlicht wurde; weiter verteilen und/oder modifizieren gemäß Version "
-"2.1 der Lizenz, oder (nach ihren Ermessen) jeder späteren Version.\n"
+"General Public License, wie von der Free Software Foundation\n"
+"veröffentlicht, weiterverteilen und/oder modifizieren; entweder gemäß\n"
+"Version 2.1 der Lizenz oder (nach Ihrer Option) jeder späteren Version.\n"
 "\n"
 "Wine wird mit der Hoffnung verteilt das es sich als nützlich erweist. Wine "
 "kommt aber OHNE JEGLICHE GARANTIE daher; sogar ohne einer angedeuteten "
 "Garantie der MARKTGÄNGIGKEIT oder der EIGNUNG FÜR EINEN BESTIMMTEN NUTZEN. "
-"Sehen Sie sich die GNU Lesser General Public License an für mehr Details.\n"
+"Mehr Details finden Sie in der GNU Lesser General Public License.\n"
 "\n"
 "Sie sollten mit dieser Bibliothek auch eine Kopie der GNU Lesser General "
 "Public License erhalten haben; wenn nicht schreiben Sie der Free Software "
@@ -11517,9 +11515,9 @@ msgstr ""
 "GNU Lesser General Public License.\n"
 "\n"
 "Sie sollten eine Kopie der GNU Lesser General Public License zusammen\n"
-"mit diesem Programm erhalten haben; falls nicht, schreiben Sie an die Free\n"
-"Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110, "
-"USA.\n"
+"mit diesem Programm erhalten haben; falls nicht, schreiben Sie an die\n"
+"Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,\n"
+"MA 02110-1301, USA.\n"
 "\n"
 "Schauen Sie in die Datei COPYING.LIB für Lizenzinformationen.\n"
 
@@ -13282,7 +13280,6 @@ msgstr ""
 "Wir entschuldigen uns für die Unannehmlichkeit."
 
 #: winedbg.rc:54
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -13290,21 +13287,15 @@ msgid ""
 msgstr ""
 "Die Ursache kann ein Problem im Programm oder ein Fehler in Wine sein. Sie "
 "können in der <a href=\"http://appdb.winehq.org\">Anwendungsdatenbank</a> "
-"Tipps zum ausführen der Anwendung einholen.\n"
-"\n"
-"Tritt dieses Problem unter Windows nicht auf und wurde es noch nicht "
-"gemeldet, können Sie <a href=\"http://wiki.winehq.org/Bugs\">einen "
-"Fehlerbericht hinterlassen</a>."
+"Tipps zum ausführen der Anwendung einholen."
 
 #: winedbg.rc:57
-#, fuzzy
 msgid "Show &Details"
-msgstr "&Details"
+msgstr "&Details anzeigen"
 
 #: winedbg.rc:62
-#, fuzzy
 msgid "Program Error Details"
-msgstr "Programm Fehler"
+msgstr "Programm Fehler Details"
 
 #: winedbg.rc:69
 msgid ""
@@ -13313,6 +13304,10 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"Tritt dieses Problem unter Windows nicht auf und wurde es noch nicht "
+"gemeldet, können Sie mit \"Speichern unter\" die detaillierten Informationen "
+"in einer Datei speichern, danach <a href=\"http://wiki.winehq.org/Bugs"
+"\">einen Fehlerbericht hinterlassen</a> und die Datei dort anhängen."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13327,9 +13322,8 @@ msgid "(unidentified)"
 msgstr "(unbekannt)"
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "Erstellung fehlgeschlagen\n"
+msgstr "Speichern fehlgeschlagen"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
