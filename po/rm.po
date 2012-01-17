@@ -226,9 +226,8 @@ msgid "&Choose a stream:"
 msgstr ""
 
 #: avifil32.rc:45 wordpad.rc:73
-#, fuzzy
 msgid "&Options..."
-msgstr "&Options"
+msgstr ""
 
 #: avifil32.rc:46
 msgid "&Interleave every"
@@ -404,14 +403,12 @@ msgid "&Read Only"
 msgstr ""
 
 #: comdlg32.rc:173
-#, fuzzy
 msgid "Save As..."
-msgstr "&Options"
+msgstr ""
 
 #: comdlg32.rc:186 comdlg32.rc:141
-#, fuzzy
 msgid "Save As"
-msgstr "&Options"
+msgstr ""
 
 #: comdlg32.rc:195 comdlg32.rc:204 comdlg32.rc:350 comdlg32.rc:50 hhctrl.rc:46
 #: wordpad.rc:162
@@ -434,9 +431,8 @@ msgid "&All"
 msgstr ""
 
 #: comdlg32.rc:202
-#, fuzzy
 msgid "S&election"
-msgstr "&Options"
+msgstr ""
 
 #: comdlg32.rc:203
 msgid "&Pages"
@@ -516,14 +512,12 @@ msgid "&Source"
 msgstr ""
 
 #: comdlg32.rc:244 wineconsole.rc:81
-#, fuzzy
 msgid "Font"
-msgstr "Fonts"
+msgstr ""
 
 #: comdlg32.rc:247
-#, fuzzy
 msgid "&Font:"
-msgstr "Fonts"
+msgstr ""
 
 #: comdlg32.rc:250
 msgid "Font St&yle:"
@@ -628,9 +622,8 @@ msgid "Match &Case"
 msgstr ""
 
 #: comdlg32.rc:317
-#, fuzzy
 msgid "Direction"
-msgstr "&Options"
+msgstr ""
 
 #: comdlg32.rc:318 view.rc:39
 msgid "&Up"
@@ -707,9 +700,8 @@ msgid "Pa&ges"
 msgstr ""
 
 #: comdlg32.rc:380
-#, fuzzy
 msgid "&Selection"
-msgstr "&Options"
+msgstr ""
 
 #: comdlg32.rc:383
 msgid "&from:"
@@ -2271,9 +2263,8 @@ msgid "&View"
 msgstr ""
 
 #: cryptui.rc:352
-#, fuzzy
 msgid "Advanced Options"
-msgstr "&Options"
+msgstr ""
 
 #: cryptui.rc:355
 #, fuzzy
@@ -2910,9 +2901,8 @@ msgid "Device"
 msgstr ""
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "&Options"
+msgstr ""
 
 #: dinput.rc:51
 msgid "Mapping"
@@ -2923,9 +2913,8 @@ msgid "Show Assigned First"
 msgstr ""
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "&Options"
+msgstr ""
 
 #: dinput.rc:35
 msgid "Object"
@@ -3286,9 +3275,8 @@ msgid "Delete &files..."
 msgstr ""
 
 #: inetcpl.rc:57
-#, fuzzy
 msgid "&Settings..."
-msgstr "&Options"
+msgstr ""
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
@@ -6559,9 +6547,8 @@ msgid "Sound Selection"
 msgstr ""
 
 #: msacm32.rc:36
-#, fuzzy
 msgid "&Save As..."
-msgstr "&Options"
+msgstr ""
 
 #: msacm32.rc:39
 msgid "&Format:"
@@ -10355,7 +10342,7 @@ msgstr ""
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
-msgstr "&Options"
+msgstr ""
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -11939,9 +11926,8 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:150
-#, fuzzy
 msgid "&Add application..."
-msgstr "&Options"
+msgstr ""
 
 #: winecfg.rc:151
 #, fuzzy
@@ -12508,9 +12494,8 @@ msgid "&Remove doubles"
 msgstr "&Annotaziun..."
 
 #: wineconsole.rc:84
-#, fuzzy
 msgid "&Font"
-msgstr "Fonts"
+msgstr ""
 
 #: wineconsole.rc:86
 msgid "&Color"
@@ -13045,7 +13030,7 @@ msgstr ""
 
 #: winhlp32.rc:46 winhlp32.rc:67
 msgid "Fonts"
-msgstr "Fonts"
+msgstr ""
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
