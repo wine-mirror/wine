@@ -829,15 +829,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(IDirectSoundBuffer8 
 	}
 
 	if ( IsEqualGUID( &IID_IKsPropertySet, riid ) ) {
-		if (!This->iks)
-			IKsBufferPropertySetImpl_Create(This, &(This->iks));
-		if (This->iks) {
-			IKsPropertySet_AddRef((LPKSPROPERTYSET)This->iks);
-	    		*ppobj = This->iks;
-			return S_OK;
-		}
-		WARN("IID_IKsPropertySet\n");
-		return E_NOINTERFACE;
+                IKsPropertySet_AddRef(&This->IKsPropertySet_iface);
+                *ppobj = &This->IKsPropertySet_iface;
+                return S_OK;
 	}
 
 	FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
@@ -901,10 +895,11 @@ HRESULT IDirectSoundBufferImpl_Create(
 	TRACE("Created buffer at %p\n", dsb);
 
 	dsb->ref = 0;
+        dsb->refiks = 0;
 	dsb->numIfaces = 0;
 	dsb->device = device;
 	dsb->IDirectSoundBuffer8_iface.lpVtbl = &dsbvt;
-	dsb->iks = NULL;
+        dsb->IKsPropertySet_iface.lpVtbl = &iksbvt;
 
 	/* size depends on version */
 	CopyMemory(&dsb->dsbd, dsbd, dsbd->dwSize);
@@ -1045,12 +1040,6 @@ HRESULT IDirectSoundBufferImpl_Destroy(
      * this object until it is ready to be deleted */
     InterlockedIncrement(&pdsb->numIfaces);
 
-    if (pdsb->iks) {
-        WARN("iks not NULL\n");
-        IKsBufferPropertySetImpl_Destroy(pdsb->iks);
-        pdsb->iks = NULL;
-    }
-
     if (pdsb->ds3db) {
         WARN("ds3db not NULL\n");
         IDirectSound3DBufferImpl_Destroy(pdsb->ds3db);
@@ -1100,8 +1089,9 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
 
     dsb->buffer->ref++;
     list_add_head(&dsb->buffer->buffers, &dsb->entry);
-    dsb->ref = 1;
-    dsb->numIfaces = 1;
+    dsb->ref = 0;
+    dsb->refiks = 0;
+    dsb->numIfaces = 0;
     dsb->state = STATE_STOPPED;
     dsb->buf_mixpos = dsb->sec_mixpos = 0;
     dsb->notify = NULL;
@@ -1109,7 +1099,6 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     dsb->nrofnotifies = 0;
     dsb->device = device;
     dsb->ds3db = NULL;
-    dsb->iks = NULL; /* FIXME? */
     DSOUND_RecalcFormat(dsb);
 
     RtlInitializeResource(&dsb->lock);
@@ -1125,6 +1114,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
         dsb = NULL;
     }
 
+    IDirectSoundBuffer8_AddRef(&dsb->IDirectSoundBuffer8_iface);
     *ppdsb = dsb;
     return hres;
 }
@@ -1133,36 +1123,44 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
  *              IKsPropertySet
  */
 
+static inline IDirectSoundBufferImpl *impl_from_IKsPropertySet(IKsPropertySet *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectSoundBufferImpl, IKsPropertySet_iface);
+}
+
 /* IUnknown methods */
 static HRESULT WINAPI IKsPropertySetImpl_QueryInterface(IKsPropertySet *iface, REFIID riid,
         void **ppobj)
 {
-    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
+    IDirectSoundBufferImpl *This = impl_from_IKsPropertySet(iface);
+
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
-    return IDirectSoundBuffer_QueryInterface((LPDIRECTSOUNDBUFFER8)This->dsb, riid, ppobj);
+    return IDirectSoundBuffer_QueryInterface(&This->IDirectSoundBuffer8_iface, riid, ppobj);
 }
 
 static ULONG WINAPI IKsPropertySetImpl_AddRef(IKsPropertySet *iface)
 {
-    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
-    ULONG ref = InterlockedIncrement(&(This->ref));
+    IDirectSoundBufferImpl *This = impl_from_IKsPropertySet(iface);
+    ULONG ref = InterlockedIncrement(&This->refiks);
+
     TRACE("(%p) ref was %d\n", This, ref - 1);
+
+    if(ref == 1)
+        InterlockedIncrement(&This->numIfaces);
+
     return ref;
 }
 
 static ULONG WINAPI IKsPropertySetImpl_Release(IKsPropertySet *iface)
 {
-    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
-    ULONG ref = InterlockedDecrement(&(This->ref));
+    IDirectSoundBufferImpl *This = impl_from_IKsPropertySet(iface);
+    ULONG ref = InterlockedDecrement(&This->refiks);
+
     TRACE("(%p) ref was %d\n", This, ref + 1);
 
-    if (!ref) {
-    This->dsb->iks = 0;
-    IDirectSoundBuffer_Release((LPDIRECTSOUND3DBUFFER)This->dsb);
-    HeapFree(GetProcessHeap(), 0, This);
-    TRACE("(%p) released\n", This);
-    }
+    if (!ref && !InterlockedDecrement(&This->numIfaces))
+        secondarybuffer_destroy(This);
     return ref;
 }
 
@@ -1170,7 +1168,7 @@ static HRESULT WINAPI IKsPropertySetImpl_Get(IKsPropertySet *iface, REFGUID guid
         ULONG dwPropID, void *pInstanceData, ULONG cbInstanceData, void *pPropData,
         ULONG cbPropData, ULONG *pcbReturned)
 {
-    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
+    IDirectSoundBufferImpl *This = impl_from_IKsPropertySet(iface);
 
     TRACE("(iface=%p,guidPropSet=%s,dwPropID=%d,pInstanceData=%p,cbInstanceData=%d,pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
     This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData,pcbReturned);
@@ -1182,7 +1180,7 @@ static HRESULT WINAPI IKsPropertySetImpl_Set(IKsPropertySet *iface, REFGUID guid
         ULONG dwPropID, void *pInstanceData, ULONG cbInstanceData, void *pPropData,
         ULONG cbPropData)
 {
-    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
+    IDirectSoundBufferImpl *This = impl_from_IKsPropertySet(iface);
 
     TRACE("(%p,%s,%d,%p,%d,%p,%d)\n",This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData);
 
@@ -1192,14 +1190,14 @@ static HRESULT WINAPI IKsPropertySetImpl_Set(IKsPropertySet *iface, REFGUID guid
 static HRESULT WINAPI IKsPropertySetImpl_QuerySupport(IKsPropertySet *iface, REFGUID guidPropSet,
         ULONG dwPropID, ULONG *pTypeSupport)
 {
-    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
+    IDirectSoundBufferImpl *This = impl_from_IKsPropertySet(iface);
 
     TRACE("(%p,%s,%d,%p)\n",This,debugstr_guid(guidPropSet),dwPropID,pTypeSupport);
 
     return E_PROP_ID_UNSUPPORTED;
 }
 
-static const IKsPropertySetVtbl iksbvt = {
+const IKsPropertySetVtbl iksbvt = {
     IKsPropertySetImpl_QueryInterface,
     IKsPropertySetImpl_AddRef,
     IKsPropertySetImpl_Release,
@@ -1207,39 +1205,3 @@ static const IKsPropertySetVtbl iksbvt = {
     IKsPropertySetImpl_Set,
     IKsPropertySetImpl_QuerySupport
 };
-
-HRESULT IKsBufferPropertySetImpl_Create(
-    IDirectSoundBufferImpl *dsb,
-    IKsBufferPropertySetImpl **piks)
-{
-    IKsBufferPropertySetImpl *iks;
-    TRACE("(%p,%p)\n",dsb,piks);
-    *piks = NULL;
-
-    iks = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*iks));
-    if (iks == 0) {
-        WARN("out of memory\n");
-        *piks = NULL;
-        return DSERR_OUTOFMEMORY;
-    }
-
-    iks->ref = 0;
-    iks->dsb = dsb;
-    dsb->iks = iks;
-    iks->lpVtbl = &iksbvt;
-
-    IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)dsb);
-
-    *piks = iks;
-    return S_OK;
-}
-
-HRESULT IKsBufferPropertySetImpl_Destroy(
-    IKsBufferPropertySetImpl *piks)
-{
-    TRACE("(%p)\n",piks);
-
-    while (IKsPropertySetImpl_Release((LPKSPROPERTYSET)piks) > 0);
-
-    return S_OK;
-}

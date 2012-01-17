@@ -50,7 +50,6 @@ typedef struct IDirectSoundCaptureImpl       IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
 typedef struct IDirectSoundNotifyImpl        IDirectSoundNotifyImpl;
 typedef struct IDirectSound3DBufferImpl      IDirectSound3DBufferImpl;
-typedef struct IKsBufferPropertySetImpl      IKsBufferPropertySetImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
 typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 
@@ -166,8 +165,9 @@ struct IDirectSoundBufferImpl
 {
     IDirectSoundBuffer8         IDirectSoundBuffer8_iface;
     IDirectSound3DListener      IDirectSound3DListener_iface; /* only primary buffer */
+    IKsPropertySet              IKsPropertySet_iface;
     LONG                        numIfaces; /* "in use interfaces" refcount */
-    LONG                        ref, ref3D;
+    LONG                        ref, ref3D, refiks;
     /* IDirectSoundBufferImpl fields */
     DirectSoundDevice*          device;
     RTL_RWLOCK                  lock;
@@ -194,9 +194,7 @@ struct IDirectSoundBufferImpl
     DS3DBUFFER                  ds3db_ds3db;
     LONG                        ds3db_lVolume;
     BOOL                        ds3db_need_recalc;
-
     /* IKsPropertySet fields */
-    IKsBufferPropertySetImpl*   iks;
     bitsconvertfunc convert;
     struct list entry;
 };
@@ -213,6 +211,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     IDirectSoundBufferImpl *pdsb) DECLSPEC_HIDDEN;
 void secondarybuffer_destroy(IDirectSoundBufferImpl *This) DECLSPEC_HIDDEN;
 const IDirectSound3DListenerVtbl ds3dlvt DECLSPEC_HIDDEN;
+const IKsPropertySetVtbl iksbvt DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * DirectSoundCaptureDevice implementation structure
@@ -258,24 +257,6 @@ struct IDirectSoundCaptureBufferImpl
     LPDSBPOSITIONNOTIFY                 notifies;
     int                                 nrofnotifies;
 };
-
-/*****************************************************************************
- *  IKsBufferPropertySet implementation structure
- */
-struct IKsBufferPropertySetImpl
-{
-    /* IUnknown fields */
-    const IKsPropertySetVtbl   *lpVtbl;
-    LONG 			ref;
-    /* IKsPropertySetImpl fields */
-    IDirectSoundBufferImpl*	dsb;
-};
-
-HRESULT IKsBufferPropertySetImpl_Create(
-    IDirectSoundBufferImpl *dsb,
-    IKsBufferPropertySetImpl **piks) DECLSPEC_HIDDEN;
-HRESULT IKsBufferPropertySetImpl_Destroy(
-    IKsBufferPropertySetImpl *piks) DECLSPEC_HIDDEN;
 
 HRESULT IKsPrivatePropertySetImpl_Create(REFIID riid, IKsPropertySet **piks) DECLSPEC_HIDDEN;
 
