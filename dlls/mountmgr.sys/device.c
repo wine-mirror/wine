@@ -195,11 +195,13 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     static const WCHAR cdromW[] = {'\\','D','e','v','i','c','e','\\','C','d','R','o','m','%','u',0};
     static const WCHAR floppyW[] = {'\\','D','e','v','i','c','e','\\','F','l','o','p','p','y','%','u',0};
     static const WCHAR ramdiskW[] = {'\\','D','e','v','i','c','e','\\','R','a','m','d','i','s','k','%','u',0};
+    static const WCHAR cdromlinkW[] = {'\\','?','?','\\','C','d','R','o','m','%','u',0};
     static const WCHAR physdriveW[] = {'\\','?','?','\\','P','h','y','s','i','c','a','l','D','r','i','v','e','%','u',0};
 
     UINT i, first = 0;
     NTSTATUS status = 0;
     const WCHAR *format = NULL;
+    const WCHAR *link_format = NULL;
     UNICODE_STRING name;
     DEVICE_OBJECT *dev_obj;
     struct disk_device *device;
@@ -210,6 +212,7 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     case DEVICE_HARDDISK:
     case DEVICE_NETWORK:  /* FIXME */
         format = harddiskW;
+        link_format = physdriveW;
         break;
     case DEVICE_HARDDISK_VOL:
         format = harddiskvolW;
@@ -221,6 +224,7 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     case DEVICE_CDROM:
     case DEVICE_DVD:
         format = cdromW;
+        link_format = cdromlinkW;
         break;
     case DEVICE_RAMDISK:
         format = ramdiskW;
@@ -246,6 +250,19 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
         device->unix_mount     = NULL;
         device->symlink.Buffer = NULL;
 
+        if (link_format)
+        {
+            UNICODE_STRING symlink;
+
+            symlink.MaximumLength = (strlenW(link_format) + 10) * sizeof(WCHAR);
+            if ((symlink.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, symlink.MaximumLength)))
+            {
+                sprintfW( symlink.Buffer, link_format, i );
+                symlink.Length = strlenW(symlink.Buffer) * sizeof(WCHAR);
+                if (!IoCreateSymbolicLink( &symlink, &name )) device->symlink = symlink;
+            }
+        }
+
         switch (type)
         {
         case DEVICE_FLOPPY:
@@ -267,20 +284,9 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
         case DEVICE_UNKNOWN:
         case DEVICE_HARDDISK:
         case DEVICE_NETWORK:  /* FIXME */
-            {
-                UNICODE_STRING symlink;
-
-                symlink.MaximumLength = sizeof(physdriveW) + 10 * sizeof(WCHAR);
-                if ((symlink.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, symlink.MaximumLength)))
-                {
-                    sprintfW( symlink.Buffer, physdriveW, i );
-                    symlink.Length = strlenW(symlink.Buffer) * sizeof(WCHAR);
-                    if (!IoCreateSymbolicLink( &symlink, &name )) device->symlink = symlink;
-                }
-                device->devnum.DeviceType = FILE_DEVICE_DISK;
-                device->devnum.DeviceNumber = i;
-                device->devnum.PartitionNumber = 0;
-            }
+            device->devnum.DeviceType = FILE_DEVICE_DISK;
+            device->devnum.DeviceNumber = i;
+            device->devnum.PartitionNumber = 0;
             break;
         case DEVICE_HARDDISK_VOL:
             device->devnum.DeviceType = FILE_DEVICE_DISK;
