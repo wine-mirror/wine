@@ -1939,6 +1939,8 @@ static int MSFT_CustData( TLBContext *pcx, int offset, struct list *custdata_lis
 
     TRACE_(typelib)("\n");
 
+    if (pcx->pTblDir->pCDGuids.offset < 0) return 0;
+
     while(offset >=0){
         count++;
         pNew=heap_alloc_zero(sizeof(TLBCustData));
