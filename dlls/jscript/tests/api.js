@@ -1980,6 +1980,8 @@ var exception_array = {
     E_DISABLED_CC:       { type: "SyntaxError",  number: -2146827258 },
     E_INVALID_BREAK:     { type: "SyntaxError",  number: -2146827269 },
     E_INVALID_CONTINUE:  { type: "SyntaxError",  number: -2146827268 },
+    E_LABEL_NOT_FOUND:   { type: "SyntaxError",  number: -2146827262 },
+    E_LABEL_REDEFINED:   { type: "SyntaxError",  number: -2146827263 },
 
     E_ILLEGAL_ASSIGN:  { type: "ReferenceError", number: -2146823280 },
 
@@ -2088,6 +2090,11 @@ testSyntaxError("@a", "E_DISABLED_CC");
 testSyntaxError("/* @cc_on @*/ @_jscript_version", "E_DISABLED_CC");
 testSyntaxError("ok(false, 'unexpected execution'); break;", "E_INVALID_BREAK");
 testSyntaxError("ok(false, 'unexpected execution'); continue;", "E_INVALID_CONTINUE");
+testSyntaxError("ok(false, 'unexpected execution'); while(true) break unknown_label;", "E_LABEL_NOT_FOUND");
+testSyntaxError("ok(false, 'unexpected execution'); some_label: continue some_label;", "E_INVALID_CONTINUE");
+testSyntaxError("ok(false, 'unexpected execution'); while(true) continue some_label;", "E_LABEL_NOT_FOUND");
+testSyntaxError("ok(false, 'unexpected execution'); some_label: { while(true) continue some_label; }", "E_INVALID_CONTINUE");
+testSyntaxError("ok(false, 'unexpected execution'); some_label: { some_label: while(true); }", "E_LABEL_REDEFINED");
 
 // ReferenceError tests
 testException(function() {test = function() {}}, "E_ILLEGAL_ASSIGN");

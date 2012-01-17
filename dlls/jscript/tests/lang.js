@@ -920,6 +920,61 @@ for(var iter in [1,2,3]) {
 }
 ok(tmp, "tmp = " + tmp);
 
+loop_label:
+while(true) {
+    while(true)
+        break loop_label;
+}
+
+loop_label: {
+    tmp = 0;
+    while(true) {
+        while(true)
+            break loop_label;
+    }
+    ok(false, "unexpected evaluation 1");
+}
+
+while(true) {
+    some_label: break;
+    ok(false, "unexpected evaluation 2");
+}
+
+just_label: tmp = 1;
+ok(tmp === 1, "tmp != 1");
+
+some_label: break some_label;
+
+other_label: {
+    break other_label;
+    ok(false, "unexpected evaluation 3");
+}
+
+loop_label:
+do {
+    while(true)
+        continue loop_label;
+}while(false);
+
+loop_label:
+for(i = 0; i < 3; i++) {
+    while(true)
+        continue loop_label;
+}
+
+loop_label:
+other_label:
+for(i = 0; i < 3; i++) {
+    while(true)
+        continue loop_label;
+}
+
+loop_label:
+for(tmp in {prop: false}) {
+    while(true)
+        continue loop_label;
+}
+
 ok((void 1) === undefined, "(void 1) !== undefined");
 
 var inobj = new Object();
