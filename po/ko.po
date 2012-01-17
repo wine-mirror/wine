@@ -546,7 +546,7 @@ msgstr "샘플"
 
 #: comdlg32.rc:267
 msgid "AaBbYyZz"
-msgstr "AaBbYyZz"
+msgstr ""
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
@@ -9905,7 +9905,7 @@ msgstr "배치 스크립트 밖의 배치 라벨은 불러올수 없습니다\n"
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr ""
 
 #: cmd.rc:313
 msgid "%1, Delete"
@@ -12421,7 +12421,7 @@ msgstr "화면 해상도 "
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "This is a sample text using 10 point Tahoma"
+msgstr ""
 
 #: winecfg.rc:182
 msgid "DLL overrides"
