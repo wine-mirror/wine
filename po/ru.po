@@ -8305,7 +8305,7 @@ msgstr "П&роложить"
 
 #: user32.rc:91
 msgid "Select Window"
-msgstr "Select Window"
+msgstr ""
 
 #: user32.rc:69
 msgid "&More Windows..."
@@ -10448,7 +10448,7 @@ msgstr "&Объект"
 
 #: oleview.rc:39
 msgid "&CoCreateInstance Flag"
-msgstr "&CoCreateInstance Flag"
+msgstr ""
 
 #: oleview.rc:41
 msgid "&In-process server"
@@ -10556,7 +10556,7 @@ msgstr ""
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
-msgstr "Default Interface Viewer"
+msgstr ""
 
 #: oleview.rc:181
 msgid "Interface"
@@ -10568,11 +10568,11 @@ msgstr "IID:"
 
 #: oleview.rc:186
 msgid "&View Type Info"
-msgstr "&View Type Info"
+msgstr ""
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
-msgstr "IPersist Interface Viewer"
+msgstr ""
 
 #: oleview.rc:194 oleview.rc:206
 msgid "Class Name:"
@@ -10584,7 +10584,7 @@ msgstr "CLSID:"
 
 #: oleview.rc:203
 msgid "IPersistStream Interface Viewer"
-msgstr "IPersistStream Interface Viewer"
+msgstr ""
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
@@ -12416,10 +12416,6 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"This program is free software; you can redistribute it and/or modify it "
-"under the terms of the GNU Lesser General Public License as published by the "
-"Free Software Foundation; either version 2.1 of the License, or (at your "
-"option) any later version."
 
 #: winecfg.rc:134
 msgid "Windows registration information"
@@ -12614,7 +12610,7 @@ msgstr "Устройство вывода:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
@@ -13387,7 +13383,7 @@ msgstr "Последнее изменение:"
 
 #: winefile.rc:174
 msgid "Cop&yright:"
-msgstr "Cop&yright:"
+msgstr ""
 
 #: winefile.rc:176
 msgid "Size:"
@@ -13562,7 +13558,7 @@ msgstr "WineMine"
 
 #: winemine.rc:28
 msgid "Nobody"
-msgstr "Nobody"
+msgstr ""
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
