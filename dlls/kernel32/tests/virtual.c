@@ -419,6 +419,7 @@ static void test_MapViewOfFile(void)
     ret = DuplicateHandle( GetCurrentProcess(), mapping, GetCurrentProcess(), &map2,
                            FILE_MAP_READ, FALSE, 0 );
     ok( ret, "DuplicateHandle failed error %u\n", GetLastError());
+    SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( map2, FILE_MAP_WRITE, 0, 0, 4096 );
     if (!ptr)
     {
@@ -426,6 +427,7 @@ static void test_MapViewOfFile(void)
         CloseHandle( map2 );
         ret = DuplicateHandle( GetCurrentProcess(), mapping, GetCurrentProcess(), &map2, 0, FALSE, 0 );
         ok( ret, "DuplicateHandle failed error %u\n", GetLastError());
+        SetLastError(0xdeadbeef);
         ptr = MapViewOfFile( map2, 0, 0, 0, 4096 );
         ok( !ptr, "MapViewOfFile succeeded\n" );
         ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
@@ -1933,7 +1935,7 @@ static DWORD map_prot_to_access(DWORD prot)
 static BOOL is_compatible_access(DWORD map_prot, DWORD view_prot)
 {
     DWORD access = map_prot_to_access(map_prot);
-    if (!access) return FALSE;
+    if (!view_prot) view_prot = SECTION_MAP_READ;
     return (view_prot & access) == view_prot;
 }
 
@@ -2112,14 +2114,7 @@ static void test_mapping(void)
             SetLastError(0xdeadbeef);
             base = MapViewOfFile(hmap, view[j].access, 0, 0, 0);
 
-            /* FIXME: completely remove the condition below once Wine is fixed */
-            if (!nt_base != !base)
-            todo_wine
             /* Vista+ supports FILE_MAP_EXECUTE properly, earlier versions don't */
-            ok(!nt_base == !base ||
-               broken((view[j].access & FILE_MAP_EXECUTE) && !nt_base != !base),
-               "%d: (%04x/%04x) NT %p kernel %p\n", j, page_prot[i], view[j].access, nt_base, base);
-            else
             ok(!nt_base == !base ||
                broken((view[j].access & FILE_MAP_EXECUTE) && !nt_base != !base),
                "%d: (%04x/%04x) NT %p kernel %p\n", j, page_prot[i], view[j].access, nt_base, base);
@@ -2145,15 +2140,6 @@ static void test_mapping(void)
             ok(ret, "%d: VirtualQuery failed %d\n", j, GetLastError());
             ok(info.BaseAddress == base, "%d: (%04x) got %p, expected %p\n", j, view[j].access, info.BaseAddress, base);
             ok(info.RegionSize == si.dwPageSize, "%d: (%04x) got %#lx != expected %#x\n", j, view[j].access, info.RegionSize, si.dwPageSize);
-            /* FIXME: completely remove the condition below once Wine is fixed */
-            if (info.Protect != view[j].prot)
-            todo_wine
-            ok(info.Protect == view[j].prot ||
-               broken(view[j].prot == PAGE_EXECUTE_READ && info.Protect == PAGE_READONLY) || /* win2k */
-               broken(view[j].prot == PAGE_EXECUTE_READWRITE && info.Protect == PAGE_READWRITE) || /* win2k */
-               broken(view[j].prot == PAGE_EXECUTE_WRITECOPY && info.Protect == PAGE_NOACCESS), /* XP */
-               "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, info.Protect, view[j].prot);
-            else
             ok(info.Protect == view[j].prot ||
                broken(view[j].prot == PAGE_EXECUTE_READ && info.Protect == PAGE_READONLY) || /* win2k */
                broken(view[j].prot == PAGE_EXECUTE_READWRITE && info.Protect == PAGE_READWRITE) || /* win2k */
@@ -2167,23 +2153,9 @@ static void test_mapping(void)
             if (nt_base && base)
             {
                 ok(nt_info.RegionSize == info.RegionSize, "%d: (%04x) got %#lx != expected %#lx\n", j, view[j].access, nt_info.RegionSize, info.RegionSize);
-                /* FIXME: completely remove the condition below once Wine is fixed */
-                if (nt_info.Protect != info.Protect)
-                todo_wine
                 ok(nt_info.Protect == info.Protect /* Vista+ */ ||
                    broken(nt_info.AllocationProtect == PAGE_EXECUTE_WRITECOPY && info.Protect == PAGE_NOACCESS), /* XP */
                    "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, nt_info.Protect, info.Protect);
-                else
-                ok(nt_info.Protect == info.Protect /* Vista+ */ ||
-                   broken(nt_info.AllocationProtect == PAGE_EXECUTE_WRITECOPY && info.Protect == PAGE_NOACCESS), /* XP */
-                   "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, nt_info.Protect, info.Protect);
-                /* FIXME: completely remove the condition below once Wine is fixed */
-                if (nt_info.AllocationProtect != info.AllocationProtect)
-                todo_wine
-                ok(nt_info.AllocationProtect == info.AllocationProtect /* Vista+ */ ||
-                   broken(nt_info.AllocationProtect == PAGE_EXECUTE_WRITECOPY && info.Protect == PAGE_NOACCESS), /* XP */
-                   "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, nt_info.AllocationProtect, info.AllocationProtect);
-                else
                 ok(nt_info.AllocationProtect == info.AllocationProtect /* Vista+ */ ||
                    broken(nt_info.AllocationProtect == PAGE_EXECUTE_WRITECOPY && info.Protect == PAGE_NOACCESS), /* XP */
                    "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, nt_info.AllocationProtect, info.AllocationProtect);

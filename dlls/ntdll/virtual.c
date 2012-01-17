@@ -2494,7 +2494,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     switch(protect)
     {
     case PAGE_NOACCESS:
-        access = 0;
+        access = SECTION_MAP_READ;
         break;
     case PAGE_READWRITE:
     case PAGE_EXECUTE_READWRITE:

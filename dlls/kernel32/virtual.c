@@ -533,15 +533,21 @@ LPVOID WINAPI MapViewOfFileEx( HANDLE handle, DWORD access,
     NTSTATUS status;
     LARGE_INTEGER offset;
     ULONG protect;
+    BOOL exec;
 
     offset.u.LowPart  = offset_low;
     offset.u.HighPart = offset_high;
 
-    if (access & FILE_MAP_WRITE) protect = PAGE_READWRITE;
-    else if (access & FILE_MAP_COPY) protect = PAGE_WRITECOPY;
-    else protect = PAGE_READONLY;
+    exec = access & FILE_MAP_EXECUTE;
+    access &= ~FILE_MAP_EXECUTE;
 
-    if (access & FILE_MAP_EXECUTE) protect <<= 4;
+    if (access == FILE_MAP_COPY)
+        protect = exec ? PAGE_EXECUTE_WRITECOPY : PAGE_WRITECOPY;
+    else if (access & FILE_MAP_WRITE)
+        protect = exec ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
+    else if (access & FILE_MAP_READ)
+        protect = exec ? PAGE_EXECUTE_READ : PAGE_READONLY;
+    else protect = PAGE_NOACCESS;
 
     if ((status = NtMapViewOfSection( handle, GetCurrentProcess(), &addr, 0, 0, &offset,
                                       &count, ViewShare, 0, protect )) < 0)
