@@ -1107,6 +1107,9 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
 
     stateblock->blockType = WINED3DSBT_INIT;
 
+    memset(stateblock->changed.pixelShaderConstantsF, 0, device->d3d_pshader_constantF * sizeof(BOOL));
+    memset(stateblock->changed.vertexShaderConstantsF, 0, device->d3d_vshader_constantF * sizeof(BOOL));
+
     /* Set some of the defaults for lights, transforms etc */
     memcpy(&state->transforms[WINED3D_TS_PROJECTION], identity, sizeof(identity));
     memcpy(&state->transforms[WINED3D_TS_VIEW], identity, sizeof(identity));
