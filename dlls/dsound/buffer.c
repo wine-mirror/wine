@@ -1130,14 +1130,12 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
 }
 
 /*******************************************************************************
- *              IKsBufferPropertySet
+ *              IKsPropertySet
  */
 
 /* IUnknown methods */
-static HRESULT WINAPI IKsBufferPropertySetImpl_QueryInterface(
-    LPKSPROPERTYSET iface,
-    REFIID riid,
-    LPVOID *ppobj )
+static HRESULT WINAPI IKsPropertySetImpl_QueryInterface(IKsPropertySet *iface, REFIID riid,
+        void **ppobj)
 {
     IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -1145,7 +1143,7 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_QueryInterface(
     return IDirectSoundBuffer_QueryInterface((LPDIRECTSOUNDBUFFER8)This->dsb, riid, ppobj);
 }
 
-static ULONG WINAPI IKsBufferPropertySetImpl_AddRef(LPKSPROPERTYSET iface)
+static ULONG WINAPI IKsPropertySetImpl_AddRef(IKsPropertySet *iface)
 {
     IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
@@ -1153,7 +1151,7 @@ static ULONG WINAPI IKsBufferPropertySetImpl_AddRef(LPKSPROPERTYSET iface)
     return ref;
 }
 
-static ULONG WINAPI IKsBufferPropertySetImpl_Release(LPKSPROPERTYSET iface)
+static ULONG WINAPI IKsPropertySetImpl_Release(IKsPropertySet *iface)
 {
     IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
@@ -1168,15 +1166,9 @@ static ULONG WINAPI IKsBufferPropertySetImpl_Release(LPKSPROPERTYSET iface)
     return ref;
 }
 
-static HRESULT WINAPI IKsBufferPropertySetImpl_Get(
-    LPKSPROPERTYSET iface,
-    REFGUID guidPropSet,
-    ULONG dwPropID,
-    LPVOID pInstanceData,
-    ULONG cbInstanceData,
-    LPVOID pPropData,
-    ULONG cbPropData,
-    PULONG pcbReturned )
+static HRESULT WINAPI IKsPropertySetImpl_Get(IKsPropertySet *iface, REFGUID guidPropSet,
+        ULONG dwPropID, void *pInstanceData, ULONG cbInstanceData, void *pPropData,
+        ULONG cbPropData, ULONG *pcbReturned)
 {
     IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
 
@@ -1186,14 +1178,9 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_Get(
     return E_PROP_ID_UNSUPPORTED;
 }
 
-static HRESULT WINAPI IKsBufferPropertySetImpl_Set(
-    LPKSPROPERTYSET iface,
-    REFGUID guidPropSet,
-    ULONG dwPropID,
-    LPVOID pInstanceData,
-    ULONG cbInstanceData,
-    LPVOID pPropData,
-    ULONG cbPropData )
+static HRESULT WINAPI IKsPropertySetImpl_Set(IKsPropertySet *iface, REFGUID guidPropSet,
+        ULONG dwPropID, void *pInstanceData, ULONG cbInstanceData, void *pPropData,
+        ULONG cbPropData)
 {
     IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
 
@@ -1202,11 +1189,8 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_Set(
     return E_PROP_ID_UNSUPPORTED;
 }
 
-static HRESULT WINAPI IKsBufferPropertySetImpl_QuerySupport(
-    LPKSPROPERTYSET iface,
-    REFGUID guidPropSet,
-    ULONG dwPropID,
-    PULONG pTypeSupport )
+static HRESULT WINAPI IKsPropertySetImpl_QuerySupport(IKsPropertySet *iface, REFGUID guidPropSet,
+        ULONG dwPropID, ULONG *pTypeSupport)
 {
     IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
 
@@ -1216,12 +1200,12 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_QuerySupport(
 }
 
 static const IKsPropertySetVtbl iksbvt = {
-    IKsBufferPropertySetImpl_QueryInterface,
-    IKsBufferPropertySetImpl_AddRef,
-    IKsBufferPropertySetImpl_Release,
-    IKsBufferPropertySetImpl_Get,
-    IKsBufferPropertySetImpl_Set,
-    IKsBufferPropertySetImpl_QuerySupport
+    IKsPropertySetImpl_QueryInterface,
+    IKsPropertySetImpl_AddRef,
+    IKsPropertySetImpl_Release,
+    IKsPropertySetImpl_Get,
+    IKsPropertySetImpl_Set,
+    IKsPropertySetImpl_QuerySupport
 };
 
 HRESULT IKsBufferPropertySetImpl_Create(
@@ -1255,7 +1239,7 @@ HRESULT IKsBufferPropertySetImpl_Destroy(
 {
     TRACE("(%p)\n",piks);
 
-    while (IKsBufferPropertySetImpl_Release((LPKSPROPERTYSET)piks) > 0);
+    while (IKsPropertySetImpl_Release((LPKSPROPERTYSET)piks) > 0);
 
     return S_OK;
 }
