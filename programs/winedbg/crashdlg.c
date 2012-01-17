@@ -261,12 +261,63 @@ static INT_PTR WINAPI crash_dlg_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 static INT_PTR WINAPI details_dlg_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     static const WCHAR openW[] = {'o','p','e','n',0};
+    static POINT orig_size, min_size, edit_size, text_pos, save_pos, close_pos;
+    RECT rect;
 
     switch (msg)
     {
     case WM_INITDIALOG:
         set_fixed_font( hwnd, IDC_CRASH_TXT );
         SetDlgItemTextA( hwnd, IDC_CRASH_TXT, crash_log );
+
+        GetClientRect( hwnd, &rect );
+        orig_size.x = rect.right;
+        orig_size.y = rect.bottom;
+
+        GetWindowRect( hwnd, &rect );
+        min_size.x = rect.right - rect.left;
+        min_size.y = rect.bottom - rect.top;
+
+        GetWindowRect( GetDlgItem( hwnd, IDOK ), &rect );
+        MapWindowPoints( 0, hwnd, (POINT *)&rect, 2 );
+        close_pos.x = rect.left;
+        close_pos.y = rect.top;
+
+        GetWindowRect( GetDlgItem( hwnd, ID_SAVEAS ), &rect );
+        MapWindowPoints( 0, hwnd, (POINT *)&rect, 2 );
+        save_pos.x = rect.left;
+        save_pos.y = rect.top;
+
+        GetWindowRect( GetDlgItem( hwnd, IDC_STATIC_TXT2 ), &rect );
+        MapWindowPoints( 0, hwnd, (POINT *)&rect, 2 );
+        text_pos.x = rect.left;
+        text_pos.y = rect.top;
+
+        GetWindowRect( GetDlgItem( hwnd, IDC_CRASH_TXT ), &rect );
+        MapWindowPoints( 0, hwnd, (POINT *)&rect, 2 );
+        edit_size.x = rect.right - rect.left;
+        edit_size.y = rect.bottom - rect.top;
+        return TRUE;
+
+    case WM_GETMINMAXINFO:
+        ((MINMAXINFO *)lparam)->ptMinTrackSize = min_size;
+        return TRUE;
+
+    case WM_SIZE:
+        if (wparam == SIZE_RESTORED)
+        {
+            int off_x = (short)LOWORD( lparam ) - orig_size.x;
+            int off_y = (short)HIWORD( lparam ) - orig_size.y;
+
+            SetWindowPos( GetDlgItem( hwnd, IDOK ), 0, close_pos.x + off_x,
+                          close_pos.y + off_y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+            SetWindowPos( GetDlgItem( hwnd, ID_SAVEAS ), 0, save_pos.x + off_x,
+                          save_pos.y + off_y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+            SetWindowPos( GetDlgItem( hwnd, IDC_STATIC_TXT2 ), 0, text_pos.x,
+                          text_pos.y + off_y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+            SetWindowPos( GetDlgItem( hwnd, IDC_CRASH_TXT ), 0, 0, 0, edit_size.x + off_x,
+                          edit_size.y + off_y, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE );
+        }
         return TRUE;
 
     case WM_NOTIFY:
