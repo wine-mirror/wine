@@ -865,10 +865,7 @@ BOOL WINAPI StrToIntExA(LPCSTR lpszStr, DWORD dwFlags, LPINT lpiRet)
     WARN("Invalid parameter would crash under Win32!\n");
     return FALSE;
   }
-  if (dwFlags > STIF_SUPPORT_HEX)
-  {
-    WARN("Unknown flags (%08X)!\n", dwFlags & ~STIF_SUPPORT_HEX);
-  }
+  if (dwFlags > STIF_SUPPORT_HEX) WARN("Unknown flags %08x\n", dwFlags);
 
   /* Skip leading space, '+', '-' */
   while (isspace(*lpszStr))
@@ -935,10 +932,7 @@ BOOL WINAPI StrToIntExW(LPCWSTR lpszStr, DWORD dwFlags, LPINT lpiRet)
     WARN("Invalid parameter would crash under Win32!\n");
     return FALSE;
   }
-  if (dwFlags > STIF_SUPPORT_HEX)
-  {
-    WARN("Unknown flags (%08X)!\n", dwFlags & ~STIF_SUPPORT_HEX);
-  }
+  if (dwFlags > STIF_SUPPORT_HEX) WARN("Unknown flags %08x\n", dwFlags);
 
   /* Skip leading space, '+', '-' */
   while (isspaceW(*lpszStr)) lpszStr++;
