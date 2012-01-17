@@ -489,7 +489,7 @@ msgstr "&Impressora Predefinida"
 
 #: comdlg32.rc:223
 msgid "[none]"
-msgstr "[none]"
+msgstr ""
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
@@ -557,7 +557,7 @@ msgstr "Exemplo"
 
 #: comdlg32.rc:267
 msgid "AaBbYyZz"
-msgstr "AaBbYyZz"
+msgstr ""
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
@@ -1170,7 +1170,7 @@ msgstr "mm"
 
 #: credui.rc:42
 msgid "&User name:"
-msgstr "&User name:"
+msgstr ""
 
 #: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
@@ -1511,7 +1511,7 @@ msgstr "Restrições de Políticas"
 
 #: crypt32.rc:99
 msgid "Cross-Certificate Distribution Points"
-msgstr "Cross-Certificate Distribution Points"
+msgstr ""
 
 #: crypt32.rc:100
 msgid "Application Policies"
@@ -1604,7 +1604,7 @@ msgstr "Informação do Template do Certificado"
 
 #: crypt32.rc:121
 msgid "Enterprise Root OID"
-msgstr "Enterprise Root OID"
+msgstr ""
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
@@ -1770,7 +1770,7 @@ msgstr ""
 
 #: crypt32.rc:155 cryptui.rc:143
 msgid "Smart Card Logon"
-msgstr "Smart Card Logon"
+msgstr ""
 
 #: crypt32.rc:156 cryptui.rc:139
 #, fuzzy
@@ -2310,7 +2310,7 @@ msgstr ""
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
-msgstr "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+msgstr ""
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
@@ -2454,15 +2454,15 @@ msgstr "Seleccione o formato que deseja utilizar:"
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (.cer)"
-msgstr "&DER-encoded X.509 (.cer)"
+msgstr ""
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr "Ba&se64-encoded X.509 (.cer):"
+msgstr ""
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
-msgstr "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+msgstr ""
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
@@ -2938,7 +2938,7 @@ msgstr "Permite que os dados em disco sejam cifrados"
 
 #: cryptui.rc:144
 msgid "Private Key Archival"
-msgstr "Private Key Archival"
+msgstr ""
 
 #: cryptui.rc:148
 msgid "Export Format"
@@ -2962,11 +2962,11 @@ msgstr "O ficheiro especificado já existe. Deseja substituí-lo?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr "DER-Encoded Binary X.509 (*.cer)"
+msgstr ""
 
 #: cryptui.rc:154
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr "Base64-Encoded X.509 (*.cer)"
+msgstr ""
 
 #: cryptui.rc:157
 msgid "CMS/PKCS #7 Messages (*.p7b)"
@@ -4070,7 +4070,7 @@ msgstr "Abertura falhou\n"
 
 #: winerror.mc:431
 msgid "Buffer overflow\n"
-msgstr "Buffer overflow\n"
+msgstr ""
 
 #: winerror.mc:441
 msgid "No more search handles\n"
@@ -4536,7 +4536,7 @@ msgstr "Erro de troca\n"
 
 #: winerror.mc:1021
 msgid "Stack overflow\n"
-msgstr "Stack overflow\n"
+msgstr ""
 
 #: winerror.mc:1026
 msgid "Invalid message\n"
@@ -4803,7 +4803,7 @@ msgstr "Media alterado\n"
 
 #: winerror.mc:1351
 msgid "I/O bus reset\n"
-msgstr "I/O bus reset\n"
+msgstr ""
 
 #: winerror.mc:1356
 msgid "No media in drive\n"
@@ -7201,23 +7201,23 @@ msgstr "texto"
 
 #: oleacc.rc:70
 msgid "push button"
-msgstr "push button"
+msgstr ""
 
 #: oleacc.rc:71
 msgid "check button"
-msgstr "check button"
+msgstr ""
 
 #: oleacc.rc:72
 msgid "radio button"
-msgstr "radio button"
+msgstr ""
 
 #: oleacc.rc:73
 msgid "combo box"
-msgstr "combo box"
+msgstr ""
 
 #: oleacc.rc:74
 msgid "drop down"
-msgstr "drop down"
+msgstr ""
 
 #: oleacc.rc:75
 msgid "progress bar"
@@ -7225,19 +7225,19 @@ msgstr "barra de progresso"
 
 #: oleacc.rc:76
 msgid "dial"
-msgstr "dial"
+msgstr ""
 
 #: oleacc.rc:77
 msgid "hot key field"
-msgstr "hot key field"
+msgstr ""
 
 #: oleacc.rc:78
 msgid "slider"
-msgstr "slider"
+msgstr ""
 
 #: oleacc.rc:79
 msgid "spin box"
-msgstr "spin box"
+msgstr ""
 
 #: oleacc.rc:80
 msgid "diagram"
@@ -7253,15 +7253,15 @@ msgstr "equação"
 
 #: oleacc.rc:83
 msgid "drop down button"
-msgstr "drop down button"
+msgstr ""
 
 #: oleacc.rc:84
 msgid "menu button"
-msgstr "menu button"
+msgstr ""
 
 #: oleacc.rc:85
 msgid "grid drop down button"
-msgstr "grid drop down button"
+msgstr ""
 
 #: oleacc.rc:86
 msgid "white space"
@@ -7269,7 +7269,7 @@ msgstr "espaço em branco"
 
 #: oleacc.rc:87
 msgid "page tab list"
-msgstr "page tab list"
+msgstr ""
 
 #: oleacc.rc:88
 msgid "clock"
@@ -7277,7 +7277,7 @@ msgstr "relógio"
 
 #: oleacc.rc:89
 msgid "split button"
-msgstr "split button"
+msgstr ""
 
 #: oleacc.rc:90 ipconfig.rc:33
 msgid "IP address"
@@ -7285,7 +7285,7 @@ msgstr "endereço IP"
 
 #: oleacc.rc:91
 msgid "outline button"
-msgstr "outline button"
+msgstr ""
 
 #: oleaut32.rc:27 oleview.rc:144
 msgid "True"
@@ -7754,63 +7754,63 @@ msgstr "&Recomeçar"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
-msgstr "Trace Tags"
+msgstr ""
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
-msgstr "Resource Failures"
+msgstr ""
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
-msgstr "Dump Tracking Info"
+msgstr ""
 
 #: shdoclc.rc:199
 msgid "Debug Break"
-msgstr "Debug Break"
+msgstr ""
 
 #: shdoclc.rc:200
 msgid "Debug View"
-msgstr "Debug View"
+msgstr ""
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
-msgstr "Dump Tree"
+msgstr ""
 
 #: shdoclc.rc:202
 msgid "Dump Lines"
-msgstr "Dump Lines"
+msgstr ""
 
 #: shdoclc.rc:203
 msgid "Dump DisplayTree"
-msgstr "Dump DisplayTree"
+msgstr ""
 
 #: shdoclc.rc:204
 msgid "Dump FormatCaches"
-msgstr "Dump FormatCaches"
+msgstr ""
 
 #: shdoclc.rc:205
 msgid "Dump LayoutRects"
-msgstr "Dump LayoutRects"
+msgstr ""
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
-msgstr "Memory Monitor"
+msgstr ""
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
-msgstr "Performance Meters"
+msgstr ""
 
 #: shdoclc.rc:208
 msgid "Save HTML"
-msgstr "Save HTML"
+msgstr ""
 
 #: shdoclc.rc:210
 msgid "&Browse View"
-msgstr "&Browse View"
+msgstr ""
 
 #: shdoclc.rc:211
 msgid "&Edit View"
-msgstr "&Edit View"
+msgstr ""
 
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
@@ -10168,7 +10168,7 @@ msgstr ""
 #: cmd.rc:292 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
-msgstr "Y"
+msgstr ""
 
 #: cmd.rc:293 xcopy.rc:41
 msgctxt "No key"
@@ -10247,7 +10247,7 @@ msgstr ""
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr ""
 
 #: cmd.rc:313
 #, fuzzy
@@ -12376,11 +12376,11 @@ msgstr "Prioridade &Base"
 
 #: taskmgr.rc:561
 msgid "&Handle Count"
-msgstr "&Handle Count"
+msgstr ""
 
 #: taskmgr.rc:563
 msgid "&Thread Count"
-msgstr "&Thread Count"
+msgstr ""
 
 #: taskmgr.rc:565 taskmgr.rc:292
 msgid "GDI Objects"
@@ -12874,7 +12874,7 @@ msgstr "Automatically capture the mouse in full-screen windows"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr "Allow the window manager to &decorate the windows"
+msgstr ""
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
@@ -12895,7 +12895,7 @@ msgstr " &Resolução do Ecrã "
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "This is a sample text using 10 point Tahoma"
+msgstr ""
 
 #: winecfg.rc:182
 #, fuzzy
@@ -12992,7 +12992,7 @@ msgstr "&Avançado"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr ""
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -13011,30 +13011,28 @@ msgid "Show &dot files"
 msgstr "Mostrar &ficheiros com pontos"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr ""
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
@@ -14495,7 +14493,7 @@ msgstr "%s? (Yes|No)\n"
 #: xcopy.rc:36
 #, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Reescrever %s? (Yes|No|All)\n"
+msgstr "Reescrever %s?\n"
 
 #: xcopy.rc:37
 #, fuzzy
