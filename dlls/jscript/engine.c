@@ -677,13 +677,6 @@ static HRESULT interp_pop_scope(exec_ctx_t *ctx)
     return S_OK;
 }
 
-/* ECMA-262 3rd Edition    12.12 */
-static HRESULT interp_label(exec_ctx_t *ctx)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 /* ECMA-262 3rd Edition    12.13 */
 static HRESULT interp_case(exec_ctx_t *ctx)
 {
