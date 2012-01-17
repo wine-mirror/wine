@@ -68,6 +68,6 @@ BEGIN
                      then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> \
                      and attach that file to the report.",
                     IDC_STATIC_TXT2,"SysLink",0,6,185,288,32
-    DEFPUSHBUTTON   "Close", IDOK, 236, 220, 60, 16, WS_TABSTOP
-    PUSHBUTTON      "&Save As...", ID_SAVEAS, 172, 220, 60, 16, WS_TABSTOP
+    DEFPUSHBUTTON   "Close", IDOK, 226, 220, 70, 16, WS_TABSTOP
+    PUSHBUTTON      "&Save As...", ID_SAVEAS, 152, 220, 70, 16, WS_TABSTOP
 END
