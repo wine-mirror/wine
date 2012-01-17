@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-16 21:21+0300\n"
+"PO-Revision-Date: 2012-01-17 22:20+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -42,9 +42,8 @@ msgstr ""
 "spauskite „Pakeisti/pašalinti“."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "Priežiūros informacija"
+msgstr "&Priežiūros informacija"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -3497,12 +3496,11 @@ msgstr "Negalima turėti „continue“ ne cikle"
 
 #: jscript.rc:40
 msgid "Label redefined"
-msgstr ""
+msgstr "Žymė apibrėžta iš naujo"
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
-msgstr "Failas nerastas"
+msgstr "Žymė nerasta"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
@@ -13221,7 +13219,6 @@ msgstr ""
 "dėl nepatogumų."
 
 #: winedbg.rc:54
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -13229,20 +13226,15 @@ msgid ""
 msgstr ""
 "Programos problemos ar Wine trūkumai gali būti to priežastimi. Jūs turbūt "
 "norėsite patikrinti <a href=\"http://appdb.winehq.org\">programų duomenų "
-"bazę</a> dėl patarimų apie šios programos vykdymą.\n"
-"\n"
-"Jei šios problemos nėra Windows sistemoje ir apie ją dar nebuvo pranešta, "
-"galite <a href=\"http://wiki.winehq.org/Bugs\">užregistruoti klaidą</a>."
+"bazę</a> dėl patarimų apie šios programos vykdymą."
 
 #: winedbg.rc:57
-#, fuzzy
 msgid "Show &Details"
-msgstr "&Išsamus"
+msgstr "Rodyti &išsamiau"
 
 #: winedbg.rc:62
-#, fuzzy
 msgid "Program Error Details"
-msgstr "Programos klaida"
+msgstr "Išsamiau apie programos klaidą"
 
 #: winedbg.rc:69
 msgid ""
@@ -13251,6 +13243,10 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"Jei šios problemos nėra Windows sistemoje ir apie ją dar nebuvo pranešta, "
+"galite išsaugoti išsamią informaciją į failą naudodami mygtuką „Išsaugoti "
+"kaip“, tada <a href=\"http://wiki.winehq.org/Bugs\">užregistruoti klaidą</a> "
+"ir prikabinti tą failą prie pranešimo."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13265,9 +13261,8 @@ msgid "(unidentified)"
 msgstr "(nenustatytas)"
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "Nepavyko sukurti\n"
+msgstr "Nepavyko išsaugoti"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
