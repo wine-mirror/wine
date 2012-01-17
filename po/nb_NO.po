@@ -544,7 +544,7 @@ msgstr "Forhåndsvisning"
 
 #: comdlg32.rc:267
 msgid "AaBbYyZz"
-msgstr "AaBbYyZz"
+msgstr ""
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
@@ -1174,7 +1174,7 @@ msgstr "&Passord:"
 
 #: credui.rc:47
 msgid "&Remember my password"
-msgstr "&Remember my password"
+msgstr ""
 
 #: credui.rc:27
 msgid "Connect to %s"
@@ -1329,7 +1329,7 @@ msgstr "Brukervarsel"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr "On-line Certificate Status Protocol"
+msgstr ""
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
@@ -2306,7 +2306,7 @@ msgstr "Personlig informasjonsutveksling/PKCS #12 (.pfx, .p12)"
 
 #: cryptui.rc:300
 msgid "Microsoft Serialized Certificate Store (.sst)"
-msgstr "Microsoft Serialized Certificate Store (.sst)"
+msgstr ""
 
 #: cryptui.rc:308
 msgid ""
@@ -2694,7 +2694,7 @@ msgstr "Liste over tiltrodde sertifikater (*.stl)"
 
 #: cryptui.rc:78
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr "Microsoft Serialized Certificate Store (*.sst)"
+msgstr ""
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
@@ -2966,7 +2966,7 @@ msgstr "Personlig informasjonsutveksling (*.pfx)"
 
 #: cryptui.rc:159
 msgid "Serialized Certificate Store (*.sst)"
-msgstr "Serialized Certificate Store (*.sst)"
+msgstr ""
 
 #: cryptui.rc:160
 msgid "File Format"
@@ -3170,7 +3170,7 @@ msgstr "Importer valgte"
 
 #: gphoto2.rc:32
 msgid "Preview"
-msgstr "Preview"
+msgstr ""
 
 #: gphoto2.rc:33
 msgid "Import All"
@@ -3178,7 +3178,7 @@ msgstr "Importer alle"
 
 #: gphoto2.rc:34
 msgid "Skip This Dialog"
-msgstr "Skip This Dialog"
+msgstr ""
 
 #: gphoto2.rc:35
 msgid "Exit"
@@ -8586,7 +8586,7 @@ msgstr "&Fortsett"
 
 #: user32.rc:91
 msgid "Select Window"
-msgstr "Select Window"
+msgstr ""
 
 #: user32.rc:69
 msgid "&More Windows..."
@@ -10246,7 +10246,7 @@ msgstr ""
 
 #: cmd.rc:322
 msgid "Wine Command Prompt"
-msgstr "Wine Command Prompt"
+msgstr ""
 
 #: cmd.rc:323
 #, fuzzy
@@ -12550,11 +12550,11 @@ msgstr "VM-størrelse"
 
 #: taskmgr.rc:287
 msgid "Paged Pool"
-msgstr "Paged Pool"
+msgstr ""
 
 #: taskmgr.rc:288
 msgid "NP Pool"
-msgstr "NP Pool"
+msgstr ""
 
 #: taskmgr.rc:289
 msgid "Base Pri"
@@ -12773,7 +12773,7 @@ msgstr " Vinduinnstillinger "
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatically capture the &mouse in full-screen windows"
+msgstr ""
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -12914,30 +12914,28 @@ msgid "Show &dot files"
 msgstr "Vis .-filer"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr ""
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
