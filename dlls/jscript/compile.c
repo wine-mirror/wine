@@ -698,6 +698,7 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
     }
     default:
         assert(0);
+        return E_FAIL;
     }
 }
 
@@ -1663,6 +1664,7 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx,
         break;
     default:
         assert(0);
+        hres = E_FAIL;
     }
 
     if(stat_ctx) {
