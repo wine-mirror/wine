@@ -77,7 +77,7 @@ static void resource_check_usage(DWORD usage)
 }
 
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
-        WINED3DRESOURCETYPE resource_type, const struct wined3d_format *format,
+        enum wined3d_resource_type type, const struct wined3d_format *format,
         enum wined3d_multisample_type multisample_type, UINT multisample_quality,
         DWORD usage, WINED3DPOOL pool, UINT width, UINT height, UINT depth, UINT size,
         void *parent, const struct wined3d_parent_ops *parent_ops,
@@ -85,7 +85,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
 {
     resource->ref = 1;
     resource->device = device;
-    resource->resourceType = resource_type;
+    resource->type = type;
     resource->format = format;
     resource->multisample_type = multisample_type;
     resource->multisample_quality = multisample_quality;
@@ -172,7 +172,7 @@ void resource_cleanup(struct wined3d_resource *resource)
 void resource_unload(struct wined3d_resource *resource)
 {
     context_resource_unloaded(resource->device,
-            resource, resource->resourceType);
+            resource, resource->type);
 }
 
 static struct private_data *resource_find_private_data(const struct wined3d_resource *resource, REFGUID tag)
@@ -318,7 +318,7 @@ void * CDECL wined3d_resource_get_parent(const struct wined3d_resource *resource
 
 void CDECL wined3d_resource_get_desc(const struct wined3d_resource *resource, struct wined3d_resource_desc *desc)
 {
-    desc->resource_type = resource->resourceType;
+    desc->resource_type = resource->type;
     desc->format = resource->format->id;
     desc->multisample_type = resource->multisample_type;
     desc->multisample_quality = resource->multisample_quality;

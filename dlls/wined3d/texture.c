@@ -26,7 +26,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
 static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined3d_texture_ops *texture_ops,
-        UINT layer_count, UINT level_count, WINED3DRESOURCETYPE resource_type, struct wined3d_device *device,
+        UINT layer_count, UINT level_count, enum wined3d_resource_type resource_type, struct wined3d_device *device,
         DWORD usage, const struct wined3d_format *format, WINED3DPOOL pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, const struct wined3d_resource_ops *resource_ops)
 {
@@ -806,7 +806,7 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
     }
 
     hr = wined3d_texture_init(texture, &texture2d_ops, 6, levels,
-            WINED3DRTYPE_CUBETEXTURE, device, usage, format, pool,
+            WINED3D_RTYPE_CUBE_TEXTURE, device, usage, format, pool,
             parent, parent_ops, &texture2d_resource_ops);
     if (FAILED(hr))
     {
@@ -943,7 +943,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT he
     }
 
     hr = wined3d_texture_init(texture, &texture2d_ops, 1, levels,
-            WINED3DRTYPE_TEXTURE, device, usage, format, pool,
+            WINED3D_RTYPE_TEXTURE, device, usage, format, pool,
             parent, parent_ops, &texture2d_resource_ops);
     if (FAILED(hr))
     {
@@ -1194,7 +1194,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, U
     }
 
     hr = wined3d_texture_init(texture, &texture3d_ops, 1, levels,
-            WINED3DRTYPE_VOLUMETEXTURE, device, usage, format, pool,
+            WINED3D_RTYPE_VOLUME_TEXTURE, device, usage, format, pool,
             parent, parent_ops, &texture3d_resource_ops);
     if (FAILED(hr))
     {

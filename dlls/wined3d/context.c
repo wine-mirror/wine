@@ -653,13 +653,13 @@ static void context_queue_fbo_entry_destruction(struct wined3d_context *context,
 }
 
 void context_resource_released(const struct wined3d_device *device,
-        struct wined3d_resource *resource, WINED3DRESOURCETYPE type)
+        struct wined3d_resource *resource, enum wined3d_resource_type type)
 {
     if (!device->d3d_initialized) return;
 
     switch (type)
     {
-        case WINED3DRTYPE_SURFACE:
+        case WINED3D_RTYPE_SURFACE:
             context_enum_surface_fbo_entries(device, surface_from_resource(resource),
                     context_queue_fbo_entry_destruction);
             break;
@@ -675,11 +675,11 @@ static void context_detach_fbo_entry(struct wined3d_context *context, struct fbo
 }
 
 void context_resource_unloaded(const struct wined3d_device *device,
-        struct wined3d_resource *resource, WINED3DRESOURCETYPE type)
+        struct wined3d_resource *resource, enum wined3d_resource_type type)
 {
     switch (type)
     {
-        case WINED3DRTYPE_SURFACE:
+        case WINED3D_RTYPE_SURFACE:
             context_enum_surface_fbo_entries(device, surface_from_resource(resource),
                     context_detach_fbo_entry);
             break;

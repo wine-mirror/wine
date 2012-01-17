@@ -279,7 +279,7 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
         return WINED3DERR_INVALIDCALL;
     }
 
-    hr = resource_init(&volume->resource, device, WINED3DRTYPE_VOLUME, format,
+    hr = resource_init(&volume->resource, device, WINED3D_RTYPE_VOLUME, format,
             WINED3D_MULTISAMPLE_NONE, 0, usage, pool, width, height, depth,
             width * height * depth * format->byte_count, parent, parent_ops,
             &volume_resource_ops);

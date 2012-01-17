@@ -670,17 +670,15 @@ enum wined3d_texture_filter_type
     WINED3D_TEXF_GAUSSIAN_QUAD              = 7,
 };
 
-typedef enum _WINED3DRESOURCETYPE
+enum wined3d_resource_type
 {
-    WINED3DRTYPE_SURFACE                    = 1,
-    WINED3DRTYPE_VOLUME                     = 2,
-    WINED3DRTYPE_TEXTURE                    = 3,
-    WINED3DRTYPE_VOLUMETEXTURE              = 4,
-    WINED3DRTYPE_CUBETEXTURE                = 5,
-    WINED3DRTYPE_BUFFER                     = 6,
-    WINED3DRTYPE_FORCE_DWORD                = 0x7fffffff
-} WINED3DRESOURCETYPE;
-#define WINED3DRTYPECOUNT                                       WINED3DRTYPE_BUFFER
+    WINED3D_RTYPE_SURFACE                   = 1,
+    WINED3D_RTYPE_VOLUME                    = 2,
+    WINED3D_RTYPE_TEXTURE                   = 3,
+    WINED3D_RTYPE_VOLUME_TEXTURE            = 4,
+    WINED3D_RTYPE_CUBE_TEXTURE              = 5,
+    WINED3D_RTYPE_BUFFER                    = 6,
+};
 
 typedef enum _WINED3DPOOL
 {
@@ -1632,7 +1630,7 @@ struct wined3d_swapchain_desc
 
 struct wined3d_resource_desc
 {
-    WINED3DRESOURCETYPE resource_type;
+    enum wined3d_resource_type resource_type;
     enum wined3d_format_id format;
     enum wined3d_multisample_type multisample_type;
     UINT multisample_quality;
@@ -2008,7 +2006,7 @@ HRESULT __cdecl wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
         enum wined3d_format_id render_target_format_id, enum wined3d_format_id depth_stencil_format_id);
 HRESULT __cdecl wined3d_check_device_format(const struct wined3d *wined3d, UINT adaper_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id, DWORD usage,
-        WINED3DRESOURCETYPE resource_type, enum wined3d_format_id check_format_id,
+        enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id,
         WINED3DSURFTYPE surface_type);
 HRESULT __cdecl wined3d_check_device_format_conversion(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id source_format_id,

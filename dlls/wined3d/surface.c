@@ -7257,7 +7257,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
             return WINED3DERR_INVALIDCALL;
     }
 
-    hr = resource_init(&surface->resource, device, WINED3DRTYPE_SURFACE, format,
+    hr = resource_init(&surface->resource, device, WINED3D_RTYPE_SURFACE, format,
             multisample_type, multisample_quality, usage, pool, width, height, 1,
             resource_size, parent, parent_ops, &surface_resource_ops);
     if (FAILED(hr))

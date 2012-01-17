@@ -461,7 +461,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
         cursor.resource.device = swapchain->device;
         cursor.resource.pool = WINED3DPOOL_SCRATCH;
         cursor.resource.format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
-        cursor.resource.resourceType = WINED3DRTYPE_SURFACE;
+        cursor.resource.type = WINED3D_RTYPE_SURFACE;
         cursor.texture_name = swapchain->device->cursorTexture;
         cursor.texture_target = GL_TEXTURE_2D;
         cursor.texture_level = 0;

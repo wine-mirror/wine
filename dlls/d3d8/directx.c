@@ -224,8 +224,8 @@ static HRESULT WINAPI IDirect3D8Impl_CheckDeviceFormat(LPDIRECT3D8 iface, UINT A
         D3DFORMAT CheckFormat)
 {
     IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
+    enum wined3d_resource_type wined3d_rtype;
     HRESULT hr;
-    WINED3DRESOURCETYPE WineD3DRType;
 
     TRACE("iface %p, adapter %u, device_type %#x, adapter_format %#x, usage %#x, resource_type %#x, format %#x.\n",
             iface, Adapter, DeviceType, AdapterFormat, Usage, RType, CheckFormat);
@@ -233,17 +233,17 @@ static HRESULT WINAPI IDirect3D8Impl_CheckDeviceFormat(LPDIRECT3D8 iface, UINT A
     switch(RType) {
         case D3DRTYPE_VERTEXBUFFER:
         case D3DRTYPE_INDEXBUFFER:
-            WineD3DRType = WINED3DRTYPE_BUFFER;
+            wined3d_rtype = WINED3D_RTYPE_BUFFER;
             break;
 
         default:
-            WineD3DRType = RType;
+            wined3d_rtype = RType;
             break;
     }
 
     wined3d_mutex_lock();
     hr = wined3d_check_device_format(This->WineD3D, Adapter, DeviceType, wined3dformat_from_d3dformat(AdapterFormat),
-            Usage, WineD3DRType, wined3dformat_from_d3dformat(CheckFormat), SURFACE_OPENGL);
+            Usage, wined3d_rtype, wined3dformat_from_d3dformat(CheckFormat), SURFACE_OPENGL);
     wined3d_mutex_unlock();
 
     return hr;

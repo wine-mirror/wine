@@ -536,7 +536,7 @@ static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
     {
         IDirect3DSurface8 *surface;
 
-        if (desc.resource_type != WINED3DRTYPE_SURFACE)
+        if (desc.resource_type != WINED3D_RTYPE_SURFACE)
         {
             WARN("Resource %p in pool D3DPOOL_DEFAULT blocks the Reset call.\n", resource);
             return D3DERR_DEVICELOST;

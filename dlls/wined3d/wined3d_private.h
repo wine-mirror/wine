@@ -1257,9 +1257,9 @@ DWORD context_get_tls_idx(void) DECLSPEC_HIDDEN;
 void context_invalidate_state(struct wined3d_context *context, DWORD state_id) DECLSPEC_HIDDEN;
 void context_release(struct wined3d_context *context) DECLSPEC_HIDDEN;
 void context_resource_released(const struct wined3d_device *device,
-        struct wined3d_resource *resource, WINED3DRESOURCETYPE type) DECLSPEC_HIDDEN;
+        struct wined3d_resource *resource, enum wined3d_resource_type type) DECLSPEC_HIDDEN;
 void context_resource_unloaded(const struct wined3d_device *device,
-        struct wined3d_resource *resource, WINED3DRESOURCETYPE type) DECLSPEC_HIDDEN;
+        struct wined3d_resource *resource, enum wined3d_resource_type type) DECLSPEC_HIDDEN;
 BOOL context_set_current(struct wined3d_context *ctx) DECLSPEC_HIDDEN;
 void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer) DECLSPEC_HIDDEN;
 void context_set_tls_idx(DWORD idx) DECLSPEC_HIDDEN;
@@ -1836,7 +1836,7 @@ struct wined3d_resource
 {
     LONG ref;
     struct wined3d_device *device;
-    WINED3DRESOURCETYPE     resourceType;
+    enum wined3d_resource_type type;
     const struct wined3d_format *format;
     enum wined3d_multisample_type multisample_type;
     UINT                    multisample_quality;
@@ -1861,7 +1861,7 @@ struct wined3d_resource
 void resource_cleanup(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 DWORD resource_get_priority(const struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
-        WINED3DRESOURCETYPE resource_type, const struct wined3d_format *format,
+        enum wined3d_resource_type type, const struct wined3d_format *format,
         enum wined3d_multisample_type multisample_type, UINT multisample_quality,
         DWORD usage, WINED3DPOOL pool, UINT width, UINT height, UINT depth, UINT size,
         void *parent, const struct wined3d_parent_ops *parent_ops,
@@ -2489,7 +2489,7 @@ void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain) DECLSPE
 /* Trace routines */
 const char *debug_d3dformat(enum wined3d_format_id format_id) DECLSPEC_HIDDEN;
 const char *debug_d3ddevicetype(enum wined3d_device_type device_type) DECLSPEC_HIDDEN;
-const char *debug_d3dresourcetype(WINED3DRESOURCETYPE res) DECLSPEC_HIDDEN;
+const char *debug_d3dresourcetype(enum wined3d_resource_type resource_type) DECLSPEC_HIDDEN;
 const char *debug_d3dusage(DWORD usage) DECLSPEC_HIDDEN;
 const char *debug_d3dusagequery(DWORD usagequery) DECLSPEC_HIDDEN;
 const char *debug_d3ddeclmethod(WINED3DDECLMETHOD method) DECLSPEC_HIDDEN;

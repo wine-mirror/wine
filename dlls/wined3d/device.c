@@ -876,7 +876,7 @@ ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
             LIST_FOR_EACH_ENTRY(resource, &device->resources, struct wined3d_resource, resource_list_entry)
             {
                 FIXME("Leftover resource %p with type %s (%#x).\n",
-                        resource, debug_d3dresourcetype(resource->resourceType), resource->resourceType);
+                        resource, debug_d3dresourcetype(resource->type), resource->type);
             }
         }
 
@@ -4338,8 +4338,8 @@ static HRESULT device_update_volume(struct wined3d_device *device,
 HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         struct wined3d_texture *src_texture, struct wined3d_texture *dst_texture)
 {
+    enum wined3d_resource_type type;
     unsigned int level_count, i;
-    WINED3DRESOURCETYPE type;
     HRESULT hr;
 
     TRACE("device %p, src_texture %p, dst_texture %p.\n", device, src_texture, dst_texture);
@@ -4358,8 +4358,8 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     }
 
     /* Verify that the source and destination textures are the same type. */
-    type = src_texture->resource.resourceType;
-    if (dst_texture->resource.resourceType != type)
+    type = src_texture->resource.type;
+    if (dst_texture->resource.type != type)
     {
         WARN("Source and destination have different types, returning WINED3DERR_INVALIDCALL.\n");
         return WINED3DERR_INVALIDCALL;
@@ -4379,7 +4379,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     /* Update every surface level of the texture. */
     switch (type)
     {
-        case WINED3DRTYPE_TEXTURE:
+        case WINED3D_RTYPE_TEXTURE:
         {
             struct wined3d_surface *src_surface;
             struct wined3d_surface *dst_surface;
@@ -4398,7 +4398,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
             break;
         }
 
-        case WINED3DRTYPE_CUBETEXTURE:
+        case WINED3D_RTYPE_CUBE_TEXTURE:
         {
             struct wined3d_surface *src_surface;
             struct wined3d_surface *dst_surface;
@@ -4417,7 +4417,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
             break;
         }
 
-        case WINED3DRTYPE_VOLUMETEXTURE:
+        case WINED3D_RTYPE_VOLUME_TEXTURE:
         {
             for (i = 0; i < level_count; ++i)
             {
@@ -4799,7 +4799,7 @@ void CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
     RECT rect;
 
     resource = rendertarget_view->resource;
-    if (resource->resourceType != WINED3DRTYPE_SURFACE)
+    if (resource->type != WINED3D_RTYPE_SURFACE)
     {
         FIXME("Only supported on surface resources\n");
         return;
@@ -5698,7 +5698,7 @@ static void device_resource_remove(struct wined3d_device *device, struct wined3d
 
 void device_resource_released(struct wined3d_device *device, struct wined3d_resource *resource)
 {
-    WINED3DRESOURCETYPE type = resource->resourceType;
+    enum wined3d_resource_type type = resource->type;
     unsigned int i;
 
     TRACE("device %p, resource %p, type %s.\n", device, resource, debug_d3dresourcetype(type));
@@ -5707,7 +5707,7 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
 
     switch (type)
     {
-        case WINED3DRTYPE_SURFACE:
+        case WINED3D_RTYPE_SURFACE:
             {
                 struct wined3d_surface *surface = surface_from_resource(resource);
 
@@ -5730,9 +5730,9 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
             }
             break;
 
-        case WINED3DRTYPE_TEXTURE:
-        case WINED3DRTYPE_CUBETEXTURE:
-        case WINED3DRTYPE_VOLUMETEXTURE:
+        case WINED3D_RTYPE_TEXTURE:
+        case WINED3D_RTYPE_CUBE_TEXTURE:
+        case WINED3D_RTYPE_VOLUME_TEXTURE:
             for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
             {
                 struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
@@ -5754,7 +5754,7 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
             }
             break;
 
-        case WINED3DRTYPE_BUFFER:
+        case WINED3D_RTYPE_BUFFER:
             {
                 struct wined3d_buffer *buffer = buffer_from_resource(resource);
 
@@ -5816,7 +5816,7 @@ HRESULT CDECL wined3d_device_get_surface_from_dc(const struct wined3d_device *de
 
     LIST_FOR_EACH_ENTRY(resource, &device->resources, struct wined3d_resource, resource_list_entry)
     {
-        if (resource->resourceType == WINED3DRTYPE_SURFACE)
+        if (resource->type == WINED3D_RTYPE_SURFACE)
         {
             struct wined3d_surface *s = surface_from_resource(resource);
 

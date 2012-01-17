@@ -3794,7 +3794,7 @@ static BOOL CheckVertexTextureCapability(const struct wined3d_adapter *adapter,
 
 HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id, DWORD usage,
-        WINED3DRESOURCETYPE resource_type, enum wined3d_format_id check_format_id, WINED3DSURFTYPE surface_type)
+        enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id, WINED3DSURFTYPE surface_type)
 {
     const struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
@@ -3813,7 +3813,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
     switch (resource_type)
     {
-        case WINED3DRTYPE_CUBETEXTURE:
+        case WINED3D_RTYPE_CUBE_TEXTURE:
             /* Cubetexture allows:
              *      - WINED3DUSAGE_AUTOGENMIPMAP
              *      - WINED3DUSAGE_DEPTHSTENCIL
@@ -3930,7 +3930,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             }
             break;
 
-        case WINED3DRTYPE_SURFACE:
+        case WINED3D_RTYPE_SURFACE:
             /* Surface allows:
              *      - WINED3DUSAGE_DEPTHSTENCIL
              *      - WINED3DUSAGE_NONSECURE (d3d9ex)
@@ -3973,7 +3973,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             }
             break;
 
-        case WINED3DRTYPE_TEXTURE:
+        case WINED3D_RTYPE_TEXTURE:
             /* Texture allows:
              *      - WINED3DUSAGE_AUTOGENMIPMAP
              *      - WINED3DUSAGE_DEPTHSTENCIL
@@ -4111,8 +4111,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             }
             break;
 
-        case WINED3DRTYPE_VOLUMETEXTURE:
-        case WINED3DRTYPE_VOLUME:
+        case WINED3D_RTYPE_VOLUME_TEXTURE:
+        case WINED3D_RTYPE_VOLUME:
             /* Volume is to VolumeTexture what Surface is to Texture, but its
              * usage caps are not documented. Most driver seem to offer
              * (nearly) the same on Volume and VolumeTexture, so do that too.
@@ -4385,7 +4385,7 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
 
     /* Use CheckDeviceFormat to see if the backbuffer_format is usable with the given display_format */
     hr = wined3d_check_device_format(wined3d, adapter_idx, device_type, display_format,
-            WINED3DUSAGE_RENDERTARGET, WINED3DRTYPE_SURFACE, backbuffer_format, SURFACE_OPENGL);
+            WINED3DUSAGE_RENDERTARGET, WINED3D_RTYPE_SURFACE, backbuffer_format, SURFACE_OPENGL);
     if (FAILED(hr))
         TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s / %s.\n",
                 debug_d3dformat(display_format), debug_d3dformat(backbuffer_format));
