@@ -1365,665 +1365,653 @@ msgid "Netscape Comment"
 msgstr "Commentaire Netscape"
 
 #: crypt32.rc:68
-msgid "SpcSpAgencyInfo"
-msgstr "SpcSpAgencyInfo"
-
-#: crypt32.rc:69
-msgid "SpcFinancialCriteria"
-msgstr "SpcFinancialCriteria"
-
-#: crypt32.rc:70
-msgid "SpcMinimalCriteria"
-msgstr "SpcMinimalCriteria"
-
-#: crypt32.rc:71
 msgid "Country/Region"
 msgstr "Pays/Région"
 
-#: crypt32.rc:72
+#: crypt32.rc:69
 msgid "Organization"
 msgstr "Organisation"
 
-#: crypt32.rc:73
+#: crypt32.rc:70
 msgid "Organizational Unit"
 msgstr "Unité d'organisation"
 
-#: crypt32.rc:74
+#: crypt32.rc:71
 msgid "Common Name"
 msgstr "Nom commun"
 
-#: crypt32.rc:75
+#: crypt32.rc:72
 msgid "Locality"
 msgstr "Localité"
 
-#: crypt32.rc:76
+#: crypt32.rc:73
 msgid "State or Province"
 msgstr "État ou province"
 
-#: crypt32.rc:77
+#: crypt32.rc:74
 msgid "Title"
 msgstr "Titre"
 
-#: crypt32.rc:78
+#: crypt32.rc:75
 msgid "Given Name"
 msgstr "Prénom"
 
-#: crypt32.rc:79
+#: crypt32.rc:76
 msgid "Initials"
 msgstr "Initiales"
 
-#: crypt32.rc:80
+#: crypt32.rc:77
 msgid "Surname"
 msgstr "Nom de famille"
 
-#: crypt32.rc:81
+#: crypt32.rc:78
 msgid "Domain Component"
 msgstr "Composant de domaine"
 
-#: crypt32.rc:82
+#: crypt32.rc:79
 msgid "Street Address"
 msgstr "Adresse"
 
-#: crypt32.rc:83
+#: crypt32.rc:80
 msgid "Serial Number"
 msgstr "Numéro de série"
 
-#: crypt32.rc:84
+#: crypt32.rc:81
 msgid "CA Version"
 msgstr "Version de l'AC"
 
-#: crypt32.rc:85
+#: crypt32.rc:82
 msgid "Cross CA Version"
 msgstr "Version de certification croisée d'AC"
 
-#: crypt32.rc:86
+#: crypt32.rc:83
 msgid "Serialized Signature Serial Number"
 msgstr "Numéro de série de signature sérialisée"
 
-#: crypt32.rc:87
+#: crypt32.rc:84
 msgid "Principal Name"
 msgstr "Nom principal"
 
-#: crypt32.rc:88
+#: crypt32.rc:85
 msgid "Windows Product Update"
 msgstr "Mise à jour de Windows"
 
-#: crypt32.rc:89
+#: crypt32.rc:86
 msgid "Enrollment Name Value Pair"
 msgstr "Paire nom/value d'enrôlement"
 
-#: crypt32.rc:90
+#: crypt32.rc:87
 msgid "OS Version"
 msgstr "Version du système d'exploitation"
 
-#: crypt32.rc:91
+#: crypt32.rc:88
 msgid "Enrollment CSP"
 msgstr "Fournisseur de service cryptographique d'enrôlement"
 
-#: crypt32.rc:92
+#: crypt32.rc:89
 msgid "CRL Number"
 msgstr "Numéro de la LRC"
 
-#: crypt32.rc:93
+#: crypt32.rc:90
 msgid "Delta CRL Indicator"
 msgstr "Indicateur de delta-LRC"
 
-#: crypt32.rc:94
+#: crypt32.rc:91
 msgid "Issuing Distribution Point"
 msgstr "Point de distribution d'émission"
 
-#: crypt32.rc:95
+#: crypt32.rc:92
 msgid "Freshest CRL"
 msgstr "LRC la plus récente"
 
-#: crypt32.rc:96
+#: crypt32.rc:93
 msgid "Name Constraints"
 msgstr "Contraintes de nom"
 
-#: crypt32.rc:97
+#: crypt32.rc:94
 msgid "Policy Mappings"
 msgstr "Mappings de politiques"
 
-#: crypt32.rc:98
+#: crypt32.rc:95
 msgid "Policy Constraints"
 msgstr "Contraintes de politiques"
 
-#: crypt32.rc:99
+#: crypt32.rc:96
 msgid "Cross-Certificate Distribution Points"
 msgstr "Points de distribution de certificats croisés"
 
-#: crypt32.rc:100
+#: crypt32.rc:97
 msgid "Application Policies"
 msgstr "Politiques applicatives"
 
-#: crypt32.rc:101
+#: crypt32.rc:98
 msgid "Application Policy Mappings"
 msgstr "Mappings de politiques applicatives"
 
-#: crypt32.rc:102
+#: crypt32.rc:99
 msgid "Application Policy Constraints"
 msgstr "Contraintes de politiques applicatives"
 
-#: crypt32.rc:103
+#: crypt32.rc:100
 msgid "CMC Data"
 msgstr "Données CMC"
 
-#: crypt32.rc:104
+#: crypt32.rc:101
 msgid "CMC Response"
 msgstr "Réponse CMC"
 
-#: crypt32.rc:105
+#: crypt32.rc:102
 msgid "Unsigned CMC Request"
 msgstr "Requête CMC non signée"
 
-#: crypt32.rc:106
+#: crypt32.rc:103
 msgid "CMC Status Info"
 msgstr "Informations sur le statut CMC"
 
-#: crypt32.rc:107
+#: crypt32.rc:104
 msgid "CMC Extensions"
 msgstr "Extensions CMC"
 
-#: crypt32.rc:108
+#: crypt32.rc:105
 msgid "CMC Attributes"
 msgstr "Attributs CMC"
 
-#: crypt32.rc:109
+#: crypt32.rc:106
 msgid "PKCS 7 Data"
 msgstr "Données PKCS 7"
 
-#: crypt32.rc:110
+#: crypt32.rc:107
 msgid "PKCS 7 Signed"
 msgstr "Signé avec PKCS 7"
 
-#: crypt32.rc:111
+#: crypt32.rc:108
 msgid "PKCS 7 Enveloped"
 msgstr "Enveloppé avec PKCS 7"
 
-#: crypt32.rc:112
+#: crypt32.rc:109
 msgid "PKCS 7 Signed Enveloped"
 msgstr "Enveloppé et signé avec PKCS 7"
 
-#: crypt32.rc:113
+#: crypt32.rc:110
 msgid "PKCS 7 Digested"
 msgstr "Haché avec PKCS 7"
 
-#: crypt32.rc:114
+#: crypt32.rc:111
 msgid "PKCS 7 Encrypted"
 msgstr "Chiffré avec PKCS 7"
 
-#: crypt32.rc:115
+#: crypt32.rc:112
 msgid "Previous CA Certificate Hash"
 msgstr "Empreinte précédente du certificat de l'AC"
 
-#: crypt32.rc:116
+#: crypt32.rc:113
 msgid "Virtual Base CRL Number"
 msgstr "Numéro de LRC de base virtuelle"
 
-#: crypt32.rc:117
+#: crypt32.rc:114
 msgid "Next CRL Publish"
 msgstr "Prochaine publication de LRC"
 
-#: crypt32.rc:118
+#: crypt32.rc:115
 msgid "CA Encryption Certificate"
 msgstr "Certificat de chiffrement d'AC"
 
-#: crypt32.rc:119 cryptui.rc:145
+#: crypt32.rc:116 cryptui.rc:145
 msgid "Key Recovery Agent"
 msgstr "Agent de recouvrement de clé"
 
-#: crypt32.rc:120
+#: crypt32.rc:117
 msgid "Certificate Template Information"
 msgstr "Informations sur le modèle de certificats"
 
-#: crypt32.rc:121
+#: crypt32.rc:118
 msgid "Enterprise Root OID"
 msgstr "OID racine de l'entreprise"
 
-#: crypt32.rc:122
+#: crypt32.rc:119
 msgid "Dummy Signer"
 msgstr "Signataire factice"
 
-#: crypt32.rc:123
+#: crypt32.rc:120
 msgid "Encrypted Private Key"
 msgstr "Clé de chiffrement privée"
 
-#: crypt32.rc:124
+#: crypt32.rc:121
 msgid "Published CRL Locations"
 msgstr "Emplacements des LRC publiées"
 
-#: crypt32.rc:125
+#: crypt32.rc:122
 msgid "Enforce Certificate Chain Policy"
 msgstr "Imposer une politique de chaîne de certificats"
 
-#: crypt32.rc:126
+#: crypt32.rc:123
 msgid "Transaction Id"
 msgstr "Identifiant de transaction"
 
-#: crypt32.rc:127
+#: crypt32.rc:124
 msgid "Sender Nonce"
 msgstr "Nonce de l'émetteur"
 
-#: crypt32.rc:128
+#: crypt32.rc:125
 msgid "Recipient Nonce"
 msgstr "Nonce du récepteur"
 
-#: crypt32.rc:129
+#: crypt32.rc:126
 msgid "Reg Info"
 msgstr "Informations d'enregistrement"
 
-#: crypt32.rc:130
+#: crypt32.rc:127
 msgid "Get Certificate"
 msgstr "Obtenir un certificat"
 
-#: crypt32.rc:131
+#: crypt32.rc:128
 msgid "Get CRL"
 msgstr "Obtenir une LRC"
 
-#: crypt32.rc:132
+#: crypt32.rc:129
 msgid "Revoke Request"
 msgstr "Révoquer une requête"
 
-#: crypt32.rc:133
+#: crypt32.rc:130
 msgid "Query Pending"
 msgstr "Requête en attente"
 
-#: crypt32.rc:134 cryptui.rc:92
+#: crypt32.rc:131 cryptui.rc:92
 msgid "Certificate Trust List"
 msgstr "Liste de certificats de confiance"
 
-#: crypt32.rc:135
+#: crypt32.rc:132
 msgid "Archived Key Certificate Hash"
 msgstr "Empreinte du certificat de clé archivée"
 
-#: crypt32.rc:136
+#: crypt32.rc:133
 msgid "Private Key Usage Period"
 msgstr "Période d'utilisation de la clé privée"
 
-#: crypt32.rc:137
+#: crypt32.rc:134
 msgid "Client Information"
 msgstr "Informations sur le client"
 
-#: crypt32.rc:138
+#: crypt32.rc:135
 msgid "Server Authentication"
 msgstr "Authentification du serveur"
 
-#: crypt32.rc:139
+#: crypt32.rc:136
 msgid "Client Authentication"
 msgstr "Authentification du client"
 
-#: crypt32.rc:140
+#: crypt32.rc:137
 msgid "Code Signing"
 msgstr "Signature de code"
 
-#: crypt32.rc:141
+#: crypt32.rc:138
 msgid "Secure Email"
 msgstr "Messagerie sécurisée"
 
-#: crypt32.rc:142
+#: crypt32.rc:139
 msgid "Time Stamping"
 msgstr "Horodatage"
 
-#: crypt32.rc:143
+#: crypt32.rc:140
 msgid "Microsoft Trust List Signing"
 msgstr "Signature de la liste de confiance Microsoft"
 
-#: crypt32.rc:144
+#: crypt32.rc:141
 msgid "Microsoft Time Stamping"
 msgstr "Horodatage Microsoft"
 
-#: crypt32.rc:145
+#: crypt32.rc:142
 msgid "IP security end system"
 msgstr "Système terminal IPsec"
 
-#: crypt32.rc:146
+#: crypt32.rc:143
 msgid "IP security tunnel termination"
 msgstr "Terminaison du tunnel IPsec"
 
-#: crypt32.rc:147
+#: crypt32.rc:144
 msgid "IP security user"
 msgstr "Utilisateur IPsec"
 
-#: crypt32.rc:148
+#: crypt32.rc:145
 msgid "Encrypting File System"
 msgstr "Système de fichiers chiffré (EFS)"
 
-#: crypt32.rc:149 cryptui.rc:130
+#: crypt32.rc:146 cryptui.rc:130
 msgid "Windows Hardware Driver Verification"
 msgstr "Vérification des pilotes matériels de Windows"
 
-#: crypt32.rc:150 cryptui.rc:131
+#: crypt32.rc:147 cryptui.rc:131
 msgid "Windows System Component Verification"
 msgstr "Vérification des composants système de Windows"
 
-#: crypt32.rc:151 cryptui.rc:132
+#: crypt32.rc:148 cryptui.rc:132
 msgid "OEM Windows System Component Verification"
 msgstr "Vérification des composants système de Windows OEM"
 
-#: crypt32.rc:152 cryptui.rc:133
+#: crypt32.rc:149 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
 msgstr "Vérification des composants système de Windows embarqué"
 
-#: crypt32.rc:153 cryptui.rc:140
+#: crypt32.rc:150 cryptui.rc:140
 msgid "Key Pack Licenses"
 msgstr "Licences de jeux de clés"
 
-#: crypt32.rc:154 cryptui.rc:141
+#: crypt32.rc:151 cryptui.rc:141
 msgid "License Server Verification"
 msgstr "Vérification du serveur de licences"
 
-#: crypt32.rc:155 cryptui.rc:143
+#: crypt32.rc:152 cryptui.rc:143
 msgid "Smart Card Logon"
 msgstr "Connexion avec carte à puce"
 
-#: crypt32.rc:156 cryptui.rc:139
+#: crypt32.rc:153 cryptui.rc:139
 msgid "Digital Rights"
 msgstr "Droits numériques"
 
-#: crypt32.rc:157 cryptui.rc:135
+#: crypt32.rc:154 cryptui.rc:135
 msgid "Qualified Subordination"
 msgstr "Subordination conditionnelle"
 
-#: crypt32.rc:158 cryptui.rc:136
+#: crypt32.rc:155 cryptui.rc:136
 msgid "Key Recovery"
 msgstr "Recouvrement de clé"
 
-#: crypt32.rc:159 cryptui.rc:137
+#: crypt32.rc:156 cryptui.rc:137
 msgid "Document Signing"
 msgstr "Signature de documents"
 
-#: crypt32.rc:160
+#: crypt32.rc:157
 msgid "IP security IKE intermediate"
 msgstr "Intermédiaire IKE IPsec"
 
-#: crypt32.rc:161 cryptui.rc:129
+#: crypt32.rc:158 cryptui.rc:129
 msgid "File Recovery"
 msgstr "Restauration de fichier"
 
-#: crypt32.rc:162 cryptui.rc:134
+#: crypt32.rc:159 cryptui.rc:134
 msgid "Root List Signer"
 msgstr "Signataire de liste racine"
 
-#: crypt32.rc:163
+#: crypt32.rc:160
 msgid "All application policies"
 msgstr "Toutes les politiques applicatives"
 
-#: crypt32.rc:164 cryptui.rc:146
+#: crypt32.rc:161 cryptui.rc:146
 msgid "Directory Service Email Replication"
 msgstr "Réplication de courriers électroniques du service d'annuaire"
 
-#: crypt32.rc:165 cryptui.rc:142
+#: crypt32.rc:162 cryptui.rc:142
 msgid "Certificate Request Agent"
 msgstr "Agent de demande de certificat"
 
-#: crypt32.rc:166 cryptui.rc:138
+#: crypt32.rc:163 cryptui.rc:138
 msgid "Lifetime Signing"
 msgstr "Signature à vie"
 
-#: crypt32.rc:167
+#: crypt32.rc:164
 msgid "All issuance policies"
 msgstr "Toutes les politiques d'émission"
 
-#: crypt32.rc:172
+#: crypt32.rc:169
 msgid "Trusted Root Certification Authorities"
 msgstr "Autorités de certification de confiance"
 
-#: crypt32.rc:173
+#: crypt32.rc:170
 msgid "Personal"
 msgstr "Personnel"
 
-#: crypt32.rc:174
+#: crypt32.rc:171
 msgid "Intermediate Certification Authorities"
 msgstr "Autorités de certification intermédiaires"
 
-#: crypt32.rc:175
+#: crypt32.rc:172
 msgid "Other People"
 msgstr "Autres personnes"
 
-#: crypt32.rc:176
+#: crypt32.rc:173
 msgid "Trusted Publishers"
 msgstr "Éditeurs de confiance"
 
-#: crypt32.rc:177
+#: crypt32.rc:174
 msgid "Untrusted Certificates"
 msgstr "Certificats non autorisés"
 
-#: crypt32.rc:182
+#: crypt32.rc:179
 msgid "KeyID="
 msgstr "ID de clé ="
 
-#: crypt32.rc:183
+#: crypt32.rc:180
 msgid "Certificate Issuer"
 msgstr "Émetteur du certificat"
 
-#: crypt32.rc:184
+#: crypt32.rc:181
 msgid "Certificate Serial Number="
 msgstr "Numéro de série du certificat ="
 
-#: crypt32.rc:185
+#: crypt32.rc:182
 msgid "Other Name="
 msgstr "Autre nom ="
 
-#: crypt32.rc:186
+#: crypt32.rc:183
 msgid "Email Address="
 msgstr "Adresse électronique ="
 
-#: crypt32.rc:187
+#: crypt32.rc:184
 msgid "DNS Name="
 msgstr "Nom DNS ="
 
-#: crypt32.rc:188
+#: crypt32.rc:185
 msgid "Directory Address"
 msgstr "Adresse d'annuaire"
 
-#: crypt32.rc:189
+#: crypt32.rc:186
 msgid "URL="
 msgstr "URL ="
 
-#: crypt32.rc:190
+#: crypt32.rc:187
 msgid "IP Address="
 msgstr "Adresse IP ="
 
-#: crypt32.rc:191
+#: crypt32.rc:188
 msgid "Mask="
 msgstr "Masque ="
 
-#: crypt32.rc:192
+#: crypt32.rc:189
 msgid "Registered ID="
 msgstr "ID enregistré ="
 
-#: crypt32.rc:193
+#: crypt32.rc:190
 msgid "Unknown Key Usage"
 msgstr "Utilisation de la clé inconnue"
 
-#: crypt32.rc:194
+#: crypt32.rc:191
 msgid "Subject Type="
 msgstr "Type de sujet ="
 
-#: crypt32.rc:195
+#: crypt32.rc:192
 msgctxt "Certificate Authority"
 msgid "CA"
 msgstr "AC"
 
-#: crypt32.rc:196
+#: crypt32.rc:193
 msgid "End Entity"
 msgstr "Entité terminale"
 
-#: crypt32.rc:197
+#: crypt32.rc:194
 msgid "Path Length Constraint="
 msgstr "Contrainte de longueur de chemin ="
 
-#: crypt32.rc:198
+#: crypt32.rc:195
 msgctxt "path length"
 msgid "None"
 msgstr "Nulle"
 
-#: crypt32.rc:199
+#: crypt32.rc:196
 msgid "Information Not Available"
 msgstr "Informations non disponibles"
 
-#: crypt32.rc:200
+#: crypt32.rc:197
 msgid "Authority Info Access"
 msgstr "Accès aux informations de l'autorité"
 
-#: crypt32.rc:201
+#: crypt32.rc:198
 msgid "Access Method="
 msgstr "Méthode d'accès ="
 
-#: crypt32.rc:202
+#: crypt32.rc:199
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr "OCSP"
 
-#: crypt32.rc:203
+#: crypt32.rc:200
 msgid "CA Issuers"
 msgstr "Émetteurs de l'AC"
 
-#: crypt32.rc:204
+#: crypt32.rc:201
 msgid "Unknown Access Method"
 msgstr "Méthode d'accès inconnue"
 
-#: crypt32.rc:205
+#: crypt32.rc:202
 msgid "Alternative Name"
 msgstr "Nom alternatif"
 
-#: crypt32.rc:206
+#: crypt32.rc:203
 msgid "CRL Distribution Point"
 msgstr "Point de distribution de LRC"
 
-#: crypt32.rc:207
+#: crypt32.rc:204
 msgid "Distribution Point Name"
 msgstr "Nom du point de distribution"
 
-#: crypt32.rc:208
+#: crypt32.rc:205
 msgid "Full Name"
 msgstr "Nom complet"
 
-#: crypt32.rc:209
+#: crypt32.rc:206
 msgid "RDN Name"
 msgstr "Nom distingué relatif (RDN)"
 
-#: crypt32.rc:210
+#: crypt32.rc:207
 msgid "CRL Reason="
 msgstr "Raison de la LRC ="
 
-#: crypt32.rc:211
+#: crypt32.rc:208
 msgid "CRL Issuer"
 msgstr "Émetteur de la LRC"
 
-#: crypt32.rc:212
+#: crypt32.rc:209
 msgid "Key Compromise"
 msgstr "Clé compromise"
 
-#: crypt32.rc:213
+#: crypt32.rc:210
 msgid "CA Compromise"
 msgstr "AC compromise"
 
-#: crypt32.rc:214
+#: crypt32.rc:211
 msgid "Affiliation Changed"
 msgstr "Affiliation modifiée"
 
-#: crypt32.rc:215
+#: crypt32.rc:212
 msgid "Superseded"
 msgstr "Supplanté"
 
-#: crypt32.rc:216
+#: crypt32.rc:213
 msgid "Operation Ceased"
 msgstr "Cessation des opérations"
 
-#: crypt32.rc:217
+#: crypt32.rc:214
 msgid "Certificate Hold"
 msgstr "Certificat suspendu"
 
-#: crypt32.rc:218
+#: crypt32.rc:215
 msgid "Financial Information="
 msgstr "Informations financières ="
 
-#: crypt32.rc:219 taskmgr.rc:401
+#: crypt32.rc:216 taskmgr.rc:401
 msgid "Available"
 msgstr "Disponible"
 
-#: crypt32.rc:220
+#: crypt32.rc:217
 msgid "Not Available"
 msgstr "Non disponible"
 
-#: crypt32.rc:221
+#: crypt32.rc:218
 msgid "Meets Criteria="
 msgstr "Respecte les critères ="
 
-#: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
+#: crypt32.rc:219 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
 msgid "Yes"
 msgstr "Oui"
 
-#: crypt32.rc:223 cryptui.rc:164 oleaut32.rc:30 wininet.rc:81 ipconfig.rc:45
+#: crypt32.rc:220 cryptui.rc:164 oleaut32.rc:30 wininet.rc:81 ipconfig.rc:45
 msgid "No"
 msgstr "Non"
 
-#: crypt32.rc:224
+#: crypt32.rc:221
 msgid "Digital Signature"
 msgstr "Signature numérique"
 
-#: crypt32.rc:225
+#: crypt32.rc:222
 msgid "Non-Repudiation"
 msgstr "Non-répudiation"
 
-#: crypt32.rc:226
+#: crypt32.rc:223
 msgid "Key Encipherment"
 msgstr "Chiffrement de la clé"
 
-#: crypt32.rc:227
+#: crypt32.rc:224
 msgid "Data Encipherment"
 msgstr "Chiffrement de données"
 
-#: crypt32.rc:228
+#: crypt32.rc:225
 msgid "Key Agreement"
 msgstr "Accord sur la clé"
 
-#: crypt32.rc:229
+#: crypt32.rc:226
 msgid "Certificate Signing"
 msgstr "Signature de certificat"
 
-#: crypt32.rc:230
+#: crypt32.rc:227
 msgid "Off-line CRL Signing"
 msgstr "Signature de LRC hors-ligne"
 
-#: crypt32.rc:231
+#: crypt32.rc:228
 msgid "CRL Signing"
 msgstr "Signature de LRC"
 
-#: crypt32.rc:232
+#: crypt32.rc:229
 msgid "Encipher Only"
 msgstr "Chiffrement seul"
 
-#: crypt32.rc:233
+#: crypt32.rc:230
 msgid "Decipher Only"
 msgstr "Déchiffrement seul"
 
-#: crypt32.rc:234
+#: crypt32.rc:231
 msgid "SSL Client Authentication"
 msgstr "Authentification de client SSL"
 
-#: crypt32.rc:235
+#: crypt32.rc:232
 msgid "SSL Server Authentication"
 msgstr "Authentification de serveur SSL"
 
-#: crypt32.rc:236
+#: crypt32.rc:233
 msgid "S/MIME"
 msgstr "S/MIME"
 
-#: crypt32.rc:237
+#: crypt32.rc:234
 msgid "Signature"
 msgstr "Signature"
 
-#: crypt32.rc:238
+#: crypt32.rc:235
 msgid "SSL CA"
 msgstr "AC SSL"
 
-#: crypt32.rc:239
+#: crypt32.rc:236
 msgid "S/MIME CA"
 msgstr "AC S/MIME"
 
-#: crypt32.rc:240
+#: crypt32.rc:237
 msgid "Signature CA"
 msgstr "AC de signature"
 

@@ -1362,665 +1362,653 @@ msgid "Netscape Comment"
 msgstr "Netscape komentaras"
 
 #: crypt32.rc:68
-msgid "SpcSpAgencyInfo"
-msgstr "SpcSpAgencyInfo"
-
-#: crypt32.rc:69
-msgid "SpcFinancialCriteria"
-msgstr "SpcFinancialCriteria"
-
-#: crypt32.rc:70
-msgid "SpcMinimalCriteria"
-msgstr "SpcMinimalCriteria"
-
-#: crypt32.rc:71
 msgid "Country/Region"
 msgstr "Valstybė/regionas"
 
-#: crypt32.rc:72
+#: crypt32.rc:69
 msgid "Organization"
 msgstr "Įstaiga"
 
-#: crypt32.rc:73
+#: crypt32.rc:70
 msgid "Organizational Unit"
 msgstr "Įstaigos padalinys"
 
-#: crypt32.rc:74
+#: crypt32.rc:71
 msgid "Common Name"
 msgstr "Vardas, pavardė"
 
-#: crypt32.rc:75
+#: crypt32.rc:72
 msgid "Locality"
 msgstr "Vietovė"
 
-#: crypt32.rc:76
+#: crypt32.rc:73
 msgid "State or Province"
 msgstr "Valstija, sritis, gubernija"
 
-#: crypt32.rc:77
+#: crypt32.rc:74
 msgid "Title"
 msgstr "Titulas"
 
-#: crypt32.rc:78
+#: crypt32.rc:75
 msgid "Given Name"
 msgstr "Vardas"
 
-#: crypt32.rc:79
+#: crypt32.rc:76
 msgid "Initials"
 msgstr "Inicialai"
 
-#: crypt32.rc:80
+#: crypt32.rc:77
 msgid "Surname"
 msgstr "Pavardė"
 
-#: crypt32.rc:81
+#: crypt32.rc:78
 msgid "Domain Component"
 msgstr "Srities komponentas"
 
-#: crypt32.rc:82
+#: crypt32.rc:79
 msgid "Street Address"
 msgstr "Adresas"
 
-#: crypt32.rc:83
+#: crypt32.rc:80
 msgid "Serial Number"
 msgstr "Numeris"
 
-#: crypt32.rc:84
+#: crypt32.rc:81
 msgid "CA Version"
 msgstr "LĮ versija"
 
-#: crypt32.rc:85
+#: crypt32.rc:82
 msgid "Cross CA Version"
 msgstr "Kryžminės LĮ versija"
 
-#: crypt32.rc:86
+#: crypt32.rc:83
 msgid "Serialized Signature Serial Number"
 msgstr "Išdėstyto serijomis parašo numeris"
 
-#: crypt32.rc:87
+#: crypt32.rc:84
 msgid "Principal Name"
 msgstr "Pagrindinis pavadinimas"
 
-#: crypt32.rc:88
+#: crypt32.rc:85
 msgid "Windows Product Update"
 msgstr "Windows produktų naujinimas"
 
-#: crypt32.rc:89
+#: crypt32.rc:86
 msgid "Enrollment Name Value Pair"
 msgstr "Registravimo vardo reikšmių pora"
 
-#: crypt32.rc:90
+#: crypt32.rc:87
 msgid "OS Version"
 msgstr "OS versija"
 
-#: crypt32.rc:91
+#: crypt32.rc:88
 msgid "Enrollment CSP"
 msgstr "Registravimo CSP"
 
-#: crypt32.rc:92
+#: crypt32.rc:89
 msgid "CRL Number"
 msgstr "ALS numeris"
 
-#: crypt32.rc:93
+#: crypt32.rc:90
 msgid "Delta CRL Indicator"
 msgstr "ALS pokyčių indikatorius"
 
-#: crypt32.rc:94
+#: crypt32.rc:91
 msgid "Issuing Distribution Point"
 msgstr "Išdavimo platinimo vieta"
 
-#: crypt32.rc:95
+#: crypt32.rc:92
 msgid "Freshest CRL"
 msgstr "Naujausias ALS"
 
-#: crypt32.rc:96
+#: crypt32.rc:93
 msgid "Name Constraints"
 msgstr "Vardo ribojimai"
 
-#: crypt32.rc:97
+#: crypt32.rc:94
 msgid "Policy Mappings"
 msgstr "Politikos atvaizdavimas"
 
-#: crypt32.rc:98
+#: crypt32.rc:95
 msgid "Policy Constraints"
 msgstr "Politikos ribojimai"
 
-#: crypt32.rc:99
+#: crypt32.rc:96
 msgid "Cross-Certificate Distribution Points"
 msgstr "Kryžminio liudijimo platinimo vietos"
 
-#: crypt32.rc:100
+#: crypt32.rc:97
 msgid "Application Policies"
 msgstr "Programos politika"
 
-#: crypt32.rc:101
+#: crypt32.rc:98
 msgid "Application Policy Mappings"
 msgstr "Programos politikos atvaizdavimas"
 
-#: crypt32.rc:102
+#: crypt32.rc:99
 msgid "Application Policy Constraints"
 msgstr "Programos politikos ribojimai"
 
-#: crypt32.rc:103
+#: crypt32.rc:100
 msgid "CMC Data"
 msgstr "CMC duomenys"
 
-#: crypt32.rc:104
+#: crypt32.rc:101
 msgid "CMC Response"
 msgstr "CMC atsakymas"
 
-#: crypt32.rc:105
+#: crypt32.rc:102
 msgid "Unsigned CMC Request"
 msgstr "Nepasirašyta CMC užklausa"
 
-#: crypt32.rc:106
+#: crypt32.rc:103
 msgid "CMC Status Info"
 msgstr "CMC būsenos informacija"
 
-#: crypt32.rc:107
+#: crypt32.rc:104
 msgid "CMC Extensions"
 msgstr "CMC plėtiniai"
 
-#: crypt32.rc:108
+#: crypt32.rc:105
 msgid "CMC Attributes"
 msgstr "CMC atributai"
 
-#: crypt32.rc:109
+#: crypt32.rc:106
 msgid "PKCS 7 Data"
 msgstr "PKCS 7 duomenys"
 
-#: crypt32.rc:110
+#: crypt32.rc:107
 msgid "PKCS 7 Signed"
 msgstr "PKCS 7 pasirašytas"
 
-#: crypt32.rc:111
+#: crypt32.rc:108
 msgid "PKCS 7 Enveloped"
 msgstr "PKCS 7 voke"
 
-#: crypt32.rc:112
+#: crypt32.rc:109
 msgid "PKCS 7 Signed Enveloped"
 msgstr "PKCS 7 pasirašytas, voke"
 
-#: crypt32.rc:113
+#: crypt32.rc:110
 msgid "PKCS 7 Digested"
 msgstr "PKCS 7 apskaičiuota maišos reikšmė"
 
-#: crypt32.rc:114
+#: crypt32.rc:111
 msgid "PKCS 7 Encrypted"
 msgstr "PKCS 7 užšifruotas"
 
-#: crypt32.rc:115
+#: crypt32.rc:112
 msgid "Previous CA Certificate Hash"
 msgstr "Ankstesnė LĮ liudijimo maišos reikšmė"
 
-#: crypt32.rc:116
+#: crypt32.rc:113
 msgid "Virtual Base CRL Number"
 msgstr "Virtualus bazinis ALS numeris"
 
-#: crypt32.rc:117
+#: crypt32.rc:114
 msgid "Next CRL Publish"
 msgstr "Kitas ALS publikavimas"
 
-#: crypt32.rc:118
+#: crypt32.rc:115
 msgid "CA Encryption Certificate"
 msgstr "LĮ užšifravimo liudijimas"
 
-#: crypt32.rc:119 cryptui.rc:145
+#: crypt32.rc:116 cryptui.rc:145
 msgid "Key Recovery Agent"
 msgstr "Rakto atkūrimo priemonė"
 
-#: crypt32.rc:120
+#: crypt32.rc:117
 msgid "Certificate Template Information"
 msgstr "Liudijimo šablono informacija"
 
-#: crypt32.rc:121
+#: crypt32.rc:118
 msgid "Enterprise Root OID"
 msgstr "Organizacijos pagrindinis objekto identifikatorius"
 
-#: crypt32.rc:122
+#: crypt32.rc:119
 msgid "Dummy Signer"
 msgstr "Fiktyvus pasirašytojas"
 
-#: crypt32.rc:123
+#: crypt32.rc:120
 msgid "Encrypted Private Key"
 msgstr "Užšifruotas privatusis raktas"
 
-#: crypt32.rc:124
+#: crypt32.rc:121
 msgid "Published CRL Locations"
 msgstr "Publikuotos ALS vietos"
 
-#: crypt32.rc:125
+#: crypt32.rc:122
 msgid "Enforce Certificate Chain Policy"
 msgstr "Priverstinai vykdyti liudijimų grandinės politiką"
 
-#: crypt32.rc:126
+#: crypt32.rc:123
 msgid "Transaction Id"
 msgstr "Operacijos identifikatorius"
 
-#: crypt32.rc:127
+#: crypt32.rc:124
 msgid "Sender Nonce"
 msgstr "Siuntėjas tam kartui"
 
-#: crypt32.rc:128
+#: crypt32.rc:125
 msgid "Recipient Nonce"
 msgstr "Gavėjas tam kartui"
 
-#: crypt32.rc:129
+#: crypt32.rc:126
 msgid "Reg Info"
 msgstr "Registracijos informacija"
 
-#: crypt32.rc:130
+#: crypt32.rc:127
 msgid "Get Certificate"
 msgstr "Gauti liudijimą"
 
-#: crypt32.rc:131
+#: crypt32.rc:128
 msgid "Get CRL"
 msgstr "Gauti ALS"
 
-#: crypt32.rc:132
+#: crypt32.rc:129
 msgid "Revoke Request"
 msgstr "Atšaukti užklausą"
 
-#: crypt32.rc:133
+#: crypt32.rc:130
 msgid "Query Pending"
 msgstr "Laukia užklausa"
 
-#: crypt32.rc:134 cryptui.rc:92
+#: crypt32.rc:131 cryptui.rc:92
 msgid "Certificate Trust List"
 msgstr "Patikintų liudijimų sąrašas"
 
-#: crypt32.rc:135
+#: crypt32.rc:132
 msgid "Archived Key Certificate Hash"
 msgstr "Atsarginės rakto kopijos liudijimo maišos reikšmė"
 
-#: crypt32.rc:136
+#: crypt32.rc:133
 msgid "Private Key Usage Period"
 msgstr "Privačiojo rakto naudojimo periodas"
 
-#: crypt32.rc:137
+#: crypt32.rc:134
 msgid "Client Information"
 msgstr "Kliento informacija"
 
-#: crypt32.rc:138
+#: crypt32.rc:135
 msgid "Server Authentication"
 msgstr "Serverio tapatumo nustatymas"
 
-#: crypt32.rc:139
+#: crypt32.rc:136
 msgid "Client Authentication"
 msgstr "Kliento tapatumo nustatymas"
 
-#: crypt32.rc:140
+#: crypt32.rc:137
 msgid "Code Signing"
 msgstr "Programos kodo pasirašymas"
 
-#: crypt32.rc:141
+#: crypt32.rc:138
 msgid "Secure Email"
 msgstr "Saugus elektroninis paštas"
 
-#: crypt32.rc:142
+#: crypt32.rc:139
 msgid "Time Stamping"
 msgstr "Laiko žymos įterpimas"
 
-#: crypt32.rc:143
+#: crypt32.rc:140
 msgid "Microsoft Trust List Signing"
 msgstr "Microsoft patikintų liudijimų sąrašo pasirašymas"
 
-#: crypt32.rc:144
+#: crypt32.rc:141
 msgid "Microsoft Time Stamping"
 msgstr "Microsoft laiko žymos įterpimas"
 
-#: crypt32.rc:145
+#: crypt32.rc:142
 msgid "IP security end system"
 msgstr "IP saugumo galinė sistema"
 
-#: crypt32.rc:146
+#: crypt32.rc:143
 msgid "IP security tunnel termination"
 msgstr "IP saugumo tunelio baigimas"
 
-#: crypt32.rc:147
+#: crypt32.rc:144
 msgid "IP security user"
 msgstr "IP saugumo naudotojas"
 
-#: crypt32.rc:148
+#: crypt32.rc:145
 msgid "Encrypting File System"
 msgstr "Failų šifravimo sistema"
 
-#: crypt32.rc:149 cryptui.rc:130
+#: crypt32.rc:146 cryptui.rc:130
 msgid "Windows Hardware Driver Verification"
 msgstr "Windows tvarkyklių patikra"
 
-#: crypt32.rc:150 cryptui.rc:131
+#: crypt32.rc:147 cryptui.rc:131
 msgid "Windows System Component Verification"
 msgstr "Windows sistemos komponentų patikra"
 
-#: crypt32.rc:151 cryptui.rc:132
+#: crypt32.rc:148 cryptui.rc:132
 msgid "OEM Windows System Component Verification"
 msgstr "OEM Windows sistemos komponentų patikra"
 
-#: crypt32.rc:152 cryptui.rc:133
+#: crypt32.rc:149 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
 msgstr "Įtaisytų Windows sistemos komponentų patikra"
 
-#: crypt32.rc:153 cryptui.rc:140
+#: crypt32.rc:150 cryptui.rc:140
 msgid "Key Pack Licenses"
 msgstr "Kodų pako licencijos"
 
-#: crypt32.rc:154 cryptui.rc:141
+#: crypt32.rc:151 cryptui.rc:141
 msgid "License Server Verification"
 msgstr "Licencijų serverio patikra"
 
-#: crypt32.rc:155 cryptui.rc:143
+#: crypt32.rc:152 cryptui.rc:143
 msgid "Smart Card Logon"
 msgstr "Lustinių kortelių įvedimas"
 
-#: crypt32.rc:156 cryptui.rc:139
+#: crypt32.rc:153 cryptui.rc:139
 msgid "Digital Rights"
 msgstr "Skaitmeninės teisės"
 
-#: crypt32.rc:157 cryptui.rc:135
+#: crypt32.rc:154 cryptui.rc:135
 msgid "Qualified Subordination"
 msgstr "Patikslintoji hierarchija"
 
-#: crypt32.rc:158 cryptui.rc:136
+#: crypt32.rc:155 cryptui.rc:136
 msgid "Key Recovery"
 msgstr "Rakto atkūrimas"
 
-#: crypt32.rc:159 cryptui.rc:137
+#: crypt32.rc:156 cryptui.rc:137
 msgid "Document Signing"
 msgstr "Dokumentų pasirašymas"
 
-#: crypt32.rc:160
+#: crypt32.rc:157
 msgid "IP security IKE intermediate"
 msgstr "IP saugumo IKE tarpininkas"
 
-#: crypt32.rc:161 cryptui.rc:129
+#: crypt32.rc:158 cryptui.rc:129
 msgid "File Recovery"
 msgstr "Failų atkūrimas"
 
-#: crypt32.rc:162 cryptui.rc:134
+#: crypt32.rc:159 cryptui.rc:134
 msgid "Root List Signer"
 msgstr "Pagrindinio sąrašo pasirašytojas"
 
-#: crypt32.rc:163
+#: crypt32.rc:160
 msgid "All application policies"
 msgstr "Visos programų politikos"
 
-#: crypt32.rc:164 cryptui.rc:146
+#: crypt32.rc:161 cryptui.rc:146
 msgid "Directory Service Email Replication"
 msgstr "Katalogų serverio el. pašto dauginimas"
 
-#: crypt32.rc:165 cryptui.rc:142
+#: crypt32.rc:162 cryptui.rc:142
 msgid "Certificate Request Agent"
 msgstr "Liudijimo užklausos priemonė"
 
-#: crypt32.rc:166 cryptui.rc:138
+#: crypt32.rc:163 cryptui.rc:138
 msgid "Lifetime Signing"
 msgstr "Gyvavimo ciklo pasirašymas"
 
-#: crypt32.rc:167
+#: crypt32.rc:164
 msgid "All issuance policies"
 msgstr "Visos išdavimo politikos"
 
-#: crypt32.rc:172
+#: crypt32.rc:169
 msgid "Trusted Root Certification Authorities"
 msgstr "Patikimos vyriausiosios liudijimų įstaigos"
 
-#: crypt32.rc:173
+#: crypt32.rc:170
 msgid "Personal"
 msgstr "Asmeniniai"
 
-#: crypt32.rc:174
+#: crypt32.rc:171
 msgid "Intermediate Certification Authorities"
 msgstr "Tarpinės liudijimų įstaigos"
 
-#: crypt32.rc:175
+#: crypt32.rc:172
 msgid "Other People"
 msgstr "Kiti žmonės"
 
-#: crypt32.rc:176
+#: crypt32.rc:173
 msgid "Trusted Publishers"
 msgstr "Patikimi publikuotojai"
 
-#: crypt32.rc:177
+#: crypt32.rc:174
 msgid "Untrusted Certificates"
 msgstr "Nepatikimi liudijimai"
 
-#: crypt32.rc:182
+#: crypt32.rc:179
 msgid "KeyID="
 msgstr "Rakto identifikatorius="
 
-#: crypt32.rc:183
+#: crypt32.rc:180
 msgid "Certificate Issuer"
 msgstr "Liudijimo išdavėjas"
 
-#: crypt32.rc:184
+#: crypt32.rc:181
 msgid "Certificate Serial Number="
 msgstr "Liudijimo numeris="
 
-#: crypt32.rc:185
+#: crypt32.rc:182
 msgid "Other Name="
 msgstr "Kitas vardas="
 
-#: crypt32.rc:186
+#: crypt32.rc:183
 msgid "Email Address="
 msgstr "Elektroninio pašto adresas="
 
-#: crypt32.rc:187
+#: crypt32.rc:184
 msgid "DNS Name="
 msgstr "DNS vardas="
 
-#: crypt32.rc:188
+#: crypt32.rc:185
 msgid "Directory Address"
 msgstr "Katalogo adresas"
 
-#: crypt32.rc:189
+#: crypt32.rc:186
 msgid "URL="
 msgstr "URL="
 
-#: crypt32.rc:190
+#: crypt32.rc:187
 msgid "IP Address="
 msgstr "IP adresas="
 
-#: crypt32.rc:191
+#: crypt32.rc:188
 msgid "Mask="
 msgstr "Kaukė="
 
-#: crypt32.rc:192
+#: crypt32.rc:189
 msgid "Registered ID="
 msgstr "Registracijos identifikatorius="
 
-#: crypt32.rc:193
+#: crypt32.rc:190
 msgid "Unknown Key Usage"
 msgstr "Nežinomas rakto naudojimas"
 
-#: crypt32.rc:194
+#: crypt32.rc:191
 msgid "Subject Type="
 msgstr "Subjekto tipas="
 
-#: crypt32.rc:195
+#: crypt32.rc:192
 msgctxt "Certificate Authority"
 msgid "CA"
 msgstr "CA"
 
-#: crypt32.rc:196
+#: crypt32.rc:193
 msgid "End Entity"
 msgstr "Esybės pabaiga"
 
-#: crypt32.rc:197
+#: crypt32.rc:194
 msgid "Path Length Constraint="
 msgstr "Kelio ilgio ribojimas="
 
-#: crypt32.rc:198
+#: crypt32.rc:195
 msgctxt "path length"
 msgid "None"
 msgstr "Nėra"
 
-#: crypt32.rc:199
+#: crypt32.rc:196
 msgid "Information Not Available"
 msgstr "Informacija neprieinama"
 
-#: crypt32.rc:200
+#: crypt32.rc:197
 msgid "Authority Info Access"
 msgstr "Įstaigos informacijos prieiga"
 
-#: crypt32.rc:201
+#: crypt32.rc:198
 msgid "Access Method="
 msgstr "Prieigos metodas="
 
-#: crypt32.rc:202
+#: crypt32.rc:199
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr "OCSP"
 
-#: crypt32.rc:203
+#: crypt32.rc:200
 msgid "CA Issuers"
 msgstr "LĮ išdavėjai"
 
-#: crypt32.rc:204
+#: crypt32.rc:201
 msgid "Unknown Access Method"
 msgstr "Nežinomas prieigos metodas"
 
-#: crypt32.rc:205
+#: crypt32.rc:202
 msgid "Alternative Name"
 msgstr "Alternatyvus vardas"
 
-#: crypt32.rc:206
+#: crypt32.rc:203
 msgid "CRL Distribution Point"
 msgstr "ALS platinimo vieta"
 
-#: crypt32.rc:207
+#: crypt32.rc:204
 msgid "Distribution Point Name"
 msgstr "Platinimo vietos pavadinimas"
 
-#: crypt32.rc:208
+#: crypt32.rc:205
 msgid "Full Name"
 msgstr "Asmenvardis"
 
-#: crypt32.rc:209
+#: crypt32.rc:206
 msgid "RDN Name"
 msgstr "RDN vardas"
 
-#: crypt32.rc:210
+#: crypt32.rc:207
 msgid "CRL Reason="
 msgstr "ALS priežastis="
 
-#: crypt32.rc:211
+#: crypt32.rc:208
 msgid "CRL Issuer"
 msgstr "ALS išdavėjas"
 
-#: crypt32.rc:212
+#: crypt32.rc:209
 msgid "Key Compromise"
 msgstr "Pasitikėjimo raktu praradimas"
 
-#: crypt32.rc:213
+#: crypt32.rc:210
 msgid "CA Compromise"
 msgstr "Pasitikėjimo LĮ praradimas"
 
-#: crypt32.rc:214
+#: crypt32.rc:211
 msgid "Affiliation Changed"
 msgstr "Priklausomybės pasikeitimas"
 
-#: crypt32.rc:215
+#: crypt32.rc:212
 msgid "Superseded"
 msgstr "Išstūmimas"
 
-#: crypt32.rc:216
+#: crypt32.rc:213
 msgid "Operation Ceased"
 msgstr "Operacijos nutraukimas"
 
-#: crypt32.rc:217
+#: crypt32.rc:214
 msgid "Certificate Hold"
 msgstr "Liudijimo įšaldymas"
 
-#: crypt32.rc:218
+#: crypt32.rc:215
 msgid "Financial Information="
 msgstr "Finansinė informacija="
 
-#: crypt32.rc:219 taskmgr.rc:401
+#: crypt32.rc:216 taskmgr.rc:401
 msgid "Available"
 msgstr "Prieinama"
 
-#: crypt32.rc:220
+#: crypt32.rc:217
 msgid "Not Available"
 msgstr "Neprieinama"
 
-#: crypt32.rc:221
+#: crypt32.rc:218
 msgid "Meets Criteria="
 msgstr "Atitinka kriterijus="
 
-#: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
+#: crypt32.rc:219 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
 msgid "Yes"
 msgstr "Taip"
 
-#: crypt32.rc:223 cryptui.rc:164 oleaut32.rc:30 wininet.rc:81 ipconfig.rc:45
+#: crypt32.rc:220 cryptui.rc:164 oleaut32.rc:30 wininet.rc:81 ipconfig.rc:45
 msgid "No"
 msgstr "Ne"
 
-#: crypt32.rc:224
+#: crypt32.rc:221
 msgid "Digital Signature"
 msgstr "Skaitmeninis parašas"
 
-#: crypt32.rc:225
+#: crypt32.rc:222
 msgid "Non-Repudiation"
 msgstr "Negalėjimas išsižadėti"
 
-#: crypt32.rc:226
+#: crypt32.rc:223
 msgid "Key Encipherment"
 msgstr "Rakto užšifravimas"
 
-#: crypt32.rc:227
+#: crypt32.rc:224
 msgid "Data Encipherment"
 msgstr "Duomenų užšifravimas"
 
-#: crypt32.rc:228
+#: crypt32.rc:225
 msgid "Key Agreement"
 msgstr "Rakto susitarimas"
 
-#: crypt32.rc:229
+#: crypt32.rc:226
 msgid "Certificate Signing"
 msgstr "Liudijimo pasirašymas"
 
-#: crypt32.rc:230
+#: crypt32.rc:227
 msgid "Off-line CRL Signing"
 msgstr "ALS pasirašymas atsijungus"
 
-#: crypt32.rc:231
+#: crypt32.rc:228
 msgid "CRL Signing"
 msgstr "ALS pasirašymas"
 
-#: crypt32.rc:232
+#: crypt32.rc:229
 msgid "Encipher Only"
 msgstr "Tik užšifravimas"
 
-#: crypt32.rc:233
+#: crypt32.rc:230
 msgid "Decipher Only"
 msgstr "Tik dešifravimas"
 
-#: crypt32.rc:234
+#: crypt32.rc:231
 msgid "SSL Client Authentication"
 msgstr "SSL kliento tapatumo nustatymas"
 
-#: crypt32.rc:235
+#: crypt32.rc:232
 msgid "SSL Server Authentication"
 msgstr "SSL serverio tapatumo nustatymas"
 
-#: crypt32.rc:236
+#: crypt32.rc:233
 msgid "S/MIME"
 msgstr "S/MIME"
 
-#: crypt32.rc:237
+#: crypt32.rc:234
 msgid "Signature"
 msgstr "Parašas"
 
-#: crypt32.rc:238
+#: crypt32.rc:235
 msgid "SSL CA"
 msgstr "SSL LĮ"
 
-#: crypt32.rc:239
+#: crypt32.rc:236
 msgid "S/MIME CA"
 msgstr "S/MIME LĮ"
 
-#: crypt32.rc:240
+#: crypt32.rc:237
 msgid "Signature CA"
 msgstr "Parašo LĮ"
 
