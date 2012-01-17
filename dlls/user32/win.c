@@ -1066,7 +1066,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
 
     /* FIXME: Add dumping of BS_/ES_/SBS_/LBS_/CBS_/DS_/etc. styles */
 #define DUMPED_STYLES \
-    (WS_POPUP | \
+    ((DWORD)(WS_POPUP | \
      WS_CHILD | \
      WS_MINIMIZE | \
      WS_VISIBLE | \
@@ -1083,7 +1083,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
      WS_GROUP | \
      WS_TABSTOP | \
      WS_MINIMIZEBOX | \
-     WS_MAXIMIZEBOX)
+     WS_MAXIMIZEBOX))
 
     if(style & ~DUMPED_STYLES) TRACE(" %08x", style & ~DUMPED_STYLES);
     TRACE("\n");
@@ -1111,7 +1111,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
     if(exstyle & WS_EX_LAYOUTRTL) TRACE(" WS_EX_LAYOUTRTL");
 
 #define DUMPED_EX_STYLES \
-    (WS_EX_DLGMODALFRAME | \
+    ((DWORD)(WS_EX_DLGMODALFRAME | \
      WS_EX_DRAGDETECT | \
      WS_EX_NOPARENTNOTIFY | \
      WS_EX_TOPMOST | \
@@ -1129,7 +1129,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
      WS_EX_STATICEDGE | \
      WS_EX_APPWINDOW | \
      WS_EX_LAYERED | \
-     WS_EX_LAYOUTRTL)
+     WS_EX_LAYOUTRTL))
 
     if(exstyle & ~DUMPED_EX_STYLES) TRACE(" %08x", exstyle & ~DUMPED_EX_STYLES);
     TRACE("\n");

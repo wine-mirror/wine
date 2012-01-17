@@ -2111,7 +2111,7 @@ static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
            (INT_PTR)menu->items[pos - 1].hbmpItem <= (INT_PTR)HBMMENU_MBAR_CLOSE_D)
         pos--;
 
-    TRACE("inserting at %u by pos %u\n", pos, flags & MF_BYPOSITION);
+    TRACE("inserting at %u flags %x\n", pos, flags);
 
     /* Create new items array */
 

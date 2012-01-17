@@ -1736,7 +1736,7 @@ static void test_espassword(void)
 
     hwEdit = create_editcontrol(ES_PASSWORD, 0);
     r = get_edit_style(hwEdit);
-    ok(r == ES_PASSWORD, "Wrong style expected 0x%x got: 0x%x\n", ES_PASSWORD, r);
+    ok(r == ES_PASSWORD, "Wrong style expected ES_PASSWORD got: 0x%x\n", r);
     /* set text */
     r = SendMessage(hwEdit , WM_SETTEXT, 0, (LPARAM) password);
     ok(r == TRUE, "Expected: %d, got: %d\n", TRUE, r);
@@ -1840,7 +1840,7 @@ static void test_enter(void)
     /* multiline */
     hwEdit = create_editcontrol(ES_MULTILINE, 0);
     r = get_edit_style(hwEdit);
-    ok(ES_MULTILINE == r, "Wrong style expected 0x%x got: 0x%x\n", ES_MULTILINE, r);
+    ok(ES_MULTILINE == r, "Wrong style expected ES_MULTILINE got: 0x%x\n", r);
 
     /* set text */
     r = SendMessage(hwEdit , WM_SETTEXT, 0, (LPARAM) "");
@@ -1880,7 +1880,7 @@ static void test_enter(void)
     /* single line with ES_WANTRETURN */
     hwEdit = create_editcontrol(ES_WANTRETURN, 0);
     r = get_edit_style(hwEdit);
-    ok(ES_WANTRETURN == r, "Wrong style expected 0x%x got: 0x%x\n", ES_WANTRETURN, r);
+    ok(ES_WANTRETURN == r, "Wrong style expected ES_WANTRETURN got: 0x%x\n", r);
 
     /* set text */
     r = SendMessage(hwEdit , WM_SETTEXT, 0, (LPARAM) "");
@@ -1907,7 +1907,7 @@ static void test_tab(void)
     /* multiline */
     hwEdit = create_editcontrol(ES_MULTILINE, 0);
     r = get_edit_style(hwEdit);
-    ok(ES_MULTILINE == r, "Wrong style expected 0x%x got: 0x%x\n", ES_MULTILINE, r);
+    ok(ES_MULTILINE == r, "Wrong style expected ES_MULTILINE got: 0x%x\n", r);
 
     /* set text */
     r = SendMessage(hwEdit , WM_SETTEXT, 0, (LPARAM) "");
