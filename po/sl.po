@@ -14185,7 +14185,7 @@ msgid ""
 msgstr ""
 "Ali je '%s' ime ciljne datoteke\n"
 "ali mape?\n"
-"(F - Datoteka, D - Mapa)\n"
+"(D - Datoteka, M - Mapa)\n"
 
 #: xcopy.rc:35
 #, fuzzy
@@ -14208,14 +14208,16 @@ msgid "Failed during reading of '%1'\n"
 msgstr "Napaka med branjem '%s'\n"
 
 #: xcopy.rc:43
+#, fuzzy
 msgctxt "File key"
 msgid "F"
 msgstr "F"
 
 #: xcopy.rc:44
+#, fuzzy
 msgctxt "Directory key"
 msgid "D"
-msgstr "D"
+msgstr "M"
 
 #: xcopy.rc:77
 #, fuzzy
