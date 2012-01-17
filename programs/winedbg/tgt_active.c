@@ -678,6 +678,42 @@ static HANDLE create_temp_file(void)
                         NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, 0 );
 }
 
+static void output_system_info(void)
+{
+#ifdef __i386__
+    static const char platform[] = "i386";
+#elif defined(__x86_64__)
+    static const char platform[] = "x86_64";
+#elif defined(__sparc__)
+    static const char platform[] = "sparc";
+#elif defined(__powerpc__)
+    static const char platform[] = "powerpc";
+#elif defined(__arm__)
+    static const char platform[] = "arm";
+#else
+# error CPU unknown
+#endif
+
+    const char *(CDECL *wine_get_build_id)(void);
+    void (CDECL *wine_get_host_version)( const char **sysname, const char **release );
+    BOOL is_wow64;
+
+    wine_get_build_id = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_build_id");
+    wine_get_host_version = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_host_version");
+    if (!IsWow64Process( dbg_curr_process->handle, &is_wow64 )) is_wow64 = FALSE;
+
+    dbg_printf( "System information:\n" );
+    if (wine_get_build_id) dbg_printf( "    Wine build: %s\n", wine_get_build_id() );
+    dbg_printf( "    Platform: %s%s\n", platform, is_wow64 ? " (WOW64)" : "" );
+    if (wine_get_host_version)
+    {
+        const char *sysname, *release;
+        wine_get_host_version( &sysname, &release );
+        dbg_printf( "    Host system: %s\n", sysname );
+        dbg_printf( "    Host version: %s\n", release );
+    }
+}
+
 /******************************************************************
  *		dbg_active_attach
  *
@@ -801,6 +837,7 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
 
     if (output != INVALID_HANDLE_VALUE)
     {
+        output_system_info();
         display_crash_details( output );
         CloseHandle( output );
     }
