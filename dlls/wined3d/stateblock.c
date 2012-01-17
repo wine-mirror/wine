@@ -924,8 +924,8 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     unsigned int i;
     DWORD map;
 
-    TRACE("Applying stateblock %p to device %p.\n", stateblock, device);
-    TRACE("Blocktype: %#x.\n", stateblock->blockType);
+    TRACE("Applying stateblock %p of type %#x to device %p.\n",
+            stateblock, stateblock->blockType, device);
 
     if (stateblock->changed.vertexShader)
         wined3d_device_set_vertex_shader(device, stateblock->state.vertex_shader);
@@ -1105,7 +1105,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
 
     TRACE("stateblock %p.\n", stateblock);
 
-    stateblock->blockType = WINED3DSBT_INIT;
+    stateblock->blockType = WINED3D_SBT_INIT;
 
     memset(stateblock->changed.pixelShaderConstantsF, 0, device->d3d_pshader_constantF * sizeof(BOOL));
     memset(stateblock->changed.vertexShaderConstantsF, 0, device->d3d_vshader_constantF * sizeof(BOOL));
@@ -1337,7 +1337,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
-        struct wined3d_device *device, WINED3DSTATEBLOCKTYPE type)
+        struct wined3d_device *device, enum wined3d_stateblock_type type)
 {
     unsigned int i;
     HRESULT hr;
@@ -1354,26 +1354,26 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
     hr = stateblock_allocate_shader_constants(stateblock);
     if (FAILED(hr)) return hr;
 
-    /* The WINED3DSBT_INIT stateblock type is used during initialization to
+    /* The WINED3D_SBT_INIT stateblock type is used during initialization to
      * produce a placeholder stateblock so other functions called can update a
      * state block. */
-    if (type == WINED3DSBT_INIT || type == WINED3DSBT_RECORDED) return WINED3D_OK;
+    if (type == WINED3D_SBT_INIT || type == WINED3D_SBT_RECORDED) return WINED3D_OK;
 
     TRACE("Updating changed flags appropriate for type %#x.\n", type);
 
     switch (type)
     {
-        case WINED3DSBT_ALL:
+        case WINED3D_SBT_ALL:
             stateblock_init_lights(stateblock, device->stateBlock->state.light_map);
             stateblock_savedstates_set_all(&stateblock->changed, device->d3d_vshader_constantF,
                                            device->d3d_pshader_constantF);
             break;
 
-        case WINED3DSBT_PIXELSTATE:
+        case WINED3D_SBT_PIXEL_STATE:
             stateblock_savedstates_set_pixel(&stateblock->changed, device->d3d_pshader_constantF);
             break;
 
-        case WINED3DSBT_VERTEXSTATE:
+        case WINED3D_SBT_VERTEX_STATE:
             stateblock_init_lights(stateblock, device->stateBlock->state.light_map);
             stateblock_savedstates_set_vertex(&stateblock->changed, device->d3d_vshader_constantF);
             break;
@@ -1390,7 +1390,7 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
 }
 
 HRESULT CDECL wined3d_stateblock_create(struct wined3d_device *device,
-        WINED3DSTATEBLOCKTYPE type, struct wined3d_stateblock **stateblock)
+        enum wined3d_stateblock_type type, struct wined3d_stateblock **stateblock)
 {
     struct wined3d_stateblock *object;
     HRESULT hr;

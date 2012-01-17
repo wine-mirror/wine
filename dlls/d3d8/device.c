@@ -1622,7 +1622,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateStateBlock(IDirect3DDevice8 *if
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_stateblock_create(This->wined3d_device, (WINED3DSTATEBLOCKTYPE)Type, &stateblock);
+    hr = wined3d_stateblock_create(This->wined3d_device, (enum wined3d_stateblock_type)Type, &stateblock);
     if (FAILED(hr))
     {
         wined3d_mutex_unlock();

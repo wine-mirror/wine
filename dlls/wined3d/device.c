@@ -3915,7 +3915,7 @@ HRESULT CDECL wined3d_device_begin_stateblock(struct wined3d_device *device)
     if (device->isRecordingState)
         return WINED3DERR_INVALIDCALL;
 
-    hr = wined3d_stateblock_create(device, WINED3DSBT_RECORDED, &stateblock);
+    hr = wined3d_stateblock_create(device, WINED3D_SBT_RECORDED, &stateblock);
     if (FAILED(hr))
         return hr;
 
@@ -5609,7 +5609,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     }
 
     /* Note: No parent needed for initial internal stateblock */
-    hr = wined3d_stateblock_create(device, WINED3DSBT_INIT, &device->stateBlock);
+    hr = wined3d_stateblock_create(device, WINED3D_SBT_INIT, &device->stateBlock);
     if (FAILED(hr))
         ERR("Resetting the stateblock failed with error %#x.\n", hr);
     else
@@ -5902,7 +5902,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     }
     device->blitter = adapter->blitter;
 
-    hr = wined3d_stateblock_create(device, WINED3DSBT_INIT, &device->stateBlock);
+    hr = wined3d_stateblock_create(device, WINED3D_SBT_INIT, &device->stateBlock);
     if (FAILED(hr))
     {
         WARN("Failed to create stateblock.\n");

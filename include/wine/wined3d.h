@@ -710,15 +710,14 @@ enum wined3d_query_type
 #define WINED3DISSUE_END                                        (1 << 0)
 #define WINED3DGETDATA_FLUSH                                    (1 << 0)
 
-typedef enum _WINED3DSTATEBLOCKTYPE
+enum wined3d_stateblock_type
 {
-    WINED3DSBT_INIT                         = 0,
-    WINED3DSBT_ALL                          = 1,
-    WINED3DSBT_PIXELSTATE                   = 2,
-    WINED3DSBT_VERTEXSTATE                  = 3,
-    WINED3DSBT_RECORDED                     = 4, /* WineD3D private */
-    WINED3DSBT_FORCE_DWORD                  = 0xffffffff
-} WINED3DSTATEBLOCKTYPE;
+    WINED3D_SBT_INIT                        = 0,
+    WINED3D_SBT_ALL                         = 1,
+    WINED3D_SBT_PIXEL_STATE                 = 2,
+    WINED3D_SBT_VERTEX_STATE                = 3,
+    WINED3D_SBT_RECORDED                    = 4, /* WineD3D private */
+};
 
 typedef enum _WINED3DDECLMETHOD
 {
@@ -2292,7 +2291,7 @@ HRESULT __cdecl wined3d_shader_set_local_constants_float(struct wined3d_shader *
 HRESULT __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock);
 HRESULT __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock);
 HRESULT __cdecl wined3d_stateblock_create(struct wined3d_device *device,
-        WINED3DSTATEBLOCKTYPE type, struct wined3d_stateblock **stateblock);
+        enum wined3d_stateblock_type type, struct wined3d_stateblock **stateblock);
 ULONG __cdecl wined3d_stateblock_decref(struct wined3d_stateblock *stateblock);
 ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
 

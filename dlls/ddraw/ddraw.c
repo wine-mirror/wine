@@ -922,7 +922,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
         {
             restore_state = TRUE;
 
-            if (FAILED(hr = wined3d_stateblock_create(This->wined3d_device, WINED3DSBT_ALL, &stateblock)))
+            if (FAILED(hr = wined3d_stateblock_create(This->wined3d_device, WINED3D_SBT_ALL, &stateblock)))
             {
                 ERR("Failed to create stateblock, hr %#x.\n", hr);
                 wined3d_mutex_unlock();
