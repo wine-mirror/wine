@@ -1294,18 +1294,29 @@ static HRESULT compile_break_statement(compiler_ctx_t *ctx, branch_statement_t *
     statement_ctx_t *pop_ctx;
     HRESULT hres;
 
-    for(pop_ctx = ctx->stat_ctx; pop_ctx; pop_ctx = pop_ctx->next) {
-        if(pop_ctx->break_label)
-            break;
-    }
+    if(stat->identifier) {
+        for(pop_ctx = ctx->stat_ctx; pop_ctx; pop_ctx = pop_ctx->next) {
+            if(pop_ctx->labelled_stat && !strcmpW(pop_ctx->labelled_stat->identifier, stat->identifier)) {
+                assert(pop_ctx->break_label);
+                break;
+            }
+        }
 
-    if(!pop_ctx) {
-        WARN("Break outside loop\n");
-        return JS_E_INVALID_BREAK;
-    }
+        if(!pop_ctx) {
+            WARN("Label not found\n");
+            return JS_E_LABEL_NOT_FOUND;
+        }
+    }else {
+        for(pop_ctx = ctx->stat_ctx; pop_ctx; pop_ctx = pop_ctx->next) {
+            if(pop_ctx->break_label && !pop_ctx->labelled_stat)
+                break;
+        }
 
-    if(stat->identifier)
-        return push_instr(ctx, OP_label) ? S_OK : E_OUTOFMEMORY; /* FIXME */
+        if(!pop_ctx) {
+            WARN("Break outside loop\n");
+            return JS_E_INVALID_BREAK;
+        }
+    }
 
     hres = pop_to_stat(ctx, pop_ctx->next);
     if(FAILED(hres))
@@ -1362,6 +1373,7 @@ static HRESULT compile_with_statement(compiler_ctx_t *ctx, with_statement_t *sta
 static HRESULT compile_labelled_statement(compiler_ctx_t *ctx, labelled_statement_t *stat)
 {
     statement_ctx_t stat_ctx = {0, FALSE, FALSE, 0, 0, stat}, *iter;
+    HRESULT hres;
 
     for(iter = ctx->stat_ctx; iter; iter = iter->next) {
         if(iter->labelled_stat && !strcmpW(iter->labelled_stat->identifier, stat->identifier)) {
@@ -1370,7 +1382,17 @@ static HRESULT compile_labelled_statement(compiler_ctx_t *ctx, labelled_statemen
         }
     }
 
-    return compile_statement(ctx, &stat_ctx, stat->statement);
+    /* Labelled breaks are allowed for any labelled statements, not only loops (violating spec) */
+    stat_ctx.break_label = alloc_label(ctx);
+    if(!stat_ctx.break_label)
+        return E_OUTOFMEMORY;
+
+    hres = compile_statement(ctx, &stat_ctx, stat->statement);
+    if(FAILED(hres))
+        return hres;
+
+    label_set_addr(ctx, stat_ctx.break_label);
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.13 */

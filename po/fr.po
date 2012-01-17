@@ -3516,66 +3516,71 @@ msgid "Label redefined"
 msgstr ""
 
 #: jscript.rc:41
+#, fuzzy
+msgid "Label not found"
+msgstr "Fichier introuvable"
+
+#: jscript.rc:42
 msgid "Conditional compilation is turned off"
 msgstr "La compilation conditionnelle est désactivée"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Number expected"
 msgstr "Nombre attendu"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Function expected"
 msgstr "Fonction attendue"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "'[object]' is not a date object"
 msgstr "« [objet] » n'est pas un objet de type date"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Object expected"
 msgstr "Objet attendu"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Illegal assignment"
 msgstr "Affectation illégale"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "'|' is undefined"
 msgstr "« | » n'est pas défini"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Boolean object expected"
 msgstr "Objet booléen attendu"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Cannot delete '|'"
 msgstr "Impossible de supprimer « | »"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "VBArray object expected"
 msgstr "Objet VBArray attendu"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "JScript object expected"
 msgstr "Objet JScript attendu"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Syntax error in regular expression"
 msgstr "Erreur de syntaxe dans l'expression rationnelle"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "URI to be encoded contains invalid characters"
 msgstr "L'URI à coder contient des caractères invalides"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "URI to be decoded is incorrect"
 msgstr "L'URI à décoder est incorrecte"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Array length must be a finite positive integer"
 msgstr "La longueur d'un tableau doit être un entier positif"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Array object expected"
 msgstr "Objet tableau attendu"
 

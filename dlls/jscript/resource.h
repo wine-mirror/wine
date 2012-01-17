@@ -38,6 +38,7 @@
 #define IDS_INVALID_BREAK                   0x03FB
 #define IDS_INVALID_CONTINUE                0x03FC
 #define IDS_LABEL_REDEFINED                 0x0401
+#define IDS_LABEL_NOT_FOUND                 0x0402
 #define IDS_DISABLED_CC                     0x0406
 #define IDS_NOT_FUNC                        0x138A
 #define IDS_NOT_DATE                        0x138E
