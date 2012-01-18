@@ -98,6 +98,7 @@ typedef struct
     /* bind callback */
     BindStatusCallback *bsc;
     LONG status;
+    BSTR status_text;
 
     /* IObjectWithSite*/
     IUnknown *site;
@@ -517,8 +518,10 @@ static HRESULT WINAPI BSCHttpNegotiate_OnResponse(IHttpNegotiate *iface, DWORD c
           debugstr_w(req_headers), add_reqheaders);
 
     This->request->status = code;
-    /* store headers */
+    /* store headers and status text */
     free_response_headers(This->request);
+    SysFreeString(This->request->status_text);
+    This->request->status_text = NULL;
     if (resp_headers)
     {
         const WCHAR *ptr, *line;
@@ -530,7 +533,19 @@ static HRESULT WINAPI BSCHttpNegotiate_OnResponse(IHttpNegotiate *iface, DWORD c
         {
             if (*ptr == '\r' && *(ptr+1) == '\n')
             {
-                line = ++ptr+1;
+                const WCHAR *end = ptr-1;
+                line = ptr + 2;
+                /* scan back to get status phrase */
+                while (ptr > resp_headers)
+                {
+                     if (*ptr == ' ')
+                     {
+                         This->request->status_text = SysAllocStringLen(ptr+1, end-ptr);
+                         TRACE("status text %s\n", debugstr_w(This->request->status_text));
+                         break;
+                     }
+                     ptr--;
+                }
                 break;
             }
             ptr++;
@@ -789,6 +804,7 @@ static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
         }
         /* response headers */
         free_response_headers(This);
+        SysFreeString(This->status_text);
 
         /* detach callback object */
         BindStatusCallback_Detach(This->bsc);
@@ -1093,13 +1109,18 @@ static HRESULT WINAPI httprequest_get_status(IXMLHTTPRequest *iface, LONG *statu
     return S_OK;
 }
 
-static HRESULT WINAPI httprequest_get_statusText(IXMLHTTPRequest *iface, BSTR *pbstrStatus)
+static HRESULT WINAPI httprequest_get_statusText(IXMLHTTPRequest *iface, BSTR *status)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
 
-    FIXME("stub %p %p\n", This, pbstrStatus);
+    TRACE("(%p)->(%p)\n", This, status);
 
-    return E_NOTIMPL;
+    if (!status) return E_INVALIDARG;
+    if (This->state != READYSTATE_COMPLETE) return E_FAIL;
+
+    *status = SysAllocString(This->status_text);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI httprequest_get_responseXML(IXMLHTTPRequest *iface, IDispatch **body)
@@ -1475,6 +1496,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
 
     req->bsc = NULL;
     req->status = 0;
+    req->status_text = NULL;
     req->reqheader_size = 0;
     req->raw_respheaders = NULL;
     req->use_utf8_content = FALSE;

@@ -4744,6 +4744,9 @@ static void test_XMLHTTP(void)
     ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win2k */, "got 0x%08x\n", hr);
     ok(status == 0xdeadbeef, "got %d\n", status);
 
+    hr = IXMLHttpRequest_get_statusText(xhr, &str);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+
     /* invalid parameters */
     hr = IXMLHttpRequest_open(xhr, NULL, NULL, async, dummy, dummy);
     EXPECT_HR(hr, E_INVALIDARG);
@@ -4861,6 +4864,14 @@ static void test_XMLHTTP(void)
     hr = IXMLHttpRequest_get_status(xhr, &status);
     EXPECT_HR(hr, S_OK);
     ok(status == 200, "got %d\n", status);
+
+    hr = IXMLHttpRequest_get_statusText(xhr, NULL);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    hr = IXMLHttpRequest_get_statusText(xhr, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("OK")), "got status %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     /* another ::send() after completed request */
     V_VT(&varbody) = VT_BSTR;
