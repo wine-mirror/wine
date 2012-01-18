@@ -2747,7 +2747,6 @@ static void check_BitBlt_pixel(HDC hdcDst, HDC hdcSrc, UINT32 *dstBuffer, UINT32
 {
     *srcBuffer = 0xFEDCBA98;
     *dstBuffer = 0x89ABCDEF;
-    Rectangle(hdcSrc, 0, 0, 1, 1);  /* A null operation to ensure dibs are coerced to X11 */
     BitBlt(hdcDst, 0, 0, 1, 1, hdcSrc, 0, 0, dwRop);
     ok(expected == *dstBuffer,
         "BitBlt with dwRop %06X. Expected 0x%08X, got 0x%08X from line %d\n",
@@ -2781,7 +2780,7 @@ static void test_BitBlt(void)
         NULL, 0);
     oldDst = SelectObject(hdcDst, bmpDst);
 
-    hBrush = CreateSolidBrush(0x012345678);
+    hBrush = CreateSolidBrush(0x12345678);
     hOldBrush = SelectObject(hdcDst, hBrush);
 
     /* Setup the source dib section */
@@ -3393,6 +3392,55 @@ static void test_GdiAlphaBlend(void)
     SetLastError(0xdeadbeef);
     ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 30, 30, blend);
     ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
+
+    SetMapMode(hdcDst, MM_ANISOTROPIC);
+    SetViewportExtEx(hdcDst, -1, -1, NULL);
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 50, 50, blend);
+    ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, -20, -20, 20, 20, hdcSrc, 0, -1, 50, 50, blend);
+    ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, -20, -20, -20, -20, hdcSrc, 0, -1, 50, 50, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, -20, 0, -20, 20, hdcSrc, 0, -1, 50, 50, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, -20, 20, -20, hdcSrc, 0, -1, 50, 50, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetMapMode(hdcDst, MM_TEXT);
+
+    SetViewportExtEx(hdcSrc, -1, -1, NULL);
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -20, -20, -30, -30, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -20, -20, 30, -30, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -20, -20, -30, 30, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -20, -20, 30, 30, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 20, 20, 30, 30, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -60, -60, 30, 30, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetViewportExtEx(hdcSrc, 1, 1, NULL);
 
     SetLastError(0xdeadbeef);
     ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, NULL, 0, 0, 20, 20, blend);

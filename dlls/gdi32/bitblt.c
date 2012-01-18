@@ -932,6 +932,7 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
               blendFunction.SourceConstantAlpha, blendFunction.AlphaFormat );
 
         if (src.x < 0 || src.y < 0 || src.width < 0 || src.height < 0 ||
+            src.log_width < 0 || src.log_height < 0 ||
             (dcSrc->header.type == OBJ_MEMDC &&
              (src.width > dcSrc->vis_rect.right - dcSrc->vis_rect.left - src.x ||
               src.height > dcSrc->vis_rect.bottom - dcSrc->vis_rect.top - src.y)))
@@ -940,9 +941,10 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
             SetLastError( ERROR_INVALID_PARAMETER );
             ret = FALSE;
         }
-        else if (dst.width < 0 || dst.height < 0)
+        else if (dst.log_width < 0 || dst.log_height < 0)
         {
-            WARN( "Invalid dst coords: (%d,%d), size %dx%d\n", dst.x, dst.y, dst.width, dst.height );
+            WARN( "Invalid dst coords: (%d,%d), size %dx%d\n",
+                  dst.log_x, dst.log_y, dst.log_width, dst.log_height );
             SetLastError( ERROR_INVALID_PARAMETER );
             ret = FALSE;
         }
