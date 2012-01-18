@@ -1844,10 +1844,32 @@ static void multiply_alpha( Picture pict, XRenderPictFormat *format, int alpha,
 
 /* Helper function for (stretched) blitting using xrender */
 static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture dst_pict,
-                          int x_src, int y_src, int x_dst, int y_dst,
-                          double xscale, double yscale, int width, int height )
+                          int x_src, int y_src, int width_src, int height_src,
+                          int x_dst, int y_dst, int width_dst, int height_dst,
+                          double xscale, double yscale )
 {
     int x_offset, y_offset;
+
+    if (width_src < 0)
+    {
+        x_src += width_src + 1;
+        width_src = -width_src;
+    }
+    if (height_src < 0)
+    {
+        y_src += height_src + 1;
+        height_src = -height_src;
+    }
+    if (width_dst < 0)
+    {
+        x_dst += width_dst + 1;
+        width_dst = -width_dst;
+    }
+    if (height_dst < 0)
+    {
+        y_dst += height_dst + 1;
+        height_dst = -height_dst;
+    }
 
     /* When we need to scale we perform scaling and source_x / source_y translation using a transformation matrix.
      * This is needed because XRender is inaccurate in combination with scaled source coordinates passed to XRenderComposite.
@@ -1858,8 +1880,8 @@ static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture d
         /* In case of mirroring we need a source x- and y-offset because without the pixels will be
          * in the wrong quadrant of the x-y plane.
          */
-        x_offset = (xscale < 0) ? -width : 0;
-        y_offset = (yscale < 0) ? -height : 0;
+        x_offset = (xscale < 0) ? -width_dst : 0;
+        y_offset = (yscale < 0) ? -height_dst : 0;
         set_xrender_transformation(src_pict, xscale, yscale, x_src, y_src);
     }
     else
@@ -1869,19 +1891,41 @@ static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture d
         set_xrender_transformation(src_pict, 1, 1, 0, 0);
     }
     pXRenderComposite( gdi_display, op, src_pict, mask_pict, dst_pict,
-                       x_offset, y_offset, 0, 0, x_dst, y_dst, width, height );
+                       x_offset, y_offset, 0, 0, x_dst, y_dst, width_dst, height_dst );
     wine_tsx11_unlock();
 }
 
 /* Helper function for (stretched) mono->color blitting using xrender */
 static void xrender_mono_blit( Picture src_pict, Picture dst_pict,
                                enum wxr_format dst_format, XRenderColor *fg, XRenderColor *bg,
-                               int x_src, int y_src, int x_dst, int y_dst,
-                               double xscale, double yscale, int width, int height )
+                               int x_src, int y_src, int width_src, int height_src,
+                               int x_dst, int y_dst, int width_dst, int height_dst,
+                               double xscale, double yscale )
 {
     Picture tile_pict;
     int x_offset, y_offset;
     XRenderColor color;
+
+    if (width_src < 0)
+    {
+        x_src += width_src + 1;
+        width_src = -width_src;
+    }
+    if (height_src < 0)
+    {
+        y_src += height_src + 1;
+        height_src = -height_src;
+    }
+    if (width_dst < 0)
+    {
+        x_dst += width_dst + 1;
+        width_dst = -width_dst;
+    }
+    if (height_dst < 0)
+    {
+        y_dst += height_dst + 1;
+        height_dst = -height_dst;
+    }
 
     /* When doing a mono->color blit, the source data is used as mask, and the source picture
      * contains a 1x1 picture for tiling. The source data effectively acts as an alpha channel to
@@ -1893,15 +1937,15 @@ static void xrender_mono_blit( Picture src_pict, Picture dst_pict,
     tile_pict = get_tile_pict( dst_format, &color );
 
     wine_tsx11_lock();
-    pXRenderFillRectangle( gdi_display, PictOpSrc, dst_pict, fg, x_dst, y_dst, width, height );
+    pXRenderFillRectangle( gdi_display, PictOpSrc, dst_pict, fg, x_dst, y_dst, width_dst, height_dst );
 
     if (xscale != 1.0 || yscale != 1.0)
     {
         /* In case of mirroring we need a source x- and y-offset because without the pixels will be
          * in the wrong quadrant of the x-y plane.
          */
-        x_offset = (xscale < 0) ? -width : 0;
-        y_offset = (yscale < 0) ? -height : 0;
+        x_offset = (xscale < 0) ? -width_dst : 0;
+        y_offset = (yscale < 0) ? -height_dst : 0;
         set_xrender_transformation(src_pict, xscale, yscale, x_src, y_src);
     }
     else
@@ -1911,13 +1955,14 @@ static void xrender_mono_blit( Picture src_pict, Picture dst_pict,
         set_xrender_transformation(src_pict, 1, 1, 0, 0);
     }
     pXRenderComposite(gdi_display, PictOpOver, tile_pict, src_pict, dst_pict,
-                      0, 0, x_offset, y_offset, x_dst, y_dst, width, height );
+                      0, 0, x_offset, y_offset, x_dst, y_dst, width_dst, height_dst );
     wine_tsx11_unlock();
     LeaveCriticalSection( &xrender_cs );
 
     /* force the alpha channel for background pixels, it has been set to 100% by the tile */
     if (bg->alpha != 0xffff && (dst_format == WXR_FORMAT_A8R8G8B8 || dst_format == WXR_FORMAT_B8G8R8A8))
-        multiply_alpha( dst_pict, pict_formats[dst_format], bg->alpha, x_dst, y_dst, width, height );
+        multiply_alpha( dst_pict, pict_formats[dst_format], bg->alpha,
+                        x_dst, y_dst, width_dst, height_dst );
 }
 
 /* create a pixmap and render picture for an image */
@@ -1971,10 +2016,6 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
                                   Drawable drawable, const struct bitblt_coords *src,
                                   const struct bitblt_coords *dst )
 {
-    int width = abs( dst->width );
-    int height = abs( dst->height );
-    int x_src = physdev_src->x11dev->dc_rect.left + src->x;
-    int y_src = physdev_src->x11dev->dc_rect.top + src->y;
     int x_dst, y_dst;
     Picture src_pict = 0, dst_pict, mask_pict = 0;
     BOOL use_repeat;
@@ -2006,11 +2047,6 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
         dst_pict = get_xrender_picture( physdev_dst, 0, &dst->visrect );
     }
 
-    if (src->width < 0) x_src += src->width + 1;
-    if (src->height < 0) y_src += src->height + 1;
-    if (dst->width < 0) x_dst += dst->width + 1;
-    if (dst->height < 0) y_dst += dst->height + 1;
-
     src_pict = get_xrender_picture_source( physdev_src, use_repeat );
 
     /* mono -> color */
@@ -2023,7 +2059,9 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
         fg.alpha = bg.alpha = 0;
 
         xrender_mono_blit( src_pict, dst_pict, physdev_dst->format, &fg, &bg,
-                           x_src, y_src, x_dst, y_dst, xscale, yscale, width, height );
+                           physdev_src->x11dev->dc_rect.left + src->x,
+                           physdev_src->x11dev->dc_rect.top + src->y,
+                           src->width, src->height, x_dst, y_dst, dst->width, dst->height, xscale, yscale );
     }
     else /* color -> color (can be at different depths) or mono -> mono */
     {
@@ -2031,7 +2069,9 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
             mask_pict = get_no_alpha_mask();
 
         xrender_blit( PictOpSrc, src_pict, mask_pict, dst_pict,
-                      x_src, y_src, x_dst, y_dst, xscale, yscale, width, height );
+                      physdev_src->x11dev->dc_rect.left + src->x,
+                      physdev_src->x11dev->dc_rect.top + src->y,
+                      src->width, src->height, x_dst, y_dst, dst->width, dst->height, xscale, yscale );
     }
 
     if (drawable)
@@ -2048,7 +2088,7 @@ static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, Picture mask
                                Drawable drawable, struct bitblt_coords *src,
                                struct bitblt_coords *dst, BOOL use_repeat )
 {
-    int x_src, y_src, x_dst, y_dst;
+    int x_dst, y_dst;
     Picture dst_pict;
     XRenderPictureAttributes pa;
     double xscale, yscale;
@@ -2083,15 +2123,8 @@ static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, Picture mask
     }
     else xscale = yscale = 1;  /* no scaling needed with a repeating source */
 
-    x_src = src->x;
-    y_src = src->y;
-    if (src->width < 0) x_src += src->width + 1;
-    if (src->height < 0) y_src += src->height + 1;
-    if (dst->width < 0) x_dst += dst->width + 1;
-    if (dst->height < 0) y_dst += dst->height + 1;
-
-    xrender_blit( PictOpSrc, src_pict, mask_pict, dst_pict, x_src, y_src, x_dst, y_dst,
-                  xscale, yscale, abs( dst->width ), abs( dst->height ));
+    xrender_blit( PictOpSrc, src_pict, mask_pict, dst_pict, src->x, src->y, src->width, src->height,
+                  x_dst, y_dst, dst->width, dst->height, xscale, yscale );
 
     if (drawable)
     {
@@ -2327,10 +2360,11 @@ static DWORD xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct 
         EnterCriticalSection( &xrender_cs );
         mask_pict = get_mask_pict( func.SourceConstantAlpha * 257 );
 
-        xrender_blit( PictOpOver, src_pict, mask_pict, dst_pict, src->x, src->y,
+        xrender_blit( PictOpOver, src_pict, mask_pict, dst_pict,
+                      src->x, src->y, src->width, src->height,
                       physdev->x11dev->dc_rect.left + dst->x,
                       physdev->x11dev->dc_rect.top + dst->y,
-                      xscale, yscale, dst->width, dst->height );
+                      dst->width, dst->height, xscale, yscale );
 
         wine_tsx11_lock();
         pXRenderFreePicture( gdi_display, src_pict );
@@ -2407,7 +2441,7 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
         wine_tsx11_unlock();
 
         xrender_mono_blit( src_pict, tmp_pict, physdev_dst->format, &fg, &bg,
-                           src->visrect.left, src->visrect.top, 0, 0, 1, 1, width, height );
+                           src->visrect.left, src->visrect.top, width, height, 0, 0, width, height, 1, 1 );
     }
     else if (!(blendfn.AlphaFormat & AC_SRC_ALPHA) && physdev_src->pict_format)
     {
@@ -2432,9 +2466,10 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     xrender_blit( PictOpOver, src_pict, mask_pict, dst_pict,
                   physdev_src->x11dev->dc_rect.left + src->x,
                   physdev_src->x11dev->dc_rect.top + src->y,
+                  src->width, src->height,
                   physdev_dst->x11dev->dc_rect.left + dst->x,
                   physdev_dst->x11dev->dc_rect.top + dst->y,
-                  xscale, yscale, dst->width, dst->height );
+                  dst->width, dst->height, xscale, yscale );
 
     wine_tsx11_lock();
     if (tmp_pict) pXRenderFreePicture( gdi_display, tmp_pict );
@@ -2527,10 +2562,11 @@ static BOOL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG n
 
             wine_tsx11_lock();
             src_pict = pXRenderCreateLinearGradient( gdi_display, &gradient, stops, colors, 2 );
-            xrender_blit( PictOpSrc, src_pict, 0, dst_pict, 0, 0,
+            xrender_blit( PictOpSrc, src_pict, 0, dst_pict,
+                          0, 0, abs(pt[1].x - pt[0].x), abs(pt[1].y - pt[0].y),
                           physdev->x11dev->dc_rect.left + min( pt[0].x, pt[1].x ),
                           physdev->x11dev->dc_rect.top + min( pt[0].y, pt[1].y ),
-                          1, 1, abs(pt[1].x - pt[0].x), abs(pt[1].y - pt[0].y) );
+                          abs(pt[1].x - pt[0].x), abs(pt[1].y - pt[0].y), 1, 1 );
             pXRenderFreePicture( gdi_display, src_pict );
             wine_tsx11_unlock();
         }
@@ -2582,7 +2618,8 @@ static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct b
     src_pict = pXRenderCreatePicture(gdi_display, physbitmap->pixmap, pict_format, CPRepeat, &pa);
     dst_pict = pXRenderCreatePicture(gdi_display, pixmap, physdev->pict_format, CPRepeat, &pa);
 
-    xrender_blit( PictOpSrc, src_pict, 0, dst_pict, 0, 0, 0, 0, 1.0, 1.0, bm.bmWidth, bm.bmHeight );
+    xrender_blit( PictOpSrc, src_pict, 0, dst_pict, 0, 0, bm.bmWidth, bm.bmHeight,
+                  0, 0, bm.bmWidth, bm.bmHeight, 1.0, 1.0 );
     pXRenderFreePicture( gdi_display, src_pict );
     pXRenderFreePicture( gdi_display, dst_pict );
 
