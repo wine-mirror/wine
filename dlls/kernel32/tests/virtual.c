@@ -2188,7 +2188,6 @@ static void test_mapping(void)
                     /* Vista+ supports PAGE_EXECUTE_WRITECOPY, earlier versions don't */
                     if (!ret && page_prot[k] == PAGE_EXECUTE_WRITECOPY)
                     {
-                    todo_wine
                         ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE_WRITECOPY\n");
                         continue;
                     }
