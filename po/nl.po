@@ -3318,7 +3318,7 @@ msgstr " Browsing history "
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr "You can delete cached pages, cookies and other data."
+msgstr ""
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
@@ -4623,7 +4623,7 @@ msgstr "Media veranderd\n"
 
 #: winerror.mc:1351
 msgid "I/O bus reset\n"
-msgstr "I/O bus reset\n"
+msgstr ""
 
 #: winerror.mc:1356
 msgid "No media in drive\n"
@@ -5567,7 +5567,7 @@ msgstr "Hook procedure heeft modulehandle nodig\n"
 
 #: winerror.mc:2541
 msgid "Global-only hook procedure\n"
-msgstr "Global-only hook procedure\n"
+msgstr ""
 
 #: winerror.mc:2546
 msgid "Journal hook already set\n"
@@ -8211,19 +8211,6 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"Wine is free software; you can redistribute it and/or modify it under the "
-"terms of the GNU Lesser General Public License as published by the Free "
-"Software Foundation; either version 2.1 of the License, or (at your option) "
-"any later version.\n"
-"\n"
-"Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
-"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
-"more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser General Public License "
-"along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
-"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:266
 msgid "Wine License"
@@ -8258,7 +8245,7 @@ msgstr " min"
 #: shlwapi.rc:30
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr " sec"
+msgstr ""
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -12546,7 +12533,7 @@ msgstr " Vensterinstellingen "
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatically capture the &mouse in full-screen windows"
+msgstr ""
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -12615,11 +12602,11 @@ msgstr " Laadvolgorde "
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
-msgstr "&Builtin (Wine)"
+msgstr ""
 
 #: winecfg.rc:201
 msgid "&Native (Windows)"
-msgstr "&Native (Windows)"
+msgstr ""
 
 #: winecfg.rc:202
 msgid "Bui&ltin then Native"
@@ -12668,7 +12655,7 @@ msgstr "Toon uitgebreid"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr ""
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12687,9 +12674,8 @@ msgid "Show &dot files"
 msgstr "Toon \".\" bestanden"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
 #, fuzzy
@@ -12698,19 +12684,19 @@ msgstr " Defaults "
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
@@ -12840,15 +12826,15 @@ msgstr "native"
 
 #: winecfg.rc:54
 msgid "builtin"
-msgstr "builtin"
+msgstr ""
 
 #: winecfg.rc:55
 msgid "native, builtin"
-msgstr "native, builtin"
+msgstr ""
 
 #: winecfg.rc:56
 msgid "builtin, native"
-msgstr "builtin, native"
+msgstr ""
 
 #: winecfg.rc:57
 msgid "disabled"
@@ -13170,7 +13156,7 @@ msgstr "Versie"
 
 #: wineconsole.rc:125
 msgid "Console parameters"
-msgstr "Console parameters"
+msgstr ""
 
 #: wineconsole.rc:128
 msgid "Retain these settings for later sessions"
@@ -13744,7 +13730,7 @@ msgstr "Zoeken"
 
 #: winhlp32.rc:78
 msgid "Wine Help"
-msgstr "Wine Help"
+msgstr ""
 
 #: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
@@ -13852,7 +13838,7 @@ msgstr "&Opmaak"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
-msgstr "&Bullet points"
+msgstr ""
 
 #: wordpad.rc:83 wordpad.rc:106
 msgid "&Paragraph..."
