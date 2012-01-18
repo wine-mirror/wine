@@ -2934,8 +2934,6 @@ BOOL WINAPI SetConsoleDisplayMode(HANDLE hConsoleOutput, DWORD dwFlags,
 /* some missing functions...
  * FIXME: those are likely to be defined as undocumented function in kernel32 (or part of them)
  * should get the right API and implement them
- *	GetConsoleCommandHistory[AW] (dword dword dword)
- *	GetConsoleCommandHistoryLength[AW]
  *	SetConsoleCommandHistoryMode
  *	SetConsoleNumberOfCommands[AW]
  */
@@ -3140,4 +3138,22 @@ BOOL CONSOLE_Exit(void)
 {
     /* the console is in raw mode, put it back in cooked mode */
     return restore_console_mode(GetStdHandle(STD_INPUT_HANDLE));
+}
+
+/* Undocumented, called by native doskey.exe */
+/* FIXME: Should use CONSOLE_GetHistory() above for full implementation */
+DWORD WINAPI GetConsoleCommandHistoryA(DWORD unknown1, DWORD unknown2, DWORD unknown3)
+{
+    FIXME(": (0x%x, 0x%x, 0x%x) stub!\n", unknown1, unknown2, unknown3);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/* Undocumented, called by native doskey.exe */
+/* FIXME: Should use CONSOLE_GetHistory() above for full implementation */
+DWORD WINAPI GetConsoleCommandHistoryW(DWORD unknown1, DWORD unknown2, DWORD unknown3)
+{
+    FIXME(": (0x%x, 0x%x, 0x%x) stub!\n", unknown1, unknown2, unknown3);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
 }

@@ -465,10 +465,10 @@
 @ stub GetConsoleAliasesW
 @ stdcall GetConsoleCP()
 @ stub GetConsoleCharType
-@ stub GetConsoleCommandHistoryA
+@ stdcall GetConsoleCommandHistoryA(long long long)
 @ stub GetConsoleCommandHistoryLengthA
 @ stub GetConsoleCommandHistoryLengthW
-@ stub GetConsoleCommandHistoryW
+@ stdcall GetConsoleCommandHistoryW(long long long)
 @ stdcall GetConsoleCursorInfo(long ptr)
 @ stub GetConsoleCursorMode
 @ stdcall GetConsoleDisplayMode(ptr)
