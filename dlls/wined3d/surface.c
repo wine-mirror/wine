@@ -514,9 +514,6 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
 
     surface->flags |= SFLAG_DIBSECTION;
 
-    HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
-    surface->resource.heapMemory = NULL;
-
     return WINED3D_OK;
 }
 
@@ -1986,9 +1983,17 @@ static void gdi_surface_map(struct wined3d_surface *surface, const RECT *rect, D
 
     if (!(surface->flags & SFLAG_DIBSECTION))
     {
+        HRESULT hr;
+
         /* This happens on gdi surfaces if the application set a user pointer
          * and resets it. Recreate the DIB section. */
-        surface_create_dib_section(surface);
+        if (FAILED(hr = surface_create_dib_section(surface)))
+        {
+            ERR("Failed to create dib section, hr %#x.\n", hr);
+            return;
+        }
+        HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
+        surface->resource.heapMemory = NULL;
         surface->resource.allocatedMemory = surface->dib.bitmap_data;
     }
 }
@@ -3843,8 +3848,12 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
             return WINED3DERR_INVALIDCALL;
 
         /* Use the DIB section from now on if we are not using a PBO. */
-        if (!(surface->flags & SFLAG_PBO))
+        if (!(surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM)))
+        {
+            HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
+            surface->resource.heapMemory = NULL;
             surface->resource.allocatedMemory = surface->dib.bitmap_data;
+        }
     }
 
     /* Map the surface. */
@@ -3857,7 +3866,7 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
 
     /* Sync the DIB with the PBO. This can't be done earlier because Map()
      * activates the allocatedMemory. */
-    if (surface->flags & SFLAG_PBO)
+    if (surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM))
         memcpy(surface->dib.bitmap_data, surface->resource.allocatedMemory, surface->resource.size);
 
     if (surface->resource.format->id == WINED3DFMT_P8_UINT
@@ -3920,7 +3929,7 @@ HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
     }
 
     /* Copy the contents of the DIB over to the PBO. */
-    if ((surface->flags & SFLAG_PBO) && surface->resource.allocatedMemory)
+    if ((surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM)) && surface->resource.allocatedMemory)
         memcpy(surface->resource.allocatedMemory, surface->dib.bitmap_data, surface->resource.size);
 
     /* We locked first, so unlock now. */
