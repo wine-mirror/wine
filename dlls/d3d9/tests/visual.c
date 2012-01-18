@@ -12978,7 +12978,7 @@ static void multisample_get_rtdata_test(IDirect3DDevice9 *device)
 static void multisampled_depth_buffer_test(IDirect3D9 *d3d9)
 {
     IDirect3DDevice9 *device = 0;
-    IDirect3DSurface9 *original_rt, *rt, *readback, *ds;
+    IDirect3DSurface9 *original_rt, *rt, *readback, *ds, *original_ds;
     D3DCAPS9 caps;
     HRESULT hr;
     D3DPRESENT_PARAMETERS present_parameters;
@@ -13047,7 +13047,7 @@ static void multisampled_depth_buffer_test(IDirect3D9 *d3d9)
 
     hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
             present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING,
-	    &present_parameters, &device);
+            &present_parameters, &device);
     ok(hr == D3D_OK, "Failed to create a device, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
@@ -13087,25 +13087,20 @@ static void multisampled_depth_buffer_test(IDirect3D9 *d3d9)
     /* Render onscreen and then offscreen */
     hr = IDirect3DDevice9_BeginScene(device);
     ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad_1, sizeof(*quad_1));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_StretchRect(device, original_rt, NULL, rt, NULL, D3DTEXF_POINT);
     ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
     ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad_2, sizeof(*quad_2));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
@@ -13122,7 +13117,6 @@ static void multisampled_depth_buffer_test(IDirect3D9 *d3d9)
 
     hr = IDirect3DDevice9_StretchRect(device, rt, NULL, original_rt, NULL, D3DTEXF_POINT);
     ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
 
@@ -13140,25 +13134,20 @@ static void multisampled_depth_buffer_test(IDirect3D9 *d3d9)
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad_1, sizeof(*quad_1));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_StretchRect(device, rt, NULL, original_rt, NULL, D3DTEXF_POINT);
     ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
     ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad_2, sizeof(*quad_2));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
@@ -13176,11 +13165,115 @@ static void multisampled_depth_buffer_test(IDirect3D9 *d3d9)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
 
+    IDirect3DSurface9_Release(ds);
+    IDirect3DSurface9_Release(readback);
+    IDirect3DSurface9_Release(rt);
+    IDirect3DSurface9_Release(original_rt);
+    cleanup_device(device);
+
+    ZeroMemory(&present_parameters, sizeof(present_parameters));
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = create_window();
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+    present_parameters.MultiSampleType = D3DMULTISAMPLE_NONE;
+
+    hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING,
+            &present_parameters, &device);
+    ok(hr == D3D_OK, "Failed to create a device, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ffff, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear depth buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 640, 480, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_2_SAMPLES, 0, FALSE, &rt, NULL);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 640, 480, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &readback, NULL);
+    ok(SUCCEEDED(hr), "Failed to create readback surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 640, 480, D3DFMT_D24S8,
+            D3DMULTISAMPLE_2_SAMPLES, 0, FALSE, &ds, NULL);
+    ok(SUCCEEDED(hr), "CreateDepthStencilSurface failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &original_rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device, &original_ds);
+    ok(SUCCEEDED(hr), "Failed to get depth/stencil, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetFVF failed, hr %#x.\n", hr);
+
+    /* Render to a multisampled offscreen frame buffer and then blit to
+     * the onscreen (not multisampled) frame buffer. */
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ff00, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad_1, sizeof(*quad_1));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, rt, NULL, original_rt, NULL, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_StretchRect(device, ds, NULL, original_ds, NULL, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, original_ds);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad_2, sizeof(*quad_2));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, original_rt, NULL, readback, NULL, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
+    {
+        D3DCOLOR color = getPixelColorFromSurface(readback, expected_colors[i].x, expected_colors[i].y);
+        if (i % 4 < 2)
+            todo_wine ok(color_match(color, expected_colors[i].color, 1),
+                    "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
+                    expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
+        else
+            ok(color_match(color, expected_colors[i].color, 1),
+                    "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
+                    expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
     hr = IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
     ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
     ok(SUCCEEDED(hr), "Failed to restore original render target, hr %#x.\n", hr);
 
+    IDirect3DSurface9_Release(original_ds);
     IDirect3DSurface9_Release(original_rt);
     IDirect3DSurface9_Release(ds);
     IDirect3DSurface9_Release(readback);
