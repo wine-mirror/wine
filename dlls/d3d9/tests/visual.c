@@ -13282,6 +13282,479 @@ cleanup:
     cleanup_device(device);
 }
 
+static void resz_test(IDirect3D9 *d3d9)
+{
+    IDirect3DDevice9 *device = 0;
+    IDirect3DSurface9 *rt, *original_rt, *ds, *readback, *intz_ds;
+    D3DCAPS9 caps;
+    HRESULT hr;
+    D3DPRESENT_PARAMETERS present_parameters;
+    unsigned int i;
+    static const DWORD ps_code[] =
+    {
+        0xffff0200,                                                             /* ps_2_0                       */
+        0x0200001f, 0x90000000, 0xa00f0800,                                     /* dcl_2d s0                    */
+        0x0200001f, 0x80000000, 0xb00f0000,                                     /* dcl t0                       */
+        0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 0.0, 0.0, 0.0, 1.0   */
+        0x02000001, 0x800f0001, 0xa0e40000,                                     /* mov r1, c0                   */
+        0x03000042, 0x800f0000, 0xb0e40000, 0xa0e40800,                         /* texld r0, t0, s0             */
+        0x02000001, 0x80010001, 0x80e40000,                                     /* mov r1.x, r0                 */
+        0x03010042, 0x800f0000, 0xb0e40000, 0xa0e40800,                         /* texldp r0, t0, s0            */
+        0x02000001, 0x80020001, 0x80000000,                                     /* mov r1.y, r0.x               */
+        0x02000001, 0x800f0800, 0x80e40001,                                     /* mov oC0, r1                  */
+        0x0000ffff,                                                             /* end                          */
+    };
+    struct
+    {
+        float x, y, z;
+        float s, t, p, q;
+    }
+    quad[] =
+    {
+        { -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.5f},
+        {  1.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.5f},
+        { -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+        {  1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.5f},
+    };
+    struct
+    {
+        UINT x, y;
+        D3DCOLOR color;
+    }
+    expected_colors[] =
+    {
+        { 80, 100, D3DCOLOR_ARGB(0x00, 0x20, 0x40, 0x00)},
+        {240, 100, D3DCOLOR_ARGB(0x00, 0x60, 0xbf, 0x00)},
+        {400, 100, D3DCOLOR_ARGB(0x00, 0x9f, 0x40, 0x00)},
+        {560, 100, D3DCOLOR_ARGB(0x00, 0xdf, 0xbf, 0x00)},
+        { 80, 450, D3DCOLOR_ARGB(0x00, 0x20, 0x40, 0x00)},
+        {240, 450, D3DCOLOR_ARGB(0x00, 0x60, 0xbf, 0x00)},
+        {400, 450, D3DCOLOR_ARGB(0x00, 0x9f, 0x40, 0x00)},
+        {560, 450, D3DCOLOR_ARGB(0x00, 0xdf, 0xbf, 0x00)},
+    };
+    IDirect3DTexture9 *texture;
+    IDirect3DPixelShader9 *ps;
+    DWORD value;
+
+    hr = IDirect3D9_CheckDeviceMultiSampleType(d3d9, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES, NULL);
+    if (FAILED(hr))
+    {
+        skip("Multisampling not supported for D3DFMT_A8R8G8B8, skipping RESZ test.\n");
+        return;
+    }
+    hr = IDirect3D9_CheckDeviceMultiSampleType(d3d9, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_D24S8, TRUE, D3DMULTISAMPLE_2_SAMPLES, NULL);
+    if (FAILED(hr))
+    {
+        skip("Multisampling not supported for D3DFMT_D24S8, skipping RESZ test.\n");
+        return;
+    }
+
+    hr = IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, MAKEFOURCC('I','N','T','Z'));
+    if (FAILED(hr))
+    {
+        skip("No INTZ support, skipping RESZ test.\n");
+        return;
+    }
+
+    hr = IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            D3DUSAGE_RENDERTARGET, D3DRTYPE_SURFACE, MAKEFOURCC('R','E','S','Z'));
+    if (FAILED(hr))
+    {
+        skip("No RESZ support, skipping RESZ test.\n");
+        return;
+    }
+
+    ZeroMemory(&present_parameters, sizeof(present_parameters));
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = create_window();
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.EnableAutoDepthStencil = FALSE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+    present_parameters.MultiSampleType = D3DMULTISAMPLE_NONE;
+
+    hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+    ok(hr == D3D_OK, "Failed to create a device, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "GetDeviceCaps failed, hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(2, 0))
+    {
+        skip("No pixel shader 2.0 support, skipping INTZ test.\n");
+        cleanup_device(device);
+        return;
+    }
+    if (caps.TextureCaps & D3DPTEXTURECAPS_POW2)
+    {
+        skip("No unconditional NP2 texture support, skipping INTZ test.\n");
+        cleanup_device(device);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &original_rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 640, 480, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_2_SAMPLES, 0, FALSE, &rt, NULL);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 640, 480, D3DFMT_D24S8,
+            D3DMULTISAMPLE_2_SAMPLES, 0, TRUE, &ds, NULL);
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 640, 480, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &readback, NULL);
+    ok(SUCCEEDED(hr), "Failed to create readback surface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 640, 480, 1,
+            D3DUSAGE_DEPTHSTENCIL, MAKEFOURCC('I','N','T','Z'), D3DPOOL_DEFAULT, &texture, NULL);
+    ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &intz_ds);
+    ok(SUCCEEDED(hr), "GetSurfaceLevel failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, intz_ds);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_ZBUFFER, 0, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear depth/stencil, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(intz_ds);
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_code, &ps);
+    ok(SUCCEEDED(hr), "CreatePixelShader failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE4(0));
+    ok(SUCCEEDED(hr), "SetFVF failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_ALWAYS);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
+    ok(SUCCEEDED(hr), "SetSamplerState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
+    ok(SUCCEEDED(hr), "SetSamplerState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "SetSamplerState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "SetSamplerState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "SetSamplerState failed, hr %#x.\n", hr);
+
+    /* Render offscreen (multisampled), blit the depth buffer
+     * into the INTZ texture and then check its contents */
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ff00, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    /* The destination depth texture has to be bound to sampler 0 */
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
+
+    /* the ATI "spec" says you have to do a dummy draw to ensure correct commands ordering */
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, 0);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, 0xf);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    /* The actual multisampled depth buffer resolve happens here */
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, 0x7fa05000);
+    ok(SUCCEEDED(hr), "SetRenderState (multisampled depth buffer resolve) failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSIZE, &value);
+    ok(SUCCEEDED(hr) && value == 0x7fa05000, "GetRenderState failed, hr %#x, value %#x.\n", hr, value);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetPixelShader(device, ps);
+    ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
+
+    /* Read the depth values back */
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
+    {
+        D3DCOLOR color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
+        ok(color_match(color, expected_colors[i].color, 1),
+                "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
+                expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(ds);
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
+    IDirect3DTexture9_Release(texture);
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
+    IDirect3DPixelShader9_Release(ps);
+    IDirect3DSurface9_Release(readback);
+    IDirect3DSurface9_Release(original_rt);
+    IDirect3DSurface9_Release(rt);
+    cleanup_device(device);
+
+
+    ZeroMemory(&present_parameters, sizeof(present_parameters));
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = create_window();
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+    present_parameters.MultiSampleType = D3DMULTISAMPLE_2_SAMPLES;
+
+    hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+    ok(hr == D3D_OK, "Failed to create a device, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &original_rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device, &ds);
+    ok(SUCCEEDED(hr), "Failed to get depth/stencil, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 640, 480, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &readback, NULL);
+    ok(SUCCEEDED(hr), "Failed to create readback surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 640, 480, 1,
+            D3DUSAGE_DEPTHSTENCIL, MAKEFOURCC('I','N','T','Z'), D3DPOOL_DEFAULT, &texture, NULL);
+    ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &intz_ds);
+    ok(SUCCEEDED(hr), "GetSurfaceLevel failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, readback);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, intz_ds);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_ZBUFFER, 0, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear depth/stencil, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(intz_ds);
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_code, &ps);
+    ok(SUCCEEDED(hr), "CreatePixelShader failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE4(0));
+    ok(SUCCEEDED(hr), "SetFVF failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_ALWAYS);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
+    ok(SUCCEEDED(hr), "SetSamplerState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
+    ok(SUCCEEDED(hr), "SetSamplerState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "SetSamplerState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "SetSamplerState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "SetSamplerState failed, hr %#x.\n", hr);
+
+    /* Render onscreen, blit the depth buffer into the INTZ texture
+     * and then check its contents */
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ff00, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, 0);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, 0xf);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    /* The actual multisampled depth buffer resolve happens here */
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, 0x7fa05000);
+    ok(SUCCEEDED(hr), "SetRenderState (multisampled depth buffer resolve) failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSIZE, &value);
+    ok(SUCCEEDED(hr) && value == 0x7fa05000, "GetRenderState failed, hr %#x, value %#x.\n", hr, value);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, readback);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetPixelShader(device, ps);
+    ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
+
+    /* Read the depth values back */
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
+    {
+        D3DCOLOR color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
+        ok(color_match(color, expected_colors[i].color, 1),
+                "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
+                expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+
+    /* Test edge cases - try with no texture at all */
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, 0x7fa05000);
+    ok(SUCCEEDED(hr), "SetRenderState (multisampled depth buffer resolve) failed, hr %#x.\n", hr);
+
+    /* With a non-multisampled depth buffer */
+    IDirect3DSurface9_Release(ds);
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 640, 480, D3DFMT_D24S8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &ds, NULL);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, readback);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, 0);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, 0xf);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, 0x7fa05000);
+    ok(SUCCEEDED(hr), "SetRenderState (multisampled depth buffer resolve) failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetPixelShader(device, ps);
+    ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
+
+    /* Read the depth values back. */
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
+    {
+        D3DCOLOR color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
+        ok(color_match(color, expected_colors[i].color, 1),
+                "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
+                expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+    /* Without a current depth-stencil buffer set */
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, 0x7fa05000);
+    ok(SUCCEEDED(hr), "SetRenderState (multisampled depth buffer resolve) failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(ds);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
+    IDirect3DTexture9_Release(texture);
+    IDirect3DPixelShader9_Release(ps);
+    IDirect3DSurface9_Release(readback);
+    IDirect3DSurface9_Release(original_rt);
+    cleanup_device(device);
+}
+
 START_TEST(visual)
 {
     IDirect3D9 *d3d9;
@@ -13465,6 +13938,8 @@ START_TEST(visual)
     device_ptr = NULL;
 
     multisampled_depth_buffer_test(d3d9);
+    resz_test(d3d9);
+
     IDirect3D9_Release(d3d9);
 
 cleanup:
