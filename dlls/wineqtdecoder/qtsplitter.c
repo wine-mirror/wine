@@ -165,14 +165,25 @@ typedef struct QTSplitter {
     FILTER_STATE state;
     CRITICAL_SECTION csReceive;
 
+    SourceSeeking sourceSeeking;
 } QTSplitter;
 
 static const IPinVtbl QT_OutputPin_Vtbl;
 static const IPinVtbl QT_InputPin_Vtbl;
 static const IBaseFilterVtbl QT_Vtbl;
+static const IMediaSeekingVtbl QT_Seeking_Vtbl;
 
 static HRESULT QT_AddPin(QTSplitter *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt, BOOL video);
 static HRESULT QT_RemoveOutputPins(QTSplitter *This);
+
+static HRESULT WINAPI QTSplitter_ChangeStart(IMediaSeeking *iface);
+static HRESULT WINAPI QTSplitter_ChangeStop(IMediaSeeking *iface);
+static HRESULT WINAPI QTSplitter_ChangeRate(IMediaSeeking *iface);
+
+static inline QTSplitter *impl_from_IMediaSeeking( IMediaSeeking *iface )
+{
+    return (QTSplitter *)((char*)iface - FIELD_OFFSET(QTSplitter, sourceSeeking.lpVtbl));
+}
 
 /*
  * Base Filter
@@ -256,6 +267,9 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *punkout, HRESULT *phr)
     This->pInputPin.pin.refCount = 1;
     This->pInputPin.pin.pConnectedTo = NULL;
     This->pInputPin.pin.pCritSec = &This->filter.csFilter;
+
+    SourceSeeking_Init(&This->sourceSeeking, &QT_Seeking_Vtbl, QTSplitter_ChangeStop, QTSplitter_ChangeStart, QTSplitter_ChangeRate,  &This->filter.csFilter);
+
     *phr = S_OK;
     return obj;
 }
@@ -315,6 +329,8 @@ static HRESULT WINAPI QT_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID 
         *ppv = This;
     else if (IsEqualIID(riid, &IID_IBaseFilter))
         *ppv = This;
+    else if (IsEqualIID(riid, &IID_IMediaSeeking))
+        *ppv = &This->sourceSeeking;
 
     if (*ppv)
     {
@@ -906,6 +922,8 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
     short id = 0;
     DWORD tid;
     HANDLE thread;
+    LONGLONG time;
+    TimeScale scale;
 
     TRACE("Trying movie connect\n");
 
@@ -943,6 +961,13 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
     TRACE("%p is a audio track\n",trk);
     if (trk)
         hr = QT_Process_Audio_Track(filter, trk);
+
+    time = GetMovieDuration(filter->pQTMovie);
+    scale = GetMovieTimeScale(filter->pQTMovie);
+    filter->sourceSeeking.llDuration = ((double)time / scale) * 10000000;
+    filter->sourceSeeking.llStop = filter->sourceSeeking.llDuration;
+
+    TRACE("Movie duration is %s\n",wine_dbgstr_longlong(filter->sourceSeeking.llDuration));
 
     thread = CreateThread(NULL, 0, QTSplitter_thread, filter, 0, &tid);
     if (thread)
@@ -1126,9 +1151,7 @@ static HRESULT WINAPI QTInPin_QueryInterface(IPin * iface, REFIID riid, LPVOID *
     else if (IsEqualIID(riid, &IID_IPin))
         *ppv = iface;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
-    {
         return IBaseFilter_QueryInterface(This->pin.pinInfo.pFilter, &IID_IMediaSeeking, ppv);
-    }
 
     if (*ppv)
     {
@@ -1338,3 +1361,66 @@ static HRESULT QT_AddPin(QTSplitter *This, const PIN_INFO *piOutput, const AM_ME
         ERR("Failed with error %x\n", hr);
     return hr;
 }
+
+static HRESULT WINAPI QTSplitter_ChangeStart(IMediaSeeking *iface)
+{
+    FIXME("(%p) filter hasn't implemented start position change!\n", iface);
+    return S_OK;
+}
+
+static HRESULT WINAPI QTSplitter_ChangeStop(IMediaSeeking *iface)
+{
+    FIXME("(%p) filter hasn't implemented stop position change!\n", iface);
+    return S_OK;
+}
+
+static HRESULT WINAPI QTSplitter_ChangeRate(IMediaSeeking *iface)
+{
+    FIXME("(%p) filter hasn't implemented rate change!\n", iface);
+    return S_OK;
+}
+
+static HRESULT WINAPI QT_Seeking_QueryInterface(IMediaSeeking * iface, REFIID riid, LPVOID * ppv)
+{
+    QTSplitter *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_QueryInterface((IUnknown *)This, riid, ppv);
+}
+
+static ULONG WINAPI QT_Seeking_AddRef(IMediaSeeking * iface)
+{
+    QTSplitter *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_AddRef((IUnknown *)This);
+}
+
+static ULONG WINAPI QT_Seeking_Release(IMediaSeeking * iface)
+{
+    QTSplitter *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_Release((IUnknown *)This);
+}
+
+static const IMediaSeekingVtbl QT_Seeking_Vtbl =
+{
+    QT_Seeking_QueryInterface,
+    QT_Seeking_AddRef,
+    QT_Seeking_Release,
+    SourceSeekingImpl_GetCapabilities,
+    SourceSeekingImpl_CheckCapabilities,
+    SourceSeekingImpl_IsFormatSupported,
+    SourceSeekingImpl_QueryPreferredFormat,
+    SourceSeekingImpl_GetTimeFormat,
+    SourceSeekingImpl_IsUsingTimeFormat,
+    SourceSeekingImpl_SetTimeFormat,
+    SourceSeekingImpl_GetDuration,
+    SourceSeekingImpl_GetStopPosition,
+    SourceSeekingImpl_GetCurrentPosition,
+    SourceSeekingImpl_ConvertTimeFormat,
+    SourceSeekingImpl_SetPositions,
+    SourceSeekingImpl_GetPositions,
+    SourceSeekingImpl_GetAvailable,
+    SourceSeekingImpl_SetRate,
+    SourceSeekingImpl_GetRate,
+    SourceSeekingImpl_GetPreroll
+};
