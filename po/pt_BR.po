@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-15 01:45-0200\n"
+"PO-Revision-Date: 2012-01-17 11:52-0200\n"
 "Last-Translator: Gustavo Henrique Milaré <gugamilare@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Portuguese (Brazil)\n"
@@ -667,7 +667,7 @@ msgstr "&Nome:"
 
 #: comdlg32.rc:362 comdlg32.rc:400
 msgid "Status:"
-msgstr "Status:"
+msgstr "Estado:"
 
 #: comdlg32.rc:364 comdlg32.rc:402
 msgid "Type:"
@@ -1342,7 +1342,7 @@ msgstr "URL Revogação Netscape"
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
-msgstr "URL Revogação CA Netscape"
+msgstr "URL da Revogação da AC Netscape"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
@@ -1350,7 +1350,7 @@ msgstr "URL Renovação de Certificados Netscape"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
-msgstr "URL Política CA Netscape"
+msgstr "URL da Política da AC Netscape"
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
@@ -1426,11 +1426,11 @@ msgstr "Número de série"
 
 #: crypt32.rc:84
 msgid "CA Version"
-msgstr "Versão CA"
+msgstr "Versão da AC"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
-msgstr "Versão Cruzada CA"
+msgstr "Versão da AC Cruzada"
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
@@ -1486,7 +1486,7 @@ msgstr "Restrições de Políticas"
 
 #: crypt32.rc:99
 msgid "Cross-Certificate Distribution Points"
-msgstr "Cross-Certificate Distribution Points"
+msgstr "Pontos de Distribuição de Certificados Cruzados"
 
 #: crypt32.rc:100
 msgid "Application Policies"
@@ -1550,7 +1550,7 @@ msgstr "PKCS 7 Encriptado"
 
 #: crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr "Hash Anterior de Certificado CA"
+msgstr "Soma Anterior de Certificado de AC"
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
@@ -1562,7 +1562,7 @@ msgstr "Próxima Publicação CRL"
 
 #: crypt32.rc:118
 msgid "CA Encryption Certificate"
-msgstr "Certificado de Encriptação CA"
+msgstr "Certificado de Encriptação da AC"
 
 #: crypt32.rc:119 cryptui.rc:145
 msgid "Key Recovery Agent"
@@ -1839,7 +1839,7 @@ msgstr "Tipo de Sujeito="
 #: crypt32.rc:195
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr "CA"
+msgstr "AC"
 
 #: crypt32.rc:196
 msgid "End Entity"
@@ -1873,7 +1873,7 @@ msgstr "OCSP"
 
 #: crypt32.rc:203
 msgid "CA Issuers"
-msgstr "Emissores CA"
+msgstr "Emissores de AC"
 
 #: crypt32.rc:204
 msgid "Unknown Access Method"
@@ -1913,7 +1913,7 @@ msgstr "Compromisso da Chave"
 
 #: crypt32.rc:213
 msgid "CA Compromise"
-msgstr "Compromisso CA"
+msgstr "Compromisso da AC"
 
 #: crypt32.rc:214
 msgid "Affiliation Changed"
@@ -2013,15 +2013,15 @@ msgstr "Assinatura"
 
 #: crypt32.rc:238
 msgid "SSL CA"
-msgstr "SSL CA"
+msgstr "SSL AC"
 
 #: crypt32.rc:239
 msgid "S/MIME CA"
-msgstr "S/MIME CA"
+msgstr "S/MIME AC"
 
 #: crypt32.rc:240
 msgid "Signature CA"
-msgstr "CA de Assinatura"
+msgstr "AC de Assinatura"
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
@@ -6135,7 +6135,7 @@ msgstr "Erro RPC interno\n"
 
 #: winerror.mc:3251
 msgid "RPC divide-by-zero\n"
-msgstr "RPC divisão-por-zero\n"
+msgstr "divisão por zero em RPC\n"
 
 #: winerror.mc:3256
 msgid "Address error\n"
@@ -6143,7 +6143,7 @@ msgstr "Erro de endereço\n"
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero\n"
-msgstr "Divisão-por-zero em ponto flutuante\n"
+msgstr "Divisão por zero em ponto flutuante\n"
 
 #: winerror.mc:3266
 msgid "Floating-point underflow\n"
@@ -10368,7 +10368,7 @@ msgstr "&Conteúdo\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "&Sobre o Notepad"
+msgstr "&Sobre o Bloco de Notas"
 
 #: notepad.rc:97
 msgid "Page Setup"
@@ -10404,7 +10404,7 @@ msgstr "Página &p"
 
 #: notepad.rc:68
 msgid "Notepad"
-msgstr "Notepad"
+msgstr "Bloco de Notas"
 
 #: notepad.rc:69 progman.rc:61 winhlp32.rc:79
 msgid "ERROR"
@@ -11586,7 +11586,7 @@ msgstr "Erro: Incapaz de finalizar o processo \"%1\".\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "Erro: Auto-finalização do processo não é permitida.\n"
+msgstr "Erro: Auto finalização do processo não é permitida.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -12135,7 +12135,7 @@ msgstr "Maximiza as janelas"
 
 #: taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
-msgstr "Dispõe as janelas em cascata diagonal pelo desktop"
+msgstr "Dispõe as janelas em cascata diagonal pela área de trabalho"
 
 #: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
