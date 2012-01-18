@@ -24,6 +24,50 @@ cpp_quote("#include <htiframe.h>")
 
 
 /*****************************************************************************
+ *    ITargetFrame interface
+ */
+[
+    object,
+    uuid(d5f78c80-5252-11cf-90fa-00aa0042106e),
+    pointer_default(unique)
+]
+interface ITargetFrame: IUnknown
+{
+    typedef [unique] ITargetFrame *LPTARGETFRAME;
+
+    typedef enum {
+        NAVIGATEFRAME_FL_RECORD                    = 0x01,
+        NAVIGATEFRAME_FL_POST                      = 0x02,
+        NAVIGATEFRAME_FL_NO_DOC_CACHE              = 0x04,
+        NAVIGATEFRAME_FL_NO_IMAGE_CACHE            = 0x08,
+        NAVIGATEFRAME_FL_AUTH_FAIL_CACHE_OK        = 0x10,
+        NAVIGATEFRAME_FL_SENDING_FROM_FORM         = 0x20,
+        NAVIGATEFRAME_FL_REALLY_SENDING_FROM_FORM  = 0x40
+    } NAVIGATEFRAME_FLAGS;
+
+    typedef struct tagNavigateData {
+        ULONG ulTarget;
+        ULONG ulURL;
+        ULONG ulRefURL;
+        ULONG ulPostData;
+        DWORD dwFlags;
+    } NAVIGATEDATA;
+
+    HRESULT SetFrameName([in] LPCWSTR pszFrameName);
+    HRESULT GetFrameName([out] LPWSTR *ppszFrameName);
+    HRESULT GetParentFrame([out] IUnknown **ppunkParent);
+
+    HRESULT FindFrame(
+            [in] LPCWSTR pszTargetName,
+            [in] IUnknown *ppunkContextFrame,
+            [in] DWORD dwFlags,
+            [out] IUnknown **ppunkTargetFrame);
+
+    HRESULT SetFrameSrc([in] LPCWSTR pszFrameSrc);
+    HRESULT GetFrameSrc([out] LPWSTR *ppszFrameSrc);
+}
+
+/*****************************************************************************
  *    ITargetFramePriv interface
  */
 [
