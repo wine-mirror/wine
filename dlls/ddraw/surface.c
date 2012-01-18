@@ -5474,15 +5474,16 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
         desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
     }
 
+    /* Some applications assume surfaces will always be mapped at the same
+     * address. Some of those also assume that this address is valid even when
+     * the surface isn't mapped, and that updates done this way will be
+     * visible on the screen. The game Nox is such an application,
+     * Commandos: Behind Enemy Lines is another. */
+    if (version == 1)
+        flags |= WINED3D_SURFACE_PIN_SYSMEM;
+
     if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
-        /* Some applications assume that the primary surface will always be
-         * mapped at the same address. Some of those also assume that this
-         * address is valid even when the surface isn't mapped, and that
-         * updates done this way will be visible on the screen. The game Nox
-         * is such an application. */
-        if (version == 1)
-            flags |= WINED3D_SURFACE_PIN_SYSMEM;
         usage |= WINED3DUSAGE_RENDERTARGET;
         desc->ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
     }
