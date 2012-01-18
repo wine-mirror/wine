@@ -1071,6 +1071,7 @@ static void wined3d_surface_depth_blt_fbo(const struct wined3d_device *device, s
     context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, NULL, dst_surface, SFLAG_INTEXTURE);
     context_set_draw_buffer(context, GL_NONE);
     context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
+    context_invalidate_state(context, STATE_FRAMEBUFFER);
 
     if (gl_mask & GL_DEPTH_BUFFER_BIT)
     {
