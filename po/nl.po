@@ -765,7 +765,7 @@ msgstr "P&rinter..."
 
 #: comdlg32.rc:456
 msgid "Look &in:"
-msgstr "&Zoeken in"
+msgstr "&Zoeken in:"
 
 #: comdlg32.rc:462
 msgid "File &name:"
@@ -949,7 +949,7 @@ msgstr ""
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
-msgstr "De VAN ingave kan niet groter zijn dan de TO waarde"
+msgstr "De VAN ingave kan niet groter zijn dan de TO waarde."
 
 #: comdlg32.rc:58
 msgid ""
@@ -964,6 +964,7 @@ msgid "The 'Number of copies' field cannot be empty."
 msgstr "Het invoerveld 'Aantal kopieën' kan niet leeg zijn."
 
 #: comdlg32.rc:62
+#, fuzzy
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
@@ -976,23 +977,23 @@ msgstr "Er heeft zich een fout voorgedaan met de printer."
 
 #: comdlg32.rc:64
 msgid "No default printer defined."
-msgstr "Er is geen standaardprinter"
+msgstr "Er is geen standaardprinter."
 
 #: comdlg32.rc:65
 msgid "Cannot find the printer."
-msgstr "De printer werd niet gevonden"
+msgstr "De printer werd niet gevonden."
 
 #: comdlg32.rc:66 progman.rc:73
 msgid "Out of memory."
-msgstr "Onvoldoende geheugen beschikbaar"
+msgstr "Onvoldoende geheugen beschikbaar."
 
 #: comdlg32.rc:67
 msgid "An error occurred."
-msgstr "Er ontstond een niet nader gespecificeerde fout"
+msgstr "Er ontstond een niet nader gespecificeerde fout."
 
 #: comdlg32.rc:68
 msgid "Unknown printer driver."
-msgstr "De printer driver is onbekend"
+msgstr "De printer driver is onbekend."
 
 #: comdlg32.rc:71
 msgid ""
@@ -1029,95 +1030,95 @@ msgstr "Gereed"
 
 #: comdlg32.rc:80
 msgid "Paused; "
-msgstr "Gepauzeerd, "
+msgstr "Gepauzeerd; "
 
 #: comdlg32.rc:81
 msgid "Error; "
-msgstr "Fout, "
+msgstr "Fout; "
 
 #: comdlg32.rc:82
 msgid "Pending deletion; "
-msgstr "Bezig met verwijderen, "
+msgstr "Bezig met verwijderen; "
 
 #: comdlg32.rc:83
 msgid "Paper jam; "
-msgstr "Papier-opstopping, "
+msgstr "Papier-opstopping; "
 
 #: comdlg32.rc:84
 msgid "Out of paper; "
-msgstr "Papier is op, "
+msgstr "Papier is op; "
 
 #: comdlg32.rc:85
 msgid "Feed paper manual; "
-msgstr "Voer s.v.p. met de hand papier in, "
+msgstr "Voer s.v.p. met de hand papier in; "
 
 #: comdlg32.rc:86
 msgid "Paper problem; "
-msgstr "Papier-probleem, "
+msgstr "Papier-probleem; "
 
 #: comdlg32.rc:87
 msgid "Printer offline; "
-msgstr "Printer offline, "
+msgstr "Printer offline; "
 
 #: comdlg32.rc:88
 msgid "I/O Active; "
-msgstr "I/O Actief, "
+msgstr "I/O Actief; "
 
 #: comdlg32.rc:89
 msgid "Busy; "
-msgstr "Druk bezig, "
+msgstr "Druk bezig; "
 
 #: comdlg32.rc:90
 msgid "Printing; "
-msgstr "Aan het printen, "
+msgstr "Aan het printen; "
 
 #: comdlg32.rc:91
 msgid "Output tray is full; "
-msgstr "De uitvoerlade is vol, "
+msgstr "De uitvoerlade is vol; "
 
 #: comdlg32.rc:92
 msgid "Not available; "
-msgstr "Niet aanwezig, "
+msgstr "Niet aanwezig; "
 
 #: comdlg32.rc:93
 msgid "Waiting; "
-msgstr "Aan het wachten, "
+msgstr "Aan het wachten; "
 
 #: comdlg32.rc:94
 msgid "Processing; "
-msgstr "Aan het verwerken, "
+msgstr "Aan het verwerken; "
 
 #: comdlg32.rc:95
 msgid "Initialising; "
-msgstr "Aan het opstarten, "
+msgstr "Aan het opstarten; "
 
 #: comdlg32.rc:96
 msgid "Warming up; "
-msgstr "Aan het opwarmen, "
+msgstr "Aan het opwarmen; "
 
 #: comdlg32.rc:97
 msgid "Toner low; "
-msgstr "Er is nog maar weinig toner, "
+msgstr "Er is nog maar weinig toner; "
 
 #: comdlg32.rc:98
 msgid "No toner; "
-msgstr "Toner is op, "
+msgstr "Toner is op; "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
-msgstr "Storing in papieruitvoer, "
+msgstr "Storing in papieruitvoer; "
 
 #: comdlg32.rc:100
 msgid "Interrupted by user; "
-msgstr "Onderbroken door een gebruiker, "
+msgstr "Onderbroken door een gebruiker; "
 
 #: comdlg32.rc:101
 msgid "Out of memory; "
-msgstr "Onvoldoende geheugen beschikbaar, "
+msgstr "Onvoldoende geheugen beschikbaar; "
 
 #: comdlg32.rc:102
 msgid "The printer door is open; "
-msgstr "De printer staat is open, "
+msgstr "De printer staat is open; "
 
 #: comdlg32.rc:103
 msgid "Print server unknown; "
@@ -1129,7 +1130,7 @@ msgstr "Power save modus; "
 
 #: comdlg32.rc:73
 msgid "Default Printer; "
-msgstr "Standaard Printer, "
+msgstr "Standaard Printer; "
 
 #: comdlg32.rc:74
 msgid "There are %d documents in the queue"
@@ -2030,7 +2031,7 @@ msgstr "Certificaatbeleid"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "Autoriteits Sleutel Identificatie nummer"
+msgstr "Autoriteits Sleutel Identificatie nummer:"
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -2188,6 +2189,7 @@ msgstr ""
 "authenticatie en om berichten te ondertekenen. Een certificaatkluis bevat "
 "een verzameling van certificaten, lijsten van herroepen certificaten en "
 "lijsten van vertrouwde certificaten.\n"
+"\n"
 "Klik Volgende om verder te gaan."
 
 #: cryptui.rc:291 cryptui.rc:427
@@ -2324,7 +2326,8 @@ msgstr ""
 "communiceert te identificeren. Het kan ook gebruikt worden voor "
 "authenticatie en om berichten te ondertekenen. Een certificaatkluis bevat "
 "een verzameling van certificaten, lijsten van herroepen certificaten en "
-"lijsten van vertrouwde certificaten."
+"lijsten van vertrouwde certificaten.\n"
+"Klik Volgende om verder te gaan."
 
 #: cryptui.rc:381
 msgid ""
@@ -2360,7 +2363,7 @@ msgstr "&DER-encoded X.509 (.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr "Ba&se64-encoded X.509 (.cer)"
+msgstr "Ba&se64-encoded X.509 (.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
@@ -8589,7 +8592,7 @@ msgid ""
 "one."
 msgstr ""
 "De gegeven opdracht vereist een character-stringparameter. Lever er s.v.p. "
-"één aan"
+"één aan."
 
 #: winmm.rc:67
 msgid "The specified integer is invalid for this command."
@@ -9384,7 +9387,7 @@ msgstr "CHDIR <mapnaam> wijzigt de huidige map.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS wist het scherm\n"
+msgstr "CLS wist het scherm.\n"
 
 #: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
@@ -9527,7 +9530,7 @@ msgstr "MD <naam> is de korte versie van MKDIR. Het maakt een map aan.\n"
 
 #: cmd.rc:104
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "MKDIR <naam> maakt een map aan\n"
+msgstr "MKDIR <naam> maakt een map aan.\n"
 
 #: cmd.rc:111
 msgid ""
@@ -9626,7 +9629,7 @@ msgstr ""
 "\n"
 "De prompt kan ook gewijzigd worden via de PROMPT omgevingsvariabele,\n"
 "dus de opdracht 'SET PROMPT=tekenreeks' heeft hetzelfde effect als 'PROMPT\n"
-"tekenreeks'\n"
+"tekenreeks'.\n"
 
 #: cmd.rc:153
 msgid ""
@@ -9932,7 +9935,7 @@ msgstr ""
 "XCOPY\t\tKopieer bestanden of mappen naar een bestemming\n"
 "EXIT\t\tSluit CMD af\n"
 "\n"
-"type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten\n"
+"type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten.\n"
 
 #: cmd.rc:291
 msgid "Are you sure"
@@ -10442,10 +10445,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"Het bestand '%s'\n"
-"bestaat niet\n"
+"Het bestand '%s' bestaat niet.\n"
 "\n"
-" Wilt u een nieuw bestand maken?"
+"Wilt u een nieuw bestand maken?"
 
 #: notepad.rc:79
 msgid ""
@@ -10453,10 +10455,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Het bestand '%s'\n"
-"is gewijzigd\n"
+"Het bestand '%s' is gewijzigd.\n"
 "\n"
-" Wilt u de wijzigingen opslaan?"
+"Wilt u de wijzigingen opslaan?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
@@ -11993,7 +11994,7 @@ msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
 msgstr ""
 "Selecteer de kolommen die op de procespagina van Taakbeheer moeten "
-"verschijnen"
+"verschijnen."
 
 #: taskmgr.rc:525
 msgid "&Image Name"
@@ -12928,6 +12929,7 @@ msgid ""
 "it doesn't. If you proceed remember to recreate it!"
 msgstr ""
 "Weet u zeker dat u station C wilt verwijderen?\n"
+"\n"
 "De meeste Windows toepassingen verwachten dat station C bestaat en zullen, "
 "met onverwachte resultaten, afbreken. Als u doorgaat vergeet dan niet om "
 "station C opnieuw aan te maken!"
