@@ -33,6 +33,7 @@
 #include "dispex.h"
 #include "mshtml_test.h"
 #include "objsafe.h"
+#include "htiface.h"
 
 static INT (WINAPI *pLCIDToLocaleName)(LCID,LPWSTR,INT,DWORD);
 static LANGID (WINAPI *pGetUserDefaultUILanguage)(void);
@@ -148,6 +149,7 @@ static const IID * const doc_obj_iids[] = {
     &IID_IOleContainer,
     &IID_IObjectSafety,
     &IID_IProvideClassInfo,
+    &IID_ITargetContainer,
     NULL
 };
 

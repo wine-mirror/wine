@@ -2249,6 +2249,9 @@ static HRESULT WINAPI CustomDoc_QueryInterface(ICustomDoc *iface, REFIID riid, v
     if(IsEqualGUID(&IID_ICustomDoc, riid)) {
         TRACE("(%p)->(IID_ICustomDoc %p)\n", This, ppv);
         *ppv = &This->ICustomDoc_iface;
+    }else if(IsEqualGUID(&IID_ITargetContainer, riid)) {
+        TRACE("(%p)->(IID_ITargetContainer %p)\n", This, ppv);
+        *ppv = &This->ITargetContainer_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
@@ -2386,6 +2389,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 
     init_dispex(&doc->dispex, (IUnknown*)&doc->ICustomDoc_iface, &HTMLDocumentObj_dispex);
     init_doc(&doc->basedoc, (IUnknown*)&doc->ICustomDoc_iface, &doc->dispex.IDispatchEx_iface);
+    TargetContainer_Init(doc);
 
     doc->ICustomDoc_iface.lpVtbl = &CustomDocVtbl;
     doc->ref = 1;

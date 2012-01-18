@@ -891,6 +891,56 @@ static const IOleContainerVtbl OleContainerVtbl = {
     OleContainer_LockContainer
 };
 
+static inline HTMLDocumentObj *impl_from_ITargetContainer(ITargetContainer *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, ITargetContainer_iface);
+}
+
+static HRESULT WINAPI TargetContainer_QueryInterface(ITargetContainer *iface, REFIID riid, void **ppv)
+{
+    HTMLDocumentObj *This = impl_from_ITargetContainer(iface);
+    return ICustomDoc_QueryInterface(&This->ICustomDoc_iface, riid, ppv);
+}
+
+static ULONG WINAPI TargetContainer_AddRef(ITargetContainer *iface)
+{
+    HTMLDocumentObj *This = impl_from_ITargetContainer(iface);
+    return ICustomDoc_AddRef(&This->ICustomDoc_iface);
+}
+
+static ULONG WINAPI TargetContainer_Release(ITargetContainer *iface)
+{
+    HTMLDocumentObj *This = impl_from_ITargetContainer(iface);
+    return ICustomDoc_Release(&This->ICustomDoc_iface);
+}
+
+static HRESULT WINAPI TargetContainer_GetFrameUrl(ITargetContainer *iface, LPWSTR *ppszFrameSrc)
+{
+    HTMLDocumentObj *This = impl_from_ITargetContainer(iface);
+    FIXME("(%p)->(%p)\n", This, ppszFrameSrc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TargetContainer_GetFramesContainer(ITargetContainer *iface, IOleContainer **ppContainer)
+{
+    HTMLDocumentObj *This = impl_from_ITargetContainer(iface);
+    FIXME("(%p)->(%p)\n", This, ppContainer);
+    return E_NOTIMPL;
+}
+
+static const ITargetContainerVtbl TargetContainerVtbl = {
+    TargetContainer_QueryInterface,
+    TargetContainer_AddRef,
+    TargetContainer_Release,
+    TargetContainer_GetFrameUrl,
+    TargetContainer_GetFramesContainer
+};
+
+void TargetContainer_Init(HTMLDocumentObj *This)
+{
+    This->ITargetContainer_iface.lpVtbl = &TargetContainerVtbl;
+}
+
 /**********************************************************
  * IObjectSafety implementation
  */

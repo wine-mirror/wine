@@ -26,6 +26,7 @@
 #include "perhist.h"
 #include "dispex.h"
 #include "objsafe.h"
+#include "htiframe.h"
 
 #include "wine/list.h"
 #include "wine/unicode.h"
@@ -437,6 +438,7 @@ struct HTMLDocumentObj {
     HTMLDocument basedoc;
     DispatchEx dispex;
     ICustomDoc ICustomDoc_iface;
+    ITargetContainer ITargetContainer_iface;
 
     LONG ref;
 
@@ -637,6 +639,8 @@ void HTMLDocument_View_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_Window_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_Service_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_Hlink_Init(HTMLDocument*) DECLSPEC_HIDDEN;
+
+void TargetContainer_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 
 void HTMLDocumentNode_SecMgr_Init(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 
