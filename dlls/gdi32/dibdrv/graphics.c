@@ -678,12 +678,74 @@ BOOL dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     return dibdrv_RoundRect( dev, left, top, right, bottom, right - left, bottom - top );
 }
 
+static inline BOOL is_interior( dib_info *dib, int x, int y, DWORD pixel, UINT type)
+{
+    if (type == FLOODFILLBORDER)
+        return dib->funcs->get_pixel( dib, x, y ) != pixel;
+    else
+        return dib->funcs->get_pixel( dib, x, y ) == pixel;
+}
+
+static void fill_row( dib_info *dib, RECT *row, DWORD pixel, UINT type, HRGN rgn );
+
+static inline void do_next_row( dib_info *dib, const RECT *row, int offset, DWORD pixel, UINT type, HRGN rgn )
+{
+    RECT next;
+
+    next.top = row->top + offset;
+    next.bottom = next.top + 1;
+    next.left = next.right = row->left;
+    while (next.right < row->right)
+    {
+        if (is_interior( dib, next.right, next.top, pixel, type)) next.right++;
+        else
+        {
+            if (next.left != next.right && !PtInRegion( rgn, next.left, next.top ))
+                fill_row( dib, &next, pixel, type, rgn );
+            next.left = ++next.right;
+        }
+    }
+    if (next.left != next.right && !PtInRegion( rgn, next.left, next.top ))
+        fill_row( dib, &next, pixel, type, rgn );
+}
+
+static void fill_row( dib_info *dib, RECT *row, DWORD pixel, UINT type, HRGN rgn )
+{
+    while (row->left > 0 && is_interior( dib, row->left - 1, row->top, pixel, type)) row->left--;
+    while (row->right < dib->width && is_interior( dib, row->right, row->top, pixel, type)) row->right++;
+    add_rect_to_region( rgn, row );
+
+    if (row->top > 0) do_next_row( dib, row, -1, pixel, type, rgn );
+    if (row->top < dib->height - 1) do_next_row( dib, row, 1, pixel, type, rgn );
+
+    return;
+}
+
 /***********************************************************************
  *           dibdrv_ExtFloodFill
  */
 BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 {
-    FIXME( "not implemented yet\n" );
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    DWORD pixel = get_pixel_color( pdev, color, FALSE );
+    RECT row;
+    HRGN rgn;
+
+    TRACE( "(%p, %d, %d, %08x, %d\n", pdev, x, y, color, type );
+
+    if (!is_interior( &pdev->dib, x, y, pixel, type )) return FALSE;
+
+    rgn = CreateRectRgn( 0, 0, 0, 0 );
+    row.left = x;
+    row.right = x + 1;
+    row.top = y;
+    row.bottom = y + 1;
+
+    fill_row( &pdev->dib, &row, pixel, type, rgn );
+
+    brush_region( pdev, rgn );
+
+    DeleteObject( rgn );
     return TRUE;
 }
 
