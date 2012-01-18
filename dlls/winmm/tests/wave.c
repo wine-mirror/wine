@@ -684,7 +684,8 @@ static void wave_out_test_deviceOut(int device, double duration,
     if (rc!=MMSYSERR_NOERROR)
         goto EXIT;
 
-    WaitForSingleObject(hevent,10000);
+    rc=WaitForSingleObject(hevent,9000);
+    ok(rc==WAIT_OBJECT_0, "missing WOM_OPEN notification\n");
 
     ok(pwfx->nChannels==nChannels &&
        pwfx->wBitsPerSample==wBitsPerSample &&
@@ -787,7 +788,8 @@ static void wave_out_test_deviceOut(int device, double duration,
                     ok(rc==MMSYSERR_NOERROR,"waveOutWrite(%s, header[%d]): rc=%s\n",
                        dev_name(device),(i+1)%headers,wave_out_error(rc));
                 }
-                WaitForSingleObject(hevent,10000);
+                rc=WaitForSingleObject(hevent,8000);
+                ok(rc==WAIT_OBJECT_0, "missing WOM_DONE notification\n");
             }
         }
 
@@ -807,12 +809,29 @@ static void wave_out_test_deviceOut(int device, double duration,
            "waveOutUnprepareHeader(%s): rc=%s\n",dev_name(device),
            wave_out_error(rc));
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
-
     rc=waveOutClose(wout);
     ok(rc==MMSYSERR_NOERROR,"waveOutClose(%s): rc=%s\n",dev_name(device),
        wave_out_error(rc));
-    WaitForSingleObject(hevent,10000);
+    if (rc==WAVERR_STILLPLAYING) {
+        /* waveOutReset ought to return all buffers s.t. waveOutClose succeeds */
+        rc=waveOutReset(wout);
+        ok(rc==MMSYSERR_NOERROR,"waveOutReset(%s): rc=%s\n",dev_name(device),
+           wave_out_error(rc));
+
+        for (i = 0; i < headers; i++) {
+            rc=waveOutUnprepareHeader(wout, &frags[i], sizeof(frags[0]));
+            ok(rc==MMSYSERR_NOERROR,
+               "waveOutUnprepareHeader(%s): rc=%s\n",dev_name(device),
+               wave_out_error(rc));
+        }
+        rc=waveOutClose(wout);
+        ok(rc==MMSYSERR_NOERROR,"waveOutClose(%s): rc=%s\n",dev_name(device),
+           wave_out_error(rc));
+    }
+    rc=WaitForSingleObject(hevent,1500);
+    ok(rc==WAIT_OBJECT_0, "missing WOM_CLOSE notification\n");
+
+    HeapFree(GetProcessHeap(), 0, buffer);
 EXIT:
     if ((flags & CALLBACK_TYPEMASK) == CALLBACK_THREAD) {
         PostThreadMessage(thread_id, WM_APP, 0, 0);
@@ -970,20 +989,20 @@ static void wave_out_test_device(UINT_PTR device)
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
-        wave_out_test_deviceOut(device,1.0,1,0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,0.6,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_EVENT,&capsA,TRUE,FALSE,FALSE);
-        wave_out_test_deviceOut(device,1.0,1,0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,0.6,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_EVENT,&capsA,TRUE,FALSE,TRUE);
-        wave_out_test_deviceOut(device,1.0,1,0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,0.6,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_FUNCTION,&capsA,TRUE,FALSE,FALSE);
-        wave_out_test_deviceOut(device,1.0,1,0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,0.6,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_FUNCTION,&capsA,TRUE,FALSE,TRUE);
-        wave_out_test_deviceOut(device,1.0,1,0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,0.6,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_THREAD,&capsA,TRUE,FALSE,FALSE);
-        wave_out_test_deviceOut(device,1.0,1,0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,0.6,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_THREAD,&capsA,TRUE,FALSE,TRUE);
 
-        wave_out_test_deviceOut(device,1.0,10,0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,0.8,10,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_EVENT,&capsA,TRUE,FALSE,FALSE);
         wave_out_test_deviceOut(device,1.0,5,1,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_EVENT,&capsA,TRUE,FALSE,FALSE);
