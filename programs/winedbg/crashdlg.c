@@ -153,11 +153,11 @@ static void save_crash_log( HWND hwnd )
     memset( &save, 0, sizeof(save) );
     lstrcpyW( path, default_name );
 
-    LoadStringW( GetModuleHandleW(0), IDS_TEXT_FILES, buffer, sizeof(buffer) );
+    LoadStringW( GetModuleHandleW(0), IDS_TEXT_FILES, buffer, sizeof(buffer)/sizeof(buffer[0]) );
     p = buffer + lstrlenW(buffer) + 1;
     lstrcpyW(p, txt_files);
     p += lstrlenW(p) + 1;
-    LoadStringW( GetModuleHandleW(0), IDS_ALL_FILES, p, sizeof(buffer) - (p - buffer) );
+    LoadStringW( GetModuleHandleW(0), IDS_ALL_FILES, p, sizeof(buffer)/sizeof(buffer[0]) - (p - buffer) );
     p += lstrlenW(p) + 1;
     lstrcpyW(p, all_files);
     p += lstrlenW(p) + 1;
