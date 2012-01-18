@@ -80,6 +80,9 @@ static HRESULT WINAPI InternetHostSecurityManager_ProcessUrlAction(IInternetHost
 
     TRACE("(%p)->(%d %p %d %p %d %x %x)\n", This, dwAction, pPolicy, cbPolicy, pContext, cbContext, dwFlags, dwReserved);
 
+    if(!This->basedoc.window)
+        return E_UNEXPECTED;
+
     url = This->basedoc.window->url ? This->basedoc.window->url : about_blankW;
 
     return IInternetSecurityManager_ProcessUrlAction(This->basedoc.window->secmgr, url, dwAction, pPolicy, cbPolicy,
@@ -183,6 +186,9 @@ static HRESULT WINAPI InternetHostSecurityManager_QueryCustomPolicy(IInternetHos
     HRESULT hres;
 
     TRACE("(%p)->(%s %p %p %p %d %x)\n", This, debugstr_guid(guidKey), ppPolicy, pcbPolicy, pContext, cbContext, dwReserved);
+
+    if(!This->basedoc.window)
+        return E_UNEXPECTED;
 
     url = This->basedoc.window->url ? This->basedoc.window->url : about_blankW;
 
