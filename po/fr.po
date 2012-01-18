@@ -372,8 +372,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Aucune"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
-#: winedbg.rc:71 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:57
+#: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
 msgstr "Fermer"
 
@@ -6621,7 +6621,7 @@ msgstr "Réseau entier"
 msgid "Sound Selection"
 msgstr "Sélection du son"
 
-#: msacm32.rc:36 winedbg.rc:72
+#: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
 msgstr "&Enregistrer sous..."
 
@@ -13339,11 +13339,11 @@ msgstr ""
 "Démarre l'interpréteur de commandes de Wine dans une console Wine.\n"
 "\n"
 
-#: winedbg.rc:45
+#: winedbg.rc:46
 msgid "Program Error"
 msgstr "Erreur du programme"
 
-#: winedbg.rc:50
+#: winedbg.rc:51
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13351,7 +13351,7 @@ msgstr ""
 "Le programme %s a rencontré un problème sérieux et doit être fermé. Nous "
 "somme désolés pour le désagrément subi."
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -13362,15 +13362,15 @@ msgstr ""
 "données d'applications</a> pour obtenir des conseils sur la façon d'exécuter "
 "cette application."
 
-#: winedbg.rc:57
+#: winedbg.rc:58
 msgid "Show &Details"
 msgstr "Afficher les &détails"
 
-#: winedbg.rc:62
+#: winedbg.rc:63
 msgid "Program Error Details"
 msgstr "Détails de l'erreur du programme"
 
-#: winedbg.rc:69
+#: winedbg.rc:70
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -13398,6 +13398,10 @@ msgstr "(non identifié)"
 #: winedbg.rc:40
 msgid "Saving failed"
 msgstr "Erreur lors de l'enregistrement"
+
+#: winedbg.rc:41
+msgid "Loading detailed information, please wait..."
+msgstr ""
 
 #: winefile.rc:26
 msgid "&Open\tEnter"

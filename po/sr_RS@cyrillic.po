@@ -372,8 +372,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Ништа"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
-#: winedbg.rc:71 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:57
+#: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
 msgstr "Затвори"
 
@@ -6850,7 +6850,7 @@ msgstr "Цела мрежа"
 msgid "Sound Selection"
 msgstr "Избор звука"
 
-#: msacm32.rc:36 winedbg.rc:72
+#: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
 msgstr "&Сачувај као..."
 
@@ -13218,11 +13218,11 @@ msgid ""
 "\n"
 msgstr ""
 
-#: winedbg.rc:45
+#: winedbg.rc:46
 msgid "Program Error"
 msgstr "Програмска грешка"
 
-#: winedbg.rc:50
+#: winedbg.rc:51
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13230,7 +13230,7 @@ msgstr ""
 "Програм %s је наишао на озбиљан проблем и мора бити затворен. Извињавамо се "
 "због непријатности."
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 #, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
@@ -13243,17 +13243,17 @@ msgstr ""
 "Ако овај проблем није присутан под Windows-ом и још увек није пријављен, "
 "пријавите га на http://bugs.winehq.org."
 
-#: winedbg.rc:57
+#: winedbg.rc:58
 #, fuzzy
 msgid "Show &Details"
 msgstr "&Детаљи"
 
-#: winedbg.rc:62
+#: winedbg.rc:63
 #, fuzzy
 msgid "Program Error Details"
 msgstr "Програмска грешка"
 
-#: winedbg.rc:69
+#: winedbg.rc:70
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -13277,6 +13277,10 @@ msgstr "(неидентификовано)"
 #, fuzzy
 msgid "Saving failed"
 msgstr "Отвори датотеку"
+
+#: winedbg.rc:41
+msgid "Loading detailed information, please wait..."
+msgstr ""
 
 #: winefile.rc:26
 #, fuzzy

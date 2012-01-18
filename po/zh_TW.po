@@ -360,8 +360,8 @@ msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
 "無"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
-#: winedbg.rc:71 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:57
+#: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
 msgstr "關閉"
 
@@ -6828,7 +6828,7 @@ msgstr "整個網路"
 msgid "Sound Selection"
 msgstr "聲音選擇"
 
-#: msacm32.rc:36 winedbg.rc:72
+#: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
 msgstr "儲存為(&S)..."
 
@@ -13164,25 +13164,25 @@ msgid ""
 "\n"
 msgstr ""
 
-#: winedbg.rc:45
+#: winedbg.rc:46
 #, fuzzy
 msgid "Program Error"
 msgstr "程式組(&G)"
 
-#: winedbg.rc:50
+#: winedbg.rc:51
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
 msgstr ""
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
 
-#: winedbg.rc:57
+#: winedbg.rc:58
 #, fuzzy
 msgid "Show &Details"
 msgstr ""
@@ -13191,12 +13191,12 @@ msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
 "詳情(&D)"
 
-#: winedbg.rc:62
+#: winedbg.rc:63
 #, fuzzy
 msgid "Program Error Details"
 msgstr "程式組(&G)"
 
-#: winedbg.rc:69
+#: winedbg.rc:70
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -13220,6 +13220,10 @@ msgstr ""
 #, fuzzy
 msgid "Saving failed"
 msgstr "Wine地雷"
+
+#: winedbg.rc:41
+msgid "Loading detailed information, please wait..."
+msgstr ""
 
 #: winefile.rc:26
 msgid "&Open\tEnter"

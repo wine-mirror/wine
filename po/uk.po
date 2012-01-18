@@ -367,8 +367,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Немає"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
-#: winedbg.rc:71 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:57
+#: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
 msgstr "Закрити"
 
@@ -6605,7 +6605,7 @@ msgstr "Вся Мережа"
 msgid "Sound Selection"
 msgstr ""
 
-#: msacm32.rc:36 winedbg.rc:72
+#: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
 msgstr "Зберегти &як..."
 
@@ -13237,11 +13237,11 @@ msgstr ""
 "Запуск командного рядка Wine в консолі Wine\n"
 "\n"
 
-#: winedbg.rc:45
+#: winedbg.rc:46
 msgid "Program Error"
 msgstr "Помилка програми"
 
-#: winedbg.rc:50
+#: winedbg.rc:51
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13249,7 +13249,7 @@ msgstr ""
 "В програмі %s сталась серйозна помилка. Програма повинна бути закрита. "
 "Вибачте за незручності."
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 #, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
@@ -13263,17 +13263,17 @@ msgstr ""
 "Якщо ця проблема не присутня під Windows і ще не була зареєстрована, ви "
 "можете повідомити про неї на http://bugs.winehq.org."
 
-#: winedbg.rc:57
+#: winedbg.rc:58
 #, fuzzy
 msgid "Show &Details"
 msgstr "&Детально"
 
-#: winedbg.rc:62
+#: winedbg.rc:63
 #, fuzzy
 msgid "Program Error Details"
 msgstr "Помилка програми"
 
-#: winedbg.rc:69
+#: winedbg.rc:70
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -13297,6 +13297,10 @@ msgstr "(не визначено)"
 #, fuzzy
 msgid "Saving failed"
 msgstr "Помилка створення\n"
+
+#: winedbg.rc:41
+msgid "Loading detailed information, please wait..."
+msgstr ""
 
 #: winefile.rc:26
 msgid "&Open\tEnter"

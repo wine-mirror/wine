@@ -372,8 +372,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Nessuno"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
-#: winedbg.rc:71 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:57
+#: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
 msgstr "Chiudi"
 
@@ -6610,7 +6610,7 @@ msgstr "Tutta la rete"
 msgid "Sound Selection"
 msgstr "Selezione dell'audio"
 
-#: msacm32.rc:36 winedbg.rc:72
+#: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
 msgstr "&Salva con nome..."
 
@@ -13277,11 +13277,11 @@ msgstr ""
 "Avvia il prompt dei comandi di Wine in una console Wine.\n"
 "\n"
 
-#: winedbg.rc:45
+#: winedbg.rc:46
 msgid "Program Error"
 msgstr "Errore del programma"
 
-#: winedbg.rc:50
+#: winedbg.rc:51
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13289,7 +13289,7 @@ msgstr ""
 "Il programma %s ha incontrato un errore e deve essere chiuso. Siamo "
 "spiacenti per l'inconveniente."
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 #, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
@@ -13303,17 +13303,17 @@ msgstr ""
 "Se questo problema non è presente sotto Windows e non è stato ancora "
 "segnalato, puoi <a href=\"http://wiki.winehq.org/Bugs\">segnalarlo</a>."
 
-#: winedbg.rc:57
+#: winedbg.rc:58
 #, fuzzy
 msgid "Show &Details"
 msgstr "&Dettagli"
 
-#: winedbg.rc:62
+#: winedbg.rc:63
 #, fuzzy
 msgid "Program Error Details"
 msgstr "Errore del programma"
 
-#: winedbg.rc:69
+#: winedbg.rc:70
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -13337,6 +13337,10 @@ msgstr "(non identificato)"
 #, fuzzy
 msgid "Saving failed"
 msgstr "Creazione fallita\n"
+
+#: winedbg.rc:41
+msgid "Loading detailed information, please wait..."
+msgstr ""
 
 #: winefile.rc:26
 msgid "&Open\tEnter"

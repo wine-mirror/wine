@@ -310,7 +310,7 @@ extern int              break_add_condition(int bpnum, struct expr* exp);
 
   /* crashdlg.c */
 extern int              display_crash_dialog(void);
-extern int              display_crash_details(HANDLE logfile);
+extern HANDLE           display_crash_details(HANDLE event);
 extern int              msgbox_res_id(HWND hwnd, UINT textId, UINT captionId, UINT uType);
 
   /* dbg.y */

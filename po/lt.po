@@ -370,8 +370,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Joks"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
-#: winedbg.rc:71 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:57
+#: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
 msgstr "Užverti"
 
@@ -6600,7 +6600,7 @@ msgstr "Visas tinklas"
 msgid "Sound Selection"
 msgstr "Garso parinkimas"
 
-#: msacm32.rc:36 winedbg.rc:72
+#: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
 msgstr "Išsaugoti k&aip..."
 
@@ -13206,11 +13206,11 @@ msgstr ""
 "Paleidžia Wine komandų interpretatorių Wine pulte.\n"
 "\n"
 
-#: winedbg.rc:45
+#: winedbg.rc:46
 msgid "Program Error"
 msgstr "Programos klaida"
 
-#: winedbg.rc:50
+#: winedbg.rc:51
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13218,7 +13218,7 @@ msgstr ""
 "Programa %s susidūrė su rimta problema ir turi būti uždaryta. Atsiprašome "
 "dėl nepatogumų."
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -13228,15 +13228,15 @@ msgstr ""
 "norėsite patikrinti <a href=\"http://appdb.winehq.org\">programų duomenų "
 "bazę</a> dėl patarimų apie šios programos vykdymą."
 
-#: winedbg.rc:57
+#: winedbg.rc:58
 msgid "Show &Details"
 msgstr "Rodyti &išsamiau"
 
-#: winedbg.rc:62
+#: winedbg.rc:63
 msgid "Program Error Details"
 msgstr "Išsamiau apie programos klaidą"
 
-#: winedbg.rc:69
+#: winedbg.rc:70
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -13263,6 +13263,10 @@ msgstr "(nenustatytas)"
 #: winedbg.rc:40
 msgid "Saving failed"
 msgstr "Nepavyko išsaugoti"
+
+#: winedbg.rc:41
+msgid "Loading detailed information, please wait..."
+msgstr ""
 
 #: winefile.rc:26
 msgid "&Open\tEnter"

@@ -800,7 +800,7 @@ enum dbg_start    dbg_active_launch(int argc, char* argv[])
  */
 enum dbg_start dbg_active_auto(int argc, char* argv[])
 {
-    HANDLE input, output = INVALID_HANDLE_VALUE;
+    HANDLE thread = 0, event = 0, input, output = INVALID_HANDLE_VALUE;
     enum dbg_start      ds = start_error_parse;
 
     DBG_IVAR(BreakOnDllLoad) = 0;
@@ -821,7 +821,9 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
         dbg_start_interactive(INVALID_HANDLE_VALUE);
         return start_ok;
     case ID_DETAILS:
-        dbg_houtput = output = create_temp_file();
+        event = CreateEventW( NULL, TRUE, FALSE, NULL );
+        if (event) thread = display_crash_details( event );
+        if (thread) dbg_houtput = output = create_temp_file();
         break;
     }
 
@@ -838,8 +840,11 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     if (output != INVALID_HANDLE_VALUE)
     {
         output_system_info();
-        display_crash_details( output );
+        SetEvent( event );
+        WaitForSingleObject( thread, INFINITE );
         CloseHandle( output );
+        CloseHandle( thread );
+        CloseHandle( event );
     }
 
     CloseHandle( input );

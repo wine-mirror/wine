@@ -370,8 +370,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Нет"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
-#: winedbg.rc:71 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:57
+#: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
 msgstr "Закрыть"
 
@@ -6599,7 +6599,7 @@ msgstr "Вся сеть"
 msgid "Sound Selection"
 msgstr "Выбор звука"
 
-#: msacm32.rc:36 winedbg.rc:72
+#: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
 msgstr "&Сохранить как..."
 
@@ -13191,11 +13191,11 @@ msgstr ""
 "Открывает командное приглашение Wine в консоли Wine.\n"
 "\n"
 
-#: winedbg.rc:45
+#: winedbg.rc:46
 msgid "Program Error"
 msgstr "Программная ошибка"
 
-#: winedbg.rc:50
+#: winedbg.rc:51
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13203,7 +13203,7 @@ msgstr ""
 "В программе %s обнаружена серьёзная ошибка. Программа будет закрыта. "
 "Приносим извинения за неудобство."
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -13213,15 +13213,15 @@ msgstr ""
 "можете посетить <a href=\"http://appdb.winehq.org\">Application Database</a> "
 "и поискать советы о запуске этой программы."
 
-#: winedbg.rc:57
+#: winedbg.rc:58
 msgid "Show &Details"
 msgstr "Показать &подробно"
 
-#: winedbg.rc:62
+#: winedbg.rc:63
 msgid "Program Error Details"
 msgstr "Подробности об ошибке"
 
-#: winedbg.rc:69
+#: winedbg.rc:70
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -13248,6 +13248,10 @@ msgstr "(не определено)"
 #: winedbg.rc:40
 msgid "Saving failed"
 msgstr "Ошибка при сохранении"
+
+#: winedbg.rc:41
+msgid "Loading detailed information, please wait..."
+msgstr ""
 
 #: winefile.rc:26
 msgid "&Open\tEnter"

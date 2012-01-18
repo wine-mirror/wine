@@ -367,8 +367,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Ingen"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
-#: winedbg.rc:71 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:57
+#: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
 msgstr "Lukk"
 
@@ -6822,7 +6822,7 @@ msgstr "Hele nettverket"
 msgid "Sound Selection"
 msgstr "Lydutvalg"
 
-#: msacm32.rc:36 winedbg.rc:72
+#: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
 msgstr "Lagre &som..."
 
@@ -13526,11 +13526,11 @@ msgstr ""
 "Starter Wine-ledeteksten i et Wine-konsoll\n"
 "\n"
 
-#: winedbg.rc:45
+#: winedbg.rc:46
 msgid "Program Error"
 msgstr "Programfeil"
 
-#: winedbg.rc:50
+#: winedbg.rc:51
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13538,7 +13538,7 @@ msgstr ""
 "Programmet %s har fått et alvorlig problem og må avsluttes. Vi beklager det "
 "inntrufne."
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 #, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
@@ -13552,17 +13552,17 @@ msgstr ""
 "Du kan rapportere feilen på http://bugs.winehq.org hvis problemet ikke "
 "oppstår i Windows."
 
-#: winedbg.rc:57
+#: winedbg.rc:58
 #, fuzzy
 msgid "Show &Details"
 msgstr "&Detaljer"
 
-#: winedbg.rc:62
+#: winedbg.rc:63
 #, fuzzy
 msgid "Program Error Details"
 msgstr "Programfeil"
 
-#: winedbg.rc:69
+#: winedbg.rc:70
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -13586,6 +13586,10 @@ msgstr "(uidentifisert)"
 #, fuzzy
 msgid "Saving failed"
 msgstr "Klarte ikke åpne\n"
+
+#: winedbg.rc:41
+msgid "Loading detailed information, please wait..."
+msgstr ""
 
 #: winefile.rc:26
 msgid "&Open\tEnter"

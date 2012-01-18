@@ -261,13 +261,19 @@ static INT_PTR WINAPI details_dlg_proc( HWND hwnd, UINT msg, WPARAM wparam, LPAR
 {
     static const WCHAR openW[] = {'o','p','e','n',0};
     static POINT orig_size, min_size, edit_size, text_pos, save_pos, close_pos;
-    RECT rect;
 
     switch (msg)
     {
     case WM_INITDIALOG:
+    {
+        RECT rect;
+        WCHAR buffer[256];
+
         set_fixed_font( hwnd, IDC_CRASH_TXT );
-        SetDlgItemTextA( hwnd, IDC_CRASH_TXT, crash_log );
+        LoadStringW( GetModuleHandleW(0), IDS_LOADING, buffer, 256 );
+        SetDlgItemTextW( hwnd, IDC_CRASH_TXT, buffer );
+        EnableWindow( GetDlgItem( hwnd, IDC_CRASH_TXT ), FALSE );
+        EnableWindow( GetDlgItem( hwnd, ID_SAVEAS ), FALSE );
 
         GetClientRect( hwnd, &rect );
         orig_size.x = rect.right;
@@ -297,6 +303,7 @@ static INT_PTR WINAPI details_dlg_proc( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         edit_size.x = rect.right - rect.left;
         edit_size.y = rect.bottom - rect.top;
         return TRUE;
+    }
 
     case WM_GETMINMAXINFO:
         ((MINMAXINFO *)lparam)->ptMinTrackSize = min_size;
@@ -338,7 +345,7 @@ static INT_PTR WINAPI details_dlg_proc( HWND hwnd, UINT msg, WPARAM wparam, LPAR
             break;
         case IDOK:
         case IDCANCEL:
-            EndDialog(hwnd, LOWORD(wparam));
+            PostQuitMessage( 0 );
             break;
         }
         return TRUE;
@@ -365,8 +372,41 @@ int display_crash_dialog(void)
     return DialogBoxW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_CRASH_DLG), NULL, crash_dlg_proc);
 }
 
-int display_crash_details( HANDLE logfile )
+static DWORD WINAPI crash_details_thread( void *event )
 {
-    load_crash_log( logfile );
-    return DialogBoxW( GetModuleHandleW(0), MAKEINTRESOURCEW(IDD_DETAILS_DLG), 0, details_dlg_proc );
+    MSG msg;
+    HWND dialog;
+
+    dialog = CreateDialogW( GetModuleHandleW(0), MAKEINTRESOURCEW(IDD_DETAILS_DLG), 0, details_dlg_proc );
+    if (!dialog) return 1;
+
+    for (;;)
+    {
+        if (MsgWaitForMultipleObjects( 1, &event, FALSE, INFINITE, QS_ALLINPUT ) == 0)
+        {
+            load_crash_log( dbg_houtput );
+            SetDlgItemTextA( dialog, IDC_CRASH_TXT, crash_log );
+            EnableWindow( GetDlgItem( dialog, IDC_CRASH_TXT ), TRUE );
+            EnableWindow( GetDlgItem( dialog, ID_SAVEAS ), TRUE );
+            break;
+        }
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+        {
+            if (msg.message == WM_QUIT) return 0;
+            TranslateMessage( &msg );
+            DispatchMessageW( &msg );
+        }
+    }
+
+    while (GetMessageW( &msg, 0, 0, 0 ))
+    {
+        TranslateMessage( &msg );
+        DispatchMessageW( &msg );
+    }
+    return 0;
+}
+
+HANDLE display_crash_details( HANDLE event )
+{
+    return CreateThread( NULL, 0, crash_details_thread, event, 0, NULL );
 }

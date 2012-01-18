@@ -41,3 +41,4 @@
 #define IDS_TEXT_FILES        19
 #define IDS_ALL_FILES         20
 #define IDS_SAVE_ERROR        21
+#define IDS_LOADING           22

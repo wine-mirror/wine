@@ -371,8 +371,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Geen"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:56
-#: winedbg.rc:71 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:57
+#: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
 msgstr "Sluiten"
 
@@ -6619,7 +6619,7 @@ msgstr "Gehele netwerk"
 msgid "Sound Selection"
 msgstr "Geluidskeuze"
 
-#: msacm32.rc:36 winedbg.rc:72
+#: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
 msgstr "&Opslaan als..."
 
@@ -13311,11 +13311,11 @@ msgstr ""
 "Start de Wine command prompt in een Wine console.\n"
 "\n"
 
-#: winedbg.rc:45
+#: winedbg.rc:46
 msgid "Program Error"
 msgstr "Programma Fout"
 
-#: winedbg.rc:50
+#: winedbg.rc:51
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -13323,7 +13323,7 @@ msgstr ""
 "Het programma %s is een serieus probleem tegengekomen en moet afgesloten "
 "worden. Excuses voor het ongemak."
 
-#: winedbg.rc:54
+#: winedbg.rc:55
 #, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
@@ -13337,17 +13337,17 @@ msgstr ""
 "Als dit probleem niet optreedt onder Windows en nog niet is gerapporteerd, "
 "dan kunt u <a href=\"http://wiki.winehq.org/Bugs\">een bug rapporteren</a>."
 
-#: winedbg.rc:57
+#: winedbg.rc:58
 #, fuzzy
 msgid "Show &Details"
 msgstr "&Details"
 
-#: winedbg.rc:62
+#: winedbg.rc:63
 #, fuzzy
 msgid "Program Error Details"
 msgstr "Programma Fout"
 
-#: winedbg.rc:69
+#: winedbg.rc:70
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
@@ -13371,6 +13371,10 @@ msgstr "(onbekend)"
 #, fuzzy
 msgid "Saving failed"
 msgstr "Openen mislukt\n"
+
+#: winedbg.rc:41
+msgid "Loading detailed information, please wait..."
+msgstr ""
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
