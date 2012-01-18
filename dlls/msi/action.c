@@ -2214,11 +2214,15 @@ static UINT calculate_file_cost( MSIPACKAGE *package )
     return ERROR_SUCCESS;
 }
 
-void msi_clean_path( WCHAR *p )
+WCHAR *msi_normalize_path( const WCHAR *in )
 {
-    WCHAR *q = p;
-    int n, len = 0;
+    const WCHAR *p = in;
+    WCHAR *q, *ret;
+    int n, len = strlenW( in ) + 2;
 
+    if (!(q = ret = msi_alloc( len * sizeof(WCHAR) ))) return NULL;
+
+    len = 0;
     while (1)
     {
         /* copy until the end of the string or a space */
@@ -2245,32 +2249,20 @@ void msi_clean_path( WCHAR *p )
         else  /* copy n spaces */
             while (n && (*q++ = *p++)) n--;
     }
-}
-
-static WCHAR *get_target_dir_property( MSIDATABASE *db )
-{
-    int len;
-    WCHAR *path, *target_dir = msi_dup_property( db, szTargetDir );
-
-    if (!target_dir) return NULL;
-
-    len = strlenW( target_dir );
-    if (target_dir[len - 1] == '\\') return target_dir;
-    if ((path = msi_alloc( (len + 2) * sizeof(WCHAR) )))
+    while (q - ret > 0 && q[-1] == ' ') q--;
+    if (q - ret > 0 && q[-1] != '\\')
     {
-        strcpyW( path, target_dir );
-        path[len] = '\\';
-        path[len + 1] = 0;
+        q[0] = '\\';
+        q[1] = 0;
     }
-    msi_free( target_dir );
-    return path;
+    return ret;
 }
 
 void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL load_prop )
 {
     FolderList *fl;
     MSIFOLDER *folder, *parent, *child;
-    WCHAR *path;
+    WCHAR *path, *normalized_path;
 
     TRACE("resolving %s\n", debugstr_w(name));
 
@@ -2278,7 +2270,7 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
 
     if (!strcmpW( folder->Directory, szTargetDir )) /* special resolving for target root dir */
     {
-        if (!load_prop || !(path = get_target_dir_property( package->db )))
+        if (!load_prop || !(path = msi_dup_property( package->db, szTargetDir )))
         {
             path = msi_dup_property( package->db, szRootDrive );
         }
@@ -2293,16 +2285,17 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
         else
             path = msi_build_directory_name( 2, folder->TargetDefault, NULL );
     }
-    msi_clean_path( path );
-    if (folder->ResolvedTarget && !strcmpiW( path, folder->ResolvedTarget ))
+    normalized_path = msi_normalize_path( path );
+    msi_free( path );
+    if (folder->ResolvedTarget && !strcmpiW( normalized_path, folder->ResolvedTarget ))
     {
         TRACE("%s already resolved to %s\n", debugstr_w(name), debugstr_w(folder->ResolvedTarget));
-        msi_free( path );
+        msi_free( normalized_path );
         return;
     }
-    msi_set_property( package->db, folder->Directory, path );
+    msi_set_property( package->db, folder->Directory, normalized_path );
     msi_free( folder->ResolvedTarget );
-    folder->ResolvedTarget = path;
+    folder->ResolvedTarget = normalized_path;
 
     LIST_FOR_EACH_ENTRY( fl, &folder->children, FolderList, entry )
     {

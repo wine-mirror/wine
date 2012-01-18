@@ -553,8 +553,7 @@ static void set_target_path( MSIPACKAGE *package, MSIFOLDER *folder, const WCHAR
     MSIFOLDER *child;
     WCHAR *target_path;
 
-    if (!(target_path = strdupW( path ))) return;
-    msi_clean_path( target_path );
+    if (!(target_path = msi_normalize_path( path ))) return;
     if (strcmpW( target_path, folder->ResolvedTarget ))
     {
         msi_free( folder->ResolvedTarget );
@@ -572,7 +571,7 @@ static void set_target_path( MSIPACKAGE *package, MSIFOLDER *folder, const WCHAR
 
 UINT MSI_SetTargetPathW( MSIPACKAGE *package, LPCWSTR szFolder, LPCWSTR szFolderPath )
 {
-    DWORD attrib, len;
+    DWORD attrib;
     MSIFOLDER *folder;
     MSIFILE *file;
 
@@ -587,17 +586,7 @@ UINT MSI_SetTargetPathW( MSIPACKAGE *package, LPCWSTR szFolder, LPCWSTR szFolder
     }
     if (!(folder = msi_get_loaded_folder( package, szFolder ))) return ERROR_DIRECTORY;
 
-    len = strlenW( szFolderPath );
-    if (len && szFolderPath[len - 1] != '\\')
-    {
-        WCHAR *path = msi_alloc( (len + 2) * sizeof(WCHAR) );
-        memcpy( path, szFolderPath, len * sizeof(WCHAR) );
-        path[len] = '\\';
-        path[len + 1] = 0;
-        set_target_path( package, folder, path );
-        msi_free( path );
-    }
-    else set_target_path( package, folder, szFolderPath );
+    set_target_path( package, folder, szFolderPath );
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {

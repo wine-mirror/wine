@@ -1134,6 +1134,7 @@ static void test_settargetpath(void)
     r = MsiSetTargetPath( hpkg, "TARGETDIR", tempdir );
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath on subsubdir returned %d\n", r );
 
+    buffer[0] = 0;
     sz = sizeof buffer - 1;
     lstrcat( tempdir, "\\" );
     r = MsiGetTargetPath( hpkg, "TARGETDIR", buffer, &sz );
@@ -1144,6 +1145,7 @@ static void test_settargetpath(void)
     query_file_path( hpkg, "[#RootFile]", buffer );
     ok( !lstrcmp(buffer, file), "Expected %s, got %s\n", file, buffer);
 
+    buffer[0] = 0;
     sz = sizeof(buffer);
     r = MsiGetPropertyA( hpkg, "TestParent", buffer, &sz );
     ok( r == ERROR_SUCCESS, "MsiGetProperty returned %u\n", r );
@@ -1153,16 +1155,19 @@ static void test_settargetpath(void)
     r = MsiSetTargetPath( hpkg, "TestParent", "C:\\one\\two" );
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
 
+    buffer[0] = 0;
     sz = sizeof(buffer);
     r = MsiGetPropertyA( hpkg, "TestParent", buffer, &sz );
     ok( r == ERROR_SUCCESS, "MsiGetProperty returned %u\n", r );
     ok( lstrcmpi(buffer, "C:\\one\\two\\TestDir\\"),
         "Expected \"C:\\one\\two\\TestDir\\\", got \"%s\"\n", buffer );
 
+    buffer[0] = 0;
     query_file_path( hpkg, "[#TestFile]", buffer );
     ok( !lstrcmpi(buffer, "C:\\one\\two\\TestDir\\testfile.txt"),
         "Expected C:\\one\\two\\TestDir\\testfile.txt, got %s\n", buffer );
 
+    buffer[0] = 0;
     sz = sizeof buffer - 1;
     r = MsiGetTargetPath( hpkg, "TestParent", buffer, &sz );
     ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
@@ -1171,6 +1176,7 @@ static void test_settargetpath(void)
     r = MsiSetTargetPath( hpkg, "TestParent", "C:\\one\\two\\three" );
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
 
+    buffer[0] = 0;
     sz = sizeof buffer - 1;
     r = MsiGetTargetPath( hpkg, "TestParent", buffer, &sz );
     ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
@@ -1179,10 +1185,20 @@ static void test_settargetpath(void)
     r = MsiSetTargetPath( hpkg, "TestParent", "C:\\\\one\\\\two  " );
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
 
+    buffer[0] = 0;
     sz = sizeof buffer - 1;
     r = MsiGetTargetPath( hpkg, "TestParent", buffer, &sz );
     ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
     ok( !lstrcmpi(buffer, "C:\\one\\two\\"), "Expected \"C:\\one\\two\\\", got %s\n", buffer);
+
+    r = MsiSetTargetPath( hpkg, "TestParent", "C:\\\\ Program Files \\\\ " );
+    ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
+
+    buffer[0] = 0;
+    sz = sizeof buffer - 1;
+    r = MsiGetTargetPath( hpkg, "TestParent", buffer, &sz );
+    ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
+    ok( !lstrcmpi(buffer, "C:\\Program Files\\"), "Expected \"C:\\Program Files\\\", got %s\n", buffer);
 
     MsiCloseHandle( hpkg );
 }
