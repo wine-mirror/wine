@@ -478,7 +478,7 @@ msgstr "&Implicita Presilo"
 
 #: comdlg32.rc:223
 msgid "[none]"
-msgstr "[none]"
+msgstr ""
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
@@ -7139,7 +7139,7 @@ msgstr "Vere"
 
 #: oleaut32.rc:28 oleview.rc:145
 msgid "False"
-msgstr "False"
+msgstr ""
 
 #: oleaut32.rc:31
 msgid "On"
@@ -7531,7 +7531,7 @@ msgstr ""
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
-msgstr "&Select"
+msgstr ""
 
 #: shdoclc.rc:102
 msgid "&Cell"
@@ -7850,11 +7850,11 @@ msgstr "Pri %s"
 
 #: shell32.rc:333
 msgid "Wine &license"
-msgstr "Wine &license"
+msgstr ""
 
 #: shell32.rc:338
 msgid "Running on %s"
-msgstr "Running on %s"
+msgstr ""
 
 #: shell32.rc:339
 msgid "Wine was brought to you by:"
@@ -7903,15 +7903,15 @@ msgstr "Komentario"
 
 #: shell32.rc:143
 msgid "Owner"
-msgstr "Owner"
+msgstr ""
 
 #: shell32.rc:144
 msgid "Group"
-msgstr "Group"
+msgstr ""
 
 #: shell32.rc:145
 msgid "Original location"
-msgstr "Original location"
+msgstr ""
 
 #: shell32.rc:146
 msgid "Date deleted"
@@ -8401,11 +8401,11 @@ msgstr "&Ignoru"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr "&Try Again"
+msgstr ""
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr "&Continue"
+msgstr ""
 
 #: user32.rc:91
 msgid "Select Window"
@@ -10091,7 +10091,7 @@ msgstr "Seræu sekvanta\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
-msgstr "&Replace...\tCtrl+H"
+msgstr ""
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
 #, fuzzy
@@ -10592,7 +10592,7 @@ msgstr "&Aløustigu la fenestron"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
-msgstr "&Options"
+msgstr ""
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -13412,15 +13412,15 @@ msgstr ""
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr "Small"
+msgstr ""
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
-msgstr "Normal"
+msgstr ""
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr "Large"
+msgstr ""
 
 #: winhlp32.rc:54
 #, fuzzy
@@ -13465,7 +13465,7 @@ msgstr "Eraro dum la legado de helpdosiero `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr "Summary"
+msgstr ""
 
 #: winhlp32.rc:84
 msgid "&Index"
