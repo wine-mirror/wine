@@ -1276,47 +1276,47 @@ static void copy_rect_null(const dib_info *dst, const RECT *rc,
     return;
 }
 
-static DWORD get_pixel_32(const dib_info *dib, const POINT *pt)
+static DWORD get_pixel_32(const dib_info *dib, int x, int y)
 {
-    DWORD *ptr = get_pixel_ptr_32( dib, pt->x, pt->y );
+    DWORD *ptr = get_pixel_ptr_32( dib, x, y );
     return *ptr;
 }
 
-static DWORD get_pixel_24(const dib_info *dib, const POINT *pt)
+static DWORD get_pixel_24(const dib_info *dib, int x, int y)
 {
-    BYTE *ptr = get_pixel_ptr_24( dib, pt->x, pt->y );
+    BYTE *ptr = get_pixel_ptr_24( dib, x, y );
     return ptr[0] | ((DWORD)ptr[1] << 8) | ((DWORD)ptr[2] << 16);
 }
 
-static DWORD get_pixel_16(const dib_info *dib, const POINT *pt)
+static DWORD get_pixel_16(const dib_info *dib, int x, int y)
 {
-    WORD *ptr = get_pixel_ptr_16( dib, pt->x, pt->y );
+    WORD *ptr = get_pixel_ptr_16( dib, x, y );
     return *ptr;
 }
 
-static DWORD get_pixel_8(const dib_info *dib, const POINT *pt)
+static DWORD get_pixel_8(const dib_info *dib, int x, int y)
 {
-    BYTE *ptr = get_pixel_ptr_8( dib, pt->x, pt->y );
+    BYTE *ptr = get_pixel_ptr_8( dib, x, y );
     return *ptr;
 }
 
-static DWORD get_pixel_4(const dib_info *dib, const POINT *pt)
+static DWORD get_pixel_4(const dib_info *dib, int x, int y)
 {
-    BYTE *ptr = get_pixel_ptr_4( dib, pt->x, pt->y );
+    BYTE *ptr = get_pixel_ptr_4( dib, x, y );
 
-    if (pt->x & 1)
+    if (x & 1)
         return *ptr & 0x0f;
     else
         return (*ptr >> 4) & 0x0f;
 }
 
-static DWORD get_pixel_1(const dib_info *dib, const POINT *pt)
+static DWORD get_pixel_1(const dib_info *dib, int x, int y)
 {
-    BYTE *ptr = get_pixel_ptr_1( dib, pt->x, pt->y );
-    return (*ptr & pixel_masks_1[pt->x & 0x7]) ? 1 : 0;
+    BYTE *ptr = get_pixel_ptr_1( dib, x, y );
+    return (*ptr & pixel_masks_1[x & 0x7]) ? 1 : 0;
 }
 
-static DWORD get_pixel_null(const dib_info *dib, const POINT *pt)
+static DWORD get_pixel_null(const dib_info *dib, int x, int y)
 {
     return 0;
 }

@@ -720,7 +720,7 @@ COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )
         pt.y < 0 || pt.y >= pdev->dib.height)
         return CLR_INVALID;
 
-    pixel = pdev->dib.funcs->get_pixel( &pdev->dib, &pt );
+    pixel = pdev->dib.funcs->get_pixel( &pdev->dib, pt.x, pt.y );
     return pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pixel );
 }
 
