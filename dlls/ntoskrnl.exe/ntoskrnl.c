@@ -1751,3 +1751,12 @@ BOOLEAN WINAPI Ke386SetIoAccessMap(ULONG flag, PVOID buffer)
     FIXME("(%d %p) stub\n", flag, buffer);
     return FALSE;
 }
+
+/*****************************************************
+ *           IoCreateSynchronizationEvent (NTOSKRNL.EXE.@)
+ */
+PKEVENT WINAPI IoCreateSynchronizationEvent(PUNICODE_STRING name, PHANDLE handle)
+{
+    FIXME("(%p %p) stub\n", name, handle);
+    return NULL;
+}
