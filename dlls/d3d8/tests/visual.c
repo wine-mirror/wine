@@ -2373,7 +2373,7 @@ static void shadow_test(IDirect3DDevice8 *device)
 
 static void multisample_copy_rects_test(IDirect3DDevice8 *device)
 {
-    IDirect3DSurface8 *original_ds, *original_rt, *rt, *readback;
+    IDirect3DSurface8 *original_ds, *original_rt, *ds, *ds_plain, *rt, *readback;
     RECT src_rect = {64, 64, 128, 128};
     POINT dst_point = {96, 96};
     D3DLOCKED_RECT locked_rect;
@@ -2395,6 +2395,12 @@ static void multisample_copy_rects_test(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_CreateRenderTarget(device, 256, 256, D3DFMT_A8R8G8B8,
             D3DMULTISAMPLE_2_SAMPLES, FALSE, &rt);
     ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateDepthStencilSurface(device, 256, 256, D3DFMT_D24S8,
+            D3DMULTISAMPLE_2_SAMPLES, &ds);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateDepthStencilSurface(device, 256, 256, D3DFMT_D24S8,
+            D3DMULTISAMPLE_NONE, &ds_plain);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil surface, hr %#x.\n", hr);
     hr = IDirect3DDevice8_CreateImageSurface(device, 256, 256, D3DFMT_A8R8G8B8, &readback);
     ok(SUCCEEDED(hr), "Failed to create readback surface, hr %#x.\n", hr);
 
@@ -2403,14 +2409,17 @@ static void multisample_copy_rects_test(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_GetDepthStencilSurface(device, &original_ds);
     ok(SUCCEEDED(hr), "Failed to get depth/stencil, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice8_SetRenderTarget(device, rt, NULL);
+    hr = IDirect3DDevice8_SetRenderTarget(device, rt, ds);
     ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ff00, 1.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_CopyRects(device, rt, NULL, 0, readback, NULL);
     ok(SUCCEEDED(hr), "Failed to read render target back, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_CopyRects(device, ds, NULL, 0, ds_plain, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Depth buffer copy, hr %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
     ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
@@ -2436,6 +2445,8 @@ static void multisample_copy_rects_test(IDirect3DDevice8 *device)
     IDirect3DSurface8_Release(original_ds);
     IDirect3DSurface8_Release(original_rt);
     IDirect3DSurface8_Release(readback);
+    IDirect3DSurface8_Release(ds_plain);
+    IDirect3DSurface8_Release(ds);
     IDirect3DSurface8_Release(rt);
 }
 
