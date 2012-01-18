@@ -2310,7 +2310,6 @@ struct wined3d_stateblock
 {
     LONG                      ref;     /* Note: Ref counting not required */
     struct wined3d_device *device;
-    enum wined3d_stateblock_type blockType;
 
     /* Array indicating whether things have been set or changed */
     struct wined3d_saved_states changed;

@@ -924,8 +924,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     unsigned int i;
     DWORD map;
 
-    TRACE("Applying stateblock %p of type %#x to device %p.\n",
-            stateblock, stateblock->blockType, device);
+    TRACE("Applying stateblock %p to device %p.\n", stateblock, device);
 
     if (stateblock->changed.vertexShader)
         wined3d_device_set_vertex_shader(device, stateblock->state.vertex_shader);
@@ -1104,8 +1103,6 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     HRESULT hr;
 
     TRACE("stateblock %p.\n", stateblock);
-
-    stateblock->blockType = WINED3D_SBT_INIT;
 
     memset(stateblock->changed.pixelShaderConstantsF, 0, device->d3d_pshader_constantF * sizeof(BOOL));
     memset(stateblock->changed.vertexShaderConstantsF, 0, device->d3d_vshader_constantF * sizeof(BOOL));
@@ -1344,7 +1341,6 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
 
     stateblock->ref = 1;
     stateblock->device = device;
-    stateblock->blockType = type;
 
     for (i = 0; i < LIGHTMAP_SIZE; i++)
     {
