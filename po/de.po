@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-17 21:58+0100\n"
+"PO-Revision-Date: 2012-01-18 21:56+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -13311,7 +13311,7 @@ msgstr "Speichern fehlgeschlagen"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "Lade detaillierte Informationen, bitte warten..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
