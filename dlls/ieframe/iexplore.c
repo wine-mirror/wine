@@ -461,10 +461,10 @@ static void create_rebar(HWND hwnd)
 
     SendMessageW(hwndToolbar, TB_SETIMAGELIST, 0, (LPARAM)imagelist);
     SendMessageW(hwndToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
-    add_tb_button(hwndToolbar, 0, 0, IDS_TB_BACK);
-    add_tb_button(hwndToolbar, 1, 0, IDS_TB_FORWARD);
-    add_tb_button(hwndToolbar, 2, 0, IDS_TB_STOP);
-    add_tb_button(hwndToolbar, 3, 0, IDS_TB_REFRESH);
+    add_tb_button(hwndToolbar, 0, ID_BROWSE_BACK, IDS_TB_BACK);
+    add_tb_button(hwndToolbar, 1, ID_BROWSE_FORWARD, IDS_TB_FORWARD);
+    add_tb_button(hwndToolbar, 2, ID_BROWSE_STOP, IDS_TB_STOP);
+    add_tb_button(hwndToolbar, 3, ID_BROWSE_REFRESH, IDS_TB_REFRESH);
     add_tb_button(hwndToolbar, 4, ID_BROWSE_HOME, IDS_TB_HOME);
     add_tb_separator(hwndToolbar);
     add_tb_button(hwndToolbar, 5, ID_BROWSE_PRINT, IDS_TB_PRINT);
@@ -592,6 +592,22 @@ static LRESULT iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT msg, WPAR
 
         case ID_BROWSE_HOME:
             IWebBrowser2_GoHome(&This->IWebBrowser2_iface);
+            break;
+
+        case ID_BROWSE_BACK:
+            IWebBrowser2_GoBack(&This->IWebBrowser2_iface);
+            break;
+
+        case ID_BROWSE_FORWARD:
+            IWebBrowser2_GoForward(&This->IWebBrowser2_iface);
+            break;
+
+        case ID_BROWSE_STOP:
+            IWebBrowser2_Stop(&This->IWebBrowser2_iface);
+            break;
+
+        case ID_BROWSE_REFRESH:
+            IWebBrowser2_Refresh(&This->IWebBrowser2_iface);
             break;
 
         case ID_BROWSE_ABOUT:

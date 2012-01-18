@@ -42,6 +42,10 @@
 
 #define ID_BROWSE_ADDFAV               1200
 #define ID_BROWSE_HOME                 1201
+#define ID_BROWSE_BACK                 1202
+#define ID_BROWSE_FORWARD              1203
+#define ID_BROWSE_STOP                 1204
+#define ID_BROWSE_REFRESH              1205
 
 #define ID_BROWSE_BAR_STD              1300
 #define ID_BROWSE_BAR_ADDR             1301
