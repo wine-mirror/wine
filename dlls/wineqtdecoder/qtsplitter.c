@@ -163,6 +163,8 @@ typedef struct QTSplitter {
 
     DWORD outputSize;
     FILTER_STATE state;
+    CRITICAL_SECTION csReceive;
+
 } QTSplitter;
 
 static const IPinVtbl QT_OutputPin_Vtbl;
@@ -237,6 +239,9 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *punkout, HRESULT *phr)
 
     BaseFilter_Init(&This->filter, &QT_Vtbl, &CLSID_QTSplitter, (DWORD_PTR)(__FILE__ ": QTSplitter.csFilter"), &BaseFuncTable);
 
+    InitializeCriticalSection(&This->csReceive);
+    This->csReceive.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": QTSplitter.csReceive");
+
     This->pVideo_Pin = NULL;
     This->pAudio_Pin = NULL;
     This->state = State_Stopped;
@@ -288,6 +293,10 @@ static void QT_Destroy(QTSplitter *This)
     CloseHandle(This->runEvent);
 
     ExitMovies();
+
+    This->csReceive.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&This->csReceive);
+
     CoTaskMemFree(This);
 }
 
@@ -338,8 +347,10 @@ static HRESULT WINAPI QT_Stop(IBaseFilter *iface)
 
     TRACE("()\n");
 
+    EnterCriticalSection(&This->csReceive);
     IAsyncReader_BeginFlush(This->pInputPin.pReader);
     IAsyncReader_EndFlush(This->pInputPin.pReader);
+    LeaveCriticalSection(&This->csReceive);
 
     return S_OK;
 }
@@ -470,11 +481,13 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
         LONGLONG mStart=0, mStop=0;
         float time;
 
+        EnterCriticalSection(&This->csReceive);
         GetMovieNextInterestingTime(This->pQTMovie, nextTimeStep, 0, NULL, movie_time, 1, &next_time, NULL);
 
         if (next_time == -1)
         {
             TRACE("No next time\n");
+            LeaveCriticalSection(&This->csReceive);
             break;
         }
 
@@ -615,6 +628,7 @@ audio_error:
             TRACE("No video to deliver\n");
 
         movie_time = next_time;
+        LeaveCriticalSection(&This->csReceive);
     } while (hr == S_OK);
 
     This->state = State_Stopped;
@@ -634,7 +648,7 @@ static HRESULT WINAPI QT_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 
     TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
 
-    EnterCriticalSection(&This->filter.csFilter);
+    EnterCriticalSection(&This->csReceive);
     This->filter.rtStreamStart = tStart;
 
     if (This->pVideo_Pin)
@@ -647,9 +661,9 @@ static HRESULT WINAPI QT_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
         hr_any = hr;
 
     hr = hr_any;
-    LeaveCriticalSection(&This->filter.csFilter);
 
     SetEvent(This->runEvent);
+    LeaveCriticalSection(&This->csReceive);
 
     return hr;
 }
