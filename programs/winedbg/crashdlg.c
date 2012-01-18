@@ -310,7 +310,7 @@ static INT_PTR WINAPI details_dlg_proc( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return TRUE;
 
     case WM_SIZE:
-        if (wparam == SIZE_RESTORED)
+        if (wparam == SIZE_RESTORED || wparam == SIZE_MAXIMIZED)
         {
             int off_x = (short)LOWORD( lparam ) - orig_size.x;
             int off_y = (short)HIWORD( lparam ) - orig_size.y;
