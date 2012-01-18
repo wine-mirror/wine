@@ -3474,7 +3474,7 @@ static void init_ps_input(const struct wined3d_shader *shader,
                 semantic_idx = sig[i].semantic_idx;
                 if (!semantic_name) continue;
 
-                if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
+                if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
                 {
                     if (!semantic_idx) priv->ps_input[i] = "fragment.color.primary";
                     else if(semantic_idx == 1) priv->ps_input[i] = "fragment.color.secondary";
@@ -3484,12 +3484,12 @@ static void init_ps_input(const struct wined3d_shader *shader,
                 {
                     priv->ps_input[i] = "0.0";
                 }
-                else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_TEXCOORD))
+                else if(shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
                 {
                     if(semantic_idx < 8) priv->ps_input[i] = texcoords[semantic_idx];
                     else priv->ps_input[i] = "0.0";
                 }
-                else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_FOG))
+                else if(shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
                 {
                     if (!semantic_idx) priv->ps_input[i] = "fragment.fogcoord";
                     else priv->ps_input[i] = "0.0";
@@ -3970,19 +3970,19 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
             semantic_name = shader->output_signature[i].semantic_name;
             if (!semantic_name) continue;
 
-            if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_POSITION))
+            if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION))
             {
                 TRACE("o%u is TMP_OUT\n", i);
                 if (!shader->output_signature[i].semantic_idx) priv_ctx->vs_output[i] = "TMP_OUT";
                 else priv_ctx->vs_output[i] = "TA";
             }
-            else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_PSIZE))
+            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE))
             {
                 TRACE("o%u is result.pointsize\n", i);
                 if (!shader->output_signature[i].semantic_idx) priv_ctx->vs_output[i] = "result.pointsize";
                 else priv_ctx->vs_output[i] = "TA";
             }
-            else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
+            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
             {
                 TRACE("o%u is result.color.?, idx %u\n", i, shader->output_signature[i].semantic_idx);
                 if (!shader->output_signature[i].semantic_idx)
@@ -3991,13 +3991,13 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
                     priv_ctx->vs_output[i] = "result.color.secondary";
                 else priv_ctx->vs_output[i] = "TA";
             }
-            else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_TEXCOORD))
+            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
             {
                 TRACE("o%u is %s\n", i, texcoords[shader->output_signature[i].semantic_idx]);
                 if (shader->output_signature[i].semantic_idx >= 8) priv_ctx->vs_output[i] = "TA";
                 else priv_ctx->vs_output[i] = texcoords[shader->output_signature[i].semantic_idx];
             }
-            else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_FOG))
+            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
             {
                 TRACE("o%u is result.fogcoord\n", i);
                 if (shader->output_signature[i].semantic_idx > 0) priv_ctx->vs_output[i] = "TA";
@@ -4039,17 +4039,20 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
          * Don't care about POSITION and PSIZE here - this is a builtin vertex shader, position goes
          * to TMP_OUT in any case
          */
-        if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_TEXCOORD))
+        if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
         {
-            if(semantic_idx < 8) priv_ctx->texcrd_output[semantic_idx] = decl_idx_to_string[reg_idx];
+            if (semantic_idx < 8)
+                priv_ctx->texcrd_output[semantic_idx] = decl_idx_to_string[reg_idx];
         }
-        else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
+        else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
         {
-            if(semantic_idx < 2) priv_ctx->color_output[semantic_idx] = decl_idx_to_string[reg_idx];
+            if (semantic_idx < 2)
+                priv_ctx->color_output[semantic_idx] = decl_idx_to_string[reg_idx];
         }
-        else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_FOG))
+        else if(shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
         {
-            if (!semantic_idx) priv_ctx->fog_output = decl_idx_to_string[reg_idx];
+            if (!semantic_idx)
+                priv_ctx->fog_output = decl_idx_to_string[reg_idx];
         }
         else
         {
@@ -4071,13 +4074,13 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
         semantic_name = shader->output_signature[i].semantic_name;
         if (!semantic_name) continue;
 
-        if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_POSITION)
+        if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION)
                 && !shader->output_signature[i].semantic_idx)
         {
             priv_ctx->vs_output[i] = "TMP_OUT";
             continue;
         }
-        else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_PSIZE)
+        else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE)
                 && !shader->output_signature[i].semantic_idx)
         {
             priv_ctx->vs_output[i] = "result.pointsize";

@@ -641,7 +641,7 @@ struct wined3d_shader_instruction
 
 struct wined3d_shader_semantic
 {
-    WINED3DDECLUSAGE usage;
+    enum wined3d_decl_usage usage;
     UINT usage_idx;
     enum wined3d_sampler_texture_type sampler_type;
     struct wined3d_shader_dst_param reg;
@@ -649,7 +649,7 @@ struct wined3d_shader_semantic
 
 struct wined3d_shader_attribute
 {
-    WINED3DDECLUSAGE usage;
+    enum wined3d_decl_usage usage;
     UINT usage_idx;
 };
 
@@ -2492,7 +2492,7 @@ const char *debug_d3dresourcetype(enum wined3d_resource_type resource_type) DECL
 const char *debug_d3dusage(DWORD usage) DECLSPEC_HIDDEN;
 const char *debug_d3dusagequery(DWORD usagequery) DECLSPEC_HIDDEN;
 const char *debug_d3ddeclmethod(enum wined3d_decl_method method) DECLSPEC_HIDDEN;
-const char *debug_d3ddeclusage(BYTE usage) DECLSPEC_HIDDEN;
+const char *debug_d3ddeclusage(enum wined3d_decl_usage usage) DECLSPEC_HIDDEN;
 const char *debug_d3dprimitivetype(enum wined3d_primitive_type primitive_type) DECLSPEC_HIDDEN;
 const char *debug_d3drenderstate(enum wined3d_render_state state) DECLSPEC_HIDDEN;
 const char *debug_d3dsamplerstate(enum wined3d_sampler_state state) DECLSPEC_HIDDEN;
@@ -2655,7 +2655,7 @@ unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_map
         unsigned int max) DECLSPEC_HIDDEN;
 void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_shader_buffer *buffer,
         const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx) DECLSPEC_HIDDEN;
-BOOL shader_match_semantic(const char *semantic_name, WINED3DDECLUSAGE usage) DECLSPEC_HIDDEN;
+BOOL shader_match_semantic(const char *semantic_name, enum wined3d_decl_usage usage) DECLSPEC_HIDDEN;
 
 static inline BOOL shader_is_pshader_version(enum wined3d_shader_type type)
 {

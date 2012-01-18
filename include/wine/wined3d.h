@@ -730,23 +730,23 @@ enum wined3d_decl_method
     WINED3D_DECL_METHOD_LOOKUP_PRESAMPLED   = 6,
 };
 
-typedef enum _WINED3DDECLUSAGE
+enum wined3d_decl_usage
 {
-    WINED3DDECLUSAGE_POSITION               = 0,
-    WINED3DDECLUSAGE_BLENDWEIGHT            = 1,
-    WINED3DDECLUSAGE_BLENDINDICES           = 2,
-    WINED3DDECLUSAGE_NORMAL                 = 3,
-    WINED3DDECLUSAGE_PSIZE                  = 4,
-    WINED3DDECLUSAGE_TEXCOORD               = 5,
-    WINED3DDECLUSAGE_TANGENT                = 6,
-    WINED3DDECLUSAGE_BINORMAL               = 7,
-    WINED3DDECLUSAGE_TESSFACTOR             = 8,
-    WINED3DDECLUSAGE_POSITIONT              = 9,
-    WINED3DDECLUSAGE_COLOR                  = 10,
-    WINED3DDECLUSAGE_FOG                    = 11,
-    WINED3DDECLUSAGE_DEPTH                  = 12,
-    WINED3DDECLUSAGE_SAMPLE                 = 13
-} WINED3DDECLUSAGE;
+    WINED3D_DECL_USAGE_POSITION             = 0,
+    WINED3D_DECL_USAGE_BLEND_WEIGHT         = 1,
+    WINED3D_DECL_USAGE_BLEND_INDICES        = 2,
+    WINED3D_DECL_USAGE_NORMAL               = 3,
+    WINED3D_DECL_USAGE_PSIZE                = 4,
+    WINED3D_DECL_USAGE_TEXCOORD             = 5,
+    WINED3D_DECL_USAGE_TANGENT              = 6,
+    WINED3D_DECL_USAGE_BINORMAL             = 7,
+    WINED3D_DECL_USAGE_TESS_FACTOR          = 8,
+    WINED3D_DECL_USAGE_POSITIONT            = 9,
+    WINED3D_DECL_USAGE_COLOR                = 10,
+    WINED3D_DECL_USAGE_FOG                  = 11,
+    WINED3D_DECL_USAGE_DEPTH                = 12,
+    WINED3D_DECL_USAGE_SAMPLE               = 13
+};
 
 typedef enum _WINED3DSURFTYPE
 {

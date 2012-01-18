@@ -3685,7 +3685,7 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
         semantic_idx = input_signature[i].semantic_idx;
         shader_glsl_write_mask_to_str(input_signature[i].mask, reg_mask);
 
-        if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_TEXCOORD))
+        if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
         {
             if (semantic_idx < 8 && vertexprocessing == pretransformed)
                 shader_addline(buffer, "IN[%u]%s = gl_TexCoord[%u]%s;\n",
@@ -3694,7 +3694,7 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
                 shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
                         shader->u.ps.input_reg_map[i], reg_mask, reg_mask);
         }
-        else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
+        else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
         {
             if (!semantic_idx)
                 shader_addline(buffer, "IN[%u]%s = vec4(gl_Color)%s;\n",
@@ -3893,7 +3893,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
             write_mask = output_signature[i].mask;
             shader_glsl_write_mask_to_str(write_mask, reg_mask);
 
-            if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
+            if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
             {
                 if (!semantic_idx)
                     shader_addline(buffer, "gl_FrontColor%s = OUT[%u]%s;\n",
@@ -3902,12 +3902,12 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
                     shader_addline(buffer, "gl_FrontSecondaryColor%s = OUT[%u]%s;\n",
                             reg_mask, i, reg_mask);
             }
-            else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_POSITION))
+            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION))
             {
                 shader_addline(buffer, "gl_Position%s = OUT[%u]%s;\n",
                         reg_mask, i, reg_mask);
             }
-            else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_TEXCOORD))
+            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
             {
                 if (semantic_idx < 8)
                 {
@@ -3920,11 +3920,11 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
                         shader_addline(buffer, "gl_TexCoord[%u].w = 1.0;\n", semantic_idx);
                 }
             }
-            else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_PSIZE))
+            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE))
             {
                 shader_addline(buffer, "gl_PointSize = OUT[%u].%c;\n", i, reg_mask[1]);
             }
-            else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_FOG))
+            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
             {
                 shader_addline(buffer, "gl_FogFragCoord = OUT[%u].%c;\n", i, reg_mask[1]);
             }
@@ -3947,12 +3947,12 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
             semantic_name = output_signature[i].semantic_name;
             shader_glsl_write_mask_to_str(output_signature[i].mask, reg_mask);
 
-            if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_POSITION))
+            if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION))
             {
                 shader_addline(buffer, "gl_Position%s = OUT[%u]%s;\n",
                         reg_mask, i, reg_mask);
             }
-            else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_PSIZE))
+            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE))
             {
                 shader_addline(buffer, "gl_PointSize = OUT[%u].%c;\n", i, reg_mask[1]);
             }

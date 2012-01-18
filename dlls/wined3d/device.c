@@ -144,21 +144,21 @@ static enum wined3d_primitive_type d3d_primitive_type_from_gl(GLenum primitive_t
 
 static BOOL fixed_get_input(BYTE usage, BYTE usage_idx, unsigned int *regnum)
 {
-    if ((usage == WINED3DDECLUSAGE_POSITION || usage == WINED3DDECLUSAGE_POSITIONT) && !usage_idx)
+    if ((usage == WINED3D_DECL_USAGE_POSITION || usage == WINED3D_DECL_USAGE_POSITIONT) && !usage_idx)
         *regnum = WINED3D_FFP_POSITION;
-    else if (usage == WINED3DDECLUSAGE_BLENDWEIGHT && !usage_idx)
+    else if (usage == WINED3D_DECL_USAGE_BLEND_WEIGHT && !usage_idx)
         *regnum = WINED3D_FFP_BLENDWEIGHT;
-    else if (usage == WINED3DDECLUSAGE_BLENDINDICES && !usage_idx)
+    else if (usage == WINED3D_DECL_USAGE_BLEND_INDICES && !usage_idx)
         *regnum = WINED3D_FFP_BLENDINDICES;
-    else if (usage == WINED3DDECLUSAGE_NORMAL && !usage_idx)
+    else if (usage == WINED3D_DECL_USAGE_NORMAL && !usage_idx)
         *regnum = WINED3D_FFP_NORMAL;
-    else if (usage == WINED3DDECLUSAGE_PSIZE && !usage_idx)
+    else if (usage == WINED3D_DECL_USAGE_PSIZE && !usage_idx)
         *regnum = WINED3D_FFP_PSIZE;
-    else if (usage == WINED3DDECLUSAGE_COLOR && !usage_idx)
+    else if (usage == WINED3D_DECL_USAGE_COLOR && !usage_idx)
         *regnum = WINED3D_FFP_DIFFUSE;
-    else if (usage == WINED3DDECLUSAGE_COLOR && usage_idx == 1)
+    else if (usage == WINED3D_DECL_USAGE_COLOR && usage_idx == 1)
         *regnum = WINED3D_FFP_SPECULAR;
-    else if (usage == WINED3DDECLUSAGE_TEXCOORD && usage_idx < WINED3DDP_MAXTEXCOORD)
+    else if (usage == WINED3D_DECL_USAGE_TEXCOORD && usage_idx < WINED3DDP_MAXTEXCOORD)
         *regnum = WINED3D_FFP_TEXCOORD0 + usage_idx;
     else
     {
@@ -240,8 +240,8 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
                 if (data.buffer_object)
                     *fixup = TRUE;
                 else if (*fixup && !use_vshader
-                        && (element->usage == WINED3DDECLUSAGE_COLOR
-                        || element->usage == WINED3DDECLUSAGE_POSITIONT))
+                        && (element->usage == WINED3D_DECL_USAGE_COLOR
+                        || element->usage == WINED3D_DECL_USAGE_POSITIONT))
                 {
                     static BOOL warned = FALSE;
                     if (!warned)

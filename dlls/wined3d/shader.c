@@ -146,23 +146,23 @@ static const char * const shader_opcode_names[] =
 
 static const char * const semantic_names[] =
 {
-    /* WINED3DDECLUSAGE_POSITION        */ "SV_POSITION",
-    /* WINED3DDECLUSAGE_BLENDWEIGHT     */ "BLENDWEIGHT",
-    /* WINED3DDECLUSAGE_BLENDINDICES    */ "BLENDINDICES",
-    /* WINED3DDECLUSAGE_NORMAL          */ "NORMAL",
-    /* WINED3DDECLUSAGE_PSIZE           */ "PSIZE",
-    /* WINED3DDECLUSAGE_TEXCOORD        */ "TEXCOORD",
-    /* WINED3DDECLUSAGE_TANGENT         */ "TANGENT",
-    /* WINED3DDECLUSAGE_BINORMAL        */ "BINORMAL",
-    /* WINED3DDECLUSAGE_TESSFACTOR      */ "TESSFACTOR",
-    /* WINED3DDECLUSAGE_POSITIONT       */ "POSITIONT",
-    /* WINED3DDECLUSAGE_COLOR           */ "COLOR",
-    /* WINED3DDECLUSAGE_FOG             */ "FOG",
-    /* WINED3DDECLUSAGE_DEPTH           */ "DEPTH",
-    /* WINED3DDECLUSAGE_SAMPLE          */ "SAMPLE",
+    /* WINED3D_DECL_USAGE_POSITION      */ "SV_POSITION",
+    /* WINED3D_DECL_USAGE_BLEND_WEIGHT  */ "BLENDWEIGHT",
+    /* WINED3D_DECL_USAGE_BLEND_INDICES */ "BLENDINDICES",
+    /* WINED3D_DECL_USAGE_NORMAL        */ "NORMAL",
+    /* WINED3D_DECL_USAGE_PSIZE         */ "PSIZE",
+    /* WINED3D_DECL_USAGE_TEXCOORD      */ "TEXCOORD",
+    /* WINED3D_DECL_USAGE_TANGENT       */ "TANGENT",
+    /* WINED3D_DECL_USAGE_BINORMAL      */ "BINORMAL",
+    /* WINED3D_DECL_USAGE_TESS_FACTOR   */ "TESSFACTOR",
+    /* WINED3D_DECL_USAGE_POSITIONT     */ "POSITIONT",
+    /* WINED3D_DECL_USAGE_COLOR         */ "COLOR",
+    /* WINED3D_DECL_USAGE_FOG           */ "FOG",
+    /* WINED3D_DECL_USAGE_DEPTH         */ "DEPTH",
+    /* WINED3D_DECL_USAGE_SAMPLE        */ "SAMPLE",
 };
 
-static const char *shader_semantic_name_from_usage(WINED3DDECLUSAGE usage)
+static const char *shader_semantic_name_from_usage(enum wined3d_decl_usage usage)
 {
     if (usage >= sizeof(semantic_names) / sizeof(*semantic_names))
     {
@@ -173,7 +173,7 @@ static const char *shader_semantic_name_from_usage(WINED3DDECLUSAGE usage)
     return semantic_names[usage];
 }
 
-static WINED3DDECLUSAGE shader_usage_from_semantic_name(const char *name)
+static enum wined3d_decl_usage shader_usage_from_semantic_name(const char *name)
 {
     unsigned int i;
 
@@ -185,7 +185,7 @@ static WINED3DDECLUSAGE shader_usage_from_semantic_name(const char *name)
     return ~0U;
 }
 
-BOOL shader_match_semantic(const char *semantic_name, WINED3DDECLUSAGE usage)
+BOOL shader_match_semantic(const char *semantic_name, enum wined3d_decl_usage usage)
 {
     return !strcmp(semantic_name, shader_semantic_name_from_usage(usage));
 }
@@ -202,7 +202,7 @@ static void shader_signature_from_semantic(struct wined3d_shader_signature_eleme
 }
 
 static void shader_signature_from_usage(struct wined3d_shader_signature_element *e,
-        WINED3DDECLUSAGE usage, UINT usage_idx, UINT reg_idx, DWORD write_mask)
+        enum wined3d_decl_usage usage, UINT usage_idx, UINT reg_idx, DWORD write_mask)
 {
     e->semantic_name = shader_semantic_name_from_usage(usage);
     e->semantic_idx = usage_idx;
@@ -518,7 +518,8 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 case WINED3DSPR_OUTPUT:
                     reg_maps->output_registers |= 1 << semantic.reg.reg.idx;
                     shader_signature_from_semantic(&output_signature[semantic.reg.reg.idx], &semantic);
-                    if (semantic.usage == WINED3DDECLUSAGE_FOG) reg_maps->fog = 1;
+                    if (semantic.usage == WINED3D_DECL_USAGE_FOG)
+                        reg_maps->fog = 1;
                     break;
 
                 /* Save sampler usage token. */
@@ -639,19 +640,19 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                                 case 0: /* oPos */
                                     reg_maps->output_registers |= 1 << 10;
                                     shader_signature_from_usage(&output_signature[10],
-                                            WINED3DDECLUSAGE_POSITION, 0, 10, WINED3DSP_WRITEMASK_ALL);
+                                            WINED3D_DECL_USAGE_POSITION, 0, 10, WINED3DSP_WRITEMASK_ALL);
                                     break;
 
                                 case 1: /* oFog */
                                     reg_maps->output_registers |= 1 << 11;
                                     shader_signature_from_usage(&output_signature[11],
-                                            WINED3DDECLUSAGE_FOG, 0, 11, WINED3DSP_WRITEMASK_0);
+                                            WINED3D_DECL_USAGE_FOG, 0, 11, WINED3DSP_WRITEMASK_0);
                                     break;
 
                                 case 2: /* oPts */
                                     reg_maps->output_registers |= 1 << 11;
                                     shader_signature_from_usage(&output_signature[11],
-                                            WINED3DDECLUSAGE_PSIZE, 0, 11, WINED3DSP_WRITEMASK_1);
+                                            WINED3D_DECL_USAGE_PSIZE, 0, 11, WINED3DSP_WRITEMASK_1);
                                     break;
                             }
                             break;
@@ -668,7 +669,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                                 {
                                     reg_maps->output_registers |= 1 << idx;
                                     shader_signature_from_usage(&output_signature[idx],
-                                            WINED3DDECLUSAGE_COLOR, idx - 8, idx, dst_param.write_mask);
+                                            WINED3D_DECL_USAGE_COLOR, idx - 8, idx, dst_param.write_mask);
                                 }
                             }
                             break;
@@ -684,7 +685,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                             {
                                 reg_maps->output_registers |= 1 << idx;
                                 shader_signature_from_usage(&output_signature[idx],
-                                        WINED3DDECLUSAGE_TEXCOORD, idx, idx, dst_param.write_mask);
+                                        WINED3D_DECL_USAGE_TEXCOORD, idx, idx, dst_param.write_mask);
                             }
                             break;
 
@@ -852,60 +853,60 @@ static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semanti
 
         switch (semantic->usage)
         {
-            case WINED3DDECLUSAGE_POSITION:
+            case WINED3D_DECL_USAGE_POSITION:
                 TRACE("position%u", semantic->usage_idx);
                 break;
 
-            case WINED3DDECLUSAGE_BLENDINDICES:
+            case WINED3D_DECL_USAGE_BLEND_INDICES:
                 TRACE("blend");
                 break;
 
-            case WINED3DDECLUSAGE_BLENDWEIGHT:
+            case WINED3D_DECL_USAGE_BLEND_WEIGHT:
                 TRACE("weight");
                 break;
 
-            case WINED3DDECLUSAGE_NORMAL:
+            case WINED3D_DECL_USAGE_NORMAL:
                 TRACE("normal%u", semantic->usage_idx);
                 break;
 
-            case WINED3DDECLUSAGE_PSIZE:
+            case WINED3D_DECL_USAGE_PSIZE:
                 TRACE("psize");
                 break;
 
-            case WINED3DDECLUSAGE_COLOR:
+            case WINED3D_DECL_USAGE_COLOR:
                 if (!semantic->usage_idx) TRACE("color");
                 else TRACE("specular%u", (semantic->usage_idx - 1));
                 break;
 
-            case WINED3DDECLUSAGE_TEXCOORD:
+            case WINED3D_DECL_USAGE_TEXCOORD:
                 TRACE("texture%u", semantic->usage_idx);
                 break;
 
-            case WINED3DDECLUSAGE_TANGENT:
+            case WINED3D_DECL_USAGE_TANGENT:
                 TRACE("tangent");
                 break;
 
-            case WINED3DDECLUSAGE_BINORMAL:
+            case WINED3D_DECL_USAGE_BINORMAL:
                 TRACE("binormal");
                 break;
 
-            case WINED3DDECLUSAGE_TESSFACTOR:
+            case WINED3D_DECL_USAGE_TESS_FACTOR:
                 TRACE("tessfactor");
                 break;
 
-            case WINED3DDECLUSAGE_POSITIONT:
+            case WINED3D_DECL_USAGE_POSITIONT:
                 TRACE("positionT%u", semantic->usage_idx);
                 break;
 
-            case WINED3DDECLUSAGE_FOG:
+            case WINED3D_DECL_USAGE_FOG:
                 TRACE("fog");
                 break;
 
-            case WINED3DDECLUSAGE_DEPTH:
+            case WINED3D_DECL_USAGE_DEPTH:
                 TRACE("depth");
                 break;
 
-            case WINED3DDECLUSAGE_SAMPLE:
+            case WINED3D_DECL_USAGE_SAMPLE:
                 TRACE("sample");
                 break;
 
@@ -1718,10 +1719,14 @@ void find_vs_compile_args(const struct wined3d_state *state,
 
 static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_idx2)
 {
-    if (usage_idx1 != usage_idx2) return FALSE;
-    if (usage1 == usage2) return TRUE;
-    if (usage1 == WINED3DDECLUSAGE_POSITION && usage2 == WINED3DDECLUSAGE_POSITIONT) return TRUE;
-    if (usage2 == WINED3DDECLUSAGE_POSITION && usage1 == WINED3DDECLUSAGE_POSITIONT) return TRUE;
+    if (usage_idx1 != usage_idx2)
+        return FALSE;
+    if (usage1 == usage2)
+        return TRUE;
+    if (usage1 == WINED3D_DECL_USAGE_POSITION && usage2 == WINED3D_DECL_USAGE_POSITIONT)
+        return TRUE;
+    if (usage2 == WINED3D_DECL_USAGE_POSITION && usage1 == WINED3D_DECL_USAGE_POSITIONT)
+        return TRUE;
 
     return FALSE;
 }
@@ -1927,7 +1932,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
                         struct wined3d_vertex_declaration_element *element =
                                 &state->vertex_declaration->elements[j];
 
-                        if (element->usage == WINED3DDECLUSAGE_TEXCOORD
+                        if (element->usage == WINED3D_DECL_USAGE_TEXCOORD
                                 && element->usage_idx == index)
                         {
                             max_valid = element->format->component_count;

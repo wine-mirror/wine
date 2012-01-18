@@ -74,8 +74,8 @@ static BOOL declaration_element_valid_ffp(const struct wined3d_vertex_element *e
 {
     switch(element->usage)
     {
-        case WINED3DDECLUSAGE_POSITION:
-        case WINED3DDECLUSAGE_POSITIONT:
+        case WINED3D_DECL_USAGE_POSITION:
+        case WINED3D_DECL_USAGE_POSITIONT:
             switch(element->format)
             {
                 case WINED3DFMT_R32G32_FLOAT:
@@ -90,7 +90,7 @@ static BOOL declaration_element_valid_ffp(const struct wined3d_vertex_element *e
                     return FALSE;
             }
 
-        case WINED3DDECLUSAGE_BLENDWEIGHT:
+        case WINED3D_DECL_USAGE_BLEND_WEIGHT:
             switch(element->format)
             {
                 case WINED3DFMT_R32_FLOAT:
@@ -108,7 +108,7 @@ static BOOL declaration_element_valid_ffp(const struct wined3d_vertex_element *e
                     return FALSE;
             }
 
-        case WINED3DDECLUSAGE_NORMAL:
+        case WINED3D_DECL_USAGE_NORMAL:
             switch(element->format)
             {
                 case WINED3DFMT_R32G32B32_FLOAT:
@@ -120,7 +120,7 @@ static BOOL declaration_element_valid_ffp(const struct wined3d_vertex_element *e
                     return FALSE;
             }
 
-        case WINED3DDECLUSAGE_TEXCOORD:
+        case WINED3D_DECL_USAGE_TEXCOORD:
             switch(element->format)
             {
                 case WINED3DFMT_R32_FLOAT:
@@ -136,7 +136,7 @@ static BOOL declaration_element_valid_ffp(const struct wined3d_vertex_element *e
                     return FALSE;
             }
 
-        case WINED3DDECLUSAGE_COLOR:
+        case WINED3D_DECL_USAGE_COLOR:
             switch(element->format)
             {
                 case WINED3DFMT_R32G32B32_FLOAT:
@@ -201,7 +201,8 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
         e->usage = elements[i].usage;
         e->usage_idx = elements[i].usage_idx;
 
-        if (e->usage == WINED3DDECLUSAGE_POSITIONT) declaration->position_transformed = TRUE;
+        if (e->usage == WINED3D_DECL_USAGE_POSITIONT)
+            declaration->position_transformed = TRUE;
 
         /* Find the streams used in the declaration. The vertex buffers have
          * to be loaded when drawing, but filter tesselation pseudo streams. */
@@ -278,7 +279,7 @@ struct wined3d_fvf_convert_state
 };
 
 static void append_decl_element(struct wined3d_fvf_convert_state *state,
-        enum wined3d_format_id format_id, WINED3DDECLUSAGE usage, UINT usage_idx)
+        enum wined3d_format_id format_id, enum wined3d_decl_usage usage, UINT usage_idx)
 {
     struct wined3d_vertex_element *elements = state->elements;
     const struct wined3d_format *format;
@@ -333,32 +334,32 @@ static unsigned int convert_fvf_to_declaration(const struct wined3d_gl_info *gl_
     if (has_pos)
     {
         if (!has_blend && (fvf & WINED3DFVF_XYZRHW))
-            append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3DDECLUSAGE_POSITIONT, 0);
+            append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3D_DECL_USAGE_POSITIONT, 0);
         else if ((fvf & WINED3DFVF_XYZW) == WINED3DFVF_XYZW)
-            append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3DDECLUSAGE_POSITION, 0);
+            append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3D_DECL_USAGE_POSITION, 0);
         else
-            append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3DDECLUSAGE_POSITION, 0);
+            append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3D_DECL_USAGE_POSITION, 0);
     }
 
     if (has_blend && (num_blends > 0))
     {
         if ((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2 && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR))
-            append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+            append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3D_DECL_USAGE_BLEND_WEIGHT, 0);
         else
         {
             switch (num_blends)
             {
                 case 1:
-                    append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+                    append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3D_DECL_USAGE_BLEND_WEIGHT, 0);
                     break;
                 case 2:
-                    append_decl_element(&state, WINED3DFMT_R32G32_FLOAT, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+                    append_decl_element(&state, WINED3DFMT_R32G32_FLOAT, WINED3D_DECL_USAGE_BLEND_WEIGHT, 0);
                     break;
                 case 3:
-                    append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+                    append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3D_DECL_USAGE_BLEND_WEIGHT, 0);
                     break;
                 case 4:
-                    append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+                    append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3D_DECL_USAGE_BLEND_WEIGHT, 0);
                     break;
                 default:
                     ERR("Unexpected amount of blend values: %u\n", num_blends);
@@ -370,33 +371,37 @@ static unsigned int convert_fvf_to_declaration(const struct wined3d_gl_info *gl_
     {
         if ((fvf & WINED3DFVF_LASTBETA_UBYTE4)
                 || ((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2 && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)))
-            append_decl_element(&state, WINED3DFMT_R8G8B8A8_UINT, WINED3DDECLUSAGE_BLENDINDICES, 0);
+            append_decl_element(&state, WINED3DFMT_R8G8B8A8_UINT, WINED3D_DECL_USAGE_BLEND_INDICES, 0);
         else if (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)
-            append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3DDECLUSAGE_BLENDINDICES, 0);
+            append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3D_DECL_USAGE_BLEND_INDICES, 0);
         else
-            append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3DDECLUSAGE_BLENDINDICES, 0);
+            append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3D_DECL_USAGE_BLEND_INDICES, 0);
     }
 
-    if (has_normal) append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3DDECLUSAGE_NORMAL, 0);
-    if (has_psize) append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3DDECLUSAGE_PSIZE, 0);
-    if (has_diffuse) append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3DDECLUSAGE_COLOR, 0);
-    if (has_specular) append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3DDECLUSAGE_COLOR, 1);
+    if (has_normal)
+        append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3D_DECL_USAGE_NORMAL, 0);
+    if (has_psize)
+        append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3D_DECL_USAGE_PSIZE, 0);
+    if (has_diffuse)
+        append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3D_DECL_USAGE_COLOR, 0);
+    if (has_specular)
+        append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3D_DECL_USAGE_COLOR, 1);
 
     for (idx = 0; idx < num_textures; ++idx)
     {
         switch ((texcoords >> (idx * 2)) & 0x03)
         {
             case WINED3DFVF_TEXTUREFORMAT1:
-                append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3DDECLUSAGE_TEXCOORD, idx);
+                append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3D_DECL_USAGE_TEXCOORD, idx);
                 break;
             case WINED3DFVF_TEXTUREFORMAT2:
-                append_decl_element(&state, WINED3DFMT_R32G32_FLOAT, WINED3DDECLUSAGE_TEXCOORD, idx);
+                append_decl_element(&state, WINED3DFMT_R32G32_FLOAT, WINED3D_DECL_USAGE_TEXCOORD, idx);
                 break;
             case WINED3DFVF_TEXTUREFORMAT3:
-                append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3DDECLUSAGE_TEXCOORD, idx);
+                append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3D_DECL_USAGE_TEXCOORD, idx);
                 break;
             case WINED3DFVF_TEXTUREFORMAT4:
-                append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3DDECLUSAGE_TEXCOORD, idx);
+                append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3D_DECL_USAGE_TEXCOORD, idx);
                 break;
         }
     }
