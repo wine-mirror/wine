@@ -488,7 +488,7 @@ static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t 
 }
 
 /* ECMA-262 3rd Edition    10.1.4 */
-static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *ret)
 {
     scope_chain_t *scope;
     named_item_t *item;
@@ -544,15 +544,6 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, DWORD flags, 
 
     if(lookup_global_members(ctx, identifier, ret))
         return S_OK;
-
-    if(flags & fdexNameEnsure) {
-        hres = jsdisp_get_id(ctx->global, identifier, fdexNameEnsure, &id);
-        if(FAILED(hres))
-            return hres;
-
-        exprval_set_idref(ret, to_disp(ctx->global), id);
-        return S_OK;
-    }
 
     ret->type = EXPRVAL_INVALID;
     return S_OK;
@@ -1083,7 +1074,7 @@ static HRESULT interp_ident(exec_ctx_t *ctx)
 
     TRACE("%s\n", debugstr_w(arg));
 
-    hres = identifier_eval(ctx->parser->script, arg, 0, ctx->ei, &exprval);
+    hres = identifier_eval(ctx->parser->script, arg, &exprval);
     if(FAILED(hres))
         return hres;
 
@@ -1108,9 +1099,19 @@ static HRESULT interp_identid(exec_ctx_t *ctx)
 
     TRACE("%s %x\n", debugstr_w(arg), flags);
 
-    hres = identifier_eval(ctx->parser->script, arg, flags, ctx->ei, &exprval);
+    hres = identifier_eval(ctx->parser->script, arg, &exprval);
     if(FAILED(hres))
         return hres;
+
+    if(exprval.type == EXPRVAL_INVALID && (flags & fdexNameEnsure)) {
+        DISPID id;
+
+        hres = jsdisp_get_id(ctx->parser->script->global, arg, fdexNameEnsure, &id);
+        if(FAILED(hres))
+            return hres;
+
+        exprval_set_idref(&exprval, to_disp(ctx->parser->script->global), id);
+    }
 
     if(exprval.type != EXPRVAL_IDREF) {
         WARN("invalid ref\n");
@@ -1686,7 +1687,7 @@ static HRESULT interp_delete_ident(exec_ctx_t *ctx)
 
     TRACE("%s\n", debugstr_w(arg));
 
-    hres = identifier_eval(ctx->parser->script, arg, 0, ctx->ei, &exprval);
+    hres = identifier_eval(ctx->parser->script, arg, &exprval);
     if(FAILED(hres))
         return hres;
 
@@ -1804,7 +1805,7 @@ static HRESULT interp_typeofident(exec_ctx_t *ctx)
 
     TRACE("%s\n", debugstr_w(arg));
 
-    hres = identifier_eval(ctx->parser->script, arg, 0, ctx->ei, &exprval);
+    hres = identifier_eval(ctx->parser->script, arg, &exprval);
     if(FAILED(hres))
         return hres;
 
