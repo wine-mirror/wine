@@ -115,7 +115,7 @@ msgstr "Megjegyzések:"
 
 #: appwiz.rc:97
 msgid "Wine Gecko Installer"
-msgstr "Wine Gecko Installer"
+msgstr ""
 
 #: appwiz.rc:100
 #, fuzzy
@@ -591,19 +591,17 @@ msgstr "&Kék:"
 
 #: comdlg32.rc:288
 msgid "&Hue:"
-msgstr "&Hue:"
+msgstr ""
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr "&Sat:"
+msgstr ""
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
-msgstr "&Lum:"
+msgstr ""
 
 #: comdlg32.rc:302
 msgid "&Add to Custom Colors"
@@ -7098,7 +7096,7 @@ msgstr "Beállí&tás..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&About"
+msgstr ""
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7577,7 +7575,7 @@ msgstr "LAPOLVASÁS... Kérem várjon"
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"
-msgstr "px"
+msgstr ""
 
 #: sane.rc:32
 msgctxt "unit: bits"
@@ -8696,11 +8694,11 @@ msgstr "&Kihagyás"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr "&Try Again"
+msgstr ""
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr "&Continue"
+msgstr ""
 
 #: user32.rc:91
 msgid "Select Window"
@@ -12611,11 +12609,11 @@ msgstr " Ablakbeállítások "
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatically capture the &mouse in full-screen windows"
+msgstr ""
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr "Allow the window manager to &decorate the windows"
+msgstr ""
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
@@ -12630,13 +12628,12 @@ msgid "Desktop &size:"
 msgstr "Ablakméret:"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Screen &Resolution "
+msgstr ""
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "This is a sample text using 10 point Tahoma"
+msgstr ""
 
 #: winecfg.rc:182
 #, fuzzy
@@ -12713,8 +12710,6 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
-"edited."
 
 #: winecfg.rc:227
 msgid "&Add..."
@@ -12734,7 +12729,7 @@ msgstr "Haladó >>"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr ""
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12753,34 +12748,32 @@ msgid "Show &dot files"
 msgstr "Rejtett fájlok megjelenítése"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr ""
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
-msgstr "&Test Sound"
+msgstr ""
 
 #: winecfg.rc:274
 #, fuzzy
@@ -13166,7 +13159,7 @@ msgstr "Előbukkanó menü"
 
 #: wineconsole.rc:67
 msgid "&Control"
-msgstr "&Control"
+msgstr ""
 
 #: wineconsole.rc:68
 msgid "S&hift"
@@ -13244,7 +13237,7 @@ msgstr "&Konsol bezárása"
 
 #: wineconsole.rc:119
 msgid "Edition"
-msgstr "Edition"
+msgstr ""
 
 #: wineconsole.rc:125
 msgid "Console parameters"
