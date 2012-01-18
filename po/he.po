@@ -273,7 +273,7 @@ msgstr "שמע"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
-msgstr "Wine AVI-default-filehandler"
+msgstr ""
 
 #: avifil32.rc:34
 msgid "uncompressed"
@@ -297,7 +297,7 @@ msgstr "עזרה"
 
 #: comctl32.rc:62
 msgid "Wizard"
-msgstr "Wizard"
+msgstr ""
 
 #: comctl32.rc:65
 msgid "< &Back"
@@ -3283,26 +3283,24 @@ msgid "&Blank page"
 msgstr "עמוד &ריק"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr " Browsing history "
+msgstr ""
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr "You can delete cached pages, cookies and other data."
+msgstr ""
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr "Delete &files..."
+msgstr ""
 
 #: inetcpl.rc:57
 msgid "&Settings..."
-msgstr "&Settings..."
+msgstr ""
 
 #: inetcpl.rc:65
-#, fuzzy
 msgid "Delete browsing history"
-msgstr " Browsing history "
+msgstr ""
 
 #: inetcpl.rc:68
 msgid ""
@@ -8347,11 +8345,11 @@ msgstr "לוח הבקרה של Wine"
 
 #: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
-msgstr "Unable to display Run File dialog box (internal error)"
+msgstr ""
 
 #: shell32.rc:193
 msgid "Unable to display Browse dialog box (internal error)"
-msgstr "Unable to display Browse dialog box (internal error)"
+msgstr ""
 
 #: shell32.rc:195
 msgid "Executable files (*.exe)"
@@ -10095,7 +10093,7 @@ msgstr "כלי ניתוח ה־DirectX"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
+msgstr ""
 
 #: explorer.rc:28
 msgid "Wine Explorer"
@@ -11012,51 +11010,49 @@ msgstr "לא מוטמע"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
-msgstr "Error reading `%s'."
+msgstr ""
 
 #: progman.rc:69
 msgid "Error writing `%s'."
-msgstr "Error writing `%s'."
+msgstr ""
 
 #: progman.rc:72
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
-"The group file `%s' cannot be opened.\n"
-"Should it be tried further on?"
 
 #: progman.rc:74
 msgid "Help not available."
-msgstr "Help not available."
+msgstr ""
 
 #: progman.rc:75
 msgid "Unknown feature in %s"
-msgstr "Unknown feature in %s"
+msgstr ""
 
 #: progman.rc:76
 msgid "File `%s' exists. Not overwritten."
-msgstr "File `%s' exists. Not overwritten."
+msgstr ""
 
 #: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
-msgstr "Save group as `%s to prevent overwriting original files."
+msgstr ""
 
 #: progman.rc:80
 msgid "Programs"
-msgstr "Programs"
+msgstr ""
 
 #: progman.rc:81
 msgid "Libraries (*.dll)"
-msgstr "Libraries (*.dll)"
+msgstr ""
 
 #: progman.rc:82
 msgid "Icon files"
-msgstr "Icon files"
+msgstr ""
 
 #: progman.rc:83
 msgid "Icons (*.ico)"
-msgstr "Icons (*.ico)"
+msgstr ""
 
 #: reg.rc:27
 msgid ""
