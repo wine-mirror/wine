@@ -557,10 +557,6 @@ msgstr "Szín:"
 msgid "Sample"
 msgstr "Minta"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr "AaBbYyZzÁáŐőÉé"
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "Szkr&ipt:"

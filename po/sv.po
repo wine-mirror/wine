@@ -546,10 +546,6 @@ msgstr "&Färg:"
 msgid "Sample"
 msgstr "Test"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr ""
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr ""

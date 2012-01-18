@@ -545,10 +545,6 @@ msgstr "配色(&C):"
 msgid "Sample"
 msgstr "サンプル"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr ""
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "文字セット(&I):"

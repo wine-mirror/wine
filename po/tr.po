@@ -550,10 +550,6 @@ msgstr "Renk:"
 msgid "Sample"
 msgstr "Örnek"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr "AaBbĞğŞş"
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "Bet&ik:"

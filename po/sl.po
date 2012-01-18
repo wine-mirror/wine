@@ -549,10 +549,6 @@ msgstr "&Barva:"
 msgid "Sample"
 msgstr "Vzorec"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr ""
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "Sis&tem pisave:"

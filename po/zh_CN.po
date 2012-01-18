@@ -537,10 +537,6 @@ msgstr "配色(&C)："
 msgid "Sample"
 msgstr "示例"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr "中文字体 AaBbYyZz"
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "书写系统(&I):"

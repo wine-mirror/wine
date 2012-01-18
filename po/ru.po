@@ -545,10 +545,6 @@ msgstr "Цвет:"
 msgid "Sample"
 msgstr "Образец"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr "АаБбAaBb"
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "На&бор символов:"

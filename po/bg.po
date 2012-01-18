@@ -549,10 +549,6 @@ msgstr "Цвят:"
 msgid "Sample"
 msgstr "Пример"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr "AaBbYyZz"
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "&Азбука:"

@@ -542,10 +542,6 @@ msgstr "&צבע:"
 msgid "Sample"
 msgstr "דוגמה"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr "AaBbYyZzנסשת"
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "&כתב:"

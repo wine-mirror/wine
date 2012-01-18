@@ -547,10 +547,6 @@ msgstr "&Couleur :"
 msgid "Sample"
 msgstr "Aperçu"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr "ÀàCcÇçEeÉéÈèÊêIiÏïÎîLlUuÙù12"
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "Sc&ript :"

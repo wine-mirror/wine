@@ -548,10 +548,6 @@ msgstr "配色(&C)："
 msgid "Sample"
 msgstr "範例"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr ""
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "语言:"

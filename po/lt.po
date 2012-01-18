@@ -545,10 +545,6 @@ msgstr "&Spalva:"
 msgid "Sample"
 msgstr "Pavyzdys"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr "AaĄąZzŽž"
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "Si&mbolių rinkinys:"

@@ -542,10 +542,6 @@ msgstr "&Coleur:"
 msgid "Sample"
 msgstr "Egzimpe"
 
-#: comdlg32.rc:267
-msgid "AaBbYyZz"
-msgstr "AaBbYyZzÅåÇçÛû"
-
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "Scr&ipt (translate):"
