@@ -1900,11 +1900,11 @@ msgstr "Wystawca CRL"
 
 #: crypt32.rc:209
 msgid "Key Compromise"
-msgstr "Key Compromise"
+msgstr ""
 
 #: crypt32.rc:210
 msgid "CA Compromise"
-msgstr "CA Compromise"
+msgstr ""
 
 #: crypt32.rc:211
 msgid "Affiliation Changed"
@@ -3065,7 +3065,7 @@ msgstr "Skopiuj wybrane"
 
 #: gphoto2.rc:32
 msgid "Preview"
-msgstr "Preview"
+msgstr ""
 
 #: gphoto2.rc:33
 msgid "Import All"
@@ -3073,7 +3073,7 @@ msgstr "Skopiuj wszystkie"
 
 #: gphoto2.rc:34
 msgid "Skip This Dialog"
-msgstr "Skip This Dialog"
+msgstr ""
 
 #: gphoto2.rc:35
 msgid "Exit"
@@ -7729,7 +7729,7 @@ msgstr "Wybierz folder"
 
 #: shell32.rc:303
 msgid "Folder:"
-msgstr "Folder:"
+msgstr ""
 
 #: shell32.rc:309
 msgid "&Make New Folder"
@@ -10922,7 +10922,7 @@ msgstr "Zmień &ikonę..."
 
 #: progman.rc:189
 msgid "Change Icon"
-msgstr "Change Icon"
+msgstr ""
 
 #: progman.rc:191
 msgid "&Filename:"
