@@ -115,7 +115,7 @@ msgstr "Comentarios:"
 
 #: appwiz.rc:97
 msgid "Wine Gecko Installer"
-msgstr "Wine Gecko Installer"
+msgstr ""
 
 #: appwiz.rc:100
 #, fuzzy
@@ -694,7 +694,7 @@ msgstr "Número de &copias:"
 
 #: comdlg32.rc:374
 msgid "C&ollate"
-msgstr "C&ollate"
+msgstr ""
 
 #: comdlg32.rc:379
 msgid "Pa&ges"
@@ -1844,10 +1844,9 @@ msgid "Subject Type="
 msgstr ""
 
 #: crypt32.rc:192
-#, fuzzy
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr "A"
+msgstr ""
 
 #: crypt32.rc:193
 msgid "End Entity"
@@ -8654,11 +8653,11 @@ msgstr "&Ignorar"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr "&Try Again"
+msgstr ""
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr "&Continue"
+msgstr ""
 
 #: user32.rc:91
 msgid "Select Window"
@@ -8674,7 +8673,7 @@ msgstr "&Tamaño de papel:"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr "Duplex:"
+msgstr ""
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
@@ -10326,7 +10325,7 @@ msgstr "No se puede llamar a una etiqueta fuera de un script por lotes\n"
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr ""
 
 #: cmd.rc:313
 #, fuzzy
@@ -12857,7 +12856,7 @@ msgstr "&Derecha"
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
-msgstr "Regular Metafile Viewer"
+msgstr ""
 
 #: wineboot.rc:28
 msgid "Waiting for Program"
@@ -12894,10 +12893,6 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"This program is free software; you can redistribute it and/or modify it "
-"under the terms of the GNU Lesser General Public License as published by the "
-"Free Software Foundation; either version 2.1 of the License, or (at your "
-"option) any later version."
 
 #: winecfg.rc:134
 #, fuzzy
@@ -13087,30 +13082,28 @@ msgid "Show &dot files"
 msgstr "Mostrar ficheros punto"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr ""
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
