@@ -719,16 +719,16 @@ enum wined3d_stateblock_type
     WINED3D_SBT_RECORDED                    = 4, /* WineD3D private */
 };
 
-typedef enum _WINED3DDECLMETHOD
+enum wined3d_decl_method
 {
-    WINED3DDECLMETHOD_DEFAULT               = 0,
-    WINED3DDECLMETHOD_PARTIALU              = 1,
-    WINED3DDECLMETHOD_PARTIALV              = 2,
-    WINED3DDECLMETHOD_CROSSUV               = 3,
-    WINED3DDECLMETHOD_UV                    = 4,
-    WINED3DDECLMETHOD_LOOKUP                = 5,
-    WINED3DDECLMETHOD_LOOKUPPRESAMPLED      = 6
-} WINED3DDECLMETHOD;
+    WINED3D_DECL_METHOD_DEFAULT             = 0,
+    WINED3D_DECL_METHOD_PARTIAL_U           = 1,
+    WINED3D_DECL_METHOD_PARTIAL_V           = 2,
+    WINED3D_DECL_METHOD_CROSS_UV            = 3,
+    WINED3D_DECL_METHOD_UV                  = 4,
+    WINED3D_DECL_METHOD_LOOKUP              = 5,
+    WINED3D_DECL_METHOD_LOOKUP_PRESAMPLED   = 6,
+};
 
 typedef enum _WINED3DDECLUSAGE
 {

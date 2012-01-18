@@ -80,7 +80,7 @@ static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEME
                 e->input_slot = f->InputSlot;
                 e->offset = f->AlignedByteOffset;
                 e->output_slot = is.elements[j].register_idx;
-                e->method = WINED3DDECLMETHOD_DEFAULT;
+                e->method = WINED3D_DECL_METHOD_DEFAULT;
                 e->usage = 0;
                 e->usage_idx = 0;
 

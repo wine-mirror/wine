@@ -1934,19 +1934,21 @@ const char *debug_d3dusagequery(DWORD usagequery)
     return buf[0] ? wine_dbg_sprintf("%s", &buf[3]) : "0";
 }
 
-const char* debug_d3ddeclmethod(WINED3DDECLMETHOD method) {
-    switch (method) {
+const char *debug_d3ddeclmethod(enum wined3d_decl_method method)
+{
+    switch (method)
+    {
 #define WINED3DDECLMETHOD_TO_STR(u) case u: return #u
-        WINED3DDECLMETHOD_TO_STR(WINED3DDECLMETHOD_DEFAULT);
-        WINED3DDECLMETHOD_TO_STR(WINED3DDECLMETHOD_PARTIALU);
-        WINED3DDECLMETHOD_TO_STR(WINED3DDECLMETHOD_PARTIALV);
-        WINED3DDECLMETHOD_TO_STR(WINED3DDECLMETHOD_CROSSUV);
-        WINED3DDECLMETHOD_TO_STR(WINED3DDECLMETHOD_UV);
-        WINED3DDECLMETHOD_TO_STR(WINED3DDECLMETHOD_LOOKUP);
-        WINED3DDECLMETHOD_TO_STR(WINED3DDECLMETHOD_LOOKUPPRESAMPLED);
+        WINED3DDECLMETHOD_TO_STR(WINED3D_DECL_METHOD_DEFAULT);
+        WINED3DDECLMETHOD_TO_STR(WINED3D_DECL_METHOD_PARTIAL_U);
+        WINED3DDECLMETHOD_TO_STR(WINED3D_DECL_METHOD_PARTIAL_V);
+        WINED3DDECLMETHOD_TO_STR(WINED3D_DECL_METHOD_CROSS_UV);
+        WINED3DDECLMETHOD_TO_STR(WINED3D_DECL_METHOD_UV);
+        WINED3DDECLMETHOD_TO_STR(WINED3D_DECL_METHOD_LOOKUP);
+        WINED3DDECLMETHOD_TO_STR(WINED3D_DECL_METHOD_LOOKUP_PRESAMPLED);
 #undef WINED3DDECLMETHOD_TO_STR
         default:
-            FIXME("Unrecognized %u declaration method!\n", method);
+            FIXME("Unrecognized declaration method %#x.\n", method);
             return "unrecognized";
     }
 }

@@ -335,7 +335,7 @@ static UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3
             element->input_slot = stream;
             element->offset = offset;
             element->output_slot = reg;
-            element->method = WINED3DDECLMETHOD_DEFAULT;
+            element->method = WINED3D_DECL_METHOD_DEFAULT;
             element->usage = wined3d_usage_lookup[reg].usage;
             element->usage_idx = wined3d_usage_lookup[reg].usage_idx;
 
