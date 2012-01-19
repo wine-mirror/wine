@@ -12874,7 +12874,7 @@ msgstr "Diskettestation"
 
 #: winecfg.rc:70
 msgid "CD-ROM"
-msgstr "CD-ROM"
+msgstr "Cd-rom"
 
 #: winecfg.rc:71
 msgid ""
