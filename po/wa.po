@@ -390,7 +390,7 @@ msgstr "&No do fitchî:"
 
 #: comdlg32.rc:157 comdlg32.rc:179
 msgid "&Directories:"
-msgstr "&Ridants"
+msgstr "&Ridants:"
 
 #: comdlg32.rc:160 comdlg32.rc:182
 msgid "List Files of &Type:"
@@ -785,7 +785,7 @@ msgstr ""
 
 #: comdlg32.rc:470 comdlg32.rc:488 shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
-msgstr "&Drovî..."
+msgstr "&Drovî"
 
 #: comdlg32.rc:481
 #, fuzzy
@@ -1013,9 +1013,8 @@ msgid "Save"
 msgstr ""
 
 #: comdlg32.rc:142
-#, fuzzy
 msgid "Open File"
-msgstr "Aidance di Wine"
+msgstr ""
 
 #: comdlg32.rc:79 oleview.rc:95
 msgid "Ready"
@@ -3152,7 +3151,6 @@ msgid "&Window"
 msgstr ""
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
-#, fuzzy
 msgid "&Open..."
 msgstr "&Drovî..."
 
@@ -3834,9 +3832,8 @@ msgid "Broken pipe\n"
 msgstr ""
 
 #: winerror.mc:426
-#, fuzzy
 msgid "Open failed\n"
-msgstr "Aidance di Wine"
+msgstr ""
 
 #: winerror.mc:431
 msgid "Buffer overflow\n"
@@ -4198,9 +4195,8 @@ msgid "More data available\n"
 msgstr ""
 
 #: winerror.mc:886
-#, fuzzy
 msgid "Session canceled\n"
-msgstr "Aidance di Wine"
+msgstr ""
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name\n"
@@ -5776,9 +5772,8 @@ msgid "Function could not be called\n"
 msgstr ""
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed\n"
-msgstr "Aidance di Wine"
+msgstr ""
 
 #: winerror.mc:2861
 msgid "Invalid table\n"
@@ -5793,9 +5788,8 @@ msgid "Unsupported type\n"
 msgstr ""
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed\n"
-msgstr "Aidance di Wine"
+msgstr ""
 
 #: winerror.mc:2881
 msgid "Temporary directory not writable\n"
@@ -7035,9 +7029,8 @@ msgid "Create Control"
 msgstr ""
 
 #: oledlg.rc:62
-#, fuzzy
 msgid "Create From File"
-msgstr "Aidance di Wine"
+msgstr ""
 
 #: oledlg.rc:65
 msgid "&Add Control..."
@@ -7718,7 +7711,7 @@ msgstr ""
 
 #: shell32.rc:348
 msgid "&Open:"
-msgstr ""
+msgstr "&Drovî:"
 
 #: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
@@ -8139,9 +8132,8 @@ msgid ""
 msgstr ""
 
 #: shell32.rc:266
-#, fuzzy
 msgid "Wine License"
-msgstr "Aidance di Wine"
+msgstr ""
 
 #: shell32.rc:155
 msgid "Trash"
@@ -9895,8 +9887,9 @@ msgid "&Wrap long lines"
 msgstr "Côper les ro&yes"
 
 #: notepad.rc:53
+#, fuzzy
 msgid "&Search...\tCtrl+F"
-msgstr "Cwerî..."
+msgstr "&Cwerî...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
@@ -9977,10 +9970,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Li fitchî '%s'\n"
-"a candjî\n"
+"Li fitchî '%s' a candjî.\n"
 "\n"
-" El voloz schaper ?"
+"El voloz schaper?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
@@ -11940,7 +11932,7 @@ msgstr ""
 #: wineboot.rc:39
 #, fuzzy
 msgid "Wine"
-msgstr "Aidance di Wine"
+msgstr "Wine"
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
@@ -12877,7 +12869,7 @@ msgstr "&Fitchî"
 
 #: winefile.rc:147
 msgid "&Directories"
-msgstr ""
+msgstr "&Ridants"
 
 #: winefile.rc:149
 #, fuzzy
@@ -13205,7 +13197,7 @@ msgstr ""
 #: wordpad.rc:28
 #, fuzzy
 msgid "&New...\tCtrl+N"
-msgstr "&Novea\tCtrl+N"
+msgstr "&Novea...\tCtrl+N"
 
 #: wordpad.rc:42
 #, fuzzy
