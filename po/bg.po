@@ -116,7 +116,7 @@ msgstr "Коментар"
 
 #: appwiz.rc:97
 msgid "Wine Gecko Installer"
-msgstr "Wine Gecko Installer"
+msgstr ""
 
 #: appwiz.rc:100
 #, fuzzy
@@ -303,7 +303,7 @@ msgstr "Помощ"
 
 #: comctl32.rc:62
 msgid "Wizard"
-msgstr "Wizard"
+msgstr ""
 
 #: comctl32.rc:65
 msgid "< &Back"
@@ -6675,7 +6675,7 @@ msgstr "Парола"
 
 #: mpr.rc:44
 msgid "&Save this password (Insecure)"
-msgstr "&Save this password (Insecure)"
+msgstr ""
 
 #: mpr.rc:27
 msgid "Entire Network"
@@ -7838,11 +7838,11 @@ msgstr "Относно %s"
 
 #: shell32.rc:333
 msgid "Wine &license"
-msgstr "Wine &license"
+msgstr ""
 
 #: shell32.rc:338
 msgid "Running on %s"
-msgstr "Running on %s"
+msgstr ""
 
 #: shell32.rc:339
 msgid "Wine was brought to you by:"
@@ -7858,7 +7858,7 @@ msgstr ""
 
 #: shell32.rc:348
 msgid "&Open:"
-msgstr "&Open:"
+msgstr ""
 
 #: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
@@ -8386,15 +8386,15 @@ msgstr "&Пропусни"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr "&Try Again"
+msgstr ""
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr "&Continue"
+msgstr ""
 
 #: user32.rc:91
 msgid "Select Window"
-msgstr "Select Window"
+msgstr ""
 
 #: user32.rc:69
 msgid "&More Windows..."
@@ -12162,15 +12162,10 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"This program is free software; you can redistribute it and/or modify it "
-"under the terms of the GNU Lesser General Public License as published by the "
-"Free Software Foundation; either version 2.1 of the License, or (at your "
-"option) any later version."
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Windows Registration Information "
+msgstr ""
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12215,11 +12210,11 @@ msgstr " Настройка на прозорците "
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatically capture the &mouse in full-screen windows"
+msgstr ""
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr "Allow the window manager to &decorate the windows"
+msgstr ""
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
@@ -12234,13 +12229,12 @@ msgid "Desktop &size:"
 msgstr "Размер на работния плот:"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Screen &Resolution "
+msgstr ""
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "This is a sample text using 10 point Tahoma"
+msgstr ""
 
 #: winecfg.rc:182
 #, fuzzy
@@ -12317,8 +12311,6 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
-"edited."
 
 #: winecfg.rc:227
 msgid "&Add..."
@@ -12338,7 +12330,7 @@ msgstr "Покажи допълнителните"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr ""
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12357,34 +12349,32 @@ msgid "Show &dot files"
 msgstr "Показвай файловете, започващи с точка"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr ""
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
-msgstr "&Test Sound"
+msgstr ""
 
 #: winecfg.rc:274
 #, fuzzy
@@ -12401,11 +12391,11 @@ msgstr "Инсталирай тема..."
 
 #: winecfg.rc:282
 msgid "It&em:"
-msgstr "Item:"
+msgstr ""
 
 #: winecfg.rc:284
 msgid "C&olor:"
-msgstr "Color:"
+msgstr ""
 
 #: winecfg.rc:290
 #, fuzzy
