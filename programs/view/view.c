@@ -24,8 +24,8 @@
 
 static HINSTANCE hInst;
 static HWND hMainWnd;
-static char szAppName[5] = "View";
-static char szTitle[80];
+static WCHAR szAppName[5] = {'V','i','e','w',0};
+static WCHAR szTitle[80];
 
 static HMETAFILE hmf;
 static HENHMETAFILE enhmf;
@@ -48,75 +48,88 @@ typedef struct
 #define APMHEADER_KEY	0x9AC6CDD7l
 
 
-static BOOL FileOpen(HWND hWnd, char *fn, int fnsz)
+static BOOL FileOpen(HWND hWnd, WCHAR *fn, int fnsz)
 {
-  OPENFILENAME ofn = { sizeof(OPENFILENAME),
-		       0, 0, NULL, NULL, 0, 0, NULL,
-		       fnsz, NULL, 0, NULL, NULL, 
-		       OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
-  ofn.lpstrFilter = "Metafiles\0*.wmf;*.emf\0";
+  static const WCHAR filter[] = {'M','e','t','a','f','i','l','e','s','\0','*','.','w','m','f',';','*','.','e','m','f','\0',0};
+  OPENFILENAMEW ofn = { sizeof(OPENFILENAMEW),
+                        0, 0, NULL, NULL, 0, 0, NULL,
+                        fnsz, NULL, 0, NULL, NULL,
+                        OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
+  ofn.lpstrFilter = filter;
   ofn.hwndOwner = hWnd;
   ofn.lpstrFile = fn;
   if( fnsz < 1 )
     return FALSE;
   *fn = 0;
-  return GetOpenFileName(&ofn);
+  return GetOpenFileNameW(&ofn);
 }
 
-static BOOL FileIsEnhanced( LPCSTR szFileName )
+static BOOL FileIsEnhanced( LPCWSTR szFileName )
 {
-  HFILE hInFile;
   ENHMETAHEADER enh;
+  HANDLE handle;
+  DWORD size;
 
-  if( (hInFile = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR )
+  handle = CreateFileW( szFileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0 );
+  if (handle == INVALID_HANDLE_VALUE)
     return FALSE;
 
-  if( _lread( hInFile, &enh, sizeof(ENHMETAHEADER) ) != sizeof(ENHMETAHEADER) )
-    {
-      _lclose( hInFile );
+  if (!ReadFile( handle, &enh, sizeof(ENHMETAHEADER), &size, NULL ) || size != sizeof(ENHMETAHEADER) )
+  {
+      CloseHandle( handle );
       return FALSE;
-    }
-  _lclose( hInFile );
+  }
+  CloseHandle( handle );
 
   /* Is it enhanced? */
   return (enh.dSignature == ENHMETA_SIGNATURE);
 }
 
-static BOOL FileIsPlaceable( LPCSTR szFileName )
+static BOOL FileIsPlaceable( LPCWSTR szFileName )
 {
-  HFILE		hInFile;
   APMFILEHEADER	apmh;
+  HANDLE handle;
+  DWORD size;
 
-  if( (hInFile = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR )
+  handle = CreateFileW( szFileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0 );
+  if (handle == INVALID_HANDLE_VALUE)
     return FALSE;
 
-  if( _lread( hInFile, &apmh, sizeof(APMFILEHEADER) )
-      != sizeof(APMFILEHEADER) )
-    {
-      _lclose( hInFile );
+  if (!ReadFile( handle, &apmh, sizeof(APMFILEHEADER), &size, NULL ) || size != sizeof(APMFILEHEADER))
+  {
+      CloseHandle( handle );
       return FALSE;
-    }
-  _lclose( hInFile );
+  }
+  CloseHandle( handle );
 
   /* Is it placeable? */
   return (apmh.key == APMHEADER_KEY);
 }
 
-static HMETAFILE GetPlaceableMetaFile( LPCSTR szFileName )
+static HMETAFILE GetPlaceableMetaFile( LPCWSTR szFileName )
 {
   LPBYTE lpData;
   METAHEADER mfHeader;
   APMFILEHEADER	APMHeader;
-  HFILE	fh;
+  HANDLE handle;
+  DWORD size;
   HMETAFILE hmf;
   WORD checksum, *p;
   HDC hdc;
   int i;
 
-  if( (fh = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR ) return 0;
-  _llseek(fh, 0, 0);
-  if (!_lread(fh, &APMHeader, sizeof(APMFILEHEADER))) return 0;
-  _llseek(fh, sizeof(APMFILEHEADER), 0);
+  handle = CreateFileW( szFileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0 );
+  if (handle == INVALID_HANDLE_VALUE)
+    return 0;
+
+  if (!ReadFile( handle, &APMHeader, sizeof(APMFILEHEADER), &size, NULL ) || size != sizeof(APMFILEHEADER))
+  {
+      CloseHandle( handle );
+      return 0;
+  }
   checksum = 0;
   p = (WORD *) &APMHeader;
 
@@ -126,22 +139,31 @@ static HMETAFILE GetPlaceableMetaFile( LPCSTR szFileName )
     char msg[128];
     sprintf(msg, "Computed checksum %04x != stored checksum %04x\n",
 	   checksum, APMHeader.checksum);
-        MessageBox(hMainWnd, msg, "Checksum failed", MB_OK);
+    MessageBoxA(hMainWnd, msg, "Checksum failed", MB_OK);
+    CloseHandle( handle );
     return 0;
   }
 
-  if (!_lread(fh, &mfHeader, sizeof(METAHEADER))) return 0;
+  if (!ReadFile( handle, &mfHeader, sizeof(METAHEADER), &size, NULL) || size != sizeof(METAHEADER))
+  {
+      CloseHandle( handle );
+      return 0;
+  }
 
-  if (!(lpData = GlobalAlloc(GPTR, (mfHeader.mtSize * 2L)))) return 0;
+  if (!(lpData = GlobalAlloc(GPTR, (mfHeader.mtSize * 2L))))
+  {
+      CloseHandle( handle );
+      return 0;
+  }
 
-  _llseek(fh, sizeof(APMFILEHEADER), 0);
-  if (!_lread(fh, lpData, (UINT)(mfHeader.mtSize * 2L)))
+  SetFilePointer( handle, sizeof(APMFILEHEADER), NULL, FILE_BEGIN );
+  if (!ReadFile(handle, lpData, mfHeader.mtSize * 2, &size, NULL ) || size != mfHeader.mtSize * 2)
   {
     GlobalFree(lpData);
-    _lclose(fh);
+    CloseHandle( handle );
     return 0;
   }
-  _lclose(fh);
+  CloseHandle( handle );
 
   if (!(hmf = SetMetaFileBitsEx(mfHeader.mtSize*2, lpData)))
     return 0;
@@ -161,7 +183,7 @@ static HMETAFILE GetPlaceableMetaFile( LPCSTR szFileName )
   return hmf;
 }
 
-static void DoOpenFile(LPCSTR filename)
+static void DoOpenFile(LPCWSTR filename)
 {
   if (!filename) return;
 
@@ -172,9 +194,9 @@ static void DoOpenFile(LPCSTR filename)
     RECT r;
     isEnhanced = FileIsEnhanced(filename);
     if (isEnhanced)
-       enhmf = GetEnhMetaFile(filename);
+       enhmf = GetEnhMetaFileW(filename);
     else
-       hmf = GetMetaFile(filename);
+       hmf = GetMetaFileW(filename);
     GetClientRect(hMainWnd, &r);
     width = r.right - r.left;
     height = r.bottom - r.top;
@@ -212,9 +234,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMessage, WPARAM wparam, LPARAM 
 	{
 	case IDM_OPEN:
 	  {
-	    char filename[MAX_PATH];
-           if (FileOpen(hwnd, filename, sizeof(filename)))
-             DoOpenFile(filename);
+              WCHAR filename[MAX_PATH];
+              if (FileOpen(hwnd, filename, sizeof(filename)/sizeof(WCHAR)))
+                  DoOpenFile(filename);
 	  }
 	  break;
 
@@ -252,7 +274,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMessage, WPARAM wparam, LPARAM 
 	  break;
 
 	default:
-	  return DefWindowProc(hwnd, uMessage, wparam, lparam);
+	  return DefWindowProcW(hwnd, uMessage, wparam, lparam);
 	}
       break;
 
@@ -261,22 +283,22 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMessage, WPARAM wparam, LPARAM 
       break;
 
     default:          /* Passes it on if unprocessed */
-      return DefWindowProc(hwnd, uMessage, wparam, lparam);
+      return DefWindowProcW(hwnd, uMessage, wparam, lparam);
     }
     return 0;
 }
 
 static BOOL InitApplication(HINSTANCE hInstance)
 {
-  WNDCLASSEX wc;
+  WNDCLASSEXW wc;
 
   /* Load the application description strings */
-  LoadString(hInstance, IDS_DESCRIPTION, szTitle, sizeof(szTitle));
+  LoadStringW(hInstance, IDS_DESCRIPTION, szTitle, sizeof(szTitle)/sizeof(WCHAR));
 
   /* Fill in window class structure with parameters that describe the
      main window */
 
-  wc.cbSize = sizeof(WNDCLASSEX);
+  wc.cbSize        = sizeof(WNDCLASSEXW);
   wc.style         = CS_HREDRAW | CS_VREDRAW;             /* Class style(s) */
   wc.lpfnWndProc   = WndProc;                             /* Window Procedure */
   wc.cbClsExtra    = 0;                          /* No per-class extra data */
@@ -284,18 +306,12 @@ static BOOL InitApplication(HINSTANCE hInstance)
   wc.hInstance     = hInstance;                      /* Owner of this class */
   wc.hIcon         = NULL;
   wc.hIconSm       = NULL;
-  wc.hCursor       = LoadCursor(NULL, IDC_ARROW);                 /* Cursor */
+  wc.hCursor       = LoadCursorW(NULL, (LPWSTR)IDC_ARROW);
   wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);           /* Default color */
   wc.lpszMenuName  = szAppName;                       /* Menu name from .rc */
   wc.lpszClassName = szAppName;                      /* Name to register as */
 
-  /* Register the window class and return FALSE if unsuccessful */
-
-  if (!RegisterClassEx(&wc))
-    {
-      if (!RegisterClass((LPWNDCLASS)&wc.style))
-      return FALSE;
-    }
+  if (!RegisterClassExW(&wc)) return FALSE;
 
   /* Call module specific initialization functions here */
 
@@ -308,7 +324,7 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     hInst = hInstance;
 
     /* Create main window */
-    hMainWnd = CreateWindow(szAppName,           /* See RegisterClass() call */
+    hMainWnd = CreateWindowW(szAppName,          /* See RegisterClass() call */
                             szTitle,             /* window title */
                             WS_OVERLAPPEDWINDOW, /* Window style */
                             CW_USEDEFAULT, 0,    /* positioning */
@@ -330,19 +346,10 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     return TRUE;
 }
 
-static void HandleCommandLine(LPSTR cmdline)
+static void HandleCommandLine(LPWSTR cmdline)
 {
-    CHAR delimiter;
-
     /* skip white space */
     while (*cmdline == ' ') cmdline++;
-
-    /* skip executable name */
-    delimiter = (*cmdline == '"' ? '"' : ' ');
-
-    if (*cmdline == delimiter) cmdline++;
-    while (*cmdline && *cmdline != delimiter) cmdline++;
-    if (*cmdline == delimiter) cmdline++;
 
     if (*cmdline)
     {
@@ -350,16 +357,13 @@ static void HandleCommandLine(LPSTR cmdline)
         if (cmdline[0] == '"')
         {
             cmdline++;
-            cmdline[lstrlen(cmdline) - 1] = 0;
+            cmdline[lstrlenW(cmdline) - 1] = 0;
         }
         DoOpenFile(cmdline);
     }
 }
 
-int APIENTRY WinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     LPSTR     lpCmdLine,
-                     int       nCmdShow)
+int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
     MSG msg;
     HANDLE hAccelTable;
@@ -380,21 +384,21 @@ int APIENTRY WinMain(HINSTANCE hInstance,
       return FALSE;
     }
 
-    HandleCommandLine(GetCommandLine());
+    HandleCommandLine(lpCmdLine);
 
-    hAccelTable = LoadAccelerators(hInstance, szAppName);
+    hAccelTable = LoadAcceleratorsW(hInstance, szAppName);
 
     /* Main loop */
     /* Acquire and dispatch messages until a WM_QUIT message is received */
-    while (GetMessage(&msg, NULL, 0, 0))
+    while (GetMessageW(&msg, NULL, 0, 0))
     {
       /* Add other Translation functions (for modeless dialogs
       and/or MDI windows) here. */
 
-      if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+      if (!TranslateAcceleratorW(msg.hwnd, hAccelTable, &msg))
         {
             TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            DispatchMessageW(&msg);
         }
     }
 

@@ -1,5 +1,6 @@
 MODULE    = view.exe
-APPMODE   = -mwindows
+APPMODE   = -mwindows -municode
+EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 IMPORTS   = comdlg32 user32 gdi32
 
 C_SRCS = \
