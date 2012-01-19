@@ -321,8 +321,8 @@ static void DSOUND_ChangeListener(IDirectSoundBufferImpl *ds3dl)
  */
 
 /* IUnknown methods */
-static HRESULT WINAPI IDirectSound3DBufferImpl_QueryInterface(
-	LPDIRECTSOUND3DBUFFER iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IDirectSound3DBufferImpl_QueryInterface(IDirectSound3DBuffer *iface,
+        REFIID riid, void **ppobj)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 
@@ -330,7 +330,7 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_QueryInterface(
 	return IDirectSoundBuffer_QueryInterface((LPDIRECTSOUNDBUFFER8)This->dsb, riid, ppobj);
 }
 
-static ULONG WINAPI IDirectSound3DBufferImpl_AddRef(LPDIRECTSOUND3DBUFFER iface)
+static ULONG WINAPI IDirectSound3DBufferImpl_AddRef(IDirectSound3DBuffer *iface)
 {
     IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
@@ -343,7 +343,7 @@ static ULONG WINAPI IDirectSound3DBufferImpl_AddRef(LPDIRECTSOUND3DBUFFER iface)
     return ref;
 }
 
-static ULONG WINAPI IDirectSound3DBufferImpl_Release(LPDIRECTSOUND3DBUFFER iface)
+static ULONG WINAPI IDirectSound3DBufferImpl_Release(IDirectSound3DBuffer *iface)
 {
     IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
@@ -360,9 +360,8 @@ static ULONG WINAPI IDirectSound3DBufferImpl_Release(LPDIRECTSOUND3DBUFFER iface
 }
 
 /* IDirectSound3DBuffer methods */
-static HRESULT WINAPI IDirectSound3DBufferImpl_GetAllParameters(
-	LPDIRECTSOUND3DBUFFER iface,
-	LPDS3DBUFFER lpDs3dBuffer)
+static HRESULT WINAPI IDirectSound3DBufferImpl_GetAllParameters(IDirectSound3DBuffer *iface,
+	DS3DBUFFER *lpDs3dBuffer)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("(%p,%p)\n",This,lpDs3dBuffer);
@@ -382,10 +381,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetAllParameters(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeAngles(
-	LPDIRECTSOUND3DBUFFER iface,
-	LPDWORD lpdwInsideConeAngle,
-	LPDWORD lpdwOutsideConeAngle)
+static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeAngles(IDirectSound3DBuffer *iface,
+        DWORD *lpdwInsideConeAngle, DWORD *lpdwOutsideConeAngle)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("returning: Inside Cone Angle = %d degrees; Outside Cone Angle = %d degrees\n",
@@ -395,9 +392,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeAngles(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeOrientation(
-	LPDIRECTSOUND3DBUFFER iface,
-	LPD3DVECTOR lpvConeOrientation)
+static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeOrientation(IDirectSound3DBuffer *iface,
+        D3DVECTOR *lpvConeOrientation)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("returning: Cone Orientation vector = (%f,%f,%f)\n",
@@ -408,9 +404,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeOrientation(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeOutsideVolume(
-	LPDIRECTSOUND3DBUFFER iface,
-	LPLONG lplConeOutsideVolume)
+static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeOutsideVolume(IDirectSound3DBuffer *iface,
+        LONG *lplConeOutsideVolume)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("returning: Cone Outside Volume = %d\n", This->dsb->ds3db_ds3db.lConeOutsideVolume);
@@ -418,9 +413,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeOutsideVolume(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_GetMaxDistance(
-	LPDIRECTSOUND3DBUFFER iface,
-	LPD3DVALUE lpfMaxDistance)
+static HRESULT WINAPI IDirectSound3DBufferImpl_GetMaxDistance(IDirectSound3DBuffer *iface,
+        D3DVALUE *lpfMaxDistance)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("returning: Max Distance = %f\n", This->dsb->ds3db_ds3db.flMaxDistance);
@@ -428,9 +422,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetMaxDistance(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_GetMinDistance(
-	LPDIRECTSOUND3DBUFFER iface,
-	LPD3DVALUE lpfMinDistance)
+static HRESULT WINAPI IDirectSound3DBufferImpl_GetMinDistance(IDirectSound3DBuffer *iface,
+        D3DVALUE *lpfMinDistance)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("returning: Min Distance = %f\n", This->dsb->ds3db_ds3db.flMinDistance);
@@ -438,9 +431,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetMinDistance(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_GetMode(
-	LPDIRECTSOUND3DBUFFER iface,
-	LPDWORD lpdwMode)
+static HRESULT WINAPI IDirectSound3DBufferImpl_GetMode(IDirectSound3DBuffer *iface,
+        DWORD *lpdwMode)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("returning: Mode = %d\n", This->dsb->ds3db_ds3db.dwMode);
@@ -448,9 +440,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetMode(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_GetPosition(
-	LPDIRECTSOUND3DBUFFER iface,
-	LPD3DVECTOR lpvPosition)
+static HRESULT WINAPI IDirectSound3DBufferImpl_GetPosition(IDirectSound3DBuffer *iface,
+        D3DVECTOR *lpvPosition)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("returning: Position vector = (%f,%f,%f)\n",
@@ -461,9 +452,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetPosition(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_GetVelocity(
-	LPDIRECTSOUND3DBUFFER iface,
-	LPD3DVECTOR lpvVelocity)
+static HRESULT WINAPI IDirectSound3DBufferImpl_GetVelocity(IDirectSound3DBuffer *iface,
+        D3DVECTOR *lpvVelocity)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("returning: Velocity vector = (%f,%f,%f)\n",
@@ -474,10 +464,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetVelocity(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_SetAllParameters(
-	LPDIRECTSOUND3DBUFFER iface,
-	LPCDS3DBUFFER lpcDs3dBuffer,
-	DWORD dwApply)
+static HRESULT WINAPI IDirectSound3DBufferImpl_SetAllParameters(IDirectSound3DBuffer *iface,
+	const DS3DBUFFER *lpcDs3dBuffer, DWORD dwApply)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	DWORD status = DSERR_INVALIDPARAM;
@@ -506,11 +494,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetAllParameters(
 	return status;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeAngles(
-	LPDIRECTSOUND3DBUFFER iface,
-	DWORD dwInsideConeAngle,
-	DWORD dwOutsideConeAngle,
-	DWORD dwApply)
+static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeAngles(IDirectSound3DBuffer *iface,
+        DWORD dwInsideConeAngle, DWORD dwOutsideConeAngle, DWORD dwApply)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("setting: Inside Cone Angle = %d; Outside Cone Angle = %d; dwApply = %d\n",
@@ -525,10 +510,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeAngles(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOrientation(
-	LPDIRECTSOUND3DBUFFER iface,
-	D3DVALUE x, D3DVALUE y, D3DVALUE z,
-	DWORD dwApply)
+static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOrientation(IDirectSound3DBuffer *iface,
+        D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("setting: Cone Orientation vector = (%f,%f,%f); dwApply = %d\n", x, y, z, dwApply);
@@ -544,10 +527,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOrientation(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOutsideVolume(
-	LPDIRECTSOUND3DBUFFER iface,
-	LONG lConeOutsideVolume,
-	DWORD dwApply)
+static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOutsideVolume(IDirectSound3DBuffer *iface,
+        LONG lConeOutsideVolume, DWORD dwApply)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("setting: ConeOutsideVolume = %d; dwApply = %d\n", lConeOutsideVolume, dwApply);
@@ -561,10 +542,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOutsideVolume(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_SetMaxDistance(
-	LPDIRECTSOUND3DBUFFER iface,
-	D3DVALUE fMaxDistance,
-	DWORD dwApply)
+static HRESULT WINAPI IDirectSound3DBufferImpl_SetMaxDistance(IDirectSound3DBuffer *iface,
+        D3DVALUE fMaxDistance, DWORD dwApply)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("setting: MaxDistance = %f; dwApply = %d\n", fMaxDistance, dwApply);
@@ -578,10 +557,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMaxDistance(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_SetMinDistance(
-	LPDIRECTSOUND3DBUFFER iface,
-	D3DVALUE fMinDistance,
-	DWORD dwApply)
+static HRESULT WINAPI IDirectSound3DBufferImpl_SetMinDistance(IDirectSound3DBuffer *iface,
+        D3DVALUE fMinDistance, DWORD dwApply)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("setting: MinDistance = %f; dwApply = %d\n", fMinDistance, dwApply);
@@ -595,10 +572,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMinDistance(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_SetMode(
-	LPDIRECTSOUND3DBUFFER iface,
-	DWORD dwMode,
-	DWORD dwApply)
+static HRESULT WINAPI IDirectSound3DBufferImpl_SetMode(IDirectSound3DBuffer *iface, DWORD dwMode,
+        DWORD dwApply)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("setting: Mode = %d; dwApply = %d\n", dwMode, dwApply);
@@ -612,10 +587,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMode(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_SetPosition(
-	LPDIRECTSOUND3DBUFFER iface,
-	D3DVALUE x, D3DVALUE y, D3DVALUE z,
-	DWORD dwApply)
+static HRESULT WINAPI IDirectSound3DBufferImpl_SetPosition(IDirectSound3DBuffer *iface, D3DVALUE x,
+        D3DVALUE y, D3DVALUE z, DWORD dwApply)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("setting: Position vector = (%f,%f,%f); dwApply = %d\n", x, y, z, dwApply);
@@ -631,10 +604,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetPosition(
 	return DS_OK;
 }
 
-static HRESULT WINAPI IDirectSound3DBufferImpl_SetVelocity(
-	LPDIRECTSOUND3DBUFFER iface,
-	D3DVALUE x, D3DVALUE y, D3DVALUE z,
-	DWORD dwApply)
+static HRESULT WINAPI IDirectSound3DBufferImpl_SetVelocity(IDirectSound3DBuffer *iface,
+        D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
 	TRACE("setting: Velocity vector = (%f,%f,%f); dwApply = %d\n", x, y, z, dwApply);
