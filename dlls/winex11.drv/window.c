@@ -1197,7 +1197,7 @@ static void set_wm_hints( Display *display, struct x11drv_win_data *data )
      * only normal windows, and doesn't handle correctly TRANSIENT_FOR hint for
      * dialogs owned by fullscreen windows.
      */
-    if ((style & WS_POPUP) && owner) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_DIALOG);
+    if (((style & WS_POPUP) || (ex_style & WS_EX_DLGMODALFRAME)) && owner) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_DIALOG);
     else window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
 
     XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE),
