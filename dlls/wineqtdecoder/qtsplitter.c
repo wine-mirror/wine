@@ -166,6 +166,9 @@ typedef struct QTSplitter {
     CRITICAL_SECTION csReceive;
 
     SourceSeeking sourceSeeking;
+    TimeValue movie_time;
+    TimeValue movie_start;
+    TimeScale movie_scale;
 } QTSplitter;
 
 static const IPinVtbl QT_OutputPin_Vtbl;
@@ -468,7 +471,7 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
 {
     QTSplitter *This = (QTSplitter *)data;
     HRESULT hr = S_OK;
-    TimeValue movie_time=0, next_time;
+    TimeValue next_time;
     CVPixelBufferRef pixelBuffer = NULL;
     OSStatus err;
     TimeRecord tr;
@@ -486,11 +489,13 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
 
     WaitForSingleObject(This->runEvent, -1);
 
+    EnterCriticalSection(&This->csReceive);
     This->state = State_Running;
     /* Prime the pump:  Needed for MPEG streams */
-    GetMovieNextInterestingTime(This->pQTMovie, nextTimeEdgeOK | nextTimeStep, 0, NULL, movie_time, 1, &next_time, NULL);
+    GetMovieNextInterestingTime(This->pQTMovie, nextTimeEdgeOK | nextTimeStep, 0, NULL, This->movie_time, 1, &next_time, NULL);
 
     GetMovieTime(This->pQTMovie, &tr);
+    LeaveCriticalSection(&This->csReceive);
     do
     {
         LONGLONG tStart=0, tStop=0;
@@ -498,7 +503,7 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
         float time;
 
         EnterCriticalSection(&This->csReceive);
-        GetMovieNextInterestingTime(This->pQTMovie, nextTimeStep, 0, NULL, movie_time, 1, &next_time, NULL);
+        GetMovieNextInterestingTime(This->pQTMovie, nextTimeStep, 0, NULL, This->movie_time, 1, &next_time, NULL);
 
         if (next_time == -1)
         {
@@ -512,15 +517,15 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
         MoviesTask(This->pQTMovie,0);
         QTVisualContextTask(This->vContext);
 
-        TRACE("In loop at time %ld\n",movie_time);
+        TRACE("In loop at time %ld\n",This->movie_time);
         TRACE("In Next time %ld\n",next_time);
 
-        mStart = movie_time;
+        mStart = This->movie_time;
         mStop = next_time;
 
-        time = (float)movie_time / tr.scale;
+        time = (float)(This->movie_time - This->movie_start) / This->movie_scale;
         tStart = time * 10000000;
-        time = (float)next_time / tr.scale;
+        time = (float)(next_time - This->movie_start) / This->movie_scale;
         tStop = time * 10000000;
 
         /* Deliver Audio */
@@ -552,8 +557,8 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
                 goto audio_error;
             }
 
-            duration = (float)next_time / tr.scale;
-            time = (float)movie_time / tr.scale;
+            duration = (float)next_time / This->movie_scale;
+            time = (float)This->movie_time / This->movie_scale;
             duration -= time;
             frames = pvi->nSamplesPerSec * duration;
             TRACE("Need audio for %f seconds (%li frames)\n",duration,frames);
@@ -643,7 +648,7 @@ audio_error:
         else
             TRACE("No video to deliver\n");
 
-        movie_time = next_time;
+        This->movie_time = next_time;
         LeaveCriticalSection(&This->csReceive);
     } while (hr == S_OK);
 
@@ -923,7 +928,6 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
     DWORD tid;
     HANDLE thread;
     LONGLONG time;
-    TimeScale scale;
 
     TRACE("Trying movie connect\n");
 
@@ -963,8 +967,8 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
         hr = QT_Process_Audio_Track(filter, trk);
 
     time = GetMovieDuration(filter->pQTMovie);
-    scale = GetMovieTimeScale(filter->pQTMovie);
-    filter->sourceSeeking.llDuration = ((double)time / scale) * 10000000;
+    filter->movie_scale = GetMovieTimeScale(filter->pQTMovie);
+    filter->sourceSeeking.llDuration = ((double)time / filter->movie_scale) * 10000000;
     filter->sourceSeeking.llStop = filter->sourceSeeking.llDuration;
 
     TRACE("Movie duration is %s\n",wine_dbgstr_longlong(filter->sourceSeeking.llDuration));
@@ -1364,7 +1368,12 @@ static HRESULT QT_AddPin(QTSplitter *This, const PIN_INFO *piOutput, const AM_ME
 
 static HRESULT WINAPI QTSplitter_ChangeStart(IMediaSeeking *iface)
 {
-    FIXME("(%p) filter hasn't implemented start position change!\n", iface);
+    QTSplitter *This = impl_from_IMediaSeeking(iface);
+    TRACE("(%p)\n", iface);
+    EnterCriticalSection(&This->csReceive);
+    This->movie_time = (This->sourceSeeking.llCurrent * This->movie_scale)/10000000;
+    This->movie_start = This->movie_time;
+    LeaveCriticalSection(&This->csReceive);
     return S_OK;
 }
 
