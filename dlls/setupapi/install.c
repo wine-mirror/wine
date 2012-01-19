@@ -701,7 +701,6 @@ static BOOL register_dlls_callback( HINF hinf, PCWSTR field, void *arg )
 static BOOL fake_dlls_callback( HINF hinf, PCWSTR field, void *arg )
 {
     INFCONTEXT context;
-    BOOL ret = TRUE;
     BOOL ok = SetupFindFirstLineW( hinf, field, NULL, &context );
 
     for (; ok; ok = SetupFindNextLine( &context, &context ))
@@ -730,9 +729,8 @@ static BOOL fake_dlls_callback( HINF hinf, PCWSTR field, void *arg )
 
     done:
         HeapFree( GetProcessHeap(), 0, path );
-        if (!ret) break;
     }
-    return ret;
+    return TRUE;
 }
 
 /***********************************************************************
