@@ -278,7 +278,7 @@ msgstr "audio"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
-msgstr "Wine AVI-default-filehandler"
+msgstr ""
 
 #: avifil32.rc:34
 msgid "uncompressed"
@@ -486,7 +486,7 @@ msgstr "&Výchozí tiskárna"
 
 #: comdlg32.rc:223
 msgid "[none]"
-msgstr "[none]"
+msgstr ""
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
@@ -735,7 +735,7 @@ msgstr "Nastavení stránky"
 
 #: comdlg32.rc:432
 msgid "&Tray:"
-msgstr "&Tray:"
+msgstr ""
 
 #: comdlg32.rc:435 wineps.rc:32
 msgid "&Portrait"
@@ -1834,10 +1834,9 @@ msgid "Subject Type="
 msgstr ""
 
 #: crypt32.rc:192
-#, fuzzy
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr "A"
+msgstr ""
 
 #: crypt32.rc:193
 msgid "End Entity"
@@ -7906,11 +7905,11 @@ msgstr "O aplikaci %s"
 
 #: shell32.rc:333
 msgid "Wine &license"
-msgstr "Wine &license"
+msgstr ""
 
 #: shell32.rc:338
 msgid "Running on %s"
-msgstr "Running on %s"
+msgstr ""
 
 #: shell32.rc:339
 msgid "Wine was brought to you by:"
@@ -8477,11 +8476,11 @@ msgstr "&Ignorovat"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr "&Try Again"
+msgstr ""
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr "&Continue"
+msgstr ""
 
 #: user32.rc:91
 #, fuzzy
@@ -10013,7 +10012,7 @@ msgstr ""
 #: cmd.rc:292 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
-msgstr "Y"
+msgstr ""
 
 #: cmd.rc:293 xcopy.rc:41
 msgctxt "No key"
@@ -10088,7 +10087,7 @@ msgstr ""
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr ""
 
 #: cmd.rc:313
 #, fuzzy
@@ -12589,23 +12588,18 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"This program is free software; you can redistribute it and/or modify it "
-"under the terms of the GNU Lesser General Public License as published by the "
-"Free Software Foundation; either version 2.1 of the License, or (at your "
-"option) any later version."
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Windows Registration Information "
+msgstr ""
 
 #: winecfg.rc:135
 msgid "&Owner:"
-msgstr "Owner:"
+msgstr ""
 
 #: winecfg.rc:137
 msgid "Organi&zation:"
-msgstr "Organization:"
+msgstr ""
 
 #: winecfg.rc:145
 #, fuzzy
@@ -12641,11 +12635,11 @@ msgstr " Nastavení oken "
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatically capture the &mouse in full-screen windows"
+msgstr ""
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr "Allow the window manager to &decorate the windows"
+msgstr ""
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
@@ -12660,13 +12654,12 @@ msgid "Desktop &size:"
 msgstr "Velikost desktopu:"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Screen &Resolution "
+msgstr ""
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "This is a sample text using 10 point Tahoma"
+msgstr ""
 
 #: winecfg.rc:182
 #, fuzzy
@@ -12700,7 +12693,7 @@ msgstr "&Upravit"
 
 #: winecfg.rc:196
 msgid "Edit Override"
-msgstr "Edit Override"
+msgstr ""
 
 #: winecfg.rc:199
 #, fuzzy
@@ -12742,8 +12735,6 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
-"edited."
 
 #: winecfg.rc:227
 msgid "&Add..."
@@ -12763,7 +12754,7 @@ msgstr "Zobrazit rozšířené možnosti"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr ""
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12782,34 +12773,32 @@ msgid "Show &dot files"
 msgstr "Zobrazit soubory s tečkou na začátku názvu"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr ""
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Output device:"
+msgstr ""
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Input device:"
+msgstr ""
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
-msgstr "&Test Sound"
+msgstr ""
 
 #: winecfg.rc:274
 #, fuzzy
@@ -13201,7 +13190,7 @@ msgstr "Řízení"
 
 #: wineconsole.rc:66
 msgid "Popup menu"
-msgstr "Popup menu"
+msgstr ""
 
 #: wineconsole.rc:67
 msgid "&Control"
