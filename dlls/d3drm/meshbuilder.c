@@ -58,9 +58,6 @@ typedef struct {
     DWORD flags;
 } Header;
 
-static const struct IDirect3DRMMeshBuilder2Vtbl Direct3DRMMeshBuilder2_Vtbl;
-static const struct IDirect3DRMMeshBuilder3Vtbl Direct3DRMMeshBuilder3_Vtbl;
-
 static char templates[] = {
 "xof 0302txt 0064"
 "template Header"
@@ -290,31 +287,6 @@ static inline IDirect3DRMMeshBuilderImpl *impl_from_IDirect3DRMMeshBuilder2(IDir
 static inline IDirect3DRMMeshBuilderImpl *impl_from_IDirect3DRMMeshBuilder3(IDirect3DRMMeshBuilder3 *iface)
 {
     return CONTAINING_RECORD(iface, IDirect3DRMMeshBuilderImpl, IDirect3DRMMeshBuilder3_iface);
-}
-
-HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown** ppObj)
-{
-    IDirect3DRMMeshBuilderImpl* object;
-
-    TRACE("(%p)\n", ppObj);
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMMeshBuilderImpl));
-    if (!object)
-    {
-        ERR("Out of memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    object->IDirect3DRMMeshBuilder2_iface.lpVtbl = &Direct3DRMMeshBuilder2_Vtbl;
-    object->IDirect3DRMMeshBuilder3_iface.lpVtbl = &Direct3DRMMeshBuilder3_Vtbl;
-    object->ref = 1;
-
-    if (IsEqualGUID(riid, &IID_IDirect3DRMMeshBuilder3))
-        *ppObj = (IUnknown*)&object->IDirect3DRMMeshBuilder3_iface;
-    else
-        *ppObj = (IUnknown*)&object->IDirect3DRMMeshBuilder2_iface;
-
-    return S_OK;
 }
 
 /*** IUnknown methods ***/
@@ -1968,3 +1940,28 @@ static const struct IDirect3DRMMeshBuilder3Vtbl Direct3DRMMeshBuilder3_Vtbl =
     IDirect3DRMMeshBuilder3Impl_GetNormals,
     IDirect3DRMMeshBuilder3Impl_GetNormalCount
 };
+
+HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown** ppObj)
+{
+    IDirect3DRMMeshBuilderImpl* object;
+
+    TRACE("(%p)\n", ppObj);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMMeshBuilderImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->IDirect3DRMMeshBuilder2_iface.lpVtbl = &Direct3DRMMeshBuilder2_Vtbl;
+    object->IDirect3DRMMeshBuilder3_iface.lpVtbl = &Direct3DRMMeshBuilder3_Vtbl;
+    object->ref = 1;
+
+    if (IsEqualGUID(riid, &IID_IDirect3DRMMeshBuilder3))
+        *ppObj = (IUnknown*)&object->IDirect3DRMMeshBuilder3_iface;
+    else
+        *ppObj = (IUnknown*)&object->IDirect3DRMMeshBuilder2_iface;
+
+    return S_OK;
+}
