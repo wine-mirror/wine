@@ -1577,7 +1577,7 @@ extern void add_gl_compat_wrappers(struct wined3d_gl_info *gl_info) DECLSPEC_HID
 /*****************************************************************************
  * High order patch management
  */
-struct WineD3DRectPatch
+struct wined3d_rect_patch
 {
     UINT                            Handle;
     float                          *mem;
@@ -1588,7 +1588,7 @@ struct WineD3DRectPatch
     struct list                     entry;
 };
 
-HRESULT tesselate_rectpatch(struct wined3d_device *device, struct WineD3DRectPatch *patch) DECLSPEC_HIDDEN;
+HRESULT tesselate_rectpatch(struct wined3d_device *device, struct wined3d_rect_patch *patch) DECLSPEC_HIDDEN;
 
 enum projection_types
 {

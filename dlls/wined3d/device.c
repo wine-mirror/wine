@@ -1443,12 +1443,14 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     }
 
     TRACE("Deleting high order patches\n");
-    for(i = 0; i < PATCHMAP_SIZE; i++) {
+    for (i = 0; i < PATCHMAP_SIZE; ++i)
+    {
+        struct wined3d_rect_patch *patch;
         struct list *e1, *e2;
-        struct WineD3DRectPatch *patch;
+
         LIST_FOR_EACH_SAFE(e1, e2, &device->patches[i])
         {
-            patch = LIST_ENTRY(e1, struct WineD3DRectPatch, entry);
+            patch = LIST_ENTRY(e1, struct wined3d_rect_patch, entry);
             wined3d_device_delete_patch(device, patch->Handle);
         }
     }
@@ -4633,7 +4635,7 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
 HRESULT CDECL wined3d_device_draw_rect_patch(struct wined3d_device *device, UINT handle,
         const float *num_segs, const struct wined3d_rect_patch_info *rect_patch_info)
 {
-    struct WineD3DRectPatch *patch;
+    struct wined3d_rect_patch *patch;
     GLenum old_primitive_type;
     unsigned int i;
     struct list *e;
@@ -4655,7 +4657,7 @@ HRESULT CDECL wined3d_device_draw_rect_patch(struct wined3d_device *device, UINT
         found = FALSE;
         LIST_FOR_EACH(e, &device->patches[i])
         {
-            patch = LIST_ENTRY(e, struct WineD3DRectPatch, entry);
+            patch = LIST_ENTRY(e, struct wined3d_rect_patch, entry);
             if (patch->Handle == handle)
             {
                 found = TRUE;
@@ -4739,7 +4741,7 @@ HRESULT CDECL wined3d_device_draw_tri_patch(struct wined3d_device *device, UINT 
 
 HRESULT CDECL wined3d_device_delete_patch(struct wined3d_device *device, UINT handle)
 {
-    struct WineD3DRectPatch *patch;
+    struct wined3d_rect_patch *patch;
     struct list *e;
     int i;
 
@@ -4748,7 +4750,7 @@ HRESULT CDECL wined3d_device_delete_patch(struct wined3d_device *device, UINT ha
     i = PATCHMAP_HASHFUNC(handle);
     LIST_FOR_EACH(e, &device->patches[i])
     {
-        patch = LIST_ENTRY(e, struct WineD3DRectPatch, entry);
+        patch = LIST_ENTRY(e, struct wined3d_rect_patch, entry);
         if (patch->Handle == handle)
         {
             TRACE("Deleting patch %p\n", patch);

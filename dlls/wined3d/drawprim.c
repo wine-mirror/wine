@@ -788,7 +788,7 @@ static void normalize_normal(float *n) {
  * responsible of taking care that either the gl states are restored, or the context activated
  * for drawing to reset the lastWasBlit flag.
  */
-HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch *patch)
+HRESULT tesselate_rectpatch(struct wined3d_device *This, struct wined3d_rect_patch *patch)
 {
     unsigned int i, j, num_quads, out_vertex_size, buffer_size, d3d_out_vertex_size;
     const struct wined3d_rect_patch_info *info = &patch->rect_patch_info;
