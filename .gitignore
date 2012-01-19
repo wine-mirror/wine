@@ -226,6 +226,7 @@ include/stdole2.tlb
 include/strmif.h
 include/structuredquerycondition.h
 include/textstor.h
+include/tlogstg.h
 include/tom.h
 include/unknwn.h
 include/urlhist.h

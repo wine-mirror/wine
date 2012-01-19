@@ -92,6 +92,7 @@ PUBLIC_IDL_H_SRCS = \
 	strmif.idl \
 	structuredquerycondition.idl \
 	textstor.idl \
+	tlogstg.idl \
 	tom.idl \
 	unknwn.idl \
 	urlhist.idl \

@@ -83,6 +83,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "sensevts.h"
 #include "ocmm.h"
 #include "commoncontrols.h"
+#include "tlogstg.h"
 
 /* FIXME: cguids declares GUIDs but does not define their values */
 
