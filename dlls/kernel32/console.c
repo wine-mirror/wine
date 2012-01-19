@@ -3189,3 +3189,15 @@ DWORD WINAPI GetConsoleAliasesLengthW(LPWSTR unknown)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
+
+VOID WINAPI ExpungeConsoleCommandHistoryA(LPCSTR unknown)
+{
+    FIXME(": (%s) stub!\n", debugstr_a(unknown));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+}
+
+VOID WINAPI ExpungeConsoleCommandHistoryW(LPCWSTR unknown)
+{
+    FIXME(": (%s) stub!\n", debugstr_w(unknown));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+}
