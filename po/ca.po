@@ -301,7 +301,7 @@ msgstr "Ajuda"
 
 #: comctl32.rc:62
 msgid "Wizard"
-msgstr "Wizard"
+msgstr ""
 
 #: comctl32.rc:65
 msgid "< &Back"
@@ -317,7 +317,7 @@ msgstr "Finalitza"
 
 #: comctl32.rc:78
 msgid "Customize Toolbar"
-msgstr "Customize Toolbar"
+msgstr ""
 
 #: comctl32.rc:81 cryptui.rc:348 ieframe.rc:40 oleview.rc:80 oleview.rc:185
 #: oleview.rc:198 oleview.rc:210 taskmgr.rc:139
@@ -496,7 +496,7 @@ msgstr "&Vertical"
 
 #: comdlg32.rc:231 comdlg32.rc:436 wineps.rc:34
 msgid "&Landscape"
-msgstr "&Horizontal"
+msgstr ""
 
 #: comdlg32.rc:234 comdlg32.rc:409 comdlg32.rc:429 wineps.rc:25
 msgid "Paper"
@@ -681,7 +681,7 @@ msgstr "Comentari:"
 
 #: comdlg32.rc:371
 msgid "Copies"
-msgstr "Copies"
+msgstr ""
 
 #: comdlg32.rc:372
 msgid "Number of &copies:"
@@ -693,7 +693,7 @@ msgstr "C&ompagina"
 
 #: comdlg32.rc:379
 msgid "Pa&ges"
-msgstr "Pa&ges"
+msgstr ""
 
 #: comdlg32.rc:380
 msgid "&Selection"
@@ -8247,7 +8247,7 @@ msgstr "%d bytes"
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
 msgid " hr"
-msgstr " hr"
+msgstr ""
 
 #: shlwapi.rc:29
 msgctxt "time unit: minutes"
@@ -8257,7 +8257,7 @@ msgstr " min"
 #: shlwapi.rc:30
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr " sec"
+msgstr ""
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -10006,7 +10006,7 @@ msgstr "No es pot trucar a una etiqueta batch fora d'un script batch\n"
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr ""
 
 #: cmd.rc:313
 msgid "%1, Delete"
@@ -14136,6 +14136,7 @@ msgid "%1? (Yes|No)\n"
 msgstr "%1? (Sí|No)\n"
 
 #: xcopy.rc:36
+#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
 msgstr "Sobreescriure %1? (Yes|No|All)\n"
 
