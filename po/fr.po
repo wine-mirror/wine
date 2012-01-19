@@ -13386,6 +13386,7 @@ msgstr "Erreur lors de l'enregistrement"
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
 msgstr ""
+"Chargement des informations détaillées en cours ; veuillez patienter..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
