@@ -40,6 +40,102 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define DOCHOST_DOCCANNAVIGATE  0
 
+typedef struct {
+    IEnumUnknown IEnumUnknown_iface;
+    LONG ref;
+} EnumUnknown;
+
+static inline EnumUnknown *impl_from_IEnumUnknown(IEnumUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, EnumUnknown, IEnumUnknown_iface);
+}
+
+static HRESULT WINAPI EnumUnknown_QueryInterface(IEnumUnknown *iface, REFIID riid, void **ppv)
+{
+    EnumUnknown *This = impl_from_IEnumUnknown(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IEnumUnknown_iface;
+    }else if(IsEqualGUID(&IID_IEnumUnknown, riid)) {
+        TRACE("(%p)->(IID_IEnumUnknown %p)\n", This, ppv);
+        *ppv = &This->IEnumUnknown_iface;
+    }else {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI EnumUnknown_AddRef(IEnumUnknown *iface)
+{
+    EnumUnknown *This = impl_from_IEnumUnknown(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI EnumUnknown_Release(IEnumUnknown *iface)
+{
+    EnumUnknown *This = impl_from_IEnumUnknown(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI EnumUnknown_Next(IEnumUnknown *iface, ULONG celt, IUnknown **rgelt, ULONG *pceltFetched)
+{
+    EnumUnknown *This = impl_from_IEnumUnknown(iface);
+
+    TRACE("(%p)->(%u %p %p)\n", This, celt, rgelt, pceltFetched);
+
+    /* FIXME: It's not clear if we should ever return something here */
+    if(pceltFetched)
+        *pceltFetched = 0;
+    return S_FALSE;
+}
+
+static HRESULT WINAPI EnumUnknown_Skip(IEnumUnknown *iface, ULONG celt)
+{
+    EnumUnknown *This = impl_from_IEnumUnknown(iface);
+    FIXME("(%p)->(%u)\n", This, celt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EnumUnknown_Reset(IEnumUnknown *iface)
+{
+    EnumUnknown *This = impl_from_IEnumUnknown(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EnumUnknown_Clone(IEnumUnknown *iface, IEnumUnknown **ppenum)
+{
+    EnumUnknown *This = impl_from_IEnumUnknown(iface);
+    FIXME("(%p)->(%p)\n", This, ppenum);
+    return E_NOTIMPL;
+}
+
+static const IEnumUnknownVtbl EnumUnknownVtbl = {
+    EnumUnknown_QueryInterface,
+    EnumUnknown_AddRef,
+    EnumUnknown_Release,
+    EnumUnknown_Next,
+    EnumUnknown_Skip,
+    EnumUnknown_Reset,
+    EnumUnknown_Clone
+};
+
 /**********************************************************
  * IOleObject implementation
  */
@@ -871,8 +967,19 @@ static HRESULT WINAPI OleContainer_ParseDisplayName(IOleContainer *iface, IBindC
 static HRESULT WINAPI OleContainer_EnumObjects(IOleContainer *iface, DWORD grfFlags, IEnumUnknown **ppenum)
 {
     HTMLDocument *This = impl_from_IOleContainer(iface);
-    FIXME("(%p)->(%x %p)\n", This, grfFlags, ppenum);
-    return E_NOTIMPL;
+    EnumUnknown *ret;
+
+    TRACE("(%p)->(%x %p)\n", This, grfFlags, ppenum);
+
+    ret = heap_alloc(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->IEnumUnknown_iface.lpVtbl = &EnumUnknownVtbl;
+    ret->ref = 1;
+
+    *ppenum = &ret->IEnumUnknown_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleContainer_LockContainer(IOleContainer *iface, BOOL fLock)
