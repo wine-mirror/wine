@@ -35,9 +35,6 @@ typedef struct {
     LONG ref;
 } IDirect3DRMFrameImpl;
 
-static const struct IDirect3DRMFrame2Vtbl Direct3DRMFrame2_Vtbl;
-static const struct IDirect3DRMFrame3Vtbl Direct3DRMFrame3_Vtbl;
-
 static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame2(IDirect3DRMFrame2 *iface)
 {
     return CONTAINING_RECORD(iface, IDirect3DRMFrameImpl, IDirect3DRMFrame2_iface);
@@ -46,31 +43,6 @@ static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame2(IDirect3DRMFrame
 static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface)
 {
     return CONTAINING_RECORD(iface, IDirect3DRMFrameImpl, IDirect3DRMFrame3_iface);
-}
-
-HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown** ppObj)
-{
-    IDirect3DRMFrameImpl* object;
-
-    TRACE("(%p)\n", ppObj);
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMFrameImpl));
-    if (!object)
-    {
-        ERR("Out of memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    object->IDirect3DRMFrame2_iface.lpVtbl = &Direct3DRMFrame2_Vtbl;
-    object->IDirect3DRMFrame3_iface.lpVtbl = &Direct3DRMFrame3_Vtbl;
-    object->ref = 1;
-
-    if (IsEqualGUID(riid, &IID_IDirect3DRMFrame3))
-        *ppObj = (IUnknown*)&object->IDirect3DRMFrame3_iface;
-    else
-        *ppObj = (IUnknown*)&object->IDirect3DRMFrame2_iface;
-
-    return S_OK;
 }
 
 /*** IUnknown methods ***/
@@ -1963,3 +1935,28 @@ static const struct IDirect3DRMFrame3Vtbl Direct3DRMFrame3_Vtbl =
     IDirect3DRMFrame3Impl_SetMaterialOverride,
     IDirect3DRMFrame3Impl_GetMaterialOverride
 };
+
+HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown** ppObj)
+{
+    IDirect3DRMFrameImpl* object;
+
+    TRACE("(%p)\n", ppObj);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMFrameImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->IDirect3DRMFrame2_iface.lpVtbl = &Direct3DRMFrame2_Vtbl;
+    object->IDirect3DRMFrame3_iface.lpVtbl = &Direct3DRMFrame3_Vtbl;
+    object->ref = 1;
+
+    if (IsEqualGUID(riid, &IID_IDirect3DRMFrame3))
+        *ppObj = (IUnknown*)&object->IDirect3DRMFrame3_iface;
+    else
+        *ppObj = (IUnknown*)&object->IDirect3DRMFrame2_iface;
+
+    return S_OK;
+}
