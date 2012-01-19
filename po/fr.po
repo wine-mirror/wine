@@ -1324,9 +1324,8 @@ msgid "Certificate Type"
 msgstr "Type de certificat"
 
 #: crypt32.rc:59
-#, fuzzy
 msgid "Certificate Manifold"
-msgstr "Certificate Manifold"
+msgstr ""
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
