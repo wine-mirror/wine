@@ -2180,18 +2180,19 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
                              SFLAG_INRB_MULTISAMPLE | \
                              SFLAG_INRB_RESOLVED)
 
-typedef enum {
-    NO_CONVERSION,
-    CONVERT_PALETTED,
-    CONVERT_PALETTED_CK,
-    CONVERT_CK_565,
-    CONVERT_CK_5551,
-    CONVERT_CK_RGB24,
-    CONVERT_RGB32_888
-} CONVERT_TYPES;
+enum wined3d_conversion_type
+{
+    WINED3D_CT_NONE,
+    WINED3D_CT_PALETTED,
+    WINED3D_CT_PALETTED_CK,
+    WINED3D_CT_CK_565,
+    WINED3D_CT_CK_5551,
+    WINED3D_CT_CK_RGB24,
+    WINED3D_CT_RGB32_888,
+};
 
 HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_ck, BOOL use_texturing,
-        struct wined3d_format *format, CONVERT_TYPES *convert) DECLSPEC_HIDDEN;
+        struct wined3d_format *format, enum wined3d_conversion_type *conversion_type) DECLSPEC_HIDDEN;
 void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[256][4], BOOL colorkey) DECLSPEC_HIDDEN;
 
 struct wined3d_vertex_declaration_element
