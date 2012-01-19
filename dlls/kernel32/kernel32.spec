@@ -460,8 +460,8 @@
 @ stub GetConsoleAliasExesW
 @ stdcall GetConsoleAliasW(wstr ptr long wstr)
 @ stub GetConsoleAliasesA
-@ stub GetConsoleAliasesLengthA
-@ stub GetConsoleAliasesLengthW
+@ stdcall GetConsoleAliasesLengthA(str)
+@ stdcall GetConsoleAliasesLengthW(wstr)
 @ stub GetConsoleAliasesW
 @ stdcall GetConsoleCP()
 @ stub GetConsoleCharType

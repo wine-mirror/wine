@@ -3175,3 +3175,17 @@ DWORD WINAPI GetConsoleCommandHistoryLengthW(LPCWSTR unknown)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
+
+DWORD WINAPI GetConsoleAliasesLengthA(LPSTR unknown)
+{
+    FIXME(": (%s) stub!\n", debugstr_a(unknown));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+DWORD WINAPI GetConsoleAliasesLengthW(LPWSTR unknown)
+{
+    FIXME(": (%s) stub!\n", debugstr_w(unknown));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
