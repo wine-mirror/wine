@@ -924,8 +924,13 @@ static HRESULT WINAPI TargetContainer_GetFrameUrl(ITargetContainer *iface, LPWST
 static HRESULT WINAPI TargetContainer_GetFramesContainer(ITargetContainer *iface, IOleContainer **ppContainer)
 {
     HTMLDocumentObj *This = impl_from_ITargetContainer(iface);
-    FIXME("(%p)->(%p)\n", This, ppContainer);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppContainer);
+
+    /* NOTE: we should return wrapped interface here */
+    IOleContainer_AddRef(&This->basedoc.IOleContainer_iface);
+    *ppContainer = &This->basedoc.IOleContainer_iface;
+    return S_OK;
 }
 
 static const ITargetContainerVtbl TargetContainerVtbl = {

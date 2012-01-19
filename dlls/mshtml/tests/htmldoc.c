@@ -310,6 +310,21 @@ static BOOL is_lang_english(void)
     return PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
 }
 
+static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
+{
+    IUnknown *unk1, *unk2;
+
+    if(iface1 == iface2)
+        return TRUE;
+
+    IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk1);
+    IUnknown_Release(unk1);
+    IUnknown_QueryInterface(iface2, &IID_IUnknown, (void**)&unk2);
+    IUnknown_Release(unk2);
+
+    return unk1 == unk2;
+}
+
 #define EXPECT_UPDATEUI  1
 #define EXPECT_SETTITLE  2
 
@@ -5212,7 +5227,6 @@ static void test_open_window(IHTMLDocument2 *doc, BOOL do_block)
     }else {
         ok(new_window != NULL, "new_window == NULL\n");
 
-        trace("WINDOW %p\n", new_window);
         hres = IHTMLWindow2_close(new_window);
         ok(hres == S_OK, "close failed: %08x\n", hres);
     }
@@ -6170,6 +6184,29 @@ static void test_external(IHTMLDocument2 *doc, BOOL initialized)
     IHTMLWindow2_Release(htmlwin);
 }
 
+static void test_target_container(IHTMLDocument2 *doc)
+{
+    IOleContainer *ole_container, *doc_ole_container;
+    ITargetContainer *target_container;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_ITargetContainer, (void**)&target_container);
+    ok(hres == S_OK, "Could not get ITargetContainer iface: %08x\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleContainer, (void**)&doc_ole_container);
+    ok(hres == S_OK, "Could not get ITargetContainer iface: %08x\n", hres);
+
+    ole_container = (void*)0xdeadbeef;
+    hres = ITargetContainer_GetFramesContainer(target_container, &ole_container);
+    ok(hres == S_OK, "GetFramesContainer failed: %08x\n", hres);
+    ok(ole_container != NULL, "ole_container == NULL\n");
+    ok(iface_cmp((IUnknown*)ole_container, (IUnknown*)doc_ole_container), "ole_container != doc_ole_container\n");
+    IOleContainer_Release(ole_container);
+
+    ITargetContainer_Release(target_container);
+    IOleContainer_Release(doc_ole_container);
+}
+
 static void test_StreamLoad(IHTMLDocument2 *doc)
 {
     IPersistStreamInit *init;
@@ -6354,6 +6391,7 @@ static void test_HTMLDocument(BOOL do_load)
     test_OnAmbientPropertyChange(doc);
     test_Window(doc, TRUE);
     test_external(doc, TRUE);
+    test_target_container(doc);
 
     test_UIDeactivate();
     test_OleCommandTarget(doc);
