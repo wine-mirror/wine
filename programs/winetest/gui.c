@@ -77,7 +77,7 @@ guiStatus (va_list ap)
     char *str = vstrmake (&len, ap);
 
     if (len > 128) str[129] = 0;
-    SetDlgItemText (dialog, IDC_SB, str);
+    SetDlgItemTextA (dialog, IDC_SB, str);
     heap_free (str);
     return 0;
 }
@@ -107,8 +107,8 @@ guiProgress (va_list ap)
     }
     else progressScale = 1;
     pb = GetDlgItem (dialog, IDC_PB0 + progressGroup * 2);
-    SendMessage (pb, PBM_SETRANGE, 0, MAKELPARAM (0, max));
-    SendMessage (pb, PBM_SETSTEP, 1, 0);
+    SendMessageA(pb, PBM_SETRANGE, 0, MAKELPARAM (0, max));
+    SendMessageA(pb, PBM_SETSTEP, 1, 0);
     return 0;
 }
 
@@ -132,8 +132,8 @@ guiStep (va_list ap)
     char *str = vstrmake (NULL, ap);
     
     progressCurr++;
-    SetDlgItemText (dialog, pgID, str);
-    SendDlgItemMessage (dialog, pgID+1, PBM_SETPOS,
+    SetDlgItemTextA (dialog, pgID, str);
+    SendDlgItemMessageA(dialog, pgID+1, PBM_SETPOS,
                         progressScale * progressCurr, 0);
     heap_free (str);
     return 0;
@@ -161,8 +161,8 @@ guiDelta (va_list ap)
     char *str = vstrmake (NULL, ap);
 
     progressCurr += inc;
-    SetDlgItemText (dialog, pgID, str);
-    SendDlgItemMessage (dialog, pgID+1, PBM_SETPOS,
+    SetDlgItemTextA (dialog, pgID, str);
+    SendDlgItemMessageA(dialog, pgID+1, PBM_SETPOS,
                         progressScale * progressCurr, 0);
     heap_free (str);
     return 0;
@@ -181,7 +181,7 @@ textTag (va_list ap)
 static int
 guiTag (va_list ap)
 {
-    SetDlgItemText (dialog, IDC_TAG, tag);
+    SetDlgItemTextA (dialog, IDC_TAG, tag);
     return 0;
 }
 
@@ -203,7 +203,7 @@ guiDir (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
 
-    SetDlgItemText (dialog, IDC_DIR, str);
+    SetDlgItemTextA (dialog, IDC_DIR, str);
     heap_free (str);
     return 0;
 }
@@ -226,7 +226,7 @@ guiOut (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
 
-    SetDlgItemText (dialog, IDC_OUT, str);
+    SetDlgItemTextA (dialog, IDC_OUT, str);
     heap_free (str);
     return 0;
 }
@@ -245,7 +245,7 @@ guiWarning (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
 
-    MessageBox (dialog, str, "Warning", MB_ICONWARNING | MB_OK);
+    MessageBoxA (dialog, str, "Warning", MB_ICONWARNING | MB_OK);
     heap_free (str);
     return 0;
 }
@@ -264,7 +264,7 @@ guiError (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
 
-    MessageBox (dialog, str, "Error", MB_ICONERROR | MB_OK);
+    MessageBoxA (dialog, str, "Error", MB_ICONERROR | MB_OK);
     heap_free (str);
     return 0;
 }
@@ -303,8 +303,7 @@ guiAsk (va_list ap)
 {
     int uType = va_arg (ap, int);
     char *str = vstrmake (NULL, ap);
-    int ret = MessageBox (dialog, str, "Question",
-                          MB_ICONQUESTION | uType);
+    int ret = MessageBoxA (dialog, str, "Question", MB_ICONQUESTION | uType);
 
     heap_free (str);
     return ret;
@@ -330,7 +329,7 @@ AskTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     switch (msg) {
     case WM_INITDIALOG:
-        DefEditProc = (WNDPROC)SetWindowLongPtr
+        DefEditProc = (WNDPROC)SetWindowLongPtrA
             (GetDlgItem (hwnd, IDC_TAG), GWLP_WNDPROC, (LONG_PTR)EditTagProc);
         return TRUE;
     case WM_COMMAND:
@@ -356,9 +355,7 @@ AskTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 int
 guiAskTag (void)
 {
-    return DialogBox (GetModuleHandle (NULL),
-                      MAKEINTRESOURCE (IDD_TAG),
-                      dialog, AskTagProc);
+    return DialogBoxA(GetModuleHandleA(NULL), MAKEINTRESOURCEA(IDD_TAG), dialog, AskTagProc);
 }
 
 static INT_PTR CALLBACK
@@ -391,7 +388,7 @@ AskEmailProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 int
 guiAskEmail (void)
 {
-    return DialogBox (GetModuleHandle (NULL), MAKEINTRESOURCE (IDD_EMAIL), dialog, AskEmailProc);
+    return DialogBoxA(GetModuleHandleA(NULL), MAKEINTRESOURCEA(IDD_EMAIL), dialog, AskEmailProc);
 }
 
 /* Quiet functions */
@@ -426,13 +423,12 @@ DlgProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
     case WM_INITDIALOG:
-        SendMessage (hwnd, WM_SETICON, ICON_SMALL,
-                     (LPARAM)LoadImage( GetModuleHandle (NULL), MAKEINTRESOURCE (IDI_WINE), IMAGE_ICON,
-                                        GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
-                                        LR_SHARED ));
-        SendMessage (hwnd, WM_SETICON, ICON_BIG,
-                     (LPARAM)LoadIcon (GetModuleHandle (NULL),
-                                       MAKEINTRESOURCE (IDI_WINE)));
+        SendMessageA(hwnd, WM_SETICON, ICON_SMALL,
+                     (LPARAM)LoadImageA( GetModuleHandleA(NULL), MAKEINTRESOURCEA(IDI_WINE), IMAGE_ICON,
+                                         GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
+                                         LR_SHARED ));
+        SendMessageA(hwnd, WM_SETICON, ICON_BIG,
+                     (LPARAM)LoadIconA( GetModuleHandleA(NULL), MAKEINTRESOURCEA(IDI_WINE)));
         dialog = hwnd;
         if (!SetEvent (initEvent)) {
             report (R_STATUS, "Can't signal main thread: %d",
@@ -446,8 +442,7 @@ DlgProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
         switch (LOWORD (wParam)) {
         case IDHELP:
-            DialogBox (GetModuleHandle (NULL),
-                       MAKEINTRESOURCE (IDD_ABOUT), hwnd, AboutProc);
+            DialogBoxA(GetModuleHandleA(NULL), MAKEINTRESOURCEA(IDD_ABOUT), hwnd, AboutProc);
             return TRUE;
         case IDABORT:
             report (R_STATUS, "Aborting, please wait...");
@@ -464,9 +459,7 @@ DlgThreadProc (LPVOID param)
     int ret;
 
     InitCommonControls ();
-    ret = DialogBox (GetModuleHandle (NULL),
-                     MAKEINTRESOURCE (IDD_STATUS),
-                     NULL, DlgProc);
+    ret = DialogBoxA(GetModuleHandleA(NULL), MAKEINTRESOURCEA(IDD_STATUS), NULL, DlgProc);
     switch (ret) {
     case 0:
         report (R_FATAL, "Cannot display dialog");
@@ -520,7 +513,7 @@ report (enum report_type t, ...)
         DWORD DlgThreadID;
 
         funcs = text_funcs;
-        initEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
+        initEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
         if (!initEvent)
             report (R_STATUS, "Can't create event object: %d",
                     GetLastError ());

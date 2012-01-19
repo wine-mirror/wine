@@ -45,7 +45,7 @@ void *heap_realloc (void *op, size_t len)
 
 char *heap_strdup( const char *str )
 {
-    int len = lstrlen(str) + 1;
+    int len = strlen(str) + 1;
     char* res = HeapAlloc(GetProcessHeap(), 0, len);
     if (!res) report (R_FATAL, "Out of memory.");
     memcpy(res, str, len);

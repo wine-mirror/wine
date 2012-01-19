@@ -51,11 +51,11 @@ STYLE WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
 CAPTION "Wine Test Shell"
 BEGIN
     LTEXT   "Extracting:",       IDC_ST0,        10,   5, 140, 10
-    CONTROL "PB0", IDC_PB0, PROGRESS_CLASS, 0,    5,  15, 150, 10
+    CONTROL "PB0", IDC_PB0, PROGRESS_CLASSA, 0,   5,  15, 150, 10
     LTEXT   "Running:",          IDC_ST1,        10,  30, 140, 10
-    CONTROL "PB1", IDC_PB1, PROGRESS_CLASS, 0,    5,  40, 150, 10
+    CONTROL "PB1", IDC_PB1, PROGRESS_CLASSA, 0,   5,  40, 150, 10
     LTEXT   "Network transfer:", IDC_ST2,        10,  55, 140, 10
-    CONTROL "PB2", IDC_PB2, PROGRESS_CLASS, 0,    5,  65, 150, 10
+    CONTROL "PB2", IDC_PB2, PROGRESS_CLASSA, 0,   5,  65, 150, 10
                                                
     LTEXT   "Tag:",               IDC_STATIC,    10,  89, 100, 10
     EDITTEXT                      IDC_TAG,       25,  88, 125, 10,
@@ -72,7 +72,7 @@ BEGIN
                    WS_DISABLED
     PUSHBUTTON    "Stop",  IDABORT,             110, 123,  30, 14
 
-    CONTROL "Created", IDC_SB, STATUSCLASSNAME, 0, 0,0,0,0
+    CONTROL "Created", IDC_SB, STATUSCLASSNAMEA, 0, 0,0,0,0
 END
 
 IDD_ABOUT DIALOG 0, 0, 150, 60

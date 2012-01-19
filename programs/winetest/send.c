@@ -263,7 +263,7 @@ send_file_wininet (const char *name)
     static const char extra_headers[] =
         CONTENT_HEADERS;
 
-    wininet_mod = LoadLibrary ("wininet.dll");
+    wininet_mod = LoadLibraryA("wininet.dll");
     if (wininet_mod == NULL)
         goto done;
     pInternetOpen = (void *)GetProcAddress(wininet_mod, "InternetOpenA");
