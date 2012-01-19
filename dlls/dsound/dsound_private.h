@@ -199,8 +199,6 @@ HRESULT IDirectSoundBufferImpl_Create(
     DirectSoundDevice *device,
     IDirectSoundBufferImpl **ppdsb,
     LPCDSBUFFERDESC dsbd) DECLSPEC_HIDDEN;
-HRESULT IDirectSoundBufferImpl_Destroy(
-    IDirectSoundBufferImpl *pdsb) DECLSPEC_HIDDEN;
 HRESULT IDirectSoundBufferImpl_Duplicate(
     DirectSoundDevice *device,
     IDirectSoundBufferImpl **ppdsb,

@@ -1244,7 +1244,7 @@ ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
 
         /* The kill event should have allowed the timer process to expire
          * but try to grab the lock just in case. Can't hold lock because
-         * IDirectSoundBufferImpl_Destroy also grabs the lock */
+         * secondarybuffer_destroy also grabs the lock */
         RtlAcquireResourceShared(&(device->buffer_list_lock), TRUE);
         RtlReleaseResource(&(device->buffer_list_lock));
 
@@ -1256,7 +1256,7 @@ ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
         if (device->buffers) {
             WARN("%d secondary buffers not released\n", device->nrofbuffers);
             for( i=0;i<device->nrofbuffers;i++)
-                IDirectSoundBufferImpl_Destroy(device->buffers[i]);
+                secondarybuffer_destroy(device->buffers[i]);
         }
 
         if (device->primary) {

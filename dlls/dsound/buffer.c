@@ -964,6 +964,11 @@ HRESULT IDirectSoundBufferImpl_Create(
 
 void secondarybuffer_destroy(IDirectSoundBufferImpl *This)
 {
+    ULONG ref = InterlockedIncrement(&This->numIfaces);
+
+    if (ref > 1)
+        WARN("Destroying buffer with %u in use interfaces\n", ref - 1);
+
     DirectSoundDevice_RemoveBuffer(This->device, This);
     RtlDeleteResource(&This->lock);
 
@@ -979,20 +984,6 @@ void secondarybuffer_destroy(IDirectSoundBufferImpl *This)
     HeapFree(GetProcessHeap(), 0, This);
 
     TRACE("(%p) released\n", This);
-}
-
-HRESULT IDirectSoundBufferImpl_Destroy(
-    IDirectSoundBufferImpl *pdsb)
-{
-    TRACE("(%p)\n",pdsb);
-
-    /* This keeps the *_Destroy functions from possibly deleting
-     * this object until it is ready to be deleted */
-    InterlockedIncrement(&pdsb->numIfaces);
-
-    secondarybuffer_destroy(pdsb);
-
-    return S_OK;
 }
 
 HRESULT IDirectSoundBufferImpl_Duplicate(
