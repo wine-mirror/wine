@@ -6184,6 +6184,35 @@ static void test_external(IHTMLDocument2 *doc, BOOL initialized)
     IHTMLWindow2_Release(htmlwin);
 }
 
+static void test_enum_objects(IOleContainer *container)
+{
+    IEnumUnknown *enum_unknown;
+    IUnknown *buf[100] = {(void*)0xdeadbeef};
+    ULONG fetched;
+    HRESULT hres;
+
+    enum_unknown = NULL;
+    hres = IOleContainer_EnumObjects(container, OLECONTF_EMBEDDINGS, &enum_unknown);
+    ok(hres == S_OK, "EnumObjects failed: %08x\n", hres);
+    ok(enum_unknown != NULL, "enum_unknown == NULL\n");
+
+    fetched = 0xdeadbeef;
+    hres = IEnumUnknown_Next(enum_unknown, sizeof(buf)/sizeof(*buf), buf, &fetched);
+    ok(hres == S_FALSE, "Next returned %08x\n", hres);
+    ok(!fetched, "fetched = %d\n", fetched);
+    ok(buf[0] == (void*)0xdeadbeef, "buf[0] = %p\n", buf[0]);
+
+    fetched = 0xdeadbeef;
+    hres = IEnumUnknown_Next(enum_unknown, 1, buf, &fetched);
+    ok(hres == S_FALSE, "Next returned %08x\n", hres);
+    ok(!fetched, "fetched = %d\n", fetched);
+
+    hres = IEnumUnknown_Next(enum_unknown, 1, buf, NULL);
+    ok(hres == S_FALSE, "Next returned %08x\n", hres);
+
+    IEnumUnknown_Release(enum_unknown);
+}
+
 static void test_target_container(IHTMLDocument2 *doc)
 {
     IOleContainer *ole_container, *doc_ole_container;
@@ -6201,6 +6230,7 @@ static void test_target_container(IHTMLDocument2 *doc)
     ok(hres == S_OK, "GetFramesContainer failed: %08x\n", hres);
     ok(ole_container != NULL, "ole_container == NULL\n");
     ok(iface_cmp((IUnknown*)ole_container, (IUnknown*)doc_ole_container), "ole_container != doc_ole_container\n");
+    test_enum_objects(ole_container);
     IOleContainer_Release(ole_container);
 
     ITargetContainer_Release(target_container);
