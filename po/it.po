@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-13 12:10+0100\n"
+"PO-Revision-Date: 2012-01-19 09:43+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -40,9 +40,8 @@ msgstr ""
 "lista e clicca Cambia/Rimuovi."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "Informazioni di supporto"
+msgstr "Informazioni di &supporto"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -3488,12 +3487,11 @@ msgstr "Impossibile avere 'continue' fuori dal ciclo"
 
 #: jscript.rc:40
 msgid "Label redefined"
-msgstr ""
+msgstr "Etichetta ridefinita"
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
-msgstr "File non trovato"
+msgstr "Etichetta non trovata"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
@@ -7504,9 +7502,8 @@ msgid "Resource Failures"
 msgstr "Fallimenti della risorsa"
 
 #: shdoclc.rc:198
-#, fuzzy
 msgid "Dump Tracking Info"
-msgstr "Informazioni di Dump Tracking"
+msgstr ""
 
 #: shdoclc.rc:199
 msgid "Debug Break"
@@ -13073,9 +13070,8 @@ msgid "Command history"
 msgstr "Cronologia"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
-msgstr "&Numero di comandi richiamati :"
+msgstr "&Numero di comandi richiamati:"
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
@@ -13098,12 +13094,10 @@ msgid "Buffer zone"
 msgstr "Zona del buffer"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
 msgstr "&Larghezza:"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
 msgstr "&Altezza:"
 
@@ -13112,12 +13106,10 @@ msgid "Window size"
 msgstr "Dimensione della finestra"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
 msgstr "&Larghezza:"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
 msgstr "&Altezza:"
 
@@ -13274,7 +13266,6 @@ msgstr ""
 "spiacenti per l'inconveniente."
 
 #: winedbg.rc:55
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -13282,20 +13273,15 @@ msgid ""
 msgstr ""
 "Ciò può essere causato da un problema nel programma o da una mancanza di "
 "Wine. Potresti voler consultare il <a href=\"http://appdb.winehq.org"
-"\">Database delle applicazioni</a> per consigli su questa applicazione.\n"
-"\n"
-"Se questo problema non è presente sotto Windows e non è stato ancora "
-"segnalato, puoi <a href=\"http://wiki.winehq.org/Bugs\">segnalarlo</a>."
+"\">Database delle applicazioni</a> per consigli su questa applicazione."
 
 #: winedbg.rc:58
-#, fuzzy
 msgid "Show &Details"
-msgstr "&Dettagli"
+msgstr "Mostra i &dettagli"
 
 #: winedbg.rc:63
-#, fuzzy
 msgid "Program Error Details"
-msgstr "Errore del programma"
+msgstr "Dettagli dell'errore del programma"
 
 #: winedbg.rc:70
 msgid ""
@@ -13304,6 +13290,10 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"Se questo problema non è presente sotto Windows e non è stato ancora "
+"riportato, puoi salvare le informazioni dettagliate su un file usando il "
+"pulsante \"Salva con nome\", poi <a href=\"http://wiki.winehq.org/Bugs"
+"\">segnalalo</a> e allega quel file al report del bug."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13318,13 +13308,12 @@ msgid "(unidentified)"
 msgstr "(non identificato)"
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "Creazione fallita\n"
+msgstr "Salvataggio fallito"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "Caricamento delle informazioni dettagliate, aspetta un momento..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
