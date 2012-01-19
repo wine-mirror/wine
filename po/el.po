@@ -68,7 +68,7 @@ msgstr ""
 #: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
 #: wordpad.rc:246
 msgid "OK"
-msgstr "OK"
+msgstr ""
 
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
@@ -392,7 +392,7 @@ msgstr "Λίστα Αρχείων του &Τύπου:"
 
 #: comdlg32.rc:162 comdlg32.rc:184
 msgid "Dri&ves:"
-msgstr "Dri&ves:"
+msgstr ""
 
 #: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:179
 msgid "&Read Only"
@@ -417,7 +417,7 @@ msgstr "Εκτυπωτής:"
 
 #: comdlg32.rc:200 comdlg32.rc:377
 msgid "Print range"
-msgstr "Print range"
+msgstr ""
 
 #: comdlg32.rc:201 comdlg32.rc:378 regedit.rc:216
 msgid "&All"
@@ -453,7 +453,7 @@ msgstr "Εκτύπωση σε Αρ&χείο"
 
 #: comdlg32.rc:212
 msgid "Condensed"
-msgstr "Condensed"
+msgstr ""
 
 #: comdlg32.rc:218 comdlg32.rc:389
 msgid "Print Setup"
@@ -469,23 +469,23 @@ msgstr "&Προεπιλεγμένος εκτυπωτής"
 
 #: comdlg32.rc:223
 msgid "[none]"
-msgstr "[none]"
+msgstr ""
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
-msgstr "Specific &Printer"
+msgstr ""
 
 #: comdlg32.rc:229 comdlg32.rc:415 comdlg32.rc:434 wineps.rc:31
 msgid "Orientation"
-msgstr "Orientation"
+msgstr ""
 
 #: comdlg32.rc:230
 msgid "Po&rtrait"
-msgstr "Po&rtrait"
+msgstr ""
 
 #: comdlg32.rc:231 comdlg32.rc:436 wineps.rc:34
 msgid "&Landscape"
-msgstr "&Landscape"
+msgstr ""
 
 #: comdlg32.rc:234 comdlg32.rc:409 comdlg32.rc:429 wineps.rc:25
 msgid "Paper"
@@ -521,7 +521,7 @@ msgstr "Εφφέ"
 
 #: comdlg32.rc:261
 msgid "Stri&keout"
-msgstr "Stri&keout"
+msgstr ""
 
 #: comdlg32.rc:262
 msgid "&Underline"
@@ -569,13 +569,12 @@ msgstr "&Μπλε:"
 
 #: comdlg32.rc:288
 msgid "&Hue:"
-msgstr "&Hue:"
+msgstr ""
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr "&Sat:"
+msgstr ""
 
 #: comdlg32.rc:292
 #, fuzzy
@@ -678,7 +677,7 @@ msgstr "Αριθμός &Αντιγράφων:"
 
 #: comdlg32.rc:374
 msgid "C&ollate"
-msgstr "C&ollate"
+msgstr ""
 
 #: comdlg32.rc:379
 msgid "Pa&ges"
@@ -706,11 +705,11 @@ msgstr "&Πηγή:"
 
 #: comdlg32.rc:417
 msgid "P&ortrait"
-msgstr "P&ortrait"
+msgstr ""
 
 #: comdlg32.rc:418
 msgid "L&andscape"
-msgstr "L&andscape"
+msgstr ""
 
 #: comdlg32.rc:423
 msgid "Setup Page"
@@ -718,15 +717,15 @@ msgstr "Ρύθμιση σελίδας"
 
 #: comdlg32.rc:432
 msgid "&Tray:"
-msgstr "&Tray:"
+msgstr ""
 
 #: comdlg32.rc:435 wineps.rc:32
 msgid "&Portrait"
-msgstr "&Portrait"
+msgstr ""
 
 #: comdlg32.rc:437
 msgid "Borders"
-msgstr "Borders"
+msgstr ""
 
 #: comdlg32.rc:438
 msgid "L&eft:"
@@ -750,7 +749,7 @@ msgstr "Εκ&τυπωτής..."
 
 #: comdlg32.rc:456
 msgid "Look &in:"
-msgstr "Look &in:"
+msgstr ""
 
 #: comdlg32.rc:462
 msgid "File &name:"
