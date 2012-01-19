@@ -629,15 +629,31 @@ static void nvrc_texfactor(struct wined3d_context *context, const struct wined3d
 }
 
 /* Context activation is done by the caller. */
-static void nvrc_enable(BOOL enable) {}
+static void nvrc_enable(BOOL enable)
+{
+    if (enable)
+    {
+        glEnable(GL_REGISTER_COMBINERS_NV);
+        checkGLcall("glEnable(GL_REGISTER_COMBINERS_NV)");
+    }
+    else
+    {
+        glDisable(GL_REGISTER_COMBINERS_NV);
+        checkGLcall("glDisable(GL_REGISTER_COMBINERS_NV)");
+    }
+}
 
 /* Context activation and GL locking are done by the caller. */
 static void nvts_enable(BOOL enable)
 {
-    if(enable) {
+    nvrc_enable(enable);
+    if (enable)
+    {
         glEnable(GL_TEXTURE_SHADER_NV);
         checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
-    } else {
+    }
+    else
+    {
         glDisable(GL_TEXTURE_SHADER_NV);
         checkGLcall("glDisable(GL_TEXTURE_SHADER_NV)");
     }
