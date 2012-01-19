@@ -678,17 +678,20 @@ BOOL dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     return dibdrv_RoundRect( dev, left, top, right, bottom, right - left, bottom - top );
 }
 
-static inline BOOL is_interior( dib_info *dib, int x, int y, DWORD pixel, UINT type)
+static inline BOOL is_interior( dib_info *dib, HRGN clip, int x, int y, DWORD pixel, UINT type)
 {
+    /* the clip rgn stops the flooding */
+    if (!PtInRegion( clip, x, y )) return FALSE;
+
     if (type == FLOODFILLBORDER)
         return dib->funcs->get_pixel( dib, x, y ) != pixel;
     else
         return dib->funcs->get_pixel( dib, x, y ) == pixel;
 }
 
-static void fill_row( dib_info *dib, RECT *row, DWORD pixel, UINT type, HRGN rgn );
+static void fill_row( dib_info *dib, HRGN clip, RECT *row, DWORD pixel, UINT type, HRGN rgn );
 
-static inline void do_next_row( dib_info *dib, const RECT *row, int offset, DWORD pixel, UINT type, HRGN rgn )
+static inline void do_next_row( dib_info *dib, HRGN clip, const RECT *row, int offset, DWORD pixel, UINT type, HRGN rgn )
 {
     RECT next;
 
@@ -697,26 +700,26 @@ static inline void do_next_row( dib_info *dib, const RECT *row, int offset, DWOR
     next.left = next.right = row->left;
     while (next.right < row->right)
     {
-        if (is_interior( dib, next.right, next.top, pixel, type)) next.right++;
+        if (is_interior( dib, clip, next.right, next.top, pixel, type)) next.right++;
         else
         {
             if (next.left != next.right && !PtInRegion( rgn, next.left, next.top ))
-                fill_row( dib, &next, pixel, type, rgn );
+                fill_row( dib, clip, &next, pixel, type, rgn );
             next.left = ++next.right;
         }
     }
     if (next.left != next.right && !PtInRegion( rgn, next.left, next.top ))
-        fill_row( dib, &next, pixel, type, rgn );
+        fill_row( dib, clip, &next, pixel, type, rgn );
 }
 
-static void fill_row( dib_info *dib, RECT *row, DWORD pixel, UINT type, HRGN rgn )
+static void fill_row( dib_info *dib, HRGN clip, RECT *row, DWORD pixel, UINT type, HRGN rgn )
 {
-    while (row->left > 0 && is_interior( dib, row->left - 1, row->top, pixel, type)) row->left--;
-    while (row->right < dib->width && is_interior( dib, row->right, row->top, pixel, type)) row->right++;
+    while (row->left > 0 && is_interior( dib, clip, row->left - 1, row->top, pixel, type)) row->left--;
+    while (row->right < dib->width && is_interior( dib, clip, row->right, row->top, pixel, type)) row->right++;
     add_rect_to_region( rgn, row );
 
-    if (row->top > 0) do_next_row( dib, row, -1, pixel, type, rgn );
-    if (row->top < dib->height - 1) do_next_row( dib, row, 1, pixel, type, rgn );
+    if (row->top > 0) do_next_row( dib, clip, row, -1, pixel, type, rgn );
+    if (row->top < dib->height - 1) do_next_row( dib, clip, row, 1, pixel, type, rgn );
 
     return;
 }
@@ -733,7 +736,7 @@ BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 
     TRACE( "(%p, %d, %d, %08x, %d\n", pdev, x, y, color, type );
 
-    if (!is_interior( &pdev->dib, x, y, pixel, type )) return FALSE;
+    if (!is_interior( &pdev->dib, pdev->clip, x, y, pixel, type )) return FALSE;
 
     rgn = CreateRectRgn( 0, 0, 0, 0 );
     row.left = x;
@@ -741,7 +744,7 @@ BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
     row.top = y;
     row.bottom = y + 1;
 
-    fill_row( &pdev->dib, &row, pixel, type, rgn );
+    fill_row( &pdev->dib, pdev->clip, &row, pixel, type, rgn );
 
     brush_region( pdev, rgn );
 
