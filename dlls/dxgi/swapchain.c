@@ -280,7 +280,7 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
     swapchain->refcount = 1;
 
     hr = wined3d_swapchain_create(device->wined3d_device, desc,
-            SURFACE_OPENGL, swapchain, &dxgi_swapchain_wined3d_parent_ops,
+            WINED3D_SURFACE_TYPE_OPENGL, swapchain, &dxgi_swapchain_wined3d_parent_ops,
             &swapchain->wined3d_swapchain);
     if (FAILED(hr))
     {

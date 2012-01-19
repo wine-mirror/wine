@@ -138,7 +138,7 @@ void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2 *pIn, DDD
 struct wined3d_vertex_declaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD fvf) DECLSPEC_HIDDEN;
 
 /* The default surface type */
-extern WINED3DSURFTYPE DefaultSurfaceType DECLSPEC_HIDDEN;
+extern enum wined3d_surface_type DefaultSurfaceType DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectDrawSurface implementation structure

@@ -175,7 +175,7 @@ HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, IDirect3DDevice8Impl 
 
     wined3d_mutex_lock();
     hr = wined3d_swapchain_create(device->wined3d_device, &desc,
-            SURFACE_OPENGL, swapchain, &d3d8_swapchain_wined3d_parent_ops,
+            WINED3D_SURFACE_TYPE_OPENGL, swapchain, &d3d8_swapchain_wined3d_parent_ops,
             &swapchain->wined3d_swapchain);
     wined3d_mutex_unlock();
 

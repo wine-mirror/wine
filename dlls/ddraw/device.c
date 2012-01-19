@@ -1162,7 +1162,7 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
     for (i = 0; i < sizeof(FormatList) / sizeof(*FormatList); ++i)
     {
         hr = wined3d_check_device_format(This->ddraw->wined3d, WINED3DADAPTER_DEFAULT, WINED3D_DEVICE_TYPE_HAL,
-                mode.format_id, 0, WINED3D_RTYPE_TEXTURE, FormatList[i], SURFACE_OPENGL);
+                mode.format_id, 0, WINED3D_RTYPE_TEXTURE, FormatList[i], WINED3D_SURFACE_TYPE_OPENGL);
         if (hr == D3D_OK)
         {
             DDPIXELFORMAT pformat;
@@ -1186,7 +1186,7 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
     {
         hr = wined3d_check_device_format(This->ddraw->wined3d, WINED3DADAPTER_DEFAULT,
                 WINED3D_DEVICE_TYPE_HAL, mode.format_id, WINED3DUSAGE_QUERY_LEGACYBUMPMAP,
-                WINED3D_RTYPE_TEXTURE, BumpFormatList[i], SURFACE_OPENGL);
+                WINED3D_RTYPE_TEXTURE, BumpFormatList[i], WINED3D_SURFACE_TYPE_OPENGL);
         if (hr == D3D_OK)
         {
             DDPIXELFORMAT pformat;
@@ -1299,7 +1299,7 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
     for (i = 0; i < sizeof(FormatList) / sizeof(*FormatList); ++i)
     {
         hr = wined3d_check_device_format(This->ddraw->wined3d, 0, WINED3D_DEVICE_TYPE_HAL,
-                mode.format_id, 0, WINED3D_RTYPE_TEXTURE, FormatList[i], SURFACE_OPENGL);
+                mode.format_id, 0, WINED3D_RTYPE_TEXTURE, FormatList[i], WINED3D_SURFACE_TYPE_OPENGL);
         if (hr == D3D_OK)
         {
             DDSURFACEDESC sdesc;

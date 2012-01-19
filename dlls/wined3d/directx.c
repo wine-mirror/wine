@@ -3721,9 +3721,9 @@ static BOOL CheckTextureCapability(const struct wined3d_adapter *adapter, const 
 static BOOL CheckSurfaceCapability(const struct wined3d_adapter *adapter,
         const struct wined3d_format *adapter_format,
         const struct wined3d_format *check_format,
-        WINED3DSURFTYPE SurfaceType)
+        enum wined3d_surface_type surface_type)
 {
-    if (SurfaceType == SURFACE_GDI)
+    if (surface_type == WINED3D_SURFACE_TYPE_GDI)
     {
         switch (check_format->id)
         {
@@ -3794,7 +3794,8 @@ static BOOL CheckVertexTextureCapability(const struct wined3d_adapter *adapter,
 
 HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id, DWORD usage,
-        enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id, WINED3DSURFTYPE surface_type)
+        enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id,
+        enum wined3d_surface_type surface_type)
 {
     const struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
@@ -3823,7 +3824,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
              *      - WINED3DUSAGE_SOFTWAREPROCESSING
              *      - WINED3DUSAGE_QUERY_WRAPANDMIP
              */
-            if (surface_type != SURFACE_OPENGL)
+            if (surface_type != WINED3D_SURFACE_TYPE_OPENGL)
             {
                 TRACE_(d3d_caps)("[FAILED]\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -3985,7 +3986,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
              *      - WINED3DUSAGE_TEXTAPI (d3d9ex)
              *      - WINED3DUSAGE_QUERY_WRAPANDMIP
              */
-            if (surface_type != SURFACE_OPENGL)
+            if (surface_type != WINED3D_SURFACE_TYPE_OPENGL)
             {
                 TRACE_(d3d_caps)("[FAILED]\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -4123,7 +4124,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
              *      - D3DUSAGE_SOFTWAREPROCESSING
              *      - D3DUSAGE_QUERY_WRAPANDMIP
              */
-            if (surface_type != SURFACE_OPENGL)
+            if (surface_type != WINED3D_SURFACE_TYPE_OPENGL)
             {
                 TRACE_(d3d_caps)("[FAILED]\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -4385,7 +4386,7 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
 
     /* Use CheckDeviceFormat to see if the backbuffer_format is usable with the given display_format */
     hr = wined3d_check_device_format(wined3d, adapter_idx, device_type, display_format,
-            WINED3DUSAGE_RENDERTARGET, WINED3D_RTYPE_SURFACE, backbuffer_format, SURFACE_OPENGL);
+            WINED3DUSAGE_RENDERTARGET, WINED3D_RTYPE_SURFACE, backbuffer_format, WINED3D_SURFACE_TYPE_OPENGL);
     if (FAILED(hr))
         TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s / %s.\n",
                 debug_d3dformat(display_format), debug_d3dformat(backbuffer_format));

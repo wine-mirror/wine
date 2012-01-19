@@ -37,7 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* The configured default surface */
-WINED3DSURFTYPE DefaultSurfaceType = SURFACE_OPENGL;
+enum wined3d_surface_type DefaultSurfaceType = WINED3D_SURFACE_TYPE_OPENGL;
 
 static struct list global_ddraw_list = LIST_INIT(global_ddraw_list);
 
@@ -869,12 +869,12 @@ DllMain(HINSTANCE hInstDLL,
                 if (!strcmp(buffer,"gdi"))
                 {
                     TRACE("Defaulting to GDI surfaces\n");
-                    DefaultSurfaceType = SURFACE_GDI;
+                    DefaultSurfaceType = WINED3D_SURFACE_TYPE_GDI;
                 }
                 else if (!strcmp(buffer,"opengl"))
                 {
                     TRACE("Defaulting to opengl surfaces\n");
-                    DefaultSurfaceType = SURFACE_OPENGL;
+                    DefaultSurfaceType = WINED3D_SURFACE_TYPE_OPENGL;
                 }
                 else
                 {

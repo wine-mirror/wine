@@ -201,7 +201,7 @@ static HRESULT WINAPI ddraw7_QueryInterface(IDirectDraw7 *iface, REFIID refiid, 
               IsEqualGUID( &IID_IDirect3D7 , refiid ) )
     {
         /* Check the surface implementation */
-        if (DefaultSurfaceType != SURFACE_OPENGL)
+        if (DefaultSurfaceType != WINED3D_SURFACE_TYPE_OPENGL)
         {
             WARN("The app requests a Direct3D interface, but non-opengl surfaces where set in winecfg\n");
             /* Do not abort here, only reject 3D Device creation */
@@ -418,7 +418,7 @@ void ddraw_destroy_swapchain(IDirectDrawImpl *ddraw)
     wined3d_swapchain_decref(ddraw->wined3d_swapchain);
     ddraw->wined3d_swapchain = NULL;
 
-    if (DefaultSurfaceType == SURFACE_OPENGL)
+    if (DefaultSurfaceType == WINED3D_SURFACE_TYPE_OPENGL)
     {
         UINT i;
 
@@ -689,7 +689,7 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, HWND window, BOOL 
     swapchain_desc.device_window = window;
     swapchain_desc.windowed = windowed;
 
-    if (DefaultSurfaceType == SURFACE_OPENGL)
+    if (DefaultSurfaceType == WINED3D_SURFACE_TYPE_OPENGL)
         hr = ddraw_attach_d3d_device(ddraw, &swapchain_desc);
     else
         hr = wined3d_device_init_gdi(ddraw->wined3d_device, &swapchain_desc);
@@ -918,7 +918,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
 
     if (This->wined3d_swapchain)
     {
-        if (DefaultSurfaceType != SURFACE_GDI)
+        if (DefaultSurfaceType != WINED3D_SURFACE_TYPE_GDI)
         {
             restore_state = TRUE;
 
@@ -1305,7 +1305,8 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
     /* Even if WineD3D supports 3D rendering, remove the cap if ddraw is configured
      * not to use it
      */
-    if(DefaultSurfaceType == SURFACE_GDI) {
+    if (DefaultSurfaceType == WINED3D_SURFACE_TYPE_GDI)
+    {
         caps.dwCaps &= ~DDCAPS_3D;
         caps.ddsCaps.dwCaps &= ~(DDSCAPS_3DDEVICE | DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_ZBUFFER);
     }
@@ -2609,7 +2610,7 @@ static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD
         DDRAW_dump_surface_desc(pDDSD);
     }
 
-    if ((pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && DefaultSurfaceType != SURFACE_OPENGL)
+    if ((pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && DefaultSurfaceType != WINED3D_SURFACE_TYPE_OPENGL)
     {
         WARN("The application requests a 3D capable surface, but a non-OpenGL surface type was set in the registry.\n");
         /* Do not fail surface creation, only fail 3D device creation. */
@@ -4438,7 +4439,7 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
     *device = NULL;
 
     /* Fail device creation if non-opengl surfaces are used. */
-    if (DefaultSurfaceType != SURFACE_OPENGL)
+    if (DefaultSurfaceType != WINED3D_SURFACE_TYPE_OPENGL)
     {
         ERR("The application wants to create a Direct3D device, but non-opengl surfaces are set in the registry.\n");
         ERR("Please set the surface implementation to opengl or autodetection to allow 3D rendering.\n");
@@ -4685,7 +4686,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
     for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
     {
         hr = wined3d_check_device_format(This->wined3d, WINED3DADAPTER_DEFAULT, type, mode.format_id,
-                WINED3DUSAGE_DEPTHSTENCIL, WINED3D_RTYPE_SURFACE, formats[i], SURFACE_OPENGL);
+                WINED3DUSAGE_DEPTHSTENCIL, WINED3D_RTYPE_SURFACE, formats[i], WINED3D_SURFACE_TYPE_OPENGL);
         if (SUCCEEDED(hr))
         {
             DDPIXELFORMAT pformat;
@@ -4710,7 +4711,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
      * pixel format, so we use dwZBufferBitDepth=32. Some games expect 24. Windows Vista and
      * newer enumerate both versions, so we do the same(bug 22434) */
     hr = wined3d_check_device_format(This->wined3d, WINED3DADAPTER_DEFAULT, type, mode.format_id,
-            WINED3DUSAGE_DEPTHSTENCIL, WINED3D_RTYPE_SURFACE, WINED3DFMT_X8D24_UNORM, SURFACE_OPENGL);
+            WINED3DUSAGE_DEPTHSTENCIL, WINED3D_RTYPE_SURFACE, WINED3DFMT_X8D24_UNORM, WINED3D_SURFACE_TYPE_OPENGL);
     if (SUCCEEDED(hr))
     {
         DDPIXELFORMAT x8d24 =

@@ -848,7 +848,7 @@ void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain)
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTYPE surface_type,
+static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, enum wined3d_surface_type surface_type,
         struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -876,11 +876,11 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
 
     switch (surface_type)
     {
-        case SURFACE_GDI:
+        case WINED3D_SURFACE_TYPE_GDI:
             swapchain->swapchain_ops = &swapchain_gdi_ops;
             break;
 
-        case SURFACE_OPENGL:
+        case WINED3D_SURFACE_TYPE_OPENGL:
             swapchain->swapchain_ops = &swapchain_gl_ops;
             break;
 
@@ -944,10 +944,8 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
     }
 
     surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_SWAPCHAIN, swapchain);
-    if (surface_type == SURFACE_OPENGL)
-    {
+    if (surface_type == WINED3D_SURFACE_TYPE_OPENGL)
         surface_modify_location(swapchain->front_buffer, SFLAG_INDRAWABLE, TRUE);
-    }
 
     /* MSDN says we're only allowed a single fullscreen swapchain per device,
      * so we should really check to see if there is a fullscreen swapchain
@@ -972,7 +970,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
         displaymode_set = TRUE;
     }
 
-    if (surface_type == SURFACE_OPENGL)
+    if (surface_type == WINED3D_SURFACE_TYPE_OPENGL)
     {
         static const enum wined3d_format_id formats[] =
         {
@@ -1060,7 +1058,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
     }
 
     /* Swapchains share the depth/stencil buffer, so only create a single depthstencil surface. */
-    if (desc->enable_auto_depth_stencil && surface_type == SURFACE_OPENGL)
+    if (desc->enable_auto_depth_stencil && surface_type == WINED3D_SURFACE_TYPE_OPENGL)
     {
         TRACE("Creating depth/stencil buffer.\n");
         if (!device->auto_depth_stencil)
@@ -1136,7 +1134,7 @@ err:
 
 /* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_swapchain_create(struct wined3d_device *device,
-        struct wined3d_swapchain_desc *desc, WINED3DSURFTYPE surface_type,
+        struct wined3d_swapchain_desc *desc, enum wined3d_surface_type surface_type,
         void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_swapchain **swapchain)
 {

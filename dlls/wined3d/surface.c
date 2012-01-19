@@ -7200,7 +7200,7 @@ const struct blit_shader cpu_blit =  {
     cpu_blit_depth_fill,
 };
 
-static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE surface_type, UINT alignment,
+static HRESULT surface_init(struct wined3d_surface *surface, enum wined3d_surface_type surface_type, UINT alignment,
         UINT width, UINT height, UINT level, enum wined3d_multisample_type multisample_type,
         UINT multisample_quality, struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id,
         enum wined3d_pool pool, DWORD flags, void *parent, const struct wined3d_parent_ops *parent_ops)
@@ -7265,11 +7265,11 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
 
     switch (surface_type)
     {
-        case SURFACE_OPENGL:
+        case WINED3D_SURFACE_TYPE_OPENGL:
             surface->surface_ops = &surface_ops;
             break;
 
-        case SURFACE_GDI:
+        case WINED3D_SURFACE_TYPE_GDI:
             surface->surface_ops = &gdi_surface_ops;
             break;
 
@@ -7343,8 +7343,9 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
 
 HRESULT CDECL wined3d_surface_create(struct wined3d_device *device, UINT width, UINT height,
         enum wined3d_format_id format_id, UINT level, DWORD usage, enum wined3d_pool pool,
-        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, WINED3DSURFTYPE surface_type,
-        DWORD flags, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface)
+        enum wined3d_multisample_type multisample_type, DWORD multisample_quality,
+        enum wined3d_surface_type surface_type, DWORD flags, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface)
 {
     struct wined3d_surface *object;
     HRESULT hr;
@@ -7355,7 +7356,7 @@ HRESULT CDECL wined3d_surface_create(struct wined3d_device *device, UINT width, 
             surface, debug_d3dusage(usage), usage, debug_d3dpool(pool), multisample_type, multisample_quality);
     TRACE("surface_type %#x, flags %#x, parent %p, parent_ops %p.\n", surface_type, flags, parent, parent_ops);
 
-    if (surface_type == SURFACE_OPENGL && !device->adapter)
+    if (surface_type == WINED3D_SURFACE_TYPE_OPENGL && !device->adapter)
     {
         ERR("OpenGL surfaces are not available without OpenGL.\n");
         return WINED3DERR_NOTAVAILABLE;
