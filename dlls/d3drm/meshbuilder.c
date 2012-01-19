@@ -927,28 +927,13 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_QueryInterface(IDirect3DRMMesh
 static ULONG WINAPI IDirect3DRMMeshBuilder3Impl_AddRef(IDirect3DRMMeshBuilder3* iface)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
-
-    TRACE("(%p)\n", This);
-
-    return InterlockedIncrement(&This->ref);
+    return IDirect3DRMMeshBuilder2_AddRef(&This->IDirect3DRMMeshBuilder2_iface);
 }
 
 static ULONG WINAPI IDirect3DRMMeshBuilder3Impl_Release(IDirect3DRMMeshBuilder3* iface)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p)\n", This);
-
-    if (!ref)
-    {
-        HeapFree(GetProcessHeap(), 0, This->pVertices);
-        HeapFree(GetProcessHeap(), 0, This->pNormals);
-        HeapFree(GetProcessHeap(), 0, This->pFaceData);
-        HeapFree(GetProcessHeap(), 0, This);
-    }
-
-    return ref;
+    return IDirect3DRMMeshBuilder2_Release(&This->IDirect3DRMMeshBuilder2_iface);
 }
 
 /*** IDirect3DRMObject methods ***/
