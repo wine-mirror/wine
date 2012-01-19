@@ -48,7 +48,6 @@ typedef struct IDirectSound8_IDirectSound8   IDirectSound8_IDirectSound8;
 typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct IDirectSoundCaptureImpl       IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
-typedef struct IDirectSoundNotifyImpl        IDirectSoundNotifyImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
 typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 
@@ -163,11 +162,12 @@ HRESULT DirectSoundDevice_VerifyCertification(DirectSoundDevice * device,
 struct IDirectSoundBufferImpl
 {
     IDirectSoundBuffer8         IDirectSoundBuffer8_iface;
+    IDirectSoundNotify          IDirectSoundNotify_iface;
     IDirectSound3DListener      IDirectSound3DListener_iface; /* only primary buffer */
     IDirectSound3DBuffer        IDirectSound3DBuffer_iface; /* only secondary buffer */
     IKsPropertySet              IKsPropertySet_iface;
     LONG                        numIfaces; /* "in use interfaces" refcount */
-    LONG                        ref, ref3D, refiks;
+    LONG                        ref, refn, ref3D, refiks;
     /* IDirectSoundBufferImpl fields */
     DirectSoundDevice*          device;
     RTL_RWLOCK                  lock;
@@ -183,12 +183,9 @@ struct IDirectSoundBufferImpl
     ULONG                       freqneeded, freqAdjust, freqAcc, freqAccNext;
     /* used for mixing */
     DWORD                       primary_mixpos, buf_mixpos, sec_mixpos;
-
-    /* IDirectSoundNotifyImpl fields */
-    IDirectSoundNotifyImpl*     notify;
+    /* IDirectSoundNotify fields */
     LPDSBPOSITIONNOTIFY         notifies;
     int                         nrofnotifies;
-
     /* DirectSound3DBuffer fields */
     DS3DBUFFER                  ds3db_ds3db;
     LONG                        ds3db_lVolume;
