@@ -2180,6 +2180,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
         ME_DisplayItem *para = cursor.pPara;
         int from, to;
         const WCHAR endl = '\r';
+        const WCHAR endlv10[] = {'\r','\n'};
         ME_Style *style;
 
         if (editor->styleFlags & ES_READONLY) {
@@ -2282,7 +2283,10 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
           if (shift_is_down)
             ME_InsertEndRowFromCursor(editor, 0);
           else
-            ME_InsertTextFromCursor(editor, 0, &endl, 1, style);
+            if (!editor->bEmulateVersion10)
+              ME_InsertTextFromCursor(editor, 0, &endl, 1, style);
+            else
+              ME_InsertTextFromCursor(editor, 0, endlv10, 2, style);
           ME_ReleaseStyle(style);
           ME_CommitCoalescingUndo(editor);
           SetCursor(NULL);
