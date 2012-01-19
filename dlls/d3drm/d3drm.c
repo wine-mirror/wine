@@ -452,23 +452,13 @@ static HRESULT WINAPI IDirect3DRM2Impl_QueryInterface(IDirect3DRM2* iface, REFII
 static ULONG WINAPI IDirect3DRM2Impl_AddRef(IDirect3DRM2* iface)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-
-    TRACE("(%p/%p)\n", iface, This);
-
-    return InterlockedIncrement(&This->ref);
+    return IDirect3DRM_AddRef(&This->IDirect3DRM_iface);
 }
 
 static ULONG WINAPI IDirect3DRM2Impl_Release(IDirect3DRM2* iface)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM2(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p/%p)\n", iface, This);
-
-    if (!ref)
-        HeapFree(GetProcessHeap(), 0, This);
-
-    return ref;
+    return IDirect3DRM_Release(&This->IDirect3DRM_iface);
 }
 
 /*** IDirect3DRM2 methods ***/
@@ -883,23 +873,13 @@ static HRESULT WINAPI IDirect3DRM3Impl_QueryInterface(IDirect3DRM3* iface, REFII
 static ULONG WINAPI IDirect3DRM3Impl_AddRef(IDirect3DRM3* iface)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-
-    TRACE("(%p/%p)\n", iface, This);
-
-    return InterlockedIncrement(&This->ref);
+    return IDirect3DRM_AddRef(&This->IDirect3DRM_iface);
 }
 
 static ULONG WINAPI IDirect3DRM3Impl_Release(IDirect3DRM3* iface)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p/%p)\n", iface, This);
-
-    if (!ref)
-        HeapFree(GetProcessHeap(), 0, This);
-
-    return ref;
+    return IDirect3DRM_Release(&This->IDirect3DRM_iface);
 }
 
 /*** IDirect3DRM3 methods ***/
