@@ -37,10 +37,6 @@ typedef struct {
     LONG ref;
 } IDirect3DRMImpl;
 
-static const struct IDirect3DRMVtbl Direct3DRM_Vtbl;
-static const struct IDirect3DRM2Vtbl Direct3DRM2_Vtbl;
-static const struct IDirect3DRM3Vtbl Direct3DRM3_Vtbl;
-
 static inline IDirect3DRMImpl *impl_from_IDirect3DRM(IDirect3DRM *iface)
 {
     return CONTAINING_RECORD(iface, IDirect3DRMImpl, IDirect3DRM_iface);
@@ -54,29 +50,6 @@ static inline IDirect3DRMImpl *impl_from_IDirect3DRM2(IDirect3DRM2 *iface)
 static inline IDirect3DRMImpl *impl_from_IDirect3DRM3(IDirect3DRM3 *iface)
 {
     return CONTAINING_RECORD(iface, IDirect3DRMImpl, IDirect3DRM3_iface);
-}
-
-HRESULT Direct3DRM_create(IUnknown** ppObj)
-{
-    IDirect3DRMImpl* object;
-
-    TRACE("(%p)\n", ppObj);
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMImpl));
-    if (!object)
-    {
-        ERR("Out of memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    object->IDirect3DRM_iface.lpVtbl = &Direct3DRM_Vtbl;
-    object->IDirect3DRM2_iface.lpVtbl = &Direct3DRM2_Vtbl;
-    object->IDirect3DRM3_iface.lpVtbl = &Direct3DRM3_Vtbl;
-    object->ref = 1;
-
-    *ppObj = (IUnknown*)&object->IDirect3DRM_iface;
-
-    return S_OK;
 }
 
 /*** IUnknown methods ***/
@@ -1378,3 +1351,26 @@ static const struct IDirect3DRM3Vtbl Direct3DRM3_Vtbl =
     IDirect3DRM3Impl_SetOptions,
     IDirect3DRM3Impl_GetOptions
 };
+
+HRESULT Direct3DRM_create(IUnknown** ppObj)
+{
+    IDirect3DRMImpl* object;
+
+    TRACE("(%p)\n", ppObj);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->IDirect3DRM_iface.lpVtbl = &Direct3DRM_Vtbl;
+    object->IDirect3DRM2_iface.lpVtbl = &Direct3DRM2_Vtbl;
+    object->IDirect3DRM3_iface.lpVtbl = &Direct3DRM3_Vtbl;
+    object->ref = 1;
+
+    *ppObj = (IUnknown*)&object->IDirect3DRM_iface;
+
+    return S_OK;
+}
