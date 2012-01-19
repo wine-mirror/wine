@@ -812,15 +812,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(IDirectSoundBuffer8 
 	}
 
 	if ( IsEqualGUID( &IID_IDirectSound3DBuffer, riid ) ) {
-		if (!This->ds3db)
-			IDirectSound3DBufferImpl_Create(This, &(This->ds3db));
-		if (This->ds3db) {
-			IDirectSound3DBuffer_AddRef((LPDIRECTSOUND3DBUFFER)This->ds3db);
-			*ppobj = This->ds3db;
-			return S_OK;
-		}
-		WARN("IID_IDirectSound3DBuffer\n");
-		return E_NOINTERFACE;
+                IDirectSound3DBuffer_AddRef(&This->IDirectSound3DBuffer_iface);
+                *ppobj = &This->IDirectSound3DBuffer_iface;
+                return S_OK;
 	}
 
 	if ( IsEqualGUID( &IID_IDirectSound3DListener, riid ) ) {
@@ -895,10 +889,12 @@ HRESULT IDirectSoundBufferImpl_Create(
 	TRACE("Created buffer at %p\n", dsb);
 
 	dsb->ref = 0;
+        dsb->ref3D = 0;
         dsb->refiks = 0;
 	dsb->numIfaces = 0;
 	dsb->device = device;
 	dsb->IDirectSoundBuffer8_iface.lpVtbl = &dsbvt;
+        dsb->IDirectSound3DBuffer_iface.lpVtbl = &ds3dbvt;
         dsb->IKsPropertySet_iface.lpVtbl = &iksbvt;
 
 	/* size depends on version */
@@ -1040,12 +1036,6 @@ HRESULT IDirectSoundBufferImpl_Destroy(
      * this object until it is ready to be deleted */
     InterlockedIncrement(&pdsb->numIfaces);
 
-    if (pdsb->ds3db) {
-        WARN("ds3db not NULL\n");
-        IDirectSound3DBufferImpl_Destroy(pdsb->ds3db);
-        pdsb->ds3db = NULL;
-    }
-
     if (pdsb->notify) {
         WARN("notify not NULL\n");
         IDirectSoundNotifyImpl_Destroy(pdsb->notify);
@@ -1090,6 +1080,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     dsb->buffer->ref++;
     list_add_head(&dsb->buffer->buffers, &dsb->entry);
     dsb->ref = 0;
+    dsb->ref3D = 0;
     dsb->refiks = 0;
     dsb->numIfaces = 0;
     dsb->state = STATE_STOPPED;
@@ -1098,7 +1089,6 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     dsb->notifies = NULL;
     dsb->nrofnotifies = 0;
     dsb->device = device;
-    dsb->ds3db = NULL;
     DSOUND_RecalcFormat(dsb);
 
     RtlInitializeResource(&dsb->lock);

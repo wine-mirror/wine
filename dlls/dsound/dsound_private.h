@@ -49,7 +49,6 @@ typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct IDirectSoundCaptureImpl       IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
 typedef struct IDirectSoundNotifyImpl        IDirectSoundNotifyImpl;
-typedef struct IDirectSound3DBufferImpl      IDirectSound3DBufferImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
 typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 
@@ -165,6 +164,7 @@ struct IDirectSoundBufferImpl
 {
     IDirectSoundBuffer8         IDirectSoundBuffer8_iface;
     IDirectSound3DListener      IDirectSound3DListener_iface; /* only primary buffer */
+    IDirectSound3DBuffer        IDirectSound3DBuffer_iface; /* only secondary buffer */
     IKsPropertySet              IKsPropertySet_iface;
     LONG                        numIfaces; /* "in use interfaces" refcount */
     LONG                        ref, ref3D, refiks;
@@ -190,7 +190,6 @@ struct IDirectSoundBufferImpl
     int                         nrofnotifies;
 
     /* DirectSound3DBuffer fields */
-    IDirectSound3DBufferImpl*   ds3db;
     DS3DBUFFER                  ds3db_ds3db;
     LONG                        ds3db_lVolume;
     BOOL                        ds3db_need_recalc;
@@ -211,6 +210,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     IDirectSoundBufferImpl *pdsb) DECLSPEC_HIDDEN;
 void secondarybuffer_destroy(IDirectSoundBufferImpl *This) DECLSPEC_HIDDEN;
 const IDirectSound3DListenerVtbl ds3dlvt DECLSPEC_HIDDEN;
+const IDirectSound3DBufferVtbl ds3dbvt DECLSPEC_HIDDEN;
 const IKsPropertySetVtbl iksbvt DECLSPEC_HIDDEN;
 
 /*****************************************************************************
@@ -259,24 +259,6 @@ struct IDirectSoundCaptureBufferImpl
 };
 
 HRESULT IKsPrivatePropertySetImpl_Create(REFIID riid, IKsPropertySet **piks) DECLSPEC_HIDDEN;
-
-/*****************************************************************************
- * IDirectSound3DBuffer implementation structure
- */
-struct IDirectSound3DBufferImpl
-{
-    /* IUnknown fields */
-    const IDirectSound3DBufferVtbl *lpVtbl;
-    LONG                        ref;
-    /* IDirectSound3DBufferImpl fields */
-    IDirectSoundBufferImpl*     dsb;
-};
-
-HRESULT IDirectSound3DBufferImpl_Create(
-    IDirectSoundBufferImpl *dsb,
-    IDirectSound3DBufferImpl **pds3db) DECLSPEC_HIDDEN;
-HRESULT IDirectSound3DBufferImpl_Destroy(
-    IDirectSound3DBufferImpl *pds3db) DECLSPEC_HIDDEN;
 
 /*******************************************************************************
  */
