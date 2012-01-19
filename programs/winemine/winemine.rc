@@ -29,7 +29,7 @@ STRINGTABLE {
      IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
 }
 
-MENU_WINEMINE MENU
+IDM_WINEMINE MENU
 {
     POPUP "&Game" {
         MENUITEM "&New\tF2",       IDM_NEW
@@ -102,13 +102,13 @@ IDA_WINEMINE ACCELERATORS
 LANGUAGE LANG_NEUTRAL,SUBLANG_NEUTRAL
 
 /* @makedep: winemine.ico */
-WINEMINE ICON winemine.ico
+IDI_WINEMINE ICON winemine.ico
 
 /* @makedep: faces.bmp */
-FACES BITMAP faces.bmp
+IDI_FACES BITMAP faces.bmp
 
 /* @makedep: leds.bmp */
-LEDS BITMAP leds.bmp
+IDI_LEDS BITMAP leds.bmp
 
 /* @makedep: mines.bmp */
-MINES BITMAP mines.bmp
+IDI_MINES BITMAP mines.bmp
