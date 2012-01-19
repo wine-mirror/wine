@@ -65,7 +65,6 @@ struct SysMouseImpl
     /* SysMouseAImpl */
     /* These are used in case of relative -> absolute transitions */
     POINT                           org_coords;
-    POINT      			    mapped_center;
     BOOL                            clipped;
     /* warping: whether we need to move mouse back to middle once we
      * reach window borders (for e.g. shooters, "surface movement" games) */
@@ -320,20 +319,18 @@ static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
 {
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
     SysMouseImpl* This = impl_from_IDirectInputDevice8A(iface);
-    int wdata = 0, inst_id = -1, ret;
+    int wdata = 0, inst_id = -1;
 
     TRACE("msg %lx @ (%d %d)\n", wparam, hook->pt.x, hook->pt.y);
 
     EnterCriticalSection(&This->base.crit);
-    ret = This->clipped;
 
     switch(wparam) {
         case WM_MOUSEMOVE:
         {
             POINT pt, pt1;
 
-            if (This->clipped) pt = This->mapped_center;
-            else GetCursorPos(&pt);
+            GetCursorPos(&pt);
             This->m_state.lX += pt.x = hook->pt.x - pt.x;
             This->m_state.lY += pt.y = hook->pt.y - pt.y;
 
@@ -403,8 +400,6 @@ static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2 + HIWORD(hook->mouseData)) | DIDFT_PSHBUTTON;
             This->m_state.rgbButtons[2 + HIWORD(hook->mouseData)] = wdata = 0x00;
             break;
-        default:
-            ret = 0;
     }
 
 
@@ -416,7 +411,7 @@ static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
     }
 
     LeaveCriticalSection(&This->base.crit);
-    return ret;
+    return 0;
 }
 
 static void warp_check( SysMouseImpl* This, BOOL force )
@@ -426,25 +421,28 @@ static void warp_check( SysMouseImpl* This, BOOL force )
 
     if (force || (This->need_warp && (now - This->last_warped > interval)))
     {
-        RECT rect, new_rect;
+        RECT rect;
+        POINT mapped_center;
 
         This->last_warped = now;
         This->need_warp = FALSE;
         if (!GetWindowRect(This->base.win, &rect)) return;
-        This->mapped_center.x = (rect.left + rect.right) / 2;
-        This->mapped_center.y = (rect.top + rect.bottom) / 2;
         if (!This->clipped)
         {
-            TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
-            SetCursorPos( This->mapped_center.x, This->mapped_center.y );
+            mapped_center.x = (rect.left + rect.right) / 2;
+            mapped_center.y = (rect.top + rect.bottom) / 2;
+            TRACE("Warping mouse to %d - %d\n", mapped_center.x, mapped_center.y);
+            SetCursorPos( mapped_center.x, mapped_center.y );
         }
         if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
         {
-            SetRect( &rect, This->mapped_center.x, This->mapped_center.y,
-                     This->mapped_center.x + 1, This->mapped_center.y + 1 );
+            /* make sure we clip even if the window covers the whole screen */
+            rect.left = max( rect.left, GetSystemMetrics( SM_XVIRTUALSCREEN ) + 1 );
+            rect.top = max( rect.top, GetSystemMetrics( SM_YVIRTUALSCREEN ) + 1 );
+            rect.right = min( rect.right, rect.left + GetSystemMetrics( SM_CXVIRTUALSCREEN ) - 2 );
+            rect.bottom = min( rect.bottom, rect.top + GetSystemMetrics( SM_CYVIRTUALSCREEN ) - 2 );
             TRACE("Clipping mouse to %s\n", wine_dbgstr_rect( &rect ));
-            ClipCursor( &rect );
-            This->clipped = GetClipCursor( &new_rect ) && EqualRect( &rect, &new_rect );
+            This->clipped = ClipCursor( &rect );
         }
     }
 }
