@@ -3157,3 +3157,21 @@ DWORD WINAPI GetConsoleCommandHistoryW(DWORD unknown1, DWORD unknown2, DWORD unk
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
+
+/* Undocumented, called by native doskey.exe */
+/* FIXME: Should use CONSOLE_GetHistory() above for full implementation */
+DWORD WINAPI GetConsoleCommandHistoryLengthA(LPCSTR unknown)
+{
+    FIXME(": (%s) stub!\n", debugstr_a(unknown));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/* Undocumented, called by native doskey.exe */
+/* FIXME: Should use CONSOLE_GetHistory() above for full implementation */
+DWORD WINAPI GetConsoleCommandHistoryLengthW(LPCWSTR unknown)
+{
+    FIXME(": (%s) stub!\n", debugstr_w(unknown));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
