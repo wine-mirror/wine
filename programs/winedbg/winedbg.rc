@@ -44,7 +44,7 @@ END
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Program Error"
-FONT 8, "Tahoma"
+FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "",IDC_STATIC_BG,0,0,273,52,WS_BORDER,0
     LTEXT           "The program %s has encountered a serious problem and needs \
@@ -61,7 +61,7 @@ END
 IDD_DETAILS_DLG DIALOGEX 100, 100, 300, 240
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_VISIBLE
 CAPTION "Program Error Details"
-FONT 8, "Tahoma"
+FONT 8, "MS Shell Dlg"
 BEGIN
     EDITTEXT        IDC_CRASH_TXT, 4, 4, 292, 172, ES_MULTILINE | ES_READONLY | WS_HSCROLL | WS_VSCROLL, WS_TABSTOP
     CONTROL         "If this problem is not present under Windows and has not been reported yet, \
