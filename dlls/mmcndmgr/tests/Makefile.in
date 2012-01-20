@@ -1,0 +1,7 @@
+TESTDLL   = mmcndmgr.dll
+IMPORTS   = ole32 shlwapi uuid
+
+C_SRCS = \
+	mmcndmgr.c
+
+@MAKE_TEST_RULES@
