@@ -1,7 +1,6 @@
 MODULE    = sc.exe
 APPMODE   = -mconsole -municode
 IMPORTS   = advapi32
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 
 C_SRCS = sc.c
 

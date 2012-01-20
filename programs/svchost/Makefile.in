@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = svchost.exe
 APPMODE   = -municode
 IMPORTS   = advapi32

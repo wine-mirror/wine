@@ -3,7 +3,6 @@ APPMODE   = -mconsole
 IMPORTS   = psapi dbghelp advapi32
 DELAYIMPORTS = comdlg32 shell32 comctl32 user32 gdi32
 EXTRALIBS = @LIBPOLL@
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 
 C_SRCS = \
 	be_arm.c \

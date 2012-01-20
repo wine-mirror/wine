@@ -3,7 +3,7 @@ APPMODE   = -mwindows -mno-cygwin
 IMPORTS   = advapi32
 DELAYIMPORTS = shlwapi shell32 comdlg32 comctl32 user32 gdi32
 EXTRAINCL = -I$(top_srcdir)/include/msvcrt
-EXTRADEFS = -DNO_LIBWINE_PORT -DWINE_NO_UNICODE_MACROS
+EXTRADEFS = -DNO_LIBWINE_PORT
 MODCFLAGS = @BUILTINFLAG@
 
 C_SRCS = \

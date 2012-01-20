@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = aspnet_regiis.exe
 APPMODE   = -mconsole -municode
 

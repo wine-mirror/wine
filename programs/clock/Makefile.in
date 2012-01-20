@@ -1,7 +1,6 @@
 MODULE    = clock.exe
 APPMODE   = -mwindows
 IMPORTS   = comdlg32 shell32 user32 gdi32
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 
 C_SRCS = \
 	main.c \

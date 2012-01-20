@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = ipconfig.exe
 APPMODE   = -mconsole -municode
 IMPORTS   = iphlpapi ws2_32 user32

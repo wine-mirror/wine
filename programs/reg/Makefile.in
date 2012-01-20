@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = reg.exe
 APPMODE   = -mconsole -municode
 IMPORTS   = advapi32

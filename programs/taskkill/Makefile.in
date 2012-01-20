@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = taskkill.exe
 APPMODE   = -mconsole -municode
 IMPORTS   = psapi user32

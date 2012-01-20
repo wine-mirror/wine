@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = winedevice.exe
 APPMODE   = -mwindows -municode
 IMPORTS   = advapi32 ntoskrnl.exe

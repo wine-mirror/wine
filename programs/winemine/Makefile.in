@@ -1,6 +1,5 @@
 MODULE    = winemine.exe
 APPMODE   = -mwindows -municode
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 IMPORTS   = user32 gdi32 advapi32
 DELAYIMPORTS = shell32
 

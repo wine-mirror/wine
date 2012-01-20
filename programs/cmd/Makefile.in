@@ -1,6 +1,5 @@
 MODULE    = cmd.exe
 APPMODE   = -mconsole -municode
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 IMPORTS   = shell32 user32 advapi32
 
 C_SRCS = \

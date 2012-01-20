@@ -1,4 +1,4 @@
-EXTRADEFS = -D__WINE__ -DWINE_NO_UNICODE_MACROS
+EXTRADEFS = -D__WINE__
 MODULE    = winefile.exe
 APPMODE   = -mwindows
 IMPORTS   = uuid shell32 comdlg32 comctl32 ole32 mpr version user32 gdi32 advapi32

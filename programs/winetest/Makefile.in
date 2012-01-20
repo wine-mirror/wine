@@ -1,6 +1,5 @@
 MODULE    = winetest.exe
 APPMODE   = -mconsole
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 IMPORTS   = uuid comctl32 version user32 gdi32 advapi32 wsock32
 DELAYIMPORTS = ole32
 

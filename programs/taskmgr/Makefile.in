@@ -2,7 +2,7 @@ MODULE    = taskmgr.exe
 APPMODE   = -mwindows -mno-cygwin
 IMPORTS   = psapi shell32 comctl32 user32 gdi32 advapi32
 EXTRAINCL = -I$(top_srcdir)/include/msvcrt
-EXTRADEFS = -DNO_LIBWINE_PORT -DWINE_NO_UNICODE_MACROS
+EXTRADEFS = -DNO_LIBWINE_PORT
 MODCFLAGS = @BUILTINFLAG@
 
 C_SRCS = \

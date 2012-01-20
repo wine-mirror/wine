@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = attrib.exe
 APPMODE   = -mconsole -municode
 IMPORTS   = user32

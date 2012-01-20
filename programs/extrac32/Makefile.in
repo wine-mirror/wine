@@ -1,6 +1,5 @@
 MODULE    = extrac32.exe
 APPMODE   = -mwindows -municode
-EXTRADEFS = -DWINE_NO_UNICODE
 IMPORTS   = shell32 setupapi shlwapi user32
 
 C_SRCS = \
