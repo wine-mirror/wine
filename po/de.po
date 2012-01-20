@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-18 21:56+0100\n"
+"PO-Revision-Date: 2012-01-20 19:43+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -1311,19 +1311,19 @@ msgstr "Zertifizierungsstellen Emittent"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr "Zertifikationsvorlagenname"
+msgstr "Zertifizierungsvorlagenname"
 
 #: crypt32.rc:58
 msgid "Certificate Type"
-msgstr "Zertifikationstyp"
+msgstr "Zertifikatstyp"
 
 #: crypt32.rc:59
 msgid "Certificate Manifold"
-msgstr "Zertifikationsvervielfältigung"
+msgstr "Zertifikatsvervielfältigung"
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
-msgstr "Netscape Zertifikationstyp"
+msgstr "Netscape Zertifikatstyp"
 
 #: crypt32.rc:61
 msgid "Netscape Base URL"
@@ -1339,7 +1339,7 @@ msgstr "Netscape CA Sperrungs-URL"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
-msgstr "Netscape Zertifikationserneuerungs-URL"
+msgstr "Netscape Zertifikatserneuerungs-URL"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
@@ -1467,7 +1467,7 @@ msgstr "Richtlinieneinschränkungen"
 
 #: crypt32.rc:96
 msgid "Cross-Certificate Distribution Points"
-msgstr "Verteilungspunkte für Kreuzzertifikate"
+msgstr "Zertifikatsübergreifende Verteilungspunkte"
 
 #: crypt32.rc:97
 msgid "Application Policies"
