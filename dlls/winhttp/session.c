@@ -1905,11 +1905,11 @@ done:
     return ret;
 }
 
-static BSTR download_script( HINTERNET ses, const WCHAR *url )
+static BSTR download_script( const WCHAR *url )
 {
     static const WCHAR typeW[] = {'*','/','*',0};
     static const WCHAR *acceptW[] = {typeW, NULL};
-    HINTERNET con, req = NULL;
+    HINTERNET ses, con = NULL, req = NULL;
     WCHAR *hostname;
     URL_COMPONENTSW uc;
     DWORD size = 4096, offset, to_read, bytes_read, flags = 0;
@@ -1924,6 +1924,7 @@ static BSTR download_script( HINTERNET ses, const WCHAR *url )
     memcpy( hostname, uc.lpszHostName, uc.dwHostNameLength * sizeof(WCHAR) );
     hostname[uc.dwHostNameLength] = 0;
 
+    if (!(ses = WinHttpOpen( NULL, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0 ))) goto done;
     if (!(con = WinHttpConnect( ses, hostname, uc.nPort, 0 ))) goto done;
     if (uc.nScheme == INTERNET_SCHEME_HTTPS) flags |= WINHTTP_FLAG_SECURE;
     if (!(req = WinHttpOpenRequest( con, NULL, uc.lpszUrlPath, NULL, NULL, acceptW, flags ))) goto done;
@@ -1955,6 +1956,7 @@ static BSTR download_script( HINTERNET ses, const WCHAR *url )
 done:
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
+    WinHttpCloseHandle( ses );
     heap_free( buffer );
     heap_free( hostname );
     if (!script) set_last_error( ERROR_WINHTTP_UNABLE_TO_DOWNLOAD_SCRIPT );
@@ -2005,7 +2007,7 @@ BOOL WINAPI WinHttpGetProxyForUrl( HINTERNET hsession, LPCWSTR url, WINHTTP_AUTO
     if (options->dwFlags & WINHTTP_AUTOPROXY_CONFIG_URL) pac_url = options->lpszAutoConfigUrl;
     else pac_url = detected_pac_url;
 
-    if (!(script = download_script( hsession, pac_url ))) goto done;
+    if (!(script = download_script( pac_url ))) goto done;
     ret = run_script( script, url, info );
     SysFreeString( script );
 
