@@ -2061,6 +2061,41 @@ static void test_dispex(void)
     IXMLDOMSchemaCollection_Release(cache);
 }
 
+static void test_get(void)
+{
+    static const WCHAR uriW[] = {'u','r','i',0};
+    IXMLDOMSchemaCollection2 *cache;
+    IXMLDOMNode *node;
+    HRESULT hr;
+    BSTR s;
+
+    cache = create_cache_version(60, &IID_IXMLDOMSchemaCollection2);
+    if (!cache) return;
+
+    hr = IXMLDOMSchemaCollection2_get(cache, NULL, NULL);
+    EXPECT_HR(hr, E_NOTIMPL);
+
+    s = SysAllocString(uriW);
+    hr = IXMLDOMSchemaCollection2_get(cache, s, &node);
+    EXPECT_HR(hr, E_NOTIMPL);
+    SysFreeString(s);
+
+    IXMLDOMSchemaCollection2_Release(cache);
+
+    cache = create_cache_version(40, &IID_IXMLDOMSchemaCollection2);
+    if (!cache) return;
+
+    hr = IXMLDOMSchemaCollection2_get(cache, NULL, NULL);
+    EXPECT_HR(hr, E_POINTER);
+
+    s = SysAllocString(uriW);
+    hr = IXMLDOMSchemaCollection2_get(cache, s, &node);
+    EXPECT_HR(hr, S_OK);
+    SysFreeString(s);
+
+    IXMLDOMSchemaCollection2_Release(cache);
+}
+
 START_TEST(schema)
 {
     HRESULT r;
@@ -2076,6 +2111,7 @@ START_TEST(schema)
     test_XDR_datatypes();
     test_validate_on_load();
     test_dispex();
+    test_get();
 
     CoUninitialize();
 }

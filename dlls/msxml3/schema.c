@@ -1139,9 +1139,12 @@ static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection2* iface, BSTR uri
                                        IXMLDOMNode** node)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    xmlChar* name;
     cache_entry* entry;
+    xmlChar* name;
+
     TRACE("(%p)->(%s %p)\n", This, wine_dbgstr_w(uri), node);
+
+    if (This->version == MSXML6) return E_NOTIMPL;
 
     if (!node)
         return E_POINTER;
@@ -1438,7 +1441,7 @@ HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* outer, void** obj)
 
 #else
 
-HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* pUnkOuter, void** ppObj)
+HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* outer, void** obj)
 {
     MESSAGE("This program tried to use a SchemaCache object, but\n"
             "libxml2 support was not present at compile time.\n");

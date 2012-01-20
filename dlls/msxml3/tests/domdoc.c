@@ -11140,6 +11140,86 @@ static void test_nodeValue(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static char namespacesA[] =
+"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+"   <ns1:elem1 xmlns:ns1=\"http://blah.org\">"
+"     <ns1:elem2/>"
+"     <ns1:elem3/>"
+"     <ns1:elem4/>"
+"     <elem5 xmlns=\"http://blahblah.org\"/>"
+"     <ns1:elem6>true</ns1:elem6>"
+"   </ns1:elem1>";
+
+static void test_get_namespaces(void)
+{
+    IXMLDOMSchemaCollection *collection, *collection2;
+    IXMLDOMDocument2 *doc;
+    IXMLDOMNode *node;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    LONG len;
+
+    doc = create_document(&IID_IXMLDOMDocument2);
+    if (!doc) return;
+
+    /* null pointer */
+    hr = IXMLDOMDocument2_get_namespaces(doc, NULL);
+    EXPECT_HR(hr, E_POINTER);
+
+    /* no document loaded */
+    collection = (void*)0xdeadbeef;
+    hr = IXMLDOMDocument2_get_namespaces(doc, &collection);
+todo_wine
+    EXPECT_HR(hr, S_OK);
+    if (hr != S_OK)
+    {
+        IXMLDOMDocument_Release(doc);
+        return;
+    }
+    EXPECT_REF(collection, 2);
+
+    collection2 = (void*)0xdeadbeef;
+    hr = IXMLDOMDocument2_get_namespaces(doc, &collection2);
+    EXPECT_HR(hr, S_OK);
+    ok(collection == collection2, "got %p\n", collection2);
+    EXPECT_REF(collection, 3);
+    IXMLDOMSchemaCollection_Release(collection);
+
+    len = -1;
+    hr = IXMLDOMSchemaCollection_get_length(collection, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 0, "got %d\n", len);
+    IXMLDOMSchemaCollection_Release(collection);
+
+    /* now with document */
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(namespacesA), &b);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument2_get_namespaces(doc, &collection);
+    EXPECT_HR(hr, S_OK);
+
+    len = -1;
+    hr = IXMLDOMSchemaCollection_get_length(collection, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 2, "got %d\n", len);
+
+    /* try to lookup some uris */
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMSchemaCollection_get(collection, _bstr_("http://blah.org"), &node);
+    EXPECT_HR(hr, S_OK);
+    ok(node == NULL, "got %p\n", node);
+
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMSchemaCollection_get(collection, _bstr_("http://blah1.org"), &node);
+    EXPECT_HR(hr, S_OK);
+    ok(node == NULL, "got %p\n", node);
+
+    IXMLDOMSchemaCollection_Release(collection);
+
+    IXMLDOMDocument2_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -11216,6 +11296,7 @@ START_TEST(domdoc)
     test_getAttributeNode();
     test_supporterrorinfo();
     test_nodeValue();
+    test_get_namespaces();
 
     test_xsltemplate();
 

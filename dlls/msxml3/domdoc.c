@@ -2508,10 +2508,13 @@ static HRESULT WINAPI domdoc_put_onTransformNode(
 
 static HRESULT WINAPI domdoc_get_namespaces(
     IXMLDOMDocument3* iface,
-    IXMLDOMSchemaCollection** schemaCollection )
+    IXMLDOMSchemaCollection** collection )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    FIXME("(%p)->(%p)\n", This, schemaCollection);
+    FIXME("(%p)->(%p): stub\n", This, collection);
+
+    if (!collection) return E_POINTER;
+
     return E_NOTIMPL;
 }
 
