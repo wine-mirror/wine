@@ -994,6 +994,29 @@ HRESULT go_home(DocHost *This)
     return navigate_url(This, wszPageName, NULL, NULL, NULL, NULL);
 }
 
+HRESULT go_back(DocHost *This)
+{
+    WCHAR *url;
+    HRESULT hres;
+
+    if(!This->travellog_position) {
+        WARN("No history available\n");
+        return E_FAIL;
+    }
+
+    url = This->travellog[--This->travellog_position].url;
+
+    if(This->doc_navigate) {
+        hres = async_doc_navigate(This, url, NULL, NULL, 0, FALSE);
+    }else {
+        FIXME("unsupported doc_navigate FALSE\n");
+        hres = E_NOTIMPL;
+    }
+
+    heap_free(url);
+    return hres;
+}
+
 HRESULT get_location_url(DocHost *This, BSTR *ret)
 {
     FIXME("semi-stub\n");

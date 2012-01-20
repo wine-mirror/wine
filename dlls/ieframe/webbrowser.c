@@ -251,8 +251,8 @@ static HRESULT WINAPI WebBrowser_Invoke(IWebBrowser2 *iface, DISPID dispIdMember
 static HRESULT WINAPI WebBrowser_GoBack(IWebBrowser2 *iface)
 {
     WebBrowser *This = impl_from_IWebBrowser2(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", This);
+    return go_back(&This->doc_host);
 }
 
 static HRESULT WINAPI WebBrowser_GoForward(IWebBrowser2 *iface)

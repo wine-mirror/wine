@@ -30,6 +30,9 @@ DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 
 #define DOCHOST_DOCCANNAVIGATE  0
 
+/* Undocumented notification, see mshtml tests */
+#define CMDID_EXPLORER_UPDATEHISTORY 38
+
 static ATOM doc_view_atom = 0;
 
 void push_dochost_task(DocHost *This, task_header_t *task, task_proc_t proc, task_destr_t destr, BOOL send)
@@ -324,6 +327,39 @@ static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
+static void update_travellog(DocHost *This)
+{
+    travellog_entry_t *new_entry;
+
+    if(!This->travellog) {
+        This->travellog = heap_alloc(4 * sizeof(*This->travellog));
+        if(!This->travellog)
+            return;
+
+        This->travellog_size = 4;
+    }else if(This->travellog_size < This->travellog_position+1) {
+        travellog_entry_t *new_travellog;
+
+        new_travellog = heap_realloc(This->travellog, This->travellog_size*2);
+        if(!new_travellog)
+            return;
+
+        This->travellog = new_travellog;
+        This->travellog_size *= 2;
+    }
+
+    while(This->travellog_length > This->travellog_position)
+        heap_free(This->travellog[--This->travellog_length].url);
+
+    new_entry = This->travellog + This->travellog_position;
+
+    new_entry->url = heap_strdupW(This->url);
+    if(!new_entry->url)
+        return;
+
+    This->travellog_position++;
+}
+
 void create_doc_view_hwnd(DocHost *This)
 {
     RECT rect;
@@ -550,11 +586,19 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
         }
     }
 
+    if(IsEqualGUID(pguidCmdGroup, &CGID_Explorer)) {
+        switch(nCmdID) {
+        case CMDID_EXPLORER_UPDATEHISTORY:
+            update_travellog(This);
+            break;
+        default:
+            FIXME("Unimplemented cmd %d of CGID_Explorer\n", nCmdID);
+        }
+    }
+
     FIXME("Unimplemented group %s\n", debugstr_guid(pguidCmdGroup));
     return E_NOTIMPL;
 }
-
-#undef impl_from_IOleCommandTarget
 
 static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
     ClOleCommandTarget_QueryInterface,
@@ -898,6 +942,10 @@ void DocHost_Release(DocHost *This)
     DocHost_ClientSite_Release(This);
 
     ConnectionPointContainer_Destroy(&This->cps);
+
+    while(This->travellog_length)
+        heap_free(This->travellog[--This->travellog_length].url);
+    heap_free(This->travellog);
 
     heap_free(This->url);
 }
