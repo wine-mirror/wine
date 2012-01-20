@@ -1977,8 +1977,11 @@ static ULONG WINAPI TravelLogClient_Release(ITravelLogClient *iface)
 static HRESULT WINAPI TravelLogClient_FindWindowByIndex(ITravelLogClient *iface, DWORD dwID, IUnknown **ppunk)
 {
     HTMLWindow *This = impl_from_ITravelLogClient(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwID, ppunk);
-    return E_NOTIMPL;
+
+    FIXME("(%p)->(%d %p) semi-stub\n", This, dwID, ppunk);
+
+    *ppunk = NULL;
+    return E_FAIL;
 }
 
 static HRESULT WINAPI TravelLogClient_GetWindowData(ITravelLogClient *iface, IStream *pStream, LPWINDOWDATA pWinData)

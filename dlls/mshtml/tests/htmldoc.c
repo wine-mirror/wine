@@ -6239,6 +6239,38 @@ static void test_target_container(IHTMLDocument2 *doc)
     IOleContainer_Release(doc_ole_container);
 }
 
+static void test_travellog(IHTMLDocument2 *doc)
+{
+    ITravelLogClient *travellog_client;
+    IHTMLWindow2 *window, *top_window;
+    IUnknown *unk;
+    HRESULT hres;
+
+    window = NULL;
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
+    ok(window != NULL, "window = NULL\n");
+
+    hres = IHTMLWindow2_get_top(window, &top_window);
+    IHTMLWindow2_Release(window);
+    ok(hres == S_OK, "get_top failed: %08x\n", hres);
+
+    hres = IHTMLWindow2_QueryInterface(top_window, &IID_ITravelLogClient, (void**)&travellog_client);
+    IHTMLWindow2_Release(top_window);
+    if(hres == E_NOINTERFACE) {
+        win_skip("ITravelLogClient not supported\n");
+        return;
+    }
+    ok(hres == S_OK, "Could not get ITraveLogClient iface: %08x\n", hres);
+
+    unk = (void*)0xdeadbeef;
+    hres = ITravelLogClient_FindWindowByIndex(travellog_client, 0, &unk);
+    ok(hres == E_FAIL, "FindWindowByIndex failed: %08x\n", hres);
+    ok(!unk, "unk != NULL\n");
+
+    ITravelLogClient_Release(travellog_client);
+}
+
 static void test_StreamLoad(IHTMLDocument2 *doc)
 {
     IPersistStreamInit *init;
@@ -6613,10 +6645,13 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     test_IsDirty(doc, S_FALSE);
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED);
     test_GetCurMoniker((IUnknown*)doc, http_mon, NULL);
+    test_travellog(doc);
 
     nav_url = nav_serv_url = "http://www.winehq.org/"; /* for valid prev nav_url */
-    if(support_wbapp)
+    if(support_wbapp) {
         test_put_href(doc, FALSE, "#test", "http://www.winehq.org/#test", FALSE, TRUE);
+        test_travellog(doc);
+    }
     test_put_href(doc, FALSE, NULL, "javascript:external&&undefined", TRUE, FALSE);
 
     test_put_href(doc, FALSE, NULL, "about:blank", FALSE, FALSE);
