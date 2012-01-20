@@ -149,13 +149,15 @@ static VARIANT_BOOL exvb;
 static IWebBrowser2 *wb;
 
 static HWND container_hwnd, shell_embedding_hwnd;
-static BOOL is_downloading, is_first_load, use_container_olecmd, test_close;
+static BOOL is_downloading, is_first_load, use_container_olecmd, test_close, is_http;
 static HRESULT hr_dochost_TranslateAccelerator = E_NOTIMPL;
 static HRESULT hr_site_TranslateAccelerator = E_NOTIMPL;
 static const char *current_url;
 
 #define DWL_EXPECT_BEFORE_NAVIGATE  0x01
 #define DWL_FROM_PUT_HREF           0x02
+#define DWL_FROM_GOBACK             0x04
+#define DWL_HTTP                    0x08
 
 static DWORD dwl_flags;
 
@@ -412,7 +414,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             }
             return S_OK;
         case OLECMDID_UPDATECOMMANDS:
-            CHECK_EXPECT(Exec_UPDATECOMMANDS);
+            CHECK_EXPECT2(Exec_UPDATECOMMANDS);
             ok(nCmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER, "nCmdexecopts=%08x\n", nCmdexecopt);
             ok(!pvaIn, "pvaIn != NULL\n");
             ok(!pvaOut, "pvaOut=%p, expected NULL\n", pvaOut);
@@ -432,6 +434,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
              */
             CHECK_EXPECT(Exec_IDM_STOP);
             return OLECMDERR_E_NOTSUPPORTED;
+        case OLECMDID_UPDATETRAVELENTRY_DATARECOVERY:
         case 6058: /* TODO */
             return E_NOTIMPL;
         default:
@@ -439,6 +442,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         }
     }else if(IsEqualGUID(&CGID_Explorer, pguidCmdGroup)) {
         switch(nCmdID) {
+        case 20: /* TODO */
         case 24: /* TODO */
         case 25: /* IE5 */
         case 37: /* TODO */
@@ -455,6 +459,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     }else if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
         switch(nCmdID) {
         case 105: /* TODO */
+        case 138: /* TODO */
         case 140: /* TODO (Win7) */
             return E_FAIL;
         default:
@@ -835,6 +840,10 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
 
         ok(pDispParams->rgvarg != NULL, "rgvarg == NULL\n");
         ok(pDispParams->cArgs == 2, "cArgs=%d, expected 2\n", pDispParams->cArgs);
+
+        ok(V_VT(pDispParams->rgvarg) == VT_BOOL, "V_VT(pDispParams->rgvarg) = %d\n", V_VT(pDispParams->rgvarg));
+        ok(V_VT(pDispParams->rgvarg+1) == VT_I4, "V_VT(pDispParams->rgvarg+1) = %d\n", V_VT(pDispParams->rgvarg+1));
+
         /* TODO: Check args */
         break;
 
@@ -889,11 +898,11 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
     case DISPID_NAVIGATECOMPLETE2:
         CHECK_EXPECT(Invoke_NAVIGATECOMPLETE2);
         /* FIXME */
-        test_ready_state((dwl_flags & DWL_FROM_PUT_HREF) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
+        test_ready_state((dwl_flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK)) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
         break;
 
     case DISPID_PROGRESSCHANGE:
-        CHECK_EXPECT(Invoke_PROGRESSCHANGE);
+        CHECK_EXPECT2(Invoke_PROGRESSCHANGE);
         /* FIXME */
         break;
 
@@ -1459,7 +1468,7 @@ static HRESULT WINAPI DocHostUIHandler_HideUI(IDocHostUIHandler2 *iface)
 
 static HRESULT WINAPI DocHostUIHandler_UpdateUI(IDocHostUIHandler2 *iface)
 {
-    CHECK_EXPECT(UpdateUI);
+    CHECK_EXPECT2(UpdateUI);
     return E_NOTIMPL;
 }
 
@@ -1818,6 +1827,7 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client, BOOL stop_dow
         SET_EXPECT(Invoke_COMMANDSTATECHANGE);
     }else {
         SET_EXPECT(Invoke_STATUSTEXTCHANGE);
+        SET_EXPECT(Invoke_PROGRESSCHANGE);
     }
 
     hres = IOleObject_SetClientSite(oleobj, client);
@@ -1834,6 +1844,7 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client, BOOL stop_dow
         todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
     }else {
         CLEAR_CALLED(Invoke_STATUSTEXTCHANGE); /* Called by IE9 */
+        CLEAR_CALLED(Invoke_PROGRESSCHANGE);
     }
 
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
@@ -2409,7 +2420,7 @@ static void test_ConnectionPoint(IUnknown *unk, BOOL init)
     IConnectionPoint_Release(point);
 }
 
-static void test_Navigate2(IUnknown *unk)
+static void test_Navigate2(IUnknown *unk, const char *nav_url)
 {
     IWebBrowser2 *webbrowser;
     VARIANT url;
@@ -2423,9 +2434,9 @@ static void test_Navigate2(IUnknown *unk)
     test_LocationURL(unk, is_first_load ? "" : current_url);
     test_ready_state(is_first_load ? READYSTATE_UNINITIALIZED : READYSTATE_COMPLETE);
 
+    is_http = !memcmp(nav_url, "http:", 5);
     V_VT(&url) = VT_BSTR;
-    V_BSTR(&url) = a2bstr("about:blank");
-    current_url = "about:blank";
+    V_BSTR(&url) = a2bstr(current_url = nav_url);
 
     if(is_first_load) {
         SET_EXPECT(Invoke_AMBIENT_USERMODE);
@@ -2579,10 +2590,12 @@ static void test_download(DWORD flags)
     is_downloading = TRUE;
     dwl_flags = flags;
 
-    test_ready_state((flags & DWL_FROM_PUT_HREF) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
+    test_ready_state((flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK)) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
+
+    if((is_http && !(flags & DWL_FROM_GOBACK)) || (flags & DWL_EXPECT_BEFORE_NAVIGATE))
+        SET_EXPECT(Invoke_PROPERTYCHANGE);
 
     if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
-        SET_EXPECT(Invoke_PROPERTYCHANGE);
         SET_EXPECT(Invoke_BEFORENAVIGATE2);
         SET_EXPECT(TranslateUrl);
     }
@@ -2608,6 +2621,8 @@ static void test_download(DWORD flags)
     SET_EXPECT(Invoke_PROGRESSCHANGE);
     SET_EXPECT(Invoke_DOCUMENTCOMPLETE);
 
+    if(flags & DWL_HTTP)
+        SET_EXPECT(Exec_SETTITLE);
     SET_EXPECT(UpdateUI);
     SET_EXPECT(Exec_UPDATECOMMANDS);
     SET_EXPECT(QueryStatus_STOP);
@@ -2617,8 +2632,10 @@ static void test_download(DWORD flags)
         DispatchMessage(&msg);
     }
 
-    if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
+    if((is_http && !(flags & DWL_FROM_GOBACK)) || (flags & DWL_EXPECT_BEFORE_NAVIGATE))
         todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
+
+    if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
         CHECK_CALLED(Invoke_BEFORENAVIGATE2);
         CHECK_CALLED(TranslateUrl);
     }
@@ -2659,6 +2676,8 @@ static void test_download(DWORD flags)
         DispatchMessage(&msg);
     }
 
+    if(flags & DWL_HTTP)
+        CLEAR_CALLED(Exec_SETTITLE); /* FIXME: make it more strict */
     CHECK_CALLED(UpdateUI);
     CHECK_CALLED(Exec_UPDATECOMMANDS);
     CLEAR_CALLED(QueryStatus_STOP);
@@ -2720,7 +2739,7 @@ static void test_IServiceProvider(IUnknown *unk)
     IServiceProvider_Release(servprov);
 }
 
-static void test_put_href(IUnknown *unk)
+static void test_put_href(IUnknown *unk, const char *url)
 {
     IHTMLLocation *location;
     IHTMLDocument2 *doc;
@@ -2742,24 +2761,46 @@ static void test_put_href(IUnknown *unk)
 
     SET_EXPECT(TranslateUrl);
     SET_EXPECT(Invoke_BEFORENAVIGATE2);
-    SET_EXPECT(Invoke_PROPERTYCHANGE);
+    if(!is_http)
+        SET_EXPECT(Invoke_PROPERTYCHANGE);
 
     dwl_flags = DWL_FROM_PUT_HREF;
 
-    str = a2bstr("about:test");
-    current_url = "about:test";
+    is_http = !memcmp(url, "http:", 5);
+    str = a2bstr(current_url = url);
     is_first_load = FALSE;
     hres = IHTMLLocation_put_href(location, str);
 
     CHECK_CALLED(TranslateUrl);
     CHECK_CALLED(Invoke_BEFORENAVIGATE2);
-    todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
+    if(!is_http)
+        todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
 
     IHTMLLocation_Release(location);
     SysFreeString(str);
     ok(hres == S_OK, "put_href failed: %08x\n", hres);
 
     test_ready_state(READYSTATE_COMPLETE);
+}
+
+static void test_go_back(IUnknown *unk, const char *back_url)
+{
+    IWebBrowser2 *wb;
+    HRESULT hres;
+
+    current_url = back_url;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
+    ok(hres == S_OK, "Could not get IWebBrowser2 iface: %08x\n", hres);
+
+    SET_EXPECT(Invoke_BEFORENAVIGATE2);
+    SET_EXPECT(Invoke_COMMANDSTATECHANGE);
+    hres = IWebBrowser2_GoBack(wb);
+    ok(hres == S_OK, "GoBack failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_BEFORENAVIGATE2);
+    todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
+
+    IWebBrowser2_Release(wb);
 }
 
 static void test_QueryInterface(IUnknown *unk)
@@ -2870,7 +2911,7 @@ static void test_TranslateAccelerator(IUnknown *unk)
         {5, 5}
     };
 
-    test_Navigate2(unk);
+    test_Navigate2(unk, "about:blank");
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceActiveObject, (void**)&pao);
     ok(hres == S_OK, "Got 0x%08x\n", hres);
@@ -3112,7 +3153,7 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
     test_wb_funcs(unk, TRUE);
     test_DoVerb(unk);
     test_olecmd(unk, FALSE);
-    test_Navigate2(unk);
+    test_Navigate2(unk, "about:blank");
     test_QueryStatusWB(wb, TRUE, TRUE);
     test_ExecWB(wb, TRUE, TRUE);
 
@@ -3123,20 +3164,36 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
         test_olecmd(unk, TRUE);
         doc = get_document(unk);
 
-        test_put_href(unk);
+        test_put_href(unk, "about:test");
         test_download(DWL_FROM_PUT_HREF);
         doc2 = get_document(unk);
         ok(doc == doc2, "doc != doc2\n");
         IDispatch_Release(doc2);
 
         trace("Navigate2 repeated...\n");
-        test_Navigate2(unk);
+        test_Navigate2(unk, "about:blank");
         test_download(DWL_EXPECT_BEFORE_NAVIGATE);
-        test_TranslateAccelerator(unk);
         doc2 = get_document(unk);
         ok(doc == doc2, "doc != doc2\n");
         IDispatch_Release(doc2);
         IDispatch_Release(doc);
+
+        if(!do_close) {
+            trace("Navigate2 http URL...\n");
+            test_ready_state(READYSTATE_COMPLETE);
+            test_Navigate2(unk, "http://test.winehq.org/tests/hello.html");
+            test_download(DWL_EXPECT_BEFORE_NAVIGATE|DWL_HTTP);
+
+            trace("put_href http URL...\n");
+            test_put_href(unk, "http://www.winehq.org/");
+            test_download(DWL_FROM_PUT_HREF|DWL_HTTP);
+
+            trace("GoBack...\n");
+            test_go_back(unk, "http://test.winehq.org/tests/hello.html");
+            test_download(DWL_FROM_GOBACK|DWL_HTTP);
+        }
+
+        test_TranslateAccelerator(unk);
 
         test_dochost_qs(unk);
     }
@@ -3176,7 +3233,7 @@ static void test_WebBrowser_NoContainerOlecmd(void)
     test_ConnectionPoint(unk, TRUE);
     test_ClientSite(unk, &ClientSite, TRUE);
     test_DoVerb(unk);
-    test_Navigate2(unk);
+    test_Navigate2(unk, "about:blank");
 
     /* Tests of interest */
     test_QueryStatusWB(wb, FALSE, TRUE);
@@ -3190,6 +3247,27 @@ static void test_WebBrowser_NoContainerOlecmd(void)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
+/* Check if Internet Explorer is configured to run in "Enhanced Security Configuration" (aka hardened mode) */
+/* Note: this code is duplicated in dlls/mshtml/tests/mshtml_test.h and dlls/urlmon/tests/sec_mgr.c */
+static BOOL is_ie_hardened(void)
+{
+    HKEY zone_map;
+    DWORD ie_harden, type, size;
+
+    ie_harden = 0;
+    if(RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap",
+                    0, KEY_QUERY_VALUE, &zone_map) == ERROR_SUCCESS) {
+        size = sizeof(DWORD);
+        if (RegQueryValueEx(zone_map, "IEHarden", NULL, &type, (LPBYTE) &ie_harden, &size) != ERROR_SUCCESS ||
+            type != REG_DWORD) {
+            ie_harden = 0;
+        }
+    RegCloseKey(zone_map);
+    }
+
+    return ie_harden != 0;
+}
+
 START_TEST(webbrowser)
 {
     OleInitialize(NULL);
@@ -3199,8 +3277,14 @@ START_TEST(webbrowser)
     trace("Testing WebBrowser (no download)...\n");
     test_WebBrowser(FALSE, FALSE);
     test_WebBrowser(FALSE, TRUE);
-    trace("Testing WebBrowser...\n");
-    test_WebBrowser(TRUE, FALSE);
+
+    if(!is_ie_hardened()) {
+        trace("Testing WebBrowser...\n");
+        test_WebBrowser(TRUE, FALSE);
+    }else {
+        win_skip("Skipping http tests in hardened mode\n");
+    }
+
     trace("Testing WebBrowser (with close)...\n");
     test_WebBrowser(TRUE, TRUE);
     trace("Testing WebBrowser w/o container-based olecmd...\n");
