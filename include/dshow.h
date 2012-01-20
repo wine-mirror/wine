@@ -21,13 +21,9 @@
 
 #define AM_NOVTABLE
 
+#include <windows.h>
 #ifndef __WINESRC__
-# include <windows.h>
 # include <windowsx.h>
-#else
-# include <windef.h>
-# include <wingdi.h>
-# include <objbase.h>
 #endif
 #include <olectl.h>
 #include <ddraw.h>

@@ -26,7 +26,7 @@ extern "C" {
 #define SDDL_REVISION_1 1
 #define SDDL_REVISION   SDDL_REVISION_1
 
-#ifndef __WINESRC__
+#ifndef WINE_NO_UNICODE_MACROS
 /* Component tags */
 #ifndef UNICODE
 # define SDDL_OWNER "O"
@@ -91,7 +91,7 @@ extern "C" {
    static const WCHAR SDDL_ACE_END[]     = { ')',0 };
 # endif
 #endif /* UNICODE */
-#endif /* __WINESRC__ */
+#endif /* WINE_NO_UNICODE_MACROS */
 
 BOOL WINAPI ConvertSidToStringSidA( PSID, LPSTR* );
 BOOL WINAPI ConvertSidToStringSidW( PSID, LPWSTR* );

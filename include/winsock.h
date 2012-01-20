@@ -107,11 +107,7 @@
 
 #endif /* __WINE_WINSOCKAPI_STDLIB_H */
 
-#ifndef __WINESRC__
-# include <windows.h>
-#else
-# include <windef.h>
-#endif
+#include <windows.h>
 
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_

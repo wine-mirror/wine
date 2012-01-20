@@ -19,9 +19,7 @@
 #ifndef __WINE_ACLAPI_H
 #define __WINE_ACLAPI_H
 
-#ifndef __WINESRC__
-# include <windows.h>
-#endif
+#include <windows.h>
 #include <accctrl.h>
 
 #ifdef __cplusplus

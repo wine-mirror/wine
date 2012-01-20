@@ -20,10 +20,7 @@
 #ifndef MAPIDEFS_H
 #define MAPIDEFS_H
 
-#ifndef __WINESRC__
-# include <windows.h>
-#endif
-
+#include <windows.h>
 #include <winerror.h>
 #include <objbase.h>
 #include <stddef.h>

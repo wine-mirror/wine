@@ -25,6 +25,18 @@
 #define GetCurrentProcess GetCurrentProcess_Mac
 #define GetCurrentThread GetCurrentThread_Mac
 #define LoadResource LoadResource_Mac
+#define AnimatePalette AnimatePalette_Mac
+#define EqualRgn EqualRgn_Mac
+#define FillRgn FillRgn_Mac
+#define FrameRgn FrameRgn_Mac
+#define GetPixel GetPixel_Mac
+#define InvertRgn InvertRgn_Mac
+#define LineTo LineTo_Mac
+#define OffsetRgn OffsetRgn_Mac
+#define PaintRgn PaintRgn_Mac
+#define Polygon Polygon_Mac
+#define ResizePalette ResizePalette_Mac
+#define SetRectRgn SetRectRgn_Mac
 #define EqualRect EqualRect_Mac
 #define FillRect FillRect_Mac
 #define FrameRect FrameRect_Mac
@@ -40,6 +52,18 @@
 #undef GetCurrentProcess
 #undef GetCurrentThread
 #undef LoadResource
+#undef AnimatePalette
+#undef EqualRgn
+#undef FillRgn
+#undef FrameRgn
+#undef GetPixel
+#undef InvertRgn
+#undef LineTo
+#undef OffsetRgn
+#undef PaintRgn
+#undef Polygon
+#undef ResizePalette
+#undef SetRectRgn
 #undef EqualRect
 #undef FillRect
 #undef FrameRect
