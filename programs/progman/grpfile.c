@@ -50,10 +50,10 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group);
 static VOID GRPFILE_ModifyFileName(LPSTR lpszNewName, LPCSTR lpszOrigName,
 				   INT nSize, BOOL bModify)
 {
-  lstrcpyn(lpszNewName, lpszOrigName, nSize);
+  lstrcpynA(lpszNewName, lpszOrigName, nSize);
   lpszNewName[nSize-1] = '\0';
   if (!bModify) return;
-  if (!lstrcmpi(lpszNewName + strlen(lpszNewName) - 4, ".grp"))
+  if (!lstrcmpiA(lpszNewName + strlen(lpszNewName) - 4, ".grp"))
     lpszNewName[strlen(lpszNewName) - 1] = '\0';
 }
 
@@ -382,12 +382,12 @@ BOOL GRPFILE_WriteGroupFile(HLOCAL hGroup)
   {
     /* Warn about the (possible) incompatibility */
     CHAR msg[MAX_PATHNAME_LEN + 200];
-    wsprintf(msg,
+    wsprintfA(msg,
 	     "Group files written by this DRAFT Program Manager "
 	     "possibly cannot be read by the Microsoft Program Manager!!\n"
 	     "Are you sure to write %s?", szPath);
-    if (IDOK != MessageBox(Globals.hMainWnd, msg, "WARNING",
-			   MB_OKCANCEL | MB_DEFBUTTON2)) return FALSE;
+    if (IDOK != MessageBoxA(Globals.hMainWnd, msg, "WARNING",
+                            MB_OKCANCEL | MB_DEFBUTTON2)) return FALSE;
   }
 
   /* Open file */
@@ -425,9 +425,9 @@ static VOID GRPFILE_CalculateSizes(PROGRAM *program, INT *Progs, INT *Icons,
   DeleteObject( info.hbmColor );
 
   *Progs += 24;
-  *Progs += lstrlen(LocalLock(program->hName)) + 1;
-  *Progs += lstrlen(LocalLock(program->hCmdLine)) + 1;
-  *Progs += lstrlen(LocalLock(program->hIconFile)) + 1;
+  *Progs += strlen(LocalLock(program->hName)) + 1;
+  *Progs += strlen(LocalLock(program->hCmdLine)) + 1;
+  *Progs += strlen(LocalLock(program->hIconFile)) + 1;
 
   *Icons += 12; /* IconInfo */
   *Icons += *sizeAnd;
@@ -540,7 +540,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       hProgram = program->hNext;
     }
   Title      = 34 + NumProg * 2;
-  Progs      = Title + lstrlen(lpszTitle) + 1;
+  Progs      = Title + strlen(lpszTitle) + 1;
   Icons     += Progs;
   Extension += Icons;
 
@@ -589,8 +589,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
     }
 
   /* Title */
-  if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszTitle,
-					       lstrlen(lpszTitle) + 1))
+  if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszTitle, strlen(lpszTitle) + 1))
     return FALSE;
 
   /* Program entries */
@@ -618,15 +617,15 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       PUT_SHORT(buffer, 16, CurrIcon + 12);
       ptr = CurrProg + 24;
       PUT_SHORT(buffer, 18, ptr);
-      ptr += lstrlen(Name) + 1;
+      ptr += strlen(Name) + 1;
       PUT_SHORT(buffer, 20, ptr);
-      ptr += lstrlen(CmdLine) + 1;
+      ptr += strlen(CmdLine) + 1;
       PUT_SHORT(buffer, 22, ptr);
 
       if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 24) ||
-	  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, Name, lstrlen(Name) + 1) ||
-	  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, CmdLine, lstrlen(CmdLine) + 1) ||
-	  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, IconFile, lstrlen(IconFile) + 1))
+	  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, Name, strlen(Name) + 1) ||
+	  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, CmdLine, strlen(CmdLine) + 1) ||
+	  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, IconFile, strlen(IconFile) + 1))
 	return FALSE;
 
       CurrProg = next_prog;
@@ -685,9 +684,9 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
 	    {
 	      PUT_SHORT(buffer, 0, 0x8101);
 	      PUT_SHORT(buffer, 2, seqnum);
-	      PUT_SHORT(buffer, 4, 7 + lstrlen(lpszWorkDir));
+	      PUT_SHORT(buffer, 4, 7 + strlen(lpszWorkDir));
 	      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 6) ||
-		  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszWorkDir, lstrlen(lpszWorkDir) + 1))
+		  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszWorkDir, strlen(lpszWorkDir) + 1))
 		return FALSE;
 	    }
 
@@ -729,7 +728,3 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
 
   return TRUE;
 }
-
-/* Local Variables:    */
-/* c-file-style: "GNU" */
-/* End:                */

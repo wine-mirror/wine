@@ -44,12 +44,12 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
 
     case WM_CHILDACTIVATE:
     case WM_NCLBUTTONDOWN:
-      Globals.hActiveGroup = (HLOCAL) GetWindowLongPtr(hWnd, 0);
+      Globals.hActiveGroup = (HLOCAL)GetWindowLongPtrW(hWnd, 0);
       EnableMenuItem(Globals.hFileMenu, PM_MOVE , MF_GRAYED);
       EnableMenuItem(Globals.hFileMenu, PM_COPY , MF_GRAYED);
       break;
     }
-  return(DefMDIChildProc(hWnd, msg, wParam, lParam));
+  return DefMDIChildProcW(hWnd, msg, wParam, lParam);
 }
 
 /***********************************************************************
@@ -59,20 +59,20 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
 
 ATOM GROUP_RegisterGroupWinClass(void)
 {
-  WNDCLASS class;
+  WNDCLASSW class;
 
   class.style         = CS_HREDRAW | CS_VREDRAW;
   class.lpfnWndProc   = GROUP_GroupWndProc;
   class.cbClsExtra    = 0;
   class.cbWndExtra    = sizeof(LONG_PTR);
   class.hInstance     = Globals.hInstance;
-  class.hIcon         = LoadIcon (0, IDI_WINLOGO);
-  class.hCursor       = LoadCursor (0, IDC_ARROW);
+  class.hIcon         = LoadIconW (0, (LPWSTR)IDI_WINLOGO);
+  class.hCursor       = LoadCursorW (0, (LPWSTR)IDC_ARROW);
   class.hbrBackground = GetStockObject (WHITE_BRUSH);
   class.lpszMenuName  = 0;
   class.lpszClassName = STRING_GROUP_WIN_CLASS_NAME;
 
-  return RegisterClass(&class);
+  return RegisterClassW(&class);
 }
 
 /***********************************************************************
@@ -118,12 +118,12 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, INT nCmdShow,
 		      BOOL bSuppressShowWindow)
 {
   PROGGROUP *group, *prior;
-  MDICREATESTRUCT cs;
+  MDICREATESTRUCTW cs;
   INT    seqnum;
   HLOCAL hPrior, *p;
   HLOCAL hGroup   = LocalAlloc(LMEM_FIXED, sizeof(PROGGROUP));
-  HLOCAL hName    = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszName));
-  HLOCAL hGrpFile = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszGrpFile));
+  HLOCAL hName    = LocalAlloc(LMEM_FIXED, 1 + strlen(lpszName));
+  HLOCAL hGrpFile = LocalAlloc(LMEM_FIXED, 1 + strlen(lpszGrpFile));
   if (!hGroup || !hName || !hGrpFile)
     {
       MAIN_MessageBoxIDS(IDS_OUT_OF_MEMORY, IDS_ERROR, MB_OK);
@@ -132,8 +132,8 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, INT nCmdShow,
       if (hGrpFile) LocalFree(hGrpFile);
       return(0);
     }
-  memcpy(LocalLock(hName), lpszName, 1 + lstrlen(lpszName));
-  memcpy(LocalLock(hGrpFile), lpszGrpFile, 1 + lstrlen(lpszGrpFile));
+  memcpy(LocalLock(hName), lpszName, 1 + strlen(lpszName));
+  memcpy(LocalLock(hGrpFile), lpszGrpFile, 1 + strlen(lpszGrpFile));
 
   Globals.hActiveGroup   = hGroup;
 
@@ -169,7 +169,7 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, INT nCmdShow,
   group->hActiveProgram = 0;
 
   cs.szClass = STRING_GROUP_WIN_CLASS_NAME;
-  cs.szTitle = lpszName;
+  cs.szTitle = NULL;
   cs.hOwner  = 0;
   cs.x       = x;
   cs.y       = y;
@@ -178,9 +178,9 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, INT nCmdShow,
   cs.style   = 0;
   cs.lParam  = 0;
 
-  group->hWnd = (HWND)SendMessage(Globals.hMDIWnd, WM_MDICREATE, 0, (LPARAM)&cs);
-
-  SetWindowLongPtr(group->hWnd, 0, (LONG_PTR) hGroup);
+  group->hWnd = (HWND)SendMessageA(Globals.hMDIWnd, WM_MDICREATE, 0, (LPARAM)&cs);
+  SetWindowTextA( group->hWnd, lpszName );
+  SetWindowLongPtrW(group->hWnd, 0, (LONG_PTR) hGroup);
 
 #if 1
   if (!bSuppressShowWindow) /* FIXME shouldn't be necessary */
@@ -203,8 +203,8 @@ VOID GROUP_ModifyGroup(HLOCAL hGroup)
   PROGGROUP *group = LocalLock(hGroup);
   CHAR szName[MAX_PATHNAME_LEN];
   CHAR szFile[MAX_PATHNAME_LEN];
-  lstrcpyn(szName, LocalLock(group->hName), MAX_PATHNAME_LEN);
-  lstrcpyn(szFile, LocalLock(group->hGrpFile), MAX_PATHNAME_LEN);
+  lstrcpynA(szName, LocalLock(group->hName), MAX_PATHNAME_LEN);
+  lstrcpynA(szFile, LocalLock(group->hGrpFile), MAX_PATHNAME_LEN);
 
   if (!DIALOG_GroupAttributes(szName, szFile, MAX_PATHNAME_LEN)) return;
 
@@ -220,7 +220,7 @@ VOID GROUP_ModifyGroup(HLOCAL hGroup)
 
   /* FIXME Update progman.ini */
 
-  SetWindowText(group->hWnd, szName);
+  SetWindowTextA(group->hWnd, szName);
 }
 
 /***********************************************************************
@@ -259,7 +259,7 @@ VOID GROUP_DeleteGroup(HLOCAL hGroup)
 
   /* FIXME Update progman.ini */
 
-  SendMessage(Globals.hMDIWnd, WM_MDIDESTROY, (WPARAM)group->hWnd, 0);
+  SendMessageW(Globals.hMDIWnd, WM_MDIDESTROY, (WPARAM)group->hWnd, 0);
 
   LocalFree(group->hName);
   LocalFree(group->hGrpFile);
@@ -324,7 +324,3 @@ LPCSTR GROUP_GroupName(HLOCAL hGroup)
   group = LocalLock(hGroup);
   return(LocalLock(group->hName));
 }
-
-/* Local Variables:    */
-/* c-file-style: "GNU" */
-/* End:                */

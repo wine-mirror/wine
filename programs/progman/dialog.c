@@ -36,14 +36,14 @@ static BOOL DIALOG_Browse(HWND hDlg, LPCSTR lpszzFilter,
 			  LPSTR lpstrFile, INT nMaxFile)
 
 {
-    OPENFILENAME openfilename;
+    OPENFILENAMEA openfilename;
 
     CHAR szDir[MAX_PATH];
     CHAR szDefaultExt[] = "exe";
 
     ZeroMemory(&openfilename, sizeof(openfilename));
 
-    GetCurrentDirectory(sizeof(szDir), szDir);
+    GetCurrentDirectoryA(sizeof(szDir), szDir);
 
     openfilename.lStructSize       = sizeof(openfilename);
     openfilename.hwndOwner         = Globals.hMainWnd;
@@ -67,7 +67,7 @@ static BOOL DIALOG_Browse(HWND hDlg, LPCSTR lpszzFilter,
     openfilename.lpfnHook          = 0;
     openfilename.lpTemplateName    = 0;
 
-    return GetOpenFileName(&openfilename);
+    return GetOpenFileNameA(&openfilename);
 }
 
 /***********************************************************************
@@ -77,9 +77,9 @@ static BOOL DIALOG_Browse(HWND hDlg, LPCSTR lpszzFilter,
 
 static VOID DIALOG_AddFilterItem(LPSTR *p, UINT ids, LPCSTR filter)
 {
-  LoadString(Globals.hInstance, ids, *p, MAX_STRING_LEN);
+  LoadStringA(Globals.hInstance, ids, *p, MAX_STRING_LEN);
   *p += strlen(*p) + 1;
-  lstrcpy(*p, filter);
+  lstrcpyA(*p, filter);
   *p += strlen(*p) + 1;
   **p = '\0';
 }
@@ -163,15 +163,8 @@ static INT_PTR CALLBACK DIALOG_NEW_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, L
  */
 INT DIALOG_New(INT nDefault)
 {
-  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_NEW_DlgProc, Globals.hInstance);
-  INT ret;
-
   New.nDefault = nDefault;
-
-  ret = DialogBox(Globals.hInstance,  STRING_NEW,
-		  Globals.hMainWnd, lpfnDlg);
-  FreeProcInstance(lpfnDlg);
-  return ret;
+  return DialogBoxW(Globals.hInstance, MAKEINTRESOURCEW(IDD_NEW), Globals.hMainWnd, DIALOG_NEW_DlgProc);
 }
 
 
@@ -194,11 +187,10 @@ static INT_PTR CALLBACK DIALOG_COPY_MOVE_DlgProc(HWND hDlg, UINT msg, WPARAM wPa
     case WM_INITDIALOG:
       /* List all group names */
       for (hGroup = GROUP_FirstGroup(); hGroup; hGroup = GROUP_NextGroup(hGroup))
-	SendDlgItemMessage(hDlg, PM_TO_GROUP, CB_ADDSTRING, 0,
-			   (LPARAM) GROUP_GroupName(hGroup));
+	SendDlgItemMessageA(hDlg, PM_TO_GROUP, CB_ADDSTRING, 0, (LPARAM)GROUP_GroupName(hGroup));
 
-      SetDlgItemText(hDlg, PM_PROGRAM,    CopyMove.lpszProgramName);
-      SetDlgItemText(hDlg, PM_FROM_GROUP, CopyMove.lpszFromGroupName);
+      SetDlgItemTextA(hDlg, PM_PROGRAM,    CopyMove.lpszProgramName);
+      SetDlgItemTextA(hDlg, PM_FROM_GROUP, CopyMove.lpszFromGroupName);
       break;
 
     case WM_COMMAND:
@@ -207,14 +199,14 @@ static INT_PTR CALLBACK DIALOG_COPY_MOVE_DlgProc(HWND hDlg, UINT msg, WPARAM wPa
 	case IDOK:
 	{
 	  /* Get selected group */
-	  INT nCurSel    = SendDlgItemMessage(hDlg, PM_TO_GROUP, CB_GETCURSEL, 0, 0);
-	  INT nLen       = SendDlgItemMessage(hDlg, PM_TO_GROUP, CB_GETLBTEXTLEN, nCurSel, 0);
+	  INT nCurSel    = SendDlgItemMessageW(hDlg, PM_TO_GROUP, CB_GETCURSEL, 0, 0);
+	  INT nLen       = SendDlgItemMessageW(hDlg, PM_TO_GROUP, CB_GETLBTEXTLEN, nCurSel, 0);
 	  HLOCAL hBuffer = LocalAlloc(LMEM_FIXED, nLen + 1);
 	  LPSTR   buffer = LocalLock(hBuffer);
 
-	  SendDlgItemMessage(hDlg, PM_TO_GROUP, CB_GETLBTEXT, nCurSel, (LPARAM)buffer);
+	  SendDlgItemMessageA(hDlg, PM_TO_GROUP, CB_GETLBTEXT, nCurSel, (LPARAM)buffer);
 	  for (hGroup = GROUP_FirstGroup(); hGroup; hGroup = GROUP_NextGroup(hGroup))
-	    if (!lstrcmp(buffer, GROUP_GroupName(hGroup))) break;
+	    if (!lstrcmpA(buffer, GROUP_GroupName(hGroup))) break;
 	  LocalFree(hBuffer);
 
 	  CopyMove.hToGroup = hGroup;
@@ -237,18 +229,15 @@ static INT_PTR CALLBACK DIALOG_COPY_MOVE_DlgProc(HWND hDlg, UINT msg, WPARAM wPa
 HLOCAL DIALOG_CopyMove(LPCSTR lpszProgramName, LPCSTR lpszFromGroupName,
 		     BOOL bMove)
 {
-  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_COPY_MOVE_DlgProc, Globals.hInstance);
   INT ret;
 
   CopyMove.lpszProgramName   = lpszProgramName;
   CopyMove.lpszFromGroupName = lpszFromGroupName;
   CopyMove.hToGroup          = 0;
 
-  ret = DialogBox(Globals.hInstance,
-		  bMove ? STRING_MOVE : STRING_COPY,
-		  Globals.hMainWnd, lpfnDlg);
-  FreeProcInstance(lpfnDlg);
-
+  ret = DialogBoxW(Globals.hInstance,
+                   bMove ? MAKEINTRESOURCEW(IDD_MOVE) : MAKEINTRESOURCEW(IDD_COPY),
+                   Globals.hMainWnd, DIALOG_COPY_MOVE_DlgProc);
   return((ret == IDOK) ? CopyMove.hToGroup : 0);
 }
 
@@ -279,18 +268,16 @@ static INT_PTR CALLBACK DIALOG_GROUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam,
   switch (msg)
     {
     case WM_INITDIALOG:
-      SetDlgItemText(hDlg, PM_DESCRIPTION, GroupAttributes.lpszTitle);
-      SetDlgItemText(hDlg, PM_FILE, GroupAttributes.lpszGrpFile);
+      SetDlgItemTextA(hDlg, PM_DESCRIPTION, GroupAttributes.lpszTitle);
+      SetDlgItemTextA(hDlg, PM_FILE, GroupAttributes.lpszGrpFile);
       break;
 
     case WM_COMMAND:
       switch (wParam)
 	{
 	case IDOK:
-	  GetDlgItemText(hDlg, PM_DESCRIPTION, GroupAttributes.lpszTitle,
-			 GroupAttributes.nSize);
-	  GetDlgItemText(hDlg, PM_FILE, GroupAttributes.lpszGrpFile,
-			 GroupAttributes.nSize);
+	  GetDlgItemTextA(hDlg, PM_DESCRIPTION, GroupAttributes.lpszTitle, GroupAttributes.nSize);
+	  GetDlgItemTextA(hDlg, PM_FILE, GroupAttributes.lpszGrpFile, GroupAttributes.nSize);
 	  EndDialog(hDlg, IDOK);
 	  return TRUE;
 
@@ -308,16 +295,13 @@ static INT_PTR CALLBACK DIALOG_GROUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam,
  */
 BOOL DIALOG_GroupAttributes(LPSTR lpszTitle, LPSTR lpszGrpFile, INT nSize)
 {
-  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_GROUP_DlgProc, Globals.hInstance);
   INT ret;
 
   GroupAttributes.nSize       = nSize;
   GroupAttributes.lpszTitle   = lpszTitle;
   GroupAttributes.lpszGrpFile = lpszGrpFile;
 
-  ret = DialogBox(Globals.hInstance,  STRING_GROUP,
-		  Globals.hMainWnd, lpfnDlg);
-  FreeProcInstance(lpfnDlg);
+  ret = DialogBoxW(Globals.hInstance, MAKEINTRESOURCEW(IDD_GROUP), Globals.hMainWnd, DIALOG_GROUP_DlgProc);
   return(ret == IDOK);
 }
 
@@ -339,11 +323,11 @@ static INT_PTR CALLBACK DIALOG_SYMBOL_DlgProc(HWND hDlg, UINT msg, WPARAM wParam
   switch (msg)
     {
     case WM_INITDIALOG:
-      SetDlgItemText(hDlg, PM_ICON_FILE, Symbol.lpszIconFile);
-      SendDlgItemMessage(hDlg, PM_SYMBOL_LIST, CB_SETITEMHEIGHT, 0, (LPARAM) 32);
-      SendDlgItemMessage(hDlg, PM_SYMBOL_LIST, CB_ADDSTRING, 0, (LPARAM)*Symbol.lphIcon);
-      SendDlgItemMessage(hDlg, PM_SYMBOL_LIST, CB_ADDSTRING, 0, (LPARAM)Globals.hDefaultIcon);
-      SendDlgItemMessage(hDlg, PM_SYMBOL_LIST, CB_SETCURSEL, 0, 0);
+      SetDlgItemTextA(hDlg, PM_ICON_FILE, Symbol.lpszIconFile);
+      SendDlgItemMessageA(hDlg, PM_SYMBOL_LIST, CB_SETITEMHEIGHT, 0, (LPARAM) 32);
+      SendDlgItemMessageA(hDlg, PM_SYMBOL_LIST, CB_ADDSTRING, 0, (LPARAM)*Symbol.lphIcon);
+      SendDlgItemMessageA(hDlg, PM_SYMBOL_LIST, CB_ADDSTRING, 0, (LPARAM)Globals.hDefaultIcon);
+      SendDlgItemMessageA(hDlg, PM_SYMBOL_LIST, CB_SETCURSEL, 0, 0);
       return TRUE;
 
     case WM_MEASUREITEM:
@@ -369,7 +353,7 @@ static INT_PTR CALLBACK DIALOG_SYMBOL_DlgProc(HWND hDlg, UINT msg, WPARAM wParam
 	    CHAR filename[MAX_PATHNAME_LEN];
 	    filename[0] = 0;
 	    if (DIALOG_BrowseSymbols(hDlg, filename, sizeof(filename)))
-	      SetDlgItemText(hDlg, PM_ICON_FILE, filename);
+	      SetDlgItemTextA(hDlg, PM_ICON_FILE, filename);
 	    return TRUE;
 	  }
 
@@ -379,11 +363,11 @@ static INT_PTR CALLBACK DIALOG_SYMBOL_DlgProc(HWND hDlg, UINT msg, WPARAM wParam
 
 	case IDOK:
 	  {
-	    INT nCurSel = SendDlgItemMessage(hDlg, PM_SYMBOL_LIST, CB_GETCURSEL, 0, 0);
+	    INT nCurSel = SendDlgItemMessageA(hDlg, PM_SYMBOL_LIST, CB_GETCURSEL, 0, 0);
 
-	    GetDlgItemText(hDlg, PM_ICON_FILE, Symbol.lpszIconFile, Symbol.nSize);
+	    GetDlgItemTextA(hDlg, PM_ICON_FILE, Symbol.lpszIconFile, Symbol.nSize);
 
-	    *Symbol.lphIcon = (HICON)SendDlgItemMessage(hDlg, PM_SYMBOL_LIST,
+	    *Symbol.lphIcon = (HICON)SendDlgItemMessageA(hDlg, PM_SYMBOL_LIST,
 							CB_GETITEMDATA,
 							(WPARAM) nCurSel, 0);
 #if 0
@@ -409,16 +393,12 @@ static INT_PTR CALLBACK DIALOG_SYMBOL_DlgProc(HWND hDlg, UINT msg, WPARAM wParam
 static VOID DIALOG_Symbol(HICON *lphIcon, LPSTR lpszIconFile,
 		   INT *lpnIconIndex, INT nSize)
 {
-  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_SYMBOL_DlgProc, Globals.hInstance);
-
   Symbol.nSize = nSize;
   Symbol.lpszIconFile = lpszIconFile;
   Symbol.lphIcon = lphIcon;
   Symbol.lpnIconIndex = lpnIconIndex;
 
-  DialogBox(Globals.hInstance, STRING_SYMBOL,
-	    Globals.hMainWnd, lpfnDlg);
-  FreeProcInstance(lpfnDlg);
+  DialogBoxW(Globals.hInstance, MAKEINTRESOURCEW(IDD_SYMBOL), Globals.hMainWnd, DIALOG_SYMBOL_DlgProc);
 }
 
 
@@ -443,19 +423,18 @@ static INT_PTR CALLBACK DIALOG_PROGRAM_DlgProc(HWND hDlg, UINT msg, WPARAM wPara
   switch (msg)
     {
     case WM_INITDIALOG:
-      SetDlgItemText(hDlg, PM_DESCRIPTION, ProgramAttributes.lpszTitle);
-      SetDlgItemText(hDlg, PM_COMMAND_LINE, ProgramAttributes.lpszCmdLine);
-      SetDlgItemText(hDlg, PM_DIRECTORY, ProgramAttributes.lpszWorkDir);
+      SetDlgItemTextA(hDlg, PM_DESCRIPTION, ProgramAttributes.lpszTitle);
+      SetDlgItemTextA(hDlg, PM_COMMAND_LINE, ProgramAttributes.lpszCmdLine);
+      SetDlgItemTextA(hDlg, PM_DIRECTORY, ProgramAttributes.lpszWorkDir);
       if (!*ProgramAttributes.lpnHotKey)
 	{
-	  LoadString(Globals.hInstance, IDS_NO_HOT_KEY, buffer, sizeof(buffer));
-	  SetDlgItemText(hDlg, PM_HOT_KEY, buffer);
+	  LoadStringA(Globals.hInstance, IDS_NO_HOT_KEY, buffer, sizeof(buffer));
+	  SetDlgItemTextA(hDlg, PM_HOT_KEY, buffer);
 	}
 
       CheckDlgButton(hDlg, PM_SYMBOL,
 		     (*ProgramAttributes.lpnCmdShow == SW_SHOWMINIMIZED));
-      SendDlgItemMessage(hDlg, PM_ICON, STM_SETICON,
-			 (WPARAM) ProgramAttributes.hTmpIcon, 0);
+      SendDlgItemMessageA(hDlg, PM_ICON, STM_SETICON, (WPARAM)ProgramAttributes.hTmpIcon, 0);
       break;
 
     case WM_COMMAND:
@@ -470,7 +449,7 @@ static INT_PTR CALLBACK DIALOG_PROGRAM_DlgProc(HWND hDlg, UINT msg, WPARAM wPara
 	    CHAR filename[MAX_PATHNAME_LEN];
 	    filename[0] = 0;
 	    if (DIALOG_BrowsePrograms(hDlg, filename, sizeof(filename)))
-	      SetDlgItemText(hDlg, PM_COMMAND_LINE, filename);
+	      SetDlgItemTextA(hDlg, PM_COMMAND_LINE, filename);
 	    return TRUE;
 	  }
 
@@ -481,19 +460,18 @@ static INT_PTR CALLBACK DIALOG_PROGRAM_DlgProc(HWND hDlg, UINT msg, WPARAM wPara
 			  &ProgramAttributes.nTmpIconIndex,
 			  MAX_PATHNAME_LEN);
 
-	    SendDlgItemMessage(hDlg, PM_ICON, STM_SETICON,
-			       (WPARAM) ProgramAttributes.hTmpIcon, 0);
+	    SendDlgItemMessageA(hDlg, PM_ICON, STM_SETICON, (WPARAM)ProgramAttributes.hTmpIcon, 0);
 	    return TRUE;
 	  }
 
 	case IDOK:
-	  GetDlgItemText(hDlg, PM_DESCRIPTION,
+	  GetDlgItemTextA(hDlg, PM_DESCRIPTION,
 			 ProgramAttributes.lpszTitle,
 			 ProgramAttributes.nSize);
-	  GetDlgItemText(hDlg, PM_COMMAND_LINE,
+	  GetDlgItemTextA(hDlg, PM_COMMAND_LINE,
 			 ProgramAttributes.lpszCmdLine,
 			 ProgramAttributes.nSize);
-	  GetDlgItemText(hDlg, PM_DIRECTORY,
+	  GetDlgItemTextA(hDlg, PM_DIRECTORY,
 			 ProgramAttributes.lpszWorkDir,
 			 ProgramAttributes.nSize);
 
@@ -505,9 +483,9 @@ static INT_PTR CALLBACK DIALOG_PROGRAM_DlgProc(HWND hDlg, UINT msg, WPARAM wPara
 #endif
 	      *ProgramAttributes.lphIcon = ProgramAttributes.hTmpIcon;
 	      *ProgramAttributes.lpnIconIndex = ProgramAttributes.nTmpIconIndex;
-	      lstrcpyn(ProgramAttributes.lpszIconFile,
-		       ProgramAttributes.lpszTmpIconFile,
-		       ProgramAttributes.nSize);
+	      lstrcpynA(ProgramAttributes.lpszIconFile,
+                        ProgramAttributes.lpszTmpIconFile,
+                        ProgramAttributes.nSize);
 	    }
 
 	  *ProgramAttributes.lpnCmdShow =
@@ -535,7 +513,6 @@ BOOL DIALOG_ProgramAttributes(LPSTR lpszTitle, LPSTR lpszCmdLine,
 			      INT *lpnHotKey, INT *lpnCmdShow, INT nSize)
 {
   CHAR szTmpIconFile[MAX_PATHNAME_LEN];
-  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_PROGRAM_DlgProc, Globals.hInstance);
   INT ret;
 
   ProgramAttributes.nSize = nSize;
@@ -555,12 +532,9 @@ BOOL DIALOG_ProgramAttributes(LPSTR lpszTitle, LPSTR lpszCmdLine,
 #endif
   ProgramAttributes.nTmpIconIndex = *lpnIconIndex;
   ProgramAttributes.lpszTmpIconFile = szTmpIconFile;
-  lstrcpyn(ProgramAttributes.lpszTmpIconFile, lpszIconFile, MAX_PATHNAME_LEN);
+  lstrcpynA(ProgramAttributes.lpszTmpIconFile, lpszIconFile, MAX_PATHNAME_LEN);
 
-  ret = DialogBox(Globals.hInstance,  STRING_PROGRAM,
-		  Globals.hMainWnd, lpfnDlg);
-  FreeProcInstance(lpfnDlg);
-
+  ret = DialogBoxW(Globals.hInstance, MAKEINTRESOURCEW(IDD_PROGRAM), Globals.hMainWnd, DIALOG_PROGRAM_DlgProc);
   return(ret == IDOK);
 }
 
@@ -586,7 +560,7 @@ static INT_PTR CALLBACK DIALOG_EXECUTE_DlgProc(HWND hDlg, UINT msg,
 	    CHAR filename[MAX_PATHNAME_LEN];
 	    filename[0] = 0;
 	    if (DIALOG_BrowsePrograms(hDlg, filename, sizeof(filename)))
-	      SetDlgItemText(hDlg, PM_COMMAND, filename);
+	      SetDlgItemTextA(hDlg, PM_COMMAND, filename);
 	    return TRUE;
 	  }
 
@@ -597,7 +571,7 @@ static INT_PTR CALLBACK DIALOG_EXECUTE_DlgProc(HWND hDlg, UINT msg,
 	case IDOK:
 	  {
 	    CHAR cmdline[MAX_PATHNAME_LEN];
-	    GetDlgItemText(hDlg, PM_COMMAND, cmdline, sizeof(cmdline));
+	    GetDlgItemTextA(hDlg, PM_COMMAND, cmdline, sizeof(cmdline));
 
 	    WinExec(cmdline, IsDlgButtonChecked(hDlg, PM_SYMBOL) ?
 		    SW_SHOWMINIMIZED : SW_SHOWNORMAL);
@@ -622,11 +596,5 @@ static INT_PTR CALLBACK DIALOG_EXECUTE_DlgProc(HWND hDlg, UINT msg,
 
 VOID DIALOG_Execute(void)
 {
-  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_EXECUTE_DlgProc, Globals.hInstance);
-  DialogBox(Globals.hInstance, STRING_EXECUTE, Globals.hMainWnd, lpfnDlg);
-  FreeProcInstance(lpfnDlg);
+    DialogBoxW(Globals.hInstance, MAKEINTRESOURCEW(IDD_EXECUTE), Globals.hMainWnd, DIALOG_EXECUTE_DlgProc);
 }
-
-/* Local Variables:    */
-/* c-file-style: "GNU" */
-/* End:                */

@@ -1,5 +1,6 @@
 MODULE    = progman.exe
 APPMODE   = -mwindows
+EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 IMPORTS   = shell32 comdlg32 user32 gdi32
 
 C_SRCS = \

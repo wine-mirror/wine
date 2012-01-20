@@ -35,7 +35,7 @@ static LRESULT CALLBACK PROGRAM_ProgramWndProc(HWND hWnd, UINT msg, WPARAM wPara
     {
     case WM_NCLBUTTONDOWN:
       {
-	HLOCAL  hProgram = (HLOCAL) GetWindowLongPtr(hWnd, 0);
+	HLOCAL  hProgram = (HLOCAL) GetWindowLongPtrW(hWnd, 0);
 	PROGRAM *program = LocalLock(hProgram);
 	PROGGROUP   *group   = LocalLock(program->hGroup);
 	group->hActiveProgram = hProgram;
@@ -45,7 +45,7 @@ static LRESULT CALLBACK PROGRAM_ProgramWndProc(HWND hWnd, UINT msg, WPARAM wPara
       }
     case WM_NCLBUTTONDBLCLK:
       {
-	PROGRAM_ExecuteProgram((HLOCAL) GetWindowLongPtr(hWnd, 0));
+	PROGRAM_ExecuteProgram((HLOCAL) GetWindowLongPtrW(hWnd, 0));
 	return(0);
       }
 
@@ -56,14 +56,14 @@ static LRESULT CALLBACK PROGRAM_ProgramWndProc(HWND hWnd, UINT msg, WPARAM wPara
 	PAINTSTRUCT      ps;
 	HDC              hdc;
 	hdc     = BeginPaint(hWnd,&ps);
-	program = LocalLock((HLOCAL) GetWindowLongPtr(hWnd, 0));
+	program = LocalLock((HLOCAL) GetWindowLongPtrW(hWnd, 0));
 	if (program->hIcon)
 	  DrawIcon(hdc, 0, 0, program->hIcon);
 	EndPaint(hWnd,&ps);
 	break;
       }
     }
-  return(DefWindowProc(hWnd, msg, wParam, lParam));
+  return DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
 /***********************************************************************
@@ -73,7 +73,7 @@ static LRESULT CALLBACK PROGRAM_ProgramWndProc(HWND hWnd, UINT msg, WPARAM wPara
 
 ATOM PROGRAM_RegisterProgramWinClass(void)
 {
-  WNDCLASS class;
+  WNDCLASSW class;
 
   class.style         = CS_HREDRAW | CS_VREDRAW;
   class.lpfnWndProc   = PROGRAM_ProgramWndProc;
@@ -81,12 +81,12 @@ ATOM PROGRAM_RegisterProgramWinClass(void)
   class.cbWndExtra    = sizeof(LONG_PTR);
   class.hInstance     = Globals.hInstance;
   class.hIcon         = 0;
-  class.hCursor       = LoadCursor (0, IDC_ARROW);
+  class.hCursor       = LoadCursorW (0, (LPWSTR)IDC_ARROW);
   class.hbrBackground = GetStockObject (WHITE_BRUSH);
   class.lpszMenuName  = 0;
   class.lpszClassName = STRING_PROGRAM_WIN_CLASS_NAME;
 
-  return RegisterClass(&class);
+  return RegisterClassW(&class);
 }
 
 /***********************************************************************
@@ -110,7 +110,7 @@ VOID PROGRAM_NewProgram(HLOCAL hGroup)
 				&nCmdShow, MAX_PATHNAME_LEN))
     return;
 
-  if (!hIcon) hIcon = LoadIcon(0, IDI_WINLOGO);
+  if (!hIcon) hIcon = LoadIconW(0, (LPWSTR)IDI_WINLOGO);
 
 
   if (!PROGRAM_AddProgram(hGroup, hIcon, szName, 0, 0, szCmdLine, szIconFile,
@@ -133,10 +133,10 @@ VOID PROGRAM_ModifyProgram(HLOCAL hProgram)
   CHAR szIconFile[MAX_PATHNAME_LEN];
   CHAR szWorkDir[MAX_PATHNAME_LEN];
 
-  lstrcpyn(szName, LocalLock(program->hName), MAX_PATHNAME_LEN);
-  lstrcpyn(szCmdLine, LocalLock(program->hCmdLine), MAX_PATHNAME_LEN);
-  lstrcpyn(szIconFile, LocalLock(program->hIconFile), MAX_PATHNAME_LEN);
-  lstrcpyn(szWorkDir, LocalLock(program->hWorkDir), MAX_PATHNAME_LEN);
+  lstrcpynA(szName, LocalLock(program->hName), MAX_PATHNAME_LEN);
+  lstrcpynA(szCmdLine, LocalLock(program->hCmdLine), MAX_PATHNAME_LEN);
+  lstrcpynA(szIconFile, LocalLock(program->hIconFile), MAX_PATHNAME_LEN);
+  lstrcpynA(szWorkDir, LocalLock(program->hWorkDir), MAX_PATHNAME_LEN);
 
   if (!DIALOG_ProgramAttributes(szName, szCmdLine, szWorkDir, szIconFile,
 				&program->hIcon, &program->nIconIndex,
@@ -149,7 +149,7 @@ VOID PROGRAM_ModifyProgram(HLOCAL hProgram)
   MAIN_ReplaceString(&program->hIconFile, szIconFile);
   MAIN_ReplaceString(&program->hWorkDir, szWorkDir);
 
-  SetWindowText(program->hWnd, szName);
+  SetWindowTextA(program->hWnd, szName);
   UpdateWindow(program->hWnd);
 
   GRPFILE_WriteGroupFile(program->hGroup);
@@ -171,10 +171,10 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
   PROGRAM *program;
   HLOCAL hPrior, *p;
   HLOCAL hProgram  = LocalAlloc(LMEM_FIXED, sizeof(PROGRAM));
-  HLOCAL hName     = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszName));
-  HLOCAL hCmdLine  = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszCmdLine));
-  HLOCAL hIconFile = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszIconFile));
-  HLOCAL hWorkDir  = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszWorkDir));
+  HLOCAL hName     = LocalAlloc(LMEM_FIXED, 1 + strlen(lpszName));
+  HLOCAL hCmdLine  = LocalAlloc(LMEM_FIXED, 1 + strlen(lpszCmdLine));
+  HLOCAL hIconFile = LocalAlloc(LMEM_FIXED, 1 + strlen(lpszIconFile));
+  HLOCAL hWorkDir  = LocalAlloc(LMEM_FIXED, 1 + strlen(lpszWorkDir));
   if (!hProgram || !hName || !hCmdLine || !hIconFile || !hWorkDir)
     {
       MAIN_MessageBoxIDS(IDS_OUT_OF_MEMORY, IDS_ERROR, MB_OK);
@@ -185,10 +185,10 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
       if (hWorkDir)  LocalFree(hWorkDir);
       return(0);
     }
-  memcpy(LocalLock(hName),     lpszName,     1 + lstrlen(lpszName));
-  memcpy(LocalLock(hCmdLine),  lpszCmdLine,  1 + lstrlen(lpszCmdLine));
-  memcpy(LocalLock(hIconFile), lpszIconFile, 1 + lstrlen(lpszIconFile));
-  memcpy(LocalLock(hWorkDir),  lpszWorkDir,  1 + lstrlen(lpszWorkDir));
+  memcpy(LocalLock(hName),     lpszName,     1 + strlen(lpszName));
+  memcpy(LocalLock(hCmdLine),  lpszCmdLine,  1 + strlen(lpszCmdLine));
+  memcpy(LocalLock(hIconFile), lpszIconFile, 1 + strlen(lpszIconFile));
+  memcpy(LocalLock(hWorkDir),  lpszWorkDir,  1 + strlen(lpszWorkDir));
 
   group->hActiveProgram  = hProgram;
 
@@ -215,12 +215,13 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
   program->nHotKey    = nHotKey;
 
   program->hWnd =
-    CreateWindow (STRING_PROGRAM_WIN_CLASS_NAME, lpszName,
+    CreateWindowW(STRING_PROGRAM_WIN_CLASS_NAME, NULL,
 		  WS_CHILD | WS_CAPTION,
 		  x, y, CW_USEDEFAULT, CW_USEDEFAULT,
 		  group->hWnd, 0, Globals.hInstance, 0);
 
-  SetWindowLongPtr(program->hWnd, 0, (LONG_PTR) hProgram);
+  SetWindowTextA(program->hWnd, lpszName);
+  SetWindowLongPtrW(program->hWnd, 0, (LONG_PTR) hProgram);
 
   ShowWindow (program->hWnd, SW_SHOWMINIMIZED);
   SetWindowPos (program->hWnd, 0, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
@@ -367,7 +368,3 @@ LPCSTR PROGRAM_ProgramName(HLOCAL hProgram)
   program = LocalLock(hProgram);
   return(LocalLock(program->hName));
 }
-
-/* Local Variables:    */
-/* c-file-style: "GNU" */
-/* End:                */

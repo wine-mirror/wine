@@ -190,23 +190,24 @@ VOID   DIALOG_Execute(void);
 VOID   STRING_LoadMenus(VOID);
 
 /* Class names */
-extern CHAR STRING_MAIN_WIN_CLASS_NAME[];
-extern CHAR STRING_MDI_WIN_CLASS_NAME[];
-extern CHAR STRING_GROUP_WIN_CLASS_NAME[];
-extern CHAR STRING_PROGRAM_WIN_CLASS_NAME[];
+extern WCHAR STRING_MAIN_WIN_CLASS_NAME[];
+extern WCHAR STRING_MDI_WIN_CLASS_NAME[];
+extern WCHAR STRING_GROUP_WIN_CLASS_NAME[];
+extern WCHAR STRING_PROGRAM_WIN_CLASS_NAME[];
 
 /* Resource names */
-extern CHAR STRING_ACCEL[];
-extern CHAR STRING_MAIN[];
-extern CHAR STRING_NEW[];
-extern CHAR STRING_OPEN[];
-extern CHAR STRING_MOVE[];
-extern CHAR STRING_COPY[];
-extern CHAR STRING_DELETE[];
-extern CHAR STRING_GROUP[];
-extern CHAR STRING_PROGRAM[];
-extern CHAR STRING_SYMBOL[];
-extern CHAR STRING_EXECUTE[];
+#define IDD_MAIN      1
+#define IDD_NEW       2
+#define IDD_OPEN      3
+#define IDD_MOVE      4
+#define IDD_COPY      5
+#define IDD_DELETE    6
+#define IDD_GROUP     7
+#define IDD_PROGRAM   8
+#define IDD_SYMBOL    9
+#define IDD_EXECUTE   10
+
+#define IDA_ACCEL     1
 
 /* Stringtable index */
 #define IDS_PROGRAM_MANAGER            0x02
