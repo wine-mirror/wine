@@ -939,7 +939,8 @@ static HRESULT WINAPI BPInternetProtocolSink_Switch(IInternetProtocolSink *iface
         return E_OUTOFMEMORY;
     memcpy(data, pProtocolData, sizeof(PROTOCOLDATA));
 
-    if(!do_direct_notif(This)) {
+    if((This->pi&PI_APARTMENTTHREADED && pProtocolData->grfFlags&PI_FORCE_ASYNC)
+            || !do_direct_notif(This)) {
         switch_task_t *task;
 
         task = heap_alloc(sizeof(switch_task_t));
