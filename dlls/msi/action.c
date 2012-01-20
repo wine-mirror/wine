@@ -4456,7 +4456,7 @@ static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
     MSIFILE *file;
     MSIRECORD *uirow;
 
-    filename = MSI_RecordGetString(row,1);
+    filename = MSI_RecordGetString( row, 1 );
     file = msi_get_loaded_file( package, filename );
     if (!file)
     {
@@ -4474,7 +4474,7 @@ static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
     register_dll( file->TargetPath, FALSE );
 
     uirow = MSI_CreateRecord( 2 );
-    MSI_RecordSetStringW( uirow, 1, filename );
+    MSI_RecordSetStringW( uirow, 1, file->File );
     MSI_RecordSetStringW( uirow, 2, file->Component->Directory );
     msi_ui_actiondata( package, szSelfRegModules, uirow );
     msiobj_release( &uirow->hdr );
@@ -4524,7 +4524,7 @@ static UINT ITERATE_SelfUnregModules( MSIRECORD *row, LPVOID param )
     register_dll( file->TargetPath, TRUE );
 
     uirow = MSI_CreateRecord( 2 );
-    MSI_RecordSetStringW( uirow, 1, filename );
+    MSI_RecordSetStringW( uirow, 1, file->File );
     MSI_RecordSetStringW( uirow, 2, file->Component->Directory );
     msi_ui_actiondata( package, szSelfUnregModules, uirow );
     msiobj_release( &uirow->hdr );
