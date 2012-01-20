@@ -2533,12 +2533,12 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 
         /* Attach the file extension with file name*/
         ext = PathFindExtensionW(lpstrPathAndFile);
-        if (! *ext)
+        if (! *ext && fodInfos->defext)
         {
             /* if no extension is specified with file name, then */
             /* attach the extension from file filter or default one */
             
-            const WCHAR *filterExt = NULL;
+            WCHAR *filterExt = NULL;
             LPWSTR lpstrFilter = NULL;
             static const WCHAR szwDot[] = {'.',0};
             int PathLength = lstrlenW(lpstrPathAndFile);
@@ -2548,15 +2548,39 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
                                              fodInfos->ofnInfos->nFilterIndex-1);
 
             if (lpstrFilter != (LPWSTR)CB_ERR)  /* control is not empty */
-                filterExt = PathFindExtensionW(lpstrFilter);
+            {
+                WCHAR* filterAtSemicolon;
+                filterExt = HeapAlloc(GetProcessHeap(), 0, lstrlenW(lpstrFilter) * sizeof(WCHAR) + sizeof(WCHAR));
+                strcpyW(filterExt, lpstrFilter);
 
-            if ( filterExt && *filterExt ) /* attach the file extension from file type filter*/
-                filterExt = filterExt + 1;
-            else if ( fodInfos->defext ) /* attach the default file extension*/
-                filterExt = fodInfos->defext;
+                /* if a semicolon-separated list of file extensions was given, do not include the
+                   semicolon or anything after it in the extension.
+                   example: if filterExt was "*.abc;*.def", it will become "*.abc" */
+                filterAtSemicolon = strchrW(filterExt, ';');
+                if (filterAtSemicolon)
+                {
+                    filterAtSemicolon[0] = '\0';
+                }
 
-            /* If extension contains a glob, ignore it */
-            if ( filterExt && !strchrW(filterExt, '*') && !strchrW(filterExt, '?') )
+                /* strip the * or anything else from the extension, "*.abc" becomes "abc" */
+                strcpyW(filterExt, PathFindExtensionW(filterExt) + 1);
+
+                /* if the extension contains a glob, ignore it */
+                if (strchrW(filterExt, '*') || strchrW(filterExt, '?'))
+                {
+                    HeapFree(GetProcessHeap(), 0, filterExt);
+                    filterExt = NULL;
+                }
+            }
+
+            if (!filterExt)
+            {
+                /* use the default file extension */
+                filterExt = HeapAlloc(GetProcessHeap(), 0, lstrlenW(fodInfos->defext) * sizeof(WCHAR) + sizeof(WCHAR));
+                strcpyW(filterExt, fodInfos->defext);
+            }
+
+            if (*filterExt) /* ignore filterExt="" */
             {
                 /* Attach the dot*/
                 lstrcatW(lpstrPathAndFile, szwDot);
@@ -2564,20 +2588,19 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
                 lstrcatW(lpstrPathAndFile, filterExt );
             }
 
+            HeapFree(GetProcessHeap(), 0, filterExt);
+
             /* In Open dialog: if file does not exist try without extension */
             if (!(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG) && !PathFileExistsW(lpstrPathAndFile))
                   lpstrPathAndFile[PathLength] = '\0';
-        }
 
-	if (fodInfos->defext) /* add default extension */
-	{
-	  /* Set/clear the output OFN_EXTENSIONDIFFERENT flag */
-	  if (*ext)
-	    ext++;
-	  if (!lstrcmpiW(fodInfos->defext, ext))
-	    fodInfos->ofnInfos->Flags &= ~OFN_EXTENSIONDIFFERENT;
-	  else
-	    fodInfos->ofnInfos->Flags |= OFN_EXTENSIONDIFFERENT;
+            /* Set/clear the output OFN_EXTENSIONDIFFERENT flag */
+            if (*ext)
+                ext++;
+            if (!lstrcmpiW(fodInfos->defext, ext))
+                fodInfos->ofnInfos->Flags &= ~OFN_EXTENSIONDIFFERENT;
+            else
+                fodInfos->ofnInfos->Flags |= OFN_EXTENSIONDIFFERENT;
 	}
 
 	/* In Save dialog: check if the file already exists */
