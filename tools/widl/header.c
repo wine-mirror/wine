@@ -1366,7 +1366,7 @@ void write_header(const statement_list_t *stmts)
   fprintf(header, "#include <rpc.h>\n" );
   fprintf(header, "#include <rpcndr.h>\n\n" );
 
-  fprintf(header, "#if !defined(COM_NO_WINDOWS_H) && !defined(__WINESRC__)\n");
+  fprintf(header, "#ifndef COM_NO_WINDOWS_H\n");
   fprintf(header, "#include <windows.h>\n");
   fprintf(header, "#include <ole2.h>\n");
   fprintf(header, "#endif\n\n");
