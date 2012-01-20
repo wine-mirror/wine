@@ -178,7 +178,7 @@ static void report_error(int code)
                 len = snprintf(NULL, 0, s, strerror(errno));
                 buffer = HeapAlloc(GetProcessHeap(), 0, len + 1);
                 snprintf(buffer, len, s, strerror(errno));
-                MessageBox(NULL, s, "", MB_OK | MB_ICONEXCLAMATION);
+                MessageBoxA(NULL, s, "", MB_OK | MB_ICONEXCLAMATION);
                 HeapFree(GetProcessHeap(), 0, buffer);
             }
             else
@@ -188,12 +188,12 @@ static void report_error(int code)
             break;
 
         case NO_MORE_LETTERS:
-            if (gui_mode) MessageBox(NULL, "No more letters are available to auto-detect available drives with.", "", MB_OK | MB_ICONEXCLAMATION);
+            if (gui_mode) MessageBoxA(NULL, "No more letters are available to auto-detect available drives with.", "", MB_OK | MB_ICONEXCLAMATION);
             fprintf(stderr, "winecfg: no more available letters while scanning /etc/fstab\n");
             break;
 
         case NO_ROOT:
-            if (gui_mode) MessageBox(NULL, "Could not ensure that the root directory was mapped.\n\n"
+            if (gui_mode) MessageBoxA(NULL, "Could not ensure that the root directory was mapped.\n\n"
                                      "This can happen if you run out of drive letters. "
                                      "It's important to have the root directory mapped, otherwise Wine"
                                      "will not be able to always find the programs you want to run. "
@@ -204,13 +204,13 @@ static void report_error(int code)
 
         case NO_DRIVE_C:
             if (gui_mode)
-                MessageBox(NULL, "No virtual drive C mapped!\n", "", MB_OK | MB_ICONEXCLAMATION);
+                MessageBoxA(NULL, "No virtual drive C mapped!\n", "", MB_OK | MB_ICONEXCLAMATION);
             else
                 fprintf(stderr, "winecfg: no drive_c directory\n");
             break;
         case NO_HOME:
             if (gui_mode)
-                MessageBox(NULL, "Could not ensure that your home directory was mapped.\n\n"
+                MessageBoxA(NULL, "Could not ensure that your home directory was mapped.\n\n"
                                  "This can happen if you run out of drive letters. "
                                  "Try unmapping a drive letter then try again.", "",
                                  MB_OK | MB_ICONEXCLAMATION);
@@ -292,7 +292,7 @@ static void ensure_drive_c_is_mapped(void)
     if (stat(drive_c_dir, &buf) == 0)
     {
         WCHAR label[64];
-        LoadStringW (GetModuleHandle (NULL), IDS_SYSTEM_DRIVE_LABEL, label,
+        LoadStringW (GetModuleHandleW(NULL), IDS_SYSTEM_DRIVE_LABEL, label,
                      sizeof(label)/sizeof(label[0]));
         add_drive('C', "../drive_c", NULL, label, 0, DRIVE_FIXED);
     }

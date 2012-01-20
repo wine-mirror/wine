@@ -152,9 +152,9 @@ static inline WCHAR *strdupU2W(const char *unix_str)
 static inline char *get_text(HWND dialog, WORD id)
 {
     HWND item = GetDlgItem(dialog, id);
-    int len = GetWindowTextLength(item) + 1;
+    int len = GetWindowTextLengthA(item) + 1;
     char *result = len ? HeapAlloc(GetProcessHeap(), 0, len) : NULL;
-    if (!result || GetWindowText(item, result, len) == 0) return NULL;
+    if (!result || GetWindowTextA(item, result, len) == 0) return NULL;
     return result;
 }
 
@@ -169,7 +169,7 @@ static inline WCHAR *get_textW(HWND dialog, WORD id)
 
 static inline void set_text(HWND dialog, WORD id, const char *text)
 {
-    SetWindowText(GetDlgItem(dialog, id), text);
+    SetWindowTextA(GetDlgItem(dialog, id), text);
 }
 
 static inline void set_textW(HWND dialog, WORD id, const WCHAR *text)

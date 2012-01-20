@@ -87,10 +87,10 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         org =   get_reg_key(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion",
                             "RegisteredOrganization", "");
 
-        SetDlgItemText(hDlg, IDC_ABT_OWNER, owner);
-        SetDlgItemText(hDlg, IDC_ABT_ORG, org);
+        SetDlgItemTextA(hDlg, IDC_ABT_OWNER, owner);
+        SetDlgItemTextA(hDlg, IDC_ABT_ORG, org);
 
-        SendMessage(GetParent(hDlg), PSM_UNCHANGED, 0, 0);
+        SendMessageW(GetParent(hDlg), PSM_UNCHANGED, 0, 0);
 
         HeapFree(GetProcessHeap(), 0, owner);
         HeapFree(GetProcessHeap(), 0, org);
@@ -111,11 +111,11 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         hWnd = GetDlgItem(hDlg, IDC_ABT_TITLE_TEXT);
         if(hWnd)
         {
-            titleFont = CreateFont(
+            static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
+            titleFont = CreateFontW(
                 -MulDiv(24, GetDeviceCaps(hDC, LOGPIXELSY), 72),
-                0, 0, 0, 0, FALSE, 0, 0, 0, 0, 0, 0, 0,
-                "Tahoma");
-            SendMessage(hWnd, WM_SETFONT, (WPARAM)titleFont, TRUE);
+                0, 0, 0, 0, FALSE, 0, 0, 0, 0, 0, 0, 0, tahomaW);
+            SendMessageW(hWnd, WM_SETFONT, (WPARAM)titleFont, TRUE);
             SetWindowTextA(hWnd, PACKAGE_NAME);
         }
         SetDlgItemTextA(hDlg, IDC_ABT_PANEL_TEXT, PACKAGE_VERSION);
@@ -147,7 +147,7 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
         case EN_CHANGE:
             /* enable apply button */
-            SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
+            SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
             break;
         }
         break;

@@ -139,7 +139,7 @@ static DWORD get_drive_type( char letter )
 
     sprintf(driveValue, "%c:", letter);
 
-    if (RegOpenKey(HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hKey) != ERROR_SUCCESS)
+    if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hKey) != ERROR_SUCCESS)
         WINE_TRACE("  Unable to open Software\\Wine\\Drives\n" );
     else
     {
@@ -149,10 +149,10 @@ static DWORD get_drive_type( char letter )
         if (!RegQueryValueExA( hKey, driveValue, NULL, NULL, (LPBYTE)buffer, &size ))
         {
             WINE_TRACE("Got type '%s' for %s\n", buffer, driveValue );
-            if (!lstrcmpi( buffer, "hd" )) ret = DRIVE_FIXED;
-            else if (!lstrcmpi( buffer, "network" )) ret = DRIVE_REMOTE;
-            else if (!lstrcmpi( buffer, "floppy" )) ret = DRIVE_REMOVABLE;
-            else if (!lstrcmpi( buffer, "cdrom" )) ret = DRIVE_CDROM;
+            if (!lstrcmpiA( buffer, "hd" )) ret = DRIVE_FIXED;
+            else if (!lstrcmpiA( buffer, "network" )) ret = DRIVE_REMOTE;
+            else if (!lstrcmpiA( buffer, "floppy" )) ret = DRIVE_REMOVABLE;
+            else if (!lstrcmpiA( buffer, "cdrom" )) ret = DRIVE_CDROM;
         }
         RegCloseKey(hKey);
     }
@@ -181,15 +181,15 @@ static void set_drive_label( char letter, const WCHAR *label )
 }
 
 /* set the drive serial number via a .windows-serial file */
-static void set_drive_serial( char letter, DWORD serial )
+static void set_drive_serial( WCHAR letter, DWORD serial )
 {
-    char filename[] = "a:\\.windows-serial";
+    WCHAR filename[] = {'a',':','\\','.','w','i','n','d','o','w','s','-','s','e','r','i','a','l',0};
     HANDLE hFile;
 
     filename[0] = letter;
-    WINE_TRACE("Putting serial number of %08X into file '%s'\n", serial, filename);
-    hFile = CreateFile(filename, GENERIC_WRITE, FILE_SHARE_READ, NULL,
-                       CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    WINE_TRACE("Putting serial number of %08X into file %s\n", serial, wine_dbgstr_w(filename));
+    hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+                        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile != INVALID_HANDLE_VALUE)
     {
         DWORD w;

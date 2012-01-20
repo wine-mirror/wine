@@ -136,7 +136,7 @@ static void update_comboboxes(HWND dialog)
         if (current_app) /* no explicit setting */
         {
             WINE_TRACE("setting winver combobox to default\n");
-            SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL, 0, 0);
+            SendDlgItemMessageW(dialog, IDC_WINVER, CB_SETCURSEL, 0, 0);
             return;
         }
         if (ver != -1) winver = strdupA( win_versions[ver].szVersion );
@@ -149,7 +149,7 @@ static void update_comboboxes(HWND dialog)
     {
         if (!strcasecmp (win_versions[i].szVersion, winver))
         {
-            SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL,
+            SendDlgItemMessageW(dialog, IDC_WINVER, CB_SETCURSEL,
                                 i + (current_app?1:0), 0);
             WINE_TRACE("match with %s\n", win_versions[i].szVersion);
             break;
@@ -164,20 +164,20 @@ init_comboboxes (HWND dialog)
 {
     int i;
 
-    SendDlgItemMessage(dialog, IDC_WINVER, CB_RESETCONTENT, 0, 0);
+    SendDlgItemMessageW(dialog, IDC_WINVER, CB_RESETCONTENT, 0, 0);
 
     /* add the default entries (automatic) which correspond to no setting  */
     if (current_app)
     {
         WCHAR str[256];
-        LoadStringW (GetModuleHandle (NULL), IDS_USE_GLOBAL_SETTINGS, str,
+        LoadStringW (GetModuleHandleW(NULL), IDS_USE_GLOBAL_SETTINGS, str,
             sizeof(str)/sizeof(str[0]));
         SendDlgItemMessageW (dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM)str);
     }
 
     for (i = 0; i < NB_VERSIONS; i++)
     {
-      SendDlgItemMessage (dialog, IDC_WINVER, CB_ADDSTRING,
+      SendDlgItemMessageA(dialog, IDC_WINVER, CB_ADDSTRING,
                           0, (LPARAM) win_versions[i].szDescription);
     }
 }
@@ -190,16 +190,17 @@ static void add_listview_item(HWND listview, WCHAR *text, void *association)
   item.pszText = text;
   item.cchTextMax = lstrlenW(text);
   item.lParam = (LPARAM) association;
-  item.iItem = ListView_GetItemCount(listview);
+  item.iItem = SendMessageW( listview, LVM_GETITEMCOUNT, 0, 0 );
   item.iSubItem = 0;
 
-  SendMessage(listview, LVM_INSERTITEMW, 0, (LPARAM) &item);
+  SendMessageW(listview, LVM_INSERTITEMW, 0, (LPARAM) &item);
 }
 
 /* Called when the application is initialized (cannot reinit!)  */
 static void init_appsheet(HWND dialog)
 {
   HWND listview;
+  LVITEMW item;
   HKEY key;
   int i;
   DWORD size;
@@ -211,12 +212,12 @@ static void init_appsheet(HWND dialog)
 
   /* we use the lparam field of the item so we can alter the presentation later and not change code
    * for instance, to use the tile view or to display the EXEs embedded 'display name' */
-  LoadStringW (GetModuleHandle (NULL), IDS_DEFAULT_SETTINGS, appname,
+  LoadStringW (GetModuleHandleW(NULL), IDS_DEFAULT_SETTINGS, appname,
       sizeof(appname)/sizeof(appname[0]));
   add_listview_item(listview, appname, NULL);
 
   /* because this list is only populated once, it's safe to bypass the settings list here  */
-  if (RegOpenKey(config_key, "AppDefaults", &key) == ERROR_SUCCESS)
+  if (RegOpenKeyA(config_key, "AppDefaults", &key) == ERROR_SUCCESS)
   {
       i = 0;
       size = sizeof(appname)/sizeof(appname[0]);
@@ -234,29 +235,24 @@ static void init_appsheet(HWND dialog)
   init_comboboxes(dialog);
   
   /* Select the default settings listview item  */
-  {
-      LVITEM item;
-      
-      item.iItem = 0;
-      item.iSubItem = 0;
-      item.mask = LVIF_STATE;
-      item.state = LVIS_SELECTED | LVIS_FOCUSED;
-      item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
+  item.iItem = 0;
+  item.iSubItem = 0;
+  item.mask = LVIF_STATE;
+  item.state = LVIS_SELECTED | LVIS_FOCUSED;
+  item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 
-      SendMessage(listview, LVM_SETITEM, 0, (LPARAM) &item);
-  }
-  
+  SendMessageW(listview, LVM_SETITEMW, 0, (LPARAM) &item);
 }
 
 /* there has to be an easier way than this  */
 static int get_listview_selection(HWND listview)
 {
-  int count = ListView_GetItemCount(listview);
+  int count = SendMessageW(listview, LVM_GETITEMCOUNT, 0, 0);
   int i;
-  
+
   for (i = 0; i < count; i++)
   {
-    if (ListView_GetItemState(listview, i, LVIS_SELECTED)) return i;
+      if (SendMessageW( listview, LVM_GETITEMSTATE, i, LVIS_SELECTED )) return i;
   }
 
   return -1;
@@ -266,7 +262,7 @@ static int get_listview_selection(HWND listview)
 /* called when the user selects a different application */
 static void on_selection_change(HWND dialog, HWND listview)
 {
-  LVITEM item;
+  LVITEMW item;
   WCHAR* oldapp = current_app;
 
   WINE_TRACE("()\n");
@@ -278,8 +274,8 @@ static void on_selection_change(HWND dialog, HWND listview)
   WINE_TRACE("item.iItem=%d\n", item.iItem);
   
   if (item.iItem == -1) return;
-  
-  SendMessage(listview, LVM_GETITEM, 0, (LPARAM) &item);
+
+  SendMessageW(listview, LVM_GETITEMW, 0, (LPARAM) &item);
 
   current_app = (WCHAR*) item.lParam;
 
@@ -330,9 +326,9 @@ static void on_add_app_click(HWND dialog)
 		       OFN_SHOWHELP | OFN_HIDEREADONLY | OFN_ENABLESIZING,
                        0, 0, NULL, 0, NULL };
 
-  LoadStringW (GetModuleHandle (NULL), IDS_SELECT_EXECUTABLE, selectExecutableStr,
+  LoadStringW (GetModuleHandleW(NULL), IDS_SELECT_EXECUTABLE, selectExecutableStr,
       sizeof(selectExecutableStr)/sizeof(selectExecutableStr[0]));
-  LoadStringW (GetModuleHandle (NULL), IDS_EXECUTABLE_FILTER, programsFilter,
+  LoadStringW (GetModuleHandleW(NULL), IDS_EXECUTABLE_FILTER, programsFilter,
       sizeof(programsFilter)/sizeof(programsFilter[0]));
   snprintfW( filter, MAX_PATH, filterW, programsFilter, 0, 0 );
 
@@ -348,19 +344,23 @@ static void on_add_app_click(HWND dialog)
   if (GetOpenFileNameW (&ofn))
   {
       HWND listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
-      int count = ListView_GetItemCount(listview);
+      int count = SendMessageW(listview, LVM_GETITEMCOUNT, 0, 0);
       WCHAR* new_app;
-      
+      LVITEMW item;
+
       if (list_contains_file(listview, filetitle))
           return;
-      
+
       new_app = strdupW(filetitle);
 
       WINE_TRACE("adding %s\n", wine_dbgstr_w (new_app));
-      
+
       add_listview_item(listview, new_app, new_app);
 
-      ListView_SetItemState(listview, count, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+      item.mask = LVIF_STATE;
+      item.state = LVIS_SELECTED | LVIS_FOCUSED;
+      item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
+      SendMessageW(listview, LVM_SETITEMSTATE, count, (LPARAM)&item );
 
       SetFocus(listview);
   }
@@ -384,19 +384,21 @@ static void on_remove_app_click(HWND dialog)
 
     section[strlen(section)] = '\0'; /* remove last backslash  */
     set_reg_key(config_key, section, NULL, NULL); /* delete the section  */
-    SendMessage(listview, LVM_GETITEMW, 0, (LPARAM) &item);
+    SendMessageW(listview, LVM_GETITEMW, 0, (LPARAM) &item);
     HeapFree (GetProcessHeap(), 0, (void*)item.lParam);
-    SendMessage(listview, LVM_DELETEITEM, selection, 0);
-    ListView_SetItemState(listview, selection - 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+    SendMessageW(listview, LVM_DELETEITEM, selection, 0);
+    item.mask = LVIF_STATE;
+    item.state = LVIS_SELECTED | LVIS_FOCUSED;
+    item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
+    SendMessageW(listview, LVM_SETITEMSTATE, -1, (LPARAM)&item);
 
     SetFocus(listview);
-    
-    SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);        
+    SendMessageW(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
 }
 
 static void on_winver_change(HWND dialog)
 {
-    int selection = SendDlgItemMessage(dialog, IDC_WINVER, CB_GETCURSEL, 0, 0);
+    int selection = SendDlgItemMessageW(dialog, IDC_WINVER, CB_GETCURSEL, 0, 0);
 
     if (current_app)
     {
@@ -475,7 +477,7 @@ static void on_winver_change(HWND dialog)
     }
 
     /* enable the apply button  */
-    SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
+    SendMessageW(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
 }
 
 INT_PTR CALLBACK
@@ -499,7 +501,7 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         case PSN_APPLY:
             apply();
-            SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
+            SetWindowLongPtrW(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
             break;
       }
       

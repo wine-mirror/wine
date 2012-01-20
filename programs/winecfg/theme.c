@@ -294,7 +294,7 @@ static BOOL fill_theme_list (HWND comboTheme, HWND comboColor, HWND comboSize)
     WCHAR currentSize[MAX_PATH];
     ThemeFile* theme = NULL;
 
-    LoadStringW (GetModuleHandle (NULL), IDS_NOTHEME, textNoTheme,
+    LoadStringW (GetModuleHandleW(NULL), IDS_NOTHEME, textNoTheme,
 	sizeof(textNoTheme) / sizeof(WCHAR));
 
     SendMessageW (comboTheme, CB_RESETCONTENT, 0, 0);
@@ -620,11 +620,11 @@ static void on_theme_install(HWND dialog)
   WCHAR filter[100];
   WCHAR title[100];
 
-  LoadStringW (GetModuleHandle (NULL), IDS_THEMEFILE, 
+  LoadStringW (GetModuleHandleW(NULL), IDS_THEMEFILE,
       filter, sizeof (filter) / sizeof (filter[0]) - filterMaskLen);
   memcpy (filter + lstrlenW (filter), filterMask, 
       filterMaskLen * sizeof (WCHAR));
-  LoadStringW (GetModuleHandle (NULL), IDS_THEMEFILE_SELECT, 
+  LoadStringW (GetModuleHandleW(NULL), IDS_THEMEFILE_SELECT,
       title, sizeof (title) / sizeof (title[0]));
 
   ofn.lStructSize = sizeof(OPENFILENAMEW);
@@ -663,7 +663,7 @@ static void on_theme_install(HWND dialog)
       if (lstrcmpiW(PathFindExtensionW(filetitle), themeExt)==0)
       {
           do_parse_theme(file);
-          SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
+          SendMessageW(GetParent(dialog), PSM_CHANGED, 0, 0);
           return;
       }
 
@@ -733,30 +733,30 @@ static struct ShellFolderInfo *psfiSelected = NULL;
 #define NUM_ELEMS(x) (sizeof(x)/sizeof(*(x)))
 
 static void init_shell_folder_listview_headers(HWND dialog) {
-    LVCOLUMN listColumn;
+    LVCOLUMNW listColumn;
     RECT viewRect;
-    char szShellFolder[64] = "Shell Folder";
-    char szLinksTo[64] = "Links to";
+    WCHAR szShellFolder[64] = {'S','h','e','l','l',' ','F','o','l','d','e','r',0};
+    WCHAR szLinksTo[64] = {'L','i','n','k','s',' ','t','o',0};
     int width;
 
-    LoadString(GetModuleHandle(NULL), IDS_SHELL_FOLDER, szShellFolder, sizeof(szShellFolder));
-    LoadString(GetModuleHandle(NULL), IDS_LINKS_TO, szLinksTo, sizeof(szLinksTo));
-    
+    LoadStringW(GetModuleHandleW(NULL), IDS_SHELL_FOLDER, szShellFolder, sizeof(szShellFolder)/sizeof(WCHAR));
+    LoadStringW(GetModuleHandleW(NULL), IDS_LINKS_TO, szLinksTo, sizeof(szLinksTo)/sizeof(WCHAR));
+
     GetClientRect(GetDlgItem(dialog, IDC_LIST_SFPATHS), &viewRect);
     width = (viewRect.right - viewRect.left) / 4;
 
     listColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
     listColumn.pszText = szShellFolder;
-    listColumn.cchTextMax = lstrlen(listColumn.pszText);
+    listColumn.cchTextMax = strlenW(listColumn.pszText);
     listColumn.cx = width;
 
-    SendDlgItemMessage(dialog, IDC_LIST_SFPATHS, LVM_INSERTCOLUMN, 0, (LPARAM) &listColumn);
+    SendDlgItemMessageW(dialog, IDC_LIST_SFPATHS, LVM_INSERTCOLUMNW, 0, (LPARAM) &listColumn);
 
     listColumn.pszText = szLinksTo;
-    listColumn.cchTextMax = lstrlen(listColumn.pszText);
+    listColumn.cchTextMax = strlenW(listColumn.pszText);
     listColumn.cx = viewRect.right - viewRect.left - width - 1;
 
-    SendDlgItemMessage(dialog, IDC_LIST_SFPATHS, LVM_INSERTCOLUMN, 1, (LPARAM) &listColumn);
+    SendDlgItemMessageW(dialog, IDC_LIST_SFPATHS, LVM_INSERTCOLUMNW, 1, (LPARAM) &listColumn);
 }
 
 /* Reads the currently set shell folder symbol link targets into asfiInfo. */
@@ -786,10 +786,10 @@ static void read_shell_folder_link_targets(void) {
 static void update_shell_folder_listview(HWND dialog) {
     int i;
     LVITEMW item;
-    LONG lSelected = SendDlgItemMessage(dialog, IDC_LIST_SFPATHS, LVM_GETNEXTITEM, -1,
+    LONG lSelected = SendDlgItemMessageW(dialog, IDC_LIST_SFPATHS, LVM_GETNEXTITEM, -1,
                                         MAKELPARAM(LVNI_SELECTED,0));
-    
-    SendDlgItemMessage(dialog, IDC_LIST_SFPATHS, LVM_DELETEALLITEMS, 0, 0);
+
+    SendDlgItemMessageW(dialog, IDC_LIST_SFPATHS, LVM_DELETEALLITEMS, 0, 0);
 
     for (i=0; i<NUM_ELEMS(asfiInfo); i++) {
         WCHAR buffer[MAX_PATH];
@@ -825,13 +825,13 @@ static void update_shell_folder_listview(HWND dialog) {
         item.iSubItem = 0;
         item.pszText = buffer;
         item.lParam = (LPARAM)&asfiInfo[i];
-        SendDlgItemMessage(dialog, IDC_LIST_SFPATHS, LVM_INSERTITEMW, 0, (LPARAM)&item);
+        SendDlgItemMessageW(dialog, IDC_LIST_SFPATHS, LVM_INSERTITEMW, 0, (LPARAM)&item);
 
         item.mask = LVIF_TEXT;
         item.iItem = i;
         item.iSubItem = 1;
         item.pszText = strdupU2W(asfiInfo[i].szLinkTarget);
-        SendDlgItemMessage(dialog, IDC_LIST_SFPATHS, LVM_SETITEMW, 0, (LPARAM)&item);
+        SendDlgItemMessageW(dialog, IDC_LIST_SFPATHS, LVM_SETITEMW, 0, (LPARAM)&item);
         HeapFree(GetProcessHeap(), 0, item.pszText);
     }
 
@@ -840,8 +840,7 @@ static void update_shell_folder_listview(HWND dialog) {
         item.mask = LVIF_STATE;
         item.state = LVIS_SELECTED;
         item.stateMask = LVIS_SELECTED;
-        SendDlgItemMessage(dialog, IDC_LIST_SFPATHS, LVM_SETITEMSTATE, lSelected,
-                           (LPARAM)&item);
+        SendDlgItemMessageW(dialog, IDC_LIST_SFPATHS, LVM_SETITEMSTATE, lSelected, (LPARAM)&item);
     }
 }
 
@@ -878,9 +877,9 @@ static void on_shell_folder_selection_changed(HWND hDlg, LPNMLISTVIEW lpnm) {
 static void on_shell_folder_edit_changed(HWND hDlg) {
     LVITEMW item;
     WCHAR *text = get_textW(hDlg, IDC_EDIT_SFPATH);
-    LONG iSel = SendDlgItemMessage(hDlg, IDC_LIST_SFPATHS, LVM_GETNEXTITEM, -1,
-                                   MAKELPARAM(LVNI_SELECTED,0));
-    
+    LONG iSel = SendDlgItemMessageW(hDlg, IDC_LIST_SFPATHS, LVM_GETNEXTITEM, -1,
+                                    MAKELPARAM(LVNI_SELECTED,0));
+
     if (!text || !psfiSelected || iSel < 0) {
         HeapFree(GetProcessHeap(), 0, text);
         return;
@@ -893,11 +892,11 @@ static void on_shell_folder_edit_changed(HWND hDlg) {
     item.iItem = iSel;
     item.iSubItem = 1;
     item.pszText = text;
-    SendDlgItemMessage(hDlg, IDC_LIST_SFPATHS, LVM_SETITEMW, 0, (LPARAM)&item);
+    SendDlgItemMessageW(hDlg, IDC_LIST_SFPATHS, LVM_SETITEMW, 0, (LPARAM)&item);
 
     HeapFree(GetProcessHeap(), 0, text);
 
-    SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
+    SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
 }
 
 static void apply_shell_folder_changes(void) {
@@ -964,7 +963,7 @@ static void read_sysparams(HWND hDlg)
 
     for (i = 0; i < sizeof(metrics) / sizeof(metrics[0]); i++)
     {
-        LoadStringW(GetModuleHandle(NULL), i + IDC_SYSPARAMS_BUTTON, buffer,
+        LoadStringW(GetModuleHandleW(NULL), i + IDC_SYSPARAMS_BUTTON, buffer,
                     sizeof(buffer) / sizeof(buffer[0]));
         idx = SendMessageW(list, CB_ADDSTRING, 0, (LPARAM)buffer);
         if (idx != CB_ERR) SendMessageW(list, CB_SETITEMDATA, idx, i);
@@ -1140,7 +1139,7 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         case IDC_THEME_SIZECOMBO: theme_dirty = TRUE; break;
                         case IDC_SYSPARAM_COMBO: on_sysparam_change(hDlg); return FALSE;
                     }
-                    SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
+                    SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
                     break;
                 }
                 case EN_CHANGE: {
@@ -1157,7 +1156,7 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             metrics[index].size = atoi(text);
                             HeapFree(GetProcessHeap(), 0, text);
 
-                            SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
+                            SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
                             break;
                         }
                     }
@@ -1182,7 +1181,7 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                                     psfiSelected->szLinkTarget, FILENAME_MAX,
                                                     NULL, NULL);
                                 update_shell_folder_listview(hDlg);
-                                SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
+                                SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
                             }
                             break;
                         }
@@ -1195,14 +1194,14 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                                         psfiSelected->szLinkTarget, FILENAME_MAX,
                                                         NULL, NULL);
                                     update_shell_folder_listview(hDlg);
-                                    SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
+                                    SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
                                 } else {
                                     CheckDlgButton(hDlg, IDC_LINK_SFPATH, BST_UNCHECKED);
                                 }
                             } else {
                                 psfiSelected->szLinkTarget[0] = '\0';
                                 update_shell_folder_listview(hDlg);
-                                SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
+                                SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
                             }
                             break;    
 
@@ -1225,7 +1224,7 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                 metrics[index].color = c_color.rgbResult;
                                 save_sys_color(index, metrics[index].color);
                                 InvalidateRect(GetDlgItem(hDlg, IDC_SYSPARAM_COLOR), NULL, TRUE);
-                                SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
+                                SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
                             }
                             break;
                         }
@@ -1237,7 +1236,7 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_NOTIFY:
             switch (((LPNMHDR)lParam)->code) {
                 case PSN_KILLACTIVE: {
-                    SetWindowLongPtr(hDlg, DWLP_MSGRESULT, FALSE);
+                    SetWindowLongPtrW(hDlg, DWLP_MSGRESULT, FALSE);
                     break;
                 }
                 case PSN_APPLY: {
@@ -1247,7 +1246,7 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     apply_sysparams();
                     read_shell_folder_link_targets();
                     update_shell_folder_listview(hDlg);
-                    SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
+                    SetWindowLongPtrW(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
                     break;
                 }
                 case LVN_ITEMCHANGED: { 

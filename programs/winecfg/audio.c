@@ -188,11 +188,11 @@ static void initAudioDlg (HWND hDlg)
 
     WINE_TRACE("\n");
 
-    LoadStringW(GetModuleHandle(NULL), IDS_AUDIO_DRIVER,
+    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_DRIVER,
             format_str, sizeof(format_str) / sizeof(*format_str));
-    LoadStringW(GetModuleHandle(NULL), IDS_AUDIO_DRIVER_NONE,
+    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_DRIVER_NONE,
             disabled_str, sizeof(disabled_str) / sizeof(*disabled_str));
-    LoadStringW(GetModuleHandle(NULL), IDS_AUDIO_SYSDEFAULT,
+    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_SYSDEFAULT,
             sysdefault_str, sizeof(sysdefault_str) / sizeof(*sysdefault_str));
 
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
@@ -308,9 +308,9 @@ static void test_sound(void)
     if(!PlaySoundW(MAKEINTRESOURCEW(IDW_TESTSOUND), NULL, SND_RESOURCE | SND_ASYNC)){
         WCHAR error_str[256], title_str[256];
 
-        LoadStringW(GetModuleHandle(NULL), IDS_AUDIO_TEST_FAILED,
+        LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_TEST_FAILED,
                 error_str, sizeof(error_str) / sizeof(*error_str));
-        LoadStringW(GetModuleHandle(NULL), IDS_AUDIO_TEST_FAILED_TITLE,
+        LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_TEST_FAILED_TITLE,
                 title_str, sizeof(title_str) / sizeof(*title_str));
 
         MessageBoxW(NULL, error_str, title_str, MB_OK | MB_ICONERROR);
@@ -360,11 +360,11 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
       case WM_NOTIFY:
         switch(((LPNMHDR)lParam)->code) {
             case PSN_KILLACTIVE:
-              SetWindowLongPtr(hDlg, DWLP_MSGRESULT, FALSE);
+              SetWindowLongPtrW(hDlg, DWLP_MSGRESULT, FALSE);
               break;
             case PSN_APPLY:
               apply();
-              SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
+              SetWindowLongPtrW(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
               break;
             case PSN_SETACTIVE:
               break;

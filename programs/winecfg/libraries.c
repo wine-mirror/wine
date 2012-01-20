@@ -97,6 +97,8 @@ struct dll
         enum dllmode mode;
 };
 
+static const WCHAR emptyW[1];
+
 /* Convert a registry string to a dllmode */
 static enum dllmode string_to_mode(char *in)
 {
@@ -234,17 +236,16 @@ static void set_controls_from_selection(HWND dialog)
 
 static void clear_settings(HWND dialog)
 {
-    int count = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCOUNT, 0, 0);
+    int count = SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_GETCOUNT, 0, 0);
     int i;
 
     WINE_TRACE("count=%d\n", count);
     
     for (i = 0; i < count; i++)
     {
-        struct dll *dll = (struct dll *) SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, 0, 0);
-        
-        SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_DELETESTRING, 0, 0);
-        
+        struct dll *dll = (struct dll *) SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, 0, 0);
+
+        SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_DELETESTRING, 0, 0);
         HeapFree(GetProcessHeap(), 0, dll->name);
         HeapFree(GetProcessHeap(), 0, dll);
     }
@@ -303,7 +304,7 @@ static void load_library_list( HWND dialog )
     unsigned int i = 0;
     const char *path, *build_dir = wine_get_build_dir();
     char item1[256], item2[256];
-    HCURSOR old_cursor = SetCursor( LoadCursor(0, IDC_WAIT) );
+    HCURSOR old_cursor = SetCursor( LoadCursorW(0, (LPWSTR)IDC_WAIT) );
 
     if (build_dir)
     {
@@ -342,7 +343,7 @@ static void load_library_settings(HWND dialog)
     char **p;
     int sel, count = 0;
 
-    sel = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
+    sel = SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
 
     WINE_TRACE("sel=%d\n", sel);
 
@@ -381,8 +382,8 @@ static void load_library_settings(HWND dialog)
         dll->name = *p;
         dll->mode = string_to_mode(value);
 
-        index = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_ADDSTRING, (WPARAM) -1, (LPARAM) str);
-        SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_SETITEMDATA, index, (LPARAM) dll);
+        index = SendDlgItemMessageA(dialog, IDC_DLLS_LIST, LB_ADDSTRING, (WPARAM) -1, (LPARAM) str);
+        SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_SETITEMDATA, index, (LPARAM) dll);
 
         HeapFree(GetProcessHeap(), 0, str);
 
@@ -394,8 +395,8 @@ static void load_library_settings(HWND dialog)
     /* restore the previous selection, if possible  */
     if (sel >= count - 1) sel = count - 1;
     else if (sel == -1) sel = 0;
-    
-    SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_SETCURSEL, sel, 0);
+
+    SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_SETCURSEL, sel, 0);
 
     set_controls_from_selection(dialog);
 }
@@ -404,22 +405,22 @@ static void load_library_settings(HWND dialog)
 static void init_libsheet(HWND dialog)
 {
     /* clear the add dll controls  */
-    SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_SETTEXT, 1, (LPARAM) "");
+    SendDlgItemMessageW(dialog, IDC_DLLCOMBO, WM_SETTEXT, 1, (LPARAM)emptyW);
     load_library_list( dialog );
     disable(IDC_DLLS_ADDDLL);
 }
 
 static void on_add_combo_change(HWND dialog)
 {
-    char buffer[1024];
+    WCHAR buffer[1024];
     int sel, len;
 
-    SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_GETTEXT, sizeof(buffer), (LPARAM) buffer);
+    SendDlgItemMessageW(dialog, IDC_DLLCOMBO, WM_GETTEXT, sizeof(buffer)/sizeof(WCHAR), (LPARAM) buffer);
     /* if lib was chosen from combobox, we receive an empty buffer, check manually */
-    sel=SendDlgItemMessage(dialog, IDC_DLLCOMBO, CB_GETCURSEL, 0, 0);
-    len=SendDlgItemMessage(dialog, IDC_DLLCOMBO, CB_GETLBTEXTLEN, sel, 0);
+    sel=SendDlgItemMessageW(dialog, IDC_DLLCOMBO, CB_GETCURSEL, 0, 0);
+    len=SendDlgItemMessageW(dialog, IDC_DLLCOMBO, CB_GETLBTEXTLEN, sel, 0);
 
-    if (strlen(buffer)>0 || len>0)
+    if (buffer[0] || len>0)
         enable(IDC_DLLS_ADDDLL)
     else
         disable(IDC_DLLS_ADDDLL);
@@ -434,15 +435,15 @@ static void set_dllmode(HWND dialog, DWORD id)
 
     mode = id_to_mode(id);
 
-    sel = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
+    sel = SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
     if (sel == -1) return;
-    
-    dll = (struct dll *) SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, sel, 0);
+
+    dll = (struct dll *) SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, sel, 0);
 
     str = mode_to_string(mode);
     WINE_TRACE("Setting %s to %s\n", dll->name, str);
-    
-    SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
+
+    SendMessageW(GetParent(dialog), PSM_CHANGED, 0, 0);
     set_reg_key(config_key, keypath("DllOverrides"), dll->name, str);
 
     load_library_settings(dialog);  /* ... and refresh  */
@@ -455,7 +456,7 @@ static void on_add_click(HWND dialog)
 
     ZeroMemory(buffer, sizeof(buffer));
 
-    SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_GETTEXT, sizeof(buffer), (LPARAM) buffer);
+    SendDlgItemMessageA(dialog, IDC_DLLCOMBO, WM_GETTEXT, sizeof(buffer), (LPARAM) buffer);
     if (lstrlenA(buffer) >= sizeof(dotDll))
     {
         ptr = buffer + lstrlenA(buffer) - sizeof(dotDll) + 1;
@@ -489,17 +490,17 @@ static void on_add_click(HWND dialog)
         if (MessageBoxIndirectA( &params ) != IDYES) return;
     }
 
-    SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_SETTEXT, 0, (LPARAM) "");
+    SendDlgItemMessageW(dialog, IDC_DLLCOMBO, WM_SETTEXT, 0, (LPARAM)emptyW);
     disable(IDC_DLLS_ADDDLL);
     
     WINE_TRACE("Adding %s as native, builtin\n", buffer);
-    
-    SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
+
+    SendMessageW(GetParent(dialog), PSM_CHANGED, 0, 0);
     set_reg_key(config_key, keypath("DllOverrides"), buffer, "native,builtin");
 
     load_library_settings(dialog);
 
-    SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_SELECTSTRING, 0, (LPARAM) buffer);
+    SendDlgItemMessageA(dialog, IDC_DLLS_LIST, LB_SELECTSTRING, 0, (LPARAM) buffer);
 
     set_controls_from_selection(dialog);
 }
@@ -539,42 +540,42 @@ static INT_PTR CALLBACK loadorder_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam
 
 static void on_edit_click(HWND hwnd)
 {
-    INT_PTR ret; 
-    int index = SendDlgItemMessage(hwnd, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
+    INT_PTR ret;
+    int index = SendDlgItemMessageW(hwnd, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
     struct dll *dll;
     DWORD id;
 
     /* if no override is selected the edit button should be disabled... */
     assert(index != -1);
 
-    dll = (struct dll *) SendDlgItemMessage(hwnd, IDC_DLLS_LIST, LB_GETITEMDATA, index, 0);
+    dll = (struct dll *) SendDlgItemMessageW(hwnd, IDC_DLLS_LIST, LB_GETITEMDATA, index, 0);
     id = mode_to_id(dll->mode);
-    
-    ret = DialogBoxParam(0, MAKEINTRESOURCE(IDD_LOADORDER), hwnd, loadorder_dlgproc, id);
-    
+
+    ret = DialogBoxParamW(0, MAKEINTRESOURCEW(IDD_LOADORDER), hwnd, loadorder_dlgproc, id);
+
     if(ret != IDCANCEL)
         set_dllmode(hwnd, ret);
 }
 
 static void on_remove_click(HWND dialog)
 {
-    int sel = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
+    int sel = SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
     struct dll *dll;
 
     if (sel == LB_ERR) return;
-    
-    dll = (struct dll *) SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, sel, 0);
-    
-    SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_DELETESTRING, sel, 0);
 
-    SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
+    dll = (struct dll *) SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, sel, 0);
+
+    SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_DELETESTRING, sel, 0);
+
+    SendMessageW(GetParent(dialog), PSM_CHANGED, 0, 0);
     set_reg_key(config_key, keypath("DllOverrides"), dll->name, NULL);
 
     HeapFree(GetProcessHeap(), 0, dll->name);
     HeapFree(GetProcessHeap(), 0, dll);
 
-    if (SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCOUNT, 0, 0) > 0)
-        SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_SETCURSEL, max(sel - 1, 0), 0);
+    if (SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_GETCOUNT, 0, 0) > 0)
+        SendDlgItemMessageW(dialog, IDC_DLLS_LIST, LB_SETCURSEL, max(sel - 1, 0), 0);
     else
     {
         disable(IDC_DLLS_EDITDLL);
