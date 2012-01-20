@@ -192,6 +192,7 @@ static const WCHAR emptyW[] = {0};
 static BOOL stopped_binding = FALSE, stopped_obj_binding = FALSE, emulate_protocol = FALSE,
     data_available = FALSE, http_is_first = TRUE, bind_to_object = FALSE, filedwl_api;
 static DWORD read = 0, bindf = 0, prot_state = 0, thread_id, tymed, security_problem;
+static const WCHAR *reported_url;
 static CHAR mime_type[512];
 static IInternetProtocolSink *protocol_sink = NULL;
 static IBinding *current_binding;
@@ -620,6 +621,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     read = 0;
 
+    reported_url = szUrl;
     if(!filedwl_api) /* FIXME */
         ok(szUrl && !lstrcmpW(szUrl, urls[test_protocol]), "wrong url %s\n", wine_dbgstr_w(szUrl));
     ok(pOIProtSink != NULL, "pOIProtSink == NULL\n");
@@ -944,6 +946,7 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
     CHECK_EXPECT(Continue);
 
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
+    ok(reported_url && !lstrcmpW(reported_url, urls[test_protocol]), "wrong url %s\n", wine_dbgstr_w(reported_url));
 
     ok(pProtocolData != NULL, "pProtocolData == NULL\n");
     if(!pProtocolData)
