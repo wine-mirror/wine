@@ -2301,6 +2301,24 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
       keys = keycode_to_keysym(display, keyc, 0);
       name = XKeysymToString(keys);
       wine_tsx11_unlock();
+
+      if (name && (vkey == VK_SHIFT || vkey == VK_CONTROL || vkey == VK_MENU))
+      {
+          char* idx = strrchr(name, '_');
+          if (idx && (strcasecmp(idx, "_r") == 0 || strcasecmp(idx, "_l") == 0))
+          {
+              INT rc = 0;
+              TRACE("found scan=%04x keyc=%u keysym=%lx modified_string=%s\n",
+                    scanCode, keyc, keys, debugstr_an(name,idx-name));
+              if (lpBuffer && nSize)
+              {
+                  rc = MultiByteToWideChar(CP_UNIXCP, 0, name, idx-name+1, lpBuffer, nSize);
+                  if (rc > 0) lpBuffer[rc - 1] = 0;
+              }
+              return rc;
+          }
+      }
+
       TRACE("found scan=%04x keyc=%u keysym=%04x string=%s\n",
             scanCode, keyc, (int)keys, debugstr_a(name));
       if (lpBuffer && nSize && name)
