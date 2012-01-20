@@ -206,6 +206,7 @@ static BOOL only_check_prot_args = FALSE;
 static BOOL invalid_cn_accepted = FALSE;
 static BOOL abort_start = FALSE;
 static BOOL abort_progress = FALSE;
+static BOOL async_switch = FALSE;
 
 static LPCWSTR urls[] = {
     winetest_data_urlW,
@@ -803,9 +804,22 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
         IInternetProtocolSink_AddRef(pOIProtSink);
         protocol_sink = pOIProtSink;
-        CreateThread(NULL, 0, thread_proc, NULL, 0, &tid);
 
-        return S_OK;
+        if(async_switch) {
+            PROTOCOLDATA data;
+
+            memset(&data, 0, sizeof(data));
+            data.grfFlags = PI_FORCE_ASYNC;
+            prot_state = 0;
+            hres = IInternetProtocolSink_Switch(pOIProtSink, &data);
+            ok(hres == S_OK, "Switch failed: %08x\n", hres);
+            SET_EXPECT(Continue);
+            SetEvent(complete_event2);
+            return E_PENDING;
+        } else {
+            CreateThread(NULL, 0, thread_proc, NULL, 0, &tid);
+            return S_OK;
+        }
     }
 
     if(test_protocol == FILE_TEST) {
@@ -936,6 +950,18 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
         return S_OK;
 
     switch(prot_state) {
+    case 0:
+        hres = IInternetProtocolSink_ReportProgress(protocol_sink,
+                    BINDSTATUS_SENDINGREQUEST, NULL);
+        ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
+
+        hres = IInternetProtocolSink_ReportProgress(protocol_sink,
+                BINDSTATUS_MIMETYPEAVAILABLE, wszTextHtml);
+        ok(hres == S_OK,
+                "ReportProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
+
+        bscf |= BSCF_FIRSTDATANOTIFICATION|BSCF_INTERMEDIATEDATANOTIFICATION;
+        break;
     case 1: {
         IServiceProvider *service_provider;
         IHttpNegotiate *http_negotiate;
@@ -990,6 +1016,15 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
     if(prot_state != 2 || !test_abort)
         SET_EXPECT(Read);
     switch(prot_state) {
+    case 0:
+        hres = IInternetProtocolSink_ReportResult(protocol_sink, S_OK, 0, NULL);
+        ok(hres == S_OK, "ReportResult failed: %08x\n", hres);
+        SET_EXPECT(OnProgress_SENDINGREQUEST);
+        SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
+        SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
+        SET_EXPECT(LockRequest);
+        SET_EXPECT(OnStopBinding);
+        break;
     case 1:
         if(bind_to_object) {
             SET_EXPECT(Obj_OnProgress_MIMETYPEAVAILABLE);
@@ -1082,6 +1117,17 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
     ok(pv != NULL, "pv == NULL\n");
     ok(cb != 0, "cb == 0\n");
     ok(pcbRead != NULL, "pcbRead == NULL\n");
+
+    if(async_switch) {
+        if(prot_state++ > 1) {
+            *pcbRead = 0;
+            return S_FALSE;
+        } else {
+            memset(pv, '?', cb);
+            *pcbRead = cb;
+            return S_OK;
+        }
+    }
 
     if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST) {
         HRESULT hres;
@@ -2687,6 +2733,7 @@ static BOOL test_RegisterBindStatusCallback(void)
 #define BINDTEST_INVALID_CN         0x0200
 #define BINDTEST_ABORT_START        0x0400
 #define BINDTEST_ABORT_PROGRESS     0x0800
+#define BINDTEST_ASYNC_SWITCH       0x1000
 
 static void init_bind_test(int protocol, DWORD flags, DWORD t)
 {
@@ -2716,7 +2763,10 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
     test_abort = (flags & BINDTEST_ABORT) != 0;
     abort_start = (flags & BINDTEST_ABORT_START) != 0;
     abort_progress = (flags & BINDTEST_ABORT_PROGRESS) != 0;
+    async_switch = (flags & BINDTEST_ASYNC_SWITCH) != 0;
     is_async_prot = protocol == HTTP_TEST || protocol == HTTPS_TEST || protocol == FTP_TEST || protocol == WINETEST_TEST;
+    prot_state = 0;
+    ResetEvent(complete_event);
 }
 
 static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
@@ -2907,6 +2957,13 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
         }
     }
 
+    if(async_switch) {
+        CHECK_CALLED(OnProgress_SENDINGREQUEST);
+        CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
+        CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
+        CHECK_CALLED(LockRequest);
+        CHECK_CALLED(OnStopBinding);
+    }
     if(!no_callback) {
         CLEAR_CALLED(QueryInterface_IBindStatusCallbackEx); /* IE 8 */
         CHECK_CALLED(GetBindInfo);
@@ -3749,6 +3806,9 @@ START_TEST(url)
         invalid_cn_accepted = FALSE;
 
         bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
+
+        trace("winetest test (async switch)...\n");
+        test_BindToStorage(WINETEST_TEST, BINDTEST_EMULATE|BINDTEST_ASYNC_SWITCH, TYMED_ISTREAM);
 
         trace("about test (no read)...\n");
         test_BindToStorage(ABOUT_TEST, BINDTEST_NO_CALLBACK_READ, TYMED_ISTREAM);
