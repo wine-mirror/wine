@@ -686,14 +686,14 @@ static void set_toolbar_state(int bandId, BOOL show)
         rbbinfo.cbSize = REBARBANDINFOW_V6_SIZE;
         rbbinfo.fMask = RBBIM_STYLE;
 
-        SendMessageW(hwndReBar, RB_GETBANDINFO, index, (LPARAM)&rbbinfo);
+        SendMessageW(hwndReBar, RB_GETBANDINFOW, index, (LPARAM)&rbbinfo);
 
         if(!show)
             rbbinfo.fStyle &= ~RBBS_BREAK;
         else
             rbbinfo.fStyle |= RBBS_BREAK;
 
-        SendMessageW(hwndReBar, RB_SETBANDINFO, index, (LPARAM)&rbbinfo);
+        SendMessageW(hwndReBar, RB_SETBANDINFOW, index, (LPARAM)&rbbinfo);
     }
 
     if(bandId == BANDID_TOOLBAR || bandId == BANDID_FORMATBAR || bandId == BANDID_RULER)
@@ -1396,15 +1396,15 @@ static BOOL get_comboexlist_selection(HWND hComboEx, LPWSTR wszBuffer, UINT buff
     HWND hCombo, hList;
     int idx, result;
 
-    hCombo = (HWND)SendMessage(hComboEx, CBEM_GETCOMBOCONTROL, 0, 0);
+    hCombo = (HWND)SendMessageW(hComboEx, CBEM_GETCOMBOCONTROL, 0, 0);
     if (!hCombo)
         return FALSE;
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
-    result = SendMessage(hCombo, CB_GETCOMBOBOXINFO, 0, (LPARAM)&cbInfo);
+    result = SendMessageW(hCombo, CB_GETCOMBOBOXINFO, 0, (LPARAM)&cbInfo);
     if (!result)
         return FALSE;
     hList = cbInfo.hwndList;
-    idx = SendMessage(hList, LB_GETCURSEL, 0, 0);
+    idx = SendMessageW(hList, LB_GETCURSEL, 0, 0);
     if (idx < 0)
         return FALSE;
 
@@ -1709,7 +1709,7 @@ static INT_PTR CALLBACK tabstops_proc(HWND hWnd, UINT message, WPARAM wParam, LP
                         if(SendMessageW(hTabWnd, CB_FINDSTRINGEXACT, -1, (LPARAM)&buffer) == CB_ERR)
                         {
                             float number = 0;
-                            int item_count = SendMessage(hTabWnd, CB_GETCOUNT, 0, 0);
+                            int item_count = SendMessageW(hTabWnd, CB_GETCOUNT, 0, 0);
 
                             if(!number_from_string(buffer, &number, &unit))
                             {
@@ -1856,7 +1856,7 @@ static LRESULT OnCreate( HWND hWnd )
     rbb.cyChild = rbb.cyMinChild = HIWORD(SendMessageW(hToolBarWnd, TB_GETBUTTONSIZE, 0, 0));
     rbb.wID = BANDID_TOOLBAR;
 
-    SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
+    SendMessageW(hReBarWnd, RB_INSERTBANDW, -1, (LPARAM)&rbb);
 
     hFontListWnd = CreateWindowExW(0, WC_COMBOBOXEXW, NULL,
                       WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN | CBS_SORT,
@@ -1866,7 +1866,7 @@ static LRESULT OnCreate( HWND hWnd )
     rbb.cx = 200;
     rbb.wID = BANDID_FONTLIST;
 
-    SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
+    SendMessageW(hReBarWnd, RB_INSERTBANDW, -1, (LPARAM)&rbb);
 
     hSizeListWnd = CreateWindowExW(0, WC_COMBOBOXEXW, NULL,
                       WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN,
@@ -1877,7 +1877,7 @@ static LRESULT OnCreate( HWND hWnd )
     rbb.fStyle ^= RBBS_BREAK;
     rbb.wID = BANDID_SIZELIST;
 
-    SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
+    SendMessageW(hReBarWnd, RB_INSERTBANDW, -1, (LPARAM)&rbb);
 
     hFormatBarWnd = CreateToolbarEx(hReBarWnd,
          CCS_NOPARENTALIGN | CCS_NOMOVEY | WS_VISIBLE | TBSTYLE_TOOLTIPS | BTNS_BUTTON,
@@ -1899,7 +1899,7 @@ static LRESULT OnCreate( HWND hWnd )
     rbb.hwndChild = hFormatBarWnd;
     rbb.wID = BANDID_FORMATBAR;
 
-    SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
+    SendMessageW(hReBarWnd, RB_INSERTBANDW, -1, (LPARAM)&rbb);
 
     hRulerWnd = CreateWindowExW(0, WC_STATICW, NULL, WS_VISIBLE | WS_CHILD,
                                 0, 0, 200, 10, hReBarWnd,  (HMENU)IDC_RULER, hInstance, NULL);
@@ -1909,7 +1909,7 @@ static LRESULT OnCreate( HWND hWnd )
     rbb.wID = BANDID_RULER;
     rbb.fStyle |= RBBS_BREAK;
 
-    SendMessageW(hReBarWnd, RB_INSERTBAND, -1, (LPARAM)&rbb);
+    SendMessageW(hReBarWnd, RB_INSERTBANDW, -1, (LPARAM)&rbb);
 
     hDLL = LoadLibraryW(wszRichEditDll);
     if(!hDLL)
@@ -2016,13 +2016,13 @@ static LRESULT OnNotify( HWND hWnd, LPARAM lParam)
     {
         if (pHdr->code == CBEN_ENDEDITW)
         {
-            NMCBEENDEDIT *endEdit = (NMCBEENDEDIT *)lParam;
+            NMCBEENDEDITW *endEdit = (NMCBEENDEDITW *)lParam;
             if(pHdr->hwndFrom == hwndFontList)
             {
-                on_fontlist_modified((LPWSTR)endEdit->szText);
+                on_fontlist_modified(endEdit->szText);
             } else if (pHdr->hwndFrom == hwndSizeList)
             {
-                on_sizelist_modified(hwndFontList,(LPWSTR)endEdit->szText);
+                on_sizelist_modified(hwndFontList,endEdit->szText);
             }
         }
         return 0;
@@ -2040,9 +2040,9 @@ static LRESULT OnNotify( HWND hWnd, LPARAM lParam)
 
         sprintf( buf,"selection = %d..%d, line count=%ld",
                  pSC->chrg.cpMin, pSC->chrg.cpMax,
-                SendMessage(hwndEditor, EM_GETLINECOUNT, 0, 0));
+                SendMessageW(hwndEditor, EM_GETLINECOUNT, 0, 0));
         SetWindowTextA(GetDlgItem(hWnd, IDC_STATUSBAR), buf);
-        SendMessage(hWnd, WM_USER, 0, 0);
+        SendMessageW(hWnd, WM_USER, 0, 0);
         return 1;
     }
     return 0;
@@ -2075,8 +2075,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
     case ID_FILE_NEW:
         {
             HINSTANCE hInstance = GetModuleHandleW(0);
-            int ret = DialogBox(hInstance, MAKEINTRESOURCE(IDD_NEWFILE), hWnd,
-                                newfile_proc);
+            int ret = DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_NEWFILE), hWnd, newfile_proc);
 
             if(ret != ID_NEWFILE_ABORT)
             {
@@ -2216,9 +2215,9 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         RECT itemrc;
         POINT pt;
         int mid;
-        int itemidx = SendMessage(hFormatBarWnd, TB_COMMANDTOINDEX, ID_FORMAT_COLOR, 0);
+        int itemidx = SendMessageW(hFormatBarWnd, TB_COMMANDTOINDEX, ID_FORMAT_COLOR, 0);
 
-        SendMessage(hFormatBarWnd, TB_GETITEMRECT, itemidx, (LPARAM)&itemrc);
+        SendMessageW(hFormatBarWnd, TB_GETITEMRECT, itemidx, (LPARAM)&itemrc);
         pt.x = itemrc.left;
         pt.y = itemrc.bottom;
         ClientToScreen(hFormatBarWnd, &pt);
@@ -2286,7 +2285,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         tr.chrg.cpMin = 0;
         tr.chrg.cpMax = nLen;
         tr.lpstrText = data;
-        SendMessage (hwndEditor, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
+        SendMessageW(hwndEditor, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
         MessageBoxW(NULL, data, wszAppTitle, MB_OK);
         HeapFree( GetProcessHeap(), 0, data );
 
@@ -2322,9 +2321,9 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         char buf[128];
         WCHAR *data = NULL;
 
-        SendMessage(hwndEditor, EM_EXGETSEL, 0, (LPARAM)&range);
+        SendMessageW(hwndEditor, EM_EXGETSEL, 0, (LPARAM)&range);
         data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data) * (range.cpMax-range.cpMin+1));
-        SendMessage(hwndEditor, EM_GETSELTEXT, 0, (LPARAM)data);
+        SendMessageW(hwndEditor, EM_GETSELTEXT, 0, (LPARAM)data);
         sprintf(buf, "Start = %d, End = %d", range.cpMin, range.cpMax);
         MessageBoxA(hWnd, buf, "Editor", MB_OK);
         MessageBoxW(hWnd, data, wszAppTitle, MB_OK);
@@ -2335,7 +2334,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_EDIT_READONLY:
         {
-        LONG nStyle = GetWindowLong(hwndEditor, GWL_STYLE);
+        LONG nStyle = GetWindowLongW(hwndEditor, GWL_STYLE);
         if (nStyle & ES_READONLY)
             SendMessageW(hwndEditor, EM_SETREADONLY, 0, 0);
         else
@@ -2495,9 +2494,9 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam )
     pf.cbSize = sizeof(PARAFORMAT);
     SendMessageW(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
     CheckMenuItem(hMenu, ID_EDIT_READONLY,
-      MF_BYCOMMAND|(GetWindowLong(hwndEditor, GWL_STYLE)&ES_READONLY ? MF_CHECKED : MF_UNCHECKED));
+      MF_BYCOMMAND|(GetWindowLongW(hwndEditor, GWL_STYLE)&ES_READONLY ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, ID_EDIT_MODIFIED,
-      MF_BYCOMMAND|(SendMessage(hwndEditor, EM_GETMODIFY, 0, 0) ? MF_CHECKED : MF_UNCHECKED));
+      MF_BYCOMMAND|(SendMessageW(hwndEditor, EM_GETMODIFY, 0, 0) ? MF_CHECKED : MF_UNCHECKED));
     if (pf.dwMask & PFM_ALIGNMENT)
         nAlignment = pf.wAlignment;
     CheckMenuItem(hMenu, ID_ALIGN_LEFT, MF_BYCOMMAND|(nAlignment == PFA_LEFT) ?
@@ -2683,7 +2682,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     wc.hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_WORDPAD));
     wc.hIconSm = LoadImageW(hInstance, MAKEINTRESOURCEW(IDI_WORDPAD), IMAGE_ICON,
                             GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
-    wc.hCursor = LoadCursor(NULL, IDC_IBEAM);
+    wc.hCursor = LoadCursorW(NULL, (LPWSTR)IDC_IBEAM);
     wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
     wc.lpszMenuName = MAKEINTRESOURCEW(IDM_MAINMENU);
     wc.lpszClassName = wszMainWndClass;
@@ -2696,7 +2695,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     wc.hInstance = hInstance;
     wc.hIcon = NULL;
     wc.hIconSm = NULL;
-    wc.hCursor = LoadCursor(NULL, IDC_IBEAM);
+    wc.hCursor = LoadCursorW(NULL, (LPWSTR)IDC_IBEAM);
     wc.hbrBackground = NULL;
     wc.lpszMenuName = NULL;
     wc.lpszClassName = wszPreviewWndClass;
@@ -2727,7 +2726,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
 
     while(GetMessageW(&msg,0,0,0))
     {
-        if (IsDialogMessage(hFindWnd, &msg))
+        if (IsDialogMessageW(hFindWnd, &msg))
             continue;
 
         if (TranslateAcceleratorW(hMainWnd, hAccel, &msg))
