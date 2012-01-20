@@ -134,6 +134,7 @@ DEFINE_EXPECT(Exec_UPDATECOMMANDS);
 DEFINE_EXPECT(Exec_SETTITLE);
 DEFINE_EXPECT(Exec_HTTPEQUIV);
 DEFINE_EXPECT(Exec_MSHTML_PARSECOMPLETE);
+DEFINE_EXPECT(Exec_Explorer_38);
 DEFINE_EXPECT(Exec_Explorer_69);
 DEFINE_EXPECT(Exec_DOCCANNAVIGATE);
 DEFINE_EXPECT(Invoke_AMBIENT_USERMODE);
@@ -214,7 +215,7 @@ static enum load_state_t {
 } load_state;
 
 static LPCOLESTR expect_status_text = NULL;
-static const char *nav_url, *nav_serv_url;
+static const char *nav_url, *nav_serv_url, *prev_url;
 
 static const char html_page[] =
 "<html>"
@@ -429,6 +430,24 @@ static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, c
     IHTMLDocument_Release(doc);
     if(mon && mon != (void*)0xdeadbeef)
         IMoniker_Release(mon);
+}
+
+#define test_current_url(a,b) _test_current_url(__LINE__,a,b)
+static void _test_current_url(unsigned line, IUnknown *unk, const char *exurl)
+{
+    IHTMLDocument2 *doc;
+    BSTR url;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDocument2, (void**)&doc);
+    ok_(__FILE__,line)(hres == S_OK, "QueryInterface(IID_IHTMLDocument2) failed: %08x\n", hres);
+
+    hres = IHTMLDocument2_get_URL(doc, &url);
+    ok_(__FILE__,line)(hres == S_OK, "get_URL failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(url, exurl), "Unexpected URL %s, expected %s\n", wine_dbgstr_w(url), exurl);
+    SysFreeString(url);
+
+    IHTMLDocument2_Release(doc);
 }
 
 DEFINE_GUID(IID_External_unk,0x30510406,0x98B5,0x11CF,0xBB,0x82,0x00,0xAA,0x00,0xBD,0xCE,0x0B);
@@ -2851,9 +2870,10 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             HRESULT hres;
 
             ok(pvaIn != NULL, "pvaIn == NULL\n");
-            ok(pvaOut != NULL, "pvaOut != NULL\n");
+            ok(pvaOut != NULL || broken(!pvaOut), "pvaOut != NULL\n");
             ok(V_VT(pvaIn) == VT_ARRAY, "V_VT(pvaIn) = %d\n", V_VT(pvaIn));
-            ok(V_VT(pvaOut) == VT_BOOL, "V_VT(pvaOut) = %d\n", V_VT(pvaOut));
+            if(pvaOut)
+                ok(V_VT(pvaOut) == VT_BOOL, "V_VT(pvaOut) = %d\n", V_VT(pvaOut));
             sa = V_ARRAY(pvaIn);
 
             dim = SafeArrayGetDim(sa);
@@ -2903,6 +2923,16 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         ok(nCmdexecopt == 0, "nCmdexecopts=%08x\n", nCmdexecopt);
 
         switch(nCmdID) {
+        case 38:
+            CHECK_EXPECT2(Exec_Explorer_38);
+            ok(pvaIn != NULL, "pvaIn == NULL\n");
+            ok(V_VT(pvaIn) == VT_I4 , "V_VT(pvaIn) = %d\n", V_VT(pvaIn));
+            ok(!V_I4(pvaIn), "V_I4(pvaIn) = %d\n", V_I4(pvaIn));
+            ok(!pvaOut, "pvaOut != NULL\n");
+
+            test_current_url(doc_unk, prev_url);
+
+            return S_OK;
         case 69:
             CHECK_EXPECT2(Exec_Explorer_69);
             ok(pvaIn == NULL, "pvaIn != NULL\n");
@@ -3081,6 +3111,119 @@ static const IDispatchVtbl EventDispatchVtbl = {
 };
 
 static IDispatch EventDispatch = { &EventDispatchVtbl };
+
+static HRESULT WINAPI TravelLog_QueryInterface(ITravelLog *iface, REFIID riid, void **ppv)
+{
+    static const IID IID_IIETravelLog2 = {0xb67cefd2,0xe3f1,0x478a,{0x9b,0xfa,0xd8,0x93,0x70,0x37,0x5e,0x94}};
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ITravelLog, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    if(!IsEqualGUID(&IID_IIETravelLog2, riid))
+        ok(0, "unexpected call %s\n", debugstr_guid(riid));
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TravelLog_AddRef(ITravelLog *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI TravelLog_Release(ITravelLog *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI TravelLog_AddEntry(ITravelLog *iface, IUnknown *punk, BOOL fIsLocalAnchor)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_UpdateEntry(ITravelLog *iface, IUnknown *punk, BOOL fIsLocalAnchor)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_UpdateExternal(ITravelLog *iface, IUnknown *punk, IUnknown *punkHLBrowseContext)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_Travel(ITravelLog *iface, IUnknown *punk, int iOffset)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_GetTravelEntry(ITravelLog *iface, IUnknown *punk, int iOffset, ITravelEntry **ppte)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_FindTravelEntry(ITravelLog *iface, IUnknown *punk, LPCITEMIDLIST pidl, ITravelEntry **ppte)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_GetTooltipText(ITravelLog *iface, IUnknown *punk, int iOffset, int idsTemplate,
+        LPWSTR pwzText, DWORD cchText)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_InsertMenuEntries(ITravelLog *iface, IUnknown *punk, HMENU hmenu, int nPos,
+        int idFirst, int idLast, DWORD dwFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_Clone(ITravelLog *iface, ITravelLog **pptl)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static DWORD WINAPI TravelLog_CountEntries(ITravelLog *iface, IUnknown *punk)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_Revert(ITravelLog *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const ITravelLogVtbl TravelLogVtbl = {
+    TravelLog_QueryInterface,
+    TravelLog_AddRef,
+    TravelLog_Release,
+    TravelLog_AddEntry,
+    TravelLog_UpdateEntry,
+    TravelLog_UpdateExternal,
+    TravelLog_Travel,
+    TravelLog_GetTravelEntry,
+    TravelLog_FindTravelEntry,
+    TravelLog_GetTooltipText,
+    TravelLog_InsertMenuEntries,
+    TravelLog_Clone,
+    TravelLog_CountEntries,
+    TravelLog_Revert
+};
+
+static ITravelLog TravelLog = { &TravelLogVtbl };
 
 static HRESULT browserservice_qi(REFIID,void**);
 
@@ -3409,12 +3552,17 @@ static HRESULT  WINAPI BrowserService_GetOleObject(
     return E_NOTIMPL;
 }
 
-static HRESULT  WINAPI BrowserService_GetTravelLog(
-        IBrowserService* This,
-        ITravelLog **pptl)
+static HRESULT  WINAPI BrowserService_GetTravelLog(IBrowserService* This, ITravelLog **pptl)
 {
     CHECK_EXPECT(GetTravelLog);
-    return E_NOTIMPL;
+
+    ok(pptl != NULL, "pptl = NULL\n");
+
+    if(!support_wbapp)
+        return E_NOTIMPL;
+
+    *pptl = &TravelLog;
+    return S_OK;
 }
 
 static HRESULT  WINAPI BrowserService_ShowControlWindow(
@@ -4802,6 +4950,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
 #define DWL_EMPTY              0x0010
 #define DWL_JAVASCRIPT         0x0020
 #define DWL_ONREADY_LOADING    0x0040
+#define DWL_EXPECT_HISTUPDATE  0x0080
 
 static void test_download(DWORD flags)
 {
@@ -4874,6 +5023,8 @@ static void test_download(DWORD flags)
         SET_EXPECT(UpdateUI);
         SET_EXPECT(Exec_UPDATECOMMANDS);
         SET_EXPECT(Exec_SETTITLE);
+        if(flags & DWL_EXPECT_HISTUPDATE)
+            SET_EXPECT(Exec_Explorer_38);
         SET_EXPECT(UpdateBackForwardState);
     }
     if(!is_js) {
@@ -4961,6 +5112,8 @@ static void test_download(DWORD flags)
         CLEAR_CALLED(UpdateUI);
         CLEAR_CALLED(Exec_UPDATECOMMANDS);
         CLEAR_CALLED(Exec_SETTITLE);
+        if(flags & DWL_EXPECT_HISTUPDATE)
+            todo_wine CHECK_CALLED(Exec_Explorer_38);
         todo_wine CHECK_CALLED_BROKEN(UpdateBackForwardState);
     }
     if(!is_js) {
@@ -5021,7 +5174,8 @@ static void test_Persist(IHTMLDocument2 *doc, IMoniker *mon)
     }
 }
 
-static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *href, const char *new_nav_url, BOOL is_js, BOOL is_hash)
+static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *href, const char *new_nav_url, BOOL is_js,
+        BOOL is_hash, DWORD dwl_flags)
 {
     const char *prev_nav_url = NULL;
     IHTMLPrivateWindow *priv_window;
@@ -5040,7 +5194,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
     ok(hres == S_OK, "get_location failed: %08x\n", hres);
     ok(location != NULL, "location == NULL\n");
 
-    prev_nav_url = nav_url;
+    prev_url = prev_nav_url = nav_url;
     nav_url = new_nav_url;
     if(!loading_hash)
         nav_serv_url = new_nav_url;
@@ -5160,7 +5314,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
 
         if(is_js)
             ignore_external_qi = TRUE;
-        test_download(DWL_VERBDONE | (is_js ? DWL_JAVASCRIPT : DWL_ONREADY_LOADING));
+        test_download(DWL_VERBDONE | (is_js ? DWL_JAVASCRIPT : DWL_ONREADY_LOADING) | dwl_flags);
         if(is_js)
             ignore_external_qi = FALSE;
 
@@ -6649,13 +6803,12 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
 
     nav_url = nav_serv_url = "http://www.winehq.org/"; /* for valid prev nav_url */
     if(support_wbapp) {
-        test_put_href(doc, FALSE, "#test", "http://www.winehq.org/#test", FALSE, TRUE);
+        test_put_href(doc, FALSE, "#test", "http://www.winehq.org/#test", FALSE, TRUE, 0);
         test_travellog(doc);
     }
-    test_put_href(doc, FALSE, NULL, "javascript:external&&undefined", TRUE, FALSE);
-
-    test_put_href(doc, FALSE, NULL, "about:blank", FALSE, FALSE);
-    test_put_href(doc, TRUE, NULL, "about:replace", FALSE, FALSE);
+    test_put_href(doc, FALSE, NULL, "javascript:external&&undefined", TRUE, FALSE, 0);
+    test_put_href(doc, FALSE, NULL, "about:blank", FALSE, FALSE, support_wbapp ? DWL_EXPECT_HISTUPDATE : 0);
+    test_put_href(doc, TRUE, NULL, "about:replace", FALSE, FALSE, 0);
 
     test_open_window(doc, TRUE);
     if(!support_wbapp) /* FIXME */
