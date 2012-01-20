@@ -5113,7 +5113,7 @@ static void test_download(DWORD flags)
         CLEAR_CALLED(Exec_UPDATECOMMANDS);
         CLEAR_CALLED(Exec_SETTITLE);
         if(flags & DWL_EXPECT_HISTUPDATE)
-            todo_wine CHECK_CALLED(Exec_Explorer_38);
+            CHECK_CALLED(Exec_Explorer_38);
         todo_wine CHECK_CALLED_BROKEN(UpdateBackForwardState);
     }
     if(!is_js) {

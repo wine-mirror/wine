@@ -44,6 +44,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+/* Undocumented notification, see tests */
+#define CMDID_EXPLORER_UPDATEHISTORY 38
+
 typedef struct {
     task_t header;
     HTMLDocumentObj *doc;
@@ -68,6 +71,35 @@ static BOOL use_gecko_script(HTMLWindow *window)
 
     hres = IUri_GetScheme(window->uri, &scheme);
     return FAILED(hres) || scheme != URL_SCHEME_ABOUT;
+}
+
+static void notify_travellog_update(HTMLDocumentObj *doc)
+{
+    IOleCommandTarget *cmdtrg;
+    HRESULT hres;
+
+    if(!doc->is_webbrowser)
+        return;
+
+    /* Don't notify if we were in about: page */
+    if(doc->basedoc.window->uri) {
+        DWORD scheme;
+
+        hres = IUri_GetScheme(doc->basedoc.window->uri, &scheme);
+        if(SUCCEEDED(hres) && scheme == URL_SCHEME_ABOUT)
+            return;
+    }
+
+    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    if(SUCCEEDED(hres)) {
+        VARIANT vin;
+
+        V_VT(&vin) = VT_I4;
+        V_I4(&vin) = 0;
+
+        IOleCommandTarget_Exec(cmdtrg, &CGID_Explorer, CMDID_EXPLORER_UPDATEHISTORY, 0, &vin, NULL);
+        IOleCommandTarget_Release(cmdtrg);
+    }
 }
 
 void set_current_uri(HTMLWindow *window, IUri *uri)
@@ -96,10 +128,11 @@ void set_current_mon(HTMLWindow *This, IMoniker *mon)
     HRESULT hres;
 
     if(This->mon) {
+        if(This->doc_obj)
+            notify_travellog_update(This->doc_obj);
         IMoniker_Release(This->mon);
         This->mon = NULL;
     }
-
 
     if(!mon)
         return;
