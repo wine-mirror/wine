@@ -749,7 +749,7 @@ HRESULT create_selection(xmlNodePtr node, xmlChar* query, IXMLDOMNodeList **out)
     xmlXPathContextPtr ctxt = xmlXPathNewContext(node->doc);
     HRESULT hr;
 
-    TRACE("(%p, %s, %p)\n", node, wine_dbgstr_a((char const*)query), out);
+    TRACE("(%p, %s, %p)\n", node, debugstr_a((char const*)query), out);
 
     *out = NULL;
     if (!This || !ctxt || !query)

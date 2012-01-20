@@ -418,7 +418,7 @@ static HRESULT WINAPI xslprocessor_setStartMode(
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
 
-    FIXME("(%p)->(%s %s): stub\n", This, wine_dbgstr_w(p), wine_dbgstr_w(uri));
+    FIXME("(%p)->(%s %s): stub\n", This, debugstr_w(p), debugstr_w(uri));
     return E_NOTIMPL;
 }
 
@@ -557,8 +557,8 @@ static HRESULT WINAPI xslprocessor_addParameter(
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
 
-    FIXME("(%p)->(%s %s %s): stub\n", This, wine_dbgstr_w(p), debugstr_variant(&var),
-        wine_dbgstr_w(uri));
+    FIXME("(%p)->(%s %s %s): stub\n", This, debugstr_w(p), debugstr_variant(&var),
+        debugstr_w(uri));
     return E_NOTIMPL;
 }
 
@@ -569,7 +569,7 @@ static HRESULT WINAPI xslprocessor_addObject(
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
 
-    FIXME("(%p)->(%p %s): stub\n", This, obj, wine_dbgstr_w(uri));
+    FIXME("(%p)->(%p %s): stub\n", This, obj, debugstr_w(uri));
     return E_NOTIMPL;
 }
 

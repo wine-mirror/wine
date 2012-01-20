@@ -589,7 +589,7 @@ HRESULT dt_validate(XDR_DT dt, xmlChar const* content)
     xmlNsPtr ns;
     HRESULT hr;
 
-    TRACE("(dt:%s, %s)\n", debugstr_dt(dt), wine_dbgstr_a((char const*)content));
+    TRACE("(dt:%s, %s)\n", debugstr_dt(dt), debugstr_a((char const*)content));
 
     if (!datatypes_schema)
     {
@@ -688,7 +688,7 @@ static xmlParserInputPtr external_entity_loader(const char *URL, const char *ID,
 {
     xmlParserInputPtr input;
 
-    TRACE("(%s %s %p)\n", wine_dbgstr_a(URL), wine_dbgstr_a(ID), ctxt);
+    TRACE("(%s %s %p)\n", debugstr_a(URL), debugstr_a(ID), ctxt);
 
     assert(MSXML_hInstance != NULL);
     assert(datatypes_rsrc != NULL);
@@ -922,7 +922,7 @@ static cache_entry* cache_entry_from_url(VARIANT url, xmlChar const* nsURI, MSXM
         ERR("IXMLDOMDocument3_load() returned 0x%08x\n", hr);
         if (b != VARIANT_TRUE)
         {
-            FIXME("Failed to load doc at %s\n", wine_dbgstr_w(V_BSTR(&url)));
+            FIXME("Failed to load doc at %s\n", debugstr_w(V_BSTR(&url)));
             IXMLDOMDocument3_Release(domdoc);
             return NULL;
         }
@@ -1142,7 +1142,7 @@ static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection2* iface, BSTR uri
     cache_entry* entry;
     xmlChar* name;
 
-    TRACE("(%p)->(%s %p)\n", This, wine_dbgstr_w(uri), node);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(uri), node);
 
     if (This->version == MSXML6) return E_NOTIMPL;
 
@@ -1165,7 +1165,7 @@ static HRESULT WINAPI schema_cache_remove(IXMLDOMSchemaCollection2* iface, BSTR 
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     xmlChar* name = uri ? xmlchar_from_wchar(uri) : xmlchar_from_wchar(emptyW);
-    TRACE("(%p)->(%s)\n", This, wine_dbgstr_w(uri));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(uri));
 
     xmlHashRemoveEntry(This->cache, name, cache_free);
     heap_free(name);

@@ -2828,7 +2828,7 @@ static HRESULT WINAPI domdoc_setProperty(
                 {
                     hr = E_FAIL;
                     WARN("Syntax error in xmlns string: %s\n\tat token: %s\n",
-                          wine_dbgstr_w(bstr), wine_dbgstr_an((const char*)pTokBegin, pTokEnd-pTokBegin));
+                          debugstr_w(bstr), debugstr_an((const char*)pTokBegin, pTokEnd-pTokBegin));
                     continue;
                 }
 
@@ -2849,7 +2849,7 @@ static HRESULT WINAPI domdoc_setProperty(
                     {
                         hr = E_FAIL;
                         WARN("Syntax error in xmlns string: %s\n\tat token: %s\n",
-                              wine_dbgstr_w(bstr), wine_dbgstr_an((const char*)pTokBegin, pTokEnd-pTokBegin));
+                              debugstr_w(bstr), debugstr_an((const char*)pTokBegin, pTokEnd-pTokBegin));
                         continue;
                     }
 
@@ -2876,7 +2876,7 @@ static HRESULT WINAPI domdoc_setProperty(
                     else
                     {
                         WARN("Syntax error in xmlns string: %s\n\tat token: %s\n",
-                              wine_dbgstr_w(bstr), wine_dbgstr_an((const char*)pTokInner, pTokEnd-pTokInner));
+                              debugstr_w(bstr), debugstr_an((const char*)pTokInner, pTokEnd-pTokInner));
                         list_add_tail(pNsList, &ns_entry->entry);
 
                         ns_entry = NULL;
@@ -2906,7 +2906,7 @@ static HRESULT WINAPI domdoc_setProperty(
         return S_OK;
     }
 
-    FIXME("Unknown property %s\n", wine_dbgstr_w(p));
+    FIXME("Unknown property %s\n", debugstr_w(p));
     return E_FAIL;
 }
 
@@ -2966,7 +2966,7 @@ static HRESULT WINAPI domdoc_getProperty(
         return S_OK;
     }
 
-    FIXME("Unknown property %s\n", wine_dbgstr_w(p));
+    FIXME("Unknown property %s\n", debugstr_w(p));
     return E_FAIL;
 }
 

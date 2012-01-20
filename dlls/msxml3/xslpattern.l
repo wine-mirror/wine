@@ -155,7 +155,7 @@ ANY                 (.)
 xmlChar* XSLPattern_to_XPath(xmlXPathContextPtr ctxt, xmlChar const* xslpat_str)
 {
     parser_param p;
-    TRACE("(%s)\n", wine_dbgstr_a((char const*)xslpat_str));
+    TRACE("(%s)\n", debugstr_a((char const*)xslpat_str));
     memset(&p, 0, sizeof(parser_param));
     p.ctx = ctxt;
     p.in = xslpat_str;
@@ -166,7 +166,7 @@ xmlChar* XSLPattern_to_XPath(xmlXPathContextPtr ctxt, xmlChar const* xslpat_str)
 
     xslpattern_parse(&p, p.yyscanner);
 
-    TRACE("=> %s\n", wine_dbgstr_a((char const*)p.out));
+    TRACE("=> %s\n", debugstr_a((char const*)p.out));
     xslpattern_lex_destroy(p.yyscanner);
 
     if (p.err)
