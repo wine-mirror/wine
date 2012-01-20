@@ -27,6 +27,7 @@
 #include "dispex.h"
 #include "objsafe.h"
 #include "htiframe.h"
+#include "tlogstg.h"
 
 #include "wine/list.h"
 #include "wine/unicode.h"
@@ -294,6 +295,7 @@ struct HTMLWindow {
     IHTMLPrivateWindow IHTMLPrivateWindow_iface;
     IDispatchEx        IDispatchEx_iface;
     IServiceProvider   IServiceProvider_iface;
+    ITravelLogClient   ITravelLogClient_iface;
 
     LONG ref;
 

@@ -34,6 +34,7 @@
 #include "mshtml_test.h"
 #include "objsafe.h"
 #include "htiface.h"
+#include "tlogstg.h"
 
 static INT (WINAPI *pLCIDToLocaleName)(LCID,LPWSTR,INT,DWORD);
 static LANGID (WINAPI *pGetUserDefaultUILanguage)(void);
@@ -253,6 +254,7 @@ static const IID * const window_iids[] = {
     &IID_IHTMLWindow3,
     &IID_IDispatchEx,
     &IID_IServiceProvider,
+    &IID_ITravelLogClient,
     NULL
 };
 

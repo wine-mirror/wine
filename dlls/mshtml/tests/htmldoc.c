@@ -42,6 +42,7 @@
 #include "perhist.h"
 #include "shobjidl.h"
 #include "htiface.h"
+#include "tlogstg.h"
 #include "mshtml_test.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);

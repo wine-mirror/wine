@@ -168,6 +168,9 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
         *ppv = &This->IServiceProvider_iface;
+    }else if(IsEqualGUID(&IID_ITravelLogClient, riid)) {
+        TRACE("(%p)->(IID_ITravelLogClient %p)\n", This, ppv);
+        *ppv = &This->ITravelLogClient_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
@@ -1945,6 +1948,62 @@ static const IHTMLPrivateWindowVtbl HTMLPrivateWindowVtbl = {
     HTMLPrivateWindow_GetAddressBarUrl
 };
 
+static inline HTMLWindow *impl_from_ITravelLogClient(ITravelLogClient *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLWindow, ITravelLogClient_iface);
+}
+
+static HRESULT WINAPI TravelLogClient_QueryInterface(ITravelLogClient *iface, REFIID riid, void **ppv)
+{
+    HTMLWindow *This = impl_from_ITravelLogClient(iface);
+
+    return IHTMLWindow2_QueryInterface(&This->IHTMLWindow2_iface, riid, ppv);
+}
+
+static ULONG WINAPI TravelLogClient_AddRef(ITravelLogClient *iface)
+{
+    HTMLWindow *This = impl_from_ITravelLogClient(iface);
+
+    return IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
+}
+
+static ULONG WINAPI TravelLogClient_Release(ITravelLogClient *iface)
+{
+    HTMLWindow *This = impl_from_ITravelLogClient(iface);
+
+    return IHTMLWindow2_Release(&This->IHTMLWindow2_iface);
+}
+
+static HRESULT WINAPI TravelLogClient_FindWindowByIndex(ITravelLogClient *iface, DWORD dwID, IUnknown **ppunk)
+{
+    HTMLWindow *This = impl_from_ITravelLogClient(iface);
+    FIXME("(%p)->(%d %p)\n", This, dwID, ppunk);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLogClient_GetWindowData(ITravelLogClient *iface, IStream *pStream, LPWINDOWDATA pWinData)
+{
+    HTMLWindow *This = impl_from_ITravelLogClient(iface);
+    FIXME("(%p)->(%p %p)\n", This, pStream, pWinData);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLogClient_LoadHistoryPosition(ITravelLogClient *iface, LPWSTR pszUrlLocation, DWORD dwPosition)
+{
+    HTMLWindow *This = impl_from_ITravelLogClient(iface);
+    FIXME("(%p)->(%s %d)\n", This, debugstr_w(pszUrlLocation), dwPosition);
+    return E_NOTIMPL;
+}
+
+static const ITravelLogClientVtbl TravelLogClientVtbl = {
+    TravelLogClient_QueryInterface,
+    TravelLogClient_AddRef,
+    TravelLogClient_Release,
+    TravelLogClient_FindWindowByIndex,
+    TravelLogClient_GetWindowData,
+    TravelLogClient_LoadHistoryPosition
+};
+
 static inline HTMLWindow *impl_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLWindow, IDispatchEx_iface);
@@ -2385,6 +2444,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
     window->IHTMLPrivateWindow_iface.lpVtbl = &HTMLPrivateWindowVtbl;
     window->IDispatchEx_iface.lpVtbl = &WindowDispExVtbl;
     window->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
+    window->ITravelLogClient_iface.lpVtbl = &TravelLogClientVtbl;
     window->ref = 1;
     window->doc_obj = doc_obj;
 
