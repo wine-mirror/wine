@@ -342,6 +342,7 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocolEx *iface)
             IInternetProtocol_Release(&This->filter_proxy->IInternetProtocol_iface);
         if(This->uri)
             IUri_Release(This->uri);
+        SysFreeString(This->display_uri);
 
         set_binding_sink(This, NULL, NULL);
 
@@ -546,15 +547,12 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
                 &This->IInternetBindInfo_iface, 0, NULL);
         IInternetProtocolEx_Release(protocolex);
     }else {
-        BSTR display_uri;
-
-        hres = IUri_GetDisplayUri(pUri, &display_uri);
+        hres = IUri_GetDisplayUri(pUri, &This->display_uri);
         if(FAILED(hres))
             return hres;
 
-        hres = IInternetProtocol_Start(protocol, display_uri, &This->IInternetProtocolSink_iface,
+        hres = IInternetProtocol_Start(protocol, This->display_uri, &This->IInternetProtocolSink_iface,
                 &This->IInternetBindInfo_iface, 0, 0);
-        SysFreeString(display_uri);
     }
 
     return hres;

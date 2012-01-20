@@ -211,6 +211,7 @@ typedef struct {
     DWORD buf_size;
     LPWSTR mime;
     IUri *uri;
+    BSTR display_uri;
     ProtocolProxy *filter_proxy;
 }  BindProtocol;
 
