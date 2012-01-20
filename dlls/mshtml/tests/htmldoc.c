@@ -47,6 +47,7 @@
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(IID_IProxyManager,0x00000008,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
+DEFINE_GUID(SID_SContainerDispatch,0xb722be00,0x4e68,0x101b,0xa2,0xbc,0x00,0xaa,0x00,0x40,0x47,0x70);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -7135,6 +7136,46 @@ static BOOL check_ie(void)
     return SUCCEEDED(hres);
 }
 
+static void test_ServiceProvider(void)
+{
+    IHTMLDocument3 *doc3, *doc3_2;
+    IServiceProvider *provider;
+    IHTMLDocument2 *doc, *doc2;
+    IUnknown *unk;
+    HRESULT hres;
+
+    doc = create_document();
+    if(!doc)
+        return;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IServiceProvider, (void**)&provider);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
+
+    hres = IServiceProvider_QueryService(provider, &SID_SContainerDispatch, &IID_IHTMLDocument2, (void**)&doc2);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
+    ok(iface_cmp((IUnknown*)doc2, (IUnknown*)doc), "got wrong pointer\n");
+    IHTMLDocument2_Release(doc2);
+
+    hres = IServiceProvider_QueryService(provider, &SID_SContainerDispatch, &IID_IHTMLDocument3, (void**)&doc3);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
+    ok(iface_cmp((IUnknown*)doc3, (IUnknown*)doc), "got wrong pointer\n");
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3_2);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
+    ok(iface_cmp((IUnknown*)doc3_2, (IUnknown*)doc), "got wrong pointer\n");
+    ok(iface_cmp((IUnknown*)doc3_2, (IUnknown*)doc3), "got wrong pointer\n");
+    IHTMLDocument3_Release(doc3);
+    IHTMLDocument3_Release(doc3_2);
+
+    hres = IServiceProvider_QueryService(provider, &SID_SContainerDispatch, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
+    ok(iface_cmp((IUnknown*)doc, unk), "got wrong pointer\n");
+
+    IUnknown_Release(unk);
+    IServiceProvider_Release(provider);
+    release_document(doc);
+}
+
 START_TEST(htmldoc)
 {
     CoInitialize(NULL);
@@ -7169,6 +7210,7 @@ START_TEST(htmldoc)
     test_UIActivate(TRUE, TRUE, TRUE);
     test_HTMLDoc_ISupportErrorInfo();
     test_IPersistHistory();
+    test_ServiceProvider();
 
     DestroyWindow(container_hwnd);
     CoUninitialize();

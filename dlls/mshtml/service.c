@@ -249,6 +249,11 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
         return IOleUndoManager_QueryInterface(This->doc_obj->undomgr, riid, ppv);
     }
 
+    if(IsEqualGUID(&SID_SContainerDispatch, guidService)) {
+        TRACE("SID_SContainerDispatch\n");
+        return IHTMLDocument2_QueryInterface(&This->IHTMLDocument2_iface, riid, ppv);
+    }
+
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
 
     if(This->doc_obj->client) {
