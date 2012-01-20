@@ -902,7 +902,7 @@ static BOOL HLPFILE_RtfAddTransparentBitmap(struct RtfData* rd, const BITMAPINFO
     DeleteDC(hdcMem);
 
     /* we create the bitmap on the fly */
-    hdcEMF = CreateEnhMetaFile(NULL, NULL, NULL, NULL);
+    hdcEMF = CreateEnhMetaFileW(NULL, NULL, NULL, NULL);
     hdcMem = CreateCompatibleDC(hdcEMF);
 
     /* sets to RGB(0,0,0) the transparent bits in final bitmap */
@@ -2014,7 +2014,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
 
         hlpfile->lpszTitle = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
         if (!hlpfile->lpszTitle) return FALSE;
-        lstrcpy(hlpfile->lpszTitle, str);
+        strcpy(hlpfile->lpszTitle, str);
         WINE_TRACE("Title: %s\n", hlpfile->lpszTitle);
         /* Nothing more to parse */
         return TRUE;
@@ -2028,7 +2028,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             if (hlpfile->lpszTitle) {WINE_WARN("title\n"); break;}
             hlpfile->lpszTitle = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
             if (!hlpfile->lpszTitle) return FALSE;
-            lstrcpy(hlpfile->lpszTitle, str);
+            strcpy(hlpfile->lpszTitle, str);
             WINE_TRACE("Title: %s\n", hlpfile->lpszTitle);
             break;
 
@@ -2036,7 +2036,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             if (hlpfile->lpszCopyright) {WINE_WARN("copyright\n"); break;}
             hlpfile->lpszCopyright = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
             if (!hlpfile->lpszCopyright) return FALSE;
-            lstrcpy(hlpfile->lpszCopyright, str);
+            strcpy(hlpfile->lpszCopyright, str);
             WINE_TRACE("Copyright: %s\n", hlpfile->lpszCopyright);
             break;
 
@@ -2047,10 +2047,10 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             break;
 
 	case 4:
-            macro = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_MACRO) + lstrlen(str) + 1);
+            macro = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_MACRO) + strlen(str) + 1);
             if (!macro) break;
             p = (char*)macro + sizeof(HLPFILE_MACRO);
-            lstrcpy(p, str);
+            strcpy(p, str);
             macro->lpszMacro = p;
             macro->next = 0;
             for (m = &hlpfile->first_macro; *m; m = &(*m)->next);
@@ -2734,7 +2734,7 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
     }
 
     hlpfile = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                        sizeof(HLPFILE) + lstrlen(lpszPath) + 1);
+                        sizeof(HLPFILE) + strlen(lpszPath) + 1);
     if (!hlpfile) return 0;
 
     hlpfile->lpszPath           = (char*)hlpfile + sizeof(HLPFILE);
