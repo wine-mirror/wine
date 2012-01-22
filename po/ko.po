@@ -13608,7 +13608,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "다시 실행(&E)\tCtrl+Y"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+#, fuzzy
+msgid "&Clear\tDel"
 msgstr "지우기(&C)\tDEL"
 
 #: wordpad.rc:48

@@ -13645,8 +13645,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "R&edo\tCtrl+Y"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
-msgstr "&Clear\tDEL"
+msgid "&Clear\tDel"
+msgstr "&Clear\tDel"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"

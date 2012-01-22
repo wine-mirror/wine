@@ -13736,7 +13736,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "Å&terställ\tCtrl+Y"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+#, fuzzy
+msgid "&Clear\tDel"
 msgstr "Ta &bort\tDEL"
 
 #: wordpad.rc:48

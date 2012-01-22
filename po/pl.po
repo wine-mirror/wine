@@ -13751,7 +13751,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Powtórz\tCtrl+Y"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+#, fuzzy
+msgid "&Clear\tDel"
 msgstr "&Wyczyść\tDEL"
 
 #: wordpad.rc:48

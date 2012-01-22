@@ -13273,8 +13273,9 @@ msgid "R&edo\tCtrl+Y"
 msgstr "เรียกคืน\tCtrl+Z"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
-msgstr ""
+#, fuzzy
+msgid "&Clear\tDel"
+msgstr "ลบ\tDel"
 
 #: wordpad.rc:48
 #, fuzzy

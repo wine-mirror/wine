@@ -13732,7 +13732,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Назад\tCtrl+Y"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+#, fuzzy
+msgid "&Clear\tDel"
 msgstr "О&чистити\tDEL"
 
 #: wordpad.rc:48

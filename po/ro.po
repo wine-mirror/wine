@@ -14369,7 +14369,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "R&efă\tCtrl+Y"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+#, fuzzy
+msgid "&Clear\tDel"
 msgstr "&Curăță\tDEL"
 
 #: wordpad.rc:48

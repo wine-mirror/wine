@@ -14128,7 +14128,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Refazer\tCtrl+Y"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+#, fuzzy
+msgid "&Clear\tDel"
 msgstr "&Limpar\tDEL"
 
 #: wordpad.rc:48

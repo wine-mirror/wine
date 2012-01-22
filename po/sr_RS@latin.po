@@ -13875,8 +13875,9 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Opozovi\tCtrl+Z"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
-msgstr ""
+#, fuzzy
+msgid "&Clear\tDel"
+msgstr "&Izbriši\tDel"
 
 #: wordpad.rc:48
 #, fuzzy

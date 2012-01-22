@@ -13692,7 +13692,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Grąžinti\tVald+Y"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+#, fuzzy
+msgid "&Clear\tDel"
 msgstr "&Šalinti\tDEL"
 
 #: wordpad.rc:48

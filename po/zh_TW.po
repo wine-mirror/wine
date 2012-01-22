@@ -13677,7 +13677,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "重做(&E)\tCtrl+Y"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+#, fuzzy
+msgid "&Clear\tDel"
 msgstr "刪除(&D)\tDEL"
 
 #: wordpad.rc:48

@@ -44,7 +44,7 @@ BEGIN
         MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
         MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
         MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
-        MENUITEM "&Clear\tDEL",                 ID_EDIT_CLEAR
+        MENUITEM "&Clear\tDel",                 ID_EDIT_CLEAR
         MENUITEM "&Select all\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "&Find...\tCtrl+F",            ID_FIND

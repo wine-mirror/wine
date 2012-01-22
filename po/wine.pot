@@ -12961,7 +12961,7 @@ msgid "R&edo\tCtrl+Y"
 msgstr ""
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+msgid "&Clear\tDel"
 msgstr ""
 
 #: wordpad.rc:48

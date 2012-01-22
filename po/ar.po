@@ -13263,8 +13263,9 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&تراجع\tCtrl+Z"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
-msgstr ""
+#, fuzzy
+msgid "&Clear\tDel"
+msgstr "اح&ذف\tDel"
 
 #: wordpad.rc:48
 #, fuzzy

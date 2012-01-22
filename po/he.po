@@ -13868,7 +13868,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "ח&זרה\tCtrl+Y"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+#, fuzzy
+msgid "&Clear\tDel"
 msgstr "&ניקוי\tDEL"
 
 #: wordpad.rc:48

@@ -14234,8 +14234,13 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Deshacer\tCtrl+Z"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+#, fuzzy
+msgid "&Clear\tDel"
 msgstr ""
+"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
+"&Borrar\tDel\n"
+"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
+"&Eliminar\tDel"
 
 #: wordpad.rc:48
 #, fuzzy

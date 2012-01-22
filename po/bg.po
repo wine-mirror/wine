@@ -13452,8 +13452,13 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Отмени\tCtrl+Z"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+#, fuzzy
+msgid "&Clear\tDel"
 msgstr ""
+"#-#-#-#-#  bg.po (Wine)  #-#-#-#-#\n"
+"Из&трий\tDel\n"
+"#-#-#-#-#  bg.po (Wine)  #-#-#-#-#\n"
+"&Изтрий\tDel"
 
 #: wordpad.rc:48
 #, fuzzy

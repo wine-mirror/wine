@@ -13504,8 +13504,9 @@ msgid "R&edo\tCtrl+Y"
 msgstr "Nuligu\tCtrl+Z"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
-msgstr ""
+#, fuzzy
+msgid "&Clear\tDel"
+msgstr "Forigu\tDel"
 
 #: wordpad.rc:48
 #, fuzzy

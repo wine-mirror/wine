@@ -13672,7 +13672,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "やり直し(&E)\tCtrl+Y"
 
 #: wordpad.rc:47
-msgid "&Clear\tDEL"
+#, fuzzy
+msgid "&Clear\tDel"
 msgstr "クリア(&C)\tDEL"
 
 #: wordpad.rc:48
