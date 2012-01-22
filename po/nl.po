@@ -2391,16 +2391,18 @@ msgid "Certificate Information"
 msgstr "Certificaat informatie"
 
 #: cryptui.rc:29
+#, fuzzy
 msgid ""
-"This certificate has an invalid signature.  The certificate may have been "
+"This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
 "Dit certificaat heeft een foutieve handtekening. Het certificaat kan "
 "gewijzigd of corrupt zijn."
 
 #: cryptui.rc:30
+#, fuzzy
 msgid ""
-"This root certificate is not trusted.  To trust it, add it to your system's "
+"This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
 "Dit basis certificaat wordt niet vertrouwd. Om het te vertrouwen, voeg het "
@@ -2551,8 +2553,9 @@ msgid "Please select a certificate store."
 msgstr "Selecteer aub. een certificatenopslag."
 
 #: cryptui.rc:69
+#, fuzzy
 msgid ""
-"The file contains objects that do not match the given criteria.  Please "
+"The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
 "Het bestand bevat objecten die niet voldoen aan de opgegeven criteria. "
@@ -2607,7 +2610,8 @@ msgid "Please select a file."
 msgstr "Selecteer een bestand."
 
 #: cryptui.rc:82
-msgid "The file format is not recognized.  Please select another file."
+#, fuzzy
+msgid "The file format is not recognized. Please select another file."
 msgstr ""
 "Het bestandsformaat wordt niet herkend. Selecteer aub. een ander bestand."
 
@@ -2848,7 +2852,8 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "Geef de naam van het bestand waarin de inhoud zal worden opgeslagen."
 
 #: cryptui.rc:152
-msgid "The specified file already exists.  Do you want to replace it?"
+#, fuzzy
+msgid "The specified file already exists. Do you want to replace it?"
 msgstr "Het gekozen bestand bestaat reeds. Wilt u het overschrijven?"
 
 #: cryptui.rc:153
@@ -6650,8 +6655,9 @@ msgid "Done"
 msgstr "Klaar"
 
 #: msi.rc:27
+#, fuzzy
 msgid ""
-"The specified installation package could not be opened.  Please check the "
+"The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
 "Het opgegeven installatie pakket kon niet worden geopend.  Verifieer het "
@@ -7184,16 +7190,18 @@ msgstr ""
 "met %s."
 
 #: oledlg.rc:36
+#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
-"activate it using %s.  It will be displayed as an icon."
+"activate it using %s. It will be displayed as an icon."
 msgstr ""
 "Voegt de inhoud van het klembord in uw document in zodat u het kan activeren "
 "met %s. Het zal getoond worden als een icoon."
 
 #: oledlg.rc:37
+#, fuzzy
 msgid ""
-"Inserts the contents of the clipboard into your document as %s.  The data is "
+"Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
@@ -7202,8 +7210,9 @@ msgstr ""
 "getoond in uw document."
 
 #: oledlg.rc:38
+#, fuzzy
 msgid ""
-"Inserts a picture of the clipboard contents into your document.  The picture "
+"Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
@@ -7212,8 +7221,9 @@ msgstr ""
 "getoond in uw document."
 
 #: oledlg.rc:39
+#, fuzzy
 msgid ""
-"Inserts a shortcut which points to the location of the clipboard contents.  "
+"Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
@@ -8198,6 +8208,7 @@ msgid "Confirm overwrite"
 msgstr "Bevestig overschrijven"
 
 #: shell32.rc:278
+#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8206,13 +8217,29 @@ msgid ""
 "\n"
 "Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
 "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
-"more details.\n"
+"FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more "
+"details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser General Public License "
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
+"start.exe versie 0.2 Copyright (C) 2003, Dan Kegel\n"
+"This program is free software; you can redistribute it and/or\n"
+"modify it under the terms of the GNU Lesser Public License\n"
+"as published by the Free Software Foundation; either version 2.1\n"
+"of the License, or (at your option) any later version.\n"
+"\n"
+"This program is distributed in the hope that it will be useful,\n"
+"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"GNU Lesser Public License for more details.\n"
+"\n"
+"You should have received a copy of the GNU Lesser Public License\n"
+"along with this program; if not, write to the Free Software\n"
+"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
+"\n"
+"Bekijk het COPYING.LIB bestand voor informatie over de licentie.\n"
 
 #: shell32.rc:266
 msgid "Wine License"
@@ -8992,7 +9019,8 @@ msgid "&Output File Name:"
 msgstr "&Bestandsnaam:"
 
 #: winspool.rc:28
-msgid "The output file already exists.  Click OK to overwrite."
+#, fuzzy
+msgid "The output file already exists. Click OK to overwrite."
 msgstr "Het afdrukbestand bestaat al. Klik OK om het te overschrijven."
 
 #: winspool.rc:29
@@ -11480,6 +11508,7 @@ msgstr ""
 "onder bepaalde voorwaarden; draai 'start /L' voor details.\n"
 
 #: start.rc:64
+#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -11489,7 +11518,7 @@ msgid ""
 "\n"
 "This program is distributed in the hope that it will be useful,\n"
 "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
 "GNU Lesser Public License for more details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser Public License\n"
@@ -12506,8 +12535,9 @@ msgid "Application settings"
 msgstr " Toepassingsinstellingen "
 
 #: winecfg.rc:146
+#, fuzzy
 msgid ""
-"Wine can mimic different Windows versions for each application.  This tab is "
+"Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""

@@ -2477,16 +2477,18 @@ msgid "Certificate Information"
 msgstr "Sertifikatinformasjon"
 
 #: cryptui.rc:29
+#, fuzzy
 msgid ""
-"This certificate has an invalid signature.  The certificate may have been "
+"This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
 "Dette sertifikatet har en ugyldig signatur. Sertifikatet kan ha blitt endret "
 "eller skadet."
 
 #: cryptui.rc:30
+#, fuzzy
 msgid ""
-"This root certificate is not trusted.  To trust it, add it to your system's "
+"This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
 "Dette rotsertifikatet er ikke tiltrodd. Legg det til i systemets "
@@ -2634,8 +2636,9 @@ msgid "Please select a certificate store."
 msgstr "Velg et lagringssted for sertifikater."
 
 #: cryptui.rc:69
+#, fuzzy
 msgid ""
-"The file contains objects that do not match the given criteria.  Please "
+"The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
 "Filen inneholder objekter som ikke passer de oppgitte kriteriene. Velg en "
@@ -2690,7 +2693,8 @@ msgid "Please select a file."
 msgstr "Velg en fil."
 
 #: cryptui.rc:82
-msgid "The file format is not recognized.  Please select another file."
+#, fuzzy
+msgid "The file format is not recognized. Please select another file."
 msgstr "Filformatet ble ikke gjenkjent. Velg en annen fil."
 
 #: cryptui.rc:83
@@ -2930,7 +2934,8 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "Angi navnet på filen som innholdet skal lagres i."
 
 #: cryptui.rc:152
-msgid "The specified file already exists.  Do you want to replace it?"
+#, fuzzy
+msgid "The specified file already exists. Do you want to replace it?"
 msgstr "Filen finnes fra før. Vil du erstatte den?"
 
 #: cryptui.rc:153
@@ -6853,8 +6858,9 @@ msgid "Done"
 msgstr ""
 
 #: msi.rc:27
+#, fuzzy
 msgid ""
-"The specified installation package could not be opened.  Please check the "
+"The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
 "Klarte ikke å åpne den oppgitte installasjonspakken.  Kontroller filbanen og "
@@ -7390,16 +7396,18 @@ msgstr ""
 "med %s."
 
 #: oledlg.rc:36
+#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
-"activate it using %s.  It will be displayed as an icon."
+"activate it using %s. It will be displayed as an icon."
 msgstr ""
 "Setter innholdet fra utklippstavlen inn i dokumentet så du kan aktivere det "
 "med %s.  Det vises som et ikon."
 
 #: oledlg.rc:37
+#, fuzzy
 msgid ""
-"Inserts the contents of the clipboard into your document as %s.  The data is "
+"Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
@@ -7407,8 +7415,9 @@ msgstr ""
 "kildefilen så endringer i denne også skjer i dokumentet."
 
 #: oledlg.rc:38
+#, fuzzy
 msgid ""
-"Inserts a picture of the clipboard contents into your document.  The picture "
+"Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
@@ -7416,8 +7425,9 @@ msgstr ""
 "til kildefilen så endringer i denne også skjer i dokumentet."
 
 #: oledlg.rc:39
+#, fuzzy
 msgid ""
-"Inserts a shortcut which points to the location of the clipboard contents.  "
+"Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
@@ -8444,6 +8454,7 @@ msgid "Confirm overwrite"
 msgstr "Bekreft overskriving av fil"
 
 #: shell32.rc:278
+#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8452,8 +8463,8 @@ msgid ""
 "\n"
 "Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
 "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
-"more details.\n"
+"FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more "
+"details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser General Public License "
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
@@ -9241,7 +9252,8 @@ msgid "&Output File Name:"
 msgstr "&Ut-fil:"
 
 #: winspool.rc:28
-msgid "The output file already exists.  Click OK to overwrite."
+#, fuzzy
+msgid "The output file already exists. Click OK to overwrite."
 msgstr "Ut-filen finnes allerede.  Velg «OK» for å overskrive den."
 
 #: winspool.rc:29
@@ -11699,6 +11711,7 @@ msgstr ""
 "kjør 'start /L' for detaljer.\n"
 
 #: start.rc:64
+#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -11708,7 +11721,7 @@ msgid ""
 "\n"
 "This program is distributed in the hope that it will be useful,\n"
 "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
 "GNU Lesser Public License for more details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser Public License\n"
@@ -12731,8 +12744,9 @@ msgid "Application settings"
 msgstr " Programminnstillinger "
 
 #: winecfg.rc:146
+#, fuzzy
 msgid ""
-"Wine can mimic different Windows versions for each application.  This tab is "
+"Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""

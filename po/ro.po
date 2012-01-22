@@ -2522,16 +2522,18 @@ msgid "Certificate Information"
 msgstr "Informații certificat"
 
 #: cryptui.rc:29
+#, fuzzy
 msgid ""
-"This certificate has an invalid signature.  The certificate may have been "
+"This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
 "Acest certificat are o semnătură nevalidă.  Se poate ca certificatul să fi "
 "fost alterat sau corupt."
 
 #: cryptui.rc:30
+#, fuzzy
 msgid ""
-"This root certificate is not trusted.  To trust it, add it to your system's "
+"This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
 "Acest certificat rădăcină nu este acreditat.  Pentru a-l acredita, adăugați-"
@@ -2685,8 +2687,9 @@ msgid "Please select a certificate store."
 msgstr "Selectați un depozit de certificate."
 
 #: cryptui.rc:69
+#, fuzzy
 msgid ""
-"The file contains objects that do not match the given criteria.  Please "
+"The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
 "Fișierul conține obiecte care nu respectă criteriile date.  Selectați alt "
@@ -2741,7 +2744,8 @@ msgid "Please select a file."
 msgstr "Selectați un fișier."
 
 #: cryptui.rc:82
-msgid "The file format is not recognized.  Please select another file."
+#, fuzzy
+msgid "The file format is not recognized. Please select another file."
 msgstr "Formatul fișierului nu este recunoscut.  Selectați alt fișier."
 
 #: cryptui.rc:83
@@ -2981,7 +2985,8 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "Specificați numele de fișier cu care va fi salvat conținutul."
 
 #: cryptui.rc:152
-msgid "The specified file already exists.  Do you want to replace it?"
+#, fuzzy
+msgid "The specified file already exists. Do you want to replace it?"
 msgstr "Fișierul specificat există deja.  Doriți să îl înlocuiți?"
 
 #: cryptui.rc:153
@@ -7101,8 +7106,9 @@ msgid "Done"
 msgstr ""
 
 #: msi.rc:27
+#, fuzzy
 msgid ""
-"The specified installation package could not be opened.  Please check the "
+"The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
 "Pachetul de instalare menționat nu a putut fi deschis. Verificați calea și "
@@ -7613,16 +7619,18 @@ msgstr ""
 "activa utilizând %s."
 
 #: oledlg.rc:36
+#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
-"activate it using %s.  It will be displayed as an icon."
+"activate it using %s. It will be displayed as an icon."
 msgstr ""
 "Inserează conținutul din clipboard în document astfel încât să îl puteți "
 "activa utilizând %s.  Va fi afișat ca o pictogramă."
 
 #: oledlg.rc:37
+#, fuzzy
 msgid ""
-"Inserts the contents of the clipboard into your document as %s.  The data is "
+"Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
@@ -7631,8 +7639,9 @@ msgstr ""
 "în document."
 
 #: oledlg.rc:38
+#, fuzzy
 msgid ""
-"Inserts a picture of the clipboard contents into your document.  The picture "
+"Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
@@ -7641,8 +7650,9 @@ msgstr ""
 "reflectate în document."
 
 #: oledlg.rc:39
+#, fuzzy
 msgid ""
-"Inserts a shortcut which points to the location of the clipboard contents.  "
+"Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
@@ -8700,6 +8710,7 @@ msgid "Confirm overwrite"
 msgstr "Confirmați suprascrierea fișierului"
 
 #: shell32.rc:278
+#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8708,13 +8719,29 @@ msgid ""
 "\n"
 "Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
 "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
-"more details.\n"
+"FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more "
+"details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser General Public License "
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
+"start.exe versiunea 0.2 Drepturi de autor (C) 2003, Dan Kegel\n"
+"Acest program este un software liber; îl puteți redistribui și/sau\n"
+"modifica respectând termenii GNU Lesser Public License așa cum este\n"
+"publicată de către Free Software Foundation; fie versiunea 2.1\n"
+"a Licenței, fie (la alegere) orice versiune mai recentă.\n"
+"\n"
+"Acest program este distribuit cu speranța că va fi util,\n"
+"dar FĂRĂ NICIO GARANȚIE; nici măcar cu garanția implicită de\n"
+"VANDABILITATE sau POTRIVIRE PENTRU UN ANUMIT SCOP. Consultați\n"
+"GNU Lesser Public License pentru mai multe detalii.\n"
+"\n"
+"Ar fi trebuit să primiți o copie a GNU Lesser Public License\n"
+"împreună cu acest program; dacă nu, scrieți la Free Software\n"
+"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
+"\n"
+"Consultați fișierul COPYING.LIB pentru informații despre licență.\n"
 
 #: shell32.rc:266
 msgid "Wine License"
@@ -9516,7 +9543,8 @@ msgid "&Output File Name:"
 msgstr "&Nume fișier de ieșire:"
 
 #: winspool.rc:28
-msgid "The output file already exists.  Click OK to overwrite."
+#, fuzzy
+msgid "The output file already exists. Click OK to overwrite."
 msgstr "Fișierul de ieșire există deja.  Dați clic pe OK pentru al suprascrie."
 
 #: winspool.rc:29
@@ -12015,6 +12043,7 @@ msgstr ""
 "executați „start /L” pentru detalii.\n"
 
 #: start.rc:64
+#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -12024,7 +12053,7 @@ msgid ""
 "\n"
 "This program is distributed in the hope that it will be useful,\n"
 "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
 "GNU Lesser Public License for more details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser Public License\n"
@@ -13043,8 +13072,9 @@ msgid "Application settings"
 msgstr " Setări pentru aplicații "
 
 #: winecfg.rc:146
+#, fuzzy
 msgid ""
-"Wine can mimic different Windows versions for each application.  This tab is "
+"Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""

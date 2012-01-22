@@ -2474,13 +2474,13 @@ msgstr ""
 
 #: cryptui.rc:29
 msgid ""
-"This certificate has an invalid signature.  The certificate may have been "
+"This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
 
 #: cryptui.rc:30
 msgid ""
-"This root certificate is not trusted.  To trust it, add it to your system's "
+"This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
 
@@ -2632,7 +2632,7 @@ msgstr ""
 
 #: cryptui.rc:69
 msgid ""
-"The file contains objects that do not match the given criteria.  Please "
+"The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
 
@@ -2683,7 +2683,7 @@ msgid "Please select a file."
 msgstr ""
 
 #: cryptui.rc:82
-msgid "The file format is not recognized.  Please select another file."
+msgid "The file format is not recognized. Please select another file."
 msgstr ""
 
 #: cryptui.rc:83
@@ -2900,8 +2900,11 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr ""
 
 #: cryptui.rc:152
-msgid "The specified file already exists.  Do you want to replace it?"
+#, fuzzy
+msgid "The specified file already exists. Do you want to replace it?"
 msgstr ""
+"Datoteka već postoji.\n"
+"Želite li da je zamenite?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -6973,8 +6976,9 @@ msgid "Done"
 msgstr "Završeno"
 
 #: msi.rc:27
+#, fuzzy
 msgid ""
-"The specified installation package could not be opened.  Please check the "
+"The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
 "Instalacioni paket ne može biti otvoren.  Proverite putanju datoteke i "
@@ -7514,16 +7518,18 @@ msgstr ""
 "%s."
 
 #: oledlg.rc:36
+#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
-"activate it using %s.  It will be displayed as an icon."
+"activate it using %s. It will be displayed as an icon."
 msgstr ""
 "Umeće sadržaj iz ostave u dokument kako biste ga mogli aktivirati koristeći "
 "%s.  Biće prikazano kao ikonica."
 
 #: oledlg.rc:37
+#, fuzzy
 msgid ""
-"Inserts the contents of the clipboard into your document as %s.  The data is "
+"Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
@@ -7531,8 +7537,9 @@ msgstr ""
 "datotekom, tako da će izmene datoteke biti reflektovane u dokumentu."
 
 #: oledlg.rc:38
+#, fuzzy
 msgid ""
-"Inserts a picture of the clipboard contents into your document.  The picture "
+"Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
@@ -7540,8 +7547,9 @@ msgstr ""
 "tako da će izmene datoteke biti reflektovane u dokumentu."
 
 #: oledlg.rc:39
+#, fuzzy
 msgid ""
-"Inserts a shortcut which points to the location of the clipboard contents.  "
+"Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
@@ -8556,8 +8564,8 @@ msgid ""
 "\n"
 "Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
 "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
-"more details.\n"
+"FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more "
+"details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser General Public License "
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
@@ -9223,7 +9231,8 @@ msgid "&Output File Name:"
 msgstr "&Naziv odredišne datoteke:"
 
 #: winspool.rc:28
-msgid "The output file already exists.  Click OK to overwrite."
+#, fuzzy
+msgid "The output file already exists. Click OK to overwrite."
 msgstr ""
 "Odredišna datoteka već postoji.  Kliknite na dugme „U redu“ da je zamenite."
 
@@ -11553,7 +11562,7 @@ msgid ""
 "\n"
 "This program is distributed in the hope that it will be useful,\n"
 "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
 "GNU Lesser Public License for more details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser Public License\n"
@@ -12554,8 +12563,9 @@ msgid "Application settings"
 msgstr " Podešavanje aplikacije "
 
 #: winecfg.rc:146
+#, fuzzy
 msgid ""
-"Wine can mimic different Windows versions for each application.  This tab is "
+"Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""

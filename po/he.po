@@ -2394,14 +2394,15 @@ msgid "Certificate Information"
 msgstr "פרטי האישור"
 
 #: cryptui.rc:29
+#, fuzzy
 msgid ""
-"This certificate has an invalid signature.  The certificate may have been "
+"This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr "לאישור זה ישנה חתימה בלתי תקפה.  האישור השתנה או שהושחת."
 
 #: cryptui.rc:30
 msgid ""
-"This root certificate is not trusted.  To trust it, add it to your system's "
+"This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
 
@@ -2547,8 +2548,9 @@ msgid "Please select a certificate store."
 msgstr ""
 
 #: cryptui.rc:69
+#, fuzzy
 msgid ""
-"The file contains objects that do not match the given criteria.  Please "
+"The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
 "הקובץ מכיל פריטים שאינם תואמים לקריטריונים שניתנו.  נא לבחור בקובץ אחר."
@@ -2600,8 +2602,10 @@ msgid "Please select a file."
 msgstr ""
 
 #: cryptui.rc:82
-msgid "The file format is not recognized.  Please select another file."
+#, fuzzy
+msgid "The file format is not recognized. Please select another file."
 msgstr ""
+"הקובץ מכיל פריטים שאינם תואמים לקריטריונים שניתנו.  נא לבחור בקובץ אחר."
 
 #: cryptui.rc:83
 msgid "Could not open "
@@ -2810,8 +2814,11 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr ""
 
 #: cryptui.rc:152
-msgid "The specified file already exists.  Do you want to replace it?"
+#, fuzzy
+msgid "The specified file already exists. Do you want to replace it?"
 msgstr ""
+"הקובץ כבר קיים.\n"
+"האם ברצונך להחליף אותו?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -6860,8 +6867,9 @@ msgid "Done"
 msgstr "הסתיימה"
 
 #: msi.rc:27
+#, fuzzy
 msgid ""
-"The specified installation package could not be opened.  Please check the "
+"The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
 "לא ניתן לפתוח את חבילת ההתקנה שצוינה.  נא לבדוק את נתיב הקובץ ולנסות שוב."
@@ -7392,16 +7400,18 @@ msgid ""
 msgstr "הוספת תוכן לוח הגזירים למסמך שלך כדי שניתן יהיה להפעילו באמצעות %s."
 
 #: oledlg.rc:36
+#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
-"activate it using %s.  It will be displayed as an icon."
+"activate it using %s. It will be displayed as an icon."
 msgstr ""
 "הוספת תוכן לוח הגזירים למסמך שלך כדי שניתן יהיה להפעילו באמצעות %s. העצם "
 "יוצג כסמל."
 
 #: oledlg.rc:37
+#, fuzzy
 msgid ""
-"Inserts the contents of the clipboard into your document as %s.  The data is "
+"Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
@@ -7409,8 +7419,9 @@ msgstr ""
 "יהיו מקושרים לקובץ המקור כך ששינויים בקובץ המקור ישפיעו גם על המסמך שלך."
 
 #: oledlg.rc:38
+#, fuzzy
 msgid ""
-"Inserts a picture of the clipboard contents into your document.  The picture "
+"Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
@@ -7418,8 +7429,9 @@ msgstr ""
 "ששינויים לקובץ ישפיעו גם על המסמך שלך."
 
 #: oledlg.rc:39
+#, fuzzy
 msgid ""
-"Inserts a shortcut which points to the location of the clipboard contents.  "
+"Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
@@ -8401,6 +8413,7 @@ msgid "Confirm overwrite"
 msgstr "אישור שכתוב על קובץ"
 
 #: shell32.rc:278
+#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8409,8 +8422,8 @@ msgid ""
 "\n"
 "Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
 "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
-"more details.\n"
+"FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more "
+"details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser General Public License "
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
@@ -9083,7 +9096,8 @@ msgid "&Output File Name:"
 msgstr "שם קובץ ה&פלט:"
 
 #: winspool.rc:28
-msgid "The output file already exists.  Click OK to overwrite."
+#, fuzzy
+msgid "The output file already exists. Click OK to overwrite."
 msgstr "קובץ הפלט כבר קיים. יש ללחוץ על אישור כדי לשכתב עליו."
 
 #: winspool.rc:29
@@ -11497,6 +11511,7 @@ msgstr ""
 "under certain conditions; run 'start /L' for details.\n"
 
 #: start.rc:64
+#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -11506,7 +11521,7 @@ msgid ""
 "\n"
 "This program is distributed in the hope that it will be useful,\n"
 "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
 "GNU Lesser Public License for more details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser Public License\n"
@@ -12509,7 +12524,7 @@ msgstr "יישומים"
 
 #: winecfg.rc:146
 msgid ""
-"Wine can mimic different Windows versions for each application.  This tab is "
+"Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""

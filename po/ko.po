@@ -2377,16 +2377,18 @@ msgid "Certificate Information"
 msgstr "인증서 정보"
 
 #: cryptui.rc:29
+#, fuzzy
 msgid ""
-"This certificate has an invalid signature.  The certificate may have been "
+"This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
 "이 인증서는 올바르지 않은 서명을 가지고 있습니다.  이 인증서는 아마도 고쳐졌"
 "거나 망가진 것같습니가"
 
 #: cryptui.rc:30
+#, fuzzy
 msgid ""
-"This root certificate is not trusted.  To trust it, add it to your system's "
+"This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
 "이 루트 인증서는 신뢰 할 수 없습니다.  이것을 신뢰하려면,당신의 시스템의 신뢰"
@@ -2533,8 +2535,9 @@ msgid "Please select a certificate store."
 msgstr "인증서 저장소를 선택하십시오."
 
 #: cryptui.rc:69
+#, fuzzy
 msgid ""
-"The file contains objects that do not match the given criteria.  Please "
+"The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
 "이 파일은 주어진 기존에 맞지 않는 객체를 포함하고 있습니다. 다른 파일을 선택"
@@ -2588,7 +2591,8 @@ msgid "Please select a file."
 msgstr "파일을 선택하십시오."
 
 #: cryptui.rc:82
-msgid "The file format is not recognized.  Please select another file."
+#, fuzzy
+msgid "The file format is not recognized. Please select another file."
 msgstr "이 파일 형식은 인식할 수 없습니다. 다른 파일을 선택하십시오."
 
 #: cryptui.rc:83
@@ -2826,7 +2830,8 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "내용을 저장할 파일 이름 지정."
 
 #: cryptui.rc:152
-msgid "The specified file already exists.  Do you want to replace it?"
+#, fuzzy
+msgid "The specified file already exists. Do you want to replace it?"
 msgstr "지정된 파일은 이미 존재합니다.덮어 쓰시겠습니까?"
 
 #: cryptui.rc:153
@@ -6610,8 +6615,9 @@ msgid "Done"
 msgstr "끝남"
 
 #: msi.rc:27
+#, fuzzy
 msgid ""
-"The specified installation package could not be opened.  Please check the "
+"The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
 "지정한 설치 패키지를 열 수 없습니다. 파일 경로를 확인하고 다시 시도하십시오."
@@ -7143,16 +7149,18 @@ msgstr ""
 "습니다."
 
 #: oledlg.rc:36
+#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
-"activate it using %s.  It will be displayed as an icon."
+"activate it using %s. It will be displayed as an icon."
 msgstr ""
 "당신의 문서에 클립보드의 내용들을 첨부하면  %s를 사용해서 이것을 실행할 수 있"
 "습니다. 이것은 아이콘으로 나타내질 겁니다."
 
 #: oledlg.rc:37
+#, fuzzy
 msgid ""
-"Inserts the contents of the clipboard into your document as %s.  The data is "
+"Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
@@ -7160,8 +7168,9 @@ msgstr ""
 "있어서 파일이 바뀌면 당신의 문서도 바뀔겁니다."
 
 #: oledlg.rc:38
+#, fuzzy
 msgid ""
-"Inserts a picture of the clipboard contents into your document.  The picture "
+"Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
@@ -7169,8 +7178,9 @@ msgstr ""
 "결되어 있어서 파일이 바뀌면 당신의 문서도 바뀔겁니다."
 
 #: oledlg.rc:39
+#, fuzzy
 msgid ""
-"Inserts a shortcut which points to the location of the clipboard contents.  "
+"Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
@@ -8144,6 +8154,7 @@ msgid "Confirm overwrite"
 msgstr "덮어쓰기 확인"
 
 #: shell32.rc:278
+#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8152,8 +8163,8 @@ msgid ""
 "\n"
 "Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
 "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
-"more details.\n"
+"FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more "
+"details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser General Public License "
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
@@ -8916,7 +8927,8 @@ msgid "&Output File Name:"
 msgstr "출력 파일 이름(&O):"
 
 #: winspool.rc:28
-msgid "The output file already exists.  Click OK to overwrite."
+#, fuzzy
+msgid "The output file already exists. Click OK to overwrite."
 msgstr "출력 파일은 존재합니다. '확인'을 누르면 덮어쓰여질겁니다."
 
 #: winspool.rc:29
@@ -11352,6 +11364,7 @@ msgstr ""
 "합니다; 'start /L'을 실행시키면 자세한 것을 볼 수 있습니다\n"
 
 #: start.rc:64
+#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -11361,7 +11374,7 @@ msgid ""
 "\n"
 "This program is distributed in the hope that it will be useful,\n"
 "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
 "GNU Lesser Public License for more details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser Public License\n"
@@ -12354,8 +12367,9 @@ msgid "Application settings"
 msgstr "응용프로그램 설정 "
 
 #: winecfg.rc:146
+#, fuzzy
 msgid ""
-"Wine can mimic different Windows versions for each application.  This tab is "
+"Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""

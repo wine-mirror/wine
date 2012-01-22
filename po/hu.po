@@ -2447,13 +2447,13 @@ msgstr "Tanusítvány sablon információ"
 
 #: cryptui.rc:29
 msgid ""
-"This certificate has an invalid signature.  The certificate may have been "
+"This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
 
 #: cryptui.rc:30
 msgid ""
-"This root certificate is not trusted.  To trust it, add it to your system's "
+"This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
 
@@ -2614,7 +2614,7 @@ msgstr ""
 
 #: cryptui.rc:69
 msgid ""
-"The file contains objects that do not match the given criteria.  Please "
+"The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
 
@@ -2668,7 +2668,7 @@ msgid "Please select a file."
 msgstr ""
 
 #: cryptui.rc:82
-msgid "The file format is not recognized.  Please select another file."
+msgid "The file format is not recognized. Please select another file."
 msgstr ""
 
 #: cryptui.rc:83
@@ -2890,8 +2890,11 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr ""
 
 #: cryptui.rc:152
-msgid "The specified file already exists.  Do you want to replace it?"
+#, fuzzy
+msgid "The specified file already exists. Do you want to replace it?"
 msgstr ""
+"A fájl már létezik.\n"
+"Cseréli a fájlt?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -7006,7 +7009,7 @@ msgstr ""
 
 #: msi.rc:27
 msgid ""
-"The specified installation package could not be opened.  Please check the "
+"The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
 
@@ -7510,16 +7513,18 @@ msgstr ""
 "használatával aktiválhat: %s."
 
 #: oledlg.rc:36
+#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
-"activate it using %s.  It will be displayed as an icon."
+"activate it using %s. It will be displayed as an icon."
 msgstr ""
 "A vágólap tartalmának beillesztése az Ön dokumentumába, amit a következő "
 "használatával aktiválhat: %s. Ikonként fog megjelnni."
 
 #: oledlg.rc:37
+#, fuzzy
 msgid ""
-"Inserts the contents of the clipboard into your document as %s.  The data is "
+"Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
@@ -7530,7 +7535,7 @@ msgstr ""
 #: oledlg.rc:38
 #, fuzzy
 msgid ""
-"Inserts a picture of the clipboard contents into your document.  The picture "
+"Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
@@ -7541,7 +7546,7 @@ msgstr ""
 #: oledlg.rc:39
 #, fuzzy
 msgid ""
-"Inserts a shortcut which points to the location of the clipboard contents.  "
+"Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
@@ -8574,6 +8579,7 @@ msgid "Confirm overwrite"
 msgstr "Fájl felülírási megerősítés"
 
 #: shell32.rc:278
+#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8582,8 +8588,8 @@ msgid ""
 "\n"
 "Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
 "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
-"more details.\n"
+"FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more "
+"details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser General Public License "
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
@@ -9264,7 +9270,8 @@ msgid "&Output File Name:"
 msgstr "Kimeneti &fájlnév:"
 
 #: winspool.rc:28
-msgid "The output file already exists.  Click OK to overwrite."
+#, fuzzy
+msgid "The output file already exists. Click OK to overwrite."
 msgstr "A kimeneti fájl már létezik.  Kattintson az OK gombra a felülíráshoz."
 
 #: winspool.rc:29
@@ -11562,6 +11569,7 @@ msgid ""
 msgstr ""
 
 #: start.rc:64
+#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -11571,7 +11579,7 @@ msgid ""
 "\n"
 "This program is distributed in the hope that it will be useful,\n"
 "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
 "GNU Lesser Public License for more details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser Public License\n"
@@ -11580,6 +11588,19 @@ msgid ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
+"A Wine szabad szoftver; szabadon terjesztheti, vagy módosíthatja a GNU "
+"Lesser General Public Liszenc feltételei szerint, amit a Free Software "
+"Foundation készített; mind a 2.1 verziójú licensz, vagy (választása szerint) "
+"bármely későbbi verzió használható.\n"
+"\n"
+"A Winet abban a reményben terjesztik, hogy hasznos lesz, ugyanakkor SEMILYEN "
+"GARANCIA NINCS RÁ; még garancia az ELADHATÓSÁGRA, illetve az ALKALMASSÁG AZ "
+"ELADHATÓSÁGI SZÁNDÉKRA sem. Nézze meg a GNU Lesser General Public Licenszt a "
+"további részletekért.\n"
+"\n"
+"Önnek kapnia kellett egy másolatot a GNU Lesser General Public Licenszből, "
+"ha nem írjon a Free Software Foundation, Inc-nek: 51 Franklin St, Fifth "
+"Floor, Boston, MA 02110-1301, USA."
 
 #: start.rc:66
 msgid ""
@@ -12581,8 +12602,9 @@ msgid "Application settings"
 msgstr " Alkalmazás beállítások "
 
 #: winecfg.rc:146
+#, fuzzy
 msgid ""
-"Wine can mimic different Windows versions for each application.  This tab is "
+"Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
