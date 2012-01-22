@@ -1590,41 +1590,9 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
         }
         else
         {
-            /* Accessing depth / stencil surfaces is supposed to fail while in
-             * a scene, except for fills, which seem to work. */
-            if (device->inScene)
-            {
-                WARN("Rejecting depth / stencil access while in scene.\n");
-                return WINED3DERR_INVALIDCALL;
-            }
-
             if (src_ds_flags != dst_ds_flags)
             {
                 WARN("Rejecting depth / stencil blit between incompatible formats.\n");
-                return WINED3DERR_INVALIDCALL;
-            }
-
-            if (src_rect.top || src_rect.left
-                    || src_rect.bottom != src_surface->resource.height
-                    || src_rect.right != src_surface->resource.width)
-            {
-                WARN("Rejecting depth / stencil blit with invalid source rect %s.\n",
-                        wine_dbgstr_rect(&src_rect));
-                return WINED3DERR_INVALIDCALL;
-            }
-
-            if (dst_rect.top || dst_rect.left
-                    || dst_rect.bottom != dst_surface->resource.height
-                    || dst_rect.right != dst_surface->resource.width)
-            {
-                WARN("Rejecting depth / stencil blit with invalid destination rect %s.\n",
-                        wine_dbgstr_rect(&src_rect));
-                return WINED3DERR_INVALIDCALL;
-            }
-
-            if (scale)
-            {
-                WARN("Rejecting depth / stencil blit with mismatched surface sizes.\n");
                 return WINED3DERR_INVALIDCALL;
             }
 

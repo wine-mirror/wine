@@ -1035,22 +1035,67 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetFrontBufferData(IDirect3DDevice9Ex
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DDevice9Impl_StretchRect(IDirect3DDevice9Ex *iface, IDirect3DSurface9 *pSourceSurface,
-        const RECT *pSourceRect, IDirect3DSurface9 *pDestSurface, const RECT *pDestRect, D3DTEXTUREFILTERTYPE Filter)
+static HRESULT WINAPI IDirect3DDevice9Impl_StretchRect(IDirect3DDevice9Ex *iface, IDirect3DSurface9 *src_surface,
+        const RECT *src_rect, IDirect3DSurface9 *dst_surface, const RECT *dst_rect, D3DTEXTUREFILTERTYPE filter)
 {
-    IDirect3DSurface9Impl *src = unsafe_impl_from_IDirect3DSurface9(pSourceSurface);
-    IDirect3DSurface9Impl *dst = unsafe_impl_from_IDirect3DSurface9(pDestSurface);
-    HRESULT hr;
+    IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
+    IDirect3DSurface9Impl *src = unsafe_impl_from_IDirect3DSurface9(src_surface);
+    IDirect3DSurface9Impl *dst = unsafe_impl_from_IDirect3DSurface9(dst_surface);
+    HRESULT hr = D3DERR_INVALIDCALL;
+    struct wined3d_resource_desc src_desc, dst_desc;
+    struct wined3d_resource *wined3d_resource;
 
     TRACE("iface %p, src_surface %p, src_rect %p, dst_surface %p, dst_rect %p, filter %#x.\n",
-            iface, pSourceSurface, pSourceRect, pDestSurface, pDestRect, Filter);
+            iface, src_surface, src_rect, dst_surface, dst_rect, filter);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_blt(dst->wined3d_surface, pDestRect, src->wined3d_surface, pSourceRect, 0, NULL, Filter);
+    wined3d_resource = wined3d_surface_get_resource(dst->wined3d_surface);
+    wined3d_resource_get_desc(wined3d_resource, &dst_desc);
+
+    wined3d_resource = wined3d_surface_get_resource(src->wined3d_surface);
+    wined3d_resource_get_desc(wined3d_resource, &src_desc);
+
+    if (src_desc.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    {
+        if (This->in_scene)
+        {
+            WARN("Rejecting depth / stencil blit while in scene.\n");
+            goto done;
+        }
+
+        if (src_rect)
+        {
+            if (src_rect->left || src_rect->top || src_rect->right != src_desc.width
+                    || src_rect->bottom != src_desc.height)
+            {
+                WARN("Rejecting depth / stencil blit with invalid source rect %s.\n",
+                        wine_dbgstr_rect(src_rect));
+                goto done;
+            }
+        }
+        if (dst_rect)
+        {
+            if (dst_rect->left || dst_rect->top || dst_rect->right != dst_desc.width
+                    || dst_rect->bottom != dst_desc.height)
+            {
+                WARN("Rejecting depth / stencil blit with invalid destination rect %s.\n",
+                        wine_dbgstr_rect(dst_rect));
+                goto done;
+            }
+        }
+        if (src_desc.width != dst_desc.width || src_desc.height != dst_desc.height)
+        {
+            WARN("Rejecting depth / stencil blit with mismatched surface sizes.\n");
+            goto done;
+        }
+    }
+
+    hr = wined3d_surface_blt(dst->wined3d_surface, dst_rect, src->wined3d_surface, src_rect, 0, NULL, filter);
     if (hr == WINEDDERR_INVALIDRECT)
         hr = D3DERR_INVALIDCALL;
-    wined3d_mutex_unlock();
 
+done:
+    wined3d_mutex_unlock();
     return hr;
 }
 
@@ -1245,6 +1290,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_BeginScene(IDirect3DDevice9Ex *iface)
 
     wined3d_mutex_lock();
     hr = wined3d_device_begin_scene(This->wined3d_device);
+    if (SUCCEEDED(hr)) This->in_scene = TRUE;
     wined3d_mutex_unlock();
 
     return hr;
@@ -1259,6 +1305,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_EndScene(IDirect3DD
 
     wined3d_mutex_lock();
     hr = wined3d_device_end_scene(This->wined3d_device);
+    if (SUCCEEDED(hr)) This->in_scene = FALSE;
     wined3d_mutex_unlock();
 
     return hr;

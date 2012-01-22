@@ -173,6 +173,7 @@ typedef struct IDirect3DDevice9Impl
     unsigned int                 numConvertedDecls, declArraySize;
 
     BOOL                          notreset;
+    BOOL                          in_scene;
 } IDirect3DDevice9Impl;
 
 HRESULT device_init(IDirect3DDevice9Impl *device, IDirect3D9Impl *parent, struct wined3d *wined3d, UINT adapter, D3DDEVTYPE device_type,
