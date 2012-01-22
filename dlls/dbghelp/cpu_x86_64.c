@@ -2,7 +2,7 @@
  * File cpu_x86_64.c
  *
  * Copyright (C) 1999, 2005 Alexandre Julliard
- * Copyright (C) 2009       Eric Pouech.
+ * Copyright (C) 2009, 2011 Eric Pouech.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -125,39 +125,45 @@ union handler_data
     ULONG handler;
 };
 
-static void dump_unwind_info(HANDLE hProcess, ULONG64 base, RUNTIME_FUNCTION *function)
+static void dump_unwind_info(struct cpu_stack_walk* csw, ULONG64 base, RUNTIME_FUNCTION *function)
 {
     static const char * const reg_names[16] =
         { "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
           "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15" };
 
-    union handler_data *handler_data;
+    union handler_data handler_data;
     char buffer[sizeof(UNWIND_INFO) + 256 * sizeof(UNWIND_CODE)];
     UNWIND_INFO* info = (UNWIND_INFO*)buffer;
     unsigned int i, count;
-    SIZE_T r;
+    RUNTIME_FUNCTION snext;
+    ULONG64 addr;
 
     TRACE("**** func %x-%x\n", function->BeginAddress, function->EndAddress);
     for (;;)
     {
         if (function->UnwindData & 1)
         {
-#if 0
-            RUNTIME_FUNCTION *next = (RUNTIME_FUNCTION*)((char*)base + (function->UnwindData & ~1));
+            if (!sw_read_mem(csw, base + function->UnwindData, &snext, sizeof(snext)))
+            {
+                TRACE("Couldn't unwind RUNTIME_INFO\n");
+                return;
+            }
             TRACE("unwind info for function %p-%p chained to function %p-%p\n",
                   (char*)base + function->BeginAddress, (char*)base + function->EndAddress,
-                  (char*)base + next->BeginAddress, (char*)base + next->EndAddress);
-            function = next;
+                  (char*)base + snext.BeginAddress, (char*)base + snext.EndAddress);
+            function = &snext;
             continue;
-#else
-            FIXME("NOT SUPPORTED\n");
-#endif
         }
-        ReadProcessMemory(hProcess, (char*)base + function->UnwindData, info, sizeof(*info), &r);
-        ReadProcessMemory(hProcess, (char*)base + function->UnwindData + FIELD_OFFSET(UNWIND_INFO, UnwindCode),
-                          info->UnwindCode, 256 * sizeof(UNWIND_CODE), &r);
+        addr = base + function->UnwindData;
+        if (!sw_read_mem(csw, addr, info, FIELD_OFFSET(UNWIND_INFO, UnwindCode)) ||
+            !sw_read_mem(csw, addr + FIELD_OFFSET(UNWIND_INFO, UnwindCode),
+                         info->UnwindCode, info->CountOfCodes * sizeof(UNWIND_CODE)))
+        {
+            FIXME("couldn't read memory for UNWIND_INFO\n");
+            return;
+        }
         TRACE("unwind info at %p flags %x prolog 0x%x bytes function %p-%p\n",
-              info, info->Flags, info->SizeOfProlog,
+              (char*)addr, info->Flags, info->SizeOfProlog,
               (char*)base + function->BeginAddress, (char*)base + function->EndAddress);
 
         if (info->FrameRegister)
@@ -222,18 +228,31 @@ static void dump_unwind_info(HANDLE hProcess, ULONG64 base, RUNTIME_FUNCTION *fu
             }
         }
 
-        handler_data = (union handler_data*)&info->UnwindCode[(info->CountOfCodes + 1) & ~1];
+        addr += FIELD_OFFSET(UNWIND_INFO, UnwindCode) +
+            ((info->CountOfCodes + 1) & ~1) * sizeof(UNWIND_CODE);
         if (info->Flags & UNW_FLAG_CHAININFO)
         {
+            if (!sw_read_mem(csw, addr, &handler_data, sizeof(handler_data.chain)))
+            {
+                FIXME("couldn't read memory for handler_data.chain\n");
+                return;
+            }
             TRACE("    chained to function %p-%p\n",
-                  (char*)base + handler_data->chain.BeginAddress,
-                  (char*)base + handler_data->chain.EndAddress);
-            function = &handler_data->chain;
+                  (char*)base + handler_data.chain.BeginAddress,
+                  (char*)base + handler_data.chain.EndAddress);
+            function = &handler_data.chain;
             continue;
         }
         if (info->Flags & (UNW_FLAG_EHANDLER | UNW_FLAG_UHANDLER))
+        {
+            if (!sw_read_mem(csw, addr, &handler_data, sizeof(handler_data.handler)))
+            {
+                FIXME("couldn't read memory for handler_data.handler\n");
+                return;
+            }
             TRACE("    handler %p data at %p\n",
-                  (char*)base + handler_data->handler, &handler_data->handler + 1);
+                  (char*)base + handler_data.handler, (char*)addr + sizeof(handler_data.handler));
+        }
         break;
     }
 }
@@ -448,7 +467,7 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw,
 
     /* FIXME: we have some assumptions here */
     assert(context);
-    dump_unwind_info(csw->hProcess, sw_module_base(csw, context->Rip), function);
+    dump_unwind_info(csw, sw_module_base(csw, context->Rip), function);
     newframe = context->Rsp;
     for (;;)
     {
