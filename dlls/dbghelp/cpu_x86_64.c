@@ -349,6 +349,82 @@ static BOOL is_inside_epilog(struct cpu_stack_walk* csw, DWORD64 pc)
     }
 }
 
+static BOOL interpret_epilog(struct cpu_stack_walk* csw, ULONG64 pc, CONTEXT *context )
+{
+    BYTE        insn, val8;
+    WORD        val16;
+    LONG        val32;
+    DWORD64     val64;
+
+    for (;;)
+    {
+        BYTE rex = 0;
+
+        if (!sw_read_mem(csw, pc, &insn, 1)) return FALSE;
+        if ((insn & 0xf0) == 0x40)
+        {
+            rex = insn & 0x0f;  /* rex prefix */
+            if (!sw_read_mem(csw, ++pc, &insn, 1)) return FALSE;
+        }
+
+        switch (insn)
+        {
+        case 0x58: /* pop %rax/r8 */
+        case 0x59: /* pop %rcx/r9 */
+        case 0x5a: /* pop %rdx/r10 */
+        case 0x5b: /* pop %rbx/r11 */
+        case 0x5c: /* pop %rsp/r12 */
+        case 0x5d: /* pop %rbp/r13 */
+        case 0x5e: /* pop %rsi/r14 */
+        case 0x5f: /* pop %rdi/r15 */
+            if (!sw_read_mem(csw, context->Rsp, &val64, sizeof(DWORD64))) return FALSE;
+            set_int_reg(context, insn - 0x58 + (rex & 1) * 8, val64);
+            context->Rsp += sizeof(ULONG64);
+            pc++;
+            continue;
+        case 0x81: /* add $nnnn,%rsp */
+            if (!sw_read_mem(csw, pc + 2, &val32, sizeof(ULONG))) return FALSE;
+            context->Rsp += (LONG)val32;
+            pc += 2 + sizeof(LONG);
+            continue;
+        case 0x83: /* add $n,%rsp */
+            if (!sw_read_mem(csw, pc + 2, &val8, sizeof(BYTE))) return FALSE;
+            context->Rsp += (signed char)val8;
+            pc += 3;
+            continue;
+        case 0x8d:
+            if (!sw_read_mem(csw, pc + 1, &insn, sizeof(BYTE))) return FALSE;
+            if ((insn >> 6) == 1)  /* lea n(reg),%rsp */
+            {
+                if (!sw_read_mem(csw, pc + 2, &val8, sizeof(BYTE))) return FALSE;
+                context->Rsp = get_int_reg( context, (insn & 7) + (rex & 1) * 8 ) + (signed char)val8;
+                pc += 3;
+            }
+            else  /* lea nnnn(reg),%rsp */
+            {
+                if (!sw_read_mem(csw, pc + 2, &val32, sizeof(ULONG))) return FALSE;
+                context->Rsp = get_int_reg( context, (insn & 7) + (rex & 1) * 8 ) + (LONG)val32;
+                pc += 2 + sizeof(LONG);
+            }
+            continue;
+        case 0xc2: /* ret $nn */
+            if (!sw_read_mem(csw, context->Rsp, &val64, sizeof(DWORD64))) return FALSE;
+            if (!sw_read_mem(csw, pc + 1, &val16, sizeof(WORD))) return FALSE;
+            context->Rip = val64;
+            context->Rsp += sizeof(ULONG64) + val16;
+            return TRUE;
+        case 0xc3: /* ret */
+            if (!sw_read_mem(csw, context->Rsp, &val64, sizeof(DWORD64))) return FALSE;
+            context->Rip = val64;
+            context->Rsp += sizeof(ULONG64);
+            return TRUE;
+        /* FIXME: add various jump instructions */
+        }
+        FIXME("unsupported insn %x\n", insn);
+        return FALSE;
+    }
+}
+
 static BOOL default_unwind(struct cpu_stack_walk* csw, CONTEXT* context)
 {
     if (!sw_read_mem(csw, context->Rsp, &context->Rip, sizeof(DWORD64)))
@@ -404,8 +480,7 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw,
             prolog_offset = ~0;
             if (is_inside_epilog(csw, context->Rip))
             {
-                FIXME("epilog management not fully done\n");
-                /* interpret_epilog((const BYTE*)frame->AddrPC.Offset, context); */
+                interpret_epilog(csw, context->Rip, context);
                 return TRUE;
             }
         }
