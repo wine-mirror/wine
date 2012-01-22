@@ -433,22 +433,22 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw,
                 break;
             case UWOP_SAVE_NONVOL:  /* movq %reg,n(%rsp) */
                 off = newframe + *(USHORT*)&info->UnwindCode[i+1] * 8;
-                if (!sw_read_mem(csw, context->Rsp, &value, sizeof(DWORD64))) return FALSE;
+                if (!sw_read_mem(csw, off, &value, sizeof(DWORD64))) return FALSE;
                 set_int_reg(context, info->UnwindCode[i].OpInfo, value);
                 break;
             case UWOP_SAVE_NONVOL_FAR:  /* movq %reg,nn(%rsp) */
                 off = newframe + *(DWORD*)&info->UnwindCode[i+1];
-                if (!sw_read_mem(csw, context->Rsp, &value, sizeof(DWORD64))) return FALSE;
+                if (!sw_read_mem(csw, off, &value, sizeof(DWORD64))) return FALSE;
                 set_int_reg(context, info->UnwindCode[i].OpInfo, value);
                 break;
             case UWOP_SAVE_XMM128:  /* movaps %xmmreg,n(%rsp) */
                 off = newframe + *(USHORT*)&info->UnwindCode[i+1] * 16;
-                if (!sw_read_mem(csw, context->Rsp, &floatvalue, sizeof(M128A))) return FALSE;
+                if (!sw_read_mem(csw, off, &floatvalue, sizeof(M128A))) return FALSE;
                 set_float_reg(context, info->UnwindCode[i].OpInfo, floatvalue);
                 break;
             case UWOP_SAVE_XMM128_FAR:  /* movaps %xmmreg,nn(%rsp) */
                 off = newframe + *(DWORD*)&info->UnwindCode[i+1];
-                if (!sw_read_mem(csw, context->Rsp, &floatvalue, sizeof(M128A))) return FALSE;
+                if (!sw_read_mem(csw, off, &floatvalue, sizeof(M128A))) return FALSE;
                 set_float_reg(context, info->UnwindCode[i].OpInfo, floatvalue);
                 break;
             case UWOP_PUSH_MACHFRAME:
