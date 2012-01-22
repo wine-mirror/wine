@@ -535,7 +535,7 @@ extern const WCHAR      S_WineLoaderW[] DECLSPEC_HIDDEN;
 extern const WCHAR      S_SlashW[] DECLSPEC_HIDDEN;
 
 extern struct module*
-                    module_find_by_addr(const struct process* pcs, unsigned long addr,
+                    module_find_by_addr(const struct process* pcs, DWORD64 addr,
                                         enum module_type type) DECLSPEC_HIDDEN;
 extern struct module*
                     module_find_by_nameW(const struct process* pcs,
