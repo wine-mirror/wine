@@ -632,6 +632,12 @@ typedef struct ID3DXConstantTableImpl {
     ctab_constant *constants;
 } ID3DXConstantTableImpl;
 
+static void free_constant_table(struct ID3DXConstantTableImpl *table)
+{
+    HeapFree(GetProcessHeap(), 0, table->constants);
+    HeapFree(GetProcessHeap(), 0, table->ctab);
+}
+
 static inline ID3DXConstantTableImpl *impl_from_ID3DXConstantTable(ID3DXConstantTable *iface)
 {
     return CONTAINING_RECORD(iface, ID3DXConstantTableImpl, ID3DXConstantTable_iface);
@@ -681,7 +687,7 @@ static ULONG WINAPI ID3DXConstantTableImpl_AddRef(ID3DXConstantTable* iface)
     return InterlockedIncrement(&This->ref);
 }
 
-static ULONG WINAPI ID3DXConstantTableImpl_Release(ID3DXConstantTable* iface)
+static ULONG WINAPI ID3DXConstantTableImpl_Release(ID3DXConstantTable *iface)
 {
     ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -690,8 +696,7 @@ static ULONG WINAPI ID3DXConstantTableImpl_Release(ID3DXConstantTable* iface)
 
     if (!ref)
     {
-        HeapFree(GetProcessHeap(), 0, This->constants);
-        HeapFree(GetProcessHeap(), 0, This->ctab);
+        free_constant_table(This);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1258,8 +1263,7 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* byte_code,
 
 error:
 
-    HeapFree(GetProcessHeap(), 0, object->constants);
-    HeapFree(GetProcessHeap(), 0, object->ctab);
+    free_constant_table(object);
     HeapFree(GetProcessHeap(), 0, object);
 
     return hr;
