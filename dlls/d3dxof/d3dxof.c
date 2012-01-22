@@ -963,6 +963,9 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   This->buf.pxo_globals = This->xobjects;
   This->buf.nb_pxo_globals = This->nb_xobjects;
   This->buf.level = 0;
+  This->buf.pdata = NULL;
+  This->buf.capacity = 0;
+  This->buf.cur_pos_data = 0;
 
   This->buf.pxo_tab = HeapAlloc(GetProcessHeap(), 0, sizeof(xobject)*MAX_SUBOBJECTS);
   if (!This->buf.pxo_tab)
@@ -973,9 +976,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   }
   This->buf.pxo = This->xobjects[This->nb_xobjects] = This->buf.pxo_tab;
 
-  This->buf.pxo->pdata = This->buf.pdata = NULL;
-  This->buf.capacity = 0;
-  This->buf.cur_pos_data = 0;
+  This->buf.pxo->pdata = NULL;
   This->buf.pxo->nb_subobjects = 1;
 
   pstrings = HeapAlloc(GetProcessHeap(), 0, MAX_STRINGS_BUFFER);
