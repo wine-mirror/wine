@@ -4147,7 +4147,7 @@ msgstr "재배치 체인이 %1의 세그맨트 제한 도달\n"
 
 #: winerror.mc:801
 msgid "Infinite loop in relocation chain in %1\n"
-msgstr "% 1에 재배치 체인의 무한 루프\n"
+msgstr "%1에 재배치 체인의 무한 루프\n"
 
 #: winerror.mc:806
 msgid "Environment variable not found\n"
@@ -9864,7 +9864,7 @@ msgstr "현재 날짜는 %1임\n"
 
 #: cmd.rc:306
 msgid "Current Time is %1\n"
-msgstr "현재 시간은 %s임\n"
+msgstr "현재 시간은 %1임\n"
 
 #: cmd.rc:307
 msgid "Enter new date: "
@@ -10348,7 +10348,7 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
+"%1\n"
 "유니코드 문자를 포함하고 있는 이 파일은 만약 당신이 %2 인코딩으로\n"
 "파일을 저장하면 문자의 손실이 있을 것입니다.\n"
 "이 문자를 보존하려면  취소를 클릭하고, 인코딩 드롭다운목록의 유니코드\n"
