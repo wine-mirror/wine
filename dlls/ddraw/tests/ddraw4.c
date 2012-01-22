@@ -640,7 +640,7 @@ static void test_clipper_blt(void)
 
     hr = IDirectDrawSurface4_Lock(src_surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
     ok(SUCCEEDED(hr), "Failed to lock source surface, hr %#x.\n", hr);
-    ok(surface_desc.lPitch == 2560, "Got unexpected surface pitch %u.\n", surface_desc.lPitch);
+    ok(U1(surface_desc).lPitch == 2560, "Got unexpected surface pitch %u.\n", U1(surface_desc).lPitch);
     ptr = surface_desc.lpSurface;
     memcpy(&ptr[   0], &src_data[ 0], 6 * sizeof(DWORD));
     memcpy(&ptr[ 640], &src_data[ 6], 6 * sizeof(DWORD));

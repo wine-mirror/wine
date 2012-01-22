@@ -137,7 +137,7 @@ static IDirect3DDevice *create_device(IDirectDraw *ddraw, HWND window, DWORD coo
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    surface_desc.dwZBufferBitDepth = z_depth;
+    U2(surface_desc).dwZBufferBitDepth = z_depth;
     surface_desc.dwWidth = 640;
     surface_desc.dwHeight = 480;
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &ds, NULL);
@@ -408,7 +408,7 @@ static void test_clipper_blt(void)
 
     hr = IDirectDrawSurface_Lock(src_surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
     ok(SUCCEEDED(hr), "Failed to lock source surface, hr %#x.\n", hr);
-    ok(surface_desc.lPitch == 2560, "Got unexpected surface pitch %u.\n", surface_desc.lPitch);
+    ok(U1(surface_desc).lPitch == 2560, "Got unexpected surface pitch %u.\n", U1(surface_desc).lPitch);
     ptr = surface_desc.lpSurface;
     memcpy(&ptr[   0], &src_data[ 0], 6 * sizeof(DWORD));
     memcpy(&ptr[ 640], &src_data[ 6], 6 * sizeof(DWORD));
