@@ -30,9 +30,6 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <assert.h>
-#ifdef HAVE_REGEX_H
-# include <regex.h>
-#endif
 
 #include "wine/debug.h"
 #include "dbghelp_private.h"
@@ -138,100 +135,53 @@ static void symt_add_module_ht(struct module* module, struct symt_ht* ht)
     }
 }
 
-#ifdef HAVE_REGEX_H
-
-static BOOL compile_file_regex(regex_t* re, const char* srcfile)
+static WCHAR* file_regex(const char* srcfile)
 {
-    char *mask, *p;
-    BOOL ret;
+    WCHAR* mask;
+    WCHAR* p;
 
-    if (!srcfile || !*srcfile) return regcomp(re, ".*", REG_NOSUB);
-
-    p = mask = HeapAlloc(GetProcessHeap(), 0, 5 * strlen(srcfile) + 4);
-    *p++ = '^';
-    while (*srcfile)
+    if (!srcfile || !*srcfile)
     {
-        switch (*srcfile)
+        if (!(p = mask = HeapAlloc(GetProcessHeap(), 0, 3 * sizeof(WCHAR)))) return NULL;
+        *p++ = '?';
+        *p++ = '#';
+    }
+    else
+    {
+        DWORD  sz = MultiByteToWideChar(CP_ACP, 0, srcfile, -1, NULL, 0);
+        WCHAR* srcfileW;
+
+        /* FIXME: we use here the largest conversion for every char... could be optimized */
+        p = mask = HeapAlloc(GetProcessHeap(), 0, (5 * strlen(srcfile) + 1 + sz) * sizeof(WCHAR));
+        if (!mask) return NULL;
+        srcfileW = mask + 5 * strlen(srcfile) + 1;
+        MultiByteToWideChar(CP_ACP, 0, srcfile, -1, srcfileW, sz);
+
+        while (*srcfileW)
         {
-        case '\\':
-        case '/':
-            *p++ = '[';
-            *p++ = '\\';
-            *p++ = '\\';
-            *p++ = '/';
-            *p++ = ']';
-            break;
-        case '.':
-            *p++ = '\\';
-            *p++ = '.';
-            break;
-        case '*':
-            *p++ = '.';
-            *p++ = '*';
-            break;
-        default:
-            *p++ = *srcfile;
-            break;
+            switch (*srcfileW)
+            {
+            case '\\':
+            case '/':
+                *p++ = '[';
+                *p++ = '\\';
+                *p++ = '\\';
+                *p++ = '/';
+                *p++ = ']';
+                break;
+            case '.':
+                *p++ = '?';
+                break;
+            default:
+                *p++ = *srcfileW;
+                break;
+            }
+            srcfileW++;
         }
-        srcfile++;
     }
-    *p++ = '$';
     *p = 0;
-    ret = !regcomp(re, mask, REG_NOSUB);
-    HeapFree(GetProcessHeap(), 0, mask);
-    if (!ret)
-    {
-        FIXME("Couldn't compile %s\n", mask);
-        SetLastError(ERROR_INVALID_PARAMETER);
-    }
-    return ret;
+    return mask;
 }
-
-static int match_regexp( const regex_t *re, const char *str )
-{
-    return !regexec( re, str, 0, NULL, 0 );
-}
-
-#else /* HAVE_REGEX_H */
-
-/* if we don't have regexp support, fall back to a simple string comparison */
-
-typedef struct
-{
-    char *str;
-    BOOL  icase;
-} regex_t;
-
-static void compile_regex(const char* str, int numchar, regex_t* re, BOOL _case)
-{
-    if (numchar == -1) numchar = strlen( str );
-
-    re->str = HeapAlloc( GetProcessHeap(), 0, numchar + 1 );
-    memcpy( re->str, str, numchar );
-    re->str[numchar] = 0;
-    re->icase = _case;
-}
-
-static BOOL compile_file_regex(regex_t* re, const char* srcfile)
-{
-    if (!srcfile || !*srcfile) re->str = NULL;
-    else compile_regex( srcfile, -1, re, FALSE );
-    return TRUE;
-}
-
-static int match_regexp( const regex_t *re, const char *str )
-{
-    if (!re->str) return 1;
-    if (re->icase) return !lstrcmpiA( re->str, str );
-    return !strcmp( re->str, str );
-}
-
-static void regfree( regex_t *re )
-{
-    HeapFree( GetProcessHeap(), 0, re->str );
-}
-
-#endif /* HAVE_REGEX_H */
 
 struct symt_compiland* symt_new_compiland(struct module* module, 
                                           unsigned long address, unsigned src_idx)
@@ -2136,7 +2086,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
     struct module_pair          pair;
     struct hash_table_iter      hti;
     struct symt_ht*             sym;
-    regex_t                     re;
+    WCHAR*                      srcmask;
     struct line_info*           dli;
     void*                       ptr;
     SRCCODEINFO                 sci;
@@ -2150,7 +2100,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
     if (compiland) FIXME("Unsupported yet (filtering on compiland %s)\n", compiland);
     pair.requested = module_find_by_addr(pair.pcs, base, DMT_UNKNOWN);
     if (!module_get_debug(&pair)) return FALSE;
-    if (!compile_file_regex(&re, srcfile)) return FALSE;
+    if (!(srcmask = file_regex(srcfile))) return FALSE;
 
     sci.SizeOfStruct = sizeof(sci);
     sci.ModBase      = base;
@@ -2170,8 +2120,20 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
             if (dli->is_source_file)
             {
                 file = source_get(pair.effective, dli->u.source_file);
-                if (!match_regexp(&re, file)) sci.FileName[0] = '\0';
-                else strcpy(sci.FileName, file);
+                if (!file) sci.FileName[0] = '\0';
+                else
+                {
+                    DWORD   sz = MultiByteToWideChar(CP_ACP, 0, file, -1, NULL, 0);
+                    WCHAR*  fileW;
+
+                    if ((fileW = HeapAlloc(GetProcessHeap(), 0, sz * sizeof(WCHAR))))
+                        MultiByteToWideChar(CP_ACP, 0, file, -1, fileW, sz);
+                    if (SymMatchStringW(fileW, srcmask, FALSE))
+                        strcpy(sci.FileName, file);
+                    else
+                        sci.FileName[0] = '\0';
+                    HeapFree(GetProcessHeap(), 0, fileW);
+                }
             }
             else if (sci.FileName[0])
             {
@@ -2183,7 +2145,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
             }
         }
     }
-    regfree(&re);
+    HeapFree(GetProcessHeap(), 0, srcmask);
     return TRUE;
 }
 
