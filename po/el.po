@@ -8226,19 +8226,21 @@ msgid "Ma&ximize"
 msgstr ""
 
 #: user32.rc:33
-msgid "&Close\tAlt-F4"
-msgstr ""
+#, fuzzy
+msgid "&Close\tAlt+F4"
+msgstr "&Κλείσιμο"
 
 #: user32.rc:35
 msgid "&About Wine"
 msgstr ""
 
 #: user32.rc:46
-msgid "&Close\tCtrl-F4"
-msgstr ""
+#, fuzzy
+msgid "&Close\tCtrl+F4"
+msgstr "&Κλείσιμο"
 
 #: user32.rc:48
-msgid "Nex&t\tCtrl-F6"
+msgid "Nex&t\tCtrl+F6"
 msgstr ""
 
 #: user32.rc:79

@@ -8099,7 +8099,7 @@ msgid "Ma&ximize"
 msgstr "Ma&ximise"
 
 #: user32.rc:33
-msgid "&Close\tAlt-F4"
+msgid "&Close\tAlt+F4"
 msgstr ""
 
 #: user32.rc:35
@@ -8107,12 +8107,12 @@ msgid "&About Wine"
 msgstr ""
 
 #: user32.rc:46
-msgid "&Close\tCtrl-F4"
-msgstr ""
+msgid "&Close\tCtrl+F4"
+msgstr "&Close\tCtrl+F4"
 
 #: user32.rc:48
-msgid "Nex&t\tCtrl-F6"
-msgstr ""
+msgid "Nex&t\tCtrl+F6"
+msgstr "Nex&t\tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"

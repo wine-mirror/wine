@@ -8554,7 +8554,8 @@ msgid "Ma&ximize"
 msgstr "Bü&yüt"
 
 #: user32.rc:33
-msgid "&Close\tAlt-F4"
+#, fuzzy
+msgid "&Close\tAlt+F4"
 msgstr "&Kapat\tAlt-F4"
 
 #: user32.rc:35
@@ -8563,12 +8564,17 @@ msgstr "&Wine Hakkında"
 
 #: user32.rc:46
 #, fuzzy
-msgid "&Close\tCtrl-F4"
+msgid "&Close\tCtrl+F4"
 msgstr "&Kapat\tAlt-F4"
 
 #: user32.rc:48
-msgid "Nex&t\tCtrl-F6"
+#, fuzzy
+msgid "Nex&t\tCtrl+F6"
 msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Kes\tCtrl+X\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Ke&s\tCtrl+X"
 
 #: user32.rc:79
 msgid "&Abort"

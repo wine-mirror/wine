@@ -8537,7 +8537,8 @@ msgid "Ma&ximize"
 msgstr "最大化(&X)"
 
 #: user32.rc:33
-msgid "&Close\tAlt-F4"
+#, fuzzy
+msgid "&Close\tAlt+F4"
 msgstr "關閉(&N)\tAlt-F4"
 
 #: user32.rc:35
@@ -8546,12 +8547,13 @@ msgstr "關於 Wine(&A)"
 
 #: user32.rc:46
 #, fuzzy
-msgid "&Close\tCtrl-F4"
+msgid "&Close\tCtrl+F4"
 msgstr "關閉(&N)\tAlt-F4"
 
 #: user32.rc:48
-msgid "Nex&t\tCtrl-F6"
-msgstr ""
+#, fuzzy
+msgid "Nex&t\tCtrl+F6"
+msgstr "剪下(&T)\tCtrl+X"
 
 #: user32.rc:79
 msgid "&Abort"

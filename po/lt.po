@@ -8273,7 +8273,8 @@ msgid "Ma&ximize"
 msgstr "Pa&didinti"
 
 #: user32.rc:33
-msgid "&Close\tAlt-F4"
+#, fuzzy
+msgid "&Close\tAlt+F4"
 msgstr "&Užverti\tAlt-F4"
 
 #: user32.rc:35
@@ -8281,11 +8282,13 @@ msgid "&About Wine"
 msgstr "Apie &Wine"
 
 #: user32.rc:46
-msgid "&Close\tCtrl-F4"
+#, fuzzy
+msgid "&Close\tCtrl+F4"
 msgstr "&Užverti\tVald-F4"
 
 #: user32.rc:48
-msgid "Nex&t\tCtrl-F6"
+#, fuzzy
+msgid "Nex&t\tCtrl+F6"
 msgstr "Ki&tas\tVald-F6"
 
 #: user32.rc:79

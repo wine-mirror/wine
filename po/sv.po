@@ -8285,7 +8285,8 @@ msgid "Ma&ximize"
 msgstr "Ma&ximera"
 
 #: user32.rc:33
-msgid "&Close\tAlt-F4"
+#, fuzzy
+msgid "&Close\tAlt+F4"
 msgstr "A&vsluta\tAlt-F4"
 
 #: user32.rc:35
@@ -8294,12 +8295,13 @@ msgstr "&Om Wine"
 
 #: user32.rc:46
 #, fuzzy
-msgid "&Close\tCtrl-F4"
+msgid "&Close\tCtrl+F4"
 msgstr "A&vsluta\tAlt-F4"
 
 #: user32.rc:48
-msgid "Nex&t\tCtrl-F6"
-msgstr ""
+#, fuzzy
+msgid "Nex&t\tCtrl+F6"
+msgstr "Klipp &ut\tCtrl+X"
 
 #: user32.rc:79
 msgid "&Abort"

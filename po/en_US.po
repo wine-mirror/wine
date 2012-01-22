@@ -8249,20 +8249,20 @@ msgid "Ma&ximize"
 msgstr "Ma&ximize"
 
 #: user32.rc:33
-msgid "&Close\tAlt-F4"
-msgstr "&Close\tAlt-F4"
+msgid "&Close\tAlt+F4"
+msgstr "&Close\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
 msgstr "&About Wine"
 
 #: user32.rc:46
-msgid "&Close\tCtrl-F4"
-msgstr "&Close\tCtrl-F4"
+msgid "&Close\tCtrl+F4"
+msgstr "&Close\tCtrl+F4"
 
 #: user32.rc:48
-msgid "Nex&t\tCtrl-F6"
-msgstr "Nex&t\tCtrl-F6"
+msgid "Nex&t\tCtrl+F6"
+msgstr "Nex&t\tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"

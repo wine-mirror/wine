@@ -8296,7 +8296,8 @@ msgid "Ma&ximize"
 msgstr "Mà&ximitza"
 
 #: user32.rc:33
-msgid "&Close\tAlt-F4"
+#, fuzzy
+msgid "&Close\tAlt+F4"
 msgstr "&Tanca\tAlt-F4"
 
 #: user32.rc:35
@@ -8304,11 +8305,13 @@ msgid "&About Wine"
 msgstr "&Quant al Wine..."
 
 #: user32.rc:46
-msgid "&Close\tCtrl-F4"
+#, fuzzy
+msgid "&Close\tCtrl+F4"
 msgstr "&Tanca\tCtrl-F4"
 
 #: user32.rc:48
-msgid "Nex&t\tCtrl-F6"
+#, fuzzy
+msgid "Nex&t\tCtrl+F6"
 msgstr "Proper\tC&trl-F6"
 
 #: user32.rc:79

@@ -8534,7 +8534,8 @@ msgid "Ma&ximize"
 msgstr "У&већај"
 
 #: user32.rc:33
-msgid "&Close\tAlt-F4"
+#, fuzzy
+msgid "&Close\tAlt+F4"
 msgstr "&Затвори\tAlt-F4"
 
 #: user32.rc:35
@@ -8544,12 +8545,13 @@ msgstr "&О Бележници"
 
 #: user32.rc:46
 #, fuzzy
-msgid "&Close\tCtrl-F4"
+msgid "&Close\tCtrl+F4"
 msgstr "&Затвори\tAlt-F4"
 
 #: user32.rc:48
-msgid "Nex&t\tCtrl-F6"
-msgstr ""
+#, fuzzy
+msgid "Nex&t\tCtrl+F6"
+msgstr "&Исеци\tCtrl+X"
 
 #: user32.rc:79
 msgid "&Abort"

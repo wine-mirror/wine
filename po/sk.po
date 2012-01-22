@@ -8253,7 +8253,8 @@ msgid "Ma&ximize"
 msgstr "Ma&ximalizovať"
 
 #: user32.rc:33
-msgid "&Close\tAlt-F4"
+#, fuzzy
+msgid "&Close\tAlt+F4"
 msgstr "Za&tvoriť\tAlt-F4"
 
 #: user32.rc:35
@@ -8262,11 +8263,11 @@ msgstr ""
 
 #: user32.rc:46
 #, fuzzy
-msgid "&Close\tCtrl-F4"
+msgid "&Close\tCtrl+F4"
 msgstr "Za&tvoriť\tAlt-F4"
 
 #: user32.rc:48
-msgid "Nex&t\tCtrl-F6"
+msgid "Nex&t\tCtrl+F6"
 msgstr ""
 
 #: user32.rc:79

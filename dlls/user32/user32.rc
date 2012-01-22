@@ -30,7 +30,7 @@ SYSMENU MENU
     MENUITEM "Mi&nimize", 61472
     MENUITEM "Ma&ximize", 61488
     MENUITEM SEPARATOR
-    MENUITEM "&Close\tAlt-F4", 61536
+    MENUITEM "&Close\tAlt+F4", 61536
     MENUITEM SEPARATOR
     MENUITEM "&About Wine", 61761
 }
@@ -43,9 +43,9 @@ SYSMENUMDI MENU
     MENUITEM "Mi&nimize", 61472
     MENUITEM "Ma&ximize", 61488
     MENUITEM SEPARATOR
-    MENUITEM "&Close\tCtrl-F4", 61536
+    MENUITEM "&Close\tCtrl+F4", 61536
     MENUITEM SEPARATOR
-    MENUITEM "Nex&t\tCtrl-F6", 61504
+    MENUITEM "Nex&t\tCtrl+F6", 61504
 }
 
 EDITMENU MENU
