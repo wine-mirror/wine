@@ -14053,7 +14053,7 @@ msgstr "Ogiltigt antal parametrar - Använd xcopy /? för hjälp\n"
 
 #: xcopy.rc:28
 #, fuzzy
-msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
+msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Ogiltig parameter '%s' -  Använd xcopy /? för hjälp\n"
 
 #: xcopy.rc:29

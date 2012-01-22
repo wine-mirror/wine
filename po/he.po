@@ -14180,7 +14180,8 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Invalid number of parameters - Use xcopy /? for help\n"
 
 #: xcopy.rc:28
-msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
+#, fuzzy
+msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Invalid parameter '%1' -  Use xcopy /? for help\n"
 
 #: xcopy.rc:29

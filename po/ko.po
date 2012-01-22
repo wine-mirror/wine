@@ -12415,8 +12415,8 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"동적 링크 라이브러리는 개별적으로 내장(Wine에 의해 제공)이나 네이티브(윈도우즈"
-"나 프로그램에 의해 제공)으로 지정될수 있습니다."
+"동적 링크 라이브러리는 개별적으로 내장(Wine에 의해 제공)이나 네이티브(윈도우"
+"즈나 프로그램에 의해 제공)으로 지정될수 있습니다."
 
 #: winecfg.rc:185
 msgid "&New override for library:"
@@ -13124,8 +13124,8 @@ msgid ""
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
-"이 문제는 프로그램의 문제나 Wine의 결함으로 인해 발생할 수 있습니다. 당신은 실"
-"행한 프로그램에 대하여   <a href=\"http://appdb.winehq.org\">Application "
+"이 문제는 프로그램의 문제나 Wine의 결함으로 인해 발생할 수 있습니다. 당신은 "
+"실행한 프로그램에 대하여   <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> 에서 관련 팁을 살펴 볼 수 있습니다."
 
 #: winedbg.rc:58
@@ -13143,10 +13143,10 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
-"만약 이 문제가 윈도우즈에는 존재하지 않고 아직 보고되지 않았다면,"
-"당신은  \"다른 이름으로 저장\" 버튼을 사용해서 자세한 정보를 파일로 저장해서, "
-"<a href=\"http://wiki.winehq.org/Bugs\">버그 보고 파일</a>로 가서"
-"보고서에 파일을 같이 올리수 있습니다."
+"만약 이 문제가 윈도우즈에는 존재하지 않고 아직 보고되지 않았다면,당신은  \"다"
+"른 이름으로 저장\" 버튼을 사용해서 자세한 정보를 파일로 저장해서, <a href="
+"\"http://wiki.winehq.org/Bugs\">버그 보고 파일</a>로 가서보고서에 파일을 같"
+"이 올리수 있습니다."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13915,7 +13915,8 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "올바르지 않은 매개변수의 갯수 - xcopy /?로 도움말을 보시오\n"
 
 #: xcopy.rc:28
-msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
+#, fuzzy
+msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "올바르지 않은 매개변수 '%1' -  xcopy /?로 도움말을 보시오\n"
 
 #: xcopy.rc:29

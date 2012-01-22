@@ -14668,7 +14668,7 @@ msgstr "Număr de parametri nevalid - Utilizați xcopy /? pentru ajutor\n"
 
 #: xcopy.rc:28
 #, fuzzy
-msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
+msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Parametru nevalid „%s” -  Utilizați xcopy /? pentru ajutor\n"
 
 #: xcopy.rc:29

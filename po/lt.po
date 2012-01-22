@@ -13999,7 +13999,8 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Neteisingas parametrų skaičius – pagalba: xcopy /?\n"
 
 #: xcopy.rc:28
-msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
+#, fuzzy
+msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Neteisingas parametras „%1“ – pagalba: xcopy /?\n"
 
 #: xcopy.rc:29

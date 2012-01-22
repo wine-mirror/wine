@@ -13979,7 +13979,8 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "パラメータの数が違います。xcopy /? で使い方を表示します\n"
 
 #: xcopy.rc:28
-msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
+#, fuzzy
+msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "無効なパラメータ '%1' です。xcopy /? で使い方を表示します\n"
 
 #: xcopy.rc:29

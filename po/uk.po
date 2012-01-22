@@ -14044,7 +14044,7 @@ msgstr "Невірна кількість параметрів - Введіть 
 
 #: xcopy.rc:28
 #, fuzzy
-msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
+msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Невірний параметр '%s' -  Введіть xcopy /? для довідки\n"
 
 #: xcopy.rc:29

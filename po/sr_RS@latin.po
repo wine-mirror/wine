@@ -14223,7 +14223,7 @@ msgstr "Neispravan broj parametara. Koristite xcopy /? za pomoć\n"
 
 #: xcopy.rc:28
 #, fuzzy
-msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
+msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Neispravan parametar „%s“. Koristite xcopy /? za pomoć\n"
 
 #: xcopy.rc:29
