@@ -1183,7 +1183,7 @@ HIMAGELIST   ShellBigIconList = 0;
  * SHELL32 DllMain
  *
  * NOTES
- *  calling oleinitialize here breaks sone apps.
+ *  calling oleinitialize here breaks some apps.
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
