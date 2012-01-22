@@ -180,31 +180,32 @@ static void test_MeshBuilder3(void)
     if (FAILED(hr))
     {
         win_skip("Cannot get IDirect3DRM3 interface (hr = %x), skipping tests\n", hr);
+        IDirect3DRM_Release(pD3DRM);
         return;
     }
 
-    hr = IDirect3DRM_CreateMeshBuilder(pD3DRM3, &pMeshBuilder3);
+    hr = IDirect3DRM3_CreateMeshBuilder(pD3DRM3, &pMeshBuilder3);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder3 interface (hr = %x)\n", hr);
 
     info.lpMemory = data_bad_version;
     info.dSize = strlen(data_bad_version);
-    hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder3, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
+    hr = IDirect3DRMMeshBuilder3_Load(pMeshBuilder3, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
     ok(hr == D3DRMERR_BADFILE, "Should have returned D3DRMERR_BADFILE (hr = %x)\n", hr);
 
     info.lpMemory = data_no_mesh;
     info.dSize = strlen(data_no_mesh);
-    hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder3, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
+    hr = IDirect3DRMMeshBuilder3_Load(pMeshBuilder3, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
     ok(hr == D3DRMERR_NOTFOUND, "Should have returned D3DRMERR_NOTFOUND (hr = %x)\n", hr);
 
     info.lpMemory = data_ok;
     info.dSize = strlen(data_ok);
-    hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder3, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
+    hr = IDirect3DRMMeshBuilder3_Load(pMeshBuilder3, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
     ok(hr == D3DRM_OK, "Cannot load mesh data (hr = %x)\n", hr);
 
-    val = IDirect3DRMMeshBuilder_GetVertexCount(pMeshBuilder3);
+    val = IDirect3DRMMeshBuilder3_GetVertexCount(pMeshBuilder3);
     ok(val == 4, "Wrong number of vertices %d (must be 4)\n", val);
 
-    val = IDirect3DRMMeshBuilder_GetFaceCount(pMeshBuilder3);
+    val = IDirect3DRMMeshBuilder3_GetFaceCount(pMeshBuilder3);
     ok(val == 3, "Wrong number of faces %d (must be 3)\n", val);
 
     hr = IDirect3DRMMeshBuilder3_GetVertices(pMeshBuilder3, 0, &val1, NULL);
@@ -230,9 +231,9 @@ static void test_MeshBuilder3(void)
     todo_wine ok(valu == 1.23f, "Wrong coordinate %f (must be 1.23)\n", valu);
     todo_wine ok(valv == 3.21f, "Wrong coordinate %f (must be 3.21)\n", valv);
 
-    IDirect3DRMMeshBuilder_Release(pMeshBuilder3);
-
-    IDirect3DRM_Release(pD3DRM3);
+    IDirect3DRMMeshBuilder3_Release(pMeshBuilder3);
+    IDirect3DRM3_Release(pD3DRM3);
+    IDirect3DRM_Release(pD3DRM);
 }
 
 static void test_Frame(void)
@@ -270,10 +271,19 @@ static void test_Frame(void)
         IDirect3DRMFrameArray_Release(pArray);
     }
 
-    /* Add child to first parent */
     hr = IDirect3DRM_CreateFrame(pD3DRM, NULL, &pFrameP1);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
 
+    /* [Add/Delete]Child with NULL pointer */
+    hr = IDirect3DRMFrame_AddChild(pFrameP1, NULL);
+    todo_wine ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
+    CHECK_REFCOUNT(pFrameP1, 1);
+
+    hr = IDirect3DRMFrame_DeleteChild(pFrameP1, NULL);
+    todo_wine ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
+    CHECK_REFCOUNT(pFrameP1, 1);
+
+    /* Add child to first parent */
     pFrameTmp = (void*)0xdeadbeef;
     hr = IDirect3DRMFrame_GetParent(pFrameP1, &pFrameTmp);
     todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
@@ -370,9 +380,31 @@ static void test_Frame(void)
     todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
     todo_wine ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
 
+    /* Add two children */
+    hr = IDirect3DRMFrame_AddChild(pFrameP2, pFrameC);
+    todo_wine ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
+    todo_wine CHECK_REFCOUNT(pFrameC, 2);
+
+    hr = IDirect3DRMFrame_AddChild(pFrameP2, pFrameP1);
+    todo_wine ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
+    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+
+    pArray = NULL;
+    hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    if (pArray)
+    {
+        count = IDirect3DRMFrameArray_GetSize(pArray);
+        ok(count == 2, "count = %u\n", count);
+        IDirect3DRMFrameArray_Release(pArray);
+    }
+
+    IDirect3DRMMeshBuilder_Release(pFrameP2);
+    todo_wine CHECK_REFCOUNT(pFrameC, 2);
+    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+
     IDirect3DRMMeshBuilder_Release(pFrameC);
     IDirect3DRMMeshBuilder_Release(pFrameP1);
-    IDirect3DRMMeshBuilder_Release(pFrameP2);
 
     IDirect3DRM_Release(pD3DRM);
 }
