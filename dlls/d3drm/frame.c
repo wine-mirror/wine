@@ -939,23 +939,13 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_QueryInterface(IDirect3DRMFrame3* if
 static ULONG WINAPI IDirect3DRMFrame3Impl_AddRef(IDirect3DRMFrame3* iface)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-
-    TRACE("(%p)\n", This);
-
-    return InterlockedIncrement(&This->ref);
+    return IDirect3DRMFrame2_AddRef(&This->IDirect3DRMFrame2_iface);
 }
 
 static ULONG WINAPI IDirect3DRMFrame3Impl_Release(IDirect3DRMFrame3* iface)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p)\n", This);
-
-    if (!ref)
-        HeapFree(GetProcessHeap(), 0, This);
-
-    return ref;
+    return IDirect3DRMFrame2_Release(&This->IDirect3DRMFrame2_iface);
 }
 
 /*** IDirect3DRMObject methods ***/
