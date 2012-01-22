@@ -5719,7 +5719,8 @@ msgid "Event log file changed\n"
 msgstr "Plik dziennika zdarzeń zmieniony\n"
 
 #: winerror.mc:2726
-msgid "Installer service failed.\n"
+#, fuzzy
+msgid "Installer service failed\n"
 msgstr "Usługa instalatora zakończyła niepowodzeniem\n"
 
 #: winerror.mc:2731

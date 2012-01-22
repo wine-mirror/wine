@@ -5678,8 +5678,9 @@ msgid "Event log file changed\n"
 msgstr ""
 
 #: winerror.mc:2726
-msgid "Installer service failed.\n"
-msgstr ""
+#, fuzzy
+msgid "Installer service failed\n"
+msgstr "Το αρχείο δε βρέθηκε"
 
 #: winerror.mc:2731
 msgid "Installation aborted by user\n"

@@ -5768,7 +5768,7 @@ msgstr ""
 
 #: winerror.mc:2726
 #, fuzzy
-msgid "Installer service failed.\n"
+msgid "Installer service failed\n"
 msgstr "Disponebla Spaco"
 
 #: winerror.mc:2731

@@ -5859,7 +5859,7 @@ msgstr ""
 
 #: winerror.mc:2726
 #, fuzzy
-msgid "Installer service failed.\n"
+msgid "Installer service failed\n"
 msgstr "剩餘空間"
 
 #: winerror.mc:2731

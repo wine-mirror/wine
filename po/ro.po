@@ -6074,7 +6074,7 @@ msgstr ""
 
 #: winerror.mc:2726
 #, fuzzy
-msgid "Installer service failed.\n"
+msgid "Installer service failed\n"
 msgstr "Eroare: Nume de cheie nevalid\n"
 
 #: winerror.mc:2731

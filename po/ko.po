@@ -5683,7 +5683,8 @@ msgid "Event log file changed\n"
 msgstr "이벤트 로그 파일이 변경됨\n"
 
 #: winerror.mc:2726
-msgid "Installer service failed.\n"
+#, fuzzy
+msgid "Installer service failed\n"
 msgstr "설치 서비스가 실패함\n"
 
 #: winerror.mc:2731

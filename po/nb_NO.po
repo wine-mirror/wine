@@ -5877,7 +5877,7 @@ msgstr "Filen for hendelsesloggen er endret\n"
 
 #: winerror.mc:2726
 #, fuzzy
-msgid "Installer service failed.\n"
+msgid "Installer service failed\n"
 msgstr "Ugyldig tjenestenavn\n"
 
 #: winerror.mc:2731

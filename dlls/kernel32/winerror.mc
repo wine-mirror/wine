@@ -2721,7 +2721,7 @@ Event log file changed
 MessageId=1601
 SymbolicName=ERROR_INSTALL_SERVICE_FAILURE
 Language=ENU
-Installer service failed.
+Installer service failed
 .
 MessageId=1602
 SymbolicName=ERROR_INSTALL_USEREXIT

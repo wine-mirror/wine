@@ -5721,7 +5721,8 @@ msgid "Event log file changed\n"
 msgstr "Fichier journal d'événements modifié\n"
 
 #: winerror.mc:2726
-msgid "Installer service failed.\n"
+#, fuzzy
+msgid "Installer service failed\n"
 msgstr "Échec du service d'installation.\n"
 
 #: winerror.mc:2731

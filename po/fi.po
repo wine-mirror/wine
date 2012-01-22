@@ -5831,7 +5831,7 @@ msgstr ""
 
 #: winerror.mc:2726
 #, fuzzy
-msgid "Installer service failed.\n"
+msgid "Installer service failed\n"
 msgstr "Tilaa jäljellä"
 
 #: winerror.mc:2731

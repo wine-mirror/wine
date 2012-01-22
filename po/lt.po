@@ -5704,7 +5704,8 @@ msgid "Event log file changed\n"
 msgstr "Įvykių žurnalo failas pasikeitė\n"
 
 #: winerror.mc:2726
-msgid "Installer service failed.\n"
+#, fuzzy
+msgid "Installer service failed\n"
 msgstr "Diegimo programos tarnybos klaida.\n"
 
 #: winerror.mc:2731

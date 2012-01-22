@@ -5606,7 +5606,7 @@ msgid "Event log file changed\n"
 msgstr ""
 
 #: winerror.mc:2726
-msgid "Installer service failed.\n"
+msgid "Installer service failed\n"
 msgstr ""
 
 #: winerror.mc:2731

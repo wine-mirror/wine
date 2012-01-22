@@ -5916,7 +5916,7 @@ msgstr "Ficheiro de log de eventos alterado\n"
 
 #: winerror.mc:2726
 #, fuzzy
-msgid "Installer service failed.\n"
+msgid "Installer service failed\n"
 msgstr "Nome de serviço inválido\n"
 
 #: winerror.mc:2731

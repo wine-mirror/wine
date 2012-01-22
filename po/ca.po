@@ -5719,7 +5719,8 @@ msgid "Event log file changed\n"
 msgstr "Fitxer de registre d'esdeveniments canviat\n"
 
 #: winerror.mc:2726
-msgid "Installer service failed.\n"
+#, fuzzy
+msgid "Installer service failed\n"
 msgstr "El servei d'instal·lació ha fallat.\n"
 
 #: winerror.mc:2731
