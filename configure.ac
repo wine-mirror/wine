@@ -447,7 +447,6 @@ AC_CHECK_HEADERS(\
 	process.h \
 	pthread.h \
 	pwd.h \
-	regex.h \
 	sched.h \
 	scsi/scsi.h \
 	scsi/scsi_ioctl.h \

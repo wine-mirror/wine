@@ -5810,7 +5810,6 @@ for ac_header in \
 	process.h \
 	pthread.h \
 	pwd.h \
-	regex.h \
 	sched.h \
 	scsi/scsi.h \
 	scsi/scsi_ioctl.h \
