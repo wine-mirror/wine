@@ -9201,7 +9201,7 @@ msgstr "Loop while handling referrals"
 msgid "Referral hop limit exceeded"
 msgstr "Referral hop limit exceeded"
 
-#: attrib.rc:27 cmd.rc:299
+#: attrib.rc:27 cmd.rc:298
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9209,7 +9209,7 @@ msgstr ""
 "Not Yet Implemented\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:302
+#: attrib.rc:28 cmd.rc:301
 msgid "%1: File Not Found\n"
 msgstr "%1: File Not Found\n"
 
@@ -9553,10 +9553,10 @@ msgstr ""
 
 #: cmd.rc:153
 msgid ""
-"A command line beginning REM (followed by a space) performs no\n"
+"A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
-"A command line beginning REM (followed by a space) performs no\n"
+"A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 
 #: cmd.rc:156
@@ -9586,7 +9586,7 @@ msgid ""
 "SET <variable>=<value>\n"
 "\n"
 "where <variable> and <value> are character strings. There must be no\n"
-"spaces before the equals sign, nor can the variable name\n"
+"space before the equals sign, nor can the variable name\n"
 "have embedded spaces.\n"
 "\n"
 "Under Wine, the environment of the underlying operating system is\n"
@@ -9603,7 +9603,7 @@ msgstr ""
 "SET <variable>=<value>\n"
 "\n"
 "where <variable> and <value> are character strings. There must be no\n"
-"spaces before the equals sign, nor can the variable name\n"
+"space before the equals sign, nor can the variable name\n"
 "have embedded spaces.\n"
 "\n"
 "Under Wine, the environment of the underlying operating system is\n"
@@ -9626,8 +9626,8 @@ msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME sets or shows the current system time.\n"
 
 #: cmd.rc:187
-msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
-msgstr "Sets the window title for the cmd window, syntax TITLE [string]\n"
+msgid "TITLE <string> sets the window title for the cmd window.\n"
+msgstr "TITLE <string> sets the window title for the cmd window.\n"
 
 #: cmd.rc:191
 msgid ""
@@ -9641,16 +9641,16 @@ msgstr ""
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
-"VERIFY ON\tSet the flag\n"
-"VERIFY OFF\tClear the flag\n"
+"VERIFY ON\tSet the flag.\n"
+"VERIFY OFF\tClear the flag.\n"
 "VERIFY\t\tDisplays ON or OFF as appropriate.\n"
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
-"VERIFY ON\tSet the flag\n"
-"VERIFY OFF\tClear the flag\n"
+"VERIFY ON\tSet the flag.\n"
+"VERIFY OFF\tClear the flag.\n"
 "VERIFY\t\tDisplays ON or OFF as appropriate.\n"
 "\n"
 "The verify flag has no function in Wine.\n"
@@ -9695,17 +9695,13 @@ msgstr ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 
-#: cmd.rc:223
-msgid ""
-"POPD changes current directory to the last one saved with\n"
-"PUSHD.\n"
-msgstr ""
-"POPD changes current directory to the last one saved with\n"
-"PUSHD.\n"
+#: cmd.rc:222
+msgid "POPD changes current directory to the last one saved with PUSHD.\n"
+msgstr "POPD changes current directory to the last one saved with PUSHD.\n"
 
-#: cmd.rc:231
+#: cmd.rc:230
 msgid ""
-"ASSOC shows or modifies file extension associations\n"
+"ASSOC shows or modifies file extension associations.\n"
 "\n"
 "Syntax: ASSOC [.ext[=[fileType]]]\n"
 "\n"
@@ -9714,7 +9710,7 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
-"ASSOC shows or modifies file extension associations\n"
+"ASSOC shows or modifies file extension associations.\n"
 "\n"
 "Syntax: ASSOC [.ext[=[fileType]]]\n"
 "\n"
@@ -9723,9 +9719,9 @@ msgstr ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 
-#: cmd.rc:242
+#: cmd.rc:241
 msgid ""
-"FTYPE shows or modifies open commands associated with file types\n"
+"FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
 "Syntax: FTYPE [fileType[=[openCommand]]]\n"
 "\n"
@@ -9736,7 +9732,7 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
-"FTYPE shows or modifies open commands associated with file types\n"
+"FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
 "Syntax: FTYPE [fileType[=[openCommand]]]\n"
 "\n"
@@ -9747,11 +9743,11 @@ msgstr ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 
-#: cmd.rc:244
+#: cmd.rc:243
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE displays output of files or piped input in pages.\n"
 
-#: cmd.rc:248
+#: cmd.rc:247
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9761,7 +9757,7 @@ msgstr ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 
-#: cmd.rc:252
+#: cmd.rc:251
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9769,7 +9765,7 @@ msgstr ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
 
-#: cmd.rc:289
+#: cmd.rc:288
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9847,110 +9843,110 @@ msgstr ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands.\n"
 
-#: cmd.rc:291
+#: cmd.rc:290
 msgid "Are you sure"
 msgstr "Are you sure"
 
-#: cmd.rc:292 xcopy.rc:40
+#: cmd.rc:291 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: cmd.rc:293 xcopy.rc:41
+#: cmd.rc:292 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:294
+#: cmd.rc:293
 msgid "File association missing for extension %1\n"
 msgstr "File association missing for extension %1\n"
 
-#: cmd.rc:295
+#: cmd.rc:294
 msgid "No open command associated with file type '%1'\n"
 msgstr "No open command associated with file type '%1'\n"
 
-#: cmd.rc:296
+#: cmd.rc:295
 msgid "Overwrite %1"
 msgstr "Overwrite %1"
 
-#: cmd.rc:297
+#: cmd.rc:296
 msgid "More..."
 msgstr "More..."
 
-#: cmd.rc:298
+#: cmd.rc:297
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Line in Batch processing possibly truncated. Using:\n"
 
-#: cmd.rc:300
+#: cmd.rc:299
 msgid "Argument missing\n"
 msgstr "Argument missing\n"
 
-#: cmd.rc:301
+#: cmd.rc:300
 msgid "Syntax error\n"
 msgstr "Syntax error\n"
 
-#: cmd.rc:303
+#: cmd.rc:302
 msgid "No help available for %1\n"
 msgstr "No help available for %1\n"
 
-#: cmd.rc:304
+#: cmd.rc:303
 msgid "Target to GOTO not found\n"
 msgstr "Target to GOTO not found\n"
 
-#: cmd.rc:305
+#: cmd.rc:304
 msgid "Current Date is %1\n"
 msgstr "Current Date is %1\n"
 
-#: cmd.rc:306
+#: cmd.rc:305
 msgid "Current Time is %1\n"
 msgstr "Current Time is %1\n"
 
-#: cmd.rc:307
+#: cmd.rc:306
 msgid "Enter new date: "
 msgstr "Enter new date: "
 
-#: cmd.rc:308
+#: cmd.rc:307
 msgid "Enter new time: "
 msgstr "Enter new time: "
 
-#: cmd.rc:309
+#: cmd.rc:308
 msgid "Environment variable %1 not defined\n"
 msgstr "Environment variable %1 not defined\n"
 
-#: cmd.rc:310 xcopy.rc:38
+#: cmd.rc:309 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "Failed to open '%1'\n"
 
-#: cmd.rc:311
+#: cmd.rc:310
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Cannot call batch label outside of a batch script\n"
 
-#: cmd.rc:312 xcopy.rc:42
+#: cmd.rc:311 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:313
+#: cmd.rc:312
 msgid "%1, Delete"
 msgstr "%1, Delete"
 
-#: cmd.rc:314
+#: cmd.rc:313
 msgid "Echo is %1\n"
 msgstr "Echo is %1\n"
 
-#: cmd.rc:315
+#: cmd.rc:314
 msgid "Verify is %1\n"
 msgstr "Verify is %1\n"
 
-#: cmd.rc:316
+#: cmd.rc:315
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify must be ON or OFF\n"
 
-#: cmd.rc:317
+#: cmd.rc:316
 msgid "Parameter error\n"
 msgstr "Parameter error\n"
 
-#: cmd.rc:318
+#: cmd.rc:317
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -9958,39 +9954,39 @@ msgstr ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:319
+#: cmd.rc:318
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "Volume label (11 characters, ENTER for none)?"
 
-#: cmd.rc:320
+#: cmd.rc:319
 msgid "PATH not found\n"
 msgstr "PATH not found\n"
 
-#: cmd.rc:321
+#: cmd.rc:320
 msgid "Press any key to continue... "
 msgstr "Press any key to continue... "
 
-#: cmd.rc:322
+#: cmd.rc:321
 msgid "Wine Command Prompt"
 msgstr "Wine Command Prompt"
 
-#: cmd.rc:323
+#: cmd.rc:322
 msgid "CMD Version %1!S!\n"
 msgstr "CMD Version %1!S!\n"
 
-#: cmd.rc:324
+#: cmd.rc:323
 msgid "More? "
 msgstr "More? "
 
-#: cmd.rc:325
+#: cmd.rc:324
 msgid "The input line is too long.\n"
 msgstr "The input line is too long.\n"
 
-#: cmd.rc:326
+#: cmd.rc:325
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Volume in drive %1!c! is %2\n"
 
-#: cmd.rc:327
+#: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Volume in drive %1!c! has no label.\n"
 

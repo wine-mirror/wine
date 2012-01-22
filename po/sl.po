@@ -9212,7 +9212,7 @@ msgstr "Kroži v zanki med upravljanjem napotiteljev"
 msgid "Referral hop limit exceeded"
 msgstr "Meja preskoka napotitev je bila presežena"
 
-#: attrib.rc:27 cmd.rc:299
+#: attrib.rc:27 cmd.rc:298
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9220,7 +9220,7 @@ msgstr ""
 "Ni še podprto\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:302
+#: attrib.rc:28 cmd.rc:301
 msgid "%1: File Not Found\n"
 msgstr "%1: datoteke ni mogoče najti\n"
 
@@ -9570,8 +9570,9 @@ msgstr ""
 "ukaz 'SET PROMPT=text' ima enak učinek kot 'PROMPT text'.\n"
 
 #: cmd.rc:153
+#, fuzzy
 msgid ""
-"A command line beginning REM (followed by a space) performs no\n"
+"A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
 "Vrstica, ki se začenja z REM (kateremu sledi presledek), se ne izvede in jo\n"
@@ -9594,6 +9595,7 @@ msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <mapa> izbriše podmapo.\n"
 
 #: cmd.rc:178
+#, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9604,7 +9606,7 @@ msgid ""
 "SET <variable>=<value>\n"
 "\n"
 "where <variable> and <value> are character strings. There must be no\n"
-"spaces before the equals sign, nor can the variable name\n"
+"space before the equals sign, nor can the variable name\n"
 "have embedded spaces.\n"
 "\n"
 "Under Wine, the environment of the underlying operating system is\n"
@@ -9647,7 +9649,8 @@ msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME nastavi ali prikaže trenutni sistemski čas.\n"
 
 #: cmd.rc:187
-msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
+#, fuzzy
+msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "Nastavi naslov za okno cmd. Skladnja je: TITLE [niz]\n"
 
 #: cmd.rc:191
@@ -9660,11 +9663,12 @@ msgstr ""
 "resnici berljivo besedilo.\n"
 
 #: cmd.rc:200
+#, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
-"VERIFY ON\tSet the flag\n"
-"VERIFY OFF\tClear the flag\n"
+"VERIFY ON\tSet the flag.\n"
+"VERIFY OFF\tClear the flag.\n"
 "VERIFY\t\tDisplays ON or OFF as appropriate.\n"
 "\n"
 "The verify flag has no function in Wine.\n"
@@ -9719,17 +9723,17 @@ msgstr ""
 "PUSHD <ime_mape> shrani trenutno mapo v sklad in se nato\n"
 "preseli v navedeno mapo.\n"
 
-#: cmd.rc:223
-msgid ""
-"POPD changes current directory to the last one saved with\n"
-"PUSHD.\n"
+#: cmd.rc:222
+#, fuzzy
+msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 "POPD se preseli iz trenutne mape v mapo, ki je bila nazadnje\n"
 "shranjena z ukazom PUSHD.\n"
 
-#: cmd.rc:231
+#: cmd.rc:230
+#, fuzzy
 msgid ""
-"ASSOC shows or modifies file extension associations\n"
+"ASSOC shows or modifies file extension associations.\n"
 "\n"
 "Syntax: ASSOC [.ext[=[fileType]]]\n"
 "\n"
@@ -9747,9 +9751,10 @@ msgstr ""
 "Če za enačajem ne določite vrste datoteke, so morebitne povezave datotek "
 "odstranjene.\n"
 
-#: cmd.rc:242
+#: cmd.rc:241
+#, fuzzy
 msgid ""
-"FTYPE shows or modifies open commands associated with file types\n"
+"FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
 "Syntax: FTYPE [fileType[=[openCommand]]]\n"
 "\n"
@@ -9771,11 +9776,11 @@ msgstr ""
 "Če ukaza odpiranja ne določite ukaz za enačajem odstrani ukazni niz, ki je "
 "povezan z določeno vrsto datoteke.\n"
 
-#: cmd.rc:244
+#: cmd.rc:243
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE prikaže vsebino datotek ali preusmerjenega vnosa v straneh.\n"
 
-#: cmd.rc:248
+#: cmd.rc:247
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9786,7 +9791,7 @@ msgstr ""
 "CHOICE se uporablja predvsem za izgradnjo izberljivega menija v paketni "
 "datoteki.\n"
 
-#: cmd.rc:252
+#: cmd.rc:251
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9795,7 +9800,7 @@ msgstr ""
 "sistemu\n"
 "ali ukazni lupini, iz katere ste priklicali cmd.\n"
 
-#: cmd.rc:289
+#: cmd.rc:288
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9872,110 +9877,110 @@ msgstr ""
 "Uporabite HELP <ukaz> za več podrobnosti o kateremkoli od zgoraj navedenih "
 "ukazov\n"
 
-#: cmd.rc:291
+#: cmd.rc:290
 msgid "Are you sure"
 msgstr "Ali ste prepričani?"
 
-#: cmd.rc:292 xcopy.rc:40
+#: cmd.rc:291 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "D"
 
-#: cmd.rc:293 xcopy.rc:41
+#: cmd.rc:292 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:294
+#: cmd.rc:293
 msgid "File association missing for extension %1\n"
 msgstr "Manjka povezava datoteke za pripono %1\n"
 
-#: cmd.rc:295
+#: cmd.rc:294
 msgid "No open command associated with file type '%1'\n"
 msgstr "Noben ukaz za odprtje ni povezan z vrsto datotek '%1'\n"
 
-#: cmd.rc:296
+#: cmd.rc:295
 msgid "Overwrite %1"
 msgstr "Prepiši %1"
 
-#: cmd.rc:297
+#: cmd.rc:296
 msgid "More..."
 msgstr "Več ..."
 
-#: cmd.rc:298
+#: cmd.rc:297
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Vrstica v paketni datoteki je morda skrajšana. Uporaba:\n"
 
-#: cmd.rc:300
+#: cmd.rc:299
 msgid "Argument missing\n"
 msgstr "Argument manjka\n"
 
-#: cmd.rc:301
+#: cmd.rc:300
 msgid "Syntax error\n"
 msgstr "Napaka skladnje\n"
 
-#: cmd.rc:303
+#: cmd.rc:302
 msgid "No help available for %1\n"
 msgstr "Za %1 ni pomoči na voljo\n"
 
-#: cmd.rc:304
+#: cmd.rc:303
 msgid "Target to GOTO not found\n"
 msgstr "Cilja ukaza GOTO ni mogoče najti\n"
 
-#: cmd.rc:305
+#: cmd.rc:304
 msgid "Current Date is %1\n"
 msgstr "Trenutni datum je %1\n"
 
-#: cmd.rc:306
+#: cmd.rc:305
 msgid "Current Time is %1\n"
 msgstr "Trenutni čas je %1\n"
 
-#: cmd.rc:307
+#: cmd.rc:306
 msgid "Enter new date: "
 msgstr "Vnesite nov datum:"
 
-#: cmd.rc:308
+#: cmd.rc:307
 msgid "Enter new time: "
 msgstr "Vnesite nov čas:"
 
-#: cmd.rc:309
+#: cmd.rc:308
 msgid "Environment variable %1 not defined\n"
 msgstr "Okoljska spremenljivka %1 ni določena\n"
 
-#: cmd.rc:310 xcopy.rc:38
+#: cmd.rc:309 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "Odpiranje '%1' je spodletelo\n"
 
-#: cmd.rc:311
+#: cmd.rc:310
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Klic paketne oznake zunaj paketnega skripta ni mogoč\n"
 
-#: cmd.rc:312 xcopy.rc:42
+#: cmd.rc:311 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:313
+#: cmd.rc:312
 msgid "%1, Delete"
 msgstr "%1, Izbriši"
 
-#: cmd.rc:314
+#: cmd.rc:313
 msgid "Echo is %1\n"
 msgstr "Odmev je %1\n"
 
-#: cmd.rc:315
+#: cmd.rc:314
 msgid "Verify is %1\n"
 msgstr "Preverjanje je %1\n"
 
-#: cmd.rc:316
+#: cmd.rc:315
 msgid "Verify must be ON or OFF\n"
 msgstr "Vrednost zastavice preverjanja mora biti ON ali OFF\n"
 
-#: cmd.rc:317
+#: cmd.rc:316
 msgid "Parameter error\n"
 msgstr "Napaka parametra\n"
 
-#: cmd.rc:318
+#: cmd.rc:317
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -9983,39 +9988,39 @@ msgstr ""
 "Zaporedna št. nosilca je %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:319
+#: cmd.rc:318
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "Oznaka nosilca (11 znakov, ENTER za brez)?"
 
-#: cmd.rc:320
+#: cmd.rc:319
 msgid "PATH not found\n"
 msgstr "POTI ni mogoče najti\n"
 
-#: cmd.rc:321
+#: cmd.rc:320
 msgid "Press any key to continue... "
 msgstr "Pritisnite katerokoli tipko za nadaljevanje ..."
 
-#: cmd.rc:322
+#: cmd.rc:321
 msgid "Wine Command Prompt"
 msgstr "Ukazni poziv Wine"
 
-#: cmd.rc:323
+#: cmd.rc:322
 msgid "CMD Version %1!S!\n"
 msgstr "Različica CMD %1!S!\n"
 
-#: cmd.rc:324
+#: cmd.rc:323
 msgid "More? "
 msgstr "Več? "
 
-#: cmd.rc:325
+#: cmd.rc:324
 msgid "The input line is too long.\n"
 msgstr "Vhodna vrstica je predolga.\n"
 
-#: cmd.rc:326
+#: cmd.rc:325
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Nosilec v pogonu %1!c! je %2\n"
 
-#: cmd.rc:327
+#: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Nosilec v pogonu %1!c! nima oznake.\n"
 

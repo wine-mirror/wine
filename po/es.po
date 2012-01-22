@@ -9637,7 +9637,7 @@ msgstr "Bucle al manejar remisiones"
 msgid "Referral hop limit exceeded"
 msgstr "Límite de saltos de remisiones excedido"
 
-#: attrib.rc:27 cmd.rc:299
+#: attrib.rc:27 cmd.rc:298
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9645,7 +9645,7 @@ msgstr ""
 "No implementado\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:302
+#: attrib.rc:28 cmd.rc:301
 #, fuzzy
 msgid "%1: File Not Found\n"
 msgstr "%s : Archivo no encontrado\n"
@@ -9992,8 +9992,9 @@ msgstr ""
 "que 'PROMPT texto'\n"
 
 #: cmd.rc:153
+#, fuzzy
 msgid ""
-"A command line beginning REM (followed by a space) performs no\n"
+"A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
 "Una línea de comandos que empieza por REM (seguido de un espacio) no\n"
@@ -10021,6 +10022,7 @@ msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "Ayuda sobre RMDIR\n"
 
 #: cmd.rc:178
+#, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -10031,7 +10033,7 @@ msgid ""
 "SET <variable>=<value>\n"
 "\n"
 "where <variable> and <value> are character strings. There must be no\n"
-"spaces before the equals sign, nor can the variable name\n"
+"space before the equals sign, nor can the variable name\n"
 "have embedded spaces.\n"
 "\n"
 "Under Wine, the environment of the underlying operating system is\n"
@@ -10073,7 +10075,8 @@ msgid "TIME sets or shows the current system time.\n"
 msgstr "Ayuda sobre TIME\n"
 
 #: cmd.rc:187
-msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
+#, fuzzy
+msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "Ajusta el título de la ventana de cmd, sintaxis TITLE [cadena]\n"
 
 #: cmd.rc:191
@@ -10086,11 +10089,12 @@ msgstr ""
 "comprobación de si el archivo es texto legible.\n"
 
 #: cmd.rc:200
+#, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
-"VERIFY ON\tSet the flag\n"
-"VERIFY OFF\tClear the flag\n"
+"VERIFY ON\tSet the flag.\n"
+"VERIFY OFF\tClear the flag.\n"
 "VERIFY\t\tDisplays ON or OFF as appropriate.\n"
 "\n"
 "The verify flag has no function in Wine.\n"
@@ -10138,17 +10142,16 @@ msgstr ""
 "PUSHD <nombre de directorio> almacena el directorio actual a una\n"
 "pila, y luego cambia el directorio actual al proporcionado.\n"
 
-#: cmd.rc:223
-msgid ""
-"POPD changes current directory to the last one saved with\n"
-"PUSHD.\n"
+#: cmd.rc:222
+#, fuzzy
+msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 "POPD cambia el directorio actual al último almacenado con\n"
 "PUSHD.\n"
 
-#: cmd.rc:231
+#: cmd.rc:230
 msgid ""
-"ASSOC shows or modifies file extension associations\n"
+"ASSOC shows or modifies file extension associations.\n"
 "\n"
 "Syntax: ASSOC [.ext[=[fileType]]]\n"
 "\n"
@@ -10158,9 +10161,9 @@ msgid ""
 "association, if any.\n"
 msgstr ""
 
-#: cmd.rc:242
+#: cmd.rc:241
 msgid ""
-"FTYPE shows or modifies open commands associated with file types\n"
+"FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
 "Syntax: FTYPE [fileType[=[openCommand]]]\n"
 "\n"
@@ -10172,18 +10175,18 @@ msgid ""
 "associated to the specified file type.\n"
 msgstr ""
 
-#: cmd.rc:244
+#: cmd.rc:243
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE muestra la salida de archivos o entrada entubada por páginas.\n"
 
-#: cmd.rc:248
+#: cmd.rc:247
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
 
-#: cmd.rc:252
+#: cmd.rc:251
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -10191,7 +10194,7 @@ msgstr ""
 "EXIT termina la sesión de comandos actual y regresa al sistema\n"
 "operativo o intérprete de comandos desde el que invocó cmd.\n"
 
-#: cmd.rc:289
+#: cmd.rc:288
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -10265,121 +10268,121 @@ msgstr ""
 "comandos\n"
 "de arriba\n"
 
-#: cmd.rc:291
+#: cmd.rc:290
 msgid "Are you sure"
 msgstr "Está seguro"
 
-#: cmd.rc:292 xcopy.rc:40
+#: cmd.rc:291 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "S"
 
-#: cmd.rc:293 xcopy.rc:41
+#: cmd.rc:292 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:294
+#: cmd.rc:293
 #, fuzzy
 msgid "File association missing for extension %1\n"
 msgstr "Falta una asociación de archivo para la extensión %s\n"
 
-#: cmd.rc:295
+#: cmd.rc:294
 #, fuzzy
 msgid "No open command associated with file type '%1'\n"
 msgstr "Ningún comando de apertura asociado con el tipo de archivo '%s'\n"
 
-#: cmd.rc:296
+#: cmd.rc:295
 #, fuzzy
 msgid "Overwrite %1"
 msgstr "Sobrescribir %s"
 
-#: cmd.rc:297
+#: cmd.rc:296
 msgid "More..."
 msgstr "Más..."
 
-#: cmd.rc:298
+#: cmd.rc:297
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Línea en procesamiento por lotes posiblemente truncada. Usando:\n"
 
-#: cmd.rc:300
+#: cmd.rc:299
 msgid "Argument missing\n"
 msgstr "Argumento faltante\n"
 
-#: cmd.rc:301
+#: cmd.rc:300
 msgid "Syntax error\n"
 msgstr "Error de sintaxis\n"
 
-#: cmd.rc:303
+#: cmd.rc:302
 #, fuzzy
 msgid "No help available for %1\n"
 msgstr "No hay ayuda disponible para %s\n"
 
-#: cmd.rc:304
+#: cmd.rc:303
 msgid "Target to GOTO not found\n"
 msgstr "El destino de la instrucción GOTO no se ha encontrado\n"
 
-#: cmd.rc:305
+#: cmd.rc:304
 #, fuzzy
 msgid "Current Date is %1\n"
 msgstr "La fecha actual es %s\n"
 
-#: cmd.rc:306
+#: cmd.rc:305
 #, fuzzy
 msgid "Current Time is %1\n"
 msgstr "La hora actual es %s\n"
 
-#: cmd.rc:307
+#: cmd.rc:306
 msgid "Enter new date: "
 msgstr "Ingrese la nueva fecha: "
 
-#: cmd.rc:308
+#: cmd.rc:307
 msgid "Enter new time: "
 msgstr "Ingrese la nueva hora: "
 
-#: cmd.rc:309
+#: cmd.rc:308
 #, fuzzy
 msgid "Environment variable %1 not defined\n"
 msgstr "Variable de entorno %s no definida\n"
 
-#: cmd.rc:310 xcopy.rc:38
+#: cmd.rc:309 xcopy.rc:38
 #, fuzzy
 msgid "Failed to open '%1'\n"
 msgstr "No se pudo abrir '%s'\n"
 
-#: cmd.rc:311
+#: cmd.rc:310
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "No se puede llamar a una etiqueta fuera de un script por lotes\n"
 
-#: cmd.rc:312 xcopy.rc:42
+#: cmd.rc:311 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr ""
 
-#: cmd.rc:313
+#: cmd.rc:312
 #, fuzzy
 msgid "%1, Delete"
 msgstr "%s, Borrar"
 
-#: cmd.rc:314
+#: cmd.rc:313
 #, fuzzy
 msgid "Echo is %1\n"
 msgstr "Echo es %s\n"
 
-#: cmd.rc:315
+#: cmd.rc:314
 #, fuzzy
 msgid "Verify is %1\n"
 msgstr "Verificar es %s\n"
 
-#: cmd.rc:316
+#: cmd.rc:315
 msgid "Verify must be ON or OFF\n"
 msgstr "Verificar debe estar ON o OFF\n"
 
-#: cmd.rc:317
+#: cmd.rc:316
 msgid "Parameter error\n"
 msgstr "Error de parámetro\n"
 
-#: cmd.rc:318
+#: cmd.rc:317
 #, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
@@ -10389,41 +10392,41 @@ msgstr ""
 "El número de serie del volumen es %04x-%04x\n"
 "\n"
 
-#: cmd.rc:319
+#: cmd.rc:318
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "Etiqueta del volumen (11 caracteres, Return para ninguno)?"
 
-#: cmd.rc:320
+#: cmd.rc:319
 msgid "PATH not found\n"
 msgstr "PATH no encontrado\n"
 
-#: cmd.rc:321
+#: cmd.rc:320
 #, fuzzy
 msgid "Press any key to continue... "
 msgstr "Pulse la tecla Return para continuar: "
 
-#: cmd.rc:322
+#: cmd.rc:321
 msgid "Wine Command Prompt"
 msgstr "Wine Símbolo del sistema"
 
-#: cmd.rc:323
+#: cmd.rc:322
 #, fuzzy
 msgid "CMD Version %1!S!\n"
 msgstr "CMD Versión %s\n"
 
-#: cmd.rc:324
+#: cmd.rc:323
 msgid "More? "
 msgstr "Más? "
 
-#: cmd.rc:325
+#: cmd.rc:324
 msgid "The input line is too long.\n"
 msgstr "La línea de entrada es demasiado larga.\n"
 
-#: cmd.rc:326
+#: cmd.rc:325
 msgid "Volume in drive %1!c! is %2\n"
 msgstr ""
 
-#: cmd.rc:327
+#: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 

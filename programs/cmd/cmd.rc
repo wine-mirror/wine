@@ -149,7 +149,7 @@ The prompt can also be changed by altering the PROMPT environment variable,\n\
 so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 
   WCMD_REM,
-"A command line beginning REM (followed by a space) performs no\n\
+"A command line beginning with REM (followed by a space) performs no\n\
 action, and can therefore be used as a comment in a batch file.\n"
 
   WCMD_REN,
@@ -169,7 +169,7 @@ To create or modify an environment variable the syntax is:\n\
       SET <variable>=<value>\n\
 \n\
 where <variable> and <value> are character strings. There must be no\n\
-spaces before the equals sign, nor can the variable name\n\
+space before the equals sign, nor can the variable name\n\
 have embedded spaces.\n\
 \n\
 Under Wine, the environment of the underlying operating system is\n\
@@ -184,7 +184,7 @@ if called from the command line.\n"
 
   WCMD_TIME,   "TIME sets or shows the current system time.\n"
 
-  WCMD_TITLE,  "Sets the window title for the cmd window, syntax TITLE [string]\n"
+  WCMD_TITLE,  "TITLE <string> sets the window title for the cmd window.\n"
 
   WCMD_TYPE,
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n\
@@ -193,8 +193,8 @@ if redirected). No check is made that the file is readable text.\n"
   WCMD_VERIFY,
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n\
 \n\
-VERIFY ON\tSet the flag\n\
-VERIFY OFF\tClear the flag\n\
+VERIFY ON\tSet the flag.\n\
+VERIFY OFF\tClear the flag.\n\
 VERIFY\t\tDisplays ON or OFF as appropriate.\n\
 \n\
 The verify flag has no function in Wine.\n"
@@ -219,10 +219,9 @@ settings are restored.\n"
   WCMD_PUSHD,  "PUSHD <directoryname> saves the current directory onto a\n\
 stack, and then changes the current directory to the supplied one.\n"
 
-  WCMD_POPD,   "POPD changes current directory to the last one saved with\n\
-PUSHD.\n"
+  WCMD_POPD,   "POPD changes current directory to the last one saved with PUSHD.\n"
 
-  WCMD_ASSOC,   "ASSOC shows or modifies file extension associations\n\
+  WCMD_ASSOC,   "ASSOC shows or modifies file extension associations.\n\
 \n\
 Syntax: ASSOC [.ext[=[fileType]]]\n\
 \n\
@@ -230,7 +229,7 @@ ASSOC without parameters displays current file associations.\n\
 If used with only a file extension, displays the current association.\n\
 Specifying no file type after the equal sign removes the current association, if any.\n"
 
-  WCMD_FTYPE,   "FTYPE shows or modifies open commands associated with file types\n\
+  WCMD_FTYPE,   "FTYPE shows or modifies open commands associated with file types.\n\
 \n\
 Syntax: FTYPE [fileType[=[openCommand]]]\n\
 \n\
