@@ -77,7 +77,7 @@ msgstr "OK"
 
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
-msgstr "Følgende oplysninger kan bruges til at få teknisk support for% s:"
+msgstr "Følgende oplysninger kan bruges til at få teknisk support for %s:"
 
 #: appwiz.rc:77
 msgid "Publisher:"
