@@ -522,8 +522,11 @@ static ULONG WINAPI IDirectXFileDataImpl_Release(IDirectXFileData* iface)
     if (!This->level && !This->from_ref)
     {
       HeapFree(GetProcessHeap(), 0, This->pstrings);
-      HeapFree(GetProcessHeap(), 0, This->pobj->pdata);
-      HeapFree(GetProcessHeap(), 0, This->pobj);
+      if (This->pobj)
+      {
+        HeapFree(GetProcessHeap(), 0, This->pobj->pdata);
+        HeapFree(GetProcessHeap(), 0, This->pobj);
+      }
     }
     HeapFree(GetProcessHeap(), 0, This);
   }
