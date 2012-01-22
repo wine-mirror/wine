@@ -13891,11 +13891,13 @@ msgstr ""
 "입니다. 당신은 정말로 저장하기를 원합니까?"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
+#, fuzzy
+msgid "Invalid number format."
 msgstr "올바르지 않은 숫자 형식"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+#, fuzzy
+msgid "OLE storage documents are not supported."
 msgstr "OLE 저장 문서는 지원되지 않습니다"
 
 #: wordpad.rc:189
@@ -13915,7 +13917,8 @@ msgid "You do not have access to open the file."
 msgstr "파일을 열 권한이 없습니다."
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
+#, fuzzy
+msgid "Printing not implemented."
 msgstr "인쇄는 지원되지 않습니다"
 
 #: wordpad.rc:194

@@ -14110,11 +14110,13 @@ msgstr ""
 "formatage. Voulez-vous vraiment continuer ?"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
+#, fuzzy
+msgid "Invalid number format."
 msgstr "Format de nombre invalide"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+#, fuzzy
+msgid "OLE storage documents are not supported."
 msgstr "Les documents conteneur OLE ne sont pas pris en charge"
 
 #: wordpad.rc:189
@@ -14135,7 +14137,8 @@ msgid "You do not have access to open the file."
 msgstr "Vous ne disposez pas des droits nécessaires à l'ouverture du fichier."
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
+#, fuzzy
+msgid "Printing not implemented."
 msgstr "L'impression n'est pas implémentée"
 
 #: wordpad.rc:194

@@ -14034,11 +14034,13 @@ msgstr ""
 "zostanie utracone. Czy na pewno chcesz to zrobić?"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
+#, fuzzy
+msgid "Invalid number format."
 msgstr "Zły format liczby"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+#, fuzzy
+msgid "OLE storage documents are not supported."
 msgstr "Dokumenty typu OLE storage nie są obsługiwane"
 
 #: wordpad.rc:189
@@ -14058,7 +14060,8 @@ msgid "You do not have access to open the file."
 msgstr "Nie masz dostępu do otwarcia pliku."
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
+#, fuzzy
+msgid "Printing not implemented."
 msgstr "Drukowanie niezaimplementowane"
 
 #: wordpad.rc:194

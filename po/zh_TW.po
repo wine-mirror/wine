@@ -13966,11 +13966,13 @@ msgid ""
 msgstr "你已經選擇儲存為文本檔案, 這可能導致格式丟失. 你確定要這麼做嗎?"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
+#, fuzzy
+msgid "Invalid number format."
 msgstr "數字格式無效"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+#, fuzzy
+msgid "OLE storage documents are not supported."
 msgstr "不支援OLE 儲存檔案"
 
 #: wordpad.rc:189
@@ -13990,8 +13992,13 @@ msgid "You do not have access to open the file."
 msgstr "你沒有開啟檔案的權力."
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
+#, fuzzy
+msgid "Printing not implemented."
 msgstr ""
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"此功能未實現\n"
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"未實現"
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."

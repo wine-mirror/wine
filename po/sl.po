@@ -13973,11 +13973,13 @@ msgstr ""
 "oblikovanja. Ali ste prepričani, da želite shraniti dokument v tej obliki?"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
+#, fuzzy
+msgid "Invalid number format."
 msgstr "Neveljavna oblika števila"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+#, fuzzy
+msgid "OLE storage documents are not supported."
 msgstr "Dokumenti s predmeti OLE niso podprti"
 
 #: wordpad.rc:189
@@ -13997,7 +13999,8 @@ msgid "You do not have access to open the file."
 msgstr "Nimate pravic za odpiranje te datoteke."
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
+#, fuzzy
+msgid "Printing not implemented."
 msgstr "Tiskanje še ni na podprto"
 
 #: wordpad.rc:194

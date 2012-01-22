@@ -14083,11 +14083,13 @@ msgstr ""
 "perdi. Esteu segur que voleu fer això?"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
+#, fuzzy
+msgid "Invalid number format."
 msgstr "Format de nombre invàlid"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+#, fuzzy
+msgid "OLE storage documents are not supported."
 msgstr "No s'accepten documents de "
 
 #: wordpad.rc:189
@@ -14107,7 +14109,8 @@ msgid "You do not have access to open the file."
 msgstr "No teneu accés per obrir el fitxer."
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
+#, fuzzy
+msgid "Printing not implemented."
 msgstr "Impressió no implementada"
 
 #: wordpad.rc:194

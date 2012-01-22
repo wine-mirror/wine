@@ -14019,11 +14019,13 @@ msgstr ""
 "всього форматування. Ви дійсно хочете зробити це?"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
+#, fuzzy
+msgid "Invalid number format."
 msgstr "Невірний числовий формат"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+#, fuzzy
+msgid "OLE storage documents are not supported."
 msgstr "Документи зберігання OLE не підтримуються"
 
 #: wordpad.rc:189
@@ -14043,7 +14045,8 @@ msgid "You do not have access to open the file."
 msgstr "У вас немає доступу на відкриття файлу."
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
+#, fuzzy
+msgid "Printing not implemented."
 msgstr "Друк не реалізований"
 
 #: wordpad.rc:194

@@ -14192,11 +14192,12 @@ msgid ""
 msgstr ""
 
 #: wordpad.rc:187
-msgid "Invalid number format"
-msgstr ""
+#, fuzzy
+msgid "Invalid number format."
+msgstr "Érvénytelen szintakszis"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+msgid "OLE storage documents are not supported."
 msgstr ""
 
 #: wordpad.rc:189
@@ -14217,7 +14218,7 @@ msgstr ""
 
 #: wordpad.rc:193
 #, fuzzy
-msgid "Printing not implemented"
+msgid "Printing not implemented."
 msgstr "Nincs implementálva"
 
 #: wordpad.rc:194

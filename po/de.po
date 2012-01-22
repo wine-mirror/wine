@@ -14038,11 +14038,13 @@ msgstr ""
 "Formatierung verloren. Möchten Sie den Vorgang trotzdem fortsetzen?"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
+#, fuzzy
+msgid "Invalid number format."
 msgstr "Diese Maßeinheit ist nicht zulässig"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+#, fuzzy
+msgid "OLE storage documents are not supported."
 msgstr "OLE-Dokumentenspeicherung wird nicht unterstützt"
 
 #: wordpad.rc:189
@@ -14064,7 +14066,8 @@ msgstr ""
 "Sie haben keine ausreichende Zugriffsberechtigung um die Datei zu öffnen."
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
+#, fuzzy
+msgid "Printing not implemented."
 msgstr "Drucken ist nicht implementiert"
 
 #: wordpad.rc:194

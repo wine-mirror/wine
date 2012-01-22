@@ -13893,11 +13893,13 @@ msgid ""
 msgstr "你已经选择保存为文本文件，而这可能导致格式丢失。你确定要这么做吗？"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
+#, fuzzy
+msgid "Invalid number format."
 msgstr "数字格式无效"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+#, fuzzy
+msgid "OLE storage documents are not supported."
 msgstr "不支持 OLE 储存文件"
 
 #: wordpad.rc:189
@@ -13917,7 +13919,8 @@ msgid "You do not have access to open the file."
 msgstr "你没有打开文件的权限。"
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
+#, fuzzy
+msgid "Printing not implemented."
 msgstr "打印功能尚未实现"
 
 #: wordpad.rc:194

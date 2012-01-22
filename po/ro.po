@@ -14659,11 +14659,13 @@ msgstr ""
 "Sigur doriți să continuați?"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
+#, fuzzy
+msgid "Invalid number format."
 msgstr "Formatul de număr nu este valid."
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+#, fuzzy
+msgid "OLE storage documents are not supported."
 msgstr "Documentele de depozitare OLE nu sunt suportate."
 
 #: wordpad.rc:189
@@ -14683,7 +14685,8 @@ msgid "You do not have access to open the file."
 msgstr "Nu aveți permisiunea de a deschide fișierul."
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
+#, fuzzy
+msgid "Printing not implemented."
 msgstr "Imprimarea nu este implementată."
 
 #: wordpad.rc:194

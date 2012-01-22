@@ -13932,12 +13932,12 @@ msgstr ""
 "formatting to be lost. Are you sure that you wish to do this?"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
-msgstr "Invalid number format"
+msgid "Invalid number format."
+msgstr "Invalid number format."
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
-msgstr "OLE storage documents are not supported"
+msgid "OLE storage documents are not supported."
+msgstr "OLE storage documents are not supported."
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -13956,8 +13956,8 @@ msgid "You do not have access to open the file."
 msgstr "You do not have access to open the file."
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
-msgstr "Printing not implemented"
+msgid "Printing not implemented."
+msgstr "Printing not implemented."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."

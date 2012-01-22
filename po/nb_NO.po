@@ -14325,11 +14325,13 @@ msgstr ""
 "formatering går tapt. Er du sikker på at du vil fortsette?"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
+#, fuzzy
+msgid "Invalid number format."
 msgstr "Ugyldig tallformat"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+#, fuzzy
+msgid "OLE storage documents are not supported."
 msgstr "OLE storage-dokumenter støttes ikke"
 
 #: wordpad.rc:189
@@ -14349,7 +14351,8 @@ msgid "You do not have access to open the file."
 msgstr "Du har ikke tilgang til å åpne filen."
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
+#, fuzzy
+msgid "Printing not implemented."
 msgstr "Utskriftfunksjonen er ikke laget ennå."
 
 #: wordpad.rc:194

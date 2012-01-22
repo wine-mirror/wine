@@ -13955,11 +13955,13 @@ msgstr ""
 "か？"
 
 #: wordpad.rc:187
-msgid "Invalid number format"
+#, fuzzy
+msgid "Invalid number format."
 msgstr "数の書式が不正"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+#, fuzzy
+msgid "OLE storage documents are not supported."
 msgstr "OLEストレージ文書はサポートされていません。"
 
 #: wordpad.rc:189
@@ -13979,7 +13981,8 @@ msgid "You do not have access to open the file."
 msgstr "ファイルを開く権限がありません。"
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
+#, fuzzy
+msgid "Printing not implemented."
 msgstr "プリントが実装されていません。"
 
 #: wordpad.rc:194

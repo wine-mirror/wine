@@ -14045,11 +14045,12 @@ msgid ""
 msgstr ""
 
 #: wordpad.rc:187
-msgid "Invalid number format"
-msgstr ""
+#, fuzzy
+msgid "Invalid number format."
+msgstr "Неисправна синтакса"
 
 #: wordpad.rc:188
-msgid "OLE storage documents are not supported"
+msgid "OLE storage documents are not supported."
 msgstr ""
 
 #: wordpad.rc:189
@@ -14069,8 +14070,9 @@ msgid "You do not have access to open the file."
 msgstr ""
 
 #: wordpad.rc:193
-msgid "Printing not implemented"
-msgstr ""
+#, fuzzy
+msgid "Printing not implemented."
+msgstr "Датотека није пронађена"
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
