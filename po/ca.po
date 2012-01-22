@@ -2186,8 +2186,9 @@ msgid "B&rowse..."
 msgstr "&Navega..."
 
 #: cryptui.rc:294
+#, fuzzy
 msgid ""
-"Note:  The following file formats may contain more than one certificate, "
+"Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
 "Nota:  Els següents formats de fitxer poden contenir més d'un certificat, "
@@ -2922,7 +2923,8 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "Nota: La clau privada d'aquest certificat no es podia obrir."
 
 #: cryptui.rc:173
-msgid "Note: The private  key for this certificate is not exportable."
+#, fuzzy
+msgid "Note: The private key for this certificate is not exportable."
 msgstr "Nota: La clau privada d'aquest certificat no és exportable."
 
 #: devenum.rc:32

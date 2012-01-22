@@ -2184,8 +2184,9 @@ msgid "B&rowse..."
 msgstr "&Огляд..."
 
 #: cryptui.rc:294
+#, fuzzy
 msgid ""
-"Note:  The following file formats may contain more than one certificate, "
+"Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
 "Увага:  Наступні формати файлів можуть містити більше одного сертифікату, "
@@ -2909,7 +2910,8 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "Увага: Приватний ключ для цього сертифікату не може бути відкритий."
 
 #: cryptui.rc:173
-msgid "Note: The private  key for this certificate is not exportable."
+#, fuzzy
+msgid "Note: The private key for this certificate is not exportable."
 msgstr ""
 "Увага: Приватний ключ для цього сертифікату не може бути експортований."
 

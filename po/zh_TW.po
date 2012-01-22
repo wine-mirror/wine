@@ -2213,7 +2213,7 @@ msgstr "瀏覽(&r)"
 
 #: cryptui.rc:294
 msgid ""
-"Note:  The following file formats may contain more than one certificate, "
+"Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
 
@@ -2907,7 +2907,7 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr ""
 
 #: cryptui.rc:173
-msgid "Note: The private  key for this certificate is not exportable."
+msgid "Note: The private key for this certificate is not exportable."
 msgstr ""
 
 #: devenum.rc:32

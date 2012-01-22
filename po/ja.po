@@ -2180,8 +2180,9 @@ msgid "B&rowse..."
 msgstr "参照(&R)"
 
 #: cryptui.rc:294
+#, fuzzy
 msgid ""
-"Note:  The following file formats may contain more than one certificate, "
+"Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
 "注意:  以下のファイル形式は、2つ以上の証明書、証明書失効リスト、証明書信頼リ"
@@ -2899,7 +2900,8 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "注意: この証明書の秘密鍵を開けません。"
 
 #: cryptui.rc:173
-msgid "Note: The private  key for this certificate is not exportable."
+#, fuzzy
+msgid "Note: The private key for this certificate is not exportable."
 msgstr "注意: この証明書の秘密鍵はエクスポートできません。"
 
 #: devenum.rc:32

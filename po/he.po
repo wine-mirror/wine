@@ -2192,7 +2192,7 @@ msgstr "&עיון"
 
 #: cryptui.rc:294
 msgid ""
-"Note:  The following file formats may contain more than one certificate, "
+"Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
 
@@ -2880,7 +2880,8 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "לתשומת לבך: לא ניתן לפתוח את המפתח הפרטי לאישור זה."
 
 #: cryptui.rc:173
-msgid "Note: The private  key for this certificate is not exportable."
+#, fuzzy
+msgid "Note: The private key for this certificate is not exportable."
 msgstr "לתשומת לבך: המפתח הפרטי לאישור זה אינו ניתן ליצוא."
 
 #: devenum.rc:32

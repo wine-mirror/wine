@@ -170,7 +170,7 @@ STRINGTABLE
     IDS_EXPORT_PASSWORD_SUBTITLE "You may password-protect a private key."
     IDS_EXPORT_PASSWORD_MISMATCH "The passwords do not match."
     IDS_EXPORT_PRIVATE_KEY_UNAVAILABLE "Note: The private key for this certificate could not be opened."
-    IDS_EXPORT_PRIVATE_KEY_NON_EXPORTABLE "Note: The private  key for this certificate is not exportable."
+    IDS_EXPORT_PRIVATE_KEY_NON_EXPORTABLE "Note: The private key for this certificate is not exportable."
 }
 
 IDD_GENERAL DIALOG 0, 0, 255, 236
@@ -291,7 +291,7 @@ BEGIN
   LTEXT "&File name:", -1, 21,1,195,10
   EDITTEXT IDC_IMPORT_FILENAME, 21,11,208,14, ES_AUTOHSCROLL|WS_TABSTOP
   PUSHBUTTON "B&rowse...", IDC_IMPORT_BROWSE_FILE, 236,11,60,14
-  LTEXT "Note:  The following file formats may contain more than one certificate, certificate revocation list, or certificate trust list:",
+  LTEXT "Note: The following file formats may contain more than one certificate, certificate revocation list, or certificate trust list:",
     -1, 21,30,265,16
   LTEXT "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)",
     -1, 31,53,265,10

@@ -2318,8 +2318,9 @@ msgid "B&rowse..."
 msgstr "&Navighează"
 
 #: cryptui.rc:294
+#, fuzzy
 msgid ""
-"Note:  The following file formats may contain more than one certificate, "
+"Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
 "Notă:  Următoarele formate de fișier pot conține mai multe certificate, "
@@ -3052,7 +3053,8 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "Notă: Cheia privată pentru acest certificat nu a putut fi deschisă."
 
 #: cryptui.rc:173
-msgid "Note: The private  key for this certificate is not exportable."
+#, fuzzy
+msgid "Note: The private key for this certificate is not exportable."
 msgstr "Notă: Cheia privată pentru acest certificat nu este exportabilă."
 
 #: devenum.rc:32

@@ -2179,8 +2179,9 @@ msgid "B&rowse..."
 msgstr "B&rskaj ..."
 
 #: cryptui.rc:294
+#, fuzzy
 msgid ""
-"Note:  The following file formats may contain more than one certificate, "
+"Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
 "Opomba: naslednje vrste datotek lahko vsebujejo več kot eno potrdilo, seznam "
@@ -2908,7 +2909,8 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "Opomba: zasebnega ključa ni mogoče odpreti."
 
 #: cryptui.rc:173
-msgid "Note: The private  key for this certificate is not exportable."
+#, fuzzy
+msgid "Note: The private key for this certificate is not exportable."
 msgstr "Opomba: zasebnega ključa za to potrdilo ni mogoče izvoziti."
 
 #: devenum.rc:32
