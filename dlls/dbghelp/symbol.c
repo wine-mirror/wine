@@ -1873,50 +1873,178 @@ DWORD WINAPI UnDecorateSymbolName(PCSTR DecoratedName, PSTR UnDecoratedName,
     return strlen(UnDecoratedName);
 }
 
+#define WILDCHAR(x)      (-(x))
+
+static  int     re_fetch_char(const WCHAR** re)
+{
+    switch (**re)
+    {
+    case '\\': (*re)++; return *(*re)++;
+    case '*': case '[': case '?': case '+': case '#': case ']': return WILDCHAR(*(*re)++);
+    default: return *(*re)++;
+    }
+}
+
+static inline int  re_match_char(WCHAR ch1, WCHAR ch2, BOOL _case)
+{
+    return _case ? ch1 - ch2 : toupperW(ch1) - toupperW(ch2);
+}
+
+static const WCHAR* re_match_one(const WCHAR* string, const WCHAR* elt, BOOL _case)
+{
+    int         ch1, prev = 0;
+    unsigned    state = 0;
+
+    switch (ch1 = re_fetch_char(&elt))
+    {
+    default:
+        return (ch1 >= 0 && re_match_char(*string, ch1, _case) == 0) ? ++string : NULL;
+    case WILDCHAR('?'): return *string ? ++string : NULL;
+    case WILDCHAR('*'): assert(0);
+    case WILDCHAR('['): break;
+    }
+
+    for (;;)
+    {
+        ch1 = re_fetch_char(&elt);
+        if (ch1 == WILDCHAR(']')) return NULL;
+        if (state == 1 && ch1 == '-') state = 2;
+        else
+        {
+            if (re_match_char(*string, ch1, _case) == 0) return ++string;
+            switch (state)
+            {
+            case 0:
+                state = 1;
+                prev = ch1;
+                break;
+            case 1:
+                state = 0;
+                break;
+            case 2:
+                if (prev >= 0 && ch1 >= 0 && re_match_char(prev, *string, _case) <= 0 &&
+                    re_match_char(*string, ch1, _case) <= 0)
+                    return ++string;
+                state = 0;
+                break;
+            }
+        }
+    }
+}
+
+/******************************************************************
+ *		re_match_multi
+ *
+ * match a substring of *pstring according to *pre regular expression
+ * pstring and pre are only updated in case of successful match
+ */
+static BOOL re_match_multi(const WCHAR** pstring, const WCHAR** pre, BOOL _case)
+{
+    const WCHAR* re_end = *pre;
+    const WCHAR* string_end = *pstring;
+    const WCHAR* re_beg;
+    const WCHAR* string_beg;
+    const WCHAR* next;
+    int          ch;
+
+    while (*re_end && *string_end)
+    {
+        string_beg = string_end;
+        re_beg = re_end;
+        switch (ch = re_fetch_char(&re_end))
+        {
+        case WILDCHAR(']'): case WILDCHAR('+'): case WILDCHAR('#'): return FALSE;
+        case WILDCHAR('*'):
+            /* transform '*' into '?#' */
+            {static const WCHAR qmW[] = {'?',0}; re_beg = qmW;}
+            goto closure;
+        case WILDCHAR('['):
+            do
+            {
+                if (!(ch = re_fetch_char(&re_end))) return FALSE;
+            } while (ch != WILDCHAR(']'));
+            /* fall through */
+        case WILDCHAR('?'):
+        default:
+            break;
+        }
+
+        switch (*re_end)
+        {
+        case '+':
+            if (!(next = re_match_one(string_end, re_beg, _case))) return FALSE;
+            string_beg++;
+            /* fall through */
+        case '#':
+            re_end++;
+        closure:
+            while ((next = re_match_one(string_end, re_beg, _case))) string_end = next;
+            for ( ; string_end >= string_beg; string_end--)
+            {
+                if (re_match_multi(&string_end, &re_end, _case)) goto found;
+            }
+            return FALSE;
+        default:
+            if (!(next = re_match_one(string_end, re_beg, _case))) return FALSE;
+            string_end = next;
+        }
+        re_beg = re_end;
+    }
+
+    if (*re_end || *string_end) return FALSE;
+
+found:
+    *pre = re_end;
+    *pstring = string_end;
+    return TRUE;
+}
+
 /******************************************************************
  *		SymMatchStringA (DBGHELP.@)
  *
  */
 BOOL WINAPI SymMatchStringA(PCSTR string, PCSTR re, BOOL _case)
 {
-    regex_t     preg;
-    BOOL        ret;
+    WCHAR*      strW;
+    WCHAR*      reW;
+    BOOL        ret = FALSE;
+    DWORD       sz;
 
+    if (!string || !re)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
     TRACE("%s %s %c\n", string, re, _case ? 'Y' : 'N');
 
-    compile_regex(re, -1, &preg, _case);
-    ret = match_regexp(&preg, string);
-    regfree(&preg);
+    sz = MultiByteToWideChar(CP_ACP, 0, string, -1, NULL, 0);
+    if ((strW = HeapAlloc(GetProcessHeap(), 0, sz * sizeof(WCHAR))))
+        MultiByteToWideChar(CP_ACP, 0, string, -1, strW, sz);
+    sz = MultiByteToWideChar(CP_ACP, 0, re, -1, NULL, 0);
+    if ((reW = HeapAlloc(GetProcessHeap(), 0, sz * sizeof(WCHAR))))
+        MultiByteToWideChar(CP_ACP, 0, re, -1, reW, sz);
+
+    if (strW && reW)
+        ret = SymMatchStringW(strW, reW, _case);
+    HeapFree(GetProcessHeap(), 0, strW);
+    HeapFree(GetProcessHeap(), 0, reW);
     return ret;
 }
 
 /******************************************************************
  *		SymMatchStringW (DBGHELP.@)
  *
- * FIXME: SymMatchStringA should convert and pass the strings to SymMatchStringW,
- *        but that needs a unicode RE library.
  */
 BOOL WINAPI SymMatchStringW(PCWSTR string, PCWSTR re, BOOL _case)
 {
-    BOOL ret;
-    LPSTR s, r;
-    DWORD len;
-
     TRACE("%s %s %c\n", debugstr_w(string), debugstr_w(re), _case ? 'Y' : 'N');
 
-    len = WideCharToMultiByte( CP_ACP, 0, string, -1, NULL, 0, NULL, NULL );
-    s = HeapAlloc( GetProcessHeap(), 0, len );
-    WideCharToMultiByte( CP_ACP, 0, string, -1, s, len, NULL, NULL );
-
-    len = WideCharToMultiByte( CP_ACP, 0, re, -1, NULL, 0, NULL, NULL );
-    r = HeapAlloc( GetProcessHeap(), 0, len );
-    WideCharToMultiByte( CP_ACP, 0, re, -1, r, len, NULL, NULL );
-
-    ret = SymMatchStringA(s, r, _case);
-
-    HeapFree( GetProcessHeap(), 0, r );
-    HeapFree( GetProcessHeap(), 0, s );
-    return ret;
+    if (!string || !re)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    return re_match_multi(&string, &re, _case);
 }
 
 /******************************************************************
