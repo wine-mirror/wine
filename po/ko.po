@@ -39,9 +39,8 @@ msgstr ""
 "프로그램을 지우려면 , 추가/삭제 목록에서 선택하십시오.."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "지원 정보"
+msgstr "지원 정보(&S)"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -3462,12 +3461,11 @@ msgstr "루프 바깥에는 'continue'를 사용할 수 없음"
 
 #: jscript.rc:40
 msgid "Label redefined"
-msgstr ""
+msgstr "라벨이 정의되지 않음"
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
-msgstr "파일을 찾을 수 없음"
+msgstr "라벨을 찾을 수 없음"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
@@ -9889,7 +9887,7 @@ msgstr "배치 스크립트 밖의 배치 라벨은 불러올수 없습니다\n"
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr ""
+msgstr "A"
 
 #: cmd.rc:313
 msgid "%1, Delete"
@@ -12405,7 +12403,7 @@ msgstr "화면 해상도 "
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr ""
+msgstr "이것은 10 포인트 타호마 글꼴을 사용한 예제 글자입니다"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
@@ -12417,8 +12415,8 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"동적 링크 라이브러리는 개별적으로 내장(Wine에 의해 제공)이나 네이티브(윈도우"
-"즈나 프로그램에 의해 제공)으로 지정될수 있습니다."
+"동적 링크 라이브러리는 개별적으로 내장(Wine에 의해 제공)이나 네이티브(윈도우즈"
+"나 프로그램에 의해 제공)으로 지정될수 있습니다."
 
 #: winecfg.rc:185
 msgid "&New override for library:"
@@ -12930,7 +12928,6 @@ msgid "Command history"
 msgstr "명령 히스토리"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
 msgstr "다시 부르는 명령의 갯수(&N):"
 
@@ -12955,12 +12952,10 @@ msgid "Buffer zone"
 msgstr "버퍼 존"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
 msgstr "너비(&W) :"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
 msgstr "높이(&H) :"
 
@@ -12969,12 +12964,10 @@ msgid "Window size"
 msgstr "창 크기"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
 msgstr "너비(&I) :"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
 msgstr "높이(&E) :"
 
@@ -13126,29 +13119,22 @@ msgstr ""
 "을 끼쳐드린 거에 대하여 유감을 표함니다."
 
 #: winedbg.rc:55
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
-"이 문제는 프로그램의 문제나 Wine의 결함으로 위해 발생할 수 있습니다. 당신은실"
+"이 문제는 프로그램의 문제나 Wine의 결함으로 인해 발생할 수 있습니다. 당신은 실"
 "행한 프로그램에 대하여   <a href=\"http://appdb.winehq.org\">Application "
-"Database</a> 에서 관련 팁을 살펴 볼 수 있습니다.\n"
-"\n"
-"만약 이 문제가 윈도우에서는 존재하지 않고, 아직 버그로 보고되지 않았으면 , 당"
-"신은 <a href=\"http://wiki.winehq.org/Bugs\">파일을 버그로 보고할 수 있습니다"
-"</a>."
+"Database</a> 에서 관련 팁을 살펴 볼 수 있습니다."
 
 #: winedbg.rc:58
-#, fuzzy
 msgid "Show &Details"
-msgstr "자세히(&D)"
+msgstr "자세히 보여주기(&D)"
 
 #: winedbg.rc:63
-#, fuzzy
 msgid "Program Error Details"
-msgstr "프로그램 에러"
+msgstr "자세한 프로그램 에러"
 
 #: winedbg.rc:70
 msgid ""
@@ -13157,6 +13143,10 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"만약 이 문제가 윈도우즈에는 존재하지 않고 아직 보고되지 않았다면,"
+"당신은  \"다른 이름으로 저장\" 버튼을 사용해서 자세한 정보를 파일로 저장해서, "
+"<a href=\"http://wiki.winehq.org/Bugs\">버그 보고 파일</a>로 가서"
+"보고서에 파일을 같이 올리수 있습니다."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13171,13 +13161,12 @@ msgid "(unidentified)"
 msgstr "(알수 없음)"
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "만들기 실패함\n"
+msgstr "저장 실패함"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "자세한 정보를 불러오는 중입니다, 잠시만 기다리십시오..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
