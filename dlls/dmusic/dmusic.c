@@ -56,6 +56,7 @@ static ULONG WINAPI IDirectMusic8Impl_Release (LPDIRECTMUSIC8 iface) {
 	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
 	if (!refCount) {
+		HeapFree(GetProcessHeap(), 0, This->ppPorts);
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 
