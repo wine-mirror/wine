@@ -41,6 +41,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 WINE_DECLARE_DEBUG_CHANNEL(dbghelp_symt);
 
+static WCHAR    starW[] = {'*','\0'};
+
 static inline int cmp_addr(ULONG64 a1, ULONG64 a2)
 {
     if (a1 > a2) return 1;
@@ -137,60 +139,6 @@ static void symt_add_module_ht(struct module* module, struct symt_ht* ht)
 }
 
 #ifdef HAVE_REGEX_H
-
-/* transforms a dbghelp's regular expression into a POSIX one
- * Here are the valid dbghelp reg ex characters:
- *      *       0 or more characters
- *      ?       a single character
- *      []      list
- *      #       0 or more of preceding char
- *      +       1 or more of preceding char
- *      escapes \ on #, ?, [, ], *, +. don't work on -
- */
-static void compile_regex(const char* str, int numchar, regex_t* re, BOOL _case)
-{
-    char *mask, *p;
-    BOOL        in_escape = FALSE;
-    unsigned    flags = REG_NOSUB;
-
-    if (numchar == -1) numchar = strlen( str );
-
-    p = mask = HeapAlloc( GetProcessHeap(), 0, 2 * numchar + 3 );
-    *p++ = '^';
-
-    while (*str && numchar--)
-    {
-        /* FIXME: this shouldn't be valid on '-' */
-        if (in_escape)
-        {
-            *p++ = '\\';
-            *p++ = *str;
-            in_escape = FALSE;
-        }
-        else switch (*str)
-        {
-        case '\\': in_escape = TRUE; break;
-        case '*':  *p++ = '.'; *p++ = '*'; break;
-        case '?':  *p++ = '.'; break;
-        case '#':  *p++ = '*'; break;
-        /* escape some valid characters in dbghelp reg exp:s */
-        case '$':  *p++ = '\\'; *p++ = '$'; break;
-        /* +, [, ], - are the same in dbghelp & POSIX, use them as any other char */
-        default:   *p++ = *str; break;
-        }
-        str++;
-    }
-    if (in_escape)
-    {
-        *p++ = '\\';
-        *p++ = '\\';
-    }
-    *p++ = '$';
-    *p = 0;
-    if (_case) flags |= REG_ICASE;
-    if (regcomp(re, mask, flags)) FIXME("Couldn't compile %s\n", mask);
-    HeapFree(GetProcessHeap(), 0, mask);
-}
 
 static BOOL compile_file_regex(regex_t* re, const char* srcfile)
 {
@@ -832,24 +780,29 @@ static BOOL send_symbol(const struct sym_enum* se, struct module_pair* pair,
     return !se->cb(se->sym_info, se->sym_info->Size, se->user);
 }
 
-static BOOL symt_enum_module(struct module_pair* pair, const regex_t* regex,
+static BOOL symt_enum_module(struct module_pair* pair, const WCHAR* match,
                              const struct sym_enum* se)
 {
     void*                       ptr;
     struct symt_ht*             sym = NULL;
     struct hash_table_iter      hti;
+    WCHAR*                      nameW;
+    BOOL                        ret;
 
     hash_table_iter_init(&pair->effective->ht_symbols, &hti, NULL);
     while ((ptr = hash_table_iter_up(&hti)))
     {
         sym = GET_ENTRY(ptr, struct symt_ht, hash_elt);
-        if (sym->hash_elt.name && match_regexp(regex, sym->hash_elt.name))
+        nameW = symt_get_nameW(&sym->symt);
+        ret = SymMatchStringW(nameW, match, FALSE);
+        HeapFree(GetProcessHeap(), 0, nameW);
+        if (ret)
         {
             se->sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
             se->sym_info->MaxNameLen = sizeof(se->buffer) - sizeof(SYMBOL_INFO);
             if (send_symbol(se, pair, NULL, &sym->symt)) return TRUE;
         }
-    }   
+    }
     return FALSE;
 }
 
@@ -1004,12 +957,14 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD_PTR addr)
 }
 
 static BOOL symt_enum_locals_helper(struct module_pair* pair,
-                                    regex_t* preg, const struct sym_enum* se,
+                                    const WCHAR* match, const struct sym_enum* se,
                                     struct symt_function* func, const struct vector* v)
 {
     struct symt*        lsym = NULL;
     DWORD               pc = pair->pcs->ctx_frame.InstructionOffset;
     unsigned int        i;
+    WCHAR*              nameW;
+    BOOL                ret;
 
     for (i=0; i<vector_length(v); i++)
     {
@@ -1021,12 +976,16 @@ static BOOL symt_enum_locals_helper(struct module_pair* pair,
                 struct symt_block*  block = (struct symt_block*)lsym;
                 if (pc < block->address || block->address + block->size <= pc)
                     continue;
-                if (!symt_enum_locals_helper(pair, preg, se, func, &block->vchildren))
+                if (!symt_enum_locals_helper(pair, match, se, func, &block->vchildren))
                     return FALSE;
             }
             break;
         case SymTagData:
-            if (match_regexp(preg, symt_get_name(lsym)))
+            nameW = symt_get_nameW(lsym);
+            ret = SymMatchStringW(nameW, match,
+                                  !(dbghelp_options & SYMOPT_CASE_INSENSITIVE));
+            HeapFree(GetProcessHeap(), 0, nameW);
+            if (ret)
             {
                 if (send_symbol(se, pair, func, lsym)) return FALSE;
             }
@@ -1044,7 +1003,7 @@ static BOOL symt_enum_locals_helper(struct module_pair* pair,
     return TRUE;
 }
 
-static BOOL symt_enum_locals(struct process* pcs, const char* mask, 
+static BOOL symt_enum_locals(struct process* pcs, const WCHAR* mask,
                              const struct sym_enum* se)
 {
     struct module_pair  pair;
@@ -1061,15 +1020,8 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
 
     if (sym->symt.tag == SymTagFunction)
     {
-        BOOL            ret;
-        regex_t         preg;
-
-        compile_regex(mask ? mask : "*", -1, &preg,
-                      dbghelp_options & SYMOPT_CASE_INSENSITIVE);
-        ret = symt_enum_locals_helper(&pair, &preg, se, (struct symt_function*)sym,
-                                      &((struct symt_function*)sym)->vchildren);
-        regfree(&preg);
-        return ret;
+        return symt_enum_locals_helper(&pair, mask ? mask : starW, se, (struct symt_function*)sym,
+                                       &((struct symt_function*)sym)->vchildren);
     }
     return FALSE;
 }
@@ -1105,33 +1057,34 @@ void copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si)
  *
  * Core routine for most of the enumeration of symbols
  */
-static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
+static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR Mask,
                      const struct sym_enum* se)
 {
     struct module_pair  pair;
-    const char*         bang;
-    regex_t             mod_regex, sym_regex;
+    const WCHAR*        bang;
+    WCHAR*              mod;
 
     pair.pcs = process_find_by_handle(hProcess);
     if (!pair.pcs) return FALSE;
     if (BaseOfDll == 0)
     {
         /* do local variables ? */
-        if (!Mask || !(bang = strchr(Mask, '!')))
+        if (!Mask || !(bang = strchrW(Mask, '!')))
             return symt_enum_locals(pair.pcs, Mask, se);
 
         if (bang == Mask) return FALSE;
 
-        compile_regex(Mask, bang - Mask, &mod_regex, TRUE);
-        compile_regex(bang + 1, -1, &sym_regex, 
-                      dbghelp_options & SYMOPT_CASE_INSENSITIVE);
-        
+        mod = HeapAlloc(GetProcessHeap(), 0, (bang - Mask + 1) * sizeof(WCHAR));
+        if (!mod) return FALSE;
+        memcpy(mod, Mask, (bang - Mask) * sizeof(WCHAR));
+        mod[bang - Mask] = 0;
+
         for (pair.requested = pair.pcs->lmodules; pair.requested; pair.requested = pair.requested->next)
         {
             if (pair.requested->type == DMT_PE && module_get_debug(&pair))
             {
-                if (match_regexp(&mod_regex, pair.requested->module_name) &&
-                    symt_enum_module(&pair, &sym_regex, se))
+                if (SymMatchStringW(pair.requested->module.ModuleName, mod, FALSE) &&
+                    symt_enum_module(&pair, bang + 1, se))
                     break;
             }
         }
@@ -1145,14 +1098,13 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
                     !module_get_containee(pair.pcs, pair.requested) &&
                     module_get_debug(&pair))
                 {
-                    if (match_regexp(&mod_regex, pair.requested->module_name) &&
-                        symt_enum_module(&pair, &sym_regex, se))
+                    if (SymMatchStringW(pair.requested->module.ModuleName, mod, FALSE) &&
+                        symt_enum_module(&pair, bang + 1, se))
                     break;
                 }
             }
         }
-        regfree(&mod_regex);
-        regfree(&sym_regex);
+        HeapFree(GetProcessHeap(), 0, mod);
         return TRUE;
     }
     pair.requested = module_find_by_addr(pair.pcs, BaseOfDll, DMT_UNKNOWN);
@@ -1160,18 +1112,31 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
         return FALSE;
 
     /* we always ignore module name from Mask when BaseOfDll is defined */
-    if (Mask && (bang = strchr(Mask, '!')))
+    if (Mask && (bang = strchrW(Mask, '!')))
     {
         if (bang == Mask) return FALSE;
         Mask = bang + 1;
     }
 
-    compile_regex(Mask ? Mask : "*", -1, &sym_regex, 
-                  dbghelp_options & SYMOPT_CASE_INSENSITIVE);
-    symt_enum_module(&pair, &sym_regex, se);
-    regfree(&sym_regex);
+    symt_enum_module(&pair, Mask ? Mask : starW, se);
 
     return TRUE;
+}
+
+static inline BOOL doSymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR Mask,
+                                    PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
+                                    PVOID UserContext)
+{
+    struct sym_enum     se;
+
+    se.cb = EnumSymbolsCallback;
+    se.user = UserContext;
+    se.index = 0;
+    se.tag = 0;
+    se.addr = 0;
+    se.sym_info = (PSYMBOL_INFO)se.buffer;
+
+    return sym_enum(hProcess, BaseOfDll, Mask, &se);
 }
 
 /******************************************************************
@@ -1189,20 +1154,23 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
                            PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
                            PVOID UserContext)
 {
-    struct sym_enum     se;
+    BOOL                ret;
+    PWSTR               maskW = NULL;
 
-    TRACE("(%p %s %s %p %p)\n", 
+    TRACE("(%p %s %s %p %p)\n",
           hProcess, wine_dbgstr_longlong(BaseOfDll), debugstr_a(Mask),
           EnumSymbolsCallback, UserContext);
 
-    se.cb = EnumSymbolsCallback;
-    se.user = UserContext;
-    se.index = 0;
-    se.tag = 0;
-    se.addr = 0;
-    se.sym_info = (PSYMBOL_INFO)se.buffer;
-
-    return sym_enum(hProcess, BaseOfDll, Mask, &se);
+    if (Mask)
+    {
+        DWORD sz = MultiByteToWideChar(CP_ACP, 0, Mask, -1, NULL, 0);
+        if (!(maskW = HeapAlloc(GetProcessHeap(), 0, sz * sizeof(WCHAR))))
+            return FALSE;
+        MultiByteToWideChar(CP_ACP, 0, Mask, -1, maskW, sz);
+    }
+    ret = doSymEnumSymbols(hProcess, BaseOfDll, maskW, EnumSymbolsCallback, UserContext);
+    HeapFree(GetProcessHeap(), 0, maskW);
+    return ret;
 }
 
 struct sym_enumW
@@ -1232,24 +1200,12 @@ BOOL WINAPI SymEnumSymbolsW(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR Mask,
                             PVOID UserContext)
 {
     struct sym_enumW    sew;
-    BOOL                ret = FALSE;
-    char*               maskA = NULL;
 
     sew.ctx = UserContext;
     sew.cb = EnumSymbolsCallback;
     sew.sym_info = (PSYMBOL_INFOW)sew.buffer;
 
-    if (Mask)
-    {
-        unsigned len = WideCharToMultiByte(CP_ACP, 0, Mask, -1, NULL, 0, NULL, NULL);
-        maskA = HeapAlloc(GetProcessHeap(), 0, len);
-        if (!maskA) return FALSE;
-        WideCharToMultiByte(CP_ACP, 0, Mask, -1, maskA, len, NULL, NULL);
-    }
-    ret = SymEnumSymbols(hProcess, BaseOfDll, maskA, sym_enumW, &sew);
-    HeapFree(GetProcessHeap(), 0, maskA);
-
-    return ret;
+    return doSymEnumSymbols(hProcess, BaseOfDll, Mask, sym_enumW, &sew);
 }
 
 struct sym_enumerate
@@ -2047,20 +2003,12 @@ BOOL WINAPI SymMatchStringW(PCWSTR string, PCWSTR re, BOOL _case)
     return re_match_multi(&string, &re, _case);
 }
 
-/******************************************************************
- *		SymSearch (DBGHELP.@)
- */
-BOOL WINAPI SymSearch(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
-                      DWORD SymTag, PCSTR Mask, DWORD64 Address,
-                      PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
-                      PVOID UserContext, DWORD Options)
+static inline BOOL doSymSearch(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
+                               DWORD SymTag, PCWSTR Mask, DWORD64 Address,
+                               PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
+                               PVOID UserContext, DWORD Options)
 {
     struct sym_enum     se;
-
-    TRACE("(%p %s %u %u %s %s %p %p %x)\n",
-          hProcess, wine_dbgstr_longlong(BaseOfDll), Index, SymTag, Mask,
-          wine_dbgstr_longlong(Address), EnumSymbolsCallback,
-          UserContext, Options);
 
     if (Options != SYMSEARCH_GLOBALSONLY)
     {
@@ -2080,6 +2028,36 @@ BOOL WINAPI SymSearch(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
 }
 
 /******************************************************************
+ *		SymSearch (DBGHELP.@)
+ */
+BOOL WINAPI SymSearch(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
+                      DWORD SymTag, PCSTR Mask, DWORD64 Address,
+                      PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
+                      PVOID UserContext, DWORD Options)
+{
+    LPWSTR      maskW = NULL;
+    BOOLEAN     ret;
+
+    TRACE("(%p %s %u %u %s %s %p %p %x)\n",
+          hProcess, wine_dbgstr_longlong(BaseOfDll), Index, SymTag, Mask,
+          wine_dbgstr_longlong(Address), EnumSymbolsCallback,
+          UserContext, Options);
+
+    if (Mask)
+    {
+        DWORD sz = MultiByteToWideChar(CP_ACP, 0, Mask, -1, NULL, 0);
+
+        if (!(maskW = HeapAlloc(GetProcessHeap(), 0, sz * sizeof(WCHAR))))
+            return FALSE;
+        MultiByteToWideChar(CP_ACP, 0, Mask, -1, maskW, sz);
+    }
+    ret = doSymSearch(hProcess, BaseOfDll, Index, SymTag, maskW, Address,
+                      EnumSymbolsCallback, UserContext, Options);
+    HeapFree(GetProcessHeap(), 0, maskW);
+    return ret;
+}
+
+/******************************************************************
  *		SymSearchW (DBGHELP.@)
  */
 BOOL WINAPI SymSearchW(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
@@ -2088,8 +2066,6 @@ BOOL WINAPI SymSearchW(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
                        PVOID UserContext, DWORD Options)
 {
     struct sym_enumW    sew;
-    BOOL                ret = FALSE;
-    char*               maskA = NULL;
 
     TRACE("(%p %s %u %u %s %s %p %p %x)\n",
           hProcess, wine_dbgstr_longlong(BaseOfDll), Index, SymTag, debugstr_w(Mask),
@@ -2100,18 +2076,8 @@ BOOL WINAPI SymSearchW(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
     sew.cb = EnumSymbolsCallback;
     sew.sym_info = (PSYMBOL_INFOW)sew.buffer;
 
-    if (Mask)
-    {
-        unsigned len = WideCharToMultiByte(CP_ACP, 0, Mask, -1, NULL, 0, NULL, NULL);
-        maskA = HeapAlloc(GetProcessHeap(), 0, len);
-        if (!maskA) return FALSE;
-        WideCharToMultiByte(CP_ACP, 0, Mask, -1, maskA, len, NULL, NULL);
-    }
-    ret = SymSearch(hProcess, BaseOfDll, Index, SymTag, maskA, Address,
-                    sym_enumW, &sew, Options);
-    HeapFree(GetProcessHeap(), 0, maskA);
-
-    return ret;
+    return doSymSearch(hProcess, BaseOfDll, Index, SymTag, Mask, Address,
+                       sym_enumW, &sew, Options);
 }
 
 /******************************************************************

@@ -101,9 +101,6 @@ static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
 void module_set_module(struct module* module, const WCHAR* name)
 {
     module_fill_module(name, module->module.ModuleName, sizeof(module->module.ModuleName));
-    WideCharToMultiByte(CP_ACP, 0, module->module.ModuleName, -1,
-                        module->module_name, sizeof(module->module_name),
-                        NULL, NULL);
 }
 
 const WCHAR *get_wine_loader_name(void)
