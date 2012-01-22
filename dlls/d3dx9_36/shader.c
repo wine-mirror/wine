@@ -1223,12 +1223,9 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD *byte_code,
     object->desc.Creator = ctab_header->Creator ? object->ctab + ctab_header->Creator : NULL;
     object->desc.Version = ctab_header->Version;
     object->desc.Constants = ctab_header->Constants;
-    if (object->desc.Creator)
-        TRACE("Creator = %s\n", object->desc.Creator);
-    TRACE("Version = %x\n", object->desc.Version);
-    TRACE("Constants = %d\n", ctab_header->Constants);
-    if (ctab_header->Target)
-        TRACE("Target = %s\n", object->ctab + ctab_header->Target);
+    TRACE("Creator %s, Version %x, Constants %u, Target %s\n",
+            debugstr_a(object->desc.Creator), object->desc.Version, object->desc.Constants,
+            debugstr_a(ctab_header->Target ? object->ctab + ctab_header->Target : NULL));
 
     if (object->desc.Constants > 65535)
     {
