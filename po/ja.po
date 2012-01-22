@@ -14014,7 +14014,7 @@ msgstr "%1 を上書きしますか? (Yes|No|All)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "'%1' から '%2' へのコピーは失敗しました。戻り値 %d\n"
+msgstr "'%1' から '%2' へのコピーは失敗しました。戻り値 %3!d!\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%1'\n"
