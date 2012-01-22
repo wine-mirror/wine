@@ -938,7 +938,7 @@ msgid ""
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Это значение не лежит внутри диапазона страниц.\n"
-"Введите значение между %1!%d! и %2!d!."
+"Введите значение между %1!d! и %2!d!."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
