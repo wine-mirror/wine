@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-03-21 16:09+0100\n"
+"PO-Revision-Date: 2012-01-21 23:31+0200\n"
 "Last-Translator: Andrej Žnidaršič <andrej.znidarsic@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Slovenian\n"
@@ -36,8 +36,8 @@ msgid ""
 "Remove."
 msgstr ""
 "Naslednji programi omogočajo samodejno odstranitev. Za odstranitev programa "
-"oz. spremembo nameščenih komponent izberite program s seznama in kliknite "
-"'Dodaj/Odstrani'."
+"oz. spremembo nameščenih sestavnih delov izberite program s seznama in "
+"kliknite 'Dodaj/Odstrani'."
 
 #: appwiz.rc:64
 #, fuzzy
@@ -46,7 +46,7 @@ msgstr "Informacije"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
-msgstr "&Modify ..."
+msgstr "&Spremeni ..."
 
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
@@ -55,7 +55,7 @@ msgstr "&Odstrani"
 
 #: appwiz.rc:72
 msgid "Support Information"
-msgstr "Informacije"
+msgstr "Podporni podatki"
 
 #: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:226 comdlg32.rc:256
 #: comdlg32.rc:299 comdlg32.rc:353 comdlg32.rc:392 comdlg32.rc:446
@@ -78,8 +78,7 @@ msgstr "V redu"
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
 msgstr ""
-"Naslednje informacije lahko uporabite pri pridobivanju tehnične podpore za "
-"%s:"
+"Pri pridobivanju tehnične podpore za %s lahko uporabite naslednje podatke:"
 
 #: appwiz.rc:77
 msgid "Publisher:"
@@ -91,7 +90,7 @@ msgstr "Različica:"
 
 #: appwiz.rc:79
 msgid "Contact:"
-msgstr "Kontakt:"
+msgstr "Stik:"
 
 #: appwiz.rc:80
 msgid "Support Information:"
@@ -103,22 +102,21 @@ msgstr "Telefon teh. podpore:"
 
 #: appwiz.rc:82
 msgid "Readme:"
-msgstr "Readme:"
+msgstr "Preberi me:"
 
 #: appwiz.rc:83
 msgid "Product Updates:"
-msgstr "Popravki:"
+msgstr "Posodobitve izdelka:"
 
 #: appwiz.rc:84
 msgid "Comments:"
-msgstr "Komentar:"
+msgstr "Opomba:"
 
 #: appwiz.rc:97
 msgid "Wine Gecko Installer"
 msgstr "Namestitev Wine Gecko"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -128,12 +126,13 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"Wine ni našel paketa Gecko, ki ga aplikacije, ki uporabljajo HTML "
-"potrebujejo, da delujejo pravilno. Wine ga lahko avtomatsko prenese in "
+"Wine ni našel paketa Gecko, ki ga programi, ki uporabljajo HTML, "
+"potrebujejo, da delujejo pravilno. Wine ga lahko samodejno prenese in "
 "namesti.\n"
 "\n"
-"Opomba: priporočljivo je uporabiti Gecko paket od distribucije. Poglej\n"
-"http://wiki.winehq.org/Gecko za podrobnost."
+"Opomba: priporočljivo je uporabiti Gecko paket od distribucije. Oglejte si "
+"<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> za "
+"podrobnosti."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -168,7 +167,7 @@ msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
-"Omogoča namestitev novih programov oziroma odstranitev programov z vašega "
+"Omogoča namestitev novih programov oziroma odstranitev programov iz vašega "
 "računalnika."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
@@ -213,9 +212,8 @@ msgid "All files (*.*)"
 msgstr "Vse datoteke (*.*)"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "&Spremeni/odstrani ..."
+msgstr "&Spremeni/Odstrani"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -267,7 +265,7 @@ msgstr "Valovna oblika"
 
 #: avifil32.rc:29
 msgid "All multimedia files"
-msgstr "Vse večpredstavnostne datoteke"
+msgstr "Vse predstavne datoteke"
 
 #: avifil32.rc:31
 msgid "video"
@@ -369,7 +367,6 @@ msgid "Separator"
 msgstr "Ločnica"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
 msgstr "Brez"
@@ -586,13 +583,11 @@ msgid "&Hue:"
 msgstr "Od&tn.:"
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr "&Nasič.:"
+msgstr "&Sob:"
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Svetl.:"
@@ -639,7 +634,7 @@ msgstr "&Najdi naslednje"
 
 #: comdlg32.rc:329
 msgid "Replace"
-msgstr "Zamenjava"
+msgstr "Zamenjaj"
 
 #: comdlg32.rc:334
 msgid "Re&place With:"
@@ -680,7 +675,7 @@ msgstr "Kje:"
 
 #: comdlg32.rc:368 comdlg32.rc:406
 msgid "Comment:"
-msgstr "Komentar:"
+msgstr "Opomba:"
 
 #: comdlg32.rc:371
 msgid "Copies"
@@ -783,14 +778,12 @@ msgid "&Open"
 msgstr "&Odpri"
 
 #: comdlg32.rc:481
-#, fuzzy
 msgid "File name:"
-msgstr "&Ime datoteke:"
+msgstr "Ime datoteke:"
 
 #: comdlg32.rc:484
-#, fuzzy
 msgid "Files of type:"
-msgstr "Vrsta da&totek:"
+msgstr "Vrsta datoteke:"
 
 #: comdlg32.rc:29
 msgid "File not found"
@@ -858,7 +851,7 @@ msgstr "Brskaj po namizju"
 
 #: comdlg32.rc:109
 msgid "Regular"
-msgstr "Navadno"
+msgstr "Običajno"
 
 #: comdlg32.rc:110
 msgid "Bold"
@@ -941,13 +934,12 @@ msgid "Unreadable Entry"
 msgstr "Neberljiv vnos"
 
 #: comdlg32.rc:54
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Ta vrednost ne leži znotraj obsega strani.\n"
-"Podajte vrednost med %d in %d."
+"Podajte vrednost med %1!d! in %2!d!."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -962,7 +954,6 @@ msgstr ""
 "Ponovno vnesite vrednosti robov."
 
 #: comdlg32.rc:60
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
 msgstr "Polje 'Število kopij' ne sme biti prazno."
 
@@ -1003,13 +994,13 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Preden lahko izvajate s tiskalniki povezana opravila, povezane s tiskanjem, "
-"morate namestiti tiskalnik. Po namestitvi tiskalnika poskusite znova."
+"Preden lahko izvajate s tiskalniki povezana opravila, kot je nastavitev "
+"strani ali tiskanje dokumenta, morate namestiti tiskalnik. Po namestitvi "
+"tiskalnika poskusite znova."
 
 #: comdlg32.rc:137
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Izberite velikost pisave med %d in %d točkami."
+msgstr "Izberite velikost pisave med %1!d! in %2!d! točkami."
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
@@ -1125,7 +1116,7 @@ msgstr "Ohišje tiskalnika je odprto ,"
 
 #: comdlg32.rc:103
 msgid "Print server unknown; "
-msgstr "Strežnik tiskanja ni znan,"
+msgstr "Strežnik za tiskanje ni znan,"
 
 #: comdlg32.rc:104
 msgid "Power save mode; "
@@ -1297,16 +1288,14 @@ msgid "Unstructured Address"
 msgstr "Nestrukturiran naslov"
 
 #: crypt32.rc:51
-#, fuzzy
 msgid "S/MIME Capabilities"
-msgstr "Zmožnosti SMIME"
+msgstr "Zmožnosti S/MIME"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
 msgstr "Podpisani podatki imajo prednost"
 
 #: crypt32.rc:53 cryptdlg.rc:31
-#, fuzzy
 msgctxt "Certification Practice Statement"
 msgid "CPS"
 msgstr "CPS"
@@ -1404,9 +1393,8 @@ msgid "Initials"
 msgstr "Začetnice"
 
 #: crypt32.rc:77
-#, fuzzy
 msgid "Surname"
-msgstr "Uporabniško ime"
+msgstr "Priimek"
 
 #: crypt32.rc:78
 msgid "Domain Component"
@@ -1438,7 +1426,7 @@ msgstr "Osnovno ime"
 
 #: crypt32.rc:85
 msgid "Windows Product Update"
-msgstr "Posodobitev produkta Windows"
+msgstr "Posodobitev izdelka Windows"
 
 #: crypt32.rc:86
 msgid "Enrollment Name Value Pair"
@@ -1458,7 +1446,7 @@ msgstr "Številka CRL"
 
 #: crypt32.rc:90
 msgid "Delta CRL Indicator"
-msgstr "Indikator razlike CRL"
+msgstr "Kazalnik razlike CRL"
 
 #: crypt32.rc:91
 msgid "Issuing Distribution Point"
@@ -1490,7 +1478,7 @@ msgstr "Pravila programov"
 
 #: crypt32.rc:98
 msgid "Application Policy Mappings"
-msgstr "Preslikava preavil programov"
+msgstr "Preslikava pravil programov"
 
 #: crypt32.rc:99
 msgid "Application Policy Constraints"
@@ -1506,7 +1494,7 @@ msgstr "Odziv CMC"
 
 #: crypt32.rc:102
 msgid "Unsigned CMC Request"
-msgstr "Nepodpisan zahteva CMC"
+msgstr "Nepodpisan zahtevek CMC"
 
 #: crypt32.rc:103
 msgid "CMC Status Info"
@@ -1558,7 +1546,7 @@ msgstr "Objava naslednjega CRL"
 
 #: crypt32.rc:115
 msgid "CA Encryption Certificate"
-msgstr "Potrdilo za šifriranje overitelja portdil"
+msgstr "Potrdilo za šifriranje overitelja potrdil"
 
 #: crypt32.rc:116 cryptui.rc:145
 msgid "Key Recovery Agent"
@@ -1662,7 +1650,7 @@ msgstr "Podpisovanje seznama zaupanja Microsoft"
 
 #: crypt32.rc:141
 msgid "Microsoft Time Stamping"
-msgstr "Microsoft časovno žigosanje"
+msgstr "Časovno žigosanje Microsoft"
 
 #: crypt32.rc:142
 msgid "IP security end system"
@@ -1682,7 +1670,7 @@ msgstr "Šifriranje datotečnega sistema"
 
 #: crypt32.rc:146 cryptui.rc:130
 msgid "Windows Hardware Driver Verification"
-msgstr "Preverjanje Windows gonilnikov strojne opreme"
+msgstr "Preverjanje gonilnikov Windows strojne opreme"
 
 #: crypt32.rc:147 cryptui.rc:131
 msgid "Windows System Component Verification"
@@ -1690,7 +1678,7 @@ msgstr "Preverjanje sestavnih delov sistema Windows"
 
 #: crypt32.rc:148 cryptui.rc:132
 msgid "OEM Windows System Component Verification"
-msgstr "OEM rreverjanje sestavnih delov sistema Windows"
+msgstr "OEM preverjanje sestavnih delov sistema Windows"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
@@ -1833,10 +1821,9 @@ msgid "Subject Type="
 msgstr "Vrsta zadeve="
 
 #: crypt32.rc:192
-#, fuzzy
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr "CA"
+msgstr "Overitelj potrdil"
 
 #: crypt32.rc:193
 msgid "End Entity"
@@ -1847,7 +1834,6 @@ msgid "Path Length Constraint="
 msgstr "Omejitev dolžine poti="
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "path length"
 msgid "None"
 msgstr "Brez"
@@ -1865,7 +1851,6 @@ msgid "Access Method="
 msgstr "Način dostopa="
 
 #: crypt32.rc:199
-#, fuzzy
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr "OCSP"
@@ -1992,7 +1977,7 @@ msgstr "Le šifrirnik"
 
 #: crypt32.rc:230
 msgid "Decipher Only"
-msgstr "Le dešifrinik"
+msgstr "Le odšifrirnik"
 
 #: crypt32.rc:231
 msgid "SSL Client Authentication"
@@ -2020,7 +2005,7 @@ msgstr "S/MIME CA"
 
 #: crypt32.rc:237
 msgid "Signature CA"
-msgstr "Podpis ovetitelja potrdil"
+msgstr "Podpis overitelja potrdil"
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
@@ -2059,126 +2044,109 @@ msgid "Notice Text="
 msgstr "Besedilo obvestila="
 
 #: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
-#, fuzzy
 msgid "General"
-msgstr "Splošna napaka\n"
+msgstr "Splošno"
 
 #: cryptui.rc:188
-#, fuzzy
 msgid "&Install Certificate..."
-msgstr "Potrdila"
+msgstr "&Namesti potrdilo ..."
 
 #: cryptui.rc:189
-#, fuzzy
 msgid "Issuer &Statement"
-msgstr "Nadomestno ime izdajatelja"
+msgstr "&Izjava izdaje"
 
 #: cryptui.rc:197
-#, fuzzy
 msgid "&Show:"
-msgstr "Pokaži"
+msgstr "&Pokaži:"
 
 #: cryptui.rc:202
-#, fuzzy
 msgid "&Edit Properties..."
-msgstr "&Lastnosti"
+msgstr "&Uredi lastnosti ..."
 
 #: cryptui.rc:203
-#, fuzzy
 msgid "&Copy to File..."
-msgstr "Kopiranje datotek ..."
+msgstr "&Kopiraj v datoteko ..."
 
 #: cryptui.rc:207
-#, fuzzy
 msgid "Certification Path"
-msgstr "Ime predloge potrdila"
+msgstr "Pot potrdila"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "Ime predloge potrdila"
+msgstr "Pot potrdila"
 
 #: cryptui.rc:214
-#, fuzzy
 msgid "&View Certificate"
-msgstr "Dobi potrdilo"
+msgstr "&Poglej potrdilo"
 
 #: cryptui.rc:215
-#, fuzzy
 msgid "Certificate &status:"
-msgstr "Potrdila"
+msgstr "&Stanje potrdil:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
-msgstr ""
+msgstr "Izjava"
 
 #: cryptui.rc:228
-#, fuzzy
 msgid "More &Info"
-msgstr "Podrobnosti registra"
+msgstr "Več &podrobnosti"
 
 #: cryptui.rc:236
-#, fuzzy
 msgid "&Friendly name:"
-msgstr "Prijazno ime"
+msgstr "&Prijazno ime:"
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
 msgstr "&Opis:"
 
 #: cryptui.rc:240
-#, fuzzy
 msgid "Certificate purposes"
-msgstr "Vrsta potrdila"
+msgstr "Nameni potrdila"
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
-msgstr ""
+msgstr "&Omogoči vse namene za to potrdilo"
 
 #: cryptui.rc:243
 msgid "D&isable all purposes for this certificate"
-msgstr ""
+msgstr "On&emogoči vse namene za to potrdilo"
 
 #: cryptui.rc:245
 msgid "Enable &only the following purposes for this certificate:"
-msgstr ""
+msgstr "Omogoči &le naslednje namene za to potrdilo:"
 
 #: cryptui.rc:250
-#, fuzzy
 msgid "Add &Purpose..."
-msgstr "<Napredne možnosti>"
+msgstr "Dodaj &namen ..."
 
 #: cryptui.rc:254
-#, fuzzy
 msgid "Add Purpose"
-msgstr "<Napredne možnosti>"
+msgstr "Dodaj namen"
 
 #: cryptui.rc:257
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
-msgstr ""
+msgstr "Doda določilo predmeta (OID) za namene potrdil, ki jih želite dodati:"
 
 #: cryptui.rc:265 cryptui.rc:66
 msgid "Select Certificate Store"
 msgstr "Izberite shrambo potrdila"
 
 #: cryptui.rc:268
-#, fuzzy
 msgid "Select the certificate store you want to use:"
-msgstr "Ime na potrdilu se ne ujema s tem spletiščem."
+msgstr "Izbor shrambe potrdil, ki jih želite uporabiti:"
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
-msgstr ""
+msgstr "&Pokaži fizični shrambe"
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
 msgstr "Čarovnik za uvoz potrdila"
 
 #: cryptui.rc:280
-#, fuzzy
 msgid "Welcome to the Certificate Import Wizard"
-msgstr "Čarovnik za uvoz potrdila"
+msgstr "Dobrodošli v čarovniku za uvoz potrdila"
 
 #: cryptui.rc:283
 msgid ""
@@ -2192,68 +2160,71 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Ta čarovnik vam pomaga pri uvozu potrdil, seznam preklicanih potrdil in "
+"seznam zaupanih potrdil iz shrambe potrdil v datoteko.\n"
+"\n"
+"Potrdilo se lahko uporabi za določitev vas ali računalnika s katerim se "
+"sporazumevanje. Uporabite ga lahko tudi za overitev in za podpis sporočil. "
+"Shrambe potrdil so zbirke potrdil, seznamov preklicanih potrdil in seznamov "
+"zaupanja vrednih potrdil.\n"
+"\n"
+"Za nadaljevanje kliknite Naprej."
 
 #: cryptui.rc:291 cryptui.rc:427
-#, fuzzy
 msgid "&File name:"
 msgstr "&Ime datoteke:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "B&rskaj"
+msgstr "B&rskaj ..."
 
 #: cryptui.rc:294
-#, fuzzy
 msgid ""
 "Note:  The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"Shrambe potrdil so zbirke potrdil, seznami preklicanih potrdil in seznami "
-"zaupana vrednih potrdil."
+"Opomba: naslednje vrste datotek lahko vsebujejo več kot eno potrdilo, seznam "
+"preklicanih potrdil ali seznam zaupana vrednih potrdil:"
 
 #: cryptui.rc:296
-#, fuzzy
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
 msgstr "Sporočila CMS/PCKS #7 (*.p7b)"
 
 #: cryptui.rc:298
-#, fuzzy
 msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
-msgstr "Osebna izmenjava podrobnosti (*.pfx, *.p12)"
+msgstr "Osebna izmenjava Exchange/PKCS št. 12 (.pfx, .p12)"
 
 #: cryptui.rc:300
-#, fuzzy
 msgid "Microsoft Serialized Certificate Store (.sst)"
-msgstr "Microsoftova shramba potrdil v zaporedjih (*.sst)"
+msgstr "Microsoftova shramba potrdil v zaporedjih (.sst)"
 
 #: cryptui.rc:308
 msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
+"Wine lahko samodejno izbere shrambo potrdil ali pa lahko sami določite mesto "
+"potrdil."
 
 #: cryptui.rc:310
-#, fuzzy
 msgid "&Automatically select certificate store"
-msgstr "Izberite shrambo potrdila."
+msgstr "&Samodejno izberi shrambo potrdila"
 
 #: cryptui.rc:312
-#, fuzzy
 msgid "&Place all certificates in the following store:"
-msgstr "To potrdilo je namenjeno za naslednje namene:"
+msgstr "&Postavi vsa potrdila v naslednjo shrambo:"
 
 #: cryptui.rc:322
-#, fuzzy
 msgid "Completing the Certificate Import Wizard"
-msgstr "Čarovnik za uvoz potrdila"
+msgstr "Dopolnjevanje čarovnika za uvoz potrdil"
 
 #: cryptui.rc:324
 msgid "You have successfully completed the Certificate Import Wizard."
-msgstr ""
+msgstr "Uspešno ste dokončali čarovnika za uvoz potrdil"
 
 #: cryptui.rc:326 cryptui.rc:440
 msgid "You have specified the following settings:"
-msgstr ""
+msgstr "Določili ste naslednje nastavitve:"
 
 #: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
@@ -2261,26 +2232,23 @@ msgstr "Potrdila"
 
 #: cryptui.rc:337
 msgid "I&ntended purpose:"
-msgstr ""
+msgstr "N&amenjen namen:"
 
 #: cryptui.rc:341
-#, fuzzy
 msgid "&Import..."
-msgstr "&Izvozi ..."
+msgstr "&Uvozi ..."
 
 #: cryptui.rc:342 regedit.rc:109
 msgid "&Export..."
 msgstr "&Izvozi ..."
 
 #: cryptui.rc:344
-#, fuzzy
 msgid "&Advanced..."
-msgstr "&Napreden"
+msgstr "&Napredno ..."
 
 #: cryptui.rc:345
-#, fuzzy
 msgid "Certificate intended purposes"
-msgstr "Razširitve potrdila"
+msgstr "Nameni namenjanega potrdila"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49
@@ -2289,24 +2257,22 @@ msgid "&View"
 msgstr "&Pogled"
 
 #: cryptui.rc:352
-#, fuzzy
 msgid "Advanced Options"
-msgstr "<Napredne možnosti>"
+msgstr "Napredne možnosti"
 
 #: cryptui.rc:355
-#, fuzzy
 msgid "Certificate purpose"
-msgstr "Vrsta potrdila"
+msgstr "Nameni potrdil"
 
 #: cryptui.rc:356
 msgid ""
 "Select one or more purposes to be listed when Advanced Purposes is selected."
 msgstr ""
+"Izberite enega ali več namenov za izpis, ko so izbrani Napredni nameni."
 
 #: cryptui.rc:358
-#, fuzzy
 msgid "&Certificate purposes:"
-msgstr "Vrsta potrdila"
+msgstr "Nameni &potrdila:"
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
@@ -2314,9 +2280,8 @@ msgid "Certificate Export Wizard"
 msgstr "Čarovnik za izvoz potrdila"
 
 #: cryptui.rc:370
-#, fuzzy
 msgid "Welcome to the Certificate Export Wizard"
-msgstr "Čarovnik za izvoz potrdila"
+msgstr "Dobrodošli v čarovniku za izvoz potrdil"
 
 #: cryptui.rc:373
 msgid ""
@@ -2330,81 +2295,83 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Ta čarovnik vam pomaga pri izvozu potrdil, seznam preklicanih potrdil in "
+"seznam zaupanih potrdil iz shrambe potrdil v datoteko.\n"
+"\n"
+"Potrdilo se lahko uporabi za določitev vas ali računalnika s katerim se "
+"sporazumevanje. Uporabite ga lahko tudi za overitev in za podpis sporočil. "
+"Shrambe potrdil so zbirke potrdil, seznamov preklicanih potrdil in seznamov "
+"zaupanja vrednih potrdil.\n"
+"\n"
+"Za nadaljevanje kliknite Naprej."
 
 #: cryptui.rc:381
 msgid ""
 "If you choose to export the private key, you will be prompted for a password "
 "to protect the private key on a later page."
 msgstr ""
+"Če izberete izvoz zasebnega ključa, boste bili pozvani za geslo za zaščito "
+"zasebnega ključa na poznejši strani."
 
 #: cryptui.rc:382
 msgid "Do you wish to export the private key?"
-msgstr ""
+msgstr "Ali želite zasebni ključ izvoziti?"
 
 #: cryptui.rc:383
-#, fuzzy
 msgid "&Yes, export the private key"
-msgstr "Izvozi zasebni ključ"
+msgstr "&Da, izvozi zasebni ključ"
 
 #: cryptui.rc:385
 msgid "N&o, do not export the private key"
-msgstr ""
+msgstr "N&e, ne izvozi zasebnega ključa"
 
 #: cryptui.rc:396
-#, fuzzy
 msgid "&Confirm password:"
-msgstr "Napačno geslo\n"
+msgstr "&Potrdi geslo:"
 
 #: cryptui.rc:404
-#, fuzzy
 msgid "Select the format you want to use:"
-msgstr "Navedite datoteko za uvoz."
+msgstr "Izberite obliko, ki jo želite uporabiti:"
 
 #: cryptui.rc:405
-#, fuzzy
 msgid "&DER-encoded X.509 (.cer)"
-msgstr "V DER kodiran binarni X.509 (*.cer)"
+msgstr "V &DER kodiran X.509 (.cer)"
 
 #: cryptui.rc:407
-#, fuzzy
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr "V 64-tiškemu sistemu kodiran X.509 (*.cer) "
+msgstr "V 64-&tiškemu sistemu kodiran X.509 (*.cer) "
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
-msgstr ""
+msgstr "Sporočilo &CMS/PKCS št.7 (.p7b)"
 
 #: cryptui.rc:411
-#, fuzzy
 msgid "&Include all certificates in the certification path if possible"
-msgstr "Vključi vsa potrdila na poti potrdila"
+msgstr "&Vključi vsa potrdila na poti potrdila, če je to mogoče"
 
 #: cryptui.rc:413
-#, fuzzy
 msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
-msgstr "Izmenjava osebnih podatkov (*.pfx)"
+msgstr "&Izmenjava osebnih podatkov Exchange/PKCS št.12 (.pfx)"
 
 #: cryptui.rc:415
-#, fuzzy
 msgid "Incl&ude all certificates in the certification path if possible"
-msgstr "Vključi vsa potrdila na poti potrdila"
+msgstr "Vkl&juči vsa potrdila na poti potrdila, če je mogoče"
 
 #: cryptui.rc:417
 msgid "&Enable strong encryption"
-msgstr ""
+msgstr "&Omogoči močno šifriranje"
 
 #: cryptui.rc:419
 msgid "Delete the private &key if the export is successful"
-msgstr ""
+msgstr "Izbriši zasebni &ključ, če je bil izvoz uspešen"
 
 #: cryptui.rc:436
-#, fuzzy
 msgid "Completing the Certificate Export Wizard"
-msgstr "Čarovnik za izvoz potrdila"
+msgstr "Dokončevanje čarovnika za izvoz potrdila"
 
 #: cryptui.rc:438
 msgid "You have successfully completed the Certificate Export Wizard."
-msgstr ""
+msgstr "Uspešno ste dokončali čarovnik za izvoz potrdil."
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -2433,7 +2400,7 @@ msgstr ""
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
 msgstr ""
-"To potrdila ni mogoče preveriti z zaupanja vrednim korenskim potrdilom."
+"Tega potrdila ni mogoče preveriti z zaupanja vrednim korenskim potrdilom."
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
@@ -2538,9 +2505,8 @@ msgid "Public key"
 msgstr "Javni ključ"
 
 #: cryptui.rc:58
-#, fuzzy
 msgid "%1 (%2!d! bits)"
-msgstr "%s (%d bitov)"
+msgstr "%1 (%2!d! bitov)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -2716,7 +2682,7 @@ msgid ""
 "sign messages with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"S tem potrdilom ne boste mogli več dešifrirati ali podpisati sporočil.\n"
+"S tem potrdilom ne boste mogli več odšifrirati ali podpisati sporočil.\n"
 "Ali ste prepričani, da želite odstraniti to potrdilo?"
 
 #: cryptui.rc:108
@@ -2725,7 +2691,7 @@ msgid ""
 "sign messages with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"S temi potrdili ne boste mogli več dešifrirati ali podpisati sporočil.\n"
+"S temi potrdili ne boste mogli več odšifrirati ali podpisati sporočil.\n"
 "Ali ste prepričani, da želite odstraniti ta potrdila?"
 
 #: cryptui.rc:109
@@ -2795,7 +2761,7 @@ msgid ""
 "Software signed by this publisher will no longer be trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Programi, ki jih je podpisal ta založnik ne bodo več zaupanja vredni.\n"
+"Programi, ki jih je podpisal ta založnik, ne bodo več zaupanja vredni.\n"
 "Ali ste prepričani, da želite odstraniti to potrdilo?"
 
 #: cryptui.rc:116
@@ -2803,7 +2769,7 @@ msgid ""
 "Software signed by these publishers will no longer be trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Programi, ki so jih podpisali ti založniki ne bodo več zaupanja vredni.\n"
+"Programi, ki so jih podpisali ti založniki, ne bodo več zaupanja vredni.\n"
 "Ali ste prepričani, da želite odstraniti ta potrdila?"
 
 #: cryptui.rc:117
@@ -2856,7 +2822,7 @@ msgstr "Arhiv zasebnega ključa"
 
 #: cryptui.rc:148
 msgid "Export Format"
-msgstr "Oblika izvoza"
+msgstr "Vrsta za izvoz"
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
@@ -2955,138 +2921,127 @@ msgstr "DirectSound: %s"
 
 #: devenum.rc:34
 msgid "Default WaveOut Device"
-msgstr "Privzeta naprava WaveIzh"
+msgstr "Privzeta naprava WaveOut"
 
 #: devenum.rc:35
 msgid "Default MidiOut Device"
-msgstr "Privzeta naprava MidiIzh"
+msgstr "Privzeta naprava MidiOut"
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "&Nastavitve ..."
+msgstr "Nastavi naprave"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Ponastavi"
 
 #: dinput.rc:48
-#, fuzzy
 msgid "Player"
-msgstr "Predvajaj"
+msgstr "Igralec"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "De&vice:"
+msgstr "Naprava"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "Omogočenje"
+msgstr "Dejanja"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "Preslikava pogona"
+msgstr "Preslikava"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Že dodeljeno\n"
+msgstr "Pokaži najprej dodeljeno"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Omogočenje"
+msgstr "Dejanje"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "&Predmet"
+msgstr "Predmet"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Privzete nastavitve"
+msgstr "Področne nastavitve"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr ""
+msgstr "%1!u!MB uporabljeno, %2!u!MB na voljo"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "zahodnoevropsko"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "srednjeevropsko"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "cirilica"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Zelena"
+msgstr "grško"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "turško"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "hebrejsko"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "arabsko"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "baltsko"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "vietnamsko"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "tajsko"
 
 #: gdi32.rc:35
-#, fuzzy
 msgid "Japanese"
-msgstr "pladenj"
+msgstr "japonsko"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "Poenostavljeno kitajsko (GB2312)"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "hangulsko"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "CHINESE_BIG5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Hangulska(Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Simbol"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
-msgstr "Datoteke na kameri"
+msgstr "Datoteke na fotoaparatu"
 
 #: gphoto2.rc:31
 msgid "Import Selected"
@@ -3102,27 +3057,27 @@ msgstr "Uvozi vse"
 
 #: gphoto2.rc:34
 msgid "Skip This Dialog"
-msgstr "Preskoči ta dialog"
+msgstr "Preskoči to pogovorno okno"
 
 #: gphoto2.rc:35
 msgid "Exit"
-msgstr "Izhod"
+msgstr "Končaj"
 
 #: gphoto2.rc:40
 msgid "Transferring"
-msgstr "Prenos"
+msgstr "Prenašanje"
 
 #: gphoto2.rc:43
 msgid "Transferring... Please Wait"
-msgstr "Prenašam ... Prosim, počakajte"
+msgstr "Prenašanje ... Prosim, počakajte"
 
 #: gphoto2.rc:48
 msgid "Connecting to camera"
-msgstr "Povezovanje"
+msgstr "Povezovanje s fotoaparatom"
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
-msgstr "Povezujem se s kamero ... Prosim, počakajte"
+msgstr "Povezovanje s fotoaparatom ... Prosim, počakajte"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -3137,7 +3092,6 @@ msgid "&Forward"
 msgstr "&Posreduj"
 
 #: hhctrl.rc:59
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
 msgstr "&Domov"
@@ -3199,7 +3153,6 @@ msgid "Back"
 msgstr "Nazaj"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
 msgstr "Domov"
@@ -3251,9 +3204,8 @@ msgid "Pr&int..."
 msgstr "Nat&isi ..."
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "&Predogled tiskanja ..."
+msgstr "Pr&edogled tiskanja"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -3276,24 +3228,22 @@ msgid "&Add to Favorites..."
 msgstr "&Dodaj med priljubljene ..."
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "&O programu Internet Explorer ..."
+msgstr "&O Internet Explorerju"
 
 #: ieframe.rc:87
 msgid "Open URL"
-msgstr ""
+msgstr "Odpri URL"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr "Vnesite interneti naslov dokumenta, ki ga bo Internet Explorer odpru."
+msgstr "Vnesite internetni naslov dokumenta, ki ga bo Internet Explorer odprl."
 
 #: ieframe.rc:91
 msgid "Open:"
 msgstr "Odpri:"
 
 #: ieframe.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
 msgstr "Domov"
@@ -3307,76 +3257,68 @@ msgid "Address"
 msgstr "Naslov"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "Lastnosti %s"
+msgstr "Iskanje %s"
 
 #: ieframe.rc:79
-#, fuzzy
 msgid "Start downloading %s"
-msgstr "Prejemanje iz %s ..."
+msgstr "Začni s prejemanjem %s"
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "Prejemanje ..."
+msgstr "Prejemanje %s"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "Lastnosti %s"
+msgstr "Spraševanje za %s"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr "Ena stran"
+msgstr "Domača stran"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr ""
+msgstr "Izberete lahko naslov, ki bo bil uporabljen kot vaša domača stran."
 
 #: inetcpl.rc:50
-#, fuzzy
 msgid "&Current page"
-msgstr "Naslednja stran"
+msgstr "&Trenutna stran"
 
 #: inetcpl.rc:51
-#, fuzzy
 msgid "&Default page"
-msgstr "Privzeti prehod"
+msgstr "&Privzeta stran"
 
 #: inetcpl.rc:52
-#, fuzzy
 msgid "&Blank page"
-msgstr "Ena stran"
+msgstr "&Prazna stran"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr "Zgodovina ukazov"
+msgstr "Zgodovina brskanja"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr ""
+msgstr "Izbrišete lahko predpomnjene strani, piškotke in druge podatke."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr ""
+msgstr "Izbriši &datoteke ..."
 
 #: inetcpl.rc:57
-#, fuzzy
 msgid "&Settings..."
-msgstr "M&ožnosti ..."
+msgstr "&Nastavitve ..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr ""
+msgstr "Počisti zgodovino brskanja"
 
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
+"Začasne internetne datoteke\n"
+"Predpomnjene kopije spletnih strani, slik in potrdil."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3384,24 +3326,33 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"Piškotki\n"
+"Datoteke, ki jih na vašem računalniku shranijo spletišča in vsebujejo stvari "
+"kot so možnosti uporabniškega računa in podatke o prijavi."
 
 #: inetcpl.rc:72
 msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"Zgodovina\n"
+"Seznam spletišč do katerih ste dostopali."
 
 #: inetcpl.rc:74
 msgid ""
 "Form data\n"
 "Usernames and other information you have entered into forms."
 msgstr ""
+"Podatki obrazcev\n"
+"Uporabniška imena in drugi podatki, ki ste jih vnesli v obrazce."
 
 #: inetcpl.rc:76
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
+"Gesla\n"
+"Shranjena gesla, ki ste jih vnesli v obrazce."
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -3416,16 +3367,16 @@ msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
 msgstr ""
+"Potrdila se uporabljajo za vašo osebno določitev in za določitev overiteljev "
+"in izdajateljev potrdil."
 
 #: inetcpl.rc:111
-#, fuzzy
 msgid "Certificates..."
-msgstr "Potrdila"
+msgstr "Potrdila ..."
 
 #: inetcpl.rc:112
-#, fuzzy
 msgid "Publishers..."
-msgstr "Založnik"
+msgstr "Založniki ..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -3436,36 +3387,32 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr "Nastavite internetni brskalnik Wine in povezane nastavitve"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr "&Shrani nastavitve ob končanju"
+msgstr "Varnostne nastavitve za področje:"
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "Prilagodi"
+msgstr "Po meri"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Zelo nizka"
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "&Nizka"
+msgstr "Nizka"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Srednja"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Povečano"
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "&Visoka"
+msgstr "Visoka"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3480,9 +3427,8 @@ msgid "Subscript out of range"
 msgstr "Podskript je izven obsega"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "Pričakovan je bil predmet"
+msgstr "Zahtevan je predmet"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -3522,11 +3468,11 @@ msgstr "Nedoločena konstanta niza"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "Ni mogoče imeti 'premora' izven zanke"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "Izven zanke ni mogoče imeti 'continue'"
 
 #: jscript.rc:40
 msgid "Label redefined"
@@ -3539,7 +3485,7 @@ msgstr "Datoteke ni mogoče najti"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
-msgstr "Pogojno kodo prevajanje je izklopljeno"
+msgstr "Pogojno kodno prevajanje je izklopljeno"
 
 #: jscript.rc:45
 msgid "Number expected"
@@ -3570,9 +3516,8 @@ msgid "Boolean object expected"
 msgstr "Pričakovan je bil Boolov predmet"
 
 #: jscript.rc:50
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Ni mogoče dokončati\n"
+msgstr "Ni mogoče izbrisati '|'"
 
 #: jscript.rc:51
 msgid "VBArray object expected"
@@ -3591,9 +3536,8 @@ msgid "URI to be encoded contains invalid characters"
 msgstr "URI za kodiranje vsebuje neveljavne znake"
 
 #: jscript.rc:54
-#, fuzzy
 msgid "URI to be decoded is incorrect"
-msgstr "URI za kodiranje vsebuje neveljavne znake"
+msgstr "URI za odkodiranje je nepravilen"
 
 #: jscript.rc:56
 msgid "Array length must be a finite positive integer"
@@ -3709,7 +3653,7 @@ msgstr "Napaka iskanja\n"
 
 #: winerror.mc:156
 msgid "Not DOS disk\n"
-msgstr "Ni diska DOS\n"
+msgstr "Ni disk DOS\n"
 
 #: winerror.mc:161
 msgid "Sector not found\n"
@@ -3889,7 +3833,7 @@ msgstr "Preveč semaforjev\n"
 
 #: winerror.mc:381
 msgid "Exclusive semaphore already owned\n"
-msgstr "Izključen semafor je ža\n"
+msgstr "Izključen semafor že ima lastnika\n"
 
 #: winerror.mc:386
 msgid "Semaphore is set\n"
@@ -3945,7 +3889,7 @@ msgstr "Neveljaven IOCTL\n"
 
 #: winerror.mc:456
 msgid "Invalid verify switch\n"
-msgstr "Neveljavno stikalo potrjevanka\n"
+msgstr "Neveljavno stikalo potrjevalnika\n"
 
 #: winerror.mc:461
 msgid "Bad driver level\n"
@@ -4120,7 +4064,6 @@ msgid "Signal pending\n"
 msgstr "Signal je na čakanju\n"
 
 #: winerror.mc:681
-#, fuzzy
 msgid "Max system-wide thread count reached\n"
 msgstr "Doseženo je bilo največje število sistemskih niti\n"
 
@@ -4158,7 +4101,7 @@ msgstr "Neveljavna številka zastavice\n"
 
 #: winerror.mc:726
 msgid "Semaphore name not found\n"
-msgstr "Imena semafor ni mogoče najti\n"
+msgstr "Imena semaforja ni mogoče najti\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1\n"
@@ -4186,7 +4129,7 @@ msgstr "Slaba oblika EXE za %1\n"
 
 #: winerror.mc:761
 msgid "Iterated data exceeds 64k in %1\n"
-msgstr "Iterirani podatko v %1 presegajo 64k\n"
+msgstr "Iterirani podatki v %1 presegajo 64k\n"
 
 #: winerror.mc:766
 msgid "Invalid MinAllocSize in %1\n"
@@ -4214,7 +4157,7 @@ msgstr "Odsek obroč 2 mora biti premakljiv\n"
 
 #: winerror.mc:796
 msgid "Relocation chain exceeds segment limit in %1\n"
-msgstr "Veriga prestavljanja v %1 presega omejitev segmenta\n"
+msgstr "Veriga prestavljanja v %1 presega omejitev odseka\n"
 
 #: winerror.mc:801
 msgid "Infinite loop in relocation chain in %1\n"
@@ -4238,7 +4181,7 @@ msgstr "Sklad obroč 2 je v uporabi\n"
 
 #: winerror.mc:826
 msgid "Error in use of filename wildcards\n"
-msgstr "Napaka pri uporabi nadomestnih znakov imena datoteke\n"
+msgstr "Napaka med uporabo nadomestnih znakov imena datoteke\n"
 
 #: winerror.mc:831
 msgid "Invalid signal number\n"
@@ -4374,7 +4317,7 @@ msgstr "Dostop do razširjenega atributa je bil zavrnjen\n"
 
 #: winerror.mc:996
 msgid "I/O operation aborted\n"
-msgstr "Oprevilo V/I je bilo preklicano\n"
+msgstr "Opravilo V/I je bilo preklicano\n"
 
 #: winerror.mc:1001
 msgid "Overlapped I/O incomplete\n"
@@ -4502,7 +4445,7 @@ msgstr "Podatkovna zbirka storitve je zaklenjena\n"
 
 #: winerror.mc:1156
 msgid "Service already running\n"
-msgstr "Storitev že teče\n"
+msgstr "Storitev se že izvaja\n"
 
 #: winerror.mc:1161
 msgid "Invalid service account\n"
@@ -4546,7 +4489,7 @@ msgstr "S storitvijo določena napaka\n"
 
 #: winerror.mc:1211
 msgid "Process aborted\n"
-msgstr "Opravilo je bilo priklicano\n"
+msgstr "Opravilo je bilo preklicano\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed\n"
@@ -4574,7 +4517,7 @@ msgstr "Storitev obstaja\n"
 
 #: winerror.mc:1246
 msgid "System running last-known-good config\n"
-msgstr "Sistem poganja zadnjo znano dobro nastavitev\n"
+msgstr "Sistem uporablja zadnjo znano dobro nastavitev\n"
 
 #: winerror.mc:1251
 msgid "Service dependency deleted\n"
@@ -4642,7 +4585,7 @@ msgstr "Neveljavna dolžina bloka\n"
 
 #: winerror.mc:1331
 msgid "Device not partitioned\n"
-msgstr "Naprava ni razdeljena\n"
+msgstr "Naprava ni razdeljena na razdelke\n"
 
 #: winerror.mc:1336
 msgid "Unable to lock media\n"
@@ -4758,7 +4701,7 @@ msgstr "Preveč povezav\n"
 
 #: winerror.mc:1476
 msgid "Newer windows version needed\n"
-msgstr "Zahtevana je novejša različica windows\n"
+msgstr "Zahtevana je novejša različica sistema windows\n"
 
 #: winerror.mc:1481
 msgid "Wrong operating system\n"
@@ -4846,7 +4789,7 @@ msgstr "Točke ni mogoče najti\n"
 
 #: winerror.mc:1586
 msgid "No running tracking service\n"
-msgstr "Storitev sledenja ne teče\n"
+msgstr "Storitev sledenja se ne izvaja\n"
 
 #: winerror.mc:1591
 msgid "No such volume ID\n"
@@ -4894,7 +4837,7 @@ msgstr "Naprava je že bila zapomnjena\n"
 
 #: winerror.mc:1646
 msgid "No network or bad path\n"
-msgstr "Ni omrežja ali slabe poti\n"
+msgstr "Ni omrežja ali pa je pot slaba\n"
 
 #: winerror.mc:1651
 msgid "Invalid network provider name\n"
@@ -4994,7 +4937,7 @@ msgstr "Naslov ni povezan s končno točko prenosa\n"
 
 #: winerror.mc:1776
 msgid "Connection invalid\n"
-msgstr "Neveljavna povezava\n"
+msgstr "Povezava ni veljavna\n"
 
 #: winerror.mc:1781
 msgid "Connection is active\n"
@@ -5122,7 +5065,7 @@ msgstr "Neznana predelava\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels\n"
-msgstr "Nezdružljivi ravni predelav\n"
+msgstr "Nezdružljive ravni predelav\n"
 
 #: winerror.mc:1941
 msgid "Invalid owner\n"
@@ -5130,7 +5073,7 @@ msgstr "Neveljaven lastnik\n"
 
 #: winerror.mc:1946
 msgid "Invalid primary group\n"
-msgstr "Neveljavna osnovan skupina\n"
+msgstr "Neveljavna osnovna skupina\n"
 
 #: winerror.mc:1951
 msgid "No impersonation token\n"
@@ -5390,7 +5333,7 @@ msgstr "Uporabnik je vgrajen\n"
 
 #: winerror.mc:2271
 msgid "Group is primary for user\n"
-msgstr "Skupna je osnovna za uporabnika\n"
+msgstr "Skupina je osnovna za uporabnika\n"
 
 #: winerror.mc:2276
 msgid "Token already in use\n"
@@ -5549,9 +5492,8 @@ msgid "Private dialog index\n"
 msgstr "Kazalo zasebnega pogovornega okna\n"
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found\n"
-msgstr "ID seznamskega polja ni mogoče najti\n"
+msgstr "ID polja seznama ni mogoče najti\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters\n"
@@ -5563,7 +5505,7 @@ msgstr "Odložišče ni odprto\n"
 
 #: winerror.mc:2491
 msgid "Hotkey not registered\n"
-msgstr "Vroča tipka ni vpisana\n"
+msgstr "Bližnjica ni vpisana\n"
 
 #: winerror.mc:2496
 msgid "Not a dialog window\n"
@@ -5614,16 +5556,14 @@ msgid "Hook procedure not installed\n"
 msgstr "Postopek kljuke ni nameščen\n"
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message\n"
-msgstr "Neveljavno sporočilo seznama polj\n"
+msgstr "Neveljaven seznam polja sporočil\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "Poslan je bil neveljaven LB_SETCOUNT\n"
 
 #: winerror.mc:2566
-#, fuzzy
 msgid "No tab stops on this list box\n"
 msgstr "Ni tabulatorskih mest na seznamskem polju\n"
 
@@ -5640,9 +5580,8 @@ msgid "Window has no system menu\n"
 msgstr "Okno nima sistemskega menija\n"
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style\n"
-msgstr "Neveljaven slog polja sporočil\n"
+msgstr "Neveljaven slog polja s sporočilom\n"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter\n"
@@ -5693,7 +5632,6 @@ msgid "No system resources\n"
 msgstr "Ni sistemskih virov\n"
 
 #: winerror.mc:2651
-#, fuzzy
 msgid "No non-paged system resources\n"
 msgstr "Ni neostranejnih sistemskih virov\n"
 
@@ -5706,9 +5644,8 @@ msgid "No working set quota\n"
 msgstr "Ni delujoče nastavljene kvote\n"
 
 #: winerror.mc:2666
-#, fuzzy
 msgid "No page file quota\n"
-msgstr "Ni kvote odstranjene datoteke\n"
+msgstr "Ni kvote izmenjevalne datoteke\n"
 
 #: winerror.mc:2671
 msgid "Exceeded commitment limit\n"
@@ -5720,7 +5657,7 @@ msgstr "Predmeta menija ni mogoče najti\n"
 
 #: winerror.mc:2681
 msgid "Invalid keyboard handle\n"
-msgstr "Neveljavna ročnik tipkovnice\n"
+msgstr "Neveljaven ročnik tipkovnice\n"
 
 #: winerror.mc:2686
 msgid "Hook type not allowed\n"
@@ -5783,7 +5720,6 @@ msgid "Unknown component\n"
 msgstr "Neznan sestavni del\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property\n"
 msgstr "Neznana lastnost\n"
 
@@ -5821,11 +5757,11 @@ msgstr "Neveljavno polje\n"
 
 #: winerror.mc:2806
 msgid "Device removed\n"
-msgstr "Naprava odstranjena\n"
+msgstr "Naprava je bila odstranjena\n"
 
 #: winerror.mc:2811
 msgid "Installation already running\n"
-msgstr "Namestitev že teče\n"
+msgstr "Namestitev se že izvaja\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
@@ -5917,7 +5853,7 @@ msgstr "Oddaljena namestitev ni dovoljena\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install\n"
-msgstr "Po uspešni namestitvi je bil začet ponoven zagon\n"
+msgstr "Po uspešni namestitvi se je začel ponoven zagon\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding\n"
@@ -6045,7 +5981,7 @@ msgstr "Neveljavna oznaka\n"
 
 #: winerror.mc:3091
 msgid "Invalid array bounds\n"
-msgstr "Neveljavne obrobe polje\n"
+msgstr "Neveljavne obrobe polja\n"
 
 #: winerror.mc:3096
 msgid "No entry name\n"
@@ -6137,7 +6073,7 @@ msgstr "Ni več članov\n"
 
 #: winerror.mc:3206
 msgid "Not all objects unexported\n"
-msgstr "Vsi predmetni niso bili neizvoženi\n"
+msgstr "Noben predmet ni bil izvožen\n"
 
 #: winerror.mc:3211
 msgid "Interface not found\n"
@@ -6185,7 +6121,7 @@ msgstr "Deljenje plavajoče točke z ničlo\n"
 
 #: winerror.mc:3266
 msgid "Floating-point underflow\n"
-msgstr "Prekoračitev plavajoče vejice\n"
+msgstr "Podkoračitev plavajoče vejice\n"
 
 #: winerror.mc:3271
 msgid "Floating-point overflow\n"
@@ -6241,7 +6177,7 @@ msgstr "Neveljaven uporabniški medpomnilnik\n"
 
 #: winerror.mc:3336
 msgid "Unrecognised media\n"
-msgstr "Neprepoznana večpredstavnost\n"
+msgstr "Neprepoznana predstavnost\n"
 
 #: winerror.mc:3341
 msgid "No trust secret\n"
@@ -6249,7 +6185,7 @@ msgstr "Ni skrivnosti zaupanja\n"
 
 #: winerror.mc:3346
 msgid "No trust SAM account\n"
-msgstr "Ni zaupanja računa SAM\n"
+msgstr "Ni računa zaupanja SAM\n"
 
 #: winerror.mc:3351
 msgid "Trusted domain failure\n"
@@ -6316,7 +6252,6 @@ msgid "Invalid printer command\n"
 msgstr "Neveljaven ukaz tiskalnika\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type\n"
 msgstr "Neveljavna vrsta podatkov\n"
 
@@ -6334,7 +6269,7 @@ msgstr "Ni se mogoče prijaviti z računom meddomenskega zaupanja\n"
 
 #: winerror.mc:3451
 msgid "Can't logon with workstation trust account\n"
-msgstr "Ni se mogoče prijaviti z računom zaupanja delovne postaja\n"
+msgstr "Ni se mogoče prijaviti z računom zaupanja delovne postaje\n"
 
 #: winerror.mc:3456
 msgid "Can't logon with server trust account\n"
@@ -6434,7 +6369,7 @@ msgstr "Napačna različica cevi\n"
 
 #: winerror.mc:3576
 msgid "Group member not found\n"
-msgstr "Člane skupine ni mogoče najti\n"
+msgstr "Člana skupine ni mogoče najti\n"
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB\n"
@@ -6574,7 +6509,7 @@ msgstr "Krajevni zaslon"
 
 #: localui.rc:36
 msgid "Add a Local Port"
-msgstr "Dodaj lokalna vrata"
+msgstr "Dodaj krajevna vrata"
 
 #: localui.rc:39
 msgid "&Enter the port name to add:"
@@ -6582,11 +6517,11 @@ msgstr "&Ime vrat:"
 
 #: localui.rc:48
 msgid "Configure LPT Port"
-msgstr "Nastavitev LPT vrat"
+msgstr "Nastavitev vrat LPT"
 
 #: localui.rc:51
 msgid "Timeout (seconds)"
-msgstr "Časovna omejitev (seconds)"
+msgstr "Časovna omejitev (sekudne)"
 
 #: localui.rc:52
 msgid "&Transmission Retry:"
@@ -6602,7 +6537,7 @@ msgstr "Vrata %s že obstajajo"
 
 #: localui.rc:31
 msgid "This port has no options to configure"
-msgstr "Ta vrata nimajo možnosti nastavitve"
+msgstr "Ta vrata nimajo možnosti za nastavitvev"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
@@ -6623,7 +6558,7 @@ msgstr "Vnesite uporabniško ime in geslo:"
 
 #: mpr.rc:36 wininet.rc:38
 msgid "Proxy"
-msgstr "Proksi"
+msgstr "Posredniški strežnik"
 
 #: mpr.rc:38 wininet.rc:40 wininet.rc:60
 msgid "User"
@@ -6651,11 +6586,11 @@ msgstr "&Shrani kot ..."
 
 #: msacm32.rc:39
 msgid "&Format:"
-msgstr "&Format:"
+msgstr "&Oblika:"
 
 #: msacm32.rc:44
 msgid "&Attributes:"
-msgstr "&Lastnosti:"
+msgstr "&Atributi:"
 
 #: mshtml.rc:37
 msgid "Hyperlink"
@@ -6706,7 +6641,6 @@ msgid "insert disk %s"
 msgstr "vstavite disk %s"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -6743,15 +6677,15 @@ msgstr ""
 "Uporaba:\n"
 "msiexec ukaz {zahtevan parameter} [izbirni parameter]\n"
 "\n"
-"Namesti product:\n"
-"\t/i {paket|koda_produkta} [lastnost]\n"
-"\t/paket {paket|koda_produkta} [lastnost]\n"
+"Namesti izdelek:\n"
+"\t/i {paket|koda_izdelka} [lastnost]\n"
+"\t/paket {paket|koda_izdelka} [lastnost]\n"
 "\t/a paket [lastnost]\n"
 "Popravi namestitev:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {paket|koda_produkta}\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {paket|koda_izdelka}\n"
 "Odstrani produkt:\n"
-"\t/odstrani {paket|koda_produkta} [lastnost]\n"
-"\t/x {paket|koda_produkta} [lastnost]\n"
+"\t/odstrani {paket|koda_izdelka} [lastnost]\n"
+"\t/x {paket|koda_izdelka} [lastnost]\n"
 "Oglašuj produkt:\n"
 "\t/j[u|m] paket [/t preoblikovanje] [/g id_jezika]\n"
 "Uveljavi popravek:\n"
@@ -6762,7 +6696,7 @@ msgstr ""
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
 "Vpis storitve MSI:\n"
 "\t/y\n"
-"Odsranitev vpisa storitve MSI:\n"
+"Odstranitev vpisa storitve MSI:\n"
 "\t/z\n"
 "Prikaži to pomoč:\n"
 "\t/help\n"
@@ -6810,7 +6744,7 @@ msgstr "&Kodek za stiskanje:"
 
 #: msvfw32.rc:39
 msgid "Con&figure..."
-msgstr "&Nastavitve ..."
+msgstr "&Nastavi ..."
 
 #: msvfw32.rc:40
 msgid "&About"
@@ -6829,9 +6763,8 @@ msgid "&Data Rate"
 msgstr "&Pretok podatkov"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "kb/s"
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -6999,7 +6932,7 @@ msgstr "stran lastnosti"
 
 #: oleacc.rc:66
 msgid "indicator"
-msgstr "indikator"
+msgstr "kazalnik"
 
 #: oleacc.rc:67
 msgid "graphic"
@@ -7031,7 +6964,7 @@ msgstr "izbirno polje"
 
 #: oleacc.rc:74
 msgid "drop down"
-msgstr "spustni"
+msgstr "spustni seznam"
 
 #: oleacc.rc:75
 msgid "progress bar"
@@ -7119,7 +7052,7 @@ msgstr "Izključeno"
 
 #: oledlg.rc:48
 msgid "Insert Object"
-msgstr "Vstavljanje predmeta"
+msgstr "Vstavi predmet"
 
 #: oledlg.rc:54
 msgid "Object Type:"
@@ -7135,7 +7068,7 @@ msgstr "Ustvari nov"
 
 #: oledlg.rc:60
 msgid "Create Control"
-msgstr "Ustvari kontrolo"
+msgstr "Ustvari nadzornik"
 
 #: oledlg.rc:62
 msgid "Create From File"
@@ -7143,7 +7076,7 @@ msgstr "Ustvari iz datoteke"
 
 #: oledlg.rc:65
 msgid "&Add Control..."
-msgstr "&Dodaj kontrolo ..."
+msgstr "&Dodaj nadzornik ..."
 
 #: oledlg.rc:66
 msgid "Display As Icon"
@@ -7278,11 +7211,11 @@ msgstr "program, ki jo je ustvaril"
 
 #: sane.rc:41
 msgid "Scanning"
-msgstr "Skeniranje"
+msgstr "Optično branje"
 
 #: sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr "Skeniram ... Prosim, počakajte"
+msgstr "Optično branje ... Prosim, počakajte"
 
 #: sane.rc:31
 msgctxt "unit: pixels"
@@ -7310,9 +7243,8 @@ msgid "us"
 msgstr "µs"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "Lastnosti %s"
+msgstr "Nastavitve %s"
 
 #: serialui.rc:28
 msgid "Baud Rate"
@@ -7320,7 +7252,7 @@ msgstr "Hitrost prenosa"
 
 #: serialui.rc:30
 msgid "Parity"
-msgstr "Pariteta"
+msgstr "Parnost"
 
 #: serialui.rc:32
 msgid "Flow Control"
@@ -7344,24 +7276,23 @@ msgstr "Cilj:"
 
 #: setupapi.rc:49
 msgid "Files Needed"
-msgstr ""
+msgstr "Zahtevane datoteke"
 
 #: setupapi.rc:52
 msgid ""
 "Insert the manufacturer's installation disk, and then\n"
 "make sure the correct drive is selected below"
 msgstr ""
-"Vstavi proizvajalčev CD in spodaj preveri, če je\n"
-"izbran pravilen pogon"
+"Vstavite proizvajalčev CD in preverite, če je\n"
+"spodaj izbran pravilen pogon"
 
 #: setupapi.rc:54
 msgid "Copy manufacturer's files from:"
 msgstr "Kopiraj proizvajalčeve datoteke iz:"
 
 #: setupapi.rc:28
-#, fuzzy
 msgid "The file '%1' on %2 is needed"
-msgstr "Zahtevana je datoteka '%s' na %s"
+msgstr "Datoteka '%1' na %2 je zahtevana"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -7734,14 +7665,13 @@ msgid "Properties"
 msgstr "Lastnosti"
 
 #: shell32.rc:82
-#, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
-msgstr "O&bnovi"
+msgstr "&Obnovi"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "&Izbriši"
 
 #: shell32.rc:95
 msgid "E&xplore"
@@ -7765,9 +7695,8 @@ msgid "E&xit"
 msgstr "&Končaj"
 
 #: shell32.rc:127
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "&O Nadzorni plošči ..."
+msgstr "&O nadzorni plošči"
 
 #: shell32.rc:283 shell32.rc:298
 msgid "Browse for Folder"
@@ -7807,7 +7736,7 @@ msgstr "&Licenčna pog."
 
 #: shell32.rc:338
 msgid "Running on %s"
-msgstr "Različica Wine: %s"
+msgstr "Izvajanje na %s"
 
 #: shell32.rc:339
 msgid "Wine was brought to you by:"
@@ -7828,7 +7757,7 @@ msgstr "&Odpri:"
 #: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
 msgid "&Browse..."
-msgstr "&Brskaj"
+msgstr "&Brskaj ..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
@@ -7871,7 +7800,6 @@ msgid "Date deleted"
 msgstr "Datum je bil izbrisan"
 
 #: shell32.rc:153 winecfg.rc:92 winefile.rc:103
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Namizje"
@@ -7894,7 +7822,7 @@ msgstr "Ponoven zagon"
 
 #: shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
-msgstr "Ali želite simulirati ponoven zagon Windows?"
+msgstr "Ali želite simulirati ponoven zagon sistema Windows?"
 
 #: shell32.rc:188
 msgid "Shutdown"
@@ -7902,7 +7830,7 @@ msgstr "Izklop"
 
 #: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
-msgstr "Ali želite končati svojo Wine sejo?"
+msgstr "Ali želite končati svojo sejo Wine?"
 
 #: shell32.rc:199
 msgid "Start Menu\\Programs"
@@ -7941,7 +7869,6 @@ msgid "My Videos"
 msgstr "Moji videi"
 
 #: shell32.rc:208
-#, fuzzy
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Namizje"
@@ -8172,7 +8099,7 @@ msgid ""
 msgstr ""
 "Mapa že vsebuje mapo z imenom '%1'.\n"
 "\n"
-"Datoteke v ciljni mapi, ki imajo enaka imena kot datoteke v izvorni mapi\n"
+"Datoteke v ciljni mapi, ki imajo enaka imena kot datoteke v izvorni mapi,\n"
 "bodo prepisane. Ali še vedno želite premakniti oziroma kopirati mapo?"
 
 #: shell32.rc:248
@@ -8181,7 +8108,7 @@ msgstr "Nova mapa"
 
 #: shell32.rc:250
 msgid "Wine Control Panel"
-msgstr "Wine Nadzorna plošča"
+msgstr "Nadzorna plošča Wine"
 
 #: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
@@ -8200,44 +8127,40 @@ msgid "There is no Windows program configured to open this type of file."
 msgstr "Za odpiranje te vrste datotek ni na voljo noben program Windows."
 
 #: shell32.rc:256
-#, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "Ali ste prepričani, da želite izbrisati predmet '%1'?"
+msgstr "Ali ste prepričani, da želite trajno izbrisati '%1'?"
 
 #: shell32.rc:257
-#, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "Ali ste prepričani, da želite izbrisati te predmete (%1)?"
 
 #: shell32.rc:258
-#, fuzzy
 msgid "Confirm deletion"
-msgstr "Potrdite brisanje datoteke"
+msgstr "Potrditev izbrisa"
 
 #: shell32.rc:259
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Datoteka že obstaja.\n"
+"Datoteka na poti %1 že obstaja.\n"
+"\n"
 "Ali jo želite zamenjati?"
 
 #: shell32.rc:260
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Datoteka že obstaja.\n"
+"Datoteka na poti %1 že obstaja.\n"
+"\n"
 "Ali jo želite zamenjati?"
 
 #: shell32.rc:261
-#, fuzzy
 msgid "Confirm overwrite"
-msgstr "Potrdite prepis datoteke"
+msgstr "Potrdi prepis"
 
 #: shell32.rc:278
 msgid ""
@@ -8287,33 +8210,28 @@ msgid "Don't show me th&is message again"
 msgstr "Tega sporočila ne &kaži več"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld bajtov"
+msgstr "%d bajtov"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
 msgstr " ur"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
 msgstr " min"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " sek"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
-#, fuzzy
 msgctxt "window"
 msgid "&Restore"
-msgstr "O&bnovi"
+msgstr "&Obnovi"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"
@@ -8321,7 +8239,7 @@ msgstr "&Premakni"
 
 #: user32.rc:29 user32.rc:42 wineconsole.rc:89
 msgid "&Size"
-msgstr "&Spremeni velikost"
+msgstr "Sp&remeni velikost"
 
 #: user32.rc:30 user32.rc:43
 msgid "Mi&nimize"
@@ -8340,13 +8258,12 @@ msgid "&About Wine"
 msgstr "&O Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl-F4"
-msgstr "&Zapri\tAlt-F4"
+msgstr "&Zapri\tCtrl-F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl-F6"
-msgstr ""
+msgstr "Na&prej\tCtrl-F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -8382,7 +8299,7 @@ msgstr "Veli&kost papirja:"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr ""
+msgstr "Duplex:"
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
@@ -8394,26 +8311,23 @@ msgstr "&Shrani geslo (nezaščiteno)"
 
 #: wininet.rc:54
 msgid "Authentication Required"
-msgstr ""
+msgstr "Zahtevana je overitev"
 
 #: wininet.rc:58
 msgid "Server"
-msgstr ""
+msgstr "Strežnik"
 
 #: wininet.rc:74
-#, fuzzy
 msgid "Security Warning"
-msgstr "Varnost"
+msgstr "Varnostno opozorilo"
 
 #: wininet.rc:77
-#, fuzzy
 msgid "There is a problem with the certificate for this site."
-msgstr "Ime na potrdilu se ne ujema s tem spletiščem."
+msgstr "Prišlo je do težave s potrdilom za to speltišče."
 
 #: wininet.rc:79
-#, fuzzy
 msgid "Do you want to continue anyway?"
-msgstr "Ali želite simulirati ponoven zagon Windows?"
+msgstr "Ali vseeno želite nadaljevati?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -8425,7 +8339,7 @@ msgstr "Potrdilo je izdal neznan ali nezaupanja vreden izdajatelj. "
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
-msgstr "Datum na potrdilu ni veljaven"
+msgstr "Datum na potrdilu ni veljaven."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
@@ -8434,7 +8348,7 @@ msgstr "Ime na potrdilu se ne ujema s tem spletiščem."
 #: wininet.rc:29
 msgid ""
 "There is at least one unspecified security problem with this certificate."
-msgstr "S tem potrdilom obstaja vsaj en nedoločena varnostna težava."
+msgstr "S tem potrdilom obstaja vsaj ena nedoločena varnostna težava."
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -8465,9 +8379,8 @@ msgid "The specified device handle is invalid."
 msgstr "Navedeni ročnik naprave je neveljaven."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "Na vašem sistemu ni nameščen noben gonilnik!\n"
+msgstr "Na vašem sistemu ni nameščen noben gonilnik!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -8498,13 +8411,12 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "Sistemski funkciji je bil posredovan neveljaven parameter."
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
 msgstr ""
 "Navedena oblika zapisa ni podprta ali pa je ni mogoče prevesti. Če želite "
-"ugotoviti, katere oblike so podprte, uporabite možnost 'Zmožnosti'."
+"ugotoviti, katere oblike so podprte, uporabite možnost Zmožnosti."
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
@@ -8589,8 +8501,8 @@ msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
 msgstr ""
-"Z vašo večpredstavnostno napravo so težave. Preverite, ali naprava deluje "
-"pravilno ali pa se posvetujte z izdelovalcem."
+"Z vašo predstavno napravo so težave. Preverite, ali naprava deluje pravilno "
+"ali pa se posvetujte z izdelovalcem."
 
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
@@ -8607,7 +8519,7 @@ msgstr ""
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr ""
-"Pri nalaganju določenega gonilnika naprave je prišlo do napake, ki je ni "
+"Med nalaganju določenega gonilnika naprave je prišlo do napake, ki je ni "
 "mogoče zaznati."
 
 #: winmm.rc:64
@@ -8645,8 +8557,8 @@ msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"Z gonilnikom naprave so težave. Od izdelovalca naprave poskusite dobiti nov "
-"gonilnik."
+"Prišlo je do težav z gonilnikom naprave. Od izdelovalca naprave poskusite "
+"dobiti nov gonilnik."
 
 #: winmm.rc:70
 msgid "The specified command requires a parameter. Please supply one."
@@ -8669,7 +8581,8 @@ msgstr "Gonilnik naprave ni pripravljen."
 
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
-msgstr "Pri začenjanju naprave MCI je prišlo do težav. Znova zaženite Windows."
+msgstr ""
+"Med začenjanjem naprave MCI je prišlo do težav. Znova zaženite Windows."
 
 #: winmm.rc:75
 msgid ""
@@ -8684,7 +8597,6 @@ msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Z navedenim ukazom kot imena naprave ni mogoče uporabiti 'vse'."
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -8781,7 +8693,7 @@ msgstr ""
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
-msgstr "MCI napravi je bil podan nični blok parametrov."
+msgstr "Napravi MCI je bil podan nični blok parametrov."
 
 #: winmm.rc:93
 msgid "Cannot save an unnamed file. Supply a filename."
@@ -8793,7 +8705,7 @@ msgstr "Pri uporabi parametra 'new' morate navesti vzdevek."
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
-msgstr "Zastavice 'notify' ni mogoče uporabiti s samodejno oprtimi napravami."
+msgstr "Zastavice 'notify' ni mogoče uporabiti s samodejno odprtimi napravami."
 
 #: winmm.rc:96
 msgid "Cannot use a filename with the specified device."
@@ -8827,7 +8739,7 @@ msgstr ""
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr ""
-"Za znaki, ki so obdan z narekovaji, ni mogoče zapisati dodatnih znakov."
+"Za znaki, ki so obdani z narekovaji, ni mogoče zapisati dodatnih znakov."
 
 #: winmm.rc:101
 msgid ""
@@ -8879,15 +8791,15 @@ msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
-"Vse naprave, ki lahko predvajajo datoteke vrse wave, so v uporabi. Poskusite "
-"znova, ko bo katera od njih na voljo."
+"Vse naprave, ki lahko predvajajo datoteke vrste wave, so v uporabi. "
+"Poskusite znova, ko bo katera od njih na voljo."
 
 #: winmm.rc:109
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Trenutna wave naprava za predvajanje je v uporabi. Počakajte, da bo prosta, "
+"Trenutna naprava wave za predvajanje je v uporabi. Počakajte, da bo prosta, "
 "in poskusite znova."
 
 #: winmm.rc:110
@@ -8974,7 +8886,7 @@ msgid ""
 "on the system. Use the MIDI Mapper option from the Control Panel to edit the "
 "setup."
 msgstr ""
-"Trenutna nastavitev MIDI se sklicuje na napravo, ki ni nameščena na sistelu. "
+"Trenutna nastavitev MIDI se sklicuje na napravo, ki ni nameščena na sistemu. "
 "Uporabite možnost 'Preslikovalnik MIDI' na Nadzorni plošči in uredite "
 "nastavitev."
 
@@ -8987,8 +8899,8 @@ msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
 msgstr ""
-"Vse večpredstavnostne števce uporabljajo drugi programi. Zaprite enega od "
-"teh programov in poskusite znova."
+"Vse predstavne števce uporabljajo drugi programi. Zaprite enega od teh "
+"programov in poskusite znova."
 
 #: winmm.rc:128
 msgid "The system doesn't have a current MIDI port specified."
@@ -8999,7 +8911,7 @@ msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
 msgstr ""
-"Nameščena ni nobena MIDI naprava. Za namestitev gonilnika MIDI uporabite "
+"Nameščena ni nobena naprava MIDI. Za namestitev gonilnika MIDI uporabite "
 "možnost Gonilniki na Nadzorni plošći."
 
 #: winmm.rc:118
@@ -9088,7 +9000,7 @@ msgstr "Napotitelj"
 
 #: wldap32.rc:38
 msgid "Administration Limit Exceeded"
-msgstr "Omejitev skrbništva je bila preesežena"
+msgstr "Omejitev skrbništva je bila presežena"
 
 #: wldap32.rc:39
 msgid "Unavailable Critical Extension"
@@ -9228,7 +9140,7 @@ msgstr "Napaka kodiranja"
 
 #: wldap32.rc:111
 msgid "Decoding Error"
-msgstr "Napaka dekodiranja"
+msgstr "Napaka odkodiranja"
 
 #: wldap32.rc:112
 msgid "Timeout"
@@ -9260,7 +9172,7 @@ msgstr "Ni se mogoče povezati s strežnikom LDAP"
 
 #: wldap32.rc:119
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr "Ta različica protokola LDAP opravila ne podpria"
+msgstr "Ta različica protokola LDAP opravila ne podpira"
 
 #: wldap32.rc:120
 msgid "Specified control was not found in message"
@@ -9291,9 +9203,8 @@ msgstr ""
 "\n"
 
 #: attrib.rc:28 cmd.rc:302
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s : datoteke ni mogoče najti\n"
+msgstr "%1: datoteke ni mogoče najti\n"
 
 #: attrib.rc:47
 msgid ""
@@ -9316,6 +9227,24 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - prikaže ali spremeni atribute datotek.\n"
+"\n"
+"Skladnja:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [pogon:][pot][imedatoteke]\n"
+"       [/S [/D]]\n"
+"\n"
+"Kje:\n"
+"\n"
+"  +   Nastavi atribut.\n"
+"  -   Počisti atribut.\n"
+"  R   Atribut datoteke le za branje.\n"
+"  A   Atribut datoteke arhiva.\n"
+"  S   Atribut sistemske datoteke.\n"
+"  H   Atribut skrite datoteke.\n"
+"  [pogon:][pot][imedatoteke]\n"
+"      Določi datoteko ali datoteke za atribute za obdelavo.\n"
+"  /S  Obdela ujemajoče se datoteke v trenutni mapi in vseh podmapah.\n"
+"  /D  Obdela tudi mape.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -9346,9 +9275,8 @@ msgid "&Always on Top"
 msgstr "&Vedno na vrhu"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "&O Uri ..."
+msgstr "&O uri"
 
 #: clock.rc:48
 msgid "Clock"
@@ -9443,7 +9371,7 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
-"Ukaz FOR se uporablja za izvrševanja ukaza za vsako datoteko iz podanega "
+"Ukaz FOR se uporablja za izvrševanje ukaza za vsako datoteko iz podanega "
 "niza datotek.\n"
 "\n"
 "Skladnja: FOR %spremenljivka IN (niz) DO ukaz\n"
@@ -9485,7 +9413,6 @@ msgstr ""
 "HELP brez argumentov pokaže vse vgrajene ukaze CMD.\n"
 
 #: cmd.rc:94
-#, fuzzy
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9499,8 +9426,8 @@ msgstr ""
 "IF se uporablja za pogojno izvrševanje ukazov.\n"
 "\n"
 "Skladnja:\tIF [NOT] EXIST ime_datoteke ukaz\n"
-"IF [NOT] niz1==niz2 ukaz\n"
-"IF [NOT] ERRORLEVEL število ukaz\n"
+"        IF [NOT] niz1==niz2 ukaz\n"
+"        IF [NOT] ERRORLEVEL število ukaz\n"
 "\n"
 "V drugem primeru zgoraj morata biti niz1 in niz2 v dvojnih navedkih.\n"
 "Primerjava ni občutljiva na velikost črk.\n"
@@ -9513,7 +9440,7 @@ msgid ""
 "The command will prompt you for the new volume label for the given drive.\n"
 "You can display the disk volume label with the VOL command.\n"
 msgstr ""
-"LABEL se uporablja za nastavljanje oznake diskovnega.\n"
+"LABEL se uporablja za nastavljanje oznake diskovnega nosilca.\n"
 "\n"
 "Skladnja: LABEL [pogon:]\n"
 "Ukaz vas pozove po novi oznaki nosilca za želeni pogon.\n"
@@ -9542,7 +9469,8 @@ msgstr ""
 "Če premikate mapo, bo premaknjena tudi vsa njena vsebina (datoteke in "
 "podmape).\n"
 "\n"
-"MOVE ne more premikati datotek ali. map med mesti na različnih pogonih.\n"
+"MOVE ne more premikati datotek ali map med mesti na pogonih z različnimi "
+"črkami DOS.\n"
 
 #: cmd.rc:122
 msgid ""
@@ -9569,20 +9497,18 @@ msgstr ""
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
-#, fuzzy
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE izpiše na zaslonu sporočilo 'Za nadaljevanje pritisnite Return'\n"
-"in počaka, da uporabnik pritisne tipko Return. Ukaz je uporaben v paketnih\n"
-"datotekah, ko želimo uporabniku omogočiti, da prebere izhodna sporočila\n"
-"predhodnega ukaza, preden izginejo z zaslona.\n"
+"PAUSE izpiše na zaslonu sporočilo, da naj uporabnik pritisnie na tipko.\n"
+"\n"
+"Ukaz je uporaben v paketnih datotekah, ko želimo uporabniku omogočiti,\n"
+"da prebere izhodna sporočila predhodnega ukaza, preden izginejo z zaslona.\n"
 
 #: cmd.rc:149
-#, fuzzy
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9616,10 +9542,10 @@ msgstr ""
 "$l    Znak <              $n    Trenutni pogon      $p    Trenutna pot\n"
 "$q    Enačaj              $t    Trenutni čas        $v    različica cmd\n"
 "\n"
-"Ukaz PROMPT brez niza za nov poziv povzroči ponastavitev ukaznega poziva na "
-"privzetega.Le-ta je sestavljen iz poti trenutne mape (vključno s črko "
-"pogona), ki ji sledi znak\n"
-"> (enakovredno ukazu PROMPT $p$g).\n"
+"Ukaz PROMPT brez niza za nov poziv povzroči ponastavitev ukaznega poziva\n"
+"na privzetega.Le-ta je sestavljen iz poti trenutne mape (vključno s črko "
+"pogona),\n"
+"ki ji sledi znak > (enakovredno ukazu PROMPT $p$g).\n"
 "\n"
 "Ukazni poziv je prav tako mogoče spremeniti z uporabo okoljske spremenljivke "
 "PROMPT;\n"
@@ -9638,9 +9564,8 @@ msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN <ime_datoteke> je kratka različice RENAME. Preimenuje datoteko.\n"
 
 #: cmd.rc:157
-#, fuzzy
 msgid "RENAME <filename> renames a file.\n"
-msgstr "RENAME <datoteka> preimenuje datoteko\n"
+msgstr "RENAME <ime datoteke> preimenuje datoteke.\n"
 
 #: cmd.rc:159
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
@@ -9682,10 +9607,10 @@ msgstr ""
 "sme biti presledka. Ime spremenljivke prav tako ne sme vsebovati "
 "presledkov.\n"
 "\n"
-"Pri Wine-u je okolje matičnega operacijskega sistema vključeno v Win32 "
-"okolje,\n"
+"Pri Wine-u je okolje matičnega operacijskega sistema vključeno v okolje "
+"Win32,\n"
 "zato v splošnem le-to vsebuje več okoljskih spremenljivk kot jih resnično\n"
-"Win32 okolje. S programom cmd ni mogoče vplivati na okolje matičnega\n"
+"okolje Win32. S programom cmd ni mogoče vplivati na okolje matičnega\n"
 "operacijskega sistema.\n"
 
 #: cmd.rc:183
@@ -9697,7 +9622,7 @@ msgstr ""
 "SHIFT se uporablja v paketni datoteki za odstranitev prvega parametra s "
 "seznama\n"
 "parametrov; parameter 2 tako postane parameter 1, itd. Ukaz nima nobenega\n"
-"učink pri uporabi iz ukazne vrstice.\n"
+"učinka pri uporabi iz ukazne vrstice.\n"
 
 #: cmd.rc:185
 msgid "TIME sets or shows the current system time.\n"
@@ -9737,19 +9662,20 @@ msgstr ""
 "Zastavica preverjanja v Wine nima nobene zmožnosti.\n"
 
 #: cmd.rc:203
-#, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
-msgstr "VER prikaže različico cmd\n"
+msgstr "VER prikaže različico cmd, ki jo poganjate.\n"
 
 #: cmd.rc:205
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL pokaže oznako nosilca diskovne napreve.\n"
+msgstr "VOL pokaže oznako nosilca diskovne naprave.\n"
 
 #: cmd.rc:209
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
+"ENDLOCAL konča prevajanje okoljskih sprememb v paketni datoteki,\n"
+"ki so bile uvedene z vnosom  SETLOCAL.\n"
 
 #: cmd.rc:217
 msgid ""
@@ -9760,6 +9686,12 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL začne prevajanje okoljskih sprememb v paketni datoteki.\n"
+"\n"
+"Spremembe okolja narejene po SETLOCAL so krajevne za paketno datoteko\n"
+"in so ohranjene do naslednjega srečanje ENDLOCAL (ali na koncu datoteke,\n"
+"karkoli je prej). Takrat so obnovljene predhodne nastavitve\n"
+"okolja.\n"
 
 #: cmd.rc:220
 msgid ""
@@ -9788,6 +9720,14 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC pokaže ali spremeni povezave pripon datotek\n"
+"\n"
+"Skladnja: ASSOC [.pri[=[vrstaDatoteke]]]\n"
+"\n"
+"ASSOC brez parametrov prikaže trenutne povezave datoteke.\n"
+"Če se uporablja samo s pripono datoteke, prikaže trenutno povezavo.\n"
+"Če za enačajem ne določite vrste datoteke, so morebitne povezave datotek "
+"odstranjene.\n"
 
 #: cmd.rc:242
 msgid ""
@@ -9802,6 +9742,16 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE pokaže ali spremeni odprte ukaze povezane z vrstami datotek\n"
+"\n"
+"Skladnja: FTYPE [fileType[=[openCommand]]]\n"
+"\n"
+"Brez parametrov pokaže vrste datotek za katere so odprti nizi ukazov "
+"trenutno določeni.\n"
+"Če se uporablja samo z vrsto datoteke, prikaže povezan niz ukaza odprtja, če "
+"obstaja.\n"
+"Če ukaza odpiranja ne določite ukaz za enačajem odstrani ukazni niz, ki je "
+"povezan z določeno vrsto datoteke.\n"
 
 #: cmd.rc:244
 msgid "MORE displays output of files or piped input in pages.\n"
@@ -9828,7 +9778,6 @@ msgstr ""
 "ali ukazni lupini, iz katere ste priklicali cmd.\n"
 
 #: cmd.rc:289
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9869,7 +9818,8 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "Vgrajeni ukazi CMD so:\n"
-"ATTRIB\t\tPrikaže ali spremeni DOS atribute datotek\n"
+"ASSOC\t\tPokaže ali spremeni povezave pripon datotekATTRIB\t\tPrikaže ali "
+"spremeni DOS atribute datotek\n"
 "CALL\t\tPokliče paketno datoteko iz druge\n"
 "CD (CHDIR)\tSpremeni trenutno privzeto mapo\n"
 "CHOICE\t\tPočaka na pritisk tipke z izberljivega seznama\n"
@@ -9880,12 +9830,15 @@ msgstr ""
 "DEL (ERASE)\tIzbriše eno ali več datotek\n"
 "DIR\t\tIzpiše vsebino mape\n"
 "ECHO\t\tPrikaže besedilo v konzoli\n"
-"HELP\t\tPrikaže kratko besedilo s pomočjo o želeni temi\n"
+"ENDLOCAL\tKonča prevednost sprememb okolja v paketni datoteki\n"
+"FTYPE\t\tPokaže ali spremeni odprte ukaze, ki so povezani z vrstam "
+"idatotekHELP\t\tPrikaže kratko besedilo s pomočjo o želeni temi\n"
 "MD (MKDIR)\tUstvari podmapo\n"
 "MORE\t\tIzpiše besedilo po straneh\n"
 "MOVE\t\tPremakne eno ali več datotek ali map\n"
 "PATH\t\tNastavi ali prikaže iskalno pot\n"
-"POPD\t\tNastavi trenutno mapo na mapo, nazadnje shranjeno z ukazom PUSHD\n"
+"PAUSE\t\tZamrzne izvajanje paketne datotekePOPD\t\tNastavi trenutno mapo na "
+"mapo, nazadnje shranjeno z ukazom PUSHD\n"
 "PROMPT\t\tSpremeni ukazni poziv\n"
 "PUSHD\t\tShrani trenutno mapo in se preseli v navedeno mapo\n"
 "REN (RENAME)\tPreimenuje datoteko\n"
@@ -9916,19 +9869,16 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "Povezava datoteke za pripono %s manjka\n"
+msgstr "Manjka povezava datoteke za pripono %1\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "Noben ukaz ni povezan z vrsto datotek '%s'\n"
+msgstr "Noben ukaz za odprtje ni povezan z vrsto datotek '%1'\n"
 
 #: cmd.rc:296
-#, fuzzy
 msgid "Overwrite %1"
-msgstr "Prepiši %s"
+msgstr "Prepiši %1"
 
 #: cmd.rc:297
 msgid "More..."
@@ -9944,26 +9894,23 @@ msgstr "Argument manjka\n"
 
 #: cmd.rc:301
 msgid "Syntax error\n"
-msgstr "Skladenjska napaka\n"
+msgstr "Napaka skladnje\n"
 
 #: cmd.rc:303
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "Za ukaz %s pomoč ni na voljo\n"
+msgstr "Za %1 ni pomoči na voljo\n"
 
 #: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr "Cilja ukaza GOTO ni mogoče najti\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "Trenutni datum je %s\n"
+msgstr "Trenutni datum je %1\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "Trenutni čas je %s\n"
+msgstr "Trenutni čas je %1\n"
 
 #: cmd.rc:307
 msgid "Enter new date: "
@@ -9974,14 +9921,12 @@ msgid "Enter new time: "
 msgstr "Vnesite nov čas:"
 
 #: cmd.rc:309
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "Okoljska spremenljivka %s ni določena\n"
+msgstr "Okoljska spremenljivka %1 ni določena\n"
 
 #: cmd.rc:310 xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "Napaka med odpiranjem '%s'\n"
+msgstr "Odpiranje '%1' je spodletelo\n"
 
 #: cmd.rc:311
 msgid "Cannot call batch label outside of a batch script\n"
@@ -9990,22 +9935,19 @@ msgstr "Klic paketne oznake zunaj paketnega skripta ni mogoč\n"
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr ""
+msgstr "A"
 
 #: cmd.rc:313
-#, fuzzy
 msgid "%1, Delete"
-msgstr "%s, Izbriši"
+msgstr "%1, Izbriši"
 
 #: cmd.rc:314
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "Odmev je %s\n"
+msgstr "Odmev je %1\n"
 
 #: cmd.rc:315
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "Preverjanje je %s\n"
+msgstr "Preverjanje je %1\n"
 
 #: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
@@ -10016,13 +9958,11 @@ msgid "Parameter error\n"
 msgstr "Napaka parametra\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Nosilec v pogonu %c je %s\n"
-"Zaporedna št. nosilca je %04x-%04x\n"
+"Zaporedna št. nosilca je %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -10034,18 +9974,16 @@ msgid "PATH not found\n"
 msgstr "POTI ni mogoče najti\n"
 
 #: cmd.rc:321
-#, fuzzy
 msgid "Press any key to continue... "
-msgstr "Za nadaljevanje pritisnite tipko Return: "
+msgstr "Pritisnite katerokoli tipko za nadaljevanje ..."
 
 #: cmd.rc:322
 msgid "Wine Command Prompt"
-msgstr "Wine ukazni poziv"
+msgstr "Ukazni poziv Wine"
 
 #: cmd.rc:323
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "Različica CMD %s\n"
+msgstr "Različica CMD %1!S!\n"
 
 #: cmd.rc:324
 msgid "More? "
@@ -10053,48 +9991,48 @@ msgstr "Več? "
 
 #: cmd.rc:325
 msgid "The input line is too long.\n"
-msgstr "Vrstica vhoda je predolga.\n"
+msgstr "Vhodna vrstica je predolga.\n"
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Nosilec v pogonu %1!c! je %2\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Nosilec v pogonu %1!c! nima oznake.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "Orodje za diagnostiko DirectX"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr ""
+"Uporaba: dxdiag [/whql:off | /whql:on] [/t imedatoteke | /x imedatoteke]"
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
-msgstr "Wine Internet Explorer"
+msgstr "Raziskovalnik Wine"
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "Mesto"
+msgstr "Mesto:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "Uporaba: ime gostitelja\n"
 
 #: hostname.rc:28
-#, fuzzy
 msgid "Error: Invalid option '%c'.\n"
-msgstr "Napaka: Neveljavno ime ključa\n"
+msgstr "Napaka: neveljavna možnost '%c'.\n"
 
 #: hostname.rc:29
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
+"Napaka: nastavljanje imena gostitelja sistema ni mogoče s pripomočkom imena "
+"gostitelja.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
@@ -10106,17 +10044,16 @@ msgstr ""
 "Napaka: navedeni so bili nepoznani ali neveljavni parametri ukazne vrstice\n"
 
 #: ipconfig.rc:29
-#, fuzzy
 msgid "%1 adapter %2\n"
-msgstr "%s prilagodilnik %s\n"
+msgstr "%1 vmesnik %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr "Ethernet"
+msgstr "Eternet"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr "S povezavo določena DNS pripona"
+msgstr "S povezavo določena pripona DNS"
 
 #: ipconfig.rc:34
 msgid "Hostname"
@@ -10159,7 +10096,6 @@ msgid "Default gateway"
 msgstr "Privzeti prehod"
 
 #: net.rc:27
-#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -10171,12 +10107,11 @@ msgid ""
 msgstr ""
 "Skladnja tega ukaza je:\n"
 "\n"
-"NET HELP ukaz\n"
+"NET command [argumenti]\n"
 "    -ali-\n"
-"NET ukaz /HELP\n"
+"NET command /HELP\n"
 "\n"
-"   Razpoložljivi ukazi so:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
+"Razpoložljivi ukazi so: HELP, START, STOP in USE.\n"
 
 #: net.rc:28
 msgid ""
@@ -10187,6 +10122,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"Skladnja tega ukaza je:\n"
+"\n"
+"NET START [storitev]\n"
+"\n"
+"Prikaže seznam izvajajočih se storitev, če je 'storitev' izpuščena. V "
+"nasprotnem primeru je 'storitev' ime storitve za zagon.\n"
 
 #: net.rc:29
 msgid ""
@@ -10196,16 +10137,19 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"Skladnja tega ukaza je:\n"
+"\n"
+"NET STOP storitev\n"
+"\n"
+"Kjer je 'storitev' je ime storitve za zaustavitev.\n"
 
 #: net.rc:30
-#, fuzzy
 msgid "Stopping dependent service: %1\n"
-msgstr "Zaustavljanje odvisne storitve: %s\n"
+msgstr "Zaustavljanje odvisnih storitev: %1\n"
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "Zaustavljanje storitve %s ni uspelo\n"
+msgstr "Ni mogoče zaustaviti storitve %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -10216,34 +10160,28 @@ msgid "Could not get handle to service.\n"
 msgstr "Storitve ni mogoče obravnavati.\n"
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "Zaganjanje storitve %s.\n"
+msgstr "Storitev %1 se začenja.\n"
 
 #: net.rc:35
-#, fuzzy
 msgid "The %1 service was started successfully.\n"
-msgstr "Zagon storitve %s je uspel.\n"
+msgstr "Storitev %1 je bila uspešno začeta.\n"
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "Zagon storitve %s ni uspel.\n"
+msgstr "Začenjanje storitve %1 je spodletelo.\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "Ustavljanje storitve %s.\n"
+msgstr "Storitev %1 se zaustavlja.\n"
 
 #: net.rc:38
-#, fuzzy
 msgid "The %1 service was stopped successfully.\n"
-msgstr "Ustavljanje storitve %s je uspelo.\n"
+msgstr "Storitev %1 je bila uspešno zaustavljena.\n"
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "Ustavljanje storitve %s ni uspelo.\n"
+msgstr "Zaustavitev storitve %1 je spodletela.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -10260,39 +10198,32 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-#, fuzzy
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%s      %s      %s      Odprta sredstva: %lu\n"
+msgstr "%1      %2      %3      Odprti viri: %4!u!\n"
 
 #: net.rc:45
-#, fuzzy
 msgid "Paused"
-msgstr "V &premoru"
+msgstr "V premoru"
 
 #: net.rc:46
-#, fuzzy
 msgid "Disconnected"
-msgstr "Cev je povezana\n"
+msgstr "Povezava je bila prekinjena"
 
 #: net.rc:47
-#, fuzzy
 msgid "A network error occurred"
-msgstr "Prišlo je do napake tiskanja."
+msgstr "Prišlo je do omrežne napake"
 
 #: net.rc:48
-#, fuzzy
 msgid "Connection is being made"
-msgstr "Povezava je dejavna\n"
+msgstr "Povezava se vzpostavlja"
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Povezovanje z %s"
+msgstr "Ponovno povezovanje"
 
 #: net.rc:40
-#, fuzzy
 msgid "The following services are running:\n"
-msgstr "Izvajajo se odvisne storitve\n"
+msgstr "Izvajajo se naslednje storitve:\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -10312,7 +10243,7 @@ msgstr "Na&tisni ...\tCtrl+P"
 
 #: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
-msgstr "Priprava s&trani ..."
+msgstr "Nastavitev s&trani ..."
 
 #: notepad.rc:34
 msgid "P&rinter Setup..."
@@ -10368,9 +10299,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "Za&menjaj ...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "&Vsebina"
+msgstr "&Vsebina\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -10378,7 +10308,7 @@ msgstr "&O Beležnici"
 
 #: notepad.rc:97
 msgid "Page Setup"
-msgstr "Priprava strani"
+msgstr "Nastavitev strani"
 
 #: notepad.rc:99
 msgid "&Header:"
@@ -10389,9 +10319,8 @@ msgid "&Footer:"
 msgstr "&Noga:"
 
 #: notepad.rc:104
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "&Robovi (v milimeterih):"
+msgstr "Odmiki (milimetri)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10464,7 +10393,6 @@ msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:91
-#, fuzzy
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -10473,9 +10401,9 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
-"Ta datoteka vsebuje Unicode znake, ki bodo izgubljeni,\n"
-"če datoteko shranite v kodiranju %s.\n"
+"%1\n"
+"Ta datoteka vsebuje znake Unicode, ki bodo izgubljeni,\n"
+"če datoteko shranite v kodiranju %2.\n"
 "Če želite te znake obdržati, kliknite Prekliči in izberite\n"
 "eno od možnosti Unicode iz spustnega seznama kodiranj.\n"
 "Ali želite nadaljevati?"
@@ -10489,9 +10417,8 @@ msgid "&View TypeLib..."
 msgstr "&Pogled TypeLib ..."
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "&Sistemske nastavitve ..."
+msgstr "&Sistemskih nastavitve"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -10503,25 +10430,23 @@ msgstr "&Predmet"
 
 #: oleview.rc:39
 msgid "&CoCreateInstance Flag"
-msgstr "&CoCreateInstance zastavica"
+msgstr "Zastavica &CoCreateInstance"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "Strežnik &v opravilu"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "Ročnik &v opravilu"
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "Krajevna napaka"
+msgstr "&Krajevni strežnik"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "Odst&rani ..."
+msgstr "&Oddaljeni strežnik"
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -10545,7 +10470,7 @@ msgstr "Kopiraj C&LSID na odložišče"
 
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
-msgstr "Kopiraj oznako predmetov &HTML na tipkovnico"
+msgstr "Kopiraj oznako predmetov &HTML na odložišče"
 
 #: oleview.rc:60
 msgid "&Expert mode"
@@ -10581,73 +10506,67 @@ msgstr "&Združi glede na vrsto"
 
 #: oleview.rc:154
 msgid "Connect to another machine"
-msgstr ""
+msgstr "Povezava z drugim strojem"
 
 #: oleview.rc:157
 msgid "&Machine name:"
-msgstr ""
+msgstr "Ime &stroja:"
 
 #: oleview.rc:165
-#, fuzzy
 msgid "System Configuration"
-msgstr "&Sistemske nastavitve ..."
+msgstr "Sistemske nastavitve"
 
 #: oleview.rc:168
-#, fuzzy
 msgid "System Settings"
-msgstr "Internetne nastavitve"
+msgstr "Sistemske nastavitve"
 
 #: oleview.rc:169
 msgid "&Enable Distributed COM"
-msgstr ""
+msgstr "&Omogoči distribuiran COM"
 
 #: oleview.rc:170
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr ""
+msgstr "Omogoči &oddaljene povezave (le Win95)"
 
 #: oleview.rc:171
 msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
+"Te nastavitve spremenijo le vrednosti registra.\n"
+"Nimajo učinka na hitrost delovanja Wine."
 
 #: oleview.rc:178
-#, fuzzy
 msgid "Default Interface Viewer"
-msgstr "Privzeti tiskalnik; "
+msgstr "Privzet pregledovalnik vmesnika"
 
 #: oleview.rc:181
-#, fuzzy
 msgid "Interface"
-msgstr "Vmesniki"
+msgstr "Vmesnik"
 
 #: oleview.rc:183
 msgid "IID:"
-msgstr ""
+msgstr "IID:"
 
 #: oleview.rc:186
-#, fuzzy
 msgid "&View Type Info"
-msgstr "Ogled podrobnosti &vrste"
+msgstr "&Ogled podatkov o vrsti"
 
 #: oleview.rc:191
-#, fuzzy
 msgid "IPersist Interface Viewer"
-msgstr "Podedovani vmesniki"
+msgstr "Pregledovalnik vmesnika IPersist"
 
 #: oleview.rc:194 oleview.rc:206
-#, fuzzy
 msgid "Class Name:"
-msgstr "Polno ime"
+msgstr "Ime razreda:"
 
 #: oleview.rc:196 oleview.rc:208
 msgid "CLSID:"
-msgstr ""
+msgstr "CLSID:"
 
 #: oleview.rc:203
-#, fuzzy
 msgid "IPersistStream Interface Viewer"
-msgstr "Podedovani vmesniki"
+msgstr "Vmesnik pregledovalnika IPersistStream"
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
@@ -10666,7 +10585,6 @@ msgid "version 1.0"
 msgstr "različica 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 msgstr "Datoteke TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
@@ -10725,7 +10643,7 @@ msgstr "Pokaži ali skrij orodno vrstico"
 
 #: oleview.rc:120
 msgid "Show or hide the status bar"
-msgstr "Ali naj bo prikazana vrstica stanja"
+msgstr "Pokaži ali skrij vrstico stanja"
 
 #: oleview.rc:121
 msgid "Refresh all lists"
@@ -10733,25 +10651,23 @@ msgstr "Osveži vse sezname"
 
 #: oleview.rc:122
 msgid "Display program information, version number and copyright"
-msgstr "Prikaže podatke o programu, števili različice in avtorskih pravicah"
+msgstr "Prikaže podatke o programu, številki različice in avtorskih pravicah"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "Pri klicu CoGetClassObject vprašaj za strežnik v opravilu"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "Vpraša za ročnik v opravilu pri klicu CoGetClassObject"
 
 #: oleview.rc:115
-#, fuzzy
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr "Uporabi CLSCTX_LOCAL_SERVER pri klicanju CoGetClassObject"
+msgstr "Pri klicanju CoGetClassObject vprašaj za krajevni strežnik"
 
 #: oleview.rc:116
-#, fuzzy
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr "Uporabi CLSCTX_LOCAL_SERVER pri klicanju CoGetClassObject"
+msgstr "Pri klicanju CoGetClassObject vprašaj za oddaljeni strežnik"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
@@ -10814,9 +10730,8 @@ msgid "bytes"
 msgstr "bajtov"
 
 #: oleview.rc:148
-#, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr "LoadTypeLib( %s ) je spodletel ($%x)"
+msgstr "Ukaz LoadTypeLib( %1 ) je spodletel ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
@@ -10824,7 +10739,7 @@ msgstr "Podedovani vmesniki"
 
 #: oleview.rc:124
 msgid "Save as an .IDL or .H file"
-msgstr "Shrani kot .IDL ali .H datoteko"
+msgstr "Shrani kot datoteko .IDL ali .H"
 
 #: oleview.rc:125
 msgid "Close window"
@@ -10851,18 +10766,16 @@ msgid "&Copy...\tF8"
 msgstr "&Kopiraj ...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "&Lastnosti ...\tAlt+Enter"
+msgstr "&Lastnosti\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "Izv&edi ..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "&Končaj Windows ..."
+msgstr "K&ončaj Windows"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
@@ -10897,9 +10810,8 @@ msgid "&Arrange Icons"
 msgstr "Razporedi &ikone"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Upraviljalnik programov"
+msgstr "&O upravljalniku programov"
 
 #: progman.rc:100
 msgid "Program &group"
@@ -10935,7 +10847,7 @@ msgstr "Kopiraj program:"
 
 #: progman.rc:149
 msgid "Program Group Attributes"
-msgstr "Lastnosti programske skupine"
+msgstr "Atributi programske skupine"
 
 #: progman.rc:153
 msgid "&Group file:"
@@ -10943,7 +10855,7 @@ msgstr "&Datoteka skupine:"
 
 #: progman.rc:165
 msgid "Program Attributes"
-msgstr "Lastnosti programa"
+msgstr "Atributi programa"
 
 #: progman.rc:169 progman.rc:209
 msgid "&Command line:"
@@ -10959,7 +10871,7 @@ msgstr "&Tipke za bližnjico:"
 
 #: progman.rc:176 progman.rc:212
 msgid "&Minimize at launch"
-msgstr "&Pomanjšaj ob zagonu"
+msgstr "&Skrči ob zagonu"
 
 #: progman.rc:180
 msgid "Change &icon..."
@@ -10979,11 +10891,11 @@ msgstr "&Trenutna ikona:"
 
 #: progman.rc:207
 msgid "Execute Program"
-msgstr "Zaženi program"
+msgstr "Izvedi program"
 
 #: progman.rc:60
 msgid "Program Manager"
-msgstr "Upraviljalnik programov"
+msgstr "Upravljalnik programov"
 
 #: progman.rc:62 winhlp32.rc:80
 msgid "WARNING"
@@ -10994,14 +10906,12 @@ msgid "Information"
 msgstr "Informacija"
 
 #: progman.rc:65
-#, fuzzy
 msgid "Delete group `%s'?"
-msgstr "Ali ste prepričani, da želite izbrisati skupino `%s' ?"
+msgstr "Ali želite izbrisati skupino `%s'?"
 
 #: progman.rc:66
-#, fuzzy
 msgid "Delete program `%s'?"
-msgstr "Ali ste prepričani, da želite izbrisati program `%s'?"
+msgstr "Ali želite izbrisati program `%s'?"
 
 #: progman.rc:67
 msgid "Not implemented"
@@ -11089,7 +10999,7 @@ msgstr "Opravilo se je uspešno izvedlo\n"
 
 #: reg.rc:32
 msgid "Error: Invalid key name\n"
-msgstr "Napaka: Neveljavno ime ključa\n"
+msgstr "Napaka: neveljavno ime ključa\n"
 
 #: reg.rc:33
 msgid "Error: Invalid command line parameters\n"
@@ -11102,7 +11012,7 @@ msgstr "Napaka: ni mogoče dodati ključa na oddaljen računalnik\n"
 #: reg.rc:35
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
-msgstr "Napaka: Sistem ni našel navedenega ključa ali vrednosti registra\n"
+msgstr "Napaka: sistem ni našel navedenega ključa ali vrednosti registra\n"
 
 #: regedit.rc:31
 msgid "&Registry"
@@ -11137,9 +11047,8 @@ msgid "&Multi String Value"
 msgstr "&Več-nizna vrednost"
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "&Nizna vrednost"
+msgstr "&Razširljiva vrednost niza"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -11174,13 +11083,12 @@ msgid "&About Registry Editor"
 msgstr "&O Urejevalniku registra"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "Spremeni binarne podatke"
+msgstr "Spremeni binarne podatke ..."
 
 #: regedit.rc:215
 msgid "Export registry"
-msgstr "Izvozi"
+msgstr "Izvozi register"
 
 #: regedit.rc:217
 msgid "S&elected branch:"
@@ -11236,7 +11144,7 @@ msgstr "Vsebina:"
 
 #: regedit.rc:274
 msgid "Edit DWORD"
-msgstr "Urejanje DWORD vrednosti"
+msgstr "Urejanje vrednosti DWORD"
 
 #: regedit.rc:281
 msgid "Base"
@@ -11244,11 +11152,11 @@ msgstr "Osnova"
 
 #: regedit.rc:282
 msgid "Hexadecimal"
-msgstr "Heksadecimalno"
+msgstr "Šestnajstiško"
 
 #: regedit.rc:283
 msgid "Decimal"
-msgstr "Decimalno"
+msgstr "Desetiško"
 
 #: regedit.rc:290
 msgid "Edit Binary"
@@ -11406,7 +11314,7 @@ msgstr ""
 
 #: regedit.rc:178
 msgid "Can't query value '%s'"
-msgstr "Ni mogoče poizvesti vrednosti '%s'"
+msgstr "Ni mogoče napraviti poizvedbe vrednosti '%s'"
 
 #: regedit.rc:179
 msgid "Can't edit keys of this type (%u)"
@@ -11453,7 +11361,6 @@ msgid "Exports selected branch of the registry to a text file"
 msgstr "Izvozi izbrano vejo registra v besedilno datoteko"
 
 #: start.rc:46
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -11489,8 +11396,9 @@ msgstr ""
 "/R[estored]  Zažene program z običajno velikostjo okna.\n"
 "/W[ait]      Počaka, da se zagnani program zaključi, nato se konča in vrne "
 "kodo ob končanju programa.\n"
-"/ProgIDOpen  Odpre dokument z uporabo nalsednjega IDprograma.\n"
+"/ProgIDOpen  Odpre dokument z uporabo naslednjega IDprograma.\n"
 "/L           Prikaže licenčno pogodbo.\n"
+"/?            Prikaže to pomoč in konča.\n"
 "\n"
 "start.exe različica 0.2 Avtorske pravice (C) 2003, Dan Kegel\n"
 "Start prihaja POPOLNOMA BREZ ZAGOTOVIL. Za podrobnosti program zaženite z "
@@ -11552,7 +11460,7 @@ msgstr ""
 
 #: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr "Navedenega Unix imena datoteke ni mogoče prevesti v DOS ime datoteke."
+msgstr "Navedenega imena datoteke Unix ni mogoče prevesti v DOS ime datoteke."
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
@@ -11572,55 +11480,49 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr "Napaka: Ena od možnosti /im ali /pid mora biti navedena.\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Napaka: možnost %s pričakuje parameter ukazne vstice.\n"
+msgstr "Napaka: možnost %1 pričakuje parameter ukazne vrstice.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "Napaka: možnosti /im in /pid se medsebojno izključujeta.\n"
 
 #: taskkill.rc:33
-#, fuzzy
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
-"Sporočilo z zahtevo po zaprtju je bilo poslano oknom opravila s PID %u.\n"
+"Zapri sporočilo poslano na okna po zaprtju je bilo poslano oknom opravila s "
+"PID %u.\n"
 
 #: taskkill.rc:34
-#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
 "Sporočilo z zahtevo po zaprtju je bilo poslano oknom opravila \"%s\" s PID "
-"%u vrhnje ravni.\n"
+"%2!u! vrhnje ravni.\n"
 
 #: taskkill.rc:35
-#, fuzzy
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "Opravilo s PID %u je bilo prisilno končano.\n"
+msgstr "Opravilo s PID %1!u! je bilo prisilno končano.\n"
 
 #: taskkill.rc:36
-#, fuzzy
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "Opravilo \"%s\" s PID %u je bilo prisilno končano.\n"
+msgstr "Opravilo \"%1\" s PID %2!u! je bilo prisilno končano.\n"
 
 #: taskkill.rc:37
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "Napaka: Opravila \"%s\" ni mogoče najti.\n"
+msgstr "Napaka: ni mogoče najti opravila \"%1\".\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "Napaka: Ni mogoče dobiti seznama opravil.\n"
+msgstr "Napaka: ni mogoče dobiti seznama opravil.\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "Napaka: Opravila  \"%s\" ni mogoče končati.\n"
+msgstr "Napaka: ni mogoče končati opravila \"%1\".\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "Napak: Samo-končanej opravila ni dovoljeno.\n"
+msgstr "Napaka: samo-končanje opravila ni dovoljeno.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -11740,17 +11642,15 @@ msgstr "Nastavi &prednost"
 
 #: taskmgr.rc:156
 msgid "&Realtime"
-msgstr "&Realnočasosvna"
+msgstr "&Realnočasovna"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
-msgstr "&Nadpovprečna"
+msgstr "&Nad običajno"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
-msgstr "Po&dpovprečna"
+msgstr "&Pod običajno"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
@@ -11770,34 +11670,29 @@ msgstr "&Novo opravilo ..."
 
 #: taskmgr.rc:368
 msgid "&Show processes from all users"
-msgstr "&Pokaži procese vseh uporabnikov"
+msgstr "&Pokaži opravila vseh uporabnikov"
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "CPU usage"
 msgstr "Uporaba CPE"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "MEM usage"
-msgstr "Uporaba pomn."
+msgstr "Uporaba pomnilnika"
 
 #: taskmgr.rc:378
 msgid "Totals"
 msgstr "Skupno"
 
 #: taskmgr.rc:379
-#, fuzzy
 msgid "Commit charge (K)"
-msgstr "Zagotovljeni pomnilnik (K)"
+msgstr "Pomnilnik izmenjevalnega prostora (K)"
 
 #: taskmgr.rc:380
-#, fuzzy
 msgid "Physical memory (K)"
 msgstr "Fizični pomnilnik (K)"
 
 #: taskmgr.rc:381
-#, fuzzy
 msgid "Kernel memory (K)"
 msgstr "Pomnilnik jedra (K)"
 
@@ -11823,7 +11718,7 @@ msgstr "Omejitev"
 
 #: taskmgr.rc:393
 msgid "Peak"
-msgstr "Temenska vr."
+msgstr "Največja obremenitev"
 
 #: taskmgr.rc:402
 msgid "System Cache"
@@ -11838,12 +11733,10 @@ msgid "Nonpaged"
 msgstr "Neizmenjano"
 
 #: taskmgr.rc:418
-#, fuzzy
 msgid "CPU usage history"
 msgstr "Zgodovina uporabe CPE"
 
 #: taskmgr.rc:419
-#, fuzzy
 msgid "Memory usage history"
 msgstr "Zgodovina uporabe pomnilnika"
 
@@ -11860,8 +11753,8 @@ msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
 msgstr ""
-"Afiniteta procesorjev določa, na katerih procesorjih se bo proces lahko "
-"izvajal."
+"Afiniteta procesorjev določa, na katerih procesorjih se bo opravilo lahko "
+"izvajalo."
 
 #: taskmgr.rc:450
 msgid "CPU 0"
@@ -11998,15 +11891,15 @@ msgstr "Izbira stolpcev"
 #: taskmgr.rc:523
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
-msgstr "Izberite stolpce, ki naj bodo prikazani na strani Procesi."
+msgstr "Izberite stolpce, ki naj bodo prikazani na strani Opravila."
 
 #: taskmgr.rc:525
 msgid "&Image Name"
-msgstr "&Ime"
+msgstr "&Ime odtisa"
 
 #: taskmgr.rc:527
 msgid "&PID (Process Identifier)"
-msgstr "&PID (ID procesa)"
+msgstr "&PID (ID opravila)"
 
 #: taskmgr.rc:529
 msgid "&CPU Usage"
@@ -12026,7 +11919,7 @@ msgstr "&Delta uporabe pomnilnika"
 
 #: taskmgr.rc:537
 msgid "Pea&k Memory Usage"
-msgstr "Te&m. vr. uporabe pomnilnika"
+msgstr "Naj&večja uporaba pomnilnika"
 
 #: taskmgr.rc:539
 msgid "Page &Faults"
@@ -12034,7 +11927,7 @@ msgstr "Napake i&zmenjevanja"
 
 #: taskmgr.rc:541
 msgid "&USER Objects"
-msgstr "&USER predmeti"
+msgstr "Predmeti &USER"
 
 #: taskmgr.rc:543 taskmgr.rc:281
 msgid "I/O Reads"
@@ -12070,7 +11963,7 @@ msgstr "Ne&izmenjana zaloga"
 
 #: taskmgr.rc:559
 msgid "Base P&riority"
-msgstr "Osnovna p&rioriteta"
+msgstr "Osnovna p&rednost"
 
 #: taskmgr.rc:561
 msgid "&Handle Count"
@@ -12124,7 +12017,7 @@ msgstr "Skrij Upraviljalnika opravil, ko je skrčen"
 #: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
 msgstr ""
-"Prisili Upravljalnika opravil k osvežtvi, ne glede na nastavljeno hitrost "
+"Prisili Upravljalnika opravil k osvežitvi ne glede na nastavljeno hitrost "
 "osveževanja"
 
 #: taskmgr.rc:193
@@ -12185,7 +12078,7 @@ msgstr "Prikaže teme pomoči Upravljalnika opravil"
 
 #: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
-msgstr "Prikaže podatke o programu, števili različice in avtorskih pravicah"
+msgstr "Prikaže podatke o programu, številki različice in avtorskih pravicah"
 
 #: taskmgr.rc:213
 msgid "Exits the Task Manager application"
@@ -12205,11 +12098,11 @@ msgstr "Prikaže čas jedra na grafih hitrosti delovanja"
 
 #: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
-msgstr "En graf zgovoine prikaže skupno uporabo vseh CPE"
+msgstr "En graf zgodovine prikaže skupno uporabo vseh CPE"
 
 #: taskmgr.rc:220
 msgid "Each CPU has its own history graph"
-msgstr "Vsaka CPE ima svoj graf zgodogvine"
+msgstr "Vsaka CPE ima svoj graf zgodovine"
 
 #: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
@@ -12273,7 +12166,7 @@ msgstr "Nadzira kanale razhroščevanja"
 
 #: taskmgr.rc:264
 msgid "Performance"
-msgstr "Učinkovitost delovanja"
+msgstr "Hitrost delovanja"
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
@@ -12284,9 +12177,8 @@ msgid "Processes: %d"
 msgstr "Opravila: %d"
 
 #: taskmgr.rc:267
-#, fuzzy
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "Uporaba pomnilnika: %dK / %dK"
+msgstr "Uporaba pomnilnika: %1!u!kB / %2!u!kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -12302,7 +12194,7 @@ msgstr "CPE"
 
 #: taskmgr.rc:275
 msgid "CPU Time"
-msgstr "Čas CPE"
+msgstr "Čas CPU"
 
 #: taskmgr.rc:276
 msgid "Mem Usage"
@@ -12322,7 +12214,7 @@ msgstr "Napake ostranjenja"
 
 #: taskmgr.rc:280
 msgid "USER Objects"
-msgstr "USER predmeti"
+msgstr "Predmeti USER"
 
 #: taskmgr.rc:283
 msgid "Session ID"
@@ -12380,7 +12272,7 @@ msgid ""
 msgstr ""
 "OPOZORILO: Prekinjanje opravila lahko povzroči nezaželene\n"
 "posledice, vključno z izgubo podatkov in nestabilnostjo sistema.\n"
-"Pred prekinitvijo opravilo ne bo imel možnosti shraniti svojega\n"
+"Pred prekinitvijo opravilo ne bo imelo možnosti shraniti svojega\n"
 "stanja ali podatkov. Ali ste prepričani, da želite\n"
 "prekiniti opravilo?"
 
@@ -12446,10 +12338,9 @@ msgstr "Sledenje"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
-msgstr "Wine Odstranjevalnik programov"
+msgstr "Odstranjevalnik programov Wine"
 
 #: uninstaller.rc:27
-#, fuzzy
 msgid ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
@@ -12477,25 +12368,24 @@ msgstr "D&esno"
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
-msgstr "Program za ogled slik Metafile"
+msgstr "Običajni pregledovalnik datotek meta"
 
 #: wineboot.rc:28
 msgid "Waiting for Program"
-msgstr "Čakam na konec programa"
+msgstr "Čakanje na program"
 
 #: wineboot.rc:32
 msgid "Terminate Process"
-msgstr "Končaj program"
+msgstr "Končaj opravilo"
 
 #: wineboot.rc:33
-#, fuzzy
 msgid ""
 "A simulated log-off or shutdown is in progress, but this program isn't "
 "responding.\n"
 "\n"
 "If you terminate the process you may lose all unsaved data."
 msgstr ""
-"Izvajam simulirano odjavo oziroma izklop, vendar se program ne odziva.\n"
+"Izvajanje simulirane odjave oziroma izklopa, vendar se program ne odziva.\n"
 "\n"
 "Če se odločite za končanje programa, lahko izgubite neshranjene podatke."
 
@@ -12505,7 +12395,7 @@ msgstr "Wine"
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr "Konfiguracija programa Wine v %s se posodablja, prosimo počkajte ..."
+msgstr "Nastavitve programa Wine v %s se posodabljajo, prosimo počakajte ..."
 
 #: winecfg.rc:132
 msgid ""
@@ -12514,24 +12404,26 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
+"Ta program je prost program. Distribuirate in/ali spreminjate ga lahko pod "
+"pogoji licence GNU Lesser General Public License kot jo je objavila Free "
+"Software Foundation Ali pod različico licence 2.1 ali (po vaši želji) pod "
+"katerokoli novejšo različico."
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Podatki o registraciji Oken "
+msgstr "Podatki o registraciji Windows"
 
 #: winecfg.rc:135
 msgid "&Owner:"
-msgstr "Lastnik:"
+msgstr "&Lastnik:"
 
 #: winecfg.rc:137
 msgid "Organi&zation:"
-msgstr "Organizacija:"
+msgstr "Organi&zacija:"
 
 #: winecfg.rc:145
-#, fuzzy
 msgid "Application settings"
-msgstr " Nastavitve programov "
+msgstr "Nastavitve programov"
 
 #: winecfg.rc:146
 msgid ""
@@ -12539,8 +12431,8 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine je sposoben oponašanja različnih različic Oken za vsak program posebej. "
-"Ta zavihek je povezan z zavihkoma Knjižnice in Grafika, kar omogoča "
+"Wine je sposoben oponašanja različnih različic Windows za vsak program "
+"posebej. Ta zavihek je povezan z zavihkoma Knjižnice in Grafika, kar omogoča "
 "spreminjanje nastavitev v teh dveh zavihkih tako za ves sistem kot za "
 "posamezne programe."
 
@@ -12554,16 +12446,15 @@ msgstr "&Odstrani program"
 
 #: winecfg.rc:152
 msgid "&Windows Version:"
-msgstr "&Različica Oken:"
+msgstr "&Različica Windows:"
 
 #: winecfg.rc:160
-#, fuzzy
 msgid "Window settings"
-msgstr " Nastavitve oken "
+msgstr "Nastavitve okna"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr ""
+msgstr "Samodejno zajemi &miško v celozaslonskih oknih"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -12575,25 +12466,23 @@ msgstr "Dovoli upravljalniku &oken, da upravlja z Wine-ovimi okni"
 
 #: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
-msgstr "Uporabi navidezni &zaslon"
+msgstr "Posnemaj navidezno &namizje"
 
 #: winecfg.rc:166
 msgid "Desktop &size:"
-msgstr "&Velikost okna:"
+msgstr "&Velikost namizja:"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Ločljivost &zaslona "
+msgstr "Ločljivost zaslona"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Vzorčno besedilo, napisano s pisavo Tahoma velikosti 10 točk"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "DLL overrides"
-msgstr " Nastavitve DLL knjižnic "
+msgstr "Prepisi DLL "
 
 #: winecfg.rc:183
 msgid ""
@@ -12601,13 +12490,13 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"Vsaka DLL knjižnica (Dinamic Link Library) je lahko določena kot bodisi "
-"vgrajena ('builtin'; del Wine-a) oziroma izvirna ('native'; vzeta iz Oken "
-"ali nameščena skupaj s programom za Okna)."
+"Vsaka knjižnica DLL je lahko določena kot bodisi vgrajena (del Wine-a) ali "
+"izviona ('native'; vzeta iz Windows ali nameščena skupaj s programom za "
+"Windows)."
 
 #: winecfg.rc:185
 msgid "&New override for library:"
-msgstr "&Nova nastavitev knjižnice:"
+msgstr "&Nov prepis za knjižnico:"
 
 #: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
@@ -12615,20 +12504,19 @@ msgstr "&Dodaj"
 
 #: winecfg.rc:188
 msgid "Existing &overrides:"
-msgstr "Obstoječe n&astavitve:"
+msgstr "Obstoječi &prepisi:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "&Uredi"
+msgstr "&Uredi ..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
-msgstr "Urejanje nastavitve"
+msgstr "Uredi prepis"
 
 #: winecfg.rc:199
-#, fuzzy
 msgid "Load order"
-msgstr " Vrstni red nalaganja "
+msgstr "Red nalaganja"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -12636,7 +12524,7 @@ msgstr "&Vgrajena (Wine)"
 
 #: winecfg.rc:201
 msgid "&Native (Windows)"
-msgstr "&Izvorna (Okna)"
+msgstr "&Izvorna (Windows)"
 
 #: winecfg.rc:202
 msgid "Bui&ltin then Native"
@@ -12652,19 +12540,18 @@ msgstr "&Onemogoči"
 
 #: winecfg.rc:211
 msgid "Select Drive Letter"
-msgstr "Izberi črko pogona"
+msgstr "Izberite črko pogona"
 
 #: winecfg.rc:223
-#, fuzzy
 msgid "Drive mappings"
-msgstr " Preslikave &pogonov "
+msgstr "Preslikave pogona"
 
 #: winecfg.rc:224
 msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
-"Napaka pri povezovanju z upravljalnikom priklopov (mount manager); "
+"Napaka med povezovanjem z upravljalnikom priklopov (mount manager); "
 "nastavitev pogonov ne bo mogoče urejati."
 
 #: winecfg.rc:227
@@ -12673,7 +12560,7 @@ msgstr "&Dodaj ..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "&Samozaznaj ..."
+msgstr "&Samodejno zaznaj ..."
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -12685,7 +12572,7 @@ msgstr "Pokaži &napredno"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr ""
+msgstr "Na&prava:"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12697,7 +12584,7 @@ msgstr "&Oznaka:"
 
 #: winecfg.rc:246
 msgid "S&erial:"
-msgstr "S&erijska št.:"
+msgstr "Zapor&edna št.:"
 
 #: winecfg.rc:249
 msgid "Show &dot files"
@@ -12705,36 +12592,35 @@ msgstr "Pokaži &datoteke s piko"
 
 #: winecfg.rc:256
 msgid "Driver diagnostics"
-msgstr ""
+msgstr "Diagnostika gonilnikov"
 
 #: winecfg.rc:258
 msgid "Defaults"
-msgstr ""
+msgstr "Privzeto"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr ""
+msgstr "Izhodna naprava:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr ""
+msgstr "Naprava zvočnega izhoda:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr ""
+msgstr "Vhodna naprava:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr ""
+msgstr "Naprava zvočnega vhoda:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
 msgstr "&Preizkusi zvok"
 
 #: winecfg.rc:274
-#, fuzzy
 msgid "Appearance"
-msgstr " Izgled "
+msgstr "Videz"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -12753,9 +12639,8 @@ msgid "C&olor:"
 msgstr "B&arva:"
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
-msgstr "Mapa"
+msgstr "Mape"
 
 #: winecfg.rc:293
 msgid "&Link to:"
@@ -12770,9 +12655,8 @@ msgid "Drives"
 msgstr "Pogoni"
 
 #: winecfg.rc:33
-#, fuzzy
 msgid "Select the Unix target directory, please."
-msgstr "Izberite ciljno mapo unix."
+msgstr "Izberite ciljno mapo Unix."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -12824,22 +12708,19 @@ msgstr "Nastavitve Wine za %s"
 
 #: winecfg.rc:81
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Izbrani gonilnik: %s"
 
 #: winecfg.rc:82
-#, fuzzy
 msgid "(None)"
-msgstr "Brez"
+msgstr "(Brez)"
 
 #: winecfg.rc:83
-#, fuzzy
 msgid "Audio test failed!"
-msgstr "Ponastavitev trdega diska je spodletela\n"
+msgstr "Preizkus zvoka je spodletel!"
 
 #: winecfg.rc:85
-#, fuzzy
 msgid "(System default)"
-msgstr "Sistemska pot"
+msgstr "(Sistemsko privzeto)"
 
 #: winecfg.rc:51
 msgid ""
@@ -12878,7 +12759,6 @@ msgid "Default Settings"
 msgstr "Privzete nastavitve"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Programi Wine (*.exe;*.exe.so)"
 
@@ -12891,9 +12771,8 @@ msgid "Select an executable file"
 msgstr "Izberite izvedljivo datoteko"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect..."
-msgstr "Samodejno zaznaj"
+msgstr "Samodejno zaznaj ..."
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -12912,7 +12791,6 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:71
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -12936,14 +12814,13 @@ msgid ""
 msgstr ""
 "Ali ste prepričani, da želite odstraniti pogon C?\n"
 "\n"
-"Večina Windows programov za pravilno delovanje pričakuje obstoj pogona C. Če "
+"Večina programov Windows za pravilno delovanje pričakuje obstoj pogona C. Če "
 "boste pogon odstranili, ga pozneje ne pozabite ponovno dodati!"
 
 #: winecfg.rc:74
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
-msgstr "Črka"
+msgstr "Pismo"
 
 #: winecfg.rc:75
 msgid "Drive Mapping"
@@ -13069,7 +12946,7 @@ msgstr "Predmet s hitrim sledenjem"
 
 #: winecfg.rc:118
 msgid "Active Title Bar Gradient"
-msgstr "Preliv naslova dejavna nazivne vrstice"
+msgstr "Preliv dejavne nazivne vrstice"
 
 #: winecfg.rc:119
 msgid "Inactive Title Bar Gradient"
@@ -13085,7 +12962,7 @@ msgstr "Menijska vrstica"
 
 #: wineconsole.rc:60
 msgid "Cursor size"
-msgstr "Velikost kurzorja"
+msgstr "Velikost kazalca"
 
 #: wineconsole.rc:61
 msgid "&Small"
@@ -13128,13 +13005,12 @@ msgid "Command history"
 msgstr "Zgodovina ukazov"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
-msgstr "&Št. zapomnjenih ukazov:"
+msgstr "&Število priklicanih ukazov:"
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
-msgstr "&Odstrani podvojene"
+msgstr "&Odstrani dvojnike"
 
 #: wineconsole.rc:84
 msgid "&Font"
@@ -13145,41 +13021,36 @@ msgid "&Color"
 msgstr "&Barva"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " Nastavitve "
+msgstr "Nastavitve"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
 msgstr "Velikost medpomnilnika"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
-msgstr "&Širina :"
+msgstr "&Širina:"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
-msgstr "&Višina :"
+msgstr "&Višina:"
 
 #: wineconsole.rc:108
 msgid "Window size"
 msgstr "Velikost okna"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
-msgstr "Ši&rina :"
+msgstr "Ši&rina:"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
-msgstr "V&išina :"
+msgstr "V&išina:"
 
 #: wineconsole.rc:116
 msgid "End of program"
-msgstr "Zaključek programa"
+msgstr "Konec programa"
 
 #: wineconsole.rc:117
 msgid "&Close console"
@@ -13239,9 +13110,8 @@ msgstr ""
 "Velikost zaslonskega medpomnilnika mora biti večja ali enaka okenskemu."
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "Vsak znak je širok %ld točk in visok %ld točk"
+msgstr "Vsak znak je širok %1!u! točk in visok %2!u! točk"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -13261,7 +13131,7 @@ msgstr "wineconsole: nepoznana možnost ukazne vrstice\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
-msgstr "Zažene program v Wine konzoli\n"
+msgstr "Zažene program v konzoli Wine\n"
 
 #: wineconsole.rc:45
 msgid ""
@@ -13286,25 +13156,23 @@ msgstr ""
 "Možnosti:\n"
 
 #: wineconsole.rc:49
-#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
 "                           try to setup the current terminal as a Wine "
 "console.\n"
 msgstr ""
-"  --backend={user|curses}   Vmesnik 'user' odpre novo okno, medtem ko "
+"  --backend={user|curses}   Izbira 'user' odpre novo okno, medtem ko "
 "'curses'\n"
-"                            poskuša uporabiti trenuten terminal kot Wine\n"
-"                            konzolo\n"
+"                            poskuša uporabiti trenutni terminal kot konzolo "
+"Wine.\n"
 
 #: wineconsole.rc:50
-#, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <ukaz>                    Program ali ukaz, ki ga želite izvesti\n"
+msgstr ""
+"  <ukaz>                    Program Wine, ki ga želite izvesti v konzoli\n"
 
 #: wineconsole.rc:51
-#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
@@ -13314,7 +13182,7 @@ msgid ""
 msgstr ""
 "\n"
 "Primer:\n"
-"  wineconsole cmd\n"
+"a  wineconsole cmd\n"
 "Zažene ukazni poziv Wine (cmd) v konzoli Wine.\n"
 "\n"
 
@@ -13391,7 +13259,6 @@ msgid "Re&name..."
 msgstr "Preime&nuj ..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
 msgstr "&Lastnosti ...\tAlt+Enter"
 
@@ -13405,16 +13272,15 @@ msgstr "Ustvari &mapo ..."
 
 #: winefile.rc:38 winemine.rc:46
 msgid "E&xit\tAlt+X"
-msgstr "Iz&hod\tAlt+X"
+msgstr "Ko&nčaj\tAlt+X"
 
 #: winefile.rc:44
 msgid "&Disk"
 msgstr "&Disk"
 
 #: winefile.rc:45
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "Poveži se z o&mrežnim pogonom"
+msgstr "Poveži se z &omrežnim pogonom ..."
 
 #: winefile.rc:46
 msgid "&Disconnect Network Drive"
@@ -13445,9 +13311,8 @@ msgid "Sort by &Date"
 msgstr "Razvrsti po &datumu"
 
 #: winefile.rc:60
-#, fuzzy
 msgid "Filter by&..."
-msgstr "&Filtriraj po ..."
+msgstr "Filtriraj &po ..."
 
 #: winefile.rc:67
 msgid "&Drivebar"
@@ -13470,9 +13335,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Razpostavi &navpično\tCtrl+F4"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "Upravljalnik datotek Wine"
+msgstr "&O upravljalniku datotek Wine"
 
 #: winefile.rc:128
 msgid "Select destination"
@@ -13483,7 +13347,6 @@ msgid "By File Type"
 msgstr "Glede na vrsto datoteke"
 
 #: winefile.rc:146
-#, fuzzy
 msgid "File type"
 msgstr "Vrsta datoteke"
 
@@ -13544,9 +13407,8 @@ msgid "&Compressed"
 msgstr "S&tisnjeno"
 
 #: winefile.rc:184
-#, fuzzy
 msgid "Version information"
-msgstr "Informacije o &različici"
+msgstr "Podrobnosti o različici"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -13593,28 +13455,27 @@ msgid "Index/Inode"
 msgstr "Kazalo/Inode"
 
 #: winefile.rc:120
-#, fuzzy
 msgid "%1 of %2 free"
-msgstr "Prosto: %s od %s"
+msgstr "%1 od %2 je prosto"
 
 #: winefile.rc:121
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:122
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:123
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "&Igra"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -13622,7 +13483,7 @@ msgstr "&Nova igra\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "&Vprašaji"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -13630,7 +13491,7 @@ msgstr "&Začetnik"
 
 #: winemine.rc:40
 msgid "&Advanced"
-msgstr "&Napreden"
+msgstr "&Srednje"
 
 #: winemine.rc:41
 msgid "&Expert"
@@ -13641,23 +13502,20 @@ msgid "&Custom..."
 msgstr "&Po meri ..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
-msgstr "&Najboljši časi ..."
+msgstr "&Najhitrejši časi"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&O Wine"
+msgstr "&O WineMine"
 
 #: winemine.rc:56
 msgid "Fastest Times"
-msgstr "Najboljši časi"
+msgstr "Najhitrejši časi"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
-msgstr "Najboljši časi"
+msgstr "Najhitrejši časi"
 
 #: winemine.rc:59
 msgid "Beginner"
@@ -13665,7 +13523,7 @@ msgstr "Začetnik"
 
 #: winemine.rc:60
 msgid "Advanced"
-msgstr "Napreden"
+msgstr "Srednje"
 
 #: winemine.rc:61
 msgid "Expert"
@@ -13681,16 +13539,15 @@ msgstr "Vnesite svoje ime"
 
 #: winemine.rc:84
 msgid "Custom Game"
-msgstr "Poljubna igra"
+msgstr "Igra po meri"
 
 #: winemine.rc:86
 msgid "Rows"
 msgstr "Vrstice"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "&Stoplec"
+msgstr "Stolpci"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -13710,7 +13567,7 @@ msgstr "Avtorske pravice 2000 Joshua Thielen"
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
-msgstr "Priprava &tiskalnika ..."
+msgstr "Nastavitev &tiskalnika ..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
@@ -13745,9 +13602,8 @@ msgid "Large"
 msgstr "Velika"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "&Pomoč o pomoči"
+msgstr "&Pomoč o pomoči\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -13767,7 +13623,7 @@ msgstr "Kopiraj"
 
 #: winhlp32.rc:97
 msgid "Index"
-msgstr "Indeks"
+msgstr "Kazalo"
 
 #: winhlp32.rc:105
 msgid "Search"
@@ -13775,7 +13631,7 @@ msgstr "Iskanje"
 
 #: winhlp32.rc:78
 msgid "Wine Help"
-msgstr "Wine pomoč"
+msgstr "Pomoč Wine"
 
 #: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
@@ -13815,7 +13671,7 @@ msgstr "Uve&ljavi\tCtrl+Y"
 
 #: wordpad.rc:47
 msgid "&Clear\tDEL"
-msgstr "Po&briši\tDEL"
+msgstr "Po&čisti\tDEL"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
@@ -13899,12 +13755,11 @@ msgstr "Oza&dje"
 
 #: wordpad.rc:87
 msgid "&System\tCtrl+1"
-msgstr "&Sistem\tCtrl+1"
+msgstr "&Sistemska\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
-msgstr "&ObjaviTo rumenkasto\tCtrl+2"
+msgstr "&Svetlo rumena\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
@@ -13924,7 +13779,7 @@ msgstr "Razpoložljive oblike"
 
 #: wordpad.rc:213
 msgid "New document type"
-msgstr "Vrsta dokumenta"
+msgstr "Nova vrsta dokumenta"
 
 #: wordpad.rc:221
 msgid "Paragraph format"
@@ -13968,7 +13823,7 @@ msgstr "Prelom vrstic"
 
 #: wordpad.rc:257
 msgid "&No line wrapping"
-msgstr "No line wrapping"
+msgstr "&Brez preloma vrstic"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
@@ -14011,9 +13866,8 @@ msgid "Unicode text document"
 msgstr "Besedilni dokument Unicode"
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "Datoteke tiskalnika (*.PRN)"
+msgstr "Datoteke tiskalnika (*.prn)"
 
 #: wordpad.rc:150
 msgid "Center"
@@ -14060,26 +13914,23 @@ msgid "Pages"
 msgstr "Strani"
 
 #: wordpad.rc:172
-#, fuzzy
 msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "cm"
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
-msgstr "pa"
+msgstr "palcev"
 
 #: wordpad.rc:174
 msgid "inch"
 msgstr "palec"
 
 #: wordpad.rc:175
-#, fuzzy
 msgctxt "unit: point"
 msgid "pt"
-msgstr "tč"
+msgstr "točk"
 
 #: wordpad.rc:180
 msgid "Document"
@@ -14146,69 +13997,58 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Neveljavno število parametrov - za pomoč uporabite xcopy /?\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
-msgstr "Neveljaven parameter '%s' -  za pomoč uporabite xcopy /?\n"
+msgstr "Neveljaven parameter '%1' -  za pomoč uporabite xcopy /?\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
 msgstr "Za začetek kopiranja pritisnite <enter>\n"
 
 #: xcopy.rc:30
-#, fuzzy
 msgid "%1!d! file(s) would be copied\n"
-msgstr "%d datotek bo bilo prekopiranih\n"
+msgstr "%1!d! datotek bi bilo kopiranih\n"
 
 #: xcopy.rc:31
-#, fuzzy
 msgid "%1!d! file(s) copied\n"
-msgstr "Prekopiranih je bilo %d datotek\n"
+msgstr "%1!d! datotek je bilo kopiranih\n"
 
 #: xcopy.rc:34
-#, fuzzy
 msgid ""
 "Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"Ali je '%s' ime ciljne datoteke\n"
+"Ali je '%1' ime ciljne datoteke\n"
 "ali mape?\n"
 "(D - Datoteka, M - Mapa)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s? (Da|Ne)\n"
+msgstr "%1 (Da|Ne)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Ali želite %s prepisati? (Da|Ne|Vse)\n"
+msgstr "Ali želite prepisati %1? (Da|Ne|Vse)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "Kopiranje '%s' v '%s' je spodletelo (koda napake: %d)\n"
+msgstr "Kopiranje '%1' v '%2' je spodletelo z r/c %3!d!\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%1'\n"
-msgstr "Napaka med branjem '%s'\n"
+msgstr "Napaka med branjem '%1'\n"
 
 #: xcopy.rc:43
-#, fuzzy
 msgctxt "File key"
 msgid "F"
-msgstr "F"
+msgstr "D"
 
 #: xcopy.rc:44
-#, fuzzy
 msgctxt "Directory key"
 msgid "D"
 msgstr "M"
 
 #: xcopy.rc:77
-#, fuzzy
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
