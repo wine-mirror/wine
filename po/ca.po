@@ -1163,7 +1163,7 @@ msgstr "Connecta a %s"
 
 #: credui.rc:28
 msgid "Connecting to %s"
-msgstr "Connectant a $s"
+msgstr "Connectant a %s"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
@@ -7175,6 +7175,7 @@ msgid "Inserts the contents of the clipboard into your document as %s."
 msgstr "Insereix el contingut del portapapers en el document com %s."
 
 #: oledlg.rc:35
+#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
@@ -7183,6 +7184,7 @@ msgstr ""
 "podeu activar mitjançant %s."
 
 #: oledlg.rc:36
+#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s.  It will be displayed as an icon."
@@ -10033,7 +10035,7 @@ msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"El Nombre de Sèrie del Volum és %04x-%04x\n"
+"El Nombre de Sèrie del Volum és %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -11578,7 +11580,7 @@ msgstr "El procès amb PID %1!u! s'ha terminat a la força.\n"
 
 #: taskkill.rc:36
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "El procès \"%1\" amb PID %u s'ha terminat a la força.\n"
+msgstr "El procès \"%1\" amb PID %2!u! s'ha terminat a la força.\n"
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%1\".\n"
@@ -14142,7 +14144,7 @@ msgstr "Sobreescriure %1? (Yes|No|All)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "La còpia de '%1' a '%2' ha fallat amb r/c %d\n"
+msgstr "La còpia de '%1' a '%2' ha fallat amb r/c %3!d!\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%1'\n"
