@@ -1175,11 +1175,30 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD *byte_code,
     TRACE("(%p, %x, %p)\n", byte_code, flags, constant_table);
 
     if (!byte_code || !constant_table)
+    {
+        WARN("Invalid argument specified.\n");
         return D3DERR_INVALIDCALL;
+    }
 
     hr = D3DXFindShaderComment(byte_code, MAKEFOURCC('C','T','A','B'), &data, &size);
     if (hr != D3D_OK)
+    {
+        WARN("CTAB not found.\n");
         return D3DXERR_INVALIDDATA;
+    }
+
+    if (size < sizeof(D3DXSHADER_CONSTANTTABLE))
+    {
+        WARN("Invalid CTAB size.\n");
+        return D3DXERR_INVALIDDATA;
+    }
+
+    ctab_header = (const D3DXSHADER_CONSTANTTABLE *)data;
+    if (ctab_header->Size != sizeof(D3DXSHADER_CONSTANTTABLE))
+    {
+        WARN("Invalid D3DXSHADER_CONSTANTTABLE size.\n");
+        return D3DXERR_INVALIDDATA;
+    }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1191,28 +1210,16 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD *byte_code,
     object->ID3DXConstantTable_iface.lpVtbl = &ID3DXConstantTable_Vtbl;
     object->ref = 1;
 
-    if (size < sizeof(D3DXSHADER_CONSTANTTABLE))
-    {
-        hr = D3DXERR_INVALIDDATA;
-        goto error;
-    }
-
     object->ctab = HeapAlloc(GetProcessHeap(), 0, size);
     if (!object->ctab)
     {
         ERR("Out of memory\n");
-        hr = E_OUTOFMEMORY;
-        goto error;
+        HeapFree(GetProcessHeap(), 0, object);
+        return E_OUTOFMEMORY;
     }
     object->size = size;
     memcpy(object->ctab, data, object->size);
 
-    ctab_header = (const D3DXSHADER_CONSTANTTABLE*)data;
-    if (ctab_header->Size != sizeof(D3DXSHADER_CONSTANTTABLE))
-    {
-        hr = D3DXERR_INVALIDDATA;
-        goto error;
-    }
     object->desc.Creator = ctab_header->Creator ? object->ctab + ctab_header->Creator : NULL;
     object->desc.Version = ctab_header->Version;
     object->desc.Constants = ctab_header->Constants;
