@@ -1477,11 +1477,9 @@ static void test_dispex(void)
 
 static void test_get(void)
 {
-    static const WCHAR uriW[] = {'u','r','i',0};
     IXMLDOMSchemaCollection2 *cache;
     IXMLDOMNode *node;
     HRESULT hr;
-    BSTR s;
 
     cache = create_cache_version(60, &IID_IXMLDOMSchemaCollection2);
     if (!cache) return;
@@ -1489,10 +1487,8 @@ static void test_get(void)
     hr = IXMLDOMSchemaCollection2_get(cache, NULL, NULL);
     EXPECT_HR(hr, E_NOTIMPL);
 
-    s = SysAllocString(uriW);
-    hr = IXMLDOMSchemaCollection2_get(cache, s, &node);
+    hr = IXMLDOMSchemaCollection2_get(cache, _bstr_("uri"), &node);
     EXPECT_HR(hr, E_NOTIMPL);
-    SysFreeString(s);
 
     IXMLDOMSchemaCollection2_Release(cache);
 
@@ -1502,12 +1498,103 @@ static void test_get(void)
     hr = IXMLDOMSchemaCollection2_get(cache, NULL, NULL);
     EXPECT_HR(hr, E_POINTER);
 
-    s = SysAllocString(uriW);
-    hr = IXMLDOMSchemaCollection2_get(cache, s, &node);
+    hr = IXMLDOMSchemaCollection2_get(cache, _bstr_("uri"), &node);
     EXPECT_HR(hr, S_OK);
-    SysFreeString(s);
 
     IXMLDOMSchemaCollection2_Release(cache);
+    free_bstrs();
+}
+
+static void test_remove(void)
+{
+    IXMLDOMSchemaCollection2 *cache;
+    IXMLDOMDocument *doc;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    VARIANT v;
+    LONG len;
+
+    cache = create_cache_version(60, &IID_IXMLDOMSchemaCollection2);
+    if (!cache) return;
+
+    doc = create_document_version(60, &IID_IXMLDOMDocument);
+    ok(doc != NULL, "got %p\n", doc);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(xsd_schema1_xml), &b);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)doc;
+    hr = IXMLDOMSchemaCollection2_add(cache, _bstr_(xsd_schema1_uri), v);
+    EXPECT_HR(hr, S_OK);
+
+    len = -1;
+    hr = IXMLDOMSchemaCollection2_get_length(cache, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 1, "got %d\n", len);
+
+    /* ::remove() is a stub for version 6 */
+    hr = IXMLDOMSchemaCollection2_remove(cache, NULL);
+    EXPECT_HR(hr, E_NOTIMPL);
+
+    hr = IXMLDOMSchemaCollection2_remove(cache, _bstr_("invaliduri"));
+    EXPECT_HR(hr, E_NOTIMPL);
+
+    hr = IXMLDOMSchemaCollection2_remove(cache, _bstr_(xsd_schema1_uri));
+    EXPECT_HR(hr, E_NOTIMPL);
+
+    len = -1;
+    hr = IXMLDOMSchemaCollection2_get_length(cache, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 1, "got %d\n", len);
+
+    IXMLDOMDocument_Release(doc);
+    IXMLDOMSchemaCollection2_Release(cache);
+    free_bstrs();
+
+    /* ::remove() works for version 4 */
+    cache = create_cache_version(40, &IID_IXMLDOMSchemaCollection2);
+    if (!cache) return;
+
+    doc = create_document_version(40, &IID_IXMLDOMDocument);
+    ok(doc != NULL, "got %p\n", doc);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(xsd_schema1_xml), &b);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)doc;
+    hr = IXMLDOMSchemaCollection2_add(cache, _bstr_(xsd_schema1_uri), v);
+    EXPECT_HR(hr, S_OK);
+
+    len = -1;
+    hr = IXMLDOMSchemaCollection2_get_length(cache, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 1, "got %d\n", len);
+
+    hr = IXMLDOMSchemaCollection2_remove(cache, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMSchemaCollection2_remove(cache, _bstr_("invaliduri"));
+    EXPECT_HR(hr, S_OK);
+
+    len = -1;
+    hr = IXMLDOMSchemaCollection2_get_length(cache, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 1, "got %d\n", len);
+
+    hr = IXMLDOMSchemaCollection2_remove(cache, _bstr_(xsd_schema1_uri));
+    EXPECT_HR(hr, S_OK);
+
+    len = -1;
+    hr = IXMLDOMSchemaCollection2_get_length(cache, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 0, "got %d\n", len);
+
+    IXMLDOMDocument_Release(doc);
+    IXMLDOMSchemaCollection2_Release(cache);
+
+    free_bstrs();
 }
 
 START_TEST(schema)
@@ -1526,6 +1613,7 @@ START_TEST(schema)
     test_validate_on_load();
     test_dispex();
     test_get();
+    test_remove();
 
     CoUninitialize();
 }

@@ -1167,6 +1167,8 @@ static HRESULT WINAPI schema_cache_remove(IXMLDOMSchemaCollection2* iface, BSTR 
     xmlChar* name = uri ? xmlchar_from_wchar(uri) : xmlchar_from_wchar(emptyW);
     TRACE("(%p)->(%s)\n", This, debugstr_w(uri));
 
+    if (This->version == MSXML6) return E_NOTIMPL;
+
     xmlHashRemoveEntry(This->cache, name, cache_free);
     heap_free(name);
     return S_OK;

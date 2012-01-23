@@ -11140,24 +11140,41 @@ static void test_nodeValue(void)
     IXMLDOMDocument_Release(doc);
 }
 
-static char namespacesA[] =
+static const char namespacesA[] =
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
 "   <ns1:elem1 xmlns:ns1=\"http://blah.org\">"
-"     <ns1:elem2/>"
+"     <ns2:elem2 xmlns:ns2=\"http://blah.org\"/>"
 "     <ns1:elem3/>"
 "     <ns1:elem4/>"
 "     <elem5 xmlns=\"http://blahblah.org\"/>"
 "     <ns1:elem6>true</ns1:elem6>"
 "   </ns1:elem1>";
 
+static const char xsd_schema1_uri[] = "x-schema:test1.xsd";
+static const char xsd_schema1_xml[] =
+"<?xml version='1.0'?>"
+"<schema xmlns='http://www.w3.org/2001/XMLSchema'"
+"            targetNamespace='x-schema:test1.xsd'>"
+"   <element name='root'>"
+"       <complexType>"
+"           <sequence maxOccurs='unbounded'>"
+"               <any/>"
+"           </sequence>"
+"       </complexType>"
+"   </element>"
+"</schema>";
+
 static void test_get_namespaces(void)
 {
     IXMLDOMSchemaCollection *collection, *collection2;
-    IXMLDOMDocument2 *doc;
+    IXMLDOMDocument2 *doc, *doc2;
+    IEnumVARIANT *enumv;
     IXMLDOMNode *node;
     VARIANT_BOOL b;
     HRESULT hr;
+    VARIANT v;
     LONG len;
+    BSTR s;
 
     doc = create_document(&IID_IXMLDOMDocument2);
     if (!doc) return;
@@ -11214,8 +11231,165 @@ todo_wine
     EXPECT_HR(hr, S_OK);
     ok(node == NULL, "got %p\n", node);
 
+    /* load schema and try to add it */
+    doc2 = create_document(&IID_IXMLDOMDocument2);
+    hr = IXMLDOMDocument2_loadXML(doc2, _bstr_(xsd_schema1_xml), &b);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)doc2;
+    hr = IXMLDOMSchemaCollection_add(collection, _bstr_(xsd_schema1_uri), v);
+    EXPECT_HR(hr, E_FAIL);
+
+    hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 0, &s);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(s, _bstr_("http://blah.org")), "got %s\n", wine_dbgstr_w(s));
+    SysFreeString(s);
+
+    hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 1, &s);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(s, _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(s));
+    SysFreeString(s);
+
+    s = (void*)0xdeadbeef;
+    hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 2, &s);
+    EXPECT_HR(hr, E_FAIL);
+    ok(s == (void*)0xdeadbeef, "got %p\n", s);
+
+    /* enumerate */
+    enumv = (void*)0xdeadbeef;
+    hr = IXMLDOMSchemaCollection_get__newEnum(collection, (IUnknown**)&enumv);
+    EXPECT_HR(hr, S_OK);
+    ok(enumv != NULL, "got %p\n", enumv);
+
+    V_VT(&v) = VT_EMPTY;
+    hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_NULL;
+    hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
+    EXPECT_HR(hr, S_FALSE);
+    ok(V_VT(&v) == VT_EMPTY, "got %d\n", V_VT(&v));
+
+    IEnumVARIANT_Release(enumv);
     IXMLDOMSchemaCollection_Release(collection);
 
+    IXMLDOMDocument2_Release(doc);
+
+    /* now with CLSID_DOMDocument60 */
+    doc = create_document_version(60, &IID_IXMLDOMDocument2);
+    if (!doc) return;
+
+    /* null pointer */
+    hr = IXMLDOMDocument2_get_namespaces(doc, NULL);
+    EXPECT_HR(hr, E_POINTER);
+
+    /* no document loaded */
+    collection = (void*)0xdeadbeef;
+    hr = IXMLDOMDocument2_get_namespaces(doc, &collection);
+todo_wine
+    EXPECT_HR(hr, S_OK);
+    if (hr != S_OK)
+    {
+        IXMLDOMDocument_Release(doc);
+        return;
+    }
+    EXPECT_REF(collection, 2);
+
+    collection2 = (void*)0xdeadbeef;
+    hr = IXMLDOMDocument2_get_namespaces(doc, &collection2);
+    EXPECT_HR(hr, S_OK);
+    ok(collection == collection2, "got %p\n", collection2);
+    EXPECT_REF(collection, 3);
+    IXMLDOMSchemaCollection_Release(collection);
+
+    len = -1;
+    hr = IXMLDOMSchemaCollection_get_length(collection, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 0, "got %d\n", len);
+    IXMLDOMSchemaCollection_Release(collection);
+
+    /* now with document */
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(namespacesA), &b);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument2_get_namespaces(doc, &collection);
+    EXPECT_HR(hr, S_OK);
+
+    len = -1;
+    hr = IXMLDOMSchemaCollection_get_length(collection, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 2, "got %d\n", len);
+
+    /* try to lookup some uris */
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMSchemaCollection_get(collection, _bstr_("http://blah.org"), &node);
+    EXPECT_HR(hr, E_NOTIMPL);
+    ok(node == (void*)0xdeadbeef, "got %p\n", node);
+
+    /* load schema and try to add it */
+    doc2 = create_document(&IID_IXMLDOMDocument2);
+    hr = IXMLDOMDocument2_loadXML(doc2, _bstr_(xsd_schema1_xml), &b);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)doc2;
+    hr = IXMLDOMSchemaCollection_add(collection, _bstr_(xsd_schema1_uri), v);
+    EXPECT_HR(hr, E_FAIL);
+    IXMLDOMSchemaCollection_Release(doc2);
+
+    hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 0, &s);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(s, _bstr_("http://blah.org")), "got %s\n", wine_dbgstr_w(s));
+    SysFreeString(s);
+
+    hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 1, &s);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(s, _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(s));
+    SysFreeString(s);
+
+    s = (void*)0xdeadbeef;
+    hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 2, &s);
+    EXPECT_HR(hr, E_FAIL);
+    ok(s == (void*)0xdeadbeef, "got %p\n", s);
+
+    /* enumerate */
+    enumv = (void*)0xdeadbeef;
+    hr = IXMLDOMSchemaCollection_get__newEnum(collection, (IUnknown**)&enumv);
+    EXPECT_HR(hr, S_OK);
+    ok(enumv != NULL, "got %p\n", enumv);
+
+    V_VT(&v) = VT_EMPTY;
+    hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_NULL;
+    hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
+    EXPECT_HR(hr, S_FALSE);
+    ok(V_VT(&v) == VT_EMPTY, "got %d\n", V_VT(&v));
+
+    IEnumVARIANT_Release(enumv);
+    IXMLDOMSchemaCollection_Release(collection);
     IXMLDOMDocument2_Release(doc);
     free_bstrs();
 }
