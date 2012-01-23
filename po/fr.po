@@ -10329,7 +10329,7 @@ msgstr "Co&ller\tCtrl+V"
 #: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:90 regedit.rc:106
 #: winefile.rc:29
 msgid "&Delete\tDel"
-msgstr "&Effacer\tDel"
+msgstr "&Effacer\tSuppr"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -13406,7 +13406,7 @@ msgstr "Barre de &lecteur"
 
 #: winefile.rc:70
 msgid "F&ull Screen\tCtrl+Shift+S"
-msgstr "P&lein écran\tCtrl+Shift+S"
+msgstr "P&lein écran\tCtrl+Maj+S"
 
 #: winefile.rc:77
 msgid "New &Window"
