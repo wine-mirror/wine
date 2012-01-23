@@ -10595,7 +10595,7 @@ msgstr ""
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
-msgstr "Seleccionar &tudo"
+msgstr "Seleccionar &tudo\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
