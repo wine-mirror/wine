@@ -10360,7 +10360,7 @@ msgstr "'%s' は見つかりませんでした"
 
 #: notepad.rc:82
 msgid "Unicode (UTF-16)"
-msgstr ""
+msgstr "Unicode (UTF-16)"
 
 #: notepad.rc:83
 msgid "Unicode (UTF-16 big-endian)"
@@ -10368,7 +10368,7 @@ msgstr ""
 
 #: notepad.rc:84
 msgid "Unicode (UTF-8)"
-msgstr ""
+msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:91
 msgid ""
@@ -13579,7 +13579,7 @@ msgstr "常に手前に表示(&T)"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "情報(&I)..."
+msgstr ""
 
 #: winhlp32.rc:64
 msgid "Annotation..."
