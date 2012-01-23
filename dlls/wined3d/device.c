@@ -3185,13 +3185,14 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
         const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, DWORD flags,
         DWORD DestFVF)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    char *dest_ptr, *dest_conv = NULL, *dest_conv_addr = NULL;
     struct wined3d_matrix mat, proj_mat, view_mat, world_mat;
     struct wined3d_viewport vp;
+    UINT vertex_size;
     unsigned int i;
+    BYTE *dest_ptr;
     BOOL doClip;
     DWORD numTextures;
+    HRESULT hr;
 
     if (stream_info->use_map & (1 << WINED3D_FFP_NORMAL))
     {
@@ -3202,34 +3203,6 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     {
         ERR("Source has no position mask\n");
         return WINED3DERR_INVALIDCALL;
-    }
-
-    if (!dest->resource.allocatedMemory)
-        buffer_get_sysmem(dest, gl_info);
-
-    /* Get a pointer into the destination vbo(create one if none exists) and
-     * write correct opengl data into it. It's cheap and allows us to run drawStridedFast
-     */
-    if (!dest->buffer_object && gl_info->supported[ARB_VERTEX_BUFFER_OBJECT])
-    {
-        dest->flags |= WINED3D_BUFFER_CREATEBO;
-        wined3d_buffer_preload(dest);
-    }
-
-    if (dest->buffer_object)
-    {
-        unsigned char extrabytes = 0;
-        /* If the destination vertex buffer has D3DFVF_XYZ position(non-rhw), native d3d writes RHW position, where the RHW
-         * gets written into the 4 bytes after the Z position. In the case of a dest buffer that only has D3DFVF_XYZ data,
-         * this may write 4 extra bytes beyond the area that should be written
-         */
-        if(DestFVF == WINED3DFVF_XYZ) extrabytes = 4;
-        dest_conv_addr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwCount * get_flexible_vertex_size(DestFVF) + extrabytes);
-        if(!dest_conv_addr) {
-            ERR("Out of memory\n");
-            /* Continue without storing converted vertices */
-        }
-        dest_conv = dest_conv_addr;
     }
 
     if (device->stateBlock->state.render_states[WINED3D_RS_CLIPPING])
@@ -3248,8 +3221,16 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
            warned = TRUE;
            FIXME("Clipping is broken and disabled for now\n");
         }
-    } else doClip = FALSE;
-    dest_ptr = ((char *)buffer_get_sysmem(dest, gl_info)) + dwDestIndex * get_flexible_vertex_size(DestFVF);
+    }
+    else
+        doClip = FALSE;
+
+    vertex_size = get_flexible_vertex_size(DestFVF);
+    if (FAILED(hr = wined3d_buffer_map(dest, dwDestIndex * vertex_size, dwCount * vertex_size, &dest_ptr, 0)))
+    {
+        WARN("Failed to map buffer, hr %#x.\n", hr);
+        return hr;
+    }
 
     wined3d_device_get_transform(device, WINED3D_TS_VIEW, &view_mat);
     wined3d_device_get_transform(device, WINED3D_TS_PROJECTION, &proj_mat);
@@ -3382,28 +3363,13 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 
             dest_ptr += 3 * sizeof(float);
 
-            if((DestFVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW) {
+            if ((DestFVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW)
                 dest_ptr += sizeof(float);
-            }
-
-            if(dest_conv) {
-                float w = 1 / rhw;
-                ( (float *) dest_conv)[0] = x * w;
-                ( (float *) dest_conv)[1] = y * w;
-                ( (float *) dest_conv)[2] = z * w;
-                ( (float *) dest_conv)[3] = w;
-
-                dest_conv += 3 * sizeof(float);
-
-                if((DestFVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW) {
-                    dest_conv += sizeof(float);
-                }
-            }
         }
-        if (DestFVF & WINED3DFVF_PSIZE) {
+
+        if (DestFVF & WINED3DFVF_PSIZE)
             dest_ptr += sizeof(DWORD);
-            if(dest_conv) dest_conv += sizeof(DWORD);
-        }
+
         if (DestFVF & WINED3DFVF_NORMAL)
         {
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_NORMAL];
@@ -3411,9 +3377,6 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
             /* AFAIK this should go into the lighting information */
             FIXME("Didn't expect the destination to have a normal\n");
             copy_and_next(dest_ptr, normal, 3 * sizeof(float));
-            if(dest_conv) {
-                copy_and_next(dest_conv, normal, 3 * sizeof(float));
-            }
         }
 
         if (DestFVF & WINED3DFVF_DIFFUSE)
@@ -3431,20 +3394,10 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 
                 *( (DWORD *) dest_ptr) = 0xffffffff;
                 dest_ptr += sizeof(DWORD);
-
-                if(dest_conv) {
-                    *( (DWORD *) dest_conv) = 0xffffffff;
-                    dest_conv += sizeof(DWORD);
-                }
             }
-            else {
+            else
+            {
                 copy_and_next(dest_ptr, color_d, sizeof(DWORD));
-                if(dest_conv) {
-                    *( (DWORD *) dest_conv)  = (*color_d & 0xff00ff00)      ; /* Alpha + green */
-                    *( (DWORD *) dest_conv) |= (*color_d & 0x00ff0000) >> 16; /* Red */
-                    *( (DWORD *) dest_conv) |= (*color_d & 0xff0000ff) << 16; /* Blue */
-                    dest_conv += sizeof(DWORD);
-                }
             }
         }
 
@@ -3464,20 +3417,10 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 
                 *( (DWORD *) dest_ptr) = 0xFF000000;
                 dest_ptr += sizeof(DWORD);
-
-                if(dest_conv) {
-                    *( (DWORD *) dest_conv) = 0xFF000000;
-                    dest_conv += sizeof(DWORD);
-                }
             }
-            else {
+            else
+            {
                 copy_and_next(dest_ptr, color_s, sizeof(DWORD));
-                if(dest_conv) {
-                    *( (DWORD *) dest_conv)  = (*color_s & 0xff00ff00)      ; /* Alpha + green */
-                    *( (DWORD *) dest_conv) |= (*color_s & 0x00ff0000) >> 16; /* Red */
-                    *( (DWORD *) dest_conv) |= (*color_s & 0xff0000ff) << 16; /* Blue */
-                    dest_conv += sizeof(DWORD);
-                }
             }
         }
 
@@ -3488,33 +3431,16 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
             if (!(stream_info->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + tex_index))))
             {
                 ERR("No source texture, but destination requests one\n");
-                dest_ptr+=GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float);
-                if(dest_conv) dest_conv += GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float);
+                dest_ptr += GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float);
             }
-            else {
+            else
+            {
                 copy_and_next(dest_ptr, tex_coord, GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float));
-                if(dest_conv) {
-                    copy_and_next(dest_conv, tex_coord, GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float));
-                }
             }
         }
     }
 
-    if (dest_conv)
-    {
-        ENTER_GL();
-
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, dest->buffer_object));
-        checkGLcall("glBindBufferARB(GL_ARRAY_BUFFER_ARB)");
-        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, dwDestIndex * get_flexible_vertex_size(DestFVF),
-                                      dwCount * get_flexible_vertex_size(DestFVF),
-                                      dest_conv_addr));
-        checkGLcall("glBufferSubDataARB(GL_ARRAY_BUFFER_ARB)");
-
-        LEAVE_GL();
-
-        HeapFree(GetProcessHeap(), 0, dest_conv_addr);
-    }
+    wined3d_buffer_unmap(dest);
 
     return WINED3D_OK;
 }
