@@ -588,9 +588,152 @@ static void test_coop_level_d3d_state(void)
     DestroyWindow(window);
 }
 
+static void test_surface_interface_mismatch(void)
+{
+    IDirectDraw *ddraw = NULL;
+    IDirect3D *d3d = NULL;
+    IDirectDrawSurface *surface = NULL, *ds;
+    IDirectDrawSurface3 *surface3 = NULL;
+    IDirect3DDevice *device = NULL;
+    IDirect3DViewport *viewport = NULL;
+    IDirect3DMaterial *background = NULL;
+    DDSURFACEDESC surface_desc;
+    DWORD z_depth = 0;
+    HRESULT hr;
+    D3DCOLOR color;
+    HWND window;
+    D3DVIEWPORT vp;
+    D3DMATERIAL material;
+    D3DMATERIALHANDLE background_handle;
+    D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        goto cleanup;
+    }
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
+    surface_desc.dwWidth = 640;
+    surface_desc.dwHeight = 480;
+
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface3, (void **)&surface3);
+    if (FAILED(hr))
+    {
+        skip("Failed to get the IDirectDrawSurface3 interface, skipping test.\n");
+        goto cleanup;
+    }
+
+    hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D, (void **)&d3d);
+    if (FAILED(hr))
+    {
+        skip("Failed to get the IDirect3D interface, skipping test.\n");
+        goto cleanup;
+    }
+
+    hr = IDirect3D_EnumDevices(d3d, enum_z_fmt, &z_depth);
+    if (FAILED(hr) || !z_depth)
+    {
+        skip("No depth buffer formats available, skipping test.\n");
+        goto cleanup;
+    }
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    surface_desc.dwZBufferBitDepth = z_depth;
+    surface_desc.dwWidth = 640;
+    surface_desc.dwHeight = 480;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &ds, NULL);
+    ok(SUCCEEDED(hr), "Failed to create depth buffer, hr %#x.\n", hr);
+    if (FAILED(hr))
+        goto cleanup;
+
+    /* Using a different surface interface version still works */
+    hr = IDirectDrawSurface3_AddAttachedSurface(surface3, (IDirectDrawSurface3 *)ds);
+    ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(ds);
+    if (FAILED(hr))
+        goto cleanup;
+
+    /* Here too */
+    hr = IDirectDrawSurface3_QueryInterface(surface3, &IID_IDirect3DHALDevice, (void **)&device);
+    ok(SUCCEEDED(hr), "Failed to create d3d device.\n");
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = IDirect3D_CreateViewport(d3d, &viewport, NULL);
+    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
+    hr = IDirect3D_CreateMaterial(d3d, &background, NULL);
+    ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice_AddViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to add viewport, hr %#x.\n", hr);
+    memset(&vp, 0, sizeof(vp));
+    vp.dwSize = sizeof(vp);
+    vp.dwX = 0;
+    vp.dwY = 0;
+    vp.dwWidth = 640;
+    vp.dwHeight = 480;
+    vp.dvScaleX = 320.0f;
+    vp.dvScaleY = 240.0f;
+    vp.dvMaxX = 1.0f;
+    vp.dvMaxY = 1.0f;
+    vp.dvMinZ = 0.0f;
+    vp.dvMaxZ = 1.0f;
+    hr = IDirect3DViewport_SetViewport(viewport, &vp);
+    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+
+    memset(&material, 0, sizeof(material));
+    material.dwSize = sizeof(material);
+    U1(U(material).diffuse).r = 1.0f;
+    U2(U(material).diffuse).g = 0.0f;
+    U3(U(material).diffuse).b = 0.0f;
+    U4(U(material).diffuse).a = 1.0f;
+    hr = IDirect3DMaterial_SetMaterial(background, &material);
+    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
+    hr = IDirect3DMaterial_GetHandle(background, device, &background_handle);
+    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+    hr = IDirect3DViewport_SetBackground(viewport, background_handle);
+    ok(SUCCEEDED(hr), "Failed to set viewport background, hr %#x.\n", hr);
+
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+    color = get_surface_color(surface, 320, 240);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+
+cleanup:
+    if (viewport)
+    {
+        IDirect3DDevice2_DeleteViewport(device, viewport);
+        IDirect3DViewport2_Release(viewport);
+    }
+    if (background) IDirect3DMaterial2_Release(background);
+    if (surface3) IDirectDrawSurface3_Release(surface3);
+    if (surface) IDirectDrawSurface7_Release(surface);
+    if (device) IDirect3DDevice2_Release(device);
+    if (d3d) IDirect3D7_Release(d3d);
+    if (ddraw) IDirectDraw7_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     test_coop_level_create_device_window();
     test_clipper_blt();
     test_coop_level_d3d_state();
+    test_surface_interface_mismatch();
 }

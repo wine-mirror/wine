@@ -5321,38 +5321,85 @@ static const struct IDirect3DTextureVtbl d3d_texture1_vtbl =
     d3d_texture1_Unload,
 };
 
+/* Some games (e.g. Tomb Raider 3) pass the wrong version of the
+ * IDirectDrawSurface interface to ddraw methods. */
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface7(IDirectDrawSurface7 *iface)
 {
     if (!iface) return NULL;
-    assert(iface->lpVtbl == &ddraw_surface7_vtbl);
+    if (iface->lpVtbl != &ddraw_surface7_vtbl)
+    {
+        HRESULT hr = IUnknown_QueryInterface(iface, &IID_IDirectDrawSurface7, (void **)&iface);
+        if (FAILED(hr))
+        {
+            WARN("Object %p doesn't expose interface IDirectDrawSurface7.\n", iface);
+            return NULL;
+        }
+        IUnknown_Release(iface);
+    }
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface7_iface);
 }
 
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *iface)
 {
     if (!iface) return NULL;
-    assert(iface->lpVtbl == &ddraw_surface4_vtbl);
+    if (iface->lpVtbl != &ddraw_surface4_vtbl)
+    {
+        HRESULT hr = IUnknown_QueryInterface(iface, &IID_IDirectDrawSurface4, (void **)&iface);
+        if (FAILED(hr))
+        {
+            WARN("Object %p doesn't expose interface IDirectDrawSurface4.\n", iface);
+            return NULL;
+        }
+        IUnknown_Release(iface);
+    }
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface4_iface);
 }
 
 static IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface)
 {
     if (!iface) return NULL;
-    assert(iface->lpVtbl == &ddraw_surface3_vtbl);
+    if (iface->lpVtbl != &ddraw_surface3_vtbl)
+    {
+        HRESULT hr = IUnknown_QueryInterface(iface, &IID_IDirectDrawSurface3, (void **)&iface);
+        if (FAILED(hr))
+        {
+            WARN("Object %p doesn't expose interface IDirectDrawSurface3.\n", iface);
+            return NULL;
+        }
+        IUnknown_Release(iface);
+    }
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_iface);
 }
 
 static IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface2(IDirectDrawSurface2 *iface)
 {
     if (!iface) return NULL;
-    assert(iface->lpVtbl == &ddraw_surface2_vtbl);
+    if (iface->lpVtbl != &ddraw_surface2_vtbl)
+    {
+        HRESULT hr = IUnknown_QueryInterface(iface, &IID_IDirectDrawSurface2, (void **)&iface);
+        if (FAILED(hr))
+        {
+            WARN("Object %p doesn't expose interface IDirectDrawSurface2.\n", iface);
+            return NULL;
+        }
+        IUnknown_Release(iface);
+    }
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface2_iface);
 }
 
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface(IDirectDrawSurface *iface)
 {
     if (!iface) return NULL;
-    assert(iface->lpVtbl == &ddraw_surface1_vtbl);
+    if (iface->lpVtbl != &ddraw_surface1_vtbl)
+    {
+        HRESULT hr = IUnknown_QueryInterface(iface, &IID_IDirectDrawSurface, (void **)&iface);
+        if (FAILED(hr))
+        {
+            WARN("Object %p doesn't expose interface IDirectDrawSurface.\n", iface);
+            return NULL;
+        }
+        IUnknown_Release(iface);
+    }
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface_iface);
 }
 

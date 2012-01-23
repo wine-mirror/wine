@@ -802,10 +802,130 @@ static void test_coop_level_d3d_state(void)
     DestroyWindow(window);
 }
 
+static void test_surface_interface_mismatch(void)
+{
+    IDirectDraw4 *ddraw = NULL;
+    IDirect3D3 *d3d = NULL;
+    IDirectDrawSurface4 *surface = NULL, *ds;
+    IDirectDrawSurface3 *surface3 = NULL;
+    IDirect3DDevice3 *device = NULL;
+    IDirect3DViewport3 *viewport = NULL;
+    DDSURFACEDESC2 surface_desc;
+    DDPIXELFORMAT z_fmt;
+    HRESULT hr;
+    D3DCOLOR color;
+    HWND window;
+    D3DVIEWPORT2 vp;
+    D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        goto cleanup;
+    }
+
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
+    surface_desc.dwWidth = 640;
+    surface_desc.dwHeight = 480;
+
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_QueryInterface(surface, &IID_IDirectDrawSurface3, (void **)&surface3);
+    ok(SUCCEEDED(hr), "Failed to QI IDirectDrawSurface3, hr %#x.\n", hr);
+
+    hr = IDirectDraw4_QueryInterface(ddraw, &IID_IDirect3D3, (void **)&d3d);
+    if (FAILED(hr))
+    {
+        skip("Failed to get the IDirect3D7 interface, skipping test.\n");
+        goto cleanup;
+    }
+
+    memset(&z_fmt, 0, sizeof(z_fmt));
+    hr = IDirect3D3_EnumZBufferFormats(d3d, &IID_IDirect3DHALDevice, enum_z_fmt, &z_fmt);
+    if (FAILED(hr) || !z_fmt.dwSize)
+    {
+        skip("No depth buffer formats available, skipping test.\n");
+        goto cleanup;
+    }
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    U4(surface_desc).ddpfPixelFormat = z_fmt;
+    surface_desc.dwWidth = 640;
+    surface_desc.dwHeight = 480;
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &ds, NULL);
+    ok(SUCCEEDED(hr), "Failed to create depth buffer, hr %#x.\n", hr);
+    if (FAILED(hr))
+        goto cleanup;
+
+    /* Using a different surface interface version still works */
+    hr = IDirectDrawSurface3_AddAttachedSurface(surface3, (IDirectDrawSurface3 *)ds);
+    ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x.\n", hr);
+    IDirectDrawSurface4_Release(ds);
+    if (FAILED(hr))
+        goto cleanup;
+
+    /* Here too */
+    hr = IDirect3D3_CreateDevice(d3d, &IID_IDirect3DHALDevice, (IDirectDrawSurface4 *)surface3, &device, NULL);
+    ok(SUCCEEDED(hr), "Failed to create d3d device.\n");
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = IDirect3D3_CreateViewport(d3d, &viewport, NULL);
+    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_AddViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to add viewport, hr %#x.\n", hr);
+    memset(&vp, 0, sizeof(vp));
+    vp.dwSize = sizeof(vp);
+    vp.dwX = 0;
+    vp.dwY = 0;
+    vp.dwWidth = 640;
+    vp.dwHeight = 480;
+    vp.dvClipX = -1.0f;
+    vp.dvClipY =  1.0f;
+    vp.dvClipWidth = 2.0f;
+    vp.dvClipHeight = 2.0f;
+    vp.dvMinZ = 0.0f;
+    vp.dvMaxZ = 1.0f;
+    hr = IDirect3DViewport3_SetViewport2(viewport, &vp);
+    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+
+    hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0xffff0000, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    color = get_surface_color(surface, 320, 240);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+
+cleanup:
+    if (viewport)
+    {
+        IDirect3DDevice2_DeleteViewport(device, viewport);
+        IDirect3DViewport2_Release(viewport);
+    }
+    if (surface3) IDirectDrawSurface3_Release(surface3);
+    if (surface) IDirectDrawSurface4_Release(surface);
+    if (device) IDirect3DDevice3_Release(device);
+    if (d3d) IDirect3D3_Release(d3d);
+    if (ddraw) IDirectDraw4_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
     test_coop_level_create_device_window();
     test_clipper_blt();
     test_coop_level_d3d_state();
+    test_surface_interface_mismatch();
 }
