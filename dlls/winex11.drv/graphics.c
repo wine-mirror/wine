@@ -161,13 +161,24 @@ RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp )
     {
         int j;
         /* need to start from the end */
+        xrect += data->rdh.nCount;
         for (j = data->rdh.nCount-1; j >= 0; j--)
         {
             tmp = rect[j];
-            xrect[j].x      = max( min( tmp.left, SHRT_MAX), SHRT_MIN);
-            xrect[j].y      = max( min( tmp.top, SHRT_MAX), SHRT_MIN);
-            xrect[j].width  = max( min( tmp.right - xrect[j].x, USHRT_MAX), 0);
-            xrect[j].height = max( min( tmp.bottom - xrect[j].y, USHRT_MAX), 0);
+            if (tmp.left > SHRT_MAX) continue;
+            if (tmp.top > SHRT_MAX) continue;
+            if (tmp.right < SHRT_MIN) continue;
+            if (tmp.bottom < SHRT_MIN) continue;
+            xrect--;
+            xrect->x      = max( min( tmp.left, SHRT_MAX), SHRT_MIN);
+            xrect->y      = max( min( tmp.top, SHRT_MAX), SHRT_MIN);
+            xrect->width  = max( min( tmp.right, SHRT_MAX ) - xrect->x, 0);
+            xrect->height = max( min( tmp.bottom, SHRT_MAX ) - xrect->y, 0);
+        }
+        if (xrect > (XRectangle *)data->Buffer)
+        {
+            data->rdh.nCount -= xrect - (XRectangle *)data->Buffer;
+            memmove( (XRectangle *)data->Buffer, xrect, data->rdh.nCount * sizeof(*xrect) );
         }
     }
     else
@@ -175,11 +186,17 @@ RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp )
         for (i = 0; i < data->rdh.nCount; i++)
         {
             tmp = rect[i];
-            xrect[i].x      = max( min( tmp.left, SHRT_MAX), SHRT_MIN);
-            xrect[i].y      = max( min( tmp.top, SHRT_MAX), SHRT_MIN);
-            xrect[i].width  = max( min( tmp.right - xrect[i].x, USHRT_MAX), 0);
-            xrect[i].height = max( min( tmp.bottom - xrect[i].y, USHRT_MAX), 0);
+            if (tmp.left > SHRT_MAX) continue;
+            if (tmp.top > SHRT_MAX) continue;
+            if (tmp.right < SHRT_MIN) continue;
+            if (tmp.bottom < SHRT_MIN) continue;
+            xrect->x      = max( min( tmp.left, SHRT_MAX), SHRT_MIN);
+            xrect->y      = max( min( tmp.top, SHRT_MAX), SHRT_MIN);
+            xrect->width  = max( min( tmp.right, SHRT_MAX ) - xrect->x, 0);
+            xrect->height = max( min( tmp.bottom, SHRT_MAX ) - xrect->y, 0);
+            xrect++;
         }
+        data->rdh.nCount = xrect - (XRectangle *)data->Buffer;
     }
     return data;
 }
