@@ -1225,12 +1225,12 @@ static BOOL parse_object_members_list(parse_buffer * buf)
             return FALSE;
           if (pt->members[i].type == TOKEN_WORD)
           {
-            *(((WORD*)(buf->cur_pos_data + buf->pdata))) = (WORD)(*(DWORD*)buf->value);
+            *(((WORD*)(buf->pdata + buf->cur_pos_data))) = (WORD)(*(DWORD*)buf->value);
             buf->cur_pos_data += 2;
           }
           else if (pt->members[i].type == TOKEN_DWORD)
           {
-            *(((DWORD*)(buf->cur_pos_data + buf->pdata))) = (DWORD)(*(DWORD*)buf->value);
+            *(((DWORD*)(buf->pdata + buf->cur_pos_data))) = (DWORD)(*(DWORD*)buf->value);
             buf->cur_pos_data += 4;
           }
           else
@@ -1247,7 +1247,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
             return FALSE;
           if (pt->members[i].type == TOKEN_FLOAT)
           {
-            *(((float*)(buf->cur_pos_data + buf->pdata))) = (float)(*(float*)buf->value);
+            *(((float*)(buf->pdata + buf->cur_pos_data))) = (float)(*(float*)buf->value);
             buf->cur_pos_data += 4;
           }
           else
@@ -1271,7 +1271,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
               return FALSE;
             }
             strcpy((char*)buf->cur_pstrings, (char*)buf->value);
-            *(((LPCSTR*)(buf->cur_pos_data + buf->pdata))) = (char*)buf->cur_pstrings;
+            *(((LPCSTR*)(buf->pdata + buf->cur_pos_data))) = (char*)buf->cur_pstrings;
             buf->cur_pstrings += len;
             buf->cur_pos_data += sizeof(LPSTR);
           }
