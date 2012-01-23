@@ -225,11 +225,11 @@ static HRESULT WINAPI Gstreamer_transform_ProcessData(TransformFilter *iface, IM
     int ret;
     TRACE("Reading %p\n", sample);
 
-    EnterCriticalSection(&This->tf.filter.csFilter);
+    EnterCriticalSection(&This->tf.csReceive);
     IMediaSample_GetPointer(sample, &data);
     buf = gst_app_buffer_new(data, IMediaSample_GetActualDataLength(sample), release_sample, sample);
     if (!buf) {
-        LeaveCriticalSection(&This->tf.filter.csFilter);
+        LeaveCriticalSection(&This->tf.csReceive);
         return S_OK;
     }
     gst_buffer_set_caps(buf, gst_pad_get_caps_reffed(This->my_src));
@@ -251,7 +251,7 @@ static HRESULT WINAPI Gstreamer_transform_ProcessData(TransformFilter *iface, IM
         GST_BUFFER_FLAG_SET(buf, GST_BUFFER_FLAG_PREROLL);
     if (IMediaSample_IsSyncPoint(sample) != S_OK)
         GST_BUFFER_FLAG_SET(buf, GST_BUFFER_FLAG_DELTA_UNIT);
-    LeaveCriticalSection(&This->tf.filter.csFilter);
+    LeaveCriticalSection(&This->tf.csReceive);
     ret = gst_pad_push(This->my_src, buf);
     if (ret)
         WARN("Sending returned: %i\n", ret);
@@ -268,9 +268,9 @@ static HRESULT WINAPI Gstreamer_transform_ProcessEnd(TransformFilter *iface) {
     GstTfImpl *This = (GstTfImpl*)iface;
     int ret;
 
-    LeaveCriticalSection(&This->tf.filter.csFilter);
+    LeaveCriticalSection(&This->tf.csReceive);
     ret = gst_element_set_state(This->filter, GST_STATE_READY);
-    EnterCriticalSection(&This->tf.filter.csFilter);
+    EnterCriticalSection(&This->tf.csReceive);
     TRACE("Returned: %i\n", ret);
     return S_OK;
 }
