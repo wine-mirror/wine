@@ -1714,9 +1714,6 @@ void WCMD_move (void)
       /* Prompt if overwriting */
       if (!force) {
         WCHAR* question;
-        WCHAR  yesChar[10];
-
-        strcpyW(yesChar, WCMD_LoadMessage(WCMD_YES));
 
         /* Ask for confirmation */
         question = WCMD_format_string(WCMD_LoadMessage(WCMD_OVERWRITE), dest);
