@@ -299,14 +299,13 @@ static BOOL read_pif_file( HANDLE hFile, char *progname, char *title,
         }
     }
     /* prepare the return data */
-    strncpy( progname, pifheader.program, sizeof(pifheader.program));
-    memcpy( title, pifheader.windowtitle, sizeof(pifheader.windowtitle));
-    title[ sizeof(pifheader.windowtitle) ] = '\0';
+    lstrcpynA( progname, pifheader.program, sizeof(pifheader.program)+1);
+    lstrcpynA( title, pifheader.windowtitle, sizeof(pifheader.windowtitle)+1);
     if( found386rec)
-        strncpy( optparams, pif386rec.optparams, sizeof( pif386rec.optparams));
+        lstrcpynA( optparams, pif386rec.optparams, sizeof( pif386rec.optparams)+1);
     else
-        strncpy( optparams, pifheader.optparams, sizeof(pifheader.optparams));
-    strncpy( startdir, pifheader.startdir, sizeof(pifheader.startdir));
+        lstrcpynA( optparams, pifheader.optparams, sizeof(pifheader.optparams)+1);
+    lstrcpynA( startdir, pifheader.startdir, sizeof(pifheader.startdir)+1);
     *closeonexit = pifheader.hdrflags1 & 0x10;
     *textmode = found386rec ? pif386rec.videoflags & 0x0010
                             : pifheader.hdrflags1 & 0x0002;
@@ -325,8 +324,8 @@ static VOID pif_cmd( char *filename, char *cmdline)
     char buf[128];
     char progname[64];
     char title[31];
-    char optparams[64];
-    char startdir[64];
+    char optparams[65];
+    char startdir[65];
     char *p;
     int closeonexit;
     int textmode;
