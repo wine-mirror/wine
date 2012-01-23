@@ -9906,7 +9906,8 @@ msgstr ""
 "anteriors.\n"
 
 #: cmd.rc:290
-msgid "Are you sure"
+#, fuzzy
+msgid "Are you sure?"
 msgstr "Esteu segur"
 
 #: cmd.rc:291 xcopy.rc:40
@@ -9928,7 +9929,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "Cap ordre d'obertura associat amb el tipus de fitxer '%1'\n"
 
 #: cmd.rc:295
-msgid "Overwrite %1"
+#, fuzzy
+msgid "Overwrite %1?"
 msgstr "Sobreescriure %1"
 
 #: cmd.rc:296
@@ -9989,8 +9991,9 @@ msgid "A"
 msgstr ""
 
 #: cmd.rc:312
-msgid "%1, Delete"
-msgstr "%1, Suprimir"
+#, fuzzy
+msgid "Delete %1?"
+msgstr "Suprimeix"
 
 #: cmd.rc:313
 msgid "Echo is %1\n"
@@ -10051,6 +10054,16 @@ msgstr "El volum en la unitat %1!c! és %2\n"
 #: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "El volum en la unitat %1!c! no té etiqueta.\n"
+
+#: cmd.rc:327
+#, fuzzy
+msgid " (Yes|No)"
+msgstr "%1? (Sí|No)\n"
+
+#: cmd.rc:328
+#, fuzzy
+msgid " (Yes|No|All)"
+msgstr "%1? (Sí|No)\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"

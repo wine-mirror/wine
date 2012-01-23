@@ -10001,7 +10001,8 @@ msgstr ""
 "Skriv «HELP <kommando>» for mere information om kommandoerne ovenover\n"
 
 #: cmd.rc:290
-msgid "Are you sure"
+#, fuzzy
+msgid "Are you sure?"
 msgstr "Er du sikker"
 
 #: cmd.rc:291 xcopy.rc:40
@@ -10026,7 +10027,7 @@ msgstr "Ingen åbnekommando er tilknyttet filtypene '%s'\n"
 
 #: cmd.rc:295
 #, fuzzy
-msgid "Overwrite %1"
+msgid "Overwrite %1?"
 msgstr "Overskriv %s"
 
 #: cmd.rc:296
@@ -10093,8 +10094,8 @@ msgstr "A"
 
 #: cmd.rc:312
 #, fuzzy
-msgid "%1, Delete"
-msgstr "%s, Slet"
+msgid "Delete %1?"
+msgstr "Slet"
 
 #: cmd.rc:313
 #, fuzzy
@@ -10161,6 +10162,16 @@ msgstr ""
 #: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
+
+#: cmd.rc:327
+#, fuzzy
+msgid " (Yes|No)"
+msgstr "%s? (Ja|Nei)\n"
+
+#: cmd.rc:328
+#, fuzzy
+msgid " (Yes|No|All)"
+msgstr "%s? (Ja|Nei)\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"

@@ -10119,7 +10119,7 @@ msgstr ""
 "Digite HELP <comando> para mais informações sobre alguns dos comandos acima\n"
 
 #: cmd.rc:290
-msgid "Are you sure"
+msgid "Are you sure?"
 msgstr ""
 
 #: cmd.rc:291 xcopy.rc:40
@@ -10142,7 +10142,7 @@ msgstr ""
 
 #: cmd.rc:295
 #, fuzzy
-msgid "Overwrite %1"
+msgid "Overwrite %1?"
 msgstr "Reescrever %s? (Yes|No|All)\n"
 
 #: cmd.rc:296
@@ -10208,7 +10208,7 @@ msgstr ""
 
 #: cmd.rc:312
 #, fuzzy
-msgid "%1, Delete"
+msgid "Delete %1?"
 msgstr "Excluir"
 
 #: cmd.rc:313
@@ -10269,6 +10269,16 @@ msgstr ""
 #: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
+
+#: cmd.rc:327
+#, fuzzy
+msgid " (Yes|No)"
+msgstr "%s? (Yes|No)\n"
+
+#: cmd.rc:328
+#, fuzzy
+msgid " (Yes|No|All)"
+msgstr "%s? (Yes|No)\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"

@@ -118,15 +118,20 @@ static BOOL verify_mode = FALSE;
 static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
                               BOOL *optionAll) {
 
-    WCHAR  msgbuffer[MAXSTRING];
-    WCHAR  Ybuffer[MAXSTRING];
-    WCHAR  Nbuffer[MAXSTRING];
-    WCHAR  Abuffer[MAXSTRING];
-    WCHAR  answer[MAX_PATH] = {'\0'};
+    UINT msgid;
+    WCHAR confirm[MAXSTRING];
+    WCHAR options[MAXSTRING];
+    WCHAR Ybuffer[MAXSTRING];
+    WCHAR Nbuffer[MAXSTRING];
+    WCHAR Abuffer[MAXSTRING];
+    WCHAR answer[MAX_PATH] = {'\0'};
     DWORD count = 0;
 
-    /* Load the translated 'Are you sure', plus valid answers */
-    LoadStringW(hinst, WCMD_CONFIRM, msgbuffer, sizeof(msgbuffer)/sizeof(WCHAR));
+    /* Load the translated valid answers */
+    if (showSureText)
+      LoadStringW(hinst, WCMD_CONFIRM, confirm, sizeof(confirm)/sizeof(WCHAR));
+    msgid = optionAll ? WCMD_YESNOALL : WCMD_YESNO;
+    LoadStringW(hinst, msgid, options, sizeof(options)/sizeof(WCHAR));
     LoadStringW(hinst, WCMD_YES, Ybuffer, sizeof(Ybuffer)/sizeof(WCHAR));
     LoadStringW(hinst, WCMD_NO,  Nbuffer, sizeof(Nbuffer)/sizeof(WCHAR));
     LoadStringW(hinst, WCMD_ALL, Abuffer, sizeof(Abuffer)/sizeof(WCHAR));
@@ -134,23 +139,12 @@ static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
     /* Loop waiting on a valid answer */
     if (optionAll)
         *optionAll = FALSE;
-    while (1) {
-      static const WCHAR startBkt[] = {' ','(','\0'};
-      static const WCHAR endBkt[]   = {')','?','\0'};
-
+    while (1)
+    {
       WCMD_output_asis (message);
-      if (showSureText) {
-        WCMD_output_asis (msgbuffer);
-      }
-      WCMD_output_asis (startBkt);
-      WCMD_output_asis (Ybuffer);
-      WCMD_output_asis (fslashW);
-      WCMD_output_asis (Nbuffer);
-      if (optionAll) {
-          WCMD_output_asis (fslashW);
-          WCMD_output_asis (Abuffer);
-      }
-      WCMD_output_asis (endBkt);
+      if (showSureText)
+        WCMD_output_asis (confirm);
+      WCMD_output_asis (options);
       WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer)/sizeof(WCHAR), &count);
       answer[0] = toupperW(answer[0]);
       if (answer[0] == Ybuffer[0])

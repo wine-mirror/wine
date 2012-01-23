@@ -9812,7 +9812,8 @@ msgstr ""
 "Введіть HELP <команда> для детальнішої інформації про вищенаведені команди\n"
 
 #: cmd.rc:290
-msgid "Are you sure"
+#, fuzzy
+msgid "Are you sure?"
 msgstr "Ви впевнені"
 
 #: cmd.rc:291 xcopy.rc:40
@@ -9837,7 +9838,7 @@ msgstr "Немає команди відкриття, асоційованої �
 
 #: cmd.rc:295
 #, fuzzy
-msgid "Overwrite %1"
+msgid "Overwrite %1?"
 msgstr "Перезаписати %s"
 
 #: cmd.rc:296
@@ -9904,8 +9905,8 @@ msgstr ""
 
 #: cmd.rc:312
 #, fuzzy
-msgid "%1, Delete"
-msgstr "%s, Видалити"
+msgid "Delete %1?"
+msgstr "Видалити"
 
 #: cmd.rc:313
 #, fuzzy
@@ -9972,6 +9973,16 @@ msgstr ""
 #: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
+
+#: cmd.rc:327
+#, fuzzy
+msgid " (Yes|No)"
+msgstr "Переписати %s? (Yes|No|All)\n"
+
+#: cmd.rc:328
+#, fuzzy
+msgid " (Yes|No|All)"
+msgstr "Переписати %s? (Yes|No|All)\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"

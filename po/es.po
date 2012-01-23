@@ -10221,7 +10221,8 @@ msgstr ""
 "de arriba\n"
 
 #: cmd.rc:290
-msgid "Are you sure"
+#, fuzzy
+msgid "Are you sure?"
 msgstr "Está seguro"
 
 #: cmd.rc:291 xcopy.rc:40
@@ -10246,7 +10247,7 @@ msgstr "Ningún comando de apertura asociado con el tipo de archivo '%s'\n"
 
 #: cmd.rc:295
 #, fuzzy
-msgid "Overwrite %1"
+msgid "Overwrite %1?"
 msgstr "Sobrescribir %s"
 
 #: cmd.rc:296
@@ -10313,8 +10314,8 @@ msgstr ""
 
 #: cmd.rc:312
 #, fuzzy
-msgid "%1, Delete"
-msgstr "%s, Borrar"
+msgid "Delete %1?"
+msgstr "Eliminar"
 
 #: cmd.rc:313
 #, fuzzy
@@ -10381,6 +10382,16 @@ msgstr ""
 #: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
+
+#: cmd.rc:327
+#, fuzzy
+msgid " (Yes|No)"
+msgstr "Sobrescribir %s"
+
+#: cmd.rc:328
+#, fuzzy
+msgid " (Yes|No|All)"
+msgstr "Sobrescribir %s"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"

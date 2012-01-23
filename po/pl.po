@@ -9879,7 +9879,8 @@ msgstr ""
 "poleceń.\n"
 
 #: cmd.rc:290
-msgid "Are you sure"
+#, fuzzy
+msgid "Are you sure?"
 msgstr "Czy jesteś pewien?"
 
 #: cmd.rc:291 xcopy.rc:40
@@ -9901,7 +9902,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "Brak skojarzenia polecenia otwórz z typem plików '%1'\n"
 
 #: cmd.rc:295
-msgid "Overwrite %1"
+#, fuzzy
+msgid "Overwrite %1?"
 msgstr "Nadpisz %1"
 
 #: cmd.rc:296
@@ -9962,8 +9964,9 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:312
-msgid "%1, Delete"
-msgstr "%1, Usuń"
+#, fuzzy
+msgid "Delete %1?"
+msgstr "Usuń"
 
 #: cmd.rc:313
 msgid "Echo is %1\n"
@@ -10024,6 +10027,16 @@ msgstr "Wolumen w napędzie %1!c! to %2\n"
 #: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Wolumen w napędzie %1!c! nie ma etykiety.\n"
+
+#: cmd.rc:327
+#, fuzzy
+msgid " (Yes|No)"
+msgstr "%1? (Tak|Nie)\n"
+
+#: cmd.rc:328
+#, fuzzy
+msgid " (Yes|No|All)"
+msgstr "%1? (Tak|Nie)\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"

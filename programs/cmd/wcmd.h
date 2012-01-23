@@ -279,3 +279,5 @@ extern WCHAR version_string[];
 #define WCMD_LINETOOLONG      1035
 #define WCMD_VOLUMELABEL      1036
 #define WCMD_VOLUMENOLABEL    1037
+#define WCMD_YESNO            1038
+#define WCMD_YESNOALL         1039

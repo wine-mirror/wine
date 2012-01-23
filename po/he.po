@@ -9918,7 +9918,8 @@ msgstr ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 
 #: cmd.rc:290
-msgid "Are you sure"
+#, fuzzy
+msgid "Are you sure?"
 msgstr "Are you sure"
 
 #: cmd.rc:291 xcopy.rc:40
@@ -9940,7 +9941,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "No open command associated with file type '%1'\n"
 
 #: cmd.rc:295
-msgid "Overwrite %1"
+#, fuzzy
+msgid "Overwrite %1?"
 msgstr "Overwrite %1"
 
 #: cmd.rc:296
@@ -10001,8 +10003,9 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:312
-msgid "%1, Delete"
-msgstr "%1, Delete"
+#, fuzzy
+msgid "Delete %1?"
+msgstr "מחיקה"
 
 #: cmd.rc:313
 msgid "Echo is %1\n"
@@ -10063,6 +10066,16 @@ msgstr ""
 #: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
+
+#: cmd.rc:327
+#, fuzzy
+msgid " (Yes|No)"
+msgstr "%1? (Yes|No)\n"
+
+#: cmd.rc:328
+#, fuzzy
+msgid " (Yes|No|All)"
+msgstr "%1? (Yes|No)\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"

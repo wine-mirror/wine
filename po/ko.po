@@ -9786,7 +9786,8 @@ msgstr ""
 "HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
 
 #: cmd.rc:290
-msgid "Are you sure"
+#, fuzzy
+msgid "Are you sure?"
 msgstr "당신은 확신합니까?"
 
 #: cmd.rc:291 xcopy.rc:40
@@ -9808,7 +9809,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "이 파일 형식 '%1'과 연결된 어떠한 명령도 없습니다.'\n"
 
 #: cmd.rc:295
-msgid "Overwrite %1"
+#, fuzzy
+msgid "Overwrite %1?"
 msgstr "%1 덮어쓰기"
 
 #: cmd.rc:296
@@ -9869,8 +9871,9 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:312
-msgid "%1, Delete"
-msgstr "%1, 삭제"
+#, fuzzy
+msgid "Delete %1?"
+msgstr "지우기"
 
 #: cmd.rc:313
 msgid "Echo is %1\n"
@@ -9929,6 +9932,16 @@ msgstr "드라이브 %1!c!의 볼륨은 %2임\n"
 #: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "드라이브 %1!c!는 라벨을 가지고 있지 않습니다.\n"
+
+#: cmd.rc:327
+#, fuzzy
+msgid " (Yes|No)"
+msgstr "%1? (예|아니오)\n"
+
+#: cmd.rc:328
+#, fuzzy
+msgid " (Yes|No|All)"
+msgstr "%1? (예|아니오)\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"

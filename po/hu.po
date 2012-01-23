@@ -9914,7 +9914,7 @@ msgid ""
 msgstr ""
 
 #: cmd.rc:290
-msgid "Are you sure"
+msgid "Are you sure?"
 msgstr ""
 
 #: cmd.rc:291 xcopy.rc:40
@@ -9936,7 +9936,7 @@ msgid "No open command associated with file type '%1'\n"
 msgstr ""
 
 #: cmd.rc:295
-msgid "Overwrite %1"
+msgid "Overwrite %1?"
 msgstr ""
 
 #: cmd.rc:296
@@ -10000,7 +10000,7 @@ msgstr ""
 
 #: cmd.rc:312
 #, fuzzy
-msgid "%1, Delete"
+msgid "Delete %1?"
 msgstr "Törlés"
 
 #: cmd.rc:313
@@ -10060,6 +10060,14 @@ msgstr ""
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
+msgstr ""
+
+#: cmd.rc:327
+msgid " (Yes|No)"
+msgstr ""
+
+#: cmd.rc:328
+msgid " (Yes|No|All)"
 msgstr ""
 
 #: dxdiag.rc:27

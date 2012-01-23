@@ -9893,7 +9893,8 @@ msgstr ""
 "obigen Befehle erhalten.\n"
 
 #: cmd.rc:290
-msgid "Are you sure"
+#, fuzzy
+msgid "Are you sure?"
 msgstr "Sind sie sicher"
 
 #: cmd.rc:291 xcopy.rc:40
@@ -9915,7 +9916,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "Kein Befehl zum Öffnen für Dateityp '%1'\n"
 
 #: cmd.rc:295
-msgid "Overwrite %1"
+#, fuzzy
+msgid "Overwrite %1?"
 msgstr "%1 überschreiben"
 
 #: cmd.rc:296
@@ -9978,8 +9980,9 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:312
-msgid "%1, Delete"
-msgstr "%1, löschen"
+#, fuzzy
+msgid "Delete %1?"
+msgstr "Löschen"
 
 #: cmd.rc:313
 msgid "Echo is %1\n"
@@ -10040,6 +10043,16 @@ msgstr "Datenträger in Laufwerk %1!c! ist %2\n"
 #: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Datenträger in Laufwerk %1!c! hat keine Bezeichnung.\n"
+
+#: cmd.rc:327
+#, fuzzy
+msgid " (Yes|No)"
+msgstr "%1? (Ja|Nein)\n"
+
+#: cmd.rc:328
+#, fuzzy
+msgid " (Yes|No|All)"
+msgstr "%1? (Ja|Nein)\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"

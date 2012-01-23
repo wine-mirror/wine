@@ -9889,7 +9889,8 @@ msgstr ""
 "sovrastanti.\n"
 
 #: cmd.rc:290
-msgid "Are you sure"
+#, fuzzy
+msgid "Are you sure?"
 msgstr "Sei sicuro"
 
 #: cmd.rc:291 xcopy.rc:40
@@ -9911,7 +9912,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "Nessun comando di apertura associato con il tipo di file '%1'\n"
 
 #: cmd.rc:295
-msgid "Overwrite %1"
+#, fuzzy
+msgid "Overwrite %1?"
 msgstr "Sovrascrivere %1"
 
 #: cmd.rc:296
@@ -9972,8 +9974,9 @@ msgid "A"
 msgstr "T"
 
 #: cmd.rc:312
-msgid "%1, Delete"
-msgstr "%1, Cancella"
+#, fuzzy
+msgid "Delete %1?"
+msgstr "Elimina"
 
 #: cmd.rc:313
 msgid "Echo is %1\n"
@@ -10034,6 +10037,16 @@ msgstr "Il volume nell'unità %1!c! è %2\n"
 #: cmd.rc:326
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Il volume nell'unità %1!c! non ha etichetta.\n"
+
+#: cmd.rc:327
+#, fuzzy
+msgid " (Yes|No)"
+msgstr "%1? (Sì|No)\n"
+
+#: cmd.rc:328
+#, fuzzy
+msgid " (Yes|No|All)"
+msgstr "%1? (Sì|No)\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
