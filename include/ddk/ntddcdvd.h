@@ -49,6 +49,8 @@ typedef enum {
 
 typedef ULONG DVD_SESSION_ID, *PDVD_SESSION_ID;
 
+#include <pshpack1.h>
+
 typedef struct _DVD_COPY_PROTECT_KEY {
     ULONG KeyLength;
     DVD_SESSION_ID SessionId;
@@ -97,7 +99,7 @@ typedef enum _DVD_STRUCTURE_FORMAT
 	DvdMaxDescriptor
 } DVD_STRUCTURE_FORMAT, *PDVD_STRUCTURE_FORMAT;
 
-typedef struct _DVD_READ_STRUCTURE {
+typedef struct DVD_READ_STRUCTURE {
         /* Contains an offset to the logical block address of the descriptor to be retrieved. */
         LARGE_INTEGER BlockByteOffset;
 
@@ -151,8 +153,6 @@ typedef struct _DVD_LAYER_DESCRIPTOR
 
     /* 0 indicates no BCA data */
     UCHAR BCAFlag : 1;
-
-    UCHAR Reserved6;
 }DVD_LAYER_DESCRIPTOR, * PDVD_LAYER_DESCRIPTOR;
 
 typedef struct _DVD_COPYRIGHT_DESCRIPTOR
@@ -185,5 +185,7 @@ typedef struct _DVD_MANUFACTURER_DESCRIPTOR
 #define DVD_CHALLENGE_SIZE 10
 #define DVD_DISCKEY_SIZE 2048
 #define DVD_SECTOR_PROTECTED            0x00000020
+
+#include <poppack.h>
 
 #endif /* __NTDDCDVD_H */
