@@ -659,6 +659,20 @@ static const char* i386_fetch_regname(unsigned regno)
     return NULL;
 }
 
+static BOOL i386_fetch_minidump_thread(struct dump_context* dc, unsigned index, unsigned flags, const CONTEXT* ctx)
+{
+    if (ctx->ContextFlags && (flags & ThreadWriteInstructionWindow))
+    {
+        /* FIXME: crop values across module boundaries, */
+#ifdef __i386__
+        ULONG base = ctx->Eip <= 0x80 ? 0 : ctx->Eip - 0x80;
+        minidump_add_memory_block(dc, base, ctx->Eip + 0x80 - base, 0);
+#endif
+    }
+
+    return TRUE;
+}
+
 DECLSPEC_HIDDEN struct cpu cpu_i386 = {
     IMAGE_FILE_MACHINE_I386,
     4,
@@ -669,4 +683,5 @@ DECLSPEC_HIDDEN struct cpu cpu_i386 = {
     i386_map_dwarf_register,
     i386_fetch_context_reg,
     i386_fetch_regname,
+    i386_fetch_minidump_thread,
 };

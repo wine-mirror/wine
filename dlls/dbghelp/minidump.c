@@ -32,54 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
-struct dump_memory
-{
-    ULONG64                             base;
-    ULONG                               size;
-    ULONG                               rva;
-};
-
-struct dump_module
-{
-    unsigned                            is_elf;
-    ULONG64                             base;
-    ULONG                               size;
-    DWORD                               timestamp;
-    DWORD                               checksum;
-    WCHAR                               name[MAX_PATH];
-};
-
-struct dump_thread
-{
-    ULONG                               tid;
-    ULONG                               prio_class;
-    ULONG                               curr_prio;
-};
-
-struct dump_context
-{
-    /* process & thread information */
-    HANDLE                              hProcess;
-    DWORD                               pid;
-    /* thread information */
-    struct dump_thread*                 threads;
-    unsigned                            num_threads;
-    /* module information */
-    struct dump_module*                 modules;
-    unsigned                            num_modules;
-    unsigned                            alloc_modules;
-    /* exception information */
-    /* output information */
-    MINIDUMP_TYPE                       type;
-    HANDLE                              hFile;
-    RVA                                 rva;
-    struct dump_memory*                 mem;
-    unsigned                            num_mem;
-    unsigned                            alloc_mem;
-    /* callback information */
-    MINIDUMP_CALLBACK_INFORMATION*      cb;
-};
-
 /******************************************************************
  *		fetch_process_info
  *
@@ -376,14 +328,14 @@ static void fetch_module_versioninfo(LPCWSTR filename, VS_FIXEDFILEINFO* ffi)
 }
 
 /******************************************************************
- *		add_memory_block
+ *		minidump_add_memory_block
  *
  * Add a memory block to be dumped in a minidump
  * If rva is non 0, it's the rva in the minidump where has to be stored
  * also the rva of the memory block when written (this allows to reference
  * a memory block from outside the list of memory blocks).
  */
-static void add_memory_block(struct dump_context* dc, ULONG64 base, ULONG size, ULONG rva)
+void minidump_add_memory_block(struct dump_context* dc, ULONG64 base, ULONG size, ULONG rva)
 {
     if (!dc->mem)
     {
@@ -806,11 +758,11 @@ static  unsigned        dump_threads(struct dump_context* dc,
             }
             if (mdThd.Stack.Memory.DataSize && (flags_out & ThreadWriteStack))
             {
-                add_memory_block(dc, mdThd.Stack.StartOfMemoryRange,
-                                 mdThd.Stack.Memory.DataSize,
-                                 rva_base + sizeof(mdThdList.NumberOfThreads) +
-                                     mdThdList.NumberOfThreads * sizeof(mdThd) +
-                                     FIELD_OFFSET(MINIDUMP_THREAD, Stack.Memory.Rva));
+                minidump_add_memory_block(dc, mdThd.Stack.StartOfMemoryRange,
+                                          mdThd.Stack.Memory.DataSize,
+                                          rva_base + sizeof(mdThdList.NumberOfThreads) +
+                                          mdThdList.NumberOfThreads * sizeof(mdThd) +
+                                          FIELD_OFFSET(MINIDUMP_THREAD, Stack.Memory.Rva));
             }
             writeat(dc, 
                     rva_base + sizeof(mdThdList.NumberOfThreads) +
@@ -818,14 +770,8 @@ static  unsigned        dump_threads(struct dump_context* dc,
                     &mdThd, sizeof(mdThd));
             mdThdList.NumberOfThreads++;
         }
-        if (ctx.ContextFlags && (flags_out & ThreadWriteInstructionWindow))
-        {
-            /* FIXME: - Native dbghelp also dumps 0x80 bytes around EIP
-             *        - also crop values across module boundaries, 
-             *        - and don't make it i386 dependent 
-             */
-            /* add_memory_block(dc, ctx.Eip - 0x80, ctx.Eip + 0x80, 0); */
-        }
+        /* fetch CPU dependent thread info (like 256 bytes around program counter */
+        dbghelp_current_cpu->fetch_minidump_thread(dc, i, flags_out, &ctx);
     }
     writeat(dc, rva_base,
             &mdThdList.NumberOfThreads, sizeof(mdThdList.NumberOfThreads));

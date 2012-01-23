@@ -222,6 +222,12 @@ static const char* arm_fetch_regname(unsigned regno)
     return NULL;
 }
 
+static BOOL arm_fetch_minidump_thread(struct dump_context* dc, unsigned index, unsigned flags, const CONTEXT* ctx)
+{
+    FIXME("NIY\n");
+    return FALSE;
+}
+
 DECLSPEC_HIDDEN struct cpu cpu_arm = {
     IMAGE_FILE_MACHINE_ARMV7,
     4,
@@ -232,4 +238,5 @@ DECLSPEC_HIDDEN struct cpu cpu_arm = {
     arm_map_dwarf_register,
     arm_fetch_context_reg,
     arm_fetch_regname,
+    arm_fetch_minidump_thread,
 };

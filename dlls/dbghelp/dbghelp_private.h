@@ -463,6 +463,55 @@ struct cpu_stack_walk
     } u;
 };
 
+struct dump_memory
+{
+    ULONG64                             base;
+    ULONG                               size;
+    ULONG                               rva;
+};
+
+struct dump_module
+{
+    unsigned                            is_elf;
+    ULONG64                             base;
+    ULONG                               size;
+    DWORD                               timestamp;
+    DWORD                               checksum;
+    WCHAR                               name[MAX_PATH];
+};
+
+struct dump_thread
+{
+    ULONG                               tid;
+    ULONG                               prio_class;
+    ULONG                               curr_prio;
+};
+
+struct dump_context
+{
+    /* process & thread information */
+    HANDLE                              hProcess;
+    DWORD                               pid;
+    unsigned                            flags_out;
+    /* thread information */
+    struct dump_thread*                 threads;
+    unsigned                            num_threads;
+    /* module information */
+    struct dump_module*                 modules;
+    unsigned                            num_modules;
+    unsigned                            alloc_modules;
+    /* exception information */
+    /* output information */
+    MINIDUMP_TYPE                       type;
+    HANDLE                              hFile;
+    RVA                                 rva;
+    struct dump_memory*                 mem;
+    unsigned                            num_mem;
+    unsigned                            alloc_mem;
+    /* callback information */
+    MINIDUMP_CALLBACK_INFORMATION*      cb;
+};
+
 enum cpu_addr {cpu_addr_pc, cpu_addr_stack, cpu_addr_frame};
 struct cpu
 {
@@ -486,6 +535,9 @@ struct cpu
     /* context related manipulation */
     void*       (*fetch_context_reg)(CONTEXT* context, unsigned regno, unsigned* size);
     const char* (*fetch_regname)(unsigned regno);
+
+    /* minidump per CPU extension */
+    BOOL        (*fetch_minidump_thread)(struct dump_context* dc, unsigned index, unsigned flags, const CONTEXT* ctx);
 };
 
 extern struct cpu*      dbghelp_current_cpu DECLSPEC_HIDDEN;
@@ -526,6 +578,9 @@ extern struct module*
                     macho_load_module(struct process* pcs, const WCHAR* name, unsigned long) DECLSPEC_HIDDEN;
 extern BOOL         macho_read_wine_loader_dbg_info(struct process* pcs) DECLSPEC_HIDDEN;
 extern BOOL         macho_synchronize_module_list(struct process* pcs) DECLSPEC_HIDDEN;
+
+/* minidump.c */
+void minidump_add_memory_block(struct dump_context* dc, ULONG64 base, ULONG size, ULONG rva);
 
 /* module.c */
 extern const WCHAR      S_ElfW[] DECLSPEC_HIDDEN;

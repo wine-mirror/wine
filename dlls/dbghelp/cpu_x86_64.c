@@ -890,6 +890,20 @@ static const char* x86_64_fetch_regname(unsigned regno)
     return NULL;
 }
 
+static BOOL x86_64_fetch_minidump_thread(struct dump_context* dc, unsigned index, unsigned flags, const CONTEXT* ctx)
+{
+    if (ctx->ContextFlags && (flags & ThreadWriteInstructionWindow))
+    {
+        /* FIXME: crop values across module boundaries, */
+#ifdef __x86_64__
+        ULONG64 base = ctx->Rip <= 0x80 ? 0 : ctx->Rip - 0x80;
+        minidump_add_memory_block(dc, base, ctx->Rip + 0x80 - base, 0);
+#endif
+    }
+
+    return TRUE;
+}
+
 DECLSPEC_HIDDEN struct cpu cpu_x86_64 = {
     IMAGE_FILE_MACHINE_AMD64,
     8,
@@ -900,4 +914,5 @@ DECLSPEC_HIDDEN struct cpu cpu_x86_64 = {
     x86_64_map_dwarf_register,
     x86_64_fetch_context_reg,
     x86_64_fetch_regname,
+    x86_64_fetch_minidump_thread,
 };
