@@ -10351,7 +10351,7 @@ msgstr "Erset&zen...\tStrg+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
 msgid "&Contents\tF1"
-msgstr "&Inhalt"
+msgstr "&Inhalt\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -11101,7 +11101,7 @@ msgstr "&Erweiterbare Zeichenfolge"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
-msgstr "&Umbenennen"
+msgstr "&Umbenennen\tF2"
 
 #: regedit.rc:58 regedit.rc:110
 msgid "&Copy Key Name"
@@ -13381,11 +13381,11 @@ msgstr "Neues &Fenster"
 
 #: winefile.rc:78
 msgid "Cascading\tCtrl+F5"
-msgstr "Über&lappend\tUmschalt+F5"
+msgstr "Über&lappend\tStrg+F5"
 
 #: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
-msgstr "&Nebeneinander\tUmschalt+F4"
+msgstr "&Nebeneinander\tStrg+F4"
 
 #: winefile.rc:87
 msgid "&About Wine File Manager"
@@ -13721,7 +13721,6 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Wiederholen\tStrg+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
 msgstr "&Löschen\tEntf"
 
