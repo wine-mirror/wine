@@ -174,6 +174,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     MINIDUMP_MODULE_LIST*       mml;
     MINIDUMP_MODULE*            mm;
     MINIDUMP_STRING*            mds;
+    MINIDUMP_DIRECTORY*         dir;
     WCHAR                       exec_name[1024];
     WCHAR                       nameW[1024];
     unsigned                    len;
@@ -212,7 +213,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         }
     }
 
-    if (MiniDumpReadDumpStream(data->mapping, SystemInfoStream, NULL, &stream, NULL))
+    if (MiniDumpReadDumpStream(data->mapping, SystemInfoStream, &dir, &stream, NULL))
     {
         MINIDUMP_SYSTEM_INFO*   msi = stream;
         const char *str;
@@ -305,6 +306,21 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         }
         dbg_printf(" on Windows %s (%u)\n", str, msi->BuildNumber);
         /* FIXME CSD: msi->CSDVersionRva */
+
+        if (sizeof(MINIDUMP_SYSTEM_INFO) + 4 > dir->Location.DataSize &&
+            msi->CSDVersionRva >= dir->Location.Rva + sizeof(MINIDUMP_SYSTEM_INFO) + 4)
+        {
+            const char*     code = (const char*)stream + sizeof(MINIDUMP_SYSTEM_INFO);
+            const DWORD*    wes;
+
+            if (code[0] == 'W' && code[1] == 'I' && code[2] == 'N' && code[3] == 'E' &&
+                *(wes = (const DWORD*)(code += 4)) >= 3)
+            {
+                /* assume we have wine extensions */
+                dbg_printf("    [on %s, on top of %s (%s)]\n",
+                           code + wes[1], code + wes[2], code + wes[3]);
+            }
+        }
     }
 
     dbg_curr_process = dbg_add_process(&be_process_minidump_io, pid, hProc);

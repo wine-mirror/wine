@@ -615,10 +615,28 @@ static  unsigned        dump_system_info(struct dump_context* dc)
     OSVERSIONINFOW              osInfo;
     DWORD                       written;
     ULONG                       slen;
+    DWORD                       wine_extra = 0;
+
+    const char *(CDECL *wine_get_build_id)(void);
+    void (CDECL *wine_get_host_version)(const char **sysname, const char **release);
+    const char* build_id = NULL;
+    const char* sys_name = NULL;
+    const char* release_name = NULL;
 
     GetSystemInfo(&sysInfo);
     osInfo.dwOSVersionInfoSize = sizeof(osInfo);
     GetVersionExW(&osInfo);
+
+    wine_get_build_id = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_build_id");
+    wine_get_host_version = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_host_version");
+    if (wine_get_build_id && wine_get_host_version)
+    {
+        /* cheat minidump system information by adding specific wine information */
+        wine_extra = 4 + 4 * sizeof(slen);
+        build_id = wine_get_build_id();
+        wine_get_host_version(&sys_name, &release_name);
+        wine_extra += strlen(build_id) + 1 + strlen(sys_name) + 1 + strlen(release_name) + 1;
+    }
 
     mdSysInfo.ProcessorArchitecture = sysInfo.u.s.wProcessorArchitecture;
     mdSysInfo.ProcessorLevel = sysInfo.wProcessorLevel;
@@ -630,7 +648,7 @@ static  unsigned        dump_system_info(struct dump_context* dc)
     mdSysInfo.BuildNumber = osInfo.dwBuildNumber;
     mdSysInfo.PlatformId = osInfo.dwPlatformId;
 
-    mdSysInfo.CSDVersionRva = dc->rva + sizeof(mdSysInfo);
+    mdSysInfo.CSDVersionRva = dc->rva + sizeof(mdSysInfo) + wine_extra;
     mdSysInfo.u1.Reserved1 = 0;
     mdSysInfo.u1.s.SuiteMask = VER_SUITE_TERMINAL;
 
@@ -671,6 +689,28 @@ static  unsigned        dump_system_info(struct dump_context* dc)
                 mdSysInfo.Cpu.OtherCpuInfo.ProcessorFeatures[0] |= one << i;
     }
     append(dc, &mdSysInfo, sizeof(mdSysInfo));
+
+    /* write Wine specific system information just behind the structure, and before any string */
+    if (wine_extra)
+    {
+        char code[] = {'W','I','N','E'};
+
+        WriteFile(dc->hFile, code, 4, &written, NULL);
+        /* number of sub-info, so that we can extend structure if needed */
+        slen = 3;
+        WriteFile(dc->hFile, &slen, sizeof(slen), &written, NULL);
+        /* we store offsets from just after the WINE marker */
+        slen = 4 * sizeof(DWORD);
+        WriteFile(dc->hFile, &slen, sizeof(slen), &written, NULL);
+        slen += strlen(build_id) + 1;
+        WriteFile(dc->hFile, &slen, sizeof(slen), &written, NULL);
+        slen += strlen(sys_name) + 1;
+        WriteFile(dc->hFile, &slen, sizeof(slen), &written, NULL);
+        WriteFile(dc->hFile, build_id, strlen(build_id) + 1, &written, NULL);
+        WriteFile(dc->hFile, sys_name, strlen(sys_name) + 1, &written, NULL);
+        WriteFile(dc->hFile, release_name, strlen(release_name) + 1, &written, NULL);
+        dc->rva += wine_extra;
+    }
 
     /* write the service pack version string after this stream.  It is referenced within the
        stream by its RVA in the file. */

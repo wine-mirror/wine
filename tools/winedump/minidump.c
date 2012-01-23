@@ -341,6 +341,21 @@ void mdmp_dump(void)
                 printf("  x86.AMDExtendedCpuFeatures: %x\n",
                        msi->Cpu.X86CpuInfo.AMDExtendedCpuFeatures);
             }
+            if (sizeof(MINIDUMP_SYSTEM_INFO) + 4 > dir->Location.DataSize &&
+                msi->CSDVersionRva >= dir->Location.Rva + 4)
+            {
+                const char*  code = PRD(dir->Location.Rva + sizeof(MINIDUMP_SYSTEM_INFO), 4);
+                const DWORD* wes;
+                if (code && code[0] == 'W' && code[1] == 'I' && code[2] == 'N' && code[3] == 'E' &&
+                    *(wes = (const DWORD*)(code += 4)) >= 3)
+                {
+                    /* assume we have wine extensions */
+                    printf("  Wine details:\n");
+                    printf("    build-id: %s\n", code + wes[1]);
+                    printf("    system: %s\n", code + wes[2]);
+                    printf("    release: %s\n", code + wes[3]);
+                }
+            }
         }
         break;
         case MiscInfoStream:
