@@ -114,7 +114,7 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     LONGLONG tStart, tStop;
     DWORD flags = 0;
 
-    EnterCriticalSection(&This->tf.filter.csFilter);
+    EnterCriticalSection(&This->tf.csReceive);
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
@@ -192,18 +192,17 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     else
         IMediaSample_SetMediaTime(pOutSample, NULL, NULL);
 
-    LeaveCriticalSection(&This->tf.filter.csFilter);
+    LeaveCriticalSection(&This->tf.csReceive);
     hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
+    EnterCriticalSection(&This->tf.csReceive);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);
-    IMediaSample_Release(pOutSample);
-    return hr;
 
 error:
     if (pOutSample)
         IMediaSample_Release(pOutSample);
 
-    LeaveCriticalSection(&This->tf.filter.csFilter);
+    LeaveCriticalSection(&This->tf.csReceive);
     return hr;
 }
 

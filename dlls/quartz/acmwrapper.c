@@ -69,12 +69,12 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
     LONGLONG tStart = -1, tStop = -1, tMed;
     LONGLONG mtStart = -1, mtStop = -1, mtMed;
 
-    EnterCriticalSection(&This->tf.filter.csFilter);
+    EnterCriticalSection(&This->tf.csReceive);
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
-        LeaveCriticalSection(&This->tf.filter.csFilter);
+        LeaveCriticalSection(&This->tf.csReceive);
         return hr;
     }
 
@@ -105,7 +105,7 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
     if (FAILED(hr))
     {
         ERR("Unable to retrieve media type\n");
-        LeaveCriticalSection(&This->tf.filter.csFilter);
+        LeaveCriticalSection(&This->tf.csReceive);
         return hr;
     }
 
@@ -118,7 +118,7 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
         if (FAILED(hr))
         {
             ERR("Unable to get delivery buffer (%x)\n", hr);
-            LeaveCriticalSection(&This->tf.filter.csFilter);
+            LeaveCriticalSection(&This->tf.csReceive);
             return hr;
         }
         IMediaSample_SetPreroll(pOutSample, preroll);
@@ -213,9 +213,9 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
 
         TRACE("Sample stop time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
 
-        LeaveCriticalSection(&This->tf.filter.csFilter);
+        LeaveCriticalSection(&This->tf.csReceive);
         hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
-        EnterCriticalSection(&This->tf.filter.csFilter);
+        EnterCriticalSection(&This->tf.csReceive);
 
         if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
             if (FAILED(hr))
@@ -238,7 +238,7 @@ error:
     This->lasttime_real = tStop;
     This->lasttime_sent = tMed;
 
-    LeaveCriticalSection(&This->tf.filter.csFilter);
+    LeaveCriticalSection(&This->tf.csReceive);
     return hr;
 }
 
