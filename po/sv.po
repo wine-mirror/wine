@@ -10259,7 +10259,7 @@ msgstr "&Ta bort\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
-msgstr "Markera &allt"
+msgstr "Markera &all\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
