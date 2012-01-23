@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-17 21:53+0100\n"
+"PO-Revision-Date: 2012-01-24 00:53+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -2185,7 +2185,6 @@ msgid "B&rowse..."
 msgstr "Parcou&rir..."
 
 #: cryptui.rc:294
-#, fuzzy
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
@@ -2399,7 +2398,6 @@ msgid "Certificate Information"
 msgstr "Informations sur le certificat"
 
 #: cryptui.rc:29
-#, fuzzy
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
@@ -2408,7 +2406,6 @@ msgstr ""
 "ou corrompu."
 
 #: cryptui.rc:30
-#, fuzzy
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
@@ -2558,7 +2555,6 @@ msgid "Please select a certificate store."
 msgstr "Veuillez sélectionner un magasin de certificats."
 
 #: cryptui.rc:69
-#, fuzzy
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
@@ -2615,7 +2611,6 @@ msgid "Please select a file."
 msgstr "Sélectionnez un fichier."
 
 #: cryptui.rc:82
-#, fuzzy
 msgid "The file format is not recognized. Please select another file."
 msgstr "Le format du fichier n'est pas reconnu. Sélectionnez un autre fichier."
 
@@ -2858,7 +2853,6 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "Choisissez le nom du fichier dans lequel le contenu sera sauvé."
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
 msgstr "Le fichier spécifié existe déjà. Voulez-vous le remplacer ?"
 
@@ -2931,7 +2925,6 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "Note : la clé privée de ce certificat n'a pu être ouverte."
 
 #: cryptui.rc:173
-#, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Note : la clé privée de ce certificat n'est pas exportable."
 
@@ -5721,9 +5714,8 @@ msgid "Event log file changed\n"
 msgstr "Fichier journal d'événements modifié\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed\n"
-msgstr "Échec du service d'installation.\n"
+msgstr "Échec du service d'installation\n"
 
 #: winerror.mc:2731
 msgid "Installation aborted by user\n"
@@ -6657,7 +6649,6 @@ msgid "Done"
 msgstr "Terminé"
 
 #: msi.rc:27
-#, fuzzy
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
@@ -7194,46 +7185,42 @@ msgstr ""
 "puissiez l'activer en utilisant %s."
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
-"Insère le contenu du presse-papiers dans votre document de sorte que vous "
-"puissiez l'activer en utilisant %s. Il sera affiché comme une icône."
+"Insère le contenu du presse-papiers dans votre document afin de pouvoir "
+"l'activer en utilisant %s. Il sera affiché comme une icône."
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
 "Insère le contenu du presse-papiers dans votre document comme %s. Les "
-"données sont liées au fichier source de sorte que les modifications de celui-"
-"ci seront répercutées dans votre document."
+"données sont liées au fichier source afin que les modifications de celui-"
+"cisoient répercutées dans votre document."
 
 #: oledlg.rc:38
-#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
 "Insère une image du contenu du presse-papiers dans votre document. L'image "
-"est liée au fichier source de sorte que les modifications de celui-ci seront "
+"est liée au fichier source afin que les modifications de celui-ci soient "
 "répercutées dans votre document."
 
 #: oledlg.rc:39
-#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
 "Insère un raccourci qui pointe vers l'emplacement du contenu du presse-"
-"papiers. Le raccourci est lié au fichier source de sorte que les "
-"modifications de celui-ci seront répercutées dans votre document."
+"papiers. Le raccourci est lié au fichier source afin que les modifications "
+"de celui-ci soient répercutées dans votre document."
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
@@ -7889,7 +7876,7 @@ msgstr "Favoris"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "Démarrage"
 
 #: shell32.rc:204
 msgid "Start Menu"
@@ -7933,18 +7920,16 @@ msgid "My Pictures"
 msgstr "Mes images"
 
 #: shell32.rc:215
-#, fuzzy
 msgid "Common Files"
-msgstr "Nom commun"
+msgstr "Fichiers communs"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
 msgstr "Documents"
 
 #: shell32.rc:217
-#, fuzzy
 msgid "Administrative Tools"
-msgstr "Menu Démarrer\\Programmes\\Outils d'administration"
+msgstr "Outils d'administration"
 
 #: shell32.rc:218
 msgid "Music"
@@ -7971,14 +7956,12 @@ msgid "Links"
 msgstr "Liens"
 
 #: shell32.rc:223
-#, fuzzy
 msgid "Slide Shows"
-msgstr "Images\\Diaporamas"
+msgstr "Diaporamas"
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
-msgstr "Musique\\Listes de lecture"
+msgstr "Listes de lecture"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -7993,24 +7976,20 @@ msgid "Model"
 msgstr "Modèle"
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
-msgstr "Musique\\Échantillons"
+msgstr "Exemples de musiques"
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
-msgstr "Images\\Échantillons"
+msgstr "Exemples d'images"
 
 #: shell32.rc:227
-#, fuzzy
 msgid "Sample Playlists"
-msgstr "Musique\\Exemples de listes de lecture"
+msgstr "Exemples de listes de lecture"
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
-msgstr "Vidéos\\Échantillons"
+msgstr "Exemples de vidéos"
 
 #: shell32.rc:229
 msgid "Saved Games"
@@ -8170,7 +8149,6 @@ msgid "Confirm overwrite"
 msgstr "Confirmez l'écrasement"
 
 #: shell32.rc:265
-#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8197,7 +8175,7 @@ msgstr ""
 "Publique Limitée pour plus de détails.\n"
 "\n"
 "Vous devriez avoir reçu une copie de la Licence Générale Publique Limitée "
-"GNU avec Wine ; si ce n’est pas le cas, écrivez à la : Free Software "
+"GNU avec Wine ; si ce n’est pas le cas, écrivez à la Free Software "
 "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:253
@@ -8257,23 +8235,20 @@ msgid "Ma&ximize"
 msgstr "Ma&ximiser"
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "&Fermer\tAlt-F4"
+msgstr "&Fermer\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
 msgstr "À &propos de Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "&Fermer\tCtrl-F4"
+msgstr "&Fermer\tCtrl+F4"
 
 #: user32.rc:48
-#, fuzzy
 msgid "Nex&t\tCtrl+F6"
-msgstr "Sui&vant\tCtrl-F6"
+msgstr "Sui&vant\tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -9616,7 +9591,6 @@ msgstr ""
 "texte ».\n"
 
 #: cmd.rc:153
-#, fuzzy
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -9642,7 +9616,6 @@ msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR efface un sous-répertoire.\n"
 
 #: cmd.rc:178
-#, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9671,7 +9644,7 @@ msgstr ""
 "\n"
 "où <variable> et <valeur> sont des chaînes de caractères. Il ne peut y "
 "avoir\n"
-"aucun espace autour du signe '=', ni dans <variable>.\n"
+"aucun espace avant le signe « = », ni dans <variable>.\n"
 "\n"
 "Sous Wine, l'environnement du système hôte est inclus dans l'environnement\n"
 "Win32, il y aura par conséquent généralement bien plus de valeurs que dans "
@@ -9697,11 +9670,8 @@ msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME règle ou affiche l'heure système courante.\n"
 
 #: cmd.rc:187
-#, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr ""
-"Définit le titre de la fenêtre pour la session cmd ; syntaxe : TITLE "
-"[chaîne]\n"
+msgstr "TITLE <chaîne> définit le titre de la fenêtre pour la session cmd.\n"
 
 #: cmd.rc:191
 msgid ""
@@ -9713,7 +9683,6 @@ msgstr ""
 "texte.\n"
 
 #: cmd.rc:200
-#, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9726,8 +9695,8 @@ msgstr ""
 "VERIFY est utilisé pour positionner, effacer ou tester l'indicateur de "
 "vérification. Les formes suivantes sont correctes :\n"
 "\n"
-"VERIFY ON\tPositionne l'indicateur\n"
-"VERIFY OFF\tEfface l'indicateur\n"
+"VERIFY ON\tPositionne l'indicateur.\n"
+"VERIFY OFF\tEfface l'indicateur.\n"
 "VERIFY\t\tAffiche l'état ON ou OFF de l'indicateur.\n"
 "\n"
 "L'indicateur de vérification n'a pas de fonction dans Wine.\n"
@@ -9776,14 +9745,12 @@ msgstr ""
 "une pile et remplace le répertoire courant par le répertoire spécifié.\n"
 
 #: cmd.rc:222
-#, fuzzy
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 "POPD remplace le répertoire courant par le dernier enregistré à l'aide de\n"
 "PUSHD.\n"
 
 #: cmd.rc:230
-#, fuzzy
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9794,7 +9761,7 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
-"ASSOC affiche ou modifie les associations d'extensions de fichiers\n"
+"ASSOC affiche ou modifie les associations d'extensions de fichiers.\n"
 "\n"
 "Syntaxe : ASSOC [.ext[=[typeFichier]]]\n"
 "\n"
@@ -9802,11 +9769,10 @@ msgstr ""
 "cours.\n"
 "Si utilisé uniquement avec une extension de fichier, affiche l'association "
 "actuelle.\n"
-"Si aucun type de fichiers n'est spécifié après le signe égal, supprimer "
+"Si aucun type de fichiers n'est spécifié après le signe égal, supprime "
 "l'association courante, si elle existe.\n"
 
 #: cmd.rc:241
-#, fuzzy
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9820,7 +9786,7 @@ msgid ""
 "associated to the specified file type.\n"
 msgstr ""
 "FTYPE affiche ou modifie les commandes d'ouvertures associées à des types de "
-"fichiers\n"
+"fichiers.\n"
 "\n"
 "Syntaxe : FTYPE [typeFichier[=[commandeOuverture]]]\n"
 "\n"
@@ -9938,9 +9904,8 @@ msgstr ""
 "dessus.\n"
 
 #: cmd.rc:290
-#, fuzzy
 msgid "Are you sure?"
-msgstr "Êtes-vous sûr(e)"
+msgstr "Êtes-vous sûr(e) ?"
 
 #: cmd.rc:291 xcopy.rc:40
 msgctxt "Yes key"
@@ -9961,9 +9926,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "Aucune commande d'ouverture n'est associée au type de fichier « %1 »\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "Overwrite %1?"
-msgstr "Écraser %1"
+msgstr "Écraser %1 ?"
 
 #: cmd.rc:296
 msgid "More..."
@@ -10023,9 +9987,8 @@ msgid "A"
 msgstr "T"
 
 #: cmd.rc:312
-#, fuzzy
 msgid "Delete %1?"
-msgstr "Supprimer"
+msgstr "Supprimer %1 ?"
 
 #: cmd.rc:313
 msgid "Echo is %1\n"
@@ -10088,14 +10051,12 @@ msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Le volume dans le lecteur %1!c! n'a pas de label.\n"
 
 #: cmd.rc:327
-#, fuzzy
 msgid " (Yes|No)"
-msgstr "%1 ? (Oui|Non)\n"
+msgstr " (Oui|Non)"
 
 #: cmd.rc:328
-#, fuzzy
 msgid " (Yes|No|All)"
-msgstr "%1 ? (Oui|Non)\n"
+msgstr " (Oui|Non|Tous)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -11521,7 +11482,6 @@ msgstr ""
 "sous certaines conditions ; lancez « start /L » pour plus de détails.\n"
 
 #: start.rc:64
-#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -11552,7 +11512,7 @@ msgstr ""
 "la Licence Générale Publique Limitée pour plus de détails.\n"
 "\n"
 "Vous devriez avoir reçu une copie de la Licence Générale Publique Limitée\n"
-"GNU avec ce programme ; si ce n’est pas le cas, écrivez à la :\n"
+"GNU avec ce programme ; si ce n’est pas le cas, écrivez à la\n"
 "Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,\n"
 "MA 02110-1301, USA.\n"
 "\n"
@@ -12547,7 +12507,6 @@ msgid "Application settings"
 msgstr "Paramètres des applications"
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
@@ -13793,7 +13752,6 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Rétablir\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
 msgstr "&Effacer\tDel"
 
@@ -14081,14 +14039,12 @@ msgstr ""
 "formatage. Voulez-vous vraiment continuer ?"
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
-msgstr "Format de nombre invalide"
+msgstr "Format de nombre invalide."
 
 #: wordpad.rc:188
-#, fuzzy
 msgid "OLE storage documents are not supported."
-msgstr "Les documents conteneur OLE ne sont pas pris en charge"
+msgstr "Les documents conteneur OLE ne sont pas pris en charge."
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -14108,9 +14064,8 @@ msgid "You do not have access to open the file."
 msgstr "Vous ne disposez pas des droits nécessaires à l'ouverture du fichier."
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
-msgstr "L'impression n'est pas implémentée"
+msgstr "L'impression n'est pas prise en charge."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
@@ -14126,10 +14081,8 @@ msgstr ""
 "Nombre invalide de paramètres - Utilisez xcopy /? pour obtenir de l'aide\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr ""
-"Paramètre « %1 » invalide -  Utilisez xcopy /? pour obtenir de l'aide\n"
+msgstr "Paramètre « %1 » invalide - Utilisez xcopy /? pour obtenir de l'aide\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
