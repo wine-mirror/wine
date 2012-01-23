@@ -2377,9 +2377,10 @@ static HRESULT internal_parse(
                 if(hr != S_OK)
                 {
                     IStream_Release(stream);
-                    break;
+                    stream = NULL;
                 }
             }
+
             if(stream || IUnknown_QueryInterface(V_UNKNOWN(&varInput),
                         &IID_IStream, (void**)&stream) == S_OK)
             {
