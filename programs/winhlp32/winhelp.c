@@ -1182,8 +1182,7 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
                 if (len > sizeof(buffer)) len = sizeof(buffer);
                 memcpy(buffer, ptr1, len);
                 if (len < sizeof(buffer)) buffer[len++] = ':';
-                strncpy(&buffer[len], Globals.history.set[i].page->lpszTitle, sizeof(buffer) - len);
-                buffer[sizeof(buffer) - 1] = '\0';
+                lstrcpynA(&buffer[len], Globals.history.set[i].page->lpszTitle, sizeof(buffer) - len);
                 TextOutA(hDc, 0, i * tm.tmHeight, buffer, strlen(buffer));
             }
         }
