@@ -11649,7 +11649,7 @@ msgstr "&Copiază numele cheii"
 
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 msgid "&Find...\tCtrl+F"
-msgstr "Cău&tare...\tCrtl+F"
+msgstr "Cău&tare...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
