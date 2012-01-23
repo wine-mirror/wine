@@ -21,7 +21,6 @@
 #define WIN32_LEAN_AND_MEAN     /* Exclude rarely-used stuff from Windows headers */
 
 #include <windows.h>
-#include <tchar.h>
 #include <commctrl.h>
 #include <commdlg.h>
 #include <cderr.h>
@@ -320,7 +319,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
 	if (DialogBoxW(0, MAKEINTRESOURCEW(IDD_EDIT_DWORD), hwnd, modify_dlgproc) == IDOK) {
 	    DWORD val;
 	    CHAR* valueA = GetMultiByteString(stringValueData);
-	    if (_stscanf(valueA, isDecimal ? "%u" : "%x", &val)) {
+	    if (sscanf(valueA, isDecimal ? "%u" : "%x", &val)) {
 		lRet = RegSetValueExW(hKey, valueName, 0, type, (BYTE*)&val, sizeof(val));
 		if (lRet == ERROR_SUCCESS) result = TRUE;
 		else error_code_messagebox(hwnd, lRet);
