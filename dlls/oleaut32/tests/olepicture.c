@@ -675,9 +675,9 @@ static void test_Render(void)
     IPicture_get_Width(pic, &pWidth);
     IPicture_get_Height(pic, &pHeight);
 
-    SetPixelV(hdc, 0, 0, 0x00F0F0F0);
-    SetPixelV(hdc, 5, 5, 0x00F0F0F0);
-    SetPixelV(hdc, 10, 10, 0x00F0F0F0);
+    SetPixelV(hdc, 0, 0, 0x00223344);
+    SetPixelV(hdc, 5, 5, 0x00223344);
+    SetPixelV(hdc, 10, 10, 0x00223344);
     expected = GetPixel(hdc, 0, 0);
 
     hres = IPicture_Render(pic, hdc, 1, 1, 9, 9, 0, 0, pWidth, -pHeight, NULL);
