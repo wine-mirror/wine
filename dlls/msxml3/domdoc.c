@@ -2082,7 +2082,9 @@ static HRESULT WINAPI domdoc_load(
             if(pNewDoc)
             {
                 domdoc *newDoc = impl_from_IXMLDOMDocument3( pNewDoc );
+
                 xmldoc = xmlCopyDoc(get_doc(newDoc), 1);
+                xmldoc->_private = create_priv();
                 hr = attach_xmldoc(This, xmldoc);
 
                 if(SUCCEEDED(hr))
@@ -3444,8 +3446,7 @@ HRESULT DOMDocument_create(MSXML_VERSION version, IUnknown *pUnkOuter, void **pp
     if(!xmldoc)
         return E_OUTOFMEMORY;
 
-    xmldoc->_private = create_priv();
-    priv_from_xmlDocPtr(xmldoc)->properties = create_properties(version);
+    xmldoc_init(xmldoc, version);
 
     hr = get_domdoc_from_xmldoc(xmldoc, (IXMLDOMDocument3**)ppObj);
     if(FAILED(hr))
