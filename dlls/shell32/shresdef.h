@@ -71,7 +71,7 @@
 #define IDS_SENDTO                  50
 #define IDS_STARTMENU               51
 #define IDS_MYMUSIC                 52
-#define IDS_MYVIDEO                 53
+#define IDS_MYVIDEOS                53
 #define IDS_DESKTOPDIRECTORY        54
 #define IDS_NETHOOD                 55
 #define IDS_TEMPLATES               56
@@ -88,7 +88,7 @@
 #define IDS_ADMINTOOLS              67
 #define IDS_COMMON_MUSIC            68
 #define IDS_COMMON_PICTURES         69
-#define IDS_COMMON_VIDEO            70
+#define IDS_COMMON_VIDEOS           70
 #define IDS_CDBURN_AREA             71
 #define IDS_PROGRAM_FILESX86        72
 #define IDS_PROGRAM_FILES_COMMONX86 73

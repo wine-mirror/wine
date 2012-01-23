@@ -781,7 +781,7 @@ static const WCHAR HistoryW[] = {'H','i','s','t','o','r','y','\0'};
 static const WCHAR Local_AppDataW[] = {'L','o','c','a','l',' ','A','p','p','D','a','t','a','\0'};
 static const WCHAR My_MusicW[] = {'M','y',' ','M','u','s','i','c','\0'};
 static const WCHAR My_PicturesW[] = {'M','y',' ','P','i','c','t','u','r','e','s','\0'};
-static const WCHAR My_VideoW[] = {'M','y',' ','V','i','d','e','o','s','\0'};
+static const WCHAR My_VideosW[] = {'M','y',' ','V','i','d','e','o','s','\0'};
 static const WCHAR NetHoodW[] = {'N','e','t','H','o','o','d','\0'};
 static const WCHAR PersonalW[] = {'P','e','r','s','o','n','a','l','\0'};
 static const WCHAR PrintHoodW[] = {'P','r','i','n','t','H','o','o','d','\0'};
@@ -918,8 +918,8 @@ static const CSIDL_DATA CSIDL_Data[] =
     { /* 0x0e - CSIDL_MYVIDEO */
         &FOLDERID_Videos,
         CSIDL_Type_User,
-        My_VideoW,
-        MAKEINTRESOURCEW(IDS_MYVIDEO)
+        My_VideosW,
+        MAKEINTRESOURCEW(IDS_MYVIDEOS)
     },
     { /* 0x0f - unassigned */
         &GUID_NULL,
@@ -1165,7 +1165,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_PublicVideos,
         CSIDL_Type_AllUsers,
         CommonVideoW,
-        MAKEINTRESOURCEW(IDS_COMMON_VIDEO)
+        MAKEINTRESOURCEW(IDS_COMMON_VIDEOS)
     },
     { /* 0x38 - CSIDL_RESOURCES */
         &FOLDERID_ResourceDir,
@@ -2503,8 +2503,8 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
                 case IDS_MYPICTURES:
                     lstrcpyW(wszSubPath, My_PicturesW);
                     break;
-                case IDS_MYVIDEO:
-                    lstrcpyW(wszSubPath, My_VideoW);
+                case IDS_MYVIDEOS:
+                    lstrcpyW(wszSubPath, My_VideosW);
                     break;
                 default:
                     ERR("LoadString(%d) failed!\n", LOWORD(pwszSubPath));
@@ -2537,7 +2537,7 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
  * - If there is a 'My Documents' directory in $HOME, the user probably wants
  *   wine's 'My Documents' to point there. Furthermore, we imply that the user
  *   is a Windows lover and has no problem with wine creating 'My Pictures',
- *   'My Music' and 'My Video' subfolders under '$HOME/My Documents', if those
+ *   'My Music' and 'My Videos' subfolders under '$HOME/My Documents', if those
  *   do not already exits. We put appropriate symbolic links in place for those,
  *   too.
  * - If there is no 'My Documents' directory in $HOME, we let 'My Documents'
@@ -2546,7 +2546,7 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
  *   there already is a 'My Music' directory in $HOME, we symlink the 'My Music'
  *   shell folder to it. But if not, then we check XDG_MUSIC_DIR - "well known"
  *   directory, and try to link to that. If that fails, then we symlink to
- *   $HOME directly. The same holds fo 'My Pictures' and 'My Video'.
+ *   $HOME directly. The same holds fo 'My Pictures' and 'My Videos'.
  * - The Desktop shell folder is symlinked to XDG_DESKTOP_DIR. If that does not
  *   exist, then we try '$HOME/Desktop'. If that does not exist, then we leave
  *   it alone.
@@ -2554,7 +2554,7 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
  */
 static void _SHCreateSymbolicLinks(void)
 {
-    UINT aidsMyStuff[] = { IDS_MYPICTURES, IDS_MYVIDEO, IDS_MYMUSIC }, i;
+    UINT aidsMyStuff[] = { IDS_MYPICTURES, IDS_MYVIDEOS, IDS_MYMUSIC }, i;
     int acsidlMyStuff[] = { CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC };
     static const char * const xdg_dirs[] = { "PICTURES", "VIDEOS", "MUSIC", "DESKTOP" };
     static const unsigned int num = sizeof(xdg_dirs) / sizeof(xdg_dirs[0]);
@@ -2614,7 +2614,7 @@ static void _SHCreateSymbolicLinks(void)
         }
     }
 
-    /* Create symbolic links for 'My Pictures', 'My Video' and 'My Music'. */
+    /* Create symbolic links for 'My Pictures', 'My Videos' and 'My Music'. */
     for (i=0; i < sizeof(aidsMyStuff)/sizeof(aidsMyStuff[0]); i++) {
         /* Create the current 'My Whatever' folder and get it's unix path. */
         hr = SHGetFolderPathW(NULL, acsidlMyStuff[i]|CSIDL_FLAG_CREATE, NULL,
@@ -2797,7 +2797,7 @@ HRESULT SHELL_RegisterShellFolders(void)
     HRESULT hr;
 
     /* Set up '$HOME' targeted symlinks for 'My Documents', 'My Pictures',
-     * 'My Video', 'My Music' and 'Desktop' in advance, so that the
+     * 'My Videos', 'My Music' and 'Desktop' in advance, so that the
      * _SHRegister*ShellFolders() functions will find everything nice and clean
      * and thus will not attempt to create them in the profile directory. */
     _SHCreateSymbolicLinks();
