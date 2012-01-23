@@ -85,6 +85,12 @@ static BOOL sparc_fetch_minidump_thread(struct dump_context* dc, unsigned index,
     return FALSE;
 }
 
+static BOOL sparc_fetch_minidump_module(struct dump_context* dc, unsigned index, unsigned flags)
+{
+    FIXME("NIY\n");
+    return FALSE;
+}
+
 DECLSPEC_HIDDEN struct cpu cpu_sparc = {
     IMAGE_FILE_MACHINE_SPARC,
     4,
@@ -96,4 +102,5 @@ DECLSPEC_HIDDEN struct cpu cpu_sparc = {
     sparc_fetch_context_reg,
     sparc_fetch_regname,
     sparc_fetch_minidump_thread,
+    sparc_fetch_minidump_module,
 };

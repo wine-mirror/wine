@@ -513,6 +513,9 @@ static  unsigned        dump_modules(struct dump_context* dc, BOOL dump_elf)
         }
         if (flags_out & ModuleWriteModule)
         {
+            /* fetch CPU dependant module info (like UNWIND_INFO) */
+            dbghelp_current_cpu->fetch_minidump_module(dc, i, flags_out);
+
             mdModule.BaseOfImage = dc->modules[i].base;
             mdModule.SizeOfImage = dc->modules[i].size;
             mdModule.CheckSum = dc->modules[i].checksum;

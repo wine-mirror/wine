@@ -673,6 +673,14 @@ static BOOL i386_fetch_minidump_thread(struct dump_context* dc, unsigned index, 
     return TRUE;
 }
 
+static BOOL i386_fetch_minidump_module(struct dump_context* dc, unsigned index, unsigned flags)
+{
+    /* FIXME: actually, we should probably take care of FPO data, unless it's stored in
+     * function table minidump stream
+     */
+    return FALSE;
+}
+
 DECLSPEC_HIDDEN struct cpu cpu_i386 = {
     IMAGE_FILE_MACHINE_I386,
     4,
@@ -684,4 +692,5 @@ DECLSPEC_HIDDEN struct cpu cpu_i386 = {
     i386_fetch_context_reg,
     i386_fetch_regname,
     i386_fetch_minidump_thread,
+    i386_fetch_minidump_module,
 };

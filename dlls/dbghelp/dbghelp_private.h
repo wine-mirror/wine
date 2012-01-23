@@ -538,6 +538,7 @@ struct cpu
 
     /* minidump per CPU extension */
     BOOL        (*fetch_minidump_thread)(struct dump_context* dc, unsigned index, unsigned flags, const CONTEXT* ctx);
+    BOOL        (*fetch_minidump_module)(struct dump_context* dc, unsigned index, unsigned flags);
 };
 
 extern struct cpu*      dbghelp_current_cpu DECLSPEC_HIDDEN;

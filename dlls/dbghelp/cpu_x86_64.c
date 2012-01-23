@@ -145,7 +145,7 @@ static void dump_unwind_info(struct cpu_stack_walk* csw, ULONG64 base, RUNTIME_F
         {
             if (!sw_read_mem(csw, base + function->UnwindData, &snext, sizeof(snext)))
             {
-                TRACE("Couldn't unwind RUNTIME_INFO\n");
+                TRACE("Couldn't unwind RUNTIME_INFO at %lx\n", base + function->UnwindData);
                 return;
             }
             TRACE("unwind info for function %p-%p chained to function %p-%p\n",
@@ -159,7 +159,7 @@ static void dump_unwind_info(struct cpu_stack_walk* csw, ULONG64 base, RUNTIME_F
             !sw_read_mem(csw, addr + FIELD_OFFSET(UNWIND_INFO, UnwindCode),
                          info->UnwindCode, info->CountOfCodes * sizeof(UNWIND_CODE)))
         {
-            FIXME("couldn't read memory for UNWIND_INFO\n");
+            FIXME("couldn't read memory for UNWIND_INFO at %lx\n", addr);
             return;
         }
         TRACE("unwind info at %p flags %x prolog 0x%x bytes function %p-%p\n",
@@ -904,6 +904,50 @@ static BOOL x86_64_fetch_minidump_thread(struct dump_context* dc, unsigned index
     return TRUE;
 }
 
+static BOOL x86_64_fetch_minidump_module(struct dump_context* dc, unsigned index, unsigned flags)
+{
+    /* FIXME: not sure about the flags... */
+    if (1)
+    {
+        /* FIXME: crop values across module boundaries, */
+#ifdef __x86_64__
+        struct process*         pcs;
+        struct module*          module;
+        const RUNTIME_FUNCTION* rtf;
+        ULONG                   size;
+
+        if (!(pcs = process_find_by_handle(dc->hProcess)) ||
+            !(module = module_find_by_addr(pcs, dc->modules[index].base, DMT_UNKNOWN)))
+            return FALSE;
+        rtf = (const RUNTIME_FUNCTION*)pe_map_directory(module, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size);
+        if (rtf)
+        {
+            const RUNTIME_FUNCTION* end = (const RUNTIME_FUNCTION*)((const char*)rtf + size);
+            UNWIND_INFO ui;
+
+            while (rtf + 1 < end)
+            {
+                while (rtf->UnwindData & 1)  /* follow chained entry */
+                {
+                    FIXME("RunTime_Function outside IMAGE_DIRECTORY_ENTRY_EXCEPTION unimplemented yet!\n");
+                    return FALSE;
+                    /* we need to read into the other process */
+                    /* rtf = (RUNTIME_FUNCTION*)(module->module.BaseOfImage + (rtf->UnwindData & ~1)); */
+                }
+                if (ReadProcessMemory(dc->hProcess,
+                                      (void*)(dc->modules[index].base + rtf->UnwindData),
+                                      &ui, sizeof(ui), NULL))
+                    minidump_add_memory_block(dc, dc->modules[index].base + rtf->UnwindData,
+                                              FIELD_OFFSET(UNWIND_INFO, UnwindCode) + ui.CountOfCodes * sizeof(UNWIND_CODE), 0);
+                rtf++;
+            }
+        }
+#endif
+    }
+
+    return TRUE;
+}
+
 DECLSPEC_HIDDEN struct cpu cpu_x86_64 = {
     IMAGE_FILE_MACHINE_AMD64,
     8,
@@ -915,4 +959,5 @@ DECLSPEC_HIDDEN struct cpu cpu_x86_64 = {
     x86_64_fetch_context_reg,
     x86_64_fetch_regname,
     x86_64_fetch_minidump_thread,
+    x86_64_fetch_minidump_module,
 };

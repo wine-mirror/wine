@@ -228,6 +228,12 @@ static BOOL arm_fetch_minidump_thread(struct dump_context* dc, unsigned index, u
     return FALSE;
 }
 
+static BOOL arm_fetch_minidump_module(struct dump_context* dc, unsigned index, unsigned flags)
+{
+    FIXME("NIY\n");
+    return FALSE;
+}
+
 DECLSPEC_HIDDEN struct cpu cpu_arm = {
     IMAGE_FILE_MACHINE_ARMV7,
     4,
@@ -239,4 +245,5 @@ DECLSPEC_HIDDEN struct cpu cpu_arm = {
     arm_fetch_context_reg,
     arm_fetch_regname,
     arm_fetch_minidump_thread,
+    arm_fetch_minidump_module,
 };
