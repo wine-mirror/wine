@@ -108,8 +108,7 @@ static BOOL verify_mode = FALSE;
 /**************************************************************************
  * WCMD_ask_confirm
  *
- * Issue a message and ask 'Are you sure (Y/N)', waiting on a valid
- * answer.
+ * Issue a message and ask for confirmation, waiting on a valid answer.
  *
  * Returns True if Y (or A) answer is selected
  *         If optionAll contains a pointer, ALL is allowed, and if answered
@@ -117,7 +116,7 @@ static BOOL verify_mode = FALSE;
  *
  */
 static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
-                              const BOOL *optionAll) {
+                              BOOL *optionAll) {
 
     WCHAR  msgbuffer[MAXSTRING];
     WCHAR  Ybuffer[MAXSTRING];
@@ -132,8 +131,10 @@ static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
     LoadStringW(hinst, WCMD_NO,  Nbuffer, sizeof(Nbuffer)/sizeof(WCHAR));
     LoadStringW(hinst, WCMD_ALL, Abuffer, sizeof(Abuffer)/sizeof(WCHAR));
 
-    /* Loop waiting on a Y or N */
-    while (answer[0] != Ybuffer[0] && answer[0] != Nbuffer[0]) {
+    /* Loop waiting on a valid answer */
+    if (optionAll)
+        *optionAll = FALSE;
+    while (1) {
       static const WCHAR startBkt[] = {' ','(','\0'};
       static const WCHAR endBkt[]   = {')','?','\0'};
 
@@ -152,11 +153,16 @@ static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
       WCMD_output_asis (endBkt);
       WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer)/sizeof(WCHAR), &count);
       answer[0] = toupperW(answer[0]);
+      if (answer[0] == Ybuffer[0])
+        return TRUE;
+      if (answer[0] == Nbuffer[0])
+        return FALSE;
+      if (optionAll && answer[0] == Abuffer[0])
+      {
+        *optionAll = TRUE;
+        return TRUE;
+      }
     }
-
-    /* Return the answer */
-    return ((answer[0] == Ybuffer[0]) ||
-            (optionAll && (answer[0] == Abuffer[0])));
 }
 
 /****************************************************************************
