@@ -9733,8 +9733,8 @@ msgstr ""
 "SETLOCAL begint localisatie van omgevingswijzigingen in een batchbestand.\n"
 "\n"
 "Omgevingswijzigingen na een SETLOCAL opdracht zijn alleen in het\n"
-"batchbestand zichtbaar en worden behouden tot de volgende ENDLOCAL \n"
-"opdracht (of tot het eind van het bestand, welke eerst komst), \n"
+"batchbestand zichtbaar en worden behouden tot de volgende ENDLOCAL\n"
+"opdracht (of tot het eind van het bestand, welke eerst komst),\n"
 "waar de vorige omgevingsvariabelen worden teruggezet.\n"
 
 #: cmd.rc:220

@@ -5631,7 +5631,7 @@ msgstr "Neveljaven obseg drsnika\n"
 
 #: winerror.mc:2641
 msgid "Invalid ShowWin command\n"
-msgstr "Neveljaven ukaz ShowWin \n"
+msgstr "Neveljaven ukaz ShowWin\n"
 
 #: winerror.mc:2646
 msgid "No system resources\n"

@@ -10093,7 +10093,7 @@ msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
-"Error: Establir el nom d'equip del sistema no és possible amb la utilitat \n"
+"Error: Establir el nom d'equip del sistema no és possible amb la utilitat\n"
 "hostname.\n"
 
 #: ipconfig.rc:27

@@ -8324,7 +8324,7 @@ msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
 msgstr ""
-"حافظه‌ی موقت برای انجام این کار وجود ندارد. \n"
+"حافظه‌ی موقت برای انجام این کار وجود ندارد.\n"
 "یک یا چند ابزار و برنامه‌ی دیگر را ببندید تا مقدار آزاد حافظه‌ی موقت را افزایش "
 "دهید."
 

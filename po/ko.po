@@ -3832,7 +3832,7 @@ msgstr "세마포어가 설정되었습니다\n"
 
 #: winerror.mc:391
 msgid "Too many semaphore requests\n"
-msgstr "세마포어 요청이 너무 많습니다 \n"
+msgstr "세마포어 요청이 너무 많습니다\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time\n"
@@ -3924,7 +3924,7 @@ msgstr "~에 대해 대기하는 자식 프로세스가 없음\n"
 
 #: winerror.mc:511
 msgid "Child process has not completed\n"
-msgstr "자식 프로세스가 완료되지 않았습니다 \n"
+msgstr "자식 프로세스가 완료되지 않았습니다\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle\n"
@@ -4080,7 +4080,7 @@ msgstr "올바르지 않은 세그멘트 번호\n"
 
 #: winerror.mc:711
 msgid "Invalid ordinal for %1\n"
-msgstr "올바르지 않은 %1 오디널 \n"
+msgstr "올바르지 않은 %1 오디널\n"
 
 #: winerror.mc:716
 msgid "File already exists\n"
@@ -4108,7 +4108,7 @@ msgstr "%1의 올바르지 않은 모듈 형식\n"
 
 #: winerror.mc:746
 msgid "Invalid EXE signature in %1\n"
-msgstr "%1 의 올바르지 않은 EXE 서명 \n"
+msgstr "%1 의 올바르지 않은 EXE 서명\n"
 
 #: winerror.mc:751
 msgid "EXE %1 is marked invalid\n"
@@ -4124,7 +4124,7 @@ msgstr "%1의 반복 데이타가 64k를 넘음\n"
 
 #: winerror.mc:766
 msgid "Invalid MinAllocSize in %1\n"
-msgstr "%1의 올바르지 않은 MinAllocSize \n"
+msgstr "%1의 올바르지 않은 MinAllocSize\n"
 
 #: winerror.mc:771
 msgid "Dynlink from invalid ring\n"
@@ -4136,7 +4136,7 @@ msgstr "IOPL는 가능하지 않습니다\n"
 
 #: winerror.mc:781
 msgid "Invalid SEGDPL in %1\n"
-msgstr "%1의 올바르지 않은 SEGDPL \n"
+msgstr "%1의 올바르지 않은 SEGDPL\n"
 
 #: winerror.mc:786
 msgid "Auto data segment exceeds 64k\n"
@@ -5520,7 +5520,7 @@ msgstr "올바르지 않은 편집 높이\n"
 
 #: winerror.mc:2521
 msgid "DC not found\n"
-msgstr "DC를 찾을 수 없습니다 \n"
+msgstr "DC를 찾을 수 없습니다\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter\n"
@@ -5616,7 +5616,7 @@ msgstr "올바르지 않은 스코롤바 범위\n"
 
 #: winerror.mc:2641
 msgid "Invalid ShowWin command\n"
-msgstr "올바르지 않은 ShowWin 명령 \n"
+msgstr "올바르지 않은 ShowWin 명령\n"
 
 #: winerror.mc:2646
 msgid "No system resources\n"
@@ -6197,7 +6197,7 @@ msgstr "RPC 요구는 이미 작업중입니다\n"
 
 #: winerror.mc:3371
 msgid "NETLOGON is not started\n"
-msgstr "NETLOGON 는 시작되어 있지 않습니다 \n"
+msgstr "NETLOGON 는 시작되어 있지 않습니다\n"
 
 #: winerror.mc:3376
 msgid "Account expired\n"
@@ -9695,7 +9695,7 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
-"CHOICE는 텍스트를 보여주고, 사용자가 선택된 목록에서  \n"
+"CHOICE는 텍스트를 보여주고, 사용자가 선택된 목록에서\n"
 "허용하는 키를 누를 때까지 기다립니다.\n"
 "CHOICE는 주로 배치 파일에서 메뉴 선택을 넣는 데 사용됩니다..\n"
 
@@ -13941,7 +13941,7 @@ msgstr "%1를 덮어쓰겠습니까? (예|아니오|모두)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "r/c %3!d!로 '%1'를 '%2'로 복사 실패 \n"
+msgstr "r/c %3!d!로 '%1'를 '%2'로 복사 실패\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%1'\n"
