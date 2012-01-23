@@ -19,16 +19,14 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-    
-#define WIN32_LEAN_AND_MEAN    /* Exclude rarely-used stuff from Windows headers */
+
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <windows.h>
 #include <commctrl.h>
-#include <stdlib.h>
 #include <shellapi.h>
-#include <memory.h>
-#include <tchar.h>
-#include <stdio.h>
-    
+
 #include "taskmgr.h"
 
 
