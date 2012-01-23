@@ -124,9 +124,9 @@ typedef enum _XDR_DT {
     DT_UI4,
     DT_UI8,
     DT_URI,
-    DT_UUID
+    DT_UUID,
+    LAST_DT
 } XDR_DT;
-#define DT__N_TYPES  (DT_UUID+1)
 
 extern HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
 extern void release_typelib(void) DECLSPEC_HIDDEN;

@@ -644,6 +644,8 @@ static inline HRESULT variant_from_dt(XDR_DT dt, xmlChar* str, VARIANT* v)
             return E_OUTOFMEMORY;
         handled = TRUE;
         break;
+    default:
+        WARN("unknown type %d\n", dt);
     }
 
     if (!handled)

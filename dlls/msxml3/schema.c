@@ -391,7 +391,7 @@ static DWORD dt_hash_bstr(OLECHAR const* bstr, int len /* calculated if -1 */)
     return hval;
 }
 
-static const xmlChar *const DT_string_table[DT__N_TYPES] =
+static const xmlChar *const DT_string_table[LAST_DT] =
 {
     DT_bin_base64,
     DT_bin_hex,
@@ -431,7 +431,7 @@ static const xmlChar *const DT_string_table[DT__N_TYPES] =
     DT_uuid
 };
 
-static const WCHAR *const DT_wstring_table[DT__N_TYPES] =
+static const WCHAR *const DT_wstring_table[LAST_DT] =
 {
     wDT_bin_base64,
     wDT_bin_hex,
