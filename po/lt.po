@@ -63,8 +63,8 @@ msgstr "Priežiūros informacija"
 #: credui.rc:49 cryptui.rc:260 cryptui.rc:272 cryptui.rc:362 dinput.rc:43
 #: ieframe.rc:93 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
 #: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
-#: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
-#: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
+#: serialui.rc:38 setupapi.rc:56 shell32.rc:273 shell32.rc:297 shell32.rc:319
+#: shell32.rc:337 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
 #: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:114 oleview.rc:159
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
@@ -145,7 +145,7 @@ msgstr "&Įdiegti"
 #: dinput.rc:44 ieframe.rc:94 inetcpl.rc:78 localui.rc:42 localui.rc:55
 #: mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34
 #: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
-#: shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42
+#: shell32.rc:274 shell32.rc:298 shell32.rc:309 shell32.rc:338 shlwapi.rc:42
 #: user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40
 #: notepad.rc:115 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
@@ -185,7 +185,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nenurodyta"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:251 regedit.rc:122 winefile.rc:110
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Vardas"
 
@@ -2526,7 +2526,7 @@ msgstr "Ypatingas rakto naudojimas (savybė)"
 msgid "Friendly name"
 msgstr "Draugiškas vardas"
 
-#: cryptui.rc:62 shell32.rc:252 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
 msgstr "Aprašas"
 
@@ -7718,51 +7718,51 @@ msgstr "Iš&eiti"
 msgid "&About Control Panel"
 msgstr "&Apie valdymo skydelį"
 
-#: shell32.rc:283 shell32.rc:298
+#: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
 msgstr "Parinkti aplanką"
 
-#: shell32.rc:303
+#: shell32.rc:290
 msgid "Folder:"
 msgstr "Aplankas:"
 
-#: shell32.rc:309
+#: shell32.rc:296
 msgid "&Make New Folder"
 msgstr "&Kurti naują aplanką"
 
-#: shell32.rc:316
+#: shell32.rc:303
 msgid "Message"
 msgstr "Pranešimas"
 
-#: shell32.rc:319 shlwapi.rc:43 user32.rc:82
+#: shell32.rc:306 shlwapi.rc:43 user32.rc:82
 msgid "&Yes"
 msgstr "&Taip"
 
-#: shell32.rc:320
+#: shell32.rc:307
 msgid "Yes to &all"
 msgstr "Taip &visiems"
 
-#: shell32.rc:321 shlwapi.rc:44 user32.rc:83
+#: shell32.rc:308 shlwapi.rc:44 user32.rc:83
 msgid "&No"
 msgstr "&Ne"
 
-#: shell32.rc:329
+#: shell32.rc:316
 msgid "About %s"
 msgstr "Apie %s"
 
-#: shell32.rc:333
+#: shell32.rc:320
 msgid "Wine &license"
 msgstr "Wine &licencija"
 
-#: shell32.rc:338
+#: shell32.rc:325
 msgid "Running on %s"
 msgstr "Paleista su %s"
 
-#: shell32.rc:339
+#: shell32.rc:326
 msgid "Wine was brought to you by:"
 msgstr "Prie Wine kūrimo prisidėjo:"
 
-#: shell32.rc:347
+#: shell32.rc:334
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
@@ -7770,11 +7770,11 @@ msgstr ""
 "Įrašykite programos pavadinimą, aplanką, dokumentą ar interneto resursą ir "
 "Wine jums jį atvers."
 
-#: shell32.rc:348
+#: shell32.rc:335
 msgid "&Open:"
 msgstr "&Atverti:"
 
-#: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
+#: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
 msgid "&Browse..."
 msgstr "&Parinkti..."
@@ -7852,142 +7852,110 @@ msgstr "Stabdyti"
 msgid "Do you want to shutdown your Wine session?"
 msgstr "Ar norite sustabdyti šį Wine seansą?"
 
-#: shell32.rc:199
-msgid "Start Menu\\Programs"
-msgstr "Pradžios meniu\\Programos"
+#: shell32.rc:200 progman.rc:80
+msgid "Programs"
+msgstr "Programos"
 
-#: shell32.rc:200
+#: shell32.rc:201
 msgid "My Documents"
 msgstr "Dokumentai"
 
-#: shell32.rc:201
+#: shell32.rc:202
 msgid "Favorites"
 msgstr "Adresynas"
 
-#: shell32.rc:202
-msgid "Start Menu\\Programs\\StartUp"
-msgstr "Pradžios meniu\\Programos\\Paleidimas"
-
 #: shell32.rc:203
-msgid "Recent"
-msgstr "Paskiausi"
+msgid "StartUp"
+msgstr ""
 
 #: shell32.rc:204
-msgid "SendTo"
-msgstr "Siųsti"
-
-#: shell32.rc:205
 msgid "Start Menu"
 msgstr "Pradžios meniu"
 
-#: shell32.rc:206
+#: shell32.rc:205
 msgid "My Music"
 msgstr "Muzika"
 
-#: shell32.rc:207
+#: shell32.rc:206
 msgid "My Videos"
 msgstr "Vaizdai"
 
-#: shell32.rc:208
+#: shell32.rc:207
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Darbalaukis"
 
-#: shell32.rc:209
+#: shell32.rc:208
 msgid "NetHood"
 msgstr "Tinkle"
 
-#: shell32.rc:210
+#: shell32.rc:209
 msgid "Templates"
 msgstr "Šablonai"
 
-#: shell32.rc:211
-msgid "Application Data"
-msgstr "Programų duomenys"
-
-#: shell32.rc:212
+#: shell32.rc:210
 msgid "PrintHood"
 msgstr "Spausdintuvai"
 
-#: shell32.rc:213
-msgid "Local Settings\\Application Data"
-msgstr "Vietinės nuostatos\\Programų duomenys"
+#: shell32.rc:211 winhlp32.rc:45
+msgid "History"
+msgstr "Istorija"
 
-#: shell32.rc:214
-msgid "Local Settings\\Temporary Internet Files"
-msgstr "Vietinės nuostatos\\Laikini interneto failai"
-
-#: shell32.rc:215
-msgid "Cookies"
-msgstr "Slapukai"
-
-#: shell32.rc:216
-msgid "Local Settings\\History"
-msgstr "Vietinės nuostatos\\Istorija"
-
-#: shell32.rc:217
+#: shell32.rc:212
 msgid "Program Files"
 msgstr "Programų failai"
 
-#: shell32.rc:219
+#: shell32.rc:214
 msgid "My Pictures"
 msgstr "Paveikslai"
 
-#: shell32.rc:220
-msgid "Program Files\\Common Files"
-msgstr "Programų failai\\Bendrieji failai"
+#: shell32.rc:215
+#, fuzzy
+msgid "Common Files"
+msgstr "Vardas, pavardė"
 
-#: shell32.rc:222 shell32.rc:147 shell32.rc:244
+#: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
 msgstr "Dokumentai"
 
-#: shell32.rc:223
-msgid "Start Menu\\Programs\\Administrative Tools"
+#: shell32.rc:217
+#, fuzzy
+msgid "Administrative Tools"
 msgstr "Pradžios meniu\\Programos\\Administravimo įrankiai"
 
-#: shell32.rc:224
+#: shell32.rc:218
 msgid "Music"
 msgstr "Muzika"
 
-#: shell32.rc:225
+#: shell32.rc:219
 msgid "Pictures"
 msgstr "Paveikslai"
 
-#: shell32.rc:226
+#: shell32.rc:220
 msgid "Videos"
 msgstr "Vaizdai"
 
-#: shell32.rc:227
-msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
-msgstr "Vietinės nuostatos\\Programų duomenys\\Microsoft\\CD rašymas"
-
-#: shell32.rc:218
+#: shell32.rc:213
 msgid "Program Files (x86)"
 msgstr "Programų failai (x86)"
 
 #: shell32.rc:221
-msgid "Program Files (x86)\\Common Files"
-msgstr "Programų failai (x86)\\Bendrieji failai"
-
-#: shell32.rc:228
 msgid "Contacts"
 msgstr "Kontaktai"
 
-#: shell32.rc:229 winefile.rc:116
+#: shell32.rc:222 winefile.rc:116
 msgid "Links"
 msgstr "Saitai"
 
-#: shell32.rc:230
-msgid "Pictures\\Slide Shows"
+#: shell32.rc:223
+#, fuzzy
+msgid "Slide Shows"
 msgstr "Paveikslai\\Skaidrių peržiūros"
 
-#: shell32.rc:231
-msgid "Music\\Playlists"
+#: shell32.rc:224
+#, fuzzy
+msgid "Playlists"
 msgstr "Muzika\\Grojaraščiai"
-
-#: shell32.rc:232 shell32.rc:245
-msgid "Downloads"
-msgstr "Atsiuntimai"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -8001,53 +7969,41 @@ msgstr "Vieta"
 msgid "Model"
 msgstr "Modelis"
 
-#: shell32.rc:233
-msgid "Microsoft\\Windows\\GameExplorer"
-msgstr "Microsoft\\Windows\\GameExplorer"
-
-#: shell32.rc:234
-msgid "Microsoft\\Windows\\Libraries"
-msgstr "Microsoft\\Windows\\Bibliotekos"
-
-#: shell32.rc:235
-msgid "Microsoft\\Windows\\Ringtones"
-msgstr "Microsoft\\Windows\\Skambučių melodijos"
-
-#: shell32.rc:236
-msgid "Music\\Sample Music"
+#: shell32.rc:225
+#, fuzzy
+msgid "Sample Music"
 msgstr "Muzika\\Muzikos pavyzdžiai"
 
-#: shell32.rc:237
-msgid "Pictures\\Sample Pictures"
+#: shell32.rc:226
+#, fuzzy
+msgid "Sample Pictures"
 msgstr "Paveikslai\\Paveikslų pavyzdžiai"
 
-#: shell32.rc:238
-msgid "Music\\Sample Playlists"
+#: shell32.rc:227
+#, fuzzy
+msgid "Sample Playlists"
 msgstr "Muzika\\Grojaraščių pavyzdžiai"
 
-#: shell32.rc:239
-msgid "Videos\\Sample Videos"
+#: shell32.rc:228
+#, fuzzy
+msgid "Sample Videos"
 msgstr "Vaizdai\\Vaizdų pavyzdžiai"
 
-#: shell32.rc:240
+#: shell32.rc:229
 msgid "Saved Games"
 msgstr "Išsaugoti žaidimai"
 
-#: shell32.rc:241
+#: shell32.rc:230
 msgid "Searches"
 msgstr "Paieškos"
 
-#: shell32.rc:242
+#: shell32.rc:231
 msgid "Users"
 msgstr "Naudotojai"
 
-#: shell32.rc:243
-msgid "OEM Links"
-msgstr "OEM nuorodos"
-
-#: shell32.rc:246
-msgid "AppData\\LocalLow"
-msgstr "Programų duomenys\\LocalLow"
+#: shell32.rc:233
+msgid "Downloads"
+msgstr "Atsiuntimai"
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
@@ -8126,11 +8082,11 @@ msgstr ""
 "kopijuoti\n"
 "šį aplanką?"
 
-#: shell32.rc:248
+#: shell32.rc:235
 msgid "New Folder"
 msgstr "Naujas aplankas"
 
-#: shell32.rc:250
+#: shell32.rc:237
 msgid "Wine Control Panel"
 msgstr "Wine valdymo skydelis"
 
@@ -8146,23 +8102,23 @@ msgstr "Nepavyko parodyti parinkimo dialogo lango (vidinė klaida)"
 msgid "Executable files (*.exe)"
 msgstr "Vykdomieji failai (*.exe)"
 
-#: shell32.rc:254
+#: shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
 msgstr "Jokia Windows programa nėra sukonfigūruota atidaryti šio tipo failų."
 
-#: shell32.rc:256
+#: shell32.rc:243
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "Ar tikrai norite negrįžtamai pašalinti „%1“?"
 
-#: shell32.rc:257
+#: shell32.rc:244
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "Ar tikrai norite negrįžtamai pašalinti šiuos %1 elementus?"
 
-#: shell32.rc:258
+#: shell32.rc:245
 msgid "Confirm deletion"
 msgstr "Patvirtinti šalinimą"
 
-#: shell32.rc:259
+#: shell32.rc:246
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
@@ -8172,7 +8128,7 @@ msgstr ""
 "\n"
 "Ar norite jį pakeisti?"
 
-#: shell32.rc:260
+#: shell32.rc:247
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
@@ -8182,11 +8138,11 @@ msgstr ""
 "\n"
 "Ar norite jį pakeisti?"
 
-#: shell32.rc:261
+#: shell32.rc:248
 msgid "Confirm overwrite"
 msgstr "Patvirtinti perrašymą"
 
-#: shell32.rc:278
+#: shell32.rc:265
 #, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
@@ -8216,7 +8172,7 @@ msgstr ""
 "kartu su Wine; jei negavote, rašykite adresu Free Software Foundation, Inc., "
 "51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: shell32.rc:266
+#: shell32.rc:253
 msgid "Wine License"
 msgstr "Wine licencija"
 
@@ -10979,10 +10935,6 @@ msgstr "Failas „%s“ egzistuoja. Neperrašytas."
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Išsaugoti grupę kaip „%s“, taip neperrašant originalių failų."
 
-#: progman.rc:80
-msgid "Programs"
-msgstr "Programos"
-
 #: progman.rc:81
 msgid "Libraries (*.dll)"
 msgstr "Bibliotekos (*.dll)"
@@ -13607,10 +13559,6 @@ msgstr "&Adresynas"
 #: winhlp32.rc:42
 msgid "&Define..."
 msgstr "&Apibrėžti..."
-
-#: winhlp32.rc:45
-msgid "History"
-msgstr "Istorija"
 
 #: winhlp32.rc:46 winhlp32.rc:67
 msgid "Fonts"

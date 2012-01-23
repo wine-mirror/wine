@@ -61,8 +61,8 @@ msgstr "Støtteinformasjon"
 #: credui.rc:49 cryptui.rc:260 cryptui.rc:272 cryptui.rc:362 dinput.rc:43
 #: ieframe.rc:93 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
 #: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
-#: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
-#: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
+#: serialui.rc:38 setupapi.rc:56 shell32.rc:273 shell32.rc:297 shell32.rc:319
+#: shell32.rc:337 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
 #: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:114 oleview.rc:159
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
@@ -144,7 +144,7 @@ msgstr "&Installer"
 #: dinput.rc:44 ieframe.rc:94 inetcpl.rc:78 localui.rc:42 localui.rc:55
 #: mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34
 #: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
-#: shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42
+#: shell32.rc:274 shell32.rc:298 shell32.rc:309 shell32.rc:338 shlwapi.rc:42
 #: user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40
 #: notepad.rc:115 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
@@ -182,7 +182,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ikke oppgitt"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:251 regedit.rc:122 winefile.rc:110
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Navn"
 
@@ -2615,7 +2615,7 @@ msgstr "Utvidet nøkkelbruk (egenskap)"
 msgid "Friendly name"
 msgstr "Vennlig navn"
 
-#: cryptui.rc:62 shell32.rc:252 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
 msgstr "Beskrivelse"
 
@@ -7969,51 +7969,51 @@ msgstr "&Avslutt"
 msgid "&About Control Panel"
 msgstr "&Om Kontrollpanel..."
 
-#: shell32.rc:283 shell32.rc:298
+#: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
 msgstr "Bla etter mappe"
 
-#: shell32.rc:303
+#: shell32.rc:290
 msgid "Folder:"
 msgstr "Mappe:"
 
-#: shell32.rc:309
+#: shell32.rc:296
 msgid "&Make New Folder"
 msgstr "Ny &mappe"
 
-#: shell32.rc:316
+#: shell32.rc:303
 msgid "Message"
 msgstr "Meldings"
 
-#: shell32.rc:319 shlwapi.rc:43 user32.rc:82
+#: shell32.rc:306 shlwapi.rc:43 user32.rc:82
 msgid "&Yes"
 msgstr "&Ja"
 
-#: shell32.rc:320
+#: shell32.rc:307
 msgid "Yes to &all"
 msgstr "Ja til &alt"
 
-#: shell32.rc:321 shlwapi.rc:44 user32.rc:83
+#: shell32.rc:308 shlwapi.rc:44 user32.rc:83
 msgid "&No"
 msgstr "&Nei"
 
-#: shell32.rc:329
+#: shell32.rc:316
 msgid "About %s"
 msgstr "Om %s"
 
-#: shell32.rc:333
+#: shell32.rc:320
 msgid "Wine &license"
 msgstr "Lisens"
 
-#: shell32.rc:338
+#: shell32.rc:325
 msgid "Running on %s"
 msgstr "Kjører på %s"
 
-#: shell32.rc:339
+#: shell32.rc:326
 msgid "Wine was brought to you by:"
 msgstr "Wine er laget av"
 
-#: shell32.rc:347
+#: shell32.rc:334
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
@@ -8021,11 +8021,11 @@ msgstr ""
 "Skriv inn navnet på programmet, mappen, dokumentet, eller Internett-"
 "ressursen du ønsker å åpne."
 
-#: shell32.rc:348
+#: shell32.rc:335
 msgid "&Open:"
 msgstr "&Åpne:"
 
-#: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
+#: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
 msgid "&Browse..."
 msgstr "&Bla"
@@ -8104,147 +8104,112 @@ msgstr "Avslutt"
 msgid "Do you want to shutdown your Wine session?"
 msgstr "Vil du avslutte Wine-økten?"
 
-#: shell32.rc:199
-msgid "Start Menu\\Programs"
-msgstr "Start-meny\\Programmer"
+#: shell32.rc:200 progman.rc:80
+msgid "Programs"
+msgstr "Programmer"
 
-#: shell32.rc:200
+#: shell32.rc:201
 msgid "My Documents"
 msgstr "Mine dokumenter"
 
-#: shell32.rc:201
+#: shell32.rc:202
 msgid "Favorites"
 msgstr "Favoritter"
 
-#: shell32.rc:202
-msgid "Start Menu\\Programs\\StartUp"
-msgstr "Start-meny\\Programmer\\Oppstart"
-
 #: shell32.rc:203
-msgid "Recent"
-msgstr "Siste"
+msgid "StartUp"
+msgstr ""
 
 #: shell32.rc:204
-msgid "SendTo"
-msgstr "SendTo"
-
-#: shell32.rc:205
 msgid "Start Menu"
 msgstr "Start-meny"
 
-#: shell32.rc:206
+#: shell32.rc:205
 msgid "My Music"
 msgstr "Min musikk"
 
-#: shell32.rc:207
+#: shell32.rc:206
 msgid "My Videos"
 msgstr "Mine videoklipp"
 
-#: shell32.rc:208
+#: shell32.rc:207
 #, fuzzy
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Skrivebord"
 
-#: shell32.rc:209
+#: shell32.rc:208
 msgid "NetHood"
 msgstr "NetHood"
 
-#: shell32.rc:210
+#: shell32.rc:209
 msgid "Templates"
 msgstr "Maler"
 
-#: shell32.rc:211
-msgid "Application Data"
-msgstr "Programdata"
-
-#: shell32.rc:212
+#: shell32.rc:210
 msgid "PrintHood"
 msgstr "Skrivere"
 
-#: shell32.rc:213
-msgid "Local Settings\\Application Data"
-msgstr "Lokale innstillinger\\Programdata"
+#: shell32.rc:211 winhlp32.rc:45
+msgid "History"
+msgstr "Historikk"
 
-#: shell32.rc:214
-msgid "Local Settings\\Temporary Internet Files"
-msgstr "Lokale innstillinger\\Temporary Internet Files"
-
-#: shell32.rc:215
-msgid "Cookies"
-msgstr "Cookies"
-
-#: shell32.rc:216
-msgid "Local Settings\\History"
-msgstr "Lokale innstillinger\\Logg"
-
-#: shell32.rc:217
+#: shell32.rc:212
 msgid "Program Files"
 msgstr "Programfiler"
 
-#: shell32.rc:219
+#: shell32.rc:214
 msgid "My Pictures"
 msgstr "Mine bilder"
 
-#: shell32.rc:220
-msgid "Program Files\\Common Files"
-msgstr "Programfiler\\Fellesfiler"
+#: shell32.rc:215
+#, fuzzy
+msgid "Common Files"
+msgstr "Vanlig navn"
 
-#: shell32.rc:222 shell32.rc:147 shell32.rc:244
+#: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
 msgstr "Dokumenter"
 
-#: shell32.rc:223
-msgid "Start Menu\\Programs\\Administrative Tools"
+#: shell32.rc:217
+#, fuzzy
+msgid "Administrative Tools"
 msgstr "Start-meny\\Programmer\\Administrative verktøy"
 
-#: shell32.rc:224
+#: shell32.rc:218
 msgid "Music"
 msgstr "Dokumenter\\Min musikk"
 
-#: shell32.rc:225
+#: shell32.rc:219
 msgid "Pictures"
 msgstr "Dokumenter\\Mine bilder"
 
-#: shell32.rc:226
+#: shell32.rc:220
 msgid "Videos"
 msgstr "Dokumenter\\Mine videoklipp"
 
-#: shell32.rc:227
-msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
-msgstr "Lokale innstillinger\\Programdata\\Microsoft\\CD Burning"
-
-#: shell32.rc:218
+#: shell32.rc:213
 #, fuzzy
 msgid "Program Files (x86)"
 msgstr "Programfiler"
 
 #: shell32.rc:221
 #, fuzzy
-msgid "Program Files (x86)\\Common Files"
-msgstr "Programfiler\\Fellesfiler"
-
-#: shell32.rc:228
-#, fuzzy
 msgid "Contacts"
 msgstr "&Innhold"
 
-#: shell32.rc:229 winefile.rc:116
+#: shell32.rc:222 winefile.rc:116
 msgid "Links"
 msgstr "Koblinger"
 
-#: shell32.rc:230
-msgid "Pictures\\Slide Shows"
+#: shell32.rc:223
+msgid "Slide Shows"
 msgstr ""
 
-#: shell32.rc:231
-msgid "Music\\Playlists"
-msgstr ""
-
-#: shell32.rc:232 shell32.rc:245
+#: shell32.rc:224
 #, fuzzy
-msgid "Downloads"
-msgstr "Laster ned..."
+msgid "Playlists"
+msgstr "liste"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -8258,35 +8223,26 @@ msgstr "Plassering"
 msgid "Model"
 msgstr "Modell"
 
-#: shell32.rc:233
-msgid "Microsoft\\Windows\\GameExplorer"
+#: shell32.rc:225
+#, fuzzy
+msgid "Sample Music"
+msgstr "Forhåndsvisning"
+
+#: shell32.rc:226
+#, fuzzy
+msgid "Sample Pictures"
+msgstr "Lagre bilde &som..."
+
+#: shell32.rc:227
+msgid "Sample Playlists"
 msgstr ""
 
-#: shell32.rc:234
-msgid "Microsoft\\Windows\\Libraries"
-msgstr ""
+#: shell32.rc:228
+#, fuzzy
+msgid "Sample Videos"
+msgstr "Lagre video &som..."
 
-#: shell32.rc:235
-msgid "Microsoft\\Windows\\Ringtones"
-msgstr ""
-
-#: shell32.rc:236
-msgid "Music\\Sample Music"
-msgstr ""
-
-#: shell32.rc:237
-msgid "Pictures\\Sample Pictures"
-msgstr ""
-
-#: shell32.rc:238
-msgid "Music\\Sample Playlists"
-msgstr ""
-
-#: shell32.rc:239
-msgid "Videos\\Sample Videos"
-msgstr ""
-
-#: shell32.rc:240
+#: shell32.rc:229
 #, fuzzy
 msgid "Saved Games"
 msgstr ""
@@ -8295,24 +8251,20 @@ msgstr ""
 "#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
 "Lagre &som..."
 
-#: shell32.rc:241
+#: shell32.rc:230
 #, fuzzy
 msgid "Searches"
 msgstr "&Søk"
 
-#: shell32.rc:242
+#: shell32.rc:231
 #, fuzzy
 msgid "Users"
 msgstr "Brukernavn"
 
-#: shell32.rc:243
+#: shell32.rc:233
 #, fuzzy
-msgid "OEM Links"
-msgstr "Koblinger"
-
-#: shell32.rc:246
-msgid "AppData\\LocalLow"
-msgstr ""
+msgid "Downloads"
+msgstr "Laster ned..."
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
@@ -8389,11 +8341,11 @@ msgstr ""
 "kopiere\n"
 "denne mappen?"
 
-#: shell32.rc:248
+#: shell32.rc:235
 msgid "New Folder"
 msgstr "Ny mappe"
 
-#: shell32.rc:250
+#: shell32.rc:237
 msgid "Wine Control Panel"
 msgstr "Wine Kontrollpanel"
 
@@ -8409,26 +8361,26 @@ msgstr "Klarte ikke vise Bla gjennom-vinduet (intern feil)"
 msgid "Executable files (*.exe)"
 msgstr "Programfiler (*.exe)"
 
-#: shell32.rc:254
+#: shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
 msgstr "Intet Windows-program er satt opp til å åpne denne filtypen."
 
-#: shell32.rc:256
+#: shell32.rc:243
 #, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "Vil du virkelig slette «%1»?"
 
-#: shell32.rc:257
+#: shell32.rc:244
 #, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "Vil du virkelig slette disse %1 elementene?"
 
-#: shell32.rc:258
+#: shell32.rc:245
 #, fuzzy
 msgid "Confirm deletion"
 msgstr "Bekreft filsletting"
 
-#: shell32.rc:259
+#: shell32.rc:246
 #, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
@@ -8438,7 +8390,7 @@ msgstr ""
 "Filen finnes fra før.\n"
 "Skal den overskrives?"
 
-#: shell32.rc:260
+#: shell32.rc:247
 #, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
@@ -8448,12 +8400,12 @@ msgstr ""
 "Filen finnes fra før.\n"
 "Skal den overskrives?"
 
-#: shell32.rc:261
+#: shell32.rc:248
 #, fuzzy
 msgid "Confirm overwrite"
 msgstr "Bekreft overskriving av fil"
 
-#: shell32.rc:278
+#: shell32.rc:265
 #, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
@@ -8483,7 +8435,7 @@ msgstr ""
 "sammen med dette programmet; hvis ikke, skriv til: the Free Software "
 "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: shell32.rc:266
+#: shell32.rc:253
 msgid "Wine License"
 msgstr "Lisensbetingelser"
 
@@ -11247,10 +11199,6 @@ msgstr "Filen '%s' fantes allerede, og ble ikke overskrevet."
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Lagre gruppe som '%s' for å unngå å overskrive filer."
 
-#: progman.rc:80
-msgid "Programs"
-msgstr "Programmer"
-
 #: progman.rc:81
 msgid "Libraries (*.dll)"
 msgstr "Biblioteker (*.dll)"
@@ -13942,10 +13890,6 @@ msgstr "&Bokmerke"
 #: winhlp32.rc:42
 msgid "&Define..."
 msgstr "&Definer..."
-
-#: winhlp32.rc:45
-msgid "History"
-msgstr "Historikk"
 
 #: winhlp32.rc:46 winhlp32.rc:67
 #, fuzzy

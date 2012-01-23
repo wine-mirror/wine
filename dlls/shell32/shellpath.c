@@ -756,6 +756,8 @@ VOID WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath)
 static const WCHAR szCurrentVersion[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\0'};
 static const WCHAR Administrative_ToolsW[] = {'A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
 static const WCHAR AppDataW[] = {'A','p','p','D','a','t','a','\0'};
+static const WCHAR AppData_LocalLowW[] = {'A','p','p','D','a','t','a','\\','L','o','c','a','l','L','o','w','\0'};
+static const WCHAR Application_DataW[] = {'A','p','p','l','i','c','a','t','i','o','n',' ','D','a','t','a','\0'};
 static const WCHAR CacheW[] = {'C','a','c','h','e','\0'};
 static const WCHAR CD_BurningW[] = {'C','D',' ','B','u','r','n','i','n','g','\0'};
 static const WCHAR Common_Administrative_ToolsW[] = {'C','o','m','m','o','n',' ','A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
@@ -775,27 +777,57 @@ static const WCHAR CommonVideoW[] = {'C','o','m','m','o','n','V','i','d','e','o'
 static const WCHAR ContactsW[] = {'C','o','n','t','a','c','t','s','\0'};
 static const WCHAR CookiesW[] = {'C','o','o','k','i','e','s','\0'};
 static const WCHAR DesktopW[] = {'D','e','s','k','t','o','p','\0'};
+static const WCHAR DocumentsW[] = {'D','o','c','u','m','e','n','t','s','\0'};
+static const WCHAR DownloadsW[] = {'D','o','w','n','l','o','a','d','s','\0'};
 static const WCHAR FavoritesW[] = {'F','a','v','o','r','i','t','e','s','\0'};
 static const WCHAR FontsW[] = {'F','o','n','t','s','\0'};
 static const WCHAR HistoryW[] = {'H','i','s','t','o','r','y','\0'};
+static const WCHAR LinksW[] = {'L','i','n','k','s','\0'};
 static const WCHAR Local_AppDataW[] = {'L','o','c','a','l',' ','A','p','p','D','a','t','a','\0'};
+static const WCHAR Local_Settings_Application_DataW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','A','p','p','l','i','c','a','t','i','o','n',' ','D','a','t','a','\0'};
+static const WCHAR Local_Settings_CD_BurningW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','A','p','p','l','i','c','a','t','i','o','n',' ','D','a','t','a','\\','M','i','c','r','o','s','o','f','t','\\','C','D',' ','B','u','r','n','i','n','g','\0'};
+static const WCHAR Local_Settings_HistoryW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','H','i','s','t','o','r','y','\0'};
+static const WCHAR Local_Settings_Temporary_Internet_FilesW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','T','e','m','p','o','r','a','r','y',' ','I','n','t','e','r','n','e','t',' ','F','i','l','e','s','\0'};
+static const WCHAR Microsoft_Windows_GameExplorerW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','G','a','m','e','E','x','p','l','o','r','e','r','\0'};
+static const WCHAR Microsoft_Windows_LibrariesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','L','i','b','r','a','r','i','e','s','\0'};
+static const WCHAR Microsoft_Windows_RingtonesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','R','i','n','g','t','o','n','e','s','\0'};
+static const WCHAR MusicW[] = {'M','u','s','i','c','\0'};
+static const WCHAR Music_PlaylistsW[] = {'M','u','s','i','c','\\','P','l','a','y','l','i','s','t','s','\0'};
+static const WCHAR Music_Sample_MusicW[] = {'M','u','s','i','c','\\','S','a','m','p','l','e',' ','M','u','s','i','c','\0'};
+static const WCHAR Music_Sample_PlaylistsW[] = {'M','u','s','i','c','\\','S','a','m','p','l','e',' ','P','l','a','y','l','i','s','t','s','\0'};
+static const WCHAR My_DocumentsW[] = {'M','y',' ','D','o','c','u','m','e','n','t','s','\0'};
 static const WCHAR My_MusicW[] = {'M','y',' ','M','u','s','i','c','\0'};
 static const WCHAR My_PicturesW[] = {'M','y',' ','P','i','c','t','u','r','e','s','\0'};
 static const WCHAR My_VideosW[] = {'M','y',' ','V','i','d','e','o','s','\0'};
 static const WCHAR NetHoodW[] = {'N','e','t','H','o','o','d','\0'};
+static const WCHAR OEM_LinksW[] = {'O','E','M',' ','L','i','n','k','s','\0'};
 static const WCHAR PersonalW[] = {'P','e','r','s','o','n','a','l','\0'};
+static const WCHAR PicturesW[] = {'P','i','c','t','u','r','e','s','\0'};
+static const WCHAR Pictures_Sample_PicturesW[] = {'P','i','c','t','u','r','e','s','\\','S','a','m','p','l','e',' ','P','i','c','t','u','r','e','s','\0'};
+static const WCHAR Pictures_Slide_ShowsW[] = {'P','i','c','t','u','r','e','s','\\','S','l','i','d','e',' ','S','h','o','w','s','\0'};
 static const WCHAR PrintHoodW[] = {'P','r','i','n','t','H','o','o','d','\0'};
+static const WCHAR Program_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s','\0'};
+static const WCHAR Program_Files_Common_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s','\\','C','o','m','m','o','n',' ','F','i','l','e','s','\0'};
+static const WCHAR Program_Files_x86W[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s',' ','(','x','8','6',')','\0'};
+static const WCHAR Program_Files_x86_Common_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s',' ','(','x','8','6',')','\\','C','o','m','m','o','n',' ','F','i','l','e','s','\0'};
 static const WCHAR ProgramFilesDirW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r','\0'};
 static const WCHAR ProgramFilesDirX86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',' ','(','x','8','6',')','\0'};
 static const WCHAR ProgramsW[] = {'P','r','o','g','r','a','m','s','\0'};
 static const WCHAR RecentW[] = {'R','e','c','e','n','t','\0'};
 static const WCHAR ResourcesW[] = {'R','e','s','o','u','r','c','e','s','\0'};
+static const WCHAR Saved_GamesW[] = {'S','a','v','e','d',' ','G','a','m','e','s','\0'};
+static const WCHAR SearchesW[] = {'S','e','a','r','c','h','e','s','\0'};
 static const WCHAR SendToW[] = {'S','e','n','d','T','o','\0'};
 static const WCHAR StartUpW[] = {'S','t','a','r','t','U','p','\0'};
 static const WCHAR Start_MenuW[] = {'S','t','a','r','t',' ','M','e','n','u','\0'};
+static const WCHAR Start_Menu_ProgramsW[] = {'S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\0'};
+static const WCHAR Start_Menu_Admin_ToolsW[] = {'S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\\','A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
+static const WCHAR Start_Menu_StartupW[] = {'S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\\','S','t','a','r','t','U','p','\0'};
 static const WCHAR TemplatesW[] = {'T','e','m','p','l','a','t','e','s','\0'};
 static const WCHAR UsersW[] = {'U','s','e','r','s','\0'};
 static const WCHAR UsersPublicW[] = {'U','s','e','r','s','\\','P','u','b','l','i','c','\0'};
+static const WCHAR VideosW[] = {'V','i','d','e','o','s','\0'};
+static const WCHAR Videos_Sample_VideosW[] = {'V','i','d','e','o','s','\\','S','a','m','p','l','e',' ','V','i','d','e','o','s','\0'};
 static const WCHAR DefaultW[] = {'.','D','e','f','a','u','l','t','\0'};
 static const WCHAR AllUsersProfileW[] = {'%','A','L','L','U','S','E','R','S','P','R','O','F','I','L','E','%','\0'};
 static const WCHAR UserProfileW[] = {'%','U','S','E','R','P','R','O','F','I','L','E','%','\0'};
@@ -847,7 +879,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Programs,
         CSIDL_Type_User,
         ProgramsW,
-        MAKEINTRESOURCEW(IDS_PROGRAMS)
+        Start_Menu_ProgramsW
     },
     { /* 0x03 - CSIDL_CONTROLS (.CPL files) */
         &FOLDERID_ControlPanelFolder,
@@ -871,25 +903,25 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Favorites,
         CSIDL_Type_User,
         FavoritesW,
-        MAKEINTRESOURCEW(IDS_FAVORITES)
+        FavoritesW
     },
     { /* 0x07 - CSIDL_STARTUP */
         &FOLDERID_Startup,
         CSIDL_Type_User,
         StartUpW,
-        MAKEINTRESOURCEW(IDS_STARTUP)
+        Start_Menu_StartupW
     },
     { /* 0x08 - CSIDL_RECENT */
         &FOLDERID_Recent,
         CSIDL_Type_User,
         RecentW,
-        MAKEINTRESOURCEW(IDS_RECENT)
+        RecentW
     },
     { /* 0x09 - CSIDL_SENDTO */
         &FOLDERID_SendTo,
         CSIDL_Type_User,
         SendToW,
-        MAKEINTRESOURCEW(IDS_SENDTO)
+        SendToW
     },
     { /* 0x0a - CSIDL_BITBUCKET - Recycle Bin */
         &FOLDERID_RecycleBinFolder,
@@ -901,7 +933,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_StartMenu,
         CSIDL_Type_User,
         Start_MenuW,
-        MAKEINTRESOURCEW(IDS_STARTMENU)
+        Start_MenuW
     },
     { /* 0x0c - CSIDL_MYDOCUMENTS */
         &GUID_NULL,
@@ -949,7 +981,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_NetHood,
         CSIDL_Type_User,
         NetHoodW,
-        MAKEINTRESOURCEW(IDS_NETHOOD)
+        NetHoodW
     },
     { /* 0x14 - CSIDL_FONTS */
         &FOLDERID_Fonts,
@@ -961,25 +993,25 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Templates,
         CSIDL_Type_User,
         TemplatesW,
-        MAKEINTRESOURCEW(IDS_TEMPLATES)
+        TemplatesW
     },
     { /* 0x16 - CSIDL_COMMON_STARTMENU */
         &FOLDERID_CommonStartMenu,
         CSIDL_Type_AllUsers,
         Common_Start_MenuW,
-        MAKEINTRESOURCEW(IDS_STARTMENU)
+        Start_MenuW
     },
     { /* 0x17 - CSIDL_COMMON_PROGRAMS */
         &FOLDERID_CommonPrograms,
         CSIDL_Type_AllUsers,
         Common_ProgramsW,
-        MAKEINTRESOURCEW(IDS_PROGRAMS)
+        Start_Menu_ProgramsW
     },
     { /* 0x18 - CSIDL_COMMON_STARTUP */
         &FOLDERID_CommonStartup,
         CSIDL_Type_AllUsers,
         Common_StartUpW,
-        MAKEINTRESOURCEW(IDS_STARTUP)
+        Start_Menu_StartupW
     },
     { /* 0x19 - CSIDL_COMMON_DESKTOPDIRECTORY */
         &FOLDERID_PublicDesktop,
@@ -991,19 +1023,19 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_RoamingAppData,
         CSIDL_Type_User,
         AppDataW,
-        MAKEINTRESOURCEW(IDS_APPDATA)
+        AppDataW
     },
     { /* 0x1b - CSIDL_PRINTHOOD */
         &FOLDERID_PrintHood,
         CSIDL_Type_User,
         PrintHoodW,
-        MAKEINTRESOURCEW(IDS_PRINTHOOD)
+        PrintHoodW
     },
     { /* 0x1c - CSIDL_LOCAL_APPDATA */
         &FOLDERID_LocalAppData,
         CSIDL_Type_User,
         Local_AppDataW,
-        MAKEINTRESOURCEW(IDS_LOCAL_APPDATA)
+        Local_AppDataW
     },
     { /* 0x1d - CSIDL_ALTSTARTUP */
         &GUID_NULL,
@@ -1021,31 +1053,31 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Favorites,
         CSIDL_Type_AllUsers,
         Common_FavoritesW,
-        MAKEINTRESOURCEW(IDS_FAVORITES)
+        FavoritesW
     },
     { /* 0x20 - CSIDL_INTERNET_CACHE */
         &FOLDERID_InternetCache,
         CSIDL_Type_User,
         CacheW,
-        MAKEINTRESOURCEW(IDS_INTERNET_CACHE)
+        Local_Settings_Temporary_Internet_FilesW
     },
     { /* 0x21 - CSIDL_COOKIES */
         &FOLDERID_Cookies,
         CSIDL_Type_User,
         CookiesW,
-        MAKEINTRESOURCEW(IDS_COOKIES)
+        CookiesW
     },
     { /* 0x22 - CSIDL_HISTORY */
         &FOLDERID_History,
         CSIDL_Type_User,
         HistoryW,
-        MAKEINTRESOURCEW(IDS_HISTORY)
+        Local_Settings_HistoryW
     },
     { /* 0x23 - CSIDL_COMMON_APPDATA */
         &FOLDERID_ProgramData,
         CSIDL_Type_AllUsers,
         Common_AppDataW,
-        MAKEINTRESOURCEW(IDS_APPDATA)
+        AppDataW
     },
     { /* 0x24 - CSIDL_WINDOWS */
         &FOLDERID_Windows,
@@ -1063,7 +1095,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_ProgramFiles,
         CSIDL_Type_CurrVer,
         ProgramFilesDirW,
-        MAKEINTRESOURCEW(IDS_PROGRAM_FILES)
+        Program_FilesW
     },
     { /* 0x27 - CSIDL_MYPICTURES */
         &FOLDERID_Pictures,
@@ -1087,43 +1119,43 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_ProgramFilesX86,
         CSIDL_Type_CurrVer,
         ProgramFilesDirX86W,
-        MAKEINTRESOURCEW(IDS_PROGRAM_FILESX86)
+        Program_Files_x86W
     },
     { /* 0x2b - CSIDL_PROGRAM_FILES_COMMON */
         &FOLDERID_ProgramFilesCommon,
         CSIDL_Type_CurrVer,
         CommonFilesDirW,
-        MAKEINTRESOURCEW(IDS_PROGRAM_FILES_COMMON)
+        Program_Files_Common_FilesW
     },
     { /* 0x2c - CSIDL_PROGRAM_FILES_COMMONX86 */
         &FOLDERID_ProgramFilesCommonX86,
         CSIDL_Type_CurrVer,
         CommonFilesDirX86W,
-        MAKEINTRESOURCEW(IDS_PROGRAM_FILES_COMMONX86)
+        Program_Files_x86_Common_FilesW
     },
     { /* 0x2d - CSIDL_COMMON_TEMPLATES */
         &FOLDERID_CommonTemplates,
         CSIDL_Type_AllUsers,
         Common_TemplatesW,
-        MAKEINTRESOURCEW(IDS_TEMPLATES)
+        TemplatesW
     },
     { /* 0x2e - CSIDL_COMMON_DOCUMENTS */
         &FOLDERID_PublicDocuments,
         CSIDL_Type_AllUsers,
         Common_DocumentsW,
-        MAKEINTRESOURCEW(IDS_COMMON_DOCUMENTS)
+        DocumentsW
     },
     { /* 0x2f - CSIDL_COMMON_ADMINTOOLS */
         &FOLDERID_CommonAdminTools,
         CSIDL_Type_AllUsers,
         Common_Administrative_ToolsW,
-        MAKEINTRESOURCEW(IDS_ADMINTOOLS)
+        Start_Menu_Admin_ToolsW
     },
     { /* 0x30 - CSIDL_ADMINTOOLS */
         &FOLDERID_AdminTools,
         CSIDL_Type_User,
         Administrative_ToolsW,
-        MAKEINTRESOURCEW(IDS_ADMINTOOLS)
+        Start_Menu_Admin_ToolsW
     },
     { /* 0x31 - CSIDL_CONNECTIONS */
         &FOLDERID_ConnectionsFolder,
@@ -1153,19 +1185,19 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_PublicMusic,
         CSIDL_Type_AllUsers,
         CommonMusicW,
-        MAKEINTRESOURCEW(IDS_COMMON_MUSIC)
+        MusicW
     },
     { /* 0x36 - CSIDL_COMMON_PICTURES */
         &FOLDERID_PublicPictures,
         CSIDL_Type_AllUsers,
         CommonPicturesW,
-        MAKEINTRESOURCEW(IDS_COMMON_PICTURES)
+        PicturesW
     },
     { /* 0x37 - CSIDL_COMMON_VIDEO */
         &FOLDERID_PublicVideos,
         CSIDL_Type_AllUsers,
         CommonVideoW,
-        MAKEINTRESOURCEW(IDS_COMMON_VIDEOS)
+        VideosW
     },
     { /* 0x38 - CSIDL_RESOURCES */
         &FOLDERID_ResourceDir,
@@ -1183,13 +1215,13 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_CommonOEMLinks,
         CSIDL_Type_AllUsers,
         NULL,
-        MAKEINTRESOURCEW(IDS_COMMON_OEM_LINKS)
+        OEM_LinksW
     },
     { /* 0x3b - CSIDL_CDBURN_AREA */
         &FOLDERID_CDBurning,
         CSIDL_Type_User,
         CD_BurningW,
-        MAKEINTRESOURCEW(IDS_CDBURN_AREA)
+        Local_Settings_CD_BurningW
     },
     { /* 0x3c unassigned */
         &GUID_NULL,
@@ -1237,7 +1269,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Contacts,
         CSIDL_Type_User,
         ContactsW,
-        MAKEINTRESOURCEW(IDS_CONTACTS)
+        ContactsW
     },
     { /* 0x44 */
         &FOLDERID_DeviceMetadataStore,
@@ -1249,7 +1281,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &GUID_NULL,
         CSIDL_Type_User,
         NULL,
-        MAKEINTRESOURCEW(IDS_DOCUMENTS)
+        DocumentsW
     },
     { /* 0x46 */
         &FOLDERID_DocumentsLibrary,
@@ -1261,7 +1293,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Downloads,
         CSIDL_Type_User,
         NULL,
-        MAKEINTRESOURCEW(IDS_DOWNLOADS)
+        DownloadsW
     },
     { /* 0x48 */
         &FOLDERID_Games,
@@ -1297,13 +1329,13 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Links,
         CSIDL_Type_User,
         NULL,
-        MAKEINTRESOURCEW(IDS_LINKS)
+        LinksW
     },
     { /* 0x4e */
         &FOLDERID_LocalAppDataLow,
         CSIDL_Type_User,
         NULL,
-        MAKEINTRESOURCEW(IDS_LOCAL_APPDATA_LOW)
+        AppData_LocalLowW
     },
     { /* 0x4f */
         &FOLDERID_MusicLibrary,
@@ -1321,7 +1353,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_PhotoAlbums,
         CSIDL_Type_User,
         NULL,
-        MAKEINTRESOURCEW(IDS_PHOTO_ALBUMS)
+        Pictures_Slide_ShowsW
     },
     { /* 0x52 */
         &FOLDERID_PicturesLibrary,
@@ -1333,7 +1365,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Playlists,
         CSIDL_Type_User,
         NULL,
-        MAKEINTRESOURCEW(IDS_PLAYLISTS)
+        Music_PlaylistsW
     },
     { /* 0x54 */
         &FOLDERID_ProgramFilesX64,
@@ -1357,25 +1389,25 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_PublicDownloads,
         CSIDL_Type_AllUsers,
         NULL,
-        MAKEINTRESOURCEW(IDS_PUBLIC_DOWNLOADS)
+        DownloadsW
     },
     { /* 0x58 */
         &FOLDERID_PublicGameTasks,
         CSIDL_Type_AllUsers,
         NULL,
-        MAKEINTRESOURCEW(IDS_PUBLIC_GAME_TASKS)
+        Microsoft_Windows_GameExplorerW
     },
     { /* 0x59 */
         &FOLDERID_PublicLibraries,
         CSIDL_Type_AllUsers,
         NULL,
-        MAKEINTRESOURCEW(IDS_PUBLIC_LIBRARIES)
+        Microsoft_Windows_LibrariesW
     },
     { /* 0x5a */
         &FOLDERID_PublicRingtones,
         CSIDL_Type_AllUsers,
         NULL,
-        MAKEINTRESOURCEW(IDS_PUBLIC_RINGTONES)
+        Microsoft_Windows_RingtonesW
     },
     { /* 0x5b */
         &FOLDERID_QuickLaunch,
@@ -1399,37 +1431,37 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_SampleMusic,
         CSIDL_Type_AllUsers,
         NULL,
-        MAKEINTRESOURCEW(IDS_SAMPLE_MUSIC)
+        Music_Sample_MusicW
     },
     { /* 0x5f */
         &FOLDERID_SamplePictures,
         CSIDL_Type_AllUsers,
         NULL,
-        MAKEINTRESOURCEW(IDS_SAMPLE_PICTURES)
+        Pictures_Sample_PicturesW
     },
     { /* 0x60 */
         &FOLDERID_SamplePlaylists,
         CSIDL_Type_AllUsers,
         NULL,
-        MAKEINTRESOURCEW(IDS_SAMPLE_PLAYLISTS)
+        Music_Sample_PlaylistsW
     },
     { /* 0x61 */
         &FOLDERID_SampleVideos,
         CSIDL_Type_AllUsers,
         NULL,
-        MAKEINTRESOURCEW(IDS_SAMPLE_VIDEOS)
+        Videos_Sample_VideosW
     },
     { /* 0x62 */
         &FOLDERID_SavedGames,
         CSIDL_Type_User,
         NULL,
-        MAKEINTRESOURCEW(IDS_SAVED_GAMES)
+        Saved_GamesW
     },
     { /* 0x63 */
         &FOLDERID_SavedSearches,
         CSIDL_Type_User,
         NULL,
-        MAKEINTRESOURCEW(IDS_SAVED_SEARCHES)
+        SearchesW
     },
     { /* 0x64 */
         &FOLDERID_SEARCH_CSC,
@@ -1489,7 +1521,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_UserProfiles,
         CSIDL_Type_CurrVer,
         UsersW,
-        MAKEINTRESOURCEW(IDS_USER_PROFILES)
+        UsersW
     },
     { /* 0x6e */
         &FOLDERID_UserProgramFiles,

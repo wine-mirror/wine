@@ -62,8 +62,8 @@ msgstr "Informații de asistență"
 #: credui.rc:49 cryptui.rc:260 cryptui.rc:272 cryptui.rc:362 dinput.rc:43
 #: ieframe.rc:93 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
 #: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
-#: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
-#: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
+#: serialui.rc:38 setupapi.rc:56 shell32.rc:273 shell32.rc:297 shell32.rc:319
+#: shell32.rc:337 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
 #: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:114 oleview.rc:159
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
@@ -147,7 +147,7 @@ msgstr "&Instalează"
 #: dinput.rc:44 ieframe.rc:94 inetcpl.rc:78 localui.rc:42 localui.rc:55
 #: mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34
 #: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
-#: shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42
+#: shell32.rc:274 shell32.rc:298 shell32.rc:309 shell32.rc:338 shlwapi.rc:42
 #: user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40
 #: notepad.rc:115 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
@@ -186,7 +186,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ne specificat"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:251 regedit.rc:122 winefile.rc:110
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Nume"
 
@@ -2666,7 +2666,7 @@ msgstr "Utilizări adiționale ale cheii (proprietate)"
 msgid "Friendly name"
 msgstr "Nume uzual"
 
-#: cryptui.rc:62 shell32.rc:252 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
 msgstr "Descriere"
 
@@ -8207,51 +8207,51 @@ msgstr "Înc&hide"
 msgid "&About Control Panel"
 msgstr ""
 
-#: shell32.rc:283 shell32.rc:298
+#: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
 msgstr "Selectare dosar"
 
-#: shell32.rc:303
+#: shell32.rc:290
 msgid "Folder:"
 msgstr "Dosar:"
 
-#: shell32.rc:309
+#: shell32.rc:296
 msgid "&Make New Folder"
 msgstr "&Creează un dosar nou"
 
-#: shell32.rc:316
+#: shell32.rc:303
 msgid "Message"
 msgstr "Mesaj"
 
-#: shell32.rc:319 shlwapi.rc:43 user32.rc:82
+#: shell32.rc:306 shlwapi.rc:43 user32.rc:82
 msgid "&Yes"
 msgstr "&Da"
 
-#: shell32.rc:320
+#: shell32.rc:307
 msgid "Yes to &all"
 msgstr "Da la &toate"
 
-#: shell32.rc:321 shlwapi.rc:44 user32.rc:83
+#: shell32.rc:308 shlwapi.rc:44 user32.rc:83
 msgid "&No"
 msgstr "&Nu"
 
-#: shell32.rc:329
+#: shell32.rc:316
 msgid "About %s"
 msgstr "Despre %s"
 
-#: shell32.rc:333
+#: shell32.rc:320
 msgid "Wine &license"
 msgstr "&Licența Wine"
 
-#: shell32.rc:338
+#: shell32.rc:325
 msgid "Running on %s"
 msgstr "Rulând pe %s"
 
-#: shell32.rc:339
+#: shell32.rc:326
 msgid "Wine was brought to you by:"
 msgstr "Wine a fost vinificat de:"
 
-#: shell32.rc:347
+#: shell32.rc:334
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
@@ -8259,11 +8259,11 @@ msgstr ""
 "Introduceți numele unui program, dosar, document sau resursă internet și "
 "Wine îl va deschide."
 
-#: shell32.rc:348
+#: shell32.rc:335
 msgid "&Open:"
 msgstr "&Deschide:"
 
-#: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
+#: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
 msgid "&Browse..."
 msgstr "Navi&gare"
@@ -8356,43 +8356,35 @@ msgstr "Oprire"
 msgid "Do you want to shutdown your Wine session?"
 msgstr "Vreți să opriți sesiunea de Wine?"
 
-#: shell32.rc:199
-msgid "Start Menu\\Programs"
-msgstr "Meniu Start\\Programe"
+#: shell32.rc:200 progman.rc:80
+msgid "Programs"
+msgstr "Programe"
 
-#: shell32.rc:200
+#: shell32.rc:201
 msgid "My Documents"
 msgstr "Documentele mele"
 
-#: shell32.rc:201
+#: shell32.rc:202
 msgid "Favorites"
 msgstr "Favorite"
 
-#: shell32.rc:202
-msgid "Start Menu\\Programs\\StartUp"
-msgstr "Meniu Start\\Programe\\AutoStart"
-
 #: shell32.rc:203
-msgid "Recent"
-msgstr "Recente"
+msgid "StartUp"
+msgstr ""
 
 #: shell32.rc:204
-msgid "SendTo"
-msgstr "SendTo"
-
-#: shell32.rc:205
 msgid "Start Menu"
 msgstr "Meniu Start"
 
-#: shell32.rc:206
+#: shell32.rc:205
 msgid "My Music"
 msgstr "Muzica mea"
 
-#: shell32.rc:207
+#: shell32.rc:206
 msgid "My Videos"
 msgstr "Filmele mele"
 
-#: shell32.rc:208
+#: shell32.rc:207
 #, fuzzy
 msgctxt "directory"
 msgid "Desktop"
@@ -8402,105 +8394,78 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Birou"
 
-#: shell32.rc:209
+#: shell32.rc:208
 msgid "NetHood"
 msgstr "NetHood"
 
-#: shell32.rc:210
+#: shell32.rc:209
 msgid "Templates"
 msgstr "Templates"
 
-#: shell32.rc:211
-msgid "Application Data"
-msgstr "Application Data"
-
-#: shell32.rc:212
+#: shell32.rc:210
 msgid "PrintHood"
 msgstr "PrintHood"
 
-#: shell32.rc:213
-msgid "Local Settings\\Application Data"
-msgstr "Local Settings\\Application Data"
+#: shell32.rc:211 winhlp32.rc:45
+msgid "History"
+msgstr "Istorie"
 
-#: shell32.rc:214
-msgid "Local Settings\\Temporary Internet Files"
-msgstr "Local Settings\\Temporary Internet Files"
-
-#: shell32.rc:215
-msgid "Cookies"
-msgstr "Cookies"
-
-#: shell32.rc:216
-msgid "Local Settings\\History"
-msgstr "Local Settings\\History"
-
-#: shell32.rc:217
+#: shell32.rc:212
 msgid "Program Files"
 msgstr "Program Files"
 
-#: shell32.rc:219
+#: shell32.rc:214
 msgid "My Pictures"
 msgstr "My Pictures"
 
-#: shell32.rc:220
-msgid "Program Files\\Common Files"
-msgstr "Program Files\\Common Files"
+#: shell32.rc:215
+#, fuzzy
+msgid "Common Files"
+msgstr "Nume uzual"
 
-#: shell32.rc:222 shell32.rc:147 shell32.rc:244
+#: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
 msgstr "Documente"
 
-#: shell32.rc:223
-msgid "Start Menu\\Programs\\Administrative Tools"
+#: shell32.rc:217
+#, fuzzy
+msgid "Administrative Tools"
 msgstr "Meniu Start\\Programe\\Scule administrative"
 
-#: shell32.rc:224
+#: shell32.rc:218
 msgid "Music"
 msgstr "Documente\\Muzica mea"
 
-#: shell32.rc:225
+#: shell32.rc:219
 msgid "Pictures"
 msgstr "Documente\\Pozele mele"
 
-#: shell32.rc:226
+#: shell32.rc:220
 msgid "Videos"
 msgstr "Documente\\Filmele mele"
 
-#: shell32.rc:227
-msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
-msgstr "Local Settings\\Application Data\\Microsoft\\CD Burning"
-
-#: shell32.rc:218
+#: shell32.rc:213
 #, fuzzy
 msgid "Program Files (x86)"
 msgstr "Program Files"
 
 #: shell32.rc:221
 #, fuzzy
-msgid "Program Files (x86)\\Common Files"
-msgstr "Program Files\\Common Files"
-
-#: shell32.rc:228
-#, fuzzy
 msgid "Contacts"
 msgstr "&Conținut"
 
-#: shell32.rc:229 winefile.rc:116
+#: shell32.rc:222 winefile.rc:116
 msgid "Links"
 msgstr "Legături"
 
-#: shell32.rc:230
-msgid "Pictures\\Slide Shows"
+#: shell32.rc:223
+msgid "Slide Shows"
 msgstr ""
 
-#: shell32.rc:231
-msgid "Music\\Playlists"
-msgstr ""
-
-#: shell32.rc:232 shell32.rc:245
+#: shell32.rc:224
 #, fuzzy
-msgid "Downloads"
-msgstr "Descarc..."
+msgid "Playlists"
+msgstr "listă"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -8514,40 +8479,31 @@ msgstr "Locație"
 msgid "Model"
 msgstr "Model"
 
-#: shell32.rc:233
-msgid "Microsoft\\Windows\\GameExplorer"
+#: shell32.rc:225
+#, fuzzy
+msgid "Sample Music"
+msgstr "Eșantion"
+
+#: shell32.rc:226
+#, fuzzy
+msgid "Sample Pictures"
+msgstr "&Salvează imaginea ca..."
+
+#: shell32.rc:227
+msgid "Sample Playlists"
 msgstr ""
 
-#: shell32.rc:234
-msgid "Microsoft\\Windows\\Libraries"
-msgstr ""
+#: shell32.rc:228
+#, fuzzy
+msgid "Sample Videos"
+msgstr "&Salvează videoul ca..."
 
-#: shell32.rc:235
-msgid "Microsoft\\Windows\\Ringtones"
-msgstr ""
-
-#: shell32.rc:236
-msgid "Music\\Sample Music"
-msgstr ""
-
-#: shell32.rc:237
-msgid "Pictures\\Sample Pictures"
-msgstr ""
-
-#: shell32.rc:238
-msgid "Music\\Sample Playlists"
-msgstr ""
-
-#: shell32.rc:239
-msgid "Videos\\Sample Videos"
-msgstr ""
-
-#: shell32.rc:240
+#: shell32.rc:229
 #, fuzzy
 msgid "Saved Games"
 msgstr "S&alvare ca..."
 
-#: shell32.rc:241
+#: shell32.rc:230
 #, fuzzy
 msgid "Searches"
 msgstr ""
@@ -8556,19 +8512,15 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "&Caută"
 
-#: shell32.rc:242
+#: shell32.rc:231
 #, fuzzy
 msgid "Users"
 msgstr "Nume utilizator"
 
-#: shell32.rc:243
+#: shell32.rc:233
 #, fuzzy
-msgid "OEM Links"
-msgstr "Legături"
-
-#: shell32.rc:246
-msgid "AppData\\LocalLow"
-msgstr ""
+msgid "Downloads"
+msgstr "Descarc..."
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
@@ -8644,11 +8596,11 @@ msgstr ""
 "dosarul\n"
 "selectat vor fi înlocuite. Mai vreți să mutați sau să copiați dosarul?"
 
-#: shell32.rc:248
+#: shell32.rc:235
 msgid "New Folder"
 msgstr "Dosar nou"
 
-#: shell32.rc:250
+#: shell32.rc:237
 msgid "Wine Control Panel"
 msgstr "Panoul de control al Wine"
 
@@ -8664,27 +8616,27 @@ msgstr "Nu se poate afișa caseta de navigare (eroare internă)"
 msgid "Executable files (*.exe)"
 msgstr "Fișiere executabile (*.exe)"
 
-#: shell32.rc:254
+#: shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 "Nici un program Windows nu este configurat să deschidă fișiere de acest tip."
 
-#: shell32.rc:256
+#: shell32.rc:243
 #, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "Sunteți sigur că vreți să ștergeți '%1'?"
 
-#: shell32.rc:257
+#: shell32.rc:244
 #, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "Sunteți sigur că vreți să ștergeți acest %1 elemente?"
 
-#: shell32.rc:258
+#: shell32.rc:245
 #, fuzzy
 msgid "Confirm deletion"
 msgstr "Confirmați ștergerea fișierului"
 
-#: shell32.rc:259
+#: shell32.rc:246
 #, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
@@ -8694,7 +8646,7 @@ msgstr ""
 "Fișierul există deja.\n"
 "Doriți să îl înlocuiți?"
 
-#: shell32.rc:260
+#: shell32.rc:247
 #, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
@@ -8704,12 +8656,12 @@ msgstr ""
 "Fișierul există deja.\n"
 "Doriți să îl înlocuiți?"
 
-#: shell32.rc:261
+#: shell32.rc:248
 #, fuzzy
 msgid "Confirm overwrite"
 msgstr "Confirmați suprascrierea fișierului"
 
-#: shell32.rc:278
+#: shell32.rc:265
 #, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
@@ -8743,7 +8695,7 @@ msgstr ""
 "\n"
 "Consultați fișierul COPYING.LIB pentru informații despre licență.\n"
 
-#: shell32.rc:266
+#: shell32.rc:253
 msgid "Wine License"
 msgstr "Licența Wine"
 
@@ -11577,10 +11529,6 @@ msgid "Save group as `%s to prevent overwriting original files."
 msgstr ""
 "Salvează grupul ca „%s” pentru a preveni suprascrierea fișierelor originale."
 
-#: progman.rc:80
-msgid "Programs"
-msgstr "Programe"
-
 #: progman.rc:81
 msgid "Libraries (*.dll)"
 msgstr "Biblioteci (*.dll)"
@@ -14276,10 +14224,6 @@ msgstr "&Se&mn de carte"
 #: winhlp32.rc:42
 msgid "&Define..."
 msgstr "&Definește..."
-
-#: winhlp32.rc:45
-msgid "History"
-msgstr "Istorie"
 
 #: winhlp32.rc:46 winhlp32.rc:67
 #, fuzzy
