@@ -4237,25 +4237,25 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
         struct projected_textures_test_run projected_tests_3[4] =
         {
             {
-                "D3DTTFF_PROJECTED (like COUNT4 | PROJECTED) - bottom left",
+                "D3DTTFF_COUNT3 | D3DTTFF_PROJECTED (like COUNT4 | PROJECTED) - bottom left",
                 D3DTTFF_PROJECTED,
                 decl3,
-                TRUE, TRUE,
+                TRUE, FALSE,
                 {120, 300, 240, 390},
             },
             {
-                "D3DTTFF_PROJECTED (like COUNT4 | PROJECTED, the w component has the default value 1.0) - bottom right",
-                D3DTTFF_PROJECTED,
-                decl,
+                "D3DTTFF_COUNT3 | D3DTTFF_PROJECTED (like COUNT4 | PROJECTED) - bottom right",
+                D3DTTFF_COUNT3 | D3DTTFF_PROJECTED,
+                decl3,
                 TRUE, TRUE,
-                {340, 450, 360, 465},
+                {440, 300, 560, 390},
             },
             {
-                "0xffffffff (like COUNT4 | PROJECTED, the w component has the default value 1.0) - top left",
+                "0xffffffff (like COUNT4 | PROJECTED) - top left",
                 0xffffffff,
-                decl,
+                decl3,
                 TRUE, TRUE,
-                {20, 210, 40, 225},
+                {120, 60, 240, 150},
             },
             {
                 "D3DTTFF_PROJECTED (like COUNT4 | PROJECTED) - top right",

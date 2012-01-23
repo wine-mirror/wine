@@ -1919,14 +1919,15 @@ void find_ps_compile_args(const struct wined3d_state *state,
 
             if (flags & WINED3D_TTFF_PROJECTED)
             {
-                enum wined3d_sampler_texture_type sampler_type = shader->reg_maps.sampler_type[i];
                 DWORD tex_transform = flags & ~WINED3D_TTFF_PROJECTED;
-                DWORD max_valid = WINED3D_TTFF_COUNT4;
 
                 if (!state->vertex_shader)
                 {
                     unsigned int j;
                     unsigned int index = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
+                    DWORD max_valid = WINED3D_TTFF_COUNT4;
+                    enum wined3d_sampler_texture_type sampler_type = shader->reg_maps.sampler_type[i];
+
                     for (j = 0; j < state->vertex_declaration->element_count; ++j)
                     {
                         struct wined3d_vertex_declaration_element *element =
@@ -1939,21 +1940,25 @@ void find_ps_compile_args(const struct wined3d_state *state,
                             break;
                         }
                     }
+                    if (!tex_transform || tex_transform > max_valid)
+                    {
+                        WARN("Fixing up projected texture transform flags from %#x to %#x.\n",
+                                tex_transform, max_valid);
+                        tex_transform = max_valid;
+                    }
+                    if ((sampler_type == WINED3DSTT_1D && tex_transform > WINED3D_TTFF_COUNT1)
+                            || (sampler_type == WINED3DSTT_2D && tex_transform > WINED3D_TTFF_COUNT2)
+                            || (sampler_type == WINED3DSTT_VOLUME && tex_transform > WINED3D_TTFF_COUNT3))
+                        tex_transform |= WINED3D_PSARGS_PROJECTED;
+                    else
+                    {
+                        WARN("Application requested projected texture with unsuitable texture coordinates.\n");
+                        WARN("(texture unit %u, transform flags %#x, sampler type %u).\n",
+                                i, tex_transform, sampler_type);
+                    }
                 }
-
-                if (!tex_transform || tex_transform > max_valid)
-                {
-                    WARN("Fixing up projected texture transform flags from %#x to %#x.\n",
-                            tex_transform, max_valid);
-                    tex_transform = max_valid;
-                }
-
-                if ((sampler_type == WINED3DSTT_1D && tex_transform > WINED3D_TTFF_COUNT1)
-                        || (sampler_type == WINED3DSTT_2D && tex_transform > WINED3D_TTFF_COUNT2)
-                        || (sampler_type == WINED3DSTT_VOLUME && tex_transform > WINED3D_TTFF_COUNT3))
-                    tex_transform |= WINED3D_PSARGS_PROJECTED;
                 else
-                    WARN("Application requested projected texture with unsuitable texture coordinates.\n");
+                    tex_transform = WINED3D_TTFF_COUNT4 | WINED3D_PSARGS_PROJECTED;
 
                 args->tex_transform |= tex_transform << i * WINED3D_PSARGS_TEXTRANSFORM_SHIFT;
             }
