@@ -49,13 +49,21 @@ struct dump_module
     WCHAR                               name[MAX_PATH];
 };
 
+struct dump_thread
+{
+    ULONG                               tid;
+    ULONG                               prio_class;
+    ULONG                               curr_prio;
+};
+
 struct dump_context
 {
     /* process & thread information */
     HANDLE                              hProcess;
     DWORD                               pid;
-    void*                               pcs_buffer;
-    SYSTEM_PROCESS_INFORMATION*         spi;
+    /* thread information */
+    struct dump_thread*                 threads;
+    unsigned                            num_threads;
     /* module information */
     struct dump_module*                 modules;
     unsigned                            num_modules;
@@ -73,41 +81,55 @@ struct dump_context
 };
 
 /******************************************************************
- *		fetch_processes_info
+ *		fetch_process_info
  *
- * reads system wide process information, and make spi point to the record
+ * reads system wide process information, and gather from it the threads information
  * for process of id 'pid'
  */
-static BOOL fetch_processes_info(struct dump_context* dc)
+static BOOL fetch_process_info(struct dump_context* dc)
 {
     ULONG       buf_size = 0x1000;
     NTSTATUS    nts;
+    void*       pcs_buffer = NULL;
 
-    dc->pcs_buffer = NULL;
-    if (!(dc->pcs_buffer = HeapAlloc(GetProcessHeap(), 0, buf_size))) return FALSE;
+    if (!(pcs_buffer = HeapAlloc(GetProcessHeap(), 0, buf_size))) return FALSE;
     for (;;)
     {
-        nts = NtQuerySystemInformation(SystemProcessInformation, 
-                                       dc->pcs_buffer, buf_size, NULL);
+        nts = NtQuerySystemInformation(SystemProcessInformation,
+                                       pcs_buffer, buf_size, NULL);
         if (nts != STATUS_INFO_LENGTH_MISMATCH) break;
-        dc->pcs_buffer = HeapReAlloc(GetProcessHeap(), 0, dc->pcs_buffer, 
-                                     buf_size *= 2);
-        if (!dc->pcs_buffer) return FALSE;
+        pcs_buffer = HeapReAlloc(GetProcessHeap(), 0, pcs_buffer, buf_size *= 2);
+        if (!pcs_buffer) return FALSE;
     }
 
     if (nts == STATUS_SUCCESS)
     {
-        dc->spi = dc->pcs_buffer;
+        SYSTEM_PROCESS_INFORMATION*     spi = pcs_buffer;
+        unsigned                        i;
+
         for (;;)
         {
-            if (HandleToUlong(dc->spi->UniqueProcessId) == dc->pid) return TRUE;
-            if (!dc->spi->NextEntryOffset) break;
-            dc->spi = (SYSTEM_PROCESS_INFORMATION*)((char*)dc->spi + dc->spi->NextEntryOffset);
+            if (HandleToUlong(spi->UniqueProcessId) == dc->pid)
+            {
+                dc->num_threads = spi->dwThreadCount;
+                dc->threads = HeapAlloc(GetProcessHeap(), 0,
+                                        dc->num_threads * sizeof(dc->threads[0]));
+                if (!dc->threads) goto failed;
+                for (i = 0; i < dc->num_threads; i++)
+                {
+                    dc->threads[i].tid        = HandleToULong(spi->ti[i].ClientId.UniqueThread);
+                    dc->threads[i].prio_class = spi->ti[i].dwBasePriority; /* FIXME */
+                    dc->threads[i].curr_prio  = spi->ti[i].dwCurrentPriority;
+                }
+                HeapFree(GetProcessHeap(), 0, pcs_buffer);
+                return TRUE;
+            }
+            if (!spi->NextEntryOffset) break;
+            spi = (SYSTEM_PROCESS_INFORMATION*)((char*)spi + spi->NextEntryOffset);
         }
     }
-    HeapFree(GetProcessHeap(), 0, dc->pcs_buffer);
-    dc->pcs_buffer = NULL;
-    dc->spi = NULL;
+failed:
+    HeapFree(GetProcessHeap(), 0, pcs_buffer);
     return FALSE;
 }
 
@@ -147,7 +169,7 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
                               const MINIDUMP_EXCEPTION_INFORMATION* except,
                               MINIDUMP_THREAD* mdThd, CONTEXT* ctx)
 {
-    DWORD                       tid = HandleToUlong(dc->spi->ti[thd_idx].ClientId.UniqueThread);
+    DWORD                       tid = dc->threads[thd_idx].tid;
     HANDLE                      hThread;
     THREAD_BASIC_INFORMATION    tbi;
 
@@ -161,8 +183,8 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
     mdThd->Stack.Memory.Rva = 0;
     mdThd->ThreadContext.DataSize = 0;
     mdThd->ThreadContext.Rva = 0;
-    mdThd->PriorityClass = dc->spi->ti[thd_idx].dwBasePriority; /* FIXME */
-    mdThd->Priority = dc->spi->ti[thd_idx].dwCurrentPriority;
+    mdThd->PriorityClass = dc->threads[thd_idx].prio_class;
+    mdThd->Priority = dc->threads[thd_idx].curr_prio;
 
     if ((hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, tid)) == NULL)
     {
@@ -740,9 +762,9 @@ static  unsigned        dump_threads(struct dump_context* dc,
     mdThdList.NumberOfThreads = 0;
 
     rva_base = dc->rva;
-    dc->rva += sz = sizeof(mdThdList.NumberOfThreads) + dc->spi->dwThreadCount * sizeof(mdThd);
+    dc->rva += sz = sizeof(mdThdList.NumberOfThreads) + dc->num_threads * sizeof(mdThd);
 
-    for (i = 0; i < dc->spi->dwThreadCount; i++)
+    for (i = 0; i < dc->num_threads; i++)
     {
         fetch_thread_info(dc, i, except, &mdThd, &ctx);
 
@@ -761,7 +783,7 @@ static  unsigned        dump_threads(struct dump_context* dc,
             cbin.ProcessId = dc->pid;
             cbin.ProcessHandle = dc->hProcess;
             cbin.CallbackType = ThreadCallback;
-            cbin.u.Thread.ThreadId = HandleToUlong(dc->spi->ti[i].ClientId.UniqueThread);
+            cbin.u.Thread.ThreadId = dc->threads[i].tid;
             cbin.u.Thread.ThreadHandle = 0; /* FIXME */
             cbin.u.Thread.Context = ctx;
             cbin.u.Thread.SizeOfContext = sizeof(CONTEXT);
@@ -896,6 +918,8 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     dc.modules = NULL;
     dc.num_modules = 0;
     dc.alloc_modules = 0;
+    dc.threads = NULL;
+    dc.num_threads = 0;
     dc.cb = CallbackParam;
     dc.type = DumpType;
     dc.mem = NULL;
@@ -903,7 +927,7 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     dc.alloc_mem = 0;
     dc.rva = 0;
 
-    if (!fetch_processes_info(&dc)) return FALSE;
+    if (!fetch_process_info(&dc)) return FALSE;
     fetch_modules_info(&dc);
 
     /* 1) init */
@@ -1007,9 +1031,9 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     for (i = idx_stream; i < nStreams; i++)
         writeat(&dc, mdHead.StreamDirectoryRva + i * sizeof(emptyDir), &emptyDir, sizeof(emptyDir));
 
-    HeapFree(GetProcessHeap(), 0, dc.pcs_buffer);
     HeapFree(GetProcessHeap(), 0, dc.mem);
     HeapFree(GetProcessHeap(), 0, dc.modules);
+    HeapFree(GetProcessHeap(), 0, dc.threads);
 
     return TRUE;
 }
