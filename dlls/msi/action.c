@@ -1821,21 +1821,6 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                 }
             }
         }
-        LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
-        {
-            FeatureList *fl;
-
-            if (!is_feature_selected( feature, level )) continue;
-
-            LIST_FOR_EACH_ENTRY( fl, &feature->Children, FeatureList, entry )
-            {
-                if (fl->feature->Attributes & msidbFeatureAttributesFollowParent)
-                {
-                    fl->feature->Action = feature->Action;
-                    fl->feature->ActionRequest = feature->ActionRequest;
-                }
-            }
-        }
     }
 
     /* now we want to set component state based based on feature state */
