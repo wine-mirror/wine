@@ -27,6 +27,7 @@
 
 #include "windows.h"
 #include "commdlg.h"
+#include "shellapi.h"
 
 #include "main.h"
 #include "winclock.h"

@@ -21,6 +21,7 @@
 #include <windows.h>
 #include <richedit.h>
 #include <commctrl.h>
+#include <commdlg.h>
 
 #include "wordpad.h"
 

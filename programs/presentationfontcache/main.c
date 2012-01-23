@@ -19,6 +19,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
+#include "winsvc.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(fontcache);

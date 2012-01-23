@@ -30,6 +30,7 @@
 
 #include <initguid.h>
 #include <windows.h>
+#include <shellapi.h>
 #include <shobjidl.h>
 #include <shlobj.h>
 #include <shlwapi.h>

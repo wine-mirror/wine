@@ -22,6 +22,7 @@
 
 #include <stdarg.h>
 #include <windows.h>
+#include <winsvc.h>
 
 #include "wine/unicode.h"
 #include "wine/debug.h"

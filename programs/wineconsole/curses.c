@@ -55,6 +55,8 @@
 
 #include "wine/library.h"
 #include "wine/debug.h"
+#undef ERR
+#define ERR (-1)
 
 WINE_DEFAULT_DEBUG_CHANNEL(curses);
 

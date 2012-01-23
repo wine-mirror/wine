@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "windows.h"
+#include "shellapi.h"
 
 int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {

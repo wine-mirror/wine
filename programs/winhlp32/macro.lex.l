@@ -27,10 +27,7 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#ifndef HAVE_UNISTD_H
 #define YY_NO_UNISTD_H
-#endif
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

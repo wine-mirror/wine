@@ -41,6 +41,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <windows.h>
 #include <wine/debug.h>
 #include <wine/unicode.h>

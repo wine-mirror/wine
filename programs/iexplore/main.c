@@ -20,6 +20,7 @@
 
 #include <windows.h>
 #include <advpub.h>
+#include <ole2.h>
 #include <rpcproxy.h>
 
 #include "wine/unicode.h"

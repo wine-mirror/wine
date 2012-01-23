@@ -22,9 +22,11 @@
  *
  */
 
-#include <windows.h>
-#include <shlwapi.h>
 #include <stdio.h>
+#include <windows.h>
+#include <commdlg.h>
+#include <shellapi.h>
+#include <shlwapi.h>
 
 #include "main.h"
 #include "dialog.h"

@@ -27,10 +27,10 @@
  * TODO: multiple monitor support
  */
 
+#include "windows.h"
+#include "shellapi.h"
 #include "wine/unicode.h"
-
-#include <windows.h>
-#include <wine/debug.h>
+#include "wine/debug.h"
 #include "explorer_private.h"
 
 #include "wine/list.h"

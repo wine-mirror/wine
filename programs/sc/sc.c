@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <winsvc.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(sc);
 

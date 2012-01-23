@@ -24,6 +24,7 @@
 #include <winbase.h>
 #include <winreg.h>
 #include <ole2.h>
+#include <shellapi.h>
 #include <activscp.h>
 #include <initguid.h>
 

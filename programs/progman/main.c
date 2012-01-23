@@ -25,6 +25,7 @@
 #define OEMRESOURCE
 
 #include "windows.h"
+#include "shellapi.h"
 #include "progman.h"
 
 GLOBALS Globals;

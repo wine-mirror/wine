@@ -19,6 +19,8 @@
  */
 
 #include "main.h"
+#include "commdlg.h"
+#include "shellapi.h"
 #include "wine/unicode.h"
 
 GLOBALS globals;

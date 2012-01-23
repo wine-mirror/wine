@@ -41,6 +41,8 @@
 #define COBJMACROS
 
 #include <windows.h>
+#include <commdlg.h>
+#include <shellapi.h>
 #include <uxtheme.h>
 #include <tmschema.h>
 #include <shlobj.h>

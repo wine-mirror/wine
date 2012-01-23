@@ -23,6 +23,7 @@
 
 #include <windows.h>
 #include <msi.h>
+#include <winsvc.h>
 #include <objbase.h>
 #include <stdio.h>
 

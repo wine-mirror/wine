@@ -26,6 +26,7 @@
 #define OEMRESOURCE
 
 #include <windows.h>
+#include <rpc.h>
 #include <wine/debug.h>
 #include "explorer_private.h"
 

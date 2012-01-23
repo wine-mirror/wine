@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <windows.h>
+#include <shellapi.h>
 #include <commdlg.h>
 #include <shlwapi.h>
 #include <winternl.h>

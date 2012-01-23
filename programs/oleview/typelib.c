@@ -19,6 +19,7 @@
  */
 
 #include "main.h"
+#include "commdlg.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"

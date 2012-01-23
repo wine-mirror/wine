@@ -45,6 +45,7 @@
 
 #include <windows.h>
 #include <shlwapi.h>
+#include <urlmon.h>
 #include <ddeml.h>
 #include <stdio.h>
 #include <stdlib.h>
