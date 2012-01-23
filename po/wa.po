@@ -9835,7 +9835,7 @@ msgstr "&Rafacer\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
-msgstr "&Tchwezi totafwait"
+msgstr "&Tchwezi totafwait\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
