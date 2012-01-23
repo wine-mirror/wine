@@ -940,7 +940,6 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   IDirectXFileEnumObjectImpl *This = impl_from_IDirectXFileEnumObject(iface);
   IDirectXFileDataImpl* object;
   HRESULT hr;
-  LPBYTE pstrings = NULL;
 
   TRACE("(%p/%p)->(%p)\n", This, iface, ppDataObj);
 
@@ -963,33 +962,36 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   if (FAILED(hr))
     return hr;
 
+  object->pobj = HeapAlloc(GetProcessHeap(), 0, sizeof(xobject)*MAX_SUBOBJECTS);
+  if (!object->pobj)
+  {
+    ERR("Out of memory\n");
+    hr = DXFILEERR_BADALLOC;
+    goto error;
+  }
+
+  object->pstrings = HeapAlloc(GetProcessHeap(), 0, MAX_STRINGS_BUFFER);
+  if (!object->pstrings)
+  {
+    ERR("Out of memory\n");
+    hr = DXFILEERR_BADALLOC;
+    goto error;
+  }
+
+  object->cur_enum_object = 0;
+  object->level = 0;
+  object->from_ref = FALSE;
+
   This->buf.pxo_globals = This->xobjects;
   This->buf.nb_pxo_globals = This->nb_xobjects;
   This->buf.level = 0;
   This->buf.pdata = NULL;
   This->buf.capacity = 0;
   This->buf.cur_pos_data = 0;
-
-  This->buf.pxo_tab = HeapAlloc(GetProcessHeap(), 0, sizeof(xobject)*MAX_SUBOBJECTS);
-  if (!This->buf.pxo_tab)
-  {
-    ERR("Out of memory\n");
-    hr = DXFILEERR_BADALLOC;
-    goto error;
-  }
-  This->buf.pxo = This->xobjects[This->nb_xobjects] = This->buf.pxo_tab;
-
+  This->buf.cur_pstrings = This->buf.pstrings = object->pstrings;
+  This->buf.pxo = This->xobjects[This->nb_xobjects] = This->buf.pxo_tab = object->pobj;
   This->buf.pxo->pdata = NULL;
   This->buf.pxo->nb_subobjects = 1;
-
-  pstrings = HeapAlloc(GetProcessHeap(), 0, MAX_STRINGS_BUFFER);
-  if (!pstrings)
-  {
-    ERR("Out of memory\n");
-    hr = DXFILEERR_BADALLOC;
-    goto error;
-  }
-  This->buf.cur_pstrings = This->buf.pstrings = object->pstrings = pstrings;
 
   if (!parse_object(&This->buf))
   {
@@ -997,12 +999,6 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     hr = DXFILEERR_PARSEERROR;
     goto error;
   }
-
-  object->pstrings = pstrings;
-  object->pobj = This->buf.pxo;
-  object->cur_enum_object = 0;
-  object->level = 0;
-  object->from_ref = FALSE;
 
   *ppDataObj = (LPDIRECTXFILEDATA)object;
 
@@ -1016,9 +1012,8 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
 
 error:
 
-  HeapFree(GetProcessHeap(), 0, This->buf.pxo_tab);
-  HeapFree(GetProcessHeap(), 0, This->buf.pdata);
-  HeapFree(GetProcessHeap(), 0, pstrings);
+  IDirectXFileData_Release(&object->IDirectXFileData_iface);
+  *ppDataObj = NULL;
 
   return hr;
 }
