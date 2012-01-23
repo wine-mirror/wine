@@ -8252,23 +8252,21 @@ msgid "Ma&ximize"
 msgstr "Mà&ximitza"
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "&Tanca\tAlt-F4"
+msgstr "&Tanca\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
 msgstr "&Quant al Wine..."
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "&Tanca\tCtrl-F4"
+msgstr "&Tanca\tCtrl+F4"
 
 #: user32.rc:48
 #, fuzzy
 msgid "Nex&t\tCtrl+F6"
-msgstr "Proper\tC&trl-F6"
+msgstr "Proper\tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -10357,7 +10355,7 @@ msgstr "&Cerca...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
-msgstr "&Cerca proper...\tCtrl+F"
+msgstr "&Cerca proper\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
@@ -11125,7 +11123,7 @@ msgstr "&Copia Nom de Clau"
 
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 msgid "&Find...\tCtrl+F"
-msgstr "&Cerca...\tCtrl+&F"
+msgstr "&Cerca...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -13368,8 +13366,9 @@ msgid "Cr&eate Directory..."
 msgstr "Cr&ear Directori..."
 
 #: winefile.rc:38 winemine.rc:46
+#, fuzzy
 msgid "E&xit\tAlt+X"
-msgstr "Sortir\tAlt+&X"
+msgstr "Sortir\tAlt+X"
 
 #: winefile.rc:44
 msgid "&Disk"
