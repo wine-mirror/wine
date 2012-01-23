@@ -159,6 +159,9 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
     }else if(IsEqualGUID(&IID_IHTMLWindow4, riid)) {
         TRACE("(%p)->(IID_IHTMLWindow4 %p)\n", This, ppv);
         *ppv = &This->IHTMLWindow4_iface;
+    }else if(IsEqualGUID(&IID_IHTMLWindow5, riid)) {
+        TRACE("(%p)->(IID_IHTMLWindow5 %p)\n", This, ppv);
+        *ppv = &This->IHTMLWindow5_iface;
     }else if(IsEqualGUID(&IID_IHTMLWindow6, riid)) {
         TRACE("(%p)->(IID_IHTMLWindow6 %p)\n", This, ppv);
         *ppv = &This->IHTMLWindow6_iface;
@@ -1656,6 +1659,92 @@ static const IHTMLWindow4Vtbl HTMLWindow4Vtbl = {
     HTMLWindow4_get_frameElement
 };
 
+static inline HTMLWindow *impl_from_IHTMLWindow5(IHTMLWindow5 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLWindow, IHTMLWindow5_iface);
+}
+
+static HRESULT WINAPI HTMLWindow5_QueryInterface(IHTMLWindow5 *iface, REFIID riid, void **ppv)
+{
+    HTMLWindow *This = impl_from_IHTMLWindow5(iface);
+
+    return IHTMLWindow2_QueryInterface(&This->IHTMLWindow2_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLWindow5_AddRef(IHTMLWindow5 *iface)
+{
+    HTMLWindow *This = impl_from_IHTMLWindow5(iface);
+
+    return IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
+}
+
+static ULONG WINAPI HTMLWindow5_Release(IHTMLWindow5 *iface)
+{
+    HTMLWindow *This = impl_from_IHTMLWindow5(iface);
+
+    return IHTMLWindow2_Release(&This->IHTMLWindow2_iface);
+}
+
+static HRESULT WINAPI HTMLWindow5_GetTypeInfoCount(IHTMLWindow5 *iface, UINT *pctinfo)
+{
+    HTMLWindow *This = impl_from_IHTMLWindow5(iface);
+
+    return IDispatchEx_GetTypeInfoCount(&This->IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLWindow5_GetTypeInfo(IHTMLWindow5 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLWindow *This = impl_from_IHTMLWindow5(iface);
+
+    return IDispatchEx_GetTypeInfo(&This->IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLWindow5_GetIDsOfNames(IHTMLWindow5 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLWindow *This = impl_from_IHTMLWindow5(iface);
+
+    return IDispatchEx_GetIDsOfNames(&This->IDispatchEx_iface, riid, rgszNames, cNames, lcid,
+            rgDispId);
+}
+
+static HRESULT WINAPI HTMLWindow5_Invoke(IHTMLWindow5 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLWindow *This = impl_from_IHTMLWindow5(iface);
+
+    return IDispatchEx_Invoke(&This->IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLWindow5_put_XMLHttpRequest(IHTMLWindow5 *iface, VARIANT v)
+{
+    HTMLWindow *This = impl_from_IHTMLWindow5(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow5_get_XMLHttpRequest(IHTMLWindow5 *iface, VARIANT *p)
+{
+    HTMLWindow *This = impl_from_IHTMLWindow5(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const IHTMLWindow5Vtbl HTMLWindow5Vtbl = {
+    HTMLWindow5_QueryInterface,
+    HTMLWindow5_AddRef,
+    HTMLWindow5_Release,
+    HTMLWindow5_GetTypeInfoCount,
+    HTMLWindow5_GetTypeInfo,
+    HTMLWindow5_GetIDsOfNames,
+    HTMLWindow5_Invoke,
+    HTMLWindow5_put_XMLHttpRequest,
+    HTMLWindow5_get_XMLHttpRequest
+};
+
 static inline HTMLWindow *impl_from_IHTMLWindow6(IHTMLWindow6 *iface)
 {
     return CONTAINING_RECORD(iface, HTMLWindow, IHTMLWindow6_iface);
@@ -2443,6 +2532,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
     window->IHTMLWindow2_iface.lpVtbl = &HTMLWindow2Vtbl;
     window->IHTMLWindow3_iface.lpVtbl = &HTMLWindow3Vtbl;
     window->IHTMLWindow4_iface.lpVtbl = &HTMLWindow4Vtbl;
+    window->IHTMLWindow5_iface.lpVtbl = &HTMLWindow5Vtbl;
     window->IHTMLWindow6_iface.lpVtbl = &HTMLWindow6Vtbl;
     window->IHTMLPrivateWindow_iface.lpVtbl = &HTMLPrivateWindowVtbl;
     window->IDispatchEx_iface.lpVtbl = &WindowDispExVtbl;

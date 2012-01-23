@@ -291,6 +291,7 @@ struct HTMLWindow {
     IHTMLWindow2       IHTMLWindow2_iface;
     IHTMLWindow3       IHTMLWindow3_iface;
     IHTMLWindow4       IHTMLWindow4_iface;
+    IHTMLWindow5       IHTMLWindow5_iface;
     IHTMLWindow6       IHTMLWindow6_iface;
     IHTMLPrivateWindow IHTMLPrivateWindow_iface;
     IDispatchEx        IDispatchEx_iface;
