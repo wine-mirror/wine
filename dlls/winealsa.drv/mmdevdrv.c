@@ -52,6 +52,7 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static const REFERENCE_TIME DefaultPeriod = 100000;
 static const REFERENCE_TIME MinimumPeriod = 50000;
+#define                     EXTRA_SAFE_RT   40000
 
 struct ACImpl;
 typedef struct ACImpl ACImpl;
@@ -112,6 +113,7 @@ struct ACImpl {
     UINT64 written_frames, last_pos_frames;
     UINT32 bufsize_frames, held_frames, tmp_buffer_frames, mmdev_period_frames;
     UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
+    UINT32 hidden_frames;   /* ALSA reserve to ensure continuous rendering */
 
     HANDLE timer;
     BYTE *local_buffer, *tmp_buffer;
@@ -961,8 +963,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     This->mmdev_period_frames = MulDiv(fmt->nSamplesPerSec,
             This->mmdev_period_rt, 10000000);
 
-    This->bufsize_frames = MulDiv(duration, fmt->nSamplesPerSec, 10000000);
-
     /* Buffer 4 ALSA periods if large enough, else 4 mmdevapi periods */
     This->alsa_bufsize_frames = This->mmdev_period_frames * 4;
     if(err < 0 || alsa_period_us < period / 10)
@@ -1033,6 +1033,15 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
+
+    /* Bear in mind weird situations where
+     * ALSA period (50ms) > mmdevapi buffer (3x10ms)
+     * or surprising rounding as seen with 22050x8x1 with Pulse:
+     * ALSA period 220 vs.  221 frames in mmdevapi and
+     *      buffer 883 vs. 2205 frames in mmdevapi! */
+    This->bufsize_frames = MulDiv(duration, fmt->nSamplesPerSec, 10000000);
+    This->hidden_frames = This->alsa_period_frames + This->mmdev_period_frames +
+        MulDiv(fmt->nSamplesPerSec, EXTRA_SAFE_RT, 10000000);
 
     /* Check if the ALSA buffer is so small that it will run out before
      * the next MMDevAPI period tick occurs. Allow a little wiggle room
@@ -1147,11 +1156,18 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient *iface,
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    LeaveCriticalSection(&This->lock);
+    /* Hide some frames in the ALSA buffer.  Allows to return GetCurrentPadding=0
+     * yet have enough data left to play (as if it were in native's mixer). Add:
+     * + mmdevapi_period such that at the end of it, ALSA still has data;
+     * + EXTRA_SAFE (~4ms) to allow for late callback invocation / fluctuation;
+     * + alsa_period such that ALSA always has at least one period to play. */
+    if(This->dataflow == eRender)
+        *latency = MulDiv(This->hidden_frames, 10000000, This->fmt->nSamplesPerSec);
+    else
+        *latency = MulDiv(This->alsa_period_frames, 10000000, This->fmt->nSamplesPerSec)
+                 + This->mmdev_period_rt;
 
-    /* one mmdevapi period plus one period we hide in the ALSA buffer */
-    *latency = MulDiv(This->alsa_period_frames, 10000000, This->fmt->nSamplesPerSec)
-             + This->mmdev_period_rt;
+    LeaveCriticalSection(&This->lock);
 
     return S_OK;
 }
@@ -1473,11 +1489,11 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient *iface,
 }
 
 static snd_pcm_sframes_t alsa_write_best_effort(snd_pcm_t *handle, BYTE *buf,
-        snd_pcm_uframes_t frames, ACImpl *This)
+        snd_pcm_uframes_t frames, ACImpl *This, BOOL mute)
 {
     snd_pcm_sframes_t written;
 
-    if(This->session->mute){
+    if(mute){
         int err;
         if((err = snd_pcm_format_set_silence(This->alsa_format, buf,
                         frames * This->fmt->nChannels)) < 0)
@@ -1510,8 +1526,8 @@ static snd_pcm_sframes_t alsa_write_best_effort(snd_pcm_t *handle, BYTE *buf,
 
 static void alsa_write_data(ACImpl *This)
 {
-    snd_pcm_sframes_t written;
-    snd_pcm_uframes_t to_write, avail, write_limit, max_period, in_alsa;
+    snd_pcm_sframes_t written, in_alsa;
+    snd_pcm_uframes_t to_write, avail, write_limit, max_period;
     int err;
     BYTE *buf =
         This->local_buffer + (This->lcl_offs_frames * This->fmt->nBlockAlign);
@@ -1557,7 +1573,29 @@ static void alsa_write_data(ACImpl *This)
 
     to_write = min(to_write, write_limit);
 
-    written = alsa_write_best_effort(This->pcm_handle, buf, to_write, This);
+    /* Add a lead-in when starting with too few frames to ensure
+     * continuous rendering.  Additional benefit: Force ALSA to start.
+     * GetPosition continues to reflect the speaker position because
+     * snd_pcm_delay includes buffered frames in its total delay
+     * and last_pos_frames prevents moving backwards. */
+    if(!in_alsa && This->held_frames < This->hidden_frames){
+        UINT32 s_frames = This->hidden_frames - This->held_frames;
+        BYTE *silence = HeapAlloc(GetProcessHeap(), 0,
+                s_frames * This->fmt->nBlockAlign);
+
+        if(silence){
+            in_alsa = alsa_write_best_effort(This->pcm_handle,
+                silence, s_frames, This, TRUE);
+            TRACE("lead-in %ld\n", in_alsa);
+            HeapFree(GetProcessHeap(), 0, silence);
+            if(in_alsa <= 0)
+                return;
+        }else
+            WARN("Couldn't allocate lead-in, expect underrun\n");
+    }
+
+    written = alsa_write_best_effort(This->pcm_handle, buf, to_write, This,
+            This->session->mute);
     if(written < 0){
         WARN("Couldn't write: %ld (%s)\n", written, snd_strerror(written));
         return;
@@ -1575,7 +1613,8 @@ static void alsa_write_data(ACImpl *This)
     if(This->held_frames && (written < write_limit)){
         /* wrapped and have some data back at the start to write */
         written = alsa_write_best_effort(This->pcm_handle, This->local_buffer,
-                min(This->held_frames, write_limit - written), This);
+                min(This->held_frames, write_limit - written), This,
+                This->session->mute);
         if(written < 0){
             WARN("Couldn't write: %ld (%s)\n", written, snd_strerror(written));
             return;
