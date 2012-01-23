@@ -853,11 +853,12 @@ static void test_length(void)
 static void test_collection_content(void)
 {
     IXMLDOMDocument2 *schema1, *schema2, *schema3, *schema4, *schema5;
+    BSTR content[5] = {NULL, NULL, NULL, NULL, NULL};
     IXMLDOMSchemaCollection *cache1, *cache2;
     VARIANT_BOOL b;
-    BSTR bstr;
-    BSTR content[5] = {NULL, NULL, NULL, NULL, NULL};
     LONG length;
+    HRESULT hr;
+    BSTR bstr;
     int i, j;
 
     schema1 = create_document_version(30, &IID_IXMLDOMDocument2);
@@ -935,10 +936,11 @@ static void test_collection_content(void)
         IXMLDOMDocument2_Release(schema5);
     }
 
-    bstr = NULL;
+    bstr = (void*)0xdeadbeef;
     /* error if index is out of range */
-    ole_expect(IXMLDOMSchemaCollection_get_namespaceURI(cache1, 3, &bstr), E_FAIL);
-    SysFreeString(bstr);
+    hr = IXMLDOMSchemaCollection_get_namespaceURI(cache1, 3, &bstr);
+    EXPECT_HR(hr, E_FAIL);
+    ok(bstr == (void*)0xdeadbeef, "got %p\n", bstr);
     /* error if return pointer is NULL */
     ole_expect(IXMLDOMSchemaCollection_get_namespaceURI(cache1, 0, NULL), E_POINTER);
     /* pointer is checked first */

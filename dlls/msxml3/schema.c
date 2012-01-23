@@ -1197,16 +1197,16 @@ static HRESULT WINAPI schema_cache_get_namespaceURI(IXMLDOMSchemaCollection2* if
                                                     LONG index, BSTR* len)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    cache_index_data data = {index,len};
+    cache_index_data data = {index, len};
     TRACE("(%p)->(%i %p)\n", This, index, len);
 
     if (!len)
         return E_POINTER;
-    *len = NULL;
 
     if (index >= xmlHashSize(This->cache))
         return E_FAIL;
 
+    *len = NULL;
     xmlHashScan(This->cache, cache_index, &data);
     return S_OK;
 }
