@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
+#include <limits.h>
 
 #include "urlmon_main.h"
 #include "wine/debug.h"
@@ -26,9 +26,6 @@
 #include "shlwapi.h"
 
 #include "strsafe.h"
-
-#define UINT_MAX 0xffffffff
-#define USHORT_MAX 0xffff
 
 #define URI_DISPLAY_NO_ABSOLUTE_URI         0x1
 #define URI_DISPLAY_NO_DEFAULT_PORT_AUTH    0x2
@@ -1353,7 +1350,7 @@ static BOOL parse_port(const WCHAR **ptr, parse_data *data, DWORD flags) {
 
         port = port*10 + (**ptr-'0');
 
-        if(port > USHORT_MAX) {
+        if(port > USHRT_MAX) {
             *ptr = data->port;
             data->port = NULL;
             return FALSE;
