@@ -8441,7 +8441,6 @@ msgid "Ma&ximize"
 msgstr "S&uurenna"
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
 msgstr "&Sulje\tAlt+F4"
 
@@ -8450,9 +8449,8 @@ msgid "&About Wine"
 msgstr ""
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "&Sulje\tAlt+F4"
+msgstr "&Sulje\tCtrl+F4"
 
 #: user32.rc:48
 #, fuzzy
@@ -10143,7 +10141,7 @@ msgstr "P&oista\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
-msgstr "&Valitse kaikki"
+msgstr "&Valitse kaikki\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
@@ -10155,7 +10153,7 @@ msgstr "Ka&tkaise pitkä rivi"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr "Etsi..."
+msgstr "Etsi...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
