@@ -23,6 +23,7 @@
 #include "wine/debug.h"
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 
