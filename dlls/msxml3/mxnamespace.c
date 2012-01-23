@@ -1,7 +1,7 @@
 /*
  *    IMXNamespaceManager implementation
  *
- * Copyright 2011 Nikolay Sivov for CodeWeavers
+ * Copyright 2011-2012 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -141,6 +141,22 @@ static HRESULT get_declared_prefix_idx(const struct nscontext *ctxt, LONG index,
     *prefix = ctxt->ns[index].prefix;
 
     return S_OK;
+}
+
+/* returned stored pointer, caller needs to copy it */
+static HRESULT get_declared_prefix_uri(const struct nscontext *ctxt, const WCHAR *uri, BSTR *prefix)
+{
+    int i;
+
+    for (i = 0; i < ctxt->count; i++)
+        if (!strcmpW(ctxt->ns[i].uri, uri))
+        {
+            *prefix = ctxt->ns[i].prefix;
+            return S_OK;
+        }
+
+    *prefix = NULL;
+    return E_FAIL;
 }
 
 static HRESULT get_uri_from_prefix(const struct nscontext *ctxt, const WCHAR *prefix, BSTR *uri)
@@ -294,8 +310,33 @@ static HRESULT WINAPI namespacemanager_getPrefix(IMXNamespaceManager *iface,
     const WCHAR *uri, LONG index, WCHAR *prefix, int *prefix_len)
 {
     namespacemanager *This = impl_from_IMXNamespaceManager( iface );
-    FIXME("(%p)->(%s %d %p %p): stub\n", This, debugstr_w(uri), index, prefix, prefix_len);
-    return E_NOTIMPL;
+    struct nscontext *ctxt;
+    HRESULT hr;
+    BSTR prfx;
+
+    TRACE("(%p)->(%s %d %p %p)\n", This, debugstr_w(uri), index, prefix, prefix_len);
+
+    if (!uri || !*uri || !prefix_len) return E_INVALIDARG;
+
+    ctxt = LIST_ENTRY(list_head(&This->ctxts), struct nscontext, entry);
+
+    hr = get_declared_prefix_uri(ctxt, uri, &prfx);
+    if (hr == S_OK)
+    {
+        /* TODO: figure out what index argument is for */
+        if (index) return E_FAIL;
+
+        if (prefix)
+        {
+            if (*prefix_len < (INT)SysStringLen(prfx)) return E_XML_BUFFERTOOSMALL;
+            strcpyW(prefix, prfx);
+        }
+
+        *prefix_len = SysStringLen(prfx);
+        TRACE("prefix=%s\n", debugstr_w(prfx));
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI namespacemanager_getURI(IMXNamespaceManager *iface,

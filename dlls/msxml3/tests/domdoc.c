@@ -10403,7 +10403,7 @@ static void test_domobj_dispex(IUnknown *obj)
     IDispatchEx_Release(dispex);
 }
 
-static void test_nsnamespacemanager(void)
+static void test_mxnamespacemanager(void)
 {
     static const char xmluriA[] = "http://www.w3.org/XML/1998/namespace";
     IVBMXNamespaceManager *mgr2;
@@ -10521,10 +10521,148 @@ todo_wine {
 
     IMXNamespaceManager_Release(nsmgr);
 
+    /* ::getPrefix() */
+    hr = CoCreateInstance(&CLSID_MXNamespaceManager40, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IMXNamespaceManager, (void**)&nsmgr);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXNamespaceManager_getPrefix(nsmgr, NULL, 0, NULL, NULL);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    len = -1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, NULL, 0, NULL, &len);
+    EXPECT_HR(hr, E_INVALIDARG);
+    ok(len == -1, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns0 uri"), 0, buffW, &len);
+    EXPECT_HR(hr, E_FAIL);
+    ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
+    ok(len == 100, "got %d\n", len);
+
+    len = 0;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns0 uri"), 0, buffW, &len);
+    EXPECT_HR(hr, E_FAIL);
+    ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
+    ok(len == 0, "got %d\n", len);
+
+    hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns1"), _bstr_("ns1 uri"));
+    EXPECT_HR(hr, S_OK);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns1 uri"), 0, buffW, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(buffW, _bstr_("ns1")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(len == 3, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("http://www.w3.org/XML/1998/namespace"), 0, buffW, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(buffW, _bstr_("xml")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(len == 3, "got %d\n", len);
+
+    /* with null buffer it's possible to get required length */
+    len = 100;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("http://www.w3.org/XML/1998/namespace"), 0, NULL, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 3, "got %d\n", len);
+
+    len = 0;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("http://www.w3.org/XML/1998/namespace"), 0, NULL, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 3, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns1 uri"), 1, buffW, &len);
+    EXPECT_HR(hr, E_FAIL);
+    ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
+    ok(len == 100, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns1 uri"), 2, buffW, &len);
+    EXPECT_HR(hr, E_FAIL);
+    ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
+    ok(len == 100, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_(""), 0, buffW, &len);
+    EXPECT_HR(hr, E_INVALIDARG);
+    ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
+    ok(len == 100, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_(""), 1, buffW, &len);
+    EXPECT_HR(hr, E_INVALIDARG);
+    ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
+    ok(len == 100, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, NULL, 0, buffW, &len);
+    EXPECT_HR(hr, E_INVALIDARG);
+    ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
+    ok(len == 100, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns0 uri"), 1, buffW, &len);
+    EXPECT_HR(hr, E_FAIL);
+    ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
+    ok(len == 100, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_(""), 1, buffW, &len);
+    EXPECT_HR(hr, E_INVALIDARG);
+    ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
+    ok(len == 100, "got %d\n", len);
+
+    /* declare another one, indices are shifted */
+    hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns2"), _bstr_("ns2 uri"));
+    EXPECT_HR(hr, S_OK);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns1 uri"), 0, buffW, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(buffW, _bstr_("ns1")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(len == 3, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns2 uri"), 0, buffW, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(buffW, _bstr_("ns2")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(len == 3, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns2 uri"), 1, buffW, &len);
+    EXPECT_HR(hr, E_FAIL);
+    ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
+    ok(len == 100, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_(""), 1, buffW, &len);
+    EXPECT_HR(hr, E_INVALIDARG);
+    ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
+    ok(len == 100, "got %d\n", len);
+
+    IMXNamespaceManager_Release(nsmgr);
+
     free_bstrs();
 }
 
-static void test_nsnamespacemanager_override(void)
+static void test_mxnamespacemanager_override(void)
 {
     IMXNamespaceManager *nsmgr;
     WCHAR buffW[250];
@@ -11478,8 +11616,8 @@ START_TEST(domdoc)
         &IID_IMXNamespaceManager, (void**)&unk);
     if (hr == S_OK)
     {
-        test_nsnamespacemanager();
-        test_nsnamespacemanager_override();
+        test_mxnamespacemanager();
+        test_mxnamespacemanager_override();
 
         IUnknown_Release(unk);
     }
