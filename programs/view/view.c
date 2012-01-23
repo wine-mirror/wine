@@ -17,7 +17,7 @@
  */
 
 #include <windows.h>
-#include <windowsx.h>
+#include <commdlg.h>
 #include "resource.h"
 
 #include <stdio.h>
@@ -230,7 +230,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMessage, WPARAM wparam, LPARAM 
       break;
 
     case WM_COMMAND: /* message: command from application menu */
-      switch (GET_WM_COMMAND_ID(wparam,lparam))
+        switch (LOWORD(wparam))
 	{
 	case IDM_OPEN:
 	  {
