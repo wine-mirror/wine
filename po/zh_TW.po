@@ -10197,7 +10197,7 @@ msgstr ""
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
-msgstr "全選(&A)"
+msgstr "全選(&A)\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
@@ -10209,7 +10209,7 @@ msgstr "自動換行(&W)"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr "尋找(&S)..."
+msgstr "尋找(&S)...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
