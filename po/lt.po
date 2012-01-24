@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-18 22:31+0300\n"
+"PO-Revision-Date: 2012-01-24 22:52+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -2182,7 +2182,6 @@ msgid "B&rowse..."
 msgstr "Pari&nkti..."
 
 #: cryptui.rc:294
-#, fuzzy
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
@@ -2388,7 +2387,6 @@ msgid "Certificate Information"
 msgstr "Liudijimo informacija"
 
 #: cryptui.rc:29
-#, fuzzy
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
@@ -2397,7 +2395,6 @@ msgstr ""
 "pažeistas."
 
 #: cryptui.rc:30
-#, fuzzy
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
@@ -2536,7 +2533,7 @@ msgstr "Liudijimo savybės"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr "Prašau įveskite organizacijos identifikatorių tokia forma: 1.2.3.4"
+msgstr "Įveskite organizacijos identifikatorių tokia forma: 1.2.3.4"
 
 #: cryptui.rc:65
 msgid "The OID you entered already exists."
@@ -2544,16 +2541,15 @@ msgstr "Įvestas organizacijos identifikatorius jau egzistuoja."
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
-msgstr "Prašau išrinkite liudijimų saugyklą."
+msgstr "Išrinkite liudijimų saugyklą."
 
 #: cryptui.rc:69
-#, fuzzy
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
-"Faile yra objektų, kurie neatitinka nustatytų kriterijų. Prašau išrinkite "
-"kitą failą."
+"Faile yra objektų, kurie neatitinka nustatytų kriterijų. Išrinkite kitą "
+"failą."
 
 #: cryptui.rc:70
 msgid "File to Import"
@@ -2601,12 +2597,11 @@ msgstr "CMS/PKCS #7 pranešimai (*.spc; *.p7b)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
-msgstr "Prašau išrinkite failą."
+msgstr "Išrinkite failą."
 
 #: cryptui.rc:82
-#, fuzzy
 msgid "The file format is not recognized. Please select another file."
-msgstr "Neatpažintas failo formatas. Prašau išrinkite kitą failą."
+msgstr "Neatpažintas failo formatas. Išrinkite kitą failą."
 
 #: cryptui.rc:83
 msgid "Could not open "
@@ -2618,7 +2613,7 @@ msgstr "Nustatyta programos"
 
 #: cryptui.rc:85
 msgid "Please select a store"
-msgstr "Prašau išrinkite saugyklą"
+msgstr "Išrinkite saugyklą"
 
 #: cryptui.rc:86
 msgid "Certificate Store Selected"
@@ -2843,9 +2838,8 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "Nurodykite failą, kuriame bus išsaugoti duomenys."
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
-msgstr "Nurodytas failas egzistuoja. Ar norite jį perrašyti?"
+msgstr "Nurodytas failas jau egzistuoja. Ar norite jį perrašyti?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -2916,7 +2910,6 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "Pastaba: nepavyko atverti privačiojo rakto šiam liudijimui."
 
 #: cryptui.rc:173
-#, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Pastaba: šio liudijimo privatusis raktas neišeksportuojamas."
 
@@ -5704,9 +5697,8 @@ msgid "Event log file changed\n"
 msgstr "Įvykių žurnalo failas pasikeitė\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed\n"
-msgstr "Diegimo programos tarnybos klaida.\n"
+msgstr "Diegimo programos tarnybos klaida\n"
 
 #: winerror.mc:2731
 msgid "Installation aborted by user\n"
@@ -6637,12 +6629,11 @@ msgid "Done"
 msgstr "Baigta"
 
 #: msi.rc:27
-#, fuzzy
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
-"Nepavyko atverti nurodyto diegimo paketo. Patikrinkite failo kelią ir "
+"Nepavyko atverti nurodyto įdiegimo paketo. Patikrinkite failo kelią ir "
 "mėginkite dar kartą."
 
 #: msi.rc:28
@@ -7173,7 +7164,6 @@ msgstr ""
 "naudodami %s."
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
@@ -7182,7 +7172,6 @@ msgstr ""
 "naudodami %s. Jis bus rodomas kaip piktograma."
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
@@ -7192,7 +7181,6 @@ msgstr ""
 "šaltinio failu, todėl failo pakeitimai bus atspindėti jūsų dokumente."
 
 #: oledlg.rc:38
-#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
@@ -7203,7 +7191,6 @@ msgstr ""
 "dokumente."
 
 #: oledlg.rc:39
-#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
@@ -7866,7 +7853,7 @@ msgstr "Adresynas"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "Paleidimas"
 
 #: shell32.rc:204
 msgid "Start Menu"
@@ -7910,18 +7897,16 @@ msgid "My Pictures"
 msgstr "Paveikslai"
 
 #: shell32.rc:215
-#, fuzzy
 msgid "Common Files"
-msgstr "Vardas, pavardė"
+msgstr "Bendrieji failai"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
 msgstr "Dokumentai"
 
 #: shell32.rc:217
-#, fuzzy
 msgid "Administrative Tools"
-msgstr "Pradžios meniu\\Programos\\Administravimo įrankiai"
+msgstr "Administravimo įrankiai"
 
 #: shell32.rc:218
 msgid "Music"
@@ -7948,14 +7933,12 @@ msgid "Links"
 msgstr "Saitai"
 
 #: shell32.rc:223
-#, fuzzy
 msgid "Slide Shows"
-msgstr "Paveikslai\\Skaidrių peržiūros"
+msgstr "Skaidrių peržiūros"
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
-msgstr "Muzika\\Grojaraščiai"
+msgstr "Grojaraščiai"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -7970,24 +7953,20 @@ msgid "Model"
 msgstr "Modelis"
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
-msgstr "Muzika\\Muzikos pavyzdžiai"
+msgstr "Muzikos pavyzdžiai"
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
-msgstr "Paveikslai\\Paveikslų pavyzdžiai"
+msgstr "Paveikslų pavyzdžiai"
 
 #: shell32.rc:227
-#, fuzzy
 msgid "Sample Playlists"
-msgstr "Muzika\\Grojaraščių pavyzdžiai"
+msgstr "Grojaraščių pavyzdžiai"
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
-msgstr "Vaizdai\\Vaizdų pavyzdžiai"
+msgstr "Vaizdų pavyzdžiai"
 
 #: shell32.rc:229
 msgid "Saved Games"
@@ -8143,7 +8122,6 @@ msgid "Confirm overwrite"
 msgstr "Patvirtinti perrašymą"
 
 #: shell32.rc:265
-#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8161,7 +8139,7 @@ msgid ""
 msgstr ""
 "Wine yra laisva programinė įranga; galite ją platinti ir/ar modifikuoti GNU "
 "laisvosios bendrosios viešosios licencijos (LGPL) sąlygomis, kurios "
-"paskelbtos Laisvosios programinės įrangos fondo (FSF); 2.1-osios arba (Jūsų "
+"paskelbtos Laisvosios programinės įrangos fondo (FSF); 2.1-osios arba (jūsų "
 "pasirinkimu) bet kurios vėlesnės licencijos versijos sąlygomis.\n"
 "\n"
 "Wine yra platinama tikintis, kad ji bus naudinga, bet BE JOKIŲ GARANTIJŲ; "
@@ -8229,23 +8207,20 @@ msgid "Ma&ximize"
 msgstr "Pa&didinti"
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "&Užverti\tAlt-F4"
+msgstr "&Užverti\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
 msgstr "Apie &Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "&Užverti\tVald-F4"
+msgstr "&Užverti\tVald+F4"
 
 #: user32.rc:48
-#, fuzzy
 msgid "Nex&t\tCtrl+F6"
-msgstr "Ki&tas\tVald-F6"
+msgstr "Ki&tas\tVald+F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -8944,10 +8919,8 @@ msgid "&Output File Name:"
 msgstr "&Išvesties failo vardas:"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
-msgstr ""
-"Išvesties failas jau egzistuoja.  Norėdami failą keisti spauskite Gerai."
+msgstr "Išvesties failas jau egzistuoja. Norėdami perrašyti spauskite Gerai."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -9545,7 +9518,6 @@ msgstr ""
 "tekstas“.\n"
 
 #: cmd.rc:153
-#, fuzzy
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -9570,7 +9542,6 @@ msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <katalogas> pašalina katalogą.\n"
 
 #: cmd.rc:178
-#, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9589,9 +9560,9 @@ msgid ""
 "many more values than in a native Win32 implementation. Note that it is\n"
 "not possible to affect the operating system environment from within cmd.\n"
 msgstr ""
-"SET parodo ar pakeičia CMD aplinkos kintamuosius.\n"
+"SET parodo ar pakeičia cmd aplinkos kintamuosius.\n"
 "\n"
-"SET be parametrų parodo visus dabartinius aplinkos kintamuosius.\n"
+"SET be parametrų parodo visą dabartinę aplinką.\n"
 "\n"
 "Aplinkos kintamojo sukūrimo ar modifikavimo sintaksė yra:\n"
 "\n"
@@ -9620,9 +9591,8 @@ msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME parodo arba nustato sistemos laiką.\n"
 
 #: cmd.rc:187
-#, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr "Nustato CMD lango antraštę, sintaksė TITLE [tekstas].\n"
+msgstr "TITLE <eilutė> nustato cmd lango antraštę.\n"
 
 #: cmd.rc:191
 msgid ""
@@ -9633,7 +9603,6 @@ msgstr ""
 "nukreipta). Nėra tikrinama ar faile yra skaitomas tekstas.\n"
 
 #: cmd.rc:200
-#, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9646,8 +9615,8 @@ msgstr ""
 "VERIFY yra naudojama nustatyti, išvalyti ar testuoti tikrinimo žymos bitą.\n"
 "Galimos formos yra:\n"
 "\n"
-"VERIFY ON\tNustatyti žymos bitą\n"
-"VERIFY OFF\tIšvalyti žymos bitą\n"
+"VERIFY ON\tNustatyti žymos bitą.\n"
+"VERIFY OFF\tIšvalyti žymos bitą.\n"
 "VERIFY\t\tParodo ON arba OFF, kuris tinkamas.\n"
 "\n"
 "Tikrinimo žymos bitas neturi jokios funkcijos Wine.\n"
@@ -9692,12 +9661,10 @@ msgstr ""
 "o po to pakeičia dabartinį katalogą į nurodytą.\n"
 
 #: cmd.rc:222
-#, fuzzy
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD pakeičia dabartinį katalogą į paskutinį išsaugotą su PUSHD.\n"
 
 #: cmd.rc:230
-#, fuzzy
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9708,17 +9675,15 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
-"ASSOC parodo ar modifikuoja failų prievardžių sąsajas\n"
+"ASSOC parodo ar modifikuoja failų prievardžių sąsajas.\n"
 "\n"
 "Sintaksė: ASSOC [.prv[=[failoTipas]]]\n"
 "\n"
 "ASSOC be parametrų parodo dabartines failų sąsajas.\n"
 "Jei naudojama tik su failo prievardžiu, parodo dabartinę sąsają.\n"
-"Po lygybės ženklo nenurodžius failo tipo pašalina dabartinę sąsają, jei "
-"yra.\n"
+"Po lygybės ženklo nenurodžius failo tipo pašalina dabartinę sąsają, jei yra.\n"
 
 #: cmd.rc:241
-#, fuzzy
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9731,7 +9696,7 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
-"FTYPE parodo ar modifikuoja atvėrimo komandas susietas su failų tipais\n"
+"FTYPE parodo ar modifikuoja atvėrimo komandas susietas su failų tipais.\n"
 "\n"
 "Sintaksė: FTYPE [failoTipas[=[atvėrimoKomanda]]]\n"
 "\n"
@@ -9843,9 +9808,8 @@ msgstr ""
 "gauti.\n"
 
 #: cmd.rc:290
-#, fuzzy
 msgid "Are you sure?"
-msgstr "Ar tikrai"
+msgstr "Ar tikrai?"
 
 #: cmd.rc:291 xcopy.rc:40
 msgctxt "Yes key"
@@ -9866,9 +9830,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "Jokia atvėrimo komanda nesusieta su failo tipu „%1“\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "Overwrite %1?"
-msgstr "Perrašyti %1"
+msgstr "Perrašyti %1?"
 
 #: cmd.rc:296
 msgid "More..."
@@ -9928,9 +9891,8 @@ msgid "A"
 msgstr "V"
 
 #: cmd.rc:312
-#, fuzzy
 msgid "Delete %1?"
-msgstr "Šalinti"
+msgstr "Šalinti %1?"
 
 #: cmd.rc:313
 msgid "Echo is %1\n"
@@ -9993,14 +9955,12 @@ msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Tomas diske %1!c! neturi vardo.\n"
 
 #: cmd.rc:327
-#, fuzzy
 msgid " (Yes|No)"
-msgstr "%1? (Taip|Ne)\n"
+msgstr " (Taip|Ne)"
 
 #: cmd.rc:328
-#, fuzzy
 msgid " (Yes|No|All)"
-msgstr "%1? (Taip|Ne)\n"
+msgstr " (Taip|Ne|Visus)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10334,62 +10294,59 @@ msgid "Encoding:"
 msgstr "Koduotė:"
 
 #: notepad.rc:129 wordpad.rc:278
-#, fuzzy
 msgctxt "accelerator Select All"
 msgid "^A"
-msgstr "V"
+msgstr "^A"
 
 #: notepad.rc:130 wordpad.rc:280
 msgctxt "accelerator Copy"
 msgid "^C"
-msgstr ""
+msgstr "^C"
 
 #: notepad.rc:131 regedit.rc:320 wordpad.rc:276
-#, fuzzy
 msgctxt "accelerator Find"
 msgid "^F"
-msgstr "F"
+msgstr "^F"
 
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "^H"
-msgstr ""
+msgstr "^H"
 
 #: notepad.rc:133 wordpad.rc:286
-#, fuzzy
 msgctxt "accelerator New"
 msgid "^N"
-msgstr "N"
+msgstr "^N"
 
 #: notepad.rc:134 wordpad.rc:287
 msgctxt "accelerator Open"
 msgid "^O"
-msgstr ""
+msgstr "^O"
 
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "^P"
-msgstr ""
+msgstr "^P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "^S"
-msgstr ""
+msgstr "^S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "^V"
-msgstr ""
+msgstr "^V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "^X"
-msgstr ""
+msgstr "^X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "^Z"
-msgstr ""
+msgstr "^Z"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -11461,7 +11418,6 @@ msgstr ""
 "tam tikromis sąlygomis; paleiskite „start /L“ išsamiai informacijai gauti.\n"
 
 #: start.rc:64
-#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -12423,7 +12379,7 @@ msgstr "&Kairėn"
 #: view.rc:51
 msgctxt "accelerator Quit"
 msgid "^Q"
-msgstr ""
+msgstr "^Q"
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
@@ -12485,13 +12441,12 @@ msgid "Application settings"
 msgstr "Programų nuostatos"
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine gali pamėgdžioti skirtingas Windows versijas skirtingoms programoms. Ši "
+"Wine gali pamėgdžioti skirtingas Windows versijas kiekvienai programai. Ši "
 "kortelė yra susijusi su bibliotekų ir grafikos kortelėmis, kuriose taip pat "
 "galima keisti sistemines nuostatas ar kiekvienos programos nuostatas "
 "atskirai."
@@ -12715,7 +12670,7 @@ msgstr "Diskai"
 
 #: winecfg.rc:33
 msgid "Select the Unix target directory, please."
-msgstr "Prašome išsirinkti Unix paskirties aplanką."
+msgstr "Prašome išrinkti Unix paskirties aplanką."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -13468,12 +13423,12 @@ msgstr "Versijos informacija"
 #: winefile.rc:201 winemine.rc:99
 msgctxt "accelerator Exit"
 msgid "X"
-msgstr ""
+msgstr "Q"
 
 #: winefile.rc:202
 msgctxt "accelerator Fullscreen"
 msgid "^S"
-msgstr ""
+msgstr "^S"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -13731,9 +13686,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Grąžinti\tVald+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
-msgstr "&Šalinti\tDEL"
+msgstr "&Šalinti\tŠal"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
@@ -13902,38 +13856,37 @@ msgstr "Įrankių juostos"
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "^L"
-msgstr ""
+msgstr "^L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "^E"
-msgstr ""
+msgstr "^E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "^R"
-msgstr ""
+msgstr "^R"
 
 #: wordpad.rc:282
-#, fuzzy
 msgctxt "accelerator Redo"
 msgid "^Y"
-msgstr "T"
+msgstr "^Y"
 
 #: wordpad.rc:283
 msgctxt "accelerator Bold"
 msgid "^B"
-msgstr ""
+msgstr "^B"
 
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "^I"
-msgstr ""
+msgstr "^I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "^U"
-msgstr ""
+msgstr "^U"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
@@ -14055,14 +14008,12 @@ msgstr ""
 "formatavimas. Ar tikrai norite tai padaryti?"
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
-msgstr "Neteisingas skaičiaus formatas"
+msgstr "Neteisingas skaičiaus formatas."
 
 #: wordpad.rc:188
-#, fuzzy
 msgid "OLE storage documents are not supported."
-msgstr "OLE saugyklos dokumentai yra nepalaikomi"
+msgstr "OLE saugyklos dokumentai yra nepalaikomi."
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -14081,9 +14032,8 @@ msgid "You do not have access to open the file."
 msgstr "Jūs neturite prieigos failui atverti."
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
-msgstr "Spausdinimas nerealizuotas"
+msgstr "Spausdinimas nerealizuotas."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
@@ -14098,7 +14048,6 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Neteisingas parametrų skaičius – pagalba: xcopy /?\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Neteisingas parametras „%1“ – pagalba: xcopy /?\n"
 
