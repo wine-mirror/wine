@@ -10398,6 +10398,64 @@ msgstr "&Superior:"
 msgid "Encoding:"
 msgstr "Codificació:"
 
+#: notepad.rc:129
+#, fuzzy
+msgctxt "accelerator Select All"
+msgid "^A"
+msgstr "CA"
+
+#: notepad.rc:130
+msgctxt "accelerator Copy"
+msgid "^C"
+msgstr ""
+
+#: notepad.rc:131
+#, fuzzy
+msgctxt "accelerator Find"
+msgid "^F"
+msgstr "F"
+
+#: notepad.rc:132
+msgctxt "accelerator Replace"
+msgid "^H"
+msgstr ""
+
+#: notepad.rc:133
+#, fuzzy
+msgctxt "accelerator New"
+msgid "^N"
+msgstr "N"
+
+#: notepad.rc:134
+msgctxt "accelerator Open"
+msgid "^O"
+msgstr ""
+
+#: notepad.rc:135
+msgctxt "accelerator Print"
+msgid "^P"
+msgstr ""
+
+#: notepad.rc:136
+msgctxt "accelerator Save"
+msgid "^S"
+msgstr ""
+
+#: notepad.rc:137
+msgctxt "accelerator Paste"
+msgid "^V"
+msgstr ""
+
+#: notepad.rc:138
+msgctxt "accelerator Cut"
+msgid "^X"
+msgstr ""
+
+#: notepad.rc:139
+msgctxt "accelerator Undo"
+msgid "^Z"
+msgstr ""
+
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "Pàgina &p"

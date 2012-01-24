@@ -126,17 +126,17 @@ END
 
 ID_ACCEL ACCELERATORS
 {
-    "^A", CMD_SELECT_ALL
-    "^C", CMD_COPY
-    "^F", CMD_SEARCH
-    "H", CMD_REPLACE, VIRTKEY, CONTROL
-    "^N", CMD_NEW
-    "^O", CMD_OPEN
-    "^P", CMD_PRINT
-    "^S", CMD_SAVE
-    "^V", CMD_PASTE
-    "^X", CMD_CUT
-    "^Z", CMD_UNDO
+    "#msgctxt#accelerator Select All#^A", CMD_SELECT_ALL
+    "#msgctxt#accelerator Copy#^C", CMD_COPY
+    "#msgctxt#accelerator Find#^F", CMD_SEARCH
+    "#msgctxt#accelerator Replace#^H", CMD_REPLACE
+    "#msgctxt#accelerator New#^N", CMD_NEW
+    "#msgctxt#accelerator Open#^O", CMD_OPEN
+    "#msgctxt#accelerator Print#^P", CMD_PRINT
+    "#msgctxt#accelerator Save#^S", CMD_SAVE
+    "#msgctxt#accelerator Paste#^V", CMD_PASTE
+    "#msgctxt#accelerator Cut#^X", CMD_CUT
+    "#msgctxt#accelerator Undo#^Z", CMD_UNDO
     VK_BACK, CMD_UNDO, VIRTKEY, ALT
     VK_F1, CMD_HELP_CONTENTS, VIRTKEY
     VK_F3, CMD_SEARCH_NEXT, VIRTKEY
