@@ -102,6 +102,7 @@ typedef struct
     xmlHashTablePtr cache;
 
     VARIANT_BOOL validateOnLoad;
+    int read_only;
 } schema_cache;
 
 typedef struct
@@ -966,10 +967,12 @@ static void cache_free(void* data, xmlChar* name /* ignored */)
    queried at libxml2 level here. */
 HRESULT cache_from_doc_ns(IXMLDOMSchemaCollection2 *iface, xmlnode *node)
 {
-    static const xmlChar query[] = "//*/namespace::*";
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
+    static const xmlChar query[] = "//*/namespace::*";
     xmlXPathObjectPtr nodeset;
     xmlXPathContextPtr ctxt;
+
+    This->read_only = 1;
 
     ctxt = xmlXPathNewContext(node->node->doc);
 
@@ -1110,6 +1113,8 @@ static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     xmlChar* name = uri ? xmlchar_from_wchar(uri) : xmlchar_from_wchar(emptyW);
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(uri), debugstr_variant(&var));
+
+    if (This->read_only) return E_FAIL;
 
     switch (V_VT(&var))
     {
@@ -1498,6 +1503,7 @@ HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* outer, void** obj)
     This->ref = 1;
     This->version = version;
     This->validateOnLoad = VARIANT_TRUE;
+    This->read_only = 0;
     init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMSchemaCollection2_iface, &schemacache_dispex);
 
     *obj = &This->IXMLDOMSchemaCollection2_iface;

@@ -11400,7 +11400,6 @@ static void test_get_namespaces(void)
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = (IDispatch*)doc2;
     hr = IXMLDOMSchemaCollection_add(collection, _bstr_(xsd_schema1_uri), v);
-todo_wine
     EXPECT_HR(hr, E_FAIL);
 
     hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 0, &s);
@@ -11410,16 +11409,13 @@ todo_wine
 
     hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 1, &s);
     EXPECT_HR(hr, S_OK);
-todo_wine
     ok(!lstrcmpW(s, _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(s));
     SysFreeString(s);
 
     s = (void*)0xdeadbeef;
     hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 2, &s);
-todo_wine {
     EXPECT_HR(hr, E_FAIL);
     ok(s == (void*)0xdeadbeef, "got %p\n", s);
-}
 
     /* enumerate */
     enumv = (void*)0xdeadbeef;
@@ -11513,7 +11509,6 @@ todo_wine
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = (IDispatch*)doc2;
     hr = IXMLDOMSchemaCollection_add(collection, _bstr_(xsd_schema1_uri), v);
-todo_wine
     EXPECT_HR(hr, E_FAIL);
     IXMLDOMSchemaCollection_Release(doc2);
 
@@ -11524,16 +11519,14 @@ todo_wine
 
     hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 1, &s);
     EXPECT_HR(hr, S_OK);
-todo_wine
     ok(!lstrcmpW(s, _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(s));
     SysFreeString(s);
 
     s = (void*)0xdeadbeef;
     hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 2, &s);
-todo_wine {
     EXPECT_HR(hr, E_FAIL);
     ok(s == (void*)0xdeadbeef, "got %p\n", s);
-}
+
     /* enumerate */
     enumv = (void*)0xdeadbeef;
     hr = IXMLDOMSchemaCollection_get__newEnum(collection, (IUnknown**)&enumv);
