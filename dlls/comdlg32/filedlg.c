@@ -2549,24 +2549,27 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 
             if (lpstrFilter != (LPWSTR)CB_ERR)  /* control is not empty */
             {
-                WCHAR* filterAtSemicolon;
-                filterExt = HeapAlloc(GetProcessHeap(), 0, lstrlenW(lpstrFilter) * sizeof(WCHAR) + sizeof(WCHAR));
+                WCHAR* filterSearchIndex;
+                filterExt = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(lpstrFilter) + 1) * sizeof(WCHAR));
                 strcpyW(filterExt, lpstrFilter);
 
                 /* if a semicolon-separated list of file extensions was given, do not include the
                    semicolon or anything after it in the extension.
                    example: if filterExt was "*.abc;*.def", it will become "*.abc" */
-                filterAtSemicolon = strchrW(filterExt, ';');
-                if (filterAtSemicolon)
+                filterSearchIndex = strchrW(filterExt, ';');
+                if (filterSearchIndex)
                 {
-                    filterAtSemicolon[0] = '\0';
+                    filterSearchIndex[0] = '\0';
                 }
 
                 /* strip the * or anything else from the extension, "*.abc" becomes "abc" */
-                strcpyW(filterExt, PathFindExtensionW(filterExt) + 1);
-
-                /* if the extension contains a glob, ignore it */
-                if (strchrW(filterExt, '*') || strchrW(filterExt, '?'))
+                /* if the extension is invalid or contains a glob, ignore it */
+                filterSearchIndex = PathFindExtensionW(filterExt);
+                if (*filterSearchIndex++ && !strchrW(filterSearchIndex, '*') && !strchrW(filterSearchIndex, '?'))
+                {
+                    strcpyW(filterExt, filterSearchIndex);
+                }
+                else
                 {
                     HeapFree(GetProcessHeap(), 0, filterExt);
                     filterExt = NULL;
@@ -2576,7 +2579,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
             if (!filterExt)
             {
                 /* use the default file extension */
-                filterExt = HeapAlloc(GetProcessHeap(), 0, lstrlenW(fodInfos->defext) * sizeof(WCHAR) + sizeof(WCHAR));
+                filterExt = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(fodInfos->defext) + 1) * sizeof(WCHAR));
                 strcpyW(filterExt, fodInfos->defext);
             }
 
@@ -2585,7 +2588,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
                 /* Attach the dot*/
                 lstrcatW(lpstrPathAndFile, szwDot);
                 /* Attach the extension */
-                lstrcatW(lpstrPathAndFile, filterExt );
+                lstrcatW(lpstrPathAndFile, filterExt);
             }
 
             HeapFree(GetProcessHeap(), 0, filterExt);

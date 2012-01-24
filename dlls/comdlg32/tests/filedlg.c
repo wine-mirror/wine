@@ -1086,6 +1086,7 @@ static void test_extension(void)
         "TestFilter (*.pt*;*.abc)\0*.pt*;*.abc\0",
         "TestFilter (*.ab?)\0*.ab?\0",
         "TestFilter (*.*)\0*.*\0",
+        "TestFilter (*sav)\0*sav\0",
         NULL    /* is a test, not an endmark! */
     };
 
