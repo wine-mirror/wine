@@ -2501,14 +2501,12 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
                                       string_table *st, TRANSFORMDATA *transform,
                                       UINT bytes_per_strref )
 {
-    UINT rawsize = 0;
     BYTE *rawdata = NULL;
     MSITABLEVIEW *tv = NULL;
-    UINT r, n, sz, i, mask;
+    UINT r, n, sz, i, mask, num_cols, colcol = 0, rawsize = 0;
     MSIRECORD *rec = NULL;
-    UINT colcol = 0;
     WCHAR coltable[32];
-    LPWSTR name;
+    const WCHAR *name;
 
     if (!transform)
         return ERROR_SUCCESS;
@@ -2539,18 +2537,18 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
           debugstr_w(name), tv->num_cols, tv->row_size, rawsize );
 
     /* interpret the data */
-    for( n=0; n < rawsize;  )
+    for (n = 0; n < rawsize;)
     {
-        mask = rawdata[n] | (rawdata[n+1] << 8);
-
-        if (mask&1)
+        mask = rawdata[n] | (rawdata[n + 1] << 8);
+        if (mask & 1)
         {
             /*
              * if the low bit is set, columns are continuous and
              * the number of columns is specified in the high byte
              */
             sz = 2;
-            for( i=0; i<tv->num_cols; i++ )
+            num_cols = mask >> 8;
+            for (i = 0; i < num_cols; i++)
             {
                 if( (tv->columns[i].type & MSITYPE_STRING) &&
                     ! MSITYPE_IS_BINARY(tv->columns[i].type) )
@@ -2570,12 +2568,13 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
              * and it means that this row should be deleted.
              */
             sz = 2;
-            for( i=0; i<tv->num_cols; i++ )
+            num_cols = tv->num_cols;
+            for (i = 0; i < num_cols; i++)
             {
-                if( (tv->columns[i].type & MSITYPE_KEY) || ((1<<i)&mask))
+                if ((tv->columns[i].type & MSITYPE_KEY) || ((1 << i) & mask))
                 {
-                    if( (tv->columns[i].type & MSITYPE_STRING) &&
-                        ! MSITYPE_IS_BINARY(tv->columns[i].type) )
+                    if ((tv->columns[i].type & MSITYPE_STRING) &&
+                        !MSITYPE_IS_BINARY(tv->columns[i].type))
                         sz += bytes_per_strref;
                     else
                         sz += bytes_per_column( tv->db, &tv->columns[i], bytes_per_strref );
@@ -2584,7 +2583,7 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
         }
 
         /* check we didn't run of the end of the table */
-        if ( (n+sz) > rawsize )
+        if (n + sz > rawsize)
         {
             ERR("borked.\n");
             dump_table( st, (USHORT *)rawdata, rawsize );
