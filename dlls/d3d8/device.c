@@ -2387,7 +2387,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(IDirect3DDevice8 *i
         const DWORD *byte_code, DWORD *shader)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DPixelShader8Impl *object;
+    struct d3d8_pixel_shader *object;
     DWORD shader_handle;
     DWORD handle;
     HRESULT hr;
@@ -2419,7 +2419,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(IDirect3DDevice8 *i
 
     shader_handle = handle + VS_HIGHESTFIXEDFXF + 1;
 
-    hr = pixelshader_init(object, This, byte_code, shader_handle);
+    hr = d3d8_pixel_shader_init(object, This, byte_code, shader_handle);
     if (FAILED(hr))
     {
         WARN("Failed to initialize pixel shader, hr %#x.\n", hr);
@@ -2440,7 +2440,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(IDirect3DDevice8 *i
 static HRESULT WINAPI IDirect3DDevice8Impl_SetPixelShader(IDirect3DDevice8 *iface, DWORD pShader)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DPixelShader8Impl *shader;
+    struct d3d8_pixel_shader *shader;
     HRESULT hr;
 
     TRACE("iface %p, shader %#x.\n", iface, pShader);
@@ -2485,7 +2485,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShader(IDirect3DDevice8 *ifac
     object = wined3d_device_get_pixel_shader(This->wined3d_device);
     if (object)
     {
-        IDirect3DPixelShader8Impl *d3d8_shader;
+        struct d3d8_pixel_shader *d3d8_shader;
         d3d8_shader = wined3d_shader_get_parent(object);
         wined3d_shader_decref(object);
         *ppShader = d3d8_shader->handle;
@@ -2504,7 +2504,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShader(IDirect3DDevice8 *ifac
 static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(IDirect3DDevice8 *iface, DWORD pShader)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DPixelShader8Impl *shader;
+    struct d3d8_pixel_shader *shader;
     struct wined3d_shader *cur;
 
     TRACE("iface %p, shader %#x.\n", iface, pShader);
@@ -2529,10 +2529,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(IDirect3DDevice8 *i
 
     wined3d_mutex_unlock();
 
-    if (IDirect3DPixelShader8_Release(&shader->IDirect3DPixelShader8_iface))
-    {
-        ERR("Shader %p has references left, this shouldn't happen.\n", shader);
-    }
+    d3d8_pixel_shader_destroy(shader);
 
     return D3D_OK;
 }
@@ -2573,7 +2570,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShaderFunction(IDirect3DDevic
         DWORD pPixelShader, void *pData, DWORD *pSizeOfData)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DPixelShader8Impl *shader = NULL;
+    struct d3d8_pixel_shader *shader = NULL;
     HRESULT hr;
 
     TRACE("iface %p, shader %#x, data %p, data_size %p.\n",
