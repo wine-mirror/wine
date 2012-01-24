@@ -2179,13 +2179,12 @@ msgid "B&rowse..."
 msgstr "B&rskaj ..."
 
 #: cryptui.rc:294
-#, fuzzy
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"Opomba: naslednje vrste datotek lahko vsebujejo več kot eno potrdilo, seznam "
-"preklicanih potrdil ali seznam zaupana vrednih potrdil:"
+"Opomba: Naslednje vrste datotek lahko vsebujejo več kot eno potrdilo, seznam "
+"preklicanih potrdil ali seznam zaupanja vrednih potrdil:"
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
@@ -8222,21 +8221,19 @@ msgstr "Ra_zpni"
 #: user32.rc:33
 #, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "&Zapri\tAlt-F4"
+msgstr "&Zapri\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
 msgstr "&O Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "&Zapri\tCtrl-F4"
+msgstr "&Zapri\tCtrl+F4"
 
 #: user32.rc:48
-#, fuzzy
 msgid "Nex&t\tCtrl+F6"
-msgstr "Na&prej\tCtrl-F6"
+msgstr "Na&prej\tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -9857,9 +9854,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "Noben ukaz za odprtje ni povezan z vrsto datotek '%1'\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "Overwrite %1?"
-msgstr "Prepiši %1"
+msgstr "Prepiši %1?"
 
 #: cmd.rc:296
 msgid "More..."
@@ -9916,12 +9912,11 @@ msgstr "Klic paketne oznake zunaj paketnega skripta ni mogoč\n"
 #: cmd.rc:311 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr "V"
 
 #: cmd.rc:312
-#, fuzzy
 msgid "Delete %1?"
-msgstr "Izbriši"
+msgstr "Izbriši %1?"
 
 #: cmd.rc:313
 msgid "Echo is %1\n"
@@ -9984,14 +9979,12 @@ msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Nosilec v pogonu %1!c! nima oznake.\n"
 
 #: cmd.rc:327
-#, fuzzy
 msgid " (Yes|No)"
-msgstr "%1 (Da|Ne)\n"
+msgstr " (Da|Ne)"
 
 #: cmd.rc:328
-#, fuzzy
 msgid " (Yes|No|All)"
-msgstr "%1 (Da|Ne)\n"
+msgstr " (Da|Ne|Vse)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -13658,7 +13651,7 @@ msgstr "Uve&ljavi\tCtrl+Y"
 #: wordpad.rc:47
 #, fuzzy
 msgid "&Clear\tDel"
-msgstr "Po&čisti\tDEL"
+msgstr "Po&čisti\tDel"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
@@ -13989,11 +13982,11 @@ msgstr "Neveljavno število parametrov - za pomoč uporabite xcopy /?\n"
 #: xcopy.rc:28
 #, fuzzy
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "Neveljaven parameter '%1' -  za pomoč uporabite xcopy /?\n"
+msgstr "Neveljaven parameter '%1' - za pomoč uporabite xcopy /?\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
-msgstr "Za začetek kopiranja pritisnite <enter>\n"
+msgstr "Pritisnite <enter> za začetek kopiranja\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
