@@ -222,7 +222,6 @@ static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
             switch (*p)
             {
             case ' ':
-                if (!count) goto done;
                 in_quotes = 1;
                 ignore = 1;
                 len++;
