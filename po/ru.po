@@ -10327,45 +10327,45 @@ msgstr "&Верхнее:"
 msgid "Encoding:"
 msgstr "Кодировка:"
 
-#: notepad.rc:129
+#: notepad.rc:129 wordpad.rc:278
 #, fuzzy
 msgctxt "accelerator Select All"
 msgid "^A"
 msgstr "A"
 
-#: notepad.rc:130
+#: notepad.rc:130 wordpad.rc:280
 msgctxt "accelerator Copy"
 msgid "^C"
 msgstr ""
 
-#: notepad.rc:131 regedit.rc:320
+#: notepad.rc:131 regedit.rc:320 wordpad.rc:276
 #, fuzzy
 msgctxt "accelerator Find"
 msgid "^F"
 msgstr "F"
 
-#: notepad.rc:132
+#: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "^H"
 msgstr ""
 
-#: notepad.rc:133
+#: notepad.rc:133 wordpad.rc:286
 #, fuzzy
 msgctxt "accelerator New"
 msgid "^N"
 msgstr "N"
 
-#: notepad.rc:134
+#: notepad.rc:134 wordpad.rc:287
 msgctxt "accelerator Open"
 msgid "^O"
 msgstr ""
 
-#: notepad.rc:135 regedit.rc:321
+#: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "^P"
 msgstr ""
 
-#: notepad.rc:136
+#: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "^S"
 msgstr ""
@@ -10375,12 +10375,12 @@ msgctxt "accelerator Paste"
 msgid "^V"
 msgstr ""
 
-#: notepad.rc:138
+#: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "^X"
 msgstr ""
 
-#: notepad.rc:139
+#: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "^Z"
 msgstr ""
@@ -13883,6 +13883,42 @@ msgstr "В границах &полей"
 #: wordpad.rc:260
 msgid "Toolbars"
 msgstr "Панели"
+
+#: wordpad.rc:273
+msgctxt "accelerator Align Left"
+msgid "^L"
+msgstr ""
+
+#: wordpad.rc:274
+msgctxt "accelerator Align Center"
+msgid "^E"
+msgstr ""
+
+#: wordpad.rc:275
+msgctxt "accelerator Align Right"
+msgid "^R"
+msgstr ""
+
+#: wordpad.rc:282
+#, fuzzy
+msgctxt "accelerator Redo"
+msgid "^Y"
+msgstr "Y"
+
+#: wordpad.rc:283
+msgctxt "accelerator Bold"
+msgid "^B"
+msgstr ""
+
+#: wordpad.rc:284
+msgctxt "accelerator Italic"
+msgid "^I"
+msgstr ""
+
+#: wordpad.rc:285
+msgctxt "accelerator Underline"
+msgid "^U"
+msgstr ""
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
