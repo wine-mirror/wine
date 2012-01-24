@@ -1486,12 +1486,12 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
 
     size.QuadPart = 0;
     status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
-                              NULL, &size, PAGE_READONLY, SEC_IMAGE, file );
+                              NULL, &size, PAGE_EXECUTE_READ, SEC_IMAGE, file );
     if (status != STATUS_SUCCESS) return status;
 
     module = NULL;
     status = NtMapViewOfSection( mapping, NtCurrentProcess(),
-                                 &module, 0, 0, &size, &len, ViewShare, 0, PAGE_READONLY );
+                                 &module, 0, 0, &size, &len, ViewShare, 0, PAGE_EXECUTE_READ );
     if (status < 0) goto done;
 
     /* create the MODREF */
