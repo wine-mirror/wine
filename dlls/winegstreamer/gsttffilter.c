@@ -627,7 +627,7 @@ static HRESULT WINAPI Gstreamer_YUV_SetMediaType(TransformFilter *tf, PIN_DIRECT
     AM_MEDIA_TYPE *outpmt = &This->tf.pmt;
     HRESULT hr;
     int avgtime;
-    DWORD width, height;
+    LONG width, height;
 
     if (dir != PINDIR_INPUT)
         return S_OK;
@@ -643,19 +643,21 @@ static HRESULT WINAPI Gstreamer_YUV_SetMediaType(TransformFilter *tf, PIN_DIRECT
         avgtime = vih->AvgTimePerFrame;
         width = vih->bmiHeader.biWidth;
         height = vih->bmiHeader.biHeight;
-        if ((LONG)vih->bmiHeader.biHeight > 0)
+        if (vih->bmiHeader.biHeight > 0)
             vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
         vih->bmiHeader.biBitCount = 24;
         vih->bmiHeader.biCompression = BI_RGB;
+        vih->bmiHeader.biSizeImage = width * abs(height) * 3;
     } else {
         VIDEOINFOHEADER2 *vih = (VIDEOINFOHEADER2*)outpmt->pbFormat;
         avgtime = vih->AvgTimePerFrame;
         width = vih->bmiHeader.biWidth;
         height = vih->bmiHeader.biHeight;
-        if ((LONG)vih->bmiHeader.biHeight > 0)
+        if (vih->bmiHeader.biHeight > 0)
             vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
         vih->bmiHeader.biBitCount = 24;
         vih->bmiHeader.biCompression = BI_RGB;
+        vih->bmiHeader.biSizeImage = width * abs(height) * 3;
     }
     if (!avgtime)
         avgtime = 10000000 / 30;
