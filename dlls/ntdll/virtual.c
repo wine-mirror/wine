@@ -73,6 +73,7 @@ struct file_view
     void         *base;        /* Base address */
     size_t        size;        /* Size in bytes */
     HANDLE        mapping;     /* Handle to the file mapping */
+    unsigned int  map_protect; /* Mapping protection */
     unsigned int  protect;     /* Protection for all pages at allocation time */
     BYTE          prot[1];     /* Protection byte for each page */
 };
@@ -474,6 +475,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     view->base    = base;
     view->size    = size;
     view->mapping = 0;
+    view->map_protect = 0;
     view->protect = vprot;
     memset( view->prot, vprot, size >> page_shift );
 
@@ -1116,7 +1118,7 @@ static NTSTATUS stat_mapping_file( struct file_view *view, struct stat *st )
  * Map an executable (PE format) image into memory.
  */
 static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_size, SIZE_T mask,
-                           SIZE_T header_size, int shared_fd, HANDLE dup_mapping, PVOID *addr_ptr )
+                           SIZE_T header_size, int shared_fd, HANDLE dup_mapping, unsigned int map_vprot, PVOID *addr_ptr )
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
@@ -1363,6 +1365,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 
  done:
     view->mapping = dup_mapping;
+    view->map_protect = map_vprot;
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 
     *addr_ptr = ptr;
@@ -2039,6 +2042,34 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     return status;
 }
 
+static ULONG map_protection_to_access( ULONG vprot )
+{
+    vprot &= VPROT_READ | VPROT_WRITE | VPROT_EXEC | VPROT_WRITECOPY;
+    if (vprot & VPROT_EXEC)
+    {
+        if (vprot & VPROT_WRITE) vprot |= VPROT_WRITECOPY;
+    }
+    else vprot &= ~VPROT_WRITECOPY;
+    return vprot;
+}
+
+static BOOL is_compatible_protection( const struct file_view *view, ULONG new_prot )
+{
+    ULONG view_prot, map_prot;
+
+    view_prot = map_protection_to_access( view->protect );
+    new_prot = map_protection_to_access( new_prot );
+
+    if (view_prot == new_prot) return TRUE;
+    if (!view_prot) return FALSE;
+
+    if ((view_prot & new_prot) != new_prot) return FALSE;
+
+    map_prot = map_protection_to_access( view->map_protect );
+    if ((map_prot & new_prot) == new_prot) return TRUE;
+
+    return FALSE;
+}
 
 /***********************************************************************
  *             NtProtectVirtualMemory   (NTDLL.@)
@@ -2099,9 +2130,13 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
                     status = STATUS_INVALID_PAGE_PROTECTION;
                 else
                 {
-                    new_vprot |= VPROT_COMMITTED;
-                    if (old_prot) *old_prot = VIRTUAL_GetWin32Prot( vprot );
-                    if (!VIRTUAL_SetProt( view, base, size, new_vprot )) status = STATUS_ACCESS_DENIED;
+                    if (!view->mapping || is_compatible_protection( view, new_vprot ))
+                    {
+                        new_vprot |= VPROT_COMMITTED;
+                        if (old_prot) *old_prot = VIRTUAL_GetWin32Prot( vprot );
+                        if (!VIRTUAL_SetProt( view, base, size, new_vprot )) status = STATUS_ACCESS_DENIED;
+                    }
+                    else status = STATUS_INVALID_PAGE_PROTECTION;
                 }
             }
         }
@@ -2571,14 +2606,14 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
             if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
                                            &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
             res = map_image( handle, unix_handle, base, size, mask, header_size,
-                             shared_fd, dup_mapping, addr_ptr );
+                             shared_fd, dup_mapping, map_vprot, addr_ptr );
             if (shared_needs_close) close( shared_fd );
             NtClose( shared_file );
         }
         else
         {
             res = map_image( handle, unix_handle, base, size, mask, header_size,
-                             -1, dup_mapping, addr_ptr );
+                             -1, dup_mapping, map_vprot, addr_ptr );
         }
         if (needs_close) close( unix_handle );
         if (res >= 0) *size_ptr = size;
@@ -2628,6 +2663,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         *addr_ptr = view->base;
         *size_ptr = size;
         view->mapping = dup_mapping;
+        view->map_protect = map_vprot;
         dup_mapping = 0;  /* don't close it */
     }
     else

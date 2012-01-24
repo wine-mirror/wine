@@ -2207,7 +2207,6 @@ static void test_mapping(void)
                     /* NT4 doesn't fail on incompatible map and view */
                     if (ret)
                     {
-                    todo_wine
                         ok(broken(ret), "VirtualProtect should fail, map %#x, view %#x, requested prot %#x\n", page_prot[i], view[j].prot, page_prot[k]);
                         skip("Incompatible map and view are not properly handled on this platform\n");
                         break; /* NT4 won't pass remaining tests */

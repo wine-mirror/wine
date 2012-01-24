@@ -639,7 +639,7 @@ static void test_VirtualProtect(void *base, void *section)
         ret = VirtualProtect(section, si.dwPageSize, td[i].prot_set, &old_prot);
         if (td[i].prot_get)
         {
-            ok(ret, "%d: VirtualProtect error %d\n", i, GetLastError());
+            ok(ret, "%d: VirtualProtect error %d, requested prot %#x\n", i, GetLastError(), td[i].prot_set);
             ok(old_prot == PAGE_NOACCESS, "%d: got %#x != expected PAGE_NOACCESS\n", i, old_prot);
 
             SetLastError(0xdeadbeef);
