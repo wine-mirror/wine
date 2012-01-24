@@ -31,9 +31,6 @@
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
-#ifdef HAVE_LIBXXSHM
-# include <X11/extensions/XShm.h>
-#endif /* defined(HAVE_LIBXXSHM) */
 
 #define BOOL X_BOOL
 #define BYTE X_BYTE
