@@ -531,7 +531,6 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
             FIXME("Unimplemented cmdid %d\n", nCmdID);
             return E_NOTIMPL;
         }
-        return S_OK;
     }
 
     if(IsEqualGUID(pguidCmdGroup, &CGID_DocHostCmdPriv)) {
