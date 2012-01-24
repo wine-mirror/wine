@@ -13393,6 +13393,16 @@ msgstr "&Compressed"
 msgid "Version information"
 msgstr "Version information"
 
+#: winefile.rc:201 winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr "X"
+
+#: winefile.rc:202
+msgctxt "accelerator Fullscreen"
+msgid "^S"
+msgstr "^S"
+
 #: winefile.rc:93
 msgid "Applying font settings"
 msgstr "Applying font settings"
@@ -13535,11 +13545,6 @@ msgstr "Columns"
 #: winemine.rc:88
 msgid "Mines"
 msgstr "Mines"
-
-#: winemine.rc:99
-msgctxt "accelerator Exit"
-msgid "X"
-msgstr "X"
 
 #: winemine.rc:27
 msgid "WineMine"

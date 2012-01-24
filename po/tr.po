@@ -13750,6 +13750,16 @@ msgstr "S&ıkışık"
 msgid "Version information"
 msgstr "S&ürüm Bilgisi"
 
+#: winefile.rc:201 winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr ""
+
+#: winefile.rc:202
+msgctxt "accelerator Fullscreen"
+msgid "^S"
+msgstr ""
+
 #: winefile.rc:93
 msgid "Applying font settings"
 msgstr "Yazı tipi ayarları uygulanıyor"
@@ -13898,11 +13908,6 @@ msgstr "&Sütun"
 #: winemine.rc:88
 msgid "Mines"
 msgstr "Mayınlar"
-
-#: winemine.rc:99
-msgctxt "accelerator Exit"
-msgid "X"
-msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"

@@ -13465,6 +13465,16 @@ msgstr "Su&glaudintas"
 msgid "Version information"
 msgstr "Versijos informacija"
 
+#: winefile.rc:201 winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr ""
+
+#: winefile.rc:202
+msgctxt "accelerator Fullscreen"
+msgid "^S"
+msgstr ""
+
 #: winefile.rc:93
 msgid "Applying font settings"
 msgstr "Pritaikomos šrifto nuostatos"
@@ -13607,11 +13617,6 @@ msgstr "Stulpeliai"
 #: winemine.rc:88
 msgid "Mines"
 msgstr "Minos"
-
-#: winemine.rc:99
-msgctxt "accelerator Exit"
-msgid "X"
-msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"

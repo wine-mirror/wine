@@ -13450,6 +13450,16 @@ msgstr "С&жатый"
 msgid "Version information"
 msgstr "Информация о версии"
 
+#: winefile.rc:201 winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr ""
+
+#: winefile.rc:202
+msgctxt "accelerator Fullscreen"
+msgid "^S"
+msgstr ""
+
 #: winefile.rc:93
 msgid "Applying font settings"
 msgstr "Применение параметров настройки шрифта"
@@ -13592,11 +13602,6 @@ msgstr "Столбцов"
 #: winemine.rc:88
 msgid "Mines"
 msgstr "Число мин"
-
-#: winemine.rc:99
-msgctxt "accelerator Exit"
-msgid "X"
-msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"

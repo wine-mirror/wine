@@ -14123,6 +14123,16 @@ msgstr "&Comprimat"
 msgid "Version information"
 msgstr "Informații despre &versiune"
 
+#: winefile.rc:201 winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr ""
+
+#: winefile.rc:202
+msgctxt "accelerator Fullscreen"
+msgid "^S"
+msgstr ""
+
 #: winefile.rc:93
 msgid "Applying font settings"
 msgstr "Se aplică opțiunile de font"
@@ -14270,11 +14280,6 @@ msgstr "&Coloană"
 #: winemine.rc:88
 msgid "Mines"
 msgstr "Mine"
-
-#: winemine.rc:99
-msgctxt "accelerator Exit"
-msgid "X"
-msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"

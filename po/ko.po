@@ -13381,6 +13381,16 @@ msgstr "압축(&C)"
 msgid "Version information"
 msgstr "버젼 정보(&V)"
 
+#: winefile.rc:201 winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr ""
+
+#: winefile.rc:202
+msgctxt "accelerator Fullscreen"
+msgid "^S"
+msgstr ""
+
 #: winefile.rc:93
 msgid "Applying font settings"
 msgstr "글꼴 설정 적용"
@@ -13523,11 +13533,6 @@ msgstr "세로줄"
 #: winemine.rc:88
 msgid "Mines"
 msgstr "지뢰"
-
-#: winemine.rc:99
-msgctxt "accelerator Exit"
-msgid "X"
-msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"

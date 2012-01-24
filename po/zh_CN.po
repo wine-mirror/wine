@@ -13350,6 +13350,16 @@ msgstr "未压缩"
 msgid "Version information"
 msgstr "信息"
 
+#: winefile.rc:201 winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr ""
+
+#: winefile.rc:202
+msgctxt "accelerator Fullscreen"
+msgid "^S"
+msgstr ""
+
 #: winefile.rc:93
 msgid "Applying font settings"
 msgstr ""
@@ -13504,11 +13514,6 @@ msgstr "列(&O)"
 #: winemine.rc:88
 msgid "Mines"
 msgstr "地雷"
-
-#: winemine.rc:99
-msgctxt "accelerator Exit"
-msgid "X"
-msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"

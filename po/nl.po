@@ -13577,6 +13577,16 @@ msgstr "Ge&comprimeerd"
 msgid "Version information"
 msgstr "&Versie-informatie"
 
+#: winefile.rc:201 winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr ""
+
+#: winefile.rc:202
+msgctxt "accelerator Fullscreen"
+msgid "^S"
+msgstr ""
+
 #: winefile.rc:93
 msgid "Applying font settings"
 msgstr "Lettertype wordt toegepast"
@@ -13720,11 +13730,6 @@ msgstr "Kolommen"
 #: winemine.rc:88
 msgid "Mines"
 msgstr "Mijnen"
-
-#: winemine.rc:99
-msgctxt "accelerator Exit"
-msgid "X"
-msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"
