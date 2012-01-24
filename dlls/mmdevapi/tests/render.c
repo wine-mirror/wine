@@ -1532,6 +1532,121 @@ static void test_session_creation(void)
     IAudioClient_Release(ac);
 }
 
+static void test_worst_case(void)
+{
+    HANDLE event;
+    HRESULT hr;
+    IAudioClient *ac;
+    IAudioRenderClient *arc;
+    IAudioClock *acl;
+    WAVEFORMATEX *pwfx;
+    REFERENCE_TIME defp;
+    UINT64 freq, pos, pcpos0, pcpos;
+    BYTE *data;
+    DWORD r;
+    UINT32 pad, fragment, sum;
+    int i,j;
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_EVENTCALLBACK, 500000, 0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetDevicePeriod(ac, &defp, NULL);
+    ok(hr == S_OK, "GetDevicePeriod failed: %08x\n", hr);
+
+    fragment  =  MulDiv(defp,   pwfx->nSamplesPerSec, 10000000);
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(event != NULL, "CreateEvent failed\n");
+
+    hr = IAudioClient_SetEventHandle(ac, event);
+    ok(hr == S_OK, "SetEventHandle failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&arc);
+    ok(hr == S_OK, "GetService(IAudioRenderClient) failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioClock, (void**)&acl);
+    ok(hr == S_OK, "GetService(IAudioClock) failed: %08x\n", hr);
+
+    hr = IAudioClock_GetFrequency(acl, &freq);
+    ok(hr == S_OK, "GetFrequency failed: %08x\n", hr);
+
+    for(j = 0; j <= (winetest_interactive ? 9 : 2); j++){
+        sum = 0;
+        trace("Should play %ums continuous tone with fragment size %u.\n",
+              (ULONG)(defp/100), fragment);
+
+        hr = IAudioClock_GetPosition(acl, &pos, &pcpos0);
+        ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+
+        /* XAudio2 prefills one period, we don't */
+        hr = IAudioClient_Start(ac);
+        ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+        for(i = 0; i <= 99; i++){ /* 100 x 10ms = 1 second */
+            r = WaitForSingleObject(event, 70);
+            ok(r == WAIT_OBJECT_0, "Wait gave %x\n", r);
+
+            /* the app has nearly one period time to feed data */
+            Sleep((i % 10) * defp / 120000);
+
+            hr = IAudioClient_GetCurrentPadding(ac, &pad);
+            ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+
+            /* XAudio2 writes only when there's little data left */
+            if(pad <= fragment){
+                hr = IAudioRenderClient_GetBuffer(arc, fragment, &data);
+                ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+
+                /* fixme: produce audible output */
+                hr = IAudioRenderClient_ReleaseBuffer(arc, fragment, AUDCLNT_BUFFERFLAGS_SILENT);
+                ok(hr == S_OK, "ReleaseBuffer failed: %08x\n", hr);
+                if(hr == S_OK)
+                    sum += fragment;
+            }
+        }
+
+        hr = IAudioClient_Stop(ac);
+        ok(hr == S_OK, "Stop failed: %08x\n", hr);
+
+        hr = IAudioClient_GetCurrentPadding(ac, &pad);
+        ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+
+        hr = IAudioClock_GetPosition(acl, &pos, &pcpos);
+        ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+
+        Sleep(100);
+
+        trace("Released %u=%ux%u -%u frames at %u worth %ums in %ums\n",
+              sum, sum/fragment, fragment, pad,
+              pwfx->nSamplesPerSec, MulDiv(sum-pad, 1000, pwfx->nSamplesPerSec),
+              (ULONG)((pcpos-pcpos0)/10000));
+
+        ok(pos * pwfx->nSamplesPerSec == (sum-pad) * freq,
+           "Position %u at end vs. %u-%u submitted frames\n", (UINT)pos, sum, pad);
+
+        hr = IAudioClient_Reset(ac);
+        ok(hr == S_OK, "Reset failed: %08x\n", hr);
+
+        Sleep(250);
+    }
+
+    CoTaskMemFree(pwfx);
+    IAudioClient_Release(ac);
+    IAudioRenderClient_Release(arc);
+}
+
 START_TEST(render)
 {
     HRESULT hr;
@@ -1568,6 +1683,7 @@ START_TEST(render)
     test_simplevolume();
     test_volume_dependence();
     test_session_creation();
+    test_worst_case();
 
     IMMDevice_Release(dev);
 
