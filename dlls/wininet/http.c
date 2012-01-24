@@ -3788,8 +3788,10 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
         WCHAR protocol[INTERNET_MAX_SCHEME_LENGTH];
         WCHAR hostName[INTERNET_MAX_HOST_NAME_LENGTH];
         WCHAR userName[INTERNET_MAX_USER_NAME_LENGTH];
-        static WCHAR szHttp[] = {'h','t','t','p',0};
-        static WCHAR szHttps[] = {'h','t','t','p','s',0};
+        BOOL custom_port = FALSE;
+
+        static WCHAR httpW[] = {'h','t','t','p',0};
+        static WCHAR httpsW[] = {'h','t','t','p','s',0};
 
         userName[0] = 0;
         hostName[0] = 0;
@@ -3811,50 +3813,33 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
         if(!InternetCrackUrlW(lpszUrl, strlenW(lpszUrl), 0, &urlComponents))
             return INTERNET_GetLastError();
 
-        if (!strncmpW(szHttp, urlComponents.lpszScheme, strlenW(szHttp)) &&
-            (request->hdr.dwFlags & INTERNET_FLAG_SECURE))
-        {
-            TRACE("redirect from secure page to non-secure page\n");
-            /* FIXME: warn about from secure redirect to non-secure page */
-            request->hdr.dwFlags &= ~INTERNET_FLAG_SECURE;
-        }
-        if (!strncmpW(szHttps, urlComponents.lpszScheme, strlenW(szHttps)) &&
-            !(request->hdr.dwFlags & INTERNET_FLAG_SECURE))
-        {
-            TRACE("redirect from non-secure page to secure page\n");
-            /* FIXME: notify about redirect to secure page */
-            request->hdr.dwFlags |= INTERNET_FLAG_SECURE;
-        }
+        if(!strcmpiW(protocol, httpW)) {
+            if(request->hdr.dwFlags & INTERNET_FLAG_SECURE) {
+                TRACE("redirect from secure page to non-secure page\n");
+                /* FIXME: warn about from secure redirect to non-secure page */
+                request->hdr.dwFlags &= ~INTERNET_FLAG_SECURE;
+            }
 
-        if (urlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
-        {
-            if (lstrlenW(protocol)>4) /*https*/
-                urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
-            else /*http*/
+            if(urlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
                 urlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
+            else if(urlComponents.nPort != INTERNET_DEFAULT_HTTP_PORT)
+                custom_port = TRUE;
+        }else if(!strcmpiW(protocol, httpsW)) {
+            if(!(request->hdr.dwFlags & INTERNET_FLAG_SECURE)) {
+                TRACE("redirect from non-secure page to secure page\n");
+                /* FIXME: notify about redirect to secure page */
+                request->hdr.dwFlags |= INTERNET_FLAG_SECURE;
+            }
+
+            if(urlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
+                urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
+            else if(urlComponents.nPort != INTERNET_DEFAULT_HTTPS_PORT)
+                custom_port = TRUE;
         }
 
-#if 0
-        /*
-         * This upsets redirects to binary files on sourceforge.net 
-         * and gives an html page instead of the target file
-         * Examination of the HTTP request sent by native wininet.dll
-         * reveals that it doesn't send a referrer in that case.
-         * Maybe there's a flag that enables this, or maybe a referrer
-         * shouldn't be added in case of a redirect.
-         */
-
-        /* consider the current host as the referrer */
-        if (session->lpszServerName && *session->lpszServerName)
-            HTTP_ProcessHeader(request, HTTP_REFERER, session->lpszServerName,
-                           HTTP_ADDHDR_FLAG_REQ|HTTP_ADDREQ_FLAG_REPLACE|
-                           HTTP_ADDHDR_FLAG_ADD_IF_NEW);
-#endif
-        
         heap_free(session->hostName);
-        if (urlComponents.nPort != INTERNET_DEFAULT_HTTP_PORT &&
-            urlComponents.nPort != INTERNET_DEFAULT_HTTPS_PORT)
-        {
+
+        if(custom_port) {
             int len;
             static const WCHAR fmt[] = {'%','s',':','%','u',0};
             len = lstrlenW(hostName);
