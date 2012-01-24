@@ -591,7 +591,7 @@ static BOOL set_win_format( HWND hwnd, XID fbconfig_id )
         XInstallColormap(gdi_display, attrib.colormap);
 
         if(data->gl_drawable) XDestroyWindow(gdi_display, data->gl_drawable);
-        data->gl_drawable = XCreateWindow(gdi_display, dummy_parent, -w, 0, w, h, 0,
+        data->gl_drawable = XCreateWindow(gdi_display, dummy_parent, 0, 0, w, h, 0,
                                           vis->depth, InputOutput, vis->visual,
                                           CWColormap | CWOverrideRedirect,
                                           &attrib);
@@ -669,7 +669,7 @@ static void sync_gl_drawable(struct x11drv_win_data *data)
     if(usexcomposite)
     {
         wine_tsx11_lock();
-        XMoveResizeWindow(gdi_display, data->gl_drawable, -w, 0, w, h);
+        XMoveResizeWindow(gdi_display, data->gl_drawable, 0, 0, w, h);
         wine_tsx11_unlock();
         return;
     }
