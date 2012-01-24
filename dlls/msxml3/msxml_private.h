@@ -345,8 +345,9 @@ extern HRESULT node_create_supporterrorinfo(const tid_t*,void**) DECLSPEC_HIDDEN
 
 extern HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document) DECLSPEC_HIDDEN;
 
-extern HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tree) DECLSPEC_HIDDEN;
-extern XDR_DT  SchemaCache_get_node_dt(IXMLDOMSchemaCollection2* iface, xmlNodePtr node) DECLSPEC_HIDDEN;
+extern HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2*, xmlNodePtr) DECLSPEC_HIDDEN;
+extern XDR_DT  SchemaCache_get_node_dt(IXMLDOMSchemaCollection2*, xmlNodePtr) DECLSPEC_HIDDEN;
+extern HRESULT cache_from_doc_ns(IXMLDOMSchemaCollection2*, xmlnode*) DECLSPEC_HIDDEN;
 
 extern XDR_DT str_to_dt(xmlChar const* str, int len /* calculated if -1 */) DECLSPEC_HIDDEN;
 extern XDR_DT bstr_to_dt(OLECHAR const* bstr, int len /* calculated if -1 */) DECLSPEC_HIDDEN;

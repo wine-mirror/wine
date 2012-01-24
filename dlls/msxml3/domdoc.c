@@ -149,6 +149,8 @@ struct domdoc
 
     /* events */
     IDispatch *events[EVENTID_LAST];
+
+    IXMLDOMSchemaCollection2 *namespaces;
 };
 
 static HRESULT set_doc_event(domdoc *doc, eventid_t eid, const VARIANT *v)
@@ -347,6 +349,15 @@ static void free_properties(domdoc_properties* properties)
         clear_selectNsList(&properties->selectNsList);
         heap_free((xmlChar*)properties->selectNsStr);
         heap_free(properties);
+    }
+}
+
+static void release_namespaces(domdoc *This)
+{
+    if (This->namespaces)
+    {
+        IXMLDOMSchemaCollection2_Release(This->namespaces);
+        This->namespaces = NULL;
     }
 }
 
@@ -612,6 +623,8 @@ static inline xmlDocPtr get_doc( domdoc *This )
 
 static HRESULT attach_xmldoc(domdoc *This, xmlDocPtr xml )
 {
+    release_namespaces(This);
+
     if(This->node.node)
     {
         priv_from_xmlDocPtr(get_doc(This))->properties = NULL;
@@ -901,6 +914,7 @@ static ULONG WINAPI domdoc_Release( IXMLDOMDocument3 *iface )
         for (eid = 0; eid < EVENTID_LAST; eid++)
             if (This->events[eid]) IDispatch_Release(This->events[eid]);
 
+        release_namespaces(This);
         heap_free(This);
     }
 
@@ -2273,11 +2287,10 @@ static HRESULT WINAPI domdoc_loadXML(
             }
         }
     }
+
     if(!xmldoc)
         xmldoc = xmlNewDoc(NULL);
-
     xmldoc->_private = create_priv();
-
     hr2 = attach_xmldoc(This, xmldoc);
     if( FAILED(hr2) )
         hr = hr2;
@@ -2513,11 +2526,27 @@ static HRESULT WINAPI domdoc_get_namespaces(
     IXMLDOMSchemaCollection** collection )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    FIXME("(%p)->(%p): stub\n", This, collection);
+    HRESULT hr;
+
+    FIXME("(%p)->(%p): semi-stub\n", This, collection);
 
     if (!collection) return E_POINTER;
 
-    return E_NOTIMPL;
+    if (!This->namespaces)
+    {
+        hr = SchemaCache_create(This->properties->version, NULL, (void**)&This->namespaces);
+        if (hr != S_OK) return hr;
+
+        hr = cache_from_doc_ns(This->namespaces, &This->node);
+        if (hr != S_OK)
+            release_namespaces(This);
+    }
+
+    if (This->namespaces)
+        return IXMLDOMSchemaCollection2_QueryInterface(This->namespaces,
+                   &IID_IXMLDOMSchemaCollection, (void**)collection);
+
+    return hr;
 }
 
 static HRESULT WINAPI domdoc_get_schemas(
@@ -3419,6 +3448,7 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     doc->safeopt = 0;
     doc->bsc = NULL;
     doc->cp_list = NULL;
+    doc->namespaces = NULL;
     memset(doc->events, 0, sizeof(doc->events));
 
     /* events connection points */
