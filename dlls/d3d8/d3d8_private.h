@@ -168,7 +168,7 @@ struct d3d8_handle_table
 struct FvfToDecl
 {
     DWORD fvf;
-    struct IDirect3DVertexDeclaration8 *decl;
+    struct d3d8_vertex_declaration *declaration;
 };
 
 struct IDirect3DDevice8Impl
@@ -366,47 +366,24 @@ struct IDirect3DVolumeTexture8Impl
 HRESULT volumetexture_init(IDirect3DVolumeTexture8Impl *texture, IDirect3DDevice8Impl *device,
         UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 
-DEFINE_GUID(IID_IDirect3DVertexDeclaration8,
-0x5dd7478d, 0xcbf3, 0x41a6, 0x8c, 0xfd, 0xfd, 0x19, 0x2b, 0x11, 0xc7, 0x90);
-
 DEFINE_GUID(IID_IDirect3DVertexShader8,
 0xefc5557e, 0x6265, 0x4613, 0x8a, 0x94, 0x43, 0x85, 0x78, 0x89, 0xeb, 0x36);
 
 DEFINE_GUID(IID_IDirect3DPixelShader8,
 0x6d3bdbdc, 0x5b02, 0x4415, 0xb8, 0x52, 0xce, 0x5e, 0x8b, 0xcc, 0xb2, 0x89);
 
-/*****************************************************************************
- * IDirect3DVertexDeclaration8 interface
- */
-#define INTERFACE IDirect3DVertexDeclaration8
-DECLARE_INTERFACE_(IDirect3DVertexDeclaration8, IUnknown)
+struct d3d8_vertex_declaration
 {
-    /*** IUnknown methods ***/
-    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** obj_ptr) PURE;
-    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
-    STDMETHOD_(ULONG,Release)(THIS) PURE;
-};
-#undef INTERFACE
-
-/*** IUnknown methods ***/
-#define IDirect3DVertexDeclaration8_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirect3DVertexDeclaration8_AddRef(p)              (p)->lpVtbl->AddRef(p)
-#define IDirect3DVertexDeclaration8_Release(p)             (p)->lpVtbl->Release(p)
-
-typedef struct {
-    const IDirect3DVertexDeclaration8Vtbl *lpVtbl;
-    LONG ref_count;
-
     DWORD *elements;
     DWORD elements_size; /* Size of elements, in bytes */
-
     struct wined3d_vertex_declaration *wined3d_vertex_declaration;
     DWORD shader_handle;
-} IDirect3DVertexDeclaration8Impl;
+};
 
-HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration8Impl *declaration,
+void d3d8_vertex_declaration_destroy(struct d3d8_vertex_declaration *declaration) DECLSPEC_HIDDEN;
+HRESULT d3d8_vertex_declaration_init(struct d3d8_vertex_declaration *declaration,
         IDirect3DDevice8Impl *device, const DWORD *elements, DWORD shader_handle) DECLSPEC_HIDDEN;
-HRESULT vertexdeclaration_init_fvf(IDirect3DVertexDeclaration8Impl *declaration,
+HRESULT d3d8_vertex_declaration_init_fvf(struct d3d8_vertex_declaration *declaration,
         IDirect3DDevice8Impl *device, DWORD fvf) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
@@ -456,7 +433,7 @@ DECLARE_INTERFACE_(IDirect3DPixelShader8,IUnknown)
 struct IDirect3DVertexShader8Impl {
   IDirect3DVertexShader8            IDirect3DVertexShader8_iface;
   LONG                              ref;
-  IDirect3DVertexDeclaration8 *vertex_declaration;
+  struct d3d8_vertex_declaration *vertex_declaration;
   struct wined3d_shader *wined3d_shader;
 };
 

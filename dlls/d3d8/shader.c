@@ -65,7 +65,7 @@ static ULONG WINAPI d3d8_vertexshader_AddRef(IDirect3DVertexShader8 *iface)
 static void STDMETHODCALLTYPE d3d8_vertexshader_wined3d_object_destroyed(void *parent)
 {
     IDirect3DVertexShader8Impl *shader = parent;
-    IDirect3DVertexDeclaration8_Release(shader->vertex_declaration);
+    d3d8_vertex_declaration_destroy(shader->vertex_declaration);
     HeapFree(GetProcessHeap(), 0, shader);
 }
 
@@ -107,9 +107,9 @@ static const struct wined3d_parent_ops d3d8_vertexshader_wined3d_parent_ops =
 };
 
 static HRESULT d3d8_vertexshader_create_vertexdeclaration(IDirect3DDevice8Impl *device,
-        const DWORD *declaration, DWORD shader_handle, IDirect3DVertexDeclaration8 **decl_ptr)
+        const DWORD *declaration, DWORD shader_handle, struct d3d8_vertex_declaration **decl_ptr)
 {
-    IDirect3DVertexDeclaration8Impl *object;
+    struct d3d8_vertex_declaration *object;
     HRESULT hr;
 
     TRACE("device %p, declaration %p, shader_handle %#x, decl_ptr %p.\n",
@@ -122,7 +122,7 @@ static HRESULT d3d8_vertexshader_create_vertexdeclaration(IDirect3DDevice8Impl *
         return E_OUTOFMEMORY;
     }
 
-    hr = vertexdeclaration_init(object, device, declaration, shader_handle);
+    hr = d3d8_vertex_declaration_init(object, device, declaration, shader_handle);
     if (FAILED(hr))
     {
         WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
@@ -131,7 +131,7 @@ static HRESULT d3d8_vertexshader_create_vertexdeclaration(IDirect3DDevice8Impl *
     }
 
     TRACE("Created vertex declaration %p.\n", object);
-    *decl_ptr = (IDirect3DVertexDeclaration8 *)object;
+    *decl_ptr = object;
 
     return D3D_OK;
 }
@@ -182,7 +182,7 @@ HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Im
         if (FAILED(hr))
         {
             WARN("Failed to create wined3d vertex shader, hr %#x.\n", hr);
-            IDirect3DVertexDeclaration8_Release(shader->vertex_declaration);
+            d3d8_vertex_declaration_destroy(shader->vertex_declaration);
             return hr;
         }
 
