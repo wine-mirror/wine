@@ -4707,6 +4707,10 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         HTTP_HttpAddRequestHeadersW(request, cache_control, strlenW(cache_control), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
     }
 
+    /* add the headers the caller supplied */
+    if( lpszHeaders && dwHeaderLength )
+        HTTP_HttpAddRequestHeadersW(request, lpszHeaders, dwHeaderLength, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
+
     do
     {
         DWORD len;
@@ -4739,13 +4743,6 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
 
         if (!(request->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES))
             HTTP_InsertCookies(request);
-
-        /* add the headers the caller supplied */
-        if( lpszHeaders && dwHeaderLength )
-        {
-            HTTP_HttpAddRequestHeadersW(request, lpszHeaders, dwHeaderLength,
-                        HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
-        }
 
         if (request->session->appInfo->proxy && request->session->appInfo->proxy[0])
         {
