@@ -395,7 +395,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 }
 
 /* retrieve the mapping parameters for an executable (PE) image */
-static int get_image_params( struct mapping *mapping, int unix_fd )
+static int get_image_params( struct mapping *mapping, int unix_fd, int protect )
 {
     IMAGE_DOS_HEADER dos;
     IMAGE_SECTION_HEADER *sec = NULL;
@@ -453,7 +453,7 @@ static int get_image_params( struct mapping *mapping, int unix_fd )
 
     if (mapping->shared_file) list_add_head( &shared_list, &mapping->shared_entry );
 
-    mapping->protect = VPROT_IMAGE;
+    mapping->protect = protect;
     free( sec );
     return 1;
 
@@ -523,7 +523,7 @@ static struct object *create_mapping( struct directory *root, const struct unico
         if ((unix_fd = get_unix_fd( mapping->fd )) == -1) goto error;
         if (protect & VPROT_IMAGE)
         {
-            if (!get_image_params( mapping, unix_fd )) goto error;
+            if (!get_image_params( mapping, unix_fd, protect )) goto error;
             return &mapping->obj;
         }
         if (fstat( unix_fd, &st ) == -1)
