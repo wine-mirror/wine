@@ -124,6 +124,16 @@ static char *get_message_context( char **msgid )
     return context;
 }
 
+static int string_has_context( const string_t *str )
+{
+    char *id, *id_buffer, *context;
+
+    id_buffer = id = convert_msgid_ascii( str, 1 );
+    context = get_message_context( &id );
+    free( id_buffer );
+    return context != NULL;
+}
+
 static int control_has_title( const control_t *ctrl )
 {
     if (!ctrl->title) return 0;
@@ -155,6 +165,12 @@ static resource_t *dup_resource( resource_t *res, language_t *lang )
 
     switch (res->type)
     {
+    case res_acc:
+        new->res.acc = xmalloc( sizeof(*(new)->res.acc) );
+        *new->res.acc = *res->res.acc;
+        new->res.acc->lvc.language = lang;
+        new->res.acc->lvc.version = get_dup_version( lang );
+        break;
     case res_dlg:
         new->res.dlg = xmalloc( sizeof(*(new)->res.dlg) );
         *new->res.dlg = *res->res.dlg;
@@ -803,6 +819,34 @@ static void add_po_menu( const resource_t *english, const resource_t *res )
     add_po_menu_items( po, english_items, items, res->res.men->lvc.language );
 }
 
+static void add_pot_accel( po_file_t po, const resource_t *res )
+{
+    event_t *event = res->res.acc->events;
+
+    while (event)
+    {
+        /* accelerators without a context don't make sense in po files */
+        if (event->str && string_has_context( event->str ))
+            add_po_string( po, event->str, NULL, NULL );
+        event = event->next;
+    }
+}
+
+static void add_po_accel( const resource_t *english, const resource_t *res )
+{
+    event_t *english_event = english->res.acc->events;
+    event_t *event = res->res.acc->events;
+    po_file_t po = get_po_file( res->res.acc->lvc.language );
+
+    while (english_event && event)
+    {
+        if (english_event->str && event->str && string_has_context( english_event->str ))
+            add_po_string( po, english_event->str, event->str, res->res.acc->lvc.language );
+        event = event->next;
+        english_event = english_event->next;
+    }
+}
+
 static resource_t *find_english_resource( resource_t *res )
 {
     resource_t *ptr;
@@ -829,7 +873,7 @@ void write_pot_file( const char *outname )
 
         switch (res->type)
         {
-        case res_acc: break;  /* FIXME */
+        case res_acc: add_pot_accel( po, res ); break;
         case res_dlg: add_pot_dialog( po, res ); break;
         case res_men: add_pot_menu( po, res ); break;
         case res_stt: add_pot_stringtable( po, res ); break;
@@ -850,7 +894,7 @@ void write_po_files( const char *outname )
         if (!(english = find_english_resource( res ))) continue;
         switch (res->type)
         {
-        case res_acc: break;  /* FIXME */
+        case res_acc: add_po_accel( english, res ); break;
         case res_dlg: add_po_dialog( english, res ); break;
         case res_men: add_po_menu( english, res ); break;
         case res_stt: add_po_stringtable( english, res ); break;
@@ -1089,6 +1133,26 @@ static void translate_dialog( dialog_t *dlg, dialog_t *new, int *found )
     new->controls = translate_controls( dlg->controls, found );
 }
 
+static event_t *translate_accel( accelerator_t *acc, accelerator_t *new, int *found )
+{
+    event_t *event, *new_ev, *head = NULL, *tail = NULL;
+
+    event = acc->events;
+    while (event)
+    {
+        new_ev = new_event();
+        *new_ev = *event;
+        if (event->str) new_ev->str = translate_string( event->str, found );
+        if (tail) tail->next = new_ev;
+        else head = new_ev;
+        new_ev->next = NULL;
+        new_ev->prev = tail;
+        tail = new_ev;
+        event = event->next;
+    }
+    return head;
+}
+
 static void translate_resources( language_t *lang )
 {
     resource_t *res;
@@ -1103,7 +1167,8 @@ static void translate_resources( language_t *lang )
         switch (res->type)
         {
         case res_acc:
-            /* FIXME */
+            new = dup_resource( res, lang );
+            new->res.acc->events = translate_accel( res->res.acc, new->res.acc, &found );
             break;
         case res_dlg:
             new = dup_resource( res, lang );

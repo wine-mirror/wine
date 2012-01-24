@@ -276,6 +276,66 @@ static void string_to_upper(string_t *str)
     }
 }
 
+static int parse_accel_string( const string_t *key, int flags )
+{
+    int keycode;
+
+    if(key->type == str_char)
+    {
+	if((flags & WRC_AF_VIRTKEY) &&
+           !((key->str.cstr[0] >= 'A' && key->str.cstr[0] <= 'Z') ||
+             (key->str.cstr[0] >= '0' && key->str.cstr[0] <= '9')))
+        {
+            print_location( &key->loc );
+            error("VIRTKEY code is not equal to ascii value");
+        }
+
+	if(key->str.cstr[0] == '^' && (flags & WRC_AF_CONTROL) != 0)
+	{
+            print_location( &key->loc );
+            error("Cannot use both '^' and CONTROL modifier");
+	}
+	else if(key->str.cstr[0] == '^')
+	{
+            keycode = toupper((unsigned char)key->str.cstr[1]) - '@';
+            if(keycode >= ' ')
+            {
+                print_location( &key->loc );
+                error("Control-code out of range");
+            }
+	}
+	else
+            keycode = key->str.cstr[0];
+    }
+    else
+    {
+	if((flags & WRC_AF_VIRTKEY) &&
+           !((key->str.wstr[0] >= 'A' && key->str.wstr[0] <= 'Z') ||
+             (key->str.wstr[0] >= '0' && key->str.wstr[0] <= '9')))
+        {
+            print_location( &key->loc );
+            error("VIRTKEY code is not equal to ascii value");
+        }
+	if(key->str.wstr[0] == '^' && (flags & WRC_AF_CONTROL) != 0)
+	{
+            print_location( &key->loc );
+            error("Cannot use both '^' and CONTROL modifier");
+	}
+	else if(key->str.wstr[0] == '^')
+	{
+            keycode = toupperW(key->str.wstr[1]) - '@';
+            if(keycode >= ' ')
+            {
+                print_location( &key->loc );
+                error("Control-code out of range");
+            }
+	}
+	else
+            keycode = key->str.wstr[0];
+    }
+    return keycode;
+}
+
 /*
  *****************************************************************************
  * Function	: put_string
@@ -514,8 +574,10 @@ static res_t *accelerator2res(name_id_t *name, accelerator_t *acc)
 		restag = put_res_header(res, WRC_RT_ACCELERATOR, NULL, name, acc->memopt, &(acc->lvc));
 		while(ev)
 		{
+			int key = ev->key;
+			if (ev->str) key = parse_accel_string( ev->str, ev->flags );
 			put_word(res, ev->flags | (ev->next ? 0 : 0x80));
-			put_word(res, ev->key);
+			put_word(res, key);
 			put_word(res, ev->id);
 			put_word(res, 0);	/* Padding */
 			ev = ev->next;
@@ -527,8 +589,10 @@ static res_t *accelerator2res(name_id_t *name, accelerator_t *acc)
 		restag = put_res_header(res, WRC_RT_ACCELERATOR, NULL, name, acc->memopt, NULL);
 		while(ev)
 		{
+			int key = ev->key;
+			if (ev->str) key = parse_accel_string( ev->str, ev->flags );
 			put_byte(res, ev->flags | (ev->next ? 0 : 0x80));
-			put_word(res, ev->key);
+			put_word(res, key);
 			put_word(res, ev->id);
 			ev = ev->next;
 		}

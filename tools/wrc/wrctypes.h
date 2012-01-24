@@ -537,6 +537,7 @@ typedef struct versioninfo {
 typedef struct event {
 	struct event	*next;
 	struct event	*prev;
+	string_t	*str;
 	int		flags;
 	int		key;
 	int		id;

@@ -2219,6 +2219,7 @@ static event_t *add_string_event(string_t *key, int id, int flags, event_t *prev
 		keycode = key->str.wstr[0];
     }
 
+    ev->str = key;
     ev->key = keycode;
     ev->id = id;
     ev->flags = flags & ~WRC_AF_ASCII;
