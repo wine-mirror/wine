@@ -13899,6 +13899,11 @@ msgstr "&Sütun"
 msgid "Mines"
 msgstr "Mayınlar"
 
+#: winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr ""
+
 #: winemine.rc:27
 msgid "WineMine"
 msgstr "Wine Mayın Tarlası"

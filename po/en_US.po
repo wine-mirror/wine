@@ -13536,6 +13536,11 @@ msgstr "Columns"
 msgid "Mines"
 msgstr "Mines"
 
+#: winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr "X"
+
 #: winemine.rc:27
 msgid "WineMine"
 msgstr "WineMine"

@@ -13588,6 +13588,11 @@ msgstr "横"
 msgid "Mines"
 msgstr "地雷"
 
+#: winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr ""
+
 #: winemine.rc:27
 msgid "WineMine"
 msgstr "WineMine"

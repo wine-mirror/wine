@@ -13608,6 +13608,11 @@ msgstr "Stulpeliai"
 msgid "Mines"
 msgstr "Minos"
 
+#: winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr ""
+
 #: winemine.rc:27
 msgid "WineMine"
 msgstr "WineMine"

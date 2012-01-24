@@ -13524,6 +13524,11 @@ msgstr "세로줄"
 msgid "Mines"
 msgstr "지뢰"
 
+#: winemine.rc:99
+msgctxt "accelerator Exit"
+msgid "X"
+msgstr ""
+
 #: winemine.rc:27
 msgid "WineMine"
 msgstr "Wine지뢰찾기"
