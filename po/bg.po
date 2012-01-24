@@ -10086,7 +10086,7 @@ msgctxt "accelerator Copy"
 msgid "^C"
 msgstr ""
 
-#: notepad.rc:131
+#: notepad.rc:131 regedit.rc:320
 msgctxt "accelerator Find"
 msgid "^F"
 msgstr ""
@@ -10106,7 +10106,7 @@ msgctxt "accelerator Open"
 msgid "^O"
 msgstr ""
 
-#: notepad.rc:135
+#: notepad.rc:135 regedit.rc:321
 msgctxt "accelerator Print"
 msgid "^P"
 msgstr ""
