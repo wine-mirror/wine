@@ -1987,7 +1987,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(IDirect3DDevice8 *
         const DWORD *declaration, const DWORD *byte_code, DWORD *shader, DWORD usage)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DVertexShader8Impl *object;
+    struct d3d8_vertex_shader *object;
     DWORD shader_handle;
     DWORD handle;
     HRESULT hr;
@@ -2016,7 +2016,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(IDirect3DDevice8 *
 
     shader_handle = handle + VS_HIGHESTFIXEDFXF + 1;
 
-    hr = vertexshader_init(object, This, declaration, byte_code, shader_handle, usage);
+    hr = d3d8_vertex_shader_init(object, This, declaration, byte_code, shader_handle, usage);
     if (FAILED(hr))
     {
         WARN("Failed to initialize vertex shader, hr %#x.\n", hr);
@@ -2102,7 +2102,7 @@ static struct d3d8_vertex_declaration *IDirect3DDevice8Impl_FindDecl(IDirect3DDe
 static HRESULT WINAPI IDirect3DDevice8Impl_SetVertexShader(IDirect3DDevice8 *iface, DWORD pShader)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DVertexShader8Impl *shader;
+    struct d3d8_vertex_shader *shader;
     HRESULT hr;
 
     TRACE("iface %p, shader %#x.\n", iface, pShader);
@@ -2181,7 +2181,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShader(IDirect3DDevice8 *ifa
 static HRESULT WINAPI IDirect3DDevice8Impl_DeleteVertexShader(IDirect3DDevice8 *iface, DWORD pShader)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DVertexShader8Impl *shader;
+    struct d3d8_vertex_shader *shader;
     struct wined3d_shader *cur;
 
     TRACE("iface %p, shader %#x.\n", iface, pShader);
@@ -2206,10 +2206,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DeleteVertexShader(IDirect3DDevice8 *
 
     wined3d_mutex_unlock();
 
-    if (IDirect3DVertexShader8_Release(&shader->IDirect3DVertexShader8_iface))
-    {
-        ERR("Shader %p has references left, this shouldn't happen.\n", shader);
-    }
+    d3d8_vertex_shader_destroy(shader);
 
     return D3D_OK;
 }
@@ -2263,7 +2260,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderDeclaration(IDirect3DD
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     struct d3d8_vertex_declaration *declaration;
-    IDirect3DVertexShader8Impl *shader;
+    struct d3d8_vertex_shader *shader;
 
     TRACE("iface %p, shader %#x, data %p, data_size %p.\n",
             iface, pVertexShader, pData, pSizeOfData);
@@ -2301,7 +2298,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderFunction(IDirect3DDevi
         DWORD pVertexShader, void *pData, DWORD *pSizeOfData)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DVertexShader8Impl *shader = NULL;
+    struct d3d8_vertex_shader *shader = NULL;
     HRESULT hr;
 
     TRACE("iface %p, shader %#x, data %p, data_size %p.\n",

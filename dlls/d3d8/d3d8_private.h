@@ -111,7 +111,6 @@ typedef struct IDirect3DSurface8Impl IDirect3DSurface8Impl;
 typedef struct IDirect3DSwapChain8Impl IDirect3DSwapChain8Impl;
 typedef struct IDirect3DVolume8Impl IDirect3DVolume8Impl;
 typedef struct IDirect3DVertexBuffer8Impl IDirect3DVertexBuffer8Impl;
-typedef struct IDirect3DVertexShader8Impl IDirect3DVertexShader8Impl;
 
 /* ===========================================================================
     The interfaces themselves
@@ -366,9 +365,6 @@ struct IDirect3DVolumeTexture8Impl
 HRESULT volumetexture_init(IDirect3DVolumeTexture8Impl *texture, IDirect3DDevice8Impl *device,
         UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 
-DEFINE_GUID(IID_IDirect3DVertexShader8,
-0xefc5557e, 0x6265, 0x4613, 0x8a, 0x94, 0x43, 0x85, 0x78, 0x89, 0xeb, 0x36);
-
 DEFINE_GUID(IID_IDirect3DPixelShader8,
 0x6d3bdbdc, 0x5b02, 0x4415, 0xb8, 0x52, 0xce, 0x5e, 0x8b, 0xcc, 0xb2, 0x89);
 
@@ -385,28 +381,6 @@ HRESULT d3d8_vertex_declaration_init(struct d3d8_vertex_declaration *declaration
         IDirect3DDevice8Impl *device, const DWORD *elements, DWORD shader_handle) DECLSPEC_HIDDEN;
 HRESULT d3d8_vertex_declaration_init_fvf(struct d3d8_vertex_declaration *declaration,
         IDirect3DDevice8Impl *device, DWORD fvf) DECLSPEC_HIDDEN;
-
-/*****************************************************************************
- * IDirect3DVertexShader8 interface
- */
-#define INTERFACE IDirect3DVertexShader8
-DECLARE_INTERFACE_(IDirect3DVertexShader8, IUnknown)
-{
-    /*** IUnknown methods ***/
-    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
-    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
-    STDMETHOD_(ULONG,Release)(THIS) PURE;
-};
-#undef INTERFACE
-
-/*** IUnknown methods ***/
-#define IDirect3DVertexShader8_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirect3DVertexShader8_AddRef(p)              (p)->lpVtbl->AddRef(p)
-#define IDirect3DVertexShader8_Release(p)             (p)->lpVtbl->Release(p)
-
-/* ------------------------- */
-/* IDirect3DVertexShader8Impl */
-/* ------------------------- */
 
 /*****************************************************************************
  * IDirect3DPixelShader8 interface
@@ -430,14 +404,14 @@ DECLARE_INTERFACE_(IDirect3DPixelShader8,IUnknown)
  * IDirect3DVertexShader implementation structure
  */
 
-struct IDirect3DVertexShader8Impl {
-  IDirect3DVertexShader8            IDirect3DVertexShader8_iface;
-  LONG                              ref;
+struct d3d8_vertex_shader
+{
   struct d3d8_vertex_declaration *vertex_declaration;
   struct wined3d_shader *wined3d_shader;
 };
 
-HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Impl *device,
+void d3d8_vertex_shader_destroy(struct d3d8_vertex_shader *shader) DECLSPEC_HIDDEN;
+HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, IDirect3DDevice8Impl *device,
         const DWORD *declaration, const DWORD *byte_code, DWORD shader_handle, DWORD usage) DECLSPEC_HIDDEN;
 
 #define D3D8_MAX_VERTEX_SHADER_CONSTANTF 256
