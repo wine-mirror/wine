@@ -1198,7 +1198,7 @@ HRESULT CDECL wined3d_device_acquire_focus_window(struct wined3d_device *device,
         return E_FAIL;
     }
 
-    device->focus_window = window;
+    InterlockedExchangePointer((void **)&device->focus_window, window);
     SetWindowPos(window, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 
     return WINED3D_OK;
@@ -1209,7 +1209,7 @@ void CDECL wined3d_device_release_focus_window(struct wined3d_device *device)
     TRACE("device %p.\n", device);
 
     if (device->focus_window) wined3d_unregister_window(device->focus_window);
-    device->focus_window = NULL;
+    InterlockedExchangePointer((void **)&device->focus_window, NULL);
 }
 
 HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
@@ -5890,12 +5890,8 @@ void get_drawable_size_backbuffer(const struct wined3d_context *context, UINT *w
 LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL unicode,
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc)
 {
-    wined3d_mutex_lock();
-
     if (device->filter_messages)
     {
-        wined3d_mutex_unlock();
-
         TRACE("Filtering message: window %p, message %#x, wparam %#lx, lparam %#lx.\n",
                 window, message, wparam, lparam);
         if (unicode)
@@ -5909,15 +5905,15 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
         TRACE("unregister window %p.\n", window);
         wined3d_unregister_window(window);
 
-        if (device->focus_window == window) device->focus_window = NULL;
-        else ERR("Window %p is not the focus window for device %p.\n", window, device);
+        if (InterlockedCompareExchangePointer((void **)&device->focus_window, NULL, window) != window)
+            ERR("Window %p is not the focus window for device %p.\n", window, device);
     }
     else if (message == WM_DISPLAYCHANGE)
     {
+        wined3d_mutex_lock();
         device->device_parent->ops->mode_changed(device->device_parent);
+        wined3d_mutex_unlock();
     }
-
-    wined3d_mutex_unlock();
 
     if (unicode)
         return CallWindowProcW(proc, window, message, wparam, lparam);
