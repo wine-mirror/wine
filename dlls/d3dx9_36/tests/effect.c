@@ -1635,7 +1635,9 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             D3DXHANDLE parameter;
             D3DXPARAMETER_DESC pdesc;
             BOOL bvalue;
+            DWORD input_value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
             DWORD expected_value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
+            UINT l;
 
             parameter = effect->lpVtbl->GetParameterByName(effect, NULL, res_full_name);
             ok(parameter != NULL, "%u - %s: GetParameterByName failed\n", i, res_full_name);
@@ -1689,6 +1691,32 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             else
             {
                 ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBool failed, got %#x, expected %#x\n",
+                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+            }
+            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
+            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+
+            /* SetBoolArray */
+            *input_value = 1;
+            for (l = 1; l < res_desc->Bytes / sizeof(*input_value); ++l)
+            {
+                *(input_value + l) = *(input_value + l - 1) + 1;
+            }
+            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            hr = effect->lpVtbl->SetBoolArray(effect, parameter, (BOOL *)input_value, res_desc->Bytes / sizeof(*input_value));
+            if (res_desc->Class == D3DXPC_SCALAR
+                    || res_desc->Class == D3DXPC_VECTOR
+                    || res_desc->Class == D3DXPC_MATRIX_ROWS)
+            {
+                for (l = 0; l < res_desc->Bytes / sizeof(*input_value); ++l)
+                {
+                    set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_BOOL);
+                }
+                ok(hr == D3D_OK, "%u - %s: SetBoolArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+            }
+            else
+            {
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBoolArray failed, got %#x, expected %#x\n",
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
