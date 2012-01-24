@@ -592,12 +592,12 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
             return S_OK;
 
         default:
-            FIXME("Unimplemented cmd %d of CGID_Explorer\n", nCmdID);
+            FIXME("Unimplemented cmdid %d of CGID_Explorer\n", nCmdID);
             return E_NOTIMPL;
         }
     }
 
-    FIXME("Unimplemented group %s\n", debugstr_guid(pguidCmdGroup));
+    FIXME("Unimplemented cmdid %d of group %s\n", nCmdID, debugstr_guid(pguidCmdGroup));
     return E_NOTIMPL;
 }
 
