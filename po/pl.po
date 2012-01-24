@@ -12456,6 +12456,11 @@ msgstr "Przesuń w &lewo"
 msgid "&Right"
 msgstr "Przesuń w &prawo"
 
+#: view.rc:51
+msgctxt "accelerator Quit"
+msgid "^Q"
+msgstr ""
+
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Podgląd plików WMF (Regular Metafile)"

@@ -12689,6 +12689,11 @@ msgstr "S&ol"
 msgid "&Right"
 msgstr "S&ağ"
 
+#: view.rc:51
+msgctxt "accelerator Quit"
+msgid "^Q"
+msgstr ""
+
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr ""
