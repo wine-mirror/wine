@@ -888,6 +888,7 @@ test_effect_parameter_value_data[] =
 #define EFFECT_PARAMETER_VALUE_ARRAY_SIZE 48
 /* Constants for special INT/FLOAT conversation */
 #define INT_FLOAT_MULTI 255.0f
+#define INT_FLOAT_MULTI_INVERSE (1/INT_FLOAT_MULTI)
 
 static void test_effect_parameter_value_GetValue(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
@@ -1635,6 +1636,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             D3DXHANDLE parameter;
             D3DXPARAMETER_DESC pdesc;
             BOOL bvalue;
+            INT ivalue;
             DWORD input_value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
             DWORD expected_value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
             UINT l;
@@ -1717,6 +1719,39 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             else
             {
                 ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBoolArray failed, got %#x, expected %#x\n",
+                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+            }
+            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
+            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+
+            /* SetInt */
+            ivalue = 0x1fbf02ff;
+            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            hr = effect->lpVtbl->SetInt(effect, parameter, ivalue);
+            if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
+            {
+                set_number(expected_value, res_desc->Type, &ivalue, D3DXPT_INT);
+                ok(hr == D3D_OK, "%u - %s: SetInt failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+            }
+            else if(!res_desc->Elements && res_desc->Type == D3DXPT_FLOAT &&
+                    ((res_desc->Class == D3DXPC_VECTOR && res_desc->Columns != 2) ||
+                    (res_desc->Class == D3DXPC_MATRIX_ROWS && res_desc->Rows != 2 && res_desc->Columns == 1)))
+            {
+                FLOAT tmp = ((ivalue & 0xff0000) >> 16) * INT_FLOAT_MULTI_INVERSE;
+                set_number(expected_value, res_desc->Type, &tmp, D3DXPT_FLOAT);
+                tmp = ((ivalue & 0xff00) >> 8) * INT_FLOAT_MULTI_INVERSE;
+                set_number(expected_value + 1, res_desc->Type, &tmp, D3DXPT_FLOAT);
+                tmp = (ivalue & 0xff) * INT_FLOAT_MULTI_INVERSE;
+                set_number(expected_value + 2, res_desc->Type, &tmp, D3DXPT_FLOAT);
+                tmp = ((ivalue & 0xff000000) >> 24) * INT_FLOAT_MULTI_INVERSE;
+                set_number(expected_value + 3, res_desc->Type, &tmp, D3DXPT_FLOAT);
+
+                ok(hr == D3D_OK, "%u - %s: SetInt failed, got %#x, expected %#x\n",
+                        i, res_full_name, hr, D3D_OK);
+            }
+            else
+            {
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetInt failed, got %#x, expected %#x\n",
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
