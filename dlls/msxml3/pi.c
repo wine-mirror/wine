@@ -222,23 +222,23 @@ static HRESULT WINAPI dom_pi_put_nodeValue(
     VARIANT value)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    BSTR sTarget;
+    BSTR target;
     HRESULT hr;
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
 
     /* Cannot set data to a PI node whose target is 'xml' */
-    hr = dom_pi_get_nodeName(iface, &sTarget);
+    hr = IXMLDOMProcessingInstruction_get_nodeName(iface, &target);
     if(hr == S_OK)
     {
         static const WCHAR xmlW[] = {'x','m','l',0};
-        if(lstrcmpW( sTarget, xmlW) == 0)
+        if(!strcmpW(target, xmlW))
         {
-            SysFreeString(sTarget);
+            SysFreeString(target);
             return E_FAIL;
         }
 
-        SysFreeString(sTarget);
+        SysFreeString(target);
     }
 
     return node_put_value(&This->node, &value);
@@ -637,24 +637,24 @@ static HRESULT WINAPI dom_pi_put_data(
     BSTR data)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    HRESULT hr;
     VARIANT val;
-    BSTR sTarget;
+    BSTR target;
+    HRESULT hr;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(data) );
 
     /* Cannot set data to a PI node whose target is 'xml' */
-    hr = dom_pi_get_nodeName(iface, &sTarget);
+    hr = IXMLDOMProcessingInstruction_get_nodeName(iface, &target);
     if(hr == S_OK)
     {
         static const WCHAR xmlW[] = {'x','m','l',0};
-        if(lstrcmpW( sTarget, xmlW) == 0)
+        if(!strcmpW(target, xmlW))
         {
-            SysFreeString(sTarget);
+            SysFreeString(target);
             return E_FAIL;
         }
 
-        SysFreeString(sTarget);
+        SysFreeString(target);
     }
 
     V_VT(&val) = VT_BSTR;

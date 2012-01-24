@@ -406,7 +406,7 @@ static HRESULT WINAPI domtext_get_nodeTypedValue(
     if (!var1)
         return E_INVALIDARG;
 
-    hr = domtext_get_parentNode(iface, &parent);
+    hr = IXMLDOMText_get_parentNode(iface, &parent);
 
     if (hr == S_OK)
     {
@@ -433,7 +433,7 @@ static HRESULT WINAPI domtext_put_nodeTypedValue(
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
 
-    hr = domtext_get_parentNode(iface, &parent);
+    hr = IXMLDOMText_get_parentNode(iface, &parent);
 
     if (hr == S_OK)
     {
@@ -461,7 +461,7 @@ static HRESULT WINAPI domtext_get_dataType(
     if (!dtName)
         return E_INVALIDARG;
 
-    hr = domtext_get_parentNode(iface, &parent);
+    hr = IXMLDOMText_get_parentNode(iface, &parent);
 
     if (hr == S_OK)
     {
@@ -491,7 +491,7 @@ static HRESULT WINAPI domtext_put_dataType(
     if (!dtName)
         return E_INVALIDARG;
 
-    hr = domtext_get_parentNode(iface, &parent);
+    hr = IXMLDOMText_get_parentNode(iface, &parent);
 
     if (hr == S_OK)
     {

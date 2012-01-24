@@ -672,28 +672,28 @@ static inline domdoc *impl_from_IConnectionPointContainer(IConnectionPointContai
 /************************************************************************
  * domdoc implementation of IPersistStream.
  */
-static HRESULT WINAPI domdoc_IPersistStreamInit_QueryInterface(
+static HRESULT WINAPI PersistStreamInit_QueryInterface(
     IPersistStreamInit *iface, REFIID riid, void **ppvObj)
 {
     domdoc* This = impl_from_IPersistStreamInit(iface);
     return IXMLDOMDocument3_QueryInterface(&This->IXMLDOMDocument3_iface, riid, ppvObj);
 }
 
-static ULONG WINAPI domdoc_IPersistStreamInit_AddRef(
+static ULONG WINAPI PersistStreamInit_AddRef(
     IPersistStreamInit *iface)
 {
     domdoc* This = impl_from_IPersistStreamInit(iface);
     return IXMLDOMDocument3_AddRef(&This->IXMLDOMDocument3_iface);
 }
 
-static ULONG WINAPI domdoc_IPersistStreamInit_Release(
+static ULONG WINAPI PersistStreamInit_Release(
     IPersistStreamInit *iface)
 {
     domdoc* This = impl_from_IPersistStreamInit(iface);
     return IXMLDOMDocument3_Release(&This->IXMLDOMDocument3_iface);
 }
 
-static HRESULT WINAPI domdoc_IPersistStreamInit_GetClassID(
+static HRESULT WINAPI PersistStreamInit_GetClassID(
     IPersistStreamInit *iface, CLSID *classid)
 {
     domdoc* This = impl_from_IPersistStreamInit(iface);
@@ -707,7 +707,7 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_GetClassID(
     return S_OK;
 }
 
-static HRESULT WINAPI domdoc_IPersistStreamInit_IsDirty(
+static HRESULT WINAPI PersistStreamInit_IsDirty(
     IPersistStreamInit *iface)
 {
     domdoc *This = impl_from_IPersistStreamInit(iface);
@@ -715,7 +715,7 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_IsDirty(
     return S_FALSE;
 }
 
-static HRESULT WINAPI domdoc_IPersistStreamInit_Load(
+static HRESULT WINAPI PersistStreamInit_Load(
     IPersistStreamInit *iface, LPSTREAM pStm)
 {
     domdoc *This = impl_from_IPersistStreamInit(iface);
@@ -768,7 +768,7 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_Load(
     return attach_xmldoc(This, xmldoc);
 }
 
-static HRESULT WINAPI domdoc_IPersistStreamInit_Save(
+static HRESULT WINAPI PersistStreamInit_Save(
     IPersistStreamInit *iface, IStream *stream, BOOL clr_dirty)
 {
     domdoc *This = impl_from_IPersistStreamInit(iface);
@@ -791,7 +791,7 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_Save(
     return hr;
 }
 
-static HRESULT WINAPI domdoc_IPersistStreamInit_GetSizeMax(
+static HRESULT WINAPI PersistStreamInit_GetSizeMax(
     IPersistStreamInit *iface, ULARGE_INTEGER *pcbSize)
 {
     domdoc *This = impl_from_IPersistStreamInit(iface);
@@ -799,7 +799,7 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_GetSizeMax(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoc_IPersistStreamInit_InitNew(
+static HRESULT WINAPI PersistStreamInit_InitNew(
     IPersistStreamInit *iface)
 {
     domdoc *This = impl_from_IPersistStreamInit(iface);
@@ -809,15 +809,15 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_InitNew(
 
 static const IPersistStreamInitVtbl xmldoc_IPersistStreamInit_VTable =
 {
-    domdoc_IPersistStreamInit_QueryInterface,
-    domdoc_IPersistStreamInit_AddRef,
-    domdoc_IPersistStreamInit_Release,
-    domdoc_IPersistStreamInit_GetClassID,
-    domdoc_IPersistStreamInit_IsDirty,
-    domdoc_IPersistStreamInit_Load,
-    domdoc_IPersistStreamInit_Save,
-    domdoc_IPersistStreamInit_GetSizeMax,
-    domdoc_IPersistStreamInit_InitNew
+    PersistStreamInit_QueryInterface,
+    PersistStreamInit_AddRef,
+    PersistStreamInit_Release,
+    PersistStreamInit_GetClassID,
+    PersistStreamInit_IsDirty,
+    PersistStreamInit_Load,
+    PersistStreamInit_Save,
+    PersistStreamInit_GetSizeMax,
+    PersistStreamInit_InitNew
 };
 
 /* IXMLDOMDocument3 interface */
@@ -2665,7 +2665,7 @@ static HRESULT WINAPI domdoc_validateNode(
     int validated = 0;
 
     TRACE("(%p)->(%p, %p)\n", This, node, err);
-    domdoc_get_readyState(iface, &state);
+    IXMLDOMDocument3_get_readyState(iface, &state);
     if (state != READYSTATE_COMPLETE)
     {
         if (err)
@@ -2760,7 +2760,7 @@ static HRESULT WINAPI domdoc_validate(
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     TRACE("(%p)->(%p)\n", This, err);
-    return domdoc_validateNode(iface, (IXMLDOMNode*)iface, err);
+    return IXMLDOMDocument3_validateNode(iface, (IXMLDOMNode*)iface, err);
 }
 
 static HRESULT WINAPI domdoc_setProperty(
