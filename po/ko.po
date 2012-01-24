@@ -2174,13 +2174,12 @@ msgid "B&rowse..."
 msgstr "찾기(&R)..."
 
 #: cryptui.rc:294
-#, fuzzy
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
 "주의:  이 파일 형식은 아마도 하나 이상의 인증서,인증서 파기 목록,인증서 신뢰 "
-"목록을 가지고 있을 수 있습니다:"
+"목록을 가지고 있을 수 있음:"
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
@@ -2377,7 +2376,6 @@ msgid "Certificate Information"
 msgstr "인증서 정보"
 
 #: cryptui.rc:29
-#, fuzzy
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
@@ -2386,13 +2384,12 @@ msgstr ""
 "거나 망가진 것같습니가"
 
 #: cryptui.rc:30
-#, fuzzy
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
-"이 루트 인증서는 신뢰 할 수 없습니다.  이것을 신뢰하려면,당신의 시스템의 신뢰"
-"된  루트 인증서 보관소에 추가하십시오."
+"이 루트 인증서는 신뢰 할 수 없습니다.  이것을 신뢰하려면, 당신의 시스템의 신뢰된"
+"루트 인증서 보관소에 추가하십시오."
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
@@ -2535,13 +2532,12 @@ msgid "Please select a certificate store."
 msgstr "인증서 저장소를 선택하십시오."
 
 #: cryptui.rc:69
-#, fuzzy
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
-"이 파일은 주어진 기존에 맞지 않는 객체를 포함하고 있습니다. 다른 파일을 선택"
-"하십시오."
+"이 파일은 주어진 기준에 일치하지 않는 개체를 포함합니다. "
+"다른 파일을 선택하십시오."
 
 #: cryptui.rc:70
 msgid "File to Import"
@@ -2591,13 +2587,12 @@ msgid "Please select a file."
 msgstr "파일을 선택하십시오."
 
 #: cryptui.rc:82
-#, fuzzy
 msgid "The file format is not recognized. Please select another file."
-msgstr "이 파일 형식은 인식할 수 없습니다. 다른 파일을 선택하십시오."
+msgstr "이 파일 형식을 이해할 수 없습니다. 다른 파일을 선택하십시오."
 
 #: cryptui.rc:83
 msgid "Could not open "
-msgstr "열수 없습니다 "
+msgstr "열수 없음 "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -2830,7 +2825,6 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "내용을 저장할 파일 이름 지정."
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
 msgstr "지정된 파일은 이미 존재합니다.덮어 쓰시겠습니까?"
 
@@ -2901,7 +2895,6 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "주의: 이 인증서를 위한 개인 키를 열 수 없습니다."
 
 #: cryptui.rc:173
-#, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "주의: 이 인증서를 위한 개인 키를 내보낼 수 없습니다."
 
@@ -5683,7 +5676,6 @@ msgid "Event log file changed\n"
 msgstr "이벤트 로그 파일이 변경됨\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed\n"
 msgstr "설치 서비스가 실패함\n"
 
@@ -6616,12 +6608,12 @@ msgid "Done"
 msgstr "끝남"
 
 #: msi.rc:27
-#, fuzzy
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
-"지정한 설치 패키지를 열 수 없습니다. 파일 경로를 확인하고 다시 시도하십시오."
+"지정한 설치 패키지를 열 수 없습니다. 파일 경로를 확인하고 "
+"다시 시도하십시오."
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -7119,8 +7111,8 @@ msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
-"작성한 풀그림을 사용하여 활성화시킬수 있는 객체를 문서파일 내용으로 삽입하시"
-"오."
+"당신이 그것을 만든 프로그램을 사용하여 활성화할 수 있도록"
+"문서에 개체로 파일의 내용을 넣습니다."
 
 #: oledlg.rc:27 shell32.rc:194
 msgid "Browse"
@@ -7131,7 +7123,7 @@ msgid ""
 "File does not appear to be a valid OLE module. Unable to register OLE "
 "control."
 msgstr ""
-"이 파일은 올바른 OLE모듈이 아닌거로 보입니다. OLE컨트롤을 등록할수 없습니다."
+"이 파일은 올바른 OLE모듈이 아닌것으로 보입니다. OLE컨트롤을 등록할수 없습니다."
 
 #: oledlg.rc:29
 msgid "Add Control"
@@ -7150,43 +7142,39 @@ msgstr ""
 "습니다."
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
-"당신의 문서에 클립보드의 내용들을 첨부하면  %s를 사용해서 이것을 실행할 수 있"
+"당신의 문서에 클립보드의 내용들을 첨부하면  %s를 사용해서 이것을 활성화할 수 있"
 "습니다. 이것은 아이콘으로 나타내질 겁니다."
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"당신의 문서 %s에 클립보드의 내용 삽입하기.  이 데이터는 원본 파일에 연결되어 "
-"있어서 파일이 바뀌면 당신의 문서도 바뀔겁니다."
+"당신의 문서 %s에 클립보드의 내용을 삽입합니다.  이 데이터는 원본 파일에 연결되어 "
+"있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다"
 
 #: oledlg.rc:38
-#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
 "당신의 문서에 클립보드에 있는 그림을 집어넣습니다.  이 그림은 원본 파일에 연"
-"결되어 있어서 파일이 바뀌면 당신의 문서도 바뀔겁니다."
+"결되어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다."
 
 #: oledlg.rc:39
-#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
 "당신의 문서에 클립보드에 있는 단축아이콘을 집어넣습니다.  이 단축아이콘은 원"
-"본 파일에 연결되어 있어서 파일이 바뀌면 당신의 문서도 바뀔겁니다t."
+"본 파일에 연결되어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다"
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
@@ -7723,7 +7711,7 @@ msgstr "아니오(&N)"
 
 #: shell32.rc:316
 msgid "About %s"
-msgstr " %s 정보"
+msgstr "%s 정보"
 
 #: shell32.rc:320
 msgid "Wine &license"
@@ -7735,7 +7723,7 @@ msgstr "%s 실행중"
 
 #: shell32.rc:326
 msgid "Wine was brought to you by:"
-msgstr "Wine 에 도움주신 분:"
+msgstr "Wine에 도움주신 분:"
 
 #: shell32.rc:334
 msgid ""
@@ -7828,7 +7816,7 @@ msgstr "당신은 Wine 세션을 끄겠습니까?"
 
 #: shell32.rc:200 progman.rc:80
 msgid "Programs"
-msgstr "풀그림"
+msgstr "응용프로그램"
 
 #: shell32.rc:201
 msgid "My Documents"
@@ -7840,7 +7828,7 @@ msgstr "즐겨찾기"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "시작 프로그램"
 
 #: shell32.rc:204
 msgid "Start Menu"
@@ -7884,18 +7872,16 @@ msgid "My Pictures"
 msgstr "내 그림"
 
 #: shell32.rc:215
-#, fuzzy
 msgid "Common Files"
-msgstr "완전한 이름"
+msgstr "Common Files"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
-msgstr "문서"
+msgstr "내 문서"
 
 #: shell32.rc:217
-#, fuzzy
 msgid "Administrative Tools"
-msgstr "시작메뉴\\프로그램\\관리 도구"
+msgstr "관리 도구"
 
 #: shell32.rc:218
 msgid "Music"
@@ -7915,21 +7901,19 @@ msgstr "Program Files (x86)"
 
 #: shell32.rc:221
 msgid "Contacts"
-msgstr "Contacts"
+msgstr "연락처"
 
 #: shell32.rc:222 winefile.rc:116
 msgid "Links"
 msgstr "링크"
 
 #: shell32.rc:223
-#, fuzzy
 msgid "Slide Shows"
-msgstr "Pictures\\Slide Shows"
+msgstr "슬라이드쇼"
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
-msgstr "Music\\Playlists"
+msgstr "재생목록"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -7944,36 +7928,32 @@ msgid "Model"
 msgstr "모델"
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
-msgstr "Music\\Sample Music"
+msgstr "샘플 음악"
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
-msgstr "Pictures\\Sample Pictures"
+msgstr "샘플 그림"
 
 #: shell32.rc:227
-#, fuzzy
 msgid "Sample Playlists"
-msgstr "Music\\Sample Playlists"
+msgstr "샘플 재생목록"
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
-msgstr "Videos\\Sample Videos"
+msgstr "샘플 동영상"
 
 #: shell32.rc:229
 msgid "Saved Games"
-msgstr "Saved Games"
+msgstr "저장된 게임"
 
 #: shell32.rc:230
 msgid "Searches"
-msgstr "Searches"
+msgstr "찾기"
 
 #: shell32.rc:231
 msgid "Users"
-msgstr "Users"
+msgstr "사용"
 
 #: shell32.rc:233
 msgid "Downloads"
@@ -8111,7 +8091,6 @@ msgid "Confirm overwrite"
 msgstr "덮어쓰기 확인"
 
 #: shell32.rc:265
-#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8128,11 +8107,11 @@ msgid ""
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
 "Wine은 자유 소프트웨어입니다; 당신은 이것을 자유 소프트웨어 재단에 위해 발표"
-"된GNU 약소 일반 공중 사용 허가서의 조건에 따라 수정이나 배포를 할 수 있습니"
+"된 GNU 약소 일반 공중 사용 허가서의 조건에 따라 수정이나 배포를 할 수 있습니"
 "다;버젼 2.1의 라이센스나,(당신의 선택에 따라)무엇이든 최신 버젼을 사용합니"
 "다.\n"
 "\n"
-"Wine은 '어떠한 보증도 없이' 유용하고 사용될 것이라는 희망으로 배포됩니다; 심"
+"Wine은 '어떠한 보증도 없이' 유용하게 사용될 것이라는 희망으로 배포됩니다; 심"
 "지어 '특정 목적에 대한 적합성'및 '상품성'의 묵시적 보증도 없습니다. 자세한 내"
 "용은 GNU 약소 일반 공중 사용 허가서를 참고하십시오.\n"
 "\n"
@@ -8186,34 +8165,31 @@ msgstr "이동(&M)"
 
 #: user32.rc:29 user32.rc:42 wineconsole.rc:89
 msgid "&Size"
-msgstr "크기 변경(&S)"
+msgstr "크기(&S)"
 
 #: user32.rc:30 user32.rc:43
 msgid "Mi&nimize"
-msgstr "아이콘 표시(&N)"
+msgstr "최소화(&N)"
 
 #: user32.rc:31 user32.rc:44 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
 msgstr "최대화(&x)"
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "닫기(&C)\tAlt-F4"
+msgstr "닫기(&C)\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
 msgstr "WINE 정보(&A)"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "닫기(&C)\tCtrl-F4"
+msgstr "닫기(&C)\tCtrl+F4"
 
 #: user32.rc:48
-#, fuzzy
 msgid "Nex&t\tCtrl+F6"
-msgstr "다음(&T)\tCtrl-F6"
+msgstr "다음(&T)\tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -8887,9 +8863,8 @@ msgid "&Output File Name:"
 msgstr "출력 파일 이름(&O):"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "출력 파일은 존재합니다. '확인'을 누르면 덮어쓰여질겁니다."
+msgstr "출력 파일은 존재합니다. '확인'을 클릭하면 덮어쓰여질겁니다."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -9485,13 +9460,12 @@ msgstr ""
 "그래서 명령 'SET PROMPT=텍스트'는 'PROMPT 텍스트와 같은 일을 합니다\n"
 
 #: cmd.rc:153
-#, fuzzy
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
 "REM으로 시작하는 명령 라인 (공백뒤에 오는) 은 아무일도 안합니다\n"
-", 그러므로 배치 파일에서 주석으로 사용됩니다\n"
+", 그러므로 배치 파일에서 주석으로 사용됩니다.\n"
 
 #: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
@@ -9513,7 +9487,6 @@ msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <디렉토리>는 하위 디렉토리를 지움.\n"
 
 #: cmd.rc:178
-#, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9532,20 +9505,20 @@ msgid ""
 "many more values than in a native Win32 implementation. Note that it is\n"
 "not possible to affect the operating system environment from within cmd.\n"
 msgstr ""
-"SET  cmd 환경 변수 보여주거나 바꾸기.\n"
+"SET은 cmd 환경 변수 보여주거나 바꿉니다.\n"
 "\n"
-"아무 매개변수가 없는 SET은 모든 현재 환경변수를 보여줌.\n"
+"아무 매개변수가 없는 SET은 모든 현재 환경변수를 보여줍니다.\n"
 "\n"
 "환경 변수를 만들거나 고칠때 사용하는 문법:\n"
 "\n"
 "SET <변수>=<값>\n"
 "\n"
-"<변수> 과 <값>은 캐릭터-문자열 이다. 반드시 등호(=)기호 앞에 어떤\n"
+"<변수> 와 <값>은 캐릭터-문자열 이다. 반드시 등호(=)기호 앞에 어떤\n"
 "공백도 있어선 안되고, 변수 이름에 내부 공백도 있을 수 없다.\n"
 "\n"
 "Wine 아래에서, 운영체제 밑의 환경은 Win32 환경에 포함됩니다, 그것은\n"
 "일반적으로 네이티브 Win32 구현에는 더 많은 값이 있어야 된 다는 것을\n"
-"의미합니다. 이것은 cmd안에서 운영체제 환경이 영향을 미치는거 것은\n"
+"의미합니다. 이것은 cmd안에서 운영체제 환경의 영향을 미치는 것은\n"
 "가능하지 않다는 것을 기억하시오.\n"
 
 #: cmd.rc:183
@@ -9563,9 +9536,8 @@ msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME 은 현재 시스템 시간을 보여 줍니다.\n"
 
 #: cmd.rc:187
-#, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr "cmd창의 창 제목 설정, 문법 TITLE [문자열]\n"
+msgstr "TITLE <문자열>은 cmd창의 창 제목을 설정합니다.\n"
 
 #: cmd.rc:191
 msgid ""
@@ -9576,7 +9548,6 @@ msgstr ""
 "어디나). 아무 오류가 없으면 그 파일을 읽을 수 있는 텍스트입니다.\n"
 
 #: cmd.rc:200
-#, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9586,8 +9557,7 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY는 검증 플래그를 설정하고 제거하거나 테스트하는데 사용됩니다. 올바른 형"
-"식은:\n"
+"VERIFY는 검증 플래그를 설정하고 제거하거나 테스트하는데 사용됩니다. 올바른 형식은:\n"
 "\n"
 "VERIFY ON\t플래그 설정\n"
 "VERIFY OFF\t플래그 제거\n"
@@ -9635,12 +9605,10 @@ msgstr ""
 "그리고 현재 디렉토리를 요청한 디렉토리로 바꾼다.\n"
 
 #: cmd.rc:222
-#, fuzzy
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
-msgstr "POPD는 현재 디렉토리를 PUSH로 마지막으로 저장했던 것으로 바꾼다.\n"
+msgstr "POPD는 현재 디렉토리를 PUSH로 마지막으로 저장했던 것으로 바꿉니다.\n"
 
 #: cmd.rc:230
-#, fuzzy
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9651,17 +9619,16 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
-"ASSOC는 파일 확장자 연결보여주거나 고침\n"
+"ASSOC는 파일 확장자 연결을 보여주거나 고칩니다.\n"
 "\n"
-"형식:ASSOC[파일확장자[=[파일종류]]\n"
+"형식:ASSOC[.파일확장자[=[파일종류]]]\n"
 "\n"
 "매개변수가 없으면, 현재 파일 연결을 보여줍니다\n"
 "만약 파일 확장자만 사용된다면, 현재 연결 상태를 보여줍니다.\n"
-"= 다음에 파일 종류가 지정되지 않으면 현재 연결상태에 가능한 것을 제거합니"
+"등호(=) 다음에 파일 종류가 지정되지 않으면 현재 연결상태에 가능한 것을 제거합니"
 "다.\n"
 
 #: cmd.rc:241
-#, fuzzy
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9679,9 +9646,9 @@ msgstr ""
 "형식:FTYPE[파일형식[=[열기명령]]]\n"
 "\n"
 "매개변수가 없으면, 열기 명령 문자열에 현재 정의된 파일 형식을 보여 줍니다\n"
-"만약 파일 형식만 사용된다면, 열기 명령 문자열에 연결된 가능 한 것을 보여줍니"
-"다.\n"
-"= 다음에 열기 명령이 지정되지 않으면 지정된 파일 형식에 연결된 명령어 문자열"
+"만약 파일 형식만 사용된다면, 열기 명령 문자열에 연결된 것을 보여줍니다,"
+"가능한 것을.\n"
+"등호(=) 다음에 열기 명령이 지정되지 않으면 지정된 파일 형식에 연결된 명령어 문자열"
 "을 제거 합니다.\n"
 
 #: cmd.rc:243
@@ -9786,7 +9753,6 @@ msgstr ""
 "HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
 
 #: cmd.rc:290
-#, fuzzy
 msgid "Are you sure?"
 msgstr "당신은 확신합니까?"
 
@@ -9809,9 +9775,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "이 파일 형식 '%1'과 연결된 어떠한 명령도 없습니다.'\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "Overwrite %1?"
-msgstr "%1 덮어쓰기"
+msgstr "%1을(를) 덮어쓰겠습니까?"
 
 #: cmd.rc:296
 msgid "More..."
@@ -9871,9 +9836,8 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:312
-#, fuzzy
 msgid "Delete %1?"
-msgstr "지우기"
+msgstr "%1을(를) 지우겠습니까?"
 
 #: cmd.rc:313
 msgid "Echo is %1\n"
@@ -9934,14 +9898,12 @@ msgid "Volume in drive %1!c! has no label.\n"
 msgstr "드라이브 %1!c!는 라벨을 가지고 있지 않습니다.\n"
 
 #: cmd.rc:327
-#, fuzzy
 msgid " (Yes|No)"
-msgstr "%1? (예|아니오)\n"
+msgstr "(예|아니오)"
 
 #: cmd.rc:328
-#, fuzzy
 msgid " (Yes|No|All)"
-msgstr "%1? (예|아니오)\n"
+msgstr "(예|아니오|모두)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -11396,7 +11358,6 @@ msgstr ""
 "합니다; 'start /L'을 실행시키면 자세한 것을 볼 수 있습니다\n"
 
 #: start.rc:64
-#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -11416,17 +11377,18 @@ msgid ""
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"당신은 이것을 자유 소프트웨어 재단에 위해 발표된GNU 약소 일반 공중 사용 허가"
-"서의 조건에 따라 수정이나 배포를 할 수 있습니다;버젼 2.1의 라이센스나,(당신"
+"당신은 이것을 자유 소프트웨어 재단에 위해 발표된 GNU 약소 일반 공중 사용 허가서의"
+"조건에 따라 수정이나 배포를 할 수 있습니다;버젼 2.1의 라이센스나,(당신"
 "의 선택에 따라)무엇이든 최신 버젼을 사용합니다.\n"
 "\n"
-"이 프로그램은 '어떠한 보증도 없이' 유용하고 사용될 것이라는 희망으로 배포됩니"
+"이 프로그램은 '어떠한 보증도 없이' 유용하게 사용될 것이라는 희망으로 배포됩니"
 "다; 심지어 '특정 목적에 대한 적합성'및 '상품성'의 묵시적 보증도 없습니다. 자"
 "세한 내용은 GNU 약소 일반 공중 사용 허가서를 참고하십시오.\n"
 "\n"
 "당신은 이 프로그램에 포함되어 있는 GNU 약소 공중 사용 허가서의 사본을 받으셨"
 "을 것입니다; 그렇지 않으면 자유 소프트웨어 재단 주식회사 , 51 Franklin St, "
 "Fifth Floor, Boston, MA 02110-1301, USA에 편지를 보내십시오.\n"
+"\n"
 "COPYING.LIB 파일에서 라이센스 정보를 볼 수 있습니다.\n"
 
 #: start.rc:66
@@ -12404,23 +12366,22 @@ msgid "Application settings"
 msgstr "응용프로그램 설정 "
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine은 각각의 프로그램에 대해서 다른 버전의 윈도우즈를 흉내낼 수 있습니다. "
-"이 탭은 라이브러리 탭, 그래픽 탭과 연결되어 있어서, 이들 탭을 이용하여 시스"
-"템 전체 또는 프로그램별로 설정이 가능합니다."
+"Wine은 각 응용 프로그램에 대한 서로 다른 Windows 버전을 모방할 수 있습니다.이 탭은 "
+"시스템 전체뿐만 아니라 해당 탭의 각각의 응용프로그램 설정을 변경할 수 있도록 라이브러리 및 "
+"그래픽 탭에 연결되어 있습니다."
 
 #: winecfg.rc:150
 msgid "&Add application..."
-msgstr "어플리케이션 추가(&A)..."
+msgstr "응용프로그램 추가(&A)..."
 
 #: winecfg.rc:151
 msgid "&Remove application"
-msgstr "어플리케이션 제거(&R)"
+msgstr "응용프로그램 제거(&R)"
 
 #: winecfg.rc:152
 msgid "&Windows Version:"
@@ -13006,11 +12967,11 @@ msgstr "버퍼 존"
 
 #: wineconsole.rc:101
 msgid "&Width:"
-msgstr "너비(&W) :"
+msgstr "너비(&W):"
 
 #: wineconsole.rc:104
 msgid "&Height:"
-msgstr "높이(&H) :"
+msgstr "높이(&H):"
 
 #: wineconsole.rc:108
 msgid "Window size"
@@ -13647,9 +13608,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "다시 실행(&E)\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
-msgstr "지우기(&C)\tDEL"
+msgstr "지우기(&C)\tDel"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
@@ -13971,12 +13931,10 @@ msgstr ""
 "입니다. 당신은 정말로 저장하기를 원합니까?"
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
 msgstr "올바르지 않은 숫자 형식"
 
 #: wordpad.rc:188
-#, fuzzy
 msgid "OLE storage documents are not supported."
 msgstr "OLE 저장 문서는 지원되지 않습니다"
 
@@ -13997,7 +13955,6 @@ msgid "You do not have access to open the file."
 msgstr "파일을 열 권한이 없습니다."
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
 msgstr "인쇄는 지원되지 않습니다"
 
@@ -14014,7 +13971,6 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "올바르지 않은 매개변수의 갯수 - xcopy /?로 도움말을 보시오\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "올바르지 않은 매개변수 '%1' -  xcopy /?로 도움말을 보시오\n"
 
