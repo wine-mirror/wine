@@ -1637,6 +1637,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             D3DXPARAMETER_DESC pdesc;
             BOOL bvalue;
             INT ivalue;
+            FLOAT fvalue;
             DWORD input_value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
             DWORD expected_value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
             UINT l;
@@ -1778,6 +1779,23 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             else
             {
                 ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetIntArray failed, got %#x, expected %#x\n",
+                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+            }
+            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
+            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+
+            /* SetFloat */
+            fvalue = 1.33;
+            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            hr = effect->lpVtbl->SetFloat(effect, parameter, fvalue);
+            if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
+            {
+                set_number(expected_value, res_desc->Type, &fvalue, D3DXPT_FLOAT);
+                ok(hr == D3D_OK, "%u - %s: SetFloat failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+            }
+            else
+            {
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloat failed, got %#x, expected %#x\n",
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
