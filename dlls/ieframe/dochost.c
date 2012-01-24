@@ -589,9 +589,11 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
         switch(nCmdID) {
         case CMDID_EXPLORER_UPDATEHISTORY:
             update_travellog(This);
-            break;
+            return S_OK;
+
         default:
             FIXME("Unimplemented cmd %d of CGID_Explorer\n", nCmdID);
+            return E_NOTIMPL;
         }
     }
 
