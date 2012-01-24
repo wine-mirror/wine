@@ -1800,6 +1800,33 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
             test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+
+            /* SetFloatArray */
+            fvalue = 1.33;
+            for (l = 0; l < res_desc->Bytes / sizeof(fvalue); ++l)
+            {
+                *(input_value + l) = *(DWORD *)&fvalue;
+                fvalue += 1.12;
+            }
+            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            hr = effect->lpVtbl->SetFloatArray(effect, parameter, (FLOAT *)input_value, res_desc->Bytes / sizeof(*input_value));
+            if (res_desc->Class == D3DXPC_SCALAR
+                    || res_desc->Class == D3DXPC_VECTOR
+                    || res_desc->Class == D3DXPC_MATRIX_ROWS)
+            {
+                for (l = 0; l < res_desc->Bytes / sizeof(*input_value); ++l)
+                {
+                    set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_FLOAT);
+                }
+                ok(hr == D3D_OK, "%u - %s: SetFloatArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+            }
+            else
+            {
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloatArray failed, got %#x, expected %#x\n",
+                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+            }
+            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
+            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
         }
 
         count = effect->lpVtbl->Release(effect);
