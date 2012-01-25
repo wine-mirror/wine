@@ -1825,7 +1825,6 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     if(This->lcl_offs_frames + *frames > This->bufsize_frames){
         UINT32 chunk_bytes, offs_bytes, frames_bytes;
         if(This->tmp_buffer_frames < *frames){
-            if(This->tmp_buffer)
             HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
             This->tmp_buffer = HeapAlloc(GetProcessHeap(), 0,
                     *frames * This->fmt->nBlockAlign);
@@ -1842,7 +1841,7 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
         offs_bytes = This->lcl_offs_frames * This->fmt->nBlockAlign;
         frames_bytes = *frames * This->fmt->nBlockAlign;
         memcpy(This->tmp_buffer, This->local_buffer + offs_bytes, chunk_bytes);
-        memcpy(This->tmp_buffer, This->local_buffer,
+        memcpy(This->tmp_buffer + chunk_bytes, This->local_buffer,
                 frames_bytes - chunk_bytes);
     }else
         *data = This->local_buffer +
