@@ -2188,8 +2188,9 @@ msgid "&File name:"
 msgstr "&Файл"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
+#, fuzzy
 msgid "B&rowse..."
-msgstr "Избор"
+msgstr "Избор..."
 
 #: cryptui.rc:294
 msgid ""
@@ -10159,7 +10160,7 @@ msgid ""
 msgstr ""
 "Файлът '%s' не съществува.\n"
 "\n"
-" Искате ли да създадете нов файл?"
+"Искате ли да създадете нов файл?"
 
 #: notepad.rc:79
 msgid ""
@@ -10169,7 +10170,7 @@ msgid ""
 msgstr ""
 "Файлът '%s' е бил променен.\n"
 "\n"
-" Искате ли да съхраните промените?"
+"Искате ли да съхраните промените?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
@@ -12218,7 +12219,7 @@ msgstr "&Добавяне на приложение..."
 
 #: winecfg.rc:151
 msgid "&Remove application"
-msgstr "Пре&махване на приложение..."
+msgstr "Пре&махване на приложение"
 
 #: winecfg.rc:152
 msgid "&Windows Version:"
@@ -12286,7 +12287,7 @@ msgstr "Съществуващи замени:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "&Редактирай"
+msgstr "&Редактирай..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12339,7 +12340,7 @@ msgstr "&Добави..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "&Открий..."
+msgstr "&Открий"
 
 #: winecfg.rc:232
 msgid "&Path:"
