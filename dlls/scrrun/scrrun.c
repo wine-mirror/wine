@@ -65,3 +65,24 @@ HRESULT WINAPI DllUnregisterServer(void)
     TRACE("()\n");
     return __wine_unregister_resources(scrrun_instance);
 }
+
+/***********************************************************************
+ *      DllGetClassObject (scrrun.@)
+ */
+
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
+{
+    FIXME("(%s, %s, %p): stub\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    if(!ppv)
+        return E_INVALIDARG;
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      DllCanUnloadNow (scrrun.@)
+ */
+HRESULT WINAPI DllCanUnloadNow(void)
+{
+    return S_FALSE;
+}
