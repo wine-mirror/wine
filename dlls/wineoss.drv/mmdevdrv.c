@@ -115,7 +115,7 @@ struct ACImpl {
     char devnode[OSS_DEVNODE_SIZE];
 
     BOOL initted, playing;
-    UINT64 written_frames;
+    UINT64 written_frames, last_pos_frames;
     UINT32 period_us, period_frames, bufsize_frames, held_frames, tmp_buffer_frames;
     UINT32 oss_bufsize_bytes, lcl_offs_frames; /* offs into local_buffer where valid data starts */
 
@@ -1454,6 +1454,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
     }
     This->lcl_offs_frames = 0;
     This->held_frames = 0;
+    This->last_pos_frames = 0;
 
     LeaveCriticalSection(&This->lock);
 
@@ -1953,8 +1954,7 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
         UINT64 *qpctime)
 {
     ACImpl *This = impl_from_IAudioClock(iface);
-    UINT32 pad;
-    HRESULT hr;
+    int delay;
 
     TRACE("(%p)->(%p, %p)\n", This, pos, qpctime);
 
@@ -1963,16 +1963,37 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
 
     EnterCriticalSection(&This->lock);
 
-    hr = IAudioClient_GetCurrentPadding(&This->IAudioClient_iface, &pad);
-    if(FAILED(hr)){
-        LeaveCriticalSection(&This->lock);
-        return hr;
+    if(This->dataflow == eRender){
+        if(!This->playing || !This->held_frames ||
+                ioctl(This->fd, SNDCTL_DSP_GETODELAY, &delay) < 0)
+            delay = 0;
+        else
+            delay /= This->fmt->nBlockAlign;
+        if(This->held_frames + delay >= This->written_frames)
+            *pos = This->last_pos_frames;
+        else{
+            *pos = This->written_frames - This->held_frames - delay;
+            if(*pos < This->last_pos_frames)
+                *pos = This->last_pos_frames;
+        }
+    }else if(This->dataflow == eCapture){
+        audio_buf_info bi;
+        UINT32 held;
+
+        if(ioctl(This->fd, SNDCTL_DSP_GETISPACE, &bi) < 0){
+            TRACE("GETISPACE failed: %d (%s)\n", errno, strerror(errno));
+            held = 0;
+        }else{
+            if(bi.bytes <= bi.fragsize)
+                held = 0;
+            else
+                held = bi.bytes / This->fmt->nBlockAlign;
+        }
+
+        *pos = This->written_frames + held;
     }
 
-    if(This->dataflow == eRender)
-        *pos = This->written_frames - pad;
-    else if(This->dataflow == eCapture)
-        *pos = This->written_frames + pad;
+    This->last_pos_frames = *pos;
 
     LeaveCriticalSection(&This->lock);
 
