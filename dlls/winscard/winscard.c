@@ -116,6 +116,20 @@ LONG WINAPI SCardReleaseContext(SCARDCONTEXT context)
     return SCARD_F_INTERNAL_ERROR;
 }
 
+LONG WINAPI SCardStatusA(SCARDHANDLE context, LPSTR szReaderName, LPDWORD pcchReaderLen, LPDWORD pdwState, LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen)
+{
+    FIXME("(%lx) stub\n", context);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return SCARD_F_INTERNAL_ERROR;
+}
+
+LONG WINAPI SCardStatusW(SCARDHANDLE context, LPWSTR szReaderName, LPDWORD pcchReaderLen, LPDWORD pdwState,LPDWORD pdwProtocol,LPBYTE pbAtr,LPDWORD pcbArtLen)
+{
+    FIXME("(%lx) stub\n", context);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return SCARD_F_INTERNAL_ERROR;
+}
+
 void WINAPI SCardReleaseStartedEvent(void)
 {
     FIXME("stub\n");

@@ -55,8 +55,8 @@
 @ stub SCardSetCardTypeProviderNameA
 @ stub SCardSetCardTypeProviderNameW
 @ stub SCardState
-@ stub SCardStatusA
-@ stub SCardStatusW
+@ stdcall SCardStatusA (long str long long long ptr long )
+@ stdcall SCardStatusW (long wstr long long long ptr long )
 @ stub SCardTransmit
 @ extern g_rgSCardRawPci
 @ extern g_rgSCardT0Pci
