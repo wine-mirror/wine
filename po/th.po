@@ -3058,7 +3058,7 @@ msgstr ""
 #: hhctrl.rc:62 winhlp32.rc:31
 #, fuzzy
 msgid "&Print..."
-msgstr "พิมพ์\tCtrl+P"
+msgstr "พิมพ์...\tCtrl+P"
 
 #: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
@@ -9859,7 +9859,7 @@ msgstr "บันทืก\tCtrl+S"
 
 #: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
-msgstr "พิมพ์\tCtrl+P"
+msgstr "พิมพ์...\tCtrl+P"
 
 #: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
@@ -9908,7 +9908,7 @@ msgstr "ห่อบรรทัดยาว"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr "ค้นหา\tCtrl+F"
+msgstr "ค้นหา...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
@@ -10038,7 +10038,8 @@ msgid ""
 "Do you want to create a new file?"
 msgstr ""
 "ไม่พบแฟ้ม '%s' ที่ต้องการเปิด\n"
-"คุณต้องการสร้างใหม่ไม่ ?"
+"\n"
+"คุณต้องการสร้างใหม่ไม่?"
 
 #: notepad.rc:79
 msgid ""
@@ -10046,11 +10047,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"มีการเปลี่ยนแปลงกับเอกสาร\n"
+"มีการเปลี่ยนแปลงกับเอกสาร '%s'\n"
 "\n"
-"'%s'\n"
-"\n"
-"คุณต้องการบันทึกมันหรือไม่ ?"
+"คุณต้องการบันทึกมันหรือไม่?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
