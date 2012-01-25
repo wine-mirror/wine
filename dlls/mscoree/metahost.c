@@ -1171,7 +1171,7 @@ static MonoAssembly* mono_assembly_search_hook_fn(MonoAssemblyName *aname, char 
     MonoImageOpenStatus stat;
     static WCHAR fusiondll[] = {'f','u','s','i','o','n',0};
     HMODULE hfusion=NULL;
-    static HRESULT WINAPI (*pCreateAssemblyCache)(IAssemblyCache**,DWORD);
+    static HRESULT (WINAPI *pCreateAssemblyCache)(IAssemblyCache**,DWORD);
 
     stringname = mono->mono_stringify_assembly_name(aname);
 
