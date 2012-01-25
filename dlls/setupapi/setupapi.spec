@@ -246,8 +246,8 @@
 @ stub SetupAddInstallSectionToDiskSpaceListW
 @ stub SetupAddSectionToDiskSpaceListA
 @ stub SetupAddSectionToDiskSpaceListW
-@ stub SetupAddToDiskSpaceListA
-@ stub SetupAddToDiskSpaceListW
+@ stdcall SetupAddToDiskSpaceListA(long str int64 long ptr long)
+@ stdcall SetupAddToDiskSpaceListW(long wstr int64 long ptr long)
 @ stub SetupAddToSourceListA
 @ stub SetupAddToSourceListW
 @ stub SetupAdjustDiskSpaceListA
