@@ -788,6 +788,26 @@ static void test_navigatecomplete2(DISPPARAMS *dp)
     test_ready_state((dwl_flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK)) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
 }
 
+static void test_documentcomplete(DISPPARAMS *dp)
+{
+    VARIANT *v;
+
+    CHECK_EXPECT(Invoke_DOCUMENTCOMPLETE);
+
+    ok(dp->rgvarg != NULL, "rgvarg == NULL\n");
+    ok(dp->cArgs == 2, "cArgs=%d, expected 2\n", dp->cArgs);
+
+    ok(V_VT(dp->rgvarg) == (VT_BYREF|VT_VARIANT), "V_VT(dp->rgvarg) = %d\n", V_VT(dp->rgvarg));
+    v = V_VARIANTREF(dp->rgvarg);
+    ok(V_VT(v) == VT_BSTR, "V_VT(url) = %d\n", V_VT(v));
+    ok(!strcmp_wa(V_BSTR(v), current_url), "url=%s, expected %s\n", wine_dbgstr_w(V_BSTR(v)), current_url);
+
+    ok(V_VT(dp->rgvarg+1) == VT_DISPATCH, "V_VT(dp->rgvarg+1) = %d\n", V_VT(dp->rgvarg+1));
+    ok(V_DISPATCH(dp->rgvarg+1) == (IDispatch*)wb, "V_DISPATCH=%p, wb=%p\n", V_DISPATCH(dp->rgvarg+1), wb);
+
+    test_ready_state(READYSTATE_COMPLETE);
+}
+
 static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
@@ -925,9 +945,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         break;
 
     case DISPID_DOCUMENTCOMPLETE:
-        CHECK_EXPECT(Invoke_DOCUMENTCOMPLETE);
-        /* FIXME */
-        test_ready_state(READYSTATE_COMPLETE);
+        test_documentcomplete(pDispParams);
         break;
 
     case 282: /* FIXME */

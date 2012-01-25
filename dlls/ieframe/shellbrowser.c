@@ -809,7 +809,7 @@ static HRESULT WINAPI DocObjectService_FireDocumentComplete(
     TRACE("got URL %s\n", debugstr_w(url));
 
     V_VT(params) = (VT_BYREF|VT_VARIANT);
-    V_BYREF(params) = &url;
+    V_VARIANTREF(params) = &url_var;
 
     V_VT(params+1) = VT_DISPATCH;
     V_DISPATCH(params+1) = (IDispatch*)This->doc_host->wb;
