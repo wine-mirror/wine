@@ -2178,12 +2178,11 @@ msgid "B&rowse..."
 msgstr "&Обзор..."
 
 #: cryptui.rc:294
-#, fuzzy
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"Примечание: Набор сертификатов, список отзыва и список доверия сертификатов "
+"Примечание: сертификаты, список отзыва и список доверия сертификатов "
 "могут содержаться в файлах следующих форматов:"
 
 #: cryptui.rc:296
@@ -2387,21 +2386,19 @@ msgid "Certificate Information"
 msgstr "Информация о сертификате"
 
 #: cryptui.rc:29
-#, fuzzy
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
-"Ошибка в подписи сертификата. Возможно сертификат изменён или испорчен."
+"Ошибка в подписи сертификата. Возможно сертификат был изменён или испорчен."
 
 #: cryptui.rc:30
-#, fuzzy
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
 "Нет доверия к корневому сертификату. Чтобы установить доверие, добавьте его "
-"в хранилище \"Доверенные корневые сертификаты\" системы."
+"в системное хранилище доверенных корневых сертификатов."
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
@@ -2544,12 +2541,11 @@ msgid "Please select a certificate store."
 msgstr "Выберите хранилище сертификатов."
 
 #: cryptui.rc:69
-#, fuzzy
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
-"Этот файл содержит объекты, не подходящие для заданных условий. Выберите "
+"Этот файл содержит объекты, не удовлетворяющие заданным критериям. Выберите "
 "другой файл."
 
 #: cryptui.rc:70
@@ -2601,7 +2597,6 @@ msgid "Please select a file."
 msgstr "Пожалуйста, выберите файл."
 
 #: cryptui.rc:82
-#, fuzzy
 msgid "The file format is not recognized. Please select another file."
 msgstr "Формат файла не распознан. Выберите другой файл."
 
@@ -2842,7 +2837,6 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "Укажите имя файла для сохранения содержимого."
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
 msgstr "Указанный файл уже существует. Вы хотите заменить его?"
 
@@ -2915,9 +2909,8 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "Примечание: Открыть закрытый ключ этого сертификата нельзя."
 
 #: cryptui.rc:173
-#, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
-msgstr "Примечание: Закрытый ключ этого сертификата не экспортируемый."
+msgstr "Примечание: закрытый ключ этого сертификата не экспортируемый."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -5702,9 +5695,8 @@ msgid "Event log file changed\n"
 msgstr "Журнал событий изменился\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed\n"
-msgstr "Сбой службы установщика.\n"
+msgstr "Сбой службы установщика\n"
 
 #: winerror.mc:2731
 msgid "Installation aborted by user\n"
@@ -6636,12 +6628,12 @@ msgid "Done"
 msgstr "Готово"
 
 #: msi.rc:27
-#, fuzzy
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
-"Указанный пакет не может быть открыт. Проверьте файл и повторите попытку."
+"Указанный установочный пакет не может быть открыт. Проверьте путь к файлу "
+"и повторите попытку."
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -7171,16 +7163,14 @@ msgstr ""
 "с помощью %s."
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
-"Вставка содержимого буфера обмена в документ так, что его можно активировать "
+"Вставка содержимого буфера обмена в документ так, его можно будет активировать "
 "с помощью %s. Он будет отображаться в виде значка."
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
@@ -7190,7 +7180,6 @@ msgstr ""
 "исходным файлом, так что изменения в нём будут отражаться в документе."
 
 #: oledlg.rc:38
-#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
@@ -7200,7 +7189,6 @@ msgstr ""
 "исходным файлом, так что изменения в нём будут отражаться в документе."
 
 #: oledlg.rc:39
-#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
@@ -7907,30 +7895,28 @@ msgid "My Pictures"
 msgstr "Мои рисунки"
 
 #: shell32.rc:215
-#, fuzzy
 msgid "Common Files"
-msgstr "Общее имя"
+msgstr ""
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
-msgstr "Общие документы"
+msgstr "Документы"
 
 #: shell32.rc:217
-#, fuzzy
 msgid "Administrative Tools"
-msgstr "Главное меню\\Программы\\Администрирование"
+msgstr "Администрирование"
 
 #: shell32.rc:218
 msgid "Music"
-msgstr "Общие документы\\Моя музыка"
+msgstr "Музыка"
 
 #: shell32.rc:219
 msgid "Pictures"
-msgstr "Общие документы\\Мои рисунки"
+msgstr "Рисунки"
 
 #: shell32.rc:220
 msgid "Videos"
-msgstr "Общие документы\\Мои фильмы"
+msgstr "Видео"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
@@ -7945,14 +7931,12 @@ msgid "Links"
 msgstr "Ссылки"
 
 #: shell32.rc:223
-#, fuzzy
 msgid "Slide Shows"
-msgstr "Рисунки\\Слайд-шоу"
+msgstr "Слайд-шоу"
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
-msgstr "Музыка\\Списки воспроизведения"
+msgstr "Списки воспроизведения"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -7967,24 +7951,20 @@ msgid "Model"
 msgstr "Модель"
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
-msgstr "Музыка\\Образцы музыки"
+msgstr "Образцы музыки"
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
-msgstr "Изображения\\Образцы изображений"
+msgstr "Образцы изображений"
 
 #: shell32.rc:227
-#, fuzzy
 msgid "Sample Playlists"
-msgstr "Музыка\\Образцы списков воспроизведения"
+msgstr "Образцы списков воспроизведения"
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
-msgstr "Видео\\Образцы видео"
+msgstr "Образцы видео"
 
 #: shell32.rc:229
 msgid "Saved Games"
@@ -8136,7 +8116,6 @@ msgid "Confirm overwrite"
 msgstr "Подтверждение замены"
 
 #: shell32.rc:265
-#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8156,7 +8135,7 @@ msgstr ""
 "его и/или модифицировать согласно условиям лицензии GNU LGPL версии 2.1 (или "
 "более поздней по вашему выбору), опубликованной Free Software Foundation.\n"
 "\n"
-"Пакет Wine распространяется в надежде на то, что он окажется полезным вам, "
+"Пакет Wine распространяется в надежде на то, что он окажется полезен вам, "
 "но без КАКИХ-ЛИБО ГАРАНТИЙ; в том числе без неявных ГАРАНТИЙ ТОВАРНОГО "
 "СОСТОЯНИЯ и ПРИГОДНОСТИ ДЛЯ КОНКРЕТНЫХ ЦЕЛЕЙ. За подробной информацией "
 "обратитесь к лицензии GNU LGPL.\n"
@@ -8222,23 +8201,20 @@ msgid "Ma&ximize"
 msgstr "&Развернуть"
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "&Закрыть\tAlt-F4"
+msgstr "&Закрыть\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
 msgstr "&О Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "&Закрыть\tCtrl-F4"
+msgstr "&Закрыть\tCtrl+F4"
 
 #: user32.rc:48
-#, fuzzy
 msgid "Nex&t\tCtrl+F6"
-msgstr "С&ледующее\tCtrl-F6"
+msgstr "С&ледующее\tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -8930,9 +8906,8 @@ msgid "&Output File Name:"
 msgstr "&Имя файла:"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "Такой файл уже существует.  Нажмите OK для его замены."
+msgstr "Такой файл уже существует. Нажмите OK чтобы его заменить."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -9533,13 +9508,12 @@ msgstr ""
 "<text>'\n"
 
 #: cmd.rc:153
-#, fuzzy
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
 "Командная строка, начинающаяся с REM (с последующим пробелом) не выполняет\n"
-"никаких действий, поэтому REM используется для комментариев в bat-файлах.\n"
+"никаких действий, REM используется для комментариев в bat-файлах.\n"
 
 #: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
@@ -9559,7 +9533,6 @@ msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <директория> удаляет поддиректорию.\n"
 
 #: cmd.rc:178
-#, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9587,7 +9560,7 @@ msgstr ""
 "SET <переменная>=<значение>\n"
 "\n"
 "где <переменная> и <значение> являются символьными строками. Перед знаком\n"
-"равно не должно быть пробелов, имя переменной не может содержать\n"
+"равенства не должно быть пробелов, имя переменной не может содержать\n"
 "пробелы.\n"
 "\n"
 "В Wine переменные окружения основной операционной системы включены\n"
@@ -9610,11 +9583,8 @@ msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME устанавливает или отображает системное время.\n"
 
 #: cmd.rc:187
-#, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr ""
-"Устанавливает заголовок окна cmd для текущей сессии.\n"
-" Синтаксис: TITLE <строка>\n"
+msgstr "TITLE <строка> устанавливает заголовок окна cmd.\n"
 
 #: cmd.rc:191
 msgid ""
@@ -9627,7 +9597,6 @@ msgstr ""
 "отсутствует.\n"
 
 #: cmd.rc:200
-#, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9640,11 +9609,11 @@ msgstr ""
 "VERIFY предназначена для установки, сброса или определения флага проверки\n"
 "корректности записи файлов на диск. Возможные значения:\n"
 "\n"
-"VERIFY ON\tУстановить флаг\n"
-"VERIFY OFF\tСбросить флаг\n"
+"VERIFY ON\tустановить флаг.\n"
+"VERIFY OFF\tсбросить флаг.\n"
 "VERIFY\t\tВыводит текущее состояние: ON или OFF.\n"
 "\n"
-"Флаг verify не используется Wine.\n"
+"Этот флаг не используется в Wine.\n"
 
 #: cmd.rc:203
 msgid "VER displays the version of cmd you are running.\n"
@@ -9687,14 +9656,10 @@ msgstr ""
 "а затем переходит в указанный каталог.\n"
 
 #: cmd.rc:222
-#, fuzzy
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
-msgstr ""
-"POPD переходит в каталог, сохранённый командой\n"
-"PUSHD.\n"
+msgstr "POPD переходит в каталог, сохранённый командой PUSHD.\n"
 
 #: cmd.rc:230
-#, fuzzy
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9705,17 +9670,16 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
-"ASSOC показывает или изменяет сопоставления типов файлов\n"
+"ASSOC показывает или изменяет сопоставления типов файлов.\n"
 "\n"
 "Синтаксис: ASSOC [.расширение[=[тип_файла]]]\n"
 "\n"
 "Без параметров ASSOC выводит все текущие сопоставления.\n"
 "Если указано только расширение, выводится сопоставление для него.\n"
-"При отсутствии типа файла после знака равно текущее сопоставление "
+"При отсутствии типа файла после знака равенства текущее сопоставление "
 "удаляется.\n"
 
 #: cmd.rc:241
-#, fuzzy
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9728,7 +9692,7 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
-"FTYPE показывает или изменяет команды открытия, связанные с типами файлов\n"
+"FTYPE показывает или изменяет команды открытия, связанные с типами файлов.\n"
 "\n"
 "Синтаксис: FTYPE [тип_файла[=[команда_открытия]]]\n"
 "\n"
@@ -9839,9 +9803,8 @@ msgstr ""
 "командам.\n"
 
 #: cmd.rc:290
-#, fuzzy
 msgid "Are you sure?"
-msgstr "Вы уверены"
+msgstr "Вы уверены?"
 
 #: cmd.rc:291 xcopy.rc:40
 msgctxt "Yes key"
@@ -9862,9 +9825,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "Не работает команда, ассоциированная с типом файлов '%1'\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "Overwrite %1?"
-msgstr "Перезаписать %1"
+msgstr "Перезаписать %1?"
 
 #: cmd.rc:296
 msgid "More..."
@@ -9924,9 +9886,8 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:312
-#, fuzzy
 msgid "Delete %1?"
-msgstr "Удалить"
+msgstr "Удалить %1?"
 
 #: cmd.rc:313
 msgid "Echo is %1\n"
@@ -9989,14 +9950,12 @@ msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
 #: cmd.rc:327
-#, fuzzy
 msgid " (Yes|No)"
-msgstr "%1? (Y - Да|N - Нет)\n"
+msgstr " (Y - да|N - нет)"
 
 #: cmd.rc:328
-#, fuzzy
 msgid " (Yes|No|All)"
-msgstr "%1? (Y - Да|N - Нет)\n"
+msgstr " (Y - да|N - нет|A - все)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -12470,14 +12429,13 @@ msgid "Application settings"
 msgstr "Настройка приложений"
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine может имитировать любую версию Windows для каждого приложения. Эта "
-"вкладка связана с вкладками Библиотеки и Графика, что позволяет изменение "
+"Wine может имитировать различные версии Windows для каждого приложения отдельно. "
+"Эта вкладка связана с вкладками Библиотеки и Графика, что позволяет изменение "
 "настроек в этих вкладках как для определённого приложения, так и глобально."
 
 #: winecfg.rc:150
@@ -13048,7 +13006,6 @@ msgid "Command history"
 msgstr "История команд"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
 msgstr "&История команд:"
 
@@ -13716,9 +13673,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Повторить\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
-msgstr "&Удалить\tDEL"
+msgstr "&Удалить\tDel"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
@@ -14040,14 +13996,12 @@ msgstr ""
 "форматирования. Подтверждаете выполнение этой операции?"
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
-msgstr "Неправильный числовой формат"
+msgstr "Неправильный числовой формат."
 
 #: wordpad.rc:188
-#, fuzzy
 msgid "OLE storage documents are not supported."
-msgstr "Документы в виде OLE-хранилища не поддерживаются"
+msgstr "Документы в виде OLE-хранилища не поддерживаются."
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -14066,9 +14020,8 @@ msgid "You do not have access to open the file."
 msgstr "Недостаточно прав для открытия файла."
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
-msgstr "Печать не поддерживается"
+msgstr "Печать не поддерживается."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
@@ -14085,12 +14038,8 @@ msgstr ""
 "подробного описания\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr ""
-"Недопустимый параметр '%1' - воспользуйтесь 'xcopy /?' для получения "
-"подробного\n"
-"описания\n"
+msgstr "Неверный параметр '%1' - воспользуйтесь 'xcopy /?'\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
