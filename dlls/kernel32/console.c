@@ -3201,3 +3201,17 @@ VOID WINAPI ExpungeConsoleCommandHistoryW(LPCWSTR unknown)
     FIXME(": (%s) stub!\n", debugstr_w(unknown));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 }
+
+BOOL WINAPI AddConsoleAliasA(LPSTR source, LPSTR target, LPSTR exename)
+{
+    FIXME(": (%s, %s, %s) stub!\n", debugstr_a(source), debugstr_a(target), debugstr_a(exename));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+BOOL WINAPI AddConsoleAliasW(LPWSTR source, LPWSTR target, LPWSTR exename)
+{
+    FIXME(": (%s, %s, %s) stub!\n", debugstr_w(source), debugstr_w(target), debugstr_w(exename));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
