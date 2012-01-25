@@ -138,7 +138,7 @@
 @ stdcall GetTcpStatistics( ptr )
 @ stub GetTcpStatsFromStack
 @ stdcall GetTcpTable( ptr ptr long )
-#@ stub GetTcpTable2
+@ stdcall GetTcpTable2( ptr ptr long )
 @ stub GetTcpTableFromStack
 #@ stub GetTeredoPort
 #@ stub GetUdp6Table

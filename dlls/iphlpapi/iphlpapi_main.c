@@ -2276,3 +2276,12 @@ DWORD WINAPI PfCreateInterface(DWORD dwName, PFFORWARD_ACTION inAction, PFFORWAR
     FIXME("(%d %d %d %x %x %p) stub\n", dwName, inAction, outAction, bUseLog, bMustBeUnique, ppInterface);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/******************************************************************
+ *    GetTcpTable2 (IPHLPAPI.@)
+ */
+ULONG WINAPI GetTcpTable2(PMIB_TCPTABLE2 table, PULONG size, BOOL order)
+{
+    FIXME("pTcpTable2 %p, pdwSize %p, bOrder %d: stub\n", table, size, order);
+    return ERROR_NOT_SUPPORTED;
+}
