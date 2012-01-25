@@ -2285,3 +2285,21 @@ ULONG WINAPI GetTcpTable2(PMIB_TCPTABLE2 table, PULONG size, BOOL order)
     FIXME("pTcpTable2 %p, pdwSize %p, bOrder %d: stub\n", table, size, order);
     return ERROR_NOT_SUPPORTED;
 }
+
+/******************************************************************
+ *    GetTcp6Table (IPHLPAPI.@)
+ */
+ULONG WINAPI GetTcp6Table(PMIB_TCP6TABLE table, PULONG size, BOOL order)
+{
+    FIXME("pTcp6Table %p, size %p, order %d: stub\n", table, size, order);
+    return ERROR_NOT_SUPPORTED;
+}
+
+/******************************************************************
+ *    GetTcp6Table2 (IPHLPAPI.@)
+ */
+ULONG WINAPI GetTcp6Table2(PMIB_TCP6TABLE2 table, PULONG size, BOOL order)
+{
+    FIXME("pTcp6Table2 %p, size %p, order %d: stub\n", table, size, order);
+    return ERROR_NOT_SUPPORTED;
+}

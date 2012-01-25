@@ -67,6 +67,38 @@ typedef struct _MIB_TCPTABLE
     MIB_TCPROW table[1];
 } MIB_TCPTABLE, *PMIB_TCPTABLE;
 
+typedef struct _MIB_TCP6ROW {
+    MIB_TCP_STATE State;
+    IN6_ADDR LocalAddr;
+    DWORD dwLocalScopeId;
+    DWORD dwLocalPort;
+    IN6_ADDR RemoteAddr;
+    DWORD dwRemoteScopeId;
+    DWORD dwRemotePort;
+} MIB_TCP6ROW, *PMIB_TCP6ROW;
+
+typedef struct _MIB_TCP6TABLE {
+    DWORD dwNumEntries;
+    MIB_TCP6ROW table[1];
+} MIB_TCP6TABLE, *PMIB_TCP6TABLE;
+
+typedef struct _MIB_TCP6ROW2 {
+    IN6_ADDR LocalAddr;
+    DWORD dwLocalScopeId;
+    DWORD dwLocalPort;
+    IN6_ADDR RemoteAddr;
+    DWORD dwRemoteScopeId;
+    DWORD dwRemotePort;
+    MIB_TCP_STATE State;
+    DWORD dwOwningPid;
+    TCP_CONNECTION_OFFLOAD_STATE dwOffloadState;
+} MIB_TCP6ROW2, *PMIB_TCP6ROW2;
+
+typedef struct _MIB_TCP6TABLE2 {
+    DWORD dwNumEntries;
+    MIB_TCP6ROW2 table[1];
+} MIB_TCP6TABLE2, *PMIB_TCP6TABLE2;
+
 typedef struct _MIB_TCPROW_OWNER_PID
 {
     DWORD dwState;

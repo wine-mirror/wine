@@ -132,8 +132,8 @@
 #@ stub GetPerTcpConnectionStats
 @ stdcall GetRTTAndHopCount( long ptr long ptr )
 #@ stub GetSessionCompartmentId
-#@ stub GetTcp6Table
-#@ stub GetTcp6Table2
+@ stdcall GetTcp6Table( ptr ptr long )
+@ stdcall GetTcp6Table2( ptr ptr long )
 #@ stub GetTcpStatisticsEx
 @ stdcall GetTcpStatistics( ptr )
 @ stub GetTcpStatsFromStack
