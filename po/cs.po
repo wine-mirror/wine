@@ -450,7 +450,7 @@ msgstr "&Zadané stránky"
 
 #: comdlg32.rc:206 comdlg32.rc:228
 msgid "&Setup"
-msgstr "&Nastavit..."
+msgstr "&Nastavit"
 
 #: comdlg32.rc:207
 msgid "&From:"
@@ -529,8 +529,9 @@ msgid "Font St&yle:"
 msgstr "St&yl:"
 
 #: comdlg32.rc:253 comdlg32.rc:430 winecfg.rc:280
+#, fuzzy
 msgid "&Size:"
-msgstr "Velikost"
+msgstr "Velikost:"
 
 #: comdlg32.rc:260
 msgid "Effects"
@@ -545,6 +546,7 @@ msgid "&Underline"
 msgstr "&Podtržení"
 
 #: comdlg32.rc:263 winecfg.rc:278
+#, fuzzy
 msgid "&Color:"
 msgstr "Barva:"
 
@@ -2201,8 +2203,9 @@ msgid "&File name:"
 msgstr "&Název souboru:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
+#, fuzzy
 msgid "B&rowse..."
-msgstr "Procházet"
+msgstr "Procházet..."
 
 #: cryptui.rc:294
 msgid ""
@@ -6754,7 +6757,7 @@ msgstr "Heslo"
 
 #: mpr.rc:44
 msgid "&Save this password (Insecure)"
-msgstr "&Uložit toto heslo (Není bezpečné) ?"
+msgstr "&Uložit toto heslo (Není bezpečné)"
 
 #: mpr.rc:27
 msgid "Entire Network"
@@ -6766,7 +6769,7 @@ msgstr "Výběr zvuku"
 
 #: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
-msgstr "&Uložit jako"
+msgstr "&Uložit jako..."
 
 #: msacm32.rc:39
 msgid "&Format:"
@@ -7877,8 +7880,9 @@ msgid "&About Control Panel"
 msgstr ""
 
 #: shell32.rc:270 shell32.rc:285
+#, fuzzy
 msgid "Browse for Folder"
-msgstr "Procházet..."
+msgstr "Procházet"
 
 #: shell32.rc:290
 #, fuzzy
@@ -7937,7 +7941,7 @@ msgstr "&Otevřít:"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:136
 msgid "&Browse..."
-msgstr "&Procházet"
+msgstr "&Procházet..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
@@ -8464,7 +8468,7 @@ msgstr "Plné jméno"
 
 #: wininet.rc:46 wininet.rc:66
 msgid "&Save this password (insecure)"
-msgstr "&Uložit toto heslo (nebezpečné) ?"
+msgstr "&Uložit toto heslo (nebezpečné)"
 
 #: wininet.rc:54
 msgid "Authentication Required"
@@ -8538,9 +8542,8 @@ msgid "The specified device handle is invalid."
 msgstr "Ukazatel na zařízení je neplatný."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "V systému není nainstalován žádný ovladač !\n"
+msgstr "V systému není nainstalován žádný ovladač!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -9522,7 +9525,7 @@ msgstr ""
 "\n"
 "V programu cmd není třeba zdvojovat znak % před proměnnou při použití "
 "příkazu\n"
-" FOR v dávkovém souboru.\n"
+"FOR v dávkovém souboru.\n"
 
 #: cmd.rc:81
 msgid ""
@@ -12715,7 +12718,7 @@ msgstr "Stávající náhrady:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "&Upravit"
+msgstr "&Upravit..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12768,7 +12771,7 @@ msgstr "Přid&at..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Auto&detekce..."
+msgstr "Auto&detekce"
 
 #: winecfg.rc:232
 msgid "&Path:"
