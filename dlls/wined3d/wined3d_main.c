@@ -444,7 +444,11 @@ static LRESULT CALLBACK wined3d_wndproc(HWND window, UINT message, WPARAM wparam
     proc = entry->proc;
     wined3d_wndproc_mutex_unlock();
 
-    return device_process_message(device, window, unicode, message, wparam, lparam, proc);
+    if (device)
+        return device_process_message(device, window, unicode, message, wparam, lparam, proc);
+    if (unicode)
+        return CallWindowProcW(proc, window, message, wparam, lparam);
+    return CallWindowProcA(proc, window, message, wparam, lparam);
 }
 
 BOOL wined3d_register_window(HWND window, struct wined3d_device *device)
@@ -515,6 +519,7 @@ void wined3d_unregister_window(HWND window)
         proc = GetWindowLongPtrW(window, GWLP_WNDPROC);
         if (proc != (LONG_PTR)wined3d_wndproc)
         {
+            entry->device = NULL;
             wined3d_wndproc_mutex_unlock();
             WARN("Not unregistering window %p, window proc %#lx doesn't match wined3d window proc %p.\n",
                     window, proc, wined3d_wndproc);
@@ -528,6 +533,7 @@ void wined3d_unregister_window(HWND window)
         proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
         if (proc != (LONG_PTR)wined3d_wndproc)
         {
+            entry->device = NULL;
             wined3d_wndproc_mutex_unlock();
             WARN("Not unregistering window %p, window proc %#lx doesn't match wined3d window proc %p.\n",
                     window, proc, wined3d_wndproc);
