@@ -1310,22 +1310,17 @@ static BOOL CRYPT_AsnDecodeOidIgnoreTag(const BYTE *pbEncoded, DWORD cbEncoded,
 
         if (dataLen)
         {
-            /* The largest possible string for the first two components
-             * is 2.175 (= 2 * 40 + 175 = 255), so this is big enough.
-             */
-            char firstTwo[6];
             const BYTE *ptr;
+            char str[32];
 
-            snprintf(firstTwo, sizeof(firstTwo), "%d.%d",
+            snprintf(str, sizeof(str), "%d.%d",
              pbEncoded[1 + lenBytes] / 40,
              pbEncoded[1 + lenBytes] - (pbEncoded[1 + lenBytes] / 40)
              * 40);
-            bytesNeeded += strlen(firstTwo) + 1;
+            bytesNeeded += strlen(str) + 1;
             for (ptr = pbEncoded + 2 + lenBytes; ret &&
              ptr - pbEncoded - 1 - lenBytes < dataLen; )
             {
-                /* large enough for ".4000000" */
-                char str[9];
                 int val = 0;
 
                 while (ptr - pbEncoded - 1 - lenBytes < dataLen &&
