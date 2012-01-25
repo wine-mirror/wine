@@ -1425,11 +1425,8 @@ static HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
         }
     }
 
-    if(!bSuccess) {
-        if(lpwh)
-            WININET_Release( &lpwh->hdr );
+    if(!bSuccess)
         return FALSE;
-    }
 
     return lpwh->hdr.hInternet;
 }
