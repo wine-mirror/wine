@@ -7200,7 +7200,7 @@ msgid ""
 msgstr ""
 "Insère le contenu du presse-papiers dans votre document comme %s. Les "
 "données sont liées au fichier source afin que les modifications de celui-"
-"cisoient répercutées dans votre document."
+"ci soient répercutées dans votre document."
 
 #: oledlg.rc:38
 msgid ""
@@ -8977,7 +8977,6 @@ msgid "&Output File Name:"
 msgstr "&Fichier de sortie :"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
 msgstr "Le fichier de sortie existe déjà. Cliquez sur OK pour l'écraser."
 
@@ -10393,62 +10392,59 @@ msgid "Encoding:"
 msgstr "Codage :"
 
 #: notepad.rc:129 wordpad.rc:278
-#, fuzzy
 msgctxt "accelerator Select All"
 msgid "^A"
-msgstr "T"
+msgstr "^A"
 
 #: notepad.rc:130 wordpad.rc:280
 msgctxt "accelerator Copy"
 msgid "^C"
-msgstr ""
+msgstr "^C"
 
 #: notepad.rc:131 regedit.rc:320 wordpad.rc:276
-#, fuzzy
 msgctxt "accelerator Find"
 msgid "^F"
-msgstr "F"
+msgstr "^F"
 
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "^H"
-msgstr ""
+msgstr "^H"
 
 #: notepad.rc:133 wordpad.rc:286
-#, fuzzy
 msgctxt "accelerator New"
 msgid "^N"
-msgstr "N"
+msgstr "^N"
 
 #: notepad.rc:134 wordpad.rc:287
 msgctxt "accelerator Open"
 msgid "^O"
-msgstr ""
+msgstr "^O"
 
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "^P"
-msgstr ""
+msgstr "^P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "^S"
-msgstr ""
+msgstr "^S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "^V"
-msgstr ""
+msgstr "^V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "^X"
-msgstr ""
+msgstr "^X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "^Z"
-msgstr ""
+msgstr "^Z"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -12506,7 +12502,7 @@ msgstr "&Droite"
 #: view.rc:51
 msgctxt "accelerator Quit"
 msgid "^Q"
-msgstr ""
+msgstr "^Q"
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
@@ -13563,12 +13559,12 @@ msgstr "Informations de version"
 #: winefile.rc:201 winemine.rc:99
 msgctxt "accelerator Exit"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: winefile.rc:202
 msgctxt "accelerator Fullscreen"
 msgid "^S"
-msgstr ""
+msgstr "^S"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -13996,38 +13992,37 @@ msgstr "Barres d'outils"
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "^L"
-msgstr ""
+msgstr "^L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "^E"
-msgstr ""
+msgstr "^E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "^R"
-msgstr ""
+msgstr "^R"
 
 #: wordpad.rc:282
-#, fuzzy
 msgctxt "accelerator Redo"
 msgid "^Y"
-msgstr "O"
+msgstr "^Y"
 
 #: wordpad.rc:283
 msgctxt "accelerator Bold"
 msgid "^B"
-msgstr ""
+msgstr "^B"
 
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "^I"
-msgstr ""
+msgstr "^I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "^U"
-msgstr ""
+msgstr "^U"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
