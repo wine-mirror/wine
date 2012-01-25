@@ -2043,8 +2043,12 @@ static void alsa_read_data(ACImpl *This)
 
     nread = snd_pcm_readi(This->pcm_handle,
             This->local_buffer + pos * This->fmt->nBlockAlign, readable);
+    TRACE("read %ld from %u limit %lu\n", nread, This->held_frames + This->lcl_offs_frames, readable);
     if(nread < 0){
         int ret;
+
+        if(nread == -EAGAIN) /* no data yet */
+            return;
 
         WARN("read failed, recovering: %ld (%s)\n", nread, snd_strerror(nread));
 
