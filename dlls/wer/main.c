@@ -348,3 +348,12 @@ HRESULT WINAPI WerReportSubmit(HREPORT hreport, WER_CONSENT consent, DWORD flags
     *presult = WerDisabled;
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ * WerReportSetUIOption (wer.@)
+ */
+HRESULT WINAPI WerReportSetUIOption(HREPORT hreport, WER_REPORT_UI uitype, PCWSTR value)
+{
+    FIXME("(%p, %d, %s) :stub\n", hreport, uitype, debugstr_w(value));
+    return E_NOTIMPL;
+}
