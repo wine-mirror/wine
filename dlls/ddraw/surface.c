@@ -1605,7 +1605,7 @@ static HRESULT WINAPI ddraw_surface7_AddAttachedSurface(IDirectDrawSurface7 *ifa
     {
         return hr;
     }
-    ddraw_surface7_AddRef(attachment);
+    ddraw_surface7_AddRef(&attachment_impl->IDirectDrawSurface7_iface);
     attachment_impl->attached_iface = (IUnknown *)attachment;
     return hr;
 }
@@ -1624,7 +1624,7 @@ static HRESULT WINAPI ddraw_surface4_AddAttachedSurface(IDirectDrawSurface4 *ifa
     {
         return hr;
     }
-    ddraw_surface4_AddRef(attachment);
+    ddraw_surface4_AddRef(&attachment_impl->IDirectDrawSurface4_iface);
     ddraw_surface7_Release(&attachment_impl->IDirectDrawSurface7_iface);
     attachment_impl->attached_iface = (IUnknown *)attachment;
     return hr;
@@ -1670,7 +1670,7 @@ static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *ifa
     {
         return hr;
     }
-    ddraw_surface3_AddRef(attachment);
+    ddraw_surface3_AddRef(&attachment_impl->IDirectDrawSurface3_iface);
     attachment_impl->attached_iface = (IUnknown *)attachment;
     return hr;
 }
@@ -1689,7 +1689,7 @@ static HRESULT WINAPI ddraw_surface2_AddAttachedSurface(IDirectDrawSurface2 *ifa
     {
         return hr;
     }
-    ddraw_surface2_AddRef(attachment);
+    ddraw_surface2_AddRef(&attachment_impl->IDirectDrawSurface2_iface);
     ddraw_surface3_Release(&attachment_impl->IDirectDrawSurface3_iface);
     attachment_impl->attached_iface = (IUnknown *)attachment;
     return hr;
@@ -1709,7 +1709,7 @@ static HRESULT WINAPI ddraw_surface1_AddAttachedSurface(IDirectDrawSurface *ifac
     {
         return hr;
     }
-    ddraw_surface1_AddRef(attachment);
+    ddraw_surface1_AddRef(&attachment_impl->IDirectDrawSurface_iface);
     ddraw_surface3_Release(&attachment_impl->IDirectDrawSurface3_iface);
     attachment_impl->attached_iface = (IUnknown *)attachment;
     return hr;
