@@ -40,9 +40,6 @@
 #include FT_SFNT_NAMES_H
 #include FT_TRUETYPE_TABLES_H
 #include FT_TRUETYPE_TAGS_H
-#ifdef HAVE_FREETYPE_INTERNAL_SFNT_H
-#include <freetype/internal/sfnt.h>
-#endif
 
 #include "wine/unicode.h"
 #include "wingdi.h"
@@ -332,35 +329,6 @@ static int get_char(const union cptable *cptable, int enc, int index)
     return cptable->sbcs.cp2uni[index];
 }
 
-/* from gdi32/freetype.c */
-static FT_Error load_sfnt_table(FT_Face ft_face, FT_ULong table, FT_Long offset, FT_Byte *buf, FT_ULong *len)
-{
-
-    FT_Error err;
-
-    /* If the FT_Load_Sfnt_Table function is there we'll use it */
-#ifdef HAVE_FT_LOAD_SFNT_TABLE
-    err = FT_Load_Sfnt_Table(ft_face, table, offset, buf, len);
-#elif defined(HAVE_FREETYPE_INTERNAL_SFNT_H)
-    TT_Face tt_face = (TT_Face) ft_face;
-    SFNT_Interface *sfnt;
-    if (FT_Version.major==2 && FT_Version.minor==0)
-    {
-        /* 2.0.x */
-        sfnt = *(SFNT_Interface**)((char*)tt_face + 528);
-    }
-    else
-    {
-        /* A field was added in the middle of the structure in 2.1.x */
-        sfnt = *(SFNT_Interface**)((char*)tt_face + 532);
-    }
-    err = sfnt->load_any(tt_face, table, offset, buf, len);
-#else
-    err = FT_Err_Unimplemented_Feature;
-#endif
-    return err;
-}
-
 static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc, int dpi,
                                        unsigned char def_char, int avg_width )
 {
@@ -398,12 +366,12 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
     assert( face->size->metrics.y_ppem == ppem );
 
     needed = 0;
-    if (load_sfnt_table(face, TTAG_EBLC, 0, NULL, &needed))
+    if (FT_Load_Sfnt_Table(face, TTAG_EBLC, 0, NULL, &needed))
         fprintf(stderr,"Can't find EBLC table\n");
     else
     {
         eblc = malloc(needed);
-        load_sfnt_table(face, TTAG_EBLC, 0, (FT_Byte *)eblc, &needed);
+        FT_Load_Sfnt_Table(face, TTAG_EBLC, 0, (FT_Byte *)eblc, &needed);
 
         num_sizes = GET_BE_DWORD(&eblc->numSizes);
 
