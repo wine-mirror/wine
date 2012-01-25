@@ -90,13 +90,6 @@ typedef struct
     Pixmap       pixmap;
 } X_PHYSBRUSH;
 
-enum x11drv_shm_mode
-{
-    X11DRV_SHM_NONE = 0,
-    X11DRV_SHM_PIXMAP,
-    X11DRV_SHM_IMAGE,
-};
-
 typedef struct {
     int shift;
     int scale;
