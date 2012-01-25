@@ -9931,7 +9931,8 @@ msgstr ""
 "Diskvolymens serienummer är %04x-%04x\n"
 
 #: cmd.rc:318
-msgid "Volume label (11 characters, ENTER for none)?"
+#, fuzzy
+msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Diskvolymens namn (11 karaktärer, tryck enter för inget)?"
 
 #: cmd.rc:319
@@ -14147,7 +14148,8 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Ogiltig parameter '%s' -  Använd xcopy /? för hjälp\n"
 
 #: xcopy.rc:29
-msgid "Press <enter> to begin copying\n"
+#, fuzzy
+msgid "Press <Enter> to begin copying\n"
 msgstr "Tryck <enter> för att börja kopiera\n"
 
 #: xcopy.rc:30

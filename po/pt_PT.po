@@ -10234,7 +10234,7 @@ msgid ""
 msgstr ""
 
 #: cmd.rc:318
-msgid "Volume label (11 characters, ENTER for none)?"
+msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr ""
 
 #: cmd.rc:319
@@ -14537,7 +14537,8 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Parâmetro inválido '%s' -  Use xcopy /? para ajuda\n"
 
 #: xcopy.rc:29
-msgid "Press <enter> to begin copying\n"
+#, fuzzy
+msgid "Press <Enter> to begin copying\n"
 msgstr "Carregue <Enter> para iniciar cópia\n"
 
 #: xcopy.rc:30

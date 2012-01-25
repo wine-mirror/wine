@@ -9681,7 +9681,8 @@ msgstr ""
 "\n"
 "ASSOC be parametrų parodo dabartines failų sąsajas.\n"
 "Jei naudojama tik su failo prievardžiu, parodo dabartinę sąsają.\n"
-"Po lygybės ženklo nenurodžius failo tipo pašalina dabartinę sąsają, jei yra.\n"
+"Po lygybės ženklo nenurodžius failo tipo pašalina dabartinę sąsają, jei "
+"yra.\n"
 
 #: cmd.rc:241
 msgid ""
@@ -9919,7 +9920,8 @@ msgstr ""
 "\n"
 
 #: cmd.rc:318
-msgid "Volume label (11 characters, ENTER for none)?"
+#, fuzzy
+msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Tomo vardas (11 simbolių, ĮVESTI – bevardis)?"
 
 #: cmd.rc:319
@@ -14052,7 +14054,8 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Neteisingas parametras „%1“ – pagalba: xcopy /?\n"
 
 #: xcopy.rc:29
-msgid "Press <enter> to begin copying\n"
+#, fuzzy
+msgid "Press <Enter> to begin copying\n"
 msgstr "Spauskite <įvesti> kopijavimui pradėti\n"
 
 #: xcopy.rc:30

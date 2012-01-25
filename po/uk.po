@@ -9937,7 +9937,8 @@ msgstr ""
 "\n"
 
 #: cmd.rc:318
-msgid "Volume label (11 characters, ENTER for none)?"
+#, fuzzy
+msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Мітка диску (11 символів, ENTER - без мітки)?"
 
 #: cmd.rc:319
@@ -14141,7 +14142,8 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Невірний параметр '%s' -  Введіть xcopy /? для довідки\n"
 
 #: xcopy.rc:29
-msgid "Press <enter> to begin copying\n"
+#, fuzzy
+msgid "Press <Enter> to begin copying\n"
 msgstr "Натисніть <enter> щоб почати копіювання\n"
 
 #: xcopy.rc:30

@@ -26,7 +26,7 @@ STRINGTABLE
 {
     STRING_INVPARMS, "Invalid number of parameters - Use xcopy /? for help\n"
     STRING_INVPARM,  "Invalid parameter '%1' - Use xcopy /? for help\n"
-    STRING_PAUSE,    "Press <enter> to begin copying\n"
+    STRING_PAUSE,    "Press <Enter> to begin copying\n"
     STRING_SIMCOPY,  "%1!d! file(s) would be copied\n"
     STRING_COPY,     "%1!d! file(s) copied\n"
     STRING_QISDIR,   "Is '%1' a filename or directory\n\

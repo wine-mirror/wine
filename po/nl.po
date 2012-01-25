@@ -10021,7 +10021,8 @@ msgstr ""
 "\n"
 
 #: cmd.rc:318
-msgid "Volume label (11 characters, ENTER for none)?"
+#, fuzzy
+msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Schijf naam (11 karakters, ENTER voor geen)?"
 
 #: cmd.rc:319
@@ -14216,7 +14217,8 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Onjuiste parameter '%1' -  Gebruik xcopy /? voor hulp\n"
 
 #: xcopy.rc:29
-msgid "Press <enter> to begin copying\n"
+#, fuzzy
+msgid "Press <Enter> to begin copying\n"
 msgstr "Druk op <enter> om te beginnen met kopiëren\n"
 
 #: xcopy.rc:30

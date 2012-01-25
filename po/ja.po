@@ -9937,7 +9937,8 @@ msgstr ""
 "\n"
 
 #: cmd.rc:318
-msgid "Volume label (11 characters, ENTER for none)?"
+#, fuzzy
+msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "ボリューム ラベル(半角11文字, ENTER で無指定)?"
 
 #: cmd.rc:319
@@ -14081,7 +14082,8 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "無効なパラメータ '%1' です。xcopy /? で使い方を表示します\n"
 
 #: xcopy.rc:29
-msgid "Press <enter> to begin copying\n"
+#, fuzzy
+msgid "Press <Enter> to begin copying\n"
 msgstr "コピーを開始するには <enter> を押してください\n"
 
 #: xcopy.rc:30

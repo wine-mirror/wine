@@ -10009,7 +10009,8 @@ msgstr ""
 "\n"
 
 #: cmd.rc:318
-msgid "Volume label (11 characters, ENTER for none)?"
+#, fuzzy
+msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Datenträgerbezeichnung (11 Zeichen, EINGABETASTE für keine)?"
 
 #: cmd.rc:319
@@ -14167,7 +14168,8 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Unbekannter Parameter '%1' - xcopy /? zeigt die Hilfe an\n"
 
 #: xcopy.rc:29
-msgid "Press <enter> to begin copying\n"
+#, fuzzy
+msgid "Press <Enter> to begin copying\n"
 msgstr "Eingabetaste betätigen, um mit dem Kopieren zu beginnen\n"
 
 #: xcopy.rc:30

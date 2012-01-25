@@ -9716,8 +9716,8 @@ msgstr ""
 "\n"
 
 #: cmd.rc:318
-msgid "Volume label (11 characters, ENTER for none)?"
-msgstr "Volume label (11 characters, ENTER for none)?"
+msgid "Volume label (11 characters, <Enter> for none)?"
+msgstr "Volume label (11 characters, <Enter> for none)?"
 
 #: cmd.rc:319
 msgid "PATH not found\n"
@@ -13742,8 +13742,8 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Invalid parameter '%1' - Use xcopy /? for help\n"
 
 #: xcopy.rc:29
-msgid "Press <enter> to begin copying\n"
-msgstr "Press <enter> to begin copying\n"
+msgid "Press <Enter> to begin copying\n"
+msgstr "Press <Enter> to begin copying\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"

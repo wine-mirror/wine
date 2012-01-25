@@ -2182,8 +2182,8 @@ msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"Примечание: сертификаты, список отзыва и список доверия сертификатов "
-"могут содержаться в файлах следующих форматов:"
+"Примечание: сертификаты, список отзыва и список доверия сертификатов могут "
+"содержаться в файлах следующих форматов:"
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
@@ -6632,8 +6632,8 @@ msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
-"Указанный установочный пакет не может быть открыт. Проверьте путь к файлу "
-"и повторите попытку."
+"Указанный установочный пакет не может быть открыт. Проверьте путь к файлу и "
+"повторите попытку."
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -7167,8 +7167,8 @@ msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
-"Вставка содержимого буфера обмена в документ так, его можно будет активировать "
-"с помощью %s. Он будет отображаться в виде значка."
+"Вставка содержимого буфера обмена в документ так, его можно будет "
+"активировать с помощью %s. Он будет отображаться в виде значка."
 
 #: oledlg.rc:37
 msgid ""
@@ -8135,8 +8135,8 @@ msgstr ""
 "его и/или модифицировать согласно условиям лицензии GNU LGPL версии 2.1 (или "
 "более поздней по вашему выбору), опубликованной Free Software Foundation.\n"
 "\n"
-"Пакет Wine распространяется в надежде на то, что он окажется полезен вам, "
-"но без КАКИХ-ЛИБО ГАРАНТИЙ; в том числе без неявных ГАРАНТИЙ ТОВАРНОГО "
+"Пакет Wine распространяется в надежде на то, что он окажется полезен вам, но "
+"без КАКИХ-ЛИБО ГАРАНТИЙ; в том числе без неявных ГАРАНТИЙ ТОВАРНОГО "
 "СОСТОЯНИЯ и ПРИГОДНОСТИ ДЛЯ КОНКРЕТНЫХ ЦЕЛЕЙ. За подробной информацией "
 "обратитесь к лицензии GNU LGPL.\n"
 "\n"
@@ -9914,7 +9914,8 @@ msgstr ""
 "\n"
 
 #: cmd.rc:318
-msgid "Volume label (11 characters, ENTER for none)?"
+#, fuzzy
+msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Метка диска (11 символов, ENTER для ввода пустой метки)?"
 
 #: cmd.rc:319
@@ -12434,9 +12435,10 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine может имитировать различные версии Windows для каждого приложения отдельно. "
-"Эта вкладка связана с вкладками Библиотеки и Графика, что позволяет изменение "
-"настроек в этих вкладках как для определённого приложения, так и глобально."
+"Wine может имитировать различные версии Windows для каждого приложения "
+"отдельно. Эта вкладка связана с вкладками Библиотеки и Графика, что "
+"позволяет изменение настроек в этих вкладках как для определённого "
+"приложения, так и глобально."
 
 #: winecfg.rc:150
 msgid "&Add application..."
@@ -14042,7 +14044,8 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Неверный параметр '%1' - воспользуйтесь 'xcopy /?'\n"
 
 #: xcopy.rc:29
-msgid "Press <enter> to begin copying\n"
+#, fuzzy
+msgid "Press <Enter> to begin copying\n"
 msgstr "Нажмите клавишу <Enter>, чтобы начать копирование\n"
 
 #: xcopy.rc:30
