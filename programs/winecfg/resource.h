@@ -46,7 +46,6 @@
 #define IDS_LINKS_TO                    17
 #define IDS_WINECFG_TITLE_APP           18   /* App specific title */
 #define IDI_WINECFG                     100
-#define IDD_MAINDLG                     101
 #define IDI_LOGO                        102
 #define IDD_ABOUTCFG                    107
 #define IDD_APPCFG                      108
@@ -55,20 +54,11 @@
 #define IDD_DLLCFG                      111
 #define IDD_DRIVECFG                    112
 #define IDD_DESKTOP_INTEGRATION         115
-#define IDB_WINE_LOGO                   200
-#define IDC_TABABOUT                    1001
-#define IDC_APPLYBTN                    1002
 #define IDC_WINVER                      1012
-#define IDC_SYSCOLORS                   1017
-#define IDC_PRIVATEMAP                  1018
-#define IDC_PERFECTGRAPH                1019
-#define IDC_MANAGED                     1022
 #define IDC_DESKTOP_WIDTH               1023
 #define IDC_DESKTOP_HEIGHT              1024
 #define IDC_DESKTOP_SIZE                1025
 #define IDC_DESKTOP_BY                  1026
-#define IDC_XDGA                        1027
-#define IDC_XSHM                        1028
 
 /* dll editing  */
 #define IDC_RAD_BUILTIN                 1029
@@ -100,21 +90,7 @@
 #define IDC_BUTTON_ADD                  1043
 #define IDC_BUTTON_REMOVE               1044
 #define IDC_BUTTON_EDIT                 1045
-#define IDC_BUTTON7                     1046
 #define IDC_BUTTON_AUTODETECT           1046
-#define IDC_DRIVE_ADD                   1047
-#define IDC_DRIVE_REMOVE                1048
-#define IDC_DRIVE_EDIT                  1049
-#define IDC_DRIVE_EDIT_NAME             1050
-#define IDC_DRIVE_EDIT_LABEL            1051
-#define IDC_DRIVE_EDIT_TYPE             1052
-#define IDC_DRIVE_EDIT_FS               1053
-#define IDC_DRIVE_EDIT_PATH             1054
-#define IDC_DRIVE_EDIT_DEVICE           1055
-#define ID_DRIVE_OK                     1056
-#define ID_DRIVE_CANCEL                 1057
-#define ID_BUTTON_CANCEL                1058
-#define ID_BUTTON_OK                    1059
 #define IDC_EDIT_LABEL                  1060
 #define IDC_EDIT_PATH                   1061
 #define IDC_EDIT_SERIAL                 1062
@@ -131,8 +107,6 @@
 #define IDC_BUTTON_SHOW_HIDE_ADVANCED   1076
 #define IDC_STATIC_TYPE                 1077
 #define IDC_SHOW_DOT_FILES              1080
-
-#define IDC_DRIVE_LABEL                 1078
 
 #define IDS_DRIVE_UNKNOWN               8200
 #define IDS_DRIVE_FIXED                 8201
@@ -152,8 +126,6 @@
 #define IDC_ENABLE_MANAGED              1100
 #define IDC_ENABLE_DECORATED            1101
 #define IDC_FULLSCREEN_GRAB             1102
-#define IDC_USE_TAKE_FOCUS              1103
-#define IDC_DOUBLE_BUFFER               1104
 
 #define IDC_RES_TRACKBAR                1107
 #define IDC_RES_DPIEDIT                 1108
