@@ -1327,7 +1327,7 @@ static void add_join( dibdrv_physdev *pdev, HRGN region, HRGN round_cap, const P
     return;
 }
 
-static void wide_line_segment( dibdrv_physdev *pdev, HRGN total,
+static int wide_line_segment( dibdrv_physdev *pdev, HRGN total,
                                const POINT *pt_1, const POINT *pt_2, int dx, int dy,
                                BOOL need_cap_1, BOOL need_cap_2, struct face *face_1, struct face *face_2 )
 {
@@ -1335,7 +1335,7 @@ static void wide_line_segment( dibdrv_physdev *pdev, HRGN total,
     BOOL sq_cap_1 = need_cap_1 && (pdev->pen_endcap == PS_ENDCAP_SQUARE);
     BOOL sq_cap_2 = need_cap_2 && (pdev->pen_endcap == PS_ENDCAP_SQUARE);
 
-    if (dx == 0 && dy == 0) return;
+    if (dx == 0 && dy == 0) return 0;
 
     if (dy == 0)
     {
@@ -1451,6 +1451,8 @@ static void wide_line_segment( dibdrv_physdev *pdev, HRGN total,
 
     face_1->dx = face_2->dx = dx;
     face_1->dy = face_2->dy = dy;
+
+    return 1;
 }
 
 static void wide_line_segments( dibdrv_physdev *pdev, int num, const POINT *pts, BOOL close,
@@ -1486,10 +1488,12 @@ static void wide_line_segments( dibdrv_physdev *pdev, int num, const POINT *pts,
     {
         pt_1 = &pts[(start + i) % num];
         pt_2 = &pts[(start + i + 1) % num];
-        wide_line_segment( pdev, total, pt_1, pt_2, pt_2->x - pt_1->x, pt_2->y - pt_1->y,
-                           FALSE, FALSE, &face_1, &face_2 );
-        add_join( pdev, total, round_cap, pt_1, &prev_face, &face_1 );
-        prev_face = face_2;
+        if (wide_line_segment( pdev, total, pt_1, pt_2, pt_2->x - pt_1->x, pt_2->y - pt_1->y,
+                               FALSE, FALSE, &face_1, &face_2 ))
+        {
+            add_join( pdev, total, round_cap, pt_1, &prev_face, &face_1 );
+            prev_face = face_2;
+        }
     }
 
     pt_1 = &pts[(start + count - 1) % num];
