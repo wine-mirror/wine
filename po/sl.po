@@ -11531,13 +11531,13 @@ msgstr "Napaka: možnosti /im in /pid se medsebojno izključujeta.\n"
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
 "Zapri sporočilo poslano na okna po zaprtju je bilo poslano oknom opravila s "
-"PID %u.\n"
+"PID %1!u!.\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"Sporočilo z zahtevo po zaprtju je bilo poslano oknom opravila \"%s\" s PID "
+"Sporočilo z zahtevo po zaprtju je bilo poslano oknom opravila \"%1\" s PID "
 "%2!u! vrhnje ravni.\n"
 
 #: taskkill.rc:35
