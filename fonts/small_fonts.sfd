@@ -58,10 +58,10 @@ NameList: Adobe Glyph List
 DisplaySize: 11
 AntiAlias: 1
 FitToEm: 1
-WinInfo: 61 61 20
+WinInfo: 0 61 20
 OnlyBitmaps: 1
 TeXData: 1 0 0 189792 94896 63264 0 1048576 63264 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65536 416
+BeginChars: 65536 497
 
 StartChar: A
 Encoding: 65 65 0
@@ -3374,8 +3374,575 @@ Width: 11
 Flags: W
 LayerCount: 2
 EndChar
+
+StartChar: Alpha
+Encoding: 913 913 416
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Beta
+Encoding: 914 914 417
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Epsilon
+Encoding: 917 917 418
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Zeta
+Encoding: 918 918 419
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Eta
+Encoding: 919 919 420
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Iota
+Encoding: 921 921 421
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Kappa
+Encoding: 922 922 422
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Mu
+Encoding: 924 924 423
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Nu
+Encoding: 925 925 424
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Omicron
+Encoding: 927 927 425
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Rho
+Encoding: 929 929 426
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Tau
+Encoding: 932 932 427
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Upsilon
+Encoding: 933 933 428
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Chi
+Encoding: 935 935 429
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Delta
+Encoding: 916 916 430
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Lambda
+Encoding: 923 923 431
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Xi
+Encoding: 926 926 432
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Pi
+Encoding: 928 928 433
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Sigma
+Encoding: 931 931 434
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Omega
+Encoding: 937 937 435
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Iotadieresis
+Encoding: 938 938 436
+Width: 3
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Upsilondieresis
+Encoding: 939 939 437
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Upsilontonos
+Encoding: 910 910 438
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Alphatonos
+Encoding: 902 902 439
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Epsilontonos
+Encoding: 904 904 440
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Etatonos
+Encoding: 905 905 441
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Iotatonos
+Encoding: 906 906 442
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Omicrontonos
+Encoding: 908 908 443
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Omegatonos
+Encoding: 911 911 444
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Gamma
+Encoding: 915 915 445
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Theta
+Encoding: 920 920 446
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Phi
+Encoding: 934 934 447
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: Psi
+Encoding: 936 936 448
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: alphatonos
+Encoding: 940 940 449
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: alpha
+Encoding: 945 945 450
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: epsilon
+Encoding: 949 949 451
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: epsilontonos
+Encoding: 941 941 452
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: eta
+Encoding: 951 951 453
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: etatonos
+Encoding: 942 942 454
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: iota
+Encoding: 953 953 455
+Width: 3
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: iotatonos
+Encoding: 943 943 456
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: iotadieresis
+Encoding: 970 970 457
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: kappa
+Encoding: 954 954 458
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: beta
+Encoding: 946 946 459
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: gamma
+Encoding: 947 947 460
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: delta
+Encoding: 948 948 461
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: zeta
+Encoding: 950 950 462
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: theta
+Encoding: 952 952 463
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: iotadieresistonos
+Encoding: 912 912 464
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: lambda
+Encoding: 955 955 465
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: mu
+Encoding: 956 956 466
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: nu
+Encoding: 957 957 467
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: xi
+Encoding: 958 958 468
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: omicron
+Encoding: 959 959 469
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: omicrontonos
+Encoding: 972 972 470
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: pi
+Encoding: 960 960 471
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: rho
+Encoding: 961 961 472
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: sigma1
+Encoding: 962 962 473
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: sigma
+Encoding: 963 963 474
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: tau
+Encoding: 964 964 475
+Width: 4
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: upsilon
+Encoding: 965 965 476
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: upsilontonos
+Encoding: 973 973 477
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: upsilondieresis
+Encoding: 971 971 478
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: phi
+Encoding: 966 966 479
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: chi
+Encoding: 967 967 480
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: psi
+Encoding: 968 968 481
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: omega
+Encoding: 969 969 482
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: omegatonos
+Encoding: 974 974 483
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: upsilondieresistonos
+Encoding: 944 944 484
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: dieresistonos
+Encoding: 901 901 485
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: tonos
+Encoding: 900 900 486
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10054
+Encoding: 1029 1029 487
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10102
+Encoding: 1109 1109 488
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10105
+Encoding: 1112 1112 489
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: afii10057
+Encoding: 1032 1032 490
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: uniF8FA
+Encoding: 63738 63738 491
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: uniF8F9
+Encoding: 63737 63737 492
+Width: 3
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: uniF8FB
+Encoding: 63739 63739 493
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: uniF8FC
+Encoding: 63740 63740 494
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: uniF8FE
+Encoding: 63742 63742 495
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
+
+StartChar: uniF8FD
+Encoding: 63741 63741 496
+Width: 11
+Flags: W
+LayerCount: 2
+EndChar
 EndChars
-BitmapFont: 11 417 9 2 1
+BitmapFont: 11 498 9 2 1
 BDFChar: 0 65 7 1 6 0 6
 0JH$gG_C_M
 BDFChar: 1 33 2 1 1 0 6
@@ -4208,5 +4775,167 @@ BDFChar: 414 1118 4 1 3 -2 7
 TKiLMTV.rc+M[sW
 BDFChar: 415 1038 6 1 5 0 8
 :`tRMLj02]Du]k<
+BDFChar: 416 913 7 1 6 0 6
+0JH$gG_C_M
+BDFChar: 417 914 7 1 6 0 6
+pk4=qKS9+#
+BDFChar: 418 917 6 1 5 0 6
+pjdnaJ:RCp
+BDFChar: 419 918 6 1 5 0 6
+p]qER5_/V0
+BDFChar: 420 919 7 1 6 0 6
+KS5$VKS5!Y
+BDFChar: 421 921 2 1 1 0 6
+J:N0#J:N.M
+BDFChar: 422 922 6 1 5 0 6
+Lle:FTTFs0
+BDFChar: 423 924 9 1 8 0 6
+_o&=IR@/U+
+BDFChar: 424 925 7 1 6 0 6
+`5JIIPa%+,
+BDFChar: 425 927 7 1 6 0 6
+G_Ca'KS4RM
+BDFChar: 426 929 7 1 6 0 6
+pk4=qJ:N.M
+BDFChar: 427 932 6 1 5 0 6
+p`L\%+<Vd,
+BDFChar: 428 933 6 1 5 0 6
+LknkM+<Vd,
+BDFChar: 429 935 6 1 5 0 6
+LknkM:l'o-
+BDFChar: 430 916 7 1 6 0 6
+0JH$g8;-m@
+BDFChar: 431 923 7 1 6 0 6
+0JH$g8;)Wr
+BDFChar: 432 926 6 1 5 0 6
+p](;5!!)co
+BDFChar: 433 928 6 1 5 0 6
+pkX`^Lkpie
+BDFChar: 434 931 6 1 5 0 6
+pcor5+@,]%
+BDFChar: 435 937 7 1 6 0 6
+G_Ca'KLj;e
+BDFChar: 436 938 3 0 2 0 8
+TE%5B5X7S"5QCca
+BDFChar: 437 939 6 1 5 0 8
+:]Q<-:`pl'+92BA
+BDFChar: 438 910 6 0 5 0 8
+5_)6j-kHq$&-)\1
+BDFChar: 439 902 7 1 6 0 8
+5_(OB84[uYKE(uP
+BDFChar: 440 904 6 0 5 0 8
+5_+5I5^5OZHiO-H
+BDFChar: 441 905 7 0 6 0 8
+5_)0f6@M6f63$uc
+BDFChar: 442 906 2 0 1 0 8
+5_)*b5X7S"5QCca
+BDFChar: 443 908 7 0 6 0 8
+5_(s`6:+"*49,?]
+BDFChar: 444 911 7 0 6 0 8
+5_(s`6:+!aAcMf2
+BDFChar: 445 915 6 1 5 0 6
+pjdmFJ:N.M
+BDFChar: 446 920 7 1 6 0 6
+G_CaWKS4RM
+BDFChar: 447 934 6 1 5 0 6
+E$0+uE$0*"
+BDFChar: 448 936 6 1 5 0 6
+Lo@8NE$0*"
+BDFChar: 449 940 6 1 5 0 7
+&0LsdOH>Q;
+BDFChar: 450 945 6 1 5 0 4
+BTS=;BE/#4
+BDFChar: 451 949 5 1 4 0 4
+E.D>HDu]k<
+BDFChar: 452 941 5 1 4 0 7
+&0LslJ7*nH
+BDFChar: 453 951 5 1 4 -2 4
+i/j%^O:Vs'
+BDFChar: 454 942 5 1 4 -2 7
++@#qbOH>Qc&.egA
+BDFChar: 455 953 3 1 2 0 4
+J:N0#5QCca
+BDFChar: 456 943 3 1 2 0 7
+5_&ibJ:N/8
+BDFChar: 457 970 3 0 2 0 6
+TE%5B5X6Fl
+BDFChar: 458 954 5 1 4 0 4
+OJ'C^O8o7\
+BDFChar: 459 946 5 1 4 -2 6
+@$$K.OHACNJ,fQL
+BDFChar: 460 947 5 1 4 -2 4
+OH>Qc?sm@B
+BDFChar: 461 948 5 1 4 0 6
+E.D>XOH<iM
+BDFChar: 462 950 5 1 4 -2 6
+n.6^-5_*5R?iU0,
+BDFChar: 463 952 5 1 4 0 6
+@$$K>OH<iM
+BDFChar: 464 912 3 0 2 0 8
++@)S"5X7S"+92BA
+BDFChar: 465 955 5 1 4 0 6
+J3ZA-@$$HM
+BDFChar: 466 956 5 1 4 -2 4
+OH>Qci.-=X
+BDFChar: 467 957 5 1 4 0 4
+TTG73?iU0,
+BDFChar: 468 958 5 1 4 -2 6
+n:6$sJ:M#=?iU0,
+BDFChar: 469 959 6 1 5 0 4
+E/9=+Du]k<
+BDFChar: 470 972 6 1 5 0 7
+&0LslLkpk+
+BDFChar: 471 960 5 1 4 0 4
+n=ZGIYQ+Y'
+BDFChar: 472 961 5 1 4 -2 4
+@$$J3i.-=X
+BDFChar: 473 962 5 1 4 -2 4
+E.EIh?k?]G
+BDFChar: 474 963 6 1 5 0 4
+G`[`;Du]k<
+BDFChar: 475 964 4 1 3 0 4
+i'9Om+92BA
+BDFChar: 476 965 5 1 4 0 4
+OH>QchuE`W
+BDFChar: 477 973 5 1 4 0 7
++@#pgOH>R^
+BDFChar: 478 971 5 1 4 0 6
+O8tB(OHAB#
+BDFChar: 479 966 6 1 5 -2 4
+0W:qKE$-8'
+BDFChar: 480 967 4 1 3 -2 4
+TV.rCTV.qX
+BDFChar: 481 968 6 1 5 -2 4
+Lo@8NE$-8'
+BDFChar: 482 969 6 1 5 0 4
+:l)'K:]LIq
+BDFChar: 483 974 6 1 5 0 7
+&0LsLLo@7K
+BDFChar: 484 944 5 1 4 0 8
+?pKeROH>QchuE`W
+BDFChar: 485 901 5 1 4 6 8
+?pKeR
+BDFChar: 486 900 3 1 2 6 7
+5_&h7
+BDFChar: 487 1029 6 1 5 0 6
+E/9$`#`*F"
+BDFChar: 488 1109 5 1 4 0 4
+E.D=-huE`W
+BDFChar: 489 1112 2 1 1 -2 6
+J,k+MJ:N0#J,fQL
+BDFChar: 490 1032 5 1 4 0 6
+&.fBaOH<iM
+BDFChar: 491 63738 2 1 1 -2 8
+J:N0#J:N0#J:N.M
+BDFChar: 492 63737 3 1 2 -2 8
+^d(.M5X7S"5X7R7
+BDFChar: 493 63739 3 1 2 0 8
+5X7S"5X7S"^]4?7
+BDFChar: 494 63740 3 1 2 -2 8
+J3Z@b5X7S"5X7R7
+BDFChar: 495 63742 3 1 2 0 8
+5X7S"5X7S"J,fQL
+BDFChar: 496 63741 3 1 2 -2 8
+J:N0#5_+B8J:N.M
 EndBitmapFont
 EndSplineFont
