@@ -768,6 +768,26 @@ static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const
            *V_BOOLREF(cancel));
 }
 
+static void test_navigatecomplete2(DISPPARAMS *dp)
+{
+    VARIANT *v;
+
+    CHECK_EXPECT(Invoke_NAVIGATECOMPLETE2);
+
+    ok(dp->rgvarg != NULL, "rgvarg == NULL\n");
+    ok(dp->cArgs == 2, "cArgs=%d, expected 2\n", dp->cArgs);
+
+    ok(V_VT(dp->rgvarg) == (VT_BYREF|VT_VARIANT), "V_VT(dp->rgvarg) = %d\n", V_VT(dp->rgvarg));
+    v = V_VARIANTREF(dp->rgvarg);
+    ok(V_VT(v) == VT_BSTR, "V_VT(url) = %d\n", V_VT(v));
+    ok(!strcmp_wa(V_BSTR(v), current_url), "url=%s, expected %s\n", wine_dbgstr_w(V_BSTR(v)), current_url);
+
+    ok(V_VT(dp->rgvarg+1) == VT_DISPATCH, "V_VT(dp->rgvarg+1) = %d\n", V_VT(dp->rgvarg+1));
+    ok(V_DISPATCH(dp->rgvarg+1) == (IDispatch*)wb, "V_DISPATCH=%p, wb=%p\n", V_DISPATCH(dp->rgvarg+1), wb);
+
+    test_ready_state((dwl_flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK)) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
+}
+
 static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
@@ -896,9 +916,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         break;
 
     case DISPID_NAVIGATECOMPLETE2:
-        CHECK_EXPECT(Invoke_NAVIGATECOMPLETE2);
-        /* FIXME */
-        test_ready_state((dwl_flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK)) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
+        test_navigatecomplete2(pDispParams);
         break;
 
     case DISPID_PROGRESSCHANGE:

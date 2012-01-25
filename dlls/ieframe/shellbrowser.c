@@ -748,7 +748,7 @@ static HRESULT WINAPI DocObjectService_FireNavigateComplete2(
     set_dochost_url(This->doc_host, url);
 
     V_VT(params) = (VT_BYREF|VT_VARIANT);
-    V_BYREF(params) = &url;
+    V_VARIANTREF(params) = &url_var;
 
     V_VT(params+1) = VT_DISPATCH;
     V_DISPATCH(params+1) = (IDispatch*)This->doc_host->wb;
