@@ -53,13 +53,6 @@
 #include "audiopolicy.h"
 #include "audioclient.h"
 
-
-/* Some implementations of OSS, such as FreeBSD older than 9.0, lack
-   SNDCTL_DSP_HALT which is just a synonym for the older SNDCTL_DSP_RESET. */
-#ifndef SNDCTL_DSP_HALT
-#define SNDCTL_DSP_HALT SNDCTL_DSP_RESET
-#endif
-
 WINE_DEFAULT_DEBUG_CHANNEL(oss);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
@@ -123,8 +116,8 @@ struct ACImpl {
 
     BOOL initted, playing;
     UINT64 written_frames;
-    UINT32 period_us, bufsize_frames, held_frames, tmp_buffer_frames, inbuf_frames;
-    UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
+    UINT32 period_us, period_frames, bufsize_frames, held_frames, tmp_buffer_frames;
+    UINT32 oss_bufsize_bytes, lcl_offs_frames; /* offs into local_buffer where valid data starts */
 
     BYTE *local_buffer, *tmp_buffer;
     int buf_state;
@@ -323,9 +316,9 @@ static UINT get_default_index(EDataFlow flow, char **keys, UINT num)
     const char *devnode;
 
     if(flow == eRender)
-        fd = open("/dev/dsp", O_WRONLY);
+        fd = open("/dev/dsp", O_WRONLY | O_NONBLOCK);
     else
-        fd = open("/dev/dsp", O_RDONLY);
+        fd = open("/dev/dsp", O_RDONLY | O_NONBLOCK);
 
     if(fd < 0){
         WARN("Couldn't open default device!\n");
@@ -422,9 +415,9 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
             continue;
 
         if(flow == eRender)
-            fd = open(devnode, O_WRONLY, 0);
+            fd = open(devnode, O_WRONLY | O_NONBLOCK, 0);
         else
-            fd = open(devnode, O_RDONLY, 0);
+            fd = open(devnode, O_RDONLY | O_NONBLOCK, 0);
         if(fd < 0){
             WARN("Opening device \"%s\" failed, pretending it doesn't exist: %d (%s)\n",
                     devnode, errno, strerror(errno));
@@ -490,9 +483,9 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(char *devnode, IMMDevice *dev,
         return E_OUTOFMEMORY;
 
     if(dataflow == eRender)
-        This->fd = open(devnode, O_WRONLY, 0);
+        This->fd = open(devnode, O_WRONLY | O_NONBLOCK, 0);
     else if(dataflow == eCapture)
-        This->fd = open(devnode, O_RDONLY, 0);
+        This->fd = open(devnode, O_RDONLY | O_NONBLOCK, 0);
     else{
         HeapFree(GetProcessHeap(), 0, This);
         return E_INVALIDARG;
@@ -881,7 +874,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         const GUID *sessionguid)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
-    int mask, i;
+    int i;
+    audio_buf_info bi;
     HRESULT hr;
 
     TRACE("(%p)->(%x, %x, %s, %s, %p, %s)\n", This, mode, flags,
@@ -942,13 +936,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         return hr;
     }
 
-    mask = 0;
-    if(ioctl(This->fd, SNDCTL_DSP_SETTRIGGER, &mask) < 0){
-        LeaveCriticalSection(&This->lock);
-        WARN("SETTRIGGER failed: %d (%s)\n", errno, strerror(errno));
-        return E_FAIL;
-    }
-
     This->fmt = clone_format(fmt);
     if(!This->fmt){
         LeaveCriticalSection(&This->lock);
@@ -956,6 +943,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     }
 
     This->period_us = period / 10;
+    This->period_frames = MulDiv(fmt->nSamplesPerSec, period, 10000000);
 
     This->bufsize_frames = MulDiv(duration, fmt->nSamplesPerSec, 10000000);
     This->local_buffer = HeapAlloc(GetProcessHeap(), 0,
@@ -965,6 +953,18 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         This->fmt = NULL;
         LeaveCriticalSection(&This->lock);
         return E_OUTOFMEMORY;
+    }
+
+    if(This->dataflow == eRender){
+        if(ioctl(This->fd, SNDCTL_DSP_GETOSPACE, &bi) < 0){
+            WARN("GETOSPACE failed: %d (%s)\n", errno, strerror(errno));
+            CoTaskMemFree(This->fmt);
+            This->fmt = NULL;
+            LeaveCriticalSection(&This->lock);
+            return E_FAIL;
+        }
+
+        This->oss_bufsize_bytes = bi.bytes;
     }
 
     This->vols = HeapAlloc(GetProcessHeap(), 0, fmt->nChannels * sizeof(float));
@@ -1025,6 +1025,8 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient *iface,
 
     *frames = This->bufsize_frames;
 
+    TRACE("buffer size: %u\n", *frames);
+
     LeaveCriticalSection(&This->lock);
 
     return S_OK;
@@ -1060,7 +1062,6 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient *iface,
         UINT32 *numpad)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
-    audio_buf_info bi;
 
     TRACE("(%p)->(%p)\n", This, numpad);
 
@@ -1074,49 +1075,9 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient *iface,
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    if(This->dataflow == eRender){
-        if(ioctl(This->fd, SNDCTL_DSP_GETOSPACE, &bi) < 0){
-            LeaveCriticalSection(&This->lock);
-            WARN("GETOSPACE failed: %d (%s)\n", errno, strerror(errno));
-            return E_FAIL;
-        }
+    *numpad = This->held_frames;
 
-        *numpad = (bi.fragstotal * bi.fragsize - bi.bytes) /
-            This->fmt->nBlockAlign;
-
-        /* when the OSS buffer has less than one fragment of data, including
-         * no data, it often reports it as some non-zero portion of a
-         * fragment. when it has more than one fragment of data, it reports
-         * it as some multiple of that portion of the fragment size.
-         *
-         * so, we have to do some ugly workarounds to report the timing
-         * as accurately as possible */
-        if(*numpad < bi.fragsize / This->fmt->nBlockAlign){
-            *numpad = This->inbuf_frames;
-            This->inbuf_frames = 0;
-        }else{
-            if(*numpad < This->inbuf_frames)
-                This->inbuf_frames = *numpad;
-            else
-                *numpad = This->inbuf_frames;
-        }
-    }else if(This->dataflow == eCapture){
-        if(ioctl(This->fd, SNDCTL_DSP_GETISPACE, &bi) < 0){
-            LeaveCriticalSection(&This->lock);
-            WARN("GETISPACE failed: %d (%s)\n", errno, strerror(errno));
-            return E_FAIL;
-        }
-
-        if(bi.bytes <= bi.fragsize)
-            *numpad = 0;
-        else
-            *numpad = bi.bytes / This->fmt->nBlockAlign;
-    }else{
-        LeaveCriticalSection(&This->lock);
-        return E_UNEXPECTED;
-    }
-
-    *numpad += This->held_frames;
+    TRACE("padding: %u\n", *numpad);
 
     LeaveCriticalSection(&This->lock);
 
@@ -1152,9 +1113,9 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
     }
 
     if(This->dataflow == eRender)
-        fd = open(This->devnode, O_WRONLY, 0);
+        fd = open(This->devnode, O_WRONLY | O_NONBLOCK, 0);
     else if(This->dataflow == eCapture)
-        fd = open(This->devnode, O_RDONLY, 0);
+        fd = open(This->devnode, O_RDONLY | O_NONBLOCK, 0);
 
     if(fd < 0){
         ERR("Unable to open device %s: %d (%s)\n", This->devnode, errno,
@@ -1264,27 +1225,45 @@ static void oss_silence_buffer(ACImpl *This, BYTE *buf, UINT32 frames)
 static void oss_write_data(ACImpl *This)
 {
     ssize_t written_bytes;
-    UINT32 written_frames;
+    UINT32 written_frames, in_oss_frames, write_limit, max_period;
     size_t to_write_frames, to_write_bytes;
     audio_buf_info bi;
     BYTE *buf =
         This->local_buffer + (This->lcl_offs_frames * This->fmt->nBlockAlign);
 
+    if(This->held_frames == 0)
+        return;
+
     if(This->lcl_offs_frames + This->held_frames > This->bufsize_frames)
         to_write_frames = This->bufsize_frames - This->lcl_offs_frames;
     else
         to_write_frames = This->held_frames;
-    to_write_bytes = to_write_frames * This->fmt->nBlockAlign;
 
     if(ioctl(This->fd, SNDCTL_DSP_GETOSPACE, &bi) < 0){
         WARN("GETOSPACE failed: %d (%s)\n", errno, strerror(errno));
         return;
     }
 
-    if(bi.bytes < to_write_bytes){
-        to_write_frames = bi.bytes / This->fmt->nBlockAlign;
-        to_write_bytes = to_write_frames * This->fmt->nBlockAlign;
-    }
+    max_period = max(bi.fragsize / This->fmt->nBlockAlign, This->period_frames);
+
+    if(bi.bytes > This->oss_bufsize_bytes){
+        TRACE("New buffer size (%u) is larger than old buffer size (%u)\n",
+                bi.bytes, This->oss_bufsize_bytes);
+        This->oss_bufsize_bytes = bi.bytes;
+        in_oss_frames = 0;
+    }else if(This->oss_bufsize_bytes - bi.bytes <= bi.fragsize)
+        in_oss_frames = 0;
+    else
+        in_oss_frames = (This->oss_bufsize_bytes - bi.bytes) / This->fmt->nBlockAlign;
+
+    write_limit = 0;
+    while(write_limit + in_oss_frames < max_period * 3)
+        write_limit += max_period;
+    if(write_limit == 0)
+        return;
+
+    to_write_frames = min(to_write_frames, write_limit);
+    to_write_bytes = to_write_frames * This->fmt->nBlockAlign;
 
     if(This->session->mute)
         oss_silence_buffer(This, buf, to_write_frames);
@@ -1300,18 +1279,16 @@ static void oss_write_data(ACImpl *This)
     This->lcl_offs_frames += written_frames;
     This->lcl_offs_frames %= This->bufsize_frames;
     This->held_frames -= written_frames;
-    This->inbuf_frames += written_frames;
 
     if(written_frames < to_write_frames){
         /* OSS buffer probably full */
         return;
     }
 
-    bi.bytes -= written_bytes;
-    if(This->held_frames && bi.bytes >= This->fmt->nBlockAlign){
+    if(This->held_frames && written_frames < write_limit){
         /* wrapped and have some data back at the start to write */
 
-        to_write_frames = bi.bytes / This->fmt->nBlockAlign;
+        to_write_frames = min(write_limit - written_frames, This->held_frames);
         to_write_bytes = to_write_frames * This->fmt->nBlockAlign;
 
         if(This->session->mute)
@@ -1327,7 +1304,6 @@ static void oss_write_data(ACImpl *This)
         This->lcl_offs_frames += written_frames;
         This->lcl_offs_frames %= This->bufsize_frames;
         This->held_frames -= written_frames;
-        This->inbuf_frames += written_frames;
     }
 }
 
@@ -1385,7 +1361,6 @@ static void CALLBACK oss_period_callback(void *user, BOOLEAN timer)
 static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
-    int mask;
 
     TRACE("(%p)\n", This);
 
@@ -1406,21 +1381,6 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
         return AUDCLNT_E_NOT_STOPPED;
     }
 
-    if(This->dataflow == eRender)
-        mask = PCM_ENABLE_OUTPUT;
-    else if(This->dataflow == eCapture)
-        mask = PCM_ENABLE_INPUT;
-    else{
-        LeaveCriticalSection(&This->lock);
-        return E_UNEXPECTED;
-    }
-
-    if(ioctl(This->fd, SNDCTL_DSP_SETTRIGGER, &mask) < 0){
-        LeaveCriticalSection(&This->lock);
-        WARN("SETTRIGGER failed: %d (%s)\n", errno, strerror(errno));
-        return E_FAIL;
-    }
-
     if(!CreateTimerQueueTimer(&This->timer, g_timer_q,
                 oss_period_callback, This, 0, This->period_us / 1000,
                 WT_EXECUTEINTIMERTHREAD))
@@ -1436,7 +1396,6 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
 static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
-    int mask;
 
     TRACE("(%p)\n", This);
 
@@ -1456,19 +1415,6 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
         DeleteTimerQueueTimer(g_timer_q, This->timer,
                 INVALID_HANDLE_VALUE);
         This->timer = NULL;
-    }
-
-    if(ioctl(This->fd, SNDCTL_DSP_HALT, NULL) < 0){
-        LeaveCriticalSection(&This->lock);
-        WARN("HALT failed: %d (%s)\n", errno, strerror(errno));
-        return E_FAIL;
-    }
-
-    mask = 0;
-    if(ioctl(This->fd, SNDCTL_DSP_SETTRIGGER, &mask) < 0){
-        LeaveCriticalSection(&This->lock);
-        WARN("SETTRIGGER failed: %d (%s)\n", errno, strerror(errno));
-        return E_FAIL;
     }
 
     This->playing = FALSE;
@@ -1507,11 +1453,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
         This->written_frames += This->held_frames;
     }
     This->lcl_offs_frames = 0;
-    This->inbuf_frames = 0;
     This->held_frames = 0;
-
-    if(ioctl(This->fd, SNDCTL_DSP_SKIP, NULL) < 0)
-        WARN("SKIP failed: %d (%s)\n", errno, strerror(errno));
 
     LeaveCriticalSection(&This->lock);
 
@@ -1798,42 +1740,10 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
     if(flags & AUDCLNT_BUFFERFLAGS_SILENT)
         oss_silence_buffer(This, buffer, written_frames);
 
-    if(This->held_frames){
-        if(This->getbuf_last < 0)
-            oss_wrap_buffer(This, buffer, written_frames);
+    if(This->getbuf_last < 0)
+        oss_wrap_buffer(This, buffer, written_frames);
 
-        This->held_frames += written_frames;
-    }else{
-        ssize_t w_bytes;
-        UINT32 w_frames;
-
-        if(This->session->mute)
-            oss_silence_buffer(This, buffer, written_frames);
-
-        w_bytes = write(This->fd, buffer,
-                written_frames * This->fmt->nBlockAlign);
-        if(w_bytes < 0){
-            if(errno != EAGAIN){
-                This->getbuf_last = 0;
-                LeaveCriticalSection(&This->lock);
-                ERR("write failed: %d (%s)\n", errno, strerror(errno));
-                return E_FAIL;
-            }else /* OSS buffer full */
-                w_bytes = 0;
-        }
-        w_frames = w_bytes / This->fmt->nBlockAlign;
-        This->inbuf_frames += w_frames;
-
-        if(w_frames < written_frames){
-            if(This->getbuf_last < 0)
-                oss_wrap_buffer(This, This->tmp_buffer + w_bytes,
-                        written_frames - w_frames);
-            else
-                This->lcl_offs_frames += w_frames;
-            This->held_frames = written_frames - w_frames;
-        }
-    }
-
+    This->held_frames += written_frames;
     This->written_frames += written_frames;
     This->getbuf_last = 0;
 
@@ -2489,21 +2399,7 @@ static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
 
     EnterCriticalSection(&session->lock);
 
-    if(!mute && session->mute){
-        ACImpl *client;
-
-        session->mute = mute;
-
-        LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry){
-            EnterCriticalSection(&client->lock);
-            if(ioctl(client->fd, SNDCTL_DSP_SKIP) < 0)
-                WARN("Error calling DSP_SKIP: %d (%s)\n", errno,
-                        strerror(errno));
-            oss_write_data(client);
-            LeaveCriticalSection(&client->lock);
-        }
-    }else
-        session->mute = mute;
+    session->mute = mute;
 
     LeaveCriticalSection(&session->lock);
 
