@@ -237,8 +237,8 @@ static void test_audioclient(void)
             hexcl = S_OK;
 
         hr = IAudioClient_IsFormatSupported(ac, 0xffffffff, pwfx, NULL);
-        ok(hr == E_INVALIDARG ||
-           hr == AUDCLNT_E_UNSUPPORTED_FORMAT,
+        ok(hr == E_INVALIDARG/*w32*/ ||
+           broken(hr == AUDCLNT_E_UNSUPPORTED_FORMAT/*w64 response from exclusive mode driver */),
            "IsFormatSupported(0xffffffff) call returns %08x\n", hr);
     }
 
@@ -250,7 +250,7 @@ static void test_audioclient(void)
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0xffffffff, 5000000, 0, pwfx, NULL);
     ok(hr == E_INVALIDARG, "Initialize with invalid flags returns %08x\n", hr);
 
-    /* It seems that if length > 2s or periodicity != 0 the length is ignored and call succeeds
+    /* A period != 0 is ignored and the call succeeds.
      * Since we can only initialize successfully once, skip those tests.
      */
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, NULL, NULL);
@@ -430,8 +430,9 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
         /* Vista returns E_INVALIDARG upon AUDCLNT_STREAMFLAGS_RATEADJUST */
         hr = IAudioClient_Initialize(ac, mode, 0, 5000000, 0, &fmt, NULL);
         if ((hrs == S_OK) ^ (hr == S_OK))
-            trace("Initialize (%u      , %ux%2ux%u) returns %08x unlike IsFormatSupported\n",
-                  mode, fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
+            trace("Initialize (%s, %ux%2ux%u) returns %08x unlike IsFormatSupported\n",
+                  mode == AUDCLNT_SHAREMODE_SHARED ? "shared " : "exclus.",
+                  fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
         if (mode == AUDCLNT_SHAREMODE_SHARED)
             ok(hrs == S_OK ? hr == S_OK : hr == AUDCLNT_E_UNSUPPORTED_FORMAT,
                "Initialize(shared,  %ux%2ux%u) returns %08x\n",
@@ -443,10 +444,12 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
                fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr, hrs);
         else
             /* On testbot 48000x16x1 claims support, but does not Initialize.
-             * Some cards Initialize 44100|48000x16x1 yet claim no support. */
+             * Some cards Initialize 44100|48000x16x1 yet claim no support;
+             * F. Gouget's w7 bots do that for 12000|96000x8|16x1|2 */
             ok(hrs == S_OK ? hr == S_OK || broken(hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED)
                : hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED || broken(hr == S_OK &&
-                   fmt.nChannels == 1 && pwfx->wBitsPerSample == fmt.wBitsPerSample),
+                   ((fmt.nChannels == 1 && fmt.wBitsPerSample == 16) ||
+                    (fmt.nSamplesPerSec == 12000 || fmt.nSamplesPerSec == 96000))),
                "Initialize(exclus., %ux%2ux%u) returns %08x\n",
                fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
 
@@ -599,6 +602,7 @@ static void test_event(void)
 {
     HANDLE event;
     HRESULT hr;
+    DWORD r;
     IAudioClient *ac;
     WAVEFORMATEX *pwfx;
 
@@ -627,11 +631,40 @@ static void test_event(void)
     hr = IAudioClient_SetEventHandle(ac, event);
     ok(hr == S_OK, "SetEventHandle failed: %08x\n", hr);
 
+    hr = IAudioClient_SetEventHandle(ac, event);
+    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "SetEventHandle returns %08x\n", hr);
+
+    r = WaitForSingleObject(event, 40);
+    ok(r == WAIT_TIMEOUT, "Wait(event) before Start gave %x\n", r);
+
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start failed: %08x\n", hr);
 
+    r = WaitForSingleObject(event, 20);
+    ok(r == WAIT_OBJECT_0, "Wait(event) after Start gave %x\n", r);
+
     hr = IAudioClient_Stop(ac);
     ok(hr == S_OK, "Stop failed: %08x\n", hr);
+
+    ok(ResetEvent(event), "ResetEvent\n");
+
+    /* Still receiving events! */
+    r = WaitForSingleObject(event, 20);
+    todo_wine ok(r == WAIT_OBJECT_0, "Wait(event) after Stop gave %x\n", r);
+
+    hr = IAudioClient_Reset(ac);
+    ok(hr == S_OK, "Reset failed: %08x\n", hr);
+
+    ok(ResetEvent(event), "ResetEvent\n");
+
+    r = WaitForSingleObject(event, 120);
+    todo_wine ok(r == WAIT_OBJECT_0, "Wait(event) after Reset gave %x\n", r);
+
+    hr = IAudioClient_SetEventHandle(ac, NULL);
+    ok(hr == E_INVALIDARG, "SetEventHandle(NULL) returns %08x\n", hr);
+
+    r = WaitForSingleObject(event, 70);
+    todo_wine ok(r == WAIT_OBJECT_0, "Wait(NULL event) gave %x\n", r);
 
     /* test releasing a playing stream */
     hr = IAudioClient_Start(ac);
@@ -889,14 +922,17 @@ static void test_session(void)
             0, 5000000, 0, pwfx, &ses1_guid);
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
 
-    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
-            NULL, (void**)&ses1_ac2);
-    ok(hr == S_OK, "Activation failed with %08x\n", hr);
-    if(FAILED(hr)){
+    if(hr == S_OK){
+        hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+                NULL, (void**)&ses1_ac2);
+        ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    }
+    if(hr != S_OK){
         skip("Unable to open the same device twice. Skipping session tests\n");
 
         ref = IAudioClient_Release(ses1_ac1);
         ok(ref == 0, "AudioClient wasn't released: %u\n", ref);
+        CoTaskMemFree(pwfx);
         return;
     }
 
@@ -1076,8 +1112,15 @@ static void test_streamvolume(void)
             0, fmt, NULL);
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
 
-    hr = IAudioClient_GetService(ac, &IID_IAudioStreamVolume, (void**)&asv);
-    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+    if(hr == S_OK){
+        hr = IAudioClient_GetService(ac, &IID_IAudioStreamVolume, (void**)&asv);
+        ok(hr == S_OK, "GetService failed: %08x\n", hr);
+    }
+    if(hr != S_OK){
+        IAudioClient_Release(ac);
+        CoTaskMemFree(fmt);
+        return;
+    }
 
     hr = IAudioStreamVolume_GetChannelCount(asv, NULL);
     ok(hr == E_POINTER, "GetChannelCount gave wrong error: %08x\n", hr);
@@ -1173,8 +1216,15 @@ static void test_channelvolume(void)
             AUDCLNT_STREAMFLAGS_NOPERSIST, 5000000, 0, fmt, NULL);
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
 
-    hr = IAudioClient_GetService(ac, &IID_IChannelAudioVolume, (void**)&acv);
-    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+    if(hr == S_OK){
+        hr = IAudioClient_GetService(ac, &IID_IChannelAudioVolume, (void**)&acv);
+        ok(hr == S_OK, "GetService failed: %08x\n", hr);
+    }
+    if(hr != S_OK){
+        IAudioClient_Release(ac);
+        CoTaskMemFree(fmt);
+        return;
+    }
 
     hr = IChannelAudioVolume_GetChannelCount(acv, NULL);
     ok(hr == NULL_PTR_ERR, "GetChannelCount gave wrong error: %08x\n", hr);
@@ -1273,8 +1323,15 @@ static void test_simplevolume(void)
             AUDCLNT_STREAMFLAGS_NOPERSIST, 5000000, 0, fmt, NULL);
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
 
-    hr = IAudioClient_GetService(ac, &IID_ISimpleAudioVolume, (void**)&sav);
-    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+    if(hr == S_OK){
+        hr = IAudioClient_GetService(ac, &IID_ISimpleAudioVolume, (void**)&sav);
+        ok(hr == S_OK, "GetService failed: %08x\n", hr);
+    }
+    if(hr != S_OK){
+        IAudioClient_Release(ac);
+        CoTaskMemFree(fmt);
+        return;
+    }
 
     hr = ISimpleAudioVolume_GetMasterVolume(sav, NULL);
     ok(hr == NULL_PTR_ERR, "GetMasterVolume gave wrong error: %08x\n", hr);
@@ -1360,8 +1417,15 @@ static void test_volume_dependence(void)
             AUDCLNT_STREAMFLAGS_NOPERSIST, 5000000, 0, fmt, &session);
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
 
-    hr = IAudioClient_GetService(ac, &IID_ISimpleAudioVolume, (void**)&sav);
-    ok(hr == S_OK, "GetService (SimpleAudioVolume) failed: %08x\n", hr);
+    if(hr == S_OK){
+        hr = IAudioClient_GetService(ac, &IID_ISimpleAudioVolume, (void**)&sav);
+        ok(hr == S_OK, "GetService (SimpleAudioVolume) failed: %08x\n", hr);
+    }
+    if(hr != S_OK){
+        IAudioClient_Release(ac);
+        CoTaskMemFree(fmt);
+        return;
+    }
 
     hr = IAudioClient_GetService(ac, &IID_IChannelAudioVolume, (void**)&cav);
     ok(hr == S_OK, "GetService (ChannelAudioVolme) failed: %08x\n", hr);
@@ -1678,6 +1742,7 @@ static void test_worst_case(void)
 
     CoTaskMemFree(pwfx);
     IAudioClient_Release(ac);
+    IAudioClock_Release(acl);
     IAudioRenderClient_Release(arc);
 }
 
