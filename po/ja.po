@@ -2722,8 +2722,8 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"この認証局によって発行された証明書は信頼されなくなります。この証明書を削除し"
-"ますか?"
+"この認証局によって発行された証明書は信頼されなくなります。\n"
+"この証明書を削除しますか?"
 
 #: cryptui.rc:112
 msgid ""
@@ -2731,8 +2731,8 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"これらの認証局によって発行された証明書は信頼されなくなります。これらの証明書"
-"を削除しますか?"
+"これらの認証局によって発行された証明書は信頼されなくなります。\n"
+"これらの証明書を削除しますか?"
 
 #: cryptui.rc:113
 msgid ""
@@ -2758,16 +2758,16 @@ msgid ""
 "Software signed by this publisher will no longer be trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"この発行元により署名されたソフトウェアは信頼されなくなります。この証明書を削"
-"除しますか?"
+"この発行元により署名されたソフトウェアは信頼されなくなります。\n"
+"この証明書を削除しますか?"
 
 #: cryptui.rc:116
 msgid ""
 "Software signed by these publishers will no longer be trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"これらの発行元により署名されたソフトウェアは信頼されなくなります。これらの証"
-"明書を削除しますか?"
+"これらの発行元により署名されたソフトウェアは信頼されなくなります。\n"
+"これらの証明書を削除しますか?"
 
 #: cryptui.rc:117
 msgid "Are you sure you want to remove this certificate?"
@@ -9285,7 +9285,7 @@ msgstr "CHDIR <ディレクトリ> は現在のデフォルト ディレクト�
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLSはコンソール画面をクリアします\n"
+msgstr "CLSはコンソール画面をクリアします。\n"
 
 #: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
@@ -10004,7 +10004,7 @@ msgstr "使い方: hostname\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
-msgstr "エラー: 無効なオプション '%c'\n"
+msgstr "エラー: 無効なオプション '%c'。\n"
 
 #: hostname.rc:29
 msgid ""
@@ -10089,7 +10089,7 @@ msgstr ""
 "    -または-\n"
 "NET コマンド /HELP\n"
 "\n"
-"コマンドは、HELP、START、STOP、USE のいずれかです\n"
+"コマンドは、HELP、START、STOP、USE のいずれかです。\n"
 
 #: net.rc:28
 msgid ""
@@ -10298,7 +10298,7 @@ msgstr "フッタ(&F):"
 
 #: notepad.rc:104
 msgid "Margins (millimeters)"
-msgstr "マージン(mm):"
+msgstr "マージン(mm)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10396,10 +10396,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"ファイル '%s'\n"
-"は存在しません\n"
+"ファイル '%s' は存在しません\n"
 "\n"
-" 新しいファイルを作成しますか ?"
+"新しいファイルを作成しますか?"
 
 #: notepad.rc:79
 msgid ""
@@ -10407,14 +10406,13 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"ファイル '%s'\n"
-"は変更されています\n"
+"ファイル '%s' は変更されています\n"
 "\n"
-" 変更を保存しますか ?"
+"変更を保存しますか?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
-msgstr "'%s' は見つかりませんでした"
+msgstr "'%s' は見つかりませんでした。"
 
 #: notepad.rc:82
 msgid "Unicode (UTF-16)"
@@ -10900,11 +10898,11 @@ msgstr "コマンド ライン(&C):"
 
 #: progman.rc:171
 msgid "&Working directory:"
-msgstr "作業ディレクトリ(&W)"
+msgstr "作業ディレクトリ(&W):"
 
 #: progman.rc:173
 msgid "&Key combination:"
-msgstr "キーの組み合わせ(&K)"
+msgstr "キーの組み合わせ(&K):"
 
 #: progman.rc:176 progman.rc:212
 msgid "&Minimize at launch"
