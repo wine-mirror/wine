@@ -1827,6 +1827,44 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
             test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+
+            /* SetVector */
+            fvalue = -1.33;
+            for (l = 0; l < 4; ++l)
+            {
+                *(input_value + l) = *(DWORD *)&fvalue;
+                fvalue += 1.12;
+            }
+            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            hr = effect->lpVtbl->SetVector(effect, parameter, (D3DXVECTOR4 *)input_value);
+            if (!res_desc->Elements &&
+                    (res_desc->Class == D3DXPC_SCALAR
+                    || res_desc->Class == D3DXPC_VECTOR))
+            {
+                /* only values between 0 and INT_FLOAT_MULTI are valid */
+                if (res_desc->Type == D3DXPT_INT && res_desc->Bytes == 4)
+                {
+                    *expected_value = (DWORD)(max(min(*(FLOAT *)(input_value + 2), 1.0f), 0.0f) * INT_FLOAT_MULTI);
+                    *expected_value += ((DWORD)(max(min(*(FLOAT *)(input_value + 1), 1.0f), 0.0f) * INT_FLOAT_MULTI)) << 8;
+                    *expected_value += ((DWORD)(max(min(*(FLOAT *)input_value, 1.0f), 0.0f) * INT_FLOAT_MULTI)) << 16;
+                    *expected_value += ((DWORD)(max(min(*(FLOAT *)(input_value + 3), 1.0f), 0.0f) * INT_FLOAT_MULTI)) << 24;
+                }
+                else
+                {
+                    for (l = 0; l < 4; ++l)
+                    {
+                        set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_FLOAT);
+                    }
+                }
+                ok(hr == D3D_OK, "%u - %s: SetVector failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+            }
+            else
+            {
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVector failed, got %#x, expected %#x\n",
+                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+            }
+            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
+            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
         }
 
         count = effect->lpVtbl->Release(effect);
