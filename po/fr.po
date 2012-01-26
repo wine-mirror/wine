@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-24 00:53+0100\n"
+"PO-Revision-Date: 2012-01-26 22:30+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -7199,8 +7199,8 @@ msgid ""
 "your document."
 msgstr ""
 "Insère le contenu du presse-papiers dans votre document comme %s. Les "
-"données sont liées au fichier source afin que les modifications de celui-"
-"ci soient répercutées dans votre document."
+"données sont liées au fichier source afin que les modifications de celui-ci "
+"soient répercutées dans votre document."
 
 #: oledlg.rc:38
 msgid ""
@@ -10014,9 +10014,8 @@ msgstr ""
 "\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "Étiquette du volume (11 caractères, ENTRÉE pour aucun) ?"
+msgstr "Étiquette du volume (11 caractères, <Entrée> pour aucun) ?"
 
 #: cmd.rc:319
 msgid "PATH not found\n"
@@ -14190,9 +14189,8 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Paramètre « %1 » invalide - Utilisez xcopy /? pour obtenir de l'aide\n"
 
 #: xcopy.rc:29
-#, fuzzy
 msgid "Press <Enter> to begin copying\n"
-msgstr "Appuyez sur ENTRÉE pour démarrer la copie\n"
+msgstr "Appuyez sur <Entrée> pour démarrer la copie\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
