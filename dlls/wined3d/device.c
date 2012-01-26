@@ -5004,14 +5004,16 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
 
         if (cursor_image->resource.width == 32 && cursor_image->resource.height == 32)
         {
-            /* Draw a hardware cursor */
+            UINT mask_size = cursor_image->resource.width * cursor_image->resource.height / 8;
             ICONINFO cursorInfo;
+            DWORD *maskBits;
             HCURSOR cursor;
-            /* Create and clear maskBits because it is not needed for
-             * 32-bit cursors.  32x32 bits split into 32-bit chunks == 32
-             * chunks. */
-            DWORD *maskBits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    (cursor_image->resource.width * cursor_image->resource.height / 8));
+
+            /* 32-bit user32 cursors ignore the alpha channel if it's all
+             * zeroes, and use the mask instead. Fill the mask with all ones
+             * to ensure we still get a fully transparent cursor. */
+            maskBits = HeapAlloc(GetProcessHeap(), 0, mask_size);
+            memset(maskBits, 0xff, mask_size);
             wined3d_surface_map(cursor_image, &mapped_rect, NULL,
                     WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY);
             TRACE("width: %u height: %u.\n", cursor_image->resource.width, cursor_image->resource.height);
