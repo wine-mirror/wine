@@ -1920,7 +1920,7 @@ HRESULT super_navigate(HTMLWindow *window, IUri *uri, const WCHAR *headers, BYTE
         }
     }
 
-    if(window->uri && compare_ignoring_frag(window->uri, uri)) {
+    if(window->uri && !post_data_size && compare_ignoring_frag(window->uri, uri)) {
         TRACE("fragment navigate\n");
         return navigate_fragment(window, uri);
     }
