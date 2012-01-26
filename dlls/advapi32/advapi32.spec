@@ -214,7 +214,7 @@
 @ stdcall EnumServicesStatusExA(long long long long ptr long ptr ptr ptr str)
 @ stdcall EnumServicesStatusExW(long long long long ptr long ptr ptr ptr wstr)
 @ stdcall EnumServicesStatusW (long long long ptr long ptr ptr ptr)
-# @ stub EnumerateTraceGuids
+@ stdcall EnumerateTraceGuids(ptr long ptr)
 # @ stub EqualDomainSid
 @ stdcall EqualPrefixSid(ptr ptr)
 @ stdcall EqualSid(ptr ptr)

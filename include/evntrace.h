@@ -49,6 +49,15 @@ typedef struct _TRACE_GUID_REGISTRATION
     HANDLE RegHandle;
 } TRACE_GUID_REGISTRATION, *PTRACE_GUID_REGISTRATION;
 
+typedef struct _TRACE_GUID_PROPERTIES {
+    GUID    Guid;
+    ULONG   GuidType;
+    ULONG   LoggerId;
+    ULONG   EnableLevel;
+    ULONG   EnableFlags;
+    BOOLEAN IsEnable;
+} TRACE_GUID_PROPERTIES, *PTRACE_GUID_PROPERTIES;
+
 typedef struct _EVENT_TRACE_HEADER
 {
     USHORT Size;

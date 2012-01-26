@@ -917,3 +917,13 @@ ULONG WINAPI CloseTrace( TRACEHANDLE handle )
     FIXME("%s: stub\n", wine_dbgstr_longlong(handle));
     return ERROR_INVALID_HANDLE;
 }
+
+/******************************************************************************
+ * EnumerateTraceGuids [ADVAPI32.@]
+ */
+ULONG WINAPI EnumerateTraceGuids(PTRACE_GUID_PROPERTIES *propertiesarray,
+                                 ULONG arraycount, PULONG guidcount)
+{
+    FIXME("%p %d %p: stub\n", propertiesarray, arraycount, guidcount);
+    return ERROR_INVALID_PARAMETER;
+}
