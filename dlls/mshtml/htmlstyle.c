@@ -1611,39 +1611,18 @@ static HRESULT WINAPI HTMLStyle_put_paddingLeft(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
 
-    TRACE("(%p)->(vt=%d)\n", This, V_VT(&v));
+    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
 
-    switch(V_VT(&v)) {
-    case VT_I4: {
-        WCHAR buf[14];
-
-        wsprintfW(buf, px_formatW, V_I4(&v));
-        return set_style_attr(This, STYLEID_PADDING_LEFT, buf, 0);
-    }
-    case VT_BSTR:
-        return set_style_attr(This, STYLEID_PADDING_LEFT, V_BSTR(&v), 0);
-    default:
-        FIXME("unsupported vt=%d\n", V_VT(&v));
-    }
-
-    return E_NOTIMPL;
+    return set_nsstyle_attr_var(This->nsstyle, STYLEID_PADDING_LEFT, &v, ATTR_FIX_PX);
 }
 
 static HRESULT WINAPI HTMLStyle_get_paddingLeft(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    BSTR ret;
-    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hres = get_style_attr(This, STYLEID_PADDING_LEFT, &ret);
-    if(FAILED(hres))
-        return hres;
-
-    V_VT(p) = VT_BSTR;
-    V_BSTR(p) = ret;
-    return S_OK;
+    return get_nsstyle_attr_var(This->nsstyle, STYLEID_PADDING_LEFT, p, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_put_padding(IHTMLStyle *iface, BSTR v)

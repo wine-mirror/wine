@@ -1289,6 +1289,8 @@ static void test_body_style(IHTMLStyle *style)
     /* PaddingLeft */
     hres = IHTMLStyle_get_paddingLeft(style, &vDefault);
     ok(hres == S_OK, "get_paddingLeft: %08x\n", hres);
+    ok(V_VT(&vDefault) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&vDefault));
+    ok(!strcmp_wa(V_BSTR(&vDefault), "1px"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&vDefault)));
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("10");
