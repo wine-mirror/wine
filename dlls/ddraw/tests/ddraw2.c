@@ -19,6 +19,14 @@
 #include "wine/test.h"
 #include "d3d.h"
 
+struct create_window_thread_param
+{
+    HWND window;
+    HANDLE window_created;
+    HANDLE destroy_window;
+    HANDLE thread;
+};
+
 static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
 {
     if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
@@ -29,6 +37,61 @@ static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
     c1 >>= 8; c2 >>= 8;
     if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
     return TRUE;
+}
+
+static DWORD WINAPI create_window_thread_proc(void *param)
+{
+    struct create_window_thread_param *p = param;
+    DWORD res;
+    BOOL ret;
+
+    p->window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ret = SetEvent(p->window_created);
+    ok(ret, "SetEvent failed, last error %#x.\n", GetLastError());
+
+    for (;;)
+    {
+        MSG msg;
+
+        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessage(&msg);
+        res = WaitForSingleObject(p->destroy_window, 100);
+        if (res == WAIT_OBJECT_0)
+            break;
+        if (res != WAIT_TIMEOUT)
+        {
+            ok(0, "Wait failed (%#x), last error %#x.\n", res, GetLastError());
+            break;
+        }
+    }
+
+    DestroyWindow(p->window);
+
+    return 0;
+}
+
+static void create_window_thread(struct create_window_thread_param *p)
+{
+    DWORD res, tid;
+
+    p->window_created = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ok(!!p->window_created, "CreateEvent failed, last error %#x.\n", GetLastError());
+    p->destroy_window = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ok(!!p->destroy_window, "CreateEvent failed, last error %#x.\n", GetLastError());
+    p->thread = CreateThread(NULL, 0, create_window_thread_proc, p, 0, &tid);
+    ok(!!p->thread, "Failed to create thread, last error %#x.\n", GetLastError());
+    res = WaitForSingleObject(p->window_created, INFINITE);
+    ok(res == WAIT_OBJECT_0, "Wait failed (%#x), last error %#x.\n", res, GetLastError());
+}
+
+static void destroy_window_thread(struct create_window_thread_param *p)
+{
+    SetEvent(p->destroy_window);
+    WaitForSingleObject(p->thread, INFINITE);
+    CloseHandle(p->destroy_window);
+    CloseHandle(p->window_created);
+    CloseHandle(p->thread);
 }
 
 static D3DCOLOR get_surface_color(IDirectDrawSurface *surface, UINT x, UINT y)
@@ -755,10 +818,31 @@ cleanup:
     DestroyWindow(window);
 }
 
+static void test_coop_level_threaded(void)
+{
+    struct create_window_thread_param p;
+    IDirectDraw2 *ddraw;
+    HRESULT hr;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+    create_window_thread(&p);
+
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, p.window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    IDirectDraw2_Release(ddraw);
+    destroy_window_thread(&p);
+}
+
 START_TEST(ddraw2)
 {
     test_coop_level_create_device_window();
     test_clipper_blt();
     test_coop_level_d3d_state();
     test_surface_interface_mismatch();
+    test_coop_level_threaded();
 }
