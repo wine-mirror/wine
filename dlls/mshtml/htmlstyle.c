@@ -1491,22 +1491,7 @@ static HRESULT WINAPI HTMLStyle_put_marginRight(IHTMLStyle *iface, VARIANT v)
 
     TRACE("(%p)->(v(%d))\n", This, V_VT(&v));
 
-    switch(V_VT(&v)) {
-    case VT_NULL:
-        return set_style_attr(This, STYLEID_MARGIN_RIGHT, emptyW, 0);
-    case VT_I4: {
-        WCHAR buf[14];
-
-        wsprintfW(buf, px_formatW, V_I4(&v));
-        return set_style_attr(This, STYLEID_MARGIN_RIGHT, buf, 0);
-    }
-    case VT_BSTR:
-        return set_style_attr(This, STYLEID_MARGIN_RIGHT, V_BSTR(&v), 0);
-    default:
-        FIXME("Unsupported vt=%d\n", V_VT(&v));
-    }
-
-    return E_NOTIMPL;
+    return set_nsstyle_attr_var(This->nsstyle, STYLEID_MARGIN_RIGHT, &v, ATTR_FIX_PX);
 }
 
 static HRESULT WINAPI HTMLStyle_get_marginRight(IHTMLStyle *iface, VARIANT *p)
