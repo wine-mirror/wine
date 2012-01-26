@@ -1898,6 +1898,39 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
                 test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
             }
+
+            /* SetMatrix */
+            fvalue = 1.33;
+            for (l = 0; l < 16; ++l)
+            {
+                *(input_value + l) = *(DWORD *)&fvalue;
+                fvalue += 1.12;
+            }
+            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            hr = effect->lpVtbl->SetMatrix(effect, parameter, (D3DXMATRIX *)input_value);
+            if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+            {
+                for (l = 0; l < 4; ++l)
+                {
+                    UINT m;
+
+                    for (m = 0; m < 4; ++m)
+                    {
+                        if (m < res_desc->Rows && l < res_desc->Columns)
+                            set_number(expected_value + l + m * res_desc->Columns, res_desc->Type,
+                                    input_value + l + m * 4, D3DXPT_FLOAT);
+                    }
+
+                }
+                ok(hr == D3D_OK, "%u - %s: SetMatrix failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+            }
+            else
+            {
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrix failed, got %#x, expected %#x\n",
+                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+            }
+            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
+            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
         }
 
         count = effect->lpVtbl->Release(effect);
