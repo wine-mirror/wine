@@ -61,7 +61,7 @@
 # @ stub CloseEncryptedFileRaw
 @ stdcall CloseEventLog (long)
 @ stdcall CloseServiceHandle(long)
-# @ stub CloseTrace
+@ stdcall CloseTrace(int64)
 @ stdcall CommandLineFromMsiDescriptor(wstr ptr ptr)
 # @ stub ComputeAccessTokenFromCodeAuthzLevel
 @ stdcall ControlService(long long ptr)

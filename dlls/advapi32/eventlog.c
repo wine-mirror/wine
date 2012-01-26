@@ -908,3 +908,12 @@ ULONG WINAPI TraceMessageVa( TRACEHANDLE handle, ULONG flags, LPGUID guid, USHOR
     FIXME("(%s %x %s %d) : stub\n", wine_dbgstr_longlong(handle), flags, debugstr_guid(guid), number);
     return ERROR_SUCCESS;
 }
+
+/******************************************************************************
+ * CloseTrace [ADVAPI32.@]
+ */
+ULONG WINAPI CloseTrace( TRACEHANDLE handle )
+{
+    FIXME("%s: stub\n", wine_dbgstr_longlong(handle));
+    return ERROR_INVALID_HANDLE;
+}
