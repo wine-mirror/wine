@@ -729,6 +729,18 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "6px"), "V_BSTR(marginTop) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 5;
+    hres = IHTMLStyle_put_marginTop(style, v);
+    ok(hres == S_OK, "put_marginTop failed: %08x\n", hres);
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_marginTop(style, &v);
+    ok(hres == S_OK, "get_marginTop failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(marginTop) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "5px"), "V_BSTR(marginTop) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     str = NULL;
     hres = IHTMLStyle_get_border(style, &str);
     ok(hres == S_OK, "get_border failed: %08x\n", hres);

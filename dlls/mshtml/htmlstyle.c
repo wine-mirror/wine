@@ -1473,7 +1473,7 @@ static HRESULT WINAPI HTMLStyle_put_marginTop(IHTMLStyle *iface, VARIANT v)
 
     TRACE("(%p)->(v%d)\n", This, V_VT(&v));
 
-    return set_nsstyle_attr_var(This->nsstyle, STYLEID_MARGIN_TOP, &v, 0);
+    return set_nsstyle_attr_var(This->nsstyle, STYLEID_MARGIN_TOP, &v, ATTR_FIX_PX);
 }
 
 static HRESULT WINAPI HTMLStyle_get_marginTop(IHTMLStyle *iface, VARIANT *p)
