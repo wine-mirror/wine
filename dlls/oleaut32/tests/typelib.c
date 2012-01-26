@@ -59,6 +59,8 @@ static HRESULT WINAPI (*pRegisterTypeLibForUser)(ITypeLib*,OLECHAR*,OLECHAR*);
 static HRESULT WINAPI (*pUnRegisterTypeLibForUser)(REFGUID,WORD,WORD,LCID,SYSKIND);
 
 static const WCHAR wszStdOle2[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
+static WCHAR wszGUID[] = {'G','U','I','D',0};
+static WCHAR wszguid[] = {'g','u','i','d',0};
 
 static const int is_win64 = sizeof(void *) > sizeof(int);
 
@@ -116,8 +118,6 @@ static void test_TypeComp(void)
     static WCHAR wszUnchecked[] = {'U','n','c','h','e','c','k','e','d',0};
     static WCHAR wszIUnknown[] = {'I','U','n','k','n','o','w','n',0};
     static WCHAR wszFont[] = {'F','o','n','t',0};
-    static WCHAR wszGUID[] = {'G','U','I','D',0};
-    static WCHAR wszguid[] = {'g','u','i','d',0};
     static WCHAR wszStdPicture[] = {'S','t','d','P','i','c','t','u','r','e',0};
     static WCHAR wszOLE_COLOR[] = {'O','L','E','_','C','O','L','O','R',0};
     static WCHAR wszClone[] = {'C','l','o','n','e',0};
@@ -3112,6 +3112,79 @@ static void test_SetVarDocString(void)
     DeleteFileA(filenameA);
 }
 
+static void test_FindName(void)
+{
+    static const WCHAR invalidW[] = {'i','n','v','a','l','i','d',0};
+    WCHAR buffW[100];
+    MEMBERID memid;
+    ITypeInfo *ti;
+    ITypeLib *tl;
+    HRESULT hr;
+    UINT16 c;
+
+    hr = LoadTypeLib(wszStdOle2, &tl);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ITypeLib_FindName(tl, NULL, 0, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    lstrcpyW(buffW, wszGUID);
+    hr = ITypeLib_FindName(tl, buffW, 0, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    c = 0;
+    ti = (void*)0xdeadbeef;
+    hr = ITypeLib_FindName(tl, buffW, 0, &ti, NULL, &c);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(c == 0, "got %d\n", c);
+    ok(ti == (void*)0xdeadbeef, "got %p\n", ti);
+
+    c = 1;
+    ti = (void*)0xdeadbeef;
+    hr = ITypeLib_FindName(tl, buffW, 0, &ti, NULL, &c);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(c == 1, "got %d\n", c);
+    ok(ti == (void*)0xdeadbeef, "got %p\n", ti);
+
+    c = 1;
+    memid = 0;
+    ti = (void*)0xdeadbeef;
+    hr = ITypeLib_FindName(tl, buffW, 0, &ti, &memid, &c);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(memid == -1, "got %d\n", memid);
+    ok(!lstrcmpW(buffW, wszGUID), "got %s\n", wine_dbgstr_w(buffW));
+    ok(c == 1, "got %d\n", c);
+    ITypeInfo_Release(ti);
+
+    c = 1;
+    memid = 0;
+    lstrcpyW(buffW, wszguid);
+    ti = (void*)0xdeadbeef;
+    hr = ITypeLib_FindName(tl, buffW, 0, &ti, &memid, &c);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
+    ok(memid == -1, "got %d\n", memid);
+    ok(!lstrcmpW(buffW, wszGUID), "got %s\n", wine_dbgstr_w(buffW));
+    ok(c == 1, "got %d\n", c);
+}
+    if (c == 1)
+        ITypeInfo_Release(ti);
+
+    c = 1;
+    memid = -1;
+    lstrcpyW(buffW, invalidW);
+    ti = (void*)0xdeadbeef;
+    hr = ITypeLib_FindName(tl, buffW, 0, &ti, &memid, &c);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(memid == -1, "got %d\n", memid);
+    ok(!lstrcmpW(buffW, invalidW), "got %s\n", wine_dbgstr_w(buffW));
+    ok(c == 0, "got %d\n", c);
+    ok(ti == (void*)0xdeadbeef, "got %p\n", ti);
+
+    ITypeLib_Release(tl);
+}
+
 START_TEST(typelib)
 {
     const char *filename;
@@ -3131,6 +3204,7 @@ START_TEST(typelib)
     test_SetVarHelpContext();
     test_SetFuncAndParamNames();
     test_SetVarDocString();
+    test_FindName();
 
     if ((filename = create_test_typelib(2)))
     {

@@ -4587,31 +4587,41 @@ ITypeLib2_fnIsName_exit:
  */
 static HRESULT WINAPI ITypeLib2_fnFindName(
 	ITypeLib2 *iface,
-	LPOLESTR szNameBuf,
-	ULONG lHashVal,
+	LPOLESTR name,
+	ULONG hash,
 	ITypeInfo **ppTInfo,
-	MEMBERID *rgMemId,
-	UINT16 *pcFound)
+	MEMBERID *memid,
+	UINT16 *found)
 {
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
-    TLBVarDesc *pVInfo;
-    UINT tic, fdc, pc, count = 0;
-    UINT nNameBufLen = (lstrlenW(szNameBuf)+1)*sizeof(WCHAR);
+    UINT tic, count = 0;
+    UINT len;
 
-    for(tic = 0; tic < This->TypeInfoCount; ++tic){
+    TRACE("(%p)->(%s %u %p %p %p)\n", This, debugstr_w(name), hash, ppTInfo, memid, found);
+
+    if ((!name && hash == 0) || !ppTInfo || !memid || !found)
+        return E_INVALIDARG;
+
+    len = (lstrlenW(name) + 1)*sizeof(WCHAR);
+    for(tic = 0; tic < This->TypeInfoCount; ++tic) {
         ITypeInfoImpl *pTInfo = This->typeinfos[tic];
-        if(!memcmp(szNameBuf,pTInfo->Name, nNameBufLen)) goto ITypeLib2_fnFindName_exit;
+        TLBVarDesc *var;
+        UINT fdc;
+
+        if(!memcmp(name, pTInfo->Name, len)) goto ITypeLib2_fnFindName_exit;
         for(fdc = 0; fdc < pTInfo->TypeAttr.cFuncs; ++fdc) {
-            TLBFuncDesc *pFInfo = &pTInfo->funcdescs[fdc];
-            if(!memcmp(szNameBuf,pFInfo->Name,nNameBufLen)) goto ITypeLib2_fnFindName_exit;
-            for(pc = 0;pc < pFInfo->funcdesc.cParams; pc++) {
-                if(!memcmp(szNameBuf,pFInfo->pParamDesc[pc].Name,nNameBufLen))
+            TLBFuncDesc *func = &pTInfo->funcdescs[fdc];
+            UINT pc;
+
+            if(!memcmp(name, func->Name, len)) goto ITypeLib2_fnFindName_exit;
+            for(pc = 0; pc < func->funcdesc.cParams; pc++) {
+                if(!memcmp(name, func->pParamDesc[pc].Name, len))
                     goto ITypeLib2_fnFindName_exit;
             }
         }
 
-        pVInfo = TLB_get_vardesc_by_name(pTInfo->vardescs, pTInfo->TypeAttr.cVars, szNameBuf);
-        if(pVInfo)
+        var = TLB_get_vardesc_by_name(pTInfo->vardescs, pTInfo->TypeAttr.cVars, name);
+        if (var)
             goto ITypeLib2_fnFindName_exit;
 
         continue;
@@ -4620,10 +4630,9 @@ ITypeLib2_fnFindName_exit:
         ppTInfo[count]=(LPTYPEINFO)pTInfo;
         count++;
     }
-    TRACE("(%p)slow! search for %d with %s: found %d TypeInfos!\n",
-          This, *pcFound, debugstr_w(szNameBuf), count);
+    TRACE("found %d typeinfos\n", count);
 
-    *pcFound = count;
+    *found = count;
 
     return S_OK;
 }
