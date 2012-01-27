@@ -34,8 +34,8 @@
 #define SET_EXPECT(func) \
     expect_ ## func = TRUE
 
-#define SET_CALLED(func) \
-    called_ ## func = TRUE
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = FALSE
 
 #define CHECK_EXPECT2(func) \
     do { \
@@ -355,7 +355,7 @@ static void run_test(const char *file_name)
     bres = CreateProcessA(NULL, command, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
     if(!bres) {
         win_skip("script.exe is not available\n");
-        SET_CALLED(reportSuccess);
+        CLEAR_CALLED(reportSuccess);
         return;
     }
 
