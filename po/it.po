@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-27 12:15+0100\n"
+"PO-Revision-Date: 2012-01-27 20:51+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -1771,7 +1771,7 @@ msgstr "Certificati non fidati"
 
 #: crypt32.rc:179
 msgid "KeyID="
-msgstr "IDChiave="
+msgstr "ID Chiave="
 
 #: crypt32.rc:180
 msgid "Certificate Issuer"
@@ -2368,7 +2368,7 @@ msgstr ""
 
 #: cryptui.rc:417
 msgid "&Enable strong encryption"
-msgstr "&Abilita Crittazione forte"
+msgstr "&Abilita Criptazione forte"
 
 #: cryptui.rc:419
 msgid "Delete the private &key if the export is successful"
@@ -2898,8 +2898,8 @@ msgid ""
 "The certificate contains a private key which may be exported along with the "
 "certificate."
 msgstr ""
-"Questo certificato contiente una chiave privata che potrebbe essere "
-"esportata insieme al certificato."
+"Questo certificato contiene una chiave privata che potrebbe essere esportata "
+"insieme al certificato."
 
 #: cryptui.rc:169
 msgid "Enter Password"
@@ -3239,7 +3239,7 @@ msgstr "&Aggiungi ai Preferiti..."
 
 #: ieframe.rc:57
 msgid "&About Internet Explorer"
-msgstr "&Informazioni su Internet Explorer..."
+msgstr "&Informazioni su Internet Explorer"
 
 #: ieframe.rc:87
 msgid "Open URL"
@@ -4474,7 +4474,7 @@ msgstr "Servizio inesistente\n"
 
 #: winerror.mc:1181
 msgid "Service cannot accept control message\n"
-msgstr "Il servivizio non accetta messaggi di controllo\n"
+msgstr "Il servizio non accetta messaggi di controllo\n"
 
 #: winerror.mc:1186
 msgid "Service not active\n"
@@ -4651,7 +4651,7 @@ msgstr "I/O seriale completato\n"
 
 #: winerror.mc:1401
 msgid "Serial I/O counter timeout\n"
-msgstr "Timeout del counter I/O seriale\n"
+msgstr "Timeout del contatore I/O seriale\n"
 
 #: winerror.mc:1406
 msgid "Floppy ID address mark not found\n"
@@ -4667,7 +4667,7 @@ msgstr "Errore sconosciuto del floppy\n"
 
 #: winerror.mc:1421
 msgid "Floppy registers inconsistent\n"
-msgstr "Registri del floppy incosistenti\n"
+msgstr "Registri del floppy inconsistenti\n"
 
 #: winerror.mc:1426
 msgid "Hard disk recalibrate failed\n"
@@ -4887,7 +4887,7 @@ msgstr "Nome del dominio non valido\n"
 
 #: winerror.mc:1696
 msgid "Invalid service name\n"
-msgstr "Nome del serfvizio non valido\n"
+msgstr "Nome del servizio non valido\n"
 
 #: winerror.mc:1701
 msgid "Invalid network name\n"
@@ -5775,7 +5775,7 @@ msgstr "Installazione già in esecuzione\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
-msgstr "Impossibile aprere il pacchetto di installazione\n"
+msgstr "Impossibile aprire il pacchetto di installazione\n"
 
 #: winerror.mc:2821
 msgid "Installation package is invalid\n"
@@ -6083,7 +6083,7 @@ msgstr "Nessun membro in più\n"
 
 #: winerror.mc:3206
 msgid "Not all objects unexported\n"
-msgstr "Non tutti gli oggetti inesportati\n"
+msgstr "Non tutti gli oggetti non esportati\n"
 
 #: winerror.mc:3211
 msgid "Interface not found\n"
@@ -6159,11 +6159,11 @@ msgstr "Handle di contesto danneggiato\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch\n"
-msgstr "Non corrispondenza dell'ahndle del legame\n"
+msgstr "Non corrispondenza dell'handle di legame\n"
 
 #: winerror.mc:3306
 msgid "Cannot get call handle\n"
-msgstr "Impossibile ottenere l'handle della chiamata\n"
+msgstr "Impossibile ottenere l'handle di chiamata\n"
 
 #: winerror.mc:3311
 msgid "Null reference pointer\n"
@@ -6207,7 +6207,7 @@ msgstr "Fallimento della relazione fidata\n"
 
 #: winerror.mc:3361
 msgid "Trust logon failure\n"
-msgstr "Fallimento dell logon di fiducia\n"
+msgstr "Fallimento del logon di fiducia\n"
 
 #: winerror.mc:3366
 msgid "RPC call already in progress\n"
@@ -6359,7 +6359,7 @@ msgstr "Handle operazione non valido\n"
 
 #: winerror.mc:3551
 msgid "Wrong serialising package version\n"
-msgstr "Versione serilaizzazione pacchetto sbagliata\n"
+msgstr "Versione di serializzazione del pacchetto sbagliata\n"
 
 #: winerror.mc:3556
 msgid "Wrong stub version\n"
@@ -6427,7 +6427,7 @@ msgstr "Account bloccato\n"
 
 #: winerror.mc:3636
 msgid "Invalid pixel format\n"
-msgstr "Fromato pixel non valido\n"
+msgstr "Formato pixel non valido\n"
 
 #: winerror.mc:3641
 msgid "Invalid driver\n"
@@ -6698,7 +6698,7 @@ msgstr ""
 "\t/uninstall {pacchetto|codice_prodotto} [proprietà]\n"
 "\t/x {pacchetto|codice_prodotto} [proprietà]\n"
 "Pubblicizza un prodotto:\n"
-"\t/j[u|m] pacchetto [/t trasformazione] [/g idlinguaggio]\n"
+"\t/j[u|m] pacchetto [/t trasformazione] [/g id_linguaggio]\n"
 "Applica una patch:\n"
 "\t/p patch_pacchetto [proprietà]\n"
 "\t/p patch_pacchetto /a pacchetto [proprietà]\n"
@@ -6783,7 +6783,7 @@ msgstr "Frame completi (non compresso)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
-msgstr "Wine Video 1 video codec"
+msgstr "Codec Video Wine Video 1"
 
 #: oleacc.rc:27
 msgid "unknown object"
@@ -6911,7 +6911,7 @@ msgstr "collegamento"
 
 #: oleacc.rc:58
 msgid "help balloon"
-msgstr "balloon d'aiuto"
+msgstr "fumetto d'aiuto"
 
 #: oleacc.rc:59
 msgid "character"
@@ -7502,11 +7502,11 @@ msgstr "Fallimenti della risorsa"
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
-msgstr ""
+msgstr "Emetti Tracking Info"
 
 #: shdoclc.rc:199
 msgid "Debug Break"
-msgstr "Break del Debug"
+msgstr "Break di Debug"
 
 #: shdoclc.rc:200
 msgid "Debug View"
@@ -7514,23 +7514,23 @@ msgstr "Vista del Debug"
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
-msgstr ""
+msgstr "Emetti albero"
 
 #: shdoclc.rc:202
 msgid "Dump Lines"
-msgstr ""
+msgstr "Emetti linee"
 
 #: shdoclc.rc:203
 msgid "Dump DisplayTree"
-msgstr ""
+msgstr "Emetti DisplayTree"
 
 #: shdoclc.rc:204
 msgid "Dump FormatCaches"
-msgstr ""
+msgstr "Emetti FormatCaches"
 
 #: shdoclc.rc:205
 msgid "Dump LayoutRects"
-msgstr ""
+msgstr "Emetti LayoutRects"
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
@@ -7610,7 +7610,7 @@ msgstr "Internet Explorer di Wine"
 
 #: shdoclc.rc:30
 msgid "&w&bPage &p"
-msgstr ""
+msgstr "&w&bPagina &p"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
@@ -8045,7 +8045,7 @@ msgstr "Sei sicuro di voler mandare '%1' nel cestino?"
 
 #: shell32.rc:175
 msgid "Are you sure that you want to send these %1 items to the Trash?"
-msgstr "Sei sicuro di voler mandare qeusti %1 oggetti nel Cestino?"
+msgstr "Sei sicuro di voler mandare questi %1 oggetti nel Cestino?"
 
 #: shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
@@ -8356,7 +8356,7 @@ msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
 msgstr ""
-"Memoria insufficente per eseguire questa operazione. Chiudere una o più "
+"Memoria insufficiente per eseguire questa operazione. Chiudere una o più "
 "applicazioni per aumentare la memoria disponibile e riprovare."
 
 #: winmm.rc:36
@@ -8364,8 +8364,8 @@ msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
 msgstr ""
-"Questa funzione non è supportata. Usare la funzione Capabilities per "
-"determinare quali funzioni e messaggi sono supportati dal driver."
+"Questa funzione non è supportata. Usare la funzione Capacità per determinare "
+"quali funzioni e messaggi sono supportati dal driver."
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
@@ -8377,7 +8377,7 @@ msgstr "Una flag non valida è stata passata a una funzione di sistema."
 
 #: winmm.rc:39
 msgid "An invalid parameter was passed to a system function."
-msgstr "Un parametro non valido è stato pasato a una funzione di sistema."
+msgstr "Un parametro non valido è stato passato a una funzione di sistema."
 
 #: winmm.rc:42
 msgid ""
@@ -8654,7 +8654,7 @@ msgid ""
 "documentation for valid formats."
 msgstr ""
 "Il valore specificato non è valido per il formato dell'orario. Consultare la "
-"documentazione dell'MCI per i formati validi."
+"documentazione MCI per i formati validi."
 
 #: winmm.rc:89
 msgid ""
@@ -8675,11 +8675,11 @@ msgid ""
 "may be corrupt, or not in the correct format."
 msgstr ""
 "Il file specificato non può essere aperto con il dispositivo MCI "
-"specificato. Il file potrebbe essere daneggiato o in un formato errato."
+"specificato. Il file potrebbe essere danneggiato o in un formato errato."
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
-msgstr "Un null parameter block è stato passato a MCI."
+msgstr "Un blocco di parametri nulli è stato passato a MCI."
 
 #: winmm.rc:93
 msgid "Cannot save an unnamed file. Supply a filename."
@@ -8787,8 +8787,8 @@ msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Impossibile impostare il dispositivo wave attuale per il play back perché in "
-"uso. Attendere che il dispositivo sia libero e riprovare."
+"Impossibile impostare il dispositivo wave attuale per la riproduzione perché "
+"in uso. Attendere che il dispositivo sia libero e riprovare."
 
 #: winmm.rc:110
 msgid ""
@@ -9058,7 +9058,7 @@ msgstr "Credenziali non valide"
 
 #: wldap32.rc:77
 msgid "Insufficient Rights"
-msgstr "Diritti insufficenti"
+msgstr "Diritti insufficienti"
 
 #: wldap32.rc:78
 msgid "Busy"
@@ -9234,7 +9234,7 @@ msgstr ""
 "  -   Cancella un attributo.\n"
 "  R   File in sola lettura.\n"
 "  A   File di archivio.\n"
-"  S   File di sitema.\n"
+"  S   File di sistema.\n"
 "  H   File nascosto.\n"
 "  [unità:][percorso][nomefile]\n"
 "      Specifica uno o più file da elaborare con attrib.\n"
@@ -9405,7 +9405,7 @@ msgid ""
 "HELP without an argument shows all CMD built-in commands.\n"
 msgstr ""
 "HELP <comando> mostra dei brevi dettagli di aiuto su un argomento.\n"
-"HELP senza argomenti mostra tutti i comandi CMD built-in.\n"
+"HELP senza argomenti mostra tutti i comandi CMD integrati.\n"
 
 #: cmd.rc:94
 msgid ""
@@ -9418,13 +9418,13 @@ msgid ""
 "In the second form of the command, string1 and string2 must be in double\n"
 "quotes. The comparison is not case-sensitive.\n"
 msgstr ""
-"IF è usato per eseguire condizionalmente un comando.\n"
+"IF è usato per eseguire condizionatamente un comando.\n"
 "\n"
 "Sintassi: IF [NOT] EXIST nomefile comando\n"
 "        IF [NOT] stringa1==stringa2 comando\n"
 "        IF [NOT] ERRORLEVEL numero comando\n"
 "\n"
-"Nella seconda forma del comando, stringa1 and stringa2 devono essere\n"
+"Nella seconda forma del comando, stringa1 e stringa2 devono essere\n"
 "in doppi apici. Il confronto non è sensibile alle maiuscole.\n"
 
 #: cmd.rc:100
@@ -9810,7 +9810,7 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
-"I comandi built-in di CMD sono:\n"
+"I comandi integrati di CMD sono:\n"
 "ASSOC\t\tMostra o modifica le associazioni delle estensioni dei file\n"
 "ATTRIB\t\tMostra o cambia gli attributi DOS dei file\n"
 "CALL\t\tInvoca un file batch da dentro un altro\n"
@@ -9832,6 +9832,7 @@ msgstr ""
 "MORE\t\tMostra l'output in pagine\n"
 "MOVE\t\tMuove un file, insieme di file o un albero di cartelle\n"
 "PATH\t\tConfigura o mostra il percorso di ricerca\n"
+"PAUSE\t\tSospendi l'esecuzione di un file batch\n"
 "POPD\t\tRipristina la cartella all'ultima salvata con PUSHD\n"
 "PROMPT\t\tCambia il prompt dei comandi\n"
 "PUSHD\t\tCambia su una nuova cartella, salvando quella attuale\n"
@@ -10511,15 +10512,15 @@ msgstr "Mostra informazioni sul &tipo"
 
 #: oleview.rc:49
 msgid "Create &Instance"
-msgstr "Crea &instanza"
+msgstr "Crea &istanza"
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
-msgstr "Crea instanza &su..."
+msgstr "Crea istanza &su..."
 
 #: oleview.rc:51
 msgid "&Release Instance"
-msgstr "&Rilascia instanza"
+msgstr "&Rilascia istanza"
 
 #: oleview.rc:53
 msgid "Copy C&LSID to clipboard"
@@ -10667,11 +10668,11 @@ msgstr "Chiudi l'applicazione. Chiede se salvare i cambiamenti"
 
 #: oleview.rc:108
 msgid "Create an instance of the selected object"
-msgstr "Crea un'instanza dell'elemento selezionato"
+msgstr "Crea un'istanza dell'elemento selezionato"
 
 #: oleview.rc:109
 msgid "Create an instance of the selected object on a specific machine"
-msgstr "Crea un'instanza dell'elemento selezionato su una macchina specifica"
+msgstr "Crea un'istanza dell'elemento selezionato su una macchina specifica"
 
 #: oleview.rc:110
 msgid "Release the currently selected object instance"
@@ -11102,7 +11103,7 @@ msgstr "Valore &DWORD"
 
 #: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
-msgstr "Valore &multistringa"
+msgstr "Valore &multi stringa"
 
 #: regedit.rc:52 regedit.rc:103
 msgid "&Expandable String Value"
@@ -11222,7 +11223,7 @@ msgstr "Modifica binario"
 
 #: regedit.rc:303
 msgid "Edit Multi String"
-msgstr "Modifica multistringa"
+msgstr "Modifica multi stringa"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
@@ -11414,7 +11415,7 @@ msgstr "Impossibile trovare la chiave '%s'"
 
 #: regedit.rc:149
 msgid "Adds a new multi string value"
-msgstr "Aggiunge un nuovo valore multistringa"
+msgstr "Aggiunge un nuovo valore multi stringa"
 
 #: regedit.rc:171
 msgid "Exports selected branch of the registry to a text file"
@@ -11467,7 +11468,7 @@ msgstr ""
 "eseguire start con l'opzione /L.\n"
 "Questo è software libero e sei invitato a redistribuirlo sotto alcune "
 "condizioni;\n"
-" eseguire 'start' con l'opzione /L per ulteriori infomazioni.\n"
+" eseguire 'start' con l'opzione /L per ulteriori informazioni.\n"
 
 #: start.rc:64
 msgid ""
@@ -11521,7 +11522,7 @@ msgstr "Non è stato possibile tradurre il nome file Unix in un nome file DOS."
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr "Uso: taskkill [/?] [/f] [/im NomeProcesso | /pid IDProcesso]\n"
+msgstr "Uso: taskkill [/?] [/f] [/im NomeProcesso | /pid ID_Processo]\n"
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
@@ -12904,7 +12905,7 @@ msgid ""
 msgstr ""
 "Non hai un'unità C. Non è consigliabile.\n"
 "\n"
-"Ricordati di cliccare 'Aggiungi' nella sezione Drives per crearne uno!\n"
+"Ricordati di cliccare 'Aggiungi' nella sezione Unità per crearne uno!\n"
 
 #: winecfg.rc:90
 msgid "Controls Background"
@@ -13780,7 +13781,7 @@ msgstr "&Formato del carattere"
 
 #: wordpad.rc:61
 msgid "&Def. char format"
-msgstr "Formato del &def. char"
+msgstr "Formato del &def. car."
 
 #: wordpad.rc:62
 msgid "Paragrap&h format"
