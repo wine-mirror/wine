@@ -885,18 +885,26 @@ ULONG WINAPI ProcessTrace( PTRACEHANDLE HandleArray, ULONG HandleCount, LPFILETI
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-ULONG TraceMessage( TRACEHANDLE SessionHandle, ULONG MessageFlags, LPGUID MessageGuid,
-                    USHORT MessageNumber, ...)
+/******************************************************************************
+ * TraceMessage [ADVAPI32.@]
+ */
+ULONG WINAPIV TraceMessage( TRACEHANDLE handle, ULONG flags, LPGUID guid, USHORT number, ... )
 {
-    FIXME("(%s %d %s %d) : stub\n", wine_dbgstr_longlong(SessionHandle), MessageFlags,
-                    debugstr_guid(MessageGuid), MessageNumber);
-    return ERROR_SUCCESS;
+    __ms_va_list valist;
+    ULONG ret;
+
+    __ms_va_start( valist, number );
+    ret = TraceMessageVa( handle, flags, guid, number, valist );
+    __ms_va_end( valist );
+    return ret;
 }
 
-ULONG TraceMessageVa( TRACEHANDLE SessionHandle, ULONG MessageFlags, LPGUID MessageGuid,
-                    USHORT MessageNumber, __ms_va_list args)
+/******************************************************************************
+ * TraceMessageVa [ADVAPI32.@]
+ */
+ULONG WINAPI TraceMessageVa( TRACEHANDLE handle, ULONG flags, LPGUID guid, USHORT number,
+                            __ms_va_list args )
 {
-    FIXME("(%s %d %s %d) : stub\n", wine_dbgstr_longlong(SessionHandle), MessageFlags,
-                    debugstr_guid(MessageGuid), MessageNumber);
+    FIXME("(%s %x %s %d) : stub\n", wine_dbgstr_longlong(handle), flags, debugstr_guid(guid), number);
     return ERROR_SUCCESS;
 }
