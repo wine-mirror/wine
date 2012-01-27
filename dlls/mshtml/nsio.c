@@ -787,6 +787,12 @@ static nsresult NSAPI nsChannel_GetContentType(nsIHttpChannel *iface, nsACString
         return S_OK;
     }
 
+    if(This->uri->is_doc_uri) {
+        WARN("Document channel with no MIME set. Assuming text/html\n");
+        nsACString_SetData(aContentType, "text/html");
+        return S_OK;
+    }
+
     WARN("unknown type\n");
     return NS_ERROR_FAILURE;
 }
