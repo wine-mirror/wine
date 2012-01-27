@@ -269,6 +269,11 @@ HBITMAP create_brush_bitmap( X11DRV_PDEVICE *physDev, const struct brush_pattern
     memdc = CreateCompatibleDC( physDev->dev.hdc );
     SelectObject( memdc, bitmap );
     DeleteDC( memdc );
+    if (!X11DRV_get_phys_bitmap( bitmap ))
+    {
+        DeleteObject( bitmap );
+        return 0;
+    }
 
     SetDIBits( physDev->dev.hdc, bitmap, 0, abs(info->bmiHeader.biHeight),
                pattern->bits.ptr, info, pattern->usage );
