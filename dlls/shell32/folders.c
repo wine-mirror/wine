@@ -49,15 +49,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 typedef struct
 {
         IExtractIconW      IExtractIconW_iface;
+        IExtractIconA      IExtractIconA_iface;
 	LONG               ref;
 	const IPersistFileVtbl  *lpvtblPersistFile;
-	const IExtractIconAVtbl *lpvtblExtractIconA;
 	LPITEMIDLIST       pidl;
 } IExtractIconWImpl;
 
 static inline IExtractIconWImpl *impl_from_IExtractIconW(IExtractIconW *iface)
 {
     return CONTAINING_RECORD(iface, IExtractIconWImpl, IExtractIconW_iface);
+}
+
+static inline IExtractIconWImpl *impl_from_IExtractIconA(IExtractIconA *iface)
+{
+    return CONTAINING_RECORD(iface, IExtractIconWImpl, IExtractIconA_iface);
 }
 
 static const IExtractIconAVtbl eiavt;
@@ -67,11 +72,6 @@ static const IPersistFileVtbl pfvt;
 static inline IExtractIconW *impl_from_IPersistFile( IPersistFile *iface )
 {
     return (IExtractIconW *)((char*)iface - FIELD_OFFSET(IExtractIconWImpl, lpvtblPersistFile));
-}
-
-static inline IExtractIconW *impl_from_IExtractIconA( IExtractIconA *iface )
-{
-    return (IExtractIconW *)((char*)iface - FIELD_OFFSET(IExtractIconWImpl, lpvtblExtractIconA));
 }
 
 
@@ -88,7 +88,7 @@ IExtractIconW* IExtractIconW_Constructor(LPCITEMIDLIST pidl)
 	ei->ref=1;
 	ei->IExtractIconW_iface.lpVtbl = &eivt;
 	ei->lpvtblPersistFile = &pfvt;
-	ei->lpvtblExtractIconA = &eiavt;
+	ei->IExtractIconA_iface.lpVtbl = &eiavt;
 	ei->pidl=ILClone(pidl);
 
 	pdump(pidl);
@@ -112,7 +112,7 @@ static HRESULT WINAPI IExtractIconW_fnQueryInterface(IExtractIconW *iface, REFII
     else if (IsEqualIID(riid, &IID_IPersistFile))
         *ppv = &This->lpvtblPersistFile;
     else if (IsEqualIID(riid, &IID_IExtractIconA))
-        *ppv = &This->lpvtblExtractIconA;
+        *ppv = &This->IExtractIconA_iface;
 
     if(*ppv)
     {
@@ -409,59 +409,56 @@ static const IExtractIconWVtbl eivt =
 IExtractIconA* IExtractIconA_Constructor(LPCITEMIDLIST pidl)
 {
 	IExtractIconWImpl *This = (IExtractIconWImpl *)IExtractIconW_Constructor(pidl);
-	IExtractIconA *eia = (IExtractIconA *)&This->lpvtblExtractIconA;
+	IExtractIconA *eia = &This->IExtractIconA_iface;
 	
 	TRACE("(%p)->(%p)\n", This, eia);
 	return eia;
 }
 /**************************************************************************
- *  IExtractIconA_QueryInterface
+ *  IExtractIconA::QueryInterface
  */
-static HRESULT WINAPI IExtractIconA_fnQueryInterface(IExtractIconA * iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI IExtractIconA_fnQueryInterface(IExtractIconA * iface, REFIID riid,
+        void **ppv)
 {
-	IExtractIconW *This = impl_from_IExtractIconA(iface);
+    IExtractIconWImpl *This = impl_from_IExtractIconA(iface);
 
-	return IExtractIconW_QueryInterface(This, riid, ppvObj);
+    return IExtractIconW_QueryInterface(&This->IExtractIconW_iface, riid, ppv);
 }
 
 /**************************************************************************
-*  IExtractIconA_AddRef
+*  IExtractIconA::AddRef
 */
 static ULONG WINAPI IExtractIconA_fnAddRef(IExtractIconA * iface)
 {
-	IExtractIconW *This = impl_from_IExtractIconA(iface);
+    IExtractIconWImpl *This = impl_from_IExtractIconA(iface);
 
-	return IExtractIconW_AddRef(This);
+    return IExtractIconW_AddRef(&This->IExtractIconW_iface);
 }
 /**************************************************************************
-*  IExtractIconA_Release
+*  IExtractIconA::Release
 */
 static ULONG WINAPI IExtractIconA_fnRelease(IExtractIconA * iface)
 {
-	IExtractIconW *This = impl_from_IExtractIconA(iface);
+    IExtractIconWImpl *This = impl_from_IExtractIconA(iface);
 
-	return IExtractIconW_Release(This);
+    return IExtractIconW_Release(&This->IExtractIconW_iface);
 }
 /**************************************************************************
-*  IExtractIconA_GetIconLocation
+*  IExtractIconA::GetIconLocation
 *
 * mapping filetype to icon
 */
-static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
-	IExtractIconA * iface,
-	UINT uFlags,
-	LPSTR szIconFile,
-	UINT cchMax,
-	int * piIndex,
-	UINT * pwFlags)
+static HRESULT WINAPI IExtractIconA_fnGetIconLocation(IExtractIconA * iface, UINT uFlags,
+        LPSTR szIconFile, UINT cchMax, int * piIndex, UINT * pwFlags)
 {
+        IExtractIconWImpl *This = impl_from_IExtractIconA(iface);
 	HRESULT ret;
 	LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, cchMax * sizeof(WCHAR));
-	IExtractIconW *This = impl_from_IExtractIconA(iface);
-	
+
 	TRACE("(%p) (flags=%u %p %u %p %p)\n", This, uFlags, szIconFile, cchMax, piIndex, pwFlags);
 
-	ret = IExtractIconW_GetIconLocation(This, uFlags, lpwstrFile, cchMax, piIndex, pwFlags);
+        ret = IExtractIconW_GetIconLocation(&This->IExtractIconW_iface, uFlags, lpwstrFile, cchMax,
+                piIndex, pwFlags);
 	WideCharToMultiByte(CP_ACP, 0, lpwstrFile, -1, szIconFile, cchMax, NULL, NULL);
 	HeapFree(GetProcessHeap(), 0, lpwstrFile);
 
@@ -469,19 +466,21 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 	return ret;
 }
 /**************************************************************************
-*  IExtractIconA_Extract
+*  IExtractIconA::Extract
 */
-static HRESULT WINAPI IExtractIconA_fnExtract(IExtractIconA * iface, LPCSTR pszFile, UINT nIconIndex, HICON *phiconLarge, HICON *phiconSmall, UINT nIconSize)
+static HRESULT WINAPI IExtractIconA_fnExtract(IExtractIconA * iface, LPCSTR pszFile,
+        UINT nIconIndex, HICON *phiconLarge, HICON *phiconSmall, UINT nIconSize)
 {
+        IExtractIconWImpl *This = impl_from_IExtractIconA(iface);
 	HRESULT ret;
 	INT len = MultiByteToWideChar(CP_ACP, 0, pszFile, -1, NULL, 0);
 	LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-	IExtractIconW *This = impl_from_IExtractIconA(iface);
 
 	TRACE("(%p) (file=%p index=%u %p %p size=%u)\n", This, pszFile, nIconIndex, phiconLarge, phiconSmall, nIconSize);
 
 	MultiByteToWideChar(CP_ACP, 0, pszFile, -1, lpwstrFile, len);
-	ret = IExtractIconW_Extract(This, lpwstrFile, nIconIndex, phiconLarge, phiconSmall, nIconSize);
+        ret = IExtractIconW_Extract(&This->IExtractIconW_iface, lpwstrFile, nIconIndex, phiconLarge,
+                phiconSmall, nIconSize);
 	HeapFree(GetProcessHeap(), 0, lpwstrFile);
 	return ret;
 }
