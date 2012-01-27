@@ -161,10 +161,9 @@ static ULONG WINAPI IExtractIconW_fnRelease(IExtractIconW * iface)
 	return refCount;
 }
 
-static HRESULT getIconLocationForFolder(IExtractIconW *iface, UINT uFlags,
- LPWSTR szIconFile, UINT cchMax, int *piIndex, UINT *pwFlags)
+static HRESULT getIconLocationForFolder(IExtractIconWImpl *This, UINT uFlags, LPWSTR szIconFile,
+        UINT cchMax, int *piIndex, UINT *pwFlags)
 {
-    IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
     int icon_idx;
     WCHAR wszPath[MAX_PATH];
     WCHAR wszCLSIDValue[CHARS_IN_GUID];
@@ -318,8 +317,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	}
 	else if (_ILIsFolder (pSimplePidl))
 	{
-            getIconLocationForFolder(iface, uFlags, szIconFile, cchMax, piIndex,
-                                     pwFlags);
+            getIconLocationForFolder(This, uFlags, szIconFile, cchMax, piIndex, pwFlags);
 	}
 	else
 	{
