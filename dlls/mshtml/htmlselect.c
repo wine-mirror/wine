@@ -375,26 +375,44 @@ static HRESULT WINAPI HTMLSelectElement_add(IHTMLSelectElement *iface, IHTMLElem
                                             VARIANT before)
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
-    IHTMLDOMNode *node, *tmp;
-    HRESULT hres;
+    nsIWritableVariant *nsvariant;
+    HTMLElement *element_obj;
+    nsresult nsres;
 
-    FIXME("(%p)->(%p %s): semi-stub\n", This, element, debugstr_variant(&before));
+    TRACE("(%p)->(%p %s)\n", This, element, debugstr_variant(&before));
 
-    if(V_VT(&before) != VT_EMPTY) {
+    element_obj = unsafe_impl_from_IHTMLElement(element);
+    if(!element_obj) {
+        FIXME("External IHTMLElement implementation?\n");
+        return E_INVALIDARG;
+    }
+
+    nsvariant = create_nsvariant();
+    if(!nsvariant)
+        return E_FAIL;
+
+    switch(V_VT(&before)) {
+    case VT_EMPTY:
+        nsres = nsIWritableVariant_SetAsEmpty(nsvariant);
+        break;
+    case VT_I2:
+        nsres = nsIWritableVariant_SetAsInt16(nsvariant, V_I2(&before));
+        break;
+    default:
         FIXME("unhandled before %s\n", debugstr_variant(&before));
+        nsIWritableVariant_Release(nsvariant);
         return E_NOTIMPL;
     }
 
-    hres = IHTMLElement_QueryInterface(element, &IID_IHTMLDOMNode, (void**)&node);
-    if(FAILED(hres))
-        return hres;
+    if(NS_SUCCEEDED(nsres))
+        nsres = nsIDOMHTMLSelectElement_Add(This->nsselect, element_obj->nselem, (nsIVariant*)nsvariant);
+    nsIWritableVariant_Release(nsvariant);
+    if(NS_FAILED(nsres)) {
+        ERR("Add failed: %08x\n", nsres);
+        return E_FAIL;
+    }
 
-    hres = IHTMLDOMNode_appendChild(&This->element.node.IHTMLDOMNode_iface, node, &tmp);
-    IHTMLDOMNode_Release(node);
-    if(SUCCEEDED(hres) && tmp)
-        IHTMLDOMNode_Release(tmp);
-
-    return hres;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLSelectElement_remove(IHTMLSelectElement *iface, LONG index)

@@ -706,6 +706,7 @@ nsICommandParams *create_nscommand_params(void) DECLSPEC_HIDDEN;
 HRESULT nsnode_to_nsstring(nsIDOMNode*,nsAString*) DECLSPEC_HIDDEN;
 void get_editor_controller(NSContainer*) DECLSPEC_HIDDEN;
 nsresult get_nsinterface(nsISupports*,REFIID,void**) DECLSPEC_HIDDEN;
+nsIWritableVariant *create_nsvariant(void) DECLSPEC_HIDDEN;
 
 void set_window_bscallback(HTMLWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
 void set_current_mon(HTMLWindow*,IMoniker*) DECLSPEC_HIDDEN;
@@ -801,6 +802,8 @@ void HTMLFrameBase_destructor(HTMLFrameBase*) DECLSPEC_HIDDEN;
 
 HRESULT get_node(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLDOMNode**) DECLSPEC_HIDDEN;
 void release_nodes(HTMLDocumentNode*) DECLSPEC_HIDDEN;
+
+HTMLElement *unsafe_impl_from_IHTMLElement(IHTMLElement*) DECLSPEC_HIDDEN;
 
 void release_script_hosts(HTMLWindow*) DECLSPEC_HIDDEN;
 void connect_scripts(HTMLWindow*) DECLSPEC_HIDDEN;

@@ -46,6 +46,7 @@ WINE_DECLARE_DEBUG_CHANNEL(gecko);
 #define NS_HTMLSERIALIZER_CONTRACTID "@mozilla.org/layout/contentserializer;1?mimetype=text/html"
 #define NS_EDITORCONTROLLER_CONTRACTID "@mozilla.org/editor/editorcontroller;1"
 #define NS_PREFERENCES_CONTRACTID "@mozilla.org/preferences;1"
+#define NS_VARIANT_CONTRACTID "@mozilla.org/variant;1"
 
 #define PR_UINT32_MAX 0xffffffff
 
@@ -709,6 +710,22 @@ nsICommandParams *create_nscommand_params(void)
             (void**)&ret);
     if(NS_FAILED(nsres))
         ERR("Could not get nsICommandParams\n");
+
+    return ret;
+}
+
+nsIWritableVariant *create_nsvariant(void)
+{
+    nsIWritableVariant *ret = NULL;
+    nsresult nsres;
+
+    if(!pCompMgr)
+        return NULL;
+
+    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
+            NS_VARIANT_CONTRACTID, NULL, &IID_nsIWritableVariant, (void**)&ret);
+    if(NS_FAILED(nsres))
+        ERR("Could not get nsIVariant\n");
 
     return ret;
 }
