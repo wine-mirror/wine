@@ -35,9 +35,6 @@ extern const CLSID CLSID_VBScript;
 #define SET_EXPECT(func) \
     expect_ ## func = TRUE
 
-#define SET_CALLED(func) \
-    called_ ## func = TRUE
-
 #define CHECK_EXPECT2(func) \
     do { \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
