@@ -250,6 +250,15 @@ static HRESULT write_output_buffer(output_buffer *buffer, const WCHAR *data, int
     return write_output_buffer_mode(buffer, OutputBuffer_Both, data, len);
 }
 
+static HRESULT write_output_buffer_quoted(output_buffer *buffer, const WCHAR *data, int len)
+{
+    write_output_buffer(buffer, quotW, 1);
+    write_output_buffer(buffer, data, len);
+    write_output_buffer(buffer, quotW, 1);
+
+    return S_OK;
+}
+
 /* frees buffer data, reallocates with a default lengths */
 static void close_output_buffer(mxwriter *This)
 {
@@ -327,7 +336,7 @@ static WCHAR *get_escaped_string(const WCHAR *str, int *len)
 
 static void write_prolog_buffer(const mxwriter *This)
 {
-    static const WCHAR versionW[] = {'<','?','x','m','l',' ','v','e','r','s','i','o','n','=','\"'};
+    static const WCHAR versionW[] = {'<','?','x','m','l',' ','v','e','r','s','i','o','n','='};
     static const WCHAR encodingW[] = {' ','e','n','c','o','d','i','n','g','=','\"'};
     static const WCHAR standaloneW[] = {' ','s','t','a','n','d','a','l','o','n','e','=','\"'};
     static const WCHAR yesW[] = {'y','e','s','\"','?','>'};
@@ -336,8 +345,7 @@ static void write_prolog_buffer(const mxwriter *This)
 
     /* version */
     write_output_buffer(This->buffer, versionW, sizeof(versionW)/sizeof(WCHAR));
-    write_output_buffer(This->buffer, This->version, -1);
-    write_output_buffer(This->buffer, quotW, 1);
+    write_output_buffer_quoted(This->buffer, This->version, -1);
 
     /* encoding */
     write_output_buffer(This->buffer, encodingW, sizeof(encodingW)/sizeof(WCHAR));
@@ -952,7 +960,7 @@ static HRESULT WINAPI SAXContentHandler_startElement(
 
         for (i = 0; i < length; i++)
         {
-            static const WCHAR eqqW[] = {'=','\"'};
+            static const WCHAR eqW[] = {'='};
             const WCHAR *str;
             WCHAR *escaped;
             INT len = 0;
@@ -964,17 +972,15 @@ static HRESULT WINAPI SAXContentHandler_startElement(
             write_output_buffer(This->buffer, spaceW, 1);
             write_output_buffer(This->buffer, str, len);
 
-            write_output_buffer(This->buffer, eqqW, 2);
+            write_output_buffer(This->buffer, eqW, 1);
 
             len = 0;
             hr = ISAXAttributes_getValue(attr, i, &str, &len);
             if (FAILED(hr)) return hr;
 
             escaped = get_escaped_string(str, &len);
-            write_output_buffer(This->buffer, escaped, len);
+            write_output_buffer_quoted(This->buffer, escaped, len);
             heap_free(escaped);
-
-            write_output_buffer(This->buffer, quotW, 1);
         }
     }
 
@@ -1136,18 +1142,14 @@ static HRESULT WINAPI SAXLexicalHandler_startDTD(ISAXLexicalHandler *iface,
         static const WCHAR publicW[] = {'P','U','B','L','I','C',' '};
 
         write_output_buffer(This->buffer, publicW, sizeof(publicW)/sizeof(WCHAR));
-        write_output_buffer(This->buffer, quotW, 1);
-        write_output_buffer(This->buffer, publicId, publicId_len);
-        write_output_buffer(This->buffer, quotW, 1);
+        write_output_buffer_quoted(This->buffer, publicId, publicId_len);
 
         if (!systemId) return E_INVALIDARG;
 
         if (*publicId)
             write_output_buffer(This->buffer, spaceW, 1);
 
-        write_output_buffer(This->buffer, quotW, 1);
-        write_output_buffer(This->buffer, systemId, systemId_len);
-        write_output_buffer(This->buffer, quotW, 1);
+        write_output_buffer_quoted(This->buffer, systemId, systemId_len);
 
         if (*systemId)
             write_output_buffer(This->buffer, spaceW, 1);
@@ -1157,9 +1159,7 @@ static HRESULT WINAPI SAXLexicalHandler_startDTD(ISAXLexicalHandler *iface,
         static const WCHAR systemW[] = {'S','Y','S','T','E','M',' '};
 
         write_output_buffer(This->buffer, systemW, sizeof(systemW)/sizeof(WCHAR));
-        write_output_buffer(This->buffer, quotW, 1);
-        write_output_buffer(This->buffer, systemId, systemId_len);
-        write_output_buffer(This->buffer, quotW, 1);
+        write_output_buffer_quoted(This->buffer, systemId, systemId_len);
         if (*systemId)
             write_output_buffer(This->buffer, spaceW, 1);
     }
