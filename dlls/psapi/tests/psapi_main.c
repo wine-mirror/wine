@@ -2,6 +2,7 @@
  * Unit test suite for PSAPI
  *
  * Copyright (C) 2005 Felix Nawothnig
+ * Copyright (C) 2012 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -184,9 +185,13 @@ static void test_GetMappedFileName(void)
     HMODULE hMod = GetModuleHandle(NULL);
     char szMapPath[MAX_PATH], szModPath[MAX_PATH], *szMapBaseName;
     DWORD ret;
-    
+    char *base;
+    char temp_path[MAX_PATH], file_name[MAX_PATH], map_name[MAX_PATH], device_name[MAX_PATH], drive[3];
+    HANDLE hfile, hmap;
+
     SetLastError(0xdeadbeef);
     pGetMappedFileNameA(NULL, hMod, szMapPath, sizeof(szMapPath));
+todo_wine
     ok(GetLastError() == ERROR_INVALID_HANDLE, "expected error=ERROR_INVALID_HANDLE but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -195,20 +200,120 @@ static void test_GetMappedFileName(void)
 
     SetLastError( 0xdeadbeef );
     ret = pGetMappedFileNameA(hpQI, hMod, szMapPath, sizeof(szMapPath));
+todo_wine
     ok( ret || broken(GetLastError() == ERROR_UNEXP_NET_ERR), /* win2k */
         "GetMappedFileNameA failed with error %u\n", GetLastError() );
-    if (!ret) return;
     ok(ret == strlen(szMapPath), "szMapPath=\"%s\" ret=%d\n", szMapPath, ret);
+todo_wine
     ok(szMapPath[0] == '\\', "szMapPath=\"%s\"\n", szMapPath);
     szMapBaseName = strrchr(szMapPath, '\\'); /* That's close enough for us */
-    if(!szMapBaseName || !*szMapBaseName)
+todo_wine
+    ok(szMapBaseName && *szMapBaseName, "szMapPath=\"%s\"\n", szMapPath);
+    if (szMapBaseName)
     {
-        ok(0, "szMapPath=\"%s\"\n", szMapPath);
-        return;
+        GetModuleFileNameA(NULL, szModPath, sizeof(szModPath));
+        ok(!strcmp(strrchr(szModPath, '\\'), szMapBaseName),
+           "szModPath=\"%s\" szMapBaseName=\"%s\"\n", szModPath, szMapBaseName);
     }
-    GetModuleFileNameA(NULL, szModPath, sizeof(szModPath));
-    ok(!strcmp(strrchr(szModPath, '\\'), szMapBaseName),
-       "szModPath=\"%s\" szMapBaseName=\"%s\"\n", szModPath, szMapBaseName);
+
+    GetTempPath(MAX_PATH, temp_path);
+    GetTempFileName(temp_path, "map", 0, file_name);
+
+    drive[0] = file_name[0];
+    drive[1] = ':';
+    drive[2] = 0;
+    SetLastError(0xdeadbeef);
+    ret = QueryDosDevice(drive, device_name, sizeof(device_name));
+    ok(ret, "QueryDosDevice error %d\n", GetLastError());
+    trace("%s -> %s\n", drive, device_name);
+
+    SetLastError(0xdeadbeef);
+    hfile = CreateFile(file_name, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "CreateFile(%s) error %d\n", file_name, GetLastError());
+    SetFilePointer(hfile, 0x4000, NULL, FILE_BEGIN);
+    SetEndOfFile(hfile);
+
+    SetLastError(0xdeadbeef);
+    hmap = CreateFileMapping(hfile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL);
+    ok(hmap != 0, "CreateFileMapping error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    base = MapViewOfFile(hmap, FILE_MAP_READ, 0, 0, 0);
+    ok(base != NULL, "MapViewOfFile error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetMappedFileNameA(GetCurrentProcess(), base, map_name, 0);
+    ok(!ret, "GetMappedFileName should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetMappedFileNameA(GetCurrentProcess(), base, 0, sizeof(map_name));
+    ok(!ret, "GetMappedFileName should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetMappedFileNameA(GetCurrentProcess(), base, map_name, 1);
+todo_wine
+    ok(ret == 1, "GetMappedFileName error %d\n", GetLastError());
+    ok(!map_name[0] || broken(map_name[0] == device_name[0]) /* before win2k */, "expected 0, got %c\n", map_name[0]);
+
+    SetLastError(0xdeadbeef);
+    ret = pGetMappedFileNameA(GetCurrentProcess(), base, map_name, sizeof(map_name));
+todo_wine {
+    ok(ret, "GetMappedFileName error %d\n", GetLastError());
+    ok(ret > strlen(file_name), "map_name should be longer than device_name\n");
+    ok(memcmp(map_name, device_name, strlen(device_name)) == 0, "map name does not start with a device name: %s\n", map_name);
+}
+
+    SetLastError(0xdeadbeef);
+    ret = pGetMappedFileNameA(GetCurrentProcess(), base + 0x2000, map_name, sizeof(map_name));
+todo_wine {
+    ok(ret, "GetMappedFileName error %d\n", GetLastError());
+    ok(ret > strlen(file_name), "map_name should be longer than device_name\n");
+    ok(memcmp(map_name, device_name, strlen(device_name)) == 0, "map name does not start with a device name: %s\n", map_name);
+}
+
+    SetLastError(0xdeadbeef);
+    ret = pGetMappedFileNameA(GetCurrentProcess(), base + 0x4000, map_name, sizeof(map_name));
+    ok(!ret, "GetMappedFileName should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_UNEXP_NET_ERR, "expected ERROR_UNEXP_NET_ERR, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetMappedFileNameA(GetCurrentProcess(), NULL, map_name, sizeof(map_name));
+    ok(!ret, "GetMappedFileName should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_UNEXP_NET_ERR, "expected ERROR_UNEXP_NET_ERR, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetMappedFileNameA(0, base, map_name, sizeof(map_name));
+    ok(!ret, "GetMappedFileName should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    UnmapViewOfFile(base);
+    CloseHandle(hmap);
+    CloseHandle(hfile);
+    DeleteFile(file_name);
+
+    SetLastError(0xdeadbeef);
+    hmap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READONLY | SEC_COMMIT, 0, 4096, NULL);
+    ok(hmap != 0, "CreateFileMapping error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    base = MapViewOfFile(hmap, FILE_MAP_READ, 0, 0, 0);
+    ok(base != NULL, "MapViewOfFile error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetMappedFileNameA(GetCurrentProcess(), base, map_name, sizeof(map_name));
+    ok(!ret, "GetMappedFileName should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_FILE_INVALID, "expected ERROR_FILE_INVALID, got %d\n", GetLastError());
+
+    UnmapViewOfFile(base);
+    CloseHandle(hmap);
 }
 
 static void test_GetProcessImageFileName(void)
@@ -431,7 +536,7 @@ START_TEST(psapi_main)
 
     if(!hpsapi)
     {
-        trace("Could not load psapi.dll\n");
+        win_skip("Could not load psapi.dll\n");
         return;
     }
 
@@ -451,7 +556,7 @@ START_TEST(psapi_main)
 	    test_EnumProcessModules();
 	    test_GetModuleInformation();
 	    test_GetProcessMemoryInfo();
-	    todo_wine test_GetMappedFileName();
+            test_GetMappedFileName();
             test_GetProcessImageFileName();
             test_GetModuleFileNameEx();
             test_GetModuleBaseName();
