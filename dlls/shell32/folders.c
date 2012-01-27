@@ -50,8 +50,8 @@ typedef struct
 {
         IExtractIconW      IExtractIconW_iface;
         IExtractIconA      IExtractIconA_iface;
+        IPersistFile       IPersistFile_iface;
 	LONG               ref;
-	const IPersistFileVtbl  *lpvtblPersistFile;
 	LPITEMIDLIST       pidl;
 } IExtractIconWImpl;
 
@@ -65,14 +65,14 @@ static inline IExtractIconWImpl *impl_from_IExtractIconA(IExtractIconA *iface)
     return CONTAINING_RECORD(iface, IExtractIconWImpl, IExtractIconA_iface);
 }
 
+static inline IExtractIconWImpl *impl_from_IPersistFile(IPersistFile *iface)
+{
+    return CONTAINING_RECORD(iface, IExtractIconWImpl, IPersistFile_iface);
+}
+
 static const IExtractIconAVtbl eiavt;
 static const IExtractIconWVtbl eivt;
 static const IPersistFileVtbl pfvt;
-
-static inline IExtractIconW *impl_from_IPersistFile( IPersistFile *iface )
-{
-    return (IExtractIconW *)((char*)iface - FIELD_OFFSET(IExtractIconWImpl, lpvtblPersistFile));
-}
 
 
 /**************************************************************************
@@ -87,8 +87,8 @@ IExtractIconW* IExtractIconW_Constructor(LPCITEMIDLIST pidl)
 	ei = HeapAlloc(GetProcessHeap(),0,sizeof(IExtractIconWImpl));
 	ei->ref=1;
 	ei->IExtractIconW_iface.lpVtbl = &eivt;
-	ei->lpvtblPersistFile = &pfvt;
 	ei->IExtractIconA_iface.lpVtbl = &eiavt;
+	ei->IPersistFile_iface.lpVtbl = &pfvt;
 	ei->pidl=ILClone(pidl);
 
 	pdump(pidl);
@@ -110,7 +110,7 @@ static HRESULT WINAPI IExtractIconW_fnQueryInterface(IExtractIconW *iface, REFII
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IExtractIconW))
         *ppv = iface;
     else if (IsEqualIID(riid, &IID_IPersistFile))
-        *ppv = &This->lpvtblPersistFile;
+        *ppv = &This->IPersistFile_iface;
     else if (IsEqualIID(riid, &IID_IExtractIconA))
         *ppv = &This->IExtractIconA_iface;
 
@@ -495,46 +495,40 @@ static const IExtractIconAVtbl eiavt =
 };
 
 /************************************************************************
- * IEIPersistFile_QueryInterface (IUnknown)
+ * IEIPersistFile::QueryInterface
  */
-static HRESULT WINAPI IEIPersistFile_fnQueryInterface(
-	IPersistFile	*iface,
-	REFIID		iid,
-	LPVOID		*ppvObj)
+static HRESULT WINAPI IEIPersistFile_fnQueryInterface(IPersistFile *iface, REFIID iid,
+        void **ppv)
 {
-	IExtractIconW *This = impl_from_IPersistFile(iface);
+    IExtractIconWImpl *This = impl_from_IPersistFile(iface);
 
-	return IExtractIconW_QueryInterface(This, iid, ppvObj);
+    return IExtractIconW_QueryInterface(&This->IExtractIconW_iface, iid, ppv);
 }
 
 /************************************************************************
- * IEIPersistFile_AddRef (IUnknown)
+ * IEIPersistFile::AddRef
  */
-static ULONG WINAPI IEIPersistFile_fnAddRef(
-	IPersistFile	*iface)
+static ULONG WINAPI IEIPersistFile_fnAddRef(IPersistFile *iface)
 {
-	IExtractIconW *This = impl_from_IPersistFile(iface);
+    IExtractIconWImpl *This = impl_from_IPersistFile(iface);
 
-	return IExtractIconW_AddRef(This);
+    return IExtractIconW_AddRef(&This->IExtractIconW_iface);
 }
 
 /************************************************************************
- * IEIPersistFile_Release (IUnknown)
+ * IEIPersistFile::Release
  */
-static ULONG WINAPI IEIPersistFile_fnRelease(
-	IPersistFile	*iface)
+static ULONG WINAPI IEIPersistFile_fnRelease(IPersistFile *iface)
 {
-	IExtractIconW *This = impl_from_IPersistFile(iface);
+    IExtractIconWImpl *This = impl_from_IPersistFile(iface);
 
-	return IExtractIconW_Release(This);
+    return IExtractIconW_Release(&This->IExtractIconW_iface);
 }
 
 /************************************************************************
- * IEIPersistFile_GetClassID (IPersist)
+ * IEIPersistFile::GetClassID
  */
-static HRESULT WINAPI IEIPersistFile_fnGetClassID(
-	IPersistFile	*iface,
-	LPCLSID		lpClassId)
+static HRESULT WINAPI IEIPersistFile_fnGetClassID(IPersistFile *iface, LPCLSID lpClassId)
 {
 	CLSID StdFolderID = { 0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00} };
 
@@ -547,14 +541,15 @@ static HRESULT WINAPI IEIPersistFile_fnGetClassID(
 }
 
 /************************************************************************
- * IEIPersistFile_Load (IPersistFile)
+ * IEIPersistFile_Load
  */
-static HRESULT WINAPI IEIPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFileName, DWORD dwMode)
+static HRESULT WINAPI IEIPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFileName,
+        DWORD dwMode)
 {
-	IExtractIconW *This = impl_from_IPersistFile(iface);
-	FIXME("%p\n", This);
-	return E_NOTIMPL;
+    IExtractIconWImpl *This = impl_from_IPersistFile(iface);
 
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
 }
 
 static const IPersistFileVtbl pfvt =
