@@ -70,32 +70,7 @@ static inline IExtractIconWImpl *impl_from_IPersistFile(IPersistFile *iface)
     return CONTAINING_RECORD(iface, IExtractIconWImpl, IPersistFile_iface);
 }
 
-static const IExtractIconAVtbl eiavt;
-static const IExtractIconWVtbl eivt;
-static const IPersistFileVtbl pfvt;
 
-
-/**************************************************************************
-*  IExtractIconW_Constructor
-*/
-IExtractIconW* IExtractIconW_Constructor(LPCITEMIDLIST pidl)
-{
-	IExtractIconWImpl* ei;
-	
-	TRACE("%p\n", pidl);
-
-	ei = HeapAlloc(GetProcessHeap(),0,sizeof(IExtractIconWImpl));
-	ei->ref=1;
-	ei->IExtractIconW_iface.lpVtbl = &eivt;
-	ei->IExtractIconA_iface.lpVtbl = &eiavt;
-	ei->IPersistFile_iface.lpVtbl = &pfvt;
-	ei->pidl=ILClone(pidl);
-
-	pdump(pidl);
-
-	TRACE("(%p)\n", ei);
-	return &ei->IExtractIconW_iface;
-}
 /**************************************************************************
  *  IExtractIconW::QueryInterface
  */
@@ -404,17 +379,6 @@ static const IExtractIconWVtbl eivt =
 };
 
 /**************************************************************************
-*  IExtractIconA_Constructor
-*/
-IExtractIconA* IExtractIconA_Constructor(LPCITEMIDLIST pidl)
-{
-	IExtractIconWImpl *This = (IExtractIconWImpl *)IExtractIconW_Constructor(pidl);
-	IExtractIconA *eia = &This->IExtractIconA_iface;
-	
-	TRACE("(%p)->(%p)\n", This, eia);
-	return eia;
-}
-/**************************************************************************
  *  IExtractIconA::QueryInterface
  */
 static HRESULT WINAPI IExtractIconA_fnQueryInterface(IExtractIconA * iface, REFIID riid,
@@ -564,3 +528,36 @@ static const IPersistFileVtbl pfvt =
 	(void *) 0xdeadbeef /* IEIPersistFile_fnSaveCompleted */,
 	(void *) 0xdeadbeef /* IEIPersistFile_fnGetCurFile */
 };
+
+IExtractIconWImpl *extracticon_create(LPCITEMIDLIST pidl)
+{
+    IExtractIconWImpl *ei;
+
+    TRACE("%p\n", pidl);
+
+    ei = HeapAlloc(GetProcessHeap(), 0, sizeof(*ei));
+    ei->ref=1;
+    ei->IExtractIconW_iface.lpVtbl = &eivt;
+    ei->IExtractIconA_iface.lpVtbl = &eiavt;
+    ei->IPersistFile_iface.lpVtbl = &pfvt;
+    ei->pidl=ILClone(pidl);
+
+    pdump(pidl);
+
+    TRACE("(%p)\n", ei);
+    return ei;
+}
+
+IExtractIconW *IExtractIconW_Constructor(LPCITEMIDLIST pidl)
+{
+    IExtractIconWImpl *ei = extracticon_create(pidl);
+
+    return &ei->IExtractIconW_iface;
+}
+
+IExtractIconA *IExtractIconA_Constructor(LPCITEMIDLIST pidl)
+{
+    IExtractIconWImpl *ei = extracticon_create(pidl);
+
+    return &ei->IExtractIconA_iface;
+}
