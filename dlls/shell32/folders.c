@@ -48,12 +48,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 */
 typedef struct
 {
-	const IExtractIconWVtbl *lpVtbl;
+        IExtractIconW      IExtractIconW_iface;
 	LONG               ref;
 	const IPersistFileVtbl  *lpvtblPersistFile;
 	const IExtractIconAVtbl *lpvtblExtractIconA;
 	LPITEMIDLIST       pidl;
 } IExtractIconWImpl;
+
+static inline IExtractIconWImpl *impl_from_IExtractIconW(IExtractIconW *iface)
+{
+    return CONTAINING_RECORD(iface, IExtractIconWImpl, IExtractIconW_iface);
+}
 
 static const IExtractIconAVtbl eiavt;
 static const IExtractIconWVtbl eivt;
@@ -81,7 +86,7 @@ IExtractIconW* IExtractIconW_Constructor(LPCITEMIDLIST pidl)
 
 	ei = HeapAlloc(GetProcessHeap(),0,sizeof(IExtractIconWImpl));
 	ei->ref=1;
-	ei->lpVtbl = &eivt;
+	ei->IExtractIconW_iface.lpVtbl = &eivt;
 	ei->lpvtblPersistFile = &pfvt;
 	ei->lpvtblExtractIconA = &eiavt;
 	ei->pidl=ILClone(pidl);
@@ -89,52 +94,42 @@ IExtractIconW* IExtractIconW_Constructor(LPCITEMIDLIST pidl)
 	pdump(pidl);
 
 	TRACE("(%p)\n", ei);
-	return (IExtractIconW *)ei;
+	return &ei->IExtractIconW_iface;
 }
 /**************************************************************************
- *  IExtractIconW_QueryInterface
+ *  IExtractIconW::QueryInterface
  */
-static HRESULT WINAPI IExtractIconW_fnQueryInterface(IExtractIconW *iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI IExtractIconW_fnQueryInterface(IExtractIconW *iface, REFIID riid,
+        void **ppv)
 {
-	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
+    IExtractIconWImpl *This = impl_from_IExtractIconW(iface);
 
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n", This, debugstr_guid(riid), ppvObj);
+    TRACE("(%p)->(\n\tIID:\t%s,%p)\n", This, debugstr_guid(riid), ppv);
 
-	*ppvObj = NULL;
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IExtractIconW))
+        *ppv = iface;
+    else if (IsEqualIID(riid, &IID_IPersistFile))
+        *ppv = &This->lpvtblPersistFile;
+    else if (IsEqualIID(riid, &IID_IExtractIconA))
+        *ppv = &This->lpvtblExtractIconA;
 
-	if (IsEqualIID(riid, &IID_IUnknown))				/*IUnknown*/
-	{
-	  *ppvObj = This;
-	}
-	else if (IsEqualIID(riid, &IID_IPersistFile))	/*IExtractIcon*/
-	{
-          *ppvObj = &This->lpvtblPersistFile;
-	}
-	else if (IsEqualIID(riid, &IID_IExtractIconA))	/*IExtractIcon*/
-	{
-          *ppvObj = &This->lpvtblExtractIconA;
-	}
-	else if (IsEqualIID(riid, &IID_IExtractIconW))	/*IExtractIcon*/
-	{
-          *ppvObj = This;
-	}
-
-	if(*ppvObj)
-	{
-	  IExtractIconW_AddRef((IExtractIconW*) *ppvObj);
-	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
-	  return S_OK;
-	}
-	TRACE("-- Interface: E_NOINTERFACE\n");
-	return E_NOINTERFACE;
+    if(*ppv)
+    {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        TRACE("-- Interface: (%p)->(%p)\n", ppv, *ppv);
+        return S_OK;
+    }
+    TRACE("-- Interface: E_NOINTERFACE\n");
+    return E_NOINTERFACE;
 }
 
 /**************************************************************************
-*  IExtractIconW_AddRef
+*  IExtractIconW::AddRef
 */
 static ULONG WINAPI IExtractIconW_fnAddRef(IExtractIconW * iface)
 {
-	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
+        IExtractIconWImpl *This = impl_from_IExtractIconW(iface);
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
 	TRACE("(%p)->(count=%u)\n", This, refCount - 1);
@@ -142,11 +137,11 @@ static ULONG WINAPI IExtractIconW_fnAddRef(IExtractIconW * iface)
 	return refCount;
 }
 /**************************************************************************
-*  IExtractIconW_Release
+*  IExtractIconW::Release
 */
 static ULONG WINAPI IExtractIconW_fnRelease(IExtractIconW * iface)
 {
-	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
+        IExtractIconWImpl *This = impl_from_IExtractIconW(iface);
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
 	TRACE("(%p)->(count=%u)\n", This, refCount + 1);
@@ -215,20 +210,14 @@ static HRESULT getIconLocationForFolder(IExtractIconWImpl *This, UINT uFlags, LP
 WCHAR swShell32Name[MAX_PATH];
 
 /**************************************************************************
-*  IExtractIconW_GetIconLocation
+*  IExtractIconW::GetIconLocation
 *
 * mapping filetype to icon
 */
-static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
-	IExtractIconW * iface,
-	UINT uFlags,		/* GIL_ flags */
-	LPWSTR szIconFile,
-	UINT cchMax,
-	int * piIndex,
-	UINT * pwFlags)		/* returned GIL_ flags */
+static HRESULT WINAPI IExtractIconW_fnGetIconLocation(IExtractIconW * iface, UINT uFlags,
+        LPWSTR szIconFile, UINT cchMax, int * piIndex, UINT * pwFlags)
 {
-	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
-
+        IExtractIconWImpl *This = impl_from_IExtractIconW(iface);
 	char	sTemp[MAX_PATH];
 	int		icon_idx;
 	GUID const * riid;
@@ -383,11 +372,12 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 }
 
 /**************************************************************************
-*  IExtractIconW_Extract
+*  IExtractIconW::Extract
 */
-static HRESULT WINAPI IExtractIconW_fnExtract(IExtractIconW * iface, LPCWSTR pszFile, UINT nIconIndex, HICON *phiconLarge, HICON *phiconSmall, UINT nIconSize)
+static HRESULT WINAPI IExtractIconW_fnExtract(IExtractIconW * iface, LPCWSTR pszFile,
+        UINT nIconIndex, HICON *phiconLarge, HICON *phiconSmall, UINT nIconSize)
 {
-	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
+        IExtractIconWImpl *This = impl_from_IExtractIconW(iface);
         int index;
 
 	FIXME("(%p) (file=%p index=%d %p %p size=%08x) semi-stub\n", This, debugstr_w(pszFile), (signed)nIconIndex,
