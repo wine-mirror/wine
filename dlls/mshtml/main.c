@@ -509,6 +509,8 @@ const char *debugstr_variant(const VARIANT *v)
         return "{VT_EMPTY}";
     case VT_NULL:
         return "{VT_NULL}";
+    case VT_I2:
+        return wine_dbg_sprintf("{VT_I2: %d}", V_I2(v));
     case VT_I4:
         return wine_dbg_sprintf("{VT_I4: %d}", V_I4(v));
     case VT_R8:
