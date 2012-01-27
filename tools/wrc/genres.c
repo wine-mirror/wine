@@ -287,13 +287,13 @@ static int parse_accel_string( const string_t *key, int flags )
              (key->str.cstr[0] >= '0' && key->str.cstr[0] <= '9')))
         {
             print_location( &key->loc );
-            error("VIRTKEY code is not equal to ascii value");
+            error("VIRTKEY code is not equal to ascii value\n");
         }
 
 	if(key->str.cstr[0] == '^' && (flags & WRC_AF_CONTROL) != 0)
 	{
             print_location( &key->loc );
-            error("Cannot use both '^' and CONTROL modifier");
+            error("Cannot use both '^' and CONTROL modifier\n");
 	}
 	else if(key->str.cstr[0] == '^')
 	{
@@ -301,7 +301,7 @@ static int parse_accel_string( const string_t *key, int flags )
             if(keycode >= ' ')
             {
                 print_location( &key->loc );
-                error("Control-code out of range");
+                error("Control-code out of range\n");
             }
 	}
 	else
@@ -314,12 +314,12 @@ static int parse_accel_string( const string_t *key, int flags )
              (key->str.wstr[0] >= '0' && key->str.wstr[0] <= '9')))
         {
             print_location( &key->loc );
-            error("VIRTKEY code is not equal to ascii value");
+            error("VIRTKEY code is not equal to ascii value\n");
         }
 	if(key->str.wstr[0] == '^' && (flags & WRC_AF_CONTROL) != 0)
 	{
             print_location( &key->loc );
-            error("Cannot use both '^' and CONTROL modifier");
+            error("Cannot use both '^' and CONTROL modifier\n");
 	}
 	else if(key->str.wstr[0] == '^')
 	{
@@ -327,7 +327,7 @@ static int parse_accel_string( const string_t *key, int flags )
             if(keycode >= ' ')
             {
                 print_location( &key->loc );
-                error("Control-code out of range");
+                error("Control-code out of range\n");
             }
 	}
 	else
