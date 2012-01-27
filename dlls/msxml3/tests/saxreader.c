@@ -2905,6 +2905,60 @@ static void test_mxwriter_comment(void)
     free_bstrs();
 }
 
+static void test_mxwriter_cdata(void)
+{
+    ISAXContentHandler *content;
+    ISAXLexicalHandler *lexical;
+    IMXWriter *writer;
+    VARIANT dest;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXLexicalHandler, (void**)&lexical);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startDocument(content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXLexicalHandler_startCDATA(lexical);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<![CDATA["), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    hr = ISAXLexicalHandler_startCDATA(lexical);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXLexicalHandler_endCDATA(lexical);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<![CDATA[<![CDATA[]]>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    ISAXContentHandler_Release(content);
+    ISAXLexicalHandler_Release(lexical);
+    IMXWriter_Release(writer);
+    free_bstrs();
+
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -2941,6 +2995,7 @@ START_TEST(saxreader)
         test_mxwriter_startendelement();
         test_mxwriter_characters();
         test_mxwriter_comment();
+        test_mxwriter_cdata();
         test_mxwriter_properties();
         test_mxwriter_flush();
         test_mxwriter_stream();

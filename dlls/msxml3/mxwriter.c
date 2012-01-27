@@ -1143,16 +1143,26 @@ static HRESULT WINAPI SAXLexicalHandler_endEntity(ISAXLexicalHandler *iface, con
 
 static HRESULT WINAPI SAXLexicalHandler_startCDATA(ISAXLexicalHandler *iface)
 {
+    static const WCHAR scdataW[] = {'<','!','[','C','D','A','T','A','['};
     mxwriter *This = impl_from_ISAXLexicalHandler( iface );
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    write_output_buffer(This->buffer, scdataW, sizeof(scdataW)/sizeof(WCHAR));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXLexicalHandler_endCDATA(ISAXLexicalHandler *iface)
 {
     mxwriter *This = impl_from_ISAXLexicalHandler( iface );
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    static const WCHAR ecdataW[] = {']',']','>'};
+
+    TRACE("(%p)\n", This);
+
+    write_output_buffer(This->buffer, ecdataW, sizeof(ecdataW)/sizeof(WCHAR));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXLexicalHandler_comment(ISAXLexicalHandler *iface, const WCHAR *chars, int nchars)
