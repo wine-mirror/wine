@@ -582,7 +582,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(const char *key, IMMDevice *dev,
         HeapFree(GetProcessHeap(), 0, This);
         WARN("Unable to open PCM \"%s\": %d (%s)\n", key, err, snd_strerror(err));
         switch(err){
-        case EBUSY:
+        case -EBUSY:
             return AUDCLNT_E_DEVICE_IN_USE;
         default:
             return AUDCLNT_E_ENDPOINT_CREATE_FAILED;
