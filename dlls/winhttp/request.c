@@ -2815,7 +2815,11 @@ static HRESULT request_receive( struct winhttp_request *request )
         return HRESULT_FROM_WIN32( get_last_error() );
     }
     if ((err = wait_for_completion( request ))) return HRESULT_FROM_WIN32( err );
-
+    if (!strcmpW( request->verb, headW ))
+    {
+        request->state = REQUEST_STATE_RESPONSE_RECEIVED;
+        return S_OK;
+    }
     if (!(request->buffer = heap_alloc( buflen ))) return E_OUTOFMEMORY;
     request->buffer[0] = 0;
     size = total_bytes_read = 0;

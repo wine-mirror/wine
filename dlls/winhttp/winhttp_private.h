@@ -46,6 +46,7 @@
 
 static const WCHAR getW[]    = {'G','E','T',0};
 static const WCHAR postW[]   = {'P','O','S','T',0};
+static const WCHAR headW[]   = {'H','E','A','D',0};
 static const WCHAR slashW[]  = {'/',0};
 static const WCHAR http1_0[] = {'H','T','T','P','/','1','.','0',0};
 static const WCHAR http1_1[] = {'H','T','T','P','/','1','.','1',0};
