@@ -29,6 +29,7 @@
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
+#include "binding.h"
 
 #include "wine/debug.h"
 
@@ -42,13 +43,42 @@ typedef struct {
     nsIDOMHTMLAnchorElement *nsanchor;
 } HTMLAnchorElement;
 
+static HRESULT navigate_anchor_window(HTMLAnchorElement *This, const WCHAR *target)
+{
+    nsAString href_str;
+    IUri *uri;
+    nsresult nsres;
+    HRESULT hres;
+
+    nsAString_Init(&href_str, NULL);
+    nsres = nsIDOMHTMLAnchorElement_GetHref(This->nsanchor, &href_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *href;
+
+        nsAString_GetData(&href_str, &href);
+        hres = create_relative_uri(This->element.node.doc->basedoc.window, href, &uri);
+    }else {
+        ERR("Could not get anchor href: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+    nsAString_Finish(&href_str);
+    if(FAILED(hres))
+        return hres;
+
+    hres = navigate_new_window(This->element.node.doc->basedoc.window, uri, target, NULL);
+    IUri_Release(uri);
+    return hres;
+}
+
 static HRESULT navigate_anchor(HTMLAnchorElement *This)
 {
     nsAString href_str, target_str;
     nsresult nsres;
     HRESULT hres = E_FAIL;
 
+    static const WCHAR _parentW[] = {'p','a','r','e','n','t',0};
     static const WCHAR _selfW[] = {'_','s','e','l','f',0};
+    static const WCHAR _topW[] = {'_','t','o','p',0};
 
     nsAString_Init(&target_str, NULL);
     nsres = nsIDOMHTMLAnchorElement_GetTarget(This->nsanchor, &target_str);
@@ -57,9 +87,14 @@ static HRESULT navigate_anchor(HTMLAnchorElement *This)
 
         nsAString_GetData(&target_str, &target);
         if(*target && strcmpiW(target, _selfW)) {
-            FIXME("Navigating to target %s is not implemented\n", debugstr_w(target));
+            if(strcmpiW(target, _parentW) && strcmpiW(target, _topW)) {
+                hres = navigate_anchor_window(This, target);
+            }else {
+                FIXME("Navigating to target %s is not implemented\n", debugstr_w(target));
+                hres = S_OK;
+            }
             nsAString_Finish(&target_str);
-            return S_OK;
+            return hres;
         }
     }
     nsAString_Finish(&target_str);
