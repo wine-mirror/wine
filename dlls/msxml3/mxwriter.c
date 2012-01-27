@@ -1155,11 +1155,24 @@ static HRESULT WINAPI SAXLexicalHandler_endCDATA(ISAXLexicalHandler *iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI SAXLexicalHandler_comment(ISAXLexicalHandler *iface, const WCHAR *chars, int len)
+static HRESULT WINAPI SAXLexicalHandler_comment(ISAXLexicalHandler *iface, const WCHAR *chars, int nchars)
 {
     mxwriter *This = impl_from_ISAXLexicalHandler( iface );
-    FIXME("(%p)->(%s): stub\n", This, debugstr_wn(chars, len));
-    return E_NOTIMPL;
+    static const WCHAR copenW[] = {'<','!','-','-'};
+    static const WCHAR ccloseW[] = {'-','-','>','\r','\n'};
+
+    TRACE("(%p)->(%s:%d)\n", This, debugstr_wn(chars, nchars), nchars);
+
+    if (!chars) return E_INVALIDARG;
+
+    close_element_starttag(This);
+
+    write_output_buffer(This->buffer, copenW, sizeof(copenW)/sizeof(WCHAR));
+    if (nchars)
+        write_output_buffer(This->buffer, chars, nchars);
+    write_output_buffer(This->buffer, ccloseW, sizeof(ccloseW)/sizeof(WCHAR));
+
+    return S_OK;
 }
 
 static const struct ISAXLexicalHandlerVtbl SAXLexicalHandlerVtbl =
