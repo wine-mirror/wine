@@ -41,6 +41,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
 static const WCHAR emptyW[] = {0};
+static const WCHAR spaceW[] = {' '};
+static const WCHAR quotW[]  = {'\"'};
 
 typedef enum
 {
@@ -266,10 +268,10 @@ static void close_output_buffer(mxwriter *This)
 */
 static WCHAR *get_escaped_string(const WCHAR *str, int *len)
 {
-    static const WCHAR ltW[]   = {'&','l','t',';'};
-    static const WCHAR ampW[]  = {'&','a','m','p',';'};
-    static const WCHAR quotW[] = {'&','q','u','o','t',';'};
-    static const WCHAR gtW[]   = {'&','g','t',';'};
+    static const WCHAR ltW[]    = {'&','l','t',';'};
+    static const WCHAR ampW[]   = {'&','a','m','p',';'};
+    static const WCHAR equotW[] = {'&','q','u','o','t',';'};
+    static const WCHAR gtW[]    = {'&','g','t',';'};
 
     const int default_alloc = 100;
     const int grow_thresh = 10;
@@ -301,8 +303,8 @@ static WCHAR *get_escaped_string(const WCHAR *str, int *len)
             ptr += sizeof(ampW)/sizeof(WCHAR);
             break;
         case '"':
-            memcpy(ptr, quotW, sizeof(quotW));
-            ptr += sizeof(quotW)/sizeof(WCHAR);
+            memcpy(ptr, equotW, sizeof(equotW));
+            ptr += sizeof(equotW)/sizeof(WCHAR);
             break;
         case '>':
             memcpy(ptr, gtW, sizeof(gtW));
@@ -330,7 +332,6 @@ static void write_prolog_buffer(const mxwriter *This)
     static const WCHAR standaloneW[] = {' ','s','t','a','n','d','a','l','o','n','e','=','\"'};
     static const WCHAR yesW[] = {'y','e','s','\"','?','>'};
     static const WCHAR noW[] = {'n','o','\"','?','>'};
-    static const WCHAR quotW[] = {'\"'};
     static const WCHAR crlfW[] = {'\r','\n'};
 
     /* version */
@@ -951,9 +952,7 @@ static HRESULT WINAPI SAXContentHandler_startElement(
 
         for (i = 0; i < length; i++)
         {
-            static const WCHAR spaceW[] = {' '};
             static const WCHAR eqqW[] = {'=','\"'};
-            static const WCHAR quotW[] = {'\"'};
             const WCHAR *str;
             WCHAR *escaped;
             INT len = 0;
@@ -1114,17 +1113,72 @@ static HRESULT WINAPI SAXLexicalHandler_startDTD(ISAXLexicalHandler *iface,
     const WCHAR *name, int name_len, const WCHAR *publicId, int publicId_len,
     const WCHAR *systemId, int systemId_len)
 {
+    static const WCHAR doctypeW[] = {'<','!','D','O','C','T','Y','P','E',' '};
+    static const WCHAR openintW[] = {'[','\r','\n'};
+
     mxwriter *This = impl_from_ISAXLexicalHandler( iface );
-    FIXME("(%p)->(%s %s %s): stub\n", This, debugstr_wn(name, name_len), debugstr_wn(publicId, publicId_len),
+
+    TRACE("(%p)->(%s %s %s)\n", This, debugstr_wn(name, name_len), debugstr_wn(publicId, publicId_len),
         debugstr_wn(systemId, systemId_len));
-    return E_NOTIMPL;
+
+    if (!name) return E_INVALIDARG;
+
+    write_output_buffer(This->buffer, doctypeW, sizeof(doctypeW)/sizeof(WCHAR));
+
+    if (*name)
+    {
+        write_output_buffer(This->buffer, name, name_len);
+        write_output_buffer(This->buffer, spaceW, 1);
+    }
+
+    if (publicId)
+    {
+        static const WCHAR publicW[] = {'P','U','B','L','I','C',' '};
+
+        write_output_buffer(This->buffer, publicW, sizeof(publicW)/sizeof(WCHAR));
+        write_output_buffer(This->buffer, quotW, 1);
+        write_output_buffer(This->buffer, publicId, publicId_len);
+        write_output_buffer(This->buffer, quotW, 1);
+
+        if (!systemId) return E_INVALIDARG;
+
+        if (*publicId)
+            write_output_buffer(This->buffer, spaceW, 1);
+
+        write_output_buffer(This->buffer, quotW, 1);
+        write_output_buffer(This->buffer, systemId, systemId_len);
+        write_output_buffer(This->buffer, quotW, 1);
+
+        if (*systemId)
+            write_output_buffer(This->buffer, spaceW, 1);
+    }
+    else if (systemId)
+    {
+        static const WCHAR systemW[] = {'S','Y','S','T','E','M',' '};
+
+        write_output_buffer(This->buffer, systemW, sizeof(systemW)/sizeof(WCHAR));
+        write_output_buffer(This->buffer, quotW, 1);
+        write_output_buffer(This->buffer, systemId, systemId_len);
+        write_output_buffer(This->buffer, quotW, 1);
+        if (*systemId)
+            write_output_buffer(This->buffer, spaceW, 1);
+    }
+
+    write_output_buffer(This->buffer, openintW, sizeof(openintW)/sizeof(WCHAR));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXLexicalHandler_endDTD(ISAXLexicalHandler *iface)
 {
     mxwriter *This = impl_from_ISAXLexicalHandler( iface );
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    static const WCHAR closedtdW[] = {']','>','\r','\n'};
+
+    TRACE("(%p)\n", This);
+
+    write_output_buffer(This->buffer, closedtdW, sizeof(closedtdW)/sizeof(WCHAR));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXLexicalHandler_startEntity(ISAXLexicalHandler *iface, const WCHAR *name, int len)
