@@ -1682,6 +1682,162 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
             test_effect_parameter_value_GetTestGroup(&res[k], effect, &blob[res_value_offset], parameter, i);
 
+            /*
+             * check invalid calls
+             * These will crash:
+             * effect->lpVtbl->SetBoolArray(effect, parameter, NULL, res_desc->Bytes / sizeof(BOOL));
+             * effect->lpVtbl->SetIntArray(effect, parameter, NULL, res_desc->Bytes / sizeof(INT));
+             * effect->lpVtbl->SetFloatArray(effect, parameter, NULL, res_desc->Bytes / sizeof(FLOAT));
+             * effect->lpVtbl->SetVector(effect, parameter, NULL);
+             * effect->lpVtbl->SetVectorArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
+             * effect->lpVtbl->SetMatrix(effect, parameter, NULL);
+             * effect->lpVtbl->GetMatrix(effect, parameter, NULL);
+             * effect->lpVtbl->SetMatrixArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
+             * effect->lpVtbl->SetMatrixTranspose(effect, parameter, NULL);
+             * effect->lpVtbl->SetMatrixTransposeArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
+             */
+            hr = effect->lpVtbl->SetBool(effect, NULL, bvalue);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBool failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetBool(effect, NULL, &bvalue);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBool failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetBool(effect, parameter, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBool failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetBoolArray(effect, NULL, (BOOL *)input_value, res_desc->Bytes / sizeof(BOOL));
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBoolArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetBoolArray(effect, NULL, (BOOL *)input_value, res_desc->Bytes / sizeof(BOOL));
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBoolArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetBoolArray(effect, parameter, NULL, res_desc->Bytes / sizeof(BOOL));
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBoolArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetInt(effect, NULL, ivalue);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetInt failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetInt(effect, NULL, &ivalue);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetInt failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetInt(effect, parameter, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetInt failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetIntArray(effect, NULL, (INT *)input_value, res_desc->Bytes / sizeof(INT));
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetIntArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetIntArray(effect, NULL, (INT *)input_value, res_desc->Bytes / sizeof(INT));
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetIntArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetIntArray(effect, parameter, NULL, res_desc->Bytes / sizeof(INT));
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetIntArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetFloat(effect, NULL, fvalue);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloat failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetFloat(effect, NULL, &fvalue);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloat failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetFloat(effect, parameter, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloat failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetFloatArray(effect, NULL, (FLOAT *)input_value, res_desc->Bytes / sizeof(FLOAT));
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloatArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetFloatArray(effect, NULL, (FLOAT *)input_value, res_desc->Bytes / sizeof(FLOAT));
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloatArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetFloatArray(effect, parameter, NULL, res_desc->Bytes / sizeof(FLOAT));
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloatArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetVector(effect, NULL, (D3DXVECTOR4 *)input_value);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVector failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetVector(effect, NULL, (D3DXVECTOR4 *)input_value);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVector failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetVector(effect, parameter, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVector failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetVectorArray(effect, NULL, (D3DXVECTOR4 *)input_value, res_desc->Elements ? res_desc->Elements : 1);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVectorArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetVectorArray(effect, NULL, (D3DXVECTOR4 *)input_value, res_desc->Elements ? res_desc->Elements : 1);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVectorArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetVectorArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVectorArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetMatrix(effect, NULL, (D3DXMATRIX *)input_value);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrix failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetMatrix(effect, NULL, (D3DXMATRIX *)input_value);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrix failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetMatrixArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetMatrixArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetMatrixArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetMatrixTranspose(effect, NULL, (D3DXMATRIX *)input_value);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTranspose failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetMatrixTranspose(effect, NULL, (D3DXMATRIX *)input_value);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetMatrixTranspose(effect, parameter, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetMatrixTransposeArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposeArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetMatrixTransposeArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposeArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetMatrixTransposeArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposeArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            test_effect_parameter_value_GetTestGroup(&res[k], effect, &blob[res_value_offset], parameter, i);
+
             /* SetBool */
             bvalue = 1;
             memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
