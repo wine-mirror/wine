@@ -440,7 +440,7 @@ static ULONG WINAPI IExtractIconA_fnRelease(IExtractIconA * iface)
 {
 	IExtractIconW *This = impl_from_IExtractIconA(iface);
 
-	return IExtractIconW_AddRef(This);
+	return IExtractIconW_Release(This);
 }
 /**************************************************************************
 *  IExtractIconA_GetIconLocation
