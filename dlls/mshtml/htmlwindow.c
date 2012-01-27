@@ -814,10 +814,7 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
         return S_OK;
     }
 
-    if(This->uri)
-        hres = CoInternetCombineUrlEx(This->uri, url, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO, &uri, 0);
-    else
-        hres = CreateUri(url, 0, 0, &uri);
+    hres = create_relative_uri(This, url, &uri);
     if(FAILED(hres))
         return hres;
 

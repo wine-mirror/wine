@@ -175,6 +175,13 @@ void set_current_mon(HTMLWindow *This, IMoniker *mon)
     set_script_mode(This, use_gecko_script(This) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
 }
 
+HRESULT create_relative_uri(HTMLWindow *window, const WCHAR *rel_uri, IUri **uri)
+{
+    return window->uri
+        ? CoInternetCombineUrlEx(window->uri, rel_uri, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO, uri, 0)
+        : CreateUri(rel_uri, 0, 0, uri);
+}
+
 void set_download_state(HTMLDocumentObj *doc, int state)
 {
     if(doc->client) {
