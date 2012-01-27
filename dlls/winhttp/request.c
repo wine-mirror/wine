@@ -1650,7 +1650,7 @@ static BOOL handle_redirect( request_t *request, DWORD status )
     if ((index = get_header_index( request, attr_content_type, 0, TRUE )) >= 0) delete_header( request, index );
     if ((index = get_header_index( request, attr_content_length, 0, TRUE )) >= 0 ) delete_header( request, index );
 
-    if (status != HTTP_STATUS_REDIRECT_KEEP_VERB)
+    if (status != HTTP_STATUS_REDIRECT_KEEP_VERB && !strcmpW( request->verb, postW ))
     {
         heap_free( request->verb );
         request->verb = strdupW( getW );
