@@ -642,6 +642,9 @@ static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, eventid_t eid,
         case 0:
             *prevent_default = TRUE;
             return navigate_anchor(This);
+        case 1:
+            *prevent_default = TRUE;
+            return navigate_anchor_window(This, NULL);
         default:
             *prevent_default = FALSE;
             return S_OK;
