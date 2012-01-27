@@ -85,6 +85,7 @@ typedef struct
     DispatchEx dispex;
     IMXWriter IMXWriter_iface;
     ISAXContentHandler ISAXContentHandler_iface;
+    ISAXLexicalHandler ISAXLexicalHandler_iface;
 
     LONG ref;
     MSXML_VERSION class_version;
@@ -455,6 +456,11 @@ static inline mxwriter *impl_from_ISAXContentHandler(ISAXContentHandler *iface)
     return CONTAINING_RECORD(iface, mxwriter, ISAXContentHandler_iface);
 }
 
+static inline mxwriter *impl_from_ISAXLexicalHandler(ISAXLexicalHandler *iface)
+{
+    return CONTAINING_RECORD(iface, mxwriter, ISAXLexicalHandler_iface);
+}
+
 static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, void **obj)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
@@ -472,6 +478,10 @@ static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, voi
     else if ( IsEqualGUID( riid, &IID_ISAXContentHandler ) )
     {
         *obj = &This->ISAXContentHandler_iface;
+    }
+    else if ( IsEqualGUID( riid, &IID_ISAXLexicalHandler ) )
+    {
+        *obj = &This->ISAXLexicalHandler_iface;
     }
     else if (dispex_query_interface(&This->dispex, riid, obj))
     {
@@ -811,7 +821,7 @@ static const struct IMXWriterVtbl MXWriterVtbl =
 };
 
 /*** ISAXContentHandler ***/
-static HRESULT WINAPI mxwriter_saxcontent_QueryInterface(
+static HRESULT WINAPI SAXContentHandler_QueryInterface(
     ISAXContentHandler *iface,
     REFIID riid,
     void **obj)
@@ -820,19 +830,19 @@ static HRESULT WINAPI mxwriter_saxcontent_QueryInterface(
     return IMXWriter_QueryInterface(&This->IMXWriter_iface, riid, obj);
 }
 
-static ULONG WINAPI mxwriter_saxcontent_AddRef(ISAXContentHandler *iface)
+static ULONG WINAPI SAXContentHandler_AddRef(ISAXContentHandler *iface)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
     return IMXWriter_AddRef(&This->IMXWriter_iface);
 }
 
-static ULONG WINAPI mxwriter_saxcontent_Release(ISAXContentHandler *iface)
+static ULONG WINAPI SAXContentHandler_Release(ISAXContentHandler *iface)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
     return IMXWriter_Release(&This->IMXWriter_iface);
 }
 
-static HRESULT WINAPI mxwriter_saxcontent_putDocumentLocator(
+static HRESULT WINAPI SAXContentHandler_putDocumentLocator(
     ISAXContentHandler *iface,
     ISAXLocator *locator)
 {
@@ -841,7 +851,7 @@ static HRESULT WINAPI mxwriter_saxcontent_putDocumentLocator(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mxwriter_saxcontent_startDocument(ISAXContentHandler *iface)
+static HRESULT WINAPI SAXContentHandler_startDocument(ISAXContentHandler *iface)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
 
@@ -874,7 +884,7 @@ static HRESULT WINAPI mxwriter_saxcontent_startDocument(ISAXContentHandler *ifac
     return S_OK;
 }
 
-static HRESULT WINAPI mxwriter_saxcontent_endDocument(ISAXContentHandler *iface)
+static HRESULT WINAPI SAXContentHandler_endDocument(ISAXContentHandler *iface)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
     TRACE("(%p)\n", This);
@@ -882,7 +892,7 @@ static HRESULT WINAPI mxwriter_saxcontent_endDocument(ISAXContentHandler *iface)
     return flush_output_buffer(This);
 }
 
-static HRESULT WINAPI mxwriter_saxcontent_startPrefixMapping(
+static HRESULT WINAPI SAXContentHandler_startPrefixMapping(
     ISAXContentHandler *iface,
     const WCHAR *prefix,
     int nprefix,
@@ -894,7 +904,7 @@ static HRESULT WINAPI mxwriter_saxcontent_startPrefixMapping(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mxwriter_saxcontent_endPrefixMapping(
+static HRESULT WINAPI SAXContentHandler_endPrefixMapping(
     ISAXContentHandler *iface,
     const WCHAR *prefix,
     int nprefix)
@@ -904,7 +914,7 @@ static HRESULT WINAPI mxwriter_saxcontent_endPrefixMapping(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mxwriter_saxcontent_startElement(
+static HRESULT WINAPI SAXContentHandler_startElement(
     ISAXContentHandler *iface,
     const WCHAR *namespaceUri,
     int nnamespaceUri,
@@ -972,7 +982,7 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
     return S_OK;
 }
 
-static HRESULT WINAPI mxwriter_saxcontent_endElement(
+static HRESULT WINAPI SAXContentHandler_endElement(
     ISAXContentHandler *iface,
     const WCHAR *namespaceUri,
     int nnamespaceUri,
@@ -1010,7 +1020,7 @@ static HRESULT WINAPI mxwriter_saxcontent_endElement(
     return S_OK;
 }
 
-static HRESULT WINAPI mxwriter_saxcontent_characters(
+static HRESULT WINAPI SAXContentHandler_characters(
     ISAXContentHandler *iface,
     const WCHAR *chars,
     int nchars)
@@ -1030,7 +1040,7 @@ static HRESULT WINAPI mxwriter_saxcontent_characters(
     return S_OK;
 }
 
-static HRESULT WINAPI mxwriter_saxcontent_ignorableWhitespace(
+static HRESULT WINAPI SAXContentHandler_ignorableWhitespace(
     ISAXContentHandler *iface,
     const WCHAR *chars,
     int nchars)
@@ -1040,7 +1050,7 @@ static HRESULT WINAPI mxwriter_saxcontent_ignorableWhitespace(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mxwriter_saxcontent_processingInstruction(
+static HRESULT WINAPI SAXContentHandler_processingInstruction(
     ISAXContentHandler *iface,
     const WCHAR *target,
     int ntarget,
@@ -1052,7 +1062,7 @@ static HRESULT WINAPI mxwriter_saxcontent_processingInstruction(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mxwriter_saxcontent_skippedEntity(
+static HRESULT WINAPI SAXContentHandler_skippedEntity(
     ISAXContentHandler *iface,
     const WCHAR *name,
     int nname)
@@ -1062,22 +1072,108 @@ static HRESULT WINAPI mxwriter_saxcontent_skippedEntity(
     return E_NOTIMPL;
 }
 
-static const struct ISAXContentHandlerVtbl mxwriter_saxcontent_vtbl =
+static const struct ISAXContentHandlerVtbl SAXContentHandlerVtbl =
 {
-    mxwriter_saxcontent_QueryInterface,
-    mxwriter_saxcontent_AddRef,
-    mxwriter_saxcontent_Release,
-    mxwriter_saxcontent_putDocumentLocator,
-    mxwriter_saxcontent_startDocument,
-    mxwriter_saxcontent_endDocument,
-    mxwriter_saxcontent_startPrefixMapping,
-    mxwriter_saxcontent_endPrefixMapping,
-    mxwriter_saxcontent_startElement,
-    mxwriter_saxcontent_endElement,
-    mxwriter_saxcontent_characters,
-    mxwriter_saxcontent_ignorableWhitespace,
-    mxwriter_saxcontent_processingInstruction,
-    mxwriter_saxcontent_skippedEntity
+    SAXContentHandler_QueryInterface,
+    SAXContentHandler_AddRef,
+    SAXContentHandler_Release,
+    SAXContentHandler_putDocumentLocator,
+    SAXContentHandler_startDocument,
+    SAXContentHandler_endDocument,
+    SAXContentHandler_startPrefixMapping,
+    SAXContentHandler_endPrefixMapping,
+    SAXContentHandler_startElement,
+    SAXContentHandler_endElement,
+    SAXContentHandler_characters,
+    SAXContentHandler_ignorableWhitespace,
+    SAXContentHandler_processingInstruction,
+    SAXContentHandler_skippedEntity
+};
+
+/*** ISAXLexicalHandler ***/
+static HRESULT WINAPI SAXLexicalHandler_QueryInterface(ISAXLexicalHandler *iface,
+    REFIID riid, void **obj)
+{
+    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
+    return IMXWriter_QueryInterface(&This->IMXWriter_iface, riid, obj);
+}
+
+static ULONG WINAPI SAXLexicalHandler_AddRef(ISAXLexicalHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
+    return IMXWriter_AddRef(&This->IMXWriter_iface);
+}
+
+static ULONG WINAPI SAXLexicalHandler_Release(ISAXLexicalHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
+    return IMXWriter_Release(&This->IMXWriter_iface);
+}
+
+static HRESULT WINAPI SAXLexicalHandler_startDTD(ISAXLexicalHandler *iface,
+    const WCHAR *name, int name_len, const WCHAR *publicId, int publicId_len,
+    const WCHAR *systemId, int systemId_len)
+{
+    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
+    FIXME("(%p)->(%s %s %s): stub\n", This, debugstr_wn(name, name_len), debugstr_wn(publicId, publicId_len),
+        debugstr_wn(systemId, systemId_len));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SAXLexicalHandler_endDTD(ISAXLexicalHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SAXLexicalHandler_startEntity(ISAXLexicalHandler *iface, const WCHAR *name, int len)
+{
+    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
+    FIXME("(%p)->(%s): stub\n", This, debugstr_wn(name, len));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SAXLexicalHandler_endEntity(ISAXLexicalHandler *iface, const WCHAR *name, int len)
+{
+    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
+    FIXME("(%p)->(%s): stub\n", This, debugstr_wn(name, len));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SAXLexicalHandler_startCDATA(ISAXLexicalHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SAXLexicalHandler_endCDATA(ISAXLexicalHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SAXLexicalHandler_comment(ISAXLexicalHandler *iface, const WCHAR *chars, int len)
+{
+    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
+    FIXME("(%p)->(%s): stub\n", This, debugstr_wn(chars, len));
+    return E_NOTIMPL;
+}
+
+static const struct ISAXLexicalHandlerVtbl SAXLexicalHandlerVtbl =
+{
+    SAXLexicalHandler_QueryInterface,
+    SAXLexicalHandler_AddRef,
+    SAXLexicalHandler_Release,
+    SAXLexicalHandler_startDTD,
+    SAXLexicalHandler_endDTD,
+    SAXLexicalHandler_startEntity,
+    SAXLexicalHandler_endEntity,
+    SAXLexicalHandler_startCDATA,
+    SAXLexicalHandler_endCDATA,
+    SAXLexicalHandler_comment
 };
 
 static const tid_t mxwriter_iface_tids[] = {
@@ -1107,7 +1203,8 @@ HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *outer, void **ppObj)
         return E_OUTOFMEMORY;
 
     This->IMXWriter_iface.lpVtbl = &MXWriterVtbl;
-    This->ISAXContentHandler_iface.lpVtbl = &mxwriter_saxcontent_vtbl;
+    This->ISAXContentHandler_iface.lpVtbl = &SAXContentHandlerVtbl;
+    This->ISAXLexicalHandler_iface.lpVtbl = &SAXLexicalHandlerVtbl;
     This->ref = 1;
     This->class_version = version;
 

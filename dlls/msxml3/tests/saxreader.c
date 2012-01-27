@@ -1628,10 +1628,11 @@ static void test_encoding(void)
     }
 }
 
-static void test_mxwriter_contenthandler(void)
+static void test_mxwriter_handlers(void)
 {
     ISAXContentHandler *handler;
     IMXWriter *writer, *writer2;
+    ISAXLexicalHandler *lh;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
@@ -1640,6 +1641,7 @@ static void test_mxwriter_contenthandler(void)
 
     EXPECT_REF(writer, 1);
 
+    /* ISAXContentHandler */
     hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&handler);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     EXPECT_REF(writer, 2);
@@ -1651,8 +1653,21 @@ static void test_mxwriter_contenthandler(void)
     EXPECT_REF(writer, 3);
     EXPECT_REF(writer2, 3);
     IMXWriter_Release(writer2);
-
     ISAXContentHandler_Release(handler);
+
+    /* ISAXLexicalHandler */
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXLexicalHandler, (void**)&lh);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    EXPECT_REF(writer, 2);
+    EXPECT_REF(lh, 2);
+
+    hr = ISAXLexicalHandler_QueryInterface(lh, &IID_IMXWriter, (void**)&writer2);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(writer2 == writer, "got %p, expected %p\n", writer2, writer);
+    EXPECT_REF(writer, 3);
+    EXPECT_REF(writer2, 3);
+    IMXWriter_Release(writer2);
+
     IMXWriter_Release(writer);
 }
 
@@ -2867,7 +2882,7 @@ START_TEST(saxreader)
     get_supported_mxwriter_data(msxmlsupported_data);
     if (is_mxwriter_supported(&CLSID_MXXMLWriter, msxmlsupported_data))
     {
-        test_mxwriter_contenthandler();
+        test_mxwriter_handlers();
         test_mxwriter_startenddocument();
         test_mxwriter_startendelement();
         test_mxwriter_characters();
