@@ -1065,7 +1065,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
                 break;
 
             if(node && node->vtbl->handle_event) {
-                hres = node->vtbl->handle_event(node, eid, &prevent_default);
+                hres = node->vtbl->handle_event(node, eid, nsevent, &prevent_default);
                 if(FAILED(hres) || prevent_default)
                     break;
             }

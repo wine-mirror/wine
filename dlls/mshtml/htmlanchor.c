@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -583,14 +584,33 @@ static void HTMLAnchorElement_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(&This->element.node);
 }
 
-static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, eventid_t eid, BOOL *prevent_default)
+static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, eventid_t eid, nsIDOMEvent *event, BOOL *prevent_default)
 {
     HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
 
     if(eid == EVENTID_CLICK) {
+        nsIDOMMouseEvent *mouse_event;
+        PRUint16 button;
+        nsresult nsres;
+
         TRACE("CLICK\n");
-        *prevent_default = TRUE;
-        return navigate_anchor(This);
+
+        nsres = nsIDOMEvent_QueryInterface(event, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
+        assert(nsres == NS_OK);
+
+        nsres = nsIDOMMouseEvent_GetButton(mouse_event, &button);
+        assert(nsres == NS_OK);
+
+        nsIDOMMouseEvent_Release(mouse_event);
+
+        switch(button) {
+        case 0:
+            *prevent_default = TRUE;
+            return navigate_anchor(This);
+        default:
+            *prevent_default = FALSE;
+            return S_OK;
+        }
     }
 
     return S_OK;
