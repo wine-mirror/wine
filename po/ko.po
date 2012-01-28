@@ -9860,10 +9860,11 @@ msgstr "매개변수 오류\n"
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
-msgstr "볼륨 시리얼 번호는 %1!04x!-%2!04x!임\n"
+msgstr ""
+"볼륨 시리얼 번호는 %1!04x!-%2!04x!임\n"
+"\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "볼륨 라벨 (11 글자, ENTER는 없음과 같음)?"
 
@@ -10238,62 +10239,59 @@ msgid "Encoding:"
 msgstr "인코딩:"
 
 #: notepad.rc:129 wordpad.rc:278
-#, fuzzy
 msgctxt "accelerator Select All"
 msgid "^A"
-msgstr "A"
+msgstr "^A"
 
 #: notepad.rc:130 wordpad.rc:280
 msgctxt "accelerator Copy"
 msgid "^C"
-msgstr ""
+msgstr "^C"
 
 #: notepad.rc:131 regedit.rc:320 wordpad.rc:276
-#, fuzzy
 msgctxt "accelerator Find"
 msgid "^F"
-msgstr "F"
+msgstr "^F"
 
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "^H"
-msgstr ""
+msgstr "^H"
 
 #: notepad.rc:133 wordpad.rc:286
-#, fuzzy
 msgctxt "accelerator New"
 msgid "^N"
-msgstr "아니오"
+msgstr "^N"
 
 #: notepad.rc:134 wordpad.rc:287
 msgctxt "accelerator Open"
 msgid "^O"
-msgstr ""
+msgstr "^O"
 
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "^P"
-msgstr ""
+msgstr "^P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "^S"
-msgstr ""
+msgstr "^S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "^V"
-msgstr ""
+msgstr "^V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "^X"
-msgstr ""
+msgstr "^X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "^Z"
-msgstr ""
+msgstr "^Z"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -12303,7 +12301,7 @@ msgstr "오른쪽(&R)"
 #: view.rc:51
 msgctxt "accelerator Quit"
 msgid "^Q"
-msgstr ""
+msgstr "^Q"
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
@@ -13342,17 +13340,17 @@ msgstr "압축(&C)"
 
 #: winefile.rc:184
 msgid "Version information"
-msgstr "버젼 정보(&V)"
+msgstr "버젼 정보"
 
 #: winefile.rc:201 winemine.rc:99
 msgctxt "accelerator Exit"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: winefile.rc:202
 msgctxt "accelerator Fullscreen"
 msgid "^S"
-msgstr ""
+msgstr "^S"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -13775,43 +13773,42 @@ msgstr "가장자리에서 줄 넘기기(&M)"
 
 #: wordpad.rc:260
 msgid "Toolbars"
-msgstr " 도구바"
+msgstr "도구바"
 
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "^L"
-msgstr ""
+msgstr "^L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "^E"
-msgstr ""
+msgstr "^E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "^R"
-msgstr ""
+msgstr "^R"
 
 #: wordpad.rc:282
-#, fuzzy
 msgctxt "accelerator Redo"
 msgid "^Y"
-msgstr "예"
+msgstr "^Y"
 
 #: wordpad.rc:283
 msgctxt "accelerator Bold"
 msgid "^B"
-msgstr ""
+msgstr "^B"
 
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "^I"
-msgstr ""
+msgstr "^I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "^U"
-msgstr ""
+msgstr "^U"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
@@ -13977,7 +13974,6 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "올바르지 않은 매개변수 '%1' -  xcopy /?로 도움말을 보시오\n"
 
 #: xcopy.rc:29
-#, fuzzy
 msgid "Press <Enter> to begin copying\n"
 msgstr "<enter> 를 누르면 복사가 시작될 것입니다\n"
 
