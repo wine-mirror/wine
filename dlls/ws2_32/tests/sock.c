@@ -5599,9 +5599,6 @@ static void test_completion_port(void)
     ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
-
-    if (dest != INVALID_SOCKET)
-        closesocket(dest);
     if (src != INVALID_SOCKET)
         closesocket(src);
     if (connector != INVALID_SOCKET)
