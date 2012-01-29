@@ -563,6 +563,10 @@ static BYTE data83[] = {'.','s','n','d'};
 static BYTE data84[] = {'.','s','n','d',0,'<','h','t','m','l','>',1,1};
 static BYTE data85[] = {'.','S','N','D',0};
 static BYTE data86[] = {0x49,0x49,0x2a,0xff};
+static BYTE data87[] = {' ','<','h','e','a','d'};
+static BYTE data88[] = {' ','<','h','e','a','d','>'};
+static BYTE data89[] = {'\t','\r','<','h','e','a','d','>'};
+static BYTE data90[] = {'<','H','e','A','d','>'};
 
 static const struct {
     BYTE *data;
@@ -654,7 +658,11 @@ static const struct {
     {data83, sizeof(data83), mimeTextPlain},
     {data84, sizeof(data84), mimeTextHtml, mimeAudioBasic /* IE8 */},
     {data85, sizeof(data85), mimeTextPlain},
-    {data86, sizeof(data86), mimeImageTiff, NULL, mimeTextPlain}
+    {data86, sizeof(data86), mimeImageTiff, NULL, mimeTextPlain},
+    {data87, sizeof(data87), mimeTextPlain},
+    {data88, sizeof(data88), mimeTextHtml, mimeTextPlain /* IE8 */},
+    {data89, sizeof(data89), mimeTextHtml, mimeTextPlain /* IE8 */},
+    {data90, sizeof(data90), mimeTextHtml, mimeTextPlain /* IE8 */}
 };
 
 static void test_FindMimeFromData(void)

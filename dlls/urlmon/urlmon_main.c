@@ -566,13 +566,19 @@ static BOOL text_html_filter(const BYTE *b, DWORD size)
     if(size < 5)
         return FALSE;
 
-    for(i=0; i < size-5; i++) {
-        if(b[i] == '<'
-           && (b[i+1] == 'h' || b[i+1] == 'H')
-           && (b[i+2] == 't' || b[i+2] == 'T')
-           && (b[i+3] == 'm' || b[i+3] == 'M')
-           && (b[i+4] == 'l' || b[i+4] == 'L'))
-            return TRUE;
+    for(i = 0; i < size-5; i++) {
+        if((b[i] == '<'
+            && (b[i+1] == 'h' || b[i+1] == 'H')
+            && (b[i+2] == 't' || b[i+2] == 'T')
+            && (b[i+3] == 'm' || b[i+3] == 'M')
+            && (b[i+4] == 'l' || b[i+4] == 'L')) ||
+           ((size - i >= 6)
+            &&  b[i]   == '<'
+            && (b[i+1] == 'h' || b[i+1] == 'H')
+            && (b[i+2] == 'e' || b[i+2] == 'E')
+            && (b[i+3] == 'a' || b[i+3] == 'A')
+            && (b[i+4] == 'd' || b[i+4] == 'D')
+            &&  b[i+5] == '>')) return TRUE;
     }
 
     return FALSE;
