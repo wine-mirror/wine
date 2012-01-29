@@ -1000,7 +1000,7 @@ static HRESULT WINAPI domdoc_put_nodeValue(
     VARIANT value)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    TRACE("(%p)->(v%d)\n", This, V_VT(&value));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
     return E_FAIL;
 }
 
@@ -1110,7 +1110,7 @@ static HRESULT WINAPI domdoc_insertBefore(
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
 
-    TRACE("(%p)->(%p x%d %p)\n", This, newChild, V_VT(&refChild), outNewChild);
+    TRACE("(%p)->(%p %s %p)\n", This, newChild, debugstr_variant(&refChild), outNewChild);
 
     return node_insert_before(&This->node, newChild, &refChild, outNewChild);
 }
@@ -1868,7 +1868,7 @@ static HRESULT WINAPI domdoc_createNode(
     xmlChar *xml_name, *href;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(name), debugstr_w(namespaceURI), node);
+    TRACE("(%p)->(%s %s %s %p)\n", This, debugstr_variant(&Type), debugstr_w(name), debugstr_w(namespaceURI), node);
 
     if(!node) return E_INVALIDARG;
 
@@ -2503,21 +2503,17 @@ static HRESULT WINAPI domdoc_put_onreadystatechange(
 }
 
 
-static HRESULT WINAPI domdoc_put_onDataAvailable(
-    IXMLDOMDocument3 *iface,
-    VARIANT onDataAvailableSink )
+static HRESULT WINAPI domdoc_put_onDataAvailable(IXMLDOMDocument3 *iface, VARIANT sink)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    FIXME("%p\n", This);
+    FIXME("(%p)->(%s): stub\n", This, debugstr_variant(&sink));
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoc_put_onTransformNode(
-    IXMLDOMDocument3 *iface,
-    VARIANT onTransformNodeSink )
+static HRESULT WINAPI domdoc_put_onTransformNode(IXMLDOMDocument3 *iface, VARIANT sink )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    FIXME("%p\n", This);
+    FIXME("(%p)->(%s): stub\n", This, debugstr_variant(&sink));
     return E_NOTIMPL;
 }
 
@@ -2573,21 +2569,21 @@ static HRESULT WINAPI domdoc_get_schemas(
 
 static HRESULT WINAPI domdoc_putref_schemas(
     IXMLDOMDocument3* iface,
-    VARIANT var1)
+    VARIANT schema)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     HRESULT hr = E_FAIL;
     IXMLDOMSchemaCollection2* new_schema = NULL;
 
-    FIXME("(%p): semi-stub\n", This);
-    switch(V_VT(&var1))
+    FIXME("(%p)->(%s): semi-stub\n", This, debugstr_variant(&schema));
+    switch(V_VT(&schema))
     {
     case VT_UNKNOWN:
-        hr = IUnknown_QueryInterface(V_UNKNOWN(&var1), &IID_IXMLDOMSchemaCollection, (void**)&new_schema);
+        hr = IUnknown_QueryInterface(V_UNKNOWN(&schema), &IID_IXMLDOMSchemaCollection, (void**)&new_schema);
         break;
 
     case VT_DISPATCH:
-        hr = IDispatch_QueryInterface(V_DISPATCH(&var1), &IID_IXMLDOMSchemaCollection, (void**)&new_schema);
+        hr = IDispatch_QueryInterface(V_DISPATCH(&schema), &IID_IXMLDOMSchemaCollection, (void**)&new_schema);
         break;
 
     case VT_NULL:
@@ -2596,7 +2592,7 @@ static HRESULT WINAPI domdoc_putref_schemas(
         break;
 
     default:
-        WARN("Can't get schema from vt %x\n", V_VT(&var1));
+        WARN("Can't get schema from vt %x\n", V_VT(&schema));
     }
 
     if(SUCCEEDED(hr))
@@ -2766,11 +2762,11 @@ static HRESULT WINAPI domdoc_validate(
 static HRESULT WINAPI domdoc_setProperty(
     IXMLDOMDocument3* iface,
     BSTR p,
-    VARIANT var)
+    VARIANT value)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
 
-    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(p), debugstr_variant(&value));
 
     if (lstrcmpiW(p, PropertySelectionLanguageW) == 0)
     {
@@ -2779,14 +2775,14 @@ static HRESULT WINAPI domdoc_setProperty(
         BSTR bstr;
 
         V_VT(&varStr) = VT_EMPTY;
-        if (V_VT(&var) != VT_BSTR)
+        if (V_VT(&value) != VT_BSTR)
         {
-            if (FAILED(hr = VariantChangeType(&varStr, &var, 0, VT_BSTR)))
+            if (FAILED(hr = VariantChangeType(&varStr, &value, 0, VT_BSTR)))
                 return hr;
             bstr = V_BSTR(&varStr);
         }
         else
-            bstr = V_BSTR(&var);
+            bstr = V_BSTR(&value);
 
         hr = S_OK;
         if (lstrcmpiW(bstr, PropValueXPathW) == 0)
@@ -2808,14 +2804,14 @@ static HRESULT WINAPI domdoc_setProperty(
         BSTR bstr;
 
         V_VT(&varStr) = VT_EMPTY;
-        if (V_VT(&var) != VT_BSTR)
+        if (V_VT(&value) != VT_BSTR)
         {
-            if (FAILED(hr = VariantChangeType(&varStr, &var, 0, VT_BSTR)))
+            if (FAILED(hr = VariantChangeType(&varStr, &value, 0, VT_BSTR)))
                 return hr;
             bstr = V_BSTR(&varStr);
         }
         else
-            bstr = V_BSTR(&var);
+            bstr = V_BSTR(&value);
 
         hr = S_OK;
 
@@ -2933,7 +2929,7 @@ static HRESULT WINAPI domdoc_setProperty(
              lstrcmpiW(p, PropertyResolveExternalsW) == 0)
     {
         /* Ignore */
-        FIXME("Ignoring property %s, value %d\n", debugstr_w(p), V_BOOL(&var));
+        FIXME("Ignoring property %s, value %d\n", debugstr_w(p), V_BOOL(&value));
         return S_OK;
     }
 
