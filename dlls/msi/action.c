@@ -233,8 +233,7 @@ static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
                 break;
             default:
                 state = state_token;
-                if (!count) in_quotes = 0;
-                else in_quotes = 1;
+                in_quotes = 1;
                 len++;
                 break;
             }
