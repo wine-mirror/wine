@@ -1459,6 +1459,11 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
             return E_OUTOFMEMORY;
         }
 
+    if(This->dataflow == eCapture){
+        UINT32 frames; /* enqueue packets */
+        AudioCaptureClient_GetNextPacket(This, &frames);
+    }
+
     This->playing = StateInTransition;
 
     sc = AudioQueueStart(This->aqueue, NULL);
@@ -1523,12 +1528,7 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
     }else
         WARN("GetCurrentTime failed: %lx\n", sc);
 
-    sc = AudioQueueFlush(This->aqueue);
-    if(sc != noErr){
-        OSSpinLockUnlock(&This->lock);
-        WARN("Unable to flush audio queue: %lx\n", sc);
-    }
-
+    /* Mac OS bug? Our capture callback is no more called past AQStop */
     sc = AudioQueuePause(This->aqueue);
     if(sc != noErr){
         OSSpinLockUnlock(&This->lock);
@@ -1552,6 +1552,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
     ACImpl *This = impl_from_IAudioClient(iface);
     OSStatus sc;
     QueuedBufInfo *bufinfo, *bufinfo2;
+    AQBuffer *buf;
 
     TRACE("(%p)\n", This);
 
@@ -1572,8 +1573,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
         return AUDCLNT_E_BUFFER_OPERATION_PENDING;
     }
 
-    This->written_frames = 0;
-    This->inbuf_frames = 0;
+    avail_update(This); /* going to skip over inbuf_frames */
 
     LIST_FOR_EACH_ENTRY_SAFE(bufinfo, bufinfo2, &This->queued_bufinfos,
             QueuedBufInfo, entry){
@@ -1587,6 +1587,18 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
         WARN("Unable to reset audio queue: %lx\n", sc);
         return E_FAIL;
     }
+
+    /* AQReset is synchronous */
+    list_move_tail(&This->avail_buffers, &This->queued_buffers);
+
+    if(This->dataflow == eRender){
+        This->written_frames = 0;
+    }else{
+        LIST_FOR_EACH_ENTRY(buf, &This->avail_buffers, AQBuffer, entry)
+            buf->buf->mAudioDataByteSize = 0;
+        This->written_frames += This->inbuf_frames;
+    }
+    This->inbuf_frames = 0;
 
     OSSpinLockUnlock(&This->lock);
 
@@ -1984,8 +1996,6 @@ static HRESULT AudioCaptureClient_GetNextPacket(ACImpl *This, UINT32 *frames)
             return S_OK;
 
         WARN("empty packet\n");
-        /* fixme: for reasons not yet understood, the initially submitted
-         * packets are returned with 0 bytes.  Resubmit them. */
         buf->used = TRUE;
         sc = AudioQueueEnqueueBuffer(This->aqueue, This->public_buffer, 0, NULL);
         if(sc != noErr){
