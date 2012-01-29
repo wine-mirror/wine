@@ -3162,6 +3162,11 @@ static BOOL match_domain_component(LPCWSTR allowed_component, DWORD allowed_len,
     BOOL matches = TRUE;
 
     *see_wildcard = FALSE;
+
+    /* permit server_len to be one byte short if allowed_component is NULL terminated */
+    if(allowed_component[allowed_len-1] == 0)
+        allowed_len--;
+
     if (server_len < allowed_len)
     {
         WARN_(chain)("domain component %s too short for %s\n",
