@@ -66,14 +66,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(treeview);
 
-enum StateListType
-{
-  OriginInternal,
-  OriginUser
-};
-
 /* internal structures */
-
 typedef struct _TREEITEM    /* HTREEITEM is a _TREEINFO *. */
 {
   HTREEITEM parent;         /* handle to parent or 0 if at root */
@@ -162,7 +155,6 @@ typedef struct tagTREEVIEW_INFO
   HIMAGELIST    himlState;
   int           stateImageHeight;
   int           stateImageWidth;
-  enum StateListType statehimlType;
   HDPA          items;
 
   DWORD lastKeyPressTimestamp;
@@ -1793,11 +1785,8 @@ TREEVIEW_SetImageList(TREEVIEW_INFO *infoPtr, UINT type, HIMAGELIST himlNew)
 	infoPtr->himlState = himlNew;
 
 	if (himlNew)
-	{
 	    ImageList_GetIconSize(himlNew, &infoPtr->stateImageWidth,
 				  &infoPtr->stateImageHeight);
-	    infoPtr->statehimlType = OriginUser;
-	}
 	else
 	{
 	    infoPtr->stateImageWidth = 0;
@@ -4970,7 +4959,6 @@ TREEVIEW_InitCheckboxes(TREEVIEW_INFO *infoPtr)
     int nIndex;
 
     infoPtr->himlState = ImageList_Create(16, 16, ILC_COLOR | ILC_MASK, 3, 0);
-    infoPtr->statehimlType = OriginInternal;
 
     hdcScreen = GetDC(0);
 
@@ -5134,8 +5122,6 @@ TREEVIEW_Destroy(TREEVIEW_INFO *infoPtr)
 
     CloseThemeData (GetWindowTheme (infoPtr->hwnd));
 
-    if (infoPtr->statehimlType == OriginInternal)
-        ImageList_Destroy(infoPtr->himlState);
     /* Deassociate treeview from the window before doing anything drastic. */
     SetWindowLongPtrW(infoPtr->hwnd, 0, 0);
 

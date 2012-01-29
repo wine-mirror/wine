@@ -1607,9 +1607,9 @@ static void test_htreeitem_layout(void)
 
 static void test_TVS_CHECKBOXES(void)
 {
-    HIMAGELIST himl;
+    HIMAGELIST himl, himl2;
+    HWND hTree, hTree2;
     TVITEMA item;
-    HWND hTree;
     DWORD ret;
 
     hTree = create_treeview_control(0);
@@ -1639,6 +1639,10 @@ static void test_TVS_CHECKBOXES(void)
     himl = (HIMAGELIST)SendMessageA(hTree, TVM_GETIMAGELIST, TVSIL_STATE, 0);
     ok(himl != NULL, "got %p\n", himl);
 
+    himl2 = (HIMAGELIST)SendMessageA(hTree, TVM_GETIMAGELIST, TVSIL_STATE, 0);
+    ok(himl2 != NULL, "got %p\n", himl2);
+    ok(himl2 == himl, "got %p, expected %p\n", himl2, himl);
+
     item.hItem = hRoot;
     item.mask = TVIF_STATE;
     item.state = 0;
@@ -1655,6 +1659,25 @@ static void test_TVS_CHECKBOXES(void)
     expect(TRUE, ret);
     ok(item.state == INDEXTOSTATEIMAGEMASK(1), "got 0x%x\n", item.state);
 
+    /* create another control and check its checkbox list */
+    hTree2 = create_treeview_control(0);
+    fill_tree(hTree2);
+
+    /* set some index for a child */
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    item.state = INDEXTOSTATEIMAGEMASK(4);
+    item.stateMask = TVIS_STATEIMAGEMASK;
+    ret = SendMessageA(hTree2, TVM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+
+    /* enabling check boxes set all items to 1 state image index */
+    SetWindowLongA(hTree2, GWL_STYLE, GetWindowLongA(hTree, GWL_STYLE) | TVS_CHECKBOXES);
+    himl2 = (HIMAGELIST)SendMessageA(hTree2, TVM_GETIMAGELIST, TVSIL_STATE, 0);
+    ok(himl2 != NULL, "got %p\n", himl2);
+    ok(himl != himl2, "got %p, expected %p\n", himl2, himl);
+
+    DestroyWindow(hTree2);
     DestroyWindow(hTree);
 
     /* the same, but initially created with TVS_CHECKBOXES */
