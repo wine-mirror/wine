@@ -2309,16 +2309,14 @@ static inline int get_cluster_size(const WORD *pwLogClust, int cChars, int item,
 static inline int get_glyph_cluster_advance(const int* piAdvance, const SCRIPT_VISATTR *pva, const WORD *pwLogClust, int cGlyphs, int cChars, int glyph, int direction)
 {
     int advance;
-    int log_clust_max = 0;
-    int i;
+    int log_clust_max;
 
     advance = piAdvance[glyph];
 
-    for (i = 0; i < cChars; i++)
-    {
-        if (pwLogClust[i] > log_clust_max)
-            log_clust_max = pwLogClust[i];
-    }
+    if (pwLogClust[0] > pwLogClust[cChars-1])
+        log_clust_max = pwLogClust[0];
+    else
+        log_clust_max = pwLogClust[cChars-1];
 
     if (glyph > log_clust_max)
         return advance;
