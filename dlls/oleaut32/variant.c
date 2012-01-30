@@ -1312,6 +1312,10 @@ INT WINAPI SystemTimeToVariantTime(LPSYSTEMTIME lpSt, double *pDateOut)
 
   if (lpSt->wMonth > 12)
     return FALSE;
+  if (lpSt->wDay > 31)
+    return FALSE;
+  if ((short)lpSt->wYear < 0)
+    return FALSE;
 
   ud.st = *lpSt;
   return VarDateFromUdate(&ud, 0, pDateOut) == S_OK;
