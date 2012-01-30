@@ -64,7 +64,7 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
     if (!warn_once++)
         FIXME("(%p, %d, %p): partially implemented\n", data, datasize, info);
 
-    /* TODO: Add support for (or at least detect) TGA, DDS, PPM and DIB */
+    /* TODO: Add support for (or at least detect) DDS, PPM and DIB */
 
     if (!data || !datasize)
         return D3DERR_INVALIDCALL;
