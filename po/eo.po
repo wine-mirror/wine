@@ -10095,42 +10095,42 @@ msgstr "&Supra:"
 msgid "Encoding:"
 msgstr ""
 
-#: notepad.rc:129
+#: notepad.rc:129 wordpad.rc:278
 msgctxt "accelerator Select All"
 msgid "A"
 msgstr ""
 
-#: notepad.rc:130
+#: notepad.rc:130 wordpad.rc:280
 msgctxt "accelerator Copy"
 msgid "C"
 msgstr ""
 
-#: notepad.rc:131
+#: notepad.rc:131 wordpad.rc:276
 msgctxt "accelerator Find"
 msgid "F"
 msgstr ""
 
-#: notepad.rc:132
+#: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
 msgstr ""
 
-#: notepad.rc:133
+#: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
 msgid "N"
 msgstr "N"
 
-#: notepad.rc:134
+#: notepad.rc:134 wordpad.rc:287
 msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:135
+#: notepad.rc:135 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
 msgstr ""
 
-#: notepad.rc:136
+#: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
 msgstr ""
@@ -10140,12 +10140,12 @@ msgctxt "accelerator Paste"
 msgid "V"
 msgstr ""
 
-#: notepad.rc:138
+#: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "X"
 msgstr ""
 
-#: notepad.rc:139
+#: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "Z"
 msgstr ""
@@ -11018,12 +11018,12 @@ msgstr "Redaktado"
 msgid "Edit Multi String"
 msgstr ""
 
-#: regedit.rc:320 wordpad.rc:276
+#: regedit.rc:320
 msgctxt "accelerator Find"
 msgid "^F"
 msgstr ""
 
-#: regedit.rc:321 wordpad.rc:289
+#: regedit.rc:321
 msgctxt "accelerator Print"
 msgid "^P"
 msgstr ""
@@ -13700,77 +13700,37 @@ msgstr "&Ruliøu"
 
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
-msgid "^L"
+msgid "L"
 msgstr ""
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
-msgid "^E"
+msgid "E"
 msgstr ""
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
-msgid "^R"
-msgstr ""
-
-#: wordpad.rc:277
-msgctxt "accelerator Replace"
-msgid "^H"
-msgstr ""
-
-#: wordpad.rc:278
-msgctxt "accelerator Select All"
-msgid "^A"
-msgstr ""
-
-#: wordpad.rc:279
-msgctxt "accelerator Cut"
-msgid "^X"
-msgstr ""
-
-#: wordpad.rc:280
-msgctxt "accelerator Copy"
-msgid "^C"
-msgstr ""
-
-#: wordpad.rc:281
-msgctxt "accelerator Undo"
-msgid "^Z"
+msgid "R"
 msgstr ""
 
 #: wordpad.rc:282
 msgctxt "accelerator Redo"
-msgid "^Y"
+msgid "Y"
 msgstr ""
 
 #: wordpad.rc:283
 msgctxt "accelerator Bold"
-msgid "^B"
+msgid "B"
 msgstr ""
 
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
-msgid "^I"
+msgid "I"
 msgstr ""
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
-msgid "^U"
-msgstr ""
-
-#: wordpad.rc:286
-msgctxt "accelerator New"
-msgid "^N"
-msgstr ""
-
-#: wordpad.rc:287
-msgctxt "accelerator Open"
-msgid "^O"
-msgstr ""
-
-#: wordpad.rc:288
-msgctxt "accelerator Save"
-msgid "^S"
+msgid "U"
 msgstr ""
 
 #: wordpad.rc:136

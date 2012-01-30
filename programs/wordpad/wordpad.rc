@@ -270,23 +270,23 @@ BEGIN
     "1",          ID_BACK_1,          VIRTKEY, CONTROL
     "2",          ID_BACK_2,          VIRTKEY, CONTROL
     VK_F3,        ID_FIND_NEXT,       VIRTKEY
-    "#msgctxt#accelerator Align Left#^L",   ID_ALIGN_LEFT
-    "#msgctxt#accelerator Align Center#^E", ID_ALIGN_CENTER
-    "#msgctxt#accelerator Align Right#^R",  ID_ALIGN_RIGHT
-    "#msgctxt#accelerator Find#^F",         ID_FIND
-    "#msgctxt#accelerator Replace#^H",      ID_REPLACE
-    "#msgctxt#accelerator Select All#^A",   ID_EDIT_SELECTALL
-    "#msgctxt#accelerator Cut#^X",          ID_EDIT_CUT
-    "#msgctxt#accelerator Copy#^C",         ID_EDIT_COPY
-    "#msgctxt#accelerator Undo#^Z",         ID_EDIT_UNDO
-    "#msgctxt#accelerator Redo#^Y",         ID_EDIT_REDO
-    "#msgctxt#accelerator Bold#^B",         ID_FORMAT_BOLD
-    "#msgctxt#accelerator Italic#^I",       ID_FORMAT_ITALIC
-    "#msgctxt#accelerator Underline#^U",    ID_FORMAT_UNDERLINE
-    "#msgctxt#accelerator New#^N",          ID_FILE_NEW
-    "#msgctxt#accelerator Open#^O",         ID_FILE_OPEN
-    "#msgctxt#accelerator Save#^S",         ID_FILE_SAVE
-    "#msgctxt#accelerator Print#^P",        ID_PRINT
+    "#msgctxt#accelerator Align Left#L",   ID_ALIGN_LEFT, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Align Center#E", ID_ALIGN_CENTER, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Align Right#R",  ID_ALIGN_RIGHT, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Find#F",         ID_FIND, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Replace#H",      ID_REPLACE, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Select All#A",   ID_EDIT_SELECTALL, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Cut#X",          ID_EDIT_CUT, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Copy#C",         ID_EDIT_COPY, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Undo#Z",         ID_EDIT_UNDO, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Redo#Y",         ID_EDIT_REDO, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Bold#B",         ID_FORMAT_BOLD, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Italic#I",       ID_FORMAT_ITALIC, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Underline#U",    ID_FORMAT_UNDERLINE, VIRTKEY, CONTROL
+    "#msgctxt#accelerator New#N",          ID_FILE_NEW, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Open#O",         ID_FILE_OPEN, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Save#S",         ID_FILE_SAVE, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Print#P",        ID_PRINT, VIRTKEY, CONTROL
 END
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
