@@ -12407,11 +12407,6 @@ msgstr "&Levo"
 msgid "&Right"
 msgstr "D&esno"
 
-#: view.rc:51
-msgctxt "accelerator Quit"
-msgid "^Q"
-msgstr ""
-
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Običajni pregledovalnik datotek meta"

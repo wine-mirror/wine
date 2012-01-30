@@ -12672,11 +12672,6 @@ msgstr "&Venstre"
 msgid "&Right"
 msgstr "Høj&re"
 
-#: view.rc:51
-msgctxt "accelerator Quit"
-msgid "^Q"
-msgstr ""
-
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Normal metafil-fremviser"

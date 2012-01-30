@@ -12298,11 +12298,6 @@ msgstr "왼쪽(&L)"
 msgid "&Right"
 msgstr "오른쪽(&R)"
 
-#: view.rc:51
-msgctxt "accelerator Quit"
-msgid "^Q"
-msgstr "^Q"
-
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "정규 메타파일 보기"

@@ -366,7 +366,6 @@ static void HandleCommandLine(LPWSTR cmdline)
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
     MSG msg;
-    HANDLE hAccelTable;
 
     /* Other instances of app running? */
     if (!hPrevInstance)
@@ -386,24 +385,13 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
     HandleCommandLine(lpCmdLine);
 
-    hAccelTable = LoadAcceleratorsW(hInstance, szAppName);
-
     /* Main loop */
     /* Acquire and dispatch messages until a WM_QUIT message is received */
     while (GetMessageW(&msg, NULL, 0, 0))
     {
-      /* Add other Translation functions (for modeless dialogs
-      and/or MDI windows) here. */
-
-      if (!TranslateAcceleratorW(msg.hwnd, hAccelTable, &msg))
-        {
-            TranslateMessage(&msg);
-            DispatchMessageW(&msg);
-        }
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
     }
 
-    /* Add module specific instance free/delete functions here */
-
-    /* Returns the value from PostQuitMessage */
     return msg.wParam;
 }

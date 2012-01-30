@@ -12799,11 +12799,6 @@ msgstr "&Esquerda"
 msgid "&Right"
 msgstr "&Direita"
 
-#: view.rc:51
-msgctxt "accelerator Quit"
-msgid "^Q"
-msgstr ""
-
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Visualizador Regular de Ficheiros Meta"

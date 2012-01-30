@@ -12407,11 +12407,6 @@ msgstr "Przesuń w &lewo"
 msgid "&Right"
 msgstr "Przesuń w &prawo"
 
-#: view.rc:51
-msgctxt "accelerator Quit"
-msgid "^Q"
-msgstr "^Q"
-
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Przeglądarka zwykłych metaplików"

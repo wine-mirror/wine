@@ -12325,11 +12325,6 @@ msgstr "左(&L)"
 msgid "&Right"
 msgstr "右(&R)"
 
-#: view.rc:51
-msgctxt "accelerator Quit"
-msgid "^Q"
-msgstr ""
-
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "普通 Metafile 閱讀器"
