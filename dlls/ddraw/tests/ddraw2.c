@@ -838,6 +838,244 @@ static void test_coop_level_threaded(void)
     destroy_window_thread(&p);
 }
 
+static IDirectDrawSurface *get_depth_stencil(IDirect3DDevice2 *device)
+{
+    IDirectDrawSurface *rt, *ret;
+    DDSCAPS caps = {DDSCAPS_ZBUFFER};
+    HRESULT hr;
+
+    hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_GetAttachedSurface(rt, &caps, &ret);
+    ok(SUCCEEDED(hr) || hr == DDERR_NOTFOUND, "Failed to get the z buffer, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(rt);
+    return ret;
+}
+
+static void test_depth_blit(void)
+{
+    static D3DLVERTEX quad1[] =
+    {
+        {{-1.0}, { 1.0}, {0.50f}, 0, {0xff00ff00}},
+        {{ 1.0}, { 1.0}, {0.50f}, 0, {0xff00ff00}},
+        {{-1.0}, {-1.0}, {0.50f}, 0, {0xff00ff00}},
+        {{ 1.0}, {-1.0}, {0.50f}, 0, {0xff00ff00}},
+    };
+    static const D3DCOLOR expected_colors[4][4] =
+    {
+        {0x00ff0000, 0x00ff0000, 0x0000ff00, 0x0000ff00},
+        {0x00ff0000, 0x00ff0000, 0x0000ff00, 0x0000ff00},
+        {0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00},
+        {0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00},
+    };
+    static const BOOL todo[4][4] =
+    {
+        {FALSE, FALSE, TRUE, TRUE},
+        {FALSE, FALSE, TRUE, TRUE},
+        {TRUE,  TRUE,  TRUE, TRUE},
+        {TRUE,  TRUE,  TRUE, TRUE},
+    };
+    DDSURFACEDESC ddsd_new, ddsd_existing;
+
+    IDirect3DDevice2 *device;
+    IDirectDrawSurface *ds1, *ds2, *ds3, *rt;
+    IDirect3DViewport2 *viewport;
+    D3DVIEWPORT2 vp_data;
+    RECT src_rect, dst_rect;
+    unsigned int i, j;
+    D3DCOLOR color;
+    HRESULT hr;
+    IDirect3D2 *d3d;
+    IDirectDraw2 *ddraw;
+    DDBLTFX fx;
+    HWND window;
+    D3DRECT d3drect;
+    IDirect3DMaterial2 *background;
+    D3DMATERIALHANDLE background_handle;
+    D3DMATERIAL material;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create ddraw object, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        IDirectDraw2_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D2 interface, hr %#x.\n", hr);
+    hr = IDirect3D2_CreateViewport(d3d, &viewport, NULL);
+    ok(SUCCEEDED(hr), "Failed to create a viewport, hr %#x.\n", hr);
+    hr = IDirect3D2_CreateMaterial(d3d, &background, NULL);
+    ok(SUCCEEDED(hr), "Failed to create a material, hr %#x.\n", hr);
+
+    ds1 = get_depth_stencil(device);
+
+    memset(&ddsd_new, 0, sizeof(ddsd_new));
+    ddsd_new.dwSize = sizeof(ddsd_new);
+    memset(&ddsd_existing, 0, sizeof(ddsd_existing));
+    ddsd_existing.dwSize = sizeof(ddsd_existing);
+    hr = IDirectDrawSurface_GetSurfaceDesc(ds1, &ddsd_existing);
+    ddsd_new.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    ddsd_new.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    ddsd_new.dwWidth = ddsd_existing.dwWidth;
+    ddsd_new.dwHeight = ddsd_existing.dwHeight;
+    U4(ddsd_new).ddpfPixelFormat = U4(ddsd_existing).ddpfPixelFormat;
+    hr = IDirectDraw2_CreateSurface(ddraw, &ddsd_new, &ds2, NULL);
+    ok(SUCCEEDED(hr), "Failed to create a surface, hr %#x.\n", hr);
+    hr = IDirectDraw2_CreateSurface(ddraw, &ddsd_new, &ds3, NULL);
+    ok(SUCCEEDED(hr), "Failed to create a surface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_AddViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to add viewport to device, hr %#x.\n", hr);
+    memset(&vp_data, 0, sizeof(vp_data));
+    vp_data.dwSize = sizeof(vp_data);
+    vp_data.dwWidth = ddsd_existing.dwWidth;
+    vp_data.dwHeight = ddsd_existing.dwHeight;
+    vp_data.dvMaxZ = 1.0;
+    vp_data.dvClipX = -1.0f;
+    vp_data.dvClipWidth = 2.0f;
+    vp_data.dvClipY = 1.0f;
+    vp_data.dvClipHeight = 2.0f;
+    hr = IDirect3DViewport2_SetViewport2(viewport, &vp_data);
+    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to activate the viewport, hr %#x.\n", hr);
+
+    memset(&material, 0, sizeof(material));
+    material.dwSize = sizeof(material);
+    U1(U(material).diffuse).r = 1.0f;
+    U2(U(material).diffuse).g = 0.0f;
+    U3(U(material).diffuse).b = 0.0f;
+    U4(U(material).diffuse).a = 1.0f;
+    hr = IDirect3DMaterial2_SetMaterial(background, &material);
+    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
+    hr = IDirect3DMaterial2_GetHandle(background, device, &background_handle);
+    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+    hr = IDirect3DViewport2_SetBackground(viewport, background_handle);
+    ok(SUCCEEDED(hr), "Failed to set viewport background, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_TRUE);
+    ok(SUCCEEDED(hr), "Failed to enable z testing, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
+    ok(SUCCEEDED(hr), "Failed to set the z function, hr %#x.\n", hr);
+
+    U1(d3drect).x1 = U2(d3drect).y1 = 0;
+    U3(d3drect).x2 = vp_data.dwWidth; U4(d3drect).y2 = vp_data.dwHeight;
+    hr = IDirect3DViewport2_Clear(viewport, 1, &d3drect, D3DCLEAR_ZBUFFER);
+    ok(SUCCEEDED(hr), "Failed to clear the z buffer, hr %#x.\n", hr);
+
+    /* Partial blit. */
+    SetRect(&src_rect, 0, 0, 320, 240);
+    SetRect(&dst_rect, 0, 0, 320, 240);
+    hr = IDirectDrawSurface_Blt(ds2, &dst_rect, ds1, &src_rect, DDBLT_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    /* Different locations. */
+    SetRect(&src_rect, 0, 0, 320, 240);
+    SetRect(&dst_rect, 320, 240, 640, 480);
+    hr = IDirectDrawSurface_Blt(ds2, &dst_rect, ds1, &src_rect, DDBLT_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    /* Streched. */
+    SetRect(&src_rect, 0, 0, 320, 240);
+    SetRect(&dst_rect, 0, 0, 640, 480);
+    hr = IDirectDrawSurface_Blt(ds2, &dst_rect, ds1, &src_rect, DDBLT_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    /* Flipped. */
+    SetRect(&src_rect, 0, 480, 640, 0);
+    SetRect(&dst_rect, 0, 0, 640, 480);
+    hr = IDirectDrawSurface_Blt(ds2, &dst_rect, ds1, &src_rect, DDBLT_WAIT, NULL);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
+    SetRect(&src_rect, 0, 0, 640, 480);
+    SetRect(&dst_rect, 0, 480, 640, 0);
+    hr = IDirectDrawSurface_Blt(ds2, &dst_rect, ds1, &src_rect, DDBLT_WAIT, NULL);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
+    /* Full, explicit. */
+    SetRect(&src_rect, 0, 0, 640, 480);
+    SetRect(&dst_rect, 0, 0, 640, 480);
+    hr = IDirectDrawSurface_Blt(ds2, &dst_rect, ds1, &src_rect, DDBLT_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    /* Depth -> color blit: Succeeds on Win7 + Radeon HD 5700, fails on WinXP + Radeon X1600 */
+
+    /* Depth blit inside a BeginScene / EndScene pair */
+    hr = IDirect3DDevice2_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to start a scene, hr %#x.\n", hr);
+    /* From the current depth stencil */
+    hr = IDirectDrawSurface_Blt(ds2, NULL, ds1, NULL, DDBLT_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    /* To the current depth stencil */
+    hr = IDirectDrawSurface_Blt(ds1, NULL, ds2, NULL, DDBLT_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    /* Between unbound surfaces */
+    hr = IDirectDrawSurface_Blt(ds3, NULL, ds2, NULL, DDBLT_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice2_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end a scene, hr %#x.\n", hr);
+
+    /* Avoid changing the depth stencil, it doesn't work properly on Windows.
+     * Instead use DDBLT_DEPTHFILL to clear the depth stencil. Unfortunately
+     * drivers disagree on the meaning of dwFillDepth. Only 0 seems to produce
+     * a reliable result(z = 0.0) */
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    fx.dwFillDepth = 0;
+    hr = IDirectDrawSurface_Blt(ds2, NULL, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear the source z buffer, hr %#x.\n", hr);
+
+    /* This clears the Z buffer with 1.0 */
+    hr = IDirect3DViewport2_Clear(viewport, 1, &d3drect, D3DCLEAR_ZBUFFER | D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear the color and z buffers, hr %#x.\n", hr);
+
+    SetRect(&dst_rect, 0, 0, 320, 240);
+    hr = IDirectDrawSurface_Blt(ds1, &dst_rect, ds2, NULL, DDBLT_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    IDirectDrawSurface_Release(ds3);
+    IDirectDrawSurface_Release(ds2);
+    IDirectDrawSurface_Release(ds1);
+
+    hr = IDirect3DDevice2_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to start a scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DVT_LVERTEX, quad1, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end a scene, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    for (i = 0; i < 4; ++i)
+    {
+        for (j = 0; j < 4; ++j)
+        {
+            unsigned int x = 80 * ((2 * j) + 1);
+            unsigned int y = 60 * ((2 * i) + 1);
+            color = get_surface_color(rt, x, y);
+            if (todo[i][j])
+                todo_wine ok(compare_color(color, expected_colors[i][j], 1),
+                        "Expected color 0x%08x at %u,%u, got 0x%08x.\n", expected_colors[i][j], x, y, color);
+            else
+                ok(compare_color(color, expected_colors[i][j], 1),
+                        "Expected color 0x%08x at %u,%u, got 0x%08x.\n", expected_colors[i][j], x, y, color);
+        }
+    }
+    IDirectDrawSurface_Release(rt);
+
+    hr = IDirect3DDevice2_DeleteViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to delete viewport from device, hr %#x.\n", hr);
+    IDirect3DMaterial2_Release(background);
+    IDirect3DViewport2_Release(viewport);
+    IDirect3D2_Release(d3d);
+    IDirect3DDevice2_Release(device);
+    IDirectDraw2_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     test_coop_level_create_device_window();
@@ -845,4 +1083,5 @@ START_TEST(ddraw2)
     test_coop_level_d3d_state();
     test_surface_interface_mismatch();
     test_coop_level_threaded();
+    test_depth_blit();
 }
