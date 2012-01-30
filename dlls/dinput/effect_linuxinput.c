@@ -29,6 +29,7 @@
 #  include <linux/input.h>
 #  undef SW_MAX
 #endif
+#include <limits.h>
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
@@ -518,7 +519,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_Start(
 
     event.type = EV_FF;
     event.code = This->effect.id;
-    event.value = dwIterations;
+    event.value = min( dwIterations, INT_MAX );
     if (write(*(This->fd), &event, sizeof(event)) == -1) {
 	FIXME("Unable to write event.  Assuming device disconnected.\n");
 	return DIERR_INPUTLOST;
