@@ -117,7 +117,7 @@ struct ACImpl {
 
     HANDLE timer;
     BYTE *local_buffer, *tmp_buffer;
-    long getbuf_last; /* <0 when using tmp_buffer */
+    LONG32 getbuf_last; /* <0 when using tmp_buffer */
 
     CRITICAL_SECTION lock;
 
