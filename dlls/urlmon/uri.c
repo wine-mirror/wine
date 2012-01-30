@@ -3301,7 +3301,7 @@ static BOOL canonicalize_scheme(const parse_data *data, Uri *uri, DWORD flags, B
             uri->scheme_start = pos;
 
             TRACE("(%p %p %x): Canonicalized scheme=%s, len=%d.\n", data, uri, flags,
-                    debugstr_wn(uri->canon_uri,  uri->scheme_len), data->scheme_len);
+                    debugstr_wn(uri->canon_uri+uri->scheme_start,  data->scheme_len), data->scheme_len);
         }
 
         /* This happens in both computation modes. */
