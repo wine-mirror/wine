@@ -25,6 +25,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -703,6 +704,11 @@ typedef struct {
     int* logical2visual;
 } StringAnalysis;
 
+typedef struct {
+    BOOL ascending;
+    WORD target;
+} FindGlyph_struct;
+
 static inline void *heap_alloc(SIZE_T size)
 {
     return HeapAlloc(GetProcessHeap(), 0, size);
@@ -879,6 +885,46 @@ static WORD get_char_script( LPCWSTR str, INT index, INT end, INT *consumed)
     } while (1);
 
     return SCRIPT_UNDEFINED;
+}
+
+static int compare_FindGlyph(const void *a, const void* b)
+{
+    const FindGlyph_struct *find = (FindGlyph_struct*)a;
+    const WORD *idx= (WORD*)b;
+    int rc = 0;
+
+    if ( find->target > *idx)
+        rc = 1;
+    else if (find->target < *idx)
+        rc = -1;
+
+    if (!find->ascending)
+        rc *= -1;
+    return rc;
+}
+
+int USP10_FindGlyphInLogClust(const WORD* pwLogClust, int cChars, WORD target)
+{
+    FindGlyph_struct fgs;
+    WORD *ptr;
+    INT k;
+
+    if (pwLogClust[0] < pwLogClust[cChars-1])
+        fgs.ascending = TRUE;
+    else
+        fgs.ascending = FALSE;
+
+    fgs.target = target;
+    ptr = bsearch(&fgs, pwLogClust, cChars, sizeof(WORD), compare_FindGlyph);
+
+    if (!ptr)
+        return -1;
+
+    for (k = (ptr - pwLogClust)-1; k >= 0 && pwLogClust[k] == target; k--)
+    ;
+    k++;
+
+    return k;
 }
 
 /***********************************************************************
@@ -1873,13 +1919,9 @@ error:
 
 static inline BOOL does_glyph_start_cluster(const SCRIPT_VISATTR *pva, const WORD *pwLogClust, int cChars, int glyph, int direction)
 {
-    int i;
-
     if (pva[glyph].fClusterStart)
         return TRUE;
-    for (i = 0; i < cChars; i++)
-        if (pwLogClust[i] == glyph) break;
-    if (i != cChars)
+    if (USP10_FindGlyphInLogClust(pwLogClust, cChars, glyph) >= 0)
         return TRUE;
 
     return FALSE;

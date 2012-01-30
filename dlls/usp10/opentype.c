@@ -438,9 +438,12 @@ void OpenType_GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGly
         int char_count = 0;
         int k;
 
-        for (k = 0; k < cChars; k++)
-            if (pwLogClust[k] == i)
+        k = USP10_FindGlyphInLogClust(pwLogClust, cChars, i);
+        if (k >= 0)
+        {
+            for (; k < cChars && pwLogClust[k] == i; k++)
                 char_count++;
+        }
 
         class = GDEF_get_glyph_class(psc->GDEF_Table, pwGlyphs[i]);
 
