@@ -124,16 +124,6 @@ static char *get_message_context( char **msgid )
     return context;
 }
 
-static int string_has_context( const string_t *str )
-{
-    char *id, *id_buffer, *context;
-
-    id_buffer = id = convert_msgid_ascii( str, 1 );
-    context = get_message_context( &id );
-    free( id_buffer );
-    return context != NULL;
-}
-
 static int control_has_title( const control_t *ctrl )
 {
     if (!ctrl->title) return 0;
@@ -817,6 +807,16 @@ static void add_po_menu( const resource_t *english, const resource_t *res )
     po_file_t po = get_po_file( res->res.men->lvc.language );
 
     add_po_menu_items( po, english_items, items, res->res.men->lvc.language );
+}
+
+static int string_has_context( const string_t *str )
+{
+    char *id, *id_buffer, *context;
+
+    id_buffer = id = convert_msgid_ascii( str, 1 );
+    context = get_message_context( &id );
+    free( id_buffer );
+    return context != NULL;
 }
 
 static void add_pot_accel( po_file_t po, const resource_t *res )
