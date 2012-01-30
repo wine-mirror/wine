@@ -403,6 +403,7 @@ static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData_linedef(EDITSTATE *es, HD
 		HFONT old_font = NULL;
 		HDC udc = dc;
 		SCRIPT_TABDEF tabdef;
+		HRESULT hr;
 
 		if (!udc)
 			udc = GetDC(es->hwndSelf);
@@ -414,7 +415,15 @@ static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData_linedef(EDITSTATE *es, HD
 		tabdef.pTabStops = es->tabs;
 		tabdef.iTabOrigin = 0;
 
-		ScriptStringAnalyse(udc, &es->text[index], line_def->net_length, (1.5*line_def->net_length+16), -1, SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB, -1, NULL, NULL, NULL, &tabdef, NULL, &line_def->ssa);
+		hr = ScriptStringAnalyse(udc, &es->text[index], line_def->net_length,
+                                         (1.5*line_def->net_length+16), -1,
+                                         SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB, -1,
+                                         NULL, NULL, NULL, &tabdef, NULL, &line_def->ssa);
+		if (FAILED(hr))
+		{
+			WARN("ScriptStringAnalyse failed (%x)\n",hr);
+			line_def->ssa = NULL;
+		}
 
 		if (es->font)
 			SelectObject(udc, old_font);
