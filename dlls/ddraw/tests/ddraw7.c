@@ -841,6 +841,7 @@ static void test_surface_interface_mismatch(void)
     IDirect3DDevice7 *device = NULL;
     DDSURFACEDESC2 surface_desc;
     DDPIXELFORMAT z_fmt;
+    ULONG refcount;
     HRESULT hr;
     D3DCOLOR color;
     HWND window;
@@ -900,7 +901,8 @@ static void test_surface_interface_mismatch(void)
     /* Using a different surface interface version still works */
     hr = IDirectDrawSurface3_AddAttachedSurface(surface3, (IDirectDrawSurface3 *)ds);
     ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x.\n", hr);
-    IDirectDrawSurface7_Release(ds);
+    refcount = IDirectDrawSurface7_Release(ds);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
     if (FAILED(hr))
         goto cleanup;
 
