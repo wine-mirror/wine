@@ -10587,7 +10587,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr ""
 
-#: notepad.rc:131 wordpad.rc:276
+#: notepad.rc:131 regedit.rc:320 wordpad.rc:276
 msgctxt "accelerator Find"
 msgid "F"
 msgstr ""
@@ -10607,7 +10607,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:135 wordpad.rc:289
+#: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
 msgstr ""
@@ -11511,16 +11511,6 @@ msgstr "İkiliyi Düzenle"
 #, fuzzy
 msgid "Edit Multi String"
 msgstr "Dizgeyi Düzenle"
-
-#: regedit.rc:320
-msgctxt "accelerator Find"
-msgid "^F"
-msgstr ""
-
-#: regedit.rc:321
-msgctxt "accelerator Print"
-msgid "^P"
-msgstr ""
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"

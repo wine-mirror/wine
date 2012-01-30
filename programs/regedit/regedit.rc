@@ -317,8 +317,8 @@ END
 
 IDC_REGEDIT ACCELERATORS
 {
-    "#msgctxt#accelerator Find#^F", ID_EDIT_FIND
-    "#msgctxt#accelerator Print#^P", ID_REGISTRY_PRINT
+    "#msgctxt#accelerator Find#F", ID_EDIT_FIND, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Print#P", ID_REGISTRY_PRINT, VIRTKEY, CONTROL
     VK_DELETE,	ID_EDIT_DELETE, VIRTKEY
     VK_F1,	ID_HELP_HELPTOPICS, VIRTKEY
     VK_F2,	ID_EDIT_RENAME, VIRTKEY

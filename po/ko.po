@@ -10248,7 +10248,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: notepad.rc:131 wordpad.rc:276
+#: notepad.rc:131 regedit.rc:320 wordpad.rc:276
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
@@ -10268,7 +10268,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:135 wordpad.rc:289
+#: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
 msgstr "P"
@@ -11117,16 +11117,6 @@ msgstr "이진 값 편집"
 #: regedit.rc:303
 msgid "Edit Multi String"
 msgstr "다중 문자열 편집"
-
-#: regedit.rc:320
-msgctxt "accelerator Find"
-msgid "^F"
-msgstr "^F"
-
-#: regedit.rc:321
-msgctxt "accelerator Print"
-msgid "^P"
-msgstr "^P"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
