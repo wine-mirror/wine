@@ -421,7 +421,7 @@ static void warp_check( SysMouseImpl* This, BOOL force )
 
     if (force || (This->need_warp && (now - This->last_warped > interval)))
     {
-        RECT rect;
+        RECT rect, new_rect;
         POINT mapped_center;
 
         This->last_warped = now;
@@ -442,7 +442,8 @@ static void warp_check( SysMouseImpl* This, BOOL force )
             rect.right = min( rect.right, rect.left + GetSystemMetrics( SM_CXVIRTUALSCREEN ) - 2 );
             rect.bottom = min( rect.bottom, rect.top + GetSystemMetrics( SM_CYVIRTUALSCREEN ) - 2 );
             TRACE("Clipping mouse to %s\n", wine_dbgstr_rect( &rect ));
-            This->clipped = ClipCursor( &rect );
+            ClipCursor( &rect );
+            This->clipped = GetClipCursor( &new_rect ) && EqualRect( &rect, &new_rect );
         }
     }
 }
