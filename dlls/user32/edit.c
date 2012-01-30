@@ -598,9 +598,13 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 			const SIZE *sz;
 			EDIT_InvalidateUniscribeData_linedef(current_line);
 			EDIT_UpdateUniscribeData_linedef(es, NULL, current_line);
-			sz = ScriptString_pSize(current_line->ssa);
-			/* Calculate line width */
-			current_line->width = sz->cx;
+			if (current_line->ssa)
+			{
+				sz = ScriptString_pSize(current_line->ssa);
+				/* Calculate line width */
+				current_line->width = sz->cx;
+			}
+			else current_line->width = es->char_width * current_line->net_length;
 		}
 		else current_line->width = 0;
 
@@ -644,18 +648,23 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 				EDIT_InvalidateUniscribeData_linedef(current_line);
 				EDIT_UpdateUniscribeData_linedef(es, NULL, current_line);
 
-				count = ScriptString_pcOutChars(current_line->ssa);
-				piDx = HeapAlloc(GetProcessHeap(),0,sizeof(INT) * (*count));
-				ScriptStringGetLogicalWidths(current_line->ssa,piDx);
+				if (current_line->ssa)
+				{
+					count = ScriptString_pcOutChars(current_line->ssa);
+					piDx = HeapAlloc(GetProcessHeap(),0,sizeof(INT) * (*count));
+					ScriptStringGetLogicalWidths(current_line->ssa,piDx);
 
-				prev = current_line->net_length-1;
-				do {
-					current_line->width -= piDx[prev];
-					prev--;
-				} while ( prev > 0 && current_line->width > fw);
-				if (prev<=0)
-					prev = 1;
-				HeapFree(GetProcessHeap(),0,piDx);
+					prev = current_line->net_length-1;
+					do {
+						current_line->width -= piDx[prev];
+						prev--;
+					} while ( prev > 0 && current_line->width > fw);
+					if (prev<=0)
+						prev = 1;
+					HeapFree(GetProcessHeap(),0,piDx);
+				}
+				else
+					prev = (fw / es->char_width);
 			}
 
 			/* If the first line we are calculating, wrapped before istart, we must
