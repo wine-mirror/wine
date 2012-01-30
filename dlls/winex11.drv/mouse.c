@@ -388,6 +388,11 @@ static BOOL grab_clipping_window( const RECT *clip, BOOL only_with_xinput )
 
     /* don't clip to 1x1 rectangle if we don't have XInput */
     if (clip->right - clip->left == 1 && clip->bottom - clip->top == 1) only_with_xinput = TRUE;
+    /* don't clip to fullscreen rectangle either (with 1-pixel offset to catch the dinput case) */
+    if (clip->left <= virtual_screen_rect.left + 1 || clip->right >= virtual_screen_rect.right - 1 ||
+        clip->top <= virtual_screen_rect.top + 1 || clip->bottom >= virtual_screen_rect.bottom - 1)
+        only_with_xinput = TRUE;
+
     if (only_with_xinput && data->xi2_state != xi_enabled)
     {
         WARN( "XInput2 not supported, refusing to clip to %s\n", wine_dbgstr_rect(clip) );
