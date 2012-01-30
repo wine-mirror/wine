@@ -256,7 +256,7 @@ void __thiscall locale_dtor(locale*);
 
 /* class _Lockit */
 typedef struct {
-    int locktype;
+    char empty_struct;
 } _Lockit;
 
 #define _LOCK_LOCALE 0

@@ -89,56 +89,21 @@ void CDECL mutex_mutex_dtor(mutex *m)
     mutex_dtor(m);
 }
 
-static CRITICAL_SECTION lockit_cs[_MAX_LOCK];
-
-/* ?_Lockit_ctor@_Lockit@std@@SAXH@Z */
-void __cdecl _Lockit_init(int locktype) {
-    InitializeCriticalSection(&lockit_cs[locktype]);
-    lockit_cs[locktype].DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": _Lockit critical section");
-}
-
-/* ?_Lockit_dtor@_Lockit@std@@SAXH@Z */
-void __cdecl _Lockit_free(int locktype)
-{
-    lockit_cs[locktype].DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&lockit_cs[locktype]);
-}
+static CRITICAL_SECTION lockit_cs;
 
 void init_lockit(void) {
-    int i;
-
-    for(i=0; i<_MAX_LOCK; i++)
-        _Lockit_init(i);
+    InitializeCriticalSection(&lockit_cs);
+    lockit_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": _Lockit critical section");
 }
 
 void free_lockit(void) {
-    int i;
-
-    for(i=0; i<_MAX_LOCK; i++)
-        _Lockit_free(i);
+    lockit_cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&lockit_cs);
 }
 
-/* ?_Lockit_ctor@_Lockit@std@@CAXPAV12@H@Z */
-/* ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@H@Z */
-void __cdecl _Lockit__Lockit_ctor_locktype(_Lockit *lockit, int locktype)
-{
-    lockit->locktype = locktype;
-    EnterCriticalSection(&lockit_cs[locktype]);
-}
-
-/* ?_Lockit_ctor@_Lockit@std@@CAXPAV12@@Z */
-/* ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@@Z */
-void __cdecl _Lockit__Lockit_ctor(_Lockit *lockit)
-{
-    _Lockit__Lockit_ctor_locktype(lockit, 0);
-}
-
-/* ??0_Lockit@std@@QAE@H@Z */
-/* ??0_Lockit@std@@QEAA@H@Z */
-DEFINE_THISCALL_WRAPPER(_Lockit_ctor_locktype, 8)
 _Lockit* __thiscall _Lockit_ctor_locktype(_Lockit *this, int locktype)
 {
-    _Lockit__Lockit_ctor_locktype(this, locktype);
+    EnterCriticalSection(&lockit_cs);
     return this;
 }
 
@@ -147,15 +112,7 @@ _Lockit* __thiscall _Lockit_ctor_locktype(_Lockit *this, int locktype)
 DEFINE_THISCALL_WRAPPER(_Lockit_ctor, 4)
 _Lockit* __thiscall _Lockit_ctor(_Lockit *this)
 {
-    _Lockit__Lockit_ctor_locktype(this, 0);
-    return this;
-}
-
-/* ?_Lockit_dtor@_Lockit@std@@CAXPAV12@@Z */
-/* ?_Lockit_dtor@_Lockit@std@@CAXPEAV12@@Z */
-void __cdecl _Lockit__Lockit_dtor(_Lockit *lockit)
-{
-    LeaveCriticalSection(&lockit_cs[lockit->locktype]);
+    return _Lockit_ctor_locktype(this, 0);
 }
 
 /* ??1_Lockit@std@@QAE@XZ */
@@ -163,7 +120,7 @@ void __cdecl _Lockit__Lockit_dtor(_Lockit *lockit)
 DEFINE_THISCALL_WRAPPER(_Lockit_dtor, 4)
 void __thiscall _Lockit_dtor(_Lockit *this)
 {
-    _Lockit__Lockit_dtor(this);
+    LeaveCriticalSection(&lockit_cs);
 }
 
 /* wctype */
