@@ -126,17 +126,17 @@ END
 
 ID_ACCEL ACCELERATORS
 {
-    "#msgctxt#accelerator Select All#^A", CMD_SELECT_ALL
-    "#msgctxt#accelerator Copy#^C", CMD_COPY
-    "#msgctxt#accelerator Find#^F", CMD_SEARCH
-    "#msgctxt#accelerator Replace#^H", CMD_REPLACE
-    "#msgctxt#accelerator New#^N", CMD_NEW
-    "#msgctxt#accelerator Open#^O", CMD_OPEN
-    "#msgctxt#accelerator Print#^P", CMD_PRINT
-    "#msgctxt#accelerator Save#^S", CMD_SAVE
-    "#msgctxt#accelerator Paste#^V", CMD_PASTE
-    "#msgctxt#accelerator Cut#^X", CMD_CUT
-    "#msgctxt#accelerator Undo#^Z", CMD_UNDO
+    "#msgctxt#accelerator Select All#A", CMD_SELECT_ALL, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Copy#C", CMD_COPY, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Find#F", CMD_SEARCH, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Replace#H", CMD_REPLACE, VIRTKEY, CONTROL
+    "#msgctxt#accelerator New#N", CMD_NEW, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Open#O", CMD_OPEN, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Print#P", CMD_PRINT, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Save#S", CMD_SAVE, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Paste#V", CMD_PASTE, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Cut#X", CMD_CUT, VIRTKEY, CONTROL
+    "#msgctxt#accelerator Undo#Z", CMD_UNDO, VIRTKEY, CONTROL
     VK_BACK, CMD_UNDO, VIRTKEY, ALT
     VK_F1, CMD_HELP_CONTENTS, VIRTKEY
     VK_F3, CMD_SEARCH_NEXT, VIRTKEY
