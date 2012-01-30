@@ -1772,19 +1772,12 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
     hr = ScriptItemize(pString, cString, num_items, &sControl, &sState, analysis->pItem,
                        &analysis->numItems);
 
-    while (hr == E_OUTOFMEMORY)
+    if FAILED(hr)
     {
-        SCRIPT_ITEM *tmp;
-
-        num_items *= 2;
-        if (!(tmp = heap_realloc_zero(analysis->pItem, num_items * sizeof(SCRIPT_ITEM) + 1)))
-            goto error;
-
-        analysis->pItem = tmp;
-        hr = ScriptItemize(pString, cString, num_items, psControl, psState, analysis->pItem,
-                           &analysis->numItems);
+        if (hr == E_OUTOFMEMORY)
+            hr = E_INVALIDARG;
+        goto error;
     }
-    if (hr != S_OK) goto error;
 
     /* set back to out of memory for default goto error behaviour */
     hr = E_OUTOFMEMORY;
