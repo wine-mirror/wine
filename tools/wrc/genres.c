@@ -282,6 +282,7 @@ static int parse_accel_string( const string_t *key, int flags )
 
     if(key->type == str_char)
     {
+        if (key->str.cstr[0] == '#') return 0;  /* ignore message contexts */
 	if((flags & WRC_AF_VIRTKEY) &&
            !((key->str.cstr[0] >= 'A' && key->str.cstr[0] <= 'Z') ||
              (key->str.cstr[0] >= '0' && key->str.cstr[0] <= '9')))
@@ -309,6 +310,7 @@ static int parse_accel_string( const string_t *key, int flags )
     }
     else
     {
+        if (key->str.wstr[0] == '#') return 0;  /* ignore message contexts */
 	if((flags & WRC_AF_VIRTKEY) &&
            !((key->str.wstr[0] >= 'A' && key->str.wstr[0] <= 'Z') ||
              (key->str.wstr[0] >= '0' && key->str.wstr[0] <= '9')))
