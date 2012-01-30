@@ -72,7 +72,7 @@ msgstr "Informacje o wsparciu"
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
 #: taskmgr.rc:521 winecfg.rc:205 winecfg.rc:215 wineconsole.rc:131
-#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
+#: winefile.rc:130 winefile.rc:153 winefile.rc:183 winemine.rc:68
 #: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
 #: wordpad.rc:246
 msgid "OK"
@@ -88,7 +88,7 @@ msgstr ""
 msgid "Publisher:"
 msgstr "Wydawca:"
 
-#: appwiz.rc:78 winefile.rc:172
+#: appwiz.rc:78 winefile.rc:168
 msgid "Version:"
 msgstr "&Wersja:"
 
@@ -156,8 +156,8 @@ msgstr "&Zainstaluj"
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
 #: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
 #: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:206
-#: winecfg.rc:216 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
-#: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: winecfg.rc:216 wineconsole.rc:132 winefile.rc:131 winefile.rc:154
+#: winefile.rc:184 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
 #: wordpad.rc:247
 msgid "Cancel"
 msgstr "Anuluj"
@@ -190,7 +190,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nieokreślone"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:110
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:106
 msgid "Name"
 msgstr "Nazwa"
 
@@ -291,7 +291,7 @@ msgstr "nie skompresowany"
 msgid "Canceling..."
 msgstr "Trwa anulowanie..."
 
-#: comctl32.rc:49 winefile.rc:163
+#: comctl32.rc:49 winefile.rc:159
 msgid "Properties for %s"
 msgstr "Właściwości: %s"
 
@@ -337,7 +337,7 @@ msgstr "Z&resetuj"
 #: comdlg32.rc:490 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
 #: clock.rc:41 notepad.rc:57 notepad.rc:116 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
-#: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
+#: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:81
 #: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "Pomo&c"
@@ -409,7 +409,7 @@ msgstr "Wyświetl pliki &typu:"
 msgid "Dri&ves:"
 msgstr "&Dyski:"
 
-#: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:179
+#: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:175
 msgid "&Read Only"
 msgstr "Tylko do &odczytu"
 
@@ -661,7 +661,7 @@ msgstr "Drukuj do pli&ku"
 msgid "&Properties"
 msgstr "Właś&ciwości"
 
-#: comdlg32.rc:360 comdlg32.rc:398 msacm32.rc:31 winefile.rc:144
+#: comdlg32.rc:360 comdlg32.rc:398 msacm32.rc:31 winefile.rc:140
 msgid "&Name:"
 msgstr "&Nazwa:"
 
@@ -2258,7 +2258,7 @@ msgid "Certificate intended purposes"
 msgstr "Zamierzone cele certyfikatu"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
-#: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49
+#: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
 #: wordpad.rc:66
 msgid "&View"
 msgstr "&Widok"
@@ -3196,7 +3196,7 @@ msgstr "&Plik"
 msgid "&New"
 msgstr "&Nowy"
 
-#: ieframe.rc:29 winefile.rc:76
+#: ieframe.rc:29 winefile.rc:72
 msgid "&Window"
 msgstr "O&kno"
 
@@ -3372,7 +3372,7 @@ msgstr ""
 msgid "Delete"
 msgstr "Usuń"
 
-#: inetcpl.rc:87 winefile.rc:118
+#: inetcpl.rc:87 winefile.rc:114
 msgid "Security"
 msgstr "Prawa dostępu"
 
@@ -7636,7 +7636,7 @@ msgstr "&Lista"
 msgid "&Details"
 msgstr "&Szczegóły"
 
-#: shell32.rc:48 winefile.rc:81
+#: shell32.rc:48 winefile.rc:77
 msgid "Arrange &Icons"
 msgstr "&Rozmieść ikony"
 
@@ -7710,7 +7710,7 @@ msgid "&Rename"
 msgstr "Z&mień nazwę"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
-#: winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
+#: winefile.rc:37 winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "Za&kończ"
 
@@ -7774,11 +7774,11 @@ msgid "&Open:"
 msgstr "&Otwórz:"
 
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
-#: winefile.rc:136
+#: winefile.rc:132
 msgid "&Browse..."
 msgstr "&Przeglądaj"
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:111
+#: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
 msgstr "Rozmiar"
 
@@ -7790,7 +7790,7 @@ msgstr "Typ"
 msgid "Modified"
 msgstr "Zmodyfikowany"
 
-#: shell32.rc:138 winefile.rc:178 winefile.rc:117
+#: shell32.rc:138 winefile.rc:174 winefile.rc:113
 msgid "Attributes"
 msgstr "Atrybuty"
 
@@ -7818,7 +7818,7 @@ msgstr "Oryginalne położenie"
 msgid "Date deleted"
 msgstr "Data usunięcia"
 
-#: shell32.rc:153 winecfg.rc:92 winefile.rc:103
+#: shell32.rc:153 winecfg.rc:92 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Pulpit"
@@ -7940,7 +7940,7 @@ msgstr "Program Files (x86)"
 msgid "Contacts"
 msgstr "Kontakty"
 
-#: shell32.rc:222 winefile.rc:116
+#: shell32.rc:222 winefile.rc:112
 msgid "Links"
 msgstr "Dowiązania"
 
@@ -8174,7 +8174,7 @@ msgstr "Licencja Wine"
 msgid "Trash"
 msgstr "Kosz"
 
-#: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:84 winefile.rc:100
+#: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:84 winefile.rc:96
 msgid "Error"
 msgstr "Błąd"
 
@@ -9246,7 +9246,7 @@ msgstr "Ana&logowy"
 msgid "Digi&tal"
 msgstr "C&yfrowy"
 
-#: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:64 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
 msgid "&Font..."
 msgstr "&Czcionka..."
 
@@ -10289,7 +10289,7 @@ msgstr "Z&najdź następny\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Za&mień...\tCtrl+H"
 
-#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:82
 msgid "&Contents\tF1"
 msgstr "&Tematy Pomocy\tF1"
 
@@ -10524,15 +10524,15 @@ msgstr "Tryb &eksperta"
 msgid "&Hidden component categories"
 msgstr "&Ukryte kategorie komponentów"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
+#: oleview.rc:64 oleview.rc:86 winefile.rc:62 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
 msgstr "Pasek &narzędzi"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:68
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64
 msgid "&Status Bar"
 msgstr "Pasek &stanu"
 
-#: oleview.rc:67 regedit.rc:69 winefile.rc:82
+#: oleview.rc:67 regedit.rc:69 winefile.rc:78
 msgid "&Refresh\tF5"
 msgstr "&Odśwież\tF5"
 
@@ -10822,7 +10822,7 @@ msgstr "Urucho&m..."
 msgid "E&xit Windows"
 msgstr "&Wyjdź z Windows"
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:59 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Opcje"
 
@@ -10834,7 +10834,7 @@ msgstr "&Autorozmieszczanie"
 msgid "&Minimize on run"
 msgstr "&Minimalizuj podczas użytkowania"
 
-#: progman.rc:44 winefile.rc:73
+#: progman.rc:44 winefile.rc:69
 msgid "&Save settings on exit"
 msgstr "&Zapisz ustawienia przy zakończeniu"
 
@@ -11111,7 +11111,7 @@ msgstr "Zn&ajdź następny\tF3"
 msgid "Status &Bar"
 msgstr "&Pasek stanu"
 
-#: regedit.rc:67 winefile.rc:50
+#: regedit.rc:67 winefile.rc:46
 msgid "Sp&lit"
 msgstr "Po&dziel"
 
@@ -11629,7 +11629,7 @@ msgstr "&Osobny wykres dla każdego procesora"
 msgid "&Show Kernel Times"
 msgstr "&Pokazuj czasy jądra"
 
-#: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:79
+#: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:75
 msgid "Tile &Horizontally"
 msgstr "&Sąsiadująco w poziomie"
 
@@ -13311,215 +13311,206 @@ msgstr "Urucho&m..."
 msgid "Cr&eate Directory..."
 msgstr "U&twórz katalog..."
 
-#: winefile.rc:38
-msgid "E&xit\tAlt+X"
-msgstr "&Wyjście\tAlt+X"
-
-#: winefile.rc:44
+#: winefile.rc:40
 msgid "&Disk"
 msgstr "&Dysk"
 
-#: winefile.rc:45
+#: winefile.rc:41
 msgid "Connect &Network Drive..."
 msgstr "Podłącz &dysk sieciowy..."
 
-#: winefile.rc:46
+#: winefile.rc:42
 msgid "&Disconnect Network Drive"
 msgstr "&Odłącz dysk sieciowy..."
 
-#: winefile.rc:52
+#: winefile.rc:48
 msgid "&Name"
 msgstr "Na&zwa"
 
-#: winefile.rc:53
+#: winefile.rc:49
 msgid "&All File Details"
 msgstr "Wszystki&e informacje o pliku"
 
-#: winefile.rc:55
+#: winefile.rc:51
 msgid "&Sort by Name"
 msgstr "Sortuj według &nazw"
 
-#: winefile.rc:56
+#: winefile.rc:52
 msgid "Sort &by Type"
 msgstr "Sortuj według &typów"
 
-#: winefile.rc:57
+#: winefile.rc:53
 msgid "Sort by Si&ze"
 msgstr "Sortuj według &rozmiarów"
 
-#: winefile.rc:58
+#: winefile.rc:54
 msgid "Sort by &Date"
 msgstr "Sortuj według &dat"
 
-#: winefile.rc:60
+#: winefile.rc:56
 msgid "Filter by&..."
 msgstr "Filtruj widok &..."
 
-#: winefile.rc:67
+#: winefile.rc:63
 msgid "&Drivebar"
 msgstr "Pasek &dysków"
 
-#: winefile.rc:70
+#: winefile.rc:66
 msgid "F&ull Screen\tCtrl+Shift+S"
 msgstr "Pełny &ekran\tCtrl+Shift+S"
 
-#: winefile.rc:77
+#: winefile.rc:73
 msgid "New &Window"
 msgstr "&Nowe okno"
 
-#: winefile.rc:78
+#: winefile.rc:74
 msgid "Cascading\tCtrl+F5"
 msgstr "&Kaskada\tCtrl+F5"
 
-#: winefile.rc:80
+#: winefile.rc:76
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "&Sąsiadująco w poziomie\tCtrl+F4"
 
-#: winefile.rc:87
+#: winefile.rc:83
 msgid "&About Wine File Manager"
 msgstr "Menadżer plików Wine - i&nformacje"
 
-#: winefile.rc:128
+#: winefile.rc:124
 msgid "Select destination"
 msgstr "Wybór celu"
 
-#: winefile.rc:141
+#: winefile.rc:137
 msgid "By File Type"
 msgstr "Według typu pliku"
 
-#: winefile.rc:146
+#: winefile.rc:142
 msgid "File type"
 msgstr "Typ pliku"
 
-#: winefile.rc:147
+#: winefile.rc:143
 msgid "&Directories"
 msgstr "&Katalogi"
 
-#: winefile.rc:149
+#: winefile.rc:145
 msgid "&Programs"
 msgstr "&Programy"
 
-#: winefile.rc:151
+#: winefile.rc:147
 msgid "Docu&ments"
 msgstr "Doku&menty"
 
-#: winefile.rc:153
+#: winefile.rc:149
 msgid "&Other files"
 msgstr "&Inne pliki"
 
-#: winefile.rc:155
+#: winefile.rc:151
 msgid "Show Hidden/&System Files"
 msgstr "Pokaż pliki ukryte i &systemowe"
 
-#: winefile.rc:166
+#: winefile.rc:162
 msgid "&File Name:"
 msgstr "&Nazwa pliku:"
 
-#: winefile.rc:168
+#: winefile.rc:164
 msgid "Full &Path:"
 msgstr "&Pełna ścieżka:"
 
-#: winefile.rc:170
+#: winefile.rc:166
 msgid "Last Change:"
 msgstr "&Ostatnio modyfikowany:"
 
-#: winefile.rc:174
+#: winefile.rc:170
 msgid "Cop&yright:"
 msgstr "Prawa a&utorskie:"
 
-#: winefile.rc:176
+#: winefile.rc:172
 msgid "Size:"
 msgstr "Wie&lkość:"
 
-#: winefile.rc:180
+#: winefile.rc:176
 msgid "H&idden"
 msgstr "&Ukryty"
 
-#: winefile.rc:181
+#: winefile.rc:177
 msgid "&Archive"
 msgstr "&Archiwalny"
 
-#: winefile.rc:182
+#: winefile.rc:178
 msgid "&System"
 msgstr "&Systemowy"
 
-#: winefile.rc:183
+#: winefile.rc:179
 msgid "&Compressed"
 msgstr "S&kompresowany"
 
-#: winefile.rc:184
+#: winefile.rc:180
 msgid "Version information"
 msgstr "Informacja o wersji"
 
-#: winefile.rc:201
-msgctxt "accelerator Exit"
-msgid "X"
-msgstr "X"
-
-#: winefile.rc:202
+#: winefile.rc:197
 msgctxt "accelerator Fullscreen"
-msgid "^S"
-msgstr "^S"
+msgid "S"
+msgstr "S"
 
-#: winefile.rc:93
+#: winefile.rc:89
 msgid "Applying font settings"
 msgstr "Wprowadzanie ustawień czcionki"
 
-#: winefile.rc:94
+#: winefile.rc:90
 msgid "Error while selecting new font."
 msgstr "Błąd przy wybieraniu czcionki"
 
-#: winefile.rc:99
+#: winefile.rc:95
 msgid "Wine File Manager"
 msgstr "Menadżer plików Wine"
 
-#: winefile.rc:101
+#: winefile.rc:97
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:102
+#: winefile.rc:98
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:104
+#: winefile.rc:100
 msgid "Shell"
 msgstr "Pulpit"
 
-#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
+#: winefile.rc:101 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
 msgstr "Jeszcze nie zaimplementowane"
 
-#: winefile.rc:112
+#: winefile.rc:108
 msgid "CDate"
 msgstr "CDate"
 
-#: winefile.rc:113
+#: winefile.rc:109
 msgid "ADate"
 msgstr "ADate"
 
-#: winefile.rc:114
+#: winefile.rc:110
 msgid "MDate"
 msgstr "MDate"
 
-#: winefile.rc:115
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr "Indeks/inode"
 
-#: winefile.rc:120
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr "%1 z %2 wolnych"
 
-#: winefile.rc:121
+#: winefile.rc:117
 msgctxt "unit kilobyte"
 msgid "kB"
 msgstr "kB"
 
-#: winefile.rc:122
+#: winefile.rc:118
 msgctxt "unit megabyte"
 msgid "MB"
 msgstr "MB"
 
-#: winefile.rc:123
+#: winefile.rc:119
 msgctxt "unit gigabyte"
 msgid "GB"
 msgstr "GB"

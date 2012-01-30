@@ -34,11 +34,7 @@ IDM_WINEFILE MENU
         MENUITEM SEPARATOR
         MENUITEM "Cr&eate Directory...",        111
         MENUITEM SEPARATOR
-#ifndef _NO_EXTENSIONS
-        MENUITEM "E&xit\tAlt+X",                ID_FILE_EXIT
-#else
         MENUITEM "E&xit",                       ID_FILE_EXIT
-#endif
     }
 
     POPUP "&Disk"  {
@@ -198,8 +194,7 @@ IDA_WINEFILE ACCELERATORS
 	VK_RETURN, ID_ACTIVATE, VIRTKEY
 	VK_RETURN, ID_EDIT_PROPERTIES, VIRTKEY, ALT
 #ifndef _NO_EXTENSIONS
-	"#msgctxt#accelerator Exit#X", ID_FILE_EXIT, ALT
-	"#msgctxt#accelerator Fullscreen#^S", ID_VIEW_FULLSCREEN, SHIFT
+	"#msgctxt#accelerator Fullscreen#S", ID_VIEW_FULLSCREEN, VIRTKEY, SHIFT, CONTROL
 	VK_ADD, ID_PREFERRED_SIZES, VIRTKEY, CONTROL
 #endif
 }

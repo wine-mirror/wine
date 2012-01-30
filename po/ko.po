@@ -67,7 +67,7 @@ msgstr "지원 정보"
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
 #: taskmgr.rc:521 winecfg.rc:205 winecfg.rc:215 wineconsole.rc:131
-#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
+#: winefile.rc:130 winefile.rc:153 winefile.rc:183 winemine.rc:68
 #: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
 #: wordpad.rc:246
 msgid "OK"
@@ -81,7 +81,7 @@ msgstr "이 정보는 %s: 에서 기술 지원을 받기 위해 사용됩니다"
 msgid "Publisher:"
 msgstr "제작사:"
 
-#: appwiz.rc:78 winefile.rc:172
+#: appwiz.rc:78 winefile.rc:168
 msgid "Version:"
 msgstr "버젼:"
 
@@ -149,8 +149,8 @@ msgstr "설치(&I)"
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
 #: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
 #: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:206
-#: winecfg.rc:216 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
-#: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: winecfg.rc:216 wineconsole.rc:132 winefile.rc:131 winefile.rc:154
+#: winefile.rc:184 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
 #: wordpad.rc:247
 msgid "Cancel"
 msgstr "취소"
@@ -183,7 +183,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "지정되지 않음"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:110
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:106
 msgid "Name"
 msgstr "이름"
 
@@ -284,7 +284,7 @@ msgstr "압축안됨"
 msgid "Canceling..."
 msgstr "취소하는 중.."
 
-#: comctl32.rc:49 winefile.rc:163
+#: comctl32.rc:49 winefile.rc:159
 msgid "Properties for %s"
 msgstr "%s 속성"
 
@@ -330,7 +330,7 @@ msgstr "재설정(&E)"
 #: comdlg32.rc:490 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
 #: clock.rc:41 notepad.rc:57 notepad.rc:116 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
-#: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
+#: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:81
 #: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "도움말(&H)"
@@ -402,7 +402,7 @@ msgstr "파일 형식 목록(&T):"
 msgid "Dri&ves:"
 msgstr "드라이브(&V):"
 
-#: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:179
+#: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:175
 msgid "&Read Only"
 msgstr "읽기 전용(&R)"
 
@@ -654,7 +654,7 @@ msgstr "파일로 인쇄(&L)"
 msgid "&Properties"
 msgstr "등록 정보(&P)"
 
-#: comdlg32.rc:360 comdlg32.rc:398 msacm32.rc:31 winefile.rc:144
+#: comdlg32.rc:360 comdlg32.rc:398 msacm32.rc:31 winefile.rc:140
 msgid "&Name:"
 msgstr "이름(&N):"
 
@@ -2246,7 +2246,7 @@ msgid "Certificate intended purposes"
 msgstr "인증서 지정 용도"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
-#: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49
+#: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
 #: wordpad.rc:66
 msgid "&View"
 msgstr "보기(&V)"
@@ -3170,7 +3170,7 @@ msgstr "파일(&F)"
 msgid "&New"
 msgstr "새로 만들기(&N)"
 
-#: ieframe.rc:29 winefile.rc:76
+#: ieframe.rc:29 winefile.rc:72
 msgid "&Window"
 msgstr "창(&W)"
 
@@ -3345,7 +3345,7 @@ msgstr ""
 msgid "Delete"
 msgstr "지우기"
 
-#: inetcpl.rc:87 winefile.rc:118
+#: inetcpl.rc:87 winefile.rc:114
 msgid "Security"
 msgstr "보안"
 
@@ -7599,7 +7599,7 @@ msgstr "목록(&L)"
 msgid "&Details"
 msgstr "자세히(&D)"
 
-#: shell32.rc:48 winefile.rc:81
+#: shell32.rc:48 winefile.rc:77
 msgid "Arrange &Icons"
 msgstr "아이콘 정렬(&I)"
 
@@ -7673,7 +7673,7 @@ msgid "&Rename"
 msgstr "이름 바꾸기(&R)"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
-#: winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
+#: winefile.rc:37 winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "끝내기(&X)"
 
@@ -7737,11 +7737,11 @@ msgid "&Open:"
 msgstr "열기(&O):"
 
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
-#: winefile.rc:136
+#: winefile.rc:132
 msgid "&Browse..."
 msgstr "찾기(&B)"
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:111
+#: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
 msgstr "크기"
 
@@ -7753,7 +7753,7 @@ msgstr "종류"
 msgid "Modified"
 msgstr "수정날짜"
 
-#: shell32.rc:138 winefile.rc:178 winefile.rc:117
+#: shell32.rc:138 winefile.rc:174 winefile.rc:113
 msgid "Attributes"
 msgstr "속성"
 
@@ -7781,7 +7781,7 @@ msgstr "원래 위치"
 msgid "Date deleted"
 msgstr "지워진 날짜"
 
-#: shell32.rc:153 winecfg.rc:92 winefile.rc:103
+#: shell32.rc:153 winecfg.rc:92 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "바탕화면"
@@ -7903,7 +7903,7 @@ msgstr "Program Files (x86)"
 msgid "Contacts"
 msgstr "연락처"
 
-#: shell32.rc:222 winefile.rc:116
+#: shell32.rc:222 winefile.rc:112
 msgid "Links"
 msgstr "링크"
 
@@ -8127,7 +8127,7 @@ msgstr "Wine 라이센스"
 msgid "Trash"
 msgstr "휴지통"
 
-#: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:84 winefile.rc:100
+#: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:84 winefile.rc:96
 msgid "Error"
 msgstr "오류"
 
@@ -9170,7 +9170,7 @@ msgstr "아날로그(&L)"
 msgid "Digi&tal"
 msgstr "디지털(&T)"
 
-#: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:64 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
 msgid "&Font..."
 msgstr "글꼴(&F)..."
 
@@ -10202,7 +10202,7 @@ msgstr "다음 찾기(&N)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "바꾸기(&R)...\tCtrl+H"
 
-#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:82
 msgid "&Contents\tF1"
 msgstr "목차(&C)"
 
@@ -10437,15 +10437,15 @@ msgstr "전문가 모드(&E)"
 msgid "&Hidden component categories"
 msgstr "컴포넌트 분류 숨기기(&H)"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
+#: oleview.rc:64 oleview.rc:86 winefile.rc:62 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
 msgstr "도구바(&T)"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:68
+#: oleview.rc:65 oleview.rc:87 winefile.rc:64
 msgid "&Status Bar"
 msgstr "상태바(&S)"
 
-#: oleview.rc:67 regedit.rc:69 winefile.rc:82
+#: oleview.rc:67 regedit.rc:69 winefile.rc:78
 msgid "&Refresh\tF5"
 msgstr "새로 고침(&R)\tF5"
 
@@ -10734,7 +10734,7 @@ msgstr "실행(&E)..."
 msgid "E&xit Windows"
 msgstr "창 종료(&X)"
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:59 winhlp32.rc:44
 msgid "&Options"
 msgstr "옵션(&O)"
 
@@ -10746,7 +10746,7 @@ msgstr "자동 정렬(&A)"
 msgid "&Minimize on run"
 msgstr "실행시 최소화(&M)"
 
-#: progman.rc:44 winefile.rc:73
+#: progman.rc:44 winefile.rc:69
 msgid "&Save settings on exit"
 msgstr "나갈때 설정 저장(&S)"
 
@@ -11022,7 +11022,7 @@ msgstr "다음 찾기(&x)\tF3"
 msgid "Status &Bar"
 msgstr "상태 표기줄(&B)"
 
-#: regedit.rc:67 winefile.rc:50
+#: regedit.rc:67 winefile.rc:46
 msgid "Sp&lit"
 msgstr "나누기(&L)"
 
@@ -11526,7 +11526,7 @@ msgstr "각각의 CPU마마다 하나의 그래프 보여주기(&P)"
 msgid "&Show Kernel Times"
 msgstr "커널 시간 보이기(&S)"
 
-#: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:79
+#: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:75
 msgid "Tile &Horizontally"
 msgstr "가로 바둑판식 정렬(&H)"
 
@@ -13202,215 +13202,206 @@ msgstr "실행(&R)..."
 msgid "Cr&eate Directory..."
 msgstr "디렉토리 만들기(&E)..."
 
-#: winefile.rc:38
-msgid "E&xit\tAlt+X"
-msgstr "나가기(&X)\tAlt+X"
-
-#: winefile.rc:44
+#: winefile.rc:40
 msgid "&Disk"
 msgstr "디스크(&D)"
 
-#: winefile.rc:45
+#: winefile.rc:41
 msgid "Connect &Network Drive..."
 msgstr "네트워크 드라이브 연결(&N)..."
 
-#: winefile.rc:46
+#: winefile.rc:42
 msgid "&Disconnect Network Drive"
 msgstr "네트워크 드라이브 연결 끊기(&D)"
 
-#: winefile.rc:52
+#: winefile.rc:48
 msgid "&Name"
 msgstr "이름(&N)"
 
-#: winefile.rc:53
+#: winefile.rc:49
 msgid "&All File Details"
 msgstr "모든 파일 설명(&A)"
 
-#: winefile.rc:55
+#: winefile.rc:51
 msgid "&Sort by Name"
 msgstr "이름으로 정렬(&S)"
 
-#: winefile.rc:56
+#: winefile.rc:52
 msgid "Sort &by Type"
 msgstr "타입으로 정렬(&b)"
 
-#: winefile.rc:57
+#: winefile.rc:53
 msgid "Sort by Si&ze"
 msgstr "크기로 정렬(&z)"
 
-#: winefile.rc:58
+#: winefile.rc:54
 msgid "Sort by &Date"
 msgstr "날짜로 정렬(&D)"
 
-#: winefile.rc:60
+#: winefile.rc:56
 msgid "Filter by&..."
 msgstr "&...로 걸려내기"
 
-#: winefile.rc:67
+#: winefile.rc:63
 msgid "&Drivebar"
 msgstr "드라이브 바(&D)"
 
-#: winefile.rc:70
+#: winefile.rc:66
 msgid "F&ull Screen\tCtrl+Shift+S"
 msgstr "전체 화면(&u)\tCtrl+Shift+S"
 
-#: winefile.rc:77
+#: winefile.rc:73
 msgid "New &Window"
 msgstr "새 창(&W)"
 
-#: winefile.rc:78
+#: winefile.rc:74
 msgid "Cascading\tCtrl+F5"
 msgstr "정렬\tCtrl+F5"
 
-#: winefile.rc:80
+#: winefile.rc:76
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "세로 바둑판식 정렬(&V)\tCtrl+F4"
 
-#: winefile.rc:87
+#: winefile.rc:83
 msgid "&About Wine File Manager"
 msgstr "Wine 파일 관리자 정보(&A)"
 
-#: winefile.rc:128
+#: winefile.rc:124
 msgid "Select destination"
 msgstr "목적지 선택"
 
-#: winefile.rc:141
+#: winefile.rc:137
 msgid "By File Type"
 msgstr "파일 타입으로"
 
-#: winefile.rc:146
+#: winefile.rc:142
 msgid "File type"
 msgstr "파일 타입"
 
-#: winefile.rc:147
+#: winefile.rc:143
 msgid "&Directories"
 msgstr "디렉토리(&D)"
 
-#: winefile.rc:149
+#: winefile.rc:145
 msgid "&Programs"
 msgstr "프로그램(&P)"
 
-#: winefile.rc:151
+#: winefile.rc:147
 msgid "Docu&ments"
 msgstr "문서파일(&M)"
 
-#: winefile.rc:153
+#: winefile.rc:149
 msgid "&Other files"
 msgstr "다른 파일(&O)"
 
-#: winefile.rc:155
+#: winefile.rc:151
 msgid "Show Hidden/&System Files"
 msgstr "숨김/시스템 파일 보여주기(&S)"
 
-#: winefile.rc:166
+#: winefile.rc:162
 msgid "&File Name:"
 msgstr "파일 이름(&F):"
 
-#: winefile.rc:168
+#: winefile.rc:164
 msgid "Full &Path:"
 msgstr "완전한 경로(&P):"
 
-#: winefile.rc:170
+#: winefile.rc:166
 msgid "Last Change:"
 msgstr "마지막 변화:"
 
-#: winefile.rc:174
+#: winefile.rc:170
 msgid "Cop&yright:"
 msgstr "저작권(&Y):"
 
-#: winefile.rc:176
+#: winefile.rc:172
 msgid "Size:"
 msgstr "크기:"
 
-#: winefile.rc:180
+#: winefile.rc:176
 msgid "H&idden"
 msgstr "숨김(&I)"
 
-#: winefile.rc:181
+#: winefile.rc:177
 msgid "&Archive"
 msgstr "아카이브(&A)"
 
-#: winefile.rc:182
+#: winefile.rc:178
 msgid "&System"
 msgstr "시스템(&S)"
 
-#: winefile.rc:183
+#: winefile.rc:179
 msgid "&Compressed"
 msgstr "압축(&C)"
 
-#: winefile.rc:184
+#: winefile.rc:180
 msgid "Version information"
 msgstr "버젼 정보"
 
-#: winefile.rc:201
-msgctxt "accelerator Exit"
-msgid "X"
-msgstr "X"
-
-#: winefile.rc:202
+#: winefile.rc:197
 msgctxt "accelerator Fullscreen"
-msgid "^S"
-msgstr "^S"
+msgid "S"
+msgstr "S"
 
-#: winefile.rc:93
+#: winefile.rc:89
 msgid "Applying font settings"
 msgstr "글꼴 설정 적용"
 
-#: winefile.rc:94
+#: winefile.rc:90
 msgid "Error while selecting new font."
 msgstr "새 글꼴 선택 오류."
 
-#: winefile.rc:99
+#: winefile.rc:95
 msgid "Wine File Manager"
 msgstr "Wine 파일 관리자"
 
-#: winefile.rc:101
+#: winefile.rc:97
 msgid "root fs"
 msgstr "루트 파일시스템"
 
-#: winefile.rc:102
+#: winefile.rc:98
 msgid "unixfs"
 msgstr "유닉스 파일시스템"
 
-#: winefile.rc:104
+#: winefile.rc:100
 msgid "Shell"
 msgstr "셀"
 
-#: winefile.rc:105 winhlp32.rc:107 winhlp32.rc:82
+#: winefile.rc:101 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
 msgstr "아직 구현안됨"
 
-#: winefile.rc:112
+#: winefile.rc:108
 msgid "CDate"
 msgstr "시(CDate)"
 
-#: winefile.rc:113
+#: winefile.rc:109
 msgid "ADate"
 msgstr "초(ADate)"
 
-#: winefile.rc:114
+#: winefile.rc:110
 msgid "MDate"
 msgstr "분(MDate)"
 
-#: winefile.rc:115
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr "인덱스/아이노드"
 
-#: winefile.rc:120
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr "%1 의 %2 사용가능"
 
-#: winefile.rc:121
+#: winefile.rc:117
 msgctxt "unit kilobyte"
 msgid "kB"
 msgstr "킬로바이트"
 
-#: winefile.rc:122
+#: winefile.rc:118
 msgctxt "unit megabyte"
 msgid "MB"
 msgstr "메가바이트"
 
-#: winefile.rc:123
+#: winefile.rc:119
 msgctxt "unit gigabyte"
 msgid "GB"
 msgstr "기가바이트"
