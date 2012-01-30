@@ -2739,8 +2739,8 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Els certificats emesos per aquestes autoritats de certificació ja no seran de "
-"confiança.\n"
+"Els certificats emesos per aquestes autoritats de certificació ja no seran "
+"de confiança.\n"
 "Esteu segur que voleu suprimir aquests certificats?"
 
 #: cryptui.rc:113
@@ -7708,7 +7708,7 @@ msgid "&Rename"
 msgstr "Canvia el &nom"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
-#: winhlp32.rc:34 wordpad.rc:37
+#: winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "&Surt"
 
@@ -9632,8 +9632,7 @@ msgstr "TIME estableix o mostra l'hora actual del sistema.\n"
 
 #: cmd.rc:187
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr ""
-"TITLE <cadena> estableix el títol de la finestra de cmd.\n"
+msgstr "TITLE <cadena> estableix el títol de la finestra de cmd.\n"
 
 #: cmd.rc:191
 msgid ""
@@ -11956,7 +11955,8 @@ msgstr "Selecciona Columnes..."
 #: taskmgr.rc:523
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
-msgstr "Seleccioneu els columnes que apareixeran a la pàgina Procés del "
+msgstr ""
+"Seleccioneu els columnes que apareixeran a la pàgina Procés del "
 "Administrador de Tasques."
 
 #: taskmgr.rc:525
@@ -12417,8 +12417,8 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"L'execució de l'ordre de desinstal·lació '%s' ha fallat, potser a causa de la "
-"falta del executable.\n"
+"L'execució de l'ordre de desinstal·lació '%s' ha fallat, potser a causa de "
+"la falta del executable.\n"
 "Voleu treure l'entrada de desinstal·lació del registre?"
 
 #: view.rc:33
@@ -12461,8 +12461,8 @@ msgid ""
 "\n"
 "If you terminate the process you may lose all unsaved data."
 msgstr ""
-"Una simulació de sortida o apagament està en progrés, però aquest programa no "
-"respon.\n"
+"Una simulació de sortida o apagament està en progrés, però aquest programa "
+"no respon.\n"
 "\n"
 "Si termineu el procés, podeu perdre totes les dades no desades."
 
@@ -12532,7 +12532,8 @@ msgstr "Ajustaments de finestra"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Captura automàticament el &ratolí en les finestres de pantalla completa"
+msgstr ""
+"Captura automàticament el &ratolí en les finestres de pantalla completa"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -13283,8 +13284,8 @@ msgid ""
 "Database</a> for tips about running this application."
 msgstr ""
 "Això pot ser causat per un problema en el programa o una deficiència en el "
-"Wine. Pot ser que vulgueu comprovar el <a href=\"http://appdb.winehq.org\">"
-"Base de Dades de Aplicacions</a> per suggeriments sobre executar aquesta "
+"Wine. Pot ser que vulgueu comprovar el <a href=\"http://appdb.winehq.org"
+"\">Base de Dades de Aplicacions</a> per suggeriments sobre executar aquesta "
 "aplicació."
 
 #: winedbg.rc:58
@@ -13304,8 +13305,8 @@ msgid ""
 msgstr ""
 "Si aquest problema no està present en el Windows i encara no s'ha reportat, "
 "podeu desar la informació detallada a un fitxer mediant el botó \"Anomenar i "
-"Desar\", després <a href=\"http://wiki.winehq.org/Bugs\">presentar un informe "
-"d'error</a> i ajuntar aquest fitxer a l'informe."
+"Desar\", després <a href=\"http://wiki.winehq.org/Bugs\">presentar un "
+"informe d'error</a> i ajuntar aquest fitxer a l'informe."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13347,7 +13348,7 @@ msgstr "&Executar..."
 msgid "Cr&eate Directory..."
 msgstr "Crear &Directori..."
 
-#: winefile.rc:38 winemine.rc:46
+#: winefile.rc:38
 msgid "E&xit\tAlt+X"
 msgstr "&Surt\tAlt+X"
 
@@ -13487,7 +13488,7 @@ msgstr "&Comprimit"
 msgid "Version information"
 msgstr "Informació de versió"
 
-#: winefile.rc:201 winemine.rc:99
+#: winefile.rc:201
 msgctxt "accelerator Exit"
 msgid "X"
 msgstr ""

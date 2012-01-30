@@ -7720,7 +7720,7 @@ msgid "&Rename"
 msgstr "&Renommer"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
-#: winhlp32.rc:34 wordpad.rc:37
+#: winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "&Quitter"
 
@@ -13415,7 +13415,7 @@ msgstr "E&xécuter..."
 msgid "Cr&eate Directory..."
 msgstr "Créer réper&toire..."
 
-#: winefile.rc:38 winemine.rc:46
+#: winefile.rc:38
 msgid "E&xit\tAlt+X"
 msgstr "&Quitter\tAlt+X"
 
@@ -13555,7 +13555,7 @@ msgstr "&Compressé"
 msgid "Version information"
 msgstr "Informations de version"
 
-#: winefile.rc:201 winemine.rc:99
+#: winefile.rc:201
 msgctxt "accelerator Exit"
 msgid "X"
 msgstr "X"

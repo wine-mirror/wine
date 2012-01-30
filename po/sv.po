@@ -7711,7 +7711,7 @@ msgid "&Rename"
 msgstr "&Byt namn"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
-#: winhlp32.rc:34 wordpad.rc:37
+#: winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "A&vsluta"
 
@@ -13357,7 +13357,7 @@ msgstr "&Kör..."
 msgid "Cr&eate Directory..."
 msgstr "Sk&apa mapp..."
 
-#: winefile.rc:38 winemine.rc:46
+#: winefile.rc:38
 msgid "E&xit\tAlt+X"
 msgstr "A&vsluta\tAlt+X"
 
@@ -13502,7 +13502,7 @@ msgstr "&Komprimerad"
 msgid "Version information"
 msgstr "&Versionsinfo"
 
-#: winefile.rc:201 winemine.rc:99
+#: winefile.rc:201
 msgctxt "accelerator Exit"
 msgid "X"
 msgstr ""

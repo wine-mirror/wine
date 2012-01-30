@@ -7694,7 +7694,7 @@ msgid "&Rename"
 msgstr "名前の変更(&R)"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
-#: winhlp32.rc:34 wordpad.rc:37
+#: winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "終了(&X)"
 
@@ -13304,7 +13304,7 @@ msgstr "実行(&R)..."
 msgid "Cr&eate Directory..."
 msgstr "ディレクトリを作成(&E)..."
 
-#: winefile.rc:38 winemine.rc:46
+#: winefile.rc:38
 msgid "E&xit\tAlt+X"
 msgstr "終了(&X)\tAlt+X"
 
@@ -13444,7 +13444,7 @@ msgstr "圧縮済み(&C)"
 msgid "Version information"
 msgstr "バージョン情報"
 
-#: winefile.rc:201 winemine.rc:99
+#: winefile.rc:201
 msgctxt "accelerator Exit"
 msgid "X"
 msgstr ""

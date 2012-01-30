@@ -7913,7 +7913,7 @@ msgid "&Rename"
 msgstr "改名(&R)"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
-#: winhlp32.rc:34 wordpad.rc:37
+#: winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
 #, fuzzy
 msgid "E&xit"
 msgstr ""
@@ -13196,7 +13196,7 @@ msgstr "运行(&R)..."
 msgid "Cr&eate Directory..."
 msgstr "建立目录(&E)..."
 
-#: winefile.rc:38 winemine.rc:46
+#: winefile.rc:38
 msgid "E&xit\tAlt+X"
 msgstr "退出(&X)\tAlt+X"
 
@@ -13350,7 +13350,7 @@ msgstr "未压缩"
 msgid "Version information"
 msgstr "信息"
 
-#: winefile.rc:201 winemine.rc:99
+#: winefile.rc:201
 msgctxt "accelerator Exit"
 msgid "X"
 msgstr ""

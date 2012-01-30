@@ -7702,7 +7702,7 @@ msgid "&Rename"
 msgstr "P&reimenuj"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
-#: winhlp32.rc:34 wordpad.rc:37
+#: winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "&Končaj"
 
@@ -13317,7 +13317,7 @@ msgstr "&Zaženi ..."
 msgid "Cr&eate Directory..."
 msgstr "Ustvari &mapo ..."
 
-#: winefile.rc:38 winemine.rc:46
+#: winefile.rc:38
 msgid "E&xit\tAlt+X"
 msgstr "Ko&nčaj\tAlt+X"
 
@@ -13457,7 +13457,7 @@ msgstr "S&tisnjeno"
 msgid "Version information"
 msgstr "Podrobnosti o različici"
 
-#: winefile.rc:201 winemine.rc:99
+#: winefile.rc:201
 msgctxt "accelerator Exit"
 msgid "X"
 msgstr ""

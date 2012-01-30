@@ -7871,7 +7871,7 @@ msgid "&Rename"
 msgstr "&Přejmenovat"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
-#: winhlp32.rc:34 wordpad.rc:37
+#: winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "&Konec"
 
@@ -13490,7 +13490,7 @@ msgstr "&Spustit..."
 msgid "Cr&eate Directory..."
 msgstr "V&ytvořit adresář..."
 
-#: winefile.rc:38 winemine.rc:46
+#: winefile.rc:38
 #, fuzzy
 msgid "E&xit\tAlt+X"
 msgstr ""
@@ -13648,7 +13648,7 @@ msgstr "nekomprimovaný"
 msgid "Version information"
 msgstr "Informace"
 
-#: winefile.rc:201 winemine.rc:99
+#: winefile.rc:201
 msgctxt "accelerator Exit"
 msgid "X"
 msgstr ""

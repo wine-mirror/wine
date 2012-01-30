@@ -7718,7 +7718,7 @@ msgid "&Rename"
 msgstr "&Renomear"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
-#: winhlp32.rc:34 wordpad.rc:37
+#: winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
 msgid "E&xit"
 msgstr "Sai&r"
 
@@ -13380,7 +13380,7 @@ msgstr "E&xecutar..."
 msgid "Cr&eate Directory..."
 msgstr "Criar &Pasta..."
 
-#: winefile.rc:38 winemine.rc:46
+#: winefile.rc:38
 msgid "E&xit\tAlt+X"
 msgstr "&Sair\tAlt+X"
 
@@ -13520,7 +13520,7 @@ msgstr "&Comprimido"
 msgid "Version information"
 msgstr "Informação de versão"
 
-#: winefile.rc:201 winemine.rc:99
+#: winefile.rc:201
 msgctxt "accelerator Exit"
 msgid "X"
 msgstr ""
