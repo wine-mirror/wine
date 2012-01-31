@@ -1128,6 +1128,93 @@ static void test_depth_blit(void)
     DestroyWindow(window);
 }
 
+static void test_texture_load_ckey(void)
+{
+    HWND window;
+    IDirect3DDevice7 *device;
+    IDirectDraw7 *ddraw;
+    IDirectDrawSurface7 *src;
+    IDirectDrawSurface7 *dst;
+    DDSURFACEDESC2 ddsd;
+    HRESULT hr;
+    DDCOLORKEY ckey;
+    IDirect3D7 *d3d;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D7 interface, hr %#x.\n", hr);
+    hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get DirectDraw7 interface, hr %#x.\n", hr);
+    IDirect3D7_Release(d3d);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
+    ddsd.dwHeight = 128;
+    ddsd.dwWidth = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY;
+    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &src, NULL);
+    ok(SUCCEEDED(hr), "Failed to create source texture, hr %#x.\n", hr);
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to create destination texture, hr %#x.\n", hr);
+
+    /* No surface has a color key */
+    hr = IDirect3DDevice7_Load(device, dst, NULL, src, NULL, 0);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0xdeadbeef;
+    hr = IDirectDrawSurface7_GetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0xdeadbeef, "dwColorSpaceLowValue is %#x.\n", ckey.dwColorSpaceLowValue);
+    ok(ckey.dwColorSpaceHighValue == 0xdeadbeef, "dwColorSpaceHighValue is %#x.\n", ckey.dwColorSpaceHighValue);
+
+    /* Source surface has a color key */
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0x0000ff00;
+    hr = IDirectDrawSurface7_SetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_Load(device, dst, NULL, src, NULL, 0);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_GetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x0000ff00, "dwColorSpaceLowValue is %#x.\n", ckey.dwColorSpaceLowValue);
+    ok(ckey.dwColorSpaceHighValue == 0x0000ff00, "dwColorSpaceHighValue is %#x.\n", ckey.dwColorSpaceHighValue);
+
+    /* Both surfaces have a color key: Dest ckey is overwritten */
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0x000000ff;
+    hr = IDirectDrawSurface7_SetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_Load(device, dst, NULL, src, NULL, 0);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_GetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x0000ff00, "dwColorSpaceLowValue is %#x.\n", ckey.dwColorSpaceLowValue);
+    ok(ckey.dwColorSpaceHighValue == 0x0000ff00, "dwColorSpaceHighValue is %#x.\n", ckey.dwColorSpaceHighValue);
+
+    /* Only the destination has a color key: It is deleted. This behavior differs from
+     * IDirect3DTexture(2)::Load */
+    hr = IDirectDrawSurface7_SetColorKey(src, DDCKEY_SRCBLT, NULL);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_GetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_Load(device, dst, NULL, src, NULL, 0);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_GetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    todo_wine ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x.\n", hr);
+
+    IDirectDrawSurface7_Release(dst);
+    IDirectDrawSurface7_Release(src);
+    IDirectDraw7_Release(ddraw);
+    IDirect3DDevice7_Release(device);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -1145,4 +1232,5 @@ START_TEST(ddraw7)
     test_surface_interface_mismatch();
     test_coop_level_threaded();
     test_depth_blit();
+    test_texture_load_ckey();
 }
