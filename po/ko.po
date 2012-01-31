@@ -12412,7 +12412,7 @@ msgstr "화면 해상도 "
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "이것은 10 포인트 타호마 글꼴을 사용한 예제 글자입니다"
+msgstr ""
 
 #: winecfg.rc:182
 msgid "DLL overrides"
