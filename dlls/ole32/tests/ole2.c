@@ -914,6 +914,7 @@ static void test_OleCreate(IStorage *pStorage)
     IOleObject_Release(pObject);
     CHECK_NO_EXTRA_METHODS();
     trace("end\n");
+    g_expected_fetc = NULL;
 }
 
 static void test_OleLoad(IStorage *pStorage)
