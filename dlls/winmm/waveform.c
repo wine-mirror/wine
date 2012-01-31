@@ -2040,7 +2040,7 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
     HRESULT hr;
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
 
-    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     if(FAILED(hr)){
         ERR("CoInitializeEx failed: %08x\n", hr);
         return 1;
