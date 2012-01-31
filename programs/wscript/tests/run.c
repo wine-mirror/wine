@@ -341,7 +341,6 @@ static IClassFactory testobj_cf = { &ClassFactoryVtbl };
 
 static void run_test(const char *file_name)
 {
-    SECURITY_ATTRIBUTES sa = {sizeof(sa), 0, TRUE};
     char command[MAX_PATH];
     STARTUPINFOA si = {sizeof(si)};
     PROCESS_INFORMATION pi;
