@@ -2543,7 +2543,10 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
         if (((swp_flags & SWP_HIDEWINDOW) && !(new_style & WS_VISIBLE)) ||
             (!event_type &&
              !is_window_rect_mapped( rectWindow ) && is_window_rect_mapped( &old_window_rect )))
+        {
             unmap_window( display, data );
+            if (is_window_rect_fullscreen( &old_window_rect )) reset_clipping_window();
+        }
     }
 
     /* don't change position if we are about to minimize or maximize a managed window */
