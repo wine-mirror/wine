@@ -482,7 +482,7 @@ static LPBYTE DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, INT len)
 static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD fraglen)
 {
 	INT len = fraglen, ilen;
-	BYTE *ibuf = dsb->buffer->memory + dsb->buf_mixpos, *volbuf;
+	BYTE *ibuf, *volbuf;
 	DWORD oldpos, mixbufpos;
 
 	TRACE("buf_mixpos=%d/%d sec_mixpos=%d/%d\n", dsb->buf_mixpos, dsb->tmp_buffer_len, dsb->sec_mixpos, dsb->buflen);
