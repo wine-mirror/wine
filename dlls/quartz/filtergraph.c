@@ -2456,7 +2456,14 @@ static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface, LONG
     *pCurrent = -1;
     hr = all_renderers_seek(This, FoundCurrentPosition, (DWORD_PTR)pCurrent);
     if (hr == E_NOTIMPL) {
-        *pCurrent = 0;
+        LONGLONG time = 0;
+        if (This->refClock)
+        {
+            IReferenceClock_GetTime(This->refClock, &time);
+            if (time)
+                time -= This->start_time;
+        }
+        *pCurrent = time;
         hr = S_OK;
     }
     LeaveCriticalSection(&This->cs);
