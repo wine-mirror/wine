@@ -1856,6 +1856,9 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
                 }
             }
 
+            if ((dwFlags & SSA_LINK) && !analysis->glyphs[i].fallbackFont && !scriptInformation[analysis->pItem[i].a.eScript].props.fComplex)
+                analysis->pItem[i].a.fNoGlyphIndex = TRUE;
+
             hr = ScriptShape(hdc, sc, &pStr[analysis->pItem[i].iCharPos],
                              cChar, numGlyphs, &analysis->pItem[i].a,
                              glyphs, pwLogClust, psva, &numGlyphsReturned);
