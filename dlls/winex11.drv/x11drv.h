@@ -648,8 +648,10 @@ static inline void mirror_rect( const RECT *window_rect, RECT *rect )
 
 static inline BOOL is_window_rect_mapped( const RECT *rect )
 {
-    return (rect->left < virtual_screen_rect.right && rect->top < virtual_screen_rect.bottom &&
-            rect->right > virtual_screen_rect.left && rect->bottom > virtual_screen_rect.top);
+    return (rect->left < virtual_screen_rect.right &&
+            rect->top < virtual_screen_rect.bottom &&
+            max( rect->right, rect->left + 1 ) > virtual_screen_rect.left &&
+            max( rect->bottom, rect->top + 1 ) > virtual_screen_rect.top);
 }
 
 static inline BOOL is_window_rect_fullscreen( const RECT *rect )
