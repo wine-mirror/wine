@@ -5155,7 +5155,7 @@ TOOLBAR_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 
     TRACE("hwnd = %p, style=0x%08x\n", hwnd, lpcs->style);
 
-    infoPtr->dwStyle = lpcs->style;
+    infoPtr->dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
     GetClientRect(hwnd, &infoPtr->client_rect);
     infoPtr->bUnicode = infoPtr->hwndNotify && 
         (NFR_UNICODE == SendMessageW(hwnd, WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_REQUERY));
