@@ -203,17 +203,20 @@ todo_wine
 todo_wine
     ok( ret || broken(GetLastError() == ERROR_UNEXP_NET_ERR), /* win2k */
         "GetMappedFileNameA failed with error %u\n", GetLastError() );
-    ok(ret == strlen(szMapPath), "szMapPath=\"%s\" ret=%d\n", szMapPath, ret);
-todo_wine
-    ok(szMapPath[0] == '\\', "szMapPath=\"%s\"\n", szMapPath);
-    szMapBaseName = strrchr(szMapPath, '\\'); /* That's close enough for us */
-todo_wine
-    ok(szMapBaseName && *szMapBaseName, "szMapPath=\"%s\"\n", szMapPath);
-    if (szMapBaseName)
+    if (ret)
     {
-        GetModuleFileNameA(NULL, szModPath, sizeof(szModPath));
-        ok(!strcmp(strrchr(szModPath, '\\'), szMapBaseName),
-           "szModPath=\"%s\" szMapBaseName=\"%s\"\n", szModPath, szMapBaseName);
+        ok(ret == strlen(szMapPath), "szMapPath=\"%s\" ret=%d\n", szMapPath, ret);
+        todo_wine
+        ok(szMapPath[0] == '\\', "szMapPath=\"%s\"\n", szMapPath);
+        szMapBaseName = strrchr(szMapPath, '\\'); /* That's close enough for us */
+        todo_wine
+        ok(szMapBaseName && *szMapBaseName, "szMapPath=\"%s\"\n", szMapPath);
+        if (szMapBaseName)
+        {
+            GetModuleFileNameA(NULL, szModPath, sizeof(szModPath));
+            ok(!strcmp(strrchr(szModPath, '\\'), szMapBaseName),
+               "szModPath=\"%s\" szMapBaseName=\"%s\"\n", szModPath, szMapBaseName);
+        }
     }
 
     GetTempPath(MAX_PATH, temp_path);
