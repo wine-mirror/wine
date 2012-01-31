@@ -166,8 +166,6 @@ static void test_msg_get_param(void)
     BOOL ret;
     HCRYPTMSG msg;
     DWORD size, i, value;
-    CMSG_SIGNED_ENCODE_INFO signInfo = { sizeof(signInfo), 0 };
-    CMSG_SIGNER_ENCODE_INFO signer = { sizeof(signer), 0 };
 
     /* Crash
     ret = CryptMsgGetParam(NULL, 0, 0, NULL, NULL);
