@@ -2903,7 +2903,10 @@ static void update_system_links(void)
 
         for (i = 0; i < sizeof(font_links_defaults_list)/sizeof(font_links_defaults_list[0]); i++)
         {
-            if (!strcmpiW(font_links_defaults_list[i].shelldlg, psub->to.name))
+            const FontSubst *psub2;
+            psub2 = get_font_subst(&font_subst_list, font_links_defaults_list[i].shelldlg, -1);
+
+            if ((!strcmpiW(font_links_defaults_list[i].shelldlg, psub->to.name) || (psub2 && !strcmpiW(psub2->to.name,psub->to.name))))
             {
                 for (j = 0; j < sizeof(font_links_list)/sizeof(font_links_list[0]); j++)
                     populate_system_links(hkey, font_links_list[j], font_links_defaults_list[i].substitutes);
