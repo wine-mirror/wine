@@ -602,7 +602,7 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
         memcpy(secur_url, url, size);
     }
 
-    hres = CreateUri(secur_url, 0, 0, &secur_uri);
+    hres = CreateUri(secur_url, Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, 0, &secur_uri);
     if(FAILED(hres)) {
         CoTaskMemFree(secur_url);
         return hres;
@@ -805,7 +805,7 @@ static HRESULT get_security_id_for_url(LPCWSTR url, BYTE *secid, DWORD *secid_le
     if(FAILED(hres))
         return hres == 0x80041001 ? E_INVALIDARG : hres;
 
-    hres = CreateUri(secur_url, 0, 0, &uri);
+    hres = CreateUri(secur_url, Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, 0, &uri);
     CoTaskMemFree(secur_url);
     if(FAILED(hres))
         return hres;
