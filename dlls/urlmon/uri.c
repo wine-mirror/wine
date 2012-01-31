@@ -410,7 +410,7 @@ static void apply_default_flags(DWORD *flags) {
  *  B.) It's an implicit file scheme.
  *  C.) It's a known hierarchical scheme and it has two '\\' after the scheme name.
  *      (the '\\' will be converted into "//" during canonicalization).
- *  D.) It's not a relative URI and "//" appears after the scheme name.
+ *  D.) "//" appears after the scheme name (or at the beginning if no scheme is given).
  */
 static inline BOOL is_hierarchical_uri(const WCHAR **ptr, const parse_data *data) {
     const WCHAR *start = *ptr;
@@ -422,7 +422,7 @@ static inline BOOL is_hierarchical_uri(const WCHAR **ptr, const parse_data *data
     else if(is_hierarchical_scheme(data->scheme_type) && (*ptr)[0] == '\\' && (*ptr)[1] == '\\') {
         *ptr += 2;
         return TRUE;
-    } else if(!data->is_relative && check_hierarchical(ptr))
+    } else if(check_hierarchical(ptr))
         return TRUE;
 
     *ptr = start;

@@ -4421,6 +4421,81 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL}
         }
     },
+    {   "//host.com/path/file.txt?query", Uri_CREATE_ALLOW_RELATIVE, S_OK, FALSE,
+        {
+            {"//host.com/path/file.txt?query",S_OK},
+            {"host.com",S_OK},
+            {"//host.com/path/file.txt?query",S_OK},
+            {"host.com",S_OK},
+            {".txt",S_OK},
+            {"",S_FALSE},
+            {"host.com",S_OK},
+            {"",S_FALSE},
+            {"/path/file.txt",S_OK},
+            {"/path/file.txt?query",S_OK},
+            {"?query",S_OK},
+            {"//host.com/path/file.txt?query",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "//host/path/file.txt?query", Uri_CREATE_ALLOW_RELATIVE, S_OK, FALSE,
+        {
+            {"//host/path/file.txt?query",S_OK},
+            {"host",S_OK},
+            {"//host/path/file.txt?query",S_OK},
+            {"",S_FALSE},
+            {".txt",S_OK},
+            {"",S_FALSE},
+            {"host",S_OK},
+            {"",S_FALSE},
+            {"/path/file.txt",S_OK},
+            {"/path/file.txt?query",S_OK},
+            {"?query",S_OK},
+            {"//host/path/file.txt?query",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "//host", Uri_CREATE_ALLOW_RELATIVE, S_OK, FALSE,
+        {
+            {"//host/",S_OK},
+            {"host",S_OK},
+            {"//host/",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"host",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"//host",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    }
 };
 
 typedef struct _invalid_uri {
