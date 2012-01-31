@@ -904,7 +904,6 @@ static void init_current_directory( CURDIR *cur_dir )
     HeapFree( GetProcessHeap(), 0, cwd );
 
 done:
-    if (!cur_dir->Handle) chdir("/"); /* change to root directory so as not to lock cdroms */
     TRACE( "starting in %s %p\n", debugstr_w( cur_dir->DosPath.Buffer ), cur_dir->Handle );
 }
 
@@ -1250,6 +1249,8 @@ void CDECL __wine_kernel_init(void)
         MESSAGE( "wine: %s", msg );
         ExitProcess( error );
     }
+
+    if (!params->CurrentDirectory.Handle) chdir("/"); /* avoid locking removable devices */
 
     LdrInitializeThunk( start_process, 0, 0, 0 );
 
