@@ -1078,6 +1078,106 @@ static void test_depth_blit(void)
     DestroyWindow(window);
 }
 
+static void test_texture_load_ckey(void)
+{
+    IDirectDraw2 *ddraw = NULL;
+    IDirectDrawSurface *src = NULL;
+    IDirectDrawSurface *dst = NULL;
+    IDirect3DTexture *src_tex = NULL;
+    IDirect3DTexture *dst_tex = NULL;
+    DDSURFACEDESC ddsd;
+    HRESULT hr;
+    DDCOLORKEY ckey;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create ddraw object, skipping test.\n");
+        return;
+    }
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
+    ddsd.dwHeight = 128;
+    ddsd.dwWidth = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY;
+    hr = IDirectDraw2_CreateSurface(ddraw, &ddsd, &src, NULL);
+    ok(SUCCEEDED(hr), "Failed to create source texture, hr %#x.\n", hr);
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    hr = IDirectDraw2_CreateSurface(ddraw, &ddsd, &dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to create destination texture, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_QueryInterface(src, &IID_IDirect3DTexture, (void **)&src_tex);
+    ok(SUCCEEDED(hr) || hr == E_NOINTERFACE, "Failed to get Direct3DTexture interface, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        /* 64 bit ddraw does not support d3d */
+        skip("Could not get Direct3DTexture interface, skipping texture::Load color keying tests.\n");
+        goto done;
+    }
+    hr = IDirectDrawSurface_QueryInterface(dst, &IID_IDirect3DTexture, (void **)&dst_tex);
+    ok(SUCCEEDED(hr), "Failed to get Direct3DTexture interface, hr %#x.\n", hr);
+
+    /* No surface has a color key */
+    hr = IDirect3DTexture_Load(dst_tex, src_tex);
+    ok(SUCCEEDED(hr) || broken(hr == DDERR_INVALIDCAPS), "Got unexpected hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        /* Testbot Windows NT VMs */
+        skip("IDirect3DTexture::Load does not work, skipping color keying tests.\n");
+        goto done;
+    }
+
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0xdeadbeef;
+    hr = IDirectDrawSurface_GetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0xdeadbeef, "dwColorSpaceLowValue is %#x.\n", ckey.dwColorSpaceLowValue);
+    ok(ckey.dwColorSpaceHighValue == 0xdeadbeef, "dwColorSpaceHighValue is %#x.\n", ckey.dwColorSpaceHighValue);
+
+    /* Source surface has a color key */
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0x0000ff00;
+    hr = IDirectDrawSurface_SetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    hr = IDirect3DTexture_Load(dst_tex, src_tex);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_GetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x0000ff00, "dwColorSpaceLowValue is %#x.\n", ckey.dwColorSpaceLowValue);
+    ok(ckey.dwColorSpaceHighValue == 0x0000ff00, "dwColorSpaceHighValue is %#x.\n", ckey.dwColorSpaceHighValue);
+
+    /* Both surfaces have a color key: Dest ckey is overwritten */
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0x000000ff;
+    hr = IDirectDrawSurface_SetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    hr = IDirect3DTexture_Load(dst_tex, src_tex);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_GetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x0000ff00, "dwColorSpaceLowValue is %#x.\n", ckey.dwColorSpaceLowValue);
+    ok(ckey.dwColorSpaceHighValue == 0x0000ff00, "dwColorSpaceHighValue is %#x.\n", ckey.dwColorSpaceHighValue);
+
+    /* Only the destination has a color key: It is not deleted */
+    hr = IDirectDrawSurface_SetColorKey(src, DDCKEY_SRCBLT, NULL);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_GetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture_Load(dst_tex, src_tex);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_GetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x0000ff00, "dwColorSpaceLowValue is %#x.\n", ckey.dwColorSpaceLowValue);
+    ok(ckey.dwColorSpaceHighValue == 0x0000ff00, "dwColorSpaceHighValue is %#x.\n", ckey.dwColorSpaceHighValue);
+
+done:
+    if (dst_tex) IDirect3DTexture_Release(dst_tex);
+    if (src_tex) IDirect3DTexture_Release(src_tex);
+    if (dst) IDirectDrawSurface_Release(dst);
+    if (src) IDirectDrawSurface_Release(src);
+    if (ddraw) IDirectDraw2_Release(ddraw);
+}
+
 START_TEST(ddraw2)
 {
     test_coop_level_create_device_window();
@@ -1086,4 +1186,5 @@ START_TEST(ddraw2)
     test_surface_interface_mismatch();
     test_coop_level_threaded();
     test_depth_blit();
+    test_texture_load_ckey();
 }
