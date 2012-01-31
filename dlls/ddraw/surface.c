@@ -4967,12 +4967,12 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
         {
             struct wined3d_mapped_rect src_rect, dst_rect;
 
-            /* Copy also the ColorKeying stuff */
+            /* Copy the src blit color key if the source has one, don't erase
+             * the destination's ckey if the source has none */
             if (src_desc->dwFlags & DDSD_CKSRCBLT)
             {
-                dst_desc->dwFlags |= DDSD_CKSRCBLT;
-                dst_desc->ddckCKSrcBlt.dwColorSpaceLowValue = src_desc->ddckCKSrcBlt.dwColorSpaceLowValue;
-                dst_desc->ddckCKSrcBlt.dwColorSpaceHighValue = src_desc->ddckCKSrcBlt.dwColorSpaceHighValue;
+                IDirectDrawSurface7_SetColorKey(&dst_surface->IDirectDrawSurface7_iface,
+                        DDCKEY_SRCBLT, &src_desc->ddckCKSrcBlt);
             }
 
             /* Copy the main memory texture into the surface that corresponds
