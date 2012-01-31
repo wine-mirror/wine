@@ -1214,6 +1214,101 @@ static void test_depth_blit(void)
     DestroyWindow(window);
 }
 
+static void test_texture_load_ckey(void)
+{
+    IDirectDraw4 *ddraw;
+    IDirectDrawSurface4 *src;
+    IDirectDrawSurface4 *dst;
+    IDirect3DTexture2 *src_tex;
+    IDirect3DTexture2 *dst_tex;
+    DDSURFACEDESC2 ddsd;
+    HRESULT hr;
+    DDCOLORKEY ckey;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create ddraw object, skipping test.\n");
+        return;
+    }
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
+    ddsd.dwHeight = 128;
+    ddsd.dwWidth = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY;
+    hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &src, NULL);
+    ok(SUCCEEDED(hr), "Failed to create source texture, hr %#x.\n", hr);
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to create destination texture, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_QueryInterface(src, &IID_IDirect3DTexture2, (void **)&src_tex);
+    ok(SUCCEEDED(hr) || hr == E_NOINTERFACE, "Failed to get Direct3DTexture2 interface, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        /* 64 bit ddraw does not support d3d */
+        skip("Could not get Direct3DTexture2 interface, skipping texture::Load color keying tests.\n");
+        IDirectDrawSurface4_Release(dst);
+        IDirectDrawSurface4_Release(src);
+        IDirectDraw4_Release(ddraw);
+        return;
+    }
+    hr = IDirectDrawSurface4_QueryInterface(dst, &IID_IDirect3DTexture2, (void **)&dst_tex);
+    ok(SUCCEEDED(hr), "Failed to get Direct3DTexture2 interface, hr %#x.\n", hr);
+
+    /* No surface has a color key */
+    hr = IDirect3DTexture2_Load(dst_tex, src_tex);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0xdeadbeef;
+    hr = IDirectDrawSurface4_GetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0xdeadbeef, "dwColorSpaceLowValue is %#x.\n", ckey.dwColorSpaceLowValue);
+    ok(ckey.dwColorSpaceHighValue == 0xdeadbeef, "dwColorSpaceHighValue is %#x.\n", ckey.dwColorSpaceHighValue);
+
+    /* Source surface has a color key */
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0x0000ff00;
+    hr = IDirectDrawSurface4_SetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    hr = IDirect3DTexture2_Load(dst_tex, src_tex);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_GetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x0000ff00, "dwColorSpaceLowValue is %#x.\n", ckey.dwColorSpaceLowValue);
+    ok(ckey.dwColorSpaceHighValue == 0x0000ff00, "dwColorSpaceHighValue is %#x.\n", ckey.dwColorSpaceHighValue);
+
+    /* Both surfaces have a color key: Dest ckey is overwritten */
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0x000000ff;
+    hr = IDirectDrawSurface4_SetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    hr = IDirect3DTexture2_Load(dst_tex, src_tex);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_GetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x0000ff00, "dwColorSpaceLowValue is %#x.\n", ckey.dwColorSpaceLowValue);
+    ok(ckey.dwColorSpaceHighValue == 0x0000ff00, "dwColorSpaceHighValue is %#x.\n", ckey.dwColorSpaceHighValue);
+
+    /* Only the destination has a color key: It is not deleted */
+    hr = IDirectDrawSurface4_SetColorKey(src, DDCKEY_SRCBLT, NULL);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_GetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture2_Load(dst_tex, src_tex);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_GetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x0000ff00, "dwColorSpaceLowValue is %#x.\n", ckey.dwColorSpaceLowValue);
+    ok(ckey.dwColorSpaceHighValue == 0x0000ff00, "dwColorSpaceHighValue is %#x.\n", ckey.dwColorSpaceHighValue);
+
+    IDirect3DTexture2_Release(dst_tex);
+    IDirect3DTexture2_Release(src_tex);
+    IDirectDrawSurface4_Release(dst);
+    IDirectDrawSurface4_Release(src);
+    IDirectDraw4_Release(ddraw);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
@@ -1223,4 +1318,5 @@ START_TEST(ddraw4)
     test_surface_interface_mismatch();
     test_coop_level_threaded();
     test_depth_blit();
+    test_texture_load_ckey();
 }
