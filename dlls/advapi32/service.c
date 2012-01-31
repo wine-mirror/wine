@@ -755,7 +755,7 @@ SC_HANDLE WINAPI OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
 SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
                                  DWORD dwDesiredAccess )
 {
-    SC_HANDLE handle;
+    SC_HANDLE handle = 0;
     LONG r;
 
     TRACE("(%s,%s,0x%08x)\n", debugstr_w(lpMachineName),
@@ -899,7 +899,7 @@ SC_HANDLE WINAPI OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                                DWORD dwDesiredAccess)
 {
-    SC_HANDLE handle;
+    SC_HANDLE handle = 0;
     DWORD err;
 
     TRACE("%p %s %d\n", hSCManager, debugstr_w(lpServiceName), dwDesiredAccess);
@@ -942,7 +942,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                   LPCWSTR lpDependencies, LPCWSTR lpServiceStartName,
                   LPCWSTR lpPassword )
 {
-    SC_HANDLE handle;
+    SC_HANDLE handle = 0;
     DWORD err;
     SIZE_T passwdlen;
 
