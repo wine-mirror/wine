@@ -1411,7 +1411,7 @@ DEFINE_THISCALL_WRAPPER(basic_string_char_replace_ch, 20)
 basic_string_char* __thiscall basic_string_char_replace_ch(basic_string_char *this,
         MSVCP_size_t off, MSVCP_size_t len, MSVCP_size_t count, char ch)
 {
-    char *ptr = this->ptr;
+    char *ptr;
 
     TRACE("%p %ld %ld %ld %c\n", this, off, len, count, ch);
 
@@ -3107,7 +3107,7 @@ DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_ch, 20)
 basic_string_wchar* __thiscall basic_string_wchar_replace_ch(basic_string_wchar *this,
         MSVCP_size_t off, MSVCP_size_t len, MSVCP_size_t count, wchar_t ch)
 {
-    wchar_t *ptr = this->ptr;
+    wchar_t *ptr;
 
     TRACE("%p %ld %ld %ld %c\n", this, off, len, count, ch);
 
