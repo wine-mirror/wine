@@ -121,6 +121,7 @@ typedef struct _uri_dword_property {
     DWORD   value;
     HRESULT expected;
     BOOL    todo;
+    BOOL    broken_combine_hres;
 } uri_dword_property;
 
 typedef struct _uri_properties {
@@ -6693,6 +6694,60 @@ static const uri_combine_test uri_combine_tests[] = {
             {URL_SCHEME_MK,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
+    },
+    {   "http://winehq.org/dir/test?querystring",0,
+        "//winehq.com/#hash",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"http://winehq.com/#hash",S_OK},
+            {"winehq.com",S_OK},
+            {"http://winehq.com/#hash",S_OK},
+            {"winehq.com",S_OK},
+            {"",S_FALSE},
+            {"#hash",S_OK},
+            {"winehq.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://winehq.com/#hash",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK,FALSE,TRUE},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://winehq.org/dir/test?querystring",0,
+        "//winehq.com/dir2/../dir/file.txt?query#hash",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"http://winehq.com/dir/file.txt?query#hash",S_OK},
+            {"winehq.com",S_OK},
+            {"http://winehq.com/dir/file.txt?query#hash",S_OK},
+            {"winehq.com",S_OK},
+            {".txt",S_OK},
+            {"#hash",S_OK},
+            {"winehq.com",S_OK},
+            {"",S_FALSE},
+            {"/dir/file.txt",S_OK},
+            {"/dir/file.txt?query",S_OK},
+            {"?query",S_OK},
+            {"http://winehq.com/dir/file.txt?query#hash",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK,FALSE,TRUE},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     }
 };
 
@@ -10035,11 +10090,12 @@ static void test_CoInternetCombineIUri(void) {
                                     prop.value, received, i, j);
                             }
                         } else {
-                            ok(hr == prop.expected,
+                            ok(hr == prop.expected || broken(prop.broken_combine_hres && hr == S_FALSE),
                                 "Error: IUri_GetPropertyDWORD returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].dword_props[%d].\n",
                                 hr, prop.expected, i, j);
-                            ok(prop.value == received, "Error: Expected %d, but got %d instead on uri_combine_tests[%d].dword_props[%d].\n",
-                                prop.value, received, i, j);
+                            if(!prop.broken_combine_hres || hr != S_FALSE)
+                                ok(prop.value == received, "Error: Expected %d, but got %d instead on uri_combine_tests[%d].dword_props[%d].\n",
+                                    prop.value, received, i, j);
                         }
                     }
                 }
@@ -10351,11 +10407,12 @@ static void test_CoInternetCombineUrlEx(void) {
                                 prop.value, received, i, j);
                         }
                     } else {
-                        ok(hr == prop.expected,
+                        ok(hr == prop.expected || broken(prop.broken_combine_hres && hr == S_FALSE),
                             "Error: IUri_GetPropertyDWORD returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].dword_props[%d].\n",
                             hr, prop.expected, i, j);
-                        ok(prop.value == received, "Error: Expected %d, but got %d instead on uri_combine_tests[%d].dword_props[%d].\n",
-                            prop.value, received, i, j);
+                        if(!prop.broken_combine_hres || hr != S_FALSE)
+                            ok(prop.value == received, "Error: Expected %d, but got %d instead on uri_combine_tests[%d].dword_props[%d].\n",
+                                prop.value, received, i, j);
                     }
                 }
             }

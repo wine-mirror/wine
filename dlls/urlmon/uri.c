@@ -6427,6 +6427,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
     Uri *ret;
     HRESULT hr;
     parse_data data;
+    Uri *proc_uri = base;
     DWORD create_flags = 0, len = 0;
 
     memset(&data, 0, sizeof(parse_data));
@@ -6483,35 +6484,38 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
             create_flags |= Uri_CREATE_ALLOW_RELATIVE;
         }
 
-        if(base->authority_start > -1) {
-            if(base->userinfo_start > -1 && base->userinfo_split != 0) {
-                data.username = base->canon_uri+base->userinfo_start;
-                data.username_len = (base->userinfo_split > -1) ? base->userinfo_split : base->userinfo_len;
+        if(relative->authority_start > -1)
+            proc_uri = relative;
+
+        if(proc_uri->authority_start > -1) {
+            if(proc_uri->userinfo_start > -1 && proc_uri->userinfo_split != 0) {
+                data.username = proc_uri->canon_uri+proc_uri->userinfo_start;
+                data.username_len = (proc_uri->userinfo_split > -1) ? proc_uri->userinfo_split : proc_uri->userinfo_len;
             }
 
-            if(base->userinfo_split > -1) {
-                data.password = base->canon_uri+base->userinfo_start+base->userinfo_split+1;
-                data.password_len = base->userinfo_len-base->userinfo_split-1;
+            if(proc_uri->userinfo_split > -1) {
+                data.password = proc_uri->canon_uri+proc_uri->userinfo_start+proc_uri->userinfo_split+1;
+                data.password_len = proc_uri->userinfo_len-proc_uri->userinfo_split-1;
             }
 
-            if(base->host_start > -1) {
-                data.host = base->canon_uri+base->host_start;
-                data.host_len = base->host_len;
-                data.host_type = base->host_type;
+            if(proc_uri->host_start > -1) {
+                data.host = proc_uri->canon_uri+proc_uri->host_start;
+                data.host_len = proc_uri->host_len;
+                data.host_type = proc_uri->host_type;
             }
 
-            if(base->has_port) {
+            if(proc_uri->has_port) {
                 data.has_port = TRUE;
-                data.port_value = base->port;
+                data.port_value = proc_uri->port;
             }
         } else if(base->scheme_type != URL_SCHEME_FILE)
             data.is_opaque = TRUE;
 
-        if(relative->path_start == -1 || !relative->path_len) {
-            if(base->path_start > -1) {
-                data.path = base->canon_uri+base->path_start;
-                data.path_len = base->path_len;
-            } else if((base->path_start == -1 || !base->path_len) && !data.is_opaque) {
+        if(proc_uri == relative || relative->path_start == -1 || !relative->path_len) {
+            if(proc_uri->path_start > -1) {
+                data.path = proc_uri->canon_uri+proc_uri->path_start;
+                data.path_len = proc_uri->path_len;
+            } else if(!data.is_opaque) {
                 /* Just set the path as a '/' if the base didn't have
                  * one and if it's an hierarchical URI.
                  */
@@ -6520,12 +6524,12 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
                 data.path_len = 1;
             }
 
-            if(relative->query_start > -1) {
-                data.query = relative->canon_uri+relative->query_start;
-                data.query_len = relative->query_len;
-            } else if(base->query_start > -1) {
-                data.query = base->canon_uri+base->query_start;
-                data.query_len = base->query_len;
+            if(relative->query_start > -1)
+                proc_uri = relative;
+
+            if(proc_uri->query_start > -1) {
+                data.query = proc_uri->canon_uri+proc_uri->query_start;
+                data.query_len = proc_uri->query_len;
             }
         } else {
             const WCHAR *ptr, **pptr;
