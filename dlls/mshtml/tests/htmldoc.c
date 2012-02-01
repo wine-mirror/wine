@@ -4790,6 +4790,10 @@ static void test_ConnectionPoint(IConnectionPointContainer *container, REFIID ri
     if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
         hres = IConnectionPoint_Advise(cp, (IUnknown*)&PropertyNotifySink, &cookie);
         ok(hres == S_OK, "Advise failed: %08x\n", hres);
+        hres = IConnectionPoint_Unadvise(cp, cookie);
+        ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+        hres = IConnectionPoint_Advise(cp, (IUnknown*)&PropertyNotifySink, NULL);
+        ok(hres == S_OK, "Advise failed: %08x\n", hres);
     } else if(IsEqualGUID(&IID_IDispatch, riid)) {
         hres = IConnectionPoint_Advise(cp, (IUnknown*)&EventDispatch, &cookie);
         ok(hres == S_OK, "Advise failed: %08x\n", hres);
