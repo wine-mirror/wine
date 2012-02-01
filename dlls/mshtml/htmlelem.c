@@ -1170,7 +1170,7 @@ static HRESULT WINAPI HTMLElement_get_outerHTML(IHTMLElement *iface, BSTR *p)
     nsAString_Finish(&html_str);
 
     TRACE("ret %s\n", debugstr_w(*p));
-    return S_OK;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLElement_put_outerText(IHTMLElement *iface, BSTR v)
