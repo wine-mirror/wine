@@ -1941,8 +1941,7 @@ HRESULT super_navigate(HTMLWindow *window, IUri *uri, const WCHAR *headers, BYTE
     prepare_for_binding(&window->doc_obj->basedoc, mon, TRUE);
 
     hres = IUri_GetScheme(uri, &scheme);
-
-    if(scheme != URL_SCHEME_JAVASCRIPT) {
+    if(SUCCEEDED(hres) && scheme != URL_SCHEME_JAVASCRIPT) {
         navigate_task_t *task;
 
         task = heap_alloc(sizeof(*task));
