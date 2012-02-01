@@ -2779,9 +2779,7 @@ static BOOL is_netwm_supported( Display *display, Atom atom )
 LRESULT CDECL X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     WPARAM hittest = wparam & 0x0f;
-    DWORD dwPoint;
-    int x, y, dir;
-    XEvent xev;
+    int dir;
     Display *display = thread_display();
     struct x11drv_win_data *data;
 
@@ -2833,30 +2831,6 @@ LRESULT CDECL X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
         return -1;
     }
 
-    dwPoint = GetMessagePos();
-    x = (short)LOWORD(dwPoint);
-    y = (short)HIWORD(dwPoint);
-
-    TRACE("hwnd %p, x %d, y %d, dir %d\n", hwnd, x, y, dir);
-
-    xev.xclient.type = ClientMessage;
-    xev.xclient.window = X11DRV_get_whole_window(hwnd);
-    xev.xclient.message_type = x11drv_atom(_NET_WM_MOVERESIZE);
-    xev.xclient.serial = 0;
-    xev.xclient.display = display;
-    xev.xclient.send_event = True;
-    xev.xclient.format = 32;
-    xev.xclient.data.l[0] = x - virtual_screen_rect.left; /* x coord */
-    xev.xclient.data.l[1] = y - virtual_screen_rect.top;  /* y coord */
-    xev.xclient.data.l[2] = dir; /* direction */
-    xev.xclient.data.l[3] = 1; /* button */
-    xev.xclient.data.l[4] = 0; /* unused */
-
-    /* need to ungrab the pointer that may have been automatically grabbed
-     * with a ButtonPress event */
-    wine_tsx11_lock();
-    XUngrabPointer( display, CurrentTime );
-    XSendEvent(display, root_window, False, SubstructureNotifyMask | SubstructureRedirectMask, &xev);
-    wine_tsx11_unlock();
+    move_resize_window( display, data, dir );
     return 0;
 }

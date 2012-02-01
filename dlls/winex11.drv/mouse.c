@@ -1327,6 +1327,48 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 }
 
 /***********************************************************************
+ *           move_resize_window
+ */
+void move_resize_window( Display *display, struct x11drv_win_data *data, int dir )
+{
+    DWORD pt;
+    int x, y, button = 0;
+    XEvent xev;
+
+    pt = GetMessagePos();
+    x = (short)LOWORD( pt );
+    y = (short)HIWORD( pt );
+
+    if (GetKeyState( VK_LBUTTON ) & 0x8000) button = 1;
+    else if (GetKeyState( VK_MBUTTON ) & 0x8000) button = 2;
+    else if (GetKeyState( VK_RBUTTON ) & 0x8000) button = 3;
+
+    TRACE( "hwnd %p/%lx, x %d, y %d, dir %d, button %d\n",
+           data->hwnd, data->whole_window, x, y, dir, button );
+
+    xev.xclient.type = ClientMessage;
+    xev.xclient.window = data->whole_window;
+    xev.xclient.message_type = x11drv_atom(_NET_WM_MOVERESIZE);
+    xev.xclient.serial = 0;
+    xev.xclient.display = display;
+    xev.xclient.send_event = True;
+    xev.xclient.format = 32;
+    xev.xclient.data.l[0] = x - virtual_screen_rect.left; /* x coord */
+    xev.xclient.data.l[1] = y - virtual_screen_rect.top;  /* y coord */
+    xev.xclient.data.l[2] = dir; /* direction */
+    xev.xclient.data.l[3] = button; /* button */
+    xev.xclient.data.l[4] = 0; /* unused */
+
+    /* need to ungrab the pointer that may have been automatically grabbed
+     * with a ButtonPress event */
+    wine_tsx11_lock();
+    XUngrabPointer( display, CurrentTime );
+    XSendEvent(display, root_window, False, SubstructureNotifyMask | SubstructureRedirectMask, &xev);
+    wine_tsx11_unlock();
+}
+
+
+/***********************************************************************
  *           X11DRV_ButtonPress
  */
 void X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
