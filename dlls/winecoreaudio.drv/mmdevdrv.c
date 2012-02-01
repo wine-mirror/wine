@@ -138,7 +138,7 @@ struct ACImpl {
     UINT32 getbuf_last;
     int playing;
 
-    Float64 highest_sampletime;
+    Float64 highest_sampletime, next_sampletime;
 
     AudioSession *session;
     AudioSessionWrapper *session_wrapper;
@@ -564,8 +564,13 @@ static UINT64 get_current_aqbuffer_position(ACImpl *This, int mode)
     else
         ret = This->highest_sampletime - bufinfo->start_sampletime;
 
-    if(mode == BUFPOS_ABSOLUTE)
-        ret += bufinfo->start_pos;
+    if(mode == BUFPOS_ABSOLUTE){
+        ret = This->written_frames - (bufinfo->len_frames - ret);
+        while((head = list_next(&This->queued_bufinfos, &bufinfo->entry))){
+            bufinfo = LIST_ENTRY(head, QueuedBufInfo, entry);
+            ret -= bufinfo->len_frames;
+        }
+    }
 
     TRACE("%llu frames (%s)\n", ret,
             mode == BUFPOS_ABSOLUTE ? "absolute" : "relative");
@@ -1851,7 +1856,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
     AQBuffer *buf;
-    AudioTimeStamp start_time;
+    AudioTimeStamp start_time, req_time = {0}, *passed_time = NULL;
     OSStatus sc;
 
     TRACE("(%p)->(%u, %x)\n", This, frames, flags);
@@ -1896,8 +1901,22 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
 
     buf = This->public_buffer->mUserData;
     buf->used = TRUE;
+
+    if(list_empty(&This->queued_bufinfos)){
+        sc = AudioQueueGetCurrentTime(This->aqueue, NULL, &req_time, NULL);
+        if(sc == noErr)
+            passed_time = &req_time;
+        else
+            TRACE("AudioQueueGetCurrentTime failed: %lx\n", sc);
+    }else{
+        req_time.mSampleTime = This->next_sampletime;
+        req_time.mFlags = kAudioTimeStampSampleTimeValid;
+        passed_time = &req_time;
+    }
+
     sc = AudioQueueEnqueueBufferWithParameters(This->aqueue,
-            This->public_buffer, 0, NULL, 0, 0, 0, NULL, NULL, &start_time);
+            This->public_buffer, 0, NULL, 0, 0, 0, NULL, passed_time,
+            &start_time);
     if(sc != noErr){
         OSSpinLockUnlock(&This->lock);
         ERR("Unable to enqueue buffer: %lx\n", sc);
@@ -1914,6 +1933,8 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         bufinfo->len_frames = frames;
 
         list_add_tail(&This->queued_bufinfos, &bufinfo->entry);
+
+        This->next_sampletime = start_time.mSampleTime + bufinfo->len_frames;
     }else
         WARN("Start time didn't contain valid SampleTime member\n");
 
