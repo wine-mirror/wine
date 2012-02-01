@@ -1856,6 +1856,10 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
                 }
             }
 
+            /* FIXME: When we properly shape Hangul remove this check */
+            if ((dwFlags & SSA_LINK) && !analysis->glyphs[i].fallbackFont && analysis->pItem[i].a.eScript == Script_Hangul)
+                analysis->pItem[i].a.fNoGlyphIndex = TRUE;
+
             if ((dwFlags & SSA_LINK) && !analysis->glyphs[i].fallbackFont && !scriptInformation[analysis->pItem[i].a.eScript].props.fComplex)
                 analysis->pItem[i].a.fNoGlyphIndex = TRUE;
 
