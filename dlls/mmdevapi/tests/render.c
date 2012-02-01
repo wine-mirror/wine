@@ -66,6 +66,32 @@ static inline const char *dbgstr_guid( const GUID *id )
     return ret;
 }
 
+#define PI 3.14159265358979323846L
+static DWORD wave_generate_tone(PWAVEFORMATEX pwfx, BYTE* data, UINT32 frames)
+{
+    static double phase = 0.; /* normalized to unit, not 2*PI */
+    PWAVEFORMATEXTENSIBLE wfxe = (PWAVEFORMATEXTENSIBLE)pwfx;
+    DWORD cn, i;
+    double delta, y;
+
+    if(!winetest_interactive || wfxe->Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE ||
+       !IsEqualGUID(&wfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))
+        return AUDCLNT_BUFFERFLAGS_SILENT;
+
+    for(delta = phase, cn = 0; cn < wfxe->Format.nChannels;
+        delta += .5/wfxe->Format.nChannels, cn++){
+        for(i = 0; i < frames; i++){
+            y = sin(2*PI*(440.* i / wfxe->Format.nSamplesPerSec + delta));
+            /* assume alignment is granted */
+            ((float*)data)[cn+i*wfxe->Format.nChannels] = y;
+            /* fixme: 16bit for exclusive mode */
+        }
+    }
+    phase += 440.* frames / wfxe->Format.nSamplesPerSec;
+    phase -= floor(phase);
+    return 0;
+}
+
 static void test_uninitialized(IAudioClient *ac)
 {
     HRESULT hr;
@@ -1590,7 +1616,15 @@ static void test_worst_case(void)
         hr = IAudioClock_GetPosition(acl, &pos, &pcpos0);
         ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
 
-        /* XAudio2 prefills one period, we don't */
+        /* XAudio2 prefills one period, play without it */
+        if(winetest_debug>2){
+            hr = IAudioRenderClient_GetBuffer(arc, fragment, &data);
+            ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+
+            hr = IAudioRenderClient_ReleaseBuffer(arc, fragment, AUDCLNT_BUFFERFLAGS_SILENT);
+            ok(hr == S_OK, "ReleaseBuffer failed: %08x\n", hr);
+        }
+
         hr = IAudioClient_Start(ac);
         ok(hr == S_OK, "Start failed: %08x\n", hr);
 
@@ -1609,8 +1643,8 @@ static void test_worst_case(void)
                 hr = IAudioRenderClient_GetBuffer(arc, fragment, &data);
                 ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
 
-                /* fixme: produce audible output */
-                hr = IAudioRenderClient_ReleaseBuffer(arc, fragment, AUDCLNT_BUFFERFLAGS_SILENT);
+                hr = IAudioRenderClient_ReleaseBuffer(arc, fragment,
+                       wave_generate_tone(pwfx, data, fragment));
                 ok(hr == S_OK, "ReleaseBuffer failed: %08x\n", hr);
                 if(hr == S_OK)
                     sum += fragment;
