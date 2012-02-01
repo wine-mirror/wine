@@ -363,7 +363,7 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
     for(err = snd_card_next(&card); card != -1 && err >= 0;
             err = snd_card_next(&card)){
         char cardpath[64];
-        const char *cardname;
+        char *cardname;
         WCHAR *cardnameW;
         snd_ctl_t *ctl;
         DWORD len;
@@ -376,24 +376,28 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
             continue;
         }
 
-        if((err = snd_card_get_name(card, (char **)&cardname)) < 0){
+        if(snd_card_get_name(card, &cardname) < 0) {
+            /* FIXME: Should be localized */
+            static const WCHAR nameW[] = {'U','n','k','n','o','w','n',' ','s','o','u','n','d','c','a','r','d',0};
             WARN("Unable to get card name for ALSA device %s: %d (%s)\n",
                     cardpath, err, snd_strerror(err));
-            /* FIXME: Should be localized */
-            cardname = "Unknown soundcard";
+            alsa_get_card_devices(stream, ids, keys, num, ctl, card, nameW);
+        }else{
+            len = MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, NULL, 0);
+            cardnameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+            if(!cardnameW){
+                free(cardname);
+                snd_ctl_close(ctl);
+                return E_OUTOFMEMORY;
+            }
+            MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, cardnameW, len);
+
+            alsa_get_card_devices(stream, ids, keys, num, ctl, card, cardnameW);
+
+            HeapFree(GetProcessHeap(), 0, cardnameW);
+            free(cardname);
         }
-
-        len = MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, NULL, 0);
-        cardnameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        if(!cardnameW){
-            snd_ctl_close(ctl);
-            return E_OUTOFMEMORY;
-        }
-        MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, cardnameW, len);
-
-        alsa_get_card_devices(stream, ids, keys, num, ctl, card, cardnameW);
-
-        HeapFree(GetProcessHeap(), 0, cardnameW);
 
         snd_ctl_close(ctl);
     }
