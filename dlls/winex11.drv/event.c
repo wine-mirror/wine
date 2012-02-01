@@ -520,12 +520,15 @@ DWORD EVENT_x11_time_to_win32_time(Time time)
  */
 static inline BOOL can_activate_window( HWND hwnd )
 {
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+
     if (!(style & WS_VISIBLE)) return FALSE;
     if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return FALSE;
     if (style & WS_MINIMIZE) return FALSE;
     if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_NOACTIVATE) return FALSE;
     if (hwnd == GetDesktopWindow()) return FALSE;
+    if (data && IsRectEmpty( &data->window_rect )) return FALSE;
     return !(style & WS_DISABLED);
 }
 
