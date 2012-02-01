@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-27 20:51+0100\n"
+"PO-Revision-Date: 2012-02-01 15:00+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -2086,11 +2086,11 @@ msgstr "&Stato del Certificato:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
-msgstr "Disclaimer"
+msgstr "Liberatoria"
 
 #: cryptui.rc:228
 msgid "More &Info"
-msgstr "Più %Informazioni"
+msgstr "Più &informazioni"
 
 #: cryptui.rc:236
 msgid "&Friendly name:"
@@ -3686,7 +3686,7 @@ msgstr "Errore generico\n"
 
 #: winerror.mc:186
 msgid "Sharing violation\n"
-msgstr "Viloazione di condivisione\n"
+msgstr "Violazione di condivisione\n"
 
 #: winerror.mc:191
 msgid "Lock violation\n"
@@ -7299,7 +7299,7 @@ msgid ""
 "make sure the correct drive is selected below"
 msgstr ""
 "Inserisci il disco d'installazione del produttore, quindi\n"
-"assicurati che l'unità giusta sia selezinata sotto"
+"assicurati che l'unità giusta sia selezionata sotto"
 
 #: setupapi.rc:54
 msgid "Copy manufacturer's files from:"
@@ -7624,7 +7624,7 @@ msgstr "Icone &piccole"
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:121 shell32.rc:161
 msgid "&List"
-msgstr "&Lista"
+msgstr "&Elenco"
 
 #: shell32.rc:30 shell32.rc:45 shell32.rc:122 shell32.rc:162 taskmgr.rc:67
 #: taskmgr.rc:112 taskmgr.rc:254
@@ -8018,7 +8018,7 @@ msgstr "Sei sicuro di voler cancellare questi %1 elementi?"
 
 #: shell32.rc:178
 msgid "Confirm file overwrite"
-msgstr "Confermare la sovrascrizione del file"
+msgstr "Confermare la sovrascrittura del file"
 
 #: shell32.rc:177
 msgid ""
@@ -8401,8 +8401,8 @@ msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"L'header wave non è stato preparato. Usare la funzione Prepare per preparare "
-"l'header e riprovare."
+"L'intestazione del wave non è stata preparata. Usare la funzione Prepare per "
+"preparare l'intestazione e riprovare."
 
 #: winmm.rc:45
 msgid ""
@@ -8417,8 +8417,8 @@ msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"L'header MIDI non è stato preparato. Usare la funzione Prepare per preparare "
-"l'header e riprovare."
+"L'intestazione MIDI non è stata preparata. Usare la funzione Prepare per "
+"preparare l'intestazione e riprovare."
 
 #: winmm.rc:50
 msgid ""
@@ -9716,7 +9716,7 @@ msgid ""
 msgstr ""
 "ASSOC mostra o modifica le associazioni con le estensioni dei file.\n"
 "\n"
-"Sintassi: ASSOC [.ext[=[tipoFile]]]\n"
+"Sintassi: ASSOC [.ext[=[tipo_file]]]\n"
 "\n"
 "ASSOC senza parametri mostra le attuali associazioni dei file.\n"
 "Se usato con solo un'estensione di file, mostra l'associazione attuale.\n"
@@ -9738,13 +9738,13 @@ msgid ""
 msgstr ""
 "FTYPE mostra o modifica i comandi di apertura associati ai tipi di file.\n"
 "\n"
-"Sintassi: FTYPE [tipoFile[=[comandoApertura]]]\n"
+"Sintassi: FTYPE [tipo_file[=[comando_apertura]]]\n"
 "\n"
 "Senza parametri, mostra i tipi di file per i quali sono attualmente definiti "
 "comandi di apertura.\n"
 "Se usato con solo un tipo di file, mostra la stringa del comando di apertura "
 "associato, se esiste.\n"
-"Non specifying alcun comando di apertura dopo il segno uguale rimuove il la "
+"Non specificare alcun comando di apertura dopo il segno uguale rimuove la "
 "stringa di comando associata con il tipo di file specificato.\n"
 
 #: cmd.rc:243
@@ -11692,7 +11692,7 @@ msgstr "Termina la &famiglia dei processi"
 
 #: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
-msgstr ""
+msgstr "Eseguire &debug"
 
 #: taskmgr.rc:154
 msgid "Set &Priority"
@@ -12015,11 +12015,11 @@ msgstr "Dimensione della memoria &virtuale"
 
 #: taskmgr.rc:555
 msgid "Pa&ged Pool"
-msgstr "Riserva di pa&ging"
+msgstr "Riserva pa&ginata"
 
 #: taskmgr.rc:557
 msgid "N&on-paged Pool"
-msgstr "Riserva n&on di paging"
+msgstr "Riserva n&on paginata"
 
 #: taskmgr.rc:559
 msgid "Base P&riority"
@@ -12297,7 +12297,7 @@ msgstr "Dimensione VM"
 
 #: taskmgr.rc:287
 msgid "Paged Pool"
-msgstr "Riserva paging"
+msgstr "Riserva paginata"
 
 #: taskmgr.rc:288
 msgid "NP Pool"
@@ -12416,7 +12416,7 @@ msgstr ""
 
 #: view.rc:33
 msgid "&Pan"
-msgstr "&Pan"
+msgstr "S&postamento"
 
 #: view.rc:35
 msgid "&Scale to Window"
