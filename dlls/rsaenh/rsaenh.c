@@ -1697,6 +1697,11 @@ static BOOL unpad_data(CONST BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWOR
 {
     DWORD i;
     
+    if (dwDataLen < 3)
+    {
+        SetLastError(NTE_BAD_DATA);
+        return FALSE;
+    }
     for (i=2; i<dwDataLen; i++)
         if (!abData[i])
             break;
