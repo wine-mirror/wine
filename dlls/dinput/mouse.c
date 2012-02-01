@@ -426,7 +426,8 @@ static void warp_check( SysMouseImpl* This, BOOL force )
 
         This->last_warped = now;
         This->need_warp = FALSE;
-        if (!GetWindowRect(This->base.win, &rect)) return;
+        if (!GetClientRect(This->base.win, &rect)) return;
+        MapWindowPoints( This->base.win, 0, (POINT *)&rect, 2 );
         if (!This->clipped)
         {
             mapped_center.x = (rect.left + rect.right) / 2;
