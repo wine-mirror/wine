@@ -1332,8 +1332,10 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 void move_resize_window( Display *display, struct x11drv_win_data *data, int dir )
 {
     DWORD pt;
-    int x, y, button = 0;
+    int x, y, rootX, rootY, ret, button = 0;
     XEvent xev;
+    Window root, child;
+    unsigned int xstate;
 
     pt = GetMessagePos();
     x = (short)LOWORD( pt );
@@ -1365,6 +1367,48 @@ void move_resize_window( Display *display, struct x11drv_win_data *data, int dir
     XUngrabPointer( display, CurrentTime );
     XSendEvent(display, root_window, False, SubstructureNotifyMask | SubstructureRedirectMask, &xev);
     wine_tsx11_unlock();
+
+    /* try to detect the end of the size/move by polling for the mouse button to be released */
+    /* (some apps don't like it if we return before the size/move is done) */
+
+    if (!button) return;
+    for (;;)
+    {
+        MSG msg;
+        INPUT input;
+
+        wine_tsx11_lock();
+        ret = XQueryPointer( display, root_window, &root, &child, &rootX, &rootY, &x, &y, &xstate );
+        wine_tsx11_unlock();
+        if (!ret) break;
+
+        if (!(xstate & (Button1Mask << (button - 1))))
+        {
+            /* fake a button release event */
+            input.type = INPUT_MOUSE;
+            input.u.mi.dx          = x + virtual_screen_rect.left;
+            input.u.mi.dy          = y + virtual_screen_rect.top;
+            input.u.mi.mouseData   = button_up_data[button - 1];
+            input.u.mi.dwFlags     = button_up_flags[button - 1] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
+            input.u.mi.time        = GetTickCount();
+            input.u.mi.dwExtraInfo = 0;
+            __wine_send_input( data->hwnd, &input );
+        }
+
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+        {
+            if (!CallMsgFilterW( &msg, MSGF_SIZE ))
+            {
+                TranslateMessage( &msg );
+                DispatchMessageW( &msg );
+            }
+        }
+
+        if (!(xstate & (Button1Mask << (button - 1)))) break;
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, 100, QS_ALLINPUT );
+    }
+
+    TRACE( "hwnd %p/%lx done\n", data->hwnd, data->whole_window );
 }
 
 
