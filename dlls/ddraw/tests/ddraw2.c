@@ -814,10 +814,10 @@ cleanup:
     }
     if (background) IDirect3DMaterial2_Release(background);
     if (surface3) IDirectDrawSurface3_Release(surface3);
-    if (surface) IDirectDrawSurface7_Release(surface);
+    if (surface) IDirectDrawSurface_Release(surface);
     if (device) IDirect3DDevice2_Release(device);
-    if (d3d) IDirect3D7_Release(d3d);
-    if (ddraw) IDirectDraw7_Release(ddraw);
+    if (d3d) IDirect3D2_Release(d3d);
+    if (ddraw) IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
 }
 

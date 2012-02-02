@@ -976,8 +976,8 @@ static void test_surface_interface_mismatch(void)
 cleanup:
     if (viewport)
     {
-        IDirect3DDevice2_DeleteViewport(device, viewport);
-        IDirect3DViewport2_Release(viewport);
+        IDirect3DDevice3_DeleteViewport(device, viewport);
+        IDirect3DViewport3_Release(viewport);
     }
     if (surface3) IDirectDrawSurface3_Release(surface3);
     if (surface) IDirectDrawSurface4_Release(surface);

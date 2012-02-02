@@ -784,15 +784,15 @@ static void test_surface_interface_mismatch(void)
 cleanup:
     if (viewport)
     {
-        IDirect3DDevice2_DeleteViewport(device, viewport);
-        IDirect3DViewport2_Release(viewport);
+        IDirect3DDevice_DeleteViewport(device, viewport);
+        IDirect3DViewport_Release(viewport);
     }
-    if (background) IDirect3DMaterial2_Release(background);
+    if (background) IDirect3DMaterial_Release(background);
     if (surface3) IDirectDrawSurface3_Release(surface3);
-    if (surface) IDirectDrawSurface7_Release(surface);
-    if (device) IDirect3DDevice2_Release(device);
-    if (d3d) IDirect3D7_Release(d3d);
-    if (ddraw) IDirectDraw7_Release(ddraw);
+    if (surface) IDirectDrawSurface_Release(surface);
+    if (device) IDirect3DDevice_Release(device);
+    if (d3d) IDirect3D_Release(d3d);
+    if (ddraw) IDirectDraw_Release(ddraw);
     DestroyWindow(window);
 }
 
