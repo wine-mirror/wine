@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-09 16:45+0900\n"
+"PO-Revision-Date: 2012-02-03 00:55+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -40,9 +40,8 @@ msgstr ""
 "除] をクリックしてください。"
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "サポート情報"
+msgstr "サポート情報(&S)"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -85,7 +84,7 @@ msgstr "発行元:"
 
 #: appwiz.rc:78 winefile.rc:168
 msgid "Version:"
-msgstr ""
+msgstr "バージョン:"
 
 #: appwiz.rc:79
 msgid "Contact:"
@@ -101,7 +100,7 @@ msgstr "サポート電話:"
 
 #: appwiz.rc:82
 msgid "Readme:"
-msgstr ""
+msgstr "付属文書:"
 
 #: appwiz.rc:83
 msgid "Product Updates:"
@@ -276,7 +275,7 @@ msgstr "音声"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
-msgstr ""
+msgstr "Wine AVIデフォルト ハンドラ"
 
 #: avifil32.rc:34
 msgid "uncompressed"
@@ -284,7 +283,7 @@ msgstr "未圧縮"
 
 #: browseui.rc:25
 msgid "Canceling..."
-msgstr "キャンセル…"
+msgstr "キャンセル中..."
 
 #: comctl32.rc:49 winefile.rc:159
 msgid "Properties for %s"
@@ -579,19 +578,17 @@ msgstr "青(&B):"
 
 #: comdlg32.rc:288
 msgid "&Hue:"
-msgstr "色合い(&H):"
+msgstr "色相(&H):"
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr "鮮やかさ(&S):"
+msgstr "彩度(&S):"
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
-msgstr "明るさ(&L):"
+msgstr "輝度(&L):"
 
 #: comdlg32.rc:302
 msgid "&Add to Custom Colors"
@@ -712,7 +709,7 @@ msgstr "サイズ(&Z):"
 
 #: comdlg32.rc:412
 msgid "&Source:"
-msgstr ""
+msgstr "給紙方法(&S):"
 
 #: comdlg32.rc:417
 msgid "P&ortrait"
@@ -2180,13 +2177,12 @@ msgid "B&rowse..."
 msgstr "参照(&R)"
 
 #: cryptui.rc:294
-#, fuzzy
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"注意:  以下のファイル形式は、2つ以上の証明書、証明書失効リスト、証明書信頼リ"
-"ストを含むことがあります:"
+"注意: 以下のファイル形式には、証明書、証明書失効リスト、証明書信頼リストが複"
+"数含まれることがあります:"
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
@@ -2336,11 +2332,11 @@ msgstr "形式を選択してください:"
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (.cer)"
-msgstr ""
+msgstr "&DER符号化された X.509 (.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr ""
+msgstr "Ba&se64符号化された X.509 (.cer)"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
@@ -2383,7 +2379,6 @@ msgid "Certificate Information"
 msgstr "証明書の情報"
 
 #: cryptui.rc:29
-#, fuzzy
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
@@ -2392,7 +2387,6 @@ msgstr ""
 "があります。"
 
 #: cryptui.rc:30
-#, fuzzy
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
@@ -2541,7 +2535,6 @@ msgid "Please select a certificate store."
 msgstr "証明書ストアを選択してください。"
 
 #: cryptui.rc:69
-#, fuzzy
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
@@ -2589,14 +2582,13 @@ msgstr "Microsoft シリアル化された証明書ストア (*.sst)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 メッセージ (*.spc; *.p7b)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
 msgstr "ファイルを選択してください。"
 
 #: cryptui.rc:82
-#, fuzzy
 msgid "The file format is not recognized. Please select another file."
 msgstr "ファイル形式を認識できません。他のファイルを選択してください。"
 
@@ -2634,7 +2626,7 @@ msgstr "証明書失効リスト"
 
 #: cryptui.rc:93
 msgid "CMS/PKCS #7 Message"
-msgstr ""
+msgstr "CMS/PKCS #7 メッセージ"
 
 #: cryptui.rc:94
 msgid "Personal Information Exchange"
@@ -2834,21 +2826,20 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "コンテンツが保存されるファイルの名前を指定してください。"
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
 msgstr "指定した名前はすでに存在します。ファイルを置き換えますか?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr ""
+msgstr "DER符号化されたバイナリ X.509 (*.cer)"
 
 #: cryptui.rc:154
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr ""
+msgstr "Base64符号化された X.509 (*.cer)"
 
 #: cryptui.rc:157
 msgid "CMS/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 メッセージ (*.p7b)"
 
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
@@ -2905,7 +2896,6 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "注意: この証明書の秘密鍵を開けません。"
 
 #: cryptui.rc:173
-#, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "注意: この証明書の秘密鍵はエクスポートできません。"
 
@@ -3475,9 +3465,8 @@ msgid "Label redefined"
 msgstr ""
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
-msgstr "ファイルが見つかりません。"
+msgstr "ラベルが見つかりません"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
@@ -5689,7 +5678,6 @@ msgid "Event log file changed\n"
 msgstr "イベント ログ ファイルが変更されました。\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed\n"
 msgstr "インストーラ サービスが失敗しました。\n"
 
@@ -6624,7 +6612,6 @@ msgid "Done"
 msgstr "完了"
 
 #: msi.rc:27
-#, fuzzy
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
@@ -7158,7 +7145,6 @@ msgid ""
 msgstr "クリップボードの内容を文書に挿入します。 %s を利用して、編集できます。"
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
@@ -7167,7 +7153,6 @@ msgstr ""
 "ンとして表示されます。"
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
@@ -7177,25 +7162,22 @@ msgstr ""
 "ンクしているため、元のファイルへの変更はこの文書に反映されます。"
 
 #: oledlg.rc:38
-#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"クリップボードの内容を示す絵を文書に挿入します。絵は元のファイルとリンクして"
-"いるため、元のファイルへの変更はこの文書に反映されます。"
+"クリップボード内の画像を文書に挿入します。画像は元のファイルとリンクしている"
+"ため、元のファイルへの変更はこの文書に反映されます。"
 
 #: oledlg.rc:39
-#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"クリップボードの内容の場所を指すショートカットを挿入します。ショートカットは"
-"元のファイルとリンクしているため、元のファイルへの変更はこの文書に反映されま"
-"す。"
+"クリップボード内の場所を指すショートカットを挿入します。ショートカットは元の"
+"ファイルとリンクしているため、元のファイルへの変更はこの文書に反映されます。"
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
@@ -7740,11 +7722,11 @@ msgstr "Wine ライセンス(&L)"
 
 #: shell32.rc:325
 msgid "Running on %s"
-msgstr ""
+msgstr "%s 上で動作しています"
 
 #: shell32.rc:326
 msgid "Wine was brought to you by:"
-msgstr ""
+msgstr "Wine の提供:"
 
 #: shell32.rc:334
 msgid ""
@@ -7850,7 +7832,7 @@ msgstr "Favorites"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "StartUp"
 
 #: shell32.rc:204
 msgid "Start Menu"
@@ -7883,7 +7865,7 @@ msgstr "PrintHood"
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
-msgstr "履歴"
+msgstr "History"
 
 #: shell32.rc:212
 msgid "Program Files"
@@ -7894,18 +7876,16 @@ msgid "My Pictures"
 msgstr "My Pictures"
 
 #: shell32.rc:215
-#, fuzzy
 msgid "Common Files"
-msgstr "ファイルをコピーしています..."
+msgstr "Common Files"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
 msgstr "Documents"
 
 #: shell32.rc:217
-#, fuzzy
 msgid "Administrative Tools"
-msgstr "Start Menu\\Programs\\Administrative Tools"
+msgstr "Administrative Tools"
 
 #: shell32.rc:218
 msgid "Music"
@@ -7932,14 +7912,12 @@ msgid "Links"
 msgstr "Links"
 
 #: shell32.rc:223
-#, fuzzy
 msgid "Slide Shows"
-msgstr "Pictures\\Slide Shows"
+msgstr "Slide Shows"
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
-msgstr "Music\\Playlists"
+msgstr "Playlists"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -7954,24 +7932,20 @@ msgid "Model"
 msgstr "機種名"
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
-msgstr "Music\\Sample Music"
+msgstr "Sample Music"
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
-msgstr "Pictures\\Sample Pictures"
+msgstr "Sample Pictures"
 
 #: shell32.rc:227
-#, fuzzy
 msgid "Sample Playlists"
-msgstr "Music\\Sample Playlists"
+msgstr "Sample Playlists"
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
-msgstr "Videos\\Sample Videos"
+msgstr "Sample Videos"
 
 #: shell32.rc:229
 msgid "Saved Games"
@@ -8123,7 +8097,6 @@ msgid "Confirm overwrite"
 msgstr "上書きの確認"
 
 #: shell32.rc:265
-#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8210,23 +8183,20 @@ msgid "Ma&ximize"
 msgstr "最大化(&X)"
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "閉じる(&C)\tAlt-F4"
+msgstr "閉じる(&C)\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
 msgstr "Wineについて(&A)"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "閉じる(&C)\tCtrl-F4"
+msgstr "閉じる(&C)\tCtrl+F4"
 
 #: user32.rc:48
-#, fuzzy
 msgid "Nex&t\tCtrl+F6"
-msgstr "次のウィンドウ(&N)\tCtrl-F6"
+msgstr "次のウィンドウ(&T)\tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -8250,7 +8220,7 @@ msgstr "続ける(&C)"
 
 #: user32.rc:91
 msgid "Select Window"
-msgstr ""
+msgstr "ウィンドウの選択"
 
 #: user32.rc:69
 msgid "&More Windows..."
@@ -8914,7 +8884,6 @@ msgid "&Output File Name:"
 msgstr "出力ファイル名(&O):"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
 msgstr ""
 "出力ファイルはすでに存在します。上書きするには OK をクリックしてください。"
@@ -9518,7 +9487,6 @@ msgstr ""
 "したがって、'SET PROMPT=文字列'と'PROMPT 文字列'の効果は同じです。\n"
 
 #: cmd.rc:153
-#, fuzzy
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -9544,7 +9512,6 @@ msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <ディレクトリ> はサブディレクトリを削除します。\n"
 
 #: cmd.rc:178
-#, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9595,9 +9562,8 @@ msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME は現在の時刻を設定または表示します。\n"
 
 #: cmd.rc:187
-#, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr "cmdウィンドウのウィンドウタイトルを設定します。構文 TITLE [文字列]\n"
+msgstr "TITLE <文字列> は cmd ウィンドウのウィンドウタイトルを設定します。\n"
 
 #: cmd.rc:191
 msgid ""
@@ -9609,7 +9575,6 @@ msgstr ""
 "されません。\n"
 
 #: cmd.rc:200
-#, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9619,14 +9584,14 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY はverifyフラグをセット、クリア、またはテストする時に使用します。有効な"
-"フォームは:\n"
+"VERIFY は照合フラグをセット、クリア、確認するときに使用します。有効な形式"
+"は:\n"
 "\n"
-"VERIFY ON\tフラグをセット\n"
-"VERIFY OFF\tフラグをクリア\n"
-"VERIFY\t\tONかOFFか表示\n"
+"VERIFY ON\tフラグをセットします。\n"
+"VERIFY OFF\tフラグをクリアします。\n"
+"VERIFY\t\t状況に応じONかOFFかを表示します。\n"
 "\n"
-"Wine環境ではverifyフラグは意味を持ちません。\n"
+"Wine環境では照合フラグは意味を持ちません。\n"
 
 #: cmd.rc:203
 msgid "VER displays the version of cmd you are running.\n"
@@ -9668,14 +9633,12 @@ msgstr ""
 "レント ディレクトリを指定されたディレクトリに変更します。\n"
 
 #: cmd.rc:222
-#, fuzzy
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
-"POPD は PUSHD で最後に保存されたディレクトリにカレント ディレクトリを変\n"
-"更します。\n"
+"POPD は PUSHD で最後に保存されたディレクトリにカレント ディレクトリを変更しま"
+"す。\n"
 
 #: cmd.rc:230
-#, fuzzy
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9686,7 +9649,7 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
-"ASSOC はファイル拡張子の関連付けを表示または変更します\n"
+"ASSOC はファイル拡張子の関連付けを表示または変更します。\n"
 "\n"
 "構文: ASSOC [.拡張子[=[ファイル タイプ]]\n"
 "\n"
@@ -9696,7 +9659,6 @@ msgstr ""
 "す。\n"
 
 #: cmd.rc:241
-#, fuzzy
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9710,7 +9672,7 @@ msgid ""
 "associated to the specified file type.\n"
 msgstr ""
 "FTYPE はファイル タイプに関連付けられたオープン コマンドを表示または変更しま"
-"す\n"
+"す。\n"
 "\n"
 "構文: FTYPE [ファイル タイプ[=[オープン コマンド]]\n"
 "\n"
@@ -9823,9 +9785,8 @@ msgstr ""
 "い。\n"
 
 #: cmd.rc:290
-#, fuzzy
 msgid "Are you sure?"
-msgstr "よろしいですか"
+msgstr "よろしいですか?"
 
 #: cmd.rc:291 xcopy.rc:40
 msgctxt "Yes key"
@@ -9846,9 +9807,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "ファイル タイプ '%1' に関連付けられた開くコマンドがありません。\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "Overwrite %1?"
-msgstr "上書き %1"
+msgstr "上書き %1?"
 
 #: cmd.rc:296
 msgid "More..."
@@ -9908,9 +9868,8 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:312
-#, fuzzy
 msgid "Delete %1?"
-msgstr "削除"
+msgstr "削除 %1?"
 
 #: cmd.rc:313
 msgid "Echo is %1\n"
@@ -9937,9 +9896,8 @@ msgstr ""
 "\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "ボリューム ラベル(半角11文字, ENTER で無指定)?"
+msgstr "ボリューム ラベル(半角11文字、<Enter>で無指定)?"
 
 #: cmd.rc:319
 msgid "PATH not found\n"
@@ -9959,7 +9917,7 @@ msgstr "CMD バージョン %1!S!\n"
 
 #: cmd.rc:323
 msgid "More? "
-msgstr ""
+msgstr "続行? "
 
 #: cmd.rc:324
 msgid "The input line is too long.\n"
@@ -9974,14 +9932,12 @@ msgid "Volume in drive %1!c! has no label.\n"
 msgstr "ドライブ %1!c! のボリュームラベルがありません。\n"
 
 #: cmd.rc:327
-#, fuzzy
 msgid " (Yes|No)"
-msgstr "%1? (Yes|No)\n"
+msgstr " (Yes|No)"
 
 #: cmd.rc:328
-#, fuzzy
 msgid " (Yes|No|All)"
-msgstr "%1? (Yes|No)\n"
+msgstr " (Yes|No|All)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10331,7 +10287,7 @@ msgstr "F"
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
@@ -10346,27 +10302,27 @@ msgstr "O"
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -10418,7 +10374,7 @@ msgstr "Unicode (UTF-16)"
 
 #: notepad.rc:83
 msgid "Unicode (UTF-16 big-endian)"
-msgstr ""
+msgstr "Unicode (UTF-16 ビッグ エンディアン)"
 
 #: notepad.rc:84
 msgid "Unicode (UTF-8)"
@@ -11435,7 +11391,6 @@ msgstr ""
 "条件の詳細は 'start /L' を起動してください。\n"
 
 #: start.rc:64
-#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -12430,6 +12385,10 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
+"このプログラムはフリー ソフトウェアです。 あなたはこれを、フリー ソフトウェア"
+"財団によって 発行された GNU 劣等一般公衆利用許諾契約書 (バージョン 2.1か、 希"
+"望によってはそれ以降の バージョン のうちどれか) の定める条件の下で 再頒布 ま"
+"たは 改変 することができます。"
 
 #: winecfg.rc:134
 msgid "Windows registration information"
@@ -12448,7 +12407,6 @@ msgid "Application settings"
 msgstr "アプリケーション設定"
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
@@ -12456,7 +12414,7 @@ msgid ""
 msgstr ""
 "Wineはアプリケーションによって異なるWindowsのバージョンをエミュレートできま"
 "す。 このタブはライブラリ及びグラフィック各タブと連動しますので、システム全体"
-"の設定や個別アプリケーションの設定の変更が行えます。"
+"の設定や 個別アプリケーションの設定の変更が行えます。"
 
 #: winecfg.rc:150
 msgid "&Add application..."
@@ -12500,7 +12458,7 @@ msgstr "画面の解像度(&R)"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr ""
+msgstr "10 ポイントの Thamoa による見本です"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
@@ -12592,7 +12550,7 @@ msgstr "詳細を表示(&A)"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr ""
+msgstr "デバイス(&V):"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -13008,11 +12966,11 @@ msgstr "ポップアップ"
 
 #: wineconsole.rc:67
 msgid "&Control"
-msgstr ""
+msgstr "コントロール(&C)"
 
 #: wineconsole.rc:68
 msgid "S&hift"
-msgstr ""
+msgstr "シフト(&H)"
 
 #: wineconsole.rc:69
 msgid "Quick edit"
@@ -13027,9 +12985,8 @@ msgid "Command history"
 msgstr "コマンド履歴"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
-msgstr "記憶するコマンド数(&N) :"
+msgstr "記憶するコマンド数(&N):"
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
@@ -13052,28 +13009,24 @@ msgid "Buffer zone"
 msgstr "バッファ サイズ"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
-msgstr "幅(&W) :"
+msgstr "幅(&W):"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
-msgstr "高さ(&H) :"
+msgstr "高さ(&H):"
 
 #: wineconsole.rc:108
 msgid "Window size"
 msgstr "ウィンドウ サイズ"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
-msgstr "幅(&I) :"
+msgstr "幅(&I):"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
-msgstr "高さ(&E) :"
+msgstr "高さ(&E):"
 
 #: wineconsole.rc:116
 msgid "End of program"
@@ -13142,7 +13095,7 @@ msgstr "それぞれの文字は %1!u! ピクセルの幅、%2!u! ピクセル�
 
 #: wineconsole.rc:35
 msgid "This is a test"
-msgstr ""
+msgstr "これはテスト"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
@@ -13224,7 +13177,6 @@ msgstr ""
 "かけし申し訳ありません。"
 
 #: winedbg.rc:55
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -13232,20 +13184,15 @@ msgid ""
 msgstr ""
 "これはプログラム内の問題や Wine の欠陥によって発生することがあります。<a "
 "href=\"http://appdb.winehq.org\">アプリケーション データベース</a>で このアプ"
-"リケーションを動作させるヒントを 確認するとよいでしょう。\n"
-"\n"
-"この問題が Windows 上で発生することがなく、まだ報告されていない場合は<a href="
-"\"http://wiki.winehq.org/Bugs\">バグ レポートを作成</a>できます。"
+"リケーションを動作させるヒントを 確認するとよいでしょう。"
 
 #: winedbg.rc:58
-#, fuzzy
 msgid "Show &Details"
-msgstr "詳細(&D)"
+msgstr "詳細を表示(&D)"
 
 #: winedbg.rc:63
-#, fuzzy
 msgid "Program Error Details"
-msgstr "プログラム エラー"
+msgstr "プログラム エラーの詳細"
 
 #: winedbg.rc:70
 msgid ""
@@ -13254,6 +13201,9 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"この問題が Windows 上で発生することがなくまだ報告されていない場合は、[保存す"
+"る]ボタンを利用して詳細情報を保存した上で、 <a href=\"http://wiki.winehq.org/"
+"Bugs\">バグ レポートを作成</a>し、そのファイルをレポートに添付できます。"
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13268,13 +13218,12 @@ msgid "(unidentified)"
 msgstr "(未識別)"
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "生成に失敗しました。\n"
+msgstr "保存に失敗しました。"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "詳細情報を読み込み中です。しばらくお待ちください..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -13435,7 +13384,7 @@ msgstr "バージョン情報"
 #: winefile.rc:197
 msgctxt "accelerator Fullscreen"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: winefile.rc:89
 msgid "Applying font settings"
@@ -13586,7 +13535,7 @@ msgstr "WineMine"
 
 #: winemine.rc:28
 msgid "Nobody"
-msgstr ""
+msgstr "名無し"
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
@@ -13634,7 +13583,7 @@ msgstr "常に手前に表示(&T)"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr ""
+msgstr "バージョン情報(&A)"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -13693,9 +13642,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "やり直し(&E)\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
-msgstr "クリア(&C)\tDEL"
+msgstr "クリア(&C)\tDel"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
@@ -13864,17 +13812,17 @@ msgstr "ツールバー"
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "R"
 
 #: wordpad.rc:282
 msgctxt "accelerator Redo"
@@ -13889,12 +13837,12 @@ msgstr "B"
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
@@ -14016,12 +13964,10 @@ msgstr ""
 "か？"
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
-msgstr "数の書式が不正"
+msgstr "数の書式が不正です。"
 
 #: wordpad.rc:188
-#, fuzzy
 msgid "OLE storage documents are not supported."
 msgstr "OLEストレージ文書はサポートされていません。"
 
@@ -14042,9 +13988,8 @@ msgid "You do not have access to open the file."
 msgstr "ファイルを開く権限がありません。"
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
-msgstr "プリントが実装されていません。"
+msgstr "印刷は実装されていません。"
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
@@ -14059,14 +14004,12 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "パラメータの数が違います。xcopy /? で使い方を表示します\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "無効なパラメータ '%1' です。xcopy /? で使い方を表示します\n"
 
 #: xcopy.rc:29
-#, fuzzy
 msgid "Press <Enter> to begin copying\n"
-msgstr "コピーを開始するには <enter> を押してください\n"
+msgstr "コピーを開始するには <Enter> を押してください\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
