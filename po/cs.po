@@ -13649,6 +13649,7 @@ msgid "Error while selecting new font."
 msgstr "Chyba při volbě nového písma."
 
 #: winefile.rc:95
+#, fuzzy
 msgid "Wine File Manager"
 msgstr "Winefile"
 
