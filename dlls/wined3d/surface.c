@@ -762,7 +762,7 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
     }
 
     if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
-        surface->flags |= SFLAG_LOST;
+        surface->flags |= SFLAG_DISCARDED;
 
     return WINED3D_OK;
 }
@@ -5599,7 +5599,7 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
 {
     TRACE("surface %p, new location %#x, w %u, h %u.\n", surface, location, w, h);
 
-    if (location & ~(SFLAG_LOCATIONS | SFLAG_LOST))
+    if (location & ~(SFLAG_LOCATIONS | SFLAG_DISCARDED))
         FIXME("Invalid location (%#x) specified.\n", location);
 
     if (((surface->flags & SFLAG_INTEXTURE) && !(location & SFLAG_INTEXTURE))
@@ -5614,7 +5614,7 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
 
     surface->ds_current_size.cx = w;
     surface->ds_current_size.cy = h;
-    surface->flags &= ~(SFLAG_LOCATIONS | SFLAG_LOST);
+    surface->flags &= ~(SFLAG_LOCATIONS | SFLAG_DISCARDED);
     surface->flags |= location;
 }
 
@@ -5655,7 +5655,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         return;
     }
 
-    if (surface->flags & SFLAG_LOST)
+    if (surface->flags & SFLAG_DISCARDED)
     {
         TRACE("Surface was discarded, no need copy data.\n");
         switch (location)
@@ -5672,7 +5672,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
             default:
                 FIXME("Unhandled location %#x\n", location);
         }
-        surface->flags &= ~SFLAG_LOST;
+        surface->flags &= ~SFLAG_DISCARDED;
         surface->flags |= location;
         surface->ds_current_size.cx = surface->resource.width;
         surface->ds_current_size.cy = surface->resource.height;

@@ -2155,6 +2155,7 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_INRB_MULTISAMPLE  0x00200000 /* The multisample renderbuffer is current. */
 #define SFLAG_INRB_RESOLVED     0x00400000 /* The resolved renderbuffer is current. */
 #define SFLAG_PIN_SYSMEM        0x02000000 /* Keep the surface in sysmem, at the same address. */
+#define SFLAG_DISCARDED         0x04000000 /* Surface was discarded, allocating new location is enough. */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_CONVERTED: Converting the data back would take too long

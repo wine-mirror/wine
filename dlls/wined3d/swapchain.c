@@ -668,7 +668,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
         if (swapchain->desc.flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
                 || fb->depth_stencil->flags & SFLAG_DISCARD)
         {
-            surface_modify_ds_location(fb->depth_stencil, SFLAG_LOST,
+            surface_modify_ds_location(fb->depth_stencil, SFLAG_DISCARDED,
                     fb->depth_stencil->resource.width,
                     fb->depth_stencil->resource.height);
             if (fb->depth_stencil == swapchain->device->onscreen_depth_stencil)

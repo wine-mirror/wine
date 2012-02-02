@@ -4862,7 +4862,7 @@ HRESULT CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, st
         if (device->swapchains[0]->desc.flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
                 || prev->flags & SFLAG_DISCARD)
         {
-            surface_modify_ds_location(prev, SFLAG_LOST,
+            surface_modify_ds_location(prev, SFLAG_DISCARDED,
                     prev->resource.width, prev->resource.height);
             if (prev == device->onscreen_depth_stencil)
             {
