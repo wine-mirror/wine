@@ -1765,6 +1765,73 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
     DWORD size = 0;
     BOOL ret;
 
+    if (!pCryptEncodeObjectEx)
+    {
+        win_skip("no CryptEncodeObjectEx support\n");
+        return;
+    }
+    ret = CryptVerifyCertificateSignature(0, 0, NULL, 0, NULL);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    ret = CryptVerifyCertificateSignature(csp, 0, NULL, 0, NULL);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    ret = CryptVerifyCertificateSignature(csp, X509_ASN_ENCODING, NULL, 0,
+     NULL);
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD ||
+     GetLastError() == OSS_BAD_ARG),
+     "Expected CRYPT_E_ASN1_EOD or OSS_BAD_ARG, got %08x\n", GetLastError());
+    info.ToBeSigned.cbData = toBeSigned->cbData;
+    info.ToBeSigned.pbData = toBeSigned->pbData;
+    info.SignatureAlgorithm.pszObjId = (LPSTR)sigOID;
+    info.SignatureAlgorithm.Parameters.cbData = 0;
+    info.Signature.cbData = sigLen;
+    info.Signature.pbData = (BYTE *)sig;
+    info.Signature.cUnusedBits = 0;
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, X509_CERT, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, &cert, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (cert)
+    {
+        PCERT_PUBLIC_KEY_INFO pubKeyInfo = NULL;
+        DWORD pubKeySize;
+
+        if (0)
+        {
+            /* Crashes prior to Vista */
+            ret = CryptVerifyCertificateSignature(csp, X509_ASN_ENCODING,
+             cert, size, NULL);
+        }
+        CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE, X509_ASN_ENCODING,
+         (LPSTR)sigOID, 0, NULL, NULL, &pubKeySize);
+        pubKeyInfo = HeapAlloc(GetProcessHeap(), 0, pubKeySize);
+        if (pubKeyInfo)
+        {
+            ret = CryptExportPublicKeyInfoEx(csp, AT_SIGNATURE,
+             X509_ASN_ENCODING, (LPSTR)sigOID, 0, NULL, pubKeyInfo,
+             &pubKeySize);
+            ok(ret, "CryptExportKey failed: %08x\n", GetLastError());
+            if (ret)
+            {
+                ret = CryptVerifyCertificateSignature(csp, X509_ASN_ENCODING,
+                 cert, size, pubKeyInfo);
+                ok(ret, "CryptVerifyCertificateSignature failed: %08x\n",
+                 GetLastError());
+            }
+            HeapFree(GetProcessHeap(), 0, pubKeyInfo);
+        }
+        LocalFree(cert);
+    }
+}
+
+static void testVerifyCertSigEx(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
+ LPCSTR sigOID, const BYTE *sig, DWORD sigLen)
+{
+    CERT_SIGNED_CONTENT_INFO info;
+    LPBYTE cert = NULL;
+    DWORD size = 0;
+    BOOL ret;
+
     if (!pCryptVerifyCertificateSignatureEx)
     {
         win_skip("no CryptVerifyCertificateSignatureEx support\n");
@@ -1875,6 +1942,7 @@ static void testCertSigs(void)
 
     testSignCert(csp, &toBeSigned, szOID_RSA_SHA1RSA, sig, &sigSize);
     testVerifyCertSig(csp, &toBeSigned, szOID_RSA_SHA1RSA, sig, sigSize);
+    testVerifyCertSigEx(csp, &toBeSigned, szOID_RSA_SHA1RSA, sig, sigSize);
 
     CryptReleaseContext(csp, 0);
     ret = pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,

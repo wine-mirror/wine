@@ -2239,8 +2239,10 @@ BOOL WINAPI CryptVerifyCertificateSignature(HCRYPTPROV_LEGACY hCryptProv,
  DWORD dwCertEncodingType, const BYTE *pbEncoded, DWORD cbEncoded,
  PCERT_PUBLIC_KEY_INFO pPublicKey)
 {
+    CRYPT_DATA_BLOB blob = { cbEncoded, (BYTE *)pbEncoded };
+
     return CryptVerifyCertificateSignatureEx(hCryptProv, dwCertEncodingType,
-     CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, (void *)pbEncoded,
+     CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &blob,
      CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY, pPublicKey, 0, NULL);
 }
 
