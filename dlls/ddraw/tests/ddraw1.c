@@ -15,6 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#define COBJMACROS
 
 #include "wine/test.h"
 #include "d3d.h"
@@ -815,6 +816,96 @@ static void test_coop_level_threaded(void)
     destroy_window_thread(&p);
 }
 
+static LONG get_refcount(IUnknown *test_iface)
+{
+    IUnknown_AddRef(test_iface);
+    return IUnknown_Release(test_iface);
+}
+
+static void test_viewport_interfaces(void)
+{
+    IDirectDraw *ddraw;
+    IDirect3D *d3d;
+    HRESULT hr;
+    LONG ref;
+    IDirect3DViewport *viewport;
+    IDirect3DViewport2 *viewport2;
+    IDirect3DViewport3 *viewport3;
+    IDirectDrawGammaControl *gamma;
+    IUnknown *unknown;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create ddraw object, skipping test.\n");
+        return;
+    }
+    hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D, (void **)&d3d);
+    ok(SUCCEEDED(hr) || hr == E_NOINTERFACE, "Failed to get d3d interface, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Direct3D not available, skipping tests\n");
+        IDirectDraw_Release(ddraw);
+        return;
+    }
+    ref = get_refcount((IUnknown *)d3d);
+    ok(ref == 2, "IDirect3D refcount is %d\n", ref);
+
+    hr = IDirect3D_CreateViewport(d3d, &viewport, NULL);
+    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
+    ref = get_refcount((IUnknown *)viewport);
+    ok(ref == 1, "Initial IDirect3DViewport refcount is %d\n", ref);
+    ref = get_refcount((IUnknown *)d3d);
+    ok(ref == 2, "IDirect3D refcount is %d\n", ref);
+
+    /* E_FAIL return values are returned by Winetestbot Windows NT machines. While not supporting
+     * newer interfaces is legitimate for old ddraw versions, E_FAIL violates Microsoft's rules
+     * for QueryInterface, hence the broken() */
+    gamma = (IDirectDrawGammaControl *)0xdeadbeef;
+    hr = IDirect3DViewport_QueryInterface(viewport, &IID_IDirectDrawGammaControl, (void **)&gamma);
+    ok(hr == E_NOINTERFACE || broken(hr == E_FAIL), "Got unexpected hr %#x.\n", hr);
+    ok(gamma == NULL, "Interface not set to NULL by failed QI call: %p\n", gamma);
+    if (SUCCEEDED(hr)) IDirectDrawGammaControl_Release(gamma);
+    /* NULL iid: Segfaults */
+
+    hr = IDirect3DViewport_QueryInterface(viewport, &IID_IDirect3DViewport2, (void **)&viewport2);
+    ok(SUCCEEDED(hr) || broken(hr == E_FAIL), "Failed to QI IDirect3DViewport2, hr %#x.\n", hr);
+    if (viewport2)
+    {
+        ref = get_refcount((IUnknown *)viewport);
+        ok(ref == 2, "IDirect3DViewport refcount is %d\n", ref);
+        ref = get_refcount((IUnknown *)viewport2);
+        ok(ref == 2, "IDirect3DViewport2 refcount is %d\n", ref);
+        IDirect3DViewport2_Release(viewport2);
+        viewport2 = NULL;
+    }
+
+    hr = IDirect3DViewport_QueryInterface(viewport, &IID_IDirect3DViewport3, (void **)&viewport3);
+    ok(SUCCEEDED(hr) || broken(hr == E_FAIL), "Failed to QI IDirect3DViewport3, hr %#x.\n", hr);
+    if (viewport3)
+    {
+        ref = get_refcount((IUnknown *)viewport);
+        ok(ref == 2, "IDirect3DViewport refcount is %d\n", ref);
+        ref = get_refcount((IUnknown *)viewport3);
+        ok(ref == 2, "IDirect3DViewport3 refcount is %d\n", ref);
+        IDirect3DViewport3_Release(viewport3);
+    }
+
+    hr = IDirect3DViewport_QueryInterface(viewport, &IID_IUnknown, (void **)&unknown);
+    ok(SUCCEEDED(hr), "Failed to QI IUnknown, hr %#x.\n", hr);
+    if (unknown)
+    {
+        ref = get_refcount((IUnknown *)viewport);
+        ok(ref == 2, "IDirect3DViewport refcount is %d\n", ref);
+        ref = get_refcount(unknown);
+        ok(ref == 2, "IUnknown refcount is %d\n", ref);
+        IUnknown_Release(unknown);
+    }
+
+    IDirect3DViewport_Release(viewport);
+    IDirect3D_Release(d3d);
+    IDirectDraw_Release(ddraw);
+}
+
 START_TEST(ddraw1)
 {
     test_coop_level_create_device_window();
@@ -822,4 +913,5 @@ START_TEST(ddraw1)
     test_coop_level_d3d_state();
     test_surface_interface_mismatch();
     test_coop_level_threaded();
+    test_viewport_interfaces();
 }
