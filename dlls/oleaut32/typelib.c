@@ -6427,83 +6427,90 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 {
                     dump_Variant(src_arg);
 
-                    if (rgvt[i] == VT_VARIANT)
-                        hres = VariantCopy(&rgvarg[i], src_arg);
-                    else if (rgvt[i] == (VT_VARIANT | VT_BYREF))
+                    if(rgvt[i]!=V_VT(src_arg))
                     {
-                        if (rgvt[i] == V_VT(src_arg))
-                            V_VARIANTREF(&rgvarg[i]) = V_VARIANTREF(src_arg);
-                        else
+                        if (rgvt[i] == VT_VARIANT)
+                            hres = VariantCopy(&rgvarg[i], src_arg);
+                        else if (rgvt[i] == (VT_VARIANT | VT_BYREF))
+                        {
+                            if (rgvt[i] == V_VT(src_arg))
+                                V_VARIANTREF(&rgvarg[i]) = V_VARIANTREF(src_arg);
+                            else
+                            {
+                                VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
+                                if (wParamFlags & PARAMFLAG_FIN)
+                                    hres = VariantCopy(&missing_arg[i], src_arg);
+                                V_VARIANTREF(&rgvarg[i]) = &missing_arg[i];
+                            }
+                            V_VT(&rgvarg[i]) = rgvt[i];
+                        }
+                        else if (rgvt[i] == (VT_VARIANT | VT_ARRAY) && func_desc->cParamsOpt < 0 && i == func_desc->cParams-1)
+                        {
+                            SAFEARRAY *a;
+                            SAFEARRAYBOUND bound;
+                            VARIANT *v;
+                            LONG j;
+                            bound.lLbound = 0;
+                            bound.cElements = pDispParams->cArgs-i;
+                            if (!(a = SafeArrayCreate(VT_VARIANT, 1, &bound)))
+                            {
+                                ERR("SafeArrayCreate failed\n");
+                                break;
+                            }
+                            hres = SafeArrayAccessData(a, (LPVOID)&v);
+                            if (hres != S_OK)
+                            {
+                                ERR("SafeArrayAccessData failed with %x\n", hres);
+                                break;
+                            }
+                            for (j = 0; j < bound.cElements; j++)
+                                VariantCopy(&v[j], &pDispParams->rgvarg[pDispParams->cArgs - 1 - i - j]);
+                            hres = SafeArrayUnaccessData(a);
+                            if (hres != S_OK)
+                            {
+                                ERR("SafeArrayUnaccessData failed with %x\n", hres);
+                                break;
+                            }
+                            V_ARRAY(&rgvarg[i]) = a;
+                            V_VT(&rgvarg[i]) = rgvt[i];
+                        }
+                        else if ((rgvt[i] & VT_BYREF) && !V_ISBYREF(src_arg))
                         {
                             VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
                             if (wParamFlags & PARAMFLAG_FIN)
-                                hres = VariantCopy(&missing_arg[i], src_arg);
-                            V_VARIANTREF(&rgvarg[i]) = &missing_arg[i];
+                                hres = VariantChangeType(&missing_arg[i], src_arg, 0, rgvt[i] & ~VT_BYREF);
+                            else
+                                V_VT(&missing_arg[i]) = rgvt[i] & ~VT_BYREF;
+                            V_BYREF(&rgvarg[i]) = &V_NONE(&missing_arg[i]);
+                            V_VT(&rgvarg[i]) = rgvt[i];
                         }
-                        V_VT(&rgvarg[i]) = rgvt[i];
-                    }
-                    else if (rgvt[i] == (VT_VARIANT | VT_ARRAY) && func_desc->cParamsOpt < 0 && i == func_desc->cParams-1)
-                    {
-                        SAFEARRAY *a;
-                        SAFEARRAYBOUND bound;
-                        VARIANT *v;
-                        LONG j;
-                        bound.lLbound = 0;
-                        bound.cElements = pDispParams->cArgs-i;
-                        if (!(a = SafeArrayCreate(VT_VARIANT, 1, &bound)))
+                        else if ((rgvt[i] & VT_BYREF) && (rgvt[i] == V_VT(src_arg)))
                         {
-                            ERR("SafeArrayCreate failed\n");
-                            break;
+                            V_BYREF(&rgvarg[i]) = V_BYREF(src_arg);
+                            V_VT(&rgvarg[i]) = rgvt[i];
                         }
-                        hres = SafeArrayAccessData(a, (LPVOID)&v);
-                        if (hres != S_OK)
-                        {
-                            ERR("SafeArrayAccessData failed with %x\n", hres);
-                            break;
-                        }
-                        for (j = 0; j < bound.cElements; j++)
-                            VariantCopy(&v[j], &pDispParams->rgvarg[pDispParams->cArgs - 1 - i - j]);
-                        hres = SafeArrayUnaccessData(a);
-                        if (hres != S_OK)
-                        {
-                            ERR("SafeArrayUnaccessData failed with %x\n", hres);
-                            break;
-                        }
-                        V_ARRAY(&rgvarg[i]) = a;
-                        V_VT(&rgvarg[i]) = rgvt[i];
-                    }
-                    else if ((rgvt[i] & VT_BYREF) && !V_ISBYREF(src_arg))
-                    {
-                        VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
-                        if (wParamFlags & PARAMFLAG_FIN)
-                            hres = VariantChangeType(&missing_arg[i], src_arg, 0, rgvt[i] & ~VT_BYREF);
                         else
-                            V_VT(&missing_arg[i]) = rgvt[i] & ~VT_BYREF;
-                        V_BYREF(&rgvarg[i]) = &V_NONE(&missing_arg[i]);
-                        V_VT(&rgvarg[i]) = rgvt[i];
-                    }
-                    else if ((rgvt[i] & VT_BYREF) && (rgvt[i] == V_VT(src_arg)))
-                    {
-                        V_BYREF(&rgvarg[i]) = V_BYREF(src_arg);
-                        V_VT(&rgvarg[i]) = rgvt[i];
+                        {
+                            /* FIXME: this doesn't work for VT_BYREF arguments if
+                             * they are not the same type as in the paramdesc */
+                            V_VT(&rgvarg[i]) = V_VT(src_arg);
+                            hres = VariantChangeType(&rgvarg[i], src_arg, 0, rgvt[i]);
+                            V_VT(&rgvarg[i]) = rgvt[i];
+                        }
+
+                        if (FAILED(hres))
+                        {
+                            ERR("failed to convert param %d to %s%s from %s%s\n", i,
+                                debugstr_vt(rgvt[i]), debugstr_vf(rgvt[i]),
+                                debugstr_VT(src_arg), debugstr_VF(src_arg));
+                            break;
+                        }
+                        prgpvarg[i] = &rgvarg[i];
                     }
                     else
                     {
-                        /* FIXME: this doesn't work for VT_BYREF arguments if
-                         * they are not the same type as in the paramdesc */
-                        V_VT(&rgvarg[i]) = V_VT(src_arg);
-                        hres = VariantChangeType(&rgvarg[i], src_arg, 0, rgvt[i]);
-                        V_VT(&rgvarg[i]) = rgvt[i];
+                        prgpvarg[i] = src_arg;
                     }
-
-                    if (FAILED(hres))
-                    {
-                        ERR("failed to convert param %d to %s%s from %s%s\n", i,
-                            debugstr_vt(rgvt[i]), debugstr_vf(rgvt[i]),
-                            debugstr_VT(src_arg), debugstr_VF(src_arg));
-                        break;
-                    }
-                    prgpvarg[i] = &rgvarg[i];
                 }
                 else if (wParamFlags & PARAMFLAG_FOPT)
                 {
