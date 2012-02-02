@@ -1176,6 +1176,31 @@ static BOOL get_async_key_state( BYTE state[256] )
 }
 
 /***********************************************************************
+ *           set_async_key_state
+ */
+static void set_async_key_state( const BYTE state[256] )
+{
+    SERVER_START_REQ( set_key_state )
+    {
+        req->tid = GetCurrentThreadId();
+        req->async = 1;
+        wine_server_add_data( req, state, 256 );
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+}
+
+static void update_key_state( BYTE *keystate, BYTE key, int down )
+{
+    if (down)
+    {
+        if (!(keystate[key] & 0x80)) keystate[key] ^= 0x01;
+        keystate[key] |= 0x80;
+    }
+    else keystate[key] &= ~0x80;
+}
+
+/***********************************************************************
  *           X11DRV_KeymapNotify
  *
  * Update modifiers state (Ctrl, Alt, Shift) when window is activated.
@@ -1187,12 +1212,11 @@ static BOOL get_async_key_state( BYTE state[256] )
 void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
 {
     int i, j;
-    DWORD time = GetCurrentTime();
     BYTE keystate[256];
     WORD vkey;
+    BOOL changed = FALSE;
     struct {
         WORD vkey;
-        WORD scan;
         BOOL pressed;
     } modifiers[6]; /* VK_LSHIFT through VK_RMENU are contiguous */
 
@@ -1220,15 +1244,9 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
             case VK_LSHIFT:
             case VK_RSHIFT:
                 m = (vkey & 0xff) - VK_LSHIFT;
-                /* Take the vkey and scan from the first keycode we encounter
-                   for this modifier. */
-                if (!modifiers[m].vkey)
-                {
-                    modifiers[m].vkey = vkey;
-                    modifiers[m].scan = keyc2scan[(i * 8) + j];
-                }
-                if (event->xkeymap.key_vector[i] & (1<<j))
-                    modifiers[m].pressed = TRUE;
+                /* Take the vkey from the first keycode we encounter for this modifier */
+                if (!modifiers[m].vkey) modifiers[m].vkey = vkey;
+                if (event->xkeymap.key_vector[i] & (1<<j)) modifiers[m].pressed = TRUE;
                 break;
             }
         }
@@ -1239,16 +1257,20 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
         int m = vkey - VK_LSHIFT;
         if (modifiers[m].vkey && !(keystate[vkey] & 0x80) != !modifiers[m].pressed)
         {
-            DWORD flags = modifiers[m].vkey & 0x100 ? KEYEVENTF_EXTENDEDKEY : 0;
-            if (!modifiers[m].pressed) flags |= KEYEVENTF_KEYUP;
-
             TRACE( "Adjusting state for vkey %#.2x. State before %#.2x\n",
                    modifiers[m].vkey, keystate[vkey]);
 
-            /* Fake key being pressed inside wine */
-            X11DRV_send_keyboard_input( hwnd, vkey, modifiers[m].scan & 0xff, flags, time );
+            update_key_state( keystate, vkey, modifiers[m].pressed );
+            changed = TRUE;
         }
     }
+
+    if (!changed) return;
+
+    update_key_state( keystate, VK_CONTROL, (keystate[VK_LCONTROL] | keystate[VK_RCONTROL]) & 0x80 );
+    update_key_state( keystate, VK_MENU, (keystate[VK_LMENU] | keystate[VK_RMENU]) & 0x80 );
+    update_key_state( keystate, VK_SHIFT, (keystate[VK_LSHIFT] | keystate[VK_RSHIFT]) & 0x80 );
+    set_async_key_state( keystate );
 }
 
 static void update_lock_state( HWND hwnd, WORD vkey, UINT state, DWORD time )

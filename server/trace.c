@@ -3162,6 +3162,7 @@ static void dump_get_key_state_reply( const struct get_key_state_reply *req )
 static void dump_set_key_state_request( const struct set_key_state_request *req )
 {
     fprintf( stderr, " tid=%04x", req->tid );
+    fprintf( stderr, ", async=%d", req->async );
     dump_varargs_bytes( ", keystate=", cur_size );
 }
 

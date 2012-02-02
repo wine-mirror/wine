@@ -2724,6 +2724,11 @@ DECL_HANDLER(set_key_state)
     {
         if (!(thread = get_thread_from_id( req->tid ))) return;
         if (thread->queue) memcpy( thread->queue->input->keystate, get_req_data(), size );
+        if (req->async && (desktop = get_thread_desktop( thread, 0 )))
+        {
+            memcpy( desktop->keystate, get_req_data(), size );
+            release_object( desktop );
+        }
         release_object( thread );
     }
 }
