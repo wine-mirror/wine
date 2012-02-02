@@ -139,6 +139,20 @@ static void destroy_window_thread(struct create_window_thread_param *p)
     CloseHandle(p->thread);
 }
 
+static IDirectDrawSurface7 *get_depth_stencil(IDirect3DDevice7 *device)
+{
+    IDirectDrawSurface7 *rt, *ret;
+    DDSCAPS2 caps = {DDSCAPS_ZBUFFER, 0, 0, 0};
+    HRESULT hr;
+
+    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get the render target, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_GetAttachedSurface(rt, &caps, &ret);
+    ok(SUCCEEDED(hr) || hr == DDERR_NOTFOUND, "Failed to get the z buffer, hr %#x.\n", hr);
+    IDirectDrawSurface7_Release(rt);
+    return ret;
+}
+
 static D3DCOLOR get_surface_color(IDirectDrawSurface7 *surface, UINT x, UINT y)
 {
     RECT rect = {x, y, x + 1, y + 1};
@@ -944,20 +958,6 @@ static void test_coop_level_threaded(void)
 
     IDirectDraw7_Release(ddraw);
     destroy_window_thread(&p);
-}
-
-static IDirectDrawSurface7 *get_depth_stencil(IDirect3DDevice7 *device)
-{
-    IDirectDrawSurface7 *rt, *ret;
-    DDSCAPS2 caps = {DDSCAPS_ZBUFFER, 0, 0, 0};
-    HRESULT hr;
-
-    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
-    ok(SUCCEEDED(hr), "Failed to get the render target, hr %#x.\n", hr);
-    hr = IDirectDrawSurface7_GetAttachedSurface(rt, &caps, &ret);
-    ok(SUCCEEDED(hr) || hr == DDERR_NOTFOUND, "Failed to get the z buffer, hr %#x.\n", hr);
-    IDirectDrawSurface7_Release(rt);
-    return ret;
 }
 
 static void test_depth_blit(void)
