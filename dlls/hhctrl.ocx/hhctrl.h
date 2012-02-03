@@ -102,6 +102,7 @@ typedef struct CHMInfo
     char **strings;
     DWORD strings_size;
 
+    WCHAR *compiledFile;
     WCHAR *defTopic;
     WCHAR *defTitle;
     WCHAR *defToc;

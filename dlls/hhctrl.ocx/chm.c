@@ -138,6 +138,8 @@ static BOOL ReadChmSystem(CHMInfo *chm)
             break;
         case 0x6:
             TRACE("Compiled file is %s\n", debugstr_an(buf, entry.len));
+            heap_free(chm->compiledFile);
+            chm->compiledFile = strdupnAtoW(buf, entry.len);
             break;
         case 0x9:
             TRACE("Version is %s\n", debugstr_an(buf, entry.len));
@@ -209,6 +211,32 @@ LPWSTR FindContextAlias(CHMInfo *chm, DWORD index)
     return strdupAtoW(ret);
 }
 
+/*
+ * Tests if the file <chmfile>.<ext> exists, used for loading Indicies, Table of Contents, etc.
+ * when these files are not available from the HH_WINTYPE structure.
+ */
+static WCHAR *FindHTMLHelpSetting(HHInfo *info, const WCHAR *extW)
+{
+    static const WCHAR periodW[] = {'.',0};
+    IStorage *pStorage = info->pCHMInfo->pStorage;
+    IStream *pStream;
+    WCHAR *filename;
+    HRESULT hr;
+
+    filename = heap_alloc(strlenW(info->pCHMInfo->compiledFile)+strlenW(periodW)+strlenW(extW)+1);
+    strcpyW(filename, info->pCHMInfo->compiledFile);
+    strcatW(filename, periodW);
+    strcatW(filename, extW);
+    hr = IStorage_OpenStream(pStorage, filename, NULL, STGM_READ, 0, &pStream);
+    if (FAILED(hr))
+    {
+        heap_free(filename);
+        return strdupAtoW("");
+    }
+    IStream_Release(pStream);
+    return filename;
+}
+
 /* Loads the HH_WINTYPE data from the CHM file
  *
  * FIXME: There may be more than one window type in the file, so
@@ -222,6 +250,8 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     HRESULT hr;
     DWORD cbRead;
 
+    static const WCHAR toc_extW[] = {'h','h','c',0};
+    static const WCHAR index_extW[] = {'h','h','k',0};
     static const WCHAR windowsW[] = {'#','W','I','N','D','O','W','S',0};
 
     hr = IStorage_OpenStream(pStorage, windowsW, NULL, STGM_READ, 0, &pStream);
@@ -258,16 +288,24 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     if (FAILED(hr)) goto done;
 
     /* convert the #STRINGS offsets to actual strings */
-    info->WinType.pszType     = info->pszType     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszType));
-    info->WinType.pszCaption  = info->pszCaption  = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszCaption));
-    info->WinType.pszToc      = info->pszToc      = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszToc));
-    info->WinType.pszIndex    = info->pszIndex    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszIndex));
-    info->WinType.pszFile     = info->pszFile     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszFile));
-    info->WinType.pszHome     = info->pszHome     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszHome));
-    info->WinType.pszJump1    = info->pszJump1    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszJump1));
-    info->WinType.pszJump2    = info->pszJump2    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszJump2));
-    info->WinType.pszUrlJump1 = info->pszUrlJump1 = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszUrlJump1));
-    info->WinType.pszUrlJump2 = info->pszUrlJump2 = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszUrlJump2));
+
+    info->WinType.pszType      = info->pszType     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszType));
+    info->WinType.pszCaption   = info->pszCaption  = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszCaption));
+    info->WinType.pszFile      = info->pszFile     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszFile));
+    info->WinType.pszHome      = info->pszHome     = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszHome));
+    info->WinType.pszJump1     = info->pszJump1    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszJump1));
+    info->WinType.pszJump2     = info->pszJump2    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszJump2));
+    info->WinType.pszUrlJump1  = info->pszUrlJump1 = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszUrlJump1));
+    info->WinType.pszUrlJump2  = info->pszUrlJump2 = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszUrlJump2));
+
+    if (info->WinType.pszToc)
+        info->WinType.pszToc   = info->pszToc      = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszToc));
+    else
+        info->WinType.pszToc   = info->pszToc      = FindHTMLHelpSetting(info, toc_extW);
+    if (info->WinType.pszIndex)
+        info->WinType.pszIndex = info->pszIndex    = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)info->WinType.pszIndex));
+    else
+        info->WinType.pszIndex = info->pszIndex    = FindHTMLHelpSetting(info, index_extW);
 
     /* FIXME: pszCustomTabs is a list of multiple zero-terminated strings so ReadString won't
      * work in this case
@@ -431,6 +469,7 @@ CHMInfo *CloseCHM(CHMInfo *chm)
     heap_free(chm->defTopic);
     heap_free(chm->defToc);
     heap_free(chm->szFile);
+    heap_free(chm->compiledFile);
     heap_free(chm);
 
     return NULL;
