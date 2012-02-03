@@ -3201,18 +3201,18 @@ UINT WINAPI MsiGetFileVersionW( LPCWSTR path, LPWSTR verbuf, LPDWORD verlen,
         return ERROR_INVALID_PARAMETER;
 
     ret = get_file_version( path, verbuf, verlen, langbuf, langlen );
-    if (ret == ERROR_RESOURCE_DATA_NOT_FOUND)
+    if (ret == ERROR_RESOURCE_DATA_NOT_FOUND && verlen)
     {
         int len;
         WCHAR *version = msi_font_version_from_file( path );
         if (!version) return ERROR_FILE_INVALID;
         len = strlenW( version );
-        if (*verlen > len)
+        if (len >= *verlen) ret = ERROR_MORE_DATA;
+        else if (verbuf)
         {
             strcpyW( verbuf, version );
             ret = ERROR_SUCCESS;
         }
-        else ret = ERROR_MORE_DATA;
         *verlen = len;
         msi_free( version );
     }
