@@ -217,9 +217,12 @@ static HRESULT WINAPI IHlink_fnSetMonikerReference( IHlink* iface,
         This->Moniker = pmkTarget;
         if (This->Moniker)
         {
+            IBindCtx *pbc;
             LPOLESTR display_name;
             IMoniker_AddRef(This->Moniker);
-            IMoniker_GetDisplayName(This->Moniker, NULL, NULL, &display_name);
+            CreateBindCtx( 0, &pbc);
+            IMoniker_GetDisplayName(This->Moniker, pbc, NULL, &display_name);
+            IBindCtx_Release(pbc);
             This->absolute = display_name && strchrW(display_name, ':');
             CoTaskMemFree(display_name);
         }
