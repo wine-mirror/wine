@@ -2457,12 +2457,14 @@ static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface, LONG
     hr = all_renderers_seek(This, FoundCurrentPosition, (DWORD_PTR)pCurrent);
     if (hr == E_NOTIMPL) {
         LONGLONG time = 0;
-        if (This->refClock)
+        if (This->state == State_Running && This->refClock && This->start_time >= 0)
         {
             IReferenceClock_GetTime(This->refClock, &time);
             if (time)
                 time -= This->start_time;
         }
+        if (This->pause_time > 0)
+            time += This->pause_time;
         *pCurrent = time;
         hr = S_OK;
     }
