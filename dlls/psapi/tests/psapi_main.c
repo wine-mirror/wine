@@ -20,11 +20,21 @@
  */
 
 #include <stdarg.h>
-#include <stdio.h>
 
-#include "windows.h"
-#include "wine/test.h"
+/* 0x0600 makes PROCESS_ALL_ACCESS not compatible with pre-Vista versions */
+#define _WIN32_WINNT 0x0500
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
+#include "winnt.h"
+#include "winternl.h"
+#include "winnls.h"
 #include "psapi.h"
+#include "wine/test.h"
 
 #define PSAPI_GET_PROC(func) \
     p ## func = (void*)GetProcAddress(hpsapi, #func); \
@@ -41,12 +51,14 @@ static DWORD (WINAPI *pGetModuleBaseNameA)(HANDLE, HMODULE, LPSTR, DWORD);
 static DWORD (WINAPI *pGetModuleFileNameExA)(HANDLE, HMODULE, LPSTR, DWORD);
 static BOOL  (WINAPI *pGetModuleInformation)(HANDLE, HMODULE, LPMODULEINFO, DWORD);
 static DWORD (WINAPI *pGetMappedFileNameA)(HANDLE, LPVOID, LPSTR, DWORD);
+static DWORD (WINAPI *pGetMappedFileNameW)(HANDLE, LPVOID, LPWSTR, DWORD);
 static DWORD (WINAPI *pGetProcessImageFileNameA)(HANDLE, LPSTR, DWORD);
 static DWORD (WINAPI *pGetProcessImageFileNameW)(HANDLE, LPWSTR, DWORD);
 static BOOL  (WINAPI *pGetProcessMemoryInfo)(HANDLE, PPROCESS_MEMORY_COUNTERS, DWORD);
 static BOOL  (WINAPI *pGetWsChanges)(HANDLE, PPSAPI_WS_WATCH_INFORMATION, DWORD);
 static BOOL  (WINAPI *pInitializeProcessForWsWatch)(HANDLE);
 static BOOL  (WINAPI *pQueryWorkingSet)(HANDLE, PVOID, DWORD);
+static NTSTATUS (WINAPI *pNtQueryVirtualMemory)(HANDLE, LPCVOID, ULONG, PVOID, SIZE_T, SIZE_T *);
       
 static BOOL InitFunctionPtrs(HMODULE hpsapi)
 {
@@ -57,6 +69,7 @@ static BOOL InitFunctionPtrs(HMODULE hpsapi)
     PSAPI_GET_PROC(GetModuleFileNameExA);
     PSAPI_GET_PROC(GetModuleInformation);
     PSAPI_GET_PROC(GetMappedFileNameA);
+    PSAPI_GET_PROC(GetMappedFileNameW);
     PSAPI_GET_PROC(GetProcessMemoryInfo);
     PSAPI_GET_PROC(GetWsChanges);
     PSAPI_GET_PROC(InitializeProcessForWsWatch);
@@ -66,6 +79,7 @@ static BOOL InitFunctionPtrs(HMODULE hpsapi)
       (void *)GetProcAddress(hpsapi, "GetProcessImageFileNameA");
     pGetProcessImageFileNameW =
       (void *)GetProcAddress(hpsapi, "GetProcessImageFileNameW");
+    pNtQueryVirtualMemory = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtQueryVirtualMemory");
     return TRUE;
 }
 
@@ -180,6 +194,36 @@ static void test_GetProcessMemoryInfo(void)
     ok(ret == 1, "failed with %d\n", GetLastError());
 }
 
+static BOOL nt_get_mapped_file_name(HANDLE process, LPVOID addr, LPWSTR name, DWORD len)
+{
+    MEMORY_SECTION_NAME *section_name;
+    WCHAR *buf;
+    SIZE_T buf_len;
+    NTSTATUS status;
+
+    if (!pNtQueryVirtualMemory) return FALSE;
+
+    buf_len = len * sizeof(WCHAR) + sizeof(MEMORY_SECTION_NAME);
+    buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buf_len);
+
+    status = pNtQueryVirtualMemory(process, addr, MemorySectionName, buf, buf_len, NULL);
+todo_wine
+    ok(!status || broken(status == STATUS_ACCESS_VIOLATION) /* win2k */, "NtQueryVirtualMemory error %x\n", status);
+    if (status) return FALSE;
+
+    section_name = (MEMORY_SECTION_NAME *)buf;
+    ok((char *)section_name->SectionFileName.Buffer == (char *)section_name + sizeof(*section_name), "got %p, %p\n",
+       section_name, section_name->SectionFileName.Buffer);
+    ok(section_name->SectionFileName.MaximumLength == section_name->SectionFileName.Length + sizeof(WCHAR), "got %u, %u\n",
+       section_name->SectionFileName.MaximumLength, section_name->SectionFileName.Length);
+    ok(section_name->SectionFileName.Length == lstrlenW(section_name->SectionFileName.Buffer) * sizeof(WCHAR), "got %u, %u\n",
+       section_name->SectionFileName.Length, lstrlenW(section_name->SectionFileName.Buffer));
+
+    memcpy(name, section_name->SectionFileName.Buffer, section_name->SectionFileName.MaximumLength);
+    HeapFree(GetProcessHeap(), 0, buf);
+    return TRUE;
+}
+
 static void test_GetMappedFileName(void)
 {
     HMODULE hMod = GetModuleHandle(NULL);
@@ -187,6 +231,7 @@ static void test_GetMappedFileName(void)
     DWORD ret;
     char *base;
     char temp_path[MAX_PATH], file_name[MAX_PATH], map_name[MAX_PATH], device_name[MAX_PATH], drive[3];
+    WCHAR map_nameW[MAX_PATH], nt_map_name[MAX_PATH];
     HANDLE hfile, hmap;
 
     SetLastError(0xdeadbeef);
@@ -266,15 +311,28 @@ todo_wine
     ret = pGetMappedFileNameA(GetCurrentProcess(), base, map_name, sizeof(map_name));
 todo_wine {
     ok(ret, "GetMappedFileName error %d\n", GetLastError());
-    ok(ret > strlen(file_name), "map_name should be longer than device_name\n");
+    ok(ret > strlen(device_name), "map_name should be longer than device_name\n");
     ok(memcmp(map_name, device_name, strlen(device_name)) == 0, "map name does not start with a device name: %s\n", map_name);
 }
+
+    SetLastError(0xdeadbeef);
+    ret = pGetMappedFileNameW(GetCurrentProcess(), base, map_nameW, sizeof(map_nameW)/sizeof(map_nameW[0]));
+todo_wine {
+    ok(ret, "GetMappedFileNameW error %d\n", GetLastError());
+    ok(ret > strlen(device_name), "map_name should be longer than device_name\n");
+}
+    if (nt_get_mapped_file_name(GetCurrentProcess(), base, nt_map_name, sizeof(nt_map_name)/sizeof(nt_map_name[0])))
+    {
+        ok(memcmp(map_nameW, nt_map_name, lstrlenW(map_nameW)) == 0, "map name does not start with a device name: %s\n", map_name);
+        WideCharToMultiByte(CP_ACP, 0, map_nameW, -1, map_name, MAX_PATH, NULL, NULL);
+        ok(memcmp(map_name, device_name, strlen(device_name)) == 0, "map name does not start with a device name: %s\n", map_name);
+    }
 
     SetLastError(0xdeadbeef);
     ret = pGetMappedFileNameA(GetCurrentProcess(), base + 0x2000, map_name, sizeof(map_name));
 todo_wine {
     ok(ret, "GetMappedFileName error %d\n", GetLastError());
-    ok(ret > strlen(file_name), "map_name should be longer than device_name\n");
+    ok(ret > strlen(device_name), "map_name should be longer than device_name\n");
     ok(memcmp(map_name, device_name, strlen(device_name)) == 0, "map name does not start with a device name: %s\n", map_name);
 }
 

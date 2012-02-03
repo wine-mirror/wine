@@ -867,6 +867,11 @@ typedef enum _MEMORY_INFORMATION_CLASS {
     MemoryBasicVlmInformation
 } MEMORY_INFORMATION_CLASS;
 
+typedef struct _MEMORY_SECTION_NAME
+{
+    UNICODE_STRING SectionFileName;
+} MEMORY_SECTION_NAME, *PMEMORY_SECTION_NAME;
+
 typedef enum _MUTANT_INFORMATION_CLASS
 {
     MutantBasicInformation
