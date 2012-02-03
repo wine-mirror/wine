@@ -78,6 +78,19 @@ static HRESULT __GetMoniker(HlinkImpl* This, IMoniker** moniker,
     if (ref_type == HLINKGETREF_DEFAULT)
         ref_type = HLINKGETREF_RELATIVE;
 
+    if (This->Moniker)
+    {
+        DWORD mktype = MKSYS_NONE;
+
+        hres = IMoniker_IsSystemMoniker(This->Moniker, &mktype);
+        if (hres == S_OK && mktype != MKSYS_NONE)
+        {
+            *moniker = This->Moniker;
+            IMoniker_AddRef(*moniker);
+            return S_OK;
+        }
+    }
+
     if (ref_type == HLINKGETREF_ABSOLUTE && This->Site)
     {
         IMoniker *hls_moniker;
