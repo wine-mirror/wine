@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define WINED3D_GLSL_SAMPLE_PROJECTED   0x1
 #define WINED3D_GLSL_SAMPLE_RECT        0x2
@@ -960,6 +961,17 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                 max_constantsF -= count_bits(reg_maps->boolean_constants);
                 /* Set by driver quirks in directx.c */
                 max_constantsF -= gl_info->reserved_glsl_constants;
+
+                if (max_constantsF < shader->limits.constant_float)
+                {
+                    static unsigned int once;
+
+                    if (!once++)
+                        ERR_(winediag)("The hardware does not support enough uniform components to run this shader,"
+                                " it may not render correctly.\n");
+                    else
+                        WARN("The hardware does not support enough uniform components to run this shader.\n");
+                }
             }
             else
             {
