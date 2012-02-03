@@ -159,8 +159,7 @@ static char *dns_dname_from_msg( ns_msg msg, const unsigned char *pos )
     char *str, dname[NS_MAXDNAME] = ".";
 
     /* returns *compressed* length, ignore it */
-    len = dns_ns_name_uncompress( ns_msg_base( msg ), ns_msg_end( msg ),
-                                  pos, dname, sizeof(dname) );
+    dns_ns_name_uncompress( ns_msg_base(msg), ns_msg_end(msg), pos, dname, sizeof(dname) );
 
     len = strlen( dname );
     str = heap_alloc( len + 1 );
