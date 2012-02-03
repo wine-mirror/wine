@@ -1793,6 +1793,9 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                 }
                 else if (fl->feature->Attributes & msidbFeatureAttributesFollowParent)
                 {
+                    TRACE("feature %s (level %d request %d) follows parent %s (level %d request %d)\n",
+                          debugstr_w(fl->feature->Feature), fl->feature->Level, fl->feature->ActionRequest,
+                          debugstr_w(feature->Feature), feature->Level, feature->ActionRequest);
                     fl->feature->Action = feature->Action;
                     fl->feature->ActionRequest = feature->ActionRequest;
                 }
@@ -1819,6 +1822,23 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                 }
             }
         }
+        LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
+        {
+            FeatureList *fl;
+
+            LIST_FOR_EACH_ENTRY( fl, &feature->Children, FeatureList, entry )
+            {
+                if (fl->feature->Attributes & msidbFeatureAttributesFollowParent &&
+                    (!(feature->Attributes & msidbFeatureAttributesFavorAdvertise)))
+                {
+                    TRACE("feature %s (level %d request %d) follows parent %s (level %d request %d)\n",
+                          debugstr_w(fl->feature->Feature), fl->feature->Level, fl->feature->ActionRequest,
+                          debugstr_w(feature->Feature), feature->Level, feature->ActionRequest);
+                    fl->feature->Action = feature->Action;
+                    fl->feature->ActionRequest = feature->ActionRequest;
+                }
+            }
+        }
     }
 
     /* now we want to set component state based based on feature state */
@@ -1826,7 +1846,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
     {
         ComponentList *cl;
 
-        TRACE("Examining Feature %s (Level %d Installed %d Request %d Action %d)\n",
+        TRACE("examining feature %s (level %d installed %d request %d action %d)\n",
               debugstr_w(feature->Feature), feature->Level, feature->Installed,
               feature->ActionRequest, feature->Action);
 
@@ -1941,7 +1961,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
             component->ActionRequest = INSTALLSTATE_UNKNOWN;
         }
 
-        TRACE("Result: Component %s (Installed %d Request %d Action %d)\n",
+        TRACE("component %s (installed %d request %d action %d)\n",
               debugstr_w(component->Component), component->Installed, component->ActionRequest, component->Action);
     }
 
