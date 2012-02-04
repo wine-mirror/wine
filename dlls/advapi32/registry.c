@@ -2909,3 +2909,13 @@ LSTATUS WINAPI RegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
     RtlFreeUnicodeString( &lpszSubKeyW );
     return ret;
 }
+
+/******************************************************************************
+ * RegDisableReflectionKey [ADVAPI32.@]
+ *
+ */
+LONG WINAPI RegDisableReflectionKey(HKEY base)
+{
+    FIXME("%p: stub\n", base);
+    return ERROR_SUCCESS;
+}

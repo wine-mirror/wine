@@ -596,7 +596,7 @@
 @ stdcall RegDeleteValueW(long wstr)
 @ stdcall RegDisablePredefinedCache()
 # @ stub RegDisablePredefinedCacheEx
-# @ stub RegDisableReflectionKey
+@ stdcall RegDisableReflectionKey(ptr)
 # @ stub RegEnableReflectionKey
 @ stdcall RegEnumKeyA(long long ptr long)
 @ stdcall RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr)
