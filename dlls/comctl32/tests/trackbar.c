@@ -298,10 +298,20 @@ static const struct message thumb_length_test_seq[] = {
     { WM_PAINT, sent|defwinproc},
     { TBM_GETTHUMBLENGTH, sent},
     { TBM_GETTHUMBLENGTH, sent},
+    { WM_SIZE, sent},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETTHUMBLENGTH, sent},
+    { WM_SIZE, sent},
+    { WM_PAINT, sent|defwinproc},
+    { TBM_GETTHUMBLENGTH, sent},
     {0}
 };
 
 static const struct message parent_thumb_length_test_seq[] = {
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
+    { WM_CTLCOLORSTATIC, sent},
+    { WM_NOTIFY, sent},
     { WM_CTLCOLORSTATIC, sent},
     { WM_NOTIFY, sent},
     { WM_CTLCOLORSTATIC, sent},
@@ -742,8 +752,17 @@ static void test_thumb_length(HWND hWndTrackbar){
     r = SendMessage(hWndTrackbar, TBM_GETTHUMBLENGTH, 0,0);
     expect(20, r);
 
+    r = SendMessage(hWndTrackbar, WM_SIZE, 0,0);
+    expect(0, r);
+    r = SendMessage(hWndTrackbar, TBM_GETTHUMBLENGTH, 0,0);
+    expect(20, r);
+    r = SendMessage(hWndTrackbar, WM_SIZE, 0, MAKELPARAM(50, 50) );
+    expect(0, r);
+    r = SendMessage(hWndTrackbar, TBM_GETTHUMBLENGTH, 0,0);
+    expect(20, r);
+
     ok_sequence(sequences, TRACKBAR_SEQ_INDEX, thumb_length_test_seq, "thumb length test sequence", TRUE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_thumb_length_test_seq, "parent thumb lenth test sequence", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_thumb_length_test_seq, "parent thumb length test sequence", TRUE);
 }
 
 static void test_tic_settings(HWND hWndTrackbar){
