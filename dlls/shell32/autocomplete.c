@@ -121,6 +121,9 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             }
             return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
         case WM_KEYUP:
+        {
+            int len;
+
             GetWindowTextW( hwnd, hwndText, sizeof(hwndText)/sizeof(WCHAR));
 
             switch(wParam) {
@@ -208,7 +211,8 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             SendMessageW(This->hwndListBox, LB_RESETCONTENT, 0, 0);
 
             HeapFree(GetProcessHeap(), 0, This->txtbackup);
-            This->txtbackup = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(hwndText)+1)*sizeof(WCHAR));
+            len = strlenW(hwndText);
+            This->txtbackup = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
             lstrcpyW(This->txtbackup, hwndText);
 
             /* Returns if there is no text to search and we doesn't want to display all the entries */
@@ -223,15 +227,14 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                 if (hr != S_OK)
                     break;
 
-                if (StrStrIW(strs, hwndText) == strs) {
+                if (!strncmpiW(hwndText, strs, len)) {
                     if (!filled && (This->options & ACO_AUTOAPPEND)) {
-                        INT typed_length = strlenW(hwndText);
                         WCHAR buffW[255];
 
                         strcpyW(buffW, hwndText);
-                        strcatW(buffW, &strs[typed_length]);
+                        strcatW(buffW, &strs[len]);
                         SetWindowTextW(hwnd, buffW);
-                        SendMessageW(hwnd, EM_SETSEL, typed_length, strlenW(strs));
+                        SendMessageW(hwnd, EM_SETSEL, len, strlenW(strs));
                         if (!(This->options & ACO_AUTOSUGGEST))
                             break;
                     }
@@ -262,6 +265,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             }
 
             break;
+        }
         case WM_DESTROY:
         {
             WNDPROC proc = This->wpOrigEditProc;
