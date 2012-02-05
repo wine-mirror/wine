@@ -180,16 +180,6 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 
 	if(/^MODULE\s*=\s*([\w\.]+)$/) {
 	    $module = $1;
-
-	    if($module eq "none") {
-		if($makefile_in_file eq "tools/winebuild/Makefile.in") {
-		    $module = "winebuild.exe";
-		} elsif ($makefile_in_file eq "include/Makefile.in") {
-		    $module = "include.lib";
-		} else {
-		    next MAKEFILE_IN;
-		}
-	    }
 	} elsif (/^\@MAKE_IMPLIB_RULES\@/) {
 	    $type = "lib";
 	} elsif(/^TOPOBJDIR\s*=\s*(\S+)\s*$/) {
@@ -243,8 +233,12 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 
     close(IN);
 
-    if (!$module && $makefile_in_file eq "libs/wine/Makefile.in") {
-	$module = "wine.lib";
+    if (!$module) {
+        if ($makefile_in_file eq "libs/wine/Makefile.in") {
+            $module = "wine.lib";
+        } elsif ($makefile_in_file eq "tools/winebuild/Makefile.in") {
+            $module = "winebuild.exe";
+        }
     }
 
     next if !$module;
