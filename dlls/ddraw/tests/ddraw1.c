@@ -719,7 +719,7 @@ static void test_surface_interface_mismatch(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    surface_desc.dwZBufferBitDepth = z_depth;
+    U2(surface_desc).dwZBufferBitDepth = z_depth;
     surface_desc.dwWidth = 640;
     surface_desc.dwHeight = 480;
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &ds, NULL);

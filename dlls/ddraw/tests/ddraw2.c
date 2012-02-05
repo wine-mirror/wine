@@ -758,7 +758,7 @@ static void test_surface_interface_mismatch(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    surface_desc.dwZBufferBitDepth = z_depth;
+    U2(surface_desc).dwZBufferBitDepth = z_depth;
     surface_desc.dwWidth = 640;
     surface_desc.dwHeight = 480;
     hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &ds, NULL);
@@ -931,7 +931,7 @@ static void test_depth_blit(void)
     ddsd_new.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
     ddsd_new.dwWidth = ddsd_existing.dwWidth;
     ddsd_new.dwHeight = ddsd_existing.dwHeight;
-    U4(ddsd_new).ddpfPixelFormat = U4(ddsd_existing).ddpfPixelFormat;
+    ddsd_new.ddpfPixelFormat = ddsd_existing.ddpfPixelFormat;
     hr = IDirectDraw2_CreateSurface(ddraw, &ddsd_new, &ds2, NULL);
     ok(SUCCEEDED(hr), "Failed to create a surface, hr %#x.\n", hr);
     hr = IDirectDraw2_CreateSurface(ddraw, &ddsd_new, &ds3, NULL);
@@ -1028,7 +1028,7 @@ static void test_depth_blit(void)
      * a reliable result(z = 0.0) */
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
-    fx.dwFillDepth = 0;
+    U5(fx).dwFillDepth = 0;
     hr = IDirectDrawSurface_Blt(ds2, NULL, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to clear the source z buffer, hr %#x.\n", hr);
 
