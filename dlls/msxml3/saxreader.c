@@ -1346,6 +1346,7 @@ static void libxmlEndElementNS(
     if (sax_callback_failed(This, hr))
     {
         format_error_message_from_id(This, hr);
+        free_element_entry(element);
         return;
     }
 
