@@ -254,7 +254,6 @@ static const IID * const window_iids[] = {
     &IID_IHTMLWindow3,
     &IID_IDispatchEx,
     &IID_IServiceProvider,
-    &IID_ITravelLogClient,
     NULL
 };
 
@@ -4419,6 +4418,12 @@ static void test_window(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
     test_ifaces((IUnknown*)window, window_iids);
+    hres = IDispatch_QueryInterface(window, &IID_ITravelLogClient, (void**)&unk);
+    if(hres == S_OK)
+        IUnknown_Release(unk);
+    else
+        win_skip("IID_ITravelLogClient not supported\n");
+
     test_disp((IUnknown*)window, &DIID_DispHTMLWindow2, "[object]");
 
     hres = IHTMLWindow2_get_document(window, &doc2);
