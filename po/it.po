@@ -10828,7 +10828,7 @@ msgstr "&Copia...\tF8"
 
 #: progman.rc:35
 msgid "&Properties\tAlt+Enter"
-msgstr "Propri&età...\tAlt+Invio"
+msgstr "Propri&età\tAlt+Invio"
 
 #: progman.rc:37
 msgid "&Execute..."
@@ -13326,7 +13326,7 @@ msgstr "Ri&nomina..."
 
 #: winefile.rc:31
 msgid "Propert&ies\tAlt+Enter"
-msgstr "Propri&età...\tAlt+Invio"
+msgstr "Propri&età\tAlt+Invio"
 
 #: winefile.rc:33
 msgid "&Run..."
