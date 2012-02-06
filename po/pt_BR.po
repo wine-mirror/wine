@@ -10818,7 +10818,7 @@ msgstr "&Copiar...\tF8"
 
 #: progman.rc:35
 msgid "&Properties\tAlt+Enter"
-msgstr "&Propriedades...\tAlt+Enter"
+msgstr "&Propriedades\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
