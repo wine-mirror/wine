@@ -8930,7 +8930,7 @@ msgstr "డిజిటల్ (&t)"
 
 #: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
 msgid "&Font..."
-msgstr "ఫాంట్... (&F)"
+msgstr "ఫాంట్ (&F)..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
