@@ -118,7 +118,7 @@ static nsresult create_profile_directory(void)
     nsresult nsres;
     HRESULT hres;
 
-    hres = SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_DEFAULT, path);
+    hres = SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
     if(FAILED(hres)) {
         ERR("SHGetFolderPath failed: %08x\n", hres);
         return NS_ERROR_FAILURE;
