@@ -7038,9 +7038,9 @@ static void test_child_window_from_point(void)
 
     DestroyWindow(parent);
 
-todo_wine
     ok(!found_invisible, "found %d invisible windows\n", found_invisible);
     ok(found_disabled, "found %d disabled windows\n", found_disabled);
+todo_wine
     ok(found_groupbox == 4, "found %d groupbox windows\n", found_groupbox);
     ok(found_httransparent, "found %d found_httransparent windows\n", found_httransparent);
 todo_wine

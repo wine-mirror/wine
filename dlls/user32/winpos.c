@@ -376,7 +376,7 @@ HWND WINAPI ChildWindowFromPoint( HWND hwndParent, POINT pt )
  */
 HWND WINAPI RealChildWindowFromPoint( HWND hwndParent, POINT pt )
 {
-    return ChildWindowFromPointEx( hwndParent, pt, CWP_SKIPTRANSPARENT );
+    return ChildWindowFromPointEx( hwndParent, pt, CWP_SKIPTRANSPARENT | CWP_SKIPINVISIBLE );
 }
 
 /*******************************************************************
