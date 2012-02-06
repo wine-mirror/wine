@@ -1732,14 +1732,14 @@ static HRESULT WINAPI AMFilterData_ParseFilterData(IAMFilterData* iface,
 {
     FilterMapper3Impl *This = impl_from_IAMFilterData(iface);
     HRESULT hr = S_OK;
-    REGFILTER2 *prf2;
+    static REGFILTER2 *prf2;
 
     TRACE("(%p/%p)->(%p, %d, %p)\n", This, iface, pData, cb, ppRegFilter2);
 
     prf2 = CoTaskMemAlloc(sizeof(*prf2));
     if (!prf2)
         return E_OUTOFMEMORY;
-    *ppRegFilter2 = (BYTE *)prf2;
+    *ppRegFilter2 = (BYTE *)&prf2;
 
     hr = FM2_ReadFilterData(pData, prf2);
     if (FAILED(hr))

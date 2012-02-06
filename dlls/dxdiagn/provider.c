@@ -1323,6 +1323,7 @@ static HRESULT fill_filter_data_information(IDxDiagContainerImpl_Container *subc
     HRESULT hr;
     IFilterMapper2 *pFileMapper = NULL;
     IAMFilterData *pFilterData = NULL;
+    BYTE *ppRF = NULL;
     REGFILTER2 *pRF = NULL;
     WCHAR bufferW[10];
     ULONG j;
@@ -1338,9 +1339,10 @@ static HRESULT fill_filter_data_information(IDxDiagContainerImpl_Container *subc
     if (FAILED(hr))
         goto cleanup;
 
-    hr = IAMFilterData_ParseFilterData(pFilterData, pData, cb, (BYTE **)&pRF);
+    hr = IAMFilterData_ParseFilterData(pFilterData, pData, cb, (BYTE **)&ppRF);
     if (FAILED(hr))
         goto cleanup;
+    pRF = ((REGFILTER2**)ppRF)[0];
 
     snprintfW(bufferW, sizeof(bufferW)/sizeof(bufferW[0]), szVersionFormat, pRF->dwVersion);
     hr = add_bstr_property(subcont, szVersionW, bufferW);

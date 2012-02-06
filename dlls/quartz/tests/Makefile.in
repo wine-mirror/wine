@@ -11,4 +11,6 @@ C_SRCS = \
 	referenceclock.c \
 	videorenderer.c
 
+IDL_H_SRCS = fil_data.idl
+
 @MAKE_TEST_RULES@
