@@ -2174,7 +2174,7 @@ msgstr "ファイル名(&F):"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "参照(&R)"
+msgstr "参照(&R)..."
 
 #: cryptui.rc:294
 msgid ""
@@ -3177,7 +3177,7 @@ msgstr "ウィンドウ(&W)"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
 msgid "&Open..."
-msgstr "開く(&O)"
+msgstr "開く(&O)..."
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
