@@ -2281,7 +2281,7 @@ msgstr "&Nome do ficheiro:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "P&rocurar"
+msgstr "P&rocurar..."
 
 #: cryptui.rc:294
 #, fuzzy
@@ -6991,7 +6991,7 @@ msgstr "Con&figurar..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&Sobre..."
+msgstr "&Sobre"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -8039,7 +8039,7 @@ msgstr "&Abrir:"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
 msgid "&Browse..."
-msgstr "&Procurar"
+msgstr "&Procurar..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
@@ -9540,7 +9540,7 @@ msgstr "Digi&tal"
 
 #: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
 msgid "&Font..."
-msgstr "Tipo de &Letra"
+msgstr "Tipo de &Letra..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -10511,7 +10511,7 @@ msgstr "Serviços dependentes estão a correr\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
-msgstr "&Novo..."
+msgstr "&Novo\tCtrl+N"
 
 #: notepad.rc:28 wordpad.rc:29
 #, fuzzy
@@ -10624,7 +10624,7 @@ msgstr "&Conteúdo"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "&Acerca do Notepad..."
+msgstr "&Acerca do Notepad"
 
 #: notepad.rc:97
 msgid "Page Setup"
@@ -11481,7 +11481,7 @@ msgstr "&Dividir"
 
 #: regedit.rc:74
 msgid "&Remove Favorite..."
-msgstr "&Remover Favorito"
+msgstr "&Remover Favorito..."
 
 #: regedit.rc:79
 msgid "&About Registry Editor"
@@ -12945,7 +12945,7 @@ msgstr "Substituições E&xistentes:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "&Editar"
+msgstr "&Editar..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12999,7 +12999,7 @@ msgstr "&Adicionar..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Auto&detectar..."
+msgstr "Auto&detectar"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -14083,6 +14083,7 @@ msgid "Always on &top"
 msgstr "Sempre &visível"
 
 #: winhlp32.rc:56
+#, fuzzy
 msgid "&About Wine Help"
 msgstr "&Informações..."
 
