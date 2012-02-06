@@ -3145,6 +3145,7 @@ msgid "Transferring"
 msgstr "Prenos"
 
 #: gphoto2.rc:43
+#, fuzzy
 msgid "Transferring... Please Wait"
 msgstr "Prenošenje..."
 
@@ -3153,6 +3154,7 @@ msgid "Connecting to camera"
 msgstr "Povezivanje sa kamerom"
 
 #: gphoto2.rc:52
+#, fuzzy
 msgid "Connecting to camera... Please Wait"
 msgstr "Povezivanje sa kamerom..."
 
@@ -7101,7 +7103,7 @@ msgstr "&Podesi..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&O programu..."
+msgstr "&O programu"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7577,6 +7579,7 @@ msgid "Scanning"
 msgstr "Pretraga"
 
 #: sane.rc:44
+#, fuzzy
 msgid "SCANNING... Please Wait"
 msgstr "Pretraživanje..."
 
@@ -12613,15 +12616,15 @@ msgstr ""
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr "Dozvoli temi da &ukrasi prozor."
+msgstr "Dozvoli temi da &ukrasi prozor"
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
-msgstr "Dozvoli &menadžeru prozora da upravlja prozorom."
+msgstr "Dozvoli &menadžeru prozora da upravlja prozorom"
 
 #: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
-msgstr "&Emulacija veštačkog desktopa."
+msgstr "&Emulacija veštačkog desktopa"
 
 #: winecfg.rc:166
 msgid "Desktop &size:"
@@ -12718,7 +12721,7 @@ msgstr "&Dodaj..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Auto&matski..."
+msgstr "Auto&matski"
 
 #: winecfg.rc:232
 msgid "&Path:"
