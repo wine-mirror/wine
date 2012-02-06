@@ -957,6 +957,8 @@ typedef struct WINE_MIDIStream {
 
 #define WINE_MSM_HEADER		(WM_USER+0)
 #define WINE_MSM_STOP		(WM_USER+1)
+#define WINE_MSM_PAUSE		(WM_USER+2)
+#define WINE_MSM_RESUME		(WM_USER+3)
 
 /**************************************************************************
  * 				MMSYSTEM_GetMidiStream		[internal]
@@ -1006,34 +1008,41 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
     LPMIDIHDR	lpMidiHdr;
     LPMIDIHDR*	lpmh;
     LPBYTE	lpData;
+    BOOL	paused = FALSE;
 
-    switch (msg->message) {
-    case WM_QUIT:
-	SetEvent(lpMidiStrm->hEvent);
-	return FALSE;
-    case WINE_MSM_STOP:
-	TRACE("STOP\n");
-	/* this is not quite what MS doc says... */
-	midiOutReset(lpMidiStrm->hDevice);
-	/* empty list of already submitted buffers */
-	for (lpMidiHdr = lpMidiStrm->lpMidiHdr; lpMidiHdr; ) {
-	    LPMIDIHDR lphdr = lpMidiHdr;
-	    lpMidiHdr = lpMidiHdr->lpNext;
-	    lphdr->dwFlags |= MHDR_DONE;
-	    lphdr->dwFlags &= ~MHDR_INQUEUE;
+    for (;;) {
+        switch (msg->message) {
+        case WM_QUIT:
+            SetEvent(lpMidiStrm->hEvent);
+            return FALSE;
+        case WINE_MSM_STOP:
+            TRACE("STOP\n");
+            /* this is not quite what MS doc says... */
+            midiOutReset(lpMidiStrm->hDevice);
+            /* empty list of already submitted buffers */
+            for (lpMidiHdr = lpMidiStrm->lpMidiHdr; lpMidiHdr; ) {
+                LPMIDIHDR lphdr = lpMidiHdr;
+                lpMidiHdr = lpMidiHdr->lpNext;
+                lphdr->dwFlags |= MHDR_DONE;
+                lphdr->dwFlags &= ~MHDR_INQUEUE;
 
-	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
-			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
-			   lpwm->mod.dwInstance, (DWORD_PTR)lphdr, 0);
-	}
-	lpMidiStrm->lpMidiHdr = 0;
-	SetEvent(lpMidiStrm->hEvent);
-	break;
-    case WINE_MSM_HEADER:
-	/* sets initial tick count for first MIDIHDR */
-	if (!lpMidiStrm->dwStartTicks)
-	    lpMidiStrm->dwStartTicks = GetTickCount();
-
+                DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
+                               (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
+                               lpwm->mod.dwInstance, (DWORD_PTR)lphdr, 0);
+            }
+            lpMidiStrm->lpMidiHdr = 0;
+            SetEvent(lpMidiStrm->hEvent);
+            return TRUE;
+        case WINE_MSM_RESUME:
+            /* FIXME: send out cc64 0 (turn off sustain pedal) on every channel */
+            lpMidiStrm->dwStartTicks = GetTickCount() - lpMidiStrm->dwPositionMS;
+            SetEvent(lpMidiStrm->hEvent);
+            return TRUE;
+        case WINE_MSM_PAUSE:
+            /* FIXME: send out cc64 0 (turn off sustain pedal) on every channel */
+            paused = TRUE;
+            SetEvent(lpMidiStrm->hEvent);
+            break;
 	/* FIXME(EPP): "I don't understand the content of the first MIDIHDR sent
 	 * by native mcimidi, it doesn't look like a correct one".
 	 * this trick allows to throw it away... but I don't like it.
@@ -1061,60 +1070,62 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	 * 48 00 99 23 78 04 89 3b 00 00 89 23 00 81 7c 99 H..#x..;...#..|.
 	 * 3b 4c 00 99 23 5e 04 89 3b 00 00 89 23 00 7c 99 ;L..#^..;...#.|.
 	 */
-	lpMidiHdr = (LPMIDIHDR)msg->lParam;
-	lpData = (LPBYTE)lpMidiHdr->lpData;
-	TRACE("Adding %s lpMidiHdr=%p [lpData=0x%p dwBytesRecorded=%u/%u dwFlags=0x%08x size=%lu]\n",
-	      (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular", lpMidiHdr,
-	      lpMidiHdr, lpMidiHdr->dwBytesRecorded, lpMidiHdr->dwBufferLength,
-	      lpMidiHdr->dwFlags, msg->wParam);
+        case WINE_MSM_HEADER:
+            /* sets initial tick count for first MIDIHDR */
+            if (!lpMidiStrm->dwStartTicks)
+                lpMidiStrm->dwStartTicks = GetTickCount();
+            lpMidiHdr = (LPMIDIHDR)msg->lParam;
+            lpData = (LPBYTE)lpMidiHdr->lpData;
+            TRACE("Adding %s lpMidiHdr=%p [lpData=0x%p dwBytesRecorded=%u/%u dwFlags=0x%08x size=%lu]\n",
+                  (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular", lpMidiHdr,
+                  lpData, lpMidiHdr->dwBytesRecorded, lpMidiHdr->dwBufferLength,
+                  lpMidiHdr->dwFlags, msg->wParam);
 #if 0
-	/* dumps content of lpMidiHdr->lpData
-	 * FIXME: there should be a debug routine somewhere that already does this
-	 * I hate spreading this type of shit all around the code
-	 */
-	for (dwToGo = 0; dwToGo < lpMidiHdr->dwBufferLength; dwToGo += 16) {
-	    DWORD	i;
-	    BYTE	ch;
+            /* dumps content of lpMidiHdr->lpData
+             * FIXME: there should be a debug routine somewhere that already does this
+             */
+            for (dwToGo = 0; dwToGo < lpMidiHdr->dwBufferLength; dwToGo += 16) {
+                DWORD       i;
+                BYTE        ch;
 
-	    for (i = 0; i < min(16, lpMidiHdr->dwBufferLength - dwToGo); i++)
-		printf("%02x ", lpData[dwToGo + i]);
-	    for (; i < 16; i++)
-		printf("   ");
-	    for (i = 0; i < min(16, lpMidiHdr->dwBufferLength - dwToGo); i++) {
-		ch = lpData[dwToGo + i];
-		printf("%c", (ch >= 0x20 && ch <= 0x7F) ? ch : '.');
-	    }
-	    printf("\n");
-	}
+                for (i = 0; i < min(16, lpMidiHdr->dwBufferLength - dwToGo); i++)
+                    printf("%02x ", lpData[dwToGo + i]);
+                for (; i < 16; i++)
+                    printf("   ");
+                for (i = 0; i < min(16, lpMidiHdr->dwBufferLength - dwToGo); i++) {
+                    ch = lpData[dwToGo + i];
+                    printf("%c", (ch >= 0x20 && ch <= 0x7F) ? ch : '.');
+                }
+                printf("\n");
+            }
 #endif
-	if (((LPMIDIEVENT)lpData)->dwStreamID != 0 &&
-	    ((LPMIDIEVENT)lpData)->dwStreamID != 0xFFFFFFFF &&
-	    ((LPMIDIEVENT)lpData)->dwStreamID != (DWORD)lpMidiStrm) {
-	    FIXME("Dropping bad %s lpMidiHdr (streamID=%08x)\n",
-		  (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular",
-		  ((LPMIDIEVENT)lpData)->dwStreamID);
-	    lpMidiHdr->dwFlags |= MHDR_DONE;
-	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+            if (((LPMIDIEVENT)lpData)->dwStreamID != 0 &&
+                ((LPMIDIEVENT)lpData)->dwStreamID != 0xFFFFFFFF &&
+                ((LPMIDIEVENT)lpData)->dwStreamID != (DWORD)lpMidiStrm) {
+                FIXME("Dropping bad %s lpMidiHdr (streamID=%08x)\n",
+                      (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular",
+                      ((LPMIDIEVENT)lpData)->dwStreamID);
+                lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+                lpMidiHdr->dwFlags |= MHDR_DONE;
 
-	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
-			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
-			   lpwm->mod.dwInstance, (DWORD_PTR)lpMidiHdr, 0);
-	    break;
-	}
+                DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
+                               (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
+                               lpwm->mod.dwInstance, (DWORD_PTR)lpMidiHdr, 0);
+                break;
+            }
 
-	for (lpmh = &lpMidiStrm->lpMidiHdr; *lpmh; lpmh = &(*lpmh)->lpNext);
-	*lpmh = lpMidiHdr;
-	lpMidiHdr = (LPMIDIHDR)msg->lParam;
-	lpMidiHdr->lpNext = 0;
-	lpMidiHdr->dwFlags |= MHDR_INQUEUE;
-	lpMidiHdr->dwFlags &= ~MHDR_DONE;
-
-	break;
-    default:
-	FIXME("Unknown message %d\n", msg->message);
-	break;
+            lpMidiHdr->lpNext = 0;
+            for (lpmh = &lpMidiStrm->lpMidiHdr; *lpmh; lpmh = &(*lpmh)->lpNext);
+            *lpmh = lpMidiHdr;
+            break;
+        default:
+            FIXME("Unknown message %d\n", msg->message);
+            break;
+        }
+        if (!paused)
+            return TRUE;
+        GetMessageA(msg, 0, 0, 0);
     }
-    return TRUE;
 }
 
 /**************************************************************************
@@ -1335,8 +1346,8 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
 
     /* wait for thread to have started, and for its queue to be created */
     WaitForSingleObject(lpMidiStrm->hEvent, INFINITE);
-    /* start in paused mode */
-    SuspendThread(lpMidiStrm->hThread);
+
+    MMSYSTEM_MidiStream_PostMessage(lpMidiStrm, WINE_MSM_PAUSE, 0, 0);
 
     TRACE("=> (%u/%d) hMidi=%p ret=%d lpMidiStrm=%p\n",
 	  *lpuDeviceID, lpwm->mld.uDeviceID, *lphMidiStrm, ret, lpMidiStrm);
@@ -1392,14 +1403,9 @@ MMRESULT WINAPI midiStreamPause(HMIDISTRM hMidiStrm)
 
     TRACE("(%p)!\n", hMidiStrm);
 
-    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
-	ret = MMSYSERR_INVALHANDLE;
-    } else {
-	if (SuspendThread(lpMidiStrm->hThread) == 0xFFFFFFFF) {
-	    ERR("bad Suspend (%d)\n", GetLastError());
-	    ret = MMSYSERR_ERROR;
-	}
-    }
+    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL))
+        return MMSYSERR_INVALHANDLE;
+    MMSYSTEM_MidiStream_PostMessage(lpMidiStrm, WINE_MSM_PAUSE, 0, 0);
     return ret;
 }
 
@@ -1493,24 +1499,9 @@ MMRESULT WINAPI midiStreamRestart(HMIDISTRM hMidiStrm)
 
     TRACE("(%p)!\n", hMidiStrm);
 
-    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
-	ret = MMSYSERR_INVALHANDLE;
-    } else {
-	DWORD	ret;
-
-	/* since we increase the thread suspend count on each midiStreamPause
-	 * there may be a need for several ResumeThread
-	 */
-	do {
-	    ret = ResumeThread(lpMidiStrm->hThread);
-	} while (ret != 0xFFFFFFFF && ret > 1);
-	if (ret == 0xFFFFFFFF) {
-	    ERR("bad Resume (%d)\n", GetLastError());
-	    ret = MMSYSERR_ERROR;
-	} else {
-	    lpMidiStrm->dwStartTicks = GetTickCount() - lpMidiStrm->dwPositionMS;
-	}
-    }
+    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL))
+        return MMSYSERR_INVALHANDLE;
+    MMSYSTEM_MidiStream_PostMessage(lpMidiStrm, WINE_MSM_RESUME, 0, 0);
     return ret;
 }
 
@@ -1524,13 +1515,9 @@ MMRESULT WINAPI midiStreamStop(HMIDISTRM hMidiStrm)
 
     TRACE("(%p)!\n", hMidiStrm);
 
-    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
-	ret = MMSYSERR_INVALHANDLE;
-    } else {
-	/* in case stream has been paused... FIXME is the current state correct ? */
-	midiStreamRestart(hMidiStrm);
-	MMSYSTEM_MidiStream_PostMessage(lpMidiStrm, WINE_MSM_STOP, 0, 0);
-    }
+    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL))
+        return MMSYSERR_INVALHANDLE;
+    MMSYSTEM_MidiStream_PostMessage(lpMidiStrm, WINE_MSM_STOP, 0, 0);
     return ret;
 }
 
