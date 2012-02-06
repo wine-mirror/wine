@@ -3116,7 +3116,7 @@ msgstr "Actualitza"
 
 #: hhctrl.rc:62 winhlp32.rc:31
 msgid "&Print..."
-msgstr "&Imprimeix"
+msgstr "&Imprimeix..."
 
 #: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
@@ -3199,7 +3199,7 @@ msgstr "Finestra"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
 msgid "&Open..."
-msgstr "&Obre"
+msgstr "&Obre..."
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
@@ -3260,7 +3260,7 @@ msgstr "Inici"
 
 #: ieframe.rc:68 winhlp32.rc:66
 msgid "Print..."
-msgstr "Imprimeix"
+msgstr "Imprimeix..."
 
 #: ieframe.rc:73
 msgid "Address"
@@ -11950,7 +11950,7 @@ msgstr ""
 
 #: taskmgr.rc:518
 msgid "Select Columns"
-msgstr "Selecciona Columnes..."
+msgstr "Selecciona Columnes"
 
 #: taskmgr.rc:523
 msgid ""
