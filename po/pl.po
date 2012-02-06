@@ -54,7 +54,7 @@ msgstr "&Modyfikuj..."
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
 msgid "&Remove"
-msgstr "&Usuń..."
+msgstr "&Usuń"
 
 #: appwiz.rc:72
 msgid "Support Information"
@@ -217,7 +217,7 @@ msgstr "Wszystkie pliki (*.*)"
 
 #: appwiz.rc:43
 msgid "&Modify/Remove"
-msgstr "&Zmień/Usuń..."
+msgstr "&Zmień/Usuń"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -2181,8 +2181,9 @@ msgid "&File name:"
 msgstr "&Nazwa pliku:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
+#, fuzzy
 msgid "B&rowse..."
-msgstr "Przeglądaj"
+msgstr "Przeglądaj..."
 
 #: cryptui.rc:294
 msgid ""
@@ -3089,6 +3090,7 @@ msgid "Connecting to camera"
 msgstr "Nawiązywanie połączenia z aparatem"
 
 #: gphoto2.rc:52
+#, fuzzy
 msgid "Connecting to camera... Please Wait"
 msgstr "Nawiązywanie połączenia z aparatem..."
 
@@ -3218,7 +3220,7 @@ msgstr "&Drukuj..."
 
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
-msgstr "&Podgląd wydruku..."
+msgstr "&Podgląd wydruku"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -3275,7 +3277,7 @@ msgstr "Szukanie %s"
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
-msgstr "Rozpocznij pobieranie %s..."
+msgstr "Rozpocznij pobieranie %s"
 
 #: ieframe.rc:80
 msgid "Downloading %s"
@@ -6764,7 +6766,7 @@ msgstr "Kon&figuruj..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&Informacje..."
+msgstr "&Informacje"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7344,7 +7346,7 @@ msgstr "Kop&iuj tło"
 
 #: shdoclc.rc:44
 msgid "Set as &Desktop Item"
-msgstr "Ustaw jako &element pulpitu..."
+msgstr "Ustaw jako &element pulpitu"
 
 #: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
 msgid "Select &All"
@@ -7776,7 +7778,7 @@ msgstr "&Otwórz:"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
 msgid "&Browse..."
-msgstr "&Przeglądaj"
+msgstr "&Przeglądaj..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
@@ -12549,7 +12551,7 @@ msgstr "Istniejące reguły:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "&Edycja"
+msgstr "&Edycja..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -13296,7 +13298,7 @@ msgstr "Zmień &nazwę..."
 
 #: winefile.rc:31
 msgid "Propert&ies\tAlt+Enter"
-msgstr "&Właściwości...\tAlt+Enter"
+msgstr "&Właściwości\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -13316,7 +13318,7 @@ msgstr "Podłącz &dysk sieciowy..."
 
 #: winefile.rc:42
 msgid "&Disconnect Network Drive"
-msgstr "&Odłącz dysk sieciowy..."
+msgstr "&Odłącz dysk sieciowy"
 
 #: winefile.rc:48
 msgid "&Name"
