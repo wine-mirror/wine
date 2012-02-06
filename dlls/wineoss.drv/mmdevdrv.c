@@ -875,7 +875,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 {
     ACImpl *This = impl_from_IAudioClient(iface);
     int i;
-    audio_buf_info bi;
     HRESULT hr;
 
     TRACE("(%p)->(%x, %x, %s, %s, %p, %s)\n", This, mode, flags,
@@ -955,18 +954,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         return E_OUTOFMEMORY;
     }
 
-    if(This->dataflow == eRender){
-        if(ioctl(This->fd, SNDCTL_DSP_GETOSPACE, &bi) < 0){
-            WARN("GETOSPACE failed: %d (%s)\n", errno, strerror(errno));
-            CoTaskMemFree(This->fmt);
-            This->fmt = NULL;
-            LeaveCriticalSection(&This->lock);
-            return E_FAIL;
-        }
-
-        This->oss_bufsize_bytes = bi.bytes;
-    }
-
     This->vols = HeapAlloc(GetProcessHeap(), 0, fmt->nChannels * sizeof(float));
     if(!This->vols){
         CoTaskMemFree(This->fmt);
@@ -980,6 +967,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     This->share = mode;
     This->flags = flags;
+    This->oss_bufsize_bytes = 0;
 
     EnterCriticalSection(&g_sessions_lock);
 
