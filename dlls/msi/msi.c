@@ -613,8 +613,11 @@ static UINT MSI_ApplicablePatchXML( MSIPACKAGE *package, IXMLDOMDocument *desc )
     {
         hr = IXMLDOMNode_get_text( node, &s );
         IXMLDOMNode_Release( node );
-        if (!strcmpW( s, product_code )) r = ERROR_SUCCESS;
-        SysFreeString(s);
+        if (hr == S_OK)
+        {
+            if (!strcmpW( s, product_code )) r = ERROR_SUCCESS;
+            SysFreeString( s );
+        }
     }
     IXMLDOMNodeList_Release( list );
 
