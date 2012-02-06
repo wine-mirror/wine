@@ -2269,8 +2269,9 @@ msgid "&File name:"
 msgstr "&Filnavn:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
+#, fuzzy
 msgid "B&rowse..."
-msgstr "Bla"
+msgstr "Bla..."
 
 #: cryptui.rc:294
 #, fuzzy
@@ -6983,7 +6984,7 @@ msgstr "&Oppsett..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "O&m..."
+msgstr "O&m"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -8028,7 +8029,7 @@ msgstr "&Åpne:"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
 msgid "&Browse..."
-msgstr "&Bla"
+msgstr "&Bla..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
@@ -9496,8 +9497,9 @@ msgid "Digi&tal"
 msgstr "Digi&tal"
 
 #: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
+#, fuzzy
 msgid "&Font..."
-msgstr "Skrift"
+msgstr "Skrift..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -12848,7 +12850,7 @@ msgstr "Gjeldende overstyringer:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "R&ediger"
+msgstr "R&ediger..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12902,7 +12904,7 @@ msgstr "&Legg til..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "&Automatisk..."
+msgstr "&Automatisk"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -13867,7 +13869,7 @@ msgstr "&Ekspert"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "E&gendefinert"
+msgstr "E&gendefinert..."
 
 #: winemine.rc:44
 #, fuzzy
@@ -13984,8 +13986,9 @@ msgid "Always on &top"
 msgstr "All&tid øverst"
 
 #: winhlp32.rc:56
+#, fuzzy
 msgid "&About Wine Help"
-msgstr "&Informasjon..."
+msgstr "&Informasjon"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
