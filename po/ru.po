@@ -6751,7 +6751,7 @@ msgstr "&Настройки..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&Информация..."
+msgstr "&Информация"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -10765,7 +10765,7 @@ msgstr "&Создать..."
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
-msgstr "О&ткрыть...\tEnter"
+msgstr "О&ткрыть\tEnter"
 
 #: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
