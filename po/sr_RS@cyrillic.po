@@ -3064,6 +3064,7 @@ msgid "Transferring"
 msgstr "Пренос"
 
 #: gphoto2.rc:43
+#, fuzzy
 msgid "Transferring... Please Wait"
 msgstr "Преношење..."
 
@@ -3072,6 +3073,7 @@ msgid "Connecting to camera"
 msgstr "Повезивање са камером"
 
 #: gphoto2.rc:52
+#, fuzzy
 msgid "Connecting to camera... Please Wait"
 msgstr "Повезивање са камером..."
 
@@ -7007,7 +7009,7 @@ msgstr "&Подеси..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&О програму..."
+msgstr "&О програму"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7483,6 +7485,7 @@ msgid "Scanning"
 msgstr "Претрага"
 
 #: sane.rc:44
+#, fuzzy
 msgid "SCANNING... Please Wait"
 msgstr "Претраживање..."
 
