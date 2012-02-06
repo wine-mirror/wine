@@ -282,7 +282,7 @@ msgstr "압축안됨"
 
 #: browseui.rc:25
 msgid "Canceling..."
-msgstr "취소하는 중.."
+msgstr "취소하는 중..."
 
 #: comctl32.rc:49 winefile.rc:159
 msgid "Properties for %s"
@@ -3192,7 +3192,7 @@ msgstr "인쇄(&I)..."
 
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
-msgstr "인쇄 미리보기(&W)..."
+msgstr "인쇄 미리보기(&W)"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -3216,7 +3216,7 @@ msgstr "즐겨찾기 추가(&A)..."
 
 #: ieframe.rc:57
 msgid "&About Internet Explorer"
-msgstr "인터넷 익스플로어에 관하여(&A)..."
+msgstr "인터넷 익스플로어에 관하여(&A)"
 
 #: ieframe.rc:87
 msgid "Open URL"
@@ -7739,7 +7739,7 @@ msgstr "열기(&O):"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
 msgid "&Browse..."
-msgstr "찾기(&B)"
+msgstr "찾기(&B)..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
@@ -9191,8 +9191,9 @@ msgid "&Always on Top"
 msgstr "항상 앞에 (&A)"
 
 #: clock.rc:42
+#, fuzzy
 msgid "&About Clock"
-msgstr "시계 정보(&A)..."
+msgstr "시계 정보(&A)"
 
 #: clock.rc:48
 msgid "Clock"
