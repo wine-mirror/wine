@@ -660,6 +660,20 @@ static HRESULT WINAPI Widget_put_prop_req_arg(
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_restrict(IWidget* iface, INT *i)
+{
+    trace("restrict\n");
+    *i = DISPID_TM_RESTRICTED;
+    return S_OK;
+}
+
+static HRESULT WINAPI Widget_neg_restrict(IWidget* iface, INT *i)
+{
+    trace("neg_restrict\n");
+    *i = DISPID_TM_NEG_RESTRICTED;
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -696,6 +710,8 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_ByRefUInt,
     Widget_put_prop_opt_arg,
     Widget_put_prop_req_arg,
+    Widget_restrict,
+    Widget_neg_restrict
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -1509,6 +1525,28 @@ static void test_typelibmarshal(void)
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_REQ_ARG, &IID_NULL, 0x40c, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, ITypeInfo_Invoke);
+    VariantClear(&varresult);
+
+    /* restricted member */
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.cArgs = 0;
+    dispparams.rgvarg = NULL;
+    VariantInit(&varresult);
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_RESTRICTED, &IID_NULL, 0x40c, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
+    ok( hr == DISP_E_MEMBERNOTFOUND, "got %08x\n", hr );
+    VariantClear(&varresult);
+
+    /* restricted member with -ve memid (not restricted) */
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.cArgs = 0;
+    dispparams.rgvarg = NULL;
+    VariantInit(&varresult);
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_NEG_RESTRICTED, &IID_NULL, 0x40c, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok(V_VT(&varresult) == VT_I4, "got %x\n", V_VT(&varresult));
+    ok(V_I4(&varresult) == DISPID_TM_NEG_RESTRICTED, "got %x\n", V_I4(&varresult));
     VariantClear(&varresult);
 
     IDispatch_Release(pDispatch);

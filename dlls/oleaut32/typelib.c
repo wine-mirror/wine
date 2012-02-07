@@ -6241,6 +6241,11 @@ DispCallFunc(
 #endif
 }
 
+static inline BOOL func_restricted( const FUNCDESC *desc )
+{
+    return (desc->wFuncFlags & FUNCFLAG_FRESTRICTED) && (desc->memid >= 0);
+}
+
 #define INVBUF_ELEMENT_SIZE \
     (sizeof(VARIANTARG) + sizeof(VARIANTARG) + sizeof(VARIANTARG *) + sizeof(VARTYPE))
 #define INVBUF_GET_ARG_ARRAY(buffer, params) (buffer)
@@ -6297,7 +6302,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
         pFuncInfo = &This->funcdescs[fdc];
         if ((memid == pFuncInfo->funcdesc.memid) &&
             (wFlags & pFuncInfo->funcdesc.invkind) &&
-            (pFuncInfo->funcdesc.wFuncFlags & FUNCFLAG_FRESTRICTED) == 0)
+            !func_restricted( &pFuncInfo->funcdesc ))
             break;
     }
 
