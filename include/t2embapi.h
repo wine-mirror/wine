@@ -23,6 +23,19 @@
 extern "C" {
 #endif
 
+#define CHARSET_UNICODE   1
+#define CHARSET_DEFAULT   1
+#define CHARSET_SYMBOL    2
+#define CHARSET_GLYPHIDX  3
+
+#define LICENSE_INSTALLABLE   0x0000
+#define LICENSE_DEFAULT       0x0000
+#define LICENSE_NOEMBEDDING   0x0002
+#define LICENSE_PREVIEWPRINT  0x0004
+#define LICENSE_EDITABLE      0x0008
+
+#define TTLOAD_PRIVATE  0x0001
+
 /* Possible return values. */
 #define E_NONE                              __MSABI_LONG(0x0000)
 #define E_API_NOTIMPL                       __MSABI_LONG(0x0001)
@@ -46,6 +59,7 @@ typedef struct
 
 LONG WINAPI TTLoadEmbeddedFont(HANDLE*,ULONG,ULONG*,ULONG,ULONG*,READEMBEDPROC,
                                LPVOID,LPWSTR,LPSTR,TTLOADINFO*);
+LONG WINAPI TTDeleteEmbeddedFont(HANDLE,ULONG,ULONG*);
 
 /* embedding privileges */
 #define EMBED_PREVIEWPRINT  1
