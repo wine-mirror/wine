@@ -1023,7 +1023,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_RoamingAppData,
         CSIDL_Type_User,
         AppDataW,
-        AppDataW
+        Application_DataW
     },
     { /* 0x1b - CSIDL_PRINTHOOD */
         &FOLDERID_PrintHood,
@@ -1035,7 +1035,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_LocalAppData,
         CSIDL_Type_User,
         Local_AppDataW,
-        Local_AppDataW
+        Local_Settings_Application_DataW
     },
     { /* 0x1d - CSIDL_ALTSTARTUP */
         &GUID_NULL,
@@ -1077,7 +1077,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_ProgramData,
         CSIDL_Type_AllUsers,
         Common_AppDataW,
-        AppDataW
+        Application_DataW
     },
     { /* 0x24 - CSIDL_WINDOWS */
         &FOLDERID_Windows,
