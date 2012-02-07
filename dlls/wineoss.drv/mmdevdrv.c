@@ -491,7 +491,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(char *devnode, IMMDevice *dev,
         return E_INVALIDARG;
     }
     if(This->fd < 0){
-        ERR("Unable to open device %s: %d (%s)\n", devnode, errno,
+        WARN("Unable to open device %s: %d (%s)\n", devnode, errno,
                 strerror(errno));
         HeapFree(GetProcessHeap(), 0, This);
         return AUDCLNT_E_DEVICE_INVALIDATED;
@@ -501,7 +501,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(char *devnode, IMMDevice *dev,
 
     This->ai.dev = -1;
     if(ioctl(This->fd, SNDCTL_ENGINEINFO, &This->ai) < 0){
-        ERR("Unable to get audio info for device %s: %d (%s)\n", devnode,
+        WARN("Unable to get audio info for device %s: %d (%s)\n", devnode,
                 errno, strerror(errno));
         close(This->fd);
         HeapFree(GetProcessHeap(), 0, This);
@@ -1106,7 +1106,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         fd = open(This->devnode, O_RDONLY | O_NONBLOCK, 0);
 
     if(fd < 0){
-        ERR("Unable to open device %s: %d (%s)\n", This->devnode, errno,
+        WARN("Unable to open device %s: %d (%s)\n", This->devnode, errno,
                 strerror(errno));
         return AUDCLNT_E_DEVICE_INVALIDATED;
     }
@@ -1161,7 +1161,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
         fmt->Format.wBitsPerSample = 24;
         fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
     }else{
-        ERR("Didn't recognize any available OSS formats: %x\n", formats);
+        WARN("Didn't recognize any available OSS formats: %x\n", formats);
         CoTaskMemFree(fmt);
         return E_FAIL;
     }
