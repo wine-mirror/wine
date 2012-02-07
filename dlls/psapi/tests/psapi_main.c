@@ -198,7 +198,7 @@ static BOOL nt_get_mapped_file_name(HANDLE process, LPVOID addr, LPWSTR name, DW
 {
     MEMORY_SECTION_NAME *section_name;
     WCHAR *buf;
-    SIZE_T buf_len;
+    SIZE_T buf_len, ret_len;
     NTSTATUS status;
 
     if (!pNtQueryVirtualMemory) return FALSE;
@@ -206,12 +206,16 @@ static BOOL nt_get_mapped_file_name(HANDLE process, LPVOID addr, LPWSTR name, DW
     buf_len = len * sizeof(WCHAR) + sizeof(MEMORY_SECTION_NAME);
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buf_len);
 
-    status = pNtQueryVirtualMemory(process, addr, MemorySectionName, buf, buf_len, NULL);
+    ret_len = 0xdeadbeef;
+    status = pNtQueryVirtualMemory(process, addr, MemorySectionName, buf, buf_len, &ret_len);
 todo_wine
-    ok(!status || broken(status == STATUS_ACCESS_VIOLATION) /* win2k */, "NtQueryVirtualMemory error %x\n", status);
+    ok(!status, "NtQueryVirtualMemory error %x\n", status);
+    /* FIXME: remove once Wine is fixed */
     if (status) return FALSE;
 
     section_name = (MEMORY_SECTION_NAME *)buf;
+    ok(ret_len == section_name->SectionFileName.MaximumLength + sizeof(*section_name), "got %lu, %u\n",
+       ret_len, section_name->SectionFileName.MaximumLength);
     ok((char *)section_name->SectionFileName.Buffer == (char *)section_name + sizeof(*section_name), "got %p, %p\n",
        section_name, section_name->SectionFileName.Buffer);
     ok(section_name->SectionFileName.MaximumLength == section_name->SectionFileName.Length + sizeof(WCHAR), "got %u, %u\n",
