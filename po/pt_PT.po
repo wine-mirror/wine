@@ -557,7 +557,7 @@ msgstr "Exemplo"
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
-msgstr "Scr&ipt:"
+msgstr ""
 
 #: comdlg32.rc:276
 msgid "Color"
@@ -674,7 +674,7 @@ msgstr "&Nome:"
 
 #: comdlg32.rc:362 comdlg32.rc:400
 msgid "Status:"
-msgstr "Status:"
+msgstr ""
 
 #: comdlg32.rc:364 comdlg32.rc:402
 msgid "Type:"
@@ -1170,7 +1170,7 @@ msgstr ""
 
 #: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
-msgstr "&Password:"
+msgstr ""
 
 #: credui.rc:47
 msgid "&Remember my password"
@@ -1374,7 +1374,7 @@ msgstr "URL Política CA Netscape"
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
-msgstr "Netscape SSL ServerName"
+msgstr ""
 
 #: crypt32.rc:67
 msgid "Netscape Comment"
@@ -1592,7 +1592,7 @@ msgstr ""
 
 #: crypt32.rc:119
 msgid "Dummy Signer"
-msgstr "Dummy Signer"
+msgstr ""
 
 #: crypt32.rc:120
 msgid "Encrypted Private Key"
@@ -1612,11 +1612,11 @@ msgstr "Id da transacção"
 
 #: crypt32.rc:124
 msgid "Sender Nonce"
-msgstr "Sender Nonce"
+msgstr ""
 
 #: crypt32.rc:125
 msgid "Recipient Nonce"
-msgstr "Recipient Nonce"
+msgstr ""
 
 #: crypt32.rc:126
 msgid "Reg Info"
@@ -1802,7 +1802,7 @@ msgstr "Recuperação de Ficheiros"
 
 #: crypt32.rc:159 cryptui.rc:134
 msgid "Root List Signer"
-msgstr "Root List Signer"
+msgstr ""
 
 #: crypt32.rc:160
 msgid "All application policies"
@@ -1865,7 +1865,7 @@ msgstr "Certificados Desconfiáveis"
 
 #: crypt32.rc:179
 msgid "KeyID="
-msgstr "KeyID="
+msgstr ""
 
 #: crypt32.rc:180
 msgid "Certificate Issuer"
@@ -2099,11 +2099,11 @@ msgstr "Assinatura"
 
 #: crypt32.rc:235
 msgid "SSL CA"
-msgstr "SSL CA"
+msgstr ""
 
 #: crypt32.rc:236
 msgid "S/MIME CA"
-msgstr "S/MIME CA"
+msgstr ""
 
 #: crypt32.rc:237
 msgid "Signature CA"
@@ -2614,7 +2614,7 @@ msgstr "%s (%d bits)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
-msgstr "SHA1 hash"
+msgstr ""
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
@@ -7036,7 +7036,7 @@ msgstr "barra de scroll"
 
 #: oleacc.rc:31
 msgid "grip"
-msgstr "grip"
+msgstr ""
 
 #: oleacc.rc:32
 msgid "sound"
@@ -7044,11 +7044,11 @@ msgstr "som"
 
 #: oleacc.rc:33
 msgid "cursor"
-msgstr "cursor"
+msgstr ""
 
 #: oleacc.rc:34
 msgid "caret"
-msgstr "caret"
+msgstr ""
 
 #: oleacc.rc:35
 msgid "alert"
@@ -7064,7 +7064,7 @@ msgstr "cliente"
 
 #: oleacc.rc:38
 msgid "popup menu"
-msgstr "popup menu"
+msgstr ""
 
 #: oleacc.rc:39
 msgid "menu item"
@@ -8570,7 +8570,7 @@ msgstr "Duplex:"
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
-msgstr "Realm"
+msgstr ""
 
 #: wininet.rc:46 wininet.rc:66
 msgid "&Save this password (insecure)"
@@ -10247,7 +10247,7 @@ msgstr ""
 
 #: cmd.rc:321
 msgid "Wine Command Prompt"
-msgstr "Wine Command Prompt"
+msgstr ""
 
 #: cmd.rc:322
 #, fuzzy
@@ -10716,7 +10716,7 @@ msgstr "Página &p"
 
 #: notepad.rc:68
 msgid "Notepad"
-msgstr "Notepad"
+msgstr ""
 
 #: notepad.rc:69 progman.rc:61 winhlp32.rc:79
 msgid "ERROR"
@@ -12121,11 +12121,11 @@ msgstr "Memória kernel (K)"
 
 #: taskmgr.rc:382 taskmgr.rc:290
 msgid "Handles"
-msgstr "Handles"
+msgstr ""
 
 #: taskmgr.rc:383 taskmgr.rc:291
 msgid "Threads"
-msgstr "Threads"
+msgstr ""
 
 #: taskmgr.rc:384 taskmgr.rc:263
 msgid "Processes"
@@ -12137,11 +12137,11 @@ msgstr "Total"
 
 #: taskmgr.rc:392
 msgid "Limit"
-msgstr "Limit"
+msgstr ""
 
 #: taskmgr.rc:393
 msgid "Peak"
-msgstr "Peak"
+msgstr ""
 
 #: taskmgr.rc:402
 msgid "System Cache"
@@ -12664,15 +12664,15 @@ msgstr "Tamanho da VM"
 
 #: taskmgr.rc:287
 msgid "Paged Pool"
-msgstr "Paged Pool"
+msgstr ""
 
 #: taskmgr.rc:288
 msgid "NP Pool"
-msgstr "NP Pool"
+msgstr ""
 
 #: taskmgr.rc:289
 msgid "Base Pri"
-msgstr "Base Pri"
+msgstr ""
 
 #: taskmgr.rc:301
 msgid "Task Manager Warning"
@@ -14440,7 +14440,7 @@ msgstr "in"
 
 #: wordpad.rc:174
 msgid "inch"
-msgstr "inch"
+msgstr ""
 
 #: wordpad.rc:175
 #, fuzzy
