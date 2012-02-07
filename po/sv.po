@@ -2186,7 +2186,7 @@ msgstr "&Filnamn:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "B&läddra"
+msgstr "B&läddra..."
 
 #: cryptui.rc:294
 #, fuzzy
@@ -7779,7 +7779,7 @@ msgstr "&Öppna:"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
 msgid "&Browse..."
-msgstr "&Bläddra"
+msgstr "&Bläddra..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
@@ -12497,7 +12497,7 @@ msgstr ""
 
 #: winecfg.rc:150
 msgid "&Add application..."
-msgstr "&Lägg till program"
+msgstr "&Lägg till program..."
 
 #: winecfg.rc:151
 msgid "&Remove application"
@@ -12570,7 +12570,7 @@ msgstr "Befintliga &åsidosättningar:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "R&edigera"
+msgstr "R&edigera..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12624,7 +12624,7 @@ msgstr "&Lägg till..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Upptäck aut&omatiskt..."
+msgstr "Upptäck aut&omatiskt"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -13695,6 +13695,7 @@ msgid "Always on &top"
 msgstr "Alltid &överst"
 
 #: winhlp32.rc:56
+#, fuzzy
 msgid "&About Wine Help"
 msgstr "&Info..."
 
