@@ -532,6 +532,10 @@ static const WCHAR system_link[] = {'S','o','f','t','w','a','r','e','\\','M','i'
                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','F','o','n','t','L','i','n','k','\\',
                                     'S','y','s','t','e','m','L','i','n','k',0};
 
+static const WCHAR internal_system_link[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+                                    'F','o','n','t','L','i','n','k','\\',
+                                    'S','y','s','t','e','m','L','i','n','k',0};
+
 /****************************************
  *   Notes on .fon files
  *
@@ -2007,6 +2011,97 @@ static BOOL init_system_links(void)
         RegCloseKey(hkey);
     }
 
+    if(RegOpenKeyW(HKEY_CURRENT_USER, internal_system_link, &hkey) == ERROR_SUCCESS)
+    {
+        RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &max_val, &max_data, NULL, NULL);
+        value = HeapAlloc(GetProcessHeap(), 0, (max_val + 1) * sizeof(WCHAR));
+        data = HeapAlloc(GetProcessHeap(), 0, max_data);
+        val_len = max_val + 1;
+        data_len = max_data;
+        index = 0;
+        while(RegEnumValueW(hkey, index++, value, &val_len, NULL, &type, (LPBYTE)data, &data_len) == ERROR_SUCCESS)
+        {
+            BOOL existing = FALSE;
+            memset(&fs, 0, sizeof(fs));
+            psub = get_font_subst(&font_subst_list, value, -1);
+            /* Don't store fonts that are only substitutes for other fonts */
+            if(psub)
+            {
+                TRACE("%s: Internal SystemLink entry for substituted font, ignoring\n", debugstr_w(value));
+                goto next_internal;
+            }
+
+            LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
+            {
+                if(!strcmpiW(font_link->font_name, value))
+                {
+                    existing = TRUE;
+                    break;
+                }
+            }
+
+            if (!existing)
+            {
+                font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*font_link));
+                font_link->font_name = strdupW(value);
+                list_init(&font_link->links);
+            }
+
+            for(entry = data; (char*)entry < (char*)data + data_len && *entry != 0; entry = next)
+            {
+                WCHAR *face_name;
+                CHILD_FONT *child_font;
+
+                TRACE("Internal entry %s: %s\n", debugstr_w(value), debugstr_w(entry));
+
+                next = entry + strlenW(entry) + 1;
+
+                face_name = strchrW(entry, ',');
+                if(face_name)
+                {
+                    *face_name++ = 0;
+                    while(isspaceW(*face_name))
+                        face_name++;
+
+                    psub = get_font_subst(&font_subst_list, face_name, -1);
+                    if(psub)
+                        face_name = psub->to.name;
+                }
+                face = find_face_from_filename(entry, face_name);
+                if(!face)
+                {
+                    TRACE("Unable to find file %s face name %s\n", debugstr_w(entry), debugstr_w(face_name));
+                    continue;
+                }
+
+                child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
+                child_font->face = face;
+                child_font->font = NULL;
+                fs.fsCsb[0] |= face->fs.fsCsb[0];
+                fs.fsCsb[1] |= face->fs.fsCsb[1];
+                TRACE("Adding file %s index %ld\n", child_font->face->file, child_font->face->face_index);
+                list_add_tail(&font_link->links, &child_font->entry);
+            }
+            family = find_family_from_name(font_link->font_name);
+            if(family)
+            {
+                LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
+                {
+                    face->fs_links = fs;
+                }
+            }
+            if (!existing)
+                list_add_tail(&system_links, &font_link->entry);
+        next_internal:
+            val_len = max_val + 1;
+            data_len = max_data;
+        }
+
+        HeapFree(GetProcessHeap(), 0, value);
+        HeapFree(GetProcessHeap(), 0, data);
+        RegCloseKey(hkey);
+    }
+
     /* Explicitly add an entry for the system font, this links to Tahoma and any links
        that Tahoma has */
 
@@ -2798,9 +2893,6 @@ static void update_font_info(void)
     }
     if (!done)
         FIXME("there is no font defaults for codepages %u,%u\n", ansi_cp, oem_cp);
-
-    /* Clear out system links */
-    RegDeleteKeyW(HKEY_LOCAL_MACHINE, system_link);
 }
 
 static void populate_system_links(HKEY hkey, const WCHAR *name, const WCHAR *const *values)
@@ -2885,7 +2977,7 @@ static void update_system_links(void)
 
     static const WCHAR MS_Shell_Dlg[] = {'M','S',' ','S','h','e','l','l',' ','D','l','g',0};
 
-    if (!RegCreateKeyExW(HKEY_LOCAL_MACHINE, system_link, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, &disposition))
+    if (!RegCreateKeyExW(HKEY_CURRENT_USER, internal_system_link, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, &disposition))
     {
         if (disposition == REG_OPENED_EXISTING_KEY)
         {
@@ -2924,7 +3016,7 @@ static void update_system_links(void)
         if (!done)
             WARN("there is no SystemLink default list for MS Shell Dlg %s\n", debugstr_w(psub->to.name));
     } else
-        WARN("failed to create SystemLink key\n");
+        WARN("failed to create Internal SystemLink key\n");
 }
 
 
