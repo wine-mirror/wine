@@ -2799,6 +2799,8 @@ UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
         return MMSYSERR_NOERROR;
     }
 
+    TRACE("Message not supported: %u\n", uMessage);
+
     return MMSYSERR_NOTSUPPORTED;
 }
 
@@ -3172,6 +3174,8 @@ UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
     case DRV_QUERYMAPPABLE:
         return MMSYSERR_NOERROR;
     }
+
+    TRACE("Message not supported: %u\n", uMessage);
 
     return MMSYSERR_NOTSUPPORTED;
 }
