@@ -1013,14 +1013,15 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
     for (;;) {
         switch (msg->message) {
         case WM_QUIT:
-            SetEvent(lpMidiStrm->hEvent);
             return FALSE;
         case WINE_MSM_STOP:
             TRACE("STOP\n");
             /* this is not quite what MS doc says... */
             midiOutReset(lpMidiStrm->hDevice);
             /* empty list of already submitted buffers */
-            for (lpMidiHdr = lpMidiStrm->lpMidiHdr; lpMidiHdr; ) {
+            lpMidiHdr = lpMidiStrm->lpMidiHdr;
+            lpMidiStrm->lpMidiHdr = NULL;
+            while (lpMidiHdr) {
                 LPMIDIHDR lphdr = lpMidiHdr;
                 lpMidiHdr = lpMidiHdr->lpNext;
                 lphdr->dwFlags |= MHDR_DONE;
@@ -1030,18 +1031,14 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
                                (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
                                lpwm->mod.dwInstance, (DWORD_PTR)lphdr, 0);
             }
-            lpMidiStrm->lpMidiHdr = 0;
-            SetEvent(lpMidiStrm->hEvent);
             return TRUE;
         case WINE_MSM_RESUME:
             /* FIXME: send out cc64 0 (turn off sustain pedal) on every channel */
             lpMidiStrm->dwStartTicks = GetTickCount() - lpMidiStrm->dwPositionMS;
-            SetEvent(lpMidiStrm->hEvent);
             return TRUE;
         case WINE_MSM_PAUSE:
             /* FIXME: send out cc64 0 (turn off sustain pedal) on every channel */
             paused = TRUE;
-            SetEvent(lpMidiStrm->hEvent);
             break;
 	/* FIXME(EPP): "I don't understand the content of the first MIDIHDR sent
 	 * by native mcimidi, it doesn't look like a correct one".
@@ -1248,25 +1245,12 @@ the_end:
 }
 
 /**************************************************************************
- * 				MMSYSTEM_MidiStream_PostMessage	[internal]
- */
-static	BOOL MMSYSTEM_MidiStream_PostMessage(WINE_MIDIStream* lpMidiStrm, WORD msg, DWORD pmt1, DWORD pmt2)
-{
-    if (PostThreadMessageA(lpMidiStrm->dwThreadID, msg, pmt1, pmt2)) {
-        MsgWaitForMultipleObjects( 1, &lpMidiStrm->hEvent, FALSE, INFINITE, 0 );
-    } else {
-	ERR("bad PostThreadMessageA\n");
-	return FALSE;
-    }
-    return TRUE;
-}
-
-/**************************************************************************
  * 				midiStreamClose			[WINMM.@]
  */
 MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
 {
     WINE_MIDIStream*	lpMidiStrm;
+    MMRESULT		ret = 0;
 
     TRACE("(%p)!\n", hMidiStrm);
 
@@ -1274,9 +1258,19 @@ MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
 	return MMSYSERR_INVALHANDLE;
 
     midiStreamStop(hMidiStrm);
-    MMSYSTEM_MidiStream_PostMessage(lpMidiStrm, WM_QUIT, 0, 0);
+    PostThreadMessageA(lpMidiStrm->dwThreadID, WM_QUIT, 0, 0);
     CloseHandle(lpMidiStrm->hEvent);
-    HeapFree(GetProcessHeap(), 0, lpMidiStrm);
+    if (lpMidiStrm->hThread) {
+        if (GetCurrentThreadId() != lpMidiStrm->dwThreadID)
+            WaitForSingleObject(lpMidiStrm->hThread, INFINITE);
+        else {
+            FIXME("leak from call within function callback\n");
+            ret = MMSYSERR_HANDLEBUSY; /* yet don't signal it to app */
+        }
+        CloseHandle(lpMidiStrm->hThread);
+    }
+    if(!ret)
+        HeapFree(GetProcessHeap(), 0, lpMidiStrm);
 
     return midiOutClose((HMIDIOUT)hMidiStrm);
 }
@@ -1347,7 +1341,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     /* wait for thread to have started, and for its queue to be created */
     WaitForSingleObject(lpMidiStrm->hEvent, INFINITE);
 
-    MMSYSTEM_MidiStream_PostMessage(lpMidiStrm, WINE_MSM_PAUSE, 0, 0);
+    PostThreadMessageA(lpMidiStrm->dwThreadID, WINE_MSM_PAUSE, 0, 0);
 
     TRACE("=> (%u/%d) hMidi=%p ret=%d lpMidiStrm=%p\n",
 	  *lpuDeviceID, lpwm->mld.uDeviceID, *lphMidiStrm, ret, lpMidiStrm);
@@ -1405,7 +1399,7 @@ MMRESULT WINAPI midiStreamPause(HMIDISTRM hMidiStrm)
 
     if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL))
         return MMSYSERR_INVALHANDLE;
-    MMSYSTEM_MidiStream_PostMessage(lpMidiStrm, WINE_MSM_PAUSE, 0, 0);
+    PostThreadMessageA(lpMidiStrm->dwThreadID, WINE_MSM_PAUSE, 0, 0);
     return ret;
 }
 
@@ -1501,7 +1495,7 @@ MMRESULT WINAPI midiStreamRestart(HMIDISTRM hMidiStrm)
 
     if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL))
         return MMSYSERR_INVALHANDLE;
-    MMSYSTEM_MidiStream_PostMessage(lpMidiStrm, WINE_MSM_RESUME, 0, 0);
+    PostThreadMessageA(lpMidiStrm->dwThreadID, WINE_MSM_RESUME, 0, 0);
     return ret;
 }
 
@@ -1517,7 +1511,7 @@ MMRESULT WINAPI midiStreamStop(HMIDISTRM hMidiStrm)
 
     if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL))
         return MMSYSERR_INVALHANDLE;
-    MMSYSTEM_MidiStream_PostMessage(lpMidiStrm, WINE_MSM_STOP, 0, 0);
+    PostThreadMessageA(lpMidiStrm->dwThreadID, WINE_MSM_STOP, 0, 0);
     return ret;
 }
 
