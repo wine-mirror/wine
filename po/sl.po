@@ -6756,7 +6756,7 @@ msgstr "&Nastavi ..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&O ..."
+msgstr "&O"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -12599,7 +12599,7 @@ msgstr "&Dodaj ..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "&Samodejno zaznaj ..."
+msgstr "&Samodejno zaznaj"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -13299,7 +13299,7 @@ msgstr "Preime&nuj ..."
 
 #: winefile.rc:31
 msgid "Propert&ies\tAlt+Enter"
-msgstr "&Lastnosti ...\tAlt+Enter"
+msgstr "&Lastnosti\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
