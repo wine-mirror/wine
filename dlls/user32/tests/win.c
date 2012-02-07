@@ -6957,10 +6957,10 @@ static int window_to_index(HWND hwnd, HWND *window, int size)
 
 static void test_child_window_from_point(void)
 {
-    static int real_child_pos[] = { 14,15,16,17,18,19,20,21,24,25,26,27,42,43,
-                                    44,45,46,47,48,49,52,53,54,55,51,50,23,22,-1 };
-    static int real_child_pos_nt4[] = { 14,15,16,17,20,21,24,25,26,27,42,43,44,45,
-                                        48,49,52,53,54,55,51,50,47,46,23,22,19,18,-1 };
+    static const int real_child_pos[] = { 14,15,16,17,18,19,20,21,24,25,26,27,42,43,
+                                          44,45,46,47,48,49,52,53,54,55,51,50,23,22,-1 };
+    static const int real_child_pos_nt4[] = { 14,15,16,17,20,21,24,25,26,27,42,43,44,45,
+                                              48,49,52,53,54,55,51,50,47,46,23,22,19,18,-1 };
     WNDCLASSA cls;
     HWND hwnd, parent, window[100];
     POINT pt;
@@ -7042,9 +7042,9 @@ static void test_child_window_from_point(void)
     ok(found_disabled, "found %d disabled windows\n", found_disabled);
 todo_wine
     ok(found_groupbox == 4, "found %d groupbox windows\n", found_groupbox);
-    ok(found_httransparent, "found %d found_httransparent windows\n", found_httransparent);
+    ok(found_httransparent, "found %d httransparent windows\n", found_httransparent);
 todo_wine
-    ok(found_extransparent, "found %d found_extransparent windows\n", found_extransparent);
+    ok(found_extransparent, "found %d extransparent windows\n", found_extransparent);
 
     ret = UnregisterClass("my_button", cls.hInstance);
     ok(ret, "UnregisterClass(my_button) failed\n");
