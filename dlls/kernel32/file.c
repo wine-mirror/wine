@@ -1286,7 +1286,9 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
 
     if (!strcmpiW(filename, coninW) || !strcmpiW(filename, conoutW))
     {
-        ret = OpenConsoleW(filename, access, (sa && sa->bInheritHandle), creation);
+        ret = OpenConsoleW(filename, access, (sa && sa->bInheritHandle),
+                           creation ? OPEN_EXISTING : 0);
+        if (ret == INVALID_HANDLE_VALUE) SetLastError(ERROR_INVALID_PARAMETER);
         goto done;
     }
 

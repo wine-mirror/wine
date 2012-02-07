@@ -1116,6 +1116,68 @@ static void test_OpenConsoleW(void)
         CloseHandle(ret);
 }
 
+static void test_CreateFileW(void)
+{
+    static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
+    static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
+
+    static const struct
+    {
+        LPCWSTR name;
+        DWORD access;
+        BOOL inherit;
+        DWORD creation;
+        DWORD gle;
+        BOOL is_broken;
+    } cf_table[] = {
+        {coninW,   0,                            FALSE,      0,                 ERROR_INVALID_PARAMETER,        TRUE},
+        {coninW,   0,                            FALSE,      OPEN_ALWAYS,       0,                              FALSE},
+        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      0,                 ERROR_INVALID_PARAMETER,        TRUE},
+        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_NEW,        0,                              FALSE},
+        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_ALWAYS,     0,                              FALSE},
+        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS,       0,                              FALSE},
+        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      TRUNCATE_EXISTING, 0,                              FALSE},
+        {conoutW,  0,                            FALSE,      0,                 ERROR_INVALID_PARAMETER,        TRUE},
+        {conoutW,  0,                            FALSE,      OPEN_ALWAYS,       0,                              FALSE},
+        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      0,                 ERROR_INVALID_PARAMETER,        TRUE},
+        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_NEW,        0,                              FALSE},
+        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_ALWAYS,     0,                              FALSE},
+        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS,       0,                              FALSE},
+        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      TRUNCATE_EXISTING, 0,                              FALSE},
+    };
+
+    int index;
+    HANDLE ret;
+    SECURITY_ATTRIBUTES sa;
+
+    for (index = 0; index < sizeof(cf_table)/sizeof(cf_table[0]); index++)
+    {
+        SetLastError(0xdeadbeef);
+
+        sa.nLength = sizeof(sa);
+        sa.lpSecurityDescriptor = NULL;
+        sa.bInheritHandle = cf_table[index].inherit;
+
+        ret = CreateFileW(cf_table[index].name, cf_table[index].access,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, &sa,
+                          cf_table[index].creation, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (ret == INVALID_HANDLE_VALUE)
+        {
+            ok(cf_table[index].gle,
+               "Expected CreateFileW not to return INVALID_HANDLE_VALUE for index %d\n", index);
+            ok(GetLastError() == cf_table[index].gle,
+                "Expected GetLastError() to return %u for index %d, got %u\n",
+                cf_table[index].gle, index, GetLastError());
+        }
+        else
+        {
+            ok(!cf_table[index].gle || broken(cf_table[index].is_broken) /* Win7 */,
+               "Expected CreateFileW to succeed for index %d\n", index);
+            CloseHandle(ret);
+        }
+    }
+}
+
 static void test_VerifyConsoleIoHandle( HANDLE handle )
 {
     BOOL ret;
@@ -2546,6 +2608,7 @@ START_TEST(console)
 
     test_GetConsoleProcessList();
     test_OpenConsoleW();
+    test_CreateFileW();
     test_OpenCON();
     test_VerifyConsoleIoHandle(hConOut);
     test_GetSetStdHandle();
