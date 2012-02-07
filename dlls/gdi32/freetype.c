@@ -1197,6 +1197,7 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family)
 
         face->StyleName = strdupW(face_name);
         face->family = family;
+        face->vertical = (family->FamilyName[0] == '@');
 
         if(RegQueryValueExW(hkey_face, face_full_name_value, NULL, NULL, NULL, &needed) == ERROR_SUCCESS)
         {
