@@ -3088,7 +3088,7 @@ int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file)
     if(file->_bufsiz) {
         int res = 0;
 
-        if(file->_cnt == 0)
+        if(file->_cnt <= 0)
             res = msvcrt_flush_buffer(file);
         if(!res) {
             *file->_ptr++ = c;

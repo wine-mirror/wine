@@ -544,10 +544,21 @@ static void test_flsbuf( void )
                          bufmodes[bufmode], 0, ret);
     ret = _flsbuf(0xff,tempfh);
     ok(0xff == ret, "_flsbuf(0xff,tempfh) with bufmode %x expected %x got %x\n",
-                         bufmodes[bufmode], 0, ret);
+                         bufmodes[bufmode], 0xff, ret);
     ret = _flsbuf(0xffffffff,tempfh);
     ok(0xff == ret, "_flsbuf(0xffffffff,tempfh) with bufmode %x expected %x got %x\n",
-                         bufmodes[bufmode], 0, ret);
+                         bufmodes[bufmode], 0xff, ret);
+    if(tempfh->_base) {
+        fputc('x', tempfh);
+        tempfh->_cnt = -1;
+        tempfh->_base[1] = 'a';
+        ret = _flsbuf(0xab,tempfh);
+        ok(ret == 0xab, "_flsbuf(0xab,tempfh) with bufmode %x expected 0xab got %x\n",
+                bufmodes[bufmode], ret);
+        ok(tempfh->_base[1] == 'a', "tempfh->_base[1] should not be changed (%d)\n",
+                tempfh->_base[1]);
+    }
+
     fclose(tempfh);
   }
 
