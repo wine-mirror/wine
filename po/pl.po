@@ -3063,7 +3063,7 @@ msgstr "Skopiuj wybrane"
 
 #: gphoto2.rc:32
 msgid "Preview"
-msgstr "Preview"
+msgstr ""
 
 #: gphoto2.rc:33
 msgid "Import All"
@@ -3071,7 +3071,7 @@ msgstr "Skopiuj wszystkie"
 
 #: gphoto2.rc:34
 msgid "Skip This Dialog"
-msgstr "Skip This Dialog"
+msgstr ""
 
 #: gphoto2.rc:35
 msgid "Exit"
@@ -7984,15 +7984,15 @@ msgstr "Przykładowe wideo"
 
 #: shell32.rc:229
 msgid "Saved Games"
-msgstr "Saved Games"
+msgstr ""
 
 #: shell32.rc:230
 msgid "Searches"
-msgstr "Searches"
+msgstr ""
 
 #: shell32.rc:231
 msgid "Users"
-msgstr "Users"
+msgstr ""
 
 #: shell32.rc:233
 msgid "Downloads"
@@ -10926,7 +10926,7 @@ msgstr "Zmień &ikonę..."
 
 #: progman.rc:189
 msgid "Change Icon"
-msgstr "Change Icon"
+msgstr ""
 
 #: progman.rc:191
 msgid "&Filename:"
