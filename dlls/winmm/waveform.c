@@ -836,7 +836,7 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
     hr = IMMDeviceEnumerator_GetDevice(g_devenum, mmdevice->dev_id,
             &device->device);
     if(FAILED(hr)){
-        ERR("Device %s (%s) unavailable: %08x\n",
+        WARN("Device %s (%s) unavailable: %08x\n",
                 wine_dbgstr_w(mmdevice->dev_id),
                 wine_dbgstr_w(mmdevice->out_caps.szPname), hr);
         goto error;
@@ -845,7 +845,7 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
     hr = IMMDevice_Activate(device->device, &IID_IAudioClient,
             CLSCTX_INPROC_SERVER, NULL, (void**)&device->client);
     if(FAILED(hr)){
-        ERR("Activate failed: %08x\n", hr);
+        WARN("Activate failed: %08x\n", hr);
         goto error;
     }
 
@@ -876,7 +876,7 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
     if(closer_fmt)
         CoTaskMemFree(closer_fmt);
     if(FAILED(hr) && hr != AUDCLNT_E_UNSUPPORTED_FORMAT){
-        ERR("IsFormatSupported failed: %08x\n", hr);
+        WARN("IsFormatSupported failed: %08x\n", hr);
         goto error;
     }
     if(hr == S_FALSE || hr == AUDCLNT_E_UNSUPPORTED_FORMAT){
@@ -893,21 +893,21 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
             AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
             10 * 100000, 50000, passed_fmt, &device->parent->session);
     if(FAILED(hr)){
-        ERR("Initialize failed: %08x\n", hr);
+        WARN("Initialize failed: %08x\n", hr);
         goto error;
     }
 
     hr = IAudioClient_GetService(device->client, &IID_IAudioClock,
             (void**)&device->clock);
     if(FAILED(hr)){
-        ERR("GetService failed: %08x\n", hr);
+        WARN("GetService failed: %08x\n", hr);
         goto error;
     }
 
     if(!device->event){
         device->event = CreateEventW(NULL, FALSE, FALSE, NULL);
         if(!device->event){
-            ERR("CreateEvent failed: %08x\n", hr);
+            WARN("CreateEvent failed: %08x\n", hr);
             goto error;
         }
 
@@ -930,7 +930,7 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
 
     hr = IAudioClient_SetEventHandle(device->client, device->event);
     if(FAILED(hr)){
-        ERR("SetEventHandle failed: %08x\n", hr);
+        WARN("SetEventHandle failed: %08x\n", hr);
         goto error;
     }
 
@@ -998,14 +998,14 @@ static LRESULT WOD_Open(WINMM_OpenInfo *info)
     hr = IAudioClient_GetService(device->client, &IID_IAudioRenderClient,
             (void**)&device->render);
     if(FAILED(hr)){
-        ERR("GetService failed: %08x\n", hr);
+        WARN("GetService(RenderClient) failed: %08x\n", hr);
         goto error;
     }
 
     hr = IAudioClient_GetService(device->client, &IID_IAudioStreamVolume,
             (void**)&device->volume);
     if(FAILED(hr)){
-        ERR("GetService failed: %08x\n", hr);
+        WARN("GetService(StreamVolume) failed: %08x\n", hr);
         goto error;
     }
 
@@ -1071,7 +1071,7 @@ static LRESULT WID_Open(WINMM_OpenInfo *info)
     hr = IAudioClient_GetService(device->client, &IID_IAudioCaptureClient,
             (void**)&device->capture);
     if(FAILED(hr)){
-        ERR("GetService failed: %08x\n", hr);
+        WARN("GetService failed: %08x\n", hr);
         goto error;
     }
 
@@ -1272,13 +1272,13 @@ static WAVEHDR *WOD_MarkDoneHeaders(WINMM_Device *device)
 
     hr = IAudioClock_GetFrequency(device->clock, &clock_freq);
     if(FAILED(hr)){
-        ERR("GetFrequency failed: %08x\n", hr);
+        WARN("GetFrequency failed: %08x\n", hr);
         return NULL;
     }
 
     hr = IAudioClock_GetPosition(device->clock, &clock_pos, NULL);
     if(FAILED(hr)){
-        ERR("GetPosition failed: %08x\n", hr);
+        WARN("GetPosition failed: %08x\n", hr);
         return NULL;
     }
 
@@ -1339,13 +1339,13 @@ static void WOD_PushData(WINMM_Device *device)
 
     hr = IAudioClient_GetBufferSize(device->client, &bufsize);
     if(FAILED(hr)){
-        ERR("GetBufferSize failed: %08x\n", hr);
+        WARN("GetBufferSize failed: %08x\n", hr);
         goto exit;
     }
 
     hr = IAudioClient_GetCurrentPadding(device->client, &pad);
     if(FAILED(hr)){
-        ERR("GetCurrentPadding failed: %08x\n", hr);
+        WARN("GetCurrentPadding failed: %08x\n", hr);
         goto exit;
     }
 
@@ -1378,7 +1378,7 @@ static void WOD_PushData(WINMM_Device *device)
 
     hr = IAudioRenderClient_GetBuffer(device->render, avail_frames, &data);
     if(FAILED(hr)){
-        ERR("GetBuffer failed: %08x\n", hr);
+        WARN("GetBuffer failed: %08x\n", hr);
         goto exit;
     }
 
@@ -1435,7 +1435,7 @@ static void WOD_PushData(WINMM_Device *device)
 
     hr = IAudioRenderClient_ReleaseBuffer(device->render, avail_frames, 0);
     if(FAILED(hr)){
-        ERR("ReleaseBuffer failed: %08x\n", hr);
+        WARN("ReleaseBuffer failed: %08x\n", hr);
         goto exit;
     }
 
@@ -1469,7 +1469,7 @@ static void WID_PullACMData(WINMM_Device *device)
                 &flags, NULL, NULL);
         if(hr != S_OK){
             if(FAILED(hr))
-                ERR("GetBuffer failed: %08x\n", hr);
+                WARN("GetBuffer failed: %08x\n", hr);
             return;
         }
 
@@ -1492,19 +1492,19 @@ static void WID_PullACMData(WINMM_Device *device)
 
         mr = acmStreamPrepareHeader(device->acm_handle, &device->acm_hdr, 0);
         if(mr != MMSYSERR_NOERROR){
-            ERR("acmStreamPrepareHeader failed: %d\n", mr);
+            WARN("acmStreamPrepareHeader failed: %d\n", mr);
             return;
         }
 
         mr = acmStreamConvert(device->acm_handle, &device->acm_hdr, 0);
         if(mr != MMSYSERR_NOERROR){
-            ERR("acmStreamConvert failed: %d\n", mr);
+            WARN("acmStreamConvert failed: %d\n", mr);
             return;
         }
 
         hr = IAudioCaptureClient_ReleaseBuffer(device->capture, packet);
         if(FAILED(hr))
-            ERR("ReleaseBuffer failed: %08x\n", hr);
+            WARN("ReleaseBuffer failed: %08x\n", hr);
 
         device->played_frames += packet;
     }
@@ -1577,7 +1577,7 @@ static void WID_PullData(WINMM_Device *device)
                 &flags, NULL, NULL);
         if(hr != S_OK){
             if(FAILED(hr))
-                ERR("GetBuffer failed: %08x\n", hr);
+                WARN("GetBuffer failed: %08x\n", hr);
             else /* AUDCLNT_S_BUFFER_EMPTY success code */
                 IAudioCaptureClient_ReleaseBuffer(device->capture, 0);
             goto exit;
@@ -1608,7 +1608,7 @@ static void WID_PullData(WINMM_Device *device)
 
         hr = IAudioCaptureClient_ReleaseBuffer(device->capture, packet_len);
         if(FAILED(hr))
-            ERR("ReleaseBuffer failed: %08x\n", hr);
+            WARN("ReleaseBuffer failed: %08x\n", hr);
 
         if(packet > 0)
             WARN("losing %u frames\n", packet);
@@ -1648,7 +1648,7 @@ static HRESULT WINMM_BeginPlaying(WINMM_Device *device)
         hr = IAudioClient_Start(device->client);
         if(FAILED(hr) && hr != AUDCLNT_E_NOT_STOPPED){
             device->stopped = TRUE;
-            ERR("Start failed: %08x\n", hr);
+            WARN("Start failed: %08x\n", hr);
             return hr;
         }
     }
@@ -1669,7 +1669,7 @@ static LRESULT WINMM_Pause(HWAVE hwave)
     hr = IAudioClient_Stop(device->client);
     if(FAILED(hr)){
         LeaveCriticalSection(&device->lock);
-        ERR("Stop failed: %08x\n", hr);
+        WARN("Stop failed: %08x\n", hr);
         return MMSYSERR_ERROR;
     }
 
@@ -1696,7 +1696,7 @@ static LRESULT WINMM_Reset(HWAVE hwave)
     hr = IAudioClient_Stop(device->client);
     if(FAILED(hr)){
         LeaveCriticalSection(&device->lock);
-        ERR("Stop failed: %08x\n", hr);
+        WARN("Stop failed: %08x\n", hr);
         return MMSYSERR_ERROR;
     }
     device->stopped = TRUE;
@@ -1833,7 +1833,7 @@ static MMRESULT WINMM_SetupMMDeviceVolume(WINMM_MMDevice *mmdevice)
 
     hr = IMMDeviceEnumerator_GetDevice(g_devenum, mmdevice->dev_id, &device);
     if(FAILED(hr)){
-        ERR("Device %s (%s) unavailable: %08x\n",
+        WARN("Device %s (%s) unavailable: %08x\n",
                 wine_dbgstr_w(mmdevice->dev_id),
                 wine_dbgstr_w(mmdevice->out_caps.szPname), hr);
         return MMSYSERR_ERROR;
@@ -1842,7 +1842,7 @@ static MMRESULT WINMM_SetupMMDeviceVolume(WINMM_MMDevice *mmdevice)
     hr = IMMDevice_Activate(device, &IID_IAudioSessionManager,
             CLSCTX_INPROC_SERVER, NULL, (void**)&sesman);
     if(FAILED(hr)){
-        ERR("Activate failed: %08x\n", hr);
+        WARN("Activate failed: %08x\n", hr);
         IMMDevice_Release(device);
         return MMSYSERR_ERROR;
     }
@@ -1853,7 +1853,7 @@ static MMRESULT WINMM_SetupMMDeviceVolume(WINMM_MMDevice *mmdevice)
             FALSE, &mmdevice->volume);
     IAudioSessionManager_Release(sesman);
     if(FAILED(hr)){
-        ERR("GetSimpleAudioVolume failed: %08x\n", hr);
+        WARN("GetSimpleAudioVolume failed: %08x\n", hr);
         return MMSYSERR_ERROR;
     }
 
@@ -1896,7 +1896,7 @@ static LRESULT MXD_GetControlDetails(WINMM_ControlDetails *details)
 
         hr = ISimpleAudioVolume_GetMasterVolume(mmdevice->volume, &vol);
         if(FAILED(hr)){
-            ERR("GetMasterVolume failed: %08x\n", hr);
+            WARN("GetMasterVolume failed: %08x\n", hr);
             LeaveCriticalSection(&mmdevice->lock);
             return MMSYSERR_ERROR;
         }
@@ -1915,7 +1915,7 @@ static LRESULT MXD_GetControlDetails(WINMM_ControlDetails *details)
 
         hr = ISimpleAudioVolume_GetMute(mmdevice->volume, &mute);
         if(FAILED(hr)){
-            ERR("GetMute failed: %08x\n", hr);
+            WARN("GetMute failed: %08x\n", hr);
             LeaveCriticalSection(&mmdevice->lock);
             return MMSYSERR_ERROR;
         }
@@ -1979,7 +1979,7 @@ static LRESULT MXD_SetControlDetails(WINMM_ControlDetails *details)
 
         hr = ISimpleAudioVolume_SetMasterVolume(mmdevice->volume, vol, NULL);
         if(FAILED(hr)){
-            ERR("SetMasterVolume failed: %08x\n", hr);
+            WARN("SetMasterVolume failed: %08x\n", hr);
             LeaveCriticalSection(&mmdevice->lock);
             return MMSYSERR_ERROR;
         }
@@ -1998,7 +1998,7 @@ static LRESULT MXD_SetControlDetails(WINMM_ControlDetails *details)
 
         hr = ISimpleAudioVolume_SetMute(mmdevice->volume, mute, NULL);
         if(FAILED(hr)){
-            ERR("SetMute failed: %08x\n", hr);
+            WARN("SetMute failed: %08x\n", hr);
             LeaveCriticalSection(&mmdevice->lock);
             return MMSYSERR_ERROR;
         }
@@ -2042,7 +2042,7 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
 
     hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     if(FAILED(hr)){
-        ERR("CoInitializeEx failed: %08x\n", hr);
+        WARN("CoInitializeEx failed: %08x\n", hr);
         return 1;
     }
 
@@ -2055,7 +2055,7 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
             CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&g_devenum);
     if(FAILED(hr)){
-        ERR("CoCreateInstance failed: %08x\n", hr);
+        WARN("CoCreateInstance failed: %08x\n", hr);
         CoUninitialize();
         return 1;
     }
@@ -2063,7 +2063,7 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
     g_devices_hwnd = CreateWindowW(messageW, NULL, 0, 0, 0, 0, 0,
             HWND_MESSAGE, NULL, NULL, NULL);
     if(!g_devices_hwnd){
-        ERR("CreateWindow failed: %d\n", GetLastError());
+        WARN("CreateWindow failed: %d\n", GetLastError());
         IMMDeviceEnumerator_Release(g_devenum);
         CoUninitialize();
         return 1;
@@ -2083,7 +2083,7 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
         if(wait == g_devhandle_count + WAIT_OBJECT_0){
             MSG msg;
             if(PeekMessageW(&msg, g_devices_hwnd, 0, 0, PM_REMOVE))
-                ERR("Unexpected message: 0x%x\n", msg.message);
+                WARN("Unexpected message: 0x%x\n", msg.message);
         }else if(wait < g_devhandle_count + WAIT_OBJECT_0){
             WINMM_Device *device = g_handle_devices[wait - WAIT_OBJECT_0];
             if(device->render)
@@ -2091,7 +2091,7 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
             else
                 WID_PullData(device);
         }else
-            ERR("Unexpected MsgWait result 0x%x, GLE: %d\n", wait,
+            WARN("Unexpected MsgWait result 0x%x, GLE: %d\n", wait,
                     GetLastError());
     }
 
@@ -2619,7 +2619,7 @@ UINT WINAPI waveOutGetVolume(HWAVEOUT hWaveOut, DWORD *out)
     hr = IAudioStreamVolume_GetChannelCount(device->volume, &channels);
     if(FAILED(hr)){
         LeaveCriticalSection(&device->lock);
-        ERR("GetChannelCount failed: %08x\n", hr);
+        WARN("GetChannelCount failed: %08x\n", hr);
         return MMSYSERR_ERROR;
     }
 
@@ -2633,7 +2633,7 @@ UINT WINAPI waveOutGetVolume(HWAVEOUT hWaveOut, DWORD *out)
     if(FAILED(hr)){
         LeaveCriticalSection(&device->lock);
         HeapFree(GetProcessHeap(), 0, vols);
-        ERR("GetAllVolumes failed: %08x\n", hr);
+        WARN("GetAllVolumes failed: %08x\n", hr);
         return MMSYSERR_ERROR;
     }
 
@@ -2668,7 +2668,7 @@ UINT WINAPI waveOutSetVolume(HWAVEOUT hWaveOut, DWORD in)
     hr = IAudioStreamVolume_GetChannelCount(device->volume, &channels);
     if(FAILED(hr)){
         LeaveCriticalSection(&device->lock);
-        ERR("GetChannelCount failed: %08x\n", hr);
+        WARN("GetChannelCount failed: %08x\n", hr);
         return MMSYSERR_ERROR;
     }
 
@@ -2682,7 +2682,7 @@ UINT WINAPI waveOutSetVolume(HWAVEOUT hWaveOut, DWORD in)
     if(FAILED(hr)){
         LeaveCriticalSection(&device->lock);
         HeapFree(GetProcessHeap(), 0, vols);
-        ERR("GetAllVolumes failed: %08x\n", hr);
+        WARN("GetAllVolumes failed: %08x\n", hr);
         return MMSYSERR_ERROR;
     }
 
@@ -2694,7 +2694,7 @@ UINT WINAPI waveOutSetVolume(HWAVEOUT hWaveOut, DWORD in)
     if(FAILED(hr)){
         LeaveCriticalSection(&device->lock);
         HeapFree(GetProcessHeap(), 0, vols);
-        ERR("SetAllVolumes failed: %08x\n", hr);
+        WARN("SetAllVolumes failed: %08x\n", hr);
         return MMSYSERR_ERROR;
     }
 
@@ -3421,7 +3421,7 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA
 	}
 	break;
     default:
-	ERR("Unsupported fdwDetails=0x%08x\n", fdwDetails);
+	WARN("Unsupported fdwDetails=0x%08x\n", fdwDetails);
     }
 
     return ret;
