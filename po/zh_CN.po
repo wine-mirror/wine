@@ -62,8 +62,8 @@ msgstr "技术支持信息"
 #: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:114 oleview.rc:159
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
-#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 winecfg.rc:205 winecfg.rc:215 wineconsole.rc:131
+#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:442
+#: taskmgr.rc:517 winecfg.rc:205 winecfg.rc:215 wineconsole.rc:131
 #: winefile.rc:130 winefile.rc:153 winefile.rc:183 winemine.rc:68
 #: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
 #: wordpad.rc:246
@@ -142,7 +142,7 @@ msgstr "安装(&I)"
 #: notepad.rc:115 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
 #: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
-#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:206
+#: regedit.rc:311 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:31 winecfg.rc:206
 #: winecfg.rc:216 wineconsole.rc:132 winefile.rc:131 winefile.rc:154
 #: winefile.rc:184 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
 #: wordpad.rc:247
@@ -362,7 +362,7 @@ msgstr ""
 "#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
 "无"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:57
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:434 winedbg.rc:57
 #: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
 msgstr "关闭"
@@ -1921,7 +1921,7 @@ msgstr ""
 msgid "Financial Information="
 msgstr ""
 
-#: crypt32.rc:216 taskmgr.rc:401
+#: crypt32.rc:216 taskmgr.rc:397
 msgid "Available"
 msgstr "可用"
 
@@ -11518,11 +11518,11 @@ msgstr "移到最前面(&B)"
 msgid "&About Task Manager"
 msgstr "关于任务管理器(&A)"
 
-#: taskmgr.rc:120 taskmgr.rc:356
+#: taskmgr.rc:120 taskmgr.rc:352
 msgid "&Switch To"
 msgstr "转到(&S)"
 
-#: taskmgr.rc:129 taskmgr.rc:357
+#: taskmgr.rc:129 taskmgr.rc:353
 msgid "&End Task"
 msgstr "结束任务(&E)"
 
@@ -11530,7 +11530,7 @@ msgstr "结束任务(&E)"
 msgid "&Go To Process"
 msgstr "转此进程(&G)"
 
-#: taskmgr.rc:149 taskmgr.rc:367
+#: taskmgr.rc:149 taskmgr.rc:363
 msgid "&End Process"
 msgstr "结束进程(&E)"
 
@@ -11568,341 +11568,341 @@ msgstr "亲和度指定(&A)..."
 msgid "Edit Debug &Channels..."
 msgstr "编辑调试频道(&C)..."
 
-#: taskmgr.rc:342 taskmgr.rc:180 taskmgr.rc:181
+#: taskmgr.rc:338 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
 msgstr "任务管理器"
 
-#: taskmgr.rc:355
+#: taskmgr.rc:351
 msgid "&New Task..."
 msgstr "新任务(&N)..."
 
-#: taskmgr.rc:368
+#: taskmgr.rc:364
 msgid "&Show processes from all users"
 msgstr "显示所有用户的进程(&S)"
 
-#: taskmgr.rc:376
+#: taskmgr.rc:372
 #, fuzzy
 msgid "CPU usage"
 msgstr "CPU 用量"
 
-#: taskmgr.rc:377
+#: taskmgr.rc:373
 #, fuzzy
 msgid "MEM usage"
 msgstr "内存用量"
 
-#: taskmgr.rc:378
+#: taskmgr.rc:374
 msgid "Totals"
 msgstr "总共"
 
-#: taskmgr.rc:379
+#: taskmgr.rc:375
 #, fuzzy
 msgid "Commit charge (K)"
 msgstr "虚存总量(K)"
 
-#: taskmgr.rc:380
+#: taskmgr.rc:376
 #, fuzzy
 msgid "Physical memory (K)"
 msgstr "物理内存(K)"
 
-#: taskmgr.rc:381
+#: taskmgr.rc:377
 #, fuzzy
 msgid "Kernel memory (K)"
 msgstr "内核内存(K)"
 
-#: taskmgr.rc:382 taskmgr.rc:290
+#: taskmgr.rc:378 taskmgr.rc:290
 msgid "Handles"
 msgstr "句柄"
 
-#: taskmgr.rc:383 taskmgr.rc:291
+#: taskmgr.rc:379 taskmgr.rc:291
 msgid "Threads"
 msgstr "线程"
 
-#: taskmgr.rc:384 taskmgr.rc:263
+#: taskmgr.rc:380 taskmgr.rc:263
 msgid "Processes"
 msgstr "进程"
 
-#: taskmgr.rc:391 taskmgr.rc:400 taskmgr.rc:409
+#: taskmgr.rc:387 taskmgr.rc:396 taskmgr.rc:405
 msgid "Total"
 msgstr "总共"
 
-#: taskmgr.rc:392
+#: taskmgr.rc:388
 msgid "Limit"
 msgstr "限制"
 
-#: taskmgr.rc:393
+#: taskmgr.rc:389
 msgid "Peak"
 msgstr "峰值"
 
-#: taskmgr.rc:402
+#: taskmgr.rc:398
 msgid "System Cache"
 msgstr "系统缓存"
 
-#: taskmgr.rc:410
+#: taskmgr.rc:406
 msgid "Paged"
 msgstr "已分页"
 
-#: taskmgr.rc:411
+#: taskmgr.rc:407
 msgid "Nonpaged"
 msgstr "未分页"
 
-#: taskmgr.rc:418
+#: taskmgr.rc:414
 #, fuzzy
 msgid "CPU usage history"
 msgstr "CPU 用量历史"
 
-#: taskmgr.rc:419
+#: taskmgr.rc:415
 #, fuzzy
 msgid "Memory usage history"
 msgstr "内存用量历史"
 
-#: taskmgr.rc:432 taskmgr.rc:327
+#: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
 msgstr "调试频道"
 
-#: taskmgr.rc:443
+#: taskmgr.rc:439
 msgid "Processor Affinity"
 msgstr "处理器亲和度"
 
-#: taskmgr.rc:448
+#: taskmgr.rc:444
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
 msgstr "处理器亲和度决定了各进程允许运行在哪些 CPU 上。"
 
-#: taskmgr.rc:450
+#: taskmgr.rc:446
 msgid "CPU 0"
 msgstr "CPU 0"
 
-#: taskmgr.rc:452
+#: taskmgr.rc:448
 msgid "CPU 1"
 msgstr "CPU 1"
 
-#: taskmgr.rc:454
+#: taskmgr.rc:450
 msgid "CPU 2"
 msgstr "CPU 2"
 
-#: taskmgr.rc:456
+#: taskmgr.rc:452
 msgid "CPU 3"
 msgstr "CPU 3"
 
-#: taskmgr.rc:458
+#: taskmgr.rc:454
 msgid "CPU 4"
 msgstr "CPU 4"
 
-#: taskmgr.rc:460
+#: taskmgr.rc:456
 msgid "CPU 5"
 msgstr "CPU 5"
 
-#: taskmgr.rc:462
+#: taskmgr.rc:458
 msgid "CPU 6"
 msgstr "CPU 6"
 
-#: taskmgr.rc:464
+#: taskmgr.rc:460
 msgid "CPU 7"
 msgstr "CPU 7"
 
-#: taskmgr.rc:466
+#: taskmgr.rc:462
 msgid "CPU 8"
 msgstr "CPU 8"
 
-#: taskmgr.rc:468
+#: taskmgr.rc:464
 msgid "CPU 9"
 msgstr "CPU 9"
 
-#: taskmgr.rc:470
+#: taskmgr.rc:466
 msgid "CPU 10"
 msgstr "CPU 10"
 
-#: taskmgr.rc:472
+#: taskmgr.rc:468
 msgid "CPU 11"
 msgstr "CPU 11"
 
-#: taskmgr.rc:474
+#: taskmgr.rc:470
 msgid "CPU 12"
 msgstr "CPU 12"
 
-#: taskmgr.rc:476
+#: taskmgr.rc:472
 msgid "CPU 13"
 msgstr "CPU 13"
 
-#: taskmgr.rc:478
+#: taskmgr.rc:474
 msgid "CPU 14"
 msgstr "CPU 14"
 
-#: taskmgr.rc:480
+#: taskmgr.rc:476
 msgid "CPU 15"
 msgstr "CPU 15"
 
-#: taskmgr.rc:482
+#: taskmgr.rc:478
 msgid "CPU 16"
 msgstr "CPU 16"
 
-#: taskmgr.rc:484
+#: taskmgr.rc:480
 msgid "CPU 17"
 msgstr "CPU 17"
 
-#: taskmgr.rc:486
+#: taskmgr.rc:482
 msgid "CPU 18"
 msgstr "CPU 18"
 
-#: taskmgr.rc:488
+#: taskmgr.rc:484
 msgid "CPU 19"
 msgstr "CPU 19"
 
-#: taskmgr.rc:490
+#: taskmgr.rc:486
 msgid "CPU 20"
 msgstr "CPU 20"
 
-#: taskmgr.rc:492
+#: taskmgr.rc:488
 msgid "CPU 21"
 msgstr "CPU 21"
 
-#: taskmgr.rc:494
+#: taskmgr.rc:490
 msgid "CPU 22"
 msgstr "CPU 22"
 
-#: taskmgr.rc:496
+#: taskmgr.rc:492
 msgid "CPU 23"
 msgstr "CPU 23"
 
-#: taskmgr.rc:498
+#: taskmgr.rc:494
 msgid "CPU 24"
 msgstr "CPU 24"
 
-#: taskmgr.rc:500
+#: taskmgr.rc:496
 msgid "CPU 25"
 msgstr "CPU 25"
 
-#: taskmgr.rc:502
+#: taskmgr.rc:498
 msgid "CPU 26"
 msgstr "CPU 26"
 
-#: taskmgr.rc:504
+#: taskmgr.rc:500
 msgid "CPU 27"
 msgstr "CPU 27"
 
-#: taskmgr.rc:506
+#: taskmgr.rc:502
 msgid "CPU 28"
 msgstr "CPU 28"
 
-#: taskmgr.rc:508
+#: taskmgr.rc:504
 msgid "CPU 29"
 msgstr "CPU 29"
 
-#: taskmgr.rc:510
+#: taskmgr.rc:506
 msgid "CPU 30"
 msgstr "CPU 30"
 
-#: taskmgr.rc:512
+#: taskmgr.rc:508
 msgid "CPU 31"
 msgstr "CPU 31"
 
-#: taskmgr.rc:518
+#: taskmgr.rc:514
 msgid "Select Columns"
 msgstr "选择列项"
 
-#: taskmgr.rc:523
+#: taskmgr.rc:519
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
 msgstr "选择任务管理器中“进程”标签页显示哪些列。"
 
-#: taskmgr.rc:525
+#: taskmgr.rc:521
 msgid "&Image Name"
 msgstr "映像名称(&I)"
 
-#: taskmgr.rc:527
+#: taskmgr.rc:523
 msgid "&PID (Process Identifier)"
 msgstr "&PID (进程编号)"
 
-#: taskmgr.rc:529
+#: taskmgr.rc:525
 msgid "&CPU Usage"
 msgstr "&CPU 用量"
 
-#: taskmgr.rc:531
+#: taskmgr.rc:527
 msgid "CPU Tim&e"
 msgstr "CPU 时间(&T)"
 
-#: taskmgr.rc:533
+#: taskmgr.rc:529
 msgid "&Memory Usage"
 msgstr "内存用量(&M)"
 
-#: taskmgr.rc:535
+#: taskmgr.rc:531
 msgid "Memory Usage &Delta"
 msgstr "内存用量差值(&D)"
 
-#: taskmgr.rc:537
+#: taskmgr.rc:533
 msgid "Pea&k Memory Usage"
 msgstr "内存用量峰值(&K)"
 
-#: taskmgr.rc:539
+#: taskmgr.rc:535
 msgid "Page &Faults"
 msgstr "页错误(&F)"
 
-#: taskmgr.rc:541
+#: taskmgr.rc:537
 msgid "&USER Objects"
 msgstr "用户对象(&U)"
 
-#: taskmgr.rc:543 taskmgr.rc:281
+#: taskmgr.rc:539 taskmgr.rc:281
 msgid "I/O Reads"
 msgstr "I/O 读取"
 
-#: taskmgr.rc:545 taskmgr.rc:282
+#: taskmgr.rc:541 taskmgr.rc:282
 msgid "I/O Read Bytes"
 msgstr "I/O 读取字节"
 
-#: taskmgr.rc:547
+#: taskmgr.rc:543
 msgid "&Session ID"
 msgstr "会话 ID(&S)"
 
-#: taskmgr.rc:549
+#: taskmgr.rc:545
 msgid "User &Name"
 msgstr "用户名(&N)"
 
-#: taskmgr.rc:551
+#: taskmgr.rc:547
 msgid "Page F&aults Delta"
 msgstr "页错误差值(&A)"
 
-#: taskmgr.rc:553
+#: taskmgr.rc:549
 msgid "&Virtual Memory Size"
 msgstr "虚拟内存大小(&V)"
 
-#: taskmgr.rc:555
+#: taskmgr.rc:551
 msgid "Pa&ged Pool"
 msgstr "已分页池(&G)"
 
-#: taskmgr.rc:557
+#: taskmgr.rc:553
 msgid "N&on-paged Pool"
 msgstr "未分页池(&O)"
 
-#: taskmgr.rc:559
+#: taskmgr.rc:555
 msgid "Base P&riority"
 msgstr "基本优先权(&R)"
 
-#: taskmgr.rc:561
+#: taskmgr.rc:557
 msgid "&Handle Count"
 msgstr "句柄数(&H)"
 
-#: taskmgr.rc:563
+#: taskmgr.rc:559
 msgid "&Thread Count"
 msgstr "线程数(&T)"
 
-#: taskmgr.rc:565 taskmgr.rc:292
+#: taskmgr.rc:561 taskmgr.rc:292
 msgid "GDI Objects"
 msgstr "GDI 对象"
 
-#: taskmgr.rc:567 taskmgr.rc:293
+#: taskmgr.rc:563 taskmgr.rc:293
 msgid "I/O Writes"
 msgstr "I/O 写入"
 
-#: taskmgr.rc:569 taskmgr.rc:294
+#: taskmgr.rc:565 taskmgr.rc:294
 msgid "I/O Write Bytes"
 msgstr "I/O 写入字节"
 
-#: taskmgr.rc:571 taskmgr.rc:295
+#: taskmgr.rc:567 taskmgr.rc:295
 msgid "I/O Other"
 msgstr "I/O 其他"
 
-#: taskmgr.rc:573 taskmgr.rc:296
+#: taskmgr.rc:569 taskmgr.rc:296
 msgid "I/O Other Bytes"
 msgstr "I/O 其他字节"
 
@@ -12225,23 +12225,6 @@ msgstr ""
 #, fuzzy
 msgid "Task"
 msgstr "结束任务(&E)"
-
-#: taskmgr.rc:328
-msgid "Fixme"
-msgstr ""
-
-#: taskmgr.rc:329
-msgid "Err"
-msgstr ""
-
-#: taskmgr.rc:330
-msgid "Warn"
-msgstr ""
-
-#: taskmgr.rc:331
-#, fuzzy
-msgid "Trace"
-msgstr "跟踪标记"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"

@@ -68,8 +68,8 @@ msgstr "Priežiūros informacija"
 #: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:114 oleview.rc:159
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
-#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 winecfg.rc:205 winecfg.rc:215 wineconsole.rc:131
+#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:442
+#: taskmgr.rc:517 winecfg.rc:205 winecfg.rc:215 wineconsole.rc:131
 #: winefile.rc:130 winefile.rc:153 winefile.rc:183 winemine.rc:68
 #: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
 #: wordpad.rc:246
@@ -150,7 +150,7 @@ msgstr "&Įdiegti"
 #: notepad.rc:115 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
 #: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
-#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:206
+#: regedit.rc:311 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:31 winecfg.rc:206
 #: winecfg.rc:216 wineconsole.rc:132 winefile.rc:131 winefile.rc:154
 #: winefile.rc:184 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
 #: wordpad.rc:247
@@ -370,7 +370,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Joks"
 
-#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:57
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:434 winedbg.rc:57
 #: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
 msgstr "Užverti"
@@ -1920,7 +1920,7 @@ msgstr "Liudijimo įšaldymas"
 msgid "Financial Information="
 msgstr "Finansinė informacija="
 
-#: crypt32.rc:216 taskmgr.rc:401
+#: crypt32.rc:216 taskmgr.rc:397
 msgid "Available"
 msgstr "Prieinama"
 
@@ -11619,11 +11619,11 @@ msgstr "Perkelti į &priekį"
 msgid "&About Task Manager"
 msgstr "&Apie užduočių tvarkytuvę"
 
-#: taskmgr.rc:120 taskmgr.rc:356
+#: taskmgr.rc:120 taskmgr.rc:352
 msgid "&Switch To"
 msgstr "Per&jungti į"
 
-#: taskmgr.rc:129 taskmgr.rc:357
+#: taskmgr.rc:129 taskmgr.rc:353
 msgid "&End Task"
 msgstr "&Baigti užduotį"
 
@@ -11631,7 +11631,7 @@ msgstr "&Baigti užduotį"
 msgid "&Go To Process"
 msgstr "&Eiti į procesą"
 
-#: taskmgr.rc:149 taskmgr.rc:367
+#: taskmgr.rc:149 taskmgr.rc:363
 msgid "&End Process"
 msgstr "&Baigti procesą"
 
@@ -11667,95 +11667,95 @@ msgstr "Nustatyti &atitikimą..."
 msgid "Edit Debug &Channels..."
 msgstr "Redaguoti derinimo &kanalus..."
 
-#: taskmgr.rc:342 taskmgr.rc:180 taskmgr.rc:181
+#: taskmgr.rc:338 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
 msgstr "Užduočių tvarkytuvė"
 
-#: taskmgr.rc:355
+#: taskmgr.rc:351
 msgid "&New Task..."
 msgstr "&Nauja užduotis..."
 
-#: taskmgr.rc:368
+#: taskmgr.rc:364
 msgid "&Show processes from all users"
 msgstr "&Rodyti visų naudotojų procesus"
 
-#: taskmgr.rc:376
+#: taskmgr.rc:372
 msgid "CPU usage"
 msgstr "CP naudojimas"
 
-#: taskmgr.rc:377
+#: taskmgr.rc:373
 msgid "MEM usage"
 msgstr "ATM naudojimas"
 
-#: taskmgr.rc:378
+#: taskmgr.rc:374
 msgid "Totals"
 msgstr "Sumos"
 
-#: taskmgr.rc:379
+#: taskmgr.rc:375
 msgid "Commit charge (K)"
 msgstr "Virtualioji atmintis (K)"
 
-#: taskmgr.rc:380
+#: taskmgr.rc:376
 msgid "Physical memory (K)"
 msgstr "Fizinė atmintis (K)"
 
-#: taskmgr.rc:381
+#: taskmgr.rc:377
 msgid "Kernel memory (K)"
 msgstr "Branduolio atmintis (K)"
 
-#: taskmgr.rc:382 taskmgr.rc:290
+#: taskmgr.rc:378 taskmgr.rc:290
 msgid "Handles"
 msgstr "Rodyklės"
 
-#: taskmgr.rc:383 taskmgr.rc:291
+#: taskmgr.rc:379 taskmgr.rc:291
 msgid "Threads"
 msgstr "Gijos"
 
-#: taskmgr.rc:384 taskmgr.rc:263
+#: taskmgr.rc:380 taskmgr.rc:263
 msgid "Processes"
 msgstr "Procesai"
 
-#: taskmgr.rc:391 taskmgr.rc:400 taskmgr.rc:409
+#: taskmgr.rc:387 taskmgr.rc:396 taskmgr.rc:405
 msgid "Total"
 msgstr "Iš viso"
 
-#: taskmgr.rc:392
+#: taskmgr.rc:388
 msgid "Limit"
 msgstr "Riba"
 
-#: taskmgr.rc:393
+#: taskmgr.rc:389
 msgid "Peak"
 msgstr "Pikas"
 
-#: taskmgr.rc:402
+#: taskmgr.rc:398
 msgid "System Cache"
 msgstr "Sist. podėlis"
 
-#: taskmgr.rc:410
+#: taskmgr.rc:406
 msgid "Paged"
 msgstr "Sukeičiama"
 
-#: taskmgr.rc:411
+#: taskmgr.rc:407
 msgid "Nonpaged"
 msgstr "Nesukeičiama"
 
-#: taskmgr.rc:418
+#: taskmgr.rc:414
 msgid "CPU usage history"
 msgstr "CP naudojimo istorija"
 
-#: taskmgr.rc:419
+#: taskmgr.rc:415
 msgid "Memory usage history"
 msgstr "Atminties naudojimo istorija"
 
-#: taskmgr.rc:432 taskmgr.rc:327
+#: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
 msgstr "Derinimo kanalai"
 
-#: taskmgr.rc:443
+#: taskmgr.rc:439
 msgid "Processor Affinity"
 msgstr "Procesoriaus atitikimas"
 
-#: taskmgr.rc:448
+#: taskmgr.rc:444
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
@@ -11763,242 +11763,242 @@ msgstr ""
 "Procesoriaus atitikimo nuostata valdo kuriuos CP procesas galės naudoti "
 "vykdymui."
 
-#: taskmgr.rc:450
+#: taskmgr.rc:446
 msgid "CPU 0"
 msgstr "CP 0"
 
-#: taskmgr.rc:452
+#: taskmgr.rc:448
 msgid "CPU 1"
 msgstr "CP 1"
 
-#: taskmgr.rc:454
+#: taskmgr.rc:450
 msgid "CPU 2"
 msgstr "CP 2"
 
-#: taskmgr.rc:456
+#: taskmgr.rc:452
 msgid "CPU 3"
 msgstr "CP 3"
 
-#: taskmgr.rc:458
+#: taskmgr.rc:454
 msgid "CPU 4"
 msgstr "CP 4"
 
-#: taskmgr.rc:460
+#: taskmgr.rc:456
 msgid "CPU 5"
 msgstr "CP 5"
 
-#: taskmgr.rc:462
+#: taskmgr.rc:458
 msgid "CPU 6"
 msgstr "CP 6"
 
-#: taskmgr.rc:464
+#: taskmgr.rc:460
 msgid "CPU 7"
 msgstr "CP 7"
 
-#: taskmgr.rc:466
+#: taskmgr.rc:462
 msgid "CPU 8"
 msgstr "CP 8"
 
-#: taskmgr.rc:468
+#: taskmgr.rc:464
 msgid "CPU 9"
 msgstr "CP 9"
 
-#: taskmgr.rc:470
+#: taskmgr.rc:466
 msgid "CPU 10"
 msgstr "CP 10"
 
-#: taskmgr.rc:472
+#: taskmgr.rc:468
 msgid "CPU 11"
 msgstr "CP 11"
 
-#: taskmgr.rc:474
+#: taskmgr.rc:470
 msgid "CPU 12"
 msgstr "CP 12"
 
-#: taskmgr.rc:476
+#: taskmgr.rc:472
 msgid "CPU 13"
 msgstr "CP 13"
 
-#: taskmgr.rc:478
+#: taskmgr.rc:474
 msgid "CPU 14"
 msgstr "CP 14"
 
-#: taskmgr.rc:480
+#: taskmgr.rc:476
 msgid "CPU 15"
 msgstr "CP 15"
 
-#: taskmgr.rc:482
+#: taskmgr.rc:478
 msgid "CPU 16"
 msgstr "CP 16"
 
-#: taskmgr.rc:484
+#: taskmgr.rc:480
 msgid "CPU 17"
 msgstr "CP 17"
 
-#: taskmgr.rc:486
+#: taskmgr.rc:482
 msgid "CPU 18"
 msgstr "CP 18"
 
-#: taskmgr.rc:488
+#: taskmgr.rc:484
 msgid "CPU 19"
 msgstr "CP 19"
 
-#: taskmgr.rc:490
+#: taskmgr.rc:486
 msgid "CPU 20"
 msgstr "CP 20"
 
-#: taskmgr.rc:492
+#: taskmgr.rc:488
 msgid "CPU 21"
 msgstr "CP 21"
 
-#: taskmgr.rc:494
+#: taskmgr.rc:490
 msgid "CPU 22"
 msgstr "CP 22"
 
-#: taskmgr.rc:496
+#: taskmgr.rc:492
 msgid "CPU 23"
 msgstr "CP 23"
 
-#: taskmgr.rc:498
+#: taskmgr.rc:494
 msgid "CPU 24"
 msgstr "CP 24"
 
-#: taskmgr.rc:500
+#: taskmgr.rc:496
 msgid "CPU 25"
 msgstr "CP 25"
 
-#: taskmgr.rc:502
+#: taskmgr.rc:498
 msgid "CPU 26"
 msgstr "CP 26"
 
-#: taskmgr.rc:504
+#: taskmgr.rc:500
 msgid "CPU 27"
 msgstr "CP 27"
 
-#: taskmgr.rc:506
+#: taskmgr.rc:502
 msgid "CPU 28"
 msgstr "CP 28"
 
-#: taskmgr.rc:508
+#: taskmgr.rc:504
 msgid "CPU 29"
 msgstr "CP 29"
 
-#: taskmgr.rc:510
+#: taskmgr.rc:506
 msgid "CPU 30"
 msgstr "CP 30"
 
-#: taskmgr.rc:512
+#: taskmgr.rc:508
 msgid "CPU 31"
 msgstr "CP 31"
 
-#: taskmgr.rc:518
+#: taskmgr.rc:514
 msgid "Select Columns"
 msgstr "Stulpelių išrinkimas"
 
-#: taskmgr.rc:523
+#: taskmgr.rc:519
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
 msgstr ""
 "Išrinkite stulpelius, kurie bus rodomi užduočių tvarkytuvės procesų "
 "kortelėje."
 
-#: taskmgr.rc:525
+#: taskmgr.rc:521
 msgid "&Image Name"
 msgstr "Proceso vardas"
 
-#: taskmgr.rc:527
+#: taskmgr.rc:523
 msgid "&PID (Process Identifier)"
 msgstr "&PID (proceso identifikatorius)"
 
-#: taskmgr.rc:529
+#: taskmgr.rc:525
 msgid "&CPU Usage"
 msgstr "&CP naudojimas"
 
-#: taskmgr.rc:531
+#: taskmgr.rc:527
 msgid "CPU Tim&e"
 msgstr "CP &laikas"
 
-#: taskmgr.rc:533
+#: taskmgr.rc:529
 msgid "&Memory Usage"
 msgstr "&Atminties naudojimas"
 
-#: taskmgr.rc:535
+#: taskmgr.rc:531
 msgid "Memory Usage &Delta"
 msgstr "Atminties naudojimo p&okytis"
 
-#: taskmgr.rc:537
+#: taskmgr.rc:533
 msgid "Pea&k Memory Usage"
 msgstr "Atminties naudojimo p&ikas"
 
-#: taskmgr.rc:539
+#: taskmgr.rc:535
 msgid "Page &Faults"
 msgstr "Puslapių &klaidos"
 
-#: taskmgr.rc:541
+#: taskmgr.rc:537
 msgid "&USER Objects"
 msgstr "&USER objektai"
 
-#: taskmgr.rc:543 taskmgr.rc:281
+#: taskmgr.rc:539 taskmgr.rc:281
 msgid "I/O Reads"
 msgstr "I/O skaitymai"
 
-#: taskmgr.rc:545 taskmgr.rc:282
+#: taskmgr.rc:541 taskmgr.rc:282
 msgid "I/O Read Bytes"
 msgstr "I/O persk. baitų"
 
-#: taskmgr.rc:547
+#: taskmgr.rc:543
 msgid "&Session ID"
 msgstr "&Seanso identifikatorius"
 
-#: taskmgr.rc:549
+#: taskmgr.rc:545
 msgid "User &Name"
 msgstr "&Naudotojo vardas"
 
-#: taskmgr.rc:551
+#: taskmgr.rc:547
 msgid "Page F&aults Delta"
 msgstr "Puslapių klaidų pok&ytis"
 
-#: taskmgr.rc:553
+#: taskmgr.rc:549
 msgid "&Virtual Memory Size"
 msgstr "&Virtualios atminties dydis"
 
-#: taskmgr.rc:555
+#: taskmgr.rc:551
 msgid "Pa&ged Pool"
 msgstr "Sukeičiamas &telkinys"
 
-#: taskmgr.rc:557
+#: taskmgr.rc:553
 msgid "N&on-paged Pool"
 msgstr "Nesukeičiamas t&elkinys"
 
-#: taskmgr.rc:559
+#: taskmgr.rc:555
 msgid "Base P&riority"
 msgstr "&Bazinis prioritetas"
 
-#: taskmgr.rc:561
+#: taskmgr.rc:557
 msgid "&Handle Count"
 msgstr "&Rodyklių skaičius"
 
-#: taskmgr.rc:563
+#: taskmgr.rc:559
 msgid "&Thread Count"
 msgstr "&Gijų skaičius"
 
-#: taskmgr.rc:565 taskmgr.rc:292
+#: taskmgr.rc:561 taskmgr.rc:292
 msgid "GDI Objects"
 msgstr "GDI objektai"
 
-#: taskmgr.rc:567 taskmgr.rc:293
+#: taskmgr.rc:563 taskmgr.rc:293
 msgid "I/O Writes"
 msgstr "I/O rašymai"
 
-#: taskmgr.rc:569 taskmgr.rc:294
+#: taskmgr.rc:565 taskmgr.rc:294
 msgid "I/O Write Bytes"
 msgstr "I/O įraš. baitų"
 
-#: taskmgr.rc:571 taskmgr.rc:295
+#: taskmgr.rc:567 taskmgr.rc:295
 msgid "I/O Other"
 msgstr "I/O kiti"
 
-#: taskmgr.rc:573 taskmgr.rc:296
+#: taskmgr.rc:569 taskmgr.rc:296
 msgid "I/O Other Bytes"
 msgstr "I/O kitų baitų"
 
@@ -12329,22 +12329,6 @@ msgstr "Vykdoma"
 #: taskmgr.rc:325
 msgid "Task"
 msgstr "Užduotis"
-
-#: taskmgr.rc:328
-msgid "Fixme"
-msgstr "Fixme (pataisyk)"
-
-#: taskmgr.rc:329
-msgid "Err"
-msgstr "Err (klaida)"
-
-#: taskmgr.rc:330
-msgid "Warn"
-msgstr "Warn (įspėjimas)"
-
-#: taskmgr.rc:331
-msgid "Trace"
-msgstr "Trace (pėdsakas)"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"

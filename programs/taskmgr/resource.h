@@ -244,10 +244,6 @@
 #define IDS_APPLICATION_TASK            32870
 #define IDS_APPLICATION_STATUS          32871
 #define IDS_DEBUG_CHANNEL               32872
-#define IDS_DEBUG_CHANNEL_FIXME         32873
-#define IDS_DEBUG_CHANNEL_ERR           32874
-#define IDS_DEBUG_CHANNEL_WARN          32875
-#define IDS_DEBUG_CHANNEL_TRACE         32876
 #define IDC_STATIC                      -1
 
 /*

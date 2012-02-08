@@ -324,10 +324,6 @@ BEGIN
     IDS_APPLICATION_TASK               "Task"
     IDS_APPLICATION_STATUS             "Status"
     IDS_DEBUG_CHANNEL                  "Debug Channels"
-    IDS_DEBUG_CHANNEL_FIXME            "Fixme"
-    IDS_DEBUG_CHANNEL_ERR              "Err"
-    IDS_DEBUG_CHANNEL_WARN             "Warn"
-    IDS_DEBUG_CHANNEL_TRACE            "Trace"
 END
 
 /*
