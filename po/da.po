@@ -484,7 +484,7 @@ msgstr "&Standardprinter"
 
 #: comdlg32.rc:223
 msgid "[none]"
-msgstr "[none]"
+msgstr ""
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
@@ -608,7 +608,7 @@ msgstr "&Definer selvvalgt farve >>"
 
 #: comdlg32.rc:310 regedit.rc:223 regedit.rc:233
 msgid "Find"
-msgstr "Find"
+msgstr ""
 
 #: comdlg32.rc:313 comdlg32.rc:332
 msgid "Fi&nd What:"
@@ -891,7 +891,7 @@ msgstr "Oliven"
 
 #: comdlg32.rc:121 wordpad.rc:118
 msgid "Navy"
-msgstr "Navy"
+msgstr ""
 
 #: comdlg32.rc:122 wordpad.rc:119
 msgid "Purple"
@@ -4571,7 +4571,7 @@ msgstr "Service login mislykkedes\n"
 
 #: winerror.mc:1226
 msgid "Service start-hang\n"
-msgstr "Service start-hang\n"
+msgstr ""
 
 #: winerror.mc:1231
 msgid "Invalid service lock\n"
@@ -6293,7 +6293,7 @@ msgstr "Kan ikke få fat i kald handle\n"
 
 #: winerror.mc:3311
 msgid "Null reference pointer\n"
-msgstr "Null reference pointer\n"
+msgstr ""
 
 #: winerror.mc:3316
 msgid "Enumeration value out of range\n"
@@ -7427,7 +7427,7 @@ msgstr "Kopierer filer..."
 
 #: setupapi.rc:42
 msgid "Destination:"
-msgstr "Destination:"
+msgstr ""
 
 #: setupapi.rc:49
 msgid "Files Needed"
@@ -10141,7 +10141,7 @@ msgstr "Tryk Return for at fortsætte: "
 
 #: cmd.rc:321
 msgid "Wine Command Prompt"
-msgstr "Wine Command Prompt"
+msgstr ""
 
 #: cmd.rc:322
 #, fuzzy
@@ -11387,7 +11387,7 @@ msgstr "&Markeret del:"
 
 #: regedit.rc:226
 msgid "Find:"
-msgstr "Find:"
+msgstr ""
 
 #: regedit.rc:228
 msgid "Find in:"
@@ -12879,7 +12879,7 @@ msgstr "Vis &advanceret"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr ""
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12887,7 +12887,7 @@ msgstr "G&ennemse..."
 
 #: winecfg.rc:244
 msgid "&Label:"
-msgstr "&Label:"
+msgstr ""
 
 #: winecfg.rc:246
 msgid "S&erial:"
