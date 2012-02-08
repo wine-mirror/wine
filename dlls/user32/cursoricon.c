@@ -2317,9 +2317,10 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
 
     if (flags & DI_MASK)
     {
+        DWORD rop = (flags & DI_IMAGE) ? SRCAND : SRCCOPY;
         SelectObject( hMemDC, frame->mask );
         StretchBlt( hdc_dest, x, y, cxWidth, cyWidth,
-                    hMemDC, 0, 0, frame->width, frame->height, SRCAND );
+                    hMemDC, 0, 0, frame->width, frame->height, rop );
     }
 
     if (flags & DI_IMAGE)
