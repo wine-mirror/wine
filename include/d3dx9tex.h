@@ -52,7 +52,7 @@
 #define D3DX_CHANNEL_LUMINANCE           0x00000010
 
 /**********************************************
- **************** Typedefs ****************
+ ****************** Typedefs ******************
  **********************************************/
 typedef enum _D3DXIMAGE_FILEFORMAT
 {
@@ -63,6 +63,8 @@ typedef enum _D3DXIMAGE_FILEFORMAT
     D3DXIFF_DDS,
     D3DXIFF_PPM,
     D3DXIFF_DIB,
+    D3DXIFF_HDR,
+    D3DXIFF_PFM,
     D3DXIFF_FORCE_DWORD = 0x7fffffff
 } D3DXIMAGE_FILEFORMAT;
 
