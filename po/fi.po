@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-04 12:15+0200\n"
+"PO-Revision-Date: 2012-02-08 03:15+0200\n"
 "Last-Translator: Laura Leinonen <leinonen.laura@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Finnish\n"
@@ -496,11 +496,11 @@ msgstr "Paperi"
 
 #: comdlg32.rc:235
 msgid "Si&ze"
-msgstr "&Koko:"
+msgstr "&Koko"
 
 #: comdlg32.rc:236
 msgid "&Source"
-msgstr "Lä&hde:"
+msgstr "Lä&hde"
 
 #: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
@@ -963,7 +963,7 @@ msgstr "Tulostinvirhe."
 
 #: comdlg32.rc:64
 msgid "No default printer defined."
-msgstr "Oletustulostinta ei ole määritetty."
+msgstr "Oletustulostinta ei ole määritelty."
 
 #: comdlg32.rc:65
 msgid "Cannot find the printer."
@@ -2040,7 +2040,7 @@ msgstr ""
 
 #: cryptui.rc:188
 msgid "&Install Certificate..."
-msgstr "&Asenna sertifikaatti"
+msgstr "&Asenna varmenne..."
 
 #: cryptui.rc:189
 msgid "Issuer &Statement"
@@ -2068,11 +2068,11 @@ msgstr ""
 
 #: cryptui.rc:214
 msgid "&View Certificate"
-msgstr "&Näytä sertifikaatti"
+msgstr "&Näytä varmenne"
 
 #: cryptui.rc:215
 msgid "Certificate &status:"
-msgstr "Sertifikaatin &tila:"
+msgstr "Varmenteen &tila:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
@@ -2345,7 +2345,7 @@ msgstr ""
 
 #: cryptui.rc:28
 msgid "Certificate Information"
-msgstr "Sertifikaatin tiedot"
+msgstr "Varmenteen tiedot"
 
 #: cryptui.rc:29
 msgid ""
@@ -2365,7 +2365,7 @@ msgstr ""
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
-msgstr "Sertifikaatin myöntäjää ei löydy."
+msgstr "Varmenteen myöntäjää ei löydy."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
@@ -3161,7 +3161,7 @@ msgstr "&Avaa Linkki"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr "Anna osoite, jonka haluat avata Internet Explorerissa"
+msgstr "Anna osoite, jonka haluat avata Internet Explorer -selaimessa"
 
 #: ieframe.rc:91
 msgid "Open:"
@@ -3194,7 +3194,7 @@ msgstr "Ladataan kohdetta %s"
 
 #: ieframe.rc:81
 msgid "Asking for %s"
-msgstr "Pyydetään kohdetta %"
+msgstr "Pyydetään kohdetta %s"
 
 #: inetcpl.rc:46
 msgid "Home page"
@@ -3230,7 +3230,7 @@ msgstr "&Poista tiedostoja..."
 
 #: inetcpl.rc:57
 msgid "&Settings..."
-msgstr "&Valinnat"
+msgstr "&Valinnat..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
@@ -3241,8 +3241,8 @@ msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
-"Väliaikaiset internettiedostot\n"
-"Välimuistissa olevat kopiot sivuista, kuvista ja sertifikaateista."
+"Väliaikaiset Internet-tiedostot\n"
+"Välimuistissa olevat kopiot sivuista, kuvista ja varmenteista."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3291,12 +3291,12 @@ msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
 msgstr ""
-"Sertifikaatteja käytetään tunnistautumiseesi ja sertifikaatin myöntäjien "
+"Varmenteita käytetään tunnistautumiseesi ja varmenteen myöntäjien "
 "ja julkaisijoiden tunnistamiseen."
 
 #: inetcpl.rc:111
 msgid "Certificates..."
-msgstr "Sertifikaatit..."
+msgstr "Varmenteet..."
 
 #: inetcpl.rc:112
 msgid "Publishers..."
@@ -4040,7 +4040,7 @@ msgstr "Virheellinen moduulin tyyppi %1:lle\n"
 
 #: winerror.mc:746
 msgid "Invalid EXE signature in %1\n"
-msgstr "Virheellinen EXEn allekirjoitus tiedostossa %1\n"
+msgstr "Virheellinen EXE-allekirjoitus tiedostossa %1\n"
 
 #: winerror.mc:751
 msgid "EXE %1 is marked invalid\n"
@@ -5264,19 +5264,19 @@ msgstr ""
 
 #: winerror.mc:2281
 msgid "No such local group\n"
-msgstr "Paikallisryhmää ei ole olemassa\n"
+msgstr "Paikallista ryhmää ei ole olemassa\n"
 
 #: winerror.mc:2286
 msgid "User not in local group\n"
-msgstr "Käyttäjä ei paikallisryhmässä\n"
+msgstr "Käyttäjä ei paikallisessa ryhmässä\n"
 
 #: winerror.mc:2291
 msgid "User already in local group\n"
-msgstr "Käyttäjä on jo paikallisryhmässä\n"
+msgstr "Käyttäjä on jo paikallisessa ryhmässä\n"
 
 #: winerror.mc:2296
 msgid "Local group already exists\n"
-msgstr "Paikallisryhmä on jo olemassa\n"
+msgstr "Paikallinen ryhmä on jo olemassa\n"
 
 #: winerror.mc:2301 winerror.mc:2326
 msgid "Logon type not granted\n"
@@ -5384,7 +5384,7 @@ msgstr "Ikkunaluokkaa ei löydy\n"
 
 #: winerror.mc:2436
 msgid "Window owned by another thread\n"
-msgstr "Ikkun kuuluu toiseen ketjuun\n"
+msgstr "Ikkuna kuuluu toiseen ketjuun\n"
 
 #: winerror.mc:2441
 msgid "Hotkey already registered\n"
@@ -5428,7 +5428,7 @@ msgstr "Leikepöytä ei auki\n"
 
 #: winerror.mc:2491
 msgid "Hotkey not registered\n"
-msgstr "Pikanäppäintä ei määritetty\n"
+msgstr "Pikanäppäintä ei määritelty\n"
 
 #: winerror.mc:2496
 msgid "Not a dialog window\n"
@@ -5528,7 +5528,7 @@ msgstr ""
 
 #: winerror.mc:2616
 msgid "Invalid thread ID\n"
-msgstr "Viallinen ketju-ID\n"
+msgstr "Viallinen säikeen ID\n"
 
 #: winerror.mc:2621
 msgid "Not an MDI child window\n"
@@ -5620,7 +5620,7 @@ msgstr "Asennuspalvelu epäonnistui\n"
 
 #: winerror.mc:2731
 msgid "Installation aborted by user\n"
-msgstr "Käyttäjä keskeytti asennusen\n"
+msgstr "Käyttäjä keskeytti asennuksen\n"
 
 #: winerror.mc:2736
 msgid "Installation failure\n"
@@ -6464,7 +6464,7 @@ msgstr "Tällä portilla ei ole säädettäviä asetuksia"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
-msgstr "Postin lähetys epäonnistui, koska MAPI-asiakasohjelmaa ei ole asennettu"
+msgstr "Postin lähetys epäonnistui, koska MAPI-asiakasohjelmaa ei ole asennettu."
 
 #: mapi32.rc:29
 msgid "Send Mail"
@@ -6910,7 +6910,7 @@ msgstr ""
 
 #: oleacc.rc:80
 msgid "diagram"
-msgstr "diagrammi"
+msgstr "kuvaaja"
 
 #: oleacc.rc:81
 msgid "animation"
@@ -7618,7 +7618,7 @@ msgstr "&Poistu"
 
 #: shell32.rc:127
 msgid "&About Control Panel"
-msgstr "Ti&etoja Ohjauspaneelista..."
+msgstr "Ti&etoja Ohjauspaneelista"
 
 #: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
@@ -7970,7 +7970,8 @@ msgstr ""
 "Tässä kansiossa on jo kansio nimeltä '%1'.\n"
 "\n"
 "Jos kohdekansiossa on samannimisiä tiedostoja kuin valitussa kansiossa,\n"
-"ne korvataan uusilla. Jatketaanko?"
+"ne korvataan uusilla. Haluatko siitä huolimatta siirtää tai kopioida\n"
+"kansion?"
 
 #: shell32.rc:235
 msgid "New Folder"
@@ -8016,7 +8017,8 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "Tiedosto on jo olemassa polussa %1.\n"
-"Haluatko kirjoitaa sen yli?"
+"\n"
+"Haluatko kirjoittaa sen yli?"
 
 #: shell32.rc:247
 msgid ""
@@ -8025,7 +8027,8 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "Kansio on jo olemassa polussa %1.\n"
-"Haluatko kirjoitaa sen yli?"
+"\n"
+"Haluatko kirjoittaa sen yli?"
 
 #: shell32.rc:248
 msgid "Confirm overwrite"
@@ -8057,7 +8060,7 @@ msgstr ""
 "lisätietoja.\n"
 "\n"
 "Winen mukana pitäisi tulla kopio GNU Lesser General Public Licensesta; jos "
-"ei, kirjoita osoitteeseen Free Software Foundation Inc., 51 Franlin Street, "
+"ei, kirjoita osoitteeseen Free Software Foundation Inc., 51 Franklin Street, "
 "Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:253
@@ -8078,7 +8081,7 @@ msgstr "&Älä näytä tätä viestiä enää"
 
 #: shlwapi.rc:27
 msgid "%d bytes"
-msgstr "%ld tavua"
+msgstr "%d tavua"
 
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
@@ -8190,7 +8193,7 @@ msgstr "Turvallisuusvaroitus"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
-msgstr "Tämän sivuston sertifikaatissa on ongelma."
+msgstr "Tämän sivuston varmenteessa on ongelma."
 
 #: wininet.rc:79
 msgid "Do you want to continue anyway?"
@@ -8202,25 +8205,25 @@ msgstr "Lähiverkkoyhteys"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
-msgstr "Sertifikaatti on tuntemattoman tai epäluotetun julkaisijan myöntämä."
+msgstr "Varmenne on tuntemattoman tai epäluotetun julkaisijan myöntämä."
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
-msgstr "Sertifikaatin päiväys ei kelpaa."
+msgstr "Varmenteen päiväys ei kelpaa."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
-msgstr "Nimi sertifikaatissa ei vastaa sivustoa."
+msgstr "Nimi varmenteessa ei vastaa sivustoa."
 
 #: wininet.rc:29
 msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr ""
-"Tässä sertifikaatissa on ainakin yksi määrittelemätön turvallisuusongelma."
+"Tässä varmenteessa on ainakin yksi määrittelemätön turvallisuusongelma."
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
-msgstr "Määritetty komento suoritettiin."
+msgstr "Määritelty komento suoritettiin."
 
 #: winmm.rc:29
 msgid "Undefined external error."
@@ -8244,7 +8247,7 @@ msgstr ""
 
 #: winmm.rc:33
 msgid "The specified device handle is invalid."
-msgstr "Määritelty laitten kahva ei kelpaa."
+msgstr "Määritelty laitteen kahva ei kelpaa."
 
 #: winmm.rc:34
 msgid "There is no driver installed on your system!"
@@ -8357,12 +8360,12 @@ msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
 msgstr ""
-"Medialaitteessasi on ongelma. Tarkista, että se toimii oikein tai ota "
+"Medialaitteessasi on ongelma. Tarkista, että se toimii oikein, tai ota "
 "yhteyttä laitteen valmistajaan."
 
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
-msgstr "MCI ei avaa tai tunnista määritettyä laitetta."
+msgstr "Määritelty laite ei ole auki, tai MCI ei tunnista sitä."
 
 #: winmm.rc:62
 msgid ""
@@ -8374,11 +8377,11 @@ msgstr ""
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr ""
-"Määritetyn laiteajurin lataamisessa on selvittämätön ongelma."
+"Määritellyn laiteajurin lataamisessa on selvittämätön ongelma."
 
 #: winmm.rc:64
 msgid "No command was specified."
-msgstr "Komentoa ei määritetty."
+msgstr "Komentoa ei määritelty."
 
 #: winmm.rc:65
 msgid ""
@@ -8434,7 +8437,7 @@ msgstr "Laiteajuri ei ole valmis."
 
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
-msgstr "MCI:n nollauksessa tapahtui virhe. Yritä käynnistää Windows uudelleen."
+msgstr "MCI:n alustamisessa tapahtui virhe. Yritä käynnistää Windows uudelleen."
 
 #: winmm.rc:75
 msgid ""
@@ -8445,7 +8448,7 @@ msgstr ""
 
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
-msgstr "aitenimeä 'all' ei voi käyttää valitun komennon kanssa."
+msgstr "Laitenimeä 'all' ei voi käyttää valitun komennon kanssa."
 
 #: winmm.rc:77
 msgid ""
@@ -8589,7 +8592,7 @@ msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
 msgstr ""
-"Määritettyä laitetta ei ole asennettu laitteistoon. Käytä Ohjauspaneelin "
+"Määriteltyä laitetta ei ole asennettu laitteistoon. Käytä Ohjauspaneelin "
 "Ajurit-kohtaa asentaaksesi laitteen."
 
 #: winmm.rc:102
@@ -8837,7 +8840,7 @@ msgstr "Ominaisuutta ei ole"
 
 #: wldap32.rc:44
 msgid "Undefined Type"
-msgstr "Määrittämätön tyyppi"
+msgstr "Määrittelemätön tyyppi"
 
 #: wldap32.rc:45
 msgid "Inappropriate Matching"
@@ -8989,7 +8992,7 @@ msgstr "Ei muistia"
 
 #: wldap32.rc:118
 msgid "Can't connect to the LDAP server"
-msgstr "Ei voida yhdistää LDAP-serveriin"
+msgstr "Ei voida yhdistää LDAP-palvelimeen"
 
 #: wldap32.rc:119
 msgid "Operation not supported by this version of the LDAP protocol"
@@ -9057,13 +9060,13 @@ msgstr ""
 "Missä:\n"
 "\n"
 "  +   Asettaa attribuutin.\n"
-"  -   Poistaa attributin.\n"
+"  -   Poistaa attribuutin.\n"
 "  R   Vain luku.\n"
 "  A   Arkistointi.\n"
 "  S   Järjestelmätiedosto.\n"
 "  H   Piilotettu.\n"
 "  [asema:][polku][tiedostonimi]\n"
-"      Määrittää tiedoston tai tiedostot, joita attrib käsittelee.\n"
+"      Määrittelee tiedoston tai tiedostot, joita attrib käsittelee.\n"
 "  /S  Käsittelee sopivat tiedostot nykyisessä kansiossa ja sen alikansioissa.\n"
 "  /D  Käsittelee myös kansiot.\n"
 
@@ -9128,7 +9131,7 @@ msgstr "CHDIR <hakemisto> vaihtaa tämänhetkisen oletushakemiston.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS tyhjentää konsolin ikkunan.\n"
+msgstr "CLS tyhjentää konsolin ruudun.\n"
 
 #: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
@@ -9161,7 +9164,7 @@ msgid ""
 "default). The ECHO OFF command can be prevented from displaying by\n"
 "preceding it with an @ sign.\n"
 msgstr ""
-"ECHO <merkkijono> näyttää <merkkijono>n senhetkisessä päätteessä.\n"
+"ECHO <merkkijono> näyttää tekstin <merkkijono> nykyisessä päätteessä.\n"
 "\n"
 "ECHO ON -komentoa seuraavat komennot tiedostossa näytetään päätteessä\n"
 "ennen suorittamista.\n"
@@ -9187,7 +9190,7 @@ msgstr ""
 "\n"
 "Syntaksi: FOR %muuttuja IN (joukko) DO komento\n"
 "\n"
-"%-merkin kirjoittaminen kahdesti, kun FOR-komentoa käytetään "
+"%-merkin kirjoittaminen kahdesti, kun FOR-komentoa käytetään\n"
 "komentojonotiedostossa, ei ole tarpeen Winen cmd:ssä.\n"
 
 #: cmd.rc:81
@@ -9298,7 +9301,7 @@ msgstr ""
 "\n"
 "Se on hyödyllinen lähinnä komentojonotiedostoissa antamaan käyttäjälle\n"
 "mahdollisuuden lukea edellisen komennon tuloste, ennen kuin se vierii\n"
-"pois näytöltä.\n"
+"pois ruudulta.\n"
 
 #: cmd.rc:149
 msgid ""
@@ -9329,7 +9332,7 @@ msgstr ""
 "\n"
 "Seuraavilla merkkijonoilla on seuraava erityismerkitys:\n"
 "\n"
-"$$    Dollarimerkki       $_    Linefeed            $b    Putkimerkki (|)\n"
+"$$    Dollarimerkki       $_    Rivinvaihto         $b    Putkimerkki (|)\n"
 "$d    Nykyinen päiväys    $e    Escape              $g    >-merkki\n"
 "$l    <-merkki            $n    Nykyinen asema      $p    Nykyinen polku\n"
 "$q    Yhtäsuuruusmerkki   $t    Nykyinen aika       $v    cmd:n versio\n"
@@ -9410,7 +9413,7 @@ msgid ""
 "if called from the command line.\n"
 msgstr ""
 "SHIFT-komentoa käytetään komentojonotiedostossa yhden parametrin poistamiseen\n"
-"listan alusta, joten parametrista 2 tulee parametri 1 ja niin edelleen. \n"
+"listan alusta, joten parametrista 2 tulee parametri 1 ja niin edelleen.\n"
 "Se ei vaikuta mihinkään, jos sitä kutsutaan komentoriviltä.\n"
 
 #: cmd.rc:185
@@ -9520,7 +9523,7 @@ msgstr ""
 "on nykyisellään määritelty.\n"
 "Jos komentoa käytetään vain tiedostotyypin kanssa, se näyttää siihen "
 "liittyvät komennot, jos niitä on.\n"
-"Jos yhtäsuuruusmerkin jälkeen ei määritetä mitään komentoa, kyseiseen "
+"Jos yhtäsuuruusmerkin jälkeen ei määritellä mitään komentoa, kyseiseen "
 "tiedostotyyppiin liitetty komento poistetaan.\n"
 
 #: cmd.rc:243
@@ -9535,7 +9538,7 @@ msgid ""
 msgstr ""
 "CHOICE näyttää tekstin ja odottaa, kunnes käyttäjä painaa\n"
 "sallittua näppäintä, joka on listassa.\n"
-"CHOICEa käytetään lähinnä menuvalintoihin komentojonotiedostoissa.\n"
+"CHOICE-komentoa käytetään lähinnä valikkoihin komentojonotiedostoissa.\n"
 
 #: cmd.rc:251
 msgid ""
@@ -9543,7 +9546,7 @@ msgid ""
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
 "EXIT päättää nykyisen komentoistunnon ja palaa käyttöjärjestelmään tai\n"
-"komentoriville, josta kutsuit cmd:tä.\n"
+"komentoriville, jolta kutsuit cmd:tä.\n"
 
 #: cmd.rc:288
 msgid ""
@@ -9591,13 +9594,13 @@ msgstr ""
 "CALL\t\tKutsu komentojonotiedostoa toisen sisältä\n"
 "CD (CHDIR)\tVaihda nykyistä oletushakemistoa\n"
 "CHOICE\t\tOdota listalla olevan näppäimen painallusta\n"
-"CLS\t\tTyhjennä konsoli-ikkuna\n"
+"CLS\t\tTyhjennä komentorivi-ikkuna\n"
 "COPY\t\tKopioi tiedosto\n"
-"CTTY\t\tMuuta input/output-laitetta\n"
+"CTTY\t\tVaihda päätelaitetta\n"
 "DATE\t\tNäytä tai muuta järjestelmän päiväystä\n"
 "DEL (ERASE)\tPoista tiedosto tai tiedostojoukko\n"
 "DIR\t\tListaa hakemiston sisältö\n"
-"ECHO\t\tKopioi teksti suoraan konsolitulosteeseen\n"
+"ECHO\t\tKopioi teksti suoraan tulosteeseen\n"
 "ENDLOCAL\tLopeta ympäristömuutosten paikallisuus komentojonotiedostossa\n"
 "FTYPE\t\tNäytä tai muuta tiedostotyyppeihin liitettyjä avoimia komentoja\n"
 "HELP\t\tNäytä aiheeseen liittyviä lyhyitä yksityiskohtia\n"
@@ -9691,7 +9694,7 @@ msgstr "Syötä uusi aika: "
 
 #: cmd.rc:308
 msgid "Environment variable %1 not defined\n"
-msgstr "Ympäristömuuttujaa %1 ei määritetty\n"
+msgstr "Ympäristömuuttujaa %1 ei määritelty\n"
 
 #: cmd.rc:309 xcopy.rc:38
 msgid "Failed to open '%1'\n"
@@ -9897,7 +9900,7 @@ msgstr ""
 "\n"
 "NET START [palvelu]\n"
 "\n"
-"Näyttää listan käytettävistä palveluista, jos 'palvelu' jätetään pois."
+"Näyttää listan käytettävistä palveluista, jos 'palvelu' jätetään pois. "
 "Muuten 'palvelu' on käynnistyvän palvelun nimi.\n"
 
 #: net.rc:29
@@ -9965,12 +9968,12 @@ msgid ""
 "---------------------------------------------------------------\n"
 msgstr ""
 "\n"
-"Tila    Paik.   Etä\n"
+"Tila  Paikallinen  Etä\n"
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr ""
+msgstr "%1      %2      %3      Avoimia resursseja: %4!u!\n"
 
 #: net.rc:45
 msgid "Paused"
@@ -10075,7 +10078,7 @@ msgstr "&Sisältö\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "&Tietoja Notepadista"
+msgstr "&Tietoja Muistiosta"
 
 #: notepad.rc:97
 msgid "Page Setup"
@@ -10166,7 +10169,7 @@ msgstr "Sivu &p"
 
 #: notepad.rc:68
 msgid "Notepad"
-msgstr "Notepad"
+msgstr "Muistio"
 
 #: notepad.rc:69 progman.rc:61 winhlp32.rc:79
 msgid "ERROR"
@@ -10454,7 +10457,7 @@ msgstr "Avaa katselin valitulle kohdalle"
 
 #: oleview.rc:117
 msgid "Toggle between expert and novice display mode"
-msgstr "Vaihda teho- ja peruskäyttäjänäkymän välillä"
+msgstr "Vaihda teho- ja peruskäyttäjän näkymän välillä"
 
 #: oleview.rc:118
 msgid ""
@@ -10963,7 +10966,7 @@ msgstr "Arvon data:"
 
 #: regedit.rc:274
 msgid "Edit DWORD"
-msgstr "Muokkaa DWORDia"
+msgstr "Muokkaa DWORD-arvoa"
 
 #: regedit.rc:281
 msgid "Base"
@@ -11092,11 +11095,11 @@ msgstr "Hakee tekstiä avaimesta, arvosta tai datasta"
 
 #: regedit.rc:170
 msgid "Finds next occurrence of text specified in previous search"
-msgstr "Hakee edellisessä haussa määritetyn tekstin seuraavan esiintymän"
+msgstr "Hakee edellisessä haussa määritellyn tekstin seuraavan esiintymän"
 
 #: regedit.rc:144
 msgid "Modifies the value's data"
-msgstr "Muokkaa arvon dataaa"
+msgstr "Muokkaa arvon dataa"
 
 #: regedit.rc:145
 msgid "Adds a new key"
@@ -11152,7 +11155,7 @@ msgstr "Haluatko varmasti tuhota arvon '%s'?"
 
 #: regedit.rc:186
 msgid "Search string '%s' not found"
-msgstr "Haettua merkkijonoa '%s' ei löydy."
+msgstr "Haettua merkkijonoa '%s' ei löydy"
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
@@ -11209,12 +11212,11 @@ msgstr ""
 "start [asetukset] dokumentin_tiedostonimi\n"
 "\n"
 "Asetukset:\n"
-"/M[inimized] Käynnistä ohjelma minimoituna.\n"
-"/MAX[imized] Käynnistä ohjelma koko ruudulla.\n"
-"/R[estored]  Käynnistä ohjelma normaalikokoisena (ei minimoituna eikä "
-"maksimoituna).\n"
-"/W[ait]      Odota, että käynnistetty ohjelma lopettaa, sitten poistu sen "
-"poistumiskäskyllä.\n"
+"/M[inimized] Käynnistä ohjelma pienennettynä.\n"
+"/MAX[imized] Käynnistä ohjelma suurennettuna.\n"
+"/R[estored]  Käynnistä ohjelma normaalikokoisena (ei pienennettynä eikä "
+"suurennettuna).\n"
+"/W[ait]      Odota, että ohjelman suoritus päättyy, ja palauta sen paluuarvo.\n"
 "/Unix        Käytä Unix-tiedostonimeä ja avaa tiedosto kuten Windows Explorer.\n"
 "/ProgIDOpen  Avaa dokumentti seuraavalla progID:lla.\n"
 "/L           Näytä loppukäyttäjän lisenssi.\n"
@@ -11255,7 +11257,7 @@ msgstr ""
 "lisätietoja.\n"
 "\n"
 "Ohjelman mukana pitäisi tulla kopio GNU Lesser General Public Licensesta; jos\n"
-"ei, kirjoita osoitteeseen Free Software Foundation Inc., 51 Franlin Street,\n"
+"ei, kirjoita osoitteeseen Free Software Foundation Inc., 51 Franklin Street,\n"
 "Fifth Floor, Boston, MA 02110-1301, USA.\n"
 "\n"
 "Tiedostossa COPYING.LIB on lisenssitietoa.\n"
@@ -11698,7 +11700,7 @@ msgstr "Valitse sarakkeet"
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
 msgstr ""
-"Valitse sarakkeet, jotka näkyvät Tehtävienhallinnan Prosessit-lehdellä."
+"Valitse sarakkeet, jotka näkyvät Tehtävienhallinnan Prosessit-sivulla."
 
 #: taskmgr.rc:525
 msgid "&Image Name"
@@ -11810,8 +11812,8 @@ msgstr "Suorittaa uuden ohjelman"
 
 #: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
-msgstr "Tehtävienhallinta pysyy kaikkien muiden ikkunoiden edessä, jos sitä "
-"ei pienennetä"
+msgstr "Tehtävienhallinta pysyy kaikkien muiden ikkunoiden edessä, ellei sitä "
+"pienennetä"
 
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
@@ -11940,7 +11942,7 @@ msgstr ""
 
 #: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
-msgstr "Kontrolloi, minkä prosessien päällä prosessi saadaan ajaa"
+msgstr "Kontrolloi, millä suorittimilla prosessia voidaan ajaa"
 
 #: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
@@ -11984,7 +11986,7 @@ msgstr "Prosessit: %d"
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "Muistin käyttö: %1!u!kB / %2!u!kB"
+msgstr "Muistin käyttö: %1!u! kt / %2!u! kt"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -12282,7 +12284,7 @@ msgstr "Tämä on näyteteksti 10 pisteen Tahoma-fontilla"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
-msgstr ""
+msgstr "DLL-tiedostojen ohitukset"
 
 #: winecfg.rc:183
 msgid ""
@@ -12296,7 +12298,7 @@ msgstr ""
 
 #: winecfg.rc:185
 msgid "&New override for library:"
-msgstr "&Uusi määritys kirjastolle:"
+msgstr "&Uusi ohitus kirjastolle:"
 
 #: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
@@ -12304,15 +12306,15 @@ msgstr "&Lisää"
 
 #: winecfg.rc:188
 msgid "Existing &overrides:"
-msgstr "&Olemassaolevat määritykset:"
+msgstr "&Olemassaolevat ohitukset:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "&Muokkaa"
+msgstr "&Muokkaa..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
-msgstr "Muokkaa määritystä"
+msgstr "Muokkaa ohitusta"
 
 #: winecfg.rc:199
 msgid "Load order"
@@ -12370,7 +12372,7 @@ msgstr "Nä&ytä lisäasetukset"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "Lai&te"
+msgstr "Lai&te:"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12976,7 +12978,7 @@ msgstr ""
 "\n"
 "Esimerkki:\n"
 "  wineconsole cmd\n"
-"Käynnistää Winen komentorivin Wine-konsolissa.\n"
+"Käynnistää Winen komentokehotteen Winen konsolissa.\n"
 "\n"
 
 #: winedbg.rc:46
@@ -13019,7 +13021,7 @@ msgstr ""
 "Jos tätä ongelmaa ei esiinny Windowsin kanssa eikä sitä ole vielä "
 "raportoitu, voit tallentaa yksityiskohtaisemmat tiedot tiedostoon "
 "Tallenna nimellä -kohdassa ja sitten "
-"<a href=\"http://wiki.winehq.org/Bugs\">lähettää bugiraportin</a> ja liittää "
+"<a href=\"http://wiki.winehq.org/Bugs\">lähettää virheraportin</a> ja liittää "
 "tiedoston raporttiin."
 
 #: winedbg.rc:35
@@ -13028,7 +13030,7 @@ msgstr "Winen ohjelman kaatuminen"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
-msgstr "Sisäisiä ongelmia - vastaanotettu viallisia parametrejä"
+msgstr "Sisäisiä ongelmia - vastaanotettu viallisia parametreja"
 
 #: winedbg.rc:37
 msgid "(unidentified)"
@@ -13124,7 +13126,7 @@ msgstr "Rivitä &Pystysuuntaisesti\tCtrl+F4"
 
 #: winefile.rc:83
 msgid "&About Wine File Manager"
-msgstr "&Tietoja Wine File Managerista"
+msgstr "&Tietoja Winen Tiedostonhallinnasta"
 
 #: winefile.rc:124
 msgid "Select destination"
@@ -13205,7 +13207,7 @@ msgstr ""
 
 #: winefile.rc:89
 msgid "Applying font settings"
-msgstr "Fonttiasetusten soveltaminen"
+msgstr "Otetaan fonttiasetuksia käyttöön"
 
 #: winefile.rc:90
 msgid "Error while selecting new font."
@@ -13213,7 +13215,7 @@ msgstr "Virhe valittaessa uutta fonttia."
 
 #: winefile.rc:95
 msgid "Wine File Manager"
-msgstr ""
+msgstr "Winen Tiedostonhallinta"
 
 #: winefile.rc:97
 msgid "root fs"
@@ -13254,17 +13256,17 @@ msgstr "%1 %2:sta vapaana"
 #: winefile.rc:117
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr "kT"
+msgstr "kt"
 
 #: winefile.rc:118
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr "MT"
+msgstr "Mt"
 
 #: winefile.rc:119
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr "GT"
+msgstr "Gt"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -13332,7 +13334,7 @@ msgstr "Anna nimesi"
 
 #: winemine.rc:84
 msgid "Custom Game"
-msgstr "Mukautettu Peli"
+msgstr "Mukautettu peli"
 
 #: winemine.rc:86
 msgid "Rows"
@@ -13934,7 +13936,7 @@ msgstr ""
 "[/A]  Kopioi vain tiedostot, joilla on arkistointiattribuutti.\n"
 "[/M]  Kopioi vain tiedostot, joilla on arkistointiattribuutti, ja\n"
 "\tpoista arkistointiattribuutti.\n"
-"[/D | /D:kk-p-v] Kopioi uudet tiedostot tai ne, joita on muokattu annetun\n"
-"\tpäivän jälkeen.\n"
-"\t\tJos päivää ei anneta, kopioi vain, jos kohde on vanhempi kuin lähde.\n"
+"[/D | /D:k-p-v] Kopioi uudet tiedostot tai ne, joita on muokattu annetun\n"
+"\t\tpäivän jälkeen. Jos päivää ei anneta, kopioi vain, jos kohde on vanhempi\n"
+"\t\tkuin lähde.\n"
 "\n"
