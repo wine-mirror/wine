@@ -937,6 +937,21 @@ static Family *find_family_from_name(const WCHAR *name)
     return NULL;
 }
 
+static Family *find_family_from_any_name(const WCHAR *name)
+{
+    Family *family;
+
+    LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
+    {
+        if(!strcmpiW(family->FamilyName, name))
+            return family;
+        if(family->EnglishName && !strcmpiW(family->EnglishName, name))
+            return family;
+    }
+
+    return NULL;
+}
+
 static void DumpSubstList(void)
 {
     FontSubst *psub;
@@ -1888,13 +1903,13 @@ static void LoadReplaceList(void)
             /* "NewName"="Oldname" */
             WideCharToMultiByte(CP_ACP, 0, value, -1, familyA, sizeof(familyA), NULL, NULL);
 
-            if(!find_family_from_name(value))
+            if(!find_family_from_any_name(value))
             {
                 /* Find the old family and hence all of the font files
                    in that family */
                 LIST_FOR_EACH(family_elem_ptr, &font_list) {
                     family = LIST_ENTRY(family_elem_ptr, Family, entry);
-                    if(!strcmpiW(family->FamilyName, data)) {
+                    if(!strcmpiW(family->FamilyName, data) || (family->EnglishName && !strcmpiW(family->EnglishName, data))) {
                         LIST_FOR_EACH(face_elem_ptr, &family->faces) {
                             face = LIST_ENTRY(face_elem_ptr, Face, entry);
                             TRACE("mapping %s %s to %s\n", debugstr_w(family->FamilyName),
