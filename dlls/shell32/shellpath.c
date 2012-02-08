@@ -3041,8 +3041,10 @@ HRESULT WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE t
 
     TRACE("%s, 0x%08x, %p, %p\n", debugstr_guid(rfid), flags, token, path);
 
+    *path = NULL;
+
     if (index < 0)
-        return E_INVALIDARG;
+        return HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND );
 
     if (flags & KF_FLAG_CREATE)
         index |= CSIDL_FLAG_CREATE;
