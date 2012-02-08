@@ -3544,6 +3544,8 @@ static HRESULT get_known_folder_path_by_id(
     else
         hr = SHGetKnownFolderPath( folderId, dwFlags, NULL, ppszPath );
 
+    if (FAILED(hr)) return hr;
+
     /* check if known folder really exists */
     dwAttributes = GetFileAttributesW(*ppszPath);
     if(dwAttributes == INVALID_FILE_ATTRIBUTES || !(dwAttributes & FILE_ATTRIBUTE_DIRECTORY) )
