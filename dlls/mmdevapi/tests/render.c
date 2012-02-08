@@ -1,5 +1,6 @@
 /*
  * Copyright 2010 Maarten Lankhorst for CodeWeavers
+ *      2011-2012 Jörg Höhle
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -680,7 +681,7 @@ static void test_padding(void)
     IAudioClient *ac;
     IAudioRenderClient *arc;
     WAVEFORMATEX *pwfx;
-    REFERENCE_TIME minp, defp;
+    REFERENCE_TIME minp, defp, lat;
     BYTE *buf;
     UINT32 psize, pad, written;
 
@@ -701,16 +702,28 @@ static void test_padding(void)
     if(hr != S_OK)
         return;
 
+    /** GetDevicePeriod
+     * Default (= shared) device period is 10ms (e.g. 441 frames at 44100),
+     * except when the HW/OS forces a particular alignment,
+     * e.g. 10.1587ms is 28 * 16 = 448 frames at 44100 with HDA.
+     * 441 observed with Vista, 448 with w7 on the same HW! */
     hr = IAudioClient_GetDevicePeriod(ac, &defp, &minp);
     ok(hr == S_OK, "GetDevicePeriod failed: %08x\n", hr);
-    ok(defp != 0, "Default period is 0\n");
+    /* some wineXYZ.drv use 20ms, not seen on native */
+    ok(defp == 100000 || broken(defp == 101587) || defp == 200000,
+       "Expected 10ms default period: %u\n", (ULONG)defp);
     ok(minp != 0, "Minimum period is 0\n");
     ok(minp <= defp, "Mininum period is greater than default period\n");
+
+    hr = IAudioClient_GetStreamLatency(ac, &lat);
+    ok(hr == S_OK, "GetStreamLatency failed: %08x\n", hr);
+    ok(lat >= defp, "Latency is at least period in shared mode\n");
+    /* Native appears to add the engine period to the HW latency in shared mode */
 
     hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&arc);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
 
-    psize = (defp / 10000000.) * pwfx->nSamplesPerSec * 10;
+    psize = MulDiv(defp, pwfx->nSamplesPerSec, 10000000) * 10;
 
     written = 0;
     hr = IAudioClient_GetCurrentPadding(ac, &pad);
@@ -721,19 +734,24 @@ static void test_padding(void)
     ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
     ok(buf != NULL, "NULL buffer returned\n");
 
+    hr = IAudioRenderClient_GetBuffer(arc, 0, &buf);
+    ok(hr == AUDCLNT_E_OUT_OF_ORDER, "GetBuffer 0 size failed: %08x\n", hr);
+    ok(buf == NULL, "GetBuffer 0 gave %p\n", buf);
+    /* MSDN instead documents buf remains untouched */
+
     hr = IAudioClient_Reset(ac);
     ok(hr == AUDCLNT_E_BUFFER_OPERATION_PENDING, "Reset failed: %08x\n", hr);
 
     hr = IAudioRenderClient_ReleaseBuffer(arc, psize,
             AUDCLNT_BUFFERFLAGS_SILENT);
     ok(hr == S_OK, "ReleaseBuffer failed: %08x\n", hr);
-    written += psize;
+    if(hr == S_OK) written += psize;
 
     hr = IAudioClient_GetCurrentPadding(ac, &pad);
     ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
     ok(pad == written, "GetCurrentPadding returned %u, should be %u\n", pad, written);
 
-    psize = (minp / 10000000.) * pwfx->nSamplesPerSec * 10;
+    psize = MulDiv(minp, pwfx->nSamplesPerSec, 10000000) * 10;
 
     hr = IAudioRenderClient_GetBuffer(arc, psize, &buf);
     ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
@@ -750,12 +768,65 @@ static void test_padding(void)
 
     /* overfull buffer. requested 1/2s buffer size, so try
      * to get a 1/2s buffer, which should fail */
-    psize = pwfx->nSamplesPerSec / 2.;
+    psize = pwfx->nSamplesPerSec / 2;
+    buf = (void*)0xDEADF00D;
     hr = IAudioRenderClient_GetBuffer(arc, psize, &buf);
     ok(hr == AUDCLNT_E_BUFFER_TOO_LARGE, "GetBuffer gave wrong error: %08x\n", hr);
+    ok(buf == NULL, "NULL expected %p\n", buf);
 
     hr = IAudioRenderClient_ReleaseBuffer(arc, psize, 0);
     ok(hr == AUDCLNT_E_OUT_OF_ORDER, "ReleaseBuffer gave wrong error: %08x\n", hr);
+
+    psize = MulDiv(minp, pwfx->nSamplesPerSec, 10000000) * 2;
+
+    hr = IAudioRenderClient_GetBuffer(arc, psize, &buf);
+    ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+    ok(buf != NULL, "NULL buffer returned\n");
+
+    hr = IAudioRenderClient_ReleaseBuffer(arc, 0, 0);
+    ok(hr == S_OK, "ReleaseBuffer 0 gave wrong error: %08x\n", hr);
+
+    buf = (void*)0xDEADF00D;
+    hr = IAudioRenderClient_GetBuffer(arc, 0, &buf);
+    ok(hr == S_OK, "GetBuffer 0 size failed: %08x\n", hr);
+    ok(buf == NULL, "GetBuffer 0 gave %p\n", buf);
+    /* MSDN instead documents buf remains untouched */
+
+    buf = (void*)0xDEADF00D;
+    hr = IAudioRenderClient_GetBuffer(arc, 0, &buf);
+    ok(hr == S_OK, "GetBuffer 0 size #2 failed: %08x\n", hr);
+    ok(buf == NULL, "GetBuffer 0 #2 gave %p\n", buf);
+
+    hr = IAudioRenderClient_ReleaseBuffer(arc, psize, 0);
+    ok(hr == AUDCLNT_E_OUT_OF_ORDER, "ReleaseBuffer not size 0 gave %08x\n", hr);
+
+    hr = IAudioRenderClient_GetBuffer(arc, psize, &buf);
+    ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+    ok(buf != NULL, "NULL buffer returned\n");
+
+    hr = IAudioRenderClient_ReleaseBuffer(arc, 0, 0);
+    ok(hr == S_OK, "ReleaseBuffer 0 gave wrong error: %08x\n", hr);
+
+    hr = IAudioClient_GetCurrentPadding(ac, &pad);
+    ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+    ok(pad == written, "GetCurrentPadding returned %u, should be %u\n", pad, written);
+
+    hr = IAudioRenderClient_GetBuffer(arc, psize, &buf);
+    ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+    ok(buf != NULL, "NULL buffer returned\n");
+
+    hr = IAudioRenderClient_ReleaseBuffer(arc, psize+1, AUDCLNT_BUFFERFLAGS_SILENT);
+    ok(hr == AUDCLNT_E_INVALID_SIZE, "ReleaseBuffer too large error: %08x\n", hr);
+    /* todo_wine means Wine may overwrite memory */
+    if(hr == S_OK) written += psize+1;
+
+    /* Buffer still hold */
+    hr = IAudioRenderClient_ReleaseBuffer(arc, psize/2, AUDCLNT_BUFFERFLAGS_SILENT);
+    ok(hr == S_OK, "ReleaseBuffer after error: %08x\n", hr);
+    if(hr == S_OK) written += psize/2;
+
+    hr = IAudioRenderClient_ReleaseBuffer(arc, 0, 0);
+    ok(hr == S_OK, "ReleaseBuffer 0 gave wrong error: %08x\n", hr);
 
     hr = IAudioClient_GetCurrentPadding(ac, &pad);
     ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
@@ -767,15 +838,22 @@ static void test_padding(void)
     IAudioClient_Release(ac);
 }
 
-static void test_clock(void)
+static void test_clock(int share)
 {
     HRESULT hr;
     IAudioClient *ac;
     IAudioClock *acl;
     IAudioRenderClient *arc;
-    UINT64 freq, pos, pcpos, last;
+    UINT64 freq, pos, pcpos0, pcpos, last;
+    UINT32 pad, gbsize, bufsize, fragment, parts, avail, slept = 0, sum = 0;
     BYTE *data;
     WAVEFORMATEX *pwfx;
+    LARGE_INTEGER hpctime, hpctime0, hpcfreq;
+    REFERENCE_TIME minp, defp, t1, t2;
+    REFERENCE_TIME duration = 5000000, period = 150000;
+    int i;
+
+    ok(QueryPerformanceFrequency(&hpcfreq), "PerfFrequency failed\n");
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ac);
@@ -788,46 +866,143 @@ static void test_clock(void)
     if(hr != S_OK)
         return;
 
-    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
-            0, 5000000, 0, pwfx, NULL);
-    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+    hr = IAudioClient_GetDevicePeriod(ac, &defp, &minp);
+    ok(hr == S_OK, "GetDevicePeriod failed: %08x\n", hr);
+    ok(minp <= period, "desired period %u to small for %u\n", (ULONG)period, (ULONG)minp);
+
+    if (share) {
+        trace("Testing shared mode\n");
+        /* period is ignored */
+        hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
+                0, duration, period, pwfx, NULL);
+        period = defp;
+    } else {
+        pwfx->wFormatTag = WAVE_FORMAT_PCM;
+        pwfx->cbSize = 0;
+        pwfx->wBitsPerSample = 16; /* no floating point */
+        pwfx->nBlockAlign = pwfx->nChannels * pwfx->wBitsPerSample / 8;
+        pwfx->nAvgBytesPerSec = pwfx->nSamplesPerSec * pwfx->nBlockAlign;
+        trace("Testing exclusive mode at %u\n", pwfx->nSamplesPerSec);
+
+        hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_EXCLUSIVE,
+                0, duration, period, pwfx, NULL);
+    }
+    ok(share ? hr == S_OK : hr == hexcl || hr == AUDCLNT_E_DEVICE_IN_USE, "Initialize failed: %08x\n", hr);
+    if (hr != S_OK) {
+        CoTaskMemFree(pwfx);
+        IAudioClient_Release(ac);
+        if(hr == AUDCLNT_E_DEVICE_IN_USE)
+            skip("Device in use, no %s access\n", share ? "shared" : "exclusive");
+        return;
+    }
+
+    /** GetStreamLatency
+     * Shared mode: 1x period + a little
+     * Exclusive mode: testbot returns 2x period + a little, but
+     * some HDA drivers return 1x period, some + a little. */
+    hr = IAudioClient_GetStreamLatency(ac, &t2);
+    ok(hr == S_OK, "GetStreamLatency failed: %08x\n", hr);
+    trace("Latency: %u.%04u ms\n", (UINT)(t2/10000), (UINT)(t2 % 10000));
+    ok(t2 >= period, "Latency < default period, delta %ldus\n", (long)((t2-period)/10));
+
+    /** GetBufferSize
+     * BufferSize must be rounded up, maximum 2s says MSDN.
+     * Both is wrong.  Rounding may lead to size a little smaller than duration;
+     * duration > 2s is accepted in shared mode.
+     * Shared mode: round solely w.r.t. mixer rate,
+     *              duration is no multiple of period.
+     * Exclusive mode: size appears as a multiple of some fragment that
+     * is either the rounded period or a fixed constant like 1024,
+     * whatever the driver implements. */
+    hr = IAudioClient_GetBufferSize(ac, &gbsize);
+    ok(hr == S_OK, "GetBufferSize failed: %08x\n", hr);
+
+    bufsize   =  MulDiv(duration, pwfx->nSamplesPerSec, 10000000);
+    fragment  =  MulDiv(period,   pwfx->nSamplesPerSec, 10000000);
+    parts     =  MulDiv(bufsize, 1, fragment); /* instead of (duration, 1, period) */
+    trace("BufferSize %u estimated fragment %u x %u = %u\n", gbsize, fragment, parts, fragment * parts);
+    /* fragment size (= period in frames) is rounded up.
+     * BufferSize must be rounded up, maximum 2s says MSDN
+     * but it is rounded down modulo fragment ! */
+    if (share)
+    ok(gbsize == bufsize,
+       "BufferSize %u at rate %u\n", gbsize, pwfx->nSamplesPerSec);
+    else todo_wine
+    ok(gbsize == parts * fragment,
+       "BufferSize %u misfits fragment size %u at rate %u\n", gbsize, fragment, pwfx->nSamplesPerSec);
+
+    /* In shared mode, GetCurrentPadding decreases in multiples of
+     * fragment size (i.e. updated only at period ticks), whereas
+     * GetPosition appears to be reporting continuous positions.
+     * In exclusive mode, testbot behaves likewise, but native's Intel
+     * HDA driver shows no such deltas, GetCurrentPadding closely
+     * matches GetPosition, as in
+     * GetCurrentPadding = GetPosition - frames held in mmdevapi */
 
     hr = IAudioClient_GetService(ac, &IID_IAudioClock, (void**)&acl);
     ok(hr == S_OK, "GetService(IAudioClock) failed: %08x\n", hr);
 
     hr = IAudioClock_GetFrequency(acl, &freq);
     ok(hr == S_OK, "GetFrequency failed: %08x\n", hr);
+    trace("Clock Frequency %u\n", (UINT)freq);
+
+    /* MSDN says it's arbitrary units, but shared mode is unlikely to change */
+    if (share) todo_wine
+        ok(freq == pwfx->nSamplesPerSec * pwfx->nBlockAlign,
+           "Clock Frequency %u\n", (UINT)freq);
+    else
+        ok(freq == pwfx->nSamplesPerSec,
+           "Clock Frequency %u\n", (UINT)freq);
 
     hr = IAudioClock_GetPosition(acl, NULL, NULL);
     ok(hr == E_POINTER, "GetPosition wrong error: %08x\n", hr);
 
-    pcpos = 0;
-    hr = IAudioClock_GetPosition(acl, &pos, &pcpos);
+    pcpos0 = 0;
+    hr = IAudioClock_GetPosition(acl, &pos, &pcpos0);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
     ok(pos == 0, "GetPosition returned non-zero pos before being started\n");
-    ok(pcpos != 0, "GetPosition returned zero pcpos\n");
+    ok(pcpos0 != 0, "GetPosition returned zero pcpos\n");
 
     hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&arc);
     ok(hr == S_OK, "GetService(IAudioRenderClient) failed: %08x\n", hr);
 
-    hr = IAudioRenderClient_GetBuffer(arc, pwfx->nSamplesPerSec / 2., &data);
-    ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+    hr = IAudioRenderClient_GetBuffer(arc, gbsize+1, &data);
+    ok(hr == AUDCLNT_E_BUFFER_TOO_LARGE, "GetBuffer too large failed: %08x\n", hr);
 
-    hr = IAudioRenderClient_ReleaseBuffer(arc, pwfx->nSamplesPerSec / 2., AUDCLNT_BUFFERFLAGS_SILENT);
+    avail = gbsize;
+    data = NULL;
+    hr = IAudioRenderClient_GetBuffer(arc, avail, &data);
+    ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+    trace("data at %p\n", data);
+
+    hr = IAudioRenderClient_ReleaseBuffer(arc, avail, winetest_debug>2 ?
+        wave_generate_tone(pwfx, data, avail) : AUDCLNT_BUFFERFLAGS_SILENT);
     ok(hr == S_OK, "ReleaseBuffer failed: %08x\n", hr);
+    if(hr == S_OK) sum += avail;
+
+    hr = IAudioClient_GetCurrentPadding(ac, &pad);
+    ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+    ok(pad == sum, "padding %u prior to start\n", pad);
 
     hr = IAudioClock_GetPosition(acl, &pos, NULL);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
     ok(pos == 0, "GetPosition returned non-zero pos before being started\n");
 
-    hr = IAudioClient_Start(ac);
+    hr = IAudioClient_Start(ac); /* #1 */
     ok(hr == S_OK, "Start failed: %08x\n", hr);
 
     Sleep(100);
+    slept += 100;
+
+    hr = IAudioClient_GetStreamLatency(ac, &t1);
+    ok(hr == S_OK, "GetStreamLatency failed: %08x\n", hr);
+    ok(t1 == t2, "Latency not constant, delta %ld\n", (long)(t1-t2));
 
     hr = IAudioClock_GetPosition(acl, &pos, NULL);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
-    ok(pos > 0, "Position should have been further along...\n");
+    ok(pos > 0, "Position %u vs. last %u\n", (UINT)pos,0);
+    /* in rare cases is slept*1.1 not enough with dmix */
+    ok(pos*1000/freq <= slept*1.4, "Position %u too far after playing %ums\n", (UINT)pos, slept);
     last = pos;
 
     hr = IAudioClient_Stop(ac);
@@ -835,59 +1010,287 @@ static void test_clock(void)
 
     hr = IAudioClock_GetPosition(acl, &pos, NULL);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
-    ok(pos >= last, "Position should have been further along...\n");
+    ok(pos >= last, "Position %u vs. last %u\n", (UINT)pos,(UINT)last);
     last = pos;
+    if(/*share &&*/ winetest_debug>1) todo_wine
+        ok(pos*1000/freq <= slept*1.1, "Position %u too far after stop %ums\n", (UINT)pos, slept);
 
-    hr = IAudioClient_Start(ac);
+    hr = IAudioClient_Start(ac); /* #2 */
     ok(hr == S_OK, "Start failed: %08x\n", hr);
 
     Sleep(100);
+    slept += 100;
+
+    hr = IAudioClient_GetCurrentPadding(ac, &pad);
+    ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+    trace("padding %u past sleep #2\n", pad);
+
+    /** IAudioClient_Stop
+     * Exclusive mode: the audio engine appears to drop frames,
+     * bumping GetPosition to a higher value than time allows, even
+     * allowing GetPosition > sum Released - GetCurrentPadding (testbot)
+     * Shared mode: no drop observed (or too small to be visible).
+     * GetPosition = sum Released - GetCurrentPadding
+     * Bugs: Some USB headset system drained the whole buffer, leaving
+     *       padding 0 and bumping pos to sum minus 17 frames! */
 
     hr = IAudioClient_Stop(ac);
     ok(hr == S_OK, "Stop failed: %08x\n", hr);
 
+    hr = IAudioClient_GetCurrentPadding(ac, &pad);
+    ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+
     hr = IAudioClock_GetPosition(acl, &pos, NULL);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
-    ok(pos >= last, "Position should have been further along...\n");
+    trace("padding %u position %u past stop #2\n", pad, (UINT)pos);
+    ok(pos * pwfx->nSamplesPerSec <= sum * freq, "Position %u > written %u\n", (UINT)pos, sum);
+    /* Prove that Stop must not drop frames (in shared mode). */
+    ok(pad ? pos > last : pos >= last, "Position %u vs. last %u\n", (UINT)pos,(UINT)last);
+    if (share && pad > 0 && winetest_debug>1) todo_wine
+        ok(pos*1000/freq <= slept*1.1, "Position %u too far after playing %ums\n", (UINT)pos, slept);
+    /* in exclusive mode, testbot's w7 machines yield pos > sum-pad */
+    if(/*share &&*/ winetest_debug>1)
+        ok(pos * pwfx->nSamplesPerSec == (sum-pad) * freq,
+           "Position %u after stop vs. %u padding\n", (UINT)pos, pad);
     last = pos;
 
+    Sleep(100);
+    slept += 100;
+
     hr = IAudioClock_GetPosition(acl, &pos, NULL);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
-    ok(pos == last, "Position should have been further along...\n");
+    ok(pos == last, "Position %u should stop.\n", (UINT)pos);
 
+    /* Restart from 0 */
     hr = IAudioClient_Reset(ac);
     ok(hr == S_OK, "Reset failed: %08x\n", hr);
+    slept = sum = 0;
 
-    hr = IAudioClock_GetPosition(acl, &pos, NULL);
+    hr = IAudioClient_Reset(ac);
+    ok(hr == S_OK, "Reset on a resetted stream returns %08x\n", hr);
+
+    hr = IAudioClock_GetPosition(acl, &pos, &pcpos);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
     ok(pos == 0, "GetPosition returned non-zero pos after Reset\n");
+    ok(pcpos > pcpos0, "pcpos should increase\n");
 
-    hr = IAudioRenderClient_GetBuffer(arc, pwfx->nSamplesPerSec / 2., &data);
+    avail = gbsize; /* implies GetCurrentPadding == 0 */
+    hr = IAudioRenderClient_GetBuffer(arc, avail, &data);
     ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+    trace("data at %p\n", data);
 
-    hr = IAudioRenderClient_ReleaseBuffer(arc, pwfx->nSamplesPerSec / 2., AUDCLNT_BUFFERFLAGS_SILENT);
+    hr = IAudioRenderClient_ReleaseBuffer(arc, avail, winetest_debug>2 ?
+        wave_generate_tone(pwfx, data, avail) : AUDCLNT_BUFFERFLAGS_SILENT);
     ok(hr == S_OK, "ReleaseBuffer failed: %08x\n", hr);
+    if(hr == S_OK) sum += avail;
+
+    hr = IAudioClient_GetCurrentPadding(ac, &pad);
+    ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+    ok(pad == sum, "padding %u prior to start\n", pad);
 
     hr = IAudioClock_GetPosition(acl, &pos, NULL);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
     ok(pos == 0, "GetPosition returned non-zero pos after Reset\n");
     last = pos;
 
-    hr = IAudioClient_Start(ac);
+    hr = IAudioClient_Start(ac); /* #3 */
     ok(hr == S_OK, "Start failed: %08x\n", hr);
 
     Sleep(100);
+    slept += 100;
 
     hr = IAudioClock_GetPosition(acl, &pos, NULL);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
-    ok(pos > last, "Position should have been further along...\n");
+    trace("position %u past %ums sleep #3\n", (UINT)pos, slept);
+    ok(pos > last, "Position %u vs. last %u\n", (UINT)pos,(UINT)last);
+    ok(pos * pwfx->nSamplesPerSec <= sum * freq, "Position %u > written %u\n", (UINT)pos, sum);
+    if (winetest_debug>1)
+        ok(pos*1000/freq <= slept*1.1, "Position %u too far after playing %ums\n", (UINT)pos, slept);
+    else
+        skip("Rerun with WINETEST_DEBUG=2 for GetPosition tests.\n");
+    last = pos;
+
+    hr = IAudioClient_Reset(ac);
+    ok(hr == AUDCLNT_E_NOT_STOPPED, "Reset while playing: %08x\n", hr);
 
     hr = IAudioClient_Stop(ac);
     ok(hr == S_OK, "Stop failed: %08x\n", hr);
 
+    hr = IAudioClient_GetCurrentPadding(ac, &pad);
+    ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+
+    hr = IAudioClock_GetPosition(acl, &pos, &pcpos);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    trace("padding %u position %u past stop #3\n", pad, (UINT)pos);
+    ok(pos >= last, "Position %u vs. last %u\n", (UINT)pos,(UINT)last);
+    ok(pcpos > pcpos0, "pcpos should increase\n");
+    ok(pos * pwfx->nSamplesPerSec <= sum * freq, "Position %u > written %u\n", (UINT)pos, sum);
+    if (pad > 0 && winetest_debug>1) todo_wine
+        ok(pos*1000/freq <= slept*1.1, "Position %u too far after stop %ums\n", (UINT)pos, slept);
+    if(winetest_debug>1)
+        ok(pos * pwfx->nSamplesPerSec == (sum-pad) * freq,
+           "Position %u after stop vs. %u padding\n", (UINT)pos, pad);
+    last = pos;
+
+    /* Begin the big loop */
+    hr = IAudioClient_Reset(ac);
+    ok(hr == S_OK, "Reset failed: %08x\n", hr);
+    slept = last = sum = 0;
+    pcpos0 = pcpos;
+
+    ok(QueryPerformanceCounter(&hpctime0), "PerfCounter unavailable\n");
+
+    hr = IAudioClient_Reset(ac);
+    ok(hr == S_OK, "Reset on a resetted stream returns %08x\n", hr);
+
+    hr = IAudioClient_Start(ac);
+    ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+    avail = pwfx->nSamplesPerSec * 15 / 16 / 2;
+    data = NULL;
+    hr = IAudioRenderClient_GetBuffer(arc, avail, &data);
+    ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+    trace("data at %p for prefill %u\n", data, avail);
+
+    if (winetest_debug>2) {
+        hr = IAudioClient_Stop(ac);
+        ok(hr == S_OK, "Stop failed: %08x\n", hr);
+
+        Sleep(20);
+        slept += 20;
+
+        hr = IAudioClient_Reset(ac);
+        ok(hr == AUDCLNT_E_BUFFER_OPERATION_PENDING, "Reset failed: %08x\n", hr);
+
+        hr = IAudioClient_Start(ac);
+        ok(hr == S_OK, "Start failed: %08x\n", hr);
+    }
+
+    /* Despite passed time, data must still point to valid memory... */
+    hr = IAudioRenderClient_ReleaseBuffer(arc, avail,
+        wave_generate_tone(pwfx, data, avail));
+    ok(hr == S_OK, "ReleaseBuffer after stop+start failed: %08x\n", hr);
+    if(hr == S_OK) sum += avail;
+
+    /* GetCurrentPadding(GCP) == 0 does not mean an underrun happened, as the
+     * mixer may still have a little data.  We believe an underrun will occur
+     * when the mixer finds GCP smaller than a period size at the *end* of a
+     * period cycle, i.e. shortly before calling SetEvent to signal the app
+     * that it has ~10ms to supply data for the next cycle.  IOW, a zero GCP
+     * with no data written for over a period causes an underrun. */
+
+    Sleep(350);
+    slept += 350;
+    ok(QueryPerformanceCounter(&hpctime), "PerfCounter failed\n");
+    trace("hpctime %u after %ums\n",
+        (ULONG)((hpctime.QuadPart-hpctime0.QuadPart)*1000/hpcfreq.QuadPart), slept);
+
+    hr = IAudioClock_GetPosition(acl, &pos, &pcpos);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    ok(pos > last, "Position %u vs. last %u\n", (UINT)pos,(UINT)last);
+    last = pos;
+
+    for(i=0; i < 9; i++) {
+        Sleep(100);
+        slept += 100;
+
+        hr = IAudioClock_GetPosition(acl, &pos, &pcpos);
+        ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+
+        hr = IAudioClient_GetCurrentPadding(ac, &pad);
+        ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+
+        ok(QueryPerformanceCounter(&hpctime), "PerfCounter failed\n");
+        trace("hpctime %u pcpos %u\n",
+              (ULONG)((hpctime.QuadPart-hpctime0.QuadPart)*1000/hpcfreq.QuadPart),
+              (ULONG)((pcpos-pcpos0)/10000));
+
+        /* Use sum-pad to see whether position is ahead padding or not. */
+        trace("padding %u position %u/%u slept %ums iteration %d\n", pad, (UINT)pos, sum-pad, slept, i);
+        ok(pad ? pos > last : pos >= last, "No position increase at iteration %d\n", i);
+        ok(pos * pwfx->nSamplesPerSec <= sum * freq, "Position %u > written %u\n", (UINT)pos, sum);
+        if (winetest_debug>1) {
+            /* Padding does not lag behind by much */
+            ok(pos * pwfx->nSamplesPerSec <= (sum-pad+fragment) * freq, "Position %u > written %u\n", (UINT)pos, sum);
+            ok(pos*1000/freq <= slept*1.1, "Position %u too far after %ums\n", (UINT)pos, slept);
+            if (pad) /* not in case of underrun */
+                ok((pos-last)*1000/freq >= 90 && 110 >= (pos-last)*1000/freq,
+                   "Position delta %ld not regular\n", (long)(pos-last));
+        }
+        last = pos;
+
+        hr = IAudioClient_GetStreamLatency(ac, &t1);
+        ok(hr == S_OK, "GetStreamLatency failed: %08x\n", hr);
+        ok(t1 == t2, "Latency not constant, delta %ld\n", (long)(t1-t2));
+
+        avail = pwfx->nSamplesPerSec * 15 / 16 / 2;
+        data = NULL;
+        hr = IAudioRenderClient_GetBuffer(arc, avail, &data);
+        /* ok(hr == AUDCLNT_E_BUFFER_TOO_LARGE || (hr == S_OK && i==0) without todo_wine */
+        ok(hr == S_OK || hr == AUDCLNT_E_BUFFER_TOO_LARGE,
+           "GetBuffer large (%u) failed: %08x\n", avail, hr);
+        if(hr == S_OK && i) todo_wine ok(FALSE, "GetBuffer large (%u) at iteration %d\n", avail, i);
+        /* Only the first iteration should allow that large a buffer
+         * as prefill was drained during the first 350+100ms sleep.
+         * Afterwards, only 100ms of data should find room per iteration. */
+
+        if(hr == S_OK) {
+            trace("data at %p\n", data);
+        } else {
+            avail = gbsize - pad;
+            hr = IAudioRenderClient_GetBuffer(arc, avail, &data);
+            ok(hr == S_OK, "GetBuffer small %u failed: %08x\n", avail, hr);
+            trace("data at %p (small %u)\n", data, avail);
+        }
+        ok(data != NULL, "NULL buffer returned\n");
+        if(i % 3 && !winetest_interactive) {
+            memset(data, 0, avail * pwfx->nBlockAlign);
+            hr = IAudioRenderClient_ReleaseBuffer(arc, avail, 0);
+        } else {
+            hr = IAudioRenderClient_ReleaseBuffer(arc, avail,
+                wave_generate_tone(pwfx, data, avail));
+        }
+        ok(hr == S_OK, "ReleaseBuffer failed: %08x\n", hr);
+        if(hr == S_OK) sum += avail;
+    }
+
     hr = IAudioClock_GetPosition(acl, &pos, NULL);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
-    ok(pos >= last, "Position should have been further along...\n");
+    trace("position %u\n", (UINT)pos);
+
+    Sleep(1000); /* 500ms buffer underrun past full buffer */
+
+    hr = IAudioClient_GetCurrentPadding(ac, &pad);
+    ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+
+    hr = IAudioClock_GetPosition(acl, &pos, NULL);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    trace("position %u past underrun, %u padding left, %u frames written\n", (UINT)pos, pad, sum);
+
+    if (share) {
+        /* Following underrun, all samples were played */
+        ok(pad == 0, "GetCurrentPadding returned %u, should be 0\n", pad);
+        ok(pos * pwfx->nSamplesPerSec == sum * freq,
+           "Position %u at end vs. %u submitted frames\n", (UINT)pos, sum);
+    } else {
+        /* Vista and w2k8 leave partial fragments behind */
+        ok(pad == 0 /* w7, w2k8R2 */||
+           pos * pwfx->nSamplesPerSec == (sum-pad) * freq, "GetCurrentPadding returned %u, should be 0\n", pad);
+        /* expect at most 5 fragments (75ms) away */
+        ok(pos * pwfx->nSamplesPerSec <= sum * freq &&
+           pos * pwfx->nSamplesPerSec + 5 * fragment * freq >= sum * freq,
+           "Position %u at end vs. %u submitted frames\n", (UINT)pos, sum);
+    }
+
+    hr = IAudioClient_GetStreamLatency(ac, &t1);
+    ok(hr == S_OK, "GetStreamLatency failed: %08x\n", hr);
+    ok(t1 == t2, "Latency not constant, delta %ld\n", (long)(t1-t2));
+
+    ok(QueryPerformanceCounter(&hpctime), "PerfCounter failed\n");
+    trace("hpctime %u after underrun\n", (ULONG)((hpctime.QuadPart-hpctime0.QuadPart)*1000/hpcfreq.QuadPart));
+
+    hr = IAudioClient_Stop(ac);
+    ok(hr == S_OK, "Stop failed: %08x\n", hr);
 
     CoTaskMemFree(pwfx);
 
@@ -1773,9 +2176,12 @@ START_TEST(render)
     test_formats(AUDCLNT_SHAREMODE_EXCLUSIVE);
     test_formats(AUDCLNT_SHAREMODE_SHARED);
     test_references();
+    trace("Output to a MS-DOS console is particularly slow and disturbs timing.\n");
+    trace("Please redirect output to a file.\n");
     test_event();
     test_padding();
-    test_clock();
+    test_clock(1);
+    test_clock(0);
     test_session();
     test_streamvolume();
     test_channelvolume();
