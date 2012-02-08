@@ -861,8 +861,6 @@ void service_terminate(struct service_entry *service)
     TerminateProcess(service->process, 0);
     CloseHandle(service->process);
     service->process = NULL;
-    CloseHandle(service->overlapped_event);
-    service->overlapped_event = NULL;
     CloseHandle(service->status_changed_event);
     service->status_changed_event = NULL;
     CloseHandle(service->control_mutex);
