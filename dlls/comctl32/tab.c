@@ -2879,13 +2879,12 @@ static LRESULT TAB_DeleteItem (TAB_INFO *infoPtr, INT iItem)
 
     if (iItem < 0 || iItem >= infoPtr->uNumItem) return FALSE;
 
+    TAB_InvalidateTabArea(infoPtr);
     item = TAB_GetItem(infoPtr, iItem);
     Free(item->pszText);
     Free(item);
     infoPtr->uNumItem--;
     DPA_DeletePtr(infoPtr->items, iItem);
-
-    TAB_InvalidateTabArea(infoPtr);
 
     if (infoPtr->uNumItem == 0)
     {
