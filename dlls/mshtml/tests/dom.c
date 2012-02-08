@@ -5913,6 +5913,14 @@ static void test_frameset(IHTMLDocument2 *doc)
     test_frames_collection(frames, "fr1");
     IHTMLFramesCollection2_Release(frames);
 
+    hres = IHTMLDocument2_get_frames(doc, &frames);
+    ok(hres == S_OK, "IHTMLDocument2_get_frames failed: 0x%08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    test_frames_collection(frames, "fr1");
+    IHTMLFramesCollection2_Release(frames);
+
     /* test using IHTMLWindow2 inheritance */
     test_frames_collection((IHTMLFramesCollection2*)window, "fr2");
 
