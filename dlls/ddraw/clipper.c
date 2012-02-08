@@ -130,6 +130,7 @@ static HRGN get_window_region(HWND window)
         OffsetRgn(rgn, origin.x, origin.y);
     }
 
+    ReleaseDC(window, dc);
     return rgn;
 }
 
