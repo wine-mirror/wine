@@ -4166,6 +4166,63 @@ static void test_vertical_font(void)
     DeleteFile(ttf_name);
 }
 
+static INT CALLBACK has_vertical_font_proc(const LOGFONT *lf, const TEXTMETRIC *ntm,
+                                           DWORD type, LPARAM lParam)
+{
+    if (lf->lfFaceName[0] == '@') {
+        return 0;
+    }
+    return 1;
+}
+
+static void test_east_asian_font_selection(void)
+{
+    HDC hdc;
+    UINT charset[] = { SHIFTJIS_CHARSET, HANGEUL_CHARSET, JOHAB_CHARSET,
+                       GB2312_CHARSET, CHINESEBIG5_CHARSET };
+    size_t i;
+
+    hdc = GetDC(NULL);
+
+    for (i = 0; i < sizeof(charset)/sizeof(charset[0]); i++)
+    {
+        LOGFONTA lf;
+        HFONT hfont;
+        char face_name[LF_FACESIZE];
+        int ret;
+
+        memset(&lf, 0, sizeof lf);
+        lf.lfFaceName[0] = '\0';
+        lf.lfCharSet = charset[i];
+
+        if (EnumFontFamiliesEx(hdc, &lf, has_vertical_font_proc, 0, 0))
+        {
+            skip("Vertical font for charset %u is not installed\n", charset[i]);
+            continue;
+        }
+
+        hfont = CreateFontIndirectA(&lf);
+        hfont = SelectObject(hdc, hfont);
+        memset(face_name, 0, sizeof face_name);
+        ret = GetTextFaceA(hdc, sizeof face_name, face_name);
+        todo_wine ok(ret && face_name[0] != '@',
+           "expected non-vertical face for charset %u, got %s\n", charset[i], face_name);
+        DeleteObject(SelectObject(hdc, hfont));
+
+        memset(&lf, 0, sizeof lf);
+        strcpy(lf.lfFaceName, "@");
+        lf.lfCharSet = charset[i];
+        hfont = CreateFontIndirectA(&lf);
+        hfont = SelectObject(hdc, hfont);
+        memset(face_name, 0, sizeof face_name);
+        ret = GetTextFaceA(hdc, sizeof face_name, face_name);
+        ok(ret && face_name[0] == '@',
+           "expected vertical face for charset %u, got %s\n", charset[i], face_name);
+        DeleteObject(SelectObject(hdc, hfont));
+    }
+    ReleaseDC(NULL, hdc);
+}
+
 START_TEST(font)
 {
     init();
@@ -4220,6 +4277,7 @@ START_TEST(font)
     test_fullname();
 
     test_vertical_font();
+    test_east_asian_font_selection();
     /* CreateScalableFontResource should be last test until RemoveFontResource
      * is properly implemented.
      */
