@@ -3982,7 +3982,7 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
     INT height, width = 0;
     unsigned int score = 0, new_score;
     signed int diff = 0, newdiff;
-    BOOL bd, it, can_use_bitmap;
+    BOOL bd, it, can_use_bitmap, want_vertical;
     LOGFONTW lf;
     CHARSETINFO csi;
     HFONTLIST *hflist;
@@ -4163,6 +4163,8 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
             lf.lfCharSet = csi.ciCharset;
     }
 
+    want_vertical = (lf.lfFaceName[0] == '@');
+
     /* Face families are in the top 4 bits of lfPitchAndFamily,
        so mask with 0xF0 before testing */
 
@@ -4192,7 +4194,8 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
         family = LIST_ENTRY(family_elem_ptr, Family, entry);
         LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            if(csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0])) {
+            if(face->vertical == want_vertical &&
+               (csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0]))) {
                 if(face->scalable)
                     goto found;
                 if(can_use_bitmap && !last_resort_family)
@@ -4211,7 +4214,7 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
         family = LIST_ENTRY(family_elem_ptr, Family, entry);
         LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            if(face->scalable) {
+            if(face->scalable && face->vertical == want_vertical) {
                 csi.fs.fsCsb[0] = 0;
                 WARN("just using first face for now\n");
                 goto found;

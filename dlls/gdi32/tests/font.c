@@ -4205,7 +4205,7 @@ static void test_east_asian_font_selection(void)
         hfont = SelectObject(hdc, hfont);
         memset(face_name, 0, sizeof face_name);
         ret = GetTextFaceA(hdc, sizeof face_name, face_name);
-        todo_wine ok(ret && face_name[0] != '@',
+        ok(ret && face_name[0] != '@',
            "expected non-vertical face for charset %u, got %s\n", charset[i], face_name);
         DeleteObject(SelectObject(hdc, hfont));
 
