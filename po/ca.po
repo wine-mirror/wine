@@ -127,7 +127,7 @@ msgid ""
 msgstr ""
 "El Wine no ha pogut trobar un paquet del Gecko que es necessita perquè les "
 "aplicacions que inclouen HTML funcionin correctament. El Wine el pot "
-"descarregar i instal·lar automàticament per vostè.\n"
+"descarregar i instal·lar automàticament per vós.\n"
 "\n"
 "Nota: es recomana utilitzar els paquets de la vostra distribució en compte."
 "Vegeu <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</"
@@ -300,7 +300,7 @@ msgstr "Ajuda"
 
 #: comctl32.rc:62
 msgid "Wizard"
-msgstr ""
+msgstr "Assistent"
 
 #: comctl32.rc:65
 msgid "< &Back"
@@ -316,7 +316,7 @@ msgstr "Finalitza"
 
 #: comctl32.rc:78
 msgid "Customize Toolbar"
-msgstr ""
+msgstr "Personalitza Barra d'Eines"
 
 #: comctl32.rc:81 cryptui.rc:348 ieframe.rc:40 oleview.rc:80 oleview.rc:185
 #: oleview.rc:198 oleview.rc:210 taskmgr.rc:139
@@ -359,7 +359,7 @@ msgstr "<- &Treu"
 
 #: comctl32.rc:90
 msgid "&Toolbar buttons:"
-msgstr "Botons de barra d'&eines:"
+msgstr "&Botons de barra d'eines:"
 
 #: comctl32.rc:39
 msgid "Separator"
@@ -678,7 +678,7 @@ msgstr "Comentari:"
 
 #: comdlg32.rc:371
 msgid "Copies"
-msgstr ""
+msgstr "Còpies"
 
 #: comdlg32.rc:372
 msgid "Number of &copies:"
@@ -690,7 +690,7 @@ msgstr "C&ompagina"
 
 #: comdlg32.rc:379
 msgid "Pa&ges"
-msgstr ""
+msgstr "Pà&gines"
 
 #: comdlg32.rc:380
 msgid "&Selection"
@@ -718,7 +718,7 @@ msgstr "&Vertical"
 
 #: comdlg32.rc:418
 msgid "L&andscape"
-msgstr "&Horizontal"
+msgstr "&Horitzontal"
 
 #: comdlg32.rc:423
 msgid "Setup Page"
@@ -817,7 +817,7 @@ msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
 msgstr ""
-"Un nom de fitxer no pot contenir cualsevol dels caràcters següents:\n"
+"Un nom de fitxer no pot contenir qualsevol dels caràcters següents:\n"
 "                          / : < > |"
 
 #: comdlg32.rc:35
@@ -1051,7 +1051,7 @@ msgstr "Problema de paper; "
 
 #: comdlg32.rc:87
 msgid "Printer offline; "
-msgstr "Impressora fora de línea; "
+msgstr "Impressora fora de línia; "
 
 #: comdlg32.rc:88
 msgid "I/O Active; "
@@ -2760,7 +2760,7 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
-"Els certificats emesos per aquestas autoritats de certificació d'arrel, o "
+"Els certificats emesos per aquestes autoritats de certificació d'arrel, o "
 "qualsevol de les autoritats de certificació que ha emès, ja no seran de\n"
 "confiança. Esteu segur que voleu treure aquests certificats d'arrel de "
 "confiança?"
@@ -3136,11 +3136,11 @@ msgstr "Prefer&its"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr "Amaga Pestanyas"
+msgstr "Amaga Pestanyes"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr "Mostra Pestanyas"
+msgstr "Mostra Pestanyes"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -3195,7 +3195,7 @@ msgstr "&Nou"
 
 #: ieframe.rc:29 winefile.rc:72
 msgid "&Window"
-msgstr "Finestra"
+msgstr "&Finestra"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
 msgid "&Open..."
@@ -3215,15 +3215,15 @@ msgstr "&Imprimeix..."
 
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
-msgstr "Pre&visualització de la impressió"
+msgstr "&Previsualització de la impressió"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
-msgstr "Barras d'eines"
+msgstr "&Barres d'eines"
 
 #: ieframe.rc:46
 msgid "&Standard bar"
-msgstr "Barra estàndard"
+msgstr "Barra &estàndard"
 
 #: ieframe.rc:47
 msgid "&Address bar"
@@ -3231,11 +3231,11 @@ msgstr "Barra d'&adreça"
 
 #: ieframe.rc:50 regedit.rc:71
 msgid "&Favorites"
-msgstr "Preferits"
+msgstr "&Preferits"
 
 #: ieframe.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
-msgstr "Afegeix a Preferits..."
+msgstr "&Afegeix a Preferits..."
 
 #: ieframe.rc:57
 msgid "&About Internet Explorer"
@@ -3247,7 +3247,7 @@ msgstr "Obre Adreça"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr ""
+msgstr "Especifiqueu la adreça que voleu obrir en el Internet Explorer"
 
 #: ieframe.rc:91
 msgid "Open:"
@@ -3362,7 +3362,7 @@ msgid ""
 "Saved passwords you have entered into forms."
 msgstr ""
 "Contrasenyes\n"
-"Contrasenyes desades que hàgeu introduïdes en formularis."
+"Contrasenyes desades que hageu introduïdes en formularis."
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -3478,15 +3478,15 @@ msgstr "Cadena constant no finalitzat"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "No es pot tenir 'break' fora d'un bucle"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "No es pot tenir 'continue' fora d'un bucle"
 
 #: jscript.rc:40
 msgid "Label redefined"
-msgstr ""
+msgstr "Etiqueta redefinida"
 
 #: jscript.rc:41
 msgid "Label not found"
@@ -3626,7 +3626,7 @@ msgstr "No es pot suprimir el directori actual\n"
 
 #: winerror.mc:111
 msgid "Not same device\n"
-msgstr "No és el mateix dispositu\n"
+msgstr "No és el mateix dispositiu\n"
 
 #: winerror.mc:116
 msgid "No more files\n"
@@ -3730,7 +3730,7 @@ msgstr "Xarxa ocupada\n"
 
 #: winerror.mc:241
 msgid "Device does not exist\n"
-msgstr "El dispositu no existeix\n"
+msgstr "El dispositiu no existeix\n"
 
 #: winerror.mc:246
 msgid "Too many commands\n"
@@ -3754,7 +3754,7 @@ msgstr "Adaptador remot dolent\n"
 
 #: winerror.mc:271
 msgid "Print queue full\n"
-msgstr "Cua d'impresió ple\n"
+msgstr "Cua d'impressió ple\n"
 
 #: winerror.mc:276
 msgid "No spool space\n"
@@ -3762,7 +3762,7 @@ msgstr "No hi ha espai de spool\n"
 
 #: winerror.mc:281
 msgid "Print canceled\n"
-msgstr "Impresió cancel·lat\n"
+msgstr "Impressió cancel·lada\n"
 
 #: winerror.mc:286
 msgid "Network name deleted\n"
@@ -4270,7 +4270,7 @@ msgstr "Fitxer d'atributs estesos corrupte\n"
 
 #: winerror.mc:926
 msgid "Extended attribute table full\n"
-msgstr "Taula d'atributs estensos ple\n"
+msgstr "Taula d'atributs estesos ple\n"
 
 #: winerror.mc:931
 msgid "Invalid extended attribute handle\n"
@@ -4282,7 +4282,7 @@ msgstr "No s'accepten atributs extensos\n"
 
 #: winerror.mc:941
 msgid "Mutex not owned by caller\n"
-msgstr "Mutex no perté al trucador\n"
+msgstr "El mutex no pertanyé al trucador\n"
 
 #: winerror.mc:946
 msgid "Too many posts to semaphore\n"
@@ -4858,7 +4858,7 @@ msgstr "No es pot obrir el perfil de connexió de xarxa\n"
 
 #: winerror.mc:1661
 msgid "Corrupt network connection profile\n"
-msgstr "Perfil de connexió de xarxa corrupta\n"
+msgstr "Perfil de connexió de xarxa corrupte\n"
 
 #: winerror.mc:1666
 msgid "Not a container\n"
@@ -5378,7 +5378,7 @@ msgstr "Secret massa llarg\n"
 
 #: winerror.mc:2316
 msgid "Internal security DB error\n"
-msgstr "Error de base de datos de seguretat intern\n"
+msgstr "Error de base de dades de seguretat intern\n"
 
 #: winerror.mc:2321
 msgid "Too many context IDs\n"
@@ -5410,11 +5410,11 @@ msgstr "Cap component heretable\n"
 
 #: winerror.mc:2361
 msgid "File or directory corrupt\n"
-msgstr "Fitxer o directori corrupt\n"
+msgstr "Fitxer o directori corrupte\n"
 
 #: winerror.mc:2366
 msgid "Disk is corrupt\n"
-msgstr "El Disc és corrupt\n"
+msgstr "El Disc és corrupte\n"
 
 #: winerror.mc:2371
 msgid "No user session key\n"
@@ -5686,7 +5686,7 @@ msgstr "Mànec de monitor invàlid\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
-msgstr "Fitxer de registre d'esdeveniments corrupt\n"
+msgstr "Fitxer de registre d'esdeveniments corrupte\n"
 
 #: winerror.mc:2711
 msgid "Event log can't start\n"
@@ -5838,7 +5838,7 @@ msgstr "Instal·lador no usat\n"
 
 #: winerror.mc:2896
 msgid "Failed to open the patch package\n"
-msgstr "S'ha fallat en obrir el paquet de parche\n"
+msgstr "S'ha fallat en obrir el paquet de pedaç\n"
 
 #: winerror.mc:2901
 msgid "Invalid patch package\n"
@@ -5854,7 +5854,7 @@ msgstr "Una altre versió està instal·lada\n"
 
 #: winerror.mc:2916
 msgid "Invalid command line\n"
-msgstr "Línea d'ordres invàlida\n"
+msgstr "Línia d'ordres invàlida\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
@@ -6618,7 +6618,7 @@ msgstr "&Tipus:"
 
 #: mshtml.rc:43
 msgid "&URL:"
-msgstr ""
+msgstr "&Adreça:"
 
 #: mshtml.rc:31
 msgid "HTML rendering is currently disabled."
@@ -6780,11 +6780,11 @@ msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
-msgstr "Fotogramas Ple (Sense Compressió)"
+msgstr "Fotogrames Ple (Sense Compressió)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
-msgstr "Còdec de vídeo Video 1 del Wine"
+msgstr "Còdec de vídeo Wine Video 1"
 
 #: oleacc.rc:27
 msgid "unknown object"
@@ -7623,7 +7623,7 @@ msgstr "Icones &Grans"
 #: shell32.rc:28 shell32.rc:43 shell32.rc:120 shell32.rc:160 taskmgr.rc:66
 #: taskmgr.rc:111 taskmgr.rc:253
 msgid "S&mall Icons"
-msgstr "Ico&nes Petites"
+msgstr "Icones &Petites"
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:121 shell32.rc:161
 msgid "&List"
@@ -7766,7 +7766,7 @@ msgid ""
 "will open it for you."
 msgstr ""
 "Introdueix el nom d'un programa, carpeta, document, o recurs de web, i el "
-"Wine el obrirà per vostè."
+"Wine el obrirà per vós."
 
 #: shell32.rc:335
 msgid "&Open:"
@@ -7965,15 +7965,15 @@ msgstr "Model"
 
 #: shell32.rc:225
 msgid "Sample Music"
-msgstr "Mostras de Música"
+msgstr "Mostres de Música"
 
 #: shell32.rc:226
 msgid "Sample Pictures"
-msgstr "Mostras d'Imatge"
+msgstr "Mostres d'Imatge"
 
 #: shell32.rc:227
 msgid "Sample Playlists"
-msgstr "Mostras de Llista de Reproducció"
+msgstr "Mostres de Llista de Reproducció"
 
 #: shell32.rc:228
 msgid "Sample Videos"
@@ -8211,11 +8211,11 @@ msgstr "&Mida"
 
 #: user32.rc:30 user32.rc:43
 msgid "Mi&nimize"
-msgstr "Mí&nimitza"
+msgstr "Mi&nimitza"
 
 #: user32.rc:31 user32.rc:44 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
-msgstr "Mà&ximitza"
+msgstr "Ma&ximitza"
 
 #: user32.rc:33
 msgid "&Close\tAlt+F4"
@@ -8287,7 +8287,7 @@ msgstr "Servidor"
 
 #: wininet.rc:74
 msgid "Security Warning"
-msgstr "Advertència de Seguritat"
+msgstr "Advertència de Seguretat"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
@@ -8350,7 +8350,7 @@ msgstr "El mànec del dispositiu especificada no és vàlid."
 
 #: winmm.rc:34
 msgid "There is no driver installed on your system!"
-msgstr "No hi ha cap controlador instalat en el vostre sistema!"
+msgstr "No hi ha cap controlador instal·lat en el vostre sistema!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -8394,7 +8394,7 @@ msgid ""
 "device, or wait until the data is finished playing."
 msgstr ""
 "No es pot realitzar aquesta operació mentre que les dades de mèdia encara "
-"s'estan reproduint. Restabligueu el dispositiu, o espereu fins que les dades "
+"s'estan reproduint. Restablieu el dispositiu, o espereu fins que les dades "
 "terminin de reproduir."
 
 #: winmm.rc:44
@@ -8663,8 +8663,8 @@ msgstr ""
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr ""
-"Un paràmetre o valor s'ha especificat dues vegades. Només especificeu-lo una "
-"vegada."
+"Un paràmetre o valor s'ha especificat dues vegades. Només especifiqueu-lo "
+"una vegada."
 
 #: winmm.rc:91
 msgid ""
@@ -9005,7 +9005,7 @@ msgstr "Límit de Administració Superat"
 
 #: wldap32.rc:39
 msgid "Unavailable Critical Extension"
-msgstr "Extensió Critical No Disponible"
+msgstr "Extensió Crítica No Disponible"
 
 #: wldap32.rc:40
 msgid "Confidentiality Required"
@@ -9259,7 +9259,7 @@ msgstr "Digi&tal"
 
 #: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
 msgid "&Font..."
-msgstr "&Tipus de lletra..."
+msgstr "Tipus de &lletra..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -9296,7 +9296,7 @@ msgid ""
 "called procedure are inherited by the caller.\n"
 msgstr ""
 "CALL <nom de fitxer batch> s'utilitza dins d'un fitxer batch per executar\n"
-"ordres d'un altre fitxer batch. Cuan es surt del fitxer batch, el control\n"
+"ordres d'un altre fitxer batch. Quan es surt del fitxer batch, el control\n"
 "retorna al fitxer que l'ha trucat. L'ordre CALL pot proporcionar\n"
 "paràmetres al procediment trucat.\n"
 "\n"
@@ -9350,10 +9350,10 @@ msgid ""
 "default). The ECHO OFF command can be prevented from displaying by\n"
 "preceding it with an @ sign.\n"
 msgstr ""
-"ECHO <cadena> mostra <cadena> en el dispositu de terminal actual.\n"
+"ECHO <cadena> mostra <cadena> en el dispositiu de terminal actual.\n"
 "\n"
 "ECHO ON causa que tots els ordres següents en un fitxer batch es mostrin\n"
-"en el dispositu de terminal abans d'executar-se.\n"
+"en el dispositiu de terminal abans d'executar-se.\n"
 "\n"
 "ECHO OFF desfà l'efecte d'un ECHO ON anterior (ECHO està OFF per defecte).\n"
 "Precedir l'ordre ECHO OFF amb la signe @ prevé que es mostri.\n"
@@ -9376,7 +9376,7 @@ msgstr ""
 "\n"
 "Sintaxi: FOR %variable IN (conjunt) DO ordre\n"
 "\n"
-"El requisit de doblar la signe % cuan usant FOR en un fitxer batch no\n"
+"El requisit de doblar la signe % quan usant FOR en un fitxer batch no\n"
 "existeix en el cmd de wine.\n"
 
 #: cmd.rc:81
@@ -9833,7 +9833,7 @@ msgstr ""
 "\t\ttipus de fitxer\n"
 "HELP\t\tMostrar detalls breus sobre un tema\n"
 "MD (MKDIR)\tCrear un subdirectori\n"
-"MORE\t\tMostrar la sortida en pàginas\n"
+"MORE\t\tMostrar la sortida en pàgines\n"
 "MOVE\t\tMoure un fitxer, conjunt de fitxers, o arbre de directori\n"
 "PATH\t\tEstablir o mostrar la ruta de cerca\n"
 "PAUSE\t\tSuspendre l'execució d'un fitxer batch\n"
@@ -9849,7 +9849,7 @@ msgstr ""
 "TITLE\t\tEstablir el títol de finestra per la sessió CMD\n"
 "TYPE\t\tAbocar el contingut d'un fitxer de text\n"
 "VER\t\tMostrar la versió actual de CMD\n"
-"VOL\t\tMostrar l'etiqueta de volum d'un dispositu de disc\n"
+"VOL\t\tMostrar l'etiqueta de volum d'un dispositiu de disc\n"
 "XCOPY\t\tCopiar fitxers fonts o arbres de directori a una destinació\n"
 "EXIT\t\tTancar CMD\n"
 "\n"
@@ -9968,9 +9968,8 @@ msgstr ""
 "\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "Etiqueta de volum (11 caràcters, ENTER per cap)?"
+msgstr "Etiqueta de volum (11 caràcters, <Enter> per cap)?"
 
 #: cmd.rc:319
 msgid "PATH not found\n"
@@ -10255,11 +10254,11 @@ msgstr "&Imprimeix...\tCtrl+P"
 
 #: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
-msgstr "Configuració de &pàgina..."
+msgstr "Configuració de pà&gina..."
 
 #: notepad.rc:34
 msgid "P&rinter Setup..."
-msgstr "Configuració d'&impressora..."
+msgstr "Configuració d'i&mpressora..."
 
 #: notepad.rc:38 regedit.rc:40 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
@@ -10296,7 +10295,7 @@ msgstr "&Hora/Dada\tF5"
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
-msgstr "&Tallar les línies llargues"
+msgstr "Tallar les línies llar&gues"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
@@ -10304,7 +10303,7 @@ msgstr "&Cerca...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
-msgstr "&Cerca proper\tF3"
+msgstr "Cerca &proper\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
@@ -10528,7 +10527,7 @@ msgstr "Crea Instància &En..."
 
 #: oleview.rc:51
 msgid "&Release Instance"
-msgstr "Llibe&ra Instància"
+msgstr "&Allibera Instància"
 
 #: oleview.rc:53
 msgid "Copy C&LSID to clipboard"
@@ -10548,7 +10547,7 @@ msgstr "Categories &ocultes de component"
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:62 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
-msgstr "Barra d'&Eines"
+msgstr "Barra d'E&ines"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:64
 msgid "&Status Bar"
@@ -10763,7 +10762,7 @@ msgstr "IDs de Aplicació"
 
 #: oleview.rc:134
 msgid "Type Libraries"
-msgstr "Bibliotequs de Tipus"
+msgstr "Biblioteques de Tipus"
 
 #: oleview.rc:135
 msgid "ver."
@@ -11324,7 +11323,7 @@ msgstr "Actualitza la finestra"
 
 #: regedit.rc:166
 msgid "Deletes the selection"
-msgstr "Supremeix la selecció"
+msgstr "Suprimeix la selecció"
 
 #: regedit.rc:167
 msgid "Renames the selection"
@@ -11598,23 +11597,23 @@ msgstr "&Surt de l'Administrador de Tasques"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
-msgstr "&Mínima Al Usar"
+msgstr "&Mínimitza Al Usar"
 
 #: taskmgr.rc:47
 msgid "&Hide When Minimized"
-msgstr "&Amaga Cuan Minimitzat"
+msgstr "Amaga &Quan Minimitzat"
 
 #: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
-msgstr "Mostra ta&sques de 16 bits"
+msgstr "&Mostra tasques de 16 bits"
 
 #: taskmgr.rc:54
 msgid "&Refresh Now"
-msgstr "Actualitza A&ra"
+msgstr "&Actualitza Ara"
 
 #: taskmgr.rc:55
 msgid "&Update Speed"
-msgstr "Frequencia d'Act&ualització"
+msgstr "&Freqüència d'Actualització"
 
 #: taskmgr.rc:57 taskmgr.rc:158
 msgid "&High"
@@ -11642,7 +11641,7 @@ msgstr "Historial de &CPU"
 
 #: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
-msgstr "Un Gràfic, T&otes les CPU"
+msgstr "Un Gràfic, &Totes les CPU"
 
 #: taskmgr.rc:73 taskmgr.rc:260
 msgid "One Graph &Per CPU"
@@ -11662,11 +11661,11 @@ msgstr "Mosaic &Vertical"
 
 #: taskmgr.rc:82 taskmgr.rc:98 taskmgr.rc:125
 msgid "&Minimize"
-msgstr "&Minimitza"
+msgstr "Mi&nimitza"
 
 #: taskmgr.rc:84 taskmgr.rc:100 taskmgr.rc:127
 msgid "&Cascade"
-msgstr "&Cascada"
+msgstr "Ca&scada"
 
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
@@ -11674,7 +11673,7 @@ msgstr "&Porta Al Primer Pla"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"
-msgstr "Quant &a l'Administrador de Tasques"
+msgstr "&Quant a l'Administrador de Tasques"
 
 #: taskmgr.rc:120 taskmgr.rc:352
 msgid "&Switch To"
@@ -11682,19 +11681,19 @@ msgstr "&Canvia A"
 
 #: taskmgr.rc:129 taskmgr.rc:353
 msgid "&End Task"
-msgstr "T&ermina Tasca"
+msgstr "&Termina Tasca"
 
 #: taskmgr.rc:130
 msgid "&Go To Process"
-msgstr "Ana Al Procés"
+msgstr "&Ana Al Procés"
 
 #: taskmgr.rc:149 taskmgr.rc:363
 msgid "&End Process"
-msgstr "T&ermina Procés"
+msgstr "&Termina Procés"
 
 #: taskmgr.rc:150
 msgid "End Process &Tree"
-msgstr "&Termina Arbre de Procés"
+msgstr "Termina &Arbre de Procés"
 
 #: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
@@ -11706,15 +11705,15 @@ msgstr "Estableix &Prioritat"
 
 #: taskmgr.rc:156
 msgid "&Realtime"
-msgstr "Temps &real"
+msgstr "&Temps real"
 
 #: taskmgr.rc:160
 msgid "&Above Normal"
-msgstr "&Amunt del Normal"
+msgstr "Amun&t del Normal"
 
 #: taskmgr.rc:164
 msgid "&Below Normal"
-msgstr "A&baix del Normal"
+msgstr "Abai&x del Normal"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
@@ -11722,7 +11721,7 @@ msgstr "Estableix &Afinitat..."
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
-msgstr "Edita les Canals de Depuració..."
+msgstr "Edita els &Canals de Depuració..."
 
 #: taskmgr.rc:338 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
@@ -12076,12 +12075,12 @@ msgstr ""
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr ""
-"Es minimitza l'Administrador de Tasques cuan es realitza una operació "
+"Es minimitza l'Administrador de Tasques quan es realitza una operació "
 "SwitchTo"
 
 #: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
-msgstr "Amaga l'Administrador de Tasques cuan es minimitza"
+msgstr "Amaga l'Administrador de Tasques quan es minimitza"
 
 #: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
@@ -12490,7 +12489,7 @@ msgid ""
 msgstr ""
 "El Wine pot imitar versions de Windows diferents per a cada aplicació. "
 "Aquesta pestanya es enllaça a les pestanyes Biblioteques i Gràfics per "
-"permetre-vos canviar la configuració del sistema o d'una aplicació en "
+"permetre-us canviar la configuració del sistema o d'una aplicació en "
 "aquestes pestanyes també."
 
 #: winecfg.rc:150
@@ -13241,7 +13240,7 @@ msgstr ""
 "\n"
 "Exemple:\n"
 "  wineconsole cmd\n"
-"Inicia la línea d'ordres en una consola del Wine.\n"
+"Inicia la línia d'ordres en una consola del Wine.\n"
 "\n"
 
 #: winedbg.rc:46
@@ -13625,7 +13624,7 @@ msgstr "© 2000 Joshua Thielen"
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
-msgstr "Configuració d'&impressora..."
+msgstr "Configuració d'i&mpressora..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
@@ -13749,19 +13748,19 @@ msgstr "E&xtres"
 
 #: wordpad.rc:59
 msgid "Selection &info"
-msgstr "Informació de selecció"
+msgstr "&Informació de selecció"
 
 #: wordpad.rc:60
 msgid "Character &format"
-msgstr "&Format de caràcters"
+msgstr "Format de &caràcters"
 
 #: wordpad.rc:61
 msgid "&Def. char format"
-msgstr "Format de caràcters pre&determinat"
+msgstr "Format de caràcters &predeterminat"
 
 #: wordpad.rc:62
 msgid "Paragrap&h format"
-msgstr "Format de paragra&f"
+msgstr "Format de paràgra&f"
 
 #: wordpad.rc:63
 msgid "&Get text"
@@ -13793,15 +13792,15 @@ msgstr "F&ormat"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
-msgstr "&Pics"
+msgstr "P&ics"
 
 #: wordpad.rc:83 wordpad.rc:106
 msgid "&Paragraph..."
-msgstr "&Paràgraf..."
+msgstr "P&aràgraf..."
 
 #: wordpad.rc:84
 msgid "&Tabs..."
-msgstr "&Tabuladors..."
+msgstr "Ta&buladors..."
 
 #: wordpad.rc:85
 msgid "Backgroun&d"
@@ -13813,7 +13812,7 @@ msgstr "&Sistema\tCtrl+1"
 
 #: wordpad.rc:88
 msgid "&Pale yellow\tCtrl+2"
-msgstr "Groc &pàl·lid\tCtrl+2"
+msgstr "&Groc pàl·lid\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
@@ -14090,9 +14089,8 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Paràmetre invàlida '%1' - Useu xcopy /? per ajuda\n"
 
 #: xcopy.rc:29
-#, fuzzy
 msgid "Press <Enter> to begin copying\n"
-msgstr "Premeu <enter> per començar a copiar\n"
+msgstr "Premeu <Enter> per començar a copiar\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
@@ -14187,7 +14185,7 @@ msgstr ""
 "[/E]  Copiar els directoris i subdirectoris, incloent els buits.\n"
 "[/Q]  No mostrar els noms durant la còpia, és dir, silenci.\n"
 "[/F]  Mostrar els noms de font i destinació complets durant la còpia.\n"
-"[/L]  Simular l'operació, mostrant els noms que es copiarian.\n"
+"[/L]  Simular l'operació, mostrant els noms que es copiarien.\n"
 "[/W]  Preguntar abans de començar l'operació de còpia.\n"
 "[/T]  Crear una estructura de directoris buits però no copiar els fitxers.\n"
 "[/Y]  Reprimir el preguntar al sobreescriure els fitxers.\n"
