@@ -3615,3042 +3615,3042 @@ msgid "Array object expected"
 msgstr "Array objekt forventet"
 
 #: winerror.mc:26
-msgid "Success\n"
+msgid "Success.\n"
 msgstr ""
 
 #: winerror.mc:31
-msgid "Invalid function\n"
-msgstr "Ugyldig funktion\n"
+msgid "Invalid function.\n"
+msgstr "Ugyldig funktion.\n"
 
 #: winerror.mc:36
-msgid "File not found\n"
-msgstr "Filen blev ikke fundet\n"
+msgid "File not found.\n"
+msgstr "Filen blev ikke fundet.\n"
 
 #: winerror.mc:41
-msgid "Path not found\n"
-msgstr "Stien blev ikke fundet\n"
+msgid "Path not found.\n"
+msgstr "Stien blev ikke fundet.\n"
 
 #: winerror.mc:46
-msgid "Too many open files\n"
-msgstr "For mange filer åbnet\n"
+msgid "Too many open files.\n"
+msgstr "For mange filer åbnet.\n"
 
 #: winerror.mc:51
-msgid "Access denied\n"
-msgstr "Adgang nægtet\n"
+msgid "Access denied.\n"
+msgstr "Adgang nægtet.\n"
 
 #: winerror.mc:56
-msgid "Invalid handle\n"
-msgstr "Ugyldig handle\n"
+msgid "Invalid handle.\n"
+msgstr "Ugyldig handle.\n"
 
 #: winerror.mc:61
-msgid "Memory trashed\n"
-msgstr "Problem med hukommelsen\n"
+msgid "Memory trashed.\n"
+msgstr "Problem med hukommelsen.\n"
 
 #: winerror.mc:66
-msgid "Not enough memory\n"
-msgstr "Ikke nok hukommelse\n"
+msgid "Not enough memory.\n"
+msgstr "Ikke nok hukommelse.\n"
 
 #: winerror.mc:71
-msgid "Invalid block\n"
-msgstr "Ugyldig blok\n"
+msgid "Invalid block.\n"
+msgstr "Ugyldig blok.\n"
 
 #: winerror.mc:76
-msgid "Bad environment\n"
-msgstr "Forkert miljø\n"
+msgid "Bad environment.\n"
+msgstr "Forkert miljø.\n"
 
 #: winerror.mc:81
-msgid "Bad format\n"
-msgstr "Forkert format\n"
+msgid "Bad format.\n"
+msgstr "Forkert format.\n"
 
 #: winerror.mc:86
-msgid "Invalid access\n"
-msgstr "Ugyldig adgang\n"
+msgid "Invalid access.\n"
+msgstr "Ugyldig adgang.\n"
 
 #: winerror.mc:91
-msgid "Invalid data\n"
-msgstr "Ugyldig data\n"
+msgid "Invalid data.\n"
+msgstr "Ugyldig data.\n"
 
 #: winerror.mc:96
-msgid "Out of memory\n"
-msgstr "Der er ikke mere hukommelse\n"
+msgid "Out of memory.\n"
+msgstr "Der er ikke mere hukommelse.\n"
 
 #: winerror.mc:101
-msgid "Invalid drive\n"
-msgstr "Ugyldigt drev\n"
+msgid "Invalid drive.\n"
+msgstr "Ugyldigt drev.\n"
 
 #: winerror.mc:106
-msgid "Can't delete current directory\n"
-msgstr "Kan ikke slette valgte bibliotek\n"
+msgid "Can't delete current directory.\n"
+msgstr "Kan ikke slette valgte bibliotek.\n"
 
 #: winerror.mc:111
-msgid "Not same device\n"
-msgstr "Ikke samme enhed\n"
+msgid "Not same device.\n"
+msgstr "Ikke samme enhed.\n"
 
 #: winerror.mc:116
-msgid "No more files\n"
-msgstr "Ikke flere filer\n"
+msgid "No more files.\n"
+msgstr "Ikke flere filer.\n"
 
 #: winerror.mc:121
-msgid "Write protected\n"
-msgstr "Skrive beskyttet\n"
+msgid "Write protected.\n"
+msgstr "Skrive beskyttet.\n"
 
 #: winerror.mc:126
-msgid "Bad unit\n"
-msgstr "Forkert enhed\n"
+msgid "Bad unit.\n"
+msgstr "Forkert enhed.\n"
 
 #: winerror.mc:131
-msgid "Not ready\n"
-msgstr "Ikke klar\n"
+msgid "Not ready.\n"
+msgstr "Ikke klar.\n"
 
 #: winerror.mc:136
-msgid "Bad command\n"
-msgstr "Forkert kommando\n"
+msgid "Bad command.\n"
+msgstr "Forkert kommando.\n"
 
 #: winerror.mc:141
-msgid "CRC error\n"
-msgstr "Cyklisk redundanstjek (CRC) fejl\n"
+msgid "CRC error.\n"
+msgstr "Cyklisk redundanstjek (CRC) fejl.\n"
 
 #: winerror.mc:146
-msgid "Bad length\n"
-msgstr "Forkert længde\n"
+msgid "Bad length.\n"
+msgstr "Forkert længde.\n"
 
 #: winerror.mc:151 winerror.mc:526
-msgid "Seek error\n"
-msgstr "Søge fejl\n"
+msgid "Seek error.\n"
+msgstr "Søge fejl.\n"
 
 #: winerror.mc:156
-msgid "Not DOS disk\n"
-msgstr "Ikke en DOS diskette\n"
+msgid "Not DOS disk.\n"
+msgstr "Ikke en DOS diskette.\n"
 
 #: winerror.mc:161
-msgid "Sector not found\n"
-msgstr "Sektoren blev ikke fundet\n"
+msgid "Sector not found.\n"
+msgstr "Sektoren blev ikke fundet.\n"
 
 #: winerror.mc:166
-msgid "Out of paper\n"
-msgstr "Ikke mere papir\n"
+msgid "Out of paper.\n"
+msgstr "Ikke mere papir.\n"
 
 #: winerror.mc:171
-msgid "Write fault\n"
-msgstr "Skrivnings fejl\n"
+msgid "Write fault.\n"
+msgstr "Skrivnings fejl.\n"
 
 #: winerror.mc:176
-msgid "Read fault\n"
-msgstr "Læsnings fejl\n"
+msgid "Read fault.\n"
+msgstr "Læsnings fejl.\n"
 
 #: winerror.mc:181
-msgid "General failure\n"
-msgstr "General fiasko\n"
+msgid "General failure.\n"
+msgstr "General fiasko.\n"
 
 #: winerror.mc:186
-msgid "Sharing violation\n"
-msgstr "Delingsfejl\n"
+msgid "Sharing violation.\n"
+msgstr "Delingsfejl.\n"
 
 #: winerror.mc:191
-msgid "Lock violation\n"
-msgstr "Låsningsfejl\n"
+msgid "Lock violation.\n"
+msgstr "Låsningsfejl.\n"
 
 #: winerror.mc:196
-msgid "Wrong disk\n"
-msgstr "Forkert diskette\n"
+msgid "Wrong disk.\n"
+msgstr "Forkert diskette.\n"
 
 #: winerror.mc:201
-msgid "Sharing buffer exceeded\n"
-msgstr "Delings buffer overskredet\n"
+msgid "Sharing buffer exceeded.\n"
+msgstr "Delings buffer overskredet.\n"
 
 #: winerror.mc:206
-msgid "End of file\n"
-msgstr "Slutningen af filen\n"
+msgid "End of file.\n"
+msgstr "Slutningen af filen.\n"
 
 #: winerror.mc:211 winerror.mc:436
-msgid "Disk full\n"
-msgstr "Diskens plads er opbrugt\n"
+msgid "Disk full.\n"
+msgstr "Diskens plads er opbrugt.\n"
 
 #: winerror.mc:216
-msgid "Request not supported\n"
-msgstr "Anmodning er ikke understøttet\n"
+msgid "Request not supported.\n"
+msgstr "Anmodning er ikke understøttet.\n"
 
 #: winerror.mc:221
-msgid "Remote machine not listening\n"
-msgstr "Fjernmaskinen lytter ikke\n"
+msgid "Remote machine not listening.\n"
+msgstr "Fjernmaskinen lytter ikke.\n"
 
 #: winerror.mc:226
-msgid "Duplicate network name\n"
-msgstr "Duplikere netværksnavnet\n"
+msgid "Duplicate network name.\n"
+msgstr "Duplikere netværksnavnet.\n"
 
 #: winerror.mc:231
-msgid "Bad network path\n"
-msgstr "Forkert netværks sti\n"
+msgid "Bad network path.\n"
+msgstr "Forkert netværks sti.\n"
 
 #: winerror.mc:236
-msgid "Network busy\n"
-msgstr "Netværk optaget\n"
+msgid "Network busy.\n"
+msgstr "Netværk optaget.\n"
 
 #: winerror.mc:241
-msgid "Device does not exist\n"
-msgstr "Enheden eksistere ikke\n"
+msgid "Device does not exist.\n"
+msgstr "Enheden eksistere ikke.\n"
 
 #: winerror.mc:246
-msgid "Too many commands\n"
-msgstr "For mange kommandoer\n"
+msgid "Too many commands.\n"
+msgstr "For mange kommandoer.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error\n"
-msgstr "Hardware adaptor fejl\n"
+msgid "Adaptor hardware error.\n"
+msgstr "Hardware adaptor fejl.\n"
 
 #: winerror.mc:256
-msgid "Bad network response\n"
-msgstr "Forkert netværks svar\n"
+msgid "Bad network response.\n"
+msgstr "Forkert netværks svar.\n"
 
 #: winerror.mc:261
-msgid "Unexpected network error\n"
-msgstr "Uventet netværksfejl\n"
+msgid "Unexpected network error.\n"
+msgstr "Uventet netværksfejl.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor\n"
-msgstr "Forkert fjern adaptor\n"
+msgid "Bad remote adaptor.\n"
+msgstr "Forkert fjern adaptor.\n"
 
 #: winerror.mc:271
-msgid "Print queue full\n"
-msgstr "Printer køen er fuld\n"
+msgid "Print queue full.\n"
+msgstr "Printer køen er fuld.\n"
 
 #: winerror.mc:276
-msgid "No spool space\n"
-msgstr "Ingen spool plads\n"
+msgid "No spool space.\n"
+msgstr "Ingen spool plads.\n"
 
 #: winerror.mc:281
-msgid "Print canceled\n"
-msgstr "Udskrivning annulleret\n"
+msgid "Print canceled.\n"
+msgstr "Udskrivning annulleret.\n"
 
 #: winerror.mc:286
-msgid "Network name deleted\n"
-msgstr "Netværks navn slettet\n"
+msgid "Network name deleted.\n"
+msgstr "Netværks navn slettet.\n"
 
 #: winerror.mc:291
-msgid "Network access denied\n"
-msgstr "Netværks adgang nægtet\n"
+msgid "Network access denied.\n"
+msgstr "Netværks adgang nægtet.\n"
 
 #: winerror.mc:296
-msgid "Bad device type\n"
-msgstr "Forkert enheds type\n"
+msgid "Bad device type.\n"
+msgstr "Forkert enheds type.\n"
 
 #: winerror.mc:301
-msgid "Bad network name\n"
-msgstr "Forkert netværks navn\n"
+msgid "Bad network name.\n"
+msgstr "Forkert netværks navn.\n"
 
 #: winerror.mc:306
-msgid "Too many network names\n"
-msgstr "Alt for mange netværks navne\n"
+msgid "Too many network names.\n"
+msgstr "Alt for mange netværks navne.\n"
 
 #: winerror.mc:311
-msgid "Too many network sessions\n"
-msgstr "Alt for mange netværks sessioner\n"
+msgid "Too many network sessions.\n"
+msgstr "Alt for mange netværks sessioner.\n"
 
 #: winerror.mc:316
-msgid "Sharing paused\n"
-msgstr "Deling pauset\n"
+msgid "Sharing paused.\n"
+msgstr "Deling pauset.\n"
 
 #: winerror.mc:321
-msgid "Request not accepted\n"
-msgstr "Anmodningen blev ikke accepteret\n"
+msgid "Request not accepted.\n"
+msgstr "Anmodningen blev ikke accepteret.\n"
 
 #: winerror.mc:326
-msgid "Redirector paused\n"
-msgstr "Redirector pauset\n"
+msgid "Redirector paused.\n"
+msgstr "Redirector pauset.\n"
 
 #: winerror.mc:331
-msgid "File exists\n"
-msgstr "Filen eksisterer\n"
+msgid "File exists.\n"
+msgstr "Filen eksisterer.\n"
 
 #: winerror.mc:336
-msgid "Cannot create\n"
-msgstr "Kan ikke oprettes\n"
+msgid "Cannot create.\n"
+msgstr "Kan ikke oprettes.\n"
 
 #: winerror.mc:341
-msgid "Int24 failure\n"
-msgstr "Int24 fejl\n"
+msgid "Int24 failure.\n"
+msgstr "Int24 fejl.\n"
 
 #: winerror.mc:346
-msgid "Out of structures\n"
-msgstr "Ud af struktur\n"
+msgid "Out of structures.\n"
+msgstr "Ud af struktur.\n"
 
 #: winerror.mc:351
-msgid "Already assigned\n"
-msgstr "Allerede tildelt\n"
+msgid "Already assigned.\n"
+msgstr "Allerede tildelt.\n"
 
 #: winerror.mc:356 winerror.mc:1711
-msgid "Invalid password\n"
-msgstr "Ugyldig adgangskode\n"
+msgid "Invalid password.\n"
+msgstr "Ugyldig adgangskode.\n"
 
 #: winerror.mc:361
-msgid "Invalid parameter\n"
-msgstr "Ugyldig parameter\n"
+msgid "Invalid parameter.\n"
+msgstr "Ugyldig parameter.\n"
 
 #: winerror.mc:366
-msgid "Net write fault\n"
-msgstr "Netværks skrive fejl\n"
+msgid "Net write fault.\n"
+msgstr "Netværks skrive fejl.\n"
 
 #: winerror.mc:371
-msgid "No process slots\n"
-msgstr "Ingen ledige slots\n"
+msgid "No process slots.\n"
+msgstr "Ingen ledige slots.\n"
 
 #: winerror.mc:376
-msgid "Too many semaphores\n"
-msgstr "For mange semaforer\n"
+msgid "Too many semaphores.\n"
+msgstr "For mange semaforer.\n"
 
 #: winerror.mc:381
-msgid "Exclusive semaphore already owned\n"
-msgstr "Eksklusive Semaforer er allerede tildelt ejer\n"
+msgid "Exclusive semaphore already owned.\n"
+msgstr "Eksklusive Semaforer er allerede tildelt ejer.\n"
 
 #: winerror.mc:386
-msgid "Semaphore is set\n"
-msgstr "Semaforere er indstillet\n"
+msgid "Semaphore is set.\n"
+msgstr "Semaforere er indstillet.\n"
 
 #: winerror.mc:391
-msgid "Too many semaphore requests\n"
-msgstr "Alt for mange Semaforere anmodninger\n"
+msgid "Too many semaphore requests.\n"
+msgstr "Alt for mange Semaforere anmodninger.\n"
 
 #: winerror.mc:396
-msgid "Invalid at interrupt time\n"
-msgstr "Ugyldig ved interrupt tid\n"
+msgid "Invalid at interrupt time.\n"
+msgstr "Ugyldig ved interrupt tid.\n"
 
 #: winerror.mc:401
-msgid "Semaphore owner died\n"
-msgstr "Semaforernes ejer døde\n"
+msgid "Semaphore owner died.\n"
+msgstr "Semaforernes ejer døde.\n"
 
 #: winerror.mc:406
-msgid "Semaphore user limit\n"
-msgstr "Semaforernes bruger begrænset\n"
+msgid "Semaphore user limit.\n"
+msgstr "Semaforernes bruger begrænset.\n"
 
 #: winerror.mc:411
-msgid "Insert disk for drive %1\n"
-msgstr "Indsæt disken til drevet %1\n"
+msgid "Insert disk for drive %1.\n"
+msgstr "Indsæt disken til drevet %1.\n"
 
 #: winerror.mc:416
-msgid "Drive locked\n"
-msgstr "Drev låst\n"
+msgid "Drive locked.\n"
+msgstr "Drev låst.\n"
 
 #: winerror.mc:421
-msgid "Broken pipe\n"
-msgstr "ødelagt rør\n"
+msgid "Broken pipe.\n"
+msgstr "ødelagt rør.\n"
 
 #: winerror.mc:426
-msgid "Open failed\n"
-msgstr "Åbning mislykkede\n"
+msgid "Open failed.\n"
+msgstr "Åbning mislykkede.\n"
 
 #: winerror.mc:431
-msgid "Buffer overflow\n"
-msgstr "Bufferoverløb\n"
+msgid "Buffer overflow.\n"
+msgstr "Bufferoverløb.\n"
 
 #: winerror.mc:441
-msgid "No more search handles\n"
-msgstr "Ikke flere søgnings handles\n"
+msgid "No more search handles.\n"
+msgstr "Ikke flere søgnings handles.\n"
 
 #: winerror.mc:446
-msgid "Invalid target handle\n"
-msgstr "Ugyldig mål handle\n"
+msgid "Invalid target handle.\n"
+msgstr "Ugyldig mål handle.\n"
 
 #: winerror.mc:451
-msgid "Invalid IOCTL\n"
-msgstr "Ugyldig IOCTL\n"
+msgid "Invalid IOCTL.\n"
+msgstr "Ugyldig IOCTL.\n"
 
 #: winerror.mc:456
-msgid "Invalid verify switch\n"
-msgstr "Ugyldigt bekræftelses skift\n"
+msgid "Invalid verify switch.\n"
+msgstr "Ugyldigt bekræftelses skift.\n"
 
 #: winerror.mc:461
-msgid "Bad driver level\n"
-msgstr "Forkert driver niveau\n"
+msgid "Bad driver level.\n"
+msgstr "Forkert driver niveau.\n"
 
 #: winerror.mc:466
-msgid "Call not implemented\n"
-msgstr "Kald til funktion, ikke implementeret\n"
+msgid "Call not implemented.\n"
+msgstr "Kald til funktion, ikke implementeret.\n"
 
 #: winerror.mc:471
-msgid "Semaphore timeout\n"
-msgstr "Semaforernes tid udløb\n"
+msgid "Semaphore timeout.\n"
+msgstr "Semaforernes tid udløb.\n"
 
 #: winerror.mc:476
-msgid "Insufficient buffer\n"
-msgstr "Utilstrækkelig buffer\n"
+msgid "Insufficient buffer.\n"
+msgstr "Utilstrækkelig buffer.\n"
 
 #: winerror.mc:481
-msgid "Invalid name\n"
-msgstr "Ugyldigt navn\n"
+msgid "Invalid name.\n"
+msgstr "Ugyldigt navn.\n"
 
 #: winerror.mc:486
-msgid "Invalid level\n"
-msgstr "Ugyldigt niveau\n"
+msgid "Invalid level.\n"
+msgstr "Ugyldigt niveau.\n"
 
 #: winerror.mc:491
-msgid "No volume label\n"
-msgstr "Ingen drev etiket\n"
+msgid "No volume label.\n"
+msgstr "Ingen drev etiket.\n"
 
 #: winerror.mc:496
-msgid "Module not found\n"
-msgstr "Modul ikke fundet\n"
+msgid "Module not found.\n"
+msgstr "Modul ikke fundet.\n"
 
 #: winerror.mc:501
-msgid "Procedure not found\n"
-msgstr "Proceduren ikke fundet\n"
+msgid "Procedure not found.\n"
+msgstr "Proceduren ikke fundet.\n"
 
 #: winerror.mc:506
-msgid "No children to wait for\n"
-msgstr "Ingen Børn at vente på\n"
+msgid "No children to wait for.\n"
+msgstr "Ingen Børn at vente på.\n"
 
 #: winerror.mc:511
-msgid "Child process has not completed\n"
-msgstr "Børne processor er ikke færdig\n"
+msgid "Child process has not completed.\n"
+msgstr "Børne processor er ikke færdig.\n"
 
 #: winerror.mc:516
-msgid "Invalid use of direct access handle\n"
-msgstr "Forkert brug af direkte adgang til handle\n"
+msgid "Invalid use of direct access handle.\n"
+msgstr "Forkert brug af direkte adgang til handle.\n"
 
 #: winerror.mc:521
-msgid "Negative seek\n"
-msgstr "Negativ søgning\n"
+msgid "Negative seek.\n"
+msgstr "Negativ søgning.\n"
 
 #: winerror.mc:531
-msgid "Drive is a JOIN target\n"
-msgstr "Drev er et JOIN mål\n"
+msgid "Drive is a JOIN target.\n"
+msgstr "Drev er et JOIN mål.\n"
 
 #: winerror.mc:536
-msgid "Drive is already JOINed\n"
-msgstr "Drev er allerede JOINed\n"
+msgid "Drive is already JOINed.\n"
+msgstr "Drev er allerede JOINed.\n"
 
 #: winerror.mc:541
-msgid "Drive is already SUBSTed\n"
-msgstr "Drev er allerede SUBSTed\n"
+msgid "Drive is already SUBSTed.\n"
+msgstr "Drev er allerede SUBSTed.\n"
 
 #: winerror.mc:546
-msgid "Drive is not JOINed\n"
-msgstr "Drev er ikke JOINed\n"
+msgid "Drive is not JOINed.\n"
+msgstr "Drev er ikke JOINed.\n"
 
 #: winerror.mc:551
-msgid "Drive is not SUBSTed\n"
-msgstr "Drev er ikke SUBSTed\n"
+msgid "Drive is not SUBSTed.\n"
+msgstr "Drev er ikke SUBSTed.\n"
 
 #: winerror.mc:556
-msgid "Attempt to JOIN onto a JOINed drive\n"
-msgstr "Forsøger at lave JOIN til et JOINed drev\n"
+msgid "Attempt to JOIN onto a JOINed drive.\n"
+msgstr "Forsøger at lave JOIN til et JOINed drev.\n"
 
 #: winerror.mc:561
-msgid "Attempt to SUBST onto a SUBSTed drive\n"
-msgstr "Forsøger at lave SUBST til et SUBSTed drev\n"
+msgid "Attempt to SUBST onto a SUBSTed drive.\n"
+msgstr "Forsøger at lave SUBST til et SUBSTed drev.\n"
 
 #: winerror.mc:566
-msgid "Attempt to JOIN to a SUBSTed drive\n"
-msgstr "Forsøger at lave JOIN til et SUBSTed drev\n"
+msgid "Attempt to JOIN to a SUBSTed drive.\n"
+msgstr "Forsøger at lave JOIN til et SUBSTed drev.\n"
 
 #: winerror.mc:571
-msgid "Attempt to SUBST to a JOINed drive\n"
-msgstr "Forsøger at lave SUBST til et JOINed drev\n"
+msgid "Attempt to SUBST to a JOINed drive.\n"
+msgstr "Forsøger at lave SUBST til et JOINed drev.\n"
 
 #: winerror.mc:576
-msgid "Drive is busy\n"
-msgstr "Drev er optaget\n"
+msgid "Drive is busy.\n"
+msgstr "Drev er optaget.\n"
 
 #: winerror.mc:581
-msgid "Same drive\n"
-msgstr "Samme drev\n"
+msgid "Same drive.\n"
+msgstr "Samme drev.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory\n"
-msgstr "Ikke topniveaukataloget\n"
+msgid "Not toplevel directory.\n"
+msgstr "Ikke topniveaukataloget.\n"
 
 #: winerror.mc:591
-msgid "Directory is not empty\n"
-msgstr "Mappen er ikke tom\n"
+msgid "Directory is not empty.\n"
+msgstr "Mappen er ikke tom.\n"
 
 #: winerror.mc:596
-msgid "Path is in use as a SUBST\n"
-msgstr "Placeringen er i brug som et SUBST\n"
+msgid "Path is in use as a SUBST.\n"
+msgstr "Placeringen er i brug som et SUBST.\n"
 
 #: winerror.mc:601
-msgid "Path is in use as a JOIN\n"
-msgstr "Placeringen er i brug som et JOIN\n"
+msgid "Path is in use as a JOIN.\n"
+msgstr "Placeringen er i brug som et JOIN.\n"
 
 #: winerror.mc:606
-msgid "Path is busy\n"
-msgstr "Placeringen er optaget\n"
+msgid "Path is busy.\n"
+msgstr "Placeringen er optaget.\n"
 
 #: winerror.mc:611
-msgid "Already a SUBST target\n"
-msgstr "Allerede et SUBST mål\n"
+msgid "Already a SUBST target.\n"
+msgstr "Allerede et SUBST mål.\n"
 
 #: winerror.mc:616
-msgid "System trace not specified or disallowed\n"
-msgstr "System sporing ikke specificeret eller ikke tilladt\n"
+msgid "System trace not specified or disallowed.\n"
+msgstr "System sporing ikke specificeret eller ikke tilladt.\n"
 
 #: winerror.mc:621
-msgid "Event count for DosMuxSemWait incorrect\n"
-msgstr "Begivenheds tæller for DosMuxSemWait forkert\n"
+msgid "Event count for DosMuxSemWait incorrect.\n"
+msgstr "Begivenheds tæller for DosMuxSemWait forkert.\n"
 
 #: winerror.mc:626
-msgid "Too many waiters for DosMuxSemWait\n"
-msgstr "Alt for mange venter på DosMuxSemWait\n"
+msgid "Too many waiters for DosMuxSemWait.\n"
+msgstr "Alt for mange venter på DosMuxSemWait.\n"
 
 #: winerror.mc:631
-msgid "DosSemMuxWait list invalid\n"
-msgstr "DosSemMuxWait listen er ugyldig\n"
+msgid "DosSemMuxWait list invalid.\n"
+msgstr "DosSemMuxWait listen er ugyldig.\n"
 
 #: winerror.mc:636
-msgid "Volume label too long\n"
-msgstr "Drev etiket er for lang\n"
+msgid "Volume label too long.\n"
+msgstr "Drev etiket er for lang.\n"
 
 #: winerror.mc:641
-msgid "Too many TCBs\n"
-msgstr "For mange TCBs\n"
+msgid "Too many TCBs.\n"
+msgstr "For mange TCBs.\n"
 
 #: winerror.mc:646
-msgid "Signal refused\n"
-msgstr "Signal nægtet\n"
+msgid "Signal refused.\n"
+msgstr "Signal nægtet.\n"
 
 #: winerror.mc:651
-msgid "Segment discarded\n"
-msgstr "Segment kasseres\n"
+msgid "Segment discarded.\n"
+msgstr "Segment kasseres.\n"
 
 #: winerror.mc:656
-msgid "Segment not locked\n"
-msgstr "Segment er ikke låst\n"
+msgid "Segment not locked.\n"
+msgstr "Segment er ikke låst.\n"
 
 #: winerror.mc:661
-msgid "Bad thread ID address\n"
-msgstr "Forkert adresse til tråd ID\n"
+msgid "Bad thread ID address.\n"
+msgstr "Forkert adresse til tråd ID.\n"
 
 #: winerror.mc:666
-msgid "Bad arguments to DosExecPgm\n"
-msgstr "Forkerte argumenter givet til DosExecPgm\n"
+msgid "Bad arguments to DosExecPgm.\n"
+msgstr "Forkerte argumenter givet til DosExecPgm.\n"
 
 #: winerror.mc:671
-msgid "Path is invalid\n"
-msgstr "Sti er ugyldig\n"
+msgid "Path is invalid.\n"
+msgstr "Sti er ugyldig.\n"
 
 #: winerror.mc:676
-msgid "Signal pending\n"
-msgstr "Venter på signal\n"
+msgid "Signal pending.\n"
+msgstr "Venter på signal.\n"
 
 #: winerror.mc:681
 #, fuzzy
-msgid "Max system-wide thread count reached\n"
-msgstr "Maks systemsider for trådantal nået\n"
+msgid "Max system-wide thread count reached.\n"
+msgstr "Maks systemsider for trådantal nået.\n"
 
 #: winerror.mc:686
-msgid "Lock failed\n"
-msgstr "Låsning fejlet\n"
+msgid "Lock failed.\n"
+msgstr "Låsning fejlet.\n"
 
 #: winerror.mc:691
-msgid "Resource in use\n"
-msgstr "Ressourcen er i brug\n"
+msgid "Resource in use.\n"
+msgstr "Ressourcen er i brug.\n"
 
 #: winerror.mc:696
-msgid "Cancel violation\n"
-msgstr "Annullerings krænkelse\n"
+msgid "Cancel violation.\n"
+msgstr "Annullerings krænkelse.\n"
 
 #: winerror.mc:701
-msgid "Atomic locks not supported\n"
-msgstr "Atomic låse ikke understøttet\n"
+msgid "Atomic locks not supported.\n"
+msgstr "Atomic låse ikke understøttet.\n"
 
 #: winerror.mc:706
-msgid "Invalid segment number\n"
-msgstr "Ugyldigt segments nummer\n"
+msgid "Invalid segment number.\n"
+msgstr "Ugyldigt segments nummer.\n"
 
 #: winerror.mc:711
-msgid "Invalid ordinal for %1\n"
-msgstr "Ugyldig ordinal for %1\n"
+msgid "Invalid ordinal for %1.\n"
+msgstr "Ugyldig ordinal for %1.\n"
 
 #: winerror.mc:716
-msgid "File already exists\n"
-msgstr "Filen eksistere allerede\n"
+msgid "File already exists.\n"
+msgstr "Filen eksistere allerede.\n"
 
 #: winerror.mc:721
-msgid "Invalid flag number\n"
-msgstr "Ugyldigt flag nummer\n"
+msgid "Invalid flag number.\n"
+msgstr "Ugyldigt flag nummer.\n"
 
 #: winerror.mc:726
-msgid "Semaphore name not found\n"
-msgstr "Semaforernes  navn ikke fundet\n"
+msgid "Semaphore name not found.\n"
+msgstr "Semaforernes  navn ikke fundet.\n"
 
 #: winerror.mc:731
-msgid "Invalid starting code segment for %1\n"
-msgstr "Ugyldig start kode segment for %1\n"
+msgid "Invalid starting code segment for %1.\n"
+msgstr "Ugyldig start kode segment for %1.\n"
 
 #: winerror.mc:736
-msgid "Invalid starting stack segment for %1\n"
-msgstr "Ugyldig start stak segment for %1\n"
+msgid "Invalid starting stack segment for %1.\n"
+msgstr "Ugyldig start stak segment for %1.\n"
 
 #: winerror.mc:741
-msgid "Invalid module type for %1\n"
-msgstr "Ugyldig modul type for %1\n"
+msgid "Invalid module type for %1.\n"
+msgstr "Ugyldig modul type for %1.\n"
 
 #: winerror.mc:746
-msgid "Invalid EXE signature in %1\n"
-msgstr "Ugyldig EXE signatur i %1\n"
+msgid "Invalid EXE signature in %1.\n"
+msgstr "Ugyldig EXE signatur i %1.\n"
 
 #: winerror.mc:751
-msgid "EXE %1 is marked invalid\n"
-msgstr "EXE %1 er markeret som ugyldig\n"
+msgid "EXE %1 is marked invalid.\n"
+msgstr "EXE %1 er markeret som ugyldig.\n"
 
 #: winerror.mc:756
-msgid "Bad EXE format for %1\n"
-msgstr "Forkert EXE format for %1\n"
+msgid "Bad EXE format for %1.\n"
+msgstr "Forkert EXE format for %1.\n"
 
 #: winerror.mc:761
-msgid "Iterated data exceeds 64k in %1\n"
-msgstr "Gentaget data overskrider 64k i %1\n"
+msgid "Iterated data exceeds 64k in %1.\n"
+msgstr "Gentaget data overskrider 64k i %1.\n"
 
 #: winerror.mc:766
-msgid "Invalid MinAllocSize in %1\n"
-msgstr "Ugyldig MinAllocSize i %1\n"
+msgid "Invalid MinAllocSize in %1.\n"
+msgstr "Ugyldig MinAllocSize i %1.\n"
 
 #: winerror.mc:771
-msgid "Dynlink from invalid ring\n"
-msgstr "Dynlink fra ugyldig ring\n"
+msgid "Dynlink from invalid ring.\n"
+msgstr "Dynlink fra ugyldig ring.\n"
 
 #: winerror.mc:776
-msgid "IOPL not enabled\n"
-msgstr "IOPL er ikke aktiveret\n"
+msgid "IOPL not enabled.\n"
+msgstr "IOPL er ikke aktiveret.\n"
 
 #: winerror.mc:781
-msgid "Invalid SEGDPL in %1\n"
-msgstr "Ugyldig SEGDPL i %1\n"
+msgid "Invalid SEGDPL in %1.\n"
+msgstr "Ugyldig SEGDPL i %1.\n"
 
 #: winerror.mc:786
-msgid "Auto data segment exceeds 64k\n"
-msgstr "Auto data segment overskrider 64k\n"
+msgid "Auto data segment exceeds 64k.\n"
+msgstr "Auto data segment overskrider 64k.\n"
 
 #: winerror.mc:791
-msgid "Ring 2 segment must be movable\n"
-msgstr "Ring 2 segment skal være flytbart\n"
+msgid "Ring 2 segment must be movable.\n"
+msgstr "Ring 2 segment skal være flytbart.\n"
 
 #: winerror.mc:796
-msgid "Relocation chain exceeds segment limit in %1\n"
-msgstr "Flytning kæde overstiger segment grænse i %1\n"
+msgid "Relocation chain exceeds segment limit in %1.\n"
+msgstr "Flytning kæde overstiger segment grænse i %1.\n"
 
 #: winerror.mc:801
-msgid "Infinite loop in relocation chain in %1\n"
-msgstr "Uendelig løkke i flytnings kæden i %1\n"
+msgid "Infinite loop in relocation chain in %1.\n"
+msgstr "Uendelig løkke i flytnings kæden i %1.\n"
 
 #: winerror.mc:806
-msgid "Environment variable not found\n"
-msgstr "Miljøvariabel ikke fundet\n"
+msgid "Environment variable not found.\n"
+msgstr "Miljøvariabel ikke fundet.\n"
 
 #: winerror.mc:811
-msgid "No signal sent\n"
-msgstr "Intet signal sendt\n"
+msgid "No signal sent.\n"
+msgstr "Intet signal sendt.\n"
 
 #: winerror.mc:816
-msgid "File name is too long\n"
-msgstr "Filnavnet er for langt\n"
+msgid "File name is too long.\n"
+msgstr "Filnavnet er for langt.\n"
 
 #: winerror.mc:821
-msgid "Ring 2 stack in use\n"
-msgstr "Ring 2 staken er i brug\n"
+msgid "Ring 2 stack in use.\n"
+msgstr "Ring 2 staken er i brug.\n"
 
 #: winerror.mc:826
-msgid "Error in use of filename wildcards\n"
-msgstr "Fejl i brugen af jokertegn i filnavne\n"
+msgid "Error in use of filename wildcards.\n"
+msgstr "Fejl i brugen af jokertegn i filnavne.\n"
 
 #: winerror.mc:831
-msgid "Invalid signal number\n"
-msgstr "Ugyldig signal nummer\n"
+msgid "Invalid signal number.\n"
+msgstr "Ugyldig signal nummer.\n"
 
 #: winerror.mc:836
-msgid "Error setting signal handler\n"
-msgstr "Fejl ved indstilling af signal handler\n"
+msgid "Error setting signal handler.\n"
+msgstr "Fejl ved indstilling af signal handler.\n"
 
 #: winerror.mc:841
-msgid "Segment locked\n"
-msgstr "Segment låst\n"
+msgid "Segment locked.\n"
+msgstr "Segment låst.\n"
 
 #: winerror.mc:846
-msgid "Too many modules\n"
-msgstr "For mange moduler\n"
+msgid "Too many modules.\n"
+msgstr "For mange moduler.\n"
 
 #: winerror.mc:851
-msgid "Nesting LoadModule calls not allowed\n"
-msgstr "Indlejring af LoadModule kald ikke tilladt\n"
+msgid "Nesting LoadModule calls not allowed.\n"
+msgstr "Indlejring af LoadModule kald ikke tilladt.\n"
 
 #: winerror.mc:856
-msgid "Machine type mismatch\n"
-msgstr "Maskintype passer ikke\n"
+msgid "Machine type mismatch.\n"
+msgstr "Maskintype passer ikke.\n"
 
 #: winerror.mc:861
-msgid "Bad pipe\n"
-msgstr "Forkert rør\n"
+msgid "Bad pipe.\n"
+msgstr "Forkert rør.\n"
 
 #: winerror.mc:866
-msgid "Pipe busy\n"
-msgstr "Rør optaget\n"
+msgid "Pipe busy.\n"
+msgstr "Rør optaget.\n"
 
 #: winerror.mc:871
-msgid "Pipe closed\n"
-msgstr "Rør lukket\n"
+msgid "Pipe closed.\n"
+msgstr "Rør lukket.\n"
 
 #: winerror.mc:876
-msgid "Pipe not connected\n"
-msgstr "Rør er ikke forbundet\n"
+msgid "Pipe not connected.\n"
+msgstr "Rør er ikke forbundet.\n"
 
 #: winerror.mc:881
-msgid "More data available\n"
-msgstr "Mere data tilgængelig\n"
+msgid "More data available.\n"
+msgstr "Mere data tilgængelig.\n"
 
 #: winerror.mc:886
-msgid "Session canceled\n"
-msgstr "Session aflyst\n"
+msgid "Session canceled.\n"
+msgstr "Session aflyst.\n"
 
 #: winerror.mc:891
-msgid "Invalid extended attribute name\n"
-msgstr "Ugyldigt forlænget attributnavn\n"
+msgid "Invalid extended attribute name.\n"
+msgstr "Ugyldigt forlænget attributnavn.\n"
 
 #: winerror.mc:896
-msgid "Extended attribute list inconsistent\n"
-msgstr "Forlænget attributliste inkonsekvent\n"
+msgid "Extended attribute list inconsistent.\n"
+msgstr "Forlænget attributliste inkonsekvent.\n"
 
 #: winerror.mc:901
-msgid "No more data available\n"
-msgstr "Ikke mere data tilgengængeligt\n"
+msgid "No more data available.\n"
+msgstr "Ikke mere data tilgengængeligt.\n"
 
 #: winerror.mc:906
-msgid "Cannot use Copy API\n"
-msgstr "Kan ikke bruge Kopierings API\n"
+msgid "Cannot use Copy API.\n"
+msgstr "Kan ikke bruge Kopierings API.\n"
 
 #: winerror.mc:911
-msgid "Directory name invalid\n"
-msgstr "Mappe navnet er ugyldig\n"
+msgid "Directory name invalid.\n"
+msgstr "Mappe navnet er ugyldig.\n"
 
 #: winerror.mc:916
-msgid "Extended attributes didn't fit\n"
-msgstr "Forlænget attributliste, passede ikke\n"
+msgid "Extended attributes didn't fit.\n"
+msgstr "Forlænget attributliste, passede ikke.\n"
 
 #: winerror.mc:921
-msgid "Extended attribute file corrupt\n"
-msgstr "Forlænget attributliste, fil korrupt\n"
+msgid "Extended attribute file corrupt.\n"
+msgstr "Forlænget attributliste, fil korrupt.\n"
 
 #: winerror.mc:926
-msgid "Extended attribute table full\n"
-msgstr "Forlænget attributliste, tabel fuld\n"
+msgid "Extended attribute table full.\n"
+msgstr "Forlænget attributliste, tabel fuld.\n"
 
 #: winerror.mc:931
-msgid "Invalid extended attribute handle\n"
-msgstr "Ugyldig forlænget attributliste håndtag\n"
+msgid "Invalid extended attribute handle.\n"
+msgstr "Ugyldig forlænget attributliste håndtag.\n"
 
 #: winerror.mc:936
-msgid "Extended attributes not supported\n"
-msgstr "Forlænget attributlister er ikke understøttet\n"
+msgid "Extended attributes not supported.\n"
+msgstr "Forlænget attributlister er ikke understøttet.\n"
 
 #: winerror.mc:941
-msgid "Mutex not owned by caller\n"
-msgstr "Mutex er ikke ejet af kald proceduren\n"
+msgid "Mutex not owned by caller.\n"
+msgstr "Mutex er ikke ejet af kald proceduren.\n"
 
 #: winerror.mc:946
-msgid "Too many posts to semaphore\n"
-msgstr "For mange poster til semaforeren\n"
+msgid "Too many posts to semaphore.\n"
+msgstr "For mange poster til semaforeren.\n"
 
 #: winerror.mc:951
-msgid "Read/WriteProcessMemory partially completed\n"
-msgstr "Read/WriteProcessMemory delvist gennemført\n"
+msgid "Read/WriteProcessMemory partially completed.\n"
+msgstr "Read/WriteProcessMemory delvist gennemført.\n"
 
 #: winerror.mc:956
-msgid "The oplock wasn't granted\n"
+msgid "The oplock wasn't granted.\n"
 msgstr ""
 
 #: winerror.mc:961
 #, fuzzy
-msgid "Invalid oplock message received\n"
-msgstr "Ugyldigt navn for besked\n"
+msgid "Invalid oplock message received.\n"
+msgstr "Ugyldigt navn for besked.\n"
 
 #: winerror.mc:966
-msgid "Message 0x%1 not found in file %2\n"
-msgstr "Beskeden 0x%1 blev ikke fundet i filen %2\n"
+msgid "Message 0x%1 not found in file %2.\n"
+msgstr "Beskeden 0x%1 blev ikke fundet i filen %2.\n"
 
 #: winerror.mc:971
-msgid "Invalid address\n"
-msgstr "Ugyldig adresse\n"
+msgid "Invalid address.\n"
+msgstr "Ugyldig adresse.\n"
 
 #: winerror.mc:976
-msgid "Arithmetic overflow\n"
+msgid "Arithmetic overflow.\n"
 msgstr ""
 
 #: winerror.mc:981
-msgid "Pipe connected\n"
-msgstr "Rør forbundet\n"
+msgid "Pipe connected.\n"
+msgstr "Rør forbundet.\n"
 
 #: winerror.mc:986
-msgid "Pipe listening\n"
-msgstr "Røret lytter\n"
+msgid "Pipe listening.\n"
+msgstr "Røret lytter.\n"
 
 #: winerror.mc:991
-msgid "Extended attribute access denied\n"
-msgstr "Forlænget attributliste, adgang nægtet\n"
+msgid "Extended attribute access denied.\n"
+msgstr "Forlænget attributliste, adgang nægtet.\n"
 
 #: winerror.mc:996
-msgid "I/O operation aborted\n"
-msgstr "I/O operation afbrudt\n"
+msgid "I/O operation aborted.\n"
+msgstr "I/O operation afbrudt.\n"
 
 #: winerror.mc:1001
-msgid "Overlapped I/O incomplete\n"
-msgstr "Overlappede I/O ufuldstændig\n"
+msgid "Overlapped I/O incomplete.\n"
+msgstr "Overlappede I/O ufuldstændig.\n"
 
 #: winerror.mc:1006
-msgid "Overlapped I/O pending\n"
-msgstr "Overlappede I/O venter\n"
+msgid "Overlapped I/O pending.\n"
+msgstr "Overlappede I/O venter.\n"
 
 #: winerror.mc:1011
-msgid "No access to memory location\n"
-msgstr "Ingen adgang til hukommelsesplaceringen\n"
+msgid "No access to memory location.\n"
+msgstr "Ingen adgang til hukommelsesplaceringen.\n"
 
 #: winerror.mc:1016
-msgid "Swap error\n"
-msgstr "Swap fejl\n"
+msgid "Swap error.\n"
+msgstr "Swap fejl.\n"
 
 #: winerror.mc:1021
-msgid "Stack overflow\n"
-msgstr "Stak overflow\n"
+msgid "Stack overflow.\n"
+msgstr "Stak overflow.\n"
 
 #: winerror.mc:1026
-msgid "Invalid message\n"
-msgstr "Ugyldig besked\n"
+msgid "Invalid message.\n"
+msgstr "Ugyldig besked.\n"
 
 #: winerror.mc:1031
-msgid "Cannot complete\n"
-msgstr "Kan ikke fuldføre\n"
+msgid "Cannot complete.\n"
+msgstr "Kan ikke fuldføre.\n"
 
 #: winerror.mc:1036
-msgid "Invalid flags\n"
-msgstr "Ugyldig flag\n"
+msgid "Invalid flags.\n"
+msgstr "Ugyldig flag.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume\n"
-msgstr "Volumen blev ikke genkendt\n"
+msgid "Unrecognised volume.\n"
+msgstr "Volumen blev ikke genkendt.\n"
 
 #: winerror.mc:1046
-msgid "File invalid\n"
-msgstr "Fil ugyldig\n"
+msgid "File invalid.\n"
+msgstr "Fil ugyldig.\n"
 
 #: winerror.mc:1051
-msgid "Cannot run full-screen\n"
-msgstr "Kan ikke køre fuld-skærm\n"
+msgid "Cannot run full-screen.\n"
+msgstr "Kan ikke køre fuld-skærm.\n"
 
 #: winerror.mc:1056
-msgid "Nonexistent token\n"
-msgstr "Ikke-eksisterende token\n"
+msgid "Nonexistent token.\n"
+msgstr "Ikke-eksisterende token.\n"
 
 #: winerror.mc:1061
-msgid "Registry corrupt\n"
-msgstr "Registringsdatabasen er korrupt\n"
+msgid "Registry corrupt.\n"
+msgstr "Registringsdatabasen er korrupt.\n"
 
 #: winerror.mc:1066
-msgid "Invalid key\n"
-msgstr "Ugyldig nøgle\n"
+msgid "Invalid key.\n"
+msgstr "Ugyldig nøgle.\n"
 
 #: winerror.mc:1071
 #, fuzzy
-msgid "Can't open registry key\n"
-msgstr "Kan ikke læse registreringsnøglen\n"
+msgid "Can't open registry key.\n"
+msgstr "Kan ikke læse registreringsnøglen.\n"
 
 #: winerror.mc:1076
-msgid "Can't read registry key\n"
-msgstr "Kan ikke læse registreringsnøglen\n"
+msgid "Can't read registry key.\n"
+msgstr "Kan ikke læse registreringsnøglen.\n"
 
 #: winerror.mc:1081
-msgid "Can't write registry key\n"
-msgstr "Kan ikke skrive registreringsnøglen\n"
+msgid "Can't write registry key.\n"
+msgstr "Kan ikke skrive registreringsnøglen.\n"
 
 #: winerror.mc:1086
-msgid "Registry has been recovered\n"
-msgstr "Registringsdatabasen er blevet gendannet\n"
+msgid "Registry has been recovered.\n"
+msgstr "Registringsdatabasen er blevet gendannet.\n"
 
 #: winerror.mc:1091
-msgid "Registry is corrupt\n"
-msgstr "Registringsdatabasen er korrupt\n"
+msgid "Registry is corrupt.\n"
+msgstr "Registringsdatabasen er korrupt.\n"
 
 #: winerror.mc:1096
-msgid "I/O to registry failed\n"
-msgstr "I/O til Registringsdatabasen fejlet\n"
+msgid "I/O to registry failed.\n"
+msgstr "I/O til Registringsdatabasen fejlet.\n"
 
 #: winerror.mc:1101
-msgid "Not registry file\n"
-msgstr "Ikke en registreringsnøgle\n"
+msgid "Not registry file.\n"
+msgstr "Ikke en registreringsnøgle.\n"
 
 #: winerror.mc:1106
-msgid "Key deleted\n"
-msgstr "Nøgle slettet\n"
+msgid "Key deleted.\n"
+msgstr "Nøgle slettet.\n"
 
 #: winerror.mc:1111
-msgid "No registry log space\n"
-msgstr "Der er ingen ledig log plads til Registringsdatabasen\n"
+msgid "No registry log space.\n"
+msgstr "Der er ingen ledig log plads til Registringsdatabasen.\n"
 
 #: winerror.mc:1116
-msgid "Registry key has subkeys\n"
-msgstr "Registreringsnøglen har undernøgler\n"
+msgid "Registry key has subkeys.\n"
+msgstr "Registreringsnøglen har undernøgler.\n"
 
 #: winerror.mc:1121
-msgid "Subkey must be volatile\n"
-msgstr "Undernøglen skal være flygtig\n"
+msgid "Subkey must be volatile.\n"
+msgstr "Undernøglen skal være flygtig.\n"
 
 #: winerror.mc:1126
-msgid "Notify change request in progress\n"
-msgstr "Advisér anmodning om ændring i gang\n"
+msgid "Notify change request in progress.\n"
+msgstr "Advisér anmodning om ændring i gang.\n"
 
 #: winerror.mc:1131
-msgid "Dependent services are running\n"
-msgstr "Afhængige tjenester kører\n"
+msgid "Dependent services are running.\n"
+msgstr "Afhængige tjenester kører.\n"
 
 #: winerror.mc:1136
-msgid "Invalid service control\n"
-msgstr "Ugyldig service kontrol\n"
+msgid "Invalid service control.\n"
+msgstr "Ugyldig service kontrol.\n"
 
 #: winerror.mc:1141
-msgid "Service request timeout\n"
-msgstr "Service anmodning udløb\n"
+msgid "Service request timeout.\n"
+msgstr "Service anmodning udløb.\n"
 
 #: winerror.mc:1146
-msgid "Cannot create service thread\n"
-msgstr "Kan ikke oprette service tråd\n"
+msgid "Cannot create service thread.\n"
+msgstr "Kan ikke oprette service tråd.\n"
 
 #: winerror.mc:1151
-msgid "Service database locked\n"
-msgstr "Service database låst\n"
+msgid "Service database locked.\n"
+msgstr "Service database låst.\n"
 
 #: winerror.mc:1156
-msgid "Service already running\n"
-msgstr "Servicen kører allerede\n"
+msgid "Service already running.\n"
+msgstr "Servicen kører allerede.\n"
 
 #: winerror.mc:1161
-msgid "Invalid service account\n"
-msgstr "Ugyldig service konto\n"
+msgid "Invalid service account.\n"
+msgstr "Ugyldig service konto.\n"
 
 #: winerror.mc:1166
-msgid "Service is disabled\n"
-msgstr "Servicen er deaktiveret\n"
+msgid "Service is disabled.\n"
+msgstr "Servicen er deaktiveret.\n"
 
 #: winerror.mc:1171
-msgid "Circular dependency\n"
-msgstr "Cirkulær afhængighed\n"
+msgid "Circular dependency.\n"
+msgstr "Cirkulær afhængighed.\n"
 
 #: winerror.mc:1176
-msgid "Service does not exist\n"
-msgstr "Service eksisterer ikke\n"
+msgid "Service does not exist.\n"
+msgstr "Service eksisterer ikke.\n"
 
 #: winerror.mc:1181
-msgid "Service cannot accept control message\n"
-msgstr "Service kan ikke acceptere styremeddelelse\n"
+msgid "Service cannot accept control message.\n"
+msgstr "Service kan ikke acceptere styremeddelelse.\n"
 
 #: winerror.mc:1186
-msgid "Service not active\n"
-msgstr "Service ikke aktiv\n"
+msgid "Service not active.\n"
+msgstr "Service ikke aktiv.\n"
 
 #: winerror.mc:1191
-msgid "Service controller connect failed\n"
-msgstr "Service controller tilslutning mislykkedes\n"
+msgid "Service controller connect failed.\n"
+msgstr "Service controller tilslutning mislykkedes.\n"
 
 #: winerror.mc:1196
-msgid "Exception in service\n"
-msgstr "Undtagelse i service\n"
+msgid "Exception in service.\n"
+msgstr "Undtagelse i service.\n"
 
 #: winerror.mc:1201
-msgid "Database does not exist\n"
-msgstr "Database eksisterer ikke\n"
+msgid "Database does not exist.\n"
+msgstr "Database eksisterer ikke.\n"
 
 #: winerror.mc:1206
-msgid "Service-specific error\n"
-msgstr "Service-specifik fejl\n"
+msgid "Service-specific error.\n"
+msgstr "Service-specifik fejl.\n"
 
 #: winerror.mc:1211
-msgid "Process aborted\n"
-msgstr "Proces afbrudt\n"
+msgid "Process aborted.\n"
+msgstr "Proces afbrudt.\n"
 
 #: winerror.mc:1216
-msgid "Service dependency failed\n"
-msgstr "Service afhængighed mislykkedes\n"
+msgid "Service dependency failed.\n"
+msgstr "Service afhængighed mislykkedes.\n"
 
 #: winerror.mc:1221
-msgid "Service login failed\n"
-msgstr "Service login mislykkedes\n"
+msgid "Service login failed.\n"
+msgstr "Service login mislykkedes.\n"
 
 #: winerror.mc:1226
-msgid "Service start-hang\n"
+msgid "Service start-hang.\n"
 msgstr ""
 
 #: winerror.mc:1231
-msgid "Invalid service lock\n"
-msgstr "Ugyldig service lås\n"
+msgid "Invalid service lock.\n"
+msgstr "Ugyldig service lås.\n"
 
 #: winerror.mc:1236
-msgid "Service marked for delete\n"
-msgstr "Service markeret til sletning\n"
+msgid "Service marked for delete.\n"
+msgstr "Service markeret til sletning.\n"
 
 #: winerror.mc:1241
-msgid "Service exists\n"
-msgstr "Service findes\n"
+msgid "Service exists.\n"
+msgstr "Service findes.\n"
 
 #: winerror.mc:1246
-msgid "System running last-known-good config\n"
-msgstr "Systemet kører den sidst kendte, fungerende konfiguration\n"
+msgid "System running last-known-good config.\n"
+msgstr "Systemet kører den sidst kendte, fungerende konfiguration.\n"
 
 #: winerror.mc:1251
-msgid "Service dependency deleted\n"
-msgstr "Service afhængighed slettet\n"
+msgid "Service dependency deleted.\n"
+msgstr "Service afhængighed slettet.\n"
 
 #: winerror.mc:1256
-msgid "Boot already accepted as last-good config\n"
+msgid "Boot already accepted as last-good config.\n"
 msgstr ""
-"Boot er allerede accepteret som sidst kendte, fungerende konfiguration\n"
+"Boot er allerede accepteret som sidst kendte, fungerende konfiguration.\n"
 
 #: winerror.mc:1261
-msgid "Service not started since last boot\n"
-msgstr "Service ikke startet siden sidste boot\n"
+msgid "Service not started since last boot.\n"
+msgstr "Service ikke startet siden sidste boot.\n"
 
 #: winerror.mc:1266
-msgid "Duplicate service name\n"
-msgstr "Duplikere service navn\n"
+msgid "Duplicate service name.\n"
+msgstr "Duplikere service navn.\n"
 
 #: winerror.mc:1271
-msgid "Different service account\n"
-msgstr "Forskellige service-konti\n"
+msgid "Different service account.\n"
+msgstr "Forskellige service-konti.\n"
 
 #: winerror.mc:1276
-msgid "Driver failure cannot be detected\n"
+msgid "Driver failure cannot be detected.\n"
 msgstr ""
 
 #: winerror.mc:1281
 #, fuzzy
-msgid "Process abort cannot be detected\n"
-msgstr "Proces afbrudt\n"
+msgid "Process abort cannot be detected.\n"
+msgstr "Proces afbrudt.\n"
 
 #: winerror.mc:1286
-msgid "No recovery program for service\n"
+msgid "No recovery program for service.\n"
 msgstr ""
 
 #: winerror.mc:1291
 #, fuzzy
-msgid "Service not implemented by exe\n"
+msgid "Service not implemented by exe.\n"
 msgstr "Udskrivning er endnu ikke implementeret."
 
 #: winerror.mc:1296
-msgid "End of media\n"
-msgstr "Slutning af medie\n"
+msgid "End of media.\n"
+msgstr "Slutning af medie.\n"
 
 #: winerror.mc:1301
-msgid "Filemark detected\n"
-msgstr "Filemark opdaget\n"
+msgid "Filemark detected.\n"
+msgstr "Filemark opdaget.\n"
 
 #: winerror.mc:1306
-msgid "Beginning of media\n"
-msgstr "Begyndelse af media\n"
+msgid "Beginning of media.\n"
+msgstr "Begyndelse af media.\n"
 
 #: winerror.mc:1311
-msgid "Setmark detected\n"
-msgstr "Setmark opdaget\n"
+msgid "Setmark detected.\n"
+msgstr "Setmark opdaget.\n"
 
 #: winerror.mc:1316
-msgid "No data detected\n"
-msgstr "Ingen data opdaget\n"
+msgid "No data detected.\n"
+msgstr "Ingen data opdaget.\n"
 
 #: winerror.mc:1321
-msgid "Partition failure\n"
-msgstr "Partitions fejl\n"
+msgid "Partition failure.\n"
+msgstr "Partitions fejl.\n"
 
 #: winerror.mc:1326
-msgid "Invalid block length\n"
-msgstr "Ugyldig blok længde\n"
+msgid "Invalid block length.\n"
+msgstr "Ugyldig blok længde.\n"
 
 #: winerror.mc:1331
-msgid "Device not partitioned\n"
-msgstr "Enhed ikke partitioneret\n"
+msgid "Device not partitioned.\n"
+msgstr "Enhed ikke partitioneret.\n"
 
 #: winerror.mc:1336
-msgid "Unable to lock media\n"
-msgstr "Kunne ikke låse medier\n"
+msgid "Unable to lock media.\n"
+msgstr "Kunne ikke låse medier.\n"
 
 #: winerror.mc:1341
-msgid "Unable to unload media\n"
-msgstr "Kunne ikke fjerne medier\n"
+msgid "Unable to unload media.\n"
+msgstr "Kunne ikke fjerne medier.\n"
 
 #: winerror.mc:1346
-msgid "Media changed\n"
-msgstr "Medier skiftet\n"
+msgid "Media changed.\n"
+msgstr "Medier skiftet.\n"
 
 #: winerror.mc:1351
-msgid "I/O bus reset\n"
+msgid "I/O bus reset.\n"
 msgstr ""
 
 #: winerror.mc:1356
-msgid "No media in drive\n"
-msgstr "Der er ingen medier på drevet\n"
+msgid "No media in drive.\n"
+msgstr "Der er ingen medier på drevet.\n"
 
 #: winerror.mc:1361
-msgid "No Unicode translation\n"
-msgstr "Ingen Unicode oversættelse\n"
+msgid "No Unicode translation.\n"
+msgstr "Ingen Unicode oversættelse.\n"
 
 #: winerror.mc:1366
-msgid "DLL init failed\n"
-msgstr "DLL initialisering fejlet\n"
+msgid "DLL init failed.\n"
+msgstr "DLL initialisering fejlet.\n"
 
 #: winerror.mc:1371
-msgid "Shutdown in progress\n"
-msgstr "Nedlukning i gang\n"
+msgid "Shutdown in progress.\n"
+msgstr "Nedlukning i gang.\n"
 
 #: winerror.mc:1376
-msgid "No shutdown in progress\n"
-msgstr "Ingen nedlukning i gang\n"
+msgid "No shutdown in progress.\n"
+msgstr "Ingen nedlukning i gang.\n"
 
 #: winerror.mc:1381
-msgid "I/O device error\n"
-msgstr "I/O enheds fejl\n"
+msgid "I/O device error.\n"
+msgstr "I/O enheds fejl.\n"
 
 #: winerror.mc:1386
-msgid "No serial devices found\n"
-msgstr "Ingen seriel enheder fundet\n"
+msgid "No serial devices found.\n"
+msgstr "Ingen seriel enheder fundet.\n"
 
 #: winerror.mc:1391
-msgid "Shared IRQ busy\n"
-msgstr "Delt IRQ optaget\n"
+msgid "Shared IRQ busy.\n"
+msgstr "Delt IRQ optaget.\n"
 
 #: winerror.mc:1396
-msgid "Serial I/O completed\n"
-msgstr "Seriel I/O færdig\n"
+msgid "Serial I/O completed.\n"
+msgstr "Seriel I/O færdig.\n"
 
 #: winerror.mc:1401
-msgid "Serial I/O counter timeout\n"
-msgstr "Seriel I/O tæller udløb\n"
+msgid "Serial I/O counter timeout.\n"
+msgstr "Seriel I/O tæller udløb.\n"
 
 #: winerror.mc:1406
-msgid "Floppy ID address mark not found\n"
-msgstr "Floppy ID adresse mærke ikke fundet\n"
+msgid "Floppy ID address mark not found.\n"
+msgstr "Floppy ID adresse mærke ikke fundet.\n"
 
 #: winerror.mc:1411
-msgid "Floppy reports wrong cylinder\n"
-msgstr "Floppy rapporter forkert cylinder\n"
+msgid "Floppy reports wrong cylinder.\n"
+msgstr "Floppy rapporter forkert cylinder.\n"
 
 #: winerror.mc:1416
-msgid "Unknown floppy error\n"
-msgstr "Ukendt floppy fejl\n"
+msgid "Unknown floppy error.\n"
+msgstr "Ukendt floppy fejl.\n"
 
 #: winerror.mc:1421
-msgid "Floppy registers inconsistent\n"
-msgstr "Floppy registre inkonsekvent\n"
+msgid "Floppy registers inconsistent.\n"
+msgstr "Floppy registre inkonsekvent.\n"
 
 #: winerror.mc:1426
-msgid "Hard disk recalibrate failed\n"
-msgstr "Harddisk rekalibrering mislykkedes\n"
+msgid "Hard disk recalibrate failed.\n"
+msgstr "Harddisk rekalibrering mislykkedes.\n"
 
 #: winerror.mc:1431
-msgid "Hard disk operation failed\n"
-msgstr "Harddisk operation mislykkedes\n"
+msgid "Hard disk operation failed.\n"
+msgstr "Harddisk operation mislykkedes.\n"
 
 #: winerror.mc:1436
-msgid "Hard disk reset failed\n"
-msgstr "Harddisk reset mislykkedes\n"
+msgid "Hard disk reset failed.\n"
+msgstr "Harddisk reset mislykkedes.\n"
 
 #: winerror.mc:1441
-msgid "End of tape media\n"
-msgstr "Slut på bånd medier\n"
+msgid "End of tape media.\n"
+msgstr "Slut på bånd medier.\n"
 
 #: winerror.mc:1446
-msgid "Not enough server memory\n"
-msgstr "Ikke nok server hukommelse\n"
+msgid "Not enough server memory.\n"
+msgstr "Ikke nok server hukommelse.\n"
 
 #: winerror.mc:1451
-msgid "Possible deadlock\n"
-msgstr "Mulige deadlock\n"
+msgid "Possible deadlock.\n"
+msgstr "Mulige deadlock.\n"
 
 #: winerror.mc:1456
-msgid "Incorrect alignment\n"
-msgstr "Forkert tilpasning\n"
+msgid "Incorrect alignment.\n"
+msgstr "Forkert tilpasning.\n"
 
 #: winerror.mc:1461
-msgid "Set-power-state vetoed\n"
-msgstr "Set-power-state nedlagde veto\n"
+msgid "Set-power-state vetoed.\n"
+msgstr "Set-power-state nedlagde veto.\n"
 
 #: winerror.mc:1466
-msgid "Set-power-state failed\n"
-msgstr "Set-power-state fejlet\n"
+msgid "Set-power-state failed.\n"
+msgstr "Set-power-state fejlet.\n"
 
 #: winerror.mc:1471
-msgid "Too many links\n"
-msgstr "For mange links\n"
+msgid "Too many links.\n"
+msgstr "For mange links.\n"
 
 #: winerror.mc:1476
-msgid "Newer windows version needed\n"
-msgstr "Nyere windows version påkrævet\n"
+msgid "Newer windows version needed.\n"
+msgstr "Nyere windows version påkrævet.\n"
 
 #: winerror.mc:1481
-msgid "Wrong operating system\n"
-msgstr "Forkert operativsystem\n"
+msgid "Wrong operating system.\n"
+msgstr "Forkert operativsystem.\n"
 
 #: winerror.mc:1486
-msgid "Single-instance application\n"
-msgstr "Single-instans applikation\n"
+msgid "Single-instance application.\n"
+msgstr "Single-instans applikation.\n"
 
 #: winerror.mc:1491
-msgid "Real-mode application\n"
-msgstr "Real-mode applikation\n"
+msgid "Real-mode application.\n"
+msgstr "Real-mode applikation.\n"
 
 #: winerror.mc:1496
-msgid "Invalid DLL\n"
-msgstr "Ugyldig DLL\n"
+msgid "Invalid DLL.\n"
+msgstr "Ugyldig DLL.\n"
 
 #: winerror.mc:1501
-msgid "No associated application\n"
-msgstr "Der er ikke tilknyttede et program\n"
+msgid "No associated application.\n"
+msgstr "Der er ikke tilknyttede et program.\n"
 
 #: winerror.mc:1506
-msgid "DDE failure\n"
-msgstr "DDE fejl\n"
+msgid "DDE failure.\n"
+msgstr "DDE fejl.\n"
 
 #: winerror.mc:1511
-msgid "DLL not found\n"
-msgstr "DLL ikke fundet\n"
+msgid "DLL not found.\n"
+msgstr "DLL ikke fundet.\n"
 
 #: winerror.mc:1516
 #, fuzzy
-msgid "Out of user handles\n"
-msgstr "Ikke flere søgnings handles\n"
+msgid "Out of user handles.\n"
+msgstr "Ikke flere søgnings handles.\n"
 
 #: winerror.mc:1521
-msgid "Message can only be used in synchronous calls\n"
+msgid "Message can only be used in synchronous calls.\n"
 msgstr ""
 
 #: winerror.mc:1526
-msgid "The source element is empty\n"
+msgid "The source element is empty.\n"
 msgstr ""
 
 #: winerror.mc:1531
 #, fuzzy
-msgid "The destination element is full\n"
-msgstr "Operationen blev afsluttet med succes\n"
+msgid "The destination element is full.\n"
+msgstr "Operationen blev afsluttet med succes.\n"
 
 #: winerror.mc:1536
 #, fuzzy
-msgid "The element address is invalid\n"
+msgid "The element address is invalid.\n"
 msgstr "Det specificerede enheds handle er ugyldigt."
 
 #: winerror.mc:1541
-msgid "The magazine is not present\n"
+msgid "The magazine is not present.\n"
 msgstr ""
 
 #: winerror.mc:1546
-msgid "The device needs reinitialization\n"
+msgid "The device needs reinitialization.\n"
 msgstr ""
 
 #: winerror.mc:1551
 #, fuzzy
-msgid "The device requires cleaning\n"
+msgid "The device requires cleaning.\n"
 msgstr "Tjenesten «%s» starter.\n"
 
 #: winerror.mc:1556
 #, fuzzy
-msgid "The device door is open\n"
-msgstr "Printer låget er åben; "
+msgid "The device door is open.\n"
+msgstr "Printer låget er åben; .\n"
 
 #: winerror.mc:1561
 #, fuzzy
-msgid "The device is not connected\n"
-msgstr "Rør er ikke forbundet\n"
+msgid "The device is not connected.\n"
+msgstr "Rør er ikke forbundet.\n"
 
 #: winerror.mc:1566
 #, fuzzy
-msgid "Element not found\n"
-msgstr "Indgang ikke fundet\n"
+msgid "Element not found.\n"
+msgstr "Indgang ikke fundet.\n"
 
 #: winerror.mc:1571
 #, fuzzy
-msgid "No match found\n"
-msgstr "Stien blev ikke fundet\n"
+msgid "No match found.\n"
+msgstr "Stien blev ikke fundet.\n"
 
 #: winerror.mc:1576
 #, fuzzy
-msgid "Property set not found\n"
-msgstr "Proceduren ikke fundet\n"
+msgid "Property set not found.\n"
+msgstr "Proceduren ikke fundet.\n"
 
 #: winerror.mc:1581
 #, fuzzy
-msgid "Point not found\n"
-msgstr "Stien blev ikke fundet\n"
+msgid "Point not found.\n"
+msgstr "Stien blev ikke fundet.\n"
 
 #: winerror.mc:1586
 #, fuzzy
-msgid "No running tracking service\n"
-msgstr "Ukendt tilladelses service\n"
+msgid "No running tracking service.\n"
+msgstr "Ukendt tilladelses service.\n"
 
 #: winerror.mc:1591
 #, fuzzy
-msgid "No such volume ID\n"
-msgstr "Brugeren eksistere ikke\n"
+msgid "No such volume ID.\n"
+msgstr "Brugeren eksistere ikke.\n"
 
 #: winerror.mc:1596
-msgid "Unable to remove the file to be replaced\n"
+msgid "Unable to remove the file to be replaced.\n"
 msgstr ""
 
 #: winerror.mc:1601
-msgid "Unable to move the replacement file into place\n"
+msgid "Unable to move the replacement file into place.\n"
 msgstr ""
 
 #: winerror.mc:1606
-msgid "Moving the replacement file failed\n"
+msgid "Moving the replacement file failed.\n"
 msgstr ""
 
 #: winerror.mc:1611
 #, fuzzy
-msgid "The journal is being deleted\n"
-msgstr "Netværks navn slettet\n"
+msgid "The journal is being deleted.\n"
+msgstr "Netværks navn slettet.\n"
 
 #: winerror.mc:1616
 #, fuzzy
-msgid "The journal is not active\n"
-msgstr "Service ikke aktiv\n"
+msgid "The journal is not active.\n"
+msgstr "Service ikke aktiv.\n"
 
 #: winerror.mc:1621
-msgid "Potential matching file found\n"
+msgid "Potential matching file found.\n"
 msgstr ""
 
 #: winerror.mc:1626
-msgid "The journal entry was deleted\n"
+msgid "The journal entry was deleted.\n"
 msgstr ""
 
 #: winerror.mc:1631
-msgid "Invalid device name\n"
-msgstr "Ugyldig enheds navn\n"
+msgid "Invalid device name.\n"
+msgstr "Ugyldig enheds navn.\n"
 
 #: winerror.mc:1636
-msgid "Connection unavailable\n"
-msgstr "Forbindelse utilgængelig\n"
+msgid "Connection unavailable.\n"
+msgstr "Forbindelse utilgængelig.\n"
 
 #: winerror.mc:1641
-msgid "Device already remembered\n"
-msgstr "Enheden er allerede husket\n"
+msgid "Device already remembered.\n"
+msgstr "Enheden er allerede husket.\n"
 
 #: winerror.mc:1646
-msgid "No network or bad path\n"
-msgstr "Intet netværk eller forkert sti\n"
+msgid "No network or bad path.\n"
+msgstr "Intet netværk eller forkert sti.\n"
 
 #: winerror.mc:1651
-msgid "Invalid network provider name\n"
-msgstr "Ugyldigt netværksudbyder navn\n"
+msgid "Invalid network provider name.\n"
+msgstr "Ugyldigt netværksudbyder navn.\n"
 
 #: winerror.mc:1656
-msgid "Cannot open network connection profile\n"
-msgstr "Kan ikke åbne profilen for netværksforbindelse\n"
+msgid "Cannot open network connection profile.\n"
+msgstr "Kan ikke åbne profilen for netværksforbindelse.\n"
 
 #: winerror.mc:1661
-msgid "Corrupt network connection profile\n"
-msgstr "Profilen for netværksforbindelse ødelagt\n"
+msgid "Corrupt network connection profile.\n"
+msgstr "Profilen for netværksforbindelse ødelagt.\n"
 
 #: winerror.mc:1666
-msgid "Not a container\n"
-msgstr "Ikke en container\n"
+msgid "Not a container.\n"
+msgstr "Ikke en container.\n"
 
 #: winerror.mc:1671
-msgid "Extended error\n"
-msgstr "Udvidet fejl\n"
+msgid "Extended error.\n"
+msgstr "Udvidet fejl.\n"
 
 #: winerror.mc:1676
-msgid "Invalid group name\n"
-msgstr "Ugyldigt gruppenavn\n"
+msgid "Invalid group name.\n"
+msgstr "Ugyldigt gruppenavn.\n"
 
 #: winerror.mc:1681
-msgid "Invalid computer name\n"
-msgstr "Ugyldigt computer navn\n"
+msgid "Invalid computer name.\n"
+msgstr "Ugyldigt computer navn.\n"
 
 #: winerror.mc:1686
-msgid "Invalid event name\n"
-msgstr "Ugyldigt begivenheds navn\n"
+msgid "Invalid event name.\n"
+msgstr "Ugyldigt begivenheds navn.\n"
 
 #: winerror.mc:1691
-msgid "Invalid domain name\n"
-msgstr "Ugyldigt domænenavn\n"
+msgid "Invalid domain name.\n"
+msgstr "Ugyldigt domænenavn.\n"
 
 #: winerror.mc:1696
-msgid "Invalid service name\n"
-msgstr "Ugyldigt service navn\n"
+msgid "Invalid service name.\n"
+msgstr "Ugyldigt service navn.\n"
 
 #: winerror.mc:1701
-msgid "Invalid network name\n"
-msgstr "Ugyldigt netværksnavn\n"
+msgid "Invalid network name.\n"
+msgstr "Ugyldigt netværksnavn.\n"
 
 #: winerror.mc:1706
-msgid "Invalid share name\n"
-msgstr "Ugyldigt delingsnavn\n"
+msgid "Invalid share name.\n"
+msgstr "Ugyldigt delingsnavn.\n"
 
 #: winerror.mc:1716
-msgid "Invalid message name\n"
-msgstr "Ugyldigt navn for besked\n"
+msgid "Invalid message name.\n"
+msgstr "Ugyldigt navn for besked.\n"
 
 #: winerror.mc:1721
-msgid "Invalid message destination\n"
-msgstr "Ugyldig destination for besked\n"
+msgid "Invalid message destination.\n"
+msgstr "Ugyldig destination for besked.\n"
 
 #: winerror.mc:1726
-msgid "Session credential conflict\n"
-msgstr "Sessionens legitimation er i konflikt\n"
+msgid "Session credential conflict.\n"
+msgstr "Sessionens legitimation er i konflikt.\n"
 
 #: winerror.mc:1731
-msgid "Remote session limit exceeded\n"
-msgstr "Fjernsessionen begrænsning overskredet\n"
+msgid "Remote session limit exceeded.\n"
+msgstr "Fjernsessionen begrænsning overskredet.\n"
 
 #: winerror.mc:1736
-msgid "Duplicate domain or workgroup name\n"
-msgstr "Domæne eller arbejdsgruppens navn, findes allerede\n"
+msgid "Duplicate domain or workgroup name.\n"
+msgstr "Domæne eller arbejdsgruppens navn, findes allerede.\n"
 
 #: winerror.mc:1741
-msgid "No network\n"
-msgstr "Intet netværk\n"
+msgid "No network.\n"
+msgstr "Intet netværk.\n"
 
 #: winerror.mc:1746
-msgid "Operation canceled by user\n"
-msgstr "Operation annulleret af bruger\n"
+msgid "Operation canceled by user.\n"
+msgstr "Operation annulleret af bruger.\n"
 
 #: winerror.mc:1751
-msgid "File has a user-mapped section\n"
-msgstr "Filen har en bruger-kortlagt sektion\n"
+msgid "File has a user-mapped section.\n"
+msgstr "Filen har en bruger-kortlagt sektion.\n"
 
 #: winerror.mc:1756 winerror.mc:3741
-msgid "Connection refused\n"
-msgstr "Forbindelse nægtet\n"
+msgid "Connection refused.\n"
+msgstr "Forbindelse nægtet.\n"
 
 #: winerror.mc:1761
-msgid "Connection gracefully closed\n"
-msgstr "Forbindelsen blev yndefuldt lukket\n"
+msgid "Connection gracefully closed.\n"
+msgstr "Forbindelsen blev yndefuldt lukket.\n"
 
 #: winerror.mc:1766
-msgid "Address already associated with transport endpoint\n"
-msgstr "Adressen er allerede associeret med transport endpoint\n"
+msgid "Address already associated with transport endpoint.\n"
+msgstr "Adressen er allerede associeret med transport endpoint.\n"
 
 #: winerror.mc:1771
-msgid "Address not associated with transport endpoint\n"
-msgstr "Adressen er ikke associeret med transport endpoint\n"
+msgid "Address not associated with transport endpoint.\n"
+msgstr "Adressen er ikke associeret med transport endpoint.\n"
 
 #: winerror.mc:1776
-msgid "Connection invalid\n"
-msgstr "Forbindelsen er ugyldig\n"
+msgid "Connection invalid.\n"
+msgstr "Forbindelsen er ugyldig.\n"
 
 #: winerror.mc:1781
-msgid "Connection is active\n"
-msgstr "Forbindelsen er aktiv\n"
+msgid "Connection is active.\n"
+msgstr "Forbindelsen er aktiv.\n"
 
 #: winerror.mc:1786
-msgid "Network unreachable\n"
-msgstr "Netværk er ikke tilgængeligt\n"
+msgid "Network unreachable.\n"
+msgstr "Netværk er ikke tilgængeligt.\n"
 
 #: winerror.mc:1791
-msgid "Host unreachable\n"
-msgstr "Host er ikke tilgængelig\n"
+msgid "Host unreachable.\n"
+msgstr "Host er ikke tilgængelig.\n"
 
 #: winerror.mc:1796
-msgid "Protocol unreachable\n"
-msgstr "Protokol er ikke tilgængelig\n"
+msgid "Protocol unreachable.\n"
+msgstr "Protokol er ikke tilgængelig.\n"
 
 #: winerror.mc:1801
-msgid "Port unreachable\n"
-msgstr "Port er ikke tilgængelig\n"
+msgid "Port unreachable.\n"
+msgstr "Port er ikke tilgængelig.\n"
 
 #: winerror.mc:1806
-msgid "Request aborted\n"
-msgstr "Anmodning afbrudt\n"
+msgid "Request aborted.\n"
+msgstr "Anmodning afbrudt.\n"
 
 #: winerror.mc:1811
-msgid "Connection aborted\n"
-msgstr "Forbindelse afbrudt\n"
+msgid "Connection aborted.\n"
+msgstr "Forbindelse afbrudt.\n"
 
 #: winerror.mc:1816
-msgid "Please retry operation\n"
-msgstr "Prøv venligst operation igen\n"
+msgid "Please retry operation.\n"
+msgstr "Prøv venligst operation igen.\n"
 
 #: winerror.mc:1821
-msgid "Connection count limit reached\n"
-msgstr "Begrænsning af forbindelses antal nået\n"
+msgid "Connection count limit reached.\n"
+msgstr "Begrænsning af forbindelses antal nået.\n"
 
 #: winerror.mc:1826
-msgid "Login time restriction\n"
-msgstr "Tidsbegrænsning for log ind\n"
+msgid "Login time restriction.\n"
+msgstr "Tidsbegrænsning for log ind.\n"
 
 #: winerror.mc:1831
-msgid "Login workstation restriction\n"
-msgstr "Arbejdsstation begrænsninger for log ind\n"
+msgid "Login workstation restriction.\n"
+msgstr "Arbejdsstation begrænsninger for log ind.\n"
 
 #: winerror.mc:1836
-msgid "Incorrect network address\n"
-msgstr "Forkert netværksadresse\n"
+msgid "Incorrect network address.\n"
+msgstr "Forkert netværksadresse.\n"
 
 #: winerror.mc:1841
-msgid "Service already registered\n"
-msgstr "Service allerede registreret\n"
+msgid "Service already registered.\n"
+msgstr "Service allerede registreret.\n"
 
 #: winerror.mc:1846
-msgid "Service not found\n"
-msgstr "Service blev ikke fundet\n"
+msgid "Service not found.\n"
+msgstr "Service blev ikke fundet.\n"
 
 #: winerror.mc:1851
-msgid "User not authenticated\n"
-msgstr "Bruger ikke bekræftet\n"
+msgid "User not authenticated.\n"
+msgstr "Bruger ikke bekræftet.\n"
 
 #: winerror.mc:1856
-msgid "User not logged on\n"
-msgstr "Brugeren er ikke logget på\n"
+msgid "User not logged on.\n"
+msgstr "Brugeren er ikke logget på.\n"
 
 #: winerror.mc:1861
-msgid "Continue work in progress\n"
-msgstr "Fortsættelse af arbejdet i gang\n"
+msgid "Continue work in progress.\n"
+msgstr "Fortsættelse af arbejdet i gang.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised\n"
-msgstr "Allerede initialiseret\n"
+msgid "Already initialised.\n"
+msgstr "Allerede initialiseret.\n"
 
 #: winerror.mc:1871
-msgid "No more local devices\n"
-msgstr "Ikke flere lokal enheder\n"
+msgid "No more local devices.\n"
+msgstr "Ikke flere lokal enheder.\n"
 
 #: winerror.mc:1876
 #, fuzzy
-msgid "The site does not exist\n"
-msgstr "Enheden eksistere ikke\n"
+msgid "The site does not exist.\n"
+msgstr "Enheden eksistere ikke.\n"
 
 #: winerror.mc:1881
 #, fuzzy
-msgid "The domain controller already exists\n"
-msgstr "Domæne eksisterer allerede\n"
+msgid "The domain controller already exists.\n"
+msgstr "Domæne eksisterer allerede.\n"
 
 #: winerror.mc:1886
 #, fuzzy
-msgid "Supported only when connected\n"
-msgstr "Rør er ikke forbundet\n"
+msgid "Supported only when connected.\n"
+msgstr "Rør er ikke forbundet.\n"
 
 #: winerror.mc:1891
-msgid "Perform operation even when nothing changed\n"
+msgid "Perform operation even when nothing changed.\n"
 msgstr ""
 
 #: winerror.mc:1896
 #, fuzzy
-msgid "The user profile is invalid\n"
+msgid "The user profile is invalid.\n"
 msgstr "Det specificerede enheds handle er ugyldigt."
 
 #: winerror.mc:1901
-msgid "Not supported on Small Business Server\n"
+msgid "Not supported on Small Business Server.\n"
 msgstr ""
 
 #: winerror.mc:1906
-msgid "Not all privileges assigned\n"
-msgstr "Ikke alle privilegier blev tildelt\n"
+msgid "Not all privileges assigned.\n"
+msgstr "Ikke alle privilegier blev tildelt.\n"
 
 #: winerror.mc:1911
-msgid "Some security IDs not mapped\n"
-msgstr "Nogle sikkerheds-id'er ikke kortlagt\n"
+msgid "Some security IDs not mapped.\n"
+msgstr "Nogle sikkerheds-id'er ikke kortlagt.\n"
 
 #: winerror.mc:1916
-msgid "No quotas for account\n"
-msgstr "Ingen kvoter for konto\n"
+msgid "No quotas for account.\n"
+msgstr "Ingen kvoter for konto.\n"
 
 #: winerror.mc:1921
-msgid "Local user session key\n"
-msgstr "Lokal bruger sessionsnøgle\n"
+msgid "Local user session key.\n"
+msgstr "Lokal bruger sessionsnøgle.\n"
 
 #: winerror.mc:1926
-msgid "Password too complex for LM\n"
-msgstr "Adgangskoden er for kompleks til LM\n"
+msgid "Password too complex for LM.\n"
+msgstr "Adgangskoden er for kompleks til LM.\n"
 
 #: winerror.mc:1931
-msgid "Unknown revision\n"
-msgstr "Ukendt revision\n"
+msgid "Unknown revision.\n"
+msgstr "Ukendt revision.\n"
 
 #: winerror.mc:1936
-msgid "Incompatible revision levels\n"
-msgstr "Ukompatibele revisions niveauer\n"
+msgid "Incompatible revision levels.\n"
+msgstr "Ukompatibele revisions niveauer.\n"
 
 #: winerror.mc:1941
-msgid "Invalid owner\n"
-msgstr "Ugyldig ejer\n"
+msgid "Invalid owner.\n"
+msgstr "Ugyldig ejer.\n"
 
 #: winerror.mc:1946
-msgid "Invalid primary group\n"
-msgstr "Ugyldig primær gruppe\n"
+msgid "Invalid primary group.\n"
+msgstr "Ugyldig primær gruppe.\n"
 
 #: winerror.mc:1951
-msgid "No impersonation token\n"
-msgstr "Ingen personifikation token\n"
+msgid "No impersonation token.\n"
+msgstr "Ingen personifikation token.\n"
 
 #: winerror.mc:1956
-msgid "Can't disable mandatory group\n"
-msgstr "Kan ikke deaktivere obligatorisk gruppe\n"
+msgid "Can't disable mandatory group.\n"
+msgstr "Kan ikke deaktivere obligatorisk gruppe.\n"
 
 #: winerror.mc:1961
-msgid "No logon servers available\n"
-msgstr "Ingen logon-servere til rådighed\n"
+msgid "No logon servers available.\n"
+msgstr "Ingen logon-servere til rådighed.\n"
 
 #: winerror.mc:1966
-msgid "No such logon session\n"
-msgstr "Der findes ikke et sådan logonsession\n"
+msgid "No such logon session.\n"
+msgstr "Der findes ikke et sådan logonsession.\n"
 
 #: winerror.mc:1971
-msgid "No such privilege\n"
-msgstr "Der findes ikke et sådan privilegium\n"
+msgid "No such privilege.\n"
+msgstr "Der findes ikke et sådan privilegium.\n"
 
 #: winerror.mc:1976
-msgid "Privilege not held\n"
-msgstr "Privilege blev ikke holdt\n"
+msgid "Privilege not held.\n"
+msgstr "Privilege blev ikke holdt.\n"
 
 #: winerror.mc:1981
-msgid "Invalid account name\n"
-msgstr "Ugyldigt konto navn\n"
+msgid "Invalid account name.\n"
+msgstr "Ugyldigt konto navn.\n"
 
 #: winerror.mc:1986
-msgid "User already exists\n"
-msgstr "Bruger eksistere allerede\n"
+msgid "User already exists.\n"
+msgstr "Bruger eksistere allerede.\n"
 
 #: winerror.mc:1991
-msgid "No such user\n"
-msgstr "Brugeren eksistere ikke\n"
+msgid "No such user.\n"
+msgstr "Brugeren eksistere ikke.\n"
 
 #: winerror.mc:1996
-msgid "Group already exists\n"
-msgstr "Gruppen eksistere allerede\n"
+msgid "Group already exists.\n"
+msgstr "Gruppen eksistere allerede.\n"
 
 #: winerror.mc:2001
-msgid "No such group\n"
-msgstr "Ingen sådan gruppe\n"
+msgid "No such group.\n"
+msgstr "Ingen sådan gruppe.\n"
 
 #: winerror.mc:2006
-msgid "User already in group\n"
-msgstr "Bruger er allerede i gruppen\n"
+msgid "User already in group.\n"
+msgstr "Bruger er allerede i gruppen.\n"
 
 #: winerror.mc:2011
-msgid "User not in group\n"
-msgstr "Bruger er ikke i gruppen\n"
+msgid "User not in group.\n"
+msgstr "Bruger er ikke i gruppen.\n"
 
 #: winerror.mc:2016
-msgid "Can't delete last admin user\n"
-msgstr "Kan ikke slette sidste administrator bruger\n"
+msgid "Can't delete last admin user.\n"
+msgstr "Kan ikke slette sidste administrator bruger.\n"
 
 #: winerror.mc:2021
-msgid "Wrong password\n"
-msgstr "Forkert adgangskode\n"
+msgid "Wrong password.\n"
+msgstr "Forkert adgangskode.\n"
 
 #: winerror.mc:2026
-msgid "Ill-formed password\n"
-msgstr "Ill-formet adgangskode\n"
+msgid "Ill-formed password.\n"
+msgstr "Ill-formet adgangskode.\n"
 
 #: winerror.mc:2031
-msgid "Password restriction\n"
-msgstr "Adgangskode begrænsning\n"
+msgid "Password restriction.\n"
+msgstr "Adgangskode begrænsning.\n"
 
 #: winerror.mc:2036
-msgid "Logon failure\n"
-msgstr "Logonfejl\n"
+msgid "Logon failure.\n"
+msgstr "Logonfejl.\n"
 
 #: winerror.mc:2041
-msgid "Account restriction\n"
-msgstr "Konto begrænsning\n"
+msgid "Account restriction.\n"
+msgstr "Konto begrænsning.\n"
 
 #: winerror.mc:2046
-msgid "Invalid logon hours\n"
-msgstr "Ugyldig antal af logon timer\n"
+msgid "Invalid logon hours.\n"
+msgstr "Ugyldig antal af logon timer.\n"
 
 #: winerror.mc:2051
-msgid "Invalid workstation\n"
-msgstr "Ugyldig arbejdsstation\n"
+msgid "Invalid workstation.\n"
+msgstr "Ugyldig arbejdsstation.\n"
 
 #: winerror.mc:2056
-msgid "Password expired\n"
-msgstr "Adgangskode udløbet\n"
+msgid "Password expired.\n"
+msgstr "Adgangskode udløbet.\n"
 
 #: winerror.mc:2061
-msgid "Account disabled\n"
-msgstr "Konto deaktiveret\n"
+msgid "Account disabled.\n"
+msgstr "Konto deaktiveret.\n"
 
 #: winerror.mc:2066
-msgid "No security ID mapped\n"
-msgstr "Ingen sikkerhed ID kortlagt\n"
+msgid "No security ID mapped.\n"
+msgstr "Ingen sikkerhed ID kortlagt.\n"
 
 #: winerror.mc:2071
-msgid "Too many LUIDs requested\n"
-msgstr "Alt for mange LUIDs anmodet\n"
+msgid "Too many LUIDs requested.\n"
+msgstr "Alt for mange LUIDs anmodet.\n"
 
 #: winerror.mc:2076
-msgid "LUIDs exhausted\n"
-msgstr "LUIDs opbrugt\n"
+msgid "LUIDs exhausted.\n"
+msgstr "LUIDs opbrugt.\n"
 
 #: winerror.mc:2081
-msgid "Invalid sub authority\n"
-msgstr "Ugyldig sub myndighed\n"
+msgid "Invalid sub authority.\n"
+msgstr "Ugyldig sub myndighed.\n"
 
 #: winerror.mc:2086
-msgid "Invalid ACL\n"
-msgstr "Ugyldig ACL\n"
+msgid "Invalid ACL.\n"
+msgstr "Ugyldig ACL.\n"
 
 #: winerror.mc:2091
-msgid "Invalid SID\n"
-msgstr "Ugyldig SID\n"
+msgid "Invalid SID.\n"
+msgstr "Ugyldig SID.\n"
 
 #: winerror.mc:2096
-msgid "Invalid security descriptor\n"
-msgstr "Ugyldig sikkerhed deskriptor\n"
+msgid "Invalid security descriptor.\n"
+msgstr "Ugyldig sikkerhed deskriptor.\n"
 
 #: winerror.mc:2101
-msgid "Bad inherited ACL\n"
-msgstr "Forkert arvet ACL\n"
+msgid "Bad inherited ACL.\n"
+msgstr "Forkert arvet ACL.\n"
 
 #: winerror.mc:2106
-msgid "Server disabled\n"
-msgstr "Server deaktiveret\n"
+msgid "Server disabled.\n"
+msgstr "Server deaktiveret.\n"
 
 #: winerror.mc:2111
-msgid "Server not disabled\n"
-msgstr "Server er ikke deaktiveret\n"
+msgid "Server not disabled.\n"
+msgstr "Server er ikke deaktiveret.\n"
 
 #: winerror.mc:2116
-msgid "Invalid ID authority\n"
-msgstr "Ugyldigt ID myndighed\n"
+msgid "Invalid ID authority.\n"
+msgstr "Ugyldigt ID myndighed.\n"
 
 #: winerror.mc:2121
-msgid "Allotted space exceeded\n"
-msgstr "Tildelte plads overskredet\n"
+msgid "Allotted space exceeded.\n"
+msgstr "Tildelte plads overskredet.\n"
 
 #: winerror.mc:2126
-msgid "Invalid group attributes\n"
-msgstr "Ugyldige gruppe attributter\n"
+msgid "Invalid group attributes.\n"
+msgstr "Ugyldige gruppe attributter.\n"
 
 #: winerror.mc:2131
-msgid "Bad impersonation level\n"
-msgstr "Forkert personifikation niveau\n"
+msgid "Bad impersonation level.\n"
+msgstr "Forkert personifikation niveau.\n"
 
 #: winerror.mc:2136
-msgid "Can't open anonymous security token\n"
-msgstr "Kan ikke åbne anonym sikkerheds token\n"
+msgid "Can't open anonymous security token.\n"
+msgstr "Kan ikke åbne anonym sikkerheds token.\n"
 
 #: winerror.mc:2141
-msgid "Bad validation class\n"
-msgstr "Forkert validering klasse\n"
+msgid "Bad validation class.\n"
+msgstr "Forkert validering klasse.\n"
 
 #: winerror.mc:2146
-msgid "Bad token type\n"
-msgstr "Forkert token type\n"
+msgid "Bad token type.\n"
+msgstr "Forkert token type.\n"
 
 #: winerror.mc:2151
-msgid "No security on object\n"
-msgstr "Ingen sikkerhed på objekt\n"
+msgid "No security on object.\n"
+msgstr "Ingen sikkerhed på objekt.\n"
 
 #: winerror.mc:2156
-msgid "Can't access domain information\n"
-msgstr "Kan ikke få adgang til domæne information\n"
+msgid "Can't access domain information.\n"
+msgstr "Kan ikke få adgang til domæne information.\n"
 
 #: winerror.mc:2161
-msgid "Invalid server state\n"
-msgstr "Ugyldig server tilstand\n"
+msgid "Invalid server state.\n"
+msgstr "Ugyldig server tilstand.\n"
 
 #: winerror.mc:2166
-msgid "Invalid domain state\n"
-msgstr "Ugyldig domæne tilstand\n"
+msgid "Invalid domain state.\n"
+msgstr "Ugyldig domæne tilstand.\n"
 
 #: winerror.mc:2171
-msgid "Invalid domain role\n"
-msgstr "Ugyldig domæne rolle\n"
+msgid "Invalid domain role.\n"
+msgstr "Ugyldig domæne rolle.\n"
 
 #: winerror.mc:2176
-msgid "No such domain\n"
-msgstr "Der findes ikke et sådan domæne\n"
+msgid "No such domain.\n"
+msgstr "Der findes ikke et sådan domæne.\n"
 
 #: winerror.mc:2181
-msgid "Domain already exists\n"
-msgstr "Domæne eksisterer allerede\n"
+msgid "Domain already exists.\n"
+msgstr "Domæne eksisterer allerede.\n"
 
 #: winerror.mc:2186
-msgid "Domain limit exceeded\n"
-msgstr "Domæne begræsning overskredet\n"
+msgid "Domain limit exceeded.\n"
+msgstr "Domæne begræsning overskredet.\n"
 
 #: winerror.mc:2191
-msgid "Internal database corruption\n"
-msgstr "Intern database korruption\n"
+msgid "Internal database corruption.\n"
+msgstr "Intern database korruption.\n"
 
 #: winerror.mc:2196
-msgid "Internal error\n"
-msgstr "Intern fejl\n"
+msgid "Internal error.\n"
+msgstr "Intern fejl.\n"
 
 #: winerror.mc:2201
-msgid "Generic access types not mapped\n"
-msgstr "Generisk adgangs typer, ikke kortlagt\n"
+msgid "Generic access types not mapped.\n"
+msgstr "Generisk adgangs typer, ikke kortlagt.\n"
 
 #: winerror.mc:2206
-msgid "Bad descriptor format\n"
-msgstr "Forkert deskriptor format\n"
+msgid "Bad descriptor format.\n"
+msgstr "Forkert deskriptor format.\n"
 
 #: winerror.mc:2211
-msgid "Not a logon process\n"
-msgstr "Ikke en logonproces\n"
+msgid "Not a logon process.\n"
+msgstr "Ikke en logonproces.\n"
 
 #: winerror.mc:2216
-msgid "Logon session ID exists\n"
-msgstr "Logon sessions ID eksisterer\n"
+msgid "Logon session ID exists.\n"
+msgstr "Logon sessions ID eksisterer.\n"
 
 #: winerror.mc:2221
-msgid "Unknown authentication package\n"
-msgstr "Ukendt autentificering pakke\n"
+msgid "Unknown authentication package.\n"
+msgstr "Ukendt autentificering pakke.\n"
 
 #: winerror.mc:2226
-msgid "Bad logon session state\n"
-msgstr "Forkert logonsessions tilstand\n"
+msgid "Bad logon session state.\n"
+msgstr "Forkert logonsessions tilstand.\n"
 
 #: winerror.mc:2231
-msgid "Logon session ID collision\n"
-msgstr "Logon session ID kollision\n"
+msgid "Logon session ID collision.\n"
+msgstr "Logon session ID kollision.\n"
 
 #: winerror.mc:2236
-msgid "Invalid logon type\n"
-msgstr "Ugyldig login type\n"
+msgid "Invalid logon type.\n"
+msgstr "Ugyldig login type.\n"
 
 #: winerror.mc:2241
-msgid "Cannot impersonate\n"
-msgstr "Kan ikke udgive\n"
+msgid "Cannot impersonate.\n"
+msgstr "Kan ikke udgive.\n"
 
 #: winerror.mc:2246
-msgid "Invalid transaction state\n"
-msgstr "Ugyldig transaktions tilstand\n"
+msgid "Invalid transaction state.\n"
+msgstr "Ugyldig transaktions tilstand.\n"
 
 #: winerror.mc:2251
-msgid "Security DB commit failure\n"
-msgstr "Fejl ved tildelinger til Sikkerhed Databasen\n"
+msgid "Security DB commit failure.\n"
+msgstr "Fejl ved tildelinger til Sikkerhed Databasen.\n"
 
 #: winerror.mc:2256
-msgid "Account is built-in\n"
-msgstr "Konto er indbygget\n"
+msgid "Account is built-in.\n"
+msgstr "Konto er indbygget.\n"
 
 #: winerror.mc:2261
-msgid "Group is built-in\n"
-msgstr "Gruppen er indbygget\n"
+msgid "Group is built-in.\n"
+msgstr "Gruppen er indbygget.\n"
 
 #: winerror.mc:2266
-msgid "User is built-in\n"
-msgstr "Brugeren er indbygget\n"
+msgid "User is built-in.\n"
+msgstr "Brugeren er indbygget.\n"
 
 #: winerror.mc:2271
-msgid "Group is primary for user\n"
-msgstr "Gruppen er primær for brugeren\n"
+msgid "Group is primary for user.\n"
+msgstr "Gruppen er primær for brugeren.\n"
 
 #: winerror.mc:2276
-msgid "Token already in use\n"
-msgstr "Token er allerede i brug\n"
+msgid "Token already in use.\n"
+msgstr "Token er allerede i brug.\n"
 
 #: winerror.mc:2281
-msgid "No such local group\n"
-msgstr "Der findes ikke en sådan lokal gruppe\n"
+msgid "No such local group.\n"
+msgstr "Der findes ikke en sådan lokal gruppe.\n"
 
 #: winerror.mc:2286
-msgid "User not in local group\n"
-msgstr "Bruger er ikke i lokal gruppe\n"
+msgid "User not in local group.\n"
+msgstr "Bruger er ikke i lokal gruppe.\n"
 
 #: winerror.mc:2291
-msgid "User already in local group\n"
-msgstr "Bruger er allerede i lokal gruppen\n"
+msgid "User already in local group.\n"
+msgstr "Bruger er allerede i lokal gruppen.\n"
 
 #: winerror.mc:2296
-msgid "Local group already exists\n"
-msgstr "Lokale gruppen eksisterer allerede\n"
+msgid "Local group already exists.\n"
+msgstr "Lokale gruppen eksisterer allerede.\n"
 
 #: winerror.mc:2301 winerror.mc:2326
-msgid "Logon type not granted\n"
-msgstr "Login type blev ikke tildelt\n"
+msgid "Logon type not granted.\n"
+msgstr "Login type blev ikke tildelt.\n"
 
 #: winerror.mc:2306
-msgid "Too many secrets\n"
-msgstr "For mange hemligheder\n"
+msgid "Too many secrets.\n"
+msgstr "For mange hemligheder.\n"
 
 #: winerror.mc:2311
-msgid "Secret too long\n"
-msgstr "Hemmelighed er for lang\n"
+msgid "Secret too long.\n"
+msgstr "Hemmelighed er for lang.\n"
 
 #: winerror.mc:2316
-msgid "Internal security DB error\n"
-msgstr "Intern sikkerhedsdatabase fejl\n"
+msgid "Internal security DB error.\n"
+msgstr "Intern sikkerhedsdatabase fejl.\n"
 
 #: winerror.mc:2321
-msgid "Too many context IDs\n"
-msgstr "Alt for mange sammenhængs id'er\n"
+msgid "Too many context IDs.\n"
+msgstr "Alt for mange sammenhængs id'er.\n"
 
 #: winerror.mc:2331
-msgid "Cross-encrypted NT password required\n"
-msgstr "Kryds krypteret NT adgangskode påkræves\n"
+msgid "Cross-encrypted NT password required.\n"
+msgstr "Kryds krypteret NT adgangskode påkræves.\n"
 
 #: winerror.mc:2336
-msgid "No such member\n"
-msgstr "Medlem findes ikke\n"
+msgid "No such member.\n"
+msgstr "Medlem findes ikke.\n"
 
 #: winerror.mc:2341
-msgid "Invalid member\n"
-msgstr "Ugyldigt medlem\n"
+msgid "Invalid member.\n"
+msgstr "Ugyldigt medlem.\n"
 
 #: winerror.mc:2346
-msgid "Too many SIDs\n"
-msgstr "For mange SIDs\n"
+msgid "Too many SIDs.\n"
+msgstr "For mange SIDs.\n"
 
 #: winerror.mc:2351
-msgid "Cross-encrypted LM password required\n"
-msgstr "Kryds krypteret LM password påkræves\n"
+msgid "Cross-encrypted LM password required.\n"
+msgstr "Kryds krypteret LM password påkræves.\n"
 
 #: winerror.mc:2356
-msgid "No inheritable components\n"
-msgstr "Ingen arvelige komponenter\n"
+msgid "No inheritable components.\n"
+msgstr "Ingen arvelige komponenter.\n"
 
 #: winerror.mc:2361
-msgid "File or directory corrupt\n"
-msgstr "Fil eller mappe er korrupt\n"
+msgid "File or directory corrupt.\n"
+msgstr "Fil eller mappe er korrupt.\n"
 
 #: winerror.mc:2366
-msgid "Disk is corrupt\n"
-msgstr "Disken er korrupt\n"
+msgid "Disk is corrupt.\n"
+msgstr "Disken er korrupt.\n"
 
 #: winerror.mc:2371
-msgid "No user session key\n"
-msgstr "Ingen sessionsnøgle for bruger\n"
+msgid "No user session key.\n"
+msgstr "Ingen sessionsnøgle for bruger.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded\n"
-msgstr "Licens kvote overskrevet\n"
+msgid "Licence quota exceeded.\n"
+msgstr "Licens kvote overskrevet.\n"
 
 #: winerror.mc:2381
 #, fuzzy
-msgid "Wrong target name\n"
-msgstr "Intet indgangs navn\n"
+msgid "Wrong target name.\n"
+msgstr "Intet indgangs navn.\n"
 
 #: winerror.mc:2386
 #, fuzzy
-msgid "Mutual authentication failed\n"
-msgstr "Ugyldig autentificering identitet\n"
+msgid "Mutual authentication failed.\n"
+msgstr "Ugyldig autentificering identitet.\n"
 
 #: winerror.mc:2391
-msgid "Time skew between client and server\n"
+msgid "Time skew between client and server.\n"
 msgstr ""
 
 #: winerror.mc:2396
-msgid "Invalid window handle\n"
-msgstr "Ugyldig vindues handle\n"
+msgid "Invalid window handle.\n"
+msgstr "Ugyldig vindues handle.\n"
 
 #: winerror.mc:2401
-msgid "Invalid menu handle\n"
-msgstr "Ugyldig menu handle\n"
+msgid "Invalid menu handle.\n"
+msgstr "Ugyldig menu handle.\n"
 
 #: winerror.mc:2406
-msgid "Invalid cursor handle\n"
-msgstr "Ugyldig markør handle\n"
+msgid "Invalid cursor handle.\n"
+msgstr "Ugyldig markør handle.\n"
 
 #: winerror.mc:2411
-msgid "Invalid accelerator table handle\n"
-msgstr "Ugyldig accelerator tabel handle\n"
+msgid "Invalid accelerator table handle.\n"
+msgstr "Ugyldig accelerator tabel handle.\n"
 
 #: winerror.mc:2416
-msgid "Invalid hook handle\n"
-msgstr "Ugyldig hook handle\n"
+msgid "Invalid hook handle.\n"
+msgstr "Ugyldig hook handle.\n"
 
 #: winerror.mc:2421
-msgid "Invalid DWP handle\n"
-msgstr "Ugyldig DWP handle\n"
+msgid "Invalid DWP handle.\n"
+msgstr "Ugyldig DWP handle.\n"
 
 #: winerror.mc:2426
-msgid "Can't create top-level child window\n"
-msgstr "Kan ikke oprette top-niveau child vindue\n"
+msgid "Can't create top-level child window.\n"
+msgstr "Kan ikke oprette top-niveau child vindue.\n"
 
 #: winerror.mc:2431
-msgid "Can't find window class\n"
-msgstr "Kan ikke finde vindues klasse\n"
+msgid "Can't find window class.\n"
+msgstr "Kan ikke finde vindues klasse.\n"
 
 #: winerror.mc:2436
-msgid "Window owned by another thread\n"
-msgstr "Vindue ejes af en anden tråd\n"
+msgid "Window owned by another thread.\n"
+msgstr "Vindue ejes af en anden tråd.\n"
 
 #: winerror.mc:2441
-msgid "Hotkey already registered\n"
-msgstr "Genvejstast findes allerede\n"
+msgid "Hotkey already registered.\n"
+msgstr "Genvejstast findes allerede.\n"
 
 #: winerror.mc:2446
-msgid "Class already exists\n"
-msgstr "Klasse eksisterer allerede\n"
+msgid "Class already exists.\n"
+msgstr "Klasse eksisterer allerede.\n"
 
 #: winerror.mc:2451
-msgid "Class does not exist\n"
-msgstr "Klasse eksisterer ikke\n"
+msgid "Class does not exist.\n"
+msgstr "Klasse eksisterer ikke.\n"
 
 #: winerror.mc:2456
-msgid "Class has open windows\n"
-msgstr "Klasse har åbne vinduer\n"
+msgid "Class has open windows.\n"
+msgstr "Klasse har åbne vinduer.\n"
 
 #: winerror.mc:2461
-msgid "Invalid index\n"
-msgstr "Ugyldigt indeks\n"
+msgid "Invalid index.\n"
+msgstr "Ugyldigt indeks.\n"
 
 #: winerror.mc:2466
-msgid "Invalid icon handle\n"
-msgstr "Ugyldig ikon handle\n"
+msgid "Invalid icon handle.\n"
+msgstr "Ugyldig ikon handle.\n"
 
 #: winerror.mc:2471
-msgid "Private dialog index\n"
-msgstr "Private dialog indeks\n"
+msgid "Private dialog index.\n"
+msgstr "Private dialog indeks.\n"
 
 #: winerror.mc:2476
 #, fuzzy
-msgid "List box ID not found\n"
-msgstr "Listbox ID ikke fundet\n"
+msgid "List box ID not found.\n"
+msgstr "Listbox ID ikke fundet.\n"
 
 #: winerror.mc:2481
-msgid "No wildcard characters\n"
-msgstr "Ingen jokertegn\n"
+msgid "No wildcard characters.\n"
+msgstr "Ingen jokertegn.\n"
 
 #: winerror.mc:2486
-msgid "Clipboard not open\n"
-msgstr "Udklipsholder ikke åben\n"
+msgid "Clipboard not open.\n"
+msgstr "Udklipsholder ikke åben.\n"
 
 #: winerror.mc:2491
-msgid "Hotkey not registered\n"
-msgstr "Genvejstest ikke registret\n"
+msgid "Hotkey not registered.\n"
+msgstr "Genvejstest ikke registret.\n"
 
 #: winerror.mc:2496
-msgid "Not a dialog window\n"
-msgstr "Ke et dialogvindue\n"
+msgid "Not a dialog window.\n"
+msgstr "Ke et dialogvindue.\n"
 
 #: winerror.mc:2501
-msgid "Control ID not found\n"
-msgstr "Kontrol ID ikke fundet\n"
+msgid "Control ID not found.\n"
+msgstr "Kontrol ID ikke fundet.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message\n"
-msgstr "Ugyldig combobox besked\n"
+msgid "Invalid combobox message.\n"
+msgstr "Ugyldig combobox besked.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window\n"
-msgstr "Ikke et combobox vindue\n"
+msgid "Not a combobox window.\n"
+msgstr "Ikke et combobox vindue.\n"
 
 #: winerror.mc:2516
-msgid "Invalid edit height\n"
-msgstr "Ugyldig edit højde\n"
+msgid "Invalid edit height.\n"
+msgstr "Ugyldig edit højde.\n"
 
 #: winerror.mc:2521
-msgid "DC not found\n"
-msgstr "DC ikke fundet\n"
+msgid "DC not found.\n"
+msgstr "DC ikke fundet.\n"
 
 #: winerror.mc:2526
-msgid "Invalid hook filter\n"
-msgstr "Ugyldig hook filter\n"
+msgid "Invalid hook filter.\n"
+msgstr "Ugyldig hook filter.\n"
 
 #: winerror.mc:2531
-msgid "Invalid filter procedure\n"
+msgid "Invalid filter procedure.\n"
 msgstr ""
 
 #: winerror.mc:2536
-msgid "Hook procedure needs module handle\n"
-msgstr "Hook procedure skal bruge modul handle\n"
+msgid "Hook procedure needs module handle.\n"
+msgstr "Hook procedure skal bruge modul handle.\n"
 
 #: winerror.mc:2541
-msgid "Global-only hook procedure\n"
-msgstr "Global-kun hook procedure\n"
+msgid "Global-only hook procedure.\n"
+msgstr "Global-kun hook procedure.\n"
 
 #: winerror.mc:2546
-msgid "Journal hook already set\n"
-msgstr "Journal hook allerede sat\n"
+msgid "Journal hook already set.\n"
+msgstr "Journal hook allerede sat.\n"
 
 #: winerror.mc:2551
-msgid "Hook procedure not installed\n"
-msgstr "Hook procedure ikke installeret\n"
+msgid "Hook procedure not installed.\n"
+msgstr "Hook procedure ikke installeret.\n"
 
 #: winerror.mc:2556
 #, fuzzy
-msgid "Invalid list box message\n"
-msgstr "Ugyldig listbox besked\n"
+msgid "Invalid list box message.\n"
+msgstr "Ugyldig listbox besked.\n"
 
 #: winerror.mc:2561
-msgid "Invalid LB_SETCOUNT sent\n"
-msgstr "Ugyldig LB_SETCOUNT sendt\n"
+msgid "Invalid LB_SETCOUNT sent.\n"
+msgstr "Ugyldig LB_SETCOUNT sendt.\n"
 
 #: winerror.mc:2566
 #, fuzzy
-msgid "No tab stops on this list box\n"
-msgstr "Ingen tabstops på denne listbox\n"
+msgid "No tab stops on this list box.\n"
+msgstr "Ingen tabstops på denne listbox.\n"
 
 #: winerror.mc:2571
-msgid "Can't destroy object owned by another thread\n"
-msgstr "Kan ikke ødelægge objekt ejet af en anden tråd\n"
+msgid "Can't destroy object owned by another thread.\n"
+msgstr "Kan ikke ødelægge objekt ejet af en anden tråd.\n"
 
 #: winerror.mc:2576
-msgid "Child window menus not allowed\n"
-msgstr "Child vindue menuer ikke tilladt\n"
+msgid "Child window menus not allowed.\n"
+msgstr "Child vindue menuer ikke tilladt.\n"
 
 #: winerror.mc:2581
-msgid "Window has no system menu\n"
-msgstr "Vindue har ikke en system menu\n"
+msgid "Window has no system menu.\n"
+msgstr "Vindue har ikke en system menu.\n"
 
 #: winerror.mc:2586
 #, fuzzy
-msgid "Invalid message box style\n"
-msgstr "Ugyldig messagebox stil\n"
+msgid "Invalid message box style.\n"
+msgstr "Ugyldig messagebox stil.\n"
 
 #: winerror.mc:2591
-msgid "Invalid SPI parameter\n"
-msgstr "Ugyldig SPI parameter\n"
+msgid "Invalid SPI parameter.\n"
+msgstr "Ugyldig SPI parameter.\n"
 
 #: winerror.mc:2596
-msgid "Screen already locked\n"
-msgstr "Skærm allerede låst\n"
+msgid "Screen already locked.\n"
+msgstr "Skærm allerede låst.\n"
 
 #: winerror.mc:2601
-msgid "Window handles have different parents\n"
-msgstr "Vindue handles har forskellige forældre\n"
+msgid "Window handles have different parents.\n"
+msgstr "Vindue handles har forskellige forældre.\n"
 
 #: winerror.mc:2606
-msgid "Not a child window\n"
-msgstr "Ikke et child vindue\n"
+msgid "Not a child window.\n"
+msgstr "Ikke et child vindue.\n"
 
 #: winerror.mc:2611
-msgid "Invalid GW command\n"
-msgstr "Ugyldig GW kommando\n"
+msgid "Invalid GW command.\n"
+msgstr "Ugyldig GW kommando.\n"
 
 #: winerror.mc:2616
-msgid "Invalid thread ID\n"
-msgstr "Ugyldig tråd ID\n"
+msgid "Invalid thread ID.\n"
+msgstr "Ugyldig tråd ID.\n"
 
 #: winerror.mc:2621
-msgid "Not an MDI child window\n"
-msgstr "Ikke et MDI child vindue\n"
+msgid "Not an MDI child window.\n"
+msgstr "Ikke et MDI child vindue.\n"
 
 #: winerror.mc:2626
-msgid "Popup menu already active\n"
-msgstr "Popup-menuen er allerede aktiv\n"
+msgid "Popup menu already active.\n"
+msgstr "Popup-menuen er allerede aktiv.\n"
 
 #: winerror.mc:2631
-msgid "No scrollbars\n"
-msgstr "Ingen rullebjælker\n"
+msgid "No scrollbars.\n"
+msgstr "Ingen rullebjælker.\n"
 
 #: winerror.mc:2636
-msgid "Invalid scrollbar range\n"
-msgstr "Ugyldig rullebjælke omkreds\n"
+msgid "Invalid scrollbar range.\n"
+msgstr "Ugyldig rullebjælke omkreds.\n"
 
 #: winerror.mc:2641
-msgid "Invalid ShowWin command\n"
-msgstr "Ugyldig ShowWin kommando\n"
+msgid "Invalid ShowWin command.\n"
+msgstr "Ugyldig ShowWin kommando.\n"
 
 #: winerror.mc:2646
-msgid "No system resources\n"
-msgstr "Ingen system ressourcer\n"
+msgid "No system resources.\n"
+msgstr "Ingen system ressourcer.\n"
 
 #: winerror.mc:2651
 #, fuzzy
-msgid "No non-paged system resources\n"
-msgstr "Ingen nonpaged system ressourcer\n"
+msgid "No non-paged system resources.\n"
+msgstr "Ingen nonpaged system ressourcer.\n"
 
 #: winerror.mc:2656
-msgid "No paged system resources\n"
-msgstr "Ingen paged system ressourcer\n"
+msgid "No paged system resources.\n"
+msgstr "Ingen paged system ressourcer.\n"
 
 #: winerror.mc:2661
-msgid "No working set quota\n"
-msgstr "Ingen working set kvota\n"
+msgid "No working set quota.\n"
+msgstr "Ingen working set kvota.\n"
 
 #: winerror.mc:2666
 #, fuzzy
-msgid "No page file quota\n"
-msgstr "Ingen sidefils kvota\n"
+msgid "No page file quota.\n"
+msgstr "Ingen sidefils kvota.\n"
 
 #: winerror.mc:2671
-msgid "Exceeded commitment limit\n"
-msgstr "Overskredet engagement grænse\n"
+msgid "Exceeded commitment limit.\n"
+msgstr "Overskredet engagement grænse.\n"
 
 #: winerror.mc:2676
-msgid "Menu item not found\n"
-msgstr "Menupunkt ikke fundet\n"
+msgid "Menu item not found.\n"
+msgstr "Menupunkt ikke fundet.\n"
 
 #: winerror.mc:2681
 #, fuzzy
-msgid "Invalid keyboard handle\n"
-msgstr "Ugyldig mål handle\n"
+msgid "Invalid keyboard handle.\n"
+msgstr "Ugyldig mål handle.\n"
 
 #: winerror.mc:2686
 #, fuzzy
-msgid "Hook type not allowed\n"
-msgstr "Login type blev ikke tildelt\n"
+msgid "Hook type not allowed.\n"
+msgstr "Login type blev ikke tildelt.\n"
 
 #: winerror.mc:2691
-msgid "Interactive window station required\n"
+msgid "Interactive window station required.\n"
 msgstr ""
 
 #: winerror.mc:2696
 #, fuzzy
-msgid "Timeout\n"
-msgstr "Tidsafbrud"
+msgid "Timeout.\n"
+msgstr "Tidsafbrud.\n"
 
 #: winerror.mc:2701
 #, fuzzy
-msgid "Invalid monitor handle\n"
-msgstr "Ugyldig menu handle\n"
+msgid "Invalid monitor handle.\n"
+msgstr "Ugyldig menu handle.\n"
 
 #: winerror.mc:2706
-msgid "Event log file corrupt\n"
-msgstr "Begivenheds log filen er korrupt\n"
+msgid "Event log file corrupt.\n"
+msgstr "Begivenheds log filen er korrupt.\n"
 
 #: winerror.mc:2711
-msgid "Event log can't start\n"
-msgstr "Begivenheds loggen kunne ikke starte\n"
+msgid "Event log can't start.\n"
+msgstr "Begivenheds loggen kunne ikke starte.\n"
 
 #: winerror.mc:2716
-msgid "Event log file full\n"
-msgstr "Begivenheds log filen er fuld\n"
+msgid "Event log file full.\n"
+msgstr "Begivenheds log filen er fuld.\n"
 
 #: winerror.mc:2721
-msgid "Event log file changed\n"
-msgstr "Begivenheds log filen skiftet\n"
+msgid "Event log file changed.\n"
+msgstr "Begivenheds log filen skiftet.\n"
 
 #: winerror.mc:2726
 #, fuzzy
-msgid "Installer service failed\n"
-msgstr "Ugyldigt service navn\n"
+msgid "Installer service failed.\n"
+msgstr "Ugyldigt service navn.\n"
 
 #: winerror.mc:2731
 #, fuzzy
-msgid "Installation aborted by user\n"
-msgstr "Installations Programmer"
+msgid "Installation aborted by user.\n"
+msgstr "Installations Programmer.\n"
 
 #: winerror.mc:2736
 #, fuzzy
-msgid "Installation failure\n"
-msgstr "Partitions fejl\n"
+msgid "Installation failure.\n"
+msgstr "Partitions fejl.\n"
 
 #: winerror.mc:2741
 #, fuzzy
-msgid "Installation suspended\n"
-msgstr "Installations Programmer"
+msgid "Installation suspended.\n"
+msgstr "Installations Programmer.\n"
 
 #: winerror.mc:2746
 #, fuzzy
-msgid "Unknown product\n"
-msgstr "Ukendt port\n"
+msgid "Unknown product.\n"
+msgstr "Ukendt port.\n"
 
 #: winerror.mc:2751
 #, fuzzy
-msgid "Unknown feature\n"
-msgstr "Ukendt feature i '%s'"
+msgid "Unknown feature.\n"
+msgstr "Ukendt feature i '%s'.\n"
 
 #: winerror.mc:2756
 #, fuzzy
-msgid "Unknown component\n"
-msgstr "Ukendt port\n"
+msgid "Unknown component.\n"
+msgstr "Ukendt port.\n"
 
 #: winerror.mc:2761
 #, fuzzy
-msgid "Unknown property\n"
-msgstr "Ukendt port\n"
+msgid "Unknown property.\n"
+msgstr "Ukendt port.\n"
 
 #: winerror.mc:2766
 #, fuzzy
-msgid "Invalid handle state\n"
-msgstr "Ugyldig handle\n"
+msgid "Invalid handle state.\n"
+msgstr "Ugyldig handle.\n"
 
 #: winerror.mc:2771
 #, fuzzy
-msgid "Bad configuration\n"
-msgstr "Wine configurering"
+msgid "Bad configuration.\n"
+msgstr "Wine configurering.\n"
 
 #: winerror.mc:2776
-msgid "Index is missing\n"
+msgid "Index is missing.\n"
 msgstr ""
 
 #: winerror.mc:2781
 #, fuzzy
-msgid "Installation source is missing\n"
+msgid "Installation source is missing.\n"
 msgstr "featurens installationskilde mangler."
 
 #: winerror.mc:2786
 #, fuzzy
-msgid "Wrong installation package version\n"
-msgstr "Forkert serialising pakke version\n"
+msgid "Wrong installation package version.\n"
+msgstr "Forkert serialising pakke version.\n"
 
 #: winerror.mc:2791
 #, fuzzy
-msgid "Product uninstalled\n"
-msgstr "Hook procedure ikke installeret\n"
+msgid "Product uninstalled.\n"
+msgstr "Hook procedure ikke installeret.\n"
 
 #: winerror.mc:2796
 #, fuzzy
-msgid "Invalid query syntax\n"
-msgstr "Ugyldig navne syntaks\n"
+msgid "Invalid query syntax.\n"
+msgstr "Ugyldig navne syntaks.\n"
 
 #: winerror.mc:2801
 #, fuzzy
-msgid "Invalid field\n"
-msgstr "Ugyldig tid\n"
+msgid "Invalid field.\n"
+msgstr "Ugyldig tid.\n"
 
 #: winerror.mc:2806
 #, fuzzy
-msgid "Device removed\n"
-msgstr "Enheden er allerede husket\n"
+msgid "Device removed.\n"
+msgstr "Enheden er allerede husket.\n"
 
 #: winerror.mc:2811
 #, fuzzy
-msgid "Installation already running\n"
-msgstr "Servicen kører allerede\n"
+msgid "Installation already running.\n"
+msgstr "Servicen kører allerede.\n"
 
 #: winerror.mc:2816
-msgid "Installation package failed to open\n"
+msgid "Installation package failed to open.\n"
 msgstr ""
 
 #: winerror.mc:2821
 #, fuzzy
-msgid "Installation package is invalid\n"
-msgstr "Installations Programmer"
+msgid "Installation package is invalid.\n"
+msgstr "Installations Programmer.\n"
 
 #: winerror.mc:2826
-msgid "Installer user interface failed\n"
+msgid "Installer user interface failed.\n"
 msgstr ""
 
 #: winerror.mc:2831
-msgid "Failed to open installation log file\n"
+msgid "Failed to open installation log file.\n"
 msgstr ""
 
 #: winerror.mc:2836
 #, fuzzy
-msgid "Installation language not supported\n"
-msgstr "Operationen er ikke understøttet\n"
+msgid "Installation language not supported.\n"
+msgstr "Operationen er ikke understøttet.\n"
 
 #: winerror.mc:2841
-msgid "Installation transform failed to apply\n"
+msgid "Installation transform failed to apply.\n"
 msgstr ""
 
 #: winerror.mc:2846
 #, fuzzy
-msgid "Installation package rejected\n"
-msgstr "Installations Programmer"
+msgid "Installation package rejected.\n"
+msgstr "Installations Programmer.\n"
 
 #: winerror.mc:2851
 #, fuzzy
-msgid "Function could not be called\n"
-msgstr "Begrænsning af forbindelses antal nået\n"
+msgid "Function could not be called.\n"
+msgstr "Begrænsning af forbindelses antal nået.\n"
 
 #: winerror.mc:2856
 #, fuzzy
-msgid "Function failed\n"
-msgstr "Funktion forventet"
+msgid "Function failed.\n"
+msgstr "Funktion forventet.\n"
 
 #: winerror.mc:2861
 #, fuzzy
-msgid "Invalid table\n"
-msgstr "Ugyldigt tag\n"
+msgid "Invalid table.\n"
+msgstr "Ugyldigt tag.\n"
 
 #: winerror.mc:2866
 #, fuzzy
-msgid "Data type mismatch\n"
-msgstr "Maskintype passer ikke\n"
+msgid "Data type mismatch.\n"
+msgstr "Maskintype passer ikke.\n"
 
 #: winerror.mc:2871 winerror.mc:3081
-msgid "Unsupported type\n"
-msgstr "Ikke-understøttet type\n"
+msgid "Unsupported type.\n"
+msgstr "Ikke-understøttet type.\n"
 
 #: winerror.mc:2876
 #, fuzzy
-msgid "Creation failed\n"
-msgstr "Åbning mislykkede\n"
+msgid "Creation failed.\n"
+msgstr "Åbning mislykkede.\n"
 
 #: winerror.mc:2881
 #, fuzzy
-msgid "Temporary directory not writable\n"
-msgstr "Fil eller mappe er korrupt\n"
+msgid "Temporary directory not writable.\n"
+msgstr "Fil eller mappe er korrupt.\n"
 
 #: winerror.mc:2886
 #, fuzzy
-msgid "Installation platform not supported\n"
-msgstr "Operationen er ikke understøttet\n"
+msgid "Installation platform not supported.\n"
+msgstr "Operationen er ikke understøttet.\n"
 
 #: winerror.mc:2891
 #, fuzzy
-msgid "Installer not used\n"
-msgstr "Interface ikke fundet\n"
+msgid "Installer not used.\n"
+msgstr "Interface ikke fundet.\n"
 
 #: winerror.mc:2896
 #, fuzzy
-msgid "Failed to open the patch package\n"
-msgstr "Kunne ikke åbne «%s»\n"
+msgid "Failed to open the patch package.\n"
+msgstr "Kunne ikke åbne «%s».\n"
 
 #: winerror.mc:2901
 #, fuzzy
-msgid "Invalid patch package\n"
-msgstr "Ugyldigt tag\n"
+msgid "Invalid patch package.\n"
+msgstr "Ugyldigt tag.\n"
 
 #: winerror.mc:2906
 #, fuzzy
-msgid "Unsupported patch package\n"
-msgstr "Ikke-understøttet type\n"
+msgid "Unsupported patch package.\n"
+msgstr "Ikke-understøttet type.\n"
 
 #: winerror.mc:2911
 #, fuzzy
-msgid "Another version is installed\n"
-msgstr "Printerens driver er allerede installeret\n"
+msgid "Another version is installed.\n"
+msgstr "Printerens driver er allerede installeret.\n"
 
 #: winerror.mc:2916
 #, fuzzy
-msgid "Invalid command line\n"
-msgstr "Ugyldig GW kommando\n"
+msgid "Invalid command line.\n"
+msgstr "Ugyldig GW kommando.\n"
 
 #: winerror.mc:2921
-msgid "Remote installation not allowed\n"
+msgid "Remote installation not allowed.\n"
 msgstr ""
 
 #: winerror.mc:2926
-msgid "Reboot initiated after successful install\n"
+msgid "Reboot initiated after successful install.\n"
 msgstr ""
 
 #: winerror.mc:2931
-msgid "Invalid string binding\n"
-msgstr "Ugyldig streng bindning\n"
+msgid "Invalid string binding.\n"
+msgstr "Ugyldig streng bindning.\n"
 
 #: winerror.mc:2936
-msgid "Wrong kind of binding\n"
-msgstr "Forkert slags binding\n"
+msgid "Wrong kind of binding.\n"
+msgstr "Forkert slags binding.\n"
 
 #: winerror.mc:2941
-msgid "Invalid binding\n"
-msgstr "Ugyldig binding\n"
+msgid "Invalid binding.\n"
+msgstr "Ugyldig binding.\n"
 
 #: winerror.mc:2946
-msgid "RPC protocol sequence not supported\n"
-msgstr "RPC-protokol sekvens ikke understøttet\n"
+msgid "RPC protocol sequence not supported.\n"
+msgstr "RPC-protokol sekvens ikke understøttet.\n"
 
 #: winerror.mc:2951
-msgid "Invalid RPC protocol sequence\n"
-msgstr "Ugyldig RPC-protokol sekvens\n"
+msgid "Invalid RPC protocol sequence.\n"
+msgstr "Ugyldig RPC-protokol sekvens.\n"
 
 #: winerror.mc:2956
-msgid "Invalid string UUID\n"
-msgstr "Ugyldig streng UUID\n"
+msgid "Invalid string UUID.\n"
+msgstr "Ugyldig streng UUID.\n"
 
 #: winerror.mc:2961
-msgid "Invalid endpoint format\n"
-msgstr "Ugyldigt endpoint format\n"
+msgid "Invalid endpoint format.\n"
+msgstr "Ugyldigt endpoint format.\n"
 
 #: winerror.mc:2966
-msgid "Invalid network address\n"
-msgstr "Ugyldig netværksadresse\n"
+msgid "Invalid network address.\n"
+msgstr "Ugyldig netværksadresse.\n"
 
 #: winerror.mc:2971
-msgid "No endpoint found\n"
-msgstr "Ingen endpoint fundet\n"
+msgid "No endpoint found.\n"
+msgstr "Ingen endpoint fundet.\n"
 
 #: winerror.mc:2976
-msgid "Invalid timeout value\n"
-msgstr "Ugyldig udløbs tid\n"
+msgid "Invalid timeout value.\n"
+msgstr "Ugyldig udløbs tid.\n"
 
 #: winerror.mc:2981
-msgid "Object UUID not found\n"
-msgstr "Objekt UUID ikke fundet\n"
+msgid "Object UUID not found.\n"
+msgstr "Objekt UUID ikke fundet.\n"
 
 #: winerror.mc:2986
-msgid "UUID already registered\n"
-msgstr "UUID allerede registreret\n"
+msgid "UUID already registered.\n"
+msgstr "UUID allerede registreret.\n"
 
 #: winerror.mc:2991
-msgid "UUID type already registered\n"
-msgstr "UUID type allerede registreret\n"
+msgid "UUID type already registered.\n"
+msgstr "UUID type allerede registreret.\n"
 
 #: winerror.mc:2996
-msgid "Server already listening\n"
-msgstr "Server lytter allerede\n"
+msgid "Server already listening.\n"
+msgstr "Server lytter allerede.\n"
 
 #: winerror.mc:3001
-msgid "No protocol sequences registered\n"
-msgstr "Ingen protokol sekvenser registreret\n"
+msgid "No protocol sequences registered.\n"
+msgstr "Ingen protokol sekvenser registreret.\n"
 
 #: winerror.mc:3006
-msgid "RPC server not listening\n"
-msgstr "RPC serveren lytter ikke\n"
+msgid "RPC server not listening.\n"
+msgstr "RPC serveren lytter ikke.\n"
 
 #: winerror.mc:3011
-msgid "Unknown manager type\n"
-msgstr "Ukendt manager type\n"
+msgid "Unknown manager type.\n"
+msgstr "Ukendt manager type.\n"
 
 #: winerror.mc:3016
-msgid "Unknown interface\n"
-msgstr "Ukendt interface\n"
+msgid "Unknown interface.\n"
+msgstr "Ukendt interface.\n"
 
 #: winerror.mc:3021
-msgid "No bindings\n"
-msgstr "Ingen bindninger\n"
+msgid "No bindings.\n"
+msgstr "Ingen bindninger.\n"
 
 #: winerror.mc:3026
-msgid "No protocol sequences\n"
-msgstr "Ingen protokol sekvenser\n"
+msgid "No protocol sequences.\n"
+msgstr "Ingen protokol sekvenser.\n"
 
 #: winerror.mc:3031
-msgid "Can't create endpoint\n"
-msgstr "Kan ikke oprette slutpunkt\n"
+msgid "Can't create endpoint.\n"
+msgstr "Kan ikke oprette slutpunkt.\n"
 
 #: winerror.mc:3036
-msgid "Out of resources\n"
-msgstr "Der er ikke flere ressourcer\n"
+msgid "Out of resources.\n"
+msgstr "Der er ikke flere ressourcer.\n"
 
 #: winerror.mc:3041
-msgid "RPC server unavailable\n"
-msgstr "RPC serveren er ikke tilgængelig\n"
+msgid "RPC server unavailable.\n"
+msgstr "RPC serveren er ikke tilgængelig.\n"
 
 #: winerror.mc:3046
-msgid "RPC server too busy\n"
-msgstr "RPC serveren har for travlt\n"
+msgid "RPC server too busy.\n"
+msgstr "RPC serveren har for travlt.\n"
 
 #: winerror.mc:3051
-msgid "Invalid network options\n"
-msgstr "Ugyldige netværksindstillinger\n"
+msgid "Invalid network options.\n"
+msgstr "Ugyldige netværksindstillinger.\n"
 
 #: winerror.mc:3056
-msgid "No RPC call active\n"
-msgstr "Ingen RPC-kald aktive\n"
+msgid "No RPC call active.\n"
+msgstr "Ingen RPC-kald aktive.\n"
 
 #: winerror.mc:3061
-msgid "RPC call failed\n"
-msgstr "RPC-kald mislykkedes\n"
+msgid "RPC call failed.\n"
+msgstr "RPC-kald mislykkedes.\n"
 
 #: winerror.mc:3066
-msgid "RPC call failed and didn't execute\n"
-msgstr "RPC-kald mislykkedes, og udførte dem ikke\n"
+msgid "RPC call failed and didn't execute.\n"
+msgstr "RPC-kald mislykkedes, og udførte dem ikke.\n"
 
 #: winerror.mc:3071
-msgid "RPC protocol error\n"
-msgstr "RPC-protokol fejl\n"
+msgid "RPC protocol error.\n"
+msgstr "RPC-protokol fejl.\n"
 
 #: winerror.mc:3076
-msgid "Unsupported transfer syntax\n"
-msgstr "Ikke-understøttet overførsel syntaks\n"
+msgid "Unsupported transfer syntax.\n"
+msgstr "Ikke-understøttet overførsel syntaks.\n"
 
 #: winerror.mc:3086
-msgid "Invalid tag\n"
-msgstr "Ugyldigt tag\n"
+msgid "Invalid tag.\n"
+msgstr "Ugyldigt tag.\n"
 
 #: winerror.mc:3091
-msgid "Invalid array bounds\n"
-msgstr "Ugyldige tabelgrænser\n"
+msgid "Invalid array bounds.\n"
+msgstr "Ugyldige tabelgrænser.\n"
 
 #: winerror.mc:3096
-msgid "No entry name\n"
-msgstr "Intet indgangs navn\n"
+msgid "No entry name.\n"
+msgstr "Intet indgangs navn.\n"
 
 #: winerror.mc:3101
-msgid "Invalid name syntax\n"
-msgstr "Ugyldig navne syntaks\n"
+msgid "Invalid name syntax.\n"
+msgstr "Ugyldig navne syntaks.\n"
 
 #: winerror.mc:3106
-msgid "Unsupported name syntax\n"
-msgstr "Ikke-understøttet navne syntaks\n"
+msgid "Unsupported name syntax.\n"
+msgstr "Ikke-understøttet navne syntaks.\n"
 
 #: winerror.mc:3111
-msgid "No network address\n"
-msgstr "Ingen netværksadresse\n"
+msgid "No network address.\n"
+msgstr "Ingen netværksadresse.\n"
 
 #: winerror.mc:3116
-msgid "Duplicate endpoint\n"
-msgstr "Duplikere endpoint\n"
+msgid "Duplicate endpoint.\n"
+msgstr "Duplikere endpoint.\n"
 
 #: winerror.mc:3121
-msgid "Unknown authentication type\n"
-msgstr "Ukendt Godkendelsestype\n"
+msgid "Unknown authentication type.\n"
+msgstr "Ukendt Godkendelsestype.\n"
 
 #: winerror.mc:3126
-msgid "Maximum calls too low\n"
-msgstr "Maksimum antal af kald er sat for lavt\n"
+msgid "Maximum calls too low.\n"
+msgstr "Maksimum antal af kald er sat for lavt.\n"
 
 #: winerror.mc:3131
-msgid "String too long\n"
-msgstr "Strengen er for lang\n"
+msgid "String too long.\n"
+msgstr "Strengen er for lang.\n"
 
 #: winerror.mc:3136
-msgid "Protocol sequence not found\n"
-msgstr "Protokol sekvens ikke fundet\n"
+msgid "Protocol sequence not found.\n"
+msgstr "Protokol sekvens ikke fundet.\n"
 
 #: winerror.mc:3141
-msgid "Procedure number out of range\n"
-msgstr "Procedure nummere uden for rækkevidde\n"
+msgid "Procedure number out of range.\n"
+msgstr "Procedure nummere uden for rækkevidde.\n"
 
 #: winerror.mc:3146
-msgid "Binding has no authentication data\n"
-msgstr "Bindning har ingen godkendelse data\n"
+msgid "Binding has no authentication data.\n"
+msgstr "Bindning har ingen godkendelse data.\n"
 
 #: winerror.mc:3151
-msgid "Unknown authentication service\n"
-msgstr "Ukendt autentificering service\n"
+msgid "Unknown authentication service.\n"
+msgstr "Ukendt autentificering service.\n"
 
 #: winerror.mc:3156
-msgid "Unknown authentication level\n"
-msgstr "Ukendt godkendelsesniveau\n"
+msgid "Unknown authentication level.\n"
+msgstr "Ukendt godkendelsesniveau.\n"
 
 #: winerror.mc:3161
-msgid "Invalid authentication identity\n"
-msgstr "Ugyldig autentificering identitet\n"
+msgid "Invalid authentication identity.\n"
+msgstr "Ugyldig autentificering identitet.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service\n"
-msgstr "Ukendt tilladelses service\n"
+msgid "Unknown authorisation service.\n"
+msgstr "Ukendt tilladelses service.\n"
 
 #: winerror.mc:3171
-msgid "Invalid entry\n"
-msgstr "Ugyldig indgang\n"
+msgid "Invalid entry.\n"
+msgstr "Ugyldig indgang.\n"
 
 #: winerror.mc:3176
-msgid "Can't perform operation\n"
-msgstr "Kan ikke udføre operation\n"
+msgid "Can't perform operation.\n"
+msgstr "Kan ikke udføre operation.\n"
 
 #: winerror.mc:3181
-msgid "Endpoints not registered\n"
-msgstr "Endpoints er ikke registreret\n"
+msgid "Endpoints not registered.\n"
+msgstr "Endpoints er ikke registreret.\n"
 
 #: winerror.mc:3186
-msgid "Nothing to export\n"
-msgstr "Intet at eksportere\n"
+msgid "Nothing to export.\n"
+msgstr "Intet at eksportere.\n"
 
 #: winerror.mc:3191
-msgid "Incomplete name\n"
-msgstr "Ufuldstændigt navn\n"
+msgid "Incomplete name.\n"
+msgstr "Ufuldstændigt navn.\n"
 
 #: winerror.mc:3196
-msgid "Invalid version option\n"
-msgstr "Ugyldigt versions valg\n"
+msgid "Invalid version option.\n"
+msgstr "Ugyldigt versions valg.\n"
 
 #: winerror.mc:3201
-msgid "No more members\n"
-msgstr "Ikke flere medlemmer\n"
+msgid "No more members.\n"
+msgstr "Ikke flere medlemmer.\n"
 
 #: winerror.mc:3206
-msgid "Not all objects unexported\n"
-msgstr "Ikke alle objekter var exporteret\n"
+msgid "Not all objects unexported.\n"
+msgstr "Ikke alle objekter var exporteret.\n"
 
 #: winerror.mc:3211
-msgid "Interface not found\n"
-msgstr "Interface ikke fundet\n"
+msgid "Interface not found.\n"
+msgstr "Interface ikke fundet.\n"
 
 #: winerror.mc:3216
-msgid "Entry already exists\n"
-msgstr "Indgangen findes allerede\n"
+msgid "Entry already exists.\n"
+msgstr "Indgangen findes allerede.\n"
 
 #: winerror.mc:3221
-msgid "Entry not found\n"
-msgstr "Indgang ikke fundet\n"
+msgid "Entry not found.\n"
+msgstr "Indgang ikke fundet.\n"
 
 #: winerror.mc:3226
-msgid "Name service unavailable\n"
-msgstr "Navne service er ikke tilgængelig\n"
+msgid "Name service unavailable.\n"
+msgstr "Navne service er ikke tilgængelig.\n"
 
 #: winerror.mc:3231
-msgid "Invalid network address family\n"
-msgstr "Ugyldig netværksadresse familie\n"
+msgid "Invalid network address family.\n"
+msgstr "Ugyldig netværksadresse familie.\n"
 
 #: winerror.mc:3236
-msgid "Operation not supported\n"
-msgstr "Operationen er ikke understøttet\n"
+msgid "Operation not supported.\n"
+msgstr "Operationen er ikke understøttet.\n"
 
 #: winerror.mc:3241
-msgid "No security context available\n"
-msgstr "Ingen sikkerheds sammenhæng til rådighed\n"
+msgid "No security context available.\n"
+msgstr "Ingen sikkerheds sammenhæng til rådighed.\n"
 
 #: winerror.mc:3246
-msgid "RPCInternal error\n"
-msgstr "RPC intern-fejl\n"
+msgid "RPCInternal error.\n"
+msgstr "RPC intern-fejl.\n"
 
 #: winerror.mc:3251
-msgid "RPC divide-by-zero\n"
-msgstr "RPC divideret-med-nul\n"
+msgid "RPC divide-by-zero.\n"
+msgstr "RPC divideret-med-nul.\n"
 
 #: winerror.mc:3256
-msgid "Address error\n"
-msgstr "Adresse fejl\n"
+msgid "Address error.\n"
+msgstr "Adresse fejl.\n"
 
 #: winerror.mc:3261
-msgid "Floating-point divide-by-zero\n"
+msgid "Floating-point divide-by-zero.\n"
 msgstr ""
 
 #: winerror.mc:3266
-msgid "Floating-point underflow\n"
+msgid "Floating-point underflow.\n"
 msgstr ""
 
 #: winerror.mc:3271
-msgid "Floating-point overflow\n"
+msgid "Floating-point overflow.\n"
 msgstr ""
 
 #: winerror.mc:3276
-msgid "No more entries\n"
-msgstr "Ikke flere indgange\n"
+msgid "No more entries.\n"
+msgstr "Ikke flere indgange.\n"
 
 #: winerror.mc:3281
-msgid "Character translation table open failed\n"
-msgstr "Tegn oversættelse tabel kunne ikke åbnes\n"
+msgid "Character translation table open failed.\n"
+msgstr "Tegn oversættelse tabel kunne ikke åbnes.\n"
 
 #: winerror.mc:3286
-msgid "Character translation table file too small\n"
-msgstr "Tegn oversættelse tabel filen er for lille\n"
+msgid "Character translation table file too small.\n"
+msgstr "Tegn oversættelse tabel filen er for lille.\n"
 
 #: winerror.mc:3291
-msgid "Null context handle\n"
-msgstr "Null baggrund handle\n"
+msgid "Null context handle.\n"
+msgstr "Null baggrund handle.\n"
 
 #: winerror.mc:3296
-msgid "Context handle damaged\n"
-msgstr "Baggrunds handle ødelagt\n"
+msgid "Context handle damaged.\n"
+msgstr "Baggrunds handle ødelagt.\n"
 
 #: winerror.mc:3301
-msgid "Binding handle mismatch\n"
-msgstr "Bindnings handle passede ikke\n"
+msgid "Binding handle mismatch.\n"
+msgstr "Bindnings handle passede ikke.\n"
 
 #: winerror.mc:3306
-msgid "Cannot get call handle\n"
-msgstr "Kan ikke få fat i kald handle\n"
+msgid "Cannot get call handle.\n"
+msgstr "Kan ikke få fat i kald handle.\n"
 
 #: winerror.mc:3311
-msgid "Null reference pointer\n"
+msgid "Null reference pointer.\n"
 msgstr ""
 
 #: winerror.mc:3316
-msgid "Enumeration value out of range\n"
-msgstr "Opregnings værdi uden for intervallet\n"
+msgid "Enumeration value out of range.\n"
+msgstr "Opregnings værdi uden for intervallet.\n"
 
 #: winerror.mc:3321
-msgid "Byte count too small\n"
-msgstr "Der er et for lille byte antal\n"
+msgid "Byte count too small.\n"
+msgstr "Der er et for lille byte antal.\n"
 
 #: winerror.mc:3326
-msgid "Bad stub data\n"
-msgstr "Forkert stub data\n"
+msgid "Bad stub data.\n"
+msgstr "Forkert stub data.\n"
 
 #: winerror.mc:3331
-msgid "Invalid user buffer\n"
-msgstr "Ugyldig bruger buffer\n"
+msgid "Invalid user buffer.\n"
+msgstr "Ugyldig bruger buffer.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media\n"
-msgstr "Ukendt media\n"
+msgid "Unrecognised media.\n"
+msgstr "Ukendt media.\n"
 
 #: winerror.mc:3341
-msgid "No trust secret\n"
-msgstr "Der er ingen tillids hemmelighed tilgængelig\n"
+msgid "No trust secret.\n"
+msgstr "Der er ingen tillids hemmelighed tilgængelig.\n"
 
 #: winerror.mc:3346
-msgid "No trust SAM account\n"
-msgstr "Der er ingen tillids SAM konto tilgængelig\n"
+msgid "No trust SAM account.\n"
+msgstr "Der er ingen tillids SAM konto tilgængelig.\n"
 
 #: winerror.mc:3351
-msgid "Trusted domain failure\n"
-msgstr "Fejl i tillids domænet\n"
+msgid "Trusted domain failure.\n"
+msgstr "Fejl i tillids domænet.\n"
 
 #: winerror.mc:3356
-msgid "Trusted relationship failure\n"
-msgstr "Fejl i tillids forholdet\n"
+msgid "Trusted relationship failure.\n"
+msgstr "Fejl i tillids forholdet.\n"
 
 #: winerror.mc:3361
-msgid "Trust logon failure\n"
-msgstr "Tillids logon fejl\n"
+msgid "Trust logon failure.\n"
+msgstr "Tillids logon fejl.\n"
 
 #: winerror.mc:3366
-msgid "RPC call already in progress\n"
-msgstr "RPC kaldet er allerede igang\n"
+msgid "RPC call already in progress.\n"
+msgstr "RPC kaldet er allerede igang.\n"
 
 #: winerror.mc:3371
-msgid "NETLOGON is not started\n"
-msgstr "NETLOGON er ikke startet\n"
+msgid "NETLOGON is not started.\n"
+msgstr "NETLOGON er ikke startet.\n"
 
 #: winerror.mc:3376
-msgid "Account expired\n"
-msgstr "Kontoen er udløbet\n"
+msgid "Account expired.\n"
+msgstr "Kontoen er udløbet.\n"
 
 #: winerror.mc:3381
-msgid "Redirector has open handles\n"
-msgstr "Redirector har åbne handles\n"
+msgid "Redirector has open handles.\n"
+msgstr "Redirector har åbne handles.\n"
 
 #: winerror.mc:3386
-msgid "Printer driver already installed\n"
-msgstr "Printerens driver er allerede installeret\n"
+msgid "Printer driver already installed.\n"
+msgstr "Printerens driver er allerede installeret.\n"
 
 #: winerror.mc:3391
-msgid "Unknown port\n"
-msgstr "Ukendt port\n"
+msgid "Unknown port.\n"
+msgstr "Ukendt port.\n"
 
 #: winerror.mc:3396
-msgid "Unknown printer driver\n"
-msgstr "Ukendt printer driver\n"
+msgid "Unknown printer driver.\n"
+msgstr "Ukendt printer driver.\n"
 
 #: winerror.mc:3401
-msgid "Unknown print processor\n"
-msgstr "Ukendt printer processor\n"
+msgid "Unknown print processor.\n"
+msgstr "Ukendt printer processor.\n"
 
 #: winerror.mc:3406
-msgid "Invalid separator file\n"
-msgstr "Ugyldig separator fil\n"
+msgid "Invalid separator file.\n"
+msgstr "Ugyldig separator fil.\n"
 
 #: winerror.mc:3411
-msgid "Invalid priority\n"
-msgstr "Ugyldig prioritet\n"
+msgid "Invalid priority.\n"
+msgstr "Ugyldig prioritet.\n"
 
 #: winerror.mc:3416
-msgid "Invalid printer name\n"
-msgstr "Ugyldigt printer navn\n"
+msgid "Invalid printer name.\n"
+msgstr "Ugyldigt printer navn.\n"
 
 #: winerror.mc:3421
-msgid "Printer already exists\n"
+msgid "Printer already exists.\n"
 msgstr ""
 
 #: winerror.mc:3426
-msgid "Invalid printer command\n"
-msgstr "Ugyldig printer kommando\n"
+msgid "Invalid printer command.\n"
+msgstr "Ugyldig printer kommando.\n"
 
 #: winerror.mc:3431
 #, fuzzy
-msgid "Invalid data type\n"
-msgstr "Ugyldig data type\n"
+msgid "Invalid data type.\n"
+msgstr "Ugyldig data type.\n"
 
 #: winerror.mc:3436
-msgid "Invalid environment\n"
-msgstr "Ugyldigt systemmiljø\n"
+msgid "Invalid environment.\n"
+msgstr "Ugyldigt systemmiljø.\n"
 
 #: winerror.mc:3441
-msgid "No more bindings\n"
-msgstr "Ikke flere bindinger\n"
+msgid "No more bindings.\n"
+msgstr "Ikke flere bindinger.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account\n"
-msgstr "Kan ikke logge på med inter-domæne tillids konto\n"
+msgid "Can't logon with interdomain trust account.\n"
+msgstr "Kan ikke logge på med inter-domæne tillids konto.\n"
 
 #: winerror.mc:3451
-msgid "Can't logon with workstation trust account\n"
-msgstr "Kan ikke logge på med arbejdsstationens tillids konto\n"
+msgid "Can't logon with workstation trust account.\n"
+msgstr "Kan ikke logge på med arbejdsstationens tillids konto.\n"
 
 #: winerror.mc:3456
-msgid "Can't logon with server trust account\n"
-msgstr "Kan ikke logge på med serverens tillids konto\n"
+msgid "Can't logon with server trust account.\n"
+msgstr "Kan ikke logge på med serverens tillids konto.\n"
 
 #: winerror.mc:3461
-msgid "Domain trust information inconsistent\n"
-msgstr "Domæne tillids oplysninger i strid\n"
+msgid "Domain trust information inconsistent.\n"
+msgstr "Domæne tillids oplysninger i strid.\n"
 
 #: winerror.mc:3466
-msgid "Server has open handles\n"
-msgstr "Serveren har åbne handles\n"
+msgid "Server has open handles.\n"
+msgstr "Serveren har åbne handles.\n"
 
 #: winerror.mc:3471
-msgid "Resource data not found\n"
-msgstr "Ressource data ikke fundet\n"
+msgid "Resource data not found.\n"
+msgstr "Ressource data ikke fundet.\n"
 
 #: winerror.mc:3476
-msgid "Resource type not found\n"
-msgstr "Ressource type ikke fundet\n"
+msgid "Resource type not found.\n"
+msgstr "Ressource type ikke fundet.\n"
 
 #: winerror.mc:3481
-msgid "Resource name not found\n"
-msgstr "Ressource navn ikke fundet\n"
+msgid "Resource name not found.\n"
+msgstr "Ressource navn ikke fundet.\n"
 
 #: winerror.mc:3486
-msgid "Resource language not found\n"
-msgstr "Ressource sprog ikke fundet\n"
+msgid "Resource language not found.\n"
+msgstr "Ressource sprog ikke fundet.\n"
 
 #: winerror.mc:3491
-msgid "Not enough quota\n"
-msgstr "Ikke nok kvote\n"
+msgid "Not enough quota.\n"
+msgstr "Ikke nok kvote.\n"
 
 #: winerror.mc:3496
-msgid "No interfaces\n"
-msgstr "Ingen grænseflader\n"
+msgid "No interfaces.\n"
+msgstr "Ingen grænseflader.\n"
 
 #: winerror.mc:3501
-msgid "RPC call canceled\n"
-msgstr "RPC kald annulleret\n"
+msgid "RPC call canceled.\n"
+msgstr "RPC kald annulleret.\n"
 
 #: winerror.mc:3506
-msgid "Binding incomplete\n"
-msgstr "Bindelse ufuldstændig\n"
+msgid "Binding incomplete.\n"
+msgstr "Bindelse ufuldstændig.\n"
 
 #: winerror.mc:3511
-msgid "RPC comm failure\n"
-msgstr "RPC kommunikations fejl\n"
+msgid "RPC comm failure.\n"
+msgstr "RPC kommunikations fejl.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level\n"
-msgstr "Ikke understøttet tilladelse niveau\n"
+msgid "Unsupported authorisation level.\n"
+msgstr "Ikke understøttet tilladelse niveau.\n"
 
 #: winerror.mc:3521
-msgid "No principal name registered\n"
-msgstr "Intet hoved navn registreret\n"
+msgid "No principal name registered.\n"
+msgstr "Intet hoved navn registreret.\n"
 
 #: winerror.mc:3526
-msgid "Not an RPC error\n"
-msgstr "Ikke en RPC fejl\n"
+msgid "Not an RPC error.\n"
+msgstr "Ikke en RPC fejl.\n"
 
 #: winerror.mc:3531
-msgid "UUID is local only\n"
-msgstr "UUID er kun lokal\n"
+msgid "UUID is local only.\n"
+msgstr "UUID er kun lokal.\n"
 
 #: winerror.mc:3536
-msgid "Security package error\n"
-msgstr "Fejl i Sikkerhedspakken\n"
+msgid "Security package error.\n"
+msgstr "Fejl i Sikkerhedspakken.\n"
 
 #: winerror.mc:3541
-msgid "Thread not canceled\n"
-msgstr "Tråd ikke aflyst\n"
+msgid "Thread not canceled.\n"
+msgstr "Tråd ikke aflyst.\n"
 
 #: winerror.mc:3546
-msgid "Invalid handle operation\n"
-msgstr "Ugyldig handle operation\n"
+msgid "Invalid handle operation.\n"
+msgstr "Ugyldig handle operation.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version\n"
-msgstr "Forkert serialising pakke version\n"
+msgid "Wrong serialising package version.\n"
+msgstr "Forkert serialising pakke version.\n"
 
 #: winerror.mc:3556
-msgid "Wrong stub version\n"
-msgstr "Forkert stub version\n"
+msgid "Wrong stub version.\n"
+msgstr "Forkert stub version.\n"
 
 #: winerror.mc:3561
-msgid "Invalid pipe object\n"
-msgstr "Ugyldig rør objekt\n"
+msgid "Invalid pipe object.\n"
+msgstr "Ugyldig rør objekt.\n"
 
 #: winerror.mc:3566
-msgid "Wrong pipe order\n"
-msgstr "Forkert rør ordre\n"
+msgid "Wrong pipe order.\n"
+msgstr "Forkert rør ordre.\n"
 
 #: winerror.mc:3571
-msgid "Wrong pipe version\n"
-msgstr "Forkert rør version\n"
+msgid "Wrong pipe version.\n"
+msgstr "Forkert rør version.\n"
 
 #: winerror.mc:3576
-msgid "Group member not found\n"
-msgstr "Gruppemedlem blev ikke fundet\n"
+msgid "Group member not found.\n"
+msgstr "Gruppemedlem blev ikke fundet.\n"
 
 #: winerror.mc:3581
-msgid "Can't create endpoint mapper DB\n"
-msgstr "Kan ikke oprette slutpunktsafbildning for DB\n"
+msgid "Can't create endpoint mapper DB.\n"
+msgstr "Kan ikke oprette slutpunktsafbildning for DB.\n"
 
 #: winerror.mc:3586
-msgid "Invalid object\n"
-msgstr "Ugyldig objekt\n"
+msgid "Invalid object.\n"
+msgstr "Ugyldig objekt.\n"
 
 #: winerror.mc:3591
-msgid "Invalid time\n"
-msgstr "Ugyldig tid\n"
+msgid "Invalid time.\n"
+msgstr "Ugyldig tid.\n"
 
 #: winerror.mc:3596
-msgid "Invalid form name\n"
-msgstr "Ugyldig form navn\n"
+msgid "Invalid form name.\n"
+msgstr "Ugyldig form navn.\n"
 
 #: winerror.mc:3601
-msgid "Invalid form size\n"
-msgstr "Ugyldig form størrelse\n"
+msgid "Invalid form size.\n"
+msgstr "Ugyldig form størrelse.\n"
 
 #: winerror.mc:3606
-msgid "Already awaiting printer handle\n"
-msgstr "Venter allerede på printer handle\n"
+msgid "Already awaiting printer handle.\n"
+msgstr "Venter allerede på printer handle.\n"
 
 #: winerror.mc:3611
-msgid "Printer deleted\n"
-msgstr "Printer slettet\n"
+msgid "Printer deleted.\n"
+msgstr "Printer slettet.\n"
 
 #: winerror.mc:3616
-msgid "Invalid printer state\n"
-msgstr "Ugyldig printer tilstand\n"
+msgid "Invalid printer state.\n"
+msgstr "Ugyldig printer tilstand.\n"
 
 #: winerror.mc:3621
-msgid "User must change password\n"
-msgstr "Brugeren skal skifte password\n"
+msgid "User must change password.\n"
+msgstr "Brugeren skal skifte password.\n"
 
 #: winerror.mc:3626
-msgid "Domain controller not found\n"
-msgstr "Domæne kontroller ikke fundet\n"
+msgid "Domain controller not found.\n"
+msgstr "Domæne kontroller ikke fundet.\n"
 
 #: winerror.mc:3631
-msgid "Account locked out\n"
-msgstr "Kontoen er låst ude\n"
+msgid "Account locked out.\n"
+msgstr "Kontoen er låst ude.\n"
 
 #: winerror.mc:3636
-msgid "Invalid pixel format\n"
-msgstr "Ugyldigt pixel format\n"
+msgid "Invalid pixel format.\n"
+msgstr "Ugyldigt pixel format.\n"
 
 #: winerror.mc:3641
-msgid "Invalid driver\n"
-msgstr "Ugyldig driver\n"
+msgid "Invalid driver.\n"
+msgstr "Ugyldig driver.\n"
 
 #: winerror.mc:3646
 #, fuzzy
-msgid "Invalid object resolver set\n"
-msgstr "Ugyldig objekt\n"
+msgid "Invalid object resolver set.\n"
+msgstr "Ugyldig objekt.\n"
 
 #: winerror.mc:3651
 #, fuzzy
-msgid "Incomplete RPC send\n"
-msgstr "Ufuldstændigt navn\n"
+msgid "Incomplete RPC send.\n"
+msgstr "Ufuldstændigt navn.\n"
 
 #: winerror.mc:3656
 #, fuzzy
-msgid "Invalid asynchronous RPC handle\n"
-msgstr "Ugyldig hook handle\n"
+msgid "Invalid asynchronous RPC handle.\n"
+msgstr "Ugyldig hook handle.\n"
 
 #: winerror.mc:3661
 #, fuzzy
-msgid "Invalid asynchronous RPC call\n"
-msgstr "Ugyldig hook handle\n"
+msgid "Invalid asynchronous RPC call.\n"
+msgstr "Ugyldig hook handle.\n"
 
 #: winerror.mc:3666
 #, fuzzy
-msgid "RPC pipe closed\n"
-msgstr "Rør lukket\n"
+msgid "RPC pipe closed.\n"
+msgstr "Rør lukket.\n"
 
 #: winerror.mc:3671
-msgid "Discipline error on RPC pipe\n"
+msgid "Discipline error on RPC pipe.\n"
 msgstr ""
 
 #: winerror.mc:3676
 #, fuzzy
-msgid "No data on RPC pipe\n"
-msgstr "Ikke en RPC fejl\n"
+msgid "No data on RPC pipe.\n"
+msgstr "Ikke en RPC fejl.\n"
 
 #: winerror.mc:3681
 #, fuzzy
-msgid "No site name available\n"
-msgstr "Ingen sikkerheds sammenhæng til rådighed\n"
+msgid "No site name available.\n"
+msgstr "Ingen sikkerheds sammenhæng til rådighed.\n"
 
 #: winerror.mc:3686
-msgid "The file cannot be accessed\n"
+msgid "The file cannot be accessed.\n"
 msgstr ""
 
 #: winerror.mc:3691
 #, fuzzy
-msgid "The filename cannot be resolved\n"
-msgstr "Brugernavnet blev ikke fundet\n"
+msgid "The filename cannot be resolved.\n"
+msgstr "Brugernavnet blev ikke fundet.\n"
 
 #: winerror.mc:3696
 #, fuzzy
-msgid "RPC entry type mismatch\n"
-msgstr "Maskintype passer ikke\n"
+msgid "RPC entry type mismatch.\n"
+msgstr "Maskintype passer ikke.\n"
 
 #: winerror.mc:3701
 #, fuzzy
-msgid "Not all objects could be exported\n"
-msgstr "Ikke alle objekter var exporteret\n"
+msgid "Not all objects could be exported.\n"
+msgstr "Ikke alle objekter var exporteret.\n"
 
 #: winerror.mc:3706
 #, fuzzy
-msgid "The interface could not be exported\n"
-msgstr "Brugernavnet blev ikke fundet\n"
+msgid "The interface could not be exported.\n"
+msgstr "Brugernavnet blev ikke fundet.\n"
 
 #: winerror.mc:3711
 #, fuzzy
-msgid "The profile could not be added\n"
-msgstr "Brugernavnet blev ikke fundet\n"
+msgid "The profile could not be added.\n"
+msgstr "Brugernavnet blev ikke fundet.\n"
 
 #: winerror.mc:3716
 #, fuzzy
-msgid "The profile element could not be added\n"
-msgstr "Brugernavnet blev ikke fundet\n"
+msgid "The profile element could not be added.\n"
+msgstr "Brugernavnet blev ikke fundet.\n"
 
 #: winerror.mc:3721
 #, fuzzy
-msgid "The profile element could not be removed\n"
-msgstr "Brugernavnet blev ikke fundet\n"
+msgid "The profile element could not be removed.\n"
+msgstr "Brugernavnet blev ikke fundet.\n"
 
 #: winerror.mc:3726
 #, fuzzy
-msgid "The group element could not be added\n"
-msgstr "Brugernavnet blev ikke fundet\n"
+msgid "The group element could not be added.\n"
+msgstr "Brugernavnet blev ikke fundet.\n"
 
 #: winerror.mc:3731
 #, fuzzy
-msgid "The group element could not be removed\n"
-msgstr "Brugernavnet blev ikke fundet\n"
+msgid "The group element could not be removed.\n"
+msgstr "Brugernavnet blev ikke fundet.\n"
 
 #: winerror.mc:3736
-msgid "The username could not be found\n"
-msgstr "Brugernavnet blev ikke fundet\n"
+msgid "The username could not be found.\n"
+msgstr "Brugernavnet blev ikke fundet.\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"

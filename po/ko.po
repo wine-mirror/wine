@@ -3532,2956 +3532,2956 @@ msgid "Array object expected"
 msgstr "배열 객체가 필요함"
 
 #: winerror.mc:26
-msgid "Success\n"
-msgstr "성공\n"
+msgid "Success.\n"
+msgstr "성공.\n"
 
 #: winerror.mc:31
-msgid "Invalid function\n"
-msgstr "잘못된 기능(함수)\n"
+msgid "Invalid function.\n"
+msgstr "잘못된 기능(함수).\n"
 
 #: winerror.mc:36
-msgid "File not found\n"
-msgstr "파일을 찾을 수 없습니다\n"
+msgid "File not found.\n"
+msgstr "파일을 찾을 수 없습니다.\n"
 
 #: winerror.mc:41
-msgid "Path not found\n"
-msgstr "경로를 찾을 수 없습니다\n"
+msgid "Path not found.\n"
+msgstr "경로를 찾을 수 없습니다.\n"
 
 #: winerror.mc:46
-msgid "Too many open files\n"
-msgstr "너무 많은 파일이 열려 있습니다\n"
+msgid "Too many open files.\n"
+msgstr "너무 많은 파일이 열려 있습니다.\n"
 
 #: winerror.mc:51
-msgid "Access denied\n"
-msgstr "접근이 금지되었습니다\n"
+msgid "Access denied.\n"
+msgstr "접근이 금지되었습니다.\n"
 
 #: winerror.mc:56
-msgid "Invalid handle\n"
-msgstr "잘못된 핸들(handle)\n"
+msgid "Invalid handle.\n"
+msgstr "잘못된 핸들(handle).\n"
 
 #: winerror.mc:61
-msgid "Memory trashed\n"
-msgstr "메모리가 버려짐\n"
+msgid "Memory trashed.\n"
+msgstr "메모리가 버려짐.\n"
 
 #: winerror.mc:66
-msgid "Not enough memory\n"
-msgstr "메모리가 부족합니다\n"
+msgid "Not enough memory.\n"
+msgstr "메모리가 부족합니다.\n"
 
 #: winerror.mc:71
-msgid "Invalid block\n"
-msgstr "잘못된 블록\n"
+msgid "Invalid block.\n"
+msgstr "잘못된 블록.\n"
 
 #: winerror.mc:76
-msgid "Bad environment\n"
-msgstr "잘못된 환경\n"
+msgid "Bad environment.\n"
+msgstr "잘못된 환경.\n"
 
 #: winerror.mc:81
-msgid "Bad format\n"
-msgstr "잘못된 형식\n"
+msgid "Bad format.\n"
+msgstr "잘못된 형식.\n"
 
 #: winerror.mc:86
-msgid "Invalid access\n"
-msgstr "잘못된 접근\n"
+msgid "Invalid access.\n"
+msgstr "잘못된 접근.\n"
 
 #: winerror.mc:91
-msgid "Invalid data\n"
-msgstr "잘못된 데이터\n"
+msgid "Invalid data.\n"
+msgstr "잘못된 데이터.\n"
 
 #: winerror.mc:96
-msgid "Out of memory\n"
-msgstr "메모리가 부족합니다\n"
+msgid "Out of memory.\n"
+msgstr "메모리가 부족합니다.\n"
 
 #: winerror.mc:101
-msgid "Invalid drive\n"
-msgstr "잘못된 드라이브\n"
+msgid "Invalid drive.\n"
+msgstr "잘못된 드라이브.\n"
 
 #: winerror.mc:106
-msgid "Can't delete current directory\n"
-msgstr "현재 디렉토리를 지울 수 없습니다\n"
+msgid "Can't delete current directory.\n"
+msgstr "현재 디렉토리를 지울 수 없습니다.\n"
 
 #: winerror.mc:111
-msgid "Not same device\n"
-msgstr "같은 장치가 아닙니다\n"
+msgid "Not same device.\n"
+msgstr "같은 장치가 아닙니다.\n"
 
 #: winerror.mc:116
-msgid "No more files\n"
-msgstr "더 이상 파일이 없습니다\n"
+msgid "No more files.\n"
+msgstr "더 이상 파일이 없습니다.\n"
 
 #: winerror.mc:121
-msgid "Write protected\n"
-msgstr "쓰기 보호됨\n"
+msgid "Write protected.\n"
+msgstr "쓰기 보호됨.\n"
 
 #: winerror.mc:126
-msgid "Bad unit\n"
-msgstr "잘못된 유닛\n"
+msgid "Bad unit.\n"
+msgstr "잘못된 유닛.\n"
 
 #: winerror.mc:131
-msgid "Not ready\n"
-msgstr "준비가 안 되었습니다\n"
+msgid "Not ready.\n"
+msgstr "준비가 안 되었습니다.\n"
 
 #: winerror.mc:136
-msgid "Bad command\n"
-msgstr "잘못된 명령\n"
+msgid "Bad command.\n"
+msgstr "잘못된 명령.\n"
 
 #: winerror.mc:141
-msgid "CRC error\n"
-msgstr "CRC 오류\n"
+msgid "CRC error.\n"
+msgstr "CRC 오류.\n"
 
 #: winerror.mc:146
-msgid "Bad length\n"
-msgstr "나쁜 길이\n"
+msgid "Bad length.\n"
+msgstr "나쁜 길이.\n"
 
 #: winerror.mc:151 winerror.mc:526
-msgid "Seek error\n"
-msgstr "찾기 오류\n"
+msgid "Seek error.\n"
+msgstr "찾기 오류.\n"
 
 #: winerror.mc:156
-msgid "Not DOS disk\n"
-msgstr "DOS 디스크가 아닙니다\n"
+msgid "Not DOS disk.\n"
+msgstr "DOS 디스크가 아닙니다.\n"
 
 #: winerror.mc:161
-msgid "Sector not found\n"
-msgstr "섹터를 찾을 수 없습니다\n"
+msgid "Sector not found.\n"
+msgstr "섹터를 찾을 수 없습니다.\n"
 
 #: winerror.mc:166
-msgid "Out of paper\n"
-msgstr "용지 범위 밖임\n"
+msgid "Out of paper.\n"
+msgstr "용지 범위 밖임.\n"
 
 #: winerror.mc:171
-msgid "Write fault\n"
-msgstr "쓰기 오류\n"
+msgid "Write fault.\n"
+msgstr "쓰기 오류.\n"
 
 #: winerror.mc:176
-msgid "Read fault\n"
-msgstr "읽기 오류\n"
+msgid "Read fault.\n"
+msgstr "읽기 오류.\n"
 
 #: winerror.mc:181
-msgid "General failure\n"
-msgstr "일반적인 실패\n"
+msgid "General failure.\n"
+msgstr "일반적인 실패.\n"
 
 #: winerror.mc:186
-msgid "Sharing violation\n"
-msgstr "공유 위반\n"
+msgid "Sharing violation.\n"
+msgstr "공유 위반.\n"
 
 #: winerror.mc:191
-msgid "Lock violation\n"
-msgstr "잠구기 위반\n"
+msgid "Lock violation.\n"
+msgstr "잠구기 위반.\n"
 
 #: winerror.mc:196
-msgid "Wrong disk\n"
-msgstr "잘못된 디스크\n"
+msgid "Wrong disk.\n"
+msgstr "잘못된 디스크.\n"
 
 #: winerror.mc:201
-msgid "Sharing buffer exceeded\n"
-msgstr "공유 버퍼가 한계를 넘었습니다\n"
+msgid "Sharing buffer exceeded.\n"
+msgstr "공유 버퍼가 한계를 넘었습니다.\n"
 
 #: winerror.mc:206
-msgid "End of file\n"
-msgstr "파일의 끝\n"
+msgid "End of file.\n"
+msgstr "파일의 끝.\n"
 
 #: winerror.mc:211 winerror.mc:436
-msgid "Disk full\n"
-msgstr "디스크가 꽉 찼습니다\n"
+msgid "Disk full.\n"
+msgstr "디스크가 꽉 찼습니다.\n"
 
 #: winerror.mc:216
-msgid "Request not supported\n"
-msgstr "이 요청은 지원하지 않습니다\n"
+msgid "Request not supported.\n"
+msgstr "이 요청은 지원하지 않습니다.\n"
 
 #: winerror.mc:221
-msgid "Remote machine not listening\n"
-msgstr "원격 머신이 응답하지 않습니다\n"
+msgid "Remote machine not listening.\n"
+msgstr "원격 머신이 응답하지 않습니다.\n"
 
 #: winerror.mc:226
-msgid "Duplicate network name\n"
-msgstr "중복된 네트워크 이름\n"
+msgid "Duplicate network name.\n"
+msgstr "중복된 네트워크 이름.\n"
 
 #: winerror.mc:231
-msgid "Bad network path\n"
-msgstr "나쁜 네트워크 경로\n"
+msgid "Bad network path.\n"
+msgstr "나쁜 네트워크 경로.\n"
 
 #: winerror.mc:236
-msgid "Network busy\n"
-msgstr "네트워크가 바쁩니다\n"
+msgid "Network busy.\n"
+msgstr "네트워크가 바쁩니다.\n"
 
 #: winerror.mc:241
-msgid "Device does not exist\n"
-msgstr "장치가 존재하지 않습니다\n"
+msgid "Device does not exist.\n"
+msgstr "장치가 존재하지 않습니다.\n"
 
 #: winerror.mc:246
-msgid "Too many commands\n"
-msgstr "명령이 너무 많습니다\n"
+msgid "Too many commands.\n"
+msgstr "명령이 너무 많습니다.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error\n"
-msgstr "어댑터 하드웨어 오류\n"
+msgid "Adaptor hardware error.\n"
+msgstr "어댑터 하드웨어 오류.\n"
 
 #: winerror.mc:256
-msgid "Bad network response\n"
-msgstr "나쁜 네트워크 반응\n"
+msgid "Bad network response.\n"
+msgstr "나쁜 네트워크 반응.\n"
 
 #: winerror.mc:261
-msgid "Unexpected network error\n"
-msgstr "예기치 않은 네트워크 오류\n"
+msgid "Unexpected network error.\n"
+msgstr "예기치 않은 네트워크 오류.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor\n"
-msgstr "나쁜 원격 어댑터\n"
+msgid "Bad remote adaptor.\n"
+msgstr "나쁜 원격 어댑터.\n"
 
 #: winerror.mc:271
-msgid "Print queue full\n"
-msgstr "프린터 재기열이 꽉 참\n"
+msgid "Print queue full.\n"
+msgstr "프린터 재기열이 꽉 참.\n"
 
 #: winerror.mc:276
-msgid "No spool space\n"
-msgstr "스풀 공간이  없습니디\n"
+msgid "No spool space.\n"
+msgstr "스풀 공간이  없습니디.\n"
 
 #: winerror.mc:281
-msgid "Print canceled\n"
-msgstr "인쇄가 취소되었습니다\n"
+msgid "Print canceled.\n"
+msgstr "인쇄가 취소되었습니다.\n"
 
 #: winerror.mc:286
-msgid "Network name deleted\n"
-msgstr "네트워크 이름이 지워졌습니다\n"
+msgid "Network name deleted.\n"
+msgstr "네트워크 이름이 지워졌습니다.\n"
 
 #: winerror.mc:291
-msgid "Network access denied\n"
-msgstr "네트워크 접근이 차단되었습니다\n"
+msgid "Network access denied.\n"
+msgstr "네트워크 접근이 차단되었습니다.\n"
 
 #: winerror.mc:296
-msgid "Bad device type\n"
-msgstr "나쁜 장치 타입\n"
+msgid "Bad device type.\n"
+msgstr "나쁜 장치 타입.\n"
 
 #: winerror.mc:301
-msgid "Bad network name\n"
-msgstr "나쁜 네트워크 이름\n"
+msgid "Bad network name.\n"
+msgstr "나쁜 네트워크 이름.\n"
 
 #: winerror.mc:306
-msgid "Too many network names\n"
-msgstr "너무 많은 네트워크 이름이 있습니다\n"
+msgid "Too many network names.\n"
+msgstr "너무 많은 네트워크 이름이 있습니다.\n"
 
 #: winerror.mc:311
-msgid "Too many network sessions\n"
-msgstr "너무 많은 네트워크 셰션이 있습니다\n"
+msgid "Too many network sessions.\n"
+msgstr "너무 많은 네트워크 셰션이 있습니다.\n"
 
 #: winerror.mc:316
-msgid "Sharing paused\n"
-msgstr "공유가 정지되었습니다\n"
+msgid "Sharing paused.\n"
+msgstr "공유가 정지되었습니다.\n"
 
 #: winerror.mc:321
-msgid "Request not accepted\n"
-msgstr "이 요청은 허용되지 않습니다\n"
+msgid "Request not accepted.\n"
+msgstr "이 요청은 허용되지 않습니다.\n"
 
 #: winerror.mc:326
-msgid "Redirector paused\n"
-msgstr "리다이렉터(Redirector)가 정지됨\n"
+msgid "Redirector paused.\n"
+msgstr "리다이렉터(Redirector)가 정지됨.\n"
 
 #: winerror.mc:331
-msgid "File exists\n"
-msgstr "파일이 존재합니다\n"
+msgid "File exists.\n"
+msgstr "파일이 존재합니다.\n"
 
 #: winerror.mc:336
-msgid "Cannot create\n"
-msgstr "만들수 없습니다\n"
+msgid "Cannot create.\n"
+msgstr "만들수 없습니다.\n"
 
 #: winerror.mc:341
-msgid "Int24 failure\n"
-msgstr "Int24 실패\n"
+msgid "Int24 failure.\n"
+msgstr "Int24 실패.\n"
 
 #: winerror.mc:346
-msgid "Out of structures\n"
-msgstr "구조의 범위를 벗어남\n"
+msgid "Out of structures.\n"
+msgstr "구조의 범위를 벗어남.\n"
 
 #: winerror.mc:351
-msgid "Already assigned\n"
-msgstr "이미 할당됨\n"
+msgid "Already assigned.\n"
+msgstr "이미 할당됨.\n"
 
 #: winerror.mc:356 winerror.mc:1711
-msgid "Invalid password\n"
-msgstr "잘못된 암호\n"
+msgid "Invalid password.\n"
+msgstr "잘못된 암호.\n"
 
 #: winerror.mc:361
-msgid "Invalid parameter\n"
-msgstr "잘못된 매개변수\n"
+msgid "Invalid parameter.\n"
+msgstr "잘못된 매개변수.\n"
 
 #: winerror.mc:366
-msgid "Net write fault\n"
-msgstr "네트워크 쓰기 잘못\n"
+msgid "Net write fault.\n"
+msgstr "네트워크 쓰기 잘못.\n"
 
 #: winerror.mc:371
-msgid "No process slots\n"
-msgstr "어떤 작업 슬롯도 없습니다\n"
+msgid "No process slots.\n"
+msgstr "어떤 작업 슬롯도 없습니다.\n"
 
 #: winerror.mc:376
-msgid "Too many semaphores\n"
-msgstr "세마포어가 너무 많습니다\n"
+msgid "Too many semaphores.\n"
+msgstr "세마포어가 너무 많습니다.\n"
 
 #: winerror.mc:381
-msgid "Exclusive semaphore already owned\n"
-msgstr "배타적 세마포어가 이미 소유되었습니다\n"
+msgid "Exclusive semaphore already owned.\n"
+msgstr "배타적 세마포어가 이미 소유되었습니다.\n"
 
 #: winerror.mc:386
-msgid "Semaphore is set\n"
-msgstr "세마포어가 설정되었습니다\n"
+msgid "Semaphore is set.\n"
+msgstr "세마포어가 설정되었습니다.\n"
 
 #: winerror.mc:391
-msgid "Too many semaphore requests\n"
-msgstr "세마포어 요청이 너무 많습니다\n"
+msgid "Too many semaphore requests.\n"
+msgstr "세마포어 요청이 너무 많습니다.\n"
 
 #: winerror.mc:396
-msgid "Invalid at interrupt time\n"
-msgstr "올바르지 않은 인터럽트 시간\n"
+msgid "Invalid at interrupt time.\n"
+msgstr "올바르지 않은 인터럽트 시간.\n"
 
 #: winerror.mc:401
-msgid "Semaphore owner died\n"
-msgstr "세마포어 소유자가 죽었습니다\n"
+msgid "Semaphore owner died.\n"
+msgstr "세마포어 소유자가 죽었습니다.\n"
 
 #: winerror.mc:406
-msgid "Semaphore user limit\n"
-msgstr "세마포어 사용자 제한\n"
+msgid "Semaphore user limit.\n"
+msgstr "세마포어 사용자 제한.\n"
 
 #: winerror.mc:411
-msgid "Insert disk for drive %1\n"
-msgstr "드라이브 %1에 디스크를 삽입하십시오\n"
+msgid "Insert disk for drive %1.\n"
+msgstr "드라이브 %1에 디스크를 삽입하십시오.\n"
 
 #: winerror.mc:416
-msgid "Drive locked\n"
-msgstr "드라이브가 잠겼습니다\n"
+msgid "Drive locked.\n"
+msgstr "드라이브가 잠겼습니다.\n"
 
 #: winerror.mc:421
-msgid "Broken pipe\n"
-msgstr "깨진 파이프\n"
+msgid "Broken pipe.\n"
+msgstr "깨진 파이프.\n"
 
 #: winerror.mc:426
-msgid "Open failed\n"
-msgstr "열기 실패하였습니다\n"
+msgid "Open failed.\n"
+msgstr "열기 실패하였습니다.\n"
 
 #: winerror.mc:431
-msgid "Buffer overflow\n"
-msgstr "버퍼 오버플로우\n"
+msgid "Buffer overflow.\n"
+msgstr "버퍼 오버플로우.\n"
 
 #: winerror.mc:441
-msgid "No more search handles\n"
-msgstr "더 이상 찾기 핸들이 없습니다\n"
+msgid "No more search handles.\n"
+msgstr "더 이상 찾기 핸들이 없습니다.\n"
 
 #: winerror.mc:446
-msgid "Invalid target handle\n"
-msgstr "올바르지 않은 타겟 핸들\n"
+msgid "Invalid target handle.\n"
+msgstr "올바르지 않은 타겟 핸들.\n"
 
 #: winerror.mc:451
-msgid "Invalid IOCTL\n"
-msgstr "올바르지 않은 IOCTL\n"
+msgid "Invalid IOCTL.\n"
+msgstr "올바르지 않은 IOCTL.\n"
 
 #: winerror.mc:456
-msgid "Invalid verify switch\n"
-msgstr "올바르지 않은 검사 스위치\n"
+msgid "Invalid verify switch.\n"
+msgstr "올바르지 않은 검사 스위치.\n"
 
 #: winerror.mc:461
-msgid "Bad driver level\n"
-msgstr "나쁜 드라이버 레밸\n"
+msgid "Bad driver level.\n"
+msgstr "나쁜 드라이버 레밸.\n"
 
 #: winerror.mc:466
-msgid "Call not implemented\n"
-msgstr "이 요구는 구현되지 않았습니다\n"
+msgid "Call not implemented.\n"
+msgstr "이 요구는 구현되지 않았습니다.\n"
 
 #: winerror.mc:471
-msgid "Semaphore timeout\n"
-msgstr "세마포어 시간 초과\n"
+msgid "Semaphore timeout.\n"
+msgstr "세마포어 시간 초과.\n"
 
 #: winerror.mc:476
-msgid "Insufficient buffer\n"
-msgstr "충분하지 않은 버퍼\n"
+msgid "Insufficient buffer.\n"
+msgstr "충분하지 않은 버퍼.\n"
 
 #: winerror.mc:481
-msgid "Invalid name\n"
-msgstr "올바르지 않은 이름\n"
+msgid "Invalid name.\n"
+msgstr "올바르지 않은 이름.\n"
 
 #: winerror.mc:486
-msgid "Invalid level\n"
-msgstr "올바르지 않은 레벨\n"
+msgid "Invalid level.\n"
+msgstr "올바르지 않은 레벨.\n"
 
 #: winerror.mc:491
-msgid "No volume label\n"
-msgstr "불륨 라벨이 없습니다\n"
+msgid "No volume label.\n"
+msgstr "불륨 라벨이 없습니다.\n"
 
 #: winerror.mc:496
-msgid "Module not found\n"
-msgstr "모듈을 찾을 수 없습니다\n"
+msgid "Module not found.\n"
+msgstr "모듈을 찾을 수 없습니다.\n"
 
 #: winerror.mc:501
-msgid "Procedure not found\n"
-msgstr "처리절차를 찾을 수 없습니다\n"
+msgid "Procedure not found.\n"
+msgstr "처리절차를 찾을 수 없습니다.\n"
 
 #: winerror.mc:506
-msgid "No children to wait for\n"
-msgstr "~에 대해 대기하는 자식 프로세스가 없음\n"
+msgid "No children to wait for.\n"
+msgstr "~에 대해 대기하는 자식 프로세스가 없음.\n"
 
 #: winerror.mc:511
-msgid "Child process has not completed\n"
-msgstr "자식 프로세스가 완료되지 않았습니다\n"
+msgid "Child process has not completed.\n"
+msgstr "자식 프로세스가 완료되지 않았습니다.\n"
 
 #: winerror.mc:516
-msgid "Invalid use of direct access handle\n"
-msgstr "올바르지 않은 직접 접근 핸들의 사용\n"
+msgid "Invalid use of direct access handle.\n"
+msgstr "올바르지 않은 직접 접근 핸들의 사용.\n"
 
 #: winerror.mc:521
-msgid "Negative seek\n"
-msgstr "부정적 탐색\n"
+msgid "Negative seek.\n"
+msgstr "부정적 탐색.\n"
 
 #: winerror.mc:531
-msgid "Drive is a JOIN target\n"
-msgstr "이 드라이브는  JOIN 타겟입니다\n"
+msgid "Drive is a JOIN target.\n"
+msgstr "이 드라이브는  JOIN 타겟입니다.\n"
 
 #: winerror.mc:536
-msgid "Drive is already JOINed\n"
-msgstr "이 드라이브는 이미 JOIN이 되었습니다\n"
+msgid "Drive is already JOINed.\n"
+msgstr "이 드라이브는 이미 JOIN이 되었습니다.\n"
 
 #: winerror.mc:541
-msgid "Drive is already SUBSTed\n"
-msgstr "이 드라이브는 이미 SUBST되었습니다\n"
+msgid "Drive is already SUBSTed.\n"
+msgstr "이 드라이브는 이미 SUBST되었습니다.\n"
 
 #: winerror.mc:546
-msgid "Drive is not JOINed\n"
-msgstr "이 드라이브는  JOIN되지 않았습니다\n"
+msgid "Drive is not JOINed.\n"
+msgstr "이 드라이브는  JOIN되지 않았습니다.\n"
 
 #: winerror.mc:551
-msgid "Drive is not SUBSTed\n"
-msgstr "이 드라이브는  SUBST되지 않았습니다\n"
+msgid "Drive is not SUBSTed.\n"
+msgstr "이 드라이브는  SUBST되지 않았습니다.\n"
 
 #: winerror.mc:556
-msgid "Attempt to JOIN onto a JOINed drive\n"
-msgstr "JOIN된 드,라이브에 JOIN 시도함\n"
+msgid "Attempt to JOIN onto a JOINed drive.\n"
+msgstr "JOIN된 드,라이브에 JOIN 시도함.\n"
 
 #: winerror.mc:561
-msgid "Attempt to SUBST onto a SUBSTed drive\n"
-msgstr "SUBST된 드라이브에 SUBST시도함\n"
+msgid "Attempt to SUBST onto a SUBSTed drive.\n"
+msgstr "SUBST된 드라이브에 SUBST시도함.\n"
 
 #: winerror.mc:566
-msgid "Attempt to JOIN to a SUBSTed drive\n"
-msgstr "SUBST된 드라이브에 JOIN시도함\n"
+msgid "Attempt to JOIN to a SUBSTed drive.\n"
+msgstr "SUBST된 드라이브에 JOIN시도함.\n"
 
 #: winerror.mc:571
-msgid "Attempt to SUBST to a JOINed drive\n"
-msgstr "JOIN된 드라이브에 SUBST시도함\n"
+msgid "Attempt to SUBST to a JOINed drive.\n"
+msgstr "JOIN된 드라이브에 SUBST시도함.\n"
 
 #: winerror.mc:576
-msgid "Drive is busy\n"
-msgstr "드라이브는 바쁩니다\n"
+msgid "Drive is busy.\n"
+msgstr "드라이브는 바쁩니다.\n"
 
 #: winerror.mc:581
-msgid "Same drive\n"
-msgstr "같은 드라이브\n"
+msgid "Same drive.\n"
+msgstr "같은 드라이브.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory\n"
-msgstr "최상위 디렉토리가 아닙니다\n"
+msgid "Not toplevel directory.\n"
+msgstr "최상위 디렉토리가 아닙니다.\n"
 
 #: winerror.mc:591
-msgid "Directory is not empty\n"
-msgstr "디렉토리가 비워 있지 않습니다\n"
+msgid "Directory is not empty.\n"
+msgstr "디렉토리가 비워 있지 않습니다.\n"
 
 #: winerror.mc:596
-msgid "Path is in use as a SUBST\n"
-msgstr "이 경로는  SUBST에서 사용하고 있습니다\n"
+msgid "Path is in use as a SUBST.\n"
+msgstr "이 경로는  SUBST에서 사용하고 있습니다.\n"
 
 #: winerror.mc:601
-msgid "Path is in use as a JOIN\n"
-msgstr "이 경로는 JOIN에서 사용하고 있습니다\n"
+msgid "Path is in use as a JOIN.\n"
+msgstr "이 경로는 JOIN에서 사용하고 있습니다.\n"
 
 #: winerror.mc:606
-msgid "Path is busy\n"
-msgstr "이 경로는 바쁩니다\n"
+msgid "Path is busy.\n"
+msgstr "이 경로는 바쁩니다.\n"
 
 #: winerror.mc:611
-msgid "Already a SUBST target\n"
-msgstr "이미 SUBST 타겟입니다\n"
+msgid "Already a SUBST target.\n"
+msgstr "이미 SUBST 타겟입니다.\n"
 
 #: winerror.mc:616
-msgid "System trace not specified or disallowed\n"
-msgstr "시스템 추적은 명시되지 않았거나 허용되지 않음\n"
+msgid "System trace not specified or disallowed.\n"
+msgstr "시스템 추적은 명시되지 않았거나 허용되지 않음.\n"
 
 #: winerror.mc:621
-msgid "Event count for DosMuxSemWait incorrect\n"
-msgstr "DosMuxSemWait의 이벤트 카운터가 올바르지 않습니다\n"
+msgid "Event count for DosMuxSemWait incorrect.\n"
+msgstr "DosMuxSemWait의 이벤트 카운터가 올바르지 않습니다.\n"
 
 #: winerror.mc:626
-msgid "Too many waiters for DosMuxSemWait\n"
-msgstr "DosMuxSemWait에 너무 많은 대기자가 있습니다\n"
+msgid "Too many waiters for DosMuxSemWait.\n"
+msgstr "DosMuxSemWait에 너무 많은 대기자가 있습니다.\n"
 
 #: winerror.mc:631
-msgid "DosSemMuxWait list invalid\n"
-msgstr "DosSemMuxWait 목록이 올바르지 않습니다\n"
+msgid "DosSemMuxWait list invalid.\n"
+msgstr "DosSemMuxWait 목록이 올바르지 않습니다.\n"
 
 #: winerror.mc:636
-msgid "Volume label too long\n"
-msgstr "볼륨 라벨이 너무 깁니다\n"
+msgid "Volume label too long.\n"
+msgstr "볼륨 라벨이 너무 깁니다.\n"
 
 #: winerror.mc:641
-msgid "Too many TCBs\n"
-msgstr "TCBs가 너무 많습니다\n"
+msgid "Too many TCBs.\n"
+msgstr "TCBs가 너무 많습니다.\n"
 
 #: winerror.mc:646
-msgid "Signal refused\n"
-msgstr "시그널 거부됨\n"
+msgid "Signal refused.\n"
+msgstr "시그널 거부됨.\n"
 
 #: winerror.mc:651
-msgid "Segment discarded\n"
-msgstr "세그맨트 버려짐\n"
+msgid "Segment discarded.\n"
+msgstr "세그맨트 버려짐.\n"
 
 #: winerror.mc:656
-msgid "Segment not locked\n"
-msgstr "세그멘트가 잠겨있지 않습니다\n"
+msgid "Segment not locked.\n"
+msgstr "세그멘트가 잠겨있지 않습니다.\n"
 
 #: winerror.mc:661
-msgid "Bad thread ID address\n"
-msgstr "나쁜 쓰레드 ID 주소\n"
+msgid "Bad thread ID address.\n"
+msgstr "나쁜 쓰레드 ID 주소.\n"
 
 #: winerror.mc:666
-msgid "Bad arguments to DosExecPgm\n"
-msgstr "DosExecPgm의 나쁜 주장\n"
+msgid "Bad arguments to DosExecPgm.\n"
+msgstr "DosExecPgm의 나쁜 주장.\n"
 
 #: winerror.mc:671
-msgid "Path is invalid\n"
-msgstr "경로가 올바르지 않습니다\n"
+msgid "Path is invalid.\n"
+msgstr "경로가 올바르지 않습니다.\n"
 
 #: winerror.mc:676
-msgid "Signal pending\n"
-msgstr "시그널 대기중\n"
+msgid "Signal pending.\n"
+msgstr "시그널 대기중.\n"
 
 #: winerror.mc:681
-msgid "Max system-wide thread count reached\n"
-msgstr "최대 시스템 전역 쓰레드 카운트 도달\n"
+msgid "Max system-wide thread count reached.\n"
+msgstr "최대 시스템 전역 쓰레드 카운트 도달.\n"
 
 #: winerror.mc:686
-msgid "Lock failed\n"
-msgstr "잠그기가 실패했습니다\n"
+msgid "Lock failed.\n"
+msgstr "잠그기가 실패했습니다.\n"
 
 #: winerror.mc:691
-msgid "Resource in use\n"
-msgstr "리소스가 사용중입니다\n"
+msgid "Resource in use.\n"
+msgstr "리소스가 사용중입니다.\n"
 
 #: winerror.mc:696
-msgid "Cancel violation\n"
-msgstr "취소 위반\n"
+msgid "Cancel violation.\n"
+msgstr "취소 위반.\n"
 
 #: winerror.mc:701
-msgid "Atomic locks not supported\n"
-msgstr "막대한 잠금은 지원하지 않습니다\n"
+msgid "Atomic locks not supported.\n"
+msgstr "막대한 잠금은 지원하지 않습니다.\n"
 
 #: winerror.mc:706
-msgid "Invalid segment number\n"
-msgstr "올바르지 않은 세그멘트 번호\n"
+msgid "Invalid segment number.\n"
+msgstr "올바르지 않은 세그멘트 번호.\n"
 
 #: winerror.mc:711
-msgid "Invalid ordinal for %1\n"
-msgstr "올바르지 않은 %1 오디널\n"
+msgid "Invalid ordinal for %1.\n"
+msgstr "올바르지 않은 %1 오디널.\n"
 
 #: winerror.mc:716
-msgid "File already exists\n"
-msgstr "파일은 이미 존재합니다\n"
+msgid "File already exists.\n"
+msgstr "파일은 이미 존재합니다.\n"
 
 #: winerror.mc:721
-msgid "Invalid flag number\n"
-msgstr "올바르지 않은 플래그 숫자\n"
+msgid "Invalid flag number.\n"
+msgstr "올바르지 않은 플래그 숫자.\n"
 
 #: winerror.mc:726
-msgid "Semaphore name not found\n"
-msgstr "세마포어 이름을 찾을 수 없습니다\n"
+msgid "Semaphore name not found.\n"
+msgstr "세마포어 이름을 찾을 수 없습니다.\n"
 
 #: winerror.mc:731
-msgid "Invalid starting code segment for %1\n"
-msgstr "올바르지 않은 %1  시작 코드 세그멘트\n"
+msgid "Invalid starting code segment for %1.\n"
+msgstr "올바르지 않은 %1  시작 코드 세그멘트.\n"
 
 #: winerror.mc:736
-msgid "Invalid starting stack segment for %1\n"
-msgstr "올바르지 않은 %1 스택 세그먼트 시작\n"
+msgid "Invalid starting stack segment for %1.\n"
+msgstr "올바르지 않은 %1 스택 세그먼트 시작.\n"
 
 #: winerror.mc:741
-msgid "Invalid module type for %1\n"
-msgstr "%1의 올바르지 않은 모듈 형식\n"
+msgid "Invalid module type for %1.\n"
+msgstr "%1의 올바르지 않은 모듈 형식.\n"
 
 #: winerror.mc:746
-msgid "Invalid EXE signature in %1\n"
-msgstr "%1 의 올바르지 않은 EXE 서명\n"
+msgid "Invalid EXE signature in %1.\n"
+msgstr "%1 의 올바르지 않은 EXE 서명.\n"
 
 #: winerror.mc:751
-msgid "EXE %1 is marked invalid\n"
-msgstr "EXE %1 는 올바르지 않다고 표시되어 있습니다\n"
+msgid "EXE %1 is marked invalid.\n"
+msgstr "EXE %1 는 올바르지 않다고 표시되어 있습니다.\n"
 
 #: winerror.mc:756
-msgid "Bad EXE format for %1\n"
-msgstr "%1의 나쁜 EXE 형식\n"
+msgid "Bad EXE format for %1.\n"
+msgstr "%1의 나쁜 EXE 형식.\n"
 
 #: winerror.mc:761
-msgid "Iterated data exceeds 64k in %1\n"
-msgstr "%1의 반복 데이타가 64k를 넘음\n"
+msgid "Iterated data exceeds 64k in %1.\n"
+msgstr "%1의 반복 데이타가 64k를 넘음.\n"
 
 #: winerror.mc:766
-msgid "Invalid MinAllocSize in %1\n"
-msgstr "%1의 올바르지 않은 MinAllocSize\n"
+msgid "Invalid MinAllocSize in %1.\n"
+msgstr "%1의 올바르지 않은 MinAllocSize.\n"
 
 #: winerror.mc:771
-msgid "Dynlink from invalid ring\n"
-msgstr "올바르지 않은 링으로부터 온 Dynlink\n"
+msgid "Dynlink from invalid ring.\n"
+msgstr "올바르지 않은 링으로부터 온 Dynlink.\n"
 
 #: winerror.mc:776
-msgid "IOPL not enabled\n"
-msgstr "IOPL는 가능하지 않습니다\n"
+msgid "IOPL not enabled.\n"
+msgstr "IOPL는 가능하지 않습니다.\n"
 
 #: winerror.mc:781
-msgid "Invalid SEGDPL in %1\n"
-msgstr "%1의 올바르지 않은 SEGDPL\n"
+msgid "Invalid SEGDPL in %1.\n"
+msgstr "%1의 올바르지 않은 SEGDPL.\n"
 
 #: winerror.mc:786
-msgid "Auto data segment exceeds 64k\n"
-msgstr "자동 데이타 세그멘트가 64k를 넘었습니다\n"
+msgid "Auto data segment exceeds 64k.\n"
+msgstr "자동 데이타 세그멘트가 64k를 넘었습니다.\n"
 
 #: winerror.mc:791
-msgid "Ring 2 segment must be movable\n"
-msgstr "링 2 세그멘트는 반드시 이동이 가능해야 합니다\n"
+msgid "Ring 2 segment must be movable.\n"
+msgstr "링 2 세그멘트는 반드시 이동이 가능해야 합니다.\n"
 
 #: winerror.mc:796
-msgid "Relocation chain exceeds segment limit in %1\n"
-msgstr "재배치 체인이 %1의 세그맨트 제한 도달\n"
+msgid "Relocation chain exceeds segment limit in %1.\n"
+msgstr "재배치 체인이 %1의 세그맨트 제한 도달.\n"
 
 #: winerror.mc:801
-msgid "Infinite loop in relocation chain in %1\n"
-msgstr "%1에 재배치 체인의 무한 루프\n"
+msgid "Infinite loop in relocation chain in %1.\n"
+msgstr "%1에 재배치 체인의 무한 루프.\n"
 
 #: winerror.mc:806
-msgid "Environment variable not found\n"
-msgstr "환경변수를 찾을 수 없습니다\n"
+msgid "Environment variable not found.\n"
+msgstr "환경변수를 찾을 수 없습니다.\n"
 
 #: winerror.mc:811
-msgid "No signal sent\n"
-msgstr "어떤 시그널도 보내지지 않음\n"
+msgid "No signal sent.\n"
+msgstr "어떤 시그널도 보내지지 않음.\n"
 
 #: winerror.mc:816
-msgid "File name is too long\n"
-msgstr "파일 이름이 너무 깁니다\n"
+msgid "File name is too long.\n"
+msgstr "파일 이름이 너무 깁니다.\n"
 
 #: winerror.mc:821
-msgid "Ring 2 stack in use\n"
-msgstr "Ring 2 스택은 이미 사용중입니다\n"
+msgid "Ring 2 stack in use.\n"
+msgstr "Ring 2 스택은 이미 사용중입니다.\n"
 
 #: winerror.mc:826
-msgid "Error in use of filename wildcards\n"
-msgstr "파일이름의 와일드카드 사용 오류\n"
+msgid "Error in use of filename wildcards.\n"
+msgstr "파일이름의 와일드카드 사용 오류.\n"
 
 #: winerror.mc:831
-msgid "Invalid signal number\n"
-msgstr "올바르지 않은 시그널 번호\n"
+msgid "Invalid signal number.\n"
+msgstr "올바르지 않은 시그널 번호.\n"
 
 #: winerror.mc:836
-msgid "Error setting signal handler\n"
-msgstr "시그널 핸들러 설정 오류\n"
+msgid "Error setting signal handler.\n"
+msgstr "시그널 핸들러 설정 오류.\n"
 
 #: winerror.mc:841
-msgid "Segment locked\n"
-msgstr "세그멘트가 잠김\n"
+msgid "Segment locked.\n"
+msgstr "세그멘트가 잠김.\n"
 
 #: winerror.mc:846
-msgid "Too many modules\n"
-msgstr "모듈이 너무 많습니다\n"
+msgid "Too many modules.\n"
+msgstr "모듈이 너무 많습니다.\n"
 
 #: winerror.mc:851
-msgid "Nesting LoadModule calls not allowed\n"
-msgstr "LoadModule 네스팅 호출은 허용되지 않음\n"
+msgid "Nesting LoadModule calls not allowed.\n"
+msgstr "LoadModule 네스팅 호출은 허용되지 않음.\n"
 
 #: winerror.mc:856
-msgid "Machine type mismatch\n"
-msgstr "머신 형식이 맞지 않습니다\n"
+msgid "Machine type mismatch.\n"
+msgstr "머신 형식이 맞지 않습니다.\n"
 
 #: winerror.mc:861
-msgid "Bad pipe\n"
-msgstr "나쁜 파이프\n"
+msgid "Bad pipe.\n"
+msgstr "나쁜 파이프.\n"
 
 #: winerror.mc:866
-msgid "Pipe busy\n"
-msgstr "파이프가 바쁨\n"
+msgid "Pipe busy.\n"
+msgstr "파이프가 바쁨.\n"
 
 #: winerror.mc:871
-msgid "Pipe closed\n"
-msgstr "파이프가 닫힘\n"
+msgid "Pipe closed.\n"
+msgstr "파이프가 닫힘.\n"
 
 #: winerror.mc:876
-msgid "Pipe not connected\n"
-msgstr "파이프가 연결되지 않았습니다\n"
+msgid "Pipe not connected.\n"
+msgstr "파이프가 연결되지 않았습니다.\n"
 
 #: winerror.mc:881
-msgid "More data available\n"
-msgstr "더 많은 데이타가 가능합니다\n"
+msgid "More data available.\n"
+msgstr "더 많은 데이타가 가능합니다.\n"
 
 #: winerror.mc:886
-msgid "Session canceled\n"
-msgstr "세션이 취소됨\n"
+msgid "Session canceled.\n"
+msgstr "세션이 취소됨.\n"
 
 #: winerror.mc:891
-msgid "Invalid extended attribute name\n"
-msgstr "올바르지 않은 확장된 속성 이름\n"
+msgid "Invalid extended attribute name.\n"
+msgstr "올바르지 않은 확장된 속성 이름.\n"
 
 #: winerror.mc:896
-msgid "Extended attribute list inconsistent\n"
-msgstr "확장 속성 목록이 불일치함\n"
+msgid "Extended attribute list inconsistent.\n"
+msgstr "확장 속성 목록이 불일치함.\n"
 
 #: winerror.mc:901
-msgid "No more data available\n"
-msgstr "더 많은 데이타는 가능하지 않습니다\n"
+msgid "No more data available.\n"
+msgstr "더 많은 데이타는 가능하지 않습니다.\n"
 
 #: winerror.mc:906
-msgid "Cannot use Copy API\n"
-msgstr "Copy API를 사용할 수 없습니다\n"
+msgid "Cannot use Copy API.\n"
+msgstr "Copy API를 사용할 수 없습니다.\n"
 
 #: winerror.mc:911
-msgid "Directory name invalid\n"
-msgstr "디렉토리 이름이 올바르지 않습니다\n"
+msgid "Directory name invalid.\n"
+msgstr "디렉토리 이름이 올바르지 않습니다.\n"
 
 #: winerror.mc:916
-msgid "Extended attributes didn't fit\n"
-msgstr "확장 속성이 맞지 않음\n"
+msgid "Extended attributes didn't fit.\n"
+msgstr "확장 속성이 맞지 않음.\n"
 
 #: winerror.mc:921
-msgid "Extended attribute file corrupt\n"
-msgstr "확장 속성 파일에 오류가 있음\n"
+msgid "Extended attribute file corrupt.\n"
+msgstr "확장 속성 파일에 오류가 있음.\n"
 
 #: winerror.mc:926
-msgid "Extended attribute table full\n"
-msgstr "확장 속성 테이블이 가득참\n"
+msgid "Extended attribute table full.\n"
+msgstr "확장 속성 테이블이 가득참.\n"
 
 #: winerror.mc:931
-msgid "Invalid extended attribute handle\n"
-msgstr "올바르지 않은 확장된 속성 핸들\n"
+msgid "Invalid extended attribute handle.\n"
+msgstr "올바르지 않은 확장된 속성 핸들.\n"
 
 #: winerror.mc:936
-msgid "Extended attributes not supported\n"
-msgstr "확장 속성은 지원하지 않음\n"
+msgid "Extended attributes not supported.\n"
+msgstr "확장 속성은 지원하지 않음.\n"
 
 #: winerror.mc:941
-msgid "Mutex not owned by caller\n"
-msgstr "뮤택스는 부른 사람이 소유하고 있지 않습니다\n"
+msgid "Mutex not owned by caller.\n"
+msgstr "뮤택스는 부른 사람이 소유하고 있지 않습니다.\n"
 
 #: winerror.mc:946
-msgid "Too many posts to semaphore\n"
-msgstr "세마포어에 너무 많은 푯말이 있음\n"
+msgid "Too many posts to semaphore.\n"
+msgstr "세마포어에 너무 많은 푯말이 있음.\n"
 
 #: winerror.mc:951
-msgid "Read/WriteProcessMemory partially completed\n"
-msgstr "ProcessMemory의 읽기/쓰기가 부분적으로 완료됨\n"
+msgid "Read/WriteProcessMemory partially completed.\n"
+msgstr "ProcessMemory의 읽기/쓰기가 부분적으로 완료됨.\n"
 
 #: winerror.mc:956
-msgid "The oplock wasn't granted\n"
-msgstr "oplock이 부여되지 않았음\n"
+msgid "The oplock wasn't granted.\n"
+msgstr "oplock이 부여되지 않았음.\n"
 
 #: winerror.mc:961
-msgid "Invalid oplock message received\n"
-msgstr "잘못된 oplock 메시지가 수신\n"
+msgid "Invalid oplock message received.\n"
+msgstr "잘못된 oplock 메시지가 수신.\n"
 
 #: winerror.mc:966
-msgid "Message 0x%1 not found in file %2\n"
-msgstr "메세지 0x%1 를 파일 %2에서 찾을 수 없습니다\n"
+msgid "Message 0x%1 not found in file %2.\n"
+msgstr "메세지 0x%1 를 파일 %2에서 찾을 수 없습니다.\n"
 
 #: winerror.mc:971
-msgid "Invalid address\n"
-msgstr "올바르지 않은 주소\n"
+msgid "Invalid address.\n"
+msgstr "올바르지 않은 주소.\n"
 
 #: winerror.mc:976
-msgid "Arithmetic overflow\n"
-msgstr "연산 오버플로우\n"
+msgid "Arithmetic overflow.\n"
+msgstr "연산 오버플로우.\n"
 
 #: winerror.mc:981
-msgid "Pipe connected\n"
-msgstr "파이프 연결됨\n"
+msgid "Pipe connected.\n"
+msgstr "파이프 연결됨.\n"
 
 #: winerror.mc:986
-msgid "Pipe listening\n"
-msgstr "파이프 리스닝\n"
+msgid "Pipe listening.\n"
+msgstr "파이프 리스닝.\n"
 
 #: winerror.mc:991
-msgid "Extended attribute access denied\n"
-msgstr "확장 속성 접근 거부됨\n"
+msgid "Extended attribute access denied.\n"
+msgstr "확장 속성 접근 거부됨.\n"
 
 #: winerror.mc:996
-msgid "I/O operation aborted\n"
-msgstr "I/O 작업 취소됨\n"
+msgid "I/O operation aborted.\n"
+msgstr "I/O 작업 취소됨.\n"
 
 #: winerror.mc:1001
-msgid "Overlapped I/O incomplete\n"
-msgstr "겹쳐진 I/O가 미완료됨\n"
+msgid "Overlapped I/O incomplete.\n"
+msgstr "겹쳐진 I/O가 미완료됨.\n"
 
 #: winerror.mc:1006
-msgid "Overlapped I/O pending\n"
-msgstr "겹쳐진 I/O가 대기중임\n"
+msgid "Overlapped I/O pending.\n"
+msgstr "겹쳐진 I/O가 대기중임.\n"
 
 #: winerror.mc:1011
-msgid "No access to memory location\n"
-msgstr "메모리 위치에 접근할 수 없습니다\n"
+msgid "No access to memory location.\n"
+msgstr "메모리 위치에 접근할 수 없습니다.\n"
 
 #: winerror.mc:1016
-msgid "Swap error\n"
-msgstr "스왑 오류\n"
+msgid "Swap error.\n"
+msgstr "스왑 오류.\n"
 
 #: winerror.mc:1021
-msgid "Stack overflow\n"
-msgstr "스택 오버플로우\n"
+msgid "Stack overflow.\n"
+msgstr "스택 오버플로우.\n"
 
 #: winerror.mc:1026
-msgid "Invalid message\n"
-msgstr "올바르지 않은 메세지\n"
+msgid "Invalid message.\n"
+msgstr "올바르지 않은 메세지.\n"
 
 #: winerror.mc:1031
-msgid "Cannot complete\n"
-msgstr "완료되지 않았습니다\n"
+msgid "Cannot complete.\n"
+msgstr "완료되지 않았습니다.\n"
 
 #: winerror.mc:1036
-msgid "Invalid flags\n"
-msgstr "올바르지 않은 플래그\n"
+msgid "Invalid flags.\n"
+msgstr "올바르지 않은 플래그.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume\n"
-msgstr "이해할 수 없는 볼륨\n"
+msgid "Unrecognised volume.\n"
+msgstr "이해할 수 없는 볼륨.\n"
 
 #: winerror.mc:1046
-msgid "File invalid\n"
-msgstr "파일이 올바르지 않습니다\n"
+msgid "File invalid.\n"
+msgstr "파일이 올바르지 않습니다.\n"
 
 #: winerror.mc:1051
-msgid "Cannot run full-screen\n"
-msgstr "전체화면에서 실행할 수 없습니다\n"
+msgid "Cannot run full-screen.\n"
+msgstr "전체화면에서 실행할 수 없습니다.\n"
 
 #: winerror.mc:1056
-msgid "Nonexistent token\n"
-msgstr "존재하지 않는 토큰\n"
+msgid "Nonexistent token.\n"
+msgstr "존재하지 않는 토큰.\n"
 
 #: winerror.mc:1061
-msgid "Registry corrupt\n"
-msgstr "레지스트리가 손상되었습니다\n"
+msgid "Registry corrupt.\n"
+msgstr "레지스트리가 손상되었습니다.\n"
 
 #: winerror.mc:1066
-msgid "Invalid key\n"
-msgstr "올바르지 않은 키\n"
+msgid "Invalid key.\n"
+msgstr "올바르지 않은 키.\n"
 
 #: winerror.mc:1071
-msgid "Can't open registry key\n"
-msgstr "레지스트리 키를 열 수 없습니다\n"
+msgid "Can't open registry key.\n"
+msgstr "레지스트리 키를 열 수 없습니다.\n"
 
 #: winerror.mc:1076
-msgid "Can't read registry key\n"
-msgstr "레지스트리 키를 읽을 수 없습니다\n"
+msgid "Can't read registry key.\n"
+msgstr "레지스트리 키를 읽을 수 없습니다.\n"
 
 #: winerror.mc:1081
-msgid "Can't write registry key\n"
-msgstr "레지스트리 키를 쓸 수 없습니다\n"
+msgid "Can't write registry key.\n"
+msgstr "레지스트리 키를 쓸 수 없습니다.\n"
 
 #: winerror.mc:1086
-msgid "Registry has been recovered\n"
-msgstr "레지스트리는 복구되었습니다\n"
+msgid "Registry has been recovered.\n"
+msgstr "레지스트리는 복구되었습니다.\n"
 
 #: winerror.mc:1091
-msgid "Registry is corrupt\n"
-msgstr "레지스트리는 손상되었습니다\n"
+msgid "Registry is corrupt.\n"
+msgstr "레지스트리는 손상되었습니다.\n"
 
 #: winerror.mc:1096
-msgid "I/O to registry failed\n"
-msgstr "레지스트리 입출력 실패함\n"
+msgid "I/O to registry failed.\n"
+msgstr "레지스트리 입출력 실패함.\n"
 
 #: winerror.mc:1101
-msgid "Not registry file\n"
-msgstr "레지스트리 파일이 아님\n"
+msgid "Not registry file.\n"
+msgstr "레지스트리 파일이 아님.\n"
 
 #: winerror.mc:1106
-msgid "Key deleted\n"
-msgstr "키는 지워졌습니다\n"
+msgid "Key deleted.\n"
+msgstr "키는 지워졌습니다.\n"
 
 #: winerror.mc:1111
-msgid "No registry log space\n"
-msgstr "레지스트리 로그 공간이 없습니다\n"
+msgid "No registry log space.\n"
+msgstr "레지스트리 로그 공간이 없습니다.\n"
 
 #: winerror.mc:1116
-msgid "Registry key has subkeys\n"
-msgstr "레지스트리 키는 하위 키를 가지고 있습니다\n"
+msgid "Registry key has subkeys.\n"
+msgstr "레지스트리 키는 하위 키를 가지고 있습니다.\n"
 
 #: winerror.mc:1121
-msgid "Subkey must be volatile\n"
-msgstr "하위키는 반드시 휘발성이어야 함\n"
+msgid "Subkey must be volatile.\n"
+msgstr "하위키는 반드시 휘발성이어야 함.\n"
 
 #: winerror.mc:1126
-msgid "Notify change request in progress\n"
-msgstr "변화 통보 요구가 진행중임\n"
+msgid "Notify change request in progress.\n"
+msgstr "변화 통보 요구가 진행중임.\n"
 
 #: winerror.mc:1131
-msgid "Dependent services are running\n"
-msgstr "의존하고 있는 서비스가 실행중입니다\n"
+msgid "Dependent services are running.\n"
+msgstr "의존하고 있는 서비스가 실행중입니다.\n"
 
 #: winerror.mc:1136
-msgid "Invalid service control\n"
-msgstr "올바르지 않은 서비스 제어\n"
+msgid "Invalid service control.\n"
+msgstr "올바르지 않은 서비스 제어.\n"
 
 #: winerror.mc:1141
-msgid "Service request timeout\n"
-msgstr "서비스 요구 시간초과\n"
+msgid "Service request timeout.\n"
+msgstr "서비스 요구 시간초과.\n"
 
 #: winerror.mc:1146
-msgid "Cannot create service thread\n"
-msgstr "서비스 쓰레드를 만들 수 없습니다\n"
+msgid "Cannot create service thread.\n"
+msgstr "서비스 쓰레드를 만들 수 없습니다.\n"
 
 #: winerror.mc:1151
-msgid "Service database locked\n"
-msgstr "서비스 데이터베이스가 잠겨있습니다\n"
+msgid "Service database locked.\n"
+msgstr "서비스 데이터베이스가 잠겨있습니다.\n"
 
 #: winerror.mc:1156
-msgid "Service already running\n"
-msgstr "서비스는 이미 실행증입니다\n"
+msgid "Service already running.\n"
+msgstr "서비스는 이미 실행증입니다.\n"
 
 #: winerror.mc:1161
-msgid "Invalid service account\n"
-msgstr "올바르지 않은 서비스 계정\n"
+msgid "Invalid service account.\n"
+msgstr "올바르지 않은 서비스 계정.\n"
 
 #: winerror.mc:1166
-msgid "Service is disabled\n"
-msgstr "서비스가 가능하지 않습니다\n"
+msgid "Service is disabled.\n"
+msgstr "서비스가 가능하지 않습니다.\n"
 
 #: winerror.mc:1171
-msgid "Circular dependency\n"
-msgstr "의존성의 순환\n"
+msgid "Circular dependency.\n"
+msgstr "의존성의 순환.\n"
 
 #: winerror.mc:1176
-msgid "Service does not exist\n"
-msgstr "서비스가 존재하지 않습니다\n"
+msgid "Service does not exist.\n"
+msgstr "서비스가 존재하지 않습니다.\n"
 
 #: winerror.mc:1181
-msgid "Service cannot accept control message\n"
-msgstr "서비스는 제어 메세지에 동의할 수 없습니다\n"
+msgid "Service cannot accept control message.\n"
+msgstr "서비스는 제어 메세지에 동의할 수 없습니다.\n"
 
 #: winerror.mc:1186
-msgid "Service not active\n"
-msgstr "서비스가 활성화되지 않았습니다\n"
+msgid "Service not active.\n"
+msgstr "서비스가 활성화되지 않았습니다.\n"
 
 #: winerror.mc:1191
-msgid "Service controller connect failed\n"
-msgstr "서비스 제어기 연결 실패\n"
+msgid "Service controller connect failed.\n"
+msgstr "서비스 제어기 연결 실패.\n"
 
 #: winerror.mc:1196
-msgid "Exception in service\n"
-msgstr "서비스의 예외\n"
+msgid "Exception in service.\n"
+msgstr "서비스의 예외.\n"
 
 #: winerror.mc:1201
-msgid "Database does not exist\n"
-msgstr "데이터베이스가 존재하지 않습니다\n"
+msgid "Database does not exist.\n"
+msgstr "데이터베이스가 존재하지 않습니다.\n"
 
 #: winerror.mc:1206
-msgid "Service-specific error\n"
-msgstr "서비스-의존적인 오류\n"
+msgid "Service-specific error.\n"
+msgstr "서비스-의존적인 오류.\n"
 
 #: winerror.mc:1211
-msgid "Process aborted\n"
-msgstr "프로세스가 취소되었습니다\n"
+msgid "Process aborted.\n"
+msgstr "프로세스가 취소되었습니다.\n"
 
 #: winerror.mc:1216
-msgid "Service dependency failed\n"
-msgstr "서비스 의존성 실패함\n"
+msgid "Service dependency failed.\n"
+msgstr "서비스 의존성 실패함.\n"
 
 #: winerror.mc:1221
-msgid "Service login failed\n"
-msgstr "서비스 로그인 실패\n"
+msgid "Service login failed.\n"
+msgstr "서비스 로그인 실패.\n"
 
 #: winerror.mc:1226
-msgid "Service start-hang\n"
-msgstr "서비스 시작-늘어짐\n"
+msgid "Service start-hang.\n"
+msgstr "서비스 시작-늘어짐.\n"
 
 #: winerror.mc:1231
-msgid "Invalid service lock\n"
-msgstr "올바르지 않은 서비스 잠금\n"
+msgid "Invalid service lock.\n"
+msgstr "올바르지 않은 서비스 잠금.\n"
 
 #: winerror.mc:1236
-msgid "Service marked for delete\n"
-msgstr "서비스가 삭제로 예약됨\n"
+msgid "Service marked for delete.\n"
+msgstr "서비스가 삭제로 예약됨.\n"
 
 #: winerror.mc:1241
-msgid "Service exists\n"
-msgstr "서비스가 존재합니다\n"
+msgid "Service exists.\n"
+msgstr "서비스가 존재합니다.\n"
 
 #: winerror.mc:1246
-msgid "System running last-known-good config\n"
-msgstr "서비스가 마지막으로 알려진 좋은 설정을 실행중임\n"
+msgid "System running last-known-good config.\n"
+msgstr "서비스가 마지막으로 알려진 좋은 설정을 실행중임.\n"
 
 #: winerror.mc:1251
-msgid "Service dependency deleted\n"
-msgstr "서비스 의존성이 지워졌습니다\n"
+msgid "Service dependency deleted.\n"
+msgstr "서비스 의존성이 지워졌습니다.\n"
 
 #: winerror.mc:1256
-msgid "Boot already accepted as last-good config\n"
-msgstr "이미 일반적을 알려진 마지막으로 성공한 설정으로 부팅됨\n"
+msgid "Boot already accepted as last-good config.\n"
+msgstr "이미 일반적을 알려진 마지막으로 성공한 설정으로 부팅됨.\n"
 
 #: winerror.mc:1261
-msgid "Service not started since last boot\n"
-msgstr "서비스는 마지막 부팅 이후로 시작되지 않았습니다\n"
+msgid "Service not started since last boot.\n"
+msgstr "서비스는 마지막 부팅 이후로 시작되지 않았습니다.\n"
 
 #: winerror.mc:1266
-msgid "Duplicate service name\n"
-msgstr "중복된 서비스 이름\n"
+msgid "Duplicate service name.\n"
+msgstr "중복된 서비스 이름.\n"
 
 #: winerror.mc:1271
-msgid "Different service account\n"
-msgstr "다른 서비스 계정\n"
+msgid "Different service account.\n"
+msgstr "다른 서비스 계정.\n"
 
 #: winerror.mc:1276
-msgid "Driver failure cannot be detected\n"
-msgstr "드라이버 오류를 발견 할 수 없음\n"
+msgid "Driver failure cannot be detected.\n"
+msgstr "드라이버 오류를 발견 할 수 없음.\n"
 
 #: winerror.mc:1281
-msgid "Process abort cannot be detected\n"
-msgstr "프로세스 중지를 발견할 수 없음\n"
+msgid "Process abort cannot be detected.\n"
+msgstr "프로세스 중지를 발견할 수 없음.\n"
 
 #: winerror.mc:1286
-msgid "No recovery program for service\n"
-msgstr "복구한 프로그램이나 서비스가 없음\n"
+msgid "No recovery program for service.\n"
+msgstr "복구한 프로그램이나 서비스가 없음.\n"
 
 #: winerror.mc:1291
-msgid "Service not implemented by exe\n"
-msgstr "서비스는 EXE 파일에 의해 구현되지 않았음\n"
+msgid "Service not implemented by exe.\n"
+msgstr "서비스는 EXE 파일에 의해 구현되지 않았음.\n"
 
 #: winerror.mc:1296
-msgid "End of media\n"
-msgstr "미디어 끝\n"
+msgid "End of media.\n"
+msgstr "미디어 끝.\n"
 
 #: winerror.mc:1301
-msgid "Filemark detected\n"
-msgstr "파일마크 발견됨\n"
+msgid "Filemark detected.\n"
+msgstr "파일마크 발견됨.\n"
 
 #: winerror.mc:1306
-msgid "Beginning of media\n"
-msgstr "미디어 시작\n"
+msgid "Beginning of media.\n"
+msgstr "미디어 시작.\n"
 
 #: winerror.mc:1311
-msgid "Setmark detected\n"
-msgstr "셋마크 발견됨\n"
+msgid "Setmark detected.\n"
+msgstr "셋마크 발견됨.\n"
 
 #: winerror.mc:1316
-msgid "No data detected\n"
-msgstr "어떤 데이타도 발견되지 않았습니다\n"
+msgid "No data detected.\n"
+msgstr "어떤 데이타도 발견되지 않았습니다.\n"
 
 #: winerror.mc:1321
-msgid "Partition failure\n"
-msgstr "분할 실패\n"
+msgid "Partition failure.\n"
+msgstr "분할 실패.\n"
 
 #: winerror.mc:1326
-msgid "Invalid block length\n"
-msgstr "올바르지 않은 블럭 길이\n"
+msgid "Invalid block length.\n"
+msgstr "올바르지 않은 블럭 길이.\n"
 
 #: winerror.mc:1331
-msgid "Device not partitioned\n"
-msgstr "장치가 분할되지 않았습니다\n"
+msgid "Device not partitioned.\n"
+msgstr "장치가 분할되지 않았습니다.\n"
 
 #: winerror.mc:1336
-msgid "Unable to lock media\n"
-msgstr "미디어를 잠글 수 업습니다\n"
+msgid "Unable to lock media.\n"
+msgstr "미디어를 잠글 수 업습니다.\n"
 
 #: winerror.mc:1341
-msgid "Unable to unload media\n"
-msgstr "미디어를 떼어낼 수 없습니다\n"
+msgid "Unable to unload media.\n"
+msgstr "미디어를 떼어낼 수 없습니다.\n"
 
 #: winerror.mc:1346
-msgid "Media changed\n"
-msgstr "미디어가 변경되었습니다\n"
+msgid "Media changed.\n"
+msgstr "미디어가 변경되었습니다.\n"
 
 #: winerror.mc:1351
-msgid "I/O bus reset\n"
-msgstr "입출력 버스 제설정\n"
+msgid "I/O bus reset.\n"
+msgstr "입출력 버스 제설정.\n"
 
 #: winerror.mc:1356
-msgid "No media in drive\n"
-msgstr "이 드라이브에는 어떠한 미디어도 없습니다\n"
+msgid "No media in drive.\n"
+msgstr "이 드라이브에는 어떠한 미디어도 없습니다.\n"
 
 #: winerror.mc:1361
-msgid "No Unicode translation\n"
-msgstr "유니코드 변역 불가\n"
+msgid "No Unicode translation.\n"
+msgstr "유니코드 변역 불가.\n"
 
 #: winerror.mc:1366
-msgid "DLL init failed\n"
-msgstr "DLL 초기화 실패\n"
+msgid "DLL init failed.\n"
+msgstr "DLL 초기화 실패.\n"
 
 #: winerror.mc:1371
-msgid "Shutdown in progress\n"
-msgstr "이 작업을 종료\n"
+msgid "Shutdown in progress.\n"
+msgstr "이 작업을 종료.\n"
 
 #: winerror.mc:1376
-msgid "No shutdown in progress\n"
-msgstr "이 작업을 종료하지 않음\n"
+msgid "No shutdown in progress.\n"
+msgstr "이 작업을 종료하지 않음.\n"
 
 #: winerror.mc:1381
-msgid "I/O device error\n"
-msgstr "입출력 장치 오류\n"
+msgid "I/O device error.\n"
+msgstr "입출력 장치 오류.\n"
 
 #: winerror.mc:1386
-msgid "No serial devices found\n"
-msgstr "어떤 시리얼 장치도 발견할 수 없습니다\n"
+msgid "No serial devices found.\n"
+msgstr "어떤 시리얼 장치도 발견할 수 없습니다.\n"
 
 #: winerror.mc:1391
-msgid "Shared IRQ busy\n"
-msgstr "공유 IRQ 바쁨\n"
+msgid "Shared IRQ busy.\n"
+msgstr "공유 IRQ 바쁨.\n"
 
 #: winerror.mc:1396
-msgid "Serial I/O completed\n"
-msgstr "시리얼 입출력 완료\n"
+msgid "Serial I/O completed.\n"
+msgstr "시리얼 입출력 완료.\n"
 
 #: winerror.mc:1401
-msgid "Serial I/O counter timeout\n"
-msgstr "시리얼 입출력 카운터 시간초과\n"
+msgid "Serial I/O counter timeout.\n"
+msgstr "시리얼 입출력 카운터 시간초과.\n"
 
 #: winerror.mc:1406
-msgid "Floppy ID address mark not found\n"
-msgstr "플로피 ID  주소 마크를 찾을 수 없음\n"
+msgid "Floppy ID address mark not found.\n"
+msgstr "플로피 ID  주소 마크를 찾을 수 없음.\n"
 
 #: winerror.mc:1411
-msgid "Floppy reports wrong cylinder\n"
-msgstr "플로피가 잘몫된 실린더를 보고함\n"
+msgid "Floppy reports wrong cylinder.\n"
+msgstr "플로피가 잘몫된 실린더를 보고함.\n"
 
 #: winerror.mc:1416
-msgid "Unknown floppy error\n"
-msgstr "알 수 없는 플로피 오류\n"
+msgid "Unknown floppy error.\n"
+msgstr "알 수 없는 플로피 오류.\n"
 
 #: winerror.mc:1421
-msgid "Floppy registers inconsistent\n"
-msgstr "플로피 등록이 일치하지 않음\n"
+msgid "Floppy registers inconsistent.\n"
+msgstr "플로피 등록이 일치하지 않음.\n"
 
 #: winerror.mc:1426
-msgid "Hard disk recalibrate failed\n"
-msgstr "하드디스크 재조성 실패\n"
+msgid "Hard disk recalibrate failed.\n"
+msgstr "하드디스크 재조성 실패.\n"
 
 #: winerror.mc:1431
-msgid "Hard disk operation failed\n"
-msgstr "하드디스크 작업 실패\n"
+msgid "Hard disk operation failed.\n"
+msgstr "하드디스크 작업 실패.\n"
 
 #: winerror.mc:1436
-msgid "Hard disk reset failed\n"
-msgstr "하드디스크 재설정 실패\n"
+msgid "Hard disk reset failed.\n"
+msgstr "하드디스크 재설정 실패.\n"
 
 #: winerror.mc:1441
-msgid "End of tape media\n"
-msgstr "테이프 미디어 끝\n"
+msgid "End of tape media.\n"
+msgstr "테이프 미디어 끝.\n"
 
 #: winerror.mc:1446
-msgid "Not enough server memory\n"
-msgstr "서버 메모리가 부족합니다\n"
+msgid "Not enough server memory.\n"
+msgstr "서버 메모리가 부족합니다.\n"
 
 #: winerror.mc:1451
-msgid "Possible deadlock\n"
-msgstr "데드락이 가능함\n"
+msgid "Possible deadlock.\n"
+msgstr "데드락이 가능함.\n"
 
 #: winerror.mc:1456
-msgid "Incorrect alignment\n"
-msgstr "올바르지 않은 정렬\n"
+msgid "Incorrect alignment.\n"
+msgstr "올바르지 않은 정렬.\n"
 
 #: winerror.mc:1461
-msgid "Set-power-state vetoed\n"
-msgstr "파워-상태-설정이 거부됨\n"
+msgid "Set-power-state vetoed.\n"
+msgstr "파워-상태-설정이 거부됨.\n"
 
 #: winerror.mc:1466
-msgid "Set-power-state failed\n"
-msgstr "파워-상태-설정이 실패함\n"
+msgid "Set-power-state failed.\n"
+msgstr "파워-상태-설정이 실패함.\n"
 
 #: winerror.mc:1471
-msgid "Too many links\n"
-msgstr "너무 많은 링크가 있습니다\n"
+msgid "Too many links.\n"
+msgstr "너무 많은 링크가 있습니다.\n"
 
 #: winerror.mc:1476
-msgid "Newer windows version needed\n"
-msgstr "더 최신의 윈도우즈 버젼을 필요로 합니다\n"
+msgid "Newer windows version needed.\n"
+msgstr "더 최신의 윈도우즈 버젼을 필요로 합니다.\n"
 
 #: winerror.mc:1481
-msgid "Wrong operating system\n"
-msgstr "잘못된 운영체제\n"
+msgid "Wrong operating system.\n"
+msgstr "잘못된 운영체제.\n"
 
 #: winerror.mc:1486
-msgid "Single-instance application\n"
-msgstr "단일 인스턴트 어플리케이션\n"
+msgid "Single-instance application.\n"
+msgstr "단일 인스턴트 어플리케이션.\n"
 
 #: winerror.mc:1491
-msgid "Real-mode application\n"
-msgstr "리얼 모드 프로그램\n"
+msgid "Real-mode application.\n"
+msgstr "리얼 모드 프로그램.\n"
 
 #: winerror.mc:1496
-msgid "Invalid DLL\n"
-msgstr "올바르지 않은DLL\n"
+msgid "Invalid DLL.\n"
+msgstr "올바르지 않은DLL.\n"
 
 #: winerror.mc:1501
-msgid "No associated application\n"
-msgstr "연결된 프로그램이 없습니다\n"
+msgid "No associated application.\n"
+msgstr "연결된 프로그램이 없습니다.\n"
 
 #: winerror.mc:1506
-msgid "DDE failure\n"
-msgstr "DDE 실패\n"
+msgid "DDE failure.\n"
+msgstr "DDE 실패.\n"
 
 #: winerror.mc:1511
-msgid "DLL not found\n"
-msgstr "DLL 을 찾을 수 업습니다\n"
+msgid "DLL not found.\n"
+msgstr "DLL 을 찾을 수 업습니다.\n"
 
 #: winerror.mc:1516
-msgid "Out of user handles\n"
-msgstr "사용자 핸들 밖임\n"
+msgid "Out of user handles.\n"
+msgstr "사용자 핸들 밖임.\n"
 
 #: winerror.mc:1521
-msgid "Message can only be used in synchronous calls\n"
-msgstr "메시지는 오직 동기 호출에만 사용할 수있음\n"
+msgid "Message can only be used in synchronous calls.\n"
+msgstr "메시지는 오직 동기 호출에만 사용할 수있음.\n"
 
 #: winerror.mc:1526
-msgid "The source element is empty\n"
-msgstr "소스 요소가 비어 있습니다\n"
+msgid "The source element is empty.\n"
+msgstr "소스 요소가 비어 있습니다.\n"
 
 #: winerror.mc:1531
-msgid "The destination element is full\n"
-msgstr "대상 요소가 가득참\n"
+msgid "The destination element is full.\n"
+msgstr "대상 요소가 가득참.\n"
 
 #: winerror.mc:1536
-msgid "The element address is invalid\n"
-msgstr "요소의 주소가 잘못되었습니다\n"
+msgid "The element address is invalid.\n"
+msgstr "요소의 주소가 잘못되었습니다.\n"
 
 #: winerror.mc:1541
-msgid "The magazine is not present\n"
-msgstr "매거진은 존재하지 않음\n"
+msgid "The magazine is not present.\n"
+msgstr "매거진은 존재하지 않음.\n"
 
 #: winerror.mc:1546
-msgid "The device needs reinitialization\n"
-msgstr "이 장치는 다시 초기화가 필요함\n"
+msgid "The device needs reinitialization.\n"
+msgstr "이 장치는 다시 초기화가 필요함.\n"
 
 #: winerror.mc:1551
-msgid "The device requires cleaning\n"
-msgstr "장치는 청소가 필요함\n"
+msgid "The device requires cleaning.\n"
+msgstr "장치는 청소가 필요함.\n"
 
 #: winerror.mc:1556
-msgid "The device door is open\n"
-msgstr "장치의 문이 열려있음\n"
+msgid "The device door is open.\n"
+msgstr "장치의 문이 열려있음.\n"
 
 #: winerror.mc:1561
-msgid "The device is not connected\n"
-msgstr "장치가 연결되지 않았습니다\n"
+msgid "The device is not connected.\n"
+msgstr "장치가 연결되지 않았습니다.\n"
 
 #: winerror.mc:1566
-msgid "Element not found\n"
-msgstr "요소를 찾을 수 없습니다\n"
+msgid "Element not found.\n"
+msgstr "요소를 찾을 수 없습니다.\n"
 
 #: winerror.mc:1571
-msgid "No match found\n"
-msgstr "일치하는 것을 찾을 수 없음\n"
+msgid "No match found.\n"
+msgstr "일치하는 것을 찾을 수 없음.\n"
 
 #: winerror.mc:1576
-msgid "Property set not found\n"
-msgstr "속성 세트를 찾을 수 없습니다\n"
+msgid "Property set not found.\n"
+msgstr "속성 세트를 찾을 수 없습니다.\n"
 
 #: winerror.mc:1581
-msgid "Point not found\n"
-msgstr "포인트를 찾을 수 없습니다\n"
+msgid "Point not found.\n"
+msgstr "포인트를 찾을 수 없습니다.\n"
 
 #: winerror.mc:1586
-msgid "No running tracking service\n"
-msgstr "추적 서비스가 실행중이 아님\n"
+msgid "No running tracking service.\n"
+msgstr "추적 서비스가 실행중이 아님.\n"
 
 #: winerror.mc:1591
-msgid "No such volume ID\n"
-msgstr "볼륨 아이디가 없음\n"
+msgid "No such volume ID.\n"
+msgstr "볼륨 아이디가 없음.\n"
 
 #: winerror.mc:1596
-msgid "Unable to remove the file to be replaced\n"
-msgstr "바꿀 파일을 지울 수 없음\n"
+msgid "Unable to remove the file to be replaced.\n"
+msgstr "바꿀 파일을 지울 수 없음.\n"
 
 #: winerror.mc:1601
-msgid "Unable to move the replacement file into place\n"
-msgstr "대체 파일을 이 장소로 이동할 수 없음\n"
+msgid "Unable to move the replacement file into place.\n"
+msgstr "대체 파일을 이 장소로 이동할 수 없음.\n"
 
 #: winerror.mc:1606
-msgid "Moving the replacement file failed\n"
-msgstr "바꿀 파일 이동 작업 실패\n"
+msgid "Moving the replacement file failed.\n"
+msgstr "바꿀 파일 이동 작업 실패.\n"
 
 #: winerror.mc:1611
-msgid "The journal is being deleted\n"
-msgstr "저널이 지워졌습니다\n"
+msgid "The journal is being deleted.\n"
+msgstr "저널이 지워졌습니다.\n"
 
 #: winerror.mc:1616
-msgid "The journal is not active\n"
-msgstr "저널이 활성화되지 않았습니다\n"
+msgid "The journal is not active.\n"
+msgstr "저널이 활성화되지 않았습니다.\n"
 
 #: winerror.mc:1621
-msgid "Potential matching file found\n"
-msgstr "잠재 일치하는 파일을 찾을 수 없음\n"
+msgid "Potential matching file found.\n"
+msgstr "잠재 일치하는 파일을 찾을 수 없음.\n"
 
 #: winerror.mc:1626
-msgid "The journal entry was deleted\n"
-msgstr "저널 엔트리가 지워짐\n"
+msgid "The journal entry was deleted.\n"
+msgstr "저널 엔트리가 지워짐.\n"
 
 #: winerror.mc:1631
-msgid "Invalid device name\n"
-msgstr "올바르지 않은 장치 이름\n"
+msgid "Invalid device name.\n"
+msgstr "올바르지 않은 장치 이름.\n"
 
 #: winerror.mc:1636
-msgid "Connection unavailable\n"
-msgstr "연결이 불가능합니다\n"
+msgid "Connection unavailable.\n"
+msgstr "연결이 불가능합니다.\n"
 
 #: winerror.mc:1641
-msgid "Device already remembered\n"
-msgstr "장치는 이미 기억됨\n"
+msgid "Device already remembered.\n"
+msgstr "장치는 이미 기억됨.\n"
 
 #: winerror.mc:1646
-msgid "No network or bad path\n"
-msgstr "네트워크가 없거나 경로가 잘못됨\n"
+msgid "No network or bad path.\n"
+msgstr "네트워크가 없거나 경로가 잘못됨.\n"
 
 #: winerror.mc:1651
-msgid "Invalid network provider name\n"
-msgstr "올바르지 않은 네트워크 제공자 이름\n"
+msgid "Invalid network provider name.\n"
+msgstr "올바르지 않은 네트워크 제공자 이름.\n"
 
 #: winerror.mc:1656
-msgid "Cannot open network connection profile\n"
-msgstr "네트워크 연결 프로필을 열 수 없음\n"
+msgid "Cannot open network connection profile.\n"
+msgstr "네트워크 연결 프로필을 열 수 없음.\n"
 
 #: winerror.mc:1661
-msgid "Corrupt network connection profile\n"
-msgstr "망가진 네트워크 연결 프로필\n"
+msgid "Corrupt network connection profile.\n"
+msgstr "망가진 네트워크 연결 프로필.\n"
 
 #: winerror.mc:1666
-msgid "Not a container\n"
-msgstr "컨테이너가 아님\n"
+msgid "Not a container.\n"
+msgstr "컨테이너가 아님.\n"
 
 #: winerror.mc:1671
-msgid "Extended error\n"
-msgstr "확장된 오류\n"
+msgid "Extended error.\n"
+msgstr "확장된 오류.\n"
 
 #: winerror.mc:1676
-msgid "Invalid group name\n"
-msgstr "올바르지 않은 그룹 이름\n"
+msgid "Invalid group name.\n"
+msgstr "올바르지 않은 그룹 이름.\n"
 
 #: winerror.mc:1681
-msgid "Invalid computer name\n"
-msgstr "잘못된 컴퓨터 이름\n"
+msgid "Invalid computer name.\n"
+msgstr "잘못된 컴퓨터 이름.\n"
 
 #: winerror.mc:1686
-msgid "Invalid event name\n"
-msgstr "올바르지 않은 이벤트 이름\n"
+msgid "Invalid event name.\n"
+msgstr "올바르지 않은 이벤트 이름.\n"
 
 #: winerror.mc:1691
-msgid "Invalid domain name\n"
-msgstr "올바르지 않은 도메인 이름\n"
+msgid "Invalid domain name.\n"
+msgstr "올바르지 않은 도메인 이름.\n"
 
 #: winerror.mc:1696
-msgid "Invalid service name\n"
-msgstr "올바르지 않은 서비스 이름\n"
+msgid "Invalid service name.\n"
+msgstr "올바르지 않은 서비스 이름.\n"
 
 #: winerror.mc:1701
-msgid "Invalid network name\n"
-msgstr "올바르지 않은 네트워크 이름\n"
+msgid "Invalid network name.\n"
+msgstr "올바르지 않은 네트워크 이름.\n"
 
 #: winerror.mc:1706
-msgid "Invalid share name\n"
-msgstr "올바르지 않은 공유 이름\n"
+msgid "Invalid share name.\n"
+msgstr "올바르지 않은 공유 이름.\n"
 
 #: winerror.mc:1716
-msgid "Invalid message name\n"
-msgstr "올바르지 않은 메세지 이름\n"
+msgid "Invalid message name.\n"
+msgstr "올바르지 않은 메세지 이름.\n"
 
 #: winerror.mc:1721
-msgid "Invalid message destination\n"
-msgstr "올바르지 않은 메세지 방향\n"
+msgid "Invalid message destination.\n"
+msgstr "올바르지 않은 메세지 방향.\n"
 
 #: winerror.mc:1726
-msgid "Session credential conflict\n"
-msgstr "세션 자격 수여 충돌\n"
+msgid "Session credential conflict.\n"
+msgstr "세션 자격 수여 충돌.\n"
 
 #: winerror.mc:1731
-msgid "Remote session limit exceeded\n"
-msgstr "원격 세션 제한 도달\n"
+msgid "Remote session limit exceeded.\n"
+msgstr "원격 세션 제한 도달.\n"
 
 #: winerror.mc:1736
-msgid "Duplicate domain or workgroup name\n"
-msgstr "도메인이나 작업 그룸 이름이 중복됨\n"
+msgid "Duplicate domain or workgroup name.\n"
+msgstr "도메인이나 작업 그룸 이름이 중복됨.\n"
 
 #: winerror.mc:1741
-msgid "No network\n"
-msgstr "네트쿼크 없음\n"
+msgid "No network.\n"
+msgstr "네트쿼크 없음.\n"
 
 #: winerror.mc:1746
-msgid "Operation canceled by user\n"
-msgstr "작업이 사용자에 위해 취소됨\n"
+msgid "Operation canceled by user.\n"
+msgstr "작업이 사용자에 위해 취소됨.\n"
 
 #: winerror.mc:1751
-msgid "File has a user-mapped section\n"
-msgstr "파일은 사용자-배치 섹션을 가지고 있음\n"
+msgid "File has a user-mapped section.\n"
+msgstr "파일은 사용자-배치 섹션을 가지고 있음.\n"
 
 #: winerror.mc:1756 winerror.mc:3741
-msgid "Connection refused\n"
-msgstr "연결이 거부됨\n"
+msgid "Connection refused.\n"
+msgstr "연결이 거부됨.\n"
 
 #: winerror.mc:1761
-msgid "Connection gracefully closed\n"
-msgstr "연결이 정상적으로 종료됨\n"
+msgid "Connection gracefully closed.\n"
+msgstr "연결이 정상적으로 종료됨.\n"
 
 #: winerror.mc:1766
-msgid "Address already associated with transport endpoint\n"
-msgstr "주소는 이미 전송 끝점과 관련되어 있음\n"
+msgid "Address already associated with transport endpoint.\n"
+msgstr "주소는 이미 전송 끝점과 관련되어 있음.\n"
 
 #: winerror.mc:1771
-msgid "Address not associated with transport endpoint\n"
-msgstr "주소는 이미 전송 끝점과 관련되어  있지 않음\n"
+msgid "Address not associated with transport endpoint.\n"
+msgstr "주소는 이미 전송 끝점과 관련되어  있지 않음.\n"
 
 #: winerror.mc:1776
-msgid "Connection invalid\n"
-msgstr "올바르지 않은 연결\n"
+msgid "Connection invalid.\n"
+msgstr "올바르지 않은 연결.\n"
 
 #: winerror.mc:1781
-msgid "Connection is active\n"
-msgstr "연결이 활성화됨\n"
+msgid "Connection is active.\n"
+msgstr "연결이 활성화됨.\n"
 
 #: winerror.mc:1786
-msgid "Network unreachable\n"
-msgstr "접근할 수 없는 네트워크\n"
+msgid "Network unreachable.\n"
+msgstr "접근할 수 없는 네트워크.\n"
 
 #: winerror.mc:1791
-msgid "Host unreachable\n"
-msgstr "접근할 수 없는 호스트\n"
+msgid "Host unreachable.\n"
+msgstr "접근할 수 없는 호스트.\n"
 
 #: winerror.mc:1796
-msgid "Protocol unreachable\n"
-msgstr "접근할 수 없는 프르토콜\n"
+msgid "Protocol unreachable.\n"
+msgstr "접근할 수 없는 프르토콜.\n"
 
 #: winerror.mc:1801
-msgid "Port unreachable\n"
-msgstr "접근할 수 없는 포트\n"
+msgid "Port unreachable.\n"
+msgstr "접근할 수 없는 포트.\n"
 
 #: winerror.mc:1806
-msgid "Request aborted\n"
-msgstr "요청이 중단됨\n"
+msgid "Request aborted.\n"
+msgstr "요청이 중단됨.\n"
 
 #: winerror.mc:1811
-msgid "Connection aborted\n"
-msgstr "연결이 취소됨\n"
+msgid "Connection aborted.\n"
+msgstr "연결이 취소됨.\n"
 
 #: winerror.mc:1816
-msgid "Please retry operation\n"
-msgstr "작업을 다시 시도하십시오\n"
+msgid "Please retry operation.\n"
+msgstr "작업을 다시 시도하십시오.\n"
 
 #: winerror.mc:1821
-msgid "Connection count limit reached\n"
-msgstr "도달 연결 개수 제한에 도달함\n"
+msgid "Connection count limit reached.\n"
+msgstr "도달 연결 개수 제한에 도달함.\n"
 
 #: winerror.mc:1826
-msgid "Login time restriction\n"
-msgstr "로그인 시간 제한\n"
+msgid "Login time restriction.\n"
+msgstr "로그인 시간 제한.\n"
 
 #: winerror.mc:1831
-msgid "Login workstation restriction\n"
-msgstr "로그인 워크 스테이션 제한\n"
+msgid "Login workstation restriction.\n"
+msgstr "로그인 워크 스테이션 제한.\n"
 
 #: winerror.mc:1836
-msgid "Incorrect network address\n"
-msgstr "잘못된 네트워크 주소\n"
+msgid "Incorrect network address.\n"
+msgstr "잘못된 네트워크 주소.\n"
 
 #: winerror.mc:1841
-msgid "Service already registered\n"
-msgstr "서비스는 이미 등록되어 있습니다\n"
+msgid "Service already registered.\n"
+msgstr "서비스는 이미 등록되어 있습니다.\n"
 
 #: winerror.mc:1846
-msgid "Service not found\n"
-msgstr "서비스를 찾을 수 없습니다\n"
+msgid "Service not found.\n"
+msgstr "서비스를 찾을 수 없습니다.\n"
 
 #: winerror.mc:1851
-msgid "User not authenticated\n"
-msgstr "사용자가 인증되지 않음\n"
+msgid "User not authenticated.\n"
+msgstr "사용자가 인증되지 않음.\n"
 
 #: winerror.mc:1856
-msgid "User not logged on\n"
-msgstr "사용자가 로그인되어있지 않음\n"
+msgid "User not logged on.\n"
+msgstr "사용자가 로그인되어있지 않음.\n"
 
 #: winerror.mc:1861
-msgid "Continue work in progress\n"
-msgstr "계속 진행중인 작업\n"
+msgid "Continue work in progress.\n"
+msgstr "계속 진행중인 작업.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised\n"
-msgstr "이미 초기화됨\n"
+msgid "Already initialised.\n"
+msgstr "이미 초기화됨.\n"
 
 #: winerror.mc:1871
-msgid "No more local devices\n"
-msgstr "더 이상의 지역 장치가 없음\n"
+msgid "No more local devices.\n"
+msgstr "더 이상의 지역 장치가 없음.\n"
 
 #: winerror.mc:1876
-msgid "The site does not exist\n"
-msgstr "사이트가 존재하지 않습니다\n"
+msgid "The site does not exist.\n"
+msgstr "사이트가 존재하지 않습니다.\n"
 
 #: winerror.mc:1881
-msgid "The domain controller already exists\n"
-msgstr "도메인 제어기는 이미 존재합니다\n"
+msgid "The domain controller already exists.\n"
+msgstr "도메인 제어기는 이미 존재합니다.\n"
 
 #: winerror.mc:1886
-msgid "Supported only when connected\n"
-msgstr "오직 연결될 때만 지원됨\n"
+msgid "Supported only when connected.\n"
+msgstr "오직 연결될 때만 지원됨.\n"
 
 #: winerror.mc:1891
-msgid "Perform operation even when nothing changed\n"
-msgstr "작업 수행할 때 아무것도 변경된 것이 없음\n"
+msgid "Perform operation even when nothing changed.\n"
+msgstr "작업 수행할 때 아무것도 변경된 것이 없음.\n"
 
 #: winerror.mc:1896
-msgid "The user profile is invalid\n"
-msgstr "사용자 프로파일이 적합하지 않음\n"
+msgid "The user profile is invalid.\n"
+msgstr "사용자 프로파일이 적합하지 않음.\n"
 
 #: winerror.mc:1901
-msgid "Not supported on Small Business Server\n"
-msgstr "Small Business Server는 지원하지 않음\n"
+msgid "Not supported on Small Business Server.\n"
+msgstr "Small Business Server는 지원하지 않음.\n"
 
 #: winerror.mc:1906
-msgid "Not all privileges assigned\n"
-msgstr "할당되지 않은 모든 권한\n"
+msgid "Not all privileges assigned.\n"
+msgstr "할당되지 않은 모든 권한.\n"
 
 #: winerror.mc:1911
-msgid "Some security IDs not mapped\n"
-msgstr "어떤  보안 아이디는 매칭되어 잇지 않음\n"
+msgid "Some security IDs not mapped.\n"
+msgstr "어떤  보안 아이디는 매칭되어 잇지 않음.\n"
 
 #: winerror.mc:1916
-msgid "No quotas for account\n"
-msgstr "게정에 할당된 쿼터가 없음\n"
+msgid "No quotas for account.\n"
+msgstr "게정에 할당된 쿼터가 없음.\n"
 
 #: winerror.mc:1921
-msgid "Local user session key\n"
-msgstr "로컬 사용자 세션 키\n"
+msgid "Local user session key.\n"
+msgstr "로컬 사용자 세션 키.\n"
 
 #: winerror.mc:1926
-msgid "Password too complex for LM\n"
-msgstr "LM을 위한 암호가 너무 복잡함\n"
+msgid "Password too complex for LM.\n"
+msgstr "LM을 위한 암호가 너무 복잡함.\n"
 
 #: winerror.mc:1931
-msgid "Unknown revision\n"
-msgstr "알수없는 개정\n"
+msgid "Unknown revision.\n"
+msgstr "알수없는 개정.\n"
 
 #: winerror.mc:1936
-msgid "Incompatible revision levels\n"
-msgstr "호환되지 않는 개정 레벨\n"
+msgid "Incompatible revision levels.\n"
+msgstr "호환되지 않는 개정 레벨.\n"
 
 #: winerror.mc:1941
-msgid "Invalid owner\n"
-msgstr "잘못된 소유자\n"
+msgid "Invalid owner.\n"
+msgstr "잘못된 소유자.\n"
 
 #: winerror.mc:1946
-msgid "Invalid primary group\n"
-msgstr "올바르지 않은 기본 그룹\n"
+msgid "Invalid primary group.\n"
+msgstr "올바르지 않은 기본 그룹.\n"
 
 #: winerror.mc:1951
-msgid "No impersonation token\n"
-msgstr "흉내내는 토큰이 없음\n"
+msgid "No impersonation token.\n"
+msgstr "흉내내는 토큰이 없음.\n"
 
 #: winerror.mc:1956
-msgid "Can't disable mandatory group\n"
-msgstr "그룹에 권한을 줄 수 없음\n"
+msgid "Can't disable mandatory group.\n"
+msgstr "그룹에 권한을 줄 수 없음.\n"
 
 #: winerror.mc:1961
-msgid "No logon servers available\n"
-msgstr "가능한 로그온 서버가 없습니다\n"
+msgid "No logon servers available.\n"
+msgstr "가능한 로그온 서버가 없습니다.\n"
 
 #: winerror.mc:1966
-msgid "No such logon session\n"
-msgstr "어떤 로그인 세션도 없음\n"
+msgid "No such logon session.\n"
+msgstr "어떤 로그인 세션도 없음.\n"
 
 #: winerror.mc:1971
-msgid "No such privilege\n"
-msgstr "어떤 권한도 없음\n"
+msgid "No such privilege.\n"
+msgstr "어떤 권한도 없음.\n"
 
 #: winerror.mc:1976
-msgid "Privilege not held\n"
-msgstr "권한이 유지 되지 않음\n"
+msgid "Privilege not held.\n"
+msgstr "권한이 유지 되지 않음.\n"
 
 #: winerror.mc:1981
-msgid "Invalid account name\n"
-msgstr "올바르지 않은 계정 이름\n"
+msgid "Invalid account name.\n"
+msgstr "올바르지 않은 계정 이름.\n"
 
 #: winerror.mc:1986
-msgid "User already exists\n"
-msgstr "사용자는 이미 존재합니다\n"
+msgid "User already exists.\n"
+msgstr "사용자는 이미 존재합니다.\n"
 
 #: winerror.mc:1991
-msgid "No such user\n"
-msgstr "어떤 사용자도 없습니다\n"
+msgid "No such user.\n"
+msgstr "어떤 사용자도 없습니다.\n"
 
 #: winerror.mc:1996
-msgid "Group already exists\n"
-msgstr "그룹은 이미 존재합니다\n"
+msgid "Group already exists.\n"
+msgstr "그룹은 이미 존재합니다.\n"
 
 #: winerror.mc:2001
-msgid "No such group\n"
-msgstr "어떤 그룹도 없습니다\n"
+msgid "No such group.\n"
+msgstr "어떤 그룹도 없습니다.\n"
 
 #: winerror.mc:2006
-msgid "User already in group\n"
-msgstr "사용자는 이미 그룹에 있습니다\n"
+msgid "User already in group.\n"
+msgstr "사용자는 이미 그룹에 있습니다.\n"
 
 #: winerror.mc:2011
-msgid "User not in group\n"
-msgstr "사용자가 그룹에 없음\n"
+msgid "User not in group.\n"
+msgstr "사용자가 그룹에 없음.\n"
 
 #: winerror.mc:2016
-msgid "Can't delete last admin user\n"
-msgstr "마지막  관리 사용자를 지울 수 없음\n"
+msgid "Can't delete last admin user.\n"
+msgstr "마지막  관리 사용자를 지울 수 없음.\n"
 
 #: winerror.mc:2021
-msgid "Wrong password\n"
-msgstr "잘못된 암호\n"
+msgid "Wrong password.\n"
+msgstr "잘못된 암호.\n"
 
 #: winerror.mc:2026
-msgid "Ill-formed password\n"
-msgstr "나쁜 형태의 암호\n"
+msgid "Ill-formed password.\n"
+msgstr "나쁜 형태의 암호.\n"
 
 #: winerror.mc:2031
-msgid "Password restriction\n"
-msgstr "암호 제한\n"
+msgid "Password restriction.\n"
+msgstr "암호 제한.\n"
 
 #: winerror.mc:2036
-msgid "Logon failure\n"
-msgstr "로그인 실패\n"
+msgid "Logon failure.\n"
+msgstr "로그인 실패.\n"
 
 #: winerror.mc:2041
-msgid "Account restriction\n"
-msgstr "계정 제한\n"
+msgid "Account restriction.\n"
+msgstr "계정 제한.\n"
 
 #: winerror.mc:2046
-msgid "Invalid logon hours\n"
-msgstr "올바르지 않은 로그온 시간\n"
+msgid "Invalid logon hours.\n"
+msgstr "올바르지 않은 로그온 시간.\n"
 
 #: winerror.mc:2051
-msgid "Invalid workstation\n"
-msgstr "올바르지 않은 워크스테이션\n"
+msgid "Invalid workstation.\n"
+msgstr "올바르지 않은 워크스테이션.\n"
 
 #: winerror.mc:2056
-msgid "Password expired\n"
-msgstr "비밀 번호 만료\n"
+msgid "Password expired.\n"
+msgstr "비밀 번호 만료.\n"
 
 #: winerror.mc:2061
-msgid "Account disabled\n"
-msgstr "계정을 사용할 수 없습니다\n"
+msgid "Account disabled.\n"
+msgstr "계정을 사용할 수 없습니다.\n"
 
 #: winerror.mc:2066
-msgid "No security ID mapped\n"
-msgstr "매핑된 보안 아이디가 없음\n"
+msgid "No security ID mapped.\n"
+msgstr "매핑된 보안 아이디가 없음.\n"
 
 #: winerror.mc:2071
-msgid "Too many LUIDs requested\n"
-msgstr "너무 많은  LUI가 요구됨\n"
+msgid "Too many LUIDs requested.\n"
+msgstr "너무 많은  LUI가 요구됨.\n"
 
 #: winerror.mc:2076
-msgid "LUIDs exhausted\n"
-msgstr "LUID가 고갈됨\n"
+msgid "LUIDs exhausted.\n"
+msgstr "LUID가 고갈됨.\n"
 
 #: winerror.mc:2081
-msgid "Invalid sub authority\n"
-msgstr "올바르지 않은 하위 기관\n"
+msgid "Invalid sub authority.\n"
+msgstr "올바르지 않은 하위 기관.\n"
 
 #: winerror.mc:2086
-msgid "Invalid ACL\n"
-msgstr "올바르지 않은 ACL\n"
+msgid "Invalid ACL.\n"
+msgstr "올바르지 않은 ACL.\n"
 
 #: winerror.mc:2091
-msgid "Invalid SID\n"
-msgstr "올바르지 않은 SID\n"
+msgid "Invalid SID.\n"
+msgstr "올바르지 않은 SID.\n"
 
 #: winerror.mc:2096
-msgid "Invalid security descriptor\n"
-msgstr "올바르지 않은 보안 설명자\n"
+msgid "Invalid security descriptor.\n"
+msgstr "올바르지 않은 보안 설명자.\n"
 
 #: winerror.mc:2101
-msgid "Bad inherited ACL\n"
-msgstr "나쁜 ACL을 상속\n"
+msgid "Bad inherited ACL.\n"
+msgstr "나쁜 ACL을 상속.\n"
 
 #: winerror.mc:2106
-msgid "Server disabled\n"
-msgstr "서버가 가능하지 않음\n"
+msgid "Server disabled.\n"
+msgstr "서버가 가능하지 않음.\n"
 
 #: winerror.mc:2111
-msgid "Server not disabled\n"
-msgstr "서버가 가능하지 않지가 않음\n"
+msgid "Server not disabled.\n"
+msgstr "서버가 가능하지 않지가 않음.\n"
 
 #: winerror.mc:2116
-msgid "Invalid ID authority\n"
-msgstr "올바르지 않은 아이디 권한\n"
+msgid "Invalid ID authority.\n"
+msgstr "올바르지 않은 아이디 권한.\n"
 
 #: winerror.mc:2121
-msgid "Allotted space exceeded\n"
-msgstr "할당된 공간을 초과했습니다\n"
+msgid "Allotted space exceeded.\n"
+msgstr "할당된 공간을 초과했습니다.\n"
 
 #: winerror.mc:2126
-msgid "Invalid group attributes\n"
-msgstr "올바르지 않은 그룹 속성\n"
+msgid "Invalid group attributes.\n"
+msgstr "올바르지 않은 그룹 속성.\n"
 
 #: winerror.mc:2131
-msgid "Bad impersonation level\n"
-msgstr "나쁜 가장 수준\n"
+msgid "Bad impersonation level.\n"
+msgstr "나쁜 가장 수준.\n"
 
 #: winerror.mc:2136
-msgid "Can't open anonymous security token\n"
-msgstr "익명 보안 토큰을 열 수 없습니다\n"
+msgid "Can't open anonymous security token.\n"
+msgstr "익명 보안 토큰을 열 수 없습니다.\n"
 
 #: winerror.mc:2141
-msgid "Bad validation class\n"
-msgstr "나쁜 검증 클래스\n"
+msgid "Bad validation class.\n"
+msgstr "나쁜 검증 클래스.\n"
 
 #: winerror.mc:2146
-msgid "Bad token type\n"
-msgstr "나쁜 토큰 형식\n"
+msgid "Bad token type.\n"
+msgstr "나쁜 토큰 형식.\n"
 
 #: winerror.mc:2151
-msgid "No security on object\n"
-msgstr "개체에 보안 없음\n"
+msgid "No security on object.\n"
+msgstr "개체에 보안 없음.\n"
 
 #: winerror.mc:2156
-msgid "Can't access domain information\n"
-msgstr "도메인 정보에 접근할 수 없음\n"
+msgid "Can't access domain information.\n"
+msgstr "도메인 정보에 접근할 수 없음.\n"
 
 #: winerror.mc:2161
-msgid "Invalid server state\n"
-msgstr "올바르지 않은 서버 상태\n"
+msgid "Invalid server state.\n"
+msgstr "올바르지 않은 서버 상태.\n"
 
 #: winerror.mc:2166
-msgid "Invalid domain state\n"
-msgstr "올바르지 않은 도메인 상태\n"
+msgid "Invalid domain state.\n"
+msgstr "올바르지 않은 도메인 상태.\n"
 
 #: winerror.mc:2171
-msgid "Invalid domain role\n"
-msgstr "올바르지 않은 도메인 법칙\n"
+msgid "Invalid domain role.\n"
+msgstr "올바르지 않은 도메인 법칙.\n"
 
 #: winerror.mc:2176
-msgid "No such domain\n"
-msgstr "어떤 도메인도 없습니다\n"
+msgid "No such domain.\n"
+msgstr "어떤 도메인도 없습니다.\n"
 
 #: winerror.mc:2181
-msgid "Domain already exists\n"
-msgstr "도메인은 이미 존재합니다\n"
+msgid "Domain already exists.\n"
+msgstr "도메인은 이미 존재합니다.\n"
 
 #: winerror.mc:2186
-msgid "Domain limit exceeded\n"
-msgstr "도메인 제한 도달\n"
+msgid "Domain limit exceeded.\n"
+msgstr "도메인 제한 도달.\n"
 
 #: winerror.mc:2191
-msgid "Internal database corruption\n"
-msgstr "내부 데이터베이스 손상\n"
+msgid "Internal database corruption.\n"
+msgstr "내부 데이터베이스 손상.\n"
 
 #: winerror.mc:2196
-msgid "Internal error\n"
-msgstr "내부 오류\n"
+msgid "Internal error.\n"
+msgstr "내부 오류.\n"
 
 #: winerror.mc:2201
-msgid "Generic access types not mapped\n"
-msgstr "매핑되지 않은 일반 액세스 유형\n"
+msgid "Generic access types not mapped.\n"
+msgstr "매핑되지 않은 일반 액세스 유형.\n"
 
 #: winerror.mc:2206
-msgid "Bad descriptor format\n"
-msgstr "나쁜 설명자 형식\n"
+msgid "Bad descriptor format.\n"
+msgstr "나쁜 설명자 형식.\n"
 
 #: winerror.mc:2211
-msgid "Not a logon process\n"
-msgstr "로그온 프로세스가 아님\n"
+msgid "Not a logon process.\n"
+msgstr "로그온 프로세스가 아님.\n"
 
 #: winerror.mc:2216
-msgid "Logon session ID exists\n"
-msgstr "로그온 세션 아이디가 존재함\n"
+msgid "Logon session ID exists.\n"
+msgstr "로그온 세션 아이디가 존재함.\n"
 
 #: winerror.mc:2221
-msgid "Unknown authentication package\n"
-msgstr "알 수없는 인증 패키지\n"
+msgid "Unknown authentication package.\n"
+msgstr "알 수없는 인증 패키지.\n"
 
 #: winerror.mc:2226
-msgid "Bad logon session state\n"
-msgstr "나쁜 로그온 세션 상태\n"
+msgid "Bad logon session state.\n"
+msgstr "나쁜 로그온 세션 상태.\n"
 
 #: winerror.mc:2231
-msgid "Logon session ID collision\n"
-msgstr "로그온 세션 아이디 충돌\n"
+msgid "Logon session ID collision.\n"
+msgstr "로그온 세션 아이디 충돌.\n"
 
 #: winerror.mc:2236
-msgid "Invalid logon type\n"
-msgstr "올바르지 않은 로그온 타입\n"
+msgid "Invalid logon type.\n"
+msgstr "올바르지 않은 로그온 타입.\n"
 
 #: winerror.mc:2241
-msgid "Cannot impersonate\n"
-msgstr "흉내낼 수 없음\n"
+msgid "Cannot impersonate.\n"
+msgstr "흉내낼 수 없음.\n"
 
 #: winerror.mc:2246
-msgid "Invalid transaction state\n"
-msgstr "올바르지 않은 처리 상태\n"
+msgid "Invalid transaction state.\n"
+msgstr "올바르지 않은 처리 상태.\n"
 
 #: winerror.mc:2251
-msgid "Security DB commit failure\n"
-msgstr "보안 DB 약속 실패\n"
+msgid "Security DB commit failure.\n"
+msgstr "보안 DB 약속 실패.\n"
 
 #: winerror.mc:2256
-msgid "Account is built-in\n"
-msgstr "이 계정은 내부용입니다\n"
+msgid "Account is built-in.\n"
+msgstr "이 계정은 내부용입니다.\n"
 
 #: winerror.mc:2261
-msgid "Group is built-in\n"
-msgstr "이 그룹은 내부용입니다\n"
+msgid "Group is built-in.\n"
+msgstr "이 그룹은 내부용입니다.\n"
 
 #: winerror.mc:2266
-msgid "User is built-in\n"
-msgstr "이 사용자는 내부용입니다\n"
+msgid "User is built-in.\n"
+msgstr "이 사용자는 내부용입니다.\n"
 
 #: winerror.mc:2271
-msgid "Group is primary for user\n"
-msgstr "그룹은 사용자에 대한 기본입니다\n"
+msgid "Group is primary for user.\n"
+msgstr "그룹은 사용자에 대한 기본입니다.\n"
 
 #: winerror.mc:2276
-msgid "Token already in use\n"
-msgstr "토큰은 이미 사용중입니다\n"
+msgid "Token already in use.\n"
+msgstr "토큰은 이미 사용중입니다.\n"
 
 #: winerror.mc:2281
-msgid "No such local group\n"
-msgstr "어떤 지역 그룹도 없음\n"
+msgid "No such local group.\n"
+msgstr "어떤 지역 그룹도 없음.\n"
 
 #: winerror.mc:2286
-msgid "User not in local group\n"
-msgstr "지역 그룹에 사용자가 없음\n"
+msgid "User not in local group.\n"
+msgstr "지역 그룹에 사용자가 없음.\n"
 
 #: winerror.mc:2291
-msgid "User already in local group\n"
-msgstr "사용자는 이미 지역 그룹에 존재함\n"
+msgid "User already in local group.\n"
+msgstr "사용자는 이미 지역 그룹에 존재함.\n"
 
 #: winerror.mc:2296
-msgid "Local group already exists\n"
-msgstr "지역 그룹이 이미 존재함\n"
+msgid "Local group already exists.\n"
+msgstr "지역 그룹이 이미 존재함.\n"
 
 #: winerror.mc:2301 winerror.mc:2326
-msgid "Logon type not granted\n"
-msgstr "부여하지 않은 로그온 유형\n"
+msgid "Logon type not granted.\n"
+msgstr "부여하지 않은 로그온 유형.\n"
 
 #: winerror.mc:2306
-msgid "Too many secrets\n"
-msgstr "너무 많은 비밀\n"
+msgid "Too many secrets.\n"
+msgstr "너무 많은 비밀.\n"
 
 #: winerror.mc:2311
-msgid "Secret too long\n"
-msgstr "비밀이 너무 김\n"
+msgid "Secret too long.\n"
+msgstr "비밀이 너무 김.\n"
 
 #: winerror.mc:2316
-msgid "Internal security DB error\n"
-msgstr "내부 보안 ID 오류\n"
+msgid "Internal security DB error.\n"
+msgstr "내부 보안 ID 오류.\n"
 
 #: winerror.mc:2321
-msgid "Too many context IDs\n"
-msgstr "컨텍스트 아이디가 너무 많음\n"
+msgid "Too many context IDs.\n"
+msgstr "컨텍스트 아이디가 너무 많음.\n"
 
 #: winerror.mc:2331
-msgid "Cross-encrypted NT password required\n"
-msgstr "교차-암호화된 NT 암호가 요구됨\n"
+msgid "Cross-encrypted NT password required.\n"
+msgstr "교차-암호화된 NT 암호가 요구됨.\n"
 
 #: winerror.mc:2336
-msgid "No such member\n"
-msgstr "어떤 회원도 없습니다\n"
+msgid "No such member.\n"
+msgstr "어떤 회원도 없습니다.\n"
 
 #: winerror.mc:2341
-msgid "Invalid member\n"
-msgstr "올바르지 않은 회원\n"
+msgid "Invalid member.\n"
+msgstr "올바르지 않은 회원.\n"
 
 #: winerror.mc:2346
-msgid "Too many SIDs\n"
-msgstr "너무 많은 SID이 있습니다\n"
+msgid "Too many SIDs.\n"
+msgstr "너무 많은 SID이 있습니다.\n"
 
 #: winerror.mc:2351
-msgid "Cross-encrypted LM password required\n"
-msgstr "교차-암호화된  LM 암호가 요구됨\n"
+msgid "Cross-encrypted LM password required.\n"
+msgstr "교차-암호화된  LM 암호가 요구됨.\n"
 
 #: winerror.mc:2356
-msgid "No inheritable components\n"
-msgstr "상속가능한 구성요소가 없음\n"
+msgid "No inheritable components.\n"
+msgstr "상속가능한 구성요소가 없음.\n"
 
 #: winerror.mc:2361
-msgid "File or directory corrupt\n"
-msgstr "파일이나 디렉토리가 망가졌습니다\n"
+msgid "File or directory corrupt.\n"
+msgstr "파일이나 디렉토리가 망가졌습니다.\n"
 
 #: winerror.mc:2366
-msgid "Disk is corrupt\n"
-msgstr "디스크가 망가졌습니다\n"
+msgid "Disk is corrupt.\n"
+msgstr "디스크가 망가졌습니다.\n"
 
 #: winerror.mc:2371
-msgid "No user session key\n"
-msgstr "사용자 세션 키가 없음\n"
+msgid "No user session key.\n"
+msgstr "사용자 세션 키가 없음.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded\n"
-msgstr "라이센스의 할당량을 초과했습니다\n"
+msgid "Licence quota exceeded.\n"
+msgstr "라이센스의 할당량을 초과했습니다.\n"
 
 #: winerror.mc:2381
-msgid "Wrong target name\n"
-msgstr "잘못된 목표의 이름\n"
+msgid "Wrong target name.\n"
+msgstr "잘못된 목표의 이름.\n"
 
 #: winerror.mc:2386
-msgid "Mutual authentication failed\n"
-msgstr "상호 인증 실패\n"
+msgid "Mutual authentication failed.\n"
+msgstr "상호 인증 실패.\n"
 
 #: winerror.mc:2391
-msgid "Time skew between client and server\n"
-msgstr "클라이언트와 서버 사이의 시간 왜곡\n"
+msgid "Time skew between client and server.\n"
+msgstr "클라이언트와 서버 사이의 시간 왜곡.\n"
 
 #: winerror.mc:2396
-msgid "Invalid window handle\n"
-msgstr "올바르지 않은 원도우 핸들\n"
+msgid "Invalid window handle.\n"
+msgstr "올바르지 않은 원도우 핸들.\n"
 
 #: winerror.mc:2401
-msgid "Invalid menu handle\n"
-msgstr "올바르지 않은 메뉴 핸들\n"
+msgid "Invalid menu handle.\n"
+msgstr "올바르지 않은 메뉴 핸들.\n"
 
 #: winerror.mc:2406
-msgid "Invalid cursor handle\n"
-msgstr "올바르지 않은 커서 핸들\n"
+msgid "Invalid cursor handle.\n"
+msgstr "올바르지 않은 커서 핸들.\n"
 
 #: winerror.mc:2411
-msgid "Invalid accelerator table handle\n"
-msgstr "올바르지 않은 엑셀레이터 테이블 핸들\n"
+msgid "Invalid accelerator table handle.\n"
+msgstr "올바르지 않은 엑셀레이터 테이블 핸들.\n"
 
 #: winerror.mc:2416
-msgid "Invalid hook handle\n"
-msgstr "올바르지 않은 hook 핸들\n"
+msgid "Invalid hook handle.\n"
+msgstr "올바르지 않은 hook 핸들.\n"
 
 #: winerror.mc:2421
-msgid "Invalid DWP handle\n"
-msgstr "올바르지 않은 DWP 핸들\n"
+msgid "Invalid DWP handle.\n"
+msgstr "올바르지 않은 DWP 핸들.\n"
 
 #: winerror.mc:2426
-msgid "Can't create top-level child window\n"
-msgstr "최고 수준의 하위 창을 만들 수 없습니다\n"
+msgid "Can't create top-level child window.\n"
+msgstr "최고 수준의 하위 창을 만들 수 없습니다.\n"
 
 #: winerror.mc:2431
-msgid "Can't find window class\n"
-msgstr "창 클래스를 찾을 수 없습니다\n"
+msgid "Can't find window class.\n"
+msgstr "창 클래스를 찾을 수 없습니다.\n"
 
 #: winerror.mc:2436
-msgid "Window owned by another thread\n"
-msgstr "창은 다른 쓰레드가 가지고 있습니다\n"
+msgid "Window owned by another thread.\n"
+msgstr "창은 다른 쓰레드가 가지고 있습니다.\n"
 
 #: winerror.mc:2441
-msgid "Hotkey already registered\n"
-msgstr "단축키는 이미 등록되었습니다\n"
+msgid "Hotkey already registered.\n"
+msgstr "단축키는 이미 등록되었습니다.\n"
 
 #: winerror.mc:2446
-msgid "Class already exists\n"
-msgstr "클래스는 이미 존재합니다\n"
+msgid "Class already exists.\n"
+msgstr "클래스는 이미 존재합니다.\n"
 
 #: winerror.mc:2451
-msgid "Class does not exist\n"
-msgstr "클래스가 존재하지 않습니다\n"
+msgid "Class does not exist.\n"
+msgstr "클래스가 존재하지 않습니다.\n"
 
 #: winerror.mc:2456
-msgid "Class has open windows\n"
-msgstr "클래스는 연 상태의 창들을 가지고 있습니다\n"
+msgid "Class has open windows.\n"
+msgstr "클래스는 연 상태의 창들을 가지고 있습니다.\n"
 
 #: winerror.mc:2461
-msgid "Invalid index\n"
-msgstr "올바르지 않은 인덱스\n"
+msgid "Invalid index.\n"
+msgstr "올바르지 않은 인덱스.\n"
 
 #: winerror.mc:2466
-msgid "Invalid icon handle\n"
-msgstr "올바르지 않은 아이콘 핸들\n"
+msgid "Invalid icon handle.\n"
+msgstr "올바르지 않은 아이콘 핸들.\n"
 
 #: winerror.mc:2471
-msgid "Private dialog index\n"
-msgstr "비공개 다이얼로그 색인\n"
+msgid "Private dialog index.\n"
+msgstr "비공개 다이얼로그 색인.\n"
 
 #: winerror.mc:2476
-msgid "List box ID not found\n"
-msgstr "목록상자 ID를 찾을 수 없습니다\n"
+msgid "List box ID not found.\n"
+msgstr "목록상자 ID를 찾을 수 없습니다.\n"
 
 #: winerror.mc:2481
-msgid "No wildcard characters\n"
-msgstr "와일드카드 문자가 없음\n"
+msgid "No wildcard characters.\n"
+msgstr "와일드카드 문자가 없음.\n"
 
 #: winerror.mc:2486
-msgid "Clipboard not open\n"
-msgstr "클립보드를 열 수 없습니다\n"
+msgid "Clipboard not open.\n"
+msgstr "클립보드를 열 수 없습니다.\n"
 
 #: winerror.mc:2491
-msgid "Hotkey not registered\n"
-msgstr "단축키가 등록되지 않았습니다\n"
+msgid "Hotkey not registered.\n"
+msgstr "단축키가 등록되지 않았습니다.\n"
 
 #: winerror.mc:2496
-msgid "Not a dialog window\n"
-msgstr "대화창이 아닙니다\n"
+msgid "Not a dialog window.\n"
+msgstr "대화창이 아닙니다.\n"
 
 #: winerror.mc:2501
-msgid "Control ID not found\n"
-msgstr "컨트롤 아이디를 찾을 수 없음\n"
+msgid "Control ID not found.\n"
+msgstr "컨트롤 아이디를 찾을 수 없음.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message\n"
-msgstr "올바르지 않은  콤보박스 메세지\n"
+msgid "Invalid combobox message.\n"
+msgstr "올바르지 않은  콤보박스 메세지.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window\n"
-msgstr "콤보박스 창이 아닙니다\n"
+msgid "Not a combobox window.\n"
+msgstr "콤보박스 창이 아닙니다.\n"
 
 #: winerror.mc:2516
-msgid "Invalid edit height\n"
-msgstr "올바르지 않은 편집 높이\n"
+msgid "Invalid edit height.\n"
+msgstr "올바르지 않은 편집 높이.\n"
 
 #: winerror.mc:2521
-msgid "DC not found\n"
-msgstr "DC를 찾을 수 없습니다\n"
+msgid "DC not found.\n"
+msgstr "DC를 찾을 수 없습니다.\n"
 
 #: winerror.mc:2526
-msgid "Invalid hook filter\n"
-msgstr "올바르지 않은 hook 필터\n"
+msgid "Invalid hook filter.\n"
+msgstr "올바르지 않은 hook 필터.\n"
 
 #: winerror.mc:2531
-msgid "Invalid filter procedure\n"
-msgstr "올바르지 않은 필터 프로시져\n"
+msgid "Invalid filter procedure.\n"
+msgstr "올바르지 않은 필터 프로시져.\n"
 
 #: winerror.mc:2536
-msgid "Hook procedure needs module handle\n"
-msgstr "후크 프로 시저가 처리 모듈 필요\n"
+msgid "Hook procedure needs module handle.\n"
+msgstr "후크 프로 시저가 처리 모듈 필요.\n"
 
 #: winerror.mc:2541
-msgid "Global-only hook procedure\n"
-msgstr "글로벌 전용 후크 프로 시저\n"
+msgid "Global-only hook procedure.\n"
+msgstr "글로벌 전용 후크 프로 시저.\n"
 
 #: winerror.mc:2546
-msgid "Journal hook already set\n"
-msgstr "저널 후크는 이미 설정되어 있음\n"
+msgid "Journal hook already set.\n"
+msgstr "저널 후크는 이미 설정되어 있음.\n"
 
 #: winerror.mc:2551
-msgid "Hook procedure not installed\n"
-msgstr "설치되어 있지 않은 후크 프로 시저\n"
+msgid "Hook procedure not installed.\n"
+msgstr "설치되어 있지 않은 후크 프로 시저.\n"
 
 #: winerror.mc:2556
-msgid "Invalid list box message\n"
-msgstr "올바르지 않은 목록상자 메세지\n"
+msgid "Invalid list box message.\n"
+msgstr "올바르지 않은 목록상자 메세지.\n"
 
 #: winerror.mc:2561
-msgid "Invalid LB_SETCOUNT sent\n"
-msgstr "올바르지 않은 LB_SETCOUNT 보내기\n"
+msgid "Invalid LB_SETCOUNT sent.\n"
+msgstr "올바르지 않은 LB_SETCOUNT 보내기.\n"
 
 #: winerror.mc:2566
-msgid "No tab stops on this list box\n"
-msgstr "목록상자에는 탭정지가 없음\n"
+msgid "No tab stops on this list box.\n"
+msgstr "목록상자에는 탭정지가 없음.\n"
 
 #: winerror.mc:2571
-msgid "Can't destroy object owned by another thread\n"
-msgstr "다른 스레드가 소유한 객체를 파괴할 수 없다\n"
+msgid "Can't destroy object owned by another thread.\n"
+msgstr "다른 스레드가 소유한 객체를 파괴할 수 없다.\n"
 
 #: winerror.mc:2576
-msgid "Child window menus not allowed\n"
-msgstr "자식 창 메뉴는 허용되지 않습니다\n"
+msgid "Child window menus not allowed.\n"
+msgstr "자식 창 메뉴는 허용되지 않습니다.\n"
 
 #: winerror.mc:2581
-msgid "Window has no system menu\n"
-msgstr "창은 시스템 메뉴를 가지고 있지 않습니다\n"
+msgid "Window has no system menu.\n"
+msgstr "창은 시스템 메뉴를 가지고 있지 않습니다.\n"
 
 #: winerror.mc:2586
-msgid "Invalid message box style\n"
-msgstr "올바르지 않은 메세지 박스 스타일\n"
+msgid "Invalid message box style.\n"
+msgstr "올바르지 않은 메세지 박스 스타일.\n"
 
 #: winerror.mc:2591
-msgid "Invalid SPI parameter\n"
-msgstr "올바르지 않은 SPI 매개변수\n"
+msgid "Invalid SPI parameter.\n"
+msgstr "올바르지 않은 SPI 매개변수.\n"
 
 #: winerror.mc:2596
-msgid "Screen already locked\n"
-msgstr "화면은 이미 잠겼습니다\n"
+msgid "Screen already locked.\n"
+msgstr "화면은 이미 잠겼습니다.\n"
 
 #: winerror.mc:2601
-msgid "Window handles have different parents\n"
-msgstr "창 핸들이 각각 다른 부모를 가지고 있습니다\n"
+msgid "Window handles have different parents.\n"
+msgstr "창 핸들이 각각 다른 부모를 가지고 있습니다.\n"
 
 #: winerror.mc:2606
-msgid "Not a child window\n"
-msgstr "자식 창이 아닙니다\n"
+msgid "Not a child window.\n"
+msgstr "자식 창이 아닙니다.\n"
 
 #: winerror.mc:2611
-msgid "Invalid GW command\n"
-msgstr "올바르지 않은 GW 명령\n"
+msgid "Invalid GW command.\n"
+msgstr "올바르지 않은 GW 명령.\n"
 
 #: winerror.mc:2616
-msgid "Invalid thread ID\n"
-msgstr "올바르지 않은 쓰레드 ID\n"
+msgid "Invalid thread ID.\n"
+msgstr "올바르지 않은 쓰레드 ID.\n"
 
 #: winerror.mc:2621
-msgid "Not an MDI child window\n"
-msgstr "MDI 자식 창이 아님\n"
+msgid "Not an MDI child window.\n"
+msgstr "MDI 자식 창이 아님.\n"
 
 #: winerror.mc:2626
-msgid "Popup menu already active\n"
-msgstr "팝업 메뉴는 이미 활성화되었습니다\n"
+msgid "Popup menu already active.\n"
+msgstr "팝업 메뉴는 이미 활성화되었습니다.\n"
 
 #: winerror.mc:2631
-msgid "No scrollbars\n"
-msgstr "스크롤바가 없습니다\n"
+msgid "No scrollbars.\n"
+msgstr "스크롤바가 없습니다.\n"
 
 #: winerror.mc:2636
-msgid "Invalid scrollbar range\n"
-msgstr "올바르지 않은 스코롤바 범위\n"
+msgid "Invalid scrollbar range.\n"
+msgstr "올바르지 않은 스코롤바 범위.\n"
 
 #: winerror.mc:2641
-msgid "Invalid ShowWin command\n"
-msgstr "올바르지 않은 ShowWin 명령\n"
+msgid "Invalid ShowWin command.\n"
+msgstr "올바르지 않은 ShowWin 명령.\n"
 
 #: winerror.mc:2646
-msgid "No system resources\n"
-msgstr "시스템 리소스가 없습니다\n"
+msgid "No system resources.\n"
+msgstr "시스템 리소스가 없습니다.\n"
 
 #: winerror.mc:2651
-msgid "No non-paged system resources\n"
-msgstr "페이지되지 않은 시스템 자원이 없음\n"
+msgid "No non-paged system resources.\n"
+msgstr "페이지되지 않은 시스템 자원이 없음.\n"
 
 #: winerror.mc:2656
-msgid "No paged system resources\n"
-msgstr "페이지된 시스템 자원이 없음\n"
+msgid "No paged system resources.\n"
+msgstr "페이지된 시스템 자원이 없음.\n"
 
 #: winerror.mc:2661
-msgid "No working set quota\n"
-msgstr "작동하는 할당령 설정이 없음\n"
+msgid "No working set quota.\n"
+msgstr "작동하는 할당령 설정이 없음.\n"
 
 #: winerror.mc:2666
-msgid "No page file quota\n"
-msgstr "페이지파일 할당량이 없음\n"
+msgid "No page file quota.\n"
+msgstr "페이지파일 할당량이 없음.\n"
 
 #: winerror.mc:2671
-msgid "Exceeded commitment limit\n"
-msgstr "헌신 한도 초과\n"
+msgid "Exceeded commitment limit.\n"
+msgstr "헌신 한도 초과.\n"
 
 #: winerror.mc:2676
-msgid "Menu item not found\n"
-msgstr "메뉴 아이템을 찾을 수 없습니다\n"
+msgid "Menu item not found.\n"
+msgstr "메뉴 아이템을 찾을 수 없습니다.\n"
 
 #: winerror.mc:2681
-msgid "Invalid keyboard handle\n"
-msgstr "올바르지 않은 키보드 핸들\n"
+msgid "Invalid keyboard handle.\n"
+msgstr "올바르지 않은 키보드 핸들.\n"
 
 #: winerror.mc:2686
-msgid "Hook type not allowed\n"
-msgstr "허용되지 않은 훅 형식\n"
+msgid "Hook type not allowed.\n"
+msgstr "허용되지 않은 훅 형식.\n"
 
 #: winerror.mc:2691
-msgid "Interactive window station required\n"
-msgstr "대화형 윈도우 스테이션이 요구됨\n"
+msgid "Interactive window station required.\n"
+msgstr "대화형 윈도우 스테이션이 요구됨.\n"
 
 #: winerror.mc:2696
-msgid "Timeout\n"
-msgstr "시간 초과\n"
+msgid "Timeout.\n"
+msgstr "시간 초과.\n"
 
 #: winerror.mc:2701
-msgid "Invalid monitor handle\n"
-msgstr "올바르지 않은 모니터 핸들\n"
+msgid "Invalid monitor handle.\n"
+msgstr "올바르지 않은 모니터 핸들.\n"
 
 #: winerror.mc:2706
-msgid "Event log file corrupt\n"
-msgstr "이벤트 로그 파일이 망가졌습니다\n"
+msgid "Event log file corrupt.\n"
+msgstr "이벤트 로그 파일이 망가졌습니다.\n"
 
 #: winerror.mc:2711
-msgid "Event log can't start\n"
-msgstr "이벤트 로그를 시작할 수 없습니다\n"
+msgid "Event log can't start.\n"
+msgstr "이벤트 로그를 시작할 수 없습니다.\n"
 
 #: winerror.mc:2716
-msgid "Event log file full\n"
-msgstr "이벤트 로그 파일이 가득 참\n"
+msgid "Event log file full.\n"
+msgstr "이벤트 로그 파일이 가득 참.\n"
 
 #: winerror.mc:2721
-msgid "Event log file changed\n"
-msgstr "이벤트 로그 파일이 변경됨\n"
+msgid "Event log file changed.\n"
+msgstr "이벤트 로그 파일이 변경됨.\n"
 
 #: winerror.mc:2726
-msgid "Installer service failed\n"
-msgstr "설치 서비스가 실패함\n"
+msgid "Installer service failed.\n"
+msgstr "설치 서비스가 실패함.\n"
 
 #: winerror.mc:2731
-msgid "Installation aborted by user\n"
-msgstr "설치가 사용자에 위해 취소됨\n"
+msgid "Installation aborted by user.\n"
+msgstr "설치가 사용자에 위해 취소됨.\n"
 
 #: winerror.mc:2736
-msgid "Installation failure\n"
-msgstr "설치 실패\n"
+msgid "Installation failure.\n"
+msgstr "설치 실패.\n"
 
 #: winerror.mc:2741
-msgid "Installation suspended\n"
-msgstr "설치가 일시 중지됨\n"
+msgid "Installation suspended.\n"
+msgstr "설치가 일시 중지됨.\n"
 
 #: winerror.mc:2746
-msgid "Unknown product\n"
-msgstr "알 수 없는 제품\n"
+msgid "Unknown product.\n"
+msgstr "알 수 없는 제품.\n"
 
 #: winerror.mc:2751
-msgid "Unknown feature\n"
-msgstr "알수 없는 특징\n"
+msgid "Unknown feature.\n"
+msgstr "알수 없는 특징.\n"
 
 #: winerror.mc:2756
-msgid "Unknown component\n"
-msgstr "알 수 없는 컴포넌트\n"
+msgid "Unknown component.\n"
+msgstr "알 수 없는 컴포넌트.\n"
 
 #: winerror.mc:2761
-msgid "Unknown property\n"
-msgstr "알 수 없는 속성\n"
+msgid "Unknown property.\n"
+msgstr "알 수 없는 속성.\n"
 
 #: winerror.mc:2766
-msgid "Invalid handle state\n"
-msgstr "잘못된 핸들 상태\n"
+msgid "Invalid handle state.\n"
+msgstr "잘못된 핸들 상태.\n"
 
 #: winerror.mc:2771
-msgid "Bad configuration\n"
-msgstr "나쁜 설정\n"
+msgid "Bad configuration.\n"
+msgstr "나쁜 설정.\n"
 
 #: winerror.mc:2776
-msgid "Index is missing\n"
-msgstr "인덱스가 빠짐\n"
+msgid "Index is missing.\n"
+msgstr "인덱스가 빠짐.\n"
 
 #: winerror.mc:2781
-msgid "Installation source is missing\n"
-msgstr "설치 원본이 빠짐\n"
+msgid "Installation source is missing.\n"
+msgstr "설치 원본이 빠짐.\n"
 
 #: winerror.mc:2786
-msgid "Wrong installation package version\n"
-msgstr "잘못된 설치 패키지 버젼\n"
+msgid "Wrong installation package version.\n"
+msgstr "잘못된 설치 패키지 버젼.\n"
 
 #: winerror.mc:2791
-msgid "Product uninstalled\n"
-msgstr "제품 제거됨\n"
+msgid "Product uninstalled.\n"
+msgstr "제품 제거됨.\n"
 
 #: winerror.mc:2796
-msgid "Invalid query syntax\n"
-msgstr "잘못된 쿼리 구문\n"
+msgid "Invalid query syntax.\n"
+msgstr "잘못된 쿼리 구문.\n"
 
 #: winerror.mc:2801
-msgid "Invalid field\n"
-msgstr "올바르지 않은 필드\n"
+msgid "Invalid field.\n"
+msgstr "올바르지 않은 필드.\n"
 
 #: winerror.mc:2806
-msgid "Device removed\n"
-msgstr "장치가 제거됨\n"
+msgid "Device removed.\n"
+msgstr "장치가 제거됨.\n"
 
 #: winerror.mc:2811
-msgid "Installation already running\n"
-msgstr "설치 작업은 이미 실행증임\n"
+msgid "Installation already running.\n"
+msgstr "설치 작업은 이미 실행증임.\n"
 
 #: winerror.mc:2816
-msgid "Installation package failed to open\n"
-msgstr "설치 패키지 열기 실패\n"
+msgid "Installation package failed to open.\n"
+msgstr "설치 패키지 열기 실패.\n"
 
 #: winerror.mc:2821
-msgid "Installation package is invalid\n"
-msgstr "설치 패키지가 올바르지 않음\n"
+msgid "Installation package is invalid.\n"
+msgstr "설치 패키지가 올바르지 않음.\n"
 
 #: winerror.mc:2826
-msgid "Installer user interface failed\n"
-msgstr "설치 프로그램 사용자 인터페이스 실패\n"
+msgid "Installer user interface failed.\n"
+msgstr "설치 프로그램 사용자 인터페이스 실패.\n"
 
 #: winerror.mc:2831
-msgid "Failed to open installation log file\n"
-msgstr "설치 로그 파일 열기 실패\n"
+msgid "Failed to open installation log file.\n"
+msgstr "설치 로그 파일 열기 실패.\n"
 
 #: winerror.mc:2836
-msgid "Installation language not supported\n"
-msgstr "설치 언어를 지원하지 않습니다\n"
+msgid "Installation language not supported.\n"
+msgstr "설치 언어를 지원하지 않습니다.\n"
 
 #: winerror.mc:2841
-msgid "Installation transform failed to apply\n"
-msgstr "설치 변환 실패가 추가됨\n"
+msgid "Installation transform failed to apply.\n"
+msgstr "설치 변환 실패가 추가됨.\n"
 
 #: winerror.mc:2846
-msgid "Installation package rejected\n"
-msgstr "설치 패키지기 거부됨\n"
+msgid "Installation package rejected.\n"
+msgstr "설치 패키지기 거부됨.\n"
 
 #: winerror.mc:2851
-msgid "Function could not be called\n"
-msgstr "함수를 호출 할 수 없음\n"
+msgid "Function could not be called.\n"
+msgstr "함수를 호출 할 수 없음.\n"
 
 #: winerror.mc:2856
-msgid "Function failed\n"
-msgstr "함수 실패\n"
+msgid "Function failed.\n"
+msgstr "함수 실패.\n"
 
 #: winerror.mc:2861
-msgid "Invalid table\n"
-msgstr "올바르지 않은 테이블\n"
+msgid "Invalid table.\n"
+msgstr "올바르지 않은 테이블.\n"
 
 #: winerror.mc:2866
-msgid "Data type mismatch\n"
-msgstr "데이타 형식이 맞지 않습니다\n"
+msgid "Data type mismatch.\n"
+msgstr "데이타 형식이 맞지 않습니다.\n"
 
 #: winerror.mc:2871 winerror.mc:3081
-msgid "Unsupported type\n"
-msgstr "지원하지 않는 형식\n"
+msgid "Unsupported type.\n"
+msgstr "지원하지 않는 형식.\n"
 
 #: winerror.mc:2876
-msgid "Creation failed\n"
-msgstr "만들기 실패함\n"
+msgid "Creation failed.\n"
+msgstr "만들기 실패함.\n"
 
 #: winerror.mc:2881
-msgid "Temporary directory not writable\n"
-msgstr "임시 디렉토리에 기록할 수 없음\n"
+msgid "Temporary directory not writable.\n"
+msgstr "임시 디렉토리에 기록할 수 없음.\n"
 
 #: winerror.mc:2886
-msgid "Installation platform not supported\n"
-msgstr "설치 플랫폼을 지원하지 않음\n"
+msgid "Installation platform not supported.\n"
+msgstr "설치 플랫폼을 지원하지 않음.\n"
 
 #: winerror.mc:2891
-msgid "Installer not used\n"
-msgstr "설치 프로그램이 사용되지 않음\n"
+msgid "Installer not used.\n"
+msgstr "설치 프로그램이 사용되지 않음.\n"
 
 #: winerror.mc:2896
-msgid "Failed to open the patch package\n"
-msgstr "패치 패키지 열기 실패\n"
+msgid "Failed to open the patch package.\n"
+msgstr "패치 패키지 열기 실패.\n"
 
 #: winerror.mc:2901
-msgid "Invalid patch package\n"
-msgstr "올바르지 않은 패치 패키지\n"
+msgid "Invalid patch package.\n"
+msgstr "올바르지 않은 패치 패키지.\n"
 
 #: winerror.mc:2906
-msgid "Unsupported patch package\n"
-msgstr "지원하지 않는 패치 패키지\n"
+msgid "Unsupported patch package.\n"
+msgstr "지원하지 않는 패치 패키지.\n"
 
 #: winerror.mc:2911
-msgid "Another version is installed\n"
-msgstr "다른 버젼이 설치되어 있음\n"
+msgid "Another version is installed.\n"
+msgstr "다른 버젼이 설치되어 있음.\n"
 
 #: winerror.mc:2916
-msgid "Invalid command line\n"
-msgstr "올바르지 않은 명령 라인\n"
+msgid "Invalid command line.\n"
+msgstr "올바르지 않은 명령 라인.\n"
 
 #: winerror.mc:2921
-msgid "Remote installation not allowed\n"
-msgstr "원격 설치는 허용되지 않음\n"
+msgid "Remote installation not allowed.\n"
+msgstr "원격 설치는 허용되지 않음.\n"
 
 #: winerror.mc:2926
-msgid "Reboot initiated after successful install\n"
-msgstr "설치가 성공한 후에 스스로 재부팅될 것임\n"
+msgid "Reboot initiated after successful install.\n"
+msgstr "설치가 성공한 후에 스스로 재부팅될 것임.\n"
 
 #: winerror.mc:2931
-msgid "Invalid string binding\n"
-msgstr "올바르지 않은 문자열 바인딩\n"
+msgid "Invalid string binding.\n"
+msgstr "올바르지 않은 문자열 바인딩.\n"
 
 #: winerror.mc:2936
-msgid "Wrong kind of binding\n"
-msgstr "잘못된 종류의 바인딩\n"
+msgid "Wrong kind of binding.\n"
+msgstr "잘못된 종류의 바인딩.\n"
 
 #: winerror.mc:2941
-msgid "Invalid binding\n"
-msgstr "올바르지 않은 바인딩\n"
+msgid "Invalid binding.\n"
+msgstr "올바르지 않은 바인딩.\n"
 
 #: winerror.mc:2946
-msgid "RPC protocol sequence not supported\n"
-msgstr "RPC 프로토콜 시퀀스가 지원되지 않음\n"
+msgid "RPC protocol sequence not supported.\n"
+msgstr "RPC 프로토콜 시퀀스가 지원되지 않음.\n"
 
 #: winerror.mc:2951
-msgid "Invalid RPC protocol sequence\n"
-msgstr "올바르지 않은 RPC 프로토콜 순서\n"
+msgid "Invalid RPC protocol sequence.\n"
+msgstr "올바르지 않은 RPC 프로토콜 순서.\n"
 
 #: winerror.mc:2956
-msgid "Invalid string UUID\n"
-msgstr "올바르지 않은 문자열 UUID\n"
+msgid "Invalid string UUID.\n"
+msgstr "올바르지 않은 문자열 UUID.\n"
 
 #: winerror.mc:2961
-msgid "Invalid endpoint format\n"
-msgstr "올바르지 않은 엔드포인트 포맷\n"
+msgid "Invalid endpoint format.\n"
+msgstr "올바르지 않은 엔드포인트 포맷.\n"
 
 #: winerror.mc:2966
-msgid "Invalid network address\n"
-msgstr "올바르지 않은 네트워크 주소\n"
+msgid "Invalid network address.\n"
+msgstr "올바르지 않은 네트워크 주소.\n"
 
 #: winerror.mc:2971
-msgid "No endpoint found\n"
-msgstr "엔드포인트를 찾을 수 없음\n"
+msgid "No endpoint found.\n"
+msgstr "엔드포인트를 찾을 수 없음.\n"
 
 #: winerror.mc:2976
-msgid "Invalid timeout value\n"
-msgstr "올바르지 않은 시간 초과 값\n"
+msgid "Invalid timeout value.\n"
+msgstr "올바르지 않은 시간 초과 값.\n"
 
 #: winerror.mc:2981
-msgid "Object UUID not found\n"
-msgstr "UUID 객체를 찾을 수 없습니다\n"
+msgid "Object UUID not found.\n"
+msgstr "UUID 객체를 찾을 수 없습니다.\n"
 
 #: winerror.mc:2986
-msgid "UUID already registered\n"
-msgstr "UUID는 이미 등록되었습니다\n"
+msgid "UUID already registered.\n"
+msgstr "UUID는 이미 등록되었습니다.\n"
 
 #: winerror.mc:2991
-msgid "UUID type already registered\n"
-msgstr "UUID 형식은 이미 등록되었습니다\n"
+msgid "UUID type already registered.\n"
+msgstr "UUID 형식은 이미 등록되었습니다.\n"
 
 #: winerror.mc:2996
-msgid "Server already listening\n"
-msgstr "서버는 이미 응답중입니다\n"
+msgid "Server already listening.\n"
+msgstr "서버는 이미 응답중입니다.\n"
 
 #: winerror.mc:3001
-msgid "No protocol sequences registered\n"
-msgstr "어떤 프로토콜 순서도 등록되어있지 않습니다\n"
+msgid "No protocol sequences registered.\n"
+msgstr "어떤 프로토콜 순서도 등록되어있지 않습니다.\n"
 
 #: winerror.mc:3006
-msgid "RPC server not listening\n"
-msgstr "RPC 서버는 응답이 없습니다\n"
+msgid "RPC server not listening.\n"
+msgstr "RPC 서버는 응답이 없습니다.\n"
 
 #: winerror.mc:3011
-msgid "Unknown manager type\n"
-msgstr "알수 없는 매니저 형식\n"
+msgid "Unknown manager type.\n"
+msgstr "알수 없는 매니저 형식.\n"
 
 #: winerror.mc:3016
-msgid "Unknown interface\n"
-msgstr "알수 없는 인터페이스\n"
+msgid "Unknown interface.\n"
+msgstr "알수 없는 인터페이스.\n"
 
 #: winerror.mc:3021
-msgid "No bindings\n"
-msgstr "바인딩이 없습니다\n"
+msgid "No bindings.\n"
+msgstr "바인딩이 없습니다.\n"
 
 #: winerror.mc:3026
-msgid "No protocol sequences\n"
-msgstr "어떤 프로토콜 순서도 없습니다\n"
+msgid "No protocol sequences.\n"
+msgstr "어떤 프로토콜 순서도 없습니다.\n"
 
 #: winerror.mc:3031
-msgid "Can't create endpoint\n"
-msgstr "엔드포인트를 만들 수 없습니다\n"
+msgid "Can't create endpoint.\n"
+msgstr "엔드포인트를 만들 수 없습니다.\n"
 
 #: winerror.mc:3036
-msgid "Out of resources\n"
-msgstr "리소스 범위 밖\n"
+msgid "Out of resources.\n"
+msgstr "리소스 범위 밖.\n"
 
 #: winerror.mc:3041
-msgid "RPC server unavailable\n"
-msgstr "RPC 서버가 가능하지 않습니다\n"
+msgid "RPC server unavailable.\n"
+msgstr "RPC 서버가 가능하지 않습니다.\n"
 
 #: winerror.mc:3046
-msgid "RPC server too busy\n"
-msgstr "RPC 서버는 매우 바쁩니다\n"
+msgid "RPC server too busy.\n"
+msgstr "RPC 서버는 매우 바쁩니다.\n"
 
 #: winerror.mc:3051
-msgid "Invalid network options\n"
-msgstr "올바르지 않은 네트워크 옵션\n"
+msgid "Invalid network options.\n"
+msgstr "올바르지 않은 네트워크 옵션.\n"
 
 #: winerror.mc:3056
-msgid "No RPC call active\n"
-msgstr "어떤 RPC 호출도 활성화되어있지 않습니다\n"
+msgid "No RPC call active.\n"
+msgstr "어떤 RPC 호출도 활성화되어있지 않습니다.\n"
 
 #: winerror.mc:3061
-msgid "RPC call failed\n"
-msgstr "RPC 호출 실패\n"
+msgid "RPC call failed.\n"
+msgstr "RPC 호출 실패.\n"
 
 #: winerror.mc:3066
-msgid "RPC call failed and didn't execute\n"
-msgstr "RPC 호출 실패 그리고 실행못함\n"
+msgid "RPC call failed and didn't execute.\n"
+msgstr "RPC 호출 실패 그리고 실행못함.\n"
 
 #: winerror.mc:3071
-msgid "RPC protocol error\n"
-msgstr "RPC  프로토콜 오류\n"
+msgid "RPC protocol error.\n"
+msgstr "RPC  프로토콜 오류.\n"
 
 #: winerror.mc:3076
-msgid "Unsupported transfer syntax\n"
-msgstr "지원하지 않는 트랜스퍼 문법\n"
+msgid "Unsupported transfer syntax.\n"
+msgstr "지원하지 않는 트랜스퍼 문법.\n"
 
 #: winerror.mc:3086
-msgid "Invalid tag\n"
-msgstr "올바르지 않은 태그\n"
+msgid "Invalid tag.\n"
+msgstr "올바르지 않은 태그.\n"
 
 #: winerror.mc:3091
-msgid "Invalid array bounds\n"
-msgstr "올바르지 않은 배치 영역\n"
+msgid "Invalid array bounds.\n"
+msgstr "올바르지 않은 배치 영역.\n"
 
 #: winerror.mc:3096
-msgid "No entry name\n"
-msgstr "엔트리 이름이 없음\n"
+msgid "No entry name.\n"
+msgstr "엔트리 이름이 없음.\n"
 
 #: winerror.mc:3101
-msgid "Invalid name syntax\n"
-msgstr "올바르지 않은 이름 문법\n"
+msgid "Invalid name syntax.\n"
+msgstr "올바르지 않은 이름 문법.\n"
 
 #: winerror.mc:3106
-msgid "Unsupported name syntax\n"
-msgstr "지원하지 않는 이름 문법\n"
+msgid "Unsupported name syntax.\n"
+msgstr "지원하지 않는 이름 문법.\n"
 
 #: winerror.mc:3111
-msgid "No network address\n"
-msgstr "네트워크 주소가 없습니다\n"
+msgid "No network address.\n"
+msgstr "네트워크 주소가 없습니다.\n"
 
 #: winerror.mc:3116
-msgid "Duplicate endpoint\n"
-msgstr "중복된 끝나는 점\n"
+msgid "Duplicate endpoint.\n"
+msgstr "중복된 끝나는 점.\n"
 
 #: winerror.mc:3121
-msgid "Unknown authentication type\n"
-msgstr "알수 없는 인증 형식\n"
+msgid "Unknown authentication type.\n"
+msgstr "알수 없는 인증 형식.\n"
 
 #: winerror.mc:3126
-msgid "Maximum calls too low\n"
-msgstr "호출의 최대값이 너무 낮습니다\n"
+msgid "Maximum calls too low.\n"
+msgstr "호출의 최대값이 너무 낮습니다.\n"
 
 #: winerror.mc:3131
-msgid "String too long\n"
-msgstr "문자열이 너무 깁니다\n"
+msgid "String too long.\n"
+msgstr "문자열이 너무 깁니다.\n"
 
 #: winerror.mc:3136
-msgid "Protocol sequence not found\n"
-msgstr "프로토콜 순서를 찾을 수 없습니다\n"
+msgid "Protocol sequence not found.\n"
+msgstr "프로토콜 순서를 찾을 수 없습니다.\n"
 
 #: winerror.mc:3141
-msgid "Procedure number out of range\n"
-msgstr "처리절차 번호가 범위를 벗어납니다\n"
+msgid "Procedure number out of range.\n"
+msgstr "처리절차 번호가 범위를 벗어납니다.\n"
 
 #: winerror.mc:3146
-msgid "Binding has no authentication data\n"
-msgstr "바인딩은 어떤 인증 정보도 가지고 있지 않습니다\n"
+msgid "Binding has no authentication data.\n"
+msgstr "바인딩은 어떤 인증 정보도 가지고 있지 않습니다.\n"
 
 #: winerror.mc:3151
-msgid "Unknown authentication service\n"
-msgstr "알수 없는 인증 서비스\n"
+msgid "Unknown authentication service.\n"
+msgstr "알수 없는 인증 서비스.\n"
 
 #: winerror.mc:3156
-msgid "Unknown authentication level\n"
-msgstr "알수 없는 인증 레벨\n"
+msgid "Unknown authentication level.\n"
+msgstr "알수 없는 인증 레벨.\n"
 
 #: winerror.mc:3161
-msgid "Invalid authentication identity\n"
-msgstr "올바르지 않은 인증 증명서\n"
+msgid "Invalid authentication identity.\n"
+msgstr "올바르지 않은 인증 증명서.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service\n"
-msgstr "알 수 없는 허가 서비스\n"
+msgid "Unknown authorisation service.\n"
+msgstr "알 수 없는 허가 서비스.\n"
 
 #: winerror.mc:3171
-msgid "Invalid entry\n"
-msgstr "올바르지 않은 엔트리\n"
+msgid "Invalid entry.\n"
+msgstr "올바르지 않은 엔트리.\n"
 
 #: winerror.mc:3176
-msgid "Can't perform operation\n"
-msgstr "작업을 완료할 수 없습니다\n"
+msgid "Can't perform operation.\n"
+msgstr "작업을 완료할 수 없습니다.\n"
 
 #: winerror.mc:3181
-msgid "Endpoints not registered\n"
-msgstr "끝나는 점이 등록되지 않았습니다\n"
+msgid "Endpoints not registered.\n"
+msgstr "끝나는 점이 등록되지 않았습니다.\n"
 
 #: winerror.mc:3186
-msgid "Nothing to export\n"
-msgstr "불러 올 것이 없습니다\n"
+msgid "Nothing to export.\n"
+msgstr "불러 올 것이 없습니다.\n"
 
 #: winerror.mc:3191
-msgid "Incomplete name\n"
-msgstr "완성되지 않은 이름\n"
+msgid "Incomplete name.\n"
+msgstr "완성되지 않은 이름.\n"
 
 #: winerror.mc:3196
-msgid "Invalid version option\n"
-msgstr "올바르지 않은 버젼 옵션\n"
+msgid "Invalid version option.\n"
+msgstr "올바르지 않은 버젼 옵션.\n"
 
 #: winerror.mc:3201
-msgid "No more members\n"
-msgstr "더 이상 회원은 없습니다\n"
+msgid "No more members.\n"
+msgstr "더 이상 회원은 없습니다.\n"
 
 #: winerror.mc:3206
-msgid "Not all objects unexported\n"
-msgstr "모든 객체가 내보내지지 못했습니다\n"
+msgid "Not all objects unexported.\n"
+msgstr "모든 객체가 내보내지지 못했습니다.\n"
 
 #: winerror.mc:3211
-msgid "Interface not found\n"
-msgstr "인터페이스를 찾을 수 없습니다\n"
+msgid "Interface not found.\n"
+msgstr "인터페이스를 찾을 수 없습니다.\n"
 
 #: winerror.mc:3216
-msgid "Entry already exists\n"
-msgstr "엔트리는 이미 존재합니다\n"
+msgid "Entry already exists.\n"
+msgstr "엔트리는 이미 존재합니다.\n"
 
 #: winerror.mc:3221
-msgid "Entry not found\n"
-msgstr "엔트리를 찾을 수 업습니다\n"
+msgid "Entry not found.\n"
+msgstr "엔트리를 찾을 수 업습니다.\n"
 
 #: winerror.mc:3226
-msgid "Name service unavailable\n"
-msgstr "네임 서비스는 가능하지 않습니다\n"
+msgid "Name service unavailable.\n"
+msgstr "네임 서비스는 가능하지 않습니다.\n"
 
 #: winerror.mc:3231
-msgid "Invalid network address family\n"
-msgstr "올바르지 않은 네트워크 주소 가족\n"
+msgid "Invalid network address family.\n"
+msgstr "올바르지 않은 네트워크 주소 가족.\n"
 
 #: winerror.mc:3236
-msgid "Operation not supported\n"
-msgstr "이 작업은 지원하지 않습니다\n"
+msgid "Operation not supported.\n"
+msgstr "이 작업은 지원하지 않습니다.\n"
 
 #: winerror.mc:3241
-msgid "No security context available\n"
-msgstr "가능한 보안 컨텍스가 없음\n"
+msgid "No security context available.\n"
+msgstr "가능한 보안 컨텍스가 없음.\n"
 
 #: winerror.mc:3246
-msgid "RPCInternal error\n"
-msgstr "RPC 내부 오류\n"
+msgid "RPCInternal error.\n"
+msgstr "RPC 내부 오류.\n"
 
 #: winerror.mc:3251
-msgid "RPC divide-by-zero\n"
-msgstr "RPC 0으로 나눔\n"
+msgid "RPC divide-by-zero.\n"
+msgstr "RPC 0으로 나눔.\n"
 
 #: winerror.mc:3256
-msgid "Address error\n"
-msgstr "주소 오류\n"
+msgid "Address error.\n"
+msgstr "주소 오류.\n"
 
 #: winerror.mc:3261
-msgid "Floating-point divide-by-zero\n"
-msgstr "플로팅 0으로 나눔\n"
+msgid "Floating-point divide-by-zero.\n"
+msgstr "플로팅 0으로 나눔.\n"
 
 #: winerror.mc:3266
-msgid "Floating-point underflow\n"
-msgstr "플로팅 언더플로우\n"
+msgid "Floating-point underflow.\n"
+msgstr "플로팅 언더플로우.\n"
 
 #: winerror.mc:3271
-msgid "Floating-point overflow\n"
-msgstr "플로팅 오버플로우\n"
+msgid "Floating-point overflow.\n"
+msgstr "플로팅 오버플로우.\n"
 
 #: winerror.mc:3276
-msgid "No more entries\n"
-msgstr "더 이상 엔트리가 없습니다\n"
+msgid "No more entries.\n"
+msgstr "더 이상 엔트리가 없습니다.\n"
 
 #: winerror.mc:3281
-msgid "Character translation table open failed\n"
-msgstr "문자변환테이블 열기 실패\n"
+msgid "Character translation table open failed.\n"
+msgstr "문자변환테이블 열기 실패.\n"
 
 #: winerror.mc:3286
-msgid "Character translation table file too small\n"
-msgstr "문자변환테이블 파일이 너무 작습니다\n"
+msgid "Character translation table file too small.\n"
+msgstr "문자변환테이블 파일이 너무 작습니다.\n"
 
 #: winerror.mc:3291
-msgid "Null context handle\n"
-msgstr "빈 콘택트 핸들\n"
+msgid "Null context handle.\n"
+msgstr "빈 콘택트 핸들.\n"
 
 #: winerror.mc:3296
-msgid "Context handle damaged\n"
-msgstr "콘텍트 핸들이 손상되었습니다\n"
+msgid "Context handle damaged.\n"
+msgstr "콘텍트 핸들이 손상되었습니다.\n"
 
 #: winerror.mc:3301
-msgid "Binding handle mismatch\n"
-msgstr "바인딩 핸들이 맞지 않습니다\n"
+msgid "Binding handle mismatch.\n"
+msgstr "바인딩 핸들이 맞지 않습니다.\n"
 
 #: winerror.mc:3306
-msgid "Cannot get call handle\n"
-msgstr "호출 핸들을 얻을 수 없습니다\n"
+msgid "Cannot get call handle.\n"
+msgstr "호출 핸들을 얻을 수 없습니다.\n"
 
 #: winerror.mc:3311
-msgid "Null reference pointer\n"
-msgstr "빈 레퍼런스 포인터\n"
+msgid "Null reference pointer.\n"
+msgstr "빈 레퍼런스 포인터.\n"
 
 #: winerror.mc:3316
-msgid "Enumeration value out of range\n"
-msgstr "열거 값이 범위를 벗어남\n"
+msgid "Enumeration value out of range.\n"
+msgstr "열거 값이 범위를 벗어남.\n"
 
 #: winerror.mc:3321
-msgid "Byte count too small\n"
-msgstr "바이트 카운트가 너무 작습니다\n"
+msgid "Byte count too small.\n"
+msgstr "바이트 카운트가 너무 작습니다.\n"
 
 #: winerror.mc:3326
-msgid "Bad stub data\n"
-msgstr "나쁜 스텁 정보\n"
+msgid "Bad stub data.\n"
+msgstr "나쁜 스텁 정보.\n"
 
 #: winerror.mc:3331
-msgid "Invalid user buffer\n"
-msgstr "올바르지 않은 사용자 버퍼\n"
+msgid "Invalid user buffer.\n"
+msgstr "올바르지 않은 사용자 버퍼.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media\n"
-msgstr "이해할 수 없는 미디어\n"
+msgid "Unrecognised media.\n"
+msgstr "이해할 수 없는 미디어.\n"
 
 #: winerror.mc:3341
-msgid "No trust secret\n"
-msgstr "어떤 신뢰된 비밀이 없습니다\n"
+msgid "No trust secret.\n"
+msgstr "어떤 신뢰된 비밀이 없습니다.\n"
 
 #: winerror.mc:3346
-msgid "No trust SAM account\n"
-msgstr "어떤 신뢰 SAM 계정이 없습니다\n"
+msgid "No trust SAM account.\n"
+msgstr "어떤 신뢰 SAM 계정이 없습니다.\n"
 
 #: winerror.mc:3351
-msgid "Trusted domain failure\n"
-msgstr "신뢰할수 있는 도메인 실패\n"
+msgid "Trusted domain failure.\n"
+msgstr "신뢰할수 있는 도메인 실패.\n"
 
 #: winerror.mc:3356
-msgid "Trusted relationship failure\n"
-msgstr "신뢰할 수 있는 관계 실패\n"
+msgid "Trusted relationship failure.\n"
+msgstr "신뢰할 수 있는 관계 실패.\n"
 
 #: winerror.mc:3361
-msgid "Trust logon failure\n"
-msgstr "신뢰할 수 있는 로그온 실패\n"
+msgid "Trust logon failure.\n"
+msgstr "신뢰할 수 있는 로그온 실패.\n"
 
 #: winerror.mc:3366
-msgid "RPC call already in progress\n"
-msgstr "RPC 요구는 이미 작업중입니다\n"
+msgid "RPC call already in progress.\n"
+msgstr "RPC 요구는 이미 작업중입니다.\n"
 
 #: winerror.mc:3371
-msgid "NETLOGON is not started\n"
-msgstr "NETLOGON 는 시작되어 있지 않습니다\n"
+msgid "NETLOGON is not started.\n"
+msgstr "NETLOGON 는 시작되어 있지 않습니다.\n"
 
 #: winerror.mc:3376
-msgid "Account expired\n"
-msgstr "계정이 만기되었습니다\n"
+msgid "Account expired.\n"
+msgstr "계정이 만기되었습니다.\n"
 
 #: winerror.mc:3381
-msgid "Redirector has open handles\n"
-msgstr "리다이렉터가 핸들을 열었습니다\n"
+msgid "Redirector has open handles.\n"
+msgstr "리다이렉터가 핸들을 열었습니다.\n"
 
 #: winerror.mc:3386
-msgid "Printer driver already installed\n"
-msgstr "프린터 드라이버는 이미 설치되어 있습니다\n"
+msgid "Printer driver already installed.\n"
+msgstr "프린터 드라이버는 이미 설치되어 있습니다.\n"
 
 #: winerror.mc:3391
-msgid "Unknown port\n"
-msgstr "알 수 없는 포트\n"
+msgid "Unknown port.\n"
+msgstr "알 수 없는 포트.\n"
 
 #: winerror.mc:3396
-msgid "Unknown printer driver\n"
-msgstr "알 수 없는 프린터 드라이버\n"
+msgid "Unknown printer driver.\n"
+msgstr "알 수 없는 프린터 드라이버.\n"
 
 #: winerror.mc:3401
-msgid "Unknown print processor\n"
-msgstr "알 수 없는 프린터 프로세서\n"
+msgid "Unknown print processor.\n"
+msgstr "알 수 없는 프린터 프로세서.\n"
 
 #: winerror.mc:3406
-msgid "Invalid separator file\n"
-msgstr "올바르지 않은 파일 분리자\n"
+msgid "Invalid separator file.\n"
+msgstr "올바르지 않은 파일 분리자.\n"
 
 #: winerror.mc:3411
-msgid "Invalid priority\n"
-msgstr "올바르지 않은 우선순위\n"
+msgid "Invalid priority.\n"
+msgstr "올바르지 않은 우선순위.\n"
 
 #: winerror.mc:3416
-msgid "Invalid printer name\n"
-msgstr "올바르지 않은 프린터 이름\n"
+msgid "Invalid printer name.\n"
+msgstr "올바르지 않은 프린터 이름.\n"
 
 #: winerror.mc:3421
-msgid "Printer already exists\n"
-msgstr "프린터는 이미 존재합니다\n"
+msgid "Printer already exists.\n"
+msgstr "프린터는 이미 존재합니다.\n"
 
 #: winerror.mc:3426
-msgid "Invalid printer command\n"
-msgstr "올바르지 않은 프린터 명령\n"
+msgid "Invalid printer command.\n"
+msgstr "올바르지 않은 프린터 명령.\n"
 
 #: winerror.mc:3431
-msgid "Invalid data type\n"
-msgstr "올바르지 않은 데이타 형식\n"
+msgid "Invalid data type.\n"
+msgstr "올바르지 않은 데이타 형식.\n"
 
 #: winerror.mc:3436
-msgid "Invalid environment\n"
-msgstr "올바르지 않은 환경변수\n"
+msgid "Invalid environment.\n"
+msgstr "올바르지 않은 환경변수.\n"
 
 #: winerror.mc:3441
-msgid "No more bindings\n"
-msgstr "더 이상의 바인딩은 없음\n"
+msgid "No more bindings.\n"
+msgstr "더 이상의 바인딩은 없음.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account\n"
-msgstr "내부 도메인의 신뢰된 계정에 로그온할 수 없습니다\n"
+msgid "Can't logon with interdomain trust account.\n"
+msgstr "내부 도메인의 신뢰된 계정에 로그온할 수 없습니다.\n"
 
 #: winerror.mc:3451
-msgid "Can't logon with workstation trust account\n"
-msgstr "워크스테이션의 신뢰된 계정에 로그온 할 수 없습니다\n"
+msgid "Can't logon with workstation trust account.\n"
+msgstr "워크스테이션의 신뢰된 계정에 로그온 할 수 없습니다.\n"
 
 #: winerror.mc:3456
-msgid "Can't logon with server trust account\n"
-msgstr "서버의 신뢰된 계정에 로그온할 수 없습니다\n"
+msgid "Can't logon with server trust account.\n"
+msgstr "서버의 신뢰된 계정에 로그온할 수 없습니다.\n"
 
 #: winerror.mc:3461
-msgid "Domain trust information inconsistent\n"
-msgstr "도메인 신뢰 정보가 다름\n"
+msgid "Domain trust information inconsistent.\n"
+msgstr "도메인 신뢰 정보가 다름.\n"
 
 #: winerror.mc:3466
-msgid "Server has open handles\n"
-msgstr "서버가 핸들을 열었습니다\n"
+msgid "Server has open handles.\n"
+msgstr "서버가 핸들을 열었습니다.\n"
 
 #: winerror.mc:3471
-msgid "Resource data not found\n"
-msgstr "리소스 데이타를 찾을 수 없습니다\n"
+msgid "Resource data not found.\n"
+msgstr "리소스 데이타를 찾을 수 없습니다.\n"
 
 #: winerror.mc:3476
-msgid "Resource type not found\n"
-msgstr "리소스 형식을 찾을 수 없습니다\n"
+msgid "Resource type not found.\n"
+msgstr "리소스 형식을 찾을 수 없습니다.\n"
 
 #: winerror.mc:3481
-msgid "Resource name not found\n"
-msgstr "리소스 이름을 찾을 수 없습니다\n"
+msgid "Resource name not found.\n"
+msgstr "리소스 이름을 찾을 수 없습니다.\n"
 
 #: winerror.mc:3486
-msgid "Resource language not found\n"
-msgstr "리소스 언어를 찾을 수 없습니다\n"
+msgid "Resource language not found.\n"
+msgstr "리소스 언어를 찾을 수 없습니다.\n"
 
 #: winerror.mc:3491
-msgid "Not enough quota\n"
-msgstr "쿼터가 충분하지 않습니다\n"
+msgid "Not enough quota.\n"
+msgstr "쿼터가 충분하지 않습니다.\n"
 
 #: winerror.mc:3496
-msgid "No interfaces\n"
-msgstr "인터페이스가 없음\n"
+msgid "No interfaces.\n"
+msgstr "인터페이스가 없음.\n"
 
 #: winerror.mc:3501
-msgid "RPC call canceled\n"
-msgstr "RPC 호출이 취소되었습니다\n"
+msgid "RPC call canceled.\n"
+msgstr "RPC 호출이 취소되었습니다.\n"
 
 #: winerror.mc:3506
-msgid "Binding incomplete\n"
-msgstr "바인딩이 완료되지 않음\n"
+msgid "Binding incomplete.\n"
+msgstr "바인딩이 완료되지 않음.\n"
 
 #: winerror.mc:3511
-msgid "RPC comm failure\n"
-msgstr "RPC 일반 실패\n"
+msgid "RPC comm failure.\n"
+msgstr "RPC 일반 실패.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level\n"
-msgstr "지원하지 않는 인증 레벨\n"
+msgid "Unsupported authorisation level.\n"
+msgstr "지원하지 않는 인증 레벨.\n"
 
 #: winerror.mc:3521
-msgid "No principal name registered\n"
-msgstr "어떤 등록된 주요 이름이 없음\n"
+msgid "No principal name registered.\n"
+msgstr "어떤 등록된 주요 이름이 없음.\n"
 
 #: winerror.mc:3526
-msgid "Not an RPC error\n"
-msgstr "RPC 오류가 아닙\n"
+msgid "Not an RPC error.\n"
+msgstr "RPC 오류가 아닙.\n"
 
 #: winerror.mc:3531
-msgid "UUID is local only\n"
-msgstr "UUID는 오직 로컬에서만 가능합니다\n"
+msgid "UUID is local only.\n"
+msgstr "UUID는 오직 로컬에서만 가능합니다.\n"
 
 #: winerror.mc:3536
-msgid "Security package error\n"
-msgstr "보안 패키지 오류\n"
+msgid "Security package error.\n"
+msgstr "보안 패키지 오류.\n"
 
 #: winerror.mc:3541
-msgid "Thread not canceled\n"
-msgstr "쓰레드는 취소되지 않았습니다\n"
+msgid "Thread not canceled.\n"
+msgstr "쓰레드는 취소되지 않았습니다.\n"
 
 #: winerror.mc:3546
-msgid "Invalid handle operation\n"
-msgstr "올바르지 않은 핸들 작업\n"
+msgid "Invalid handle operation.\n"
+msgstr "올바르지 않은 핸들 작업.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version\n"
-msgstr "잘못된 연속 패키지 버젼\n"
+msgid "Wrong serialising package version.\n"
+msgstr "잘못된 연속 패키지 버젼.\n"
 
 #: winerror.mc:3556
-msgid "Wrong stub version\n"
-msgstr "잘못된 스텁 버전\n"
+msgid "Wrong stub version.\n"
+msgstr "잘못된 스텁 버전.\n"
 
 #: winerror.mc:3561
-msgid "Invalid pipe object\n"
-msgstr "올바르지 않은 파이프 객체\n"
+msgid "Invalid pipe object.\n"
+msgstr "올바르지 않은 파이프 객체.\n"
 
 #: winerror.mc:3566
-msgid "Wrong pipe order\n"
-msgstr "잘못된 파이프 순서\n"
+msgid "Wrong pipe order.\n"
+msgstr "잘못된 파이프 순서.\n"
 
 #: winerror.mc:3571
-msgid "Wrong pipe version\n"
-msgstr "잘못된 파이프 버젼\n"
+msgid "Wrong pipe version.\n"
+msgstr "잘못된 파이프 버젼.\n"
 
 #: winerror.mc:3576
-msgid "Group member not found\n"
-msgstr "그룹 멤버를 찾을 수 없습니다\n"
+msgid "Group member not found.\n"
+msgstr "그룹 멤버를 찾을 수 없습니다.\n"
 
 #: winerror.mc:3581
-msgid "Can't create endpoint mapper DB\n"
-msgstr "엔드포인트 매퍼 DB를 만들 수 없습니다\n"
+msgid "Can't create endpoint mapper DB.\n"
+msgstr "엔드포인트 매퍼 DB를 만들 수 없습니다.\n"
 
 #: winerror.mc:3586
-msgid "Invalid object\n"
-msgstr "올바르지 않은 객체\n"
+msgid "Invalid object.\n"
+msgstr "올바르지 않은 객체.\n"
 
 #: winerror.mc:3591
-msgid "Invalid time\n"
-msgstr "올바르지 않은 시간\n"
+msgid "Invalid time.\n"
+msgstr "올바르지 않은 시간.\n"
 
 #: winerror.mc:3596
-msgid "Invalid form name\n"
-msgstr "올바르지 않은 폼 이름\n"
+msgid "Invalid form name.\n"
+msgstr "올바르지 않은 폼 이름.\n"
 
 #: winerror.mc:3601
-msgid "Invalid form size\n"
-msgstr "올바르지 않은 폼 크기\n"
+msgid "Invalid form size.\n"
+msgstr "올바르지 않은 폼 크기.\n"
 
 #: winerror.mc:3606
-msgid "Already awaiting printer handle\n"
-msgstr "이미 프린터 핸들르 기다리고 있습니다\n"
+msgid "Already awaiting printer handle.\n"
+msgstr "이미 프린터 핸들르 기다리고 있습니다.\n"
 
 #: winerror.mc:3611
-msgid "Printer deleted\n"
-msgstr "프린터가 지워졌습니다\n"
+msgid "Printer deleted.\n"
+msgstr "프린터가 지워졌습니다.\n"
 
 #: winerror.mc:3616
-msgid "Invalid printer state\n"
-msgstr "올바르지 않은 프린터 상태\n"
+msgid "Invalid printer state.\n"
+msgstr "올바르지 않은 프린터 상태.\n"
 
 #: winerror.mc:3621
-msgid "User must change password\n"
-msgstr "사용자는 반드시 암호를 바꾸어야 합니다\n"
+msgid "User must change password.\n"
+msgstr "사용자는 반드시 암호를 바꾸어야 합니다.\n"
 
 #: winerror.mc:3626
-msgid "Domain controller not found\n"
-msgstr "도메인 컨트롤러를 찾을 수 없습니다\n"
+msgid "Domain controller not found.\n"
+msgstr "도메인 컨트롤러를 찾을 수 없습니다.\n"
 
 #: winerror.mc:3631
-msgid "Account locked out\n"
-msgstr "계정이 잠겨 있음\n"
+msgid "Account locked out.\n"
+msgstr "계정이 잠겨 있음.\n"
 
 #: winerror.mc:3636
-msgid "Invalid pixel format\n"
-msgstr "올바르지 않은 픽셀 형식\n"
+msgid "Invalid pixel format.\n"
+msgstr "올바르지 않은 픽셀 형식.\n"
 
 #: winerror.mc:3641
-msgid "Invalid driver\n"
-msgstr "올바르지 않은 드라이버\n"
+msgid "Invalid driver.\n"
+msgstr "올바르지 않은 드라이버.\n"
 
 #: winerror.mc:3646
-msgid "Invalid object resolver set\n"
-msgstr "잘못된 객체 확인자 세트\n"
+msgid "Invalid object resolver set.\n"
+msgstr "잘못된 객체 확인자 세트.\n"
 
 #: winerror.mc:3651
-msgid "Incomplete RPC send\n"
-msgstr "불완전 RPC를 보냄\n"
+msgid "Incomplete RPC send.\n"
+msgstr "불완전 RPC를 보냄.\n"
 
 #: winerror.mc:3656
-msgid "Invalid asynchronous RPC handle\n"
-msgstr "올바르지 않은 비동기식 RPC 핸들\n"
+msgid "Invalid asynchronous RPC handle.\n"
+msgstr "올바르지 않은 비동기식 RPC 핸들.\n"
 
 #: winerror.mc:3661
-msgid "Invalid asynchronous RPC call\n"
-msgstr "비동기 RPC 호출이 잘못되었습니다\n"
+msgid "Invalid asynchronous RPC call.\n"
+msgstr "비동기 RPC 호출이 잘못되었습니다.\n"
 
 #: winerror.mc:3666
-msgid "RPC pipe closed\n"
-msgstr "RPC 파이프가 닫힘\n"
+msgid "RPC pipe closed.\n"
+msgstr "RPC 파이프가 닫힘.\n"
 
 #: winerror.mc:3671
-msgid "Discipline error on RPC pipe\n"
-msgstr "RPC 파이프에 대한 규율 오류\n"
+msgid "Discipline error on RPC pipe.\n"
+msgstr "RPC 파이프에 대한 규율 오류.\n"
 
 #: winerror.mc:3676
-msgid "No data on RPC pipe\n"
-msgstr "RPC 파이프에 어떠한 데이타도 없음\n"
+msgid "No data on RPC pipe.\n"
+msgstr "RPC 파이프에 어떠한 데이타도 없음.\n"
 
 #: winerror.mc:3681
-msgid "No site name available\n"
-msgstr "가능한 사이트 이름이 없음\n"
+msgid "No site name available.\n"
+msgstr "가능한 사이트 이름이 없음.\n"
 
 #: winerror.mc:3686
-msgid "The file cannot be accessed\n"
-msgstr "이 파일은  접근할 수 없습니다\n"
+msgid "The file cannot be accessed.\n"
+msgstr "이 파일은  접근할 수 없습니다.\n"
 
 #: winerror.mc:3691
-msgid "The filename cannot be resolved\n"
-msgstr "파일 이름을 확인 할 수 없음\n"
+msgid "The filename cannot be resolved.\n"
+msgstr "파일 이름을 확인 할 수 없음.\n"
 
 #: winerror.mc:3696
-msgid "RPC entry type mismatch\n"
-msgstr "RPC 입력 유형 불일치\n"
+msgid "RPC entry type mismatch.\n"
+msgstr "RPC 입력 유형 불일치.\n"
 
 #: winerror.mc:3701
-msgid "Not all objects could be exported\n"
-msgstr "모든 개체를 내보낼 수는 없습니다\n"
+msgid "Not all objects could be exported.\n"
+msgstr "모든 개체를 내보낼 수는 없습니다.\n"
 
 #: winerror.mc:3706
-msgid "The interface could not be exported\n"
-msgstr "인터페이스를 내보낼 수 없습니다\n"
+msgid "The interface could not be exported.\n"
+msgstr "인터페이스를 내보낼 수 없습니다.\n"
 
 #: winerror.mc:3711
-msgid "The profile could not be added\n"
-msgstr "프로필을 추가할 수 없습니다\n"
+msgid "The profile could not be added.\n"
+msgstr "프로필을 추가할 수 없습니다.\n"
 
 #: winerror.mc:3716
-msgid "The profile element could not be added\n"
-msgstr "프로필 요소를 추가할 수 없습니다\n"
+msgid "The profile element could not be added.\n"
+msgstr "프로필 요소를 추가할 수 없습니다.\n"
 
 #: winerror.mc:3721
-msgid "The profile element could not be removed\n"
-msgstr "프로필 요소를 제거하지 못했습니다\n"
+msgid "The profile element could not be removed.\n"
+msgstr "프로필 요소를 제거하지 못했습니다.\n"
 
 #: winerror.mc:3726
-msgid "The group element could not be added\n"
-msgstr "그룹 요소를 추가할 수 없습니다\n"
+msgid "The group element could not be added.\n"
+msgstr "그룹 요소를 추가할 수 없습니다.\n"
 
 #: winerror.mc:3731
-msgid "The group element could not be removed\n"
-msgstr "그룹 요소가 제거되지 않았습니다\n"
+msgid "The group element could not be removed.\n"
+msgstr "그룹 요소가 제거되지 않았습니다.\n"
 
 #: winerror.mc:3736
-msgid "The username could not be found\n"
-msgstr "사용자 이름을 찾을 수 없습니다\n"
+msgid "The username could not be found.\n"
+msgstr "사용자 이름을 찾을 수 없습니다.\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"

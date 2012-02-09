@@ -3551,2957 +3551,2957 @@ msgid "Array object expected"
 msgstr "Ожидается объект типа 'Array'"
 
 #: winerror.mc:26
-msgid "Success\n"
-msgstr "Выполнено успешно\n"
+msgid "Success.\n"
+msgstr "Выполнено успешно.\n"
 
 #: winerror.mc:31
-msgid "Invalid function\n"
-msgstr "Неверная функция\n"
+msgid "Invalid function.\n"
+msgstr "Неверная функция.\n"
 
 #: winerror.mc:36
-msgid "File not found\n"
-msgstr "Файл не найден\n"
+msgid "File not found.\n"
+msgstr "Файл не найден.\n"
 
 #: winerror.mc:41
-msgid "Path not found\n"
-msgstr "Путь не найден\n"
+msgid "Path not found.\n"
+msgstr "Путь не найден.\n"
 
 #: winerror.mc:46
-msgid "Too many open files\n"
-msgstr "Слишком много открытых файлов\n"
+msgid "Too many open files.\n"
+msgstr "Слишком много открытых файлов.\n"
 
 #: winerror.mc:51
-msgid "Access denied\n"
-msgstr "Доступ запрещён\n"
+msgid "Access denied.\n"
+msgstr "Доступ запрещён.\n"
 
 #: winerror.mc:56
-msgid "Invalid handle\n"
-msgstr "Неверный дескриптор\n"
+msgid "Invalid handle.\n"
+msgstr "Неверный дескриптор.\n"
 
 #: winerror.mc:61
-msgid "Memory trashed\n"
-msgstr "Повреждены служебные блоки памяти\n"
+msgid "Memory trashed.\n"
+msgstr "Повреждены служебные блоки памяти.\n"
 
 #: winerror.mc:66
-msgid "Not enough memory\n"
-msgstr "Недостаточно памяти для выполнения команды\n"
+msgid "Not enough memory.\n"
+msgstr "Недостаточно памяти для выполнения команды.\n"
 
 #: winerror.mc:71
-msgid "Invalid block\n"
-msgstr "Неверный адрес блока памяти\n"
+msgid "Invalid block.\n"
+msgstr "Неверный адрес блока памяти.\n"
 
 #: winerror.mc:76
-msgid "Bad environment\n"
-msgstr "Неверное окружение\n"
+msgid "Bad environment.\n"
+msgstr "Неверное окружение.\n"
 
 #: winerror.mc:81
-msgid "Bad format\n"
-msgstr "Неверный формат\n"
+msgid "Bad format.\n"
+msgstr "Неверный формат.\n"
 
 #: winerror.mc:86
-msgid "Invalid access\n"
-msgstr "Доступ недействителен\n"
+msgid "Invalid access.\n"
+msgstr "Доступ недействителен.\n"
 
 #: winerror.mc:91
-msgid "Invalid data\n"
-msgstr "Неверные данные\n"
+msgid "Invalid data.\n"
+msgstr "Неверные данные.\n"
 
 #: winerror.mc:96
-msgid "Out of memory\n"
-msgstr "Недостаточно памяти для завершения операции\n"
+msgid "Out of memory.\n"
+msgstr "Недостаточно памяти для завершения операции.\n"
 
 #: winerror.mc:101
-msgid "Invalid drive\n"
-msgstr "Неверный диск\n"
+msgid "Invalid drive.\n"
+msgstr "Неверный диск.\n"
 
 #: winerror.mc:106
-msgid "Can't delete current directory\n"
-msgstr "Невозможно удалить текущий каталог\n"
+msgid "Can't delete current directory.\n"
+msgstr "Невозможно удалить текущий каталог.\n"
 
 #: winerror.mc:111
-msgid "Not same device\n"
-msgstr "Не то же самое устройство\n"
+msgid "Not same device.\n"
+msgstr "Не то же самое устройство.\n"
 
 #: winerror.mc:116
-msgid "No more files\n"
-msgstr "Больше файлов нет\n"
+msgid "No more files.\n"
+msgstr "Больше файлов нет.\n"
 
 #: winerror.mc:121
-msgid "Write protected\n"
-msgstr "Защищено от записи\n"
+msgid "Write protected.\n"
+msgstr "Защищено от записи.\n"
 
 #: winerror.mc:126
-msgid "Bad unit\n"
-msgstr "Не удаётся найти устройство\n"
+msgid "Bad unit.\n"
+msgstr "Не удаётся найти устройство.\n"
 
 #: winerror.mc:131
-msgid "Not ready\n"
-msgstr "Устройство не готово\n"
+msgid "Not ready.\n"
+msgstr "Устройство не готово.\n"
 
 #: winerror.mc:136
-msgid "Bad command\n"
-msgstr "Неверная команда\n"
+msgid "Bad command.\n"
+msgstr "Неверная команда.\n"
 
 #: winerror.mc:141
-msgid "CRC error\n"
-msgstr "Ошибка CRC\n"
+msgid "CRC error.\n"
+msgstr "Ошибка CRC.\n"
 
 #: winerror.mc:146
-msgid "Bad length\n"
-msgstr "Неверная длина команды\n"
+msgid "Bad length.\n"
+msgstr "Неверная длина команды.\n"
 
 #: winerror.mc:151 winerror.mc:526
-msgid "Seek error\n"
-msgstr "Ошибка позиционирования\n"
+msgid "Seek error.\n"
+msgstr "Ошибка позиционирования.\n"
 
 #: winerror.mc:156
-msgid "Not DOS disk\n"
-msgstr "Не диск DOS\n"
+msgid "Not DOS disk.\n"
+msgstr "Не диск DOS.\n"
 
 #: winerror.mc:161
-msgid "Sector not found\n"
-msgstr "Сектор не найден\n"
+msgid "Sector not found.\n"
+msgstr "Сектор не найден.\n"
 
 #: winerror.mc:166
-msgid "Out of paper\n"
-msgstr "Кончилась бумага\n"
+msgid "Out of paper.\n"
+msgstr "Кончилась бумага.\n"
 
 #: winerror.mc:171
-msgid "Write fault\n"
-msgstr "Не удаётся выполнить запись\n"
+msgid "Write fault.\n"
+msgstr "Не удаётся выполнить запись.\n"
 
 #: winerror.mc:176
-msgid "Read fault\n"
-msgstr "Не удаётся выполнить чтение\n"
+msgid "Read fault.\n"
+msgstr "Не удаётся выполнить чтение.\n"
 
 #: winerror.mc:181
-msgid "General failure\n"
-msgstr "Общая ошибка\n"
+msgid "General failure.\n"
+msgstr "Общая ошибка.\n"
 
 #: winerror.mc:186
-msgid "Sharing violation\n"
-msgstr "Конфликт совместного доступа\n"
+msgid "Sharing violation.\n"
+msgstr "Конфликт совместного доступа.\n"
 
 #: winerror.mc:191
-msgid "Lock violation\n"
-msgstr "Конфликт блокировки части файла\n"
+msgid "Lock violation.\n"
+msgstr "Конфликт блокировки части файла.\n"
 
 #: winerror.mc:196
-msgid "Wrong disk\n"
-msgstr "Неверный диск\n"
+msgid "Wrong disk.\n"
+msgstr "Неверный диск.\n"
 
 #: winerror.mc:201
-msgid "Sharing buffer exceeded\n"
-msgstr "Исчерпан буфер файлов совместного использования\n"
+msgid "Sharing buffer exceeded.\n"
+msgstr "Исчерпан буфер файлов совместного использования.\n"
 
 #: winerror.mc:206
-msgid "End of file\n"
-msgstr "Достигнут конец файла\n"
+msgid "End of file.\n"
+msgstr "Достигнут конец файла.\n"
 
 #: winerror.mc:211 winerror.mc:436
-msgid "Disk full\n"
-msgstr "Диск полностью заполнен\n"
+msgid "Disk full.\n"
+msgstr "Диск полностью заполнен.\n"
 
 #: winerror.mc:216
-msgid "Request not supported\n"
-msgstr "Сетевой запрос не поддерживается\n"
+msgid "Request not supported.\n"
+msgstr "Сетевой запрос не поддерживается.\n"
 
 #: winerror.mc:221
-msgid "Remote machine not listening\n"
-msgstr "Удалённый компьютер не отвечает\n"
+msgid "Remote machine not listening.\n"
+msgstr "Удалённый компьютер не отвечает.\n"
 
 #: winerror.mc:226
-msgid "Duplicate network name\n"
-msgstr "В сети есть совпадающие названия\n"
+msgid "Duplicate network name.\n"
+msgstr "В сети есть совпадающие названия.\n"
 
 #: winerror.mc:231
-msgid "Bad network path\n"
-msgstr "Неверный сетевой путь\n"
+msgid "Bad network path.\n"
+msgstr "Неверный сетевой путь.\n"
 
 #: winerror.mc:236
-msgid "Network busy\n"
-msgstr "Сеть занята\n"
+msgid "Network busy.\n"
+msgstr "Сеть занята.\n"
 
 #: winerror.mc:241
-msgid "Device does not exist\n"
-msgstr "Устройство не существует\n"
+msgid "Device does not exist.\n"
+msgstr "Устройство не существует.\n"
 
 #: winerror.mc:246
-msgid "Too many commands\n"
-msgstr "Слишком много команд NetBIOS\n"
+msgid "Too many commands.\n"
+msgstr "Слишком много команд NetBIOS.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error\n"
-msgstr "Аппаратная ошибка сетевой карты\n"
+msgid "Adaptor hardware error.\n"
+msgstr "Аппаратная ошибка сетевой карты.\n"
 
 #: winerror.mc:256
-msgid "Bad network response\n"
-msgstr "Сервер не может выполнить такую операцию\n"
+msgid "Bad network response.\n"
+msgstr "Сервер не может выполнить такую операцию.\n"
 
 #: winerror.mc:261
-msgid "Unexpected network error\n"
-msgstr "Неожиданная сетевая ошибка\n"
+msgid "Unexpected network error.\n"
+msgstr "Неожиданная сетевая ошибка.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor\n"
-msgstr "Несовместимая удалённая сетевая карта\n"
+msgid "Bad remote adaptor.\n"
+msgstr "Несовместимая удалённая сетевая карта.\n"
 
 #: winerror.mc:271
-msgid "Print queue full\n"
-msgstr "Очередь печати переполнена\n"
+msgid "Print queue full.\n"
+msgstr "Очередь печати переполнена.\n"
 
 #: winerror.mc:276
-msgid "No spool space\n"
-msgstr "Закончилось место для хранения файлов, ожидающих печати\n"
+msgid "No spool space.\n"
+msgstr "Закончилось место для хранения файлов, ожидающих печати.\n"
 
 #: winerror.mc:281
-msgid "Print canceled\n"
-msgstr "Вывод на печать отменён\n"
+msgid "Print canceled.\n"
+msgstr "Вывод на печать отменён.\n"
 
 #: winerror.mc:286
-msgid "Network name deleted\n"
-msgstr "Сетевое имя более не существует\n"
+msgid "Network name deleted.\n"
+msgstr "Сетевое имя более не существует.\n"
 
 #: winerror.mc:291
-msgid "Network access denied\n"
-msgstr "Нет доступа к сети\n"
+msgid "Network access denied.\n"
+msgstr "Нет доступа к сети.\n"
 
 #: winerror.mc:296
-msgid "Bad device type\n"
-msgstr "Неверный тип сетевого ресурса\n"
+msgid "Bad device type.\n"
+msgstr "Неверный тип сетевого ресурса.\n"
 
 #: winerror.mc:301
-msgid "Bad network name\n"
-msgstr "Неверное сетевое имя\n"
+msgid "Bad network name.\n"
+msgstr "Неверное сетевое имя.\n"
 
 #: winerror.mc:306
-msgid "Too many network names\n"
-msgstr "Слишком много сетевых имён\n"
+msgid "Too many network names.\n"
+msgstr "Слишком много сетевых имён.\n"
 
 #: winerror.mc:311
-msgid "Too many network sessions\n"
-msgstr "Слишком много сетевых подключений NetBIOS\n"
+msgid "Too many network sessions.\n"
+msgstr "Слишком много сетевых подключений NetBIOS.\n"
 
 #: winerror.mc:316
-msgid "Sharing paused\n"
-msgstr "Сервер остановлен или перезагружается\n"
+msgid "Sharing paused.\n"
+msgstr "Сервер остановлен или перезагружается.\n"
 
 #: winerror.mc:321
-msgid "Request not accepted\n"
-msgstr "Достигнут предел подключений к удалённому компьютеру\n"
+msgid "Request not accepted.\n"
+msgstr "Достигнут предел подключений к удалённому компьютеру.\n"
 
 #: winerror.mc:326
-msgid "Redirector paused\n"
-msgstr "Работа устройства приостановлена\n"
+msgid "Redirector paused.\n"
+msgstr "Работа устройства приостановлена.\n"
 
 #: winerror.mc:331
-msgid "File exists\n"
-msgstr "Файл уже существует\n"
+msgid "File exists.\n"
+msgstr "Файл уже существует.\n"
 
 #: winerror.mc:336
-msgid "Cannot create\n"
-msgstr "Невозможно создать файл или каталог\n"
+msgid "Cannot create.\n"
+msgstr "Невозможно создать файл или каталог.\n"
 
 #: winerror.mc:341
-msgid "Int24 failure\n"
-msgstr "Ошибка при вызове прерывания Int24\n"
+msgid "Int24 failure.\n"
+msgstr "Ошибка при вызове прерывания Int24.\n"
 
 #: winerror.mc:346
-msgid "Out of structures\n"
-msgstr "Недостаточно памяти для обработки запроса\n"
+msgid "Out of structures.\n"
+msgstr "Недостаточно памяти для обработки запроса.\n"
 
 #: winerror.mc:351
-msgid "Already assigned\n"
-msgstr "Название уже используется\n"
+msgid "Already assigned.\n"
+msgstr "Название уже используется.\n"
 
 #: winerror.mc:356 winerror.mc:1711
-msgid "Invalid password\n"
-msgstr "Неверный пароль\n"
+msgid "Invalid password.\n"
+msgstr "Неверный пароль.\n"
 
 #: winerror.mc:361
-msgid "Invalid parameter\n"
-msgstr "Неверный параметр\n"
+msgid "Invalid parameter.\n"
+msgstr "Неверный параметр.\n"
 
 #: winerror.mc:366
-msgid "Net write fault\n"
-msgstr "Ошибка сетевой записи\n"
+msgid "Net write fault.\n"
+msgstr "Ошибка сетевой записи.\n"
 
 #: winerror.mc:371
-msgid "No process slots\n"
-msgstr "Нет места для запуска процесса\n"
+msgid "No process slots.\n"
+msgstr "Нет места для запуска процесса.\n"
 
 #: winerror.mc:376
-msgid "Too many semaphores\n"
-msgstr "Слишком много семафоров\n"
+msgid "Too many semaphores.\n"
+msgstr "Слишком много семафоров.\n"
 
 #: winerror.mc:381
-msgid "Exclusive semaphore already owned\n"
-msgstr "Эксклюзивный семафор занят другим процессом\n"
+msgid "Exclusive semaphore already owned.\n"
+msgstr "Эксклюзивный семафор занят другим процессом.\n"
 
 #: winerror.mc:386
-msgid "Semaphore is set\n"
-msgstr "Семафор установлен\n"
+msgid "Semaphore is set.\n"
+msgstr "Семафор установлен.\n"
 
 #: winerror.mc:391
-msgid "Too many semaphore requests\n"
-msgstr "Слишком много запросов к семафору\n"
+msgid "Too many semaphore requests.\n"
+msgstr "Слишком много запросов к семафору.\n"
 
 #: winerror.mc:396
-msgid "Invalid at interrupt time\n"
-msgstr "Нельзя обратиться к семафору во время обработки прерывания\n"
+msgid "Invalid at interrupt time.\n"
+msgstr "Нельзя обратиться к семафору во время обработки прерывания.\n"
 
 #: winerror.mc:401
-msgid "Semaphore owner died\n"
-msgstr "Владелец семафора не существует\n"
+msgid "Semaphore owner died.\n"
+msgstr "Владелец семафора не существует.\n"
 
 #: winerror.mc:406
-msgid "Semaphore user limit\n"
-msgstr "Достигнут предел числа пользователей семафора\n"
+msgid "Semaphore user limit.\n"
+msgstr "Достигнут предел числа пользователей семафора.\n"
 
 #: winerror.mc:411
-msgid "Insert disk for drive %1\n"
-msgstr "Вставьте диск в устройство %1\n"
+msgid "Insert disk for drive %1.\n"
+msgstr "Вставьте диск в устройство %1.\n"
 
 #: winerror.mc:416
-msgid "Drive locked\n"
-msgstr "Диск занят или заблокирован\n"
+msgid "Drive locked.\n"
+msgstr "Диск занят или заблокирован.\n"
 
 #: winerror.mc:421
-msgid "Broken pipe\n"
-msgstr "Канал закрыт\n"
+msgid "Broken pipe.\n"
+msgstr "Канал закрыт.\n"
 
 #: winerror.mc:426
-msgid "Open failed\n"
-msgstr "Не удаётся открыть устройство или файл\n"
+msgid "Open failed.\n"
+msgstr "Не удаётся открыть устройство или файл.\n"
 
 #: winerror.mc:431
-msgid "Buffer overflow\n"
-msgstr "Буфер переполнен\n"
+msgid "Buffer overflow.\n"
+msgstr "Буфер переполнен.\n"
 
 #: winerror.mc:441
-msgid "No more search handles\n"
-msgstr "Нет свободных дескрипторов файлов\n"
+msgid "No more search handles.\n"
+msgstr "Нет свободных дескрипторов файлов.\n"
 
 #: winerror.mc:446
-msgid "Invalid target handle\n"
-msgstr "Неверный дескриптор файла\n"
+msgid "Invalid target handle.\n"
+msgstr "Неверный дескриптор файла.\n"
 
 #: winerror.mc:451
-msgid "Invalid IOCTL\n"
-msgstr "Неверный вызов IOCTL\n"
+msgid "Invalid IOCTL.\n"
+msgstr "Неверный вызов IOCTL.\n"
 
 #: winerror.mc:456
-msgid "Invalid verify switch\n"
-msgstr "Неверное значение флага VERIFY (проверки записи на диск)\n"
+msgid "Invalid verify switch.\n"
+msgstr "Неверное значение флага VERIFY (проверки записи на диск).\n"
 
 #: winerror.mc:461
-msgid "Bad driver level\n"
-msgstr "Невозможна обработка полученной драйвером команды\n"
+msgid "Bad driver level.\n"
+msgstr "Невозможна обработка полученной драйвером команды.\n"
 
 #: winerror.mc:466
-msgid "Call not implemented\n"
-msgstr "Функция не реализована\n"
+msgid "Call not implemented.\n"
+msgstr "Функция не реализована.\n"
 
 #: winerror.mc:471
-msgid "Semaphore timeout\n"
-msgstr "Истекло время ожидания семафора\n"
+msgid "Semaphore timeout.\n"
+msgstr "Истекло время ожидания семафора.\n"
 
 #: winerror.mc:476
-msgid "Insufficient buffer\n"
-msgstr "Недостаточный объём буфера\n"
+msgid "Insufficient buffer.\n"
+msgstr "Недостаточный объём буфера.\n"
 
 #: winerror.mc:481
-msgid "Invalid name\n"
-msgstr "Неверное имя файла, каталога или метки тома\n"
+msgid "Invalid name.\n"
+msgstr "Неверное имя файла, каталога или метки тома.\n"
 
 #: winerror.mc:486
-msgid "Invalid level\n"
-msgstr "Неверный уровень системного вызова\n"
+msgid "Invalid level.\n"
+msgstr "Неверный уровень системного вызова.\n"
 
 #: winerror.mc:491
-msgid "No volume label\n"
-msgstr "Диск не имеет метки тома\n"
+msgid "No volume label.\n"
+msgstr "Диск не имеет метки тома.\n"
 
 #: winerror.mc:496
-msgid "Module not found\n"
-msgstr "Модуль не найден\n"
+msgid "Module not found.\n"
+msgstr "Модуль не найден.\n"
 
 #: winerror.mc:501
-msgid "Procedure not found\n"
-msgstr "Процедура не найдена\n"
+msgid "Procedure not found.\n"
+msgstr "Процедура не найдена.\n"
 
 #: winerror.mc:506
-msgid "No children to wait for\n"
-msgstr "Нет дочерних процессов, которые требуется ожидать\n"
+msgid "No children to wait for.\n"
+msgstr "Нет дочерних процессов, которые требуется ожидать.\n"
 
 #: winerror.mc:511
-msgid "Child process has not completed\n"
-msgstr "Дочерний процесс не завершён\n"
+msgid "Child process has not completed.\n"
+msgstr "Дочерний процесс не завершён.\n"
 
 #: winerror.mc:516
-msgid "Invalid use of direct access handle\n"
-msgstr "Неверное использование дескриптора файла\n"
+msgid "Invalid use of direct access handle.\n"
+msgstr "Неверное использование дескриптора файла.\n"
 
 #: winerror.mc:521
-msgid "Negative seek\n"
-msgstr "Отрицательное позиционирование в файле недопустимо\n"
+msgid "Negative seek.\n"
+msgstr "Отрицательное позиционирование в файле недопустимо.\n"
 
 #: winerror.mc:531
-msgid "Drive is a JOIN target\n"
-msgstr "Команда JOIN не может быть использована\n"
+msgid "Drive is a JOIN target.\n"
+msgstr "Команда JOIN не может быть использована.\n"
 
 #: winerror.mc:536
-msgid "Drive is already JOINed\n"
-msgstr "Диск уже объединён с помощью JOIN\n"
+msgid "Drive is already JOINed.\n"
+msgstr "Диск уже объединён с помощью JOIN.\n"
 
 #: winerror.mc:541
-msgid "Drive is already SUBSTed\n"
-msgstr "Диск уже отображён с помощью SUBST\n"
+msgid "Drive is already SUBSTed.\n"
+msgstr "Диск уже отображён с помощью SUBST.\n"
 
 #: winerror.mc:546
-msgid "Drive is not JOINed\n"
-msgstr "Диск не объединён через JOIN\n"
+msgid "Drive is not JOINed.\n"
+msgstr "Диск не объединён через JOIN.\n"
 
 #: winerror.mc:551
-msgid "Drive is not SUBSTed\n"
-msgstr "Диск не отображён через SUBST\n"
+msgid "Drive is not SUBSTed.\n"
+msgstr "Диск не отображён через SUBST.\n"
 
 #: winerror.mc:556
-msgid "Attempt to JOIN onto a JOINed drive\n"
-msgstr "Попытка выполнить JOIN для уже подсоединённого диска\n"
+msgid "Attempt to JOIN onto a JOINed drive.\n"
+msgstr "Попытка выполнить JOIN для уже подсоединённого диска.\n"
 
 #: winerror.mc:561
-msgid "Attempt to SUBST onto a SUBSTed drive\n"
-msgstr "Попытка выполнить SUBST для уже сопоставленного диска\n"
+msgid "Attempt to SUBST onto a SUBSTed drive.\n"
+msgstr "Попытка выполнить SUBST для уже сопоставленного диска.\n"
 
 #: winerror.mc:566
-msgid "Attempt to JOIN to a SUBSTed drive\n"
-msgstr "Попытка выполнить JOIN для сопоставленного диска\n"
+msgid "Attempt to JOIN to a SUBSTed drive.\n"
+msgstr "Попытка выполнить JOIN для сопоставленного диска.\n"
 
 #: winerror.mc:571
-msgid "Attempt to SUBST to a JOINed drive\n"
-msgstr "Попытка выполнить SUBST для подсоединённого диска\n"
+msgid "Attempt to SUBST to a JOINed drive.\n"
+msgstr "Попытка выполнить SUBST для подсоединённого диска.\n"
 
 #: winerror.mc:576
-msgid "Drive is busy\n"
-msgstr "Устройство занято\n"
+msgid "Drive is busy.\n"
+msgstr "Устройство занято.\n"
 
 #: winerror.mc:581
-msgid "Same drive\n"
-msgstr "То же самое устройство\n"
+msgid "Same drive.\n"
+msgstr "То же самое устройство.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory\n"
-msgstr "Каталог не является корневым\n"
+msgid "Not toplevel directory.\n"
+msgstr "Каталог не является корневым.\n"
 
 #: winerror.mc:591
-msgid "Directory is not empty\n"
-msgstr "Каталог не пуст\n"
+msgid "Directory is not empty.\n"
+msgstr "Каталог не пуст.\n"
 
 #: winerror.mc:596
-msgid "Path is in use as a SUBST\n"
-msgstr "Путь используется для отображения диска через SUBST\n"
+msgid "Path is in use as a SUBST.\n"
+msgstr "Путь используется для отображения диска через SUBST.\n"
 
 #: winerror.mc:601
-msgid "Path is in use as a JOIN\n"
-msgstr "Путь используется для объединённого диска\n"
+msgid "Path is in use as a JOIN.\n"
+msgstr "Путь используется для объединённого диска.\n"
 
 #: winerror.mc:606
-msgid "Path is busy\n"
-msgstr "Невозможно использовать путь\n"
+msgid "Path is busy.\n"
+msgstr "Невозможно использовать путь.\n"
 
 #: winerror.mc:611
-msgid "Already a SUBST target\n"
-msgstr "Уже используется как цель SUBST\n"
+msgid "Already a SUBST target.\n"
+msgstr "Уже используется как цель SUBST.\n"
 
 #: winerror.mc:616
-msgid "System trace not specified or disallowed\n"
-msgstr "Трассировка запрещена\n"
+msgid "System trace not specified or disallowed.\n"
+msgstr "Трассировка запрещена.\n"
 
 #: winerror.mc:621
-msgid "Event count for DosMuxSemWait incorrect\n"
-msgstr "Неверное число событий для DosMuxSemWait\n"
+msgid "Event count for DosMuxSemWait incorrect.\n"
+msgstr "Неверное число событий для DosMuxSemWait.\n"
 
 #: winerror.mc:626
-msgid "Too many waiters for DosMuxSemWait\n"
-msgstr "Слишком много ожидающих DosMuxSemWait\n"
+msgid "Too many waiters for DosMuxSemWait.\n"
+msgstr "Слишком много ожидающих DosMuxSemWait.\n"
 
 #: winerror.mc:631
-msgid "DosSemMuxWait list invalid\n"
-msgstr "Неверный список DosSemMuxWait\n"
+msgid "DosSemMuxWait list invalid.\n"
+msgstr "Неверный список DosSemMuxWait.\n"
 
 #: winerror.mc:636
-msgid "Volume label too long\n"
-msgstr "Слишком длинная метка тома\n"
+msgid "Volume label too long.\n"
+msgstr "Слишком длинная метка тома.\n"
 
 #: winerror.mc:641
-msgid "Too many TCBs\n"
-msgstr "Слишком много потоков команд TCB\n"
+msgid "Too many TCBs.\n"
+msgstr "Слишком много потоков команд TCB.\n"
 
 #: winerror.mc:646
-msgid "Signal refused\n"
-msgstr "Сигнал отклонён\n"
+msgid "Signal refused.\n"
+msgstr "Сигнал отклонён.\n"
 
 #: winerror.mc:651
-msgid "Segment discarded\n"
-msgstr "Невозможно заблокировать сегмент\n"
+msgid "Segment discarded.\n"
+msgstr "Невозможно заблокировать сегмент.\n"
 
 #: winerror.mc:656
-msgid "Segment not locked\n"
-msgstr "Сегмент не заблокирован\n"
+msgid "Segment not locked.\n"
+msgstr "Сегмент не заблокирован.\n"
 
 #: winerror.mc:661
-msgid "Bad thread ID address\n"
-msgstr "Ошибочный адрес кода потока\n"
+msgid "Bad thread ID address.\n"
+msgstr "Ошибочный адрес кода потока.\n"
 
 #: winerror.mc:666
-msgid "Bad arguments to DosExecPgm\n"
-msgstr "Ошибочные аргументы DosExecPgm\n"
+msgid "Bad arguments to DosExecPgm.\n"
+msgstr "Ошибочные аргументы DosExecPgm.\n"
 
 #: winerror.mc:671
-msgid "Path is invalid\n"
-msgstr "Неверный путь\n"
+msgid "Path is invalid.\n"
+msgstr "Неверный путь.\n"
 
 #: winerror.mc:676
-msgid "Signal pending\n"
-msgstr "Сигнал обрабатывается\n"
+msgid "Signal pending.\n"
+msgstr "Сигнал обрабатывается.\n"
 
 #: winerror.mc:681
-msgid "Max system-wide thread count reached\n"
-msgstr "Создано максимально возможное количество потоков\n"
+msgid "Max system-wide thread count reached.\n"
+msgstr "Создано максимально возможное количество потоков.\n"
 
 #: winerror.mc:686
-msgid "Lock failed\n"
-msgstr "Блокирование не удалось\n"
+msgid "Lock failed.\n"
+msgstr "Блокирование не удалось.\n"
 
 #: winerror.mc:691
-msgid "Resource in use\n"
-msgstr "Ресурс занят\n"
+msgid "Resource in use.\n"
+msgstr "Ресурс занят.\n"
 
 #: winerror.mc:696
-msgid "Cancel violation\n"
-msgstr "Нарушение отмены\n"
+msgid "Cancel violation.\n"
+msgstr "Нарушение отмены.\n"
 
 #: winerror.mc:701
-msgid "Atomic locks not supported\n"
-msgstr "Атомарные блокировки не поддерживаются\n"
+msgid "Atomic locks not supported.\n"
+msgstr "Атомарные блокировки не поддерживаются.\n"
 
 #: winerror.mc:706
-msgid "Invalid segment number\n"
-msgstr "Неверный номер сегмента\n"
+msgid "Invalid segment number.\n"
+msgstr "Неверный номер сегмента.\n"
 
 #: winerror.mc:711
-msgid "Invalid ordinal for %1\n"
-msgstr "Неверная функция с порядковым номером %1\n"
+msgid "Invalid ordinal for %1.\n"
+msgstr "Неверная функция с порядковым номером %1.\n"
 
 #: winerror.mc:716
-msgid "File already exists\n"
-msgstr "Файл уже существует\n"
+msgid "File already exists.\n"
+msgstr "Файл уже существует.\n"
 
 #: winerror.mc:721
-msgid "Invalid flag number\n"
-msgstr "Неверный номер флага\n"
+msgid "Invalid flag number.\n"
+msgstr "Неверный номер флага.\n"
 
 #: winerror.mc:726
-msgid "Semaphore name not found\n"
-msgstr "Имя семафора не найдено\n"
+msgid "Semaphore name not found.\n"
+msgstr "Имя семафора не найдено.\n"
 
 #: winerror.mc:731
-msgid "Invalid starting code segment for %1\n"
-msgstr "Неверный начальный сегмент кода в %1\n"
+msgid "Invalid starting code segment for %1.\n"
+msgstr "Неверный начальный сегмент кода в %1.\n"
 
 #: winerror.mc:736
-msgid "Invalid starting stack segment for %1\n"
-msgstr "Неверный начальный сегмент стека в %1\n"
+msgid "Invalid starting stack segment for %1.\n"
+msgstr "Неверный начальный сегмент стека в %1.\n"
 
 #: winerror.mc:741
-msgid "Invalid module type for %1\n"
-msgstr "Неверный тип модуля в %1\n"
+msgid "Invalid module type for %1.\n"
+msgstr "Неверный тип модуля в %1.\n"
 
 #: winerror.mc:746
-msgid "Invalid EXE signature in %1\n"
-msgstr "Неверная сигнатура EXE в %1\n"
+msgid "Invalid EXE signature in %1.\n"
+msgstr "Неверная сигнатура EXE в %1.\n"
 
 #: winerror.mc:751
-msgid "EXE %1 is marked invalid\n"
-msgstr "EXE %1 помечен как неверный\n"
+msgid "EXE %1 is marked invalid.\n"
+msgstr "EXE %1 помечен как неверный.\n"
 
 #: winerror.mc:756
-msgid "Bad EXE format for %1\n"
-msgstr "Ошибка в формате EXE для %1\n"
+msgid "Bad EXE format for %1.\n"
+msgstr "Ошибка в формате EXE для %1.\n"
 
 #: winerror.mc:761
-msgid "Iterated data exceeds 64k in %1\n"
-msgstr "Объём данных итерации превышает 64КБ в %1\n"
+msgid "Iterated data exceeds 64k in %1.\n"
+msgstr "Объём данных итерации превышает 64КБ в %1.\n"
 
 #: winerror.mc:766
-msgid "Invalid MinAllocSize in %1\n"
-msgstr "Неверный MinAllocSize в %1\n"
+msgid "Invalid MinAllocSize in %1.\n"
+msgstr "Неверный MinAllocSize в %1.\n"
 
 #: winerror.mc:771
-msgid "Dynlink from invalid ring\n"
-msgstr "Дин. связывание из недопустимого кольца\n"
+msgid "Dynlink from invalid ring.\n"
+msgstr "Дин. связывание из недопустимого кольца.\n"
 
 #: winerror.mc:776
-msgid "IOPL not enabled\n"
-msgstr "IOPL не включено\n"
+msgid "IOPL not enabled.\n"
+msgstr "IOPL не включено.\n"
 
 #: winerror.mc:781
-msgid "Invalid SEGDPL in %1\n"
-msgstr "Неверный SEGDPL в %1\n"
+msgid "Invalid SEGDPL in %1.\n"
+msgstr "Неверный SEGDPL в %1.\n"
 
 #: winerror.mc:786
-msgid "Auto data segment exceeds 64k\n"
-msgstr "Автоматический сегмент данных превышает 64КБ\n"
+msgid "Auto data segment exceeds 64k.\n"
+msgstr "Автоматический сегмент данных превышает 64КБ.\n"
 
 #: winerror.mc:791
-msgid "Ring 2 segment must be movable\n"
-msgstr "Сегмент кольца 2 должен быть перемещаемым\n"
+msgid "Ring 2 segment must be movable.\n"
+msgstr "Сегмент кольца 2 должен быть перемещаемым.\n"
 
 #: winerror.mc:796
-msgid "Relocation chain exceeds segment limit in %1\n"
-msgstr "Цепочка перемещения превышает предел сегмента в %1\n"
+msgid "Relocation chain exceeds segment limit in %1.\n"
+msgstr "Цепочка перемещения превышает предел сегмента в %1.\n"
 
 #: winerror.mc:801
-msgid "Infinite loop in relocation chain in %1\n"
-msgstr "Зацикленная цепочка перемещения в %1\n"
+msgid "Infinite loop in relocation chain in %1.\n"
+msgstr "Зацикленная цепочка перемещения в %1.\n"
 
 #: winerror.mc:806
-msgid "Environment variable not found\n"
-msgstr "Переменная окружения не найдена\n"
+msgid "Environment variable not found.\n"
+msgstr "Переменная окружения не найдена.\n"
 
 #: winerror.mc:811
-msgid "No signal sent\n"
-msgstr "Сигнал не отправлен\n"
+msgid "No signal sent.\n"
+msgstr "Сигнал не отправлен.\n"
 
 #: winerror.mc:816
-msgid "File name is too long\n"
-msgstr "Слишком длинное имя файла\n"
+msgid "File name is too long.\n"
+msgstr "Слишком длинное имя файла.\n"
 
 #: winerror.mc:821
-msgid "Ring 2 stack in use\n"
-msgstr "Стек кольца 2 занят\n"
+msgid "Ring 2 stack in use.\n"
+msgstr "Стек кольца 2 занят.\n"
 
 #: winerror.mc:826
-msgid "Error in use of filename wildcards\n"
-msgstr "Неверно задан шаблон имени файла\n"
+msgid "Error in use of filename wildcards.\n"
+msgstr "Неверно задан шаблон имени файла.\n"
 
 #: winerror.mc:831
-msgid "Invalid signal number\n"
-msgstr "Неверный номер сигнала\n"
+msgid "Invalid signal number.\n"
+msgstr "Неверный номер сигнала.\n"
 
 #: winerror.mc:836
-msgid "Error setting signal handler\n"
-msgstr "Ошибка установки обработчика сигнала\n"
+msgid "Error setting signal handler.\n"
+msgstr "Ошибка установки обработчика сигнала.\n"
 
 #: winerror.mc:841
-msgid "Segment locked\n"
-msgstr "Сегмент заблокирован\n"
+msgid "Segment locked.\n"
+msgstr "Сегмент заблокирован.\n"
 
 #: winerror.mc:846
-msgid "Too many modules\n"
-msgstr "Слишком много подключаемых модулей\n"
+msgid "Too many modules.\n"
+msgstr "Слишком много подключаемых модулей.\n"
 
 #: winerror.mc:851
-msgid "Nesting LoadModule calls not allowed\n"
-msgstr "Вложение вызовов LoadModule не допускается\n"
+msgid "Nesting LoadModule calls not allowed.\n"
+msgstr "Вложение вызовов LoadModule не допускается.\n"
 
 #: winerror.mc:856
-msgid "Machine type mismatch\n"
-msgstr "Неподходящий тип компьютера\n"
+msgid "Machine type mismatch.\n"
+msgstr "Неподходящий тип компьютера.\n"
 
 #: winerror.mc:861
-msgid "Bad pipe\n"
-msgstr "Неверное состояние канала\n"
+msgid "Bad pipe.\n"
+msgstr "Неверное состояние канала.\n"
 
 #: winerror.mc:866
-msgid "Pipe busy\n"
-msgstr "Канал занят\n"
+msgid "Pipe busy.\n"
+msgstr "Канал занят.\n"
 
 #: winerror.mc:871
-msgid "Pipe closed\n"
-msgstr "Канал закрыт\n"
+msgid "Pipe closed.\n"
+msgstr "Канал закрыт.\n"
 
 #: winerror.mc:876
-msgid "Pipe not connected\n"
-msgstr "Канал не подключен ни к одному процессу\n"
+msgid "Pipe not connected.\n"
+msgstr "Канал не подключен ни к одному процессу.\n"
 
 #: winerror.mc:881
-msgid "More data available\n"
-msgstr "Имеются дополнительные данные\n"
+msgid "More data available.\n"
+msgstr "Имеются дополнительные данные.\n"
 
 #: winerror.mc:886
-msgid "Session canceled\n"
-msgstr "Сеанс был прекращён\n"
+msgid "Session canceled.\n"
+msgstr "Сеанс был прекращён.\n"
 
 #: winerror.mc:891
-msgid "Invalid extended attribute name\n"
-msgstr "Неверное имя расширенного атрибута\n"
+msgid "Invalid extended attribute name.\n"
+msgstr "Неверное имя расширенного атрибута.\n"
 
 #: winerror.mc:896
-msgid "Extended attribute list inconsistent\n"
-msgstr "Список расширенных атрибутов нарушен\n"
+msgid "Extended attribute list inconsistent.\n"
+msgstr "Список расширенных атрибутов нарушен.\n"
 
 #: winerror.mc:901
-msgid "No more data available\n"
-msgstr "Данных больше нет\n"
+msgid "No more data available.\n"
+msgstr "Данных больше нет.\n"
 
 #: winerror.mc:906
-msgid "Cannot use Copy API\n"
-msgstr "Невозможно использовать Copy API\n"
+msgid "Cannot use Copy API.\n"
+msgstr "Невозможно использовать Copy API.\n"
 
 #: winerror.mc:911
-msgid "Directory name invalid\n"
-msgstr "Неверно задано имя каталога\n"
+msgid "Directory name invalid.\n"
+msgstr "Неверно задано имя каталога.\n"
 
 #: winerror.mc:916
-msgid "Extended attributes didn't fit\n"
-msgstr "Расширенные атрибуты не помещаются\n"
+msgid "Extended attributes didn't fit.\n"
+msgstr "Расширенные атрибуты не помещаются.\n"
 
 #: winerror.mc:921
-msgid "Extended attribute file corrupt\n"
-msgstr "Файл расширенных атрибутов испорчен\n"
+msgid "Extended attribute file corrupt.\n"
+msgstr "Файл расширенных атрибутов испорчен.\n"
 
 #: winerror.mc:926
-msgid "Extended attribute table full\n"
-msgstr "Таблица расширенных атрибутов полна\n"
+msgid "Extended attribute table full.\n"
+msgstr "Таблица расширенных атрибутов полна.\n"
 
 #: winerror.mc:931
-msgid "Invalid extended attribute handle\n"
-msgstr "Неверный дескриптор расширенного атрибута\n"
+msgid "Invalid extended attribute handle.\n"
+msgstr "Неверный дескриптор расширенного атрибута.\n"
 
 #: winerror.mc:936
-msgid "Extended attributes not supported\n"
-msgstr "Расширенные атрибуты не поддерживаются\n"
+msgid "Extended attributes not supported.\n"
+msgstr "Расширенные атрибуты не поддерживаются.\n"
 
 #: winerror.mc:941
-msgid "Mutex not owned by caller\n"
-msgstr "Mutex не принадлежит вызывающему коду\n"
+msgid "Mutex not owned by caller.\n"
+msgstr "Mutex не принадлежит вызывающему коду.\n"
 
 #: winerror.mc:946
-msgid "Too many posts to semaphore\n"
-msgstr "Слишком много попыток освободить семафор\n"
+msgid "Too many posts to semaphore.\n"
+msgstr "Слишком много попыток освободить семафор.\n"
 
 #: winerror.mc:951
-msgid "Read/WriteProcessMemory partially completed\n"
-msgstr "Read/WriteProcessMemory выполнено частично\n"
+msgid "Read/WriteProcessMemory partially completed.\n"
+msgstr "Read/WriteProcessMemory выполнено частично.\n"
 
 #: winerror.mc:956
-msgid "The oplock wasn't granted\n"
-msgstr "Оп. блокировка не получена\n"
+msgid "The oplock wasn't granted.\n"
+msgstr "Оп. блокировка не получена.\n"
 
 #: winerror.mc:961
-msgid "Invalid oplock message received\n"
-msgstr "Получено неверное сообщение оп. блокировки\n"
+msgid "Invalid oplock message received.\n"
+msgstr "Получено неверное сообщение оп. блокировки.\n"
 
 #: winerror.mc:966
-msgid "Message 0x%1 not found in file %2\n"
-msgstr "Сообщение 0x%1 не найдено в файле %2\n"
+msgid "Message 0x%1 not found in file %2.\n"
+msgstr "Сообщение 0x%1 не найдено в файле %2.\n"
 
 #: winerror.mc:971
-msgid "Invalid address\n"
-msgstr "Неверный адрес\n"
+msgid "Invalid address.\n"
+msgstr "Неверный адрес.\n"
 
 #: winerror.mc:976
-msgid "Arithmetic overflow\n"
-msgstr "Переполнение при вычислении\n"
+msgid "Arithmetic overflow.\n"
+msgstr "Переполнение при вычислении.\n"
 
 #: winerror.mc:981
-msgid "Pipe connected\n"
-msgstr "Канал уже подсоединён\n"
+msgid "Pipe connected.\n"
+msgstr "Канал уже подсоединён.\n"
 
 #: winerror.mc:986
-msgid "Pipe listening\n"
-msgstr "Канал ожидает подключения\n"
+msgid "Pipe listening.\n"
+msgstr "Канал ожидает подключения.\n"
 
 #: winerror.mc:991
-msgid "Extended attribute access denied\n"
-msgstr "Доступ к расширенным атрибутам запрещён\n"
+msgid "Extended attribute access denied.\n"
+msgstr "Доступ к расширенным атрибутам запрещён.\n"
 
 #: winerror.mc:996
-msgid "I/O operation aborted\n"
-msgstr "Операция ввода-вывода прервана\n"
+msgid "I/O operation aborted.\n"
+msgstr "Операция ввода-вывода прервана.\n"
 
 #: winerror.mc:1001
-msgid "Overlapped I/O incomplete\n"
-msgstr "Операция ввода-вывода не завершена\n"
+msgid "Overlapped I/O incomplete.\n"
+msgstr "Операция ввода-вывода не завершена.\n"
 
 #: winerror.mc:1006
-msgid "Overlapped I/O pending\n"
-msgstr "Производится операция ввода-вывода\n"
+msgid "Overlapped I/O pending.\n"
+msgstr "Производится операция ввода-вывода.\n"
 
 #: winerror.mc:1011
-msgid "No access to memory location\n"
-msgstr "Нет доступа к адресу памяти\n"
+msgid "No access to memory location.\n"
+msgstr "Нет доступа к адресу памяти.\n"
 
 #: winerror.mc:1016
-msgid "Swap error\n"
-msgstr "Ошибка при подкачке страницы\n"
+msgid "Swap error.\n"
+msgstr "Ошибка при подкачке страницы.\n"
 
 #: winerror.mc:1021
-msgid "Stack overflow\n"
-msgstr "Переполнение стека\n"
+msgid "Stack overflow.\n"
+msgstr "Переполнение стека.\n"
 
 #: winerror.mc:1026
-msgid "Invalid message\n"
-msgstr "Неверное сообщение\n"
+msgid "Invalid message.\n"
+msgstr "Неверное сообщение.\n"
 
 #: winerror.mc:1031
-msgid "Cannot complete\n"
-msgstr "Невозможно завершить выполнение\n"
+msgid "Cannot complete.\n"
+msgstr "Невозможно завершить выполнение.\n"
 
 #: winerror.mc:1036
-msgid "Invalid flags\n"
-msgstr "Неверные флаги\n"
+msgid "Invalid flags.\n"
+msgstr "Неверные флаги.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume\n"
-msgstr "Нераспознанная файловая система\n"
+msgid "Unrecognised volume.\n"
+msgstr "Нераспознанная файловая система.\n"
 
 #: winerror.mc:1046
-msgid "File invalid\n"
-msgstr "Неверный файл\n"
+msgid "File invalid.\n"
+msgstr "Неверный файл.\n"
 
 #: winerror.mc:1051
-msgid "Cannot run full-screen\n"
-msgstr "Невозможно переключиться в полноэкранный режим\n"
+msgid "Cannot run full-screen.\n"
+msgstr "Невозможно переключиться в полноэкранный режим.\n"
 
 #: winerror.mc:1056
-msgid "Nonexistent token\n"
-msgstr "Элемент не существует\n"
+msgid "Nonexistent token.\n"
+msgstr "Элемент не существует.\n"
 
 #: winerror.mc:1061
-msgid "Registry corrupt\n"
-msgstr "База данных реестра повреждена\n"
+msgid "Registry corrupt.\n"
+msgstr "База данных реестра повреждена.\n"
 
 #: winerror.mc:1066
-msgid "Invalid key\n"
-msgstr "Неверный ключ реестра\n"
+msgid "Invalid key.\n"
+msgstr "Неверный ключ реестра.\n"
 
 #: winerror.mc:1071
-msgid "Can't open registry key\n"
-msgstr "Не удаётся открыть ключ реестра\n"
+msgid "Can't open registry key.\n"
+msgstr "Не удаётся открыть ключ реестра.\n"
 
 #: winerror.mc:1076
-msgid "Can't read registry key\n"
-msgstr "Невозможно прочитать ключ реестра\n"
+msgid "Can't read registry key.\n"
+msgstr "Невозможно прочитать ключ реестра.\n"
 
 #: winerror.mc:1081
-msgid "Can't write registry key\n"
-msgstr "Невозможно записать ключ реестра\n"
+msgid "Can't write registry key.\n"
+msgstr "Невозможно записать ключ реестра.\n"
 
 #: winerror.mc:1086
-msgid "Registry has been recovered\n"
-msgstr "Реестр восстановлен\n"
+msgid "Registry has been recovered.\n"
+msgstr "Реестр восстановлен.\n"
 
 #: winerror.mc:1091
-msgid "Registry is corrupt\n"
-msgstr "Реестр повреждён\n"
+msgid "Registry is corrupt.\n"
+msgstr "Реестр повреждён.\n"
 
 #: winerror.mc:1096
-msgid "I/O to registry failed\n"
-msgstr "Не удалось выполнить чтение или запись файла реестра\n"
+msgid "I/O to registry failed.\n"
+msgstr "Не удалось выполнить чтение или запись файла реестра.\n"
 
 #: winerror.mc:1101
-msgid "Not registry file\n"
-msgstr "Нет файла реестра\n"
+msgid "Not registry file.\n"
+msgstr "Нет файла реестра.\n"
 
 #: winerror.mc:1106
-msgid "Key deleted\n"
-msgstr "Раздел удалён\n"
+msgid "Key deleted.\n"
+msgstr "Раздел удалён.\n"
 
 #: winerror.mc:1111
-msgid "No registry log space\n"
-msgstr "Нет места для журнала реестра\n"
+msgid "No registry log space.\n"
+msgstr "Нет места для журнала реестра.\n"
 
 #: winerror.mc:1116
-msgid "Registry key has subkeys\n"
-msgstr "Раздел реестра содержит подразделы\n"
+msgid "Registry key has subkeys.\n"
+msgstr "Раздел реестра содержит подразделы.\n"
 
 #: winerror.mc:1121
-msgid "Subkey must be volatile\n"
-msgstr "Подраздел не может быть постоянным\n"
+msgid "Subkey must be volatile.\n"
+msgstr "Подраздел не может быть постоянным.\n"
 
 #: winerror.mc:1126
-msgid "Notify change request in progress\n"
-msgstr "Запрос уведомления об изменениях выполнен\n"
+msgid "Notify change request in progress.\n"
+msgstr "Запрос уведомления об изменениях выполнен.\n"
 
 #: winerror.mc:1131
-msgid "Dependent services are running\n"
-msgstr "Работают зависимые службы\n"
+msgid "Dependent services are running.\n"
+msgstr "Работают зависимые службы.\n"
 
 #: winerror.mc:1136
-msgid "Invalid service control\n"
-msgstr "Неверная команда службе\n"
+msgid "Invalid service control.\n"
+msgstr "Неверная команда службе.\n"
 
 #: winerror.mc:1141
-msgid "Service request timeout\n"
-msgstr "Таймаут запроса к службе\n"
+msgid "Service request timeout.\n"
+msgstr "Таймаут запроса к службе.\n"
 
 #: winerror.mc:1146
-msgid "Cannot create service thread\n"
-msgstr "Не удалось создать поток службы\n"
+msgid "Cannot create service thread.\n"
+msgstr "Не удалось создать поток службы.\n"
 
 #: winerror.mc:1151
-msgid "Service database locked\n"
-msgstr "База данных службы заблокирована\n"
+msgid "Service database locked.\n"
+msgstr "База данных службы заблокирована.\n"
 
 #: winerror.mc:1156
-msgid "Service already running\n"
-msgstr "Служба уже запущена\n"
+msgid "Service already running.\n"
+msgstr "Служба уже запущена.\n"
 
 #: winerror.mc:1161
-msgid "Invalid service account\n"
-msgstr "Неверная учётная запись службы\n"
+msgid "Invalid service account.\n"
+msgstr "Неверная учётная запись службы.\n"
 
 #: winerror.mc:1166
-msgid "Service is disabled\n"
-msgstr "Служба отключена\n"
+msgid "Service is disabled.\n"
+msgstr "Служба отключена.\n"
 
 #: winerror.mc:1171
-msgid "Circular dependency\n"
-msgstr "Циклическая зависимость\n"
+msgid "Circular dependency.\n"
+msgstr "Циклическая зависимость.\n"
 
 #: winerror.mc:1176
-msgid "Service does not exist\n"
-msgstr "Служба не существует\n"
+msgid "Service does not exist.\n"
+msgstr "Служба не существует.\n"
 
 #: winerror.mc:1181
-msgid "Service cannot accept control message\n"
-msgstr "Служба не может принять управляющее сообщение\n"
+msgid "Service cannot accept control message.\n"
+msgstr "Служба не может принять управляющее сообщение.\n"
 
 #: winerror.mc:1186
-msgid "Service not active\n"
-msgstr "Служба не активна\n"
+msgid "Service not active.\n"
+msgstr "Служба не активна.\n"
 
 #: winerror.mc:1191
-msgid "Service controller connect failed\n"
-msgstr "Сбой при подключении к контроллеру служб\n"
+msgid "Service controller connect failed.\n"
+msgstr "Сбой при подключении к контроллеру служб.\n"
 
 #: winerror.mc:1196
-msgid "Exception in service\n"
-msgstr "Исключение в службе\n"
+msgid "Exception in service.\n"
+msgstr "Исключение в службе.\n"
 
 #: winerror.mc:1201
-msgid "Database does not exist\n"
-msgstr "База данных не существует\n"
+msgid "Database does not exist.\n"
+msgstr "База данных не существует.\n"
 
 #: winerror.mc:1206
-msgid "Service-specific error\n"
-msgstr "Специфическая ошибка службы\n"
+msgid "Service-specific error.\n"
+msgstr "Специфическая ошибка службы.\n"
 
 #: winerror.mc:1211
-msgid "Process aborted\n"
-msgstr "Процесс прерван\n"
+msgid "Process aborted.\n"
+msgstr "Процесс прерван.\n"
 
 #: winerror.mc:1216
-msgid "Service dependency failed\n"
-msgstr "Сбой в зависимостях службы\n"
+msgid "Service dependency failed.\n"
+msgstr "Сбой в зависимостях службы.\n"
 
 #: winerror.mc:1221
-msgid "Service login failed\n"
-msgstr "Ошибка входа службы в систему\n"
+msgid "Service login failed.\n"
+msgstr "Ошибка входа службы в систему.\n"
 
 #: winerror.mc:1226
-msgid "Service start-hang\n"
-msgstr "Служба зависла при запуске\n"
+msgid "Service start-hang.\n"
+msgstr "Служба зависла при запуске.\n"
 
 #: winerror.mc:1231
-msgid "Invalid service lock\n"
-msgstr "Неверная блокировка службы\n"
+msgid "Invalid service lock.\n"
+msgstr "Неверная блокировка службы.\n"
 
 #: winerror.mc:1236
-msgid "Service marked for delete\n"
-msgstr "Служба помечена для удаления\n"
+msgid "Service marked for delete.\n"
+msgstr "Служба помечена для удаления.\n"
 
 #: winerror.mc:1241
-msgid "Service exists\n"
-msgstr "Служба существует\n"
+msgid "Service exists.\n"
+msgstr "Служба существует.\n"
 
 #: winerror.mc:1246
-msgid "System running last-known-good config\n"
-msgstr "Система работает в режиме \"Последняя удачная конфигурация\"\n"
+msgid "System running last-known-good config.\n"
+msgstr "Система работает в режиме \"Последняя удачная конфигурация\".\n"
 
 #: winerror.mc:1251
-msgid "Service dependency deleted\n"
-msgstr "Необходимая служба удалена\n"
+msgid "Service dependency deleted.\n"
+msgstr "Необходимая служба удалена.\n"
 
 #: winerror.mc:1256
-msgid "Boot already accepted as last-good config\n"
-msgstr "Уже принят режим \"Последняя удачная конфигурация\"\n"
+msgid "Boot already accepted as last-good config.\n"
+msgstr "Уже принят режим \"Последняя удачная конфигурация\".\n"
 
 #: winerror.mc:1261
-msgid "Service not started since last boot\n"
-msgstr "Служба не запускалась после последней загрузки\n"
+msgid "Service not started since last boot.\n"
+msgstr "Служба не запускалась после последней загрузки.\n"
 
 #: winerror.mc:1266
-msgid "Duplicate service name\n"
-msgstr "Имя службы должно быть уникальным\n"
+msgid "Duplicate service name.\n"
+msgstr "Имя службы должно быть уникальным.\n"
 
 #: winerror.mc:1271
-msgid "Different service account\n"
-msgstr "Другая учётная запись\n"
+msgid "Different service account.\n"
+msgstr "Другая учётная запись.\n"
 
 #: winerror.mc:1276
-msgid "Driver failure cannot be detected\n"
-msgstr "Сбой драйвера не выявляется\n"
+msgid "Driver failure cannot be detected.\n"
+msgstr "Сбой драйвера не выявляется.\n"
 
 #: winerror.mc:1281
-msgid "Process abort cannot be detected\n"
-msgstr "Прерывание процесса не может быть обнаружено\n"
+msgid "Process abort cannot be detected.\n"
+msgstr "Прерывание процесса не может быть обнаружено.\n"
 
 #: winerror.mc:1286
-msgid "No recovery program for service\n"
-msgstr "Для службы не задана программа восстановления\n"
+msgid "No recovery program for service.\n"
+msgstr "Для службы не задана программа восстановления.\n"
 
 #: winerror.mc:1291
-msgid "Service not implemented by exe\n"
-msgstr "Exe-файл не реализует службу\n"
+msgid "Service not implemented by exe.\n"
+msgstr "Exe-файл не реализует службу.\n"
 
 #: winerror.mc:1296
-msgid "End of media\n"
-msgstr "Конец носителя\n"
+msgid "End of media.\n"
+msgstr "Конец носителя.\n"
 
 #: winerror.mc:1301
-msgid "Filemark detected\n"
-msgstr "Обнаружена метка файла\n"
+msgid "Filemark detected.\n"
+msgstr "Обнаружена метка файла.\n"
 
 #: winerror.mc:1306
-msgid "Beginning of media\n"
-msgstr "Начало носителя\n"
+msgid "Beginning of media.\n"
+msgstr "Начало носителя.\n"
 
 #: winerror.mc:1311
-msgid "Setmark detected\n"
-msgstr "Обнаружена метка набора файлов\n"
+msgid "Setmark detected.\n"
+msgstr "Обнаружена метка набора файлов.\n"
 
 #: winerror.mc:1316
-msgid "No data detected\n"
-msgstr "Данные не обнаружены\n"
+msgid "No data detected.\n"
+msgstr "Данные не обнаружены.\n"
 
 #: winerror.mc:1321
-msgid "Partition failure\n"
-msgstr "Сбой разметки\n"
+msgid "Partition failure.\n"
+msgstr "Сбой разметки.\n"
 
 #: winerror.mc:1326
-msgid "Invalid block length\n"
-msgstr "Неверная длина блока\n"
+msgid "Invalid block length.\n"
+msgstr "Неверная длина блока.\n"
 
 #: winerror.mc:1331
-msgid "Device not partitioned\n"
-msgstr "Устройство не размечено\n"
+msgid "Device not partitioned.\n"
+msgstr "Устройство не размечено.\n"
 
 #: winerror.mc:1336
-msgid "Unable to lock media\n"
-msgstr "Невозможно заблокировать носитель\n"
+msgid "Unable to lock media.\n"
+msgstr "Невозможно заблокировать носитель.\n"
 
 #: winerror.mc:1341
-msgid "Unable to unload media\n"
-msgstr "Невозможно разблокировать носитель\n"
+msgid "Unable to unload media.\n"
+msgstr "Невозможно разблокировать носитель.\n"
 
 #: winerror.mc:1346
-msgid "Media changed\n"
-msgstr "Обнаружена смена носителя\n"
+msgid "Media changed.\n"
+msgstr "Обнаружена смена носителя.\n"
 
 #: winerror.mc:1351
-msgid "I/O bus reset\n"
-msgstr "Сброс шины ввода/вывода\n"
+msgid "I/O bus reset.\n"
+msgstr "Сброс шины ввода/вывода.\n"
 
 #: winerror.mc:1356
-msgid "No media in drive\n"
-msgstr "В устройстве нет носителя\n"
+msgid "No media in drive.\n"
+msgstr "В устройстве нет носителя.\n"
 
 #: winerror.mc:1361
-msgid "No Unicode translation\n"
-msgstr "Нет преобразования в Unicode\n"
+msgid "No Unicode translation.\n"
+msgstr "Нет преобразования в Unicode.\n"
 
 #: winerror.mc:1366
-msgid "DLL init failed\n"
-msgstr "Инициализация DLL не удалась\n"
+msgid "DLL init failed.\n"
+msgstr "Инициализация DLL не удалась.\n"
 
 #: winerror.mc:1371
-msgid "Shutdown in progress\n"
-msgstr "Система подготавливается к отключению\n"
+msgid "Shutdown in progress.\n"
+msgstr "Система подготавливается к отключению.\n"
 
 #: winerror.mc:1376
-msgid "No shutdown in progress\n"
-msgstr "Система не подготавливается к выключению\n"
+msgid "No shutdown in progress.\n"
+msgstr "Система не подготавливается к выключению.\n"
 
 #: winerror.mc:1381
-msgid "I/O device error\n"
-msgstr "Ошибка ввода/вывода на устройстве\n"
+msgid "I/O device error.\n"
+msgstr "Ошибка ввода/вывода на устройстве.\n"
 
 #: winerror.mc:1386
-msgid "No serial devices found\n"
-msgstr "Последовательные устройства не найдены\n"
+msgid "No serial devices found.\n"
+msgstr "Последовательные устройства не найдены.\n"
 
 #: winerror.mc:1391
-msgid "Shared IRQ busy\n"
-msgstr "Разделяемый IRQ занят\n"
+msgid "Shared IRQ busy.\n"
+msgstr "Разделяемый IRQ занят.\n"
 
 #: winerror.mc:1396
-msgid "Serial I/O completed\n"
-msgstr "Операция последовательного I/O прекращена\n"
+msgid "Serial I/O completed.\n"
+msgstr "Операция последовательного I/O прекращена.\n"
 
 #: winerror.mc:1401
-msgid "Serial I/O counter timeout\n"
-msgstr "Таймаут счетчика последовательного I/O\n"
+msgid "Serial I/O counter timeout.\n"
+msgstr "Таймаут счетчика последовательного I/O.\n"
 
 #: winerror.mc:1406
-msgid "Floppy ID address mark not found\n"
-msgstr "Метка адреса ID дискеты не найдена\n"
+msgid "Floppy ID address mark not found.\n"
+msgstr "Метка адреса ID дискеты не найдена.\n"
 
 #: winerror.mc:1411
-msgid "Floppy reports wrong cylinder\n"
-msgstr "Неверный цилиндр на дискете\n"
+msgid "Floppy reports wrong cylinder.\n"
+msgstr "Неверный цилиндр на дискете.\n"
 
 #: winerror.mc:1416
-msgid "Unknown floppy error\n"
-msgstr "Неизвестная ошибка дискеты\n"
+msgid "Unknown floppy error.\n"
+msgstr "Неизвестная ошибка дискеты.\n"
 
 #: winerror.mc:1421
-msgid "Floppy registers inconsistent\n"
-msgstr "Несогласованность регистров дисковода\n"
+msgid "Floppy registers inconsistent.\n"
+msgstr "Несогласованность регистров дисковода.\n"
 
 #: winerror.mc:1426
-msgid "Hard disk recalibrate failed\n"
-msgstr "Сбой перекалибровки жёсткого диска\n"
+msgid "Hard disk recalibrate failed.\n"
+msgstr "Сбой перекалибровки жёсткого диска.\n"
 
 #: winerror.mc:1431
-msgid "Hard disk operation failed\n"
-msgstr "Сбой операции жёсткого диска\n"
+msgid "Hard disk operation failed.\n"
+msgstr "Сбой операции жёсткого диска.\n"
 
 #: winerror.mc:1436
-msgid "Hard disk reset failed\n"
-msgstr "Сбой при сбросе жёсткого диска\n"
+msgid "Hard disk reset failed.\n"
+msgstr "Сбой при сбросе жёсткого диска.\n"
 
 #: winerror.mc:1441
-msgid "End of tape media\n"
-msgstr "Конец ленточного носителя\n"
+msgid "End of tape media.\n"
+msgstr "Конец ленточного носителя.\n"
 
 #: winerror.mc:1446
-msgid "Not enough server memory\n"
-msgstr "Недостаточно памяти на сервере\n"
+msgid "Not enough server memory.\n"
+msgstr "Недостаточно памяти на сервере.\n"
 
 #: winerror.mc:1451
-msgid "Possible deadlock\n"
-msgstr "Возможна взаимная блокировка\n"
+msgid "Possible deadlock.\n"
+msgstr "Возможна взаимная блокировка.\n"
 
 #: winerror.mc:1456
-msgid "Incorrect alignment\n"
-msgstr "Ошибка выравнивания\n"
+msgid "Incorrect alignment.\n"
+msgstr "Ошибка выравнивания.\n"
 
 #: winerror.mc:1461
-msgid "Set-power-state vetoed\n"
-msgstr "Переключение состояния питания запрещено\n"
+msgid "Set-power-state vetoed.\n"
+msgstr "Переключение состояния питания запрещено.\n"
 
 #: winerror.mc:1466
-msgid "Set-power-state failed\n"
-msgstr "Сбой при переключении состояния питания\n"
+msgid "Set-power-state failed.\n"
+msgstr "Сбой при переключении состояния питания.\n"
 
 #: winerror.mc:1471
-msgid "Too many links\n"
-msgstr "Слишком много ссылок\n"
+msgid "Too many links.\n"
+msgstr "Слишком много ссылок.\n"
 
 #: winerror.mc:1476
-msgid "Newer windows version needed\n"
-msgstr "Требуется более новая версия Windows\n"
+msgid "Newer windows version needed.\n"
+msgstr "Требуется более новая версия Windows.\n"
 
 #: winerror.mc:1481
-msgid "Wrong operating system\n"
-msgstr "Неверная операционная система\n"
+msgid "Wrong operating system.\n"
+msgstr "Неверная операционная система.\n"
 
 #: winerror.mc:1486
-msgid "Single-instance application\n"
-msgstr "Приложение нельзя запустить дважды\n"
+msgid "Single-instance application.\n"
+msgstr "Приложение нельзя запустить дважды.\n"
 
 #: winerror.mc:1491
-msgid "Real-mode application\n"
-msgstr "Приложение реального режима\n"
+msgid "Real-mode application.\n"
+msgstr "Приложение реального режима.\n"
 
 #: winerror.mc:1496
-msgid "Invalid DLL\n"
-msgstr "Неверная DLL\n"
+msgid "Invalid DLL.\n"
+msgstr "Неверная DLL.\n"
 
 #: winerror.mc:1501
-msgid "No associated application\n"
-msgstr "Нет связанных приложений\n"
+msgid "No associated application.\n"
+msgstr "Нет связанных приложений.\n"
 
 #: winerror.mc:1506
-msgid "DDE failure\n"
-msgstr "Ошибка DDE\n"
+msgid "DDE failure.\n"
+msgstr "Ошибка DDE.\n"
 
 #: winerror.mc:1511
-msgid "DLL not found\n"
-msgstr "DLL не найдена\n"
+msgid "DLL not found.\n"
+msgstr "DLL не найдена.\n"
 
 #: winerror.mc:1516
-msgid "Out of user handles\n"
-msgstr "Недостаточно пользовательских дескрипторов\n"
+msgid "Out of user handles.\n"
+msgstr "Недостаточно пользовательских дескрипторов.\n"
 
 #: winerror.mc:1521
-msgid "Message can only be used in synchronous calls\n"
-msgstr "Сообщение может использоваться только в асинхронных вызовах\n"
+msgid "Message can only be used in synchronous calls.\n"
+msgstr "Сообщение может использоваться только в асинхронных вызовах.\n"
 
 #: winerror.mc:1526
-msgid "The source element is empty\n"
-msgstr "Элемент-источник пуст\n"
+msgid "The source element is empty.\n"
+msgstr "Элемент-источник пуст.\n"
 
 #: winerror.mc:1531
-msgid "The destination element is full\n"
-msgstr "Элемент-получатель заполнен\n"
+msgid "The destination element is full.\n"
+msgstr "Элемент-получатель заполнен.\n"
 
 #: winerror.mc:1536
-msgid "The element address is invalid\n"
-msgstr "Адрес элемента неверен\n"
+msgid "The element address is invalid.\n"
+msgstr "Адрес элемента неверен.\n"
 
 #: winerror.mc:1541
-msgid "The magazine is not present\n"
-msgstr "Кассета отсутствует\n"
+msgid "The magazine is not present.\n"
+msgstr "Кассета отсутствует.\n"
 
 #: winerror.mc:1546
-msgid "The device needs reinitialization\n"
-msgstr "Устройство нужно переинициализировать\n"
+msgid "The device needs reinitialization.\n"
+msgstr "Устройство нужно переинициализировать.\n"
 
 #: winerror.mc:1551
-msgid "The device requires cleaning\n"
-msgstr "Необходима очистка устройства\n"
+msgid "The device requires cleaning.\n"
+msgstr "Необходима очистка устройства.\n"
 
 #: winerror.mc:1556
-msgid "The device door is open\n"
-msgstr "Дверца устройства открыта\n"
+msgid "The device door is open.\n"
+msgstr "Дверца устройства открыта.\n"
 
 #: winerror.mc:1561
-msgid "The device is not connected\n"
-msgstr "Устройство не подключено\n"
+msgid "The device is not connected.\n"
+msgstr "Устройство не подключено.\n"
 
 #: winerror.mc:1566
-msgid "Element not found\n"
-msgstr "Элемент не найден\n"
+msgid "Element not found.\n"
+msgstr "Элемент не найден.\n"
 
 #: winerror.mc:1571
-msgid "No match found\n"
-msgstr "Соответствие не найдено\n"
+msgid "No match found.\n"
+msgstr "Соответствие не найдено.\n"
 
 #: winerror.mc:1576
-msgid "Property set not found\n"
-msgstr "Набор свойств не найден\n"
+msgid "Property set not found.\n"
+msgstr "Набор свойств не найден.\n"
 
 #: winerror.mc:1581
-msgid "Point not found\n"
-msgstr "Точка не найдена\n"
+msgid "Point not found.\n"
+msgstr "Точка не найдена.\n"
 
 #: winerror.mc:1586
-msgid "No running tracking service\n"
-msgstr "Служба отслеживания не работает\n"
+msgid "No running tracking service.\n"
+msgstr "Служба отслеживания не работает.\n"
 
 #: winerror.mc:1591
-msgid "No such volume ID\n"
-msgstr "Код тома не найден\n"
+msgid "No such volume ID.\n"
+msgstr "Код тома не найден.\n"
 
 #: winerror.mc:1596
-msgid "Unable to remove the file to be replaced\n"
-msgstr "Не удалось удалить файл для замены\n"
+msgid "Unable to remove the file to be replaced.\n"
+msgstr "Не удалось удалить файл для замены.\n"
 
 #: winerror.mc:1601
-msgid "Unable to move the replacement file into place\n"
-msgstr "Не удалось поместить файл на место заменяемого\n"
+msgid "Unable to move the replacement file into place.\n"
+msgstr "Не удалось поместить файл на место заменяемого.\n"
 
 #: winerror.mc:1606
-msgid "Moving the replacement file failed\n"
-msgstr "Перенести файл для замены не удалось\n"
+msgid "Moving the replacement file failed.\n"
+msgstr "Перенести файл для замены не удалось.\n"
 
 #: winerror.mc:1611
-msgid "The journal is being deleted\n"
-msgstr "Выполняется удаление журнала\n"
+msgid "The journal is being deleted.\n"
+msgstr "Выполняется удаление журнала.\n"
 
 #: winerror.mc:1616
-msgid "The journal is not active\n"
-msgstr "Журнал не активен\n"
+msgid "The journal is not active.\n"
+msgstr "Журнал не активен.\n"
 
 #: winerror.mc:1621
-msgid "Potential matching file found\n"
-msgstr "Найден потенциальный, но ошибочный файл\n"
+msgid "Potential matching file found.\n"
+msgstr "Найден потенциальный, но ошибочный файл.\n"
 
 #: winerror.mc:1626
-msgid "The journal entry was deleted\n"
-msgstr "Запись журнала была удалена\n"
+msgid "The journal entry was deleted.\n"
+msgstr "Запись журнала была удалена.\n"
 
 #: winerror.mc:1631
-msgid "Invalid device name\n"
-msgstr "Неверное имя устройства\n"
+msgid "Invalid device name.\n"
+msgstr "Неверное имя устройства.\n"
 
 #: winerror.mc:1636
-msgid "Connection unavailable\n"
-msgstr "Соединение недоступно\n"
+msgid "Connection unavailable.\n"
+msgstr "Соединение недоступно.\n"
 
 #: winerror.mc:1641
-msgid "Device already remembered\n"
-msgstr "Устройство уже подключено\n"
+msgid "Device already remembered.\n"
+msgstr "Устройство уже подключено.\n"
 
 #: winerror.mc:1646
-msgid "No network or bad path\n"
-msgstr "Не сетевой или неверный путь\n"
+msgid "No network or bad path.\n"
+msgstr "Не сетевой или неверный путь.\n"
 
 #: winerror.mc:1651
-msgid "Invalid network provider name\n"
-msgstr "Неверное имя сетевого провайдера\n"
+msgid "Invalid network provider name.\n"
+msgstr "Неверное имя сетевого провайдера.\n"
 
 #: winerror.mc:1656
-msgid "Cannot open network connection profile\n"
-msgstr "Не удалось открыть профиль сетевого соединения\n"
+msgid "Cannot open network connection profile.\n"
+msgstr "Не удалось открыть профиль сетевого соединения.\n"
 
 #: winerror.mc:1661
-msgid "Corrupt network connection profile\n"
-msgstr "Профиль сетевого соединения испорчен\n"
+msgid "Corrupt network connection profile.\n"
+msgstr "Профиль сетевого соединения испорчен.\n"
 
 #: winerror.mc:1666
-msgid "Not a container\n"
-msgstr "Не контейнер\n"
+msgid "Not a container.\n"
+msgstr "Не контейнер.\n"
 
 #: winerror.mc:1671
-msgid "Extended error\n"
-msgstr "Расширенная ошибка\n"
+msgid "Extended error.\n"
+msgstr "Расширенная ошибка.\n"
 
 #: winerror.mc:1676
-msgid "Invalid group name\n"
-msgstr "Неверное имя группы\n"
+msgid "Invalid group name.\n"
+msgstr "Неверное имя группы.\n"
 
 #: winerror.mc:1681
-msgid "Invalid computer name\n"
-msgstr "Неверное имя компьютера\n"
+msgid "Invalid computer name.\n"
+msgstr "Неверное имя компьютера.\n"
 
 #: winerror.mc:1686
-msgid "Invalid event name\n"
-msgstr "Неверное название события\n"
+msgid "Invalid event name.\n"
+msgstr "Неверное название события.\n"
 
 #: winerror.mc:1691
-msgid "Invalid domain name\n"
-msgstr "Неверное имя домена\n"
+msgid "Invalid domain name.\n"
+msgstr "Неверное имя домена.\n"
 
 #: winerror.mc:1696
-msgid "Invalid service name\n"
-msgstr "Неверное имя службы\n"
+msgid "Invalid service name.\n"
+msgstr "Неверное имя службы.\n"
 
 #: winerror.mc:1701
-msgid "Invalid network name\n"
-msgstr "Неверное сетевое имя\n"
+msgid "Invalid network name.\n"
+msgstr "Неверное сетевое имя.\n"
 
 #: winerror.mc:1706
-msgid "Invalid share name\n"
-msgstr "Неверное название сетевого ресурса\n"
+msgid "Invalid share name.\n"
+msgstr "Неверное название сетевого ресурса.\n"
 
 #: winerror.mc:1716
-msgid "Invalid message name\n"
-msgstr "Неверное имя сообщения\n"
+msgid "Invalid message name.\n"
+msgstr "Неверное имя сообщения.\n"
 
 #: winerror.mc:1721
-msgid "Invalid message destination\n"
-msgstr "Неверный получатель сообщения\n"
+msgid "Invalid message destination.\n"
+msgstr "Неверный получатель сообщения.\n"
 
 #: winerror.mc:1726
-msgid "Session credential conflict\n"
-msgstr "Конфликт учётных данных сеанса\n"
+msgid "Session credential conflict.\n"
+msgstr "Конфликт учётных данных сеанса.\n"
 
 #: winerror.mc:1731
-msgid "Remote session limit exceeded\n"
-msgstr "Превышен предел числа удалённых сеансов\n"
+msgid "Remote session limit exceeded.\n"
+msgstr "Превышен предел числа удалённых сеансов.\n"
 
 #: winerror.mc:1736
-msgid "Duplicate domain or workgroup name\n"
-msgstr "Имя домена или рабочей группы не уникально\n"
+msgid "Duplicate domain or workgroup name.\n"
+msgstr "Имя домена или рабочей группы не уникально.\n"
 
 #: winerror.mc:1741
-msgid "No network\n"
-msgstr "Нет сети\n"
+msgid "No network.\n"
+msgstr "Нет сети.\n"
 
 #: winerror.mc:1746
-msgid "Operation canceled by user\n"
-msgstr "Операция прервана пользователем\n"
+msgid "Operation canceled by user.\n"
+msgstr "Операция прервана пользователем.\n"
 
 #: winerror.mc:1751
-msgid "File has a user-mapped section\n"
-msgstr "В файле есть блок, отображённый приложению пользователя\n"
+msgid "File has a user-mapped section.\n"
+msgstr "В файле есть блок, отображённый приложению пользователя.\n"
 
 #: winerror.mc:1756 winerror.mc:3741
-msgid "Connection refused\n"
-msgstr "Соединение отвергнуто\n"
+msgid "Connection refused.\n"
+msgstr "Соединение отвергнуто.\n"
 
 #: winerror.mc:1761
-msgid "Connection gracefully closed\n"
-msgstr "Соединение закрыто в штатном режиме\n"
+msgid "Connection gracefully closed.\n"
+msgstr "Соединение закрыто в штатном режиме.\n"
 
 #: winerror.mc:1766
-msgid "Address already associated with transport endpoint\n"
-msgstr "Адрес уже связан с конечной точкой транспорта\n"
+msgid "Address already associated with transport endpoint.\n"
+msgstr "Адрес уже связан с конечной точкой транспорта.\n"
 
 #: winerror.mc:1771
-msgid "Address not associated with transport endpoint\n"
-msgstr "Адрес не связан с конечной точкой транспорта\n"
+msgid "Address not associated with transport endpoint.\n"
+msgstr "Адрес не связан с конечной точкой транспорта.\n"
 
 #: winerror.mc:1776
-msgid "Connection invalid\n"
-msgstr "Неверное соединение\n"
+msgid "Connection invalid.\n"
+msgstr "Неверное соединение.\n"
 
 #: winerror.mc:1781
-msgid "Connection is active\n"
-msgstr "Соединение активно\n"
+msgid "Connection is active.\n"
+msgstr "Соединение активно.\n"
 
 #: winerror.mc:1786
-msgid "Network unreachable\n"
-msgstr "Сеть недоступна\n"
+msgid "Network unreachable.\n"
+msgstr "Сеть недоступна.\n"
 
 #: winerror.mc:1791
-msgid "Host unreachable\n"
-msgstr "Узел сети недоступен\n"
+msgid "Host unreachable.\n"
+msgstr "Узел сети недоступен.\n"
 
 #: winerror.mc:1796
-msgid "Protocol unreachable\n"
-msgstr "Протокол недоступен\n"
+msgid "Protocol unreachable.\n"
+msgstr "Протокол недоступен.\n"
 
 #: winerror.mc:1801
-msgid "Port unreachable\n"
-msgstr "Порт недоступен\n"
+msgid "Port unreachable.\n"
+msgstr "Порт недоступен.\n"
 
 #: winerror.mc:1806
-msgid "Request aborted\n"
-msgstr "Запрос прерван\n"
+msgid "Request aborted.\n"
+msgstr "Запрос прерван.\n"
 
 #: winerror.mc:1811
-msgid "Connection aborted\n"
-msgstr "Соединение прервано\n"
+msgid "Connection aborted.\n"
+msgstr "Соединение прервано.\n"
 
 #: winerror.mc:1816
-msgid "Please retry operation\n"
-msgstr "Повторите операцию\n"
+msgid "Please retry operation.\n"
+msgstr "Повторите операцию.\n"
 
 #: winerror.mc:1821
-msgid "Connection count limit reached\n"
-msgstr "Превышен лимит на количество подключений\n"
+msgid "Connection count limit reached.\n"
+msgstr "Превышен лимит на количество подключений.\n"
 
 #: winerror.mc:1826
-msgid "Login time restriction\n"
-msgstr "Ограничение по времени входа\n"
+msgid "Login time restriction.\n"
+msgstr "Ограничение по времени входа.\n"
 
 #: winerror.mc:1831
-msgid "Login workstation restriction\n"
-msgstr "Ограничение по компьютерам\n"
+msgid "Login workstation restriction.\n"
+msgstr "Ограничение по компьютерам.\n"
 
 #: winerror.mc:1836
-msgid "Incorrect network address\n"
-msgstr "Неверный сетевой адрес\n"
+msgid "Incorrect network address.\n"
+msgstr "Неверный сетевой адрес.\n"
 
 #: winerror.mc:1841
-msgid "Service already registered\n"
-msgstr "Служба уже зарегистрирована\n"
+msgid "Service already registered.\n"
+msgstr "Служба уже зарегистрирована.\n"
 
 #: winerror.mc:1846
-msgid "Service not found\n"
-msgstr "Служба не найдена\n"
+msgid "Service not found.\n"
+msgstr "Служба не найдена.\n"
 
 #: winerror.mc:1851
-msgid "User not authenticated\n"
-msgstr "Пользователь не прошёл проверку подлинности\n"
+msgid "User not authenticated.\n"
+msgstr "Пользователь не прошёл проверку подлинности.\n"
 
 #: winerror.mc:1856
-msgid "User not logged on\n"
-msgstr "Пользователь не вошёл в систему\n"
+msgid "User not logged on.\n"
+msgstr "Пользователь не вошёл в систему.\n"
 
 #: winerror.mc:1861
-msgid "Continue work in progress\n"
-msgstr "Выполняется продолжение работы\n"
+msgid "Continue work in progress.\n"
+msgstr "Выполняется продолжение работы.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised\n"
-msgstr "Инициализация уже выполнена\n"
+msgid "Already initialised.\n"
+msgstr "Инициализация уже выполнена.\n"
 
 #: winerror.mc:1871
-msgid "No more local devices\n"
-msgstr "Нет свободных локальных устройств\n"
+msgid "No more local devices.\n"
+msgstr "Нет свободных локальных устройств.\n"
 
 #: winerror.mc:1876
-msgid "The site does not exist\n"
-msgstr "Указанный сайт не существует\n"
+msgid "The site does not exist.\n"
+msgstr "Указанный сайт не существует.\n"
 
 #: winerror.mc:1881
-msgid "The domain controller already exists\n"
-msgstr "Контроллер домена уже существует\n"
+msgid "The domain controller already exists.\n"
+msgstr "Контроллер домена уже существует.\n"
 
 #: winerror.mc:1886
-msgid "Supported only when connected\n"
-msgstr "Поддерживается только при подключении\n"
+msgid "Supported only when connected.\n"
+msgstr "Поддерживается только при подключении.\n"
 
 #: winerror.mc:1891
-msgid "Perform operation even when nothing changed\n"
-msgstr "Необходимо выполнять операцию даже при отсутствии изменений\n"
+msgid "Perform operation even when nothing changed.\n"
+msgstr "Необходимо выполнять операцию даже при отсутствии изменений.\n"
 
 #: winerror.mc:1896
-msgid "The user profile is invalid\n"
-msgstr "Ошибка в профиле пользователя\n"
+msgid "The user profile is invalid.\n"
+msgstr "Ошибка в профиле пользователя.\n"
 
 #: winerror.mc:1901
-msgid "Not supported on Small Business Server\n"
-msgstr "Не поддерживается системой Small Business Server\n"
+msgid "Not supported on Small Business Server.\n"
+msgstr "Не поддерживается системой Small Business Server.\n"
 
 #: winerror.mc:1906
-msgid "Not all privileges assigned\n"
-msgstr "Назначены не все привилегии\n"
+msgid "Not all privileges assigned.\n"
+msgstr "Назначены не все привилегии.\n"
 
 #: winerror.mc:1911
-msgid "Some security IDs not mapped\n"
-msgstr "Некоторые коды безопасности не сопоставлены\n"
+msgid "Some security IDs not mapped.\n"
+msgstr "Некоторые коды безопасности не сопоставлены.\n"
 
 #: winerror.mc:1916
-msgid "No quotas for account\n"
-msgstr "Нет квот для учётной записи\n"
+msgid "No quotas for account.\n"
+msgstr "Нет квот для учётной записи.\n"
 
 #: winerror.mc:1921
-msgid "Local user session key\n"
-msgstr "Локальный ключ сеанса пользователя\n"
+msgid "Local user session key.\n"
+msgstr "Локальный ключ сеанса пользователя.\n"
 
 #: winerror.mc:1926
-msgid "Password too complex for LM\n"
-msgstr "Слишком сложный пароль для LM\n"
+msgid "Password too complex for LM.\n"
+msgstr "Слишком сложный пароль для LM.\n"
 
 #: winerror.mc:1931
-msgid "Unknown revision\n"
-msgstr "Неизвестная версия\n"
+msgid "Unknown revision.\n"
+msgstr "Неизвестная версия.\n"
 
 #: winerror.mc:1936
-msgid "Incompatible revision levels\n"
-msgstr "Несовместимые уровни версий\n"
+msgid "Incompatible revision levels.\n"
+msgstr "Несовместимые уровни версий.\n"
 
 #: winerror.mc:1941
-msgid "Invalid owner\n"
-msgstr "Неверный владелец\n"
+msgid "Invalid owner.\n"
+msgstr "Неверный владелец.\n"
 
 #: winerror.mc:1946
-msgid "Invalid primary group\n"
-msgstr "Неверная основная группа\n"
+msgid "Invalid primary group.\n"
+msgstr "Неверная основная группа.\n"
 
 #: winerror.mc:1951
-msgid "No impersonation token\n"
-msgstr "Нет маркера олицетворения\n"
+msgid "No impersonation token.\n"
+msgstr "Нет маркера олицетворения.\n"
 
 #: winerror.mc:1956
-msgid "Can't disable mandatory group\n"
-msgstr "Отключить обязательную группу нельзя\n"
+msgid "Can't disable mandatory group.\n"
+msgstr "Отключить обязательную группу нельзя.\n"
 
 #: winerror.mc:1961
-msgid "No logon servers available\n"
-msgstr "Нет серверов входа в сеть\n"
+msgid "No logon servers available.\n"
+msgstr "Нет серверов входа в сеть.\n"
 
 #: winerror.mc:1966
-msgid "No such logon session\n"
-msgstr "Нет такого сеанса входа в систему\n"
+msgid "No such logon session.\n"
+msgstr "Нет такого сеанса входа в систему.\n"
 
 #: winerror.mc:1971
-msgid "No such privilege\n"
-msgstr "Нет такой привилегии\n"
+msgid "No such privilege.\n"
+msgstr "Нет такой привилегии.\n"
 
 #: winerror.mc:1976
-msgid "Privilege not held\n"
-msgstr "Клиент не обладает этой привилегией\n"
+msgid "Privilege not held.\n"
+msgstr "Клиент не обладает этой привилегией.\n"
 
 #: winerror.mc:1981
-msgid "Invalid account name\n"
-msgstr "Неверное имя учётной записи\n"
+msgid "Invalid account name.\n"
+msgstr "Неверное имя учётной записи.\n"
 
 #: winerror.mc:1986
-msgid "User already exists\n"
-msgstr "Пользователь уже существует\n"
+msgid "User already exists.\n"
+msgstr "Пользователь уже существует.\n"
 
 #: winerror.mc:1991
-msgid "No such user\n"
-msgstr "Нет такого пользователя\n"
+msgid "No such user.\n"
+msgstr "Нет такого пользователя.\n"
 
 #: winerror.mc:1996
-msgid "Group already exists\n"
-msgstr "Группа уже существует\n"
+msgid "Group already exists.\n"
+msgstr "Группа уже существует.\n"
 
 #: winerror.mc:2001
-msgid "No such group\n"
-msgstr "Нет такой группы\n"
+msgid "No such group.\n"
+msgstr "Нет такой группы.\n"
 
 #: winerror.mc:2006
-msgid "User already in group\n"
-msgstr "Пользователь уже включён в группу\n"
+msgid "User already in group.\n"
+msgstr "Пользователь уже включён в группу.\n"
 
 #: winerror.mc:2011
-msgid "User not in group\n"
-msgstr "Пользователь не включен в группу\n"
+msgid "User not in group.\n"
+msgstr "Пользователь не включен в группу.\n"
 
 #: winerror.mc:2016
-msgid "Can't delete last admin user\n"
-msgstr "Удалить последнего пользователя (администратора) нельзя\n"
+msgid "Can't delete last admin user.\n"
+msgstr "Удалить последнего пользователя (администратора) нельзя.\n"
 
 #: winerror.mc:2021
-msgid "Wrong password\n"
-msgstr "Неверный пароль\n"
+msgid "Wrong password.\n"
+msgstr "Неверный пароль.\n"
 
 #: winerror.mc:2026
-msgid "Ill-formed password\n"
-msgstr "Недопустимые символы в пароле\n"
+msgid "Ill-formed password.\n"
+msgstr "Недопустимые символы в пароле.\n"
 
 #: winerror.mc:2031
-msgid "Password restriction\n"
-msgstr "Пароль не удовлетворяет ограничениям\n"
+msgid "Password restriction.\n"
+msgstr "Пароль не удовлетворяет ограничениям.\n"
 
 #: winerror.mc:2036
-msgid "Logon failure\n"
-msgstr "Ошибка входа в систему\n"
+msgid "Logon failure.\n"
+msgstr "Ошибка входа в систему.\n"
 
 #: winerror.mc:2041
-msgid "Account restriction\n"
-msgstr "Ограничение учётной записи\n"
+msgid "Account restriction.\n"
+msgstr "Ограничение учётной записи.\n"
 
 #: winerror.mc:2046
-msgid "Invalid logon hours\n"
-msgstr "Вход в это время не разрешён\n"
+msgid "Invalid logon hours.\n"
+msgstr "Вход в это время не разрешён.\n"
 
 #: winerror.mc:2051
-msgid "Invalid workstation\n"
-msgstr "Вход на этом компьютере не разрешён\n"
+msgid "Invalid workstation.\n"
+msgstr "Вход на этом компьютере не разрешён.\n"
 
 #: winerror.mc:2056
-msgid "Password expired\n"
-msgstr "Срок годности пароля истёк\n"
+msgid "Password expired.\n"
+msgstr "Срок годности пароля истёк.\n"
 
 #: winerror.mc:2061
-msgid "Account disabled\n"
-msgstr "Учётная запись отключена\n"
+msgid "Account disabled.\n"
+msgstr "Учётная запись отключена.\n"
 
 #: winerror.mc:2066
-msgid "No security ID mapped\n"
-msgstr "Код безопасности не сопоставлен\n"
+msgid "No security ID mapped.\n"
+msgstr "Код безопасности не сопоставлен.\n"
 
 #: winerror.mc:2071
-msgid "Too many LUIDs requested\n"
-msgstr "Запрошено слишком много LUID\n"
+msgid "Too many LUIDs requested.\n"
+msgstr "Запрошено слишком много LUID.\n"
 
 #: winerror.mc:2076
-msgid "LUIDs exhausted\n"
-msgstr "Нет доступных LUID\n"
+msgid "LUIDs exhausted.\n"
+msgstr "Нет доступных LUID.\n"
 
 #: winerror.mc:2081
-msgid "Invalid sub authority\n"
-msgstr "Неверная подчинённая область доверия\n"
+msgid "Invalid sub authority.\n"
+msgstr "Неверная подчинённая область доверия.\n"
 
 #: winerror.mc:2086
-msgid "Invalid ACL\n"
-msgstr "Неверный ACL\n"
+msgid "Invalid ACL.\n"
+msgstr "Неверный ACL.\n"
 
 #: winerror.mc:2091
-msgid "Invalid SID\n"
-msgstr "Неверный SID\n"
+msgid "Invalid SID.\n"
+msgstr "Неверный SID.\n"
 
 #: winerror.mc:2096
-msgid "Invalid security descriptor\n"
-msgstr "Неверный дескриптор безопасности\n"
+msgid "Invalid security descriptor.\n"
+msgstr "Неверный дескриптор безопасности.\n"
 
 #: winerror.mc:2101
-msgid "Bad inherited ACL\n"
-msgstr "Ошибочный унаследованный ACL\n"
+msgid "Bad inherited ACL.\n"
+msgstr "Ошибочный унаследованный ACL.\n"
 
 #: winerror.mc:2106
-msgid "Server disabled\n"
-msgstr "Сервер отключен\n"
+msgid "Server disabled.\n"
+msgstr "Сервер отключен.\n"
 
 #: winerror.mc:2111
-msgid "Server not disabled\n"
-msgstr "Сервер не отключен\n"
+msgid "Server not disabled.\n"
+msgstr "Сервер не отключен.\n"
 
 #: winerror.mc:2116
-msgid "Invalid ID authority\n"
-msgstr "Неверный центр выдачи идентификаторов\n"
+msgid "Invalid ID authority.\n"
+msgstr "Неверный центр выдачи идентификаторов.\n"
 
 #: winerror.mc:2121
-msgid "Allotted space exceeded\n"
-msgstr "Отведённое пространство исчерпано\n"
+msgid "Allotted space exceeded.\n"
+msgstr "Отведённое пространство исчерпано.\n"
 
 #: winerror.mc:2126
-msgid "Invalid group attributes\n"
-msgstr "Неверные атрибуты группы\n"
+msgid "Invalid group attributes.\n"
+msgstr "Неверные атрибуты группы.\n"
 
 #: winerror.mc:2131
-msgid "Bad impersonation level\n"
-msgstr "Ошибочный уровень олицетворения\n"
+msgid "Bad impersonation level.\n"
+msgstr "Ошибочный уровень олицетворения.\n"
 
 #: winerror.mc:2136
-msgid "Can't open anonymous security token\n"
-msgstr "Не удалось открыть анонимный маркер безопасности\n"
+msgid "Can't open anonymous security token.\n"
+msgstr "Не удалось открыть анонимный маркер безопасности.\n"
 
 #: winerror.mc:2141
-msgid "Bad validation class\n"
-msgstr "Ошибочный класс проверки\n"
+msgid "Bad validation class.\n"
+msgstr "Ошибочный класс проверки.\n"
 
 #: winerror.mc:2146
-msgid "Bad token type\n"
-msgstr "Ошибочный тип маркера\n"
+msgid "Bad token type.\n"
+msgstr "Ошибочный тип маркера.\n"
 
 #: winerror.mc:2151
-msgid "No security on object\n"
-msgstr "Объект не связан с безопасностью\n"
+msgid "No security on object.\n"
+msgstr "Объект не связан с безопасностью.\n"
 
 #: winerror.mc:2156
-msgid "Can't access domain information\n"
-msgstr "Информация о домене недоступна\n"
+msgid "Can't access domain information.\n"
+msgstr "Информация о домене недоступна.\n"
 
 #: winerror.mc:2161
-msgid "Invalid server state\n"
-msgstr "Неверное состояние сервера\n"
+msgid "Invalid server state.\n"
+msgstr "Неверное состояние сервера.\n"
 
 #: winerror.mc:2166
-msgid "Invalid domain state\n"
-msgstr "Неверное состояние домена\n"
+msgid "Invalid domain state.\n"
+msgstr "Неверное состояние домена.\n"
 
 #: winerror.mc:2171
-msgid "Invalid domain role\n"
-msgstr "Неверная роль домена\n"
+msgid "Invalid domain role.\n"
+msgstr "Неверная роль домена.\n"
 
 #: winerror.mc:2176
-msgid "No such domain\n"
-msgstr "Такого домена нет\n"
+msgid "No such domain.\n"
+msgstr "Такого домена нет.\n"
 
 #: winerror.mc:2181
-msgid "Domain already exists\n"
-msgstr "Домен уже существует\n"
+msgid "Domain already exists.\n"
+msgstr "Домен уже существует.\n"
 
 #: winerror.mc:2186
-msgid "Domain limit exceeded\n"
-msgstr "Превышено ограничение на число доменов\n"
+msgid "Domain limit exceeded.\n"
+msgstr "Превышено ограничение на число доменов.\n"
 
 #: winerror.mc:2191
-msgid "Internal database corruption\n"
-msgstr "Разрушение внутренней базы данных\n"
+msgid "Internal database corruption.\n"
+msgstr "Разрушение внутренней базы данных.\n"
 
 #: winerror.mc:2196
-msgid "Internal error\n"
-msgstr "Внутренняя ошибка\n"
+msgid "Internal error.\n"
+msgstr "Внутренняя ошибка.\n"
 
 #: winerror.mc:2201
-msgid "Generic access types not mapped\n"
-msgstr "Не удалось сопоставить общие типы доступа\n"
+msgid "Generic access types not mapped.\n"
+msgstr "Не удалось сопоставить общие типы доступа.\n"
 
 #: winerror.mc:2206
-msgid "Bad descriptor format\n"
-msgstr "Неверный формат дескриптора\n"
+msgid "Bad descriptor format.\n"
+msgstr "Неверный формат дескриптора.\n"
 
 #: winerror.mc:2211
-msgid "Not a logon process\n"
-msgstr "Не процесс входа в систему\n"
+msgid "Not a logon process.\n"
+msgstr "Не процесс входа в систему.\n"
 
 #: winerror.mc:2216
-msgid "Logon session ID exists\n"
-msgstr "Сеанс входа с таким кодом уже существует\n"
+msgid "Logon session ID exists.\n"
+msgstr "Сеанс входа с таким кодом уже существует.\n"
 
 #: winerror.mc:2221
-msgid "Unknown authentication package\n"
-msgstr "Неизвестный пакет входа в систему\n"
+msgid "Unknown authentication package.\n"
+msgstr "Неизвестный пакет входа в систему.\n"
 
 #: winerror.mc:2226
-msgid "Bad logon session state\n"
-msgstr "Неверное состояние сеанса входа\n"
+msgid "Bad logon session state.\n"
+msgstr "Неверное состояние сеанса входа.\n"
 
 #: winerror.mc:2231
-msgid "Logon session ID collision\n"
-msgstr "Конфликт кодов сеансов входа\n"
+msgid "Logon session ID collision.\n"
+msgstr "Конфликт кодов сеансов входа.\n"
 
 #: winerror.mc:2236
-msgid "Invalid logon type\n"
-msgstr "Неверный тип входа\n"
+msgid "Invalid logon type.\n"
+msgstr "Неверный тип входа.\n"
 
 #: winerror.mc:2241
-msgid "Cannot impersonate\n"
-msgstr "Олицетворение не удалось\n"
+msgid "Cannot impersonate.\n"
+msgstr "Олицетворение не удалось.\n"
 
 #: winerror.mc:2246
-msgid "Invalid transaction state\n"
-msgstr "Ошибочное состояние транзакции\n"
+msgid "Invalid transaction state.\n"
+msgstr "Ошибочное состояние транзакции.\n"
 
 #: winerror.mc:2251
-msgid "Security DB commit failure\n"
-msgstr "Сбой при записи в БД безопасности\n"
+msgid "Security DB commit failure.\n"
+msgstr "Сбой при записи в БД безопасности.\n"
 
 #: winerror.mc:2256
-msgid "Account is built-in\n"
-msgstr "Эта учётная запись встроенная\n"
+msgid "Account is built-in.\n"
+msgstr "Эта учётная запись встроенная.\n"
 
 #: winerror.mc:2261
-msgid "Group is built-in\n"
-msgstr "Эта группа встроенная\n"
+msgid "Group is built-in.\n"
+msgstr "Эта группа встроенная.\n"
 
 #: winerror.mc:2266
-msgid "User is built-in\n"
-msgstr "Этот пользователь встроенный\n"
+msgid "User is built-in.\n"
+msgstr "Этот пользователь встроенный.\n"
 
 #: winerror.mc:2271
-msgid "Group is primary for user\n"
-msgstr "Это основная группа пользователя\n"
+msgid "Group is primary for user.\n"
+msgstr "Это основная группа пользователя.\n"
 
 #: winerror.mc:2276
-msgid "Token already in use\n"
-msgstr "Маркер уже используется\n"
+msgid "Token already in use.\n"
+msgstr "Маркер уже используется.\n"
 
 #: winerror.mc:2281
-msgid "No such local group\n"
-msgstr "Нет такой локальной группы\n"
+msgid "No such local group.\n"
+msgstr "Нет такой локальной группы.\n"
 
 #: winerror.mc:2286
-msgid "User not in local group\n"
-msgstr "Пользователь не в локальной группе\n"
+msgid "User not in local group.\n"
+msgstr "Пользователь не в локальной группе.\n"
 
 #: winerror.mc:2291
-msgid "User already in local group\n"
-msgstr "Пользователь уже включен в локальную группу\n"
+msgid "User already in local group.\n"
+msgstr "Пользователь уже включен в локальную группу.\n"
 
 #: winerror.mc:2296
-msgid "Local group already exists\n"
-msgstr "Локальная группа уже существует\n"
+msgid "Local group already exists.\n"
+msgstr "Локальная группа уже существует.\n"
 
 #: winerror.mc:2301 winerror.mc:2326
-msgid "Logon type not granted\n"
-msgstr "Такой тип входа не разрешён\n"
+msgid "Logon type not granted.\n"
+msgstr "Такой тип входа не разрешён.\n"
 
 #: winerror.mc:2306
-msgid "Too many secrets\n"
-msgstr "Слишком много секретных данных\n"
+msgid "Too many secrets.\n"
+msgstr "Слишком много секретных данных.\n"
 
 #: winerror.mc:2311
-msgid "Secret too long\n"
-msgstr "Слишком длинные секретные данные\n"
+msgid "Secret too long.\n"
+msgstr "Слишком длинные секретные данные.\n"
 
 #: winerror.mc:2316
-msgid "Internal security DB error\n"
-msgstr "Внутренняя ошибка БД безопасности\n"
+msgid "Internal security DB error.\n"
+msgstr "Внутренняя ошибка БД безопасности.\n"
 
 #: winerror.mc:2321
-msgid "Too many context IDs\n"
-msgstr "Слишком много кодов безопасности в контексте\n"
+msgid "Too many context IDs.\n"
+msgstr "Слишком много кодов безопасности в контексте.\n"
 
 #: winerror.mc:2331
-msgid "Cross-encrypted NT password required\n"
-msgstr "Необходим пароль с перекрестным шифрованием NT\n"
+msgid "Cross-encrypted NT password required.\n"
+msgstr "Необходим пароль с перекрестным шифрованием NT.\n"
 
 #: winerror.mc:2336
-msgid "No such member\n"
-msgstr "Нет такого члена группы\n"
+msgid "No such member.\n"
+msgstr "Нет такого члена группы.\n"
 
 #: winerror.mc:2341
-msgid "Invalid member\n"
-msgstr "Неверный член группы\n"
+msgid "Invalid member.\n"
+msgstr "Неверный член группы.\n"
 
 #: winerror.mc:2346
-msgid "Too many SIDs\n"
-msgstr "Слишком много кодов SID\n"
+msgid "Too many SIDs.\n"
+msgstr "Слишком много кодов SID.\n"
 
 #: winerror.mc:2351
-msgid "Cross-encrypted LM password required\n"
-msgstr "Необходим пароль с перекрёстным шифрованием LM\n"
+msgid "Cross-encrypted LM password required.\n"
+msgstr "Необходим пароль с перекрёстным шифрованием LM.\n"
 
 #: winerror.mc:2356
-msgid "No inheritable components\n"
-msgstr "Нет наследуемых компонентов\n"
+msgid "No inheritable components.\n"
+msgstr "Нет наследуемых компонентов.\n"
 
 #: winerror.mc:2361
-msgid "File or directory corrupt\n"
-msgstr "Файл или каталог повреждён\n"
+msgid "File or directory corrupt.\n"
+msgstr "Файл или каталог повреждён.\n"
 
 #: winerror.mc:2366
-msgid "Disk is corrupt\n"
-msgstr "Диск повреждён\n"
+msgid "Disk is corrupt.\n"
+msgstr "Диск повреждён.\n"
 
 #: winerror.mc:2371
-msgid "No user session key\n"
-msgstr "Нет сеансового ключа пользователя\n"
+msgid "No user session key.\n"
+msgstr "Нет сеансового ключа пользователя.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded\n"
-msgstr "Превышена квота лицензий\n"
+msgid "Licence quota exceeded.\n"
+msgstr "Превышена квота лицензий.\n"
 
 #: winerror.mc:2381
-msgid "Wrong target name\n"
-msgstr "Неверное целевое имя\n"
+msgid "Wrong target name.\n"
+msgstr "Неверное целевое имя.\n"
 
 #: winerror.mc:2386
-msgid "Mutual authentication failed\n"
-msgstr "Сбой взаимной проверки подлинности\n"
+msgid "Mutual authentication failed.\n"
+msgstr "Сбой взаимной проверки подлинности.\n"
 
 #: winerror.mc:2391
-msgid "Time skew between client and server\n"
-msgstr "На клиенте и сервере разное время\n"
+msgid "Time skew between client and server.\n"
+msgstr "На клиенте и сервере разное время.\n"
 
 #: winerror.mc:2396
-msgid "Invalid window handle\n"
-msgstr "Неверный дескриптор окна\n"
+msgid "Invalid window handle.\n"
+msgstr "Неверный дескриптор окна.\n"
 
 #: winerror.mc:2401
-msgid "Invalid menu handle\n"
-msgstr "Неверный дескриптор меню\n"
+msgid "Invalid menu handle.\n"
+msgstr "Неверный дескриптор меню.\n"
 
 #: winerror.mc:2406
-msgid "Invalid cursor handle\n"
-msgstr "Неверный дескриптор курсора\n"
+msgid "Invalid cursor handle.\n"
+msgstr "Неверный дескриптор курсора.\n"
 
 #: winerror.mc:2411
-msgid "Invalid accelerator table handle\n"
-msgstr "Неверный дескриптор таблицы акселераторов\n"
+msgid "Invalid accelerator table handle.\n"
+msgstr "Неверный дескриптор таблицы акселераторов.\n"
 
 #: winerror.mc:2416
-msgid "Invalid hook handle\n"
-msgstr "Неверный дескриптор обработчика\n"
+msgid "Invalid hook handle.\n"
+msgstr "Неверный дескриптор обработчика.\n"
 
 #: winerror.mc:2421
-msgid "Invalid DWP handle\n"
-msgstr "Неверный дескриптор DWP\n"
+msgid "Invalid DWP handle.\n"
+msgstr "Неверный дескриптор DWP.\n"
 
 #: winerror.mc:2426
-msgid "Can't create top-level child window\n"
-msgstr "Нельзя создать дочернее окно верхнего уровня\n"
+msgid "Can't create top-level child window.\n"
+msgstr "Нельзя создать дочернее окно верхнего уровня.\n"
 
 #: winerror.mc:2431
-msgid "Can't find window class\n"
-msgstr "Класс окна не найден\n"
+msgid "Can't find window class.\n"
+msgstr "Класс окна не найден.\n"
 
 #: winerror.mc:2436
-msgid "Window owned by another thread\n"
-msgstr "Окно принадлежит другому потоку\n"
+msgid "Window owned by another thread.\n"
+msgstr "Окно принадлежит другому потоку.\n"
 
 #: winerror.mc:2441
-msgid "Hotkey already registered\n"
-msgstr "Горячая клавиша уже зарегистрирована\n"
+msgid "Hotkey already registered.\n"
+msgstr "Горячая клавиша уже зарегистрирована.\n"
 
 #: winerror.mc:2446
-msgid "Class already exists\n"
-msgstr "Класс уже существует\n"
+msgid "Class already exists.\n"
+msgstr "Класс уже существует.\n"
 
 #: winerror.mc:2451
-msgid "Class does not exist\n"
-msgstr "Класс не существует\n"
+msgid "Class does not exist.\n"
+msgstr "Класс не существует.\n"
 
 #: winerror.mc:2456
-msgid "Class has open windows\n"
-msgstr "С классом связаны открытые окна\n"
+msgid "Class has open windows.\n"
+msgstr "С классом связаны открытые окна.\n"
 
 #: winerror.mc:2461
-msgid "Invalid index\n"
-msgstr "Неверный индекс\n"
+msgid "Invalid index.\n"
+msgstr "Неверный индекс.\n"
 
 #: winerror.mc:2466
-msgid "Invalid icon handle\n"
-msgstr "Неверный дескриптор значка\n"
+msgid "Invalid icon handle.\n"
+msgstr "Неверный дескриптор значка.\n"
 
 #: winerror.mc:2471
-msgid "Private dialog index\n"
-msgstr "Индекс частного диалога\n"
+msgid "Private dialog index.\n"
+msgstr "Индекс частного диалога.\n"
 
 #: winerror.mc:2476
-msgid "List box ID not found\n"
-msgstr "Идентификатор элемента \"Список\" не найден\n"
+msgid "List box ID not found.\n"
+msgstr "Идентификатор элемента \"Список\" не найден.\n"
 
 #: winerror.mc:2481
-msgid "No wildcard characters\n"
-msgstr "Символы подстановки не найдены\n"
+msgid "No wildcard characters.\n"
+msgstr "Символы подстановки не найдены.\n"
 
 #: winerror.mc:2486
-msgid "Clipboard not open\n"
-msgstr "Буфер обмена не открыт\n"
+msgid "Clipboard not open.\n"
+msgstr "Буфер обмена не открыт.\n"
 
 #: winerror.mc:2491
-msgid "Hotkey not registered\n"
-msgstr "Горячая клавиша не зарегистрирована\n"
+msgid "Hotkey not registered.\n"
+msgstr "Горячая клавиша не зарегистрирована.\n"
 
 #: winerror.mc:2496
-msgid "Not a dialog window\n"
-msgstr "Не диалоговое окно\n"
+msgid "Not a dialog window.\n"
+msgstr "Не диалоговое окно.\n"
 
 #: winerror.mc:2501
-msgid "Control ID not found\n"
-msgstr "Код элемента управления не найден\n"
+msgid "Control ID not found.\n"
+msgstr "Код элемента управления не найден.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message\n"
-msgstr "Неверное сообщение для поля со списком\n"
+msgid "Invalid combobox message.\n"
+msgstr "Неверное сообщение для поля со списком.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window\n"
-msgstr "Тип окна не \"поле со списком\"\n"
+msgid "Not a combobox window.\n"
+msgstr "Тип окна не \"поле со списком\".\n"
 
 #: winerror.mc:2516
-msgid "Invalid edit height\n"
-msgstr "Неверная высота поля\n"
+msgid "Invalid edit height.\n"
+msgstr "Неверная высота поля.\n"
 
 #: winerror.mc:2521
-msgid "DC not found\n"
-msgstr "Контекст устройства не найден\n"
+msgid "DC not found.\n"
+msgstr "Контекст устройства не найден.\n"
 
 #: winerror.mc:2526
-msgid "Invalid hook filter\n"
-msgstr "Неверный фильтр обработчика\n"
+msgid "Invalid hook filter.\n"
+msgstr "Неверный фильтр обработчика.\n"
 
 #: winerror.mc:2531
-msgid "Invalid filter procedure\n"
-msgstr "Неверная процедура фильтра\n"
+msgid "Invalid filter procedure.\n"
+msgstr "Неверная процедура фильтра.\n"
 
 #: winerror.mc:2536
-msgid "Hook procedure needs module handle\n"
-msgstr "Процедуре обработчика нужен дескриптор модуля\n"
+msgid "Hook procedure needs module handle.\n"
+msgstr "Процедуре обработчика нужен дескриптор модуля.\n"
 
 #: winerror.mc:2541
-msgid "Global-only hook procedure\n"
-msgstr "Процедура обработчика может быть только глобальной\n"
+msgid "Global-only hook procedure.\n"
+msgstr "Процедура обработчика может быть только глобальной.\n"
 
 #: winerror.mc:2546
-msgid "Journal hook already set\n"
-msgstr "Обработчик журнала уже установлен\n"
+msgid "Journal hook already set.\n"
+msgstr "Обработчик журнала уже установлен.\n"
 
 #: winerror.mc:2551
-msgid "Hook procedure not installed\n"
-msgstr "Процедура обработчика не установлена\n"
+msgid "Hook procedure not installed.\n"
+msgstr "Процедура обработчика не установлена.\n"
 
 #: winerror.mc:2556
-msgid "Invalid list box message\n"
-msgstr "Неверное сообщение для элемента \"Список\"\n"
+msgid "Invalid list box message.\n"
+msgstr "Неверное сообщение для элемента \"Список\".\n"
 
 #: winerror.mc:2561
-msgid "Invalid LB_SETCOUNT sent\n"
-msgstr "Послано неверное сообщение LB_SETCOUNT\n"
+msgid "Invalid LB_SETCOUNT sent.\n"
+msgstr "Послано неверное сообщение LB_SETCOUNT.\n"
 
 #: winerror.mc:2566
-msgid "No tab stops on this list box\n"
-msgstr "Элемент \"Список\" не имеет позиции табуляции\n"
+msgid "No tab stops on this list box.\n"
+msgstr "Элемент \"Список\" не имеет позиции табуляции.\n"
 
 #: winerror.mc:2571
-msgid "Can't destroy object owned by another thread\n"
-msgstr "Невозможно разрушить объект, принадлежащий другому потоку\n"
+msgid "Can't destroy object owned by another thread.\n"
+msgstr "Невозможно разрушить объект, принадлежащий другому потоку.\n"
 
 #: winerror.mc:2576
-msgid "Child window menus not allowed\n"
-msgstr "Меню в дочерних окнах не допускаются\n"
+msgid "Child window menus not allowed.\n"
+msgstr "Меню в дочерних окнах не допускаются.\n"
 
 #: winerror.mc:2581
-msgid "Window has no system menu\n"
-msgstr "У окна нет системного меню\n"
+msgid "Window has no system menu.\n"
+msgstr "У окна нет системного меню.\n"
 
 #: winerror.mc:2586
-msgid "Invalid message box style\n"
-msgstr "Неверный стиль окна-сообщения\n"
+msgid "Invalid message box style.\n"
+msgstr "Неверный стиль окна-сообщения.\n"
 
 #: winerror.mc:2591
-msgid "Invalid SPI parameter\n"
-msgstr "Неверный параметр SPI\n"
+msgid "Invalid SPI parameter.\n"
+msgstr "Неверный параметр SPI.\n"
 
 #: winerror.mc:2596
-msgid "Screen already locked\n"
-msgstr "Экран уже заблокирован\n"
+msgid "Screen already locked.\n"
+msgstr "Экран уже заблокирован.\n"
 
 #: winerror.mc:2601
-msgid "Window handles have different parents\n"
-msgstr "Дескрипторы окон принадлежат разным родителям\n"
+msgid "Window handles have different parents.\n"
+msgstr "Дескрипторы окон принадлежат разным родителям.\n"
 
 #: winerror.mc:2606
-msgid "Not a child window\n"
-msgstr "Не дочернее окно\n"
+msgid "Not a child window.\n"
+msgstr "Не дочернее окно.\n"
 
 #: winerror.mc:2611
-msgid "Invalid GW command\n"
-msgstr "Неверная команда GW_*\n"
+msgid "Invalid GW command.\n"
+msgstr "Неверная команда GW_*.\n"
 
 #: winerror.mc:2616
-msgid "Invalid thread ID\n"
-msgstr "Неверный код потока\n"
+msgid "Invalid thread ID.\n"
+msgstr "Неверный код потока.\n"
 
 #: winerror.mc:2621
-msgid "Not an MDI child window\n"
-msgstr "Не дочернее окно MDI\n"
+msgid "Not an MDI child window.\n"
+msgstr "Не дочернее окно MDI.\n"
 
 #: winerror.mc:2626
-msgid "Popup menu already active\n"
-msgstr "Всплывающее меню уже активно\n"
+msgid "Popup menu already active.\n"
+msgstr "Всплывающее меню уже активно.\n"
 
 #: winerror.mc:2631
-msgid "No scrollbars\n"
-msgstr "Нет прокрутки\n"
+msgid "No scrollbars.\n"
+msgstr "Нет прокрутки.\n"
 
 #: winerror.mc:2636
-msgid "Invalid scrollbar range\n"
-msgstr "Неверный диапазон прокрутки\n"
+msgid "Invalid scrollbar range.\n"
+msgstr "Неверный диапазон прокрутки.\n"
 
 #: winerror.mc:2641
-msgid "Invalid ShowWin command\n"
-msgstr "Неверная команда ShowWindow\n"
+msgid "Invalid ShowWin command.\n"
+msgstr "Неверная команда ShowWindow.\n"
 
 #: winerror.mc:2646
-msgid "No system resources\n"
-msgstr "Недостаточно системных ресурсов\n"
+msgid "No system resources.\n"
+msgstr "Недостаточно системных ресурсов.\n"
 
 #: winerror.mc:2651
-msgid "No non-paged system resources\n"
-msgstr "Недостаточно невыгружаемых системных ресурсов\n"
+msgid "No non-paged system resources.\n"
+msgstr "Недостаточно невыгружаемых системных ресурсов.\n"
 
 #: winerror.mc:2656
-msgid "No paged system resources\n"
-msgstr "Недостаточно выгружаемых системных ресурсов\n"
+msgid "No paged system resources.\n"
+msgstr "Недостаточно выгружаемых системных ресурсов.\n"
 
 #: winerror.mc:2661
-msgid "No working set quota\n"
-msgstr "Превышена квота рабочего набора\n"
+msgid "No working set quota.\n"
+msgstr "Превышена квота рабочего набора.\n"
 
 #: winerror.mc:2666
-msgid "No page file quota\n"
-msgstr "Не задана квота файла подкачки\n"
+msgid "No page file quota.\n"
+msgstr "Не задана квота файла подкачки.\n"
 
 #: winerror.mc:2671
-msgid "Exceeded commitment limit\n"
-msgstr "Превышен предел фиксации операций\n"
+msgid "Exceeded commitment limit.\n"
+msgstr "Превышен предел фиксации операций.\n"
 
 #: winerror.mc:2676
-msgid "Menu item not found\n"
-msgstr "Пункт меню не найден\n"
+msgid "Menu item not found.\n"
+msgstr "Пункт меню не найден.\n"
 
 #: winerror.mc:2681
-msgid "Invalid keyboard handle\n"
-msgstr "Неверный дескриптор клавиатуры\n"
+msgid "Invalid keyboard handle.\n"
+msgstr "Неверный дескриптор клавиатуры.\n"
 
 #: winerror.mc:2686
-msgid "Hook type not allowed\n"
-msgstr "Тип обработчика не допустим\n"
+msgid "Hook type not allowed.\n"
+msgstr "Тип обработчика не допустим.\n"
 
 #: winerror.mc:2691
-msgid "Interactive window station required\n"
-msgstr "Требуется интерактивная станция\n"
+msgid "Interactive window station required.\n"
+msgstr "Требуется интерактивная станция.\n"
 
 #: winerror.mc:2696
-msgid "Timeout\n"
-msgstr "Таймаут\n"
+msgid "Timeout.\n"
+msgstr "Таймаут.\n"
 
 #: winerror.mc:2701
-msgid "Invalid monitor handle\n"
-msgstr "Неверный дескриптор монитора\n"
+msgid "Invalid monitor handle.\n"
+msgstr "Неверный дескриптор монитора.\n"
 
 #: winerror.mc:2706
-msgid "Event log file corrupt\n"
-msgstr "Файл журнала событий повреждён\n"
+msgid "Event log file corrupt.\n"
+msgstr "Файл журнала событий повреждён.\n"
 
 #: winerror.mc:2711
-msgid "Event log can't start\n"
-msgstr "Журнал событий не может запуститься\n"
+msgid "Event log can't start.\n"
+msgstr "Журнал событий не может запуститься.\n"
 
 #: winerror.mc:2716
-msgid "Event log file full\n"
-msgstr "Журнал событий переполнен\n"
+msgid "Event log file full.\n"
+msgstr "Журнал событий переполнен.\n"
 
 #: winerror.mc:2721
-msgid "Event log file changed\n"
-msgstr "Журнал событий изменился\n"
+msgid "Event log file changed.\n"
+msgstr "Журнал событий изменился.\n"
 
 #: winerror.mc:2726
-msgid "Installer service failed\n"
-msgstr "Сбой службы установщика\n"
+msgid "Installer service failed.\n"
+msgstr "Сбой службы установщика.\n"
 
 #: winerror.mc:2731
-msgid "Installation aborted by user\n"
-msgstr "Установка прервана пользователем\n"
+msgid "Installation aborted by user.\n"
+msgstr "Установка прервана пользователем.\n"
 
 #: winerror.mc:2736
-msgid "Installation failure\n"
-msgstr "Сбой установки\n"
+msgid "Installation failure.\n"
+msgstr "Сбой установки.\n"
 
 #: winerror.mc:2741
-msgid "Installation suspended\n"
-msgstr "Установка приостановлена\n"
+msgid "Installation suspended.\n"
+msgstr "Установка приостановлена.\n"
 
 #: winerror.mc:2746
-msgid "Unknown product\n"
-msgstr "Неизвестный продукт\n"
+msgid "Unknown product.\n"
+msgstr "Неизвестный продукт.\n"
 
 #: winerror.mc:2751
-msgid "Unknown feature\n"
-msgstr "Неизвестная возможность\n"
+msgid "Unknown feature.\n"
+msgstr "Неизвестная возможность.\n"
 
 #: winerror.mc:2756
-msgid "Unknown component\n"
-msgstr "Неизвестный компонент\n"
+msgid "Unknown component.\n"
+msgstr "Неизвестный компонент.\n"
 
 #: winerror.mc:2761
-msgid "Unknown property\n"
-msgstr "Неизвестное свойство\n"
+msgid "Unknown property.\n"
+msgstr "Неизвестное свойство.\n"
 
 #: winerror.mc:2766
-msgid "Invalid handle state\n"
-msgstr "Неверное состояние дескриптора\n"
+msgid "Invalid handle state.\n"
+msgstr "Неверное состояние дескриптора.\n"
 
 #: winerror.mc:2771
-msgid "Bad configuration\n"
-msgstr "Неверная конфигурация\n"
+msgid "Bad configuration.\n"
+msgstr "Неверная конфигурация.\n"
 
 #: winerror.mc:2776
-msgid "Index is missing\n"
-msgstr "Отсутствует индекс\n"
+msgid "Index is missing.\n"
+msgstr "Отсутствует индекс.\n"
 
 #: winerror.mc:2781
-msgid "Installation source is missing\n"
-msgstr "Источник установочных файлов отсутствует\n"
+msgid "Installation source is missing.\n"
+msgstr "Источник установочных файлов отсутствует.\n"
 
 #: winerror.mc:2786
-msgid "Wrong installation package version\n"
-msgstr "Неверная версия установочного пакета\n"
+msgid "Wrong installation package version.\n"
+msgstr "Неверная версия установочного пакета.\n"
 
 #: winerror.mc:2791
-msgid "Product uninstalled\n"
-msgstr "Продукт удалён\n"
+msgid "Product uninstalled.\n"
+msgstr "Продукт удалён.\n"
 
 #: winerror.mc:2796
-msgid "Invalid query syntax\n"
-msgstr "Неверный синтаксис запроса\n"
+msgid "Invalid query syntax.\n"
+msgstr "Неверный синтаксис запроса.\n"
 
 #: winerror.mc:2801
-msgid "Invalid field\n"
-msgstr "Неверное поле\n"
+msgid "Invalid field.\n"
+msgstr "Неверное поле.\n"
 
 #: winerror.mc:2806
-msgid "Device removed\n"
-msgstr "Устройство удалено\n"
+msgid "Device removed.\n"
+msgstr "Устройство удалено.\n"
 
 #: winerror.mc:2811
-msgid "Installation already running\n"
-msgstr "Процесс установки уже запущен\n"
+msgid "Installation already running.\n"
+msgstr "Процесс установки уже запущен.\n"
 
 #: winerror.mc:2816
-msgid "Installation package failed to open\n"
-msgstr "Не удалось открыть установочный пакет\n"
+msgid "Installation package failed to open.\n"
+msgstr "Не удалось открыть установочный пакет.\n"
 
 #: winerror.mc:2821
-msgid "Installation package is invalid\n"
-msgstr "Ошибка в установочном пакете\n"
+msgid "Installation package is invalid.\n"
+msgstr "Ошибка в установочном пакете.\n"
 
 #: winerror.mc:2826
-msgid "Installer user interface failed\n"
-msgstr "Сбой пользовательского интерфейса установщика\n"
+msgid "Installer user interface failed.\n"
+msgstr "Сбой пользовательского интерфейса установщика.\n"
 
 #: winerror.mc:2831
-msgid "Failed to open installation log file\n"
-msgstr "Не удалось открыть журнал установки\n"
+msgid "Failed to open installation log file.\n"
+msgstr "Не удалось открыть журнал установки.\n"
 
 #: winerror.mc:2836
-msgid "Installation language not supported\n"
-msgstr "Язык установочного пакета не поддерживается\n"
+msgid "Installation language not supported.\n"
+msgstr "Язык установочного пакета не поддерживается.\n"
 
 #: winerror.mc:2841
-msgid "Installation transform failed to apply\n"
-msgstr "Не удалось применить преобразование установки\n"
+msgid "Installation transform failed to apply.\n"
+msgstr "Не удалось применить преобразование установки.\n"
 
 #: winerror.mc:2846
-msgid "Installation package rejected\n"
-msgstr "Установочный пакет отвергнут\n"
+msgid "Installation package rejected.\n"
+msgstr "Установочный пакет отвергнут.\n"
 
 #: winerror.mc:2851
-msgid "Function could not be called\n"
-msgstr "Функция не может быть вызвана\n"
+msgid "Function could not be called.\n"
+msgstr "Функция не может быть вызвана.\n"
 
 #: winerror.mc:2856
-msgid "Function failed\n"
-msgstr "Сбой функции\n"
+msgid "Function failed.\n"
+msgstr "Сбой функции.\n"
 
 #: winerror.mc:2861
-msgid "Invalid table\n"
-msgstr "Неверная таблица\n"
+msgid "Invalid table.\n"
+msgstr "Неверная таблица.\n"
 
 #: winerror.mc:2866
-msgid "Data type mismatch\n"
-msgstr "Тип данных не совпадает\n"
+msgid "Data type mismatch.\n"
+msgstr "Тип данных не совпадает.\n"
 
 #: winerror.mc:2871 winerror.mc:3081
-msgid "Unsupported type\n"
-msgstr "Неподдерживаемый тип\n"
+msgid "Unsupported type.\n"
+msgstr "Неподдерживаемый тип.\n"
 
 #: winerror.mc:2876
-msgid "Creation failed\n"
-msgstr "Создание не удалось\n"
+msgid "Creation failed.\n"
+msgstr "Создание не удалось.\n"
 
 #: winerror.mc:2881
-msgid "Temporary directory not writable\n"
-msgstr "Временный каталог недоступен для записи\n"
+msgid "Temporary directory not writable.\n"
+msgstr "Временный каталог недоступен для записи.\n"
 
 #: winerror.mc:2886
-msgid "Installation platform not supported\n"
-msgstr "Платформа для установки не поддерживается\n"
+msgid "Installation platform not supported.\n"
+msgstr "Платформа для установки не поддерживается.\n"
 
 #: winerror.mc:2891
-msgid "Installer not used\n"
-msgstr "Установщик не использован\n"
+msgid "Installer not used.\n"
+msgstr "Установщик не использован.\n"
 
 #: winerror.mc:2896
-msgid "Failed to open the patch package\n"
-msgstr "Не удалось открыть пакет исправлений\n"
+msgid "Failed to open the patch package.\n"
+msgstr "Не удалось открыть пакет исправлений.\n"
 
 #: winerror.mc:2901
-msgid "Invalid patch package\n"
-msgstr "Неверный пакет исправлений\n"
+msgid "Invalid patch package.\n"
+msgstr "Неверный пакет исправлений.\n"
 
 #: winerror.mc:2906
-msgid "Unsupported patch package\n"
-msgstr "Неподдерживаемый пакет исправлений\n"
+msgid "Unsupported patch package.\n"
+msgstr "Неподдерживаемый пакет исправлений.\n"
 
 #: winerror.mc:2911
-msgid "Another version is installed\n"
-msgstr "Установлена другая версия\n"
+msgid "Another version is installed.\n"
+msgstr "Установлена другая версия.\n"
 
 #: winerror.mc:2916
-msgid "Invalid command line\n"
-msgstr "Неверная командная строка\n"
+msgid "Invalid command line.\n"
+msgstr "Неверная командная строка.\n"
 
 #: winerror.mc:2921
-msgid "Remote installation not allowed\n"
-msgstr "Удалённая установка не разрешена\n"
+msgid "Remote installation not allowed.\n"
+msgstr "Удалённая установка не разрешена.\n"
 
 #: winerror.mc:2926
-msgid "Reboot initiated after successful install\n"
-msgstr "Начата перезагрузка после успешной установки\n"
+msgid "Reboot initiated after successful install.\n"
+msgstr "Начата перезагрузка после успешной установки.\n"
 
 #: winerror.mc:2931
-msgid "Invalid string binding\n"
-msgstr "Ошибка привязки по строке\n"
+msgid "Invalid string binding.\n"
+msgstr "Ошибка привязки по строке.\n"
 
 #: winerror.mc:2936
-msgid "Wrong kind of binding\n"
-msgstr "Ошибочный тип привязки\n"
+msgid "Wrong kind of binding.\n"
+msgstr "Ошибочный тип привязки.\n"
 
 #: winerror.mc:2941
-msgid "Invalid binding\n"
-msgstr "Неверная привязка\n"
+msgid "Invalid binding.\n"
+msgstr "Неверная привязка.\n"
 
 #: winerror.mc:2946
-msgid "RPC protocol sequence not supported\n"
-msgstr "Неподдерживаемая последовательность протокола RPC\n"
+msgid "RPC protocol sequence not supported.\n"
+msgstr "Неподдерживаемая последовательность протокола RPC.\n"
 
 #: winerror.mc:2951
-msgid "Invalid RPC protocol sequence\n"
-msgstr "Неверная последовательность протокола RPC\n"
+msgid "Invalid RPC protocol sequence.\n"
+msgstr "Неверная последовательность протокола RPC.\n"
 
 #: winerror.mc:2956
-msgid "Invalid string UUID\n"
-msgstr "Неверная строка UUID\n"
+msgid "Invalid string UUID.\n"
+msgstr "Неверная строка UUID.\n"
 
 #: winerror.mc:2961
-msgid "Invalid endpoint format\n"
-msgstr "Неверный формат конечной точки\n"
+msgid "Invalid endpoint format.\n"
+msgstr "Неверный формат конечной точки.\n"
 
 #: winerror.mc:2966
-msgid "Invalid network address\n"
-msgstr "Неверный сетевой адрес\n"
+msgid "Invalid network address.\n"
+msgstr "Неверный сетевой адрес.\n"
 
 #: winerror.mc:2971
-msgid "No endpoint found\n"
-msgstr "Конечная точка не найдена\n"
+msgid "No endpoint found.\n"
+msgstr "Конечная точка не найдена.\n"
 
 #: winerror.mc:2976
-msgid "Invalid timeout value\n"
-msgstr "Неверное значение таймаута\n"
+msgid "Invalid timeout value.\n"
+msgstr "Неверное значение таймаута.\n"
 
 #: winerror.mc:2981
-msgid "Object UUID not found\n"
-msgstr "UUID объекта не найден\n"
+msgid "Object UUID not found.\n"
+msgstr "UUID объекта не найден.\n"
 
 #: winerror.mc:2986
-msgid "UUID already registered\n"
-msgstr "UUID уже зарегистрирован\n"
+msgid "UUID already registered.\n"
+msgstr "UUID уже зарегистрирован.\n"
 
 #: winerror.mc:2991
-msgid "UUID type already registered\n"
-msgstr "UUID типа уже зарегистрирован\n"
+msgid "UUID type already registered.\n"
+msgstr "UUID типа уже зарегистрирован.\n"
 
 #: winerror.mc:2996
-msgid "Server already listening\n"
-msgstr "Сервер уже принимает подключения\n"
+msgid "Server already listening.\n"
+msgstr "Сервер уже принимает подключения.\n"
 
 #: winerror.mc:3001
-msgid "No protocol sequences registered\n"
-msgstr "Последовательности протокола не зарегистрированы\n"
+msgid "No protocol sequences registered.\n"
+msgstr "Последовательности протокола не зарегистрированы.\n"
 
 #: winerror.mc:3006
-msgid "RPC server not listening\n"
-msgstr "RPC-сервер не принимает подключения\n"
+msgid "RPC server not listening.\n"
+msgstr "RPC-сервер не принимает подключения.\n"
 
 #: winerror.mc:3011
-msgid "Unknown manager type\n"
-msgstr "Неизвестный тип диспетчера\n"
+msgid "Unknown manager type.\n"
+msgstr "Неизвестный тип диспетчера.\n"
 
 #: winerror.mc:3016
-msgid "Unknown interface\n"
-msgstr "Неизвестный интерфейс\n"
+msgid "Unknown interface.\n"
+msgstr "Неизвестный интерфейс.\n"
 
 #: winerror.mc:3021
-msgid "No bindings\n"
-msgstr "Нет привязок\n"
+msgid "No bindings.\n"
+msgstr "Нет привязок.\n"
 
 #: winerror.mc:3026
-msgid "No protocol sequences\n"
-msgstr "Нет последовательностей протокола\n"
+msgid "No protocol sequences.\n"
+msgstr "Нет последовательностей протокола.\n"
 
 #: winerror.mc:3031
-msgid "Can't create endpoint\n"
-msgstr "Создать конечную точку не удалось\n"
+msgid "Can't create endpoint.\n"
+msgstr "Создать конечную точку не удалось.\n"
 
 #: winerror.mc:3036
-msgid "Out of resources\n"
-msgstr "Нехватка ресурсов\n"
+msgid "Out of resources.\n"
+msgstr "Нехватка ресурсов.\n"
 
 #: winerror.mc:3041
-msgid "RPC server unavailable\n"
-msgstr "RPC-сервер недоступен\n"
+msgid "RPC server unavailable.\n"
+msgstr "RPC-сервер недоступен.\n"
 
 #: winerror.mc:3046
-msgid "RPC server too busy\n"
-msgstr "RPC-сервер перегружен запросами\n"
+msgid "RPC server too busy.\n"
+msgstr "RPC-сервер перегружен запросами.\n"
 
 #: winerror.mc:3051
-msgid "Invalid network options\n"
-msgstr "Неверные сетевые параметры\n"
+msgid "Invalid network options.\n"
+msgstr "Неверные сетевые параметры.\n"
 
 #: winerror.mc:3056
-msgid "No RPC call active\n"
-msgstr "Нет активных RPC-вызовов\n"
+msgid "No RPC call active.\n"
+msgstr "Нет активных RPC-вызовов.\n"
 
 #: winerror.mc:3061
-msgid "RPC call failed\n"
-msgstr "Сбой RPC-вызова\n"
+msgid "RPC call failed.\n"
+msgstr "Сбой RPC-вызова.\n"
 
 #: winerror.mc:3066
-msgid "RPC call failed and didn't execute\n"
-msgstr "RPC-вызов не выполнился\n"
+msgid "RPC call failed and didn't execute.\n"
+msgstr "RPC-вызов не выполнился.\n"
 
 #: winerror.mc:3071
-msgid "RPC protocol error\n"
-msgstr "Ошибка протокола RPC\n"
+msgid "RPC protocol error.\n"
+msgstr "Ошибка протокола RPC.\n"
 
 #: winerror.mc:3076
-msgid "Unsupported transfer syntax\n"
-msgstr "Неподдерживаемый синтаксис передачи\n"
+msgid "Unsupported transfer syntax.\n"
+msgstr "Неподдерживаемый синтаксис передачи.\n"
 
 #: winerror.mc:3086
-msgid "Invalid tag\n"
-msgstr "Неверный тэг\n"
+msgid "Invalid tag.\n"
+msgstr "Неверный тэг.\n"
 
 #: winerror.mc:3091
-msgid "Invalid array bounds\n"
-msgstr "Неверные границы массива\n"
+msgid "Invalid array bounds.\n"
+msgstr "Неверные границы массива.\n"
 
 #: winerror.mc:3096
-msgid "No entry name\n"
-msgstr "Нет имени записи\n"
+msgid "No entry name.\n"
+msgstr "Нет имени записи.\n"
 
 #: winerror.mc:3101
-msgid "Invalid name syntax\n"
-msgstr "Неверный синтаксис имени\n"
+msgid "Invalid name syntax.\n"
+msgstr "Неверный синтаксис имени.\n"
 
 #: winerror.mc:3106
-msgid "Unsupported name syntax\n"
-msgstr "Неподдерживаемый синтаксис имени\n"
+msgid "Unsupported name syntax.\n"
+msgstr "Неподдерживаемый синтаксис имени.\n"
 
 #: winerror.mc:3111
-msgid "No network address\n"
-msgstr "Нет сетевого адреса\n"
+msgid "No network address.\n"
+msgstr "Нет сетевого адреса.\n"
 
 #: winerror.mc:3116
-msgid "Duplicate endpoint\n"
-msgstr "Эта конечная точка уже зарегистрирована\n"
+msgid "Duplicate endpoint.\n"
+msgstr "Эта конечная точка уже зарегистрирована.\n"
 
 #: winerror.mc:3121
-msgid "Unknown authentication type\n"
-msgstr "Неизвестный тип проверки подлинности\n"
+msgid "Unknown authentication type.\n"
+msgstr "Неизвестный тип проверки подлинности.\n"
 
 #: winerror.mc:3126
-msgid "Maximum calls too low\n"
-msgstr "Максимальное число вызовов слишком мало\n"
+msgid "Maximum calls too low.\n"
+msgstr "Максимальное число вызовов слишком мало.\n"
 
 #: winerror.mc:3131
-msgid "String too long\n"
-msgstr "Слишком длинная строка\n"
+msgid "String too long.\n"
+msgstr "Слишком длинная строка.\n"
 
 #: winerror.mc:3136
-msgid "Protocol sequence not found\n"
-msgstr "Последовательность протокола не найдена\n"
+msgid "Protocol sequence not found.\n"
+msgstr "Последовательность протокола не найдена.\n"
 
 #: winerror.mc:3141
-msgid "Procedure number out of range\n"
-msgstr "Номер процедуры вне диапазона\n"
+msgid "Procedure number out of range.\n"
+msgstr "Номер процедуры вне диапазона.\n"
 
 #: winerror.mc:3146
-msgid "Binding has no authentication data\n"
-msgstr "Для привязки необходимы данные проверки подлинности\n"
+msgid "Binding has no authentication data.\n"
+msgstr "Для привязки необходимы данные проверки подлинности.\n"
 
 #: winerror.mc:3151
-msgid "Unknown authentication service\n"
-msgstr "Неизвестная служба проверки подлинности\n"
+msgid "Unknown authentication service.\n"
+msgstr "Неизвестная служба проверки подлинности.\n"
 
 #: winerror.mc:3156
-msgid "Unknown authentication level\n"
-msgstr "Неизвестный уровень проверки подлинности\n"
+msgid "Unknown authentication level.\n"
+msgstr "Неизвестный уровень проверки подлинности.\n"
 
 #: winerror.mc:3161
-msgid "Invalid authentication identity\n"
-msgstr "Неверное удостоверение\n"
+msgid "Invalid authentication identity.\n"
+msgstr "Неверное удостоверение.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service\n"
-msgstr "Неизвестная служба авторизации\n"
+msgid "Unknown authorisation service.\n"
+msgstr "Неизвестная служба авторизации.\n"
 
 #: winerror.mc:3171
-msgid "Invalid entry\n"
-msgstr "Неверная запись\n"
+msgid "Invalid entry.\n"
+msgstr "Неверная запись.\n"
 
 #: winerror.mc:3176
-msgid "Can't perform operation\n"
-msgstr "Не удаётся выполнить операцию\n"
+msgid "Can't perform operation.\n"
+msgstr "Не удаётся выполнить операцию.\n"
 
 #: winerror.mc:3181
-msgid "Endpoints not registered\n"
-msgstr "Конечные точки не зарегистрированы\n"
+msgid "Endpoints not registered.\n"
+msgstr "Конечные точки не зарегистрированы.\n"
 
 #: winerror.mc:3186
-msgid "Nothing to export\n"
-msgstr "Экспортировать нечего\n"
+msgid "Nothing to export.\n"
+msgstr "Экспортировать нечего.\n"
 
 #: winerror.mc:3191
-msgid "Incomplete name\n"
-msgstr "Неполное имя\n"
+msgid "Incomplete name.\n"
+msgstr "Неполное имя.\n"
 
 #: winerror.mc:3196
-msgid "Invalid version option\n"
-msgstr "Неверный параметр версии\n"
+msgid "Invalid version option.\n"
+msgstr "Неверный параметр версии.\n"
 
 #: winerror.mc:3201
-msgid "No more members\n"
-msgstr "Больше членов группы нет\n"
+msgid "No more members.\n"
+msgstr "Больше членов группы нет.\n"
 
 #: winerror.mc:3206
-msgid "Not all objects unexported\n"
-msgstr "Экспорт отменён не для всех объектов\n"
+msgid "Not all objects unexported.\n"
+msgstr "Экспорт отменён не для всех объектов.\n"
 
 #: winerror.mc:3211
-msgid "Interface not found\n"
-msgstr "Интерфейс не найден\n"
+msgid "Interface not found.\n"
+msgstr "Интерфейс не найден.\n"
 
 #: winerror.mc:3216
-msgid "Entry already exists\n"
-msgstr "Запись уже существует\n"
+msgid "Entry already exists.\n"
+msgstr "Запись уже существует.\n"
 
 #: winerror.mc:3221
-msgid "Entry not found\n"
-msgstr "Запись не найдена\n"
+msgid "Entry not found.\n"
+msgstr "Запись не найдена.\n"
 
 #: winerror.mc:3226
-msgid "Name service unavailable\n"
-msgstr "Служба имён недоступна\n"
+msgid "Name service unavailable.\n"
+msgstr "Служба имён недоступна.\n"
 
 #: winerror.mc:3231
-msgid "Invalid network address family\n"
-msgstr "Неверное семейство сетевых адресов\n"
+msgid "Invalid network address family.\n"
+msgstr "Неверное семейство сетевых адресов.\n"
 
 #: winerror.mc:3236
-msgid "Operation not supported\n"
-msgstr "Операция не поддерживается\n"
+msgid "Operation not supported.\n"
+msgstr "Операция не поддерживается.\n"
 
 #: winerror.mc:3241
-msgid "No security context available\n"
-msgstr "Контекст безопасности недоступен\n"
+msgid "No security context available.\n"
+msgstr "Контекст безопасности недоступен.\n"
 
 #: winerror.mc:3246
-msgid "RPCInternal error\n"
-msgstr "Внутренняя ошибка RPC\n"
+msgid "RPCInternal error.\n"
+msgstr "Внутренняя ошибка RPC.\n"
 
 #: winerror.mc:3251
-msgid "RPC divide-by-zero\n"
-msgstr "Деление на ноль в RPC\n"
+msgid "RPC divide-by-zero.\n"
+msgstr "Деление на ноль в RPC.\n"
 
 #: winerror.mc:3256
-msgid "Address error\n"
-msgstr "Ошибка адресации\n"
+msgid "Address error.\n"
+msgstr "Ошибка адресации.\n"
 
 #: winerror.mc:3261
-msgid "Floating-point divide-by-zero\n"
-msgstr "Деление на ноль при операции с плавающей точкой\n"
+msgid "Floating-point divide-by-zero.\n"
+msgstr "Деление на ноль при операции с плавающей точкой.\n"
 
 #: winerror.mc:3266
-msgid "Floating-point underflow\n"
-msgstr "Потеря значимости при операции с плавающей точкой\n"
+msgid "Floating-point underflow.\n"
+msgstr "Потеря значимости при операции с плавающей точкой.\n"
 
 #: winerror.mc:3271
-msgid "Floating-point overflow\n"
-msgstr "Переполнение при операции с плавающей точкой\n"
+msgid "Floating-point overflow.\n"
+msgstr "Переполнение при операции с плавающей точкой.\n"
 
 #: winerror.mc:3276
-msgid "No more entries\n"
-msgstr "Больше записей нет\n"
+msgid "No more entries.\n"
+msgstr "Больше записей нет.\n"
 
 #: winerror.mc:3281
-msgid "Character translation table open failed\n"
-msgstr "Открыть таблицу преобразования символов не удалось\n"
+msgid "Character translation table open failed.\n"
+msgstr "Открыть таблицу преобразования символов не удалось.\n"
 
 #: winerror.mc:3286
-msgid "Character translation table file too small\n"
-msgstr "Таблица преобразования символов слишком мала\n"
+msgid "Character translation table file too small.\n"
+msgstr "Таблица преобразования символов слишком мала.\n"
 
 #: winerror.mc:3291
-msgid "Null context handle\n"
-msgstr "Нулевой дескриптор контекста\n"
+msgid "Null context handle.\n"
+msgstr "Нулевой дескриптор контекста.\n"
 
 #: winerror.mc:3296
-msgid "Context handle damaged\n"
-msgstr "Дескриптор контекста повреждён\n"
+msgid "Context handle damaged.\n"
+msgstr "Дескриптор контекста повреждён.\n"
 
 #: winerror.mc:3301
-msgid "Binding handle mismatch\n"
-msgstr "Несоответствие дескриптора привязки\n"
+msgid "Binding handle mismatch.\n"
+msgstr "Несоответствие дескриптора привязки.\n"
 
 #: winerror.mc:3306
-msgid "Cannot get call handle\n"
-msgstr "Не удалось получить дескриптор вызова\n"
+msgid "Cannot get call handle.\n"
+msgstr "Не удалось получить дескриптор вызова.\n"
 
 #: winerror.mc:3311
-msgid "Null reference pointer\n"
-msgstr "Нулевой ссылочный указатель\n"
+msgid "Null reference pointer.\n"
+msgstr "Нулевой ссылочный указатель.\n"
 
 #: winerror.mc:3316
-msgid "Enumeration value out of range\n"
-msgstr "Значение перечисления вне диапазона\n"
+msgid "Enumeration value out of range.\n"
+msgstr "Значение перечисления вне диапазона.\n"
 
 #: winerror.mc:3321
-msgid "Byte count too small\n"
-msgstr "Число байт слишком мало\n"
+msgid "Byte count too small.\n"
+msgstr "Число байт слишком мало.\n"
 
 #: winerror.mc:3326
-msgid "Bad stub data\n"
-msgstr "Испорченные данные в заглушке\n"
+msgid "Bad stub data.\n"
+msgstr "Испорченные данные в заглушке.\n"
 
 #: winerror.mc:3331
-msgid "Invalid user buffer\n"
-msgstr "Неподходящий пользовательский буфер\n"
+msgid "Invalid user buffer.\n"
+msgstr "Неподходящий пользовательский буфер.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media\n"
-msgstr "Нераспознанный носитель\n"
+msgid "Unrecognised media.\n"
+msgstr "Нераспознанный носитель.\n"
 
 #: winerror.mc:3341
-msgid "No trust secret\n"
-msgstr "Нет доверенного секрета\n"
+msgid "No trust secret.\n"
+msgstr "Нет доверенного секрета.\n"
 
 #: winerror.mc:3346
-msgid "No trust SAM account\n"
-msgstr "Нет доверенной учётной записи SAM\n"
+msgid "No trust SAM account.\n"
+msgstr "Нет доверенной учётной записи SAM.\n"
 
 #: winerror.mc:3351
-msgid "Trusted domain failure\n"
-msgstr "Ошибка доверия доменов\n"
+msgid "Trusted domain failure.\n"
+msgstr "Ошибка доверия доменов.\n"
 
 #: winerror.mc:3356
-msgid "Trusted relationship failure\n"
-msgstr "Ошибка связи доверия\n"
+msgid "Trusted relationship failure.\n"
+msgstr "Ошибка связи доверия.\n"
 
 #: winerror.mc:3361
-msgid "Trust logon failure\n"
-msgstr "Ошибка доверия при входе в систему\n"
+msgid "Trust logon failure.\n"
+msgstr "Ошибка доверия при входе в систему.\n"
 
 #: winerror.mc:3366
-msgid "RPC call already in progress\n"
-msgstr "RPC-вызов уже выполняется\n"
+msgid "RPC call already in progress.\n"
+msgstr "RPC-вызов уже выполняется.\n"
 
 #: winerror.mc:3371
-msgid "NETLOGON is not started\n"
-msgstr "Служба NETLOGON не запущена\n"
+msgid "NETLOGON is not started.\n"
+msgstr "Служба NETLOGON не запущена.\n"
 
 #: winerror.mc:3376
-msgid "Account expired\n"
-msgstr "Срок учётной записи истёк\n"
+msgid "Account expired.\n"
+msgstr "Срок учётной записи истёк.\n"
 
 #: winerror.mc:3381
-msgid "Redirector has open handles\n"
-msgstr "У перенаправителя остаются открытые дескрипторы\n"
+msgid "Redirector has open handles.\n"
+msgstr "У перенаправителя остаются открытые дескрипторы.\n"
 
 #: winerror.mc:3386
-msgid "Printer driver already installed\n"
-msgstr "Драйвер принтера уже установлен\n"
+msgid "Printer driver already installed.\n"
+msgstr "Драйвер принтера уже установлен.\n"
 
 #: winerror.mc:3391
-msgid "Unknown port\n"
-msgstr "Неизвестный порт\n"
+msgid "Unknown port.\n"
+msgstr "Неизвестный порт.\n"
 
 #: winerror.mc:3396
-msgid "Unknown printer driver\n"
-msgstr "Неизвестный драйвер принтера\n"
+msgid "Unknown printer driver.\n"
+msgstr "Неизвестный драйвер принтера.\n"
 
 #: winerror.mc:3401
-msgid "Unknown print processor\n"
-msgstr "Неизвестный обработчик печати\n"
+msgid "Unknown print processor.\n"
+msgstr "Неизвестный обработчик печати.\n"
 
 #: winerror.mc:3406
-msgid "Invalid separator file\n"
-msgstr "Неверный файл-разделитель заданий\n"
+msgid "Invalid separator file.\n"
+msgstr "Неверный файл-разделитель заданий.\n"
 
 #: winerror.mc:3411
-msgid "Invalid priority\n"
-msgstr "Неверный приоритет\n"
+msgid "Invalid priority.\n"
+msgstr "Неверный приоритет.\n"
 
 #: winerror.mc:3416
-msgid "Invalid printer name\n"
-msgstr "Неверное имя принтера\n"
+msgid "Invalid printer name.\n"
+msgstr "Неверное имя принтера.\n"
 
 #: winerror.mc:3421
-msgid "Printer already exists\n"
-msgstr "Принтер уже существует\n"
+msgid "Printer already exists.\n"
+msgstr "Принтер уже существует.\n"
 
 #: winerror.mc:3426
-msgid "Invalid printer command\n"
-msgstr "Неверная команда принтеру\n"
+msgid "Invalid printer command.\n"
+msgstr "Неверная команда принтеру.\n"
 
 #: winerror.mc:3431
-msgid "Invalid data type\n"
-msgstr "Неверный тип данных\n"
+msgid "Invalid data type.\n"
+msgstr "Неверный тип данных.\n"
 
 #: winerror.mc:3436
-msgid "Invalid environment\n"
-msgstr "Неверное окружение\n"
+msgid "Invalid environment.\n"
+msgstr "Неверное окружение.\n"
 
 #: winerror.mc:3441
-msgid "No more bindings\n"
-msgstr "Привязок больше нет\n"
+msgid "No more bindings.\n"
+msgstr "Привязок больше нет.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account\n"
+msgid "Can't logon with interdomain trust account.\n"
 msgstr ""
-"Не удаётся войти в систему с учётной записью другого доверенного домена\n"
+"Не удаётся войти в систему с учётной записью другого доверенного домена.\n"
 
 #: winerror.mc:3451
-msgid "Can't logon with workstation trust account\n"
-msgstr "Не удаётся войти в систему с учётной записью компьютера\n"
+msgid "Can't logon with workstation trust account.\n"
+msgstr "Не удаётся войти в систему с учётной записью компьютера.\n"
 
 #: winerror.mc:3456
-msgid "Can't logon with server trust account\n"
-msgstr "Не удаётся войти в систему с учётной записью доверенного сервера\n"
+msgid "Can't logon with server trust account.\n"
+msgstr "Не удаётся войти в систему с учётной записью доверенного сервера.\n"
 
 #: winerror.mc:3461
-msgid "Domain trust information inconsistent\n"
-msgstr "Несогласованность сведений о доверии доменов\n"
+msgid "Domain trust information inconsistent.\n"
+msgstr "Несогласованность сведений о доверии доменов.\n"
 
 #: winerror.mc:3466
-msgid "Server has open handles\n"
-msgstr "У сервера остаются открытые дескрипторы\n"
+msgid "Server has open handles.\n"
+msgstr "У сервера остаются открытые дескрипторы.\n"
 
 #: winerror.mc:3471
-msgid "Resource data not found\n"
-msgstr "Раздел ресурсов не найден\n"
+msgid "Resource data not found.\n"
+msgstr "Раздел ресурсов не найден.\n"
 
 #: winerror.mc:3476
-msgid "Resource type not found\n"
-msgstr "Тип ресурсов не найден\n"
+msgid "Resource type not found.\n"
+msgstr "Тип ресурсов не найден.\n"
 
 #: winerror.mc:3481
-msgid "Resource name not found\n"
-msgstr "Ресурс с таким именем не найден\n"
+msgid "Resource name not found.\n"
+msgstr "Ресурс с таким именем не найден.\n"
 
 #: winerror.mc:3486
-msgid "Resource language not found\n"
-msgstr "Язык ресурсов не найден\n"
+msgid "Resource language not found.\n"
+msgstr "Язык ресурсов не найден.\n"
 
 #: winerror.mc:3491
-msgid "Not enough quota\n"
-msgstr "Недостаточная квота\n"
+msgid "Not enough quota.\n"
+msgstr "Недостаточная квота.\n"
 
 #: winerror.mc:3496
-msgid "No interfaces\n"
-msgstr "Нет интерфейсов\n"
+msgid "No interfaces.\n"
+msgstr "Нет интерфейсов.\n"
 
 #: winerror.mc:3501
-msgid "RPC call canceled\n"
-msgstr "RPC-вызов отменён\n"
+msgid "RPC call canceled.\n"
+msgstr "RPC-вызов отменён.\n"
 
 #: winerror.mc:3506
-msgid "Binding incomplete\n"
-msgstr "Привязка выполнена не полностью\n"
+msgid "Binding incomplete.\n"
+msgstr "Привязка выполнена не полностью.\n"
 
 #: winerror.mc:3511
-msgid "RPC comm failure\n"
-msgstr "Сбой RPC-обмена\n"
+msgid "RPC comm failure.\n"
+msgstr "Сбой RPC-обмена.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level\n"
-msgstr "Неподдерживаемый уровень авторизации\n"
+msgid "Unsupported authorisation level.\n"
+msgstr "Неподдерживаемый уровень авторизации.\n"
 
 #: winerror.mc:3521
-msgid "No principal name registered\n"
-msgstr "Имена участников не зарегистрированы\n"
+msgid "No principal name registered.\n"
+msgstr "Имена участников не зарегистрированы.\n"
 
 #: winerror.mc:3526
-msgid "Not an RPC error\n"
-msgstr "Ошибка не в RPC\n"
+msgid "Not an RPC error.\n"
+msgstr "Ошибка не в RPC.\n"
 
 #: winerror.mc:3531
-msgid "UUID is local only\n"
-msgstr "UUID действителен только локально\n"
+msgid "UUID is local only.\n"
+msgstr "UUID действителен только локально.\n"
 
 #: winerror.mc:3536
-msgid "Security package error\n"
-msgstr "Ошибка в пакете безопасности\n"
+msgid "Security package error.\n"
+msgstr "Ошибка в пакете безопасности.\n"
 
 #: winerror.mc:3541
-msgid "Thread not canceled\n"
-msgstr "Выполнение потока не отменено\n"
+msgid "Thread not canceled.\n"
+msgstr "Выполнение потока не отменено.\n"
 
 #: winerror.mc:3546
-msgid "Invalid handle operation\n"
-msgstr "Неверная операция с дескриптором\n"
+msgid "Invalid handle operation.\n"
+msgstr "Неверная операция с дескриптором.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version\n"
-msgstr "Неверная версия пакета сериализации\n"
+msgid "Wrong serialising package version.\n"
+msgstr "Неверная версия пакета сериализации.\n"
 
 #: winerror.mc:3556
-msgid "Wrong stub version\n"
-msgstr "Неверная версия заглушки\n"
+msgid "Wrong stub version.\n"
+msgstr "Неверная версия заглушки.\n"
 
 #: winerror.mc:3561
-msgid "Invalid pipe object\n"
-msgstr "Неверный объект канала\n"
+msgid "Invalid pipe object.\n"
+msgstr "Неверный объект канала.\n"
 
 #: winerror.mc:3566
-msgid "Wrong pipe order\n"
-msgstr "Неправильный порядок в канале\n"
+msgid "Wrong pipe order.\n"
+msgstr "Неправильный порядок в канале.\n"
 
 #: winerror.mc:3571
-msgid "Wrong pipe version\n"
-msgstr "Неверная версия канала\n"
+msgid "Wrong pipe version.\n"
+msgstr "Неверная версия канала.\n"
 
 #: winerror.mc:3576
-msgid "Group member not found\n"
-msgstr "Член группы не найден\n"
+msgid "Group member not found.\n"
+msgstr "Член группы не найден.\n"
 
 #: winerror.mc:3581
-msgid "Can't create endpoint mapper DB\n"
-msgstr "Не удаётся создать запись в БД сопоставителя конечных точек\n"
+msgid "Can't create endpoint mapper DB.\n"
+msgstr "Не удаётся создать запись в БД сопоставителя конечных точек.\n"
 
 #: winerror.mc:3586
-msgid "Invalid object\n"
-msgstr "Неверный объект\n"
+msgid "Invalid object.\n"
+msgstr "Неверный объект.\n"
 
 #: winerror.mc:3591
-msgid "Invalid time\n"
-msgstr "Неверное время\n"
+msgid "Invalid time.\n"
+msgstr "Неверное время.\n"
 
 #: winerror.mc:3596
-msgid "Invalid form name\n"
-msgstr "Неверное имя формы\n"
+msgid "Invalid form name.\n"
+msgstr "Неверное имя формы.\n"
 
 #: winerror.mc:3601
-msgid "Invalid form size\n"
-msgstr "Неверный размер формы\n"
+msgid "Invalid form size.\n"
+msgstr "Неверный размер формы.\n"
 
 #: winerror.mc:3606
-msgid "Already awaiting printer handle\n"
-msgstr "Дескриптор принтера уже ожидается\n"
+msgid "Already awaiting printer handle.\n"
+msgstr "Дескриптор принтера уже ожидается.\n"
 
 #: winerror.mc:3611
-msgid "Printer deleted\n"
-msgstr "Принтер удалён\n"
+msgid "Printer deleted.\n"
+msgstr "Принтер удалён.\n"
 
 #: winerror.mc:3616
-msgid "Invalid printer state\n"
-msgstr "Неверное состояние принтера\n"
+msgid "Invalid printer state.\n"
+msgstr "Неверное состояние принтера.\n"
 
 #: winerror.mc:3621
-msgid "User must change password\n"
-msgstr "Пользователь должен сменить пароль\n"
+msgid "User must change password.\n"
+msgstr "Пользователь должен сменить пароль.\n"
 
 #: winerror.mc:3626
-msgid "Domain controller not found\n"
-msgstr "Контроллер домена не найден\n"
+msgid "Domain controller not found.\n"
+msgstr "Контроллер домена не найден.\n"
 
 #: winerror.mc:3631
-msgid "Account locked out\n"
-msgstr "Учётная запись заблокирована\n"
+msgid "Account locked out.\n"
+msgstr "Учётная запись заблокирована.\n"
 
 #: winerror.mc:3636
-msgid "Invalid pixel format\n"
-msgstr "Неверный формат пикселей\n"
+msgid "Invalid pixel format.\n"
+msgstr "Неверный формат пикселей.\n"
 
 #: winerror.mc:3641
-msgid "Invalid driver\n"
-msgstr "Неверный драйвер\n"
+msgid "Invalid driver.\n"
+msgstr "Неверный драйвер.\n"
 
 #: winerror.mc:3646
-msgid "Invalid object resolver set\n"
-msgstr "Неверный набор сопоставителей объектов\n"
+msgid "Invalid object resolver set.\n"
+msgstr "Неверный набор сопоставителей объектов.\n"
 
 #: winerror.mc:3651
-msgid "Incomplete RPC send\n"
-msgstr "RPC-данные отправлены не полностью\n"
+msgid "Incomplete RPC send.\n"
+msgstr "RPC-данные отправлены не полностью.\n"
 
 #: winerror.mc:3656
-msgid "Invalid asynchronous RPC handle\n"
-msgstr "Неверный дескриптор асинхронного RPC\n"
+msgid "Invalid asynchronous RPC handle.\n"
+msgstr "Неверный дескриптор асинхронного RPC.\n"
 
 #: winerror.mc:3661
-msgid "Invalid asynchronous RPC call\n"
-msgstr "Неверный асинхронный RPC-вызов\n"
+msgid "Invalid asynchronous RPC call.\n"
+msgstr "Неверный асинхронный RPC-вызов.\n"
 
 #: winerror.mc:3666
-msgid "RPC pipe closed\n"
-msgstr "RPC-канал закрыт\n"
+msgid "RPC pipe closed.\n"
+msgstr "RPC-канал закрыт.\n"
 
 #: winerror.mc:3671
-msgid "Discipline error on RPC pipe\n"
-msgstr "Нарушение порядка в RPC-канале\n"
+msgid "Discipline error on RPC pipe.\n"
+msgstr "Нарушение порядка в RPC-канале.\n"
 
 #: winerror.mc:3676
-msgid "No data on RPC pipe\n"
-msgstr "Нет данных в RPC-канале\n"
+msgid "No data on RPC pipe.\n"
+msgstr "Нет данных в RPC-канале.\n"
 
 #: winerror.mc:3681
-msgid "No site name available\n"
-msgstr "Имя сайта не определено\n"
+msgid "No site name available.\n"
+msgstr "Имя сайта не определено.\n"
 
 #: winerror.mc:3686
-msgid "The file cannot be accessed\n"
-msgstr "Система не может обратиться к файлу\n"
+msgid "The file cannot be accessed.\n"
+msgstr "Система не может обратиться к файлу.\n"
 
 #: winerror.mc:3691
-msgid "The filename cannot be resolved\n"
-msgstr "Не удалось разобрать имя файла\n"
+msgid "The filename cannot be resolved.\n"
+msgstr "Не удалось разобрать имя файла.\n"
 
 #: winerror.mc:3696
-msgid "RPC entry type mismatch\n"
-msgstr "Несоответствие типа RPC-записи\n"
+msgid "RPC entry type mismatch.\n"
+msgstr "Несоответствие типа RPC-записи.\n"
 
 #: winerror.mc:3701
-msgid "Not all objects could be exported\n"
-msgstr "Невозможно экспортировать все объекты\n"
+msgid "Not all objects could be exported.\n"
+msgstr "Невозможно экспортировать все объекты.\n"
 
 #: winerror.mc:3706
-msgid "The interface could not be exported\n"
-msgstr "Невозможно экспортировать интерфейс\n"
+msgid "The interface could not be exported.\n"
+msgstr "Невозможно экспортировать интерфейс.\n"
 
 #: winerror.mc:3711
-msgid "The profile could not be added\n"
-msgstr "Невозможно добавить профиль\n"
+msgid "The profile could not be added.\n"
+msgstr "Невозможно добавить профиль.\n"
 
 #: winerror.mc:3716
-msgid "The profile element could not be added\n"
-msgstr "Невозможно добавить элемент профиля\n"
+msgid "The profile element could not be added.\n"
+msgstr "Невозможно добавить элемент профиля.\n"
 
 #: winerror.mc:3721
-msgid "The profile element could not be removed\n"
-msgstr "Невозможно удалить элемент профиля\n"
+msgid "The profile element could not be removed.\n"
+msgstr "Невозможно удалить элемент профиля.\n"
 
 #: winerror.mc:3726
-msgid "The group element could not be added\n"
-msgstr "Невозможно добавить элемент группы\n"
+msgid "The group element could not be added.\n"
+msgstr "Невозможно добавить элемент группы.\n"
 
 #: winerror.mc:3731
-msgid "The group element could not be removed\n"
-msgstr "Невозможно удалить элемент группы\n"
+msgid "The group element could not be removed.\n"
+msgstr "Невозможно удалить элемент группы.\n"
 
 #: winerror.mc:3736
-msgid "The username could not be found\n"
-msgstr "Имя пользователя не найдено\n"
+msgid "The username could not be found.\n"
+msgstr "Имя пользователя не найдено.\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"

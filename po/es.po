@@ -78,8 +78,8 @@ msgstr "Aceptar"
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
 msgstr ""
-"La siguiente información puede ser usada para obtener soporte técnico para %"
-"s:"
+"La siguiente información puede ser usada para obtener soporte técnico para "
+"%s:"
 
 #: appwiz.rc:77
 msgid "Publisher:"
@@ -3608,3238 +3608,3238 @@ msgstr "Objeto Arreglo esperado"
 
 #: winerror.mc:26
 #, fuzzy
-msgid "Success\n"
-msgstr "Éxito"
+msgid "Success.\n"
+msgstr "Éxito.\n"
 
 #: winerror.mc:31
 #, fuzzy
-msgid "Invalid function\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid function.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:36
 #, fuzzy
-msgid "File not found\n"
-msgstr "Archivo no encontrado"
+msgid "File not found.\n"
+msgstr "Archivo no encontrado.\n"
 
 #: winerror.mc:41
 #, fuzzy
-msgid "Path not found\n"
-msgstr "ruta %s no encontrada"
+msgid "Path not found.\n"
+msgstr "ruta %s no encontrada.\n"
 
 #: winerror.mc:46
-msgid "Too many open files\n"
+msgid "Too many open files.\n"
 msgstr ""
 
 #: winerror.mc:51
-msgid "Access denied\n"
+msgid "Access denied.\n"
 msgstr ""
 
 #: winerror.mc:56
 #, fuzzy
-msgid "Invalid handle\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid handle.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:61
 #, fuzzy
-msgid "Memory trashed\n"
-msgstr "Monitor de &memoria"
+msgid "Memory trashed.\n"
+msgstr "Monitor de &memoria.\n"
 
 #: winerror.mc:66
 #, fuzzy
-msgid "Not enough memory\n"
+msgid "Not enough memory.\n"
 msgstr "Sin memoria."
 
 #: winerror.mc:71
 #, fuzzy
-msgid "Invalid block\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid block.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:76
-msgid "Bad environment\n"
+msgid "Bad environment.\n"
 msgstr ""
 
 #: winerror.mc:81
-msgid "Bad format\n"
+msgid "Bad format.\n"
 msgstr ""
 
 #: winerror.mc:86
 #, fuzzy
-msgid "Invalid access\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid access.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:91
 #, fuzzy
-msgid "Invalid data\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid data.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:96
 #, fuzzy
-msgid "Out of memory\n"
+msgid "Out of memory.\n"
 msgstr "Sin memoria."
 
 #: winerror.mc:101
 #, fuzzy
-msgid "Invalid drive\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid drive.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:106
 #, fuzzy
-msgid "Can't delete current directory\n"
-msgstr "Ayuda sobre CHDIR\n"
+msgid "Can't delete current directory.\n"
+msgstr "Ayuda sobre CHDIR.\n"
 
 #: winerror.mc:111
-msgid "Not same device\n"
+msgid "Not same device.\n"
 msgstr ""
 
 #: winerror.mc:116
-msgid "No more files\n"
+msgid "No more files.\n"
 msgstr ""
 
 #: winerror.mc:121
-msgid "Write protected\n"
+msgid "Write protected.\n"
 msgstr ""
 
 #: winerror.mc:126
-msgid "Bad unit\n"
+msgid "Bad unit.\n"
 msgstr ""
 
 #: winerror.mc:131
-msgid "Not ready\n"
+msgid "Not ready.\n"
 msgstr ""
 
 #: winerror.mc:136
-msgid "Bad command\n"
+msgid "Bad command.\n"
 msgstr ""
 
 #: winerror.mc:141
 #, fuzzy
-msgid "CRC error\n"
-msgstr "Error de sintaxis\n"
+msgid "CRC error.\n"
+msgstr "Error de sintaxis.\n"
 
 #: winerror.mc:146
-msgid "Bad length\n"
+msgid "Bad length.\n"
 msgstr ""
 
 #: winerror.mc:151 winerror.mc:526
 #, fuzzy
-msgid "Seek error\n"
-msgstr "Error de sintaxis\n"
+msgid "Seek error.\n"
+msgstr "Error de sintaxis.\n"
 
 #: winerror.mc:156
-msgid "Not DOS disk\n"
+msgid "Not DOS disk.\n"
 msgstr ""
 
 #: winerror.mc:161
 #, fuzzy
-msgid "Sector not found\n"
-msgstr "Archivo no encontrado"
+msgid "Sector not found.\n"
+msgstr "Archivo no encontrado.\n"
 
 #: winerror.mc:166
 #, fuzzy
-msgid "Out of paper\n"
-msgstr "Sin papel; "
+msgid "Out of paper.\n"
+msgstr "Sin papel; .\n"
 
 #: winerror.mc:171
 #, fuzzy
-msgid "Write fault\n"
+msgid "Write fault.\n"
 msgstr ""
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
 "Default\n"
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Por defecto"
+"Por defecto.\n"
 
 #: winerror.mc:176
 #, fuzzy
-msgid "Read fault\n"
+msgid "Read fault.\n"
 msgstr ""
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
 "Default\n"
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Por defecto"
+"Por defecto.\n"
 
 #: winerror.mc:181
-msgid "General failure\n"
+msgid "General failure.\n"
 msgstr ""
 
 #: winerror.mc:186
 #, fuzzy
-msgid "Sharing violation\n"
-msgstr "Violación de nomenclatura"
+msgid "Sharing violation.\n"
+msgstr "Violación de nomenclatura.\n"
 
 #: winerror.mc:191
 #, fuzzy
-msgid "Lock violation\n"
-msgstr "Ubicación"
+msgid "Lock violation.\n"
+msgstr "Ubicación.\n"
 
 #: winerror.mc:196
-msgid "Wrong disk\n"
+msgid "Wrong disk.\n"
 msgstr ""
 
 #: winerror.mc:201
-msgid "Sharing buffer exceeded\n"
+msgid "Sharing buffer exceeded.\n"
 msgstr ""
 
 #: winerror.mc:206
 #, fuzzy
-msgid "End of file\n"
+msgid "End of file.\n"
 msgstr "&Añadir a Favoritos..."
 
 #: winerror.mc:211 winerror.mc:436
-msgid "Disk full\n"
+msgid "Disk full.\n"
 msgstr ""
 
 #: winerror.mc:216
-msgid "Request not supported\n"
+msgid "Request not supported.\n"
 msgstr ""
 
 #: winerror.mc:221
-msgid "Remote machine not listening\n"
+msgid "Remote machine not listening.\n"
 msgstr ""
 
 #: winerror.mc:226
-msgid "Duplicate network name\n"
+msgid "Duplicate network name.\n"
 msgstr ""
 
 #: winerror.mc:231
-msgid "Bad network path\n"
+msgid "Bad network path.\n"
 msgstr ""
 
 #: winerror.mc:236
 #, fuzzy
-msgid "Network busy\n"
-msgstr "Compartición de red"
+msgid "Network busy.\n"
+msgstr "Compartición de red.\n"
 
 #: winerror.mc:241
 #, fuzzy
-msgid "Device does not exist\n"
-msgstr "El archivo no existe"
+msgid "Device does not exist.\n"
+msgstr "El archivo no existe.\n"
 
 #: winerror.mc:246
-msgid "Too many commands\n"
+msgid "Too many commands.\n"
 msgstr ""
 
 #: winerror.mc:251
-msgid "Adaptor hardware error\n"
+msgid "Adaptor hardware error.\n"
 msgstr ""
 
 #: winerror.mc:256
-msgid "Bad network response\n"
+msgid "Bad network response.\n"
 msgstr ""
 
 #: winerror.mc:261
 #, fuzzy
-msgid "Unexpected network error\n"
+msgid "Unexpected network error.\n"
 msgstr "Error externo indefinido."
 
 #: winerror.mc:266
-msgid "Bad remote adaptor\n"
+msgid "Bad remote adaptor.\n"
 msgstr ""
 
 #: winerror.mc:271
-msgid "Print queue full\n"
+msgid "Print queue full.\n"
 msgstr ""
 
 #: winerror.mc:276
-msgid "No spool space\n"
+msgid "No spool space.\n"
 msgstr ""
 
 #: winerror.mc:281
 #, fuzzy
-msgid "Print canceled\n"
-msgstr "Cancelado por el usuario"
+msgid "Print canceled.\n"
+msgstr "Cancelado por el usuario.\n"
 
 #: winerror.mc:286
 #, fuzzy
-msgid "Network name deleted\n"
-msgstr "Fecha de borrado"
+msgid "Network name deleted.\n"
+msgstr "Fecha de borrado.\n"
 
 #: winerror.mc:291
-msgid "Network access denied\n"
+msgid "Network access denied.\n"
 msgstr ""
 
 #: winerror.mc:296
-msgid "Bad device type\n"
+msgid "Bad device type.\n"
 msgstr ""
 
 #: winerror.mc:301
 #, fuzzy
-msgid "Bad network name\n"
-msgstr "Compartición de red"
+msgid "Bad network name.\n"
+msgstr "Compartición de red.\n"
 
 #: winerror.mc:306
-msgid "Too many network names\n"
+msgid "Too many network names.\n"
 msgstr ""
 
 #: winerror.mc:311
-msgid "Too many network sessions\n"
+msgid "Too many network sessions.\n"
 msgstr ""
 
 #: winerror.mc:316
 #, fuzzy
-msgid "Sharing paused\n"
-msgstr "Valor de c&adena"
+msgid "Sharing paused.\n"
+msgstr "Valor de c&adena.\n"
 
 #: winerror.mc:321
-msgid "Request not accepted\n"
+msgid "Request not accepted.\n"
 msgstr ""
 
 #: winerror.mc:326
-msgid "Redirector paused\n"
+msgid "Redirector paused.\n"
 msgstr ""
 
 #: winerror.mc:331
 #, fuzzy
-msgid "File exists\n"
-msgstr "El archivo no existe"
+msgid "File exists.\n"
+msgstr "El archivo no existe.\n"
 
 #: winerror.mc:336
-msgid "Cannot create\n"
+msgid "Cannot create.\n"
 msgstr ""
 
 #: winerror.mc:341
-msgid "Int24 failure\n"
+msgid "Int24 failure.\n"
 msgstr ""
 
 #: winerror.mc:346
-msgid "Out of structures\n"
+msgid "Out of structures.\n"
 msgstr ""
 
 #: winerror.mc:351
 #, fuzzy
-msgid "Already assigned\n"
-msgstr "Ya existe"
+msgid "Already assigned.\n"
+msgstr "Ya existe.\n"
 
 #: winerror.mc:356 winerror.mc:1711
 #, fuzzy
-msgid "Invalid password\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid password.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:361
 #, fuzzy
-msgid "Invalid parameter\n"
-msgstr "Error: parámetros de línea de comandos inválidos\n"
+msgid "Invalid parameter.\n"
+msgstr "Error: parámetros de línea de comandos inválidos.\n"
 
 #: winerror.mc:366
 #, fuzzy
-msgid "Net write fault\n"
-msgstr "Por &defecto"
+msgid "Net write fault.\n"
+msgstr "Por &defecto.\n"
 
 #: winerror.mc:371
-msgid "No process slots\n"
+msgid "No process slots.\n"
 msgstr ""
 
 #: winerror.mc:376
-msgid "Too many semaphores\n"
+msgid "Too many semaphores.\n"
 msgstr ""
 
 #: winerror.mc:381
-msgid "Exclusive semaphore already owned\n"
+msgid "Exclusive semaphore already owned.\n"
 msgstr ""
 
 #: winerror.mc:386
-msgid "Semaphore is set\n"
+msgid "Semaphore is set.\n"
 msgstr ""
 
 #: winerror.mc:391
-msgid "Too many semaphore requests\n"
+msgid "Too many semaphore requests.\n"
 msgstr ""
 
 #: winerror.mc:396
-msgid "Invalid at interrupt time\n"
+msgid "Invalid at interrupt time.\n"
 msgstr ""
 
 #: winerror.mc:401
-msgid "Semaphore owner died\n"
+msgid "Semaphore owner died.\n"
 msgstr ""
 
 #: winerror.mc:406
-msgid "Semaphore user limit\n"
+msgid "Semaphore user limit.\n"
 msgstr ""
 
 #: winerror.mc:411
 #, fuzzy
-msgid "Insert disk for drive %1\n"
-msgstr "inserte el disco %s"
+msgid "Insert disk for drive %1.\n"
+msgstr "inserte el disco %s.\n"
 
 #: winerror.mc:416
-msgid "Drive locked\n"
+msgid "Drive locked.\n"
 msgstr ""
 
 #: winerror.mc:421
-msgid "Broken pipe\n"
+msgid "Broken pipe.\n"
 msgstr ""
 
 #: winerror.mc:426
 #, fuzzy
-msgid "Open failed\n"
-msgstr "Abrir archivo"
+msgid "Open failed.\n"
+msgstr "Abrir archivo.\n"
 
 #: winerror.mc:431
-msgid "Buffer overflow\n"
+msgid "Buffer overflow.\n"
 msgstr ""
 
 #: winerror.mc:441
-msgid "No more search handles\n"
+msgid "No more search handles.\n"
 msgstr ""
 
 #: winerror.mc:446
 #, fuzzy
-msgid "Invalid target handle\n"
-msgstr "Credenciales inválidos"
+msgid "Invalid target handle.\n"
+msgstr "Credenciales inválidos.\n"
 
 #: winerror.mc:451
 #, fuzzy
-msgid "Invalid IOCTL\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid IOCTL.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:456
-msgid "Invalid verify switch\n"
+msgid "Invalid verify switch.\n"
 msgstr ""
 
 #: winerror.mc:461
-msgid "Bad driver level\n"
+msgid "Bad driver level.\n"
 msgstr ""
 
 #: winerror.mc:466
 #, fuzzy
-msgid "Call not implemented\n"
+msgid "Call not implemented.\n"
 msgstr ""
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
 "No implementado\n"
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Aún no implementado"
+"Aún no implementado.\n"
 
 #: winerror.mc:471
-msgid "Semaphore timeout\n"
+msgid "Semaphore timeout.\n"
 msgstr ""
 
 #: winerror.mc:476
 #, fuzzy
-msgid "Insufficient buffer\n"
-msgstr "Insuficientes permisos"
+msgid "Insufficient buffer.\n"
+msgstr "Insuficientes permisos.\n"
 
 #: winerror.mc:481
 #, fuzzy
-msgid "Invalid name\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid name.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:486
 #, fuzzy
-msgid "Invalid level\n"
-msgstr "Credenciales inválidos"
+msgid "Invalid level.\n"
+msgstr "Credenciales inválidos.\n"
 
 #: winerror.mc:491
-msgid "No volume label\n"
+msgid "No volume label.\n"
 msgstr ""
 
 #: winerror.mc:496
 #, fuzzy
-msgid "Module not found\n"
-msgstr "Archivo no encontrado"
+msgid "Module not found.\n"
+msgstr "Archivo no encontrado.\n"
 
 #: winerror.mc:501
 #, fuzzy
-msgid "Procedure not found\n"
-msgstr "PATH no encontrado\n"
+msgid "Procedure not found.\n"
+msgstr "PATH no encontrado.\n"
 
 #: winerror.mc:506
-msgid "No children to wait for\n"
+msgid "No children to wait for.\n"
 msgstr ""
 
 #: winerror.mc:511
-msgid "Child process has not completed\n"
+msgid "Child process has not completed.\n"
 msgstr ""
 
 #: winerror.mc:516
-msgid "Invalid use of direct access handle\n"
+msgid "Invalid use of direct access handle.\n"
 msgstr ""
 
 #: winerror.mc:521
-msgid "Negative seek\n"
+msgid "Negative seek.\n"
 msgstr ""
 
 #: winerror.mc:531
-msgid "Drive is a JOIN target\n"
+msgid "Drive is a JOIN target.\n"
 msgstr ""
 
 #: winerror.mc:536
-msgid "Drive is already JOINed\n"
+msgid "Drive is already JOINed.\n"
 msgstr ""
 
 #: winerror.mc:541
-msgid "Drive is already SUBSTed\n"
+msgid "Drive is already SUBSTed.\n"
 msgstr ""
 
 #: winerror.mc:546
-msgid "Drive is not JOINed\n"
+msgid "Drive is not JOINed.\n"
 msgstr ""
 
 #: winerror.mc:551
-msgid "Drive is not SUBSTed\n"
+msgid "Drive is not SUBSTed.\n"
 msgstr ""
 
 #: winerror.mc:556
-msgid "Attempt to JOIN onto a JOINed drive\n"
+msgid "Attempt to JOIN onto a JOINed drive.\n"
 msgstr ""
 
 #: winerror.mc:561
-msgid "Attempt to SUBST onto a SUBSTed drive\n"
+msgid "Attempt to SUBST onto a SUBSTed drive.\n"
 msgstr ""
 
 #: winerror.mc:566
-msgid "Attempt to JOIN to a SUBSTed drive\n"
+msgid "Attempt to JOIN to a SUBSTed drive.\n"
 msgstr ""
 
 #: winerror.mc:571
-msgid "Attempt to SUBST to a JOINed drive\n"
+msgid "Attempt to SUBST to a JOINed drive.\n"
 msgstr ""
 
 #: winerror.mc:576
 #, fuzzy
-msgid "Drive is busy\n"
-msgstr "Unidades"
+msgid "Drive is busy.\n"
+msgstr "Unidades.\n"
 
 #: winerror.mc:581
 #, fuzzy
-msgid "Same drive\n"
-msgstr "Unidad del sistema"
+msgid "Same drive.\n"
+msgstr "Unidad del sistema.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory\n"
+msgid "Not toplevel directory.\n"
 msgstr ""
 
 #: winerror.mc:591
 #, fuzzy
-msgid "Directory is not empty\n"
-msgstr "&Directorio sólo"
+msgid "Directory is not empty.\n"
+msgstr "&Directorio sólo.\n"
 
 #: winerror.mc:596
-msgid "Path is in use as a SUBST\n"
+msgid "Path is in use as a SUBST.\n"
 msgstr ""
 
 #: winerror.mc:601
-msgid "Path is in use as a JOIN\n"
+msgid "Path is in use as a JOIN.\n"
 msgstr ""
 
 #: winerror.mc:606
-msgid "Path is busy\n"
+msgid "Path is busy.\n"
 msgstr ""
 
 #: winerror.mc:611
-msgid "Already a SUBST target\n"
+msgid "Already a SUBST target.\n"
 msgstr ""
 
 #: winerror.mc:616
-msgid "System trace not specified or disallowed\n"
+msgid "System trace not specified or disallowed.\n"
 msgstr ""
 
 #: winerror.mc:621
-msgid "Event count for DosMuxSemWait incorrect\n"
+msgid "Event count for DosMuxSemWait incorrect.\n"
 msgstr ""
 
 #: winerror.mc:626
-msgid "Too many waiters for DosMuxSemWait\n"
+msgid "Too many waiters for DosMuxSemWait.\n"
 msgstr ""
 
 #: winerror.mc:631
-msgid "DosSemMuxWait list invalid\n"
+msgid "DosSemMuxWait list invalid.\n"
 msgstr ""
 
 #: winerror.mc:636
-msgid "Volume label too long\n"
+msgid "Volume label too long.\n"
 msgstr ""
 
 #: winerror.mc:641
-msgid "Too many TCBs\n"
+msgid "Too many TCBs.\n"
 msgstr ""
 
 #: winerror.mc:646
-msgid "Signal refused\n"
+msgid "Signal refused.\n"
 msgstr ""
 
 #: winerror.mc:651
-msgid "Segment discarded\n"
+msgid "Segment discarded.\n"
 msgstr ""
 
 #: winerror.mc:656
-msgid "Segment not locked\n"
+msgid "Segment not locked.\n"
 msgstr ""
 
 #: winerror.mc:661
-msgid "Bad thread ID address\n"
+msgid "Bad thread ID address.\n"
 msgstr ""
 
 #: winerror.mc:666
-msgid "Bad arguments to DosExecPgm\n"
+msgid "Bad arguments to DosExecPgm.\n"
 msgstr ""
 
 #: winerror.mc:671
-msgid "Path is invalid\n"
+msgid "Path is invalid.\n"
 msgstr ""
 
 #: winerror.mc:676
-msgid "Signal pending\n"
+msgid "Signal pending.\n"
 msgstr ""
 
 #: winerror.mc:681
-msgid "Max system-wide thread count reached\n"
+msgid "Max system-wide thread count reached.\n"
 msgstr ""
 
 #: winerror.mc:686
-msgid "Lock failed\n"
+msgid "Lock failed.\n"
 msgstr ""
 
 #: winerror.mc:691
 #, fuzzy
-msgid "Resource in use\n"
-msgstr "Fallos de &recursos"
+msgid "Resource in use.\n"
+msgstr "Fallos de &recursos.\n"
 
 #: winerror.mc:696
 #, fuzzy
-msgid "Cancel violation\n"
-msgstr "Violación de nomenclatura"
+msgid "Cancel violation.\n"
+msgstr "Violación de nomenclatura.\n"
 
 #: winerror.mc:701
-msgid "Atomic locks not supported\n"
+msgid "Atomic locks not supported.\n"
 msgstr ""
 
 #: winerror.mc:706
-msgid "Invalid segment number\n"
+msgid "Invalid segment number.\n"
 msgstr ""
 
 #: winerror.mc:711
 #, fuzzy
-msgid "Invalid ordinal for %1\n"
-msgstr "Credenciales inválidos"
+msgid "Invalid ordinal for %1.\n"
+msgstr "Credenciales inválidos.\n"
 
 #: winerror.mc:716
 #, fuzzy
-msgid "File already exists\n"
-msgstr "El puerto %s ya existe"
+msgid "File already exists.\n"
+msgstr "El puerto %s ya existe.\n"
 
 #: winerror.mc:721
-msgid "Invalid flag number\n"
+msgid "Invalid flag number.\n"
 msgstr ""
 
 #: winerror.mc:726
 #, fuzzy
-msgid "Semaphore name not found\n"
-msgstr "ruta %s no encontrada"
+msgid "Semaphore name not found.\n"
+msgstr "ruta %s no encontrada.\n"
 
 #: winerror.mc:731
-msgid "Invalid starting code segment for %1\n"
+msgid "Invalid starting code segment for %1.\n"
 msgstr ""
 
 #: winerror.mc:736
-msgid "Invalid starting stack segment for %1\n"
+msgid "Invalid starting stack segment for %1.\n"
 msgstr ""
 
 #: winerror.mc:741
-msgid "Invalid module type for %1\n"
+msgid "Invalid module type for %1.\n"
 msgstr ""
 
 #: winerror.mc:746
-msgid "Invalid EXE signature in %1\n"
+msgid "Invalid EXE signature in %1.\n"
 msgstr ""
 
 #: winerror.mc:751
-msgid "EXE %1 is marked invalid\n"
+msgid "EXE %1 is marked invalid.\n"
 msgstr ""
 
 #: winerror.mc:756
-msgid "Bad EXE format for %1\n"
+msgid "Bad EXE format for %1.\n"
 msgstr ""
 
 #: winerror.mc:761
-msgid "Iterated data exceeds 64k in %1\n"
+msgid "Iterated data exceeds 64k in %1.\n"
 msgstr ""
 
 #: winerror.mc:766
-msgid "Invalid MinAllocSize in %1\n"
+msgid "Invalid MinAllocSize in %1.\n"
 msgstr ""
 
 #: winerror.mc:771
-msgid "Dynlink from invalid ring\n"
+msgid "Dynlink from invalid ring.\n"
 msgstr ""
 
 #: winerror.mc:776
-msgid "IOPL not enabled\n"
+msgid "IOPL not enabled.\n"
 msgstr ""
 
 #: winerror.mc:781
-msgid "Invalid SEGDPL in %1\n"
+msgid "Invalid SEGDPL in %1.\n"
 msgstr ""
 
 #: winerror.mc:786
-msgid "Auto data segment exceeds 64k\n"
+msgid "Auto data segment exceeds 64k.\n"
 msgstr ""
 
 #: winerror.mc:791
-msgid "Ring 2 segment must be movable\n"
+msgid "Ring 2 segment must be movable.\n"
 msgstr ""
 
 #: winerror.mc:796
-msgid "Relocation chain exceeds segment limit in %1\n"
+msgid "Relocation chain exceeds segment limit in %1.\n"
 msgstr ""
 
 #: winerror.mc:801
-msgid "Infinite loop in relocation chain in %1\n"
+msgid "Infinite loop in relocation chain in %1.\n"
 msgstr ""
 
 #: winerror.mc:806
 #, fuzzy
-msgid "Environment variable not found\n"
-msgstr "Variable de entorno %s no definida\n"
+msgid "Environment variable not found.\n"
+msgstr "Variable de entorno %s no definida.\n"
 
 #: winerror.mc:811
-msgid "No signal sent\n"
+msgid "No signal sent.\n"
 msgstr ""
 
 #: winerror.mc:816
 #, fuzzy
-msgid "File name is too long\n"
+msgid "File name is too long.\n"
 msgstr "La línea de entrada es demasiado larga.\n"
 
 #: winerror.mc:821
-msgid "Ring 2 stack in use\n"
+msgid "Ring 2 stack in use.\n"
 msgstr ""
 
 #: winerror.mc:826
-msgid "Error in use of filename wildcards\n"
+msgid "Error in use of filename wildcards.\n"
 msgstr ""
 
 #: winerror.mc:831
-msgid "Invalid signal number\n"
+msgid "Invalid signal number.\n"
 msgstr ""
 
 #: winerror.mc:836
-msgid "Error setting signal handler\n"
+msgid "Error setting signal handler.\n"
 msgstr ""
 
 #: winerror.mc:841
-msgid "Segment locked\n"
+msgid "Segment locked.\n"
 msgstr ""
 
 #: winerror.mc:846
-msgid "Too many modules\n"
+msgid "Too many modules.\n"
 msgstr ""
 
 #: winerror.mc:851
-msgid "Nesting LoadModule calls not allowed\n"
+msgid "Nesting LoadModule calls not allowed.\n"
 msgstr ""
 
 #: winerror.mc:856
-msgid "Machine type mismatch\n"
+msgid "Machine type mismatch.\n"
 msgstr ""
 
 #: winerror.mc:861
-msgid "Bad pipe\n"
+msgid "Bad pipe.\n"
 msgstr ""
 
 #: winerror.mc:866
-msgid "Pipe busy\n"
+msgid "Pipe busy.\n"
 msgstr ""
 
 #: winerror.mc:871
-msgid "Pipe closed\n"
+msgid "Pipe closed.\n"
 msgstr ""
 
 #: winerror.mc:876
 #, fuzzy
-msgid "Pipe not connected\n"
-msgstr "Archivo no encontrado"
+msgid "Pipe not connected.\n"
+msgstr "Archivo no encontrado.\n"
 
 #: winerror.mc:881
 #, fuzzy
-msgid "More data available\n"
-msgstr "No disponible; "
+msgid "More data available.\n"
+msgstr "No disponible; .\n"
 
 #: winerror.mc:886
 #, fuzzy
-msgid "Session canceled\n"
-msgstr "Cancelado por el usuario"
+msgid "Session canceled.\n"
+msgstr "Cancelado por el usuario.\n"
 
 #: winerror.mc:891
-msgid "Invalid extended attribute name\n"
+msgid "Invalid extended attribute name.\n"
 msgstr ""
 
 #: winerror.mc:896
-msgid "Extended attribute list inconsistent\n"
+msgid "Extended attribute list inconsistent.\n"
 msgstr ""
 
 #: winerror.mc:901
 #, fuzzy
-msgid "No more data available\n"
-msgstr "No disponible; "
+msgid "No more data available.\n"
+msgstr "No disponible; .\n"
 
 #: winerror.mc:906
-msgid "Cannot use Copy API\n"
+msgid "Cannot use Copy API.\n"
 msgstr ""
 
 #: winerror.mc:911
 #, fuzzy
-msgid "Directory name invalid\n"
-msgstr "&Directorio sólo"
+msgid "Directory name invalid.\n"
+msgstr "&Directorio sólo.\n"
 
 #: winerror.mc:916
-msgid "Extended attributes didn't fit\n"
+msgid "Extended attributes didn't fit.\n"
 msgstr ""
 
 #: winerror.mc:921
-msgid "Extended attribute file corrupt\n"
+msgid "Extended attribute file corrupt.\n"
 msgstr ""
 
 #: winerror.mc:926
-msgid "Extended attribute table full\n"
+msgid "Extended attribute table full.\n"
 msgstr ""
 
 #: winerror.mc:931
-msgid "Invalid extended attribute handle\n"
+msgid "Invalid extended attribute handle.\n"
 msgstr ""
 
 #: winerror.mc:936
-msgid "Extended attributes not supported\n"
+msgid "Extended attributes not supported.\n"
 msgstr ""
 
 #: winerror.mc:941
-msgid "Mutex not owned by caller\n"
+msgid "Mutex not owned by caller.\n"
 msgstr ""
 
 #: winerror.mc:946
-msgid "Too many posts to semaphore\n"
+msgid "Too many posts to semaphore.\n"
 msgstr ""
 
 #: winerror.mc:951
-msgid "Read/WriteProcessMemory partially completed\n"
+msgid "Read/WriteProcessMemory partially completed.\n"
 msgstr ""
 
 #: winerror.mc:956
-msgid "The oplock wasn't granted\n"
+msgid "The oplock wasn't granted.\n"
 msgstr ""
 
 #: winerror.mc:961
 #, fuzzy
-msgid "Invalid oplock message received\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid oplock message received.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:966
-msgid "Message 0x%1 not found in file %2\n"
+msgid "Message 0x%1 not found in file %2.\n"
 msgstr ""
 
 #: winerror.mc:971
 #, fuzzy
-msgid "Invalid address\n"
-msgstr "Credenciales inválidos"
+msgid "Invalid address.\n"
+msgstr "Credenciales inválidos.\n"
 
 #: winerror.mc:976
-msgid "Arithmetic overflow\n"
+msgid "Arithmetic overflow.\n"
 msgstr ""
 
 #: winerror.mc:981
-msgid "Pipe connected\n"
+msgid "Pipe connected.\n"
 msgstr ""
 
 #: winerror.mc:986
-msgid "Pipe listening\n"
+msgid "Pipe listening.\n"
 msgstr ""
 
 #: winerror.mc:991
-msgid "Extended attribute access denied\n"
+msgid "Extended attribute access denied.\n"
 msgstr ""
 
 #: winerror.mc:996
 #, fuzzy
-msgid "I/O operation aborted\n"
-msgstr "Error en operacioens"
+msgid "I/O operation aborted.\n"
+msgstr "Error en operacioens.\n"
 
 #: winerror.mc:1001
-msgid "Overlapped I/O incomplete\n"
+msgid "Overlapped I/O incomplete.\n"
 msgstr ""
 
 #: winerror.mc:1006
-msgid "Overlapped I/O pending\n"
+msgid "Overlapped I/O pending.\n"
 msgstr ""
 
 #: winerror.mc:1011
-msgid "No access to memory location\n"
+msgid "No access to memory location.\n"
 msgstr ""
 
 #: winerror.mc:1016
 #, fuzzy
-msgid "Swap error\n"
-msgstr "Error de sintaxis\n"
+msgid "Swap error.\n"
+msgstr "Error de sintaxis.\n"
 
 #: winerror.mc:1021
-msgid "Stack overflow\n"
+msgid "Stack overflow.\n"
 msgstr ""
 
 #: winerror.mc:1026
 #, fuzzy
-msgid "Invalid message\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid message.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:1031
-msgid "Cannot complete\n"
+msgid "Cannot complete.\n"
 msgstr ""
 
 #: winerror.mc:1036
 #, fuzzy
-msgid "Invalid flags\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid flags.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume\n"
+msgid "Unrecognised volume.\n"
 msgstr ""
 
 #: winerror.mc:1046
-msgid "File invalid\n"
+msgid "File invalid.\n"
 msgstr ""
 
 #: winerror.mc:1051
-msgid "Cannot run full-screen\n"
+msgid "Cannot run full-screen.\n"
 msgstr ""
 
 #: winerror.mc:1056
-msgid "Nonexistent token\n"
+msgid "Nonexistent token.\n"
 msgstr ""
 
 #: winerror.mc:1061
 #, fuzzy
-msgid "Registry corrupt\n"
-msgstr "Editor del registro"
+msgid "Registry corrupt.\n"
+msgstr "Editor del registro.\n"
 
 #: winerror.mc:1066
 #, fuzzy
-msgid "Invalid key\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid key.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:1071
 #, fuzzy
-msgid "Can't open registry key\n"
-msgstr "Sale del editor de registro"
+msgid "Can't open registry key.\n"
+msgstr "Sale del editor de registro.\n"
 
 #: winerror.mc:1076
-msgid "Can't read registry key\n"
+msgid "Can't read registry key.\n"
 msgstr ""
 
 #: winerror.mc:1081
 #, fuzzy
-msgid "Can't write registry key\n"
-msgstr "Sale del editor de registro"
+msgid "Can't write registry key.\n"
+msgstr "Sale del editor de registro.\n"
 
 #: winerror.mc:1086
-msgid "Registry has been recovered\n"
+msgid "Registry has been recovered.\n"
 msgstr ""
 
 #: winerror.mc:1091
 #, fuzzy
-msgid "Registry is corrupt\n"
-msgstr "Editor del registro"
+msgid "Registry is corrupt.\n"
+msgstr "Editor del registro.\n"
 
 #: winerror.mc:1096
 #, fuzzy
-msgid "I/O to registry failed\n"
-msgstr "Importar archivo de registro"
+msgid "I/O to registry failed.\n"
+msgstr "Importar archivo de registro.\n"
 
 #: winerror.mc:1101
 #, fuzzy
-msgid "Not registry file\n"
-msgstr "Importar archivo de registro"
+msgid "Not registry file.\n"
+msgstr "Importar archivo de registro.\n"
 
 #: winerror.mc:1106
 #, fuzzy
-msgid "Key deleted\n"
-msgstr "Fecha de borrado"
+msgid "Key deleted.\n"
+msgstr "Fecha de borrado.\n"
 
 #: winerror.mc:1111
-msgid "No registry log space\n"
+msgid "No registry log space.\n"
 msgstr ""
 
 #: winerror.mc:1116
-msgid "Registry key has subkeys\n"
+msgid "Registry key has subkeys.\n"
 msgstr ""
 
 #: winerror.mc:1121
-msgid "Subkey must be volatile\n"
+msgid "Subkey must be volatile.\n"
 msgstr ""
 
 #: winerror.mc:1126
-msgid "Notify change request in progress\n"
+msgid "Notify change request in progress.\n"
 msgstr ""
 
 #: winerror.mc:1131
-msgid "Dependent services are running\n"
+msgid "Dependent services are running.\n"
 msgstr ""
 
 #: winerror.mc:1136
 #, fuzzy
-msgid "Invalid service control\n"
-msgstr "Credenciales inválidos"
+msgid "Invalid service control.\n"
+msgstr "Credenciales inválidos.\n"
 
 #: winerror.mc:1141
-msgid "Service request timeout\n"
+msgid "Service request timeout.\n"
 msgstr ""
 
 #: winerror.mc:1146
-msgid "Cannot create service thread\n"
+msgid "Cannot create service thread.\n"
 msgstr ""
 
 #: winerror.mc:1151
-msgid "Service database locked\n"
+msgid "Service database locked.\n"
 msgstr ""
 
 #: winerror.mc:1156
-msgid "Service already running\n"
+msgid "Service already running.\n"
 msgstr ""
 
 #: winerror.mc:1161
-msgid "Invalid service account\n"
+msgid "Invalid service account.\n"
 msgstr ""
 
 #: winerror.mc:1166
-msgid "Service is disabled\n"
+msgid "Service is disabled.\n"
 msgstr ""
 
 #: winerror.mc:1171
-msgid "Circular dependency\n"
+msgid "Circular dependency.\n"
 msgstr ""
 
 #: winerror.mc:1176
 #, fuzzy
-msgid "Service does not exist\n"
-msgstr "El archivo no existe"
+msgid "Service does not exist.\n"
+msgstr "El archivo no existe.\n"
 
 #: winerror.mc:1181
-msgid "Service cannot accept control message\n"
+msgid "Service cannot accept control message.\n"
 msgstr ""
 
 #: winerror.mc:1186
-msgid "Service not active\n"
+msgid "Service not active.\n"
 msgstr ""
 
 #: winerror.mc:1191
-msgid "Service controller connect failed\n"
+msgid "Service controller connect failed.\n"
 msgstr ""
 
 #: winerror.mc:1196
-msgid "Exception in service\n"
+msgid "Exception in service.\n"
 msgstr ""
 
 #: winerror.mc:1201
 #, fuzzy
-msgid "Database does not exist\n"
-msgstr "La ruta no existe"
+msgid "Database does not exist.\n"
+msgstr "La ruta no existe.\n"
 
 #: winerror.mc:1206
-msgid "Service-specific error\n"
+msgid "Service-specific error.\n"
 msgstr ""
 
 #: winerror.mc:1211
-msgid "Process aborted\n"
+msgid "Process aborted.\n"
 msgstr ""
 
 #: winerror.mc:1216
-msgid "Service dependency failed\n"
+msgid "Service dependency failed.\n"
 msgstr ""
 
 #: winerror.mc:1221
-msgid "Service login failed\n"
+msgid "Service login failed.\n"
 msgstr ""
 
 #: winerror.mc:1226
-msgid "Service start-hang\n"
+msgid "Service start-hang.\n"
 msgstr ""
 
 #: winerror.mc:1231
-msgid "Invalid service lock\n"
+msgid "Invalid service lock.\n"
 msgstr ""
 
 #: winerror.mc:1236
-msgid "Service marked for delete\n"
+msgid "Service marked for delete.\n"
 msgstr ""
 
 #: winerror.mc:1241
-msgid "Service exists\n"
+msgid "Service exists.\n"
 msgstr ""
 
 #: winerror.mc:1246
-msgid "System running last-known-good config\n"
+msgid "System running last-known-good config.\n"
 msgstr ""
 
 #: winerror.mc:1251
-msgid "Service dependency deleted\n"
+msgid "Service dependency deleted.\n"
 msgstr ""
 
 #: winerror.mc:1256
-msgid "Boot already accepted as last-good config\n"
+msgid "Boot already accepted as last-good config.\n"
 msgstr ""
 
 #: winerror.mc:1261
-msgid "Service not started since last boot\n"
+msgid "Service not started since last boot.\n"
 msgstr ""
 
 #: winerror.mc:1266
-msgid "Duplicate service name\n"
+msgid "Duplicate service name.\n"
 msgstr ""
 
 #: winerror.mc:1271
-msgid "Different service account\n"
+msgid "Different service account.\n"
 msgstr ""
 
 #: winerror.mc:1276
-msgid "Driver failure cannot be detected\n"
+msgid "Driver failure cannot be detected.\n"
 msgstr ""
 
 #: winerror.mc:1281
 #, fuzzy
-msgid "Process abort cannot be detected\n"
-msgstr "Bucle detectado"
+msgid "Process abort cannot be detected.\n"
+msgstr "Bucle detectado.\n"
 
 #: winerror.mc:1286
-msgid "No recovery program for service\n"
+msgid "No recovery program for service.\n"
 msgstr ""
 
 #: winerror.mc:1291
 #, fuzzy
-msgid "Service not implemented by exe\n"
+msgid "Service not implemented by exe.\n"
 msgstr ""
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
 "No implementado\n"
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Aún no implementado"
+"Aún no implementado.\n"
 
 #: winerror.mc:1296
-msgid "End of media\n"
+msgid "End of media.\n"
 msgstr ""
 
 #: winerror.mc:1301
-msgid "Filemark detected\n"
+msgid "Filemark detected.\n"
 msgstr ""
 
 #: winerror.mc:1306
-msgid "Beginning of media\n"
+msgid "Beginning of media.\n"
 msgstr ""
 
 #: winerror.mc:1311
-msgid "Setmark detected\n"
+msgid "Setmark detected.\n"
 msgstr ""
 
 #: winerror.mc:1316
 #, fuzzy
-msgid "No data detected\n"
-msgstr "Bucle detectado"
+msgid "No data detected.\n"
+msgstr "Bucle detectado.\n"
 
 #: winerror.mc:1321
-msgid "Partition failure\n"
+msgid "Partition failure.\n"
 msgstr ""
 
 #: winerror.mc:1326
-msgid "Invalid block length\n"
+msgid "Invalid block length.\n"
 msgstr ""
 
 #: winerror.mc:1331
-msgid "Device not partitioned\n"
+msgid "Device not partitioned.\n"
 msgstr ""
 
 #: winerror.mc:1336
-msgid "Unable to lock media\n"
+msgid "Unable to lock media.\n"
 msgstr ""
 
 #: winerror.mc:1341
-msgid "Unable to unload media\n"
+msgid "Unable to unload media.\n"
 msgstr ""
 
 #: winerror.mc:1346
-msgid "Media changed\n"
+msgid "Media changed.\n"
 msgstr ""
 
 #: winerror.mc:1351
-msgid "I/O bus reset\n"
+msgid "I/O bus reset.\n"
 msgstr ""
 
 #: winerror.mc:1356
-msgid "No media in drive\n"
+msgid "No media in drive.\n"
 msgstr ""
 
 #: winerror.mc:1361
-msgid "No Unicode translation\n"
+msgid "No Unicode translation.\n"
 msgstr ""
 
 #: winerror.mc:1366
-msgid "DLL init failed\n"
+msgid "DLL init failed.\n"
 msgstr ""
 
 #: winerror.mc:1371
-msgid "Shutdown in progress\n"
+msgid "Shutdown in progress.\n"
 msgstr ""
 
 #: winerror.mc:1376
-msgid "No shutdown in progress\n"
+msgid "No shutdown in progress.\n"
 msgstr ""
 
 #: winerror.mc:1381
-msgid "I/O device error\n"
+msgid "I/O device error.\n"
 msgstr ""
 
 #: winerror.mc:1386
-msgid "No serial devices found\n"
+msgid "No serial devices found.\n"
 msgstr ""
 
 #: winerror.mc:1391
-msgid "Shared IRQ busy\n"
+msgid "Shared IRQ busy.\n"
 msgstr ""
 
 #: winerror.mc:1396
-msgid "Serial I/O completed\n"
+msgid "Serial I/O completed.\n"
 msgstr ""
 
 #: winerror.mc:1401
-msgid "Serial I/O counter timeout\n"
+msgid "Serial I/O counter timeout.\n"
 msgstr ""
 
 #: winerror.mc:1406
-msgid "Floppy ID address mark not found\n"
+msgid "Floppy ID address mark not found.\n"
 msgstr ""
 
 #: winerror.mc:1411
-msgid "Floppy reports wrong cylinder\n"
+msgid "Floppy reports wrong cylinder.\n"
 msgstr ""
 
 #: winerror.mc:1416
 #, fuzzy
-msgid "Unknown floppy error\n"
-msgstr "Origen desconocido"
+msgid "Unknown floppy error.\n"
+msgstr "Origen desconocido.\n"
 
 #: winerror.mc:1421
-msgid "Floppy registers inconsistent\n"
+msgid "Floppy registers inconsistent.\n"
 msgstr ""
 
 #: winerror.mc:1426
-msgid "Hard disk recalibrate failed\n"
+msgid "Hard disk recalibrate failed.\n"
 msgstr ""
 
 #: winerror.mc:1431
-msgid "Hard disk operation failed\n"
+msgid "Hard disk operation failed.\n"
 msgstr ""
 
 #: winerror.mc:1436
-msgid "Hard disk reset failed\n"
+msgid "Hard disk reset failed.\n"
 msgstr ""
 
 #: winerror.mc:1441
-msgid "End of tape media\n"
+msgid "End of tape media.\n"
 msgstr ""
 
 #: winerror.mc:1446
-msgid "Not enough server memory\n"
+msgid "Not enough server memory.\n"
 msgstr ""
 
 #: winerror.mc:1451
-msgid "Possible deadlock\n"
+msgid "Possible deadlock.\n"
 msgstr ""
 
 #: winerror.mc:1456
-msgid "Incorrect alignment\n"
+msgid "Incorrect alignment.\n"
 msgstr ""
 
 #: winerror.mc:1461
-msgid "Set-power-state vetoed\n"
+msgid "Set-power-state vetoed.\n"
 msgstr ""
 
 #: winerror.mc:1466
-msgid "Set-power-state failed\n"
+msgid "Set-power-state failed.\n"
 msgstr ""
 
 #: winerror.mc:1471
-msgid "Too many links\n"
+msgid "Too many links.\n"
 msgstr ""
 
 #: winerror.mc:1476
-msgid "Newer windows version needed\n"
+msgid "Newer windows version needed.\n"
 msgstr ""
 
 #: winerror.mc:1481
-msgid "Wrong operating system\n"
+msgid "Wrong operating system.\n"
 msgstr ""
 
 #: winerror.mc:1486
-msgid "Single-instance application\n"
+msgid "Single-instance application.\n"
 msgstr ""
 
 #: winerror.mc:1491
 #, fuzzy
-msgid "Real-mode application\n"
-msgstr "Aplicaciones"
+msgid "Real-mode application.\n"
+msgstr "Aplicaciones.\n"
 
 #: winerror.mc:1496
 #, fuzzy
-msgid "Invalid DLL\n"
-msgstr "Sintaxis inválida de DN"
+msgid "Invalid DLL.\n"
+msgstr "Sintaxis inválida de DN.\n"
 
 #: winerror.mc:1501
-msgid "No associated application\n"
+msgid "No associated application.\n"
 msgstr ""
 
 #: winerror.mc:1506
-msgid "DDE failure\n"
+msgid "DDE failure.\n"
 msgstr ""
 
 #: winerror.mc:1511
 #, fuzzy
-msgid "DLL not found\n"
-msgstr "PATH no encontrado\n"
+msgid "DLL not found.\n"
+msgstr "PATH no encontrado.\n"
 
 #: winerror.mc:1516
 #, fuzzy
-msgid "Out of user handles\n"
+msgid "Out of user handles.\n"
 msgstr "Sin memoria."
 
 #: winerror.mc:1521
-msgid "Message can only be used in synchronous calls\n"
+msgid "Message can only be used in synchronous calls.\n"
 msgstr ""
 
 #: winerror.mc:1526
-msgid "The source element is empty\n"
+msgid "The source element is empty.\n"
 msgstr ""
 
 #: winerror.mc:1531
 #, fuzzy
-msgid "The destination element is full\n"
-msgstr "La operación finalizó con éxito\n"
+msgid "The destination element is full.\n"
+msgstr "La operación finalizó con éxito.\n"
 
 #: winerror.mc:1536
 #, fuzzy
-msgid "The element address is invalid\n"
+msgid "The element address is invalid.\n"
 msgstr "El handle de dispositivo especificado es inválido."
 
 #: winerror.mc:1541
-msgid "The magazine is not present\n"
+msgid "The magazine is not present.\n"
 msgstr ""
 
 #: winerror.mc:1546
-msgid "The device needs reinitialization\n"
+msgid "The device needs reinitialization.\n"
 msgstr ""
 
 #: winerror.mc:1551
 #, fuzzy
-msgid "The device requires cleaning\n"
+msgid "The device requires cleaning.\n"
 msgstr "El controlador de dispositivo no está listo."
 
 #: winerror.mc:1556
 #, fuzzy
-msgid "The device door is open\n"
-msgstr "Puerta de la impresora abierta; "
+msgid "The device door is open.\n"
+msgstr "Puerta de la impresora abierta; .\n"
 
 #: winerror.mc:1561
 #, fuzzy
-msgid "The device is not connected\n"
-msgstr "Archivo no encontrado"
+msgid "The device is not connected.\n"
+msgstr "Archivo no encontrado.\n"
 
 #: winerror.mc:1566
 #, fuzzy
-msgid "Element not found\n"
-msgstr "PATH no encontrado\n"
+msgid "Element not found.\n"
+msgstr "PATH no encontrado.\n"
 
 #: winerror.mc:1571
 #, fuzzy
-msgid "No match found\n"
-msgstr "ruta %s no encontrada"
+msgid "No match found.\n"
+msgstr "ruta %s no encontrada.\n"
 
 #: winerror.mc:1576
 #, fuzzy
-msgid "Property set not found\n"
-msgstr "PATH no encontrado\n"
+msgid "Property set not found.\n"
+msgstr "PATH no encontrado.\n"
 
 #: winerror.mc:1581
 #, fuzzy
-msgid "Point not found\n"
-msgstr "ruta %s no encontrada"
+msgid "Point not found.\n"
+msgstr "ruta %s no encontrada.\n"
 
 #: winerror.mc:1586
-msgid "No running tracking service\n"
+msgid "No running tracking service.\n"
 msgstr ""
 
 #: winerror.mc:1591
 #, fuzzy
-msgid "No such volume ID\n"
-msgstr "No existe dicho atributo"
+msgid "No such volume ID.\n"
+msgstr "No existe dicho atributo.\n"
 
 #: winerror.mc:1596
-msgid "Unable to remove the file to be replaced\n"
+msgid "Unable to remove the file to be replaced.\n"
 msgstr ""
 
 #: winerror.mc:1601
-msgid "Unable to move the replacement file into place\n"
+msgid "Unable to move the replacement file into place.\n"
 msgstr ""
 
 #: winerror.mc:1606
-msgid "Moving the replacement file failed\n"
+msgid "Moving the replacement file failed.\n"
 msgstr ""
 
 #: winerror.mc:1611
 #, fuzzy
-msgid "The journal is being deleted\n"
-msgstr "Fecha de borrado"
+msgid "The journal is being deleted.\n"
+msgstr "Fecha de borrado.\n"
 
 #: winerror.mc:1616
-msgid "The journal is not active\n"
+msgid "The journal is not active.\n"
 msgstr ""
 
 #: winerror.mc:1621
-msgid "Potential matching file found\n"
+msgid "Potential matching file found.\n"
 msgstr ""
 
 #: winerror.mc:1626
-msgid "The journal entry was deleted\n"
+msgid "The journal entry was deleted.\n"
 msgstr ""
 
 #: winerror.mc:1631
 #, fuzzy
-msgid "Invalid device name\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid device name.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:1636
 #, fuzzy
-msgid "Connection unavailable\n"
-msgstr "No disponible; "
+msgid "Connection unavailable.\n"
+msgstr "No disponible; .\n"
 
 #: winerror.mc:1641
-msgid "Device already remembered\n"
+msgid "Device already remembered.\n"
 msgstr ""
 
 #: winerror.mc:1646
-msgid "No network or bad path\n"
+msgid "No network or bad path.\n"
 msgstr ""
 
 #: winerror.mc:1651
-msgid "Invalid network provider name\n"
+msgid "Invalid network provider name.\n"
 msgstr ""
 
 #: winerror.mc:1656
-msgid "Cannot open network connection profile\n"
+msgid "Cannot open network connection profile.\n"
 msgstr ""
 
 #: winerror.mc:1661
-msgid "Corrupt network connection profile\n"
+msgid "Corrupt network connection profile.\n"
 msgstr ""
 
 #: winerror.mc:1666
-msgid "Not a container\n"
+msgid "Not a container.\n"
 msgstr ""
 
 #: winerror.mc:1671
-msgid "Extended error\n"
+msgid "Extended error.\n"
 msgstr ""
 
 #: winerror.mc:1676
 #, fuzzy
-msgid "Invalid group name\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid group name.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:1681
 #, fuzzy
-msgid "Invalid computer name\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid computer name.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:1686
 #, fuzzy
-msgid "Invalid event name\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid event name.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:1691
 #, fuzzy
-msgid "Invalid domain name\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid domain name.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:1696
 #, fuzzy
-msgid "Invalid service name\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid service name.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:1701
 #, fuzzy
-msgid "Invalid network name\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid network name.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:1706
 #, fuzzy
-msgid "Invalid share name\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid share name.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:1716
 #, fuzzy
-msgid "Invalid message name\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid message name.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:1721
-msgid "Invalid message destination\n"
+msgid "Invalid message destination.\n"
 msgstr ""
 
 #: winerror.mc:1726
-msgid "Session credential conflict\n"
+msgid "Session credential conflict.\n"
 msgstr ""
 
 #: winerror.mc:1731
 #, fuzzy
-msgid "Remote session limit exceeded\n"
-msgstr "Límite de saltos de remisiones excedido"
+msgid "Remote session limit exceeded.\n"
+msgstr "Límite de saltos de remisiones excedido.\n"
 
 #: winerror.mc:1736
-msgid "Duplicate domain or workgroup name\n"
+msgid "Duplicate domain or workgroup name.\n"
 msgstr ""
 
 #: winerror.mc:1741
-msgid "No network\n"
+msgid "No network.\n"
 msgstr ""
 
 #: winerror.mc:1746
 #, fuzzy
-msgid "Operation canceled by user\n"
-msgstr "Programas de instalación"
+msgid "Operation canceled by user.\n"
+msgstr "Programas de instalación.\n"
 
 #: winerror.mc:1751
-msgid "File has a user-mapped section\n"
+msgid "File has a user-mapped section.\n"
 msgstr ""
 
 #: winerror.mc:1756 winerror.mc:3741
 #, fuzzy
-msgid "Connection refused\n"
-msgstr "Conectando to %s"
+msgid "Connection refused.\n"
+msgstr "Conectando to %s.\n"
 
 #: winerror.mc:1761
-msgid "Connection gracefully closed\n"
+msgid "Connection gracefully closed.\n"
 msgstr ""
 
 #: winerror.mc:1766
-msgid "Address already associated with transport endpoint\n"
+msgid "Address already associated with transport endpoint.\n"
 msgstr ""
 
 #: winerror.mc:1771
-msgid "Address not associated with transport endpoint\n"
+msgid "Address not associated with transport endpoint.\n"
 msgstr ""
 
 #: winerror.mc:1776
 #, fuzzy
-msgid "Connection invalid\n"
-msgstr "Conexión LAN"
+msgid "Connection invalid.\n"
+msgstr "Conexión LAN.\n"
 
 #: winerror.mc:1781
-msgid "Connection is active\n"
+msgid "Connection is active.\n"
 msgstr ""
 
 #: winerror.mc:1786
 #, fuzzy
-msgid "Network unreachable\n"
-msgstr "Compartición de red"
+msgid "Network unreachable.\n"
+msgstr "Compartición de red.\n"
 
 #: winerror.mc:1791
-msgid "Host unreachable\n"
+msgid "Host unreachable.\n"
 msgstr ""
 
 #: winerror.mc:1796
-msgid "Protocol unreachable\n"
+msgid "Protocol unreachable.\n"
 msgstr ""
 
 #: winerror.mc:1801
-msgid "Port unreachable\n"
+msgid "Port unreachable.\n"
 msgstr ""
 
 #: winerror.mc:1806
-msgid "Request aborted\n"
+msgid "Request aborted.\n"
 msgstr ""
 
 #: winerror.mc:1811
 #, fuzzy
-msgid "Connection aborted\n"
-msgstr "Conectando to %s"
+msgid "Connection aborted.\n"
+msgstr "Conectando to %s.\n"
 
 #: winerror.mc:1816
-msgid "Please retry operation\n"
+msgid "Please retry operation.\n"
 msgstr ""
 
 #: winerror.mc:1821
-msgid "Connection count limit reached\n"
+msgid "Connection count limit reached.\n"
 msgstr ""
 
 #: winerror.mc:1826
-msgid "Login time restriction\n"
+msgid "Login time restriction.\n"
 msgstr ""
 
 #: winerror.mc:1831
-msgid "Login workstation restriction\n"
+msgid "Login workstation restriction.\n"
 msgstr ""
 
 #: winerror.mc:1836
-msgid "Incorrect network address\n"
+msgid "Incorrect network address.\n"
 msgstr ""
 
 #: winerror.mc:1841
-msgid "Service already registered\n"
+msgid "Service already registered.\n"
 msgstr ""
 
 #: winerror.mc:1846
 #, fuzzy
-msgid "Service not found\n"
-msgstr "Archivo no encontrado"
+msgid "Service not found.\n"
+msgstr "Archivo no encontrado.\n"
 
 #: winerror.mc:1851
-msgid "User not authenticated\n"
+msgid "User not authenticated.\n"
 msgstr ""
 
 #: winerror.mc:1856
-msgid "User not logged on\n"
+msgid "User not logged on.\n"
 msgstr ""
 
 #: winerror.mc:1861
-msgid "Continue work in progress\n"
+msgid "Continue work in progress.\n"
 msgstr ""
 
 #: winerror.mc:1866
 #, fuzzy
-msgid "Already initialised\n"
-msgstr "Ya existe"
+msgid "Already initialised.\n"
+msgstr "Ya existe.\n"
 
 #: winerror.mc:1871
-msgid "No more local devices\n"
+msgid "No more local devices.\n"
 msgstr ""
 
 #: winerror.mc:1876
 #, fuzzy
-msgid "The site does not exist\n"
-msgstr "El archivo no existe"
+msgid "The site does not exist.\n"
+msgstr "El archivo no existe.\n"
 
 #: winerror.mc:1881
 #, fuzzy
-msgid "The domain controller already exists\n"
-msgstr "El puerto %s ya existe"
+msgid "The domain controller already exists.\n"
+msgstr "El puerto %s ya existe.\n"
 
 #: winerror.mc:1886
 #, fuzzy
-msgid "Supported only when connected\n"
-msgstr "Archivo no encontrado"
+msgid "Supported only when connected.\n"
+msgstr "Archivo no encontrado.\n"
 
 #: winerror.mc:1891
-msgid "Perform operation even when nothing changed\n"
+msgid "Perform operation even when nothing changed.\n"
 msgstr ""
 
 #: winerror.mc:1896
 #, fuzzy
-msgid "The user profile is invalid\n"
+msgid "The user profile is invalid.\n"
 msgstr "El handle de dispositivo especificado es inválido."
 
 #: winerror.mc:1901
-msgid "Not supported on Small Business Server\n"
+msgid "Not supported on Small Business Server.\n"
 msgstr ""
 
 #: winerror.mc:1906
-msgid "Not all privileges assigned\n"
+msgid "Not all privileges assigned.\n"
 msgstr ""
 
 #: winerror.mc:1911
-msgid "Some security IDs not mapped\n"
+msgid "Some security IDs not mapped.\n"
 msgstr ""
 
 #: winerror.mc:1916
-msgid "No quotas for account\n"
+msgid "No quotas for account.\n"
 msgstr ""
 
 #: winerror.mc:1921
-msgid "Local user session key\n"
+msgid "Local user session key.\n"
 msgstr ""
 
 #: winerror.mc:1926
-msgid "Password too complex for LM\n"
+msgid "Password too complex for LM.\n"
 msgstr ""
 
 #: winerror.mc:1931
 #, fuzzy
-msgid "Unknown revision\n"
-msgstr "Origen desconocido"
+msgid "Unknown revision.\n"
+msgstr "Origen desconocido.\n"
 
 #: winerror.mc:1936
-msgid "Incompatible revision levels\n"
+msgid "Incompatible revision levels.\n"
 msgstr ""
 
 #: winerror.mc:1941
 #, fuzzy
-msgid "Invalid owner\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid owner.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:1946
 #, fuzzy
-msgid "Invalid primary group\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid primary group.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:1951
-msgid "No impersonation token\n"
+msgid "No impersonation token.\n"
 msgstr ""
 
 #: winerror.mc:1956
-msgid "Can't disable mandatory group\n"
+msgid "Can't disable mandatory group.\n"
 msgstr ""
 
 #: winerror.mc:1961
-msgid "No logon servers available\n"
+msgid "No logon servers available.\n"
 msgstr ""
 
 #: winerror.mc:1966
-msgid "No such logon session\n"
+msgid "No such logon session.\n"
 msgstr ""
 
 #: winerror.mc:1971
-msgid "No such privilege\n"
+msgid "No such privilege.\n"
 msgstr ""
 
 #: winerror.mc:1976
-msgid "Privilege not held\n"
+msgid "Privilege not held.\n"
 msgstr ""
 
 #: winerror.mc:1981
 #, fuzzy
-msgid "Invalid account name\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid account name.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:1986
 #, fuzzy
-msgid "User already exists\n"
-msgstr "El puerto %s ya existe"
+msgid "User already exists.\n"
+msgstr "El puerto %s ya existe.\n"
 
 #: winerror.mc:1991
 #, fuzzy
-msgid "No such user\n"
-msgstr "No existe dicho atributo"
+msgid "No such user.\n"
+msgstr "No existe dicho atributo.\n"
 
 #: winerror.mc:1996
 #, fuzzy
-msgid "Group already exists\n"
-msgstr "El puerto %s ya existe"
+msgid "Group already exists.\n"
+msgstr "El puerto %s ya existe.\n"
 
 #: winerror.mc:2001
-msgid "No such group\n"
+msgid "No such group.\n"
 msgstr ""
 
 #: winerror.mc:2006
-msgid "User already in group\n"
+msgid "User already in group.\n"
 msgstr ""
 
 #: winerror.mc:2011
-msgid "User not in group\n"
+msgid "User not in group.\n"
 msgstr ""
 
 #: winerror.mc:2016
-msgid "Can't delete last admin user\n"
+msgid "Can't delete last admin user.\n"
 msgstr ""
 
 #: winerror.mc:2021
-msgid "Wrong password\n"
+msgid "Wrong password.\n"
 msgstr ""
 
 #: winerror.mc:2026
-msgid "Ill-formed password\n"
+msgid "Ill-formed password.\n"
 msgstr ""
 
 #: winerror.mc:2031
-msgid "Password restriction\n"
+msgid "Password restriction.\n"
 msgstr ""
 
 #: winerror.mc:2036
-msgid "Logon failure\n"
+msgid "Logon failure.\n"
 msgstr ""
 
 #: winerror.mc:2041
-msgid "Account restriction\n"
+msgid "Account restriction.\n"
 msgstr ""
 
 #: winerror.mc:2046
-msgid "Invalid logon hours\n"
+msgid "Invalid logon hours.\n"
 msgstr ""
 
 #: winerror.mc:2051
 #, fuzzy
-msgid "Invalid workstation\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid workstation.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2056
-msgid "Password expired\n"
+msgid "Password expired.\n"
 msgstr ""
 
 #: winerror.mc:2061
 #, fuzzy
-msgid "Account disabled\n"
-msgstr "deshabilitada"
+msgid "Account disabled.\n"
+msgstr "deshabilitada.\n"
 
 #: winerror.mc:2066
-msgid "No security ID mapped\n"
+msgid "No security ID mapped.\n"
 msgstr ""
 
 #: winerror.mc:2071
-msgid "Too many LUIDs requested\n"
+msgid "Too many LUIDs requested.\n"
 msgstr ""
 
 #: winerror.mc:2076
-msgid "LUIDs exhausted\n"
+msgid "LUIDs exhausted.\n"
 msgstr ""
 
 #: winerror.mc:2081
-msgid "Invalid sub authority\n"
+msgid "Invalid sub authority.\n"
 msgstr ""
 
 #: winerror.mc:2086
 #, fuzzy
-msgid "Invalid ACL\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid ACL.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2091
 #, fuzzy
-msgid "Invalid SID\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid SID.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2096
-msgid "Invalid security descriptor\n"
+msgid "Invalid security descriptor.\n"
 msgstr ""
 
 #: winerror.mc:2101
-msgid "Bad inherited ACL\n"
+msgid "Bad inherited ACL.\n"
 msgstr ""
 
 #: winerror.mc:2106
 #, fuzzy
-msgid "Server disabled\n"
-msgstr "deshabilitada"
+msgid "Server disabled.\n"
+msgstr "deshabilitada.\n"
 
 #: winerror.mc:2111
 #, fuzzy
-msgid "Server not disabled\n"
+msgid "Server not disabled.\n"
 msgstr "El manejador no fue activado."
 
 #: winerror.mc:2116
-msgid "Invalid ID authority\n"
+msgid "Invalid ID authority.\n"
 msgstr ""
 
 #: winerror.mc:2121
-msgid "Allotted space exceeded\n"
+msgid "Allotted space exceeded.\n"
 msgstr ""
 
 #: winerror.mc:2126
-msgid "Invalid group attributes\n"
+msgid "Invalid group attributes.\n"
 msgstr ""
 
 #: winerror.mc:2131
-msgid "Bad impersonation level\n"
+msgid "Bad impersonation level.\n"
 msgstr ""
 
 #: winerror.mc:2136
-msgid "Can't open anonymous security token\n"
+msgid "Can't open anonymous security token.\n"
 msgstr ""
 
 #: winerror.mc:2141
-msgid "Bad validation class\n"
+msgid "Bad validation class.\n"
 msgstr ""
 
 #: winerror.mc:2146
-msgid "Bad token type\n"
+msgid "Bad token type.\n"
 msgstr ""
 
 #: winerror.mc:2151
-msgid "No security on object\n"
+msgid "No security on object.\n"
 msgstr ""
 
 #: winerror.mc:2156
-msgid "Can't access domain information\n"
+msgid "Can't access domain information.\n"
 msgstr ""
 
 #: winerror.mc:2161
 #, fuzzy
-msgid "Invalid server state\n"
-msgstr "Credenciales inválidos"
+msgid "Invalid server state.\n"
+msgstr "Credenciales inválidos.\n"
 
 #: winerror.mc:2166
 #, fuzzy
-msgid "Invalid domain state\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid domain state.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2171
-msgid "Invalid domain role\n"
+msgid "Invalid domain role.\n"
 msgstr ""
 
 #: winerror.mc:2176
-msgid "No such domain\n"
+msgid "No such domain.\n"
 msgstr ""
 
 #: winerror.mc:2181
 #, fuzzy
-msgid "Domain already exists\n"
-msgstr "El puerto %s ya existe"
+msgid "Domain already exists.\n"
+msgstr "El puerto %s ya existe.\n"
 
 #: winerror.mc:2186
 #, fuzzy
-msgid "Domain limit exceeded\n"
-msgstr "Límite de tiempo excedido"
+msgid "Domain limit exceeded.\n"
+msgstr "Límite de tiempo excedido.\n"
 
 #: winerror.mc:2191
-msgid "Internal database corruption\n"
+msgid "Internal database corruption.\n"
 msgstr ""
 
 #: winerror.mc:2196
 #, fuzzy
-msgid "Internal error\n"
-msgstr "Error de sintaxis\n"
+msgid "Internal error.\n"
+msgstr "Error de sintaxis.\n"
 
 #: winerror.mc:2201
-msgid "Generic access types not mapped\n"
+msgid "Generic access types not mapped.\n"
 msgstr ""
 
 #: winerror.mc:2206
-msgid "Bad descriptor format\n"
+msgid "Bad descriptor format.\n"
 msgstr ""
 
 #: winerror.mc:2211
-msgid "Not a logon process\n"
+msgid "Not a logon process.\n"
 msgstr ""
 
 #: winerror.mc:2216
-msgid "Logon session ID exists\n"
+msgid "Logon session ID exists.\n"
 msgstr ""
 
 #: winerror.mc:2221
-msgid "Unknown authentication package\n"
+msgid "Unknown authentication package.\n"
 msgstr ""
 
 #: winerror.mc:2226
-msgid "Bad logon session state\n"
+msgid "Bad logon session state.\n"
 msgstr ""
 
 #: winerror.mc:2231
-msgid "Logon session ID collision\n"
+msgid "Logon session ID collision.\n"
 msgstr ""
 
 #: winerror.mc:2236
 #, fuzzy
-msgid "Invalid logon type\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid logon type.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2241
 #, fuzzy
-msgid "Cannot impersonate\n"
+msgid "Cannot impersonate.\n"
 msgstr "No se encuentra la impresora."
 
 #: winerror.mc:2246
 #, fuzzy
-msgid "Invalid transaction state\n"
-msgstr "Caracter(es) inválidos en la ruta"
+msgid "Invalid transaction state.\n"
+msgstr "Caracter(es) inválidos en la ruta.\n"
 
 #: winerror.mc:2251
-msgid "Security DB commit failure\n"
+msgid "Security DB commit failure.\n"
 msgstr ""
 
 #: winerror.mc:2256
 #, fuzzy
-msgid "Account is built-in\n"
-msgstr "nativa, interna"
+msgid "Account is built-in.\n"
+msgstr "nativa, interna.\n"
 
 #: winerror.mc:2261
-msgid "Group is built-in\n"
+msgid "Group is built-in.\n"
 msgstr ""
 
 #: winerror.mc:2266
-msgid "User is built-in\n"
+msgid "User is built-in.\n"
 msgstr ""
 
 #: winerror.mc:2271
-msgid "Group is primary for user\n"
+msgid "Group is primary for user.\n"
 msgstr ""
 
 #: winerror.mc:2276
-msgid "Token already in use\n"
+msgid "Token already in use.\n"
 msgstr ""
 
 #: winerror.mc:2281
-msgid "No such local group\n"
+msgid "No such local group.\n"
 msgstr ""
 
 #: winerror.mc:2286
-msgid "User not in local group\n"
+msgid "User not in local group.\n"
 msgstr ""
 
 #: winerror.mc:2291
-msgid "User already in local group\n"
+msgid "User already in local group.\n"
 msgstr ""
 
 #: winerror.mc:2296
 #, fuzzy
-msgid "Local group already exists\n"
-msgstr "El puerto %s ya existe"
+msgid "Local group already exists.\n"
+msgstr "El puerto %s ya existe.\n"
 
 #: winerror.mc:2301 winerror.mc:2326
-msgid "Logon type not granted\n"
+msgid "Logon type not granted.\n"
 msgstr ""
 
 #: winerror.mc:2306
-msgid "Too many secrets\n"
+msgid "Too many secrets.\n"
 msgstr ""
 
 #: winerror.mc:2311
-msgid "Secret too long\n"
+msgid "Secret too long.\n"
 msgstr ""
 
 #: winerror.mc:2316
-msgid "Internal security DB error\n"
+msgid "Internal security DB error.\n"
 msgstr ""
 
 #: winerror.mc:2321
-msgid "Too many context IDs\n"
+msgid "Too many context IDs.\n"
 msgstr ""
 
 #: winerror.mc:2331
-msgid "Cross-encrypted NT password required\n"
+msgid "Cross-encrypted NT password required.\n"
 msgstr ""
 
 #: winerror.mc:2336
 #, fuzzy
-msgid "No such member\n"
-msgstr "No existe dicho objeto"
+msgid "No such member.\n"
+msgstr "No existe dicho objeto.\n"
 
 #: winerror.mc:2341
 #, fuzzy
-msgid "Invalid member\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid member.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:2346
-msgid "Too many SIDs\n"
+msgid "Too many SIDs.\n"
 msgstr ""
 
 #: winerror.mc:2351
-msgid "Cross-encrypted LM password required\n"
+msgid "Cross-encrypted LM password required.\n"
 msgstr ""
 
 #: winerror.mc:2356
-msgid "No inheritable components\n"
+msgid "No inheritable components.\n"
 msgstr ""
 
 #: winerror.mc:2361
-msgid "File or directory corrupt\n"
+msgid "File or directory corrupt.\n"
 msgstr ""
 
 #: winerror.mc:2366
-msgid "Disk is corrupt\n"
+msgid "Disk is corrupt.\n"
 msgstr ""
 
 #: winerror.mc:2371
-msgid "No user session key\n"
+msgid "No user session key.\n"
 msgstr ""
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded\n"
+msgid "Licence quota exceeded.\n"
 msgstr ""
 
 #: winerror.mc:2381
 #, fuzzy
-msgid "Wrong target name\n"
-msgstr "Credenciales inválidos"
+msgid "Wrong target name.\n"
+msgstr "Credenciales inválidos.\n"
 
 #: winerror.mc:2386
 #, fuzzy
-msgid "Mutual authentication failed\n"
-msgstr "Autentificación inapropriada"
+msgid "Mutual authentication failed.\n"
+msgstr "Autentificación inapropriada.\n"
 
 #: winerror.mc:2391
-msgid "Time skew between client and server\n"
+msgid "Time skew between client and server.\n"
 msgstr ""
 
 #: winerror.mc:2396
 #, fuzzy
-msgid "Invalid window handle\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid window handle.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2401
 #, fuzzy
-msgid "Invalid menu handle\n"
-msgstr "Credenciales inválidos"
+msgid "Invalid menu handle.\n"
+msgstr "Credenciales inválidos.\n"
 
 #: winerror.mc:2406
-msgid "Invalid cursor handle\n"
+msgid "Invalid cursor handle.\n"
 msgstr ""
 
 #: winerror.mc:2411
-msgid "Invalid accelerator table handle\n"
+msgid "Invalid accelerator table handle.\n"
 msgstr ""
 
 #: winerror.mc:2416
-msgid "Invalid hook handle\n"
+msgid "Invalid hook handle.\n"
 msgstr ""
 
 #: winerror.mc:2421
 #, fuzzy
-msgid "Invalid DWP handle\n"
-msgstr "Sintaxis inválida de DN"
+msgid "Invalid DWP handle.\n"
+msgstr "Sintaxis inválida de DN.\n"
 
 #: winerror.mc:2426
-msgid "Can't create top-level child window\n"
+msgid "Can't create top-level child window.\n"
 msgstr ""
 
 #: winerror.mc:2431
-msgid "Can't find window class\n"
+msgid "Can't find window class.\n"
 msgstr ""
 
 #: winerror.mc:2436
-msgid "Window owned by another thread\n"
+msgid "Window owned by another thread.\n"
 msgstr ""
 
 #: winerror.mc:2441
 #, fuzzy
-msgid "Hotkey already registered\n"
-msgstr "El puerto %s ya existe"
+msgid "Hotkey already registered.\n"
+msgstr "El puerto %s ya existe.\n"
 
 #: winerror.mc:2446
 #, fuzzy
-msgid "Class already exists\n"
-msgstr "El puerto %s ya existe"
+msgid "Class already exists.\n"
+msgstr "El puerto %s ya existe.\n"
 
 #: winerror.mc:2451
 #, fuzzy
-msgid "Class does not exist\n"
-msgstr "La ruta no existe"
+msgid "Class does not exist.\n"
+msgstr "La ruta no existe.\n"
 
 #: winerror.mc:2456
 #, fuzzy
-msgid "Class has open windows\n"
-msgstr "&Ventana"
+msgid "Class has open windows.\n"
+msgstr "&Ventana.\n"
 
 #: winerror.mc:2461
 #, fuzzy
-msgid "Invalid index\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid index.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2466
 #, fuzzy
-msgid "Invalid icon handle\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid icon handle.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2471
-msgid "Private dialog index\n"
+msgid "Private dialog index.\n"
 msgstr ""
 
 #: winerror.mc:2476
 #, fuzzy
-msgid "List box ID not found\n"
-msgstr "ruta %s no encontrada"
+msgid "List box ID not found.\n"
+msgstr "ruta %s no encontrada.\n"
 
 #: winerror.mc:2481
-msgid "No wildcard characters\n"
+msgid "No wildcard characters.\n"
 msgstr ""
 
 #: winerror.mc:2486
 #, fuzzy
-msgid "Clipboard not open\n"
+msgid "Clipboard not open.\n"
 msgstr "No puede crearse o usar una ventana."
 
 #: winerror.mc:2491
-msgid "Hotkey not registered\n"
+msgid "Hotkey not registered.\n"
 msgstr ""
 
 #: winerror.mc:2496
-msgid "Not a dialog window\n"
+msgid "Not a dialog window.\n"
 msgstr ""
 
 #: winerror.mc:2501
 #, fuzzy
-msgid "Control ID not found\n"
-msgstr "ruta %s no encontrada"
+msgid "Control ID not found.\n"
+msgstr "ruta %s no encontrada.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message\n"
+msgid "Invalid combobox message.\n"
 msgstr ""
 
 #: winerror.mc:2511
-msgid "Not a combobox window\n"
+msgid "Not a combobox window.\n"
 msgstr ""
 
 #: winerror.mc:2516
 #, fuzzy
-msgid "Invalid edit height\n"
-msgstr "Credenciales inválidos"
+msgid "Invalid edit height.\n"
+msgstr "Credenciales inválidos.\n"
 
 #: winerror.mc:2521
 #, fuzzy
-msgid "DC not found\n"
-msgstr "PATH no encontrado\n"
+msgid "DC not found.\n"
+msgstr "PATH no encontrado.\n"
 
 #: winerror.mc:2526
-msgid "Invalid hook filter\n"
+msgid "Invalid hook filter.\n"
 msgstr ""
 
 #: winerror.mc:2531
-msgid "Invalid filter procedure\n"
+msgid "Invalid filter procedure.\n"
 msgstr ""
 
 #: winerror.mc:2536
-msgid "Hook procedure needs module handle\n"
+msgid "Hook procedure needs module handle.\n"
 msgstr ""
 
 #: winerror.mc:2541
-msgid "Global-only hook procedure\n"
+msgid "Global-only hook procedure.\n"
 msgstr ""
 
 #: winerror.mc:2546
-msgid "Journal hook already set\n"
+msgid "Journal hook already set.\n"
 msgstr ""
 
 #: winerror.mc:2551
-msgid "Hook procedure not installed\n"
+msgid "Hook procedure not installed.\n"
 msgstr ""
 
 #: winerror.mc:2556
 #, fuzzy
-msgid "Invalid list box message\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid list box message.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2561
-msgid "Invalid LB_SETCOUNT sent\n"
+msgid "Invalid LB_SETCOUNT sent.\n"
 msgstr ""
 
 #: winerror.mc:2566
-msgid "No tab stops on this list box\n"
+msgid "No tab stops on this list box.\n"
 msgstr ""
 
 #: winerror.mc:2571
-msgid "Can't destroy object owned by another thread\n"
+msgid "Can't destroy object owned by another thread.\n"
 msgstr ""
 
 #: winerror.mc:2576
-msgid "Child window menus not allowed\n"
+msgid "Child window menus not allowed.\n"
 msgstr ""
 
 #: winerror.mc:2581
-msgid "Window has no system menu\n"
+msgid "Window has no system menu.\n"
 msgstr ""
 
 #: winerror.mc:2586
 #, fuzzy
-msgid "Invalid message box style\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid message box style.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:2591
 #, fuzzy
-msgid "Invalid SPI parameter\n"
-msgstr "Error: parámetros de línea de comandos inválidos\n"
+msgid "Invalid SPI parameter.\n"
+msgstr "Error: parámetros de línea de comandos inválidos.\n"
 
 #: winerror.mc:2596
-msgid "Screen already locked\n"
+msgid "Screen already locked.\n"
 msgstr ""
 
 #: winerror.mc:2601
-msgid "Window handles have different parents\n"
+msgid "Window handles have different parents.\n"
 msgstr ""
 
 #: winerror.mc:2606
-msgid "Not a child window\n"
+msgid "Not a child window.\n"
 msgstr ""
 
 #: winerror.mc:2611
 #, fuzzy
-msgid "Invalid GW command\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid GW command.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2616
 #, fuzzy
-msgid "Invalid thread ID\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid thread ID.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2621
-msgid "Not an MDI child window\n"
+msgid "Not an MDI child window.\n"
 msgstr ""
 
 #: winerror.mc:2626
-msgid "Popup menu already active\n"
+msgid "Popup menu already active.\n"
 msgstr ""
 
 #: winerror.mc:2631
 #, fuzzy
-msgid "No scrollbars\n"
-msgstr "Desplazar &aquí"
+msgid "No scrollbars.\n"
+msgstr "Desplazar &aquí.\n"
 
 #: winerror.mc:2636
-msgid "Invalid scrollbar range\n"
+msgid "Invalid scrollbar range.\n"
 msgstr ""
 
 #: winerror.mc:2641
-msgid "Invalid ShowWin command\n"
+msgid "Invalid ShowWin command.\n"
 msgstr ""
 
 #: winerror.mc:2646
-msgid "No system resources\n"
+msgid "No system resources.\n"
 msgstr ""
 
 #: winerror.mc:2651
-msgid "No non-paged system resources\n"
+msgid "No non-paged system resources.\n"
 msgstr ""
 
 #: winerror.mc:2656
-msgid "No paged system resources\n"
+msgid "No paged system resources.\n"
 msgstr ""
 
 #: winerror.mc:2661
-msgid "No working set quota\n"
+msgid "No working set quota.\n"
 msgstr ""
 
 #: winerror.mc:2666
-msgid "No page file quota\n"
+msgid "No page file quota.\n"
 msgstr ""
 
 #: winerror.mc:2671
-msgid "Exceeded commitment limit\n"
+msgid "Exceeded commitment limit.\n"
 msgstr ""
 
 #: winerror.mc:2676
 #, fuzzy
-msgid "Menu item not found\n"
-msgstr "Archivo no encontrado"
+msgid "Menu item not found.\n"
+msgstr "Archivo no encontrado.\n"
 
 #: winerror.mc:2681
 #, fuzzy
-msgid "Invalid keyboard handle\n"
-msgstr "Credenciales inválidos"
+msgid "Invalid keyboard handle.\n"
+msgstr "Credenciales inválidos.\n"
 
 #: winerror.mc:2686
 #, fuzzy
-msgid "Hook type not allowed\n"
-msgstr "El destino de la instrucción GOTO no se ha encontrado\n"
+msgid "Hook type not allowed.\n"
+msgstr "El destino de la instrucción GOTO no se ha encontrado.\n"
 
 #: winerror.mc:2691
-msgid "Interactive window station required\n"
+msgid "Interactive window station required.\n"
 msgstr ""
 
 #: winerror.mc:2696
 #, fuzzy
-msgid "Timeout\n"
-msgstr "Tiempo de espera superado"
+msgid "Timeout.\n"
+msgstr "Tiempo de espera superado.\n"
 
 #: winerror.mc:2701
 #, fuzzy
-msgid "Invalid monitor handle\n"
-msgstr "Credenciales inválidos"
+msgid "Invalid monitor handle.\n"
+msgstr "Credenciales inválidos.\n"
 
 #: winerror.mc:2706
-msgid "Event log file corrupt\n"
+msgid "Event log file corrupt.\n"
 msgstr ""
 
 #: winerror.mc:2711
-msgid "Event log can't start\n"
+msgid "Event log can't start.\n"
 msgstr ""
 
 #: winerror.mc:2716
-msgid "Event log file full\n"
+msgid "Event log file full.\n"
 msgstr ""
 
 #: winerror.mc:2721
-msgid "Event log file changed\n"
+msgid "Event log file changed.\n"
 msgstr ""
 
 #: winerror.mc:2726
 #, fuzzy
-msgid "Installer service failed\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Installer service failed.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:2731
 #, fuzzy
-msgid "Installation aborted by user\n"
-msgstr "Programas de instalación"
+msgid "Installation aborted by user.\n"
+msgstr "Programas de instalación.\n"
 
 #: winerror.mc:2736
 #, fuzzy
-msgid "Installation failure\n"
-msgstr "Programas de instalación"
+msgid "Installation failure.\n"
+msgstr "Programas de instalación.\n"
 
 #: winerror.mc:2741
 #, fuzzy
-msgid "Installation suspended\n"
-msgstr "Programas de instalación"
+msgid "Installation suspended.\n"
+msgstr "Programas de instalación.\n"
 
 #: winerror.mc:2746
 #, fuzzy
-msgid "Unknown product\n"
-msgstr "Origen desconocido"
+msgid "Unknown product.\n"
+msgstr "Origen desconocido.\n"
 
 #: winerror.mc:2751
 #, fuzzy
-msgid "Unknown feature\n"
-msgstr "Característica desconocida en %s"
+msgid "Unknown feature.\n"
+msgstr "Característica desconocida en %s.\n"
 
 #: winerror.mc:2756
 #, fuzzy
-msgid "Unknown component\n"
-msgstr "Origen desconocido"
+msgid "Unknown component.\n"
+msgstr "Origen desconocido.\n"
 
 #: winerror.mc:2761
 #, fuzzy
-msgid "Unknown property\n"
-msgstr "Origen desconocido"
+msgid "Unknown property.\n"
+msgstr "Origen desconocido.\n"
 
 #: winerror.mc:2766
 #, fuzzy
-msgid "Invalid handle state\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid handle state.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2771
 #, fuzzy
-msgid "Bad configuration\n"
-msgstr "Configuración de Wine"
+msgid "Bad configuration.\n"
+msgstr "Configuración de Wine.\n"
 
 #: winerror.mc:2776
-msgid "Index is missing\n"
+msgid "Index is missing.\n"
 msgstr ""
 
 #: winerror.mc:2781
 #, fuzzy
-msgid "Installation source is missing\n"
-msgstr "instalar fuente para característica ausente"
+msgid "Installation source is missing.\n"
+msgstr "instalar fuente para característica ausente.\n"
 
 #: winerror.mc:2786
-msgid "Wrong installation package version\n"
+msgid "Wrong installation package version.\n"
 msgstr ""
 
 #: winerror.mc:2791
 #, fuzzy
-msgid "Product uninstalled\n"
-msgstr "Cancelado por el usuario"
+msgid "Product uninstalled.\n"
+msgstr "Cancelado por el usuario.\n"
 
 #: winerror.mc:2796
 #, fuzzy
-msgid "Invalid query syntax\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid query syntax.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2801
 #, fuzzy
-msgid "Invalid field\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid field.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2806
-msgid "Device removed\n"
+msgid "Device removed.\n"
 msgstr ""
 
 #: winerror.mc:2811
 #, fuzzy
-msgid "Installation already running\n"
-msgstr "Programas de instalación"
+msgid "Installation already running.\n"
+msgstr "Programas de instalación.\n"
 
 #: winerror.mc:2816
-msgid "Installation package failed to open\n"
+msgid "Installation package failed to open.\n"
 msgstr ""
 
 #: winerror.mc:2821
 #, fuzzy
-msgid "Installation package is invalid\n"
-msgstr "Programas de instalación"
+msgid "Installation package is invalid.\n"
+msgstr "Programas de instalación.\n"
 
 #: winerror.mc:2826
-msgid "Installer user interface failed\n"
+msgid "Installer user interface failed.\n"
 msgstr ""
 
 #: winerror.mc:2831
-msgid "Failed to open installation log file\n"
+msgid "Failed to open installation log file.\n"
 msgstr ""
 
 #: winerror.mc:2836
 #, fuzzy
-msgid "Installation language not supported\n"
-msgstr "Método de autentificación no soportado"
+msgid "Installation language not supported.\n"
+msgstr "Método de autentificación no soportado.\n"
 
 #: winerror.mc:2841
-msgid "Installation transform failed to apply\n"
+msgid "Installation transform failed to apply.\n"
 msgstr ""
 
 #: winerror.mc:2846
 #, fuzzy
-msgid "Installation package rejected\n"
-msgstr "Programas de instalación"
+msgid "Installation package rejected.\n"
+msgstr "Programas de instalación.\n"
 
 #: winerror.mc:2851
-msgid "Function could not be called\n"
+msgid "Function could not be called.\n"
 msgstr ""
 
 #: winerror.mc:2856
 #, fuzzy
-msgid "Function failed\n"
-msgstr "Función esperada"
+msgid "Function failed.\n"
+msgstr "Función esperada.\n"
 
 #: winerror.mc:2861
 #, fuzzy
-msgid "Invalid table\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid table.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2866
-msgid "Data type mismatch\n"
+msgid "Data type mismatch.\n"
 msgstr ""
 
 #: winerror.mc:2871 winerror.mc:3081
-msgid "Unsupported type\n"
+msgid "Unsupported type.\n"
 msgstr ""
 
 #: winerror.mc:2876
 #, fuzzy
-msgid "Creation failed\n"
-msgstr "Abrir archivo"
+msgid "Creation failed.\n"
+msgstr "Abrir archivo.\n"
 
 #: winerror.mc:2881
-msgid "Temporary directory not writable\n"
+msgid "Temporary directory not writable.\n"
 msgstr ""
 
 #: winerror.mc:2886
 #, fuzzy
-msgid "Installation platform not supported\n"
-msgstr "Método de autentificación no soportado"
+msgid "Installation platform not supported.\n"
+msgstr "Método de autentificación no soportado.\n"
 
 #: winerror.mc:2891
 #, fuzzy
-msgid "Installer not used\n"
-msgstr "Archivo no encontrado"
+msgid "Installer not used.\n"
+msgstr "Archivo no encontrado.\n"
 
 #: winerror.mc:2896
 #, fuzzy
-msgid "Failed to open the patch package\n"
-msgstr "No se pudo abrir '%s'\n"
+msgid "Failed to open the patch package.\n"
+msgstr "No se pudo abrir '%s'.\n"
 
 #: winerror.mc:2901
 #, fuzzy
-msgid "Invalid patch package\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid patch package.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2906
-msgid "Unsupported patch package\n"
+msgid "Unsupported patch package.\n"
 msgstr ""
 
 #: winerror.mc:2911
-msgid "Another version is installed\n"
+msgid "Another version is installed.\n"
 msgstr ""
 
 #: winerror.mc:2916
 #, fuzzy
-msgid "Invalid command line\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid command line.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2921
-msgid "Remote installation not allowed\n"
+msgid "Remote installation not allowed.\n"
 msgstr ""
 
 #: winerror.mc:2926
-msgid "Reboot initiated after successful install\n"
+msgid "Reboot initiated after successful install.\n"
 msgstr ""
 
 #: winerror.mc:2931
-msgid "Invalid string binding\n"
+msgid "Invalid string binding.\n"
 msgstr ""
 
 #: winerror.mc:2936
-msgid "Wrong kind of binding\n"
+msgid "Wrong kind of binding.\n"
 msgstr ""
 
 #: winerror.mc:2941
 #, fuzzy
-msgid "Invalid binding\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid binding.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2946
-msgid "RPC protocol sequence not supported\n"
+msgid "RPC protocol sequence not supported.\n"
 msgstr ""
 
 #: winerror.mc:2951
-msgid "Invalid RPC protocol sequence\n"
+msgid "Invalid RPC protocol sequence.\n"
 msgstr ""
 
 #: winerror.mc:2956
 #, fuzzy
-msgid "Invalid string UUID\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid string UUID.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2961
 #, fuzzy
-msgid "Invalid endpoint format\n"
-msgstr "Credenciales inválidos"
+msgid "Invalid endpoint format.\n"
+msgstr "Credenciales inválidos.\n"
 
 #: winerror.mc:2966
-msgid "Invalid network address\n"
+msgid "Invalid network address.\n"
 msgstr ""
 
 #: winerror.mc:2971
 #, fuzzy
-msgid "No endpoint found\n"
-msgstr "PATH no encontrado\n"
+msgid "No endpoint found.\n"
+msgstr "PATH no encontrado.\n"
 
 #: winerror.mc:2976
 #, fuzzy
-msgid "Invalid timeout value\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid timeout value.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:2981
 #, fuzzy
-msgid "Object UUID not found\n"
-msgstr "ruta %s no encontrada"
+msgid "Object UUID not found.\n"
+msgstr "ruta %s no encontrada.\n"
 
 #: winerror.mc:2986
-msgid "UUID already registered\n"
+msgid "UUID already registered.\n"
 msgstr ""
 
 #: winerror.mc:2991
-msgid "UUID type already registered\n"
+msgid "UUID type already registered.\n"
 msgstr ""
 
 #: winerror.mc:2996
-msgid "Server already listening\n"
+msgid "Server already listening.\n"
 msgstr ""
 
 #: winerror.mc:3001
-msgid "No protocol sequences registered\n"
+msgid "No protocol sequences registered.\n"
 msgstr ""
 
 #: winerror.mc:3006
-msgid "RPC server not listening\n"
+msgid "RPC server not listening.\n"
 msgstr ""
 
 #: winerror.mc:3011
 #, fuzzy
-msgid "Unknown manager type\n"
-msgstr "Tipo desconocido"
+msgid "Unknown manager type.\n"
+msgstr "Tipo desconocido.\n"
 
 #: winerror.mc:3016
 #, fuzzy
-msgid "Unknown interface\n"
-msgstr "Origen desconocido"
+msgid "Unknown interface.\n"
+msgstr "Origen desconocido.\n"
 
 #: winerror.mc:3021
-msgid "No bindings\n"
+msgid "No bindings.\n"
 msgstr ""
 
 #: winerror.mc:3026
-msgid "No protocol sequences\n"
+msgid "No protocol sequences.\n"
 msgstr ""
 
 #: winerror.mc:3031
-msgid "Can't create endpoint\n"
+msgid "Can't create endpoint.\n"
 msgstr ""
 
 #: winerror.mc:3036
 #, fuzzy
-msgid "Out of resources\n"
+msgid "Out of resources.\n"
 msgstr "Sin memoria."
 
 #: winerror.mc:3041
-msgid "RPC server unavailable\n"
+msgid "RPC server unavailable.\n"
 msgstr ""
 
 #: winerror.mc:3046
-msgid "RPC server too busy\n"
+msgid "RPC server too busy.\n"
 msgstr ""
 
 #: winerror.mc:3051
 #, fuzzy
-msgid "Invalid network options\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid network options.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3056
-msgid "No RPC call active\n"
+msgid "No RPC call active.\n"
 msgstr ""
 
 #: winerror.mc:3061
-msgid "RPC call failed\n"
+msgid "RPC call failed.\n"
 msgstr ""
 
 #: winerror.mc:3066
-msgid "RPC call failed and didn't execute\n"
+msgid "RPC call failed and didn't execute.\n"
 msgstr ""
 
 #: winerror.mc:3071
 #, fuzzy
-msgid "RPC protocol error\n"
-msgstr "Error de protocolo"
+msgid "RPC protocol error.\n"
+msgstr "Error de protocolo.\n"
 
 #: winerror.mc:3076
-msgid "Unsupported transfer syntax\n"
+msgid "Unsupported transfer syntax.\n"
 msgstr ""
 
 #: winerror.mc:3086
 #, fuzzy
-msgid "Invalid tag\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid tag.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3091
-msgid "Invalid array bounds\n"
+msgid "Invalid array bounds.\n"
 msgstr ""
 
 #: winerror.mc:3096
-msgid "No entry name\n"
+msgid "No entry name.\n"
 msgstr ""
 
 #: winerror.mc:3101
 #, fuzzy
-msgid "Invalid name syntax\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid name syntax.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3106
-msgid "Unsupported name syntax\n"
+msgid "Unsupported name syntax.\n"
 msgstr ""
 
 #: winerror.mc:3111
 #, fuzzy
-msgid "No network address\n"
-msgstr "Compartición de red"
+msgid "No network address.\n"
+msgstr "Compartición de red.\n"
 
 #: winerror.mc:3116
-msgid "Duplicate endpoint\n"
+msgid "Duplicate endpoint.\n"
 msgstr ""
 
 #: winerror.mc:3121
 #, fuzzy
-msgid "Unknown authentication type\n"
-msgstr "Autentificación fuerte requerida"
+msgid "Unknown authentication type.\n"
+msgstr "Autentificación fuerte requerida.\n"
 
 #: winerror.mc:3126
-msgid "Maximum calls too low\n"
+msgid "Maximum calls too low.\n"
 msgstr ""
 
 #: winerror.mc:3131
-msgid "String too long\n"
+msgid "String too long.\n"
 msgstr ""
 
 #: winerror.mc:3136
-msgid "Protocol sequence not found\n"
+msgid "Protocol sequence not found.\n"
 msgstr ""
 
 #: winerror.mc:3141
-msgid "Procedure number out of range\n"
+msgid "Procedure number out of range.\n"
 msgstr ""
 
 #: winerror.mc:3146
-msgid "Binding has no authentication data\n"
+msgid "Binding has no authentication data.\n"
 msgstr ""
 
 #: winerror.mc:3151
 #, fuzzy
-msgid "Unknown authentication service\n"
-msgstr "Autentificación fuerte requerida"
+msgid "Unknown authentication service.\n"
+msgstr "Autentificación fuerte requerida.\n"
 
 #: winerror.mc:3156
 #, fuzzy
-msgid "Unknown authentication level\n"
-msgstr "Autentificación fuerte requerida"
+msgid "Unknown authentication level.\n"
+msgstr "Autentificación fuerte requerida.\n"
 
 #: winerror.mc:3161
 #, fuzzy
-msgid "Invalid authentication identity\n"
-msgstr "Autentificación inapropriada"
+msgid "Invalid authentication identity.\n"
+msgstr "Autentificación inapropriada.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service\n"
+msgid "Unknown authorisation service.\n"
 msgstr ""
 
 #: winerror.mc:3171
 #, fuzzy
-msgid "Invalid entry\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid entry.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3176
-msgid "Can't perform operation\n"
+msgid "Can't perform operation.\n"
 msgstr ""
 
 #: winerror.mc:3181
 #, fuzzy
-msgid "Endpoints not registered\n"
-msgstr "Sale del editor de registro"
+msgid "Endpoints not registered.\n"
+msgstr "Sale del editor de registro.\n"
 
 #: winerror.mc:3186
-msgid "Nothing to export\n"
+msgid "Nothing to export.\n"
 msgstr ""
 
 #: winerror.mc:3191
-msgid "Incomplete name\n"
+msgid "Incomplete name.\n"
 msgstr ""
 
 #: winerror.mc:3196
 #, fuzzy
-msgid "Invalid version option\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid version option.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3201
-msgid "No more members\n"
+msgid "No more members.\n"
 msgstr ""
 
 #: winerror.mc:3206
 #, fuzzy
-msgid "Not all objects unexported\n"
-msgstr "Objeto Booleano esperado"
+msgid "Not all objects unexported.\n"
+msgstr "Objeto Booleano esperado.\n"
 
 #: winerror.mc:3211
 #, fuzzy
-msgid "Interface not found\n"
-msgstr "Archivo no encontrado"
+msgid "Interface not found.\n"
+msgstr "Archivo no encontrado.\n"
 
 #: winerror.mc:3216
 #, fuzzy
-msgid "Entry already exists\n"
-msgstr "El puerto %s ya existe"
+msgid "Entry already exists.\n"
+msgstr "El puerto %s ya existe.\n"
 
 #: winerror.mc:3221
 #, fuzzy
-msgid "Entry not found\n"
-msgstr "PATH no encontrado\n"
+msgid "Entry not found.\n"
+msgstr "PATH no encontrado.\n"
 
 #: winerror.mc:3226
 #, fuzzy
-msgid "Name service unavailable\n"
-msgstr "Tamaño disponible"
+msgid "Name service unavailable.\n"
+msgstr "Tamaño disponible.\n"
 
 #: winerror.mc:3231
-msgid "Invalid network address family\n"
+msgid "Invalid network address family.\n"
 msgstr ""
 
 #: winerror.mc:3236
 #, fuzzy
-msgid "Operation not supported\n"
-msgstr "Método de autentificación no soportado"
+msgid "Operation not supported.\n"
+msgstr "Método de autentificación no soportado.\n"
 
 #: winerror.mc:3241
-msgid "No security context available\n"
+msgid "No security context available.\n"
 msgstr ""
 
 #: winerror.mc:3246
 #, fuzzy
-msgid "RPCInternal error\n"
-msgstr "Error de parámetro\n"
+msgid "RPCInternal error.\n"
+msgstr "Error de parámetro.\n"
 
 #: winerror.mc:3251
-msgid "RPC divide-by-zero\n"
+msgid "RPC divide-by-zero.\n"
 msgstr ""
 
 #: winerror.mc:3256
 #, fuzzy
-msgid "Address error\n"
-msgstr "Barra de &direcciones"
+msgid "Address error.\n"
+msgstr "Barra de &direcciones.\n"
 
 #: winerror.mc:3261
-msgid "Floating-point divide-by-zero\n"
+msgid "Floating-point divide-by-zero.\n"
 msgstr ""
 
 #: winerror.mc:3266
-msgid "Floating-point underflow\n"
+msgid "Floating-point underflow.\n"
 msgstr ""
 
 #: winerror.mc:3271
-msgid "Floating-point overflow\n"
+msgid "Floating-point overflow.\n"
 msgstr ""
 
 #: winerror.mc:3276
-msgid "No more entries\n"
+msgid "No more entries.\n"
 msgstr ""
 
 #: winerror.mc:3281
-msgid "Character translation table open failed\n"
+msgid "Character translation table open failed.\n"
 msgstr ""
 
 #: winerror.mc:3286
-msgid "Character translation table file too small\n"
+msgid "Character translation table file too small.\n"
 msgstr ""
 
 #: winerror.mc:3291
-msgid "Null context handle\n"
+msgid "Null context handle.\n"
 msgstr ""
 
 #: winerror.mc:3296
-msgid "Context handle damaged\n"
+msgid "Context handle damaged.\n"
 msgstr ""
 
 #: winerror.mc:3301
-msgid "Binding handle mismatch\n"
+msgid "Binding handle mismatch.\n"
 msgstr ""
 
 #: winerror.mc:3306
-msgid "Cannot get call handle\n"
+msgid "Cannot get call handle.\n"
 msgstr ""
 
 #: winerror.mc:3311
-msgid "Null reference pointer\n"
+msgid "Null reference pointer.\n"
 msgstr ""
 
 #: winerror.mc:3316
-msgid "Enumeration value out of range\n"
+msgid "Enumeration value out of range.\n"
 msgstr ""
 
 #: winerror.mc:3321
-msgid "Byte count too small\n"
+msgid "Byte count too small.\n"
 msgstr ""
 
 #: winerror.mc:3326
-msgid "Bad stub data\n"
+msgid "Bad stub data.\n"
 msgstr ""
 
 #: winerror.mc:3331
-msgid "Invalid user buffer\n"
+msgid "Invalid user buffer.\n"
 msgstr ""
 
 #: winerror.mc:3336
-msgid "Unrecognised media\n"
+msgid "Unrecognised media.\n"
 msgstr ""
 
 #: winerror.mc:3341
-msgid "No trust secret\n"
+msgid "No trust secret.\n"
 msgstr ""
 
 #: winerror.mc:3346
-msgid "No trust SAM account\n"
+msgid "No trust SAM account.\n"
 msgstr ""
 
 #: winerror.mc:3351
-msgid "Trusted domain failure\n"
+msgid "Trusted domain failure.\n"
 msgstr ""
 
 #: winerror.mc:3356
-msgid "Trusted relationship failure\n"
+msgid "Trusted relationship failure.\n"
 msgstr ""
 
 #: winerror.mc:3361
-msgid "Trust logon failure\n"
+msgid "Trust logon failure.\n"
 msgstr ""
 
 #: winerror.mc:3366
-msgid "RPC call already in progress\n"
+msgid "RPC call already in progress.\n"
 msgstr ""
 
 #: winerror.mc:3371
-msgid "NETLOGON is not started\n"
+msgid "NETLOGON is not started.\n"
 msgstr ""
 
 #: winerror.mc:3376
-msgid "Account expired\n"
+msgid "Account expired.\n"
 msgstr ""
 
 #: winerror.mc:3381
-msgid "Redirector has open handles\n"
+msgid "Redirector has open handles.\n"
 msgstr ""
 
 #: winerror.mc:3386
-msgid "Printer driver already installed\n"
+msgid "Printer driver already installed.\n"
 msgstr ""
 
 #: winerror.mc:3391
 #, fuzzy
-msgid "Unknown port\n"
-msgstr "Origen desconocido"
+msgid "Unknown port.\n"
+msgstr "Origen desconocido.\n"
 
 #: winerror.mc:3396
 #, fuzzy
-msgid "Unknown printer driver\n"
+msgid "Unknown printer driver.\n"
 msgstr "Manejador de la impresora desconocido."
 
 #: winerror.mc:3401
 #, fuzzy
-msgid "Unknown print processor\n"
+msgid "Unknown print processor.\n"
 msgstr "Manejador de la impresora desconocido."
 
 #: winerror.mc:3406
-msgid "Invalid separator file\n"
+msgid "Invalid separator file.\n"
 msgstr ""
 
 #: winerror.mc:3411
 #, fuzzy
-msgid "Invalid priority\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid priority.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3416
 #, fuzzy
-msgid "Invalid printer name\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid printer name.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:3421
 #, fuzzy
-msgid "Printer already exists\n"
-msgstr "El puerto %s ya existe"
+msgid "Printer already exists.\n"
+msgstr "El puerto %s ya existe.\n"
 
 #: winerror.mc:3426
 #, fuzzy
-msgid "Invalid printer command\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid printer command.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3431
 #, fuzzy
-msgid "Invalid data type\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid data type.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3436
 #, fuzzy
-msgid "Invalid environment\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid environment.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3441
-msgid "No more bindings\n"
+msgid "No more bindings.\n"
 msgstr ""
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account\n"
+msgid "Can't logon with interdomain trust account.\n"
 msgstr ""
 
 #: winerror.mc:3451
-msgid "Can't logon with workstation trust account\n"
+msgid "Can't logon with workstation trust account.\n"
 msgstr ""
 
 #: winerror.mc:3456
-msgid "Can't logon with server trust account\n"
+msgid "Can't logon with server trust account.\n"
 msgstr ""
 
 #: winerror.mc:3461
-msgid "Domain trust information inconsistent\n"
+msgid "Domain trust information inconsistent.\n"
 msgstr ""
 
 #: winerror.mc:3466
-msgid "Server has open handles\n"
+msgid "Server has open handles.\n"
 msgstr ""
 
 #: winerror.mc:3471
 #, fuzzy
-msgid "Resource data not found\n"
-msgstr "El destino de la instrucción GOTO no se ha encontrado\n"
+msgid "Resource data not found.\n"
+msgstr "El destino de la instrucción GOTO no se ha encontrado.\n"
 
 #: winerror.mc:3476
 #, fuzzy
-msgid "Resource type not found\n"
-msgstr "El destino de la instrucción GOTO no se ha encontrado\n"
+msgid "Resource type not found.\n"
+msgstr "El destino de la instrucción GOTO no se ha encontrado.\n"
 
 #: winerror.mc:3481
-msgid "Resource name not found\n"
+msgid "Resource name not found.\n"
 msgstr ""
 
 #: winerror.mc:3486
-msgid "Resource language not found\n"
+msgid "Resource language not found.\n"
 msgstr ""
 
 #: winerror.mc:3491
-msgid "Not enough quota\n"
+msgid "Not enough quota.\n"
 msgstr ""
 
 #: winerror.mc:3496
-msgid "No interfaces\n"
+msgid "No interfaces.\n"
 msgstr ""
 
 #: winerror.mc:3501
 #, fuzzy
-msgid "RPC call canceled\n"
-msgstr "Cancelado por el usuario"
+msgid "RPC call canceled.\n"
+msgstr "Cancelado por el usuario.\n"
 
 #: winerror.mc:3506
 #, fuzzy
-msgid "Binding incomplete\n"
+msgid "Binding incomplete.\n"
 msgstr ""
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
 "No implementado\n"
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Aún no implementado"
+"Aún no implementado.\n"
 
 #: winerror.mc:3511
-msgid "RPC comm failure\n"
+msgid "RPC comm failure.\n"
 msgstr ""
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level\n"
+msgid "Unsupported authorisation level.\n"
 msgstr ""
 
 #: winerror.mc:3521
-msgid "No principal name registered\n"
+msgid "No principal name registered.\n"
 msgstr ""
 
 #: winerror.mc:3526
 #, fuzzy
-msgid "Not an RPC error\n"
-msgstr "Error de sintaxis\n"
+msgid "Not an RPC error.\n"
+msgstr "Error de sintaxis.\n"
 
 #: winerror.mc:3531
-msgid "UUID is local only\n"
+msgid "UUID is local only.\n"
 msgstr ""
 
 #: winerror.mc:3536
-msgid "Security package error\n"
+msgid "Security package error.\n"
 msgstr ""
 
 #: winerror.mc:3541
 #, fuzzy
-msgid "Thread not canceled\n"
-msgstr "Cancelado por el usuario"
+msgid "Thread not canceled.\n"
+msgstr "Cancelado por el usuario.\n"
 
 #: winerror.mc:3546
 #, fuzzy
-msgid "Invalid handle operation\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid handle operation.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version\n"
+msgid "Wrong serialising package version.\n"
 msgstr ""
 
 #: winerror.mc:3556
-msgid "Wrong stub version\n"
+msgid "Wrong stub version.\n"
 msgstr ""
 
 #: winerror.mc:3561
 #, fuzzy
-msgid "Invalid pipe object\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid pipe object.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3566
-msgid "Wrong pipe order\n"
+msgid "Wrong pipe order.\n"
 msgstr ""
 
 #: winerror.mc:3571
-msgid "Wrong pipe version\n"
+msgid "Wrong pipe version.\n"
 msgstr ""
 
 #: winerror.mc:3576
 #, fuzzy
-msgid "Group member not found\n"
-msgstr "ruta %s no encontrada"
+msgid "Group member not found.\n"
+msgstr "ruta %s no encontrada.\n"
 
 #: winerror.mc:3581
-msgid "Can't create endpoint mapper DB\n"
+msgid "Can't create endpoint mapper DB.\n"
 msgstr ""
 
 #: winerror.mc:3586
 #, fuzzy
-msgid "Invalid object\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid object.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3591
 #, fuzzy
-msgid "Invalid time\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid time.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3596
 #, fuzzy
-msgid "Invalid form name\n"
-msgstr "Error: nombre de clave no válido\n"
+msgid "Invalid form name.\n"
+msgstr "Error: nombre de clave no válido.\n"
 
 #: winerror.mc:3601
-msgid "Invalid form size\n"
+msgid "Invalid form size.\n"
 msgstr ""
 
 #: winerror.mc:3606
-msgid "Already awaiting printer handle\n"
+msgid "Already awaiting printer handle.\n"
 msgstr ""
 
 #: winerror.mc:3611
 #, fuzzy
-msgid "Printer deleted\n"
-msgstr "Fecha de borrado"
+msgid "Printer deleted.\n"
+msgstr "Fecha de borrado.\n"
 
 #: winerror.mc:3616
 #, fuzzy
-msgid "Invalid printer state\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid printer state.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3621
-msgid "User must change password\n"
+msgid "User must change password.\n"
 msgstr ""
 
 #: winerror.mc:3626
 #, fuzzy
-msgid "Domain controller not found\n"
-msgstr "Archivo no encontrado"
+msgid "Domain controller not found.\n"
+msgstr "Archivo no encontrado.\n"
 
 #: winerror.mc:3631
-msgid "Account locked out\n"
+msgid "Account locked out.\n"
 msgstr ""
 
 #: winerror.mc:3636
 #, fuzzy
-msgid "Invalid pixel format\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid pixel format.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3641
 #, fuzzy
-msgid "Invalid driver\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid driver.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3646
 #, fuzzy
-msgid "Invalid object resolver set\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid object resolver set.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3651
-msgid "Incomplete RPC send\n"
+msgid "Incomplete RPC send.\n"
 msgstr ""
 
 #: winerror.mc:3656
 #, fuzzy
-msgid "Invalid asynchronous RPC handle\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid asynchronous RPC handle.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3661
 #, fuzzy
-msgid "Invalid asynchronous RPC call\n"
-msgstr "Sintaxis inválida"
+msgid "Invalid asynchronous RPC call.\n"
+msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3666
-msgid "RPC pipe closed\n"
+msgid "RPC pipe closed.\n"
 msgstr ""
 
 #: winerror.mc:3671
-msgid "Discipline error on RPC pipe\n"
+msgid "Discipline error on RPC pipe.\n"
 msgstr ""
 
 #: winerror.mc:3676
 #, fuzzy
-msgid "No data on RPC pipe\n"
-msgstr "Error de sintaxis\n"
+msgid "No data on RPC pipe.\n"
+msgstr "Error de sintaxis.\n"
 
 #: winerror.mc:3681
 #, fuzzy
-msgid "No site name available\n"
-msgstr "No disponible; "
+msgid "No site name available.\n"
+msgstr "No disponible; .\n"
 
 #: winerror.mc:3686
-msgid "The file cannot be accessed\n"
+msgid "The file cannot be accessed.\n"
 msgstr ""
 
 #: winerror.mc:3691
 #, fuzzy
-msgid "The filename cannot be resolved\n"
+msgid "The filename cannot be resolved.\n"
 msgstr "No se encontró '%s'."
 
 #: winerror.mc:3696
-msgid "RPC entry type mismatch\n"
+msgid "RPC entry type mismatch.\n"
 msgstr ""
 
 #: winerror.mc:3701
 #, fuzzy
-msgid "Not all objects could be exported\n"
-msgstr "Objeto Booleano esperado"
+msgid "Not all objects could be exported.\n"
+msgstr "Objeto Booleano esperado.\n"
 
 #: winerror.mc:3706
 #, fuzzy
-msgid "The interface could not be exported\n"
+msgid "The interface could not be exported.\n"
 msgstr "No se encontró '%s'."
 
 #: winerror.mc:3711
 #, fuzzy
-msgid "The profile could not be added\n"
+msgid "The profile could not be added.\n"
 msgstr "No se encontró '%s'."
 
 #: winerror.mc:3716
 #, fuzzy
-msgid "The profile element could not be added\n"
+msgid "The profile element could not be added.\n"
 msgstr "No se encontró '%s'."
 
 #: winerror.mc:3721
 #, fuzzy
-msgid "The profile element could not be removed\n"
+msgid "The profile element could not be removed.\n"
 msgstr "No se encontró '%s'."
 
 #: winerror.mc:3726
 #, fuzzy
-msgid "The group element could not be added\n"
+msgid "The group element could not be added.\n"
 msgstr "No se encontró '%s'."
 
 #: winerror.mc:3731
 #, fuzzy
-msgid "The group element could not be removed\n"
+msgid "The group element could not be removed.\n"
 msgstr "No se encontró '%s'."
 
 #: winerror.mc:3736
 #, fuzzy
-msgid "The username could not be found\n"
+msgid "The username could not be found.\n"
 msgstr "No se encontró '%s'."
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27

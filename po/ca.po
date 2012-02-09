@@ -3557,2958 +3557,2958 @@ msgid "Array object expected"
 msgstr "S'esperava un objecte Array"
 
 #: winerror.mc:26
-msgid "Success\n"
-msgstr "Èxit\n"
+msgid "Success.\n"
+msgstr "Èxit.\n"
 
 #: winerror.mc:31
-msgid "Invalid function\n"
-msgstr "Funció invàlid\n"
+msgid "Invalid function.\n"
+msgstr "Funció invàlid.\n"
 
 #: winerror.mc:36
-msgid "File not found\n"
-msgstr "Fitxer no trobat\n"
+msgid "File not found.\n"
+msgstr "Fitxer no trobat.\n"
 
 #: winerror.mc:41
-msgid "Path not found\n"
-msgstr "Ruta no trobada\n"
+msgid "Path not found.\n"
+msgstr "Ruta no trobada.\n"
 
 #: winerror.mc:46
-msgid "Too many open files\n"
-msgstr "Massa fitxers oberts\n"
+msgid "Too many open files.\n"
+msgstr "Massa fitxers oberts.\n"
 
 #: winerror.mc:51
-msgid "Access denied\n"
-msgstr "Accés denegat\n"
+msgid "Access denied.\n"
+msgstr "Accés denegat.\n"
 
 #: winerror.mc:56
-msgid "Invalid handle\n"
-msgstr "Mànec invàlid\n"
+msgid "Invalid handle.\n"
+msgstr "Mànec invàlid.\n"
 
 #: winerror.mc:61
-msgid "Memory trashed\n"
-msgstr "Memòria destruïda\n"
+msgid "Memory trashed.\n"
+msgstr "Memòria destruïda.\n"
 
 #: winerror.mc:66
-msgid "Not enough memory\n"
-msgstr "Falta memòria\n"
+msgid "Not enough memory.\n"
+msgstr "Falta memòria.\n"
 
 #: winerror.mc:71
-msgid "Invalid block\n"
-msgstr "Bloc invàlid\n"
+msgid "Invalid block.\n"
+msgstr "Bloc invàlid.\n"
 
 #: winerror.mc:76
-msgid "Bad environment\n"
-msgstr "Entorn dolent\n"
+msgid "Bad environment.\n"
+msgstr "Entorn dolent.\n"
 
 #: winerror.mc:81
-msgid "Bad format\n"
-msgstr "Format dolent\n"
+msgid "Bad format.\n"
+msgstr "Format dolent.\n"
 
 #: winerror.mc:86
-msgid "Invalid access\n"
-msgstr "Accés invàlid\n"
+msgid "Invalid access.\n"
+msgstr "Accés invàlid.\n"
 
 #: winerror.mc:91
-msgid "Invalid data\n"
-msgstr "Dades invàlides\n"
+msgid "Invalid data.\n"
+msgstr "Dades invàlides.\n"
 
 #: winerror.mc:96
-msgid "Out of memory\n"
-msgstr "No queda memòria\n"
+msgid "Out of memory.\n"
+msgstr "No queda memòria.\n"
 
 #: winerror.mc:101
-msgid "Invalid drive\n"
-msgstr "Unitat invàlida\n"
+msgid "Invalid drive.\n"
+msgstr "Unitat invàlida.\n"
 
 #: winerror.mc:106
-msgid "Can't delete current directory\n"
-msgstr "No es pot suprimir el directori actual\n"
+msgid "Can't delete current directory.\n"
+msgstr "No es pot suprimir el directori actual.\n"
 
 #: winerror.mc:111
-msgid "Not same device\n"
-msgstr "No és el mateix dispositiu\n"
+msgid "Not same device.\n"
+msgstr "No és el mateix dispositiu.\n"
 
 #: winerror.mc:116
-msgid "No more files\n"
-msgstr "No hi ha més fitxers\n"
+msgid "No more files.\n"
+msgstr "No hi ha més fitxers.\n"
 
 #: winerror.mc:121
-msgid "Write protected\n"
-msgstr "Protegit contra escriptura\n"
+msgid "Write protected.\n"
+msgstr "Protegit contra escriptura.\n"
 
 #: winerror.mc:126
-msgid "Bad unit\n"
-msgstr "Unitat dolenta\n"
+msgid "Bad unit.\n"
+msgstr "Unitat dolenta.\n"
 
 #: winerror.mc:131
-msgid "Not ready\n"
-msgstr "No està llest\n"
+msgid "Not ready.\n"
+msgstr "No està llest.\n"
 
 #: winerror.mc:136
-msgid "Bad command\n"
-msgstr "Ordre dolent\n"
+msgid "Bad command.\n"
+msgstr "Ordre dolent.\n"
 
 #: winerror.mc:141
-msgid "CRC error\n"
-msgstr "Error de CRC\n"
+msgid "CRC error.\n"
+msgstr "Error de CRC.\n"
 
 #: winerror.mc:146
-msgid "Bad length\n"
-msgstr "Longitud dolent\n"
+msgid "Bad length.\n"
+msgstr "Longitud dolent.\n"
 
 #: winerror.mc:151 winerror.mc:526
-msgid "Seek error\n"
-msgstr "Error de cercar\n"
+msgid "Seek error.\n"
+msgstr "Error de cercar.\n"
 
 #: winerror.mc:156
-msgid "Not DOS disk\n"
-msgstr "No és un disc de DOS\n"
+msgid "Not DOS disk.\n"
+msgstr "No és un disc de DOS.\n"
 
 #: winerror.mc:161
-msgid "Sector not found\n"
-msgstr "Sector no trobat\n"
+msgid "Sector not found.\n"
+msgstr "Sector no trobat.\n"
 
 #: winerror.mc:166
-msgid "Out of paper\n"
-msgstr "No queda paper\n"
+msgid "Out of paper.\n"
+msgstr "No queda paper.\n"
 
 #: winerror.mc:171
-msgid "Write fault\n"
-msgstr "Fallada d'escriptura\n"
+msgid "Write fault.\n"
+msgstr "Fallada d'escriptura.\n"
 
 #: winerror.mc:176
-msgid "Read fault\n"
-msgstr "Fallada de lectura\n"
+msgid "Read fault.\n"
+msgstr "Fallada de lectura.\n"
 
 #: winerror.mc:181
-msgid "General failure\n"
-msgstr "Fallada general\n"
+msgid "General failure.\n"
+msgstr "Fallada general.\n"
 
 #: winerror.mc:186
-msgid "Sharing violation\n"
-msgstr "Violació de compartició\n"
+msgid "Sharing violation.\n"
+msgstr "Violació de compartició.\n"
 
 #: winerror.mc:191
-msgid "Lock violation\n"
-msgstr "Violació de cadenat\n"
+msgid "Lock violation.\n"
+msgstr "Violació de cadenat.\n"
 
 #: winerror.mc:196
-msgid "Wrong disk\n"
-msgstr "Disc incorrecte\n"
+msgid "Wrong disk.\n"
+msgstr "Disc incorrecte.\n"
 
 #: winerror.mc:201
-msgid "Sharing buffer exceeded\n"
-msgstr "Memòria intermèdia de compartició superada\n"
+msgid "Sharing buffer exceeded.\n"
+msgstr "Memòria intermèdia de compartició superada.\n"
 
 #: winerror.mc:206
-msgid "End of file\n"
-msgstr "Final del fitxer\n"
+msgid "End of file.\n"
+msgstr "Final del fitxer.\n"
 
 #: winerror.mc:211 winerror.mc:436
-msgid "Disk full\n"
-msgstr "Disc ple\n"
+msgid "Disk full.\n"
+msgstr "Disc ple.\n"
 
 #: winerror.mc:216
-msgid "Request not supported\n"
-msgstr "Sol·licitud no compatible\n"
+msgid "Request not supported.\n"
+msgstr "Sol·licitud no compatible.\n"
 
 #: winerror.mc:221
-msgid "Remote machine not listening\n"
-msgstr "Màquina remota no escoltant\n"
+msgid "Remote machine not listening.\n"
+msgstr "Màquina remota no escoltant.\n"
 
 #: winerror.mc:226
-msgid "Duplicate network name\n"
-msgstr "Nom de xarxa duplicat\n"
+msgid "Duplicate network name.\n"
+msgstr "Nom de xarxa duplicat.\n"
 
 #: winerror.mc:231
-msgid "Bad network path\n"
-msgstr "Ruta de xarxa dolenta\n"
+msgid "Bad network path.\n"
+msgstr "Ruta de xarxa dolenta.\n"
 
 #: winerror.mc:236
-msgid "Network busy\n"
-msgstr "Xarxa ocupada\n"
+msgid "Network busy.\n"
+msgstr "Xarxa ocupada.\n"
 
 #: winerror.mc:241
-msgid "Device does not exist\n"
-msgstr "El dispositiu no existeix\n"
+msgid "Device does not exist.\n"
+msgstr "El dispositiu no existeix.\n"
 
 #: winerror.mc:246
-msgid "Too many commands\n"
-msgstr "Massa ordres\n"
+msgid "Too many commands.\n"
+msgstr "Massa ordres.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error\n"
-msgstr "Error de maquinari d'adaptador\n"
+msgid "Adaptor hardware error.\n"
+msgstr "Error de maquinari d'adaptador.\n"
 
 #: winerror.mc:256
-msgid "Bad network response\n"
-msgstr "Resposta de xarxa dolenta\n"
+msgid "Bad network response.\n"
+msgstr "Resposta de xarxa dolenta.\n"
 
 #: winerror.mc:261
-msgid "Unexpected network error\n"
-msgstr "Error de xarxa inesperat\n"
+msgid "Unexpected network error.\n"
+msgstr "Error de xarxa inesperat.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor\n"
-msgstr "Adaptador remot dolent\n"
+msgid "Bad remote adaptor.\n"
+msgstr "Adaptador remot dolent.\n"
 
 #: winerror.mc:271
-msgid "Print queue full\n"
-msgstr "Cua d'impressió ple\n"
+msgid "Print queue full.\n"
+msgstr "Cua d'impressió ple.\n"
 
 #: winerror.mc:276
-msgid "No spool space\n"
-msgstr "No hi ha espai de spool\n"
+msgid "No spool space.\n"
+msgstr "No hi ha espai de spool.\n"
 
 #: winerror.mc:281
-msgid "Print canceled\n"
-msgstr "Impressió cancel·lada\n"
+msgid "Print canceled.\n"
+msgstr "Impressió cancel·lada.\n"
 
 #: winerror.mc:286
-msgid "Network name deleted\n"
-msgstr "Nom de xarxa suprimit\n"
+msgid "Network name deleted.\n"
+msgstr "Nom de xarxa suprimit.\n"
 
 #: winerror.mc:291
-msgid "Network access denied\n"
-msgstr "Accés de xarxa denegat\n"
+msgid "Network access denied.\n"
+msgstr "Accés de xarxa denegat.\n"
 
 #: winerror.mc:296
-msgid "Bad device type\n"
-msgstr "Tipus de dispositiu dolent\n"
+msgid "Bad device type.\n"
+msgstr "Tipus de dispositiu dolent.\n"
 
 #: winerror.mc:301
-msgid "Bad network name\n"
-msgstr "Nom de xarxa dolent\n"
+msgid "Bad network name.\n"
+msgstr "Nom de xarxa dolent.\n"
 
 #: winerror.mc:306
-msgid "Too many network names\n"
-msgstr "Massa noms de xarxa\n"
+msgid "Too many network names.\n"
+msgstr "Massa noms de xarxa.\n"
 
 #: winerror.mc:311
-msgid "Too many network sessions\n"
-msgstr "Massa sessions de xarxa\n"
+msgid "Too many network sessions.\n"
+msgstr "Massa sessions de xarxa.\n"
 
 #: winerror.mc:316
-msgid "Sharing paused\n"
-msgstr "Compartició pausada\n"
+msgid "Sharing paused.\n"
+msgstr "Compartició pausada.\n"
 
 #: winerror.mc:321
-msgid "Request not accepted\n"
-msgstr "Sol·licitud no acceptada\n"
+msgid "Request not accepted.\n"
+msgstr "Sol·licitud no acceptada.\n"
 
 #: winerror.mc:326
-msgid "Redirector paused\n"
-msgstr "Redirector pausat\n"
+msgid "Redirector paused.\n"
+msgstr "Redirector pausat.\n"
 
 #: winerror.mc:331
-msgid "File exists\n"
-msgstr "El fitxer existeix\n"
+msgid "File exists.\n"
+msgstr "El fitxer existeix.\n"
 
 #: winerror.mc:336
-msgid "Cannot create\n"
-msgstr "No es pot crear\n"
+msgid "Cannot create.\n"
+msgstr "No es pot crear.\n"
 
 #: winerror.mc:341
-msgid "Int24 failure\n"
-msgstr "Fallada d'Int24\n"
+msgid "Int24 failure.\n"
+msgstr "Fallada d'Int24.\n"
 
 #: winerror.mc:346
-msgid "Out of structures\n"
-msgstr "No queden estructures\n"
+msgid "Out of structures.\n"
+msgstr "No queden estructures.\n"
 
 #: winerror.mc:351
-msgid "Already assigned\n"
-msgstr "Ja assignat\n"
+msgid "Already assigned.\n"
+msgstr "Ja assignat.\n"
 
 #: winerror.mc:356 winerror.mc:1711
-msgid "Invalid password\n"
-msgstr "Contrasenya invàlida\n"
+msgid "Invalid password.\n"
+msgstr "Contrasenya invàlida.\n"
 
 #: winerror.mc:361
-msgid "Invalid parameter\n"
-msgstr "Paràmetre invàlid\n"
+msgid "Invalid parameter.\n"
+msgstr "Paràmetre invàlid.\n"
 
 #: winerror.mc:366
-msgid "Net write fault\n"
-msgstr "Fallada d'escriptura de xarxa\n"
+msgid "Net write fault.\n"
+msgstr "Fallada d'escriptura de xarxa.\n"
 
 #: winerror.mc:371
-msgid "No process slots\n"
-msgstr "Cap ranura de procés\n"
+msgid "No process slots.\n"
+msgstr "Cap ranura de procés.\n"
 
 #: winerror.mc:376
-msgid "Too many semaphores\n"
-msgstr "Massa semàfors\n"
+msgid "Too many semaphores.\n"
+msgstr "Massa semàfors.\n"
 
 #: winerror.mc:381
-msgid "Exclusive semaphore already owned\n"
-msgstr "Semàfor exclusiu ja posseït\n"
+msgid "Exclusive semaphore already owned.\n"
+msgstr "Semàfor exclusiu ja posseït.\n"
 
 #: winerror.mc:386
-msgid "Semaphore is set\n"
-msgstr "El semàfor està establert\n"
+msgid "Semaphore is set.\n"
+msgstr "El semàfor està establert.\n"
 
 #: winerror.mc:391
-msgid "Too many semaphore requests\n"
-msgstr "Massa sol·licituds de semàfor\n"
+msgid "Too many semaphore requests.\n"
+msgstr "Massa sol·licituds de semàfor.\n"
 
 #: winerror.mc:396
-msgid "Invalid at interrupt time\n"
-msgstr "No vàlid en a l'hora d'interrupció\n"
+msgid "Invalid at interrupt time.\n"
+msgstr "No vàlid en a l'hora d'interrupció.\n"
 
 #: winerror.mc:401
-msgid "Semaphore owner died\n"
-msgstr "El propietari de semàfor s'ha mort\n"
+msgid "Semaphore owner died.\n"
+msgstr "El propietari de semàfor s'ha mort.\n"
 
 #: winerror.mc:406
-msgid "Semaphore user limit\n"
-msgstr "Límit d'usuaris de semàfor\n"
+msgid "Semaphore user limit.\n"
+msgstr "Límit d'usuaris de semàfor.\n"
 
 #: winerror.mc:411
-msgid "Insert disk for drive %1\n"
-msgstr "Introduïu disc en unitat %1\n"
+msgid "Insert disk for drive %1.\n"
+msgstr "Introduïu disc en unitat %1.\n"
 
 #: winerror.mc:416
-msgid "Drive locked\n"
-msgstr "Unitat encadenat\n"
+msgid "Drive locked.\n"
+msgstr "Unitat encadenat.\n"
 
 #: winerror.mc:421
-msgid "Broken pipe\n"
-msgstr "Canonada trencada\n"
+msgid "Broken pipe.\n"
+msgstr "Canonada trencada.\n"
 
 #: winerror.mc:426
-msgid "Open failed\n"
-msgstr "L'obertura ha fallat\n"
+msgid "Open failed.\n"
+msgstr "L'obertura ha fallat.\n"
 
 #: winerror.mc:431
-msgid "Buffer overflow\n"
-msgstr "Desbordament de memòria intermèdia\n"
+msgid "Buffer overflow.\n"
+msgstr "Desbordament de memòria intermèdia.\n"
 
 #: winerror.mc:441
-msgid "No more search handles\n"
-msgstr "No queden mànecs de cerca\n"
+msgid "No more search handles.\n"
+msgstr "No queden mànecs de cerca.\n"
 
 #: winerror.mc:446
-msgid "Invalid target handle\n"
-msgstr "Mànec de destinació invàlid\n"
+msgid "Invalid target handle.\n"
+msgstr "Mànec de destinació invàlid.\n"
 
 #: winerror.mc:451
-msgid "Invalid IOCTL\n"
-msgstr "IOCTL invàlid\n"
+msgid "Invalid IOCTL.\n"
+msgstr "IOCTL invàlid.\n"
 
 #: winerror.mc:456
-msgid "Invalid verify switch\n"
-msgstr "Indicador de verificació invàlid\n"
+msgid "Invalid verify switch.\n"
+msgstr "Indicador de verificació invàlid.\n"
 
 #: winerror.mc:461
-msgid "Bad driver level\n"
-msgstr "Nivell de controlador dolent\n"
+msgid "Bad driver level.\n"
+msgstr "Nivell de controlador dolent.\n"
 
 #: winerror.mc:466
-msgid "Call not implemented\n"
-msgstr "Trucada no implementada\n"
+msgid "Call not implemented.\n"
+msgstr "Trucada no implementada.\n"
 
 #: winerror.mc:471
-msgid "Semaphore timeout\n"
-msgstr "Temps d'espera de semàfor superat\n"
+msgid "Semaphore timeout.\n"
+msgstr "Temps d'espera de semàfor superat.\n"
 
 #: winerror.mc:476
-msgid "Insufficient buffer\n"
-msgstr "Memòria intermèdia insuficient\n"
+msgid "Insufficient buffer.\n"
+msgstr "Memòria intermèdia insuficient.\n"
 
 #: winerror.mc:481
-msgid "Invalid name\n"
-msgstr "Nom invàlid\n"
+msgid "Invalid name.\n"
+msgstr "Nom invàlid.\n"
 
 #: winerror.mc:486
-msgid "Invalid level\n"
-msgstr "Nivell invàlid\n"
+msgid "Invalid level.\n"
+msgstr "Nivell invàlid.\n"
 
 #: winerror.mc:491
-msgid "No volume label\n"
-msgstr "Cap etiqueta de volum\n"
+msgid "No volume label.\n"
+msgstr "Cap etiqueta de volum.\n"
 
 #: winerror.mc:496
-msgid "Module not found\n"
-msgstr "Mòdul no trobat\n"
+msgid "Module not found.\n"
+msgstr "Mòdul no trobat.\n"
 
 #: winerror.mc:501
-msgid "Procedure not found\n"
-msgstr "Procediment no trobat\n"
+msgid "Procedure not found.\n"
+msgstr "Procediment no trobat.\n"
 
 #: winerror.mc:506
-msgid "No children to wait for\n"
-msgstr "Cap fill per a esperar\n"
+msgid "No children to wait for.\n"
+msgstr "Cap fill per a esperar.\n"
 
 #: winerror.mc:511
-msgid "Child process has not completed\n"
-msgstr "Procés fill no s'ha acabat\n"
+msgid "Child process has not completed.\n"
+msgstr "Procés fill no s'ha acabat.\n"
 
 #: winerror.mc:516
-msgid "Invalid use of direct access handle\n"
-msgstr "Ús de mànec d'accés directe invàlid\n"
+msgid "Invalid use of direct access handle.\n"
+msgstr "Ús de mànec d'accés directe invàlid.\n"
 
 #: winerror.mc:521
-msgid "Negative seek\n"
-msgstr "Cerca negativa\n"
+msgid "Negative seek.\n"
+msgstr "Cerca negativa.\n"
 
 #: winerror.mc:531
-msgid "Drive is a JOIN target\n"
-msgstr "Unitat es una destinació JOIN\n"
+msgid "Drive is a JOIN target.\n"
+msgstr "Unitat es una destinació JOIN.\n"
 
 #: winerror.mc:536
-msgid "Drive is already JOINed\n"
-msgstr "Ja s'ha fet JOIN en la unitat\n"
+msgid "Drive is already JOINed.\n"
+msgstr "Ja s'ha fet JOIN en la unitat.\n"
 
 #: winerror.mc:541
-msgid "Drive is already SUBSTed\n"
-msgstr "Ja s'ha fet SUBST en la unitat\n"
+msgid "Drive is already SUBSTed.\n"
+msgstr "Ja s'ha fet SUBST en la unitat.\n"
 
 #: winerror.mc:546
-msgid "Drive is not JOINed\n"
-msgstr "No s'ha fet JOIN en la unitat\n"
+msgid "Drive is not JOINed.\n"
+msgstr "No s'ha fet JOIN en la unitat.\n"
 
 #: winerror.mc:551
-msgid "Drive is not SUBSTed\n"
-msgstr "No s'ha fet SUBST en la unitat\n"
+msgid "Drive is not SUBSTed.\n"
+msgstr "No s'ha fet SUBST en la unitat.\n"
 
 #: winerror.mc:556
-msgid "Attempt to JOIN onto a JOINed drive\n"
-msgstr "Intent de fer JOIN damunt una unitat en que ja s'ha fet JOIN\n"
+msgid "Attempt to JOIN onto a JOINed drive.\n"
+msgstr "Intent de fer JOIN damunt una unitat en que ja s'ha fet JOIN.\n"
 
 #: winerror.mc:561
-msgid "Attempt to SUBST onto a SUBSTed drive\n"
-msgstr "Intent de fer SUBST damunt una unitat en que ja s'ha fet SUBST\n"
+msgid "Attempt to SUBST onto a SUBSTed drive.\n"
+msgstr "Intent de fer SUBST damunt una unitat en que ja s'ha fet SUBST.\n"
 
 #: winerror.mc:566
-msgid "Attempt to JOIN to a SUBSTed drive\n"
-msgstr "Intent de fer JOIN damunt una unitat en que ja s'ha fet SUBST\n"
+msgid "Attempt to JOIN to a SUBSTed drive.\n"
+msgstr "Intent de fer JOIN damunt una unitat en que ja s'ha fet SUBST.\n"
 
 #: winerror.mc:571
-msgid "Attempt to SUBST to a JOINed drive\n"
-msgstr "Intent de fer SUBST damunt una unitat en que ja s'ha fet JOIN\n"
+msgid "Attempt to SUBST to a JOINed drive.\n"
+msgstr "Intent de fer SUBST damunt una unitat en que ja s'ha fet JOIN.\n"
 
 #: winerror.mc:576
-msgid "Drive is busy\n"
-msgstr "La unitat està ocupada\n"
+msgid "Drive is busy.\n"
+msgstr "La unitat està ocupada.\n"
 
 #: winerror.mc:581
-msgid "Same drive\n"
-msgstr "És la mateixa unitat\n"
+msgid "Same drive.\n"
+msgstr "És la mateixa unitat.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory\n"
-msgstr "No és un directori superior\n"
+msgid "Not toplevel directory.\n"
+msgstr "No és un directori superior.\n"
 
 #: winerror.mc:591
-msgid "Directory is not empty\n"
-msgstr "El directori no està buit\n"
+msgid "Directory is not empty.\n"
+msgstr "El directori no està buit.\n"
 
 #: winerror.mc:596
-msgid "Path is in use as a SUBST\n"
-msgstr "La ruta està en ús com un SUBST\n"
+msgid "Path is in use as a SUBST.\n"
+msgstr "La ruta està en ús com un SUBST.\n"
 
 #: winerror.mc:601
-msgid "Path is in use as a JOIN\n"
-msgstr "La ruta està en ús com un JOIN\n"
+msgid "Path is in use as a JOIN.\n"
+msgstr "La ruta està en ús com un JOIN.\n"
 
 #: winerror.mc:606
-msgid "Path is busy\n"
-msgstr "La ruta està ocupada\n"
+msgid "Path is busy.\n"
+msgstr "La ruta està ocupada.\n"
 
 #: winerror.mc:611
-msgid "Already a SUBST target\n"
-msgstr "Ja és una destinació SUBST\n"
+msgid "Already a SUBST target.\n"
+msgstr "Ja és una destinació SUBST.\n"
 
 #: winerror.mc:616
-msgid "System trace not specified or disallowed\n"
-msgstr "Seguiment de sistema no especificat o no permès\n"
+msgid "System trace not specified or disallowed.\n"
+msgstr "Seguiment de sistema no especificat o no permès.\n"
 
 #: winerror.mc:621
-msgid "Event count for DosMuxSemWait incorrect\n"
-msgstr "Nombre d'esdeveniments de DosMuxSemWait incorrecte\n"
+msgid "Event count for DosMuxSemWait incorrect.\n"
+msgstr "Nombre d'esdeveniments de DosMuxSemWait incorrecte.\n"
 
 #: winerror.mc:626
-msgid "Too many waiters for DosMuxSemWait\n"
-msgstr "Massa esperançats per a DosMuxSemWait\n"
+msgid "Too many waiters for DosMuxSemWait.\n"
+msgstr "Massa esperançats per a DosMuxSemWait.\n"
 
 #: winerror.mc:631
-msgid "DosSemMuxWait list invalid\n"
-msgstr "Llista de DosSemMuxWait invàlid\n"
+msgid "DosSemMuxWait list invalid.\n"
+msgstr "Llista de DosSemMuxWait invàlid.\n"
 
 #: winerror.mc:636
-msgid "Volume label too long\n"
-msgstr "Etiqueta de volum massa llarg\n"
+msgid "Volume label too long.\n"
+msgstr "Etiqueta de volum massa llarg.\n"
 
 #: winerror.mc:641
-msgid "Too many TCBs\n"
-msgstr "Massa TCB\n"
+msgid "Too many TCBs.\n"
+msgstr "Massa TCB.\n"
 
 #: winerror.mc:646
-msgid "Signal refused\n"
-msgstr "Senyal negat\n"
+msgid "Signal refused.\n"
+msgstr "Senyal negat.\n"
 
 #: winerror.mc:651
-msgid "Segment discarded\n"
-msgstr "Segment descartat\n"
+msgid "Segment discarded.\n"
+msgstr "Segment descartat.\n"
 
 #: winerror.mc:656
-msgid "Segment not locked\n"
-msgstr "Segment no encadenat\n"
+msgid "Segment not locked.\n"
+msgstr "Segment no encadenat.\n"
 
 #: winerror.mc:661
-msgid "Bad thread ID address\n"
-msgstr "Adreça d'ID de fil dolent\n"
+msgid "Bad thread ID address.\n"
+msgstr "Adreça d'ID de fil dolent.\n"
 
 #: winerror.mc:666
-msgid "Bad arguments to DosExecPgm\n"
-msgstr "Paràmetres dolents a DosExecPgm\n"
+msgid "Bad arguments to DosExecPgm.\n"
+msgstr "Paràmetres dolents a DosExecPgm.\n"
 
 #: winerror.mc:671
-msgid "Path is invalid\n"
-msgstr "La ruta es invàlida\n"
+msgid "Path is invalid.\n"
+msgstr "La ruta es invàlida.\n"
 
 #: winerror.mc:676
-msgid "Signal pending\n"
-msgstr "Senyal pendent\n"
+msgid "Signal pending.\n"
+msgstr "Senyal pendent.\n"
 
 #: winerror.mc:681
-msgid "Max system-wide thread count reached\n"
-msgstr "Nombre màxim de fils de sistema aconseguit\n"
+msgid "Max system-wide thread count reached.\n"
+msgstr "Nombre màxim de fils de sistema aconseguit.\n"
 
 #: winerror.mc:686
-msgid "Lock failed\n"
-msgstr "El cadenat ha fallat\n"
+msgid "Lock failed.\n"
+msgstr "El cadenat ha fallat.\n"
 
 #: winerror.mc:691
-msgid "Resource in use\n"
-msgstr "Recurs en ús\n"
+msgid "Resource in use.\n"
+msgstr "Recurs en ús.\n"
 
 #: winerror.mc:696
-msgid "Cancel violation\n"
-msgstr "Violació de cancel·lació\n"
+msgid "Cancel violation.\n"
+msgstr "Violació de cancel·lació.\n"
 
 #: winerror.mc:701
-msgid "Atomic locks not supported\n"
-msgstr "No es accepten els cadenats atòmics\n"
+msgid "Atomic locks not supported.\n"
+msgstr "No es accepten els cadenats atòmics.\n"
 
 #: winerror.mc:706
-msgid "Invalid segment number\n"
-msgstr "Nombre de segment invàlid\n"
+msgid "Invalid segment number.\n"
+msgstr "Nombre de segment invàlid.\n"
 
 #: winerror.mc:711
-msgid "Invalid ordinal for %1\n"
-msgstr "Ordinal invàlid per a %1\n"
+msgid "Invalid ordinal for %1.\n"
+msgstr "Ordinal invàlid per a %1.\n"
 
 #: winerror.mc:716
-msgid "File already exists\n"
-msgstr "Fitxer ja existeix\n"
+msgid "File already exists.\n"
+msgstr "Fitxer ja existeix.\n"
 
 #: winerror.mc:721
-msgid "Invalid flag number\n"
-msgstr "Nombre de bandera invàlida\n"
+msgid "Invalid flag number.\n"
+msgstr "Nombre de bandera invàlida.\n"
 
 #: winerror.mc:726
-msgid "Semaphore name not found\n"
-msgstr "Nom de semàfor no trobat\n"
+msgid "Semaphore name not found.\n"
+msgstr "Nom de semàfor no trobat.\n"
 
 #: winerror.mc:731
-msgid "Invalid starting code segment for %1\n"
-msgstr "Segment de codi d'inici invàlid per a %1\n"
+msgid "Invalid starting code segment for %1.\n"
+msgstr "Segment de codi d'inici invàlid per a %1.\n"
 
 #: winerror.mc:736
-msgid "Invalid starting stack segment for %1\n"
-msgstr "Segment de codi d'inici de pila invàlid per a %1\n"
+msgid "Invalid starting stack segment for %1.\n"
+msgstr "Segment de codi d'inici de pila invàlid per a %1.\n"
 
 #: winerror.mc:741
-msgid "Invalid module type for %1\n"
-msgstr "Tipus de mòdul invàlid per a %1\n"
+msgid "Invalid module type for %1.\n"
+msgstr "Tipus de mòdul invàlid per a %1.\n"
 
 #: winerror.mc:746
-msgid "Invalid EXE signature in %1\n"
-msgstr "Signatura EXE invàlid en %1\n"
+msgid "Invalid EXE signature in %1.\n"
+msgstr "Signatura EXE invàlid en %1.\n"
 
 #: winerror.mc:751
-msgid "EXE %1 is marked invalid\n"
-msgstr "El EXE %1 està marcat invàlid\n"
+msgid "EXE %1 is marked invalid.\n"
+msgstr "El EXE %1 està marcat invàlid.\n"
 
 #: winerror.mc:756
-msgid "Bad EXE format for %1\n"
-msgstr "Format EXE dolent per a %1\n"
+msgid "Bad EXE format for %1.\n"
+msgstr "Format EXE dolent per a %1.\n"
 
 #: winerror.mc:761
-msgid "Iterated data exceeds 64k in %1\n"
-msgstr "Dades iterades superen els 64k in %1\n"
+msgid "Iterated data exceeds 64k in %1.\n"
+msgstr "Dades iterades superen els 64k in %1.\n"
 
 #: winerror.mc:766
-msgid "Invalid MinAllocSize in %1\n"
-msgstr "MinAllocSize invàlid in %1\n"
+msgid "Invalid MinAllocSize in %1.\n"
+msgstr "MinAllocSize invàlid in %1.\n"
 
 #: winerror.mc:771
-msgid "Dynlink from invalid ring\n"
-msgstr "Enllaç dinàmic d'anell invàlid\n"
+msgid "Dynlink from invalid ring.\n"
+msgstr "Enllaç dinàmic d'anell invàlid.\n"
 
 #: winerror.mc:776
-msgid "IOPL not enabled\n"
-msgstr "IOPL no habilitat\n"
+msgid "IOPL not enabled.\n"
+msgstr "IOPL no habilitat.\n"
 
 #: winerror.mc:781
-msgid "Invalid SEGDPL in %1\n"
-msgstr "SEGDPL invàlid en %1\n"
+msgid "Invalid SEGDPL in %1.\n"
+msgstr "SEGDPL invàlid en %1.\n"
 
 #: winerror.mc:786
-msgid "Auto data segment exceeds 64k\n"
-msgstr "Segment de dades automàtic supera els 64k\n"
+msgid "Auto data segment exceeds 64k.\n"
+msgstr "Segment de dades automàtic supera els 64k.\n"
 
 #: winerror.mc:791
-msgid "Ring 2 segment must be movable\n"
-msgstr "Segment de l'anell 2 ha de ser mòbil\n"
+msgid "Ring 2 segment must be movable.\n"
+msgstr "Segment de l'anell 2 ha de ser mòbil.\n"
 
 #: winerror.mc:796
-msgid "Relocation chain exceeds segment limit in %1\n"
-msgstr "Cadena de trasllat supera el límit de segment in %1\n"
+msgid "Relocation chain exceeds segment limit in %1.\n"
+msgstr "Cadena de trasllat supera el límit de segment in %1.\n"
 
 #: winerror.mc:801
-msgid "Infinite loop in relocation chain in %1\n"
-msgstr "Bucle infinit en la cadena de reubicació %1\n"
+msgid "Infinite loop in relocation chain in %1.\n"
+msgstr "Bucle infinit en la cadena de reubicació %1.\n"
 
 #: winerror.mc:806
-msgid "Environment variable not found\n"
-msgstr "Variable d'entorn no es troba\n"
+msgid "Environment variable not found.\n"
+msgstr "Variable d'entorn no es troba.\n"
 
 #: winerror.mc:811
-msgid "No signal sent\n"
-msgstr "Cap senyal enviat\n"
+msgid "No signal sent.\n"
+msgstr "Cap senyal enviat.\n"
 
 #: winerror.mc:816
-msgid "File name is too long\n"
-msgstr "Nom de fitxer és massa llarg\n"
+msgid "File name is too long.\n"
+msgstr "Nom de fitxer és massa llarg.\n"
 
 #: winerror.mc:821
-msgid "Ring 2 stack in use\n"
-msgstr "Pila d'anell 2 en ús\n"
+msgid "Ring 2 stack in use.\n"
+msgstr "Pila d'anell 2 en ús.\n"
 
 #: winerror.mc:826
-msgid "Error in use of filename wildcards\n"
-msgstr "Error en l'ús de comodins de nom de fitxer\n"
+msgid "Error in use of filename wildcards.\n"
+msgstr "Error en l'ús de comodins de nom de fitxer.\n"
 
 #: winerror.mc:831
-msgid "Invalid signal number\n"
-msgstr "Nombre de senyal invàlid\n"
+msgid "Invalid signal number.\n"
+msgstr "Nombre de senyal invàlid.\n"
 
 #: winerror.mc:836
-msgid "Error setting signal handler\n"
-msgstr "Error establint manejador de senyals\n"
+msgid "Error setting signal handler.\n"
+msgstr "Error establint manejador de senyals.\n"
 
 #: winerror.mc:841
-msgid "Segment locked\n"
-msgstr "Segment encadenat\n"
+msgid "Segment locked.\n"
+msgstr "Segment encadenat.\n"
 
 #: winerror.mc:846
-msgid "Too many modules\n"
-msgstr "Massa mòduls\n"
+msgid "Too many modules.\n"
+msgstr "Massa mòduls.\n"
 
 #: winerror.mc:851
-msgid "Nesting LoadModule calls not allowed\n"
-msgstr "No es permet l'anidament de trucades\n"
+msgid "Nesting LoadModule calls not allowed.\n"
+msgstr "No es permet l'anidament de trucades.\n"
 
 #: winerror.mc:856
-msgid "Machine type mismatch\n"
-msgstr "Diferència en tipus de màquina\n"
+msgid "Machine type mismatch.\n"
+msgstr "Diferència en tipus de màquina.\n"
 
 #: winerror.mc:861
-msgid "Bad pipe\n"
-msgstr "Canonada dolenta\n"
+msgid "Bad pipe.\n"
+msgstr "Canonada dolenta.\n"
 
 #: winerror.mc:866
-msgid "Pipe busy\n"
-msgstr "Canonada ocupada\n"
+msgid "Pipe busy.\n"
+msgstr "Canonada ocupada.\n"
 
 #: winerror.mc:871
-msgid "Pipe closed\n"
-msgstr "Canonada trucada\n"
+msgid "Pipe closed.\n"
+msgstr "Canonada trucada.\n"
 
 #: winerror.mc:876
-msgid "Pipe not connected\n"
-msgstr "Canonada no connectada\n"
+msgid "Pipe not connected.\n"
+msgstr "Canonada no connectada.\n"
 
 #: winerror.mc:881
-msgid "More data available\n"
-msgstr "Més dades disponibles\n"
+msgid "More data available.\n"
+msgstr "Més dades disponibles.\n"
 
 #: winerror.mc:886
-msgid "Session canceled\n"
-msgstr "Sessió cancel·lat\n"
+msgid "Session canceled.\n"
+msgstr "Sessió cancel·lat.\n"
 
 #: winerror.mc:891
-msgid "Invalid extended attribute name\n"
-msgstr "Nom d'atribut estès invàlid\n"
+msgid "Invalid extended attribute name.\n"
+msgstr "Nom d'atribut estès invàlid.\n"
 
 #: winerror.mc:896
-msgid "Extended attribute list inconsistent\n"
-msgstr "Llista d'atributs estès inconsistent\n"
+msgid "Extended attribute list inconsistent.\n"
+msgstr "Llista d'atributs estès inconsistent.\n"
 
 #: winerror.mc:901
-msgid "No more data available\n"
-msgstr "No hi ha més dades disponibles\n"
+msgid "No more data available.\n"
+msgstr "No hi ha més dades disponibles.\n"
 
 #: winerror.mc:906
-msgid "Cannot use Copy API\n"
-msgstr "No es pot usar la Copy API\n"
+msgid "Cannot use Copy API.\n"
+msgstr "No es pot usar la Copy API.\n"
 
 #: winerror.mc:911
-msgid "Directory name invalid\n"
-msgstr "Nom de directori invàlid\n"
+msgid "Directory name invalid.\n"
+msgstr "Nom de directori invàlid.\n"
 
 #: winerror.mc:916
-msgid "Extended attributes didn't fit\n"
-msgstr "Els atributs estesos no han cabut\n"
+msgid "Extended attributes didn't fit.\n"
+msgstr "Els atributs estesos no han cabut.\n"
 
 #: winerror.mc:921
-msgid "Extended attribute file corrupt\n"
-msgstr "Fitxer d'atributs estesos corrupte\n"
+msgid "Extended attribute file corrupt.\n"
+msgstr "Fitxer d'atributs estesos corrupte.\n"
 
 #: winerror.mc:926
-msgid "Extended attribute table full\n"
-msgstr "Taula d'atributs estesos ple\n"
+msgid "Extended attribute table full.\n"
+msgstr "Taula d'atributs estesos ple.\n"
 
 #: winerror.mc:931
-msgid "Invalid extended attribute handle\n"
-msgstr "Mànec d'atribut estès invàlid\n"
+msgid "Invalid extended attribute handle.\n"
+msgstr "Mànec d'atribut estès invàlid.\n"
 
 #: winerror.mc:936
-msgid "Extended attributes not supported\n"
-msgstr "No s'accepten atributs extensos\n"
+msgid "Extended attributes not supported.\n"
+msgstr "No s'accepten atributs extensos.\n"
 
 #: winerror.mc:941
-msgid "Mutex not owned by caller\n"
-msgstr "El mutex no pertanyé al trucador\n"
+msgid "Mutex not owned by caller.\n"
+msgstr "El mutex no pertanyé al trucador.\n"
 
 #: winerror.mc:946
-msgid "Too many posts to semaphore\n"
-msgstr "Massa missatges al semàfor\n"
+msgid "Too many posts to semaphore.\n"
+msgstr "Massa missatges al semàfor.\n"
 
 #: winerror.mc:951
-msgid "Read/WriteProcessMemory partially completed\n"
-msgstr "Read/WriteProcessMemory parcialment acabats\n"
+msgid "Read/WriteProcessMemory partially completed.\n"
+msgstr "Read/WriteProcessMemory parcialment acabats.\n"
 
 #: winerror.mc:956
-msgid "The oplock wasn't granted\n"
-msgstr "No s'ha concedit el cadenat d'operació\n"
+msgid "The oplock wasn't granted.\n"
+msgstr "No s'ha concedit el cadenat d'operació.\n"
 
 #: winerror.mc:961
-msgid "Invalid oplock message received\n"
-msgstr "Missatge invàlid rebut de cadenat d'operació\n"
+msgid "Invalid oplock message received.\n"
+msgstr "Missatge invàlid rebut de cadenat d'operació.\n"
 
 #: winerror.mc:966
-msgid "Message 0x%1 not found in file %2\n"
-msgstr "No s'ha trobat el missatge 0x%1 en el fitxer %2\n"
+msgid "Message 0x%1 not found in file %2.\n"
+msgstr "No s'ha trobat el missatge 0x%1 en el fitxer %2.\n"
 
 #: winerror.mc:971
-msgid "Invalid address\n"
-msgstr "Adreça invàlida\n"
+msgid "Invalid address.\n"
+msgstr "Adreça invàlida.\n"
 
 #: winerror.mc:976
-msgid "Arithmetic overflow\n"
-msgstr "Desbordament aritmètic\n"
+msgid "Arithmetic overflow.\n"
+msgstr "Desbordament aritmètic.\n"
 
 #: winerror.mc:981
-msgid "Pipe connected\n"
-msgstr "Canonada connectada\n"
+msgid "Pipe connected.\n"
+msgstr "Canonada connectada.\n"
 
 #: winerror.mc:986
-msgid "Pipe listening\n"
-msgstr "Canonada escoltant\n"
+msgid "Pipe listening.\n"
+msgstr "Canonada escoltant.\n"
 
 #: winerror.mc:991
-msgid "Extended attribute access denied\n"
-msgstr "Accés als atributs estesos denegat\n"
+msgid "Extended attribute access denied.\n"
+msgstr "Accés als atributs estesos denegat.\n"
 
 #: winerror.mc:996
-msgid "I/O operation aborted\n"
-msgstr "Operació E/S avortada\n"
+msgid "I/O operation aborted.\n"
+msgstr "Operació E/S avortada.\n"
 
 #: winerror.mc:1001
-msgid "Overlapped I/O incomplete\n"
-msgstr "E/S superposada incompleta\n"
+msgid "Overlapped I/O incomplete.\n"
+msgstr "E/S superposada incompleta.\n"
 
 #: winerror.mc:1006
-msgid "Overlapped I/O pending\n"
-msgstr "E/S superposada pendent\n"
+msgid "Overlapped I/O pending.\n"
+msgstr "E/S superposada pendent.\n"
 
 #: winerror.mc:1011
-msgid "No access to memory location\n"
-msgstr "Cap accés a la ubicació de memòria\n"
+msgid "No access to memory location.\n"
+msgstr "Cap accés a la ubicació de memòria.\n"
 
 #: winerror.mc:1016
-msgid "Swap error\n"
-msgstr "Error d'intercanvi\n"
+msgid "Swap error.\n"
+msgstr "Error d'intercanvi.\n"
 
 #: winerror.mc:1021
-msgid "Stack overflow\n"
-msgstr "Desbordament de pila\n"
+msgid "Stack overflow.\n"
+msgstr "Desbordament de pila.\n"
 
 #: winerror.mc:1026
-msgid "Invalid message\n"
-msgstr "Missatge invàlid\n"
+msgid "Invalid message.\n"
+msgstr "Missatge invàlid.\n"
 
 #: winerror.mc:1031
-msgid "Cannot complete\n"
-msgstr "No es pot completar\n"
+msgid "Cannot complete.\n"
+msgstr "No es pot completar.\n"
 
 #: winerror.mc:1036
-msgid "Invalid flags\n"
-msgstr "Banderes invàlides\n"
+msgid "Invalid flags.\n"
+msgstr "Banderes invàlides.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume\n"
-msgstr "Volum no reconegut\n"
+msgid "Unrecognised volume.\n"
+msgstr "Volum no reconegut.\n"
 
 #: winerror.mc:1046
-msgid "File invalid\n"
-msgstr "Fitxer invàlid\n"
+msgid "File invalid.\n"
+msgstr "Fitxer invàlid.\n"
 
 #: winerror.mc:1051
-msgid "Cannot run full-screen\n"
-msgstr "No es pot executar a pantalla completa\n"
+msgid "Cannot run full-screen.\n"
+msgstr "No es pot executar a pantalla completa.\n"
 
 #: winerror.mc:1056
-msgid "Nonexistent token\n"
-msgstr "Component lèxic inexistent\n"
+msgid "Nonexistent token.\n"
+msgstr "Component lèxic inexistent.\n"
 
 #: winerror.mc:1061
-msgid "Registry corrupt\n"
-msgstr "Registre corrupte\n"
+msgid "Registry corrupt.\n"
+msgstr "Registre corrupte.\n"
 
 #: winerror.mc:1066
-msgid "Invalid key\n"
-msgstr "Clau invàlida\n"
+msgid "Invalid key.\n"
+msgstr "Clau invàlida.\n"
 
 #: winerror.mc:1071
-msgid "Can't open registry key\n"
-msgstr "No es pot obrir la clau de registre\n"
+msgid "Can't open registry key.\n"
+msgstr "No es pot obrir la clau de registre.\n"
 
 #: winerror.mc:1076
-msgid "Can't read registry key\n"
-msgstr "No es pot llegir la clau de registre\n"
+msgid "Can't read registry key.\n"
+msgstr "No es pot llegir la clau de registre.\n"
 
 #: winerror.mc:1081
-msgid "Can't write registry key\n"
-msgstr "No es pot escriure la clau de registre\n"
+msgid "Can't write registry key.\n"
+msgstr "No es pot escriure la clau de registre.\n"
 
 #: winerror.mc:1086
-msgid "Registry has been recovered\n"
-msgstr "S'ha recuperat el registre\n"
+msgid "Registry has been recovered.\n"
+msgstr "S'ha recuperat el registre.\n"
 
 #: winerror.mc:1091
-msgid "Registry is corrupt\n"
-msgstr "Registre està corrupte\n"
+msgid "Registry is corrupt.\n"
+msgstr "Registre està corrupte.\n"
 
 #: winerror.mc:1096
-msgid "I/O to registry failed\n"
-msgstr "Ha fallat la E/S al registre\n"
+msgid "I/O to registry failed.\n"
+msgstr "Ha fallat la E/S al registre.\n"
 
 #: winerror.mc:1101
-msgid "Not registry file\n"
-msgstr "No es fitxer de registre\n"
+msgid "Not registry file.\n"
+msgstr "No es fitxer de registre.\n"
 
 #: winerror.mc:1106
-msgid "Key deleted\n"
-msgstr "Clau suprimida\n"
+msgid "Key deleted.\n"
+msgstr "Clau suprimida.\n"
 
 #: winerror.mc:1111
-msgid "No registry log space\n"
-msgstr "No hi ha espai de log de registre\n"
+msgid "No registry log space.\n"
+msgstr "No hi ha espai de log de registre.\n"
 
 #: winerror.mc:1116
-msgid "Registry key has subkeys\n"
-msgstr "La clau de registre té subclaus\n"
+msgid "Registry key has subkeys.\n"
+msgstr "La clau de registre té subclaus.\n"
 
 #: winerror.mc:1121
-msgid "Subkey must be volatile\n"
-msgstr "La subclau ha de ser volàtil\n"
+msgid "Subkey must be volatile.\n"
+msgstr "La subclau ha de ser volàtil.\n"
 
 #: winerror.mc:1126
-msgid "Notify change request in progress\n"
-msgstr "Sol·licitud de canvi de notificació en curs\n"
+msgid "Notify change request in progress.\n"
+msgstr "Sol·licitud de canvi de notificació en curs.\n"
 
 #: winerror.mc:1131
-msgid "Dependent services are running\n"
-msgstr "Serveis dependents s'estan executant\n"
+msgid "Dependent services are running.\n"
+msgstr "Serveis dependents s'estan executant.\n"
 
 #: winerror.mc:1136
-msgid "Invalid service control\n"
-msgstr "Control de servei invàlid\n"
+msgid "Invalid service control.\n"
+msgstr "Control de servei invàlid.\n"
 
 #: winerror.mc:1141
-msgid "Service request timeout\n"
-msgstr "Temps d'espera de sol·licitud de servei superat\n"
+msgid "Service request timeout.\n"
+msgstr "Temps d'espera de sol·licitud de servei superat.\n"
 
 #: winerror.mc:1146
-msgid "Cannot create service thread\n"
-msgstr "No es pot crear fil de servei\n"
+msgid "Cannot create service thread.\n"
+msgstr "No es pot crear fil de servei.\n"
 
 #: winerror.mc:1151
-msgid "Service database locked\n"
-msgstr "Base de dades de servei encadenat\n"
+msgid "Service database locked.\n"
+msgstr "Base de dades de servei encadenat.\n"
 
 #: winerror.mc:1156
-msgid "Service already running\n"
-msgstr "El servei ja està executant\n"
+msgid "Service already running.\n"
+msgstr "El servei ja està executant.\n"
 
 #: winerror.mc:1161
-msgid "Invalid service account\n"
-msgstr "Compte de servei invàlid\n"
+msgid "Invalid service account.\n"
+msgstr "Compte de servei invàlid.\n"
 
 #: winerror.mc:1166
-msgid "Service is disabled\n"
-msgstr "El servei està deshabilitat\n"
+msgid "Service is disabled.\n"
+msgstr "El servei està deshabilitat.\n"
 
 #: winerror.mc:1171
-msgid "Circular dependency\n"
-msgstr "Dependència circular\n"
+msgid "Circular dependency.\n"
+msgstr "Dependència circular.\n"
 
 #: winerror.mc:1176
-msgid "Service does not exist\n"
-msgstr "El servei no existeix\n"
+msgid "Service does not exist.\n"
+msgstr "El servei no existeix.\n"
 
 #: winerror.mc:1181
-msgid "Service cannot accept control message\n"
-msgstr "El servei no pot acceptar el missatge de control\n"
+msgid "Service cannot accept control message.\n"
+msgstr "El servei no pot acceptar el missatge de control.\n"
 
 #: winerror.mc:1186
-msgid "Service not active\n"
-msgstr "El servei no està actiu\n"
+msgid "Service not active.\n"
+msgstr "El servei no està actiu.\n"
 
 #: winerror.mc:1191
-msgid "Service controller connect failed\n"
-msgstr "La connexió de controlador de servei ha fallat\n"
+msgid "Service controller connect failed.\n"
+msgstr "La connexió de controlador de servei ha fallat.\n"
 
 #: winerror.mc:1196
-msgid "Exception in service\n"
-msgstr "Excepció en servei\n"
+msgid "Exception in service.\n"
+msgstr "Excepció en servei.\n"
 
 #: winerror.mc:1201
-msgid "Database does not exist\n"
-msgstr "El base de dades no existeix\n"
+msgid "Database does not exist.\n"
+msgstr "El base de dades no existeix.\n"
 
 #: winerror.mc:1206
-msgid "Service-specific error\n"
-msgstr "Error específic al servei\n"
+msgid "Service-specific error.\n"
+msgstr "Error específic al servei.\n"
 
 #: winerror.mc:1211
-msgid "Process aborted\n"
-msgstr "Procés avortat\n"
+msgid "Process aborted.\n"
+msgstr "Procés avortat.\n"
 
 #: winerror.mc:1216
-msgid "Service dependency failed\n"
-msgstr "Una dependència de servei ha fallat\n"
+msgid "Service dependency failed.\n"
+msgstr "Una dependència de servei ha fallat.\n"
 
 #: winerror.mc:1221
-msgid "Service login failed\n"
-msgstr "L'inici de sessió ha fallat\n"
+msgid "Service login failed.\n"
+msgstr "L'inici de sessió ha fallat.\n"
 
 #: winerror.mc:1226
-msgid "Service start-hang\n"
-msgstr "Congelació d'inici de servei\n"
+msgid "Service start-hang.\n"
+msgstr "Congelació d'inici de servei.\n"
 
 #: winerror.mc:1231
-msgid "Invalid service lock\n"
-msgstr "Cadenat de servei invàlid\n"
+msgid "Invalid service lock.\n"
+msgstr "Cadenat de servei invàlid.\n"
 
 #: winerror.mc:1236
-msgid "Service marked for delete\n"
-msgstr "Servei marcat per a suprimir\n"
+msgid "Service marked for delete.\n"
+msgstr "Servei marcat per a suprimir.\n"
 
 #: winerror.mc:1241
-msgid "Service exists\n"
-msgstr "Servei existeix\n"
+msgid "Service exists.\n"
+msgstr "Servei existeix.\n"
 
 #: winerror.mc:1246
-msgid "System running last-known-good config\n"
-msgstr "El sistema està executant l'última configuració bona coneguda\n"
+msgid "System running last-known-good config.\n"
+msgstr "El sistema està executant l'última configuració bona coneguda.\n"
 
 #: winerror.mc:1251
-msgid "Service dependency deleted\n"
-msgstr "Dependència de serveis suprimida\n"
+msgid "Service dependency deleted.\n"
+msgstr "Dependència de serveis suprimida.\n"
 
 #: winerror.mc:1256
-msgid "Boot already accepted as last-good config\n"
-msgstr "Arrencada ja acceptada com última configuració bona\n"
+msgid "Boot already accepted as last-good config.\n"
+msgstr "Arrencada ja acceptada com última configuració bona.\n"
 
 #: winerror.mc:1261
-msgid "Service not started since last boot\n"
-msgstr "Servei no iniciat des de l'última arrencada\n"
+msgid "Service not started since last boot.\n"
+msgstr "Servei no iniciat des de l'última arrencada.\n"
 
 #: winerror.mc:1266
-msgid "Duplicate service name\n"
-msgstr "Nom del servei duplicat\n"
+msgid "Duplicate service name.\n"
+msgstr "Nom del servei duplicat.\n"
 
 #: winerror.mc:1271
-msgid "Different service account\n"
-msgstr "Compte de servei diferent\n"
+msgid "Different service account.\n"
+msgstr "Compte de servei diferent.\n"
 
 #: winerror.mc:1276
-msgid "Driver failure cannot be detected\n"
-msgstr "No es pot detectar la fallada del controlador\n"
+msgid "Driver failure cannot be detected.\n"
+msgstr "No es pot detectar la fallada del controlador.\n"
 
 #: winerror.mc:1281
-msgid "Process abort cannot be detected\n"
-msgstr "No es pot detectar l'avortament de procés\n"
+msgid "Process abort cannot be detected.\n"
+msgstr "No es pot detectar l'avortament de procés.\n"
 
 #: winerror.mc:1286
-msgid "No recovery program for service\n"
-msgstr "Cap programa de recuperació per al servei\n"
+msgid "No recovery program for service.\n"
+msgstr "Cap programa de recuperació per al servei.\n"
 
 #: winerror.mc:1291
-msgid "Service not implemented by exe\n"
-msgstr "Servei no implementat per exe\n"
+msgid "Service not implemented by exe.\n"
+msgstr "Servei no implementat per exe.\n"
 
 #: winerror.mc:1296
-msgid "End of media\n"
-msgstr "Fi de mitjà\n"
+msgid "End of media.\n"
+msgstr "Fi de mitjà.\n"
 
 #: winerror.mc:1301
-msgid "Filemark detected\n"
-msgstr "Marca de fitxer detectada\n"
+msgid "Filemark detected.\n"
+msgstr "Marca de fitxer detectada.\n"
 
 #: winerror.mc:1306
-msgid "Beginning of media\n"
-msgstr "Començament de mitjà\n"
+msgid "Beginning of media.\n"
+msgstr "Començament de mitjà.\n"
 
 #: winerror.mc:1311
-msgid "Setmark detected\n"
-msgstr "Marca de conjunt detectada\n"
+msgid "Setmark detected.\n"
+msgstr "Marca de conjunt detectada.\n"
 
 #: winerror.mc:1316
-msgid "No data detected\n"
-msgstr "No s'ha detectat dades\n"
+msgid "No data detected.\n"
+msgstr "No s'ha detectat dades.\n"
 
 #: winerror.mc:1321
-msgid "Partition failure\n"
-msgstr "Fallada de partició\n"
+msgid "Partition failure.\n"
+msgstr "Fallada de partició.\n"
 
 #: winerror.mc:1326
-msgid "Invalid block length\n"
-msgstr "Longitud de bloc invàlid\n"
+msgid "Invalid block length.\n"
+msgstr "Longitud de bloc invàlid.\n"
 
 #: winerror.mc:1331
-msgid "Device not partitioned\n"
-msgstr "Dispositiu no particionat\n"
+msgid "Device not partitioned.\n"
+msgstr "Dispositiu no particionat.\n"
 
 #: winerror.mc:1336
-msgid "Unable to lock media\n"
-msgstr "No es pot encadenar la mitjà\n"
+msgid "Unable to lock media.\n"
+msgstr "No es pot encadenar la mitjà.\n"
 
 #: winerror.mc:1341
-msgid "Unable to unload media\n"
-msgstr "No es pot descarregar la mitjà\n"
+msgid "Unable to unload media.\n"
+msgstr "No es pot descarregar la mitjà.\n"
 
 #: winerror.mc:1346
-msgid "Media changed\n"
-msgstr "Mitjà canviada\n"
+msgid "Media changed.\n"
+msgstr "Mitjà canviada.\n"
 
 #: winerror.mc:1351
-msgid "I/O bus reset\n"
-msgstr "Bus E/S reiniciat\n"
+msgid "I/O bus reset.\n"
+msgstr "Bus E/S reiniciat.\n"
 
 #: winerror.mc:1356
-msgid "No media in drive\n"
-msgstr "Cap mitjà en unitat\n"
+msgid "No media in drive.\n"
+msgstr "Cap mitjà en unitat.\n"
 
 #: winerror.mc:1361
-msgid "No Unicode translation\n"
-msgstr "Cap traducció Unicode\n"
+msgid "No Unicode translation.\n"
+msgstr "Cap traducció Unicode.\n"
 
 #: winerror.mc:1366
-msgid "DLL init failed\n"
-msgstr "L'inici DLL ha fallat\n"
+msgid "DLL init failed.\n"
+msgstr "L'inici DLL ha fallat.\n"
 
 #: winerror.mc:1371
-msgid "Shutdown in progress\n"
-msgstr "Aturada en curs\n"
+msgid "Shutdown in progress.\n"
+msgstr "Aturada en curs.\n"
 
 #: winerror.mc:1376
-msgid "No shutdown in progress\n"
-msgstr "Cap aturada en curs\n"
+msgid "No shutdown in progress.\n"
+msgstr "Cap aturada en curs.\n"
 
 #: winerror.mc:1381
-msgid "I/O device error\n"
-msgstr "Error de dispositiu E/S\n"
+msgid "I/O device error.\n"
+msgstr "Error de dispositiu E/S.\n"
 
 #: winerror.mc:1386
-msgid "No serial devices found\n"
-msgstr "Cap dispositiu sèrie trobat\n"
+msgid "No serial devices found.\n"
+msgstr "Cap dispositiu sèrie trobat.\n"
 
 #: winerror.mc:1391
-msgid "Shared IRQ busy\n"
-msgstr "IRQ compartida ocupada\n"
+msgid "Shared IRQ busy.\n"
+msgstr "IRQ compartida ocupada.\n"
 
 #: winerror.mc:1396
-msgid "Serial I/O completed\n"
-msgstr "E/S sèrie completada\n"
+msgid "Serial I/O completed.\n"
+msgstr "E/S sèrie completada.\n"
 
 #: winerror.mc:1401
-msgid "Serial I/O counter timeout\n"
-msgstr "Temps d'espera de sol·licitud de servei superat\n"
+msgid "Serial I/O counter timeout.\n"
+msgstr "Temps d'espera de sol·licitud de servei superat.\n"
 
 #: winerror.mc:1406
-msgid "Floppy ID address mark not found\n"
-msgstr "Marca de direcció d'ID de disquet no trobada\n"
+msgid "Floppy ID address mark not found.\n"
+msgstr "Marca de direcció d'ID de disquet no trobada.\n"
 
 #: winerror.mc:1411
-msgid "Floppy reports wrong cylinder\n"
-msgstr "El disquet informa de cilindre equivocat\n"
+msgid "Floppy reports wrong cylinder.\n"
+msgstr "El disquet informa de cilindre equivocat.\n"
 
 #: winerror.mc:1416
-msgid "Unknown floppy error\n"
-msgstr "Error de disquet desconegut\n"
+msgid "Unknown floppy error.\n"
+msgstr "Error de disquet desconegut.\n"
 
 #: winerror.mc:1421
-msgid "Floppy registers inconsistent\n"
-msgstr "Registres de disquet inconsistents\n"
+msgid "Floppy registers inconsistent.\n"
+msgstr "Registres de disquet inconsistents.\n"
 
 #: winerror.mc:1426
-msgid "Hard disk recalibrate failed\n"
-msgstr "La recalibració del disc dur ha fallat\n"
+msgid "Hard disk recalibrate failed.\n"
+msgstr "La recalibració del disc dur ha fallat.\n"
 
 #: winerror.mc:1431
-msgid "Hard disk operation failed\n"
-msgstr "L'operació de disc dur ha fallat\n"
+msgid "Hard disk operation failed.\n"
+msgstr "L'operació de disc dur ha fallat.\n"
 
 #: winerror.mc:1436
-msgid "Hard disk reset failed\n"
-msgstr "La reinicialització del disc dur ha fallat\n"
+msgid "Hard disk reset failed.\n"
+msgstr "La reinicialització del disc dur ha fallat.\n"
 
 #: winerror.mc:1441
-msgid "End of tape media\n"
-msgstr "Fi de mitjà de cinta\n"
+msgid "End of tape media.\n"
+msgstr "Fi de mitjà de cinta.\n"
 
 #: winerror.mc:1446
-msgid "Not enough server memory\n"
-msgstr "No n'hi ha prou memòria en el servidor\n"
+msgid "Not enough server memory.\n"
+msgstr "No n'hi ha prou memòria en el servidor.\n"
 
 #: winerror.mc:1451
-msgid "Possible deadlock\n"
-msgstr "Abraçada mortal possible\n"
+msgid "Possible deadlock.\n"
+msgstr "Abraçada mortal possible.\n"
 
 #: winerror.mc:1456
-msgid "Incorrect alignment\n"
-msgstr "Alineació incorrecta\n"
+msgid "Incorrect alignment.\n"
+msgstr "Alineació incorrecta.\n"
 
 #: winerror.mc:1461
-msgid "Set-power-state vetoed\n"
-msgstr "Ajust d'estat de potència vetat\n"
+msgid "Set-power-state vetoed.\n"
+msgstr "Ajust d'estat de potència vetat.\n"
 
 #: winerror.mc:1466
-msgid "Set-power-state failed\n"
-msgstr "L'ajust d'estat de potència ha fallat\n"
+msgid "Set-power-state failed.\n"
+msgstr "L'ajust d'estat de potència ha fallat.\n"
 
 #: winerror.mc:1471
-msgid "Too many links\n"
-msgstr "Massa enllaços\n"
+msgid "Too many links.\n"
+msgstr "Massa enllaços.\n"
 
 #: winerror.mc:1476
-msgid "Newer windows version needed\n"
-msgstr "Cal una versió de Windows més nou\n"
+msgid "Newer windows version needed.\n"
+msgstr "Cal una versió de Windows més nou.\n"
 
 #: winerror.mc:1481
-msgid "Wrong operating system\n"
-msgstr "Sistema operatiu incorrecte\n"
+msgid "Wrong operating system.\n"
+msgstr "Sistema operatiu incorrecte.\n"
 
 #: winerror.mc:1486
-msgid "Single-instance application\n"
-msgstr "Aplicació d'instància única\n"
+msgid "Single-instance application.\n"
+msgstr "Aplicació d'instància única.\n"
 
 #: winerror.mc:1491
-msgid "Real-mode application\n"
-msgstr "Aplicació de mode real\n"
+msgid "Real-mode application.\n"
+msgstr "Aplicació de mode real.\n"
 
 #: winerror.mc:1496
-msgid "Invalid DLL\n"
-msgstr "DLL Invàlid\n"
+msgid "Invalid DLL.\n"
+msgstr "DLL Invàlid.\n"
 
 #: winerror.mc:1501
-msgid "No associated application\n"
-msgstr "Cap aplicació associada\n"
+msgid "No associated application.\n"
+msgstr "Cap aplicació associada.\n"
 
 #: winerror.mc:1506
-msgid "DDE failure\n"
-msgstr "Fallada de DDE\n"
+msgid "DDE failure.\n"
+msgstr "Fallada de DDE.\n"
 
 #: winerror.mc:1511
-msgid "DLL not found\n"
-msgstr "DLL no trobada\n"
+msgid "DLL not found.\n"
+msgstr "DLL no trobada.\n"
 
 #: winerror.mc:1516
-msgid "Out of user handles\n"
-msgstr "No queden mànecs d'usuari\n"
+msgid "Out of user handles.\n"
+msgstr "No queden mànecs d'usuari.\n"
 
 #: winerror.mc:1521
-msgid "Message can only be used in synchronous calls\n"
-msgstr "El missatge només pot usar-se en les trucades sincròniques\n"
+msgid "Message can only be used in synchronous calls.\n"
+msgstr "El missatge només pot usar-se en les trucades sincròniques.\n"
 
 #: winerror.mc:1526
-msgid "The source element is empty\n"
-msgstr "L'element d'origen està buida\n"
+msgid "The source element is empty.\n"
+msgstr "L'element d'origen està buida.\n"
 
 #: winerror.mc:1531
-msgid "The destination element is full\n"
-msgstr "L'element destinatari està ple\n"
+msgid "The destination element is full.\n"
+msgstr "L'element destinatari està ple.\n"
 
 #: winerror.mc:1536
-msgid "The element address is invalid\n"
-msgstr "L'adreça d'element és invàlida\n"
+msgid "The element address is invalid.\n"
+msgstr "L'adreça d'element és invàlida.\n"
 
 #: winerror.mc:1541
-msgid "The magazine is not present\n"
-msgstr "El magazine no està present\n"
+msgid "The magazine is not present.\n"
+msgstr "El magazine no està present.\n"
 
 #: winerror.mc:1546
-msgid "The device needs reinitialization\n"
-msgstr "El dispositiu necessita reinicialització\n"
+msgid "The device needs reinitialization.\n"
+msgstr "El dispositiu necessita reinicialització.\n"
 
 #: winerror.mc:1551
-msgid "The device requires cleaning\n"
-msgstr "El dispositiu requereix una neteja\n"
+msgid "The device requires cleaning.\n"
+msgstr "El dispositiu requereix una neteja.\n"
 
 #: winerror.mc:1556
-msgid "The device door is open\n"
-msgstr "La porta de dispositiu està obert\n"
+msgid "The device door is open.\n"
+msgstr "La porta de dispositiu està obert.\n"
 
 #: winerror.mc:1561
-msgid "The device is not connected\n"
-msgstr "El dispositiu no està connectat\n"
+msgid "The device is not connected.\n"
+msgstr "El dispositiu no està connectat.\n"
 
 #: winerror.mc:1566
-msgid "Element not found\n"
-msgstr "Element no trobat\n"
+msgid "Element not found.\n"
+msgstr "Element no trobat.\n"
 
 #: winerror.mc:1571
-msgid "No match found\n"
-msgstr "Cap coincidència trobada\n"
+msgid "No match found.\n"
+msgstr "Cap coincidència trobada.\n"
 
 #: winerror.mc:1576
-msgid "Property set not found\n"
-msgstr "Conjunt de propietats no trobat\n"
+msgid "Property set not found.\n"
+msgstr "Conjunt de propietats no trobat.\n"
 
 #: winerror.mc:1581
-msgid "Point not found\n"
-msgstr "Punt no trobat\n"
+msgid "Point not found.\n"
+msgstr "Punt no trobat.\n"
 
 #: winerror.mc:1586
-msgid "No running tracking service\n"
-msgstr "Cap servei de rastreig executant\n"
+msgid "No running tracking service.\n"
+msgstr "Cap servei de rastreig executant.\n"
 
 #: winerror.mc:1591
-msgid "No such volume ID\n"
-msgstr "Cap ID de volum així\n"
+msgid "No such volume ID.\n"
+msgstr "Cap ID de volum així.\n"
 
 #: winerror.mc:1596
-msgid "Unable to remove the file to be replaced\n"
-msgstr "No es pot eliminar el fitxer per a substituir\n"
+msgid "Unable to remove the file to be replaced.\n"
+msgstr "No es pot eliminar el fitxer per a substituir.\n"
 
 #: winerror.mc:1601
-msgid "Unable to move the replacement file into place\n"
-msgstr "No es pot moure el fitxer de recanvi al seu lloc\n"
+msgid "Unable to move the replacement file into place.\n"
+msgstr "No es pot moure el fitxer de recanvi al seu lloc.\n"
 
 #: winerror.mc:1606
-msgid "Moving the replacement file failed\n"
-msgstr "El moviment del fitxer de substitució ha fallat\n"
+msgid "Moving the replacement file failed.\n"
+msgstr "El moviment del fitxer de substitució ha fallat.\n"
 
 #: winerror.mc:1611
-msgid "The journal is being deleted\n"
-msgstr "El journal s'està suprimint\n"
+msgid "The journal is being deleted.\n"
+msgstr "El journal s'està suprimint.\n"
 
 #: winerror.mc:1616
-msgid "The journal is not active\n"
-msgstr "El journal no està actiu\n"
+msgid "The journal is not active.\n"
+msgstr "El journal no està actiu.\n"
 
 #: winerror.mc:1621
-msgid "Potential matching file found\n"
-msgstr "Fitxer coincident potencial trobat\n"
+msgid "Potential matching file found.\n"
+msgstr "Fitxer coincident potencial trobat.\n"
 
 #: winerror.mc:1626
-msgid "The journal entry was deleted\n"
-msgstr "L'entrada de journal s'ha suprimit\n"
+msgid "The journal entry was deleted.\n"
+msgstr "L'entrada de journal s'ha suprimit.\n"
 
 #: winerror.mc:1631
-msgid "Invalid device name\n"
-msgstr "Nom de dispositiu invàlid\n"
+msgid "Invalid device name.\n"
+msgstr "Nom de dispositiu invàlid.\n"
 
 #: winerror.mc:1636
-msgid "Connection unavailable\n"
-msgstr "Connexió no disponible\n"
+msgid "Connection unavailable.\n"
+msgstr "Connexió no disponible.\n"
 
 #: winerror.mc:1641
-msgid "Device already remembered\n"
-msgstr "Dispositiu ja recordat\n"
+msgid "Device already remembered.\n"
+msgstr "Dispositiu ja recordat.\n"
 
 #: winerror.mc:1646
-msgid "No network or bad path\n"
-msgstr "Cap xarxa o ruta dolenta\n"
+msgid "No network or bad path.\n"
+msgstr "Cap xarxa o ruta dolenta.\n"
 
 #: winerror.mc:1651
-msgid "Invalid network provider name\n"
-msgstr "Nom invàlid de proveïdor de xarxa\n"
+msgid "Invalid network provider name.\n"
+msgstr "Nom invàlid de proveïdor de xarxa.\n"
 
 #: winerror.mc:1656
-msgid "Cannot open network connection profile\n"
-msgstr "No es pot obrir el perfil de connexió de xarxa\n"
+msgid "Cannot open network connection profile.\n"
+msgstr "No es pot obrir el perfil de connexió de xarxa.\n"
 
 #: winerror.mc:1661
-msgid "Corrupt network connection profile\n"
-msgstr "Perfil de connexió de xarxa corrupte\n"
+msgid "Corrupt network connection profile.\n"
+msgstr "Perfil de connexió de xarxa corrupte.\n"
 
 #: winerror.mc:1666
-msgid "Not a container\n"
-msgstr "No és un contenidor\n"
+msgid "Not a container.\n"
+msgstr "No és un contenidor.\n"
 
 #: winerror.mc:1671
-msgid "Extended error\n"
-msgstr "Error estès\n"
+msgid "Extended error.\n"
+msgstr "Error estès.\n"
 
 #: winerror.mc:1676
-msgid "Invalid group name\n"
-msgstr "Nom del grup invàlid\n"
+msgid "Invalid group name.\n"
+msgstr "Nom del grup invàlid.\n"
 
 #: winerror.mc:1681
-msgid "Invalid computer name\n"
-msgstr "Nom d'ordinador invàlid\n"
+msgid "Invalid computer name.\n"
+msgstr "Nom d'ordinador invàlid.\n"
 
 #: winerror.mc:1686
-msgid "Invalid event name\n"
-msgstr "Nom d'esdeveniment invàlid\n"
+msgid "Invalid event name.\n"
+msgstr "Nom d'esdeveniment invàlid.\n"
 
 #: winerror.mc:1691
-msgid "Invalid domain name\n"
-msgstr "Nom de domini invàlid\n"
+msgid "Invalid domain name.\n"
+msgstr "Nom de domini invàlid.\n"
 
 #: winerror.mc:1696
-msgid "Invalid service name\n"
-msgstr "Nom de servei invàlid\n"
+msgid "Invalid service name.\n"
+msgstr "Nom de servei invàlid.\n"
 
 #: winerror.mc:1701
-msgid "Invalid network name\n"
-msgstr "Nom de xarxa invàlid\n"
+msgid "Invalid network name.\n"
+msgstr "Nom de xarxa invàlid.\n"
 
 #: winerror.mc:1706
-msgid "Invalid share name\n"
-msgstr "Nom de compartició invàlid\n"
+msgid "Invalid share name.\n"
+msgstr "Nom de compartició invàlid.\n"
 
 #: winerror.mc:1716
-msgid "Invalid message name\n"
-msgstr "Nom de missatge invàlid\n"
+msgid "Invalid message name.\n"
+msgstr "Nom de missatge invàlid.\n"
 
 #: winerror.mc:1721
-msgid "Invalid message destination\n"
-msgstr "Destinació de missatge invàlida\n"
+msgid "Invalid message destination.\n"
+msgstr "Destinació de missatge invàlida.\n"
 
 #: winerror.mc:1726
-msgid "Session credential conflict\n"
-msgstr "Conflicte de credencials de sessió\n"
+msgid "Session credential conflict.\n"
+msgstr "Conflicte de credencials de sessió.\n"
 
 #: winerror.mc:1731
-msgid "Remote session limit exceeded\n"
-msgstr "Límit de sessions remots superat\n"
+msgid "Remote session limit exceeded.\n"
+msgstr "Límit de sessions remots superat.\n"
 
 #: winerror.mc:1736
-msgid "Duplicate domain or workgroup name\n"
-msgstr "Nom de domini o grup de treball duplicat\n"
+msgid "Duplicate domain or workgroup name.\n"
+msgstr "Nom de domini o grup de treball duplicat.\n"
 
 #: winerror.mc:1741
-msgid "No network\n"
-msgstr "Cap xarxa\n"
+msgid "No network.\n"
+msgstr "Cap xarxa.\n"
 
 #: winerror.mc:1746
-msgid "Operation canceled by user\n"
-msgstr "Operació cancel·lat per usuari\n"
+msgid "Operation canceled by user.\n"
+msgstr "Operació cancel·lat per usuari.\n"
 
 #: winerror.mc:1751
-msgid "File has a user-mapped section\n"
-msgstr "El fitxer té una secció assignada per usuari\n"
+msgid "File has a user-mapped section.\n"
+msgstr "El fitxer té una secció assignada per usuari.\n"
 
 #: winerror.mc:1756 winerror.mc:3741
-msgid "Connection refused\n"
-msgstr "Connexió refusada\n"
+msgid "Connection refused.\n"
+msgstr "Connexió refusada.\n"
 
 #: winerror.mc:1761
-msgid "Connection gracefully closed\n"
-msgstr "Connexió tancat amb gràcia\n"
+msgid "Connection gracefully closed.\n"
+msgstr "Connexió tancat amb gràcia.\n"
 
 #: winerror.mc:1766
-msgid "Address already associated with transport endpoint\n"
-msgstr "Direcció ja associada amb el punt final de transport\n"
+msgid "Address already associated with transport endpoint.\n"
+msgstr "Direcció ja associada amb el punt final de transport.\n"
 
 #: winerror.mc:1771
-msgid "Address not associated with transport endpoint\n"
-msgstr "Direcció no associada amb el punt final de transport\n"
+msgid "Address not associated with transport endpoint.\n"
+msgstr "Direcció no associada amb el punt final de transport.\n"
 
 #: winerror.mc:1776
-msgid "Connection invalid\n"
-msgstr "Connexió invàlid\n"
+msgid "Connection invalid.\n"
+msgstr "Connexió invàlid.\n"
 
 #: winerror.mc:1781
-msgid "Connection is active\n"
-msgstr "La connexió està activa\n"
+msgid "Connection is active.\n"
+msgstr "La connexió està activa.\n"
 
 #: winerror.mc:1786
-msgid "Network unreachable\n"
-msgstr "Xarxa inabastable\n"
+msgid "Network unreachable.\n"
+msgstr "Xarxa inabastable.\n"
 
 #: winerror.mc:1791
-msgid "Host unreachable\n"
-msgstr "Equip inabastable\n"
+msgid "Host unreachable.\n"
+msgstr "Equip inabastable.\n"
 
 #: winerror.mc:1796
-msgid "Protocol unreachable\n"
-msgstr "Protocol inabastable\n"
+msgid "Protocol unreachable.\n"
+msgstr "Protocol inabastable.\n"
 
 #: winerror.mc:1801
-msgid "Port unreachable\n"
-msgstr "Port inabastable\n"
+msgid "Port unreachable.\n"
+msgstr "Port inabastable.\n"
 
 #: winerror.mc:1806
-msgid "Request aborted\n"
-msgstr "Sol·licitud avortada\n"
+msgid "Request aborted.\n"
+msgstr "Sol·licitud avortada.\n"
 
 #: winerror.mc:1811
-msgid "Connection aborted\n"
-msgstr "Connexió avortada\n"
+msgid "Connection aborted.\n"
+msgstr "Connexió avortada.\n"
 
 #: winerror.mc:1816
-msgid "Please retry operation\n"
-msgstr "Si us plau, torneu a intentar l'operació\n"
+msgid "Please retry operation.\n"
+msgstr "Si us plau, torneu a intentar l'operació.\n"
 
 #: winerror.mc:1821
-msgid "Connection count limit reached\n"
-msgstr "Límit de nombre de connexions assolit\n"
+msgid "Connection count limit reached.\n"
+msgstr "Límit de nombre de connexions assolit.\n"
 
 #: winerror.mc:1826
-msgid "Login time restriction\n"
-msgstr "Restricció de temps de sessió\n"
+msgid "Login time restriction.\n"
+msgstr "Restricció de temps de sessió.\n"
 
 #: winerror.mc:1831
-msgid "Login workstation restriction\n"
-msgstr "Restricció d'estació de treball de sessió\n"
+msgid "Login workstation restriction.\n"
+msgstr "Restricció d'estació de treball de sessió.\n"
 
 #: winerror.mc:1836
-msgid "Incorrect network address\n"
-msgstr "Adreça de xarxa incorrecta\n"
+msgid "Incorrect network address.\n"
+msgstr "Adreça de xarxa incorrecta.\n"
 
 #: winerror.mc:1841
-msgid "Service already registered\n"
-msgstr "Servei ja registrat\n"
+msgid "Service already registered.\n"
+msgstr "Servei ja registrat.\n"
 
 #: winerror.mc:1846
-msgid "Service not found\n"
-msgstr "Servei no trobat\n"
+msgid "Service not found.\n"
+msgstr "Servei no trobat.\n"
 
 #: winerror.mc:1851
-msgid "User not authenticated\n"
-msgstr "Usuari no autenticat\n"
+msgid "User not authenticated.\n"
+msgstr "Usuari no autenticat.\n"
 
 #: winerror.mc:1856
-msgid "User not logged on\n"
-msgstr "Usuari no està\n"
+msgid "User not logged on.\n"
+msgstr "Usuari no està.\n"
 
 #: winerror.mc:1861
-msgid "Continue work in progress\n"
-msgstr "Continua treball en curs\n"
+msgid "Continue work in progress.\n"
+msgstr "Continua treball en curs.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised\n"
-msgstr "Ja inicialitzat\n"
+msgid "Already initialised.\n"
+msgstr "Ja inicialitzat.\n"
 
 #: winerror.mc:1871
-msgid "No more local devices\n"
-msgstr "No hi ha més dispositius locals\n"
+msgid "No more local devices.\n"
+msgstr "No hi ha més dispositius locals.\n"
 
 #: winerror.mc:1876
-msgid "The site does not exist\n"
-msgstr "El lloc no existeix\n"
+msgid "The site does not exist.\n"
+msgstr "El lloc no existeix.\n"
 
 #: winerror.mc:1881
-msgid "The domain controller already exists\n"
-msgstr "El controlador de domini ja existeix\n"
+msgid "The domain controller already exists.\n"
+msgstr "El controlador de domini ja existeix.\n"
 
 #: winerror.mc:1886
-msgid "Supported only when connected\n"
-msgstr "Només s'admet quan es connecta\n"
+msgid "Supported only when connected.\n"
+msgstr "Només s'admet quan es connecta.\n"
 
 #: winerror.mc:1891
-msgid "Perform operation even when nothing changed\n"
-msgstr "Realitza operació tot i que no ha canviat res\n"
+msgid "Perform operation even when nothing changed.\n"
+msgstr "Realitza operació tot i que no ha canviat res.\n"
 
 #: winerror.mc:1896
-msgid "The user profile is invalid\n"
-msgstr "El perfil d'usuari és invàlid\n"
+msgid "The user profile is invalid.\n"
+msgstr "El perfil d'usuari és invàlid.\n"
 
 #: winerror.mc:1901
-msgid "Not supported on Small Business Server\n"
-msgstr "No compatible am el Small Business Server\n"
+msgid "Not supported on Small Business Server.\n"
+msgstr "No compatible am el Small Business Server.\n"
 
 #: winerror.mc:1906
-msgid "Not all privileges assigned\n"
-msgstr "No tots els privilegis estan assignats\n"
+msgid "Not all privileges assigned.\n"
+msgstr "No tots els privilegis estan assignats.\n"
 
 #: winerror.mc:1911
-msgid "Some security IDs not mapped\n"
-msgstr "Alguns IDs de seguretat no assignats\n"
+msgid "Some security IDs not mapped.\n"
+msgstr "Alguns IDs de seguretat no assignats.\n"
 
 #: winerror.mc:1916
-msgid "No quotas for account\n"
-msgstr "Cap quota per al compte\n"
+msgid "No quotas for account.\n"
+msgstr "Cap quota per al compte.\n"
 
 #: winerror.mc:1921
-msgid "Local user session key\n"
-msgstr "Clau de sessió d'usuari local\n"
+msgid "Local user session key.\n"
+msgstr "Clau de sessió d'usuari local.\n"
 
 #: winerror.mc:1926
-msgid "Password too complex for LM\n"
-msgstr "Contrasenya massa complex per LM\n"
+msgid "Password too complex for LM.\n"
+msgstr "Contrasenya massa complex per LM.\n"
 
 #: winerror.mc:1931
-msgid "Unknown revision\n"
-msgstr "Revisió desconegut\n"
+msgid "Unknown revision.\n"
+msgstr "Revisió desconegut.\n"
 
 #: winerror.mc:1936
-msgid "Incompatible revision levels\n"
-msgstr "Nivells de revisió incompatibles\n"
+msgid "Incompatible revision levels.\n"
+msgstr "Nivells de revisió incompatibles.\n"
 
 #: winerror.mc:1941
-msgid "Invalid owner\n"
-msgstr "Propietari invàlid\n"
+msgid "Invalid owner.\n"
+msgstr "Propietari invàlid.\n"
 
 #: winerror.mc:1946
-msgid "Invalid primary group\n"
-msgstr "Grup primari invàlid\n"
+msgid "Invalid primary group.\n"
+msgstr "Grup primari invàlid.\n"
 
 #: winerror.mc:1951
-msgid "No impersonation token\n"
-msgstr "Cap token de suplantació\n"
+msgid "No impersonation token.\n"
+msgstr "Cap token de suplantació.\n"
 
 #: winerror.mc:1956
-msgid "Can't disable mandatory group\n"
-msgstr "No es pot deshabilitar un grup obligatori\n"
+msgid "Can't disable mandatory group.\n"
+msgstr "No es pot deshabilitar un grup obligatori.\n"
 
 #: winerror.mc:1961
-msgid "No logon servers available\n"
-msgstr "Cap servidor d'autenticació disponible\n"
+msgid "No logon servers available.\n"
+msgstr "Cap servidor d'autenticació disponible.\n"
 
 #: winerror.mc:1966
-msgid "No such logon session\n"
-msgstr "Cap sessió d'inici així\n"
+msgid "No such logon session.\n"
+msgstr "Cap sessió d'inici així.\n"
 
 #: winerror.mc:1971
-msgid "No such privilege\n"
-msgstr "Cap privilegi així\n"
+msgid "No such privilege.\n"
+msgstr "Cap privilegi així.\n"
 
 #: winerror.mc:1976
-msgid "Privilege not held\n"
-msgstr "Privilegi no tingut\n"
+msgid "Privilege not held.\n"
+msgstr "Privilegi no tingut.\n"
 
 #: winerror.mc:1981
-msgid "Invalid account name\n"
-msgstr "Nom del compte invàlid\n"
+msgid "Invalid account name.\n"
+msgstr "Nom del compte invàlid.\n"
 
 #: winerror.mc:1986
-msgid "User already exists\n"
-msgstr "L'usuari ja existeix\n"
+msgid "User already exists.\n"
+msgstr "L'usuari ja existeix.\n"
 
 #: winerror.mc:1991
-msgid "No such user\n"
-msgstr "Cap usuari així\n"
+msgid "No such user.\n"
+msgstr "Cap usuari així.\n"
 
 #: winerror.mc:1996
-msgid "Group already exists\n"
-msgstr "El grup ja existeix\n"
+msgid "Group already exists.\n"
+msgstr "El grup ja existeix.\n"
 
 #: winerror.mc:2001
-msgid "No such group\n"
-msgstr "Cap grup així\n"
+msgid "No such group.\n"
+msgstr "Cap grup així.\n"
 
 #: winerror.mc:2006
-msgid "User already in group\n"
-msgstr "L'usuari ja està en el grup\n"
+msgid "User already in group.\n"
+msgstr "L'usuari ja està en el grup.\n"
 
 #: winerror.mc:2011
-msgid "User not in group\n"
-msgstr "L'usuari no està en el grup\n"
+msgid "User not in group.\n"
+msgstr "L'usuari no està en el grup.\n"
 
 #: winerror.mc:2016
-msgid "Can't delete last admin user\n"
-msgstr "No es pot suprimir l'últim usuari administrador\n"
+msgid "Can't delete last admin user.\n"
+msgstr "No es pot suprimir l'últim usuari administrador.\n"
 
 #: winerror.mc:2021
-msgid "Wrong password\n"
-msgstr "Contrasenya equivocada\n"
+msgid "Wrong password.\n"
+msgstr "Contrasenya equivocada.\n"
 
 #: winerror.mc:2026
-msgid "Ill-formed password\n"
-msgstr "Contrasenya mal format\n"
+msgid "Ill-formed password.\n"
+msgstr "Contrasenya mal format.\n"
 
 #: winerror.mc:2031
-msgid "Password restriction\n"
-msgstr "Restricció de contrasenya\n"
+msgid "Password restriction.\n"
+msgstr "Restricció de contrasenya.\n"
 
 #: winerror.mc:2036
-msgid "Logon failure\n"
-msgstr "Fallada d'inici de sessió\n"
+msgid "Logon failure.\n"
+msgstr "Fallada d'inici de sessió.\n"
 
 #: winerror.mc:2041
-msgid "Account restriction\n"
-msgstr "Restricció de compte\n"
+msgid "Account restriction.\n"
+msgstr "Restricció de compte.\n"
 
 #: winerror.mc:2046
-msgid "Invalid logon hours\n"
-msgstr "Hores de sessió invàlides\n"
+msgid "Invalid logon hours.\n"
+msgstr "Hores de sessió invàlides.\n"
 
 #: winerror.mc:2051
-msgid "Invalid workstation\n"
-msgstr "Estació de treball invàlida\n"
+msgid "Invalid workstation.\n"
+msgstr "Estació de treball invàlida.\n"
 
 #: winerror.mc:2056
-msgid "Password expired\n"
-msgstr "Contrasenya caducada\n"
+msgid "Password expired.\n"
+msgstr "Contrasenya caducada.\n"
 
 #: winerror.mc:2061
-msgid "Account disabled\n"
-msgstr "Compte deshabilitat\n"
+msgid "Account disabled.\n"
+msgstr "Compte deshabilitat.\n"
 
 #: winerror.mc:2066
-msgid "No security ID mapped\n"
-msgstr "Cap ID de seguretat assignat\n"
+msgid "No security ID mapped.\n"
+msgstr "Cap ID de seguretat assignat.\n"
 
 #: winerror.mc:2071
-msgid "Too many LUIDs requested\n"
-msgstr "Massa LUIDs sol·licitats\n"
+msgid "Too many LUIDs requested.\n"
+msgstr "Massa LUIDs sol·licitats.\n"
 
 #: winerror.mc:2076
-msgid "LUIDs exhausted\n"
-msgstr "LUIDs acabats\n"
+msgid "LUIDs exhausted.\n"
+msgstr "LUIDs acabats.\n"
 
 #: winerror.mc:2081
-msgid "Invalid sub authority\n"
-msgstr "Sub-autoritat invàlida\n"
+msgid "Invalid sub authority.\n"
+msgstr "Sub-autoritat invàlida.\n"
 
 #: winerror.mc:2086
-msgid "Invalid ACL\n"
-msgstr "ACL invàlida\n"
+msgid "Invalid ACL.\n"
+msgstr "ACL invàlida.\n"
 
 #: winerror.mc:2091
-msgid "Invalid SID\n"
-msgstr "SID invàlid\n"
+msgid "Invalid SID.\n"
+msgstr "SID invàlid.\n"
 
 #: winerror.mc:2096
-msgid "Invalid security descriptor\n"
-msgstr "Descriptor de seguretat invàlid\n"
+msgid "Invalid security descriptor.\n"
+msgstr "Descriptor de seguretat invàlid.\n"
 
 #: winerror.mc:2101
-msgid "Bad inherited ACL\n"
-msgstr "ACL heretat dolent\n"
+msgid "Bad inherited ACL.\n"
+msgstr "ACL heretat dolent.\n"
 
 #: winerror.mc:2106
-msgid "Server disabled\n"
-msgstr "Servidor deshabilitat\n"
+msgid "Server disabled.\n"
+msgstr "Servidor deshabilitat.\n"
 
 #: winerror.mc:2111
-msgid "Server not disabled\n"
-msgstr "Servidor no deshabilitat\n"
+msgid "Server not disabled.\n"
+msgstr "Servidor no deshabilitat.\n"
 
 #: winerror.mc:2116
-msgid "Invalid ID authority\n"
-msgstr "Autoritat d'ID invàlida\n"
+msgid "Invalid ID authority.\n"
+msgstr "Autoritat d'ID invàlida.\n"
 
 #: winerror.mc:2121
-msgid "Allotted space exceeded\n"
-msgstr "Espai assignat superat\n"
+msgid "Allotted space exceeded.\n"
+msgstr "Espai assignat superat.\n"
 
 #: winerror.mc:2126
-msgid "Invalid group attributes\n"
-msgstr "Atributs de grup invàlids\n"
+msgid "Invalid group attributes.\n"
+msgstr "Atributs de grup invàlids.\n"
 
 #: winerror.mc:2131
-msgid "Bad impersonation level\n"
-msgstr "Nivell de suplantació dolent\n"
+msgid "Bad impersonation level.\n"
+msgstr "Nivell de suplantació dolent.\n"
 
 #: winerror.mc:2136
-msgid "Can't open anonymous security token\n"
-msgstr "No es pot obrir token de seguretat anònim\n"
+msgid "Can't open anonymous security token.\n"
+msgstr "No es pot obrir token de seguretat anònim.\n"
 
 #: winerror.mc:2141
-msgid "Bad validation class\n"
-msgstr "Classe de validació dolent\n"
+msgid "Bad validation class.\n"
+msgstr "Classe de validació dolent.\n"
 
 #: winerror.mc:2146
-msgid "Bad token type\n"
-msgstr "Tipus de token dolent\n"
+msgid "Bad token type.\n"
+msgstr "Tipus de token dolent.\n"
 
 #: winerror.mc:2151
-msgid "No security on object\n"
-msgstr "Cap seguretat en objecte\n"
+msgid "No security on object.\n"
+msgstr "Cap seguretat en objecte.\n"
 
 #: winerror.mc:2156
-msgid "Can't access domain information\n"
-msgstr "No es pot accedir a la informació de domini\n"
+msgid "Can't access domain information.\n"
+msgstr "No es pot accedir a la informació de domini.\n"
 
 #: winerror.mc:2161
-msgid "Invalid server state\n"
-msgstr "Estat de servidor invàlid\n"
+msgid "Invalid server state.\n"
+msgstr "Estat de servidor invàlid.\n"
 
 #: winerror.mc:2166
-msgid "Invalid domain state\n"
-msgstr "Estat de domini invàlid\n"
+msgid "Invalid domain state.\n"
+msgstr "Estat de domini invàlid.\n"
 
 #: winerror.mc:2171
-msgid "Invalid domain role\n"
-msgstr "Paper de domini invàlid\n"
+msgid "Invalid domain role.\n"
+msgstr "Paper de domini invàlid.\n"
 
 #: winerror.mc:2176
-msgid "No such domain\n"
-msgstr "Cap domini així\n"
+msgid "No such domain.\n"
+msgstr "Cap domini així.\n"
 
 #: winerror.mc:2181
-msgid "Domain already exists\n"
-msgstr "El domini ja existeix\n"
+msgid "Domain already exists.\n"
+msgstr "El domini ja existeix.\n"
 
 #: winerror.mc:2186
-msgid "Domain limit exceeded\n"
-msgstr "Límit de domini superat\n"
+msgid "Domain limit exceeded.\n"
+msgstr "Límit de domini superat.\n"
 
 #: winerror.mc:2191
-msgid "Internal database corruption\n"
-msgstr "Corrupció de base de dades intern\n"
+msgid "Internal database corruption.\n"
+msgstr "Corrupció de base de dades intern.\n"
 
 #: winerror.mc:2196
-msgid "Internal error\n"
-msgstr "Error intern\n"
+msgid "Internal error.\n"
+msgstr "Error intern.\n"
 
 #: winerror.mc:2201
-msgid "Generic access types not mapped\n"
-msgstr "Tipus genèrics d'accés no assignats\n"
+msgid "Generic access types not mapped.\n"
+msgstr "Tipus genèrics d'accés no assignats.\n"
 
 #: winerror.mc:2206
-msgid "Bad descriptor format\n"
-msgstr "Format dolent de descriptor\n"
+msgid "Bad descriptor format.\n"
+msgstr "Format dolent de descriptor.\n"
 
 #: winerror.mc:2211
-msgid "Not a logon process\n"
-msgstr "No és un procés d'inici de sessió\n"
+msgid "Not a logon process.\n"
+msgstr "No és un procés d'inici de sessió.\n"
 
 #: winerror.mc:2216
-msgid "Logon session ID exists\n"
-msgstr "ID de sessió d'inici existeix\n"
+msgid "Logon session ID exists.\n"
+msgstr "ID de sessió d'inici existeix.\n"
 
 #: winerror.mc:2221
-msgid "Unknown authentication package\n"
-msgstr "Paquet d'autenticació desconegut\n"
+msgid "Unknown authentication package.\n"
+msgstr "Paquet d'autenticació desconegut.\n"
 
 #: winerror.mc:2226
-msgid "Bad logon session state\n"
-msgstr "Estat dolent de sessió d'inici\n"
+msgid "Bad logon session state.\n"
+msgstr "Estat dolent de sessió d'inici.\n"
 
 #: winerror.mc:2231
-msgid "Logon session ID collision\n"
-msgstr "Col·lisió d'ID de sessió d'inici\n"
+msgid "Logon session ID collision.\n"
+msgstr "Col·lisió d'ID de sessió d'inici.\n"
 
 #: winerror.mc:2236
-msgid "Invalid logon type\n"
-msgstr "Tipus d'inici de sessió invàlid\n"
+msgid "Invalid logon type.\n"
+msgstr "Tipus d'inici de sessió invàlid.\n"
 
 #: winerror.mc:2241
-msgid "Cannot impersonate\n"
-msgstr "No es pot suplantar\n"
+msgid "Cannot impersonate.\n"
+msgstr "No es pot suplantar.\n"
 
 #: winerror.mc:2246
-msgid "Invalid transaction state\n"
-msgstr "Estat de transacció invàlid\n"
+msgid "Invalid transaction state.\n"
+msgstr "Estat de transacció invàlid.\n"
 
 #: winerror.mc:2251
-msgid "Security DB commit failure\n"
-msgstr "Fallada de comissió de base de dades de seguretat\n"
+msgid "Security DB commit failure.\n"
+msgstr "Fallada de comissió de base de dades de seguretat.\n"
 
 #: winerror.mc:2256
-msgid "Account is built-in\n"
-msgstr "Compte és integrada\n"
+msgid "Account is built-in.\n"
+msgstr "Compte és integrada.\n"
 
 #: winerror.mc:2261
-msgid "Group is built-in\n"
-msgstr "Grup és integrat\n"
+msgid "Group is built-in.\n"
+msgstr "Grup és integrat.\n"
 
 #: winerror.mc:2266
-msgid "User is built-in\n"
-msgstr "Usuari és integrat\n"
+msgid "User is built-in.\n"
+msgstr "Usuari és integrat.\n"
 
 #: winerror.mc:2271
-msgid "Group is primary for user\n"
-msgstr "Grup és primari per l'usuari\n"
+msgid "Group is primary for user.\n"
+msgstr "Grup és primari per l'usuari.\n"
 
 #: winerror.mc:2276
-msgid "Token already in use\n"
-msgstr "Token ja en ús\n"
+msgid "Token already in use.\n"
+msgstr "Token ja en ús.\n"
 
 #: winerror.mc:2281
-msgid "No such local group\n"
-msgstr "Cap grup local així\n"
+msgid "No such local group.\n"
+msgstr "Cap grup local així.\n"
 
 #: winerror.mc:2286
-msgid "User not in local group\n"
-msgstr "L'usuari no està en el grup local\n"
+msgid "User not in local group.\n"
+msgstr "L'usuari no està en el grup local.\n"
 
 #: winerror.mc:2291
-msgid "User already in local group\n"
-msgstr "L'usuari ja està en el grup local\n"
+msgid "User already in local group.\n"
+msgstr "L'usuari ja està en el grup local.\n"
 
 #: winerror.mc:2296
-msgid "Local group already exists\n"
-msgstr "El grup local ja existeix\n"
+msgid "Local group already exists.\n"
+msgstr "El grup local ja existeix.\n"
 
 #: winerror.mc:2301 winerror.mc:2326
-msgid "Logon type not granted\n"
-msgstr "Tipus d'inici de sessió no concedit\n"
+msgid "Logon type not granted.\n"
+msgstr "Tipus d'inici de sessió no concedit.\n"
 
 #: winerror.mc:2306
-msgid "Too many secrets\n"
-msgstr "Massa secrets\n"
+msgid "Too many secrets.\n"
+msgstr "Massa secrets.\n"
 
 #: winerror.mc:2311
-msgid "Secret too long\n"
-msgstr "Secret massa llarg\n"
+msgid "Secret too long.\n"
+msgstr "Secret massa llarg.\n"
 
 #: winerror.mc:2316
-msgid "Internal security DB error\n"
-msgstr "Error de base de dades de seguretat intern\n"
+msgid "Internal security DB error.\n"
+msgstr "Error de base de dades de seguretat intern.\n"
 
 #: winerror.mc:2321
-msgid "Too many context IDs\n"
-msgstr "Massa IDs de context\n"
+msgid "Too many context IDs.\n"
+msgstr "Massa IDs de context.\n"
 
 #: winerror.mc:2331
-msgid "Cross-encrypted NT password required\n"
-msgstr "Contrasenya mutualment xifrada NT requerit\n"
+msgid "Cross-encrypted NT password required.\n"
+msgstr "Contrasenya mutualment xifrada NT requerit.\n"
 
 #: winerror.mc:2336
-msgid "No such member\n"
-msgstr "Cap membre així\n"
+msgid "No such member.\n"
+msgstr "Cap membre així.\n"
 
 #: winerror.mc:2341
-msgid "Invalid member\n"
-msgstr "Membre invàlid\n"
+msgid "Invalid member.\n"
+msgstr "Membre invàlid.\n"
 
 #: winerror.mc:2346
-msgid "Too many SIDs\n"
-msgstr "Massa SIDs\n"
+msgid "Too many SIDs.\n"
+msgstr "Massa SIDs.\n"
 
 #: winerror.mc:2351
-msgid "Cross-encrypted LM password required\n"
-msgstr "Contrasenya mutualment xifrada LM requerit\n"
+msgid "Cross-encrypted LM password required.\n"
+msgstr "Contrasenya mutualment xifrada LM requerit.\n"
 
 #: winerror.mc:2356
-msgid "No inheritable components\n"
-msgstr "Cap component heretable\n"
+msgid "No inheritable components.\n"
+msgstr "Cap component heretable.\n"
 
 #: winerror.mc:2361
-msgid "File or directory corrupt\n"
-msgstr "Fitxer o directori corrupte\n"
+msgid "File or directory corrupt.\n"
+msgstr "Fitxer o directori corrupte.\n"
 
 #: winerror.mc:2366
-msgid "Disk is corrupt\n"
-msgstr "El Disc és corrupte\n"
+msgid "Disk is corrupt.\n"
+msgstr "El Disc és corrupte.\n"
 
 #: winerror.mc:2371
-msgid "No user session key\n"
-msgstr "Cap clau de sessió d'usuari\n"
+msgid "No user session key.\n"
+msgstr "Cap clau de sessió d'usuari.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded\n"
-msgstr "Quota de llicència superada\n"
+msgid "Licence quota exceeded.\n"
+msgstr "Quota de llicència superada.\n"
 
 #: winerror.mc:2381
-msgid "Wrong target name\n"
-msgstr "Nom de destinació incorrecte\n"
+msgid "Wrong target name.\n"
+msgstr "Nom de destinació incorrecte.\n"
 
 #: winerror.mc:2386
-msgid "Mutual authentication failed\n"
-msgstr "L'autenticació mutual ha fallat\n"
+msgid "Mutual authentication failed.\n"
+msgstr "L'autenticació mutual ha fallat.\n"
 
 #: winerror.mc:2391
-msgid "Time skew between client and server\n"
-msgstr "Asimetria de temps entre client i servidor\n"
+msgid "Time skew between client and server.\n"
+msgstr "Asimetria de temps entre client i servidor.\n"
 
 #: winerror.mc:2396
-msgid "Invalid window handle\n"
-msgstr "Mànec de finestra invàlid\n"
+msgid "Invalid window handle.\n"
+msgstr "Mànec de finestra invàlid.\n"
 
 #: winerror.mc:2401
-msgid "Invalid menu handle\n"
-msgstr "Mànec de menú invàlid\n"
+msgid "Invalid menu handle.\n"
+msgstr "Mànec de menú invàlid.\n"
 
 #: winerror.mc:2406
-msgid "Invalid cursor handle\n"
-msgstr "Mànec de cursor invàlid\n"
+msgid "Invalid cursor handle.\n"
+msgstr "Mànec de cursor invàlid.\n"
 
 #: winerror.mc:2411
-msgid "Invalid accelerator table handle\n"
-msgstr "Mànec de taula acceleradora invàlid\n"
+msgid "Invalid accelerator table handle.\n"
+msgstr "Mànec de taula acceleradora invàlid.\n"
 
 #: winerror.mc:2416
-msgid "Invalid hook handle\n"
-msgstr "Mànec de ganxo invàlid\n"
+msgid "Invalid hook handle.\n"
+msgstr "Mànec de ganxo invàlid.\n"
 
 #: winerror.mc:2421
-msgid "Invalid DWP handle\n"
-msgstr "Mànec DWP invàlid\n"
+msgid "Invalid DWP handle.\n"
+msgstr "Mànec DWP invàlid.\n"
 
 #: winerror.mc:2426
-msgid "Can't create top-level child window\n"
-msgstr "No es pot crear la finestra filla de nivell superior\n"
+msgid "Can't create top-level child window.\n"
+msgstr "No es pot crear la finestra filla de nivell superior.\n"
 
 #: winerror.mc:2431
-msgid "Can't find window class\n"
-msgstr "No es pot trobar la classe de finestra\n"
+msgid "Can't find window class.\n"
+msgstr "No es pot trobar la classe de finestra.\n"
 
 #: winerror.mc:2436
-msgid "Window owned by another thread\n"
-msgstr "La finestra pertany a un altre fil\n"
+msgid "Window owned by another thread.\n"
+msgstr "La finestra pertany a un altre fil.\n"
 
 #: winerror.mc:2441
-msgid "Hotkey already registered\n"
-msgstr "Tecla d'accés directe ja registrada\n"
+msgid "Hotkey already registered.\n"
+msgstr "Tecla d'accés directe ja registrada.\n"
 
 #: winerror.mc:2446
-msgid "Class already exists\n"
-msgstr "Classe ja existeix\n"
+msgid "Class already exists.\n"
+msgstr "Classe ja existeix.\n"
 
 #: winerror.mc:2451
-msgid "Class does not exist\n"
-msgstr "Classe no existeix\n"
+msgid "Class does not exist.\n"
+msgstr "Classe no existeix.\n"
 
 #: winerror.mc:2456
-msgid "Class has open windows\n"
-msgstr "La classe té finestres obertes\n"
+msgid "Class has open windows.\n"
+msgstr "La classe té finestres obertes.\n"
 
 #: winerror.mc:2461
-msgid "Invalid index\n"
-msgstr "Índex invàlid\n"
+msgid "Invalid index.\n"
+msgstr "Índex invàlid.\n"
 
 #: winerror.mc:2466
-msgid "Invalid icon handle\n"
-msgstr "Mànec d'icona invàlid\n"
+msgid "Invalid icon handle.\n"
+msgstr "Mànec d'icona invàlid.\n"
 
 #: winerror.mc:2471
-msgid "Private dialog index\n"
-msgstr "Índex de diàleg privat\n"
+msgid "Private dialog index.\n"
+msgstr "Índex de diàleg privat.\n"
 
 #: winerror.mc:2476
-msgid "List box ID not found\n"
-msgstr "ID de caixa de llista no trobat\n"
+msgid "List box ID not found.\n"
+msgstr "ID de caixa de llista no trobat.\n"
 
 #: winerror.mc:2481
-msgid "No wildcard characters\n"
-msgstr "Cap caràcter comodí\n"
+msgid "No wildcard characters.\n"
+msgstr "Cap caràcter comodí.\n"
 
 #: winerror.mc:2486
-msgid "Clipboard not open\n"
-msgstr "Portapapers no obert\n"
+msgid "Clipboard not open.\n"
+msgstr "Portapapers no obert.\n"
 
 #: winerror.mc:2491
-msgid "Hotkey not registered\n"
-msgstr "Tecla d'accés directe no registrada\n"
+msgid "Hotkey not registered.\n"
+msgstr "Tecla d'accés directe no registrada.\n"
 
 #: winerror.mc:2496
-msgid "Not a dialog window\n"
-msgstr "No és finestra de diàleg\n"
+msgid "Not a dialog window.\n"
+msgstr "No és finestra de diàleg.\n"
 
 #: winerror.mc:2501
-msgid "Control ID not found\n"
-msgstr "ID de control no trobat\n"
+msgid "Control ID not found.\n"
+msgstr "ID de control no trobat.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message\n"
-msgstr "Missatge de quadre combinat invàlid\n"
+msgid "Invalid combobox message.\n"
+msgstr "Missatge de quadre combinat invàlid.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window\n"
-msgstr "No és finestra de quadre combinat\n"
+msgid "Not a combobox window.\n"
+msgstr "No és finestra de quadre combinat.\n"
 
 #: winerror.mc:2516
-msgid "Invalid edit height\n"
-msgstr "Altura d'edició invàlida\n"
+msgid "Invalid edit height.\n"
+msgstr "Altura d'edició invàlida.\n"
 
 #: winerror.mc:2521
-msgid "DC not found\n"
-msgstr "DC no trobat\n"
+msgid "DC not found.\n"
+msgstr "DC no trobat.\n"
 
 #: winerror.mc:2526
-msgid "Invalid hook filter\n"
-msgstr "Filtre de ganxo invàlid\n"
+msgid "Invalid hook filter.\n"
+msgstr "Filtre de ganxo invàlid.\n"
 
 #: winerror.mc:2531
-msgid "Invalid filter procedure\n"
-msgstr "Procediment de filtre no vàlid\n"
+msgid "Invalid filter procedure.\n"
+msgstr "Procediment de filtre no vàlid.\n"
 
 #: winerror.mc:2536
-msgid "Hook procedure needs module handle\n"
-msgstr "El procediment necessita mànec de mòdul\n"
+msgid "Hook procedure needs module handle.\n"
+msgstr "El procediment necessita mànec de mòdul.\n"
 
 #: winerror.mc:2541
-msgid "Global-only hook procedure\n"
-msgstr "Procediment de ganxo només global\n"
+msgid "Global-only hook procedure.\n"
+msgstr "Procediment de ganxo només global.\n"
 
 #: winerror.mc:2546
-msgid "Journal hook already set\n"
-msgstr "Ganxo de journal ja establert\n"
+msgid "Journal hook already set.\n"
+msgstr "Ganxo de journal ja establert.\n"
 
 #: winerror.mc:2551
-msgid "Hook procedure not installed\n"
-msgstr "Procediment de ganxo no instal·lat\n"
+msgid "Hook procedure not installed.\n"
+msgstr "Procediment de ganxo no instal·lat.\n"
 
 #: winerror.mc:2556
-msgid "Invalid list box message\n"
-msgstr "Missatge de caixa de llista invàlid\n"
+msgid "Invalid list box message.\n"
+msgstr "Missatge de caixa de llista invàlid.\n"
 
 #: winerror.mc:2561
-msgid "Invalid LB_SETCOUNT sent\n"
-msgstr "LB_SETCOUNT invàlid enviat\n"
+msgid "Invalid LB_SETCOUNT sent.\n"
+msgstr "LB_SETCOUNT invàlid enviat.\n"
 
 #: winerror.mc:2566
-msgid "No tab stops on this list box\n"
-msgstr "Cap tabulador s'atura en aquesta caixa de llista\n"
+msgid "No tab stops on this list box.\n"
+msgstr "Cap tabulador s'atura en aquesta caixa de llista.\n"
 
 #: winerror.mc:2571
-msgid "Can't destroy object owned by another thread\n"
-msgstr "No es pot destruir un objecte d'un altre fil\n"
+msgid "Can't destroy object owned by another thread.\n"
+msgstr "No es pot destruir un objecte d'un altre fil.\n"
 
 #: winerror.mc:2576
-msgid "Child window menus not allowed\n"
-msgstr "No es permeten els menús de finestres filles\n"
+msgid "Child window menus not allowed.\n"
+msgstr "No es permeten els menús de finestres filles.\n"
 
 #: winerror.mc:2581
-msgid "Window has no system menu\n"
-msgstr "La finestra no té menú de sistema\n"
+msgid "Window has no system menu.\n"
+msgstr "La finestra no té menú de sistema.\n"
 
 #: winerror.mc:2586
-msgid "Invalid message box style\n"
-msgstr "Estil de quadre de missatge invàlid\n"
+msgid "Invalid message box style.\n"
+msgstr "Estil de quadre de missatge invàlid.\n"
 
 #: winerror.mc:2591
-msgid "Invalid SPI parameter\n"
-msgstr "Paràmetre SPI invàlid\n"
+msgid "Invalid SPI parameter.\n"
+msgstr "Paràmetre SPI invàlid.\n"
 
 #: winerror.mc:2596
-msgid "Screen already locked\n"
-msgstr "Pantalla ja bloquejada\n"
+msgid "Screen already locked.\n"
+msgstr "Pantalla ja bloquejada.\n"
 
 #: winerror.mc:2601
-msgid "Window handles have different parents\n"
-msgstr "Els mànecs de les finestres tenen pares diferents\n"
+msgid "Window handles have different parents.\n"
+msgstr "Els mànecs de les finestres tenen pares diferents.\n"
 
 #: winerror.mc:2606
-msgid "Not a child window\n"
-msgstr "No és finestra filla\n"
+msgid "Not a child window.\n"
+msgstr "No és finestra filla.\n"
 
 #: winerror.mc:2611
-msgid "Invalid GW command\n"
-msgstr "Ordre GW invàlid\n"
+msgid "Invalid GW command.\n"
+msgstr "Ordre GW invàlid.\n"
 
 #: winerror.mc:2616
-msgid "Invalid thread ID\n"
-msgstr "ID de fil invàlid\n"
+msgid "Invalid thread ID.\n"
+msgstr "ID de fil invàlid.\n"
 
 #: winerror.mc:2621
-msgid "Not an MDI child window\n"
-msgstr "No és finestra filla MDI\n"
+msgid "Not an MDI child window.\n"
+msgstr "No és finestra filla MDI.\n"
 
 #: winerror.mc:2626
-msgid "Popup menu already active\n"
-msgstr "Menú emergent ja actiu\n"
+msgid "Popup menu already active.\n"
+msgstr "Menú emergent ja actiu.\n"
 
 #: winerror.mc:2631
-msgid "No scrollbars\n"
-msgstr "Cap barra de desplaçament\n"
+msgid "No scrollbars.\n"
+msgstr "Cap barra de desplaçament.\n"
 
 #: winerror.mc:2636
-msgid "Invalid scrollbar range\n"
-msgstr "Rang de desplaçament invàlid\n"
+msgid "Invalid scrollbar range.\n"
+msgstr "Rang de desplaçament invàlid.\n"
 
 #: winerror.mc:2641
-msgid "Invalid ShowWin command\n"
-msgstr "Ordre ShowWin invàlid\n"
+msgid "Invalid ShowWin command.\n"
+msgstr "Ordre ShowWin invàlid.\n"
 
 #: winerror.mc:2646
-msgid "No system resources\n"
-msgstr "Cap recurs de sistema\n"
+msgid "No system resources.\n"
+msgstr "Cap recurs de sistema.\n"
 
 #: winerror.mc:2651
-msgid "No non-paged system resources\n"
-msgstr "Cap recurs de sistema no paginat\n"
+msgid "No non-paged system resources.\n"
+msgstr "Cap recurs de sistema no paginat.\n"
 
 #: winerror.mc:2656
-msgid "No paged system resources\n"
-msgstr "Cap recurs de sistema paginat\n"
+msgid "No paged system resources.\n"
+msgstr "Cap recurs de sistema paginat.\n"
 
 #: winerror.mc:2661
-msgid "No working set quota\n"
-msgstr "Cap quota de conjunt de treball\n"
+msgid "No working set quota.\n"
+msgstr "Cap quota de conjunt de treball.\n"
 
 #: winerror.mc:2666
-msgid "No page file quota\n"
-msgstr "Cap quota de fitxer de paginació\n"
+msgid "No page file quota.\n"
+msgstr "Cap quota de fitxer de paginació.\n"
 
 #: winerror.mc:2671
-msgid "Exceeded commitment limit\n"
-msgstr "Límit de compromís superat\n"
+msgid "Exceeded commitment limit.\n"
+msgstr "Límit de compromís superat.\n"
 
 #: winerror.mc:2676
-msgid "Menu item not found\n"
-msgstr "Element de menú no trobat\n"
+msgid "Menu item not found.\n"
+msgstr "Element de menú no trobat.\n"
 
 #: winerror.mc:2681
-msgid "Invalid keyboard handle\n"
-msgstr "Mànec de teclat invàlid\n"
+msgid "Invalid keyboard handle.\n"
+msgstr "Mànec de teclat invàlid.\n"
 
 #: winerror.mc:2686
-msgid "Hook type not allowed\n"
-msgstr "Tipus de ganxo no permès\n"
+msgid "Hook type not allowed.\n"
+msgstr "Tipus de ganxo no permès.\n"
 
 #: winerror.mc:2691
-msgid "Interactive window station required\n"
-msgstr "Estació de finestra interactiva requerida\n"
+msgid "Interactive window station required.\n"
+msgstr "Estació de finestra interactiva requerida.\n"
 
 #: winerror.mc:2696
-msgid "Timeout\n"
-msgstr "Temps d'espera superat\n"
+msgid "Timeout.\n"
+msgstr "Temps d'espera superat.\n"
 
 #: winerror.mc:2701
-msgid "Invalid monitor handle\n"
-msgstr "Mànec de monitor invàlid\n"
+msgid "Invalid monitor handle.\n"
+msgstr "Mànec de monitor invàlid.\n"
 
 #: winerror.mc:2706
-msgid "Event log file corrupt\n"
-msgstr "Fitxer de registre d'esdeveniments corrupte\n"
+msgid "Event log file corrupt.\n"
+msgstr "Fitxer de registre d'esdeveniments corrupte.\n"
 
 #: winerror.mc:2711
-msgid "Event log can't start\n"
-msgstr "No es pot iniciar el registre d'esdeveniments\n"
+msgid "Event log can't start.\n"
+msgstr "No es pot iniciar el registre d'esdeveniments.\n"
 
 #: winerror.mc:2716
-msgid "Event log file full\n"
-msgstr "Fitxer de registre d'esdeveniments ple\n"
+msgid "Event log file full.\n"
+msgstr "Fitxer de registre d'esdeveniments ple.\n"
 
 #: winerror.mc:2721
-msgid "Event log file changed\n"
-msgstr "Fitxer de registre d'esdeveniments canviat\n"
+msgid "Event log file changed.\n"
+msgstr "Fitxer de registre d'esdeveniments canviat.\n"
 
 #: winerror.mc:2726
-msgid "Installer service failed\n"
-msgstr "El servei d'instal·lació ha fallat\n"
+msgid "Installer service failed.\n"
+msgstr "El servei d'instal·lació ha fallat.\n"
 
 #: winerror.mc:2731
-msgid "Installation aborted by user\n"
-msgstr "Instal·lació avortada per usuari\n"
+msgid "Installation aborted by user.\n"
+msgstr "Instal·lació avortada per usuari.\n"
 
 #: winerror.mc:2736
-msgid "Installation failure\n"
-msgstr "Fallada d'instal·lació\n"
+msgid "Installation failure.\n"
+msgstr "Fallada d'instal·lació.\n"
 
 #: winerror.mc:2741
-msgid "Installation suspended\n"
-msgstr "Instal·lació suspesa\n"
+msgid "Installation suspended.\n"
+msgstr "Instal·lació suspesa.\n"
 
 #: winerror.mc:2746
-msgid "Unknown product\n"
-msgstr "Producte desconegut\n"
+msgid "Unknown product.\n"
+msgstr "Producte desconegut.\n"
 
 #: winerror.mc:2751
-msgid "Unknown feature\n"
-msgstr "Funció desconeguda\n"
+msgid "Unknown feature.\n"
+msgstr "Funció desconeguda.\n"
 
 #: winerror.mc:2756
-msgid "Unknown component\n"
-msgstr "Component desconegut\n"
+msgid "Unknown component.\n"
+msgstr "Component desconegut.\n"
 
 #: winerror.mc:2761
-msgid "Unknown property\n"
-msgstr "Propietat desconeguda\n"
+msgid "Unknown property.\n"
+msgstr "Propietat desconeguda.\n"
 
 #: winerror.mc:2766
-msgid "Invalid handle state\n"
-msgstr "Estat de mànec invàlid\n"
+msgid "Invalid handle state.\n"
+msgstr "Estat de mànec invàlid.\n"
 
 #: winerror.mc:2771
-msgid "Bad configuration\n"
-msgstr "Configuració dolenta\n"
+msgid "Bad configuration.\n"
+msgstr "Configuració dolenta.\n"
 
 #: winerror.mc:2776
-msgid "Index is missing\n"
-msgstr "Falta l'índex\n"
+msgid "Index is missing.\n"
+msgstr "Falta l'índex.\n"
 
 #: winerror.mc:2781
-msgid "Installation source is missing\n"
-msgstr "Falta el font d'instal·lació\n"
+msgid "Installation source is missing.\n"
+msgstr "Falta el font d'instal·lació.\n"
 
 #: winerror.mc:2786
-msgid "Wrong installation package version\n"
-msgstr "Versió de paquet d'instal·lació incorrecta\n"
+msgid "Wrong installation package version.\n"
+msgstr "Versió de paquet d'instal·lació incorrecta.\n"
 
 #: winerror.mc:2791
-msgid "Product uninstalled\n"
-msgstr "Producte desinstal·lat\n"
+msgid "Product uninstalled.\n"
+msgstr "Producte desinstal·lat.\n"
 
 #: winerror.mc:2796
-msgid "Invalid query syntax\n"
-msgstr "Sintaxi de consulta invàlida\n"
+msgid "Invalid query syntax.\n"
+msgstr "Sintaxi de consulta invàlida.\n"
 
 #: winerror.mc:2801
-msgid "Invalid field\n"
-msgstr "Camp invàlid\n"
+msgid "Invalid field.\n"
+msgstr "Camp invàlid.\n"
 
 #: winerror.mc:2806
-msgid "Device removed\n"
-msgstr "Dispositiu tret\n"
+msgid "Device removed.\n"
+msgstr "Dispositiu tret.\n"
 
 #: winerror.mc:2811
-msgid "Installation already running\n"
-msgstr "Instal·lació ja executant\n"
+msgid "Installation already running.\n"
+msgstr "Instal·lació ja executant.\n"
 
 #: winerror.mc:2816
-msgid "Installation package failed to open\n"
-msgstr "El paquet d'instal·lació ha fallat en obrir\n"
+msgid "Installation package failed to open.\n"
+msgstr "El paquet d'instal·lació ha fallat en obrir.\n"
 
 #: winerror.mc:2821
-msgid "Installation package is invalid\n"
-msgstr "El paquet d'instal·lació és invàlid\n"
+msgid "Installation package is invalid.\n"
+msgstr "El paquet d'instal·lació és invàlid.\n"
 
 #: winerror.mc:2826
-msgid "Installer user interface failed\n"
-msgstr "La interfície d'usuari de l'instal·lador ha fallat\n"
+msgid "Installer user interface failed.\n"
+msgstr "La interfície d'usuari de l'instal·lador ha fallat.\n"
 
 #: winerror.mc:2831
-msgid "Failed to open installation log file\n"
-msgstr "Fallada en obrir el fitxer de registre d'instal·lació\n"
+msgid "Failed to open installation log file.\n"
+msgstr "Fallada en obrir el fitxer de registre d'instal·lació.\n"
 
 #: winerror.mc:2836
-msgid "Installation language not supported\n"
-msgstr "Llengua d'instal·lació no compatible\n"
+msgid "Installation language not supported.\n"
+msgstr "Llengua d'instal·lació no compatible.\n"
 
 #: winerror.mc:2841
-msgid "Installation transform failed to apply\n"
-msgstr "La transformació d'instal·lació ha fallat en aplicar-se\n"
+msgid "Installation transform failed to apply.\n"
+msgstr "La transformació d'instal·lació ha fallat en aplicar-se.\n"
 
 #: winerror.mc:2846
-msgid "Installation package rejected\n"
-msgstr "Paquet d'instal·lació refusat\n"
+msgid "Installation package rejected.\n"
+msgstr "Paquet d'instal·lació refusat.\n"
 
 #: winerror.mc:2851
-msgid "Function could not be called\n"
-msgstr "No s'ha pogut trucar a la funció\n"
+msgid "Function could not be called.\n"
+msgstr "No s'ha pogut trucar a la funció.\n"
 
 #: winerror.mc:2856
-msgid "Function failed\n"
-msgstr "La funció ha fallat\n"
+msgid "Function failed.\n"
+msgstr "La funció ha fallat.\n"
 
 #: winerror.mc:2861
-msgid "Invalid table\n"
-msgstr "Taula invàlida\n"
+msgid "Invalid table.\n"
+msgstr "Taula invàlida.\n"
 
 #: winerror.mc:2866
-msgid "Data type mismatch\n"
-msgstr "Els tipus de dades no es coincideixen\n"
+msgid "Data type mismatch.\n"
+msgstr "Els tipus de dades no es coincideixen.\n"
 
 #: winerror.mc:2871 winerror.mc:3081
-msgid "Unsupported type\n"
-msgstr "Tipus incompatible\n"
+msgid "Unsupported type.\n"
+msgstr "Tipus incompatible.\n"
 
 #: winerror.mc:2876
-msgid "Creation failed\n"
-msgstr "La creació ha fallat\n"
+msgid "Creation failed.\n"
+msgstr "La creació ha fallat.\n"
 
 #: winerror.mc:2881
-msgid "Temporary directory not writable\n"
-msgstr "No es pot escriure al directori temporal\n"
+msgid "Temporary directory not writable.\n"
+msgstr "No es pot escriure al directori temporal.\n"
 
 #: winerror.mc:2886
-msgid "Installation platform not supported\n"
-msgstr "Plataforma d'instal·lació no compatible\n"
+msgid "Installation platform not supported.\n"
+msgstr "Plataforma d'instal·lació no compatible.\n"
 
 #: winerror.mc:2891
-msgid "Installer not used\n"
-msgstr "Instal·lador no usat\n"
+msgid "Installer not used.\n"
+msgstr "Instal·lador no usat.\n"
 
 #: winerror.mc:2896
-msgid "Failed to open the patch package\n"
-msgstr "S'ha fallat en obrir el paquet de pedaç\n"
+msgid "Failed to open the patch package.\n"
+msgstr "S'ha fallat en obrir el paquet de pedaç.\n"
 
 #: winerror.mc:2901
-msgid "Invalid patch package\n"
-msgstr "Paquet de pegada invàlid\n"
+msgid "Invalid patch package.\n"
+msgstr "Paquet de pegada invàlid.\n"
 
 #: winerror.mc:2906
-msgid "Unsupported patch package\n"
-msgstr "Paquet de pegada no compatible\n"
+msgid "Unsupported patch package.\n"
+msgstr "Paquet de pegada no compatible.\n"
 
 #: winerror.mc:2911
-msgid "Another version is installed\n"
-msgstr "Una altre versió està instal·lada\n"
+msgid "Another version is installed.\n"
+msgstr "Una altre versió està instal·lada.\n"
 
 #: winerror.mc:2916
-msgid "Invalid command line\n"
-msgstr "Línia d'ordres invàlida\n"
+msgid "Invalid command line.\n"
+msgstr "Línia d'ordres invàlida.\n"
 
 #: winerror.mc:2921
-msgid "Remote installation not allowed\n"
-msgstr "Instal·lació remota no permesa\n"
+msgid "Remote installation not allowed.\n"
+msgstr "Instal·lació remota no permesa.\n"
 
 #: winerror.mc:2926
-msgid "Reboot initiated after successful install\n"
-msgstr "Reinici iniciat desprès d'instal·lació amb èxit\n"
+msgid "Reboot initiated after successful install.\n"
+msgstr "Reinici iniciat desprès d'instal·lació amb èxit.\n"
 
 #: winerror.mc:2931
-msgid "Invalid string binding\n"
-msgstr "Lligament de cadena invàlid\n"
+msgid "Invalid string binding.\n"
+msgstr "Lligament de cadena invàlid.\n"
 
 #: winerror.mc:2936
-msgid "Wrong kind of binding\n"
-msgstr "Tipus de lligament incorrecte\n"
+msgid "Wrong kind of binding.\n"
+msgstr "Tipus de lligament incorrecte.\n"
 
 #: winerror.mc:2941
-msgid "Invalid binding\n"
-msgstr "Lligament invàlid\n"
+msgid "Invalid binding.\n"
+msgstr "Lligament invàlid.\n"
 
 #: winerror.mc:2946
-msgid "RPC protocol sequence not supported\n"
-msgstr "Seqüència de protocol RPC no compatible\n"
+msgid "RPC protocol sequence not supported.\n"
+msgstr "Seqüència de protocol RPC no compatible.\n"
 
 #: winerror.mc:2951
-msgid "Invalid RPC protocol sequence\n"
-msgstr "Seqüència de protocol RPC invàlida\n"
+msgid "Invalid RPC protocol sequence.\n"
+msgstr "Seqüència de protocol RPC invàlida.\n"
 
 #: winerror.mc:2956
-msgid "Invalid string UUID\n"
-msgstr "UUID de cadena invàlida\n"
+msgid "Invalid string UUID.\n"
+msgstr "UUID de cadena invàlida.\n"
 
 #: winerror.mc:2961
-msgid "Invalid endpoint format\n"
-msgstr "Format de punt final invàlid\n"
+msgid "Invalid endpoint format.\n"
+msgstr "Format de punt final invàlid.\n"
 
 #: winerror.mc:2966
-msgid "Invalid network address\n"
-msgstr "Adreça de xarxa invàlida\n"
+msgid "Invalid network address.\n"
+msgstr "Adreça de xarxa invàlida.\n"
 
 #: winerror.mc:2971
-msgid "No endpoint found\n"
-msgstr "Cap punt final trobat\n"
+msgid "No endpoint found.\n"
+msgstr "Cap punt final trobat.\n"
 
 #: winerror.mc:2976
-msgid "Invalid timeout value\n"
-msgstr "Valor de temps d'espera invàlid\n"
+msgid "Invalid timeout value.\n"
+msgstr "Valor de temps d'espera invàlid.\n"
 
 #: winerror.mc:2981
-msgid "Object UUID not found\n"
-msgstr "UUID del objecte no trobat\n"
+msgid "Object UUID not found.\n"
+msgstr "UUID del objecte no trobat.\n"
 
 #: winerror.mc:2986
-msgid "UUID already registered\n"
-msgstr "UUID ja registrat\n"
+msgid "UUID already registered.\n"
+msgstr "UUID ja registrat.\n"
 
 #: winerror.mc:2991
-msgid "UUID type already registered\n"
-msgstr "Tipus UUID ja registrat\n"
+msgid "UUID type already registered.\n"
+msgstr "Tipus UUID ja registrat.\n"
 
 #: winerror.mc:2996
-msgid "Server already listening\n"
-msgstr "Servidor ja escoltant\n"
+msgid "Server already listening.\n"
+msgstr "Servidor ja escoltant.\n"
 
 #: winerror.mc:3001
-msgid "No protocol sequences registered\n"
-msgstr "Cap seqüència de protocol registrada\n"
+msgid "No protocol sequences registered.\n"
+msgstr "Cap seqüència de protocol registrada.\n"
 
 #: winerror.mc:3006
-msgid "RPC server not listening\n"
-msgstr "Servidor RPC no escoltant\n"
+msgid "RPC server not listening.\n"
+msgstr "Servidor RPC no escoltant.\n"
 
 #: winerror.mc:3011
-msgid "Unknown manager type\n"
-msgstr "Tipus de gestor desconegut\n"
+msgid "Unknown manager type.\n"
+msgstr "Tipus de gestor desconegut.\n"
 
 #: winerror.mc:3016
-msgid "Unknown interface\n"
-msgstr "Interfície desconeguda\n"
+msgid "Unknown interface.\n"
+msgstr "Interfície desconeguda.\n"
 
 #: winerror.mc:3021
-msgid "No bindings\n"
-msgstr "Cap lligament\n"
+msgid "No bindings.\n"
+msgstr "Cap lligament.\n"
 
 #: winerror.mc:3026
-msgid "No protocol sequences\n"
-msgstr "Cap seqüència de protocol\n"
+msgid "No protocol sequences.\n"
+msgstr "Cap seqüència de protocol.\n"
 
 #: winerror.mc:3031
-msgid "Can't create endpoint\n"
-msgstr "No es pot crear el punt final\n"
+msgid "Can't create endpoint.\n"
+msgstr "No es pot crear el punt final.\n"
 
 #: winerror.mc:3036
-msgid "Out of resources\n"
-msgstr "No queden recursos\n"
+msgid "Out of resources.\n"
+msgstr "No queden recursos.\n"
 
 #: winerror.mc:3041
-msgid "RPC server unavailable\n"
-msgstr "Servidor RPC no disponible\n"
+msgid "RPC server unavailable.\n"
+msgstr "Servidor RPC no disponible.\n"
 
 #: winerror.mc:3046
-msgid "RPC server too busy\n"
-msgstr "Servidor RPC massa ocupat\n"
+msgid "RPC server too busy.\n"
+msgstr "Servidor RPC massa ocupat.\n"
 
 #: winerror.mc:3051
-msgid "Invalid network options\n"
-msgstr "Opcions de xarxa invàlides\n"
+msgid "Invalid network options.\n"
+msgstr "Opcions de xarxa invàlides.\n"
 
 #: winerror.mc:3056
-msgid "No RPC call active\n"
-msgstr "Cap trucada RPC activa\n"
+msgid "No RPC call active.\n"
+msgstr "Cap trucada RPC activa.\n"
 
 #: winerror.mc:3061
-msgid "RPC call failed\n"
-msgstr "La trucada RPC ha fallat\n"
+msgid "RPC call failed.\n"
+msgstr "La trucada RPC ha fallat.\n"
 
 #: winerror.mc:3066
-msgid "RPC call failed and didn't execute\n"
-msgstr "La trucada RPC ha fallat i no s'ha executat\n"
+msgid "RPC call failed and didn't execute.\n"
+msgstr "La trucada RPC ha fallat i no s'ha executat.\n"
 
 #: winerror.mc:3071
-msgid "RPC protocol error\n"
-msgstr "Error de protocol RPC\n"
+msgid "RPC protocol error.\n"
+msgstr "Error de protocol RPC.\n"
 
 #: winerror.mc:3076
-msgid "Unsupported transfer syntax\n"
-msgstr "Sintaxi de transferència no compatible\n"
+msgid "Unsupported transfer syntax.\n"
+msgstr "Sintaxi de transferència no compatible.\n"
 
 #: winerror.mc:3086
-msgid "Invalid tag\n"
-msgstr "Etiqueta invàlida\n"
+msgid "Invalid tag.\n"
+msgstr "Etiqueta invàlida.\n"
 
 #: winerror.mc:3091
-msgid "Invalid array bounds\n"
-msgstr "Límits de vector invàlids\n"
+msgid "Invalid array bounds.\n"
+msgstr "Límits de vector invàlids.\n"
 
 #: winerror.mc:3096
-msgid "No entry name\n"
-msgstr "Cap nom d'entrada\n"
+msgid "No entry name.\n"
+msgstr "Cap nom d'entrada.\n"
 
 #: winerror.mc:3101
-msgid "Invalid name syntax\n"
-msgstr "Sintaxi de nom invàlid\n"
+msgid "Invalid name syntax.\n"
+msgstr "Sintaxi de nom invàlid.\n"
 
 #: winerror.mc:3106
-msgid "Unsupported name syntax\n"
-msgstr "Sintaxi de nom no compatible\n"
+msgid "Unsupported name syntax.\n"
+msgstr "Sintaxi de nom no compatible.\n"
 
 #: winerror.mc:3111
-msgid "No network address\n"
-msgstr "Cap adreça de xarxa\n"
+msgid "No network address.\n"
+msgstr "Cap adreça de xarxa.\n"
 
 #: winerror.mc:3116
-msgid "Duplicate endpoint\n"
-msgstr "Punt final duplicat\n"
+msgid "Duplicate endpoint.\n"
+msgstr "Punt final duplicat.\n"
 
 #: winerror.mc:3121
-msgid "Unknown authentication type\n"
-msgstr "Tipus d'autenticació desconegut\n"
+msgid "Unknown authentication type.\n"
+msgstr "Tipus d'autenticació desconegut.\n"
 
 #: winerror.mc:3126
-msgid "Maximum calls too low\n"
-msgstr "Nombre màxim de trucades massa baix\n"
+msgid "Maximum calls too low.\n"
+msgstr "Nombre màxim de trucades massa baix.\n"
 
 #: winerror.mc:3131
-msgid "String too long\n"
-msgstr "Cadena massa llarga\n"
+msgid "String too long.\n"
+msgstr "Cadena massa llarga.\n"
 
 #: winerror.mc:3136
-msgid "Protocol sequence not found\n"
-msgstr "Seqüència de protocol no trobada\n"
+msgid "Protocol sequence not found.\n"
+msgstr "Seqüència de protocol no trobada.\n"
 
 #: winerror.mc:3141
-msgid "Procedure number out of range\n"
-msgstr "Nombre de procediment fora de rang\n"
+msgid "Procedure number out of range.\n"
+msgstr "Nombre de procediment fora de rang.\n"
 
 #: winerror.mc:3146
-msgid "Binding has no authentication data\n"
-msgstr "El lligament no té dades d'autenticació\n"
+msgid "Binding has no authentication data.\n"
+msgstr "El lligament no té dades d'autenticació.\n"
 
 #: winerror.mc:3151
-msgid "Unknown authentication service\n"
-msgstr "Servei d'autenticació desconegut\n"
+msgid "Unknown authentication service.\n"
+msgstr "Servei d'autenticació desconegut.\n"
 
 #: winerror.mc:3156
-msgid "Unknown authentication level\n"
-msgstr "Nivell d'autenticació desconegut\n"
+msgid "Unknown authentication level.\n"
+msgstr "Nivell d'autenticació desconegut.\n"
 
 #: winerror.mc:3161
-msgid "Invalid authentication identity\n"
-msgstr "Identitat d'autenticació invàlid\n"
+msgid "Invalid authentication identity.\n"
+msgstr "Identitat d'autenticació invàlid.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service\n"
-msgstr "Servei d'autorització desconegut\n"
+msgid "Unknown authorisation service.\n"
+msgstr "Servei d'autorització desconegut.\n"
 
 #: winerror.mc:3171
-msgid "Invalid entry\n"
-msgstr "Entrada invàlida\n"
+msgid "Invalid entry.\n"
+msgstr "Entrada invàlida.\n"
 
 #: winerror.mc:3176
-msgid "Can't perform operation\n"
-msgstr "No es pot realitzar l'operació\n"
+msgid "Can't perform operation.\n"
+msgstr "No es pot realitzar l'operació.\n"
 
 #: winerror.mc:3181
-msgid "Endpoints not registered\n"
-msgstr "Punts finals no registrats\n"
+msgid "Endpoints not registered.\n"
+msgstr "Punts finals no registrats.\n"
 
 #: winerror.mc:3186
-msgid "Nothing to export\n"
-msgstr "Res per exportar\n"
+msgid "Nothing to export.\n"
+msgstr "Res per exportar.\n"
 
 #: winerror.mc:3191
-msgid "Incomplete name\n"
-msgstr "Nom incomplet\n"
+msgid "Incomplete name.\n"
+msgstr "Nom incomplet.\n"
 
 #: winerror.mc:3196
-msgid "Invalid version option\n"
-msgstr "Opció de versió invàlida\n"
+msgid "Invalid version option.\n"
+msgstr "Opció de versió invàlida.\n"
 
 #: winerror.mc:3201
-msgid "No more members\n"
-msgstr "No hi ha més membres\n"
+msgid "No more members.\n"
+msgstr "No hi ha més membres.\n"
 
 #: winerror.mc:3206
-msgid "Not all objects unexported\n"
-msgstr "Alguns objectes s'han exportat\n"
+msgid "Not all objects unexported.\n"
+msgstr "Alguns objectes s'han exportat.\n"
 
 #: winerror.mc:3211
-msgid "Interface not found\n"
-msgstr "Interfície no trobada\n"
+msgid "Interface not found.\n"
+msgstr "Interfície no trobada.\n"
 
 #: winerror.mc:3216
-msgid "Entry already exists\n"
-msgstr "L'entrada ja existeix\n"
+msgid "Entry already exists.\n"
+msgstr "L'entrada ja existeix.\n"
 
 #: winerror.mc:3221
-msgid "Entry not found\n"
-msgstr "Entrada no trobada\n"
+msgid "Entry not found.\n"
+msgstr "Entrada no trobada.\n"
 
 #: winerror.mc:3226
-msgid "Name service unavailable\n"
-msgstr "Servei de noms no disponible\n"
+msgid "Name service unavailable.\n"
+msgstr "Servei de noms no disponible.\n"
 
 #: winerror.mc:3231
-msgid "Invalid network address family\n"
-msgstr "Família d'adreces de xarxa invàlida\n"
+msgid "Invalid network address family.\n"
+msgstr "Família d'adreces de xarxa invàlida.\n"
 
 #: winerror.mc:3236
-msgid "Operation not supported\n"
-msgstr "Operació no compatible\n"
+msgid "Operation not supported.\n"
+msgstr "Operació no compatible.\n"
 
 #: winerror.mc:3241
-msgid "No security context available\n"
-msgstr "Cap context de seguretat disponible\n"
+msgid "No security context available.\n"
+msgstr "Cap context de seguretat disponible.\n"
 
 #: winerror.mc:3246
-msgid "RPCInternal error\n"
-msgstr "Error RPCInternal\n"
+msgid "RPCInternal error.\n"
+msgstr "Error RPCInternal.\n"
 
 #: winerror.mc:3251
-msgid "RPC divide-by-zero\n"
-msgstr "RPC divisió per zero\n"
+msgid "RPC divide-by-zero.\n"
+msgstr "RPC divisió per zero.\n"
 
 #: winerror.mc:3256
-msgid "Address error\n"
-msgstr "Error d'adreça\n"
+msgid "Address error.\n"
+msgstr "Error d'adreça.\n"
 
 #: winerror.mc:3261
-msgid "Floating-point divide-by-zero\n"
-msgstr "Divisió per zero de coma flotant\n"
+msgid "Floating-point divide-by-zero.\n"
+msgstr "Divisió per zero de coma flotant.\n"
 
 #: winerror.mc:3266
-msgid "Floating-point underflow\n"
-msgstr "Desbordament underflow de punt flotant\n"
+msgid "Floating-point underflow.\n"
+msgstr "Desbordament underflow de punt flotant.\n"
 
 #: winerror.mc:3271
-msgid "Floating-point overflow\n"
-msgstr "Desbordament overflow de punt flotant\n"
+msgid "Floating-point overflow.\n"
+msgstr "Desbordament overflow de punt flotant.\n"
 
 #: winerror.mc:3276
-msgid "No more entries\n"
-msgstr "No hi ha més entrades\n"
+msgid "No more entries.\n"
+msgstr "No hi ha més entrades.\n"
 
 #: winerror.mc:3281
-msgid "Character translation table open failed\n"
-msgstr "L'obertura de la taula de traducció de caràcters ha fallat\n"
+msgid "Character translation table open failed.\n"
+msgstr "L'obertura de la taula de traducció de caràcters ha fallat.\n"
 
 #: winerror.mc:3286
-msgid "Character translation table file too small\n"
-msgstr "Fitxer de taula de traducció de caràcters massa petit\n"
+msgid "Character translation table file too small.\n"
+msgstr "Fitxer de taula de traducció de caràcters massa petit.\n"
 
 #: winerror.mc:3291
-msgid "Null context handle\n"
-msgstr "Mànec de context nul\n"
+msgid "Null context handle.\n"
+msgstr "Mànec de context nul.\n"
 
 #: winerror.mc:3296
-msgid "Context handle damaged\n"
-msgstr "Mànec de context danyat\n"
+msgid "Context handle damaged.\n"
+msgstr "Mànec de context danyat.\n"
 
 #: winerror.mc:3301
-msgid "Binding handle mismatch\n"
-msgstr "Els mànec de lligament no es coincideixen\n"
+msgid "Binding handle mismatch.\n"
+msgstr "Els mànec de lligament no es coincideixen.\n"
 
 #: winerror.mc:3306
-msgid "Cannot get call handle\n"
-msgstr "No es pot obtenir el mànec de trucada\n"
+msgid "Cannot get call handle.\n"
+msgstr "No es pot obtenir el mànec de trucada.\n"
 
 #: winerror.mc:3311
-msgid "Null reference pointer\n"
-msgstr "Punter de referència nul\n"
+msgid "Null reference pointer.\n"
+msgstr "Punter de referència nul.\n"
 
 #: winerror.mc:3316
-msgid "Enumeration value out of range\n"
-msgstr "Valor d'enumeració fora de rang\n"
+msgid "Enumeration value out of range.\n"
+msgstr "Valor d'enumeració fora de rang.\n"
 
 #: winerror.mc:3321
-msgid "Byte count too small\n"
-msgstr "Nombre de bytes massa petit\n"
+msgid "Byte count too small.\n"
+msgstr "Nombre de bytes massa petit.\n"
 
 #: winerror.mc:3326
-msgid "Bad stub data\n"
-msgstr "Dades d'esbós (stub) dolentes\n"
+msgid "Bad stub data.\n"
+msgstr "Dades d'esbós (stub) dolentes.\n"
 
 #: winerror.mc:3331
-msgid "Invalid user buffer\n"
-msgstr "Memòria intermèdia d'usuari invàlida\n"
+msgid "Invalid user buffer.\n"
+msgstr "Memòria intermèdia d'usuari invàlida.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media\n"
-msgstr "Mitjà no reconegut\n"
+msgid "Unrecognised media.\n"
+msgstr "Mitjà no reconegut.\n"
 
 #: winerror.mc:3341
-msgid "No trust secret\n"
-msgstr "Cap secret de confiança\n"
+msgid "No trust secret.\n"
+msgstr "Cap secret de confiança.\n"
 
 #: winerror.mc:3346
-msgid "No trust SAM account\n"
-msgstr "Cap compte SAM de confiança\n"
+msgid "No trust SAM account.\n"
+msgstr "Cap compte SAM de confiança.\n"
 
 #: winerror.mc:3351
-msgid "Trusted domain failure\n"
-msgstr "Fallada de domini de confiança\n"
+msgid "Trusted domain failure.\n"
+msgstr "Fallada de domini de confiança.\n"
 
 #: winerror.mc:3356
-msgid "Trusted relationship failure\n"
-msgstr "Fallada de relació de confiança\n"
+msgid "Trusted relationship failure.\n"
+msgstr "Fallada de relació de confiança.\n"
 
 #: winerror.mc:3361
-msgid "Trust logon failure\n"
-msgstr "Fallada d'inici de sessió de confiança\n"
+msgid "Trust logon failure.\n"
+msgstr "Fallada d'inici de sessió de confiança.\n"
 
 #: winerror.mc:3366
-msgid "RPC call already in progress\n"
-msgstr "Trucada RPC ja en curs\n"
+msgid "RPC call already in progress.\n"
+msgstr "Trucada RPC ja en curs.\n"
 
 #: winerror.mc:3371
-msgid "NETLOGON is not started\n"
-msgstr "NETLOGON no està iniciat\n"
+msgid "NETLOGON is not started.\n"
+msgstr "NETLOGON no està iniciat.\n"
 
 #: winerror.mc:3376
-msgid "Account expired\n"
-msgstr "Compte caducada\n"
+msgid "Account expired.\n"
+msgstr "Compte caducada.\n"
 
 #: winerror.mc:3381
-msgid "Redirector has open handles\n"
-msgstr "El redirector té mànecs oberts\n"
+msgid "Redirector has open handles.\n"
+msgstr "El redirector té mànecs oberts.\n"
 
 #: winerror.mc:3386
-msgid "Printer driver already installed\n"
-msgstr "Controlador d'impressora ja instal·lat\n"
+msgid "Printer driver already installed.\n"
+msgstr "Controlador d'impressora ja instal·lat.\n"
 
 #: winerror.mc:3391
-msgid "Unknown port\n"
-msgstr "Port desconegut\n"
+msgid "Unknown port.\n"
+msgstr "Port desconegut.\n"
 
 #: winerror.mc:3396
-msgid "Unknown printer driver\n"
-msgstr "Controlador d'impressora desconegut\n"
+msgid "Unknown printer driver.\n"
+msgstr "Controlador d'impressora desconegut.\n"
 
 #: winerror.mc:3401
-msgid "Unknown print processor\n"
-msgstr "Processador d'impressió desconegut\n"
+msgid "Unknown print processor.\n"
+msgstr "Processador d'impressió desconegut.\n"
 
 #: winerror.mc:3406
-msgid "Invalid separator file\n"
-msgstr "Fitxer separador invàlid\n"
+msgid "Invalid separator file.\n"
+msgstr "Fitxer separador invàlid.\n"
 
 #: winerror.mc:3411
-msgid "Invalid priority\n"
-msgstr "Prioritat invàlida\n"
+msgid "Invalid priority.\n"
+msgstr "Prioritat invàlida.\n"
 
 #: winerror.mc:3416
-msgid "Invalid printer name\n"
-msgstr "Nom d'impressora invàlid\n"
+msgid "Invalid printer name.\n"
+msgstr "Nom d'impressora invàlid.\n"
 
 #: winerror.mc:3421
-msgid "Printer already exists\n"
-msgstr "La impressora ja existeix\n"
+msgid "Printer already exists.\n"
+msgstr "La impressora ja existeix.\n"
 
 #: winerror.mc:3426
-msgid "Invalid printer command\n"
-msgstr "Ordre d'impressora invàlid\n"
+msgid "Invalid printer command.\n"
+msgstr "Ordre d'impressora invàlid.\n"
 
 #: winerror.mc:3431
-msgid "Invalid data type\n"
-msgstr "Tipus de dades invàlid\n"
+msgid "Invalid data type.\n"
+msgstr "Tipus de dades invàlid.\n"
 
 #: winerror.mc:3436
-msgid "Invalid environment\n"
-msgstr "Entorn invàlid\n"
+msgid "Invalid environment.\n"
+msgstr "Entorn invàlid.\n"
 
 #: winerror.mc:3441
-msgid "No more bindings\n"
-msgstr "No hi ha més lligaments\n"
+msgid "No more bindings.\n"
+msgstr "No hi ha més lligaments.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account\n"
+msgid "Can't logon with interdomain trust account.\n"
 msgstr ""
-"No es pot iniciar la sessió amb compte de confiança de diversos dominis\n"
+"No es pot iniciar la sessió amb compte de confiança de diversos dominis.\n"
 
 #: winerror.mc:3451
-msgid "Can't logon with workstation trust account\n"
+msgid "Can't logon with workstation trust account.\n"
 msgstr ""
-"No es pot iniciar la sessió amb compte de confiança d'estació de treball\n"
+"No es pot iniciar la sessió amb compte de confiança d'estació de treball.\n"
 
 #: winerror.mc:3456
-msgid "Can't logon with server trust account\n"
-msgstr "No es pot iniciar la sessió amb compte de confiança de servidor\n"
+msgid "Can't logon with server trust account.\n"
+msgstr "No es pot iniciar la sessió amb compte de confiança de servidor.\n"
 
 #: winerror.mc:3461
-msgid "Domain trust information inconsistent\n"
-msgstr "Informació de confiança de domini inconsistent\n"
+msgid "Domain trust information inconsistent.\n"
+msgstr "Informació de confiança de domini inconsistent.\n"
 
 #: winerror.mc:3466
-msgid "Server has open handles\n"
-msgstr "El servidor té mànecs oberts\n"
+msgid "Server has open handles.\n"
+msgstr "El servidor té mànecs oberts.\n"
 
 #: winerror.mc:3471
-msgid "Resource data not found\n"
-msgstr "Dades de recurs no trobades\n"
+msgid "Resource data not found.\n"
+msgstr "Dades de recurs no trobades.\n"
 
 #: winerror.mc:3476
-msgid "Resource type not found\n"
-msgstr "Tipus de recurs no trobat\n"
+msgid "Resource type not found.\n"
+msgstr "Tipus de recurs no trobat.\n"
 
 #: winerror.mc:3481
-msgid "Resource name not found\n"
-msgstr "Nom de recurs no trobat\n"
+msgid "Resource name not found.\n"
+msgstr "Nom de recurs no trobat.\n"
 
 #: winerror.mc:3486
-msgid "Resource language not found\n"
-msgstr "Llengua de recurs no trobada\n"
+msgid "Resource language not found.\n"
+msgstr "Llengua de recurs no trobada.\n"
 
 #: winerror.mc:3491
-msgid "Not enough quota\n"
-msgstr "Falta quota\n"
+msgid "Not enough quota.\n"
+msgstr "Falta quota.\n"
 
 #: winerror.mc:3496
-msgid "No interfaces\n"
-msgstr "Cap interfície\n"
+msgid "No interfaces.\n"
+msgstr "Cap interfície.\n"
 
 #: winerror.mc:3501
-msgid "RPC call canceled\n"
-msgstr "Trucada RPC cancel·lada\n"
+msgid "RPC call canceled.\n"
+msgstr "Trucada RPC cancel·lada.\n"
 
 #: winerror.mc:3506
-msgid "Binding incomplete\n"
-msgstr "Lligament incomplet\n"
+msgid "Binding incomplete.\n"
+msgstr "Lligament incomplet.\n"
 
 #: winerror.mc:3511
-msgid "RPC comm failure\n"
-msgstr "Fallada de comunicació RPC\n"
+msgid "RPC comm failure.\n"
+msgstr "Fallada de comunicació RPC.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level\n"
-msgstr "Nivell d'autorització incompatible\n"
+msgid "Unsupported authorisation level.\n"
+msgstr "Nivell d'autorització incompatible.\n"
 
 #: winerror.mc:3521
-msgid "No principal name registered\n"
-msgstr "Cap nom principal registrat\n"
+msgid "No principal name registered.\n"
+msgstr "Cap nom principal registrat.\n"
 
 #: winerror.mc:3526
-msgid "Not an RPC error\n"
-msgstr "No és un error RPC\n"
+msgid "Not an RPC error.\n"
+msgstr "No és un error RPC.\n"
 
 #: winerror.mc:3531
-msgid "UUID is local only\n"
-msgstr "La UUID és només local\n"
+msgid "UUID is local only.\n"
+msgstr "La UUID és només local.\n"
 
 #: winerror.mc:3536
-msgid "Security package error\n"
-msgstr "Error de paquet de seguretat\n"
+msgid "Security package error.\n"
+msgstr "Error de paquet de seguretat.\n"
 
 #: winerror.mc:3541
-msgid "Thread not canceled\n"
-msgstr "Fil no cancel·lat\n"
+msgid "Thread not canceled.\n"
+msgstr "Fil no cancel·lat.\n"
 
 #: winerror.mc:3546
-msgid "Invalid handle operation\n"
-msgstr "Operació de mànec invàlida\n"
+msgid "Invalid handle operation.\n"
+msgstr "Operació de mànec invàlida.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version\n"
-msgstr "Versió de paquet serialitzador incorrecta\n"
+msgid "Wrong serialising package version.\n"
+msgstr "Versió de paquet serialitzador incorrecta.\n"
 
 #: winerror.mc:3556
-msgid "Wrong stub version\n"
-msgstr "Versió d'esbós (stub) incorrecta\n"
+msgid "Wrong stub version.\n"
+msgstr "Versió d'esbós (stub) incorrecta.\n"
 
 #: winerror.mc:3561
-msgid "Invalid pipe object\n"
-msgstr "Objecte de canonada invàlid\n"
+msgid "Invalid pipe object.\n"
+msgstr "Objecte de canonada invàlid.\n"
 
 #: winerror.mc:3566
-msgid "Wrong pipe order\n"
-msgstr "Ordre de canonada incorrecte\n"
+msgid "Wrong pipe order.\n"
+msgstr "Ordre de canonada incorrecte.\n"
 
 #: winerror.mc:3571
-msgid "Wrong pipe version\n"
-msgstr "Versió de canonada incorrecta\n"
+msgid "Wrong pipe version.\n"
+msgstr "Versió de canonada incorrecta.\n"
 
 #: winerror.mc:3576
-msgid "Group member not found\n"
-msgstr "Membre de grup no trobat\n"
+msgid "Group member not found.\n"
+msgstr "Membre de grup no trobat.\n"
 
 #: winerror.mc:3581
-msgid "Can't create endpoint mapper DB\n"
-msgstr "No es pot crear el base de datos assignador de punts finals\n"
+msgid "Can't create endpoint mapper DB.\n"
+msgstr "No es pot crear el base de datos assignador de punts finals.\n"
 
 #: winerror.mc:3586
-msgid "Invalid object\n"
-msgstr "Objecte invàlid\n"
+msgid "Invalid object.\n"
+msgstr "Objecte invàlid.\n"
 
 #: winerror.mc:3591
-msgid "Invalid time\n"
-msgstr "Hora invàlida\n"
+msgid "Invalid time.\n"
+msgstr "Hora invàlida.\n"
 
 #: winerror.mc:3596
-msgid "Invalid form name\n"
-msgstr "Nom de forma invàlid\n"
+msgid "Invalid form name.\n"
+msgstr "Nom de forma invàlid.\n"
 
 #: winerror.mc:3601
-msgid "Invalid form size\n"
-msgstr "Mida de forma invàlida\n"
+msgid "Invalid form size.\n"
+msgstr "Mida de forma invàlida.\n"
 
 #: winerror.mc:3606
-msgid "Already awaiting printer handle\n"
-msgstr "Ja esperant el mànec d'impressora\n"
+msgid "Already awaiting printer handle.\n"
+msgstr "Ja esperant el mànec d'impressora.\n"
 
 #: winerror.mc:3611
-msgid "Printer deleted\n"
-msgstr "Impressora suprimida\n"
+msgid "Printer deleted.\n"
+msgstr "Impressora suprimida.\n"
 
 #: winerror.mc:3616
-msgid "Invalid printer state\n"
-msgstr "Estat d'impressora invàlid\n"
+msgid "Invalid printer state.\n"
+msgstr "Estat d'impressora invàlid.\n"
 
 #: winerror.mc:3621
-msgid "User must change password\n"
-msgstr "L'usuari ha de canviar la contrasenya\n"
+msgid "User must change password.\n"
+msgstr "L'usuari ha de canviar la contrasenya.\n"
 
 #: winerror.mc:3626
-msgid "Domain controller not found\n"
-msgstr "Controlador de domini no trobat\n"
+msgid "Domain controller not found.\n"
+msgstr "Controlador de domini no trobat.\n"
 
 #: winerror.mc:3631
-msgid "Account locked out\n"
-msgstr "Compte bloquejada\n"
+msgid "Account locked out.\n"
+msgstr "Compte bloquejada.\n"
 
 #: winerror.mc:3636
-msgid "Invalid pixel format\n"
-msgstr "Format de píxels invàlid\n"
+msgid "Invalid pixel format.\n"
+msgstr "Format de píxels invàlid.\n"
 
 #: winerror.mc:3641
-msgid "Invalid driver\n"
-msgstr "Controlador invàlid\n"
+msgid "Invalid driver.\n"
+msgstr "Controlador invàlid.\n"
 
 #: winerror.mc:3646
-msgid "Invalid object resolver set\n"
-msgstr "Conjunt de resolució d'objectes invàlid\n"
+msgid "Invalid object resolver set.\n"
+msgstr "Conjunt de resolució d'objectes invàlid.\n"
 
 #: winerror.mc:3651
-msgid "Incomplete RPC send\n"
-msgstr "Enviament RPC incomplet\n"
+msgid "Incomplete RPC send.\n"
+msgstr "Enviament RPC incomplet.\n"
 
 #: winerror.mc:3656
-msgid "Invalid asynchronous RPC handle\n"
-msgstr "Mànec RPC asíncron invàlid\n"
+msgid "Invalid asynchronous RPC handle.\n"
+msgstr "Mànec RPC asíncron invàlid.\n"
 
 #: winerror.mc:3661
-msgid "Invalid asynchronous RPC call\n"
-msgstr "Trucada RPC asíncrona invàlid\n"
+msgid "Invalid asynchronous RPC call.\n"
+msgstr "Trucada RPC asíncrona invàlid.\n"
 
 #: winerror.mc:3666
-msgid "RPC pipe closed\n"
-msgstr "Canonada RPC tancada\n"
+msgid "RPC pipe closed.\n"
+msgstr "Canonada RPC tancada.\n"
 
 #: winerror.mc:3671
-msgid "Discipline error on RPC pipe\n"
-msgstr "Error de disciplina en canonada RPC\n"
+msgid "Discipline error on RPC pipe.\n"
+msgstr "Error de disciplina en canonada RPC.\n"
 
 #: winerror.mc:3676
-msgid "No data on RPC pipe\n"
-msgstr "No hi ha dades en la canonada RPC\n"
+msgid "No data on RPC pipe.\n"
+msgstr "No hi ha dades en la canonada RPC.\n"
 
 #: winerror.mc:3681
-msgid "No site name available\n"
-msgstr "Cap nom de lloc disponible\n"
+msgid "No site name available.\n"
+msgstr "Cap nom de lloc disponible.\n"
 
 #: winerror.mc:3686
-msgid "The file cannot be accessed\n"
-msgstr "No es pot accedir al fitxer\n"
+msgid "The file cannot be accessed.\n"
+msgstr "No es pot accedir al fitxer.\n"
 
 #: winerror.mc:3691
-msgid "The filename cannot be resolved\n"
-msgstr "No es pot resoldre el nom de fitxer\n"
+msgid "The filename cannot be resolved.\n"
+msgstr "No es pot resoldre el nom de fitxer.\n"
 
 #: winerror.mc:3696
-msgid "RPC entry type mismatch\n"
-msgstr "Els tipus d'entrada RPC no es coincideixen\n"
+msgid "RPC entry type mismatch.\n"
+msgstr "Els tipus d'entrada RPC no es coincideixen.\n"
 
 #: winerror.mc:3701
-msgid "Not all objects could be exported\n"
-msgstr "No s'ha pogut exportar tots els objectes\n"
+msgid "Not all objects could be exported.\n"
+msgstr "No s'ha pogut exportar tots els objectes.\n"
 
 #: winerror.mc:3706
-msgid "The interface could not be exported\n"
-msgstr "No s'ha pogut exportar la interfície\n"
+msgid "The interface could not be exported.\n"
+msgstr "No s'ha pogut exportar la interfície.\n"
 
 #: winerror.mc:3711
-msgid "The profile could not be added\n"
-msgstr "No s'ha pogut afegir el perfil\n"
+msgid "The profile could not be added.\n"
+msgstr "No s'ha pogut afegir el perfil.\n"
 
 #: winerror.mc:3716
-msgid "The profile element could not be added\n"
-msgstr "No s'ha pogut afegir l'element de perfil\n"
+msgid "The profile element could not be added.\n"
+msgstr "No s'ha pogut afegir l'element de perfil.\n"
 
 #: winerror.mc:3721
-msgid "The profile element could not be removed\n"
-msgstr "No s'ha pogut treure l'element de perfil\n"
+msgid "The profile element could not be removed.\n"
+msgstr "No s'ha pogut treure l'element de perfil.\n"
 
 #: winerror.mc:3726
-msgid "The group element could not be added\n"
-msgstr "No s'ha pogut afegir l'element de grup\n"
+msgid "The group element could not be added.\n"
+msgstr "No s'ha pogut afegir l'element de grup.\n"
 
 #: winerror.mc:3731
-msgid "The group element could not be removed\n"
-msgstr "No s'ha pogut treure l'element de grup\n"
+msgid "The group element could not be removed.\n"
+msgstr "No s'ha pogut treure l'element de grup.\n"
 
 #: winerror.mc:3736
-msgid "The username could not be found\n"
-msgstr "No s'ha pogut trobar el nom d'usuari\n"
+msgid "The username could not be found.\n"
+msgstr "No s'ha pogut trobar el nom d'usuari.\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"

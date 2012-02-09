@@ -3575,2957 +3575,2957 @@ msgid "Array object expected"
 msgstr "Array-objekt förväntades"
 
 #: winerror.mc:26
-msgid "Success\n"
-msgstr "Lyckades\n"
+msgid "Success.\n"
+msgstr "Lyckades.\n"
 
 #: winerror.mc:31
-msgid "Invalid function\n"
-msgstr "Ogiltig funktion\n"
+msgid "Invalid function.\n"
+msgstr "Ogiltig funktion.\n"
 
 #: winerror.mc:36
-msgid "File not found\n"
-msgstr "Filen hittades inte\n"
+msgid "File not found.\n"
+msgstr "Filen hittades inte.\n"
 
 #: winerror.mc:41
-msgid "Path not found\n"
-msgstr "Sökvägen hittades inte\n"
+msgid "Path not found.\n"
+msgstr "Sökvägen hittades inte.\n"
 
 #: winerror.mc:46
-msgid "Too many open files\n"
-msgstr "För många öppna filer\n"
+msgid "Too many open files.\n"
+msgstr "För många öppna filer.\n"
 
 #: winerror.mc:51
-msgid "Access denied\n"
-msgstr "Åtkomst nekad\n"
+msgid "Access denied.\n"
+msgstr "Åtkomst nekad.\n"
 
 #: winerror.mc:56
-msgid "Invalid handle\n"
-msgstr "Ogiltig referens\n"
+msgid "Invalid handle.\n"
+msgstr "Ogiltig referens.\n"
 
 #: winerror.mc:61
-msgid "Memory trashed\n"
-msgstr "Minne förstört\n"
+msgid "Memory trashed.\n"
+msgstr "Minne förstört.\n"
 
 #: winerror.mc:66
-msgid "Not enough memory\n"
-msgstr "Ej tillräckligt minne\n"
+msgid "Not enough memory.\n"
+msgstr "Ej tillräckligt minne.\n"
 
 #: winerror.mc:71
-msgid "Invalid block\n"
-msgstr "Ogiltigt block\n"
+msgid "Invalid block.\n"
+msgstr "Ogiltigt block.\n"
 
 #: winerror.mc:76
-msgid "Bad environment\n"
-msgstr "Felaktig miljö\n"
+msgid "Bad environment.\n"
+msgstr "Felaktig miljö.\n"
 
 #: winerror.mc:81
-msgid "Bad format\n"
-msgstr "Felaktigt format\n"
+msgid "Bad format.\n"
+msgstr "Felaktigt format.\n"
 
 #: winerror.mc:86
-msgid "Invalid access\n"
-msgstr "Ogiltig åtkomst\n"
+msgid "Invalid access.\n"
+msgstr "Ogiltig åtkomst.\n"
 
 #: winerror.mc:91
-msgid "Invalid data\n"
-msgstr "Ogiltigt data\n"
+msgid "Invalid data.\n"
+msgstr "Ogiltigt data.\n"
 
 #: winerror.mc:96
-msgid "Out of memory\n"
-msgstr "Otillräckligt minne\n"
+msgid "Out of memory.\n"
+msgstr "Otillräckligt minne.\n"
 
 #: winerror.mc:101
-msgid "Invalid drive\n"
-msgstr "Ogiltig disk\n"
+msgid "Invalid drive.\n"
+msgstr "Ogiltig disk.\n"
 
 #: winerror.mc:106
-msgid "Can't delete current directory\n"
-msgstr "Kan inte ta bort aktuell katalog\n"
+msgid "Can't delete current directory.\n"
+msgstr "Kan inte ta bort aktuell katalog.\n"
 
 #: winerror.mc:111
-msgid "Not same device\n"
-msgstr "Inte samma enhet\n"
+msgid "Not same device.\n"
+msgstr "Inte samma enhet.\n"
 
 #: winerror.mc:116
-msgid "No more files\n"
-msgstr "Inga fler filer\n"
+msgid "No more files.\n"
+msgstr "Inga fler filer.\n"
 
 #: winerror.mc:121
-msgid "Write protected\n"
-msgstr "Skrivskyddad\n"
+msgid "Write protected.\n"
+msgstr "Skrivskyddad.\n"
 
 #: winerror.mc:126
-msgid "Bad unit\n"
-msgstr "Felaktig enhet\n"
+msgid "Bad unit.\n"
+msgstr "Felaktig enhet.\n"
 
 #: winerror.mc:131
-msgid "Not ready\n"
-msgstr "Ej redo\n"
+msgid "Not ready.\n"
+msgstr "Ej redo.\n"
 
 #: winerror.mc:136
-msgid "Bad command\n"
-msgstr "Felaktigt kommando\n"
+msgid "Bad command.\n"
+msgstr "Felaktigt kommando.\n"
 
 #: winerror.mc:141
-msgid "CRC error\n"
-msgstr "CRC-fel\n"
+msgid "CRC error.\n"
+msgstr "CRC-fel.\n"
 
 #: winerror.mc:146
-msgid "Bad length\n"
-msgstr "Felaktig längd\n"
+msgid "Bad length.\n"
+msgstr "Felaktig längd.\n"
 
 #: winerror.mc:151 winerror.mc:526
-msgid "Seek error\n"
-msgstr "Sökfel\n"
+msgid "Seek error.\n"
+msgstr "Sökfel.\n"
 
 #: winerror.mc:156
-msgid "Not DOS disk\n"
-msgstr "Inte DOS-disk\n"
+msgid "Not DOS disk.\n"
+msgstr "Inte DOS-disk.\n"
 
 #: winerror.mc:161
-msgid "Sector not found\n"
-msgstr "Sektor hittades inte\n"
+msgid "Sector not found.\n"
+msgstr "Sektor hittades inte.\n"
 
 #: winerror.mc:166
-msgid "Out of paper\n"
-msgstr "Slut på papper\n"
+msgid "Out of paper.\n"
+msgstr "Slut på papper.\n"
 
 #: winerror.mc:171
-msgid "Write fault\n"
-msgstr "Skrivfel\n"
+msgid "Write fault.\n"
+msgstr "Skrivfel.\n"
 
 #: winerror.mc:176
-msgid "Read fault\n"
-msgstr "Läsfel\n"
+msgid "Read fault.\n"
+msgstr "Läsfel.\n"
 
 #: winerror.mc:181
-msgid "General failure\n"
-msgstr "Allmänt fel\n"
+msgid "General failure.\n"
+msgstr "Allmänt fel.\n"
 
 #: winerror.mc:186
-msgid "Sharing violation\n"
-msgstr "Delningsfel\n"
+msgid "Sharing violation.\n"
+msgstr "Delningsfel.\n"
 
 #: winerror.mc:191
-msgid "Lock violation\n"
-msgstr "Låsningsfel\n"
+msgid "Lock violation.\n"
+msgstr "Låsningsfel.\n"
 
 #: winerror.mc:196
-msgid "Wrong disk\n"
-msgstr "Fel disk\n"
+msgid "Wrong disk.\n"
+msgstr "Fel disk.\n"
 
 #: winerror.mc:201
-msgid "Sharing buffer exceeded\n"
-msgstr "Delningsbufferten överskreds\n"
+msgid "Sharing buffer exceeded.\n"
+msgstr "Delningsbufferten överskreds.\n"
 
 #: winerror.mc:206
-msgid "End of file\n"
-msgstr "Filslut\n"
+msgid "End of file.\n"
+msgstr "Filslut.\n"
 
 #: winerror.mc:211 winerror.mc:436
-msgid "Disk full\n"
+msgid "Disk full.\n"
 msgstr ""
 
 #: winerror.mc:216
-msgid "Request not supported\n"
-msgstr "Förfrågan ej stödd\n"
+msgid "Request not supported.\n"
+msgstr "Förfrågan ej stödd.\n"
 
 #: winerror.mc:221
-msgid "Remote machine not listening\n"
-msgstr "Fjärrmaskinen lyssnar inte\n"
+msgid "Remote machine not listening.\n"
+msgstr "Fjärrmaskinen lyssnar inte.\n"
 
 #: winerror.mc:226
-msgid "Duplicate network name\n"
-msgstr "Upprepat nätverksnamn\n"
+msgid "Duplicate network name.\n"
+msgstr "Upprepat nätverksnamn.\n"
 
 #: winerror.mc:231
-msgid "Bad network path\n"
-msgstr "Felaktig nätverkssökväg\n"
+msgid "Bad network path.\n"
+msgstr "Felaktig nätverkssökväg.\n"
 
 #: winerror.mc:236
-msgid "Network busy\n"
-msgstr "Nätverket upptaget\n"
+msgid "Network busy.\n"
+msgstr "Nätverket upptaget.\n"
 
 #: winerror.mc:241
-msgid "Device does not exist\n"
-msgstr "Enheten existerar inte\n"
+msgid "Device does not exist.\n"
+msgstr "Enheten existerar inte.\n"
 
 #: winerror.mc:246
-msgid "Too many commands\n"
-msgstr "För många kommandon\n"
+msgid "Too many commands.\n"
+msgstr "För många kommandon.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error\n"
-msgstr "Adapter-hårdvarufel\n"
+msgid "Adaptor hardware error.\n"
+msgstr "Adapter-hårdvarufel.\n"
 
 #: winerror.mc:256
-msgid "Bad network response\n"
-msgstr "Felaktig nätverksrespons\n"
+msgid "Bad network response.\n"
+msgstr "Felaktig nätverksrespons.\n"
 
 #: winerror.mc:261
-msgid "Unexpected network error\n"
-msgstr "Oväntat nätverksfel\n"
+msgid "Unexpected network error.\n"
+msgstr "Oväntat nätverksfel.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor\n"
-msgstr "Felaktig fjärradapter\n"
+msgid "Bad remote adaptor.\n"
+msgstr "Felaktig fjärradapter.\n"
 
 #: winerror.mc:271
-msgid "Print queue full\n"
-msgstr "Skrivarkön full\n"
+msgid "Print queue full.\n"
+msgstr "Skrivarkön full.\n"
 
 #: winerror.mc:276
-msgid "No spool space\n"
-msgstr "Inget spool-utrymme\n"
+msgid "No spool space.\n"
+msgstr "Inget spool-utrymme.\n"
 
 #: winerror.mc:281
-msgid "Print canceled\n"
-msgstr "Utskrift avbruten\n"
+msgid "Print canceled.\n"
+msgstr "Utskrift avbruten.\n"
 
 #: winerror.mc:286
-msgid "Network name deleted\n"
-msgstr "Nätverksnamn borttaget\n"
+msgid "Network name deleted.\n"
+msgstr "Nätverksnamn borttaget.\n"
 
 #: winerror.mc:291
-msgid "Network access denied\n"
-msgstr "Nätverksåtkomst nekad\n"
+msgid "Network access denied.\n"
+msgstr "Nätverksåtkomst nekad.\n"
 
 #: winerror.mc:296
-msgid "Bad device type\n"
-msgstr "Felaktig enhetstyp\n"
+msgid "Bad device type.\n"
+msgstr "Felaktig enhetstyp.\n"
 
 #: winerror.mc:301
-msgid "Bad network name\n"
-msgstr "Felaktigt nätverksnamn\n"
+msgid "Bad network name.\n"
+msgstr "Felaktigt nätverksnamn.\n"
 
 #: winerror.mc:306
-msgid "Too many network names\n"
-msgstr "För många nätverksnamn\n"
+msgid "Too many network names.\n"
+msgstr "För många nätverksnamn.\n"
 
 #: winerror.mc:311
-msgid "Too many network sessions\n"
-msgstr "För många nätverkssessioner\n"
+msgid "Too many network sessions.\n"
+msgstr "För många nätverkssessioner.\n"
 
 #: winerror.mc:316
-msgid "Sharing paused\n"
-msgstr "Delning pausad\n"
+msgid "Sharing paused.\n"
+msgstr "Delning pausad.\n"
 
 #: winerror.mc:321
-msgid "Request not accepted\n"
-msgstr "Förfrågan ej accepterad\n"
+msgid "Request not accepted.\n"
+msgstr "Förfrågan ej accepterad.\n"
 
 #: winerror.mc:326
-msgid "Redirector paused\n"
-msgstr "Omdirigerare pausad\n"
+msgid "Redirector paused.\n"
+msgstr "Omdirigerare pausad.\n"
 
 #: winerror.mc:331
-msgid "File exists\n"
-msgstr "Filen existerar\n"
+msgid "File exists.\n"
+msgstr "Filen existerar.\n"
 
 #: winerror.mc:336
-msgid "Cannot create\n"
-msgstr "Kan ej skapa\n"
+msgid "Cannot create.\n"
+msgstr "Kan ej skapa.\n"
 
 #: winerror.mc:341
-msgid "Int24 failure\n"
-msgstr "Int24-fel\n"
+msgid "Int24 failure.\n"
+msgstr "Int24-fel.\n"
 
 #: winerror.mc:346
-msgid "Out of structures\n"
-msgstr "Slut på strukturer\n"
+msgid "Out of structures.\n"
+msgstr "Slut på strukturer.\n"
 
 #: winerror.mc:351
-msgid "Already assigned\n"
-msgstr "Redan tilldelad\n"
+msgid "Already assigned.\n"
+msgstr "Redan tilldelad.\n"
 
 #: winerror.mc:356 winerror.mc:1711
-msgid "Invalid password\n"
-msgstr "Ogiltigt lösenord\n"
+msgid "Invalid password.\n"
+msgstr "Ogiltigt lösenord.\n"
 
 #: winerror.mc:361
-msgid "Invalid parameter\n"
-msgstr "Ogiltig parameter\n"
+msgid "Invalid parameter.\n"
+msgstr "Ogiltig parameter.\n"
 
 #: winerror.mc:366
-msgid "Net write fault\n"
-msgstr "Nätverksskrivfel\n"
+msgid "Net write fault.\n"
+msgstr "Nätverksskrivfel.\n"
 
 #: winerror.mc:371
-msgid "No process slots\n"
-msgstr "Inga lediga processutrymmen\n"
+msgid "No process slots.\n"
+msgstr "Inga lediga processutrymmen.\n"
 
 #: winerror.mc:376
-msgid "Too many semaphores\n"
-msgstr "För många semaforer\n"
+msgid "Too many semaphores.\n"
+msgstr "För många semaforer.\n"
 
 #: winerror.mc:381
-msgid "Exclusive semaphore already owned\n"
-msgstr "Exklusiv semafor ägs redan\n"
+msgid "Exclusive semaphore already owned.\n"
+msgstr "Exklusiv semafor ägs redan.\n"
 
 #: winerror.mc:386
-msgid "Semaphore is set\n"
-msgstr "Semaforen är riggad\n"
+msgid "Semaphore is set.\n"
+msgstr "Semaforen är riggad.\n"
 
 #: winerror.mc:391
-msgid "Too many semaphore requests\n"
-msgstr "För många semaforförfrågningar\n"
+msgid "Too many semaphore requests.\n"
+msgstr "För många semaforförfrågningar.\n"
 
 #: winerror.mc:396
-msgid "Invalid at interrupt time\n"
+msgid "Invalid at interrupt time.\n"
 msgstr ""
 
 #: winerror.mc:401
-msgid "Semaphore owner died\n"
-msgstr "Semaforägaren dog\n"
+msgid "Semaphore owner died.\n"
+msgstr "Semaforägaren dog.\n"
 
 #: winerror.mc:406
-msgid "Semaphore user limit\n"
-msgstr "Användargräns för semafor\n"
+msgid "Semaphore user limit.\n"
+msgstr "Användargräns för semafor.\n"
 
 #: winerror.mc:411
-msgid "Insert disk for drive %1\n"
-msgstr "Sätt i disk i enhet %1\n"
+msgid "Insert disk for drive %1.\n"
+msgstr "Sätt i disk i enhet %1.\n"
 
 #: winerror.mc:416
-msgid "Drive locked\n"
-msgstr "Disken låst\n"
+msgid "Drive locked.\n"
+msgstr "Disken låst.\n"
 
 #: winerror.mc:421
-msgid "Broken pipe\n"
-msgstr "Trasig pipa\n"
+msgid "Broken pipe.\n"
+msgstr "Trasig pipa.\n"
 
 #: winerror.mc:426
-msgid "Open failed\n"
-msgstr "Kunde inte öppna\n"
+msgid "Open failed.\n"
+msgstr "Kunde inte öppna.\n"
 
 #: winerror.mc:431
-msgid "Buffer overflow\n"
-msgstr "Buffertöverspill\n"
+msgid "Buffer overflow.\n"
+msgstr "Buffertöverspill.\n"
 
 #: winerror.mc:441
-msgid "No more search handles\n"
-msgstr "Inga fler sökreferenser\n"
+msgid "No more search handles.\n"
+msgstr "Inga fler sökreferenser.\n"
 
 #: winerror.mc:446
-msgid "Invalid target handle\n"
-msgstr "Ogiltig målreferens\n"
+msgid "Invalid target handle.\n"
+msgstr "Ogiltig målreferens.\n"
 
 #: winerror.mc:451
-msgid "Invalid IOCTL\n"
-msgstr "Ogiltig IOCTL\n"
+msgid "Invalid IOCTL.\n"
+msgstr "Ogiltig IOCTL.\n"
 
 #: winerror.mc:456
-msgid "Invalid verify switch\n"
-msgstr "Ogiltigt verify-val\n"
+msgid "Invalid verify switch.\n"
+msgstr "Ogiltigt verify-val.\n"
 
 #: winerror.mc:461
-msgid "Bad driver level\n"
-msgstr "Felaktig drivrutinsnivå\n"
+msgid "Bad driver level.\n"
+msgstr "Felaktig drivrutinsnivå.\n"
 
 #: winerror.mc:466
-msgid "Call not implemented\n"
-msgstr "Anrop ej implementerat\n"
+msgid "Call not implemented.\n"
+msgstr "Anrop ej implementerat.\n"
 
 #: winerror.mc:471
-msgid "Semaphore timeout\n"
-msgstr "Tiden gick ut för semaforen\n"
+msgid "Semaphore timeout.\n"
+msgstr "Tiden gick ut för semaforen.\n"
 
 #: winerror.mc:476
-msgid "Insufficient buffer\n"
-msgstr "Otillräcklig buffert\n"
+msgid "Insufficient buffer.\n"
+msgstr "Otillräcklig buffert.\n"
 
 #: winerror.mc:481
-msgid "Invalid name\n"
-msgstr "Ogiltigt namn\n"
+msgid "Invalid name.\n"
+msgstr "Ogiltigt namn.\n"
 
 #: winerror.mc:486
-msgid "Invalid level\n"
-msgstr "Ogiltig nivå\n"
+msgid "Invalid level.\n"
+msgstr "Ogiltig nivå.\n"
 
 #: winerror.mc:491
-msgid "No volume label\n"
-msgstr "Ingen volymetikett\n"
+msgid "No volume label.\n"
+msgstr "Ingen volymetikett.\n"
 
 #: winerror.mc:496
-msgid "Module not found\n"
-msgstr "Modulen hittades inte\n"
+msgid "Module not found.\n"
+msgstr "Modulen hittades inte.\n"
 
 #: winerror.mc:501
-msgid "Procedure not found\n"
-msgstr "Proceduren hittades inte\n"
+msgid "Procedure not found.\n"
+msgstr "Proceduren hittades inte.\n"
 
 #: winerror.mc:506
-msgid "No children to wait for\n"
-msgstr "Inga barn att vänta på\n"
+msgid "No children to wait for.\n"
+msgstr "Inga barn att vänta på.\n"
 
 #: winerror.mc:511
-msgid "Child process has not completed\n"
-msgstr "Barnprocessen är ej klar\n"
+msgid "Child process has not completed.\n"
+msgstr "Barnprocessen är ej klar.\n"
 
 #: winerror.mc:516
-msgid "Invalid use of direct access handle\n"
-msgstr "Ogiltig användning av direktåtkomstreferens\n"
+msgid "Invalid use of direct access handle.\n"
+msgstr "Ogiltig användning av direktåtkomstreferens.\n"
 
 #: winerror.mc:521
-msgid "Negative seek\n"
-msgstr "Sökning till innan filens början\n"
+msgid "Negative seek.\n"
+msgstr "Sökning till innan filens början.\n"
 
 #: winerror.mc:531
-msgid "Drive is a JOIN target\n"
-msgstr "Disken är ett mål för JOIN\n"
+msgid "Drive is a JOIN target.\n"
+msgstr "Disken är ett mål för JOIN.\n"
 
 #: winerror.mc:536
-msgid "Drive is already JOINed\n"
-msgstr "Disken är redan JOINad\n"
+msgid "Drive is already JOINed.\n"
+msgstr "Disken är redan JOINad.\n"
 
 #: winerror.mc:541
-msgid "Drive is already SUBSTed\n"
-msgstr "Disken är redan SUBSTad\n"
+msgid "Drive is already SUBSTed.\n"
+msgstr "Disken är redan SUBSTad.\n"
 
 #: winerror.mc:546
-msgid "Drive is not JOINed\n"
-msgstr "Disken är inte JOINad\n"
+msgid "Drive is not JOINed.\n"
+msgstr "Disken är inte JOINad.\n"
 
 #: winerror.mc:551
-msgid "Drive is not SUBSTed\n"
-msgstr "Disken är inte SUBSTad\n"
+msgid "Drive is not SUBSTed.\n"
+msgstr "Disken är inte SUBSTad.\n"
 
 #: winerror.mc:556
-msgid "Attempt to JOIN onto a JOINed drive\n"
-msgstr "Försökte JOINa till en JOINad disk\n"
+msgid "Attempt to JOIN onto a JOINed drive.\n"
+msgstr "Försökte JOINa till en JOINad disk.\n"
 
 #: winerror.mc:561
-msgid "Attempt to SUBST onto a SUBSTed drive\n"
-msgstr "Försökte SUBSTa till en SUBSTad disk\n"
+msgid "Attempt to SUBST onto a SUBSTed drive.\n"
+msgstr "Försökte SUBSTa till en SUBSTad disk.\n"
 
 #: winerror.mc:566
-msgid "Attempt to JOIN to a SUBSTed drive\n"
-msgstr "Försökte JOINa till en SUBSTad disk\n"
+msgid "Attempt to JOIN to a SUBSTed drive.\n"
+msgstr "Försökte JOINa till en SUBSTad disk.\n"
 
 #: winerror.mc:571
-msgid "Attempt to SUBST to a JOINed drive\n"
-msgstr "Försökte SUBSTa till en JOINad disk\n"
+msgid "Attempt to SUBST to a JOINed drive.\n"
+msgstr "Försökte SUBSTa till en JOINad disk.\n"
 
 #: winerror.mc:576
-msgid "Drive is busy\n"
-msgstr "Enheten är upptagen\n"
+msgid "Drive is busy.\n"
+msgstr "Enheten är upptagen.\n"
 
 #: winerror.mc:581
-msgid "Same drive\n"
-msgstr "Samma enhet\n"
+msgid "Same drive.\n"
+msgstr "Samma enhet.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory\n"
-msgstr "Inte toppnivåkatalog\n"
+msgid "Not toplevel directory.\n"
+msgstr "Inte toppnivåkatalog.\n"
 
 #: winerror.mc:591
-msgid "Directory is not empty\n"
-msgstr "Katalogen är ej tom\n"
+msgid "Directory is not empty.\n"
+msgstr "Katalogen är ej tom.\n"
 
 #: winerror.mc:596
-msgid "Path is in use as a SUBST\n"
-msgstr "Sökvägen används som en SUBST\n"
+msgid "Path is in use as a SUBST.\n"
+msgstr "Sökvägen används som en SUBST.\n"
 
 #: winerror.mc:601
-msgid "Path is in use as a JOIN\n"
-msgstr "Sökvägen används som ett JOIN\n"
+msgid "Path is in use as a JOIN.\n"
+msgstr "Sökvägen används som ett JOIN.\n"
 
 #: winerror.mc:606
-msgid "Path is busy\n"
-msgstr "Sökvägen är upptagen\n"
+msgid "Path is busy.\n"
+msgstr "Sökvägen är upptagen.\n"
 
 #: winerror.mc:611
-msgid "Already a SUBST target\n"
-msgstr "Redan ett mål för SUBST\n"
+msgid "Already a SUBST target.\n"
+msgstr "Redan ett mål för SUBST.\n"
 
 #: winerror.mc:616
-msgid "System trace not specified or disallowed\n"
-msgstr "System-trace ospecificerat eller ej tillåtet\n"
+msgid "System trace not specified or disallowed.\n"
+msgstr "System-trace ospecificerat eller ej tillåtet.\n"
 
 #: winerror.mc:621
-msgid "Event count for DosMuxSemWait incorrect\n"
-msgstr "Inkorrekt antal händelser för DosMuxSemWait\n"
+msgid "Event count for DosMuxSemWait incorrect.\n"
+msgstr "Inkorrekt antal händelser för DosMuxSemWait.\n"
 
 #: winerror.mc:626
-msgid "Too many waiters for DosMuxSemWait\n"
-msgstr "För många väntande för DosMuxSemWait\n"
+msgid "Too many waiters for DosMuxSemWait.\n"
+msgstr "För många väntande för DosMuxSemWait.\n"
 
 #: winerror.mc:631
-msgid "DosSemMuxWait list invalid\n"
-msgstr "DosSemMuxWait-lista ogiltig\n"
+msgid "DosSemMuxWait list invalid.\n"
+msgstr "DosSemMuxWait-lista ogiltig.\n"
 
 #: winerror.mc:636
-msgid "Volume label too long\n"
-msgstr "Volymetiketten är för lång\n"
+msgid "Volume label too long.\n"
+msgstr "Volymetiketten är för lång.\n"
 
 #: winerror.mc:641
-msgid "Too many TCBs\n"
-msgstr "För många TCB:er\n"
+msgid "Too many TCBs.\n"
+msgstr "För många TCB:er.\n"
 
 #: winerror.mc:646
-msgid "Signal refused\n"
-msgstr "Signal vägrad\n"
+msgid "Signal refused.\n"
+msgstr "Signal vägrad.\n"
 
 #: winerror.mc:651
-msgid "Segment discarded\n"
-msgstr "Segment kasserat\n"
+msgid "Segment discarded.\n"
+msgstr "Segment kasserat.\n"
 
 #: winerror.mc:656
-msgid "Segment not locked\n"
-msgstr "Segment inte låst\n"
+msgid "Segment not locked.\n"
+msgstr "Segment inte låst.\n"
 
 #: winerror.mc:661
-msgid "Bad thread ID address\n"
-msgstr "Felaktig tråd-ID-adress\n"
+msgid "Bad thread ID address.\n"
+msgstr "Felaktig tråd-ID-adress.\n"
 
 #: winerror.mc:666
-msgid "Bad arguments to DosExecPgm\n"
-msgstr "Felaktiga argument till DosExecPgm\n"
+msgid "Bad arguments to DosExecPgm.\n"
+msgstr "Felaktiga argument till DosExecPgm.\n"
 
 #: winerror.mc:671
-msgid "Path is invalid\n"
-msgstr "Ogiltig sökväg\n"
+msgid "Path is invalid.\n"
+msgstr "Ogiltig sökväg.\n"
 
 #: winerror.mc:676
-msgid "Signal pending\n"
+msgid "Signal pending.\n"
 msgstr ""
 
 #: winerror.mc:681
-msgid "Max system-wide thread count reached\n"
-msgstr "Max antal trådar i systemet uppnått\n"
+msgid "Max system-wide thread count reached.\n"
+msgstr "Max antal trådar i systemet uppnått.\n"
 
 #: winerror.mc:686
-msgid "Lock failed\n"
-msgstr "Låsning misslyckades\n"
+msgid "Lock failed.\n"
+msgstr "Låsning misslyckades.\n"
 
 #: winerror.mc:691
-msgid "Resource in use\n"
-msgstr "Resursen används\n"
+msgid "Resource in use.\n"
+msgstr "Resursen används.\n"
 
 #: winerror.mc:696
-msgid "Cancel violation\n"
+msgid "Cancel violation.\n"
 msgstr ""
 
 #: winerror.mc:701
-msgid "Atomic locks not supported\n"
-msgstr "Atomiska lås stöds inte\n"
+msgid "Atomic locks not supported.\n"
+msgstr "Atomiska lås stöds inte.\n"
 
 #: winerror.mc:706
-msgid "Invalid segment number\n"
-msgstr "Ogiltigt segmentnummer\n"
+msgid "Invalid segment number.\n"
+msgstr "Ogiltigt segmentnummer.\n"
 
 #: winerror.mc:711
-msgid "Invalid ordinal for %1\n"
-msgstr "Ogiltigt ordningstal för %1\n"
+msgid "Invalid ordinal for %1.\n"
+msgstr "Ogiltigt ordningstal för %1.\n"
 
 #: winerror.mc:716
-msgid "File already exists\n"
-msgstr "Filen existerar redan\n"
+msgid "File already exists.\n"
+msgstr "Filen existerar redan.\n"
 
 #: winerror.mc:721
-msgid "Invalid flag number\n"
-msgstr "Ogiltigt flaggnummer\n"
+msgid "Invalid flag number.\n"
+msgstr "Ogiltigt flaggnummer.\n"
 
 #: winerror.mc:726
-msgid "Semaphore name not found\n"
-msgstr "Semafornamnet hittades inte\n"
+msgid "Semaphore name not found.\n"
+msgstr "Semafornamnet hittades inte.\n"
 
 #: winerror.mc:731
-msgid "Invalid starting code segment for %1\n"
-msgstr "Ogiltigt startkodsegment för %1\n"
+msgid "Invalid starting code segment for %1.\n"
+msgstr "Ogiltigt startkodsegment för %1.\n"
 
 #: winerror.mc:736
-msgid "Invalid starting stack segment for %1\n"
-msgstr "Ogiltigt startstacksegment för %1\n"
+msgid "Invalid starting stack segment for %1.\n"
+msgstr "Ogiltigt startstacksegment för %1.\n"
 
 #: winerror.mc:741
-msgid "Invalid module type for %1\n"
-msgstr "Ogiltig modultyp för %1\n"
+msgid "Invalid module type for %1.\n"
+msgstr "Ogiltig modultyp för %1.\n"
 
 #: winerror.mc:746
-msgid "Invalid EXE signature in %1\n"
-msgstr "Ogiltig EXE-signatur i %1\n"
+msgid "Invalid EXE signature in %1.\n"
+msgstr "Ogiltig EXE-signatur i %1.\n"
 
 #: winerror.mc:751
-msgid "EXE %1 is marked invalid\n"
-msgstr "EXE:n %1 är märkt ogiltig\n"
+msgid "EXE %1 is marked invalid.\n"
+msgstr "EXE:n %1 är märkt ogiltig.\n"
 
 #: winerror.mc:756
-msgid "Bad EXE format for %1\n"
-msgstr "Felaktigt EXE-format för %1\n"
+msgid "Bad EXE format for %1.\n"
+msgstr "Felaktigt EXE-format för %1.\n"
 
 #: winerror.mc:761
-msgid "Iterated data exceeds 64k in %1\n"
-msgstr "Itererat data överskrider 64k i %1\n"
+msgid "Iterated data exceeds 64k in %1.\n"
+msgstr "Itererat data överskrider 64k i %1.\n"
 
 #: winerror.mc:766
-msgid "Invalid MinAllocSize in %1\n"
-msgstr "Ogiltig MinAllocSize i %1\n"
+msgid "Invalid MinAllocSize in %1.\n"
+msgstr "Ogiltig MinAllocSize i %1.\n"
 
 #: winerror.mc:771
-msgid "Dynlink from invalid ring\n"
-msgstr "Dynlink från ogiltig ring\n"
+msgid "Dynlink from invalid ring.\n"
+msgstr "Dynlink från ogiltig ring.\n"
 
 #: winerror.mc:776
-msgid "IOPL not enabled\n"
-msgstr "IOPL ej aktiverat\n"
+msgid "IOPL not enabled.\n"
+msgstr "IOPL ej aktiverat.\n"
 
 #: winerror.mc:781
-msgid "Invalid SEGDPL in %1\n"
-msgstr "Ogiltig SEGDPL i %1\n"
+msgid "Invalid SEGDPL in %1.\n"
+msgstr "Ogiltig SEGDPL i %1.\n"
 
 #: winerror.mc:786
-msgid "Auto data segment exceeds 64k\n"
-msgstr "Autodatasegment överskrider 64k\n"
+msgid "Auto data segment exceeds 64k.\n"
+msgstr "Autodatasegment överskrider 64k.\n"
 
 #: winerror.mc:791
-msgid "Ring 2 segment must be movable\n"
-msgstr "Ring 2-segment måste vara flyttbart\n"
+msgid "Ring 2 segment must be movable.\n"
+msgstr "Ring 2-segment måste vara flyttbart.\n"
 
 #: winerror.mc:796
-msgid "Relocation chain exceeds segment limit in %1\n"
-msgstr "Omflyttningskedjan överskrider segmentgränsen i %1\n"
+msgid "Relocation chain exceeds segment limit in %1.\n"
+msgstr "Omflyttningskedjan överskrider segmentgränsen i %1.\n"
 
 #: winerror.mc:801
-msgid "Infinite loop in relocation chain in %1\n"
-msgstr "Oändlig loop i omflyttningskedja i %1\n"
+msgid "Infinite loop in relocation chain in %1.\n"
+msgstr "Oändlig loop i omflyttningskedja i %1.\n"
 
 #: winerror.mc:806
-msgid "Environment variable not found\n"
-msgstr "Miljövariabeln hittades inte\n"
+msgid "Environment variable not found.\n"
+msgstr "Miljövariabeln hittades inte.\n"
 
 #: winerror.mc:811
-msgid "No signal sent\n"
-msgstr "Ingen signal skickades\n"
+msgid "No signal sent.\n"
+msgstr "Ingen signal skickades.\n"
 
 #: winerror.mc:816
-msgid "File name is too long\n"
-msgstr "Filnamnet för långt\n"
+msgid "File name is too long.\n"
+msgstr "Filnamnet för långt.\n"
 
 #: winerror.mc:821
-msgid "Ring 2 stack in use\n"
-msgstr "Ring 2-stack används\n"
+msgid "Ring 2 stack in use.\n"
+msgstr "Ring 2-stack används.\n"
 
 #: winerror.mc:826
-msgid "Error in use of filename wildcards\n"
-msgstr "Felaktig användning av jokertecken för filnamn\n"
+msgid "Error in use of filename wildcards.\n"
+msgstr "Felaktig användning av jokertecken för filnamn.\n"
 
 #: winerror.mc:831
-msgid "Invalid signal number\n"
-msgstr "Ogiltigt signalnummer\n"
+msgid "Invalid signal number.\n"
+msgstr "Ogiltigt signalnummer.\n"
 
 #: winerror.mc:836
-msgid "Error setting signal handler\n"
-msgstr "Fel vid inställning av signalhanterare\n"
+msgid "Error setting signal handler.\n"
+msgstr "Fel vid inställning av signalhanterare.\n"
 
 #: winerror.mc:841
-msgid "Segment locked\n"
-msgstr "Segment låst\n"
+msgid "Segment locked.\n"
+msgstr "Segment låst.\n"
 
 #: winerror.mc:846
-msgid "Too many modules\n"
-msgstr "För många moduler\n"
+msgid "Too many modules.\n"
+msgstr "För många moduler.\n"
 
 #: winerror.mc:851
-msgid "Nesting LoadModule calls not allowed\n"
-msgstr "Ej tillåtet att nästa LoadModule-anrop\n"
+msgid "Nesting LoadModule calls not allowed.\n"
+msgstr "Ej tillåtet att nästa LoadModule-anrop.\n"
 
 #: winerror.mc:856
-msgid "Machine type mismatch\n"
-msgstr "Arkitekturerna misstämmer\n"
+msgid "Machine type mismatch.\n"
+msgstr "Arkitekturerna misstämmer.\n"
 
 #: winerror.mc:861
-msgid "Bad pipe\n"
-msgstr "Felaktig pipa\n"
+msgid "Bad pipe.\n"
+msgstr "Felaktig pipa.\n"
 
 #: winerror.mc:866
-msgid "Pipe busy\n"
-msgstr "Pipa upptagen\n"
+msgid "Pipe busy.\n"
+msgstr "Pipa upptagen.\n"
 
 #: winerror.mc:871
-msgid "Pipe closed\n"
-msgstr "Pipa stängd\n"
+msgid "Pipe closed.\n"
+msgstr "Pipa stängd.\n"
 
 #: winerror.mc:876
-msgid "Pipe not connected\n"
-msgstr "Pipa ej ansluten\n"
+msgid "Pipe not connected.\n"
+msgstr "Pipa ej ansluten.\n"
 
 #: winerror.mc:881
-msgid "More data available\n"
-msgstr "Mer data tillgängligt\n"
+msgid "More data available.\n"
+msgstr "Mer data tillgängligt.\n"
 
 #: winerror.mc:886
-msgid "Session canceled\n"
-msgstr "Sessionen avbröts\n"
+msgid "Session canceled.\n"
+msgstr "Sessionen avbröts.\n"
 
 #: winerror.mc:891
-msgid "Invalid extended attribute name\n"
-msgstr "Ogiltigt namn på utökat attribut\n"
+msgid "Invalid extended attribute name.\n"
+msgstr "Ogiltigt namn på utökat attribut.\n"
 
 #: winerror.mc:896
-msgid "Extended attribute list inconsistent\n"
-msgstr "Utökade attributslistan inkonsekvent\n"
+msgid "Extended attribute list inconsistent.\n"
+msgstr "Utökade attributslistan inkonsekvent.\n"
 
 #: winerror.mc:901
-msgid "No more data available\n"
-msgstr "Inget mer data tillgängligt\n"
+msgid "No more data available.\n"
+msgstr "Inget mer data tillgängligt.\n"
 
 #: winerror.mc:906
-msgid "Cannot use Copy API\n"
-msgstr "Kan inte använda Copy-API:t\n"
+msgid "Cannot use Copy API.\n"
+msgstr "Kan inte använda Copy-API:t.\n"
 
 #: winerror.mc:911
-msgid "Directory name invalid\n"
-msgstr "Ogiltigt katalognamn\n"
+msgid "Directory name invalid.\n"
+msgstr "Ogiltigt katalognamn.\n"
 
 #: winerror.mc:916
-msgid "Extended attributes didn't fit\n"
-msgstr "Utökat attribut passade inte\n"
+msgid "Extended attributes didn't fit.\n"
+msgstr "Utökat attribut passade inte.\n"
 
 #: winerror.mc:921
-msgid "Extended attribute file corrupt\n"
-msgstr "Utökade attributsfilen korrupt\n"
+msgid "Extended attribute file corrupt.\n"
+msgstr "Utökade attributsfilen korrupt.\n"
 
 #: winerror.mc:926
-msgid "Extended attribute table full\n"
-msgstr "Utökade attributstabellen är full\n"
+msgid "Extended attribute table full.\n"
+msgstr "Utökade attributstabellen är full.\n"
 
 #: winerror.mc:931
-msgid "Invalid extended attribute handle\n"
-msgstr "Ogiltig referens till utökade attribut\n"
+msgid "Invalid extended attribute handle.\n"
+msgstr "Ogiltig referens till utökade attribut.\n"
 
 #: winerror.mc:936
-msgid "Extended attributes not supported\n"
-msgstr "Utökade attribut ej stödda\n"
+msgid "Extended attributes not supported.\n"
+msgstr "Utökade attribut ej stödda.\n"
 
 #: winerror.mc:941
-msgid "Mutex not owned by caller\n"
-msgstr "Mutex ägdes inte av anroparen\n"
+msgid "Mutex not owned by caller.\n"
+msgstr "Mutex ägdes inte av anroparen.\n"
 
 #: winerror.mc:946
-msgid "Too many posts to semaphore\n"
-msgstr "För många poster till semafor\n"
+msgid "Too many posts to semaphore.\n"
+msgstr "För många poster till semafor.\n"
 
 #: winerror.mc:951
-msgid "Read/WriteProcessMemory partially completed\n"
-msgstr "Read/WriteProcessMemory delvis fullbordat\n"
+msgid "Read/WriteProcessMemory partially completed.\n"
+msgstr "Read/WriteProcessMemory delvis fullbordat.\n"
 
 #: winerror.mc:956
-msgid "The oplock wasn't granted\n"
+msgid "The oplock wasn't granted.\n"
 msgstr ""
 
 #: winerror.mc:961
-msgid "Invalid oplock message received\n"
-msgstr "Ogiltigt oplock-meddelande mottaget\n"
+msgid "Invalid oplock message received.\n"
+msgstr "Ogiltigt oplock-meddelande mottaget.\n"
 
 #: winerror.mc:966
-msgid "Message 0x%1 not found in file %2\n"
-msgstr "Meddelande 0x%1 ej funnet i fil %2\n"
+msgid "Message 0x%1 not found in file %2.\n"
+msgstr "Meddelande 0x%1 ej funnet i fil %2.\n"
 
 #: winerror.mc:971
-msgid "Invalid address\n"
-msgstr "Ogiltig adress\n"
+msgid "Invalid address.\n"
+msgstr "Ogiltig adress.\n"
 
 #: winerror.mc:976
-msgid "Arithmetic overflow\n"
-msgstr "Aritmetiskt överspill\n"
+msgid "Arithmetic overflow.\n"
+msgstr "Aritmetiskt överspill.\n"
 
 #: winerror.mc:981
-msgid "Pipe connected\n"
-msgstr "Pipa ansluten\n"
+msgid "Pipe connected.\n"
+msgstr "Pipa ansluten.\n"
 
 #: winerror.mc:986
-msgid "Pipe listening\n"
-msgstr "Pipa lyssnar\n"
+msgid "Pipe listening.\n"
+msgstr "Pipa lyssnar.\n"
 
 #: winerror.mc:991
-msgid "Extended attribute access denied\n"
-msgstr "Åtkomst till utökade attribut nekad\n"
+msgid "Extended attribute access denied.\n"
+msgstr "Åtkomst till utökade attribut nekad.\n"
 
 #: winerror.mc:996
-msgid "I/O operation aborted\n"
-msgstr "I/O-operation avbruten\n"
+msgid "I/O operation aborted.\n"
+msgstr "I/O-operation avbruten.\n"
 
 #: winerror.mc:1001
-msgid "Overlapped I/O incomplete\n"
-msgstr "Överlappande I/O oavslutad\n"
+msgid "Overlapped I/O incomplete.\n"
+msgstr "Överlappande I/O oavslutad.\n"
 
 #: winerror.mc:1006
-msgid "Overlapped I/O pending\n"
-msgstr "Överlappande I/O pågår\n"
+msgid "Overlapped I/O pending.\n"
+msgstr "Överlappande I/O pågår.\n"
 
 #: winerror.mc:1011
-msgid "No access to memory location\n"
-msgstr "Ingen åtkomst till minnesplats\n"
+msgid "No access to memory location.\n"
+msgstr "Ingen åtkomst till minnesplats.\n"
 
 #: winerror.mc:1016
-msgid "Swap error\n"
-msgstr "Swap-fel\n"
+msgid "Swap error.\n"
+msgstr "Swap-fel.\n"
 
 #: winerror.mc:1021
-msgid "Stack overflow\n"
-msgstr "Stack-överspill\n"
+msgid "Stack overflow.\n"
+msgstr "Stack-överspill.\n"
 
 #: winerror.mc:1026
-msgid "Invalid message\n"
-msgstr "Ogiltigt meddelande\n"
+msgid "Invalid message.\n"
+msgstr "Ogiltigt meddelande.\n"
 
 #: winerror.mc:1031
-msgid "Cannot complete\n"
-msgstr "Kan inte slutföra\n"
+msgid "Cannot complete.\n"
+msgstr "Kan inte slutföra.\n"
 
 #: winerror.mc:1036
-msgid "Invalid flags\n"
-msgstr "Ogiltiga flaggor\n"
+msgid "Invalid flags.\n"
+msgstr "Ogiltiga flaggor.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume\n"
-msgstr "Volymen ej igenkänd\n"
+msgid "Unrecognised volume.\n"
+msgstr "Volymen ej igenkänd.\n"
 
 #: winerror.mc:1046
-msgid "File invalid\n"
-msgstr "Ogiltig fil\n"
+msgid "File invalid.\n"
+msgstr "Ogiltig fil.\n"
 
 #: winerror.mc:1051
-msgid "Cannot run full-screen\n"
-msgstr "Kan inte köra fullskärm\n"
+msgid "Cannot run full-screen.\n"
+msgstr "Kan inte köra fullskärm.\n"
 
 #: winerror.mc:1056
-msgid "Nonexistent token\n"
-msgstr "Ej existerande symbol\n"
+msgid "Nonexistent token.\n"
+msgstr "Ej existerande symbol.\n"
 
 #: winerror.mc:1061
-msgid "Registry corrupt\n"
-msgstr "Registret korrupt\n"
+msgid "Registry corrupt.\n"
+msgstr "Registret korrupt.\n"
 
 #: winerror.mc:1066
-msgid "Invalid key\n"
-msgstr "Ogiltig nyckel\n"
+msgid "Invalid key.\n"
+msgstr "Ogiltig nyckel.\n"
 
 #: winerror.mc:1071
-msgid "Can't open registry key\n"
-msgstr "Kan inte öppna registernyckel\n"
+msgid "Can't open registry key.\n"
+msgstr "Kan inte öppna registernyckel.\n"
 
 #: winerror.mc:1076
-msgid "Can't read registry key\n"
-msgstr "Kan inte läsa registernyckel\n"
+msgid "Can't read registry key.\n"
+msgstr "Kan inte läsa registernyckel.\n"
 
 #: winerror.mc:1081
-msgid "Can't write registry key\n"
-msgstr "Kan inte skriva registernyckel\n"
+msgid "Can't write registry key.\n"
+msgstr "Kan inte skriva registernyckel.\n"
 
 #: winerror.mc:1086
-msgid "Registry has been recovered\n"
-msgstr "Registret har återskapats\n"
+msgid "Registry has been recovered.\n"
+msgstr "Registret har återskapats.\n"
 
 #: winerror.mc:1091
-msgid "Registry is corrupt\n"
-msgstr "Registret är korrupt\n"
+msgid "Registry is corrupt.\n"
+msgstr "Registret är korrupt.\n"
 
 #: winerror.mc:1096
-msgid "I/O to registry failed\n"
-msgstr "I/O till registret misslyckades\n"
+msgid "I/O to registry failed.\n"
+msgstr "I/O till registret misslyckades.\n"
 
 #: winerror.mc:1101
-msgid "Not registry file\n"
-msgstr "Ej registerfil\n"
+msgid "Not registry file.\n"
+msgstr "Ej registerfil.\n"
 
 #: winerror.mc:1106
-msgid "Key deleted\n"
-msgstr "Nyckel togs bort\n"
+msgid "Key deleted.\n"
+msgstr "Nyckel togs bort.\n"
 
 #: winerror.mc:1111
-msgid "No registry log space\n"
-msgstr "Inget utrymme för registerlogg\n"
+msgid "No registry log space.\n"
+msgstr "Inget utrymme för registerlogg.\n"
 
 #: winerror.mc:1116
-msgid "Registry key has subkeys\n"
-msgstr "Registernyckeln har undernycklar\n"
+msgid "Registry key has subkeys.\n"
+msgstr "Registernyckeln har undernycklar.\n"
 
 #: winerror.mc:1121
-msgid "Subkey must be volatile\n"
-msgstr "Undernyckel måste vara volatile\n"
+msgid "Subkey must be volatile.\n"
+msgstr "Undernyckel måste vara volatile.\n"
 
 #: winerror.mc:1126
-msgid "Notify change request in progress\n"
-msgstr "Förfrågan om ändring av notifiering pågår\n"
+msgid "Notify change request in progress.\n"
+msgstr "Förfrågan om ändring av notifiering pågår.\n"
 
 #: winerror.mc:1131
-msgid "Dependent services are running\n"
-msgstr "Beroende tjänster körs\n"
+msgid "Dependent services are running.\n"
+msgstr "Beroende tjänster körs.\n"
 
 #: winerror.mc:1136
-msgid "Invalid service control\n"
-msgstr "Ogiltig tjänstkontroll\n"
+msgid "Invalid service control.\n"
+msgstr "Ogiltig tjänstkontroll.\n"
 
 #: winerror.mc:1141
-msgid "Service request timeout\n"
-msgstr "Tiden gick ut för förfrågan till tjänst\n"
+msgid "Service request timeout.\n"
+msgstr "Tiden gick ut för förfrågan till tjänst.\n"
 
 #: winerror.mc:1146
-msgid "Cannot create service thread\n"
-msgstr "Kan inte skapa tjänst-tråd\n"
+msgid "Cannot create service thread.\n"
+msgstr "Kan inte skapa tjänst-tråd.\n"
 
 #: winerror.mc:1151
-msgid "Service database locked\n"
-msgstr "Tjänstdatabas låst\n"
+msgid "Service database locked.\n"
+msgstr "Tjänstdatabas låst.\n"
 
 #: winerror.mc:1156
-msgid "Service already running\n"
-msgstr "Tjänsten körs redan\n"
+msgid "Service already running.\n"
+msgstr "Tjänsten körs redan.\n"
 
 #: winerror.mc:1161
-msgid "Invalid service account\n"
-msgstr "Ogiltigt tjänstkonto\n"
+msgid "Invalid service account.\n"
+msgstr "Ogiltigt tjänstkonto.\n"
 
 #: winerror.mc:1166
-msgid "Service is disabled\n"
-msgstr "Tjänsten inaktiverad\n"
+msgid "Service is disabled.\n"
+msgstr "Tjänsten inaktiverad.\n"
 
 #: winerror.mc:1171
-msgid "Circular dependency\n"
-msgstr "Cirkulärt beroende\n"
+msgid "Circular dependency.\n"
+msgstr "Cirkulärt beroende.\n"
 
 #: winerror.mc:1176
-msgid "Service does not exist\n"
-msgstr "Tjänsten existerar inte\n"
+msgid "Service does not exist.\n"
+msgstr "Tjänsten existerar inte.\n"
 
 #: winerror.mc:1181
-msgid "Service cannot accept control message\n"
-msgstr "Tjänsten kan inte acceptera kontrollmeddelande\n"
+msgid "Service cannot accept control message.\n"
+msgstr "Tjänsten kan inte acceptera kontrollmeddelande.\n"
 
 #: winerror.mc:1186
-msgid "Service not active\n"
-msgstr "Tjänst ej aktiv\n"
+msgid "Service not active.\n"
+msgstr "Tjänst ej aktiv.\n"
 
 #: winerror.mc:1191
-msgid "Service controller connect failed\n"
-msgstr "Anslutning till tjänstens kontrollant misslyckades\n"
+msgid "Service controller connect failed.\n"
+msgstr "Anslutning till tjänstens kontrollant misslyckades.\n"
 
 #: winerror.mc:1196
-msgid "Exception in service\n"
-msgstr "Undantag i tjänst\n"
+msgid "Exception in service.\n"
+msgstr "Undantag i tjänst.\n"
 
 #: winerror.mc:1201
-msgid "Database does not exist\n"
-msgstr "Databasen existerar inte\n"
+msgid "Database does not exist.\n"
+msgstr "Databasen existerar inte.\n"
 
 #: winerror.mc:1206
-msgid "Service-specific error\n"
-msgstr "Tjänst-specifikt fel\n"
+msgid "Service-specific error.\n"
+msgstr "Tjänst-specifikt fel.\n"
 
 #: winerror.mc:1211
-msgid "Process aborted\n"
-msgstr "Processen avbröts\n"
+msgid "Process aborted.\n"
+msgstr "Processen avbröts.\n"
 
 #: winerror.mc:1216
-msgid "Service dependency failed\n"
-msgstr "Beroendetjänsten misslyckades\n"
+msgid "Service dependency failed.\n"
+msgstr "Beroendetjänsten misslyckades.\n"
 
 #: winerror.mc:1221
-msgid "Service login failed\n"
-msgstr "Tjänstinloggning misslyckades\n"
+msgid "Service login failed.\n"
+msgstr "Tjänstinloggning misslyckades.\n"
 
 #: winerror.mc:1226
-msgid "Service start-hang\n"
-msgstr "Tjänsten hängdes vid start\n"
+msgid "Service start-hang.\n"
+msgstr "Tjänsten hängdes vid start.\n"
 
 #: winerror.mc:1231
-msgid "Invalid service lock\n"
-msgstr "Ogiltigt lås för tjänsten\n"
+msgid "Invalid service lock.\n"
+msgstr "Ogiltigt lås för tjänsten.\n"
 
 #: winerror.mc:1236
-msgid "Service marked for delete\n"
-msgstr "Tjänst markerad för borttagning\n"
+msgid "Service marked for delete.\n"
+msgstr "Tjänst markerad för borttagning.\n"
 
 #: winerror.mc:1241
-msgid "Service exists\n"
-msgstr "Tjänsten existerar\n"
+msgid "Service exists.\n"
+msgstr "Tjänsten existerar.\n"
 
 #: winerror.mc:1246
-msgid "System running last-known-good config\n"
-msgstr "Systemet kör senaste kända bra inställning\n"
+msgid "System running last-known-good config.\n"
+msgstr "Systemet kör senaste kända bra inställning.\n"
 
 #: winerror.mc:1251
-msgid "Service dependency deleted\n"
-msgstr "Beroendetjänsten borttagen\n"
+msgid "Service dependency deleted.\n"
+msgstr "Beroendetjänsten borttagen.\n"
 
 #: winerror.mc:1256
-msgid "Boot already accepted as last-good config\n"
-msgstr "Boot redan accepterad som senaste bra inställning\n"
+msgid "Boot already accepted as last-good config.\n"
+msgstr "Boot redan accepterad som senaste bra inställning.\n"
 
 #: winerror.mc:1261
-msgid "Service not started since last boot\n"
-msgstr "Tjänst ej startad sedan senaste systemstart\n"
+msgid "Service not started since last boot.\n"
+msgstr "Tjänst ej startad sedan senaste systemstart.\n"
 
 #: winerror.mc:1266
-msgid "Duplicate service name\n"
-msgstr "Upprepat tjänstnamn\n"
+msgid "Duplicate service name.\n"
+msgstr "Upprepat tjänstnamn.\n"
 
 #: winerror.mc:1271
-msgid "Different service account\n"
-msgstr "Annat tjänstkonto\n"
+msgid "Different service account.\n"
+msgstr "Annat tjänstkonto.\n"
 
 #: winerror.mc:1276
-msgid "Driver failure cannot be detected\n"
-msgstr "Drivrutinsfel kan ej upptäckas\n"
+msgid "Driver failure cannot be detected.\n"
+msgstr "Drivrutinsfel kan ej upptäckas.\n"
 
 #: winerror.mc:1281
-msgid "Process abort cannot be detected\n"
-msgstr "Processavbrott kan ej upptäckas\n"
+msgid "Process abort cannot be detected.\n"
+msgstr "Processavbrott kan ej upptäckas.\n"
 
 #: winerror.mc:1286
-msgid "No recovery program for service\n"
-msgstr "Inget återställningsprogram för tjänsten\n"
+msgid "No recovery program for service.\n"
+msgstr "Inget återställningsprogram för tjänsten.\n"
 
 #: winerror.mc:1291
-msgid "Service not implemented by exe\n"
-msgstr "Tjänsten ej implementerad av exe\n"
+msgid "Service not implemented by exe.\n"
+msgstr "Tjänsten ej implementerad av exe.\n"
 
 #: winerror.mc:1296
-msgid "End of media\n"
-msgstr "Slut på media\n"
+msgid "End of media.\n"
+msgstr "Slut på media.\n"
 
 #: winerror.mc:1301
-msgid "Filemark detected\n"
-msgstr "Filmarkör upptäckt\n"
+msgid "Filemark detected.\n"
+msgstr "Filmarkör upptäckt.\n"
 
 #: winerror.mc:1306
-msgid "Beginning of media\n"
-msgstr "Början på media\n"
+msgid "Beginning of media.\n"
+msgstr "Början på media.\n"
 
 #: winerror.mc:1311
-msgid "Setmark detected\n"
-msgstr "Setmarkör upptäckt\n"
+msgid "Setmark detected.\n"
+msgstr "Setmarkör upptäckt.\n"
 
 #: winerror.mc:1316
-msgid "No data detected\n"
-msgstr "Inget data upptäckt\n"
+msgid "No data detected.\n"
+msgstr "Inget data upptäckt.\n"
 
 #: winerror.mc:1321
-msgid "Partition failure\n"
-msgstr "Partitionsfel\n"
+msgid "Partition failure.\n"
+msgstr "Partitionsfel.\n"
 
 #: winerror.mc:1326
-msgid "Invalid block length\n"
-msgstr "Ogiltig blocklängd\n"
+msgid "Invalid block length.\n"
+msgstr "Ogiltig blocklängd.\n"
 
 #: winerror.mc:1331
-msgid "Device not partitioned\n"
-msgstr "Enheten är ej partitionerad\n"
+msgid "Device not partitioned.\n"
+msgstr "Enheten är ej partitionerad.\n"
 
 #: winerror.mc:1336
-msgid "Unable to lock media\n"
-msgstr "Kunde inte låsa media\n"
+msgid "Unable to lock media.\n"
+msgstr "Kunde inte låsa media.\n"
 
 #: winerror.mc:1341
-msgid "Unable to unload media\n"
-msgstr "Kunde inte mata ut media\n"
+msgid "Unable to unload media.\n"
+msgstr "Kunde inte mata ut media.\n"
 
 #: winerror.mc:1346
-msgid "Media changed\n"
-msgstr "Media ändrades\n"
+msgid "Media changed.\n"
+msgstr "Media ändrades.\n"
 
 #: winerror.mc:1351
-msgid "I/O bus reset\n"
-msgstr "I/O-bussen återställdes\n"
+msgid "I/O bus reset.\n"
+msgstr "I/O-bussen återställdes.\n"
 
 #: winerror.mc:1356
-msgid "No media in drive\n"
-msgstr "Inget media i enhet\n"
+msgid "No media in drive.\n"
+msgstr "Inget media i enhet.\n"
 
 #: winerror.mc:1361
-msgid "No Unicode translation\n"
-msgstr "Ingen Unicode-översättning\n"
+msgid "No Unicode translation.\n"
+msgstr "Ingen Unicode-översättning.\n"
 
 #: winerror.mc:1366
-msgid "DLL init failed\n"
-msgstr "DLL-initiering misslyckades\n"
+msgid "DLL init failed.\n"
+msgstr "DLL-initiering misslyckades.\n"
 
 #: winerror.mc:1371
-msgid "Shutdown in progress\n"
-msgstr "Nedstängning pågår\n"
+msgid "Shutdown in progress.\n"
+msgstr "Nedstängning pågår.\n"
 
 #: winerror.mc:1376
-msgid "No shutdown in progress\n"
-msgstr "Ingen nedstängning pågår\n"
+msgid "No shutdown in progress.\n"
+msgstr "Ingen nedstängning pågår.\n"
 
 #: winerror.mc:1381
-msgid "I/O device error\n"
-msgstr "I/O-enhetsfel\n"
+msgid "I/O device error.\n"
+msgstr "I/O-enhetsfel.\n"
 
 #: winerror.mc:1386
-msgid "No serial devices found\n"
-msgstr "Inga seriella enheter hittades\n"
+msgid "No serial devices found.\n"
+msgstr "Inga seriella enheter hittades.\n"
 
 #: winerror.mc:1391
-msgid "Shared IRQ busy\n"
-msgstr "Delad IRQ upptagen\n"
+msgid "Shared IRQ busy.\n"
+msgstr "Delad IRQ upptagen.\n"
 
 #: winerror.mc:1396
-msgid "Serial I/O completed\n"
-msgstr "Seriell I/O slutförd\n"
+msgid "Serial I/O completed.\n"
+msgstr "Seriell I/O slutförd.\n"
 
 #: winerror.mc:1401
-msgid "Serial I/O counter timeout\n"
-msgstr "Tiden gick ut för seriella I/O-räknaren\n"
+msgid "Serial I/O counter timeout.\n"
+msgstr "Tiden gick ut för seriella I/O-räknaren.\n"
 
 #: winerror.mc:1406
-msgid "Floppy ID address mark not found\n"
-msgstr "ID-adressmärke hittades inte på floppyn\n"
+msgid "Floppy ID address mark not found.\n"
+msgstr "ID-adressmärke hittades inte på floppyn.\n"
 
 #: winerror.mc:1411
-msgid "Floppy reports wrong cylinder\n"
-msgstr "Floppy uppger fel cylinder\n"
+msgid "Floppy reports wrong cylinder.\n"
+msgstr "Floppy uppger fel cylinder.\n"
 
 #: winerror.mc:1416
-msgid "Unknown floppy error\n"
-msgstr "Okänt floppyfel\n"
+msgid "Unknown floppy error.\n"
+msgstr "Okänt floppyfel.\n"
 
 #: winerror.mc:1421
-msgid "Floppy registers inconsistent\n"
-msgstr "Floppyregister inkonsekventa\n"
+msgid "Floppy registers inconsistent.\n"
+msgstr "Floppyregister inkonsekventa.\n"
 
 #: winerror.mc:1426
-msgid "Hard disk recalibrate failed\n"
-msgstr "Omkalibrering av hårddisk misslyckades\n"
+msgid "Hard disk recalibrate failed.\n"
+msgstr "Omkalibrering av hårddisk misslyckades.\n"
 
 #: winerror.mc:1431
-msgid "Hard disk operation failed\n"
-msgstr "Hårddisksoperation misslyckades\n"
+msgid "Hard disk operation failed.\n"
+msgstr "Hårddisksoperation misslyckades.\n"
 
 #: winerror.mc:1436
-msgid "Hard disk reset failed\n"
-msgstr "Återställning av hårddisk misslyckades\n"
+msgid "Hard disk reset failed.\n"
+msgstr "Återställning av hårddisk misslyckades.\n"
 
 #: winerror.mc:1441
-msgid "End of tape media\n"
-msgstr "Slut på bandet\n"
+msgid "End of tape media.\n"
+msgstr "Slut på bandet.\n"
 
 #: winerror.mc:1446
-msgid "Not enough server memory\n"
-msgstr "Otillräckligt serverminne\n"
+msgid "Not enough server memory.\n"
+msgstr "Otillräckligt serverminne.\n"
 
 #: winerror.mc:1451
-msgid "Possible deadlock\n"
-msgstr "Möjlig deadlock\n"
+msgid "Possible deadlock.\n"
+msgstr "Möjlig deadlock.\n"
 
 #: winerror.mc:1456
-msgid "Incorrect alignment\n"
-msgstr "Felaktig justering\n"
+msgid "Incorrect alignment.\n"
+msgstr "Felaktig justering.\n"
 
 #: winerror.mc:1461
-msgid "Set-power-state vetoed\n"
-msgstr "Set-power-state hejdades\n"
+msgid "Set-power-state vetoed.\n"
+msgstr "Set-power-state hejdades.\n"
 
 #: winerror.mc:1466
-msgid "Set-power-state failed\n"
-msgstr "Set-power-state misslyckades\n"
+msgid "Set-power-state failed.\n"
+msgstr "Set-power-state misslyckades.\n"
 
 #: winerror.mc:1471
-msgid "Too many links\n"
-msgstr "För många länkar\n"
+msgid "Too many links.\n"
+msgstr "För många länkar.\n"
 
 #: winerror.mc:1476
-msgid "Newer windows version needed\n"
-msgstr "Nyare windowsversion krävs\n"
+msgid "Newer windows version needed.\n"
+msgstr "Nyare windowsversion krävs.\n"
 
 #: winerror.mc:1481
-msgid "Wrong operating system\n"
-msgstr "Fel operativsystem\n"
+msgid "Wrong operating system.\n"
+msgstr "Fel operativsystem.\n"
 
 #: winerror.mc:1486
-msgid "Single-instance application\n"
-msgstr "Endast en instans kan köras av detta program\n"
+msgid "Single-instance application.\n"
+msgstr "Endast en instans kan köras av detta program.\n"
 
 #: winerror.mc:1491
-msgid "Real-mode application\n"
-msgstr "Real mode-program\n"
+msgid "Real-mode application.\n"
+msgstr "Real mode-program.\n"
 
 #: winerror.mc:1496
-msgid "Invalid DLL\n"
-msgstr "Ogiltig DLL\n"
+msgid "Invalid DLL.\n"
+msgstr "Ogiltig DLL.\n"
 
 #: winerror.mc:1501
-msgid "No associated application\n"
-msgstr "Inget associerat program\n"
+msgid "No associated application.\n"
+msgstr "Inget associerat program.\n"
 
 #: winerror.mc:1506
-msgid "DDE failure\n"
-msgstr "DDE-fel\n"
+msgid "DDE failure.\n"
+msgstr "DDE-fel.\n"
 
 #: winerror.mc:1511
-msgid "DLL not found\n"
-msgstr "DLL hittades inte\n"
+msgid "DLL not found.\n"
+msgstr "DLL hittades inte.\n"
 
 #: winerror.mc:1516
-msgid "Out of user handles\n"
-msgstr "Inga fler användarreferenser\n"
+msgid "Out of user handles.\n"
+msgstr "Inga fler användarreferenser.\n"
 
 #: winerror.mc:1521
-msgid "Message can only be used in synchronous calls\n"
-msgstr "Meddelande kan endast användas i synkrona anrop\n"
+msgid "Message can only be used in synchronous calls.\n"
+msgstr "Meddelande kan endast användas i synkrona anrop.\n"
 
 #: winerror.mc:1526
-msgid "The source element is empty\n"
-msgstr "Källelementet är tomt\n"
+msgid "The source element is empty.\n"
+msgstr "Källelementet är tomt.\n"
 
 #: winerror.mc:1531
-msgid "The destination element is full\n"
-msgstr "Destinationselementet är fullt\n"
+msgid "The destination element is full.\n"
+msgstr "Destinationselementet är fullt.\n"
 
 #: winerror.mc:1536
-msgid "The element address is invalid\n"
-msgstr "Elementets adress är ogiltig\n"
+msgid "The element address is invalid.\n"
+msgstr "Elementets adress är ogiltig.\n"
 
 #: winerror.mc:1541
-msgid "The magazine is not present\n"
+msgid "The magazine is not present.\n"
 msgstr ""
 
 #: winerror.mc:1546
-msgid "The device needs reinitialization\n"
-msgstr "Enheten behöver återinitialiseras\n"
+msgid "The device needs reinitialization.\n"
+msgstr "Enheten behöver återinitialiseras.\n"
 
 #: winerror.mc:1551
-msgid "The device requires cleaning\n"
-msgstr "Enheten behöver rengöras\n"
+msgid "The device requires cleaning.\n"
+msgstr "Enheten behöver rengöras.\n"
 
 #: winerror.mc:1556
-msgid "The device door is open\n"
-msgstr "Enhetsdörren är öppen\n"
+msgid "The device door is open.\n"
+msgstr "Enhetsdörren är öppen.\n"
 
 #: winerror.mc:1561
-msgid "The device is not connected\n"
-msgstr "Enheten är ej ansluten\n"
+msgid "The device is not connected.\n"
+msgstr "Enheten är ej ansluten.\n"
 
 #: winerror.mc:1566
-msgid "Element not found\n"
-msgstr "Elementet hittades inte\n"
+msgid "Element not found.\n"
+msgstr "Elementet hittades inte.\n"
 
 #: winerror.mc:1571
-msgid "No match found\n"
-msgstr "Ingen matchning hittades\n"
+msgid "No match found.\n"
+msgstr "Ingen matchning hittades.\n"
 
 #: winerror.mc:1576
-msgid "Property set not found\n"
-msgstr "Egenskapsmängden hittades inte\n"
+msgid "Property set not found.\n"
+msgstr "Egenskapsmängden hittades inte.\n"
 
 #: winerror.mc:1581
-msgid "Point not found\n"
-msgstr "Punkten hittades inte\n"
+msgid "Point not found.\n"
+msgstr "Punkten hittades inte.\n"
 
 #: winerror.mc:1586
-msgid "No running tracking service\n"
-msgstr "Ingen spårningstjänst körs\n"
+msgid "No running tracking service.\n"
+msgstr "Ingen spårningstjänst körs.\n"
 
 #: winerror.mc:1591
-msgid "No such volume ID\n"
-msgstr "Inget sådant volym-ID\n"
+msgid "No such volume ID.\n"
+msgstr "Inget sådant volym-ID.\n"
 
 #: winerror.mc:1596
-msgid "Unable to remove the file to be replaced\n"
-msgstr "Kan inte ta bort filen som ska ersättas\n"
+msgid "Unable to remove the file to be replaced.\n"
+msgstr "Kan inte ta bort filen som ska ersättas.\n"
 
 #: winerror.mc:1601
-msgid "Unable to move the replacement file into place\n"
-msgstr "Kan inte flytta ersättningsfilen\n"
+msgid "Unable to move the replacement file into place.\n"
+msgstr "Kan inte flytta ersättningsfilen.\n"
 
 #: winerror.mc:1606
-msgid "Moving the replacement file failed\n"
-msgstr "Kunde inte flytta ersättningsfilen\n"
+msgid "Moving the replacement file failed.\n"
+msgstr "Kunde inte flytta ersättningsfilen.\n"
 
 #: winerror.mc:1611
-msgid "The journal is being deleted\n"
-msgstr "Journalen tas bort\n"
+msgid "The journal is being deleted.\n"
+msgstr "Journalen tas bort.\n"
 
 #: winerror.mc:1616
-msgid "The journal is not active\n"
-msgstr "Jornalen är ej aktiv\n"
+msgid "The journal is not active.\n"
+msgstr "Jornalen är ej aktiv.\n"
 
 #: winerror.mc:1621
-msgid "Potential matching file found\n"
-msgstr "Potentiellt matchande fil funnen\n"
+msgid "Potential matching file found.\n"
+msgstr "Potentiellt matchande fil funnen.\n"
 
 #: winerror.mc:1626
-msgid "The journal entry was deleted\n"
-msgstr "Journalinlägget togs bort\n"
+msgid "The journal entry was deleted.\n"
+msgstr "Journalinlägget togs bort.\n"
 
 #: winerror.mc:1631
-msgid "Invalid device name\n"
-msgstr "Ogiltigt enhetsnamn\n"
+msgid "Invalid device name.\n"
+msgstr "Ogiltigt enhetsnamn.\n"
 
 #: winerror.mc:1636
-msgid "Connection unavailable\n"
-msgstr "Anslutning ej tillgänglig\n"
+msgid "Connection unavailable.\n"
+msgstr "Anslutning ej tillgänglig.\n"
 
 #: winerror.mc:1641
-msgid "Device already remembered\n"
-msgstr "Enhet redan ihågkommen\n"
+msgid "Device already remembered.\n"
+msgstr "Enhet redan ihågkommen.\n"
 
 #: winerror.mc:1646
-msgid "No network or bad path\n"
-msgstr "Inget nätverk eller felaktig sökväg\n"
+msgid "No network or bad path.\n"
+msgstr "Inget nätverk eller felaktig sökväg.\n"
 
 #: winerror.mc:1651
-msgid "Invalid network provider name\n"
-msgstr "Ogiltigt namn på nätverksleverantör\n"
+msgid "Invalid network provider name.\n"
+msgstr "Ogiltigt namn på nätverksleverantör.\n"
 
 #: winerror.mc:1656
-msgid "Cannot open network connection profile\n"
-msgstr "Kan inte öppna nätverksanslutningsprofil\n"
+msgid "Cannot open network connection profile.\n"
+msgstr "Kan inte öppna nätverksanslutningsprofil.\n"
 
 #: winerror.mc:1661
-msgid "Corrupt network connection profile\n"
-msgstr "Korrupt nätverksanslutningsprofil\n"
+msgid "Corrupt network connection profile.\n"
+msgstr "Korrupt nätverksanslutningsprofil.\n"
 
 #: winerror.mc:1666
-msgid "Not a container\n"
-msgstr "Inte en container\n"
+msgid "Not a container.\n"
+msgstr "Inte en container.\n"
 
 #: winerror.mc:1671
-msgid "Extended error\n"
-msgstr "Utökat fel\n"
+msgid "Extended error.\n"
+msgstr "Utökat fel.\n"
 
 #: winerror.mc:1676
-msgid "Invalid group name\n"
-msgstr "Ogiltigt gruppnamn\n"
+msgid "Invalid group name.\n"
+msgstr "Ogiltigt gruppnamn.\n"
 
 #: winerror.mc:1681
-msgid "Invalid computer name\n"
-msgstr "Ogiltigt datornamn\n"
+msgid "Invalid computer name.\n"
+msgstr "Ogiltigt datornamn.\n"
 
 #: winerror.mc:1686
-msgid "Invalid event name\n"
-msgstr "Ogiltigt händelsenamn\n"
+msgid "Invalid event name.\n"
+msgstr "Ogiltigt händelsenamn.\n"
 
 #: winerror.mc:1691
-msgid "Invalid domain name\n"
-msgstr "Ogiltigt domännamn\n"
+msgid "Invalid domain name.\n"
+msgstr "Ogiltigt domännamn.\n"
 
 #: winerror.mc:1696
-msgid "Invalid service name\n"
-msgstr "Ogiltigt tjänstnamn\n"
+msgid "Invalid service name.\n"
+msgstr "Ogiltigt tjänstnamn.\n"
 
 #: winerror.mc:1701
-msgid "Invalid network name\n"
-msgstr "Ogiltigt nätverksnamn\n"
+msgid "Invalid network name.\n"
+msgstr "Ogiltigt nätverksnamn.\n"
 
 #: winerror.mc:1706
-msgid "Invalid share name\n"
-msgstr "Ogiltigt namn på share\n"
+msgid "Invalid share name.\n"
+msgstr "Ogiltigt namn på share.\n"
 
 #: winerror.mc:1716
-msgid "Invalid message name\n"
-msgstr "Ogiltigt meddelandenamn\n"
+msgid "Invalid message name.\n"
+msgstr "Ogiltigt meddelandenamn.\n"
 
 #: winerror.mc:1721
-msgid "Invalid message destination\n"
-msgstr "Ogiltig meddelandedestination\n"
+msgid "Invalid message destination.\n"
+msgstr "Ogiltig meddelandedestination.\n"
 
 #: winerror.mc:1726
-msgid "Session credential conflict\n"
-msgstr "Inloggningskonflikt mellan sessionerna\n"
+msgid "Session credential conflict.\n"
+msgstr "Inloggningskonflikt mellan sessionerna.\n"
 
 #: winerror.mc:1731
-msgid "Remote session limit exceeded\n"
-msgstr "Antalet tillåtna fjärrsessioner överskridet\n"
+msgid "Remote session limit exceeded.\n"
+msgstr "Antalet tillåtna fjärrsessioner överskridet.\n"
 
 #: winerror.mc:1736
-msgid "Duplicate domain or workgroup name\n"
-msgstr "Upprepat domän- eller arbetsgrupps-namn\n"
+msgid "Duplicate domain or workgroup name.\n"
+msgstr "Upprepat domän- eller arbetsgrupps-namn.\n"
 
 #: winerror.mc:1741
-msgid "No network\n"
-msgstr "Inget nätverk\n"
+msgid "No network.\n"
+msgstr "Inget nätverk.\n"
 
 #: winerror.mc:1746
-msgid "Operation canceled by user\n"
-msgstr "Operationen avbröts av en användare\n"
+msgid "Operation canceled by user.\n"
+msgstr "Operationen avbröts av en användare.\n"
 
 #: winerror.mc:1751
-msgid "File has a user-mapped section\n"
-msgstr "Filen har en användarmappad sektion\n"
+msgid "File has a user-mapped section.\n"
+msgstr "Filen har en användarmappad sektion.\n"
 
 #: winerror.mc:1756 winerror.mc:3741
-msgid "Connection refused\n"
-msgstr "Anslutning nekades\n"
+msgid "Connection refused.\n"
+msgstr "Anslutning nekades.\n"
 
 #: winerror.mc:1761
-msgid "Connection gracefully closed\n"
-msgstr "Anslutningen stängdes graciöst\n"
+msgid "Connection gracefully closed.\n"
+msgstr "Anslutningen stängdes graciöst.\n"
 
 #: winerror.mc:1766
-msgid "Address already associated with transport endpoint\n"
-msgstr "Adressen redan associerad med transportslutpunkt\n"
+msgid "Address already associated with transport endpoint.\n"
+msgstr "Adressen redan associerad med transportslutpunkt.\n"
 
 #: winerror.mc:1771
-msgid "Address not associated with transport endpoint\n"
-msgstr "Adress ej associerad med transportslutpunkt\n"
+msgid "Address not associated with transport endpoint.\n"
+msgstr "Adress ej associerad med transportslutpunkt.\n"
 
 #: winerror.mc:1776
-msgid "Connection invalid\n"
-msgstr "Anslutningen ogiltig\n"
+msgid "Connection invalid.\n"
+msgstr "Anslutningen ogiltig.\n"
 
 #: winerror.mc:1781
-msgid "Connection is active\n"
-msgstr "Anslutningen är aktiv\n"
+msgid "Connection is active.\n"
+msgstr "Anslutningen är aktiv.\n"
 
 #: winerror.mc:1786
-msgid "Network unreachable\n"
-msgstr "Nätverket oåtkomligt\n"
+msgid "Network unreachable.\n"
+msgstr "Nätverket oåtkomligt.\n"
 
 #: winerror.mc:1791
-msgid "Host unreachable\n"
-msgstr "Värden oåtkomlig\n"
+msgid "Host unreachable.\n"
+msgstr "Värden oåtkomlig.\n"
 
 #: winerror.mc:1796
-msgid "Protocol unreachable\n"
-msgstr "Protokoll oåtkomligt\n"
+msgid "Protocol unreachable.\n"
+msgstr "Protokoll oåtkomligt.\n"
 
 #: winerror.mc:1801
-msgid "Port unreachable\n"
-msgstr "Port oåtkomlig\n"
+msgid "Port unreachable.\n"
+msgstr "Port oåtkomlig.\n"
 
 #: winerror.mc:1806
-msgid "Request aborted\n"
-msgstr "Förfrågningen avbröts\n"
+msgid "Request aborted.\n"
+msgstr "Förfrågningen avbröts.\n"
 
 #: winerror.mc:1811
-msgid "Connection aborted\n"
-msgstr "Anslutningen avbröts\n"
+msgid "Connection aborted.\n"
+msgstr "Anslutningen avbröts.\n"
 
 #: winerror.mc:1816
-msgid "Please retry operation\n"
-msgstr "Var god försök operationen igen\n"
+msgid "Please retry operation.\n"
+msgstr "Var god försök operationen igen.\n"
 
 #: winerror.mc:1821
-msgid "Connection count limit reached\n"
-msgstr "Gränsen för högsta antal anslutningar har nåtts\n"
+msgid "Connection count limit reached.\n"
+msgstr "Gränsen för högsta antal anslutningar har nåtts.\n"
 
 #: winerror.mc:1826
-msgid "Login time restriction\n"
-msgstr "Inloggningstidsbegränsning\n"
+msgid "Login time restriction.\n"
+msgstr "Inloggningstidsbegränsning.\n"
 
 #: winerror.mc:1831
-msgid "Login workstation restriction\n"
-msgstr "Inloggningsbegränsning för datorn\n"
+msgid "Login workstation restriction.\n"
+msgstr "Inloggningsbegränsning för datorn.\n"
 
 #: winerror.mc:1836
-msgid "Incorrect network address\n"
-msgstr "Ogiltig nätverksadress\n"
+msgid "Incorrect network address.\n"
+msgstr "Ogiltig nätverksadress.\n"
 
 #: winerror.mc:1841
-msgid "Service already registered\n"
-msgstr "Tjänsten redan registrerad\n"
+msgid "Service already registered.\n"
+msgstr "Tjänsten redan registrerad.\n"
 
 #: winerror.mc:1846
-msgid "Service not found\n"
-msgstr "Tjänsten hittades inte\n"
+msgid "Service not found.\n"
+msgstr "Tjänsten hittades inte.\n"
 
 #: winerror.mc:1851
-msgid "User not authenticated\n"
-msgstr "Användaren är ej autentiserad\n"
+msgid "User not authenticated.\n"
+msgstr "Användaren är ej autentiserad.\n"
 
 #: winerror.mc:1856
-msgid "User not logged on\n"
-msgstr "Användaren är ej inloggad\n"
+msgid "User not logged on.\n"
+msgstr "Användaren är ej inloggad.\n"
 
 #: winerror.mc:1861
-msgid "Continue work in progress\n"
-msgstr "Fortsätt pågående arbete\n"
+msgid "Continue work in progress.\n"
+msgstr "Fortsätt pågående arbete.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised\n"
-msgstr "Redan initialiserad\n"
+msgid "Already initialised.\n"
+msgstr "Redan initialiserad.\n"
 
 #: winerror.mc:1871
-msgid "No more local devices\n"
-msgstr "Inga fler lokala enheter\n"
+msgid "No more local devices.\n"
+msgstr "Inga fler lokala enheter.\n"
 
 #: winerror.mc:1876
-msgid "The site does not exist\n"
-msgstr "Sidan existerar inte\n"
+msgid "The site does not exist.\n"
+msgstr "Sidan existerar inte.\n"
 
 #: winerror.mc:1881
-msgid "The domain controller already exists\n"
-msgstr "Domänkontrollanten existerar redan\n"
+msgid "The domain controller already exists.\n"
+msgstr "Domänkontrollanten existerar redan.\n"
 
 #: winerror.mc:1886
-msgid "Supported only when connected\n"
-msgstr "Stöds endast medan ansluten\n"
+msgid "Supported only when connected.\n"
+msgstr "Stöds endast medan ansluten.\n"
 
 #: winerror.mc:1891
-msgid "Perform operation even when nothing changed\n"
-msgstr "Utför operation även då inget ändrats\n"
+msgid "Perform operation even when nothing changed.\n"
+msgstr "Utför operation även då inget ändrats.\n"
 
 #: winerror.mc:1896
-msgid "The user profile is invalid\n"
-msgstr "Användarprofilen är ogiltig\n"
+msgid "The user profile is invalid.\n"
+msgstr "Användarprofilen är ogiltig.\n"
 
 #: winerror.mc:1901
-msgid "Not supported on Small Business Server\n"
-msgstr "Stöds ej på Small Business Server\n"
+msgid "Not supported on Small Business Server.\n"
+msgstr "Stöds ej på Small Business Server.\n"
 
 #: winerror.mc:1906
-msgid "Not all privileges assigned\n"
-msgstr "Alla privilegier ej tilldelade\n"
+msgid "Not all privileges assigned.\n"
+msgstr "Alla privilegier ej tilldelade.\n"
 
 #: winerror.mc:1911
-msgid "Some security IDs not mapped\n"
-msgstr "Vissa säkerhets-ID ej mappade\n"
+msgid "Some security IDs not mapped.\n"
+msgstr "Vissa säkerhets-ID ej mappade.\n"
 
 #: winerror.mc:1916
-msgid "No quotas for account\n"
-msgstr "Inga kvoter för konto\n"
+msgid "No quotas for account.\n"
+msgstr "Inga kvoter för konto.\n"
 
 #: winerror.mc:1921
-msgid "Local user session key\n"
-msgstr "Sessionsnyckel för lokal användare\n"
+msgid "Local user session key.\n"
+msgstr "Sessionsnyckel för lokal användare.\n"
 
 #: winerror.mc:1926
-msgid "Password too complex for LM\n"
-msgstr "Lösenord för komplext för LM\n"
+msgid "Password too complex for LM.\n"
+msgstr "Lösenord för komplext för LM.\n"
 
 #: winerror.mc:1931
-msgid "Unknown revision\n"
-msgstr "Okänd revision\n"
+msgid "Unknown revision.\n"
+msgstr "Okänd revision.\n"
 
 #: winerror.mc:1936
-msgid "Incompatible revision levels\n"
-msgstr "Inkompatibla revisionsnivåer\n"
+msgid "Incompatible revision levels.\n"
+msgstr "Inkompatibla revisionsnivåer.\n"
 
 #: winerror.mc:1941
-msgid "Invalid owner\n"
-msgstr "Ogiltig ägare\n"
+msgid "Invalid owner.\n"
+msgstr "Ogiltig ägare.\n"
 
 #: winerror.mc:1946
-msgid "Invalid primary group\n"
-msgstr "Ogiltig primär grupp\n"
+msgid "Invalid primary group.\n"
+msgstr "Ogiltig primär grupp.\n"
 
 #: winerror.mc:1951
-msgid "No impersonation token\n"
-msgstr "Ingen symbol för personifiering\n"
+msgid "No impersonation token.\n"
+msgstr "Ingen symbol för personifiering.\n"
 
 #: winerror.mc:1956
-msgid "Can't disable mandatory group\n"
-msgstr "Kan inte avaktivera obligatorisk grupp\n"
+msgid "Can't disable mandatory group.\n"
+msgstr "Kan inte avaktivera obligatorisk grupp.\n"
 
 #: winerror.mc:1961
-msgid "No logon servers available\n"
-msgstr "Inga inloggningsservrar tillgängliga\n"
+msgid "No logon servers available.\n"
+msgstr "Inga inloggningsservrar tillgängliga.\n"
 
 #: winerror.mc:1966
-msgid "No such logon session\n"
-msgstr "Ingen sådan inloggningssession\n"
+msgid "No such logon session.\n"
+msgstr "Ingen sådan inloggningssession.\n"
 
 #: winerror.mc:1971
-msgid "No such privilege\n"
-msgstr "Inget sådant privilegium\n"
+msgid "No such privilege.\n"
+msgstr "Inget sådant privilegium.\n"
 
 #: winerror.mc:1976
-msgid "Privilege not held\n"
-msgstr "Har inte nödvändigt privilegium\n"
+msgid "Privilege not held.\n"
+msgstr "Har inte nödvändigt privilegium.\n"
 
 #: winerror.mc:1981
-msgid "Invalid account name\n"
-msgstr "Ogiltigt kontonamn\n"
+msgid "Invalid account name.\n"
+msgstr "Ogiltigt kontonamn.\n"
 
 #: winerror.mc:1986
-msgid "User already exists\n"
-msgstr "Användaren existerar redan\n"
+msgid "User already exists.\n"
+msgstr "Användaren existerar redan.\n"
 
 #: winerror.mc:1991
-msgid "No such user\n"
-msgstr "Ingen sådan användare\n"
+msgid "No such user.\n"
+msgstr "Ingen sådan användare.\n"
 
 #: winerror.mc:1996
-msgid "Group already exists\n"
-msgstr "Gruppen existerar redan\n"
+msgid "Group already exists.\n"
+msgstr "Gruppen existerar redan.\n"
 
 #: winerror.mc:2001
-msgid "No such group\n"
-msgstr "Ingen sådan grupp\n"
+msgid "No such group.\n"
+msgstr "Ingen sådan grupp.\n"
 
 #: winerror.mc:2006
-msgid "User already in group\n"
-msgstr "Användare redan i gruppen\n"
+msgid "User already in group.\n"
+msgstr "Användare redan i gruppen.\n"
 
 #: winerror.mc:2011
-msgid "User not in group\n"
-msgstr "Användare ej i gruppen\n"
+msgid "User not in group.\n"
+msgstr "Användare ej i gruppen.\n"
 
 #: winerror.mc:2016
-msgid "Can't delete last admin user\n"
-msgstr "Kan inte ta bort sista administratörsanvändaren\n"
+msgid "Can't delete last admin user.\n"
+msgstr "Kan inte ta bort sista administratörsanvändaren.\n"
 
 #: winerror.mc:2021
-msgid "Wrong password\n"
-msgstr "Fel lösenord\n"
+msgid "Wrong password.\n"
+msgstr "Fel lösenord.\n"
 
 #: winerror.mc:2026
-msgid "Ill-formed password\n"
-msgstr "Ogiltigt lösenord\n"
+msgid "Ill-formed password.\n"
+msgstr "Ogiltigt lösenord.\n"
 
 #: winerror.mc:2031
-msgid "Password restriction\n"
-msgstr "Lösenordsbegränsning\n"
+msgid "Password restriction.\n"
+msgstr "Lösenordsbegränsning.\n"
 
 #: winerror.mc:2036
-msgid "Logon failure\n"
-msgstr "Inloggningsfel\n"
+msgid "Logon failure.\n"
+msgstr "Inloggningsfel.\n"
 
 #: winerror.mc:2041
-msgid "Account restriction\n"
-msgstr "Kontobegränsning\n"
+msgid "Account restriction.\n"
+msgstr "Kontobegränsning.\n"
 
 #: winerror.mc:2046
-msgid "Invalid logon hours\n"
-msgstr "Ogiltiga inloggningstider\n"
+msgid "Invalid logon hours.\n"
+msgstr "Ogiltiga inloggningstider.\n"
 
 #: winerror.mc:2051
-msgid "Invalid workstation\n"
-msgstr "Ej tillåten dator\n"
+msgid "Invalid workstation.\n"
+msgstr "Ej tillåten dator.\n"
 
 #: winerror.mc:2056
-msgid "Password expired\n"
-msgstr "Lösenord utgånget\n"
+msgid "Password expired.\n"
+msgstr "Lösenord utgånget.\n"
 
 #: winerror.mc:2061
-msgid "Account disabled\n"
-msgstr "Kontot avaktiverat\n"
+msgid "Account disabled.\n"
+msgstr "Kontot avaktiverat.\n"
 
 #: winerror.mc:2066
-msgid "No security ID mapped\n"
-msgstr "Inget säkerhets-ID mappat\n"
+msgid "No security ID mapped.\n"
+msgstr "Inget säkerhets-ID mappat.\n"
 
 #: winerror.mc:2071
-msgid "Too many LUIDs requested\n"
-msgstr "För många LUID efterfrågade\n"
+msgid "Too many LUIDs requested.\n"
+msgstr "För många LUID efterfrågade.\n"
 
 #: winerror.mc:2076
-msgid "LUIDs exhausted\n"
-msgstr "Slut på LUID:er\n"
+msgid "LUIDs exhausted.\n"
+msgstr "Slut på LUID:er.\n"
 
 #: winerror.mc:2081
-msgid "Invalid sub authority\n"
-msgstr "Ogiltig underauktoritet\n"
+msgid "Invalid sub authority.\n"
+msgstr "Ogiltig underauktoritet.\n"
 
 #: winerror.mc:2086
-msgid "Invalid ACL\n"
-msgstr "Ogiltigt ACL\n"
+msgid "Invalid ACL.\n"
+msgstr "Ogiltigt ACL.\n"
 
 #: winerror.mc:2091
-msgid "Invalid SID\n"
-msgstr "Ogiltigt SID\n"
+msgid "Invalid SID.\n"
+msgstr "Ogiltigt SID.\n"
 
 #: winerror.mc:2096
-msgid "Invalid security descriptor\n"
-msgstr "Ogiltig säkerhetsdeskriptor\n"
+msgid "Invalid security descriptor.\n"
+msgstr "Ogiltig säkerhetsdeskriptor.\n"
 
 #: winerror.mc:2101
-msgid "Bad inherited ACL\n"
-msgstr "Felaktig ärvd ACL\n"
+msgid "Bad inherited ACL.\n"
+msgstr "Felaktig ärvd ACL.\n"
 
 #: winerror.mc:2106
-msgid "Server disabled\n"
-msgstr "Servern avaktiverad\n"
+msgid "Server disabled.\n"
+msgstr "Servern avaktiverad.\n"
 
 #: winerror.mc:2111
-msgid "Server not disabled\n"
-msgstr "Servern ej avaktiverad\n"
+msgid "Server not disabled.\n"
+msgstr "Servern ej avaktiverad.\n"
 
 #: winerror.mc:2116
-msgid "Invalid ID authority\n"
-msgstr "Ogiltig ID-auktoritet\n"
+msgid "Invalid ID authority.\n"
+msgstr "Ogiltig ID-auktoritet.\n"
 
 #: winerror.mc:2121
-msgid "Allotted space exceeded\n"
-msgstr "Tilldelat utrymme överskridet\n"
+msgid "Allotted space exceeded.\n"
+msgstr "Tilldelat utrymme överskridet.\n"
 
 #: winerror.mc:2126
-msgid "Invalid group attributes\n"
-msgstr "Ogiltiga gruppattribut\n"
+msgid "Invalid group attributes.\n"
+msgstr "Ogiltiga gruppattribut.\n"
 
 #: winerror.mc:2131
-msgid "Bad impersonation level\n"
-msgstr "Ogiltig personifieringsnivå\n"
+msgid "Bad impersonation level.\n"
+msgstr "Ogiltig personifieringsnivå.\n"
 
 #: winerror.mc:2136
-msgid "Can't open anonymous security token\n"
-msgstr "Kan inte öppna anonym säkerhetssymbol\n"
+msgid "Can't open anonymous security token.\n"
+msgstr "Kan inte öppna anonym säkerhetssymbol.\n"
 
 #: winerror.mc:2141
-msgid "Bad validation class\n"
-msgstr "Felaktig valideringsklass\n"
+msgid "Bad validation class.\n"
+msgstr "Felaktig valideringsklass.\n"
 
 #: winerror.mc:2146
-msgid "Bad token type\n"
-msgstr "Felaktig symboltyp\n"
+msgid "Bad token type.\n"
+msgstr "Felaktig symboltyp.\n"
 
 #: winerror.mc:2151
-msgid "No security on object\n"
-msgstr "Ingen säkerhet på objekt\n"
+msgid "No security on object.\n"
+msgstr "Ingen säkerhet på objekt.\n"
 
 #: winerror.mc:2156
-msgid "Can't access domain information\n"
-msgstr "Kan inte komma åt domäninformation\n"
+msgid "Can't access domain information.\n"
+msgstr "Kan inte komma åt domäninformation.\n"
 
 #: winerror.mc:2161
-msgid "Invalid server state\n"
-msgstr "Ogiltigt servertillstånd\n"
+msgid "Invalid server state.\n"
+msgstr "Ogiltigt servertillstånd.\n"
 
 #: winerror.mc:2166
-msgid "Invalid domain state\n"
-msgstr "Ogiltigt domäntillstånd\n"
+msgid "Invalid domain state.\n"
+msgstr "Ogiltigt domäntillstånd.\n"
 
 #: winerror.mc:2171
-msgid "Invalid domain role\n"
-msgstr "Ogiltig domänroll\n"
+msgid "Invalid domain role.\n"
+msgstr "Ogiltig domänroll.\n"
 
 #: winerror.mc:2176
-msgid "No such domain\n"
-msgstr "Ingen sådan domän\n"
+msgid "No such domain.\n"
+msgstr "Ingen sådan domän.\n"
 
 #: winerror.mc:2181
-msgid "Domain already exists\n"
-msgstr "Domänen existerar redan\n"
+msgid "Domain already exists.\n"
+msgstr "Domänen existerar redan.\n"
 
 #: winerror.mc:2186
-msgid "Domain limit exceeded\n"
-msgstr "Domängräns överskriden\n"
+msgid "Domain limit exceeded.\n"
+msgstr "Domängräns överskriden.\n"
 
 #: winerror.mc:2191
-msgid "Internal database corruption\n"
-msgstr "Intern databaskorruption\n"
+msgid "Internal database corruption.\n"
+msgstr "Intern databaskorruption.\n"
 
 #: winerror.mc:2196
-msgid "Internal error\n"
-msgstr "Internt fel\n"
+msgid "Internal error.\n"
+msgstr "Internt fel.\n"
 
 #: winerror.mc:2201
-msgid "Generic access types not mapped\n"
-msgstr "Generiska åtkomsttyper ej mappade\n"
+msgid "Generic access types not mapped.\n"
+msgstr "Generiska åtkomsttyper ej mappade.\n"
 
 #: winerror.mc:2206
-msgid "Bad descriptor format\n"
-msgstr "Felaktigt deskriptorformat\n"
+msgid "Bad descriptor format.\n"
+msgstr "Felaktigt deskriptorformat.\n"
 
 #: winerror.mc:2211
-msgid "Not a logon process\n"
-msgstr "Inte en inloggningsprocess\n"
+msgid "Not a logon process.\n"
+msgstr "Inte en inloggningsprocess.\n"
 
 #: winerror.mc:2216
-msgid "Logon session ID exists\n"
-msgstr "Inloggningssessions-ID existerar\n"
+msgid "Logon session ID exists.\n"
+msgstr "Inloggningssessions-ID existerar.\n"
 
 #: winerror.mc:2221
-msgid "Unknown authentication package\n"
-msgstr "Okänt autentiseringspaket\n"
+msgid "Unknown authentication package.\n"
+msgstr "Okänt autentiseringspaket.\n"
 
 #: winerror.mc:2226
-msgid "Bad logon session state\n"
-msgstr "Felaktigt inloggningssessionstillstånd\n"
+msgid "Bad logon session state.\n"
+msgstr "Felaktigt inloggningssessionstillstånd.\n"
 
 #: winerror.mc:2231
-msgid "Logon session ID collision\n"
-msgstr "ID-kollision för inloggningssession\n"
+msgid "Logon session ID collision.\n"
+msgstr "ID-kollision för inloggningssession.\n"
 
 #: winerror.mc:2236
-msgid "Invalid logon type\n"
-msgstr "Ogiltig inloggningstyp\n"
+msgid "Invalid logon type.\n"
+msgstr "Ogiltig inloggningstyp.\n"
 
 #: winerror.mc:2241
-msgid "Cannot impersonate\n"
-msgstr "Kan inte personifiera\n"
+msgid "Cannot impersonate.\n"
+msgstr "Kan inte personifiera.\n"
 
 #: winerror.mc:2246
-msgid "Invalid transaction state\n"
-msgstr "Ogiltigt överföringstillstånd\n"
+msgid "Invalid transaction state.\n"
+msgstr "Ogiltigt överföringstillstånd.\n"
 
 #: winerror.mc:2251
-msgid "Security DB commit failure\n"
-msgstr "Skrivfel till säkerhetsdatabasen\n"
+msgid "Security DB commit failure.\n"
+msgstr "Skrivfel till säkerhetsdatabasen.\n"
 
 #: winerror.mc:2256
-msgid "Account is built-in\n"
-msgstr "Kontot är inbyggt\n"
+msgid "Account is built-in.\n"
+msgstr "Kontot är inbyggt.\n"
 
 #: winerror.mc:2261
-msgid "Group is built-in\n"
-msgstr "Gruppen är inbyggd\n"
+msgid "Group is built-in.\n"
+msgstr "Gruppen är inbyggd.\n"
 
 #: winerror.mc:2266
-msgid "User is built-in\n"
-msgstr "Användaren är inbyggd\n"
+msgid "User is built-in.\n"
+msgstr "Användaren är inbyggd.\n"
 
 #: winerror.mc:2271
-msgid "Group is primary for user\n"
-msgstr "Gruppen är primär för användaren\n"
+msgid "Group is primary for user.\n"
+msgstr "Gruppen är primär för användaren.\n"
 
 #: winerror.mc:2276
-msgid "Token already in use\n"
-msgstr "Symbolen används redan\n"
+msgid "Token already in use.\n"
+msgstr "Symbolen används redan.\n"
 
 #: winerror.mc:2281
-msgid "No such local group\n"
-msgstr "Ingen sådan lokal grupp\n"
+msgid "No such local group.\n"
+msgstr "Ingen sådan lokal grupp.\n"
 
 #: winerror.mc:2286
-msgid "User not in local group\n"
-msgstr "Användare ej i lokal grupp\n"
+msgid "User not in local group.\n"
+msgstr "Användare ej i lokal grupp.\n"
 
 #: winerror.mc:2291
-msgid "User already in local group\n"
-msgstr "Användare redan i lokal grupp\n"
+msgid "User already in local group.\n"
+msgstr "Användare redan i lokal grupp.\n"
 
 #: winerror.mc:2296
-msgid "Local group already exists\n"
-msgstr "Lokal grupp existerar redan\n"
+msgid "Local group already exists.\n"
+msgstr "Lokal grupp existerar redan.\n"
 
 #: winerror.mc:2301 winerror.mc:2326
-msgid "Logon type not granted\n"
-msgstr "Inloggningstypen beviljades inte\n"
+msgid "Logon type not granted.\n"
+msgstr "Inloggningstypen beviljades inte.\n"
 
 #: winerror.mc:2306
-msgid "Too many secrets\n"
-msgstr "För många hemligheter\n"
+msgid "Too many secrets.\n"
+msgstr "För många hemligheter.\n"
 
 #: winerror.mc:2311
-msgid "Secret too long\n"
-msgstr "Hemligheten för lång\n"
+msgid "Secret too long.\n"
+msgstr "Hemligheten för lång.\n"
 
 #: winerror.mc:2316
-msgid "Internal security DB error\n"
-msgstr "Fel i intern säkerhetsdatabas\n"
+msgid "Internal security DB error.\n"
+msgstr "Fel i intern säkerhetsdatabas.\n"
 
 #: winerror.mc:2321
-msgid "Too many context IDs\n"
-msgstr "För många kontext-ID:n\n"
+msgid "Too many context IDs.\n"
+msgstr "För många kontext-ID:n.\n"
 
 #: winerror.mc:2331
-msgid "Cross-encrypted NT password required\n"
-msgstr "Korskrypterat NT-lösenord krävs\n"
+msgid "Cross-encrypted NT password required.\n"
+msgstr "Korskrypterat NT-lösenord krävs.\n"
 
 #: winerror.mc:2336
-msgid "No such member\n"
-msgstr "Ingen sådan medlem\n"
+msgid "No such member.\n"
+msgstr "Ingen sådan medlem.\n"
 
 #: winerror.mc:2341
-msgid "Invalid member\n"
-msgstr "Ogiltig medlem\n"
+msgid "Invalid member.\n"
+msgstr "Ogiltig medlem.\n"
 
 #: winerror.mc:2346
-msgid "Too many SIDs\n"
-msgstr "För många SID\n"
+msgid "Too many SIDs.\n"
+msgstr "För många SID.\n"
 
 #: winerror.mc:2351
-msgid "Cross-encrypted LM password required\n"
-msgstr "Korskrypterat LM-lösenord krävs\n"
+msgid "Cross-encrypted LM password required.\n"
+msgstr "Korskrypterat LM-lösenord krävs.\n"
 
 #: winerror.mc:2356
-msgid "No inheritable components\n"
-msgstr "Inga ärvbara komponenter\n"
+msgid "No inheritable components.\n"
+msgstr "Inga ärvbara komponenter.\n"
 
 #: winerror.mc:2361
-msgid "File or directory corrupt\n"
-msgstr "Fil eller katalog korrupt\n"
+msgid "File or directory corrupt.\n"
+msgstr "Fil eller katalog korrupt.\n"
 
 #: winerror.mc:2366
-msgid "Disk is corrupt\n"
-msgstr "Disken är korrupt\n"
+msgid "Disk is corrupt.\n"
+msgstr "Disken är korrupt.\n"
 
 #: winerror.mc:2371
-msgid "No user session key\n"
-msgstr "Ingen användarsessionsnyckel\n"
+msgid "No user session key.\n"
+msgstr "Ingen användarsessionsnyckel.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded\n"
-msgstr "Licenskvot överskriden\n"
+msgid "Licence quota exceeded.\n"
+msgstr "Licenskvot överskriden.\n"
 
 #: winerror.mc:2381
-msgid "Wrong target name\n"
-msgstr "Felaktigt namn på mål\n"
+msgid "Wrong target name.\n"
+msgstr "Felaktigt namn på mål.\n"
 
 #: winerror.mc:2386
-msgid "Mutual authentication failed\n"
-msgstr "Ömsesidig autentisering misslyckades\n"
+msgid "Mutual authentication failed.\n"
+msgstr "Ömsesidig autentisering misslyckades.\n"
 
 #: winerror.mc:2391
-msgid "Time skew between client and server\n"
+msgid "Time skew between client and server.\n"
 msgstr ""
 
 #: winerror.mc:2396
-msgid "Invalid window handle\n"
-msgstr "Ogiltig fönsterreferens\n"
+msgid "Invalid window handle.\n"
+msgstr "Ogiltig fönsterreferens.\n"
 
 #: winerror.mc:2401
-msgid "Invalid menu handle\n"
-msgstr "Ogiltig menyreferens\n"
+msgid "Invalid menu handle.\n"
+msgstr "Ogiltig menyreferens.\n"
 
 #: winerror.mc:2406
-msgid "Invalid cursor handle\n"
-msgstr "Ogiltig markörreferens\n"
+msgid "Invalid cursor handle.\n"
+msgstr "Ogiltig markörreferens.\n"
 
 #: winerror.mc:2411
-msgid "Invalid accelerator table handle\n"
-msgstr "Ogiltig snabbtangentstabellreferens\n"
+msgid "Invalid accelerator table handle.\n"
+msgstr "Ogiltig snabbtangentstabellreferens.\n"
 
 #: winerror.mc:2416
-msgid "Invalid hook handle\n"
-msgstr "Ogiltig hookreferens\n"
+msgid "Invalid hook handle.\n"
+msgstr "Ogiltig hookreferens.\n"
 
 #: winerror.mc:2421
-msgid "Invalid DWP handle\n"
-msgstr "Ogiltig DWP-referens\n"
+msgid "Invalid DWP handle.\n"
+msgstr "Ogiltig DWP-referens.\n"
 
 #: winerror.mc:2426
-msgid "Can't create top-level child window\n"
-msgstr "Kan inte skapa barnfönster på toppnivå\n"
+msgid "Can't create top-level child window.\n"
+msgstr "Kan inte skapa barnfönster på toppnivå.\n"
 
 #: winerror.mc:2431
-msgid "Can't find window class\n"
-msgstr "Kan inte hitta fönsterklass\n"
+msgid "Can't find window class.\n"
+msgstr "Kan inte hitta fönsterklass.\n"
 
 #: winerror.mc:2436
-msgid "Window owned by another thread\n"
-msgstr "Fönster ägt av annan tråd\n"
+msgid "Window owned by another thread.\n"
+msgstr "Fönster ägt av annan tråd.\n"
 
 #: winerror.mc:2441
-msgid "Hotkey already registered\n"
-msgstr "Snabbknapp redan registrerad\n"
+msgid "Hotkey already registered.\n"
+msgstr "Snabbknapp redan registrerad.\n"
 
 #: winerror.mc:2446
-msgid "Class already exists\n"
-msgstr "Klassen existerar redan\n"
+msgid "Class already exists.\n"
+msgstr "Klassen existerar redan.\n"
 
 #: winerror.mc:2451
-msgid "Class does not exist\n"
-msgstr "Klass existerar inte\n"
+msgid "Class does not exist.\n"
+msgstr "Klass existerar inte.\n"
 
 #: winerror.mc:2456
-msgid "Class has open windows\n"
-msgstr "Klassen har öppna fönster\n"
+msgid "Class has open windows.\n"
+msgstr "Klassen har öppna fönster.\n"
 
 #: winerror.mc:2461
-msgid "Invalid index\n"
-msgstr "Ogiltigt index\n"
+msgid "Invalid index.\n"
+msgstr "Ogiltigt index.\n"
 
 #: winerror.mc:2466
-msgid "Invalid icon handle\n"
-msgstr "Ogiltig ikonreferens\n"
+msgid "Invalid icon handle.\n"
+msgstr "Ogiltig ikonreferens.\n"
 
 #: winerror.mc:2471
-msgid "Private dialog index\n"
-msgstr "Privat dialogindex\n"
+msgid "Private dialog index.\n"
+msgstr "Privat dialogindex.\n"
 
 #: winerror.mc:2476
-msgid "List box ID not found\n"
-msgstr "Listrute-ID ej funnet\n"
+msgid "List box ID not found.\n"
+msgstr "Listrute-ID ej funnet.\n"
 
 #: winerror.mc:2481
-msgid "No wildcard characters\n"
-msgstr "Inga jokertecken\n"
+msgid "No wildcard characters.\n"
+msgstr "Inga jokertecken.\n"
 
 #: winerror.mc:2486
-msgid "Clipboard not open\n"
-msgstr "Urklippshanterare ej öppen\n"
+msgid "Clipboard not open.\n"
+msgstr "Urklippshanterare ej öppen.\n"
 
 #: winerror.mc:2491
-msgid "Hotkey not registered\n"
-msgstr "Snabbknapp ej registrerad\n"
+msgid "Hotkey not registered.\n"
+msgstr "Snabbknapp ej registrerad.\n"
 
 #: winerror.mc:2496
-msgid "Not a dialog window\n"
-msgstr "Inte ett dialogfönster\n"
+msgid "Not a dialog window.\n"
+msgstr "Inte ett dialogfönster.\n"
 
 #: winerror.mc:2501
-msgid "Control ID not found\n"
-msgstr "Kontroll-ID hittades inte\n"
+msgid "Control ID not found.\n"
+msgstr "Kontroll-ID hittades inte.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message\n"
-msgstr "Invalid kombinationsrutemeddelande\n"
+msgid "Invalid combobox message.\n"
+msgstr "Invalid kombinationsrutemeddelande.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window\n"
-msgstr "Inte ett kombinationsrutefönster\n"
+msgid "Not a combobox window.\n"
+msgstr "Inte ett kombinationsrutefönster.\n"
 
 #: winerror.mc:2516
-msgid "Invalid edit height\n"
-msgstr "Ogiltig höjdändring\n"
+msgid "Invalid edit height.\n"
+msgstr "Ogiltig höjdändring.\n"
 
 #: winerror.mc:2521
-msgid "DC not found\n"
-msgstr "DC ej funnen\n"
+msgid "DC not found.\n"
+msgstr "DC ej funnen.\n"
 
 #: winerror.mc:2526
-msgid "Invalid hook filter\n"
-msgstr "Ogiltigt hook-filter\n"
+msgid "Invalid hook filter.\n"
+msgstr "Ogiltigt hook-filter.\n"
 
 #: winerror.mc:2531
-msgid "Invalid filter procedure\n"
-msgstr "Ogiltig filterprocedur\n"
+msgid "Invalid filter procedure.\n"
+msgstr "Ogiltig filterprocedur.\n"
 
 #: winerror.mc:2536
-msgid "Hook procedure needs module handle\n"
-msgstr "Hook-procedur kräver modulreferens\n"
+msgid "Hook procedure needs module handle.\n"
+msgstr "Hook-procedur kräver modulreferens.\n"
 
 #: winerror.mc:2541
-msgid "Global-only hook procedure\n"
-msgstr "Hook-proceduren enbart global\n"
+msgid "Global-only hook procedure.\n"
+msgstr "Hook-proceduren enbart global.\n"
 
 #: winerror.mc:2546
-msgid "Journal hook already set\n"
-msgstr "Journal-hook redan riggad\n"
+msgid "Journal hook already set.\n"
+msgstr "Journal-hook redan riggad.\n"
 
 #: winerror.mc:2551
-msgid "Hook procedure not installed\n"
-msgstr "Hook-procedur inte installerad\n"
+msgid "Hook procedure not installed.\n"
+msgstr "Hook-procedur inte installerad.\n"
 
 #: winerror.mc:2556
-msgid "Invalid list box message\n"
-msgstr "Ogiltigt listrutemeddelande\n"
+msgid "Invalid list box message.\n"
+msgstr "Ogiltigt listrutemeddelande.\n"
 
 #: winerror.mc:2561
-msgid "Invalid LB_SETCOUNT sent\n"
-msgstr "Ogiltig LB_SETCOUNT skickad\n"
+msgid "Invalid LB_SETCOUNT sent.\n"
+msgstr "Ogiltig LB_SETCOUNT skickad.\n"
 
 #: winerror.mc:2566
-msgid "No tab stops on this list box\n"
-msgstr "Inga tabbstop på denna listruta\n"
+msgid "No tab stops on this list box.\n"
+msgstr "Inga tabbstop på denna listruta.\n"
 
 #: winerror.mc:2571
-msgid "Can't destroy object owned by another thread\n"
-msgstr "Kan inte förstöra objekt ägt av annan tråd\n"
+msgid "Can't destroy object owned by another thread.\n"
+msgstr "Kan inte förstöra objekt ägt av annan tråd.\n"
 
 #: winerror.mc:2576
-msgid "Child window menus not allowed\n"
-msgstr "Barnfönstermenyer ej tillåtna\n"
+msgid "Child window menus not allowed.\n"
+msgstr "Barnfönstermenyer ej tillåtna.\n"
 
 #: winerror.mc:2581
-msgid "Window has no system menu\n"
-msgstr "Fönstret har ingen systemmeny\n"
+msgid "Window has no system menu.\n"
+msgstr "Fönstret har ingen systemmeny.\n"
 
 #: winerror.mc:2586
-msgid "Invalid message box style\n"
-msgstr "Ogiltig stil på meddelanderuta\n"
+msgid "Invalid message box style.\n"
+msgstr "Ogiltig stil på meddelanderuta.\n"
 
 #: winerror.mc:2591
-msgid "Invalid SPI parameter\n"
-msgstr "Ogiltig SPI-parameter\n"
+msgid "Invalid SPI parameter.\n"
+msgstr "Ogiltig SPI-parameter.\n"
 
 #: winerror.mc:2596
-msgid "Screen already locked\n"
-msgstr "Skärm redan låst\n"
+msgid "Screen already locked.\n"
+msgstr "Skärm redan låst.\n"
 
 #: winerror.mc:2601
-msgid "Window handles have different parents\n"
-msgstr "Fönsterreferenserna har olika föräldrar\n"
+msgid "Window handles have different parents.\n"
+msgstr "Fönsterreferenserna har olika föräldrar.\n"
 
 #: winerror.mc:2606
-msgid "Not a child window\n"
-msgstr "Inte ett barnfönster\n"
+msgid "Not a child window.\n"
+msgstr "Inte ett barnfönster.\n"
 
 #: winerror.mc:2611
-msgid "Invalid GW command\n"
-msgstr "Ogiltigt GW-kommando\n"
+msgid "Invalid GW command.\n"
+msgstr "Ogiltigt GW-kommando.\n"
 
 #: winerror.mc:2616
-msgid "Invalid thread ID\n"
-msgstr "Ogiltigt tråd-ID\n"
+msgid "Invalid thread ID.\n"
+msgstr "Ogiltigt tråd-ID.\n"
 
 #: winerror.mc:2621
-msgid "Not an MDI child window\n"
-msgstr "Inte ett MDI-barnfönster\n"
+msgid "Not an MDI child window.\n"
+msgstr "Inte ett MDI-barnfönster.\n"
 
 #: winerror.mc:2626
-msgid "Popup menu already active\n"
-msgstr "Popupmeny redan aktiv\n"
+msgid "Popup menu already active.\n"
+msgstr "Popupmeny redan aktiv.\n"
 
 #: winerror.mc:2631
-msgid "No scrollbars\n"
-msgstr "Inga rullningslister\n"
+msgid "No scrollbars.\n"
+msgstr "Inga rullningslister.\n"
 
 #: winerror.mc:2636
-msgid "Invalid scrollbar range\n"
-msgstr "Ogiltigt rullningslistintervall\n"
+msgid "Invalid scrollbar range.\n"
+msgstr "Ogiltigt rullningslistintervall.\n"
 
 #: winerror.mc:2641
-msgid "Invalid ShowWin command\n"
-msgstr "Ogiltigt ShowWin-kommando\n"
+msgid "Invalid ShowWin command.\n"
+msgstr "Ogiltigt ShowWin-kommando.\n"
 
 #: winerror.mc:2646
-msgid "No system resources\n"
-msgstr "Inga systemresurser\n"
+msgid "No system resources.\n"
+msgstr "Inga systemresurser.\n"
 
 #: winerror.mc:2651
-msgid "No non-paged system resources\n"
-msgstr "Inga oväxlade systemresurser\n"
+msgid "No non-paged system resources.\n"
+msgstr "Inga oväxlade systemresurser.\n"
 
 #: winerror.mc:2656
-msgid "No paged system resources\n"
-msgstr "Inga växlade systemresurser\n"
+msgid "No paged system resources.\n"
+msgstr "Inga växlade systemresurser.\n"
 
 #: winerror.mc:2661
-msgid "No working set quota\n"
-msgstr "Ingen fungerande kvot satt\n"
+msgid "No working set quota.\n"
+msgstr "Ingen fungerande kvot satt.\n"
 
 #: winerror.mc:2666
-msgid "No page file quota\n"
-msgstr "Ingen växlingsfilkvot\n"
+msgid "No page file quota.\n"
+msgstr "Ingen växlingsfilkvot.\n"
 
 #: winerror.mc:2671
-msgid "Exceeded commitment limit\n"
-msgstr "Överskred commitment-gräns\n"
+msgid "Exceeded commitment limit.\n"
+msgstr "Överskred commitment-gräns.\n"
 
 #: winerror.mc:2676
-msgid "Menu item not found\n"
-msgstr "Menypost ej funnen\n"
+msgid "Menu item not found.\n"
+msgstr "Menypost ej funnen.\n"
 
 #: winerror.mc:2681
-msgid "Invalid keyboard handle\n"
-msgstr "Ogiltig tangentbordsreferens\n"
+msgid "Invalid keyboard handle.\n"
+msgstr "Ogiltig tangentbordsreferens.\n"
 
 #: winerror.mc:2686
-msgid "Hook type not allowed\n"
-msgstr "Hook-typen ej tillåten\n"
+msgid "Hook type not allowed.\n"
+msgstr "Hook-typen ej tillåten.\n"
 
 #: winerror.mc:2691
-msgid "Interactive window station required\n"
+msgid "Interactive window station required.\n"
 msgstr ""
 
 #: winerror.mc:2696
-msgid "Timeout\n"
-msgstr "Tidsgräns överstigen\n"
+msgid "Timeout.\n"
+msgstr "Tidsgräns överstigen.\n"
 
 #: winerror.mc:2701
-msgid "Invalid monitor handle\n"
-msgstr "Ogiltig skärmreferens\n"
+msgid "Invalid monitor handle.\n"
+msgstr "Ogiltig skärmreferens.\n"
 
 #: winerror.mc:2706
-msgid "Event log file corrupt\n"
-msgstr "Händelseloggfil korrupt\n"
+msgid "Event log file corrupt.\n"
+msgstr "Händelseloggfil korrupt.\n"
 
 #: winerror.mc:2711
-msgid "Event log can't start\n"
-msgstr "Händelselogg kan inte starta\n"
+msgid "Event log can't start.\n"
+msgstr "Händelselogg kan inte starta.\n"
 
 #: winerror.mc:2716
-msgid "Event log file full\n"
-msgstr "Händelseloggfil full\n"
+msgid "Event log file full.\n"
+msgstr "Händelseloggfil full.\n"
 
 #: winerror.mc:2721
-msgid "Event log file changed\n"
-msgstr "Händelseloggfil ändrad\n"
+msgid "Event log file changed.\n"
+msgstr "Händelseloggfil ändrad.\n"
 
 #: winerror.mc:2726
 #, fuzzy
-msgid "Installer service failed\n"
+msgid "Installer service failed.\n"
 msgstr "Installationstjänsten misslyckades.\n"
 
 #: winerror.mc:2731
-msgid "Installation aborted by user\n"
-msgstr "Installation avbruten av användare\n"
+msgid "Installation aborted by user.\n"
+msgstr "Installation avbruten av användare.\n"
 
 #: winerror.mc:2736
-msgid "Installation failure\n"
-msgstr "Installationsfel\n"
+msgid "Installation failure.\n"
+msgstr "Installationsfel.\n"
 
 #: winerror.mc:2741
-msgid "Installation suspended\n"
-msgstr "Installationen avbruten\n"
+msgid "Installation suspended.\n"
+msgstr "Installationen avbruten.\n"
 
 #: winerror.mc:2746
-msgid "Unknown product\n"
-msgstr "Okänd produkt\n"
+msgid "Unknown product.\n"
+msgstr "Okänd produkt.\n"
 
 #: winerror.mc:2751
-msgid "Unknown feature\n"
-msgstr "Okänd egenskap\n"
+msgid "Unknown feature.\n"
+msgstr "Okänd egenskap.\n"
 
 #: winerror.mc:2756
-msgid "Unknown component\n"
-msgstr "Okänd komponent\n"
+msgid "Unknown component.\n"
+msgstr "Okänd komponent.\n"
 
 #: winerror.mc:2761
-msgid "Unknown property\n"
-msgstr "Okänd egenskap\n"
+msgid "Unknown property.\n"
+msgstr "Okänd egenskap.\n"
 
 #: winerror.mc:2766
-msgid "Invalid handle state\n"
-msgstr "Ogiltigt referenstillstånd\n"
+msgid "Invalid handle state.\n"
+msgstr "Ogiltigt referenstillstånd.\n"
 
 #: winerror.mc:2771
-msgid "Bad configuration\n"
-msgstr "Ogiltig konfiguration\n"
+msgid "Bad configuration.\n"
+msgstr "Ogiltig konfiguration.\n"
 
 #: winerror.mc:2776
-msgid "Index is missing\n"
-msgstr "Index saknas\n"
+msgid "Index is missing.\n"
+msgstr "Index saknas.\n"
 
 #: winerror.mc:2781
-msgid "Installation source is missing\n"
-msgstr "Installationskälla saknas\n"
+msgid "Installation source is missing.\n"
+msgstr "Installationskälla saknas.\n"
 
 #: winerror.mc:2786
-msgid "Wrong installation package version\n"
-msgstr "Fel version av installationspaket\n"
+msgid "Wrong installation package version.\n"
+msgstr "Fel version av installationspaket.\n"
 
 #: winerror.mc:2791
-msgid "Product uninstalled\n"
-msgstr "Produkten avinstallerad\n"
+msgid "Product uninstalled.\n"
+msgstr "Produkten avinstallerad.\n"
 
 #: winerror.mc:2796
-msgid "Invalid query syntax\n"
-msgstr "Ogiltig frågesyntax\n"
+msgid "Invalid query syntax.\n"
+msgstr "Ogiltig frågesyntax.\n"
 
 #: winerror.mc:2801
-msgid "Invalid field\n"
-msgstr "Ogiltigt fält\n"
+msgid "Invalid field.\n"
+msgstr "Ogiltigt fält.\n"
 
 #: winerror.mc:2806
-msgid "Device removed\n"
-msgstr "Enhet borttagen\n"
+msgid "Device removed.\n"
+msgstr "Enhet borttagen.\n"
 
 #: winerror.mc:2811
-msgid "Installation already running\n"
-msgstr "Installationen körs redan\n"
+msgid "Installation already running.\n"
+msgstr "Installationen körs redan.\n"
 
 #: winerror.mc:2816
-msgid "Installation package failed to open\n"
-msgstr "Installationspaketet öppnades inte\n"
+msgid "Installation package failed to open.\n"
+msgstr "Installationspaketet öppnades inte.\n"
 
 #: winerror.mc:2821
-msgid "Installation package is invalid\n"
-msgstr "Installationspaketet är ogiltigt\n"
+msgid "Installation package is invalid.\n"
+msgstr "Installationspaketet är ogiltigt.\n"
 
 #: winerror.mc:2826
-msgid "Installer user interface failed\n"
-msgstr "Användargränssnittet för installationsprogrammet misslyckades\n"
+msgid "Installer user interface failed.\n"
+msgstr "Användargränssnittet för installationsprogrammet misslyckades.\n"
 
 #: winerror.mc:2831
-msgid "Failed to open installation log file\n"
-msgstr "Kunde inte öppna installationslogg\n"
+msgid "Failed to open installation log file.\n"
+msgstr "Kunde inte öppna installationslogg.\n"
 
 #: winerror.mc:2836
-msgid "Installation language not supported\n"
-msgstr "Installationsspråket stöds inte\n"
+msgid "Installation language not supported.\n"
+msgstr "Installationsspråket stöds inte.\n"
 
 #: winerror.mc:2841
-msgid "Installation transform failed to apply\n"
+msgid "Installation transform failed to apply.\n"
 msgstr ""
 
 #: winerror.mc:2846
-msgid "Installation package rejected\n"
-msgstr "Installationspaketet avslogs\n"
+msgid "Installation package rejected.\n"
+msgstr "Installationspaketet avslogs.\n"
 
 #: winerror.mc:2851
-msgid "Function could not be called\n"
-msgstr "Funktionen kunde inte anropas\n"
+msgid "Function could not be called.\n"
+msgstr "Funktionen kunde inte anropas.\n"
 
 #: winerror.mc:2856
-msgid "Function failed\n"
-msgstr "Funktionen misslyckades\n"
+msgid "Function failed.\n"
+msgstr "Funktionen misslyckades.\n"
 
 #: winerror.mc:2861
-msgid "Invalid table\n"
-msgstr "Ogiltig tabell\n"
+msgid "Invalid table.\n"
+msgstr "Ogiltig tabell.\n"
 
 #: winerror.mc:2866
-msgid "Data type mismatch\n"
-msgstr "Datatyperna misstämmer\n"
+msgid "Data type mismatch.\n"
+msgstr "Datatyperna misstämmer.\n"
 
 #: winerror.mc:2871 winerror.mc:3081
-msgid "Unsupported type\n"
-msgstr "Ej stödd typ\n"
+msgid "Unsupported type.\n"
+msgstr "Ej stödd typ.\n"
 
 #: winerror.mc:2876
-msgid "Creation failed\n"
-msgstr "Kunde inte skapa\n"
+msgid "Creation failed.\n"
+msgstr "Kunde inte skapa.\n"
 
 #: winerror.mc:2881
-msgid "Temporary directory not writable\n"
-msgstr "Tillfällig katalog ej skrivbar\n"
+msgid "Temporary directory not writable.\n"
+msgstr "Tillfällig katalog ej skrivbar.\n"
 
 #: winerror.mc:2886
-msgid "Installation platform not supported\n"
-msgstr "Installationsplattformen stöds inte\n"
+msgid "Installation platform not supported.\n"
+msgstr "Installationsplattformen stöds inte.\n"
 
 #: winerror.mc:2891
-msgid "Installer not used\n"
-msgstr "Installationsprogrammet ej använt\n"
+msgid "Installer not used.\n"
+msgstr "Installationsprogrammet ej använt.\n"
 
 #: winerror.mc:2896
-msgid "Failed to open the patch package\n"
-msgstr "Kunde inte öppna korrigeringspaketet\n"
+msgid "Failed to open the patch package.\n"
+msgstr "Kunde inte öppna korrigeringspaketet.\n"
 
 #: winerror.mc:2901
-msgid "Invalid patch package\n"
-msgstr "Ogiltigt korrigeringspaket\n"
+msgid "Invalid patch package.\n"
+msgstr "Ogiltigt korrigeringspaket.\n"
 
 #: winerror.mc:2906
-msgid "Unsupported patch package\n"
-msgstr "Ej stött korrigeringspaket\n"
+msgid "Unsupported patch package.\n"
+msgstr "Ej stött korrigeringspaket.\n"
 
 #: winerror.mc:2911
-msgid "Another version is installed\n"
-msgstr "En annan version är installerad\n"
+msgid "Another version is installed.\n"
+msgstr "En annan version är installerad.\n"
 
 #: winerror.mc:2916
-msgid "Invalid command line\n"
-msgstr "Ogiltig kommandorad\n"
+msgid "Invalid command line.\n"
+msgstr "Ogiltig kommandorad.\n"
 
 #: winerror.mc:2921
-msgid "Remote installation not allowed\n"
-msgstr "Fjärrinstallation ej tillåten\n"
+msgid "Remote installation not allowed.\n"
+msgstr "Fjärrinstallation ej tillåten.\n"
 
 #: winerror.mc:2926
-msgid "Reboot initiated after successful install\n"
-msgstr "Omstart påbörjad efter lyckad installation\n"
+msgid "Reboot initiated after successful install.\n"
+msgstr "Omstart påbörjad efter lyckad installation.\n"
 
 #: winerror.mc:2931
-msgid "Invalid string binding\n"
-msgstr "Ogiltig sträng-bindning\n"
+msgid "Invalid string binding.\n"
+msgstr "Ogiltig sträng-bindning.\n"
 
 #: winerror.mc:2936
-msgid "Wrong kind of binding\n"
-msgstr "Fel sorts bindning\n"
+msgid "Wrong kind of binding.\n"
+msgstr "Fel sorts bindning.\n"
 
 #: winerror.mc:2941
-msgid "Invalid binding\n"
-msgstr "Ogiltig bindning\n"
+msgid "Invalid binding.\n"
+msgstr "Ogiltig bindning.\n"
 
 #: winerror.mc:2946
-msgid "RPC protocol sequence not supported\n"
-msgstr "RPC-protokollsekvens ej stödd\n"
+msgid "RPC protocol sequence not supported.\n"
+msgstr "RPC-protokollsekvens ej stödd.\n"
 
 #: winerror.mc:2951
-msgid "Invalid RPC protocol sequence\n"
-msgstr "Ogiltig RPC-protokollsekvens\n"
+msgid "Invalid RPC protocol sequence.\n"
+msgstr "Ogiltig RPC-protokollsekvens.\n"
 
 #: winerror.mc:2956
-msgid "Invalid string UUID\n"
-msgstr "Ogiltigt sträng-UUID\n"
+msgid "Invalid string UUID.\n"
+msgstr "Ogiltigt sträng-UUID.\n"
 
 #: winerror.mc:2961
-msgid "Invalid endpoint format\n"
-msgstr "Ogiltigt slutpunktsformat\n"
+msgid "Invalid endpoint format.\n"
+msgstr "Ogiltigt slutpunktsformat.\n"
 
 #: winerror.mc:2966
-msgid "Invalid network address\n"
-msgstr "Ogiltig nätverksadress\n"
+msgid "Invalid network address.\n"
+msgstr "Ogiltig nätverksadress.\n"
 
 #: winerror.mc:2971
-msgid "No endpoint found\n"
-msgstr "Ingen slutpunkt funnen\n"
+msgid "No endpoint found.\n"
+msgstr "Ingen slutpunkt funnen.\n"
 
 #: winerror.mc:2976
-msgid "Invalid timeout value\n"
-msgstr "Ogiltigt timeoutvärde\n"
+msgid "Invalid timeout value.\n"
+msgstr "Ogiltigt timeoutvärde.\n"
 
 #: winerror.mc:2981
-msgid "Object UUID not found\n"
-msgstr "Objekt-UUID ej funnet\n"
+msgid "Object UUID not found.\n"
+msgstr "Objekt-UUID ej funnet.\n"
 
 #: winerror.mc:2986
-msgid "UUID already registered\n"
-msgstr "UUID redan registrerat\n"
+msgid "UUID already registered.\n"
+msgstr "UUID redan registrerat.\n"
 
 #: winerror.mc:2991
-msgid "UUID type already registered\n"
-msgstr "UUID-typ redan registrerad\n"
+msgid "UUID type already registered.\n"
+msgstr "UUID-typ redan registrerad.\n"
 
 #: winerror.mc:2996
-msgid "Server already listening\n"
-msgstr "Servern lyssnar redan\n"
+msgid "Server already listening.\n"
+msgstr "Servern lyssnar redan.\n"
 
 #: winerror.mc:3001
-msgid "No protocol sequences registered\n"
-msgstr "Inga protokollsekvenser registrerade\n"
+msgid "No protocol sequences registered.\n"
+msgstr "Inga protokollsekvenser registrerade.\n"
 
 #: winerror.mc:3006
-msgid "RPC server not listening\n"
-msgstr "RPC-servern lyssnar inte\n"
+msgid "RPC server not listening.\n"
+msgstr "RPC-servern lyssnar inte.\n"
 
 #: winerror.mc:3011
-msgid "Unknown manager type\n"
-msgstr "Okänd hanterartyp\n"
+msgid "Unknown manager type.\n"
+msgstr "Okänd hanterartyp.\n"
 
 #: winerror.mc:3016
-msgid "Unknown interface\n"
-msgstr "Okänt gränssnitt\n"
+msgid "Unknown interface.\n"
+msgstr "Okänt gränssnitt.\n"
 
 #: winerror.mc:3021
-msgid "No bindings\n"
-msgstr "Inga bindningar\n"
+msgid "No bindings.\n"
+msgstr "Inga bindningar.\n"
 
 #: winerror.mc:3026
-msgid "No protocol sequences\n"
-msgstr "Inga protokollsekvenser\n"
+msgid "No protocol sequences.\n"
+msgstr "Inga protokollsekvenser.\n"
 
 #: winerror.mc:3031
-msgid "Can't create endpoint\n"
-msgstr "Kan inte skapa slutpunkt\n"
+msgid "Can't create endpoint.\n"
+msgstr "Kan inte skapa slutpunkt.\n"
 
 #: winerror.mc:3036
-msgid "Out of resources\n"
-msgstr "Slut på resurser\n"
+msgid "Out of resources.\n"
+msgstr "Slut på resurser.\n"
 
 #: winerror.mc:3041
-msgid "RPC server unavailable\n"
-msgstr "RPC-servern otillgänglig\n"
+msgid "RPC server unavailable.\n"
+msgstr "RPC-servern otillgänglig.\n"
 
 #: winerror.mc:3046
-msgid "RPC server too busy\n"
-msgstr "RPC-servern är för upptagen\n"
+msgid "RPC server too busy.\n"
+msgstr "RPC-servern är för upptagen.\n"
 
 #: winerror.mc:3051
-msgid "Invalid network options\n"
-msgstr "Ogiltiga nätverksval\n"
+msgid "Invalid network options.\n"
+msgstr "Ogiltiga nätverksval.\n"
 
 #: winerror.mc:3056
-msgid "No RPC call active\n"
-msgstr "Inget RPC-anrop aktivt\n"
+msgid "No RPC call active.\n"
+msgstr "Inget RPC-anrop aktivt.\n"
 
 #: winerror.mc:3061
-msgid "RPC call failed\n"
-msgstr "RPC-anrop misslyckades\n"
+msgid "RPC call failed.\n"
+msgstr "RPC-anrop misslyckades.\n"
 
 #: winerror.mc:3066
-msgid "RPC call failed and didn't execute\n"
-msgstr "RPC-anrop misslyckades och exekverades inte\n"
+msgid "RPC call failed and didn't execute.\n"
+msgstr "RPC-anrop misslyckades och exekverades inte.\n"
 
 #: winerror.mc:3071
-msgid "RPC protocol error\n"
-msgstr "RPC-protokollfel\n"
+msgid "RPC protocol error.\n"
+msgstr "RPC-protokollfel.\n"
 
 #: winerror.mc:3076
-msgid "Unsupported transfer syntax\n"
-msgstr "Ej stött överföringssyntax\n"
+msgid "Unsupported transfer syntax.\n"
+msgstr "Ej stött överföringssyntax.\n"
 
 #: winerror.mc:3086
-msgid "Invalid tag\n"
-msgstr "Ogiltig tagg\n"
+msgid "Invalid tag.\n"
+msgstr "Ogiltig tagg.\n"
 
 #: winerror.mc:3091
-msgid "Invalid array bounds\n"
-msgstr "Ogiltiga arraygränser\n"
+msgid "Invalid array bounds.\n"
+msgstr "Ogiltiga arraygränser.\n"
 
 #: winerror.mc:3096
-msgid "No entry name\n"
-msgstr "Inget postnamn\n"
+msgid "No entry name.\n"
+msgstr "Inget postnamn.\n"
 
 #: winerror.mc:3101
-msgid "Invalid name syntax\n"
-msgstr "Ogiltig namnsyntax\n"
+msgid "Invalid name syntax.\n"
+msgstr "Ogiltig namnsyntax.\n"
 
 #: winerror.mc:3106
-msgid "Unsupported name syntax\n"
-msgstr "Ej stött namnsyntax\n"
+msgid "Unsupported name syntax.\n"
+msgstr "Ej stött namnsyntax.\n"
 
 #: winerror.mc:3111
-msgid "No network address\n"
-msgstr "Ingen nätverksadress\n"
+msgid "No network address.\n"
+msgstr "Ingen nätverksadress.\n"
 
 #: winerror.mc:3116
-msgid "Duplicate endpoint\n"
-msgstr "Upprepad slutpunkt\n"
+msgid "Duplicate endpoint.\n"
+msgstr "Upprepad slutpunkt.\n"
 
 #: winerror.mc:3121
-msgid "Unknown authentication type\n"
-msgstr "Okänd autentiseringstyp\n"
+msgid "Unknown authentication type.\n"
+msgstr "Okänd autentiseringstyp.\n"
 
 #: winerror.mc:3126
-msgid "Maximum calls too low\n"
-msgstr "Maximalt antal anrop för lågt\n"
+msgid "Maximum calls too low.\n"
+msgstr "Maximalt antal anrop för lågt.\n"
 
 #: winerror.mc:3131
-msgid "String too long\n"
-msgstr "Strängen för lång\n"
+msgid "String too long.\n"
+msgstr "Strängen för lång.\n"
 
 #: winerror.mc:3136
-msgid "Protocol sequence not found\n"
-msgstr "Protokollsekvens ej funnen\n"
+msgid "Protocol sequence not found.\n"
+msgstr "Protokollsekvens ej funnen.\n"
 
 #: winerror.mc:3141
-msgid "Procedure number out of range\n"
-msgstr "Procedurnummer utanför giltigt intervall\n"
+msgid "Procedure number out of range.\n"
+msgstr "Procedurnummer utanför giltigt intervall.\n"
 
 #: winerror.mc:3146
-msgid "Binding has no authentication data\n"
-msgstr "Bindningen har inget autentiseringsdata\n"
+msgid "Binding has no authentication data.\n"
+msgstr "Bindningen har inget autentiseringsdata.\n"
 
 #: winerror.mc:3151
-msgid "Unknown authentication service\n"
-msgstr "Okänd autentiseringstjänst\n"
+msgid "Unknown authentication service.\n"
+msgstr "Okänd autentiseringstjänst.\n"
 
 #: winerror.mc:3156
-msgid "Unknown authentication level\n"
-msgstr "Okänd autentiseringsnivå\n"
+msgid "Unknown authentication level.\n"
+msgstr "Okänd autentiseringsnivå.\n"
 
 #: winerror.mc:3161
-msgid "Invalid authentication identity\n"
-msgstr "Okänd autentiseringsidentitet\n"
+msgid "Invalid authentication identity.\n"
+msgstr "Okänd autentiseringsidentitet.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service\n"
-msgstr "Okänd auktoriseringstjänst\n"
+msgid "Unknown authorisation service.\n"
+msgstr "Okänd auktoriseringstjänst.\n"
 
 #: winerror.mc:3171
-msgid "Invalid entry\n"
-msgstr "Ogiltig post\n"
+msgid "Invalid entry.\n"
+msgstr "Ogiltig post.\n"
 
 #: winerror.mc:3176
-msgid "Can't perform operation\n"
-msgstr "Kan inte utföra operationen\n"
+msgid "Can't perform operation.\n"
+msgstr "Kan inte utföra operationen.\n"
 
 #: winerror.mc:3181
-msgid "Endpoints not registered\n"
-msgstr "Slutpunkter ej registrerade\n"
+msgid "Endpoints not registered.\n"
+msgstr "Slutpunkter ej registrerade.\n"
 
 #: winerror.mc:3186
-msgid "Nothing to export\n"
-msgstr "Inget att exportera\n"
+msgid "Nothing to export.\n"
+msgstr "Inget att exportera.\n"
 
 #: winerror.mc:3191
-msgid "Incomplete name\n"
-msgstr "Inkomplett namn\n"
+msgid "Incomplete name.\n"
+msgstr "Inkomplett namn.\n"
 
 #: winerror.mc:3196
-msgid "Invalid version option\n"
-msgstr "Ogiltigt versionsval\n"
+msgid "Invalid version option.\n"
+msgstr "Ogiltigt versionsval.\n"
 
 #: winerror.mc:3201
-msgid "No more members\n"
-msgstr "Inga fler medlemmar\n"
+msgid "No more members.\n"
+msgstr "Inga fler medlemmar.\n"
 
 #: winerror.mc:3206
-msgid "Not all objects unexported\n"
-msgstr "Alla objekt avexporterades inte\n"
+msgid "Not all objects unexported.\n"
+msgstr "Alla objekt avexporterades inte.\n"
 
 #: winerror.mc:3211
-msgid "Interface not found\n"
-msgstr "Gränssnitt hittades inte\n"
+msgid "Interface not found.\n"
+msgstr "Gränssnitt hittades inte.\n"
 
 #: winerror.mc:3216
-msgid "Entry already exists\n"
-msgstr "Posten existerar redan\n"
+msgid "Entry already exists.\n"
+msgstr "Posten existerar redan.\n"
 
 #: winerror.mc:3221
-msgid "Entry not found\n"
-msgstr "Posten hittades inte\n"
+msgid "Entry not found.\n"
+msgstr "Posten hittades inte.\n"
 
 #: winerror.mc:3226
-msgid "Name service unavailable\n"
-msgstr "Namntjänst otillgänglig\n"
+msgid "Name service unavailable.\n"
+msgstr "Namntjänst otillgänglig.\n"
 
 #: winerror.mc:3231
-msgid "Invalid network address family\n"
-msgstr "Ogiltig nätverksadressfamilj\n"
+msgid "Invalid network address family.\n"
+msgstr "Ogiltig nätverksadressfamilj.\n"
 
 #: winerror.mc:3236
-msgid "Operation not supported\n"
-msgstr "Operationen stöds inte\n"
+msgid "Operation not supported.\n"
+msgstr "Operationen stöds inte.\n"
 
 #: winerror.mc:3241
-msgid "No security context available\n"
-msgstr "Ingen säkerhetskontext tillgänglig\n"
+msgid "No security context available.\n"
+msgstr "Ingen säkerhetskontext tillgänglig.\n"
 
 #: winerror.mc:3246
-msgid "RPCInternal error\n"
-msgstr "RPCInternal-fel\n"
+msgid "RPCInternal error.\n"
+msgstr "RPCInternal-fel.\n"
 
 #: winerror.mc:3251
-msgid "RPC divide-by-zero\n"
-msgstr "Division med noll för RPC\n"
+msgid "RPC divide-by-zero.\n"
+msgstr "Division med noll för RPC.\n"
 
 #: winerror.mc:3256
-msgid "Address error\n"
-msgstr "Adressfel\n"
+msgid "Address error.\n"
+msgstr "Adressfel.\n"
 
 #: winerror.mc:3261
-msgid "Floating-point divide-by-zero\n"
-msgstr "Division med noll för flyttal\n"
+msgid "Floating-point divide-by-zero.\n"
+msgstr "Division med noll för flyttal.\n"
 
 #: winerror.mc:3266
-msgid "Floating-point underflow\n"
-msgstr "Flyttals-underspill\n"
+msgid "Floating-point underflow.\n"
+msgstr "Flyttals-underspill.\n"
 
 #: winerror.mc:3271
-msgid "Floating-point overflow\n"
-msgstr "Flyttals-överspill\n"
+msgid "Floating-point overflow.\n"
+msgstr "Flyttals-överspill.\n"
 
 #: winerror.mc:3276
-msgid "No more entries\n"
-msgstr "Inga fler poster\n"
+msgid "No more entries.\n"
+msgstr "Inga fler poster.\n"
 
 #: winerror.mc:3281
-msgid "Character translation table open failed\n"
-msgstr "Kunde inte öppna teckenomvandlingstabellen\n"
+msgid "Character translation table open failed.\n"
+msgstr "Kunde inte öppna teckenomvandlingstabellen.\n"
 
 #: winerror.mc:3286
-msgid "Character translation table file too small\n"
-msgstr "Teckenomvandlingstabellens fil är för liten\n"
+msgid "Character translation table file too small.\n"
+msgstr "Teckenomvandlingstabellens fil är för liten.\n"
 
 #: winerror.mc:3291
-msgid "Null context handle\n"
-msgstr "Nullkontext-referens\n"
+msgid "Null context handle.\n"
+msgstr "Nullkontext-referens.\n"
 
 #: winerror.mc:3296
-msgid "Context handle damaged\n"
-msgstr "Kontextreferens skadad\n"
+msgid "Context handle damaged.\n"
+msgstr "Kontextreferens skadad.\n"
 
 #: winerror.mc:3301
-msgid "Binding handle mismatch\n"
-msgstr "Bindningsreferensen misstämmer\n"
+msgid "Binding handle mismatch.\n"
+msgstr "Bindningsreferensen misstämmer.\n"
 
 #: winerror.mc:3306
-msgid "Cannot get call handle\n"
-msgstr "Kan inte erhålla anropsreferens\n"
+msgid "Cannot get call handle.\n"
+msgstr "Kan inte erhålla anropsreferens.\n"
 
 #: winerror.mc:3311
-msgid "Null reference pointer\n"
-msgstr "Nullreferens-pekare\n"
+msgid "Null reference pointer.\n"
+msgstr "Nullreferens-pekare.\n"
 
 #: winerror.mc:3316
-msgid "Enumeration value out of range\n"
-msgstr "Uppräkningsvärde utanför giltigt intervall\n"
+msgid "Enumeration value out of range.\n"
+msgstr "Uppräkningsvärde utanför giltigt intervall.\n"
 
 #: winerror.mc:3321
-msgid "Byte count too small\n"
-msgstr "Byteantalet för litet\n"
+msgid "Byte count too small.\n"
+msgstr "Byteantalet för litet.\n"
 
 #: winerror.mc:3326
-msgid "Bad stub data\n"
-msgstr "Felaktigt stub-data\n"
+msgid "Bad stub data.\n"
+msgstr "Felaktigt stub-data.\n"
 
 #: winerror.mc:3331
-msgid "Invalid user buffer\n"
-msgstr "Ogiltig användarbuffert\n"
+msgid "Invalid user buffer.\n"
+msgstr "Ogiltig användarbuffert.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media\n"
-msgstr "Ej igenkänt media\n"
+msgid "Unrecognised media.\n"
+msgstr "Ej igenkänt media.\n"
 
 #: winerror.mc:3341
-msgid "No trust secret\n"
+msgid "No trust secret.\n"
 msgstr ""
 
 #: winerror.mc:3346
-msgid "No trust SAM account\n"
+msgid "No trust SAM account.\n"
 msgstr ""
 
 #: winerror.mc:3351
-msgid "Trusted domain failure\n"
+msgid "Trusted domain failure.\n"
 msgstr ""
 
 #: winerror.mc:3356
-msgid "Trusted relationship failure\n"
+msgid "Trusted relationship failure.\n"
 msgstr ""
 
 #: winerror.mc:3361
-msgid "Trust logon failure\n"
+msgid "Trust logon failure.\n"
 msgstr ""
 
 #: winerror.mc:3366
-msgid "RPC call already in progress\n"
-msgstr "RPC-anrop pågår redan\n"
+msgid "RPC call already in progress.\n"
+msgstr "RPC-anrop pågår redan.\n"
 
 #: winerror.mc:3371
-msgid "NETLOGON is not started\n"
-msgstr "NETLOGON ej startat\n"
+msgid "NETLOGON is not started.\n"
+msgstr "NETLOGON ej startat.\n"
 
 #: winerror.mc:3376
-msgid "Account expired\n"
-msgstr "Kontot utgånget\n"
+msgid "Account expired.\n"
+msgstr "Kontot utgånget.\n"
 
 #: winerror.mc:3381
-msgid "Redirector has open handles\n"
-msgstr "Omdirigeraren har öppna referenser\n"
+msgid "Redirector has open handles.\n"
+msgstr "Omdirigeraren har öppna referenser.\n"
 
 #: winerror.mc:3386
-msgid "Printer driver already installed\n"
-msgstr "Skrivardrivrutin redan installerad\n"
+msgid "Printer driver already installed.\n"
+msgstr "Skrivardrivrutin redan installerad.\n"
 
 #: winerror.mc:3391
-msgid "Unknown port\n"
-msgstr "Okänd port\n"
+msgid "Unknown port.\n"
+msgstr "Okänd port.\n"
 
 #: winerror.mc:3396
-msgid "Unknown printer driver\n"
-msgstr "Okänd skrivardrivrutin\n"
+msgid "Unknown printer driver.\n"
+msgstr "Okänd skrivardrivrutin.\n"
 
 #: winerror.mc:3401
-msgid "Unknown print processor\n"
-msgstr "Okänd utskriftsprocessor\n"
+msgid "Unknown print processor.\n"
+msgstr "Okänd utskriftsprocessor.\n"
 
 #: winerror.mc:3406
-msgid "Invalid separator file\n"
-msgstr "Ogiltig separatorfil\n"
+msgid "Invalid separator file.\n"
+msgstr "Ogiltig separatorfil.\n"
 
 #: winerror.mc:3411
-msgid "Invalid priority\n"
-msgstr "Ogiltig prioritet\n"
+msgid "Invalid priority.\n"
+msgstr "Ogiltig prioritet.\n"
 
 #: winerror.mc:3416
-msgid "Invalid printer name\n"
-msgstr "Ogiltigt skrivarnamn\n"
+msgid "Invalid printer name.\n"
+msgstr "Ogiltigt skrivarnamn.\n"
 
 #: winerror.mc:3421
-msgid "Printer already exists\n"
-msgstr "Skrivaren existerar redan\n"
+msgid "Printer already exists.\n"
+msgstr "Skrivaren existerar redan.\n"
 
 #: winerror.mc:3426
-msgid "Invalid printer command\n"
-msgstr "Ogiltigt skrivarkommando\n"
+msgid "Invalid printer command.\n"
+msgstr "Ogiltigt skrivarkommando.\n"
 
 #: winerror.mc:3431
-msgid "Invalid data type\n"
-msgstr "Ogiltig datatyp\n"
+msgid "Invalid data type.\n"
+msgstr "Ogiltig datatyp.\n"
 
 #: winerror.mc:3436
-msgid "Invalid environment\n"
-msgstr "Ogiltig miljö\n"
+msgid "Invalid environment.\n"
+msgstr "Ogiltig miljö.\n"
 
 #: winerror.mc:3441
-msgid "No more bindings\n"
-msgstr "Inga fler bindningar\n"
+msgid "No more bindings.\n"
+msgstr "Inga fler bindningar.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account\n"
+msgid "Can't logon with interdomain trust account.\n"
 msgstr ""
 
 #: winerror.mc:3451
-msgid "Can't logon with workstation trust account\n"
+msgid "Can't logon with workstation trust account.\n"
 msgstr ""
 
 #: winerror.mc:3456
-msgid "Can't logon with server trust account\n"
+msgid "Can't logon with server trust account.\n"
 msgstr ""
 
 #: winerror.mc:3461
-msgid "Domain trust information inconsistent\n"
+msgid "Domain trust information inconsistent.\n"
 msgstr ""
 
 #: winerror.mc:3466
-msgid "Server has open handles\n"
-msgstr "Server har öppna referenser\n"
+msgid "Server has open handles.\n"
+msgstr "Server har öppna referenser.\n"
 
 #: winerror.mc:3471
-msgid "Resource data not found\n"
-msgstr "Resursdata hittades inte\n"
+msgid "Resource data not found.\n"
+msgstr "Resursdata hittades inte.\n"
 
 #: winerror.mc:3476
-msgid "Resource type not found\n"
-msgstr "Resurstyp hittades inte\n"
+msgid "Resource type not found.\n"
+msgstr "Resurstyp hittades inte.\n"
 
 #: winerror.mc:3481
-msgid "Resource name not found\n"
-msgstr "Resursnamn hittades inte\n"
+msgid "Resource name not found.\n"
+msgstr "Resursnamn hittades inte.\n"
 
 #: winerror.mc:3486
-msgid "Resource language not found\n"
-msgstr "Resursspråk hittades inte\n"
+msgid "Resource language not found.\n"
+msgstr "Resursspråk hittades inte.\n"
 
 #: winerror.mc:3491
-msgid "Not enough quota\n"
-msgstr "Otillräcklig kvot\n"
+msgid "Not enough quota.\n"
+msgstr "Otillräcklig kvot.\n"
 
 #: winerror.mc:3496
-msgid "No interfaces\n"
-msgstr "Inga gränssnitt\n"
+msgid "No interfaces.\n"
+msgstr "Inga gränssnitt.\n"
 
 #: winerror.mc:3501
-msgid "RPC call canceled\n"
-msgstr "RPC-anrop avbröts\n"
+msgid "RPC call canceled.\n"
+msgstr "RPC-anrop avbröts.\n"
 
 #: winerror.mc:3506
-msgid "Binding incomplete\n"
-msgstr "Bindning ej komplett\n"
+msgid "Binding incomplete.\n"
+msgstr "Bindning ej komplett.\n"
 
 #: winerror.mc:3511
-msgid "RPC comm failure\n"
-msgstr "RPC-kommunikationsfel\n"
+msgid "RPC comm failure.\n"
+msgstr "RPC-kommunikationsfel.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level\n"
-msgstr "Ostödd auktoriseringsnivå\n"
+msgid "Unsupported authorisation level.\n"
+msgstr "Ostödd auktoriseringsnivå.\n"
 
 #: winerror.mc:3521
-msgid "No principal name registered\n"
-msgstr "Inget principalnamn registrerat\n"
+msgid "No principal name registered.\n"
+msgstr "Inget principalnamn registrerat.\n"
 
 #: winerror.mc:3526
-msgid "Not an RPC error\n"
-msgstr "Inte ett RPC-fel\n"
+msgid "Not an RPC error.\n"
+msgstr "Inte ett RPC-fel.\n"
 
 #: winerror.mc:3531
-msgid "UUID is local only\n"
-msgstr "UUID är endast lokalt\n"
+msgid "UUID is local only.\n"
+msgstr "UUID är endast lokalt.\n"
 
 #: winerror.mc:3536
-msgid "Security package error\n"
-msgstr "Säkerhetspaket-fel\n"
+msgid "Security package error.\n"
+msgstr "Säkerhetspaket-fel.\n"
 
 #: winerror.mc:3541
-msgid "Thread not canceled\n"
-msgstr "Tråd ej avbruten\n"
+msgid "Thread not canceled.\n"
+msgstr "Tråd ej avbruten.\n"
 
 #: winerror.mc:3546
-msgid "Invalid handle operation\n"
-msgstr "Ogiltig referensoperation\n"
+msgid "Invalid handle operation.\n"
+msgstr "Ogiltig referensoperation.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version\n"
-msgstr "Fel serialiserande paketversion\n"
+msgid "Wrong serialising package version.\n"
+msgstr "Fel serialiserande paketversion.\n"
 
 #: winerror.mc:3556
-msgid "Wrong stub version\n"
-msgstr "Fel stub-version\n"
+msgid "Wrong stub version.\n"
+msgstr "Fel stub-version.\n"
 
 #: winerror.mc:3561
-msgid "Invalid pipe object\n"
-msgstr "Ogiltig pipa\n"
+msgid "Invalid pipe object.\n"
+msgstr "Ogiltig pipa.\n"
 
 #: winerror.mc:3566
-msgid "Wrong pipe order\n"
-msgstr "Fel ordning på pipan\n"
+msgid "Wrong pipe order.\n"
+msgstr "Fel ordning på pipan.\n"
 
 #: winerror.mc:3571
-msgid "Wrong pipe version\n"
-msgstr "Fel version på pipan\n"
+msgid "Wrong pipe version.\n"
+msgstr "Fel version på pipan.\n"
 
 #: winerror.mc:3576
-msgid "Group member not found\n"
-msgstr "Gruppmedlem ej funnen\n"
+msgid "Group member not found.\n"
+msgstr "Gruppmedlem ej funnen.\n"
 
 #: winerror.mc:3581
-msgid "Can't create endpoint mapper DB\n"
-msgstr "Kan inte skapa Endpoint mapper-databas\n"
+msgid "Can't create endpoint mapper DB.\n"
+msgstr "Kan inte skapa Endpoint mapper-databas.\n"
 
 #: winerror.mc:3586
-msgid "Invalid object\n"
-msgstr "Ogiltigt objekt\n"
+msgid "Invalid object.\n"
+msgstr "Ogiltigt objekt.\n"
 
 #: winerror.mc:3591
-msgid "Invalid time\n"
-msgstr "Ogiltig tid\n"
+msgid "Invalid time.\n"
+msgstr "Ogiltig tid.\n"
 
 #: winerror.mc:3596
-msgid "Invalid form name\n"
-msgstr "Ogiltigt formulärnamn\n"
+msgid "Invalid form name.\n"
+msgstr "Ogiltigt formulärnamn.\n"
 
 #: winerror.mc:3601
-msgid "Invalid form size\n"
-msgstr "Ogiltig formulärstorlek\n"
+msgid "Invalid form size.\n"
+msgstr "Ogiltig formulärstorlek.\n"
 
 #: winerror.mc:3606
-msgid "Already awaiting printer handle\n"
-msgstr "Väntar redan på skrivarreferens\n"
+msgid "Already awaiting printer handle.\n"
+msgstr "Väntar redan på skrivarreferens.\n"
 
 #: winerror.mc:3611
-msgid "Printer deleted\n"
-msgstr "Skrivare borttagen\n"
+msgid "Printer deleted.\n"
+msgstr "Skrivare borttagen.\n"
 
 #: winerror.mc:3616
-msgid "Invalid printer state\n"
-msgstr "Ogiltigt skrivartillstånd\n"
+msgid "Invalid printer state.\n"
+msgstr "Ogiltigt skrivartillstånd.\n"
 
 #: winerror.mc:3621
-msgid "User must change password\n"
-msgstr "Användaren måste byta lösenord\n"
+msgid "User must change password.\n"
+msgstr "Användaren måste byta lösenord.\n"
 
 #: winerror.mc:3626
-msgid "Domain controller not found\n"
-msgstr "Domänkontrollanten hittades inte\n"
+msgid "Domain controller not found.\n"
+msgstr "Domänkontrollanten hittades inte.\n"
 
 #: winerror.mc:3631
-msgid "Account locked out\n"
-msgstr "Konto utlåst\n"
+msgid "Account locked out.\n"
+msgstr "Konto utlåst.\n"
 
 #: winerror.mc:3636
-msgid "Invalid pixel format\n"
-msgstr "Ogiltigt pixelformat\n"
+msgid "Invalid pixel format.\n"
+msgstr "Ogiltigt pixelformat.\n"
 
 #: winerror.mc:3641
-msgid "Invalid driver\n"
-msgstr "Ogiltig drivrutin\n"
+msgid "Invalid driver.\n"
+msgstr "Ogiltig drivrutin.\n"
 
 #: winerror.mc:3646
-msgid "Invalid object resolver set\n"
-msgstr "Ogiltig objekt-resolver vald\n"
+msgid "Invalid object resolver set.\n"
+msgstr "Ogiltig objekt-resolver vald.\n"
 
 #: winerror.mc:3651
-msgid "Incomplete RPC send\n"
-msgstr "Inkomplett RPC send\n"
+msgid "Incomplete RPC send.\n"
+msgstr "Inkomplett RPC send.\n"
 
 #: winerror.mc:3656
-msgid "Invalid asynchronous RPC handle\n"
-msgstr "Ogiltig asynkron RPC-referens\n"
+msgid "Invalid asynchronous RPC handle.\n"
+msgstr "Ogiltig asynkron RPC-referens.\n"
 
 #: winerror.mc:3661
-msgid "Invalid asynchronous RPC call\n"
-msgstr "Ogiltigt asynkront RPC-anrop\n"
+msgid "Invalid asynchronous RPC call.\n"
+msgstr "Ogiltigt asynkront RPC-anrop.\n"
 
 #: winerror.mc:3666
-msgid "RPC pipe closed\n"
-msgstr "RPC-pipa stängd\n"
+msgid "RPC pipe closed.\n"
+msgstr "RPC-pipa stängd.\n"
 
 #: winerror.mc:3671
-msgid "Discipline error on RPC pipe\n"
+msgid "Discipline error on RPC pipe.\n"
 msgstr ""
 
 #: winerror.mc:3676
-msgid "No data on RPC pipe\n"
-msgstr "Inget data på RPC-pipa\n"
+msgid "No data on RPC pipe.\n"
+msgstr "Inget data på RPC-pipa.\n"
 
 #: winerror.mc:3681
-msgid "No site name available\n"
-msgstr "Inget sidnamn tillgängligt\n"
+msgid "No site name available.\n"
+msgstr "Inget sidnamn tillgängligt.\n"
 
 #: winerror.mc:3686
-msgid "The file cannot be accessed\n"
-msgstr "Kommer inte åt filen\n"
+msgid "The file cannot be accessed.\n"
+msgstr "Kommer inte åt filen.\n"
 
 #: winerror.mc:3691
-msgid "The filename cannot be resolved\n"
-msgstr "Filnamnet kan inte hittas\n"
+msgid "The filename cannot be resolved.\n"
+msgstr "Filnamnet kan inte hittas.\n"
 
 #: winerror.mc:3696
-msgid "RPC entry type mismatch\n"
-msgstr "Posttyper för RPC misstämmer\n"
+msgid "RPC entry type mismatch.\n"
+msgstr "Posttyper för RPC misstämmer.\n"
 
 #: winerror.mc:3701
-msgid "Not all objects could be exported\n"
-msgstr "Alla objekt kunde inte exporteras\n"
+msgid "Not all objects could be exported.\n"
+msgstr "Alla objekt kunde inte exporteras.\n"
 
 #: winerror.mc:3706
-msgid "The interface could not be exported\n"
-msgstr "Gränssnittet kunde inte exporteras\n"
+msgid "The interface could not be exported.\n"
+msgstr "Gränssnittet kunde inte exporteras.\n"
 
 #: winerror.mc:3711
-msgid "The profile could not be added\n"
-msgstr "Profilen kunde inte läggas till\n"
+msgid "The profile could not be added.\n"
+msgstr "Profilen kunde inte läggas till.\n"
 
 #: winerror.mc:3716
-msgid "The profile element could not be added\n"
-msgstr "Profilelementet kunde inte läggas till\n"
+msgid "The profile element could not be added.\n"
+msgstr "Profilelementet kunde inte läggas till.\n"
 
 #: winerror.mc:3721
-msgid "The profile element could not be removed\n"
-msgstr "Profilelementet kunde inte tas bort\n"
+msgid "The profile element could not be removed.\n"
+msgstr "Profilelementet kunde inte tas bort.\n"
 
 #: winerror.mc:3726
-msgid "The group element could not be added\n"
-msgstr "Gruppelementet kunde inte hittas\n"
+msgid "The group element could not be added.\n"
+msgstr "Gruppelementet kunde inte hittas.\n"
 
 #: winerror.mc:3731
-msgid "The group element could not be removed\n"
-msgstr "Gruppelementet kunde inte tas bort\n"
+msgid "The group element could not be removed.\n"
+msgstr "Gruppelementet kunde inte tas bort.\n"
 
 #: winerror.mc:3736
-msgid "The username could not be found\n"
-msgstr "Användarnamnet kunde inte hittas\n"
+msgid "The username could not be found.\n"
+msgstr "Användarnamnet kunde inte hittas.\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"

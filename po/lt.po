@@ -3551,2958 +3551,2958 @@ msgid "Array object expected"
 msgstr "Tikėtasi masyvo objekto"
 
 #: winerror.mc:26
-msgid "Success\n"
-msgstr "Sėkmė\n"
+msgid "Success.\n"
+msgstr "Sėkmė.\n"
 
 #: winerror.mc:31
-msgid "Invalid function\n"
-msgstr "Netinkama funkcija\n"
+msgid "Invalid function.\n"
+msgstr "Netinkama funkcija.\n"
 
 #: winerror.mc:36
-msgid "File not found\n"
-msgstr "Failas nerastas\n"
+msgid "File not found.\n"
+msgstr "Failas nerastas.\n"
 
 #: winerror.mc:41
-msgid "Path not found\n"
-msgstr "Kelias nerastas\n"
+msgid "Path not found.\n"
+msgstr "Kelias nerastas.\n"
 
 #: winerror.mc:46
-msgid "Too many open files\n"
-msgstr "Per daug atvertų failų\n"
+msgid "Too many open files.\n"
+msgstr "Per daug atvertų failų.\n"
 
 #: winerror.mc:51
-msgid "Access denied\n"
-msgstr "Prieiga nesuteikta\n"
+msgid "Access denied.\n"
+msgstr "Prieiga nesuteikta.\n"
 
 #: winerror.mc:56
-msgid "Invalid handle\n"
-msgstr "Neteisinga rodyklė\n"
+msgid "Invalid handle.\n"
+msgstr "Neteisinga rodyklė.\n"
 
 #: winerror.mc:61
-msgid "Memory trashed\n"
-msgstr "Atmintis išgadinta\n"
+msgid "Memory trashed.\n"
+msgstr "Atmintis išgadinta.\n"
 
 #: winerror.mc:66
-msgid "Not enough memory\n"
-msgstr "Per mažai atminties\n"
+msgid "Not enough memory.\n"
+msgstr "Per mažai atminties.\n"
 
 #: winerror.mc:71
-msgid "Invalid block\n"
-msgstr "Neteisingas blokas\n"
+msgid "Invalid block.\n"
+msgstr "Neteisingas blokas.\n"
 
 #: winerror.mc:76
-msgid "Bad environment\n"
-msgstr "Bloga aplinka\n"
+msgid "Bad environment.\n"
+msgstr "Bloga aplinka.\n"
 
 #: winerror.mc:81
-msgid "Bad format\n"
-msgstr "Blogas formatas\n"
+msgid "Bad format.\n"
+msgstr "Blogas formatas.\n"
 
 #: winerror.mc:86
-msgid "Invalid access\n"
-msgstr "Neteisinga prieiga\n"
+msgid "Invalid access.\n"
+msgstr "Neteisinga prieiga.\n"
 
 #: winerror.mc:91
-msgid "Invalid data\n"
-msgstr "Neteisingi duomenys\n"
+msgid "Invalid data.\n"
+msgstr "Neteisingi duomenys.\n"
 
 #: winerror.mc:96
-msgid "Out of memory\n"
-msgstr "Trūksta atminties\n"
+msgid "Out of memory.\n"
+msgstr "Trūksta atminties.\n"
 
 #: winerror.mc:101
-msgid "Invalid drive\n"
-msgstr "neteisingas diskas\n"
+msgid "Invalid drive.\n"
+msgstr "neteisingas diskas.\n"
 
 #: winerror.mc:106
-msgid "Can't delete current directory\n"
-msgstr "Negalima pašalinti dabartinio katalogo\n"
+msgid "Can't delete current directory.\n"
+msgstr "Negalima pašalinti dabartinio katalogo.\n"
 
 #: winerror.mc:111
-msgid "Not same device\n"
-msgstr "Ne tas pats įrenginys\n"
+msgid "Not same device.\n"
+msgstr "Ne tas pats įrenginys.\n"
 
 #: winerror.mc:116
-msgid "No more files\n"
-msgstr "Nėra daugiau failų\n"
+msgid "No more files.\n"
+msgstr "Nėra daugiau failų.\n"
 
 #: winerror.mc:121
-msgid "Write protected\n"
-msgstr "Apsaugotas nuo rašymo\n"
+msgid "Write protected.\n"
+msgstr "Apsaugotas nuo rašymo.\n"
 
 #: winerror.mc:126
-msgid "Bad unit\n"
-msgstr "Blogas vienetas\n"
+msgid "Bad unit.\n"
+msgstr "Blogas vienetas.\n"
 
 #: winerror.mc:131
-msgid "Not ready\n"
-msgstr "Nepasiruošęs\n"
+msgid "Not ready.\n"
+msgstr "Nepasiruošęs.\n"
 
 #: winerror.mc:136
-msgid "Bad command\n"
-msgstr "Bloga komanda\n"
+msgid "Bad command.\n"
+msgstr "Bloga komanda.\n"
 
 #: winerror.mc:141
-msgid "CRC error\n"
-msgstr "CRC klaida\n"
+msgid "CRC error.\n"
+msgstr "CRC klaida.\n"
 
 #: winerror.mc:146
-msgid "Bad length\n"
-msgstr "Blogas ilgis\n"
+msgid "Bad length.\n"
+msgstr "Blogas ilgis.\n"
 
 #: winerror.mc:151 winerror.mc:526
-msgid "Seek error\n"
-msgstr "Perėjimo klaida\n"
+msgid "Seek error.\n"
+msgstr "Perėjimo klaida.\n"
 
 #: winerror.mc:156
-msgid "Not DOS disk\n"
-msgstr "Ne DOS diskas\n"
+msgid "Not DOS disk.\n"
+msgstr "Ne DOS diskas.\n"
 
 #: winerror.mc:161
-msgid "Sector not found\n"
-msgstr "Sektorius nerastas\n"
+msgid "Sector not found.\n"
+msgstr "Sektorius nerastas.\n"
 
 #: winerror.mc:166
-msgid "Out of paper\n"
-msgstr "Baigėsi popierius\n"
+msgid "Out of paper.\n"
+msgstr "Baigėsi popierius.\n"
 
 #: winerror.mc:171
-msgid "Write fault\n"
-msgstr "Rašymo klaida\n"
+msgid "Write fault.\n"
+msgstr "Rašymo klaida.\n"
 
 #: winerror.mc:176
-msgid "Read fault\n"
-msgstr "Skaitymo klaida\n"
+msgid "Read fault.\n"
+msgstr "Skaitymo klaida.\n"
 
 #: winerror.mc:181
-msgid "General failure\n"
-msgstr "Bendra triktis\n"
+msgid "General failure.\n"
+msgstr "Bendra triktis.\n"
 
 #: winerror.mc:186
-msgid "Sharing violation\n"
-msgstr "Bendro naudojimo pažeidimas\n"
+msgid "Sharing violation.\n"
+msgstr "Bendro naudojimo pažeidimas.\n"
 
 #: winerror.mc:191
-msgid "Lock violation\n"
-msgstr "Blokavimo pažeidimas\n"
+msgid "Lock violation.\n"
+msgstr "Blokavimo pažeidimas.\n"
 
 #: winerror.mc:196
-msgid "Wrong disk\n"
-msgstr "Ne tas diskas\n"
+msgid "Wrong disk.\n"
+msgstr "Ne tas diskas.\n"
 
 #: winerror.mc:201
-msgid "Sharing buffer exceeded\n"
-msgstr "Viršytas bendro naudojimo buferis\n"
+msgid "Sharing buffer exceeded.\n"
+msgstr "Viršytas bendro naudojimo buferis.\n"
 
 #: winerror.mc:206
-msgid "End of file\n"
-msgstr "Failo pabaiga\n"
+msgid "End of file.\n"
+msgstr "Failo pabaiga.\n"
 
 #: winerror.mc:211 winerror.mc:436
-msgid "Disk full\n"
-msgstr "Diskas pilnas\n"
+msgid "Disk full.\n"
+msgstr "Diskas pilnas.\n"
 
 #: winerror.mc:216
-msgid "Request not supported\n"
-msgstr "Užklausa nepalaikoma\n"
+msgid "Request not supported.\n"
+msgstr "Užklausa nepalaikoma.\n"
 
 #: winerror.mc:221
-msgid "Remote machine not listening\n"
-msgstr "Nutolęs kompiuteris nesiklauso\n"
+msgid "Remote machine not listening.\n"
+msgstr "Nutolęs kompiuteris nesiklauso.\n"
 
 #: winerror.mc:226
-msgid "Duplicate network name\n"
-msgstr "Vienodi tinklo vardai\n"
+msgid "Duplicate network name.\n"
+msgstr "Vienodi tinklo vardai.\n"
 
 #: winerror.mc:231
-msgid "Bad network path\n"
-msgstr "Blogas tinklo kelias\n"
+msgid "Bad network path.\n"
+msgstr "Blogas tinklo kelias.\n"
 
 #: winerror.mc:236
-msgid "Network busy\n"
-msgstr "Tinklas užimtas\n"
+msgid "Network busy.\n"
+msgstr "Tinklas užimtas.\n"
 
 #: winerror.mc:241
-msgid "Device does not exist\n"
-msgstr "Įrenginys neegzistuoja\n"
+msgid "Device does not exist.\n"
+msgstr "Įrenginys neegzistuoja.\n"
 
 #: winerror.mc:246
-msgid "Too many commands\n"
-msgstr "Per daug komandų\n"
+msgid "Too many commands.\n"
+msgstr "Per daug komandų.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error\n"
-msgstr "Adapterio aparatinė klaida\n"
+msgid "Adaptor hardware error.\n"
+msgstr "Adapterio aparatinė klaida.\n"
 
 #: winerror.mc:256
-msgid "Bad network response\n"
-msgstr "Blogas tinklo atsakymas\n"
+msgid "Bad network response.\n"
+msgstr "Blogas tinklo atsakymas.\n"
 
 #: winerror.mc:261
-msgid "Unexpected network error\n"
-msgstr "Netikėta tinklo klaida\n"
+msgid "Unexpected network error.\n"
+msgstr "Netikėta tinklo klaida.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor\n"
-msgstr "Blogas nutolęs adapteris\n"
+msgid "Bad remote adaptor.\n"
+msgstr "Blogas nutolęs adapteris.\n"
 
 #: winerror.mc:271
-msgid "Print queue full\n"
-msgstr "Spausdinimo eilė pilna\n"
+msgid "Print queue full.\n"
+msgstr "Spausdinimo eilė pilna.\n"
 
 #: winerror.mc:276
-msgid "No spool space\n"
-msgstr "Nėra vietos kaupe\n"
+msgid "No spool space.\n"
+msgstr "Nėra vietos kaupe.\n"
 
 #: winerror.mc:281
-msgid "Print canceled\n"
-msgstr "Spausdinimas nutrauktas\n"
+msgid "Print canceled.\n"
+msgstr "Spausdinimas nutrauktas.\n"
 
 #: winerror.mc:286
-msgid "Network name deleted\n"
-msgstr "Tinklo vardas pašalintas\n"
+msgid "Network name deleted.\n"
+msgstr "Tinklo vardas pašalintas.\n"
 
 #: winerror.mc:291
-msgid "Network access denied\n"
-msgstr "Tinklo prieiga nesuteikta\n"
+msgid "Network access denied.\n"
+msgstr "Tinklo prieiga nesuteikta.\n"
 
 #: winerror.mc:296
-msgid "Bad device type\n"
-msgstr "Blogas įrenginio tipas\n"
+msgid "Bad device type.\n"
+msgstr "Blogas įrenginio tipas.\n"
 
 #: winerror.mc:301
-msgid "Bad network name\n"
-msgstr "Blogas tinklo vardas\n"
+msgid "Bad network name.\n"
+msgstr "Blogas tinklo vardas.\n"
 
 #: winerror.mc:306
-msgid "Too many network names\n"
-msgstr "Per daug tinklo vardų\n"
+msgid "Too many network names.\n"
+msgstr "Per daug tinklo vardų.\n"
 
 #: winerror.mc:311
-msgid "Too many network sessions\n"
-msgstr "Per daug tinklo seansų\n"
+msgid "Too many network sessions.\n"
+msgstr "Per daug tinklo seansų.\n"
 
 #: winerror.mc:316
-msgid "Sharing paused\n"
-msgstr "Bendrinimas pristabdytas\n"
+msgid "Sharing paused.\n"
+msgstr "Bendrinimas pristabdytas.\n"
 
 #: winerror.mc:321
-msgid "Request not accepted\n"
-msgstr "Užklausa nepriimta\n"
+msgid "Request not accepted.\n"
+msgstr "Užklausa nepriimta.\n"
 
 #: winerror.mc:326
-msgid "Redirector paused\n"
-msgstr "Nukreiptuvė pristabdyta\n"
+msgid "Redirector paused.\n"
+msgstr "Nukreiptuvė pristabdyta.\n"
 
 #: winerror.mc:331
-msgid "File exists\n"
-msgstr "Failas egzistuoja\n"
+msgid "File exists.\n"
+msgstr "Failas egzistuoja.\n"
 
 #: winerror.mc:336
-msgid "Cannot create\n"
-msgstr "Nepavyko sukurti\n"
+msgid "Cannot create.\n"
+msgstr "Nepavyko sukurti.\n"
 
 #: winerror.mc:341
-msgid "Int24 failure\n"
-msgstr "Int24 klaida\n"
+msgid "Int24 failure.\n"
+msgstr "Int24 klaida.\n"
 
 #: winerror.mc:346
-msgid "Out of structures\n"
-msgstr "Trūksta struktūrų\n"
+msgid "Out of structures.\n"
+msgstr "Trūksta struktūrų.\n"
 
 #: winerror.mc:351
-msgid "Already assigned\n"
-msgstr "Jau priskirta\n"
+msgid "Already assigned.\n"
+msgstr "Jau priskirta.\n"
 
 #: winerror.mc:356 winerror.mc:1711
-msgid "Invalid password\n"
-msgstr "Neteisingas slaptažodis\n"
+msgid "Invalid password.\n"
+msgstr "Neteisingas slaptažodis.\n"
 
 #: winerror.mc:361
-msgid "Invalid parameter\n"
-msgstr "Neteisingas parametras\n"
+msgid "Invalid parameter.\n"
+msgstr "Neteisingas parametras.\n"
 
 #: winerror.mc:366
-msgid "Net write fault\n"
-msgstr "Tinklo rašymo klaida\n"
+msgid "Net write fault.\n"
+msgstr "Tinklo rašymo klaida.\n"
 
 #: winerror.mc:371
-msgid "No process slots\n"
-msgstr "Nėra procesų lizdų\n"
+msgid "No process slots.\n"
+msgstr "Nėra procesų lizdų.\n"
 
 #: winerror.mc:376
-msgid "Too many semaphores\n"
-msgstr "Per daug semaforų\n"
+msgid "Too many semaphores.\n"
+msgstr "Per daug semaforų.\n"
 
 #: winerror.mc:381
-msgid "Exclusive semaphore already owned\n"
-msgstr "Jau turimas išskirtinis semaforas\n"
+msgid "Exclusive semaphore already owned.\n"
+msgstr "Jau turimas išskirtinis semaforas.\n"
 
 #: winerror.mc:386
-msgid "Semaphore is set\n"
-msgstr "Semaforas nustatytas\n"
+msgid "Semaphore is set.\n"
+msgstr "Semaforas nustatytas.\n"
 
 #: winerror.mc:391
-msgid "Too many semaphore requests\n"
-msgstr "Per daug semaforo užklausų\n"
+msgid "Too many semaphore requests.\n"
+msgstr "Per daug semaforo užklausų.\n"
 
 #: winerror.mc:396
-msgid "Invalid at interrupt time\n"
-msgstr "Netinkamas pertraukties metu\n"
+msgid "Invalid at interrupt time.\n"
+msgstr "Netinkamas pertraukties metu.\n"
 
 #: winerror.mc:401
-msgid "Semaphore owner died\n"
-msgstr "Semaforo turėtojas numirė\n"
+msgid "Semaphore owner died.\n"
+msgstr "Semaforo turėtojas numirė.\n"
 
 #: winerror.mc:406
-msgid "Semaphore user limit\n"
-msgstr "Semaforo naudotojų riba\n"
+msgid "Semaphore user limit.\n"
+msgstr "Semaforo naudotojų riba.\n"
 
 #: winerror.mc:411
-msgid "Insert disk for drive %1\n"
-msgstr "Įdėkite diską į kaupiklį %1\n"
+msgid "Insert disk for drive %1.\n"
+msgstr "Įdėkite diską į kaupiklį %1.\n"
 
 #: winerror.mc:416
-msgid "Drive locked\n"
-msgstr "Kaupiklis užblokuotas\n"
+msgid "Drive locked.\n"
+msgstr "Kaupiklis užblokuotas.\n"
 
 #: winerror.mc:421
-msgid "Broken pipe\n"
-msgstr "Neveikiantis kanalas\n"
+msgid "Broken pipe.\n"
+msgstr "Neveikiantis kanalas.\n"
 
 #: winerror.mc:426
-msgid "Open failed\n"
-msgstr "Nepavyko atverti\n"
+msgid "Open failed.\n"
+msgstr "Nepavyko atverti.\n"
 
 #: winerror.mc:431
-msgid "Buffer overflow\n"
-msgstr "Buferio perpildymas\n"
+msgid "Buffer overflow.\n"
+msgstr "Buferio perpildymas.\n"
 
 #: winerror.mc:441
-msgid "No more search handles\n"
-msgstr "Daugiau nebėra paieškos rodyklių\n"
+msgid "No more search handles.\n"
+msgstr "Daugiau nebėra paieškos rodyklių.\n"
 
 #: winerror.mc:446
-msgid "Invalid target handle\n"
-msgstr "Neteisinga tikslo rodyklė\n"
+msgid "Invalid target handle.\n"
+msgstr "Neteisinga tikslo rodyklė.\n"
 
 #: winerror.mc:451
-msgid "Invalid IOCTL\n"
-msgstr "Klaidingas IOCTL\n"
+msgid "Invalid IOCTL.\n"
+msgstr "Klaidingas IOCTL.\n"
 
 #: winerror.mc:456
-msgid "Invalid verify switch\n"
-msgstr "Neteisingas patikrinimo jungiklis\n"
+msgid "Invalid verify switch.\n"
+msgstr "Neteisingas patikrinimo jungiklis.\n"
 
 #: winerror.mc:461
-msgid "Bad driver level\n"
-msgstr "Blogas tvarkyklės lygis\n"
+msgid "Bad driver level.\n"
+msgstr "Blogas tvarkyklės lygis.\n"
 
 #: winerror.mc:466
-msgid "Call not implemented\n"
-msgstr "Kreipinys nerealizuotas\n"
+msgid "Call not implemented.\n"
+msgstr "Kreipinys nerealizuotas.\n"
 
 #: winerror.mc:471
-msgid "Semaphore timeout\n"
-msgstr "Baigėsi semaforo laikas\n"
+msgid "Semaphore timeout.\n"
+msgstr "Baigėsi semaforo laikas.\n"
 
 #: winerror.mc:476
-msgid "Insufficient buffer\n"
-msgstr "Nepakankamas buferis\n"
+msgid "Insufficient buffer.\n"
+msgstr "Nepakankamas buferis.\n"
 
 #: winerror.mc:481
-msgid "Invalid name\n"
-msgstr "Neteisingas vardas\n"
+msgid "Invalid name.\n"
+msgstr "Neteisingas vardas.\n"
 
 #: winerror.mc:486
-msgid "Invalid level\n"
-msgstr "Neteisingas lygis\n"
+msgid "Invalid level.\n"
+msgstr "Neteisingas lygis.\n"
 
 #: winerror.mc:491
-msgid "No volume label\n"
-msgstr "Nėra tomo vardo\n"
+msgid "No volume label.\n"
+msgstr "Nėra tomo vardo.\n"
 
 #: winerror.mc:496
-msgid "Module not found\n"
-msgstr "Nerastas modulis\n"
+msgid "Module not found.\n"
+msgstr "Nerastas modulis.\n"
 
 #: winerror.mc:501
-msgid "Procedure not found\n"
-msgstr "Nerasta procedūra\n"
+msgid "Procedure not found.\n"
+msgstr "Nerasta procedūra.\n"
 
 #: winerror.mc:506
-msgid "No children to wait for\n"
-msgstr "Nėra vaikų laukimui\n"
+msgid "No children to wait for.\n"
+msgstr "Nėra vaikų laukimui.\n"
 
 #: winerror.mc:511
-msgid "Child process has not completed\n"
-msgstr "Antrinis procesas neužbaigtas\n"
+msgid "Child process has not completed.\n"
+msgstr "Antrinis procesas neužbaigtas.\n"
 
 #: winerror.mc:516
-msgid "Invalid use of direct access handle\n"
-msgstr "Neteisingas tiesioginės kreipties rodyklės naudojimas\n"
+msgid "Invalid use of direct access handle.\n"
+msgstr "Neteisingas tiesioginės kreipties rodyklės naudojimas.\n"
 
 #: winerror.mc:521
-msgid "Negative seek\n"
-msgstr "Neigiamas perėjimas\n"
+msgid "Negative seek.\n"
+msgstr "Neigiamas perėjimas.\n"
 
 #: winerror.mc:531
-msgid "Drive is a JOIN target\n"
-msgstr "Kaupiklis yra JOIN paskirtis\n"
+msgid "Drive is a JOIN target.\n"
+msgstr "Kaupiklis yra JOIN paskirtis.\n"
 
 #: winerror.mc:536
-msgid "Drive is already JOINed\n"
-msgstr "Kaupiklis jau prijungtas su JOIN\n"
+msgid "Drive is already JOINed.\n"
+msgstr "Kaupiklis jau prijungtas su JOIN.\n"
 
 #: winerror.mc:541
-msgid "Drive is already SUBSTed\n"
-msgstr "Kaupiklis jau yra pakeistas su SUBST\n"
+msgid "Drive is already SUBSTed.\n"
+msgstr "Kaupiklis jau yra pakeistas su SUBST.\n"
 
 #: winerror.mc:546
-msgid "Drive is not JOINed\n"
-msgstr "Kaupiklis nėra prijungtas su JOIN\n"
+msgid "Drive is not JOINed.\n"
+msgstr "Kaupiklis nėra prijungtas su JOIN.\n"
 
 #: winerror.mc:551
-msgid "Drive is not SUBSTed\n"
-msgstr "Kaupiklis nėra pakeistas su SUBST\n"
+msgid "Drive is not SUBSTed.\n"
+msgstr "Kaupiklis nėra pakeistas su SUBST.\n"
 
 #: winerror.mc:556
-msgid "Attempt to JOIN onto a JOINed drive\n"
-msgstr "Mėginimas prijungti su JOIN prie su JOIN prijungto kaupiklio\n"
+msgid "Attempt to JOIN onto a JOINed drive.\n"
+msgstr "Mėginimas prijungti su JOIN prie su JOIN prijungto kaupiklio.\n"
 
 #: winerror.mc:561
-msgid "Attempt to SUBST onto a SUBSTed drive\n"
-msgstr "Mėginimas pakeisti su SUBST kaupiklį jau pakeistą su SUBST\n"
+msgid "Attempt to SUBST onto a SUBSTed drive.\n"
+msgstr "Mėginimas pakeisti su SUBST kaupiklį jau pakeistą su SUBST.\n"
 
 #: winerror.mc:566
-msgid "Attempt to JOIN to a SUBSTed drive\n"
-msgstr "Mėginimas prijungti su JOIN prie pakeisto su SUBST kaupiklio\n"
+msgid "Attempt to JOIN to a SUBSTed drive.\n"
+msgstr "Mėginimas prijungti su JOIN prie pakeisto su SUBST kaupiklio.\n"
 
 #: winerror.mc:571
-msgid "Attempt to SUBST to a JOINed drive\n"
-msgstr "Mėginimas pakeisti su SUBST kaupiklį jau prijungtą su JOIN\n"
+msgid "Attempt to SUBST to a JOINed drive.\n"
+msgstr "Mėginimas pakeisti su SUBST kaupiklį jau prijungtą su JOIN.\n"
 
 #: winerror.mc:576
-msgid "Drive is busy\n"
-msgstr "Kaupiklis užimtas\n"
+msgid "Drive is busy.\n"
+msgstr "Kaupiklis užimtas.\n"
 
 #: winerror.mc:581
-msgid "Same drive\n"
-msgstr "Tas pats kaupiklis\n"
+msgid "Same drive.\n"
+msgstr "Tas pats kaupiklis.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory\n"
-msgstr "Ne aukščiausio lygio katalogas\n"
+msgid "Not toplevel directory.\n"
+msgstr "Ne aukščiausio lygio katalogas.\n"
 
 #: winerror.mc:591
-msgid "Directory is not empty\n"
-msgstr "Katalogas netuščias\n"
+msgid "Directory is not empty.\n"
+msgstr "Katalogas netuščias.\n"
 
 #: winerror.mc:596
-msgid "Path is in use as a SUBST\n"
-msgstr "Kelias naudojamas kaip SUBST\n"
+msgid "Path is in use as a SUBST.\n"
+msgstr "Kelias naudojamas kaip SUBST.\n"
 
 #: winerror.mc:601
-msgid "Path is in use as a JOIN\n"
-msgstr "Kelias naudojamas kaip JOIN\n"
+msgid "Path is in use as a JOIN.\n"
+msgstr "Kelias naudojamas kaip JOIN.\n"
 
 #: winerror.mc:606
-msgid "Path is busy\n"
-msgstr "Kelias užimtas\n"
+msgid "Path is busy.\n"
+msgstr "Kelias užimtas.\n"
 
 #: winerror.mc:611
-msgid "Already a SUBST target\n"
-msgstr "Jau SUBST paskirtis\n"
+msgid "Already a SUBST target.\n"
+msgstr "Jau SUBST paskirtis.\n"
 
 #: winerror.mc:616
-msgid "System trace not specified or disallowed\n"
-msgstr "Nenurodytas ar neleidžiamas sistemos pėdsakas\n"
+msgid "System trace not specified or disallowed.\n"
+msgstr "Nenurodytas ar neleidžiamas sistemos pėdsakas.\n"
 
 #: winerror.mc:621
-msgid "Event count for DosMuxSemWait incorrect\n"
-msgstr "Neteisingas DosMuxSemWait įvykių skaičius\n"
+msgid "Event count for DosMuxSemWait incorrect.\n"
+msgstr "Neteisingas DosMuxSemWait įvykių skaičius.\n"
 
 #: winerror.mc:626
-msgid "Too many waiters for DosMuxSemWait\n"
-msgstr "Per daug laukiančių DosMuxSemWait\n"
+msgid "Too many waiters for DosMuxSemWait.\n"
+msgstr "Per daug laukiančių DosMuxSemWait.\n"
 
 #: winerror.mc:631
-msgid "DosSemMuxWait list invalid\n"
-msgstr "Neteisingas DosSemMuxWait sąrašas\n"
+msgid "DosSemMuxWait list invalid.\n"
+msgstr "Neteisingas DosSemMuxWait sąrašas.\n"
 
 #: winerror.mc:636
-msgid "Volume label too long\n"
-msgstr "Tomo vardas per ilgas\n"
+msgid "Volume label too long.\n"
+msgstr "Tomo vardas per ilgas.\n"
 
 #: winerror.mc:641
-msgid "Too many TCBs\n"
-msgstr "Per daug TCB\n"
+msgid "Too many TCBs.\n"
+msgstr "Per daug TCB.\n"
 
 #: winerror.mc:646
-msgid "Signal refused\n"
-msgstr "Signalas nepriimtas\n"
+msgid "Signal refused.\n"
+msgstr "Signalas nepriimtas.\n"
 
 #: winerror.mc:651
-msgid "Segment discarded\n"
-msgstr "Segmentas atmestas\n"
+msgid "Segment discarded.\n"
+msgstr "Segmentas atmestas.\n"
 
 #: winerror.mc:656
-msgid "Segment not locked\n"
-msgstr "Segmentas neužblokuotas\n"
+msgid "Segment not locked.\n"
+msgstr "Segmentas neužblokuotas.\n"
 
 #: winerror.mc:661
-msgid "Bad thread ID address\n"
-msgstr "Blogas gijos identifikatoriaus adresas\n"
+msgid "Bad thread ID address.\n"
+msgstr "Blogas gijos identifikatoriaus adresas.\n"
 
 #: winerror.mc:666
-msgid "Bad arguments to DosExecPgm\n"
-msgstr "Blogi DosExecPgm argumentai\n"
+msgid "Bad arguments to DosExecPgm.\n"
+msgstr "Blogi DosExecPgm argumentai.\n"
 
 #: winerror.mc:671
-msgid "Path is invalid\n"
-msgstr "Neteisingas kelias\n"
+msgid "Path is invalid.\n"
+msgstr "Neteisingas kelias.\n"
 
 #: winerror.mc:676
-msgid "Signal pending\n"
-msgstr "Laukiama signalo\n"
+msgid "Signal pending.\n"
+msgstr "Laukiama signalo.\n"
 
 #: winerror.mc:681
-msgid "Max system-wide thread count reached\n"
-msgstr "Pasiekta sistemos gijų skaičiaus riba\n"
+msgid "Max system-wide thread count reached.\n"
+msgstr "Pasiekta sistemos gijų skaičiaus riba.\n"
 
 #: winerror.mc:686
-msgid "Lock failed\n"
-msgstr "Nepavyko užblokuoti\n"
+msgid "Lock failed.\n"
+msgstr "Nepavyko užblokuoti.\n"
 
 #: winerror.mc:691
-msgid "Resource in use\n"
-msgstr "Išteklius naudojamas\n"
+msgid "Resource in use.\n"
+msgstr "Išteklius naudojamas.\n"
 
 #: winerror.mc:696
-msgid "Cancel violation\n"
-msgstr "Atmetimo pažeidimas\n"
+msgid "Cancel violation.\n"
+msgstr "Atmetimo pažeidimas.\n"
 
 #: winerror.mc:701
-msgid "Atomic locks not supported\n"
-msgstr "Neskaidomi užblokavimai nepalaikomi\n"
+msgid "Atomic locks not supported.\n"
+msgstr "Neskaidomi užblokavimai nepalaikomi.\n"
 
 #: winerror.mc:706
-msgid "Invalid segment number\n"
-msgstr "Neteisingas segmento numeris\n"
+msgid "Invalid segment number.\n"
+msgstr "Neteisingas segmento numeris.\n"
 
 #: winerror.mc:711
-msgid "Invalid ordinal for %1\n"
-msgstr "Neteisingas %1 eilės numeris\n"
+msgid "Invalid ordinal for %1.\n"
+msgstr "Neteisingas %1 eilės numeris.\n"
 
 #: winerror.mc:716
-msgid "File already exists\n"
-msgstr "Failas jau egzistuoja\n"
+msgid "File already exists.\n"
+msgstr "Failas jau egzistuoja.\n"
 
 #: winerror.mc:721
-msgid "Invalid flag number\n"
-msgstr "Neteisingas žymos bito numeris\n"
+msgid "Invalid flag number.\n"
+msgstr "Neteisingas žymos bito numeris.\n"
 
 #: winerror.mc:726
-msgid "Semaphore name not found\n"
-msgstr "Semaforo vardas nerastas\n"
+msgid "Semaphore name not found.\n"
+msgstr "Semaforo vardas nerastas.\n"
 
 #: winerror.mc:731
-msgid "Invalid starting code segment for %1\n"
-msgstr "Neteisingas %1 pradinis kodo segmentas\n"
+msgid "Invalid starting code segment for %1.\n"
+msgstr "Neteisingas %1 pradinis kodo segmentas.\n"
 
 #: winerror.mc:736
-msgid "Invalid starting stack segment for %1\n"
-msgstr "Neteisingas %1 pradinis dėklo segmentas\n"
+msgid "Invalid starting stack segment for %1.\n"
+msgstr "Neteisingas %1 pradinis dėklo segmentas.\n"
 
 #: winerror.mc:741
-msgid "Invalid module type for %1\n"
-msgstr "Neteisingas %1 modulio tipas\n"
+msgid "Invalid module type for %1.\n"
+msgstr "Neteisingas %1 modulio tipas.\n"
 
 #: winerror.mc:746
-msgid "Invalid EXE signature in %1\n"
-msgstr "Neteisingas %1 EXE parašas\n"
+msgid "Invalid EXE signature in %1.\n"
+msgstr "Neteisingas %1 EXE parašas.\n"
 
 #: winerror.mc:751
-msgid "EXE %1 is marked invalid\n"
-msgstr "%1 EXE pažymėtas neteisingu\n"
+msgid "EXE %1 is marked invalid.\n"
+msgstr "%1 EXE pažymėtas neteisingu.\n"
 
 #: winerror.mc:756
-msgid "Bad EXE format for %1\n"
-msgstr "Blogas %1 EXE formatas\n"
+msgid "Bad EXE format for %1.\n"
+msgstr "Blogas %1 EXE formatas.\n"
 
 #: winerror.mc:761
-msgid "Iterated data exceeds 64k in %1\n"
-msgstr "Pakartoti %1 duomenys viršija 64k\n"
+msgid "Iterated data exceeds 64k in %1.\n"
+msgstr "Pakartoti %1 duomenys viršija 64k.\n"
 
 #: winerror.mc:766
-msgid "Invalid MinAllocSize in %1\n"
-msgstr "Neteisingas %1 MinAllocSize\n"
+msgid "Invalid MinAllocSize in %1.\n"
+msgstr "Neteisingas %1 MinAllocSize.\n"
 
 #: winerror.mc:771
-msgid "Dynlink from invalid ring\n"
-msgstr "Dynlink iš neteisingo žiedo\n"
+msgid "Dynlink from invalid ring.\n"
+msgstr "Dynlink iš neteisingo žiedo.\n"
 
 #: winerror.mc:776
-msgid "IOPL not enabled\n"
-msgstr "IOPL neįjungtas\n"
+msgid "IOPL not enabled.\n"
+msgstr "IOPL neįjungtas.\n"
 
 #: winerror.mc:781
-msgid "Invalid SEGDPL in %1\n"
-msgstr "Neteisingas %1 SEGDPL\n"
+msgid "Invalid SEGDPL in %1.\n"
+msgstr "Neteisingas %1 SEGDPL.\n"
 
 #: winerror.mc:786
-msgid "Auto data segment exceeds 64k\n"
-msgstr "Automatinis duomenų segmentas viršija 64k\n"
+msgid "Auto data segment exceeds 64k.\n"
+msgstr "Automatinis duomenų segmentas viršija 64k.\n"
 
 #: winerror.mc:791
-msgid "Ring 2 segment must be movable\n"
-msgstr "Antrojo žiedo segmentas turi būti perkeliamas\n"
+msgid "Ring 2 segment must be movable.\n"
+msgstr "Antrojo žiedo segmentas turi būti perkeliamas.\n"
 
 #: winerror.mc:796
-msgid "Relocation chain exceeds segment limit in %1\n"
-msgstr "%1 perkėlimų grandinė viršija segmentų limitą\n"
+msgid "Relocation chain exceeds segment limit in %1.\n"
+msgstr "%1 perkėlimų grandinė viršija segmentų limitą.\n"
 
 #: winerror.mc:801
-msgid "Infinite loop in relocation chain in %1\n"
-msgstr "Begalinis ciklas %1 perkėlimų grandinėje\n"
+msgid "Infinite loop in relocation chain in %1.\n"
+msgstr "Begalinis ciklas %1 perkėlimų grandinėje.\n"
 
 #: winerror.mc:806
-msgid "Environment variable not found\n"
-msgstr "Aplinkos kintamasis nerastas\n"
+msgid "Environment variable not found.\n"
+msgstr "Aplinkos kintamasis nerastas.\n"
 
 #: winerror.mc:811
-msgid "No signal sent\n"
-msgstr "Joks signalas neišsiųstas\n"
+msgid "No signal sent.\n"
+msgstr "Joks signalas neišsiųstas.\n"
 
 #: winerror.mc:816
-msgid "File name is too long\n"
-msgstr "Failo vardas per ilgas\n"
+msgid "File name is too long.\n"
+msgstr "Failo vardas per ilgas.\n"
 
 #: winerror.mc:821
-msgid "Ring 2 stack in use\n"
-msgstr "Antrojo žiedo dėklas naudojamas\n"
+msgid "Ring 2 stack in use.\n"
+msgstr "Antrojo žiedo dėklas naudojamas.\n"
 
 #: winerror.mc:826
-msgid "Error in use of filename wildcards\n"
-msgstr "Klaida naudojant failo vardo pakaitos simbolius\n"
+msgid "Error in use of filename wildcards.\n"
+msgstr "Klaida naudojant failo vardo pakaitos simbolius.\n"
 
 #: winerror.mc:831
-msgid "Invalid signal number\n"
-msgstr "Neteisingas signalo numeris\n"
+msgid "Invalid signal number.\n"
+msgstr "Neteisingas signalo numeris.\n"
 
 #: winerror.mc:836
-msgid "Error setting signal handler\n"
-msgstr "Klaida nustatant signalo doroklę\n"
+msgid "Error setting signal handler.\n"
+msgstr "Klaida nustatant signalo doroklę.\n"
 
 #: winerror.mc:841
-msgid "Segment locked\n"
-msgstr "Segmentas užblokuotas\n"
+msgid "Segment locked.\n"
+msgstr "Segmentas užblokuotas.\n"
 
 #: winerror.mc:846
-msgid "Too many modules\n"
-msgstr "Per daug modulių\n"
+msgid "Too many modules.\n"
+msgstr "Per daug modulių.\n"
 
 #: winerror.mc:851
-msgid "Nesting LoadModule calls not allowed\n"
-msgstr "Negalima naudoti įdėtinių LoadModule kreipinių\n"
+msgid "Nesting LoadModule calls not allowed.\n"
+msgstr "Negalima naudoti įdėtinių LoadModule kreipinių.\n"
 
 #: winerror.mc:856
-msgid "Machine type mismatch\n"
-msgstr "Neatitinka kompiuterio tipas\n"
+msgid "Machine type mismatch.\n"
+msgstr "Neatitinka kompiuterio tipas.\n"
 
 #: winerror.mc:861
-msgid "Bad pipe\n"
-msgstr "Blogas kanalas\n"
+msgid "Bad pipe.\n"
+msgstr "Blogas kanalas.\n"
 
 #: winerror.mc:866
-msgid "Pipe busy\n"
-msgstr "Kanalas užimtas\n"
+msgid "Pipe busy.\n"
+msgstr "Kanalas užimtas.\n"
 
 #: winerror.mc:871
-msgid "Pipe closed\n"
-msgstr "Kanalas užvertas\n"
+msgid "Pipe closed.\n"
+msgstr "Kanalas užvertas.\n"
 
 #: winerror.mc:876
-msgid "Pipe not connected\n"
-msgstr "Kanalas neprijungtas\n"
+msgid "Pipe not connected.\n"
+msgstr "Kanalas neprijungtas.\n"
 
 #: winerror.mc:881
-msgid "More data available\n"
-msgstr "Yra daugiau duomenų\n"
+msgid "More data available.\n"
+msgstr "Yra daugiau duomenų.\n"
 
 #: winerror.mc:886
-msgid "Session canceled\n"
-msgstr "Seansas nutrauktas\n"
+msgid "Session canceled.\n"
+msgstr "Seansas nutrauktas.\n"
 
 #: winerror.mc:891
-msgid "Invalid extended attribute name\n"
-msgstr "Neteisingas išplėstinio atributo vardas\n"
+msgid "Invalid extended attribute name.\n"
+msgstr "Neteisingas išplėstinio atributo vardas.\n"
 
 #: winerror.mc:896
-msgid "Extended attribute list inconsistent\n"
-msgstr "Išplėstinių atributų sąrašas prieštaringas\n"
+msgid "Extended attribute list inconsistent.\n"
+msgstr "Išplėstinių atributų sąrašas prieštaringas.\n"
 
 #: winerror.mc:901
-msgid "No more data available\n"
-msgstr "Nėra daugiau duomenų\n"
+msgid "No more data available.\n"
+msgstr "Nėra daugiau duomenų.\n"
 
 #: winerror.mc:906
-msgid "Cannot use Copy API\n"
-msgstr "Negalima naudoti kopijavimo programų sąsajos\n"
+msgid "Cannot use Copy API.\n"
+msgstr "Negalima naudoti kopijavimo programų sąsajos.\n"
 
 #: winerror.mc:911
-msgid "Directory name invalid\n"
-msgstr "Neteisingas katalogo vardas\n"
+msgid "Directory name invalid.\n"
+msgstr "Neteisingas katalogo vardas.\n"
 
 #: winerror.mc:916
-msgid "Extended attributes didn't fit\n"
-msgstr "Netilpo išplėstiniai atributai\n"
+msgid "Extended attributes didn't fit.\n"
+msgstr "Netilpo išplėstiniai atributai.\n"
 
 #: winerror.mc:921
-msgid "Extended attribute file corrupt\n"
-msgstr "Pažeistas išplėstinių atributų failas\n"
+msgid "Extended attribute file corrupt.\n"
+msgstr "Pažeistas išplėstinių atributų failas.\n"
 
 #: winerror.mc:926
-msgid "Extended attribute table full\n"
-msgstr "Išplėstinių atributų lentelė pilna\n"
+msgid "Extended attribute table full.\n"
+msgstr "Išplėstinių atributų lentelė pilna.\n"
 
 #: winerror.mc:931
-msgid "Invalid extended attribute handle\n"
-msgstr "Neteisinga išplėstinių atributų rodyklė\n"
+msgid "Invalid extended attribute handle.\n"
+msgstr "Neteisinga išplėstinių atributų rodyklė.\n"
 
 #: winerror.mc:936
-msgid "Extended attributes not supported\n"
-msgstr "Nepalaikomi išplėstiniai atributai\n"
+msgid "Extended attributes not supported.\n"
+msgstr "Nepalaikomi išplėstiniai atributai.\n"
 
 #: winerror.mc:941
-msgid "Mutex not owned by caller\n"
-msgstr "Muteksas nepriklauso kvietėjui\n"
+msgid "Mutex not owned by caller.\n"
+msgstr "Muteksas nepriklauso kvietėjui.\n"
 
 #: winerror.mc:946
-msgid "Too many posts to semaphore\n"
-msgstr "Per didelis semaforo prieaugis\n"
+msgid "Too many posts to semaphore.\n"
+msgstr "Per didelis semaforo prieaugis.\n"
 
 #: winerror.mc:951
-msgid "Read/WriteProcessMemory partially completed\n"
-msgstr "Funkcija skaityti/rašyti proceso atmintį dalinai baigta\n"
+msgid "Read/WriteProcessMemory partially completed.\n"
+msgstr "Funkcija skaityti/rašyti proceso atmintį dalinai baigta.\n"
 
 #: winerror.mc:956
-msgid "The oplock wasn't granted\n"
-msgstr "Nesutikta su oportunistiniu užblokavimu\n"
+msgid "The oplock wasn't granted.\n"
+msgstr "Nesutikta su oportunistiniu užblokavimu.\n"
 
 #: winerror.mc:961
-msgid "Invalid oplock message received\n"
-msgstr "Gautas neteisingas oportunistinio užblokavimo pranešimas\n"
+msgid "Invalid oplock message received.\n"
+msgstr "Gautas neteisingas oportunistinio užblokavimo pranešimas.\n"
 
 #: winerror.mc:966
-msgid "Message 0x%1 not found in file %2\n"
-msgstr "Pranešimas 0x%1 nerastas faile %2\n"
+msgid "Message 0x%1 not found in file %2.\n"
+msgstr "Pranešimas 0x%1 nerastas faile %2.\n"
 
 #: winerror.mc:971
-msgid "Invalid address\n"
-msgstr "Neteisingas adresas\n"
+msgid "Invalid address.\n"
+msgstr "Neteisingas adresas.\n"
 
 #: winerror.mc:976
-msgid "Arithmetic overflow\n"
-msgstr "Aritmetinis perpildymas\n"
+msgid "Arithmetic overflow.\n"
+msgstr "Aritmetinis perpildymas.\n"
 
 #: winerror.mc:981
-msgid "Pipe connected\n"
-msgstr "Kanalas prijungtas\n"
+msgid "Pipe connected.\n"
+msgstr "Kanalas prijungtas.\n"
 
 #: winerror.mc:986
-msgid "Pipe listening\n"
-msgstr "Klausomasi kanalo\n"
+msgid "Pipe listening.\n"
+msgstr "Klausomasi kanalo.\n"
 
 #: winerror.mc:991
-msgid "Extended attribute access denied\n"
-msgstr "Išplėstinių atributų prieiga nesuteikta\n"
+msgid "Extended attribute access denied.\n"
+msgstr "Išplėstinių atributų prieiga nesuteikta.\n"
 
 #: winerror.mc:996
-msgid "I/O operation aborted\n"
-msgstr "Į/I operacija nutraukta\n"
+msgid "I/O operation aborted.\n"
+msgstr "Į/I operacija nutraukta.\n"
 
 #: winerror.mc:1001
-msgid "Overlapped I/O incomplete\n"
-msgstr "Persiklojantis Į/I neužbaigtas\n"
+msgid "Overlapped I/O incomplete.\n"
+msgstr "Persiklojantis Į/I neužbaigtas.\n"
 
 #: winerror.mc:1006
-msgid "Overlapped I/O pending\n"
-msgstr "Laukiama persiklojančio Į/I\n"
+msgid "Overlapped I/O pending.\n"
+msgstr "Laukiama persiklojančio Į/I.\n"
 
 #: winerror.mc:1011
-msgid "No access to memory location\n"
-msgstr "Nėra prieigos prie atminties vietos\n"
+msgid "No access to memory location.\n"
+msgstr "Nėra prieigos prie atminties vietos.\n"
 
 #: winerror.mc:1016
-msgid "Swap error\n"
-msgstr "Sukeitimų klaida\n"
+msgid "Swap error.\n"
+msgstr "Sukeitimų klaida.\n"
 
 #: winerror.mc:1021
-msgid "Stack overflow\n"
-msgstr "Dėklo perpildymas\n"
+msgid "Stack overflow.\n"
+msgstr "Dėklo perpildymas.\n"
 
 #: winerror.mc:1026
-msgid "Invalid message\n"
-msgstr "Neteisingas pranešimas\n"
+msgid "Invalid message.\n"
+msgstr "Neteisingas pranešimas.\n"
 
 #: winerror.mc:1031
-msgid "Cannot complete\n"
-msgstr "Nepavyko užbaigti\n"
+msgid "Cannot complete.\n"
+msgstr "Nepavyko užbaigti.\n"
 
 #: winerror.mc:1036
-msgid "Invalid flags\n"
-msgstr "Neteisingi žymos bitai\n"
+msgid "Invalid flags.\n"
+msgstr "Neteisingi žymos bitai.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume\n"
-msgstr "Neatpažintas tomas\n"
+msgid "Unrecognised volume.\n"
+msgstr "Neatpažintas tomas.\n"
 
 #: winerror.mc:1046
-msgid "File invalid\n"
-msgstr "Neteisingas failas\n"
+msgid "File invalid.\n"
+msgstr "Neteisingas failas.\n"
 
 #: winerror.mc:1051
-msgid "Cannot run full-screen\n"
-msgstr "Negalima paleisti visame ekrane\n"
+msgid "Cannot run full-screen.\n"
+msgstr "Negalima paleisti visame ekrane.\n"
 
 #: winerror.mc:1056
-msgid "Nonexistent token\n"
-msgstr "Neegzistuojantis prieigos raktas\n"
+msgid "Nonexistent token.\n"
+msgstr "Neegzistuojantis prieigos raktas.\n"
 
 #: winerror.mc:1061
-msgid "Registry corrupt\n"
-msgstr "Pažeistas registras\n"
+msgid "Registry corrupt.\n"
+msgstr "Pažeistas registras.\n"
 
 #: winerror.mc:1066
-msgid "Invalid key\n"
-msgstr "Neteisingas raktas\n"
+msgid "Invalid key.\n"
+msgstr "Neteisingas raktas.\n"
 
 #: winerror.mc:1071
-msgid "Can't open registry key\n"
-msgstr "Nepavyko atverti registro rakto\n"
+msgid "Can't open registry key.\n"
+msgstr "Nepavyko atverti registro rakto.\n"
 
 #: winerror.mc:1076
-msgid "Can't read registry key\n"
-msgstr "Nepavyko perskaityti registro rakto\n"
+msgid "Can't read registry key.\n"
+msgstr "Nepavyko perskaityti registro rakto.\n"
 
 #: winerror.mc:1081
-msgid "Can't write registry key\n"
-msgstr "Nepavyko įrašyti registro rakto\n"
+msgid "Can't write registry key.\n"
+msgstr "Nepavyko įrašyti registro rakto.\n"
 
 #: winerror.mc:1086
-msgid "Registry has been recovered\n"
-msgstr "Registras buvo atkurtas\n"
+msgid "Registry has been recovered.\n"
+msgstr "Registras buvo atkurtas.\n"
 
 #: winerror.mc:1091
-msgid "Registry is corrupt\n"
-msgstr "Registras yra pažeistas\n"
+msgid "Registry is corrupt.\n"
+msgstr "Registras yra pažeistas.\n"
 
 #: winerror.mc:1096
-msgid "I/O to registry failed\n"
-msgstr "Nepavyko registro Į/I\n"
+msgid "I/O to registry failed.\n"
+msgstr "Nepavyko registro Į/I.\n"
 
 #: winerror.mc:1101
-msgid "Not registry file\n"
-msgstr "Ne registro failas\n"
+msgid "Not registry file.\n"
+msgstr "Ne registro failas.\n"
 
 #: winerror.mc:1106
-msgid "Key deleted\n"
-msgstr "Raktas ištrintas\n"
+msgid "Key deleted.\n"
+msgstr "Raktas ištrintas.\n"
 
 #: winerror.mc:1111
-msgid "No registry log space\n"
-msgstr "Nėra vietos registro žurnale\n"
+msgid "No registry log space.\n"
+msgstr "Nėra vietos registro žurnale.\n"
 
 #: winerror.mc:1116
-msgid "Registry key has subkeys\n"
-msgstr "Registro raktas turi porakčių\n"
+msgid "Registry key has subkeys.\n"
+msgstr "Registro raktas turi porakčių.\n"
 
 #: winerror.mc:1121
-msgid "Subkey must be volatile\n"
-msgstr "Poraktis turi būti kintamas\n"
+msgid "Subkey must be volatile.\n"
+msgstr "Poraktis turi būti kintamas.\n"
 
 #: winerror.mc:1126
-msgid "Notify change request in progress\n"
-msgstr "Vyksta pranešimo apie pasikeitimus užklausa\n"
+msgid "Notify change request in progress.\n"
+msgstr "Vyksta pranešimo apie pasikeitimus užklausa.\n"
 
 #: winerror.mc:1131
-msgid "Dependent services are running\n"
-msgstr "Priklausomos tarnybos yra vykdomos\n"
+msgid "Dependent services are running.\n"
+msgstr "Priklausomos tarnybos yra vykdomos.\n"
 
 #: winerror.mc:1136
-msgid "Invalid service control\n"
-msgstr "Neteisingas tarnybos valdymas\n"
+msgid "Invalid service control.\n"
+msgstr "Neteisingas tarnybos valdymas.\n"
 
 #: winerror.mc:1141
-msgid "Service request timeout\n"
-msgstr "Baigėsi tarnybos užklausos laikas\n"
+msgid "Service request timeout.\n"
+msgstr "Baigėsi tarnybos užklausos laikas.\n"
 
 #: winerror.mc:1146
-msgid "Cannot create service thread\n"
-msgstr "Nepavyko sukurti tarnybos gijos\n"
+msgid "Cannot create service thread.\n"
+msgstr "Nepavyko sukurti tarnybos gijos.\n"
 
 #: winerror.mc:1151
-msgid "Service database locked\n"
-msgstr "Tarnybų duomenų bazė užblokuota\n"
+msgid "Service database locked.\n"
+msgstr "Tarnybų duomenų bazė užblokuota.\n"
 
 #: winerror.mc:1156
-msgid "Service already running\n"
-msgstr "Tarnyba jau vykdoma\n"
+msgid "Service already running.\n"
+msgstr "Tarnyba jau vykdoma.\n"
 
 #: winerror.mc:1161
-msgid "Invalid service account\n"
-msgstr "Neteisinga tarnybos paskyra\n"
+msgid "Invalid service account.\n"
+msgstr "Neteisinga tarnybos paskyra.\n"
 
 #: winerror.mc:1166
-msgid "Service is disabled\n"
-msgstr "Tarnyba išjungta\n"
+msgid "Service is disabled.\n"
+msgstr "Tarnyba išjungta.\n"
 
 #: winerror.mc:1171
-msgid "Circular dependency\n"
-msgstr "Ciklinė priklausomybė\n"
+msgid "Circular dependency.\n"
+msgstr "Ciklinė priklausomybė.\n"
 
 #: winerror.mc:1176
-msgid "Service does not exist\n"
-msgstr "Tarnyba neegzistuoja\n"
+msgid "Service does not exist.\n"
+msgstr "Tarnyba neegzistuoja.\n"
 
 #: winerror.mc:1181
-msgid "Service cannot accept control message\n"
-msgstr "Tarnyba negali priimti valdymo pranešimo\n"
+msgid "Service cannot accept control message.\n"
+msgstr "Tarnyba negali priimti valdymo pranešimo.\n"
 
 #: winerror.mc:1186
-msgid "Service not active\n"
-msgstr "Tarnyba neaktyvi\n"
+msgid "Service not active.\n"
+msgstr "Tarnyba neaktyvi.\n"
 
 #: winerror.mc:1191
-msgid "Service controller connect failed\n"
-msgstr "Nepavyko prisijungti prie tarnybų valdiklio\n"
+msgid "Service controller connect failed.\n"
+msgstr "Nepavyko prisijungti prie tarnybų valdiklio.\n"
 
 #: winerror.mc:1196
-msgid "Exception in service\n"
-msgstr "Išimtinė situacija tarnyboje\n"
+msgid "Exception in service.\n"
+msgstr "Išimtinė situacija tarnyboje.\n"
 
 #: winerror.mc:1201
-msgid "Database does not exist\n"
-msgstr "Duomenų bazė neegzistuoja\n"
+msgid "Database does not exist.\n"
+msgstr "Duomenų bazė neegzistuoja.\n"
 
 #: winerror.mc:1206
-msgid "Service-specific error\n"
-msgstr "Savita tarnybos klaida\n"
+msgid "Service-specific error.\n"
+msgstr "Savita tarnybos klaida.\n"
 
 #: winerror.mc:1211
-msgid "Process aborted\n"
-msgstr "Procesas nutrauktas\n"
+msgid "Process aborted.\n"
+msgstr "Procesas nutrauktas.\n"
 
 #: winerror.mc:1216
-msgid "Service dependency failed\n"
-msgstr "Sutrikę tarnybos priklausomybės\n"
+msgid "Service dependency failed.\n"
+msgstr "Sutrikę tarnybos priklausomybės.\n"
 
 #: winerror.mc:1221
-msgid "Service login failed\n"
-msgstr "Nepavyko tarnybos prisijungimas\n"
+msgid "Service login failed.\n"
+msgstr "Nepavyko tarnybos prisijungimas.\n"
 
 #: winerror.mc:1226
-msgid "Service start-hang\n"
-msgstr "Tarnybos paleidimo strigtis\n"
+msgid "Service start-hang.\n"
+msgstr "Tarnybos paleidimo strigtis.\n"
 
 #: winerror.mc:1231
-msgid "Invalid service lock\n"
-msgstr "Neteisingas tarnybos blokavimas\n"
+msgid "Invalid service lock.\n"
+msgstr "Neteisingas tarnybos blokavimas.\n"
 
 #: winerror.mc:1236
-msgid "Service marked for delete\n"
-msgstr "Tarnyba pažymėta trynimui\n"
+msgid "Service marked for delete.\n"
+msgstr "Tarnyba pažymėta trynimui.\n"
 
 #: winerror.mc:1241
-msgid "Service exists\n"
-msgstr "Tarnyba egzistuoja\n"
+msgid "Service exists.\n"
+msgstr "Tarnyba egzistuoja.\n"
 
 #: winerror.mc:1246
-msgid "System running last-known-good config\n"
-msgstr "Sistema veikia su paskutine žinoma gera konfigūracija\n"
+msgid "System running last-known-good config.\n"
+msgstr "Sistema veikia su paskutine žinoma gera konfigūracija.\n"
 
 #: winerror.mc:1251
-msgid "Service dependency deleted\n"
-msgstr "Pašalinta tarnybos priklausomybė\n"
+msgid "Service dependency deleted.\n"
+msgstr "Pašalinta tarnybos priklausomybė.\n"
 
 #: winerror.mc:1256
-msgid "Boot already accepted as last-good config\n"
+msgid "Boot already accepted as last-good config.\n"
 msgstr ""
 "Operacinės sistemos paleidimas jau patvirtintas su paskutine žinoma gera "
-"konfigūracija\n"
+"konfigūracija.\n"
 
 #: winerror.mc:1261
-msgid "Service not started since last boot\n"
-msgstr "Tarnyba nepasileido nuo paskutinio operacinės sistemos paleidimo\n"
+msgid "Service not started since last boot.\n"
+msgstr "Tarnyba nepasileido nuo paskutinio operacinės sistemos paleidimo.\n"
 
 #: winerror.mc:1266
-msgid "Duplicate service name\n"
-msgstr "Vienodas tarnybos vardas\n"
+msgid "Duplicate service name.\n"
+msgstr "Vienodas tarnybos vardas.\n"
 
 #: winerror.mc:1271
-msgid "Different service account\n"
-msgstr "Kita tarnybos paskyra\n"
+msgid "Different service account.\n"
+msgstr "Kita tarnybos paskyra.\n"
 
 #: winerror.mc:1276
-msgid "Driver failure cannot be detected\n"
-msgstr "Tvarkyklės klaida negali būti aptikta\n"
+msgid "Driver failure cannot be detected.\n"
+msgstr "Tvarkyklės klaida negali būti aptikta.\n"
 
 #: winerror.mc:1281
-msgid "Process abort cannot be detected\n"
-msgstr "Proceso nutraukimas negali būti aptiktas\n"
+msgid "Process abort cannot be detected.\n"
+msgstr "Proceso nutraukimas negali būti aptiktas.\n"
 
 #: winerror.mc:1286
-msgid "No recovery program for service\n"
-msgstr "Nėra atkūrimo programos tarnybai\n"
+msgid "No recovery program for service.\n"
+msgstr "Nėra atkūrimo programos tarnybai.\n"
 
 #: winerror.mc:1291
-msgid "Service not implemented by exe\n"
-msgstr "Tarnyba nerealizuota vykdomajame faile\n"
+msgid "Service not implemented by exe.\n"
+msgstr "Tarnyba nerealizuota vykdomajame faile.\n"
 
 #: winerror.mc:1296
-msgid "End of media\n"
-msgstr "Laikmenos pabaiga\n"
+msgid "End of media.\n"
+msgstr "Laikmenos pabaiga.\n"
 
 #: winerror.mc:1301
-msgid "Filemark detected\n"
-msgstr "Failo žymė aptikta\n"
+msgid "Filemark detected.\n"
+msgstr "Failo žymė aptikta.\n"
 
 #: winerror.mc:1306
-msgid "Beginning of media\n"
-msgstr "Laikmenos pradžia\n"
+msgid "Beginning of media.\n"
+msgstr "Laikmenos pradžia.\n"
 
 #: winerror.mc:1311
-msgid "Setmark detected\n"
-msgstr "Žymės nustatymas aptiktas\n"
+msgid "Setmark detected.\n"
+msgstr "Žymės nustatymas aptiktas.\n"
 
 #: winerror.mc:1316
-msgid "No data detected\n"
-msgstr "Neaptikta duomenų\n"
+msgid "No data detected.\n"
+msgstr "Neaptikta duomenų.\n"
 
 #: winerror.mc:1321
-msgid "Partition failure\n"
-msgstr "Disko skaidinio klaida\n"
+msgid "Partition failure.\n"
+msgstr "Disko skaidinio klaida.\n"
 
 #: winerror.mc:1326
-msgid "Invalid block length\n"
-msgstr "Neteisingas bloko ilgis\n"
+msgid "Invalid block length.\n"
+msgstr "Neteisingas bloko ilgis.\n"
 
 #: winerror.mc:1331
-msgid "Device not partitioned\n"
-msgstr "Įrenginys neskaidytas\n"
+msgid "Device not partitioned.\n"
+msgstr "Įrenginys neskaidytas.\n"
 
 #: winerror.mc:1336
-msgid "Unable to lock media\n"
-msgstr "Nepavyko užblokuoti laikmenos\n"
+msgid "Unable to lock media.\n"
+msgstr "Nepavyko užblokuoti laikmenos.\n"
 
 #: winerror.mc:1341
-msgid "Unable to unload media\n"
-msgstr "Nepavyko išstumti laikmenos\n"
+msgid "Unable to unload media.\n"
+msgstr "Nepavyko išstumti laikmenos.\n"
 
 #: winerror.mc:1346
-msgid "Media changed\n"
-msgstr "Laikmena pasikeitė\n"
+msgid "Media changed.\n"
+msgstr "Laikmena pasikeitė.\n"
 
 #: winerror.mc:1351
-msgid "I/O bus reset\n"
-msgstr "Į/I magistralės paleidimas iš naujo\n"
+msgid "I/O bus reset.\n"
+msgstr "Į/I magistralės paleidimas iš naujo.\n"
 
 #: winerror.mc:1356
-msgid "No media in drive\n"
-msgstr "Nėra laikmenos kaupiklyje\n"
+msgid "No media in drive.\n"
+msgstr "Nėra laikmenos kaupiklyje.\n"
 
 #: winerror.mc:1361
-msgid "No Unicode translation\n"
-msgstr "Nėra unikodo perskaičiavimo\n"
+msgid "No Unicode translation.\n"
+msgstr "Nėra unikodo perskaičiavimo.\n"
 
 #: winerror.mc:1366
-msgid "DLL init failed\n"
-msgstr "Nepavyko DLL inicijavimas\n"
+msgid "DLL init failed.\n"
+msgstr "Nepavyko DLL inicijavimas.\n"
 
 #: winerror.mc:1371
-msgid "Shutdown in progress\n"
-msgstr "Vyksta sistemos stabdymas\n"
+msgid "Shutdown in progress.\n"
+msgstr "Vyksta sistemos stabdymas.\n"
 
 #: winerror.mc:1376
-msgid "No shutdown in progress\n"
-msgstr "Nevyksta sistemos stabdymas\n"
+msgid "No shutdown in progress.\n"
+msgstr "Nevyksta sistemos stabdymas.\n"
 
 #: winerror.mc:1381
-msgid "I/O device error\n"
-msgstr "Į/I įrenginio klaida\n"
+msgid "I/O device error.\n"
+msgstr "Į/I įrenginio klaida.\n"
 
 #: winerror.mc:1386
-msgid "No serial devices found\n"
-msgstr "Nerastas joks nuoseklusis įtaisas\n"
+msgid "No serial devices found.\n"
+msgstr "Nerastas joks nuoseklusis įtaisas.\n"
 
 #: winerror.mc:1391
-msgid "Shared IRQ busy\n"
-msgstr "Bendrasis IRQ užimtas\n"
+msgid "Shared IRQ busy.\n"
+msgstr "Bendrasis IRQ užimtas.\n"
 
 #: winerror.mc:1396
-msgid "Serial I/O completed\n"
-msgstr "Nuoseklusis Į/I baigtas\n"
+msgid "Serial I/O completed.\n"
+msgstr "Nuoseklusis Į/I baigtas.\n"
 
 #: winerror.mc:1401
-msgid "Serial I/O counter timeout\n"
-msgstr "Nuosekliojo Į/I skaitiklio laikas baigėsi\n"
+msgid "Serial I/O counter timeout.\n"
+msgstr "Nuosekliojo Į/I skaitiklio laikas baigėsi.\n"
 
 #: winerror.mc:1406
-msgid "Floppy ID address mark not found\n"
-msgstr "Diskelio identifikatoriaus adreso žymė nerasta\n"
+msgid "Floppy ID address mark not found.\n"
+msgstr "Diskelio identifikatoriaus adreso žymė nerasta.\n"
 
 #: winerror.mc:1411
-msgid "Floppy reports wrong cylinder\n"
-msgstr "Diskelis perduoda neteisingą cilindrą\n"
+msgid "Floppy reports wrong cylinder.\n"
+msgstr "Diskelis perduoda neteisingą cilindrą.\n"
 
 #: winerror.mc:1416
-msgid "Unknown floppy error\n"
-msgstr "Nežinoma diskelio klaida\n"
+msgid "Unknown floppy error.\n"
+msgstr "Nežinoma diskelio klaida.\n"
 
 #: winerror.mc:1421
-msgid "Floppy registers inconsistent\n"
-msgstr "Diskelio registrai prieštaringi\n"
+msgid "Floppy registers inconsistent.\n"
+msgstr "Diskelio registrai prieštaringi.\n"
 
 #: winerror.mc:1426
-msgid "Hard disk recalibrate failed\n"
-msgstr "Nepavyko standžiojo disko perkalibravimas\n"
+msgid "Hard disk recalibrate failed.\n"
+msgstr "Nepavyko standžiojo disko perkalibravimas.\n"
 
 #: winerror.mc:1431
-msgid "Hard disk operation failed\n"
-msgstr "Nepavyko standžiojo disko operacija\n"
+msgid "Hard disk operation failed.\n"
+msgstr "Nepavyko standžiojo disko operacija.\n"
 
 #: winerror.mc:1436
-msgid "Hard disk reset failed\n"
-msgstr "Nepavyko paleisti standžiojo disko iš naujo\n"
+msgid "Hard disk reset failed.\n"
+msgstr "Nepavyko paleisti standžiojo disko iš naujo.\n"
 
 #: winerror.mc:1441
-msgid "End of tape media\n"
-msgstr "Juostinės laikmenos pabaiga\n"
+msgid "End of tape media.\n"
+msgstr "Juostinės laikmenos pabaiga.\n"
 
 #: winerror.mc:1446
-msgid "Not enough server memory\n"
-msgstr "Trūksta atminties serveryje\n"
+msgid "Not enough server memory.\n"
+msgstr "Trūksta atminties serveryje.\n"
 
 #: winerror.mc:1451
-msgid "Possible deadlock\n"
-msgstr "Galima aklavietė\n"
+msgid "Possible deadlock.\n"
+msgstr "Galima aklavietė.\n"
 
 #: winerror.mc:1456
-msgid "Incorrect alignment\n"
-msgstr "Neteisingas lygiavimas\n"
+msgid "Incorrect alignment.\n"
+msgstr "Neteisingas lygiavimas.\n"
 
 #: winerror.mc:1461
-msgid "Set-power-state vetoed\n"
-msgstr "Maitinimo būsenos nustatymas vetuotas\n"
+msgid "Set-power-state vetoed.\n"
+msgstr "Maitinimo būsenos nustatymas vetuotas.\n"
 
 #: winerror.mc:1466
-msgid "Set-power-state failed\n"
-msgstr "Maitinimo būsenos nustatymas nepavyko\n"
+msgid "Set-power-state failed.\n"
+msgstr "Maitinimo būsenos nustatymas nepavyko.\n"
 
 #: winerror.mc:1471
-msgid "Too many links\n"
-msgstr "Per daug nuorodų\n"
+msgid "Too many links.\n"
+msgstr "Per daug nuorodų.\n"
 
 #: winerror.mc:1476
-msgid "Newer windows version needed\n"
-msgstr "Reikalinga naujesnė windows versija\n"
+msgid "Newer windows version needed.\n"
+msgstr "Reikalinga naujesnė windows versija.\n"
 
 #: winerror.mc:1481
-msgid "Wrong operating system\n"
-msgstr "Netinkama operacinė sistema\n"
+msgid "Wrong operating system.\n"
+msgstr "Netinkama operacinė sistema.\n"
 
 #: winerror.mc:1486
-msgid "Single-instance application\n"
-msgstr "Vieno egzemplioriaus programa\n"
+msgid "Single-instance application.\n"
+msgstr "Vieno egzemplioriaus programa.\n"
 
 #: winerror.mc:1491
-msgid "Real-mode application\n"
-msgstr "Real-mode programa\n"
+msgid "Real-mode application.\n"
+msgstr "Real-mode programa.\n"
 
 #: winerror.mc:1496
-msgid "Invalid DLL\n"
-msgstr "Neteisingas DLL\n"
+msgid "Invalid DLL.\n"
+msgstr "Neteisingas DLL.\n"
 
 #: winerror.mc:1501
-msgid "No associated application\n"
-msgstr "Nėra susietos programos\n"
+msgid "No associated application.\n"
+msgstr "Nėra susietos programos.\n"
 
 #: winerror.mc:1506
-msgid "DDE failure\n"
-msgstr "DDE klaida\n"
+msgid "DDE failure.\n"
+msgstr "DDE klaida.\n"
 
 #: winerror.mc:1511
-msgid "DLL not found\n"
-msgstr "DLL nerastas\n"
+msgid "DLL not found.\n"
+msgstr "DLL nerastas.\n"
 
 #: winerror.mc:1516
-msgid "Out of user handles\n"
-msgstr "Trūksta naudotojo rodyklių\n"
+msgid "Out of user handles.\n"
+msgstr "Trūksta naudotojo rodyklių.\n"
 
 #: winerror.mc:1521
-msgid "Message can only be used in synchronous calls\n"
-msgstr "Pranešimas gali būti naudojamas tik sinchroniniuose kreipiniuose\n"
+msgid "Message can only be used in synchronous calls.\n"
+msgstr "Pranešimas gali būti naudojamas tik sinchroniniuose kreipiniuose.\n"
 
 #: winerror.mc:1526
-msgid "The source element is empty\n"
-msgstr "Šaltinio elementas tuščias\n"
+msgid "The source element is empty.\n"
+msgstr "Šaltinio elementas tuščias.\n"
 
 #: winerror.mc:1531
-msgid "The destination element is full\n"
-msgstr "Paskirties elementas pilnas\n"
+msgid "The destination element is full.\n"
+msgstr "Paskirties elementas pilnas.\n"
 
 #: winerror.mc:1536
-msgid "The element address is invalid\n"
-msgstr "Elemento adresas netinkamas\n"
+msgid "The element address is invalid.\n"
+msgstr "Elemento adresas netinkamas.\n"
 
 #: winerror.mc:1541
-msgid "The magazine is not present\n"
-msgstr "Dėtuvės nėra\n"
+msgid "The magazine is not present.\n"
+msgstr "Dėtuvės nėra.\n"
 
 #: winerror.mc:1546
-msgid "The device needs reinitialization\n"
-msgstr "Įrenginiui reikalingas pakartotinis inicijavimas\n"
+msgid "The device needs reinitialization.\n"
+msgstr "Įrenginiui reikalingas pakartotinis inicijavimas.\n"
 
 #: winerror.mc:1551
-msgid "The device requires cleaning\n"
-msgstr "Įrenginiui reikalingas valymas\n"
+msgid "The device requires cleaning.\n"
+msgstr "Įrenginiui reikalingas valymas.\n"
 
 #: winerror.mc:1556
-msgid "The device door is open\n"
-msgstr "Įrenginio durelės atidarytos\n"
+msgid "The device door is open.\n"
+msgstr "Įrenginio durelės atidarytos.\n"
 
 #: winerror.mc:1561
-msgid "The device is not connected\n"
-msgstr "Įrenginys neprijungtas\n"
+msgid "The device is not connected.\n"
+msgstr "Įrenginys neprijungtas.\n"
 
 #: winerror.mc:1566
-msgid "Element not found\n"
-msgstr "Elementas nerastas\n"
+msgid "Element not found.\n"
+msgstr "Elementas nerastas.\n"
 
 #: winerror.mc:1571
-msgid "No match found\n"
-msgstr "Atitiktis nerasta\n"
+msgid "No match found.\n"
+msgstr "Atitiktis nerasta.\n"
 
 #: winerror.mc:1576
-msgid "Property set not found\n"
-msgstr "Savybių aibė nerasta\n"
+msgid "Property set not found.\n"
+msgstr "Savybių aibė nerasta.\n"
 
 #: winerror.mc:1581
-msgid "Point not found\n"
-msgstr "Taškas nerastas\n"
+msgid "Point not found.\n"
+msgstr "Taškas nerastas.\n"
 
 #: winerror.mc:1586
-msgid "No running tracking service\n"
-msgstr "Nėra vykdomos stebėjimo tarnybos\n"
+msgid "No running tracking service.\n"
+msgstr "Nėra vykdomos stebėjimo tarnybos.\n"
 
 #: winerror.mc:1591
-msgid "No such volume ID\n"
-msgstr "Nėra tokio tomo identifikatoriaus\n"
+msgid "No such volume ID.\n"
+msgstr "Nėra tokio tomo identifikatoriaus.\n"
 
 #: winerror.mc:1596
-msgid "Unable to remove the file to be replaced\n"
-msgstr "Nepavyko pašalinti keičiamo failo\n"
+msgid "Unable to remove the file to be replaced.\n"
+msgstr "Nepavyko pašalinti keičiamo failo.\n"
 
 #: winerror.mc:1601
-msgid "Unable to move the replacement file into place\n"
-msgstr "Nepavyko perkelti pakeitimo failo į vietą\n"
+msgid "Unable to move the replacement file into place.\n"
+msgstr "Nepavyko perkelti pakeitimo failo į vietą.\n"
 
 #: winerror.mc:1606
-msgid "Moving the replacement file failed\n"
-msgstr "Pakeitimo failo perkėlimas nepavyko\n"
+msgid "Moving the replacement file failed.\n"
+msgstr "Pakeitimo failo perkėlimas nepavyko.\n"
 
 #: winerror.mc:1611
-msgid "The journal is being deleted\n"
-msgstr "Žurnalas yra šalinamas\n"
+msgid "The journal is being deleted.\n"
+msgstr "Žurnalas yra šalinamas.\n"
 
 #: winerror.mc:1616
-msgid "The journal is not active\n"
-msgstr "Žurnalas neaktyvus\n"
+msgid "The journal is not active.\n"
+msgstr "Žurnalas neaktyvus.\n"
 
 #: winerror.mc:1621
-msgid "Potential matching file found\n"
-msgstr "Rastas galimas atitinkantis failas\n"
+msgid "Potential matching file found.\n"
+msgstr "Rastas galimas atitinkantis failas.\n"
 
 #: winerror.mc:1626
-msgid "The journal entry was deleted\n"
-msgstr "Žurnalo įrašas buvo pašalintas\n"
+msgid "The journal entry was deleted.\n"
+msgstr "Žurnalo įrašas buvo pašalintas.\n"
 
 #: winerror.mc:1631
-msgid "Invalid device name\n"
-msgstr "Neteisingas įrenginio vardas\n"
+msgid "Invalid device name.\n"
+msgstr "Neteisingas įrenginio vardas.\n"
 
 #: winerror.mc:1636
-msgid "Connection unavailable\n"
-msgstr "Ryšys negalimas\n"
+msgid "Connection unavailable.\n"
+msgstr "Ryšys negalimas.\n"
 
 #: winerror.mc:1641
-msgid "Device already remembered\n"
-msgstr "Įrenginys jau atsimintas\n"
+msgid "Device already remembered.\n"
+msgstr "Įrenginys jau atsimintas.\n"
 
 #: winerror.mc:1646
-msgid "No network or bad path\n"
-msgstr "Nėra tinklo arba blogas kelias\n"
+msgid "No network or bad path.\n"
+msgstr "Nėra tinklo arba blogas kelias.\n"
 
 #: winerror.mc:1651
-msgid "Invalid network provider name\n"
-msgstr "Neteisingas tinklo tiekėjo vardas\n"
+msgid "Invalid network provider name.\n"
+msgstr "Neteisingas tinklo tiekėjo vardas.\n"
 
 #: winerror.mc:1656
-msgid "Cannot open network connection profile\n"
-msgstr "Nepavyko atverti tinklo ryšio profilio\n"
+msgid "Cannot open network connection profile.\n"
+msgstr "Nepavyko atverti tinklo ryšio profilio.\n"
 
 #: winerror.mc:1661
-msgid "Corrupt network connection profile\n"
-msgstr "Pažeistas tinklo ryšio profilis\n"
+msgid "Corrupt network connection profile.\n"
+msgstr "Pažeistas tinklo ryšio profilis.\n"
 
 #: winerror.mc:1666
-msgid "Not a container\n"
-msgstr "Ne konteineris\n"
+msgid "Not a container.\n"
+msgstr "Ne konteineris.\n"
 
 #: winerror.mc:1671
-msgid "Extended error\n"
-msgstr "Išplėstinė klaida\n"
+msgid "Extended error.\n"
+msgstr "Išplėstinė klaida.\n"
 
 #: winerror.mc:1676
-msgid "Invalid group name\n"
-msgstr "Neteisingas grupės vardas\n"
+msgid "Invalid group name.\n"
+msgstr "Neteisingas grupės vardas.\n"
 
 #: winerror.mc:1681
-msgid "Invalid computer name\n"
-msgstr "Neteisingas kompiuterio vardas\n"
+msgid "Invalid computer name.\n"
+msgstr "Neteisingas kompiuterio vardas.\n"
 
 #: winerror.mc:1686
-msgid "Invalid event name\n"
-msgstr "Neteisingas įvykio vardas\n"
+msgid "Invalid event name.\n"
+msgstr "Neteisingas įvykio vardas.\n"
 
 #: winerror.mc:1691
-msgid "Invalid domain name\n"
-msgstr "Neteisingas srities vardas\n"
+msgid "Invalid domain name.\n"
+msgstr "Neteisingas srities vardas.\n"
 
 #: winerror.mc:1696
-msgid "Invalid service name\n"
-msgstr "Neteisingas tarnybos vardas\n"
+msgid "Invalid service name.\n"
+msgstr "Neteisingas tarnybos vardas.\n"
 
 #: winerror.mc:1701
-msgid "Invalid network name\n"
-msgstr "Neteisingas tinklo vardas\n"
+msgid "Invalid network name.\n"
+msgstr "Neteisingas tinklo vardas.\n"
 
 #: winerror.mc:1706
-msgid "Invalid share name\n"
-msgstr "Neteisingas viešinio vardas\n"
+msgid "Invalid share name.\n"
+msgstr "Neteisingas viešinio vardas.\n"
 
 #: winerror.mc:1716
-msgid "Invalid message name\n"
-msgstr "Neteisingas pranešimo vardas\n"
+msgid "Invalid message name.\n"
+msgstr "Neteisingas pranešimo vardas.\n"
 
 #: winerror.mc:1721
-msgid "Invalid message destination\n"
-msgstr "Neteisinga pranešimo paskirtis\n"
+msgid "Invalid message destination.\n"
+msgstr "Neteisinga pranešimo paskirtis.\n"
 
 #: winerror.mc:1726
-msgid "Session credential conflict\n"
-msgstr "Seanso kredencialų konfliktas\n"
+msgid "Session credential conflict.\n"
+msgstr "Seanso kredencialų konfliktas.\n"
 
 #: winerror.mc:1731
-msgid "Remote session limit exceeded\n"
-msgstr "Viršyta nuotolinių seansų riba\n"
+msgid "Remote session limit exceeded.\n"
+msgstr "Viršyta nuotolinių seansų riba.\n"
 
 #: winerror.mc:1736
-msgid "Duplicate domain or workgroup name\n"
-msgstr "Vienodi sričių ar darbo grupių vardai\n"
+msgid "Duplicate domain or workgroup name.\n"
+msgstr "Vienodi sričių ar darbo grupių vardai.\n"
 
 #: winerror.mc:1741
-msgid "No network\n"
-msgstr "Nėra tinklo\n"
+msgid "No network.\n"
+msgstr "Nėra tinklo.\n"
 
 #: winerror.mc:1746
-msgid "Operation canceled by user\n"
-msgstr "Operacija nutraukta naudotojo\n"
+msgid "Operation canceled by user.\n"
+msgstr "Operacija nutraukta naudotojo.\n"
 
 #: winerror.mc:1751
-msgid "File has a user-mapped section\n"
-msgstr "Failas turi naudotojo atvaizduotą sekciją\n"
+msgid "File has a user-mapped section.\n"
+msgstr "Failas turi naudotojo atvaizduotą sekciją.\n"
 
 #: winerror.mc:1756 winerror.mc:3741
-msgid "Connection refused\n"
-msgstr "Sujungimas nepriimtas\n"
+msgid "Connection refused.\n"
+msgstr "Sujungimas nepriimtas.\n"
 
 #: winerror.mc:1761
-msgid "Connection gracefully closed\n"
-msgstr "Sujungimas grakščiai nutrauktas\n"
+msgid "Connection gracefully closed.\n"
+msgstr "Sujungimas grakščiai nutrauktas.\n"
 
 #: winerror.mc:1766
-msgid "Address already associated with transport endpoint\n"
-msgstr "Adresas jau susietas su transporto galutiniu tašku\n"
+msgid "Address already associated with transport endpoint.\n"
+msgstr "Adresas jau susietas su transporto galutiniu tašku.\n"
 
 #: winerror.mc:1771
-msgid "Address not associated with transport endpoint\n"
-msgstr "Adresas nesusietas su transporto galutiniu tašku\n"
+msgid "Address not associated with transport endpoint.\n"
+msgstr "Adresas nesusietas su transporto galutiniu tašku.\n"
 
 #: winerror.mc:1776
-msgid "Connection invalid\n"
-msgstr "Sujungimas negaliojantis\n"
+msgid "Connection invalid.\n"
+msgstr "Sujungimas negaliojantis.\n"
 
 #: winerror.mc:1781
-msgid "Connection is active\n"
-msgstr "Sujungimas aktyvus\n"
+msgid "Connection is active.\n"
+msgstr "Sujungimas aktyvus.\n"
 
 #: winerror.mc:1786
-msgid "Network unreachable\n"
-msgstr "Tinklas nepasiekiamas\n"
+msgid "Network unreachable.\n"
+msgstr "Tinklas nepasiekiamas.\n"
 
 #: winerror.mc:1791
-msgid "Host unreachable\n"
-msgstr "Serveris nepasiekiamas\n"
+msgid "Host unreachable.\n"
+msgstr "Serveris nepasiekiamas.\n"
 
 #: winerror.mc:1796
-msgid "Protocol unreachable\n"
-msgstr "Protokolas nepasiekiamas\n"
+msgid "Protocol unreachable.\n"
+msgstr "Protokolas nepasiekiamas.\n"
 
 #: winerror.mc:1801
-msgid "Port unreachable\n"
-msgstr "Prievadas nepasiekiamas\n"
+msgid "Port unreachable.\n"
+msgstr "Prievadas nepasiekiamas.\n"
 
 #: winerror.mc:1806
-msgid "Request aborted\n"
-msgstr "Užklausa nutraukta\n"
+msgid "Request aborted.\n"
+msgstr "Užklausa nutraukta.\n"
 
 #: winerror.mc:1811
-msgid "Connection aborted\n"
-msgstr "Sujungimas nutrauktas\n"
+msgid "Connection aborted.\n"
+msgstr "Sujungimas nutrauktas.\n"
 
 #: winerror.mc:1816
-msgid "Please retry operation\n"
-msgstr "Prašome pakartoti operaciją\n"
+msgid "Please retry operation.\n"
+msgstr "Prašome pakartoti operaciją.\n"
 
 #: winerror.mc:1821
-msgid "Connection count limit reached\n"
-msgstr "Pasiekta sujungimų kiekio riba\n"
+msgid "Connection count limit reached.\n"
+msgstr "Pasiekta sujungimų kiekio riba.\n"
 
 #: winerror.mc:1826
-msgid "Login time restriction\n"
-msgstr "Prisijungimo laiko ribojimas\n"
+msgid "Login time restriction.\n"
+msgstr "Prisijungimo laiko ribojimas.\n"
 
 #: winerror.mc:1831
-msgid "Login workstation restriction\n"
-msgstr "Prisijungimo darbo vietos ribojimas\n"
+msgid "Login workstation restriction.\n"
+msgstr "Prisijungimo darbo vietos ribojimas.\n"
 
 #: winerror.mc:1836
-msgid "Incorrect network address\n"
-msgstr "Neteisingas tinklo adresas\n"
+msgid "Incorrect network address.\n"
+msgstr "Neteisingas tinklo adresas.\n"
 
 #: winerror.mc:1841
-msgid "Service already registered\n"
-msgstr "Tarnyba jau užregistruota\n"
+msgid "Service already registered.\n"
+msgstr "Tarnyba jau užregistruota.\n"
 
 #: winerror.mc:1846
-msgid "Service not found\n"
-msgstr "Tarnyba nerasta\n"
+msgid "Service not found.\n"
+msgstr "Tarnyba nerasta.\n"
 
 #: winerror.mc:1851
-msgid "User not authenticated\n"
-msgstr "Naudotojo tapatumas nenustatytas\n"
+msgid "User not authenticated.\n"
+msgstr "Naudotojo tapatumas nenustatytas.\n"
 
 #: winerror.mc:1856
-msgid "User not logged on\n"
-msgstr "Naudotojas neprisijungęs\n"
+msgid "User not logged on.\n"
+msgstr "Naudotojas neprisijungęs.\n"
 
 #: winerror.mc:1861
-msgid "Continue work in progress\n"
-msgstr "Tęsti pradėtą darbą\n"
+msgid "Continue work in progress.\n"
+msgstr "Tęsti pradėtą darbą.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised\n"
-msgstr "Jau inicijuota\n"
+msgid "Already initialised.\n"
+msgstr "Jau inicijuota.\n"
 
 #: winerror.mc:1871
-msgid "No more local devices\n"
-msgstr "Nėra daugiau vietinių įrenginių\n"
+msgid "No more local devices.\n"
+msgstr "Nėra daugiau vietinių įrenginių.\n"
 
 #: winerror.mc:1876
-msgid "The site does not exist\n"
-msgstr "Tinklavietė neegzistuoja\n"
+msgid "The site does not exist.\n"
+msgstr "Tinklavietė neegzistuoja.\n"
 
 #: winerror.mc:1881
-msgid "The domain controller already exists\n"
-msgstr "Srities valdiklis jau egzistuoja\n"
+msgid "The domain controller already exists.\n"
+msgstr "Srities valdiklis jau egzistuoja.\n"
 
 #: winerror.mc:1886
-msgid "Supported only when connected\n"
-msgstr "Palaikoma tik kai prijungta\n"
+msgid "Supported only when connected.\n"
+msgstr "Palaikoma tik kai prijungta.\n"
 
 #: winerror.mc:1891
-msgid "Perform operation even when nothing changed\n"
-msgstr "Vykdyti operaciją, net jei niekas nepasikeitė\n"
+msgid "Perform operation even when nothing changed.\n"
+msgstr "Vykdyti operaciją, net jei niekas nepasikeitė.\n"
 
 #: winerror.mc:1896
-msgid "The user profile is invalid\n"
-msgstr "Naudotojo profilis yra netinkamas\n"
+msgid "The user profile is invalid.\n"
+msgstr "Naudotojo profilis yra netinkamas.\n"
 
 #: winerror.mc:1901
-msgid "Not supported on Small Business Server\n"
-msgstr "„Small Business Server“ sistema nepalaikoma\n"
+msgid "Not supported on Small Business Server.\n"
+msgstr "„Small Business Server“ sistema nepalaikoma.\n"
 
 #: winerror.mc:1906
-msgid "Not all privileges assigned\n"
-msgstr "Priskirtos ne visos teisės\n"
+msgid "Not all privileges assigned.\n"
+msgstr "Priskirtos ne visos teisės.\n"
 
 #: winerror.mc:1911
-msgid "Some security IDs not mapped\n"
-msgstr "Atvaizduoti ne visi saugumo identifikatoriai\n"
+msgid "Some security IDs not mapped.\n"
+msgstr "Atvaizduoti ne visi saugumo identifikatoriai.\n"
 
 #: winerror.mc:1916
-msgid "No quotas for account\n"
-msgstr "Paskyra neturi kvotų\n"
+msgid "No quotas for account.\n"
+msgstr "Paskyra neturi kvotų.\n"
 
 #: winerror.mc:1921
-msgid "Local user session key\n"
-msgstr "Vietinio naudotojo seanso raktas\n"
+msgid "Local user session key.\n"
+msgstr "Vietinio naudotojo seanso raktas.\n"
 
 #: winerror.mc:1926
-msgid "Password too complex for LM\n"
-msgstr "Per sudėtingas LM slaptažodis\n"
+msgid "Password too complex for LM.\n"
+msgstr "Per sudėtingas LM slaptažodis.\n"
 
 #: winerror.mc:1931
-msgid "Unknown revision\n"
-msgstr "Nežinomas poversijis\n"
+msgid "Unknown revision.\n"
+msgstr "Nežinomas poversijis.\n"
 
 #: winerror.mc:1936
-msgid "Incompatible revision levels\n"
-msgstr "Nesuderinami poversijų lygiai\n"
+msgid "Incompatible revision levels.\n"
+msgstr "Nesuderinami poversijų lygiai.\n"
 
 #: winerror.mc:1941
-msgid "Invalid owner\n"
-msgstr "Netinkamas valdytojas\n"
+msgid "Invalid owner.\n"
+msgstr "Netinkamas valdytojas.\n"
 
 #: winerror.mc:1946
-msgid "Invalid primary group\n"
-msgstr "Neteisinga pirminė grupė\n"
+msgid "Invalid primary group.\n"
+msgstr "Neteisinga pirminė grupė.\n"
 
 #: winerror.mc:1951
-msgid "No impersonation token\n"
-msgstr "Nėra apsimetimo prieigos rakto\n"
+msgid "No impersonation token.\n"
+msgstr "Nėra apsimetimo prieigos rakto.\n"
 
 #: winerror.mc:1956
-msgid "Can't disable mandatory group\n"
-msgstr "Negalima išjungti privalomos grupės\n"
+msgid "Can't disable mandatory group.\n"
+msgstr "Negalima išjungti privalomos grupės.\n"
 
 #: winerror.mc:1961
-msgid "No logon servers available\n"
-msgstr "Nėra pasiekiamų prisijungimo serverių\n"
+msgid "No logon servers available.\n"
+msgstr "Nėra pasiekiamų prisijungimo serverių.\n"
 
 #: winerror.mc:1966
-msgid "No such logon session\n"
-msgstr "Nėra tokio prisijungimo seanso\n"
+msgid "No such logon session.\n"
+msgstr "Nėra tokio prisijungimo seanso.\n"
 
 #: winerror.mc:1971
-msgid "No such privilege\n"
-msgstr "Nėra tokios teisės\n"
+msgid "No such privilege.\n"
+msgstr "Nėra tokios teisės.\n"
 
 #: winerror.mc:1976
-msgid "Privilege not held\n"
-msgstr "Teisė neturima\n"
+msgid "Privilege not held.\n"
+msgstr "Teisė neturima.\n"
 
 #: winerror.mc:1981
-msgid "Invalid account name\n"
-msgstr "Neteisingas paskyros vardas\n"
+msgid "Invalid account name.\n"
+msgstr "Neteisingas paskyros vardas.\n"
 
 #: winerror.mc:1986
-msgid "User already exists\n"
-msgstr "Naudotojas jau egzistuoja\n"
+msgid "User already exists.\n"
+msgstr "Naudotojas jau egzistuoja.\n"
 
 #: winerror.mc:1991
-msgid "No such user\n"
-msgstr "Nėra tokio naudotojo\n"
+msgid "No such user.\n"
+msgstr "Nėra tokio naudotojo.\n"
 
 #: winerror.mc:1996
-msgid "Group already exists\n"
-msgstr "Grupė jau egzistuoja\n"
+msgid "Group already exists.\n"
+msgstr "Grupė jau egzistuoja.\n"
 
 #: winerror.mc:2001
-msgid "No such group\n"
-msgstr "Nėra tokios grupės\n"
+msgid "No such group.\n"
+msgstr "Nėra tokios grupės.\n"
 
 #: winerror.mc:2006
-msgid "User already in group\n"
-msgstr "Naudotojas jau grupėje\n"
+msgid "User already in group.\n"
+msgstr "Naudotojas jau grupėje.\n"
 
 #: winerror.mc:2011
-msgid "User not in group\n"
-msgstr "Naudotojas ne grupėje\n"
+msgid "User not in group.\n"
+msgstr "Naudotojas ne grupėje.\n"
 
 #: winerror.mc:2016
-msgid "Can't delete last admin user\n"
-msgstr "Negalima pašalinti paskutinio naudotojo administratoriaus\n"
+msgid "Can't delete last admin user.\n"
+msgstr "Negalima pašalinti paskutinio naudotojo administratoriaus.\n"
 
 #: winerror.mc:2021
-msgid "Wrong password\n"
-msgstr "Neteisingas slaptažodis\n"
+msgid "Wrong password.\n"
+msgstr "Neteisingas slaptažodis.\n"
 
 #: winerror.mc:2026
-msgid "Ill-formed password\n"
-msgstr "Blogai sudarytas slaptažodis\n"
+msgid "Ill-formed password.\n"
+msgstr "Blogai sudarytas slaptažodis.\n"
 
 #: winerror.mc:2031
-msgid "Password restriction\n"
-msgstr "Slaptažodžio ribojimas\n"
+msgid "Password restriction.\n"
+msgstr "Slaptažodžio ribojimas.\n"
 
 #: winerror.mc:2036
-msgid "Logon failure\n"
-msgstr "Prisijungimo klaida\n"
+msgid "Logon failure.\n"
+msgstr "Prisijungimo klaida.\n"
 
 #: winerror.mc:2041
-msgid "Account restriction\n"
-msgstr "Paskyros ribojimas\n"
+msgid "Account restriction.\n"
+msgstr "Paskyros ribojimas.\n"
 
 #: winerror.mc:2046
-msgid "Invalid logon hours\n"
-msgstr "Neteisingos prisijungimo valandos\n"
+msgid "Invalid logon hours.\n"
+msgstr "Neteisingos prisijungimo valandos.\n"
 
 #: winerror.mc:2051
-msgid "Invalid workstation\n"
-msgstr "Neteisinga darbo vieta\n"
+msgid "Invalid workstation.\n"
+msgstr "Neteisinga darbo vieta.\n"
 
 #: winerror.mc:2056
-msgid "Password expired\n"
-msgstr "Slaptažodis nebegaliojantis\n"
+msgid "Password expired.\n"
+msgstr "Slaptažodis nebegaliojantis.\n"
 
 #: winerror.mc:2061
-msgid "Account disabled\n"
-msgstr "Paskyra išjungta\n"
+msgid "Account disabled.\n"
+msgstr "Paskyra išjungta.\n"
 
 #: winerror.mc:2066
-msgid "No security ID mapped\n"
-msgstr "Nėra atvaizduotų saugumo identifikatorių\n"
+msgid "No security ID mapped.\n"
+msgstr "Nėra atvaizduotų saugumo identifikatorių.\n"
 
 #: winerror.mc:2071
-msgid "Too many LUIDs requested\n"
-msgstr "Užklausta per daug LUID\n"
+msgid "Too many LUIDs requested.\n"
+msgstr "Užklausta per daug LUID.\n"
 
 #: winerror.mc:2076
-msgid "LUIDs exhausted\n"
-msgstr "LUID išnaudoti\n"
+msgid "LUIDs exhausted.\n"
+msgstr "LUID išnaudoti.\n"
 
 #: winerror.mc:2081
-msgid "Invalid sub authority\n"
-msgstr "Neteisingas žemesnis autoritetas\n"
+msgid "Invalid sub authority.\n"
+msgstr "Neteisingas žemesnis autoritetas.\n"
 
 #: winerror.mc:2086
-msgid "Invalid ACL\n"
-msgstr "Neteisingas ACL\n"
+msgid "Invalid ACL.\n"
+msgstr "Neteisingas ACL.\n"
 
 #: winerror.mc:2091
-msgid "Invalid SID\n"
-msgstr "Neteisingas SID\n"
+msgid "Invalid SID.\n"
+msgstr "Neteisingas SID.\n"
 
 #: winerror.mc:2096
-msgid "Invalid security descriptor\n"
-msgstr "Neteisingas saugumo aprašas\n"
+msgid "Invalid security descriptor.\n"
+msgstr "Neteisingas saugumo aprašas.\n"
 
 #: winerror.mc:2101
-msgid "Bad inherited ACL\n"
-msgstr "Blogas paveldėtas ACL\n"
+msgid "Bad inherited ACL.\n"
+msgstr "Blogas paveldėtas ACL.\n"
 
 #: winerror.mc:2106
-msgid "Server disabled\n"
-msgstr "Serveris išjungtas\n"
+msgid "Server disabled.\n"
+msgstr "Serveris išjungtas.\n"
 
 #: winerror.mc:2111
-msgid "Server not disabled\n"
-msgstr "Serveris neišjungtas\n"
+msgid "Server not disabled.\n"
+msgstr "Serveris neišjungtas.\n"
 
 #: winerror.mc:2116
-msgid "Invalid ID authority\n"
-msgstr "Neteisingas identifikatoriaus autoritetas\n"
+msgid "Invalid ID authority.\n"
+msgstr "Neteisingas identifikatoriaus autoritetas.\n"
 
 #: winerror.mc:2121
-msgid "Allotted space exceeded\n"
-msgstr "Viršyta paskirta vieta\n"
+msgid "Allotted space exceeded.\n"
+msgstr "Viršyta paskirta vieta.\n"
 
 #: winerror.mc:2126
-msgid "Invalid group attributes\n"
-msgstr "Neteisingi grupės požymiai\n"
+msgid "Invalid group attributes.\n"
+msgstr "Neteisingi grupės požymiai.\n"
 
 #: winerror.mc:2131
-msgid "Bad impersonation level\n"
-msgstr "Blogas apsimetimo lygis\n"
+msgid "Bad impersonation level.\n"
+msgstr "Blogas apsimetimo lygis.\n"
 
 #: winerror.mc:2136
-msgid "Can't open anonymous security token\n"
-msgstr "Nepavyko atverti anoniminio saugumo prieigos rakto\n"
+msgid "Can't open anonymous security token.\n"
+msgstr "Nepavyko atverti anoniminio saugumo prieigos rakto.\n"
 
 #: winerror.mc:2141
-msgid "Bad validation class\n"
-msgstr "Bloga tikrinimo klasė\n"
+msgid "Bad validation class.\n"
+msgstr "Bloga tikrinimo klasė.\n"
 
 #: winerror.mc:2146
-msgid "Bad token type\n"
-msgstr "Blogas prieigos rakto tipas\n"
+msgid "Bad token type.\n"
+msgstr "Blogas prieigos rakto tipas.\n"
 
 #: winerror.mc:2151
-msgid "No security on object\n"
-msgstr "Nėra saugumo objektui\n"
+msgid "No security on object.\n"
+msgstr "Nėra saugumo objektui.\n"
 
 #: winerror.mc:2156
-msgid "Can't access domain information\n"
-msgstr "Nepavyko prieiti prie srities informacijos\n"
+msgid "Can't access domain information.\n"
+msgstr "Nepavyko prieiti prie srities informacijos.\n"
 
 #: winerror.mc:2161
-msgid "Invalid server state\n"
-msgstr "Neteisinga serverio būsena\n"
+msgid "Invalid server state.\n"
+msgstr "Neteisinga serverio būsena.\n"
 
 #: winerror.mc:2166
-msgid "Invalid domain state\n"
-msgstr "Neteisinga srities būsena\n"
+msgid "Invalid domain state.\n"
+msgstr "Neteisinga srities būsena.\n"
 
 #: winerror.mc:2171
-msgid "Invalid domain role\n"
-msgstr "Neteisinga srities rolė\n"
+msgid "Invalid domain role.\n"
+msgstr "Neteisinga srities rolė.\n"
 
 #: winerror.mc:2176
-msgid "No such domain\n"
-msgstr "Nėra tokios srities\n"
+msgid "No such domain.\n"
+msgstr "Nėra tokios srities.\n"
 
 #: winerror.mc:2181
-msgid "Domain already exists\n"
-msgstr "Sritis jau egzistuoja\n"
+msgid "Domain already exists.\n"
+msgstr "Sritis jau egzistuoja.\n"
 
 #: winerror.mc:2186
-msgid "Domain limit exceeded\n"
-msgstr "Viršyta sričių riba\n"
+msgid "Domain limit exceeded.\n"
+msgstr "Viršyta sričių riba.\n"
 
 #: winerror.mc:2191
-msgid "Internal database corruption\n"
-msgstr "Pažeista vidinė duomenų bazė\n"
+msgid "Internal database corruption.\n"
+msgstr "Pažeista vidinė duomenų bazė.\n"
 
 #: winerror.mc:2196
-msgid "Internal error\n"
-msgstr "Vidinė klaida\n"
+msgid "Internal error.\n"
+msgstr "Vidinė klaida.\n"
 
 #: winerror.mc:2201
-msgid "Generic access types not mapped\n"
-msgstr "Daugybiniai prieigos tipai neatvaizduoti\n"
+msgid "Generic access types not mapped.\n"
+msgstr "Daugybiniai prieigos tipai neatvaizduoti.\n"
 
 #: winerror.mc:2206
-msgid "Bad descriptor format\n"
-msgstr "Blogas aprašo formatas\n"
+msgid "Bad descriptor format.\n"
+msgstr "Blogas aprašo formatas.\n"
 
 #: winerror.mc:2211
-msgid "Not a logon process\n"
-msgstr "Ne prisijungimo procesas\n"
+msgid "Not a logon process.\n"
+msgstr "Ne prisijungimo procesas.\n"
 
 #: winerror.mc:2216
-msgid "Logon session ID exists\n"
-msgstr "Prisijungimo seanso identifikatorius egzistuoja\n"
+msgid "Logon session ID exists.\n"
+msgstr "Prisijungimo seanso identifikatorius egzistuoja.\n"
 
 #: winerror.mc:2221
-msgid "Unknown authentication package\n"
-msgstr "Nežinomas tapatybės nustatymo paketas\n"
+msgid "Unknown authentication package.\n"
+msgstr "Nežinomas tapatybės nustatymo paketas.\n"
 
 #: winerror.mc:2226
-msgid "Bad logon session state\n"
-msgstr "Bloga prisijungimo seanso būsena\n"
+msgid "Bad logon session state.\n"
+msgstr "Bloga prisijungimo seanso būsena.\n"
 
 #: winerror.mc:2231
-msgid "Logon session ID collision\n"
-msgstr "Prisijungimo seanso identifikatorių konfliktas\n"
+msgid "Logon session ID collision.\n"
+msgstr "Prisijungimo seanso identifikatorių konfliktas.\n"
 
 #: winerror.mc:2236
-msgid "Invalid logon type\n"
-msgstr "Neteisingas prisijungimo tipas\n"
+msgid "Invalid logon type.\n"
+msgstr "Neteisingas prisijungimo tipas.\n"
 
 #: winerror.mc:2241
-msgid "Cannot impersonate\n"
-msgstr "Nepavyko apsimesti\n"
+msgid "Cannot impersonate.\n"
+msgstr "Nepavyko apsimesti.\n"
 
 #: winerror.mc:2246
-msgid "Invalid transaction state\n"
-msgstr "Neteisinga transakcijos būsena\n"
+msgid "Invalid transaction state.\n"
+msgstr "Neteisinga transakcijos būsena.\n"
 
 #: winerror.mc:2251
-msgid "Security DB commit failure\n"
-msgstr "Saugumo duomenų bazės nusiuntimo klaida\n"
+msgid "Security DB commit failure.\n"
+msgstr "Saugumo duomenų bazės nusiuntimo klaida.\n"
 
 #: winerror.mc:2256
-msgid "Account is built-in\n"
-msgstr "Paskyra yra įtaisyta\n"
+msgid "Account is built-in.\n"
+msgstr "Paskyra yra įtaisyta.\n"
 
 #: winerror.mc:2261
-msgid "Group is built-in\n"
-msgstr "Grupė yra įtaisyta\n"
+msgid "Group is built-in.\n"
+msgstr "Grupė yra įtaisyta.\n"
 
 #: winerror.mc:2266
-msgid "User is built-in\n"
-msgstr "Naudotojas yra įtaisytas\n"
+msgid "User is built-in.\n"
+msgstr "Naudotojas yra įtaisytas.\n"
 
 #: winerror.mc:2271
-msgid "Group is primary for user\n"
-msgstr "Grupė yra pirminė naudotojui\n"
+msgid "Group is primary for user.\n"
+msgstr "Grupė yra pirminė naudotojui.\n"
 
 #: winerror.mc:2276
-msgid "Token already in use\n"
-msgstr "Prieigos raktas jau naudojamas\n"
+msgid "Token already in use.\n"
+msgstr "Prieigos raktas jau naudojamas.\n"
 
 #: winerror.mc:2281
-msgid "No such local group\n"
-msgstr "Nėra tokios vietinės grupės\n"
+msgid "No such local group.\n"
+msgstr "Nėra tokios vietinės grupės.\n"
 
 #: winerror.mc:2286
-msgid "User not in local group\n"
-msgstr "Naudotojas ne vietinėje grupėje\n"
+msgid "User not in local group.\n"
+msgstr "Naudotojas ne vietinėje grupėje.\n"
 
 #: winerror.mc:2291
-msgid "User already in local group\n"
-msgstr "Naudotojas jau vietinėje grupėje\n"
+msgid "User already in local group.\n"
+msgstr "Naudotojas jau vietinėje grupėje.\n"
 
 #: winerror.mc:2296
-msgid "Local group already exists\n"
-msgstr "Vietinė grupė jau egzistuoja\n"
+msgid "Local group already exists.\n"
+msgstr "Vietinė grupė jau egzistuoja.\n"
 
 #: winerror.mc:2301 winerror.mc:2326
-msgid "Logon type not granted\n"
-msgstr "Nesutikta su prisijungimo tipu\n"
+msgid "Logon type not granted.\n"
+msgstr "Nesutikta su prisijungimo tipu.\n"
 
 #: winerror.mc:2306
-msgid "Too many secrets\n"
-msgstr "Per daug paslapčių\n"
+msgid "Too many secrets.\n"
+msgstr "Per daug paslapčių.\n"
 
 #: winerror.mc:2311
-msgid "Secret too long\n"
-msgstr "Paslaptis per ilga\n"
+msgid "Secret too long.\n"
+msgstr "Paslaptis per ilga.\n"
 
 #: winerror.mc:2316
-msgid "Internal security DB error\n"
-msgstr "Vidinė saugumo duomenų bazės klaida\n"
+msgid "Internal security DB error.\n"
+msgstr "Vidinė saugumo duomenų bazės klaida.\n"
 
 #: winerror.mc:2321
-msgid "Too many context IDs\n"
-msgstr "Per daug konteksto identifikatorių\n"
+msgid "Too many context IDs.\n"
+msgstr "Per daug konteksto identifikatorių.\n"
 
 #: winerror.mc:2331
-msgid "Cross-encrypted NT password required\n"
-msgstr "Reikalingas kryžmiškai užšifruotas NT slaptažodis\n"
+msgid "Cross-encrypted NT password required.\n"
+msgstr "Reikalingas kryžmiškai užšifruotas NT slaptažodis.\n"
 
 #: winerror.mc:2336
-msgid "No such member\n"
-msgstr "Nėra tokio nario\n"
+msgid "No such member.\n"
+msgstr "Nėra tokio nario.\n"
 
 #: winerror.mc:2341
-msgid "Invalid member\n"
-msgstr "Neteisingas narys\n"
+msgid "Invalid member.\n"
+msgstr "Neteisingas narys.\n"
 
 #: winerror.mc:2346
-msgid "Too many SIDs\n"
-msgstr "Per daug SID\n"
+msgid "Too many SIDs.\n"
+msgstr "Per daug SID.\n"
 
 #: winerror.mc:2351
-msgid "Cross-encrypted LM password required\n"
-msgstr "Reikalingas kryžmiškai užšifruotas LM slaptažodis\n"
+msgid "Cross-encrypted LM password required.\n"
+msgstr "Reikalingas kryžmiškai užšifruotas LM slaptažodis.\n"
 
 #: winerror.mc:2356
-msgid "No inheritable components\n"
-msgstr "Nėra paveldimų komponentų\n"
+msgid "No inheritable components.\n"
+msgstr "Nėra paveldimų komponentų.\n"
 
 #: winerror.mc:2361
-msgid "File or directory corrupt\n"
-msgstr "Failas ar katalogas pažeisti\n"
+msgid "File or directory corrupt.\n"
+msgstr "Failas ar katalogas pažeisti.\n"
 
 #: winerror.mc:2366
-msgid "Disk is corrupt\n"
-msgstr "Diskas yra pažeistas\n"
+msgid "Disk is corrupt.\n"
+msgstr "Diskas yra pažeistas.\n"
 
 #: winerror.mc:2371
-msgid "No user session key\n"
-msgstr "Nėra naudotojo seanso rakto\n"
+msgid "No user session key.\n"
+msgstr "Nėra naudotojo seanso rakto.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded\n"
-msgstr "Viršyta licencijų kvota\n"
+msgid "Licence quota exceeded.\n"
+msgstr "Viršyta licencijų kvota.\n"
 
 #: winerror.mc:2381
-msgid "Wrong target name\n"
-msgstr "Neteisingas paskirties vardas\n"
+msgid "Wrong target name.\n"
+msgstr "Neteisingas paskirties vardas.\n"
 
 #: winerror.mc:2386
-msgid "Mutual authentication failed\n"
-msgstr "Rankinis tapatumo nustatymas nepavyko\n"
+msgid "Mutual authentication failed.\n"
+msgstr "Rankinis tapatumo nustatymas nepavyko.\n"
 
 #: winerror.mc:2391
-msgid "Time skew between client and server\n"
-msgstr "Laiko nukrypimas tarp kliento ir serverio\n"
+msgid "Time skew between client and server.\n"
+msgstr "Laiko nukrypimas tarp kliento ir serverio.\n"
 
 #: winerror.mc:2396
-msgid "Invalid window handle\n"
-msgstr "Klaidinga lango rodyklė\n"
+msgid "Invalid window handle.\n"
+msgstr "Klaidinga lango rodyklė.\n"
 
 #: winerror.mc:2401
-msgid "Invalid menu handle\n"
-msgstr "Klaidinga meniu rodyklė\n"
+msgid "Invalid menu handle.\n"
+msgstr "Klaidinga meniu rodyklė.\n"
 
 #: winerror.mc:2406
-msgid "Invalid cursor handle\n"
-msgstr "Neteisinga žymeklio rodyklė\n"
+msgid "Invalid cursor handle.\n"
+msgstr "Neteisinga žymeklio rodyklė.\n"
 
 #: winerror.mc:2411
-msgid "Invalid accelerator table handle\n"
-msgstr "Neteisinga prieigos klavišų lentelės rodyklė\n"
+msgid "Invalid accelerator table handle.\n"
+msgstr "Neteisinga prieigos klavišų lentelės rodyklė.\n"
 
 #: winerror.mc:2416
-msgid "Invalid hook handle\n"
-msgstr "Neteisinga hook rodyklė\n"
+msgid "Invalid hook handle.\n"
+msgstr "Neteisinga hook rodyklė.\n"
 
 #: winerror.mc:2421
-msgid "Invalid DWP handle\n"
-msgstr "Neteisinga DWP rodyklė\n"
+msgid "Invalid DWP handle.\n"
+msgstr "Neteisinga DWP rodyklė.\n"
 
 #: winerror.mc:2426
-msgid "Can't create top-level child window\n"
-msgstr "Nepavyko sukurti aukščiausio lygio polangio\n"
+msgid "Can't create top-level child window.\n"
+msgstr "Nepavyko sukurti aukščiausio lygio polangio.\n"
 
 #: winerror.mc:2431
-msgid "Can't find window class\n"
-msgstr "Nerasta lango klasė\n"
+msgid "Can't find window class.\n"
+msgstr "Nerasta lango klasė.\n"
 
 #: winerror.mc:2436
-msgid "Window owned by another thread\n"
-msgstr "Langas valdomas kitos gijos\n"
+msgid "Window owned by another thread.\n"
+msgstr "Langas valdomas kitos gijos.\n"
 
 #: winerror.mc:2441
-msgid "Hotkey already registered\n"
-msgstr "Spartusis klavišas jau registruotas\n"
+msgid "Hotkey already registered.\n"
+msgstr "Spartusis klavišas jau registruotas.\n"
 
 #: winerror.mc:2446
-msgid "Class already exists\n"
-msgstr "Klasė jau egzistuoja\n"
+msgid "Class already exists.\n"
+msgstr "Klasė jau egzistuoja.\n"
 
 #: winerror.mc:2451
-msgid "Class does not exist\n"
-msgstr "Klasė neegzistuoja\n"
+msgid "Class does not exist.\n"
+msgstr "Klasė neegzistuoja.\n"
 
 #: winerror.mc:2456
-msgid "Class has open windows\n"
-msgstr "Klasė turi atvertų langų\n"
+msgid "Class has open windows.\n"
+msgstr "Klasė turi atvertų langų.\n"
 
 #: winerror.mc:2461
-msgid "Invalid index\n"
-msgstr "Neteisingas indeksas\n"
+msgid "Invalid index.\n"
+msgstr "Neteisingas indeksas.\n"
 
 #: winerror.mc:2466
-msgid "Invalid icon handle\n"
-msgstr "Neteisinga piktogramos rodyklė\n"
+msgid "Invalid icon handle.\n"
+msgstr "Neteisinga piktogramos rodyklė.\n"
 
 #: winerror.mc:2471
-msgid "Private dialog index\n"
-msgstr "Privataus dialogo lango indeksas\n"
+msgid "Private dialog index.\n"
+msgstr "Privataus dialogo lango indeksas.\n"
 
 #: winerror.mc:2476
-msgid "List box ID not found\n"
-msgstr "Nerastas sąrašo langelio identifikatorius\n"
+msgid "List box ID not found.\n"
+msgstr "Nerastas sąrašo langelio identifikatorius.\n"
 
 #: winerror.mc:2481
-msgid "No wildcard characters\n"
-msgstr "Nerasti pakaitos simboliai\n"
+msgid "No wildcard characters.\n"
+msgstr "Nerasti pakaitos simboliai.\n"
 
 #: winerror.mc:2486
-msgid "Clipboard not open\n"
-msgstr "Iškarpinė neatverta\n"
+msgid "Clipboard not open.\n"
+msgstr "Iškarpinė neatverta.\n"
 
 #: winerror.mc:2491
-msgid "Hotkey not registered\n"
-msgstr "Spartusis klavišas neregistruotas\n"
+msgid "Hotkey not registered.\n"
+msgstr "Spartusis klavišas neregistruotas.\n"
 
 #: winerror.mc:2496
-msgid "Not a dialog window\n"
-msgstr "Ne dialogo langas\n"
+msgid "Not a dialog window.\n"
+msgstr "Ne dialogo langas.\n"
 
 #: winerror.mc:2501
-msgid "Control ID not found\n"
-msgstr "Valdiklio identifikatorius nerastas\n"
+msgid "Control ID not found.\n"
+msgstr "Valdiklio identifikatorius nerastas.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message\n"
-msgstr "Neteisingas išskleidžiamojo sąrašo pranešimas\n"
+msgid "Invalid combobox message.\n"
+msgstr "Neteisingas išskleidžiamojo sąrašo pranešimas.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window\n"
-msgstr "Ne išskleidžiamojo sąrašo langas\n"
+msgid "Not a combobox window.\n"
+msgstr "Ne išskleidžiamojo sąrašo langas.\n"
 
 #: winerror.mc:2516
-msgid "Invalid edit height\n"
-msgstr "Neteisingas aukštis\n"
+msgid "Invalid edit height.\n"
+msgstr "Neteisingas aukštis.\n"
 
 #: winerror.mc:2521
-msgid "DC not found\n"
-msgstr "DC nerastas\n"
+msgid "DC not found.\n"
+msgstr "DC nerastas.\n"
 
 #: winerror.mc:2526
-msgid "Invalid hook filter\n"
-msgstr "Neteisingas hook filtras\n"
+msgid "Invalid hook filter.\n"
+msgstr "Neteisingas hook filtras.\n"
 
 #: winerror.mc:2531
-msgid "Invalid filter procedure\n"
-msgstr "Neteisinga filtro procedūra\n"
+msgid "Invalid filter procedure.\n"
+msgstr "Neteisinga filtro procedūra.\n"
 
 #: winerror.mc:2536
-msgid "Hook procedure needs module handle\n"
-msgstr "Hook procedūrai reikalinga modulio rodyklė\n"
+msgid "Hook procedure needs module handle.\n"
+msgstr "Hook procedūrai reikalinga modulio rodyklė.\n"
 
 #: winerror.mc:2541
-msgid "Global-only hook procedure\n"
-msgstr "Tik globali hook procedūra\n"
+msgid "Global-only hook procedure.\n"
+msgstr "Tik globali hook procedūra.\n"
 
 #: winerror.mc:2546
-msgid "Journal hook already set\n"
-msgstr "Žurnalo hook jau nustatytas\n"
+msgid "Journal hook already set.\n"
+msgstr "Žurnalo hook jau nustatytas.\n"
 
 #: winerror.mc:2551
-msgid "Hook procedure not installed\n"
-msgstr "Hook procedūra neįdiegta\n"
+msgid "Hook procedure not installed.\n"
+msgstr "Hook procedūra neįdiegta.\n"
 
 #: winerror.mc:2556
-msgid "Invalid list box message\n"
-msgstr "Neteisingas sąrašo langelio pranešimas\n"
+msgid "Invalid list box message.\n"
+msgstr "Neteisingas sąrašo langelio pranešimas.\n"
 
 #: winerror.mc:2561
-msgid "Invalid LB_SETCOUNT sent\n"
-msgstr "Išsiųstas neteisingas LB_SETCOUNT\n"
+msgid "Invalid LB_SETCOUNT sent.\n"
+msgstr "Išsiųstas neteisingas LB_SETCOUNT.\n"
 
 #: winerror.mc:2566
-msgid "No tab stops on this list box\n"
-msgstr "Sąrašo langelis be tabuliavimo pozicijų\n"
+msgid "No tab stops on this list box.\n"
+msgstr "Sąrašo langelis be tabuliavimo pozicijų.\n"
 
 #: winerror.mc:2571
-msgid "Can't destroy object owned by another thread\n"
-msgstr "Negalima sunaikinti objekto valdomo kitos gijos\n"
+msgid "Can't destroy object owned by another thread.\n"
+msgstr "Negalima sunaikinti objekto valdomo kitos gijos.\n"
 
 #: winerror.mc:2576
-msgid "Child window menus not allowed\n"
-msgstr "Polangio meniu neleidžiami\n"
+msgid "Child window menus not allowed.\n"
+msgstr "Polangio meniu neleidžiami.\n"
 
 #: winerror.mc:2581
-msgid "Window has no system menu\n"
-msgstr "Langas neturi sisteminio meniu\n"
+msgid "Window has no system menu.\n"
+msgstr "Langas neturi sisteminio meniu.\n"
 
 #: winerror.mc:2586
-msgid "Invalid message box style\n"
-msgstr "Neteisingas pranešimo lango stilius\n"
+msgid "Invalid message box style.\n"
+msgstr "Neteisingas pranešimo lango stilius.\n"
 
 #: winerror.mc:2591
-msgid "Invalid SPI parameter\n"
-msgstr "Neteisingas SPI parametras\n"
+msgid "Invalid SPI parameter.\n"
+msgstr "Neteisingas SPI parametras.\n"
 
 #: winerror.mc:2596
-msgid "Screen already locked\n"
-msgstr "Ekranas jau užblokuotas\n"
+msgid "Screen already locked.\n"
+msgstr "Ekranas jau užblokuotas.\n"
 
 #: winerror.mc:2601
-msgid "Window handles have different parents\n"
-msgstr "Langų rodyklės turi skirtingus viršlangius\n"
+msgid "Window handles have different parents.\n"
+msgstr "Langų rodyklės turi skirtingus viršlangius.\n"
 
 #: winerror.mc:2606
-msgid "Not a child window\n"
-msgstr "Ne polangis\n"
+msgid "Not a child window.\n"
+msgstr "Ne polangis.\n"
 
 #: winerror.mc:2611
-msgid "Invalid GW command\n"
-msgstr "Neteisinga GW komanda\n"
+msgid "Invalid GW command.\n"
+msgstr "Neteisinga GW komanda.\n"
 
 #: winerror.mc:2616
-msgid "Invalid thread ID\n"
-msgstr "Neteisingas gijos identifikatorius\n"
+msgid "Invalid thread ID.\n"
+msgstr "Neteisingas gijos identifikatorius.\n"
 
 #: winerror.mc:2621
-msgid "Not an MDI child window\n"
-msgstr "Ne MDI polangis\n"
+msgid "Not an MDI child window.\n"
+msgstr "Ne MDI polangis.\n"
 
 #: winerror.mc:2626
-msgid "Popup menu already active\n"
-msgstr "Iškylantis meniu jau aktyvus\n"
+msgid "Popup menu already active.\n"
+msgstr "Iškylantis meniu jau aktyvus.\n"
 
 #: winerror.mc:2631
-msgid "No scrollbars\n"
-msgstr "Nėra slankjuosčių\n"
+msgid "No scrollbars.\n"
+msgstr "Nėra slankjuosčių.\n"
 
 #: winerror.mc:2636
-msgid "Invalid scrollbar range\n"
-msgstr "Neteisingi slankjuostės rėžiai\n"
+msgid "Invalid scrollbar range.\n"
+msgstr "Neteisingi slankjuostės rėžiai.\n"
 
 #: winerror.mc:2641
-msgid "Invalid ShowWin command\n"
-msgstr "Neteisinga ShowWin komanda\n"
+msgid "Invalid ShowWin command.\n"
+msgstr "Neteisinga ShowWin komanda.\n"
 
 #: winerror.mc:2646
-msgid "No system resources\n"
-msgstr "Nėra sistemos išteklių\n"
+msgid "No system resources.\n"
+msgstr "Nėra sistemos išteklių.\n"
 
 #: winerror.mc:2651
-msgid "No non-paged system resources\n"
-msgstr "Nėra nesukeičiamų sistemos išteklių\n"
+msgid "No non-paged system resources.\n"
+msgstr "Nėra nesukeičiamų sistemos išteklių.\n"
 
 #: winerror.mc:2656
-msgid "No paged system resources\n"
-msgstr "Nėra sukeičiamų sistemos išteklių\n"
+msgid "No paged system resources.\n"
+msgstr "Nėra sukeičiamų sistemos išteklių.\n"
 
 #: winerror.mc:2661
-msgid "No working set quota\n"
-msgstr "Nėra darbinio rinkinio kvotos\n"
+msgid "No working set quota.\n"
+msgstr "Nėra darbinio rinkinio kvotos.\n"
 
 #: winerror.mc:2666
-msgid "No page file quota\n"
-msgstr "Nėra sukeitimų failo kvotos\n"
+msgid "No page file quota.\n"
+msgstr "Nėra sukeitimų failo kvotos.\n"
 
 #: winerror.mc:2671
-msgid "Exceeded commitment limit\n"
-msgstr "Viršyta virtualios atminties riba\n"
+msgid "Exceeded commitment limit.\n"
+msgstr "Viršyta virtualios atminties riba.\n"
 
 #: winerror.mc:2676
-msgid "Menu item not found\n"
-msgstr "Meniu elementas nerastas\n"
+msgid "Menu item not found.\n"
+msgstr "Meniu elementas nerastas.\n"
 
 #: winerror.mc:2681
-msgid "Invalid keyboard handle\n"
-msgstr "Neteisinga klaviatūros rodyklė\n"
+msgid "Invalid keyboard handle.\n"
+msgstr "Neteisinga klaviatūros rodyklė.\n"
 
 #: winerror.mc:2686
-msgid "Hook type not allowed\n"
-msgstr "Hook tipas neleidžiamas\n"
+msgid "Hook type not allowed.\n"
+msgstr "Hook tipas neleidžiamas.\n"
 
 #: winerror.mc:2691
-msgid "Interactive window station required\n"
-msgstr "Reikalinga interaktyvi lango vieta\n"
+msgid "Interactive window station required.\n"
+msgstr "Reikalinga interaktyvi lango vieta.\n"
 
 #: winerror.mc:2696
-msgid "Timeout\n"
-msgstr "Baigėsi laikas\n"
+msgid "Timeout.\n"
+msgstr "Baigėsi laikas.\n"
 
 #: winerror.mc:2701
-msgid "Invalid monitor handle\n"
-msgstr "Klaidinga monitoriaus rodyklė\n"
+msgid "Invalid monitor handle.\n"
+msgstr "Klaidinga monitoriaus rodyklė.\n"
 
 #: winerror.mc:2706
-msgid "Event log file corrupt\n"
-msgstr "Įvykių žurnalo failas pažeistas\n"
+msgid "Event log file corrupt.\n"
+msgstr "Įvykių žurnalo failas pažeistas.\n"
 
 #: winerror.mc:2711
-msgid "Event log can't start\n"
-msgstr "Nepavyko paleisti įvykių žurnalo\n"
+msgid "Event log can't start.\n"
+msgstr "Nepavyko paleisti įvykių žurnalo.\n"
 
 #: winerror.mc:2716
-msgid "Event log file full\n"
-msgstr "Įvykių žurnalo failas pilnas\n"
+msgid "Event log file full.\n"
+msgstr "Įvykių žurnalo failas pilnas.\n"
 
 #: winerror.mc:2721
-msgid "Event log file changed\n"
-msgstr "Įvykių žurnalo failas pasikeitė\n"
+msgid "Event log file changed.\n"
+msgstr "Įvykių žurnalo failas pasikeitė.\n"
 
 #: winerror.mc:2726
-msgid "Installer service failed\n"
-msgstr "Diegimo programos tarnybos klaida\n"
+msgid "Installer service failed.\n"
+msgstr "Diegimo programos tarnybos klaida.\n"
 
 #: winerror.mc:2731
-msgid "Installation aborted by user\n"
-msgstr "Įdiegimas nutrauktas naudotojo\n"
+msgid "Installation aborted by user.\n"
+msgstr "Įdiegimas nutrauktas naudotojo.\n"
 
 #: winerror.mc:2736
-msgid "Installation failure\n"
-msgstr "Įdiegimo klaida\n"
+msgid "Installation failure.\n"
+msgstr "Įdiegimo klaida.\n"
 
 #: winerror.mc:2741
-msgid "Installation suspended\n"
-msgstr "Įdiegimas atidėtas\n"
+msgid "Installation suspended.\n"
+msgstr "Įdiegimas atidėtas.\n"
 
 #: winerror.mc:2746
-msgid "Unknown product\n"
-msgstr "Nežinomas produktas\n"
+msgid "Unknown product.\n"
+msgstr "Nežinomas produktas.\n"
 
 #: winerror.mc:2751
-msgid "Unknown feature\n"
-msgstr "Nežinoma funkcija\n"
+msgid "Unknown feature.\n"
+msgstr "Nežinoma funkcija.\n"
 
 #: winerror.mc:2756
-msgid "Unknown component\n"
-msgstr "Nežinomas komponentas\n"
+msgid "Unknown component.\n"
+msgstr "Nežinomas komponentas.\n"
 
 #: winerror.mc:2761
-msgid "Unknown property\n"
-msgstr "Nežinoma savybė\n"
+msgid "Unknown property.\n"
+msgstr "Nežinoma savybė.\n"
 
 #: winerror.mc:2766
-msgid "Invalid handle state\n"
-msgstr "Neteisinga rodyklės būsena\n"
+msgid "Invalid handle state.\n"
+msgstr "Neteisinga rodyklės būsena.\n"
 
 #: winerror.mc:2771
-msgid "Bad configuration\n"
-msgstr "Bloga konfigūracija\n"
+msgid "Bad configuration.\n"
+msgstr "Bloga konfigūracija.\n"
 
 #: winerror.mc:2776
-msgid "Index is missing\n"
-msgstr "Trūksta indekso\n"
+msgid "Index is missing.\n"
+msgstr "Trūksta indekso.\n"
 
 #: winerror.mc:2781
-msgid "Installation source is missing\n"
-msgstr "Trūksta įdiegimo šaltinio\n"
+msgid "Installation source is missing.\n"
+msgstr "Trūksta įdiegimo šaltinio.\n"
 
 #: winerror.mc:2786
-msgid "Wrong installation package version\n"
-msgstr "Neteisinga įdiegimo paketo versija\n"
+msgid "Wrong installation package version.\n"
+msgstr "Neteisinga įdiegimo paketo versija.\n"
 
 #: winerror.mc:2791
-msgid "Product uninstalled\n"
-msgstr "Produktas pašalintas\n"
+msgid "Product uninstalled.\n"
+msgstr "Produktas pašalintas.\n"
 
 #: winerror.mc:2796
-msgid "Invalid query syntax\n"
-msgstr "Neteisinga užklausos sintaksė\n"
+msgid "Invalid query syntax.\n"
+msgstr "Neteisinga užklausos sintaksė.\n"
 
 #: winerror.mc:2801
-msgid "Invalid field\n"
-msgstr "Neteisingas laikas\n"
+msgid "Invalid field.\n"
+msgstr "Neteisingas laikas.\n"
 
 #: winerror.mc:2806
-msgid "Device removed\n"
-msgstr "Įrenginys pašalintas\n"
+msgid "Device removed.\n"
+msgstr "Įrenginys pašalintas.\n"
 
 #: winerror.mc:2811
-msgid "Installation already running\n"
-msgstr "Įdiegimas jau vykdomas\n"
+msgid "Installation already running.\n"
+msgstr "Įdiegimas jau vykdomas.\n"
 
 #: winerror.mc:2816
-msgid "Installation package failed to open\n"
-msgstr "Nepavyko atverti įdiegimo paketo\n"
+msgid "Installation package failed to open.\n"
+msgstr "Nepavyko atverti įdiegimo paketo.\n"
 
 #: winerror.mc:2821
-msgid "Installation package is invalid\n"
-msgstr "Įdiegimo paketas netinkamas\n"
+msgid "Installation package is invalid.\n"
+msgstr "Įdiegimo paketas netinkamas.\n"
 
 #: winerror.mc:2826
-msgid "Installer user interface failed\n"
-msgstr "Diegimo programos naudotojo sąsajos klaida\n"
+msgid "Installer user interface failed.\n"
+msgstr "Diegimo programos naudotojo sąsajos klaida.\n"
 
 #: winerror.mc:2831
-msgid "Failed to open installation log file\n"
-msgstr "Nepavyko atverti įdiegimo žurnalo failo\n"
+msgid "Failed to open installation log file.\n"
+msgstr "Nepavyko atverti įdiegimo žurnalo failo.\n"
 
 #: winerror.mc:2836
-msgid "Installation language not supported\n"
-msgstr "Įdiegimo kalba nepalaikoma\n"
+msgid "Installation language not supported.\n"
+msgstr "Įdiegimo kalba nepalaikoma.\n"
 
 #: winerror.mc:2841
-msgid "Installation transform failed to apply\n"
-msgstr "Nepavyko pritaikyti įdiegimo transformacijos\n"
+msgid "Installation transform failed to apply.\n"
+msgstr "Nepavyko pritaikyti įdiegimo transformacijos.\n"
 
 #: winerror.mc:2846
-msgid "Installation package rejected\n"
-msgstr "Įdiegimo paketas atmestas\n"
+msgid "Installation package rejected.\n"
+msgstr "Įdiegimo paketas atmestas.\n"
 
 #: winerror.mc:2851
-msgid "Function could not be called\n"
-msgstr "Nepavyko iškviesti funkcijos\n"
+msgid "Function could not be called.\n"
+msgstr "Nepavyko iškviesti funkcijos.\n"
 
 #: winerror.mc:2856
-msgid "Function failed\n"
-msgstr "Funkcija nepavyko\n"
+msgid "Function failed.\n"
+msgstr "Funkcija nepavyko.\n"
 
 #: winerror.mc:2861
-msgid "Invalid table\n"
-msgstr "Neteisinga lentelė\n"
+msgid "Invalid table.\n"
+msgstr "Neteisinga lentelė.\n"
 
 #: winerror.mc:2866
-msgid "Data type mismatch\n"
-msgstr "Duomenų tipo neatitikimas\n"
+msgid "Data type mismatch.\n"
+msgstr "Duomenų tipo neatitikimas.\n"
 
 #: winerror.mc:2871 winerror.mc:3081
-msgid "Unsupported type\n"
-msgstr "Nepalaikomas tipas\n"
+msgid "Unsupported type.\n"
+msgstr "Nepalaikomas tipas.\n"
 
 #: winerror.mc:2876
-msgid "Creation failed\n"
-msgstr "Nepavyko sukurti\n"
+msgid "Creation failed.\n"
+msgstr "Nepavyko sukurti.\n"
 
 #: winerror.mc:2881
-msgid "Temporary directory not writable\n"
-msgstr "Į laikinąjį katalogą negalima rašyti\n"
+msgid "Temporary directory not writable.\n"
+msgstr "Į laikinąjį katalogą negalima rašyti.\n"
 
 #: winerror.mc:2886
-msgid "Installation platform not supported\n"
-msgstr "Įdiegimo platforma nepalaikoma\n"
+msgid "Installation platform not supported.\n"
+msgstr "Įdiegimo platforma nepalaikoma.\n"
 
 #: winerror.mc:2891
-msgid "Installer not used\n"
-msgstr "Diegimo programa nenaudojama\n"
+msgid "Installer not used.\n"
+msgstr "Diegimo programa nenaudojama.\n"
 
 #: winerror.mc:2896
-msgid "Failed to open the patch package\n"
-msgstr "Nepavyko atverti pataisų paketo\n"
+msgid "Failed to open the patch package.\n"
+msgstr "Nepavyko atverti pataisų paketo.\n"
 
 #: winerror.mc:2901
-msgid "Invalid patch package\n"
-msgstr "Neteisingas pataisų paketas\n"
+msgid "Invalid patch package.\n"
+msgstr "Neteisingas pataisų paketas.\n"
 
 #: winerror.mc:2906
-msgid "Unsupported patch package\n"
-msgstr "Nepalaikomas pataisų paketas\n"
+msgid "Unsupported patch package.\n"
+msgstr "Nepalaikomas pataisų paketas.\n"
 
 #: winerror.mc:2911
-msgid "Another version is installed\n"
-msgstr "Kita versija jau įdiegta\n"
+msgid "Another version is installed.\n"
+msgstr "Kita versija jau įdiegta.\n"
 
 #: winerror.mc:2916
-msgid "Invalid command line\n"
-msgstr "Neteisinga komandos eilutė\n"
+msgid "Invalid command line.\n"
+msgstr "Neteisinga komandos eilutė.\n"
 
 #: winerror.mc:2921
-msgid "Remote installation not allowed\n"
-msgstr "Nuotolinis įdiegimas neleidžiamas\n"
+msgid "Remote installation not allowed.\n"
+msgstr "Nuotolinis įdiegimas neleidžiamas.\n"
 
 #: winerror.mc:2926
-msgid "Reboot initiated after successful install\n"
-msgstr "Inicijuotas paleidimas iš naujo po sėkmingo įdiegimo\n"
+msgid "Reboot initiated after successful install.\n"
+msgstr "Inicijuotas paleidimas iš naujo po sėkmingo įdiegimo.\n"
 
 #: winerror.mc:2931
-msgid "Invalid string binding\n"
-msgstr "Neteisingas simbolių eilučių saistymas\n"
+msgid "Invalid string binding.\n"
+msgstr "Neteisingas simbolių eilučių saistymas.\n"
 
 #: winerror.mc:2936
-msgid "Wrong kind of binding\n"
-msgstr "Neteisinga saistymo rūšis\n"
+msgid "Wrong kind of binding.\n"
+msgstr "Neteisinga saistymo rūšis.\n"
 
 #: winerror.mc:2941
-msgid "Invalid binding\n"
-msgstr "Neteisingas saistymas\n"
+msgid "Invalid binding.\n"
+msgstr "Neteisingas saistymas.\n"
 
 #: winerror.mc:2946
-msgid "RPC protocol sequence not supported\n"
-msgstr "RPC protokolo seka nepalaikoma\n"
+msgid "RPC protocol sequence not supported.\n"
+msgstr "RPC protokolo seka nepalaikoma.\n"
 
 #: winerror.mc:2951
-msgid "Invalid RPC protocol sequence\n"
-msgstr "Neteisinga RPC protokolo seka\n"
+msgid "Invalid RPC protocol sequence.\n"
+msgstr "Neteisinga RPC protokolo seka.\n"
 
 #: winerror.mc:2956
-msgid "Invalid string UUID\n"
-msgstr "Neteisingas UUID\n"
+msgid "Invalid string UUID.\n"
+msgstr "Neteisingas UUID.\n"
 
 #: winerror.mc:2961
-msgid "Invalid endpoint format\n"
-msgstr "Neteisingas galutinio taško formatas\n"
+msgid "Invalid endpoint format.\n"
+msgstr "Neteisingas galutinio taško formatas.\n"
 
 #: winerror.mc:2966
-msgid "Invalid network address\n"
-msgstr "Neteisingas tinklo adresas\n"
+msgid "Invalid network address.\n"
+msgstr "Neteisingas tinklo adresas.\n"
 
 #: winerror.mc:2971
-msgid "No endpoint found\n"
-msgstr "Nerastas galutinis taškas\n"
+msgid "No endpoint found.\n"
+msgstr "Nerastas galutinis taškas.\n"
 
 #: winerror.mc:2976
-msgid "Invalid timeout value\n"
-msgstr "Neteisinga laiko baigimosi reikšmė\n"
+msgid "Invalid timeout value.\n"
+msgstr "Neteisinga laiko baigimosi reikšmė.\n"
 
 #: winerror.mc:2981
-msgid "Object UUID not found\n"
-msgstr "Objekto UUID nerastas\n"
+msgid "Object UUID not found.\n"
+msgstr "Objekto UUID nerastas.\n"
 
 #: winerror.mc:2986
-msgid "UUID already registered\n"
-msgstr "UUID jau registruotas\n"
+msgid "UUID already registered.\n"
+msgstr "UUID jau registruotas.\n"
 
 #: winerror.mc:2991
-msgid "UUID type already registered\n"
-msgstr "UUID tipas jau registruotas\n"
+msgid "UUID type already registered.\n"
+msgstr "UUID tipas jau registruotas.\n"
 
 #: winerror.mc:2996
-msgid "Server already listening\n"
-msgstr "Serveris jau klausosi\n"
+msgid "Server already listening.\n"
+msgstr "Serveris jau klausosi.\n"
 
 #: winerror.mc:3001
-msgid "No protocol sequences registered\n"
-msgstr "Neužregistruota jokia protokolo seka\n"
+msgid "No protocol sequences registered.\n"
+msgstr "Neužregistruota jokia protokolo seka.\n"
 
 #: winerror.mc:3006
-msgid "RPC server not listening\n"
-msgstr "RPC serveris nesiklauso\n"
+msgid "RPC server not listening.\n"
+msgstr "RPC serveris nesiklauso.\n"
 
 #: winerror.mc:3011
-msgid "Unknown manager type\n"
-msgstr "Nežinomas tvarkytuvės tipas\n"
+msgid "Unknown manager type.\n"
+msgstr "Nežinomas tvarkytuvės tipas.\n"
 
 #: winerror.mc:3016
-msgid "Unknown interface\n"
-msgstr "Nežinoma sąsaja\n"
+msgid "Unknown interface.\n"
+msgstr "Nežinoma sąsaja.\n"
 
 #: winerror.mc:3021
-msgid "No bindings\n"
-msgstr "Nėra saistymų\n"
+msgid "No bindings.\n"
+msgstr "Nėra saistymų.\n"
 
 #: winerror.mc:3026
-msgid "No protocol sequences\n"
-msgstr "Nėra protokolo sekų\n"
+msgid "No protocol sequences.\n"
+msgstr "Nėra protokolo sekų.\n"
 
 #: winerror.mc:3031
-msgid "Can't create endpoint\n"
-msgstr "Nepavyko sukurti galutinio taško\n"
+msgid "Can't create endpoint.\n"
+msgstr "Nepavyko sukurti galutinio taško.\n"
 
 #: winerror.mc:3036
-msgid "Out of resources\n"
-msgstr "Trūksta išteklių\n"
+msgid "Out of resources.\n"
+msgstr "Trūksta išteklių.\n"
 
 #: winerror.mc:3041
-msgid "RPC server unavailable\n"
-msgstr "RPC serveris nepasiekiamas\n"
+msgid "RPC server unavailable.\n"
+msgstr "RPC serveris nepasiekiamas.\n"
 
 #: winerror.mc:3046
-msgid "RPC server too busy\n"
-msgstr "RPC serveris per daug užsiėmęs\n"
+msgid "RPC server too busy.\n"
+msgstr "RPC serveris per daug užsiėmęs.\n"
 
 #: winerror.mc:3051
-msgid "Invalid network options\n"
-msgstr "Neteisingos tinklo nuostatos\n"
+msgid "Invalid network options.\n"
+msgstr "Neteisingos tinklo nuostatos.\n"
 
 #: winerror.mc:3056
-msgid "No RPC call active\n"
-msgstr "Nėra aktyvaus RPC kreipinio\n"
+msgid "No RPC call active.\n"
+msgstr "Nėra aktyvaus RPC kreipinio.\n"
 
 #: winerror.mc:3061
-msgid "RPC call failed\n"
-msgstr "RPC kreipinys nepavyko\n"
+msgid "RPC call failed.\n"
+msgstr "RPC kreipinys nepavyko.\n"
 
 #: winerror.mc:3066
-msgid "RPC call failed and didn't execute\n"
-msgstr "RPC kreipinys nepavyko ir nebuvo įvykdytas\n"
+msgid "RPC call failed and didn't execute.\n"
+msgstr "RPC kreipinys nepavyko ir nebuvo įvykdytas.\n"
 
 #: winerror.mc:3071
-msgid "RPC protocol error\n"
-msgstr "RPC protokolo klaida\n"
+msgid "RPC protocol error.\n"
+msgstr "RPC protokolo klaida.\n"
 
 #: winerror.mc:3076
-msgid "Unsupported transfer syntax\n"
-msgstr "Nepalaikoma perdavimo sintaksė\n"
+msgid "Unsupported transfer syntax.\n"
+msgstr "Nepalaikoma perdavimo sintaksė.\n"
 
 #: winerror.mc:3086
-msgid "Invalid tag\n"
-msgstr "Neteisinga žymė\n"
+msgid "Invalid tag.\n"
+msgstr "Neteisinga žymė.\n"
 
 #: winerror.mc:3091
-msgid "Invalid array bounds\n"
-msgstr "Neteisingos masyvo ribos\n"
+msgid "Invalid array bounds.\n"
+msgstr "Neteisingos masyvo ribos.\n"
 
 #: winerror.mc:3096
-msgid "No entry name\n"
-msgstr "Nėra įrašo vardo\n"
+msgid "No entry name.\n"
+msgstr "Nėra įrašo vardo.\n"
 
 #: winerror.mc:3101
-msgid "Invalid name syntax\n"
-msgstr "Neteisinga vardo sintaksė\n"
+msgid "Invalid name syntax.\n"
+msgstr "Neteisinga vardo sintaksė.\n"
 
 #: winerror.mc:3106
-msgid "Unsupported name syntax\n"
-msgstr "Nepalaikoma vardo sintaksė\n"
+msgid "Unsupported name syntax.\n"
+msgstr "Nepalaikoma vardo sintaksė.\n"
 
 #: winerror.mc:3111
-msgid "No network address\n"
-msgstr "Nėra tinklo adreso\n"
+msgid "No network address.\n"
+msgstr "Nėra tinklo adreso.\n"
 
 #: winerror.mc:3116
-msgid "Duplicate endpoint\n"
-msgstr "Dvigubas pabaigos taškas\n"
+msgid "Duplicate endpoint.\n"
+msgstr "Dvigubas pabaigos taškas.\n"
 
 #: winerror.mc:3121
-msgid "Unknown authentication type\n"
-msgstr "Nežinomas tapatumo nustatymo tipas\n"
+msgid "Unknown authentication type.\n"
+msgstr "Nežinomas tapatumo nustatymo tipas.\n"
 
 #: winerror.mc:3126
-msgid "Maximum calls too low\n"
-msgstr "Didžiausias kreipinių skaičius per mažas\n"
+msgid "Maximum calls too low.\n"
+msgstr "Didžiausias kreipinių skaičius per mažas.\n"
 
 #: winerror.mc:3131
-msgid "String too long\n"
-msgstr "Eilutė per ilga\n"
+msgid "String too long.\n"
+msgstr "Eilutė per ilga.\n"
 
 #: winerror.mc:3136
-msgid "Protocol sequence not found\n"
-msgstr "Protokolo seka nerasta\n"
+msgid "Protocol sequence not found.\n"
+msgstr "Protokolo seka nerasta.\n"
 
 #: winerror.mc:3141
-msgid "Procedure number out of range\n"
-msgstr "Procedūros numeris ne tarp rėžių\n"
+msgid "Procedure number out of range.\n"
+msgstr "Procedūros numeris ne tarp rėžių.\n"
 
 #: winerror.mc:3146
-msgid "Binding has no authentication data\n"
-msgstr "Saistymas neturi tapatumo nustatymo duomenų\n"
+msgid "Binding has no authentication data.\n"
+msgstr "Saistymas neturi tapatumo nustatymo duomenų.\n"
 
 #: winerror.mc:3151
-msgid "Unknown authentication service\n"
-msgstr "Nežinoma tapatumo nustatymo tarnyba\n"
+msgid "Unknown authentication service.\n"
+msgstr "Nežinoma tapatumo nustatymo tarnyba.\n"
 
 #: winerror.mc:3156
-msgid "Unknown authentication level\n"
-msgstr "Nežinomas tapatumo nustatymo lygis\n"
+msgid "Unknown authentication level.\n"
+msgstr "Nežinomas tapatumo nustatymo lygis.\n"
 
 #: winerror.mc:3161
-msgid "Invalid authentication identity\n"
-msgstr "Neteisinga tapatumo nustatymo tapatybė\n"
+msgid "Invalid authentication identity.\n"
+msgstr "Neteisinga tapatumo nustatymo tapatybė.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service\n"
-msgstr "Nežinoma prieigos teisių tarnyba\n"
+msgid "Unknown authorisation service.\n"
+msgstr "Nežinoma prieigos teisių tarnyba.\n"
 
 #: winerror.mc:3171
-msgid "Invalid entry\n"
-msgstr "Neteisingas įrašas\n"
+msgid "Invalid entry.\n"
+msgstr "Neteisingas įrašas.\n"
 
 #: winerror.mc:3176
-msgid "Can't perform operation\n"
-msgstr "Nepavyko įvykdyti operacijos\n"
+msgid "Can't perform operation.\n"
+msgstr "Nepavyko įvykdyti operacijos.\n"
 
 #: winerror.mc:3181
-msgid "Endpoints not registered\n"
-msgstr "Pabaigos taškai neregistruoti\n"
+msgid "Endpoints not registered.\n"
+msgstr "Pabaigos taškai neregistruoti.\n"
 
 #: winerror.mc:3186
-msgid "Nothing to export\n"
-msgstr "Nėra ką eksportuoti\n"
+msgid "Nothing to export.\n"
+msgstr "Nėra ką eksportuoti.\n"
 
 #: winerror.mc:3191
-msgid "Incomplete name\n"
-msgstr "Nevisas vardas\n"
+msgid "Incomplete name.\n"
+msgstr "Nevisas vardas.\n"
 
 #: winerror.mc:3196
-msgid "Invalid version option\n"
-msgstr "Neteisinga versijos išvestis\n"
+msgid "Invalid version option.\n"
+msgstr "Neteisinga versijos išvestis.\n"
 
 #: winerror.mc:3201
-msgid "No more members\n"
-msgstr "Nėra daugiau narių\n"
+msgid "No more members.\n"
+msgstr "Nėra daugiau narių.\n"
 
 #: winerror.mc:3206
-msgid "Not all objects unexported\n"
-msgstr "Ne visi objektai importuoti\n"
+msgid "Not all objects unexported.\n"
+msgstr "Ne visi objektai importuoti.\n"
 
 #: winerror.mc:3211
-msgid "Interface not found\n"
-msgstr "Sąsaja nerasta\n"
+msgid "Interface not found.\n"
+msgstr "Sąsaja nerasta.\n"
 
 #: winerror.mc:3216
-msgid "Entry already exists\n"
-msgstr "Įrašas jau egzistuoja\n"
+msgid "Entry already exists.\n"
+msgstr "Įrašas jau egzistuoja.\n"
 
 #: winerror.mc:3221
-msgid "Entry not found\n"
-msgstr "Įrašas nerastas\n"
+msgid "Entry not found.\n"
+msgstr "Įrašas nerastas.\n"
 
 #: winerror.mc:3226
-msgid "Name service unavailable\n"
-msgstr "Vardų tarnyba nepasiekiama\n"
+msgid "Name service unavailable.\n"
+msgstr "Vardų tarnyba nepasiekiama.\n"
 
 #: winerror.mc:3231
-msgid "Invalid network address family\n"
-msgstr "Neteisinga tinklo adresų šeima\n"
+msgid "Invalid network address family.\n"
+msgstr "Neteisinga tinklo adresų šeima.\n"
 
 #: winerror.mc:3236
-msgid "Operation not supported\n"
-msgstr "Operacija nepalaikoma\n"
+msgid "Operation not supported.\n"
+msgstr "Operacija nepalaikoma.\n"
 
 #: winerror.mc:3241
-msgid "No security context available\n"
-msgstr "Nėra saugumo konteksto\n"
+msgid "No security context available.\n"
+msgstr "Nėra saugumo konteksto.\n"
 
 #: winerror.mc:3246
-msgid "RPCInternal error\n"
-msgstr "RPC vidinė klaida\n"
+msgid "RPCInternal error.\n"
+msgstr "RPC vidinė klaida.\n"
 
 #: winerror.mc:3251
-msgid "RPC divide-by-zero\n"
-msgstr "RPC dalyba iš nulio\n"
+msgid "RPC divide-by-zero.\n"
+msgstr "RPC dalyba iš nulio.\n"
 
 #: winerror.mc:3256
-msgid "Address error\n"
-msgstr "Adreso klaida\n"
+msgid "Address error.\n"
+msgstr "Adreso klaida.\n"
 
 #: winerror.mc:3261
-msgid "Floating-point divide-by-zero\n"
-msgstr "Slankiojo kablelio skaičiaus dalyba iš nulio\n"
+msgid "Floating-point divide-by-zero.\n"
+msgstr "Slankiojo kablelio skaičiaus dalyba iš nulio.\n"
 
 #: winerror.mc:3266
-msgid "Floating-point underflow\n"
-msgstr "Slankiojo kablelio skaičiaus atvirkštinis perpildymas\n"
+msgid "Floating-point underflow.\n"
+msgstr "Slankiojo kablelio skaičiaus atvirkštinis perpildymas.\n"
 
 #: winerror.mc:3271
-msgid "Floating-point overflow\n"
-msgstr "Slankiojo kablelio skaičiaus perpildymas\n"
+msgid "Floating-point overflow.\n"
+msgstr "Slankiojo kablelio skaičiaus perpildymas.\n"
 
 #: winerror.mc:3276
-msgid "No more entries\n"
-msgstr "Nėra daugiau įrašų\n"
+msgid "No more entries.\n"
+msgstr "Nėra daugiau įrašų.\n"
 
 #: winerror.mc:3281
-msgid "Character translation table open failed\n"
-msgstr "Nepavyko atverti ženklų perkodavimo lentelės\n"
+msgid "Character translation table open failed.\n"
+msgstr "Nepavyko atverti ženklų perkodavimo lentelės.\n"
 
 #: winerror.mc:3286
-msgid "Character translation table file too small\n"
-msgstr "Ženklų perkodavimo lentelės failas per mažas\n"
+msgid "Character translation table file too small.\n"
+msgstr "Ženklų perkodavimo lentelės failas per mažas.\n"
 
 #: winerror.mc:3291
-msgid "Null context handle\n"
-msgstr "Nulinė konteksto rodyklė\n"
+msgid "Null context handle.\n"
+msgstr "Nulinė konteksto rodyklė.\n"
 
 #: winerror.mc:3296
-msgid "Context handle damaged\n"
-msgstr "Pažeista konteksto rodyklė\n"
+msgid "Context handle damaged.\n"
+msgstr "Pažeista konteksto rodyklė.\n"
 
 #: winerror.mc:3301
-msgid "Binding handle mismatch\n"
-msgstr "Saistymo rodyklių neatitiktis\n"
+msgid "Binding handle mismatch.\n"
+msgstr "Saistymo rodyklių neatitiktis.\n"
 
 #: winerror.mc:3306
-msgid "Cannot get call handle\n"
-msgstr "Nepavyko gauti kreipties rodyklės\n"
+msgid "Cannot get call handle.\n"
+msgstr "Nepavyko gauti kreipties rodyklės.\n"
 
 #: winerror.mc:3311
-msgid "Null reference pointer\n"
-msgstr "Nulinė rodyklė\n"
+msgid "Null reference pointer.\n"
+msgstr "Nulinė rodyklė.\n"
 
 #: winerror.mc:3316
-msgid "Enumeration value out of range\n"
-msgstr "Išvardijimo reikšmė ne tarp rėžių\n"
+msgid "Enumeration value out of range.\n"
+msgstr "Išvardijimo reikšmė ne tarp rėžių.\n"
 
 #: winerror.mc:3321
-msgid "Byte count too small\n"
-msgstr "Gautas baitų skaičius per mažas\n"
+msgid "Byte count too small.\n"
+msgstr "Gautas baitų skaičius per mažas.\n"
 
 #: winerror.mc:3326
-msgid "Bad stub data\n"
-msgstr "Blogi stub duomenys\n"
+msgid "Bad stub data.\n"
+msgstr "Blogi stub duomenys.\n"
 
 #: winerror.mc:3331
-msgid "Invalid user buffer\n"
-msgstr "Netinkamas naudotojo buferis\n"
+msgid "Invalid user buffer.\n"
+msgstr "Netinkamas naudotojo buferis.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media\n"
-msgstr "Neatpažinta laikmena\n"
+msgid "Unrecognised media.\n"
+msgstr "Neatpažinta laikmena.\n"
 
 #: winerror.mc:3341
-msgid "No trust secret\n"
-msgstr "Nėra patikėjimo paslapties\n"
+msgid "No trust secret.\n"
+msgstr "Nėra patikėjimo paslapties.\n"
 
 #: winerror.mc:3346
-msgid "No trust SAM account\n"
-msgstr "Nėra patikimos SAM paskyros\n"
+msgid "No trust SAM account.\n"
+msgstr "Nėra patikimos SAM paskyros.\n"
 
 #: winerror.mc:3351
-msgid "Trusted domain failure\n"
-msgstr "Patikimos srities klaida\n"
+msgid "Trusted domain failure.\n"
+msgstr "Patikimos srities klaida.\n"
 
 #: winerror.mc:3356
-msgid "Trusted relationship failure\n"
-msgstr "Patikimo ryšio klaida\n"
+msgid "Trusted relationship failure.\n"
+msgstr "Patikimo ryšio klaida.\n"
 
 #: winerror.mc:3361
-msgid "Trust logon failure\n"
-msgstr "Patikimo prisijungimo klaida\n"
+msgid "Trust logon failure.\n"
+msgstr "Patikimo prisijungimo klaida.\n"
 
 #: winerror.mc:3366
-msgid "RPC call already in progress\n"
-msgstr "RPC kreipinys jau vyksta\n"
+msgid "RPC call already in progress.\n"
+msgstr "RPC kreipinys jau vyksta.\n"
 
 #: winerror.mc:3371
-msgid "NETLOGON is not started\n"
-msgstr "NETLOGON nepaleistas\n"
+msgid "NETLOGON is not started.\n"
+msgstr "NETLOGON nepaleistas.\n"
 
 #: winerror.mc:3376
-msgid "Account expired\n"
-msgstr "Paskyra nebegalioja\n"
+msgid "Account expired.\n"
+msgstr "Paskyra nebegalioja.\n"
 
 #: winerror.mc:3381
-msgid "Redirector has open handles\n"
-msgstr "Nukreiptuvė turi atvertų rodyklių\n"
+msgid "Redirector has open handles.\n"
+msgstr "Nukreiptuvė turi atvertų rodyklių.\n"
 
 #: winerror.mc:3386
-msgid "Printer driver already installed\n"
-msgstr "Spausdintuvo tvarkyklė jau įdiegta\n"
+msgid "Printer driver already installed.\n"
+msgstr "Spausdintuvo tvarkyklė jau įdiegta.\n"
 
 #: winerror.mc:3391
-msgid "Unknown port\n"
-msgstr "Nežinomas prievadas\n"
+msgid "Unknown port.\n"
+msgstr "Nežinomas prievadas.\n"
 
 #: winerror.mc:3396
-msgid "Unknown printer driver\n"
-msgstr "Nežinoma spausdintuvo tvarkyklė\n"
+msgid "Unknown printer driver.\n"
+msgstr "Nežinoma spausdintuvo tvarkyklė.\n"
 
 #: winerror.mc:3401
-msgid "Unknown print processor\n"
-msgstr "Nežinoma spausdinimo doroklė\n"
+msgid "Unknown print processor.\n"
+msgstr "Nežinoma spausdinimo doroklė.\n"
 
 #: winerror.mc:3406
-msgid "Invalid separator file\n"
-msgstr "Neteisingas skirtuko failas\n"
+msgid "Invalid separator file.\n"
+msgstr "Neteisingas skirtuko failas.\n"
 
 #: winerror.mc:3411
-msgid "Invalid priority\n"
-msgstr "Neteisingas prioritetas\n"
+msgid "Invalid priority.\n"
+msgstr "Neteisingas prioritetas.\n"
 
 #: winerror.mc:3416
-msgid "Invalid printer name\n"
-msgstr "Neteisingas spausdintuvo vardas\n"
+msgid "Invalid printer name.\n"
+msgstr "Neteisingas spausdintuvo vardas.\n"
 
 #: winerror.mc:3421
-msgid "Printer already exists\n"
-msgstr "Spausdintuvas jau egzistuoja\n"
+msgid "Printer already exists.\n"
+msgstr "Spausdintuvas jau egzistuoja.\n"
 
 #: winerror.mc:3426
-msgid "Invalid printer command\n"
-msgstr "Neteisinga spausdintuvo komanda\n"
+msgid "Invalid printer command.\n"
+msgstr "Neteisinga spausdintuvo komanda.\n"
 
 #: winerror.mc:3431
-msgid "Invalid data type\n"
-msgstr "Neteisingas duomenų tipas\n"
+msgid "Invalid data type.\n"
+msgstr "Neteisingas duomenų tipas.\n"
 
 #: winerror.mc:3436
-msgid "Invalid environment\n"
-msgstr "Neteisinga aplinka\n"
+msgid "Invalid environment.\n"
+msgstr "Neteisinga aplinka.\n"
 
 #: winerror.mc:3441
-msgid "No more bindings\n"
-msgstr "Nėra daugiau saistymų\n"
+msgid "No more bindings.\n"
+msgstr "Nėra daugiau saistymų.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account\n"
-msgstr "Negalima prisijungti su tarpsritine patikima paskyra\n"
+msgid "Can't logon with interdomain trust account.\n"
+msgstr "Negalima prisijungti su tarpsritine patikima paskyra.\n"
 
 #: winerror.mc:3451
-msgid "Can't logon with workstation trust account\n"
-msgstr "Negalima prisijungti su darbo vietos patikima paskyra\n"
+msgid "Can't logon with workstation trust account.\n"
+msgstr "Negalima prisijungti su darbo vietos patikima paskyra.\n"
 
 #: winerror.mc:3456
-msgid "Can't logon with server trust account\n"
-msgstr "Negalima prisijungti su serverio patikima paskyra\n"
+msgid "Can't logon with server trust account.\n"
+msgstr "Negalima prisijungti su serverio patikima paskyra.\n"
 
 #: winerror.mc:3461
-msgid "Domain trust information inconsistent\n"
-msgstr "Srities patikėjimo informacija prieštaringa\n"
+msgid "Domain trust information inconsistent.\n"
+msgstr "Srities patikėjimo informacija prieštaringa.\n"
 
 #: winerror.mc:3466
-msgid "Server has open handles\n"
-msgstr "Serveris turi atvirų rodyklių\n"
+msgid "Server has open handles.\n"
+msgstr "Serveris turi atvirų rodyklių.\n"
 
 #: winerror.mc:3471
-msgid "Resource data not found\n"
-msgstr "Išteklių duomenys nerasti\n"
+msgid "Resource data not found.\n"
+msgstr "Išteklių duomenys nerasti.\n"
 
 #: winerror.mc:3476
-msgid "Resource type not found\n"
-msgstr "Išteklių tipas nerastas\n"
+msgid "Resource type not found.\n"
+msgstr "Išteklių tipas nerastas.\n"
 
 #: winerror.mc:3481
-msgid "Resource name not found\n"
-msgstr "Išteklių vardas nerastas\n"
+msgid "Resource name not found.\n"
+msgstr "Išteklių vardas nerastas.\n"
 
 #: winerror.mc:3486
-msgid "Resource language not found\n"
-msgstr "Išteklių kalba nerasta\n"
+msgid "Resource language not found.\n"
+msgstr "Išteklių kalba nerasta.\n"
 
 #: winerror.mc:3491
-msgid "Not enough quota\n"
-msgstr "Per maža kvota\n"
+msgid "Not enough quota.\n"
+msgstr "Per maža kvota.\n"
 
 #: winerror.mc:3496
-msgid "No interfaces\n"
-msgstr "Nėra sąsajų\n"
+msgid "No interfaces.\n"
+msgstr "Nėra sąsajų.\n"
 
 #: winerror.mc:3501
-msgid "RPC call canceled\n"
-msgstr "RPC kreipinys nutrauktas\n"
+msgid "RPC call canceled.\n"
+msgstr "RPC kreipinys nutrauktas.\n"
 
 #: winerror.mc:3506
-msgid "Binding incomplete\n"
-msgstr "Saistymas nepilnas\n"
+msgid "Binding incomplete.\n"
+msgstr "Saistymas nepilnas.\n"
 
 #: winerror.mc:3511
-msgid "RPC comm failure\n"
-msgstr "RPC ryšio klaida\n"
+msgid "RPC comm failure.\n"
+msgstr "RPC ryšio klaida.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level\n"
-msgstr "Nepalaikomas prieigos teisių lygis\n"
+msgid "Unsupported authorisation level.\n"
+msgstr "Nepalaikomas prieigos teisių lygis.\n"
 
 #: winerror.mc:3521
-msgid "No principal name registered\n"
-msgstr "Pagrindinis vardas neužregistruotas\n"
+msgid "No principal name registered.\n"
+msgstr "Pagrindinis vardas neužregistruotas.\n"
 
 #: winerror.mc:3526
-msgid "Not an RPC error\n"
-msgstr "Ne RPC klaida\n"
+msgid "Not an RPC error.\n"
+msgstr "Ne RPC klaida.\n"
 
 #: winerror.mc:3531
-msgid "UUID is local only\n"
-msgstr "UUID yra tik vietinis\n"
+msgid "UUID is local only.\n"
+msgstr "UUID yra tik vietinis.\n"
 
 #: winerror.mc:3536
-msgid "Security package error\n"
-msgstr "Saugumo paketo klaida\n"
+msgid "Security package error.\n"
+msgstr "Saugumo paketo klaida.\n"
 
 #: winerror.mc:3541
-msgid "Thread not canceled\n"
-msgstr "Gija nenutraukta\n"
+msgid "Thread not canceled.\n"
+msgstr "Gija nenutraukta.\n"
 
 #: winerror.mc:3546
-msgid "Invalid handle operation\n"
-msgstr "Neteisinga rodyklės operacija\n"
+msgid "Invalid handle operation.\n"
+msgstr "Neteisinga rodyklės operacija.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version\n"
-msgstr "Neteisinga sekų išdėstymo paketo versija\n"
+msgid "Wrong serialising package version.\n"
+msgstr "Neteisinga sekų išdėstymo paketo versija.\n"
 
 #: winerror.mc:3556
-msgid "Wrong stub version\n"
-msgstr "Neteisinga stub versija\n"
+msgid "Wrong stub version.\n"
+msgstr "Neteisinga stub versija.\n"
 
 #: winerror.mc:3561
-msgid "Invalid pipe object\n"
-msgstr "Neteisingas kanalo objektas\n"
+msgid "Invalid pipe object.\n"
+msgstr "Neteisingas kanalo objektas.\n"
 
 #: winerror.mc:3566
-msgid "Wrong pipe order\n"
-msgstr "Neteisinga kanalo tvarka\n"
+msgid "Wrong pipe order.\n"
+msgstr "Neteisinga kanalo tvarka.\n"
 
 #: winerror.mc:3571
-msgid "Wrong pipe version\n"
-msgstr "Neteisinga kanalo versija\n"
+msgid "Wrong pipe version.\n"
+msgstr "Neteisinga kanalo versija.\n"
 
 #: winerror.mc:3576
-msgid "Group member not found\n"
-msgstr "Grupės narys nerastas\n"
+msgid "Group member not found.\n"
+msgstr "Grupės narys nerastas.\n"
 
 #: winerror.mc:3581
-msgid "Can't create endpoint mapper DB\n"
-msgstr "Nepavyko sukurti pabaigos taškų atvaizdavimo DB\n"
+msgid "Can't create endpoint mapper DB.\n"
+msgstr "Nepavyko sukurti pabaigos taškų atvaizdavimo DB.\n"
 
 #: winerror.mc:3586
-msgid "Invalid object\n"
-msgstr "Neteisingas objektas\n"
+msgid "Invalid object.\n"
+msgstr "Neteisingas objektas.\n"
 
 #: winerror.mc:3591
-msgid "Invalid time\n"
-msgstr "Neteisingas laikas\n"
+msgid "Invalid time.\n"
+msgstr "Neteisingas laikas.\n"
 
 #: winerror.mc:3596
-msgid "Invalid form name\n"
-msgstr "Neteisingas formos vardas\n"
+msgid "Invalid form name.\n"
+msgstr "Neteisingas formos vardas.\n"
 
 #: winerror.mc:3601
-msgid "Invalid form size\n"
-msgstr "Neteisingas formos dydis\n"
+msgid "Invalid form size.\n"
+msgstr "Neteisingas formos dydis.\n"
 
 #: winerror.mc:3606
-msgid "Already awaiting printer handle\n"
-msgstr "Jau laukiama spausdintuvo rodyklės\n"
+msgid "Already awaiting printer handle.\n"
+msgstr "Jau laukiama spausdintuvo rodyklės.\n"
 
 #: winerror.mc:3611
-msgid "Printer deleted\n"
-msgstr "Spausdintuvas ištrintas\n"
+msgid "Printer deleted.\n"
+msgstr "Spausdintuvas ištrintas.\n"
 
 #: winerror.mc:3616
-msgid "Invalid printer state\n"
-msgstr "Neteisinga spausdintuvo būsena\n"
+msgid "Invalid printer state.\n"
+msgstr "Neteisinga spausdintuvo būsena.\n"
 
 #: winerror.mc:3621
-msgid "User must change password\n"
-msgstr "Naudotojas privalo pakeisti slaptažodį\n"
+msgid "User must change password.\n"
+msgstr "Naudotojas privalo pakeisti slaptažodį.\n"
 
 #: winerror.mc:3626
-msgid "Domain controller not found\n"
-msgstr "Sričių valdiklis nerastas\n"
+msgid "Domain controller not found.\n"
+msgstr "Sričių valdiklis nerastas.\n"
 
 #: winerror.mc:3631
-msgid "Account locked out\n"
-msgstr "Paskyra užblokuota\n"
+msgid "Account locked out.\n"
+msgstr "Paskyra užblokuota.\n"
 
 #: winerror.mc:3636
-msgid "Invalid pixel format\n"
-msgstr "Neteisingas pikselio formatas\n"
+msgid "Invalid pixel format.\n"
+msgstr "Neteisingas pikselio formatas.\n"
 
 #: winerror.mc:3641
-msgid "Invalid driver\n"
-msgstr "Neteisinga tvarkyklė\n"
+msgid "Invalid driver.\n"
+msgstr "Neteisinga tvarkyklė.\n"
 
 #: winerror.mc:3646
-msgid "Invalid object resolver set\n"
-msgstr "Nustatytas neteisingas objektų nustatymas\n"
+msgid "Invalid object resolver set.\n"
+msgstr "Nustatytas neteisingas objektų nustatymas.\n"
 
 #: winerror.mc:3651
-msgid "Incomplete RPC send\n"
-msgstr "Išsiųstas nevisas RPC\n"
+msgid "Incomplete RPC send.\n"
+msgstr "Išsiųstas nevisas RPC.\n"
 
 #: winerror.mc:3656
-msgid "Invalid asynchronous RPC handle\n"
-msgstr "Neteisinga asinchroninio RPC rodyklė\n"
+msgid "Invalid asynchronous RPC handle.\n"
+msgstr "Neteisinga asinchroninio RPC rodyklė.\n"
 
 #: winerror.mc:3661
-msgid "Invalid asynchronous RPC call\n"
-msgstr "Neteisinga asinchroninio RPC kvietimas\n"
+msgid "Invalid asynchronous RPC call.\n"
+msgstr "Neteisinga asinchroninio RPC kvietimas.\n"
 
 #: winerror.mc:3666
-msgid "RPC pipe closed\n"
-msgstr "RPC kanalas užvertas\n"
+msgid "RPC pipe closed.\n"
+msgstr "RPC kanalas užvertas.\n"
 
 #: winerror.mc:3671
-msgid "Discipline error on RPC pipe\n"
-msgstr "Disciplinos klaida RPC kanale\n"
+msgid "Discipline error on RPC pipe.\n"
+msgstr "Disciplinos klaida RPC kanale.\n"
 
 #: winerror.mc:3676
-msgid "No data on RPC pipe\n"
-msgstr "Nėra duomenų RPC kanale\n"
+msgid "No data on RPC pipe.\n"
+msgstr "Nėra duomenų RPC kanale.\n"
 
 #: winerror.mc:3681
-msgid "No site name available\n"
-msgstr "Nėra tinklavietės vardo\n"
+msgid "No site name available.\n"
+msgstr "Nėra tinklavietės vardo.\n"
 
 #: winerror.mc:3686
-msgid "The file cannot be accessed\n"
-msgstr "Nėra prieigos prie failo\n"
+msgid "The file cannot be accessed.\n"
+msgstr "Nėra prieigos prie failo.\n"
 
 #: winerror.mc:3691
-msgid "The filename cannot be resolved\n"
-msgstr "Nepavyko nustatyti failo vardo\n"
+msgid "The filename cannot be resolved.\n"
+msgstr "Nepavyko nustatyti failo vardo.\n"
 
 #: winerror.mc:3696
-msgid "RPC entry type mismatch\n"
-msgstr "RPC įrašo tipo neatitikimas\n"
+msgid "RPC entry type mismatch.\n"
+msgstr "RPC įrašo tipo neatitikimas.\n"
 
 #: winerror.mc:3701
-msgid "Not all objects could be exported\n"
-msgstr "Ne visi objektai eksportuoti\n"
+msgid "Not all objects could be exported.\n"
+msgstr "Ne visi objektai eksportuoti.\n"
 
 #: winerror.mc:3706
-msgid "The interface could not be exported\n"
-msgstr "Sąsaja neeksportuota\n"
+msgid "The interface could not be exported.\n"
+msgstr "Sąsaja neeksportuota.\n"
 
 #: winerror.mc:3711
-msgid "The profile could not be added\n"
-msgstr "Profilis nepridėtas\n"
+msgid "The profile could not be added.\n"
+msgstr "Profilis nepridėtas.\n"
 
 #: winerror.mc:3716
-msgid "The profile element could not be added\n"
-msgstr "Profilio elementas nepridėtas\n"
+msgid "The profile element could not be added.\n"
+msgstr "Profilio elementas nepridėtas.\n"
 
 #: winerror.mc:3721
-msgid "The profile element could not be removed\n"
-msgstr "Profilio elementas nepašalintas\n"
+msgid "The profile element could not be removed.\n"
+msgstr "Profilio elementas nepašalintas.\n"
 
 #: winerror.mc:3726
-msgid "The group element could not be added\n"
-msgstr "Grupės elementas nepridėtas\n"
+msgid "The group element could not be added.\n"
+msgstr "Grupės elementas nepridėtas.\n"
 
 #: winerror.mc:3731
-msgid "The group element could not be removed\n"
-msgstr "Grupės elementas nepašalintas\n"
+msgid "The group element could not be removed.\n"
+msgstr "Grupės elementas nepašalintas.\n"
 
 #: winerror.mc:3736
-msgid "The username could not be found\n"
-msgstr "Naudotojo vardas nerastas\n"
+msgid "The username could not be found.\n"
+msgstr "Naudotojo vardas nerastas.\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"

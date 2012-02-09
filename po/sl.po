@@ -3554,2957 +3554,2957 @@ msgid "Array object expected"
 msgstr "Pričakovan je bil predmet polja"
 
 #: winerror.mc:26
-msgid "Success\n"
-msgstr "Uspešno\n"
+msgid "Success.\n"
+msgstr "Uspešno.\n"
 
 #: winerror.mc:31
-msgid "Invalid function\n"
-msgstr "Neveljavna funkcija\n"
+msgid "Invalid function.\n"
+msgstr "Neveljavna funkcija.\n"
 
 #: winerror.mc:36
-msgid "File not found\n"
-msgstr "Datoteke ni mogoče najti\n"
+msgid "File not found.\n"
+msgstr "Datoteke ni mogoče najti.\n"
 
 #: winerror.mc:41
-msgid "Path not found\n"
-msgstr "Poti ni mogoče najti\n"
+msgid "Path not found.\n"
+msgstr "Poti ni mogoče najti.\n"
 
 #: winerror.mc:46
-msgid "Too many open files\n"
-msgstr "Preveč odprtih datotek\n"
+msgid "Too many open files.\n"
+msgstr "Preveč odprtih datotek.\n"
 
 #: winerror.mc:51
-msgid "Access denied\n"
-msgstr "Dostop je zavrnjen\n"
+msgid "Access denied.\n"
+msgstr "Dostop je zavrnjen.\n"
 
 #: winerror.mc:56
-msgid "Invalid handle\n"
-msgstr "Neveljaven ročnik\n"
+msgid "Invalid handle.\n"
+msgstr "Neveljaven ročnik.\n"
 
 #: winerror.mc:61
-msgid "Memory trashed\n"
-msgstr "Pomnilnik je v smeteh\n"
+msgid "Memory trashed.\n"
+msgstr "Pomnilnik je v smeteh.\n"
 
 #: winerror.mc:66
-msgid "Not enough memory\n"
-msgstr "Ni dovolj pomnilnika\n"
+msgid "Not enough memory.\n"
+msgstr "Ni dovolj pomnilnika.\n"
 
 #: winerror.mc:71
-msgid "Invalid block\n"
-msgstr "Neveljaven blok\n"
+msgid "Invalid block.\n"
+msgstr "Neveljaven blok.\n"
 
 #: winerror.mc:76
-msgid "Bad environment\n"
-msgstr "Slabo okolje\n"
+msgid "Bad environment.\n"
+msgstr "Slabo okolje.\n"
 
 #: winerror.mc:81
-msgid "Bad format\n"
-msgstr "Slaba oblika\n"
+msgid "Bad format.\n"
+msgstr "Slaba oblika.\n"
 
 #: winerror.mc:86
-msgid "Invalid access\n"
-msgstr "Neveljaven dostop\n"
+msgid "Invalid access.\n"
+msgstr "Neveljaven dostop.\n"
 
 #: winerror.mc:91
-msgid "Invalid data\n"
-msgstr "Neveljavni podatki\n"
+msgid "Invalid data.\n"
+msgstr "Neveljavni podatki.\n"
 
 #: winerror.mc:96
-msgid "Out of memory\n"
-msgstr "Pomnilnika je zmanjkalo\n"
+msgid "Out of memory.\n"
+msgstr "Pomnilnika je zmanjkalo.\n"
 
 #: winerror.mc:101
-msgid "Invalid drive\n"
-msgstr "Neveljaven pogon\n"
+msgid "Invalid drive.\n"
+msgstr "Neveljaven pogon.\n"
 
 #: winerror.mc:106
-msgid "Can't delete current directory\n"
-msgstr "Trenutne mape ni mogoče izbrisati\n"
+msgid "Can't delete current directory.\n"
+msgstr "Trenutne mape ni mogoče izbrisati.\n"
 
 #: winerror.mc:111
-msgid "Not same device\n"
-msgstr "Ni enaka naprava\n"
+msgid "Not same device.\n"
+msgstr "Ni enaka naprava.\n"
 
 #: winerror.mc:116
-msgid "No more files\n"
-msgstr "Ni več datotek\n"
+msgid "No more files.\n"
+msgstr "Ni več datotek.\n"
 
 #: winerror.mc:121
-msgid "Write protected\n"
-msgstr "Zaščiteno pred pisanjem\n"
+msgid "Write protected.\n"
+msgstr "Zaščiteno pred pisanjem.\n"
 
 #: winerror.mc:126
-msgid "Bad unit\n"
-msgstr "Slaba enota\n"
+msgid "Bad unit.\n"
+msgstr "Slaba enota.\n"
 
 #: winerror.mc:131
-msgid "Not ready\n"
-msgstr "Ni pripravljeno\n"
+msgid "Not ready.\n"
+msgstr "Ni pripravljeno.\n"
 
 #: winerror.mc:136
-msgid "Bad command\n"
-msgstr "Slab ukaz\n"
+msgid "Bad command.\n"
+msgstr "Slab ukaz.\n"
 
 #: winerror.mc:141
-msgid "CRC error\n"
-msgstr "Napaka CRC\n"
+msgid "CRC error.\n"
+msgstr "Napaka CRC.\n"
 
 #: winerror.mc:146
-msgid "Bad length\n"
-msgstr "Slaba dolžina\n"
+msgid "Bad length.\n"
+msgstr "Slaba dolžina.\n"
 
 #: winerror.mc:151 winerror.mc:526
-msgid "Seek error\n"
-msgstr "Napaka iskanja\n"
+msgid "Seek error.\n"
+msgstr "Napaka iskanja.\n"
 
 #: winerror.mc:156
-msgid "Not DOS disk\n"
-msgstr "Ni disk DOS\n"
+msgid "Not DOS disk.\n"
+msgstr "Ni disk DOS.\n"
 
 #: winerror.mc:161
-msgid "Sector not found\n"
-msgstr "Odseka ni bilo mogoče najti\n"
+msgid "Sector not found.\n"
+msgstr "Odseka ni bilo mogoče najti.\n"
 
 #: winerror.mc:166
-msgid "Out of paper\n"
-msgstr "Papirja je zmanjkalo\n"
+msgid "Out of paper.\n"
+msgstr "Papirja je zmanjkalo.\n"
 
 #: winerror.mc:171
-msgid "Write fault\n"
-msgstr "Napaka pisanja\n"
+msgid "Write fault.\n"
+msgstr "Napaka pisanja.\n"
 
 #: winerror.mc:176
-msgid "Read fault\n"
-msgstr "Napaka branja\n"
+msgid "Read fault.\n"
+msgstr "Napaka branja.\n"
 
 #: winerror.mc:181
-msgid "General failure\n"
-msgstr "Splošna napaka\n"
+msgid "General failure.\n"
+msgstr "Splošna napaka.\n"
 
 #: winerror.mc:186
-msgid "Sharing violation\n"
-msgstr "Kršitev souporabe\n"
+msgid "Sharing violation.\n"
+msgstr "Kršitev souporabe.\n"
 
 #: winerror.mc:191
-msgid "Lock violation\n"
-msgstr "Kršitev zaklepa\n"
+msgid "Lock violation.\n"
+msgstr "Kršitev zaklepa.\n"
 
 #: winerror.mc:196
-msgid "Wrong disk\n"
-msgstr "Napačen disk\n"
+msgid "Wrong disk.\n"
+msgstr "Napačen disk.\n"
 
 #: winerror.mc:201
-msgid "Sharing buffer exceeded\n"
-msgstr "Souporabljeni medpomnilnik je bil presežen\n"
+msgid "Sharing buffer exceeded.\n"
+msgstr "Souporabljeni medpomnilnik je bil presežen.\n"
 
 #: winerror.mc:206
-msgid "End of file\n"
-msgstr "Konec datoteke\n"
+msgid "End of file.\n"
+msgstr "Konec datoteke.\n"
 
 #: winerror.mc:211 winerror.mc:436
-msgid "Disk full\n"
-msgstr "Disk je poln\n"
+msgid "Disk full.\n"
+msgstr "Disk je poln.\n"
 
 #: winerror.mc:216
-msgid "Request not supported\n"
-msgstr "Zahteva ni podprta\n"
+msgid "Request not supported.\n"
+msgstr "Zahteva ni podprta.\n"
 
 #: winerror.mc:221
-msgid "Remote machine not listening\n"
-msgstr "Oddaljena naprava ne posluša\n"
+msgid "Remote machine not listening.\n"
+msgstr "Oddaljena naprava ne posluša.\n"
 
 #: winerror.mc:226
-msgid "Duplicate network name\n"
-msgstr "Podvojeno omrežno ime\n"
+msgid "Duplicate network name.\n"
+msgstr "Podvojeno omrežno ime.\n"
 
 #: winerror.mc:231
-msgid "Bad network path\n"
-msgstr "Slaba omrežna pot\n"
+msgid "Bad network path.\n"
+msgstr "Slaba omrežna pot.\n"
 
 #: winerror.mc:236
-msgid "Network busy\n"
-msgstr "Omrežje je zaposleno\n"
+msgid "Network busy.\n"
+msgstr "Omrežje je zaposleno.\n"
 
 #: winerror.mc:241
-msgid "Device does not exist\n"
-msgstr "Naprava ne obstaja\n"
+msgid "Device does not exist.\n"
+msgstr "Naprava ne obstaja.\n"
 
 #: winerror.mc:246
-msgid "Too many commands\n"
-msgstr "Preveč ukazov\n"
+msgid "Too many commands.\n"
+msgstr "Preveč ukazov.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error\n"
-msgstr "Napaka strojne opreme prilagodilnika\n"
+msgid "Adaptor hardware error.\n"
+msgstr "Napaka strojne opreme prilagodilnika.\n"
 
 #: winerror.mc:256
-msgid "Bad network response\n"
-msgstr "Slab omrežni odziv\n"
+msgid "Bad network response.\n"
+msgstr "Slab omrežni odziv.\n"
 
 #: winerror.mc:261
-msgid "Unexpected network error\n"
-msgstr "Nepričakovana napaka omrežja\n"
+msgid "Unexpected network error.\n"
+msgstr "Nepričakovana napaka omrežja.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor\n"
-msgstr "Slab oddaljeni vmesnik\n"
+msgid "Bad remote adaptor.\n"
+msgstr "Slab oddaljeni vmesnik.\n"
 
 #: winerror.mc:271
-msgid "Print queue full\n"
-msgstr "Čakalna vrsta tiskalnika je polna\n"
+msgid "Print queue full.\n"
+msgstr "Čakalna vrsta tiskalnika je polna.\n"
 
 #: winerror.mc:276
-msgid "No spool space\n"
-msgstr "Ni vrstilnega prostora\n"
+msgid "No spool space.\n"
+msgstr "Ni vrstilnega prostora.\n"
 
 #: winerror.mc:281
-msgid "Print canceled\n"
-msgstr "Tiskanje je bilo preklicano\n"
+msgid "Print canceled.\n"
+msgstr "Tiskanje je bilo preklicano.\n"
 
 #: winerror.mc:286
-msgid "Network name deleted\n"
-msgstr "Omrežno ime je izbrisano\n"
+msgid "Network name deleted.\n"
+msgstr "Omrežno ime je izbrisano.\n"
 
 #: winerror.mc:291
-msgid "Network access denied\n"
-msgstr "Omrežni dostop je zavrnjen\n"
+msgid "Network access denied.\n"
+msgstr "Omrežni dostop je zavrnjen.\n"
 
 #: winerror.mc:296
-msgid "Bad device type\n"
-msgstr "Slaba vrsta naprave\n"
+msgid "Bad device type.\n"
+msgstr "Slaba vrsta naprave.\n"
 
 #: winerror.mc:301
-msgid "Bad network name\n"
-msgstr "Slabo omrežno ime\n"
+msgid "Bad network name.\n"
+msgstr "Slabo omrežno ime.\n"
 
 #: winerror.mc:306
-msgid "Too many network names\n"
-msgstr "Preveč omrežnih imen\n"
+msgid "Too many network names.\n"
+msgstr "Preveč omrežnih imen.\n"
 
 #: winerror.mc:311
-msgid "Too many network sessions\n"
-msgstr "Preveč omrežnih sej\n"
+msgid "Too many network sessions.\n"
+msgstr "Preveč omrežnih sej.\n"
 
 #: winerror.mc:316
-msgid "Sharing paused\n"
-msgstr "Souporaba je v premoru\n"
+msgid "Sharing paused.\n"
+msgstr "Souporaba je v premoru.\n"
 
 #: winerror.mc:321
-msgid "Request not accepted\n"
-msgstr "Zahteva ni bila sprejeta\n"
+msgid "Request not accepted.\n"
+msgstr "Zahteva ni bila sprejeta.\n"
 
 #: winerror.mc:326
-msgid "Redirector paused\n"
-msgstr "Preusmernik je v premoru\n"
+msgid "Redirector paused.\n"
+msgstr "Preusmernik je v premoru.\n"
 
 #: winerror.mc:331
-msgid "File exists\n"
-msgstr "Datoteka že obstaja\n"
+msgid "File exists.\n"
+msgstr "Datoteka že obstaja.\n"
 
 #: winerror.mc:336
-msgid "Cannot create\n"
-msgstr "Ni mogoče ustvariti\n"
+msgid "Cannot create.\n"
+msgstr "Ni mogoče ustvariti.\n"
 
 #: winerror.mc:341
-msgid "Int24 failure\n"
-msgstr "Int24 je spodletel\n"
+msgid "Int24 failure.\n"
+msgstr "Int24 je spodletel.\n"
 
 #: winerror.mc:346
-msgid "Out of structures\n"
-msgstr "Ni več struktur\n"
+msgid "Out of structures.\n"
+msgstr "Ni več struktur.\n"
 
 #: winerror.mc:351
-msgid "Already assigned\n"
-msgstr "Že dodeljeno\n"
+msgid "Already assigned.\n"
+msgstr "Že dodeljeno.\n"
 
 #: winerror.mc:356 winerror.mc:1711
-msgid "Invalid password\n"
-msgstr "Neveljavno geslo\n"
+msgid "Invalid password.\n"
+msgstr "Neveljavno geslo.\n"
 
 #: winerror.mc:361
-msgid "Invalid parameter\n"
-msgstr "Neveljaven parameter\n"
+msgid "Invalid parameter.\n"
+msgstr "Neveljaven parameter.\n"
 
 #: winerror.mc:366
-msgid "Net write fault\n"
-msgstr "Napaka pisanja omrežja\n"
+msgid "Net write fault.\n"
+msgstr "Napaka pisanja omrežja.\n"
 
 #: winerror.mc:371
-msgid "No process slots\n"
-msgstr "Ni mest opravil\n"
+msgid "No process slots.\n"
+msgstr "Ni mest opravil.\n"
 
 #: winerror.mc:376
-msgid "Too many semaphores\n"
-msgstr "Preveč semaforjev\n"
+msgid "Too many semaphores.\n"
+msgstr "Preveč semaforjev.\n"
 
 #: winerror.mc:381
-msgid "Exclusive semaphore already owned\n"
-msgstr "Izključen semafor že ima lastnika\n"
+msgid "Exclusive semaphore already owned.\n"
+msgstr "Izključen semafor že ima lastnika.\n"
 
 #: winerror.mc:386
-msgid "Semaphore is set\n"
-msgstr "Semafor je nastavljen\n"
+msgid "Semaphore is set.\n"
+msgstr "Semafor je nastavljen.\n"
 
 #: winerror.mc:391
-msgid "Too many semaphore requests\n"
-msgstr "Preveč zahtev semafor\n"
+msgid "Too many semaphore requests.\n"
+msgstr "Preveč zahtev semafor.\n"
 
 #: winerror.mc:396
-msgid "Invalid at interrupt time\n"
-msgstr "Neveljavno ob času prekinitve\n"
+msgid "Invalid at interrupt time.\n"
+msgstr "Neveljavno ob času prekinitve.\n"
 
 #: winerror.mc:401
-msgid "Semaphore owner died\n"
-msgstr "Lastni semafor je umrl\n"
+msgid "Semaphore owner died.\n"
+msgstr "Lastni semafor je umrl.\n"
 
 #: winerror.mc:406
-msgid "Semaphore user limit\n"
-msgstr "Uporabniška omejitev semafor\n"
+msgid "Semaphore user limit.\n"
+msgstr "Uporabniška omejitev semafor.\n"
 
 #: winerror.mc:411
-msgid "Insert disk for drive %1\n"
-msgstr "Vstavite disk za pogon %1\n"
+msgid "Insert disk for drive %1.\n"
+msgstr "Vstavite disk za pogon %1.\n"
 
 #: winerror.mc:416
-msgid "Drive locked\n"
-msgstr "Pogon je zaklenjen\n"
+msgid "Drive locked.\n"
+msgstr "Pogon je zaklenjen.\n"
 
 #: winerror.mc:421
-msgid "Broken pipe\n"
-msgstr "Pokvarjena cev\n"
+msgid "Broken pipe.\n"
+msgstr "Pokvarjena cev.\n"
 
 #: winerror.mc:426
-msgid "Open failed\n"
-msgstr "Odpiranje je spodletelo\n"
+msgid "Open failed.\n"
+msgstr "Odpiranje je spodletelo.\n"
 
 #: winerror.mc:431
-msgid "Buffer overflow\n"
-msgstr "Prekoračitev medpomnilnika\n"
+msgid "Buffer overflow.\n"
+msgstr "Prekoračitev medpomnilnika.\n"
 
 #: winerror.mc:441
-msgid "No more search handles\n"
-msgstr "Ni več ročnikov iskanja\n"
+msgid "No more search handles.\n"
+msgstr "Ni več ročnikov iskanja.\n"
 
 #: winerror.mc:446
-msgid "Invalid target handle\n"
-msgstr "Neveljaven ciljni ročnik\n"
+msgid "Invalid target handle.\n"
+msgstr "Neveljaven ciljni ročnik.\n"
 
 #: winerror.mc:451
-msgid "Invalid IOCTL\n"
-msgstr "Neveljaven IOCTL\n"
+msgid "Invalid IOCTL.\n"
+msgstr "Neveljaven IOCTL.\n"
 
 #: winerror.mc:456
-msgid "Invalid verify switch\n"
-msgstr "Neveljavno stikalo potrjevalnika\n"
+msgid "Invalid verify switch.\n"
+msgstr "Neveljavno stikalo potrjevalnika.\n"
 
 #: winerror.mc:461
-msgid "Bad driver level\n"
-msgstr "Slaba raven gonilnika\n"
+msgid "Bad driver level.\n"
+msgstr "Slaba raven gonilnika.\n"
 
 #: winerror.mc:466
-msgid "Call not implemented\n"
-msgstr "Klic ni podprt\n"
+msgid "Call not implemented.\n"
+msgstr "Klic ni podprt.\n"
 
 #: winerror.mc:471
-msgid "Semaphore timeout\n"
-msgstr "Zakasnitev semafor\n"
+msgid "Semaphore timeout.\n"
+msgstr "Zakasnitev semafor.\n"
 
 #: winerror.mc:476
-msgid "Insufficient buffer\n"
-msgstr "Nezadosten medpomnilnik\n"
+msgid "Insufficient buffer.\n"
+msgstr "Nezadosten medpomnilnik.\n"
 
 #: winerror.mc:481
-msgid "Invalid name\n"
-msgstr "Neveljavno ime\n"
+msgid "Invalid name.\n"
+msgstr "Neveljavno ime.\n"
 
 #: winerror.mc:486
-msgid "Invalid level\n"
-msgstr "Neveljavna raven\n"
+msgid "Invalid level.\n"
+msgstr "Neveljavna raven.\n"
 
 #: winerror.mc:491
-msgid "No volume label\n"
-msgstr "Ni oznake nosilca\n"
+msgid "No volume label.\n"
+msgstr "Ni oznake nosilca.\n"
 
 #: winerror.mc:496
-msgid "Module not found\n"
-msgstr "Modula ni mogoče najti\n"
+msgid "Module not found.\n"
+msgstr "Modula ni mogoče najti.\n"
 
 #: winerror.mc:501
-msgid "Procedure not found\n"
-msgstr "Postopka ni mogoče najti\n"
+msgid "Procedure not found.\n"
+msgstr "Postopka ni mogoče najti.\n"
 
 #: winerror.mc:506
-msgid "No children to wait for\n"
-msgstr "Ni podrejenega predmeta za čakanje\n"
+msgid "No children to wait for.\n"
+msgstr "Ni podrejenega predmeta za čakanje.\n"
 
 #: winerror.mc:511
-msgid "Child process has not completed\n"
-msgstr "Podrejeno opravilo se ni dokončalo\n"
+msgid "Child process has not completed.\n"
+msgstr "Podrejeno opravilo se ni dokončalo.\n"
 
 #: winerror.mc:516
-msgid "Invalid use of direct access handle\n"
-msgstr "Neveljavna uporaba ročnika neposrednega dostopa\n"
+msgid "Invalid use of direct access handle.\n"
+msgstr "Neveljavna uporaba ročnika neposrednega dostopa.\n"
 
 #: winerror.mc:521
-msgid "Negative seek\n"
-msgstr "Iskanje nazaj\n"
+msgid "Negative seek.\n"
+msgstr "Iskanje nazaj.\n"
 
 #: winerror.mc:531
-msgid "Drive is a JOIN target\n"
-msgstr "Pogoj je cilj pridruževanja\n"
+msgid "Drive is a JOIN target.\n"
+msgstr "Pogoj je cilj pridruževanja.\n"
 
 #: winerror.mc:536
-msgid "Drive is already JOINed\n"
-msgstr "Pogon je že pridružen\n"
+msgid "Drive is already JOINed.\n"
+msgstr "Pogon je že pridružen.\n"
 
 #: winerror.mc:541
-msgid "Drive is already SUBSTed\n"
-msgstr "Pogon je že navidezen\n"
+msgid "Drive is already SUBSTed.\n"
+msgstr "Pogon je že navidezen.\n"
 
 #: winerror.mc:546
-msgid "Drive is not JOINed\n"
-msgstr "Pogon ni pridružen\n"
+msgid "Drive is not JOINed.\n"
+msgstr "Pogon ni pridružen.\n"
 
 #: winerror.mc:551
-msgid "Drive is not SUBSTed\n"
-msgstr "Pogon ni navidezen\n"
+msgid "Drive is not SUBSTed.\n"
+msgstr "Pogon ni navidezen.\n"
 
 #: winerror.mc:556
-msgid "Attempt to JOIN onto a JOINed drive\n"
-msgstr "Poskus pridružitve pridruženega pogona\n"
+msgid "Attempt to JOIN onto a JOINed drive.\n"
+msgstr "Poskus pridružitve pridruženega pogona.\n"
 
 #: winerror.mc:561
-msgid "Attempt to SUBST onto a SUBSTed drive\n"
-msgstr "Poskus navideznosti na navideznem pogonu\n"
+msgid "Attempt to SUBST onto a SUBSTed drive.\n"
+msgstr "Poskus navideznosti na navideznem pogonu.\n"
 
 #: winerror.mc:566
-msgid "Attempt to JOIN to a SUBSTed drive\n"
-msgstr "Poskus pridružitve navideznemu pogonu\n"
+msgid "Attempt to JOIN to a SUBSTed drive.\n"
+msgstr "Poskus pridružitve navideznemu pogonu.\n"
 
 #: winerror.mc:571
-msgid "Attempt to SUBST to a JOINed drive\n"
-msgstr "Poskus navideznosti pridruženega pogona\n"
+msgid "Attempt to SUBST to a JOINed drive.\n"
+msgstr "Poskus navideznosti pridruženega pogona.\n"
 
 #: winerror.mc:576
-msgid "Drive is busy\n"
-msgstr "Pogon je zaposlen\n"
+msgid "Drive is busy.\n"
+msgstr "Pogon je zaposlen.\n"
 
 #: winerror.mc:581
-msgid "Same drive\n"
-msgstr "Enak pogon\n"
+msgid "Same drive.\n"
+msgstr "Enak pogon.\n"
 
 #: winerror.mc:586
-msgid "Not toplevel directory\n"
-msgstr "Ni mapa vrhnje ravni\n"
+msgid "Not toplevel directory.\n"
+msgstr "Ni mapa vrhnje ravni.\n"
 
 #: winerror.mc:591
-msgid "Directory is not empty\n"
-msgstr "Mapa ni prazna\n"
+msgid "Directory is not empty.\n"
+msgstr "Mapa ni prazna.\n"
 
 #: winerror.mc:596
-msgid "Path is in use as a SUBST\n"
-msgstr "Pot je v uporabiti kot SUBST\n"
+msgid "Path is in use as a SUBST.\n"
+msgstr "Pot je v uporabiti kot SUBST.\n"
 
 #: winerror.mc:601
-msgid "Path is in use as a JOIN\n"
-msgstr "Pot je v uporabi kot JOIN\n"
+msgid "Path is in use as a JOIN.\n"
+msgstr "Pot je v uporabi kot JOIN.\n"
 
 #: winerror.mc:606
-msgid "Path is busy\n"
-msgstr "Pot je zasedena\n"
+msgid "Path is busy.\n"
+msgstr "Pot je zasedena.\n"
 
 #: winerror.mc:611
-msgid "Already a SUBST target\n"
-msgstr "Že cilj SUBST\n"
+msgid "Already a SUBST target.\n"
+msgstr "Že cilj SUBST.\n"
 
 #: winerror.mc:616
-msgid "System trace not specified or disallowed\n"
-msgstr "Sistemsko sledenje ni določeno ali ni dovoljeno\n"
+msgid "System trace not specified or disallowed.\n"
+msgstr "Sistemsko sledenje ni določeno ali ni dovoljeno.\n"
 
 #: winerror.mc:621
-msgid "Event count for DosMuxSemWait incorrect\n"
-msgstr "Števec dogodkov za DosMuxSemWait je nepravilen\n"
+msgid "Event count for DosMuxSemWait incorrect.\n"
+msgstr "Števec dogodkov za DosMuxSemWait je nepravilen.\n"
 
 #: winerror.mc:626
-msgid "Too many waiters for DosMuxSemWait\n"
-msgstr "Preveč čakalnikov za DosMuxSemWait\n"
+msgid "Too many waiters for DosMuxSemWait.\n"
+msgstr "Preveč čakalnikov za DosMuxSemWait.\n"
 
 #: winerror.mc:631
-msgid "DosSemMuxWait list invalid\n"
-msgstr "Seznam DosSemMuxWait je neveljaven\n"
+msgid "DosSemMuxWait list invalid.\n"
+msgstr "Seznam DosSemMuxWait je neveljaven.\n"
 
 #: winerror.mc:636
-msgid "Volume label too long\n"
-msgstr "Oznaka nosilca je predolga\n"
+msgid "Volume label too long.\n"
+msgstr "Oznaka nosilca je predolga.\n"
 
 #: winerror.mc:641
-msgid "Too many TCBs\n"
-msgstr "Preveč TCB-jev\n"
+msgid "Too many TCBs.\n"
+msgstr "Preveč TCB-jev.\n"
 
 #: winerror.mc:646
-msgid "Signal refused\n"
-msgstr "Signal je bil zavrnjen\n"
+msgid "Signal refused.\n"
+msgstr "Signal je bil zavrnjen.\n"
 
 #: winerror.mc:651
-msgid "Segment discarded\n"
-msgstr "Odsek je bil zavržen\n"
+msgid "Segment discarded.\n"
+msgstr "Odsek je bil zavržen.\n"
 
 #: winerror.mc:656
-msgid "Segment not locked\n"
-msgstr "Odsek ni zaklenjen\n"
+msgid "Segment not locked.\n"
+msgstr "Odsek ni zaklenjen.\n"
 
 #: winerror.mc:661
-msgid "Bad thread ID address\n"
-msgstr "Slab naslov ID niti\n"
+msgid "Bad thread ID address.\n"
+msgstr "Slab naslov ID niti.\n"
 
 #: winerror.mc:666
-msgid "Bad arguments to DosExecPgm\n"
-msgstr "Slabi argumenti za DosExecPgm\n"
+msgid "Bad arguments to DosExecPgm.\n"
+msgstr "Slabi argumenti za DosExecPgm.\n"
 
 #: winerror.mc:671
-msgid "Path is invalid\n"
-msgstr "Pot je neveljavna\n"
+msgid "Path is invalid.\n"
+msgstr "Pot je neveljavna.\n"
 
 #: winerror.mc:676
-msgid "Signal pending\n"
-msgstr "Signal je na čakanju\n"
+msgid "Signal pending.\n"
+msgstr "Signal je na čakanju.\n"
 
 #: winerror.mc:681
-msgid "Max system-wide thread count reached\n"
-msgstr "Doseženo je bilo največje število sistemskih niti\n"
+msgid "Max system-wide thread count reached.\n"
+msgstr "Doseženo je bilo največje število sistemskih niti.\n"
 
 #: winerror.mc:686
-msgid "Lock failed\n"
-msgstr "Zaklep je spodletel\n"
+msgid "Lock failed.\n"
+msgstr "Zaklep je spodletel.\n"
 
 #: winerror.mc:691
-msgid "Resource in use\n"
-msgstr "Sredstvo je v uporabi\n"
+msgid "Resource in use.\n"
+msgstr "Sredstvo je v uporabi.\n"
 
 #: winerror.mc:696
-msgid "Cancel violation\n"
-msgstr "Prekliči kršitev\n"
+msgid "Cancel violation.\n"
+msgstr "Prekliči kršitev.\n"
 
 #: winerror.mc:701
-msgid "Atomic locks not supported\n"
-msgstr "Atomski zaklepi niso podprti\n"
+msgid "Atomic locks not supported.\n"
+msgstr "Atomski zaklepi niso podprti.\n"
 
 #: winerror.mc:706
-msgid "Invalid segment number\n"
-msgstr "Neveljavno število odseka\n"
+msgid "Invalid segment number.\n"
+msgstr "Neveljavno število odseka.\n"
 
 #: winerror.mc:711
-msgid "Invalid ordinal for %1\n"
-msgstr "Neveljavna odrinata za %1\n"
+msgid "Invalid ordinal for %1.\n"
+msgstr "Neveljavna odrinata za %1.\n"
 
 #: winerror.mc:716
-msgid "File already exists\n"
-msgstr "Datoteka že obstaja\n"
+msgid "File already exists.\n"
+msgstr "Datoteka že obstaja.\n"
 
 #: winerror.mc:721
-msgid "Invalid flag number\n"
-msgstr "Neveljavna številka zastavice\n"
+msgid "Invalid flag number.\n"
+msgstr "Neveljavna številka zastavice.\n"
 
 #: winerror.mc:726
-msgid "Semaphore name not found\n"
-msgstr "Imena semaforja ni mogoče najti\n"
+msgid "Semaphore name not found.\n"
+msgstr "Imena semaforja ni mogoče najti.\n"
 
 #: winerror.mc:731
-msgid "Invalid starting code segment for %1\n"
-msgstr "Neveljavna začetna koda odseka za %1\n"
+msgid "Invalid starting code segment for %1.\n"
+msgstr "Neveljavna začetna koda odseka za %1.\n"
 
 #: winerror.mc:736
-msgid "Invalid starting stack segment for %1\n"
-msgstr "Neveljaven začetni odsek sklada za %1\n"
+msgid "Invalid starting stack segment for %1.\n"
+msgstr "Neveljaven začetni odsek sklada za %1.\n"
 
 #: winerror.mc:741
-msgid "Invalid module type for %1\n"
-msgstr "Neveljavna vrsta modulov za %1\n"
+msgid "Invalid module type for %1.\n"
+msgstr "Neveljavna vrsta modulov za %1.\n"
 
 #: winerror.mc:746
-msgid "Invalid EXE signature in %1\n"
-msgstr "Neveljaven podpis EXE v %1\n"
+msgid "Invalid EXE signature in %1.\n"
+msgstr "Neveljaven podpis EXE v %1.\n"
 
 #: winerror.mc:751
-msgid "EXE %1 is marked invalid\n"
-msgstr "EXE %1 je označen kot neveljaven\n"
+msgid "EXE %1 is marked invalid.\n"
+msgstr "EXE %1 je označen kot neveljaven.\n"
 
 #: winerror.mc:756
-msgid "Bad EXE format for %1\n"
-msgstr "Slaba oblika EXE za %1\n"
+msgid "Bad EXE format for %1.\n"
+msgstr "Slaba oblika EXE za %1.\n"
 
 #: winerror.mc:761
-msgid "Iterated data exceeds 64k in %1\n"
-msgstr "Iterirani podatki v %1 presegajo 64k\n"
+msgid "Iterated data exceeds 64k in %1.\n"
+msgstr "Iterirani podatki v %1 presegajo 64k.\n"
 
 #: winerror.mc:766
-msgid "Invalid MinAllocSize in %1\n"
-msgstr "Neveljavna najmanjša dodeljena velikost v %1\n"
+msgid "Invalid MinAllocSize in %1.\n"
+msgstr "Neveljavna najmanjša dodeljena velikost v %1.\n"
 
 #: winerror.mc:771
-msgid "Dynlink from invalid ring\n"
-msgstr "Dinamična povezava iz neveljavnega obroča\n"
+msgid "Dynlink from invalid ring.\n"
+msgstr "Dinamična povezava iz neveljavnega obroča.\n"
 
 #: winerror.mc:776
-msgid "IOPL not enabled\n"
-msgstr "IOPL ni omogočen\n"
+msgid "IOPL not enabled.\n"
+msgstr "IOPL ni omogočen.\n"
 
 #: winerror.mc:781
-msgid "Invalid SEGDPL in %1\n"
-msgstr "Neveljaven SEGDPL v %1\n"
+msgid "Invalid SEGDPL in %1.\n"
+msgstr "Neveljaven SEGDPL v %1.\n"
 
 #: winerror.mc:786
-msgid "Auto data segment exceeds 64k\n"
-msgstr "Samodejni odseki podatkov presegajo 64k\n"
+msgid "Auto data segment exceeds 64k.\n"
+msgstr "Samodejni odseki podatkov presegajo 64k.\n"
 
 #: winerror.mc:791
-msgid "Ring 2 segment must be movable\n"
-msgstr "Odsek obroč 2 mora biti premakljiv\n"
+msgid "Ring 2 segment must be movable.\n"
+msgstr "Odsek obroč 2 mora biti premakljiv.\n"
 
 #: winerror.mc:796
-msgid "Relocation chain exceeds segment limit in %1\n"
-msgstr "Veriga prestavljanja v %1 presega omejitev odseka\n"
+msgid "Relocation chain exceeds segment limit in %1.\n"
+msgstr "Veriga prestavljanja v %1 presega omejitev odseka.\n"
 
 #: winerror.mc:801
-msgid "Infinite loop in relocation chain in %1\n"
-msgstr "Neskončna zanka v verigi prestavljanja v %1\n"
+msgid "Infinite loop in relocation chain in %1.\n"
+msgstr "Neskončna zanka v verigi prestavljanja v %1.\n"
 
 #: winerror.mc:806
-msgid "Environment variable not found\n"
-msgstr "Okoljske spremenljivke ni mogoče najti\n"
+msgid "Environment variable not found.\n"
+msgstr "Okoljske spremenljivke ni mogoče najti.\n"
 
 #: winerror.mc:811
-msgid "No signal sent\n"
-msgstr "Ni poslanega signala\n"
+msgid "No signal sent.\n"
+msgstr "Ni poslanega signala.\n"
 
 #: winerror.mc:816
-msgid "File name is too long\n"
-msgstr "Ime datoteke je predolgo\n"
+msgid "File name is too long.\n"
+msgstr "Ime datoteke je predolgo.\n"
 
 #: winerror.mc:821
-msgid "Ring 2 stack in use\n"
-msgstr "Sklad obroč 2 je v uporabi\n"
+msgid "Ring 2 stack in use.\n"
+msgstr "Sklad obroč 2 je v uporabi.\n"
 
 #: winerror.mc:826
-msgid "Error in use of filename wildcards\n"
-msgstr "Napaka med uporabo nadomestnih znakov imena datoteke\n"
+msgid "Error in use of filename wildcards.\n"
+msgstr "Napaka med uporabo nadomestnih znakov imena datoteke.\n"
 
 #: winerror.mc:831
-msgid "Invalid signal number\n"
-msgstr "Neveljavna številka signala\n"
+msgid "Invalid signal number.\n"
+msgstr "Neveljavna številka signala.\n"
 
 #: winerror.mc:836
-msgid "Error setting signal handler\n"
-msgstr "Napaka med nastavljanjem ročnika signala\n"
+msgid "Error setting signal handler.\n"
+msgstr "Napaka med nastavljanjem ročnika signala.\n"
 
 #: winerror.mc:841
-msgid "Segment locked\n"
-msgstr "Odsek je zaklenjen\n"
+msgid "Segment locked.\n"
+msgstr "Odsek je zaklenjen.\n"
 
 #: winerror.mc:846
-msgid "Too many modules\n"
-msgstr "Preveč modulov\n"
+msgid "Too many modules.\n"
+msgstr "Preveč modulov.\n"
 
 #: winerror.mc:851
-msgid "Nesting LoadModule calls not allowed\n"
-msgstr "Klici gnezdenega modula nalaganja niso dovoljeni\n"
+msgid "Nesting LoadModule calls not allowed.\n"
+msgstr "Klici gnezdenega modula nalaganja niso dovoljeni.\n"
 
 #: winerror.mc:856
-msgid "Machine type mismatch\n"
-msgstr "Neujemanje vrste stroja\n"
+msgid "Machine type mismatch.\n"
+msgstr "Neujemanje vrste stroja.\n"
 
 #: winerror.mc:861
-msgid "Bad pipe\n"
-msgstr "Slaba cev\n"
+msgid "Bad pipe.\n"
+msgstr "Slaba cev.\n"
 
 #: winerror.mc:866
-msgid "Pipe busy\n"
-msgstr "Cev je zasedena\n"
+msgid "Pipe busy.\n"
+msgstr "Cev je zasedena.\n"
 
 #: winerror.mc:871
-msgid "Pipe closed\n"
-msgstr "Cev je zaprta\n"
+msgid "Pipe closed.\n"
+msgstr "Cev je zaprta.\n"
 
 #: winerror.mc:876
-msgid "Pipe not connected\n"
-msgstr "Cev ni povezana\n"
+msgid "Pipe not connected.\n"
+msgstr "Cev ni povezana.\n"
 
 #: winerror.mc:881
-msgid "More data available\n"
-msgstr "Na voljo je več podatkov\n"
+msgid "More data available.\n"
+msgstr "Na voljo je več podatkov.\n"
 
 #: winerror.mc:886
-msgid "Session canceled\n"
-msgstr "Seja je bila preklicana\n"
+msgid "Session canceled.\n"
+msgstr "Seja je bila preklicana.\n"
 
 #: winerror.mc:891
-msgid "Invalid extended attribute name\n"
-msgstr "Neveljavno ime razširjenega atributa\n"
+msgid "Invalid extended attribute name.\n"
+msgstr "Neveljavno ime razširjenega atributa.\n"
 
 #: winerror.mc:896
-msgid "Extended attribute list inconsistent\n"
-msgstr "Razširjen seznam atributov ni dosleden\n"
+msgid "Extended attribute list inconsistent.\n"
+msgstr "Razširjen seznam atributov ni dosleden.\n"
 
 #: winerror.mc:901
-msgid "No more data available\n"
-msgstr "Ni več razpoložljivih podatkov\n"
+msgid "No more data available.\n"
+msgstr "Ni več razpoložljivih podatkov.\n"
 
 #: winerror.mc:906
-msgid "Cannot use Copy API\n"
-msgstr "Ni mogoče uporabiti API-ja kopiranja\n"
+msgid "Cannot use Copy API.\n"
+msgstr "Ni mogoče uporabiti API-ja kopiranja.\n"
 
 #: winerror.mc:911
-msgid "Directory name invalid\n"
-msgstr "Neveljavno ime mape\n"
+msgid "Directory name invalid.\n"
+msgstr "Neveljavno ime mape.\n"
 
 #: winerror.mc:916
-msgid "Extended attributes didn't fit\n"
-msgstr "Razširjeni atributi se niso prilegali\n"
+msgid "Extended attributes didn't fit.\n"
+msgstr "Razširjeni atributi se niso prilegali.\n"
 
 #: winerror.mc:921
-msgid "Extended attribute file corrupt\n"
-msgstr "Datoteka razširjenih atributov je pokvarjena\n"
+msgid "Extended attribute file corrupt.\n"
+msgstr "Datoteka razširjenih atributov je pokvarjena.\n"
 
 #: winerror.mc:926
-msgid "Extended attribute table full\n"
-msgstr "Razpredelnica razširjenih atributov je polna\n"
+msgid "Extended attribute table full.\n"
+msgstr "Razpredelnica razširjenih atributov je polna.\n"
 
 #: winerror.mc:931
-msgid "Invalid extended attribute handle\n"
-msgstr "Neveljaven ročnik razširjenih atributov\n"
+msgid "Invalid extended attribute handle.\n"
+msgstr "Neveljaven ročnik razširjenih atributov.\n"
 
 #: winerror.mc:936
-msgid "Extended attributes not supported\n"
-msgstr "Razširjeni atributi niso podprti\n"
+msgid "Extended attributes not supported.\n"
+msgstr "Razširjeni atributi niso podprti.\n"
 
 #: winerror.mc:941
-msgid "Mutex not owned by caller\n"
-msgstr "Klicatelj ne sme biti lastnik mutexa\n"
+msgid "Mutex not owned by caller.\n"
+msgstr "Klicatelj ne sme biti lastnik mutexa.\n"
 
 #: winerror.mc:946
-msgid "Too many posts to semaphore\n"
-msgstr "Preveč objav na semaforju\n"
+msgid "Too many posts to semaphore.\n"
+msgstr "Preveč objav na semaforju.\n"
 
 #: winerror.mc:951
-msgid "Read/WriteProcessMemory partially completed\n"
-msgstr "Branje/Pisanje opravila pomnilnika je deloma dokončano\n"
+msgid "Read/WriteProcessMemory partially completed.\n"
+msgstr "Branje/Pisanje opravila pomnilnika je deloma dokončano.\n"
 
 #: winerror.mc:956
-msgid "The oplock wasn't granted\n"
-msgstr "Oportunistični zaklep ni bil dovoljen\n"
+msgid "The oplock wasn't granted.\n"
+msgstr "Oportunistični zaklep ni bil dovoljen.\n"
 
 #: winerror.mc:961
-msgid "Invalid oplock message received\n"
-msgstr "Prejeto je bilo neveljavno sporočilo oportunističnega zaklepa\n"
+msgid "Invalid oplock message received.\n"
+msgstr "Prejeto je bilo neveljavno sporočilo oportunističnega zaklepa.\n"
 
 #: winerror.mc:966
-msgid "Message 0x%1 not found in file %2\n"
-msgstr "Sporočila 0x%1 ni bilo mogoče najti v datoteki %2\n"
+msgid "Message 0x%1 not found in file %2.\n"
+msgstr "Sporočila 0x%1 ni bilo mogoče najti v datoteki %2.\n"
 
 #: winerror.mc:971
-msgid "Invalid address\n"
-msgstr "Neveljaven naslov\n"
+msgid "Invalid address.\n"
+msgstr "Neveljaven naslov.\n"
 
 #: winerror.mc:976
-msgid "Arithmetic overflow\n"
-msgstr "Aritmetična prekoračitev\n"
+msgid "Arithmetic overflow.\n"
+msgstr "Aritmetična prekoračitev.\n"
 
 #: winerror.mc:981
-msgid "Pipe connected\n"
-msgstr "Cev je povezana\n"
+msgid "Pipe connected.\n"
+msgstr "Cev je povezana.\n"
 
 #: winerror.mc:986
-msgid "Pipe listening\n"
-msgstr "Cev posluša\n"
+msgid "Pipe listening.\n"
+msgstr "Cev posluša.\n"
 
 #: winerror.mc:991
-msgid "Extended attribute access denied\n"
-msgstr "Dostop do razširjenega atributa je bil zavrnjen\n"
+msgid "Extended attribute access denied.\n"
+msgstr "Dostop do razširjenega atributa je bil zavrnjen.\n"
 
 #: winerror.mc:996
-msgid "I/O operation aborted\n"
-msgstr "Opravilo V/I je bilo preklicano\n"
+msgid "I/O operation aborted.\n"
+msgstr "Opravilo V/I je bilo preklicano.\n"
 
 #: winerror.mc:1001
-msgid "Overlapped I/O incomplete\n"
-msgstr "Prekrivajoči V/I ni končan\n"
+msgid "Overlapped I/O incomplete.\n"
+msgstr "Prekrivajoči V/I ni končan.\n"
 
 #: winerror.mc:1006
-msgid "Overlapped I/O pending\n"
-msgstr "Prekrivajoči V/I je na čakanju\n"
+msgid "Overlapped I/O pending.\n"
+msgstr "Prekrivajoči V/I je na čakanju.\n"
 
 #: winerror.mc:1011
-msgid "No access to memory location\n"
-msgstr "Ni dostopa do mesta pomnilnika\n"
+msgid "No access to memory location.\n"
+msgstr "Ni dostopa do mesta pomnilnika.\n"
 
 #: winerror.mc:1016
-msgid "Swap error\n"
-msgstr "Napaka izmenjalnega prostora\n"
+msgid "Swap error.\n"
+msgstr "Napaka izmenjalnega prostora.\n"
 
 #: winerror.mc:1021
-msgid "Stack overflow\n"
-msgstr "Prekoračitev sklada\n"
+msgid "Stack overflow.\n"
+msgstr "Prekoračitev sklada.\n"
 
 #: winerror.mc:1026
-msgid "Invalid message\n"
-msgstr "Neveljavno sporočilo\n"
+msgid "Invalid message.\n"
+msgstr "Neveljavno sporočilo.\n"
 
 #: winerror.mc:1031
-msgid "Cannot complete\n"
-msgstr "Ni mogoče dokončati\n"
+msgid "Cannot complete.\n"
+msgstr "Ni mogoče dokončati.\n"
 
 #: winerror.mc:1036
-msgid "Invalid flags\n"
-msgstr "Neveljavne zastavice\n"
+msgid "Invalid flags.\n"
+msgstr "Neveljavne zastavice.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume\n"
-msgstr "Nepoznan nosilec\n"
+msgid "Unrecognised volume.\n"
+msgstr "Nepoznan nosilec.\n"
 
 #: winerror.mc:1046
-msgid "File invalid\n"
-msgstr "Neveljavna datoteka\n"
+msgid "File invalid.\n"
+msgstr "Neveljavna datoteka.\n"
 
 #: winerror.mc:1051
-msgid "Cannot run full-screen\n"
-msgstr "Ni mogoče poganjati v celozaslonskem načinu\n"
+msgid "Cannot run full-screen.\n"
+msgstr "Ni mogoče poganjati v celozaslonskem načinu.\n"
 
 #: winerror.mc:1056
-msgid "Nonexistent token\n"
-msgstr "Žeton ne obstaja\n"
+msgid "Nonexistent token.\n"
+msgstr "Žeton ne obstaja.\n"
 
 #: winerror.mc:1061
-msgid "Registry corrupt\n"
-msgstr "Register je pokvarjen\n"
+msgid "Registry corrupt.\n"
+msgstr "Register je pokvarjen.\n"
 
 #: winerror.mc:1066
-msgid "Invalid key\n"
-msgstr "Neveljaven ključ\n"
+msgid "Invalid key.\n"
+msgstr "Neveljaven ključ.\n"
 
 #: winerror.mc:1071
-msgid "Can't open registry key\n"
-msgstr "Ključa registra ni mogoče odpreti\n"
+msgid "Can't open registry key.\n"
+msgstr "Ključa registra ni mogoče odpreti.\n"
 
 #: winerror.mc:1076
-msgid "Can't read registry key\n"
-msgstr "Ključa registra ni mogoče prebrati\n"
+msgid "Can't read registry key.\n"
+msgstr "Ključa registra ni mogoče prebrati.\n"
 
 #: winerror.mc:1081
-msgid "Can't write registry key\n"
-msgstr "Ključa registra ni mogoče zapisati\n"
+msgid "Can't write registry key.\n"
+msgstr "Ključa registra ni mogoče zapisati.\n"
 
 #: winerror.mc:1086
-msgid "Registry has been recovered\n"
-msgstr "Register je bil obnovljen\n"
+msgid "Registry has been recovered.\n"
+msgstr "Register je bil obnovljen.\n"
 
 #: winerror.mc:1091
-msgid "Registry is corrupt\n"
-msgstr "Register je pokvarjen\n"
+msgid "Registry is corrupt.\n"
+msgstr "Register je pokvarjen.\n"
 
 #: winerror.mc:1096
-msgid "I/O to registry failed\n"
-msgstr "V/I v register je spodletel\n"
+msgid "I/O to registry failed.\n"
+msgstr "V/I v register je spodletel.\n"
 
 #: winerror.mc:1101
-msgid "Not registry file\n"
-msgstr "Ni datoteka registra\n"
+msgid "Not registry file.\n"
+msgstr "Ni datoteka registra.\n"
 
 #: winerror.mc:1106
-msgid "Key deleted\n"
-msgstr "Ključ je bil izbrisan\n"
+msgid "Key deleted.\n"
+msgstr "Ključ je bil izbrisan.\n"
 
 #: winerror.mc:1111
-msgid "No registry log space\n"
-msgstr "Ni prostora dnevnika registra\n"
+msgid "No registry log space.\n"
+msgstr "Ni prostora dnevnika registra.\n"
 
 #: winerror.mc:1116
-msgid "Registry key has subkeys\n"
-msgstr "Ključ registra ima podključe\n"
+msgid "Registry key has subkeys.\n"
+msgstr "Ključ registra ima podključe.\n"
 
 #: winerror.mc:1121
-msgid "Subkey must be volatile\n"
-msgstr "Podključ mora biti spremenljiv\n"
+msgid "Subkey must be volatile.\n"
+msgstr "Podključ mora biti spremenljiv.\n"
 
 #: winerror.mc:1126
-msgid "Notify change request in progress\n"
-msgstr "Obvesti o spremembi zahteve v teku\n"
+msgid "Notify change request in progress.\n"
+msgstr "Obvesti o spremembi zahteve v teku.\n"
 
 #: winerror.mc:1131
-msgid "Dependent services are running\n"
-msgstr "Izvajajo se odvisne storitve\n"
+msgid "Dependent services are running.\n"
+msgstr "Izvajajo se odvisne storitve.\n"
 
 #: winerror.mc:1136
-msgid "Invalid service control\n"
-msgstr "Neveljaven nadzor storitve\n"
+msgid "Invalid service control.\n"
+msgstr "Neveljaven nadzor storitve.\n"
 
 #: winerror.mc:1141
-msgid "Service request timeout\n"
-msgstr "Zakasnitev zahteve storitve\n"
+msgid "Service request timeout.\n"
+msgstr "Zakasnitev zahteve storitve.\n"
 
 #: winerror.mc:1146
-msgid "Cannot create service thread\n"
-msgstr "Niti storitve ni mogoče ustvariti\n"
+msgid "Cannot create service thread.\n"
+msgstr "Niti storitve ni mogoče ustvariti.\n"
 
 #: winerror.mc:1151
-msgid "Service database locked\n"
-msgstr "Podatkovna zbirka storitve je zaklenjena\n"
+msgid "Service database locked.\n"
+msgstr "Podatkovna zbirka storitve je zaklenjena.\n"
 
 #: winerror.mc:1156
-msgid "Service already running\n"
-msgstr "Storitev se že izvaja\n"
+msgid "Service already running.\n"
+msgstr "Storitev se že izvaja.\n"
 
 #: winerror.mc:1161
-msgid "Invalid service account\n"
-msgstr "Neveljaven račun storitve\n"
+msgid "Invalid service account.\n"
+msgstr "Neveljaven račun storitve.\n"
 
 #: winerror.mc:1166
-msgid "Service is disabled\n"
-msgstr "Storitev je onemogočena\n"
+msgid "Service is disabled.\n"
+msgstr "Storitev je onemogočena.\n"
 
 #: winerror.mc:1171
-msgid "Circular dependency\n"
-msgstr "Krožna odvisnost\n"
+msgid "Circular dependency.\n"
+msgstr "Krožna odvisnost.\n"
 
 #: winerror.mc:1176
-msgid "Service does not exist\n"
-msgstr "Storitev ne obstaja\n"
+msgid "Service does not exist.\n"
+msgstr "Storitev ne obstaja.\n"
 
 #: winerror.mc:1181
-msgid "Service cannot accept control message\n"
-msgstr "Storitev ne more sprejeti nadzornega sporočila\n"
+msgid "Service cannot accept control message.\n"
+msgstr "Storitev ne more sprejeti nadzornega sporočila.\n"
 
 #: winerror.mc:1186
-msgid "Service not active\n"
-msgstr "Storitev ni dejavna\n"
+msgid "Service not active.\n"
+msgstr "Storitev ni dejavna.\n"
 
 #: winerror.mc:1191
-msgid "Service controller connect failed\n"
-msgstr "Povezava nadzornika storitve je spodletela\n"
+msgid "Service controller connect failed.\n"
+msgstr "Povezava nadzornika storitve je spodletela.\n"
 
 #: winerror.mc:1196
-msgid "Exception in service\n"
-msgstr "Izjema v storitvi\n"
+msgid "Exception in service.\n"
+msgstr "Izjema v storitvi.\n"
 
 #: winerror.mc:1201
-msgid "Database does not exist\n"
-msgstr "Podatkovna zbirka ne obstaja\n"
+msgid "Database does not exist.\n"
+msgstr "Podatkovna zbirka ne obstaja.\n"
 
 #: winerror.mc:1206
-msgid "Service-specific error\n"
-msgstr "S storitvijo določena napaka\n"
+msgid "Service-specific error.\n"
+msgstr "S storitvijo določena napaka.\n"
 
 #: winerror.mc:1211
-msgid "Process aborted\n"
-msgstr "Opravilo je bilo preklicano\n"
+msgid "Process aborted.\n"
+msgstr "Opravilo je bilo preklicano.\n"
 
 #: winerror.mc:1216
-msgid "Service dependency failed\n"
-msgstr "Odvisnost storitve je spodletela\n"
+msgid "Service dependency failed.\n"
+msgstr "Odvisnost storitve je spodletela.\n"
 
 #: winerror.mc:1221
-msgid "Service login failed\n"
-msgstr "Prijava storitve je spodletela\n"
+msgid "Service login failed.\n"
+msgstr "Prijava storitve je spodletela.\n"
 
 #: winerror.mc:1226
-msgid "Service start-hang\n"
-msgstr "Storitev se je obesila ob zagonu\n"
+msgid "Service start-hang.\n"
+msgstr "Storitev se je obesila ob zagonu.\n"
 
 #: winerror.mc:1231
-msgid "Invalid service lock\n"
-msgstr "Neveljaven zaklep storitve\n"
+msgid "Invalid service lock.\n"
+msgstr "Neveljaven zaklep storitve.\n"
 
 #: winerror.mc:1236
-msgid "Service marked for delete\n"
-msgstr "Storitev je označena za izbris\n"
+msgid "Service marked for delete.\n"
+msgstr "Storitev je označena za izbris.\n"
 
 #: winerror.mc:1241
-msgid "Service exists\n"
-msgstr "Storitev obstaja\n"
+msgid "Service exists.\n"
+msgstr "Storitev obstaja.\n"
 
 #: winerror.mc:1246
-msgid "System running last-known-good config\n"
-msgstr "Sistem uporablja zadnjo znano dobro nastavitev\n"
+msgid "System running last-known-good config.\n"
+msgstr "Sistem uporablja zadnjo znano dobro nastavitev.\n"
 
 #: winerror.mc:1251
-msgid "Service dependency deleted\n"
-msgstr "Odvisnost storitve je bila izbrisana\n"
+msgid "Service dependency deleted.\n"
+msgstr "Odvisnost storitve je bila izbrisana.\n"
 
 #: winerror.mc:1256
-msgid "Boot already accepted as last-good config\n"
-msgstr "Zagon je bil že sprejet kot zadnja znana nastavitev\n"
+msgid "Boot already accepted as last-good config.\n"
+msgstr "Zagon je bil že sprejet kot zadnja znana nastavitev.\n"
 
 #: winerror.mc:1261
-msgid "Service not started since last boot\n"
-msgstr "Storitev ni bila začeta od zadnjega zagona\n"
+msgid "Service not started since last boot.\n"
+msgstr "Storitev ni bila začeta od zadnjega zagona.\n"
 
 #: winerror.mc:1266
-msgid "Duplicate service name\n"
-msgstr "Podvojeno ime storitve\n"
+msgid "Duplicate service name.\n"
+msgstr "Podvojeno ime storitve.\n"
 
 #: winerror.mc:1271
-msgid "Different service account\n"
-msgstr "Drugačen račun storitve\n"
+msgid "Different service account.\n"
+msgstr "Drugačen račun storitve.\n"
 
 #: winerror.mc:1276
-msgid "Driver failure cannot be detected\n"
-msgstr "Spodletenja gonilnika ni mogoče zaznati\n"
+msgid "Driver failure cannot be detected.\n"
+msgstr "Spodletenja gonilnika ni mogoče zaznati.\n"
 
 #: winerror.mc:1281
-msgid "Process abort cannot be detected\n"
-msgstr "Prekinitve opravila ni mogoče zaznati\n"
+msgid "Process abort cannot be detected.\n"
+msgstr "Prekinitve opravila ni mogoče zaznati.\n"
 
 #: winerror.mc:1286
-msgid "No recovery program for service\n"
-msgstr "Ni obnovitvenega programa za storitev\n"
+msgid "No recovery program for service.\n"
+msgstr "Ni obnovitvenega programa za storitev.\n"
 
 #: winerror.mc:1291
-msgid "Service not implemented by exe\n"
-msgstr "Storitve ne izvaja exe\n"
+msgid "Service not implemented by exe.\n"
+msgstr "Storitve ne izvaja exe.\n"
 
 #: winerror.mc:1296
-msgid "End of media\n"
-msgstr "Konec medija\n"
+msgid "End of media.\n"
+msgstr "Konec medija.\n"
 
 #: winerror.mc:1301
-msgid "Filemark detected\n"
-msgstr "Zaznana je bila oznaka datoteke\n"
+msgid "Filemark detected.\n"
+msgstr "Zaznana je bila oznaka datoteke.\n"
 
 #: winerror.mc:1306
-msgid "Beginning of media\n"
-msgstr "Začetek medija\n"
+msgid "Beginning of media.\n"
+msgstr "Začetek medija.\n"
 
 #: winerror.mc:1311
-msgid "Setmark detected\n"
-msgstr "Zaznana je bila nastavljena oznaka\n"
+msgid "Setmark detected.\n"
+msgstr "Zaznana je bila nastavljena oznaka.\n"
 
 #: winerror.mc:1316
-msgid "No data detected\n"
-msgstr "Ni zaznanih podatkov\n"
+msgid "No data detected.\n"
+msgstr "Ni zaznanih podatkov.\n"
 
 #: winerror.mc:1321
-msgid "Partition failure\n"
-msgstr "Razdelek je spodletel\n"
+msgid "Partition failure.\n"
+msgstr "Razdelek je spodletel.\n"
 
 #: winerror.mc:1326
-msgid "Invalid block length\n"
-msgstr "Neveljavna dolžina bloka\n"
+msgid "Invalid block length.\n"
+msgstr "Neveljavna dolžina bloka.\n"
 
 #: winerror.mc:1331
-msgid "Device not partitioned\n"
-msgstr "Naprava ni razdeljena na razdelke\n"
+msgid "Device not partitioned.\n"
+msgstr "Naprava ni razdeljena na razdelke.\n"
 
 #: winerror.mc:1336
-msgid "Unable to lock media\n"
-msgstr "Medija ni mogoče zakleniti\n"
+msgid "Unable to lock media.\n"
+msgstr "Medija ni mogoče zakleniti.\n"
 
 #: winerror.mc:1341
-msgid "Unable to unload media\n"
-msgstr "Medija ni mogoče razložiti\n"
+msgid "Unable to unload media.\n"
+msgstr "Medija ni mogoče razložiti.\n"
 
 #: winerror.mc:1346
-msgid "Media changed\n"
-msgstr "Medij je bil spremenjen\n"
+msgid "Media changed.\n"
+msgstr "Medij je bil spremenjen.\n"
 
 #: winerror.mc:1351
-msgid "I/O bus reset\n"
-msgstr "Vodilo V/I je bilo ponstavljeno\n"
+msgid "I/O bus reset.\n"
+msgstr "Vodilo V/I je bilo ponstavljeno.\n"
 
 #: winerror.mc:1356
-msgid "No media in drive\n"
-msgstr "Ni medija v pogonu\n"
+msgid "No media in drive.\n"
+msgstr "Ni medija v pogonu.\n"
 
 #: winerror.mc:1361
-msgid "No Unicode translation\n"
-msgstr "Ni prevoda Unicode\n"
+msgid "No Unicode translation.\n"
+msgstr "Ni prevoda Unicode.\n"
 
 #: winerror.mc:1366
-msgid "DLL init failed\n"
-msgstr "Začenjanje DLL je spodletelo\n"
+msgid "DLL init failed.\n"
+msgstr "Začenjanje DLL je spodletelo.\n"
 
 #: winerror.mc:1371
-msgid "Shutdown in progress\n"
-msgstr "Izklop poteka\n"
+msgid "Shutdown in progress.\n"
+msgstr "Izklop poteka.\n"
 
 #: winerror.mc:1376
-msgid "No shutdown in progress\n"
-msgstr "Ni izklopa v teku\n"
+msgid "No shutdown in progress.\n"
+msgstr "Ni izklopa v teku.\n"
 
 #: winerror.mc:1381
-msgid "I/O device error\n"
-msgstr "Napaka V/I naprave\n"
+msgid "I/O device error.\n"
+msgstr "Napaka V/I naprave.\n"
 
 #: winerror.mc:1386
-msgid "No serial devices found\n"
-msgstr "Zaporednih naprav ni mogoče najti\n"
+msgid "No serial devices found.\n"
+msgstr "Zaporednih naprav ni mogoče najti.\n"
 
 #: winerror.mc:1391
-msgid "Shared IRQ busy\n"
-msgstr "Souporabljen IRQ je zaseden\n"
+msgid "Shared IRQ busy.\n"
+msgstr "Souporabljen IRQ je zaseden.\n"
 
 #: winerror.mc:1396
-msgid "Serial I/O completed\n"
-msgstr "Zaporedni V/I je končan\n"
+msgid "Serial I/O completed.\n"
+msgstr "Zaporedni V/I je končan.\n"
 
 #: winerror.mc:1401
-msgid "Serial I/O counter timeout\n"
-msgstr "Zakasnitev zaporednega števca V/I\n"
+msgid "Serial I/O counter timeout.\n"
+msgstr "Zakasnitev zaporednega števca V/I.\n"
 
 #: winerror.mc:1406
-msgid "Floppy ID address mark not found\n"
-msgstr "ID-ja naslova diskete ni bilo mogoče najti\n"
+msgid "Floppy ID address mark not found.\n"
+msgstr "ID-ja naslova diskete ni bilo mogoče najti.\n"
 
 #: winerror.mc:1411
-msgid "Floppy reports wrong cylinder\n"
-msgstr "Disketa poroča napačen cilinder\n"
+msgid "Floppy reports wrong cylinder.\n"
+msgstr "Disketa poroča napačen cilinder.\n"
 
 #: winerror.mc:1416
-msgid "Unknown floppy error\n"
-msgstr "Neznana napaka diskete\n"
+msgid "Unknown floppy error.\n"
+msgstr "Neznana napaka diskete.\n"
 
 #: winerror.mc:1421
-msgid "Floppy registers inconsistent\n"
-msgstr "Registri diskete niso dosledni\n"
+msgid "Floppy registers inconsistent.\n"
+msgstr "Registri diskete niso dosledni.\n"
 
 #: winerror.mc:1426
-msgid "Hard disk recalibrate failed\n"
-msgstr "Ponovno umerjanje trdega diska je spodletelo\n"
+msgid "Hard disk recalibrate failed.\n"
+msgstr "Ponovno umerjanje trdega diska je spodletelo.\n"
 
 #: winerror.mc:1431
-msgid "Hard disk operation failed\n"
-msgstr "Opravilo trdega diska je spodletelo\n"
+msgid "Hard disk operation failed.\n"
+msgstr "Opravilo trdega diska je spodletelo.\n"
 
 #: winerror.mc:1436
-msgid "Hard disk reset failed\n"
-msgstr "Ponastavitev trdega diska je spodletela\n"
+msgid "Hard disk reset failed.\n"
+msgstr "Ponastavitev trdega diska je spodletela.\n"
 
 #: winerror.mc:1441
-msgid "End of tape media\n"
-msgstr "Konec kasetnega medija\n"
+msgid "End of tape media.\n"
+msgstr "Konec kasetnega medija.\n"
 
 #: winerror.mc:1446
-msgid "Not enough server memory\n"
-msgstr "Ni dovolj pomnilnika na strežniku\n"
+msgid "Not enough server memory.\n"
+msgstr "Ni dovolj pomnilnika na strežniku.\n"
 
 #: winerror.mc:1451
-msgid "Possible deadlock\n"
-msgstr "Možen zaklep\n"
+msgid "Possible deadlock.\n"
+msgstr "Možen zaklep.\n"
 
 #: winerror.mc:1456
-msgid "Incorrect alignment\n"
-msgstr "Nepravilna poravnava\n"
+msgid "Incorrect alignment.\n"
+msgstr "Nepravilna poravnava.\n"
 
 #: winerror.mc:1461
-msgid "Set-power-state vetoed\n"
-msgstr "Nastavljeno stanje porabe je dobilo veto\n"
+msgid "Set-power-state vetoed.\n"
+msgstr "Nastavljeno stanje porabe je dobilo veto.\n"
 
 #: winerror.mc:1466
-msgid "Set-power-state failed\n"
-msgstr "Nastavljeno stanje moči je spodletelo\n"
+msgid "Set-power-state failed.\n"
+msgstr "Nastavljeno stanje moči je spodletelo.\n"
 
 #: winerror.mc:1471
-msgid "Too many links\n"
-msgstr "Preveč povezav\n"
+msgid "Too many links.\n"
+msgstr "Preveč povezav.\n"
 
 #: winerror.mc:1476
-msgid "Newer windows version needed\n"
-msgstr "Zahtevana je novejša različica sistema windows\n"
+msgid "Newer windows version needed.\n"
+msgstr "Zahtevana je novejša različica sistema windows.\n"
 
 #: winerror.mc:1481
-msgid "Wrong operating system\n"
-msgstr "Napačni operacijski sistem\n"
+msgid "Wrong operating system.\n"
+msgstr "Napačni operacijski sistem.\n"
 
 #: winerror.mc:1486
-msgid "Single-instance application\n"
-msgstr "Program enega primerka\n"
+msgid "Single-instance application.\n"
+msgstr "Program enega primerka.\n"
 
 #: winerror.mc:1491
-msgid "Real-mode application\n"
-msgstr "Realnočasovni program\n"
+msgid "Real-mode application.\n"
+msgstr "Realnočasovni program.\n"
 
 #: winerror.mc:1496
-msgid "Invalid DLL\n"
-msgstr "Neveljaven DLL\n"
+msgid "Invalid DLL.\n"
+msgstr "Neveljaven DLL.\n"
 
 #: winerror.mc:1501
-msgid "No associated application\n"
-msgstr "Ni povezanega programa\n"
+msgid "No associated application.\n"
+msgstr "Ni povezanega programa.\n"
 
 #: winerror.mc:1506
-msgid "DDE failure\n"
-msgstr "DDE je spodletel\n"
+msgid "DDE failure.\n"
+msgstr "DDE je spodletel.\n"
 
 #: winerror.mc:1511
-msgid "DLL not found\n"
-msgstr "DLL-ja ni mogoče najti\n"
+msgid "DLL not found.\n"
+msgstr "DLL-ja ni mogoče najti.\n"
 
 #: winerror.mc:1516
-msgid "Out of user handles\n"
-msgstr "Ročnikov uporabnikov je zmanjkalo\n"
+msgid "Out of user handles.\n"
+msgstr "Ročnikov uporabnikov je zmanjkalo.\n"
 
 #: winerror.mc:1521
-msgid "Message can only be used in synchronous calls\n"
-msgstr "Sporočilo je mogoče uporabiti le v usklajenih klicih\n"
+msgid "Message can only be used in synchronous calls.\n"
+msgstr "Sporočilo je mogoče uporabiti le v usklajenih klicih.\n"
 
 #: winerror.mc:1526
-msgid "The source element is empty\n"
-msgstr "Izvirni predmet je prazen\n"
+msgid "The source element is empty.\n"
+msgstr "Izvirni predmet je prazen.\n"
 
 #: winerror.mc:1531
-msgid "The destination element is full\n"
-msgstr "Ciljni predmet je poln\n"
+msgid "The destination element is full.\n"
+msgstr "Ciljni predmet je poln.\n"
 
 #: winerror.mc:1536
-msgid "The element address is invalid\n"
-msgstr "Naslov predmeta ni veljaven\n"
+msgid "The element address is invalid.\n"
+msgstr "Naslov predmeta ni veljaven.\n"
 
 #: winerror.mc:1541
-msgid "The magazine is not present\n"
-msgstr "Revija ni prisotna\n"
+msgid "The magazine is not present.\n"
+msgstr "Revija ni prisotna.\n"
 
 #: winerror.mc:1546
-msgid "The device needs reinitialization\n"
-msgstr "Naprava zahteva ponoven začetek\n"
+msgid "The device needs reinitialization.\n"
+msgstr "Naprava zahteva ponoven začetek.\n"
 
 #: winerror.mc:1551
-msgid "The device requires cleaning\n"
-msgstr "Naprava zahteva čiščenje\n"
+msgid "The device requires cleaning.\n"
+msgstr "Naprava zahteva čiščenje.\n"
 
 #: winerror.mc:1556
-msgid "The device door is open\n"
-msgstr "Vrata naprave so odprta\n"
+msgid "The device door is open.\n"
+msgstr "Vrata naprave so odprta.\n"
 
 #: winerror.mc:1561
-msgid "The device is not connected\n"
-msgstr "Naprava ni povezana\n"
+msgid "The device is not connected.\n"
+msgstr "Naprava ni povezana.\n"
 
 #: winerror.mc:1566
-msgid "Element not found\n"
-msgstr "Predmeta ni mogoče najti\n"
+msgid "Element not found.\n"
+msgstr "Predmeta ni mogoče najti.\n"
 
 #: winerror.mc:1571
-msgid "No match found\n"
-msgstr "Zadetka ni mogoče najti\n"
+msgid "No match found.\n"
+msgstr "Zadetka ni mogoče najti.\n"
 
 #: winerror.mc:1576
-msgid "Property set not found\n"
-msgstr "Nastavljene lastnosti ni mogoče najti\n"
+msgid "Property set not found.\n"
+msgstr "Nastavljene lastnosti ni mogoče najti.\n"
 
 #: winerror.mc:1581
-msgid "Point not found\n"
-msgstr "Točke ni mogoče najti\n"
+msgid "Point not found.\n"
+msgstr "Točke ni mogoče najti.\n"
 
 #: winerror.mc:1586
-msgid "No running tracking service\n"
-msgstr "Storitev sledenja se ne izvaja\n"
+msgid "No running tracking service.\n"
+msgstr "Storitev sledenja se ne izvaja.\n"
 
 #: winerror.mc:1591
-msgid "No such volume ID\n"
-msgstr "Ni takšnega ID-ja nosilca\n"
+msgid "No such volume ID.\n"
+msgstr "Ni takšnega ID-ja nosilca.\n"
 
 #: winerror.mc:1596
-msgid "Unable to remove the file to be replaced\n"
-msgstr "Datoteke za zamenjavo ni mogoče odstraniti\n"
+msgid "Unable to remove the file to be replaced.\n"
+msgstr "Datoteke za zamenjavo ni mogoče odstraniti.\n"
 
 #: winerror.mc:1601
-msgid "Unable to move the replacement file into place\n"
-msgstr "Premikanje datoteke zamenjave na mesto ni mogoče\n"
+msgid "Unable to move the replacement file into place.\n"
+msgstr "Premikanje datoteke zamenjave na mesto ni mogoče.\n"
 
 #: winerror.mc:1606
-msgid "Moving the replacement file failed\n"
-msgstr "Premikanje datoteke zamenjave je spodletelo\n"
+msgid "Moving the replacement file failed.\n"
+msgstr "Premikanje datoteke zamenjave je spodletelo.\n"
 
 #: winerror.mc:1611
-msgid "The journal is being deleted\n"
-msgstr "Dnevnik se briše\n"
+msgid "The journal is being deleted.\n"
+msgstr "Dnevnik se briše.\n"
 
 #: winerror.mc:1616
-msgid "The journal is not active\n"
-msgstr "Dnevnik ni dejaven\n"
+msgid "The journal is not active.\n"
+msgstr "Dnevnik ni dejaven.\n"
 
 #: winerror.mc:1621
-msgid "Potential matching file found\n"
-msgstr "Najdena je bila morebitno ujemajoča se datoteka\n"
+msgid "Potential matching file found.\n"
+msgstr "Najdena je bila morebitno ujemajoča se datoteka.\n"
 
 #: winerror.mc:1626
-msgid "The journal entry was deleted\n"
-msgstr "Vnos dnevnika je bil izbrisan\n"
+msgid "The journal entry was deleted.\n"
+msgstr "Vnos dnevnika je bil izbrisan.\n"
 
 #: winerror.mc:1631
-msgid "Invalid device name\n"
-msgstr "Neveljavno ime naprave\n"
+msgid "Invalid device name.\n"
+msgstr "Neveljavno ime naprave.\n"
 
 #: winerror.mc:1636
-msgid "Connection unavailable\n"
-msgstr "Povezava ni na voljo\n"
+msgid "Connection unavailable.\n"
+msgstr "Povezava ni na voljo.\n"
 
 #: winerror.mc:1641
-msgid "Device already remembered\n"
-msgstr "Naprava je že bila zapomnjena\n"
+msgid "Device already remembered.\n"
+msgstr "Naprava je že bila zapomnjena.\n"
 
 #: winerror.mc:1646
-msgid "No network or bad path\n"
-msgstr "Ni omrežja ali pa je pot slaba\n"
+msgid "No network or bad path.\n"
+msgstr "Ni omrežja ali pa je pot slaba.\n"
 
 #: winerror.mc:1651
-msgid "Invalid network provider name\n"
-msgstr "Neveljavno ime ponudnika omrežja\n"
+msgid "Invalid network provider name.\n"
+msgstr "Neveljavno ime ponudnika omrežja.\n"
 
 #: winerror.mc:1656
-msgid "Cannot open network connection profile\n"
-msgstr "Profila omrežne povezave ni mogoče odpreti\n"
+msgid "Cannot open network connection profile.\n"
+msgstr "Profila omrežne povezave ni mogoče odpreti.\n"
 
 #: winerror.mc:1661
-msgid "Corrupt network connection profile\n"
-msgstr "Profil omrežne povezave je pokvarjen\n"
+msgid "Corrupt network connection profile.\n"
+msgstr "Profil omrežne povezave je pokvarjen.\n"
 
 #: winerror.mc:1666
-msgid "Not a container\n"
-msgstr "Ni vsebnik\n"
+msgid "Not a container.\n"
+msgstr "Ni vsebnik.\n"
 
 #: winerror.mc:1671
-msgid "Extended error\n"
-msgstr "Razširjena napaka\n"
+msgid "Extended error.\n"
+msgstr "Razširjena napaka.\n"
 
 #: winerror.mc:1676
-msgid "Invalid group name\n"
-msgstr "Neveljavno ime skupine\n"
+msgid "Invalid group name.\n"
+msgstr "Neveljavno ime skupine.\n"
 
 #: winerror.mc:1681
-msgid "Invalid computer name\n"
-msgstr "Neveljavno ime računalnika\n"
+msgid "Invalid computer name.\n"
+msgstr "Neveljavno ime računalnika.\n"
 
 #: winerror.mc:1686
-msgid "Invalid event name\n"
-msgstr "Neveljavno ime dogodka\n"
+msgid "Invalid event name.\n"
+msgstr "Neveljavno ime dogodka.\n"
 
 #: winerror.mc:1691
-msgid "Invalid domain name\n"
-msgstr "Neveljavno ime domene\n"
+msgid "Invalid domain name.\n"
+msgstr "Neveljavno ime domene.\n"
 
 #: winerror.mc:1696
-msgid "Invalid service name\n"
-msgstr "Neveljavno ime storitve\n"
+msgid "Invalid service name.\n"
+msgstr "Neveljavno ime storitve.\n"
 
 #: winerror.mc:1701
-msgid "Invalid network name\n"
-msgstr "Neveljavno ime omrežja\n"
+msgid "Invalid network name.\n"
+msgstr "Neveljavno ime omrežja.\n"
 
 #: winerror.mc:1706
-msgid "Invalid share name\n"
-msgstr "Neveljavno ime souporabe\n"
+msgid "Invalid share name.\n"
+msgstr "Neveljavno ime souporabe.\n"
 
 #: winerror.mc:1716
-msgid "Invalid message name\n"
-msgstr "Neveljavno ime sporočila\n"
+msgid "Invalid message name.\n"
+msgstr "Neveljavno ime sporočila.\n"
 
 #: winerror.mc:1721
-msgid "Invalid message destination\n"
-msgstr "Neveljaven cilj sporočila\n"
+msgid "Invalid message destination.\n"
+msgstr "Neveljaven cilj sporočila.\n"
 
 #: winerror.mc:1726
-msgid "Session credential conflict\n"
-msgstr "Spor poveril seje\n"
+msgid "Session credential conflict.\n"
+msgstr "Spor poveril seje.\n"
 
 #: winerror.mc:1731
-msgid "Remote session limit exceeded\n"
-msgstr "Omejitev oddaljene seje je bila presežena\n"
+msgid "Remote session limit exceeded.\n"
+msgstr "Omejitev oddaljene seje je bila presežena.\n"
 
 #: winerror.mc:1736
-msgid "Duplicate domain or workgroup name\n"
-msgstr "Podvojeno ime domene ali delovne skupine\n"
+msgid "Duplicate domain or workgroup name.\n"
+msgstr "Podvojeno ime domene ali delovne skupine.\n"
 
 #: winerror.mc:1741
-msgid "No network\n"
-msgstr "Ni omrežja\n"
+msgid "No network.\n"
+msgstr "Ni omrežja.\n"
 
 #: winerror.mc:1746
-msgid "Operation canceled by user\n"
-msgstr "Uporabnik je prekinil opravilo\n"
+msgid "Operation canceled by user.\n"
+msgstr "Uporabnik je prekinil opravilo.\n"
 
 #: winerror.mc:1751
-msgid "File has a user-mapped section\n"
-msgstr "Datoteka ima uporabniško preslikan odsek\n"
+msgid "File has a user-mapped section.\n"
+msgstr "Datoteka ima uporabniško preslikan odsek.\n"
 
 #: winerror.mc:1756 winerror.mc:3741
-msgid "Connection refused\n"
-msgstr "Povezava je bila zavrnjena\n"
+msgid "Connection refused.\n"
+msgstr "Povezava je bila zavrnjena.\n"
 
 #: winerror.mc:1761
-msgid "Connection gracefully closed\n"
-msgstr "Povezava je bila elegantno zaprta\n"
+msgid "Connection gracefully closed.\n"
+msgstr "Povezava je bila elegantno zaprta.\n"
 
 #: winerror.mc:1766
-msgid "Address already associated with transport endpoint\n"
-msgstr "Naslov je že povezan s končno točko prenosa\n"
+msgid "Address already associated with transport endpoint.\n"
+msgstr "Naslov je že povezan s končno točko prenosa.\n"
 
 #: winerror.mc:1771
-msgid "Address not associated with transport endpoint\n"
-msgstr "Naslov ni povezan s končno točko prenosa\n"
+msgid "Address not associated with transport endpoint.\n"
+msgstr "Naslov ni povezan s končno točko prenosa.\n"
 
 #: winerror.mc:1776
-msgid "Connection invalid\n"
-msgstr "Povezava ni veljavna\n"
+msgid "Connection invalid.\n"
+msgstr "Povezava ni veljavna.\n"
 
 #: winerror.mc:1781
-msgid "Connection is active\n"
-msgstr "Povezava je dejavna\n"
+msgid "Connection is active.\n"
+msgstr "Povezava je dejavna.\n"
 
 #: winerror.mc:1786
-msgid "Network unreachable\n"
-msgstr "Omrežje ni dosegljivo\n"
+msgid "Network unreachable.\n"
+msgstr "Omrežje ni dosegljivo.\n"
 
 #: winerror.mc:1791
-msgid "Host unreachable\n"
-msgstr "Gostitelja ni mogoče doseči\n"
+msgid "Host unreachable.\n"
+msgstr "Gostitelja ni mogoče doseči.\n"
 
 #: winerror.mc:1796
-msgid "Protocol unreachable\n"
-msgstr "Protokol ni dosegljiv\n"
+msgid "Protocol unreachable.\n"
+msgstr "Protokol ni dosegljiv.\n"
 
 #: winerror.mc:1801
-msgid "Port unreachable\n"
-msgstr "Vrata niso dosegljiva\n"
+msgid "Port unreachable.\n"
+msgstr "Vrata niso dosegljiva.\n"
 
 #: winerror.mc:1806
-msgid "Request aborted\n"
-msgstr "Zahteva je bila preklicana\n"
+msgid "Request aborted.\n"
+msgstr "Zahteva je bila preklicana.\n"
 
 #: winerror.mc:1811
-msgid "Connection aborted\n"
-msgstr "Povezava je bila prekinjena\n"
+msgid "Connection aborted.\n"
+msgstr "Povezava je bila prekinjena.\n"
 
 #: winerror.mc:1816
-msgid "Please retry operation\n"
-msgstr "Znova poskusite z opravilom\n"
+msgid "Please retry operation.\n"
+msgstr "Znova poskusite z opravilom.\n"
 
 #: winerror.mc:1821
-msgid "Connection count limit reached\n"
-msgstr "Število omejitev povezav je bilo doseženo\n"
+msgid "Connection count limit reached.\n"
+msgstr "Število omejitev povezav je bilo doseženo.\n"
 
 #: winerror.mc:1826
-msgid "Login time restriction\n"
-msgstr "Omejitev časa prijave\n"
+msgid "Login time restriction.\n"
+msgstr "Omejitev časa prijave.\n"
 
 #: winerror.mc:1831
-msgid "Login workstation restriction\n"
-msgstr "Omejitev prijave delovne postaje\n"
+msgid "Login workstation restriction.\n"
+msgstr "Omejitev prijave delovne postaje.\n"
 
 #: winerror.mc:1836
-msgid "Incorrect network address\n"
-msgstr "Nepravilen omrežni naslov\n"
+msgid "Incorrect network address.\n"
+msgstr "Nepravilen omrežni naslov.\n"
 
 #: winerror.mc:1841
-msgid "Service already registered\n"
-msgstr "Storitev je že vpisana\n"
+msgid "Service already registered.\n"
+msgstr "Storitev je že vpisana.\n"
 
 #: winerror.mc:1846
-msgid "Service not found\n"
-msgstr "Storitve ni mogoče najti\n"
+msgid "Service not found.\n"
+msgstr "Storitve ni mogoče najti.\n"
 
 #: winerror.mc:1851
-msgid "User not authenticated\n"
-msgstr "Uporabnik ni overjen\n"
+msgid "User not authenticated.\n"
+msgstr "Uporabnik ni overjen.\n"
 
 #: winerror.mc:1856
-msgid "User not logged on\n"
-msgstr "Uporabnik ni prijavljen\n"
+msgid "User not logged on.\n"
+msgstr "Uporabnik ni prijavljen.\n"
 
 #: winerror.mc:1861
-msgid "Continue work in progress\n"
-msgstr "Nadaljuj z delom v teku\n"
+msgid "Continue work in progress.\n"
+msgstr "Nadaljuj z delom v teku.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised\n"
-msgstr "Že začeto\n"
+msgid "Already initialised.\n"
+msgstr "Že začeto.\n"
 
 #: winerror.mc:1871
-msgid "No more local devices\n"
-msgstr "Ni več krajevnih naprav\n"
+msgid "No more local devices.\n"
+msgstr "Ni več krajevnih naprav.\n"
 
 #: winerror.mc:1876
-msgid "The site does not exist\n"
-msgstr "Stran ne obstaja\n"
+msgid "The site does not exist.\n"
+msgstr "Stran ne obstaja.\n"
 
 #: winerror.mc:1881
-msgid "The domain controller already exists\n"
-msgstr "Nadzornik domene že obstaja\n"
+msgid "The domain controller already exists.\n"
+msgstr "Nadzornik domene že obstaja.\n"
 
 #: winerror.mc:1886
-msgid "Supported only when connected\n"
-msgstr "Podprt je le, ko je povezan\n"
+msgid "Supported only when connected.\n"
+msgstr "Podprt je le, ko je povezan.\n"
 
 #: winerror.mc:1891
-msgid "Perform operation even when nothing changed\n"
-msgstr "Izvede opravilo tudi ko se ničesar ne spremeni\n"
+msgid "Perform operation even when nothing changed.\n"
+msgstr "Izvede opravilo tudi ko se ničesar ne spremeni.\n"
 
 #: winerror.mc:1896
-msgid "The user profile is invalid\n"
-msgstr "Profil uporabnika ni veljaven\n"
+msgid "The user profile is invalid.\n"
+msgstr "Profil uporabnika ni veljaven.\n"
 
 #: winerror.mc:1901
-msgid "Not supported on Small Business Server\n"
-msgstr "Ni podprto na majhnem poslovnem strežniku\n"
+msgid "Not supported on Small Business Server.\n"
+msgstr "Ni podprto na majhnem poslovnem strežniku.\n"
 
 #: winerror.mc:1906
-msgid "Not all privileges assigned\n"
-msgstr "Vsa dovoljenja niso dovoljena\n"
+msgid "Not all privileges assigned.\n"
+msgstr "Vsa dovoljenja niso dovoljena.\n"
 
 #: winerror.mc:1911
-msgid "Some security IDs not mapped\n"
-msgstr "Nekateri varnostni ID-ji niso preslikani\n"
+msgid "Some security IDs not mapped.\n"
+msgstr "Nekateri varnostni ID-ji niso preslikani.\n"
 
 #: winerror.mc:1916
-msgid "No quotas for account\n"
-msgstr "Ni kvot za račun\n"
+msgid "No quotas for account.\n"
+msgstr "Ni kvot za račun.\n"
 
 #: winerror.mc:1921
-msgid "Local user session key\n"
-msgstr "Ključ seje krajevnega uporabnika\n"
+msgid "Local user session key.\n"
+msgstr "Ključ seje krajevnega uporabnika.\n"
 
 #: winerror.mc:1926
-msgid "Password too complex for LM\n"
-msgstr "Geslo je preveč zapleteno za LM\n"
+msgid "Password too complex for LM.\n"
+msgstr "Geslo je preveč zapleteno za LM.\n"
 
 #: winerror.mc:1931
-msgid "Unknown revision\n"
-msgstr "Neznana predelava\n"
+msgid "Unknown revision.\n"
+msgstr "Neznana predelava.\n"
 
 #: winerror.mc:1936
-msgid "Incompatible revision levels\n"
-msgstr "Nezdružljive ravni predelav\n"
+msgid "Incompatible revision levels.\n"
+msgstr "Nezdružljive ravni predelav.\n"
 
 #: winerror.mc:1941
-msgid "Invalid owner\n"
-msgstr "Neveljaven lastnik\n"
+msgid "Invalid owner.\n"
+msgstr "Neveljaven lastnik.\n"
 
 #: winerror.mc:1946
-msgid "Invalid primary group\n"
-msgstr "Neveljavna osnovna skupina\n"
+msgid "Invalid primary group.\n"
+msgstr "Neveljavna osnovna skupina.\n"
 
 #: winerror.mc:1951
-msgid "No impersonation token\n"
-msgstr "Ni žetona oponašanja\n"
+msgid "No impersonation token.\n"
+msgstr "Ni žetona oponašanja.\n"
 
 #: winerror.mc:1956
-msgid "Can't disable mandatory group\n"
-msgstr "Obvezne skupine ni mogoče onemogočiti\n"
+msgid "Can't disable mandatory group.\n"
+msgstr "Obvezne skupine ni mogoče onemogočiti.\n"
 
 #: winerror.mc:1961
-msgid "No logon servers available\n"
-msgstr "Strežniki prijave niso na voljo\n"
+msgid "No logon servers available.\n"
+msgstr "Strežniki prijave niso na voljo.\n"
 
 #: winerror.mc:1966
-msgid "No such logon session\n"
-msgstr "Ni takšne prijavne seje\n"
+msgid "No such logon session.\n"
+msgstr "Ni takšne prijavne seje.\n"
 
 #: winerror.mc:1971
-msgid "No such privilege\n"
-msgstr "Ni takšnega dovoljenja\n"
+msgid "No such privilege.\n"
+msgstr "Ni takšnega dovoljenja.\n"
 
 #: winerror.mc:1976
-msgid "Privilege not held\n"
-msgstr "Nimate dovoljenja\n"
+msgid "Privilege not held.\n"
+msgstr "Nimate dovoljenja.\n"
 
 #: winerror.mc:1981
-msgid "Invalid account name\n"
-msgstr "Neveljavno ime računa\n"
+msgid "Invalid account name.\n"
+msgstr "Neveljavno ime računa.\n"
 
 #: winerror.mc:1986
-msgid "User already exists\n"
-msgstr "Uporabnik že obstaja\n"
+msgid "User already exists.\n"
+msgstr "Uporabnik že obstaja.\n"
 
 #: winerror.mc:1991
-msgid "No such user\n"
-msgstr "Ni takšnega uporabnika\n"
+msgid "No such user.\n"
+msgstr "Ni takšnega uporabnika.\n"
 
 #: winerror.mc:1996
-msgid "Group already exists\n"
-msgstr "Skupina že obstaja\n"
+msgid "Group already exists.\n"
+msgstr "Skupina že obstaja.\n"
 
 #: winerror.mc:2001
-msgid "No such group\n"
-msgstr "Ni takšne skupine\n"
+msgid "No such group.\n"
+msgstr "Ni takšne skupine.\n"
 
 #: winerror.mc:2006
-msgid "User already in group\n"
-msgstr "Uporabnik je že v skupini\n"
+msgid "User already in group.\n"
+msgstr "Uporabnik je že v skupini.\n"
 
 #: winerror.mc:2011
-msgid "User not in group\n"
-msgstr "Uporabnik ni v skupini\n"
+msgid "User not in group.\n"
+msgstr "Uporabnik ni v skupini.\n"
 
 #: winerror.mc:2016
-msgid "Can't delete last admin user\n"
-msgstr "Ni mogoče izbrisati zadnjega skrbniškega uporabnika\n"
+msgid "Can't delete last admin user.\n"
+msgstr "Ni mogoče izbrisati zadnjega skrbniškega uporabnika.\n"
 
 #: winerror.mc:2021
-msgid "Wrong password\n"
-msgstr "Napačno geslo\n"
+msgid "Wrong password.\n"
+msgstr "Napačno geslo.\n"
 
 #: winerror.mc:2026
-msgid "Ill-formed password\n"
-msgstr "Slabo oblikovano geslo\n"
+msgid "Ill-formed password.\n"
+msgstr "Slabo oblikovano geslo.\n"
 
 #: winerror.mc:2031
-msgid "Password restriction\n"
-msgstr "Omejitev gesla\n"
+msgid "Password restriction.\n"
+msgstr "Omejitev gesla.\n"
 
 #: winerror.mc:2036
-msgid "Logon failure\n"
-msgstr "Prijava je spodletela\n"
+msgid "Logon failure.\n"
+msgstr "Prijava je spodletela.\n"
 
 #: winerror.mc:2041
-msgid "Account restriction\n"
-msgstr "Omejitev računa\n"
+msgid "Account restriction.\n"
+msgstr "Omejitev računa.\n"
 
 #: winerror.mc:2046
-msgid "Invalid logon hours\n"
-msgstr "Neveljavne ure prijave\n"
+msgid "Invalid logon hours.\n"
+msgstr "Neveljavne ure prijave.\n"
 
 #: winerror.mc:2051
-msgid "Invalid workstation\n"
-msgstr "Neveljavna delovna postaja\n"
+msgid "Invalid workstation.\n"
+msgstr "Neveljavna delovna postaja.\n"
 
 #: winerror.mc:2056
-msgid "Password expired\n"
-msgstr "Geslo je poteklo\n"
+msgid "Password expired.\n"
+msgstr "Geslo je poteklo.\n"
 
 #: winerror.mc:2061
-msgid "Account disabled\n"
-msgstr "Račun je onemogočen\n"
+msgid "Account disabled.\n"
+msgstr "Račun je onemogočen.\n"
 
 #: winerror.mc:2066
-msgid "No security ID mapped\n"
-msgstr "Ni preslikanih varnostnih ID-jev\n"
+msgid "No security ID mapped.\n"
+msgstr "Ni preslikanih varnostnih ID-jev.\n"
 
 #: winerror.mc:2071
-msgid "Too many LUIDs requested\n"
-msgstr "Zahtevanih je bil preveč LUID-jev\n"
+msgid "Too many LUIDs requested.\n"
+msgstr "Zahtevanih je bil preveč LUID-jev.\n"
 
 #: winerror.mc:2076
-msgid "LUIDs exhausted\n"
-msgstr "LUID-ji so izčrpani\n"
+msgid "LUIDs exhausted.\n"
+msgstr "LUID-ji so izčrpani.\n"
 
 #: winerror.mc:2081
-msgid "Invalid sub authority\n"
-msgstr "Neveljaven podoveritelj\n"
+msgid "Invalid sub authority.\n"
+msgstr "Neveljaven podoveritelj.\n"
 
 #: winerror.mc:2086
-msgid "Invalid ACL\n"
-msgstr "Neveljaven ACL\n"
+msgid "Invalid ACL.\n"
+msgstr "Neveljaven ACL.\n"
 
 #: winerror.mc:2091
-msgid "Invalid SID\n"
-msgstr "Neveljaven SID\n"
+msgid "Invalid SID.\n"
+msgstr "Neveljaven SID.\n"
 
 #: winerror.mc:2096
-msgid "Invalid security descriptor\n"
-msgstr "Neveljaven opisnik varnosti\n"
+msgid "Invalid security descriptor.\n"
+msgstr "Neveljaven opisnik varnosti.\n"
 
 #: winerror.mc:2101
-msgid "Bad inherited ACL\n"
-msgstr "Slab podedovan ACL\n"
+msgid "Bad inherited ACL.\n"
+msgstr "Slab podedovan ACL.\n"
 
 #: winerror.mc:2106
-msgid "Server disabled\n"
-msgstr "Strežnik je onemogočen\n"
+msgid "Server disabled.\n"
+msgstr "Strežnik je onemogočen.\n"
 
 #: winerror.mc:2111
-msgid "Server not disabled\n"
-msgstr "Strežnik ni onemogočen\n"
+msgid "Server not disabled.\n"
+msgstr "Strežnik ni onemogočen.\n"
 
 #: winerror.mc:2116
-msgid "Invalid ID authority\n"
-msgstr "Neveljaven ID overitelja\n"
+msgid "Invalid ID authority.\n"
+msgstr "Neveljaven ID overitelja.\n"
 
 #: winerror.mc:2121
-msgid "Allotted space exceeded\n"
-msgstr "Dodeljen prostor je bil presežen\n"
+msgid "Allotted space exceeded.\n"
+msgstr "Dodeljen prostor je bil presežen.\n"
 
 #: winerror.mc:2126
-msgid "Invalid group attributes\n"
-msgstr "Neveljavni atributi skupine\n"
+msgid "Invalid group attributes.\n"
+msgstr "Neveljavni atributi skupine.\n"
 
 #: winerror.mc:2131
-msgid "Bad impersonation level\n"
-msgstr "Slaba raven oponašanja\n"
+msgid "Bad impersonation level.\n"
+msgstr "Slaba raven oponašanja.\n"
 
 #: winerror.mc:2136
-msgid "Can't open anonymous security token\n"
-msgstr "Anonimnega žetona varnosti ni mogoče odpreti\n"
+msgid "Can't open anonymous security token.\n"
+msgstr "Anonimnega žetona varnosti ni mogoče odpreti.\n"
 
 #: winerror.mc:2141
-msgid "Bad validation class\n"
-msgstr "Slab razred potrjevanja\n"
+msgid "Bad validation class.\n"
+msgstr "Slab razred potrjevanja.\n"
 
 #: winerror.mc:2146
-msgid "Bad token type\n"
-msgstr "Slaba vrsta žetona\n"
+msgid "Bad token type.\n"
+msgstr "Slaba vrsta žetona.\n"
 
 #: winerror.mc:2151
-msgid "No security on object\n"
-msgstr "Ni varnosti na predmetu\n"
+msgid "No security on object.\n"
+msgstr "Ni varnosti na predmetu.\n"
 
 #: winerror.mc:2156
-msgid "Can't access domain information\n"
-msgstr "Ni mogoče dostopati do podatkov o domeni\n"
+msgid "Can't access domain information.\n"
+msgstr "Ni mogoče dostopati do podatkov o domeni.\n"
 
 #: winerror.mc:2161
-msgid "Invalid server state\n"
-msgstr "Neveljavno stanje strežnika\n"
+msgid "Invalid server state.\n"
+msgstr "Neveljavno stanje strežnika.\n"
 
 #: winerror.mc:2166
-msgid "Invalid domain state\n"
-msgstr "Neveljavno stanje domene\n"
+msgid "Invalid domain state.\n"
+msgstr "Neveljavno stanje domene.\n"
 
 #: winerror.mc:2171
-msgid "Invalid domain role\n"
-msgstr "Neveljavna vloga domene\n"
+msgid "Invalid domain role.\n"
+msgstr "Neveljavna vloga domene.\n"
 
 #: winerror.mc:2176
-msgid "No such domain\n"
-msgstr "Ni takšne domene\n"
+msgid "No such domain.\n"
+msgstr "Ni takšne domene.\n"
 
 #: winerror.mc:2181
-msgid "Domain already exists\n"
-msgstr "Domena že obstaja\n"
+msgid "Domain already exists.\n"
+msgstr "Domena že obstaja.\n"
 
 #: winerror.mc:2186
-msgid "Domain limit exceeded\n"
-msgstr "Omejitev domene je bila presežena\n"
+msgid "Domain limit exceeded.\n"
+msgstr "Omejitev domene je bila presežena.\n"
 
 #: winerror.mc:2191
-msgid "Internal database corruption\n"
-msgstr "Napaka notranje podatkovne zbirke\n"
+msgid "Internal database corruption.\n"
+msgstr "Napaka notranje podatkovne zbirke.\n"
 
 #: winerror.mc:2196
-msgid "Internal error\n"
-msgstr "Notranja napaka\n"
+msgid "Internal error.\n"
+msgstr "Notranja napaka.\n"
 
 #: winerror.mc:2201
-msgid "Generic access types not mapped\n"
-msgstr "Splošne vrste dostopa niso preslikane\n"
+msgid "Generic access types not mapped.\n"
+msgstr "Splošne vrste dostopa niso preslikane.\n"
 
 #: winerror.mc:2206
-msgid "Bad descriptor format\n"
-msgstr "Slaba oblika opisnika\n"
+msgid "Bad descriptor format.\n"
+msgstr "Slaba oblika opisnika.\n"
 
 #: winerror.mc:2211
-msgid "Not a logon process\n"
-msgstr "Ni opravilo prijave\n"
+msgid "Not a logon process.\n"
+msgstr "Ni opravilo prijave.\n"
 
 #: winerror.mc:2216
-msgid "Logon session ID exists\n"
-msgstr "ID prijavne seje obstaja\n"
+msgid "Logon session ID exists.\n"
+msgstr "ID prijavne seje obstaja.\n"
 
 #: winerror.mc:2221
-msgid "Unknown authentication package\n"
-msgstr "Neznan paket overitve\n"
+msgid "Unknown authentication package.\n"
+msgstr "Neznan paket overitve.\n"
 
 #: winerror.mc:2226
-msgid "Bad logon session state\n"
-msgstr "Slabo stanje prijavne seje\n"
+msgid "Bad logon session state.\n"
+msgstr "Slabo stanje prijavne seje.\n"
 
 #: winerror.mc:2231
-msgid "Logon session ID collision\n"
-msgstr "Trk ID-ja prijavne seje\n"
+msgid "Logon session ID collision.\n"
+msgstr "Trk ID-ja prijavne seje.\n"
 
 #: winerror.mc:2236
-msgid "Invalid logon type\n"
-msgstr "Neveljavna vrsta prijave\n"
+msgid "Invalid logon type.\n"
+msgstr "Neveljavna vrsta prijave.\n"
 
 #: winerror.mc:2241
-msgid "Cannot impersonate\n"
-msgstr "Ni mogoče oponašati\n"
+msgid "Cannot impersonate.\n"
+msgstr "Ni mogoče oponašati.\n"
 
 #: winerror.mc:2246
-msgid "Invalid transaction state\n"
-msgstr "Neveljavno stanje prenosa\n"
+msgid "Invalid transaction state.\n"
+msgstr "Neveljavno stanje prenosa.\n"
 
 #: winerror.mc:2251
-msgid "Security DB commit failure\n"
-msgstr "Uveljavitev varnostne podatkovne zbirke je spodletela\n"
+msgid "Security DB commit failure.\n"
+msgstr "Uveljavitev varnostne podatkovne zbirke je spodletela.\n"
 
 #: winerror.mc:2256
-msgid "Account is built-in\n"
-msgstr "Račun je vgrajen\n"
+msgid "Account is built-in.\n"
+msgstr "Račun je vgrajen.\n"
 
 #: winerror.mc:2261
-msgid "Group is built-in\n"
-msgstr "Skupina je vgrajena\n"
+msgid "Group is built-in.\n"
+msgstr "Skupina je vgrajena.\n"
 
 #: winerror.mc:2266
-msgid "User is built-in\n"
-msgstr "Uporabnik je vgrajen\n"
+msgid "User is built-in.\n"
+msgstr "Uporabnik je vgrajen.\n"
 
 #: winerror.mc:2271
-msgid "Group is primary for user\n"
-msgstr "Skupina je osnovna za uporabnika\n"
+msgid "Group is primary for user.\n"
+msgstr "Skupina je osnovna za uporabnika.\n"
 
 #: winerror.mc:2276
-msgid "Token already in use\n"
-msgstr "Žeton je že v uporabi\n"
+msgid "Token already in use.\n"
+msgstr "Žeton je že v uporabi.\n"
 
 #: winerror.mc:2281
-msgid "No such local group\n"
-msgstr "Ni takšne krajevne skupine\n"
+msgid "No such local group.\n"
+msgstr "Ni takšne krajevne skupine.\n"
 
 #: winerror.mc:2286
-msgid "User not in local group\n"
-msgstr "Uporabnika ni v krajevni skupini\n"
+msgid "User not in local group.\n"
+msgstr "Uporabnika ni v krajevni skupini.\n"
 
 #: winerror.mc:2291
-msgid "User already in local group\n"
-msgstr "Uporabnik je že v krajevni skupini\n"
+msgid "User already in local group.\n"
+msgstr "Uporabnik je že v krajevni skupini.\n"
 
 #: winerror.mc:2296
-msgid "Local group already exists\n"
-msgstr "Krajevna skupina že obstaja\n"
+msgid "Local group already exists.\n"
+msgstr "Krajevna skupina že obstaja.\n"
 
 #: winerror.mc:2301 winerror.mc:2326
-msgid "Logon type not granted\n"
-msgstr "Vrsta prijave ni bila dodeljena\n"
+msgid "Logon type not granted.\n"
+msgstr "Vrsta prijave ni bila dodeljena.\n"
 
 #: winerror.mc:2306
-msgid "Too many secrets\n"
-msgstr "Preveč skrivnosti\n"
+msgid "Too many secrets.\n"
+msgstr "Preveč skrivnosti.\n"
 
 #: winerror.mc:2311
-msgid "Secret too long\n"
-msgstr "Skrivnost je predolga\n"
+msgid "Secret too long.\n"
+msgstr "Skrivnost je predolga.\n"
 
 #: winerror.mc:2316
-msgid "Internal security DB error\n"
-msgstr "Notranja napaka varnosti podatkovne zbirke\n"
+msgid "Internal security DB error.\n"
+msgstr "Notranja napaka varnosti podatkovne zbirke.\n"
 
 #: winerror.mc:2321
-msgid "Too many context IDs\n"
-msgstr "Preveč ID-jev vsebine\n"
+msgid "Too many context IDs.\n"
+msgstr "Preveč ID-jev vsebine.\n"
 
 #: winerror.mc:2331
-msgid "Cross-encrypted NT password required\n"
-msgstr "Zahtevano je navzkrižno šifrirano geslo NT\n"
+msgid "Cross-encrypted NT password required.\n"
+msgstr "Zahtevano je navzkrižno šifrirano geslo NT.\n"
 
 #: winerror.mc:2336
-msgid "No such member\n"
-msgstr "Ni takšnega člana\n"
+msgid "No such member.\n"
+msgstr "Ni takšnega člana.\n"
 
 #: winerror.mc:2341
-msgid "Invalid member\n"
-msgstr "Neveljaven član\n"
+msgid "Invalid member.\n"
+msgstr "Neveljaven član.\n"
 
 #: winerror.mc:2346
-msgid "Too many SIDs\n"
-msgstr "Preveč SID-jev\n"
+msgid "Too many SIDs.\n"
+msgstr "Preveč SID-jev.\n"
 
 #: winerror.mc:2351
-msgid "Cross-encrypted LM password required\n"
-msgstr "Zahtevano je navzkrižno šifrirano geslo LM\n"
+msgid "Cross-encrypted LM password required.\n"
+msgstr "Zahtevano je navzkrižno šifrirano geslo LM.\n"
 
 #: winerror.mc:2356
-msgid "No inheritable components\n"
-msgstr "Ni dednih sestavnih delov\n"
+msgid "No inheritable components.\n"
+msgstr "Ni dednih sestavnih delov.\n"
 
 #: winerror.mc:2361
-msgid "File or directory corrupt\n"
-msgstr "Datoteka ali mapa je pokvarjena\n"
+msgid "File or directory corrupt.\n"
+msgstr "Datoteka ali mapa je pokvarjena.\n"
 
 #: winerror.mc:2366
-msgid "Disk is corrupt\n"
-msgstr "Disk je pokvarjen\n"
+msgid "Disk is corrupt.\n"
+msgstr "Disk je pokvarjen.\n"
 
 #: winerror.mc:2371
-msgid "No user session key\n"
-msgstr "Ni ključa uporabniške seje\n"
+msgid "No user session key.\n"
+msgstr "Ni ključa uporabniške seje.\n"
 
 #: winerror.mc:2376
-msgid "Licence quota exceeded\n"
-msgstr "Kvota licence je bila presežena\n"
+msgid "Licence quota exceeded.\n"
+msgstr "Kvota licence je bila presežena.\n"
 
 #: winerror.mc:2381
-msgid "Wrong target name\n"
-msgstr "Napačno ime cilja\n"
+msgid "Wrong target name.\n"
+msgstr "Napačno ime cilja.\n"
 
 #: winerror.mc:2386
-msgid "Mutual authentication failed\n"
-msgstr "Medsebojna overitev je spodletela\n"
+msgid "Mutual authentication failed.\n"
+msgstr "Medsebojna overitev je spodletela.\n"
 
 #: winerror.mc:2391
-msgid "Time skew between client and server\n"
-msgstr "Popačenje časa med odjemalcem in strežnikom\n"
+msgid "Time skew between client and server.\n"
+msgstr "Popačenje časa med odjemalcem in strežnikom.\n"
 
 #: winerror.mc:2396
-msgid "Invalid window handle\n"
-msgstr "Neveljaven ročnik okna\n"
+msgid "Invalid window handle.\n"
+msgstr "Neveljaven ročnik okna.\n"
 
 #: winerror.mc:2401
-msgid "Invalid menu handle\n"
-msgstr "Neveljaven ročnik menija\n"
+msgid "Invalid menu handle.\n"
+msgstr "Neveljaven ročnik menija.\n"
 
 #: winerror.mc:2406
-msgid "Invalid cursor handle\n"
-msgstr "Neveljaven ročnik kazalke\n"
+msgid "Invalid cursor handle.\n"
+msgstr "Neveljaven ročnik kazalke.\n"
 
 #: winerror.mc:2411
-msgid "Invalid accelerator table handle\n"
-msgstr "Neveljaven pospeševalnik ročnika razpredelnice\n"
+msgid "Invalid accelerator table handle.\n"
+msgstr "Neveljaven pospeševalnik ročnika razpredelnice.\n"
 
 #: winerror.mc:2416
-msgid "Invalid hook handle\n"
-msgstr "Neveljaven ročnik kljuke\n"
+msgid "Invalid hook handle.\n"
+msgstr "Neveljaven ročnik kljuke.\n"
 
 #: winerror.mc:2421
-msgid "Invalid DWP handle\n"
-msgstr "Neveljaven ročnik DWP\n"
+msgid "Invalid DWP handle.\n"
+msgstr "Neveljaven ročnik DWP.\n"
 
 #: winerror.mc:2426
-msgid "Can't create top-level child window\n"
-msgstr "Ni mogoče ustvariti podrejenega okna zgornje ravni\n"
+msgid "Can't create top-level child window.\n"
+msgstr "Ni mogoče ustvariti podrejenega okna zgornje ravni.\n"
 
 #: winerror.mc:2431
-msgid "Can't find window class\n"
-msgstr "Ni mogoče najti razreda okna\n"
+msgid "Can't find window class.\n"
+msgstr "Ni mogoče najti razreda okna.\n"
 
 #: winerror.mc:2436
-msgid "Window owned by another thread\n"
-msgstr "Okno si lasti druga nit\n"
+msgid "Window owned by another thread.\n"
+msgstr "Okno si lasti druga nit.\n"
 
 #: winerror.mc:2441
-msgid "Hotkey already registered\n"
-msgstr "Tipkovna bližnjica je že vpisana\n"
+msgid "Hotkey already registered.\n"
+msgstr "Tipkovna bližnjica je že vpisana.\n"
 
 #: winerror.mc:2446
-msgid "Class already exists\n"
-msgstr "Razred že obstaja\n"
+msgid "Class already exists.\n"
+msgstr "Razred že obstaja.\n"
 
 #: winerror.mc:2451
-msgid "Class does not exist\n"
-msgstr "Razred ne obstaja\n"
+msgid "Class does not exist.\n"
+msgstr "Razred ne obstaja.\n"
 
 #: winerror.mc:2456
-msgid "Class has open windows\n"
-msgstr "Razred ima odprta okna\n"
+msgid "Class has open windows.\n"
+msgstr "Razred ima odprta okna.\n"
 
 #: winerror.mc:2461
-msgid "Invalid index\n"
-msgstr "Neveljavno kazalo\n"
+msgid "Invalid index.\n"
+msgstr "Neveljavno kazalo.\n"
 
 #: winerror.mc:2466
-msgid "Invalid icon handle\n"
-msgstr "Neveljaven ročnik ikone\n"
+msgid "Invalid icon handle.\n"
+msgstr "Neveljaven ročnik ikone.\n"
 
 #: winerror.mc:2471
-msgid "Private dialog index\n"
-msgstr "Kazalo zasebnega pogovornega okna\n"
+msgid "Private dialog index.\n"
+msgstr "Kazalo zasebnega pogovornega okna.\n"
 
 #: winerror.mc:2476
-msgid "List box ID not found\n"
-msgstr "ID polja seznama ni mogoče najti\n"
+msgid "List box ID not found.\n"
+msgstr "ID polja seznama ni mogoče najti.\n"
 
 #: winerror.mc:2481
-msgid "No wildcard characters\n"
-msgstr "Ni nadomestnih znakov\n"
+msgid "No wildcard characters.\n"
+msgstr "Ni nadomestnih znakov.\n"
 
 #: winerror.mc:2486
-msgid "Clipboard not open\n"
-msgstr "Odložišče ni odprto\n"
+msgid "Clipboard not open.\n"
+msgstr "Odložišče ni odprto.\n"
 
 #: winerror.mc:2491
-msgid "Hotkey not registered\n"
-msgstr "Bližnjica ni vpisana\n"
+msgid "Hotkey not registered.\n"
+msgstr "Bližnjica ni vpisana.\n"
 
 #: winerror.mc:2496
-msgid "Not a dialog window\n"
-msgstr "Ni pogovorno okno\n"
+msgid "Not a dialog window.\n"
+msgstr "Ni pogovorno okno.\n"
 
 #: winerror.mc:2501
-msgid "Control ID not found\n"
-msgstr "Nadzornega ID-ja ni mogoče najti\n"
+msgid "Control ID not found.\n"
+msgstr "Nadzornega ID-ja ni mogoče najti.\n"
 
 #: winerror.mc:2506
-msgid "Invalid combobox message\n"
-msgstr "Neveljavno sporočilo izbirnega polja\n"
+msgid "Invalid combobox message.\n"
+msgstr "Neveljavno sporočilo izbirnega polja.\n"
 
 #: winerror.mc:2511
-msgid "Not a combobox window\n"
-msgstr "Ni okno izbirnega polja\n"
+msgid "Not a combobox window.\n"
+msgstr "Ni okno izbirnega polja.\n"
 
 #: winerror.mc:2516
-msgid "Invalid edit height\n"
-msgstr "Neveljavno urejanje višine\n"
+msgid "Invalid edit height.\n"
+msgstr "Neveljavno urejanje višine.\n"
 
 #: winerror.mc:2521
-msgid "DC not found\n"
-msgstr "DC ni mogoče najti\n"
+msgid "DC not found.\n"
+msgstr "DC ni mogoče najti.\n"
 
 #: winerror.mc:2526
-msgid "Invalid hook filter\n"
-msgstr "Neveljaven filter kljuke\n"
+msgid "Invalid hook filter.\n"
+msgstr "Neveljaven filter kljuke.\n"
 
 #: winerror.mc:2531
-msgid "Invalid filter procedure\n"
-msgstr "Neveljaven postopek filtrov\n"
+msgid "Invalid filter procedure.\n"
+msgstr "Neveljaven postopek filtrov.\n"
 
 #: winerror.mc:2536
-msgid "Hook procedure needs module handle\n"
-msgstr "Postopek kljuke zahteva ročnik modula\n"
+msgid "Hook procedure needs module handle.\n"
+msgstr "Postopek kljuke zahteva ročnik modula.\n"
 
 #: winerror.mc:2541
-msgid "Global-only hook procedure\n"
-msgstr "Le splošen postopek kljuke\n"
+msgid "Global-only hook procedure.\n"
+msgstr "Le splošen postopek kljuke.\n"
 
 #: winerror.mc:2546
-msgid "Journal hook already set\n"
-msgstr "Kljuka dnevnika je že nastavljena\n"
+msgid "Journal hook already set.\n"
+msgstr "Kljuka dnevnika je že nastavljena.\n"
 
 #: winerror.mc:2551
-msgid "Hook procedure not installed\n"
-msgstr "Postopek kljuke ni nameščen\n"
+msgid "Hook procedure not installed.\n"
+msgstr "Postopek kljuke ni nameščen.\n"
 
 #: winerror.mc:2556
-msgid "Invalid list box message\n"
-msgstr "Neveljaven seznam polja sporočil\n"
+msgid "Invalid list box message.\n"
+msgstr "Neveljaven seznam polja sporočil.\n"
 
 #: winerror.mc:2561
-msgid "Invalid LB_SETCOUNT sent\n"
-msgstr "Poslan je bil neveljaven LB_SETCOUNT\n"
+msgid "Invalid LB_SETCOUNT sent.\n"
+msgstr "Poslan je bil neveljaven LB_SETCOUNT.\n"
 
 #: winerror.mc:2566
-msgid "No tab stops on this list box\n"
-msgstr "Ni tabulatorskih mest na seznamskem polju\n"
+msgid "No tab stops on this list box.\n"
+msgstr "Ni tabulatorskih mest na seznamskem polju.\n"
 
 #: winerror.mc:2571
-msgid "Can't destroy object owned by another thread\n"
-msgstr "Predmeta, ki si ga lasti druga nit, ni mogoče uničiti\n"
+msgid "Can't destroy object owned by another thread.\n"
+msgstr "Predmeta, ki si ga lasti druga nit, ni mogoče uničiti.\n"
 
 #: winerror.mc:2576
-msgid "Child window menus not allowed\n"
-msgstr "Meniji podrejenih oken niso dovoljeni\n"
+msgid "Child window menus not allowed.\n"
+msgstr "Meniji podrejenih oken niso dovoljeni.\n"
 
 #: winerror.mc:2581
-msgid "Window has no system menu\n"
-msgstr "Okno nima sistemskega menija\n"
+msgid "Window has no system menu.\n"
+msgstr "Okno nima sistemskega menija.\n"
 
 #: winerror.mc:2586
-msgid "Invalid message box style\n"
-msgstr "Neveljaven slog polja s sporočilom\n"
+msgid "Invalid message box style.\n"
+msgstr "Neveljaven slog polja s sporočilom.\n"
 
 #: winerror.mc:2591
-msgid "Invalid SPI parameter\n"
-msgstr "Neveljaven parameter SPI\n"
+msgid "Invalid SPI parameter.\n"
+msgstr "Neveljaven parameter SPI.\n"
 
 #: winerror.mc:2596
-msgid "Screen already locked\n"
-msgstr "Zaslon je že zaklenjen\n"
+msgid "Screen already locked.\n"
+msgstr "Zaslon je že zaklenjen.\n"
 
 #: winerror.mc:2601
-msgid "Window handles have different parents\n"
-msgstr "Ročniki oken imajo različne nadrejene predmete\n"
+msgid "Window handles have different parents.\n"
+msgstr "Ročniki oken imajo različne nadrejene predmete.\n"
 
 #: winerror.mc:2606
-msgid "Not a child window\n"
-msgstr "Ni podrejeno okno\n"
+msgid "Not a child window.\n"
+msgstr "Ni podrejeno okno.\n"
 
 #: winerror.mc:2611
-msgid "Invalid GW command\n"
-msgstr "Neveljaven ukaz GW\n"
+msgid "Invalid GW command.\n"
+msgstr "Neveljaven ukaz GW.\n"
 
 #: winerror.mc:2616
-msgid "Invalid thread ID\n"
-msgstr "Neveljaven ID niti\n"
+msgid "Invalid thread ID.\n"
+msgstr "Neveljaven ID niti.\n"
 
 #: winerror.mc:2621
-msgid "Not an MDI child window\n"
-msgstr "Ni podrejeno okno MDI\n"
+msgid "Not an MDI child window.\n"
+msgstr "Ni podrejeno okno MDI.\n"
 
 #: winerror.mc:2626
-msgid "Popup menu already active\n"
-msgstr "Pojavni meni je že dejaven\n"
+msgid "Popup menu already active.\n"
+msgstr "Pojavni meni je že dejaven.\n"
 
 #: winerror.mc:2631
-msgid "No scrollbars\n"
-msgstr "Ni drsnikov\n"
+msgid "No scrollbars.\n"
+msgstr "Ni drsnikov.\n"
 
 #: winerror.mc:2636
-msgid "Invalid scrollbar range\n"
-msgstr "Neveljaven obseg drsnika\n"
+msgid "Invalid scrollbar range.\n"
+msgstr "Neveljaven obseg drsnika.\n"
 
 #: winerror.mc:2641
-msgid "Invalid ShowWin command\n"
-msgstr "Neveljaven ukaz ShowWin\n"
+msgid "Invalid ShowWin command.\n"
+msgstr "Neveljaven ukaz ShowWin.\n"
 
 #: winerror.mc:2646
-msgid "No system resources\n"
-msgstr "Ni sistemskih virov\n"
+msgid "No system resources.\n"
+msgstr "Ni sistemskih virov.\n"
 
 #: winerror.mc:2651
-msgid "No non-paged system resources\n"
-msgstr "Ni neostranejnih sistemskih virov\n"
+msgid "No non-paged system resources.\n"
+msgstr "Ni neostranejnih sistemskih virov.\n"
 
 #: winerror.mc:2656
-msgid "No paged system resources\n"
-msgstr "Ni ostranjenih sistemskih virov\n"
+msgid "No paged system resources.\n"
+msgstr "Ni ostranjenih sistemskih virov.\n"
 
 #: winerror.mc:2661
-msgid "No working set quota\n"
-msgstr "Ni delujoče nastavljene kvote\n"
+msgid "No working set quota.\n"
+msgstr "Ni delujoče nastavljene kvote.\n"
 
 #: winerror.mc:2666
-msgid "No page file quota\n"
-msgstr "Ni kvote izmenjevalne datoteke\n"
+msgid "No page file quota.\n"
+msgstr "Ni kvote izmenjevalne datoteke.\n"
 
 #: winerror.mc:2671
-msgid "Exceeded commitment limit\n"
-msgstr "Omejitev kvote je bila presežena\n"
+msgid "Exceeded commitment limit.\n"
+msgstr "Omejitev kvote je bila presežena.\n"
 
 #: winerror.mc:2676
-msgid "Menu item not found\n"
-msgstr "Predmeta menija ni mogoče najti\n"
+msgid "Menu item not found.\n"
+msgstr "Predmeta menija ni mogoče najti.\n"
 
 #: winerror.mc:2681
-msgid "Invalid keyboard handle\n"
-msgstr "Neveljaven ročnik tipkovnice\n"
+msgid "Invalid keyboard handle.\n"
+msgstr "Neveljaven ročnik tipkovnice.\n"
 
 #: winerror.mc:2686
-msgid "Hook type not allowed\n"
-msgstr "Vrsta kljuke ni dovoljena\n"
+msgid "Hook type not allowed.\n"
+msgstr "Vrsta kljuke ni dovoljena.\n"
 
 #: winerror.mc:2691
-msgid "Interactive window station required\n"
-msgstr "Zahtevana je vzajemna okenska postaja\n"
+msgid "Interactive window station required.\n"
+msgstr "Zahtevana je vzajemna okenska postaja.\n"
 
 #: winerror.mc:2696
-msgid "Timeout\n"
-msgstr "Zakasnitev\n"
+msgid "Timeout.\n"
+msgstr "Zakasnitev.\n"
 
 #: winerror.mc:2701
-msgid "Invalid monitor handle\n"
-msgstr "Neveljaven ročnik zaslona\n"
+msgid "Invalid monitor handle.\n"
+msgstr "Neveljaven ročnik zaslona.\n"
 
 #: winerror.mc:2706
-msgid "Event log file corrupt\n"
-msgstr "Dnevniška datoteka dogodkov je pokvarjena\n"
+msgid "Event log file corrupt.\n"
+msgstr "Dnevniška datoteka dogodkov je pokvarjena.\n"
 
 #: winerror.mc:2711
-msgid "Event log can't start\n"
-msgstr "Dnevnik dogodkov se ne more zagnati\n"
+msgid "Event log can't start.\n"
+msgstr "Dnevnik dogodkov se ne more zagnati.\n"
 
 #: winerror.mc:2716
-msgid "Event log file full\n"
-msgstr "Dnevniška datoteka dogodkov je polna\n"
+msgid "Event log file full.\n"
+msgstr "Dnevniška datoteka dogodkov je polna.\n"
 
 #: winerror.mc:2721
-msgid "Event log file changed\n"
-msgstr "Dnevniška datoteka dogodka je bila spremenjena\n"
+msgid "Event log file changed.\n"
+msgstr "Dnevniška datoteka dogodka je bila spremenjena.\n"
 
 #: winerror.mc:2726
 #, fuzzy
-msgid "Installer service failed\n"
-msgstr "Storitev namestilnika je spodletela\n"
+msgid "Installer service failed.\n"
+msgstr "Storitev namestilnika je spodletela.\n"
 
 #: winerror.mc:2731
-msgid "Installation aborted by user\n"
-msgstr "Uporabnik je preklical namestitev\n"
+msgid "Installation aborted by user.\n"
+msgstr "Uporabnik je preklical namestitev.\n"
 
 #: winerror.mc:2736
-msgid "Installation failure\n"
-msgstr "Namestitev je spodletela\n"
+msgid "Installation failure.\n"
+msgstr "Namestitev je spodletela.\n"
 
 #: winerror.mc:2741
-msgid "Installation suspended\n"
-msgstr "Namestitev je bila zaustavljena\n"
+msgid "Installation suspended.\n"
+msgstr "Namestitev je bila zaustavljena.\n"
 
 #: winerror.mc:2746
-msgid "Unknown product\n"
-msgstr "Neznan izdelek\n"
+msgid "Unknown product.\n"
+msgstr "Neznan izdelek.\n"
 
 #: winerror.mc:2751
-msgid "Unknown feature\n"
-msgstr "Neznana zmožnost\n"
+msgid "Unknown feature.\n"
+msgstr "Neznana zmožnost.\n"
 
 #: winerror.mc:2756
-msgid "Unknown component\n"
-msgstr "Neznan sestavni del\n"
+msgid "Unknown component.\n"
+msgstr "Neznan sestavni del.\n"
 
 #: winerror.mc:2761
-msgid "Unknown property\n"
-msgstr "Neznana lastnost\n"
+msgid "Unknown property.\n"
+msgstr "Neznana lastnost.\n"
 
 #: winerror.mc:2766
-msgid "Invalid handle state\n"
-msgstr "Neveljavno stanje ročnika\n"
+msgid "Invalid handle state.\n"
+msgstr "Neveljavno stanje ročnika.\n"
 
 #: winerror.mc:2771
-msgid "Bad configuration\n"
-msgstr "Slaba nastavitev\n"
+msgid "Bad configuration.\n"
+msgstr "Slaba nastavitev.\n"
 
 #: winerror.mc:2776
-msgid "Index is missing\n"
-msgstr "Kazalo manjka\n"
+msgid "Index is missing.\n"
+msgstr "Kazalo manjka.\n"
 
 #: winerror.mc:2781
-msgid "Installation source is missing\n"
-msgstr "Vir namestitve manjka\n"
+msgid "Installation source is missing.\n"
+msgstr "Vir namestitve manjka.\n"
 
 #: winerror.mc:2786
-msgid "Wrong installation package version\n"
-msgstr "Napačna različica namestitvenega paketa\n"
+msgid "Wrong installation package version.\n"
+msgstr "Napačna različica namestitvenega paketa.\n"
 
 #: winerror.mc:2791
-msgid "Product uninstalled\n"
-msgstr "Izdelek je bil odstranjen\n"
+msgid "Product uninstalled.\n"
+msgstr "Izdelek je bil odstranjen.\n"
 
 #: winerror.mc:2796
-msgid "Invalid query syntax\n"
-msgstr "Neveljavna skladnja poizvedbe\n"
+msgid "Invalid query syntax.\n"
+msgstr "Neveljavna skladnja poizvedbe.\n"
 
 #: winerror.mc:2801
-msgid "Invalid field\n"
-msgstr "Neveljavno polje\n"
+msgid "Invalid field.\n"
+msgstr "Neveljavno polje.\n"
 
 #: winerror.mc:2806
-msgid "Device removed\n"
-msgstr "Naprava je bila odstranjena\n"
+msgid "Device removed.\n"
+msgstr "Naprava je bila odstranjena.\n"
 
 #: winerror.mc:2811
-msgid "Installation already running\n"
-msgstr "Namestitev se že izvaja\n"
+msgid "Installation already running.\n"
+msgstr "Namestitev se že izvaja.\n"
 
 #: winerror.mc:2816
-msgid "Installation package failed to open\n"
-msgstr "Odpiranje namestitvenega paketa je spodletelo\n"
+msgid "Installation package failed to open.\n"
+msgstr "Odpiranje namestitvenega paketa je spodletelo.\n"
 
 #: winerror.mc:2821
-msgid "Installation package is invalid\n"
-msgstr "Namestitveni paket je neveljaven\n"
+msgid "Installation package is invalid.\n"
+msgstr "Namestitveni paket je neveljaven.\n"
 
 #: winerror.mc:2826
-msgid "Installer user interface failed\n"
-msgstr "Uporabniški vmesnik namestilnika je spodletel\n"
+msgid "Installer user interface failed.\n"
+msgstr "Uporabniški vmesnik namestilnika je spodletel.\n"
 
 #: winerror.mc:2831
-msgid "Failed to open installation log file\n"
-msgstr "Dnevniške datoteke namestitve ni bilo mogoče odpreti\n"
+msgid "Failed to open installation log file.\n"
+msgstr "Dnevniške datoteke namestitve ni bilo mogoče odpreti.\n"
 
 #: winerror.mc:2836
-msgid "Installation language not supported\n"
-msgstr "Jezik namestitve ni podprt\n"
+msgid "Installation language not supported.\n"
+msgstr "Jezik namestitve ni podprt.\n"
 
 #: winerror.mc:2841
-msgid "Installation transform failed to apply\n"
-msgstr "Uveljavljanje preoblikovanja namestitve je spodletelo\n"
+msgid "Installation transform failed to apply.\n"
+msgstr "Uveljavljanje preoblikovanja namestitve je spodletelo.\n"
 
 #: winerror.mc:2846
-msgid "Installation package rejected\n"
-msgstr "Namestitveni paket je bil zavrnjen\n"
+msgid "Installation package rejected.\n"
+msgstr "Namestitveni paket je bil zavrnjen.\n"
 
 #: winerror.mc:2851
-msgid "Function could not be called\n"
-msgstr "Funkcije ni mogoče priklicati\n"
+msgid "Function could not be called.\n"
+msgstr "Funkcije ni mogoče priklicati.\n"
 
 #: winerror.mc:2856
-msgid "Function failed\n"
-msgstr "Funkcija je spodletela\n"
+msgid "Function failed.\n"
+msgstr "Funkcija je spodletela.\n"
 
 #: winerror.mc:2861
-msgid "Invalid table\n"
-msgstr "Neveljavna razpredelnica\n"
+msgid "Invalid table.\n"
+msgstr "Neveljavna razpredelnica.\n"
 
 #: winerror.mc:2866
-msgid "Data type mismatch\n"
-msgstr "Neujemanje vrste podatkov\n"
+msgid "Data type mismatch.\n"
+msgstr "Neujemanje vrste podatkov.\n"
 
 #: winerror.mc:2871 winerror.mc:3081
-msgid "Unsupported type\n"
-msgstr "Nepodprta vrsta\n"
+msgid "Unsupported type.\n"
+msgstr "Nepodprta vrsta.\n"
 
 #: winerror.mc:2876
-msgid "Creation failed\n"
-msgstr "Ustvarjanje je spodletelo\n"
+msgid "Creation failed.\n"
+msgstr "Ustvarjanje je spodletelo.\n"
 
 #: winerror.mc:2881
-msgid "Temporary directory not writable\n"
-msgstr "V začasno mapo ni mogoče pisati\n"
+msgid "Temporary directory not writable.\n"
+msgstr "V začasno mapo ni mogoče pisati.\n"
 
 #: winerror.mc:2886
-msgid "Installation platform not supported\n"
-msgstr "Okolje namestilnika ni podprto\n"
+msgid "Installation platform not supported.\n"
+msgstr "Okolje namestilnika ni podprto.\n"
 
 #: winerror.mc:2891
-msgid "Installer not used\n"
-msgstr "Namestilnik ni uporabljen\n"
+msgid "Installer not used.\n"
+msgstr "Namestilnik ni uporabljen.\n"
 
 #: winerror.mc:2896
-msgid "Failed to open the patch package\n"
-msgstr "Napaka med odstranjevanjem paketa popravkov\n"
+msgid "Failed to open the patch package.\n"
+msgstr "Napaka med odstranjevanjem paketa popravkov.\n"
 
 #: winerror.mc:2901
-msgid "Invalid patch package\n"
-msgstr "Neveljaven paket popravkov\n"
+msgid "Invalid patch package.\n"
+msgstr "Neveljaven paket popravkov.\n"
 
 #: winerror.mc:2906
-msgid "Unsupported patch package\n"
-msgstr "Nepodprt paket popravkov\n"
+msgid "Unsupported patch package.\n"
+msgstr "Nepodprt paket popravkov.\n"
 
 #: winerror.mc:2911
-msgid "Another version is installed\n"
-msgstr "Druga različica je nameščena\n"
+msgid "Another version is installed.\n"
+msgstr "Druga različica je nameščena.\n"
 
 #: winerror.mc:2916
-msgid "Invalid command line\n"
-msgstr "Neveljavna ukazna vrstica\n"
+msgid "Invalid command line.\n"
+msgstr "Neveljavna ukazna vrstica.\n"
 
 #: winerror.mc:2921
-msgid "Remote installation not allowed\n"
-msgstr "Oddaljena namestitev ni dovoljena\n"
+msgid "Remote installation not allowed.\n"
+msgstr "Oddaljena namestitev ni dovoljena.\n"
 
 #: winerror.mc:2926
-msgid "Reboot initiated after successful install\n"
-msgstr "Po uspešni namestitvi se je začel ponoven zagon\n"
+msgid "Reboot initiated after successful install.\n"
+msgstr "Po uspešni namestitvi se je začel ponoven zagon.\n"
 
 #: winerror.mc:2931
-msgid "Invalid string binding\n"
-msgstr "Neveljavna vezava niza\n"
+msgid "Invalid string binding.\n"
+msgstr "Neveljavna vezava niza.\n"
 
 #: winerror.mc:2936
-msgid "Wrong kind of binding\n"
-msgstr "Napačna vrsta vezave\n"
+msgid "Wrong kind of binding.\n"
+msgstr "Napačna vrsta vezave.\n"
 
 #: winerror.mc:2941
-msgid "Invalid binding\n"
-msgstr "Neveljavna vezava\n"
+msgid "Invalid binding.\n"
+msgstr "Neveljavna vezava.\n"
 
 #: winerror.mc:2946
-msgid "RPC protocol sequence not supported\n"
-msgstr "Zaporedje protokola RPC ni podprto\n"
+msgid "RPC protocol sequence not supported.\n"
+msgstr "Zaporedje protokola RPC ni podprto.\n"
 
 #: winerror.mc:2951
-msgid "Invalid RPC protocol sequence\n"
-msgstr "Neveljavno zaporedje protokola RPC\n"
+msgid "Invalid RPC protocol sequence.\n"
+msgstr "Neveljavno zaporedje protokola RPC.\n"
 
 #: winerror.mc:2956
-msgid "Invalid string UUID\n"
-msgstr "Neveljaven niz UUID\n"
+msgid "Invalid string UUID.\n"
+msgstr "Neveljaven niz UUID.\n"
 
 #: winerror.mc:2961
-msgid "Invalid endpoint format\n"
-msgstr "Neveljavna oblika končne točke\n"
+msgid "Invalid endpoint format.\n"
+msgstr "Neveljavna oblika končne točke.\n"
 
 #: winerror.mc:2966
-msgid "Invalid network address\n"
-msgstr "Neveljaven omrežni naslov\n"
+msgid "Invalid network address.\n"
+msgstr "Neveljaven omrežni naslov.\n"
 
 #: winerror.mc:2971
-msgid "No endpoint found\n"
-msgstr "Ni najdene končne točke\n"
+msgid "No endpoint found.\n"
+msgstr "Ni najdene končne točke.\n"
 
 #: winerror.mc:2976
-msgid "Invalid timeout value\n"
-msgstr "Neveljavna vrednost zakasnitve\n"
+msgid "Invalid timeout value.\n"
+msgstr "Neveljavna vrednost zakasnitve.\n"
 
 #: winerror.mc:2981
-msgid "Object UUID not found\n"
-msgstr "UUID predmeta ni mogoče najti\n"
+msgid "Object UUID not found.\n"
+msgstr "UUID predmeta ni mogoče najti.\n"
 
 #: winerror.mc:2986
-msgid "UUID already registered\n"
-msgstr "UUID je že vpisan\n"
+msgid "UUID already registered.\n"
+msgstr "UUID je že vpisan.\n"
 
 #: winerror.mc:2991
-msgid "UUID type already registered\n"
-msgstr "Vrsta UUID je že vpisana\n"
+msgid "UUID type already registered.\n"
+msgstr "Vrsta UUID je že vpisana.\n"
 
 #: winerror.mc:2996
-msgid "Server already listening\n"
-msgstr "Strežnik že posluša\n"
+msgid "Server already listening.\n"
+msgstr "Strežnik že posluša.\n"
 
 #: winerror.mc:3001
-msgid "No protocol sequences registered\n"
-msgstr "Ni vpisanih zaporedij protokolov\n"
+msgid "No protocol sequences registered.\n"
+msgstr "Ni vpisanih zaporedij protokolov.\n"
 
 #: winerror.mc:3006
-msgid "RPC server not listening\n"
-msgstr "Strežnik RPC ne posluša\n"
+msgid "RPC server not listening.\n"
+msgstr "Strežnik RPC ne posluša.\n"
 
 #: winerror.mc:3011
-msgid "Unknown manager type\n"
-msgstr "Neznana vrsta upravljalnika\n"
+msgid "Unknown manager type.\n"
+msgstr "Neznana vrsta upravljalnika.\n"
 
 #: winerror.mc:3016
-msgid "Unknown interface\n"
-msgstr "Neznan vmesnik\n"
+msgid "Unknown interface.\n"
+msgstr "Neznan vmesnik.\n"
 
 #: winerror.mc:3021
-msgid "No bindings\n"
-msgstr "Ni vezav\n"
+msgid "No bindings.\n"
+msgstr "Ni vezav.\n"
 
 #: winerror.mc:3026
-msgid "No protocol sequences\n"
-msgstr "Ni zaporedij protokolov\n"
+msgid "No protocol sequences.\n"
+msgstr "Ni zaporedij protokolov.\n"
 
 #: winerror.mc:3031
-msgid "Can't create endpoint\n"
-msgstr "Ni mogoče ustvariti končne točke\n"
+msgid "Can't create endpoint.\n"
+msgstr "Ni mogoče ustvariti končne točke.\n"
 
 #: winerror.mc:3036
-msgid "Out of resources\n"
-msgstr "Virov je zmanjkalo\n"
+msgid "Out of resources.\n"
+msgstr "Virov je zmanjkalo.\n"
 
 #: winerror.mc:3041
-msgid "RPC server unavailable\n"
-msgstr "Strežnik RPC ni na voljo\n"
+msgid "RPC server unavailable.\n"
+msgstr "Strežnik RPC ni na voljo.\n"
 
 #: winerror.mc:3046
-msgid "RPC server too busy\n"
-msgstr "Strežnik RPC je prezaposlen\n"
+msgid "RPC server too busy.\n"
+msgstr "Strežnik RPC je prezaposlen.\n"
 
 #: winerror.mc:3051
-msgid "Invalid network options\n"
-msgstr "Neveljavne možnosti omrežja\n"
+msgid "Invalid network options.\n"
+msgstr "Neveljavne možnosti omrežja.\n"
 
 #: winerror.mc:3056
-msgid "No RPC call active\n"
-msgstr "Ni dejavnih klicev RPC\n"
+msgid "No RPC call active.\n"
+msgstr "Ni dejavnih klicev RPC.\n"
 
 #: winerror.mc:3061
-msgid "RPC call failed\n"
-msgstr "Klic RPC je spodletel\n"
+msgid "RPC call failed.\n"
+msgstr "Klic RPC je spodletel.\n"
 
 #: winerror.mc:3066
-msgid "RPC call failed and didn't execute\n"
-msgstr "Klic RPC je spodletel in se ni izvedel\n"
+msgid "RPC call failed and didn't execute.\n"
+msgstr "Klic RPC je spodletel in se ni izvedel.\n"
 
 #: winerror.mc:3071
-msgid "RPC protocol error\n"
-msgstr "Napaka protokola RPC\n"
+msgid "RPC protocol error.\n"
+msgstr "Napaka protokola RPC.\n"
 
 #: winerror.mc:3076
-msgid "Unsupported transfer syntax\n"
-msgstr "Nepodprta skladnja prenosa\n"
+msgid "Unsupported transfer syntax.\n"
+msgstr "Nepodprta skladnja prenosa.\n"
 
 #: winerror.mc:3086
-msgid "Invalid tag\n"
-msgstr "Neveljavna oznaka\n"
+msgid "Invalid tag.\n"
+msgstr "Neveljavna oznaka.\n"
 
 #: winerror.mc:3091
-msgid "Invalid array bounds\n"
-msgstr "Neveljavne obrobe polja\n"
+msgid "Invalid array bounds.\n"
+msgstr "Neveljavne obrobe polja.\n"
 
 #: winerror.mc:3096
-msgid "No entry name\n"
-msgstr "Ni imena vnosa\n"
+msgid "No entry name.\n"
+msgstr "Ni imena vnosa.\n"
 
 #: winerror.mc:3101
-msgid "Invalid name syntax\n"
-msgstr "Neveljavna skladnja imen\n"
+msgid "Invalid name syntax.\n"
+msgstr "Neveljavna skladnja imen.\n"
 
 #: winerror.mc:3106
-msgid "Unsupported name syntax\n"
-msgstr "Nepodprta skladnja imen\n"
+msgid "Unsupported name syntax.\n"
+msgstr "Nepodprta skladnja imen.\n"
 
 #: winerror.mc:3111
-msgid "No network address\n"
-msgstr "Ni omrežnega naslova\n"
+msgid "No network address.\n"
+msgstr "Ni omrežnega naslova.\n"
 
 #: winerror.mc:3116
-msgid "Duplicate endpoint\n"
-msgstr "Podvojena končna točka\n"
+msgid "Duplicate endpoint.\n"
+msgstr "Podvojena končna točka.\n"
 
 #: winerror.mc:3121
-msgid "Unknown authentication type\n"
-msgstr "Neznana vrsta overitve\n"
+msgid "Unknown authentication type.\n"
+msgstr "Neznana vrsta overitve.\n"
 
 #: winerror.mc:3126
-msgid "Maximum calls too low\n"
-msgstr "Največje število klicev je prenizko\n"
+msgid "Maximum calls too low.\n"
+msgstr "Največje število klicev je prenizko.\n"
 
 #: winerror.mc:3131
-msgid "String too long\n"
-msgstr "Niz je predolg\n"
+msgid "String too long.\n"
+msgstr "Niz je predolg.\n"
 
 #: winerror.mc:3136
-msgid "Protocol sequence not found\n"
-msgstr "Zaporedja protokolov ni mogoče najti\n"
+msgid "Protocol sequence not found.\n"
+msgstr "Zaporedja protokolov ni mogoče najti.\n"
 
 #: winerror.mc:3141
-msgid "Procedure number out of range\n"
-msgstr "Število postopkov je izven obsega\n"
+msgid "Procedure number out of range.\n"
+msgstr "Število postopkov je izven obsega.\n"
 
 #: winerror.mc:3146
-msgid "Binding has no authentication data\n"
-msgstr "Vezava nima podatkov overitve\n"
+msgid "Binding has no authentication data.\n"
+msgstr "Vezava nima podatkov overitve.\n"
 
 #: winerror.mc:3151
-msgid "Unknown authentication service\n"
-msgstr "Neznana storitev overitve\n"
+msgid "Unknown authentication service.\n"
+msgstr "Neznana storitev overitve.\n"
 
 #: winerror.mc:3156
-msgid "Unknown authentication level\n"
-msgstr "Neznana raven overitve\n"
+msgid "Unknown authentication level.\n"
+msgstr "Neznana raven overitve.\n"
 
 #: winerror.mc:3161
-msgid "Invalid authentication identity\n"
-msgstr "Neveljavna istovetnost overitve\n"
+msgid "Invalid authentication identity.\n"
+msgstr "Neveljavna istovetnost overitve.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service\n"
-msgstr "Neznana storitev overitve\n"
+msgid "Unknown authorisation service.\n"
+msgstr "Neznana storitev overitve.\n"
 
 #: winerror.mc:3171
-msgid "Invalid entry\n"
-msgstr "Neveljaven vnos\n"
+msgid "Invalid entry.\n"
+msgstr "Neveljaven vnos.\n"
 
 #: winerror.mc:3176
-msgid "Can't perform operation\n"
-msgstr "Opravila ni mogoče izvesti\n"
+msgid "Can't perform operation.\n"
+msgstr "Opravila ni mogoče izvesti.\n"
 
 #: winerror.mc:3181
-msgid "Endpoints not registered\n"
-msgstr "Kočne točke niso vpisane\n"
+msgid "Endpoints not registered.\n"
+msgstr "Kočne točke niso vpisane.\n"
 
 #: winerror.mc:3186
-msgid "Nothing to export\n"
-msgstr "Nič za izvoz\n"
+msgid "Nothing to export.\n"
+msgstr "Nič za izvoz.\n"
 
 #: winerror.mc:3191
-msgid "Incomplete name\n"
-msgstr "Nepopolno ime\n"
+msgid "Incomplete name.\n"
+msgstr "Nepopolno ime.\n"
 
 #: winerror.mc:3196
-msgid "Invalid version option\n"
-msgstr "Neveljavna možnost različice\n"
+msgid "Invalid version option.\n"
+msgstr "Neveljavna možnost različice.\n"
 
 #: winerror.mc:3201
-msgid "No more members\n"
-msgstr "Ni več članov\n"
+msgid "No more members.\n"
+msgstr "Ni več članov.\n"
 
 #: winerror.mc:3206
-msgid "Not all objects unexported\n"
-msgstr "Noben predmet ni bil izvožen\n"
+msgid "Not all objects unexported.\n"
+msgstr "Noben predmet ni bil izvožen.\n"
 
 #: winerror.mc:3211
-msgid "Interface not found\n"
-msgstr "Vmesnika ni mogoče najti\n"
+msgid "Interface not found.\n"
+msgstr "Vmesnika ni mogoče najti.\n"
 
 #: winerror.mc:3216
-msgid "Entry already exists\n"
-msgstr "Vnos že obstaja\n"
+msgid "Entry already exists.\n"
+msgstr "Vnos že obstaja.\n"
 
 #: winerror.mc:3221
-msgid "Entry not found\n"
-msgstr "Vnosa ni mogoče najti\n"
+msgid "Entry not found.\n"
+msgstr "Vnosa ni mogoče najti.\n"
 
 #: winerror.mc:3226
-msgid "Name service unavailable\n"
-msgstr "Ime storitve ni na voljo\n"
+msgid "Name service unavailable.\n"
+msgstr "Ime storitve ni na voljo.\n"
 
 #: winerror.mc:3231
-msgid "Invalid network address family\n"
-msgstr "Neveljavna družina omrežnih naslovov\n"
+msgid "Invalid network address family.\n"
+msgstr "Neveljavna družina omrežnih naslovov.\n"
 
 #: winerror.mc:3236
-msgid "Operation not supported\n"
-msgstr "Dejanje ni podprto\n"
+msgid "Operation not supported.\n"
+msgstr "Dejanje ni podprto.\n"
 
 #: winerror.mc:3241
-msgid "No security context available\n"
-msgstr "Varnostna vsebina ni na voljo\n"
+msgid "No security context available.\n"
+msgstr "Varnostna vsebina ni na voljo.\n"
 
 #: winerror.mc:3246
-msgid "RPCInternal error\n"
-msgstr "RPC Notranja napaka\n"
+msgid "RPCInternal error.\n"
+msgstr "RPC Notranja napaka.\n"
 
 #: winerror.mc:3251
-msgid "RPC divide-by-zero\n"
-msgstr "RPC deljenje z nič\n"
+msgid "RPC divide-by-zero.\n"
+msgstr "RPC deljenje z nič.\n"
 
 #: winerror.mc:3256
-msgid "Address error\n"
-msgstr "Napaka naslova\n"
+msgid "Address error.\n"
+msgstr "Napaka naslova.\n"
 
 #: winerror.mc:3261
-msgid "Floating-point divide-by-zero\n"
-msgstr "Deljenje plavajoče točke z ničlo\n"
+msgid "Floating-point divide-by-zero.\n"
+msgstr "Deljenje plavajoče točke z ničlo.\n"
 
 #: winerror.mc:3266
-msgid "Floating-point underflow\n"
-msgstr "Podkoračitev plavajoče vejice\n"
+msgid "Floating-point underflow.\n"
+msgstr "Podkoračitev plavajoče vejice.\n"
 
 #: winerror.mc:3271
-msgid "Floating-point overflow\n"
-msgstr "Prekoračitev plavajoče vejice\n"
+msgid "Floating-point overflow.\n"
+msgstr "Prekoračitev plavajoče vejice.\n"
 
 #: winerror.mc:3276
-msgid "No more entries\n"
-msgstr "Ni več vnosov\n"
+msgid "No more entries.\n"
+msgstr "Ni več vnosov.\n"
 
 #: winerror.mc:3281
-msgid "Character translation table open failed\n"
-msgstr "Odpiranje razpredelnice prevoda znakov je spodletelo\n"
+msgid "Character translation table open failed.\n"
+msgstr "Odpiranje razpredelnice prevoda znakov je spodletelo.\n"
 
 #: winerror.mc:3286
-msgid "Character translation table file too small\n"
-msgstr "Datoteka razpredelnice prevoda znakov je premajhna\n"
+msgid "Character translation table file too small.\n"
+msgstr "Datoteka razpredelnice prevoda znakov je premajhna.\n"
 
 #: winerror.mc:3291
-msgid "Null context handle\n"
-msgstr "Prazen ročnik vsebine\n"
+msgid "Null context handle.\n"
+msgstr "Prazen ročnik vsebine.\n"
 
 #: winerror.mc:3296
-msgid "Context handle damaged\n"
-msgstr "Ročnik vsebine je poškodovan\n"
+msgid "Context handle damaged.\n"
+msgstr "Ročnik vsebine je poškodovan.\n"
 
 #: winerror.mc:3301
-msgid "Binding handle mismatch\n"
-msgstr "Neujemanje ročnika vezave\n"
+msgid "Binding handle mismatch.\n"
+msgstr "Neujemanje ročnika vezave.\n"
 
 #: winerror.mc:3306
-msgid "Cannot get call handle\n"
-msgstr "Ročnika klica ni mogoče dobiti\n"
+msgid "Cannot get call handle.\n"
+msgstr "Ročnika klica ni mogoče dobiti.\n"
 
 #: winerror.mc:3311
-msgid "Null reference pointer\n"
-msgstr "Prazni kazalnik sklica\n"
+msgid "Null reference pointer.\n"
+msgstr "Prazni kazalnik sklica.\n"
 
 #: winerror.mc:3316
-msgid "Enumeration value out of range\n"
-msgstr "Vrednost oštevilčenja je izven obsega\n"
+msgid "Enumeration value out of range.\n"
+msgstr "Vrednost oštevilčenja je izven obsega.\n"
 
 #: winerror.mc:3321
-msgid "Byte count too small\n"
-msgstr "Število bajtov je premajhno\n"
+msgid "Byte count too small.\n"
+msgstr "Število bajtov je premajhno.\n"
 
 #: winerror.mc:3326
-msgid "Bad stub data\n"
-msgstr "Slab konček podatkov\n"
+msgid "Bad stub data.\n"
+msgstr "Slab konček podatkov.\n"
 
 #: winerror.mc:3331
-msgid "Invalid user buffer\n"
-msgstr "Neveljaven uporabniški medpomnilnik\n"
+msgid "Invalid user buffer.\n"
+msgstr "Neveljaven uporabniški medpomnilnik.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media\n"
-msgstr "Neprepoznana predstavnost\n"
+msgid "Unrecognised media.\n"
+msgstr "Neprepoznana predstavnost.\n"
 
 #: winerror.mc:3341
-msgid "No trust secret\n"
-msgstr "Ni skrivnosti zaupanja\n"
+msgid "No trust secret.\n"
+msgstr "Ni skrivnosti zaupanja.\n"
 
 #: winerror.mc:3346
-msgid "No trust SAM account\n"
-msgstr "Ni računa zaupanja SAM\n"
+msgid "No trust SAM account.\n"
+msgstr "Ni računa zaupanja SAM.\n"
 
 #: winerror.mc:3351
-msgid "Trusted domain failure\n"
-msgstr "Zaupana domena je spodletela\n"
+msgid "Trusted domain failure.\n"
+msgstr "Zaupana domena je spodletela.\n"
 
 #: winerror.mc:3356
-msgid "Trusted relationship failure\n"
-msgstr "Zaupano razmerje je spodletelo\n"
+msgid "Trusted relationship failure.\n"
+msgstr "Zaupano razmerje je spodletelo.\n"
 
 #: winerror.mc:3361
-msgid "Trust logon failure\n"
-msgstr "Zaupana prijava je spodletela\n"
+msgid "Trust logon failure.\n"
+msgstr "Zaupana prijava je spodletela.\n"
 
 #: winerror.mc:3366
-msgid "RPC call already in progress\n"
-msgstr "Klic RPC že poteka\n"
+msgid "RPC call already in progress.\n"
+msgstr "Klic RPC že poteka.\n"
 
 #: winerror.mc:3371
-msgid "NETLOGON is not started\n"
-msgstr "NETLOGON ni zagnan\n"
+msgid "NETLOGON is not started.\n"
+msgstr "NETLOGON ni zagnan.\n"
 
 #: winerror.mc:3376
-msgid "Account expired\n"
-msgstr "Račun je pretekel\n"
+msgid "Account expired.\n"
+msgstr "Račun je pretekel.\n"
 
 #: winerror.mc:3381
-msgid "Redirector has open handles\n"
-msgstr "Preusmernik ima odprte ročnike\n"
+msgid "Redirector has open handles.\n"
+msgstr "Preusmernik ima odprte ročnike.\n"
 
 #: winerror.mc:3386
-msgid "Printer driver already installed\n"
-msgstr "Gonilnik tiskalnika je že nameščen\n"
+msgid "Printer driver already installed.\n"
+msgstr "Gonilnik tiskalnika je že nameščen.\n"
 
 #: winerror.mc:3391
-msgid "Unknown port\n"
-msgstr "Neznana vrata\n"
+msgid "Unknown port.\n"
+msgstr "Neznana vrata.\n"
 
 #: winerror.mc:3396
-msgid "Unknown printer driver\n"
-msgstr "Neznan gonilnik tiskalnika\n"
+msgid "Unknown printer driver.\n"
+msgstr "Neznan gonilnik tiskalnika.\n"
 
 #: winerror.mc:3401
-msgid "Unknown print processor\n"
-msgstr "Neznan opravilnik tiskanja\n"
+msgid "Unknown print processor.\n"
+msgstr "Neznan opravilnik tiskanja.\n"
 
 #: winerror.mc:3406
-msgid "Invalid separator file\n"
-msgstr "Neveljavna datoteka ločnice\n"
+msgid "Invalid separator file.\n"
+msgstr "Neveljavna datoteka ločnice.\n"
 
 #: winerror.mc:3411
-msgid "Invalid priority\n"
-msgstr "Neveljavna prednost\n"
+msgid "Invalid priority.\n"
+msgstr "Neveljavna prednost.\n"
 
 #: winerror.mc:3416
-msgid "Invalid printer name\n"
-msgstr "Neveljavno ime tiskalnika\n"
+msgid "Invalid printer name.\n"
+msgstr "Neveljavno ime tiskalnika.\n"
 
 #: winerror.mc:3421
-msgid "Printer already exists\n"
-msgstr "Tiskalnik že obstaja\n"
+msgid "Printer already exists.\n"
+msgstr "Tiskalnik že obstaja.\n"
 
 #: winerror.mc:3426
-msgid "Invalid printer command\n"
-msgstr "Neveljaven ukaz tiskalnika\n"
+msgid "Invalid printer command.\n"
+msgstr "Neveljaven ukaz tiskalnika.\n"
 
 #: winerror.mc:3431
-msgid "Invalid data type\n"
-msgstr "Neveljavna vrsta podatkov\n"
+msgid "Invalid data type.\n"
+msgstr "Neveljavna vrsta podatkov.\n"
 
 #: winerror.mc:3436
-msgid "Invalid environment\n"
-msgstr "Neveljavno okolje\n"
+msgid "Invalid environment.\n"
+msgstr "Neveljavno okolje.\n"
 
 #: winerror.mc:3441
-msgid "No more bindings\n"
-msgstr "Ni več vezav\n"
+msgid "No more bindings.\n"
+msgstr "Ni več vezav.\n"
 
 #: winerror.mc:3446
-msgid "Can't logon with interdomain trust account\n"
-msgstr "Ni se mogoče prijaviti z računom meddomenskega zaupanja\n"
+msgid "Can't logon with interdomain trust account.\n"
+msgstr "Ni se mogoče prijaviti z računom meddomenskega zaupanja.\n"
 
 #: winerror.mc:3451
-msgid "Can't logon with workstation trust account\n"
-msgstr "Ni se mogoče prijaviti z računom zaupanja delovne postaje\n"
+msgid "Can't logon with workstation trust account.\n"
+msgstr "Ni se mogoče prijaviti z računom zaupanja delovne postaje.\n"
 
 #: winerror.mc:3456
-msgid "Can't logon with server trust account\n"
-msgstr "Ni se mogoče prijaviti z računom zaupanja strežnika\n"
+msgid "Can't logon with server trust account.\n"
+msgstr "Ni se mogoče prijaviti z računom zaupanja strežnika.\n"
 
 #: winerror.mc:3461
-msgid "Domain trust information inconsistent\n"
-msgstr "Podrobnosti zaupanja domene niso dosledne\n"
+msgid "Domain trust information inconsistent.\n"
+msgstr "Podrobnosti zaupanja domene niso dosledne.\n"
 
 #: winerror.mc:3466
-msgid "Server has open handles\n"
-msgstr "Strežnik ima odprte ročnike\n"
+msgid "Server has open handles.\n"
+msgstr "Strežnik ima odprte ročnike.\n"
 
 #: winerror.mc:3471
-msgid "Resource data not found\n"
-msgstr "Podatkov virov ni mogoče najti\n"
+msgid "Resource data not found.\n"
+msgstr "Podatkov virov ni mogoče najti.\n"
 
 #: winerror.mc:3476
-msgid "Resource type not found\n"
-msgstr "Vrste virov ni mogoče najti\n"
+msgid "Resource type not found.\n"
+msgstr "Vrste virov ni mogoče najti.\n"
 
 #: winerror.mc:3481
-msgid "Resource name not found\n"
-msgstr "Imena virov ni mogoče najti\n"
+msgid "Resource name not found.\n"
+msgstr "Imena virov ni mogoče najti.\n"
 
 #: winerror.mc:3486
-msgid "Resource language not found\n"
-msgstr "Jezika virov ni mogoče najti\n"
+msgid "Resource language not found.\n"
+msgstr "Jezika virov ni mogoče najti.\n"
 
 #: winerror.mc:3491
-msgid "Not enough quota\n"
-msgstr "Ni dovolj kvote\n"
+msgid "Not enough quota.\n"
+msgstr "Ni dovolj kvote.\n"
 
 #: winerror.mc:3496
-msgid "No interfaces\n"
-msgstr "Ni vmesnikov\n"
+msgid "No interfaces.\n"
+msgstr "Ni vmesnikov.\n"
 
 #: winerror.mc:3501
-msgid "RPC call canceled\n"
-msgstr "Klic RPC je bil preklican\n"
+msgid "RPC call canceled.\n"
+msgstr "Klic RPC je bil preklican.\n"
 
 #: winerror.mc:3506
-msgid "Binding incomplete\n"
-msgstr "Vezava je nepopolna\n"
+msgid "Binding incomplete.\n"
+msgstr "Vezava je nepopolna.\n"
 
 #: winerror.mc:3511
-msgid "RPC comm failure\n"
-msgstr "Spodletelo sporazumevanje RPC\n"
+msgid "RPC comm failure.\n"
+msgstr "Spodletelo sporazumevanje RPC.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level\n"
-msgstr "Nepodprta raven overitve\n"
+msgid "Unsupported authorisation level.\n"
+msgstr "Nepodprta raven overitve.\n"
 
 #: winerror.mc:3521
-msgid "No principal name registered\n"
-msgstr "Ni vpisanega imena ravnatelja\n"
+msgid "No principal name registered.\n"
+msgstr "Ni vpisanega imena ravnatelja.\n"
 
 #: winerror.mc:3526
-msgid "Not an RPC error\n"
-msgstr "Ni napaka RPC\n"
+msgid "Not an RPC error.\n"
+msgstr "Ni napaka RPC.\n"
 
 #: winerror.mc:3531
-msgid "UUID is local only\n"
-msgstr "UUID je le krajeven\n"
+msgid "UUID is local only.\n"
+msgstr "UUID je le krajeven.\n"
 
 #: winerror.mc:3536
-msgid "Security package error\n"
-msgstr "Napaka varnostnega paketa\n"
+msgid "Security package error.\n"
+msgstr "Napaka varnostnega paketa.\n"
 
 #: winerror.mc:3541
-msgid "Thread not canceled\n"
-msgstr "Nit ni bila preklicana\n"
+msgid "Thread not canceled.\n"
+msgstr "Nit ni bila preklicana.\n"
 
 #: winerror.mc:3546
-msgid "Invalid handle operation\n"
-msgstr "Neveljavno opravilo upravljanja\n"
+msgid "Invalid handle operation.\n"
+msgstr "Neveljavno opravilo upravljanja.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version\n"
-msgstr "Napačna različica paketa dajanja v zaporedje\n"
+msgid "Wrong serialising package version.\n"
+msgstr "Napačna različica paketa dajanja v zaporedje.\n"
 
 #: winerror.mc:3556
-msgid "Wrong stub version\n"
-msgstr "Napačna različica končka\n"
+msgid "Wrong stub version.\n"
+msgstr "Napačna različica končka.\n"
 
 #: winerror.mc:3561
-msgid "Invalid pipe object\n"
-msgstr "Neveljaven predmet cevi\n"
+msgid "Invalid pipe object.\n"
+msgstr "Neveljaven predmet cevi.\n"
 
 #: winerror.mc:3566
-msgid "Wrong pipe order\n"
-msgstr "Napačni red cevi\n"
+msgid "Wrong pipe order.\n"
+msgstr "Napačni red cevi.\n"
 
 #: winerror.mc:3571
-msgid "Wrong pipe version\n"
-msgstr "Napačna različica cevi\n"
+msgid "Wrong pipe version.\n"
+msgstr "Napačna različica cevi.\n"
 
 #: winerror.mc:3576
-msgid "Group member not found\n"
-msgstr "Člana skupine ni mogoče najti\n"
+msgid "Group member not found.\n"
+msgstr "Člana skupine ni mogoče najti.\n"
 
 #: winerror.mc:3581
-msgid "Can't create endpoint mapper DB\n"
-msgstr "Ni mogoče ustvariti podatkovne zbirke preslikovalnika končne točke\n"
+msgid "Can't create endpoint mapper DB.\n"
+msgstr "Ni mogoče ustvariti podatkovne zbirke preslikovalnika končne točke.\n"
 
 #: winerror.mc:3586
-msgid "Invalid object\n"
-msgstr "Neveljaven predmet\n"
+msgid "Invalid object.\n"
+msgstr "Neveljaven predmet.\n"
 
 #: winerror.mc:3591
-msgid "Invalid time\n"
-msgstr "Neveljaven čas\n"
+msgid "Invalid time.\n"
+msgstr "Neveljaven čas.\n"
 
 #: winerror.mc:3596
-msgid "Invalid form name\n"
-msgstr "Neveljavno ime obrazca\n"
+msgid "Invalid form name.\n"
+msgstr "Neveljavno ime obrazca.\n"
 
 #: winerror.mc:3601
-msgid "Invalid form size\n"
-msgstr "Neveljavna velikost obrazca\n"
+msgid "Invalid form size.\n"
+msgstr "Neveljavna velikost obrazca.\n"
 
 #: winerror.mc:3606
-msgid "Already awaiting printer handle\n"
-msgstr "Že čaka na ročnik tiskalnika\n"
+msgid "Already awaiting printer handle.\n"
+msgstr "Že čaka na ročnik tiskalnika.\n"
 
 #: winerror.mc:3611
-msgid "Printer deleted\n"
-msgstr "Tiskalnik je bil izbrisan\n"
+msgid "Printer deleted.\n"
+msgstr "Tiskalnik je bil izbrisan.\n"
 
 #: winerror.mc:3616
-msgid "Invalid printer state\n"
-msgstr "Neveljavno stanje tiskalnika\n"
+msgid "Invalid printer state.\n"
+msgstr "Neveljavno stanje tiskalnika.\n"
 
 #: winerror.mc:3621
-msgid "User must change password\n"
-msgstr "Ni mogoče spremeniti gesla\n"
+msgid "User must change password.\n"
+msgstr "Ni mogoče spremeniti gesla.\n"
 
 #: winerror.mc:3626
-msgid "Domain controller not found\n"
-msgstr "Nadzornika domene ni mogoče najti\n"
+msgid "Domain controller not found.\n"
+msgstr "Nadzornika domene ni mogoče najti.\n"
 
 #: winerror.mc:3631
-msgid "Account locked out\n"
-msgstr "Račun je bil zaklenjen\n"
+msgid "Account locked out.\n"
+msgstr "Račun je bil zaklenjen.\n"
 
 #: winerror.mc:3636
-msgid "Invalid pixel format\n"
-msgstr "Neveljavna oblika točk\n"
+msgid "Invalid pixel format.\n"
+msgstr "Neveljavna oblika točk.\n"
 
 #: winerror.mc:3641
-msgid "Invalid driver\n"
-msgstr "Neveljaven gonilnik\n"
+msgid "Invalid driver.\n"
+msgstr "Neveljaven gonilnik.\n"
 
 #: winerror.mc:3646
-msgid "Invalid object resolver set\n"
-msgstr "Neveljaven niz razreševalnikov predmetov\n"
+msgid "Invalid object resolver set.\n"
+msgstr "Neveljaven niz razreševalnikov predmetov.\n"
 
 #: winerror.mc:3651
-msgid "Incomplete RPC send\n"
-msgstr "Nepopolno pošiljanje RPC\n"
+msgid "Incomplete RPC send.\n"
+msgstr "Nepopolno pošiljanje RPC.\n"
 
 #: winerror.mc:3656
-msgid "Invalid asynchronous RPC handle\n"
-msgstr "Neveljaven asinhron ročnik RPC\n"
+msgid "Invalid asynchronous RPC handle.\n"
+msgstr "Neveljaven asinhron ročnik RPC.\n"
 
 #: winerror.mc:3661
-msgid "Invalid asynchronous RPC call\n"
-msgstr "Neveljaven asinhron klic RPC\n"
+msgid "Invalid asynchronous RPC call.\n"
+msgstr "Neveljaven asinhron klic RPC.\n"
 
 #: winerror.mc:3666
-msgid "RPC pipe closed\n"
-msgstr "Cev RPC je zaprta\n"
+msgid "RPC pipe closed.\n"
+msgstr "Cev RPC je zaprta.\n"
 
 #: winerror.mc:3671
-msgid "Discipline error on RPC pipe\n"
-msgstr "Napaka discipline na cevi RPC\n"
+msgid "Discipline error on RPC pipe.\n"
+msgstr "Napaka discipline na cevi RPC.\n"
 
 #: winerror.mc:3676
-msgid "No data on RPC pipe\n"
-msgstr "Na cevi RPC ni podatkov\n"
+msgid "No data on RPC pipe.\n"
+msgstr "Na cevi RPC ni podatkov.\n"
 
 #: winerror.mc:3681
-msgid "No site name available\n"
-msgstr "Ime spletišča ni na voljo\n"
+msgid "No site name available.\n"
+msgstr "Ime spletišča ni na voljo.\n"
 
 #: winerror.mc:3686
-msgid "The file cannot be accessed\n"
-msgstr "Do datoteke ni mogoče dostopati\n"
+msgid "The file cannot be accessed.\n"
+msgstr "Do datoteke ni mogoče dostopati.\n"
 
 #: winerror.mc:3691
-msgid "The filename cannot be resolved\n"
-msgstr "Imena datoteke ni mogoče razrešiti\n"
+msgid "The filename cannot be resolved.\n"
+msgstr "Imena datoteke ni mogoče razrešiti.\n"
 
 #: winerror.mc:3696
-msgid "RPC entry type mismatch\n"
-msgstr "Neujemanje vrste vnosa RPC\n"
+msgid "RPC entry type mismatch.\n"
+msgstr "Neujemanje vrste vnosa RPC.\n"
 
 #: winerror.mc:3701
-msgid "Not all objects could be exported\n"
-msgstr "Vseh predmetov ni bilo mogoče izvoziti\n"
+msgid "Not all objects could be exported.\n"
+msgstr "Vseh predmetov ni bilo mogoče izvoziti.\n"
 
 #: winerror.mc:3706
-msgid "The interface could not be exported\n"
-msgstr "Vmesnika ni bilo mogoče izvoziti\n"
+msgid "The interface could not be exported.\n"
+msgstr "Vmesnika ni bilo mogoče izvoziti.\n"
 
 #: winerror.mc:3711
-msgid "The profile could not be added\n"
-msgstr "Profila ni bilo mogoče dodati\n"
+msgid "The profile could not be added.\n"
+msgstr "Profila ni bilo mogoče dodati.\n"
 
 #: winerror.mc:3716
-msgid "The profile element could not be added\n"
-msgstr "Predmeta profila ni mogoče dodati\n"
+msgid "The profile element could not be added.\n"
+msgstr "Predmeta profila ni mogoče dodati.\n"
 
 #: winerror.mc:3721
-msgid "The profile element could not be removed\n"
-msgstr "Predmeta profila ni bilo mogoče odstraniti\n"
+msgid "The profile element could not be removed.\n"
+msgstr "Predmeta profila ni bilo mogoče odstraniti.\n"
 
 #: winerror.mc:3726
-msgid "The group element could not be added\n"
-msgstr "Predmeta skupine ni mogoče dodati\n"
+msgid "The group element could not be added.\n"
+msgstr "Predmeta skupine ni mogoče dodati.\n"
 
 #: winerror.mc:3731
-msgid "The group element could not be removed\n"
-msgstr "Predmeta skupine ni mogoče odstraniti\n"
+msgid "The group element could not be removed.\n"
+msgstr "Predmeta skupine ni mogoče odstraniti.\n"
 
 #: winerror.mc:3736
-msgid "The username could not be found\n"
-msgstr "Uporabniškega imena ni mogoče najti\n"
+msgid "The username could not be found.\n"
+msgstr "Uporabniškega imena ni mogoče najti.\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
