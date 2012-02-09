@@ -2340,21 +2340,21 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
             if(!(flags & ETO_OPAQUE) || x < rc.left || x + width.x >= rc.right ||
                y - tm.tmAscent < rc.top || y + tm.tmDescent >= rc.bottom)
             {
-                RECT rc;
-                rc.left = x;
-                rc.right = x + width.x;
-                rc.top = y - tm.tmAscent;
-                rc.bottom = y + tm.tmDescent;
+                RECT text_box;
+                text_box.left = x;
+                text_box.right = x + width.x;
+                text_box.top = y - tm.tmAscent;
+                text_box.bottom = y + tm.tmDescent;
 
                 if(flags & ETO_CLIPPED)
                 {
-                    rc.left = max(lprect->left, rc.left);
-                    rc.right = min(lprect->right, rc.right);
-                    rc.top = max(lprect->top, rc.top);
-                    rc.bottom = min(lprect->bottom, rc.bottom);
+                    text_box.left = max(lprect->left, text_box.left);
+                    text_box.right = min(lprect->right, text_box.right);
+                    text_box.top = max(lprect->top, text_box.top);
+                    text_box.bottom = min(lprect->bottom, text_box.bottom);
                 }
-                if(rc.left < rc.right && rc.top < rc.bottom)
-                    physdev->funcs->pExtTextOut( physdev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL );
+                if(text_box.left < text_box.right && text_box.top < text_box.bottom)
+                    physdev->funcs->pExtTextOut( physdev, 0, 0, ETO_OPAQUE, &text_box, NULL, 0, NULL );
             }
         }
     }
