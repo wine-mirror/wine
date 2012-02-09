@@ -6389,13 +6389,25 @@ static HRESULT merge_paths(parse_data *data, const WCHAR *base, DWORD base_len, 
     WCHAR *ptr;
 
     if(base_len) {
-        /* Find the characters that will be copied over from
-         * the base path.
-         */
-        end = memrchrW(base, '/', base_len);
-        if(!end && data->scheme_type == URL_SCHEME_FILE)
-            /* Try looking for a '\\'. */
-            end = memrchrW(base, '\\', base_len);
+        if(data->scheme_type == URL_SCHEME_MK && *relative == '/') {
+            /* Find '::' segment */
+            for(end = base; end < base+base_len-1; end++) {
+                if(end[0] == ':' && end[1] == ':') {
+                    end++;
+                    break;
+                }
+            }
+
+            /* If not found, try finding the end of @xxx: */
+            if(end == base+base_len-1)
+                end = *base == '@' ? memchr(base, ':', base_len) : NULL;
+        }else {
+            /* Find the characters that will be copied over from the base path. */
+            end = memrchrW(base, '/', base_len);
+            if(!end && data->scheme_type == URL_SCHEME_FILE)
+                /* Try looking for a '\\'. */
+                end = memrchrW(base, '\\', base_len);
+        }
     }
 
     if(end) {
@@ -6420,6 +6432,7 @@ static HRESULT merge_paths(parse_data *data, const WCHAR *base, DWORD base_len, 
     *ptr = '\0';
 
     *result_len = (ptr-*result);
+    TRACE("ret %s\n", debugstr_wn(*result, *result_len));
     return S_OK;
 }
 
@@ -6541,7 +6554,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
              * relative path doesn't begin with a '/' then the base path and relative
              * path are merged together.
              */
-            if(relative->path_len && *(relative->canon_uri+relative->path_start) == '/') {
+            if(relative->path_len && *(relative->canon_uri+relative->path_start) == '/' && data.scheme_type != URL_SCHEME_MK) {
                 WCHAR *tmp = NULL;
                 BOOL copy_drive_path = FALSE;
 
