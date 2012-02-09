@@ -2346,14 +2346,8 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                 text_box.top = y - tm.tmAscent;
                 text_box.bottom = y + tm.tmDescent;
 
-                if(flags & ETO_CLIPPED)
-                {
-                    text_box.left = max(lprect->left, text_box.left);
-                    text_box.right = min(lprect->right, text_box.right);
-                    text_box.top = max(lprect->top, text_box.top);
-                    text_box.bottom = min(lprect->bottom, text_box.bottom);
-                }
-                if(text_box.left < text_box.right && text_box.top < text_box.bottom)
+                if (flags & ETO_CLIPPED) intersect_rect( &text_box, &text_box, &rc );
+                if (!is_rect_empty( &text_box ))
                     physdev->funcs->pExtTextOut( physdev, 0, 0, ETO_OPAQUE, &text_box, NULL, 0, NULL );
             }
         }
