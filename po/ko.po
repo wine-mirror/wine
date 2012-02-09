@@ -9191,7 +9191,6 @@ msgid "&Always on Top"
 msgstr "항상 앞에 (&A)"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
 msgstr "시계 정보(&A)"
 
