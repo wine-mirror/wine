@@ -4275,11 +4275,11 @@ START_TEST(font)
     test_CreateFontIndirectEx();
     test_oemcharset();
     test_fullname();
-
-    test_vertical_font();
     test_east_asian_font_selection();
-    /* CreateScalableFontResource should be last test until RemoveFontResource
+
+    /* These tests should be last test until RemoveFontResource
      * is properly implemented.
      */
+    test_vertical_font();
     test_CreateScalableFontResource();
 }
