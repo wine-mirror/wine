@@ -1825,6 +1825,19 @@ static void test_create(void)
 
     DestroyWindow(hwnd);
     UnhookWindowsHook(WH_CBT, cbt_hook_proc);
+
+    /* TBSTYLE_TRANSPARENT */
+    hwnd = CreateWindowExA(0, TOOLBARCLASSNAME, NULL,
+        WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|TBSTYLE_FLAT|TBSTYLE_TOOLTIPS|TBSTYLE_GROUP,
+        0, 0, 0, 0, hMainWnd, (HMENU)5, GetModuleHandle(NULL), NULL);
+
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    ok((style & TBSTYLE_TRANSPARENT) == TBSTYLE_TRANSPARENT, "got 0x%08x\n", style);
+
+    style = SendMessageA(hwnd, TB_GETSTYLE, 0, 0);
+    ok((style & TBSTYLE_TRANSPARENT) == TBSTYLE_TRANSPARENT, "got 0x%08x\n", style);
+
+    DestroyWindow(hwnd);
 }
 
 START_TEST(toolbar)
