@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-31 22:20-0200\n"
+"PO-Revision-Date: 2012-02-09 23:08-0200\n"
 "Last-Translator: Gustavo Henrique Milaré <gugamilare@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Portuguese (Brazil)\n"
@@ -1256,7 +1256,7 @@ msgstr "Confiança Sim ou Não"
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr "Endereço de Email"
+msgstr "Endereço de E-mail"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
@@ -2348,7 +2348,7 @@ msgstr "Ba&se64-codificado X.509 (.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
-msgstr "Padrão de Sintaxe de Mensagem &Criptográfica/PKCS #7 Message (.p7b)"
+msgstr "Padrão de Sintaxe de Mensagem &Criptográfica/PKCS #7 Mensagem (.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
@@ -4333,7 +4333,7 @@ msgstr "Overlapped E/S incompleto\n"
 
 #: winerror.mc:1006
 msgid "Overlapped I/O pending\n"
-msgstr "Overlapped E/S pendente\n"
+msgstr "E/S sobreposta pendente\n"
 
 #: winerror.mc:1011
 msgid "No access to memory location\n"
@@ -6696,7 +6696,7 @@ msgstr ""
 "\t/uninstall {pacote|códigodoproduto} [propriedade]\n"
 "\t/x {pacote|códigodoproduto} [propriedade]\n"
 "Anunciar um produto:\n"
-"\t/j[u|m] pacote [/t transform] [/g languageid]\n"
+"\t/j[u|m] pacote [/t transformação] [/g idlinguagem]\n"
 "Aplicar um patch:\n"
 "\t/p pacotedepatch [propriedade]\n"
 "\t/p pacotedepatch /a pacote [propriedade]\n"
@@ -10067,7 +10067,7 @@ msgstr "Broadcast"
 
 #: ipconfig.rc:37
 msgid "Peer-to-peer"
-msgstr "Ponto-a-ponto"
+msgstr "Ponto a ponto"
 
 #: ipconfig.rc:38
 msgid "Mixed"
@@ -10350,7 +10350,7 @@ msgstr "F"
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
@@ -10673,7 +10673,7 @@ msgstr "Libertar a instância de objeto selecionada"
 
 #: oleview.rc:111
 msgid "Copy the GUID of the currently selected item to the clipboard"
-msgstr "Copiar a GUID do objecto selecionado para a àrea de transferência"
+msgstr "Copiar a GUID do objeto selecionado para a área de transferência"
 
 #: oleview.rc:112
 msgid "Display the viewer for the selected item"
