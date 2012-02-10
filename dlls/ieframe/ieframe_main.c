@@ -54,29 +54,70 @@ const char *debugstr_variant(const VARIANT *v)
     }
 }
 
-static ITypeInfo *wb_typeinfo = NULL;
+static ITypeLib *typelib;
+static ITypeInfo *typeinfos[LAST_tid];
 
-HRESULT get_typeinfo(ITypeInfo **typeinfo)
+static REFIID tid_ids[] = {
+#define XIID(iface) &IID_ ## iface,
+TID_LIST
+#undef XIID
+};
+
+static HRESULT load_typelib(void)
 {
-    ITypeLib *typelib;
     HRESULT hres;
+    ITypeLib *tl;
 
-    if(wb_typeinfo) {
-        *typeinfo = wb_typeinfo;
-        return S_OK;
-    }
-
-    hres = LoadRegTypeLib(&LIBID_SHDocVw, 1, 1, LOCALE_SYSTEM_DEFAULT, &typelib);
+    hres = LoadRegTypeLib(&LIBID_SHDocVw, 1, 1, LOCALE_SYSTEM_DEFAULT, &tl);
     if(FAILED(hres)) {
         ERR("LoadRegTypeLib failed: %08x\n", hres);
         return hres;
     }
 
-    hres = ITypeLib_GetTypeInfoOfGuid(typelib, &IID_IWebBrowser2, &wb_typeinfo);
-    ITypeLib_Release(typelib);
-
-    *typeinfo = wb_typeinfo;
+    if(InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
+        ITypeLib_Release(tl);
     return hres;
+}
+
+HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
+{
+    HRESULT hres;
+
+    if(!typelib)
+        hres = load_typelib();
+    if(!typelib)
+        return hres;
+
+    if(!typeinfos[tid]) {
+        ITypeInfo *ti;
+
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
+        if(FAILED(hres)) {
+            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hres);
+            return hres;
+        }
+
+        if(InterlockedCompareExchangePointer((void**)(typeinfos+tid), ti, NULL))
+            ITypeInfo_Release(ti);
+    }
+
+    *typeinfo = typeinfos[tid];
+    return S_OK;
+}
+
+static void release_typelib(void)
+{
+    unsigned i;
+
+    if(!typelib)
+        return;
+
+    for(i=0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++) {
+        if(typeinfos[i])
+            ITypeInfo_Release(typeinfos[i]);
+    }
+
+    ITypeLib_Release(typelib);
 }
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
@@ -186,8 +227,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
         break;
     case DLL_PROCESS_DETACH:
         unregister_iewindow_class();
-        if(wb_typeinfo)
-            ITypeInfo_Release(wb_typeinfo);
+        release_typelib();
     }
 
     return TRUE;

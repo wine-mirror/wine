@@ -200,7 +200,7 @@ static HRESULT WINAPI WebBrowser_GetTypeInfo(IWebBrowser2 *iface, UINT iTInfo, L
 
     TRACE("(%p)->(%d %d %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hres = get_typeinfo(&typeinfo);
+    hres = get_typeinfo(IWebBrowser2_tid, &typeinfo);
     if(FAILED(hres))
         return hres;
 
@@ -220,7 +220,7 @@ static HRESULT WINAPI WebBrowser_GetIDsOfNames(IWebBrowser2 *iface, REFIID riid,
     TRACE("(%p)->(%s %p %d %d %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
 
-    hres = get_typeinfo(&typeinfo);
+    hres = get_typeinfo(IWebBrowser2_tid, &typeinfo);
     if(FAILED(hres))
         return hres;
 
@@ -239,7 +239,7 @@ static HRESULT WINAPI WebBrowser_Invoke(IWebBrowser2 *iface, DISPID dispIdMember
     TRACE("(%p)->(%d %s %d %08x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
 
-    hres = get_typeinfo(&typeinfo);
+    hres = get_typeinfo(IWebBrowser2_tid, &typeinfo);
     if(FAILED(hres))
         return hres;
 

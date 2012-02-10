@@ -283,7 +283,17 @@ void released_obj(void) DECLSPEC_HIDDEN;
 void register_iewindow_class(void) DECLSPEC_HIDDEN;
 void unregister_iewindow_class(void) DECLSPEC_HIDDEN;
 
-HRESULT get_typeinfo(ITypeInfo**) DECLSPEC_HIDDEN;
+#define TID_LIST \
+    XIID(IWebBrowser2)
+
+typedef enum {
+#define XIID(iface) iface ## _tid,
+TID_LIST
+#undef XIID
+    LAST_tid
+} tid_t;
+
+HRESULT get_typeinfo(tid_t,ITypeInfo**) DECLSPEC_HIDDEN;
 HRESULT register_class_object(BOOL) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI CUrlHistory_Create(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
