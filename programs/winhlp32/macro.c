@@ -1029,6 +1029,32 @@ int MACRO_Lookup(const char* name, struct lexret* lr)
         return ret;
     if (MACRO_Loaded && (ret = MACRO_DoLookUp(MACRO_Loaded, name, lr, MACRO_NumLoaded)) != EMPTY)
         return ret;
+    if (!strcmp(name, "hwndApp"))
+    {
+        WINHELP_WINDOW* win;
+        lr->integer = 0;
+        for (win = Globals.win_list; win; win = win->next)
+        {
+            if (!strcmp(win->info->name, "main"))
+            {
+                lr->integer = (LONG_PTR)win->hMainWnd;
+                break;
+            }
+        }
+        return INTEGER;
+    }
+    if (!strcmp(name, "hwndContext"))
+    {
+        lr->integer = Globals.active_win ?
+            (LONG_PTR)Globals.active_win->hMainWnd : 0;
+        return INTEGER;
+    }
+    if (!strcmp(name, "qchPath") || !strcmp(name, "qError") || !strcmp(name, "lTopicNo") ||
+        !strcmp(name, "hfs") || !strcmp(name, "coForeground") || !strcmp(name, "coBackground"))
+    {
+        WINE_FIXME("keyword %s not substituted in macro parsing\n", name);
+        return EMPTY;
+    }
 
     lr->string = name;
     return IDENTIFIER;
