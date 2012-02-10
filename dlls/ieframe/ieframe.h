@@ -284,12 +284,16 @@ void register_iewindow_class(void) DECLSPEC_HIDDEN;
 void unregister_iewindow_class(void) DECLSPEC_HIDDEN;
 
 #define TID_LIST \
+    XCLSID(WebBrowser) \
+    XCLSID(WebBrowser_V1) \
     XIID(IWebBrowser2)
 
 typedef enum {
 #define XIID(iface) iface ## _tid,
+#define XCLSID(class) class ## _tid,
 TID_LIST
 #undef XIID
+#undef XCLSID
     LAST_tid
 } tid_t;
 

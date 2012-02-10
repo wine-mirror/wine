@@ -59,8 +59,10 @@ static ITypeInfo *typeinfos[LAST_tid];
 
 static REFIID tid_ids[] = {
 #define XIID(iface) &IID_ ## iface,
+#define XCLSID(class) &CLSID_ ## class,
 TID_LIST
 #undef XIID
+#undef XCLSID
 };
 
 static HRESULT load_typelib(void)
