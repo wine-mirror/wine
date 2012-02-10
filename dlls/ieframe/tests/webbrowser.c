@@ -153,6 +153,7 @@ static BOOL is_downloading, is_first_load, use_container_olecmd, test_close, is_
 static HRESULT hr_dochost_TranslateAccelerator = E_NOTIMPL;
 static HRESULT hr_site_TranslateAccelerator = E_NOTIMPL;
 static const char *current_url;
+static int wb_version;
 
 #define DWL_EXPECT_BEFORE_NAVIGATE  0x01
 #define DWL_FROM_PUT_HREF           0x02
@@ -235,6 +236,8 @@ static BSTR a2bstr(const char *str)
 static HRESULT _create_WebBrowser(unsigned line, IUnknown **unk)
 {
     HRESULT hres;
+
+    wb_version = 2;
 
     hres = CoCreateInstance(&CLSID_WebBrowser, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IUnknown, (void**)unk);
@@ -1898,6 +1901,8 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client, BOOL stop_dow
 static void test_ClassInfo(IUnknown *unk)
 {
     IProvideClassInfo2 *class_info;
+    TYPEATTR *type_attr;
+    ITypeInfo *typeinfo;
     GUID guid;
     HRESULT hres;
 
@@ -1908,7 +1913,7 @@ static void test_ClassInfo(IUnknown *unk)
 
     hres = IProvideClassInfo2_GetGUID(class_info, GUIDKIND_DEFAULT_SOURCE_DISP_IID, &guid);
     ok(hres == S_OK, "GetGUID failed: %08x\n", hres);
-    ok(IsEqualGUID(&DIID_DWebBrowserEvents2, &guid), "wrong guid\n");
+    ok(IsEqualGUID(wb_version > 1 ? &DIID_DWebBrowserEvents2 : &DIID_DWebBrowserEvents, &guid), "wrong guid\n");
 
     hres = IProvideClassInfo2_GetGUID(class_info, 0, &guid);
     ok(hres == E_FAIL, "GetGUID failed: %08x, expected E_FAIL\n", hres);
@@ -1923,6 +1928,20 @@ static void test_ClassInfo(IUnknown *unk)
 
     hres = IProvideClassInfo2_GetGUID(class_info, 0, NULL);
     ok(hres == E_POINTER, "GetGUID failed: %08x, expected E_POINTER\n", hres);
+
+    typeinfo = NULL;
+    hres = IProvideClassInfo2_GetClassInfo(class_info, &typeinfo);
+    ok(hres == S_OK, "GetClassInfo failed: %08x\n", hres);
+    ok(typeinfo != NULL, "typeinfo == NULL\n");
+
+    hres = ITypeInfo_GetTypeAttr(typeinfo, &type_attr);
+    ok(hres == S_OK, "GetTypeAtr failed: %08x\n", hres);
+
+    ok(IsEqualGUID(&type_attr->guid, wb_version > 1 ? &CLSID_WebBrowser : &CLSID_WebBrowser_V1),
+       "guid = %s\n", debugstr_guid(&type_attr->guid));
+
+    ITypeInfo_ReleaseTypeAttr(typeinfo, type_attr);
+    ITypeInfo_Release(typeinfo);
 
     IProvideClassInfo2_Release(class_info);
 }
@@ -3249,6 +3268,28 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
+static void test_WebBrowserV1(void)
+{
+    IWebBrowser2 *wb;
+    ULONG ref;
+    HRESULT hres;
+
+    wb_version = 1;
+
+    hres = CoCreateInstance(&CLSID_WebBrowser_V1, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IWebBrowser2, (void**)&wb);
+    ok(hres == S_OK, "Could not get WebBrowserV1 instance: %08x\n", hres);
+
+    test_QueryStatusWB(wb, FALSE, FALSE);
+    test_ExecWB(wb, FALSE, FALSE);
+    test_QueryInterface((IUnknown*)wb);
+    test_ready_state(READYSTATE_UNINITIALIZED);
+    test_ClassInfo((IUnknown*)wb);
+
+    ref = IWebBrowser2_Release(wb);
+    ok(ref == 0, "ref=%d, expected 0\n", ref);
+}
+
 static void test_WebBrowser_NoContainerOlecmd(void)
 {
     IUnknown *unk = NULL;
@@ -3325,6 +3366,8 @@ START_TEST(webbrowser)
     test_WebBrowser(TRUE, TRUE);
     trace("Testing WebBrowser w/o container-based olecmd...\n");
     test_WebBrowser_NoContainerOlecmd();
+    trace("Testing WebBrowserV1...\n");
+    test_WebBrowserV1();
 
     OleUninitialize();
 }
