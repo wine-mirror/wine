@@ -62,8 +62,6 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
 
     TRACE("(%p, %d, %p)\n", data, datasize, info);
 
-    /* TODO: Add support for (or at least detect) DDS, PPM and DIB */
-
     if (!data || !datasize)
         return D3DERR_INVALIDCALL;
 
@@ -80,6 +78,19 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
         hr = IWICImagingFactory_CreateDecoderFromStream(factory, (IStream*)stream, NULL, 0, &decoder);
         IStream_Release(stream);
         IWICImagingFactory_Release(factory);
+    }
+
+    if (FAILED(hr)) {
+        if ((datasize >= 4) && !strncmp(data, "DDS ", 4))
+            FIXME("File type DDS is not supported yet\n");
+        else if ((datasize >= 2) && (!strncmp(data, "P3", 2) || !strncmp(data, "P6", 2)))
+            FIXME("File type PPM is not supported yet\n");
+        else if ((datasize >= 2) && !strncmp(data, "BM", 2))
+            FIXME("File type DIB is not supported yet\n");
+        else if ((datasize >= 10) && !strncmp(data, "#?RADIANCE", 10))
+            FIXME("File type HDR is not supported yet\n");
+        else if ((datasize >= 2) && (!strncmp(data, "PF", 2) || !strncmp(data, "Pf", 2)))
+            FIXME("File type PFM is not supported yet\n");
     }
 
     if (SUCCEEDED(hr)) {
@@ -161,8 +172,7 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
         CoUninitialize();
 
     if (FAILED(hr)) {
-        /* Missing formats are not detected yet and will fail silently without the FIXME */
-        FIXME("Invalid or unsupported image file\n");
+        TRACE("Invalid or unsupported image file\n");
         return D3DXERR_INVALIDDATA;
     }
 
