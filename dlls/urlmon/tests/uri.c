@@ -4691,6 +4691,22 @@ static const uri_equality equality_tests[] = {
         "file:///c:/dir/file.txt#a", 0,
         "file:///c:\\dir\\file.txt#b", Uri_CREATE_FILE_USE_DOS_PATH,
         FALSE
+    },
+    /* Tests of an empty hash/fragment part */
+    {
+        "http://google.com/test",0,
+        "http://google.com/test#",0,
+        FALSE
+    },
+    {
+        "ftp://ftp.winehq.org/",0,
+        "ftp://ftp.winehq.org/#",0,
+        FALSE
+    },
+    {
+        "file:///c:/dir/file.txt#", 0,
+        "file:///c:\\dir\\file.txt", Uri_CREATE_FILE_USE_DOS_PATH,
+        FALSE
     }
 };
 
