@@ -2017,9 +2017,14 @@ GpStatus WINGDIPAPI GdipMultiplyLineTransform(GpLineGradient *brush,
 GpStatus WINGDIPAPI GdipTranslateLineTransform(GpLineGradient* brush,
         REAL dx, REAL dy, GpMatrixOrder order)
 {
-    FIXME("stub: %p %f %f %d\n", brush, dx, dy, order);
+    static int calls;
 
-    return NotImplemented;
+    TRACE("(%p,%f,%f,%d)\n", brush, dx, dy, order);
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return Ok;
 }
 
 /******************************************************************************
