@@ -831,11 +831,11 @@ msgstr ""
 
 #: comdlg32.rc:35
 msgid "Path does not exist"
-msgstr "Stien eksisterer ikke."
+msgstr "Stien eksisterer ikke"
 
 #: comdlg32.rc:36
 msgid "File does not exist"
-msgstr "Filen eksisterer ikke."
+msgstr "Filen eksisterer ikke"
 
 #: comdlg32.rc:41
 msgid "Up One Level"
@@ -6788,7 +6788,7 @@ msgstr ""
 
 #: msi.rc:28
 msgid "path %s not found"
-msgstr "kunne ikke finden stien '%s'."
+msgstr "kunne ikke finden stien '%s'"
 
 #: msi.rc:29
 msgid "insert disk %s"
@@ -6829,15 +6829,15 @@ msgstr ""
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
-msgstr "angiv kataloget som indeholder '%s'."
+msgstr "angiv kataloget som indeholder '%s'"
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr "featurens installationskilde mangler."
+msgstr "featurens installationskilde mangler"
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr "featurens netværksdrev mangler."
+msgstr "featurens netværksdrev mangler"
 
 #: msi.rc:60
 msgid "feature from:"
@@ -6845,7 +6845,7 @@ msgstr "feature fra:"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
-msgstr "Vælg kataloget som indeholder '%s'."
+msgstr "Vælg kataloget som indeholder '%s'"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
@@ -9094,7 +9094,7 @@ msgstr ""
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."
-msgstr "En fejl opstod med den specificerede port.."
+msgstr "En fejl opstod med den specificerede port."
 
 #: winmm.rc:129
 msgid ""
@@ -9488,36 +9488,43 @@ msgstr ""
 "proceduren arves af kalderen.\n"
 
 #: cmd.rc:40
+#, fuzzy
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr "Hjælp til CD\n"
 
 #: cmd.rc:41
+#, fuzzy
 msgid "CHDIR <dir> changes the current default directory.\n"
 msgstr "Hjælp til CHDIR\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS sletter konsolskærmen\n"
+msgstr "CLS sletter konsolskærmen.\n"
 
 #: cmd.rc:45
+#, fuzzy
 msgid "COPY <filename> copies a file.\n"
 msgstr "Hjælp til COPY\n"
 
 #: cmd.rc:46
+#, fuzzy
 msgid "CTTY changes the input/output device.\n"
 msgstr "Hjælp til CTTY\n"
 
 #: cmd.rc:47
+#, fuzzy
 msgid "DATE shows or changes the system date.\n"
 msgstr "Hjælp til DATE\n"
 
 #: cmd.rc:48
+#, fuzzy
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "Hjælp til DEL\n"
 
 #: cmd.rc:49
+#, fuzzy
 msgid "DIR lists the contents of a directory.\n"
 msgstr "Hjælp til DIR\n"
 
@@ -9542,6 +9549,7 @@ msgstr ""
 "et @-tegn foran den.\n"
 
 #: cmd.rc:61
+#, fuzzy
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "Hjælp til ERASE\n"
 
@@ -9584,6 +9592,7 @@ msgstr ""
 "GOTO har ingen effekt når den bruges interaktivt.\n"
 
 #: cmd.rc:84
+#, fuzzy
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -9625,10 +9634,12 @@ msgstr ""
 "Du kan vise et drevs volumenavn med VOL-kommandoen.\n"
 
 #: cmd.rc:103
+#, fuzzy
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "Hjælp til MD\n"
 
 #: cmd.rc:104
+#, fuzzy
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "Hjælp til MKDIR\n"
 
@@ -9741,6 +9752,7 @@ msgstr ""
 "fil.\n"
 
 #: cmd.rc:156
+#, fuzzy
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "Hjælp til REN\n"
 
@@ -9750,10 +9762,12 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "Hjælp til RENAME\n"
 
 #: cmd.rc:159
+#, fuzzy
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr "Hjælp til RD\n"
 
 #: cmd.rc:160
+#, fuzzy
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "Hjælp til RMDIR\n"
 
@@ -9805,6 +9819,7 @@ msgstr ""
 "effekt hvis det bruges fra kommandolinien.\n"
 
 #: cmd.rc:185
+#, fuzzy
 msgid "TIME sets or shows the current system time.\n"
 msgstr "Hjælp til TIME\n"
 
@@ -9850,6 +9865,7 @@ msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER viser CMD's versionnummer\n"
 
 #: cmd.rc:205
+#, fuzzy
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "Hjælp til VOL\n"
 
@@ -12597,7 +12613,7 @@ msgstr "Er ikke i stand til at Fejlsøge Processen"
 
 #: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
-msgstr "Processen skal have affinitet, med mindst en processor."
+msgstr "Processen skal have affinitet, med mindst en processor"
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
@@ -13543,7 +13559,7 @@ msgstr "Wine Program Nedbrud"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
-msgstr "Interne fejl - ugyldige parametre modtaget."
+msgstr "Interne fejl - ugyldige parametre modtaget"
 
 #: winedbg.rc:37
 msgid "(unidentified)"
