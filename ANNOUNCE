@@ -1,12 +1,12 @@
-The Wine development release 1.4-rc2 is now available.
+The Wine development release 1.4-rc3 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.4-rc2.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-1.4-rc2.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.4-rc3.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.4-rc3.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -22,182 +22,250 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.4-rc2:
+Bugs fixed in 1.4-rc3:
 
-   4386  Font rendering wrong.
-  16531  Issues using embedded html (DVD Profiler written with Delphi)
-  17120  Synful Orchestra tpkd.sys crashes due to unimplemented function ntoskrnl.exe.KeInitializeMutex
-  20534  gdb proxy mode: allow interrupt from command line (e.g. Ctrl-C)
-  22201  Dragon Age: Origins - Configuration Utility windows are blank
-  22256  Miranda runs out of GDI object handles and crashes
-  23512  DDO - Silent crash at login
-  23682  Suggestion: Editbox with backtrace in crash window
-  25606  Clones: stuck after launching a single-player game
-  26240  R-Studio: HtmlHelpW HH case HH_DISPLAY_INDEX not handled
-  26260  Axis & Allies: Sound does not work / stops working
-  26670  Atlantis Word Processor window does not appear in task bar
-  27115  Wild Earth: Photo Safari Demo: launcher screen is not functional without native ie7
-  27190  Incorrect focus and Alt+Tab order with Delphi MDI application
-  27374  FAR: Alt-tab will cause "alt" key to be left as pressed when returning to console window
-  27543  Alice: Madness Returns - no sound in game
-  27567  Crystal Towers 2 crashes with unimplemented function msvcp60.dll.??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV?$allocator@D@1@@Z
-  27588  Drake of the 99 Dragons needs many msvcp60.dll basic_string<char> functions
-  27982  Creative Writer 2 hangs on startup
-  28367  Download Accelerator Plus:needs  msvcp60.dll.?npos@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@2IB
-  28511  Marvel Ultimate Alliance: vidoes arent played anymore
-  28544  x86 PC emulator in Javascript fails to boot linux 2.6.20
-  28744  CCleaner does not display checkboxes and icons in the 'cleaner' treeview
-  28944  Notepad2 v4.2.25 needs native msvcp60 to work correctly
-  29066  Cambridge Classware installAnywhere installer fails to draw (wined3d_surface_blt problem?)
-  29122  Sonic R has rendering (color keying) issues in Direct3D mode
-  29477  unimplemented function msvcp90.dll.?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z, aborting
-  29496  Mouse doesn't release when moving/resizing Steam window
-  29511  IrfanView fails to play a specific WAV file
-  29520  Error 458. Variable uses an Automation type not supported in Visual Basic
-  29544  StarCraft BroodWar crashes when I try to click on map
-  29657  winecoreaudio memory management and locking seems to be broken
-  29732  Prince of Persia: The Sands of Time mouse clipping broken
-  29733  Notepad: replace dialog is popup when press backspace
-  29739  Microsoft Visual Studio 2010 installer wants to update MSI to 4.5.6001.22299 (Wine: 4.5.6001.22159)
-  29746  iexplore does not display some YouTube images
-  29748  mouse doesn't work after fullscreen window goes away
-  29752  Sonic 3 & Knuckles Collection AutoPlay menu hangs on start
-  29759  In exclusive mode/non fullscreen app, moving the cursor can result in resizing window if cursor is "virtually" on an window border
+   4756  Can't install Bard's tale due to grayed out "I accept" button in eula dialog
+   6033  Fallout 2 : In game mouse pointer is unusable
+   8295  Motorhead crashes when using hw D3D renderer
+  14211  Skype 3.8 Crash while installing
+  15229  Dragon NaturallySpeaking 10 has gdiplus error on microphone display box
+  15531  Janosch - Kleine Tigerschule crashes
+  15894  PostgreSQL 8.3 service installation fails
+  17036  GTA2 (Grand Theft Auto 2) runs too slow to be playable (ATi issue)
+  17370  Notepad++ 5.2 crashes when triggering tooltip over macro record toolbar button (user32.RealChildWindowFromPoint needs to pass CWP_SKIPINVISIBLE to skip hidden windows)
+  17508  Adobe Photoshop CS2 won't install
+  18345  Silverlight 2+ installers fails
+  20186  Project64 does not work with gamepads anymore
+  20866  Houaiss Portuguese Dictionary (blocked window)
+  21015  Star Trek: Birth of the Federation crashes
+  21799  3DRad IDE does not display properly
+  22104  Proteus ISIS slows down in time
+  22305  AutoWikiBrowser databse scanner fails with err:seh:setup_exception_record
+  22459  NFSMW - Only black screen
+  22836  ITypeInfo_fnInvoke member ID -525 - HP Virtual Rooms 8.0
+  23423  Some graphics are corrupted in Civilization IV
+  23827  HTML-Kit crashes on exit
+  23912  dvdflick has an error on startup: "Object doesn't support this property or method"
+  24248  TREPCAD St3: some stair types give fatal errors
+  24288  SR3D Builder "will only install when DotNet2.0 is installed"
+  24659  The material Navigator reports a system failure and terminates the program
+  24791  Broken display in Might and Magic VII: For Blood and Honor
+  25615  Wine Internet Explorer cannot load kongregate
+  25749  TortoiseSVN (TortoiseProc.exe) crashes upon exit (OLE teardown)
+  26792  Sentinel Protection Driver/Service installer fails (needs "HKLM\\SYSTEM\\CurrentControlSet\\Control\\VirtualDeviceDrivers" registry key present)
+  27256  PDFCreator installer cannot display Chinese correctly
+  27606  SketchUp 8 garbled working area
+  27826  SpongeBob: Truth or Square Demo crashes before you can start
+  27902  Project64 1.7.x beta doesn't work anymore
+  28033  CAJViewer 7.1 install failed on some machine
+  28092  pwsafe 3.26 chm help file blank
+  28162  Battle.net System Check fails to send data
+  28237  Hyperlinks do nothing in Internet Explorer 3.02
+  28304  "p" command doesn't recognize single-quoted chars in expressions
+  28379  Internet Explorer 4.0 highlights selected text incorrectly
+  28516  Red Alert 3 crashes when loading map
+  29046  Office 2007 apps crash loading document properties editing window
+  29116  Pegasus Mail v. 4.62 build 191, IERenderer 2.4.5.18 generates (0x80004001) @01AEDC9D upon exit due to mshtml HTMLDocument_get_frames() stub
+  29130  Where's Wally? The Fantastic Journey fails to recognize the CD in the drive (needs support for IOCTL_STORAGE_CHECK_VERIFY2)
+  29552  Tropico 3 installer crashes with -fno-omit-frame-pointer
+  29577  msvcmaker-generated projects try to run non-existent winebuild.exe
+  29639  TextPad 5 installer crashes in repair mode
+  29712  DInput doesn't support INFINITE effect iterations
+  29740  wine gecko failed to get the profile directory
+  29741  Office 2007 SP2 & SP3 installers report success but fail to install some components
+  29760  Sonic R complains about a lost surface when starting in Direct3D mode
+  29761  Bridge Commander: Black screen
+  29783  quartz/filtergraph test is flaky
+  29808  mingw32-g++ random crash compiling a wxWidgets app
+  29814  Stronghold Crusader: unhandled page fault
+  29821  Notepad++: closed tabs aren't properly cleared
+  29827  Where's Wally? The Fantastic Journey gives 'File not found' when running setup.exe
+  29829  Some images in treeview have black backgrounds with native comctl32
+  29834  Age of Empires II screen freezes after playing for around 10 minutes
+  29840  gdi32/font.ok test fails: font.c:4208: Test failed: expected non-vertical face for charset 128, got'
 
 ----------------------------------------------------------------
 
-Changes since 1.4-rc1:
+Changes since 1.4-rc2:
 
-Alexandre Julliard (19):
-      wrc: Fix parsing of virtkey accelerators.
-      winemine: Get rid of the exit accelerator.
-      winefile: Get rid of the exit accelerator.
-      view: Get rid of the quit accelerator.
-      notepad: Use virtkeys for all accelerators.
-      wordpad: Use virtkeys for all accelerators.
-      regedit: Use virtkeys for all accelerators.
-      dinput: Catch unsuccessful clipping attempts and fall back to warping.
-      winex11: Disallow clipping to fullscreen rectangle if XInput2 is not available.
-      kernel32: Only change the Unix current after exec_process to make sure it's inherited properly.
-      winex11: Reset clipping when a fullscreen window is unmapped.
-      psapi/tests: Don't check data returned from a failing call.
-      winex11: Consider zero-size windows mapped even when they are positioned at 0,0.
-      dinput: Clip to the client area instead of the whole window in exclusive mode.
-      winex11: Don't give focus to zero-size windows.
-      winex11: Move the window resizing support to mouse.c.
-      winex11: Poll the mouse button to detect the end of a window manager move/resize.
-      winealsa: Avoid memory leak with snd_card_get_name.
-      winex11: Update only the key state on KeymapNotify without sending fake key events.
+Akihiro Sagawa (5):
+      po: Update Japanese translation.
+      gdi32: Restore the vertical font flag from the cache.
+      gdi32/tests: Add tests for East Asian font selection.
+      gdi32: Consider whether the logical font face is vertical when selecting.
+      gdi32/tests: Reorder tests to avoid side-effects.
 
-Andrew Eikum (3):
-      mmdevapi: Correctly convert UINT32 to LONG32.
-      winmm: Initialize COM for MULTITHREADED, not APARTMENTTHREADED.
-      winecoreaudio: Improve underrun handling.
+Alex Henrie (1):
+      po: Update Catalan translation.
 
-Aric Stewart (9):
-      user32: Check return code from ScriptStringAnalyse.
-      user32: Have a fallback in linebreaking if uniscribe fails to analyse a string.
-      usp10: pwLogClust is ordered so its max will be on one end.
-      usp10: Use a bsearch function to find a glyph in the LogClust array.
-      usp10: Limit runs in ScriptStringAnalyse to 255.
-      usp10: Implement SSA_LINK flag.
-      gdi32: In update_system_links if the font we are trying to link has already been substituted or localized we need to check against that name also.
-      quartz: If the MediaSeeking is not implemented all the way up the passthru chain fall back to the filtergraph's clock to find position.
-      usp10: We do not yet shape hangul properly so allow for SSA_LINK flags to take effect.
+Alexandre Julliard (6):
+      mshtml: Use the current AppData folder instead of the default one as profile directory.
+      winecoreaudio: Fix spec file parameters.
+      user32: Draw the mask with SRCCOPY in DrawIcon when the image isn't being drawn.
+      services: Don't close the overlapped event when terminating a service.
+      dbgeng: Add missing WINAPI.
+      cmd: START needs to be an internal command.
 
-Austin English (4):
-      wscript: Remove an unused variable (LLVM/Clang).
-      crypt32: Remove a couple unused variables (LLVM/Clang).
-      dsound: Remove an unnecessary assignment (LLVM/Clang).
-      msvcp60: Remove unnecessary assignments (LLVM/Clang).
+Alistair Leslie-Hughes (1):
+      mshtml/tests: Interface ITravelLogClient may not be supported.
 
-Christian Costa (1):
-      d3dx9_36: Remove TGA from TODO since it is supported.
+Andrew Eikum (6):
+      hlink: Always pass a bind context to IMoniker::GetDisplayName.
+      hlink: Don't query the IHlinkSite if the IMoniker is a system moniker.
+      wineoss.drv: Don't call GETOSPACE immediately after device initialization.
+      wineoss.drv: Downgrade most ERRs to WARNs.
+      winmm: Downgrade most ERRs to WARNs.
+      winmm: TRACE unhandled messages.
 
-Dmitry Timoshkov (1):
-      riched20: Fix some GDI object leaks.
+André Hentschel (5):
+      winemaker: Print the invocation command line to the Makefile.
+      msvcmaker: "MODULE = none" is obsolete.
+      po: Update German translation.
+      comctl32/tests: Add some more thumb length tests.
+      mshtml: Only release the interface if it exists.
+
+Aric Stewart (5):
+      quartz: Do not report a position unless the filter graph is running or has been paused.
+      quartz: AMFilterData_ParseFilterData returns a pointer to a pointer to filter data.
+      gdi32: Keep our internal generated system links separate and append them to any user defined system links.
+      gdi32: Allow font replacements to be specified either in localized name or English name.
+      gdi32: Load fonts from default Mac external font paths.
+
+Aurimas Fišeras (1):
+      po: Update Lithuanian translation.
+
+Austin English (3):
+      kernel32: Add support for IOCTL_STORAGE_CHECK_VERIFY2.
+      wine.inf: Add CurrentControlSet\Control\VirtualDeviceDrivers registry key.
+      advapi32: Sync specfile to win7.
+
+Christian Costa (3):
+      d3dx9_36: Turn FIXME into TRACE since function is implemented. Not supported formats are caught by final FIXME.
+      include: Add missing formats in D3DXIMAGE_FILEFORMAT enum.
+      d3dx9_36: Detect and display message for all not yet supported file formats.
+
+Dmitry Timoshkov (6):
+      psapi: Add a test for NtQueryVirtualMemory(MemorySectionName).
+      user32: Add a bunch of RealChildWindowFromPoint tests.
+      user32: RealChildWindowFromPoint should skip invisible windows.
+      psapi: Make sure that NtQueryVirtualMemory(MemorySectionName) succeeds under Windows 2000 too.
+      user32: Fix a couple of typos.
+      user32: Make FlashWindowEx tests pass under Windows.
+
+Eric Pouech (4):
+      msvcrt: Fix TRACE format modifier for wfreopen.
+      kernel32: Added a couple of tests about console creation through CreateFile, and fix some corner cases.
+      winhlp32: Added support for some keyword support in external DLL support (RegisterRoutine parameters).
+      winedbg: Let the lexer accept char definitions as integral values.
 
 Erich Hoover (1):
-      crypt32: Fix domain component length check.
+      hhctrl.ocx: Fix searching for Index and TOC file.
 
-Francois Gouget (4):
-      po: Remove English strings (invalid even) from the Bulgarian shell folder translations.
-      po: Mark an incorrect Czech translation as fuzzy.
-      po: Remove/fix a couple of invalid Hungarian translations.
-      po: Remove English strings from the Hungarian shell folder translations.
+Francois Gouget (7):
+      ddraw/tests: Fix compilation on systems that don't support nameless unions.
+      po: Fix a typography issue in the Telugu translation.
+      po: Fix some typography issues in the Serbian (Latin) translation.
+      po: Fix some typography issues in the Serbian (Cyrillic) translation.
+      po: Remove or fuzzy invalid Turkish shell folder translations.
+      shell32: Fix the name of the 'Application Data' folders.
+      kernel32: Add a trailing full stop to the error messages.
 
-Frédéric Delanoy (2):
-      ws2_32/tests: Remove dead code in test_completion_port (Coverity).
-      msi: Avoid dead code in parse_prop (Coverity).
+Frédéric Delanoy (28):
+      po: Update French translation.
+      po: Fix some trailing ellipses errors in Brazilian Portuguese translation.
+      po: Fix some trailing ellipses errors in Italian translation.
+      po: Fix some trailing ellipses errors in Japanese translation.
+      po: Fix some trailing ellipses errors in Russian translation.
+      po: Fix some trailing ellipses errors in Portuguese translation.
+      po: Fix some trailing ellipses errors in Catalan translation.
+      po: Fix some trailing ellipses errors in Norwegian Bokmål translation.
+      po: Fix some trailing ellipses errors in Korean translation.
+      po: Fix some trailing ellipses errors in Polish translation.
+      po: Fix some trailing ellipses errors in the Swedish translation.
+      po: Fix some trailing ellipses errors in the Slovenian translation.
+      po: Remove untranslated English strings from the Portuguese (Portugal) translation.
+      po: Remove untranslated English strings from the Polish translation.
+      po: Remove untranslated English strings from the Danish translation.
+      taskmgr: Debug classes names are not translatable.
+      po: Fix trailing full stops errors in the Catalan translation.
+      po: Fix trailing full stops errors in the Danish translation.
+      po: Fix trailing full stops errors in the Italian translation.
+      po: Fix trailing full stops errors in the Swedish translation.
+      po: Fix trailing full stops errors in the Polish translation.
+      po: Fix trailing full stops errors in the Ukrainian translation.
+      po: Fix trailing full stops errors in the Slovenian translation.
+      po: Fix trailing full stops errors in the Portuguese (Portugal) translation.
+      po: Fix trailing full stops errors in the Korean translation.
+      po: Fix trailing full stops errors in the Norwegian Bokmål translation.
+      po: Fix trailing full stops errors in the Russian translation.
+      cmd: Add short help for START command.
 
 Gustavo Henrique Milaré (1):
       po: Update Brazilian Portuguese translation.
 
-Henri Verbeet (2):
-      ddraw: AddAttachedSurface() just references whatever we pass it.
-      wrc: Avoid an unused function warning when HAVE_LIBGETTEXTPO is not defined.
+Hans Leidekker (6):
+      dnsapi: Remove a dead assignment (clang).
+      mscms: Use the return values of GetStandardColorSpaceProfileW and GetColorDirectoryW (clang).
+      mscms/tests: Pass profiles names as parameters instead of using global variables.
+      msi: Follow the parent state for preselected features unless the parent is an advertised feature.
+      msi: Avoid a null pointer dereference in MsiGetFileVersionW (clang).
+      msi: Use the return value of IXMLDOMNode_get_text (clang).
 
-Hwang YunSong (2):
-      po: Updated Korean translation.
+Henri Verbeet (4):
+      ddraw/tests: Use correct COM macros in a couple of places.
+      ddraw/tests: Move some helper functions up with the rest of the helper functions.
+      wined3d: Complain when the hardware may not be able to run a shader.
+      ddraw: Implement get_window_region() on top of GetRandomRgn().
+
+Huw Davies (6):
+      ole32: Don't hold a ref to the drop target in the wrapper. Apps tend to destroy the target object without calling RevokeDragDrop.
+      oleaut32: [restricted] members with negative dispids may still be called.
+      shell32: Zero-init the out parameter and fix the error if the folder id is invalid.
+      shell32: Don't try to check for the folder's existence if we don't have a path.
+      gdi32: Rename a shadow variable.
+      gdi32: Intersect the background text box with the clip rectangle in device units.
+
+Hwang YunSong (1):
       po: Update Korean translation.
 
-Jacek Caban (4):
-      urlmon: Relative URI without scheme may be treated as hierarchical.
-      urlmon: Properly handle relative URIs with specified host in combine_uri.
-      mshtml: Properly handle GetScheme failure.
-      mshtml: Properly handle out of memory in IHTMLElement::get_outerHTML.
+Jacek Caban (9):
+      mshtml: Removed code duplication in frame collection tests.
+      mshtml: Added IHTMLDocument2::get_frames implementation.
+      urlmon: Properly handle combining relative mk: URIs containing full internal path.
+      urlmon: Added more mk: combining tests.
+      t2embapi.h: Added some missing declarations.
+      urlmon: Added empty hash URIs comparing tests.
+      ieframe: Make get_typeinfo implementation thread safe and more generic.
+      ieframe: Added IProvideClassInfo::GetClassInfo implementation.
+      ieframe: Added IProvideClassInfo::GetClassInfo tests.
 
-Juan Lang (2):
-      crypt32: Only accept trailing NULLs in a certificate common name.
-      crypt32: Test and correct CryptVerifyCertificateSignature.
+Jörg Höhle (3):
+      mmdevapi/tests: Produce audible output.
+      mmdevapi/tests: Fix errors and crashes in various native configurations.
+      mmdevapi/tests: Perform renderer padding & position tests.
 
-Jörg Höhle (4):
-      winecoreaudio: Avoid deadlock in AudioClient_Stop.
-      winecoreaudio: Implement a lock-free callback design.
-      winecoreaudio: Fix the Start/Stop/Reset cycle.
-      mciwave: Always reach an end position expressed in milliseconds.
+Laura Leinonen (1):
+      po: Update Finnish translation.
 
-Luca Bennati (2):
-      po: Update Italian translation.
-      po: Update Italian translation.
-
-Marcel Hasler (1):
-      dinput: Support INFINITE as number of effect iterations.
+Lauri Kenttä (2):
+      po: Correct Finnish translation.
+      po: Fix Finnish translation.
 
 Matteo Bruni (1):
-      wined3d: Use a separate flag for discarded surfaces.
+      ddraw: Don't leak the window DC.
+
+Michael Stefaniuc (2):
+      comctl32: Remove an obsolete resource attribute.
+      inetcpl.cpl: Remove an obsolete resource attribute.
 
 Nikolay Sivov (4):
-      urlmon: Recognize <head> start tag as text/html MIME type.
-      comctl32: Never release state image list.
-      msxml3: Trace VARIANT parameters.
-      comctl32: More tests for Toolbar window style handling.
+      msxml3: Fix element data leak on error.
+      shell32: Use string comparison as autocompletion check.
+      comctl32: Invalidate before item is removed.
+      comctl32: A test for auto-set TBSTYLE_TRANSPARENT style.
 
-Piotr Caban (4):
-      msvcp60: Fix _Lockit class implementation.
-      urlmon: Fix debug message in canonicalize_scheme.
-      urlmon: Handle implicit file scheme in MapUrlToZone and GetSecurityId functions.
-      mshtml: Make cookie parameter optional in ConnectionPoint_Advise.
-
-Stefan Dösinger (8):
-      ddraw/tests: Port the depth blit test to ddraw7.
-      ddraw/tests: Port the depth blit test to ddraw4.
-      ddraw/tests: Port the depth blit test to ddraw2.
-      ddraw: Properly set the color key in texture::load.
-      ddraw/tests: Add an IDirect3DTexture::Load color key test.
-      ddraw/tests: Add an IDirect3DTexture2::Load color key test.
-      ddraw/tests: Add an IDirect3DDevice7::Load color key test.
-      ddraw/tests: Add some IDirect3DViewport interface tests.
-
-Stefan Leichter (1):
-      msi: Update version resource.
-
-Thomas Faber (2):
-      comctl32: Fix MSVC build in monthcal.c.
-      comctl32: Fix MSVC build in imagelist.c.
-
-Łukasz Wojniłowicz (1):
-      po: Update Polish translation.
+Piotr Caban (1):
+      msvcrt: Handle negative file->_cnt value in _flsbuf function.
 
 --
 Alexandre Julliard
