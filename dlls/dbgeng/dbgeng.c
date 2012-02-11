@@ -94,7 +94,7 @@ HRESULT WINAPI DebugCreate(REFIID InterfaceId, PVOID * pInterface)
 * BUGS
 *   Unimplemented
 */
-HRESULT DebugConnect(PCSTR RemoteOptions, REFIID InterfaceId, PVOID * pInterface)
+HRESULT WINAPI DebugConnect(PCSTR RemoteOptions, REFIID InterfaceId, PVOID * pInterface)
 {
     FIXME("(%p,%p,%p): stub\n", RemoteOptions, InterfaceId, pInterface);
 
