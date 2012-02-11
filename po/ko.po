@@ -820,7 +820,7 @@ msgstr ""
 
 #: comdlg32.rc:35
 msgid "Path does not exist"
-msgstr "경로가 존재하지 않습니다."
+msgstr "경로가 존재하지 않습니다"
 
 #: comdlg32.rc:36
 msgid "File does not exist"
@@ -936,7 +936,7 @@ msgid ""
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "페이지 범위를 벗어나지 않아야 올바른 값입니다.\n"
-"%1!d! 과 %2!d! 사이의 값을 입력하시오 "
+"%1!d! 과 %2!d! 사이의 값을 입력하시오."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -976,7 +976,7 @@ msgstr "프린터를 찾을 수 없습니다."
 
 #: comdlg32.rc:66 progman.rc:73
 msgid "Out of memory."
-msgstr "메모리 부족"
+msgstr "메모리 부족."
 
 #: comdlg32.rc:67
 msgid "An error occurred."
@@ -1169,7 +1169,7 @@ msgid ""
 "and password are correct."
 msgstr ""
 "당신의 사용자 이름과 암호가\n"
-"올바른지 확인하십시오"
+"올바른지 확인하십시오."
 
 #: credui.rc:32
 msgid ""
@@ -2381,7 +2381,7 @@ msgid ""
 "altered or corrupted."
 msgstr ""
 "이 인증서는 올바르지 않은 서명을 가지고 있습니다.  이 인증서는 아마도 고쳐졌"
-"거나 망가진 것같습니가"
+"거나 망가진 것같습니가."
 
 #: cryptui.rc:30
 msgid ""
@@ -2433,7 +2433,7 @@ msgstr "이 인증서는 만료되었거나 아직 유효하지 않습니다."
 
 #: cryptui.rc:41
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr "이 인증서는 발행자가 정한 유효시간을 초과했습니다"
+msgstr "이 인증서는 발행자가 정한 유효시간을 초과했습니다."
 
 #: cryptui.rc:42
 msgid "This certificate was revoked by its issuer."
@@ -2441,7 +2441,7 @@ msgstr "이 인증서는 발행자에 의하여 취소되었습니다."
 
 #: cryptui.rc:43
 msgid "This certificate is OK."
-msgstr "이 인증서는 올바릅니다.."
+msgstr "이 인증서는 올바릅니다."
 
 #: cryptui.rc:44
 msgid "Field"
@@ -3249,7 +3249,7 @@ msgstr "%s 찾는 중"
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
-msgstr "%s 다운로드 시작."
+msgstr "%s 다운로드 시작"
 
 #: ieframe.rc:80
 msgid "Downloading %s"
@@ -5373,7 +5373,7 @@ msgstr "올바르지 않은 회원\n"
 
 #: winerror.mc:2346
 msgid "Too many SIDs\n"
-msgstr "너무 많은 SID이 있습니다.\n"
+msgstr "너무 많은 SID이 있습니다\n"
 
 #: winerror.mc:2351
 msgid "Cross-encrypted LM password required\n"
@@ -5981,7 +5981,7 @@ msgstr "지원하지 않는 이름 문법\n"
 
 #: winerror.mc:3111
 msgid "No network address\n"
-msgstr "네트워크 주소가 없습니다.\n"
+msgstr "네트워크 주소가 없습니다\n"
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint\n"
@@ -7156,7 +7156,7 @@ msgid ""
 "your document."
 msgstr ""
 "당신의 문서 %s에 클립보드의 내용을 삽입합니다.  이 데이터는 원본 파일에 연결"
-"되어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다"
+"되어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다."
 
 #: oledlg.rc:38
 msgid ""
@@ -7174,7 +7174,7 @@ msgid ""
 "be reflected in your document."
 msgstr ""
 "당신의 문서에 클립보드에 있는 단축아이콘을 집어넣습니다.  이 단축아이콘은 원"
-"본 파일에 연결되어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다"
+"본 파일에 연결되어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다."
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
@@ -7198,7 +7198,7 @@ msgstr "스캐닝중"
 
 #: sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr "스캐닝중... 기다리십시오."
+msgstr "스캐닝중... 기다리십시오"
 
 #: sane.rc:31
 msgctxt "unit: pixels"
@@ -8341,7 +8341,7 @@ msgid ""
 "Capabilities function to determine the supported formats."
 msgstr ""
 "지정된 형식은 지원하지 않거나 전송할 수 없습니다. 지원하는 형식을 결정하는 가"
-"능한 함수를 사용하십시오"
+"능한 함수를 사용하십시오."
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
@@ -8389,7 +8389,7 @@ msgid ""
 "transmitted, and then try again."
 msgstr ""
 "이 포트는 장치로 데이타를 옮기는 중입니다. 데이타가 다 옮겨질 때까지 기다리십"
-"시오,그리고 다시 시도하십시오"
+"시오,그리고 다시 시도하십시오."
 
 #: winmm.rc:52
 msgid ""
@@ -8425,7 +8425,7 @@ msgid ""
 "or contact the device manufacturer."
 msgstr ""
 "이것은 당신의  미디어 장치 문제입니다. 반드시 올바르게 작동한다고 확신한다면 "
-"장치 제조자에게 연락하십시오"
+"장치 제조자에게 연락하십시오."
 
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
@@ -8601,7 +8601,7 @@ msgstr "매개변수 값에서 닫힌 쌍 따옴표 하나가 빠졌습니다. �
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
-msgstr "이 값의 매개변수는 두번 지정되었습니다. 오직 하나만 지정하십시오"
+msgstr "이 값의 매개변수는 두번 지정되었습니다. 오직 하나만 지정하십시오."
 
 #: winmm.rc:91
 msgid ""
@@ -8852,7 +8852,7 @@ msgid ""
 "are still connected to the network."
 msgstr ""
 "지정된 파일에 기록할 수 없습니다. 디스크 공간이 충분한지 확인하거나. 네트워크"
-"에 연결중인지 확인하십시오"
+"에 연결중인지 확인하십시오."
 
 #: winspool.rc:34
 msgid "Print to File"
@@ -9036,7 +9036,7 @@ msgstr "결과가 너무 큽니다"
 
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
-msgstr "다양한 DSAs이 작용합니다."
+msgstr "다양한 DSAs이 작용합니다"
 
 #: wldap32.rc:107
 msgid "Other"
@@ -9457,7 +9457,7 @@ msgstr ""
 "기호가 뒤따른다는 걸 주의하시오. (명령 PROMPT $p$g롸 같이).\n"
 "\n"
 "이 프롬프트는 PROMPT 환경 변수 값의 변경에 의해 바뀔 수 있습니다,\n"
-"그래서 명령 'SET PROMPT=텍스트'는 'PROMPT 텍스트와 같은 일을 합니다\n"
+"그래서 명령 'SET PROMPT=텍스트'는 'PROMPT 텍스트와 같은 일을 합니다.\n"
 
 #: cmd.rc:153
 msgid ""
@@ -9475,7 +9475,7 @@ msgstr ""
 
 #: cmd.rc:157
 msgid "RENAME <filename> renames a file.\n"
-msgstr "RENAME <파일이름> 은 파일의 이름을 바꿈\n"
+msgstr "RENAME <파일이름> 은 파일의 이름을 바꿈.\n"
 
 #: cmd.rc:159
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
@@ -9568,7 +9568,7 @@ msgstr ""
 
 #: cmd.rc:203
 msgid "VER displays the version of cmd you are running.\n"
-msgstr "VER  당신이 실행시킨 cmd 버젼 보여줌\n"
+msgstr "VER  당신이 실행시킨 cmd 버젼 보여줌.\n"
 
 #: cmd.rc:205
 msgid "VOL shows the volume label of a disk device.\n"
@@ -9665,7 +9665,7 @@ msgid ""
 msgstr ""
 "CHOICE는 텍스트를 보여주고, 사용자가 선택된 목록에서\n"
 "허용하는 키를 누를 때까지 기다립니다.\n"
-"CHOICE는 주로 배치 파일에서 메뉴 선택을 넣는 데 사용됩니다..\n"
+"CHOICE는 주로 배치 파일에서 메뉴 선택을 넣는 데 사용됩니다.\n"
 
 #: cmd.rc:251
 msgid ""
@@ -9769,11 +9769,11 @@ msgstr "아니오"
 
 #: cmd.rc:293
 msgid "File association missing for extension %1\n"
-msgstr "이 파일확장자 %1에 연결된 풀그림이 없습니다.\n"
+msgstr "이 파일확장자 %1에 연결된 풀그림이 없습니다\n"
 
 #: cmd.rc:294
 msgid "No open command associated with file type '%1'\n"
-msgstr "이 파일 형식 '%1'과 연결된 어떠한 명령도 없습니다.'\n"
+msgstr "이 파일 형식 '%1'과 연결된 어떠한 명령도 없습니다'\n"
 
 #: cmd.rc:295
 msgid "Overwrite %1?"
@@ -9850,7 +9850,7 @@ msgstr "검증(Verify)은 %1임\n"
 
 #: cmd.rc:315
 msgid "Verify must be ON or OFF\n"
-msgstr "검증(Verify)은 반드시 ON 이나 OFF가 되어야 합니다.\n"
+msgstr "검증(Verify)은 반드시 ON 이나 OFF가 되어야 합니다\n"
 
 #: cmd.rc:316
 msgid "Parameter error\n"
@@ -10015,7 +10015,7 @@ msgstr ""
 "       -나-\n"
 "NET 명령어  /HELP\n"
 "\n"
-"명령어에 들어갈 수 있는 것은  HELP, START, STOP이나 USE중의 하나임\n"
+"명령어에 들어갈 수 있는 것은  HELP, START, STOP이나 USE중의 하나임.\n"
 
 #: net.rc:28
 msgid ""
@@ -11355,7 +11355,7 @@ msgstr ""
 "Start는 보증이 없이 제공됩니다; /L 옵션과 함께 실행시키면 자세한 내용을 볼 "
 "수 있습니다.\n"
 "이것은 자유 소프트웨어이고, 당신은 특정 조건하에서 재배포를 환영\n"
-"합니다; 'start /L'을 실행시키면 자세한 것을 볼 수 있습니다\n"
+"합니다; 'start /L'을 실행시키면 자세한 것을 볼 수 있습니다.\n"
 
 #: start.rc:64
 msgid ""
@@ -12715,7 +12715,7 @@ msgstr ""
 "당신은 더 이상 드라이브를 추가할 수 없습니다.\n"
 "\n"
 "각 드라이브는 반드시 A~Z까지의 문자를 가집니다, 그래서 당신은 26개보다 더 많"
-"이 추가할 수 없습니다"
+"이 추가할 수 없습니다."
 
 #: winecfg.rc:72
 msgid "System drive"
@@ -13022,7 +13022,7 @@ msgstr "설정 오류"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
-msgstr "스크린 버퍼 크기는 반드시 창보다 같거나 커야합니다."
+msgstr "스크린 버퍼 크기는 반드시 창보다 같거나 커야합니다"
 
 #: wineconsole.rc:34
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
@@ -13079,11 +13079,11 @@ msgid ""
 msgstr ""
 "  --backend={user|curses}  사용자가 새 창을 열 것인지,\n"
 "                            curses으로 Wine 콘솔처럼 현재 터미널에  나타낼 것"
-"인지 선택\n"
+"인지 선택.\n"
 
 #: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <명령>                 The Wine 프로그램은 콘솔을 통해서 시작됨\n"
+msgstr "  <명령>                 The Wine 프로그램은 콘솔을 통해서 시작됨.\n"
 
 #: wineconsole.rc:51
 msgid ""
@@ -13096,7 +13096,7 @@ msgstr ""
 "\n"
 "예:\n"
 "  wineconsole cmd\n"
-"Wine 콘솔에서 Wine 명령 프롬프트 시작\n"
+"Wine 콘솔에서 Wine 명령 프롬프트 시작.\n"
 "\n"
 
 #: winedbg.rc:46
@@ -13901,11 +13901,11 @@ msgstr ""
 
 #: wordpad.rc:187
 msgid "Invalid number format."
-msgstr "올바르지 않은 숫자 형식"
+msgstr "올바르지 않은 숫자 형식."
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported."
-msgstr "OLE 저장 문서는 지원되지 않습니다"
+msgstr "OLE 저장 문서는 지원되지 않습니다."
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -13925,7 +13925,7 @@ msgstr "파일을 열 권한이 없습니다."
 
 #: wordpad.rc:193
 msgid "Printing not implemented."
-msgstr "인쇄는 지원되지 않습니다"
+msgstr "인쇄는 지원되지 않습니다."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
@@ -14057,5 +14057,5 @@ msgstr ""
 "\t파일만 복사\n"
 "[/D | /D:m-d-y] 지정된 날짜 후에 수정되거나 새로운 파일 복사.\n"
 "\t\tI만약 어떠한 날짜도 지정되지 않으면,오직 원본보다\n"
-"\t\t대상이 오래된 것만 복사\n"
+"\t\t대상이 오래된 것만 복사.\n"
 "\n"
