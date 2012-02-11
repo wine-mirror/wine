@@ -562,14 +562,6 @@ VCP_UI_FileCopyWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     if (uMsg != WM_CREATE)
         return DefWindowProcA (hwnd, uMsg, wParam, lParam);
 
-    switch (uMsg)
-    {
-	case WM_CREATE:
-	    return 0;
-	default:
-	    FIXME("%04x: unhandled.\n", uMsg);
-    }
-
     return 0;
 }
 
