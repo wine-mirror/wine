@@ -948,7 +948,7 @@ msgstr ""
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
-msgstr "'från'-fältet kan inte överskrida 'till'-fältet"
+msgstr "'från'-fältet kan inte överskrida 'till'-fältet."
 
 #: comdlg32.rc:58
 msgid ""
@@ -9431,7 +9431,7 @@ msgstr ""
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr ""
 "MD <name> är en synonym för MKDIR.\n"
-"Den skapar en ny mapp i mappen du befinner dig i\n"
+"Den skapar en ny mapp i mappen du befinner dig i.\n"
 
 #: cmd.rc:104
 msgid "MKDIR <name> creates a subdirectory.\n"
