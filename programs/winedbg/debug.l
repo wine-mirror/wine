@@ -113,6 +113,7 @@ static int read_input(const char* pfx, char* buf, int size)
 static int syntax_error;
 %}
 
+OCTDIGIT   [0-7]
 DIGIT	   [0-9]
 HEXDIGIT   [0-9a-fA-F]
 FORMAT     [ubcdgiswxa]
@@ -157,6 +158,11 @@ STRING     \"[^\n"]+\"
 
 "0x"{HEXDIGIT}+      			{ sscanf(yytext, "%lx", &dbg_lval.integer); return tNUM; }
 {DIGIT}+             			{ sscanf(yytext, "%ld", &dbg_lval.integer); return tNUM; }
+"'\\''"                                 { dbg_lval.integer = '\''; return tNUM;}
+"'\\0"{OCTDIGIT}*"'"                    { sscanf(yytext + 3, "%lo", &dbg_lval.integer); return tNUM;}
+"'\\x"{HEXDIGIT}+"'"                    { sscanf(yytext + 3, "%lx", &dbg_lval.integer); return tNUM;}
+"'\\"[a-z]"'"                           { dbg_lval.integer = yytext[2] - 'a'; return tNUM;}
+"'"."'"                                 { dbg_lval.integer = yytext[1]; return tNUM;}
 
 <FORMAT_EXPECTED>"/"{DIGIT}+{FORMAT}	{ char* last;
                                           dbg_lval.integer = strtol(yytext+1, &last, 0) << 8;
