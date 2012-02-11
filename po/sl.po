@@ -2220,7 +2220,7 @@ msgstr "Dopolnjevanje čarovnika za uvoz potrdil"
 
 #: cryptui.rc:324
 msgid "You have successfully completed the Certificate Import Wizard."
-msgstr "Uspešno ste dokončali čarovnika za uvoz potrdil"
+msgstr "Uspešno ste dokončali čarovnika za uvoz potrdil."
 
 #: cryptui.rc:326 cryptui.rc:440
 msgid "You have specified the following settings:"
@@ -3243,7 +3243,7 @@ msgstr "Odpri URL"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr "Vnesite internetni naslov dokumenta, ki ga bo Internet Explorer odprl."
+msgstr "Vnesite internetni naslov dokumenta, ki ga bo Internet Explorer odprl"
 
 #: ieframe.rc:91
 msgid "Open:"
@@ -8717,7 +8717,7 @@ msgid ""
 "in Control Panel to install the device."
 msgstr ""
 "Naprava ni nameščena. Če želite namestiti nov gonilnik uporabite možnost "
-"Gonilniki na Nadzorni plošči"
+"Gonilniki na Nadzorni plošči."
 
 #: winmm.rc:102
 msgid ""
@@ -9304,7 +9304,7 @@ msgstr "DATE prikaže ali spremeni sistemski datum.\n"
 
 #: cmd.rc:48
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DEL <filename> izbriše datoteko ali več datotek\n"
+msgstr "DEL <filename> izbriše datoteko ali več datotek.\n"
 
 #: cmd.rc:49
 msgid "DIR lists the contents of a directory.\n"
@@ -9828,7 +9828,7 @@ msgstr ""
 "EXIT\t\tZapre sejo CMD\n"
 "\n"
 "Uporabite HELP <ukaz> za več podrobnosti o kateremkoli od zgoraj navedenih "
-"ukazov\n"
+"ukazov.\n"
 
 #: cmd.rc:290
 #, fuzzy
@@ -10676,7 +10676,7 @@ msgstr "Preklopi med načinom prikaza izvedenca in začetnika"
 #: oleview.rc:118
 msgid ""
 "Toggle the display of component categories that are not meant to be visible"
-msgstr "Preklopi prikaz kategorij sestavnih delov, ki naj ne bi bile vidne."
+msgstr "Preklopi prikaz kategorij sestavnih delov, ki naj ne bi bile vidne"
 
 #: oleview.rc:119
 msgid "Show or hide the toolbar"
@@ -13129,8 +13129,7 @@ msgstr "Napaka nastavitve"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
-msgstr ""
-"Velikost zaslonskega medpomnilnika mora biti večja ali enaka okenskemu."
+msgstr "Velikost zaslonskega medpomnilnika mora biti večja ali enaka okenskemu"
 
 #: wineconsole.rc:34
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
@@ -13193,7 +13192,7 @@ msgstr ""
 #: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
-"  <ukaz>                    Program Wine, ki ga želite izvesti v konzoli\n"
+"  <ukaz>                    Program Wine, ki ga želite izvesti v konzoli.\n"
 
 #: wineconsole.rc:51
 msgid ""
@@ -14176,5 +14175,5 @@ msgstr ""
 "[/D | /D:m-d-y] Kopiraj datoteke, ustvarjene ali spremenjene po navedenem "
 "datumu.\n"
 "\t\tČe datum ni podan, so kopirane le datoteke, katerih cilj je starejši\n"
-"\t\tod izvora\n"
+"\t\tod izvora.\n"
 "\n"
