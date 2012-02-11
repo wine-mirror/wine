@@ -123,11 +123,12 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"Wine ei löytänyt Gecko-pakettia, jota tarvitaan HTML:ää sisältävien ohjelmien "
-"toimintaan. Wine voi ladata ja asentaa sen puolestasi.\n"
+"Wine ei löytänyt Gecko-pakettia, jota tarvitaan HTML:ää sisältävien "
+"ohjelmien toimintaan. Wine voi ladata ja asentaa sen puolestasi.\n"
 "\n"
-"Huomaa, että on suositeltavampaa käyttää oman jakelusi paketteja. Lisätietoja: "
-"<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a>."
+"Huomaa, että on suositeltavampaa käyttää oman jakelusi paketteja. "
+"Lisätietoja: <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/"
+"Gecko</a>."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -161,8 +162,7 @@ msgstr "Lisää/poista ohjelmia"
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
-msgstr ""
-"Voit asentaa uusia ohjelmia tai poistaa ohjelmia tietokoneeltasi."
+msgstr "Voit asentaa uusia ohjelmia tai poistaa ohjelmia tietokoneeltasi."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
@@ -173,7 +173,8 @@ msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"Poistokomento '%s' epäonnistui. Haluatko poistaa ohjelman asennettujen ohjelmien listalta?"
+"Poistokomento '%s' epäonnistui. Haluatko poistaa ohjelman asennettujen "
+"ohjelmien listalta?"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -221,7 +222,8 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
-"Ladatun tiedoston tarkistussumma ei täsmää. Keskeytetään viallisen tiedoston asennus."
+"Ladatun tiedoston tarkistussumma ei täsmää. Keskeytetään viallisen tiedoston "
+"asennus."
 
 #: avifil32.rc:39
 msgid "Compress options"
@@ -3291,8 +3293,8 @@ msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
 msgstr ""
-"Varmenteita käytetään tunnistautumiseesi ja varmenteen myöntäjien "
-"ja julkaisijoiden tunnistamiseen."
+"Varmenteita käytetään tunnistautumiseesi ja varmenteen myöntäjien ja "
+"julkaisijoiden tunnistamiseen."
 
 #: inetcpl.rc:111
 msgid "Certificates..."
@@ -4024,7 +4026,7 @@ msgstr "Virheellinen valitsimen numero\n"
 
 #: winerror.mc:726
 msgid "Semaphore name not found\n"
-msgstr "Semafooran nimeä ei löydy\n"
+msgstr "Semaforin nimeä ei löydy\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1\n"
@@ -4256,7 +4258,7 @@ msgstr "Ei pääsyä muistipaikkaan\n"
 
 #: winerror.mc:1016
 msgid "Swap error\n"
-msgstr "Sivutusvirhe\n"
+msgstr "Sivuvirhe\n"
 
 #: winerror.mc:1021
 msgid "Stack overflow\n"
@@ -6464,7 +6466,8 @@ msgstr "Tällä portilla ei ole säädettäviä asetuksia"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
-msgstr "Postin lähetys epäonnistui, koska MAPI-asiakasohjelmaa ei ole asennettu."
+msgstr ""
+"Postin lähetys epäonnistui, koska MAPI-asiakasohjelmaa ei ole asennettu."
 
 #: mapi32.rc:29
 msgid "Send Mail"
@@ -7062,7 +7065,8 @@ msgid ""
 "File does not appear to be a valid OLE module. Unable to register OLE "
 "control."
 msgstr ""
-"Tiedosto ei ole kelvollinen OLE-moduuli. OLE-kontrollia ei voida rekisteröidä."
+"Tiedosto ei ole kelvollinen OLE-moduuli. OLE-kontrollia ei voida "
+"rekisteröidä."
 
 #: oledlg.rc:29
 msgid "Add Control"
@@ -7077,16 +7081,16 @@ msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
-"Lisää leikepöydän sisällön dokumenttiisi niin, että voit aktivoida sen "
-"%s:lla."
+"Lisää leikepöydän sisällön dokumenttiisi niin, että voit aktivoida sen %s:"
+"lla."
 
 #: oledlg.rc:36
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
-"Lisää leikepöydän sisällön dokumenttiisi niin, että voit aktivoida sen "
-"%s:lla. Se näytetään kuvakkeena."
+"Lisää leikepöydän sisällön dokumenttiisi niin, että voit aktivoida sen %s:"
+"lla. Se näytetään kuvakkeena."
 
 #: oledlg.rc:37
 msgid ""
@@ -7112,8 +7116,9 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"Lisää oikopolun, joka osoittaa leikepöydän sisältöön. Oikopolku on linkitetty "
-"lähdetiedostoon, joten muutokset tiedostoon vaikuttavat dokumenttiisi."
+"Lisää oikopolun, joka osoittaa leikepöydän sisältöön. Oikopolku on "
+"linkitetty lähdetiedostoon, joten muutokset tiedostoon vaikuttavat "
+"dokumenttiisi."
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
@@ -8266,8 +8271,8 @@ msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
 msgstr ""
-"Tätä funktiota ei tueta. Käytä Capabilities-funktiota selvittääksesi, "
-"mitä funktioita ja viestejä ajuri tukee."
+"Tätä funktiota ei tueta. Käytä Capabilities-funktiota selvittääksesi, mitä "
+"funktioita ja viestejä ajuri tukee."
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
@@ -8376,8 +8381,7 @@ msgstr ""
 #: winmm.rc:63
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
-msgstr ""
-"Määritellyn laiteajurin lataamisessa on selvittämätön ongelma."
+msgstr "Määritellyn laiteajurin lataamisessa on selvittämätön ongelma."
 
 #: winmm.rc:64
 msgid "No command was specified."
@@ -8388,8 +8392,8 @@ msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
 msgstr ""
-"Tulostemerkkijono oli liian suuri mahtuakseen palautuspuskuriin. "
-"Kasvata puskurin kokoa."
+"Tulostemerkkijono oli liian suuri mahtuakseen palautuspuskuriin. Kasvata "
+"puskurin kokoa."
 
 #: winmm.rc:66
 msgid ""
@@ -8406,15 +8410,14 @@ msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"Laiteajuri palautti vääräntyyppistä dataa. Pyydä laitteen valmistajalta "
-"uusi laite."
+"Laiteajuri palautti vääräntyyppistä dataa. Pyydä laitteen valmistajalta uusi "
+"laite."
 
 #: winmm.rc:69
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
-msgstr ""
-"Laiteajurissa on ongelma. Pyydä laitteen valmistajalta uusi laite."
+msgstr "Laiteajurissa on ongelma. Pyydä laitteen valmistajalta uusi laite."
 
 #: winmm.rc:70
 msgid "The specified command requires a parameter. Please supply one."
@@ -8437,14 +8440,14 @@ msgstr "Laiteajuri ei ole valmis."
 
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
-msgstr "MCI:n alustamisessa tapahtui virhe. Yritä käynnistää Windows uudelleen."
+msgstr ""
+"MCI:n alustamisessa tapahtui virhe. Yritä käynnistää Windows uudelleen."
 
 #: winmm.rc:75
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
-msgstr ""
-"Laiteajurissa on ongelma. Ajuri on suljettu. Virheeseen ei päästä."
+msgstr "Laiteajurissa on ongelma. Ajuri on suljettu. Virheeseen ei päästä."
 
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
@@ -8525,8 +8528,7 @@ msgstr ""
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
-msgstr ""
-"Parametrin arvosta puuttuu sulkeva lainausmerkki. Ole hyvä ja anna se."
+msgstr "Parametrin arvosta puuttuu sulkeva lainausmerkki. Ole hyvä ja anna se."
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
@@ -8537,8 +8539,8 @@ msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
 msgstr ""
-"Annettua tiedostoa ei voi toistaa annetulla MCI-laitteella. Tiedosto voi olla "
-"vioittunut tai väärässä tiedostomuodossa."
+"Annettua tiedostoa ei voi toistaa annetulla MCI-laitteella. Tiedosto voi "
+"olla vioittunut tai väärässä tiedostomuodossa."
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
@@ -8630,8 +8632,7 @@ msgstr "Anna laitteen tai ajurin nimi, joka on alle 69 merkkiä pitkä."
 #: winmm.rc:107
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
-msgstr ""
-"Annettu komento vaatii kokonaislukuparametrin. Anna sellainen."
+msgstr "Annettu komento vaatii kokonaislukuparametrin. Anna sellainen."
 
 #: winmm.rc:108
 msgid ""
@@ -8700,7 +8701,8 @@ msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
 msgstr ""
-"Annettu MIDI-portti on jo käytössä. Odota, että se vapautuu ja yritä uudelleen."
+"Annettu MIDI-portti on jo käytössä. Odota, että se vapautuu ja yritä "
+"uudelleen."
 
 #: winmm.rc:127
 msgid ""
@@ -8735,8 +8737,9 @@ msgstr "Laitteistolle ei ole määritelty tämänhetkistä MIDI-porttia."
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
-msgstr "Laitteistolla ei ole asennettuja MIDI-laitteita. Käytä Ohjauspaneelin "
-"Ajurit-kohtaa asentaaksesi MIDI-ajurin."
+msgstr ""
+"Laitteistolla ei ole asennettuja MIDI-laitteita. Käytä Ohjauspaneelin Ajurit-"
+"kohtaa asentaaksesi MIDI-ajurin."
 
 #: winmm.rc:118
 msgid "There is no display window."
@@ -9054,7 +9057,8 @@ msgstr ""
 "ATTRIB - Näyttää ja muuttaa tiedostoattribuutteja\n"
 "\n"
 "Syntaksi:\n"
-"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [asema:][polku][tiedostonimi]\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [asema:][polku]"
+"[tiedostonimi]\n"
 "       [/S [/D]]\n"
 "\n"
 "Missä:\n"
@@ -9067,7 +9071,8 @@ msgstr ""
 "  H   Piilotettu.\n"
 "  [asema:][polku][tiedostonimi]\n"
 "      Määrittelee tiedoston tai tiedostot, joita attrib käsittelee.\n"
-"  /S  Käsittelee sopivat tiedostot nykyisessä kansiossa ja sen alikansioissa.\n"
+"  /S  Käsittelee sopivat tiedostot nykyisessä kansiossa ja sen "
+"alikansioissa.\n"
 "  /D  Käsittelee myös kansiot.\n"
 
 #: clock.rc:29
@@ -9232,7 +9237,8 @@ msgstr ""
 "          IF [NOT] merkkijono1==merkkijono2 komento\n"
 "          IF [NOT] ERRORLEVEL luku komento\n"
 "\n"
-"Komennon toisessa muodossa string1:n ja string2:n on oltava lainausmerkeissä.\n"
+"Komennon toisessa muodossa string1:n ja string2:n on oltava "
+"lainausmerkeissä.\n"
 "Vertailu ei huomioi isoja ja pieniä kirjaimia.\n"
 
 #: cmd.rc:100
@@ -9262,7 +9268,8 @@ msgid ""
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
-"MOVE siirtää tiedoston tai hakemiston uuteen paikkaan tiedostojärjestelmässä.\n"
+"MOVE siirtää tiedoston tai hakemiston uuteen paikkaan "
+"tiedostojärjestelmässä.\n"
 "\n"
 "Hakemistoa siirrettäessä myös kaikki sen sisältämät tiedostot ja\n"
 "alihakemistot siirtyvät.\n"
@@ -9412,7 +9419,8 @@ msgid ""
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
 "if called from the command line.\n"
 msgstr ""
-"SHIFT-komentoa käytetään komentojonotiedostossa yhden parametrin poistamiseen\n"
+"SHIFT-komentoa käytetään komentojonotiedostossa yhden parametrin "
+"poistamiseen\n"
 "listan alusta, joten parametrista 2 tulee parametri 1 ja niin edelleen.\n"
 "Se ei vaikuta mihinkään, jos sitä kutsutaan komentoriviltä.\n"
 
@@ -9429,7 +9437,7 @@ msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
-"TYPE <tiedostonimi> kopioi <tiedostonimi>-parametrin konsolilaitteeseen\n"
+"TYPE <tiedostonimi> kopioi tiedoston <tiedostonimi> konsolilaitteeseen\n"
 "(tai muualle, jos ohjataan muualle). Sitä, onko tiedosto luettavissa,\n"
 "ei tarkisteta.\n"
 
@@ -9443,7 +9451,7 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY-komennolla voi asettaa, poistaa tai tarkistaa verity-lipun.\n"
+"VERIFY-komennolla voi asettaa, poistaa tai tarkistaa verify-lipun.\n"
 "Kelvolliset muodot:\n"
 "\n"
 "VERIFY ON\tAsettaa lipun\n"
@@ -9481,7 +9489,8 @@ msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <hakemistonnimi> tallentaa nykyisen hakemiston pinoon ja muuttaa sitten\n"
+"PUSHD <hakemistonnimi> tallentaa nykyisen hakemiston pinoon ja muuttaa "
+"sitten\n"
 "nykyisen hakemiston annetuksi.\n"
 
 #: cmd.rc:222
@@ -9519,8 +9528,8 @@ msgstr ""
 "\n"
 "Syntaksi: FTYPE [tiedostotyyppi[=[avauskomento]]]\n"
 "\n"
-"Ilman parametreja komento näyttää tiedostotyypit, joihin avauskomentoja "
-"on nykyisellään määritelty.\n"
+"Ilman parametreja komento näyttää tiedostotyypit, joihin avauskomentoja on "
+"nykyisellään määritelty.\n"
 "Jos komentoa käytetään vain tiedostotyypin kanssa, se näyttää siihen "
 "liittyvät komennot, jos niitä on.\n"
 "Jos yhtäsuuruusmerkin jälkeen ei määritellä mitään komentoa, kyseiseen "
@@ -10462,8 +10471,7 @@ msgstr "Vaihda teho- ja peruskäyttäjän näkymän välillä"
 #: oleview.rc:118
 msgid ""
 "Toggle the display of component categories that are not meant to be visible"
-msgstr ""
-"Muuta näkymättömiksi tarkoitettujen komponenttiluokkien näyttämistä"
+msgstr "Muuta näkymättömiksi tarkoitettujen komponenttiluokkien näyttämistä"
 
 #: oleview.rc:119
 msgid "Show or hide the toolbar"
@@ -10627,7 +10635,7 @@ msgstr "&Ikkunat"
 
 #: progman.rc:47
 msgid "&Overlapped\tShift+F5"
-msgstr "&Päällekäin\tShift+F5"
+msgstr "&Päällekkäin\tShift+F5"
 
 #: progman.rc:48
 msgid "&Side by side\tShift+F4"
@@ -10775,7 +10783,9 @@ msgstr "Tiedosto '%s' on olemassa. Ei kirjoitettu yli."
 
 #: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
-msgstr "Tallenna ryhmä nimellä '%s' estääksesi kirjoittamisen alkuperäisen tiedoston yli."
+msgstr ""
+"Tallenna ryhmä nimellä '%s' estääksesi kirjoittamisen alkuperäisen tiedoston "
+"yli."
 
 #: progman.rc:81
 msgid "Libraries (*.dll)"
@@ -11007,7 +11017,8 @@ msgstr "Sisältää komentoja usein käytettyihin avaimiin"
 #: regedit.rc:138
 msgid ""
 "Contains commands for displaying help and information about registry editor"
-msgstr "Sisältää komentoja, joilla saa apua ja tietoja koko rekisterieditorista"
+msgstr ""
+"Sisältää komentoja, joilla saa apua ja tietoja koko rekisterieditorista"
 
 #: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
@@ -11205,8 +11216,8 @@ msgid ""
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
 msgstr ""
-"Käynnistä ohjelma tai avaa ohjelmassa dokumentti, jonka tiedostopääte "
-"on yleensä käytössä ohjelmassa.\n"
+"Käynnistä ohjelma tai avaa ohjelmassa dokumentti, jonka tiedostopääte on "
+"yleensä käytössä ohjelmassa.\n"
 "Käyttö:\n"
 "start [asetukset] ohjelman_tiedostonimi [...]\n"
 "start [asetukset] dokumentin_tiedostonimi\n"
@@ -11216,16 +11227,19 @@ msgstr ""
 "/MAX[imized] Käynnistä ohjelma suurennettuna.\n"
 "/R[estored]  Käynnistä ohjelma normaalikokoisena (ei pienennettynä eikä "
 "suurennettuna).\n"
-"/W[ait]      Odota, että ohjelman suoritus päättyy, ja palauta sen paluuarvo.\n"
-"/Unix        Käytä Unix-tiedostonimeä ja avaa tiedosto kuten Windows Explorer.\n"
+"/W[ait]      Odota, että ohjelman suoritus päättyy, ja palauta sen "
+"paluuarvo.\n"
+"/Unix        Käytä Unix-tiedostonimeä ja avaa tiedosto kuten Windows "
+"Explorer.\n"
 "/ProgIDOpen  Avaa dokumentti seuraavalla progID:lla.\n"
 "/L           Näytä loppukäyttäjän lisenssi.\n"
 "/?           Näytä tämä ohje ja poistu.\n"
 "\n"
 "start.exe versio 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start-ohjelmalla EI OLE MITÄÄN TAKUUTA; yksityiskohdista kertoo /L-parametri.\n"
+"Start-ohjelmalla EI OLE MITÄÄN TAKUUTA; yksityiskohdista kertoo parametri /"
+"L.\n"
 "Tämä on vapaa ohjelma; tätä saa levittää tietyin ehdoin; yksityiskohdista\n"
-"kertoo /L-parametri.\n"
+"kertoo parametri /L.\n"
 
 #: start.rc:64
 msgid ""
@@ -11256,8 +11270,10 @@ msgstr ""
 "TIETTYYN TARKOITUKSEEN. Lue GNU Lesser General Public License, jos haluat\n"
 "lisätietoja.\n"
 "\n"
-"Ohjelman mukana pitäisi tulla kopio GNU Lesser General Public Licensesta; jos\n"
-"ei, kirjoita osoitteeseen Free Software Foundation Inc., 51 Franklin Street,\n"
+"Ohjelman mukana pitäisi tulla kopio GNU Lesser General Public Licensesta; "
+"jos\n"
+"ei, kirjoita osoitteeseen Free Software Foundation Inc., 51 Franklin "
+"Street,\n"
 "Fifth Floor, Boston, MA 02110-1301, USA.\n"
 "\n"
 "Tiedostossa COPYING.LIB on lisenssitietoa.\n"
@@ -11440,7 +11456,7 @@ msgstr "&Lopeta prosessi"
 
 #: taskmgr.rc:150
 msgid "End Process &Tree"
-msgstr "Lopeta &prosessipuu"
+msgstr "L&opeta prosessipuu"
 
 #: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
@@ -11448,7 +11464,7 @@ msgstr ""
 
 #: taskmgr.rc:154
 msgid "Set &Priority"
-msgstr "Aseta &ensisijaisuus"
+msgstr "Aseta &prioriteetti"
 
 #: taskmgr.rc:156
 msgid "&Realtime"
@@ -11512,7 +11528,7 @@ msgstr "Kahvat"
 
 #: taskmgr.rc:379 taskmgr.rc:291
 msgid "Threads"
-msgstr "Langat"
+msgstr "Säikeet"
 
 #: taskmgr.rc:380 taskmgr.rc:263
 msgid "Processes"
@@ -11811,12 +11827,13 @@ msgstr "Suorittaa uuden ohjelman"
 
 #: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
-msgstr "Tehtävienhallinta pysyy kaikkien muiden ikkunoiden edessä, ellei sitä "
+msgstr ""
+"Tehtävienhallinta pysyy kaikkien muiden ikkunoiden edessä, ellei sitä "
 "pienennetä"
 
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
-msgstr "Tehtävienhallinta pienennetään, kun SwitchTo-komento suoritetaan"
+msgstr "Tehtävienhallinta pienennetään, kun siirrytään ohjelmasta toiseen"
 
 #: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
@@ -11824,7 +11841,8 @@ msgstr "Piilota Tehtävienhallinta, kun se pienennetään"
 
 #: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
-msgstr "Pakota Tehtävienhallinta päivittymään nyt päivitysnopeus-asetuksesta "
+msgstr ""
+"Pakota Tehtävienhallinta päivittymään nyt päivitysnopeus-asetuksesta "
 "huolimatta"
 
 #: taskmgr.rc:193
@@ -13002,10 +13020,9 @@ msgid ""
 "and attach that file to the report."
 msgstr ""
 "Jos tätä ongelmaa ei esiinny Windowsin kanssa eikä sitä ole vielä "
-"raportoitu, voit tallentaa yksityiskohtaisemmat tiedot tiedostoon "
-"Tallenna nimellä -kohdassa ja sitten "
-"<a href=\"http://wiki.winehq.org/Bugs\">lähettää virheraportin</a> ja liittää "
-"tiedoston raporttiin."
+"raportoitu, voit tallentaa yksityiskohtaisemmat tiedot tiedostoon Tallenna "
+"nimellä -kohdassa ja sitten <a href=\"http://wiki.winehq.org/Bugs\">lähettää "
+"virheraportin</a> ja liittää tiedoston raporttiin."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13762,8 +13779,8 @@ msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
 msgstr ""
-"Valitsit tallennuksen tavallisessa tekstimuodossa, jolloin kaikki "
-"muotoilut häviävät. Haluatko varmasti tehdä näin?"
+"Valitsit tallennuksen tavallisessa tekstimuodossa, jolloin kaikki muotoilut "
+"häviävät. Haluatko varmasti tehdä näin?"
 
 #: wordpad.rc:187
 msgid "Invalid number format."
@@ -13841,7 +13858,8 @@ msgstr "Kirjoita %1:n yli? (Kyllä|Ei|kAikki)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "Tiedoston '%1' kopiointi sijaintiin '%2' epäonnistui paluuarvolla %3!d!\n"
+msgstr ""
+"Tiedoston '%1' kopiointi sijaintiin '%2' epäonnistui paluuarvolla %3!d!\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%1'\n"
@@ -13920,6 +13938,7 @@ msgstr ""
 "[/M]  Kopioi vain tiedostot, joilla on arkistointiattribuutti, ja\n"
 "\tpoista arkistointiattribuutti.\n"
 "[/D | /D:k-p-v] Kopioi uudet tiedostot tai ne, joita on muokattu annetun\n"
-"\t\tpäivän jälkeen. Jos päivää ei anneta, kopioi vain, jos kohde on vanhempi\n"
+"\t\tpäivän jälkeen. Jos päivää ei anneta, kopioi vain, jos kohde on "
+"vanhempi\n"
 "\t\tkuin lähde.\n"
 "\n"
