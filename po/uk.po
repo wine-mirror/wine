@@ -1978,11 +1978,11 @@ msgstr "Підписання CRL"
 
 #: crypt32.rc:229
 msgid "Encipher Only"
-msgstr "Лише зашифр."
+msgstr "Лише зашифр"
 
 #: crypt32.rc:230
 msgid "Decipher Only"
-msgstr "Лише розшифр."
+msgstr "Лише розшифр"
 
 #: crypt32.rc:231
 msgid "SSL Client Authentication"
@@ -8344,7 +8344,7 @@ msgstr "Дата сертифікату недійсна."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
-msgstr "Ім'я сертифікату не збігається з сайтом"
+msgstr "Ім'я сертифікату не збігається з сайтом."
 
 #: wininet.rc:29
 msgid ""
@@ -8419,7 +8419,7 @@ msgid ""
 msgstr ""
 "Вказаний формат не підтримується, або його неможливо перетворити. "
 "Скористайтеся функцією Capabilities, щоб одержати список форматів, які "
-"підтримуються"
+"підтримуються."
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
@@ -13048,7 +13048,7 @@ msgstr ""
 
 #: wineconsole.rc:69
 msgid "Quick edit"
-msgstr "Швидке редагув."
+msgstr "Швидке редагув"
 
 #: wineconsole.rc:70
 msgid "&enable"
