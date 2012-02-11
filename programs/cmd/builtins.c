@@ -2477,7 +2477,6 @@ void WCMD_shift (const WCHAR *command) {
  */
 void WCMD_start(const WCHAR *command)
 {
-    static const WCHAR spaceW[] = {' ',0};
     static const WCHAR exeW[] = {'\\','c','o','m','m','a','n','d',
                                  '\\','s','t','a','r','t','.','e','x','e',0};
     WCHAR file[MAX_PATH];
@@ -2489,7 +2488,7 @@ void WCMD_start(const WCHAR *command)
     strcatW( file, exeW );
     cmdline = HeapAlloc( GetProcessHeap(), 0, (strlenW(file) + strlenW(command) + 2) * sizeof(WCHAR) );
     strcpyW( cmdline, file );
-    strcatW( cmdline, spaceW );
+    strcatW( cmdline, space );
     strcatW( cmdline, command );
 
     memset( &st, 0, sizeof(STARTUPINFOW) );
