@@ -9505,7 +9505,7 @@ msgstr ""
 "\n"
 "Подсказка может быть также изменена переменной окружения PROMPT,\n"
 "так что команда 'SET PROMPT=<текст>' даёт такой же эффект, как 'PROMPT "
-"<text>'\n"
+"<text>'.\n"
 
 #: cmd.rc:153
 msgid ""
@@ -12123,7 +12123,7 @@ msgstr "Удаляет процесс из системы"
 
 #: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
-msgstr "Удаляет из системы этот процесс и всех его потомков."
+msgstr "Удаляет из системы этот процесс и всех его потомков"
 
 #: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
