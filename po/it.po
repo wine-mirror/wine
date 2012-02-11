@@ -13751,7 +13751,7 @@ msgstr "&Formato del carattere"
 
 #: wordpad.rc:61
 msgid "&Def. char format"
-msgstr "Formato del &def. car."
+msgstr "Formato del &def. car"
 
 #: wordpad.rc:62
 msgid "Paragrap&h format"
