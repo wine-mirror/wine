@@ -9455,13 +9455,13 @@ msgstr "Løkke under håndtering av henvisninger"
 msgid "Referral hop limit exceeded"
 msgstr "Grense for henvisningshopp overskredet"
 
-#: attrib.rc:27 cmd.rc:314
+#: attrib.rc:27 cmd.rc:315
 msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
 
-#: attrib.rc:28 cmd.rc:317
+#: attrib.rc:28 cmd.rc:318
 #, fuzzy
 msgid "%1: File Not Found\n"
 msgstr "Fant ikke filen\n"
@@ -10042,7 +10042,7 @@ msgstr ""
 "EXIT avslutter gjeldende kommandoøkt og returnerer til operativsystemet\n"
 "eller skallet CMD ble startet fra.\n"
 
-#: cmd.rc:304
+#: cmd.rc:305
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -10073,6 +10073,7 @@ msgid ""
 "RD (RMDIR)\tDelete a subdirectory\n"
 "SET\t\tSet or show environment variables\n"
 "SETLOCAL\tStart localization of environment changes in a batch file\n"
+"START\t\tStart a program, or open a document in the associated program\n"
 "TIME\t\tSet or show the current system time\n"
 "TITLE\t\tSet the window title for the CMD session\n"
 "TYPE\t\tType the contents of a text file\n"
@@ -10114,167 +10115,167 @@ msgstr ""
 "\n"
 "Skriv «HELP <kommando>» for mer informasjon om kommandoene ovenfor\n"
 
-#: cmd.rc:306
+#: cmd.rc:307
 #, fuzzy
 msgid "Are you sure?"
 msgstr "Er du sikker"
 
-#: cmd.rc:307 xcopy.rc:40
+#: cmd.rc:308 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "J"
 
-#: cmd.rc:308 xcopy.rc:41
+#: cmd.rc:309 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:309
+#: cmd.rc:310
 #, fuzzy
 msgid "File association missing for extension %1\n"
 msgstr "Manglende filtilknytning for etternavnet %s\n"
 
-#: cmd.rc:310
+#: cmd.rc:311
 #, fuzzy
 msgid "No open command associated with file type '%1'\n"
 msgstr "Ingen åpnekommando er tilknyttet filtypene '%s'\n"
 
-#: cmd.rc:311
+#: cmd.rc:312
 #, fuzzy
 msgid "Overwrite %1?"
 msgstr "Skrive over «%s»? (Ja|Nei|Alle)\n"
 
-#: cmd.rc:312
+#: cmd.rc:313
 msgid "More..."
 msgstr "Mer..."
 
-#: cmd.rc:313
+#: cmd.rc:314
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr ""
 
-#: cmd.rc:315
+#: cmd.rc:316
 msgid "Argument missing\n"
 msgstr ""
 
-#: cmd.rc:316
+#: cmd.rc:317
 msgid "Syntax error\n"
 msgstr ""
 
-#: cmd.rc:318
+#: cmd.rc:319
 #, fuzzy
 msgid "No help available for %1\n"
 msgstr "Ikke tilgjengelig; "
 
-#: cmd.rc:319
+#: cmd.rc:320
 msgid "Target to GOTO not found\n"
 msgstr ""
 
-#: cmd.rc:320
+#: cmd.rc:321
 #, fuzzy
 msgid "Current Date is %1\n"
 msgstr "Neste side"
 
-#: cmd.rc:321
+#: cmd.rc:322
 msgid "Current Time is %1\n"
 msgstr ""
 
-#: cmd.rc:322
+#: cmd.rc:323
 msgid "Enter new date: "
 msgstr ""
 
-#: cmd.rc:323
+#: cmd.rc:324
 msgid "Enter new time: "
 msgstr ""
 
-#: cmd.rc:324
+#: cmd.rc:325
 #, fuzzy
 msgid "Environment variable %1 not defined\n"
 msgstr "Fant ikke miljøvariablen\n"
 
-#: cmd.rc:325 xcopy.rc:38
+#: cmd.rc:326 xcopy.rc:38
 #, fuzzy
 msgid "Failed to open '%1'\n"
 msgstr "Klarte ikke åpne «%s»\n"
 
-#: cmd.rc:326
+#: cmd.rc:327
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr ""
 
-#: cmd.rc:327 xcopy.rc:42
+#: cmd.rc:328 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:328
+#: cmd.rc:329
 #, fuzzy
 msgid "Delete %1?"
 msgstr "Slett"
 
-#: cmd.rc:329
+#: cmd.rc:330
 msgid "Echo is %1\n"
 msgstr ""
 
-#: cmd.rc:330
+#: cmd.rc:331
 msgid "Verify is %1\n"
 msgstr ""
 
-#: cmd.rc:331
+#: cmd.rc:332
 msgid "Verify must be ON or OFF\n"
 msgstr ""
 
-#: cmd.rc:332
+#: cmd.rc:333
 msgid "Parameter error\n"
 msgstr ""
 
-#: cmd.rc:333
+#: cmd.rc:334
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
 
-#: cmd.rc:334
+#: cmd.rc:335
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr ""
 
-#: cmd.rc:335
+#: cmd.rc:336
 msgid "PATH not found\n"
 msgstr ""
 
-#: cmd.rc:336
+#: cmd.rc:337
 msgid "Press any key to continue... "
 msgstr ""
 
-#: cmd.rc:337
+#: cmd.rc:338
 msgid "Wine Command Prompt"
 msgstr ""
 
-#: cmd.rc:338
+#: cmd.rc:339
 #, fuzzy
 msgid "CMD Version %1!S!\n"
 msgstr "CA-versjon"
 
-#: cmd.rc:339
+#: cmd.rc:340
 msgid "More? "
 msgstr ""
 
-#: cmd.rc:340
+#: cmd.rc:341
 msgid "The input line is too long.\n"
 msgstr ""
 
-#: cmd.rc:341
+#: cmd.rc:342
 msgid "Volume in drive %1!c! is %2\n"
 msgstr ""
 
-#: cmd.rc:342
+#: cmd.rc:343
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
-#: cmd.rc:343
+#: cmd.rc:344
 #, fuzzy
 msgid " (Yes|No)"
 msgstr "%s? (Ja|Nei)\n"
 
-#: cmd.rc:344
+#: cmd.rc:345
 #, fuzzy
 msgid " (Yes|No|All)"
 msgstr "%s? (Ja|Nei)\n"

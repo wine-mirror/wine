@@ -9745,7 +9745,7 @@ msgstr "Buclă la gestionarea referenților"
 msgid "Referral hop limit exceeded"
 msgstr "Limită număr referenți depășită"
 
-#: attrib.rc:27 cmd.rc:314
+#: attrib.rc:27 cmd.rc:315
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9753,7 +9753,7 @@ msgstr ""
 "Încă neimplementat\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:317
+#: attrib.rc:28 cmd.rc:318
 #, fuzzy
 msgid "%1: File Not Found\n"
 msgstr "%s : fișier negăsit\n"
@@ -10319,7 +10319,7 @@ msgstr ""
 "EXIT termină sesiunea curentă a liniei de comandă și revine la sistemul\n"
 "de operare sau shell-ul din care ați invocat cmd.\n"
 
-#: cmd.rc:304
+#: cmd.rc:305
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -10350,6 +10350,7 @@ msgid ""
 "RD (RMDIR)\tDelete a subdirectory\n"
 "SET\t\tSet or show environment variables\n"
 "SETLOCAL\tStart localization of environment changes in a batch file\n"
+"START\t\tStart a program, or open a document in the associated program\n"
 "TIME\t\tSet or show the current system time\n"
 "TITLE\t\tSet the window title for the CMD session\n"
 "TYPE\t\tType the contents of a text file\n"
@@ -10392,124 +10393,124 @@ msgstr ""
 "Introduceți HELP <comandă> pentru informații suplimentare despre\n"
 "comenzile de mai sus\n"
 
-#: cmd.rc:306
+#: cmd.rc:307
 #, fuzzy
 msgid "Are you sure?"
 msgstr "Sunteți sigur"
 
-#: cmd.rc:307 xcopy.rc:40
+#: cmd.rc:308 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "D"
 
-#: cmd.rc:308 xcopy.rc:41
+#: cmd.rc:309 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:309
+#: cmd.rc:310
 #, fuzzy
 msgid "File association missing for extension %1\n"
 msgstr "Lipsește asocierea cu fișiere pentru extensia %s\n"
 
-#: cmd.rc:310
+#: cmd.rc:311
 #, fuzzy
 msgid "No open command associated with file type '%1'\n"
 msgstr ""
 "Nici o comandă de deschidere nu este asociată cu tipul de fișier „%s”\n"
 
-#: cmd.rc:311
+#: cmd.rc:312
 #, fuzzy
 msgid "Overwrite %1?"
 msgstr "Suprascrie %s"
 
-#: cmd.rc:312
+#: cmd.rc:313
 msgid "More..."
 msgstr "Mai mult..."
 
-#: cmd.rc:313
+#: cmd.rc:314
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr ""
 "Linie posibil trunchiată în procesarea fișierului batch. Se utilizează:\n"
 
-#: cmd.rc:315
+#: cmd.rc:316
 msgid "Argument missing\n"
 msgstr "Argument lipsă\n"
 
-#: cmd.rc:316
+#: cmd.rc:317
 msgid "Syntax error\n"
 msgstr "Eroare de sintaxă\n"
 
-#: cmd.rc:318
+#: cmd.rc:319
 #, fuzzy
 msgid "No help available for %1\n"
 msgstr "Nu există ajutor pentru %s\n"
 
-#: cmd.rc:319
+#: cmd.rc:320
 msgid "Target to GOTO not found\n"
 msgstr "Destinația pentru GOTO nu a fost găsită\n"
 
-#: cmd.rc:320
+#: cmd.rc:321
 #, fuzzy
 msgid "Current Date is %1\n"
 msgstr "Data curentă este %s\n"
 
-#: cmd.rc:321
+#: cmd.rc:322
 #, fuzzy
 msgid "Current Time is %1\n"
 msgstr "Ora curentă este %s\n"
 
-#: cmd.rc:322
+#: cmd.rc:323
 msgid "Enter new date: "
 msgstr "Introduceți noua dată: "
 
-#: cmd.rc:323
+#: cmd.rc:324
 msgid "Enter new time: "
 msgstr "Introduceți noua oră: "
 
-#: cmd.rc:324
+#: cmd.rc:325
 #, fuzzy
 msgid "Environment variable %1 not defined\n"
 msgstr "Variabila de mediu %s nu este definită\n"
 
-#: cmd.rc:325 xcopy.rc:38
+#: cmd.rc:326 xcopy.rc:38
 #, fuzzy
 msgid "Failed to open '%1'\n"
 msgstr "Deschiderea „%s” a eșuat\n"
 
-#: cmd.rc:326
+#: cmd.rc:327
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Nu se poate apela eticheta pentru batch în afara unui script batch\n"
 
-#: cmd.rc:327 xcopy.rc:42
+#: cmd.rc:328 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "T"
 
-#: cmd.rc:328
+#: cmd.rc:329
 #, fuzzy
 msgid "Delete %1?"
 msgstr "Șterge"
 
-#: cmd.rc:329
+#: cmd.rc:330
 #, fuzzy
 msgid "Echo is %1\n"
 msgstr "Echo este %s\n"
 
-#: cmd.rc:330
+#: cmd.rc:331
 #, fuzzy
 msgid "Verify is %1\n"
 msgstr "Verify este %s\n"
 
-#: cmd.rc:331
+#: cmd.rc:332
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify trebuie să fie ON sau OFF\n"
 
-#: cmd.rc:332
+#: cmd.rc:333
 msgid "Parameter error\n"
 msgstr "Eroare de parametri\n"
 
-#: cmd.rc:333
+#: cmd.rc:334
 #, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
@@ -10519,51 +10520,51 @@ msgstr ""
 "Numărul de serie al volumului este %04x-%04x\n"
 "\n"
 
-#: cmd.rc:334
+#: cmd.rc:335
 #, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Etichetă pentru volum (11 caractere, ENTER pentru nici una)?"
 
-#: cmd.rc:335
+#: cmd.rc:336
 msgid "PATH not found\n"
 msgstr "PATH negăsită\n"
 
-#: cmd.rc:336
+#: cmd.rc:337
 #, fuzzy
 msgid "Press any key to continue... "
 msgstr "Apăsați pe Enter pentru a continua: "
 
-#: cmd.rc:337
+#: cmd.rc:338
 msgid "Wine Command Prompt"
 msgstr "Linia de comandă Wine"
 
-#: cmd.rc:338
+#: cmd.rc:339
 #, fuzzy
 msgid "CMD Version %1!S!\n"
 msgstr "CMD versiunea %s\n"
 
-#: cmd.rc:339
+#: cmd.rc:340
 msgid "More? "
 msgstr "Mai mult? "
 
-#: cmd.rc:340
+#: cmd.rc:341
 msgid "The input line is too long.\n"
 msgstr "Șirul introdus este prea lung.\n"
 
-#: cmd.rc:341
+#: cmd.rc:342
 msgid "Volume in drive %1!c! is %2\n"
 msgstr ""
 
-#: cmd.rc:342
+#: cmd.rc:343
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
-#: cmd.rc:343
+#: cmd.rc:344
 #, fuzzy
 msgid " (Yes|No)"
 msgstr "%s? (Da|Nu)\n"
 
-#: cmd.rc:344
+#: cmd.rc:345
 #, fuzzy
 msgid " (Yes|No|All)"
 msgstr "%s? (Da|Nu)\n"

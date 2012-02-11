@@ -9153,7 +9153,7 @@ msgstr "Зацикливание при обработке ссылок"
 msgid "Referral hop limit exceeded"
 msgstr "Предел числа пересылки ссылок превышен"
 
-#: attrib.rc:27 cmd.rc:314
+#: attrib.rc:27 cmd.rc:315
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9161,7 +9161,7 @@ msgstr ""
 "Ещё не выполнено\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:317
+#: attrib.rc:28 cmd.rc:318
 msgid "%1: File Not Found\n"
 msgstr "%1 : Файл не найден\n"
 
@@ -9766,7 +9766,8 @@ msgstr ""
 "EXIT завершает текущую командную сессию и возвращает\n"
 "в операционную систему или оболочку из которой был запущен cmd.\n"
 
-#: cmd.rc:304
+#: cmd.rc:305
+#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9796,6 +9797,7 @@ msgid ""
 "RD (RMDIR)\tDelete a subdirectory\n"
 "SET\t\tSet or show environment variables\n"
 "SETLOCAL\tStart localization of environment changes in a batch file\n"
+"START\t\tStart a program, or open a document in the associated program\n"
 "TIME\t\tSet or show the current system time\n"
 "TITLE\t\tSet the window title for the CMD session\n"
 "TYPE\t\tType the contents of a text file\n"
@@ -9844,110 +9846,110 @@ msgstr ""
 "Выполните HELP <команда> для дополнительной информации по перечисленным "
 "командам.\n"
 
-#: cmd.rc:306
+#: cmd.rc:307
 msgid "Are you sure?"
 msgstr "Вы уверены?"
 
-#: cmd.rc:307 xcopy.rc:40
+#: cmd.rc:308 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: cmd.rc:308 xcopy.rc:41
+#: cmd.rc:309 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:309
+#: cmd.rc:310
 msgid "File association missing for extension %1\n"
 msgstr "Нет ассоциации для расширения %1\n"
 
-#: cmd.rc:310
+#: cmd.rc:311
 msgid "No open command associated with file type '%1'\n"
 msgstr "Не работает команда, ассоциированная с типом файлов '%1'\n"
 
-#: cmd.rc:311
+#: cmd.rc:312
 msgid "Overwrite %1?"
 msgstr "Перезаписать %1?"
 
-#: cmd.rc:312
+#: cmd.rc:313
 msgid "More..."
 msgstr "Дальше..."
 
-#: cmd.rc:313
+#: cmd.rc:314
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Строка в обрабатываемом bat-файле возможно урезана. Используем:\n"
 
-#: cmd.rc:315
+#: cmd.rc:316
 msgid "Argument missing\n"
 msgstr "Отсутствует аргумент\n"
 
-#: cmd.rc:316
+#: cmd.rc:317
 msgid "Syntax error\n"
 msgstr "Синтаксическая ошибка\n"
 
-#: cmd.rc:318
+#: cmd.rc:319
 msgid "No help available for %1\n"
 msgstr "Справка для %1 отсутствует\n"
 
-#: cmd.rc:319
+#: cmd.rc:320
 msgid "Target to GOTO not found\n"
 msgstr "Цель для GOTO не найдена\n"
 
-#: cmd.rc:320
+#: cmd.rc:321
 msgid "Current Date is %1\n"
 msgstr "Текущая дата %1\n"
 
-#: cmd.rc:321
+#: cmd.rc:322
 msgid "Current Time is %1\n"
 msgstr "Текущее время %1\n"
 
-#: cmd.rc:322
+#: cmd.rc:323
 msgid "Enter new date: "
 msgstr "Введите новую дату: "
 
-#: cmd.rc:323
+#: cmd.rc:324
 msgid "Enter new time: "
 msgstr "Введите новое время: "
 
-#: cmd.rc:324
+#: cmd.rc:325
 msgid "Environment variable %1 not defined\n"
 msgstr "Переменная окружения %1 не определена\n"
 
-#: cmd.rc:325 xcopy.rc:38
+#: cmd.rc:326 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "Не удалось открыть '%1'\n"
 
-#: cmd.rc:326
+#: cmd.rc:327
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Не могу вызвать метку bat-файла вне bat-скрипта\n"
 
-#: cmd.rc:327 xcopy.rc:42
+#: cmd.rc:328 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:328
+#: cmd.rc:329
 msgid "Delete %1?"
 msgstr "Удалить %1?"
 
-#: cmd.rc:329
+#: cmd.rc:330
 msgid "Echo is %1\n"
 msgstr "Echo установлено в %1\n"
 
-#: cmd.rc:330
+#: cmd.rc:331
 msgid "Verify is %1\n"
 msgstr "Verify установлено в %1\n"
 
-#: cmd.rc:331
+#: cmd.rc:332
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify должен быть либо ON, либо OFF\n"
 
-#: cmd.rc:332
+#: cmd.rc:333
 msgid "Parameter error\n"
 msgstr "Неверный параметр\n"
 
-#: cmd.rc:333
+#: cmd.rc:334
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -9955,48 +9957,48 @@ msgstr ""
 "Серийный номер тома %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:334
+#: cmd.rc:335
 #, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Метка диска (11 символов, ENTER для ввода пустой метки)?"
 
-#: cmd.rc:335
+#: cmd.rc:336
 msgid "PATH not found\n"
 msgstr "PATH не найден\n"
 
-#: cmd.rc:336
+#: cmd.rc:337
 msgid "Press any key to continue... "
 msgstr "Нажмите любую клавишу для продолжения... "
 
-#: cmd.rc:337
+#: cmd.rc:338
 msgid "Wine Command Prompt"
 msgstr "Приглашение командной строки Wine"
 
-#: cmd.rc:338
+#: cmd.rc:339
 msgid "CMD Version %1!S!\n"
 msgstr "Версия CMD %1!S!\n"
 
-#: cmd.rc:339
+#: cmd.rc:340
 msgid "More? "
 msgstr "Ещё? "
 
-#: cmd.rc:340
+#: cmd.rc:341
 msgid "The input line is too long.\n"
 msgstr "Введённая команда слишком длинная.\n"
 
-#: cmd.rc:341
+#: cmd.rc:342
 msgid "Volume in drive %1!c! is %2\n"
 msgstr ""
 
-#: cmd.rc:342
+#: cmd.rc:343
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
-#: cmd.rc:343
+#: cmd.rc:344
 msgid " (Yes|No)"
 msgstr " (Y - да|N - нет)"
 
-#: cmd.rc:344
+#: cmd.rc:345
 msgid " (Yes|No|All)"
 msgstr " (Y - да|N - нет|A - все)"
 

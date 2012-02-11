@@ -294,6 +294,7 @@ REN (RENAME)\tRename a file\n\
 RD (RMDIR)\tDelete a subdirectory\n\
 SET\t\tSet or show environment variables\n\
 SETLOCAL\tStart localization of environment changes in a batch file\n\
+START\t\tStart a program, or open a document in the associated program\n\
 TIME\t\tSet or show the current system time\n\
 TITLE\t\tSet the window title for the CMD session\n\
 TYPE\t\tType the contents of a text file\n\
