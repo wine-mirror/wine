@@ -36,7 +36,7 @@ msgid ""
 "Remove."
 msgstr ""
 "Følgende programmer kan fjernes automatisk. Merk et program og trykk Endre/"
-"Fjern for å fjerne det eller endre installerte komponenter"
+"Fjern for å fjerne det eller endre installerte komponenter."
 
 #: appwiz.rc:64
 #, fuzzy
@@ -6869,7 +6869,7 @@ msgstr ""
 
 #: msi.rc:28
 msgid "path %s not found"
-msgstr "fant ikke stien '%s'."
+msgstr "fant ikke stien '%s'"
 
 #: msi.rc:29
 msgid "insert disk %s"
@@ -6940,15 +6940,15 @@ msgstr ""
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
-msgstr "Oppgi katalogen som inneholder '%s'."
+msgstr "Oppgi katalogen som inneholder '%s'"
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr "Egenskapens installasjonskilde mangler."
+msgstr "Egenskapens installasjonskilde mangler"
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr "Egenskapens nettverksstasjon mangler."
+msgstr "Egenskapens nettverksstasjon mangler"
 
 #: msi.rc:60
 msgid "feature from:"
@@ -6956,7 +6956,7 @@ msgstr "Egenskap fra::"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
-msgstr "Velg katalogen som inneholder '%s'."
+msgstr "Velg katalogen som inneholder '%s'"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
@@ -9152,7 +9152,7 @@ msgstr ""
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."
-msgstr "En feil oppstod med den oppgitte porten.."
+msgstr "En feil oppstod med den oppgitte porten."
 
 #: winmm.rc:129
 msgid ""
@@ -9558,7 +9558,7 @@ msgstr "Hjelp til CHDIR.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS tømmer konsollskjermen\n"
+msgstr "CLS tømmer konsollskjermen.\n"
 
 #: cmd.rc:45
 #, fuzzy
