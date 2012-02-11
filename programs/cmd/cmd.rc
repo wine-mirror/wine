@@ -159,6 +159,22 @@ action, and can therefore be used as a comment in a batch file.\n"
 "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
   WCMD_RMDIR,  "RMDIR <dir> deletes a subdirectory.\n"
 
+  WCMD_START,
+"Start a program, or open a document in the program normally used for files with that suffix.\n\
+Usage:\n\
+start [options] program_filename [...]\n\
+start [options] document_filename\n\
+\n\
+Options:\n\
+/M[inimized] Start the program minimized.\n\
+/MAX[imized] Start the program maximized.\n\
+/R[estored]  Start the program normally (neither minimized nor maximized).\n\
+/W[ait]      Wait for started program to finish, then exit with its exit code.\n\
+/Unix        Use a Unix filename and start the file like windows explorer.\n\
+/ProgIDOpen  Open a document using the following progID.\n\
+/L           Show end-user license.\n\
+/?           Display this help and exit.\n"
+
   WCMD_SET,
 "SET displays or changes the cmd environment variables.\n\
 \n\

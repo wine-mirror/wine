@@ -9153,7 +9153,7 @@ msgstr "Зацикливание при обработке ссылок"
 msgid "Referral hop limit exceeded"
 msgstr "Предел числа пересылки ссылок превышен"
 
-#: attrib.rc:27 cmd.rc:298
+#: attrib.rc:27 cmd.rc:314
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9161,7 +9161,7 @@ msgstr ""
 "Ещё не выполнено\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:301
+#: attrib.rc:28 cmd.rc:317
 msgid "%1: File Not Found\n"
 msgstr "%1 : Файл не найден\n"
 
@@ -9532,7 +9532,7 @@ msgstr ""
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <директория> удаляет поддиректорию.\n"
 
-#: cmd.rc:178
+#: cmd.rc:194
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9568,7 +9568,7 @@ msgstr ""
 "переменных, чем в обычной Win32. Стоит отметить,\n"
 "что невозможно изменить окружение операционной системы из cmd.\n"
 
-#: cmd.rc:183
+#: cmd.rc:199
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9578,15 +9578,57 @@ msgstr ""
 "списка, таким образом параметр 2 переместится в параметр 1 и так далее.\n"
 "SHIFT не работает при вызове в командной строке.\n"
 
-#: cmd.rc:185
+#: cmd.rc:176
+#, fuzzy
+msgid ""
+"Start a program, or open a document in the program normally used for files "
+"with that suffix.\n"
+"Usage:\n"
+"start [options] program_filename [...]\n"
+"start [options] document_filename\n"
+"\n"
+"Options:\n"
+"/M[inimized] Start the program minimized.\n"
+"/MAX[imized] Start the program maximized.\n"
+"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
+"/W[ait]      Wait for started program to finish, then exit with its exit "
+"code.\n"
+"/Unix        Use a Unix filename and start the file like windows explorer.\n"
+"/ProgIDOpen  Open a document using the following progID.\n"
+"/L           Show end-user license.\n"
+"/?           Display this help and exit.\n"
+msgstr ""
+"Запускает программу или открывает документ приложением,\n"
+"связанным с файлами с данным расширением.\n"
+"\n"
+"Использование:\n"
+"start [options] имя_файла_программы [...]\n"
+"start [options] имя_файла_документа\n"
+"\n"
+"Опции:\n"
+"/M[inimized] Запустить программу свёрнутой.\n"
+"/MAX[imized] Запустить программу на весь экран.\n"
+"/R[estored]  Запустить программу в окне обычного размера.\n"
+"/W[ait]      Ожидать завершения программы и выйти с её кодом выхода.\n"
+"/Unix        Запустить файл с путем в Unix-формате.\n"
+"/ProgIDOpen  Открыть документ, используя указанный progID.\n"
+"/L           Показать лицензию конечного пользователя.\n"
+"/?           Вывести эту справку и выйти.\n"
+"\n"
+"start.exe версия 0.2 Copyright (C) 2003, Dan Kegel\n"
+"Start предоставляется БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ.\n"
+"Это свободная программа, и вы можете её распространять на определённых\n"
+"условиях. Чтобы узнать о них подробнее, запустите 'start /L'.\n"
+
+#: cmd.rc:201
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME устанавливает или отображает системное время.\n"
 
-#: cmd.rc:187
+#: cmd.rc:203
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <строка> устанавливает заголовок окна cmd.\n"
 
-#: cmd.rc:191
+#: cmd.rc:207
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9596,7 +9638,7 @@ msgstr ""
 "Проверка на то, что файл - это текст, предназначенный для чтения, "
 "отсутствует.\n"
 
-#: cmd.rc:200
+#: cmd.rc:216
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9615,15 +9657,15 @@ msgstr ""
 "\n"
 "Этот флаг не используется в Wine.\n"
 
-#: cmd.rc:203
+#: cmd.rc:219
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER выводит версию используемого cmd.\n"
 
-#: cmd.rc:205
+#: cmd.rc:221
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL выводит метку тома дискового устройства.\n"
 
-#: cmd.rc:209
+#: cmd.rc:225
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -9631,7 +9673,7 @@ msgstr ""
 "ENDLOCAL заканчивает действие локальных изменений окружения,\n"
 "произошедших в пакетном файле после SETLOCAL.\n"
 
-#: cmd.rc:217
+#: cmd.rc:233
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9647,7 +9689,7 @@ msgstr ""
 "файла, если такой команды нет), после чего все переменные\n"
 "окружения восстанавливаются.\n"
 
-#: cmd.rc:220
+#: cmd.rc:236
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9655,11 +9697,11 @@ msgstr ""
 "PUSHD <directoryname> сохраняет текущий каталог в стек,\n"
 "а затем переходит в указанный каталог.\n"
 
-#: cmd.rc:222
+#: cmd.rc:238
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD переходит в каталог, сохранённый командой PUSHD.\n"
 
-#: cmd.rc:230
+#: cmd.rc:246
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9679,7 +9721,7 @@ msgstr ""
 "При отсутствии типа файла после знака равенства текущее сопоставление "
 "удаляется.\n"
 
-#: cmd.rc:241
+#: cmd.rc:257
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9702,11 +9744,11 @@ msgstr ""
 "При отсутствии команды после знака равно текущая назначенная команда "
 "удаляется.\n"
 
-#: cmd.rc:243
+#: cmd.rc:259
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE выводит содержимое файлов или каналов постранично.\n"
 
-#: cmd.rc:247
+#: cmd.rc:263
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9716,7 +9758,7 @@ msgstr ""
 "не нажмёт клавишу из предложенного списка.\n"
 "CHOICE обычно применяется для создания меню в пакетном файле.\n"
 
-#: cmd.rc:251
+#: cmd.rc:267
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9724,7 +9766,7 @@ msgstr ""
 "EXIT завершает текущую командную сессию и возвращает\n"
 "в операционную систему или оболочку из которой был запущен cmd.\n"
 
-#: cmd.rc:288
+#: cmd.rc:304
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9802,110 +9844,110 @@ msgstr ""
 "Выполните HELP <команда> для дополнительной информации по перечисленным "
 "командам.\n"
 
-#: cmd.rc:290
+#: cmd.rc:306
 msgid "Are you sure?"
 msgstr "Вы уверены?"
 
-#: cmd.rc:291 xcopy.rc:40
+#: cmd.rc:307 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: cmd.rc:292 xcopy.rc:41
+#: cmd.rc:308 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:293
+#: cmd.rc:309
 msgid "File association missing for extension %1\n"
 msgstr "Нет ассоциации для расширения %1\n"
 
-#: cmd.rc:294
+#: cmd.rc:310
 msgid "No open command associated with file type '%1'\n"
 msgstr "Не работает команда, ассоциированная с типом файлов '%1'\n"
 
-#: cmd.rc:295
+#: cmd.rc:311
 msgid "Overwrite %1?"
 msgstr "Перезаписать %1?"
 
-#: cmd.rc:296
+#: cmd.rc:312
 msgid "More..."
 msgstr "Дальше..."
 
-#: cmd.rc:297
+#: cmd.rc:313
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Строка в обрабатываемом bat-файле возможно урезана. Используем:\n"
 
-#: cmd.rc:299
+#: cmd.rc:315
 msgid "Argument missing\n"
 msgstr "Отсутствует аргумент\n"
 
-#: cmd.rc:300
+#: cmd.rc:316
 msgid "Syntax error\n"
 msgstr "Синтаксическая ошибка\n"
 
-#: cmd.rc:302
+#: cmd.rc:318
 msgid "No help available for %1\n"
 msgstr "Справка для %1 отсутствует\n"
 
-#: cmd.rc:303
+#: cmd.rc:319
 msgid "Target to GOTO not found\n"
 msgstr "Цель для GOTO не найдена\n"
 
-#: cmd.rc:304
+#: cmd.rc:320
 msgid "Current Date is %1\n"
 msgstr "Текущая дата %1\n"
 
-#: cmd.rc:305
+#: cmd.rc:321
 msgid "Current Time is %1\n"
 msgstr "Текущее время %1\n"
 
-#: cmd.rc:306
+#: cmd.rc:322
 msgid "Enter new date: "
 msgstr "Введите новую дату: "
 
-#: cmd.rc:307
+#: cmd.rc:323
 msgid "Enter new time: "
 msgstr "Введите новое время: "
 
-#: cmd.rc:308
+#: cmd.rc:324
 msgid "Environment variable %1 not defined\n"
 msgstr "Переменная окружения %1 не определена\n"
 
-#: cmd.rc:309 xcopy.rc:38
+#: cmd.rc:325 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "Не удалось открыть '%1'\n"
 
-#: cmd.rc:310
+#: cmd.rc:326
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Не могу вызвать метку bat-файла вне bat-скрипта\n"
 
-#: cmd.rc:311 xcopy.rc:42
+#: cmd.rc:327 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:312
+#: cmd.rc:328
 msgid "Delete %1?"
 msgstr "Удалить %1?"
 
-#: cmd.rc:313
+#: cmd.rc:329
 msgid "Echo is %1\n"
 msgstr "Echo установлено в %1\n"
 
-#: cmd.rc:314
+#: cmd.rc:330
 msgid "Verify is %1\n"
 msgstr "Verify установлено в %1\n"
 
-#: cmd.rc:315
+#: cmd.rc:331
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify должен быть либо ON, либо OFF\n"
 
-#: cmd.rc:316
+#: cmd.rc:332
 msgid "Parameter error\n"
 msgstr "Неверный параметр\n"
 
-#: cmd.rc:317
+#: cmd.rc:333
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -9913,48 +9955,48 @@ msgstr ""
 "Серийный номер тома %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:318
+#: cmd.rc:334
 #, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Метка диска (11 символов, ENTER для ввода пустой метки)?"
 
-#: cmd.rc:319
+#: cmd.rc:335
 msgid "PATH not found\n"
 msgstr "PATH не найден\n"
 
-#: cmd.rc:320
+#: cmd.rc:336
 msgid "Press any key to continue... "
 msgstr "Нажмите любую клавишу для продолжения... "
 
-#: cmd.rc:321
+#: cmd.rc:337
 msgid "Wine Command Prompt"
 msgstr "Приглашение командной строки Wine"
 
-#: cmd.rc:322
+#: cmd.rc:338
 msgid "CMD Version %1!S!\n"
 msgstr "Версия CMD %1!S!\n"
 
-#: cmd.rc:323
+#: cmd.rc:339
 msgid "More? "
 msgstr "Ещё? "
 
-#: cmd.rc:324
+#: cmd.rc:340
 msgid "The input line is too long.\n"
 msgstr "Введённая команда слишком длинная.\n"
 
-#: cmd.rc:325
+#: cmd.rc:341
 msgid "Volume in drive %1!c! is %2\n"
 msgstr ""
 
-#: cmd.rc:326
+#: cmd.rc:342
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
-#: cmd.rc:327
+#: cmd.rc:343
 msgid " (Yes|No)"
 msgstr " (Y - да|N - нет)"
 
-#: cmd.rc:328
+#: cmd.rc:344
 msgid " (Yes|No|All)"
 msgstr " (Y - да|N - нет|A - все)"
 

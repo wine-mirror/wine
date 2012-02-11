@@ -95,6 +95,7 @@ void WCMD_setshow_path (const WCHAR *command);
 void WCMD_setshow_prompt (void);
 void WCMD_setshow_time (void);
 void WCMD_shift (const WCHAR *command);
+void WCMD_start (const WCHAR *command);
 void WCMD_title (const WCHAR *);
 void WCMD_type (WCHAR *);
 void WCMD_verify (const WCHAR *command);
@@ -208,25 +209,26 @@ extern BATCH_CONTEXT *context;
 #define WCMD_RMDIR    26
 #define WCMD_SET      27
 #define WCMD_SHIFT    28
-#define WCMD_TIME     29
-#define WCMD_TITLE    30
-#define WCMD_TYPE     31
-#define WCMD_VERIFY   32
-#define WCMD_VER      33
-#define WCMD_VOL      34
+#define WCMD_START    29
+#define WCMD_TIME     30
+#define WCMD_TITLE    31
+#define WCMD_TYPE     32
+#define WCMD_VERIFY   33
+#define WCMD_VER      34
+#define WCMD_VOL      35
 
-#define WCMD_ENDLOCAL 35
-#define WCMD_SETLOCAL 36
-#define WCMD_PUSHD    37
-#define WCMD_POPD     38
-#define WCMD_ASSOC    39
-#define WCMD_COLOR    40
-#define WCMD_FTYPE    41
-#define WCMD_MORE     42
-#define WCMD_CHOICE   43
+#define WCMD_ENDLOCAL 36
+#define WCMD_SETLOCAL 37
+#define WCMD_PUSHD    38
+#define WCMD_POPD     39
+#define WCMD_ASSOC    40
+#define WCMD_COLOR    41
+#define WCMD_FTYPE    42
+#define WCMD_MORE     43
+#define WCMD_CHOICE   44
 
 /* Must be last in list */
-#define WCMD_EXIT     44
+#define WCMD_EXIT     45
 
 /* Some standard messages */
 extern const WCHAR newline[];

@@ -1536,6 +1536,9 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       case WCMD_SHIFT:
         WCMD_shift (p);
         break;
+      case WCMD_START:
+        WCMD_start (p);
+        break;
       case WCMD_TIME:
         WCMD_setshow_time ();
         break;

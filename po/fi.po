@@ -9021,7 +9021,7 @@ msgstr ""
 msgid "Referral hop limit exceeded"
 msgstr ""
 
-#: attrib.rc:27 cmd.rc:298
+#: attrib.rc:27 cmd.rc:314
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9029,7 +9029,7 @@ msgstr ""
 "Ei ole vielä toiminnassa\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:301
+#: attrib.rc:28 cmd.rc:317
 msgid "%1: File Not Found\n"
 msgstr "%1: Tiedostoa ei löydy\n"
 
@@ -9378,7 +9378,7 @@ msgstr "RD <hakemisto> on RMDIR-komennon lyhenne. Se poistaa alihakemiston.\n"
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <dir> poistaa alihakemiston.\n"
 
-#: cmd.rc:178
+#: cmd.rc:194
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9413,7 +9413,7 @@ msgstr ""
 "natiivissa Win32-toteutuksessa. Käyttöjärjestelmän ympäristöä ei voi\n"
 "muuttaa cmd:n sisältä.\n"
 
-#: cmd.rc:183
+#: cmd.rc:199
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9424,15 +9424,60 @@ msgstr ""
 "listan alusta, joten parametrista 2 tulee parametri 1 ja niin edelleen.\n"
 "Se ei vaikuta mihinkään, jos sitä kutsutaan komentoriviltä.\n"
 
-#: cmd.rc:185
+#: cmd.rc:176
+#, fuzzy
+msgid ""
+"Start a program, or open a document in the program normally used for files "
+"with that suffix.\n"
+"Usage:\n"
+"start [options] program_filename [...]\n"
+"start [options] document_filename\n"
+"\n"
+"Options:\n"
+"/M[inimized] Start the program minimized.\n"
+"/MAX[imized] Start the program maximized.\n"
+"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
+"/W[ait]      Wait for started program to finish, then exit with its exit "
+"code.\n"
+"/Unix        Use a Unix filename and start the file like windows explorer.\n"
+"/ProgIDOpen  Open a document using the following progID.\n"
+"/L           Show end-user license.\n"
+"/?           Display this help and exit.\n"
+msgstr ""
+"Käynnistä ohjelma tai avaa ohjelmassa dokumentti, jonka tiedostopääte on "
+"yleensä käytössä ohjelmassa.\n"
+"Käyttö:\n"
+"start [asetukset] ohjelman_tiedostonimi [...]\n"
+"start [asetukset] dokumentin_tiedostonimi\n"
+"\n"
+"Asetukset:\n"
+"/M[inimized] Käynnistä ohjelma pienennettynä.\n"
+"/MAX[imized] Käynnistä ohjelma suurennettuna.\n"
+"/R[estored]  Käynnistä ohjelma normaalikokoisena (ei pienennettynä eikä "
+"suurennettuna).\n"
+"/W[ait]      Odota, että ohjelman suoritus päättyy, ja palauta sen "
+"paluuarvo.\n"
+"/Unix        Käytä Unix-tiedostonimeä ja avaa tiedosto kuten Windows "
+"Explorer.\n"
+"/ProgIDOpen  Avaa dokumentti seuraavalla progID:lla.\n"
+"/L           Näytä loppukäyttäjän lisenssi.\n"
+"/?           Näytä tämä ohje ja poistu.\n"
+"\n"
+"start.exe versio 0.2 Copyright (C) 2003, Dan Kegel\n"
+"Start-ohjelmalla EI OLE MITÄÄN TAKUUTA; yksityiskohdista kertoo parametri /"
+"L.\n"
+"Tämä on vapaa ohjelma; tätä saa levittää tietyin ehdoin; yksityiskohdista\n"
+"kertoo parametri /L.\n"
+
+#: cmd.rc:201
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME asettaa ja näyttää järjestelmän nykyisen ajan.\n"
 
-#: cmd.rc:187
+#: cmd.rc:203
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <merkkijono> asettaa CMD-ikkunan otsikon.\n"
 
-#: cmd.rc:191
+#: cmd.rc:207
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9441,7 +9486,7 @@ msgstr ""
 "(tai muualle, jos ohjataan muualle). Sitä, onko tiedosto luettavissa,\n"
 "ei tarkisteta.\n"
 
-#: cmd.rc:200
+#: cmd.rc:216
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9460,21 +9505,21 @@ msgstr ""
 "\n"
 "Verify-lippu ei tee mitään Winessä.\n"
 
-#: cmd.rc:203
+#: cmd.rc:219
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER näyttää, mitä cmd:n versio on.\n"
 
-#: cmd.rc:205
+#: cmd.rc:221
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr ""
 
-#: cmd.rc:209
+#: cmd.rc:225
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
 
-#: cmd.rc:217
+#: cmd.rc:233
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9484,7 +9529,7 @@ msgid ""
 "settings are restored.\n"
 msgstr ""
 
-#: cmd.rc:220
+#: cmd.rc:236
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9493,13 +9538,13 @@ msgstr ""
 "sitten\n"
 "nykyisen hakemiston annetuksi.\n"
 
-#: cmd.rc:222
+#: cmd.rc:238
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 "POPD muuttaa nykyisen hakemiston siksi, joka on viimeksi tallennettu\n"
 "PUSHD-komennolla.\n"
 
-#: cmd.rc:230
+#: cmd.rc:246
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9511,7 +9556,7 @@ msgid ""
 "association, if any.\n"
 msgstr ""
 
-#: cmd.rc:241
+#: cmd.rc:257
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9535,11 +9580,11 @@ msgstr ""
 "Jos yhtäsuuruusmerkin jälkeen ei määritellä mitään komentoa, kyseiseen "
 "tiedostotyyppiin liitetty komento poistetaan.\n"
 
-#: cmd.rc:243
+#: cmd.rc:259
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE näyttää tiedostojen tulosteen tai putkitetun syötteen sivuina.\n"
 
-#: cmd.rc:247
+#: cmd.rc:263
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9549,7 +9594,7 @@ msgstr ""
 "sallittua näppäintä, joka on listassa.\n"
 "CHOICE-komentoa käytetään lähinnä valikkoihin komentojonotiedostoissa.\n"
 
-#: cmd.rc:251
+#: cmd.rc:267
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9557,7 +9602,7 @@ msgstr ""
 "EXIT päättää nykyisen komentoistunnon ja palaa käyttöjärjestelmään tai\n"
 "komentoriville, jolta kutsuit cmd:tä.\n"
 
-#: cmd.rc:288
+#: cmd.rc:304
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9635,156 +9680,156 @@ msgstr ""
 "\n"
 "Kirjoita HELP <komento>, niin saat lisätietoa yllä olevasta komennosta.\n"
 
-#: cmd.rc:290
+#: cmd.rc:306
 msgid "Are you sure?"
 msgstr "Oletko varma?"
 
-#: cmd.rc:291 xcopy.rc:40
+#: cmd.rc:307 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "K"
 
-#: cmd.rc:292 xcopy.rc:41
+#: cmd.rc:308 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "E"
 
-#: cmd.rc:293
+#: cmd.rc:309
 msgid "File association missing for extension %1\n"
 msgstr ""
 
-#: cmd.rc:294
+#: cmd.rc:310
 msgid "No open command associated with file type '%1'\n"
 msgstr ""
 
-#: cmd.rc:295
+#: cmd.rc:311
 msgid "Overwrite %1?"
 msgstr "Kirjoita tiedoston %1 yli?"
 
-#: cmd.rc:296
+#: cmd.rc:312
 msgid "More..."
 msgstr "Lisää..."
 
-#: cmd.rc:297
+#: cmd.rc:313
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr ""
 
-#: cmd.rc:299
+#: cmd.rc:315
 msgid "Argument missing\n"
 msgstr "Argumentti puuttuu\n"
 
-#: cmd.rc:300
+#: cmd.rc:316
 msgid "Syntax error\n"
 msgstr "Syntaksivirhe\n"
 
-#: cmd.rc:302
+#: cmd.rc:318
 msgid "No help available for %1\n"
 msgstr "Apua ei saatavilla %1:lle\n"
 
-#: cmd.rc:303
+#: cmd.rc:319
 msgid "Target to GOTO not found\n"
 msgstr "GOTO-komennolle ei löytynyt kohdetta\n"
 
-#: cmd.rc:304
+#: cmd.rc:320
 msgid "Current Date is %1\n"
 msgstr "Nykyinen päiväys on %1\n"
 
-#: cmd.rc:305
+#: cmd.rc:321
 msgid "Current Time is %1\n"
 msgstr "Nykyinen aika on %1\n"
 
-#: cmd.rc:306
+#: cmd.rc:322
 msgid "Enter new date: "
 msgstr "Syötä uusi päiväys: "
 
-#: cmd.rc:307
+#: cmd.rc:323
 msgid "Enter new time: "
 msgstr "Syötä uusi aika: "
 
-#: cmd.rc:308
+#: cmd.rc:324
 msgid "Environment variable %1 not defined\n"
 msgstr "Ympäristömuuttujaa %1 ei määritelty\n"
 
-#: cmd.rc:309 xcopy.rc:38
+#: cmd.rc:325 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "'%1' ei auennut\n"
 
-#: cmd.rc:310
+#: cmd.rc:326
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr ""
 
-#: cmd.rc:311 xcopy.rc:42
+#: cmd.rc:327 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:312
+#: cmd.rc:328
 msgid "Delete %1?"
 msgstr "Poista %1?"
 
-#: cmd.rc:313
+#: cmd.rc:329
 msgid "Echo is %1\n"
 msgstr ""
 
-#: cmd.rc:314
+#: cmd.rc:330
 msgid "Verify is %1\n"
 msgstr ""
 
-#: cmd.rc:315
+#: cmd.rc:331
 msgid "Verify must be ON or OFF\n"
 msgstr ""
 
-#: cmd.rc:316
+#: cmd.rc:332
 msgid "Parameter error\n"
 msgstr "Parametrivirhe\n"
 
-#: cmd.rc:317
+#: cmd.rc:333
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
 
-#: cmd.rc:318
+#: cmd.rc:334
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr ""
 
-#: cmd.rc:319
+#: cmd.rc:335
 msgid "PATH not found\n"
 msgstr ""
 
-#: cmd.rc:320
+#: cmd.rc:336
 msgid "Press any key to continue... "
 msgstr "Paina mitä tahansa näppäintä jatkaaksesi... "
 
-#: cmd.rc:321
+#: cmd.rc:337
 msgid "Wine Command Prompt"
 msgstr "Winen komentokehote"
 
-#: cmd.rc:322
+#: cmd.rc:338
 msgid "CMD Version %1!S!\n"
 msgstr "CMD versio %1!S!\n"
 
-#: cmd.rc:323
+#: cmd.rc:339
 msgid "More? "
 msgstr "Lisää? "
 
-#: cmd.rc:324
+#: cmd.rc:340
 msgid "The input line is too long.\n"
 msgstr ""
 
-#: cmd.rc:325
+#: cmd.rc:341
 msgid "Volume in drive %1!c! is %2\n"
 msgstr ""
 
-#: cmd.rc:326
+#: cmd.rc:342
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
-#: cmd.rc:327
+#: cmd.rc:343
 msgid " (Yes|No)"
 msgstr " (Kyllä|Ei)"
 
-#: cmd.rc:328
+#: cmd.rc:344
 msgid " (Yes|No|All)"
 msgstr " (Kyllä|Ei|kAikki)"
 

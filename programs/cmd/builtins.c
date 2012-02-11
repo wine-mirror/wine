@@ -74,6 +74,7 @@ const WCHAR inbuilt[][10] = {
         {'R','M','D','I','R','\0'},
         {'S','E','T','\0'},
         {'S','H','I','F','T','\0'},
+        {'S','T','A','R','T','\0'},
         {'T','I','M','E','\0'},
         {'T','I','T','L','E','\0'},
         {'T','Y','P','E','\0'},
@@ -2469,6 +2470,46 @@ void WCMD_shift (const WCHAR *command) {
     context -> shift_count[9] = context -> shift_count[9] + 1;
   }
 
+}
+
+/****************************************************************************
+ * WCMD_start
+ */
+void WCMD_start(const WCHAR *command)
+{
+    static const WCHAR spaceW[] = {' ',0};
+    static const WCHAR exeW[] = {'\\','c','o','m','m','a','n','d',
+                                 '\\','s','t','a','r','t','.','e','x','e',0};
+    WCHAR file[MAX_PATH];
+    WCHAR *cmdline;
+    STARTUPINFOW st;
+    PROCESS_INFORMATION pi;
+
+    GetWindowsDirectoryW( file, MAX_PATH );
+    strcatW( file, exeW );
+    cmdline = HeapAlloc( GetProcessHeap(), 0, (strlenW(file) + strlenW(command) + 2) * sizeof(WCHAR) );
+    strcpyW( cmdline, file );
+    strcatW( cmdline, spaceW );
+    strcatW( cmdline, command );
+
+    memset( &st, 0, sizeof(STARTUPINFOW) );
+    st.cb = sizeof(STARTUPINFOW);
+
+    if (CreateProcessW( file, cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &st, &pi ))
+    {
+        WaitForSingleObject( pi.hProcess, INFINITE );
+        GetExitCodeProcess( pi.hProcess, &errorlevel );
+        if (errorlevel == STILL_ACTIVE) errorlevel = 0;
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }
+    else
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        WCMD_print_error ();
+        errorlevel = 9009;
+    }
+    HeapFree( GetProcessHeap(), 0, cmdline );
 }
 
 /****************************************************************************
