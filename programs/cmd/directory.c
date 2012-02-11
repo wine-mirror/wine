@@ -316,7 +316,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
     /* Output the results */
     if (!bare) {
-       if (level != 0 && (entry_count > 0)) WCMD_output_asis (newline);
+       if (level != 0 && (entry_count > 0)) WCMD_output_asis (newlineW);
        if (!recurse || ((entry_count > 0) && done_header==FALSE)) {
            static const WCHAR headerW[] = {'D','i','r','e','c','t','o','r','y',' ','o','f',
                                            ' ','%','1','\n','\n','\0'};
@@ -446,7 +446,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         }
       }
      }
-     if (addNewLine) WCMD_output_asis (newline);
+     if (addNewLine) WCMD_output_asis (newlineW);
      cur_width = 0;
     }
 

@@ -44,8 +44,8 @@ int defaultColor = 7;
 BOOL echo_mode = TRUE;
 
 WCHAR anykey[100], version_string[100];
-const WCHAR newline[] = {'\r','\n','\0'};
-const WCHAR space[]   = {' ','\0'};
+const WCHAR newlineW[] = {'\r','\n','\0'};
+const WCHAR spaceW[]   = {' ','\0'};
 
 static BOOL opt_c, opt_k, opt_s, unicodeOutput = FALSE;
 
@@ -318,7 +318,7 @@ void WCMD_print_error (void) {
   WCMD_output_asis_len(lpMsgBuf, lstrlenW(lpMsgBuf),
                        GetStdHandle(STD_ERROR_HANDLE));
   LocalFree (lpMsgBuf);
-  WCMD_output_asis_len (newline, lstrlenW(newline),
+  WCMD_output_asis_len (newlineW, lstrlenW(newlineW),
                         GetStdHandle(STD_ERROR_HANDLE));
   return;
 }
@@ -1550,7 +1550,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         WCMD_type (p);
 	break;
       case WCMD_VER:
-        WCMD_output_asis(newline);
+        WCMD_output_asis(newlineW);
         WCMD_version ();
         break;
       case WCMD_VERIFY:
@@ -1813,7 +1813,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     if (strlenW(extraSpace) == MAXSTRING -1) {
         WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_TRUNCATEDLINE));
         WCMD_output_asis_stderr(extraSpace);
-        WCMD_output_asis_stderr(newline);
+        WCMD_output_asis_stderr(newlineW);
     }
 
     /* Replace env vars if in a batch context */
@@ -1834,9 +1834,9 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
           && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
                          extraSpace, min_len, echoCol, len) != CSTR_EQUAL)
       {
-          WCMD_output_asis(space);
+          WCMD_output_asis(spaceW);
       }
-      WCMD_output_asis(newline);
+      WCMD_output_asis(newlineW);
     }
 
     /* Start with an empty string, copying to the command string */
@@ -2172,7 +2172,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
         /* Continue to echo commands IF echo is on and in batch program */
         if (context && echo_mode && extraSpace[0] && (extraSpace[0] != '@')) {
           WCMD_output_asis(extraSpace);
-          WCMD_output_asis(newline);
+          WCMD_output_asis(newlineW);
         }
       }
     }

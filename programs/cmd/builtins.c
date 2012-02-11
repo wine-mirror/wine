@@ -349,7 +349,7 @@ void WCMD_choice (const WCHAR * command) {
         ptr = strchrW(opt_c, answer[0]);
         if (ptr) {
             WCMD_output_asis(answer);
-            WCMD_output_asis(newline);
+            WCMD_output_asis(newlineW);
             if (have_console)
                 SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), oldmode);
 
@@ -954,7 +954,7 @@ void WCMD_echo (const WCHAR *command)
     echo_mode = FALSE;
   else {
     WCMD_output_asis (command);
-    WCMD_output_asis (newline);
+    WCMD_output_asis (newlineW);
   }
   HeapFree(GetProcessHeap(), 0, trimmed);
 }
@@ -2101,7 +2101,7 @@ void WCMD_setshow_default (const WCHAR *command) {
 
   GetCurrentDirectoryW(sizeof(cwd)/sizeof(WCHAR), cwd);
   if (strlenW(command) == 0) {
-    strcatW (cwd, newline);
+    strcatW (cwd, newlineW);
     WCMD_output_asis (cwd);
   }
   else {
@@ -2264,7 +2264,7 @@ static int WCMD_setshow_sortenv(const WCHAR *s, const WCHAR *stub)
       /* Don't display special internal variables */
       if (str[i][0] != '=') {
         WCMD_output_asis(str[i]);
-        WCMD_output_asis(newline);
+        WCMD_output_asis(newlineW);
         displayedcount++;
       }
     }
@@ -2368,7 +2368,7 @@ void WCMD_setshow_path (const WCHAR *command) {
     if (status != 0) {
       WCMD_output_asis ( pathEqW);
       WCMD_output_asis ( string);
-      WCMD_output_asis ( newline);
+      WCMD_output_asis ( newlineW);
     }
     else {
       WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOPATH));
@@ -2488,7 +2488,7 @@ void WCMD_start(const WCHAR *command)
     strcatW( file, exeW );
     cmdline = HeapAlloc( GetProcessHeap(), 0, (strlenW(file) + strlenW(command) + 2) * sizeof(WCHAR) );
     strcpyW( cmdline, file );
-    strcatW( cmdline, space );
+    strcatW( cmdline, spaceW );
     strcatW( cmdline, command );
 
     memset( &st, 0, sizeof(STARTUPINFOW) );
@@ -2879,7 +2879,7 @@ void WCMD_assoc (const WCHAR *command, BOOL assoc) {
               if (rc == ERROR_SUCCESS) {
                 WCMD_output_asis(keyValue);
               }
-              WCMD_output_asis(newline);
+              WCMD_output_asis(newlineW);
               RegCloseKey(readKey);
             }
           }
@@ -2909,7 +2909,7 @@ void WCMD_assoc (const WCHAR *command, BOOL assoc) {
           WCMD_output_asis(equalW);
           /* If no default value found, leave line empty after '=' */
           if (rc == ERROR_SUCCESS) WCMD_output_asis(keyValue);
-          WCMD_output_asis(newline);
+          WCMD_output_asis(newlineW);
           RegCloseKey(readKey);
 
         } else {
@@ -2982,7 +2982,7 @@ void WCMD_assoc (const WCHAR *command, BOOL assoc) {
             WCMD_output_asis(command);
             WCMD_output_asis(equalW);
             WCMD_output_asis(newValue);
-            WCMD_output_asis(newline);
+            WCMD_output_asis(newlineW);
           }
         }
       }

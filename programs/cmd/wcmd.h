@@ -231,8 +231,8 @@ extern BATCH_CONTEXT *context;
 #define WCMD_EXIT     45
 
 /* Some standard messages */
-extern const WCHAR newline[];
-extern const WCHAR space[];
+extern const WCHAR newlineW[];
+extern const WCHAR spaceW[];
 extern const WCHAR nullW[];
 extern const WCHAR dotW[];
 extern const WCHAR dotdotW[];

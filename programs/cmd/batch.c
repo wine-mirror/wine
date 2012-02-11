@@ -475,13 +475,13 @@ void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
       int datelen;
 
       doneModifier = TRUE;
-      if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
+      if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
 
       /* Format the time */
       FileTimeToSystemTime(&fileInfo.ftLastWriteTime, &systime);
       GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &systime,
                         NULL, thisoutput, MAX_PATH);
-      strcatW(thisoutput, space);
+      strcatW(thisoutput, spaceW);
       datelen = strlenW(thisoutput);
       GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &systime,
                         NULL, (thisoutput+datelen), MAX_PATH-datelen);
@@ -497,14 +497,14 @@ void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
       static const WCHAR fmt[] = {'%','u','\0'};
 
       doneModifier = TRUE;
-      if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
+      if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
       wsprintfW(thisoutput, fmt, fullsize);
       strcatW(finaloutput, thisoutput);
     }
 
     /* 4. Handle 's' : Use short paths (File doesn't have to exist) */
     if (memchrW(firstModifier, 's', modifierLen) != NULL) {
-      if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
+      if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
       /* Don't flag as doneModifier - %~s on its own is processed later */
       GetShortPathNameW(outputparam, outputparam, sizeof(outputparam)/sizeof(outputparam[0]));
     }
@@ -513,7 +513,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
     /*      Note this overrides d,p,n,x                                 */
     if (memchrW(firstModifier, 'f', modifierLen) != NULL) {
       doneModifier = TRUE;
-      if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
+      if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
       strcatW(finaloutput, fullfilename);
     } else {
 
@@ -523,7 +523,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
       WCHAR ext[MAX_PATH];
       BOOL doneFileModifier = FALSE;
 
-      if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
+      if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
 
       /* Split into components */
       WCMD_splitpath(fullfilename, drive, dir, fname, ext);
@@ -560,7 +560,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
       if (!doneFileModifier &&
           memchrW(firstModifier, 's', modifierLen) != NULL) {
         doneModifier = TRUE;
-        if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
+        if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
         strcatW(finaloutput, outputparam);
       }
     }
