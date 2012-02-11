@@ -27,7 +27,7 @@ msgid ""
 "drive, click Install."
 msgstr ""
 "Aby dodać program z dysku, płyty CD-ROM lub dyskietki, kliknij przycisk "
-"Zainstaluj"
+"Zainstaluj."
 
 #: appwiz.rc:59
 msgid "&Install..."
@@ -795,7 +795,7 @@ msgstr "Nie znaleziono pliku"
 
 #: comdlg32.rc:30
 msgid "Please verify that the correct file name was given"
-msgstr "Sprawdź, czy podana nazwa pliku jest prawidłowa."
+msgstr "Sprawdź, czy podana nazwa pliku jest prawidłowa"
 
 #: comdlg32.rc:31
 msgid ""
@@ -935,7 +935,7 @@ msgstr "Biały"
 
 #: comdlg32.rc:52
 msgid "Unreadable Entry"
-msgstr "Składnia zakresu stron jest nieprawidłowa."
+msgstr "Składnia zakresu stron jest nieprawidłowa"
 
 #: comdlg32.rc:54
 msgid ""
@@ -943,7 +943,7 @@ msgid ""
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Ta wartość nie leży w zakresie stron.\n"
-"Wprowadź wartość pomiędzy %1!d! i %2!d!.."
+"Wprowadź wartość pomiędzy %1!d! i %2!d!."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -5050,7 +5050,7 @@ msgstr "Wykonaj operację nawet gdy nic się nie zmieniło\n"
 
 #: winerror.mc:1896
 msgid "The user profile is invalid\n"
-msgstr "Profil użytkownika jest niepoprawny.\n"
+msgstr "Profil użytkownika jest niepoprawny\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
@@ -7217,7 +7217,7 @@ msgstr ""
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
-msgstr "Wstawia zawartość schowka do dokumentu"
+msgstr "Wstawia zawartość schowka do dokumentu."
 
 #: oledlg.rc:41
 msgid "Unknown Type"
@@ -8004,7 +8004,7 @@ msgstr "Nie mogę utworzyć nowego katalogu: Brak dostępu."
 
 #: shell32.rc:167
 msgid "Error during creation of a new folder"
-msgstr "Błąd przy tworzeniu nowego katalogu."
+msgstr "Błąd przy tworzeniu nowego katalogu"
 
 #: shell32.rc:168
 msgid "Confirm file deletion"
@@ -8559,7 +8559,8 @@ msgstr "Sterownik urządzenia nie jest gotowy."
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr ""
-"Wystąpił problem podczas inicjowania MCI. Spróbuj uruchomić ponownie Windowsa"
+"Wystąpił problem podczas inicjowania MCI. Spróbuj uruchomić ponownie "
+"Windowsa."
 
 #: winmm.rc:75
 msgid ""
@@ -8892,7 +8893,7 @@ msgid ""
 "these applications; then, try again."
 msgstr ""
 "Wszystkie czasomierze multimediów są używane przez inne aplikacje. Zamknij "
-"jedną z nich i spróbuj ponownie.."
+"jedną z nich i spróbuj ponownie."
 
 #: winmm.rc:128
 msgid "The system doesn't have a current MIDI port specified."
@@ -9308,7 +9309,7 @@ msgstr "CHDIR <katalog> zmienia aktualny domyślny katalog.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS czyści ekran konsoli\n"
+msgstr "CLS czyści ekran konsoli.\n"
 
 #: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
@@ -9368,7 +9369,7 @@ msgstr ""
 "Składnia: FOR %zmienna IN (zbiór) DO polecenie\n"
 "\n"
 "Wymóg powtarzania znaku %, gdy używamy komendy FOR w pliku bat nie\n"
-"istnieje w cmd\n"
+"istnieje w cmd.\n"
 
 #: cmd.rc:81
 msgid ""
@@ -9686,7 +9687,7 @@ msgid ""
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
 "PUSHD <nazwakatalogu> zapamiętuje aktualny katalog na stosie, a\n"
-"następnie przechodzi do katalogu podanego jako parametr\n"
+"następnie przechodzi do katalogu podanego jako parametr.\n"
 
 #: cmd.rc:222
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
@@ -10652,7 +10653,7 @@ msgstr "Uruchom Edytor Rejestrów Wine"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
-msgstr "Zakończ aplikację. Możesz zostać zapytany, czy zapisać zmiany."
+msgstr "Zakończ aplikację. Możesz zostać zapytany, czy zapisać zmiany"
 
 #: oleview.rc:108
 msgid "Create an instance of the selected object"
@@ -11232,7 +11233,7 @@ msgstr "Zawiera polecenia wyświetlające informacje o programie"
 
 #: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
-msgstr "Zawiera polecenia do tworzenia nowych kluczy lub wartości."
+msgstr "Zawiera polecenia do tworzenia nowych kluczy lub wartości"
 
 #: regedit.rc:124
 msgid "Data"
@@ -11797,7 +11798,7 @@ msgid ""
 "allowed to execute on."
 msgstr ""
 "Koligacja Procesora pozwala ustalić na których procesorach można uruchamiać "
-"ten proces"
+"ten proces."
 
 #: taskmgr.rc:446
 msgid "CPU 0"
@@ -11935,7 +11936,7 @@ msgstr "Wybierz kolumny"
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
 msgstr ""
-"Wybierz kolumny, które będą widoczne na zakładce Procesy Menedżera Procesów"
+"Wybierz kolumny, które będą widoczne na zakładce Procesy Menedżera Procesów."
 
 #: taskmgr.rc:521
 msgid "&Image Name"
@@ -13133,7 +13134,7 @@ msgstr "Błąd konfiguracji"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
-msgstr "Wielkość bufora ekranu musi być większa niż wielkość bufora okna."
+msgstr "Wielkość bufora ekranu musi być większa niż wielkość bufora okna"
 
 #: wineconsole.rc:34
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
@@ -13439,7 +13440,7 @@ msgstr "Wprowadzanie ustawień czcionki"
 
 #: winefile.rc:90
 msgid "Error while selecting new font."
-msgstr "Błąd przy wybieraniu czcionki"
+msgstr "Błąd przy wybieraniu czcionki."
 
 #: winefile.rc:95
 msgid "Wine File Manager"
