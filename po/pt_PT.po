@@ -8981,7 +8981,7 @@ msgstr ""
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
-msgstr "Um bloco de parâmetro nulo foi passado para o MCI.."
+msgstr "Um bloco de parâmetro nulo foi passado para o MCI."
 
 #: winmm.rc:93
 msgid "Cannot save an unnamed file. Supply a filename."
@@ -9602,7 +9602,7 @@ msgstr "Ajuda do comando CHDIR\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS limpa a ecrã da consola\n"
+msgstr "CLS limpa a ecrã da consola.\n"
 
 #: cmd.rc:45
 #, fuzzy
@@ -10993,7 +10993,7 @@ msgstr "Iniciar o Editor de Registo do Wine"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
-msgstr "Sair da aplicação. Pede para guardar alterações."
+msgstr "Sair da aplicação. Pede para guardar alterações"
 
 #: oleview.rc:108
 msgid "Create an instance of the selected object"
@@ -11574,26 +11574,26 @@ msgstr "Editar Multi-frase"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
-msgstr "Contém comandos para trabalhar com o Registo inteiro."
+msgstr "Contém comandos para trabalhar com o Registo inteiro"
 
 #: regedit.rc:135
 msgid "Contains commands for editing values or keys"
-msgstr "Contém comandos para edição de valores ou chaves."
+msgstr "Contém comandos para edição de valores ou chaves"
 
 #: regedit.rc:136
 msgid "Contains commands for customising the registry window"
-msgstr "Contém comandos para personalização da janela do Registo."
+msgstr "Contém comandos para personalização da janela do Registo"
 
 #: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
-msgstr "Contém comandos para aceder a chaves frequentemente usadas."
+msgstr "Contém comandos para aceder a chaves frequentemente usadas"
 
 #: regedit.rc:138
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
 "Contém comandos para exibição da ajuda e informações sobre o Editor do "
-"Registo."
+"Registo"
 
 #: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
@@ -11643,51 +11643,51 @@ msgstr "(desconhecido %d)"
 
 #: regedit.rc:160
 msgid "Quits the registry editor"
-msgstr "Encerra o Editor de Registo."
+msgstr "Encerra o Editor de Registo"
 
 #: regedit.rc:161
 msgid "Adds keys to the favorites list"
-msgstr "Adiciona chaves à lista de favoritos."
+msgstr "Adiciona chaves à lista de favoritos"
 
 #: regedit.rc:162
 msgid "Removes keys from the favorites list"
-msgstr "Remove chaves da lista de favoritos."
+msgstr "Remove chaves da lista de favoritos"
 
 #: regedit.rc:163
 msgid "Shows or hides the status bar"
-msgstr "Mostra ou oculta a barra de status."
+msgstr "Mostra ou oculta a barra de status"
 
 #: regedit.rc:164
 msgid "Change position of split between two panes"
-msgstr "Altera a posição da divisão entre os painéis."
+msgstr "Altera a posição da divisão entre os painéis"
 
 #: regedit.rc:165
 msgid "Refreshes the window"
-msgstr "Actualiza a janela."
+msgstr "Actualiza a janela"
 
 #: regedit.rc:166
 msgid "Deletes the selection"
-msgstr "Exclui a selecção."
+msgstr "Exclui a selecção"
 
 #: regedit.rc:167
 msgid "Renames the selection"
-msgstr "Renomeia a selecção."
+msgstr "Renomeia a selecção"
 
 #: regedit.rc:168
 msgid "Copies the name of the selected key to the clipboard"
-msgstr "Copia o nome da chave seleccionada para a Área de transferência."
+msgstr "Copia o nome da chave seleccionada para a Área de transferência"
 
 #: regedit.rc:169
 msgid "Finds a text string in a key, value or data"
-msgstr "Localiza um texto numa chave, valor ou dado."
+msgstr "Localiza um texto numa chave, valor ou dado"
 
 #: regedit.rc:170
 msgid "Finds next occurrence of text specified in previous search"
-msgstr "Localiza a próxima ocorrência do texto indicado na pesquisa anterior."
+msgstr "Localiza a próxima ocorrência do texto indicado na pesquisa anterior"
 
 #: regedit.rc:144
 msgid "Modifies the value's data"
-msgstr "Modifica os dados do valor."
+msgstr "Modifica os dados do valor"
 
 #: regedit.rc:145
 msgid "Adds a new key"
@@ -11695,31 +11695,31 @@ msgstr "Adiciona uma nova chave"
 
 #: regedit.rc:146
 msgid "Adds a new string value"
-msgstr "Adiciona um novo valor texto."
+msgstr "Adiciona um novo valor texto"
 
 #: regedit.rc:147
 msgid "Adds a new binary value"
-msgstr "Adiciona um novo valor binário."
+msgstr "Adiciona um novo valor binário"
 
 #: regedit.rc:148
 msgid "Adds a new double word value"
-msgstr "Adiciona um novo valor DWORD."
+msgstr "Adiciona um novo valor DWORD"
 
 #: regedit.rc:150
 msgid "Imports a text file into the registry"
-msgstr "Importa um ficheiro de texto para o registo."
+msgstr "Importa um ficheiro de texto para o registo"
 
 #: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
-msgstr "Exporta todo ou parte do registo para um ficheiro de texto."
+msgstr "Exporta todo ou parte do registo para um ficheiro de texto"
 
 #: regedit.rc:153
 msgid "Prints all or part of the registry"
-msgstr "Imprime todo ou parte do registo."
+msgstr "Imprime todo ou parte do registo"
 
 #: regedit.rc:155
 msgid "Displays program information, version number and copyright"
-msgstr "Exibe informações do programa, número da versão e direitos de autor."
+msgstr "Exibe informações do programa, número da versão e direitos de autor"
 
 #: regedit.rc:178
 msgid "Can't query value '%s'"
@@ -12447,7 +12447,7 @@ msgstr "Esconder o Gestor de Tarefas quando está minimizado"
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
 msgstr ""
 "Forçar o Gestor de Tarefas a actualizar agora, independentemente da "
-"velocidade de actualização definida."
+"velocidade de actualização definida"
 
 #: taskmgr.rc:193
 msgid "Displays tasks by using large icons"
