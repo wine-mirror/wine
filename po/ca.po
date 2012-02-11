@@ -2089,7 +2089,7 @@ msgstr "Renúncia"
 
 #: cryptui.rc:228
 msgid "More &Info"
-msgstr "Més &Info."
+msgstr "Més &Info"
 
 #: cryptui.rc:236
 msgid "&Friendly name:"
@@ -9566,11 +9566,11 @@ msgstr ""
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
 "REN <nom de fitxer> és la versió curta de RENAME. Canvia el nom\n"
-"d'un fitxer\n"
+"d'un fitxer.\n"
 
 #: cmd.rc:157
 msgid "RENAME <filename> renames a file.\n"
-msgstr "REN <nom de fitxer> canvia el nom d'un fitxer\n"
+msgstr "REN <nom de fitxer> canvia el nom d'un fitxer.\n"
 
 #: cmd.rc:159
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
