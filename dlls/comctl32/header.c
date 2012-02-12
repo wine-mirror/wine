@@ -1241,6 +1241,14 @@ HEADER_SetOrderArray(HEADER_INFO *infoPtr, INT size, const INT *order)
     if ((UINT)size != infoPtr->uNumItem)
       return FALSE;
 
+    if (TRACE_ON(header))
+    {
+        TRACE("count=%d, order array={", size);
+        for (i = 0; i < size; i++)
+            TRACE("%d%c", order[i], i != size-1 ? ',' : '}');
+        TRACE("\n");
+    }
+
     for (i=0; i<size; i++)
     {
         if (order[i] >= size || order[i] < 0)
