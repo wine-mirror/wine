@@ -1034,6 +1034,15 @@ static void test_TBS_AUTOTICKS(void)
     ret = SendMessage(hWnd, TBM_GETNUMTICS, 0, 0);
     expect(91, ret);
 
+    ret = SendMessage(hWnd, TBM_SETRANGEMIN, TRUE, 0);
+    expect(0, ret);
+
+    /* TBM_SETRANGE rebuilds tics */
+    ret = SendMessage(hWnd, TBM_SETRANGE, TRUE, MAKELONG(10, 200));
+    expect(0, ret);
+    ret = SendMessage(hWnd, TBM_GETNUMTICS, 0, 0);
+    expect(191, ret);
+
     DestroyWindow(hWnd);
 }
 
