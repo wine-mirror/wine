@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-28 19:54+0100\n"
+"PO-Revision-Date: 2012-02-12 07:41+0100\n"
 "Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: Polish\n"
@@ -1036,7 +1036,7 @@ msgstr "Błąd; "
 
 #: comdlg32.rc:82
 msgid "Pending deletion; "
-msgstr "Oczekiwanie na usunięcie"
+msgstr "Oczekiwanie na usunięcie; "
 
 #: comdlg32.rc:83
 msgid "Paper jam; "
@@ -2017,7 +2017,7 @@ msgstr "Zasady certyfikatu"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "Identyfikator zasad"
+msgstr "Identyfikator zasad: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -2181,9 +2181,8 @@ msgid "&File name:"
 msgstr "&Nazwa pliku:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
-#, fuzzy
 msgid "B&rowse..."
-msgstr "Przeglądaj..."
+msgstr "P&rzeglądaj..."
 
 #: cryptui.rc:294
 msgid ""
@@ -2955,7 +2954,7 @@ msgstr "Odtwarzacz"
 
 #: dinput.rc:49
 msgid "Device"
-msgstr "Urządzenie:"
+msgstr "Urządzenie"
 
 #: dinput.rc:50
 msgid "Actions"
@@ -3063,7 +3062,7 @@ msgstr "Skopiuj wybrane"
 
 #: gphoto2.rc:32
 msgid "Preview"
-msgstr ""
+msgstr "Podgląd"
 
 #: gphoto2.rc:33
 msgid "Import All"
@@ -3071,7 +3070,7 @@ msgstr "Skopiuj wszystkie"
 
 #: gphoto2.rc:34
 msgid "Skip This Dialog"
-msgstr ""
+msgstr "Pomiń to okno dialogowe"
 
 #: gphoto2.rc:35
 msgid "Exit"
@@ -3090,9 +3089,8 @@ msgid "Connecting to camera"
 msgstr "Nawiązywanie połączenia z aparatem"
 
 #: gphoto2.rc:52
-#, fuzzy
 msgid "Connecting to camera... Please Wait"
-msgstr "Nawiązywanie połączenia z aparatem..."
+msgstr "Nawiązywanie połączenia z aparatem... Proszę czekać"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -3309,7 +3307,7 @@ msgstr "Użyj pu&stej"
 
 #: inetcpl.rc:53
 msgid "Browsing history"
-msgstr "Historia przeglądania "
+msgstr "Historia przeglądania"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3406,7 +3404,7 @@ msgstr ""
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
-msgstr "&Poziom zabezpieczeń dla tej strefy"
+msgstr "Poziom zabezpieczeń dla tej strefy: "
 
 #: inetcpl.rc:31
 msgid "Custom"
@@ -7984,15 +7982,15 @@ msgstr "Przykładowe wideo"
 
 #: shell32.rc:229
 msgid "Saved Games"
-msgstr ""
+msgstr "Zapisane gry"
 
 #: shell32.rc:230
 msgid "Searches"
-msgstr ""
+msgstr "Wyszukiwania"
 
 #: shell32.rc:231
 msgid "Users"
-msgstr ""
+msgstr "Użytkownicy"
 
 #: shell32.rc:233
 msgid "Downloads"
@@ -8045,7 +8043,7 @@ msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr ""
 "Czy jesteś pewien, że chcesz umieścić folder '%1' i całą jego zawartość w "
-"koszu"
+"koszu?"
 
 #: shell32.rc:173
 msgid "Are you sure that you want to send '%1' to the Trash?"
@@ -8286,7 +8284,7 @@ msgstr "&Zapamiętaj to hasło (niebezpieczne)"
 
 #: wininet.rc:54
 msgid "Authentication Required"
-msgstr "Wymagane uwierzytelnienie "
+msgstr "Wymagane uwierzytelnienie"
 
 #: wininet.rc:58
 msgid "Server"
@@ -8822,7 +8820,7 @@ msgid ""
 msgstr ""
 "Nie zainstalowano żadnego urządzenia dźwiękowego WAVE, które mogłoby "
 "odtwarzać pliki w bieżącym formacie. Aby zainstalować urządzenie wave, "
-"przejdź do Panelu sterowania, a następnie kliknij ikonę Dodaj sprzęt. "
+"przejdź do Panelu sterowania, a następnie kliknij ikonę Dodaj sprzęt."
 
 #: winmm.rc:115
 msgid ""
@@ -8872,7 +8870,7 @@ msgid ""
 msgstr ""
 "Określone urządzenie MIDI nie jest zainstalowane w systemie. Aby "
 "zainstalować sterownik, przejdź do Panelu sterowania, a następnie kliknij "
-"ikonę Dodaj sprzęt. "
+"ikonę Dodaj sprzęt."
 
 #: winmm.rc:125
 msgid ""
@@ -9364,8 +9362,8 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
-"Komenda FOR służy do uruchomienia komendy dla każdego z plików ze\n"
-"zbioru.\n"
+"Komenda FOR służy do uruchomienia komendy dla każdego z plików ze zbioru.\n"
+"\n"
 "Składnia: FOR %zmienna IN (zbiór) DO polecenie\n"
 "\n"
 "Wymóg powtarzania znaku %, gdy używamy komendy FOR w pliku bat nie\n"
@@ -9384,13 +9382,16 @@ msgid ""
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
-"Komenda GOTO przenosi kursor do innego miejsca w pliku bat.\n"
+"Komenda GOTO przenosi kursor do innego miejsca\n"
+"w pliku bat.\n"
 "\n"
 "Etykieta, która jest celem skoku (komendy GOTO) może mieć maksymalnie\n"
 "255 znaków długości, nie może zawierać spacji. Jeżeli są dwie (lub\n"
 "więcej) etykiety o takich samych nazwach skok zostanie wykonany do\n"
 "pierwszej z nich. Jeżeli etykieta nie istnieje wykonywanie pliku zostaje\n"
 "przerwane.\n"
+"\n"
+"GOTO nie przynosi żadnego efektu, gdy jest używane interaktywnie.\n"
 
 #: cmd.rc:84
 msgid ""
@@ -9472,10 +9473,11 @@ msgid ""
 "variable, for example:\n"
 "PATH %PATH%;c:\\temp\n"
 msgstr ""
-"PATH wyświetla lub zmienia ścieżkę w której wyszukuje cmd.\n"
+"PATH wyświetla lub zmienia ścieżkę, w której wyszukuje cmd.\n"
 "\n"
-"Komenda PATH bez parametrów wyświetla aktualną ścieżkę. Aby ją\n"
-"zmienić należy wywołać PATH za którym występuje nowa ścieżka.\n"
+"Polecenie PATH wyświetli ustawienie obecnej ŚCIEŻKI (wstępnie wzięte\n"
+"z rejestru). Aby zmienić ustawienie dodaj do\n"
+"polecenia PATH nową wartość ścieżki.\n"
 "\n"
 "Umieszczenie wyrażenia %PATH% przy podawaniu nowej ścieżki\n"
 "powoduje wstawienie starej ścieżki, na przykład:\n"
@@ -9614,7 +9616,6 @@ msgstr ""
 "wywoływane z linii komend.\n"
 
 #: cmd.rc:176
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9645,7 +9646,7 @@ msgstr ""
 "/R[estored]  Uruchamia program normalnie (bez minimalizacji ani "
 "maksymalizacji).\n"
 "/W[ait]      Zaczekaj aż program zakończy działanie (i zakończ\n"
-"\t     kodem wyjścia programu).\n"
+"kodem wyjścia programu).\n"
 "/Unix        Użyj Uniksowej nazwy pliku i uruchom plik tak jak w eksplorerze "
 "windowsa.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
@@ -9722,7 +9723,7 @@ msgstr ""
 "\n"
 "Zmiany środowiska dokonane po SETLOCAL są lokalne dla pliku wsadowego\n"
 "i są ważne do wystąpienia ENDLOCAL (lub na końcu pliku\n"
-"cokolwiek nastąpi pierwsze), przy którym zostają przywrócone poprzednie "
+"cokolwiek nastąpi pierwsze), przy którym zostają przywrócone poprzednie\n"
 "ustawienia środowiska.\n"
 
 #: cmd.rc:236
@@ -9805,7 +9806,6 @@ msgstr ""
 "lub powłoki, w której uruchomiono cmd.\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9875,6 +9875,7 @@ msgstr ""
 "RD (RMDIR)\tUsuwa katalog\n"
 "SET\t\tUstawia lub wyświetla zmienne środowiskowe\n"
 "SETLOCAL\tPoczątek zmiany ustawień regionalnych środowiska w pliku wsadowym\n"
+"START\t\tUruchom program lub otwórz dokument w skojarzonym programie\n"
 "TIME\t\tUstawia lub wyświetla czas\n"
 "TITLE\t\tUstawia tytuł okna CMD\n"
 "TYPE\t\tWyświetla zawartość pliku\n"
@@ -10626,8 +10627,8 @@ msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
-"Te ustawienia zmieniają tylko wartości w rejestrze. Nie mają wpływu na "
-"zachowanie Wine."
+"Te ustawienia zmieniają tylko wartości w rejestrze.\n"
+"Nie mają wpływu na zachowanie Wine."
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
@@ -10973,7 +10974,7 @@ msgstr "Zmień &ikonę..."
 
 #: progman.rc:189
 msgid "Change Icon"
-msgstr ""
+msgstr "Zmień ikonę"
 
 #: progman.rc:191
 msgid "&Filename:"
@@ -11485,8 +11486,8 @@ msgstr ""
 "/MAX[ymalizowany] Uruchamia program zmaksymalizowany.\n"
 "/R[estored]  Uruchamia program normalnie (bez minimalizacji ani "
 "maksymalizacji).\n"
-"/W[ait]      Zaczekaj aż program zakończy działanie (i zakończ\n"
-"\t     kodem wyjścia programu).\n"
+"/W[ait]      Zaczekaj aż program zakończy działanie (i zakończkodem wyjścia "
+"programu).\n"
 "/Unix        Użyj Uniksowej nazwy pliku i uruchom plik tak jak w eksplorerze "
 "windowsa.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
@@ -11520,12 +11521,10 @@ msgstr ""
 "start.exe wersja 0.2 Prawa autorskie (C) 2003, Dan Kegel\n"
 "Ten program jest wolnym oprogramowaniem; wolno ci je rozpowszechniać i/lub\n"
 "modyfikować zgodnie z warunkami zawartymi w GNU Lesser General Public "
-"License\n"
-"(z ang. Mniejsza Powszechna Licencja Publiczna GNU)\n"
+"License (z ang. Mniejsza Powszechna Licencja Publiczna GNU)\n"
 "opublikowanej przez Free Software Foundation (z ang. Fundacja Wolnego "
-"Oprogramowania);\n"
-"albo w wersji 2.1 licencji lub (do twojego wyboru) jakiejkolwiek późniejszej "
-"wersji.\n"
+"Oprogramowania); albo w wersji 2.1\n"
+"licencji lub (do twojego wyboru) jakiejkolwiek późniejszej wersji.\n"
 "\n"
 "Ten program jest rozpowszechniany w nadziei, że będzie użyteczny,\n"
 "ale BEZ ŻADNEJ GWARANCJI; nawet bez odpowiedzialności za dorozumianą "
@@ -12486,7 +12485,7 @@ msgstr ""
 
 #: winecfg.rc:134
 msgid "Windows registration information"
-msgstr "Informacje do rejestracji w Windows "
+msgstr "Informacje do rejestracji w Windows"
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12556,7 +12555,7 @@ msgstr "Oto przykład zastosowania 10-punktowej czcionki Tahoma"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
-msgstr "Zastąpione biblioteki DLL "
+msgstr "Zastąpione biblioteki DLL"
 
 #: winecfg.rc:183
 msgid ""
@@ -12670,7 +12669,7 @@ msgstr "Diagnostyka sterownika"
 
 #: winecfg.rc:258
 msgid "Defaults"
-msgstr "Domyślne "
+msgstr "Domyślne"
 
 #: winecfg.rc:259
 msgid "Output device:"
@@ -12694,7 +12693,7 @@ msgstr "Test dźwięku"
 
 #: winecfg.rc:274
 msgid "Appearance"
-msgstr "Wygląd "
+msgstr "Wygląd"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -13096,7 +13095,7 @@ msgstr "&Kolor"
 
 #: wineconsole.rc:97
 msgid "Configuration"
-msgstr "Konfiguracja "
+msgstr "Konfiguracja"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
@@ -14214,7 +14213,8 @@ msgstr ""
 "[/H]  Kopiuje również pliki ukryte i systemowe.\n"
 "[/C]  Kontynuuje nawet jeżeli podczas kopiowania wystąpiły błędy.\n"
 "[/A]  Kopiuje tylko pliki z atrybutem archiwalny.\n"
-"[/M]  Kopiuje tylko pliki z atrybutem archiwalny i usuwa ten atrybut.\n"
+"[/M]  Kopiuje tylko pliki z atrybutem archiwalny\n"
+"\ti usuwa ten atrybut.\n"
 "[/D | /D:m-d-y] Kopiuje tylko nowe pliki lub te zmodyfikowane po podanej "
 "dacie.\n"
 "\t\tJeżeli nie podano żadnej daty, to kopiowane są pliki, które są\n"
