@@ -1455,9 +1455,11 @@ static void test_token_attr(void)
     Size = 0;
     ret = GetTokenInformation(Token, TokenGroups, Groups, Size2, &Size);
     ok(Size > 1, "got %d\n", Size);
-    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+    ok((!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER) || broken(ret) /* wow64 */,
         "%d with error %d\n", ret, GetLastError());
-    ok(*((BYTE*)Groups) == 0xcc, "buffer altered\n");
+    if(!ret)
+        ok(*((BYTE*)Groups) == 0xcc, "buffer altered\n");
+
     HeapFree(GetProcessHeap(), 0, Groups);
 
     SetLastError(0xdeadbeef);
