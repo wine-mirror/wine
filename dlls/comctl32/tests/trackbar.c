@@ -982,6 +982,43 @@ static void test_initial_state(void)
     expect(-1, ret);
     ret = SendMessage(hWnd, TBM_GETTICPOS, 0, 0);
     expect(-1, ret);
+    ret = SendMessage(hWnd, TBM_GETRANGEMIN, 0, 0);
+    expect(0, ret);
+    ret = SendMessage(hWnd, TBM_GETRANGEMAX, 0, 0);
+    expect(100, ret);
+
+    ret = SendMessage(hWnd, TBM_SETRANGEMAX, TRUE, 200);
+    expect(0, ret);
+
+    ret = SendMessage(hWnd, TBM_GETNUMTICS, 0, 0);
+    expect(2, ret);
+
+    DestroyWindow(hWnd);
+}
+
+static void test_TBS_AUTOTICKS(void)
+{
+    HWND hWnd;
+    int ret;
+
+    hWnd = create_trackbar(TBS_AUTOTICKS, hWndParent);
+
+    ret = SendMessage(hWnd, TBM_GETNUMTICS, 0, 0);
+    expect(2, ret);
+    ret = SendMessage(hWnd, TBM_GETTIC, 0, 0);
+    expect(-1, ret);
+    ret = SendMessage(hWnd, TBM_GETTICPOS, 0, 0);
+    expect(-1, ret);
+    ret = SendMessage(hWnd, TBM_GETRANGEMIN, 0, 0);
+    expect(0, ret);
+    ret = SendMessage(hWnd, TBM_GETRANGEMAX, 0, 0);
+    expect(100, ret);
+
+    ret = SendMessage(hWnd, TBM_SETRANGEMAX, TRUE, 200);
+    expect(0, ret);
+
+    ret = SendMessage(hWnd, TBM_GETNUMTICS, 0, 0);
+    expect(201, ret);
 
     DestroyWindow(hWnd);
 }
@@ -1031,6 +1068,7 @@ START_TEST(trackbar)
     test_tic_placement(hWndTrackbar);
     test_tool_tips(hWndTrackbar);
     test_unicode(hWndTrackbar);
+    test_TBS_AUTOTICKS();
 
     flush_sequences(sequences, NUM_MSG_SEQUENCE);
     DestroyWindow(hWndTrackbar);

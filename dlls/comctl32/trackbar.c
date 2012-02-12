@@ -1176,8 +1176,10 @@ TRACKBAR_SetRange (TRACKBAR_INFO *infoPtr, BOOL fRedraw, LONG lRange)
 
 
 static inline LRESULT
-TRACKBAR_SetRangeMax (TRACKBAR_INFO *infoPtr, BOOL fRedraw, LONG lMax)
+TRACKBAR_SetRangeMax (TRACKBAR_INFO *infoPtr, BOOL redraw, LONG lMax)
 {
+    BOOL changed = infoPtr->lRangeMax != lMax;
+
     infoPtr->lRangeMax = lMax;
     if (infoPtr->lPos > infoPtr->lRangeMax) {
         infoPtr->lPos = infoPtr->lRangeMax;
@@ -1187,7 +1189,10 @@ TRACKBAR_SetRangeMax (TRACKBAR_INFO *infoPtr, BOOL fRedraw, LONG lMax)
     infoPtr->lPageSize = (infoPtr->lRangeMax - infoPtr->lRangeMin) / 5;
     if (infoPtr->lPageSize == 0) infoPtr->lPageSize = 1;
 
-    if (fRedraw) TRACKBAR_InvalidateAll(infoPtr);
+    if (changed && (infoPtr->dwStyle & TBS_AUTOTICKS))
+        TRACKBAR_RecalculateTics (infoPtr);
+
+    if (redraw) TRACKBAR_InvalidateAll(infoPtr);
 
     return 0;
 }
