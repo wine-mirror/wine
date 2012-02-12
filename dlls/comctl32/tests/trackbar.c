@@ -993,6 +993,12 @@ static void test_initial_state(void)
     ret = SendMessage(hWnd, TBM_GETNUMTICS, 0, 0);
     expect(2, ret);
 
+    ret = SendMessage(hWnd, TBM_SETRANGEMIN, TRUE, 10);
+    expect(0, ret);
+
+    ret = SendMessage(hWnd, TBM_GETNUMTICS, 0, 0);
+    expect(2, ret);
+
     DestroyWindow(hWnd);
 }
 
@@ -1014,11 +1020,19 @@ static void test_TBS_AUTOTICKS(void)
     ret = SendMessage(hWnd, TBM_GETRANGEMAX, 0, 0);
     expect(100, ret);
 
+    /* TBM_SETRANGEMAX rebuilds tics */
     ret = SendMessage(hWnd, TBM_SETRANGEMAX, TRUE, 200);
     expect(0, ret);
-
     ret = SendMessage(hWnd, TBM_GETNUMTICS, 0, 0);
     expect(201, ret);
+
+    /* TBM_SETRANGEMIN rebuilds tics */
+    ret = SendMessage(hWnd, TBM_SETRANGEMAX, TRUE, 100);
+    expect(0, ret);
+    ret = SendMessage(hWnd, TBM_SETRANGEMIN, TRUE, 10);
+    expect(0, ret);
+    ret = SendMessage(hWnd, TBM_GETNUMTICS, 0, 0);
+    expect(91, ret);
 
     DestroyWindow(hWnd);
 }
