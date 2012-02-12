@@ -200,9 +200,7 @@ static void test_PrintDlgA(void)
 
         /* The Driver Entry does not include a Path */
         ptr = strrchr(driver, '\\');
-        todo_wine {
         ok( ptr == NULL, "got %p for '%s' (expected NULL for a simple name)\n", ptr, driver);
-        }
 
         /* The Driver Entry does not have an extension (fixed to ".drv") */
         ptr = strrchr(driver, '.');
@@ -220,11 +218,8 @@ static void test_PrintDlgA(void)
             res, GetLastError(), ptr, buffer);
 
         if (ptr) ptr[0] = '\0';
-        todo_wine {
         ok( lstrcmpiA(driver, buffer) == 0,
             "got driver '%s' (expected '%s')\n", driver, buffer);
-        }
-
     }
 
     GlobalUnlock(pDlg->hDevNames);
