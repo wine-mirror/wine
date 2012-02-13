@@ -115,6 +115,7 @@ static BOOL fetch_next_frame32(struct cpu_stack_walk* csw,
         /* do a simple unwind using ebp
          * we assume a "regular" prologue in the function has been used
          */
+        if (!context->Ebp) return FALSE;
         context->Esp = context->Ebp + 2 * sizeof(DWORD);
         if (!sw_read_mem(csw, context->Ebp + sizeof(DWORD), &val32, sizeof(DWORD)))
         {
@@ -273,7 +274,6 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
     }
     else
     {
-        if (frame->AddrFrame.Offset == 0) goto done_err;
         if (frame->AddrFrame.Mode == AddrModeFlat)
         {
             assert(curr_mode == stm_32bit);
@@ -389,7 +389,8 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
                 frame->AddrPC = frame->AddrReturn;
                 frame->AddrStack.Offset = frame->AddrFrame.Offset + 2 * sizeof(WORD);
                 /* "pop up" previous BP value */
-                if (!sw_read_mem(csw, sw_xlat_addr(csw, &frame->AddrFrame),
+                if (!frame->AddrFrame.Offset ||
+                    !sw_read_mem(csw, sw_xlat_addr(csw, &frame->AddrFrame),
                                  &val16, sizeof(WORD)))
                     goto done_err;
                 frame->AddrFrame.Offset = val16;
