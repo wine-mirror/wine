@@ -223,7 +223,8 @@ static WCHAR *FindHTMLHelpSetting(HHInfo *info, const WCHAR *extW)
     WCHAR *filename;
     HRESULT hr;
 
-    filename = heap_alloc(strlenW(info->pCHMInfo->compiledFile)+strlenW(periodW)+strlenW(extW)+1);
+    filename = heap_alloc( (strlenW(info->pCHMInfo->compiledFile)
+                            + strlenW(periodW) + strlenW(extW) + 1) * sizeof(WCHAR) );
     strcpyW(filename, info->pCHMInfo->compiledFile);
     strcatW(filename, periodW);
     strcatW(filename, extW);
