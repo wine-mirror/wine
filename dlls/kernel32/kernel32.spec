@@ -1019,6 +1019,7 @@
 @ stdcall -register RtlCaptureContext(ptr) ntdll.RtlCaptureContext
 @ stdcall RtlCaptureStackBackTrace(long long ptr ptr) ntdll.RtlCaptureStackBackTrace
 @ stdcall -arch=x86_64 RtlCompareMemory(ptr ptr long) ntdll.RtlCompareMemory
+@ cdecl -arch=x86_64 RtlDeleteFunctionTable(ptr) ntdll.RtlDeleteFunctionTable
 @ stdcall RtlFillMemory(ptr long long) ntdll.RtlFillMemory
 @ stdcall -arch=x86_64 RtlLookupFunctionEntry(long ptr ptr) ntdll.RtlLookupFunctionEntry
 @ stdcall RtlMoveMemory(ptr ptr long) ntdll.RtlMoveMemory
