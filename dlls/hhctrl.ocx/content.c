@@ -50,11 +50,21 @@ static void free_content_item(ContentItem *item)
     }
 }
 
+static void store_param(LPWSTR *param, const char *value, int len)
+{
+    int wlen;
+
+    wlen = MultiByteToWideChar(CP_ACP, 0, value, len, NULL, 0);
+    *param = heap_alloc((wlen+1)*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, value, len, *param, wlen);
+    (*param)[wlen] = 0;
+}
+
 static void parse_obj_node_param(ContentItem *item, ContentItem *hhc_root, const char *text)
 {
     const char *ptr;
     LPWSTR *param, merge;
-    int len, wlen;
+    int len;
 
     ptr = get_attr(text, "name", &len);
     if(!ptr) {
@@ -79,10 +89,21 @@ static void parse_obj_node_param(ContentItem *item, ContentItem *hhc_root, const
         return;
     }
 
-    wlen = MultiByteToWideChar(CP_ACP, 0, ptr, len, NULL, 0);
-    *param = heap_alloc((wlen+1)*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, ptr, len, *param, wlen);
-    (*param)[wlen] = 0;
+    /*
+     * "merge" parameter data (referencing another CHM file) can be incorporated into the "local" parameter
+     * by specifying the filename in the format:
+     *  MS-ITS:file.chm::/local_path.htm
+     */
+    if(param == &item->local && strstr(ptr, "::"))
+    {
+        const char *local = strstr(ptr, "::")+2;
+        int local_len = len-(local-ptr);
+
+        store_param(&item->local, local, local_len);
+        param = &merge;
+    }
+
+    store_param(param, ptr, len);
 
     if(param == &merge) {
         SetChmPath(&item->merge, hhc_root->merge.chm_file, merge);
