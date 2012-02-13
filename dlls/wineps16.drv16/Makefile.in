@@ -1,4 +1,5 @@
 MODULE    = wineps16.drv16
+IMPORTS   = winspool
 EXTRADLLFLAGS = -m16
 
 C_SRCS = driver.c

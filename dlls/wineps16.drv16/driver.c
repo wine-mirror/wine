@@ -25,24 +25,11 @@
 #include "windef.h"
 #include "wine/winuser16.h"
 #include "wownt32.h"
+#include "winspool.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-static HMODULE wineps;
-static INT (CDECL *pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,DWORD);
-static DWORD (CDECL *pDeviceCapabilities)(LPSTR,LPCSTR,LPCSTR,WORD,LPSTR,LPDEVMODEA);
-
-static HMODULE load_wineps(void)
-{
-    if (!wineps)
-    {
-        wineps = LoadLibraryA( "wineps.drv" );
-        pExtDeviceMode = (void *)GetProcAddress( wineps, "ExtDeviceMode" );
-        pDeviceCapabilities = (void *)GetProcAddress( wineps, "DeviceCapabilities" );
-    }
-    return wineps;
-}
 
 /**************************************************************
  *	AdvancedSetupDialog	[WINEPS16.93]
@@ -63,9 +50,7 @@ INT16 WINAPI PSDRV_ExtDeviceMode16(HWND16 hwnd, HANDLE16 hDriver,
 				   LPSTR lpszProfile, WORD fwMode)
 
 {
-    if (!load_wineps() || !pExtDeviceMode) return -1;
-    return pExtDeviceMode( NULL, HWND_32(hwnd), lpdmOutput, lpszDevice,
-                           lpszPort, lpdmInput, lpszProfile, fwMode );
+    return DocumentPropertiesA( HWND_32(hwnd), 0, lpszDevice, lpdmOutput, lpdmInput, fwMode );
 }
 
 /**************************************************************
@@ -75,8 +60,28 @@ DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice,
 			       LPCSTR lpszPort, WORD fwCapability,
 			       LPSTR lpszOutput, LPDEVMODEA lpdm)
 {
-    if (!load_wineps() || !pDeviceCapabilities) return 0;
-    return pDeviceCapabilities( NULL, lpszDevice, lpszPort, fwCapability, lpszOutput, lpdm );
+    int i, ret;
+    POINT *pt;
+    POINT16 *pt16;
+
+    if (fwCapability != DC_PAPERSIZE || !lpszOutput)
+        return DeviceCapabilitiesA( lpszDevice, lpszPort, fwCapability, lpszOutput, lpdm );
+
+    /* for DC_PAPERSIZE, map POINT to POINT16 */
+
+    ret = DeviceCapabilitiesA( lpszDevice, lpszPort, DC_PAPERSIZE, NULL, lpdm );
+    if (ret <= 0) return ret;
+
+    pt16 = (POINT16 *)lpszOutput;
+    pt = HeapAlloc( GetProcessHeap(), 0, ret * sizeof(POINT) );
+    ret = DeviceCapabilitiesA( lpszDevice, lpszPort, DC_PAPERSIZE, (LPSTR)pt, lpdm );
+    for (i = 0; i < ret; i++)
+    {
+        pt16[i].x = pt[i].x;
+        pt16[i].y = pt[i].y;
+    }
+    HeapFree( GetProcessHeap(), 0, pt );
+    return ret;
 }
 
 /***************************************************************
