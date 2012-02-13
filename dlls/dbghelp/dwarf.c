@@ -2270,15 +2270,19 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                         address = ctx->load_offset + dwarf2_parse_addr(&traverse);
                         break;
                     case DW_LNE_define_file:
-                        FIXME("not handled %s\n", traverse.data);
+                        FIXME("not handled define file %s\n", traverse.data);
                         traverse.data += strlen((const char *)traverse.data) + 1;
                         dwarf2_leb128_as_unsigned(&traverse);
                         dwarf2_leb128_as_unsigned(&traverse);
                         dwarf2_leb128_as_unsigned(&traverse);
                         break;
                     case DW_LNE_set_discriminator:
-                        WARN("not handled %s\n", traverse.data);
-                        dwarf2_leb128_as_unsigned(&traverse);
+                        {
+                            unsigned descr;
+
+                            descr = dwarf2_leb128_as_unsigned(&traverse);
+                            WARN("not handled discriminator %x\n", descr);
+                        }
                         break;
                     default:
                         FIXME("Unsupported extended opcode %x\n", extopcode);
