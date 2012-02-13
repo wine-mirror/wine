@@ -1933,6 +1933,151 @@ static void LoadReplaceList(void)
     }
 }
 
+static const WCHAR *font_links_list[] =
+{
+    Lucida_Sans_Unicode,
+    Microsoft_Sans_Serif,
+    Tahoma
+};
+
+static const struct font_links_defaults_list
+{
+    /* Keyed off substitution for "MS Shell Dlg" */
+    const WCHAR *shelldlg;
+    /* Maximum of four substitutes, plus terminating NULL pointer */
+    const WCHAR *substitutes[5];
+} font_links_defaults_list[] =
+{
+    /* Non East-Asian */
+    { Tahoma, /* FIXME unverified ordering */
+      { MS_UI_Gothic, SimSun, Gulim, PMingLiU, NULL }
+    },
+    /* Below lists are courtesy of
+     * http://blogs.msdn.com/michkap/archive/2005/06/18/430507.aspx
+     */
+    /* Japanese */
+    { MS_UI_Gothic,
+      { MS_UI_Gothic, PMingLiU, SimSun, Gulim, NULL }
+    },
+    /* Chinese Simplified */
+    { SimSun,
+      { SimSun, PMingLiU, MS_UI_Gothic, Batang, NULL }
+    },
+    /* Korean */
+    { Gulim,
+      { Gulim, PMingLiU, MS_UI_Gothic, SimSun, NULL }
+    },
+    /* Chinese Traditional */
+    { PMingLiU,
+      { PMingLiU, SimSun, MS_UI_Gothic, Batang, NULL }
+    }
+};
+
+
+static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
+{
+    const WCHAR *value;
+    int i;
+    FontSubst *psub;
+    Family *family;
+    Face *face;
+    const char *file;
+    WCHAR *fileW;
+    FONTSIGNATURE fs;
+
+    if (values)
+    {
+        SYSTEM_LINKS *font_link;
+        BOOL existing = FALSE;
+
+        memset(&fs, 0, sizeof(fs));
+        psub = get_font_subst(&font_subst_list, name, -1);
+        /* Don't store fonts that are only substitutes for other fonts */
+        if(psub)
+        {
+            TRACE("%s: Internal SystemLink entry for substituted font, ignoring\n", debugstr_w(name));
+            return;
+        }
+
+        LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
+        {
+            if(!strcmpiW(font_link->font_name, name))
+            {
+                existing = TRUE;
+                break;
+            }
+        }
+
+        if (!existing)
+        {
+            font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*font_link));
+            font_link->font_name = strdupW(name);
+            list_init(&font_link->links);
+        }
+
+        for (i = 0; values[i] != NULL; i++)
+        {
+            CHILD_FONT *child_font;
+
+            value = values[i];
+            if (!strcmpiW(name,value))
+                continue;
+            psub = get_font_subst(&font_subst_list, value, -1);
+            if(psub)
+                value = psub->to.name;
+            family = find_family_from_name(value);
+            if (!family)
+                continue;
+            file = NULL;
+            /* Use first extant filename for this Family */
+            LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
+            {
+                if (!face->file)
+                    continue;
+                file = strrchr(face->file, '/');
+                if (!file)
+                    file = face->file;
+                else
+                    file++;
+                break;
+            }
+            if (!file)
+                continue;
+            fileW = towstr(CP_UNIXCP, file);
+
+            face = find_face_from_filename(fileW, value);
+            if(!face)
+            {
+                TRACE("Unable to find file %s face name %s\n", debugstr_w(fileW), debugstr_w(value));
+                continue;
+            }
+
+            child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
+            child_font->face = face;
+            child_font->font = NULL;
+            fs.fsCsb[0] |= face->fs.fsCsb[0];
+            fs.fsCsb[1] |= face->fs.fsCsb[1];
+            TRACE("Adding file %s index %ld\n", child_font->face->file, child_font->face->face_index);
+            list_add_tail(&font_link->links, &child_font->entry);
+
+            TRACE("added internal SystemLink for %s to %s in %s\n", debugstr_w(name), debugstr_w(value),debugstr_w(fileW));
+            HeapFree(GetProcessHeap(), 0, fileW);
+        }
+
+        family = find_family_from_name(font_link->font_name);
+        if(family)
+        {
+            LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
+            {
+                face->fs_links = fs;
+            }
+        }
+        if (!existing)
+            list_add_tail(&system_links, &font_link->entry);
+    }
+}
+
+
 /*************************************************************
  * init_system_links
  */
@@ -1947,10 +2092,12 @@ static BOOL init_system_links(void)
     CHILD_FONT *child_font;
     static const WCHAR tahoma_ttf[] = {'t','a','h','o','m','a','.','t','t','f',0};
     static const WCHAR System[] = {'S','y','s','t','e','m',0};
+    static const WCHAR MS_Shell_Dlg[] = {'M','S',' ','S','h','e','l','l',' ','D','l','g',0};
     FONTSIGNATURE fs;
     Family *family;
     Face *face;
     FontSubst *psub;
+    UINT i, j;
 
     if(RegOpenKeyW(HKEY_LOCAL_MACHINE, system_link, &hkey) == ERROR_SUCCESS)
     {
@@ -2027,96 +2174,33 @@ static BOOL init_system_links(void)
         RegCloseKey(hkey);
     }
 
-    if(RegOpenKeyW(HKEY_CURRENT_USER, internal_system_link, &hkey) == ERROR_SUCCESS)
-    {
-        RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &max_val, &max_data, NULL, NULL);
-        value = HeapAlloc(GetProcessHeap(), 0, (max_val + 1) * sizeof(WCHAR));
-        data = HeapAlloc(GetProcessHeap(), 0, max_data);
-        val_len = max_val + 1;
-        data_len = max_data;
-        index = 0;
-        while(RegEnumValueW(hkey, index++, value, &val_len, NULL, &type, (LPBYTE)data, &data_len) == ERROR_SUCCESS)
-        {
-            BOOL existing = FALSE;
-            memset(&fs, 0, sizeof(fs));
-            psub = get_font_subst(&font_subst_list, value, -1);
-            /* Don't store fonts that are only substitutes for other fonts */
-            if(psub)
-            {
-                TRACE("%s: Internal SystemLink entry for substituted font, ignoring\n", debugstr_w(value));
-                goto next_internal;
-            }
 
-            LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
-            {
-                if(!strcmpiW(font_link->font_name, value))
-                {
-                    existing = TRUE;
-                    break;
-                }
-            }
-
-            if (!existing)
-            {
-                font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*font_link));
-                font_link->font_name = strdupW(value);
-                list_init(&font_link->links);
-            }
-
-            for(entry = data; (char*)entry < (char*)data + data_len && *entry != 0; entry = next)
-            {
-                WCHAR *face_name;
-                CHILD_FONT *child_font;
-
-                TRACE("Internal entry %s: %s\n", debugstr_w(value), debugstr_w(entry));
-
-                next = entry + strlenW(entry) + 1;
-
-                face_name = strchrW(entry, ',');
-                if(face_name)
-                {
-                    *face_name++ = 0;
-                    while(isspaceW(*face_name))
-                        face_name++;
-
-                    psub = get_font_subst(&font_subst_list, face_name, -1);
-                    if(psub)
-                        face_name = psub->to.name;
-                }
-                face = find_face_from_filename(entry, face_name);
-                if(!face)
-                {
-                    TRACE("Unable to find file %s face name %s\n", debugstr_w(entry), debugstr_w(face_name));
-                    continue;
-                }
-
-                child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
-                child_font->face = face;
-                child_font->font = NULL;
-                fs.fsCsb[0] |= face->fs.fsCsb[0];
-                fs.fsCsb[1] |= face->fs.fsCsb[1];
-                TRACE("Adding file %s index %ld\n", child_font->face->file, child_font->face->face_index);
-                list_add_tail(&font_link->links, &child_font->entry);
-            }
-            family = find_family_from_name(font_link->font_name);
-            if(family)
-            {
-                LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
-                {
-                    face->fs_links = fs;
-                }
-            }
-            if (!existing)
-                list_add_tail(&system_links, &font_link->entry);
-        next_internal:
-            val_len = max_val + 1;
-            data_len = max_data;
-        }
-
-        HeapFree(GetProcessHeap(), 0, value);
-        HeapFree(GetProcessHeap(), 0, data);
-        RegCloseKey(hkey);
+    psub = get_font_subst(&font_subst_list, MS_Shell_Dlg, -1);
+    if (!psub) {
+        WARN("could not find FontSubstitute for MS Shell Dlg\n");
+        goto skip_internal;
     }
+
+    for (i = 0; i < sizeof(font_links_defaults_list)/sizeof(font_links_defaults_list[0]); i++)
+    {
+        const FontSubst *psub2;
+        psub2 = get_font_subst(&font_subst_list, font_links_defaults_list[i].shelldlg, -1);
+
+        if ((!strcmpiW(font_links_defaults_list[i].shelldlg, psub->to.name) || (psub2 && !strcmpiW(psub2->to.name,psub->to.name))))
+        {
+            for (j = 0; j < sizeof(font_links_list)/sizeof(font_links_list[0]); j++)
+                populate_system_links(font_links_list[j], font_links_defaults_list[i].substitutes);
+
+            if (!strcmpiW(psub->to.name, font_links_defaults_list[i].substitutes[0]))
+                populate_system_links(psub->to.name, font_links_defaults_list[i].substitutes);
+        }
+        else if (strcmpiW(psub->to.name, font_links_defaults_list[i].substitutes[0]))
+        {
+            populate_system_links(font_links_defaults_list[i].substitutes[0], NULL);
+        }
+    }
+
+skip_internal:
 
     /* Explicitly add an entry for the system font, this links to Tahoma and any links
        that Tahoma has */
@@ -2723,46 +2807,6 @@ static const struct nls_update_font_list
     }
 };
 
-static const WCHAR *font_links_list[] =
-{
-    Lucida_Sans_Unicode,
-    Microsoft_Sans_Serif,
-    Tahoma
-};
-
-static const struct font_links_defaults_list
-{
-    /* Keyed off substitution for "MS Shell Dlg" */
-    const WCHAR *shelldlg;
-    /* Maximum of four substitutes, plus terminating NULL pointer */
-    const WCHAR *substitutes[5];
-} font_links_defaults_list[] =
-{
-    /* Non East-Asian */
-    { Tahoma, /* FIXME unverified ordering */
-      { MS_UI_Gothic, SimSun, Gulim, PMingLiU, NULL }
-    },
-    /* Below lists are courtesy of
-     * http://blogs.msdn.com/michkap/archive/2005/06/18/430507.aspx
-     */
-    /* Japanese */
-    { MS_UI_Gothic,
-      { MS_UI_Gothic, PMingLiU, SimSun, Gulim, NULL }
-    },
-    /* Chinese Simplified */
-    { SimSun,
-      { SimSun, PMingLiU, MS_UI_Gothic, Batang, NULL }
-    },
-    /* Korean */
-    { Gulim,
-      { Gulim, PMingLiU, MS_UI_Gothic, SimSun, NULL }
-    },
-    /* Chinese Traditional */
-    { PMingLiU,
-      { PMingLiU, SimSun, MS_UI_Gothic, Batang, NULL }
-    }
-};
-
 static inline BOOL is_dbcs_ansi_cp(UINT ansi_cp)
 {
     return ( ansi_cp == 932       /* CP932 for Japanese */
@@ -2910,131 +2954,6 @@ static void update_font_info(void)
     if (!done)
         FIXME("there is no font defaults for codepages %u,%u\n", ansi_cp, oem_cp);
 }
-
-static void populate_system_links(HKEY hkey, const WCHAR *name, const WCHAR *const *values)
-{
-    const WCHAR *value;
-    int i;
-    FontSubst *psub;
-    Family *family;
-    Face *face;
-    const char *file;
-    WCHAR *fileW;
-    WCHAR buff[MAX_PATH];
-    WCHAR *data;
-    int entryLen;
-
-    static const WCHAR comma[] = {',',0};
-
-    RegDeleteValueW(hkey, name);
-    if (values)
-    {
-        data = buff;
-        data[0] = '\0';
-        for (i = 0; values[i] != NULL; i++)
-        {
-            value = values[i];
-            if (!strcmpiW(name,value))
-                continue;
-            psub = get_font_subst(&font_subst_list, value, -1);
-            if(psub)
-                value = psub->to.name;
-            family = find_family_from_name(value);
-            if (!family)
-                continue;
-            file = NULL;
-            /* Use first extant filename for this Family */
-            LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
-            {
-                if (!face->file)
-                    continue;
-                file = strrchr(face->file, '/');
-                if (!file)
-                    file = face->file;
-                else
-                    file++;
-                break;
-            }
-            if (!file)
-                continue;
-            fileW = towstr(CP_UNIXCP, file);
-            entryLen = strlenW(fileW) + 1 + strlenW(value) + 1;
-            if (sizeof(buff)-(data-buff) < entryLen + 1)
-            {
-                WARN("creating SystemLink for %s, ran out of buffer space\n", debugstr_w(name));
-                HeapFree(GetProcessHeap(), 0, fileW);
-                break;
-            }
-            strcpyW(data, fileW);
-            strcatW(data, comma);
-            strcatW(data, value);
-            data += entryLen;
-            TRACE("added SystemLink for %s to %s in %s\n", debugstr_w(name), debugstr_w(value),debugstr_w(fileW));
-            HeapFree(GetProcessHeap(), 0, fileW);
-        }
-        if (data != buff)
-        {
-            *data='\0';
-            data++;
-            RegSetValueExW(hkey, name, 0, REG_MULTI_SZ, (BYTE*)buff, (data-buff) * sizeof(WCHAR));
-        } else
-            TRACE("no SystemLink fonts found for %s\n", debugstr_w(name));
-    } else
-        TRACE("removed SystemLink for %s\n", debugstr_w(name));
-}
-
-static void update_system_links(void)
-{
-    HKEY hkey = 0;
-    UINT i, j;
-    BOOL done = FALSE;
-    DWORD disposition;
-    FontSubst *psub;
-
-    static const WCHAR MS_Shell_Dlg[] = {'M','S',' ','S','h','e','l','l',' ','D','l','g',0};
-
-    if (!RegCreateKeyExW(HKEY_CURRENT_USER, internal_system_link, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, &disposition))
-    {
-        if (disposition == REG_OPENED_EXISTING_KEY)
-        {
-            TRACE("SystemLink key already exists, doing nothing\n");
-            RegCloseKey(hkey);
-            return;
-        }
-
-        psub = get_font_subst(&font_subst_list, MS_Shell_Dlg, -1);
-        if (!psub) {
-            WARN("could not find FontSubstitute for MS Shell Dlg\n");
-            RegCloseKey(hkey);
-            return;
-        }
-
-        for (i = 0; i < sizeof(font_links_defaults_list)/sizeof(font_links_defaults_list[0]); i++)
-        {
-            const FontSubst *psub2;
-            psub2 = get_font_subst(&font_subst_list, font_links_defaults_list[i].shelldlg, -1);
-
-            if ((!strcmpiW(font_links_defaults_list[i].shelldlg, psub->to.name) || (psub2 && !strcmpiW(psub2->to.name,psub->to.name))))
-            {
-                for (j = 0; j < sizeof(font_links_list)/sizeof(font_links_list[0]); j++)
-                    populate_system_links(hkey, font_links_list[j], font_links_defaults_list[i].substitutes);
-
-                if (!strcmpiW(psub->to.name, font_links_defaults_list[i].substitutes[0]))
-                    populate_system_links(hkey, psub->to.name, font_links_defaults_list[i].substitutes);
-                done = TRUE;
-            }
-            else if (strcmpiW(psub->to.name, font_links_defaults_list[i].substitutes[0]))
-            {
-                populate_system_links(hkey, font_links_defaults_list[i].substitutes[0], NULL);
-            }
-        }
-        RegCloseKey(hkey);
-        if (!done)
-            WARN("there is no SystemLink default list for MS Shell Dlg %s\n", debugstr_w(psub->to.name));
-    } else
-        WARN("failed to create Internal SystemLink key\n");
-}
-
 
 static BOOL init_freetype(void)
 {
@@ -3338,7 +3257,6 @@ BOOL WineEngInit(void)
     if(disposition == REG_CREATED_NEW_KEY)
         update_reg_entries();
 
-    update_system_links();
     init_system_links();
     
     ReleaseMutex(font_mutex);
