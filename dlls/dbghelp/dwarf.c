@@ -2851,7 +2851,7 @@ static void execute_cfa_instructions(dwarf2_traverse_context_t* ctx,
             ULONG_PTR offset = (op == DW_CFA_def_cfa) ? dwarf2_leb128_as_unsigned(ctx)
                                                       : dwarf2_leb128_as_signed(ctx) * info->data_align;
             if (!valid_reg(reg)) break;
-            TRACE("%lx: DW_CFA_def_cfa %s, %lu\n",
+            TRACE("%lx: DW_CFA_def_cfa %s, %ld\n",
                   info->ip,
                   dbghelp_current_cpu->fetch_regname(dbghelp_current_cpu->map_dwarf_register(reg)),
                   offset);
@@ -2876,7 +2876,7 @@ static void execute_cfa_instructions(dwarf2_traverse_context_t* ctx,
         {
             ULONG_PTR offset = (op == DW_CFA_def_cfa_offset) ? dwarf2_leb128_as_unsigned(ctx)
                                                              : dwarf2_leb128_as_signed(ctx) * info->data_align;
-            TRACE("%lx: DW_CFA_def_cfa_offset %lu\n", info->ip, offset);
+            TRACE("%lx: DW_CFA_def_cfa_offset %ld\n", info->ip, offset);
             info->state.cfa_offset = offset;
             info->state.cfa_rule   = RULE_CFA_OFFSET;
             break;
