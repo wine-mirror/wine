@@ -800,6 +800,7 @@ static HRESULT IOCS_Detach( IOCS *This ) /* remove subclassing */
         IOleObject *control = This->control;
 
         This->control = NULL;
+        IOleObject_Close( control, OLECLOSE_NOSAVE );
         IOleObject_SetClientSite( control, NULL );
         IOleObject_Release( control );
     }
