@@ -32,6 +32,7 @@
 #include <stdio.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
+WINE_DECLARE_DEBUG_CHANNEL(d3dxof_dump);
 
 static const struct IDirectXFileVtbl IDirectXFile_Vtbl;
 static const struct IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl;
@@ -215,6 +216,21 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
 
   TRACE("File size is %d bytes\n", file_size);
 
+  if (TRACE_ON(d3dxof_dump))
+  {
+    static USHORT num;
+    char tmp[12];
+    HANDLE file;
+    sprintf(tmp, "file%05u.x", num++);
+
+    file = CreateFileA(tmp, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
+    if (file != INVALID_HANDLE_VALUE)
+    {
+      WriteFile(file, file_buffer, file_size, NULL, NULL);
+      CloseHandle(file);
+    }
+  }
+
   object->pDirectXFile = This;
 
   object->buf.pdxf = This;
@@ -283,6 +299,21 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
 
   if (!pvData)
     return DXFILEERR_BADVALUE;
+
+  if (TRACE_ON(d3dxof_dump))
+  {
+    static USHORT num;
+    char tmp[16];
+    HANDLE file;
+    sprintf(tmp, "template%05u.x", num++);
+
+    file = CreateFileA(tmp, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
+    if (file != INVALID_HANDLE_VALUE)
+    {
+      WriteFile(file, pvData, cbSize, NULL, NULL);
+      CloseHandle(file);
+    }
+  }
 
   hr = parse_header(&buf, &decomp_buffer);
   if (FAILED(hr))
