@@ -3366,6 +3366,9 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     dwarf2_modfmt->module->module.SourceIndexed = TRUE;
     dwarf2_modfmt->module->module.Publics = TRUE;
 
+    /* set the word_size for eh_frame parsing */
+    dwarf2_modfmt->u.dwarf2_info->word_size = fmap->addr_size / 8;
+
 leave:
     image_unmap_section(&debug_sect);
     image_unmap_section(&debug_abbrev_sect);
