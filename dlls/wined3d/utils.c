@@ -1580,6 +1580,7 @@ static void apply_format_fixups(struct wined3d_gl_info *gl_info)
     }
 
     idx = getFmtIdx(WINED3DFMT_YV12);
+    gl_info->formats[idx].flags |= WINED3DFMT_FLAG_HEIGHT_SCALE;
     gl_info->formats[idx].heightscale = 1.5f;
     gl_info->formats[idx].color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_YV12);
 
@@ -1705,7 +1706,7 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT ali
         size = height * (((width * format->byte_count) + alignment - 1) & ~(alignment - 1));
     }
 
-    if (format->heightscale != 0.0f)
+    if (format->flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
     {
         /* The D3D format requirements make sure that the resulting format is an integer again */
         size = (UINT) (size * format->heightscale);

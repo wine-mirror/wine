@@ -2281,7 +2281,7 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
         surface->flags |= SFLAG_PIN_SYSMEM;
     }
 
-    if (format->heightscale != 1.0f && format->heightscale != 0.0f)
+    if (format->flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
         update_h *= format->heightscale;
 
     ENTER_GL();
@@ -2516,7 +2516,8 @@ static void surface_allocate_surface(struct wined3d_surface *surface, const stru
         internal = format->glInternal;
     }
 
-    if (format->heightscale != 1.0f && format->heightscale != 0.0f) height *= format->heightscale;
+    if (format->flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
+        height *= format->heightscale;
 
     TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n",
             surface, surface->texture_target, surface->texture_level, debug_d3dformat(format->id),
