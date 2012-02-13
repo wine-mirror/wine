@@ -32,11 +32,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipping);
 /* return the DC visible rectangle if not empty */
 static inline BOOL get_dc_visrect( DC *dc, RECT *rect )
 {
+    if (dc->header.type != OBJ_MEMDC) return FALSE;
     rect->left = 0;
     rect->top = 0;
     rect->right = dc->vis_rect.right - dc->vis_rect.left;
     rect->bottom = dc->vis_rect.bottom - dc->vis_rect.top;
-    return !is_rect_empty( rect );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -114,19 +115,16 @@ void update_dc_clipping( DC * dc )
  */
 static inline void create_default_clip_region( DC * dc )
 {
-    UINT width, height;
+    RECT rect;
 
-    if (dc->header.type == OBJ_MEMDC)
+    if (!get_dc_visrect( dc, &rect ))
     {
-        width = dc->vis_rect.right - dc->vis_rect.left;
-        height = dc->vis_rect.bottom - dc->vis_rect.top;
+        rect.left = 0;
+        rect.top = 0;
+        rect.right = GetDeviceCaps( dc->hSelf, DESKTOPHORZRES );
+        rect.bottom = GetDeviceCaps( dc->hSelf, DESKTOPVERTRES );
     }
-    else
-    {
-        width = GetDeviceCaps( dc->hSelf, DESKTOPHORZRES );
-        height = GetDeviceCaps( dc->hSelf, DESKTOPVERTRES );
-    }
-    dc->hClipRgn = CreateRectRgn( 0, 0, width, height );
+    dc->hClipRgn = CreateRectRgnIndirect( &rect );
 }
 
 
@@ -363,9 +361,9 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
     pt.y = y;
     LPtoDP( hdc, &pt, 1 );
     update_dc( dc );
-    ret = (get_dc_visrect( dc, &visrect ) &&
-           pt.x >= visrect.left && pt.x < visrect.right &&
-           pt.y >= visrect.top && pt.y < visrect.bottom);
+    ret = (!get_dc_visrect( dc, &visrect ) ||
+           (pt.x >= visrect.left && pt.x < visrect.right &&
+            pt.y >= visrect.top && pt.y < visrect.bottom));
     if (ret && get_dc_region( dc )) ret = PtInRegion( get_dc_region( dc ), pt.x, pt.y );
     release_dc_ptr( dc );
     return ret;
@@ -387,7 +385,7 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
     LPtoDP( hdc, (POINT *)&tmpRect, 2 );
 
     update_dc( dc );
-    ret = (get_dc_visrect( dc, &visrect ) && intersect_rect( &visrect, &visrect, &tmpRect ));
+    ret = (!get_dc_visrect( dc, &visrect ) || intersect_rect( &visrect, &visrect, &tmpRect ));
     if (ret && get_dc_region( dc )) ret = RectInRegion( get_dc_region( dc ), &tmpRect );
     release_dc_ptr( dc );
     return ret;
