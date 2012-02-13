@@ -365,9 +365,12 @@ static void test_retrieveObjectByUrl(void)
     SetLastError(0xdeadbeef);
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CRL, 0, 0, (void **)&crl,
      NULL, NULL, NULL, NULL);
-    /* w2k3,XP, newer w2k: CRYPT_E_NO_MATCH, older w2k: CRYPT_E_ASN1_BADTAG */
+    /* w2k3,XP, newer w2k: CRYPT_E_NO_MATCH, older w2k: CRYPT_E_ASN1_BADTAG
+     * or OSS_DATA_ERROR.
+     */
     ok(!ret && (GetLastError() == CRYPT_E_NO_MATCH ||
-                broken(GetLastError() == CRYPT_E_ASN1_BADTAG)),
+                broken(GetLastError() == CRYPT_E_ASN1_BADTAG ||
+                       GetLastError() == OSS_DATA_ERROR)),
         "got 0x%x/%u (expected CRYPT_E_NO_MATCH)\n", GetLastError(), GetLastError());
 
     /* only newer versions of cryptnet do the cleanup */
@@ -698,6 +701,11 @@ static void test_verifyRevocation(void)
      * bad authority key ID extension and can't be matched with the issuer
      * cert, hence the revocation status should be unknown.
      */
+    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+    {
+        win_skip("CERT_CONTEXT_REVOCATION_TYPE unsupported, skipping\n");
+        return;
+    }
     ok(!ret && (GetLastError() == CRYPT_E_NO_REVOCATION_CHECK ||
      broken(GetLastError() == CRYPT_E_REVOKED /* Win2k */)),
      "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
