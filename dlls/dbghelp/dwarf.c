@@ -2632,6 +2632,15 @@ static BOOL dwarf2_get_cie(unsigned long addr, struct module* module, DWORD_PTR 
     const BYTE*                 start_data = fde_ctx->data;
 
     cie_id = in_eh_frame ? 0 : DW_CIE_ID;
+    /* skip 0-padding at beginning of section (alignment) */
+    while (fde_ctx->data + 2 * 4 < fde_ctx->end_data)
+    {
+        if (dwarf2_parse_u4(fde_ctx))
+        {
+            fde_ctx->data -= 4;
+            break;
+        }
+    }
     for (; fde_ctx->data + 2 * 4 < fde_ctx->end_data; fde_ctx->data = ptr_blk)
     {
         /* find the FDE for address addr (skip CIE) */
@@ -2659,7 +2668,9 @@ static BOOL dwarf2_get_cie(unsigned long addr, struct module* module, DWORD_PTR 
             cie_ctx->end_data = cie_ptr + 4 + dwarf2_parse_u4(cie_ctx);
             if (dwarf2_parse_u4(cie_ctx) != cie_id)
             {
-                FIXME("wrong CIE pointer\n");
+                FIXME("wrong CIE pointer at %x from FDE %x\n",
+                      (unsigned)(cie_ptr - start_data),
+                      (unsigned)(fde_ctx->data - start_data));
                 return FALSE;
             }
             if (!parse_cie_details(cie_ctx, info)) return FALSE;
