@@ -3321,6 +3321,11 @@ static void testVerifyRevocation(void)
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
      1, (void **)certs, 0, NULL, &status);
+    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+    {
+        win_skip("CERT_CONTEXT_REVOCATION_TYPE unsupported, skipping\n");
+        return;
+    }
     ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_CHECK,
      "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
     ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK,
