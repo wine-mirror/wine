@@ -2016,6 +2016,7 @@ BOOL CDECL X11DRV_CreateWindow( HWND hwnd )
         wine_tsx11_lock();
         data->clip_window = XCreateWindow( data->display, root_window, 0, 0, 1, 1, 0, 0,
                                            InputOnly, visual, CWOverrideRedirect | CWEventMask, &attr );
+        XFlush( data->display );
         wine_tsx11_unlock();
         SetPropA( hwnd, clip_window_prop, (HANDLE)data->clip_window );
     }
