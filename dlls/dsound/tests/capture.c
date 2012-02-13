@@ -695,9 +695,15 @@ static void test_COM(void)
     bufdesc.lpwfxFormat = &wfx;
 
     hr = IDirectSoundCapture_CreateCaptureBuffer(dsc, &bufdesc, &buffer, (IUnknown*)0xdeadbeef);
+    if (hr == E_INVALIDARG) {
+        /* Old DirectX has only the 1st version of the DSCBUFFERDESC struct */
+        bufdesc.dwSize = sizeof(DSCBUFFERDESC1);
+        hr = IDirectSoundCapture_CreateCaptureBuffer(dsc, &bufdesc, &buffer, (IUnknown*)0xdeadbeef);
+    }
     ok(hr == DSERR_NOAGGREGATION,
        "IDirectSoundCapture_CreateCaptureBuffer failed: %08x, expected DSERR_NOAGGREGATION\n", hr);
-    ok(buffer == (IDirectSoundCaptureBuffer*)0xdeadbeef, "buffer = %p\n", buffer);
+    ok(buffer == (IDirectSoundCaptureBuffer*)0xdeadbeef || !buffer /* Win2k without DirectX9 */,
+       "buffer = %p\n", buffer);
 
     hr = IDirectSoundCapture_CreateCaptureBuffer(dsc, &bufdesc, &buffer, NULL);
     ok(hr == DS_OK, "IDirectSoundCapture_CreateCaptureBuffer failed: %08x, expected DS_OK\n", hr);
