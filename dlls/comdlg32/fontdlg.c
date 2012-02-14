@@ -1115,7 +1115,6 @@ static LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam, const CHOOSE
     {
         PAINTSTRUCT ps;
         HDC hdc;
-        HPEN hOrigPen;
         HFONT hOrigFont;
         LOGFONTW lf = *(lpcf->lpLogFont);
 
@@ -1127,22 +1126,9 @@ static LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam, const CHOOSE
               ps.rcPaint.right, ps.rcPaint.bottom);
 
         /* Paint frame */
-        MoveToEx( hdc, info.rcWindow.left, info.rcWindow.bottom, NULL );
-        hOrigPen=SelectObject( hdc, CreatePen( PS_SOLID, 2,
-                                               GetSysColor( COLOR_3DSHADOW ) ));
-        LineTo( hdc, info.rcWindow.left, info.rcWindow.top );
-        LineTo( hdc, info.rcWindow.right, info.rcWindow.top );
-        DeleteObject(SelectObject( hdc, CreatePen( PS_SOLID, 2,
-                                                   GetSysColor( COLOR_3DLIGHT ) )));
-        LineTo( hdc, info.rcWindow.right, info.rcWindow.bottom );
-        LineTo( hdc, info.rcWindow.left, info.rcWindow.bottom );
-        DeleteObject(SelectObject( hdc, hOrigPen ));
+        DrawEdge( hdc, &info.rcWindow, EDGE_SUNKEN, BF_RECT|BF_ADJUST );
 
         /* Draw the sample text itself */
-        info.rcWindow.right--;
-        info.rcWindow.bottom--;
-        info.rcWindow.top++;
-        info.rcWindow.left++;
         hOrigFont = SelectObject( hdc, CreateFontIndirectW( &lf ) );
         SetTextColor( hdc, lpcf->rgbColors );
 
