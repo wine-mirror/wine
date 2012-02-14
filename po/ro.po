@@ -449,7 +449,7 @@ msgstr "&Calitate tipărire:"
 
 #: comdlg32.rc:211
 msgid "Print to Fi&le"
-msgstr "Tipăreşte în fişier"
+msgstr "Tipărește în fișier"
 
 #: comdlg32.rc:212
 msgid "Condensed"
@@ -627,19 +627,19 @@ msgstr "Înlocuire"
 
 #: comdlg32.rc:334
 msgid "Re&place With:"
-msgstr "În&locuieşte cu:"
+msgstr "În&locuiește cu:"
 
 #: comdlg32.rc:340
 msgid "&Replace"
-msgstr "&Înlocuieşte"
+msgstr "&Înlocuiește"
 
 #: comdlg32.rc:341
 msgid "Replace &All"
-msgstr "Înlocuieşte &tot"
+msgstr "Înlocuiește &tot"
 
 #: comdlg32.rc:358
 msgid "Print to fi&le"
-msgstr "Tipăreşte în &fişier"
+msgstr "Tipărește în &fișier"
 
 #: comdlg32.rc:359 comdlg32.rc:397 ieframe.rc:39 shdoclc.rc:58 shell32.rc:105
 #: clock.rc:28 wineconsole.rc:27
@@ -787,7 +787,7 @@ msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
-"Fişierul nu există.\n"
+"Fișierul nu există.\n"
 "Doriți să creați acest fișier?"
 
 #: comdlg32.rc:32
@@ -816,7 +816,7 @@ msgstr "Calea nu există"
 
 #: comdlg32.rc:36
 msgid "File does not exist"
-msgstr "Fişierul nu există"
+msgstr "Fișierul nu există"
 
 #: comdlg32.rc:41
 msgid "Up One Level"
@@ -3793,7 +3793,7 @@ msgstr ""
 
 #: winerror.mc:331
 msgid "File exists.\n"
-msgstr "Fişierul există deja.\n"
+msgstr "Fișierul există deja.\n"
 
 #: winerror.mc:336
 msgid "Cannot create.\n"
@@ -4516,7 +4516,7 @@ msgstr ""
 #: winerror.mc:1176
 #, fuzzy
 msgid "Service does not exist.\n"
-msgstr "Fişierul nu există.\n"
+msgstr "Fișierul nu există.\n"
 
 #: winerror.mc:1181
 msgid "Service cannot accept control message.\n"
@@ -5121,7 +5121,7 @@ msgstr ""
 #: winerror.mc:1876
 #, fuzzy
 msgid "The site does not exist.\n"
-msgstr "Fişierul nu există.\n"
+msgstr "Fișierul nu există.\n"
 
 #: winerror.mc:1881
 #, fuzzy
@@ -7498,11 +7498,11 @@ msgstr "Controlul fluxului"
 
 #: serialui.rc:34
 msgid "Data Bits"
-msgstr "Biţi de date"
+msgstr "Biți de date"
 
 #: serialui.rc:36
 msgid "Stop Bits"
-msgstr "Biţi de stop"
+msgstr "Biți de stop"
 
 #: setupapi.rc:36
 msgid "Copying Files..."
@@ -13782,7 +13782,7 @@ msgstr "Felicitări!"
 
 #: winemine.rc:76
 msgid "Please enter your name"
-msgstr "Scrieţi-vă numele"
+msgstr "Scrieți-vă numele"
 
 #: winemine.rc:84
 msgid "Custom Game"
