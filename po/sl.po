@@ -8219,7 +8219,6 @@ msgid "Ma&ximize"
 msgstr "Ra_zpni"
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
 msgstr "&Zapri\tAlt+F4"
 

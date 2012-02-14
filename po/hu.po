@@ -8622,18 +8622,16 @@ msgid "Ma&ximize"
 msgstr "&Teljes méret"
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "&Bezárás\tAlt-F4"
+msgstr "&Bezárás\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
 msgstr "&Wine névjegye"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "&Bezárás\tAlt-F4"
+msgstr "&Bezárás\tCtrl+F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl+F6"

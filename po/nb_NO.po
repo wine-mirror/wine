@@ -8498,18 +8498,16 @@ msgid "Ma&ximize"
 msgstr "Ma&ksimer"
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "&Lukk\tAlt-F4"
+msgstr "&Lukk\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
-msgstr "&om Wine"
+msgstr "&Om Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "&Lukk\tAlt-F4"
+msgstr "&Lukk\tCtrl+F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl+F6"

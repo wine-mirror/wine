@@ -8593,9 +8593,8 @@ msgid "Ma&ximize"
 msgstr "U&većaj"
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "&Zatvori\tAlt-F4"
+msgstr "&Zatvori\tAlt+F4"
 
 #: user32.rc:35
 #, fuzzy
@@ -8603,9 +8602,8 @@ msgid "&About Wine"
 msgstr "&O Beležnici"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "&Zatvori\tAlt-F4"
+msgstr "&Zatvori\tCtrl+F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl+F6"

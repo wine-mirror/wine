@@ -8458,18 +8458,16 @@ msgid "Ma&ximize"
 msgstr "ה&גדלה"
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "&סגירה\tAlt-F4"
+msgstr "&סגירה\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
 msgstr "על &אודות Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "&סגירה\tCtrl-F4"
+msgstr "&סגירה\tCtrl+F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl+F6"
