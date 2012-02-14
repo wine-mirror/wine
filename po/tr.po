@@ -8525,13 +8525,8 @@ msgid "&Close\tCtrl+F4"
 msgstr "&Kapat\tAlt-F4"
 
 #: user32.rc:48
-#, fuzzy
 msgid "Nex&t\tCtrl+F6"
 msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Kes\tCtrl+X\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Ke&s\tCtrl+X"
 
 #: user32.rc:79
 msgid "&Abort"

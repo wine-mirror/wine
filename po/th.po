@@ -8193,23 +8193,20 @@ msgid "Ma&ximize"
 msgstr ""
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "ตัดลอก\tCtrl+C"
+msgstr ""
 
 #: user32.rc:35
 msgid "&About Wine"
 msgstr ""
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "ตัดลอก\tCtrl+C"
+msgstr ""
 
 #: user32.rc:48
-#, fuzzy
 msgid "Nex&t\tCtrl+F6"
-msgstr "ตัด\tCtrl+X"
+msgstr ""
 
 #: user32.rc:79
 #, fuzzy

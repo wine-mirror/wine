@@ -8255,9 +8255,8 @@ msgid "&Close\tCtrl+F4"
 msgstr "A&vsluta\tAlt-F4"
 
 #: user32.rc:48
-#, fuzzy
 msgid "Nex&t\tCtrl+F6"
-msgstr "Klipp &ut\tCtrl+X"
+msgstr ""
 
 #: user32.rc:79
 msgid "&Abort"

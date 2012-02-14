@@ -8180,9 +8180,8 @@ msgid "Ma&ximize"
 msgstr ""
 
 #: user32.rc:33
-#, fuzzy
 msgid "&Close\tAlt+F4"
-msgstr "ا&نسخ\tCtrl+C"
+msgstr ""
 
 #: user32.rc:35
 #, fuzzy
@@ -8190,14 +8189,12 @@ msgid "&About Wine"
 msgstr "&عن لوح الملاحظات"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl+F4"
-msgstr "ا&نسخ\tCtrl+C"
+msgstr ""
 
 #: user32.rc:48
-#, fuzzy
 msgid "Nex&t\tCtrl+F6"
-msgstr "&قص\tCtrl+X"
+msgstr ""
 
 #: user32.rc:79
 #, fuzzy
