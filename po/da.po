@@ -27,7 +27,7 @@ msgstr ""
 
 #: appwiz.rc:59
 msgid "&Install..."
-msgstr "&Installer…"
+msgstr "&Installer..."
 
 #: appwiz.rc:62
 msgid ""
@@ -2206,7 +2206,7 @@ msgstr "&Filnavn:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "&Gennemse"
+msgstr "&Gennemse..."
 
 #: cryptui.rc:294
 msgid ""
@@ -6873,7 +6873,7 @@ msgstr "&Opsætning..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "O&m..."
+msgstr "O&m"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7949,7 +7949,7 @@ msgstr "&Åbn:"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
 msgid "&Browse..."
-msgstr "&Gennemse"
+msgstr "&Gennemse..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
@@ -9405,9 +9405,8 @@ msgstr ""
 "\n"
 
 #: attrib.rc:28 cmd.rc:318
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s : Filen ikke fundet\n"
+msgstr "%1: Filen ikke fundet\n"
 
 #: attrib.rc:47
 msgid ""
@@ -9616,7 +9615,7 @@ msgstr ""
 "IF [NOT] ERRORLEVEL nummer kommando\n"
 "\n"
 "I kommando form nummer to skal streng1 og streng2 omsluttes af dobbelte\n"
-" anførselstegn. Der skeldnes ikke mellem store og små bogstaver.\n"
+"anførselstegn. Der skeldnes ikke mellem store og små bogstaver.\n"
 
 #: cmd.rc:100
 msgid ""
@@ -9652,14 +9651,12 @@ msgid ""
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
-"MOVE flytter en fil eller katalog til et nyt sted indenfor\n"
-"filsystemet.\n"
+"MOVE flytter en fil eller katalog til et nyt sted indenfor filsystemet.\n"
 "\n"
 "Hvis elementet som flyttes er en katalog, så flyttes filerne og\n"
 "underkatalogene også i den.\n"
 "\n"
-"MOVE fejler hvis den gamle og nye pladsering har forskellige\n"
-"drevbogstaver.\n"
+"MOVE fejler hvis den gamle og nye pladsering har forskellige drevbogstaver.\n"
 
 #: cmd.rc:122
 msgid ""
@@ -9692,10 +9689,9 @@ msgid ""
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
 "PAUSE viser meldingen 'Tryk Enter for at fortsætte', og venter på at\n"
-" brugeren trykker Enter. Dette er hovedsageligt nyttigt i batchfiler,\n"
+"brugeren trykker Enter. Dette er hovedsageligt nyttigt i batchfiler,\n"
 "for at lade brugeren læse uddata fra en tidligere kommando før den "
-"forsvinder ud\n"
-"væk fra skærmen..\n"
+"forsvinder ud væk fra skærmen.\n"
 
 #: cmd.rc:149
 #, fuzzy
@@ -9803,7 +9799,7 @@ msgstr ""
 "mellemrum.\n"
 "\n"
 "I Wine er miljøvariablene i det underliggende operativsystemet\n"
-" inkludert i Win32-miljøet, og der er derfor mange flere\n"
+"inkludert i Win32-miljøet, og der er derfor mange flere\n"
 "værdier end i et normalt Win32-miljø. Vær opmærksom på at man ikke kan\n"
 "ændre miljøet i det underliggende operativsystemet fra CMD.\n"
 
@@ -9891,7 +9887,7 @@ msgid ""
 "The verify flag has no function in Wine.\n"
 msgstr ""
 "VERIFY bruges til at aktivere, deaktivere eller teste «verify»-flagget.\n"
-" Gyldige måder er:\n"
+"Gyldige måder er:\n"
 "\n"
 "VERIFY ON\tAktiverer flagget\n"
 "VERIFY OFF\tDeaktiverer flagget\n"
@@ -10677,10 +10673,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"Filen '%s'\n"
-"findes ikke\n"
+"Filen '%s' findes ikke.\n"
 "\n"
-" Ønsker du at oprette en ny fil ?"
+"Ønsker du at oprette en ny fil?"
 
 #: notepad.rc:79
 msgid ""
@@ -10688,10 +10683,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Filen '%s'\n"
-"er blevet ændret\n"
+"Filen '%s' er blevet ændret.\n"
 "\n"
-" Vil du gemme ændringerne ?"
+"Vil du gemme ændringerne?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
@@ -11270,6 +11264,7 @@ msgid "Error writing `%s'."
 msgstr "Fejl ved skrivning til '%s'."
 
 #: progman.rc:72
+#, fuzzy
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -12409,11 +12404,11 @@ msgstr "Opdaterer ikke automatisk"
 
 #: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
-msgstr "Stiller vinduerne på skrivebordet op vandret "
+msgstr "Stiller vinduerne på skrivebordet op vandret"
 
 #: taskmgr.rc:206
 msgid "Tiles the windows vertically on the desktop"
-msgstr "Stiller vinduerne på skrivebordet op lodret "
+msgstr "Stiller vinduerne på skrivebordet op lodret"
 
 #: taskmgr.rc:207
 msgid "Minimizes the windows"
@@ -12856,7 +12851,7 @@ msgstr "Eksisterende indlæsnings &prioritetter:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "&Editér"
+msgstr "&Editér..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12908,7 +12903,7 @@ msgstr "&Tilføj..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Auto&detekter..."
+msgstr "Auto&detekter"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -13438,7 +13433,7 @@ msgstr "Rediger kun nuværende session"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"
-msgstr "Sæt &Standarder  "
+msgstr "Sæt &Standarder"
 
 #: wineconsole.rc:28
 msgid "&Mark"
@@ -13498,6 +13493,7 @@ msgid "Starts a program in a Wine console\n"
 msgstr "Starter et program i en Wine konsol\n"
 
 #: wineconsole.rc:45
+#, fuzzy
 msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
@@ -13513,7 +13509,7 @@ msgid ""
 msgstr ""
 "\n"
 "Brug:\n"
-" wineconsole [tilvalg] <kommando>\n"
+"  wineconsole [tilvalg] <kommando>\n"
 "\n"
 "Valg:\n"
 
@@ -13872,7 +13868,7 @@ msgstr "&Ekspert"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "B&rugerdefineret"
+msgstr "B&rugerdefineret..."
 
 #: winemine.rc:44
 #, fuzzy
@@ -13944,7 +13940,7 @@ msgstr "Ophavsret 2000 tilhører Joshua Thielen"
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
-msgstr "&Indstil printer"
+msgstr "&Indstil printer..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
@@ -13985,7 +13981,7 @@ msgstr "Altid &øverst"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Information..."
+msgstr ""
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -14522,7 +14518,7 @@ msgstr ""
 "\tfindes og 2 eller flere filer bliver kopieret\n"
 "[/S]  Kopier kataloger og underkataloger\n"
 "[/E]  Kopier kataloger og underkataloger, også tomme kataloger\n"
-"[/Q]  Vær stille : vis ikke filnavne under kopiering\n"
+"[/Q]  Vær stille: vis ikke filnavne under kopiering\n"
 "[/F]  Fil hele kilde- og målnavn under kopiering\n"
 "[/L]  Simulér operationen; vis kun, gør intet\n"
 "[/W]  Spørg før koperingen starter\n"
