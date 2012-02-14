@@ -353,7 +353,12 @@ static void test_set_value(void)
     test_hkey_main_Value_A(NULL, string1A, sizeof(string1A));
     test_hkey_main_Value_W(NULL, string1W, sizeof(string1W));
 
-    /* RegSetValueA ignores the size passed in */
+    ret = RegSetValueW(hkey_main, name1W, REG_SZ, string1W, sizeof(string1W));
+    ok(ret == ERROR_SUCCESS, "RegSetValueW failed: %d, GLE=%d\n", ret, GetLastError());
+    test_hkey_main_Value_A(name1A, string1A, sizeof(string1A));
+    test_hkey_main_Value_W(name1W, string1W, sizeof(string1W));
+
+    /* RegSetValueW ignores the size passed in */
     ret = RegSetValueW(hkey_main, NULL, REG_SZ, string1W, 4 * sizeof(string1W[0]));
     ok(ret == ERROR_SUCCESS, "RegSetValueW failed: %d, GLE=%d\n", ret, GetLastError());
     test_hkey_main_Value_A(NULL, string1A, sizeof(string1A));
