@@ -413,6 +413,61 @@ static GpStatus alpha_blend_pixels(GpGraphics *graphics, INT dst_x, INT dst_y,
     }
 }
 
+static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst_y,
+    const BYTE *src, INT src_width, INT src_height, INT src_stride, HRGN hregion)
+{
+    GpStatus stat=Ok;
+
+    if (graphics->image && graphics->image->type == ImageTypeBitmap)
+    {
+        int i, size;
+        RGNDATA *rgndata;
+        RECT *rects;
+
+        size = GetRegionData(hregion, 0, NULL);
+
+        rgndata = GdipAlloc(size);
+        if (!rgndata)
+            return OutOfMemory;
+
+        GetRegionData(hregion, size, rgndata);
+
+        rects = (RECT*)&rgndata->Buffer;
+
+        for (i=0; stat == Ok && i<rgndata->rdh.nCount; i++)
+        {
+            stat = alpha_blend_pixels(graphics, rects[i].left, rects[i].top,
+                &src[(rects[i].left - dst_x) * 4 + (rects[i].top - dst_y) * src_stride],
+                rects[i].right - rects[i].left, rects[i].bottom - rects[i].top,
+                src_stride);
+        }
+
+        GdipFree(rgndata);
+
+        return stat;
+    }
+    else if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        ERR("This should not be used for metafiles; fix caller\n");
+        return NotImplemented;
+    }
+    else
+    {
+        int save;
+
+        save = SaveDC(graphics->hdc);
+
+        ExtSelectClipRgn(graphics->hdc, hregion, RGN_AND);
+
+        stat = alpha_blend_pixels(graphics, dst_x, dst_y, src, src_width,
+            src_height, src_stride);
+
+        RestoreDC(graphics->hdc, save);
+
+        return stat;
+    }
+}
+
 static ARGB blend_colors(ARGB start, ARGB end, REAL position)
 {
     ARGB result=0;
@@ -3928,12 +3983,12 @@ static GpStatus SOFTWARE_GdipFillRegion(GpGraphics *graphics, GpBrush *brush,
 {
     GpStatus stat;
     GpRegion *temp_region;
-    GpMatrix *world_to_device, *identity;
+    GpMatrix *world_to_device;
     GpRectF graphics_bounds;
-    UINT scans_count, i;
-    INT dummy;
-    GpRect *scans = NULL;
     DWORD *pixel_data;
+    HRGN hregion;
+    RECT bound_rect;
+    GpRect gp_bound_rect;
 
     if (!brush_can_fill_pixels(brush))
         return NotImplemented;
@@ -3959,125 +4014,42 @@ static GpStatus SOFTWARE_GdipFillRegion(GpGraphics *graphics, GpBrush *brush,
             stat = GdipCombineRegionRect(temp_region, &graphics_bounds, CombineModeIntersect);
 
         if (stat == Ok)
-            stat = GdipCreateMatrix(&identity);
-
-        if (stat == Ok)
-        {
-            stat = GdipGetRegionScansCount(temp_region, &scans_count, identity);
-
-            if (stat == Ok && scans_count != 0)
-            {
-                scans = GdipAlloc(sizeof(*scans) * scans_count);
-                if (!scans)
-                    stat = OutOfMemory;
-
-                if (stat == Ok)
-                {
-                    stat = GdipGetRegionScansI(temp_region, scans, &dummy, identity);
-
-                    if (stat != Ok)
-                        GdipFree(scans);
-                }
-            }
-
-            GdipDeleteMatrix(identity);
-        }
+            stat = GdipGetRegionHRgn(temp_region, NULL, &hregion);
 
         GdipDeleteRegion(temp_region);
     }
 
-    if (stat == Ok && scans_count == 0)
+    if (stat == Ok && GetRgnBox(hregion, &bound_rect) == NULLREGION)
+    {
+        DeleteObject(hregion);
         return Ok;
+    }
 
     if (stat == Ok)
     {
-        if (!graphics->image)
+        gp_bound_rect.X = bound_rect.left;
+        gp_bound_rect.Y = bound_rect.top;
+        gp_bound_rect.Width = bound_rect.right - bound_rect.left;
+        gp_bound_rect.Height = bound_rect.bottom - bound_rect.top;
+
+        pixel_data = GdipAlloc(sizeof(*pixel_data) * gp_bound_rect.Width * gp_bound_rect.Height);
+        if (!pixel_data)
+            stat = OutOfMemory;
+
+        if (stat == Ok)
         {
-            /* If we have to go through gdi32, use as few alpha blends as possible. */
-            INT min_x, min_y, max_x, max_y;
-            UINT data_width, data_height;
-
-            min_x = scans[0].X;
-            min_y = scans[0].Y;
-            max_x = scans[0].X+scans[0].Width;
-            max_y = scans[0].Y+scans[0].Height;
-
-            for (i=1; i<scans_count; i++)
-            {
-                min_x = min(min_x, scans[i].X);
-                min_y = min(min_y, scans[i].Y);
-                max_x = max(max_x, scans[i].X+scans[i].Width);
-                max_y = max(max_y, scans[i].Y+scans[i].Height);
-            }
-
-            data_width = max_x - min_x;
-            data_height = max_y - min_y;
-
-            pixel_data = GdipAlloc(sizeof(*pixel_data) * data_width * data_height);
-            if (!pixel_data)
-                stat = OutOfMemory;
+            stat = brush_fill_pixels(graphics, brush, pixel_data,
+                &gp_bound_rect, gp_bound_rect.Width);
 
             if (stat == Ok)
-            {
-                for (i=0; i<scans_count; i++)
-                {
-                    stat = brush_fill_pixels(graphics, brush,
-                        pixel_data + (scans[i].X - min_x) + (scans[i].Y - min_y) * data_width,
-                        &scans[i], data_width);
+                stat = alpha_blend_pixels_hrgn(graphics, gp_bound_rect.X,
+                    gp_bound_rect.Y, (BYTE*)pixel_data, gp_bound_rect.Width,
+                    gp_bound_rect.Height, gp_bound_rect.Width * 4, hregion);
 
-                    if (stat != Ok)
-                        break;
-                }
-
-                if (stat == Ok)
-                {
-                    stat = alpha_blend_pixels(graphics, min_x, min_y,
-                        (BYTE*)pixel_data, data_width, data_height,
-                        data_width * 4);
-                }
-
-                GdipFree(pixel_data);
-            }
-        }
-        else
-        {
-            UINT max_size=0;
-
-            for (i=0; i<scans_count; i++)
-            {
-                UINT size = scans[i].Width * scans[i].Height;
-
-                if (size > max_size)
-                    max_size = size;
-            }
-
-            pixel_data = GdipAlloc(sizeof(*pixel_data) * max_size);
-            if (!pixel_data)
-                stat = OutOfMemory;
-
-            if (stat == Ok)
-            {
-                for (i=0; i<scans_count; i++)
-                {
-                    stat = brush_fill_pixels(graphics, brush, pixel_data, &scans[i],
-                        scans[i].Width);
-
-                    if (stat == Ok)
-                    {
-                        stat = alpha_blend_pixels(graphics, scans[i].X, scans[i].Y,
-                            (BYTE*)pixel_data, scans[i].Width, scans[i].Height,
-                            scans[i].Width * 4);
-                    }
-
-                    if (stat != Ok)
-                        break;
-                }
-
-                GdipFree(pixel_data);
-            }
+            GdipFree(pixel_data);
         }
 
-        GdipFree(scans);
+        DeleteObject(hregion);
     }
 
     return stat;
