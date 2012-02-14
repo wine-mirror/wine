@@ -2424,15 +2424,15 @@ msgstr ""
 
 #: cryptui.rc:35
 msgid "Issued to: "
-msgstr "הונפק עבור:"
+msgstr "הונפק עבור: "
 
 #: cryptui.rc:36
 msgid "Issued by: "
-msgstr "הונפק על ידי:"
+msgstr "הונפק על ידי: "
 
 #: cryptui.rc:37
 msgid "Valid from "
-msgstr "תקף מהתאריך"
+msgstr "תקף מהתאריך "
 
 #: cryptui.rc:38
 msgid " to "
@@ -2609,7 +2609,7 @@ msgstr ""
 
 #: cryptui.rc:83
 msgid "Could not open "
-msgstr "לא ניתן לפתוח"
+msgstr "לא ניתן לפתוח "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -3217,7 +3217,7 @@ msgstr "&מועדפים"
 
 #: ieframe.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
-msgstr "הו&ספה למועדפים…"
+msgstr "הו&ספה למועדפים..."
 
 #: ieframe.rc:57
 #, fuzzy
@@ -3373,7 +3373,7 @@ msgstr "הגדרת דפדפן האינטרנט של Wine והגדרות שקשו
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
-msgstr "הגדרות אבטחה עבור האזור"
+msgstr "הגדרות אבטחה עבור האזור: "
 
 #: inetcpl.rc:31
 msgid "Custom"
@@ -6991,7 +6991,7 @@ msgstr "ה&גדרה..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "על &אודות..."
+msgstr "על &אודות"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7530,7 +7530,7 @@ msgid ""
 "make sure the correct drive is selected below"
 msgstr ""
 "נא להכניס את תקליטור ההתקנה של היצרן ואז לוודא\n"
-"שהכונן שנבחר להלן הוא הכונן הנכון."
+"שהכונן שנבחר להלן הוא הכונן הנכון"
 
 #: setupapi.rc:54
 msgid "Copy manufacturer's files from:"
@@ -8004,7 +8004,7 @@ msgstr "&פתיחה:"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
 msgid "&Browse..."
-msgstr "&עיון"
+msgstr "&עיון..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
@@ -8389,7 +8389,7 @@ msgstr ""
 "הפחות כללי של  GNU כפי שפורסם על ידי מוסד התכנה החופשית; או גרסה 2.1 של "
 "הרישיון או (לבחירתך) כל גרסה עדכנית יותר.\n"
 "\n"
-" Wine מופצת בתקווה שתביא תועלת, אך ללא כל אחריות; אפילו לא מרומזת למטרות, ‎"
+"Wine מופצת בתקווה שתביא תועלת, אך ללא כל אחריות; אפילו לא מרומזת למטרות, ‎"
 "מסחר או התאמה לצרכים מסוימים. נא לעיין בתנאי הרישיון הציבורי הפחות כללי של "
 "GNU לפרטים נוספים.\n"
 "\n"
@@ -11068,11 +11068,11 @@ msgstr "מידע"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "האם למחוק את הקבוצה `%s' ?"
+msgstr "האם למחוק את הקבוצה `%s'?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "האם למחוק את התכנית `%s' ?"
+msgstr "האם למחוק את התכנית `%s'?"
 
 #: progman.rc:67
 msgid "Not implemented"
@@ -12479,7 +12479,7 @@ msgid ""
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "הפעלת פקודת ההסרה '%s' נכשלה, כנראה עקב חוסר בקובץ הפעלה.\n"
-"האם ברצונך להסיר את רשומת ההסרה מרישומי המערכת ?"
+"האם ברצונך להסיר את רשומת ההסרה מרישומי המערכת?"
 
 #: view.rc:33
 msgid "&Pan"
@@ -13836,8 +13836,9 @@ msgid "Always on &top"
 msgstr "תמיד &עליון"
 
 #: winhlp32.rc:56
+#, fuzzy
 msgid "&About Wine Help"
-msgstr "&מידע..."
+msgstr "&מידע"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
