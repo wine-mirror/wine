@@ -9636,12 +9636,11 @@ msgstr ""
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 
 #: cmd.rc:153
-#, fuzzy
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
-"A command line beginning REM (followed by a space) performs no\n"
+"A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 
 #: cmd.rc:156
@@ -9661,7 +9660,6 @@ msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <dir> deletes a subdirectory.\n"
 
 #: cmd.rc:194
-#, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9689,7 +9687,7 @@ msgstr ""
 "SET <variable>=<value>\n"
 "\n"
 "where <variable> and <value> are character strings. There must be no\n"
-"spaces before the equals sign, nor can the variable name\n"
+"space before the equals sign, nor can the variable name\n"
 "have embedded spaces.\n"
 "\n"
 "Under Wine, the environment of the underlying operating system is\n"
@@ -9708,7 +9706,6 @@ msgstr ""
 "if called from the command line.\n"
 
 #: cmd.rc:176
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9743,20 +9740,14 @@ msgstr ""
 "/ProgIDOpen  Open a document using the following progID.\n"
 "/L           Show end-user license.\n"
 "/?           Display this help and exit.\n"
-"\n"
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
-"This is free software, and you are welcome to redistribute it\n"
-"under certain conditions; run 'start /L' for details.\n"
 
 #: cmd.rc:201
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME sets or shows the current system time.\n"
 
 #: cmd.rc:203
-#, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr "Sets the window title for the cmd window, syntax TITLE [string]\n"
+msgstr "TITLE <string> sets the window title for the cmd window.\n"
 
 #: cmd.rc:207
 msgid ""
@@ -9767,7 +9758,6 @@ msgstr ""
 "if redirected). No check is made that the file is readable text.\n"
 
 #: cmd.rc:216
-#, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9779,8 +9769,8 @@ msgid ""
 msgstr ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
-"VERIFY ON\tSet the flag\n"
-"VERIFY OFF\tClear the flag\n"
+"VERIFY ON\tSet the flag.\n"
+"VERIFY OFF\tClear the flag.\n"
 "VERIFY\t\tDisplays ON or OFF as appropriate.\n"
 "\n"
 "The verify flag has no function in Wine.\n"
@@ -9826,11 +9816,8 @@ msgstr ""
 "stack, and then changes the current directory to the supplied one.\n"
 
 #: cmd.rc:238
-#, fuzzy
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
-msgstr ""
-"POPD changes current directory to the last one saved with\n"
-"PUSHD.\n"
+msgstr "POPD changes current directory to the last one saved with PUSHD.\n"
 
 #: cmd.rc:246
 msgid ""
@@ -9881,7 +9868,6 @@ msgstr ""
 "to the operating system or shell from which you invoked cmd.\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9950,6 +9936,7 @@ msgstr ""
 "RD (RMDIR)\tDelete a subdirectory\n"
 "SET\t\tSet or show environment variables\n"
 "SETLOCAL\tStart localization of environment changes in a batch file\n"
+"START\t\tStart a program, or open a document in the associated program\n"
 "TIME\t\tSet or show the current system time\n"
 "TITLE\t\tSet the window title for the CMD session\n"
 "TYPE\t\tType the contents of a text file\n"
@@ -9961,9 +9948,8 @@ msgstr ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 
 #: cmd.rc:307
-#, fuzzy
 msgid "Are you sure?"
-msgstr "Are you sure"
+msgstr "Are you sure?"
 
 #: cmd.rc:308 xcopy.rc:40
 msgctxt "Yes key"
@@ -9984,9 +9970,8 @@ msgid "No open command associated with file type '%1'\n"
 msgstr "No open command associated with file type '%1'\n"
 
 #: cmd.rc:312
-#, fuzzy
 msgid "Overwrite %1?"
-msgstr "Overwrite %1"
+msgstr "Overwrite %1?"
 
 #: cmd.rc:313
 msgid "More..."
@@ -10046,9 +10031,8 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:329
-#, fuzzy
 msgid "Delete %1?"
-msgstr "מחיקה"
+msgstr "Delete %1?"
 
 #: cmd.rc:330
 msgid "Echo is %1\n"
@@ -10075,9 +10059,8 @@ msgstr ""
 "\n"
 
 #: cmd.rc:335
-#, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "Volume label (11 characters, ENTER for none)?"
+msgstr "Volume label (11 characters, <Enter> for none)?"
 
 #: cmd.rc:336
 msgid "PATH not found\n"
@@ -10112,14 +10095,12 @@ msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
 #: cmd.rc:344
-#, fuzzy
 msgid " (Yes|No)"
-msgstr "%1? (Yes|No)\n"
+msgstr " (Yes|No)"
 
 #: cmd.rc:345
-#, fuzzy
 msgid " (Yes|No|All)"
-msgstr "%1? (Yes|No)\n"
+msgstr " (Yes|No|All)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -11581,7 +11562,6 @@ msgstr ""
 "under certain conditions; run 'start /L' for details.\n"
 
 #: start.rc:64
-#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -11608,7 +11588,7 @@ msgstr ""
 "\n"
 "This program is distributed in the hope that it will be useful,\n"
 "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
 "GNU Lesser Public License for more details.\n"
 "\n"
 "You should have received a copy of the GNU Lesser Public License\n"
@@ -14286,14 +14266,12 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Invalid number of parameters - Use xcopy /? for help\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "Invalid parameter '%1' -  Use xcopy /? for help\n"
+msgstr "Invalid parameter '%1' - Use xcopy /? for help\n"
 
 #: xcopy.rc:29
-#, fuzzy
 msgid "Press <Enter> to begin copying\n"
-msgstr "Press <enter> to begin copying\n"
+msgstr "Press <Enter> to begin copying\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
