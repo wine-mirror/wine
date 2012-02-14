@@ -3563,7 +3563,10 @@ static BOOL expand_entry(ChildWnd* child, Entry* dir)
 
 static void collapse_entry(Pane* pane, Entry* dir)
 {
-	int idx = SendMessageW(pane->hwnd, LB_FINDSTRING, 0, (LPARAM)dir);
+        int idx;
+
+        if (!dir) return;
+        idx = SendMessageW(pane->hwnd, LB_FINDSTRING, 0, (LPARAM)dir);
 
 	ShowWindow(pane->hwnd, SW_HIDE);
 
