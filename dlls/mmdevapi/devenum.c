@@ -942,7 +942,7 @@ static HRESULT WINAPI MMDevEnum_GetDefaultAudioEndpoint(IMMDeviceEnumerator *ifa
     if(RegOpenKeyW(HKEY_CURRENT_USER, reg_key, &key) == ERROR_SUCCESS){
         const WCHAR *reg_x_name, *reg_vx_name;
         WCHAR def_id[256];
-        DWORD size = sizeof(def_id);
+        DWORD size = sizeof(def_id), state;
 
         if(flow == eRender){
             reg_x_name = reg_out_nameW;
@@ -957,8 +957,11 @@ static HRESULT WINAPI MMDevEnum_GetDefaultAudioEndpoint(IMMDeviceEnumerator *ifa
                     (BYTE*)def_id, &size) == ERROR_SUCCESS){
             hr = IMMDeviceEnumerator_GetDevice(iface, def_id, device);
             if(SUCCEEDED(hr)){
-                RegCloseKey(key);
-                return S_OK;
+                if(SUCCEEDED(IMMDevice_GetState(*device, &state)) &&
+                        state == DEVICE_STATE_ACTIVE){
+                    RegCloseKey(key);
+                    return S_OK;
+                }
             }
 
             TRACE("Unable to find voice device %s\n", wine_dbgstr_w(def_id));
@@ -968,8 +971,11 @@ static HRESULT WINAPI MMDevEnum_GetDefaultAudioEndpoint(IMMDeviceEnumerator *ifa
                     (BYTE*)def_id, &size) == ERROR_SUCCESS){
             hr = IMMDeviceEnumerator_GetDevice(iface, def_id, device);
             if(SUCCEEDED(hr)){
-                RegCloseKey(key);
-                return S_OK;
+                if(SUCCEEDED(IMMDevice_GetState(*device, &state)) &&
+                        state == DEVICE_STATE_ACTIVE){
+                    RegCloseKey(key);
+                    return S_OK;
+                }
             }
 
             TRACE("Unable to find device %s\n", wine_dbgstr_w(def_id));
