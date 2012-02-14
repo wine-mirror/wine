@@ -298,7 +298,7 @@ RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding, RpcConnection* Connection)
     /* don't destroy a connection that is cached in the binding */
     if (Binding->FromConn == Connection)
       return RPC_S_OK;
-    return RPCRT4_DestroyConnection(Connection);
+    return RPCRT4_ReleaseConnection(Connection);
   }
   else {
     RpcAssoc_ReleaseIdleConnection(Binding->Assoc, Connection);

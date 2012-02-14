@@ -1374,7 +1374,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         if (ret < 0)
         {
             WARN("listen failed: %s\n", strerror(errno));
-            RPCRT4_DestroyConnection(&tcpc->common);
+            RPCRT4_ReleaseConnection(&tcpc->common);
             status = RPC_S_OUT_OF_RESOURCES;
             continue;
         }
@@ -1387,7 +1387,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         if (ret < 0)
         {
             WARN("couldn't make socket non-blocking, error %d\n", ret);
-            RPCRT4_DestroyConnection(&tcpc->common);
+            RPCRT4_ReleaseConnection(&tcpc->common);
             status = RPC_S_OUT_OF_RESOURCES;
             continue;
         }
@@ -2946,6 +2946,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   }
 
   NewConnection = ops->alloc();
+  NewConnection->ref = 1;
   NewConnection->Next = NULL;
   NewConnection->server_binding = NULL;
   NewConnection->server = server;
@@ -2991,9 +2992,17 @@ static RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnecti
   return err;
 }
 
-RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
+RpcConnection *RPCRT4_GrabConnection( RpcConnection *conn )
 {
-  TRACE("connection: %p\n", Connection);
+    InterlockedIncrement( &conn->ref );
+    return conn;
+}
+
+RPC_STATUS RPCRT4_ReleaseConnection(RpcConnection* Connection)
+{
+  if (InterlockedDecrement( &Connection->ref ) > 0) return RPC_S_OK;
+
+  TRACE("destroying connection %p\n", Connection);
 
   RPCRT4_CloseConnection(Connection);
   RPCRT4_strfree(Connection->Endpoint);

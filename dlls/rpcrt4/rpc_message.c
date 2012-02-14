@@ -1875,7 +1875,7 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
 
 fail:
   RPCRT4_FreeHeader(hdr);
-  RPCRT4_DestroyConnection(conn);
+  RPCRT4_ReleaseConnection(conn);
   pMsg->ReservedForRuntime = NULL;
   return status;
 }

@@ -539,6 +539,7 @@ static DWORD CALLBACK RPCRT4_worker_thread(LPVOID the_arg)
   RpcPacket *pkt = the_arg;
   RPCRT4_process_packet(pkt->conn, pkt->hdr, pkt->msg, pkt->auth_data,
                         pkt->auth_length);
+  RPCRT4_ReleaseConnection(pkt->conn);
   HeapFree(GetProcessHeap(), 0, pkt);
   return 0;
 }
@@ -585,7 +586,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
         HeapFree(GetProcessHeap(), 0, auth_data);
         goto exit;
       }
-      packet->conn = conn;
+      packet->conn = RPCRT4_GrabConnection( conn );
       packet->hdr = hdr;
       packet->msg = msg;
       packet->auth_data = auth_data;
@@ -621,7 +622,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
     }
   }
 exit:
-  RPCRT4_DestroyConnection(conn);
+  RPCRT4_ReleaseConnection(conn);
   return 0;
 }
 
@@ -631,7 +632,7 @@ void RPCRT4_new_client(RpcConnection* conn)
   if (!thread) {
     DWORD err = GetLastError();
     ERR("failed to create thread, error=%08x\n", err);
-    RPCRT4_DestroyConnection(conn);
+    RPCRT4_ReleaseConnection(conn);
   }
   /* we could set conn->thread, but then we'd have to make the io_thread wait
    * for that, otherwise the thread might finish, destroy the connection, and

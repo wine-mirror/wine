@@ -203,7 +203,7 @@ ULONG RpcAssoc_Release(RpcAssoc *assoc)
         LIST_FOR_EACH_ENTRY_SAFE(Connection, cursor2, &assoc->free_connection_pool, RpcConnection, conn_pool_entry)
         {
             list_remove(&Connection->conn_pool_entry);
-            RPCRT4_DestroyConnection(Connection);
+            RPCRT4_ReleaseConnection(Connection);
         }
 
         LIST_FOR_EACH_ENTRY_SAFE(context_handle, context_handle_cursor, &assoc->context_handle_list, RpcContextHandle, entry)
@@ -410,14 +410,14 @@ RPC_STATUS RpcAssoc_GetClientConnection(RpcAssoc *assoc,
     status = RPCRT4_OpenClientConnection(NewConnection);
     if (status != RPC_S_OK)
     {
-        RPCRT4_DestroyConnection(NewConnection);
+        RPCRT4_ReleaseConnection(NewConnection);
         return status;
     }
 
     status = RpcAssoc_BindConnection(assoc, NewConnection, InterfaceId, TransferSyntax);
     if (status != RPC_S_OK)
     {
-        RPCRT4_DestroyConnection(NewConnection);
+        RPCRT4_ReleaseConnection(NewConnection);
         return status;
     }
 
