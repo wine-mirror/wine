@@ -340,6 +340,57 @@ static HRESULT alsa_get_card_devices(snd_pcm_stream_t stream, WCHAR **ids, char 
     return S_OK;
 }
 
+static void get_reg_devices(snd_pcm_stream_t stream, WCHAR **ids, char **keys,
+        UINT *num)
+{
+    static const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
+        'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
+        'w','i','n','e','a','l','s','a','.','d','r','v',0};
+    static const WCHAR ALSAOutputDevices[] = {'A','L','S','A','O','u','t','p','u','t','D','e','v','i','c','e','s',0};
+    static const WCHAR ALSAInputDevices[] = {'A','L','S','A','I','n','p','u','t','D','e','v','i','c','e','s',0};
+    HKEY key;
+    WCHAR reg_devices[256];
+    DWORD size = sizeof(reg_devices), type, len;
+    const WCHAR *value_name = (stream == SND_PCM_STREAM_PLAYBACK) ? ALSAOutputDevices : ALSAInputDevices;
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Drivers\winealsa.drv */
+    if(RegOpenKeyW(HKEY_CURRENT_USER, drv_keyW, &key) == ERROR_SUCCESS){
+        if(RegQueryValueExW(key, value_name, 0, &type,
+                    (BYTE*)reg_devices, &size) == ERROR_SUCCESS){
+            WCHAR *p = reg_devices;
+
+            if(type != REG_MULTI_SZ){
+                ERR("Registry ALSA device list value type must be REG_MULTI_SZ\n");
+                RegCloseKey(key);
+                return;
+            }
+
+            while(*p){
+                char devname[64];
+
+                WideCharToMultiByte(CP_UNIXCP, 0, p, -1, devname, sizeof(devname), NULL, NULL);
+
+                if(alsa_try_open(devname, stream)){
+                    if(ids && keys){
+                        len = lstrlenW(p) + 1;
+                        ids[*num] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+                        memcpy(ids[*num], p, len * sizeof(WCHAR));
+
+                        len = strlen(devname) + 1;
+                        keys[*num] = HeapAlloc(GetProcessHeap(), 0, len);
+                        memcpy(keys[*num], devname, len);
+                    }
+                    ++*num;
+                }
+
+                p += lstrlenW(p) + 1;
+            }
+        }
+
+        RegCloseKey(key);
+    }
+}
+
 static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
         UINT *num)
 {
@@ -359,6 +410,8 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
         }
         ++*num;
     }
+
+    get_reg_devices(stream, ids, keys, num);
 
     for(err = snd_card_next(&card); card != -1 && err >= 0;
             err = snd_card_next(&card)){
