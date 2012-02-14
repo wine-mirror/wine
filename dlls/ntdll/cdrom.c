@@ -2640,6 +2640,7 @@ static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, 
     } nt_desc;
 
     nt_desc.layer = layer;
+    RtlZeroMemory(&dvdrs, sizeof(dvdrs));
     dvdrs.address = (uint32_t)(structure->BlockByteOffset.QuadPart>>11);
     dvdrs.grantID = (uint8_t)structure->SessionId;
     dvdrs.layer = structure->LayerNumber;
