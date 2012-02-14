@@ -7914,7 +7914,7 @@ msgstr "Historique"
 
 #: shell32.rc:212
 msgid "Program Files"
-msgstr "Program Files"
+msgstr "Programmes"
 
 #: shell32.rc:214
 msgid "My Pictures"
@@ -7946,7 +7946,7 @@ msgstr "Vidéos"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
-msgstr "Program Files (x86)"
+msgstr "Programmes (x86)"
 
 #: shell32.rc:221
 msgid "Contacts"
@@ -7978,19 +7978,19 @@ msgstr "Modèle"
 
 #: shell32.rc:225
 msgid "Sample Music"
-msgstr "Exemples de musiques"
+msgstr "Échantillons de musique"
 
 #: shell32.rc:226
 msgid "Sample Pictures"
-msgstr "Exemples d'images"
+msgstr "Échantillons d'images"
 
 #: shell32.rc:227
 msgid "Sample Playlists"
-msgstr "Exemples de listes de lecture"
+msgstr "Échantillons de listes de lecture"
 
 #: shell32.rc:228
 msgid "Sample Videos"
-msgstr "Exemples de vidéos"
+msgstr "Échantillons de vidéos"
 
 #: shell32.rc:229
 msgid "Saved Games"
@@ -8176,7 +8176,7 @@ msgstr ""
 "Publique Limitée pour plus de détails.\n"
 "\n"
 "Vous devriez avoir reçu une copie de la Licence Générale Publique Limitée "
-"GNU avec Wine ; si ce n’est pas le cas, écrivez à la Free Software "
+"GNU avec Wine ; si ce n’est pas le cas, écrivez à la Free Software "
 "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:253
@@ -9403,10 +9403,10 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
-"La commande FOR sert à exécuter une commande pour chaque fichier d'un groupe "
+"La commande FOR sert à exécuter une commande pour chaque fichier d'une liste "
 "de fichiers.\n"
 "\n"
-"Syntaxe : FOR %variable IN (groupe) DO commande\n"
+"Syntaxe : FOR %variable IN (liste) DO commande\n"
 "\n"
 "La nécessité de doubler le signe « % » lorsque l'on utilise FOR dans un "
 "fichier batch\n"
