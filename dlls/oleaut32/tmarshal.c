@@ -638,6 +638,17 @@ _xsize(const TYPEDESC *td, ITypeInfo *tinfo) {
     }
 }
 
+/* Whether we pass this type by reference or by value */
+static int
+_passbyref(const TYPEDESC *td, ITypeInfo *tinfo) {
+    if (td->vt == VT_USERDEFINED ||
+        td->vt == VT_VARIANT     ||
+        td->vt == VT_PTR)
+        return 1;
+
+    return 0;
+}
+
 static HRESULT
 serialize_param(
     ITypeInfo		*tinfo,
@@ -892,7 +903,8 @@ serialize_param(
 	if (debugout) TRACE_(olerelay)("(vt %s)",debugstr_vt(adesc->tdescElem.vt));
 	if (debugout) TRACE_(olerelay)("[");
 	for (i=0;i<arrsize;i++) {
-	    hres = serialize_param(tinfo, writeit, debugout, dealloc, &adesc->tdescElem, (DWORD*)((LPBYTE)(*arg)+i*_xsize(&adesc->tdescElem, tinfo)), buf);
+            LPBYTE base = _passbyref(&adesc->tdescElem, tinfo) ? (LPBYTE) *arg : (LPBYTE) arg;
+	    hres = serialize_param(tinfo, writeit, debugout, dealloc, &adesc->tdescElem, (DWORD*)((LPBYTE)base+i*_xsize(&adesc->tdescElem, tinfo)), buf);
 	    if (hres)
 		return hres;
 	    if (debugout && (i<arrsize-1)) TRACE_(olerelay)(",");
@@ -1172,13 +1184,18 @@ deserialize_param(
 	}
 	case VT_CARRAY: {
 	    /* arg is pointing to the start of the array. */
+            LPBYTE base = (LPBYTE) arg;
 	    ARRAYDESC *adesc = tdesc->u.lpadesc;
 	    int		arrsize,i;
 	    arrsize = 1;
 	    if (adesc->cDims > 1) FIXME("cDims > 1 in VT_CARRAY. Does it work?\n");
 	    for (i=0;i<adesc->cDims;i++)
 		arrsize *= adesc->rgbounds[i].cElements;
-	    *arg=(DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,_xsize(tdesc->u.lptdesc, tinfo) * arrsize);
+            if (_passbyref(&adesc->tdescElem, tinfo))
+            {
+	        base = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,_xsize(tdesc->u.lptdesc, tinfo) * arrsize);
+                *arg = (DWORD) base;
+            }
 	    for (i=0;i<arrsize;i++)
 		deserialize_param(
 		    tinfo,
@@ -1186,7 +1203,7 @@ deserialize_param(
 		    debugout,
 		    alloc,
 		    &adesc->tdescElem,
-		    (DWORD*)((LPBYTE)(*arg)+i*_xsize(&adesc->tdescElem, tinfo)),
+		    (DWORD*)(base + i*_xsize(&adesc->tdescElem, tinfo)),
 		    buf
 		);
 	    return S_OK;

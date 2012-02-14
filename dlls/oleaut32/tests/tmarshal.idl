@@ -39,6 +39,7 @@ library TestTypelib
     {
         INT field1;
         ULONGLONG field2;
+        UINT uarr[8];
     } MYSTRUCT;
 
     coclass ApplicationObject2;

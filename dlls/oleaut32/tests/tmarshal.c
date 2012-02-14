@@ -37,14 +37,14 @@ static HRESULT (WINAPI *pVarAdd)(LPVARIANT,LPVARIANT,LPVARIANT);
 /* ULL suffix is not portable */
 #define ULL_CONST(dw1, dw2) ((((ULONGLONG)dw1) << 32) | (ULONGLONG)dw2)
 
-const MYSTRUCT MYSTRUCT_BYVAL = {0x12345678, ULL_CONST(0xdeadbeef, 0x98765432)};
-const MYSTRUCT MYSTRUCT_BYPTR = {0x91827364, ULL_CONST(0x88776655, 0x44332211)};
+const MYSTRUCT MYSTRUCT_BYVAL = {0x12345678, ULL_CONST(0xdeadbeef, 0x98765432), {0,1,2,3,4,5,6,7}};
+const MYSTRUCT MYSTRUCT_BYPTR = {0x91827364, ULL_CONST(0x88776655, 0x44332211), {0,1,2,3,4,5,6,7}};
 const MYSTRUCT MYSTRUCT_ARRAY[5] = {
-    {0x1a1b1c1d, ULL_CONST(0x1e1f1011, 0x12131415)},
-    {0x2a2b2c2d, ULL_CONST(0x2e2f2021, 0x22232425)},
-    {0x3a3b3c3d, ULL_CONST(0x3e3f3031, 0x32333435)},
-    {0x4a4b4c4d, ULL_CONST(0x4e4f4041, 0x42434445)},
-    {0x5a5b5c5d, ULL_CONST(0x5e5f5051, 0x52535455)},
+    {0x1a1b1c1d, ULL_CONST(0x1e1f1011, 0x12131415), {0,1,2,3,4,5,6,7}},
+    {0x2a2b2c2d, ULL_CONST(0x2e2f2021, 0x22232425), {0,1,2,3,4,5,6,7}},
+    {0x3a3b3c3d, ULL_CONST(0x3e3f3031, 0x32333435), {0,1,2,3,4,5,6,7}},
+    {0x4a4b4c4d, ULL_CONST(0x4e4f4041, 0x42434445), {0,1,2,3,4,5,6,7}},
+    {0x5a5b5c5d, ULL_CONST(0x5e5f5051, 0x52535455), {0,1,2,3,4,5,6,7}},
 };
 
 
@@ -563,6 +563,17 @@ static HRESULT WINAPI Widget_VarArg(
     return S_OK;
 }
 
+
+static BOOL mystruct_uint_ordered(UINT uarr[8])
+{
+    int i;
+    for (i = 0; i < sizeof(uarr) / sizeof(uarr[0]); i++)
+        if (uarr[i] != i)
+            return 0;
+
+    return 1;
+}
+
 static HRESULT WINAPI Widget_StructArgs(
     IWidget * iface,
     MYSTRUCT byval,
@@ -571,14 +582,17 @@ static HRESULT WINAPI Widget_StructArgs(
 {
     int i, diff = 0;
     ok(byval.field1 == MYSTRUCT_BYVAL.field1 &&
-       byval.field2 == MYSTRUCT_BYVAL.field2,
+       byval.field2 == MYSTRUCT_BYVAL.field2 &&
+       mystruct_uint_ordered(byval.uarr),
        "Struct parameter passed by value corrupted\n");
     ok(byptr->field1 == MYSTRUCT_BYPTR.field1 &&
-       byptr->field2 == MYSTRUCT_BYPTR.field2,
+       byptr->field2 == MYSTRUCT_BYPTR.field2 &&
+       mystruct_uint_ordered(byptr->uarr),
        "Struct parameter passed by pointer corrupted\n");
     for (i = 0; i < 5; i++)
         if (arr[i].field1 != MYSTRUCT_ARRAY[i].field1 ||
-            arr[i].field2 != MYSTRUCT_ARRAY[i].field2)
+            arr[i].field2 != MYSTRUCT_ARRAY[i].field2 ||
+            ! mystruct_uint_ordered(arr[i].uarr))
             diff++;
     ok(diff == 0, "Array of structs corrupted\n");
     return S_OK;
