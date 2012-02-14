@@ -720,12 +720,7 @@ BOOL WINAPI CryptCreateHash (HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey,
 
 	TRACE("(0x%lx, 0x%x, 0x%lx, %08x, %p)\n", hProv, Algid, hKey, dwFlags, phHash);
 
-	if (!prov)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-	if (!phHash || prov->dwMagic != MAGIC_CRYPTPROV ||
+	if (!prov || !phHash || prov->dwMagic != MAGIC_CRYPTPROV ||
 		(key && key->dwMagic != MAGIC_CRYPTKEY))
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);

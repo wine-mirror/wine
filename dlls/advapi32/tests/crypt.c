@@ -238,6 +238,9 @@ static void test_incorrect_api_usage(void)
     if (!result) return;
     pCryptDestroyHash(hHash);
 
+    result = pCryptCreateHash(0, CALG_SHA, 0, 0, &hHash);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
+
     result = pCryptGenKey(0, CALG_RC4, 0, &hKey);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
