@@ -1480,6 +1480,11 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
             DSOUND_check_supported(device->client, 96000, 16, 2))
         device->drvcaps.dwFlags |= DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYSTEREO;
 
+    /* the dsound mixer supports all of the following */
+    device->drvcaps.dwFlags |= DSCAPS_SECONDARY8BIT | DSCAPS_SECONDARY16BIT;
+    device->drvcaps.dwFlags |= DSCAPS_SECONDARYMONO | DSCAPS_SECONDARYSTEREO;
+    device->drvcaps.dwFlags |= DSCAPS_CONTINUOUSRATE;
+
     device->drvcaps.dwPrimaryBuffers = 1;
     device->drvcaps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
     device->drvcaps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
