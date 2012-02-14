@@ -1172,7 +1172,7 @@ msgstr ""
 "Cu tasta Caps Lock activată este foarte probabil că veți introduce parola "
 "greșit.\n"
 "\n"
-"Inainte de a introduce parola apăsați tasta Caps Lock pentru a dezactiva "
+"Inainte de a introduce parola apăsați tasta Caps Lock pentru a dezactiva\n"
 "scrierea cu majuscule."
 
 #: credui.rc:31
@@ -2165,7 +2165,7 @@ msgstr "Nume &fișier:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "&Navighează"
+msgstr "&Navighează..."
 
 #: cryptui.rc:294
 msgid ""
@@ -2360,7 +2360,7 @@ msgstr "Se finalizează Asistentul de exportare a certificatelor"
 
 #: cryptui.rc:438
 msgid "You have successfully completed the Certificate Export Wizard."
-msgstr "Ați finalizat cu succes Asistentul de exportare a certificatelor"
+msgstr "Ați finalizat cu succes Asistentul de exportare a certificatelor."
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -6845,7 +6845,7 @@ msgstr ""
 
 #: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
-msgstr "&Salvează ca"
+msgstr "&Salvează ca..."
 
 #: msacm32.rc:39
 msgid "&Format:"
@@ -6982,7 +6982,7 @@ msgstr "Con&figurare..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&Despre..."
+msgstr "&Despre"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7521,8 +7521,8 @@ msgid ""
 "Insert the manufacturer's installation disk, and then\n"
 "make sure the correct drive is selected below"
 msgstr ""
-"Introduceți discul de instalare al producătorului și asigurațivă că unitatea "
-"corectă a fost selectată mai jos"
+"Introduceți discul de instalare al producătorului\n"
+"și asigurațivă că unitatea corectă a fost selectată mai jos"
 
 #: setupapi.rc:54
 msgid "Copy manufacturer's files from:"
@@ -7995,7 +7995,7 @@ msgstr "&Deschide:"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
 msgid "&Browse..."
-msgstr "Navi&gare"
+msgstr "Navi&gare..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
@@ -8384,19 +8384,19 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"Acest program este un software liber; îl puteți redistribui și/sau\n"
-"modifica respectând termenii GNU Lesser Public License așa cum este\n"
-"publicată de către Free Software Foundation; fie versiunea 2.1\n"
-"a Licenței, fie (la alegere) orice versiune mai recentă.\n"
+"Acest program este un software liber; îl puteți redistribui și/sau modifica "
+"respectând termenii GNU Lesser Public License așa cum este publicată de "
+"către Free Software Foundation; fie versiunea 2.1 a Licenței, fie (la "
+"alegere) orice versiune mai recentă.\n"
 "\n"
-"Acest program este distribuit cu speranța că va fi util,\n"
-"dar FĂRĂ NICIO GARANȚIE; nici măcar cu garanția implicită de\n"
-"VANDABILITATE sau POTRIVIRE PENTRU UN ANUMIT SCOP. Consultați\n"
-"GNU Lesser Public License pentru mai multe detalii.\n"
+"Acest program este distribuit cu speranța că va fi util, dar FĂRĂ NICIO "
+"GARANȚIE; nici măcar cu garanția implicită de VANDABILITATE sau POTRIVIRE "
+"PENTRU UN ANUMIT SCOP. Consultați GNU Lesser Public License pentru mai multe "
+"detalii.\n"
 "\n"
-"Ar fi trebuit să primiți o copie a GNU Lesser Public License\n"
-"împreună cu acest program; dacă nu, scrieți la Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+"Ar fi trebuit să primiți o copie a GNU Lesser Public License împreună cu "
+"acest program; dacă nu, scrieți la Free Software Foundation, Inc., 51 "
+"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:253
 msgid "Wine License"
@@ -8904,7 +8904,7 @@ msgstr ""
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr ""
 "Un parametru sau o valoare a fost specificat(ă) de două ori. Specificați-l"
-"(o) o singură dată. "
+"(o) o singură dată."
 
 #: winmm.rc:91
 msgid ""
@@ -9532,7 +9532,7 @@ msgstr "CHDIR <dir> schimbă directorul curent.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS golește ecranul consolei\n"
+msgstr "CLS golește ecranul consolei.\n"
 
 #: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
@@ -9590,7 +9590,7 @@ msgstr ""
 "Comanda FOR se utilizează pentru a executa o comandă pentru fiecare set\n"
 "de fișere.\n"
 "\n"
-"Sintaxă: FOR %variabilă IN (set) comandă DO\n"
+"Sintaxă: FOR %variabilă IN (set) DO comandă\n"
 "\n"
 "Necesitatea de a dubla semnul % când se utilizează FOR într-un fișier\n"
 "batch nu există în cmd în Wine.\n"
@@ -9706,7 +9706,7 @@ msgstr ""
 "noua valoare după comanda PATH.\n"
 "\n"
 "PATH se poate modifica și utilizând variabila de mediu PATH, de exemplu:\n"
-"\tPATH %PATH%;c:\\temp\n"
+"PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
 msgid ""
@@ -9921,7 +9921,7 @@ msgstr "VER afișează versiunea de cmd utilizată.\n"
 
 #: cmd.rc:221
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL Afișează eticheta de volum a unui disc\n"
+msgstr "VOL Afișează eticheta de volum a unui disc.\n"
 
 #: cmd.rc:225
 msgid ""
@@ -10358,11 +10358,11 @@ msgstr ""
 
 #: net.rc:30
 msgid "Stopping dependent service: %1\n"
-msgstr "Se oprește serviciul dependent: %1.\n"
+msgstr "Se oprește serviciul dependent: %1\n"
 
 #: net.rc:31
 msgid "Could not stop service %1\n"
-msgstr "Serviciul %1 nu a putut fi oprit.\n"
+msgstr "Serviciul %1 nu a putut fi oprit\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -10628,10 +10628,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"Fișierul '%s'\n"
-"nu există\n"
+"Fișierul '%s' nu există.\n"
 "\n"
-" Vreți să creați un fișier nou?"
+"Vreți să creați un fișier nou?"
 
 #: notepad.rc:79
 msgid ""
@@ -10639,8 +10638,7 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Fișierul '%s'\n"
-"a fost modificat\n"
+"Fișierul '%s' a fost modificat.\n"
 "\n"
 "Vreți să salvați modificările?"
 
@@ -10886,7 +10884,7 @@ msgstr "Creează o instanță a obiectului selectat pe un calculator specificat"
 
 #: oleview.rc:110
 msgid "Release the currently selected object instance"
-msgstr "Eliberează instanța obiectului selectat "
+msgstr "Eliberează instanța obiectului selectat"
 
 #: oleview.rc:111
 msgid "Copy the GUID of the currently selected item to the clipboard"
@@ -10922,7 +10920,7 @@ msgstr "Actualizează toate listele"
 #: oleview.rc:122
 msgid "Display program information, version number and copyright"
 msgstr ""
-"Afișează numărul versiunii, drepturile de autor și informații despre program "
+"Afișează numărul versiunii, drepturile de autor și informații despre program"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
@@ -11178,11 +11176,11 @@ msgstr "Informații"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "Se șterge grupul „%s” ?"
+msgstr "Se șterge grupul „%s”?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "Se șterge programul „%s” ?"
+msgstr "Se șterge programul „%s”?"
 
 #: progman.rc:67
 msgid "Not implemented"
@@ -12691,7 +12689,7 @@ msgstr ""
 
 #: winecfg.rc:150
 msgid "&Add application..."
-msgstr "&Adaugă o aplicație"
+msgstr "&Adaugă o aplicație..."
 
 #: winecfg.rc:151
 msgid "&Remove application"
@@ -12760,7 +12758,7 @@ msgstr "Suprascrieri existente:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "&Editează"
+msgstr "&Editează..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12808,7 +12806,7 @@ msgstr ""
 
 #: winecfg.rc:227
 msgid "&Add..."
-msgstr "&Adaugă"
+msgstr "&Adaugă..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
@@ -12828,7 +12826,7 @@ msgstr "Dispoziti&v:"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
-msgstr "Navighează"
+msgstr "Navighează..."
 
 #: winecfg.rc:244
 msgid "&Label:"
@@ -12880,7 +12878,7 @@ msgstr "Tematică:"
 
 #: winecfg.rc:277
 msgid "&Install theme..."
-msgstr "Instalează o tematică"
+msgstr "Instalează o tematică..."
 
 #: winecfg.rc:282
 msgid "It&em:"
@@ -13534,7 +13532,7 @@ msgstr "&Nume"
 
 #: winefile.rc:49
 msgid "&All File Details"
-msgstr "To&ate detaliile "
+msgstr "To&ate detaliile"
 
 #: winefile.rc:51
 msgid "&Sort by Name"
@@ -13746,7 +13744,7 @@ msgstr "&Expert"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "&Personalizat"
+msgstr "&Personalizat..."
 
 #: winemine.rc:44
 msgid "&Fastest Times"
@@ -13814,7 +13812,7 @@ msgstr "Copyright 2000 Joshua Thielen"
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
-msgstr "&Setare imprimantă"
+msgstr "&Setare imprimantă..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
@@ -13902,7 +13900,7 @@ msgstr "Nu am găsit o implementare pentru richedit... Abandonez"
 
 #: winhlp32.rc:91
 msgid "Help topics: "
-msgstr "Subiecte de ajutor:"
+msgstr "Subiecte de ajutor: "
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
