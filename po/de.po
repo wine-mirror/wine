@@ -8020,7 +8020,7 @@ msgid ""
 msgstr ""
 "Der Ordner enthält bereits eine Datei namens '%1'.\n"
 "\n"
-" Wollen Sie die Datei ersetzen?"
+"Wollen Sie die Datei ersetzen?"
 
 #: shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
@@ -8048,9 +8048,8 @@ msgstr ""
 #: shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr ""
-"Das Objekt '%1' kann nicht in den Papierkorb verschoben werden.\n"
-"\n"
-" Möchten Sie es stattdessen löschen?"
+"Das Objekt '%1' kann nicht in den Papierkorb verschoben werden. Möchten Sie "
+"es stattdessen löschen?"
 
 #: shell32.rc:183
 msgid ""
@@ -9203,7 +9202,7 @@ msgstr ""
 
 #: attrib.rc:28 cmd.rc:318
 msgid "%1: File Not Found\n"
-msgstr "%1 : Datei nicht gefunden\n"
+msgstr "%1: Datei nicht gefunden\n"
 
 #: attrib.rc:47
 msgid ""
