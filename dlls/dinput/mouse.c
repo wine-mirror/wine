@@ -319,7 +319,7 @@ static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
 {
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
     SysMouseImpl* This = impl_from_IDirectInputDevice8A(iface);
-    int wdata = 0, inst_id = -1;
+    int wdata = 0, inst_id = -1, ret = 0;
 
     TRACE("msg %lx @ (%d %d)\n", wparam, hook->pt.x, hook->pt.y);
 
@@ -367,6 +367,9 @@ static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
         case WM_MOUSEWHEEL:
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_Z_AXIS_INSTANCE) | DIDFT_RELAXIS;
             This->m_state.lZ += wdata = (short)HIWORD(hook->mouseData);
+            /* FarCry crashes if it gets a mouse wheel message */
+            /* FIXME: should probably filter out other messages too */
+            ret = This->clipped;
             break;
         case WM_LBUTTONDOWN:
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 0) | DIDFT_PSHBUTTON;
@@ -411,7 +414,7 @@ static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
     }
 
     LeaveCriticalSection(&This->base.crit);
-    return 0;
+    return ret;
 }
 
 static void warp_check( SysMouseImpl* This, BOOL force )
