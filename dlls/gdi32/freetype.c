@@ -1918,6 +1918,14 @@ static void LoadReplaceList(void)
                                       ADDFONT_FORCE_BITMAP | (face->external ? ADDFONT_EXTERNAL_FONT : 0));
                     }
                 }
+                else
+                {
+	            TRACE("%s is not available. Skip this replacement.\n", debugstr_w(data));
+                }
+            }
+            else
+            {
+	        TRACE("%s is available. Skip this replacement.\n", debugstr_w(value));
             }
 	    /* reset dlen and vlen */
 	    dlen = datalen;
