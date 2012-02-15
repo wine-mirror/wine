@@ -334,21 +334,11 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         return NC_HandleNCLButtonDblClk( hwnd, wParam, lParam );
 
     case WM_NCRBUTTONDOWN:
-        /* in Windows, capture is taken when right-clicking on the caption bar */
-        if (wParam==HTCAPTION)
-        {
-            SetCapture(hwnd);
-        }
-        break;
+        return NC_HandleNCRButtonDown( hwnd, wParam, lParam );
 
     case WM_RBUTTONUP:
         {
             POINT pt;
-
-            if (hwnd == GetCapture())
-                /* release capture if we took it on WM_NCRBUTTONDOWN */
-                ReleaseCapture();
-
             pt.x = (short)LOWORD(lParam);
             pt.y = (short)HIWORD(lParam);
             ClientToScreen(hwnd, &pt);

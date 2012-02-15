@@ -1462,6 +1462,44 @@ LRESULT NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
 
 /***********************************************************************
+ *           NC_HandleNCRButtonDown
+ *
+ * Handle a WM_NCRBUTTONDOWN message. Called from DefWindowProc().
+ */
+LRESULT NC_HandleNCRButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
+{
+    MSG msg;
+    INT hittest = wParam;
+    HMENU hSysMenu = GetSystemMenu(hwnd, FALSE);
+
+    switch (hittest)
+    {
+    case HTCAPTION:
+    case HTSYSMENU:
+        hSysMenu = GetSystemMenu(hwnd, FALSE);
+        if (!hSysMenu) break;
+
+        SetCapture( hwnd );
+        for (;;)
+        {
+            if (!GetMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST )) break;
+            if (CallMsgFilterW( &msg, MSGF_MAX )) continue;
+            if (msg.message == WM_RBUTTONUP)
+            {
+                hittest = NC_HandleNCHitTest( hwnd, msg.pt );
+                break;
+            }
+        }
+        ReleaseCapture();
+        if (hittest == HTCAPTION || hittest == HTSYSMENU)
+            SendMessageW( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, msg.lParam );
+        break;
+    }
+    return 0;
+}
+
+
+/***********************************************************************
  *           NC_HandleNCLButtonDblClk
  *
  * Handle a WM_NCLBUTTONDBLCLK message. Called from DefWindowProc().
