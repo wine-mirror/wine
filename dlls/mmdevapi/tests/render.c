@@ -75,8 +75,10 @@ static DWORD wave_generate_tone(PWAVEFORMATEX pwfx, BYTE* data, UINT32 frames)
     DWORD cn, i;
     double delta, y;
 
-    if(!winetest_interactive || wfxe->Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE ||
-       !IsEqualGUID(&wfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))
+    if(!winetest_interactive)
+        return AUDCLNT_BUFFERFLAGS_SILENT;
+    if(wfxe->Format.wBitsPerSample != ((wfxe->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+       IsEqualGUID(&wfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) ? 8 * sizeof(float) : 16))
         return AUDCLNT_BUFFERFLAGS_SILENT;
 
     for(delta = phase, cn = 0; cn < wfxe->Format.nChannels;
@@ -84,8 +86,10 @@ static DWORD wave_generate_tone(PWAVEFORMATEX pwfx, BYTE* data, UINT32 frames)
         for(i = 0; i < frames; i++){
             y = sin(2*PI*(440.* i / wfxe->Format.nSamplesPerSec + delta));
             /* assume alignment is granted */
-            ((float*)data)[cn+i*wfxe->Format.nChannels] = y;
-            /* fixme: 16bit for exclusive mode */
+            if(wfxe->Format.wBitsPerSample == 16)
+                ((short*)data)[cn+i*wfxe->Format.nChannels] = y * 32767.9;
+            else
+                ((float*)data)[cn+i*wfxe->Format.nChannels] = y;
         }
     }
     phase += 440.* frames / wfxe->Format.nSamplesPerSec;
