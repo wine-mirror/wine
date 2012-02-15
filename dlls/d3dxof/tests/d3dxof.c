@@ -204,11 +204,37 @@ static void test_CreateEnumObject(void)
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
     ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
 
+    /* Get all data (szMember == NULL) */
     hr = IDirectXFileData_GetData(lpdxfd, NULL, &size, (void**)&pdata);
     ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
 
-    ok(size == 8, "Retrieved data size is wrong\n");
+    ok(size == 8, "Retrieved data size is wrong (%u instead of 8)\n", size);
     ok((*((WORD*)pdata) == 1) && (*((WORD*)(pdata+2)) == 2) && (*((DWORD*)(pdata+4)) == 3), "Retrieved data is wrong\n");
+
+    /* Get only "major" member (szMember == "major") */
+    hr = IDirectXFileData_GetData(lpdxfd, "major", &size, (void**)&pdata);
+    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+
+    ok(size == 2, "Retrieved data size is wrong (%u instead of 2)\n", size);
+    ok(*((WORD*)pdata) == 1, "Retrieved data is wrong (%u instead of 1)\n", *((WORD*)pdata));
+
+    /* Get only "minor" member (szMember == "minor") */
+    hr = IDirectXFileData_GetData(lpdxfd, "minor", &size, (void**)&pdata);
+    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+
+    ok(size == 2, "Retrieved data size is wrong (%u instead of 2)\n", size);
+    ok(*((WORD*)pdata) == 2, "Retrieved data is wrong (%u instead of 2)\n", *((WORD*)pdata));
+
+    /* Get only "flags" member (szMember == "flags") */
+    hr = IDirectXFileData_GetData(lpdxfd, "flags", &size, (void**)&pdata);
+    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+
+    ok(size == 4, "Retrieved data size is wrong (%u instead of 4)\n", size);
+    ok(*((WORD*)pdata) == 3, "Retrieved data is wrong (%u instead of 3)\n", *((WORD*)pdata));
+
+    /* Try to get not existing member (szMember == "unknown") */
+    hr = IDirectXFileData_GetData(lpdxfd, "unknow", &size, (void**)&pdata);
+    ok(hr == DXFILEERR_BADDATAREFERENCE, "IDirectXFileData_GetData: %x\n", hr);
 
     ref = IDirectXFileEnumObject_Release(lpdxfeo);
     ok(ref == 0, "Got refcount %d, expected 0\n", ref);

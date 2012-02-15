@@ -616,12 +616,23 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetData(IDirectXFileData* iface, LPCS
 
   if (szMember)
   {
-    FIXME("Specifying a member is not supported yet!\n");
-    return DXFILEERR_BADVALUE;
+    int i;
+    for (i = 0; i < This->pobj->nb_members; i++)
+      if (!strcmp(This->pobj->members[i].name, szMember))
+        break;
+    if (i == This->pobj->nb_members)
+    {
+      WARN("Unknown member '%s'\n", szMember);
+      return DXFILEERR_BADDATAREFERENCE;
+    }
+    *pcbSize = This->pobj->members[i].size;
+    *ppvData = This->pobj->root->pdata + This->pobj->members[i].start;
   }
-
-  *pcbSize = This->pobj->size;
-  *ppvData = This->pobj->root->pdata + This->pobj->pos_data;
+  else
+  {
+    *pcbSize = This->pobj->size;
+    *ppvData = This->pobj->root->pdata + This->pobj->pos_data;
+  }
 
   return DXFILE_OK;
 }

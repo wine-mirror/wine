@@ -1149,6 +1149,8 @@ static BOOL parse_object_members_list(parse_buffer * buf)
   int i;
   xtemplate* pt = buf->pxt[buf->level];
 
+  buf->pxo->nb_members = pt->nb_members;
+
   for (i = 0; i < pt->nb_members; i++)
   {
     int k;
@@ -1295,6 +1297,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
       if ((token != TOKEN_SEMICOLON) && (token != TOKEN_COMMA))
         return FALSE;
     }
+    buf->pxo->members[i].size = buf->cur_pos_data - buf->pxo->members[i].start;
   }
 
   return TRUE;
