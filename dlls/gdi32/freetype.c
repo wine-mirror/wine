@@ -1880,9 +1880,6 @@ static void LoadReplaceList(void)
     DWORD valuelen, datalen, i = 0, type, dlen, vlen;
     LPWSTR value;
     LPVOID data;
-    Family *family;
-    Face *face;
-    struct list *family_elem_ptr, *face_elem_ptr;
     CHAR familyA[400];
 
     /* @@ Wine registry key: HKCU\Software\Wine\Fonts\Replacements */
@@ -1907,19 +1904,18 @@ static void LoadReplaceList(void)
             {
                 /* Find the old family and hence all of the font files
                    in that family */
-                LIST_FOR_EACH(family_elem_ptr, &font_list) {
-                    family = LIST_ENTRY(family_elem_ptr, Family, entry);
-                    if(!strcmpiW(family->FamilyName, data) || (family->EnglishName && !strcmpiW(family->EnglishName, data))) {
-                        LIST_FOR_EACH(face_elem_ptr, &family->faces) {
-                            face = LIST_ENTRY(face_elem_ptr, Face, entry);
-                            TRACE("mapping %s %s to %s\n", debugstr_w(family->FamilyName),
-                                  debugstr_w(face->StyleName), familyA);
-                            /* Now add a new entry with the new family name */
-                            AddFontToList(face->file, face->font_data_ptr, face->font_data_size,
-                                          familyA, family->FamilyName,
-                                          ADDFONT_FORCE_BITMAP | (face->external ? ADDFONT_EXTERNAL_FONT : 0));
-                        }
-                        break;
+                const Family * const family = find_family_from_any_name(data);
+                if (family != NULL)
+                {
+                    const struct list *face_elem_ptr;
+                    LIST_FOR_EACH(face_elem_ptr, &family->faces) {
+                        const Face * const face = LIST_ENTRY(face_elem_ptr, Face, entry);
+                        TRACE("mapping %s %s to %s\n", debugstr_w(family->FamilyName),
+                              debugstr_w(face->StyleName), familyA);
+                        /* Now add a new entry with the new family name */
+                        AddFontToList(face->file, face->font_data_ptr, face->font_data_size,
+                                      familyA, family->FamilyName,
+                                      ADDFONT_FORCE_BITMAP | (face->external ? ADDFONT_EXTERNAL_FONT : 0));
                     }
                 }
             }
