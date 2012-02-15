@@ -823,7 +823,7 @@ INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
     WCHAR buf[256];
     INT ret;
 
-    if (!GetKeyNameTextW(lParam, buf, 256))
+    if (!nSize || !GetKeyNameTextW(lParam, buf, 256))
     {
         lpBuffer[0] = 0;
         return 0;
@@ -834,6 +834,8 @@ INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
         ret = nSize - 1;
         lpBuffer[ret] = 0;
     }
+    else ret--;
+
     return ret;
 }
 
@@ -842,6 +844,7 @@ INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
  */
 INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
 {
+    if (!lpBuffer || !nSize) return 0;
     return USER_Driver->pGetKeyNameText( lParam, lpBuffer, nSize );
 }
 

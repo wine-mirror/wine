@@ -2291,7 +2291,7 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
        (scanCode != 0x4a ) &&   /* numpad - */
        (scanCode != 0x4e ) )    /* numpad + */
       {
-        if ((nSize >= 2) && lpBuffer)
+        if (nSize >= 2)
 	{
           *lpBuffer = toupperW((WCHAR)ansi);
           *(lpBuffer+1) = 0;
@@ -2318,6 +2318,8 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
          break;
   if (keyi <= max_keycode)
   {
+      INT rc;
+
       wine_tsx11_lock();
       keyc = (KeyCode) keyi;
       keys = keycode_to_keysym(display, keyc, 0);
@@ -2329,29 +2331,30 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
           char* idx = strrchr(name, '_');
           if (idx && (strcasecmp(idx, "_r") == 0 || strcasecmp(idx, "_l") == 0))
           {
-              INT rc = 0;
               TRACE("found scan=%04x keyc=%u keysym=%lx modified_string=%s\n",
                     scanCode, keyc, keys, debugstr_an(name,idx-name));
-              if (lpBuffer && nSize)
-              {
-                  rc = MultiByteToWideChar(CP_UNIXCP, 0, name, idx-name+1, lpBuffer, nSize);
-                  if (rc > 0) lpBuffer[rc - 1] = 0;
-              }
+              rc = MultiByteToWideChar(CP_UNIXCP, 0, name, idx-name+1, lpBuffer, nSize);
+              if (!rc) rc = nSize;
+              lpBuffer[--rc] = 0;
               return rc;
           }
       }
 
-      TRACE("found scan=%04x keyc=%u keysym=%04x string=%s\n",
-            scanCode, keyc, (int)keys, debugstr_a(name));
-      if (lpBuffer && nSize && name)
-          return MultiByteToWideChar(CP_UNIXCP, 0, name, -1, lpBuffer, nSize);
+      if (name)
+      {
+          TRACE("found scan=%04x keyc=%u keysym=%04x vkey=%04x string=%s\n",
+                scanCode, keyc, (int)keys, vkey, debugstr_a(name));
+          rc = MultiByteToWideChar(CP_UNIXCP, 0, name, -1, lpBuffer, nSize);
+          if (!rc) rc = nSize;
+          lpBuffer[--rc] = 0;
+          return rc;
+      }
   }
 
   /* Finally issue WARN for unknown keys   */
 
   WARN("(%08x,%p,%d): unsupported key, vkey=%04X, ansi=%04x\n",lParam,lpBuffer,nSize,vkey,ansi);
-  if (lpBuffer && nSize)
-    *lpBuffer = 0;
+  *lpBuffer = 0;
   return 0;
 }
 
