@@ -96,7 +96,12 @@ void wineXmlCallbackError(char const* caller, xmlErrorPtr err)
     case XML_ERR_WARNING: dbcl = __WINE_DBCL_WARN; break;
     default:              dbcl = __WINE_DBCL_ERR; break;
     }
-    wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, "%s", debugstr_a(err->message));
+
+    wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, "error code %d", err->code);
+    if (err->message)
+        wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, ": %s", err->message);
+    else
+        wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, "\n");
 }
 
 /* Support for loading xml files from a Wine Windows drive */
