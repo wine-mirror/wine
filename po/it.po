@@ -7917,16 +7917,19 @@ msgid "Administrative Tools"
 msgstr "Strumenti di amministrazione"
 
 #: shell32.rc:218
+#, fuzzy
 msgid "Music"
-msgstr "Documenti\\Musica"
+msgstr "Musica"
 
 #: shell32.rc:219
+#, fuzzy
 msgid "Pictures"
-msgstr "Documenti\\Immagini"
+msgstr "Immagini"
 
 #: shell32.rc:220
+#, fuzzy
 msgid "Videos"
-msgstr "Documenti\\Video"
+msgstr "Video"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
@@ -7962,19 +7965,19 @@ msgstr "Modello"
 
 #: shell32.rc:225
 msgid "Sample Music"
-msgstr "Sample Music"
+msgstr ""
 
 #: shell32.rc:226
 msgid "Sample Pictures"
-msgstr "Sample Pictures"
+msgstr ""
 
 #: shell32.rc:227
 msgid "Sample Playlists"
-msgstr "Sample Playlists"
+msgstr ""
 
 #: shell32.rc:228
 msgid "Sample Videos"
-msgstr "Sample Videos"
+msgstr ""
 
 #: shell32.rc:229
 msgid "Saved Games"
