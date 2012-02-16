@@ -1926,11 +1926,11 @@ msgstr ""
 
 #: crypt32.rc:219 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
 msgid "Yes"
-msgstr ""
+msgstr "Kyllä"
 
 #: crypt32.rc:220 cryptui.rc:164 oleaut32.rc:30 wininet.rc:81 ipconfig.rc:45
 msgid "No"
-msgstr ""
+msgstr "Ei"
 
 #: crypt32.rc:221
 msgid "Digital Signature"
