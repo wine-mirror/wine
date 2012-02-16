@@ -4481,20 +4481,22 @@ TOOLBAR_SetDrawTextFlags (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
  *  (MSDN says that this parameter is reserved)
  */
 static LRESULT
-TOOLBAR_SetExtendedStyle (TOOLBAR_INFO *infoPtr, LPARAM lParam)
+TOOLBAR_SetExtendedStyle (TOOLBAR_INFO *infoPtr, DWORD mask, DWORD style)
 {
-    DWORD dwOldStyle;
+    DWORD old_style = infoPtr->dwExStyle;
 
-    dwOldStyle = infoPtr->dwExStyle;
-    infoPtr->dwExStyle = (DWORD)lParam;
+    TRACE("mask=0x%08x, style=0x%08x\n", mask, style);
 
-    TRACE("new style 0x%08x\n", infoPtr->dwExStyle);
+    if (mask)
+	infoPtr->dwExStyle = (old_style & ~mask) | (style & mask);
+    else
+	infoPtr->dwExStyle = style;
 
     if (infoPtr->dwExStyle & ~TBSTYLE_EX_ALL)
 	FIXME("Unknown Toolbar Extended Style 0x%08x. Please report.\n",
 	      (infoPtr->dwExStyle & ~TBSTYLE_EX_ALL));
 
-    if ((dwOldStyle ^ infoPtr->dwExStyle) & TBSTYLE_EX_MIXEDBUTTONS)
+    if ((old_style ^ infoPtr->dwExStyle) & TBSTYLE_EX_MIXEDBUTTONS)
         TOOLBAR_CalcToolbar(infoPtr);
     else
         TOOLBAR_LayoutToolbar(infoPtr);
@@ -4502,7 +4504,7 @@ TOOLBAR_SetExtendedStyle (TOOLBAR_INFO *infoPtr, LPARAM lParam)
     TOOLBAR_AutoSize(infoPtr);
     InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
 
-    return (LRESULT)dwOldStyle;
+    return old_style;
 }
 
 
@@ -6629,7 +6631,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_SetDrawTextFlags (infoPtr, wParam, lParam);
 
 	case TB_SETEXTENDEDSTYLE:
-	    return TOOLBAR_SetExtendedStyle (infoPtr, lParam);
+	    return TOOLBAR_SetExtendedStyle (infoPtr, wParam, lParam);
 
 	case TB_SETHOTIMAGELIST:
 	    return TOOLBAR_SetHotImageList (infoPtr, wParam, (HIMAGELIST)lParam);

@@ -1840,6 +1840,76 @@ static void test_create(void)
     DestroyWindow(hwnd);
 }
 
+typedef struct {
+    DWORD mask;
+    DWORD style;
+    DWORD style_set;
+} extended_style_t;
+
+static const extended_style_t extended_style_test[] = {
+    {
+      TBSTYLE_EX_DRAWDDARROWS | TBSTYLE_EX_HIDECLIPPEDBUTTONS | TBSTYLE_EX_DOUBLEBUFFER,
+      TBSTYLE_EX_DRAWDDARROWS | TBSTYLE_EX_HIDECLIPPEDBUTTONS | TBSTYLE_EX_DOUBLEBUFFER,
+      TBSTYLE_EX_DRAWDDARROWS | TBSTYLE_EX_HIDECLIPPEDBUTTONS | TBSTYLE_EX_DOUBLEBUFFER
+    },
+    {
+      TBSTYLE_EX_MIXEDBUTTONS, TBSTYLE_EX_MIXEDBUTTONS,
+      TBSTYLE_EX_DRAWDDARROWS | TBSTYLE_EX_HIDECLIPPEDBUTTONS | TBSTYLE_EX_DOUBLEBUFFER | TBSTYLE_EX_MIXEDBUTTONS
+    },
+
+    { 0, TBSTYLE_EX_MIXEDBUTTONS, TBSTYLE_EX_MIXEDBUTTONS },
+    { 0, 0, 0 },
+    { 0, TBSTYLE_EX_DRAWDDARROWS, TBSTYLE_EX_DRAWDDARROWS },
+    { 0, TBSTYLE_EX_HIDECLIPPEDBUTTONS, TBSTYLE_EX_HIDECLIPPEDBUTTONS },
+
+    { 0, 0, 0 },
+    { TBSTYLE_EX_HIDECLIPPEDBUTTONS, TBSTYLE_EX_MIXEDBUTTONS, 0 },
+    { TBSTYLE_EX_MIXEDBUTTONS, TBSTYLE_EX_HIDECLIPPEDBUTTONS, 0 },
+    { TBSTYLE_EX_DOUBLEBUFFER, TBSTYLE_EX_MIXEDBUTTONS, 0 },
+
+    {
+      TBSTYLE_EX_DOUBLEBUFFER | TBSTYLE_EX_MIXEDBUTTONS,
+      TBSTYLE_EX_MIXEDBUTTONS, TBSTYLE_EX_MIXEDBUTTONS
+    },
+    {
+      TBSTYLE_EX_DOUBLEBUFFER | TBSTYLE_EX_MIXEDBUTTONS,
+      TBSTYLE_EX_DOUBLEBUFFER, TBSTYLE_EX_DOUBLEBUFFER
+    }
+};
+
+static void test_TB_GET_SET_EXTENDEDSTYLE(void)
+{
+    DWORD style, oldstyle, oldstyle2;
+    const extended_style_t *ptr;
+    HWND hwnd;
+    int i;
+
+    rebuild_toolbar(&hwnd);
+
+    SendMessageA(hwnd, TB_SETEXTENDEDSTYLE, TBSTYLE_EX_DOUBLEBUFFER, TBSTYLE_EX_MIXEDBUTTONS);
+    style = SendMessageA(hwnd, TB_GETEXTENDEDSTYLE, 0, 0);
+    if (style == TBSTYLE_EX_MIXEDBUTTONS)
+    {
+        win_skip("Some extended style bits are not supported\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    for (i = 0; i < sizeof(extended_style_test)/sizeof(extended_style_t); i++)
+    {
+        ptr = &extended_style_test[i];
+
+        oldstyle2 = SendMessageA(hwnd, TB_GETEXTENDEDSTYLE, 0, 0);
+
+        oldstyle = SendMessageA(hwnd, TB_SETEXTENDEDSTYLE, ptr->mask, ptr->style);
+        ok(oldstyle == oldstyle2, "%d: got old style 0x%08x, expected 0x%08x\n", i, oldstyle, oldstyle2);
+        style = SendMessageA(hwnd, TB_GETEXTENDEDSTYLE, 0, 0);
+        ok(style == ptr->style_set, "%d: got style 0x%08x, expected 0x%08x\n", i, style, ptr->style_set);
+    }
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(toolbar)
 {
     WNDCLASSA wc;
@@ -1881,6 +1951,7 @@ START_TEST(toolbar)
     test_tooltip();
     test_get_set_style();
     test_create();
+    test_TB_GET_SET_EXTENDEDSTYLE();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
