@@ -236,13 +236,14 @@ static char* heap_printf(const char *format, ...)
     char *buffer, *ret;
     int n;
 
-    va_start(args, format);
     while (1)
     {
         buffer = HeapAlloc(GetProcessHeap(), 0, size);
         if (buffer == NULL)
             break;
+        va_start(args, format);
         n = vsnprintf(buffer, size, format, args);
+        va_end(args);
         if (n == -1)
             size *= 2;
         else if (n >= size)
@@ -251,7 +252,7 @@ static char* heap_printf(const char *format, ...)
             break;
         HeapFree(GetProcessHeap(), 0, buffer);
     }
-    va_end(args);
+
     if (!buffer) return NULL;
     ret = HeapReAlloc(GetProcessHeap(), 0, buffer, strlen(buffer) + 1 );
     if (!ret) ret = buffer;
