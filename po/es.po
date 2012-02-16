@@ -477,7 +477,7 @@ msgstr "Configuración de impresión"
 
 #: comdlg32.rc:221 comdlg32.rc:357 comdlg32.rc:396
 msgid "Printer"
-msgstr "Impresora:"
+msgstr "Impresora"
 
 #: comdlg32.rc:222
 msgid "&Default Printer"
@@ -489,7 +489,7 @@ msgstr "[ninguna]"
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
-msgstr "Impresora &específica:"
+msgstr "Impresora &específica"
 
 #: comdlg32.rc:229 comdlg32.rc:415 comdlg32.rc:434 wineps.rc:31
 msgid "Orientation"
@@ -513,7 +513,7 @@ msgstr "&Tamaño"
 
 #: comdlg32.rc:236
 msgid "&Source"
-msgstr "O&rigen:"
+msgstr "O&rigen"
 
 #: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
@@ -950,7 +950,7 @@ msgid ""
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Este valor no concuerda con el rango de la página.\n"
-" Por favor, introduzca un valor entre %d y %d."
+"Por favor, introduzca un valor entre %d y %d."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -1198,7 +1198,7 @@ msgstr ""
 "El Bloq Mayus activado puede hacer que entre su contraseña incorrectamente.\n"
 "\n"
 "Pulse la tecla Bloq Mayus de su teclado para desactivar Bloq Mayus antes\n"
-" de introducir su contraseña."
+"de introducir su contraseña."
 
 #: credui.rc:31
 msgid "Caps Lock is On"
@@ -2213,7 +2213,7 @@ msgstr "&Nombre de archivo:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "E&xplorar"
+msgstr "E&xplorar..."
 
 #: cryptui.rc:294
 msgid ""
@@ -7064,7 +7064,7 @@ msgstr "C&onfigurar..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&Acerca de..."
+msgstr "&Acerca de"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -8124,7 +8124,7 @@ msgstr "&Abrir:"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
 msgid "&Browse..."
-msgstr "&Examinar"
+msgstr "&Examinar..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
@@ -9597,7 +9597,7 @@ msgstr ""
 #: attrib.rc:28 cmd.rc:318
 #, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s : Archivo no encontrado\n"
+msgstr "%1: Archivo no encontrado\n"
 
 #: attrib.rc:47
 msgid ""
@@ -9631,7 +9631,7 @@ msgstr "&Digital"
 
 #: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
 msgid "&Font..."
-msgstr "&Fuente"
+msgstr "&Fuente..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -9691,7 +9691,7 @@ msgstr "Ayuda sobre CHDIR\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS limpia la pantalla de la consola\n"
+msgstr "CLS limpia la pantalla de la consola.\n"
 
 #: cmd.rc:45
 #, fuzzy
@@ -10094,8 +10094,8 @@ msgstr ""
 "VERIFY se usa para poner, quitar o probar la etiqueta de verificación.\n"
 "Las formas válidas son:\n"
 "\n"
-"VERIFY ON\tPoner la bandera\n"
-"VERIFY OFF\tQuitar la bandera\n"
+"VERIFY ON\tPoner la bandera.\n"
+"VERIFY OFF\tQuitar la bandera.\n"
 "VERIFY\t\tMuestra ON u OFF como corresponda.\n"
 "\n"
 "La bandera de verificación no tiene funcionalidad en Wine.\n"
@@ -10846,10 +10846,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"El archivo '%s'\n"
-"no existe\n"
+"El archivo '%s' no existe.\n"
 "\n"
-" ¿Desea crear un nuevo archivo?"
+"¿Desea crear un nuevo archivo?"
 
 #: notepad.rc:79
 msgid ""
@@ -10857,9 +10856,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"El texto en el archivo '%s' ha cambiado\n"
+"El texto en el archivo '%s' ha cambiado.\n"
 "\n"
-" ¿Desea guardar los cambios?"
+"¿Desea guardar los cambios?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
@@ -11622,7 +11621,7 @@ msgstr ""
 
 #: regedit.rc:74
 msgid "&Remove Favorite..."
-msgstr "&Eliminar favorito"
+msgstr "&Eliminar favorito..."
 
 #: regedit.rc:79
 msgid "&About Registry Editor"
@@ -11788,11 +11787,11 @@ msgstr "Sale del editor de registro"
 
 #: regedit.rc:161
 msgid "Adds keys to the favorites list"
-msgstr "Añade claves a la lista de favoritos..."
+msgstr "Añade claves a la lista de favoritos"
 
 #: regedit.rc:162
 msgid "Removes keys from the favorites list"
-msgstr "Elimina claves de la lista de favoritos..."
+msgstr "Elimina claves de la lista de favoritos"
 
 #: regedit.rc:163
 msgid "Shows or hides the status bar"
@@ -13000,7 +12999,7 @@ msgstr "&Añadir aplicación..."
 
 #: winecfg.rc:151
 msgid "&Remove application"
-msgstr "&Eliminar aplicación..."
+msgstr "&Eliminar aplicación"
 
 #: winecfg.rc:152
 msgid "&Windows Version:"
@@ -13069,7 +13068,7 @@ msgstr "&Reemplazos existentes:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "&Editar"
+msgstr "&Editar..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -13123,7 +13122,7 @@ msgstr "&Añadir..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Auto&detectar..."
+msgstr "Auto&detectar"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -14097,7 +14096,7 @@ msgstr "&Experto"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "P&ersonalizado"
+msgstr "P&ersonalizado..."
 
 #: winemine.rc:44
 #, fuzzy
@@ -14210,7 +14209,7 @@ msgstr "&Siempre visible"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Info..."
+msgstr ""
 
 #: winhlp32.rc:64
 #, fuzzy
