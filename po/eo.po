@@ -7969,7 +7969,7 @@ msgstr "Miaj Dokumentoj"
 
 #: shell32.rc:202
 msgid "Favorites"
-msgstr "Favorites"
+msgstr ""
 
 #: shell32.rc:203
 msgid "StartUp"
@@ -7977,15 +7977,17 @@ msgstr ""
 
 #: shell32.rc:204
 msgid "Start Menu"
-msgstr "Start Menu"
+msgstr ""
 
 #: shell32.rc:205
+#, fuzzy
 msgid "My Music"
-msgstr "Miaj Dokumentoj\\Muziko"
+msgstr "Muziko"
 
 #: shell32.rc:206
+#, fuzzy
 msgid "My Videos"
-msgstr "Miai Dokumentoj\\Video"
+msgstr "Video"
 
 #: shell32.rc:207
 #, fuzzy
@@ -7995,27 +7997,28 @@ msgstr "Desktop"
 
 #: shell32.rc:208
 msgid "NetHood"
-msgstr "NetHood"
+msgstr ""
 
 #: shell32.rc:209
 msgid "Templates"
-msgstr "Templates"
+msgstr ""
 
 #: shell32.rc:210
 msgid "PrintHood"
-msgstr "PrintHood"
+msgstr ""
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
-msgstr "History"
+msgstr ""
 
 #: shell32.rc:212
 msgid "Program Files"
-msgstr "Program Files"
+msgstr ""
 
 #: shell32.rc:214
+#, fuzzy
 msgid "My Pictures"
-msgstr "Maj Documentoj\\Bildoj"
+msgstr "Bildoj"
 
 #: shell32.rc:215
 #, fuzzy
@@ -8024,29 +8027,30 @@ msgstr "Plenume dosierkopiadon..."
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
-msgstr "Documents"
+msgstr ""
 
 #: shell32.rc:217
-#, fuzzy
 msgid "Administrative Tools"
-msgstr "Start Menu\\Programs\\Administrative Tools"
+msgstr ""
 
 #: shell32.rc:218
+#, fuzzy
 msgid "Music"
-msgstr "Documents\\Musiko"
+msgstr "Musiko"
 
 #: shell32.rc:219
+#, fuzzy
 msgid "Pictures"
-msgstr "Documents\\Bildoj"
+msgstr "Bildoj"
 
 #: shell32.rc:220
+#, fuzzy
 msgid "Videos"
-msgstr "Documents\\Video"
+msgstr "Video"
 
 #: shell32.rc:213
-#, fuzzy
 msgid "Program Files (x86)"
-msgstr "Program Files"
+msgstr ""
 
 #: shell32.rc:221
 #, fuzzy
@@ -8086,7 +8090,7 @@ msgstr "Ekzemplo"
 #: shell32.rc:226
 #, fuzzy
 msgid "Sample Pictures"
-msgstr "Documents\\Bildoj"
+msgstr "Bildoj"
 
 #: shell32.rc:227
 msgid "Sample Playlists"
@@ -8095,7 +8099,7 @@ msgstr ""
 #: shell32.rc:228
 #, fuzzy
 msgid "Sample Videos"
-msgstr "Miai Dokumentoj\\Video"
+msgstr "Video"
 
 #: shell32.rc:229
 #, fuzzy
@@ -13445,7 +13449,7 @@ msgstr "Æiam &supre"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Pri..."
+msgstr ""
 
 #: winhlp32.rc:64
 #, fuzzy
