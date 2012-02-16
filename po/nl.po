@@ -2015,7 +2015,7 @@ msgstr "Certificaatbeleid"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "Autoriteits Sleutel Identificatie nummer:"
+msgstr "Autoriteits Sleutel Identificatie nummer: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -2312,6 +2312,7 @@ msgstr ""
 "authenticatie en om berichten te ondertekenen. Een certificaatkluis bevat "
 "een verzameling van certificaten, lijsten van herroepen certificaten en "
 "lijsten van vertrouwde certificaten.\n"
+"\n"
 "Klik Volgende om verder te gaan."
 
 #: cryptui.rc:381
@@ -8388,9 +8389,8 @@ msgid "The specified device handle is invalid."
 msgstr "De gespecificeerde apparaatverwijzing is ongeldig."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "Er is geen driver geïnstalleerd op uw systeem !\n"
+msgstr "Er is geen driver geïnstalleerd op uw systeem!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -9235,7 +9235,7 @@ msgstr ""
 
 #: attrib.rc:28 cmd.rc:318
 msgid "%1: File Not Found\n"
-msgstr "%1 : Bestand niet gevonden\n"
+msgstr "%1: Bestand niet gevonden\n"
 
 #: attrib.rc:47
 msgid ""
@@ -9460,9 +9460,9 @@ msgid ""
 msgstr ""
 "IF wordt gebruikt om een opdracht voorwaardelijk uit te voeren.\n"
 "\n"
-"Syntax:\tIF [NOT] EXIST bestandsnaam opdracht\n"
-"IF [NOT] tekenreeks1==tekenreeks2 opdracht\n"
-"IF [NOT] ERRORLEVEL getal opdracht\n"
+"Syntax: IF [NOT] EXIST bestandsnaam opdracht\n"
+"        IF [NOT] tekenreeks1==tekenreeks2 opdracht\n"
+"        IF [NOT] ERRORLEVEL getal opdracht\n"
 "\n"
 "In de tweede vorm van de opdracht moeten tekenreeks1 en tekenreeks2 tussen\n"
 "dubbele aanhalingstekens staan. De vergelijking is niet gevoelig voor het\n"
@@ -9543,7 +9543,8 @@ msgstr ""
 "toets in te drukken.\n"
 "\n"
 "Dit is vooral handig in batchbestanden om de gebruiker in staat te stellen "
-"om de uitvoer van een voorafgaande opdracht te bekijken, voordat het van het "
+"om\n"
+"de uitvoer van een voorafgaande opdracht te bekijken, voordat het van het\n"
 "scherm schuift.\n"
 
 #: cmd.rc:149
@@ -9761,7 +9762,7 @@ msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
-"ENDLOCAL beëindigt de localisatie van omgevingswijzigingen in een "
+"ENDLOCAL beëindigt de localisatie van omgevingswijzigingen in een\n"
 "batchbestand die werd begonnen door een voorafgaande SETLOCAL opdracht.\n"
 
 #: cmd.rc:233
@@ -9845,8 +9846,7 @@ msgstr ""
 #: cmd.rc:259
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
-"MORE toont de uitvoer van programma's of herleidde invoer\n"
-"per bladzijde.\n"
+"MORE toont de uitvoer van programma's of herleidde invoer per bladzijde.\n"
 
 #: cmd.rc:263
 msgid ""
@@ -12937,7 +12937,7 @@ msgstr "Standaardinstellingen"
 
 #: winecfg.rc:59
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Wine toepassingen (*.exe, *.exe.so)"
+msgstr "Wine toepassingen (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -13348,9 +13348,9 @@ msgid ""
 msgstr ""
 "  --backend={user|curses}  Kiezen voor user zal een nieuw window doen "
 "verschijnen,\n"
-"                            curses zal proberen de huidige terminal om te "
+"                           curses zal proberen de huidige terminal om te "
 "zetten\n"
-"                            in een Wine console.\n"
+"                           in een Wine console.\n"
 
 #: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
