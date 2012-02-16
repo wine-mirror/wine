@@ -1186,7 +1186,7 @@ msgstr ""
 "incorrettamente.\n"
 "\n"
 "Premere il tasto Caps Lock sulla tua tastiera per spegnere Caps Lock prima\n"
-" di immettere la tua password."
+"di immettere la tua password."
 
 #: credui.rc:31
 msgid "Caps Lock is On"
@@ -2927,7 +2927,7 @@ msgstr "DirectSound predefinito"
 
 #: devenum.rc:33
 msgid "DirectSound: %s"
-msgstr "DirectSound : %s"
+msgstr "DirectSound: %s"
 
 #: devenum.rc:34
 msgid "Default WaveOut Device"
@@ -9201,7 +9201,7 @@ msgstr ""
 
 #: attrib.rc:28 cmd.rc:318
 msgid "%1: File Not Found\n"
-msgstr "%1 : File non trovato\n"
+msgstr "%1: File non trovato\n"
 
 #: attrib.rc:47
 msgid ""
@@ -11018,11 +11018,11 @@ msgstr "Informazioni"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "Eliminare il gruppo `%s' ?"
+msgstr "Eliminare il gruppo `%s'?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "Eliminare `%s' ?"
+msgstr "Eliminare `%s'?"
 
 #: progman.rc:67
 msgid "Not implemented"
