@@ -2224,8 +2224,9 @@ msgid "&File name:"
 msgstr "&Fájlnév:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
+#, fuzzy
 msgid "B&rowse..."
-msgstr "Tallózás"
+msgstr "Tallózás..."
 
 #: cryptui.rc:294
 msgid ""
@@ -2286,20 +2287,12 @@ msgstr ""
 #: cryptui.rc:341
 #, fuzzy
 msgid "&Import..."
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Betűtípus...\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Font..."
+msgstr "&Betűtípus...\n"
 
 #: cryptui.rc:342 regedit.rc:109
 #, fuzzy
 msgid "&Export..."
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Betűtípus...\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Font..."
+msgstr "&Betűtípus...\n"
 
 #: cryptui.rc:344
 #, fuzzy
@@ -10385,8 +10378,9 @@ msgid "&Wrap long lines"
 msgstr "&Hosszú sorok tördelése"
 
 #: notepad.rc:53
+#, fuzzy
 msgid "&Search...\tCtrl+F"
-msgstr "&Keresés..."
+msgstr "&Keresés...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
@@ -10492,7 +10486,7 @@ msgstr ""
 
 #: notepad.rc:66
 msgid "Page &p"
-msgstr "Oldalszám: &p."
+msgstr "Oldalszám &p"
 
 #: notepad.rc:68
 msgid "Notepad"
@@ -10516,10 +10510,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"A megadott '%s'\n"
-"fájl nem létezik!\n"
+"A megadott '%s' fájl nem létezik.\n"
 "\n"
-" Kíván létrehozni új fájlt?"
+"Kíván létrehozni új fájlt?"
 
 #: notepad.rc:79
 msgid ""
@@ -10527,14 +10520,13 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"'%s' fájl\n"
-"módosult\n"
+"'%s' fájl módosult.\n"
 "\n"
-" Szeretné menteni a változásokat?"
+"Szeretné menteni a változásokat?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
-msgstr "'%s' nem található!"
+msgstr "'%s' nem található."
 
 #: notepad.rc:82
 msgid "Unicode (UTF-16)"
@@ -11145,7 +11137,7 @@ msgstr "Ismeretlen jellemző a következőben: %s"
 
 #: progman.rc:76
 msgid "File `%s' exists. Not overwritten."
-msgstr "`%s' fájl létezik, ezért nem felülírható!"
+msgstr "`%s' fájl létezik, ezért nem felülírható."
 
 #: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
@@ -12532,7 +12524,7 @@ msgstr ""
 "Az eltávolítási parancs '%s' végrehajtása sikertelen, feltehetőleg a hiányzó "
 "futtatható állomány miatt.\n"
 "El szeretné távolítani az eltávolítási bejegyzést a regisztrációs "
-"adatbázisból ?"
+"adatbázisból?"
 
 #: view.rc:33
 msgid "&Pan"
@@ -12698,7 +12690,7 @@ msgstr "Létező felülbírálások:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "Sz&erkesztés"
+msgstr "Sz&erkesztés..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12751,7 +12743,7 @@ msgstr "Hozzá&ad..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Auto&felism..."
+msgstr "Auto&felism"
 
 #: winecfg.rc:232
 msgid "&Path:"
