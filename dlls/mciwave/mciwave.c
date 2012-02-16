@@ -870,6 +870,10 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
 
     whidx = 0;
     wmw->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    if (!wmw->hEvent) {
+	dwRet = MCIERR_OUT_OF_MEMORY;
+	goto cleanUp;
+    }
     wmw->dwEventCount = 1L; /* for first buffer */
 
     TRACE("Playing (normalized) from byte=%u for %u bytes\n", wmw->dwPosition, left);
@@ -921,6 +925,7 @@ cleanUp:
 	wmw->hWave = 0;
     }
     CloseHandle(wmw->hEvent);
+    wmw->hEvent = NULL;
 
     wmw->dwStatus = MCI_MODE_STOP;
 
