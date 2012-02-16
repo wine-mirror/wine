@@ -23,6 +23,16 @@
 
 #include "cpl.h"
 
+struct applet_info
+{
+    BOOL     valid;
+    LONG_PTR data;
+    HICON    icon;
+    WCHAR    name[256];
+    WCHAR    info[256];
+    WCHAR    helpfile[128];
+};
+
 typedef struct CPlApplet {
     struct CPlApplet*   next;		/* linked list */
     HWND		hWnd;
@@ -30,8 +40,7 @@ typedef struct CPlApplet {
     unsigned		count;		/* number of subprograms */
     HMODULE     	hModule;	/* module of loaded applet */
     APPLET_PROC		proc;		/* entry point address */
-    NEWCPLINFOW		info[1];	/* array of count information.
-					 * dwSize field is 0 if entry is invalid */
+    struct applet_info  info[1];	/* array of count information */
 } CPlApplet;
 
 typedef struct CPanel {

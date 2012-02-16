@@ -309,8 +309,8 @@ static BOOL SHELL_RegisterCPanelApp(IEnumIDListImpl *list, LPCSTR path)
     {
         for(i=0; i<applet->count; ++i)
         {
-            WideCharToMultiByte(CP_ACP, 0, applet->info[i].szName, -1, displayName, MAX_PATH, 0, 0);
-            WideCharToMultiByte(CP_ACP, 0, applet->info[i].szInfo, -1, comment, MAX_PATH, 0, 0);
+            WideCharToMultiByte(CP_ACP, 0, applet->info[i].name, -1, displayName, MAX_PATH, 0, 0);
+            WideCharToMultiByte(CP_ACP, 0, applet->info[i].info, -1, comment, MAX_PATH, 0, 0);
 
             applet->proc(0, CPL_INQUIRE, i, (LPARAM)&info);
 

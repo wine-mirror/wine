@@ -51,8 +51,8 @@ CPlApplet*	Control_UnloadApplet(CPlApplet* applet)
     CPlApplet*	next;
 
     for (i = 0; i < applet->count; i++) {
-        if (!applet->info[i].dwSize) continue;
-        applet->proc(applet->hWnd, CPL_STOP, i, applet->info[i].lData);
+        if (!applet->info[i].valid) continue;
+        applet->proc(applet->hWnd, CPL_STOP, i, applet->info[i].data);
     }
     if (applet->proc) applet->proc(applet->hWnd, CPL_EXIT, 0L, 0L);
     FreeLibrary(applet->hModule);
@@ -104,75 +104,66 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
     for (i = 0; i < applet->count; i++) {
        ZeroMemory(&newinfo, sizeof(newinfo));
        newinfo.dwSize = sizeof(NEWCPLINFOA);
-       applet->info[i].dwSize = sizeof(NEWCPLINFOW);
-       applet->info[i].dwFlags = 0;
-       applet->info[i].dwHelpContext = 0;
-       applet->info[i].szHelpFile[0] = '\0';
+       applet->info[i].valid = TRUE;
+       applet->info[i].helpfile[0] = 0;
        /* proc is supposed to return a null value upon success for
 	* CPL_INQUIRE and CPL_NEWINQUIRE
 	* However, real drivers don't seem to behave like this
 	* So, use introspection rather than return value
 	*/
        applet->proc(hWnd, CPL_INQUIRE, i, (LPARAM)&info);
-       applet->info[i].lData = info.lData;
+       applet->info[i].data = info.lData;
        if (info.idIcon != CPL_DYNAMIC_RES)
-	   applet->info[i].hIcon = LoadIconW(applet->hModule,
-					     MAKEINTRESOURCEW(info.idIcon));
+	   applet->info[i].icon = LoadIconW(applet->hModule, MAKEINTRESOURCEW(info.idIcon));
        if (info.idName != CPL_DYNAMIC_RES)
 	   LoadStringW(applet->hModule, info.idName,
-		       applet->info[i].szName, sizeof(applet->info[i].szName) / sizeof(WCHAR));
+		       applet->info[i].name, sizeof(applet->info[i].name) / sizeof(WCHAR));
        if (info.idInfo != CPL_DYNAMIC_RES)
 	   LoadStringW(applet->hModule, info.idInfo,
-		       applet->info[i].szInfo, sizeof(applet->info[i].szInfo) / sizeof(WCHAR));
+		       applet->info[i].info, sizeof(applet->info[i].info) / sizeof(WCHAR));
 
        /* some broken control panels seem to return incorrect values in CPL_INQUIRE,
           but proper data in CPL_NEWINQUIRE. if we get an empty string or a null
           icon, see what we can get from CPL_NEWINQUIRE */
 
-       if (lstrlenW(applet->info[i].szName) == 0)
-           info.idName = CPL_DYNAMIC_RES;
+       if (!applet->info[i].name[0]) info.idName = CPL_DYNAMIC_RES;
 
        /* zero-length szInfo may not be a buggy applet, but it doesn't hurt for us
           to check anyway */
 
-       if (lstrlenW(applet->info[i].szInfo) == 0)
-           info.idInfo = CPL_DYNAMIC_RES;
+       if (!applet->info[i].info[0]) info.idInfo = CPL_DYNAMIC_RES;
 
-       if (applet->info[i].hIcon == NULL)
+       if (applet->info[i].icon == NULL)
            info.idIcon = CPL_DYNAMIC_RES;
 
        if ((info.idIcon == CPL_DYNAMIC_RES) || (info.idName == CPL_DYNAMIC_RES) ||
            (info.idInfo == CPL_DYNAMIC_RES)) {
 	   applet->proc(hWnd, CPL_NEWINQUIRE, i, (LPARAM)&newinfo);
 
-	   applet->info[i].dwFlags = newinfo.dwFlags;
-	   applet->info[i].dwHelpContext = newinfo.dwHelpContext;
-	   applet->info[i].lData = newinfo.lData;
+	   applet->info[i].data = newinfo.lData;
 	   if (info.idIcon == CPL_DYNAMIC_RES) {
 	       if (!newinfo.hIcon) WARN("couldn't get icon for applet %u\n", i);
-	       applet->info[i].hIcon = newinfo.hIcon;
+	       applet->info[i].icon = newinfo.hIcon;
 	   }
 	   if (newinfo.dwSize == sizeof(NEWCPLINFOW)) {
 	       if (info.idName == CPL_DYNAMIC_RES)
-	           memcpy(applet->info[i].szName, newinfo.szName, sizeof(newinfo.szName));
+	           memcpy(applet->info[i].name, newinfo.szName, sizeof(newinfo.szName));
 	       if (info.idInfo == CPL_DYNAMIC_RES)
-	           memcpy(applet->info[i].szInfo, newinfo.szInfo, sizeof(newinfo.szInfo));
-	       memcpy(applet->info[i].szHelpFile, newinfo.szHelpFile, sizeof(newinfo.szHelpFile));
+	           memcpy(applet->info[i].info, newinfo.szInfo, sizeof(newinfo.szInfo));
+	       memcpy(applet->info[i].helpfile, newinfo.szHelpFile, sizeof(newinfo.szHelpFile));
 	   } else {
 	       if (info.idName == CPL_DYNAMIC_RES)
                    MultiByteToWideChar(CP_ACP, 0, ((LPNEWCPLINFOA)&newinfo)->szName,
 	                               sizeof(((LPNEWCPLINFOA)&newinfo)->szName) / sizeof(CHAR),
-			               applet->info[i].szName,
-			               sizeof(applet->info[i].szName) / sizeof(WCHAR));
+			               applet->info[i].name, sizeof(applet->info[i].name) / sizeof(WCHAR));
 	       if (info.idInfo == CPL_DYNAMIC_RES)
                    MultiByteToWideChar(CP_ACP, 0, ((LPNEWCPLINFOA)&newinfo)->szInfo,
 	                               sizeof(((LPNEWCPLINFOA)&newinfo)->szInfo) / sizeof(CHAR),
-			               applet->info[i].szInfo,
-			               sizeof(applet->info[i].szInfo) / sizeof(WCHAR));
+			               applet->info[i].info, sizeof(applet->info[i].info) / sizeof(WCHAR));
                MultiByteToWideChar(CP_ACP, 0, ((LPNEWCPLINFOA)&newinfo)->szHelpFile,
 	                           sizeof(((LPNEWCPLINFOA)&newinfo)->szHelpFile) / sizeof(CHAR),
-			           applet->info[i].szHelpFile,
-			           sizeof(applet->info[i].szHelpFile) / sizeof(WCHAR));
+			           applet->info[i].helpfile,
+                                   sizeof(applet->info[i].helpfile) / sizeof(WCHAR));
            }
        }
     }
@@ -289,7 +280,7 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
 
    for (applet = panel->first; applet; applet = applet->next) {
       for (i = 0; i < applet->count; i++) {
-         if (!applet->info[i].dwSize)
+         if (!applet->info[i].valid)
             continue;
 
          /* set up a CPlItem for this particular subprogram */
@@ -303,28 +294,27 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
 
          mii.cbSize = sizeof(MENUITEMINFOW);
          mii.fMask = MIIM_ID | MIIM_STRING | MIIM_DATA;
-         mii.dwTypeData = applet->info[i].szName;
-         mii.cch = sizeof(applet->info[i].szName) / sizeof(applet->info[i].szName[0]);
+         mii.dwTypeData = applet->info[i].name;
+         mii.cch = sizeof(applet->info[i].name) / sizeof(WCHAR);
          mii.wID = IDM_CPANEL_APPLET_BASE + menucount;
          mii.dwItemData = (ULONG_PTR)item;
 
          if (InsertMenuItemW(hSubMenu, menucount, TRUE, &mii)) {
             /* add the list view item */
-            index = ImageList_AddIcon(panel->hImageListLarge, applet->info[i].hIcon);
-            ImageList_AddIcon(panel->hImageListSmall, applet->info[i].hIcon);
+            index = ImageList_AddIcon(panel->hImageListLarge, applet->info[i].icon);
+            ImageList_AddIcon(panel->hImageListSmall, applet->info[i].icon);
 
             lvItem.mask = LVIF_IMAGE | LVIF_TEXT | LVIF_PARAM;
             lvItem.iItem = menucount;
             lvItem.iSubItem = 0;
-            lvItem.pszText = applet->info[i].szName;
+            lvItem.pszText = applet->info[i].name;
             lvItem.iImage = index;
             lvItem.lParam = (LPARAM) item;
 
             itemidx = ListView_InsertItemW(panel->hWndListView, &lvItem);
 
             /* add the description */
-            ListView_SetItemTextW(panel->hWndListView, itemidx, 1,
-                applet->info[i].szInfo);
+            ListView_SetItemTextW(panel->hWndListView, itemidx, 1, applet->info[i].info);
 
             /* update menu bar, increment count */
             DrawMenuBar(hWnd);
@@ -536,8 +526,7 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 
                           /* update the status bar if item is valid */
                           if (item)
-                              SetWindowTextW(panel->hWndStatusBar,
-                                  item->applet->info[item->id].szInfo);
+                              SetWindowTextW(panel->hWndStatusBar, item->applet->info[item->id].info);
                           else
                               SetWindowTextW(panel->hWndStatusBar, NULL);
 
@@ -560,7 +549,7 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 
               /* update the status bar if item is valid */
               if (item)
-                  SetWindowTextW(panel->hWndStatusBar, item->applet->info[item->id].szInfo);
+                  SetWindowTextW(panel->hWndStatusBar, item->applet->info[item->id].info);
           }
           else if ((HIWORD(lParam1) == 0xFFFF) && (lParam2 == 0))
           {
@@ -568,7 +557,7 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
               CPlItem *item = Control_GetCPlItem_From_ListView(panel);
 
               if (item)
-                  SetWindowTextW(panel->hWndStatusBar, item->applet->info[item->id].szInfo);
+                  SetWindowTextW(panel->hWndStatusBar, item->applet->info[item->id].info);
               else
                   SetWindowTextW(panel->hWndStatusBar, NULL);
 
@@ -802,10 +791,10 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
         /* we've been given a textual parameter (or none at all) */
         if (sp == -1) {
             while ((++sp) != applet->count) {
-                if (applet->info[sp].dwSize) {
-                    TRACE("sp %d, name %s\n", sp, debugstr_w(applet->info[sp].szName));
+                if (applet->info[sp].valid) {
+                    TRACE("sp %d, name %s\n", sp, debugstr_w(applet->info[sp].name));
 
-                    if (StrCmpIW(extraPmts, applet->info[sp].szName) == 0)
+                    if (StrCmpIW(extraPmts, applet->info[sp].name) == 0)
                         break;
                 }
             }
@@ -816,9 +805,9 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
             sp = 0;
         }
 
-        if (applet->info[sp].dwSize) {
+        if (applet->info[sp].valid) {
             if (!applet->proc(applet->hWnd, CPL_STARTWPARMSW, sp, (LPARAM)extraPmts))
-                applet->proc(applet->hWnd, CPL_DBLCLK, sp, applet->info[sp].lData);
+                applet->proc(applet->hWnd, CPL_DBLCLK, sp, applet->info[sp].data);
         }
 
         Control_UnloadApplet(applet);
