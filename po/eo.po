@@ -177,7 +177,7 @@ msgid ""
 "entry for this program from the registry?"
 msgstr ""
 "Malinstalad-komando '%s' malsukcesis, eble æar mankas programo.\n"
-"Æu vi volas forigi la malinstalada 'entry' de la registro ?"
+"Æu vi volas forigi la malinstalada 'entry' de la registro?"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -357,7 +357,7 @@ msgstr "<- &Forigu"
 
 #: comctl32.rc:90
 msgid "&Toolbar buttons:"
-msgstr "Butonoj por stango de la &iloj"
+msgstr "Butonoj por stango de la &iloj:"
 
 #: comctl32.rc:39
 msgid "Separator"
@@ -566,31 +566,31 @@ msgstr "Sol&idkoloro"
 
 #: comdlg32.rc:282
 msgid "&Red:"
-msgstr "&Ruøo"
+msgstr "&Ruøo:"
 
 #: comdlg32.rc:284
 msgid "&Green:"
-msgstr "&Verdo"
+msgstr "&Verdo:"
 
 #: comdlg32.rc:286
 msgid "&Blue:"
-msgstr "&Bluo"
+msgstr "&Bluo:"
 
 #: comdlg32.rc:288
 msgid "&Hue:"
-msgstr "&Farbo"
+msgstr "&Farbo:"
 
 #: comdlg32.rc:290
 #, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr "&Saturo"
+msgstr "&Saturo:"
 
 #: comdlg32.rc:292
 #, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
-msgstr "&Helo"
+msgstr "&Helo:"
 
 #: comdlg32.rc:302
 msgid "&Add to Custom Colors"
@@ -755,7 +755,7 @@ msgstr "Su&ba:"
 
 #: comdlg32.rc:448
 msgid "P&rinter..."
-msgstr "&Printilo.."
+msgstr "&Printilo..."
 
 #: comdlg32.rc:456
 msgid "Look &in:"
@@ -797,7 +797,7 @@ msgstr "Dosiero ne estis trovita"
 
 #: comdlg32.rc:30
 msgid "Please verify that the correct file name was given"
-msgstr "Kontrolu la øustecon je havigita dosiernomo."
+msgstr "Kontrolu la øustecon je havigita dosiernomo"
 
 #: comdlg32.rc:31
 msgid ""
@@ -825,7 +825,7 @@ msgid ""
 "                          / : < > |"
 msgstr ""
 "La dosiernomo ne povas enhavi la jenajn tipojn:\n"
-" / : < > |"
+"                          / : < > |"
 
 #: comdlg32.rc:35
 msgid "Path does not exist"
@@ -3204,17 +3204,17 @@ msgstr "&Malfermu"
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
-msgstr "Konservu &kiel"
+msgstr "Konservu &kiel..."
 
 #: ieframe.rc:35
 #, fuzzy
 msgid "Print &format..."
-msgstr "&Presu"
+msgstr "&Presu..."
 
 #: ieframe.rc:36
 #, fuzzy
 msgid "Pr&int..."
-msgstr "&Presu"
+msgstr "&Presu..."
 
 #: ieframe.rc:37 wordpad.rc:34
 #, fuzzy
@@ -10002,24 +10002,28 @@ msgid "&New\tCtrl+N"
 msgstr "&Nova\tCtrl+N"
 
 #: notepad.rc:28 wordpad.rc:29
+#, fuzzy
 msgid "&Open...\tCtrl+O"
-msgstr "Malfermu\tCtrl+O"
+msgstr "Malfermu...\tCtrl+O"
 
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "Kon&servu\tCtrl+S"
 
 #: notepad.rc:32 regedit.rc:36 wordpad.rc:33
+#, fuzzy
 msgid "&Print...\tCtrl+P"
-msgstr "Presu\tCtrl+P"
+msgstr "Presu...\tCtrl+P"
 
 #: notepad.rc:33 wordpad.rc:35
+#, fuzzy
 msgid "Page Se&tup..."
-msgstr "Impozu paøon"
+msgstr "Impozu paøon..."
 
 #: notepad.rc:34
+#, fuzzy
 msgid "P&rinter Setup..."
-msgstr "Impozu Printilon"
+msgstr "Impozu Printilon..."
 
 #: notepad.rc:38 regedit.rc:40 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 #, fuzzy
@@ -10064,8 +10068,9 @@ msgid "&Wrap long lines"
 msgstr "&Alineu aýtomate"
 
 #: notepad.rc:53
+#, fuzzy
 msgid "&Search...\tCtrl+F"
-msgstr "Seræu\tCtrl+F"
+msgstr "Seræu...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
@@ -10199,10 +10204,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"La dosiero '%s'\n"
-"ne eksistas\n"
+"La dosiero '%s' ne eksistas\n"
 "\n"
-" Æu mi devas krei novan dosieron?"
+"Æu mi devas krei novan dosieron?"
 
 #: notepad.rc:79
 msgid ""
@@ -10210,10 +10214,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"La dosiero'%s'\n"
-" estis þanøita\n"
+"La dosiero'%s' estis þanøita\n"
 "\n"
-" Æu vi volas konservi la þanøojn?"
+"Æu vi volas konservi la þanøojn?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
@@ -10916,7 +10919,7 @@ msgstr ""
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 #, fuzzy
 msgid "&Find...\tCtrl+F"
-msgstr "Presu\tCtrl+P"
+msgstr "Presu...\tCtrl+P"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -12155,7 +12158,7 @@ msgid ""
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "Malinstalad-komando '%s' malsukcesis, eble æar mankas programo.\n"
-"Æu vi volas forigi la malinstalada 'entry' de la registro ?"
+"Æu vi volas forigi la malinstalada 'entry' de la registro?"
 
 #: view.rc:33
 msgid "&Pan"
@@ -13499,7 +13502,7 @@ msgstr ""
 #: wordpad.rc:28
 #, fuzzy
 msgid "&New...\tCtrl+N"
-msgstr "&Nova\tCtrl+N"
+msgstr "&Nova...\tCtrl+N"
 
 #: wordpad.rc:42
 #, fuzzy
