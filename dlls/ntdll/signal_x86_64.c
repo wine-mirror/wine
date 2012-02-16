@@ -2511,7 +2511,7 @@ void signal_init_process(void)
 BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD64 addr )
 {
     FIXME( "%p %u %lx: stub\n", table, count, addr );
-    return FALSE;
+    return TRUE;
 }
 
 
@@ -2521,7 +2521,7 @@ BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD64
 BOOLEAN CDECL RtlDeleteFunctionTable( RUNTIME_FUNCTION *table )
 {
     FIXME( "%p: stub\n", table );
-    return FALSE;
+    return TRUE;
 }
 
 
