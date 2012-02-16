@@ -62,9 +62,11 @@ HINSTANCE MSXML_hInstance = NULL;
 
 void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap)
 {
-    char* buf = NULL;
-    int len = 32, needed;
-    enum __wine_debug_class dbcl = __WINE_DBCL_ERR;
+    static const int max_size = 200;
+    enum __wine_debug_class dbcl;
+    char buff[max_size];
+    int len;
+
     switch (lvl)
     {
         case XML_ERR_NONE:
@@ -74,25 +76,14 @@ void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, 
             dbcl = __WINE_DBCL_WARN;
             break;
         default:
+            dbcl = __WINE_DBCL_ERR;
             break;
     }
 
-    do
-    {
-        heap_free(buf);
-        buf = heap_alloc(len);
-        needed = vsnprintf(buf, len, msg, ap);
-        if (needed == -1)
-            len *= 2;
-        else if (needed >= len)
-            len = needed + 1;
-        else
-            needed = 0;
-    }
-    while (needed);
+    len = vsnprintf(buff, max_size, msg, ap);
+    if (len == -1 || len >= max_size) buff[max_size-1] = 0;
 
-    wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, "%s", buf);
-    heap_free(buf);
+    wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, "%s", buff);
 }
 
 void wineXmlCallbackError(char const* caller, xmlErrorPtr err)
