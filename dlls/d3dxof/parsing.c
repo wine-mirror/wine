@@ -220,40 +220,64 @@ HRESULT parse_header(parse_buffer * buf, BYTE ** decomp_buffer_ptr)
   if (header[2] == XOFFILE_FORMAT_BINARY_MSZIP || header[2] == XOFFILE_FORMAT_TEXT_MSZIP)
   {
     /* Extended header for compressed data:
-     * 16-17 -> decompressed size w/ header,  18-19 -> null,
-     * 20-21 -> decompressed size w/o header, 22-23 -> size of MSZIP compressed data,
-     * 24-xx -> compressed MSZIP data */
+     * 16-19 -> size of decompressed file including xof header,
+     * 20-21 -> size of first decompressed MSZIP chunk, 22-23 -> size of first compressed MSZIP chunk
+     * 24-xx -> compressed MSZIP data chunk
+     * xx-xx -> size of next decompressed MSZIP chunk, xx-xx -> size of next compressed MSZIP chunk
+     * xx-xx -> compressed MSZIP data chunk
+     * .............................................................................................. */
     int err;
-    WORD decomp_size;
-    WORD comp_size;
+    DWORD decomp_file_size;
+    WORD decomp_chunk_size;
+    WORD comp_chunk_size;
     LPBYTE decomp_buffer;
 
-    buf->rem_bytes -= sizeof(WORD) * 2;
-    buf->buffer += sizeof(WORD) * 2;
-    if (!read_bytes(buf, &decomp_size, sizeof(decomp_size)))
-      return DXFILEERR_BADFILETYPE;
-    if (!read_bytes(buf, &comp_size, sizeof(comp_size)))
+    if (!read_bytes(buf, &decomp_file_size, sizeof(decomp_file_size)))
       return DXFILEERR_BADFILETYPE;
 
-    TRACE("Compressed format %s detected: compressed_size = %x, decompressed_size = %x\n",
-        debugstr_fourcc(header[2]), comp_size, decomp_size);
+    TRACE("Compressed format %s detected: decompressed file size with xof header = %d\n",
+          debugstr_fourcc(header[2]), decomp_file_size);
 
-    decomp_buffer = HeapAlloc(GetProcessHeap(), 0, decomp_size);
+    /* Does not take xof header into account */
+    decomp_file_size -= 16;
+
+    decomp_buffer = HeapAlloc(GetProcessHeap(), 0, decomp_file_size);
     if (!decomp_buffer)
     {
         ERR("Out of memory\n");
         return DXFILEERR_BADALLOC;
     }
-    err = mszip_decompress(comp_size, decomp_size, (char*)buf->buffer, (char*)decomp_buffer);
-    if (err)
+    *decomp_buffer_ptr = decomp_buffer;
+
+    while (buf->rem_bytes)
     {
-        WARN("Error while decompressing mszip archive %d\n", err);
+      if (!read_bytes(buf, &decomp_chunk_size, sizeof(decomp_chunk_size)))
+        return DXFILEERR_BADFILETYPE;
+      if (!read_bytes(buf, &comp_chunk_size, sizeof(comp_chunk_size)))
+        return DXFILEERR_BADFILETYPE;
+
+      TRACE("Process chunk: compressed_size = %d, decompressed_size = %d\n",
+            comp_chunk_size, decomp_chunk_size);
+
+      err = mszip_decompress(comp_chunk_size, decomp_chunk_size, (char*)buf->buffer, (char*)decomp_buffer);
+      if (err)
+      {
+        WARN("Error while decompressing MSZIP chunk %d\n", err);
         HeapFree(GetProcessHeap(), 0, decomp_buffer);
         return DXFILEERR_BADALLOC;
+      }
+      buf->rem_bytes -= comp_chunk_size;
+      buf->buffer += comp_chunk_size;
+      decomp_buffer += decomp_chunk_size;
     }
+
+    if ((decomp_buffer - *decomp_buffer_ptr) != decomp_file_size)
+      ERR("Size of all decompressed chunks (%u) does not match decompressed file size (%u)\n",
+          (DWORD)(decomp_buffer - *decomp_buffer_ptr), decomp_file_size);
+
     /* Use decompressed data */
-    buf->buffer = *decomp_buffer_ptr = decomp_buffer;
-    buf->rem_bytes = decomp_size;
+    buf->buffer = *decomp_buffer_ptr;
+    buf->rem_bytes = decomp_file_size;
   }
 
   TRACE("Header is correct\n");

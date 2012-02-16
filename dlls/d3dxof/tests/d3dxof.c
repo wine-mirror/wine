@@ -74,11 +74,12 @@ static char empty_bin_file[]  = "xof 0302bin 0064";
 /* MSZip data is generated with the command "MAKECAB.EXE /D Compress=ON /D CompressionType=MSZip file packed"
  * Data in cab is after the filename (null terminated) and the 32-bit checksum:
  * size (16-bit), packed_size (16-bit) and compressed data (with leading 16-bit CK signature)
- * Data in x files is preceding by 2 16-bit words: size with xof header (16 bytes) and a 0 value
- * It does not seem possible to generate a MSZip data with no byte, so put just 1 byte here */
-/* "\n" packed with MSZip => not text */
+ * for each MSZIP chunk whose decompressed size can not exceed 32768 bytes
+ * Data in x files is preceeding by the size (32-bit) of the decompressed file including the xof header (16 bytes)
+ * It does not seem possible to generate a MSZip data chunk with no byte, so put just 1 byte here */
+/* "\n" packed with MSZip => no text */
 static char empty_tzip_file[] = "xof 0302tzip0064\x11\x00\x00\x00\x01\x00\x05\x00\x43\x4b\xe3\x02\x00";
-/* "\n" packed with MSZip => not token (token are 16-bit and there is only 1 byte) */
+/* "\n" packed with MSZip => no token (token are 16-bit and there is only 1 byte) */
 static char empty_bzip_file[] = "xof 0302bzip0064\x11\x00\x00\x00\x01\x00\x05\x00\x43\x4b\xe3\x02\x00";
 static char empty_cmp_file[]  = "xof 0302cmp 0064";
 static char empty_xxxx_file[] = "xof 0302xxxx0064";
