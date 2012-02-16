@@ -3946,21 +3946,29 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
 	  lf.lfEscapement);
 
     if(dc->GraphicsMode == GM_ADVANCED)
+    {
         memcpy(&dcmat, &dc->xformWorld2Vport, sizeof(FMAT2));
+        /* Try to avoid not necessary glyph transformations */
+        if (dcmat.eM21 == 0.0 && dcmat.eM12 == 0.0 && dcmat.eM11 == dcmat.eM22)
+        {
+            lf.lfHeight *= fabs(dcmat.eM11);
+            lf.lfWidth *= fabs(dcmat.eM11);
+            dcmat.eM11 = dcmat.eM22 = 1.0;
+        }
+    }
     else
     {
         /* Windows 3.1 compatibility mode GM_COMPATIBLE has only limited
            font scaling abilities. */
-        dcmat.eM11 = dcmat.eM22 = dc->vport2WorldValid ? fabs(dc->xformWorld2Vport.eM22) : 1.0;
-        dcmat.eM21 = dcmat.eM12 = 0;
-    }
-
-    /* Try to avoid not necessary glyph transformations */
-    if (dcmat.eM21 == 0.0 && dcmat.eM12 == 0.0 && dcmat.eM11 == dcmat.eM22)
-    {
-        lf.lfHeight *= fabs(dcmat.eM11);
-        lf.lfWidth *= fabs(dcmat.eM11);
         dcmat.eM11 = dcmat.eM22 = 1.0;
+        dcmat.eM21 = dcmat.eM12 = 0;
+        if (dc->vport2WorldValid)
+        {
+            if (dc->xformWorld2Vport.eM11 * dc->xformWorld2Vport.eM22 < 0)
+                lf.lfOrientation = -lf.lfOrientation;
+            lf.lfHeight *= fabs(dc->xformWorld2Vport.eM22);
+            lf.lfWidth *= fabs(dc->xformWorld2Vport.eM22);
+        }
     }
 
     TRACE("DC transform %f %f %f %f\n", dcmat.eM11, dcmat.eM12,
