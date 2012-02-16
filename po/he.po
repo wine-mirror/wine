@@ -13452,15 +13452,15 @@ msgstr ""
 
 #: winedbg.rc:35
 msgid "Wine program crash"
-msgstr "Wine program crash"
+msgstr ""
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
-msgstr "Internal errors - invalid parameters received"
+msgstr ""
 
 #: winedbg.rc:37
 msgid "(unidentified)"
-msgstr "(unidentified)"
+msgstr ""
 
 #: winedbg.rc:40
 #, fuzzy
