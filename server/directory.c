@@ -370,6 +370,7 @@ void init_directories(void)
     static const WCHAR dir_named_pipeW[] = {'\\','D','e','v','i','c','e','\\','N','a','m','e','d','P','i','p','e'};
     static const WCHAR dir_mailslotW[] = {'\\','D','e','v','i','c','e','\\','M','a','i','l','S','l','o','t'};
     static const WCHAR dir_objtypeW[] = {'O','b','j','e','c','t','T','y','p','e','s',};
+    static const WCHAR dir_sessionsW[] = {'S','e','s','s','i','o','n','s'};
     static const struct unicode_str dir_global_str = {dir_globalW, sizeof(dir_globalW)};
     static const struct unicode_str dir_driver_str = {dir_driverW, sizeof(dir_driverW)};
     static const struct unicode_str dir_device_str = {dir_deviceW, sizeof(dir_deviceW)};
@@ -377,6 +378,7 @@ void init_directories(void)
     static const struct unicode_str dir_named_pipe_str = {dir_named_pipeW, sizeof(dir_named_pipeW)};
     static const struct unicode_str dir_mailslot_str = {dir_mailslotW, sizeof(dir_mailslotW)};
     static const struct unicode_str dir_objtype_str = {dir_objtypeW, sizeof(dir_objtypeW)};
+    static const struct unicode_str dir_sessions_str = {dir_sessionsW, sizeof(dir_sessionsW)};
 
     /* symlinks */
     static const WCHAR link_dosdevW[] = {'D','o','s','D','e','v','i','c','e','s'};
@@ -384,11 +386,17 @@ void init_directories(void)
     static const WCHAR link_localW[]  = {'L','o','c','a','l'};
     static const WCHAR link_pipeW[]   = {'P','I','P','E'};
     static const WCHAR link_mailslotW[] = {'M','A','I','L','S','L','O','T'};
+    static const WCHAR link_0W[]      = {'0'};
+    static const WCHAR link_sessionW[] = {'S','e','s','s','i','o','n'};
+    static const WCHAR link_sessionsW[] = {'\\','S','e','s','s','i','o','n','s'};
     static const struct unicode_str link_dosdev_str = {link_dosdevW, sizeof(link_dosdevW)};
     static const struct unicode_str link_global_str = {link_globalW, sizeof(link_globalW)};
     static const struct unicode_str link_local_str  = {link_localW, sizeof(link_localW)};
     static const struct unicode_str link_pipe_str   = {link_pipeW, sizeof(link_pipeW)};
     static const struct unicode_str link_mailslot_str = {link_mailslotW, sizeof(link_mailslotW)};
+    static const struct unicode_str link_0_str      = {link_0W, sizeof(link_0W)};
+    static const struct unicode_str link_session_str = {link_sessionW, sizeof(link_sessionW)};
+    static const struct unicode_str link_sessions_str = {link_sessionsW, sizeof(link_sessionsW)};
 
     /* devices */
     static const WCHAR named_pipeW[] = {'N','a','m','e','d','P','i','p','e'};
@@ -396,16 +404,18 @@ void init_directories(void)
     static const struct unicode_str named_pipe_str = {named_pipeW, sizeof(named_pipeW)};
     static const struct unicode_str mailslot_str = {mailslotW, sizeof(mailslotW)};
 
-    struct directory *dir_driver, *dir_device, *dir_global, *dir_basenamed;
-    struct symlink *link_dosdev, *link_global1, *link_global2, *link_local, *link_pipe, *link_mailslot;
+    struct directory *dir_driver, *dir_device, *dir_global, *dir_basenamed, *dir_sessions;
+    struct symlink *link_dosdev, *link_global1, *link_global2, *link_local, *link_pipe, *link_mailslot, *link_0, *link_session;
 
     root_directory = create_directory( NULL, NULL, 0, HASH_SIZE );
     dir_driver     = create_directory( root_directory, &dir_driver_str, 0, HASH_SIZE );
     dir_device     = create_directory( root_directory, &dir_device_str, 0, HASH_SIZE );
     dir_objtype    = create_directory( root_directory, &dir_objtype_str, 0, HASH_SIZE );
+    dir_sessions   = create_directory( root_directory, &dir_sessions_str, 0, HASH_SIZE );
     make_object_static( &root_directory->obj );
     make_object_static( &dir_driver->obj );
     make_object_static( &dir_objtype->obj );
+    make_object_static( &dir_sessions->obj );
 
     dir_global     = create_directory( NULL, &dir_global_str, 0, HASH_SIZE );
     /* use a larger hash table for this one since it can contain a lot of objects */
@@ -422,12 +432,16 @@ void init_directories(void)
     link_local     = create_symlink( dir_basenamed, &link_local_str, 0, &dir_basenamed_str );
     link_pipe      = create_symlink( dir_global, &link_pipe_str, 0, &dir_named_pipe_str );
     link_mailslot  = create_symlink( dir_global, &link_mailslot_str, 0, &dir_mailslot_str );
+    link_0         = create_symlink( dir_sessions, &link_0_str, 0, &dir_basenamed_str );
+    link_session   = create_symlink( dir_basenamed, &link_session_str, 0, &link_sessions_str );
     make_object_static( (struct object *)link_dosdev );
     make_object_static( (struct object *)link_global1 );
     make_object_static( (struct object *)link_global2 );
     make_object_static( (struct object *)link_local );
     make_object_static( (struct object *)link_pipe );
     make_object_static( (struct object *)link_mailslot );
+    make_object_static( (struct object *)link_0 );
+    make_object_static( (struct object *)link_session );
 
     /* the symlinks or devices hold references so we can release these */
     release_object( dir_global );
