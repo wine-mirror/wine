@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-11 22:12-0200\n"
+"PO-Revision-Date: 2012-02-17 16:03-0200\n"
 "Last-Translator: Gustavo Henrique Milaré <gugamilare@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Portuguese (Brazil)\n"
@@ -563,11 +563,11 @@ msgstr "&Cores do Usuário:"
 
 #: comdlg32.rc:281 comdlg32.rc:304
 msgid "Color |  Sol&id"
-msgstr "Colorido|Sólid&o"
+msgstr "Cor |  &Sólida"
 
 #: comdlg32.rc:282
 msgid "&Red:"
-msgstr "Ver&m:"
+msgstr "&Rubro:"
 
 #: comdlg32.rc:284
 msgid "&Green:"
@@ -579,12 +579,12 @@ msgstr "A&zul:"
 
 #: comdlg32.rc:288
 msgid "&Hue:"
-msgstr "Mat&iz:"
+msgstr "&Matiz:"
 
 #: comdlg32.rc:290
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr "Sa&t:"
+msgstr "&Sat:"
 
 #: comdlg32.rc:292
 msgctxt "Luminance"
@@ -2114,10 +2114,9 @@ msgstr "D&esativar todos os propósitos para este certificado"
 msgid "Enable &only the following purposes for this certificate:"
 msgstr "A&tivar apenas os seguintes propósitos para este certificado:"
 
-# Ellipsis removed - not enough space in button
 #: cryptui.rc:250
 msgid "Add &Purpose..."
-msgstr "Adicionar &Propósito"
+msgstr "Adicionar &Propósito..."
 
 #: cryptui.rc:254
 msgid "Add Purpose"
