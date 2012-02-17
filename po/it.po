@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-01 15:00+0100\n"
+"PO-Revision-Date: 2012-02-17 10:25+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -5575,7 +5575,7 @@ msgstr "LB_SETCOUNT inviato non valido.\n"
 
 #: winerror.mc:2566
 msgid "No tab stops on this list box.\n"
-msgstr "Nessun tabstop in questa list box.\n"
+msgstr "Nessun tab stop in questa list box.\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread.\n"
@@ -6691,7 +6691,7 @@ msgstr ""
 "Installa un prodotto:\n"
 "\t/i {pacchetto|codice_prodotto} [proprietà]\n"
 "\t/pacchetto {pacchetto|codice_prodotto} [proprietà]\n"
-"\t/a pacchetto [property]\n"
+"\t/a pacchetto [proprietà]\n"
 "Ripara un'installazione:\n"
 "\t/f[p|o|e|d|c|a|u|m|s|v] {pacchetto|codice_prodotto}\n"
 "Disinstalla un prodotto:\n"
@@ -7917,17 +7917,14 @@ msgid "Administrative Tools"
 msgstr "Strumenti di amministrazione"
 
 #: shell32.rc:218
-#, fuzzy
 msgid "Music"
 msgstr "Musica"
 
 #: shell32.rc:219
-#, fuzzy
 msgid "Pictures"
 msgstr "Immagini"
 
 #: shell32.rc:220
-#, fuzzy
 msgid "Videos"
 msgstr "Video"
 
@@ -7945,7 +7942,7 @@ msgstr "Collegamenti"
 
 #: shell32.rc:223
 msgid "Slide Shows"
-msgstr "Slide Shows"
+msgstr "Presentazioni"
 
 #: shell32.rc:224
 msgid "Playlists"
@@ -7965,19 +7962,19 @@ msgstr "Modello"
 
 #: shell32.rc:225
 msgid "Sample Music"
-msgstr ""
+msgstr "Musica condivisa"
 
 #: shell32.rc:226
 msgid "Sample Pictures"
-msgstr ""
+msgstr "Immagini condivise"
 
 #: shell32.rc:227
 msgid "Sample Playlists"
-msgstr ""
+msgstr "Playlist condivise"
 
 #: shell32.rc:228
 msgid "Sample Videos"
-msgstr ""
+msgstr "Video condivisi"
 
 #: shell32.rc:229
 msgid "Saved Games"
@@ -9626,7 +9623,6 @@ msgstr ""
 "se chiamato dalla linea di comando.\n"
 
 #: cmd.rc:176
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9662,13 +9658,6 @@ msgstr ""
 "/ProgIDOpen  Apri un documento usando il seguente progID.\n"
 "/L           Mostra l'accordo di licenza con l'utente finale.\n"
 "/?           Mostra questo aiuto ed esci.\n"
-"\n"
-"start.exe versione 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start è fornito SENZA GARANZIA di alcun tipo; per ulteriori informazioni "
-"eseguire start con l'opzione /L.\n"
-"Questo è software libero e sei invitato a redistribuirlo sotto alcune "
-"condizioni;\n"
-" eseguire 'start' con l'opzione /L per ulteriori informazioni.\n"
 
 #: cmd.rc:201
 msgid "TIME sets or shows the current system time.\n"
@@ -9744,8 +9733,8 @@ msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <nomedellacartella> salva la cartella attuale su di uno\n"
-"stack e poi la cambia con quella passata.\n"
+"PUSHD <nomedellacartella> salva la cartella attuale in una\n"
+"pila e poi la cambia con quella passata.\n"
 
 #: cmd.rc:238
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
@@ -9819,7 +9808,6 @@ msgstr ""
 "sistema operativo o alla shell dal quale hai chiamato cmd.\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9890,6 +9878,7 @@ msgstr ""
 "RD (RMDIR)\tElimina una sottocartella\n"
 "SET\t\tConfigura o mostra le variabili d'ambiente\n"
 "SETLOCAL\tInizia localizzazione dei cambiamenti d'ambiente in un file batch\n"
+"START\t\tAvvia un programma o apre un documento con il programma associato\n"
 "TIME\t\tConfigura o cambia l'orario di sistema attuale\n"
 "TITLE\t\tConfigura il titolo della finestra per la sessione di CMD\n"
 "TYPE\t\tInserisce il contenuto di un file di testo\n"
@@ -10407,7 +10396,7 @@ msgstr "F"
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
@@ -10422,27 +10411,27 @@ msgstr "O"
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -13509,7 +13498,7 @@ msgstr "Informazioni sulla versione"
 #: winefile.rc:197
 msgctxt "accelerator Fullscreen"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: winefile.rc:89
 msgid "Applying font settings"
@@ -13801,7 +13790,7 @@ msgstr "&Formato del carattere"
 
 #: wordpad.rc:61
 msgid "&Def. char format"
-msgstr "Formato del &def. car"
+msgstr "Formato pre&definito del carattere"
 
 #: wordpad.rc:62
 msgid "Paragrap&h format"
@@ -13938,17 +13927,17 @@ msgstr "Barre"
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "R"
 
 #: wordpad.rc:282
 msgctxt "accelerator Redo"
@@ -13963,12 +13952,12 @@ msgstr "B"
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
