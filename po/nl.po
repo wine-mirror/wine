@@ -7942,19 +7942,22 @@ msgstr "Documenten"
 #: shell32.rc:217
 #, fuzzy
 msgid "Administrative Tools"
-msgstr "Start Menu\\Programma's\\Administratieve Tools"
+msgstr "Administratieve Tools"
 
 #: shell32.rc:218
+#, fuzzy
 msgid "Music"
-msgstr "Documenten\\Mijn Muziek"
+msgstr "Mijn Muziek"
 
 #: shell32.rc:219
+#, fuzzy
 msgid "Pictures"
-msgstr "Documenten\\Mijn Afbeeldingen"
+msgstr "Mijn Afbeeldingen"
 
 #: shell32.rc:220
+#, fuzzy
 msgid "Videos"
-msgstr "Documenten\\Mijn Videos"
+msgstr "Mijn Videos"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
@@ -7971,12 +7974,12 @@ msgstr "Links"
 #: shell32.rc:223
 #, fuzzy
 msgid "Slide Shows"
-msgstr "Afbeeldingen\\Diashows"
+msgstr "Diashows"
 
 #: shell32.rc:224
 #, fuzzy
 msgid "Playlists"
-msgstr "Muziek\\Afspeellijsten"
+msgstr "Afspeellijsten"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -7993,22 +7996,22 @@ msgstr "Model"
 #: shell32.rc:225
 #, fuzzy
 msgid "Sample Music"
-msgstr "Muziek\\Voorbeelden van muziek"
+msgstr "Voorbeelden van muziek"
 
 #: shell32.rc:226
 #, fuzzy
 msgid "Sample Pictures"
-msgstr "Afbeeldingen\\Voorbeelden van afbeeldingen"
+msgstr "Voorbeelden van afbeeldingen"
 
 #: shell32.rc:227
 #, fuzzy
 msgid "Sample Playlists"
-msgstr "Muziek\\Voorbeelden van afspeellijsten"
+msgstr "Voorbeelden van afspeellijsten"
 
 #: shell32.rc:228
 #, fuzzy
 msgid "Sample Videos"
-msgstr "Video's\\Voorbeelden van video's"
+msgstr "Voorbeelden van video's"
 
 #: shell32.rc:229
 msgid "Saved Games"
