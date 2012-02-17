@@ -723,7 +723,7 @@ serialize_param(
         return S_OK;
     }
     case VT_BSTR: {
-	if (debugout) {
+	if (writeit && debugout) {
 	    if (*arg)
                    TRACE_(olerelay)("%s",relaystr((WCHAR*)*arg));
 	    else
@@ -1402,11 +1402,20 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
 		TRACE_(olerelay)("%s=",relaystr(names[i+1]));
 	}
 	/* No need to marshal other data than FIN and any VT_PTR. */
-	if (!is_in_elem(elem) && (elem->tdesc.vt != VT_PTR)) {
-	    xargs+=_argsize(&elem->tdesc, tinfo);
-	    if (relaydeb) TRACE_(olerelay)("[out]");
-	    continue;
-	}
+        if (!is_in_elem(elem))
+        {
+            if (elem->tdesc.vt != VT_PTR)
+            {
+                xargs+=_argsize(&elem->tdesc, tinfo);
+                if (relaydeb) TRACE_(olerelay)("[out]");
+                continue;
+            }
+            else
+            {
+                memset( *(void **)xargs, 0, _xsize( elem->tdesc.u.lptdesc, tinfo ) );
+            }
+        }
+
 	hres = serialize_param(
 	    tinfo,
 	    is_in_elem(elem),

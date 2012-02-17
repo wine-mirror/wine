@@ -1118,7 +1118,7 @@ static void test_typelibmarshal(void)
     VariantClear(&varresult);
 
     /* call get_Name (direct) */
-    bstr = NULL;
+    bstr = (void *)0xdeadbeef;
     hr = IWidget_get_Name(pWidget, &bstr);
     ok_ole_success(hr, IWidget_get_Name);
     ok(!lstrcmpW(bstr, szCat), "IWidget_get_Name should have returned string \"Cat\" instead of %s\n", wine_dbgstr_w(bstr));
