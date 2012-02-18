@@ -517,8 +517,8 @@ static void test_parse_filter_data(void)
     pRegFilter =((REGFILTER2**)prgbRegFilter2)[0];
     ok (hr==S_OK,"Failed to Parse filter Data\n");
 
-    ok(IsBadReadPtr(prgbRegFilter2,sizeof(REGFILTER2**))==0,"Bad read pointer returned\n");
-    ok(IsBadReadPtr(pRegFilter,sizeof(REGFILTER2*))==0,"Bad read pointer for FilterData\n");
+    ok(IsBadReadPtr(prgbRegFilter2,sizeof(REGFILTER2*))==0,"Bad read pointer returned\n");
+    ok(IsBadReadPtr(pRegFilter,sizeof(REGFILTER2))==0,"Bad read pointer for FilterData\n");
     ok(pRegFilter->dwMerit == 0x5fffff,"Incorrect merit returned\n");
 
 out:
