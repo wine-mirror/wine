@@ -1470,14 +1470,12 @@ LRESULT NC_HandleNCRButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     MSG msg;
     INT hittest = wParam;
-    HMENU hSysMenu = GetSystemMenu(hwnd, FALSE);
 
     switch (hittest)
     {
     case HTCAPTION:
     case HTSYSMENU:
-        hSysMenu = GetSystemMenu(hwnd, FALSE);
-        if (!hSysMenu) break;
+        if (!GetSystemMenu( hwnd, FALSE )) break;
 
         SetCapture( hwnd );
         for (;;)
