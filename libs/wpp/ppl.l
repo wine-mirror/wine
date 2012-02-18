@@ -329,6 +329,7 @@ void pp_writestring(const char *format, ...)
 	va_start(valist, format);
 	len = vsnprintf(buffer, buffercapacity,
 			format, valist);
+	va_end(valist);
         /* If the string is longer than buffersize, vsnprintf returns
          * the string length with glibc >= 2.1, -1 with glibc < 2.1 */
 	while(len > buffercapacity || len < 0)
@@ -345,10 +346,11 @@ void pp_writestring(const char *format, ...)
 			return;
 		}
 		buffer = new_buffer;
+		va_start(valist, format);
 		len = vsnprintf(buffer, buffercapacity,
 				format, valist);
+		va_end(valist);
 	}
-	va_end(valist);
 
 	wpp_callbacks->write(buffer, len);
 }
