@@ -1881,7 +1881,7 @@ static void test_TB_GET_SET_EXTENDEDSTYLE(void)
 {
     DWORD style, oldstyle, oldstyle2;
     const extended_style_t *ptr;
-    HWND hwnd;
+    HWND hwnd = NULL;
     int i;
 
     rebuild_toolbar(&hwnd);
