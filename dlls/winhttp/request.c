@@ -1085,6 +1085,8 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
         return FALSE;
     }
 
+    if (context) request->hdr.context = context;
+
     if (!(ret = open_connection( request ))) goto end;
     if (!(req = build_request_string( request ))) goto end;
 
@@ -1092,7 +1094,6 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     TRACE("full request: %s\n", debugstr_a(req_ascii));
     len = strlen(req_ascii);
 
-    if (context) request->hdr.context = context;
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_SENDING_REQUEST, NULL, 0 );
 
     ret = netconn_send( &request->netconn, req_ascii, len, 0, &bytes_sent );
