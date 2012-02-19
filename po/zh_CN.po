@@ -1176,6 +1176,7 @@ msgstr ""
 "是否正确."
 
 #: credui.rc:32
+#, fuzzy
 msgid ""
 "Having Caps Lock on may cause you to enter your password incorrectly.\n"
 "\n"
