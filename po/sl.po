@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-21 23:31+0200\n"
-"Last-Translator: Andrej Žnidaršič <andrej.znidarsic@gmail.com>\n"
+"PO-Revision-Date: 2012-02-19 17:20+0100\n"
+"Last-Translator: Jaka Kranjc <lynxlupodian@sourceforge.net>\n"
 "Language-Team: none\n"
 "Language: Slovenian\n"
 "MIME-Version: 1.0\n"
@@ -40,9 +40,8 @@ msgstr ""
 "kliknite 'Dodaj/Odstrani'."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "Informacije"
+msgstr "&Informacije o podpori"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -1024,7 +1023,7 @@ msgstr "Pripravljen"
 
 #: comdlg32.rc:80
 msgid "Paused; "
-msgstr "V premoru,"
+msgstr "V premoru, "
 
 #: comdlg32.rc:81
 msgid "Error; "
@@ -1032,35 +1031,35 @@ msgstr "Napaka; "
 
 #: comdlg32.rc:82
 msgid "Pending deletion; "
-msgstr "Brisanje je na čakanju,"
+msgstr "Brisanje je na čakanju, "
 
 #: comdlg32.rc:83
 msgid "Paper jam; "
-msgstr "Papir se je zataknil,"
+msgstr "Papir se je zataknil, "
 
 #: comdlg32.rc:84
 msgid "Out of paper; "
-msgstr "Zmanjkalo je papirja,"
+msgstr "Zmanjkalo je papirja, "
 
 #: comdlg32.rc:85
 msgid "Feed paper manual; "
-msgstr "Podajanje papirja je ročno,"
+msgstr "Podajanje papirja je ročno, "
 
 #: comdlg32.rc:86
 msgid "Paper problem; "
-msgstr "Težava s papirjem,"
+msgstr "Težava s papirjem, "
 
 #: comdlg32.rc:87
 msgid "Printer offline; "
-msgstr "Tiskalnik ni povezan,"
+msgstr "Tiskalnik ni povezan, "
 
 #: comdlg32.rc:88
 msgid "I/O Active; "
-msgstr "V/I je dejaven."
+msgstr "V/I je dejaven, "
 
 #: comdlg32.rc:89
 msgid "Busy; "
-msgstr "Zaposleno,- "
+msgstr "Zaposleno, "
 
 #: comdlg32.rc:90
 msgid "Printing; "
@@ -1068,7 +1067,7 @@ msgstr "Tiskanje, "
 
 #: comdlg32.rc:91
 msgid "Output tray is full; "
-msgstr "Izhodni pladenj je poln,"
+msgstr "Izhodni pladenj je poln, "
 
 #: comdlg32.rc:92
 msgid "Not available; "
@@ -1084,15 +1083,15 @@ msgstr "Obdelovanje, "
 
 #: comdlg32.rc:95
 msgid "Initialising; "
-msgstr "Začenjanje,"
+msgstr "Začenjanje, "
 
 #: comdlg32.rc:96
 msgid "Warming up; "
-msgstr "Ogrevanje,"
+msgstr "Ogrevanje, "
 
 #: comdlg32.rc:97
 msgid "Toner low; "
-msgstr "Zmanjkuje črnila,"
+msgstr "Zmanjkuje črnila, "
 
 #: comdlg32.rc:98
 msgid "No toner; "
@@ -1100,11 +1099,11 @@ msgstr "Ni črnila, "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
-msgstr "Upor strani,"
+msgstr "Upor strani, "
 
 #: comdlg32.rc:100
 msgid "Interrupted by user; "
-msgstr "Preklic s strani uporabnika,"
+msgstr "Preklic s strani uporabnika, "
 
 #: comdlg32.rc:101
 msgid "Out of memory; "
@@ -1112,15 +1111,15 @@ msgstr "Zmanjkalo je pomnilnika, "
 
 #: comdlg32.rc:102
 msgid "The printer door is open; "
-msgstr "Ohišje tiskalnika je odprto ,"
+msgstr "Ohišje tiskalnika je odprto, "
 
 #: comdlg32.rc:103
 msgid "Print server unknown; "
-msgstr "Strežnik za tiskanje ni znan,"
+msgstr "Strežnik za tiskanje ni znan, "
 
 #: comdlg32.rc:104
 msgid "Power save mode; "
-msgstr "Način varčevanja z energijo,"
+msgstr "Način varčevanja z energijo, "
 
 #: comdlg32.rc:73
 msgid "Default Printer; "
@@ -1253,7 +1252,7 @@ msgstr "Naslednja posodobitev mesta"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr "Zaupanje ali brez njega "
+msgstr "Zaupanje ali brez njega"
 
 #: crypt32.rc:43
 msgid "Email Address"
@@ -2013,7 +2012,7 @@ msgstr "Pravilo potrdila"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "Določilo pravil:"
+msgstr "Določilo pravil: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -2248,7 +2247,7 @@ msgstr "&Napredno ..."
 
 #: cryptui.rc:345
 msgid "Certificate intended purposes"
-msgstr "Nameni namenjanega potrdila"
+msgstr "Nameni namenjenega potrdila"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
@@ -2339,7 +2338,7 @@ msgstr "V &DER kodiran X.509 (.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr "V 64-&tiškemu sistemu kodiran X.509 (*.cer) "
+msgstr "V 64-&tiškemu sistemu kodiran X.509 (.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
@@ -2382,7 +2381,6 @@ msgid "Certificate Information"
 msgstr "Podrobnosti potrdila"
 
 #: cryptui.rc:29
-#, fuzzy
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
@@ -2391,7 +2389,6 @@ msgstr ""
 "okvarjeno."
 
 #: cryptui.rc:30
-#, fuzzy
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
@@ -2418,15 +2415,15 @@ msgstr "To potrdilo je namenjeno za naslednje namene:"
 
 #: cryptui.rc:35
 msgid "Issued to: "
-msgstr "Izdano osebi:"
+msgstr "Izdano osebi: "
 
 #: cryptui.rc:36
 msgid "Issued by: "
-msgstr "Izdajatelj:"
+msgstr "Izdajatelj: "
 
 #: cryptui.rc:37
 msgid "Valid from "
-msgstr "Veljavno od"
+msgstr "Veljavno od "
 
 #: cryptui.rc:38
 msgid " to "
@@ -2543,7 +2540,6 @@ msgid "Please select a certificate store."
 msgstr "Izberite shrambo potrdila."
 
 #: cryptui.rc:69
-#, fuzzy
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
@@ -2600,13 +2596,12 @@ msgid "Please select a file."
 msgstr "Izberite datoteko."
 
 #: cryptui.rc:82
-#, fuzzy
 msgid "The file format is not recognized. Please select another file."
 msgstr "Oblike datoteke ni mogoče prepoznati. Izberite drugo datoteko."
 
 #: cryptui.rc:83
 msgid "Could not open "
-msgstr "Ni mogoče odpreti"
+msgstr "Ni mogoče odpreti "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -2841,7 +2836,6 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "Določi ime datoteke v kateri bo vsebina shranjena."
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
 msgstr "Določena datoteka že obstaja. Ali jo želite zamenjati?"
 
@@ -2913,7 +2907,6 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "Opomba: zasebnega ključa ni mogoče odpreti."
 
 #: cryptui.rc:173
-#, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Opomba: zasebnega ključa za to potrdilo ni mogoče izvoziti."
 
@@ -3394,7 +3387,7 @@ msgstr "Nastavite internetni brskalnik Wine in povezane nastavitve"
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
-msgstr "Varnostne nastavitve za področje:"
+msgstr "Varnostne nastavitve za področje: "
 
 #: inetcpl.rc:31
 msgid "Custom"
@@ -3482,12 +3475,11 @@ msgstr "Izven zanke ni mogoče imeti 'continue'"
 
 #: jscript.rc:40
 msgid "Label redefined"
-msgstr ""
+msgstr "Ponovna definicija oznake"
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
-msgstr "Datoteke ni mogoče najti"
+msgstr "Oznake ni mogoče najti"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
@@ -4095,7 +4087,7 @@ msgstr "Neveljavno število odseka.\n"
 
 #: winerror.mc:711
 msgid "Invalid ordinal for %1.\n"
-msgstr "Neveljavna odrinata za %1.\n"
+msgstr "Neveljavna ordinata za %1.\n"
 
 #: winerror.mc:716
 msgid "File already exists.\n"
@@ -4707,7 +4699,7 @@ msgstr "Preveč povezav.\n"
 
 #: winerror.mc:1476
 msgid "Newer windows version needed.\n"
-msgstr "Zahtevana je novejša različica sistema windows.\n"
+msgstr "Zahtevana je novejša različica sistema Windows.\n"
 
 #: winerror.mc:1481
 msgid "Wrong operating system.\n"
@@ -5698,7 +5690,6 @@ msgid "Event log file changed.\n"
 msgstr "Dnevniška datoteka dogodka je bila spremenjena.\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
 msgstr "Storitev namestilnika je spodletela.\n"
 
@@ -6528,7 +6519,7 @@ msgstr "Nastavitev vrat LPT"
 
 #: localui.rc:51
 msgid "Timeout (seconds)"
-msgstr "Časovna omejitev (sekudne)"
+msgstr "Časovna omejitev (sekunde)"
 
 #: localui.rc:52
 msgid "&Transmission Retry:"
@@ -6632,7 +6623,6 @@ msgid "Done"
 msgstr "Končano"
 
 #: msi.rc:27
-#, fuzzy
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
@@ -7166,7 +7156,6 @@ msgstr ""
 "programom %s."
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
@@ -7175,7 +7164,6 @@ msgstr ""
 "programom %s. Prikazana bo kot ikona."
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
@@ -7186,7 +7174,6 @@ msgstr ""
 "vašem dokumentu."
 
 #: oledlg.rc:38
-#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
@@ -7196,7 +7183,6 @@ msgstr ""
 "izvorno datoteko, tako da bodo spremembe datoteke izražene tudi v dokumentu."
 
 #: oledlg.rc:39
-#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
@@ -7447,7 +7433,7 @@ msgstr "&Vrstico"
 
 #: shdoclc.rc:104
 msgid "&Column"
-msgstr "&Stoplec"
+msgstr "&Stolpec"
 
 #: shdoclc.rc:105
 msgid "&Table"
@@ -7858,7 +7844,7 @@ msgstr "Priljubljene"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "Zagon"
 
 #: shell32.rc:204
 msgid "Start Menu"
@@ -7902,18 +7888,16 @@ msgid "My Pictures"
 msgstr "Moje slike"
 
 #: shell32.rc:215
-#, fuzzy
 msgid "Common Files"
-msgstr "Splošno ime"
+msgstr "Skupne datoteke"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
 msgstr "Dokumenti"
 
 #: shell32.rc:217
-#, fuzzy
 msgid "Administrative Tools"
-msgstr "Meni start\\Programi\\Skrbniška orodja"
+msgstr "Skrbniška orodja"
 
 #: shell32.rc:218
 msgid "Music"
@@ -7940,14 +7924,12 @@ msgid "Links"
 msgstr "Povezave"
 
 #: shell32.rc:223
-#, fuzzy
 msgid "Slide Shows"
-msgstr "Slike\\Predstavitve"
+msgstr "Predstavitve"
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
-msgstr "Glasba\\Seznami predvajanja"
+msgstr "Seznami predvajanja"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -7962,24 +7944,20 @@ msgid "Model"
 msgstr "Model"
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
-msgstr "Glasba\\Primeri glasbe"
+msgstr "Primeri glasbe"
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
-msgstr "Slike\\Primeri slik"
+msgstr "Primeri slik"
 
 #: shell32.rc:227
-#, fuzzy
 msgid "Sample Playlists"
-msgstr "Glasba\\Primeri seznamov predvajanja"
+msgstr "Primeri seznamov predvajanja"
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
-msgstr "Videi\\Primeri video posnetkov"
+msgstr "Primeri video posnetkov"
 
 #: shell32.rc:229
 msgid "Saved Games"
@@ -8131,7 +8109,6 @@ msgid "Confirm overwrite"
 msgstr "Potrdi prepis"
 
 #: shell32.rc:265
-#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8159,8 +8136,8 @@ msgstr ""
 "\n"
 "Kopijo Splošnega Javnega Dovoljenja GNU (angleško: GNU General Public "
 "License) bi morali prejeti skupaj s programom, v kolikor pa je niste, pišite "
-"na naslov Free Software Foundation, Inc.,59 Temple Place - Suite 330, "
-"Boston, MA 02111-1307, USA in zahtevajte kopijo."
+"na naslov Free Software Foundation, Inc.,51 Franklin St, Fifth Floor, "
+"Boston, MA 02110-1301, USA in zahtevajte kopijo."
 
 #: shell32.rc:253
 msgid "Wine License"
@@ -8216,7 +8193,7 @@ msgstr "&Skrči"
 
 #: user32.rc:31 user32.rc:44 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
-msgstr "Ra_zpni"
+msgstr "Ra&zpni"
 
 #: user32.rc:33
 msgid "&Close\tAlt+F4"
@@ -8292,7 +8269,7 @@ msgstr "Varnostno opozorilo"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
-msgstr "Prišlo je do težave s potrdilom za to speltišče."
+msgstr "Prišlo je do težave s potrdilom za to spletišče."
 
 #: wininet.rc:79
 msgid "Do you want to continue anyway?"
@@ -8304,7 +8281,7 @@ msgstr "Povezava LAN"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
-msgstr "Potrdilo je izdal neznan ali nezaupanja vreden izdajatelj. "
+msgstr "Potrdilo je izdal neznan ali nezaupanja vreden izdajatelj."
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
@@ -8881,7 +8858,7 @@ msgid ""
 "Control Panel to install a MIDI driver."
 msgstr ""
 "Nameščena ni nobena naprava MIDI. Za namestitev gonilnika MIDI uporabite "
-"možnost Gonilniki na Nadzorni plošći."
+"možnost Gonilniki na Nadzorni plošči."
 
 #: winmm.rc:118
 msgid "There is no display window."
@@ -8916,7 +8893,6 @@ msgid "&Output File Name:"
 msgstr "&Ime izhodne datoteke:"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
 msgstr "Izhodna datoteka že obstaja. Za njen prepis kliknite gumb V redu."
 
@@ -9473,7 +9449,7 @@ msgid ""
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE izpiše na zaslonu sporočilo, da naj uporabnik pritisnie na tipko.\n"
+"PAUSE izpiše na zaslonu sporočilo, da naj uporabnik pritisnite na tipko.\n"
 "\n"
 "Ukaz je uporaben v paketnih datotekah, ko želimo uporabniku omogočiti,\n"
 "da prebere izhodna sporočila predhodnega ukaza, preden izginejo z zaslona.\n"
@@ -9522,7 +9498,6 @@ msgstr ""
 "ukaz 'SET PROMPT=text' ima enak učinek kot 'PROMPT text'.\n"
 
 #: cmd.rc:153
-#, fuzzy
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -9547,7 +9522,6 @@ msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <mapa> izbriše podmapo.\n"
 
 #: cmd.rc:194
-#, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9574,9 +9548,8 @@ msgstr ""
 "\n"
 "SET <spremenljivka>=<vrednost>\n"
 "\n"
-"kjer sta tako <spremenljivka> kot <vrednost> znakovna niza. Pred enačajem "
-"ne\n"
-"sme biti presledka. Ime spremenljivke prav tako ne sme vsebovati "
+"kjer sta tako <spremenljivka> kot <vrednost> znakovna niza. Pred enačajem\n"
+"ne sme biti presledka. Ime spremenljivke prav tako ne sme vsebovati "
 "presledkov.\n"
 "\n"
 "Pri Wine-u je okolje matičnega operacijskega sistema vključeno v okolje "
@@ -9597,7 +9570,6 @@ msgstr ""
 "učinka pri uporabi iz ukazne vrstice.\n"
 
 #: cmd.rc:176
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9631,21 +9603,14 @@ msgstr ""
 "/ProgIDOpen  Odpre dokument z uporabo naslednjega IDprograma.\n"
 "/L           Prikaže licenčno pogodbo.\n"
 "/?            Prikaže to pomoč in konča.\n"
-"\n"
-"start.exe različica 0.2 Avtorske pravice (C) 2003, Dan Kegel\n"
-"Start prihaja POPOLNOMA BREZ ZAGOTOVIL. Za podrobnosti program zaženite z "
-"možnostjo /L.\n"
-"To je prost program, ki ga lahko razširjate pod določenimi pogoji.\n"
-"Za podrobnosti zaženite 'start /L'.\n"
 
 #: cmd.rc:201
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME nastavi ali prikaže trenutni sistemski čas.\n"
 
 #: cmd.rc:203
-#, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr "Nastavi naslov za okno cmd. Skladnja je: TITLE [niz]\n"
+msgstr "Nastavi naslov za okno cmd. Skladnja je: TITLE <niz>\n"
 
 #: cmd.rc:207
 msgid ""
@@ -9657,7 +9622,6 @@ msgstr ""
 "resnici berljivo besedilo.\n"
 
 #: cmd.rc:216
-#, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9667,9 +9631,8 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY uporabimo za nastavljanje, brisanje ali preizkušanje zastavice "
-"preverjanja.\n"
-"Veljavne oblike ukaza so:\n"
+"VERIFY uporabimo za nastavljanje, brisanje ali preizkušanje zastavice\n"
+" preverjanja. Veljavne oblike ukaza so:\n"
 "\n"
 "VERIFY ON\tVključi zastavico\n"
 "VERIFY OFF\tIzključi zastavico\n"
@@ -9718,14 +9681,12 @@ msgstr ""
 "preseli v navedeno mapo.\n"
 
 #: cmd.rc:238
-#, fuzzy
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 "POPD se preseli iz trenutne mape v mapo, ki je bila nazadnje\n"
 "shranjena z ukazom PUSHD.\n"
 
 #: cmd.rc:246
-#, fuzzy
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9746,7 +9707,6 @@ msgstr ""
 "odstranjene.\n"
 
 #: cmd.rc:257
-#, fuzzy
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9795,7 +9755,6 @@ msgstr ""
 "ali ukazni lupini, iz katere ste priklicali cmd.\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9837,8 +9796,8 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "Vgrajeni ukazi CMD so:\n"
-"ASSOC\t\tPokaže ali spremeni povezave pripon datotekATTRIB\t\tPrikaže ali "
-"spremeni DOS atribute datotek\n"
+"ASSOC\t\tPokaže ali spremeni povezave pripon datotek\n"
+"ATTRIB\t\tPrikaže ali spremeni DOS atribute datotek\n"
 "CALL\t\tPokliče paketno datoteko iz druge\n"
 "CD (CHDIR)\tSpremeni trenutno privzeto mapo\n"
 "CHOICE\t\tPočaka na pritisk tipke z izberljivega seznama\n"
@@ -9850,14 +9809,14 @@ msgstr ""
 "DIR\t\tIzpiše vsebino mape\n"
 "ECHO\t\tPrikaže besedilo v konzoli\n"
 "ENDLOCAL\tKonča prevednost sprememb okolja v paketni datoteki\n"
-"FTYPE\t\tPokaže ali spremeni odprte ukaze, ki so povezani z vrstam "
-"idatotekHELP\t\tPrikaže kratko besedilo s pomočjo o želeni temi\n"
+"FTYPE\t\tPokaže ali spremeni odprte ukaze, ki so povezani z vrstami datotek\n"
+"HELP\t\tPrikaže kratko besedilo s pomočjo o želeni temi\n"
 "MD (MKDIR)\tUstvari podmapo\n"
 "MORE\t\tIzpiše besedilo po straneh\n"
 "MOVE\t\tPremakne eno ali več datotek ali map\n"
 "PATH\t\tNastavi ali prikaže iskalno pot\n"
-"PAUSE\t\tZamrzne izvajanje paketne datotekePOPD\t\tNastavi trenutno mapo na "
-"mapo, nazadnje shranjeno z ukazom PUSHD\n"
+"PAUSE\t\tZamrzne izvajanje paketne datoteke\n"
+"POPD\t\tNastavi trenutno mapo na mapo, nazadnje shranjeno z ukazom PUSHD\n"
 "PROMPT\t\tSpremeni ukazni poziv\n"
 "PUSHD\t\tShrani trenutno mapo in se preseli v navedeno mapo\n"
 "REN (RENAME)\tPreimenuje datoteko\n"
@@ -9870,11 +9829,10 @@ msgstr ""
 "VOL\t\tPrikaže oznako nosilca diskovne naprave\n"
 "EXIT\t\tZapre sejo CMD\n"
 "\n"
-"Uporabite HELP <ukaz> za več podrobnosti o kateremkoli od zgoraj navedenih "
+"Uporabite HELP <ukaz> za več podrobnosti o kateremkoli od zgoraj navedenih\n"
 "ukazov.\n"
 
 #: cmd.rc:307
-#, fuzzy
 msgid "Are you sure?"
 msgstr "Ali ste prepričani?"
 
@@ -9934,11 +9892,11 @@ msgstr "Trenutni čas je %1\n"
 
 #: cmd.rc:323
 msgid "Enter new date: "
-msgstr "Vnesite nov datum:"
+msgstr "Vnesite nov datum: "
 
 #: cmd.rc:324
 msgid "Enter new time: "
-msgstr "Vnesite nov čas:"
+msgstr "Vnesite nov čas: "
 
 #: cmd.rc:325
 msgid "Environment variable %1 not defined\n"
@@ -9986,9 +9944,8 @@ msgstr ""
 "\n"
 
 #: cmd.rc:335
-#, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "Oznaka nosilca (11 znakov, ENTER za brez)?"
+msgstr "Oznaka nosilca (11 znakov, <Enter> za brez)?"
 
 #: cmd.rc:336
 msgid "PATH not found\n"
@@ -9996,7 +9953,7 @@ msgstr "POTI ni mogoče najti\n"
 
 #: cmd.rc:337
 msgid "Press any key to continue... "
-msgstr "Pritisnite katerokoli tipko za nadaljevanje ..."
+msgstr "Pritisnite katerokoli tipko za nadaljevanje ... "
 
 #: cmd.rc:338
 msgid "Wine Command Prompt"
@@ -10381,7 +10338,7 @@ msgstr "F"
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
@@ -10396,27 +10353,27 @@ msgstr "O"
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -11487,7 +11444,6 @@ msgstr ""
 "Za podrobnosti zaženite 'start /L'.\n"
 
 #: start.rc:64
-#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -11507,27 +11463,25 @@ msgid ""
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
 "start.exe različica 0.2 Avtorske pravice (C) 2003, Dan Kegel\n"
-"Program je opredeljen kot prosta programska oprema; lahko ga razširjate in/"
-"ali spreminjate\n"
-"pod pogoji Splošnega Javnega Dovoljenja GNU (angleško: GNU Lesser Public "
-"License), kot\n"
-"ga je objavila ustanova Free Software Foundation; različice 2.1 ali (po "
-"želji) katerekoli kasnejše\n"
-"različice.\n"
+"Program je opredeljen kot prosta programska oprema; lahko ga razširjate\n"
+"in/ali spreminjate\n"
+"pod pogoji Splošnega Javnega Dovoljenja GNU (angleško: GNU Lesser Public\n"
+"License), kot ga je objavila ustanova Free Software Foundation; različice "
+"2.1\n"
+"ali (po želji) katerekoli kasnejše različice.\n"
 "\n"
-"Program se razširja v upanju, da bo uporabniku koristen, vendar BREZ "
-"VSAKRŠNE GARANCIJE;\n"
-"tudi brez posrednega zagotovila JAMSTVA CENOVNE VREDNOSTI in PRIMERNOSTI ZA "
-"DOLOČENO\n"
-"UPORABO. Za več podrobnosti si poglejte določila Splošnega Javnega "
-"Dovoljenja GNU.\n"
+"Program se razširja v upanju, da bo uporabniku koristen, vendar BREZ\n"
+"VSAKRŠNE GARANCIJE; tudi brez posrednega zagotovila JAMSTVA CENOVNE\n"
+"VREDNOSTI in PRIMERNOSTI ZA DOLOČENO UPORABO. Za več podrobnosti\n"
+"si poglejte določila Splošnega Javnega Dovoljenja GNU.\n"
 "\n"
-"Kopijo Splošnega Javnega Dovoljenja GNU (angleško: GNU General Public "
-"License) bi morali prejeti\n"
-"skupaj s programom, v kolikor pa je niste, pišite na naslov Free Software "
-"Foundation, Inc.,\n"
-"59 Temple Place - Suite 330, Boston, MA 02111-1307, USA in zahtevajte "
-"kopijo.\n"
+"Kopijo Splošnega Javnega Dovoljenja GNU (angleško: GNU General Public\n"
+"License) bi morali prejeti skupaj s programom, v kolikor pa je niste, "
+"pišite\n"
+"na naslov Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,\n"
+"Boston, MA 02110-1301, USA in zahtevajte kopijo.\n"
+"\n"
+"Za informacije o licenciranju si oglejte datoteko COPYING.LIB.\n"
 
 #: start.rc:66
 msgid ""
@@ -12491,7 +12445,6 @@ msgid "Application settings"
 msgstr "Nastavitve programov"
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
@@ -12548,7 +12501,7 @@ msgstr "Vzorčno besedilo, napisano s pisavo Tahoma velikosti 10 točk"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
-msgstr "Prepisi DLL "
+msgstr "Prepisi DLL"
 
 #: winecfg.rc:183
 msgid ""
@@ -13188,7 +13141,7 @@ msgstr "wineconsole: napaka med razčlenjevanjem ID dogodka\n"
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole: neveljaveno zaledje\n"
+msgstr "wineconsole: neveljavno zaledje\n"
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
@@ -13264,27 +13217,22 @@ msgstr ""
 "nevšečnosti."
 
 #: winedbg.rc:55
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
-"Napako lahko povzroči problem v pogramu ali pomankljivost v Wine. Poglejte "
-"na http://appdb.winehq.org za nasvete glede poganjanjate aplikacije.\n"
-"\n"
-"Če ta težava ni prisotna na Windows sistemu in še ni bila prijavljena na "
-"http://bugs.winehq.org, prosim napišite prijavo."
+"Napako lahko povzroči problem v pogramu ali pomankljivost v Wine. Poglejte v "
+"<a href=\"http://appdb.winehq.org\">Application Database</a> za nasvete "
+"glede poganjanja te aplikacije."
 
 #: winedbg.rc:58
-#, fuzzy
 msgid "Show &Details"
-msgstr "&Podrobnosti"
+msgstr "Pokaži &Podrobnosti"
 
 #: winedbg.rc:63
-#, fuzzy
 msgid "Program Error Details"
-msgstr "Napaka v programu"
+msgstr "Podrobnosti napake v programu"
 
 #: winedbg.rc:70
 msgid ""
@@ -13293,6 +13241,10 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"Če ta težava ni prisotna na sistemu Windows in še ni bila prijavljena, vas "
+"prosimo, da shranite podrobnosti napake v datoteko preko gumba \"Shrani kot"
+"\", nato pa <a href=\"http://bugs.winehq.org\">prijavite napako</a> in ji "
+"priložite ravno ustvarjeno datoteko."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13307,13 +13259,12 @@ msgid "(unidentified)"
 msgstr "(nedoločeno)"
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "Ustvarjanje je spodletelo\n"
+msgstr "Shranjevanje je spodletelo"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "Nalaganje podrobnih informacij, prosimo počakajte ..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -13474,7 +13425,7 @@ msgstr "Podrobnosti o različici"
 #: winefile.rc:197
 msgctxt "accelerator Fullscreen"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: winefile.rc:89
 msgid "Applying font settings"
@@ -13732,7 +13683,6 @@ msgid "R&edo\tCtrl+Y"
 msgstr "Uve&ljavi\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
 msgstr "Po&čisti\tDel"
 
@@ -13810,7 +13760,7 @@ msgstr "&Odstavek ..."
 
 #: wordpad.rc:84
 msgid "&Tabs..."
-msgstr "&Zavhihki ..."
+msgstr "&Zavihki ..."
 
 #: wordpad.rc:85
 msgid "Backgroun&d"
@@ -13826,7 +13776,7 @@ msgstr "&Svetlo rumena\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
-msgstr "&O Wine Wordpadu"
+msgstr "&O Wine Wordpad-u"
 
 #: wordpad.rc:130
 msgid "Automatic"
@@ -13903,17 +13853,17 @@ msgstr "Orodne vrstice"
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "R"
 
 #: wordpad.rc:282
 msgctxt "accelerator Redo"
@@ -13928,12 +13878,12 @@ msgstr "B"
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
@@ -14055,14 +14005,12 @@ msgstr ""
 "oblikovanja. Ali ste prepričani, da želite shraniti dokument v tej obliki?"
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
-msgstr "Neveljavna oblika števila"
+msgstr "Neveljavna oblika števila."
 
 #: wordpad.rc:188
-#, fuzzy
 msgid "OLE storage documents are not supported."
-msgstr "Dokumenti s predmeti OLE niso podprti"
+msgstr "Dokumenti s predmeti OLE niso podprti."
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -14081,9 +14029,8 @@ msgid "You do not have access to open the file."
 msgstr "Nimate pravic za odpiranje te datoteke."
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
-msgstr "Tiskanje še ni na podprto"
+msgstr "Tiskanje še ni na podprto."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
@@ -14098,14 +14045,12 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Neveljavno število parametrov - za pomoč uporabite xcopy /?\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Neveljaven parameter '%1' - za pomoč uporabite xcopy /?\n"
 
 #: xcopy.rc:29
-#, fuzzy
 msgid "Press <Enter> to begin copying\n"
-msgstr "Pritisnite <enter> za začetek kopiranja\n"
+msgstr "Pritisnite <Enter> za začetek kopiranja\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
