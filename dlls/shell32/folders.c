@@ -529,7 +529,7 @@ static const IPersistFileVtbl pfvt =
 	(void *) 0xdeadbeef /* IEIPersistFile_fnGetCurFile */
 };
 
-IExtractIconWImpl *extracticon_create(LPCITEMIDLIST pidl)
+static IExtractIconWImpl *extracticon_create(LPCITEMIDLIST pidl)
 {
     IExtractIconWImpl *ei;
 
