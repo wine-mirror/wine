@@ -774,7 +774,7 @@ msgstr "列印"
 
 #: comdlg32.rc:456
 msgid "Look &in:"
-msgstr "搜尋位置(&I)"
+msgstr "搜尋位置(&I):"
 
 #: comdlg32.rc:462
 msgid "File &name:"
@@ -958,7 +958,7 @@ msgid ""
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "這個值不在頁數範圍。\n"
-" 請輸入一個 %d 和 %d 之間的數。"
+"請輸入一個 %d 和 %d 之間的數。"
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -983,7 +983,7 @@ msgid ""
 "Please enter a value between 1 and %d."
 msgstr ""
 "你的印表機不支持這麼大的份數。\n"
-" 請輸入一個 1 和 %d 之間的數。"
+"請輸入一個 1 和 %d 之間的數。"
 
 #: comdlg32.rc:63
 msgid "A printer error occurred."
@@ -2210,7 +2210,7 @@ msgstr "檔案名(&F):"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "瀏覽(&r)"
+msgstr "瀏覽(&r)..."
 
 #: cryptui.rc:294
 msgid ""
@@ -6952,7 +6952,7 @@ msgstr "配置(&F)..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "關於(&A)..."
+msgstr "關於(&A)"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7559,7 +7559,7 @@ msgstr "創建捷徑(&T)"
 
 #: shdoclc.rc:50 shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Add to &Favorites..."
-msgstr "添加到我的最愛(&F)"
+msgstr "添加到我的最愛(&F)..."
 
 #: shdoclc.rc:51
 msgid "&View Source"
@@ -7583,7 +7583,7 @@ msgstr "在新視窗開啟鏈接(&N)"
 
 #: shdoclc.rc:65 shdoclc.rc:126 shdoclc.rc:148 shdoclc.rc:172
 msgid "Save Target &As..."
-msgstr "將目標存為(&A)"
+msgstr "將目標存為(&A)..."
 
 #: shdoclc.rc:66 shdoclc.rc:127 shdoclc.rc:149 shdoclc.rc:173
 msgid "&Print Target"
@@ -7595,11 +7595,11 @@ msgstr "顯示圖片(&S)"
 
 #: shdoclc.rc:69 shdoclc.rc:176
 msgid "&Save Picture As..."
-msgstr "將圖片存為(&A)"
+msgstr "將圖片存為(&A)..."
 
 #: shdoclc.rc:70
 msgid "&E-mail Picture..."
-msgstr "電郵圖片(&E)"
+msgstr "電郵圖片(&E)..."
 
 #: shdoclc.rc:71
 msgid "Pr&int Picture..."
@@ -9379,7 +9379,7 @@ msgstr "數字時鐘(&T)"
 
 #: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
 msgid "&Font..."
-msgstr "字型(&F)"
+msgstr "字型(&F)..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -10363,8 +10363,7 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"檔案 '%s'\n"
-"不存在\n"
+"檔案 '%s' 不存在\n"
 "\n"
 "您想新建一個檔案嗎？"
 
@@ -10374,8 +10373,7 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"檔案 '%s'\n"
-"正文已更改\n"
+"檔案 '%s' 正文已更改\n"
 "\n"
 "是否儲存更改？"
 
@@ -10581,7 +10579,7 @@ msgstr "OleView - OLE/COM 對象查看器"
 
 #: oleview.rc:97
 msgid "version 1.0"
-msgstr "版本 1.0 "
+msgstr "版本 1.0"
 
 #: oleview.rc:100
 #, fuzzy
@@ -10928,11 +10926,11 @@ msgstr ""
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "是否刪除程式組 `%s' ？"
+msgstr "是否刪除程式組 `%s'？"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "是否刪除程式組 `%s' ?"
+msgstr "是否刪除程式組 `%s'?"
 
 #: progman.rc:67
 #, fuzzy
@@ -12472,7 +12470,7 @@ msgstr "已有的函式庫頂替(&o)："
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "編輯(&E)"
+msgstr "編輯(&E)..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12521,11 +12519,11 @@ msgstr ""
 
 #: winecfg.rc:227
 msgid "&Add..."
-msgstr "加入(&A)"
+msgstr "加入(&A)..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "自動偵測(&d)..."
+msgstr "自動偵測(&d)"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -13507,7 +13505,7 @@ msgstr "專家(&E)"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "自定義(&C)"
+msgstr "自定義(&C)..."
 
 #: winemine.rc:44
 #, fuzzy
@@ -13911,7 +13909,7 @@ msgstr "RTF豐富格式檔案"
 
 #: wordpad.rc:141
 msgid "Text document"
-msgstr "文本檔案 "
+msgstr "文本檔案"
 
 #: wordpad.rc:142
 msgid "Unicode text document"
