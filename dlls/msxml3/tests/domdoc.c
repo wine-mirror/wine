@@ -5523,7 +5523,7 @@ static const selection_ns_t selection_ns_data[] = {
     { NULL }
 };
 
-void test_XPath(void)
+static void test_XPath(void)
 {
     const selection_ns_t *ptr = selection_ns_data;
     VARIANT var;
