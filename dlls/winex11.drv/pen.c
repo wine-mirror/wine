@@ -21,9 +21,6 @@
 #include "config.h"
 
 #include "x11drv.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 
 static DWORD get_user_dashes( char *res, const DWORD *style, DWORD len )
