@@ -1203,6 +1203,7 @@ msgstr ""
 "是否正確。"
 
 #: credui.rc:32
+#, fuzzy
 msgid ""
 "Having Caps Lock on may cause you to enter your password incorrectly.\n"
 "\n"
@@ -13618,6 +13619,7 @@ msgid "Always on &top"
 msgstr "總是在最上面(&T)"
 
 #: winhlp32.rc:56
+#, fuzzy
 msgid "&About Wine Help"
 msgstr "資訊(&I)..."
 
