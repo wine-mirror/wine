@@ -681,7 +681,7 @@ BOOL dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 static inline BOOL is_interior( dib_info *dib, HRGN clip, int x, int y, DWORD pixel, UINT type)
 {
     /* the clip rgn stops the flooding */
-    if (!PtInRegion( clip, x, y )) return FALSE;
+    if (clip && !PtInRegion( clip, x, y )) return FALSE;
 
     if (type == FLOODFILLBORDER)
         return dib->funcs->get_pixel( dib, x, y ) != pixel;
@@ -734,7 +734,7 @@ BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
     RECT row;
     HRGN rgn;
 
-    TRACE( "(%p, %d, %d, %08x, %d\n", pdev, x, y, color, type );
+    TRACE( "(%p, %d, %d, %08x, %d)\n", pdev, x, y, color, type );
 
     if (!is_interior( &pdev->dib, pdev->clip, x, y, pixel, type )) return FALSE;
 
