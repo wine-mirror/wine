@@ -8068,15 +8068,11 @@ msgstr "程序"
 #: shell32.rc:201
 #, fuzzy
 msgid "My Documents"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"My Documents\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"我的文档"
+msgstr "我的文档"
 
 #: shell32.rc:202
 msgid "Favorites"
-msgstr "Favorites"
+msgstr ""
 
 #: shell32.rc:203
 msgid "StartUp"
@@ -8084,15 +8080,15 @@ msgstr ""
 
 #: shell32.rc:204
 msgid "Start Menu"
-msgstr "Start Menu"
+msgstr ""
 
 #: shell32.rc:205
 msgid "My Music"
-msgstr "My Music"
+msgstr ""
 
 #: shell32.rc:206
 msgid "My Videos"
-msgstr "My Videos"
+msgstr ""
 
 #: shell32.rc:207
 #, fuzzy
@@ -8102,15 +8098,15 @@ msgstr "桌面"
 
 #: shell32.rc:208
 msgid "NetHood"
-msgstr "NetHood"
+msgstr ""
 
 #: shell32.rc:209
 msgid "Templates"
-msgstr "Templates"
+msgstr ""
 
 #: shell32.rc:210
 msgid "PrintHood"
-msgstr "PrintHood"
+msgstr ""
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
@@ -8122,7 +8118,7 @@ msgstr "Program Files"
 
 #: shell32.rc:214
 msgid "My Pictures"
-msgstr "My Pictures"
+msgstr ""
 
 #: shell32.rc:215
 #, fuzzy
@@ -8131,24 +8127,23 @@ msgstr "复制文件..."
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
-msgstr "Documents"
+msgstr ""
 
 #: shell32.rc:217
-#, fuzzy
 msgid "Administrative Tools"
-msgstr "Start Menu\\Programs\\Administrative Tools"
+msgstr ""
 
 #: shell32.rc:218
 msgid "Music"
-msgstr "Music"
+msgstr ""
 
 #: shell32.rc:219
 msgid "Pictures"
-msgstr "Pictures"
+msgstr ""
 
 #: shell32.rc:220
 msgid "Videos"
-msgstr "Videos"
+msgstr ""
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
@@ -8156,21 +8151,19 @@ msgstr "Program Files (x86)"
 
 #: shell32.rc:221
 msgid "Contacts"
-msgstr "Contacts"
+msgstr ""
 
 #: shell32.rc:222 winefile.rc:112
 msgid "Links"
-msgstr "Links"
+msgstr ""
 
 #: shell32.rc:223
-#, fuzzy
 msgid "Slide Shows"
-msgstr "Pictures\\Slide Shows"
+msgstr ""
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
-msgstr "Music\\Playlists"
+msgstr ""
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -8185,40 +8178,36 @@ msgid "Model"
 msgstr "型号"
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
-msgstr "Music\\Sample Music"
+msgstr ""
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
-msgstr "Pictures\\Sample Pictures"
+msgstr ""
 
 #: shell32.rc:227
-#, fuzzy
 msgid "Sample Playlists"
-msgstr "Music\\Sample Playlists"
+msgstr ""
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
-msgstr "Videos\\Sample Videos"
+msgstr ""
 
 #: shell32.rc:229
 msgid "Saved Games"
-msgstr "Saved Games"
+msgstr ""
 
 #: shell32.rc:230
 msgid "Searches"
-msgstr "Searches"
+msgstr ""
 
 #: shell32.rc:231
 msgid "Users"
-msgstr "Users"
+msgstr ""
 
 #: shell32.rc:233
 msgid "Downloads"
-msgstr "Downloads"
+msgstr ""
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
