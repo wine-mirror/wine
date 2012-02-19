@@ -878,6 +878,7 @@ static void test_clock(int share)
         period = defp;
     } else {
         pwfx->wFormatTag = WAVE_FORMAT_PCM;
+        pwfx->nChannels = 2;
         pwfx->cbSize = 0;
         pwfx->wBitsPerSample = 16; /* no floating point */
         pwfx->nBlockAlign = pwfx->nChannels * pwfx->wBitsPerSample / 8;
