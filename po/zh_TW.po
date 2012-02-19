@@ -21,7 +21,7 @@ msgstr "安裝/卸載"
 msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
-msgstr "要從軟碟，光碟或硬碟安裝新程式，請按'安裝'."
+msgstr "要從軟碟，光碟或硬碟安裝新程式，請按'安裝'。"
 
 #: appwiz.rc:59
 msgid "&Install..."
@@ -32,7 +32,7 @@ msgid ""
 "The following software can be automatically removed. To remove a program or "
 "to modify its installed components, select it from the list and click Change/"
 "Remove."
-msgstr "下列軟件可以自動卸載. 按'添加/刪除'可卸載選定程式或者調整已安裝部件."
+msgstr "下列軟件可以自動卸載。 按'添加/刪除'可卸載選定程式或者調整已安裝部件。"
 
 #: appwiz.rc:64
 #, fuzzy
@@ -121,8 +121,8 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"這個運用程式要顯示一個HTML 網頁. Wine 需要裝上 Gecko (Mozilla HTML engine)才"
-"能顯示HTML網頁. 如果你想自動下載和安裝Gecko，請按'安裝'."
+"這個運用程式要顯示一個HTML 網頁。 Wine 需要裝上 Gecko (Mozilla HTML engine)才"
+"能顯示HTML網頁。 如果你想自動下載和安裝Gecko，請按'安裝'。"
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -156,7 +156,7 @@ msgstr "添加/刪除程式"
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
-msgstr "允許你安裝新軟件, 和從你的電腦裡刪除現有程式."
+msgstr "允許你安裝新軟件, 和從你的電腦裡刪除現有程式。"
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
@@ -166,7 +166,7 @@ msgstr ""
 msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
-msgstr "不能執行卸載程式 '%s'. 你想把這個卸載程式從註冊表中刪除嗎?"
+msgstr "不能執行卸載程式 '%s'。 你想把這個卸載程式從註冊表中刪除嗎?"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -975,7 +975,7 @@ msgstr ""
 #: comdlg32.rc:60
 #, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "'份數' 項不能空."
+msgstr "'份數' 項不能空。"
 
 #: comdlg32.rc:62
 msgid ""
@@ -1200,7 +1200,7 @@ msgid ""
 "and password are correct."
 msgstr ""
 "請確認你輸入的用戶名和密碼\n"
-"是否正確."
+"是否正確。"
 
 #: credui.rc:32
 msgid ""
@@ -1208,7 +1208,7 @@ msgid ""
 "\n"
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
-msgstr "開著大寫鎖定可能導致你輸入錯誤的密碼."
+msgstr "開著大寫鎖定可能導致你輸入錯誤的密碼。"
 
 #: credui.rc:31
 msgid "Caps Lock is On"
@@ -5658,7 +5658,7 @@ msgstr ""
 #: winerror.mc:2486
 #, fuzzy
 msgid "Clipboard not open.\n"
-msgstr "不能開啟檔案."
+msgstr "不能開啟檔案。"
 
 #: winerror.mc:2491
 msgid "Hotkey not registered.\n"
@@ -6845,7 +6845,7 @@ msgstr "網址(&U):"
 
 #: mshtml.rc:31
 msgid "HTML rendering is currently disabled."
-msgstr "HTML 功能目前已被停用."
+msgstr "HTML 功能目前已被停用。"
 
 #: mshtml.rc:32
 msgid "HTML Document"
@@ -6864,7 +6864,7 @@ msgstr ""
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
-msgstr "不能開啟所指定的安裝軟件包. 請檢查檔案路徑後再試."
+msgstr "不能開啟所指定的安裝軟件包。 請檢查檔案路徑後再試。"
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -7350,7 +7350,7 @@ msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
-"將檔案的內容以對象的方式插入到你的檔案以便你可以用創建本檔案的程式來激活它."
+"將檔案的內容以對象的方式插入到你的檔案以便你可以用創建本檔案的程式來激活它。"
 
 #: oledlg.rc:27 shell32.rc:194
 msgid "Browse"
@@ -7360,7 +7360,7 @@ msgstr "瀏覽"
 msgid ""
 "File does not appear to be a valid OLE module. Unable to register OLE "
 "control."
-msgstr "本檔案不像是一個有效的 OLE 模型. 不能註冊 OLE 控件."
+msgstr "本檔案不像是一個有效的 OLE 模型。 不能註冊 OLE 控件。"
 
 #: oledlg.rc:29
 msgid "Add Control"
@@ -7368,20 +7368,20 @@ msgstr "添加控件"
 
 #: oledlg.rc:34
 msgid "Inserts the contents of the clipboard into your document as %s."
-msgstr "將剪貼板的內容以 %s 插入到你的檔案."
+msgstr "將剪貼板的內容以 %s 插入到你的檔案。"
 
 #: oledlg.rc:35
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
-msgstr "將剪貼板的內容插入到你的檔案以便你可以使用 %s."
+msgstr "將剪貼板的內容插入到你的檔案以便你可以使用 %s。"
 
 #: oledlg.rc:36
 #, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
-msgstr "將剪貼板的內容插入到你的檔案以便你可以用 %s 激活它, 一般顯示為圖標."
+msgstr "將剪貼板的內容插入到你的檔案以便你可以用 %s 激活它, 一般顯示為圖標。"
 
 #: oledlg.rc:37
 #, fuzzy
@@ -7390,8 +7390,8 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"將剪貼板的內容以 %s 插入到你的檔案. 數據是鏈接到源檔案的, 對源檔案的任何改動"
-"都會反應到你的檔案."
+"將剪貼板的內容以 %s 插入到你的檔案。 數據是鏈接到源檔案的, 對源檔案的任何改動"
+"都會反應到你的檔案。"
 
 #: oledlg.rc:38
 #, fuzzy
@@ -7400,8 +7400,8 @@ msgid ""
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"將剪貼板的圖像插入到你的檔案. 圖像是鏈接到源檔案的, 對源檔案的任何改動都會反"
-"應到你的檔案."
+"將剪貼板的圖像插入到你的檔案。 圖像是鏈接到源檔案的, 對源檔案的任何改動都會反"
+"應到你的檔案。"
 
 #: oledlg.rc:39
 #, fuzzy
@@ -7410,12 +7410,12 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"將剪貼板的捷徑插入到你的檔案. 捷徑是鏈接到源檔案的, 對源檔案的任何改動都會反"
-"應到你的檔案."
+"將剪貼板的捷徑插入到你的檔案。 捷徑是鏈接到源檔案的, 對源檔案的任何改動都會反"
+"應到你的檔案。"
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
-msgstr "將剪貼板的內容插入到你的檔案."
+msgstr "將剪貼板的內容插入到你的檔案。"
 
 #: oledlg.rc:41
 msgid "Unknown Type"
@@ -9088,7 +9088,7 @@ msgstr "輸出檔案已存在, 按'確定'覆蓋。"
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
-msgstr "不能開啟輸出檔案."
+msgstr "不能開啟輸出檔案。"
 
 #: wldap32.rc:27
 msgid "Success"
@@ -10531,8 +10531,8 @@ msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
-"這些設定只改變註冊表值.\n"
-"它對Wine的性能沒有影響."
+"這些設定只改變註冊表值。\n"
+"它對Wine的性能沒有影響。"
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
@@ -10605,7 +10605,7 @@ msgstr "執行 Wine 註冊表編輯器"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
-msgstr "結束程式. 提示儲存"
+msgstr "結束程式。 提示儲存"
 
 #: oleview.rc:108
 msgid "Create an instance of the selected object"
@@ -10720,7 +10720,7 @@ msgstr "激活"
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
-msgstr "CoGetClassObject 失敗."
+msgstr "CoGetClassObject 失敗。"
 
 #: oleview.rc:143
 msgid "Unknown error"
@@ -11738,7 +11738,7 @@ msgstr "處理器親和度"
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
-msgstr "處理器親和度設定控制各進程使用CPU分配情況."
+msgstr "處理器親和度設定控制各進程使用CPU分配情況。"
 
 #: taskmgr.rc:446
 msgid "CPU 0"
@@ -11875,7 +11875,7 @@ msgstr "選擇顯示內容"
 #: taskmgr.rc:519
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
-msgstr "請選擇任務管理器中進程分頁的顯示內容."
+msgstr "請選擇任務管理器中進程分頁的顯示內容。"
 
 #: taskmgr.rc:521
 msgid "&Image Name"
@@ -12307,7 +12307,7 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"卸載指令執行失敗 '%s', 可能是找不到可執行程式.\n"
+"卸載指令執行失敗 '%s', 可能是找不到可執行程式。\n"
 "你想把這項卸載指令從註冊表中刪除嗎?"
 
 #: view.rc:33
@@ -13663,7 +13663,7 @@ msgstr "幫助檔案 (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "不能開啟檔案 '%s'. 你想要自己找這個檔案嗎?"
+msgstr "不能開啟檔案 '%s'。 你想要自己找這個檔案嗎?"
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
@@ -13996,17 +13996,17 @@ msgstr "儲存改動到 '%s'?"
 
 #: wordpad.rc:182
 msgid "Finished searching the document."
-msgstr "檔案查找結束."
+msgstr "檔案查找結束。"
 
 #: wordpad.rc:183
 msgid "Failed to load the RichEdit library."
-msgstr "RichEdit 裝載失敗."
+msgstr "RichEdit 裝載失敗。"
 
 #: wordpad.rc:184
 msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
-msgstr "你已經選擇儲存為文本檔案, 這可能導致格式丟失. 你確定要這麼做嗎?"
+msgstr "你已經選擇儲存為文本檔案, 這可能導致格式丟失。 你確定要這麼做嗎?"
 
 #: wordpad.rc:187
 #, fuzzy
@@ -14020,19 +14020,19 @@ msgstr "不支援OLE 儲存檔案"
 
 #: wordpad.rc:189
 msgid "Could not save the file."
-msgstr "不能儲存檔案."
+msgstr "不能儲存檔案。"
 
 #: wordpad.rc:190
 msgid "You do not have access to save the file."
-msgstr "你沒有儲存檔案的權力."
+msgstr "你沒有儲存檔案的權力。"
 
 #: wordpad.rc:191
 msgid "Could not open the file."
-msgstr "不能開啟檔案."
+msgstr "不能開啟檔案。"
 
 #: wordpad.rc:192
 msgid "You do not have access to open the file."
-msgstr "你沒有開啟檔案的權力."
+msgstr "你沒有開啟檔案的權力。"
 
 #: wordpad.rc:193
 #, fuzzy
