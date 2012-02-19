@@ -1776,7 +1776,7 @@ static LRESULT WINAPI toolbar_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, 
     return CallWindowProcA(oldproc, hwnd, msg, wParam, lParam);
 }
 
-LRESULT CALLBACK cbt_hook_proc(int code, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK cbt_hook_proc(int code, WPARAM wParam, LPARAM lParam)
 {
     if (code == HCBT_CREATEWND)
     {
