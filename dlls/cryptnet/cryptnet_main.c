@@ -967,7 +967,8 @@ static BOOL WINAPI HTTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
                     /* We don't set ret to TRUE in this block to avoid masking
                      * an error from HttpSendRequestExW.
                      */
-                    if (!HttpEndRequestW(hHttp, NULL, 0, (DWORD_PTR)context) &&
+                    if (ret &&
+                     !HttpEndRequestW(hHttp, NULL, 0, (DWORD_PTR)context) &&
                      GetLastError() == ERROR_IO_PENDING)
                     {
                         if (WaitForSingleObject(context->event,
