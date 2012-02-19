@@ -21,7 +21,7 @@ msgstr "安装/卸载"
 msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
-msgstr "要从软盘，光盘或硬盘安装新程序，请按'安装'."
+msgstr "要从软盘，光盘或硬盘安装新程序，请按'安装'。"
 
 #: appwiz.rc:59
 msgid "&Install..."
@@ -32,7 +32,7 @@ msgid ""
 "The following software can be automatically removed. To remove a program or "
 "to modify its installed components, select it from the list and click Change/"
 "Remove."
-msgstr "下列软件可以自动卸载. 按'添加/删除'可卸载选定程序或者调整已安装部件."
+msgstr "下列软件可以自动卸载。 按'添加/删除'可卸载选定程序或者调整已安装部件。"
 
 #: appwiz.rc:64
 #, fuzzy
@@ -157,7 +157,7 @@ msgstr "添加/删除程序"
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
-msgstr "允许你安装新软件或删除现有程序."
+msgstr "允许你安装新软件或删除现有程序。"
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
@@ -167,7 +167,7 @@ msgstr "应用程序"
 msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
-msgstr "不能运行卸载程序 '%s'. 你想把这个卸载程序从注册表中删除吗?"
+msgstr "不能运行卸载程序 '%s'。 你想把这个卸载程序从注册表中删除吗?"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -1173,7 +1173,7 @@ msgid ""
 "and password are correct."
 msgstr ""
 "请确认你输入的用户名和密码\n"
-"是否正确."
+"是否正确。"
 
 #: credui.rc:32
 #, fuzzy
@@ -1182,7 +1182,7 @@ msgid ""
 "\n"
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
-msgstr "开着大写锁定可能导致你输入错误的密码."
+msgstr "开着大写锁定可能导致你输入错误的密码。"
 
 #: credui.rc:31
 msgid "Caps Lock is On"
@@ -6831,7 +6831,7 @@ msgstr "网址(&U):"
 
 #: mshtml.rc:31
 msgid "HTML rendering is currently disabled."
-msgstr "HTML 功能目前已被停用."
+msgstr "HTML 功能目前已被停用。"
 
 #: mshtml.rc:32
 msgid "HTML Document"
@@ -6850,7 +6850,7 @@ msgstr ""
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
-msgstr "不能打开所指定的安装软件包. 请检查文件路径后再试."
+msgstr "不能打开所指定的安装软件包。 请检查文件路径后再试。"
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -7333,7 +7333,7 @@ msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
-"将文件的内容以对象的方式插入到你的文件以便你可以用创建本文件的程序来激活它."
+"将文件的内容以对象的方式插入到你的文件以便你可以用创建本文件的程序来激活它。"
 
 #: oledlg.rc:27 shell32.rc:194
 msgid "Browse"
@@ -7343,7 +7343,7 @@ msgstr "浏览"
 msgid ""
 "File does not appear to be a valid OLE module. Unable to register OLE "
 "control."
-msgstr "本文件不像是一个有效的 OLE 模型. 不能注册 OLE 控件."
+msgstr "本文件不像是一个有效的 OLE 模型。 不能注册 OLE 控件。"
 
 #: oledlg.rc:29
 msgid "Add Control"
@@ -7351,20 +7351,20 @@ msgstr "添加控件"
 
 #: oledlg.rc:34
 msgid "Inserts the contents of the clipboard into your document as %s."
-msgstr "将剪贴板的内容以 %s 插入到你的文件."
+msgstr "将剪贴板的内容以 %s 插入到你的文件。"
 
 #: oledlg.rc:35
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
-msgstr "将剪贴板的内容插入到你的文件以便你可以使用 %s."
+msgstr "将剪贴板的内容插入到你的文件以便你可以使用 %s。"
 
 #: oledlg.rc:36
 #, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
-msgstr "将剪贴板的内容插入到你的文件以便你可以用 %s 激活它, 一般显示为图标."
+msgstr "将剪贴板的内容插入到你的文件以便你可以用 %s 激活它, 一般显示为图标。"
 
 #: oledlg.rc:37
 #, fuzzy
@@ -7373,8 +7373,8 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"将剪贴板的内容以 %s 插入到你的文件. 数据是链接到源文件的, 对源文件的任何改动"
-"都会反应到你的文件."
+"将剪贴板的内容以 %s 插入到你的文件。 数据是链接到源文件的, 对源文件的任何改动"
+"都会反应到你的文件。"
 
 #: oledlg.rc:38
 #, fuzzy
@@ -7383,8 +7383,8 @@ msgid ""
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"将剪贴板的图像插入到你的文件. 图像是链接到源文件的, 对源文件的任何改动都会反"
-"应到你的文件."
+"将剪贴板的图像插入到你的文件。 图像是链接到源文件的, 对源文件的任何改动都会反"
+"应到你的文件。"
 
 #: oledlg.rc:39
 #, fuzzy
@@ -7393,12 +7393,12 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"将剪贴板的捷径插入到你的文件. 捷径是链接到源文件的, 对源文件的任何改动都会反"
-"应到你的文件."
+"将剪贴板的捷径插入到你的文件。 捷径是链接到源文件的, 对源文件的任何改动都会反"
+"应到你的文件。"
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
-msgstr "将剪贴板的内容插入到你的文件."
+msgstr "将剪贴板的内容插入到你的文件。"
 
 #: oledlg.rc:41
 msgid "Unknown Type"
@@ -8222,7 +8222,7 @@ msgstr "Downloads"
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
-msgstr "无法创建新文件夹: 拒绝访问."
+msgstr "无法创建新文件夹: 拒绝访问。"
 
 #: shell32.rc:167
 msgid "Error during creation of a new folder"
@@ -8254,7 +8254,7 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"已存在名为 '%1' 的文件.\n"
+"已存在名为 '%1' 的文件。\n"
 "\n"
 "要替换吗?"
 
@@ -8277,7 +8277,7 @@ msgstr "真的把这 %1 项送入回收站?"
 
 #: shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-msgstr "'%1' 一项无法送入回收站. 要彻底删除吗?"
+msgstr "'%1' 一项无法送入回收站。 要彻底删除吗?"
 
 #: shell32.rc:183
 msgid ""
@@ -8287,9 +8287,9 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
-"已存在名为 '%1' 的文件夹.\n"
+"已存在名为 '%1' 的文件夹。\n"
 "\n"
-"若选择合并原有同名文件将被替换. 真的要合并吗?"
+"若选择合并原有同名文件将被替换。 真的要合并吗?"
 
 #: shell32.rc:235
 msgid "New Folder"
@@ -8313,7 +8313,7 @@ msgstr "可执行文件 (*.exe)"
 
 #: shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
-msgstr "找不到用于打开此类文件的 Windows 程序."
+msgstr "找不到用于打开此类文件的 Windows 程序。"
 
 #: shell32.rc:243
 #, fuzzy
@@ -9037,7 +9037,7 @@ msgstr "输出文件已存在, 按'确定'覆盖。"
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
-msgstr "不能打开输出文件."
+msgstr "不能打开输出文件。"
 
 #: wldap32.rc:27
 msgid "Success"
@@ -10678,7 +10678,7 @@ msgstr "激活"
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
-msgstr "CoGetClassObject 失败."
+msgstr "CoGetClassObject 失败。"
 
 #: oleview.rc:143
 msgid "Unknown error"
