@@ -26,12 +26,9 @@
 #include "shellapi.h"
 #include "psapi.h"
 
-#include "wine/debug.h"
 #include "wine/unicode.h"
 
 #include "resource.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 #define MAX_PROGRAM_NAME_LENGTH 80
 
