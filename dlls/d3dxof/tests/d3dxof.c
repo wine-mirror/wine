@@ -91,6 +91,25 @@ static char object_noname[] =
 "1; 2; 3;\n"
 "}\n";
 
+static char template_syntax_empty_array[] =
+"xof 0302txt 0064\n"
+"template Buffer\n"
+"{\n"
+"<3D82AB43-62DA-11CF-AB39-0020AF71E433>\n"
+"DWORD num_elem;\n"
+"array DWORD value[num_elem];\n"
+"DWORD dummy;\n"
+"}\n";
+
+static char object_syntax_empty_array[] =
+"xof 0302txt 0064\n"
+"Buffer\n"
+"{\n"
+"0;\n"
+";\n"
+"1234;\n"
+"}\n";
+
 static void init_function_pointers(void)
 {
     /* We have to use LoadLibrary as no d3dxof functions are referenced directly */
@@ -457,6 +476,50 @@ static void test_getname(void)
     ok(ref == 0, "Got refcount %d, expected 0\n", ref);
 }
 
+static void test_syntax(void)
+{
+    HRESULT hr;
+    ULONG ref;
+    LPDIRECTXFILE lpDirectXFile = NULL;
+    LPDIRECTXFILEENUMOBJECT lpdxfeo;
+    LPDIRECTXFILEDATA lpdxfd;
+    DXFILELOADMEMORY dxflm;
+
+    if (!pDirectXFileCreate)
+    {
+        win_skip("DirectXFileCreate is not available\n");
+        return;
+    }
+
+    hr = pDirectXFileCreate(&lpDirectXFile);
+    ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
+    if (!lpDirectXFile)
+    {
+        skip("Couldn't create DirectXFile interface\n");
+        return;
+    }
+
+    hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template_syntax_empty_array, sizeof(template_syntax_empty_array) - 1);
+    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+
+    dxflm.lpMemory = &object_syntax_empty_array;
+    dxflm.dSize = sizeof(object_syntax_empty_array) - 1;
+    hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
+    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
+    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+
+    ref = IDirectXFileEnumObject_Release(lpdxfeo);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    if (hr == DXFILE_OK)
+    {
+        ref = IDirectXFileData_Release(lpdxfd);
+        ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    }
+    ref = IDirectXFile_Release(lpDirectXFile);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+}
+
 /* Set it to 1 to expand the string when dumping the object. This is useful when there is
  * only one string in a sub-object (very common). Use with care, this may lead to a crash. */
 #define EXPAND_STRING 0
@@ -634,6 +697,7 @@ START_TEST(d3dxof)
     test_file_types();
     test_compressed_files();
     test_getname();
+    test_syntax();
     test_dump();
 
     FreeLibrary(hd3dxof);
