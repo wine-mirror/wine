@@ -852,6 +852,59 @@ static void test_pathgradientpath(void)
     expect(Ok, status);
 }
 
+static void test_pathgradientcenterpoint(void)
+{
+    static const GpPointF path_points[] = {{0,0}, {3,0}, {0,4}};
+    GpStatus status;
+    GpPathGradient *grad;
+    GpPointF point;
+
+    status = GdipCreatePathGradient(path_points+1, 2, WrapModeClamp, &grad);
+    expect(Ok, status);
+
+    status = GdipGetPathGradientCenterPoint(NULL, &point);
+    expect(InvalidParameter, status);
+
+    status = GdipGetPathGradientCenterPoint(grad, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipGetPathGradientCenterPoint(grad, &point);
+    expect(Ok, status);
+    expectf(1.5, point.X);
+    expectf(2.0, point.Y);
+
+    status = GdipSetPathGradientCenterPoint(NULL, &point);
+    expect(InvalidParameter, status);
+
+    status = GdipSetPathGradientCenterPoint(grad, NULL);
+    expect(InvalidParameter, status);
+
+    point.X = 10.0;
+    point.Y = 15.0;
+    status = GdipSetPathGradientCenterPoint(grad, &point);
+    expect(Ok, status);
+
+    point.X = point.Y = -1;
+    status = GdipGetPathGradientCenterPoint(grad, &point);
+    expect(Ok, status);
+    expectf(10.0, point.X);
+    expectf(15.0, point.Y);
+
+    status = GdipDeleteBrush((GpBrush*)grad);
+    expect(Ok, status);
+
+    status = GdipCreatePathGradient(path_points, 3, WrapModeClamp, &grad);
+    expect(Ok, status);
+
+    status = GdipGetPathGradientCenterPoint(grad, &point);
+    expect(Ok, status);
+    todo_wine expectf(1.0, point.X);
+    todo_wine expectf(4.0/3.0, point.Y);
+
+    status = GdipDeleteBrush((GpBrush*)grad);
+    expect(Ok, status);
+}
+
 START_TEST(brush)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -877,6 +930,7 @@ START_TEST(brush)
     test_linelinearblend();
     test_gradientsurroundcolorcount();
     test_pathgradientpath();
+    test_pathgradientcenterpoint();
 
     GdiplusShutdown(gdiplusToken);
 }
