@@ -33,9 +33,6 @@
 static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
 				   WPARAM wParam, LPARAM lParam)
 {
-#if 0
-  printf("G %4.4x %4.4x\n", msg, wParam);
-#endif
   switch (msg)
     {
     case WM_SYSCOMMAND:
