@@ -875,6 +875,11 @@ static ARGB resample_bitmap_pixel(GDIPCONST GpRect *src_rect, LPBYTE bits, UINT 
     }
 }
 
+static REAL intersect_line_scanline(const GpPointF *p1, const GpPointF *p2, REAL y)
+{
+    return (p1->X - p2->X) * (p2->Y - y) / (p2->Y - p1->Y) + p2->X;
+}
+
 static INT brush_can_fill_path(GpBrush *brush)
 {
     switch (brush->bt)
@@ -958,6 +963,7 @@ static INT brush_can_fill_pixels(GpBrush *brush)
     case BrushTypeHatchFill:
     case BrushTypeLinearGradient:
     case BrushTypeTextureFill:
+    case BrushTypePathGradient:
         return 1;
     default:
         return 0;
@@ -1171,6 +1177,140 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
             }
         }
 
+        return stat;
+    }
+    case BrushTypePathGradient:
+    {
+        GpPathGradient *fill = (GpPathGradient*)brush;
+        GpPath *flat_path;
+        GpMatrix *world_to_device;
+        GpStatus stat;
+        int i, figure_start=0;
+        GpPointF start_point, end_point, center_point;
+        BYTE type;
+        REAL min_yf, max_yf, line1_xf, line2_xf;
+        INT min_y, max_y, min_x, max_x;
+        INT x, y;
+
+        stat = GdipClonePath(fill->path, &flat_path);
+
+        if (stat != Ok)
+            return stat;
+
+        stat = get_graphics_transform(graphics, CoordinateSpaceDevice,
+            CoordinateSpaceWorld, &world_to_device);
+        if (stat == Ok)
+        {
+            stat = GdipTransformPath(flat_path, world_to_device);
+
+            if (stat == Ok)
+            {
+                center_point = fill->center;
+                stat = GdipTransformMatrixPoints(world_to_device, &center_point, 1);
+            }
+
+            if (stat == Ok)
+                stat = GdipFlattenPath(flat_path, NULL, 0.5);
+
+            GdipDeleteMatrix(world_to_device);
+        }
+
+        if (stat != Ok)
+        {
+            GdipDeletePath(flat_path);
+            return stat;
+        }
+
+        for (i=0; i<flat_path->pathdata.Count; i++)
+        {
+            int start_center_line=0, end_center_line=0;
+            int seen_start=0, seen_end=0, seen_center=0;
+
+            type = flat_path->pathdata.Types[i];
+
+            if ((type&PathPointTypePathTypeMask) == PathPointTypeStart)
+                figure_start = i;
+
+            start_point = flat_path->pathdata.Points[i];
+
+            if ((type&PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath || i+1 >= flat_path->pathdata.Count)
+                end_point = flat_path->pathdata.Points[figure_start];
+            else if ((flat_path->pathdata.Types[i+1] & PathPointTypePathTypeMask) == PathPointTypeLine)
+                end_point = flat_path->pathdata.Points[i+1];
+            else
+                continue;
+
+            min_yf = center_point.Y;
+            if (min_yf > start_point.Y) min_yf = start_point.Y;
+            if (min_yf > end_point.Y) min_yf = end_point.Y;
+
+            if (min_yf < fill_area->Y)
+                min_y = fill_area->Y;
+            else
+                min_y = (INT)ceil(min_yf);
+
+            max_yf = center_point.Y;
+            if (max_yf < start_point.Y) max_yf = start_point.Y;
+            if (max_yf < end_point.Y) max_yf = end_point.Y;
+
+            if (max_yf > fill_area->Y + fill_area->Height)
+                max_y = fill_area->Y + fill_area->Height;
+            else
+                max_y = (INT)ceil(max_yf);
+
+            for (y=min_y; y<max_y; y++)
+            {
+                REAL yf = (REAL)y;
+
+                if (!seen_start && yf >= start_point.Y)
+                {
+                    seen_start = 1;
+                    start_center_line ^= 1;
+                }
+                if (!seen_end && yf >= end_point.Y)
+                {
+                    seen_end = 1;
+                    end_center_line ^= 1;
+                }
+                if (!seen_center && yf >= center_point.Y)
+                {
+                    seen_center = 1;
+                    start_center_line ^= 1;
+                    end_center_line ^= 1;
+                }
+
+                if (start_center_line)
+                    line1_xf = intersect_line_scanline(&start_point, &center_point, yf);
+                else
+                    line1_xf = intersect_line_scanline(&start_point, &end_point, yf);
+
+                if (end_center_line)
+                    line2_xf = intersect_line_scanline(&end_point, &center_point, yf);
+                else
+                    line2_xf = intersect_line_scanline(&start_point, &end_point, yf);
+
+                if (line1_xf < line2_xf)
+                {
+                    min_x = (INT)ceil(line1_xf);
+                    max_x = (INT)ceil(line2_xf);
+                }
+                else
+                {
+                    min_x = (INT)ceil(line2_xf);
+                    max_x = (INT)ceil(line1_xf);
+                }
+
+                if (min_x < fill_area->X)
+                    min_x = fill_area->X;
+                if (max_x > fill_area->X + fill_area->Width)
+                    max_x = fill_area->X + fill_area->Width;
+
+                for (x=min_x; x<max_x; x++)
+                    argb_pixels[(x-fill_area->X) + (y-fill_area->Y)*cdwStride] = fill->centercolor;
+            }
+        }
+
+        GdipDeletePath(flat_path);
         return stat;
     }
     default:
