@@ -21,11 +21,17 @@
 #include <stdarg.h>
 #include <assert.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "wine/test.h"
 
 #define ALIGN_SIZE(size, alignment) (((size) + (alignment - 1)) & ~((alignment - 1)))
+
+static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
+static NTSTATUS (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
 
 static PVOID RVAToAddr(DWORD_PTR rva, HMODULE module)
 {
@@ -553,6 +559,105 @@ static void test_ImportDescriptors(void)
     }
 }
 
+static void test_image_mapping(const char *dll_name, DWORD scn_page_access)
+{
+    HANDLE hfile, hmap;
+    NTSTATUS status;
+    LARGE_INTEGER offset;
+    SIZE_T size;
+    void *addr1, *addr2;
+    MEMORY_BASIC_INFORMATION info;
+    SYSTEM_INFO si;
+
+    if (!pNtMapViewOfSection) return;
+
+    GetSystemInfo(&si);
+
+    SetLastError(0xdeadbeef);
+    hfile = CreateFile(dll_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hmap = CreateFileMapping(hfile, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, 0);
+    ok(hmap != 0, "CreateFileMapping error %d\n", GetLastError());
+
+    offset.u.LowPart  = 0;
+    offset.u.HighPart = 0;
+
+    addr1 = NULL;
+    size = 0;
+    status = pNtMapViewOfSection(hmap, GetCurrentProcess(), &addr1, 0, 0, &offset,
+                                 &size, 1 /* ViewShare */, 0, PAGE_READONLY);
+    ok(status == STATUS_SUCCESS, "NtMapViewOfSection error %x\n", status);
+    ok(addr1 != 0, "mapped address should be valid\n");
+
+    SetLastError(0xdeadbeef);
+    size = VirtualQuery((char *)addr1 + section.VirtualAddress, &info, sizeof(info));
+    ok(size == sizeof(info), "VirtualQuery error %d\n", GetLastError());
+    ok(info.BaseAddress == (char *)addr1 + section.VirtualAddress, "got %p != expected %p\n", info.BaseAddress, (char *)addr1 + section.VirtualAddress);
+    ok(info.RegionSize == si.dwPageSize, "got %#lx != expected %#x\n", info.RegionSize, si.dwPageSize);
+    ok(info.Protect == scn_page_access, "got %#x != expected %#x\n", info.Protect, scn_page_access);
+    ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
+    ok(info.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "%#x != PAGE_EXECUTE_WRITECOPY\n", info.AllocationProtect);
+    ok(info.State == MEM_COMMIT, "%#x != MEM_COMMIT\n", info.State);
+    ok(info.Type == SEC_IMAGE, "%#x != SEC_IMAGE\n", info.Type);
+
+    addr2 = NULL;
+    size = 0;
+    status = pNtMapViewOfSection(hmap, GetCurrentProcess(), &addr2, 0, 0, &offset,
+                                 &size, 1 /* ViewShare */, 0, PAGE_READONLY);
+    /* FIXME: remove once Wine is fixed */
+    if (status != STATUS_IMAGE_NOT_AT_BASE)
+    {
+        todo_wine {
+        ok(status == STATUS_IMAGE_NOT_AT_BASE, "expected STATUS_IMAGE_NOT_AT_BASE, got %x\n", status);
+        ok(addr2 != 0, "mapped address should be valid\n");
+        }
+        goto wine_is_broken;
+    }
+    ok(status == STATUS_IMAGE_NOT_AT_BASE, "expected STATUS_IMAGE_NOT_AT_BASE, got %x\n", status);
+    ok(addr2 != 0, "mapped address should be valid\n");
+
+    ok(addr2 != addr1, "mapped addresses should be different\n");
+
+    SetLastError(0xdeadbeef);
+    size = VirtualQuery((char *)addr2 + section.VirtualAddress, &info, sizeof(info));
+    ok(size == sizeof(info), "VirtualQuery error %d\n", GetLastError());
+    ok(info.BaseAddress == (char *)addr2 + section.VirtualAddress, "got %p != expected %p\n", info.BaseAddress, (char *)addr2 + section.VirtualAddress);
+    ok(info.RegionSize == si.dwPageSize, "got %#lx != expected %#x\n", info.RegionSize, si.dwPageSize);
+    ok(info.Protect == scn_page_access, "got %#x != expected %#x\n", info.Protect, scn_page_access);
+    ok(info.AllocationBase == addr2, "%p != %p\n", info.AllocationBase, addr2);
+    ok(info.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "%#x != PAGE_EXECUTE_WRITECOPY\n", info.AllocationProtect);
+    ok(info.State == MEM_COMMIT, "%#x != MEM_COMMIT\n", info.State);
+    ok(info.Type == SEC_IMAGE, "%#x != SEC_IMAGE\n", info.Type);
+
+    status = pNtUnmapViewOfSection(GetCurrentProcess(), addr2);
+    ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection error %x\n", status);
+
+    addr2 = MapViewOfFile(hmap, 0, 0, 0, 0);
+    ok(addr2 != addr1, "mapped addresses should be different\n");
+
+    SetLastError(0xdeadbeef);
+    size = VirtualQuery((char *)addr2 + section.VirtualAddress, &info, sizeof(info));
+    ok(size == sizeof(info), "VirtualQuery error %d\n", GetLastError());
+    ok(info.BaseAddress == (char *)addr2 + section.VirtualAddress, "got %p != expected %p\n", info.BaseAddress, (char *)addr2 + section.VirtualAddress);
+    ok(info.RegionSize == si.dwPageSize, "got %#lx != expected %#x\n", info.RegionSize, si.dwPageSize);
+    ok(info.Protect == scn_page_access, "got %#x != expected %#x\n", info.Protect, scn_page_access);
+    ok(info.AllocationBase == addr2, "%p != %p\n", info.AllocationBase, addr2);
+    ok(info.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "%#x != PAGE_EXECUTE_WRITECOPY\n", info.AllocationProtect);
+    ok(info.State == MEM_COMMIT, "%#x != MEM_COMMIT\n", info.State);
+    ok(info.Type == SEC_IMAGE, "%#x != SEC_IMAGE\n", info.Type);
+
+    UnmapViewOfFile(addr2);
+
+wine_is_broken:
+    status = pNtUnmapViewOfSection(GetCurrentProcess(), addr1);
+    ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection error %x\n", status);
+
+    CloseHandle(hmap);
+    CloseHandle(hfile);
+}
+
 static BOOL is_mem_writable(DWORD prot)
 {
     switch (prot & 0xff)
@@ -776,9 +881,7 @@ static void test_section_access(void)
 
         nt_header.FileHeader.NumberOfSections = 1;
         nt_header.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
-
-        /* don't set IMAGE_FILE_DLL to show that it doesn't change anything for a DLL or a process image */
-        nt_header.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE;
+        nt_header.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_DLL | IMAGE_FILE_RELOCS_STRIPPED;
 
         nt_header.OptionalHeader.SectionAlignment = si.dwPageSize;
         nt_header.OptionalHeader.FileAlignment = 0x200;
@@ -852,6 +955,19 @@ static void test_section_access(void)
         ret = FreeLibrary(hlib);
         ok(ret, "FreeLibrary error %d\n", GetLastError());
 
+        test_image_mapping(dll_name, td[i].scn_page_access);
+
+        /* reset IMAGE_FILE_DLL otherwise CreateProcess fails */
+        nt_header.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_RELOCS_STRIPPED;
+        SetLastError(0xdeadbeef);
+        hfile = CreateFile(dll_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+        ok (hfile != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+        SetFilePointer(hfile, sizeof(dos_header), NULL, FILE_BEGIN);
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, &nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+        CloseHandle(hfile);
+
         memset(&sti, 0, sizeof(sti));
         sti.cb = sizeof(sti);
         SetLastError(0xdeadbeef);
@@ -886,6 +1002,8 @@ static void test_section_access(void)
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
 
+        test_image_mapping(dll_name, td[i].scn_page_access);
+
         SetLastError(0xdeadbeef);
         ret = DeleteFile(dll_name);
         ok(ret, "DeleteFile error %d\n", GetLastError());
@@ -894,6 +1012,9 @@ static void test_section_access(void)
 
 START_TEST(loader)
 {
+    pNtMapViewOfSection = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtMapViewOfSection");
+    pNtUnmapViewOfSection = (void *)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtUnmapViewOfSection");
+
     test_Loader();
     test_ImportDescriptors();
     test_section_access();
