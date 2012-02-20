@@ -611,6 +611,7 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int* plevel)
             printf("Found Binary (%d)\n", j);
             IDirectXFileBinary_Release(p3);
         }
+        IDirectXFileObject_Release(pChildObj);
     }
     (*plevel)--;
     ok(hr == DXFILE_OK || hr == DXFILEERR_NOMOREOBJECTS, "IDirectXFileData_GetNextObject: %x\n", hr);
