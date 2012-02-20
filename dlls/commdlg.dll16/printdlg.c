@@ -51,7 +51,7 @@ static void global_handle_to_16( HGLOBAL16 *h16, HGLOBAL handle )
 
     if (!handle) return;
     size = GlobalSize( handle );
-    if (*h16) ret = GlobalReAlloc16( GMEM_MOVEABLE, *h16, size );
+    if (*h16) ret = GlobalReAlloc16( *h16, size, GMEM_MOVEABLE );
     else ret = GlobalAlloc16( GMEM_MOVEABLE, size );
     if (ret)
     {
