@@ -61,29 +61,22 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
         case BrushTypePathGradient:{
             GpPathGradient *src, *dest;
             INT count;
+            GpStatus stat;
 
             *clone = GdipAlloc(sizeof(GpPathGradient));
             if (!*clone) return OutOfMemory;
 
             src = (GpPathGradient*) brush,
             dest = (GpPathGradient*) *clone;
-            count = src->pathdata.Count;
 
             memcpy(dest, src, sizeof(GpPathGradient));
 
-            dest->pathdata.Count = count;
-            dest->pathdata.Points = GdipAlloc(count * sizeof(PointF));
-            dest->pathdata.Types = GdipAlloc(count);
+            stat = GdipClonePath(src->path, &dest->path);
 
-            if(!dest->pathdata.Points || !dest->pathdata.Types){
-                GdipFree(dest->pathdata.Points);
-                GdipFree(dest->pathdata.Types);
+            if(stat != Ok){
                 GdipFree(dest);
-                return OutOfMemory;
+                return stat;
             }
-
-            memcpy(dest->pathdata.Points, src->pathdata.Points, count * sizeof(PointF));
-            memcpy(dest->pathdata.Types, src->pathdata.Types, count);
 
             /* blending */
             count = src->blendcount;
@@ -92,8 +85,7 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
             dest->blendpos = GdipAlloc(count * sizeof(REAL));
 
             if(!dest->blendfac || !dest->blendpos){
-                GdipFree(dest->pathdata.Points);
-                GdipFree(dest->pathdata.Types);
+                GdipDeletePath(dest->path);
                 GdipFree(dest->blendfac);
                 GdipFree(dest->blendpos);
                 GdipFree(dest);
@@ -490,106 +482,16 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngleI(GDIPCONST GpRect* rect
                                         wrap, line);
 }
 
-GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
-    INT count, GpWrapMode wrap, GpPathGradient **grad)
+static GpStatus create_path_gradient(GpPath *path, GpPathGradient **grad)
 {
-    TRACE("(%p, %d, %d, %p)\n", points, count, wrap, grad);
-
-    if(!points || !grad)
-        return InvalidParameter;
-
-    if(count <= 0)
-        return OutOfMemory;
-
-    *grad = GdipAlloc(sizeof(GpPathGradient));
-    if (!*grad) return OutOfMemory;
-
-    (*grad)->blendfac = GdipAlloc(sizeof(REAL));
-    (*grad)->blendpos = GdipAlloc(sizeof(REAL));
-    if(!(*grad)->blendfac || !(*grad)->blendpos){
-        GdipFree((*grad)->blendfac);
-        GdipFree((*grad)->blendpos);
-        GdipFree(*grad);
-        *grad = NULL;
-        return OutOfMemory;
-    }
-    (*grad)->blendfac[0] = 1.0;
-    (*grad)->blendpos[0] = 1.0;
-    (*grad)->blendcount  = 1;
-
-    (*grad)->pathdata.Count = count;
-    (*grad)->pathdata.Points = GdipAlloc(count * sizeof(PointF));
-    (*grad)->pathdata.Types = GdipAlloc(count);
-
-    if(!(*grad)->pathdata.Points || !(*grad)->pathdata.Types){
-        GdipFree((*grad)->pathdata.Points);
-        GdipFree((*grad)->pathdata.Types);
-        GdipFree(*grad);
-        return OutOfMemory;
-    }
-
-    memcpy((*grad)->pathdata.Points, points, count * sizeof(PointF));
-    memset((*grad)->pathdata.Types, PathPointTypeLine, count);
-
-    (*grad)->brush.bt = BrushTypePathGradient;
-    (*grad)->centercolor = 0xffffffff;
-    (*grad)->wrap = wrap;
-    (*grad)->gamma = FALSE;
-    (*grad)->center.X = 0.0;
-    (*grad)->center.Y = 0.0;
-    (*grad)->focus.X = 0.0;
-    (*grad)->focus.Y = 0.0;
-
-    TRACE("<-- %p\n", *grad);
-
-    return Ok;
-}
-
-GpStatus WINGDIPAPI GdipCreatePathGradientI(GDIPCONST GpPoint* points,
-    INT count, GpWrapMode wrap, GpPathGradient **grad)
-{
-    GpPointF *pointsF;
-    GpStatus ret;
-    INT i;
-
-    TRACE("(%p, %d, %d, %p)\n", points, count, wrap, grad);
-
-    if(!points || !grad)
-        return InvalidParameter;
-
-    if(count <= 0)
-        return OutOfMemory;
-
-    pointsF = GdipAlloc(sizeof(GpPointF) * count);
-    if(!pointsF)
-        return OutOfMemory;
-
-    for(i = 0; i < count; i++){
-        pointsF[i].X = (REAL)points[i].X;
-        pointsF[i].Y = (REAL)points[i].Y;
-    }
-
-    ret = GdipCreatePathGradient(pointsF, count, wrap, grad);
-    GdipFree(pointsF);
-
-    return ret;
-}
-
-/******************************************************************************
- * GdipCreatePathGradientFromPath [GDIPLUS.@]
- *
- * FIXME: path gradient brushes not truly supported (drawn as solid brushes)
- */
-GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
-    GpPathGradient **grad)
-{
-    TRACE("(%p, %p)\n", path, grad);
-
     if(!path || !grad)
         return InvalidParameter;
 
     *grad = GdipAlloc(sizeof(GpPathGradient));
-    if (!*grad) return OutOfMemory;
+    if (!*grad)
+    {
+        return OutOfMemory;
+    }
 
     (*grad)->blendfac = GdipAlloc(sizeof(REAL));
     (*grad)->blendpos = GdipAlloc(sizeof(REAL));
@@ -604,20 +506,7 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     (*grad)->blendpos[0] = 1.0;
     (*grad)->blendcount  = 1;
 
-    (*grad)->pathdata.Count = path->pathdata.Count;
-    (*grad)->pathdata.Points = GdipAlloc(path->pathdata.Count * sizeof(PointF));
-    (*grad)->pathdata.Types = GdipAlloc(path->pathdata.Count);
-
-    if(!(*grad)->pathdata.Points || !(*grad)->pathdata.Types){
-        GdipFree((*grad)->pathdata.Points);
-        GdipFree((*grad)->pathdata.Types);
-        GdipFree(*grad);
-        return OutOfMemory;
-    }
-
-    memcpy((*grad)->pathdata.Points, path->pathdata.Points,
-           path->pathdata.Count * sizeof(PointF));
-    memcpy((*grad)->pathdata.Types, path->pathdata.Types, path->pathdata.Count);
+    (*grad)->path = path;
 
     (*grad)->brush.bt = BrushTypePathGradient;
     (*grad)->centercolor = 0xffffffff;
@@ -632,6 +521,93 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     TRACE("<-- %p\n", *grad);
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
+    INT count, GpWrapMode wrap, GpPathGradient **grad)
+{
+    GpStatus stat;
+    GpPath *path;
+
+    TRACE("(%p, %d, %d, %p)\n", points, count, wrap, grad);
+
+    if(!points || !grad)
+        return InvalidParameter;
+
+    if(count <= 0)
+        return OutOfMemory;
+
+    stat = GdipCreatePath(FillModeAlternate, &path);
+
+    if (stat == Ok)
+    {
+        stat = GdipAddPathLine2(path, points, count);
+
+        if (stat == Ok)
+            stat = create_path_gradient(path, grad);
+
+        if (stat != Ok)
+            GdipDeletePath(path);
+    }
+
+    return stat;
+}
+
+GpStatus WINGDIPAPI GdipCreatePathGradientI(GDIPCONST GpPoint* points,
+    INT count, GpWrapMode wrap, GpPathGradient **grad)
+{
+    GpStatus stat;
+    GpPath *path;
+
+    TRACE("(%p, %d, %d, %p)\n", points, count, wrap, grad);
+
+    if(!points || !grad)
+        return InvalidParameter;
+
+    if(count <= 0)
+        return OutOfMemory;
+
+    stat = GdipCreatePath(FillModeAlternate, &path);
+
+    if (stat == Ok)
+    {
+        stat = GdipAddPathLine2I(path, points, count);
+
+        if (stat == Ok)
+            stat = create_path_gradient(path, grad);
+
+        if (stat != Ok)
+            GdipDeletePath(path);
+    }
+
+    return stat;
+}
+
+/******************************************************************************
+ * GdipCreatePathGradientFromPath [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
+    GpPathGradient **grad)
+{
+    GpStatus stat;
+    GpPath *new_path;
+
+    TRACE("(%p, %p)\n", path, grad);
+
+    if(!path || !grad)
+        return InvalidParameter;
+
+    stat = GdipClonePath((GpPath*)path, &new_path);
+
+    if (stat == Ok)
+    {
+        stat = create_path_gradient(new_path, grad);
+
+        if (stat != Ok)
+            GdipDeletePath(new_path);
+    }
+
+    return stat;
 }
 
 /******************************************************************************
@@ -887,8 +863,7 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
     switch(brush->bt)
     {
         case BrushTypePathGradient:
-            GdipFree(((GpPathGradient*) brush)->pathdata.Points);
-            GdipFree(((GpPathGradient*) brush)->pathdata.Types);
+            GdipDeletePath(((GpPathGradient*) brush)->path);
             GdipFree(((GpPathGradient*) brush)->blendfac);
             GdipFree(((GpPathGradient*) brush)->blendpos);
             break;
@@ -1052,15 +1027,13 @@ GpStatus WINGDIPAPI GdipGetPathGradientPointCount(GpPathGradient *grad,
     if(!grad || !count)
         return InvalidParameter;
 
-    *count = grad->pathdata.Count;
+    *count = grad->path->pathdata.Count;
 
     return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetPathGradientRect(GpPathGradient *brush, GpRectF *rect)
 {
-    GpRectF r;
-    GpPath* path;
     GpStatus stat;
 
     TRACE("(%p, %p)\n", brush, rect);
@@ -1068,21 +1041,9 @@ GpStatus WINGDIPAPI GdipGetPathGradientRect(GpPathGradient *brush, GpRectF *rect
     if(!brush || !rect)
         return InvalidParameter;
 
-    stat = GdipCreatePath2(brush->pathdata.Points, brush->pathdata.Types,
-                           brush->pathdata.Count, FillModeAlternate, &path);
-    if(stat != Ok)  return stat;
+    stat = GdipGetPathWorldBounds(brush->path, rect, NULL, NULL);
 
-    stat = GdipGetPathWorldBounds(path, &r, NULL, NULL);
-    if(stat != Ok){
-        GdipDeletePath(path);
-        return stat;
-    }
-
-    memcpy(rect, &r, sizeof(GpRectF));
-
-    GdipDeletePath(path);
-
-    return Ok;
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipGetPathGradientRectI(GpPathGradient *brush, GpRect *rect)
@@ -1113,7 +1074,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorsWithCount(GpPathGradient
 
     TRACE("(%p,%p,%p)\n", grad, argb, count);
 
-    if(!grad || !argb || !count || (*count < grad->pathdata.Count))
+    if(!grad || !argb || !count || (*count < grad->path->pathdata.Count))
         return InvalidParameter;
 
     if(!(calls++))
@@ -1531,7 +1492,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientSurroundColorsWithCount(GpPathGradient
     TRACE("(%p,%p,%p)\n", grad, argb, count);
 
     if(!grad || !argb || !count || (*count <= 0) ||
-        (*count > grad->pathdata.Count))
+        (*count > grad->path->pathdata.Count))
         return InvalidParameter;
 
     if(!(calls++))

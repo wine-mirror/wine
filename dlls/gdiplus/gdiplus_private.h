@@ -187,7 +187,7 @@ struct GpSolidFill{
 
 struct GpPathGradient{
     GpBrush brush;
-    PathData pathdata;
+    GpPath* path;
     ARGB centercolor;
     GpWrapMode wrap;
     BOOL gamma;
