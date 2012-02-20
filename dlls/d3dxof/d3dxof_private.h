@@ -30,7 +30,7 @@
 #include "winuser.h"
 #include "dxfile.h"
 
-#define MAX_NAME_LEN 32
+#define MAX_NAME_LEN 40
 #define MAX_ARRAY_DIM 4
 #define MAX_MEMBERS 50
 #define MAX_CHILDREN 200
