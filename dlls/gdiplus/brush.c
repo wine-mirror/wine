@@ -484,8 +484,12 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngleI(GDIPCONST GpRect* rect
 
 static GpStatus create_path_gradient(GpPath *path, GpPathGradient **grad)
 {
+    GpRectF bounds;
+
     if(!path || !grad)
         return InvalidParameter;
+
+    GdipGetPathWorldBounds(path, &bounds, NULL, NULL);
 
     *grad = GdipAlloc(sizeof(GpPathGradient));
     if (!*grad)
@@ -513,8 +517,8 @@ static GpStatus create_path_gradient(GpPath *path, GpPathGradient **grad)
     (*grad)->wrap = WrapModeClamp;
     (*grad)->gamma = FALSE;
     /* FIXME: this should be set to the "centroid" of the path by default */
-    (*grad)->center.X = 0.0;
-    (*grad)->center.Y = 0.0;
+    (*grad)->center.X = bounds.X + bounds.Width / 2;
+    (*grad)->center.Y = bounds.Y + bounds.Height / 2;
     (*grad)->focus.X = 0.0;
     (*grad)->focus.Y = 0.0;
 
