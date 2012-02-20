@@ -6254,7 +6254,7 @@ msgstr ""
 
 #: winerror.mc:3526
 msgid "Not an RPC error.\n"
-msgstr "Ei RCP-virhe.\n"
+msgstr "Ei RPC-virhe.\n"
 
 #: winerror.mc:3531
 msgid "UUID is local only.\n"
@@ -8065,7 +8065,7 @@ msgstr ""
 "lisätietoja.\n"
 "\n"
 "Winen mukana pitäisi tulla kopio GNU Lesser General Public Licensesta; jos "
-"ei, kirjoita osoitteeseen Free Software Foundation Inc., 51 Franklin Street, "
+"ei, kirjoita osoitteeseen Free Software Foundation Inc., 51 Franklin St, "
 "Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:253
@@ -9619,7 +9619,7 @@ msgstr ""
 "Syntaksi: ASSOC [.pääte[=[tyyppi]]]\n"
 "\n"
 "ASSOC ilman parametreja näyttää nykyiset tiedostokytkennät.\n"
-"Pelkän tiedostopäätteen kanssa ASSOC näyttää kyseisen päätteen kytekennän.\n"
+"Pelkän tiedostopäätteen kanssa ASSOC näyttää kyseisen päätteen kytkennän.\n"
 "Jos annetaan yhtäsuuruusmerkki mutta ei tyyppiä, ASSOC poistaa "
 "tiedostopäätteen nykyisen kytkennän.\n"
 
@@ -9670,7 +9670,6 @@ msgstr ""
 "komentoriville, jolta kutsuit cmd:tä.\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9739,6 +9738,7 @@ msgstr ""
 "RD (RMDIR)\tPoista alihakemisto\n"
 "SET\t\tAseta tai näytä ympäristömuuttujia\n"
 "SETLOCAL\tAloita ympäristömuutosten paikallisuus komentojonotiedostossa\n"
+"START\t\tKäynnistä ohjelma tai avaa dokumentti siihen kytketyllä ohjelmalla\n"
 "TIME\t\tAseta tai näytä järjestelmän nykyinen aika\n"
 "TITLE\t\tAseta ikkunan otsikko CMD-istunnolle\n"
 "TYPE\t\tKirjoita tekstitiedoston sisältö\n"
@@ -9765,11 +9765,11 @@ msgstr "E"
 
 #: cmd.rc:310
 msgid "File association missing for extension %1\n"
-msgstr "Päätteellä %1 ei ole tiedostokytkentää.\n"
+msgstr "Päätteellä %1 ei ole tiedostokytkentää\n"
 
 #: cmd.rc:311
 msgid "No open command associated with file type '%1'\n"
-msgstr "Tiedostotyyppiin '%1' ei ole liitetty avauskomentoa.\n"
+msgstr "Tiedostotyyppiin '%1' ei ole liitetty avauskomentoa\n"
 
 #: cmd.rc:312
 msgid "Overwrite %1?"
@@ -11392,8 +11392,7 @@ msgstr ""
 "\n"
 "Ohjelman mukana pitäisi tulla kopio GNU Lesser General Public Licensesta; "
 "jos\n"
-"ei, kirjoita osoitteeseen Free Software Foundation Inc., 51 Franklin "
-"Street,\n"
+"ei, kirjoita osoitteeseen Free Software Foundation Inc., 51 Franklin St,\n"
 "Fifth Floor, Boston, MA 02110-1301, USA.\n"
 "\n"
 "Tiedostossa COPYING.LIB on lisenssitietoa.\n"
