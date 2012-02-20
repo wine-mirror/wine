@@ -316,7 +316,7 @@
 316 stdcall GdipGetPathGradientCenterPointI(ptr ptr)
 317 stdcall GdipGetPathGradientFocusScales(ptr ptr ptr)
 318 stdcall GdipGetPathGradientGammaCorrection(ptr ptr)
-319 stub GdipGetPathGradientPath
+319 stdcall GdipGetPathGradientPath(ptr ptr)
 320 stdcall GdipGetPathGradientPointCount(ptr ptr)
 321 stdcall GdipGetPathGradientPresetBlend(ptr ptr ptr long)
 322 stdcall GdipGetPathGradientPresetBlendCount(ptr ptr)

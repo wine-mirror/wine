@@ -824,6 +824,34 @@ static void test_gradientsurroundcolorcount(void)
     GdipDeleteBrush((GpBrush*)grad);
 }
 
+static void test_pathgradientpath(void)
+{
+    GpStatus status;
+    GpPath *path=NULL;
+    GpPathGradient *grad=NULL;
+
+    status = GdipCreatePathGradient(blendcount_ptf, 2, WrapModeClamp, &grad);
+    expect(Ok, status);
+
+    status = GdipGetPathGradientPath(grad, NULL);
+    expect(NotImplemented, status);
+
+    status = GdipCreatePath(FillModeWinding, &path);
+    expect(Ok, status);
+
+    status = GdipGetPathGradientPath(NULL, path);
+    expect(NotImplemented, status);
+
+    status = GdipGetPathGradientPath(grad, path);
+    expect(NotImplemented, status);
+
+    status = GdipDeletePath(path);
+    expect(Ok, status);
+
+    status = GdipDeleteBrush((GpBrush*)grad);
+    expect(Ok, status);
+}
+
 START_TEST(brush)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -848,6 +876,7 @@ START_TEST(brush)
     test_lineblend();
     test_linelinearblend();
     test_gradientsurroundcolorcount();
+    test_pathgradientpath();
 
     GdiplusShutdown(gdiplusToken);
 }

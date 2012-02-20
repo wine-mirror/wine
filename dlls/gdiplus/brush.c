@@ -1019,6 +1019,18 @@ GpStatus WINGDIPAPI GdipGetPathGradientGammaCorrection(GpPathGradient *grad,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPathGradientPath(GpPathGradient *grad, GpPath *path)
+{
+    static int calls;
+
+    TRACE("(%p, %p)\n", grad, path);
+
+    if (!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipGetPathGradientPointCount(GpPathGradient *grad,
     INT *count)
 {
