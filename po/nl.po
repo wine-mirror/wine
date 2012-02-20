@@ -10134,7 +10134,7 @@ msgstr "Locatie:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr "Gebruik: hostnaam\n"
+msgstr "Gebruik: hostname\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"

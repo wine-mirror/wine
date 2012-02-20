@@ -10045,7 +10045,7 @@ msgstr "Розміщення"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr "Використання: ім'я_хосту\n"
+msgstr "Використання: hostname\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"

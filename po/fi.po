@@ -9922,7 +9922,7 @@ msgstr "Sijainti:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr "Käyttö: isäntänimi\n"
+msgstr "Käyttö: hostname\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"

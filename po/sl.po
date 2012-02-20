@@ -6677,12 +6677,12 @@ msgstr ""
 "\n"
 "Namesti izdelek:\n"
 "\t/i {paket|koda_izdelka} [lastnost]\n"
-"\t/paket {paket|koda_izdelka} [lastnost]\n"
+"\t/package {paket|koda_izdelka} [lastnost]\n"
 "\t/a paket [lastnost]\n"
 "Popravi namestitev:\n"
 "\t/f[p|o|e|d|c|a|u|m|s|v] {paket|koda_izdelka}\n"
 "Odstrani produkt:\n"
-"\t/odstrani {paket|koda_izdelka} [lastnost]\n"
+"\t/uninstall {paket|koda_izdelka} [lastnost]\n"
 "\t/x {paket|koda_izdelka} [lastnost]\n"
 "Oglašuj produkt:\n"
 "\t/j[u|m] paket [/t preoblikovanje] [/g id_jezika]\n"
@@ -10006,7 +10006,7 @@ msgstr "Mesto:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr "Uporaba: ime gostitelja\n"
+msgstr "Uporaba: hostname\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
