@@ -988,17 +988,22 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   if (This->nb_xobjects >= MAX_OBJECTS)
   {
     ERR("Too many objects\n");
+    *ppDataObj = NULL;
     return DXFILEERR_NOMOREOBJECTS;
   }
 
   /* Check if there are templates defined before the object */
-  if (!parse_templates(&This->buf)) {
+  if (!parse_templates(&This->buf))
+  {
     hr = DXFILEERR_BADVALUE;
     goto error;
   }
 
   if (!This->buf.rem_bytes)
+  {
+    *ppDataObj = NULL;
     return DXFILEERR_NOMOREOBJECTS;
+  }
 
   hr = IDirectXFileDataImpl_Create(&object);
   if (FAILED(hr))
