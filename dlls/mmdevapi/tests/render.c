@@ -334,6 +334,7 @@ static void test_audioclient(void)
           (UINT)(t2/10000), (UINT)(t2 % 10000));
     ok(t2 >= t1 || broken(t2 >= t1/2 && pwfx->nSamplesPerSec > 48000),
        "Latency < default period, delta %ldus\n", (long)((t2-t1)/10));
+    /* Native appears to add the engine period to the HW latency in shared mode */
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
     ok(hr == AUDCLNT_E_ALREADY_INITIALIZED, "Calling Initialize twice returns %08x\n", hr);
@@ -681,7 +682,7 @@ static void test_padding(void)
     IAudioClient *ac;
     IAudioRenderClient *arc;
     WAVEFORMATEX *pwfx;
-    REFERENCE_TIME minp, defp, lat;
+    REFERENCE_TIME minp, defp;
     BYTE *buf;
     UINT32 psize, pad, written;
 
@@ -714,11 +715,6 @@ static void test_padding(void)
        "Expected 10ms default period: %u\n", (ULONG)defp);
     ok(minp != 0, "Minimum period is 0\n");
     ok(minp <= defp, "Mininum period is greater than default period\n");
-
-    hr = IAudioClient_GetStreamLatency(ac, &lat);
-    ok(hr == S_OK, "GetStreamLatency failed: %08x\n", hr);
-    ok(lat >= defp, "Latency is at least period in shared mode\n");
-    /* Native appears to add the engine period to the HW latency in shared mode */
 
     hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&arc);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
@@ -898,13 +894,14 @@ static void test_clock(int share)
     }
 
     /** GetStreamLatency
-     * Shared mode: 1x period + a little
+     * Shared mode: 1x period + a little, but some 192000 devices return 5.3334ms.
      * Exclusive mode: testbot returns 2x period + a little, but
      * some HDA drivers return 1x period, some + a little. */
     hr = IAudioClient_GetStreamLatency(ac, &t2);
     ok(hr == S_OK, "GetStreamLatency failed: %08x\n", hr);
     trace("Latency: %u.%04u ms\n", (UINT)(t2/10000), (UINT)(t2 % 10000));
-    ok(t2 >= period, "Latency < default period, delta %ldus\n", (long)((t2-period)/10));
+    ok(t2 >= period || broken(t2 >= period/2 && share && pwfx->nSamplesPerSec > 48000),
+       "Latency < default period, delta %ldus\n", (long)((t2-period)/10));
 
     /** GetBufferSize
      * BufferSize must be rounded up, maximum 2s says MSDN.
@@ -929,7 +926,7 @@ static void test_clock(int share)
     ok(gbsize == bufsize,
        "BufferSize %u at rate %u\n", gbsize, pwfx->nSamplesPerSec);
     else todo_wine
-    ok(gbsize == parts * fragment,
+    ok(gbsize == parts * fragment || gbsize == MulDiv(bufsize, 1, 1024) * 1024,
        "BufferSize %u misfits fragment size %u at rate %u\n", gbsize, fragment, pwfx->nSamplesPerSec);
 
     /* In shared mode, GetCurrentPadding decreases in multiples of
@@ -1860,13 +1857,19 @@ static void test_volume_dependence(void)
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ac2);
-    if(SUCCEEDED(hr)){
-        IChannelAudioVolume *cav2;
-        IAudioStreamVolume *asv2;
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
 
+    if(hr == S_OK){
         hr = IAudioClient_Initialize(ac2, AUDCLNT_SHAREMODE_SHARED,
                 AUDCLNT_STREAMFLAGS_NOPERSIST, 5000000, 0, fmt, &session);
         ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+        if(hr != S_OK)
+            IAudioClient_Release(ac2);
+    }
+
+    if(hr == S_OK){
+        IChannelAudioVolume *cav2;
+        IAudioStreamVolume *asv2;
 
         hr = IAudioClient_GetService(ac2, &IID_IChannelAudioVolume, (void**)&cav2);
         ok(hr == S_OK, "GetService failed: %08x\n", hr);
@@ -2097,8 +2100,8 @@ static void test_worst_case(void)
         ok(hr == S_OK, "Start failed: %08x\n", hr);
 
         for(i = 0; i <= 99; i++){ /* 100 x 10ms = 1 second */
-            r = WaitForSingleObject(event, 70);
-            ok(r == WAIT_OBJECT_0, "Wait gave %x\n", r);
+            r = WaitForSingleObject(event, 60 + defp / 10000);
+            ok(r == WAIT_OBJECT_0, "Wait iteration %d gave %x\n", i, r);
 
             /* the app has nearly one period time to feed data */
             Sleep((i % 10) * defp / 120000);
