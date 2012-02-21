@@ -5359,6 +5359,8 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
     TRACE("device_parent %p, device %p.\n", device_parent, device);
 }
 
+/* This is run from device_process_message() in wined3d, we can't take the
+ * wined3d mutex. */
 static void CDECL device_parent_mode_changed(struct wined3d_device_parent *device_parent)
 {
     struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);

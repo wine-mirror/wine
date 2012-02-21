@@ -5912,9 +5912,7 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
     }
     else if (message == WM_DISPLAYCHANGE)
     {
-        wined3d_mutex_lock();
         device->device_parent->ops->mode_changed(device->device_parent);
-        wined3d_mutex_unlock();
     }
 
     if (unicode)
