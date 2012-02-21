@@ -2198,7 +2198,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         if(rc.top > rc.bottom) {INT tmp = rc.top; rc.top = rc.bottom; rc.bottom = tmp;}
     }
 
-    if (flags & ETO_OPAQUE)
+    if (lprect && (flags & ETO_OPAQUE))
         physdev->funcs->pExtTextOut( physdev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL );
 
     if(count == 0)
@@ -2354,7 +2354,8 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     {
         if(!((flags & ETO_CLIPPED) && (flags & ETO_OPAQUE)))
         {
-            if(!(flags & ETO_OPAQUE) || x < rc.left || x + width.x >= rc.right ||
+            if(!(flags & ETO_OPAQUE) || !lprect ||
+               x < rc.left || x + width.x >= rc.right ||
                y - tm.tmAscent < rc.top || y + tm.tmDescent >= rc.bottom)
             {
                 RECT text_box;
