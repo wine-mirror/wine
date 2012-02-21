@@ -773,7 +773,7 @@ HRESULT WINAPI DoDragDrop (
   HWND            hwndTrackWindow;
   MSG             msg;
 
-  TRACE("(%p, %p, %d, %p)\n", pDataObject, pDropSource, dwOKEffect, pdwEffect);
+  TRACE("(%p, %p, %08x, %p)\n", pDataObject, pDropSource, dwOKEffect, pdwEffect);
 
   if (!pDataObject || !pDropSource || !pdwEffect)
       return E_INVALIDARG;
