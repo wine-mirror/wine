@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-16 17:15+0100\n"
+"PO-Revision-Date: 2012-02-21 20:56+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -130,7 +130,7 @@ msgstr ""
 "eingebettetem HTML benötigt, damit diese richtig funktionieren. Wine kann "
 "das Paket für Sie herunterladen und installieren.\n"
 "\n"
-"Hinweis: Es wird empfohlen das Paket ihrer Distribution zu verwenden. "
+"Hinweis: Es wird empfohlen, das Paket ihrer Distribution zu verwenden. "
 "Weitere Hinweise finden Sie unter <a href=\"http://wiki.winehq.org/Gecko\"> "
 "http://wiki.winehq.org/Gecko</a>."
 
@@ -166,7 +166,7 @@ msgstr "Software"
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
-msgstr "Erlaubt ihnen neue Software hinzuzufügen oder zu entfernen."
+msgstr "Erlaubt es ihnen, neue Software hinzuzufügen oder zu entfernen."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
@@ -255,11 +255,11 @@ msgstr "Aktuelles Format:"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
-msgstr "Kurvenform: %s"
+msgstr "Wellenform: %s"
 
 #: avifil32.rc:28
 msgid "Waveform"
-msgstr "Kurvenform"
+msgstr "Wellenform"
 
 #: avifil32.rc:29
 msgid "All multimedia files"
@@ -426,7 +426,7 @@ msgstr "Drucker:"
 
 #: comdlg32.rc:200 comdlg32.rc:377
 msgid "Print range"
-msgstr "Druck Bereich"
+msgstr "Druckbereich"
 
 #: comdlg32.rc:201 comdlg32.rc:378 regedit.rc:216
 msgid "&All"
@@ -953,7 +953,7 @@ msgstr ""
 
 #: comdlg32.rc:60
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "Es muss ein Wert bei der Anzahl der Kopien angegeben werden."
+msgstr "Es muss ein Wert für 'Anzahl der Kopien' angegeben werden."
 
 #: comdlg32.rc:62
 msgid ""
@@ -994,7 +994,7 @@ msgid ""
 msgstr ""
 "Bevor Sie Drucker-relevante Aufgaben ausführen können, wie die "
 "Seiteneinrichtung oder ein Dokument zu drucken, müssen Sie einen Drucker "
-"installieren. Bitte führen Sie dies zuerst aus und versuchen Sie es erneut."
+"einrichten. Bitte versuchen Sie es danach erneut."
 
 #: comdlg32.rc:137
 msgid "Select a font size between %1!d! and %2!d! points."
@@ -1022,7 +1022,7 @@ msgstr "Bereit"
 
 #: comdlg32.rc:80
 msgid "Paused; "
-msgstr "Gestoppt; "
+msgstr "Angehalten; "
 
 #: comdlg32.rc:81
 msgid "Error; "
@@ -1066,11 +1066,11 @@ msgstr "Druckend; "
 
 #: comdlg32.rc:91
 msgid "Output tray is full; "
-msgstr "Ausgabe Fach ist voll; "
+msgstr "Ausgabefach ist voll; "
 
 #: comdlg32.rc:92
 msgid "Not available; "
-msgstr "Nicht vorhanden; "
+msgstr "Nicht verfügbar; "
 
 #: comdlg32.rc:93
 msgid "Waiting; "
@@ -2182,8 +2182,8 @@ msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"Hinweis: Es können mehrere Zertifikate, Zertifikatssperrlisten oder-"
-"vertrauenslisten in einer Datei folgender Formate gespeichert werden:"
+"Hinweis: Es können mehrere Zertifikate, Zertifikatssperr- oder "
+"Vertrauenslisten in einer Datei folgender Formate gespeichert werden:"
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
@@ -2309,8 +2309,8 @@ msgid ""
 "If you choose to export the private key, you will be prompted for a password "
 "to protect the private key on a later page."
 msgstr ""
-"Wenn Sie sich entscheiden den privaten Schlüssel zu exportieren, werden Sie "
-"später nach einem Passwort gefragt."
+"Wenn Sie sich entscheiden, den privaten Schlüssel zu exportieren, werden Sie "
+"später nach einem Kennwort gefragt."
 
 #: cryptui.rc:382
 msgid "Do you wish to export the private key?"
@@ -2385,29 +2385,30 @@ msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
-"Das Zertifikat hat einen ungültige Signatur. Das Zertifikat wurde eventuell "
-"manipuliert."
+"Dieses Zertifikat hat eine ungültige Signatur. Es wurde eventuell "
+"manipuliert oder ist beschädigt."
 
 #: cryptui.rc:30
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
-"Dieses Stammzertifikat ist nicht vertrauenswürdig. Installieren Sie das "
-"Zertifikat zu den vertrauenswürdigen Stammzertifikatsstellen, um die "
-"Vertrauensstellung zu aktivieren."
+"Diesem Stammzertifikat wird nicht vertraut. Um es als vertrauenswürdig "
+"einzustufen, können Sie es zu den vertrauenswürdigen Stammzertifikatsstellen "
+"hinzufügen."
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr "Das Zertifikat hat kein gültiges Stammzertifikat."
+msgstr "Dieses Zertifikat hat kein gültiges Stammzertifikat."
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
-msgstr "Der Zertifikats-Aussteller konnte nicht gefunden werden."
+msgstr "Der Aussteller dieses Zertifikats konnte nicht gefunden werden."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
-msgstr "Die geplanten Zwecke des Zertifikats konnten nicht verifiziert werden."
+msgstr ""
+"Die geplanten Zwecke dieses Zertifikats konnten nicht verifiziert werden."
 
 #: cryptui.rc:34
 msgid "This certificate is intended for the following purposes:"
@@ -2431,19 +2432,19 @@ msgstr " bis "
 
 #: cryptui.rc:39
 msgid "This certificate has an invalid signature."
-msgstr "Das Zertifikat hat einen ungültige Signatur."
+msgstr "Dieses Zertifikat hat eine ungültige Signatur."
 
 #: cryptui.rc:40
 msgid "This certificate has expired or is not yet valid."
-msgstr "Dieses Zertifikat ist entweder abgelaufen oder noch nicht gültig."
+msgstr "Dieses Zertifikat ist entweder abgelaufen, oder noch nicht gültig."
 
 #: cryptui.rc:41
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr "Das Zertifikat überschreitet die Gültigkeit des Ausstellers."
+msgstr "Dieses Zertifikat überschreitet die Gültigkeit des Ausstellers."
 
 #: cryptui.rc:42
 msgid "This certificate was revoked by its issuer."
-msgstr "Das Zertifikat wurde vom Aussteller zurückgezogen."
+msgstr "Dieses Zertifikat wurde vom Aussteller zurückgezogen."
 
 #: cryptui.rc:43
 msgid "This certificate is OK."
@@ -2593,7 +2594,7 @@ msgstr "Bitte wählen Sie eine Datei."
 
 #: cryptui.rc:82
 msgid "The file format is not recognized. Please select another file."
-msgstr "Unbekanntes Format. Wählen Sie eine andere Datei."
+msgstr "Unbekanntes Format. Bitte wählen Sie eine andere Datei."
 
 #: cryptui.rc:83
 msgid "Could not open "
@@ -2677,7 +2678,7 @@ msgid ""
 "sign messages with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Sie sind danach nicht länger fähig Nachrichten mit diesem Zertifikat zu "
+"Sie werden nicht mehr in der Lage sein, Nachrichten mit diesem Zertifikat zu "
 "entschlüsseln oder zu unterzeichnen.\n"
 "Sind Sie sicher, dass Sie es löschen möchten?"
 
@@ -2687,8 +2688,8 @@ msgid ""
 "sign messages with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Sie sind danach nicht länger fähig Nachrichten mit diesen Zertifikaten zu "
-"entschlüsseln oder zu unterzeichnen.\n"
+"Sie werden nicht mehr in der Lage sein, Nachrichten mit diesen Zertifikaten "
+"zu entschlüsseln oder zu unterzeichnen.\n"
 "Sind Sie sicher, dass Sie sie löschen möchten?"
 
 #: cryptui.rc:109
@@ -2697,7 +2698,7 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Sie sind danach nicht länger fähig Nachrichten mit diesem Zertifikat zu "
+"Sie werden nicht mehr in der Lage sein, Nachrichten mit diesem Zertifikat zu "
 "entschlüsseln oder zu unterzeichnen.\n"
 "Sind Sie sicher, dass Sie es löschen möchten?"
 
@@ -2707,8 +2708,8 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Sie sind danach nicht länger fähig Nachrichten mit diesen Zertifikaten zu "
-"entschlüsseln oder zu unterzeichnen.\n"
+"Sie werden nicht mehr in der Lage sein, Nachrichten mit diesen Zertifikaten "
+"zu entschlüsseln oder zu unterzeichnen.\n"
 "Sind Sie sicher, dass Sie sie löschen möchten?"
 
 #: cryptui.rc:111
@@ -2719,7 +2720,7 @@ msgid ""
 msgstr ""
 "Von dieser CA ausgestellte Zertifikate werden nicht länger vertrauenswürdig "
 "sein.\n"
-"Sind Sie sicher, dass Sie es löschen möchten?"
+"Sind Sie sicher, dass Sie dieses Zertifikat löschen möchten?"
 
 #: cryptui.rc:112
 msgid ""
@@ -2729,7 +2730,7 @@ msgid ""
 msgstr ""
 "Von diesen CAs ausgestellte Zertifikate werden nicht länger vertrauenswürdig "
 "sein.\n"
-"Sind Sie sicher, dass Sie sie löschen möchten?"
+"Sind Sie sicher, dass Sie diese Zertifikate löschen möchten?"
 
 #: cryptui.rc:113
 msgid ""
@@ -2737,9 +2738,9 @@ msgid ""
 "certification authorities it issued, will no longer be trusted.\n"
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
-"Von dieser Stamm-CA ausgestellte Zertifikate werden nicht länger "
-"vertrauenswürdig sein.\n"
-"Sind Sie sicher, dass Sie es löschen möchten?"
+"Von dieser Stamm-CA oder einer abhängigen CA ausgestellte Zertifikate werden "
+"nicht länger vertrauenswürdig sein.\n"
+"Sind Sie sicher, dass Sie dieses Stammzertifikat löschen möchten?"
 
 #: cryptui.rc:114
 msgid ""
@@ -2747,16 +2748,16 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
-"Von diesen Stamm-CAs ausgestellte Zertifikate werden nicht länger "
-"vertrauenswürdig sein.\n"
-"Sind Sie sicher, dass Sie sie löschen möchten?"
+"Von diesen Stamm-CAs oder einer abhängigen CA ausgestellte Zertifikate "
+"werden nicht länger vertrauenswürdig sein.\n"
+"Sind Sie sicher, dass Sie diese Stammzertifikate löschen möchten?"
 
 #: cryptui.rc:115
 msgid ""
 "Software signed by this publisher will no longer be trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Software die von diesem Hersteller signiert ist wird nicht länger "
+"Software, die von diesem Hersteller signiert ist, wird nicht länger "
 "vertrauenswürdig sein.\n"
 "Sind Sie sicher, dass Sie ihn löschen möchten?"
 
@@ -2765,7 +2766,7 @@ msgid ""
 "Software signed by these publishers will no longer be trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Software die von diesen Herstellern signiert ist wird nicht länger "
+"Software, die von diesen Herstellern signiert ist, wird nicht länger "
 "vertrauenswürdig sein.\n"
 "Sind Sie sicher, dass Sie sie löschen möchten?"
 
@@ -2783,7 +2784,7 @@ msgstr "Garantiert die Identität eines entfernten Computers"
 
 #: cryptui.rc:122
 msgid "Proves your identity to a remote computer"
-msgstr "Beweist Ihre Identität für einen entfernten Computers"
+msgstr "Beweist Ihre Identität gegenüber einem entfernten Computer"
 
 #: cryptui.rc:123
 msgid ""
@@ -2803,15 +2804,15 @@ msgstr "Erlaubt sichere Kommunikation über das Internet"
 
 #: cryptui.rc:126
 msgid "Allows data to be signed with the current time"
-msgstr "Erlaubt Daten mit der aktuellen Zeit zu signieren"
+msgstr "Erlaubt es, Daten mit der aktuellen Zeit zu signieren"
 
 #: cryptui.rc:127
 msgid "Allows you to digitally sign a certificate trust list"
-msgstr "Erlaubt Ihnen eine Zertifikatsvertrauensliste zu signieren"
+msgstr "Erlaubt Ihnen, eine Zertifikatsvertrauensliste zu signieren"
 
 #: cryptui.rc:128
 msgid "Allows data on disk to be encrypted"
-msgstr "Erlaubt es lokale Daten zu verschlüsseln"
+msgstr "Erlaubt es, lokale Daten zu verschlüsseln"
 
 #: cryptui.rc:144
 msgid "Private Key Archival"
@@ -3417,7 +3418,7 @@ msgstr "Hoch"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
-msgstr "Fehler beim umwandeln des Objektes in einen Grundtyp"
+msgstr "Fehler beim Umwandeln des Objektes in einen Grundtyp"
 
 #: jscript.rc:26
 msgid "Invalid procedure call or argument"
@@ -3449,7 +3450,7 @@ msgstr "Argument nicht optional"
 
 #: jscript.rc:33
 msgid "Syntax error"
-msgstr "Syntax Fehler"
+msgstr "Syntaxfehler"
 
 #: jscript.rc:34
 msgid "Expected ';'"
@@ -3469,11 +3470,11 @@ msgstr "konstante Zeichenkette nicht terminiert"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr "Unerwartetes 'break' außerhalb der Schleife"
+msgstr "Unerwartetes 'break' außerhalb einer Schleife"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr "Unerwartetes 'continue' außerhalb der Schleife"
+msgstr "Unerwartetes 'continue' außerhalb einer Schleife"
 
 #: jscript.rc:40
 msgid "Label redefined"
@@ -3489,7 +3490,7 @@ msgstr "Bedingte Kompilierung ist ausgeschaltet"
 
 #: jscript.rc:45
 msgid "Number expected"
-msgstr "Nummer erwartet"
+msgstr "Zahl erwartet"
 
 #: jscript.rc:43
 msgid "Function expected"
@@ -3513,7 +3514,7 @@ msgstr "'|' nicht definiert"
 
 #: jscript.rc:49
 msgid "Boolean object expected"
-msgstr "Boolesches Objekt erwartet"
+msgstr "Boolsches Objekt erwartet"
 
 #: jscript.rc:50
 msgid "Cannot delete '|'"
@@ -3529,7 +3530,7 @@ msgstr "JScript Objekt erwartet"
 
 #: jscript.rc:53
 msgid "Syntax error in regular expression"
-msgstr "Syntax Fehler in regulärem Ausdruck"
+msgstr "Syntaxfehler in regulärem Ausdruck"
 
 #: jscript.rc:55
 msgid "URI to be encoded contains invalid characters"
@@ -3541,7 +3542,7 @@ msgstr "Zu entschlüsselnde URI ist ungültig"
 
 #: jscript.rc:56
 msgid "Array length must be a finite positive integer"
-msgstr "Array-Größe muss eine endliche, positive Ganzzahl sein"
+msgstr "Array-Größe muss eine natürliche Zahl sein"
 
 #: jscript.rc:57
 msgid "Array object expected"
@@ -3565,7 +3566,7 @@ msgstr "Pfad nicht gefunden.\n"
 
 #: winerror.mc:46
 msgid "Too many open files.\n"
-msgstr "Zu viele offene Dateien.\n"
+msgstr "Zu viele geöffnete Dateien.\n"
 
 #: winerror.mc:51
 msgid "Access denied.\n"
@@ -3613,7 +3614,7 @@ msgstr "Ungültiges Laufwerk.\n"
 
 #: winerror.mc:106
 msgid "Can't delete current directory.\n"
-msgstr "Kann Arbeitsverzeichnis nicht löschen.\n"
+msgstr "Das Arbeitsverzeichnis kann nicht gelöscht werden.\n"
 
 #: winerror.mc:111
 msgid "Not same device.\n"
@@ -3637,7 +3638,7 @@ msgstr "Nicht bereit.\n"
 
 #: winerror.mc:136
 msgid "Bad command.\n"
-msgstr "Fehlerhafter Befehl.\n"
+msgstr "Ungültiger Befehl.\n"
 
 #: winerror.mc:141
 msgid "CRC error.\n"
@@ -3645,7 +3646,7 @@ msgstr "CRC-Fehler.\n"
 
 #: winerror.mc:146
 msgid "Bad length.\n"
-msgstr "Fehlerhafte Länge.\n"
+msgstr "Ungültige Länge.\n"
 
 #: winerror.mc:151 winerror.mc:526
 msgid "Seek error.\n"
@@ -3677,7 +3678,7 @@ msgstr "Allgemeiner Fehler.\n"
 
 #: winerror.mc:186
 msgid "Sharing violation.\n"
-msgstr "Sharing-Verletzung.\n"
+msgstr "Freigabeverletzung.\n"
 
 #: winerror.mc:191
 msgid "Lock violation.\n"
@@ -3689,7 +3690,7 @@ msgstr "Falscher Datenträger.\n"
 
 #: winerror.mc:201
 msgid "Sharing buffer exceeded.\n"
-msgstr "Sharing-Puffer aufgebraucht.\n"
+msgstr "Freigabepuffer überschritten.\n"
 
 #: winerror.mc:206
 msgid "End of file.\n"
@@ -3737,7 +3738,7 @@ msgstr "Fehlerhafte Netzwerk-Antwort.\n"
 
 #: winerror.mc:261
 msgid "Unexpected network error.\n"
-msgstr "Unerwartete Netzwerk-Antwort.\n"
+msgstr "Unerwarteter Netzwerkfehler.\n"
 
 #: winerror.mc:266
 msgid "Bad remote adaptor.\n"
@@ -3781,7 +3782,7 @@ msgstr "Zu viele Netzwerksitzungen.\n"
 
 #: winerror.mc:316
 msgid "Sharing paused.\n"
-msgstr "Sharing pausiert.\n"
+msgstr "Freigabe pausiert.\n"
 
 #: winerror.mc:321
 msgid "Request not accepted.\n"
@@ -3797,7 +3798,7 @@ msgstr "Datei existiert.\n"
 
 #: winerror.mc:336
 msgid "Cannot create.\n"
-msgstr "Kann nicht erstellen.\n"
+msgstr "Kann nicht erstellt werden.\n"
 
 #: winerror.mc:341
 msgid "Int24 failure.\n"
@@ -3833,7 +3834,7 @@ msgstr "Zu viele Semaphoren.\n"
 
 #: winerror.mc:381
 msgid "Exclusive semaphore already owned.\n"
-msgstr "Exklusive hat Semaphore bereits Besitzer.\n"
+msgstr "Exklusive Semaphore bereits zugewiesen.\n"
 
 #: winerror.mc:386
 msgid "Semaphore is set.\n"
@@ -3845,7 +3846,7 @@ msgstr "Zu viele Semaphoren-Anfragen.\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time.\n"
-msgstr "Ungültig zu Interrupt-Zeitpunkt.\n"
+msgstr "Ungültig während eines Interrupts.\n"
 
 #: winerror.mc:401
 msgid "Semaphore owner died.\n"
@@ -3865,7 +3866,7 @@ msgstr "Laufwerk gesperrt.\n"
 
 #: winerror.mc:421
 msgid "Broken pipe.\n"
-msgstr "Gebrochene Pipe.\n"
+msgstr "Defekte Pipe.\n"
 
 #: winerror.mc:426
 msgid "Open failed.\n"
@@ -3905,7 +3906,7 @@ msgstr "Semaphoren-Zeitüberschreitung.\n"
 
 #: winerror.mc:476
 msgid "Insufficient buffer.\n"
-msgstr "Nicht ausreichender Puffer.\n"
+msgstr "Unzureichender Puffer.\n"
 
 #: winerror.mc:481
 msgid "Invalid name.\n"
@@ -3929,7 +3930,7 @@ msgstr "Prozedur nicht gefunden.\n"
 
 #: winerror.mc:506
 msgid "No children to wait for.\n"
-msgstr "Keine Unterprogramme auf die gewartet werden kann.\n"
+msgstr "Keine Unterprogramme, auf die gewartet werden kann.\n"
 
 #: winerror.mc:511
 msgid "Child process has not completed.\n"
@@ -4149,7 +4150,7 @@ msgstr "Ungültiges SEGDPL in %1.\n"
 
 #: winerror.mc:786
 msgid "Auto data segment exceeds 64k.\n"
-msgstr "Automatisches Daten-Segment übertrifft 64k.\n"
+msgstr "Automatisches Daten-Segment übersteigt 64k.\n"
 
 #: winerror.mc:791
 msgid "Ring 2 segment must be movable.\n"
@@ -4189,7 +4190,7 @@ msgstr "Ungültige Signalnummer.\n"
 
 #: winerror.mc:836
 msgid "Error setting signal handler.\n"
-msgstr "Fehler beim setzen von Signal-Handler.\n"
+msgstr "Fehler beim Setzen von Signal-Handler.\n"
 
 #: winerror.mc:841
 msgid "Segment locked.\n"
@@ -4535,15 +4536,15 @@ msgstr "Dienst seit Systemstart nicht gestartet.\n"
 
 #: winerror.mc:1266
 msgid "Duplicate service name.\n"
-msgstr "Doppelter Dienst-Name.\n"
+msgstr "Doppelter Dienstname.\n"
 
 #: winerror.mc:1271
 msgid "Different service account.\n"
-msgstr "Anderes Dienst-Konto.\n"
+msgstr "Anderes Dienstkonto.\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected.\n"
-msgstr "Treiberfehler nicht gefunden.\n"
+msgstr "Treiberfehler konnte nicht festgestellt werden.\n"
 
 #: winerror.mc:1281
 msgid "Process abort cannot be detected.\n"
@@ -4591,11 +4592,11 @@ msgstr "Gerät nicht partitioniert.\n"
 
 #: winerror.mc:1336
 msgid "Unable to lock media.\n"
-msgstr "Kann Medium nicht sperren.\n"
+msgstr "Medium konnte nicht gesperrt werden.\n"
 
 #: winerror.mc:1341
 msgid "Unable to unload media.\n"
-msgstr "Kann Medium nicht entladen.\n"
+msgstr "Medium konnte nicht entladen werden.\n"
 
 #: winerror.mc:1346
 msgid "Media changed.\n"
@@ -4703,7 +4704,7 @@ msgstr "Zu viele Verknüpfungen.\n"
 
 #: winerror.mc:1476
 msgid "Newer windows version needed.\n"
-msgstr "Neuerer Windows-Version benötigt.\n"
+msgstr "Neuere Windows-Version nötig.\n"
 
 #: winerror.mc:1481
 msgid "Wrong operating system.\n"
@@ -4711,7 +4712,7 @@ msgstr "Falsches Betriebssystem.\n"
 
 #: winerror.mc:1486
 msgid "Single-instance application.\n"
-msgstr "Eine-Instanz-Anwendung.\n"
+msgstr "Einzelinstanz-Anwendung.\n"
 
 #: winerror.mc:1491
 msgid "Real-mode application.\n"
@@ -4795,19 +4796,19 @@ msgstr "Kein laufender Tracking Dienst.\n"
 
 #: winerror.mc:1591
 msgid "No such volume ID.\n"
-msgstr "Keine derartige Datenträger ID.\n"
+msgstr "Keine derartige Datenträger-ID.\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced.\n"
-msgstr "Konnte die zu ersetzende Datei nicht entfernen.\n"
+msgstr "Zu ersetzende Datei konnte nicht entfernt werden.\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place.\n"
-msgstr "Konnte die ersetzende Datei nicht zum Ziel bewegen.\n"
+msgstr "Ersetzende Datei konnte nicht ans Ziel verschoben werden.\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed.\n"
-msgstr "Konnte die ersetzende Datei nicht verschieben.\n"
+msgstr "Verschieben der ersetzenden Datei fehlgeschlagen.\n"
 
 #: winerror.mc:1611
 msgid "The journal is being deleted.\n"
@@ -5131,7 +5132,7 @@ msgstr "Benutzer nicht in Gruppe.\n"
 
 #: winerror.mc:2016
 msgid "Can't delete last admin user.\n"
-msgstr "Kann letzten Admin-User nicht löschen.\n"
+msgstr "Der letzte Admin-Benutzer kann nicht gelöscht werden.\n"
 
 #: winerror.mc:2021
 msgid "Wrong password.\n"
@@ -5199,7 +5200,7 @@ msgstr "Ungültiger Sicherheitsdeskriptor.\n"
 
 #: winerror.mc:2101
 msgid "Bad inherited ACL.\n"
-msgstr "Fehlerhafte ererbte ACL.\n"
+msgstr "Fehlerhafte geerbte ACL.\n"
 
 #: winerror.mc:2106
 msgid "Server disabled.\n"
@@ -5223,19 +5224,19 @@ msgstr "Ungültige Gruppen-Attribute.\n"
 
 #: winerror.mc:2131
 msgid "Bad impersonation level.\n"
-msgstr "Fehlerhaftes Imitationsstufe.\n"
+msgstr "Fehlerhafte Imitationsstufe.\n"
 
 #: winerror.mc:2136
 msgid "Can't open anonymous security token.\n"
-msgstr "Kann anonymes Sicherheitstoken nicht öffnen.\n"
+msgstr "Anonymes Sicherheitstoken konnte nicht geöffnet werden.\n"
 
 #: winerror.mc:2141
 msgid "Bad validation class.\n"
-msgstr "Fehlerhafte Validierungs-Klasse.\n"
+msgstr "Fehlerhafte Validierungsklasse.\n"
 
 #: winerror.mc:2146
 msgid "Bad token type.\n"
-msgstr "Fehlerhafter Token-Typ.\n"
+msgstr "Fehlerhafter Tokentyp.\n"
 
 #: winerror.mc:2151
 msgid "No security on object.\n"
@@ -5243,19 +5244,19 @@ msgstr "Keine Sicherheit auf Objekt.\n"
 
 #: winerror.mc:2156
 msgid "Can't access domain information.\n"
-msgstr "Kann auf Domänen-Information nicht zugreifen.\n"
+msgstr "Auf Domänen-Information konnte nicht zugegriffen werden.\n"
 
 #: winerror.mc:2161
 msgid "Invalid server state.\n"
-msgstr "Ungültiger Server-Status.\n"
+msgstr "Ungültiger Serverstatus.\n"
 
 #: winerror.mc:2166
 msgid "Invalid domain state.\n"
-msgstr "Ungültiger Domänen-Status.\n"
+msgstr "Ungültiger Domänenstatus.\n"
 
 #: winerror.mc:2171
 msgid "Invalid domain role.\n"
-msgstr "Ungültige Domänen-Rolle.\n"
+msgstr "Ungültige Domänenrolle.\n"
 
 #: winerror.mc:2176
 msgid "No such domain.\n"
@@ -5267,7 +5268,7 @@ msgstr "Domäne existiert bereits.\n"
 
 #: winerror.mc:2186
 msgid "Domain limit exceeded.\n"
-msgstr "Domänen-Limit überschritten.\n"
+msgstr "Domänenlimit überschritten.\n"
 
 #: winerror.mc:2191
 msgid "Internal database corruption.\n"
@@ -5279,7 +5280,7 @@ msgstr "Interner Fehler.\n"
 
 #: winerror.mc:2201
 msgid "Generic access types not mapped.\n"
-msgstr "Allgemeiner Zugriffs-Typ nicht abgebildet.\n"
+msgstr "Allgemeine Zugriffstypen nicht abgebildet.\n"
 
 #: winerror.mc:2206
 msgid "Bad descriptor format.\n"
@@ -5303,7 +5304,7 @@ msgstr "Fehlerhafter Logon Sitzungsstatus.\n"
 
 #: winerror.mc:2231
 msgid "Logon session ID collision.\n"
-msgstr "Kollision von Logon Sitzungs-ID.\n"
+msgstr "Kollision von Logon-Sitzungs-ID.\n"
 
 #: winerror.mc:2236
 msgid "Invalid logon type.\n"
@@ -5315,7 +5316,7 @@ msgstr "Kann nicht imitieren.\n"
 
 #: winerror.mc:2246
 msgid "Invalid transaction state.\n"
-msgstr "Ungültiger Transaktions-Status.\n"
+msgstr "Ungültiger Transaktionsstatus.\n"
 
 #: winerror.mc:2251
 msgid "Security DB commit failure.\n"
@@ -5571,7 +5572,7 @@ msgstr "Keine Tabstopps in dieser Listbox.\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread.\n"
-msgstr "Kann nicht Objekt zerstören dass anderem Thread gehört.\n"
+msgstr "Objekt, das anderem Thread gehört, kann nicht zerstört werden.\n"
 
 #: winerror.mc:2576
 msgid "Child window menus not allowed.\n"
@@ -5655,7 +5656,7 @@ msgstr "Commitment-Grenze überschritten.\n"
 
 #: winerror.mc:2676
 msgid "Menu item not found.\n"
-msgstr "Menü-Eintrag nicht gefunden.\n"
+msgstr "Menüeintrag nicht gefunden.\n"
 
 #: winerror.mc:2681
 msgid "Invalid keyboard handle.\n"
@@ -5727,7 +5728,7 @@ msgstr "Unbekannte Eigenschaft.\n"
 
 #: winerror.mc:2766
 msgid "Invalid handle state.\n"
-msgstr "Ungültiger Handle Zustand.\n"
+msgstr "Ungültiger Handle-Zustand.\n"
 
 #: winerror.mc:2771
 msgid "Bad configuration.\n"
@@ -5743,7 +5744,7 @@ msgstr "Die Installationsquelle fehlt.\n"
 
 #: winerror.mc:2786
 msgid "Wrong installation package version.\n"
-msgstr "Fehlerhafte Paket-Version für Installation.\n"
+msgstr "Falsche Version des Installationspakets.\n"
 
 #: winerror.mc:2791
 msgid "Product uninstalled.\n"
@@ -5807,7 +5808,7 @@ msgstr "Ungültige Tabelle.\n"
 
 #: winerror.mc:2866
 msgid "Data type mismatch.\n"
-msgstr "Datentyp nicht übereinstimmend.\n"
+msgstr "Datentypen stimmen nicht überein.\n"
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type.\n"
@@ -5819,7 +5820,7 @@ msgstr "Erstellung fehlgeschlagen.\n"
 
 #: winerror.mc:2881
 msgid "Temporary directory not writable.\n"
-msgstr "Temporäres Verzeichnis kann nicht beschrieben werden.\n"
+msgstr "Kein Schreibzugriff auf temporäres Verzeichnis.\n"
 
 #: winerror.mc:2886
 msgid "Installation platform not supported.\n"
@@ -5831,15 +5832,15 @@ msgstr "Installer wird nicht genutzt.\n"
 
 #: winerror.mc:2896
 msgid "Failed to open the patch package.\n"
-msgstr "Patch Paket konnte nicht geöffnet werden.\n"
+msgstr "Patchpaket konnte nicht geöffnet werden.\n"
 
 #: winerror.mc:2901
 msgid "Invalid patch package.\n"
-msgstr "Ungültiges Patch Paket.\n"
+msgstr "Ungültiges Patchpaket.\n"
 
 #: winerror.mc:2906
 msgid "Unsupported patch package.\n"
-msgstr "Nicht unterstütztes Patch Paket.\n"
+msgstr "Nicht unterstütztes Patchpaket.\n"
 
 #: winerror.mc:2911
 msgid "Another version is installed.\n"
@@ -5851,7 +5852,7 @@ msgstr "Ungültige Kommandozeile.\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed.\n"
-msgstr "Remote Installation nicht erlaubt.\n"
+msgstr "Remote-Installation nicht erlaubt.\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install.\n"
@@ -5999,7 +6000,7 @@ msgstr "Nicht unterstützte Namens-Syntax.\n"
 
 #: winerror.mc:3111
 msgid "No network address.\n"
-msgstr "Keine Netzwerk-Adresse.\n"
+msgstr "Keine Netzwerkadresse.\n"
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint.\n"
@@ -6111,7 +6112,7 @@ msgstr "Interner RPC-Fehler.\n"
 
 #: winerror.mc:3251
 msgid "RPC divide-by-zero.\n"
-msgstr "RPC Division durch Null.\n"
+msgstr "RPC Division-durch-Null.\n"
 
 #: winerror.mc:3256
 msgid "Address error.\n"
@@ -6119,7 +6120,7 @@ msgstr "Adressfehler.\n"
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero.\n"
-msgstr "Fließkomma Division durch Null.\n"
+msgstr "Fließkomma Division-durch-Null.\n"
 
 #: winerror.mc:3266
 msgid "Floating-point underflow.\n"
@@ -6151,7 +6152,7 @@ msgstr "Kontext-Handle beschädigt.\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch.\n"
-msgstr "Bindungshandle stimmen nicht überein.\n"
+msgstr "Bindungs-Handles stimmen nicht überein.\n"
 
 #: winerror.mc:3306
 msgid "Cannot get call handle.\n"
@@ -6167,7 +6168,7 @@ msgstr "Aufzählungswert außerhalb des Bereichs.\n"
 
 #: winerror.mc:3321
 msgid "Byte count too small.\n"
-msgstr "Byte-Zahl zu klein.\n"
+msgstr "Bytezahl zu klein.\n"
 
 #: winerror.mc:3326
 msgid "Bad stub data.\n"
@@ -6231,7 +6232,7 @@ msgstr "Unbekannter Druckertreiber.\n"
 
 #: winerror.mc:3401
 msgid "Unknown print processor.\n"
-msgstr "Unbekannter Druckerprozessor.\n"
+msgstr "Unbekannter Druckprozessor.\n"
 
 #: winerror.mc:3406
 msgid "Invalid separator file.\n"
@@ -6327,7 +6328,7 @@ msgstr "Nicht unterstützte Berechtigungsstufe.\n"
 
 #: winerror.mc:3521
 msgid "No principal name registered.\n"
-msgstr "Keine Prinzipalname registriert.\n"
+msgstr "Kein Prinzipalname registriert.\n"
 
 #: winerror.mc:3526
 msgid "Not an RPC error.\n"
@@ -6391,11 +6392,11 @@ msgstr "Ungültiger Formularname.\n"
 
 #: winerror.mc:3601
 msgid "Invalid form size.\n"
-msgstr "Ungültige Formular-Größe.\n"
+msgstr "Ungültige Formulargröße.\n"
 
 #: winerror.mc:3606
 msgid "Already awaiting printer handle.\n"
-msgstr "Warte bereits auf Drucker-Handle.\n"
+msgstr "Auf Drucker-Handle wird bereits gewartet.\n"
 
 #: winerror.mc:3611
 msgid "Printer deleted.\n"
@@ -6411,7 +6412,7 @@ msgstr "Benutzer muss Passwort ändern.\n"
 
 #: winerror.mc:3626
 msgid "Domain controller not found.\n"
-msgstr "Domänen-Controller nicht gefunden.\n"
+msgstr "Domänencontroller nicht gefunden.\n"
 
 #: winerror.mc:3631
 msgid "Account locked out.\n"
@@ -6419,7 +6420,7 @@ msgstr "Account ausgeschlossen.\n"
 
 #: winerror.mc:3636
 msgid "Invalid pixel format.\n"
-msgstr "Ungültiges Pixel-Format.\n"
+msgstr "Ungültiges Pixelformat.\n"
 
 #: winerror.mc:3641
 msgid "Invalid driver.\n"
@@ -6447,7 +6448,7 @@ msgstr "RPC-Pipe geschlossen.\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe.\n"
-msgstr "Verfahrensfehler in RPC Pipe.\n"
+msgstr "Verfahrensfehler in RPC-Pipe.\n"
 
 #: winerror.mc:3676
 msgid "No data on RPC pipe.\n"
@@ -6539,13 +6540,13 @@ msgstr "Der Anschluss %s existiert bereits"
 
 #: localui.rc:31
 msgid "This port has no options to configure"
-msgstr "Dieser Anschluss hat keine Optionen zum Konfigurieren"
+msgstr "Dieser Anschluss hat keine konfigurierbaren Optionen"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
 msgstr ""
-"Das senden der E-Mails scheiterte, da Sie keinen MAPI E-Mail Programm "
-"installiert haben."
+"Es können keine E-Mails versendet werden, da Sie keinen MAPI-fähigen "
+"Mailclient installiert haben."
 
 #: mapi32.rc:29
 msgid "Send Mail"
@@ -6601,7 +6602,7 @@ msgstr "Hyperlink"
 
 #: mshtml.rc:40
 msgid "Hyperlink Information"
-msgstr "Hyperlink Informationen"
+msgstr "Hyperlink-Informationen"
 
 #: mshtml.rc:41 winecfg.rc:236
 msgid "&Type:"
@@ -6633,7 +6634,7 @@ msgid ""
 "file path and try again."
 msgstr ""
 "Das angegebene Installationspaket konnte nicht geöffnet werden. Bitte "
-"überprüfen Sie den Pfadnamen und versuchen Sie es noch einmal."
+"überprüfen Sie die Pfadangabe und versuchen Sie es erneut."
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -6707,15 +6708,15 @@ msgstr ""
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
-msgstr "Geben Sie das Verzeichnis ein, dass %s enthält"
+msgstr "Geben Sie das Verzeichnis ein, das %s enthält"
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr "Die Installationsquelle für das Feature fehlt"
+msgstr "Die Installationsquelle für dieses Feature fehlt"
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr "Das Netzwerklaufwerk für das Feature fehlt"
+msgstr "Das Netzwerklaufwerk für dieses Feature fehlt"
 
 #: msi.rc:60
 msgid "feature from:"
@@ -6723,7 +6724,7 @@ msgstr "Feature von:"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
-msgstr "Wählen Sie das Verzeichnis aus, dass %s enthält"
+msgstr "Wählen Sie das Verzeichnis aus, das %s enthält"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
@@ -6739,7 +6740,7 @@ msgstr ""
 
 #: msvfw32.rc:30
 msgid "Video Compression"
-msgstr "Video Kompression"
+msgstr "Videokompression"
 
 #: msvfw32.rc:36
 msgid "&Compressor:"
@@ -6827,7 +6828,7 @@ msgstr "Kontextmenü"
 
 #: oleacc.rc:39
 msgid "menu item"
-msgstr "Menübefehl"
+msgstr "Menüelement"
 
 #: oleacc.rc:40
 msgid "tool tip"
@@ -7071,7 +7072,7 @@ msgstr "&Neu erstellen"
 
 #: oledlg.rc:60
 msgid "Create Control"
-msgstr "S&teuerung erstellen"
+msgstr "S&teuerelement erstellen"
 
 #: oledlg.rc:62
 msgid "Create From File"
@@ -7079,7 +7080,7 @@ msgstr "A&us Datei erstellen"
 
 #: oledlg.rc:65
 msgid "&Add Control..."
-msgstr "Steuerung hin&zufügen..."
+msgstr "Steuerelement hin&zufügen..."
 
 #: oledlg.rc:66
 msgid "Display As Icon"
@@ -7143,12 +7144,12 @@ msgid ""
 "File does not appear to be a valid OLE module. Unable to register OLE "
 "control."
 msgstr ""
-"Die Datei ist offenbar kein gültiges OLE - Steuermodul. Die OLE - Steuerung "
-"konnte nicht registriert werden."
+"Die Datei ist offenbar kein gültiges OLE-Modul. Das OLE-Steuerelement konnte "
+"nicht registriert werden."
 
 #: oledlg.rc:29
 msgid "Add Control"
-msgstr "Steuerung hinzufügen"
+msgstr "Steuerelement hinzufügen"
 
 #: oledlg.rc:34
 msgid "Inserts the contents of the clipboard into your document as %s."
@@ -7159,16 +7160,16 @@ msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
-"Fügt den Inhalt der Zwischenablage so in Ihr Dokument ein dass Sie es mit %s "
-"aktivieren können."
+"Fügt den Inhalt der Zwischenablage so in Ihr Dokument ein, dass Sie ihn mit "
+"%s aktivieren können."
 
 #: oledlg.rc:36
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
-"Fügt den Inhalt der Zwischenablage so in Ihr Dokument ein dass Sie es mit %s "
-"aktivieren können. Wird als Symbol dargestellt."
+"Fügt den Inhalt der Zwischenablage so in Ihr Dokument ein, dass Sie ihn mit "
+"%s aktivieren können. Er wird als Symbol dargestellt."
 
 #: oledlg.rc:37
 msgid ""
@@ -7177,7 +7178,7 @@ msgid ""
 "your document."
 msgstr ""
 "Fügt den Inhalt der Zwischenablage in Ihr Dokument als %s ein. Die Daten "
-"sind mit der Ursprungsdatei verknüpft so dass Änderungen an dieser in Ihrem "
+"sind mit der Ursprungsdatei verknüpft, so dass Änderungen an dieser in Ihrem "
 "Dokument erscheinen."
 
 #: oledlg.rc:38
@@ -7187,7 +7188,7 @@ msgid ""
 "in your document."
 msgstr ""
 "Fügt ein Bild des Zwischenablagen-Inhalts in Ihr Dokument ein. Das Bild ist "
-"mit der Ursprungsdatei verknüpft so dass Änderungen an dieser in Ihrem "
+"mit der Ursprungsdatei verknüpft, so dass Änderungen an dieser in Ihrem "
 "Dokument erscheinen."
 
 #: oledlg.rc:39
@@ -7196,13 +7197,13 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"Fügt eine Verknüpfung ein die auf den Ort des Zwischenablagen-Inhalts zeigt. "
-"Die Verknüpfung ist mit der Ursprungsdatei verknüpft so dass Änderungen an "
-"dieser in Ihrem Dokument erscheinen."
+"Fügt eine Verknüpfung ein, die auf den Ort des Zwischenablagen-Inhalts "
+"zeigt. Die Verknüpfung ist mit der Ursprungsdatei verknüpft so dass "
+"Änderungen an dieser in Ihrem Dokument erscheinen."
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
-msgstr "Fügt den Inhalt der Zwischenablage in Ihr Dokument als ein."
+msgstr "Fügt den Inhalt der Zwischenablage in Ihr Dokument ein."
 
 #: oledlg.rc:41
 msgid "Unknown Type"
@@ -7829,7 +7830,7 @@ msgstr "Neustarten"
 
 #: shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
-msgstr "Möchten Sie, dass ein simulierter Windows Neustart durchgeführt wird?"
+msgstr "Möchten Sie, dass ein simulierter Windows-Neustart durchgeführt wird?"
 
 #: shell32.rc:188
 msgid "Shutdown"
@@ -7837,7 +7838,7 @@ msgstr "Beenden"
 
 #: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
-msgstr "Möchten Sie die aktuelle Wine Sitzung beenden?"
+msgstr "Möchten Sie die aktuelle Wine-Sitzung beenden?"
 
 #: shell32.rc:200 progman.rc:80
 msgid "Programs"
@@ -8002,11 +8003,11 @@ msgstr "Bestätigung: Verzeichnis löschen"
 
 #: shell32.rc:170
 msgid "Are you sure you want to delete '%1'?"
-msgstr "Sind Sie sich sicher, dass Sie '%1' löschen möchten?"
+msgstr "Sind Sie sicher, dass Sie '%1' löschen möchten?"
 
 #: shell32.rc:171
 msgid "Are you sure you want to delete these %1 items?"
-msgstr "Sind Sie sich sicher, dass Sie diese %1 Objekte löschen möchten?"
+msgstr "Sind Sie sicher, dass Sie diese %1 Objekte löschen möchten?"
 
 #: shell32.rc:178
 msgid "Confirm file overwrite"
@@ -8024,26 +8025,24 @@ msgstr ""
 
 #: shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
-msgstr ""
-"Sind Sie sich sicher, dass Sie die ausgewählten Objekte löschen möchten?"
+msgstr "Sind Sie sicher, dass Sie die ausgewählten Objekte löschen möchten?"
 
 #: shell32.rc:174
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr ""
-"Sind Sie sich sicher, dass Sie '%1' und seinen Inhalt in den Papierkorb "
+"Sind Sie sicher, dass Sie '%1' und seinen Inhalt in den Papierkorb "
 "verschieben möchten?"
 
 #: shell32.rc:173
 msgid "Are you sure that you want to send '%1' to the Trash?"
-msgstr ""
-"Sind Sie sich sicher, dass Sie '%1' in den Papierkorb verschieben möchten?"
+msgstr "Sind Sie sicher, dass Sie '%1' in den Papierkorb verschieben möchten?"
 
 #: shell32.rc:175
 msgid "Are you sure that you want to send these %1 items to the Trash?"
 msgstr ""
-"Sind Sie sich sicher, dass Sie diese %1 Dateien in den Papierkorb "
-"verschieben möchten?"
+"Sind Sie sicher, dass Sie diese %1 Dateien in den Papierkorb verschieben "
+"möchten?"
 
 #: shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
@@ -8061,8 +8060,8 @@ msgid ""
 msgstr ""
 "Im Verzeichnis befindet sich bereits ein Ordner namens '%1'.\n"
 "\n"
-"Wenn die Dateien im Zielordner die gleichen Namen haben,\n"
-"wie die im ausgewählten Ordner, werden sie ersetzt.\n"
+"Wenn Dateien im Zielordner die gleichen Namen haben,\n"
+"wie im ausgewählten Ordner, werden diese ersetzt.\n"
 "Möchten sie trotzdem fortfahren?"
 
 #: shell32.rc:235
@@ -9399,7 +9398,7 @@ msgstr ""
 "darf aber keine Leerzeichen enthalten (dies ist ein Unterschied\n"
 "zu anderen Betriebssystemen). Wenn zwei oder mehr identische Labels\n"
 "in einer Batchdatei existieren, dann wird stets zum ersten davon\n"
-"gesprungen. Der Versuch, mit GOTO zu einem nicht vorhanden Label\n"
+"gesprungen. Der Versuch, mit GOTO zu einem nicht vorhandenen Label\n"
 "zu springen, beendet die Ausführung der Batchdatei.\n"
 "\n"
 "GOTO hat keine Auswirkungen, wenn es interaktiv genutzt wird.\n"
@@ -9489,9 +9488,9 @@ msgid ""
 msgstr ""
 "PATH ändert oder zeigt den CMD Suchpfad an.\n"
 "\n"
-"Nach der Eingabe von PATH, wird die aktuelle PATH Einstellung angezeigt\n"
-"(ursprünglich aus der Registry). Um die Einstellungen zu ändern, muss\n"
-"nach dem PATH Befehl der neue Wert angegeben werden\n"
+"Nach der Eingabe von PATH wird die aktuelle PATH-Einstellung angezeigt\n"
+"(ursprünglich aus der Registry). Um die Einstellung zu ändern, muss\n"
+"nach dem PATH Befehl der neue Wert angegeben werden.\n"
 "\n"
 "Es ist auch möglich, den PATH mit Hilfe der PATH Umgebungsvariable zu\n"
 "modifizieren. Zum Beispiel:\n"
@@ -9536,10 +9535,10 @@ msgstr ""
 "PROMPT setzt den Befehlszeilenprompt.\n"
 "\n"
 "Die Zeichenkette, die dem PROMPT Befehl folgt (und dem Leerzeichen\n"
-"unmittelbar danach), erscheint am Zeilenanfang, wenn cmd auf die Eingabe\n"
+"unmittelbar danach), erscheint am Zeilenanfang, wenn cmd auf Eingabe\n"
 "wartet.\n"
 "\n"
-"Die nachfolgenden Zeichen haben eine besondere Bedeutung:\n"
+"Die folgenden Zeichen haben eine besondere Bedeutung:\n"
 "\n"
 "$$    Dollarzeichen       $_    Zeilenvorschub      $b    Pipe Zeichen (|)\n"
 "$d    aktuelles Datum     $e    Escape              $g    > Zeichen\n"
@@ -9553,7 +9552,7 @@ msgstr ""
 "einem Größerzeichen (>) (genau wie der PROMPT $p$g Befehl).\n"
 "\n"
 "Der Prompt kann auch durch Änderung der PROMPT Umgebungsvariable\n"
-"geändert werden, folglich hat der Befehl 'SET PROMPT=Text' die gleiche\n"
+"angepasst werden, folglich hat der Befehl 'SET PROMPT=Text' die gleiche\n"
 "Auswirkung wie 'PROMPT Text'.\n"
 
 #: cmd.rc:153
