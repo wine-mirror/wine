@@ -2212,6 +2212,7 @@ skip_internal:
     system_font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*system_font_link));
     system_font_link->font_name = strdupW(System);
     list_init(&system_font_link->links);    
+    memset(&fs, 0, sizeof(fs));
 
     face = find_face_from_filename(tahoma_ttf, Tahoma);
     if(face)
@@ -2219,6 +2220,8 @@ skip_internal:
         child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
         child_font->face = face;
         child_font->font = NULL;
+        fs.fsCsb[0] |= face->fs.fsCsb[0];
+        fs.fsCsb[1] |= face->fs.fsCsb[1];
         TRACE("Found Tahoma in %s index %ld\n", child_font->face->file, child_font->face->face_index);
         list_add_tail(&system_font_link->links, &child_font->entry);
     }
@@ -2233,9 +2236,19 @@ skip_internal:
                 new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
                 new_child->face = font_link_entry->face;
                 new_child->font = NULL;
+                fs.fsCsb[0] |= font_link_entry->face->fs.fsCsb[0];
+                fs.fsCsb[1] |= font_link_entry->face->fs.fsCsb[1];
                 list_add_tail(&system_font_link->links, &new_child->entry);
             }
             break;
+        }
+    }
+    family = find_family_from_name(system_font_link->font_name);
+    if(family)
+    {
+        LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
+        {
+            face->fs_links = fs;
         }
     }
     list_add_tail(&system_links, &system_font_link->entry);
