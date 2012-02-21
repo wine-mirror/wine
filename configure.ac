@@ -3107,7 +3107,7 @@ then
     WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
 [ALL_POT_FILES =$ALL_POT_FILES
 \$(LINGUAS:%=po/%.po): \$(srcdir)/po/wine.pot
-	msgmerge -q \$[@] \$(srcdir)/po/wine.pot | msgattrib --no-obsolete -o \$[@].new && mv \$[@].new \$[@]
+	msgmerge --previous -q \$[@] \$(srcdir)/po/wine.pot | msgattrib --no-obsolete -o \$[@].new && mv \$[@].new \$[@]
 \$(srcdir)/po/wine.pot: \$(ALL_POT_FILES)
 	msgcat -o \$[@] \$(ALL_POT_FILES)])
 fi
