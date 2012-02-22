@@ -2845,7 +2845,7 @@ msgstr "V DER kodiran binarni X.509 (*.cer)"
 
 #: cryptui.rc:154
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr "V 64-tiškemu sistemu kodiran X.509 (*.cer) "
+msgstr "V 64-tiškemu sistemu kodiran X.509 (*.cer)"
 
 #: cryptui.rc:157
 msgid "CMS/PKCS #7 Messages (*.p7b)"
@@ -9600,6 +9600,7 @@ msgstr ""
 "/R[estored]  Zažene program z običajno velikostjo okna.\n"
 "/W[ait]      Počaka, da se zagnani program zaključi, nato se konča in vrne "
 "kodo ob končanju programa.\n"
+"/Unix        Odpre datoteko podano z UNIX potjo, kot bi jo Raziskovalec.\n"
 "/ProgIDOpen  Odpre dokument z uporabo naslednjega IDprograma.\n"
 "/L           Prikaže licenčno pogodbo.\n"
 "/?            Prikaže to pomoč in konča.\n"
@@ -9610,7 +9611,7 @@ msgstr "TIME nastavi ali prikaže trenutni sistemski čas.\n"
 
 #: cmd.rc:203
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr "Nastavi naslov za okno cmd. Skladnja je: TITLE <niz>\n"
+msgstr "Nastavi naslov za okno cmd. Skladnja je: TITLE <niz>.\n"
 
 #: cmd.rc:207
 msgid ""
@@ -9827,6 +9828,7 @@ msgstr ""
 "TYPE\t\tPrikaže vsebino besedilne datoteke\n"
 "VER\t\tPrikaže trenutno različico CMD\n"
 "VOL\t\tPrikaže oznako nosilca diskovne naprave\n"
+"XCOPY\t\tKopira datoteko ali mapo v navedeno lokacijo\n"
 "EXIT\t\tZapre sejo CMD\n"
 "\n"
 "Uporabite HELP <ukaz> za več podrobnosti o kateremkoli od zgoraj navedenih\n"
