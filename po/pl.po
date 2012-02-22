@@ -10458,7 +10458,7 @@ msgid ""
 msgstr ""
 "Nie można znaleźć pliku '%s'\n"
 "\n"
-"Czy chcesz utworzyć nowy plik ?"
+"Czy chcesz utworzyć nowy plik?"
 
 #: notepad.rc:79
 msgid ""
@@ -11002,11 +11002,11 @@ msgstr "Informacja"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "Czy na pewno chcesz usunąć grupę `%s' ?"
+msgstr "Czy na pewno chcesz usunąć grupę `%s'?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "Czy na pewno chcesz Usunąć program `%s' ?"
+msgstr "Czy na pewno chcesz Usunąć program `%s'?"
 
 #: progman.rc:67
 msgid "Not implemented"
