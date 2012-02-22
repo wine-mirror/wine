@@ -7886,7 +7886,7 @@ msgstr "Pulpit"
 
 #: shell32.rc:208
 msgid "NetHood"
-msgstr "NetHood"
+msgstr ""
 
 #: shell32.rc:209
 msgid "Templates"
@@ -7894,7 +7894,7 @@ msgstr "Szablony"
 
 #: shell32.rc:210
 msgid "PrintHood"
-msgstr "PrintHood"
+msgstr ""
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
@@ -7902,7 +7902,7 @@ msgstr "Historia"
 
 #: shell32.rc:212
 msgid "Program Files"
-msgstr "Program Files"
+msgstr ""
 
 #: shell32.rc:214
 msgid "My Pictures"
@@ -7934,7 +7934,7 @@ msgstr "Wideo"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
-msgstr "Program Files (x86)"
+msgstr ""
 
 #: shell32.rc:221
 msgid "Contacts"
