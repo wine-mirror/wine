@@ -1191,6 +1191,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         REAL min_yf, max_yf, line1_xf, line2_xf;
         INT min_y, max_y, min_x, max_x;
         INT x, y;
+        ARGB outer_color=0xffffffff;
 
         stat = GdipClonePath(fill->path, &flat_path);
 
@@ -1225,6 +1226,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         {
             int start_center_line=0, end_center_line=0;
             int seen_start=0, seen_end=0, seen_center=0;
+            REAL center_distance;
 
             type = flat_path->pathdata.Types[i];
 
@@ -1257,6 +1259,10 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
                 max_y = fill_area->Y + fill_area->Height;
             else
                 max_y = (INT)ceil(max_yf);
+
+            /* This is proportional to the distance from start-end line to center point. */
+            center_distance = (end_point.Y - start_point.Y) * (start_point.X - center_point.X) +
+                (end_point.X - start_point.X) * (center_point.Y - start_point.Y);
 
             for (y=min_y; y<max_y; y++)
             {
@@ -1306,7 +1312,17 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
                     max_x = fill_area->X + fill_area->Width;
 
                 for (x=min_x; x<max_x; x++)
-                    argb_pixels[(x-fill_area->X) + (y-fill_area->Y)*cdwStride] = fill->centercolor;
+                {
+                    REAL distance;
+
+                    distance = (end_point.Y - start_point.Y) * (start_point.X - (REAL)x) +
+                        (end_point.X - start_point.X) * (yf - start_point.Y);
+
+                    distance = distance / center_distance;
+
+                    argb_pixels[(x-fill_area->X) + (y-fill_area->Y)*cdwStride] =
+                        blend_colors(outer_color, fill->centercolor, distance);
+                }
             }
         }
 
