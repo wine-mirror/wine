@@ -1193,6 +1193,20 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         INT x, y;
         ARGB outer_color=0xffffffff;
 
+        if (fill->focus.X != 0.0 || fill->focus.Y != 0.0)
+        {
+            static int once;
+            if (!once++)
+                FIXME("path gradient focus not implemented\n");
+        }
+
+        if (fill->gamma)
+        {
+            static int once;
+            if (!once++)
+                FIXME("path gradient gamma correction not implemented\n");
+        }
+
         stat = GdipClonePath(fill->path, &flat_path);
 
         if (stat != Ok)
