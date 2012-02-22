@@ -5561,6 +5561,7 @@ static void surface_depth_blt(const struct wined3d_surface *surface, struct wine
     glDepthMask(GL_TRUE);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glViewport(x, y, w, h);
+    glDepthRange(0.0, 1.0);
 
     SetRect(&rect, 0, h, w, 0);
     surface_get_blt_info(target, &rect, surface->pow2Width, surface->pow2Height, &info);
