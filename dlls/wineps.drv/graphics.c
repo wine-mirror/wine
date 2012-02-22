@@ -521,6 +521,7 @@ static BOOL paint_path( PHYSDEV dev, BOOL stroke, BOOL fill )
     types = HeapAlloc( GetProcessHeap(), 0, size * sizeof(*types) );
     if (!points || !types) goto done;
     if (GetPath( dev->hdc, points, types, size ) == -1) goto done;
+    LPtoDP( dev->hdc, points, size );
 
     if (stroke) PSDRV_SetPen(dev);
     PSDRV_SetClip(dev);
