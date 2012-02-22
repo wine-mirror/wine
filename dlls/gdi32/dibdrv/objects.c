@@ -372,7 +372,8 @@ static inline DWORD calc_outcode(const POINT *pt, const RECT *clip)
 int clip_line(const POINT *start, const POINT *end, const RECT *clip,
               const bres_params *params, POINT *pt1, POINT *pt2)
 {
-    int m, n;
+
+    INT64 m, n;  /* 64-bit to avoid overflows (FIXME: find a more efficient way) */
     BOOL clipped = FALSE;
     DWORD start_oc, end_oc;
     const int bias = params->bias;
