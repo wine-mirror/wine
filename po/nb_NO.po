@@ -10266,14 +10266,12 @@ msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
 #: cmd.rc:344
-#, fuzzy
 msgid " (Yes|No)"
-msgstr "%s? (Ja|Nei)\n"
+msgstr " (Ja|Nei)"
 
 #: cmd.rc:345
-#, fuzzy
 msgid " (Yes|No|All)"
-msgstr "%s? (Ja|Nei)\n"
+msgstr " (Ja|Nei|Alle)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -14471,14 +14469,12 @@ msgstr ""
 "(F - Fil, K - Katalog)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s? (Ja|Nei)\n"
+msgstr "%1? (Ja|Nei)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Skrive over «%s»? (Ja|Nei|Alle)\n"
+msgstr "Skrive over «%1»? (Ja|Nei|Alle)\n"
 
 #: xcopy.rc:37
 #, fuzzy
