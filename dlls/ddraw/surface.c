@@ -5526,8 +5526,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
      * the surface isn't mapped, and that updates done this way will be
      * visible on the screen. The game Nox is such an application,
      * Commandos: Behind Enemy Lines is another. */
-    if (version == 1)
-        flags |= WINED3D_SURFACE_PIN_SYSMEM;
+    flags |= WINED3D_SURFACE_PIN_SYSMEM;
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
