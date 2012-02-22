@@ -773,21 +773,58 @@ static void test_gradientsurroundcolorcount(void)
 {
     GpStatus status;
     GpPathGradient *grad;
-    ARGB *color;
-    INT count = 3;
+    ARGB color[3];
+    INT count;
 
     status = GdipCreatePathGradient(blendcount_ptf, 2, WrapModeClamp, &grad);
     expect(Ok, status);
 
-    color = GdipAlloc(sizeof(ARGB[3]));
+    count = 0;
+    status = GdipGetPathGradientSurroundColorCount(grad, &count);
+    todo_wine expect(Ok, status);
+    todo_wine expect(2, count);
 
+    color[0] = color[1] = color[2] = 0xdeadbeef;
+    count = 3;
+    status = GdipGetPathGradientSurroundColorsWithCount(grad, color, &count);
+    todo_wine expect(Ok, status);
+    todo_wine expect(1, count);
+    todo_wine expect(0xffffffff, color[0]);
+    todo_wine expect(0xffffffff, color[1]);
+    expect(0xdeadbeef, color[2]);
+
+    color[0] = color[1] = color[2] = 0xdeadbeef;
+    count = 2;
+    status = GdipGetPathGradientSurroundColorsWithCount(grad, color, &count);
+    todo_wine expect(Ok, status);
+    todo_wine expect(1, count);
+    todo_wine expect(0xffffffff, color[0]);
+    todo_wine expect(0xffffffff, color[1]);
+    expect(0xdeadbeef, color[2]);
+
+    color[0] = color[1] = color[2] = 0xdeadbeef;
+    count = 1;
+    status = GdipGetPathGradientSurroundColorsWithCount(grad, color, &count);
+    expect(InvalidParameter, status);
+    expect(1, count);
+    expect(0xdeadbeef, color[0]);
+    expect(0xdeadbeef, color[1]);
+    expect(0xdeadbeef, color[2]);
+
+    color[0] = color[1] = color[2] = 0xdeadbeef;
+    count = 0;
+    status = GdipGetPathGradientSurroundColorsWithCount(grad, color, &count);
+    expect(InvalidParameter, status);
+    expect(0, count);
+    expect(0xdeadbeef, color[0]);
+    expect(0xdeadbeef, color[1]);
+    expect(0xdeadbeef, color[2]);
+
+    count = 3;
     status = GdipSetPathGradientSurroundColorsWithCount(grad, color, &count);
     expect(InvalidParameter, status);
-    GdipFree(color);
 
     count = 2;
-
-    color = GdipAlloc(sizeof(ARGB[2]));
 
     color[0] = 0x00ff0000;
     color[1] = 0x0000ff00;
@@ -820,7 +857,38 @@ static void test_gradientsurroundcolorcount(void)
     todo_wine expect(Ok, status);
     todo_wine expect(2, count);
 
-    GdipFree(color);
+    color[0] = color[1] = color[2] = 0xdeadbeef;
+    count = 2;
+    status = GdipGetPathGradientSurroundColorsWithCount(grad, color, &count);
+    todo_wine expect(Ok, status);
+    expect(2, count);
+    todo_wine expect(0x00ff0000, color[0]);
+    todo_wine expect(0x0000ff00, color[1]);
+    expect(0xdeadbeef, color[2]);
+
+    GdipDeleteBrush((GpBrush*)grad);
+
+    status = GdipCreatePathGradient(getbounds_ptf, 3, WrapModeClamp, &grad);
+    expect(Ok, status);
+
+    color[0] = color[1] = color[2] = 0xdeadbeef;
+    count = 3;
+    status = GdipGetPathGradientSurroundColorsWithCount(grad, color, &count);
+    todo_wine expect(Ok, status);
+    todo_wine expect(1, count);
+    todo_wine expect(0xffffffff, color[0]);
+    todo_wine expect(0xffffffff, color[1]);
+    todo_wine expect(0xffffffff, color[2]);
+
+    color[0] = color[1] = color[2] = 0xdeadbeef;
+    count = 2;
+    status = GdipGetPathGradientSurroundColorsWithCount(grad, color, &count);
+    expect(InvalidParameter, status);
+    expect(2, count);
+    expect(0xdeadbeef, color[0]);
+    expect(0xdeadbeef, color[1]);
+    expect(0xdeadbeef, color[2]);
+
     GdipDeleteBrush((GpBrush*)grad);
 }
 
