@@ -3364,7 +3364,7 @@ msgstr "Legg til i f&avoritter..."
 #: ieframe.rc:57
 #, fuzzy
 msgid "&About Internet Explorer"
-msgstr "Wine Internet Explorer"
+msgstr "&Om Internet Explorer"
 
 #: ieframe.rc:87
 #, fuzzy
@@ -7966,9 +7966,8 @@ msgid "E&xit"
 msgstr "&Avslutt"
 
 #: shell32.rc:127
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "&Om Kontrollpanel..."
+msgstr "&Om Kontrollpanel"
 
 #: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
@@ -9515,9 +9514,8 @@ msgid "&Always on Top"
 msgstr "&Alltid øverst"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "&Om Klokke..."
+msgstr "&Om Klokke"
 
 #: clock.rc:48
 msgid "Clock"
@@ -11169,7 +11167,7 @@ msgstr "Ordne &ikoner"
 #: progman.rc:54
 #, fuzzy
 msgid "&About Program Manager"
-msgstr "Programbehandling"
+msgstr "&Om Programbehandling"
 
 #: progman.rc:100
 msgid "Program &group"
@@ -13722,7 +13720,7 @@ msgstr "Still &loddrett\tCtrl+F4"
 #: winefile.rc:83
 #, fuzzy
 msgid "&About Wine File Manager"
-msgstr "Filbehandling"
+msgstr "&Om Filbehandling"
 
 #: winefile.rc:124
 msgid "Select destination"
@@ -13903,7 +13901,7 @@ msgstr "&Beste tider"
 #: winemine.rc:49
 #, fuzzy
 msgid "&About WineMine"
-msgstr "&om Wine"
+msgstr "&Om WineMine"
 
 #: winemine.rc:56
 msgid "Fastest Times"
@@ -14012,7 +14010,7 @@ msgstr "All&tid øverst"
 #: winhlp32.rc:56
 #, fuzzy
 msgid "&About Wine Help"
-msgstr "&Informasjon"
+msgstr "&Om Wine Help"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
