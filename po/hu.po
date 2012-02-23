@@ -220,7 +220,7 @@ msgstr ""
 
 #: appwiz.rc:43
 msgid "&Modify/Remove"
-msgstr "&Módosítás/Eltávolítás..."
+msgstr "&Módosítás/Eltávolítás"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -298,7 +298,7 @@ msgstr "Tulajdonságok: %s"
 
 #: comctl32.rc:54 comdlg32.rc:258
 msgid "&Apply"
-msgstr "&Alkalmazás"
+msgstr "&Alkalmaz"
 
 #: comctl32.rc:55 comctl32.rc:69 comdlg32.rc:301 user32.rc:86
 msgid "Help"
@@ -534,7 +534,7 @@ msgstr "Betû&stílus:"
 
 #: comdlg32.rc:253 comdlg32.rc:430 winecfg.rc:280
 msgid "&Size:"
-msgstr "Méret:"
+msgstr "&Méret:"
 
 #: comdlg32.rc:260
 msgid "Effects"
@@ -566,15 +566,15 @@ msgstr "Szín"
 
 #: comdlg32.rc:279
 msgid "&Basic Colors:"
-msgstr "&Alap színek:"
+msgstr "&Alapszínek:"
 
 #: comdlg32.rc:280
 msgid "&Custom Colors:"
-msgstr "&Egyedi színek:"
+msgstr "&Egyéni színek:"
 
 #: comdlg32.rc:281 comdlg32.rc:304
 msgid "Color |  Sol&id"
-msgstr "Szín |  &Tömör"
+msgstr "Szín | Egy&színű"
 
 #: comdlg32.rc:282
 msgid "&Red:"
@@ -590,25 +590,25 @@ msgstr "&Kék:"
 
 #: comdlg32.rc:288
 msgid "&Hue:"
-msgstr "Á&rnyalat"
+msgstr "Á&rny.:"
 
 #: comdlg32.rc:290
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr "&Telítettség:"
+msgstr "&Telít.:"
 
 #: comdlg32.rc:292
 msgctxt "Luminance"
 msgid "&Lum:"
-msgstr "&Fényerő"
+msgstr "&Fény.:"
 
 #: comdlg32.rc:302
 msgid "&Add to Custom Colors"
-msgstr "&Egyedi színekhez adás"
+msgstr "&Hozzáadás az egyéni színekhez"
 
 #: comdlg32.rc:303
 msgid "&Define Custom Colors >>"
-msgstr "E&gyedi szín definiálás >>"
+msgstr "E&gyéni színek definiálása >>"
 
 #: comdlg32.rc:310 regedit.rc:223 regedit.rc:233
 msgid "Find"
@@ -717,7 +717,7 @@ msgstr "Ed&dig:"
 
 #: comdlg32.rc:410 winecfg.rc:286
 msgid "Si&ze:"
-msgstr "Size:"
+msgstr "&Méret:"
 
 #: comdlg32.rc:412
 msgid "&Source:"
@@ -1009,9 +1009,9 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Mielõtt nyomtatási feladatokat hajtana végre mint például oldalbeállítás "
+"Mielőtt nyomtatási feladatokat hajtana végre mint például oldalbeállítás "
 "vagy dokumentum nyomtatása, Önnek telepítenie kell egy nyomtatót. Kérem "
-"telepítse fel, majd használja az Ismét nyomógombot!"
+"telepítse fel, majd használja az Ismét nyomógombot."
 
 #: comdlg32.rc:137
 msgid "Select a font size between %1!d! and %2!d! points."
@@ -2113,7 +2113,7 @@ msgstr "Tanusítvány megtekintés"
 
 #: cryptui.rc:215
 msgid "Certificate &status:"
-msgstr "Tanusítvány &állapot"
+msgstr "Tanusítvány &állapot:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
@@ -2125,7 +2125,7 @@ msgstr "Több &információ"
 
 #: cryptui.rc:236
 msgid "&Friendly name:"
-msgstr "Keresztnév"
+msgstr "&Keresztnév:"
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
@@ -2217,7 +2217,7 @@ msgid ""
 "certificate revocation list, or certificate trust list:"
 msgstr ""
 "Üzenet: A következő fájl formátumok egynél több tanusítványt, visszavonási "
-"listát vagy megbízhatósági listát tartalmazhatnak."
+"listát vagy megbízhatósági listát tartalmazhatnak:"
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
@@ -2307,7 +2307,7 @@ msgstr ""
 
 #: cryptui.rc:358
 msgid "&Certificate purposes:"
-msgstr "Tanusítvány típusok"
+msgstr "&Tanusítvány típusok:"
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
@@ -2336,6 +2336,7 @@ msgstr ""
 "Egy tanusítványt fel lehet használni, hogy Önt vagy azt a számítógépet "
 "azonosítsa, amellyel kommunikál. Fel lehet használni hitelesítésre is és "
 "hogy digitálisan aláírjon üzeneteket.\n"
+"\n"
 "Folytatáshoz, kattintson a Következő nyomógombra."
 
 #: cryptui.rc:381
@@ -2372,7 +2373,7 @@ msgstr "&DER-kódolt X.509 (.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr "Ba&se64-kódolt X.509 (.cer)"
+msgstr "Ba&se64-kódolt X.509 (.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
@@ -2433,11 +2434,11 @@ msgstr ""
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr "Ez a tanusítványt nem lehetett azonosítni megbízható kiállítóként"
+msgstr "Ezt a tanusítványt nem lehetett azonosítni megbízható kiállítóként."
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
-msgstr "A tanusítvány kiállító nem található!"
+msgstr "A tanusítvány kiállító nem található."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
@@ -2585,8 +2586,8 @@ msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
-"A kiválasztott fájl olyan objekutumokat tartalmaz, amely nem felel meg a "
-"feltételeknek. Kérem, válasszon ki másik fájlt!"
+"A kiválasztott fájl olyan objekutumokat tartalmaz, amely nem felel meg az "
+"adott feltételeknek. Kérem, válasszon ki másik fájlt."
 
 #: cryptui.rc:70
 msgid "File to Import"
@@ -2891,9 +2892,7 @@ msgstr "Adja meg a fájlnevet, amely néven menteni szeretné az adatokat."
 
 #: cryptui.rc:152
 msgid "The specified file already exists. Do you want to replace it?"
-msgstr ""
-"A fájl már létezik.\n"
-"Cseréli a fájlt?"
+msgstr "A fájl már létezik. Lecseréli a fájlt?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -2935,7 +2934,7 @@ msgstr "Az export sikerült."
 
 #: cryptui.rc:166
 msgid "The export failed."
-msgstr "Az export hibás!"
+msgstr "Az export hibás."
 
 #: cryptui.rc:167
 msgid "Export Private Key"
@@ -2959,7 +2958,7 @@ msgstr "Jelszóvédetté tehet egy privát kulcsot."
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
-msgstr "A jelszavak nem egyeznek!"
+msgstr "A jelszavak nem egyeznek."
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
@@ -2967,7 +2966,7 @@ msgstr "Üzenet: A tanusítványhoz tartozó privát kulcsot nem lehet megnyitni
 
 #: cryptui.rc:173
 msgid "Note: The private key for this certificate is not exportable."
-msgstr "Üzenet: A tanusítványhoz tartozó privát kulcsok nem exportálhatóak!"
+msgstr "Üzenet: A tanusítványhoz tartozó privát kulcsok nem exportálhatóak."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -2987,7 +2986,7 @@ msgstr "Alapértelmezett MidiOut eszköz"
 
 #: dinput.rc:40
 msgid "Configure Devices"
-msgstr "Eszközbeállí&tás..."
+msgstr "Eszközbeállí&tás"
 
 #: dinput.rc:45
 msgid "Reset"
@@ -3177,7 +3176,7 @@ msgstr "&Nyomtatás..."
 
 #: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
-msgstr "&Tartalom"
+msgstr "&Témakörök"
 
 #: hhctrl.rc:29
 msgid "I&ndex"
@@ -3282,16 +3281,11 @@ msgstr "Ny&omtatás..."
 
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
-msgstr "Nyomtatási &kép..."
+msgstr "Nyomtatási &kép"
 
 #: ieframe.rc:44
-#, fuzzy
 msgid "&Toolbars"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Eszköztár\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Toolbar"
+msgstr "&Eszköztár"
 
 #: ieframe.rc:46
 msgid "&Standard bar"
@@ -3307,7 +3301,7 @@ msgstr "Ked&vencek"
 
 #: ieframe.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
-msgstr "Hozzá&adás a kedvencekhez..."
+msgstr "H&ozzáadás a Kedvencekhez..."
 
 #: ieframe.rc:57
 msgid "&About Internet Explorer"
@@ -3404,7 +3398,7 @@ msgid ""
 "Cached copies of webpages, images and certificates."
 msgstr ""
 "Ideiglenes internet fájlok\n"
-"Weboldalak, képek és tanusítványok mentett változatai"
+"Weboldalak, képek és tanusítványok mentett változatai."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3610,7 +3604,7 @@ msgstr "Boolean (igaz-hamis) objektumot vártam"
 
 #: jscript.rc:50
 msgid "Cannot delete '|'"
-msgstr " nem törölhető"
+msgstr "'|' nem törölhető"
 
 #: jscript.rc:51
 msgid "VBArray object expected"
@@ -3962,7 +3956,7 @@ msgstr "Szemafor felhasználói limit.\n"
 
 #: winerror.mc:411
 msgid "Insert disk for drive %1.\n"
-msgstr "Helyezze be a lemezt: %l.\n"
+msgstr "Helyezze be a lemezt %1.\n"
 
 #: winerror.mc:416
 msgid "Drive locked.\n"
@@ -4130,7 +4124,7 @@ msgstr "Túl sok várakozó van DosMuxSamWait-re.\n"
 
 #: winerror.mc:631
 msgid "DosSemMuxWait list invalid.\n"
-msgstr "DosSemMuxWait lista nem valósl\n"
+msgstr "DosSemMuxWait lista nem valós.\n"
 
 #: winerror.mc:636
 msgid "Volume label too long.\n"
@@ -4212,23 +4206,23 @@ msgstr "Szemafor nem található.\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1.\n"
-msgstr "Nem valós induló szegmens %1\n"
+msgstr "Nem valós induló szegmens %1.\n"
 
 #: winerror.mc:736
 msgid "Invalid starting stack segment for %1.\n"
-msgstr "Nem valós induló stack szegmens %1\n"
+msgstr "Nem valós induló verem szegmens %1.\n"
 
 #: winerror.mc:741
 msgid "Invalid module type for %1.\n"
-msgstr "Nem valós modul typus %1\n"
+msgstr "Nem valós modul típus %1.\n"
 
 #: winerror.mc:746
 msgid "Invalid EXE signature in %1.\n"
-msgstr "Nem valós EXE aláírás %1\n"
+msgstr "Nem valós EXE aláírás %1.\n"
 
 #: winerror.mc:751
 msgid "EXE %1 is marked invalid.\n"
-msgstr "%1 EXE nem valósként van megjelölve\n"
+msgstr "%1 EXE nem valósként van megjelölve.\n"
 
 #: winerror.mc:756
 msgid "Bad EXE format for %1.\n"
@@ -5055,7 +5049,7 @@ msgstr "LAN kapcsolat érvénytelen.\n"
 
 #: winerror.mc:1781
 msgid "Connection is active.\n"
-msgstr "Kapcsolat aktív\n"
+msgstr "Kapcsolat aktív.\n"
 
 #: winerror.mc:1786
 msgid "Network unreachable.\n"
@@ -6988,7 +6982,7 @@ msgstr "cella"
 
 #: oleacc.rc:57
 msgid "link"
-msgstr "link"
+msgstr "kapcsolat"
 
 #: oleacc.rc:58
 msgid "help balloon"
@@ -7503,7 +7497,7 @@ msgstr "Beállíttás &asztalelemként..."
 #: shdoclc.rc:76 shdoclc.rc:90 shdoclc.rc:114 shdoclc.rc:156 shdoclc.rc:180
 #: user32.rc:57 wordpad.rc:101
 msgid "Cu&t"
-msgstr "Kiv&ágás\tCtrl+X"
+msgstr "Kivá&gás"
 
 #: shdoclc.rc:77 shdoclc.rc:91 shdoclc.rc:115 shdoclc.rc:130 shdoclc.rc:157
 #: shdoclc.rc:181 shell32.rc:99 user32.rc:58 wineconsole.rc:29 winhlp32.rc:37
@@ -7524,22 +7518,12 @@ msgid "&Undo"
 msgstr "&Visszavonás"
 
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
-#, fuzzy
 msgid "&Delete"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Törlés\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Tö&rlés"
+msgstr "Tö&rlés"
 
 #: shdoclc.rc:100 shell32.rc:94
-#, fuzzy
 msgid "&Select"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Kiválasztás\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Kijelölés"
+msgstr "Tár&sítás"
 
 #: shdoclc.rc:102
 msgid "&Cell"
@@ -7707,7 +7691,7 @@ msgstr "Görgetés jobbra"
 
 #: shdoclc.rc:25
 msgid "Wine Internet Explorer"
-msgstr "Wine Internet Explorer"
+msgstr "Wine Internet Böngésző"
 
 #: shdoclc.rc:30
 msgid "&w&bPage &p"
@@ -7812,7 +7796,7 @@ msgstr "&Kilépés"
 
 #: shell32.rc:127
 msgid "&About Control Panel"
-msgstr "&Vezérlőpult névjegye..."
+msgstr "&Névjegy"
 
 #: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
@@ -8222,7 +8206,8 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"A fájl már létezik.\n"
+"A fájl már létezik %1 útvonalon.\n"
+"\n"
 "Cseréli a fájlt?"
 
 #: shell32.rc:247
@@ -8231,8 +8216,9 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"A fájl már létezik.\n"
-"Cseréli a fájlt?"
+"A mappa már létezik %1 útvonalon.\n"
+"\n"
+"Cseréli a mappát"
 
 #: shell32.rc:248
 msgid "Confirm overwrite"
@@ -8415,7 +8401,7 @@ msgstr "A tanusítvány kibocsátója ismeretlen vagy nem megbízható."
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
-msgstr "Tanusítvány ideje érvénytelen"
+msgstr "Tanusítvány ideje érvénytelen."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
@@ -8941,7 +8927,7 @@ msgid ""
 msgstr ""
 "Nincs olyan wave eszköz, amely fel tud venni az aktuálisan feltelepített "
 "formátumokban. Használja a Driver ablakot, hogy telepítsen wave felvevő "
-"eszközt"
+"eszközt."
 
 #: winmm.rc:117
 msgid ""
@@ -9880,7 +9866,7 @@ msgstr "CMD verzió %1!S!\n"
 
 #: cmd.rc:340
 msgid "More? "
-msgstr "Több?"
+msgstr "Több? "
 
 #: cmd.rc:341
 msgid "The input line is too long.\n"
@@ -9964,11 +9950,11 @@ msgstr "Csomópont típus"
 
 #: ipconfig.rc:36
 msgid "Broadcast"
-msgstr ""
+msgstr "Üzenetszórt"
 
 #: ipconfig.rc:37
 msgid "Peer-to-peer"
-msgstr ""
+msgstr "Egyenrangú"
 
 #: ipconfig.rc:38
 msgid "Mixed"
@@ -10092,7 +10078,7 @@ msgstr "Lecsatlakozott"
 
 #: net.rc:47
 msgid "A network error occurred"
-msgstr "Hálózati hiba történt."
+msgstr "Hálózati hiba történt"
 
 #: net.rc:48
 msgid "Connection is being made"
@@ -10181,7 +10167,7 @@ msgstr "&Csere...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:82
 msgid "&Contents\tF1"
-msgstr "&Súgó megjelenítése"
+msgstr "&Témakörök\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -10320,7 +10306,7 @@ msgstr "Unicode (UTF-16)"
 
 #: notepad.rc:83
 msgid "Unicode (UTF-16 big-endian)"
-msgstr "Unicode (UTF-16 big-endian)"
+msgstr "Unicode (UTF-16 nagy végű)"
 
 #: notepad.rc:84
 msgid "Unicode (UTF-8)"
@@ -10339,8 +10325,8 @@ msgstr ""
 "Ez a fájl unicode karaktereket tartalmaz, amelyek elvesznek,\n"
 "ha elmenti a fájlt %2 karakter kódolással.\n"
 "Hogy megtartsa ezeket a karaktereket, klikkeljen a Mégse nyomógombra,\n"
-"és azután válassza ki az egyik unicode opciót a karakter kódolás\n"
-"legördülő menüből.\n"
+"és azután válassza ki az egyik unicode opciót a karakter kódolás legördülő "
+"menüből.\n"
 "Folytatja?"
 
 #: oleview.rc:29
@@ -10420,26 +10406,16 @@ msgid "&Hidden component categories"
 msgstr ""
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:62 wordpad.rc:68 wordpad.rc:261
-#, fuzzy
 msgid "&Toolbar"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Eszköztár\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Toolbar"
+msgstr "&Eszköztár"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:64
 msgid "&Status Bar"
 msgstr "&Állapotsor"
 
 #: oleview.rc:67 regedit.rc:69 winefile.rc:78
-#, fuzzy
 msgid "&Refresh\tF5"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Frissítés\tF5\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"F&rissítés\tF5"
+msgstr "&Frissítés\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
@@ -10451,7 +10427,7 @@ msgstr "Mentés má&sként..."
 
 #: oleview.rc:84
 msgid "&Group by type kind"
-msgstr ""
+msgstr "Csoportosítás &típus szerint"
 
 #: oleview.rc:154
 msgid "Connect to another machine"
@@ -10485,14 +10461,12 @@ msgid ""
 msgstr ""
 
 #: oleview.rc:178
-#, fuzzy
 msgid "Default Interface Viewer"
-msgstr "Alapértelmezett nyomtató; "
+msgstr "Alapértelmezett interfész néző"
 
 #: oleview.rc:181
-#, fuzzy
 msgid "Interface"
-msgstr "Fájl nem található"
+msgstr "Interfész"
 
 #: oleview.rc:183
 msgid "IID:"
@@ -10505,12 +10479,11 @@ msgstr "Kliens információk"
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
-msgstr ""
+msgstr "IPersist interfész néző"
 
 #: oleview.rc:194 oleview.rc:206
-#, fuzzy
 msgid "Class Name:"
-msgstr "Teljes név"
+msgstr "Osztálynév:"
 
 #: oleview.rc:196 oleview.rc:208
 msgid "CLSID:"
@@ -10518,12 +10491,11 @@ msgstr ""
 
 #: oleview.rc:203
 msgid "IPersistStream Interface Viewer"
-msgstr ""
+msgstr "IPersistStream interfész néző"
 
 #: oleview.rc:93 oleview.rc:94
-#, fuzzy
 msgid "OleView"
-msgstr "Né&zet"
+msgstr "OleView"
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
@@ -10531,7 +10503,7 @@ msgstr "ITypeLib nézegető"
 
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
-msgstr ""
+msgstr "OleView - OLE/COM objektum néző"
 
 #: oleview.rc:97
 msgid "version 1.0"
@@ -10604,7 +10576,7 @@ msgstr "Minden lista frissítése"
 
 #: oleview.rc:122
 msgid "Display program information, version number and copyright"
-msgstr ""
+msgstr "Kijelzi a program információkat, verziót és szerzői adatot"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
@@ -10711,13 +10683,8 @@ msgid "O&pen\tEnter"
 msgstr "Meg&nyitás\tEnter"
 
 #: progman.rc:32 winefile.rc:27
-#, fuzzy
 msgid "&Move...\tF7"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Áthelyezés...\tF7\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Át&helyezés...\tF7"
+msgstr "Át&helyezés mappába...\tF7"
 
 #: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
@@ -10725,7 +10692,7 @@ msgstr "&Másolás...\tF8"
 
 #: progman.rc:35
 msgid "&Properties\tAlt+Enter"
-msgstr "T&ulajdonságok...\tAlt+Enter"
+msgstr "T&ulajdonságok\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
@@ -10753,13 +10720,8 @@ msgstr ""
 "Programfuttatás utáni &szimbólum"
 
 #: progman.rc:44 winefile.rc:69
-#, fuzzy
 msgid "&Save settings on exit"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Beállítások &mentése kilépéskor\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Megszüntetés a tárolás végén"
+msgstr "Keresés &mentése"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
 msgid "&Windows"
@@ -10976,15 +10938,15 @@ msgstr ""
 
 #: regedit.rc:31
 msgid "&Registry"
-msgstr "&Regisztrációs Adatbázis"
+msgstr "&Fájl"
 
 #: regedit.rc:33
 msgid "&Import Registry File..."
-msgstr "Regisztrációs adatbázis fájl &importálása..."
+msgstr "&Importálás..."
 
 #: regedit.rc:34
 msgid "&Export Registry File..."
-msgstr "Regisztrációs adatbázis fájl &exportálása..."
+msgstr "&Exportálás..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
@@ -11031,17 +10993,12 @@ msgid "Status &Bar"
 msgstr "Álla&potsor"
 
 #: regedit.rc:67 winefile.rc:46
-#, fuzzy
 msgid "Sp&lit"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Felosztás\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Szétvá&lasztás"
+msgstr "&Osztó"
 
 #: regedit.rc:74
 msgid "&Remove Favorite..."
-msgstr "Tö&rlés a kedvencekből..."
+msgstr "&Kedvenc eltávolítása..."
 
 #: regedit.rc:79
 msgid "&About Registry Editor"
@@ -11097,15 +11054,15 @@ msgstr "Kedvenc törlése"
 
 #: regedit.rc:261
 msgid "Edit String"
-msgstr "Sztring szerkesztése"
+msgstr "Karakterlánc szerkesztése"
 
 #: regedit.rc:264 regedit.rc:277 regedit.rc:293 regedit.rc:306
 msgid "Value name:"
-msgstr "Érték neve:"
+msgstr "Azonosító neve:"
 
 #: regedit.rc:266 regedit.rc:279 regedit.rc:295 regedit.rc:308
 msgid "Value data:"
-msgstr "Érték adat:"
+msgstr "Azonosító értéke:"
 
 #: regedit.rc:274
 msgid "Edit DWORD"
@@ -11429,12 +11386,12 @@ msgstr "Hiba: /im vagy /pid opciók kölcsönösen kizárják egymást.\n"
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
-"Bezáró üzenet elküldődött a %1 PID azonosítóval rendelkező ablakoknak.\n"
+"Bezáró üzenet elküldődött a %1!u! PID azonosítóval rendelkező ablakoknak.\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
-msgstr "Bezáró üzenet elküldődött a \"%1\" folyamat (PID %2!u) ablakainak.\n"
+msgstr "Bezáró üzenet elküldődött a \"%1\" folyamat (PID %2!u!) ablakainak.\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %1!u! was forcibly terminated.\n"
@@ -11551,11 +11508,11 @@ msgstr "&Névjegy"
 
 #: taskmgr.rc:120 taskmgr.rc:352
 msgid "&Switch To"
-msgstr "&Ugrás szolgáltatás(ok)ra"
+msgstr "Á&tváltás"
 
 #: taskmgr.rc:129 taskmgr.rc:353
 msgid "&End Task"
-msgstr "F&eladat leállítása"
+msgstr "F&eladat befejezése"
 
 #: taskmgr.rc:130
 msgid "&Go To Process"
@@ -11595,7 +11552,7 @@ msgstr "Affinitás beállítása..."
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
-msgstr "Hibakeresési &csatornák szerkesztése"
+msgstr "Hibakeresési &csatornák szerkesztése..."
 
 #: taskmgr.rc:338 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
@@ -11691,7 +11648,7 @@ msgid ""
 "allowed to execute on."
 msgstr ""
 "A processzor affinitás azt állítja be, hogy mely CPU-knak lesz engedélyezve "
-"a folyamat végrehajtása"
+"a folyamat végrehajtása."
 
 #: taskmgr.rc:446
 msgid "CPU 0"
@@ -11832,7 +11789,7 @@ msgstr "Válassza ki a Feladatkezelő Folyamatok lapján megjelenő oszlopokat."
 
 #: taskmgr.rc:521
 msgid "&Image Name"
-msgstr "&Név"
+msgstr "&Programkód neve"
 
 #: taskmgr.rc:523
 msgid "&PID (Process Identifier)"
@@ -12070,7 +12027,7 @@ msgstr "Hibakereső kapcsolása a folyamathoz"
 
 #: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
-msgstr ""
+msgstr "Beállítja, hogy a folyamat mely processzorokon legyen futtatható"
 
 #: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
@@ -12114,7 +12071,7 @@ msgstr "Folyamatok: %d"
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "Memória használat: %1!u!KB / %2!u!KB"
+msgstr "Fizikai memória: %1!u!KB / %2!u!KB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -12360,11 +12317,11 @@ msgstr ""
 
 #: winecfg.rc:150
 msgid "&Add application..."
-msgstr "&Alk. hozzáadás..."
+msgstr "&Alkalmazás hozzáadás..."
 
 #: winecfg.rc:151
 msgid "&Remove application"
-msgstr "Alk. &eltávolítása"
+msgstr "Alkalmazás &eltávolítás"
 
 #: winecfg.rc:152
 msgid "&Windows Version:"
@@ -12392,7 +12349,7 @@ msgstr "Virtuális asztal emulálása"
 
 #: winecfg.rc:166
 msgid "Desktop &size:"
-msgstr "Ablak méret:"
+msgstr "Asztal &méret:"
 
 #: winecfg.rc:171
 msgid "Screen resolution"
@@ -12404,7 +12361,7 @@ msgstr "Ez egy minta szöveg, amely 10 pontos Tahoma betűtípust használ"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
-msgstr " DLL felűlbírálások "
+msgstr " DLL felűlbírálások"
 
 #: winecfg.rc:183
 msgid ""
@@ -12482,11 +12439,11 @@ msgstr "Hozzá&ad..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Auto&felism"
+msgstr "Automata &felismerés"
 
 #: winecfg.rc:232
 msgid "&Path:"
-msgstr "&Útv.:"
+msgstr "&Útvonal:"
 
 #: winecfg.rc:239 winecfg.rc:35
 msgid "Show &Advanced"
@@ -12506,7 +12463,7 @@ msgstr "&Címke:"
 
 #: winecfg.rc:246
 msgid "S&erial:"
-msgstr "S&orszám:"
+msgstr "S&orozatszám:"
 
 #: winecfg.rc:249
 msgid "Show &dot files"
@@ -12554,11 +12511,11 @@ msgstr "Téma telepítése..."
 
 #: winecfg.rc:282
 msgid "It&em:"
-msgstr "El&em:"
+msgstr "&Elem:"
 
 #: winecfg.rc:284
 msgid "C&olor:"
-msgstr "Color:"
+msgstr "Szín:"
 
 #: winecfg.rc:290
 msgid "Folders"
@@ -12566,7 +12523,7 @@ msgstr "Rendszermappák"
 
 #: winecfg.rc:293
 msgid "&Link to:"
-msgstr "Ide linkel:"
+msgstr "Mappa &útvonal:"
 
 #: winecfg.rc:31
 msgid "Libraries"
@@ -12622,7 +12579,7 @@ msgstr "Rendszermappa"
 
 #: winecfg.rc:46
 msgid "Links to"
-msgstr "Ide linkel"
+msgstr "Mappa útvonal"
 
 #: winecfg.rc:42
 msgid "Wine configuration for %s"
@@ -13089,7 +13046,7 @@ msgid ""
 "                           try to setup the current terminal as a Wine "
 "console.\n"
 msgstr ""
-"  --backend={user|curses}  User választása új ablakot szül, curses \n"
+"  --backend={user|curses}  User választása új ablakot szül, curses\n"
 "                           megpróbálja beállítani az aktuális terminált Wine "
 "konzolként.\n"
 
@@ -13175,7 +13132,7 @@ msgstr "Részletes adatok betöltése, kérem várjon..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
-msgstr "&Megynitás\tEnter"
+msgstr "&Megnyitás\tEnter"
 
 #: winefile.rc:30
 msgid "Re&name..."
@@ -13183,7 +13140,7 @@ msgstr "Át&nevezés..."
 
 #: winefile.rc:31
 msgid "Propert&ies\tAlt+Enter"
-msgstr "T&ulajdonságok...\tAlt+Enter"
+msgstr "T&ulajdonságok\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -13199,7 +13156,7 @@ msgstr "&Lemez"
 
 #: winefile.rc:41
 msgid "Connect &Network Drive..."
-msgstr "&Hálózati meghajtó csatlakoztatása"
+msgstr "&Hálózati meghajtó csatlakoztatása..."
 
 #: winefile.rc:42
 msgid "&Disconnect Network Drive"
@@ -13255,7 +13212,7 @@ msgstr "Mozaikszerű elrendezés fü&ggőlegesen\tCtrl+F4"
 
 #: winefile.rc:83
 msgid "&About Wine File Manager"
-msgstr "&Névjegy..."
+msgstr "&Névjegy"
 
 #: winefile.rc:124
 msgid "Select destination"
@@ -13307,7 +13264,7 @@ msgstr "Szerzői &jog:"
 
 #: winefile.rc:172
 msgid "Size:"
-msgstr "Méret"
+msgstr "Méret:"
 
 #: winefile.rc:176
 msgid "H&idden"
@@ -13543,7 +13500,7 @@ msgstr "&Másolás"
 
 #: winhlp32.rc:97
 msgid "Index"
-msgstr "&Tartalom"
+msgstr "&Témakörök"
 
 #: winhlp32.rc:105
 msgid "Search"
@@ -13563,7 +13520,7 @@ msgstr "Összegzés"
 
 #: winhlp32.rc:84
 msgid "&Index"
-msgstr "&Tartalom"
+msgstr "&Témakörök"
 
 #: winhlp32.rc:88
 msgid "Help files (*.hlp)"
@@ -13838,7 +13795,7 @@ msgstr "Rich text szöveg"
 
 #: wordpad.rc:163
 msgid "Next page"
-msgstr "Következő oldal"
+msgstr "Köv. oldal"
 
 #: wordpad.rc:164
 msgid "Previous page"
