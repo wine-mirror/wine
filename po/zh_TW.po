@@ -15,7 +15,7 @@ msgstr ""
 
 #: appwiz.rc:55
 msgid "Install/Uninstall"
-msgstr "安裝/卸載"
+msgstr "安裝/移除"
 
 #: appwiz.rc:58
 msgid ""
@@ -32,21 +32,21 @@ msgid ""
 "The following software can be automatically removed. To remove a program or "
 "to modify its installed components, select it from the list and click Change/"
 "Remove."
-msgstr "下列軟件可以自動卸載。 按'添加/刪除'可卸載選定程式或者調整已安裝部件。"
+msgstr ""
+"下列軟體可以自動解除安裝。 按'新增/移除'可移除選定程式或者調整已安裝元件。"
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "技術支援資訊"
+msgstr "技術支援資訊(&S)"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
-msgstr ""
+msgstr "修改(&M)"
 
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
 msgid "&Remove"
-msgstr "刪除(&R)"
+msgstr "移除(&R)"
 
 #: appwiz.rc:72
 msgid "Support Information"
@@ -121,7 +121,7 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"這個運用程式要顯示一個HTML 網頁。 Wine 需要裝上 Gecko (Mozilla HTML engine)才"
+"這個應用程式要顯示一個HTML 網頁。 Wine 需要裝上 Gecko (Mozilla HTML engine)才"
 "能顯示HTML網頁。 如果你想自動下載和安裝Gecko，請按'安裝'。"
 
 #: appwiz.rc:106
@@ -150,27 +150,27 @@ msgstr "取消"
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
-msgstr "添加/刪除程式"
+msgstr "新增/移除程式"
 
 #: appwiz.rc:29
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
-msgstr "允許你安裝新軟件, 和從你的電腦裡刪除現有程式。"
+msgstr "允許您安裝新軟體, 或從你的電腦裡移除現有的程式。"
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
-msgstr ""
+msgstr "應用程式"
 
 #: appwiz.rc:32
 msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
-msgstr "不能執行卸載程式 '%s'。 你想把這個卸載程式從註冊表中刪除嗎?"
+msgstr "無法執行移除程式 '%s'。 你想把這個移除程式從登錄檔中刪除嗎?"
 
 #: appwiz.rc:33
 msgid "Not specified"
-msgstr "沒指定"
+msgstr "未指定"
 
 #: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:106
 msgid "Name"
@@ -186,7 +186,7 @@ msgstr "版本"
 
 #: appwiz.rc:38
 msgid "Installation programs"
-msgstr ""
+msgstr "安裝程式"
 
 #: appwiz.rc:39
 msgid "Programs (*.exe)"
@@ -199,7 +199,7 @@ msgstr "所有檔案 (*.*)"
 
 #: appwiz.rc:43
 msgid "&Modify/Remove"
-msgstr ""
+msgstr "修改/移除(&M)"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -233,11 +233,11 @@ msgstr "交織: 每"
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
-msgstr "幀數"
+msgstr "畫格數"
 
 #: avifil32.rc:49
 msgid "Current format:"
-msgstr "當前格式:"
+msgstr "目前格式:"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
@@ -253,15 +253,15 @@ msgstr "所有多媒體檔案"
 
 #: avifil32.rc:31
 msgid "video"
-msgstr "視頻"
+msgstr "視訊"
 
 #: avifil32.rc:32
 msgid "audio"
-msgstr "音頻"
+msgstr "音訊"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
-msgstr "Wine AVI-默認處理器"
+msgstr "Wine AVI-預設處理器"
 
 #: avifil32.rc:34
 msgid "uncompressed"
@@ -281,11 +281,11 @@ msgstr "套用(&A)"
 
 #: comctl32.rc:55 comctl32.rc:69 comdlg32.rc:301 user32.rc:86
 msgid "Help"
-msgstr "幫助"
+msgstr "說明"
 
 #: comctl32.rc:62
 msgid "Wizard"
-msgstr "向導"
+msgstr "精靈"
 
 #: comctl32.rc:65
 msgid "< &Back"
@@ -301,7 +301,7 @@ msgstr "結束"
 
 #: comctl32.rc:78
 msgid "Customize Toolbar"
-msgstr "自定義工具欄"
+msgstr "自訂工具列"
 
 #: comctl32.rc:81 cryptui.rc:348 ieframe.rc:40 oleview.rc:80 oleview.rc:185
 #: oleview.rc:198 oleview.rc:210 taskmgr.rc:139
@@ -320,7 +320,7 @@ msgstr "重置(&e)"
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:81
 #: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
-msgstr "幫助(&H)"
+msgstr "說明(&H)"
 
 #: comctl32.rc:84
 msgid "Move &Up"
@@ -332,19 +332,19 @@ msgstr "下移(&D)"
 
 #: comctl32.rc:86
 msgid "A&vailable buttons:"
-msgstr "可用工具欄按鈕(&V):"
+msgstr "可用工具列按鈕(&V):"
 
 #: comctl32.rc:88
 msgid "&Add ->"
-msgstr "添加(&A) ->"
+msgstr "新增(&A) ->"
 
 #: comctl32.rc:89
 msgid "<- &Remove"
-msgstr "<- 刪除(&R)"
+msgstr "<- 移除(&R)"
 
 #: comctl32.rc:90
 msgid "&Toolbar buttons:"
-msgstr "當前工具欄按鈕(&T):"
+msgstr "目前工具列按鈕(&T):"
 
 #: comctl32.rc:39
 msgid "Separator"
@@ -412,14 +412,12 @@ msgid "Print"
 msgstr "列印"
 
 #: comdlg32.rc:198
-#, fuzzy
 msgid "Printer:"
-msgstr "列印"
+msgstr "印表機:"
 
 #: comdlg32.rc:200 comdlg32.rc:377
-#, fuzzy
 msgid "Print range"
-msgstr "列印目標(&P)"
+msgstr "列印範圍"
 
 #: comdlg32.rc:201 comdlg32.rc:378 regedit.rc:216
 msgid "&All"
@@ -431,55 +429,48 @@ msgid "S&election"
 msgstr "選择區文字"
 
 #: comdlg32.rc:203
-#, fuzzy
 msgid "&Pages"
-msgstr "向上翻頁"
+msgstr "頁面(&P)"
 
 #: comdlg32.rc:206 comdlg32.rc:228
-#, fuzzy
 msgid "&Setup"
-msgstr "版面設定"
+msgstr "設定(&S)"
 
 #: comdlg32.rc:207
 msgid "&From:"
-msgstr ""
+msgstr "從(&F):"
 
 #: comdlg32.rc:208
 msgid "&To:"
-msgstr ""
+msgstr "到(&T):"
 
 #: comdlg32.rc:209
-#, fuzzy
 msgid "Print &Quality:"
-msgstr "壓縮質量(&Q):"
+msgstr "列印品質(&Q):"
 
 #: comdlg32.rc:211
-#, fuzzy
 msgid "Print to Fi&le"
-msgstr "列印到檔案"
+msgstr "列印至檔案(&L)"
 
 #: comdlg32.rc:212
 msgid "Condensed"
 msgstr ""
 
 #: comdlg32.rc:218 comdlg32.rc:389
-#, fuzzy
 msgid "Print Setup"
-msgstr "列印設定(&R)..."
+msgstr "列印設定"
 
 #: comdlg32.rc:221 comdlg32.rc:357 comdlg32.rc:396
-#, fuzzy
 msgid "Printer"
-msgstr "列印"
+msgstr "印表機"
 
 #: comdlg32.rc:222
-#, fuzzy
 msgid "&Default Printer"
-msgstr "默認印表機; "
+msgstr "預設印表機(&D)"
 
 #: comdlg32.rc:223
 msgid "[none]"
-msgstr ""
+msgstr "[無]"
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
@@ -490,9 +481,8 @@ msgid "Orientation"
 msgstr "方向"
 
 #: comdlg32.rc:230
-#, fuzzy
 msgid "Po&rtrait"
-msgstr "縱向(&P)"
+msgstr "縱向(&R)"
 
 #: comdlg32.rc:231 comdlg32.rc:436 wineps.rc:34
 msgid "&Landscape"
@@ -503,14 +493,12 @@ msgid "Paper"
 msgstr "紙張"
 
 #: comdlg32.rc:235
-#, fuzzy
 msgid "Si&ze"
-msgstr "大小(&z)："
+msgstr "大小(&Z)"
 
 #: comdlg32.rc:236
-#, fuzzy
 msgid "&Source"
-msgstr "原始檔案:"
+msgstr "來源(&S)"
 
 #: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
@@ -585,13 +573,11 @@ msgid "&Hue:"
 msgstr "色調(&H):"
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr "濃度(&S):"
+msgstr "飽和度(&S):"
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "亮度(&L):"
@@ -606,7 +592,7 @@ msgstr "定義自定色彩(&D) >>"
 
 #: comdlg32.rc:310 regedit.rc:223 regedit.rc:233
 msgid "Find"
-msgstr "查找"
+msgstr "搜尋"
 
 #: comdlg32.rc:313 comdlg32.rc:332
 msgid "Fi&nd What:"
@@ -653,9 +639,8 @@ msgid "Replace &All"
 msgstr "取代全部(&A)"
 
 #: comdlg32.rc:358
-#, fuzzy
 msgid "Print to fi&le"
-msgstr "列印到檔案"
+msgstr "列印至檔案(&L)"
 
 #: comdlg32.rc:359 comdlg32.rc:397 ieframe.rc:39 shdoclc.rc:58 shell32.rc:105
 #: clock.rc:28 wineconsole.rc:27
@@ -667,93 +652,84 @@ msgid "&Name:"
 msgstr "名稱(&N):"
 
 #: comdlg32.rc:362 comdlg32.rc:400
-#, fuzzy
 msgid "Status:"
-msgstr "狀態欄(&S)"
+msgstr "狀態:"
 
 #: comdlg32.rc:364 comdlg32.rc:402
-#, fuzzy
 msgid "Type:"
-msgstr "類型(&T)："
+msgstr "類型:"
 
 #: comdlg32.rc:366 comdlg32.rc:404
 msgid "Where:"
-msgstr ""
+msgstr "位置:"
 
 #: comdlg32.rc:368 comdlg32.rc:406
-#, fuzzy
 msgid "Comment:"
 msgstr "備註:"
 
 #: comdlg32.rc:371
 msgid "Copies"
-msgstr ""
+msgstr "份數"
 
 #: comdlg32.rc:372
 msgid "Number of &copies:"
-msgstr ""
+msgstr "份數(&C):"
 
 #: comdlg32.rc:374
 msgid "C&ollate"
-msgstr ""
+msgstr "自動分頁(&O)"
 
 #: comdlg32.rc:379
 msgid "Pa&ges"
-msgstr ""
+msgstr "頁面(&G)"
 
 #: comdlg32.rc:380
-#, fuzzy
 msgid "&Selection"
 msgstr "選擇(&S)"
 
 #: comdlg32.rc:383
 msgid "&from:"
-msgstr ""
+msgstr "從(&F):"
 
 #: comdlg32.rc:384
 msgid "&to:"
-msgstr ""
+msgstr "到(&T):"
 
 #: comdlg32.rc:410 winecfg.rc:286
 msgid "Si&ze:"
 msgstr "大小(&z)："
 
 #: comdlg32.rc:412
-#, fuzzy
 msgid "&Source:"
-msgstr "原始檔案:"
+msgstr "來源(&S):"
 
 #: comdlg32.rc:417
-#, fuzzy
 msgid "P&ortrait"
-msgstr "縱向(&P)"
+msgstr "縱向(&O)"
 
 #: comdlg32.rc:418
-#, fuzzy
 msgid "L&andscape"
-msgstr "橫向(&L)"
+msgstr "橫向(&A)"
 
 #: comdlg32.rc:423
 msgid "Setup Page"
-msgstr ""
+msgstr "設定頁面"
 
 #: comdlg32.rc:432
 msgid "&Tray:"
-msgstr ""
+msgstr "進紙匣(&T):"
 
 #: comdlg32.rc:435 wineps.rc:32
 msgid "&Portrait"
 msgstr "縱向(&P)"
 
 #: comdlg32.rc:437
-#, fuzzy
 msgid "Borders"
-msgstr "當前標題欄"
+msgstr "邊框"
 
 #: comdlg32.rc:438
-#, fuzzy
 msgid "L&eft:"
-msgstr "左(&L):"
+msgstr "左(&E):"
 
 #: comdlg32.rc:440 notepad.rc:109
 msgid "&Right:"
@@ -761,16 +737,15 @@ msgstr "右(&R):"
 
 #: comdlg32.rc:442
 msgid "T&op:"
-msgstr ""
+msgstr "上(&O):"
 
 #: comdlg32.rc:444 notepad.rc:111
 msgid "&Bottom:"
 msgstr "下(&B):"
 
 #: comdlg32.rc:448
-#, fuzzy
 msgid "P&rinter..."
-msgstr "列印"
+msgstr "印表機(&R)..."
 
 #: comdlg32.rc:456
 msgid "Look &in:"
@@ -793,14 +768,12 @@ msgid "&Open"
 msgstr "開啟(&O)"
 
 #: comdlg32.rc:481
-#, fuzzy
 msgid "File name:"
-msgstr "檔案名(&F):"
+msgstr "檔案名稱:"
 
 #: comdlg32.rc:484
-#, fuzzy
 msgid "Files of type:"
-msgstr "檔案類型(&T):"
+msgstr "檔案類型:"
 
 #: comdlg32.rc:29
 msgid "File not found"
@@ -824,18 +797,18 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "檔案已經存在。\n"
-"要替換嗎?"
+"要取代嗎?"
 
 #: comdlg32.rc:33
 msgid "Invalid character(s) in path"
-msgstr "檔案名中存在無效的字符"
+msgstr "檔案名稱中存在無效的字元"
 
 #: comdlg32.rc:34
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
 msgstr ""
-"檔案名中不能包含任何一下字符::\n"
+"檔案名中不能包含任何一下字元:\n"
 "                          / : < > |"
 
 #: comdlg32.rc:35
@@ -868,19 +841,19 @@ msgstr "顯示桌面"
 
 #: comdlg32.rc:109
 msgid "Regular"
-msgstr ""
+msgstr "標準"
 
 #: comdlg32.rc:110
 msgid "Bold"
-msgstr ""
+msgstr "粗體"
 
 #: comdlg32.rc:111
 msgid "Italic"
-msgstr ""
+msgstr "斜體"
 
 #: comdlg32.rc:112
 msgid "Bold Italic"
-msgstr ""
+msgstr "粗斜體"
 
 #: comdlg32.rc:117 wordpad.rc:114
 msgid "Black"
@@ -900,7 +873,7 @@ msgstr ""
 
 #: comdlg32.rc:121 wordpad.rc:118
 msgid "Navy"
-msgstr ""
+msgstr "海軍藍"
 
 #: comdlg32.rc:122 wordpad.rc:119
 msgid "Purple"
@@ -912,28 +885,27 @@ msgstr ""
 
 #: comdlg32.rc:124 wordpad.rc:121
 msgid "Gray"
-msgstr ""
+msgstr "灰色"
 
 #: comdlg32.rc:125 wordpad.rc:122
 msgid "Silver"
-msgstr ""
+msgstr "銀色"
 
 #: comdlg32.rc:126 wordpad.rc:123
-#, fuzzy
 msgid "Red"
-msgstr "倒回"
+msgstr "紅色"
 
 #: comdlg32.rc:127 wordpad.rc:124
 msgid "Lime"
-msgstr ""
+msgstr "萊姆綠"
 
 #: comdlg32.rc:128 wordpad.rc:125
 msgid "Yellow"
-msgstr ""
+msgstr "黃色"
 
 #: comdlg32.rc:129 wordpad.rc:126
 msgid "Blue"
-msgstr ""
+msgstr "藍色"
 
 #: comdlg32.rc:130 wordpad.rc:127
 msgid "Fuchsia"
@@ -941,24 +913,23 @@ msgstr ""
 
 #: comdlg32.rc:131 wordpad.rc:128
 msgid "Aqua"
-msgstr ""
+msgstr "水藍色"
 
 #: comdlg32.rc:132 wordpad.rc:129
 msgid "White"
-msgstr ""
+msgstr "白色"
 
 #: comdlg32.rc:52
 msgid "Unreadable Entry"
 msgstr "數值不可讀"
 
 #: comdlg32.rc:54
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
-"這個值不在頁數範圍。\n"
-"請輸入一個 %d 和 %d 之間的數。"
+"輸入值不在頁數範圍內。\n"
+"請輸入一個 %d 和 %d 之間的值。"
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -969,13 +940,12 @@ msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
 msgstr ""
-"邊緣空白重迭或落於紙外,\n"
+"邊緣空白重疊或落於邊界外,\n"
 "請重新輸入邊緣空白。"
 
 #: comdlg32.rc:60
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "'份數' 項不能空。"
+msgstr "'份數' 欄位不能空白。"
 
 #: comdlg32.rc:62
 msgid ""
@@ -987,24 +957,19 @@ msgstr ""
 
 #: comdlg32.rc:63
 msgid "A printer error occurred."
-msgstr "印表機錯誤。"
+msgstr "印表機發生錯誤。"
 
 #: comdlg32.rc:64
 msgid "No default printer defined."
-msgstr "沒有默認印表機。"
+msgstr "無預設印表機。"
 
 #: comdlg32.rc:65
 msgid "Cannot find the printer."
 msgstr "找不到印表機。"
 
 #: comdlg32.rc:66 progman.rc:73
-#, fuzzy
 msgid "Out of memory."
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"內存溢出。\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"內存不夠。"
+msgstr "記憶體不足。"
 
 #: comdlg32.rc:67
 msgid "An error occurred."
@@ -1012,7 +977,7 @@ msgstr "出現一些錯誤。"
 
 #: comdlg32.rc:68
 msgid "Unknown printer driver."
-msgstr "找不到印表機驅動器。"
+msgstr "找不到印表機驅動程式。"
 
 #: comdlg32.rc:71
 msgid ""
@@ -1028,7 +993,7 @@ msgstr ""
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
-msgstr ""
+msgstr "儲存(&S)"
 
 #: comdlg32.rc:139
 #, fuzzy
@@ -1036,14 +1001,12 @@ msgid "Save &in:"
 msgstr "另存為(&A)..."
 
 #: comdlg32.rc:140
-#, fuzzy
 msgid "Save"
-msgstr "儲存 HTML"
+msgstr "儲存"
 
 #: comdlg32.rc:142
-#, fuzzy
 msgid "Open File"
-msgstr "Wine地雷"
+msgstr "開啟檔案"
 
 #: comdlg32.rc:79 oleview.rc:95
 msgid "Ready"
@@ -1075,7 +1038,7 @@ msgstr "手動進紙; "
 
 #: comdlg32.rc:86
 msgid "Paper problem; "
-msgstr "紙的問題; "
+msgstr "紙張問題; "
 
 #: comdlg32.rc:87
 msgid "Printer offline; "
@@ -1087,7 +1050,7 @@ msgstr "I/O 活動; "
 
 #: comdlg32.rc:89
 msgid "Busy; "
-msgstr "繁忙; "
+msgstr "忙碌中; "
 
 #: comdlg32.rc:90
 msgid "Printing; "
@@ -1095,7 +1058,7 @@ msgstr "正在列印; "
 
 #: comdlg32.rc:91
 msgid "Output tray is full; "
-msgstr "出紙托盤已滿; "
+msgstr "出紙匣已滿; "
 
 #: comdlg32.rc:92
 msgid "Not available; "
@@ -1127,15 +1090,15 @@ msgstr "沒墨; "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
-msgstr "頁處理內存超支; "
+msgstr "頁處理記憶體超支; "
 
 #: comdlg32.rc:100
 msgid "Interrupted by user; "
-msgstr "用戶干預; "
+msgstr "已被使用者中斷; "
 
 #: comdlg32.rc:101
 msgid "Out of memory; "
-msgstr "內存不夠; "
+msgstr "記憶體不足; "
 
 #: comdlg32.rc:102
 msgid "The printer door is open; "
@@ -1143,7 +1106,7 @@ msgstr "印表機蓋是打開的; "
 
 #: comdlg32.rc:103
 msgid "Print server unknown; "
-msgstr "找不到列印服務器; "
+msgstr "找不到列印伺服器; "
 
 #: comdlg32.rc:104
 msgid "Power save mode; "
@@ -1151,7 +1114,7 @@ msgstr "省電狀態; "
 
 #: comdlg32.rc:73
 msgid "Default Printer; "
-msgstr "默認印表機; "
+msgstr "預設印表機; "
 
 #: comdlg32.rc:74
 msgid "There are %d documents in the queue"
@@ -1168,11 +1131,11 @@ msgstr "邊緣空白 [毫米]"
 #: comdlg32.rc:77 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
-msgstr "毫米"
+msgstr "公釐"
 
 #: credui.rc:42
 msgid "&User name:"
-msgstr "用戶名(&U):"
+msgstr "使用者名稱(&U):"
 
 #: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
@@ -1192,7 +1155,7 @@ msgstr "正在連接到 %s"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
-msgstr "登錄失敗"
+msgstr "登入失敗"
 
 #: credui.rc:30
 msgid ""
@@ -1213,7 +1176,7 @@ msgstr "開著大寫鎖定可能導致你輸入錯誤的密碼。"
 
 #: credui.rc:31
 msgid "Caps Lock is On"
-msgstr "大寫鎖定開著"
+msgstr "大寫鎖定已開啟"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
@@ -2623,9 +2586,8 @@ msgid "The file format is not recognized. Please select another file."
 msgstr ""
 
 #: cryptui.rc:83
-#, fuzzy
 msgid "Could not open "
-msgstr "不能開啟檔案."
+msgstr "無法開啟 "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -2648,9 +2610,8 @@ msgid "File"
 msgstr "檔案"
 
 #: cryptui.rc:89 inetcpl.rc:105
-#, fuzzy
 msgid "Content"
-msgstr "內容(&C)"
+msgstr "內容"
 
 #: cryptui.rc:91
 msgid "Certificate Revocation List"
@@ -2697,13 +2658,8 @@ msgid "Friendly Name"
 msgstr ""
 
 #: cryptui.rc:106 cryptui.rc:120
-#, fuzzy
 msgid "<None>"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"未定義\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"無"
+msgstr "<無>"
 
 #: cryptui.rc:107
 msgid ""
@@ -2820,9 +2776,8 @@ msgid "Private Key Archival"
 msgstr ""
 
 #: cryptui.rc:148
-#, fuzzy
 msgid "Export Format"
-msgstr "格式(&O)"
+msgstr "匯出格式"
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
@@ -2830,18 +2785,17 @@ msgstr ""
 
 #: cryptui.rc:150
 msgid "Export Filename"
-msgstr ""
+msgstr "匯出檔名"
 
 #: cryptui.rc:151
 msgid "Specify the name of the file in which the content will be saved."
 msgstr ""
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
 msgstr ""
 "檔案已經存在。\n"
-"要替換嗎?"
+"要取代嗎?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -2864,9 +2818,8 @@ msgid "Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:160
-#, fuzzy
 msgid "File Format"
-msgstr "格式(&O)"
+msgstr "檔案格式"
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
@@ -2896,7 +2849,7 @@ msgstr ""
 
 #: cryptui.rc:169
 msgid "Enter Password"
-msgstr ""
+msgstr "輸入密碼"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
@@ -2916,7 +2869,7 @@ msgstr ""
 
 #: devenum.rc:32
 msgid "Default DirectSound"
-msgstr ""
+msgstr "預設 DirectSound 裝置"
 
 #: devenum.rc:33
 msgid "DirectSound: %s"
@@ -2924,54 +2877,47 @@ msgstr ""
 
 #: devenum.rc:34
 msgid "Default WaveOut Device"
-msgstr ""
+msgstr "預設 WaveOut 裝置"
 
 #: devenum.rc:35
 msgid "Default MidiOut Device"
-msgstr ""
+msgstr "預設 MidiOut 裝置"
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "配置(&F)..."
+msgstr "裝置設定"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "重置"
 
 #: dinput.rc:48
-#, fuzzy
 msgid "Player"
-msgstr "播放"
+msgstr "玩家"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "De&vice:"
+msgstr "裝置"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "激活"
+msgstr "動作"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "儲存槽對映"
+msgstr "映射"
 
 #: dinput.rc:53
 msgid "Show Assigned First"
 msgstr ""
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "激活"
+msgstr "動作"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "對象(&O)"
+msgstr "物件"
 
 #: dxdiagn.rc:25
 #, fuzzy
@@ -3056,7 +3002,7 @@ msgstr "照相機中的檔案"
 
 #: gphoto2.rc:31
 msgid "Import Selected"
-msgstr "導入選定檔案"
+msgstr "匯入選擇的檔案"
 
 #: gphoto2.rc:32
 msgid "Preview"
@@ -3064,7 +3010,7 @@ msgstr "預覽"
 
 #: gphoto2.rc:33
 msgid "Import All"
-msgstr "導入全部"
+msgstr "匯入全部"
 
 #: gphoto2.rc:34
 msgid "Skip This Dialog"
@@ -3092,36 +3038,28 @@ msgstr "正在連接照相機... 請稍候"
 
 #: hhctrl.rc:56
 msgid "S&ync"
-msgstr ""
+msgstr "同步(&Y)"
 
 #: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
-#, fuzzy
 msgid "&Back"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"向後(&B)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"返回(&B)"
+msgstr "返回(&B)"
 
 #: hhctrl.rc:58
-#, fuzzy
 msgid "&Forward"
 msgstr "向前"
 
 #: hhctrl.rc:59
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
-msgstr "首頁"
+msgstr "首頁(&H)"
 
 #: hhctrl.rc:60
-#, fuzzy
 msgid "&Stop"
-msgstr "停止"
+msgstr "停止(&S)"
 
 #: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
-msgstr "刷新(&R)"
+msgstr "重新整理(&R)"
 
 #: hhctrl.rc:62 winhlp32.rc:31
 msgid "&Print..."
@@ -3133,7 +3071,7 @@ msgstr "內容(&C)"
 
 #: hhctrl.rc:29
 msgid "I&ndex"
-msgstr "目錄(&N)"
+msgstr "索引(&N)"
 
 #: hhctrl.rc:30 notepad.rc:52
 msgid "&Search"
@@ -3141,15 +3079,15 @@ msgstr "搜尋(&S)"
 
 #: hhctrl.rc:31
 msgid "Favor&ites"
-msgstr "最愛(&I)"
+msgstr "我的最愛(&I)"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "隱藏分頁標籤(&T)"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "顯示分頁標籤(&T)"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -3165,14 +3103,13 @@ msgstr "停止"
 
 #: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 msgid "Refresh"
-msgstr "刷新"
+msgstr "重新整理"
 
 #: hhctrl.rc:43 ieframe.rc:63
 msgid "Back"
-msgstr "向後"
+msgstr "返回"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
 msgstr "首頁"
@@ -3201,53 +3138,43 @@ msgstr "檔案(&F)"
 
 #: ieframe.rc:27 regedit.rc:44 regedit.rc:95
 msgid "&New"
-msgstr "新建(&N)"
+msgstr "新增(&N)"
 
 #: ieframe.rc:29 winefile.rc:72
 msgid "&Window"
-msgstr "窗口(&W)"
+msgstr "視窗(&W)"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
-#, fuzzy
 msgid "&Open..."
-msgstr "開啟(&O)"
+msgstr "開啟(&O)..."
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "另存為(&A)..."
 
 #: ieframe.rc:35
-#, fuzzy
 msgid "Print &format..."
-msgstr "列印"
+msgstr "列印格式(&F)..."
 
 #: ieframe.rc:36
-#, fuzzy
 msgid "Pr&int..."
-msgstr "列印"
+msgstr "列印(&I)..."
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
 msgstr "列印預覽(&W)..."
 
 #: ieframe.rc:44
-#, fuzzy
 msgid "&Toolbars"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"工具條(&T)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"工具欄(&T)"
+msgstr "工具列(&T)"
 
 #: ieframe.rc:46
-#, fuzzy
 msgid "&Standard bar"
-msgstr "狀態欄(&S)"
+msgstr "標準列(&S)"
 
 #: ieframe.rc:47
 msgid "&Address bar"
-msgstr ""
+msgstr "位址列(&A)"
 
 #: ieframe.rc:50 regedit.rc:71
 msgid "&Favorites"
@@ -3255,54 +3182,48 @@ msgstr "我的最愛(&F)"
 
 #: ieframe.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
-msgstr "添加到我的最愛(&A)..."
+msgstr "新增到我的最愛(&A)..."
 
 #: ieframe.rc:57
 msgid "&About Internet Explorer"
-msgstr ""
+msgstr "關於 Internet Explorer(&A)"
 
 #: ieframe.rc:87
-#, fuzzy
 msgid "Open URL"
-msgstr "開啟鏈接(&O)"
+msgstr "開啟連結(&O)"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
 msgstr ""
 
 #: ieframe.rc:91
-#, fuzzy
 msgid "Open:"
-msgstr "開啟"
+msgstr "開啟:"
 
 #: ieframe.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
 msgstr "首頁"
 
 #: ieframe.rc:68 winhlp32.rc:66
-#, fuzzy
 msgid "Print..."
-msgstr "列印"
+msgstr "列印..."
 
 #: ieframe.rc:73
 msgid "Address"
-msgstr ""
+msgstr "位址"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "屬性(&P)"
+msgstr "搜尋 %s"
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
-msgstr ""
+msgstr "開始下載 %s"
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "正在下載..."
+msgstr "正在下載 %s ..."
 
 #: ieframe.rc:81
 #, fuzzy
@@ -3310,33 +3231,28 @@ msgid "Asking for %s"
 msgstr "屬性(&P)"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr "單頁"
+msgstr "首頁"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
 msgstr ""
 
 #: inetcpl.rc:50
-#, fuzzy
 msgid "&Current page"
-msgstr "下一頁"
+msgstr "目前的頁面(&C)"
 
 #: inetcpl.rc:51
-#, fuzzy
 msgid "&Default page"
-msgstr "(默認)"
+msgstr "預設頁面(&D)"
 
 #: inetcpl.rc:52
-#, fuzzy
 msgid "&Blank page"
-msgstr "單頁"
+msgstr "空白頁面(&B)"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr "歷史指令"
+msgstr "瀏覽紀錄"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3344,16 +3260,15 @@ msgstr ""
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr ""
+msgstr "刪除檔案(&F)..."
 
 #: inetcpl.rc:57
-#, fuzzy
 msgid "&Settings..."
-msgstr "選項(&O)..."
+msgstr "設定(&S)..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr ""
+msgstr "刪除瀏覽紀錄"
 
 #: inetcpl.rc:68
 msgid ""
@@ -3413,7 +3328,7 @@ msgstr "生產商"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
-msgstr ""
+msgstr "網際網路設定"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
@@ -3425,9 +3340,8 @@ msgid "Security settings for zone: "
 msgstr "結束時儲存設定(&S)"
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "個性化"
+msgstr "自訂"
 
 #: inetcpl.rc:32
 msgid "Very Low"
@@ -3599,13 +3513,12 @@ msgid "File not found.\n"
 msgstr "找不到檔案。\n"
 
 #: winerror.mc:41
-#, fuzzy
 msgid "Path not found.\n"
-msgstr "路徑 %s 沒找到。\n"
+msgstr "找不到路徑 %s 。\n"
 
 #: winerror.mc:46
 msgid "Too many open files.\n"
-msgstr ""
+msgstr "開啟過多檔但。\n"
 
 #: winerror.mc:51
 msgid "Access denied.\n"
@@ -3618,16 +3531,11 @@ msgstr ""
 #: winerror.mc:61
 #, fuzzy
 msgid "Memory trashed.\n"
-msgstr "內存監視器。\n"
+msgstr "記憶體監視器。\n"
 
 #: winerror.mc:66
-#, fuzzy
 msgid "Not enough memory.\n"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"內存溢出。\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"內存不夠。"
+msgstr "記憶體不足。\n"
 
 #: winerror.mc:71
 msgid "Invalid block.\n"
@@ -3650,13 +3558,8 @@ msgid "Invalid data.\n"
 msgstr ""
 
 #: winerror.mc:96
-#, fuzzy
 msgid "Out of memory.\n"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"內存溢出。\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"內存不夠。"
+msgstr "記憶體不足。\n"
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
@@ -3719,12 +3622,12 @@ msgstr "無紙; 。\n"
 #: winerror.mc:171
 #, fuzzy
 msgid "Write fault.\n"
-msgstr "默認。\n"
+msgstr "預設。\n"
 
 #: winerror.mc:176
 #, fuzzy
 msgid "Read fault.\n"
-msgstr "默認。\n"
+msgstr "預設。\n"
 
 #: winerror.mc:181
 msgid "General failure.\n"
@@ -3844,7 +3747,7 @@ msgstr ""
 #: winerror.mc:316
 #, fuzzy
 msgid "Sharing paused.\n"
-msgstr "字符串值(&S)。\n"
+msgstr "字串值(&S)。\n"
 
 #: winerror.mc:321
 msgid "Request not accepted.\n"
@@ -3887,7 +3790,7 @@ msgstr "檔案名中存在無效的字符。\n"
 #: winerror.mc:366
 #, fuzzy
 msgid "Net write fault.\n"
-msgstr "設為默認值(&D)。\n"
+msgstr "設為預設值(&D)。\n"
 
 #: winerror.mc:371
 msgid "No process slots.\n"
@@ -4182,7 +4085,7 @@ msgstr ""
 #: winerror.mc:716
 #, fuzzy
 msgid "File already exists.\n"
-msgstr "端口 %s 已經存在。\n"
+msgstr "連接埠 %s 已經存在。\n"
 
 #: winerror.mc:721
 #, fuzzy
@@ -4469,7 +4372,7 @@ msgstr ""
 #: winerror.mc:1061
 #, fuzzy
 msgid "Registry corrupt.\n"
-msgstr "註冊表編輯器。\n"
+msgstr "登錄檔編輯器。\n"
 
 #: winerror.mc:1066
 msgid "Invalid key.\n"
@@ -4478,7 +4381,7 @@ msgstr ""
 #: winerror.mc:1071
 #, fuzzy
 msgid "Can't open registry key.\n"
-msgstr "執行 Wine 註冊表編輯器。\n"
+msgstr "執行 Wine 登錄檔編輯器。\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key.\n"
@@ -4487,7 +4390,7 @@ msgstr ""
 #: winerror.mc:1081
 #, fuzzy
 msgid "Can't write registry key.\n"
-msgstr "執行 Wine 註冊表編輯器。\n"
+msgstr "執行 Wine 登錄檔編輯器。\n"
 
 #: winerror.mc:1086
 msgid "Registry has been recovered.\n"
@@ -4496,17 +4399,17 @@ msgstr ""
 #: winerror.mc:1091
 #, fuzzy
 msgid "Registry is corrupt.\n"
-msgstr "註冊表編輯器。\n"
+msgstr "登錄檔編輯器。\n"
 
 #: winerror.mc:1096
 #, fuzzy
 msgid "I/O to registry failed.\n"
-msgstr "導入註冊表檔案。\n"
+msgstr "匯入登錄檔檔案。\n"
 
 #: winerror.mc:1101
 #, fuzzy
 msgid "Not registry file.\n"
-msgstr "導入註冊表檔案。\n"
+msgstr "匯入登錄檔檔案。\n"
 
 #: winerror.mc:1106
 #, fuzzy
@@ -4598,7 +4501,7 @@ msgstr ""
 #: winerror.mc:1211
 #, fuzzy
 msgid "Process aborted.\n"
-msgstr "結束進程(&E)。\n"
+msgstr "結束行程(&E)。\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed.\n"
@@ -4655,7 +4558,7 @@ msgstr ""
 #: winerror.mc:1281
 #, fuzzy
 msgid "Process abort cannot be detected.\n"
-msgstr "結束進程(&E)。\n"
+msgstr "結束行程(&E)。\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service.\n"
@@ -4825,7 +4728,7 @@ msgstr ""
 #: winerror.mc:1491
 #, fuzzy
 msgid "Real-mode application.\n"
-msgstr "運用程式。\n"
+msgstr "應用程式。\n"
 
 #: winerror.mc:1496
 msgid "Invalid DLL.\n"
@@ -4849,9 +4752,9 @@ msgstr "找不到檔案。\n"
 msgid "Out of user handles.\n"
 msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"內存溢出。\n"
+"記憶體溢出。\n"
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"內存不夠。"
+"記憶體不夠。"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls.\n"
@@ -5157,7 +5060,7 @@ msgstr "檔案不存在。\n"
 #: winerror.mc:1881
 #, fuzzy
 msgid "The domain controller already exists.\n"
-msgstr "端口 %s 已經存在。\n"
+msgstr "連接埠 %s 已經存在。\n"
 
 #: winerror.mc:1886
 #, fuzzy
@@ -5245,7 +5148,7 @@ msgstr ""
 #: winerror.mc:1986
 #, fuzzy
 msgid "User already exists.\n"
-msgstr "端口 %s 已經存在。\n"
+msgstr "連接埠 %s 已經存在。\n"
 
 #: winerror.mc:1991
 msgid "No such user.\n"
@@ -5254,7 +5157,7 @@ msgstr ""
 #: winerror.mc:1996
 #, fuzzy
 msgid "Group already exists.\n"
-msgstr "端口 %s 已經存在。\n"
+msgstr "連接埠 %s 已經存在。\n"
 
 #: winerror.mc:2001
 msgid "No such group.\n"
@@ -5407,7 +5310,7 @@ msgstr ""
 #: winerror.mc:2181
 #, fuzzy
 msgid "Domain already exists.\n"
-msgstr "端口 %s 已經存在。\n"
+msgstr "連接埠 %s 已經存在。\n"
 
 #: winerror.mc:2186
 msgid "Domain limit exceeded.\n"
@@ -5503,7 +5406,7 @@ msgstr ""
 #: winerror.mc:2296
 #, fuzzy
 msgid "Local group already exists.\n"
-msgstr "端口 %s 已經存在。\n"
+msgstr "連接埠 %s 已經存在。\n"
 
 #: winerror.mc:2301 winerror.mc:2326
 msgid "Logon type not granted.\n"
@@ -5618,12 +5521,12 @@ msgstr ""
 #: winerror.mc:2441
 #, fuzzy
 msgid "Hotkey already registered.\n"
-msgstr "端口 %s 已經存在。\n"
+msgstr "連接埠 %s 已經存在。\n"
 
 #: winerror.mc:2446
 #, fuzzy
 msgid "Class already exists.\n"
-msgstr "端口 %s 已經存在。\n"
+msgstr "連接埠 %s 已經存在。\n"
 
 #: winerror.mc:2451
 #, fuzzy
@@ -5633,7 +5536,7 @@ msgstr "資料夾不存在。\n"
 #: winerror.mc:2456
 #, fuzzy
 msgid "Class has open windows.\n"
-msgstr "關閉窗口。\n"
+msgstr "關閉視窗。\n"
 
 #: winerror.mc:2461
 msgid "Invalid index.\n"
@@ -6134,9 +6037,9 @@ msgstr ""
 msgid "Out of resources.\n"
 msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"內存溢出。\n"
+"記憶體溢出。\n"
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"內存不夠。"
+"記憶體不夠。"
 
 #: winerror.mc:3041
 msgid "RPC server unavailable.\n"
@@ -6252,7 +6155,7 @@ msgstr ""
 #: winerror.mc:3181
 #, fuzzy
 msgid "Endpoints not registered.\n"
-msgstr "結束註冊表編輯器。\n"
+msgstr "結束登錄檔編輯器。\n"
 
 #: winerror.mc:3186
 msgid "Nothing to export.\n"
@@ -6283,7 +6186,7 @@ msgstr "找不到檔案。\n"
 #: winerror.mc:3216
 #, fuzzy
 msgid "Entry already exists.\n"
-msgstr "端口 %s 已經存在。\n"
+msgstr "連接埠 %s 已經存在。\n"
 
 #: winerror.mc:3221
 #, fuzzy
@@ -6457,7 +6360,7 @@ msgstr "數字格式無效。\n"
 #: winerror.mc:3421
 #, fuzzy
 msgid "Printer already exists.\n"
-msgstr "端口 %s 已經存在。\n"
+msgstr "連接埠 %s 已經存在。\n"
 
 #: winerror.mc:3426
 #, fuzzy
@@ -6738,23 +6641,23 @@ msgstr "找不到: '%s'。\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
-msgstr "本地端口"
+msgstr "本機連接埠"
 
 #: localspl.rc:29
 msgid "Local Monitor"
-msgstr "本地監視器"
+msgstr "本機監視器"
 
 #: localui.rc:36
 msgid "Add a Local Port"
-msgstr "添加本地端口"
+msgstr "新增本機連接埠"
 
 #: localui.rc:39
 msgid "&Enter the port name to add:"
-msgstr "添加本地端口名稱(&E):"
+msgstr "輸入要新增的本機連接埠名稱(&E):"
 
 #: localui.rc:48
 msgid "Configure LPT Port"
-msgstr "設定列印端口"
+msgstr "設定並列埠"
 
 #: localui.rc:51
 msgid "Timeout (seconds)"
@@ -6762,19 +6665,19 @@ msgstr "超時(秒)"
 
 #: localui.rc:52
 msgid "&Transmission Retry:"
-msgstr "重試通訊(&T):"
+msgstr "重試傳送(&T):"
 
 #: localui.rc:29
 msgid "'%s' is not a valid port name"
-msgstr "'%s' 不是有效的端口名稱"
+msgstr "'%s' 不是有效的連接埠名稱"
 
 #: localui.rc:30
 msgid "Port %s already exists"
-msgstr "端口 %s 已經存在"
+msgstr "連接埠 %s 已經存在"
 
 #: localui.rc:31
 msgid "This port has no options to configure"
-msgstr "這個端口沒有可設定選項"
+msgstr "這個連接埠沒有可設定選項"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
@@ -6782,7 +6685,7 @@ msgstr ""
 
 #: mapi32.rc:29
 msgid "Send Mail"
-msgstr ""
+msgstr "傳送郵件"
 
 #: mpr.rc:32 wininet.rc:34
 msgid "Enter Network Password"
@@ -6790,15 +6693,15 @@ msgstr "輸入網路密碼"
 
 #: mpr.rc:35 wininet.rc:37 wininet.rc:57
 msgid "Please enter your username and password:"
-msgstr "請輸入用戶名和密碼:"
+msgstr "請輸入使用者名稱和密碼:"
 
 #: mpr.rc:36 wininet.rc:38
 msgid "Proxy"
-msgstr "代理"
+msgstr "代理伺服器"
 
 #: mpr.rc:38 wininet.rc:40 wininet.rc:60
 msgid "User"
-msgstr "用戶名"
+msgstr "使用者"
 
 #: mpr.rc:39 wininet.rc:41 wininet.rc:61
 msgid "Password"
@@ -6818,7 +6721,7 @@ msgstr "聲音選擇"
 
 #: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
-msgstr "儲存為(&S)..."
+msgstr "另存為(&S)..."
 
 #: msacm32.rc:39
 msgid "&Format:"
@@ -6830,11 +6733,11 @@ msgstr "屬性(&A):"
 
 #: mshtml.rc:37
 msgid "Hyperlink"
-msgstr "超鏈接"
+msgstr "超連結"
 
 #: mshtml.rc:40
 msgid "Hyperlink Information"
-msgstr "超鏈接資訊"
+msgstr "超連結資訊"
 
 #: mshtml.rc:41 winecfg.rc:236
 msgid "&Type:"
@@ -6854,7 +6757,7 @@ msgstr "HTML 檔案"
 
 #: mshtml.rc:26
 msgid "Downloading from %s..."
-msgstr ""
+msgstr "從 %s 下載中..."
 
 #: mshtml.rc:25
 msgid "Done"
@@ -6865,7 +6768,7 @@ msgstr ""
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
-msgstr "不能開啟所指定的安裝軟件包。 請檢查檔案路徑後再試。"
+msgstr "不能開啟所指定的安裝軟體包。 請檢查檔案路徑後再試。"
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -6873,7 +6776,7 @@ msgstr "路徑 %s 沒找到"
 
 #: msi.rc:29
 msgid "insert disk %s"
-msgstr "插入軟碟 %s"
+msgstr "插入磁碟 %s"
 
 #: msi.rc:30
 msgid ""
@@ -6914,11 +6817,11 @@ msgstr "輸入包含 %s 的檔案夾"
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr "本功能的安裝源不存在"
+msgstr "本功能的安裝來源不存在"
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr "本功能的網路儲存槽不存在"
+msgstr "本功能的網路儲存裝置不存在"
 
 #: msi.rc:60
 msgid "feature from:"
@@ -6940,7 +6843,7 @@ msgstr ""
 
 #: msvfw32.rc:30
 msgid "Video Compression"
-msgstr "視頻壓縮"
+msgstr "視訊壓縮"
 
 #: msvfw32.rc:36
 msgid "&Compressor:"
@@ -6948,7 +6851,7 @@ msgstr "壓縮器(&C):"
 
 #: msvfw32.rc:39
 msgid "Con&figure..."
-msgstr "配置(&F)..."
+msgstr "組態(&F)..."
 
 #: msvfw32.rc:40
 msgid "&About"
@@ -6956,24 +6859,23 @@ msgstr "關於(&A)"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
-msgstr "壓縮質量(&Q):"
+msgstr "壓縮品質(&Q):"
 
 #: msvfw32.rc:46
 msgid "&Key Frame Every"
-msgstr "關鍵幀/每(&K)"
+msgstr "關鍵畫格/每(&K)"
 
 #: msvfw32.rc:50
 msgid "&Data Rate"
-msgstr "數據速度(&D)"
+msgstr "資料速率(&D)"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
 msgstr "KB/sec"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
-msgstr "全幀(未壓縮)"
+msgstr "全畫格(未壓縮)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
@@ -7020,7 +6922,7 @@ msgstr ""
 #: oleacc.rc:36
 #, fuzzy
 msgid "window"
-msgstr "窗口(&W)"
+msgstr "視窗(&W)"
 
 #: oleacc.rc:37
 msgid "client"
@@ -7039,9 +6941,8 @@ msgid "tool tip"
 msgstr ""
 
 #: oleacc.rc:41
-#, fuzzy
 msgid "application"
-msgstr "運用程式"
+msgstr "應用程式"
 
 #: oleacc.rc:42
 msgid "document"
@@ -7079,7 +6980,7 @@ msgstr ""
 #: oleacc.rc:50
 #, fuzzy
 msgid "status bar"
-msgstr "狀態欄(&S)"
+msgstr "狀態列(&S)"
 
 #: oleacc.rc:51
 #, fuzzy
@@ -7287,7 +7188,7 @@ msgstr "結果"
 
 #: oledlg.rc:58
 msgid "Create New"
-msgstr "新建"
+msgstr "新增"
 
 #: oledlg.rc:60
 msgid "Create Control"
@@ -7303,7 +7204,7 @@ msgstr "添加控件(&A)..."
 
 #: oledlg.rc:66
 msgid "Display As Icon"
-msgstr "顯示為圖標"
+msgstr "顯示為圖示"
 
 #: oledlg.rc:68 setupapi.rc:58
 msgid "Browse..."
@@ -7336,11 +7237,11 @@ msgstr "為(&A):"
 
 #: oledlg.rc:90
 msgid "&Display As Icon"
-msgstr "顯示為圖標(&D)"
+msgstr "顯示為圖示(&D)"
 
 #: oledlg.rc:92
 msgid "Change &Icon..."
-msgstr "改變圖標(&I)..."
+msgstr "改變圖示(&I)..."
 
 #: oledlg.rc:25
 msgid "Insert a new %s object into your document"
@@ -7382,7 +7283,7 @@ msgstr "將剪貼板的內容插入到你的檔案以便你可以使用 %s。"
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
-msgstr "將剪貼板的內容插入到你的檔案以便你可以用 %s 激活它, 一般顯示為圖標。"
+msgstr "將剪貼板的內容插入到你的檔案以便你可以用 %s 激活它, 一般顯示為圖示。"
 
 #: oledlg.rc:37
 #, fuzzy
@@ -7391,7 +7292,7 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"將剪貼板的內容以 %s 插入到你的檔案。 數據是鏈接到源檔案的, 對源檔案的任何改動"
+"將剪貼板的內容以 %s 插入到你的檔案。 資料是鏈接到源檔案的, 對源檔案的任何改動"
 "都會反應到你的檔案。"
 
 #: oledlg.rc:38
@@ -7416,7 +7317,7 @@ msgstr ""
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
-msgstr "將剪貼板的內容插入到你的檔案。"
+msgstr "將剪貼簿的內容插入到你的文件。"
 
 #: oledlg.rc:41
 msgid "Unknown Type"
@@ -7470,11 +7371,11 @@ msgstr "屬性(&P)"
 
 #: serialui.rc:28
 msgid "Baud Rate"
-msgstr "速度"
+msgstr "鮑率"
 
 #: serialui.rc:30
 msgid "Parity"
-msgstr ""
+msgstr "同位元檢查"
 
 #: serialui.rc:32
 msgid "Flow Control"
@@ -7482,7 +7383,7 @@ msgstr "流程控制"
 
 #: serialui.rc:34
 msgid "Data Bits"
-msgstr "數據位"
+msgstr "資料位"
 
 #: serialui.rc:36
 msgid "Stop Bits"
@@ -7625,13 +7526,8 @@ msgstr "剪下(&T)"
 #: shdoclc.rc:77 shdoclc.rc:91 shdoclc.rc:115 shdoclc.rc:130 shdoclc.rc:157
 #: shdoclc.rc:181 shell32.rc:99 user32.rc:58 wineconsole.rc:29 winhlp32.rc:37
 #: wordpad.rc:102
-#, fuzzy
 msgid "&Copy"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"複製(&C)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"復製(&C)"
+msgstr "複製(&C)"
 
 #: shdoclc.rc:78 shdoclc.rc:131 shdoclc.rc:158 shdoclc.rc:182
 msgid "Copy Shor&tcut"
@@ -7642,13 +7538,8 @@ msgid "P&roperties"
 msgstr "屬性(&R)"
 
 #: shdoclc.rc:88 user32.rc:55
-#, fuzzy
 msgid "&Undo"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"復原(&U)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"恢复(&U)"
+msgstr "復原(&U)"
 
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
@@ -7692,7 +7583,7 @@ msgstr "列印(&P)"
 
 #: shdoclc.rc:125
 msgid "Open in &New Window"
-msgstr "開啟新窗口(&N)"
+msgstr "在新視窗中開啟(&N)"
 
 #: shdoclc.rc:129
 msgid "Cut"
@@ -7700,7 +7591,7 @@ msgstr "剪下"
 
 #: shdoclc.rc:152
 msgid "&Save Video As..."
-msgstr "將視頻存為(&V)..."
+msgstr "將視訊另存為(&S)..."
 
 #: shdoclc.rc:163 shdoclc.rc:187
 msgid "Play"
@@ -7720,15 +7611,15 @@ msgstr "資源失敗"
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
-msgstr "輸出跟蹤資訊"
+msgstr "傾印追蹤資訊"
 
 #: shdoclc.rc:199
 msgid "Debug Break"
-msgstr "調試停點"
+msgstr "除錯中斷"
 
 #: shdoclc.rc:200
 msgid "Debug View"
-msgstr "調試檢視"
+msgstr "除錯檢視"
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
@@ -7752,7 +7643,7 @@ msgstr "輸出 LayoutRects"
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
-msgstr "內存監視器"
+msgstr "記憶體監視器"
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
@@ -7776,11 +7667,11 @@ msgstr "滾動這裡"
 
 #: shdoclc.rc:218
 msgid "Top"
-msgstr "頂"
+msgstr "頂端"
 
 #: shdoclc.rc:219
 msgid "Bottom"
-msgstr "低"
+msgstr "底端"
 
 #: shdoclc.rc:221
 msgid "Page Up"
@@ -7832,75 +7723,55 @@ msgstr ""
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
-#, fuzzy
 msgid "Lar&ge Icons"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"大圖標(&G)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"大圖標(&g)"
+msgstr "大型圖示(&G)"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:120 shell32.rc:160 taskmgr.rc:66
 #: taskmgr.rc:111 taskmgr.rc:253
-#, fuzzy
 msgid "S&mall Icons"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"小圖標(&M)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"小圖標(&m)"
+msgstr "小型圖示(&M)"
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:121 shell32.rc:161
 msgid "&List"
-msgstr "列表(&L)"
+msgstr "清單(&L)"
 
 #: shell32.rc:30 shell32.rc:45 shell32.rc:122 shell32.rc:162 taskmgr.rc:67
 #: taskmgr.rc:112 taskmgr.rc:254
-#, fuzzy
 msgid "&Details"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"詳情列表(&D)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"詳情(&D)"
+msgstr "詳細清單(&D)"
 
 #: shell32.rc:48 winefile.rc:77
-#, fuzzy
 msgid "Arrange &Icons"
-msgstr "排列圖標(&A)"
+msgstr "排列圖示(&I)"
 
 #: shell32.rc:50
-#, fuzzy
 msgid "By &Name"
 msgstr "檔案名稱(&N)"
 
 #: shell32.rc:51
-#, fuzzy
 msgid "By &Type"
 msgstr "類型"
 
 #: shell32.rc:52
-#, fuzzy
 msgid "By &Size"
 msgstr "大小"
 
 #: shell32.rc:53
-#, fuzzy
 msgid "By &Date"
 msgstr "日期(&D)"
 
 #: shell32.rc:55
 msgid "&Auto Arrange"
-msgstr ""
+msgstr "自動排列(&A)"
 
 #: shell32.rc:57
 #, fuzzy
 msgid "Line up Icons"
 msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"大圖標(&G)\n"
+"大圖示(&G)\n"
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"大圖標(&g)"
+"大圖示(&g)"
 
 #: shell32.rc:62
 #, fuzzy
@@ -7909,31 +7780,24 @@ msgstr "生成連接(&L)"
 
 #: shell32.rc:64 progman.rc:97 wordpad.rc:210
 msgid "New"
-msgstr "新建"
+msgstr "新增"
 
 #: shell32.rc:66
 msgid "New &Folder"
-msgstr ""
+msgstr "新增資料夾(&F)"
 
 #: shell32.rc:67
-#, fuzzy
 msgid "New &Link"
-msgstr "新建(&W)"
+msgstr "新增連結(&L)"
 
 #: shell32.rc:71
-#, fuzzy
 msgid "Properties"
-msgstr "屬性(&P)"
+msgstr "屬性"
 
 #: shell32.rc:82
-#, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"復原(&R)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"回復(&R)"
+msgstr "回復(&R)"
 
 #: shell32.rc:83
 msgid "&Erase"
@@ -7941,53 +7805,44 @@ msgstr ""
 
 #: shell32.rc:95
 msgid "E&xplore"
-msgstr "檔案管理器(&x)"
+msgstr "檔案管理員(&X)"
 
 #: shell32.rc:98
 msgid "C&ut"
-msgstr "剪下(&u)"
+msgstr "剪下(&U)"
 
 #: shell32.rc:101
 msgid "Create &Link"
-msgstr "生成連接(&L)"
+msgstr "建立連結(&L)"
 
 #: shell32.rc:103 regedit.rc:91
 msgid "&Rename"
-msgstr "改名(&R)"
+msgstr "重新命名(&R)"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
 #: winefile.rc:37 winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
-#, fuzzy
 msgid "E&xit"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"結束(&X)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"結束(&x)"
+msgstr "結束(&X)"
 
 #: shell32.rc:127
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "關於控制面板(&A)..."
+msgstr "關於控制台(&A)..."
 
 #: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
 msgstr ""
 
 #: shell32.rc:290
-#, fuzzy
 msgid "Folder:"
-msgstr "特殊資料夾"
+msgstr "資料夾:"
 
 #: shell32.rc:296
-#, fuzzy
 msgid "&Make New Folder"
-msgstr "建立新資料夾"
+msgstr "建立新資料夾(&M)"
 
 #: shell32.rc:303
-#, fuzzy
 msgid "Message"
-msgstr "內存用量"
+msgstr "訊息"
 
 #: shell32.rc:306 shlwapi.rc:43 user32.rc:82
 msgid "&Yes"
@@ -7995,7 +7850,7 @@ msgstr "是(&Y)"
 
 #: shell32.rc:307
 msgid "Yes to &all"
-msgstr ""
+msgstr "全部皆是(&A)"
 
 #: shell32.rc:308 shlwapi.rc:44 user32.rc:83
 msgid "&No"
@@ -8011,11 +7866,11 @@ msgstr "使用許可(&l)"
 
 #: shell32.rc:325
 msgid "Running on %s"
-msgstr "運行於 %s"
+msgstr "執行於 %s"
 
 #: shell32.rc:326
 msgid "Wine was brought to you by:"
-msgstr "Wine 開發人員 :"
+msgstr "Wine 開發人員:"
 
 #: shell32.rc:334
 msgid ""
@@ -8025,7 +7880,7 @@ msgstr "輸入程式，目錄，檔案或者Internet資源名，Wine將為您開
 
 #: shell32.rc:335
 msgid "&Open:"
-msgstr "打開(&O):"
+msgstr "開啟(&O):"
 
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
@@ -8057,13 +7912,12 @@ msgid "Comments"
 msgstr "備註"
 
 #: shell32.rc:143
-#, fuzzy
 msgid "Owner"
-msgstr "所有者(&O)..."
+msgstr "所有者"
 
 #: shell32.rc:144
 msgid "Group"
-msgstr ""
+msgstr "群組"
 
 #: shell32.rc:145
 msgid "Original location"
@@ -8075,7 +7929,6 @@ msgid "Date deleted"
 msgstr "刪除"
 
 #: shell32.rc:153 winecfg.rc:92 winefile.rc:99
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
 msgstr "桌面"
@@ -8085,31 +7938,28 @@ msgid "My Computer"
 msgstr "我的電腦"
 
 #: shell32.rc:156
-#, fuzzy
 msgid "Control Panel"
-msgstr "Wine 控制面板"
+msgstr "Wine 控制台"
 
 #: shell32.rc:163
-#, fuzzy
 msgid "Select"
-msgstr "選擇(&S)"
+msgstr "選擇"
 
 #: shell32.rc:186
-#, fuzzy
 msgid "Restart"
-msgstr "復原(&R)"
+msgstr "重新啟動"
 
 #: shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
-msgstr ""
+msgstr "您要模擬視窗重新開機？"
 
 #: shell32.rc:188
 msgid "Shutdown"
-msgstr ""
+msgstr "關機"
 
 #: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
-msgstr ""
+msgstr "您確定要關閉您的 Wine 工作階段嗎？"
 
 #: shell32.rc:200 progman.rc:80
 msgid "Programs"
@@ -8117,42 +7967,40 @@ msgstr "程式"
 
 #: shell32.rc:201
 msgid "My Documents"
-msgstr "我的檔案"
+msgstr "我的文件"
 
 #: shell32.rc:202
-#, fuzzy
 msgid "Favorites"
-msgstr "最愛(&I)"
+msgstr "我的最愛"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "啟動"
 
 #: shell32.rc:204
 msgid "Start Menu"
-msgstr ""
+msgstr "開始功能表"
 
 #: shell32.rc:205
 msgid "My Music"
-msgstr ""
+msgstr "我的音樂"
 
 #: shell32.rc:206
 msgid "My Videos"
-msgstr ""
+msgstr "我的影片"
 
 #: shell32.rc:207
-#, fuzzy
 msgctxt "directory"
 msgid "Desktop"
 msgstr "桌面"
 
 #: shell32.rc:208
 msgid "NetHood"
-msgstr ""
+msgstr "網路上的芳鄰"
 
 #: shell32.rc:209
 msgid "Templates"
-msgstr ""
+msgstr "樣板"
 
 #: shell32.rc:210
 #, fuzzy
@@ -8164,14 +8012,12 @@ msgid "History"
 msgstr "歷史"
 
 #: shell32.rc:212
-#, fuzzy
 msgid "Program Files"
-msgstr "程式"
+msgstr ""
 
 #: shell32.rc:214
-#, fuzzy
 msgid "My Pictures"
-msgstr "到我的圖片(&G)"
+msgstr "我的圖片"
 
 #: shell32.rc:215
 #, fuzzy
@@ -8180,25 +8026,23 @@ msgstr "複製檔案..."
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
-msgstr ""
+msgstr "文件"
 
 #: shell32.rc:217
 msgid "Administrative Tools"
-msgstr ""
+msgstr "系統管理工具"
 
 #: shell32.rc:218
 msgid "Music"
-msgstr ""
+msgstr "音樂"
 
 #: shell32.rc:219
-#, fuzzy
 msgid "Pictures"
-msgstr "顯示圖片(&S)"
+msgstr "圖片"
 
 #: shell32.rc:220
-#, fuzzy
 msgid "Videos"
-msgstr "視頻"
+msgstr "視訊"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
@@ -8211,48 +8055,43 @@ msgstr "內容(&C)"
 
 #: shell32.rc:222 winefile.rc:112
 msgid "Links"
-msgstr ""
+msgstr "連結"
 
 #: shell32.rc:223
 msgid "Slide Shows"
 msgstr ""
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
-msgstr "播放"
+msgstr "播放清單"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
-msgstr ""
+msgstr "狀態"
 
 #: shell32.rc:149
-#, fuzzy
 msgid "Location"
-msgstr "區域網路連線"
+msgstr "位置"
 
 #: shell32.rc:150
 msgid "Model"
 msgstr ""
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
-msgstr "範例"
+msgstr "範例音樂"
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
-msgstr "將圖片存為(&A)"
+msgstr "範例圖片"
 
 #: shell32.rc:227
 msgid "Sample Playlists"
-msgstr ""
+msgstr "範例播放清單"
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
-msgstr "將視頻存為(&V)..."
+msgstr "範例影片"
 
 #: shell32.rc:229
 #, fuzzy
@@ -8260,18 +8099,16 @@ msgid "Saved Games"
 msgstr "另存為(&A)..."
 
 #: shell32.rc:230
-#, fuzzy
 msgid "Searches"
-msgstr "搜尋(&S)"
+msgstr "搜尋"
 
 #: shell32.rc:231
 msgid "Users"
-msgstr ""
+msgstr "使用者"
 
 #: shell32.rc:233
-#, fuzzy
 msgid "Downloads"
-msgstr "正在下載..."
+msgstr "下載"
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
@@ -8340,11 +8177,11 @@ msgstr ""
 
 #: shell32.rc:235
 msgid "New Folder"
-msgstr ""
+msgstr "新資料夾"
 
 #: shell32.rc:237
 msgid "Wine Control Panel"
-msgstr "Wine 控制面板"
+msgstr "Wine 控制台"
 
 #: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
@@ -8426,13 +8263,8 @@ msgid "Trash"
 msgstr ""
 
 #: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:84 winefile.rc:96
-#, fuzzy
 msgid "Error"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"错误\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"錯誤"
+msgstr "錯誤"
 
 #: shlwapi.rc:40
 msgid "Don't show me th&is message again"
@@ -8444,19 +8276,16 @@ msgid "%d bytes"
 msgstr "%ld 字節"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
 msgstr " 小時"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
 msgstr " 分"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " 秒"
@@ -8556,9 +8385,8 @@ msgid "Server"
 msgstr "伺服器"
 
 #: wininet.rc:74
-#, fuzzy
 msgid "Security Warning"
-msgstr "安全(&S)"
+msgstr "安全警告"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
@@ -8566,7 +8394,7 @@ msgstr ""
 
 #: wininet.rc:79
 msgid "Do you want to continue anyway?"
-msgstr ""
+msgstr "您無論如何都要繼續？"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -9076,33 +8904,31 @@ msgstr ""
 
 #: winspool.rc:34
 msgid "Print to File"
-msgstr "列印到檔案"
+msgstr "列印至檔案"
 
 #: winspool.rc:37
 msgid "&Output File Name:"
 msgstr "輸出檔案名(&O):"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
 msgstr "輸出檔案已存在, 按'確定'覆蓋。"
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
-msgstr "不能開啟輸出檔案。"
+msgstr "無法建立輸出檔案。"
 
 #: wldap32.rc:27
 msgid "Success"
-msgstr ""
+msgstr "成功"
 
 #: wldap32.rc:28
-#, fuzzy
 msgid "Operations Error"
-msgstr "選項"
+msgstr "操作錯誤"
 
 #: wldap32.rc:29
 msgid "Protocol Error"
-msgstr ""
+msgstr "協定錯誤"
 
 #: wldap32.rc:30
 msgid "Time Limit Exceeded"
@@ -9273,7 +9099,7 @@ msgstr "向下滾動"
 #: wldap32.rc:109
 #, fuzzy
 msgid "Local Error"
-msgstr "本地端口"
+msgstr "本地連接埠"
 
 #: wldap32.rc:110
 #, fuzzy
@@ -9398,9 +9224,8 @@ msgid "&Always on Top"
 msgstr "總是在最上面(&A)"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "關於 Wine(&A)..."
+msgstr "關於時鐘(&A)..."
 
 #: clock.rc:48
 msgid "Clock"
@@ -10162,7 +9987,7 @@ msgstr ""
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
-msgstr "新建(&N)\tCtrl+N"
+msgstr "新增(&N)\tCtrl+N"
 
 #: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
@@ -10206,13 +10031,8 @@ msgstr "貼上(&P)\tCtrl+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:90 regedit.rc:106
 #: winefile.rc:29
-#, fuzzy
 msgid "&Delete\tDel"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"刪除(&D)\tDel\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"刪除(&D)\tDEL"
+msgstr "刪除(&D)\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -10235,18 +10055,12 @@ msgid "&Search next\tF3"
 msgstr "找下一個(&N)\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
-#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"&Replace...\tCtrl+H\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"替換(&R)...\tCtrl+H"
+msgstr "取代(&R)...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:82
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "內容(&C)"
+msgstr "內容(&C)\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -10262,12 +10076,11 @@ msgstr "頁首(&H):"
 
 #: notepad.rc:101
 msgid "&Footer:"
-msgstr "腳註(&F):"
+msgstr "頁尾(&F):"
 
 #: notepad.rc:104
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "邊緣空白(&M):"
+msgstr "邊界 (公釐):"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10278,9 +10091,8 @@ msgid "&Top:"
 msgstr "上(&T):"
 
 #: notepad.rc:123
-#, fuzzy
 msgid "Encoding:"
-msgstr "語言編碼(&E)"
+msgstr "編碼:"
 
 #: notepad.rc:129 wordpad.rc:278
 msgctxt "accelerator Select All"
@@ -10365,7 +10177,7 @@ msgid ""
 msgstr ""
 "檔案 '%s' 不存在\n"
 "\n"
-"您想新建一個檔案嗎？"
+"您想新增一個檔案嗎？"
 
 #: notepad.rc:79
 msgid ""
@@ -10418,11 +10230,11 @@ msgstr "系統設定(&S)..."
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
-msgstr "執行註冊表編輯器(&R)"
+msgstr "執行登錄檔編輯器(&R)"
 
 #: oleview.rc:37
 msgid "&Object"
-msgstr "對象(&O)"
+msgstr "物件(&O)"
 
 #: oleview.rc:39
 msgid "&CoCreateInstance Flag"
@@ -10437,13 +10249,12 @@ msgid "In-process &handler"
 msgstr ""
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "本地端口"
+msgstr "本機伺服器(&L)"
 
 #: oleview.rc:44
 msgid "&Remote server"
-msgstr ""
+msgstr "遠端伺服器(&R)"
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -10471,23 +10282,23 @@ msgstr "複製 &HTML 對象標記到剪貼板"
 
 #: oleview.rc:60
 msgid "&Expert mode"
-msgstr "專家狀態(&E)"
+msgstr "專家模式(&E)"
 
 #: oleview.rc:62
 msgid "&Hidden component categories"
-msgstr "隱藏部件分類(&H)"
+msgstr "隱藏元件分類(&H)"
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:62 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
-msgstr "工具欄(&T)"
+msgstr "工具列(&T)"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:64
 msgid "&Status Bar"
-msgstr "狀態欄(&S)"
+msgstr "狀態列(&S)"
 
 #: oleview.rc:67 regedit.rc:69 winefile.rc:78
 msgid "&Refresh\tF5"
-msgstr "刷新(&R)\tF5"
+msgstr "重新整理(&R)\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
@@ -10519,27 +10330,27 @@ msgstr "系統設定"
 
 #: oleview.rc:169
 msgid "&Enable Distributed COM"
-msgstr "啟用分佈式CO&M"
+msgstr "啟用分散式CO&M"
 
 #: oleview.rc:170
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr "啟用遠程連接(限&Win95)"
+msgstr "啟用遠端連線(&R)(限Win95)"
 
 #: oleview.rc:171
 msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
-"這些設定只改變註冊表值。\n"
+"這些設定只改變登錄檔內的值。\n"
 "它對Wine的性能沒有影響。"
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
-msgstr "默認界面查看器"
+msgstr "預設介面檢視器"
 
 #: oleview.rc:181
 msgid "Interface"
-msgstr "界面"
+msgstr "介面"
 
 #: oleview.rc:183
 msgid "IID:"
@@ -10551,7 +10362,7 @@ msgstr "查看類型資訊(&V)"
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
-msgstr "IPersist 界面查看器"
+msgstr "IPersist 介面檢視器"
 
 #: oleview.rc:194 oleview.rc:206
 msgid "Class Name:"
@@ -10563,7 +10374,7 @@ msgstr "CLSID:"
 
 #: oleview.rc:203
 msgid "IPersistStream Interface Viewer"
-msgstr "IPersistStream 界面查看器"
+msgstr "IPersistStream 介面檢視器"
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
@@ -10571,11 +10382,11 @@ msgstr "OleView"
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
-msgstr "ITypeLib 查看器"
+msgstr "ITypeLib 檢視器"
 
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
-msgstr "OleView - OLE/COM 對象查看器"
+msgstr "OleView - OLE/COM 物件檢視器"
 
 #: oleview.rc:97
 msgid "version 1.0"
@@ -10596,11 +10407,11 @@ msgstr "開啟 TypeLib 檔案並查看內容"
 
 #: oleview.rc:105
 msgid "Change machine wide Distributed COM settings"
-msgstr "修改本機分佈式 COM 設定"
+msgstr "修改本機分散式 COM 設定"
 
 #: oleview.rc:106
 msgid "Run the Wine registry editor"
-msgstr "執行 Wine 註冊表編輯器"
+msgstr "執行 Wine 登錄檔編輯器"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
@@ -10633,19 +10444,19 @@ msgstr "切換專家和新手顯示模式"
 #: oleview.rc:118
 msgid ""
 "Toggle the display of component categories that are not meant to be visible"
-msgstr "切換隱藏組件類顯示"
+msgstr "切換隱藏元件分類顯示"
 
 #: oleview.rc:119
 msgid "Show or hide the toolbar"
-msgstr "顯示或隱藏工具欄"
+msgstr "顯示或隱藏工具列"
 
 #: oleview.rc:120
 msgid "Show or hide the status bar"
-msgstr "顯示或隱藏狀態欄"
+msgstr "顯示或隱藏狀態列"
 
 #: oleview.rc:121
 msgid "Refresh all lists"
-msgstr "刷新所有名單"
+msgstr "重新整理所有清單"
 
 #: oleview.rc:122
 msgid "Display program information, version number and copyright"
@@ -10671,11 +10482,11 @@ msgstr "呼叫 CoGetClassObject 時使用 CLSCTX_LOCAL_SERVER"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
-msgstr "對象類型"
+msgstr "物件類型"
 
 #: oleview.rc:129
 msgid "Grouped by Component Category"
-msgstr "按部件類型分組"
+msgstr "按元件類型分組"
 
 #: oleview.rc:130
 msgid "OLE 1.0 Objects"
@@ -10683,7 +10494,7 @@ msgstr "OLE 1.0 對象"
 
 #: oleview.rc:131
 msgid "COM Library Objects"
-msgstr "COM 函式庫對象"
+msgstr "COM 函式庫物件"
 
 #: oleview.rc:132
 msgid "All Objects"
@@ -10703,19 +10514,19 @@ msgstr "版本"
 
 #: oleview.rc:136
 msgid "Interfaces"
-msgstr "界面"
+msgstr "介面"
 
 #: oleview.rc:138
 msgid "Registry"
-msgstr "註冊表"
+msgstr "登錄檔"
 
 #: oleview.rc:139
 msgid "Implementation"
-msgstr "實行"
+msgstr "實作"
 
 #: oleview.rc:140
 msgid "Activation"
-msgstr "激活"
+msgstr "啟動"
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
@@ -10727,16 +10538,15 @@ msgstr "未知錯誤"
 
 #: oleview.rc:146
 msgid "bytes"
-msgstr "字節"
+msgstr "位元組"
 
 #: oleview.rc:148
-#, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
 msgstr "LoadTypeLib( %s ) 失敗 ($%x)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
-msgstr "遺傳界面"
+msgstr "繼承介面"
 
 #: oleview.rc:124
 msgid "Save as an .IDL or .H file"
@@ -10744,7 +10554,7 @@ msgstr "存為 .IDL 或 .H 檔案"
 
 #: oleview.rc:125
 msgid "Close window"
-msgstr "關閉窗口"
+msgstr "關閉視窗"
 
 #: oleview.rc:126
 msgid "Group typeinfos by kind"
@@ -10752,7 +10562,7 @@ msgstr "按類別分組"
 
 #: progman.rc:30
 msgid "&New..."
-msgstr "新建(&N)..."
+msgstr "新增(&N)..."
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
@@ -10767,18 +10577,16 @@ msgid "&Copy...\tF8"
 msgstr "複製(&C)...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "屬性(&I)...\tAlt+Enter"
+msgstr "屬性(&P)...\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "執行(&E)..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "結束 Windows(&X)..."
+msgstr "結束 Windows(&X)"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:59 winhlp32.rc:44
 msgid "&Options"
@@ -10802,17 +10610,12 @@ msgid "&Save settings on exit"
 msgstr "結束時儲存設定(&S)"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
-#, fuzzy
 msgid "&Windows"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"窗口(&W)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"視窗(&W)"
+msgstr "視窗(&W)"
 
 #: progman.rc:47
 msgid "&Overlapped\tShift+F5"
-msgstr "層疊(&O)\tShift+F5"
+msgstr "重疊(&O)\tShift+F5"
 
 #: progman.rc:48
 msgid "&Side by side\tShift+F4"
@@ -10820,16 +10623,15 @@ msgstr "並排(&S)\tShift+F4"
 
 #: progman.rc:49
 msgid "&Arrange Icons"
-msgstr "排列圖標(&A)"
+msgstr "排列圖示(&A)"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "程式管理器"
+msgstr "關於程式管理員(&A)"
 
 #: progman.rc:100
 msgid "Program &group"
-msgstr "程式組(&G)"
+msgstr "程式群組(&G)"
 
 #: progman.rc:102
 msgid "&Program"
@@ -10845,11 +10647,11 @@ msgstr "移動程式:"
 
 #: progman.rc:117 progman.rc:135
 msgid "From group:"
-msgstr "從此程式組中:"
+msgstr "從此程式群組中:"
 
 #: progman.rc:119 progman.rc:137
 msgid "&To group:"
-msgstr "移動到程式組(&T):"
+msgstr "移動到程式群組(&T):"
 
 #: progman.rc:131
 msgid "Copy Program"
@@ -10865,7 +10667,7 @@ msgstr "程式組屬性"
 
 #: progman.rc:153
 msgid "&Group file:"
-msgstr "組檔案(&G):"
+msgstr "群組檔案(&G):"
 
 #: progman.rc:165
 msgid "Program Attributes"
@@ -10873,7 +10675,7 @@ msgstr "程式屬性"
 
 #: progman.rc:169 progman.rc:209
 msgid "&Command line:"
-msgstr "指令行(&C):"
+msgstr "命令列(&C):"
 
 #: progman.rc:171
 msgid "&Working directory:"
@@ -10889,11 +10691,11 @@ msgstr "啟動後最小化(&M)"
 
 #: progman.rc:180
 msgid "Change &icon..."
-msgstr "修改圖標(&I)..."
+msgstr "變更圖示(&I)..."
 
 #: progman.rc:189
 msgid "Change Icon"
-msgstr "修改圖標"
+msgstr "變更圖示"
 
 #: progman.rc:191
 msgid "&Filename:"
@@ -10901,7 +10703,7 @@ msgstr "檔案名(&F):"
 
 #: progman.rc:193
 msgid "Current &icon:"
-msgstr "當前圖標(&I):"
+msgstr "當前圖示(&I):"
 
 #: progman.rc:207
 msgid "Execute Program"
@@ -10909,37 +10711,27 @@ msgstr "執行程式"
 
 #: progman.rc:60
 msgid "Program Manager"
-msgstr "程式管理器"
+msgstr "程式管理員"
 
 #: progman.rc:62 winhlp32.rc:80
 msgid "WARNING"
 msgstr "警告"
 
 #: progman.rc:63 winhlp32.rc:81
-#, fuzzy
 msgid "Information"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"信息\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"資訊"
+msgstr "資訊"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "是否刪除程式組 `%s'？"
+msgstr "是否刪除程式群組 `%s'？"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "是否刪除程式組 `%s'?"
+msgstr "是否刪除程式群組 `%s'?"
 
 #: progman.rc:67
-#, fuzzy
 msgid "Not implemented"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"此功能未實現\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"未實現"
+msgstr "未實作"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
@@ -10954,12 +10746,12 @@ msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
-"不能開啟組檔案 `%s' 。\n"
+"無法開啟群組檔案 `%s' 。\n"
 "是否繼續嘗試？"
 
 #: progman.rc:74
 msgid "Help not available."
-msgstr "沒有可用的幫助資訊。"
+msgstr "沒有可用的說明資訊。"
 
 #: progman.rc:75
 msgid "Unknown feature in %s"
@@ -10975,15 +10767,15 @@ msgstr "將程式組儲存為 %s 可以避免復蓋已有的檔案。"
 
 #: progman.rc:81
 msgid "Libraries (*.dll)"
-msgstr "動態連接庫 (*.dll)"
+msgstr "動態連結程式庫 (*.dll)"
 
 #: progman.rc:82
 msgid "Icon files"
-msgstr "圖標檔案"
+msgstr "圖示檔案"
 
 #: progman.rc:83
 msgid "Icons (*.ico)"
-msgstr "圖標 (*.ico)"
+msgstr "圖示 (*.ico)"
 
 #: reg.rc:27
 msgid ""
@@ -11030,52 +10822,51 @@ msgstr ""
 
 #: regedit.rc:31
 msgid "&Registry"
-msgstr "註冊表(&R)"
+msgstr "登錄檔(&R)"
 
 #: regedit.rc:33
 msgid "&Import Registry File..."
-msgstr "導入註冊表檔案(&I)..."
+msgstr "匯入登錄檔(&I)..."
 
 #: regedit.rc:34
 msgid "&Export Registry File..."
-msgstr "導出註冊表檔案(&E)..."
+msgstr "匯出登錄檔(&E)..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
-msgstr "關鍵詞(&K)"
+msgstr "鍵值(&K)"
 
 #: regedit.rc:48 regedit.rc:99
 msgid "&String Value"
-msgstr "字符串值(&S)"
+msgstr "字串值(&S)"
 
 #: regedit.rc:49 regedit.rc:100
 msgid "&Binary Value"
-msgstr "二進制值(&B)"
+msgstr "二進位值(&B)"
 
 #: regedit.rc:50 regedit.rc:101
 msgid "&DWORD Value"
-msgstr "整數值(&D)"
+msgstr "雙字組值(&D)"
 
 #: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
-msgstr "多字符串值(&M)"
+msgstr "多重字串值(&M)"
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "字符串值(&S)"
+msgstr "可展開字串值(&S)"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
-msgstr "改名(&R)\tF2"
+msgstr "重新命名(&R)\tF2"
 
 #: regedit.rc:58 regedit.rc:110
 msgid "&Copy Key Name"
-msgstr "複製關鍵詞名稱(&C)"
+msgstr "複製鍵值名稱(&C)"
 
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 msgid "&Find...\tCtrl+F"
-msgstr "查找(&F)...\tCtrl+F"
+msgstr "搜尋(&F)...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -11083,16 +10874,11 @@ msgstr "找下一個(&X)\tF3"
 
 #: regedit.rc:65
 msgid "Status &Bar"
-msgstr "狀態欄(&B)"
+msgstr "狀態列(&B)"
 
 #: regedit.rc:67 winefile.rc:46
-#, fuzzy
 msgid "Sp&lit"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"分割(&L)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"切開(&L)"
+msgstr "調整分隔(&L)"
 
 #: regedit.rc:74
 msgid "&Remove Favorite..."
@@ -11100,16 +10886,15 @@ msgstr "刪除我的最愛(&R)..."
 
 #: regedit.rc:79
 msgid "&About Registry Editor"
-msgstr "關於註冊表編輯器(&A)"
+msgstr "關於登錄檔編輯器(&A)"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "修改二進制數據"
+msgstr "修改二進位資料..."
 
 #: regedit.rc:215
 msgid "Export registry"
-msgstr "導出註冊表"
+msgstr "匯出登錄檔"
 
 #: regedit.rc:217
 msgid "S&elected branch:"
@@ -11117,7 +10902,7 @@ msgstr "指定分支(&E):"
 
 #: regedit.rc:226
 msgid "Find:"
-msgstr "查找:"
+msgstr "搜尋:"
 
 #: regedit.rc:228
 msgid "Find in:"
@@ -11125,7 +10910,7 @@ msgstr "在這找:"
 
 #: regedit.rc:229
 msgid "Keys"
-msgstr "關鍵詞"
+msgstr "鍵值"
 
 #: regedit.rc:230
 msgid "Value names"
@@ -11141,7 +10926,7 @@ msgstr "整詞匹配"
 
 #: regedit.rc:239
 msgid "Add Favorite"
-msgstr "添加我的最愛"
+msgstr "加入我的最愛"
 
 #: regedit.rc:242 regedit.rc:253
 msgid "Name:"
@@ -11153,7 +10938,7 @@ msgstr "刪除我的最愛"
 
 #: regedit.rc:261
 msgid "Edit String"
-msgstr "編輯字符串"
+msgstr "編輯字串"
 
 #: regedit.rc:264 regedit.rc:277 regedit.rc:293 regedit.rc:306
 msgid "Value name:"
@@ -11161,11 +10946,11 @@ msgstr "值名稱:"
 
 #: regedit.rc:266 regedit.rc:279 regedit.rc:295 regedit.rc:308
 msgid "Value data:"
-msgstr "值數據:"
+msgstr "數值資料:"
 
 #: regedit.rc:274
 msgid "Edit DWORD"
-msgstr "編輯整數"
+msgstr "編輯雙字組"
 
 #: regedit.rc:281
 msgid "Base"
@@ -11173,23 +10958,23 @@ msgstr "進位制"
 
 #: regedit.rc:282
 msgid "Hexadecimal"
-msgstr "十六進制"
+msgstr "十六進位"
 
 #: regedit.rc:283
 msgid "Decimal"
-msgstr "十進制"
+msgstr "十進位"
 
 #: regedit.rc:290
 msgid "Edit Binary"
-msgstr "編輯二進制"
+msgstr "編輯二進位資料"
 
 #: regedit.rc:303
 msgid "Edit Multi String"
-msgstr "編輯多個字符串"
+msgstr "編輯多個字串"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
-msgstr "含有與註冊表有關的全部指令"
+msgstr "含有與登錄檔有關的全部指令"
 
 #: regedit.rc:135
 msgid "Contains commands for editing values or keys"
@@ -11197,7 +10982,7 @@ msgstr "含有與編輯數值有關的全部指令"
 
 #: regedit.rc:136
 msgid "Contains commands for customising the registry window"
-msgstr "含有與註冊表個性化有關的全部指令"
+msgstr "含有與自訂話登錄視窗有關的全部指令"
 
 #: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
@@ -11206,7 +10991,7 @@ msgstr "含有與使用常用關鍵詞有關的全部指令"
 #: regedit.rc:138
 msgid ""
 "Contains commands for displaying help and information about registry editor"
-msgstr "含有與幫助資訊有關的全部指令"
+msgstr "含有與說明資訊有關的全部指令"
 
 #: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
@@ -11214,33 +10999,32 @@ msgstr "含有與創建新值有關的全部指令"
 
 #: regedit.rc:124
 msgid "Data"
-msgstr "數據"
+msgstr "資料"
 
 #: regedit.rc:129
 msgid "Registry Editor"
-msgstr "註冊表編輯器"
+msgstr "登錄檔編輯器"
 
 #: regedit.rc:191
 msgid "Import Registry File"
-msgstr "導入註冊表檔案"
+msgstr "匯入登錄檔"
 
 #: regedit.rc:192
 msgid "Export Registry File"
-msgstr "導出註冊表檔案"
+msgstr "匯出登錄檔"
 
 #: regedit.rc:193
-#, fuzzy
 msgid "Registry files (*.reg)"
-msgstr "註冊表檔案 (*.reg)"
+msgstr "登錄檔 (*.reg)"
 
 #: regedit.rc:194
 #, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr "Win9x/NT4 註冊表檔案 (REGEDIT4)"
+msgstr "Win9x/NT4 登錄檔檔案 (REGEDIT4)"
 
 #: regedit.rc:201
 msgid "(Default)"
-msgstr "(默認)"
+msgstr "(預設)"
 
 #: regedit.rc:202
 msgid "(value not set)"
@@ -11256,7 +11040,7 @@ msgstr "(未知 %d)"
 
 #: regedit.rc:160
 msgid "Quits the registry editor"
-msgstr "結束註冊表編輯器"
+msgstr "結束登錄檔編輯器"
 
 #: regedit.rc:161
 msgid "Adds keys to the favorites list"
@@ -11268,7 +11052,7 @@ msgstr "從我的最愛中刪除關鍵詞"
 
 #: regedit.rc:163
 msgid "Shows or hides the status bar"
-msgstr "顯示或隱藏狀態欄"
+msgstr "顯示或隱藏狀態列"
 
 #: regedit.rc:164
 msgid "Change position of split between two panes"
@@ -11292,15 +11076,15 @@ msgstr "把關鍵詞的名稱複製到剪貼板"
 
 #: regedit.rc:169
 msgid "Finds a text string in a key, value or data"
-msgstr "在關鍵詞、值或數據中找字符串"
+msgstr "在關鍵詞、值或資料中找字串"
 
 #: regedit.rc:170
 msgid "Finds next occurrence of text specified in previous search"
-msgstr "查找下一個剛找過的字符串"
+msgstr "搜尋下一個剛找過的字串"
 
 #: regedit.rc:144
 msgid "Modifies the value's data"
-msgstr "修改值的數據"
+msgstr "修改值的資料"
 
 #: regedit.rc:145
 msgid "Adds a new key"
@@ -11308,7 +11092,7 @@ msgstr "添加一個新的關鍵詞"
 
 #: regedit.rc:146
 msgid "Adds a new string value"
-msgstr "添加一個新的字符串值"
+msgstr "添加一個新的字串值"
 
 #: regedit.rc:147
 msgid "Adds a new binary value"
@@ -11320,15 +11104,15 @@ msgstr "添加一個新的整數值"
 
 #: regedit.rc:150
 msgid "Imports a text file into the registry"
-msgstr "將文本檔案導入註冊表"
+msgstr "將文本檔案匯入登錄檔"
 
 #: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
-msgstr "將註冊表導出到文本檔案"
+msgstr "將登錄檔導出到文本檔案"
 
 #: regedit.rc:153
 msgid "Prints all or part of the registry"
-msgstr "列印註冊表的全部或部分"
+msgstr "列印登錄檔的全部或部分"
 
 #: regedit.rc:155
 msgid "Displays program information, version number and copyright"
@@ -11356,7 +11140,7 @@ msgstr "你確認要刪除這個值嗎 '%s'?"
 
 #: regedit.rc:186
 msgid "Search string '%s' not found"
-msgstr "查找字符串 '%s' 沒找到"
+msgstr "搜尋字串 '%s' 沒找到"
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
@@ -11376,7 +11160,7 @@ msgstr "不能查詢關鍵詞'%s'"
 
 #: regedit.rc:149
 msgid "Adds a new multi string value"
-msgstr "添加一個新的多字符串值"
+msgstr "添加一個新的多字串值"
 
 #: regedit.rc:171
 msgid "Exports selected branch of the registry to a text file"
@@ -11501,7 +11285,7 @@ msgstr "新任務(&N)..."
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
-msgstr "結束任務管理器(&X)"
+msgstr "結束工作管理員(&X)"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -11586,7 +11370,7 @@ msgstr "移到最前面(&B)"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"
-msgstr "關於任務管理器(&A)"
+msgstr "關於工作管理員(&A)"
 
 #: taskmgr.rc:120 taskmgr.rc:352
 msgid "&Switch To"
@@ -11598,15 +11382,15 @@ msgstr "結束任務(&E)"
 
 #: taskmgr.rc:130
 msgid "&Go To Process"
-msgstr "轉此進程(&G)"
+msgstr "轉此行程(&G)"
 
 #: taskmgr.rc:149 taskmgr.rc:363
 msgid "&End Process"
-msgstr "結束進程(&E)"
+msgstr "結束行程(&E)"
 
 #: taskmgr.rc:150
 msgid "End Process &Tree"
-msgstr "結束進程樹(&T)"
+msgstr "結束行程樹(&T)"
 
 #: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
@@ -11640,7 +11424,7 @@ msgstr "編輯調試頻道(&C)..."
 
 #: taskmgr.rc:338 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
-msgstr "任務管理器"
+msgstr "工作管理員"
 
 #: taskmgr.rc:351
 msgid "&New Task..."
@@ -11648,7 +11432,7 @@ msgstr "新任務(&N)..."
 
 #: taskmgr.rc:364
 msgid "&Show processes from all users"
-msgstr "顯示所有用戶進程(&S)"
+msgstr "顯示所有用戶行程(&S)"
 
 #: taskmgr.rc:372
 #, fuzzy
@@ -11658,7 +11442,7 @@ msgstr "CPU 用量"
 #: taskmgr.rc:373
 #, fuzzy
 msgid "MEM usage"
-msgstr "內存用量"
+msgstr "記憶體用量"
 
 #: taskmgr.rc:374
 msgid "Totals"
@@ -11672,12 +11456,12 @@ msgstr "正在使用(K)"
 #: taskmgr.rc:376
 #, fuzzy
 msgid "Physical memory (K)"
-msgstr "實際內存(K)"
+msgstr "實際記憶體(K)"
 
 #: taskmgr.rc:377
 #, fuzzy
 msgid "Kernel memory (K)"
-msgstr "內核內存(K)"
+msgstr "內核記憶體(K)"
 
 #: taskmgr.rc:378 taskmgr.rc:290
 msgid "Handles"
@@ -11689,7 +11473,7 @@ msgstr "線數"
 
 #: taskmgr.rc:380 taskmgr.rc:263
 msgid "Processes"
-msgstr "進程數"
+msgstr "行程數"
 
 #: taskmgr.rc:387 taskmgr.rc:396 taskmgr.rc:405
 msgid "Total"
@@ -11723,7 +11507,7 @@ msgstr "CPU 用量歷史"
 #: taskmgr.rc:415
 #, fuzzy
 msgid "Memory usage history"
-msgstr "內存用量歷史"
+msgstr "記憶體用量歷史"
 
 #: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
@@ -11737,7 +11521,7 @@ msgstr "處理器親和度"
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
-msgstr "處理器親和度設定控制各進程使用CPU分配情況。"
+msgstr "處理器親和度設定控制各行程使用CPU分配情況。"
 
 #: taskmgr.rc:446
 msgid "CPU 0"
@@ -11874,7 +11658,7 @@ msgstr "選擇顯示內容"
 #: taskmgr.rc:519
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
-msgstr "請選擇任務管理器中進程分頁的顯示內容。"
+msgstr "請選擇工作管理員中行程分頁的顯示內容。"
 
 #: taskmgr.rc:521
 msgid "&Image Name"
@@ -11882,7 +11666,7 @@ msgstr "程式名稱(&I)"
 
 #: taskmgr.rc:523
 msgid "&PID (Process Identifier)"
-msgstr "&PID (進程編號)"
+msgstr "&PID (行程編號)"
 
 #: taskmgr.rc:525
 msgid "&CPU Usage"
@@ -11894,15 +11678,15 @@ msgstr "CPU 時間(&T)"
 
 #: taskmgr.rc:529
 msgid "&Memory Usage"
-msgstr "內存用量(&M)"
+msgstr "記憶體用量(&M)"
 
 #: taskmgr.rc:531
 msgid "Memory Usage &Delta"
-msgstr "內存用量差(&D)"
+msgstr "記憶體用量差(&D)"
 
 #: taskmgr.rc:533
 msgid "Pea&k Memory Usage"
-msgstr "最高內存用(&K)"
+msgstr "最高記憶體用(&K)"
 
 #: taskmgr.rc:535
 msgid "Page &Faults"
@@ -11934,7 +11718,7 @@ msgstr "頁故障差(&A)"
 
 #: taskmgr.rc:549
 msgid "&Virtual Memory Size"
-msgstr "虛擬內存大小(&V)"
+msgstr "虛擬記憶體大小(&V)"
 
 #: taskmgr.rc:551
 msgid "Pa&ged Pool"
@@ -11986,27 +11770,27 @@ msgstr "執行新任務"
 
 #: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
-msgstr "任務管理器總是在其他視窗的最上面，除非是最小化"
+msgstr "工作管理員總是在其他視窗的最上面，除非是最小化"
 
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
-msgstr "任務管理器使用時最小化"
+msgstr "工作管理員使用時最小化"
 
 #: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
-msgstr "最小化時隱藏任務管理器"
+msgstr "最小化時隱藏工作管理員"
 
 #: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
-msgstr "強制任務管理器更新顯示，不管設定的是什麼速度"
+msgstr "強制工作管理員更新顯示，不管設定的是什麼速度"
 
 #: taskmgr.rc:193
 msgid "Displays tasks by using large icons"
-msgstr "用大圖標顯示任務"
+msgstr "用大圖示顯示任務"
 
 #: taskmgr.rc:194
 msgid "Displays tasks by using small icons"
-msgstr "用小圖標顯示任務"
+msgstr "用小圖示顯示任務"
 
 #: taskmgr.rc:195
 msgid "Displays information about each task"
@@ -12026,7 +11810,7 @@ msgstr "每四秒更新顯示一次"
 
 #: taskmgr.rc:203
 msgid "Does not automatically update"
-msgstr "不會自動更新"
+msgstr "不要自動更新"
 
 #: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
@@ -12050,11 +11834,11 @@ msgstr "在桌面上按對角線將視窗疊放"
 
 #: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
-msgstr "將視窗調到最前面，但不激活"
+msgstr "將視窗調到最前面，但不切換"
 
 #: taskmgr.rc:211
 msgid "Displays Task Manager help topics"
-msgstr "顯示任務管理器幫助內容"
+msgstr "顯示工作管理員說明主題"
 
 #: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
@@ -12062,83 +11846,83 @@ msgstr "顯示本程式資訊，版本及版權"
 
 #: taskmgr.rc:213
 msgid "Exits the Task Manager application"
-msgstr "結束任務管理器"
+msgstr "結束工作管理員"
 
 #: taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
-msgstr "顯示 16-位任務及有關的ntvdm.exe"
+msgstr "顯示 16-位元工作及有關的ntvdm.exe"
 
 #: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
-msgstr "選擇在進程分頁的顯示內容"
+msgstr "選擇在行程分頁的顯示內容"
 
 #: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
-msgstr "在性能圖上顯示內核使用時間"
+msgstr "在效能圖表上顯示核心使用時間"
 
 #: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
-msgstr "一張歷史圖顯示所有CPU用量"
+msgstr "在一張歷史圖表顯示所有CPU用量"
 
 #: taskmgr.rc:220
 msgid "Each CPU has its own history graph"
-msgstr "每一個CPU有自己的歷史圖"
+msgstr "每一個CPU有自己的歷史圖表"
 
 #: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
-msgstr "將任務設為當前任務，並激活"
+msgstr "將工作設為前景，並且切換至該工作"
 
 #: taskmgr.rc:227
 msgid "Tells the selected tasks to close"
-msgstr "通知當前選中的任務關閉"
+msgstr "通知關閉選擇的工作"
 
 #: taskmgr.rc:228
 msgid "Switches the focus to the process of the selected task"
-msgstr "將焦點轉到當前選中的任務"
+msgstr "將視窗焦點轉到選擇的工作"
 
 #: taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
-msgstr "取消任務管理器隱藏狀態"
+msgstr "取消工作管理員隱藏狀態"
 
 #: taskmgr.rc:230
 msgid "Removes the process from the system"
-msgstr "將進程從系統中刪除"
+msgstr "將行程從系統中移除"
 
 #: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
-msgstr "將進程及其附屬進程從系統中刪除"
+msgstr "將行程及其附屬行程從系統中移除"
 
 #: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
-msgstr "將調試器接到本進程"
+msgstr "將除錯器接到本行程"
 
 #: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
-msgstr "控制各進程使用那個處理器"
+msgstr "控制各行程使用那個處理器"
 
 #: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
-msgstr "將進程設為實時優先級"
+msgstr "將行程設為實時優先級"
 
 #: taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
-msgstr "將進程設為高優先級"
+msgstr "將行程設為高優先級"
 
 #: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
-msgstr "將進程設為中等以上優先級"
+msgstr "將行程設為中等以上優先級"
 
 #: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
-msgstr "將進程設為中等優先級"
+msgstr "將行程設為中等優先級"
 
 #: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
-msgstr "將進程設為中等以下優先級"
+msgstr "將行程設為中等以下優先級"
 
 #: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
-msgstr "將進程設為低優先級"
+msgstr "將行程設為低優先級"
 
 #: taskmgr.rc:247
 msgid "Controls Debug Channels"
@@ -12151,20 +11935,19 @@ msgstr "性能表"
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
-msgstr ""
+msgstr "CPU 使用率: %3d%%"
 
 #: taskmgr.rc:266
 msgid "Processes: %d"
-msgstr ""
+msgstr "行程: %d"
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
 msgstr ""
 
 #: taskmgr.rc:272
-#, fuzzy
 msgid "Image Name"
-msgstr "圖片"
+msgstr "圖片名稱"
 
 #: taskmgr.rc:273
 msgid "PID"
@@ -12231,7 +12014,7 @@ msgstr ""
 #: taskmgr.rc:301
 #, fuzzy
 msgid "Task Manager Warning"
-msgstr "任務管理器"
+msgstr "工作管理員"
 
 #: taskmgr.rc:304
 msgid ""
@@ -12307,7 +12090,7 @@ msgid ""
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "卸載指令執行失敗 '%s', 可能是找不到可執行程式。\n"
-"你想把這項卸載指令從註冊表中刪除嗎?"
+"你想把這項卸載指令從登錄檔中刪除嗎?"
 
 #: view.rc:33
 msgid "&Pan"
@@ -12363,15 +12146,14 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"這個函式庫是自由軟體﹐你可以遵照\n"
+"這個程式是自由軟體﹐你可以遵照\n"
 "自由軟體基金會出版的 GNU LGPL 2.1\n"
 "版或新版的許可條款來修改和重新\n"
-"發佈這一程式。"
+"散佈這個程式。"
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Windows 註冊信息 "
+msgstr "Windows 註冊資訊"
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12379,26 +12161,25 @@ msgstr "姓名:"
 
 #: winecfg.rc:137
 msgid "Organi&zation:"
-msgstr "單位:"
+msgstr "組織:"
 
 #: winecfg.rc:145
-#, fuzzy
 msgid "Application settings"
-msgstr " 應用程式設定 "
+msgstr "應用程式設定"
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine 可以對不同程式假裝成不同版本的 Windows 。 「函式庫」 與 「顯示」 頁籤將"
-"連結到這個頁籤， 除了調整預設設定， 也能調整個別程式的設定。"
+"Wine 可以對不同程式偽裝成不同版本的 Windows。\n"
+"「函式庫」與「顯示」分頁將連結到這個分頁，除了調整預設設定，\n"
+"也能調整個別程式的設定。"
 
 #: winecfg.rc:150
 msgid "&Add application..."
-msgstr "增加程式設定(&A)..."
+msgstr "新增程式設定(&A)..."
 
 #: winecfg.rc:151
 msgid "&Remove application"
@@ -12409,43 +12190,40 @@ msgid "&Windows Version:"
 msgstr "&Windows 版本："
 
 #: winecfg.rc:160
-#, fuzzy
 msgid "Window settings"
-msgstr " 視窗設定 "
+msgstr "視窗設定"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatically capture the mouse in full-screen windows"
+msgstr "自動在全螢幕視窗中捕捉滑鼠(&M)"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr "允許視窗管理器裝飾視窗(&d)"
+msgstr "允許視窗管理器裝飾視窗(&D)"
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
-msgstr "允許視窗管理器控制視窗(&w)"
+msgstr "允許視窗管理器控制視窗(&W)"
 
 #: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
-msgstr "模擬一個虛擬桌面(&d)"
+msgstr "模擬一個虛擬桌面(&E)"
 
 #: winecfg.rc:166
 msgid "Desktop &size:"
-msgstr "桌面大小(&s)："
+msgstr "桌面大小(&S):"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " 螢幕解析度(&R) "
+msgstr "螢幕解析度"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
 msgstr ""
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "DLL overrides"
-msgstr " DLL 頂替 "
+msgstr "DLL 覆載"
 
 #: winecfg.rc:183
 msgid ""
@@ -12458,15 +12236,15 @@ msgstr ""
 
 #: winecfg.rc:185
 msgid "&New override for library:"
-msgstr "新增函式庫頂替(&N)："
+msgstr "新增函式庫覆載(&N):"
 
 #: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
-msgstr "添加(&A)"
+msgstr "新增(&A)"
 
 #: winecfg.rc:188
 msgid "Existing &overrides:"
-msgstr "已有的函式庫頂替(&o)："
+msgstr "已有的函式庫覆載(&O)："
 
 #: winecfg.rc:190
 msgid "&Edit..."
@@ -12474,12 +12252,11 @@ msgstr "編輯(&E)..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
-msgstr "編輯頂替"
+msgstr "編輯覆載設定"
 
 #: winecfg.rc:199
-#, fuzzy
 msgid "Load order"
-msgstr " 載入順序 "
+msgstr "載入順序"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -12491,25 +12268,23 @@ msgstr "原生(Windows)(&N)"
 
 #: winecfg.rc:202
 msgid "Bui&ltin then Native"
-msgstr "內建先於原生(&l)"
+msgstr "內建先於原生(&L)"
 
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
-msgstr "原生先於內建(&v)"
+msgstr "原生先於內建(&V)"
 
 #: winecfg.rc:204
 msgid "&Disable"
 msgstr "停用(&D)"
 
 #: winecfg.rc:211
-#, fuzzy
 msgid "Select Drive Letter"
-msgstr "選择區文字"
+msgstr "選擇儲存裝置代號"
 
 #: winecfg.rc:223
-#, fuzzy
 msgid "Drive mappings"
-msgstr " 儲存槽對映(&m) "
+msgstr "儲存裝置對映"
 
 #: winecfg.rc:224
 msgid ""
@@ -12523,7 +12298,7 @@ msgstr "加入(&A)..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "自動偵測(&d)"
+msgstr "自動偵測(&D)"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -12535,11 +12310,11 @@ msgstr "顯示進階選項(&A)"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr ""
+msgstr "裝置(&V)"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
-msgstr "瀏覽(&w)..."
+msgstr "瀏覽(&W)..."
 
 #: winecfg.rc:244
 msgid "&Label:"
@@ -12547,44 +12322,43 @@ msgstr "標籤(&L)："
 
 #: winecfg.rc:246
 msgid "S&erial:"
-msgstr "序號(&e)："
+msgstr "序號(&E)："
 
 #: winecfg.rc:249
 msgid "Show &dot files"
-msgstr "顯示隱藏檔案(&d)"
+msgstr "顯示隱藏檔案(&D)"
 
 #: winecfg.rc:256
 msgid "Driver diagnostics"
-msgstr ""
+msgstr "驅動程式資訊"
 
 #: winecfg.rc:258
 msgid "Defaults"
-msgstr ""
+msgstr "預設"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr ""
+msgstr "輸出裝置:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr ""
+msgstr "語音輸出裝置:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr ""
+msgstr "輸入裝置:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr ""
+msgstr "語音輸入裝置:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
 msgstr "測試音效(&T)"
 
 #: winecfg.rc:274
-#, fuzzy
 msgid "Appearance"
-msgstr " 外觀 "
+msgstr "外觀"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -12596,20 +12370,19 @@ msgstr "安裝佈景主題(&I)..."
 
 #: winecfg.rc:282
 msgid "It&em:"
-msgstr "物件(&e)："
+msgstr "項目(&E)："
 
 #: winecfg.rc:284
 msgid "C&olor:"
-msgstr "顏色(&o)："
+msgstr "顏色(&O)："
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
-msgstr "特殊資料夾"
+msgstr "資料夾"
 
 #: winecfg.rc:293
 msgid "&Link to:"
-msgstr "連結至(&L)："
+msgstr "連結至(&L):"
 
 #: winecfg.rc:31
 msgid "Libraries"
@@ -12617,12 +12390,11 @@ msgstr "函式庫"
 
 #: winecfg.rc:32
 msgid "Drives"
-msgstr "儲存槽"
+msgstr "儲存裝置"
 
 #: winecfg.rc:33
-#, fuzzy
 msgid "Select the Unix target directory, please."
-msgstr "請選擇 unix 資料夾。"
+msgstr "請選擇 Unix 資料夾。"
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -12674,25 +12446,19 @@ msgstr "Wine 於 %s 的設定"
 
 #: winecfg.rc:81
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "選擇的驅動程式: %s"
 
 #: winecfg.rc:82
-#, fuzzy
 msgid "(None)"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"未定義\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"無"
+msgstr "(無)"
 
 #: winecfg.rc:83
 msgid "Audio test failed!"
-msgstr ""
+msgstr "音效測試失敗！"
 
 #: winecfg.rc:85
-#, fuzzy
 msgid "(System default)"
-msgstr "系統路徑"
+msgstr "(系統預設值)"
 
 #: winecfg.rc:51
 msgid ""
@@ -12731,7 +12497,6 @@ msgid "Default Settings"
 msgstr "預設設定"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Wine 程式 (*.exe,*.exe.so)"
 
@@ -12744,9 +12509,8 @@ msgid "Select an executable file"
 msgstr "選擇一個可執行檔"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect..."
-msgstr "自動偵測"
+msgstr "自動偵測..."
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -12777,7 +12541,7 @@ msgstr ""
 
 #: winecfg.rc:72
 msgid "System drive"
-msgstr "系統儲存槽"
+msgstr "系統儲存裝置"
 
 #: winecfg.rc:73
 msgid ""
@@ -12789,17 +12553,16 @@ msgstr ""
 "你確定要刪除 C 槽嗎？\n"
 "\n"
 "大部分的 Windows 程式都假定 C 槽存在， 而沒有 C 槽時就會死得很嚴重。 如果你刪"
-"除了它， 請記得要重新建立一個！"
+"除了它， 請記得要重新增立一個！"
 
 #: winecfg.rc:74
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
-msgstr "字母"
+msgstr "代號"
 
 #: winecfg.rc:75
 msgid "Drive Mapping"
-msgstr "儲存槽對映"
+msgstr "儲存裝置對映"
 
 #: winecfg.rc:76
 msgid ""
@@ -12833,19 +12596,19 @@ msgstr "捲軸"
 
 #: winecfg.rc:96
 msgid "Selection Background"
-msgstr "選择區背景"
+msgstr "選擇區背景"
 
 #: winecfg.rc:97
 msgid "Selection Text"
-msgstr "選择區文字"
+msgstr "選擇區文字"
 
 #: winecfg.rc:98
 msgid "ToolTip Background"
-msgstr "提示區背景"
+msgstr "工具提示背景"
 
 #: winecfg.rc:99
 msgid "ToolTip Text"
-msgstr "提示區文字"
+msgstr "工具提示文字"
 
 #: winecfg.rc:100
 msgid "Window Background"
@@ -12876,18 +12639,12 @@ msgid "Message Box Text"
 msgstr ""
 
 #: winecfg.rc:107
-#, fuzzy
 msgid "Application Workspace"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"運用程式\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"應用程式"
+msgstr "應用程式工作區"
 
 #: winecfg.rc:108
-#, fuzzy
 msgid "Window Frame"
-msgstr "視窗文字"
+msgstr "視窗邊框"
 
 #: winecfg.rc:109
 #, fuzzy
@@ -12905,9 +12662,8 @@ msgid "Controls Shadow"
 msgstr "按鈕背景"
 
 #: winecfg.rc:112
-#, fuzzy
 msgid "Gray Text"
-msgstr "文本文字"
+msgstr "灰色文字"
 
 #: winecfg.rc:113
 #, fuzzy
@@ -12954,7 +12710,7 @@ msgstr "功能表背景"
 
 #: wineconsole.rc:60
 msgid "Cursor size"
-msgstr "游標尺寸"
+msgstr "游標大小"
 
 #: wineconsole.rc:61
 msgid "&Small"
@@ -13014,35 +12770,30 @@ msgid "&Color"
 msgstr "顏色(&C)"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " 配置 "
+msgstr "組態"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
 msgstr "緩衝區域"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
 msgstr "寬度(&W):"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
 msgstr "高度(&H):"
 
 #: wineconsole.rc:108
 msgid "Window size"
-msgstr "窗口大小"
+msgstr "視窗大小"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
 msgstr "寬度(&I):"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
 msgstr "高度(&E):"
 
@@ -13068,11 +12819,11 @@ msgstr "保留當前配置以便下次使用"
 
 #: wineconsole.rc:129
 msgid "Modify only current session"
-msgstr "僅修改當前會話"
+msgstr "僅修改目前的工作階段"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"
-msgstr "設為默認值(&D)"
+msgstr "設為預設值(&D)"
 
 #: wineconsole.rc:28
 msgid "&Mark"
@@ -13084,36 +12835,35 @@ msgstr "全選(&S)"
 
 #: wineconsole.rc:32
 msgid "Sc&roll"
-msgstr "滾動(&R)"
+msgstr "捲動(&R)"
 
 #: wineconsole.rc:33
 msgid "S&earch"
-msgstr "搜索(&E)"
+msgstr "搜尋(&E)"
 
 #: wineconsole.rc:36
 msgid "Setup - Default settings"
-msgstr "配置 - 默認設定"
+msgstr "設定 - 預設設定"
 
 #: wineconsole.rc:37
 msgid "Setup - Current settings"
-msgstr "配置 - 當前設定"
+msgstr "設定 - 當前設定"
 
 #: wineconsole.rc:38
 msgid "Configuration error"
-msgstr "配置錯誤"
+msgstr "組態錯誤"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
-msgstr "螢幕緩存大小必須大於或等於視窗緩存"
+msgstr "螢幕緩衝區大小必須大於或等於視窗緩衝區"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
 msgstr "每個字都是 %ld 個像素寬，%ld 個像素高"
 
 #: wineconsole.rc:35
 msgid "This is a test"
-msgstr "這是一段測試語句"
+msgstr "這是一段測試訊息"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
@@ -13168,9 +12918,8 @@ msgid ""
 msgstr ""
 
 #: winedbg.rc:46
-#, fuzzy
 msgid "Program Error"
-msgstr "程式組(&G)"
+msgstr "程式錯誤"
 
 #: winedbg.rc:51
 msgid ""
@@ -13186,13 +12935,8 @@ msgid ""
 msgstr ""
 
 #: winedbg.rc:58
-#, fuzzy
 msgid "Show &Details"
-msgstr ""
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"詳情列表(&D)\n"
-"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
-"詳情(&D)"
+msgstr "顯示詳細資訊(&D)"
 
 #: winedbg.rc:63
 #, fuzzy
@@ -13237,7 +12981,6 @@ msgid "Re&name..."
 msgstr "改名(&N)..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
 msgstr "屬性(&I)...\tAlt+Enter"
 
@@ -13251,16 +12994,15 @@ msgstr "建立目錄(&E)..."
 
 #: winefile.rc:40
 msgid "&Disk"
-msgstr "磁盤(&D)"
+msgstr "磁碟(&D)"
 
 #: winefile.rc:41
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "連接網路儲存槽(&N)"
+msgstr "連線至網路儲存裝置(&N)..."
 
 #: winefile.rc:42
 msgid "&Disconnect Network Drive"
-msgstr "斷開網路儲存槽連接(&D)"
+msgstr "從網路儲存裝置離線(&D)"
 
 #: winefile.rc:48
 msgid "&Name"
@@ -13293,15 +13035,15 @@ msgstr "定製排列..."
 
 #: winefile.rc:63
 msgid "&Drivebar"
-msgstr "儲存槽列表(&D)"
+msgstr "儲存裝置列表(&D)"
 
 #: winefile.rc:66
 msgid "F&ull Screen\tCtrl+Shift+S"
-msgstr "全屏(&U)\tCtrl+Shift+S"
+msgstr "全螢幕(&U)\tCtrl+Shift+S"
 
 #: winefile.rc:73
 msgid "New &Window"
-msgstr "新建(&W)"
+msgstr "新視窗(&W)"
 
 #: winefile.rc:74
 msgid "Cascading\tCtrl+F5"
@@ -13317,9 +13059,8 @@ msgid "&About Wine File Manager"
 msgstr "&關於 Winefile..."
 
 #: winefile.rc:124
-#, fuzzy
 msgid "Select destination"
-msgstr "選擇資訊(&I)"
+msgstr "選擇目的地"
 
 #: winefile.rc:137
 #, fuzzy
@@ -13333,12 +13074,11 @@ msgstr "檔案"
 
 #: winefile.rc:143
 msgid "&Directories"
-msgstr ""
+msgstr "目錄(&D)"
 
 #: winefile.rc:145
-#, fuzzy
 msgid "&Programs"
-msgstr "程式"
+msgstr "程式(&P)"
 
 #: winefile.rc:147
 #, fuzzy
@@ -13351,7 +13091,7 @@ msgstr ""
 
 #: winefile.rc:151
 msgid "Show Hidden/&System Files"
-msgstr ""
+msgstr "顯示隱藏或系統檔"
 
 #: winefile.rc:162
 #, fuzzy
@@ -13360,21 +13100,19 @@ msgstr "電腦名稱(&M):"
 
 #: winefile.rc:164
 msgid "Full &Path:"
-msgstr ""
+msgstr "完整路徑(P):"
 
 #: winefile.rc:166
 msgid "Last Change:"
 msgstr ""
 
 #: winefile.rc:170
-#, fuzzy
 msgid "Cop&yright:"
-msgstr "右(&R):"
+msgstr ""
 
 #: winefile.rc:172
-#, fuzzy
 msgid "Size:"
-msgstr "大小"
+msgstr "大小:"
 
 #: winefile.rc:176
 msgid "H&idden"
@@ -13385,9 +13123,8 @@ msgid "&Archive"
 msgstr ""
 
 #: winefile.rc:178
-#, fuzzy
 msgid "&System"
-msgstr "系統(&S)\tCtrl+1"
+msgstr "系統(&S)"
 
 #: winefile.rc:179
 #, fuzzy
@@ -13643,7 +13380,7 @@ msgstr "搜尋(&S)"
 
 #: winhlp32.rc:78
 msgid "Wine Help"
-msgstr "Wine 幫助"
+msgstr "Wine 說明"
 
 #: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
@@ -13659,7 +13396,7 @@ msgstr "內容(&C)"
 
 #: winhlp32.rc:88
 msgid "Help files (*.hlp)"
-msgstr "幫助檔案 (*.hlp)"
+msgstr "說明檔案 (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
@@ -13671,20 +13408,19 @@ msgstr "找不到 richedit... 終止"
 
 #: winhlp32.rc:91
 msgid "Help topics: "
-msgstr "幫助內容: "
+msgstr "說明主題: "
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
-msgstr "新建(&N)...\tCtrl+N"
+msgstr "新增(&N)...\tCtrl+N"
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"
 msgstr "重做(&E)\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
-msgstr "刪除(&D)\tDEL"
+msgstr "清除(&C)\tDel"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
@@ -13696,11 +13432,11 @@ msgstr "找下一個(&N)\tF3"
 
 #: wordpad.rc:54
 msgid "Read-&only"
-msgstr "唯讀(&0))"
+msgstr "唯讀(&O))"
 
 #: wordpad.rc:55
 msgid "&Modified"
-msgstr "已改動(M)"
+msgstr "已修改(&M)"
 
 #: wordpad.rc:57
 msgid "E&xtras"
@@ -13716,7 +13452,7 @@ msgstr "文字格式(&F)"
 
 #: wordpad.rc:61
 msgid "&Def. char format"
-msgstr "默認格式(&D)"
+msgstr "預設格式(&D)"
 
 #: wordpad.rc:62
 msgid "Paragrap&h format"
@@ -13724,19 +13460,19 @@ msgstr "段落格式(&H)"
 
 #: wordpad.rc:63
 msgid "&Get text"
-msgstr "獲取文字(&G)"
+msgstr "擷取文字(&G)"
 
 #: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
-msgstr "格式工具欄(&F)"
+msgstr "格式工具列(&F)"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
-msgstr "標尺(&R)"
+msgstr "尺規(&R)"
 
 #: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
-msgstr "狀態欄(&S)"
+msgstr "狀態列(&S)"
 
 #: wordpad.rc:75
 msgid "&Insert"
@@ -13771,18 +13507,16 @@ msgid "&System\tCtrl+1"
 msgstr "系統(&S)\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
 msgstr "淡黃色(&P)\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
-msgstr "關於 &Wine 寫字板"
+msgstr "關於 Wine Wordpad(&A)"
 
 #: wordpad.rc:130
-#, fuzzy
 msgid "Automatic"
-msgstr "自動排列"
+msgstr "自動"
 
 #: wordpad.rc:199
 msgid "Date and time"
@@ -13794,7 +13528,7 @@ msgstr "可用格式"
 
 #: wordpad.rc:213
 msgid "New document type"
-msgstr "新檔案類型"
+msgstr "新文件類型"
 
 #: wordpad.rc:221
 msgid "Paragraph format"
@@ -13802,7 +13536,7 @@ msgstr "段落格式"
 
 #: wordpad.rc:224
 msgid "Indentation"
-msgstr "縮進"
+msgstr "縮排"
 
 #: wordpad.rc:225 wordpad.rc:148
 msgid "Left"
@@ -13838,7 +13572,7 @@ msgstr "自動換行"
 
 #: wordpad.rc:257
 msgid "&No line wrapping"
-msgstr "No line wrapping"
+msgstr "關閉自動換行(&N)"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
@@ -13850,7 +13584,7 @@ msgstr "按紙張寬度(&M)"
 
 #: wordpad.rc:260
 msgid "Toolbars"
-msgstr "工具欄"
+msgstr "工具列"
 
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
@@ -13950,11 +13684,11 @@ msgstr "單頁"
 
 #: wordpad.rc:167
 msgid "Zoom in"
-msgstr ""
+msgstr "放大"
 
 #: wordpad.rc:168
 msgid "Zoom out"
-msgstr ""
+msgstr "縮小"
 
 #: wordpad.rc:170
 #, fuzzy
@@ -13996,7 +13730,7 @@ msgstr "儲存改動到 '%s'?"
 
 #: wordpad.rc:182
 msgid "Finished searching the document."
-msgstr "檔案查找結束。"
+msgstr "檔案搜尋結束。"
 
 #: wordpad.rc:183
 msgid "Failed to load the RichEdit library."
