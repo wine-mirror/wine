@@ -1277,7 +1277,7 @@ msgstr "Hora de Signatura"
 
 #: crypt32.rc:48
 msgid "Counter Sign"
-msgstr "Co-signatura"
+msgstr "Contra-Signatura"
 
 #: crypt32.rc:49
 msgid "Challenge Password"
@@ -2448,7 +2448,7 @@ msgstr "Aquest certificat ha caducat o encara no és vàlid."
 
 #: cryptui.rc:41
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr "El periode de validesa d'aquest certificat supera el del seu emissor."
+msgstr "El període de validesa d'aquest certificat supera el del seu emissor."
 
 #: cryptui.rc:42
 msgid "This certificate was revoked by its issuer."
@@ -2665,19 +2665,19 @@ msgstr "<Propòsits Avançades>"
 
 #: cryptui.rc:101
 msgid "Issued To"
-msgstr "Emès a"
+msgstr "Emès A"
 
 #: cryptui.rc:102
 msgid "Issued By"
-msgstr "Emès de"
+msgstr "Emès De"
 
 #: cryptui.rc:103
 msgid "Expiration Date"
-msgstr "Dada de caducació"
+msgstr "Dada de Caducitat"
 
 #: cryptui.rc:104
 msgid "Friendly Name"
-msgstr "Nom amistós"
+msgstr "Nom Amistós"
 
 #: cryptui.rc:106 cryptui.rc:120
 msgid "<None>"
@@ -6384,7 +6384,7 @@ msgstr "Membre de grup no trobat.\n"
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB.\n"
-msgstr "No es pot crear el base de datos assignador de punts finals.\n"
+msgstr "No es pot crear el base de dades assignador de punts finals.\n"
 
 #: winerror.mc:3586
 msgid "Invalid object.\n"
@@ -9627,7 +9627,6 @@ msgstr ""
 "etc. No té cap efecte si es truca des de la línia d'ordres.\n"
 
 #: cmd.rc:176
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9646,8 +9645,8 @@ msgid ""
 "/L           Show end-user license.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
-"Inicia un programa o obrir un document en el programa normalment usat amb\n"
-"els fitxers amb aquell sufix.\n"
+"Inicia un programa o obrir un document en el programa normalment usat pels\n"
+"fitxers amb aquell sufix.\n"
 "Ús:\n"
 "start [opcions] nom_de_fitxer_del_programa [...]\n"
 "start [opcions] nom_de_fitxer_del_document\n"
@@ -9663,13 +9662,6 @@ msgstr ""
 "/ProgIDOpen  Obrir un document usant el progID següent.\n"
 "/L           Mostrar la llicència d'usuari final.\n"
 "/?           Mostrar aquesta ajuda i sortir.\n"
-"\n"
-"start.exe versió 0.2 © 2003, Dan Kegel\n"
-"Start ve amb ABSOLUTAMENT CAP GARANTIA; per més detalls executar amb "
-"l'opció\n"
-"/L.\n"
-"Això és programari lliure, i esteu benvingut a redistribuir-lo sota certes\n"
-"condicions; executeu 'start /L' pels detalls.\n"
 
 #: cmd.rc:201
 msgid "TIME sets or shows the current system time.\n"
@@ -9821,7 +9813,6 @@ msgstr ""
 "del qual heu invocat cmd.\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9892,6 +9883,7 @@ msgstr ""
 "SET\t\tEstablir o mostrar les variables d'entorn\n"
 "SETLOCAL\tComençar la localització de canvis en l'entorn en un fitxer\n"
 "\t\tbatch\n"
+"START\t\tIniciar un programa o obrir un document en el programa associat\n"
 "TIME\t\tEstablir o mostrar l'hora de sistema actual\n"
 "TITLE\t\tEstablir el títol de finestra per la sessió CMD\n"
 "TYPE\t\tAbocar el contingut d'un fitxer de text\n"
@@ -11643,7 +11635,7 @@ msgstr "&Surt de l'Administrador de Tasques"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
-msgstr "&Mínimitza Al Usar"
+msgstr "&Minimitza Al Usar"
 
 #: taskmgr.rc:47
 msgid "&Hide When Minimized"
@@ -11731,7 +11723,7 @@ msgstr "&Termina Tasca"
 
 #: taskmgr.rc:130
 msgid "&Go To Process"
-msgstr "&Ana Al Procés"
+msgstr "Vés &Al Procés"
 
 #: taskmgr.rc:149 taskmgr.rc:363
 msgid "&End Process"
@@ -13523,7 +13515,7 @@ msgstr "Error al seleccionar el nou tipus de lletra."
 
 #: winefile.rc:95
 msgid "Wine File Manager"
-msgstr "Gestor de Fixers del Wine"
+msgstr "Gestor de Fitxers del Wine"
 
 #: winefile.rc:97
 msgid "root fs"
