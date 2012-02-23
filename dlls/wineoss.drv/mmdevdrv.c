@@ -1335,13 +1335,15 @@ static void CALLBACK oss_period_callback(void *user, BOOLEAN timer)
 
     EnterCriticalSection(&This->lock);
 
-    if(This->dataflow == eRender && This->held_frames)
-        oss_write_data(This);
-    else if(This->dataflow == eCapture)
-        oss_read_data(This);
+    if(This->playing){
+        if(This->dataflow == eRender && This->held_frames)
+            oss_write_data(This);
+        else if(This->dataflow == eCapture)
+            oss_read_data(This);
 
-    if(This->event)
-        SetEvent(This->event);
+        if(This->event)
+            SetEvent(This->event);
+    }
 
     LeaveCriticalSection(&This->lock);
 }
@@ -1384,6 +1386,8 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
 static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
+    HANDLE event;
+    DWORD wait;
 
     TRACE("(%p)\n", This);
 
@@ -1399,15 +1403,19 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
         return S_FALSE;
     }
 
-    if(This->timer && This->timer != INVALID_HANDLE_VALUE){
-        DeleteTimerQueueTimer(g_timer_q, This->timer,
-                INVALID_HANDLE_VALUE);
-        This->timer = NULL;
-    }
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    wait = !DeleteTimerQueueTimer(g_timer_q, This->timer, event);
+    if(wait)
+        WARN("DeleteTimerQueueTimer error %u\n", GetLastError());
+    wait = wait && GetLastError() == ERROR_IO_PENDING;
 
     This->playing = FALSE;
 
     LeaveCriticalSection(&This->lock);
+
+    if(event && wait)
+        WaitForSingleObject(event, INFINITE);
+    CloseHandle(event);
 
     return S_OK;
 }
