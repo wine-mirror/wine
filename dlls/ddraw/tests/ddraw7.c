@@ -1215,6 +1215,68 @@ static void test_texture_load_ckey(void)
     IDirect3DDevice7_Release(device);
 }
 
+static void test_zenable(void)
+{
+    static struct
+    {
+        struct vec4 position;
+        D3DCOLOR diffuse;
+    }
+    tquad[] =
+    {
+        {{  0.0f, 480.0f, -0.5f, 1.0f}, 0xff00ff00},
+        {{  0.0f,   0.0f, -0.5f, 1.0f}, 0xff00ff00},
+        {{640.0f, 480.0f,  1.5f, 1.0f}, 0xff00ff00},
+        {{640.0f,   0.0f,  1.5f, 1.0f}, 0xff00ff00},
+    };
+    IDirect3DDevice7 *device;
+    IDirectDrawSurface7 *rt;
+    D3DCOLOR color;
+    HWND window;
+    HRESULT hr;
+    UINT x, y;
+    UINT i, j;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable z-buffering, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZRHW | D3DFVF_DIFFUSE, tquad, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    for (i = 0; i < 4; ++i)
+    {
+        for (j = 0; j < 4; ++j)
+        {
+            x = 80 * ((2 * j) + 1);
+            y = 60 * ((2 * i) + 1);
+            color = get_surface_color(rt, x, y);
+            ok(compare_color(color, 0x0000ff00, 1),
+                    "Expected color 0x0000ff00 at %u, %u, got 0x%08x.\n", x, y, color);
+        }
+    }
+    IDirectDrawSurface7_Release(rt);
+
+    IDirect3DDevice7_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -1233,4 +1295,5 @@ START_TEST(ddraw7)
     test_coop_level_threaded();
     test_depth_blit();
     test_texture_load_ckey();
+    test_zenable();
 }

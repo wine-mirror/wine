@@ -1396,6 +1396,100 @@ static void test_viewport_interfaces(void)
     IDirectDraw4_Release(ddraw);
 }
 
+static void test_zenable(void)
+{
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    static struct
+    {
+        struct vec4 position;
+        D3DCOLOR diffuse;
+    }
+    tquad[] =
+    {
+        {{  0.0f, 480.0f, -0.5f, 1.0f}, 0xff00ff00},
+        {{  0.0f,   0.0f, -0.5f, 1.0f}, 0xff00ff00},
+        {{640.0f, 480.0f,  1.5f, 1.0f}, 0xff00ff00},
+        {{640.0f,   0.0f,  1.5f, 1.0f}, 0xff00ff00},
+    };
+    IDirect3DViewport3 *viewport;
+    IDirect3DDevice3 *device;
+    IDirectDrawSurface4 *rt;
+    D3DVIEWPORT2 vp;
+    IDirect3D3 *d3d;
+    D3DCOLOR color;
+    HWND window;
+    HRESULT hr;
+    UINT x, y;
+    UINT i, j;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    hr = IDirect3D3_CreateViewport(d3d, &viewport, NULL);
+    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_AddViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to add viewport, hr %#x.\n", hr);
+    memset(&vp, 0, sizeof(vp));
+    vp.dwSize = sizeof(vp);
+    vp.dwX = 0;
+    vp.dwY = 0;
+    vp.dwWidth = 640;
+    vp.dwHeight = 480;
+    vp.dvClipX = -1.0f;
+    vp.dvClipY =  1.0f;
+    vp.dvClipWidth = 2.0f;
+    vp.dvClipHeight = 2.0f;
+    vp.dvMinZ = 0.0f;
+    vp.dvMaxZ = 1.0f;
+    hr = IDirect3DViewport3_SetViewport2(viewport, &vp);
+    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable z-buffering, hr %#x.\n", hr);
+
+    hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZRHW | D3DFVF_DIFFUSE, tquad, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    for (i = 0; i < 4; ++i)
+    {
+        for (j = 0; j < 4; ++j)
+        {
+            x = 80 * ((2 * j) + 1);
+            y = 60 * ((2 * i) + 1);
+            color = get_surface_color(rt, x, y);
+            ok(compare_color(color, 0x0000ff00, 1),
+                    "Expected color 0x0000ff00 at %u, %u, got 0x%08x.\n", x, y, color);
+        }
+    }
+    IDirectDrawSurface4_Release(rt);
+
+    hr = IDirect3DDevice3_DeleteViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to delete viewport, hr %#x.\n", hr);
+    IDirect3DViewport3_Release(viewport);
+    IDirect3D3_Release(d3d);
+    IDirect3DDevice3_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
@@ -1407,4 +1501,5 @@ START_TEST(ddraw4)
     test_depth_blit();
     test_texture_load_ckey();
     test_viewport_interfaces();
+    test_zenable();
 }
