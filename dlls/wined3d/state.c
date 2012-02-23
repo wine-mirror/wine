@@ -93,16 +93,17 @@ static void state_lighting(struct wined3d_context *context, const struct wined3d
 
 static void state_zenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
+    enum wined3d_depth_buffer_type zenable = state->render_states[WINED3D_RS_ZENABLE];
+    static UINT once;
+
     /* No z test without depth stencil buffers */
     if (!state->fb->depth_stencil)
     {
         TRACE("No Z buffer - disabling depth test\n");
-        glDisable(GL_DEPTH_TEST); /* This also disables z writing in gl */
-        checkGLcall("glDisable GL_DEPTH_TEST");
-        return;
+        zenable = WINED3D_ZB_FALSE;
     }
 
-    switch (state->render_states[WINED3D_RS_ZENABLE])
+    switch (zenable)
     {
         case WINED3D_ZB_FALSE:
             glDisable(GL_DEPTH_TEST);
@@ -118,9 +119,25 @@ static void state_zenable(struct wined3d_context *context, const struct wined3d_
             FIXME("W buffer is not well handled\n");
             break;
         default:
-            FIXME("Unrecognized depth buffer type %#x.\n",
-                    state->render_states[WINED3D_RS_ZENABLE]);
+            FIXME("Unrecognized depth buffer type %#x.\n", zenable);
+            break;
     }
+
+    if (context->gl_info->supported[ARB_DEPTH_CLAMP])
+    {
+        if (!zenable && context->swapchain->device->strided_streams.position_transformed)
+        {
+            glEnable(GL_DEPTH_CLAMP);
+            checkGLcall("glEnable(GL_DEPTH_CLAMP)");
+        }
+        else
+        {
+            glDisable(GL_DEPTH_CLAMP);
+            checkGLcall("glDisable(GL_DEPTH_CLAMP)");
+        }
+    }
+    else if (!zenable && !once++)
+        FIXME("Z buffer disabled, but ARB_depth_clamp isn't supported.\n");
 }
 
 static void state_cullmode(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4647,6 +4664,9 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
                 transform_texture(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS));
         }
     }
+
+    if (transformed != wasrhw && !isStateDirty(context, STATE_RENDER(WINED3D_RS_ZENABLE)))
+        state_zenable(context, state, STATE_RENDER(WINED3D_RS_ZENABLE));
 }
 
 static void viewport_miscpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
