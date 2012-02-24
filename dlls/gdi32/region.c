@@ -754,7 +754,8 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 {
     RGNOBJ * obj;
     HRGN hrgn = 0;
-    int a, b, i, x, y, asq, bsq, dx, dy, err;
+    int a, b, i, x, y;
+    INT64 asq, bsq, dx, dy, err;
     RECT *rects;
 
       /* Make the dimensions sensible */
@@ -788,10 +789,10 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 
     a = ellipse_width - 1;
     b = ellipse_height - 1;
-    asq = 8 * a * a;
-    bsq = 8 * b * b;
-    dx  = 4 * b * b * (1 - a);
-    dy  = 4 * a * a * (1 + (b % 2));
+    asq = (INT64)8 * a * a;
+    bsq = (INT64)8 * b * b;
+    dx  = (INT64)4 * b * b * (1 - a);
+    dy  = (INT64)4 * a * a * (1 + (b % 2));
     err = dx + dy + a * a * (b % 2);
 
     x = 0;
@@ -802,7 +803,7 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 
     while (x <= ellipse_width / 2)
     {
-        int e2 = 2 * err;
+        INT64 e2 = 2 * err;
         if (e2 >= dx)
         {
             x++;

@@ -78,11 +78,11 @@ static int ellipse_first_quadrant( int width, int height, POINT *data )
 {
     const int a = width - 1;
     const int b = height - 1;
-    const int asq = 8 * a * a;
-    const int bsq = 8 * b * b;
-    int dx  = 4 * b * b * (1 - a);
-    int dy  = 4 * a * a * (1 + (b % 2));
-    int err = dx + dy + a * a * (b % 2);
+    const INT64 asq = (INT64)8 * a * a;
+    const INT64 bsq = (INT64)8 * b * b;
+    INT64 dx  = (INT64)4 * b * b * (1 - a);
+    INT64 dy  = (INT64)4 * a * a * (1 + (b % 2));
+    INT64 err = dx + dy + a * a * (b % 2);
     int pos = 0;
     POINT pt;
 
@@ -93,7 +93,7 @@ static int ellipse_first_quadrant( int width, int height, POINT *data )
 
     while (pt.x >= width / 2)
     {
-        int e2 = 2 * err;
+        INT64 e2 = 2 * err;
         data[pos++] = pt;
         if (e2 >= dx)
         {
