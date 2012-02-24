@@ -172,11 +172,11 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
             emr->offBmi = sizeof( EMRCREATEDIBPATTERNBRUSHPT );
             emr->cbBmi = info_size;
         }
-        emr->emr.nSize = emr->offBits + emr->cbBits;
         emr->ihBrush = index = EMFDRV_AddHandle( dev, hBrush );
         emr->iUsage = usage;
         emr->offBits = emr->offBmi + emr->cbBmi;
         emr->cbBits = info->bmiHeader.biSizeImage;
+        emr->emr.nSize = emr->offBits + emr->cbBits;
 
         memcpy( (BYTE *)emr + emr->offBmi, info, emr->cbBmi );
         memcpy( (BYTE *)emr + emr->offBits, bits, emr->cbBits );
