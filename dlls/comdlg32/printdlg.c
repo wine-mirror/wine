@@ -321,8 +321,10 @@ static BOOL PRINTDLG_CreateDevNames(HGLOBAL *hmem, const char* DeviceDriverName,
     LPDEVNAMES lpDevNames;
     char buf[260];
     DWORD dwBufLen = sizeof(buf);
+    const char *p;
 
-    DeviceDriverName = strrchr(DeviceDriverName, '\\') + 1;
+    p = strrchr( DeviceDriverName, '\\' );
+    if (p) DeviceDriverName = p + 1;
 
     size = strlen(DeviceDriverName) + 1
             + strlen(DeviceName) + 1
@@ -366,8 +368,10 @@ static BOOL PRINTDLG_CreateDevNamesW(HGLOBAL *hmem, LPCWSTR DeviceDriverName,
     LPDEVNAMES lpDevNames;
     WCHAR bufW[260];
     DWORD dwBufLen = sizeof(bufW) / sizeof(WCHAR);
+    const WCHAR *p;
 
-    DeviceDriverName = strrchrW(DeviceDriverName, '\\') + 1;
+    p = strrchrW( DeviceDriverName, '\\' );
+    if (p) DeviceDriverName = p + 1;
 
     size = sizeof(WCHAR)*lstrlenW(DeviceDriverName) + 2
             + sizeof(WCHAR)*lstrlenW(DeviceName) + 2
