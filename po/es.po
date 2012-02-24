@@ -3098,13 +3098,8 @@ msgid "S&ync"
 msgstr ""
 
 #: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
-#, fuzzy
 msgid "&Back"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Atrás\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Anterior"
+msgstr "&Atrás"
 
 #: hhctrl.rc:58
 #, fuzzy
@@ -3247,13 +3242,8 @@ msgid "&Favorites"
 msgstr "&Favoritos"
 
 #: ieframe.rc:52 regedit.rc:73
-#, fuzzy
 msgid "&Add to Favorites..."
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Añadir a Favoritos...\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Añadir a favoritos"
+msgstr "&Añadir a Favoritos..."
 
 #: ieframe.rc:57
 #, fuzzy
@@ -3279,9 +3269,8 @@ msgid "Home"
 msgstr "Inicio"
 
 #: ieframe.rc:68 winhlp32.rc:66
-#, fuzzy
 msgid "Print..."
-msgstr "Imprimir"
+msgstr "Imprimir..."
 
 #: ieframe.rc:73
 msgid "Address"
@@ -3588,799 +3577,728 @@ msgid "Array object expected"
 msgstr "Objeto Arreglo esperado"
 
 #: winerror.mc:26
-#, fuzzy
 msgid "Success.\n"
 msgstr "Éxito.\n"
 
 #: winerror.mc:31
-#, fuzzy
 msgid "Invalid function.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Función inválida.\n"
 
 #: winerror.mc:36
-#, fuzzy
 msgid "File not found.\n"
 msgstr "Archivo no encontrado.\n"
 
 #: winerror.mc:41
-#, fuzzy
 msgid "Path not found.\n"
-msgstr "ruta %s no encontrada.\n"
+msgstr "Ruta no encontrada.\n"
 
 #: winerror.mc:46
 msgid "Too many open files.\n"
-msgstr ""
+msgstr "Demasiados archivos abiertos.\n"
 
 #: winerror.mc:51
 msgid "Access denied.\n"
-msgstr ""
+msgstr "Acceso denegado.\n"
 
 #: winerror.mc:56
-#, fuzzy
 msgid "Invalid handle.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Descriptor inválido.\n"
 
 #: winerror.mc:61
-#, fuzzy
 msgid "Memory trashed.\n"
-msgstr "Monitor de &memoria.\n"
+msgstr "Error de hiperpaginación.\n"
 
 #: winerror.mc:66
-#, fuzzy
 msgid "Not enough memory.\n"
-msgstr "Sin memoria."
+msgstr "Memoria insuficiente.\n"
 
 #: winerror.mc:71
-#, fuzzy
 msgid "Invalid block.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Bloque inválido.\n"
 
 #: winerror.mc:76
 msgid "Bad environment.\n"
-msgstr ""
+msgstr "Medio inválido.\n"
 
 #: winerror.mc:81
 msgid "Bad format.\n"
-msgstr ""
+msgstr "Formato inválido.\n"
 
 #: winerror.mc:86
-#, fuzzy
 msgid "Invalid access.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Acceso inválido.\n"
 
 #: winerror.mc:91
-#, fuzzy
 msgid "Invalid data.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Datos inválidos.\n"
 
 #: winerror.mc:96
-#, fuzzy
 msgid "Out of memory.\n"
-msgstr "Sin memoria."
+msgstr "Memoria agotada.\n"
 
 #: winerror.mc:101
-#, fuzzy
 msgid "Invalid drive.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Unidad inválida.\n"
 
 #: winerror.mc:106
-#, fuzzy
 msgid "Can't delete current directory.\n"
-msgstr "Ayuda sobre CHDIR.\n"
+msgstr "No se ha podido borrar el directorio actual.\n"
 
 #: winerror.mc:111
 msgid "Not same device.\n"
-msgstr ""
+msgstr "No es la misma unidad.\n"
 
 #: winerror.mc:116
 msgid "No more files.\n"
-msgstr ""
+msgstr "No más archivos.\n"
 
 #: winerror.mc:121
 msgid "Write protected.\n"
-msgstr ""
+msgstr "Protegido contra escritura.\n"
 
 #: winerror.mc:126
 msgid "Bad unit.\n"
-msgstr ""
+msgstr "Unidad inválida.\n"
 
 #: winerror.mc:131
 msgid "Not ready.\n"
-msgstr ""
+msgstr "No está lista.\n"
 
 #: winerror.mc:136
 msgid "Bad command.\n"
-msgstr ""
+msgstr "Comando inválido.\n"
 
 #: winerror.mc:141
-#, fuzzy
 msgid "CRC error.\n"
-msgstr "Error de sintaxis.\n"
+msgstr "Error CRC.\n"
 
 #: winerror.mc:146
 msgid "Bad length.\n"
-msgstr ""
+msgstr "Longitud errónea.\n"
 
 #: winerror.mc:151 winerror.mc:526
-#, fuzzy
 msgid "Seek error.\n"
-msgstr "Error de sintaxis.\n"
+msgstr "Error de búsqueda.\n"
 
 #: winerror.mc:156
 msgid "Not DOS disk.\n"
-msgstr ""
+msgstr "No es un disco DOS.\n"
 
 #: winerror.mc:161
-#, fuzzy
 msgid "Sector not found.\n"
-msgstr "Archivo no encontrado.\n"
+msgstr "Sector no encontrado.\n"
 
 #: winerror.mc:166
-#, fuzzy
 msgid "Out of paper.\n"
-msgstr "Sin papel; .\n"
+msgstr "Sin papel.\n"
 
 #: winerror.mc:171
-#, fuzzy
 msgid "Write fault.\n"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Default\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Por defecto.\n"
+msgstr "Error de escritura.\n"
 
 #: winerror.mc:176
-#, fuzzy
 msgid "Read fault.\n"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Default\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Por defecto.\n"
+msgstr "Error de lectura.\n"
 
 #: winerror.mc:181
 msgid "General failure.\n"
-msgstr ""
+msgstr "Falló general.\n"
 
 #: winerror.mc:186
-#, fuzzy
 msgid "Sharing violation.\n"
-msgstr "Violación de nomenclatura.\n"
+msgstr "Violación de recurso compartido.\n"
 
 #: winerror.mc:191
-#, fuzzy
 msgid "Lock violation.\n"
-msgstr "Ubicación.\n"
+msgstr "Violación del bloqueo.\n"
 
 #: winerror.mc:196
 msgid "Wrong disk.\n"
-msgstr ""
+msgstr "Disco equivocado.\n"
 
 #: winerror.mc:201
 msgid "Sharing buffer exceeded.\n"
-msgstr ""
+msgstr "Se excedió el buffer compartido.\n"
 
 #: winerror.mc:206
-#, fuzzy
 msgid "End of file.\n"
-msgstr "&Añadir a Favoritos..."
+msgstr "Fin del archivo.\n"
 
 #: winerror.mc:211 winerror.mc:436
 msgid "Disk full.\n"
-msgstr ""
+msgstr "Disco lleno.\n"
 
 #: winerror.mc:216
 msgid "Request not supported.\n"
-msgstr ""
+msgstr "Petición no soportada.\n"
 
 #: winerror.mc:221
 msgid "Remote machine not listening.\n"
-msgstr ""
+msgstr "La máquina remota no está escuchando.\n"
 
 #: winerror.mc:226
 msgid "Duplicate network name.\n"
-msgstr ""
+msgstr "Nombre de red duplicado.\n"
 
 #: winerror.mc:231
 msgid "Bad network path.\n"
-msgstr ""
+msgstr "Ruta de red inválida.\n"
 
 #: winerror.mc:236
-#, fuzzy
 msgid "Network busy.\n"
-msgstr "Compartición de red.\n"
+msgstr "La red está ocupada.\n"
 
 #: winerror.mc:241
-#, fuzzy
 msgid "Device does not exist.\n"
-msgstr "El archivo no existe.\n"
+msgstr "La unidad no existe.\n"
 
 #: winerror.mc:246
 msgid "Too many commands.\n"
-msgstr ""
+msgstr "Demasiados comandos.\n"
 
 #: winerror.mc:251
 msgid "Adaptor hardware error.\n"
-msgstr ""
+msgstr "Error en el adaptador de hardware.\n"
 
 #: winerror.mc:256
 msgid "Bad network response.\n"
-msgstr ""
+msgstr "Respuesta de red inválida.\n"
 
 #: winerror.mc:261
-#, fuzzy
 msgid "Unexpected network error.\n"
-msgstr "Error externo indefinido."
+msgstr "Error de red inesperado.\n"
 
 #: winerror.mc:266
 msgid "Bad remote adaptor.\n"
-msgstr ""
+msgstr "Error en el adaptador remoto.\n"
 
 #: winerror.mc:271
 msgid "Print queue full.\n"
-msgstr ""
+msgstr "Cola de impresión llena.\n"
 
 #: winerror.mc:276
 msgid "No spool space.\n"
-msgstr ""
+msgstr "Sin espacio en el buffer.\n"
 
 #: winerror.mc:281
-#, fuzzy
 msgid "Print canceled.\n"
-msgstr "Cancelado por el usuario.\n"
+msgstr "Impresión cancelada.\n"
 
 #: winerror.mc:286
-#, fuzzy
 msgid "Network name deleted.\n"
-msgstr "Fecha de borrado.\n"
+msgstr "Nombre de red borrado.\n"
 
 #: winerror.mc:291
 msgid "Network access denied.\n"
-msgstr ""
+msgstr "Acceso a la red denegado.\n"
 
 #: winerror.mc:296
 msgid "Bad device type.\n"
-msgstr ""
+msgstr "Tipo de dispositivo erróneo.\n"
 
 #: winerror.mc:301
-#, fuzzy
 msgid "Bad network name.\n"
-msgstr "Compartición de red.\n"
+msgstr "Nombre de red inválido.\n"
 
 #: winerror.mc:306
 msgid "Too many network names.\n"
-msgstr ""
+msgstr "Demasiados nombres de red.\n"
 
 #: winerror.mc:311
 msgid "Too many network sessions.\n"
-msgstr ""
+msgstr "Demasiadas sesiones de red.\n"
 
 #: winerror.mc:316
-#, fuzzy
 msgid "Sharing paused.\n"
-msgstr "Valor de c&adena.\n"
+msgstr "Compartición pausada.\n"
 
 #: winerror.mc:321
 msgid "Request not accepted.\n"
-msgstr ""
+msgstr "Petición no aceptada.\n"
 
 #: winerror.mc:326
 msgid "Redirector paused.\n"
-msgstr ""
+msgstr "Redirección pausada.\n"
 
 #: winerror.mc:331
-#, fuzzy
 msgid "File exists.\n"
-msgstr "El archivo no existe.\n"
+msgstr "El archivo existe.\n"
 
 #: winerror.mc:336
 msgid "Cannot create.\n"
-msgstr ""
+msgstr "No se pudo crear.\n"
 
 #: winerror.mc:341
 msgid "Int24 failure.\n"
-msgstr ""
+msgstr "Error Int24\n"
 
 #: winerror.mc:346
 msgid "Out of structures.\n"
-msgstr ""
+msgstr "Fuera de las estructuras.\n"
 
 #: winerror.mc:351
-#, fuzzy
 msgid "Already assigned.\n"
-msgstr "Ya existe.\n"
+msgstr "Ya está en uso.\n"
 
 #: winerror.mc:356 winerror.mc:1711
-#, fuzzy
 msgid "Invalid password.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Contraseña inválida.\n"
 
 #: winerror.mc:361
-#, fuzzy
 msgid "Invalid parameter.\n"
-msgstr "Error: parámetros de línea de comandos inválidos.\n"
+msgstr "Parámetro inválido.\n"
 
 #: winerror.mc:366
-#, fuzzy
 msgid "Net write fault.\n"
-msgstr "Por &defecto.\n"
+msgstr "Fallo de escritura en red.\n"
 
 #: winerror.mc:371
 msgid "No process slots.\n"
-msgstr ""
+msgstr "Sin espacios de proceso.\n"
 
 #: winerror.mc:376
 msgid "Too many semaphores.\n"
-msgstr ""
+msgstr "Demasiados semáforos.\n"
 
 #: winerror.mc:381
 msgid "Exclusive semaphore already owned.\n"
-msgstr ""
+msgstr "El semáforo exclusivo ya era de tu propiedad.\n"
 
 #: winerror.mc:386
 msgid "Semaphore is set.\n"
-msgstr ""
+msgstr "El semáforo se ha fijado.\n"
 
 #: winerror.mc:391
 msgid "Too many semaphore requests.\n"
-msgstr ""
+msgstr "Demasiadas peticiones de semáforo.\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time.\n"
-msgstr ""
+msgstr "Invalido en tiempo de interrupción.\n"
 
 #: winerror.mc:401
 msgid "Semaphore owner died.\n"
-msgstr ""
+msgstr "El propietario del semáforo ha muerto.\n"
 
 #: winerror.mc:406
 msgid "Semaphore user limit.\n"
-msgstr ""
+msgstr "Límite del semáforo del usuario.\n"
 
 #: winerror.mc:411
-#, fuzzy
 msgid "Insert disk for drive %1.\n"
-msgstr "inserte el disco %s.\n"
+msgstr "Inserte disco para la unidad %1.\n"
 
 #: winerror.mc:416
 msgid "Drive locked.\n"
-msgstr ""
+msgstr "Unidad bloqueada.\n"
 
 #: winerror.mc:421
 msgid "Broken pipe.\n"
-msgstr ""
+msgstr "Tubería rota.\n"
 
 #: winerror.mc:426
-#, fuzzy
 msgid "Open failed.\n"
-msgstr "Abrir archivo.\n"
+msgstr "Error en la apertura.\n"
 
 #: winerror.mc:431
 msgid "Buffer overflow.\n"
-msgstr ""
+msgstr "Desbordamiento de buffer.\n"
 
 #: winerror.mc:441
 msgid "No more search handles.\n"
-msgstr ""
+msgstr "No hay más descriptores de búsqueda.\n"
 
 #: winerror.mc:446
-#, fuzzy
 msgid "Invalid target handle.\n"
-msgstr "Credenciales inválidos.\n"
+msgstr "Descriptor de objeto inválido.\n"
 
 #: winerror.mc:451
-#, fuzzy
 msgid "Invalid IOCTL.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "IOCTL inválido.\n"
 
 #: winerror.mc:456
 msgid "Invalid verify switch.\n"
-msgstr ""
+msgstr "Interruptor de verificación inválido.\n"
 
 #: winerror.mc:461
 msgid "Bad driver level.\n"
-msgstr ""
+msgstr "Nível de controlador inválido.\n"
 
 #: winerror.mc:466
-#, fuzzy
 msgid "Call not implemented.\n"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"No implementado\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Aún no implementado.\n"
+msgstr "Llamada no implementada.\n"
 
 #: winerror.mc:471
 msgid "Semaphore timeout.\n"
-msgstr ""
+msgstr "Semáforo expirado.\n"
 
 #: winerror.mc:476
-#, fuzzy
 msgid "Insufficient buffer.\n"
-msgstr "Insuficientes permisos.\n"
+msgstr "Buffer insuficiente.\n"
 
 #: winerror.mc:481
-#, fuzzy
 msgid "Invalid name.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Nombre inválido.\n"
 
 #: winerror.mc:486
-#, fuzzy
 msgid "Invalid level.\n"
-msgstr "Credenciales inválidos.\n"
+msgstr "Nível inválido.\n"
 
 #: winerror.mc:491
 msgid "No volume label.\n"
-msgstr ""
+msgstr "No existe un nombre de volumen.\n"
 
 #: winerror.mc:496
-#, fuzzy
 msgid "Module not found.\n"
-msgstr "Archivo no encontrado.\n"
+msgstr "Módulo no encontrado.\n"
 
 #: winerror.mc:501
-#, fuzzy
 msgid "Procedure not found.\n"
-msgstr "PATH no encontrado.\n"
+msgstr "Procedimiento no encontrado.\n"
 
 #: winerror.mc:506
 msgid "No children to wait for.\n"
-msgstr ""
+msgstr "No hay proceso hijo al que esperar.\n"
 
 #: winerror.mc:511
 msgid "Child process has not completed.\n"
-msgstr ""
+msgstr "El proceso hijo no se ha completado.\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle.\n"
-msgstr ""
+msgstr "Uso inválido del descriptor de acceso directo.\n"
 
 #: winerror.mc:521
 msgid "Negative seek.\n"
-msgstr ""
+msgstr "Búsqueda inversa.\n"
 
 #: winerror.mc:531
 msgid "Drive is a JOIN target.\n"
-msgstr ""
+msgstr "La unidad de destino una unidad JOIN.\n"
 
 #: winerror.mc:536
 msgid "Drive is already JOINed.\n"
-msgstr ""
+msgstr "Ya se había usado JOIN sobre esta unidad.\n"
 
 #: winerror.mc:541
 msgid "Drive is already SUBSTed.\n"
-msgstr ""
+msgstr "Ya se había usado SUBST sobre esta unidad.\n"
 
 #: winerror.mc:546
 msgid "Drive is not JOINed.\n"
-msgstr ""
+msgstr "No se pudo realizar JOIN en esta unidad.\n"
 
 #: winerror.mc:551
 msgid "Drive is not SUBSTed.\n"
-msgstr ""
+msgstr "No se pudo realizar SUBST en esta unidad.\n"
 
 #: winerror.mc:556
 msgid "Attempt to JOIN onto a JOINed drive.\n"
-msgstr ""
+msgstr "Se ha intentado usar JOIN en una unidad JOIN.\n"
 
 #: winerror.mc:561
 msgid "Attempt to SUBST onto a SUBSTed drive.\n"
-msgstr ""
+msgstr "Se ha intentado usar SUBST en una unidad SUBST.\n"
 
 #: winerror.mc:566
 msgid "Attempt to JOIN to a SUBSTed drive.\n"
-msgstr ""
+msgstr "Se ha intentado usar JOIN en una unidad SUBST.\n"
 
 #: winerror.mc:571
 msgid "Attempt to SUBST to a JOINed drive.\n"
-msgstr ""
+msgstr "Se ha intentado usar SUBST en una unidad JOIN.\n"
 
 #: winerror.mc:576
-#, fuzzy
 msgid "Drive is busy.\n"
-msgstr "Unidades.\n"
+msgstr "La unidad está ocupada.\n"
 
 #: winerror.mc:581
-#, fuzzy
 msgid "Same drive.\n"
-msgstr "Unidad del sistema.\n"
+msgstr "Es la misma unidad.\n"
 
 #: winerror.mc:586
 msgid "Not toplevel directory.\n"
-msgstr ""
+msgstr "No es un directorio raíz.\n"
 
 #: winerror.mc:591
-#, fuzzy
 msgid "Directory is not empty.\n"
-msgstr "&Directorio sólo.\n"
+msgstr "El directorio no esta vacío.\n"
 
 #: winerror.mc:596
 msgid "Path is in use as a SUBST.\n"
-msgstr ""
+msgstr "La ruta está en uso como SUBST.\n"
 
 #: winerror.mc:601
 msgid "Path is in use as a JOIN.\n"
-msgstr ""
+msgstr "La ruta está en uso como JOIN.\n"
 
 #: winerror.mc:606
 msgid "Path is busy.\n"
-msgstr ""
+msgstr "La ruta está ocupada.\n"
 
 #: winerror.mc:611
 msgid "Already a SUBST target.\n"
-msgstr ""
+msgstr "La unidad ya era SUBST.\n"
 
 #: winerror.mc:616
 msgid "System trace not specified or disallowed.\n"
-msgstr ""
+msgstr "Traza del sistema no especificada o no permitida.\n"
 
 #: winerror.mc:621
 msgid "Event count for DosMuxSemWait incorrect.\n"
-msgstr ""
+msgstr "Contador de eventos para DosMuxSemWait incorrecto.\n"
 
 #: winerror.mc:626
 msgid "Too many waiters for DosMuxSemWait.\n"
-msgstr ""
+msgstr "Se han establecido demasiados semáforos para DosMuxSemWait.\n"
 
 #: winerror.mc:631
 msgid "DosSemMuxWait list invalid.\n"
-msgstr ""
+msgstr "Lista DosSemMuxWait inválida.\n"
 
 #: winerror.mc:636
 msgid "Volume label too long.\n"
-msgstr ""
+msgstr "Nombre del vólumen demasiado largo.\n"
 
 #: winerror.mc:641
 msgid "Too many TCBs.\n"
-msgstr ""
+msgstr "Demasiados TCBs.\n"
 
 #: winerror.mc:646
 msgid "Signal refused.\n"
-msgstr ""
+msgstr "Señal descartada.\n"
 
 #: winerror.mc:651
 msgid "Segment discarded.\n"
-msgstr ""
+msgstr "Segmento descartado.\n"
 
 #: winerror.mc:656
 msgid "Segment not locked.\n"
-msgstr ""
+msgstr "Segmento no bloqueado.\n"
 
 #: winerror.mc:661
 msgid "Bad thread ID address.\n"
-msgstr ""
+msgstr "Direccíon ID de hílo de ejecución erronea.\n"
 
 #: winerror.mc:666
 msgid "Bad arguments to DosExecPgm.\n"
-msgstr ""
+msgstr "Argumentos inválidos para DosExecPgm.\n"
 
 #: winerror.mc:671
 msgid "Path is invalid.\n"
-msgstr ""
+msgstr "Ruta inválida.\n"
 
 #: winerror.mc:676
 msgid "Signal pending.\n"
-msgstr ""
+msgstr "Señal en espera.\n"
 
 #: winerror.mc:681
 msgid "Max system-wide thread count reached.\n"
-msgstr ""
+msgstr "Se ha alcanzado el número máximo de hilos de ejecución.\n"
 
 #: winerror.mc:686
 msgid "Lock failed.\n"
-msgstr ""
+msgstr "Fallo de bloqueo.\n"
 
 #: winerror.mc:691
-#, fuzzy
 msgid "Resource in use.\n"
-msgstr "Fallos de &recursos.\n"
+msgstr "Recursos es uso.\n"
 
 #: winerror.mc:696
-#, fuzzy
 msgid "Cancel violation.\n"
-msgstr "Violación de nomenclatura.\n"
+msgstr "Cancelación de violación.\n"
 
 #: winerror.mc:701
 msgid "Atomic locks not supported.\n"
-msgstr ""
+msgstr "Bloqueos atómicos no soportados.\n"
 
 #: winerror.mc:706
 msgid "Invalid segment number.\n"
-msgstr ""
+msgstr "Número de segmento inválido.\n"
 
 #: winerror.mc:711
-#, fuzzy
 msgid "Invalid ordinal for %1.\n"
-msgstr "Credenciales inválidos.\n"
+msgstr "Ordinales inválidos para %1.\n"
 
 #: winerror.mc:716
-#, fuzzy
 msgid "File already exists.\n"
-msgstr "El puerto %s ya existe.\n"
+msgstr "El archivo existe.\n"
 
 #: winerror.mc:721
 msgid "Invalid flag number.\n"
-msgstr ""
+msgstr "Número de bandera inválido.\n"
 
 #: winerror.mc:726
-#, fuzzy
 msgid "Semaphore name not found.\n"
-msgstr "ruta %s no encontrada.\n"
+msgstr "Nombre de semáforo no encontrado.\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1.\n"
-msgstr ""
+msgstr "Segmento inicial de código inválido para %1.\n"
 
 #: winerror.mc:736
 msgid "Invalid starting stack segment for %1.\n"
-msgstr ""
+msgstr "Segmento inicial de pila inválido para %1.\n"
 
 #: winerror.mc:741
 msgid "Invalid module type for %1.\n"
-msgstr ""
+msgstr "Tipo de módulo inválido para %1.\n"
 
 #: winerror.mc:746
 msgid "Invalid EXE signature in %1.\n"
-msgstr ""
+msgstr "Firma EXE inválida en %1.\n"
 
 #: winerror.mc:751
 msgid "EXE %1 is marked invalid.\n"
-msgstr ""
+msgstr "EXE %1 ha sido marcado como inválido.\n"
 
 #: winerror.mc:756
 msgid "Bad EXE format for %1.\n"
-msgstr ""
+msgstr "Formato EXE erróneo en %1.\n"
 
 #: winerror.mc:761
 msgid "Iterated data exceeds 64k in %1.\n"
-msgstr ""
+msgstr "Los datos iterados exceden 64k en %1.\n"
 
 #: winerror.mc:766
 msgid "Invalid MinAllocSize in %1.\n"
-msgstr ""
+msgstr "MinAllocSize inválido en %1.\n"
 
 #: winerror.mc:771
 msgid "Dynlink from invalid ring.\n"
-msgstr ""
+msgstr "Dynlink desde anillo inválido.\n"
 
 #: winerror.mc:776
 msgid "IOPL not enabled.\n"
-msgstr ""
+msgstr "IOPL no habilitado.\n"
 
 #: winerror.mc:781
 msgid "Invalid SEGDPL in %1.\n"
-msgstr ""
+msgstr "SEGDPL inválido en %1.\n"
 
 #: winerror.mc:786
 msgid "Auto data segment exceeds 64k.\n"
-msgstr ""
+msgstr "Segemento de datos excede 64k.\n"
 
 #: winerror.mc:791
 msgid "Ring 2 segment must be movable.\n"
-msgstr ""
+msgstr "El segmento en anillo 2 debe ser transportable.\n"
 
 #: winerror.mc:796
 msgid "Relocation chain exceeds segment limit in %1.\n"
-msgstr ""
+msgstr "Cadena de transporte excede el límite de segmento en %1.\n"
 
 #: winerror.mc:801
 msgid "Infinite loop in relocation chain in %1.\n"
-msgstr ""
+msgstr "Bucle infinito en cadena de transporte en %1.\n"
 
 #: winerror.mc:806
-#, fuzzy
 msgid "Environment variable not found.\n"
-msgstr "Variable de entorno %s no definida.\n"
+msgstr "Variable de entorno no encontrada.\n"
 
 #: winerror.mc:811
 msgid "No signal sent.\n"
-msgstr ""
+msgstr "No se envió una señal.\n"
 
 #: winerror.mc:816
-#, fuzzy
 msgid "File name is too long.\n"
-msgstr "La línea de entrada es demasiado larga.\n"
+msgstr "El nombre de archivo es demasiado largo.\n"
 
 #: winerror.mc:821
 msgid "Ring 2 stack in use.\n"
-msgstr ""
+msgstr "Pila del anillo 2 en uso.\n"
 
 #: winerror.mc:826
 msgid "Error in use of filename wildcards.\n"
-msgstr ""
+msgstr "Error en el uso de comodines en el nombre de archivo.\n"
 
 #: winerror.mc:831
 msgid "Invalid signal number.\n"
-msgstr ""
+msgstr "Número de señal inválido.\n"
 
 #: winerror.mc:836
 msgid "Error setting signal handler.\n"
-msgstr ""
+msgstr "Error estableciendo el descriptor de señal.\n"
 
 #: winerror.mc:841
 msgid "Segment locked.\n"
-msgstr ""
+msgstr "Segmento cerrado.\n"
 
 #: winerror.mc:846
 msgid "Too many modules.\n"
-msgstr ""
+msgstr "Demasiados módulos.\n"
 
 #: winerror.mc:851
 msgid "Nesting LoadModule calls not allowed.\n"
-msgstr ""
+msgstr "Llamadas anidadas a LoadModule no permitidas.\n"
 
 #: winerror.mc:856
 msgid "Machine type mismatch.\n"
-msgstr ""
+msgstr "Tipo de maquina incorrecta.\n"
 
 #: winerror.mc:861
 msgid "Bad pipe.\n"
-msgstr ""
+msgstr "Error en tubería.\n"
 
 #: winerror.mc:866
 msgid "Pipe busy.\n"
-msgstr ""
+msgstr "Tubería ocupada.\n"
 
 #: winerror.mc:871
 msgid "Pipe closed.\n"
-msgstr ""
+msgstr "Tubería cerrada.\n"
 
 #: winerror.mc:876
-#, fuzzy
 msgid "Pipe not connected.\n"
-msgstr "Archivo no encontrado.\n"
+msgstr "Tubería no conectada.\n"
 
 #: winerror.mc:881
-#, fuzzy
 msgid "More data available.\n"
-msgstr "No disponible; .\n"
+msgstr "Más información disponible.\n"
 
 #: winerror.mc:886
-#, fuzzy
 msgid "Session canceled.\n"
-msgstr "Cancelado por el usuario.\n"
+msgstr "Sesión cancelada.\n"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name.\n"
-msgstr ""
+msgstr "Nombre de atributos extendidos inválidos.\n"
 
 #: winerror.mc:896
 msgid "Extended attribute list inconsistent.\n"
-msgstr ""
+msgstr "Lísta de atributos extendidos inconsistente.\n"
 
 #: winerror.mc:901
-#, fuzzy
 msgid "No more data available.\n"
-msgstr "No disponible; .\n"
+msgstr "No hay más información disponible.\n"
 
 #: winerror.mc:906
 msgid "Cannot use Copy API.\n"
-msgstr ""
+msgstr "No se pudo usar la API de copy.\n"
 
 #: winerror.mc:911
-#, fuzzy
 msgid "Directory name invalid.\n"
-msgstr "&Directorio sólo.\n"
+msgstr "Nombre de directorio inválido.\n"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit.\n"
-msgstr ""
+msgstr "Los atributos extendidos no se ajustan.\n"
 
 #: winerror.mc:921
 msgid "Extended attribute file corrupt.\n"
-msgstr ""
+msgstr "Archivo de atributos extendidos corrompido.\n"
 
 #: winerror.mc:926
 msgid "Extended attribute table full.\n"
-msgstr ""
+msgstr "Tabla atributos extendidos llena.\n"
 
 #: winerror.mc:931
 msgid "Invalid extended attribute handle.\n"
-msgstr ""
+msgstr "Descriptor de atributos extendidos inválido.\n"
 
 #: winerror.mc:936
 msgid "Extended attributes not supported.\n"
-msgstr ""
+msgstr "Atributos extendidos no soportados.\n"
 
 #: winerror.mc:941
 msgid "Mutex not owned by caller.\n"
@@ -7548,7 +7466,7 @@ msgstr "b"
 #: sane.rc:34 winecfg.rc:174
 msgctxt "unit: dots/inch"
 msgid "dpi"
-msgstr "dpi"
+msgstr "ppp"
 
 #: sane.rc:35
 msgctxt "unit: percent"
@@ -10613,7 +10531,7 @@ msgstr "&Editar"
 
 #: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
-msgstr "&Deshacer\tCtrl+Z"
+msgstr "Des&hacer\tCtrl+Z"
 
 #: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
@@ -10629,13 +10547,8 @@ msgstr "&Pegar\tCtrl+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:90 regedit.rc:106
 #: winefile.rc:29
-#, fuzzy
 msgid "&Delete\tDel"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Borrar\tDel\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Eliminar\tDel"
+msgstr "&Eliminar\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -10662,9 +10575,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "&Reemplazar...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:82
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "&Contenido"
+msgstr "&Contenido\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -10712,7 +10624,7 @@ msgstr ""
 #: notepad.rc:131 regedit.rc:320 wordpad.rc:276
 msgctxt "accelerator Find"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
@@ -10732,7 +10644,7 @@ msgstr "O"
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
@@ -11360,13 +11272,8 @@ msgid "Program Manager"
 msgstr "Gestor de programas"
 
 #: progman.rc:62 winhlp32.rc:80
-#, fuzzy
 msgid "WARNING"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"ADVERTENCIA\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"ADVERTENCA"
+msgstr "ADVERTENCIA"
 
 #: progman.rc:63 winhlp32.rc:81
 msgid "Information"
@@ -11519,9 +11426,8 @@ msgid "&Multi String Value"
 msgstr "Valor de cadena &múltiple"
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "Valor de c&adena"
+msgstr "Valor de cadena e&xpandible"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -11532,9 +11438,8 @@ msgid "&Copy Key Name"
 msgstr "&Copiar nombre de clave"
 
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
-#, fuzzy
 msgid "&Find...\tCtrl+F"
-msgstr "&Imprimir...\tCtrl+P"
+msgstr "&Buscar...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -11545,13 +11450,8 @@ msgid "Status &Bar"
 msgstr "&Barra de estado"
 
 #: regedit.rc:67 winefile.rc:46
-#, fuzzy
 msgid "Sp&lit"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Di&vidir\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Separar"
+msgstr "&Separador"
 
 #: regedit.rc:74
 msgid "&Remove Favorite..."
@@ -11562,9 +11462,8 @@ msgid "&About Registry Editor"
 msgstr "&Acerca del Editor del registro"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "Modificar datos binarios"
+msgstr "Modificar datos binarios..."
 
 #: regedit.rc:215
 msgid "Export registry"
@@ -11690,12 +11589,10 @@ msgid "Export Registry File"
 msgstr "Exportar archivo de registro"
 
 #: regedit.rc:193
-#, fuzzy
 msgid "Registry files (*.reg)"
 msgstr "Archivos de registro (*.reg)"
 
 #: regedit.rc:194
-#, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Archivos de registro de Win9x/NT4 (REGEDIT4)"
 
@@ -11705,7 +11602,7 @@ msgstr "(Por defecto)"
 
 #: regedit.rc:202
 msgid "(value not set)"
-msgstr "(valor no puesto)"
+msgstr "(valor no definido)"
 
 #: regedit.rc:203
 msgid "(cannot display value)"
@@ -11713,7 +11610,7 @@ msgstr "(no se puede mostrar valor)"
 
 #: regedit.rc:204
 msgid "(unknown %d)"
-msgstr "(desconocido %d)"
+msgstr "(%d desconocido)"
 
 #: regedit.rc:160
 msgid "Quits the registry editor"
@@ -12897,11 +12794,14 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
+"Wine es software libre, puedes redistribuirlo y/o modificarlo bajo los "
+"términos de la Licencia GNU Lesser General Public publicada por la Free "
+"Software Foundation; bajo la versión 2.1 de la licencía, o (a tu discreción) "
+"cualquier versión posterior."
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Información de Registro de Windows "
+msgstr "Información de registro de Windows"
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12912,20 +12812,18 @@ msgid "Organi&zation:"
 msgstr "&Organización:"
 
 #: winecfg.rc:145
-#, fuzzy
 msgid "Application settings"
-msgstr " Configuración de aplicaciones "
+msgstr "Configuración de las aplicaciones"
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
 "Wine puede imitar distintas versiones de Windows para cada aplicación. Esta "
-"pestaña está enlazada a las de Librerías y Gráficos para poder cambiar en "
-"ellas la configuración global y/o la de por aplicación."
+"pestaña está enlazada a las pestañas de Librerías y Gráficos para permitirte "
+"cambiar la configuración global o la configuración por aplicación."
 
 #: winecfg.rc:150
 msgid "&Add application..."
@@ -12940,9 +12838,8 @@ msgid "&Windows Version:"
 msgstr "&Versión a imitar:"
 
 #: winecfg.rc:160
-#, fuzzy
 msgid "Window settings"
-msgstr " Configuración de ventanas "
+msgstr "Configuración de las ventanas"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12950,11 +12847,11 @@ msgstr "Capturar el &ratón automáticamente en pantalla completa"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr "Permitir al gestor de ventanas &decorar las ventanas"
+msgstr "Permitir que el gestor de ventanas &decore las ventanas"
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
-msgstr "Permitir al gestor de ventanas &controlar las ventanas"
+msgstr "Permitir que el gestor de ventanas &controle las ventanas"
 
 #: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
@@ -12962,21 +12859,19 @@ msgstr "&Emular un escritorio virtual"
 
 #: winecfg.rc:166
 msgid "Desktop &size:"
-msgstr "Dimensiones:"
+msgstr "Di&mensiones:"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Resolución de pantalla "
+msgstr "Resolución"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Esto es un texto de ejemplo usando Tahoma de 10 puntos"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "DLL overrides"
-msgstr " Reemplazos de DLL "
+msgstr "Sustitución de DLLs"
 
 #: winecfg.rc:183
 msgid ""
@@ -12984,13 +12879,13 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"Cada librería de enlace dinámico se puede especificar para que sea la "
-"interna (proporcionada por Wine) o la nativa (obtenida de Windows o "
+"Se puede seleccionar cada Librería de Enlace Dinámico (DLL) para que sea "
+"interna (proporcionada por Wine) o bien nativa (obtenida de Windows o "
 "proporcionada por la aplicación)."
 
 #: winecfg.rc:185
 msgid "&New override for library:"
-msgstr "&Nuevo reemplazo para librería:"
+msgstr "&Nueva sustitución de librería:"
 
 #: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
@@ -12998,7 +12893,7 @@ msgstr "&Añadir"
 
 #: winecfg.rc:188
 msgid "Existing &overrides:"
-msgstr "&Reemplazos existentes:"
+msgstr "&Sustituciones existentes:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
@@ -13006,12 +12901,11 @@ msgstr "&Editar..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
-msgstr "Editar reemplazo"
+msgstr "Modificar sustitución"
 
 #: winecfg.rc:199
-#, fuzzy
 msgid "Load order"
-msgstr " Orden de carga "
+msgstr "Orden de carga"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -13038,17 +12932,16 @@ msgid "Select Drive Letter"
 msgstr "Seleccionar letra de la unidad"
 
 #: winecfg.rc:223
-#, fuzzy
 msgid "Drive mappings"
-msgstr " Mapeos de unidad "
+msgstr "Mapeo de unidades"
 
 #: winecfg.rc:224
 msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
-"Conexión fallida al gestor de montaje, la configuración de unidades no se "
-"puede editar."
+"Falló en la conexión al gestor de montaje, la configuración de unidades no "
+"se ha podido editar."
 
 #: winecfg.rc:227
 msgid "&Add..."
@@ -13064,7 +12957,7 @@ msgstr "&Ruta:"
 
 #: winecfg.rc:239 winecfg.rc:35
 msgid "Show &Advanced"
-msgstr "Mostrar avanzado"
+msgstr "Mostrar &avanzado"
 
 #: winecfg.rc:240
 msgid "De&vice:"
@@ -13084,40 +12977,39 @@ msgstr "&Nº serie:"
 
 #: winecfg.rc:249
 msgid "Show &dot files"
-msgstr "Mostrar ficheros punto"
+msgstr "Mostrar archivos &punto"
 
 #: winecfg.rc:256
 msgid "Driver diagnostics"
-msgstr ""
+msgstr "Diagnósticos del controlador"
 
 #: winecfg.rc:258
 msgid "Defaults"
-msgstr ""
+msgstr "Configuraciones por defecto"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr ""
+msgstr "Dispositivo de salida"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr ""
+msgstr "Dispositivo de salida de voz"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr ""
+msgstr "Dispositivo de entrada"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr ""
+msgstr "Dispositivo de entrada de voz"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
 msgstr "Probar &sonido"
 
 #: winecfg.rc:274
-#, fuzzy
 msgid "Appearance"
-msgstr " Apariencia "
+msgstr "Apariencia"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -13133,12 +13025,11 @@ msgstr "&Elemento:"
 
 #: winecfg.rc:284
 msgid "C&olor:"
-msgstr "Color:"
+msgstr "C&olor:"
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
-msgstr "Carpeta del sistema"
+msgstr "Carpeta"
 
 #: winecfg.rc:293
 msgid "&Link to:"
@@ -13153,13 +13044,12 @@ msgid "Drives"
 msgstr "Unidades"
 
 #: winecfg.rc:33
-#, fuzzy
 msgid "Select the Unix target directory, please."
-msgstr "Por favor, seleccione el directorio unix."
+msgstr "Por favor, seleccione el directorio unix de destino."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
-msgstr "Ocultar avanzado"
+msgstr "Ocultar &avanzado"
 
 #: winecfg.rc:36
 msgid "(No Theme)"
@@ -13207,25 +13097,19 @@ msgstr "Configuración de Wine para %s"
 
 #: winecfg.rc:81
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Controlador seleccionado: %s"
 
 #: winecfg.rc:82
-#, fuzzy
 msgid "(None)"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Ninguna\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Ninguno"
+msgstr "(Ninguno)"
 
 #: winecfg.rc:83
 msgid "Audio test failed!"
-msgstr ""
+msgstr "¡La prueba de sonido ha fallado!"
 
 #: winecfg.rc:85
-#, fuzzy
 msgid "(System default)"
-msgstr "Ruta del sistema"
+msgstr "(Predeterminado del sistema)"
 
 #: winecfg.rc:51
 msgid ""
@@ -13264,9 +13148,8 @@ msgid "Default Settings"
 msgstr "Configuración por defecto"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Programas Wine (*.exe,*.exe.so)"
+msgstr "Programas de Wine (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -13277,9 +13160,8 @@ msgid "Select an executable file"
 msgstr "Seleccione un fichero ejecutable"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect..."
-msgstr "Autodetectar"
+msgstr "Autodetectar..."
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -13287,18 +13169,17 @@ msgstr "Disco duro local"
 
 #: winecfg.rc:68
 msgid "Network share"
-msgstr "Compartición de red"
+msgstr "Compartidos de red"
 
 #: winecfg.rc:69
 msgid "Floppy disk"
-msgstr "Disco flexible"
+msgstr "Disquete"
 
 #: winecfg.rc:70
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:71
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -13306,8 +13187,8 @@ msgid ""
 msgstr ""
 "No puede añadir más unidades.\n"
 "\n"
-"Cada unidad debe tener una letra, de la A a la Z, por lo que no puede tener "
-"más de 26"
+"Cada unidad debe tener una letra, de la A a la Z, el número máximo de "
+"unidades es 26"
 
 #: winecfg.rc:72
 msgid "System drive"
@@ -13320,20 +13201,19 @@ msgid ""
 "Most Windows applications expect drive C to exist, and will die messily if "
 "it doesn't. If you proceed remember to recreate it!"
 msgstr ""
-"¿Seguro que desea eliminar la unidad C?\n"
+"¿Está seguro de que desea eliminar la unidad C?\n"
 "\n"
 "La mayoría de las aplicaciones Windows esperan que la unidad C exista, y "
-"fallarán si no existe. ¡Si lo hace recuerde volver a crearla!"
+"fallarán si esta no existe. ¡Si lo hace recuerde volver a crear la unidad!"
 
 #: winecfg.rc:74
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
-msgstr "Letra"
+msgstr "Unidad"
 
 #: winecfg.rc:75
 msgid "Drive Mapping"
-msgstr "Mapeo de unidad"
+msgstr "Mapeo de la unidad"
 
 #: winecfg.rc:76
 msgid ""
@@ -13341,9 +13221,9 @@ msgid ""
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
-"No tiene una unidad C. Esto no es muy bueno.\n"
+"No existe una unidad C. Y esto no es nada bueno.\n"
 "\n"
-"¡Recuerde pulsar 'Añadir' en la pestaña de Unidades para crear una!\n"
+"¡Recuerde pulsar 'Añadir' en la pestaña Unidades para crear una!\n"
 
 #: winecfg.rc:90
 msgid "Controls Background"
@@ -13471,7 +13351,7 @@ msgstr "Barra de menú"
 
 #: wineconsole.rc:60
 msgid "Cursor size"
-msgstr "Tanaño del cursor"
+msgstr "Tamaño del cursor"
 
 #: wineconsole.rc:61
 msgid "&Small"
@@ -14102,7 +13982,7 @@ msgstr "Copyright 2000 Joshua Thielen"
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
-msgstr "&Configuración impresora..."
+msgstr "&Configuración de impresora..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
@@ -14133,9 +14013,8 @@ msgid "Large"
 msgstr "Grande"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "A&yuda sobre la ayuda"
+msgstr "A&yuda sobre la ayuda\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -14143,17 +14022,15 @@ msgstr "&Siempre visible"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr ""
+msgstr "Sobre la ayuda de &Wine"
 
 #: winhlp32.rc:64
-#, fuzzy
 msgid "Annotation..."
-msgstr "&Anotar..."
+msgstr "Anotar..."
 
 #: winhlp32.rc:65
-#, fuzzy
 msgid "Copy"
-msgstr "&Copiar"
+msgstr "Copiar"
 
 #: winhlp32.rc:97
 msgid "Index"
