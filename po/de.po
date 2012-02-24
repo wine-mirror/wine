@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-21 20:56+0100\n"
+"PO-Revision-Date: 2012-02-24 15:36+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -3514,7 +3514,7 @@ msgstr "'|' nicht definiert"
 
 #: jscript.rc:49
 msgid "Boolean object expected"
-msgstr "Boolsches Objekt erwartet"
+msgstr "Boolesches Objekt erwartet"
 
 #: jscript.rc:50
 msgid "Cannot delete '|'"
@@ -6614,7 +6614,7 @@ msgstr "&URL:"
 
 #: mshtml.rc:31
 msgid "HTML rendering is currently disabled."
-msgstr "Die HTML-Darstellung ist zur Zeit ausgeschaltet."
+msgstr "HTML-Darstellung ist zur Zeit ausgeschaltet."
 
 #: mshtml.rc:32
 msgid "HTML Document"
@@ -6944,7 +6944,7 @@ msgstr "Grafik"
 
 #: oleacc.rc:68
 msgid "static text"
-msgstr "Text"
+msgstr "Statischer Text"
 
 #: oleacc.rc:69
 msgid "text"
@@ -7117,7 +7117,7 @@ msgstr "&Als:"
 
 #: oledlg.rc:90
 msgid "&Display As Icon"
-msgstr "Als Sym&bol"
+msgstr "Als Sym&bol anzeigen"
 
 #: oledlg.rc:92
 msgid "Change &Icon..."
@@ -7198,7 +7198,7 @@ msgid ""
 "be reflected in your document."
 msgstr ""
 "Fügt eine Verknüpfung ein, die auf den Ort des Zwischenablagen-Inhalts "
-"zeigt. Die Verknüpfung ist mit der Ursprungsdatei verknüpft so dass "
+"zeigt. Die Verknüpfung ist mit der Ursprungsdatei verknüpft, so dass "
 "Änderungen an dieser in Ihrem Dokument erscheinen."
 
 #: oledlg.rc:40
@@ -7256,7 +7256,7 @@ msgstr "Einstellungen für %s"
 
 #: serialui.rc:28
 msgid "Baud Rate"
-msgstr "Bits pro Sekunde"
+msgstr "Baudrate"
 
 #: serialui.rc:30
 msgid "Parity"
@@ -7272,11 +7272,11 @@ msgstr "Datenbits"
 
 #: serialui.rc:36
 msgid "Stop Bits"
-msgstr "Stopp-Bits"
+msgstr "Stoppbits"
 
 #: setupapi.rc:36
 msgid "Copying Files..."
-msgstr "Dateien kopieren..."
+msgstr "Dateien werden kopiert..."
 
 #: setupapi.rc:42
 msgid "Destination:"
@@ -7320,11 +7320,11 @@ msgstr "V&orwärts"
 
 #: shdoclc.rc:41
 msgid "&Save Background As..."
-msgstr "&Speichere Hintergrund als..."
+msgstr "Hintergrund &speichern als..."
 
 #: shdoclc.rc:42
 msgid "Set As Back&ground"
-msgstr "Als Hintergrund"
+msgstr "Als Hinter&grund"
 
 #: shdoclc.rc:43
 msgid "&Copy Background"
@@ -7340,7 +7340,7 @@ msgstr "Alles &markieren"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
-msgstr "Erzeuge &Verknüpfung"
+msgstr "&Verknüpfung anlegen"
 
 #: shdoclc.rc:50 shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Add to &Favorites..."
@@ -7360,35 +7360,35 @@ msgstr "&Drucken"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
-msgstr "&Öffne Verweis"
+msgstr "Link &Öffnen"
 
 #: shdoclc.rc:64 shdoclc.rc:147 shdoclc.rc:171
 msgid "Open Link in &New Window"
-msgstr "Öffne Verweis in neuem Fenster"
+msgstr "Link in &neuem Fenster öffnen"
 
 #: shdoclc.rc:65 shdoclc.rc:126 shdoclc.rc:148 shdoclc.rc:172
 msgid "Save Target &As..."
-msgstr "Speichere &Ziel als..."
+msgstr "&Ziel speichern als..."
 
 #: shdoclc.rc:66 shdoclc.rc:127 shdoclc.rc:149 shdoclc.rc:173
 msgid "&Print Target"
-msgstr "&Drucke Ziel"
+msgstr "Ziel &drucken"
 
 #: shdoclc.rc:68 shdoclc.rc:151 shdoclc.rc:175
 msgid "S&how Picture"
-msgstr "Zeige Bi&ld"
+msgstr "Grafik anzeigen"
 
 #: shdoclc.rc:69 shdoclc.rc:176
 msgid "&Save Picture As..."
-msgstr "Speichere &Bild als..."
+msgstr "&Bild speichern als..."
 
 #: shdoclc.rc:70
 msgid "&E-mail Picture..."
-msgstr "&Versende Bild..."
+msgstr "Bild per E-Mail &versenden..."
 
 #: shdoclc.rc:71
 msgid "Pr&int Picture..."
-msgstr "D&rucke Bild..."
+msgstr "Bild d&rucken..."
 
 #: shdoclc.rc:72
 msgid "&Go to My Pictures"
@@ -7396,7 +7396,7 @@ msgstr "&Gehe zu Eigene Bilder"
 
 #: shdoclc.rc:73 shdoclc.rc:153 shdoclc.rc:177
 msgid "Set as Back&ground"
-msgstr "Als Hintergrund"
+msgstr "Als Hinter&grund einrichten"
 
 #: shdoclc.rc:74 shdoclc.rc:154 shdoclc.rc:178
 msgid "Set as &Desktop Item..."
@@ -7451,11 +7451,11 @@ msgstr "&Tabelle"
 
 #: shdoclc.rc:108
 msgid "&Cell Properties"
-msgstr "&Zellen Eigenschaften"
+msgstr "&Zelleigenschaften"
 
 #: shdoclc.rc:109
 msgid "&Table Properties"
-msgstr "&Tabellen Eigenschaften"
+msgstr "&Tabelleneigenschaften"
 
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
@@ -7467,7 +7467,7 @@ msgstr "&Drucken"
 
 #: shdoclc.rc:125
 msgid "Open in &New Window"
-msgstr "Im &neuen Fenster öffnen"
+msgstr "In &neuem Fenster öffnen"
 
 #: shdoclc.rc:129
 msgid "Cut"
@@ -7475,7 +7475,7 @@ msgstr "Ausschneiden"
 
 #: shdoclc.rc:152
 msgid "&Save Video As..."
-msgstr "Speichere &Video als..."
+msgstr "&Video speichern als..."
 
 #: shdoclc.rc:163 shdoclc.rc:187
 msgid "Play"
@@ -7483,7 +7483,7 @@ msgstr "Abspielen"
 
 #: shdoclc.rc:189
 msgid "Rewind"
-msgstr "Rückspulen"
+msgstr "Zurückspulen"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -7491,11 +7491,11 @@ msgstr "Tags nachgehen"
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
-msgstr "Ressourcen Fehler"
+msgstr "Ressourcenfehler"
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
-msgstr "Tracking Info ausgeben"
+msgstr "Tracking-Informationen ausgeben"
 
 #: shdoclc.rc:199
 msgid "Debug Break"
@@ -7523,7 +7523,7 @@ msgstr "Formatierungspuffer ausgeben"
 
 #: shdoclc.rc:205
 msgid "Dump LayoutRects"
-msgstr "Layout Rechtecke ausgeben"
+msgstr "LayoutRects ausgeben"
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
@@ -7547,7 +7547,7 @@ msgstr "Ansicht &Editieren"
 
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
-msgstr "Scrolle hier"
+msgstr "Hier scrollen"
 
 #: shdoclc.rc:218
 msgid "Top"
@@ -7567,11 +7567,11 @@ msgstr "Seite runter"
 
 #: shdoclc.rc:224
 msgid "Scroll Up"
-msgstr "Scrolle hoch"
+msgstr "Hochscrollen"
 
 #: shdoclc.rc:225
 msgid "Scroll Down"
-msgstr "Scrolle runter"
+msgstr "Runterscrollen"
 
 #: shdoclc.rc:232
 msgid "Left Edge"
@@ -7591,11 +7591,11 @@ msgstr "Seite rechts"
 
 #: shdoclc.rc:238
 msgid "Scroll Left"
-msgstr "Scrolle links"
+msgstr "Nach links scrollen"
 
 #: shdoclc.rc:239
 msgid "Scroll Right"
-msgstr "Scrolle rechts"
+msgstr "Nach rechts scrollen"
 
 #: shdoclc.rc:25
 msgid "Wine Internet Explorer"
@@ -7654,7 +7654,7 @@ msgstr "Icons anordnen"
 
 #: shell32.rc:62
 msgid "Paste as Link"
-msgstr "Einfügen als Verknüpfung"
+msgstr "Verknüpfung einfügen"
 
 #: shell32.rc:64 progman.rc:97 wordpad.rc:210
 msgid "New"
@@ -7662,7 +7662,7 @@ msgstr "Neu"
 
 #: shell32.rc:66
 msgid "New &Folder"
-msgstr "Neues Ver&zeichnis"
+msgstr "Neuer &Ordner"
 
 #: shell32.rc:67
 msgid "New &Link"
@@ -7691,7 +7691,7 @@ msgstr "&Ausschneiden"
 
 #: shell32.rc:101
 msgid "Create &Link"
-msgstr "&Verknüpfung erzeugen"
+msgstr "&Verknüpfung anlegen"
 
 #: shell32.rc:103 regedit.rc:91
 msgid "&Rename"
@@ -7736,7 +7736,7 @@ msgstr "&Nein"
 
 #: shell32.rc:316
 msgid "About %s"
-msgstr "Informationen über %s"
+msgstr "Über %s"
 
 #: shell32.rc:320
 msgid "Wine &license"
@@ -7755,8 +7755,8 @@ msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
-"Geben sie den Namen eines Programmes, eines Ordners, eines Dokumentes oder "
-"einer Internet-Ressource ein, und Wine wird es öffnen."
+"Geben sie den Namen eines Programms, eines Ordners, eines Dokuments oder "
+"einer Internet-Ressource ein, und Wine wird es für Sie öffnen."
 
 #: shell32.rc:335
 msgid "&Open:"
@@ -7991,7 +7991,8 @@ msgstr "Es konnte kein neues Verzeichnis erstellt werden: Zugriff verweigert."
 
 #: shell32.rc:167
 msgid "Error during creation of a new folder"
-msgstr "Es trat ein Fehler beim Erstellen eines neuen Verzeichnisses auf"
+msgstr ""
+"Es ist ein Fehler beim Erstellen eines neuen Verzeichnisses aufgetreten"
 
 #: shell32.rc:168
 msgid "Confirm file deletion"
@@ -8021,7 +8022,7 @@ msgid ""
 msgstr ""
 "Der Ordner enthält bereits eine Datei namens '%1'.\n"
 "\n"
-"Wollen Sie die Datei ersetzen?"
+"Möchten Sie die Datei ersetzen?"
 
 #: shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
@@ -8058,10 +8059,10 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
-"Im Verzeichnis befindet sich bereits ein Ordner namens '%1'.\n"
+"Am Ziel befindet sich bereits ein Ordner namens '%1'.\n"
 "\n"
 "Wenn Dateien im Zielordner die gleichen Namen haben,\n"
-"wie im ausgewählten Ordner, werden diese ersetzt.\n"
+"werden diese durch Inhalte des Quellordners ersetzt.\n"
 "Möchten sie trotzdem fortfahren?"
 
 #: shell32.rc:235
@@ -8078,7 +8079,7 @@ msgstr "Konnte Ausführen-Dialog nicht anzeigen (interner Fehler)"
 
 #: shell32.rc:193
 msgid "Unable to display Browse dialog box (internal error)"
-msgstr "Konnte Durchsuchen-Dialog nicht anzeigen (interner Fehler)"
+msgstr "Durchsuchen-Dialog konnte nicht angezeigt werden (interner Fehler)"
 
 #: shell32.rc:195
 msgid "Executable files (*.exe)"
@@ -8090,15 +8091,15 @@ msgstr "Es ist kein Programm mit diesem Dateityp verknüpft."
 
 #: shell32.rc:243
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "Sind Sie sich sicher, dass Sie '%1'  für immer löschen möchten?"
+msgstr "Sind Sie sicher, dass Sie '%1' endgültig löschen möchten?"
 
 #: shell32.rc:244
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "Sind Sie sich sicher, dass Sie diese %1 Objekte löschen möchten?"
+msgstr "Sind Sie sicher, dass Sie diese %1 Objekte endgültig löschen möchten?"
 
 #: shell32.rc:245
 msgid "Confirm deletion"
-msgstr "Löschung bestätigen"
+msgstr "Löschen bestätigen"
 
 #: shell32.rc:246
 msgid ""
@@ -8140,19 +8141,20 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"Wine ist freie Software; Sie dürfen sie unter den Bedingungen der GNU Lesser "
-"General Public License, wie von der Free Software Foundation\n"
-"veröffentlicht, weiterverteilen und/oder modifizieren; entweder gemäß\n"
-"Version 2.1 der Lizenz oder (nach Ihrer Option) jeder späteren Version.\n"
+"Wine ist freie Software; Sie dürfen es unter den Bedingungen der GNU Lesser "
+"General Public License, wie von der Free Software Foundation veröffentlicht, "
+"weiterverteilen und/oder modifizieren; entweder gemäß Version 2.1 der Lizenz "
+"oder einer späteren Version ihrer Wahl.\n"
 "\n"
-"Wine wird mit der Hoffnung verteilt das es sich als nützlich erweist. Wine "
-"kommt aber OHNE JEGLICHE GARANTIE daher; sogar ohne einer angedeuteten "
-"Garantie der MARKTGÄNGIGKEIT oder der EIGNUNG FÜR EINEN BESTIMMTEN NUTZEN. "
-"Mehr Details finden Sie in der GNU Lesser General Public License.\n"
+"Wine wird in der Hoffnung verteilt, sich als nützlich zu erweisen, kommt "
+"aber OHNE JEGLICHE GARANTIE; sogar ohne eine implizierte Garantie der "
+"MARKTREIFE oder der EIGNUNG FÜR EINEN BESTIMMTEN ZWECK. Weitere Details "
+"entnehmen Sie bitte der GNU Lesser General Public License.\n"
 "\n"
-"Sie sollten mit dieser Bibliothek auch eine Kopie der GNU Lesser General "
-"Public License erhalten haben; wenn nicht schreiben Sie der Free Software "
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+"Sie sollten ein Exemplar der GNU Lesser General Public License zusammen mit "
+"Wine erhalten haben; falls dies nicht der Fall sein sollte, schreiben Sie "
+"bitte der Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, "
+"Boston, MA 02110-1301, USA."
 
 #: shell32.rc:253
 msgid "Wine License"
@@ -8292,12 +8294,12 @@ msgstr "Möchten Sie dennoch fortfahren?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
-msgstr "LAN Verbindung"
+msgstr "LAN-Verbindung"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
 msgstr ""
-"Das Zertifikat wurde von einem unbekannten oder vertrauensunwürdigen "
+"Das Zertifikat wurde von einem unbekannten oder nicht vertrauenswürdigen "
 "Herausgeber ausgestellt."
 
 #: wininet.rc:27
@@ -8306,7 +8308,7 @@ msgstr "Das Datum des Zertifikats ist ungültig."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
-msgstr "Der Name auf dem Zertifikat entspricht nicht der Seite."
+msgstr "Der Name auf dem Zertifikat entspricht nicht dem der Seite."
 
 #: wininet.rc:29
 msgid ""
@@ -8337,8 +8339,8 @@ msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
 msgstr ""
-"Das Gerät wird bereits verwendet. Warten Sie, bis es freigegeben ist, und "
-"versuchen Sie es erneut."
+"Das Gerät wird bereits verwendet. Bitte warten Sie, bis es freigegeben ist, "
+"und versuchen Sie es erneut."
 
 #: winmm.rc:33
 msgid "The specified device handle is invalid."
@@ -8362,7 +8364,7 @@ msgid ""
 "which functions and messages the driver supports."
 msgstr ""
 "Diese Funktion wird nicht unterstützt. Benutzen Sie die Funktion "
-"'Capabilities', um zu ermitteln, welche Funktion dieser Treiber unterstützt."
+"'Capabilities', um zu ermitteln, welche Funktionen der Treiber unterstützt."
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
@@ -8382,7 +8384,7 @@ msgid ""
 "Capabilities function to determine the supported formats."
 msgstr ""
 "Dieses Format wird nicht unterstützt oder kann nicht übersetzt werden. "
-"Benutzen Sie die Funktion Capabilities, um die unterstützten Formate zu "
+"Benutzen Sie die Funktion 'Capabilities', um die unterstützten Formate zu "
 "ermitteln."
 
 #: winmm.rc:43 winmm.rc:49
@@ -8390,87 +8392,88 @@ msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
-"Die Funktion kann nicht durchgeführt werden, wenn noch Mediendateien "
-"wiedergegeben werden. Starten Sie das Gerät neu, oder warten Sie bis keine "
-"Daten mehr wiedergegeben werden."
+"Diese Funktion kann nicht ausgeführt werden, während noch Mediendateien "
+"wiedergegeben werden. Setzen Sie das Gerät zurück, oder warten Sie bis die "
+"Wiedergabe abgeschlossen ist."
 
 #: winmm.rc:44
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"Der WAVE - Header wurde nicht vorbereitet. Benutzen Sie die Funktion "
-"'Prepare' zum Vorbereiten des Headers und versuchen Sie es erneut."
+"Der WAVE-Header wurde nicht vorbereitet. Benutzen Sie die Funktion 'Prepare' "
+"zum Vorbereiten des Headers und versuchen Sie es erneut."
 
 #: winmm.rc:45
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-"Das Gerät kann nicht ohne das WAVE_ALLOWSYNC - Flag geöffnet werden. "
-"Benutzen Sie dieses Flag und versuchen Sie es erneut."
+"Das Gerät kann nicht ohne das WAVE_ALLOWSYNC-Flag geöffnet werden. Benutzen "
+"Sie dieses Flag und versuchen Sie es erneut."
 
 #: winmm.rc:48
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"Der MIDI - Header wurde nicht vorbereitet. Benutzen Sie die Funktion "
-"'Prepare' zum Vorbereiten des Headers und versuchen Sie es erneut."
+"Der MIDI-Header wurde nicht vorbereitet. Benutzen Sie die Funktion 'Prepare' "
+"zum Vorbereiten des Headers und versuchen Sie es erneut."
 
 #: winmm.rc:50
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
-"Es wurde keine MIDI - Map gefunden. Es könnte ein Problem mit dem Treiber "
-"geben oder die Datei MIDIMAP.CFG fehlt oder ist beschädigt."
+"Es wurde keine MIDI-Map gefunden. Es könnte ein Problem mit dem Treiber "
+"vorliegen, oder die Datei MIDIMAP.CFG fehlt oder ist beschädigt."
 
 #: winmm.rc:51
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
 msgstr ""
-"Der Anschluss ist mit der Datenausgabe belegt. Warten Sie, bis die Daten "
-"übertragen wurden und versuchen Sie es erneut."
+"Über den Anschluss werden momentan Daten übertragen. Warten Sie, bis die "
+"Übertragung abgeschlossen ist und versuchen Sie es erneut."
 
 #: winmm.rc:52
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system. Use MIDI Mapper to edit the setup."
 msgstr ""
-"Das gegenwärtige MIDI - Mapper Setup benutzt ein MIDI - Gerät, das nicht "
-"installiert ist. Benutzen Sie den MIDI - Mapper, um das Setup zu ändern."
+"Die gegenwärtigen MIDI-Mapper Einstellungen beziehen sich auf ein MIDI-"
+"Gerät, das nicht installiert ist. Benutzen Sie den MIDI-Mapper, um dies zu "
+"ändern."
 
 #: winmm.rc:53
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
 msgstr ""
-"Das aktuelle MIDI Setup ist beschädigt. Kopieren sie die ursprüngliche Datei "
-"MIDIMAP.CFG in das Windows Systemverzeichnis und versuchen Sie es erneut."
+"Das aktuelle MIDI-Setup ist beschädigt. Kopieren sie die ursprüngliche Datei "
+"MIDIMAP.CFG in das Windows-Systemverzeichnis und versuchen Sie es erneut."
 
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
-"Ungültige MCI - Gerätekennung. Benutzen Sie die zurückgegebene ID, wenn Sie "
-"das MCI - Gerät öffnen."
+"Ungültige MCI-Gerätekennung. Benutzen Sie die zurückgegebene ID, wenn Sie "
+"das MCI-Gerät öffnen."
 
 #: winmm.rc:57
 msgid "The driver cannot recognize the specified command parameter."
-msgstr "Der Treiber kann den angegebenen Befehlsparameter nicht anerkennen."
+msgstr "Der Treiber konnte den angegebenen Befehlsparameter nicht erkennen."
 
 #: winmm.rc:58
 msgid "The driver cannot recognize the specified command."
-msgstr "Der Treiber kann den angegebenen Befehl nicht anerkennen."
+msgstr "Der Treiber konnte den angegebenen Befehl nicht erkennen."
 
 #: winmm.rc:59
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
 msgstr ""
-"Es gibt ein Problem mit Ihrem Media - Gerät. Stellen Sie sicher, dass es "
-"richtig arbeitet oder fragen Sie den Gerätehersteller."
+"Es liegt ein Problem mit Ihrem Mediengerät vor. Stellen Sie sicher, dass es "
+"korrekt arbeitet oder kontaktieren Sie den Gerätehersteller."
 
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
@@ -8489,11 +8492,12 @@ msgstr ""
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr ""
-"Es gibt ein unbekanntes Problem beim Laden des angegebenen Gerätetreibers."
+"Es ist ein unbekanntes Problem beim Laden des angegebenen Gerätetreibers "
+"aufgetreten."
 
 #: winmm.rc:64
 msgid "No command was specified."
-msgstr "Kein Befehl wurde angegeben."
+msgstr "Kein Befehl angegeben."
 
 #: winmm.rc:65
 msgid ""
@@ -8508,12 +8512,11 @@ msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr ""
-"Der Befehl erfordert einen Zeichenkettenparameter. Bitte stellen Sie einen "
-"bereit."
+"Der Befehl erfordert einen Zeichenkettenparameter. Bitte geben Sie einen an."
 
 #: winmm.rc:67
 msgid "The specified integer is invalid for this command."
-msgstr "Die Angabe einer ganzen Zahl ist für diesen Befehl ungültig."
+msgstr "Der angegebene Wert ist für diesen Befehl nicht gültig."
 
 #: winmm.rc:68
 msgid ""
@@ -8538,13 +8541,13 @@ msgstr ""
 
 #: winmm.rc:71
 msgid "The MCI device you are using does not support the specified command."
-msgstr "Das verwendete MCI - Gerät unterstützt diesen Befehl nicht."
+msgstr "Das verwendete MCI-Gerät unterstützt diesen Befehl nicht."
 
 #: winmm.rc:72
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
-"Die angeforderte Datei wurde nicht gefunden. Stellen Sie sicher, dass Pfad- "
+"Die angeforderte Datei wurde nicht gefunden. Stellen Sie sicher, dass Pfad "
 "und Dateiname richtig sind."
 
 #: winmm.rc:73
@@ -8554,28 +8557,28 @@ msgstr "Der Gerätetreiber ist nicht bereit."
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr ""
-"Ein Fehler ereignete sich beim Starten von MCI. Versuche Windows neu zu "
-"starten."
+"Beim Starten von MCI ist ein Problem aufgetreten. Versuchen Sie, Windows neu "
+"zu starten."
 
 #: winmm.rc:75
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr ""
-"Es gibt ein Problem mit dem Gerätetreiber. Der Treiber wird geschlossen. Ein "
-"Fehler kann nicht gemeldet werden."
+"Es liegt ein Problem mit dem Gerätetreiber vor. Der Treiber wurde "
+"geschlossen. Ein genauer Fehler konnte nicht bestimmt werden."
 
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
-msgstr "Der Gerätename 'all' ist nicht in diesem Befehl erlaubt."
+msgstr "Der Gerätename 'all' ist bei diesem Befehl nicht zulässig."
 
 #: winmm.rc:77
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
-"Es traten Fehler in mehr als einem Gerät auf. Geben Sie jeden Befehl für "
-"jedes Gerät einzeln an, um zu bestimmen, welches Gerät die Fehler "
+"Es sind Fehler in mehr als einem Gerät aufgetreten. Geben Sie jeden Befehl "
+"für jedes Gerät einzeln an, um zu bestimmen, welches Gerät die Fehler "
 "verursachte."
 
 #: winmm.rc:78
@@ -10199,7 +10202,7 @@ msgstr "Stoppe den abhängigen Dienst: %1\n"
 
 #: net.rc:31
 msgid "Could not stop service %1\n"
-msgstr "Konnte den Dienst nicht stoppen %1\n"
+msgstr "Konnte den Dienst %1 nicht stoppen\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -11109,7 +11112,7 @@ msgstr "Fehler: Ungültige Befehlszeilenargumente\n"
 
 #: reg.rc:34
 msgid "Error: Unable to add keys to remote machine\n"
-msgstr "Fehler: Konnte Schlüssel nicht zum remote Rechner hinzufügen\n"
+msgstr "Fehler: Konnte Schlüssel nicht zum Remoterechner hinzufügen\n"
 
 #: reg.rc:35
 msgid ""
