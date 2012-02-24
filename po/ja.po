@@ -7824,48 +7824,48 @@ msgstr "プログラム"
 
 #: shell32.rc:201
 msgid "My Documents"
-msgstr "My Documents"
+msgstr ""
 
 #: shell32.rc:202
 msgid "Favorites"
-msgstr "Favorites"
+msgstr ""
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr "StartUp"
+msgstr ""
 
 #: shell32.rc:204
 msgid "Start Menu"
-msgstr "Start Menu"
+msgstr ""
 
 #: shell32.rc:205
 msgid "My Music"
-msgstr "My Music"
+msgstr ""
 
 #: shell32.rc:206
 msgid "My Videos"
-msgstr "My Videos"
+msgstr ""
 
 #: shell32.rc:207
 msgctxt "directory"
 msgid "Desktop"
-msgstr "Desktop"
+msgstr ""
 
 #: shell32.rc:208
 msgid "NetHood"
-msgstr "NetHood"
+msgstr ""
 
 #: shell32.rc:209
 msgid "Templates"
-msgstr "Templates"
+msgstr ""
 
 #: shell32.rc:210
 msgid "PrintHood"
-msgstr "PrintHood"
+msgstr ""
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
-msgstr "History"
+msgstr ""
 
 #: shell32.rc:212
 msgid "Program Files"
@@ -7873,7 +7873,7 @@ msgstr "Program Files"
 
 #: shell32.rc:214
 msgid "My Pictures"
-msgstr "My Pictures"
+msgstr ""
 
 #: shell32.rc:215
 msgid "Common Files"
@@ -7881,23 +7881,23 @@ msgstr "Common Files"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
-msgstr "Documents"
+msgstr ""
 
 #: shell32.rc:217
 msgid "Administrative Tools"
-msgstr "Administrative Tools"
+msgstr ""
 
 #: shell32.rc:218
 msgid "Music"
-msgstr "Music"
+msgstr ""
 
 #: shell32.rc:219
 msgid "Pictures"
-msgstr "Pictures"
+msgstr ""
 
 #: shell32.rc:220
 msgid "Videos"
-msgstr "Videos"
+msgstr ""
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
@@ -7905,19 +7905,19 @@ msgstr "Program Files (x86)"
 
 #: shell32.rc:221
 msgid "Contacts"
-msgstr "Contacs"
+msgstr ""
 
 #: shell32.rc:222 winefile.rc:112
 msgid "Links"
-msgstr "Links"
+msgstr ""
 
 #: shell32.rc:223
 msgid "Slide Shows"
-msgstr "Slide Shows"
+msgstr ""
 
 #: shell32.rc:224
 msgid "Playlists"
-msgstr "Playlists"
+msgstr ""
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -7933,35 +7933,35 @@ msgstr "機種名"
 
 #: shell32.rc:225
 msgid "Sample Music"
-msgstr "Sample Music"
+msgstr ""
 
 #: shell32.rc:226
 msgid "Sample Pictures"
-msgstr "Sample Pictures"
+msgstr ""
 
 #: shell32.rc:227
 msgid "Sample Playlists"
-msgstr "Sample Playlists"
+msgstr ""
 
 #: shell32.rc:228
 msgid "Sample Videos"
-msgstr "Sample Videos"
+msgstr ""
 
 #: shell32.rc:229
 msgid "Saved Games"
-msgstr "Saved Games"
+msgstr ""
 
 #: shell32.rc:230
 msgid "Searches"
-msgstr "Searches"
+msgstr ""
 
 #: shell32.rc:231
 msgid "Users"
-msgstr "Users"
+msgstr ""
 
 #: shell32.rc:233
 msgid "Downloads"
-msgstr "Downloads"
+msgstr ""
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
