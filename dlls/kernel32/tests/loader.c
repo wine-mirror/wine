@@ -559,7 +559,7 @@ static void test_ImportDescriptors(void)
     }
 }
 
-static void test_image_mapping(const char *dll_name, DWORD scn_page_access)
+static void test_image_mapping(const char *dll_name, DWORD scn_page_access, BOOL is_dll)
 {
     HANDLE hfile, hmap;
     NTSTATUS status;
@@ -617,7 +617,6 @@ static void test_image_mapping(const char *dll_name, DWORD scn_page_access)
     }
     ok(status == STATUS_IMAGE_NOT_AT_BASE, "expected STATUS_IMAGE_NOT_AT_BASE, got %x\n", status);
     ok(addr2 != 0, "mapped address should be valid\n");
-
     ok(addr2 != addr1, "mapped addresses should be different\n");
 
     SetLastError(0xdeadbeef);
@@ -635,6 +634,7 @@ static void test_image_mapping(const char *dll_name, DWORD scn_page_access)
     ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection error %x\n", status);
 
     addr2 = MapViewOfFile(hmap, 0, 0, 0, 0);
+    ok(addr2 != 0, "mapped address should be valid\n");
     ok(addr2 != addr1, "mapped addresses should be different\n");
 
     SetLastError(0xdeadbeef);
@@ -649,6 +649,24 @@ static void test_image_mapping(const char *dll_name, DWORD scn_page_access)
     ok(info.Type == SEC_IMAGE, "%#x != SEC_IMAGE\n", info.Type);
 
     UnmapViewOfFile(addr2);
+
+    SetLastError(0xdeadbeef);
+    addr2 = LoadLibrary(dll_name);
+    if (is_dll)
+    {
+        ok(!addr2, "LoadLibrary should fail, is_dll %d\n", is_dll);
+        ok(GetLastError() == ERROR_INVALID_ADDRESS, "expected ERROR_INVALID_ADDRESS, got %d\n", GetLastError());
+    }
+    else
+    {
+        BOOL ret;
+        ok(addr2 != 0, "LoadLibrary error %d, is_dll %d\n", GetLastError(), is_dll);
+        ok(addr2 != addr1, "mapped addresses should be different\n");
+
+        SetLastError(0xdeadbeef);
+        ret = FreeLibrary(addr2);
+        ok(ret, "FreeLibrary error %d\n", GetLastError());
+    }
 
 wine_is_broken:
     status = pNtUnmapViewOfSection(GetCurrentProcess(), addr1);
@@ -955,13 +973,21 @@ static void test_section_access(void)
         ret = FreeLibrary(hlib);
         ok(ret, "FreeLibrary error %d\n", GetLastError());
 
-        test_image_mapping(dll_name, td[i].scn_page_access);
+        test_image_mapping(dll_name, td[i].scn_page_access, TRUE);
 
         /* reset IMAGE_FILE_DLL otherwise CreateProcess fails */
         nt_header.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_RELOCS_STRIPPED;
         SetLastError(0xdeadbeef);
         hfile = CreateFile(dll_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
-        ok (hfile != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+        /* LoadLibrary called on an already memory-mapped file in
+         * test_image_mapping() above leads to a file handle leak
+         * under nt4, and inability to overwrite and delete the file
+         * due to sharing violation error. Ignore it and skip the test,
+         * but leave a not deletable temporary file.
+         */
+        ok(hfile != INVALID_HANDLE_VALUE || broken(hfile == INVALID_HANDLE_VALUE) /* nt4 */,
+            "CreateFile error %d\n", GetLastError());
+        if (hfile == INVALID_HANDLE_VALUE) goto nt4_is_broken;
         SetFilePointer(hfile, sizeof(dos_header), NULL, FILE_BEGIN);
         SetLastError(0xdeadbeef);
         ret = WriteFile(hfile, &nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL);
@@ -1002,11 +1028,12 @@ static void test_section_access(void)
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
 
-        test_image_mapping(dll_name, td[i].scn_page_access);
+        test_image_mapping(dll_name, td[i].scn_page_access, FALSE);
 
+nt4_is_broken:
         SetLastError(0xdeadbeef);
         ret = DeleteFile(dll_name);
-        ok(ret, "DeleteFile error %d\n", GetLastError());
+        ok(ret || broken(!ret) /* nt4 */, "DeleteFile error %d\n", GetLastError());
     }
 }
 
