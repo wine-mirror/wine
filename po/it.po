@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-23 09:53+0100\n"
+"PO-Revision-Date: 2012-02-24 09:28+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -1339,7 +1339,7 @@ msgstr "URL Revoca Netscape"
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
-msgstr "URL Revoca CA Netscape"
+msgstr "URL Revoca AC Netscape"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
@@ -3019,7 +3019,7 @@ msgstr "Vietnamita"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr "Thai"
+msgstr "Tailandese"
 
 #: gdi32.rc:35
 msgid "Japanese"
@@ -4330,11 +4330,11 @@ msgstr "Operazione di I/O interrotta.\n"
 
 #: winerror.mc:1001
 msgid "Overlapped I/O incomplete.\n"
-msgstr "Overlapped I/O incompleto.\n"
+msgstr "I/O sovrapposto incompleto.\n"
 
 #: winerror.mc:1006
 msgid "Overlapped I/O pending.\n"
-msgstr "Overlapped I/O in attesa.\n"
+msgstr "I/O sovrapposto in attesa.\n"
 
 #: winerror.mc:1011
 msgid "No access to memory location.\n"
@@ -9225,7 +9225,7 @@ msgstr ""
 "\n"
 "Sintassi:\n"
 "ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [unità:][percorso]"
-"[nomefile]\n"
+"[nome_file]\n"
 "       [/S [/D]]\n"
 "\n"
 "Dove:\n"
@@ -9236,7 +9236,7 @@ msgstr ""
 "  A   File di archivio.\n"
 "  S   File di sistema.\n"
 "  H   File nascosto.\n"
-"  [unità:][percorso][nomefile]\n"
+"  [unità:][percorso][nome_file]\n"
 "      Specifica uno o più file da elaborare con attrib.\n"
 "  /S  Elabora i file corrispondenti nella cartella attuale e in tutte le "
 "sottocartelle.\n"
@@ -9288,7 +9288,7 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <nomefilebatch> si usa all'interno di un file batch per eseguire\n"
+"CALL <nome_file_batch> si usa all'interno di un file batch per eseguire\n"
 "comandi da un altro file batch. Quando il file batch esiste, il controllo\n"
 "torna al file che l'ha chiamato. Il comando CALL può passare parametri alla\n"
 "procedura chiamata.\n"
@@ -9314,7 +9314,7 @@ msgstr "CLS pulisce la schermata della console.\n"
 
 #: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
-msgstr "COPY <nomefile> copia un file.\n"
+msgstr "COPY <nome_file> copia un file.\n"
 
 #: cmd.rc:46
 msgid "CTTY changes the input/output device.\n"
@@ -9326,7 +9326,7 @@ msgstr "DATE mostra o cambia l'orario di sistema.\n"
 
 #: cmd.rc:48
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DEL <nomefile> cancella un file o un insieme di file.\n"
+msgstr "DEL <nome_file> cancella un file o un insieme di file.\n"
 
 #: cmd.rc:49
 msgid "DIR lists the contents of a directory.\n"
@@ -9354,7 +9354,7 @@ msgstr ""
 
 #: cmd.rc:61
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "ERASE <nomefile> cancella un file o un insieme di file.\n"
+msgstr "ERASE <nome_file> cancella un file o un insieme di file.\n"
 
 #: cmd.rc:69
 msgid ""
@@ -9420,7 +9420,7 @@ msgid ""
 msgstr ""
 "IF è usato per eseguire condizionatamente un comando.\n"
 "\n"
-"Sintassi: IF [NOT] EXIST nomefile comando\n"
+"Sintassi: IF [NOT] EXIST nome_file comando\n"
 "        IF [NOT] stringa1==stringa2 comando\n"
 "        IF [NOT] ERRORLEVEL numero comando\n"
 "\n"
@@ -9562,11 +9562,11 @@ msgstr ""
 
 #: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "REN <nomefile> è la versione ridotta di RENAME. Rinomina un file.\n"
+msgstr "REN <nome_file> è la versione ridotta di RENAME. Rinomina un file.\n"
 
 #: cmd.rc:157
 msgid "RENAME <filename> renames a file.\n"
-msgstr "RENAME <nomefile> rinomina un file.\n"
+msgstr "RENAME <nome_file> rinomina un file.\n"
 
 #: cmd.rc:159
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
@@ -10051,7 +10051,7 @@ msgstr "Strumento di Diagnostica DirectX"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr "Uso: dxdiag [/whql:off | /whql:on] [/t nomefile | /x nomefile]"
+msgstr "Uso: dxdiag [/whql:off | /whql:on] [/t nome_file | /x nome_file]"
 
 #: explorer.rc:28
 msgid "Wine Explorer"
@@ -10795,7 +10795,7 @@ msgstr "ID Applicazione"
 
 #: oleview.rc:134
 msgid "Type Libraries"
-msgstr "TypeLibrary"
+msgstr "Librerie di tipi"
 
 #: oleview.rc:135
 msgid "ver."
