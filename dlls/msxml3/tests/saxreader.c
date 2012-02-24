@@ -327,7 +327,6 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
         ISAXContentHandler* iface,
         ISAXLocator *pLocator)
 {
-    ISAXAttributes *attr, *attr1;
     HRESULT hr;
 
     if(!test_expect_call(CH_PUTDOCUMENTLOCATOR))
@@ -338,6 +337,9 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
             msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
 
     if(msxml_version >= 6) {
+        ISAXAttributes *attr, *attr1;
+        IMXAttributes *mxattr;
+
         EXPECT_REF(pLocator, 1);
         hr = ISAXLocator_QueryInterface(pLocator, &IID_ISAXAttributes, (void**)&attr);
         EXPECT_HR(hr, S_OK);
@@ -346,6 +348,10 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
         EXPECT_HR(hr, S_OK);
         EXPECT_REF(pLocator, 3);
         ok(attr == attr1, "got %p, %p\n", attr, attr1);
+
+        hr = ISAXAttributes_QueryInterface(attr, &IID_IMXAttributes, (void**)&mxattr);
+        EXPECT_HR(hr, E_NOINTERFACE);
+
         ISAXAttributes_Release(attr);
         ISAXAttributes_Release(attr1);
     }
@@ -1678,7 +1684,7 @@ struct msxmlsupported_data_t
     BOOL supported;
 };
 
-static struct msxmlsupported_data_t msxmlsupported_data[] =
+static struct msxmlsupported_data_t mxwriter_support_data[] =
 {
     { &CLSID_MXXMLWriter,   "MXXMLWriter" },
     { &CLSID_MXXMLWriter30, "MXXMLWriter30" },
@@ -1687,7 +1693,16 @@ static struct msxmlsupported_data_t msxmlsupported_data[] =
     { NULL }
 };
 
-static BOOL is_mxwriter_supported(const GUID *clsid, const struct msxmlsupported_data_t *table)
+static struct msxmlsupported_data_t mxattributes_support_data[] =
+{
+    { &CLSID_SAXAttributes,   "SAXAttributes" },
+    { &CLSID_SAXAttributes30, "SAXAttributes30" },
+    { &CLSID_SAXAttributes40, "SAXAttributes40" },
+    { &CLSID_SAXAttributes60, "SAXAttributes60" },
+    { NULL }
+};
+
+static BOOL is_clsid_supported(const GUID *clsid, const struct msxmlsupported_data_t *table)
 {
     while (table->clsid)
     {
@@ -1728,7 +1743,7 @@ static void test_mxwriter_default_properties(const struct mxwriter_props_t *tabl
         BSTR encoding;
         HRESULT hr;
 
-        if (!is_mxwriter_supported(table->clsid, msxmlsupported_data))
+        if (!is_clsid_supported(table->clsid, mxwriter_support_data))
         {
             table++;
             i++;
@@ -2205,7 +2220,7 @@ static const struct writer_startendelement_t writer_startendelement[] = {
     { NULL }
 };
 
-static void get_supported_mxwriter_data(struct msxmlsupported_data_t *table)
+static void get_mxwriter_support_data(struct msxmlsupported_data_t *table)
 {
     while (table->clsid)
     {
@@ -2223,6 +2238,24 @@ static void get_supported_mxwriter_data(struct msxmlsupported_data_t *table)
     }
 }
 
+static void get_mxattributes_support_data(struct msxmlsupported_data_t *table)
+{
+    while (table->clsid)
+    {
+        IMXAttributes *attr;
+        HRESULT hr;
+
+        hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXAttributes, (void**)&attr);
+        if (hr == S_OK) IMXAttributes_Release(attr);
+
+        table->supported = hr == S_OK;
+        if (hr != S_OK) skip("class %s not supported\n", table->name);
+
+        table++;
+    }
+}
+
 static void test_mxwriter_startendelement_batch(const struct writer_startendelement_t *table)
 {
     int i = 0;
@@ -2233,7 +2266,7 @@ static void test_mxwriter_startendelement_batch(const struct writer_startendelem
         IMXWriter *writer;
         HRESULT hr;
 
-        if (!is_mxwriter_supported(table->clsid, msxmlsupported_data))
+        if (!is_clsid_supported(table->clsid, mxwriter_support_data))
         {
             table++;
             i++;
@@ -3044,6 +3077,85 @@ static void test_mxwriter_dtd(void)
     free_bstrs();
 }
 
+typedef struct {
+    const CLSID *clsid;
+    const char *uri;
+    const char *local;
+    const char *qname;
+    const char *type;
+    const char *value;
+    HRESULT hr;
+} addattribute_test_t;
+
+static const addattribute_test_t addattribute_data[] = {
+    { &CLSID_SAXAttributes,   NULL, NULL, "ns:qname", NULL, "value", E_INVALIDARG },
+    { &CLSID_SAXAttributes30, NULL, NULL, "ns:qname", NULL, "value", E_INVALIDARG },
+    { &CLSID_SAXAttributes40, NULL, NULL, "ns:qname", NULL, "value", E_INVALIDARG },
+    { &CLSID_SAXAttributes60, NULL, NULL, "ns:qname", NULL, "value", S_OK },
+    { NULL }
+};
+
+static void test_mxattr_addAttribute(void)
+{
+    const addattribute_test_t *table = addattribute_data;
+    int i = 0;
+
+    while (table->clsid)
+    {
+        ISAXAttributes *saxattr;
+        IMXAttributes *mxattr;
+        HRESULT hr;
+        int len;
+
+        if (!is_clsid_supported(table->clsid, mxattributes_support_data))
+        {
+            table++;
+            i++;
+            continue;
+        }
+
+        hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXAttributes, (void**)&mxattr);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IMXAttributes_QueryInterface(mxattr, &IID_ISAXAttributes, (void**)&saxattr);
+        EXPECT_HR(hr, S_OK);
+
+        /* SAXAttributes30 and SAXAttributes60 both crash on this test */
+        if (IsEqualGUID(table->clsid, &CLSID_SAXAttributes) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXAttributes30))
+        {
+            hr = ISAXAttributes_getLength(saxattr, NULL);
+            EXPECT_HR(hr, E_POINTER);
+        }
+
+        len = -1;
+        hr = ISAXAttributes_getLength(saxattr, &len);
+        EXPECT_HR(hr, S_OK);
+        ok(len == 0, "got %d\n", len);
+
+        hr = IMXAttributes_addAttribute(mxattr, _bstr_(table->uri), _bstr_(table->local),
+            _bstr_(table->qname), _bstr_(table->type), _bstr_(table->value));
+        ok(hr == table->hr, "%d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
+
+        len = -1;
+        hr = ISAXAttributes_getLength(saxattr, &len);
+        EXPECT_HR(hr, S_OK);
+        if (table->hr == S_OK)
+            ok(len == 1, "%d: got %d length, expected 0\n", i, len);
+        else
+            ok(len == 0, "%d: got %d length, expected 1\n", i, len);
+
+        ISAXAttributes_Release(saxattr);
+        IMXAttributes_Release(mxattr);
+
+        table++;
+        i++;
+    }
+
+    free_bstrs();
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -3072,8 +3184,8 @@ START_TEST(saxreader)
     test_dispex();
 
     /* MXXMLWriter tests */
-    get_supported_mxwriter_data(msxmlsupported_data);
-    if (is_mxwriter_supported(&CLSID_MXXMLWriter, msxmlsupported_data))
+    get_mxwriter_support_data(mxwriter_support_data);
+    if (is_clsid_supported(&CLSID_MXXMLWriter, mxwriter_support_data))
     {
         test_mxwriter_handlers();
         test_mxwriter_startenddocument();
@@ -3090,6 +3202,15 @@ START_TEST(saxreader)
     }
     else
         win_skip("MXXMLWriter not supported\n");
+
+    /* SAXAttributes tests */
+    get_mxattributes_support_data(mxattributes_support_data);
+    if (is_clsid_supported(&CLSID_SAXAttributes, mxattributes_support_data))
+    {
+        test_mxattr_addAttribute();
+    }
+    else
+        skip("SAXAttributes not supported\n");
 
     CoUninitialize();
 }
