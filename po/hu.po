@@ -210,13 +210,8 @@ msgstr "Programok (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winedbg.rc:39 winhlp32.rc:87
-#, fuzzy
 msgid "All files (*.*)"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Minden fájl (*.*)\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Összes fájl (*.*)"
+msgstr "Minden fájl (*.*)"
 
 #: appwiz.rc:43
 msgid "&Modify/Remove"
@@ -372,14 +367,9 @@ msgid "Separator"
 msgstr "Elválasztó"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Nincs\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Semmi"
+msgstr "Nincs"
 
 #: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:434 winedbg.rc:57
 #: winedbg.rc:72 wordpad.rc:169
@@ -988,13 +978,8 @@ msgid "Cannot find the printer."
 msgstr "Nem találom a nyomtatót."
 
 #: comdlg32.rc:66 progman.rc:73
-#, fuzzy
 msgid "Out of memory."
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Rendkívül kevés a memória\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Elfogyott a memória."
+msgstr "Elfogyott a memória."
 
 #: comdlg32.rc:67
 msgid "An error occurred."
@@ -1237,7 +1222,7 @@ msgstr "Kulcs használat"
 
 #: crypt32.rc:34
 msgid "Certificate Policies"
-msgstr "Tanusítvány szabályok"
+msgstr "Tanúsítvány szabályok"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
@@ -1261,7 +1246,7 @@ msgstr "Mighatalmazási információ hozzáférés"
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
-msgstr "Tanusítvány kiterjesztések"
+msgstr "Tanúsítvány kiterjesztések"
 
 #: crypt32.rc:41
 msgid "Next Update Location"
@@ -1322,11 +1307,11 @@ msgstr "Felhasználó figyelmeztetés"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr "On-line tanusítvány állapot protokoll"
+msgstr "On-line tanúsítvány állapot protokoll"
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
-msgstr "Tanusítvány hitelesítés szolgáltató"
+msgstr "Tanúsítvány hitelesítés szolgáltató"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
@@ -1334,15 +1319,15 @@ msgstr "Tanusítási sablon név"
 
 #: crypt32.rc:58
 msgid "Certificate Type"
-msgstr "Tanusítvány típusa"
+msgstr "Tanúsítvány típusa"
 
 #: crypt32.rc:59
 msgid "Certificate Manifold"
-msgstr "Tanusítvány sokszorosítás"
+msgstr "Tanúsítvány sokszorosítás"
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
-msgstr "Netscape Tanusítvány típus"
+msgstr "Netscape Tanúsítvány típus"
 
 #: crypt32.rc:61
 msgid "Netscape Base URL"
@@ -1486,7 +1471,7 @@ msgstr "Szabály megszorítások"
 
 #: crypt32.rc:96
 msgid "Cross-Certificate Distribution Points"
-msgstr "Kereszttanusítvány disztribúciós pontok"
+msgstr "Kereszttanúsítvány disztribúciós pontok"
 
 #: crypt32.rc:97
 msgid "Application Policies"
@@ -1550,7 +1535,7 @@ msgstr "PKCS 7 titkosított"
 
 #: crypt32.rc:112
 msgid "Previous CA Certificate Hash"
-msgstr "Előző CA tanusítvány hash"
+msgstr "Előző CA tanúsítvány hash"
 
 #: crypt32.rc:113
 msgid "Virtual Base CRL Number"
@@ -1562,7 +1547,7 @@ msgstr "Következő CRL kibocsátás"
 
 #: crypt32.rc:115
 msgid "CA Encryption Certificate"
-msgstr "CA titkosítási tanusítvány"
+msgstr "CA titkosítási tanúsítvány"
 
 #: crypt32.rc:116 cryptui.rc:145
 msgid "Key Recovery Agent"
@@ -1570,7 +1555,7 @@ msgstr "Kulcs helyreállítási ügynök"
 
 #: crypt32.rc:117
 msgid "Certificate Template Information"
-msgstr "Tanusítvány sablon információ"
+msgstr "Tanúsítvány sablon információ"
 
 #: crypt32.rc:118
 msgid "Enterprise Root OID"
@@ -1590,7 +1575,7 @@ msgstr "Közzétett CRL helyek"
 
 #: crypt32.rc:122
 msgid "Enforce Certificate Chain Policy"
-msgstr "Tanusítványlánc szabályok megkövetelése"
+msgstr "Tanúsítványlánc szabályok megkövetelése"
 
 #: crypt32.rc:123
 msgid "Transaction Id"
@@ -1610,7 +1595,7 @@ msgstr "Reg.információ"
 
 #: crypt32.rc:127
 msgid "Get Certificate"
-msgstr "Tanusítvány beszerzés"
+msgstr "Tanúsítvány beszerzés"
 
 #: crypt32.rc:128
 msgid "Get CRL"
@@ -1626,11 +1611,11 @@ msgstr "Folyamatban lévők lekérése"
 
 #: crypt32.rc:131 cryptui.rc:92
 msgid "Certificate Trust List"
-msgstr "Tanusítvány bizalmi lista"
+msgstr "Tanúsítvány bizalmi lista"
 
 #: crypt32.rc:132
 msgid "Archived Key Certificate Hash"
-msgstr "Alchívált kulcs tanusítvány hash"
+msgstr "Alchívált kulcs tanúsítvány hash"
 
 #: crypt32.rc:133
 msgid "Private Key Usage Period"
@@ -1750,7 +1735,7 @@ msgstr "Könyvtárszolgáltatás (DS) Email replikáció"
 
 #: crypt32.rc:162 cryptui.rc:142
 msgid "Certificate Request Agent"
-msgstr "Tanusítvány kérési ügynök"
+msgstr "Tanúsítvány kérési ügynök"
 
 #: crypt32.rc:163 cryptui.rc:138
 msgid "Lifetime Signing"
@@ -1762,7 +1747,7 @@ msgstr "Összes kiadási szabályok"
 
 #: crypt32.rc:169
 msgid "Trusted Root Certification Authorities"
-msgstr "Megbízható gyökér tanusítvány kiadók"
+msgstr "Megbízható gyökér tanúsítvány kiadók"
 
 #: crypt32.rc:170
 msgid "Personal"
@@ -1770,7 +1755,7 @@ msgstr "Személyes"
 
 #: crypt32.rc:171
 msgid "Intermediate Certification Authorities"
-msgstr "Közbeeső tanusítvány kiadók"
+msgstr "Közbeeső tanúsítvány kiadók"
 
 #: crypt32.rc:172
 msgid "Other People"
@@ -1782,7 +1767,7 @@ msgstr "Megbízható kiadók"
 
 #: crypt32.rc:174
 msgid "Untrusted Certificates"
-msgstr "Nem megbízható tanusítványok"
+msgstr "Nem megbízható tanúsítványok"
 
 #: crypt32.rc:179
 msgid "KeyID="
@@ -1790,11 +1775,11 @@ msgstr "KulcsID="
 
 #: crypt32.rc:180
 msgid "Certificate Issuer"
-msgstr "Tanusítvány kiadó"
+msgstr "Tanúsítvány kiadó"
 
 #: crypt32.rc:181
 msgid "Certificate Serial Number="
-msgstr "Tanusítvány szériaszám="
+msgstr "Tanúsítvány szériaszám="
 
 #: crypt32.rc:182
 msgid "Other Name="
@@ -1850,14 +1835,9 @@ msgid "Path Length Constraint="
 msgstr "Útvonal hossz megszorítás="
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "path length"
 msgid "None"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Nincs\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Semmi"
+msgstr "Nincs"
 
 #: crypt32.rc:196
 msgid "Information Not Available"
@@ -1934,7 +1914,7 @@ msgstr "Művelet lejárt"
 
 #: crypt32.rc:214
 msgid "Certificate Hold"
-msgstr "Tanusítvány tartva"
+msgstr "Tanúsítvány tartva"
 
 #: crypt32.rc:215
 msgid "Financial Information="
@@ -1982,7 +1962,7 @@ msgstr "Kulcs megegyezés"
 
 #: crypt32.rc:226
 msgid "Certificate Signing"
-msgstr "Tanusítvány aláírás"
+msgstr "Tanúsítvány aláírás"
 
 #: crypt32.rc:227
 msgid "Off-line CRL Signing"
@@ -2031,7 +2011,7 @@ msgstr "Aláírás CA"
 #: cryptdlg.rc:27
 #, fuzzy
 msgid "Certificate Policy"
-msgstr "Tanusítvány szabályok"
+msgstr "Tanúsítvány szabályok"
 
 #: cryptdlg.rc:28
 #, fuzzy
@@ -2052,7 +2032,7 @@ msgstr "Hitelesítés"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr "Tanusítvány hivatkozás"
+msgstr "Tanúsítvány hivatkozás"
 
 #: cryptdlg.rc:35
 msgid "Organization="
@@ -2061,11 +2041,11 @@ msgstr "Szervezet="
 #: cryptdlg.rc:36
 #, fuzzy
 msgid "Notice Number="
-msgstr "Tanusítvány szériaszám="
+msgstr "Tanúsítvány szériaszám="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr "Tanusítvány szöveg="
+msgstr "Tanúsítvány szöveg="
 
 #: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
 msgid "General"
@@ -2074,7 +2054,7 @@ msgstr "Általános"
 #: cryptui.rc:188
 #, fuzzy
 msgid "&Install Certificate..."
-msgstr "Tanusítvány beszerzés"
+msgstr "Tanúsítvány beszerzés"
 
 #: cryptui.rc:189
 #, fuzzy
@@ -2109,11 +2089,11 @@ msgstr "Tanusítási sablon útvonal"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
-msgstr "Tanusítvány megtekintés"
+msgstr "Tanúsítvány megtekintés"
 
 #: cryptui.rc:215
 msgid "Certificate &status:"
-msgstr "Tanusítvány &állapot:"
+msgstr "Tanúsítvány &állapot:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
@@ -2133,7 +2113,7 @@ msgstr "&Leírás:"
 
 #: cryptui.rc:240
 msgid "Certificate purposes"
-msgstr "Tanusítvány felhasználása"
+msgstr "Tanúsítvány felhasználása"
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
@@ -2163,12 +2143,12 @@ msgstr "Az objektum azonosító (OID) hozzáadása, a felhasználási cél érde
 #: cryptui.rc:265 cryptui.rc:66
 #, fuzzy
 msgid "Select Certificate Store"
-msgstr "Tanusítvány beszerzés"
+msgstr "Tanúsítvány beszerzés"
 
 #: cryptui.rc:268
 #, fuzzy
 msgid "Select the certificate store you want to use:"
-msgstr "Tanusítvány beszerzés"
+msgstr "Tanúsítvány beszerzés"
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
@@ -2176,11 +2156,11 @@ msgstr "&Tároltak megmutatása"
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
-msgstr "Tanusítvány import varázsló"
+msgstr "Tanúsítvány import varázsló"
 
 #: cryptui.rc:280
 msgid "Welcome to the Certificate Import Wizard"
-msgstr "Üdvözli a tanusítvány import varázsló"
+msgstr "Üdvözli a tanúsítvány import varázsló"
 
 #: cryptui.rc:283
 msgid ""
@@ -2194,10 +2174,10 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Ez a varázsló egyszerűsíti a tanusítványok importálását, visszavonását és  "
+"Ez a varázsló egyszerűsíti a tanúsítványok importálását, visszavonását és  "
 "megbízhatósági beállítását egy adott fájl felhasználásával.\n"
 "\n"
-"Egy tanusítványt fel lehet használni, hogy Önt vagy azt számítógépet "
+"Egy tanúsítványt fel lehet használni, hogy Önt vagy azt számítógépet "
 "azonosítsa, amellyel kommunikál. Fel lahet használni hitelesítésre és hogy "
 "digitálisan aláírjon üzeneteket.\n"
 "\n"
@@ -2216,7 +2196,7 @@ msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"Üzenet: A következő fájl formátumok egynél több tanusítványt, visszavonási "
+"Üzenet: A következő fájl formátumok egynél több tanúsítványt, visszavonási "
 "listát vagy megbízhatósági listát tartalmazhatnak:"
 
 #: cryptui.rc:296
@@ -2229,31 +2209,31 @@ msgstr "Személyi információcsere/PKCS #12 (.pfx, .p12)"
 
 #: cryptui.rc:300
 msgid "Microsoft Serialized Certificate Store (.sst)"
-msgstr "Microsoft szabvány tanusítvány beszerzés (.sst)"
+msgstr "Microsoft szabvány tanúsítvány beszerzés (.sst)"
 
 #: cryptui.rc:308
 msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
-"Wine automatikusan beállítja a tanusítvány útvonalat vagy kiválaszthat egy "
+"Wine automatikusan beállítja a tanúsítvány útvonalat vagy kiválaszthat egy "
 "meghatározott útvonalat."
 
 #: cryptui.rc:310
 msgid "&Automatically select certificate store"
-msgstr "&Automatikus tanusítvány beszerzés"
+msgstr "&Automatikus tanúsítvány beszerzés"
 
 #: cryptui.rc:312
 msgid "&Place all certificates in the following store:"
-msgstr "&Helyezz minden tanusítványt a következő útvonalra:"
+msgstr "&Helyezz minden tanúsítványt a következő útvonalra:"
 
 #: cryptui.rc:322
 msgid "Completing the Certificate Import Wizard"
-msgstr "Tanusítvány import varázsló befejezése"
+msgstr "Tanúsítvány import varázsló befejezése"
 
 #: cryptui.rc:324
 msgid "You have successfully completed the Certificate Import Wizard."
-msgstr "Sikeresen végrehajtódott a Tanusítvány import varázsló."
+msgstr "Sikeresen végrehajtódott a Tanúsítvány import varázsló."
 
 #: cryptui.rc:326 cryptui.rc:440
 msgid "You have specified the following settings:"
@@ -2261,7 +2241,7 @@ msgstr "A következő beállítások lettek megadva:"
 
 #: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
-msgstr "Tanusítványok"
+msgstr "Tanúsítványok"
 
 #: cryptui.rc:337
 msgid "I&ntended purpose:"
@@ -2282,7 +2262,7 @@ msgstr "&Haladó..."
 #: cryptui.rc:345
 #, fuzzy
 msgid "Certificate intended purposes"
-msgstr "Tanusítvány kiterjesztések"
+msgstr "Tanúsítvány kiterjesztések"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
@@ -2296,7 +2276,7 @@ msgstr "Speciális opciók"
 
 #: cryptui.rc:355
 msgid "Certificate purpose"
-msgstr "Tanusítvány típusa"
+msgstr "Tanúsítvány típusa"
 
 #: cryptui.rc:356
 msgid ""
@@ -2307,16 +2287,16 @@ msgstr ""
 
 #: cryptui.rc:358
 msgid "&Certificate purposes:"
-msgstr "&Tanusítvány típusok:"
+msgstr "&Tanúsítvány típusok:"
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
 msgid "Certificate Export Wizard"
-msgstr "Tanusítvány export varázsló"
+msgstr "Tanúsítvány export varázsló"
 
 #: cryptui.rc:370
 msgid "Welcome to the Certificate Export Wizard"
-msgstr "Üdvözli a Tanusítvány export varázsló"
+msgstr "Üdvözli a Tanúsítvány export varázsló"
 
 #: cryptui.rc:373
 msgid ""
@@ -2330,10 +2310,10 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Ez a varázsló egyszerűvé teszi a tanusítványok exportját, visszavonását és "
+"Ez a varázsló egyszerűvé teszi a tanúsítványok exportját, visszavonását és "
 "megbízhatósági beállítását egy tárolt fájl felhasználásával.\n"
 "\n"
-"Egy tanusítványt fel lehet használni, hogy Önt vagy azt a számítógépet "
+"Egy tanúsítványt fel lehet használni, hogy Önt vagy azt a számítógépet "
 "azonosítsa, amellyel kommunikál. Fel lehet használni hitelesítésre is és "
 "hogy digitálisan aláírjon üzeneteket.\n"
 "\n"
@@ -2381,7 +2361,7 @@ msgstr "&Titkosított szabványos/PKCS #7 üzenet (.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
-msgstr "&Minden elérhető tanusítvány"
+msgstr "&Minden elérhető tanúsítvány"
 
 #: cryptui.rc:413
 msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
@@ -2389,7 +2369,7 @@ msgstr "Sz&emélyes információcsere/PKCS #12 (.pfx)"
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
-msgstr "Minden e&lérhető tanusítvány"
+msgstr "Minden e&lérhető tanúsítvány"
 
 #: cryptui.rc:417
 msgid "&Enable strong encryption"
@@ -2401,7 +2381,7 @@ msgstr "Privát kulcs t&örlése, sikeres export után"
 
 #: cryptui.rc:436
 msgid "Completing the Certificate Export Wizard"
-msgstr "Tanusítvány export varázsló befejezése"
+msgstr "Tanúsítvány export varázsló befejezése"
 
 #: cryptui.rc:438
 msgid "You have successfully completed the Certificate Export Wizard."
@@ -2410,43 +2390,43 @@ msgstr "Sikeresen befejeződött az export varázsló."
 #: cryptui.rc:27 cryptui.rc:90
 #, fuzzy
 msgid "Certificate"
-msgstr "Tanusítvány beszerzés"
+msgstr "Tanúsítvány beszerzés"
 
 #: cryptui.rc:28
 #, fuzzy
 msgid "Certificate Information"
-msgstr "Tanusítvány sablon információ"
+msgstr "Tanúsítvány sablon információ"
 
 #: cryptui.rc:29
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
-"Ennek a tanusítványnak hibás az aláírása. Lehet módosították vagy megsérült."
+"Ennek a tanúsítványnak hibás az aláírása. Lehet módosították vagy megsérült."
 
 #: cryptui.rc:30
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
-"A tanusítvány kiállítója nem megbízható. Hogy azzá tegye, adja hozzá a "
+"A tanúsítvány kiállítója nem megbízható. Hogy azzá tegye, adja hozzá a "
 "rendszer megbízható root kiállító listájába."
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr "Ezt a tanusítványt nem lehetett azonosítni megbízható kiállítóként."
+msgstr "Ezt a tanúsítványt nem lehetett azonosítni megbízható kiállítóként."
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
-msgstr "A tanusítvány kiállító nem található."
+msgstr "A tanúsítvány kiállító nem található."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
-msgstr "A tanusítvány minden felhasználási típusát nem lehetett ellenőrizni."
+msgstr "A tanúsítvány minden felhasználási típusát nem lehetett ellenőrizni."
 
 #: cryptui.rc:34
 msgid "This certificate is intended for the following purposes:"
-msgstr "A tanusítvány a következő típusokat tartalmazza:"
+msgstr "A tanúsítvány a következő típusokat tartalmazza:"
 
 #: cryptui.rc:35
 msgid "Issued to: "
@@ -2466,23 +2446,23 @@ msgstr " eddig "
 
 #: cryptui.rc:39
 msgid "This certificate has an invalid signature."
-msgstr "A tanusítvány aláírása nem valós."
+msgstr "A tanúsítvány aláírása nem valós."
 
 #: cryptui.rc:40
 msgid "This certificate has expired or is not yet valid."
-msgstr "A tanusítvány lejárt vagy még nem valós."
+msgstr "A tanúsítvány lejárt vagy még nem valós."
 
 #: cryptui.rc:41
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr "A tanusítvány érvényességi idejét megnövelte a kiállítója."
+msgstr "A tanúsítvány érvényességi idejét megnövelte a kiállítója."
 
 #: cryptui.rc:42
 msgid "This certificate was revoked by its issuer."
-msgstr "A tanusítványt a kiállító visszavonta."
+msgstr "A tanúsítványt a kiállító visszavonta."
 
 #: cryptui.rc:43
 msgid "This certificate is OK."
-msgstr "Tanusítvány rendben van."
+msgstr "Tanúsítvány rendben van."
 
 #: cryptui.rc:44
 msgid "Field"
@@ -2567,7 +2547,7 @@ msgstr "Leírás"
 #: cryptui.rc:63
 #, fuzzy
 msgid "Certificate Properties"
-msgstr "Tanusítvány szabályok"
+msgstr "Tanúsítvány szabályok"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
@@ -2579,7 +2559,7 @@ msgstr "A beírt OID már létezik."
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
-msgstr "Kérem válasszon ki egy tanusítvány útvonalat."
+msgstr "Kérem válasszon ki egy tanúsítvány útvonalat."
 
 #: cryptui.rc:69
 msgid ""
@@ -2600,19 +2580,19 @@ msgstr "Adja meg az importálandó fájlt."
 #: cryptui.rc:72 cryptui.rc:95
 #, fuzzy
 msgid "Certificate Store"
-msgstr "Tanusítványok"
+msgstr "Tanúsítványok"
 
 #: cryptui.rc:73
 msgid ""
 "Certificate stores are collections of certificates, certificate revocation "
 "lists, and certificate trust lists."
 msgstr ""
-"Tanusítványok egy gyűjtemény, amely aktív, visszavont és megbízható "
-"tanusítványokból áll."
+"Tanúsítványok egy gyűjtemény, amely aktív, visszavont és megbízható "
+"tanúsítványokból áll."
 
 #: cryptui.rc:74
 msgid "X.509 Certificate (*.cer; *.crt)"
-msgstr "X.509 tanusítvány (*.cer; *.crt)"
+msgstr "X.509 tanúsítvány (*.cer; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
@@ -2620,15 +2600,15 @@ msgstr "Személyi információcsere (*.pfx; *.p12)"
 
 #: cryptui.rc:76 cryptui.rc:155
 msgid "Certificate Revocation List (*.crl)"
-msgstr "Tanusítvány visszavonási lista (*.crl)"
+msgstr "Tanúsítvány visszavonási lista (*.crl)"
 
 #: cryptui.rc:77 cryptui.rc:156
 msgid "Certificate Trust List (*.stl)"
-msgstr "Tanusítvány bizalmi lista (*.stl)"
+msgstr "Tanúsítvány bizalmi lista (*.stl)"
 
 #: cryptui.rc:78
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr "Microsoft szabványos tanusítványok (*.sst)"
+msgstr "Microsoft szabványos tanúsítványok (*.sst)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
@@ -2657,7 +2637,7 @@ msgstr "Kérem válasszon ki egy útvonalat"
 #: cryptui.rc:86
 #, fuzzy
 msgid "Certificate Store Selected"
-msgstr "Tanusítvány útvonal"
+msgstr "Tanúsítvány útvonal"
 
 #: cryptui.rc:87
 msgid "Automatically determined by the program"
@@ -2674,7 +2654,7 @@ msgstr "Tartalom"
 #: cryptui.rc:91
 #, fuzzy
 msgid "Certificate Revocation List"
-msgstr "Tanusítvány visszavonási lista"
+msgstr "Tanúsítvány visszavonási lista"
 
 #: cryptui.rc:93
 msgid "CMS/PKCS #7 Message"
@@ -2713,18 +2693,12 @@ msgid "Expiration Date"
 msgstr "lejárat"
 
 #: cryptui.rc:104
-#, fuzzy
 msgid "Friendly Name"
 msgstr "Keresztnév"
 
 #: cryptui.rc:106 cryptui.rc:120
-#, fuzzy
 msgid "<None>"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Nincs\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Semmi"
+msgstr "<Nincs>"
 
 #: cryptui.rc:107
 msgid ""
@@ -2734,7 +2708,7 @@ msgid ""
 msgstr ""
 "Már nem lesz képes dekódolni az üzeneteket ezzel a tanusítvánnyal, vagy "
 "aláírni az üzeneteket ezzel.\n"
-"Biztosan törölni szeretné ezt a tanusítványt?"
+"Biztosan törölni szeretné ezt a tanúsítványt?"
 
 #: cryptui.rc:108
 msgid ""
@@ -2744,7 +2718,7 @@ msgid ""
 msgstr ""
 "Már nem lesz képes dekódolni az üzeneteket ezzel a tanusítvánnyal, vagy "
 "alárni az üzeneteket ezzel.\n"
-"Biztosan törölni akarja ezeket a tanusítványokat?"
+"Biztosan törölni akarja ezeket a tanúsítványokat?"
 
 #: cryptui.rc:109
 msgid ""
@@ -2754,7 +2728,7 @@ msgid ""
 msgstr ""
 "Már nem lesz képes kódolni az üzeneteket ezzel a tanusítvánnyal, vagy "
 "ellenőrizni az üzenetek aláírását.\n"
-"Biztosan törölni akarja ezt a tanusítványt?"
+"Biztosan törölni akarja ezt a tanúsítványt?"
 
 #: cryptui.rc:110
 msgid ""
@@ -2764,7 +2738,7 @@ msgid ""
 msgstr ""
 "Már nem lesz képes kódolni az üzeneteket ezzel a tanusítvánnyal, vagy "
 "ellenőrizni az üzenetek aláírását.\n"
-"Biztosan törölni akarja ezeket a tanusítványokat?"
+"Biztosan törölni akarja ezeket a tanúsítványokat?"
 
 #: cryptui.rc:111
 msgid ""
@@ -2772,9 +2746,9 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Azok a tanusítványok, amelyeket ez a hitelesítő szervezet bocsátott ki, már "
+"Azok a tanúsítványok, amelyeket ez a hitelesítő szervezet bocsátott ki, már "
 "nem lesznek biztonságosak.\n"
-"Biztosan törölni akarja ezt a tanusítványt?"
+"Biztosan törölni akarja ezt a tanúsítványt?"
 
 #: cryptui.rc:112
 msgid ""
@@ -2782,9 +2756,9 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Azok a  tanusítványok, amelyeket  ezek a hitelesítő szervezetek bocsátották "
+"Azok a  tanúsítványok, amelyeket  ezek a hitelesítő szervezetek bocsátották "
 "ki már nem lesznek biztonságosak.\n"
-"Biztosan törölni akarja ezeket a tanusítványokat?"
+"Biztosan törölni akarja ezeket a tanúsítványokat?"
 
 #: cryptui.rc:113
 msgid ""
@@ -2792,9 +2766,9 @@ msgid ""
 "certification authorities it issued, will no longer be trusted.\n"
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
-"Azok a  tanusítványok, amelyeket  ez a kiállító vagy hitelesítő szervezet "
+"Azok a  tanúsítványok, amelyeket  ez a kiállító vagy hitelesítő szervezet "
 "bocsátott ki, már nem lesznek biztonságosak.\n"
-"Biztosan törölni akarja ezt a tanusítvány kiállítót?"
+"Biztosan törölni akarja ezt a tanúsítvány kiállítót?"
 
 #: cryptui.rc:114
 msgid ""
@@ -2802,9 +2776,9 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
-"Azok a  tanusítványok, amelyeket  ezek a kiállítók vagy hitelesítő "
+"Azok a  tanúsítványok, amelyeket  ezek a kiállítók vagy hitelesítő "
 "szervezetek bocsátottak ki, már nem lesznek biztonságosak.\n"
-"Biztosan törölni akarja ezeket a tanusítvány kiállítókat?"
+"Biztosan törölni akarja ezeket a tanúsítvány kiállítókat?"
 
 #: cryptui.rc:115
 msgid ""
@@ -2813,7 +2787,7 @@ msgid ""
 msgstr ""
 "Azok a szoftverek, melyeket ez a kibocsátó szignálta nem lesznek "
 "biztonságosak.\n"
-"Biztosan törölni akarja ezt a tanusítványt?"
+"Biztosan törölni akarja ezt a tanúsítványt?"
 
 #: cryptui.rc:116
 msgid ""
@@ -2822,15 +2796,15 @@ msgid ""
 msgstr ""
 "Azok a szoftverek, melyeket ezek a kibocsátók szignálták nem lesznek "
 "biztonságosak.\n"
-"Biztosan törölni akarja ezeket a tanusítványokat?"
+"Biztosan törölni akarja ezeket a tanúsítványokat?"
 
 #: cryptui.rc:117
 msgid "Are you sure you want to remove this certificate?"
-msgstr "Biztosan törölni akarja ezt a tanusítványt?"
+msgstr "Biztosan törölni akarja ezt a tanúsítványt?"
 
 #: cryptui.rc:118
 msgid "Are you sure you want to remove these certificates?"
-msgstr "Biztosan törölni akarja ezeket a tanusítványokat?"
+msgstr "Biztosan törölni akarja ezeket a tanúsítványokat?"
 
 #: cryptui.rc:121
 msgid "Ensures the identity of a remote computer"
@@ -2862,7 +2836,7 @@ msgstr "Engedélyezi az adatok aláírását az aktuális időbélyeggel"
 
 #: cryptui.rc:127
 msgid "Allows you to digitally sign a certificate trust list"
-msgstr "Megengedi, hogy digitálisan aláírjon egy tanusítványt"
+msgstr "Megengedi, hogy digitálisan aláírjon egy tanúsítványt"
 
 #: cryptui.rc:128
 msgid "Allows data on disk to be encrypted"
@@ -2912,7 +2886,7 @@ msgstr "Személyi információcsere (*.pfx)"
 
 #: cryptui.rc:159
 msgid "Serialized Certificate Store (*.sst)"
-msgstr "Sorozat tanusítvány tár (*.sst)"
+msgstr "Sorozat tanúsítvány tár (*.sst)"
 
 #: cryptui.rc:160
 #, fuzzy
@@ -2922,7 +2896,7 @@ msgstr "F&ormátum"
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
 msgstr ""
-"Beszúrja az összes tanusítványt, amely a tanusítvány útvonalon található"
+"Beszúrja az összes tanúsítványt, amely a tanúsítvány útvonalon található"
 
 #: cryptui.rc:162
 msgid "Export keys"
@@ -2945,7 +2919,7 @@ msgid ""
 "The certificate contains a private key which may be exported along with the "
 "certificate."
 msgstr ""
-"A tanusítvány privát kulcsot tartalmaz, amely exportálódhat a tanusítvánnyal "
+"A tanúsítvány privát kulcsot tartalmaz, amely exportálódhat a tanusítvánnyal "
 "együtt."
 
 #: cryptui.rc:169
@@ -2962,11 +2936,11 @@ msgstr "A jelszavak nem egyeznek."
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
-msgstr "Üzenet: A tanusítványhoz tartozó privát kulcsot nem lehet megnyitni."
+msgstr "Üzenet: A tanúsítványhoz tartozó privát kulcsot nem lehet megnyitni."
 
 #: cryptui.rc:173
 msgid "Note: The private key for this certificate is not exportable."
-msgstr "Üzenet: A tanusítványhoz tartozó privát kulcsok nem exportálhatóak."
+msgstr "Üzenet: A tanúsítványhoz tartozó privát kulcsok nem exportálhatóak."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -3158,13 +3132,8 @@ msgid "&Home"
 msgstr "Kezdőlap"
 
 #: hhctrl.rc:60
-#, fuzzy
 msgid "&Stop"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Megállítás\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Leállítás"
+msgstr "Me&gállítás"
 
 #: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
@@ -3207,13 +3176,8 @@ msgid "Hide"
 msgstr "Elrejtés"
 
 #: hhctrl.rc:41 ieframe.rc:65 shdoclc.rc:164 shdoclc.rc:188
-#, fuzzy
 msgid "Stop"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Megállítás\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Leállítás"
+msgstr "Megállítás"
 
 #: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 msgid "Refresh"
@@ -3259,13 +3223,8 @@ msgid "&Window"
 msgstr "&Ablakok"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
-#, fuzzy
 msgid "&Open..."
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Megnyitás\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Megnyitás..."
+msgstr "&Megnyitás..."
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
@@ -3308,9 +3267,8 @@ msgid "&About Internet Explorer"
 msgstr "Wine Internet Böngésző"
 
 #: ieframe.rc:87
-#, fuzzy
 msgid "Open URL"
-msgstr "&Link megnyitása"
+msgstr "URL cím megnyitása"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
@@ -3398,7 +3356,7 @@ msgid ""
 "Cached copies of webpages, images and certificates."
 msgstr ""
 "Ideiglenes internet fájlok\n"
-"Weboldalak, képek és tanusítványok mentett változatai."
+"Weboldalak, képek és tanúsítványok mentett változatai."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3447,12 +3405,12 @@ msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
 msgstr ""
-"Tanusítványokat személyes azonosításra szolgálnak és hogy azonosítsák a "
+"Tanúsítványokat személyes azonosításra szolgálnak és hogy azonosítsák a "
 "hitelesítő szerezeteket, hitelesítési kiállítókat."
 
 #: inetcpl.rc:111
 msgid "Certificates..."
-msgstr "Tanusítványok..."
+msgstr "Tanúsítványok..."
 
 #: inetcpl.rc:112
 #, fuzzy
@@ -3668,13 +3626,8 @@ msgid "Memory trashed.\n"
 msgstr "Memóriafigyelő.\n"
 
 #: winerror.mc:66
-#, fuzzy
 msgid "Not enough memory.\n"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Rendkívül kevés a memória\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Elfogyott a memória."
+msgstr "Rendkívül kevés a memória.\n"
 
 #: winerror.mc:71
 msgid "Invalid block.\n"
@@ -3697,13 +3650,8 @@ msgid "Invalid data.\n"
 msgstr "Érvénytelen adat.\n"
 
 #: winerror.mc:96
-#, fuzzy
 msgid "Out of memory.\n"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Rendkívül kevés a memória\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Elfogyott a memória."
+msgstr "Elfogyott a memória.\n"
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
@@ -4398,7 +4346,6 @@ msgid "Message 0x%1 not found in file %2.\n"
 msgstr "0x%1 üzenet nem található a %2 fájlban.\n"
 
 #: winerror.mc:971
-#, fuzzy
 msgid "Invalid address.\n"
 msgstr "Nem valós IP cím.\n"
 
@@ -4835,13 +4782,8 @@ msgid "DLL not found.\n"
 msgstr "DLL nem található.\n"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles.\n"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Rendkívül kevés a memória\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Elfogyott a memória."
+msgstr "Betelt a felhasználható leírók száma.\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls.\n"
@@ -7422,13 +7364,8 @@ msgid "Set as &Desktop Item"
 msgstr "Beállítás &asztalelemként"
 
 #: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
-#, fuzzy
 msgid "Select &All"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"M&indet kijelöli\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Az összes kijelölése"
+msgstr "&Az összes kijelölése"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -7905,13 +7842,8 @@ msgid "Desktop"
 msgstr "Asztal"
 
 #: shell32.rc:154 regedit.rc:200
-#, fuzzy
 msgid "My Computer"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Sajátgép\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Számítógép"
+msgstr "Sajátgép"
 
 #: shell32.rc:156
 msgid "Control Panel"
@@ -7942,13 +7874,8 @@ msgid "Programs"
 msgstr "Programok"
 
 #: shell32.rc:201
-#, fuzzy
 msgid "My Documents"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"My Documents\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Dokumentumok"
+msgstr "Dokumentumok"
 
 #: shell32.rc:202
 msgid "Favorites"
@@ -8218,7 +8145,7 @@ msgid ""
 msgstr ""
 "A mappa már létezik %1 útvonalon.\n"
 "\n"
-"Cseréli a mappát"
+"Cseréli a mappát?"
 
 #: shell32.rc:248
 msgid "Confirm overwrite"
@@ -8397,15 +8324,15 @@ msgstr "LAN kapcsolat"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
-msgstr "A tanusítvány kibocsátója ismeretlen vagy nem megbízható."
+msgstr "A tanúsítvány kibocsátója ismeretlen vagy nem megbízható."
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
-msgstr "Tanusítvány ideje érvénytelen."
+msgstr "Tanúsítvány ideje érvénytelen."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
-msgstr "A tanusítványon lévő név nem egyezik az oldal nevével."
+msgstr "A tanúsítványon lévő név nem egyezik az oldal nevével."
 
 #: wininet.rc:29
 msgid ""
@@ -9809,7 +9736,7 @@ msgstr "'%1' megnyitása sikertelen\n"
 
 #: cmd.rc:327
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr ""
+msgstr "Nem lehet hívi batch címkét a batch szkripten kívűl\n"
 
 #: cmd.rc:328 xcopy.rc:42
 msgctxt "All key"
@@ -9822,11 +9749,11 @@ msgstr "%1 töröleató?"
 
 #: cmd.rc:330
 msgid "Echo is %1\n"
-msgstr ""
+msgstr "%1 ismétlése\n"
 
 #: cmd.rc:331
 msgid "Verify is %1\n"
-msgstr ""
+msgstr "%1 ellenőrzése\n"
 
 #: cmd.rc:332
 msgid "Verify must be ON or OFF\n"
@@ -9874,7 +9801,7 @@ msgstr "A bemenő sor túl hosszú.\n"
 
 #: cmd.rc:342
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "%1!c! meghajtó kötet neve %2\n"
 
 #: cmd.rc:343
 msgid "Volume in drive %1!c! has no label.\n"
@@ -10330,9 +10257,8 @@ msgstr ""
 "Folytatja?"
 
 #: oleview.rc:29
-#, fuzzy
 msgid "&Bind to file..."
-msgstr "Hozzáa&dás a kedvencekhez..."
+msgstr "&Fájlhoz csatolás..."
 
 #: oleview.rc:30
 msgid "&View TypeLib..."
@@ -10347,9 +10273,8 @@ msgid "&Run the Registry Editor"
 msgstr "&Regisztrációs adatbázis megnyitása"
 
 #: oleview.rc:37
-#, fuzzy
 msgid "&Object"
-msgstr "Tárgy típus="
+msgstr "&Objektum"
 
 #: oleview.rc:39
 msgid "&CoCreateInstance Flag"
@@ -10357,11 +10282,11 @@ msgstr ""
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "Beépített folyamat &kiszolgáló"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "&Beépített folymat leíró"
 
 #: oleview.rc:43
 msgid "&Local server"
@@ -10372,38 +10297,36 @@ msgid "&Remote server"
 msgstr "&Távoli szerver"
 
 #: oleview.rc:47
-#, fuzzy
 msgid "View &Type information"
-msgstr "Kliens információk"
+msgstr "Típus információk megtekintése"
 
 #: oleview.rc:49
-#, fuzzy
 msgid "Create &Instance"
-msgstr "&Link létrehozása"
+msgstr "Példány &létrehozása"
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
-msgstr ""
+msgstr "Példány létrehozása eze&n..."
 
 #: oleview.rc:51
 msgid "&Release Instance"
-msgstr ""
+msgstr "&Példány felszabadítása"
 
 #: oleview.rc:53
 msgid "Copy C&LSID to clipboard"
-msgstr ""
+msgstr "C&LSID Vágólapra másolása"
 
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
-msgstr ""
+msgstr "&HTML objektum másolása Vágólapra"
 
 #: oleview.rc:60
 msgid "&Expert mode"
-msgstr ""
+msgstr "&Bővített mód"
 
 #: oleview.rc:62
 msgid "&Hidden component categories"
-msgstr ""
+msgstr "&Rejtett komponensek kategóriák"
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:62 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
@@ -10438,9 +10361,8 @@ msgid "&Machine name:"
 msgstr "&Gépnév:"
 
 #: oleview.rc:165
-#, fuzzy
 msgid "System Configuration"
-msgstr "&Megerősítés..."
+msgstr "Rendszer konfiguráció"
 
 #: oleview.rc:168
 msgid "System Settings"
@@ -10448,17 +10370,19 @@ msgstr "Rendszerbeállítások"
 
 #: oleview.rc:169
 msgid "&Enable Distributed COM"
-msgstr ""
+msgstr "&Elosztott COM engedélyezése"
 
 #: oleview.rc:170
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr ""
+msgstr "&Távoli kapcsolat (csak Win95) engedélyezése"
 
 #: oleview.rc:171
 msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
+"Ezek a beállítások csak a regisztrálják az értékeket.\n"
+"Nincs hatása a Wine teljesítményre."
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
@@ -10473,9 +10397,8 @@ msgid "IID:"
 msgstr ""
 
 #: oleview.rc:186
-#, fuzzy
 msgid "&View Type Info"
-msgstr "Kliens információk"
+msgstr "Megtekinti a &típus információt"
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
@@ -10515,11 +10438,11 @@ msgstr "TypeLib fájlok (*.tlb; *.olb; *.dll; *.ocx; *.exe"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
-msgstr ""
+msgstr "Csatolás a fájlhoz egy File Monker-en keresztül"
 
 #: oleview.rc:104
 msgid "Open a TypeLib file and view the contents"
-msgstr ""
+msgstr "TypeLib fájl megnyitása és tartalmának megtekintése"
 
 #: oleview.rc:105
 msgid "Change machine wide Distributed COM settings"
@@ -10527,11 +10450,11 @@ msgstr ""
 
 #: oleview.rc:106
 msgid "Run the Wine registry editor"
-msgstr ""
+msgstr "Wine regisztráció szerkesztő futtatása"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
-msgstr ""
+msgstr "Kilépés a programból. Az adatok mentése kérdéssel"
 
 #: oleview.rc:108
 msgid "Create an instance of the selected object"
@@ -10711,13 +10634,8 @@ msgid "&Arrange automatically"
 msgstr "&Automatikus elrendezés"
 
 #: progman.rc:43
-#, fuzzy
 msgid "&Minimize on run"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Indításkor kis méret\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Programfuttatás utáni &szimbólum"
+msgstr "&Futtatáskor kis méret"
 
 #: progman.rc:44 winefile.rc:69
 msgid "&Save settings on exit"
@@ -11312,7 +11230,6 @@ msgid ""
 msgstr ""
 
 #: start.rc:64
-#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -11331,19 +11248,26 @@ msgid ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
-"A Wine szabad szoftver; szabadon terjesztheti, vagy módosíthatja a GNU "
-"Lesser General Public Liszenc feltételei szerint, amit a Free Software "
-"Foundation készített; mind a 2.1 verziójú licensz, vagy (választása szerint) "
+"start.exe 0.2 verzió Copyright (C) 2003, Dan Kegel\n"
+"Ez a program szabad szoftver; szabadon terjesztheti, vagy módosíthatja a "
+"GNU\n"
+"Lesser General Public Licensz feltételei szerint, amit a Free Software\n"
+"Foundation készített; mind a 2.1 verziójú licensz, vagy (választása "
+"szerint)\n"
 "bármely későbbi verzió használható.\n"
 "\n"
-"A Winet abban a reményben terjesztik, hogy hasznos lesz, ugyanakkor SEMILYEN "
-"GARANCIA NINCS RÁ; még garancia az ELADHATÓSÁGRA, illetve az ALKALMASSÁG AZ "
-"ELADHATÓSÁGI SZÁNDÉKRA sem. Nézze meg a GNU Lesser General Public Licenszt a "
+"Ez a program abban a reményben terjesztik, hogy hasznos lesz, ugyanakkor "
+"SEMILYEN\n"
+"GARANCIA NINCS RÁ; még garancia az ELADHATÓSÁGRA, illetve az ALKALMASSÁG AZ\n"
+"ELADHATÓSÁGI SZÁNDÉKRA sem. Nézze meg a GNU Lesser General Public Licenszt "
+"a\n"
 "további részletekért.\n"
 "\n"
-"Önnek kapnia kellett egy másolatot a GNU Lesser General Public Licenszből, "
-"ha nem írjon a Free Software Foundation, Inc-nek: 51 Franklin St, Fifth "
-"Floor, Boston, MA 02110-1301, USA."
+"Önnek kapnia kellett egy másolatot a GNU Lesser General Public Licenszből,\n"
+"ha nem írjon a Free Software Foundation, Inc-nek: 51 Franklin St, Fifth\n"
+"Floor, Boston, MA 02110-1301, USA.\n"
+"\n"
+"Nézze meg a COPYING.LIB fájt a licensz tartalmáért.\n"
 
 #: start.rc:66
 msgid ""
@@ -11395,7 +11319,7 @@ msgstr "Bezáró üzenet elküldődött a \"%1\" folyamat (PID %2!u!) ablakainak
 
 #: taskkill.rc:35
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "%1!u PID azonosítóval rendelkező folyamatok kényszerből leálltak.\n"
+msgstr "%1!u! PID azonosítóval rendelkező folyamatok kényszerből leálltak.\n"
 
 #: taskkill.rc:36
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
@@ -11490,9 +11414,8 @@ msgid "Tile &Vertically"
 msgstr "Mozaikszerű elrendezés &függőlegesen"
 
 #: taskmgr.rc:82 taskmgr.rc:98 taskmgr.rc:125
-#, fuzzy
 msgid "&Minimize"
-msgstr "&Indításkor kis méret"
+msgstr "&Kis méret"
 
 #: taskmgr.rc:84 taskmgr.rc:100 taskmgr.rc:127
 msgid "&Cascade"
@@ -12361,7 +12284,7 @@ msgstr "Ez egy minta szöveg, amely 10 pontos Tahoma betűtípust használ"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
-msgstr " DLL felűlbírálások"
+msgstr "DLL felülbírálások"
 
 #: winecfg.rc:183
 msgid ""
@@ -12590,13 +12513,8 @@ msgid "Selected driver: %s"
 msgstr "Kiválasztott driver: %s"
 
 #: winecfg.rc:82
-#, fuzzy
 msgid "(None)"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Nincs\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Semmi"
+msgstr "(Nincs)"
 
 #: winecfg.rc:83
 msgid "Audio test failed!"
@@ -13380,7 +13298,7 @@ msgstr "Ha&ladó"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "Egyé&ni"
+msgstr "Egyé&ni..."
 
 #: winemine.rc:44
 msgid "&Fastest Times"
@@ -13870,7 +13788,7 @@ msgstr ""
 
 #: wordpad.rc:187
 msgid "Invalid number format."
-msgstr "Érvénytelen szám szintakszis"
+msgstr "Érvénytelen szám szintakszis."
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported."
@@ -13894,7 +13812,7 @@ msgstr "Nincs hozzáférési joga, a fájl megnyitásához."
 
 #: wordpad.rc:193
 msgid "Printing not implemented."
-msgstr "Nyomtatás nincs implementálva"
+msgstr "Nyomtatás nincs implementálva."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
