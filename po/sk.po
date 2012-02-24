@@ -437,7 +437,7 @@ msgstr "Vytlačiť &zadané strany"
 
 #: comdlg32.rc:206 comdlg32.rc:228
 msgid "&Setup"
-msgstr "&Nastaviť..."
+msgstr "&Nastaviť"
 
 #: comdlg32.rc:207
 msgid "&From:"
@@ -754,7 +754,7 @@ msgstr ""
 
 #: comdlg32.rc:456
 msgid "Look &in:"
-msgstr "Hľadať &v"
+msgstr "Hľadať &v:"
 
 #: comdlg32.rc:462
 msgid "File &name:"
@@ -762,7 +762,7 @@ msgstr "&Názov súboru:"
 
 #: comdlg32.rc:465
 msgid "Files of &type:"
-msgstr "&Typ súborov"
+msgstr "&Typ súborov:"
 
 #: comdlg32.rc:468
 msgid "Open as &read-only"
@@ -770,7 +770,7 @@ msgstr "Otvo&riť iba na čítanie"
 
 #: comdlg32.rc:470 comdlg32.rc:488 shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
-msgstr "&Otvoriť..."
+msgstr "&Otvoriť"
 
 #: comdlg32.rc:481
 #, fuzzy
@@ -958,23 +958,23 @@ msgstr ""
 
 #: comdlg32.rc:64
 msgid "No default printer defined."
-msgstr "Nie je nastavená implicitná tlačiareň"
+msgstr "Nie je nastavená implicitná tlačiareň."
 
 #: comdlg32.rc:65
 msgid "Cannot find the printer."
-msgstr "Nemožno nájsť tlačiareň"
+msgstr "Nemožno nájsť tlačiareň."
 
 #: comdlg32.rc:66 progman.rc:73
 msgid "Out of memory."
-msgstr "Nedostatok pamäte"
+msgstr "Nedostatok pamäte."
 
 #: comdlg32.rc:67
 msgid "An error occurred."
-msgstr "Vyskytla sa chyba"
+msgstr "Vyskytla sa chyba."
 
 #: comdlg32.rc:68
 msgid "Unknown printer driver."
-msgstr "Neznámy ovládač tlačiarne"
+msgstr "Neznámy ovládač tlačiarne."
 
 #: comdlg32.rc:71
 msgid ""
