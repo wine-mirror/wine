@@ -2439,13 +2439,29 @@ static void test_mxwriter_startendelement(void)
     free_bstrs();
 }
 
+struct writer_characters_t {
+    const GUID *clsid;
+    const char *data;
+    const char *output;
+};
+
+static const struct writer_characters_t writer_characters[] = {
+    { &CLSID_MXXMLWriter,   "< > & \"", "&lt; &gt; &amp; \"" },
+    { &CLSID_MXXMLWriter30, "< > & \"", "&lt; &gt; &amp; \"" },
+    { &CLSID_MXXMLWriter40, "< > & \"", "&lt; &gt; &amp; \"" },
+    { &CLSID_MXXMLWriter60, "< > & \"", "&lt; &gt; &amp; \"" },
+    { NULL }
+};
+
 static void test_mxwriter_characters(void)
 {
     static const WCHAR chardataW[] = {'T','E','S','T','C','H','A','R','D','A','T','A',' ','.',0};
+    const struct writer_characters_t *table = writer_characters;
     ISAXContentHandler *content;
     IMXWriter *writer;
     VARIANT dest;
     HRESULT hr;
+    int i = 0;
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
@@ -2514,6 +2530,54 @@ static void test_mxwriter_characters(void)
 
     ISAXContentHandler_Release(content);
     IMXWriter_Release(writer);
+
+    /* batch tests */
+    while (table->clsid)
+    {
+        ISAXContentHandler *content;
+        IMXWriter *writer;
+        HRESULT hr;
+
+        if (!is_clsid_supported(table->clsid, mxwriter_support_data))
+        {
+            table++;
+            i++;
+            continue;
+        }
+
+        hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
+        EXPECT_HR(hr, S_OK);
+
+        hr = ISAXContentHandler_startDocument(content);
+        EXPECT_HR(hr, S_OK);
+
+        hr = ISAXContentHandler_characters(content, _bstr_(table->data), strlen(table->data));
+        EXPECT_HR(hr, S_OK);
+
+        /* test output */
+        if (hr == S_OK)
+        {
+            VARIANT dest;
+
+            V_VT(&dest) = VT_EMPTY;
+            hr = IMXWriter_get_output(writer, &dest);
+            EXPECT_HR(hr, S_OK);
+            ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+            ok(!lstrcmpW(_bstr_(table->output), V_BSTR(&dest)),
+                "test %d: got wrong content %s, expected %s\n", i, wine_dbgstr_w(V_BSTR(&dest)), table->output);
+            VariantClear(&dest);
+        }
+
+        table++;
+        i++;
+    }
 
     free_bstrs();
 }
@@ -2975,6 +3039,10 @@ static void test_mxwriter_cdata(void)
     hr = ISAXLexicalHandler_startCDATA(lexical);
     EXPECT_HR(hr, S_OK);
 
+    /* all these are escaped for text nodes */
+    hr = ISAXContentHandler_characters(content, _bstr_("< > & \""), 7);
+    EXPECT_HR(hr, S_OK);
+
     hr = ISAXLexicalHandler_endCDATA(lexical);
     EXPECT_HR(hr, S_OK);
 
@@ -2982,7 +3050,7 @@ static void test_mxwriter_cdata(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<![CDATA[<![CDATA[]]>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(_bstr_("<![CDATA[<![CDATA[< > & \"]]>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     ISAXContentHandler_Release(content);

@@ -68,6 +68,12 @@ typedef enum
     MXWriter_LastProp
 } mxwriter_prop;
 
+typedef enum
+{
+    EscapeValue,
+    EscapeText
+} escape_mode;
+
 typedef struct
 {
     char *data;
@@ -94,6 +100,7 @@ typedef struct
 
     VARIANT_BOOL props[MXWriter_LastProp];
     BOOL prop_changed;
+    BOOL cdata;
 
     BSTR version;
 
@@ -275,7 +282,7 @@ static void close_output_buffer(mxwriter *This)
    '"' -> "&quot;"
    '>' -> "&gt;"
 */
-static WCHAR *get_escaped_string(const WCHAR *str, int *len)
+static WCHAR *get_escaped_string(const WCHAR *str, escape_mode mode, int *len)
 {
     static const WCHAR ltW[]    = {'&','l','t',';'};
     static const WCHAR ampW[]   = {'&','a','m','p',';'};
@@ -311,14 +318,18 @@ static WCHAR *get_escaped_string(const WCHAR *str, int *len)
             memcpy(ptr, ampW, sizeof(ampW));
             ptr += sizeof(ampW)/sizeof(WCHAR);
             break;
-        case '"':
-            memcpy(ptr, equotW, sizeof(equotW));
-            ptr += sizeof(equotW)/sizeof(WCHAR);
-            break;
         case '>':
             memcpy(ptr, gtW, sizeof(gtW));
             ptr += sizeof(gtW)/sizeof(WCHAR);
             break;
+        case '"':
+            if (mode == EscapeValue)
+            {
+                memcpy(ptr, equotW, sizeof(equotW));
+                ptr += sizeof(equotW)/sizeof(WCHAR);
+                break;
+            }
+            /* fallthrough for text mode */
         default:
             *ptr++ = *str;
             break;
@@ -429,6 +440,7 @@ static inline HRESULT flush_output_buffer(mxwriter *This)
 {
     close_element_starttag(This);
     set_element_name(This, NULL, 0);
+    This->cdata = FALSE;
     return write_data_to_stream(This);
 }
 
@@ -978,7 +990,7 @@ static HRESULT WINAPI SAXContentHandler_startElement(
             hr = ISAXAttributes_getValue(attr, i, &str, &len);
             if (FAILED(hr)) return hr;
 
-            escaped = get_escaped_string(str, &len);
+            escaped = get_escaped_string(str, EscapeValue, &len);
             write_output_buffer_quoted(This->buffer, escaped, len);
             heap_free(escaped);
         }
@@ -1040,7 +1052,19 @@ static HRESULT WINAPI SAXContentHandler_characters(
     set_element_name(This, NULL, 0);
 
     if (nchars)
-        write_output_buffer(This->buffer, chars, nchars);
+    {
+        if (This->cdata)
+            write_output_buffer(This->buffer, chars, nchars);
+        else
+        {
+            int len = nchars;
+            WCHAR *escaped;
+
+            escaped = get_escaped_string(chars, EscapeText, &len);
+            write_output_buffer(This->buffer, escaped, len);
+            heap_free(escaped);
+        }
+    }
 
     return S_OK;
 }
@@ -1203,6 +1227,7 @@ static HRESULT WINAPI SAXLexicalHandler_startCDATA(ISAXLexicalHandler *iface)
     TRACE("(%p)\n", This);
 
     write_output_buffer(This->buffer, scdataW, sizeof(scdataW)/sizeof(WCHAR));
+    This->cdata = TRUE;
 
     return S_OK;
 }
@@ -1215,6 +1240,7 @@ static HRESULT WINAPI SAXLexicalHandler_endCDATA(ISAXLexicalHandler *iface)
     TRACE("(%p)\n", This);
 
     write_output_buffer(This->buffer, ecdataW, sizeof(ecdataW)/sizeof(WCHAR));
+    This->cdata = FALSE;
 
     return S_OK;
 }
@@ -1296,6 +1322,7 @@ HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *outer, void **ppObj)
     This->xml_enc  = XmlEncoding_UTF16;
 
     This->element = NULL;
+    This->cdata = FALSE;
 
     This->dest = NULL;
     This->dest_written = 0;
