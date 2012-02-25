@@ -1315,7 +1315,11 @@ static BOOL parse_object_members_list(parse_buffer * buf)
       }
     }
 
-    if (buf->txt && (check_TOKEN(buf) != TOKEN_CBRACE) && (check_TOKEN(buf) != TOKEN_NAME))
+    /* Empty arrays can have the semicolon at the end or not so remove it if any and skip next check */
+    if (!nb_elems && (check_TOKEN(buf) == TOKEN_SEMICOLON))
+      get_TOKEN(buf);
+
+    if (nb_elems && buf->txt && (check_TOKEN(buf) != TOKEN_CBRACE) && (check_TOKEN(buf) != TOKEN_NAME))
     {
       token = get_TOKEN(buf);
       if ((token != TOKEN_SEMICOLON) && (token != TOKEN_COMMA))

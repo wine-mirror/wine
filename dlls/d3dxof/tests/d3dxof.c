@@ -101,7 +101,7 @@ static char template_syntax_empty_array[] =
 "DWORD dummy;\n"
 "}\n";
 
-static char object_syntax_empty_array[] =
+static char object_syntax_empty_array_semicolon[] =
 "xof 0302txt 0064\n"
 "Buffer\n"
 "{\n"
@@ -109,6 +109,15 @@ static char object_syntax_empty_array[] =
 ";\n"
 "1234;\n"
 "}\n";
+
+static char object_syntax_empty_array_nosemicolon[] =
+"xof 0302txt 0064\n"
+"Buffer\n"
+"{\n"
+"0;\n"
+"1234;\n"
+"}\n";
+
 
 static void init_function_pointers(void)
 {
@@ -502,8 +511,8 @@ static void test_syntax(void)
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template_syntax_empty_array, sizeof(template_syntax_empty_array) - 1);
     ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
-    dxflm.lpMemory = &object_syntax_empty_array;
-    dxflm.dSize = sizeof(object_syntax_empty_array) - 1;
+    dxflm.lpMemory = &object_syntax_empty_array_semicolon;
+    dxflm.dSize = sizeof(object_syntax_empty_array_semicolon) - 1;
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
     ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
@@ -516,6 +525,22 @@ static void test_syntax(void)
         ref = IDirectXFileData_Release(lpdxfd);
         ok(ref == 0, "Got refcount %d, expected 0\n", ref);
     }
+
+    dxflm.lpMemory = &object_syntax_empty_array_nosemicolon;
+    dxflm.dSize = sizeof(object_syntax_empty_array_nosemicolon) - 1;
+    hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
+    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
+    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+
+    ref = IDirectXFileEnumObject_Release(lpdxfeo);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    if (hr == DXFILE_OK)
+    {
+        ref = IDirectXFileData_Release(lpdxfd);
+        ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    }
+
     ref = IDirectXFile_Release(lpDirectXFile);
     ok(ref == 0, "Got refcount %d, expected 0\n", ref);
 }
