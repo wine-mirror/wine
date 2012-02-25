@@ -160,15 +160,15 @@ static void emit_tquad(void **ptr, WORD base_idx)
     inst->bSize = sizeof(*tri);
     inst->wCount = 2;
 
-    tri->v1 = base_idx;
-    tri->v2 = base_idx + 1;
-    tri->v3 = base_idx + 2;
+    U1(*tri).v1 = base_idx;
+    U2(*tri).v2 = base_idx + 1;
+    U3(*tri).v3 = base_idx + 2;
     tri->wFlags = D3DTRIFLAG_START;
     ++tri;
 
-    tri->v1 = base_idx + 2;
-    tri->v2 = base_idx + 1;
-    tri->v3 = base_idx + 3;
+    U1(*tri).v1 = base_idx + 2;
+    U2(*tri).v2 = base_idx + 1;
+    U3(*tri).v3 = base_idx + 3;
     tri->wFlags = D3DTRIFLAG_ODD;
     ++tri;
 
