@@ -15,7 +15,7 @@ msgstr ""
 
 #: appwiz.rc:55
 msgid "Install/Uninstall"
-msgstr ""
+msgstr "Inštalovať/Odinštalovať"
 
 #: appwiz.rc:58
 msgid ""
@@ -26,7 +26,7 @@ msgstr ""
 #: appwiz.rc:59
 #, fuzzy
 msgid "&Install..."
-msgstr "&Skomentovať..."
+msgstr "&Inštalovať..."
 
 #: appwiz.rc:62
 msgid ""
@@ -34,22 +34,25 @@ msgid ""
 "to modify its installed components, select it from the list and click Change/"
 "Remove."
 msgstr ""
+"Nasledujúci program môže byť automaticky odinštalovaný. K odstráneniu "
+"programu alebo k modifukácii jeho inštalovaných súčastí, zvoľte možnosť zo "
+"zoznamu a kliknite Zmeniť/Odstrániť"
 
 #: appwiz.rc:64
 #, fuzzy
 msgid "&Support Information"
-msgstr "Informácie"
+msgstr "&Informácie"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 #, fuzzy
 msgid "&Modify..."
-msgstr "Modifikovaný"
+msgstr "&Zmeniť"
 
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
 #, fuzzy
 msgid "&Remove"
-msgstr "&Skomentovať..."
+msgstr "&Odstrániť"
 
 #: appwiz.rc:72
 #, fuzzy
@@ -77,18 +80,20 @@ msgstr "OK"
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
 msgstr ""
+"Nasledujúca informácia môže byť použitá na získanie technickej podpory pre "
+"%s:"
 
 #: appwiz.rc:77
 msgid "Publisher:"
-msgstr ""
+msgstr "Vydavateľ"
 
 #: appwiz.rc:78 winefile.rc:168
 msgid "Version:"
-msgstr ""
+msgstr "Verzia"
 
 #: appwiz.rc:79
 msgid "Contact:"
-msgstr ""
+msgstr "Kontakt"
 
 #: appwiz.rc:80
 #, fuzzy
@@ -97,25 +102,25 @@ msgstr "Informácie"
 
 #: appwiz.rc:81
 msgid "Support Telephone:"
-msgstr ""
+msgstr "Telefonická podpora"
 
 #: appwiz.rc:82
 #, fuzzy
 msgid "Readme:"
-msgstr "Pripravená"
+msgstr "Čítaj ma"
 
 #: appwiz.rc:83
 msgid "Product Updates:"
-msgstr ""
+msgstr "Aktualizácie produktu"
 
 #: appwiz.rc:84
 #, fuzzy
 msgid "Comments:"
-msgstr "Moje dokumenty"
+msgstr "Komentáre:"
 
 #: appwiz.rc:97
 msgid "Wine Gecko Installer"
-msgstr ""
+msgstr "Wine Gecko inštalátor"
 
 #: appwiz.rc:100
 msgid ""
@@ -127,11 +132,18 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
+"Wine nemohol nájsť balíček Gecko ktorý je potrebný pre aplikácie, obsahujúce "
+"HTML, aby fungovali správne. Wine ho môže automaticky stiahnuť a "
+"nainštalovať pre Vás.\n"
+"\n"
+"Poznámka: odporúča sa použiť balíček Vašej distribúcie. Pozrite <a href="
+"\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> pre "
+"bližšie informácie."
 
 #: appwiz.rc:106
 #, fuzzy
 msgid "&Install"
-msgstr "&Skomentovať..."
+msgstr "&Inštalovať..."
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
 #: comdlg32.rc:165 comdlg32.rc:187 comdlg32.rc:205 comdlg32.rc:227
@@ -155,7 +167,7 @@ msgstr "Zrušiť"
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
-msgstr ""
+msgstr "Pridať/Odstrániť programy"
 
 #: appwiz.rc:29
 msgid ""
@@ -165,7 +177,7 @@ msgstr ""
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
-msgstr ""
+msgstr "Aplikácie"
 
 #: appwiz.rc:32
 msgid ""
@@ -180,15 +192,15 @@ msgstr "Nebol špecifikovaný žiadny príkaz."
 
 #: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:106
 msgid "Name"
-msgstr ""
+msgstr "Názov"
 
 #: appwiz.rc:36
 msgid "Publisher"
-msgstr ""
+msgstr "Distribútor"
 
 #: appwiz.rc:37 cryptui.rc:51
 msgid "Version"
-msgstr ""
+msgstr "Verzia"
 
 #: appwiz.rc:38
 msgid "Installation programs"
@@ -196,7 +208,7 @@ msgstr ""
 
 #: appwiz.rc:39
 msgid "Programs (*.exe)"
-msgstr ""
+msgstr "Programy (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winedbg.rc:39 winhlp32.rc:87
@@ -206,15 +218,15 @@ msgstr "Všetky súbory (*.*)"
 #: appwiz.rc:43
 #, fuzzy
 msgid "&Modify/Remove"
-msgstr "Modifikovaný"
+msgstr "&Upraviť/Odstrániť"
 
 #: appwiz.rc:48
 msgid "Downloading..."
-msgstr ""
+msgstr "Sťahujem..."
 
 #: appwiz.rc:49
 msgid "Installing..."
-msgstr ""
+msgstr "Inštalujem..."
 
 #: appwiz.rc:50
 msgid ""
@@ -224,7 +236,7 @@ msgstr ""
 
 #: avifil32.rc:39
 msgid "Compress options"
-msgstr ""
+msgstr "Možnosti kompresie"
 
 #: avifil32.rc:42
 msgid "&Choose a stream:"
@@ -232,7 +244,7 @@ msgstr ""
 
 #: avifil32.rc:45 wordpad.rc:73
 msgid "&Options..."
-msgstr ""
+msgstr "&NMožnosti..."
 
 #: avifil32.rc:46
 msgid "&Interleave every"
@@ -240,12 +252,12 @@ msgstr ""
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
-msgstr ""
+msgstr "snímkov"
 
 #: avifil32.rc:49
 #, fuzzy
 msgid "Current format:"
-msgstr "&Tlačiť"
+msgstr "Aktuálny formát"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
@@ -257,15 +269,15 @@ msgstr ""
 
 #: avifil32.rc:29
 msgid "All multimedia files"
-msgstr ""
+msgstr "Všetky multimediálne súbory"
 
 #: avifil32.rc:31
 msgid "video"
-msgstr ""
+msgstr "video"
 
 #: avifil32.rc:32
 msgid "audio"
-msgstr ""
+msgstr "zvuk"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
@@ -277,11 +289,11 @@ msgstr ""
 
 #: browseui.rc:25
 msgid "Canceling..."
-msgstr ""
+msgstr "Ruším..."
 
 #: comctl32.rc:49 winefile.rc:159
 msgid "Properties for %s"
-msgstr "%s - vlastnosti"
+msgstr "Vlastnosti pre %s"
 
 #: comctl32.rc:54 comdlg32.rc:258
 msgid "&Apply"
@@ -301,7 +313,7 @@ msgstr "< &Naspäť"
 
 #: comctl32.rc:66
 msgid "&Next >"
-msgstr "Ď&alej >"
+msgstr "&Ďalej >"
 
 #: comctl32.rc:67
 msgid "Finish"
@@ -872,7 +884,7 @@ msgstr "Zelená"
 
 #: comdlg32.rc:120 wordpad.rc:117
 msgid "Olive"
-msgstr ""
+msgstr "Olivová"
 
 #: comdlg32.rc:121 wordpad.rc:118
 msgid "Navy"
@@ -888,11 +900,11 @@ msgstr ""
 
 #: comdlg32.rc:124 wordpad.rc:121
 msgid "Gray"
-msgstr ""
+msgstr "Šedá"
 
 #: comdlg32.rc:125 wordpad.rc:122
 msgid "Silver"
-msgstr ""
+msgstr "Strieborná"
 
 #: comdlg32.rc:126 wordpad.rc:123
 msgid "Red"
@@ -924,7 +936,7 @@ msgstr "Biela"
 
 #: comdlg32.rc:52
 msgid "Unreadable Entry"
-msgstr ""
+msgstr "Nečitateľný vstup"
 
 #: comdlg32.rc:54
 msgid ""
@@ -988,7 +1000,7 @@ msgstr ""
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
-msgstr ""
+msgstr "&Uložiť"
 
 #: comdlg32.rc:139
 msgid "Save &in:"
@@ -1131,33 +1143,35 @@ msgstr "mm"
 #: credui.rc:42
 #, fuzzy
 msgid "&User name:"
-msgstr "&Súbor"
+msgstr "&Užívateľské meno:"
 
 #: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
-msgstr ""
+msgstr "&Heslo:"
 
 #: credui.rc:47
 msgid "&Remember my password"
-msgstr ""
+msgstr "&Zapamätaj si moje heslo"
 
 #: credui.rc:27
 msgid "Connect to %s"
-msgstr ""
+msgstr "Pripojiť sa k %s"
 
 #: credui.rc:28
 msgid "Connecting to %s"
-msgstr ""
+msgstr "Pripájam sa k %s"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
-msgstr ""
+msgstr "Prihlásenie sa nepodarilo"
 
 #: credui.rc:30
 msgid ""
 "Make sure that your user name\n"
 "and password are correct."
 msgstr ""
+"Uistite sa že Vaše prihlasovacie meno\n"
+"a heslo sú správne."
 
 #: credui.rc:32
 msgid ""
@@ -1169,7 +1183,7 @@ msgstr ""
 
 #: credui.rc:31
 msgid "Caps Lock is On"
-msgstr ""
+msgstr "Caps Lock je zapnutý"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
@@ -1679,7 +1693,7 @@ msgstr ""
 #: crypt32.rc:153 cryptui.rc:139
 #, fuzzy
 msgid "Digital Rights"
-msgstr "Digi&tálne"
+msgstr "Digi&tálne práva"
 
 #: crypt32.rc:154 cryptui.rc:135
 msgid "Qualified Subordination"
@@ -1731,7 +1745,7 @@ msgstr ""
 
 #: crypt32.rc:170
 msgid "Personal"
-msgstr ""
+msgstr "Osobné"
 
 #: crypt32.rc:171
 msgid "Intermediate Certification Authorities"
@@ -1779,15 +1793,15 @@ msgstr ""
 
 #: crypt32.rc:186
 msgid "URL="
-msgstr ""
+msgstr "URL="
 
 #: crypt32.rc:187
 msgid "IP Address="
-msgstr ""
+msgstr "IP adresa="
 
 #: crypt32.rc:188
 msgid "Mask="
-msgstr ""
+msgstr "Maska="
 
 #: crypt32.rc:189
 msgid "Registered ID="
@@ -1804,7 +1818,7 @@ msgstr ""
 #: crypt32.rc:192
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr ""
+msgstr "CA"
 
 #: crypt32.rc:193
 msgid "End Entity"
@@ -1915,15 +1929,15 @@ msgstr ""
 
 #: crypt32.rc:219 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
 msgid "Yes"
-msgstr ""
+msgstr "Áno"
 
 #: crypt32.rc:220 cryptui.rc:164 oleaut32.rc:30 wininet.rc:81 ipconfig.rc:45
 msgid "No"
-msgstr ""
+msgstr "Nie"
 
 #: crypt32.rc:221
 msgid "Digital Signature"
-msgstr ""
+msgstr "Digitálny podpis"
 
 #: crypt32.rc:222
 msgid "Non-Repudiation"
@@ -1971,7 +1985,7 @@ msgstr ""
 
 #: crypt32.rc:233
 msgid "S/MIME"
-msgstr ""
+msgstr "S/MIME"
 
 #: crypt32.rc:234
 msgid "Signature"
@@ -1979,7 +1993,7 @@ msgstr ""
 
 #: crypt32.rc:235
 msgid "SSL CA"
-msgstr ""
+msgstr "SSL CA"
 
 #: crypt32.rc:236
 msgid "S/MIME CA"
@@ -2032,7 +2046,7 @@ msgstr ""
 #: cryptui.rc:188
 #, fuzzy
 msgid "&Install Certificate..."
-msgstr "&Vlastnosti"
+msgstr "&Nainštaluj certifikát..."
 
 #: cryptui.rc:189
 msgid "Issuer &Statement"
@@ -2040,7 +2054,7 @@ msgstr ""
 
 #: cryptui.rc:197
 msgid "&Show:"
-msgstr ""
+msgstr "&Ukáž:"
 
 #: cryptui.rc:202
 #, fuzzy
@@ -2059,22 +2073,22 @@ msgstr "Kopírovanie súborov..."
 #: cryptui.rc:207
 #, fuzzy
 msgid "Certification Path"
-msgstr "&Vlastnosti"
+msgstr "Cesta k certifikátu"
 
 #: cryptui.rc:211
 #, fuzzy
 msgid "Certification path"
-msgstr "&Vlastnosti"
+msgstr "Cesta k certifikátu"
 
 #: cryptui.rc:214
 #, fuzzy
 msgid "&View Certificate"
-msgstr "&Vlastnosti"
+msgstr "&Ukáž certifikát"
 
 #: cryptui.rc:215
 #, fuzzy
 msgid "Certificate &status:"
-msgstr "&Vlastnosti"
+msgstr "Stav &certifikátu:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
@@ -2087,16 +2101,16 @@ msgstr ""
 #: cryptui.rc:236
 #, fuzzy
 msgid "&Friendly name:"
-msgstr "&Súbor"
+msgstr "&Priateľné meno"
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
-msgstr ""
+msgstr "&Popis:"
 
 #: cryptui.rc:240
 #, fuzzy
 msgid "Certificate purposes"
-msgstr "&Vlastnosti"
+msgstr "Účel certifikátu"
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
@@ -2113,7 +2127,7 @@ msgstr ""
 #: cryptui.rc:250
 #, fuzzy
 msgid "Add &Purpose..."
-msgstr "&Browse..."
+msgstr "Pridaj &účel..."
 
 #: cryptui.rc:254
 msgid "Add Purpose"
@@ -2160,11 +2174,11 @@ msgstr ""
 #: cryptui.rc:291 cryptui.rc:427
 #, fuzzy
 msgid "&File name:"
-msgstr "&Súbor"
+msgstr "&Súbor:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr ""
+msgstr "Prechádzaj..."
 
 #: cryptui.rc:294
 msgid ""
@@ -2221,20 +2235,19 @@ msgstr ""
 #: cryptui.rc:341
 #, fuzzy
 msgid "&Import..."
-msgstr "&Tlačiť"
+msgstr "&Importovať..."
 
 #: cryptui.rc:342 regedit.rc:109
 msgid "&Export..."
-msgstr ""
+msgstr "&Exportovať..."
 
 #: cryptui.rc:344
 msgid "&Advanced..."
-msgstr ""
+msgstr "&Pokročilé..."
 
 #: cryptui.rc:345
-#, fuzzy
 msgid "Certificate intended purposes"
-msgstr "&Vlastnosti"
+msgstr ""
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
@@ -2245,12 +2258,11 @@ msgstr ""
 #: cryptui.rc:352
 #, fuzzy
 msgid "Advanced Options"
-msgstr "Informácie"
+msgstr "Pokročilé možnosti"
 
 #: cryptui.rc:355
-#, fuzzy
 msgid "Certificate purpose"
-msgstr "&Vlastnosti"
+msgstr ""
 
 #: cryptui.rc:356
 msgid ""
@@ -2258,9 +2270,8 @@ msgid ""
 msgstr ""
 
 #: cryptui.rc:358
-#, fuzzy
 msgid "&Certificate purposes:"
-msgstr "&Vlastnosti"
+msgstr ""
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
@@ -2304,7 +2315,7 @@ msgstr ""
 
 #: cryptui.rc:396
 msgid "&Confirm password:"
-msgstr ""
+msgstr "&Potvrď heslo:"
 
 #: cryptui.rc:404
 msgid "Select the format you want to use:"
@@ -2357,7 +2368,7 @@ msgstr ""
 #: cryptui.rc:28
 #, fuzzy
 msgid "Certificate Information"
-msgstr "Informácie"
+msgstr "Informácie o certifikáte"
 
 #: cryptui.rc:29
 msgid ""
@@ -2429,11 +2440,11 @@ msgstr ""
 
 #: cryptui.rc:45
 msgid "Value"
-msgstr ""
+msgstr "Hodnota"
 
 #: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
 msgid "<All>"
-msgstr ""
+msgstr "<Všetko>"
 
 #: cryptui.rc:47
 msgid "Version 1 Fields Only"
@@ -2448,13 +2459,12 @@ msgid "Critical Extensions Only"
 msgstr ""
 
 #: cryptui.rc:50
-#, fuzzy
 msgid "Properties Only"
-msgstr "&Vlastnosti"
+msgstr ""
 
 #: cryptui.rc:52
 msgid "Serial number"
-msgstr ""
+msgstr "Sériové číslo"
 
 #: cryptui.rc:53
 msgid "Issuer"
@@ -2470,11 +2480,11 @@ msgstr ""
 
 #: cryptui.rc:56
 msgid "Subject"
-msgstr ""
+msgstr "Predmet"
 
 #: cryptui.rc:57
 msgid "Public key"
-msgstr ""
+msgstr "Verejný kľúč"
 
 #: cryptui.rc:58
 msgid "%1 (%2!d! bits)"
@@ -2482,7 +2492,7 @@ msgstr ""
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
-msgstr ""
+msgstr "SHA1 hash"
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
@@ -2494,12 +2504,12 @@ msgstr ""
 
 #: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
-msgstr ""
+msgstr "Popis"
 
 #: cryptui.rc:63
 #, fuzzy
 msgid "Certificate Properties"
-msgstr "&Vlastnosti"
+msgstr "Vlastnosti certifikátu"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
@@ -2572,7 +2582,7 @@ msgstr ""
 #: cryptui.rc:83
 #, fuzzy
 msgid "Could not open "
-msgstr "Nemôžem vytvoriť alebo použiť okno."
+msgstr "Nemôžem otvoriť"
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -2596,7 +2606,7 @@ msgstr "Súbor"
 
 #: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
-msgstr ""
+msgstr "Obsah"
 
 #: cryptui.rc:91
 msgid "Certificate Revocation List"
@@ -2612,15 +2622,15 @@ msgstr ""
 
 #: cryptui.rc:96
 msgid "The import was successful."
-msgstr ""
+msgstr "Importovanie bolo úspešné."
 
 #: cryptui.rc:97
 msgid "The import failed."
-msgstr ""
+msgstr "Importovanie sa nepodarilo."
 
 #: cryptui.rc:98
 msgid "Arial"
-msgstr ""
+msgstr "Arial"
 
 #: cryptui.rc:100
 msgid "<Advanced Purposes>"
@@ -2645,7 +2655,7 @@ msgstr ""
 #: cryptui.rc:106 cryptui.rc:120
 #, fuzzy
 msgid "<None>"
-msgstr "Žiadne"
+msgstr "<Žiadne>"
 
 #: cryptui.rc:107
 msgid ""
@@ -2870,7 +2880,7 @@ msgstr ""
 #: dinput.rc:40
 #, fuzzy
 msgid "Configure Devices"
-msgstr "&Definovať..."
+msgstr "Nastaviť zariadenia..."
 
 #: dinput.rc:45
 msgid "Reset"
@@ -2882,12 +2892,12 @@ msgstr ""
 
 #: dinput.rc:49
 msgid "Device"
-msgstr ""
+msgstr "Zariadenie"
 
 #: dinput.rc:50
 #, fuzzy
 msgid "Actions"
-msgstr "Informácie"
+msgstr "Akcie"
 
 #: dinput.rc:51
 msgid "Mapping"
@@ -2900,15 +2910,15 @@ msgstr ""
 #: dinput.rc:34
 #, fuzzy
 msgid "Action"
-msgstr "Informácie"
+msgstr "Akcia"
 
 #: dinput.rc:35
 msgid "Object"
-msgstr ""
+msgstr "Objekt"
 
 #: dxdiagn.rc:25
 msgid "Regional Setting"
-msgstr ""
+msgstr "Regionálne nastavenia"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
@@ -2916,20 +2926,19 @@ msgstr ""
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Western"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Stredná Európa"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Cyrilica"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Zelená"
+msgstr ""
 
 #: gdi32.rc:29
 msgid "Turkish"
@@ -2986,44 +2995,44 @@ msgstr ""
 #: gphoto2.rc:27
 #, fuzzy
 msgid "Files on Camera"
-msgstr "&Súbor"
+msgstr "Súbory na fotoaparáte"
 
 #: gphoto2.rc:31
 msgid "Import Selected"
-msgstr ""
+msgstr "Importuj zvolené"
 
 #: gphoto2.rc:32
 #, fuzzy
 msgid "Preview"
-msgstr "&Tlačiť"
+msgstr "Náhľad"
 
 #: gphoto2.rc:33
 msgid "Import All"
-msgstr ""
+msgstr "Importuj všetko"
 
 #: gphoto2.rc:34
 msgid "Skip This Dialog"
-msgstr ""
+msgstr "Preskoč tento dialóg"
 
 #: gphoto2.rc:35
 msgid "Exit"
-msgstr ""
+msgstr "Koniec"
 
 #: gphoto2.rc:40
 msgid "Transferring"
-msgstr ""
+msgstr "Prenášam"
 
 #: gphoto2.rc:43
 msgid "Transferring... Please Wait"
-msgstr ""
+msgstr "Prenášam... Prosím počkajte"
 
 #: gphoto2.rc:48
 msgid "Connecting to camera"
-msgstr ""
+msgstr "Pripájam sa k fotoaparátu"
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
-msgstr ""
+msgstr "Pripájam sa k fotoaparátu... Prosím počkajte"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -3035,20 +3044,20 @@ msgstr "&Späť"
 
 #: hhctrl.rc:58
 msgid "&Forward"
-msgstr ""
+msgstr "&Dopredu"
 
 #: hhctrl.rc:59
 msgctxt "table of contents"
 msgid "&Home"
-msgstr ""
+msgstr "&Domov"
 
 #: hhctrl.rc:60
 msgid "&Stop"
-msgstr ""
+msgstr "&Zastaviť"
 
 #: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
-msgstr ""
+msgstr "&Obnoviť"
 
 #: hhctrl.rc:62 winhlp32.rc:31
 #, fuzzy
@@ -3065,11 +3074,11 @@ msgstr ""
 
 #: hhctrl.rc:30 notepad.rc:52
 msgid "&Search"
-msgstr ""
+msgstr "&Hľadať"
 
 #: hhctrl.rc:31
 msgid "Favor&ites"
-msgstr ""
+msgstr "Obľúbené"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
@@ -3081,28 +3090,28 @@ msgstr ""
 
 #: hhctrl.rc:39
 msgid "Show"
-msgstr ""
+msgstr "Ukázať"
 
 #: hhctrl.rc:40
 msgid "Hide"
-msgstr ""
+msgstr "Skryť"
 
 #: hhctrl.rc:41 ieframe.rc:65 shdoclc.rc:164 shdoclc.rc:188
 msgid "Stop"
-msgstr ""
+msgstr "Zastaviť"
 
 #: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 msgid "Refresh"
-msgstr ""
+msgstr "Obnoviť"
 
 #: hhctrl.rc:43 ieframe.rc:63
 msgid "Back"
-msgstr ""
+msgstr "Späť"
 
 #: hhctrl.rc:44
 msgctxt "table of contents"
 msgid "Home"
-msgstr ""
+msgstr "Domov"
 
 #: hhctrl.rc:45
 msgid "Sync"
@@ -3110,11 +3119,11 @@ msgstr ""
 
 #: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
-msgstr ""
+msgstr "Voľby"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
-msgstr ""
+msgstr "Späť"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
@@ -3128,11 +3137,11 @@ msgstr "&Súbor"
 
 #: ieframe.rc:27 regedit.rc:44 regedit.rc:95
 msgid "&New"
-msgstr ""
+msgstr "&Nový"
 
 #: ieframe.rc:29 winefile.rc:72
 msgid "&Window"
-msgstr ""
+msgstr "&Okno"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
 #, fuzzy
@@ -3141,7 +3150,7 @@ msgstr "&Otvoriť..."
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
-msgstr ""
+msgstr "Uložiť &ako..."
 
 #: ieframe.rc:35
 #, fuzzy
@@ -3156,7 +3165,7 @@ msgstr "&Tlačiť"
 #: ieframe.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
-msgstr "&Tlačiť"
+msgstr "&Tlačiť náhľad"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -3172,20 +3181,20 @@ msgstr ""
 
 #: ieframe.rc:50 regedit.rc:71
 msgid "&Favorites"
-msgstr ""
+msgstr "&Obľúbené"
 
 #: ieframe.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
-msgstr ""
+msgstr "&Pridať k obľúbeným..."
 
 #: ieframe.rc:57
 msgid "&About Internet Explorer"
-msgstr ""
+msgstr "&O aplikácii Internet Explorer"
 
 #: ieframe.rc:87
 #, fuzzy
 msgid "Open URL"
-msgstr "&Otvoriť..."
+msgstr "Otvoriť URL"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
@@ -3194,12 +3203,12 @@ msgstr ""
 #: ieframe.rc:91
 #, fuzzy
 msgid "Open:"
-msgstr "&Otvoriť..."
+msgstr "&Otvoriť"
 
 #: ieframe.rc:67
 msgctxt "home page"
 msgid "Home"
-msgstr ""
+msgstr "Domov"
 
 #: ieframe.rc:68 winhlp32.rc:66
 #, fuzzy
@@ -3208,7 +3217,7 @@ msgstr "&Tlačiť"
 
 #: ieframe.rc:73
 msgid "Address"
-msgstr ""
+msgstr "Adresa"
 
 #: ieframe.rc:78
 #, fuzzy
@@ -3221,11 +3230,11 @@ msgstr ""
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
-msgstr ""
+msgstr "Začať sťahovanie"
 
 #: ieframe.rc:80
 msgid "Downloading %s"
-msgstr ""
+msgstr "Sťahovanie %s"
 
 #: ieframe.rc:81
 #, fuzzy
@@ -3238,44 +3247,44 @@ msgstr ""
 
 #: inetcpl.rc:46
 msgid "Home page"
-msgstr ""
+msgstr "Domovská stránka"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr ""
+msgstr "Môžete si zvoliť stránku ktorá bude použítá ako domovská stránka."
 
 #: inetcpl.rc:50
 msgid "&Current page"
-msgstr ""
+msgstr "&Aktuálna stránka"
 
 #: inetcpl.rc:51
 #, fuzzy
 msgid "&Default page"
-msgstr "Implicitná tlačiareň; "
+msgstr "&Predvolená stránka"
 
 #: inetcpl.rc:52
 msgid "&Blank page"
-msgstr ""
+msgstr "&Prázdna stránka"
 
 #: inetcpl.rc:53
 msgid "Browsing history"
-msgstr ""
+msgstr "Prechádzať históriu"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr ""
+msgstr "Môžete zmazať uložené stránky, cookies a iné údaje."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr ""
+msgstr "Zmazať &súbory..."
 
 #: inetcpl.rc:57
 msgid "&Settings..."
-msgstr ""
+msgstr "&Nastavenia"
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr ""
+msgstr "Zmazať históriu prehliadača"
 
 #: inetcpl.rc:68
 msgid ""
@@ -3310,11 +3319,11 @@ msgstr ""
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
-msgstr ""
+msgstr "Zmazať"
 
 #: inetcpl.rc:87 winefile.rc:114
 msgid "Security"
-msgstr ""
+msgstr "Bezpečnosť"
 
 #: inetcpl.rc:109
 msgid ""
@@ -3325,19 +3334,19 @@ msgstr ""
 #: inetcpl.rc:111
 #, fuzzy
 msgid "Certificates..."
-msgstr "&Vlastnosti"
+msgstr "Certifikáty"
 
 #: inetcpl.rc:112
 msgid "Publishers..."
-msgstr ""
+msgstr "Distribútori..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
-msgstr ""
+msgstr "Nastavenia internetu"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
-msgstr ""
+msgstr "Nastavte Wine internetový prehliadač a príbuzné nastavenia"
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
@@ -3345,27 +3354,27 @@ msgstr ""
 
 #: inetcpl.rc:31
 msgid "Custom"
-msgstr ""
+msgstr "Vlastné"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Veľmi nízke"
 
 #: inetcpl.rc:33
 msgid "Low"
-msgstr ""
+msgstr "Nízke"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Stredné"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Zvýšené"
 
 #: inetcpl.rc:36
 msgid "High"
-msgstr ""
+msgstr "Vysoké"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3434,7 +3443,7 @@ msgstr ""
 #: jscript.rc:41
 #, fuzzy
 msgid "Label not found"
-msgstr "Súbor nenájdený"
+msgstr "Pole nenájdené"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
@@ -3442,11 +3451,11 @@ msgstr ""
 
 #: jscript.rc:45
 msgid "Number expected"
-msgstr ""
+msgstr "Očakávané číslo"
 
 #: jscript.rc:43
 msgid "Function expected"
-msgstr ""
+msgstr "Očakávaná funkcia"
 
 #: jscript.rc:44
 msgid "'[object]' is not a date object"
@@ -3454,7 +3463,7 @@ msgstr ""
 
 #: jscript.rc:46
 msgid "Object expected"
-msgstr ""
+msgstr "Očakávaný objekt"
 
 #: jscript.rc:47
 msgid "Illegal assignment"
@@ -3516,15 +3525,15 @@ msgstr "Súbor nenájdený.\n"
 #: winerror.mc:41
 #, fuzzy
 msgid "Path not found.\n"
-msgstr "Súbor nenájdený.\n"
+msgstr "Cesta nenájdená.\n"
 
 #: winerror.mc:46
 msgid "Too many open files.\n"
-msgstr ""
+msgstr "Prílš veľa otvorení súborov.\n"
 
 #: winerror.mc:51
 msgid "Access denied.\n"
-msgstr ""
+msgstr "Prístup zamietnutý.\n"
 
 #: winerror.mc:56
 msgid "Invalid handle.\n"
@@ -3549,7 +3558,7 @@ msgstr ""
 
 #: winerror.mc:81
 msgid "Bad format.\n"
-msgstr ""
+msgstr "Zlý formát.\n"
 
 #: winerror.mc:86
 msgid "Invalid access.\n"
@@ -3615,7 +3624,7 @@ msgstr ""
 #: winerror.mc:161
 #, fuzzy
 msgid "Sector not found.\n"
-msgstr "Súbor nenájdený.\n"
+msgstr "Sektor nenájdený.\n"
 
 #: winerror.mc:166
 #, fuzzy
@@ -3639,9 +3648,8 @@ msgid "Sharing violation.\n"
 msgstr ""
 
 #: winerror.mc:191
-#, fuzzy
 msgid "Lock violation.\n"
-msgstr "Informácie.\n"
+msgstr ""
 
 #: winerror.mc:196
 msgid "Wrong disk.\n"
@@ -3699,7 +3707,7 @@ msgstr ""
 #: winerror.mc:261
 #, fuzzy
 msgid "Unexpected network error.\n"
-msgstr "Nedefinovaná externá chyba."
+msgstr "Nedefinovaná sieťová chyba."
 
 #: winerror.mc:266
 msgid "Bad remote adaptor.\n"
