@@ -8053,7 +8053,7 @@ msgstr ""
 
 #: shell32.rc:204
 msgid "Start Menu"
-msgstr "Start Menu"
+msgstr ""
 
 #: shell32.rc:205
 msgid "My Music"
@@ -8071,7 +8071,7 @@ msgstr "Skrivebord"
 
 #: shell32.rc:208
 msgid "NetHood"
-msgstr "NetHood"
+msgstr ""
 
 #: shell32.rc:209
 msgid "Templates"
@@ -8079,15 +8079,15 @@ msgstr "Skabeloner"
 
 #: shell32.rc:210
 msgid "PrintHood"
-msgstr "PrintHood"
+msgstr ""
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
-msgstr "History"
+msgstr ""
 
 #: shell32.rc:212
 msgid "Program Files"
-msgstr "Program Files"
+msgstr ""
 
 #: shell32.rc:214
 msgid "My Pictures"
@@ -8105,24 +8105,26 @@ msgstr "Documenter"
 #: shell32.rc:217
 #, fuzzy
 msgid "Administrative Tools"
-msgstr "Start MenuProgrammerAdministrative Værktøjer"
+msgstr "Administrative Værktøjer"
 
 #: shell32.rc:218
+#, fuzzy
 msgid "Music"
-msgstr "Dokumenter\\Min Musik"
+msgstr "Min Musik"
 
 #: shell32.rc:219
+#, fuzzy
 msgid "Pictures"
-msgstr "Dokumenter\\Mine Billeder"
+msgstr "Mine Billeder"
 
 #: shell32.rc:220
+#, fuzzy
 msgid "Videos"
-msgstr "Dokumenter\\Mine Film"
+msgstr "Mine Film"
 
 #: shell32.rc:213
-#, fuzzy
 msgid "Program Files (x86)"
-msgstr "Program Files"
+msgstr ""
 
 #: shell32.rc:221
 #, fuzzy
