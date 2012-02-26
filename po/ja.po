@@ -12397,9 +12397,7 @@ msgstr "Wine"
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr ""
-"%s にある Wine 設定を更新しています。\n"
-"しばらくお待ちください…。"
+msgstr "%s にある Wine 設定を更新しています。しばらくお待ちください..."
 
 #: winecfg.rc:132
 msgid ""
