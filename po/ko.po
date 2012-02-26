@@ -36,7 +36,7 @@ msgid ""
 "Remove."
 msgstr ""
 "이 소프트웨어는 자동으로 삭제되었을 수도 있습니다.설치된 구성요소를 고치거나 "
-"프로그램을 지우려면 , 추가/삭제 목록에서 선택하십시오.."
+"프로그램을 지우려면 , 추가/삭제 목록에서 선택하십시오."
 
 #: appwiz.rc:64
 msgid "&Support Information"
@@ -75,7 +75,7 @@ msgstr "확인"
 
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
-msgstr "이 정보는 %s: 에서 기술 지원을 받기 위해 사용됩니다"
+msgstr "이 정보는 %s 에서 기술 지원을 받기 위해 사용됩니다:"
 
 #: appwiz.rc:77
 msgid "Publisher:"
@@ -345,7 +345,7 @@ msgstr "아래로 이동(&D)"
 
 #: comctl32.rc:86
 msgid "A&vailable buttons:"
-msgstr "가능한 버튼(&V)"
+msgstr "가능한 버튼(&V):"
 
 #: comctl32.rc:88
 msgid "&Add ->"
@@ -2009,7 +2009,7 @@ msgstr "인증 방침"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "접근 키 식별자"
+msgstr "접근 키 식별자: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -8211,7 +8211,7 @@ msgstr "다시 시도(&T)"
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr "계속(&C),"
+msgstr "계속(&C)"
 
 #: user32.rc:91
 msgid "Select Window"
@@ -9552,7 +9552,8 @@ msgid ""
 "/L           Show end-user license.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
-"프로그램을 실행시키거나, 보통 파일 확장자에서 사용되는 프로그램으로 문서 열기\n"
+"프로그램을 실행시키거나, 보통 파일 확장자에서 사용되는 프로그램으로 문서 열"
+"기\n"
 "사용법:\n"
 "start [옵션] 프로그램이나 파일 이름 [...]\n"
 "start [옵션] 문서 파일 이름\n"
@@ -9560,7 +9561,8 @@ msgstr ""
 "옵션:\n"
 "/M[inimized] 프로그램을 최소화 상태로 실행.\n"
 "/MAX[imized] 프로그램을 최대화 상태로 실행.\n"
-"/R[estored]  프로그램을 보통상태로 시작시키기 (최소화도 아니고 최대화도 아님).\n"
+"/R[estored]  프로그램을 보통상태로 시작시키기 (최소화도 아니고 최대화도 아"
+"님).\n"
 "/W[ait]      시작된 풀그림이 끝날 때까지 기다림, 끝날 때 종료코드를 남김.\n"
 "/Unix        윈도우 탐색기같이 유닉스 파일이름을 사용해서 시작.\n"
 "/ProgIDOpen  지정한 progID를 사용해서 문서 열기.\n"
@@ -9789,7 +9791,7 @@ msgstr ""
 "XCOPY\t\t원본 파일이나 디렉토리 구조를 대상으로 복사함\n"
 "EXIT\t\tCMD 닫기\n"
 "\n"
-"HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
+"HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌.\n"
 
 #: cmd.rc:307
 msgid "Are you sure?"
@@ -13450,7 +13452,7 @@ msgstr "상급자(&E)"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "사용자 정의(&C)"
+msgstr "사용자 정의(&C)..."
 
 #: winemine.rc:44
 msgid "&Fastest Times"
@@ -13557,8 +13559,9 @@ msgid "Always on &top"
 msgstr "항상 위(&T)"
 
 #: winhlp32.rc:56
+#, fuzzy
 msgid "&About Wine Help"
-msgstr "Wine 도움말 정보(&I)..."
+msgstr "Wine 도움말 정보(&I)"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -13602,7 +13605,7 @@ msgstr "%s을 찾을 수 없습니다'. 이 파일을 직접 찾겠습니까?"
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "richedit 구현을 찾을수 업습니다.. 취소중"
+msgstr "richedit 구현을 찾을수 업습니다... 취소중"
 
 #: winhlp32.rc:91
 msgid "Help topics: "
