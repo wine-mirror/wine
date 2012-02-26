@@ -8646,7 +8646,7 @@ msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
 msgstr ""
-"Der angegebene Befehl erfordert einen Alias-,  Datei-, Treiber- oder "
+"Der angegebene Befehl erfordert einen Alias-, Datei-, Treiber- oder "
 "Gerätenamen. Bitte geben Sie einen an."
 
 #: winmm.rc:88
