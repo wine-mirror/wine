@@ -10451,7 +10451,7 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"O arquivo '%s' não existe\n"
+"O arquivo '%s' não existe.\n"
 "\n"
 "Você deseja criar um novo arquivo?"
 
@@ -10461,7 +10461,7 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"O arquivo '%s' foi modificado\n"
+"O arquivo '%s' foi modificado.\n"
 "\n"
 "Gostaria de salvar as alterações?"
 
@@ -10996,11 +10996,11 @@ msgstr "Informação"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "Excluir grupo '%s' ?"
+msgstr "Excluir grupo '%s'?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "Excluir programa '%s' ?"
+msgstr "Excluir programa '%s'?"
 
 #: progman.rc:67
 msgid "Not implemented"
