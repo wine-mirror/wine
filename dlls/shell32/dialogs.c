@@ -266,7 +266,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     LoadStringW(shell32_hInstance, IDS_RUNDLG_BROWSE_FILTER_EXE, filter_exe, 256);
                     LoadStringW(shell32_hInstance, IDS_RUNDLG_BROWSE_FILTER_ALL, filter_all, 256);
                     LoadStringW(shell32_hInstance, IDS_RUNDLG_BROWSE_CAPTION, szCaption, MAX_PATH);
-                    snprintfW( filter, MAX_PATH, filterW, filter_exe, 0, 0, filter_all, 0 );
+                    snprintfW( filter, MAX_PATH, filterW, filter_exe, 0, 0, filter_all, 0, 0 );
 
                     ZeroMemory(&ofn, sizeof(ofn));
                     ofn.lStructSize = sizeof(OPENFILENAMEW);
