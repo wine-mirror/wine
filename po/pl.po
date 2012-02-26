@@ -9652,11 +9652,6 @@ msgstr ""
 "/ProgIDOpen  Open a document using the following progID.\n"
 "/L           Pokaż licencję użytkownika.\n"
 "/?           Wyświetl tą pomoc i wyjdź.\n"
-"\n"
-"start.exe wersja 0.2 Prawa autorskie (C) 2003, Dan Kegel\n"
-"Start jest dostarczany BEZ ŻADNEJ GWARANCJI; szczegóły w opcji /L.\n"
-"To jest wolne oprogramowanie i możesz je rozpowszechniać (pod pewnymi\n"
-"warunkami); uruchom 'start /L' aby poznać szczegóły.\n"
 
 #: cmd.rc:201
 msgid "TIME sets or shows the current system time.\n"
