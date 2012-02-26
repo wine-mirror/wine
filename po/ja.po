@@ -2336,7 +2336,7 @@ msgstr "&DER符号化された X.509 (.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr "Ba&se64符号化された X.509 (.cer)"
+msgstr "Ba&se64符号化された X.509 (.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
