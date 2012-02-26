@@ -7913,7 +7913,7 @@ msgstr "Історія"
 
 #: shell32.rc:212
 msgid "Program Files"
-msgstr "Program Files"
+msgstr ""
 
 #: shell32.rc:214
 msgid "My Pictures"
@@ -7929,9 +7929,8 @@ msgid "Documents"
 msgstr "Документи"
 
 #: shell32.rc:217
-#, fuzzy
 msgid "Administrative Tools"
-msgstr "Start Menu\\Programs\\Administrative Tools"
+msgstr ""
 
 #: shell32.rc:218
 msgid "Music"
@@ -7947,7 +7946,7 @@ msgstr "Фільми"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
-msgstr "Program Files (x86)"
+msgstr ""
 
 #: shell32.rc:221
 msgid "Contacts"
