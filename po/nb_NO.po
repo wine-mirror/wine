@@ -6952,7 +6952,7 @@ msgstr "Egenskapens nettverksstasjon mangler"
 
 #: msi.rc:60
 msgid "feature from:"
-msgstr "Egenskap fra::"
+msgstr "Egenskap fra:"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
@@ -8011,7 +8011,7 @@ msgstr "Kjører på %s"
 
 #: shell32.rc:326
 msgid "Wine was brought to you by:"
-msgstr "Wine er laget av"
+msgstr "Wine er laget av:"
 
 #: shell32.rc:334
 msgid ""
@@ -8634,7 +8634,7 @@ msgstr "Det oppgitte enhetshåndtaket er ugyldig."
 #: winmm.rc:34
 #, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "Det er ingen driver installert på systemet.\n"
+msgstr "Det er ingen driver installert på systemet!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -9747,7 +9747,7 @@ msgstr ""
 "PAUSE viser meldingen 'Trykk Enter for å fortsette', og venter på at\n"
 " brukeren trykker Enter. Dette er hovedsakelig nyttig i satsvise filer,\n"
 "for å la brukeren lese utdata fra en tidligere kommando før den ruller\n"
-"vekk fra skjermen..\n"
+"vekk fra skjermen.\n"
 
 #: cmd.rc:149
 #, fuzzy
@@ -13186,7 +13186,7 @@ msgstr ""
 "Vil du virkelig fjerne stasjon C?\n"
 "\n"
 "De fleste Windows-programmer forventer at C finnes, og lager bråk hvis den "
-"ikke er der. Husk å lage den på nytt hvis du fortsetter."
+"ikke er der. Husk å lage den på nytt hvis du fortsetter!"
 
 #: winecfg.rc:74
 #, fuzzy
@@ -13204,9 +13204,9 @@ msgid ""
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
-"Du har ikke en C-stasjon. Det er ikke så bra..\n"
+"Du har ikke en C-stasjon. Det er ikke så bra.\n"
 "\n"
-"Husk å trykke «Legg til» i stasjonsfanen for å lage en.\n"
+"Husk å trykke «Legg til» i stasjonsfanen for å lage en!\n"
 
 #: winecfg.rc:90
 msgid "Controls Background"
@@ -14396,12 +14396,12 @@ msgstr ""
 #: wordpad.rc:187
 #, fuzzy
 msgid "Invalid number format."
-msgstr "Ugyldig tallformat"
+msgstr "Ugyldig tallformat."
 
 #: wordpad.rc:188
 #, fuzzy
 msgid "OLE storage documents are not supported."
-msgstr "OLE storage-dokumenter støttes ikke"
+msgstr "OLE storage-dokumenter støttes ikke."
 
 #: wordpad.rc:189
 msgid "Could not save the file."
