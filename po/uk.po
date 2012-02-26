@@ -757,7 +757,7 @@ msgstr "П&ринтер..."
 
 #: comdlg32.rc:456
 msgid "Look &in:"
-msgstr "Шукати &в"
+msgstr "Шукати &в:"
 
 #: comdlg32.rc:462
 msgid "File &name:"
@@ -765,7 +765,7 @@ msgstr "Ім'я &файлу:"
 
 #: comdlg32.rc:465
 msgid "Files of &type:"
-msgstr "Файли &типу"
+msgstr "Файли &типу:"
 
 #: comdlg32.rc:468
 msgid "Open as &read-only"
@@ -2799,7 +2799,7 @@ msgid ""
 "Protects software from alteration after publication"
 msgstr ""
 "Гарантує, що програмне забезпечення прийшло від\n"
-" видавця ПЗ.Захищає ПЗ від змін після публікації"
+"видавця ПЗ.Захищає ПЗ від змін після публікації"
 
 #: cryptui.rc:124
 msgid "Protects e-mail messages"
@@ -6766,7 +6766,7 @@ msgstr "Налаштува&ти..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&Інформація..."
+msgstr "&Інформація"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7159,7 +7159,7 @@ msgid ""
 "File does not appear to be a valid OLE module. Unable to register OLE "
 "control."
 msgstr ""
-"Файл не є модулем управління OLE.  Не вдається зареєструвати елемент "
+"Файл не є модулем управління OLE. Не вдається зареєструвати елемент "
 "управління OLE."
 
 #: oledlg.rc:29
@@ -7785,7 +7785,7 @@ msgstr "&Відкрити:"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
 msgid "&Browse..."
-msgstr "&Огляд"
+msgstr "&Огляд..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
@@ -8378,7 +8378,7 @@ msgstr "Вказано неправильний дескриптор прист�
 #: winmm.rc:34
 #, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "У системі немає встановлених драйверів !\n"
+msgstr "У системі немає встановлених драйверів!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -9211,7 +9211,7 @@ msgstr ""
 #: attrib.rc:28 cmd.rc:318
 #, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s : Файл не знайдено\n"
+msgstr "%1: Файл не знайдено\n"
 
 #: attrib.rc:47
 msgid ""
@@ -10997,11 +10997,11 @@ msgstr "Інформація"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "Видалити групу `%s' ?"
+msgstr "Видалити групу `%s'?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "Видалити програму `%s' ?"
+msgstr "Видалити програму `%s'?"
 
 #: progman.rc:67
 msgid "Not implemented"
@@ -11792,7 +11792,7 @@ msgstr "Пам'ять ядра (K)"
 
 #: taskmgr.rc:378 taskmgr.rc:290
 msgid "Handles"
-msgstr "Дескрип."
+msgstr "Дескрип"
 
 #: taskmgr.rc:379 taskmgr.rc:291
 msgid "Threads"
@@ -12429,7 +12429,7 @@ msgid ""
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "Помилка виконання команди видалення '%s', можливо через відсутність файлу.\n"
-"Видалити дані про встановлення з реєстру ?"
+"Видалити дані про встановлення з реєстру?"
 
 #: view.rc:33
 msgid "&Pan"
@@ -12646,7 +12646,7 @@ msgstr "&Додати..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Автови&значення..."
+msgstr "Автови&значення"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -13715,7 +13715,7 @@ msgstr "Завжди &зверху"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Інформація..."
+msgstr ""
 
 #: winhlp32.rc:64
 msgid "Annotation..."
