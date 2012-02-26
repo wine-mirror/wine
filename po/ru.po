@@ -10030,7 +10030,7 @@ msgstr "Ошибка: неверная опция '%c'.\n"
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
-msgstr "Ошибка: с помощью hostname невозможно измененить имя машины.\n"
+msgstr "Ошибка: с помощью hostname невозможно изменить имя машины.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
