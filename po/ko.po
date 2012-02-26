@@ -13254,6 +13254,7 @@ msgid "Sort by &Date"
 msgstr "날짜로 정렬(&D)"
 
 #: winefile.rc:56
+#, fuzzy
 msgid "Filter by&..."
 msgstr "&...로 걸려내기"
 
