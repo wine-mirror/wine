@@ -22,7 +22,7 @@ msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
 msgstr ""
-"For at installere et nyt program fra en diskette, cd-rom-drev, eller din "
+"For at installere et nyt program fra en diskette, CD-Rom-drev, eller din "
 "harddisk, skal du klikke på Installer."
 
 #: appwiz.rc:59
@@ -42,7 +42,7 @@ msgstr ""
 #: appwiz.rc:64
 #, fuzzy
 msgid "&Support Information"
-msgstr "Support Information"
+msgstr "&Support information"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -55,7 +55,7 @@ msgstr "&Fjern"
 
 #: appwiz.rc:72
 msgid "Support Information"
-msgstr ""
+msgstr "Support information"
 
 #: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:226 comdlg32.rc:256
 #: comdlg32.rc:299 comdlg32.rc:353 comdlg32.rc:392 comdlg32.rc:446
@@ -93,7 +93,7 @@ msgstr "Kontakt:"
 
 #: appwiz.rc:80
 msgid "Support Information:"
-msgstr ""
+msgstr "Support information:"
 
 #: appwiz.rc:81
 msgid "Support Telephone:"
@@ -113,10 +113,9 @@ msgstr "Kommentarer:"
 
 #: appwiz.rc:97
 msgid "Wine Gecko Installer"
-msgstr "Installere Wine Gecko"
+msgstr "Wine Gecko Installationsprogram"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -127,8 +126,8 @@ msgid ""
 "details."
 msgstr ""
 "Wine kunne ikke finde Gecko Pakken, som er nødvendig for at få "
-"applikationers indlejringaf HTML til at fungere korrekt. Wine kan automatisk "
-"downloade, og installere det for dig.\n"
+"applikationers indlejring af HTML til at fungere korrekt. Wine kan "
+"automatisk downloade, og installere det for dig.\n"
 "\n"
 "Bemærk: Det anbefales at bruge distributions pakker i stedet. Se http://wiki."
 "winehq.org/Gecko for flere detaljer."
@@ -195,11 +194,11 @@ msgstr "Udgiver"
 
 #: appwiz.rc:37 cryptui.rc:51
 msgid "Version"
-msgstr ""
+msgstr "Version"
 
 #: appwiz.rc:38
 msgid "Installation programs"
-msgstr "Installations Programmer"
+msgstr "Installationsprogrammer"
 
 #: appwiz.rc:39
 msgid "Programs (*.exe)"
@@ -207,18 +206,12 @@ msgstr "Programmer (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winedbg.rc:39 winhlp32.rc:87
-#, fuzzy
 msgid "All files (*.*)"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Alle filer (*.*)\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Alle Filer (*.*)"
+msgstr "Alle filer (*.*)"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "&Rediger/Fjern..."
+msgstr "&Rediger/Fjern"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -233,10 +226,11 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
+"Uventet kontrolsum af downloadet fil. Afbryder installation af korrupt fil."
 
 #: avifil32.rc:39
 msgid "Compress options"
-msgstr "Komprimerings indstillinger"
+msgstr "Komprimeringsindstillinger"
 
 #: avifil32.rc:42
 msgid "&Choose a stream:"
@@ -268,7 +262,7 @@ msgstr "Lydkurve"
 
 #: avifil32.rc:29
 msgid "All multimedia files"
-msgstr "Alle multimedia filer"
+msgstr "Alle multimedie filer"
 
 #: avifil32.rc:31
 msgid "video"
@@ -292,7 +286,7 @@ msgstr "Annullering..."
 
 #: comctl32.rc:49 winefile.rc:159
 msgid "Properties for %s"
-msgstr "Egenskaper for %s"
+msgstr "Egenskaber for %s"
 
 #: comctl32.rc:54 comdlg32.rc:258
 msgid "&Apply"
@@ -370,7 +364,6 @@ msgid "Separator"
 msgstr "Separator"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
 msgstr "Ingen"
@@ -391,7 +384,7 @@ msgstr "Gå til i dag"
 #: comdlg32.rc:151 comdlg32.rc:164 comdlg32.rc:453 comdlg32.rc:478
 #: shell32.rc:164 oleview.rc:99
 msgid "Open"
-msgstr "Åben"
+msgstr "Åbn"
 
 #: comdlg32.rc:154 comdlg32.rc:176
 msgid "File &Name:"
@@ -484,7 +477,7 @@ msgstr "&Standardprinter"
 
 #: comdlg32.rc:223
 msgid "[none]"
-msgstr ""
+msgstr "[ingen]"
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
@@ -552,7 +545,7 @@ msgstr "Eksempel"
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
-msgstr "Scr&ipt (translate):"
+msgstr "Scr&ipt:"
 
 #: comdlg32.rc:276
 msgid "Color"
@@ -608,7 +601,7 @@ msgstr "&Definer selvvalgt farve >>"
 
 #: comdlg32.rc:310 regedit.rc:223 regedit.rc:233
 msgid "Find"
-msgstr ""
+msgstr "Find"
 
 #: comdlg32.rc:313 comdlg32.rc:332
 msgid "Fi&nd What:"
@@ -789,13 +782,12 @@ msgid "File name:"
 msgstr "&Filnavn:"
 
 #: comdlg32.rc:484
-#, fuzzy
 msgid "Files of type:"
-msgstr "Fil&type:"
+msgstr "Filer af type:"
 
 #: comdlg32.rc:29
 msgid "File not found"
-msgstr "Kunne ikke finde filen"
+msgstr "Filen Kunne ikke findes"
 
 #: comdlg32.rc:30
 msgid "Please verify that the correct file name was given"
@@ -891,7 +883,7 @@ msgstr "Oliven"
 
 #: comdlg32.rc:121 wordpad.rc:118
 msgid "Navy"
-msgstr ""
+msgstr "Navy"
 
 #: comdlg32.rc:122 wordpad.rc:119
 msgid "Purple"
@@ -899,7 +891,7 @@ msgstr "Lilla"
 
 #: comdlg32.rc:123 wordpad.rc:120
 msgid "Teal"
-msgstr ""
+msgstr "Krikand"
 
 #: comdlg32.rc:124 wordpad.rc:121
 msgid "Gray"
@@ -915,7 +907,7 @@ msgstr "Rød"
 
 #: comdlg32.rc:127 wordpad.rc:124
 msgid "Lime"
-msgstr ""
+msgstr "Lime"
 
 #: comdlg32.rc:128 wordpad.rc:125
 msgid "Yellow"
@@ -963,9 +955,8 @@ msgstr ""
 "Genindtast Margin."
 
 #: comdlg32.rc:60
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "Værdien af 'Antal kopier' kan ikke være tomt."
+msgstr "'Antal kopier'-feltet kan ikke være tomt."
 
 #: comdlg32.rc:62
 msgid ""
@@ -988,13 +979,8 @@ msgid "Cannot find the printer."
 msgstr "Kan ikke finde printeren."
 
 #: comdlg32.rc:66 progman.rc:73
-#, fuzzy
 msgid "Out of memory."
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Ikke nok hukommelse.\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Ikke mere hukommelse."
+msgstr "Ikke mere hukommelse."
 
 #: comdlg32.rc:67
 msgid "An error occurred."
@@ -1009,14 +995,14 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Før du kan udføre printer-relaterede opgaver, som f.eks sideopsætning eller "
+"Før du kan udføre printer-relaterede opgaver, som f.eks. sideopsætning eller "
 "udskrivning af dokumenter, skal du installere en printer. Installer venligst "
 "en og prøv igen."
 
 #: comdlg32.rc:137
 #, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Vælg en skrift størrelse mellem %d og %d punkter."
+msgstr "Vælg en skriftstørrelse mellem %d og %d punkter."
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
@@ -1032,7 +1018,7 @@ msgstr "Gem"
 
 #: comdlg32.rc:142
 msgid "Open File"
-msgstr "Åben fil"
+msgstr "Åbn fil"
 
 #: comdlg32.rc:79 oleview.rc:95
 msgid "Ready"
@@ -1108,11 +1094,11 @@ msgstr "Varmer op; "
 
 #: comdlg32.rc:97
 msgid "Toner low; "
-msgstr "Toner næsten slut; "
+msgstr "Toner næsten tom; "
 
 #: comdlg32.rc:98
 msgid "No toner; "
-msgstr "Ikke mere toner; "
+msgstr "Ingen toner; "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
@@ -1128,7 +1114,7 @@ msgstr "Ikke mere hukommelse; "
 
 #: comdlg32.rc:102
 msgid "The printer door is open; "
-msgstr "Printer låget er åben; "
+msgstr "Printer låget er åbent; "
 
 #: comdlg32.rc:103
 msgid "Print server unknown; "
@@ -1198,26 +1184,26 @@ msgid ""
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
 msgstr ""
-"Du har sat Caps Lock til, dette kan være årsagen til at du indtaster "
+"Du har slået Caps Lock til, dette kan være årsagen til at du indtaster "
 "kodeordet forkert.\n"
 "\n"
 "Tryk på Caps Lock tasten for at slå det fra før du indtaster dit kodeord."
 
 #: credui.rc:31
 msgid "Caps Lock is On"
-msgstr "Caps Lock er på"
+msgstr "Caps Lock er slået til"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
-msgstr ""
+msgstr "Autoritet nøgleidentifikator"
 
 #: crypt32.rc:28
 msgid "Key Attributes"
-msgstr ""
+msgstr "Nøgle attributter"
 
 #: crypt32.rc:29
 msgid "Key Usage Restriction"
-msgstr ""
+msgstr "Nøgle anvendelsesbegrænsning"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
@@ -1229,15 +1215,15 @@ msgstr ""
 
 #: crypt32.rc:32
 msgid "Basic Constraints"
-msgstr ""
+msgstr "Grundlæggende begrænsninger"
 
 #: crypt32.rc:33
 msgid "Key Usage"
-msgstr ""
+msgstr "Nøgle brug"
 
 #: crypt32.rc:34
 msgid "Certificate Policies"
-msgstr ""
+msgstr "Certifikatpolitikker"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
@@ -1245,7 +1231,7 @@ msgstr ""
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
-msgstr ""
+msgstr "CRL årsagskode"
 
 #: crypt32.rc:37
 msgid "CRL Distribution Points"
@@ -1253,7 +1239,7 @@ msgstr ""
 
 #: crypt32.rc:38
 msgid "Enhanced Key Usage"
-msgstr ""
+msgstr "Forbedret nøgle brug"
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
@@ -1261,11 +1247,11 @@ msgstr ""
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
-msgstr ""
+msgstr "Certifikatudvidelser"
 
 #: crypt32.rc:41
 msgid "Next Update Location"
-msgstr ""
+msgstr "Næste opdateringsplacering"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
@@ -1273,15 +1259,15 @@ msgstr ""
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr ""
+msgstr "Email adresse"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
-msgstr ""
+msgstr "Ustruktureret navn"
 
 #: crypt32.rc:45
 msgid "Content Type"
-msgstr ""
+msgstr "Indholdstype"
 
 #: crypt32.rc:46
 msgid "Message Digest"
@@ -1301,7 +1287,7 @@ msgstr ""
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
-msgstr ""
+msgstr "Ustruktureret adresse"
 
 #: crypt32.rc:51
 msgid "S/MIME Capabilities"
@@ -1319,7 +1305,7 @@ msgstr "CPU"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
-msgstr ""
+msgstr "Brugermeddelelse"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
@@ -1375,56 +1361,55 @@ msgstr ""
 
 #: crypt32.rc:68
 msgid "Country/Region"
-msgstr ""
+msgstr "Land/område"
 
 #: crypt32.rc:69
 msgid "Organization"
-msgstr ""
+msgstr "Organisation"
 
 #: crypt32.rc:70
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Organisational enhed"
 
 #: crypt32.rc:71
 msgid "Common Name"
-msgstr ""
+msgstr "Almindelig navn"
 
 #: crypt32.rc:72
 msgid "Locality"
-msgstr ""
+msgstr "Lokalitet"
 
 #: crypt32.rc:73
 msgid "State or Province"
-msgstr ""
+msgstr "Stat eller provins"
 
 #: crypt32.rc:74
 msgid "Title"
-msgstr ""
+msgstr "Titel"
 
 #: crypt32.rc:75
 msgid "Given Name"
-msgstr ""
+msgstr "Givet navn"
 
 #: crypt32.rc:76
 msgid "Initials"
-msgstr ""
+msgstr "Initialer"
 
 #: crypt32.rc:77
-#, fuzzy
 msgid "Surname"
-msgstr "Brugernavn"
+msgstr "Efternavn"
 
 #: crypt32.rc:78
 msgid "Domain Component"
-msgstr ""
+msgstr "Domæne komponent"
 
 #: crypt32.rc:79
 msgid "Street Address"
-msgstr ""
+msgstr "Vejadresse"
 
 #: crypt32.rc:80
 msgid "Serial Number"
-msgstr ""
+msgstr "Serienummer"
 
 #: crypt32.rc:81
 msgid "CA Version"
@@ -1452,7 +1437,7 @@ msgstr ""
 
 #: crypt32.rc:87
 msgid "OS Version"
-msgstr ""
+msgstr "Styresystemsversion"
 
 #: crypt32.rc:88
 msgid "Enrollment CSP"
@@ -1476,7 +1461,7 @@ msgstr ""
 
 #: crypt32.rc:93
 msgid "Name Constraints"
-msgstr ""
+msgstr "Navnebegrænsninger"
 
 #: crypt32.rc:94
 msgid "Policy Mappings"
@@ -1484,11 +1469,11 @@ msgstr ""
 
 #: crypt32.rc:95
 msgid "Policy Constraints"
-msgstr ""
+msgstr "Politik begrænsninger"
 
 #: crypt32.rc:96
 msgid "Cross-Certificate Distribution Points"
-msgstr ""
+msgstr "Krydscertifikat fordelingspoint"
 
 #: crypt32.rc:97
 msgid "Application Policies"
@@ -1516,15 +1501,15 @@ msgstr ""
 
 #: crypt32.rc:103
 msgid "CMC Status Info"
-msgstr ""
+msgstr "CMC status info"
 
 #: crypt32.rc:104
 msgid "CMC Extensions"
-msgstr ""
+msgstr "CMC udvidelser"
 
 #: crypt32.rc:105
 msgid "CMC Attributes"
-msgstr ""
+msgstr "CMC attributter"
 
 #: crypt32.rc:106
 msgid "PKCS 7 Data"
@@ -1584,7 +1569,7 @@ msgstr ""
 
 #: crypt32.rc:120
 msgid "Encrypted Private Key"
-msgstr ""
+msgstr "Krypteret privatnøgle"
 
 #: crypt32.rc:121
 msgid "Published CRL Locations"
@@ -1627,8 +1612,9 @@ msgid "Query Pending"
 msgstr ""
 
 #: crypt32.rc:131 cryptui.rc:92
+#, fuzzy
 msgid "Certificate Trust List"
-msgstr ""
+msgstr "Certifikat tillidsliste"
 
 #: crypt32.rc:132
 msgid "Archived Key Certificate Hash"
@@ -1640,7 +1626,7 @@ msgstr ""
 
 #: crypt32.rc:134
 msgid "Client Information"
-msgstr ""
+msgstr "Klientinformation"
 
 #: crypt32.rc:135
 msgid "Server Authentication"
@@ -1656,7 +1642,7 @@ msgstr ""
 
 #: crypt32.rc:138
 msgid "Secure Email"
-msgstr ""
+msgstr "Sikker email"
 
 #: crypt32.rc:139
 msgid "Time Stamping"
@@ -1764,11 +1750,11 @@ msgstr ""
 
 #: crypt32.rc:169
 msgid "Trusted Root Certification Authorities"
-msgstr ""
+msgstr "Troværdige rodcertifikat autoriteter"
 
 #: crypt32.rc:170
 msgid "Personal"
-msgstr ""
+msgstr "Personlig"
 
 #: crypt32.rc:171
 msgid "Intermediate Certification Authorities"
@@ -1776,15 +1762,15 @@ msgstr ""
 
 #: crypt32.rc:172
 msgid "Other People"
-msgstr ""
+msgstr "Andre folk"
 
 #: crypt32.rc:173
 msgid "Trusted Publishers"
-msgstr ""
+msgstr "Troværdige udgivere"
 
 #: crypt32.rc:174
 msgid "Untrusted Certificates"
-msgstr ""
+msgstr "Utroværdige certifikater"
 
 #: crypt32.rc:179
 msgid "KeyID="
@@ -1796,43 +1782,43 @@ msgstr ""
 
 #: crypt32.rc:181
 msgid "Certificate Serial Number="
-msgstr ""
+msgstr "Certifikat serienummer="
 
 #: crypt32.rc:182
 msgid "Other Name="
-msgstr ""
+msgstr "Andet navn="
 
 #: crypt32.rc:183
 msgid "Email Address="
-msgstr ""
+msgstr "Email adresse="
 
 #: crypt32.rc:184
 msgid "DNS Name="
-msgstr ""
+msgstr "DNS navn="
 
 #: crypt32.rc:185
 msgid "Directory Address"
-msgstr ""
+msgstr "Katalogadresse"
 
 #: crypt32.rc:186
 msgid "URL="
-msgstr ""
+msgstr "URL="
 
 #: crypt32.rc:187
 msgid "IP Address="
-msgstr ""
+msgstr "IP adresse="
 
 #: crypt32.rc:188
 msgid "Mask="
-msgstr ""
+msgstr "Maske="
 
 #: crypt32.rc:189
 msgid "Registered ID="
-msgstr ""
+msgstr "Registreret ID="
 
 #: crypt32.rc:190
 msgid "Unknown Key Usage"
-msgstr ""
+msgstr "Ukendt nøgle brug"
 
 #: crypt32.rc:191
 msgid "Subject Type="
@@ -1846,21 +1832,20 @@ msgstr "A"
 
 #: crypt32.rc:193
 msgid "End Entity"
-msgstr ""
+msgstr "Slutenhed"
 
 #: crypt32.rc:194
 msgid "Path Length Constraint="
-msgstr ""
+msgstr "Stilængde begrænsning="
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "path length"
 msgid "None"
 msgstr "Ingen"
 
 #: crypt32.rc:196
 msgid "Information Not Available"
-msgstr ""
+msgstr "Information ikke tilgængelig"
 
 #: crypt32.rc:197
 msgid "Authority Info Access"
@@ -1868,7 +1853,7 @@ msgstr ""
 
 #: crypt32.rc:198
 msgid "Access Method="
-msgstr ""
+msgstr "Adgangsmetode="
 
 #: crypt32.rc:199
 msgctxt "Online Certificate Status Protocol"
@@ -1885,7 +1870,7 @@ msgstr ""
 
 #: crypt32.rc:202
 msgid "Alternative Name"
-msgstr ""
+msgstr "Alternativ navn"
 
 #: crypt32.rc:203
 msgid "CRL Distribution Point"
@@ -1897,15 +1882,15 @@ msgstr ""
 
 #: crypt32.rc:205
 msgid "Full Name"
-msgstr ""
+msgstr "Fulde navn"
 
 #: crypt32.rc:206
 msgid "RDN Name"
-msgstr ""
+msgstr "RDN navn"
 
 #: crypt32.rc:207
 msgid "CRL Reason="
-msgstr ""
+msgstr "CRL grund="
 
 #: crypt32.rc:208
 msgid "CRL Issuer"
@@ -1929,7 +1914,7 @@ msgstr ""
 
 #: crypt32.rc:213
 msgid "Operation Ceased"
-msgstr ""
+msgstr "Operation ophørt"
 
 #: crypt32.rc:214
 msgid "Certificate Hold"
@@ -1937,7 +1922,7 @@ msgstr ""
 
 #: crypt32.rc:215
 msgid "Financial Information="
-msgstr ""
+msgstr "Finansielle informationer="
 
 #: crypt32.rc:216 taskmgr.rc:397
 msgid "Available"
@@ -1945,11 +1930,11 @@ msgstr "Tilgængelig"
 
 #: crypt32.rc:217
 msgid "Not Available"
-msgstr ""
+msgstr "Ikke tilgængelig"
 
 #: crypt32.rc:218
 msgid "Meets Criteria="
-msgstr ""
+msgstr "Møder kriterier="
 
 #: crypt32.rc:219 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
 msgid "Yes"
@@ -1961,7 +1946,7 @@ msgstr "Nej"
 
 #: crypt32.rc:221
 msgid "Digital Signature"
-msgstr ""
+msgstr "Digital signatur"
 
 #: crypt32.rc:222
 msgid "Non-Repudiation"
@@ -1977,7 +1962,7 @@ msgstr ""
 
 #: crypt32.rc:225
 msgid "Key Agreement"
-msgstr ""
+msgstr "Nøgle aftale"
 
 #: crypt32.rc:226
 msgid "Certificate Signing"
@@ -2013,7 +1998,7 @@ msgstr ""
 
 #: crypt32.rc:234
 msgid "Signature"
-msgstr ""
+msgstr "Signatur"
 
 #: crypt32.rc:235
 msgid "SSL CA"
@@ -2029,7 +2014,7 @@ msgstr ""
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
-msgstr ""
+msgstr "Certifikatpolitik"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
@@ -2053,7 +2038,7 @@ msgstr ""
 
 #: cryptdlg.rc:35
 msgid "Organization="
-msgstr ""
+msgstr "Organisation="
 
 #: cryptdlg.rc:36
 msgid "Notice Number="
@@ -2069,96 +2054,82 @@ msgid "General"
 msgstr "General fiasko\n"
 
 #: cryptui.rc:188
-#, fuzzy
 msgid "&Install Certificate..."
-msgstr "Egenskaper for &celle"
+msgstr "&Installer certifikat..."
 
 #: cryptui.rc:189
 msgid "Issuer &Statement"
-msgstr ""
+msgstr "Udstedererklæring"
 
 #: cryptui.rc:197
-#, fuzzy
 msgid "&Show:"
-msgstr "Vis"
+msgstr "Vi&s"
 
 #: cryptui.rc:202
-#, fuzzy
 msgid "&Edit Properties..."
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Instillinger\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Egenska&per"
+msgstr "R&ediger egenskaber..."
 
 #: cryptui.rc:203
-#, fuzzy
 msgid "&Copy to File..."
-msgstr "Kopierer filer..."
+msgstr "&Kopier til fil..."
 
 #: cryptui.rc:207
 #, fuzzy
 msgid "Certification Path"
-msgstr "Egenskaper for &celle"
+msgstr "Certificeringssti"
 
 #: cryptui.rc:211
 #, fuzzy
 msgid "Certification path"
-msgstr "Egenskaper for &celle"
+msgstr "Certificeringssti"
 
 #: cryptui.rc:214
-#, fuzzy
 msgid "&View Certificate"
-msgstr "Egenskaper for &celle"
+msgstr "&Vis certifikat"
 
 #: cryptui.rc:215
-#, fuzzy
 msgid "Certificate &status:"
-msgstr "Egenskaper for &celle"
+msgstr "Certifikat &status:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
-msgstr ""
+msgstr "Ansvarsfraskrivelse"
 
 #: cryptui.rc:228
-#, fuzzy
 msgid "More &Info"
-msgstr "Mere? "
+msgstr "Mere &info"
 
 #: cryptui.rc:236
-#, fuzzy
 msgid "&Friendly name:"
-msgstr "&Filnavn:"
+msgstr "&Venlig navn:"
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
 msgstr "&Beskrivelse:"
 
 #: cryptui.rc:240
-#, fuzzy
 msgid "Certificate purposes"
-msgstr "Egenskaper for &celle"
+msgstr "Certifikatformål"
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
-msgstr ""
+msgstr "Aktiv&er alle formål for dette certifikat"
 
 #: cryptui.rc:243
 msgid "D&isable all purposes for this certificate"
-msgstr ""
+msgstr "Deakt&iver alle formål for dette certifikat"
 
 #: cryptui.rc:245
 msgid "Enable &only the following purposes for this certificate:"
-msgstr ""
+msgstr "Aktiver kun følgende formål for dette certifikat:"
 
 #: cryptui.rc:250
-#, fuzzy
 msgid "Add &Purpose..."
-msgstr "&Gennemse"
+msgstr "Tilføj &formål..."
 
 #: cryptui.rc:254
 msgid "Add Purpose"
-msgstr ""
+msgstr "Tilføj formål"
 
 #: cryptui.rc:257
 msgid ""
@@ -2167,24 +2138,23 @@ msgstr ""
 
 #: cryptui.rc:265 cryptui.rc:66
 msgid "Select Certificate Store"
-msgstr ""
+msgstr "Vælg certifikatlager"
 
 #: cryptui.rc:268
 msgid "Select the certificate store you want to use:"
-msgstr ""
+msgstr "Vælg det certifikatlager du vil bruge:"
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
-msgstr ""
+msgstr "&Vis fysiske lagre"
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
-msgstr ""
+msgstr "Certifikatimporteringsguide"
 
 #: cryptui.rc:280
-#, fuzzy
 msgid "Welcome to the Certificate Import Wizard"
-msgstr "Det specificerede enheds handle er ugyldigt."
+msgstr "Velkommen til certifikatimporteringsguiden."
 
 #: cryptui.rc:283
 msgid ""
@@ -2198,9 +2168,18 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Denne guide hjælper dig importere certifikater, certifikat "
+"tilbagekaldelseslister og certifikat troværdighedslister fra en fil, til et "
+"certifikatlager.\n"
+"\n"
+"Et certifikat kan bruges til at identificere dig eller den computer, som du "
+"kommunikerer med.  Det kan også bruges til godkendelse og til at underskrive "
+"beskeder.  Certifikatlagre er samlinger af certifikater, certifikat "
+"tilbagekaldelseslister og certifikat troværdighedslister.\n"
+"\n"
+"For at fortsætte, klik næste."
 
 #: cryptui.rc:291 cryptui.rc:427
-#, fuzzy
 msgid "&File name:"
 msgstr "&Filnavn:"
 
@@ -2209,10 +2188,13 @@ msgid "B&rowse..."
 msgstr "&Gennemse..."
 
 #: cryptui.rc:294
+#, fuzzy
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
+"Bemærk: De følgende fil formater kan indeholde mere end et certifikat, en "
+"certifikat tilbagekaldelsesliste eller en certifikat troværdighedsliste:"
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
@@ -2231,54 +2213,53 @@ msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
+"Wine kan automatisk vælge certifikatlageret eller du kan selv angive en "
+"placering for certifikaterne."
 
 #: cryptui.rc:310
-#, fuzzy
 msgid "&Automatically select certificate store"
-msgstr "Automations-serveren kan ikke oprette objektet"
+msgstr "&Automatisk vælg certifikatlager"
 
 #: cryptui.rc:312
 msgid "&Place all certificates in the following store:"
-msgstr ""
+msgstr "&Placer alle certifikater i følgende lager:"
 
 #: cryptui.rc:322
 msgid "Completing the Certificate Import Wizard"
-msgstr ""
+msgstr "Færdiggører certifikat importeringsguiden"
 
 #: cryptui.rc:324
 msgid "You have successfully completed the Certificate Import Wizard."
-msgstr ""
+msgstr "Du har med success fuldført certifikat importeringsguiden."
 
 #: cryptui.rc:326 cryptui.rc:440
 msgid "You have specified the following settings:"
-msgstr ""
+msgstr "Du har specificeret følgende egenskaber:"
 
 #: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
-msgstr ""
+msgstr "Certifikater"
 
 #: cryptui.rc:337
 msgid "I&ntended purpose:"
-msgstr ""
+msgstr "&Bestemt formål:"
 
 #: cryptui.rc:341
-#, fuzzy
 msgid "&Import..."
-msgstr "&Skrifttype..."
+msgstr "&Importer..."
 
 #: cryptui.rc:342 regedit.rc:109
 msgid "&Export..."
-msgstr ""
+msgstr "&Eksporter..."
 
 #: cryptui.rc:344
-#, fuzzy
 msgid "&Advanced..."
-msgstr "&Avanceret"
+msgstr "&Avanceret..."
 
 #: cryptui.rc:345
 #, fuzzy
 msgid "Certificate intended purposes"
-msgstr "Egenskaper for &celle"
+msgstr "Certifikat bestemte formål"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
@@ -2289,34 +2270,34 @@ msgstr "&Vis"
 #: cryptui.rc:352
 #, fuzzy
 msgid "Advanced Options"
-msgstr "Ugyldigt Valg"
+msgstr "Avancerede indstillinger"
 
 #: cryptui.rc:355
-#, fuzzy
 msgid "Certificate purpose"
-msgstr "Egenskaper for &celle"
+msgstr "Certifikatformål"
 
 #: cryptui.rc:356
 msgid ""
 "Select one or more purposes to be listed when Advanced Purposes is selected."
 msgstr ""
+"Vælg et eller flere formål til at blive opført når Avancerede Formål er "
+"valgt."
 
 #: cryptui.rc:358
-#, fuzzy
 msgid "&Certificate purposes:"
-msgstr "Egenskaper for &celle"
+msgstr "&Certifikatformål:"
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
 msgid "Certificate Export Wizard"
-msgstr ""
+msgstr "Certifikateksporteringsguide"
 
 #: cryptui.rc:370
-#, fuzzy
 msgid "Welcome to the Certificate Export Wizard"
-msgstr "Det specificerede enheds handle er ugyldigt."
+msgstr "Velkommen til certifikateksporteringsguiden"
 
 #: cryptui.rc:373
+#, fuzzy
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2328,33 +2309,45 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Denne guide hjælper dig eksportere certifikater, certifikat "
+"tilbagekaldelseslister og certifikat troværdighedslister fra et "
+"certifikatlager til en fil.\n"
+"\n"
+"Et certifikat kan blive brugt til at identificere dig eller den computer, "
+"som du kommunikerer med.  Det kan også bruges til godkendelse og til at "
+"underskrive beskeder.  Certifikatlagre er samlinger af certifikater, "
+"certifikat tilbagekaldelseslister og certifikat troværdighedslister.\n"
+"\n"
+"For at fortsætte, klik næste."
 
 #: cryptui.rc:381
 msgid ""
 "If you choose to export the private key, you will be prompted for a password "
 "to protect the private key on a later page."
 msgstr ""
+"Hvis du vælger at eksportere privatnøglen, vil du blive spurgt om et kodeord "
+"for at beskytte privatnøglen på en senere side."
 
 #: cryptui.rc:382
 msgid "Do you wish to export the private key?"
-msgstr ""
+msgstr "Ønsker du at eksportere privatnøglen?"
 
 #: cryptui.rc:383
 msgid "&Yes, export the private key"
-msgstr ""
+msgstr "&Ja, eksporter privatnøglen"
 
 #: cryptui.rc:385
 msgid "N&o, do not export the private key"
-msgstr ""
+msgstr "&Nej, eksporter ikke privatnøglen"
 
 #: cryptui.rc:396
 #, fuzzy
 msgid "&Confirm password:"
-msgstr "Forkert adgangskode\n"
+msgstr "&Bekræft kodeord:"
 
 #: cryptui.rc:404
 msgid "Select the format you want to use:"
-msgstr ""
+msgstr "Vælg det format do vil bruge:"
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (.cer)"
@@ -2370,7 +2363,7 @@ msgstr ""
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
-msgstr ""
+msgstr "&Inkluder alle certifikater i certifikationstien, hvis muligt"
 
 #: cryptui.rc:413
 msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
@@ -2386,149 +2379,148 @@ msgstr ""
 
 #: cryptui.rc:419
 msgid "Delete the private &key if the export is successful"
-msgstr ""
+msgstr "Slet privat&nøglen, hvis eksporteringen er vellykket"
 
 #: cryptui.rc:436
 msgid "Completing the Certificate Export Wizard"
-msgstr ""
+msgstr "Færdiggører certifikat eksporteringsguiden"
 
 #: cryptui.rc:438
 msgid "You have successfully completed the Certificate Export Wizard."
-msgstr ""
+msgstr "Du har med success færdiggjort certifikat eksporteringsguiden."
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
-msgstr ""
+msgstr "Certifikat"
 
 #: cryptui.rc:28
 #, fuzzy
 msgid "Certificate Information"
-msgstr "Information"
+msgstr "Certifikat information"
 
 #: cryptui.rc:29
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
+"Dette certifikat har et ugyldigt signatur. Certifikate kan have være ændret "
+"eller beskadiget."
 
 #: cryptui.rc:30
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
+"Dette rodcertifikat er ikke troværdigt. For at have tillid til det, skal du "
+"tilføje det til dit systems troværdige rodcertifikatslager."
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr ""
+msgstr "Dette certifikat kunne ikke valideres til et troværdigt rodcertifikat."
 
 #: cryptui.rc:32
 #, fuzzy
 msgid "This certificate's issuer could not be found."
-msgstr "Kan ikke finde '%s'."
+msgstr "Dette certifikat's udsteder kunne ikke findes."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
-msgstr ""
+msgstr "Alle de bestemte formål af dette certifikat kunne ikke verificeres."
 
 #: cryptui.rc:34
 msgid "This certificate is intended for the following purposes:"
-msgstr ""
+msgstr "Dette certifikat er bestemt for følgende formål:"
 
 #: cryptui.rc:35
 msgid "Issued to: "
-msgstr ""
+msgstr "Udstedt til: "
 
 #: cryptui.rc:36
 msgid "Issued by: "
-msgstr ""
+msgstr "Udstedt af: "
 
 #: cryptui.rc:37
 msgid "Valid from "
-msgstr ""
+msgstr "Gyldig fra "
 
 #: cryptui.rc:38
 msgid " to "
-msgstr ""
+msgstr " til "
 
 #: cryptui.rc:39
 msgid "This certificate has an invalid signature."
-msgstr ""
+msgstr "Dette certifikat har et ugyldigt signatur."
 
 #: cryptui.rc:40
 msgid "This certificate has expired or is not yet valid."
-msgstr ""
+msgstr "Dette certifikat er udgået eller er endnu ikke gyldigt."
 
 #: cryptui.rc:41
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr ""
+msgstr "Dette certifikats gyldighedsperiode udgår af dens udsteder."
 
 #: cryptui.rc:42
 msgid "This certificate was revoked by its issuer."
-msgstr ""
+msgstr "Dette certifikat was tilbagekaldt af dens udsteder."
 
 #: cryptui.rc:43
 msgid "This certificate is OK."
-msgstr ""
+msgstr "Dette certifikat er OK."
 
 #: cryptui.rc:44
 msgid "Field"
-msgstr ""
+msgstr "Felt"
 
 #: cryptui.rc:45
 msgid "Value"
-msgstr ""
+msgstr "Værdi"
 
 #: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
 msgid "<All>"
-msgstr ""
+msgstr "<Alle>"
 
 #: cryptui.rc:47
 msgid "Version 1 Fields Only"
-msgstr ""
+msgstr "Version 1 Kun felter"
 
 #: cryptui.rc:48
 msgid "Extensions Only"
-msgstr ""
+msgstr "Kun udvidelser"
 
 #: cryptui.rc:49
 #, fuzzy
 msgid "Critical Extensions Only"
-msgstr "Kritisk udvidelse utilgængelig"
+msgstr "Kun kritiske udvidelser"
 
 #: cryptui.rc:50
-#, fuzzy
 msgid "Properties Only"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Instillinger\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Egenska&per"
+msgstr "Kun egenskaber"
 
 #: cryptui.rc:52
 msgid "Serial number"
-msgstr ""
+msgstr "Serienummer"
 
 #: cryptui.rc:53
 msgid "Issuer"
-msgstr ""
+msgstr "Udsteder"
 
 #: cryptui.rc:54
 msgid "Valid from"
-msgstr ""
+msgstr "Gyldig fra"
 
 #: cryptui.rc:55
 #, fuzzy
 msgid "Valid to"
-msgstr "Ugyldigt Valg"
+msgstr "Gyldig til"
 
 #: cryptui.rc:56
 #, fuzzy
 msgid "Subject"
-msgstr "Objekt eksistere ikke"
+msgstr "Emne"
 
 #: cryptui.rc:57
 msgid "Public key"
-msgstr ""
+msgstr "Offentlig nøgle"
 
 #: cryptui.rc:58
 msgid "%1 (%2!d! bits)"
@@ -2544,16 +2536,15 @@ msgstr ""
 
 #: cryptui.rc:61
 msgid "Friendly name"
-msgstr ""
+msgstr "Venlig navn"
 
 #: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
-msgstr ""
+msgstr "Beskrivelse"
 
 #: cryptui.rc:63
-#, fuzzy
 msgid "Certificate Properties"
-msgstr "Egenskaper for &celle"
+msgstr "Certifikategenskaber"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
@@ -2565,31 +2556,35 @@ msgstr ""
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
-msgstr ""
+msgstr "Vælg venligst et certifikatlager."
 
 #: cryptui.rc:69
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
+"Filen indeholder objekter der ikke matcher det givne kriterie. Vælg venligst "
+"en anden fil."
 
 #: cryptui.rc:70
 msgid "File to Import"
-msgstr ""
+msgstr "Fil at importere"
 
 #: cryptui.rc:71
 msgid "Specify the file you want to import."
-msgstr ""
+msgstr "Angiv filen du vil importere."
 
 #: cryptui.rc:72 cryptui.rc:95
 msgid "Certificate Store"
-msgstr ""
+msgstr "Certifikatlager"
 
 #: cryptui.rc:73
 msgid ""
 "Certificate stores are collections of certificates, certificate revocation "
 "lists, and certificate trust lists."
 msgstr ""
+"Certifikatlagre er samlinger af certifikater, certifikat "
+"tilbagekaldelseslister og certifikat troværdighedslister."
 
 #: cryptui.rc:74
 msgid "X.509 Certificate (*.cer; *.crt)"
@@ -2617,45 +2612,44 @@ msgstr ""
 
 #: cryptui.rc:81
 msgid "Please select a file."
-msgstr ""
+msgstr "Vælg venligst en fil."
 
 #: cryptui.rc:82
 msgid "The file format is not recognized. Please select another file."
-msgstr ""
+msgstr "Fil formatet er ikke genkendt. Vælg venligst en anden fil."
 
 #: cryptui.rc:83
 #, fuzzy
 msgid "Could not open "
-msgstr "Kunne ikke åbne filen."
+msgstr "Kunne ikke åbne "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
-msgstr ""
+msgstr "Bestemt af programmet"
 
 #: cryptui.rc:85
 msgid "Please select a store"
-msgstr ""
+msgstr "Vælg venligst et lager"
 
 #: cryptui.rc:86
 msgid "Certificate Store Selected"
-msgstr ""
+msgstr "Certifikatlager valgt"
 
 #: cryptui.rc:87
 msgid "Automatically determined by the program"
-msgstr ""
+msgstr "Automatisk bestemt af programmet"
 
 #: cryptui.rc:88 shell32.rc:134
 msgid "File"
 msgstr "Fil"
 
 #: cryptui.rc:89 inetcpl.rc:105
-#, fuzzy
 msgid "Content"
-msgstr "&Indhold"
+msgstr "Indhold"
 
 #: cryptui.rc:91
 msgid "Certificate Revocation List"
-msgstr ""
+msgstr "Certifikat tilbagekaldelsesliste"
 
 #: cryptui.rc:93
 msgid "CMS/PKCS #7 Message"
@@ -2668,40 +2662,39 @@ msgstr ""
 #: cryptui.rc:96
 #, fuzzy
 msgid "The import was successful."
-msgstr "Tjenesten «%s» startede vellykket.\n"
+msgstr "Importeringen var vellykket."
 
 #: cryptui.rc:97
 msgid "The import failed."
-msgstr ""
+msgstr "Importeringen fejlede."
 
 #: cryptui.rc:98
 msgid "Arial"
-msgstr ""
+msgstr "Arial"
 
 #: cryptui.rc:100
 msgid "<Advanced Purposes>"
-msgstr ""
+msgstr "<Avancerede formål>"
 
 #: cryptui.rc:101
 msgid "Issued To"
-msgstr ""
+msgstr "Udstedt til"
 
 #: cryptui.rc:102
 msgid "Issued By"
-msgstr ""
+msgstr "Udstedt af"
 
 #: cryptui.rc:103
 msgid "Expiration Date"
-msgstr ""
+msgstr "Udløbelsesdato"
 
 #: cryptui.rc:104
 msgid "Friendly Name"
-msgstr ""
+msgstr "Venlig navn"
 
 #: cryptui.rc:106 cryptui.rc:120
-#, fuzzy
 msgid "<None>"
-msgstr "Ingen"
+msgstr "<Ingen>"
 
 #: cryptui.rc:107
 msgid ""
@@ -2709,6 +2702,9 @@ msgid ""
 "sign messages with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Du vil ikke længere kunne dekryptere beskeder med dette certifikat eller "
+"underskrive beskeder med det.\n"
+"Er du sikker på du vil fjerne dette certifikat?"
 
 #: cryptui.rc:108
 msgid ""
@@ -2716,6 +2712,9 @@ msgid ""
 "sign messages with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Du vil ikke længere kunne dekryptere beskeder med disse certifikater eller "
+"underskrive beskeder med dem.\n"
+"Er du sikker på du vil fjerne disse certifikater?"
 
 #: cryptui.rc:109
 msgid ""
@@ -2723,6 +2722,9 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Du vil ikke længere kunne kryptere beskeder med dette certifikat eller "
+"verificere beskeder underskrevet med det.\n"
+"Er du sikker på du vil fjerne dette certifikat?"
 
 #: cryptui.rc:110
 msgid ""
@@ -2730,6 +2732,9 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Du vil ikke længere kunne kryptere beskeder med disse certifikater eller "
+"verificere beskeder underskrevet med det.\n"
+"Er du sikker på du vil fjerne disse certifikater?"
 
 #: cryptui.rc:111
 msgid ""
@@ -2737,6 +2742,9 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Certifikater udstedt af denne certificeringsmyndighed vil ikke længere være "
+"troværdig.\n"
+"Er du sikker på du vil fjerne dette certifikat?"
 
 #: cryptui.rc:112
 msgid ""
@@ -2744,6 +2752,9 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Certifikater udstedt af disse certificeringsmyndigheder vil ikke længere "
+"være troværdig.\n"
+"Er du sikker på du vil fjerne disse certifikater?"
 
 #: cryptui.rc:113
 msgid ""
@@ -2751,6 +2762,9 @@ msgid ""
 "certification authorities it issued, will no longer be trusted.\n"
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
+"Certifikater udstedt af denne rodcertificeringsmyndighed eller enhver "
+"certificeringsmyndighed det udstedte vil ikke længere være troværdig.\n"
+"Er du sikker du vil fjerne dette troværdige rodcertifikat?"
 
 #: cryptui.rc:114
 msgid ""
@@ -2758,87 +2772,93 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
+"Certifikater udstedt af disse rodcertificeringsmyndigheder eller enhver "
+"certificeringsmyndighed de udstedte vil ikke længere være troværdig.\n"
+"Er du sikker på du vil fjerne disse troværdige rodcertifikater?"
 
 #: cryptui.rc:115
 msgid ""
 "Software signed by this publisher will no longer be trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Software underskrevet af denne udgiver vil ikke længere være troværdig.\n"
+"Er du sikker du på du vil fjerne dette certifikat?"
 
 #: cryptui.rc:116
 msgid ""
 "Software signed by these publishers will no longer be trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Software underskrevet af disse udgivere vil ikke længere være troværdig.\n"
+"Er du sikker på du vil fjerne disse certifikater?"
 
 #: cryptui.rc:117
 msgid "Are you sure you want to remove this certificate?"
-msgstr ""
+msgstr "Er du sikker på du vil fjerne dette certifikat?"
 
 #: cryptui.rc:118
 msgid "Are you sure you want to remove these certificates?"
-msgstr ""
+msgstr "Er du sikkert på du vil fjerne disse certifikater?"
 
 #: cryptui.rc:121
 msgid "Ensures the identity of a remote computer"
-msgstr ""
+msgstr "Sikrer identiteten af en fjern computer"
 
 #: cryptui.rc:122
 msgid "Proves your identity to a remote computer"
-msgstr ""
+msgstr "Beviser din identitet til en fjern computer"
 
 #: cryptui.rc:123
 msgid ""
 "Ensures software came from software publisher\n"
 "Protects software from alteration after publication"
 msgstr ""
+"Sikrer software kom fra software udgiver\n"
+"Beskytter software fra ændring efter offentliggørelse"
 
 #: cryptui.rc:124
 msgid "Protects e-mail messages"
-msgstr ""
+msgstr "Beskytter e-mail beskeder"
 
 #: cryptui.rc:125
 msgid "Allows secure communication over the Internet"
-msgstr ""
+msgstr "Tillader sikker kommunikation over internettet"
 
 #: cryptui.rc:126
 msgid "Allows data to be signed with the current time"
-msgstr ""
+msgstr "Tillader data at blive underskrevet med nuværende tid"
 
 #: cryptui.rc:127
 msgid "Allows you to digitally sign a certificate trust list"
-msgstr ""
+msgstr "Tillader dig digitalt, at underskrive en certifikat troværdighedsliste"
 
 #: cryptui.rc:128
 msgid "Allows data on disk to be encrypted"
-msgstr ""
+msgstr "Tillader data på disken at blive krypteret"
 
 #: cryptui.rc:144
 msgid "Private Key Archival"
-msgstr ""
+msgstr "Privat nøglearkivering"
 
 #: cryptui.rc:148
 msgid "Export Format"
-msgstr ""
+msgstr "Eksporter format"
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
-msgstr ""
+msgstr "Vælg formatet, som indholdet vil blive gemt i."
 
 #: cryptui.rc:150
 msgid "Export Filename"
-msgstr ""
+msgstr "Eksporter filnavn"
 
 #: cryptui.rc:151
 msgid "Specify the name of the file in which the content will be saved."
-msgstr ""
+msgstr "Angiv navnet af filen, som indholdet vil blive gemt i."
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
-msgstr ""
-"Filen findes allerede.\n"
-"Vil du erstatte den?"
+msgstr "Filen findes allerede. Vil du erstatte den?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -2858,59 +2878,60 @@ msgstr ""
 
 #: cryptui.rc:159
 msgid "Serialized Certificate Store (*.sst)"
-msgstr ""
+msgstr "Serialiseret certifikatlager (*.sst)"
 
 #: cryptui.rc:160
 msgid "File Format"
-msgstr ""
+msgstr "Fil format"
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
-msgstr ""
+msgstr "Inkluder alle certifikater i certifikatsti"
 
 #: cryptui.rc:162
 msgid "Export keys"
-msgstr ""
+msgstr "Eksporter nøgler"
 
 #: cryptui.rc:165
-#, fuzzy
 msgid "The export was successful."
-msgstr "Tjenesten «%s» startede vellykket.\n"
+msgstr "Eksporteringen var vellykket."
 
 #: cryptui.rc:166
 msgid "The export failed."
-msgstr ""
+msgstr "Eksporteringen fejlede."
 
 #: cryptui.rc:167
 msgid "Export Private Key"
-msgstr ""
+msgstr "Eksporter privatnøgle"
 
 #: cryptui.rc:168
 msgid ""
 "The certificate contains a private key which may be exported along with the "
 "certificate."
 msgstr ""
+"Certifikatet indeholder en privatnøgle der kan eksporteres sammen med "
+"certifikatet."
 
 #: cryptui.rc:169
 msgid "Enter Password"
-msgstr ""
+msgstr "Indtast kodeord"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
-msgstr ""
+msgstr "Du kan beskytte en privatnøgle med et kodeord."
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
-msgstr ""
+msgstr "Kodeordene matcher ikke."
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
-msgstr ""
+msgstr "Bemærk: Privatnøglen for dette certifikat kunne ikke blive åbnet."
 
 #: cryptui.rc:173
 #, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
-msgstr "Det specificerede enheds handle er ugyldigt."
+msgstr "Bemærk: Privatnøglen for dette certifikat kan ikke eksporteres."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -2931,26 +2952,26 @@ msgstr "Standard MidiOut Enhed"
 #: dinput.rc:40
 #, fuzzy
 msgid "Configure Devices"
-msgstr "&Opsætning..."
+msgstr "Konfigurer enheder"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Nulstil"
 
 #: dinput.rc:48
 #, fuzzy
 msgid "Player"
-msgstr "Afspil"
+msgstr "Afspiller"
 
 #: dinput.rc:49
 #, fuzzy
 msgid "Device"
-msgstr "De&vice:"
+msgstr "Enhed"
 
 #: dinput.rc:50
 #, fuzzy
 msgid "Actions"
-msgstr "Aktivering"
+msgstr "Handlinger"
 
 #: dinput.rc:51
 #, fuzzy
@@ -2960,12 +2981,12 @@ msgstr "Peger på"
 #: dinput.rc:53
 #, fuzzy
 msgid "Show Assigned First"
-msgstr "Allerede tildelt\n"
+msgstr "Vis tildelt først"
 
 #: dinput.rc:34
 #, fuzzy
 msgid "Action"
-msgstr "Aktivering"
+msgstr "Handling"
 
 #: dinput.rc:35
 #, fuzzy
@@ -2975,7 +2996,7 @@ msgstr "&Objekt"
 #: dxdiagn.rc:25
 #, fuzzy
 msgid "Regional Setting"
-msgstr "Standard indstillinger"
+msgstr "Regional indstilling"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
@@ -2983,48 +3004,48 @@ msgstr ""
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Vestlige"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Central europæer"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Syrisk"
 
 #: gdi32.rc:28
 #, fuzzy
 msgid "Greek"
-msgstr "Grøn"
+msgstr "Græsk"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Tyrkisk"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "Hebraisk"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Arabisk"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Baltisk"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamesisk"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Thair"
 
 #: gdi32.rc:35
 msgid "Japanese"
-msgstr ""
+msgstr "Japansk"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
@@ -3032,7 +3053,7 @@ msgstr ""
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "Hangul"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
@@ -3056,7 +3077,7 @@ msgstr "Filer på kamera"
 
 #: gphoto2.rc:31
 msgid "Import Selected"
-msgstr "Importér valgte"
+msgstr "Importer valgte"
 
 #: gphoto2.rc:32
 msgid "Preview"
@@ -3064,7 +3085,7 @@ msgstr "Forhåndsvisning"
 
 #: gphoto2.rc:33
 msgid "Import All"
-msgstr "Importér alt"
+msgstr "Importer alt"
 
 #: gphoto2.rc:34
 msgid "Skip This Dialog"
@@ -3092,31 +3113,24 @@ msgstr "Tilslutter til kamera... Vent venligst"
 
 #: hhctrl.rc:56
 msgid "S&ync"
-msgstr ""
+msgstr "S&ynkroniser"
 
 #: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
-#, fuzzy
 msgid "&Back"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Til&bage\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Tilbage"
+msgstr "Til&bage"
 
 #: hhctrl.rc:58
-#, fuzzy
 msgid "&Forward"
-msgstr "Frem"
+msgstr "&Frem"
 
 #: hhctrl.rc:59
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
-msgstr "Hjem"
+msgstr "&Hjem"
 
 #: hhctrl.rc:60
 msgid "&Stop"
-msgstr ""
+msgstr "&Stop"
 
 #: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
@@ -3144,11 +3158,11 @@ msgstr "Favor&itter"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "Skjul &faner"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "Vis &faner"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -3163,20 +3177,14 @@ msgid "Stop"
 msgstr "Stop"
 
 #: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
-#, fuzzy
 msgid "Refresh"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Opdatér\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Opdater"
+msgstr "Opdater"
 
 #: hhctrl.rc:43 ieframe.rc:63
 msgid "Back"
 msgstr "Tilbage"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
 msgstr "Hjem"
@@ -3186,13 +3194,8 @@ msgid "Sync"
 msgstr "Synkroniser"
 
 #: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
-#, fuzzy
 msgid "Options"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Indstillinger\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Alternativer"
+msgstr "Indstillinger"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
@@ -3205,13 +3208,8 @@ msgstr "Cinepak videokodeks"
 #: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
 #: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
 #: wordpad.rc:26
-#, fuzzy
 msgid "&File"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Fil\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Filer"
+msgstr "&Fil"
 
 #: ieframe.rc:27 regedit.rc:44 regedit.rc:95
 msgid "&New"
@@ -3222,55 +3220,37 @@ msgid "&Window"
 msgstr "Vind&ue"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
-#, fuzzy
 msgid "&Open..."
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Åben\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Å&ben..."
+msgstr "Å&bn..."
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
-#, fuzzy
 msgid "Save &as..."
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Gem so&m...\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Gemme &som..."
+msgstr "Gem so&m..."
 
 #: ieframe.rc:35
-#, fuzzy
 msgid "Print &format..."
-msgstr "Udskriv..."
+msgstr "Udskriv &format..."
 
 #: ieframe.rc:36
-#, fuzzy
 msgid "Pr&int..."
-msgstr "Udskriv..."
+msgstr "Udskr&iv..."
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "&Forhåndsvisning..."
+msgstr "&Forhåndsvisning"
 
 #: ieframe.rc:44
-#, fuzzy
 msgid "&Toolbars"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Værk&tøjlinie\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Værk&tøjslinie"
+msgstr "Værk&tøjslinjer"
 
 #: ieframe.rc:46
 #, fuzzy
 msgid "&Standard bar"
-msgstr "&Statuslinie"
+msgstr "&Statuslinje"
 
 #: ieframe.rc:47
 msgid "&Address bar"
-msgstr ""
+msgstr "&Adressebar"
 
 #: ieframe.rc:50 regedit.rc:71
 msgid "&Favorites"
@@ -3282,21 +3262,20 @@ msgstr "Tilføj til f&avoritter..."
 
 #: ieframe.rc:57
 msgid "&About Internet Explorer"
-msgstr ""
+msgstr "&Om Internet Explorer"
 
 #: ieframe.rc:87
 #, fuzzy
 msgid "Open URL"
-msgstr "Åben &link"
+msgstr "Åbn &link"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr ""
+msgstr "Angiv det URL du ønsker at åbne i Internet Explorer"
 
 #: ieframe.rc:91
-#, fuzzy
 msgid "Open:"
-msgstr "Åben"
+msgstr "Åbn:"
 
 #: ieframe.rc:67
 #, fuzzy
@@ -3310,78 +3289,80 @@ msgstr "Udskriv..."
 
 #: ieframe.rc:73
 msgid "Address"
-msgstr ""
+msgstr "Adresse"
 
 #: ieframe.rc:78
 #, fuzzy
 msgid "Searching for %s"
-msgstr "Egenskaper for %s"
+msgstr "Egenskaber for %s"
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
-msgstr ""
+msgstr "Start nedhentning %s"
 
 #: ieframe.rc:80
 #, fuzzy
 msgid "Downloading %s"
-msgstr "Henter..."
+msgstr "Henter %s"
 
 #: ieframe.rc:81
 #, fuzzy
 msgid "Asking for %s"
-msgstr "Egenskaper for %s"
+msgstr "Spørger for %s"
 
 #: inetcpl.rc:46
 #, fuzzy
 msgid "Home page"
-msgstr "Én side"
+msgstr "Startside"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr ""
+msgstr "Du kan vælge adressen der vil blive brugt som din startside."
 
 #: inetcpl.rc:50
 #, fuzzy
 msgid "&Current page"
-msgstr "Næste side"
+msgstr "Nuværende side"
 
 #: inetcpl.rc:51
 #, fuzzy
 msgid "&Default page"
-msgstr "(Standard)"
+msgstr "Standard side"
 
 #: inetcpl.rc:52
 #, fuzzy
 msgid "&Blank page"
-msgstr "Én side"
+msgstr "Blank side"
 
 #: inetcpl.rc:53
 #, fuzzy
 msgid "Browsing history"
-msgstr "Kommando historik"
+msgstr "Historik"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr ""
+msgstr "Du kan slette cachede sider, cookies og andet data."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr ""
+msgstr "Slet &filer..."
 
 #: inetcpl.rc:57
 #, fuzzy
 msgid "&Settings..."
-msgstr "&Alternativer..."
+msgstr "&Indstillinger..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr ""
+msgstr "Slet historik"
 
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
+"Midlertidige internet filer\n"
+"Cachede kopier af sider, billeder og certifikater."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3389,24 +3370,33 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"Cookies\n"
+"Filer gemt på din computer af hjemmesider, som indeholder ting som bruger "
+"præferencer og login information."
 
 #: inetcpl.rc:72
 msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"Historie\n"
+"Liste af hjemmesider du har besøgt."
 
 #: inetcpl.rc:74
 msgid ""
 "Form data\n"
 "Usernames and other information you have entered into forms."
 msgstr ""
+"Form data\n"
+"Brugernavne og andet information du har indtastet i former."
 
 #: inetcpl.rc:76
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
+"Kodeord\n"
+"Gemte kodeord du har indtastet i former."
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -3421,42 +3411,40 @@ msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
 msgstr ""
+"Certifikater er brugt til din personlige identifikation og til at "
+"identificere certifikatmyndigheder og udgivere."
 
 #: inetcpl.rc:111
 #, fuzzy
 msgid "Certificates..."
-msgstr "Egenskaper for &celle"
+msgstr "Certifikater..."
 
 #: inetcpl.rc:112
 #, fuzzy
 msgid "Publishers..."
-msgstr "Udgiver"
+msgstr "Udgivere..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
-msgstr ""
+msgstr "Internet indstillinger"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
-msgstr ""
+msgstr "Konfigurer Wine Internet Browser og relaterede indstillinger"
 
 #: inetcpl.rc:30
 #, fuzzy
 msgid "Security settings for zone: "
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Gem ændringer ved af&slutting\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Gem ind&stillinger ved afslutning"
+msgstr "Sikkerhedsindstillinger for zone: "
 
 #: inetcpl.rc:31
 #, fuzzy
 msgid "Custom"
-msgstr "Tilpas"
+msgstr "Brugerdefineret"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Meget lav"
 
 #: inetcpl.rc:33
 #, fuzzy
@@ -3465,11 +3453,11 @@ msgstr "&Lav"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Medium"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Øget"
 
 #: inetcpl.rc:36
 #, fuzzy
@@ -3486,12 +3474,12 @@ msgstr "Ugyldig procedure kald eller argument"
 
 #: jscript.rc:27
 msgid "Subscript out of range"
-msgstr ""
+msgstr "Indekset er uden for rækkevidde"
 
 #: jscript.rc:28
 #, fuzzy
 msgid "Object required"
-msgstr "objekt forventet"
+msgstr "Objekt krævet"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -3528,28 +3516,28 @@ msgstr "Forventet ')'"
 
 #: jscript.rc:37
 msgid "Unterminated string constant"
-msgstr "Uafsluttet streng konstant"
+msgstr "Uafsluttet strengkonstant"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "Kan ikke have 'break' udenfor en løkke"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "Kan ikke have 'continue' udenfor en løkke"
 
 #: jscript.rc:40
 msgid "Label redefined"
-msgstr ""
+msgstr "Etiket omdefineret"
 
 #: jscript.rc:41
 #, fuzzy
 msgid "Label not found"
-msgstr "Kunne ikke finde filen"
+msgstr "Etiket ikke fundet"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
-msgstr ""
+msgstr "Betinget kompilering er slået fra"
 
 #: jscript.rc:45
 msgid "Number expected"
@@ -3561,11 +3549,11 @@ msgstr "Funktion forventet"
 
 #: jscript.rc:44
 msgid "'[object]' is not a date object"
-msgstr "[objekt]' er ikke en dato objekt"
+msgstr "'[objekt]' er ikke et dato objekt"
 
 #: jscript.rc:46
 msgid "Object expected"
-msgstr "objekt forventet"
+msgstr "Objekt forventet"
 
 #: jscript.rc:47
 msgid "Illegal assignment"
@@ -3577,17 +3565,17 @@ msgstr "'|' er ikke defineret"
 
 #: jscript.rc:49
 msgid "Boolean object expected"
-msgstr "Boolean objekt forventet"
+msgstr "Boolsk objekt forventet"
 
 #: jscript.rc:50
 #, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Kan ikke fuldføre\n"
+msgstr "Kan ikke slette '|'"
 
 #: jscript.rc:51
 #, fuzzy
 msgid "VBArray object expected"
-msgstr "Array objekt forventet"
+msgstr "VBArray objekt forventet"
 
 #: jscript.rc:52
 msgid "JScript object expected"
@@ -3595,7 +3583,7 @@ msgstr "JScript objekt forventet"
 
 #: jscript.rc:53
 msgid "Syntax error in regular expression"
-msgstr "Syntax fejl i regulært udtryk"
+msgstr "Syntaksfejl i regulært udtryk"
 
 #: jscript.rc:55
 msgid "URI to be encoded contains invalid characters"
@@ -3616,7 +3604,7 @@ msgstr "Array objekt forventet"
 
 #: winerror.mc:26
 msgid "Success.\n"
-msgstr ""
+msgstr "Vellykket.\n"
 
 #: winerror.mc:31
 msgid "Invalid function.\n"
@@ -3640,7 +3628,7 @@ msgstr "Adgang nægtet.\n"
 
 #: winerror.mc:56
 msgid "Invalid handle.\n"
-msgstr "Ugyldig handle.\n"
+msgstr "Ugyldig handling.\n"
 
 #: winerror.mc:61
 msgid "Memory trashed.\n"
@@ -3796,7 +3784,7 @@ msgstr "For mange kommandoer.\n"
 
 #: winerror.mc:251
 msgid "Adaptor hardware error.\n"
-msgstr "Hardware adaptor fejl.\n"
+msgstr "Hardware adapterfejl.\n"
 
 #: winerror.mc:256
 msgid "Bad network response.\n"
@@ -3808,7 +3796,7 @@ msgstr "Uventet netværksfejl.\n"
 
 #: winerror.mc:266
 msgid "Bad remote adaptor.\n"
-msgstr "Forkert fjern adaptor.\n"
+msgstr "Forkert fjernadapter.\n"
 
 #: winerror.mc:271
 msgid "Print queue full.\n"
@@ -3880,7 +3868,7 @@ msgstr "Allerede tildelt.\n"
 
 #: winerror.mc:356 winerror.mc:1711
 msgid "Invalid password.\n"
-msgstr "Ugyldig adgangskode.\n"
+msgstr "Ugyldig kodeord.\n"
 
 #: winerror.mc:361
 msgid "Invalid parameter.\n"
@@ -4000,7 +3988,7 @@ msgstr "Ingen Børn at vente på.\n"
 
 #: winerror.mc:511
 msgid "Child process has not completed.\n"
-msgstr "Børne processor er ikke færdig.\n"
+msgstr "Børneproces er ikke færdig.\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle.\n"
@@ -4149,7 +4137,7 @@ msgstr "Annullerings krænkelse.\n"
 
 #: winerror.mc:701
 msgid "Atomic locks not supported.\n"
-msgstr "Atomic låse ikke understøttet.\n"
+msgstr "Atomiske låse ikke understøttet.\n"
 
 #: winerror.mc:706
 msgid "Invalid segment number.\n"
@@ -4313,7 +4301,7 @@ msgstr "Ikke mere data tilgengængeligt.\n"
 
 #: winerror.mc:906
 msgid "Cannot use Copy API.\n"
-msgstr "Kan ikke bruge Kopierings API.\n"
+msgstr "Kan ikke bruge Kopierings-API.\n"
 
 #: winerror.mc:911
 msgid "Directory name invalid.\n"
@@ -4491,7 +4479,7 @@ msgstr "Undernøglen skal være flygtig.\n"
 
 #: winerror.mc:1126
 msgid "Notify change request in progress.\n"
-msgstr "Advisér anmodning om ændring i gang.\n"
+msgstr "Adviser anmodning om ændring i gang.\n"
 
 #: winerror.mc:1131
 msgid "Dependent services are running.\n"
@@ -4543,7 +4531,7 @@ msgstr "Service ikke aktiv.\n"
 
 #: winerror.mc:1191
 msgid "Service controller connect failed.\n"
-msgstr "Service controller tilslutning mislykkedes.\n"
+msgstr "Service kontrollør tilslutning mislykkedes.\n"
 
 #: winerror.mc:1196
 msgid "Exception in service.\n"
@@ -4604,7 +4592,7 @@ msgstr "Service ikke startet siden sidste boot.\n"
 
 #: winerror.mc:1266
 msgid "Duplicate service name.\n"
-msgstr "Duplikere service navn.\n"
+msgstr "Dublet service navn.\n"
 
 #: winerror.mc:1271
 msgid "Different service account.\n"
@@ -4612,7 +4600,7 @@ msgstr "Forskellige service-konti.\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected.\n"
-msgstr ""
+msgstr "Driver fejl kan ikke blive opdaget.\n"
 
 #: winerror.mc:1281
 #, fuzzy
@@ -4621,12 +4609,12 @@ msgstr "Proces afbrudt.\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service.\n"
-msgstr ""
+msgstr "Intet genopretningsprogram for service.\n"
 
 #: winerror.mc:1291
 #, fuzzy
 msgid "Service not implemented by exe.\n"
-msgstr "Udskrivning er endnu ikke implementeret."
+msgstr "Service er ikke implementeret af exe.\n"
 
 #: winerror.mc:1296
 msgid "End of media.\n"
@@ -4650,7 +4638,7 @@ msgstr "Ingen data opdaget.\n"
 
 #: winerror.mc:1321
 msgid "Partition failure.\n"
-msgstr "Partitions fejl.\n"
+msgstr "Partitionsfejl.\n"
 
 #: winerror.mc:1326
 msgid "Invalid block length.\n"
@@ -4843,7 +4831,7 @@ msgstr "Tjenesten «%s» starter.\n"
 #: winerror.mc:1556
 #, fuzzy
 msgid "The device door is open.\n"
-msgstr "Printer låget er åben; .\n"
+msgstr "Printer låget er åbent.\n"
 
 #: winerror.mc:1561
 #, fuzzy
@@ -4882,15 +4870,15 @@ msgstr "Brugeren eksistere ikke.\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced.\n"
-msgstr ""
+msgstr "Ikke i stand til at fjerne filen der skal erstattes.\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place.\n"
-msgstr ""
+msgstr "Ikke i stand til at flytte erstatningsfilen på plads.\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed.\n"
-msgstr ""
+msgstr "Flytningen af erstatningsfilen fejlede.\n"
 
 #: winerror.mc:1611
 #, fuzzy
@@ -5148,7 +5136,7 @@ msgstr "Lokal bruger sessionsnøgle.\n"
 
 #: winerror.mc:1926
 msgid "Password too complex for LM.\n"
-msgstr "Adgangskoden er for kompleks til LM.\n"
+msgstr "Kodeordet er for kompleks til LM.\n"
 
 #: winerror.mc:1931
 msgid "Unknown revision.\n"
@@ -5156,7 +5144,7 @@ msgstr "Ukendt revision.\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels.\n"
-msgstr "Ukompatibele revisions niveauer.\n"
+msgstr "Ukompatible revisions niveauer.\n"
 
 #: winerror.mc:1941
 msgid "Invalid owner.\n"
@@ -5224,15 +5212,15 @@ msgstr "Kan ikke slette sidste administrator bruger.\n"
 
 #: winerror.mc:2021
 msgid "Wrong password.\n"
-msgstr "Forkert adgangskode.\n"
+msgstr "Forkert kodeord.\n"
 
 #: winerror.mc:2026
 msgid "Ill-formed password.\n"
-msgstr "Ill-formet adgangskode.\n"
+msgstr "Ill-formet kodeord.\n"
 
 #: winerror.mc:2031
 msgid "Password restriction.\n"
-msgstr "Adgangskode begrænsning.\n"
+msgstr "Kodeordsbegrænsning.\n"
 
 #: winerror.mc:2036
 msgid "Logon failure.\n"
@@ -5240,7 +5228,7 @@ msgstr "Logonfejl.\n"
 
 #: winerror.mc:2041
 msgid "Account restriction.\n"
-msgstr "Konto begrænsning.\n"
+msgstr "Kontobegrænsning.\n"
 
 #: winerror.mc:2046
 msgid "Invalid logon hours.\n"
@@ -5252,7 +5240,7 @@ msgstr "Ugyldig arbejdsstation.\n"
 
 #: winerror.mc:2056
 msgid "Password expired.\n"
-msgstr "Adgangskode udløbet.\n"
+msgstr "Kodeord udløbet.\n"
 
 #: winerror.mc:2061
 msgid "Account disabled.\n"
@@ -5356,7 +5344,7 @@ msgstr "Domæne eksisterer allerede.\n"
 
 #: winerror.mc:2186
 msgid "Domain limit exceeded.\n"
-msgstr "Domæne begræsning overskredet.\n"
+msgstr "Domæne begrænsning overskredet.\n"
 
 #: winerror.mc:2191
 msgid "Internal database corruption.\n"
@@ -5384,7 +5372,7 @@ msgstr "Logon sessions ID eksisterer.\n"
 
 #: winerror.mc:2221
 msgid "Unknown authentication package.\n"
-msgstr "Ukendt autentificering pakke.\n"
+msgstr "Ukendt godkendelsespakke.\n"
 
 #: winerror.mc:2226
 msgid "Bad logon session state.\n"
@@ -5452,7 +5440,7 @@ msgstr "Login type blev ikke tildelt.\n"
 
 #: winerror.mc:2306
 msgid "Too many secrets.\n"
-msgstr "For mange hemligheder.\n"
+msgstr "For mange hemmeligheder.\n"
 
 #: winerror.mc:2311
 msgid "Secret too long.\n"
@@ -5468,7 +5456,7 @@ msgstr "Alt for mange sammenhængs id'er.\n"
 
 #: winerror.mc:2331
 msgid "Cross-encrypted NT password required.\n"
-msgstr "Kryds krypteret NT adgangskode påkræves.\n"
+msgstr "Kryds krypteret NT kodeord påkræves.\n"
 
 #: winerror.mc:2336
 msgid "No such member.\n"
@@ -5509,16 +5497,16 @@ msgstr "Licens kvote overskrevet.\n"
 #: winerror.mc:2381
 #, fuzzy
 msgid "Wrong target name.\n"
-msgstr "Intet indgangs navn.\n"
+msgstr "Forkert mål navn.\n"
 
 #: winerror.mc:2386
 #, fuzzy
 msgid "Mutual authentication failed.\n"
-msgstr "Ugyldig autentificering identitet.\n"
+msgstr "Gensidig godkendelse mislykkede.\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server.\n"
-msgstr ""
+msgstr "Tid skæv imellem klient og server.\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle.\n"
@@ -5546,7 +5534,7 @@ msgstr "Ugyldig DWP handle.\n"
 
 #: winerror.mc:2426
 msgid "Can't create top-level child window.\n"
-msgstr "Kan ikke oprette top-niveau child vindue.\n"
+msgstr "Kan ikke oprette top-niveau børnevindue.\n"
 
 #: winerror.mc:2431
 msgid "Can't find window class.\n"
@@ -5603,7 +5591,7 @@ msgstr "Genvejstest ikke registret.\n"
 
 #: winerror.mc:2496
 msgid "Not a dialog window.\n"
-msgstr "Ke et dialogvindue.\n"
+msgstr "Ikke et dialogvindue.\n"
 
 #: winerror.mc:2501
 msgid "Control ID not found.\n"
@@ -5631,7 +5619,7 @@ msgstr "Ugyldig hook filter.\n"
 
 #: winerror.mc:2531
 msgid "Invalid filter procedure.\n"
-msgstr ""
+msgstr "Ugyldig filter procedure.\n"
 
 #: winerror.mc:2536
 msgid "Hook procedure needs module handle.\n"
@@ -5739,7 +5727,7 @@ msgstr "Ingen paged system ressourcer.\n"
 
 #: winerror.mc:2661
 msgid "No working set quota.\n"
-msgstr "Ingen working set kvota.\n"
+msgstr "Intet arbejdssæt kvota.\n"
 
 #: winerror.mc:2666
 #, fuzzy
@@ -5807,7 +5795,7 @@ msgstr "Installations Programmer.\n"
 #: winerror.mc:2736
 #, fuzzy
 msgid "Installation failure.\n"
-msgstr "Partitions fejl.\n"
+msgstr "Partitionsfejl.\n"
 
 #: winerror.mc:2741
 #, fuzzy
@@ -5837,21 +5825,21 @@ msgstr "Ukendt port.\n"
 #: winerror.mc:2766
 #, fuzzy
 msgid "Invalid handle state.\n"
-msgstr "Ugyldig handle.\n"
+msgstr "Ugyldig handling.\n"
 
 #: winerror.mc:2771
 #, fuzzy
 msgid "Bad configuration.\n"
-msgstr "Wine configurering.\n"
+msgstr "Dårlig konfiguration.\n"
 
 #: winerror.mc:2776
 msgid "Index is missing.\n"
-msgstr ""
+msgstr "Indeks mangler.\n"
 
 #: winerror.mc:2781
 #, fuzzy
 msgid "Installation source is missing.\n"
-msgstr "featurens installationskilde mangler."
+msgstr "Installationskilde mangler.\n"
 
 #: winerror.mc:2786
 #, fuzzy
@@ -5885,7 +5873,7 @@ msgstr "Servicen kører allerede.\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open.\n"
-msgstr ""
+msgstr "Installationspakke kunne ikke åbne.\n"
 
 #: winerror.mc:2821
 #, fuzzy
@@ -5898,7 +5886,7 @@ msgstr ""
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file.\n"
-msgstr ""
+msgstr "Kunne ikke åbne installationslogfil.\n"
 
 #: winerror.mc:2836
 #, fuzzy
@@ -5961,7 +5949,7 @@ msgstr "Interface ikke fundet.\n"
 #: winerror.mc:2896
 #, fuzzy
 msgid "Failed to open the patch package.\n"
-msgstr "Kunne ikke åbne «%s».\n"
+msgstr "Kunne ikke åbne patch pakken.\n"
 
 #: winerror.mc:2901
 #, fuzzy
@@ -5985,15 +5973,15 @@ msgstr "Ugyldig GW kommando.\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed.\n"
-msgstr ""
+msgstr "Fjerninstallation er ikke tilladt.\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install.\n"
-msgstr ""
+msgstr "Genstart er sat igang efter vellykket installering.\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding.\n"
-msgstr "Ugyldig streng bindning.\n"
+msgstr "Ugyldig streng binding.\n"
 
 #: winerror.mc:2936
 msgid "Wrong kind of binding.\n"
@@ -6065,7 +6053,7 @@ msgstr "Ukendt interface.\n"
 
 #: winerror.mc:3021
 msgid "No bindings.\n"
-msgstr "Ingen bindninger.\n"
+msgstr "Ingen bindinger.\n"
 
 #: winerror.mc:3026
 msgid "No protocol sequences.\n"
@@ -6117,7 +6105,7 @@ msgstr "Ugyldigt tag.\n"
 
 #: winerror.mc:3091
 msgid "Invalid array bounds.\n"
-msgstr "Ugyldige tabelgrænser.\n"
+msgstr "Ugyldige array-grænser.\n"
 
 #: winerror.mc:3096
 msgid "No entry name.\n"
@@ -6141,7 +6129,7 @@ msgstr "Duplikere endpoint.\n"
 
 #: winerror.mc:3121
 msgid "Unknown authentication type.\n"
-msgstr "Ukendt Godkendelsestype.\n"
+msgstr "Ukendt godkendelsestype.\n"
 
 #: winerror.mc:3126
 msgid "Maximum calls too low.\n"
@@ -6157,15 +6145,15 @@ msgstr "Protokol sekvens ikke fundet.\n"
 
 #: winerror.mc:3141
 msgid "Procedure number out of range.\n"
-msgstr "Procedure nummere uden for rækkevidde.\n"
+msgstr "Procedure nummer uden for rækkevidde.\n"
 
 #: winerror.mc:3146
 msgid "Binding has no authentication data.\n"
-msgstr "Bindning har ingen godkendelse data.\n"
+msgstr "Binding har ingen godkendelsesdata.\n"
 
 #: winerror.mc:3151
 msgid "Unknown authentication service.\n"
-msgstr "Ukendt autentificering service.\n"
+msgstr "Ukendt godkendelsesservice.\n"
 
 #: winerror.mc:3156
 msgid "Unknown authentication level.\n"
@@ -6173,11 +6161,11 @@ msgstr "Ukendt godkendelsesniveau.\n"
 
 #: winerror.mc:3161
 msgid "Invalid authentication identity.\n"
-msgstr "Ugyldig autentificering identitet.\n"
+msgstr "Ugyldig godkendelsesidentitet.\n"
 
 #: winerror.mc:3166
 msgid "Unknown authorisation service.\n"
-msgstr "Ukendt tilladelses service.\n"
+msgstr "Ukendt tilladelsesservice.\n"
 
 #: winerror.mc:3171
 msgid "Invalid entry.\n"
@@ -6209,7 +6197,7 @@ msgstr "Ikke flere medlemmer.\n"
 
 #: winerror.mc:3206
 msgid "Not all objects unexported.\n"
-msgstr "Ikke alle objekter var exporteret.\n"
+msgstr "Ikke alle objekter var eksporteret.\n"
 
 #: winerror.mc:3211
 msgid "Interface not found.\n"
@@ -6285,7 +6273,7 @@ msgstr "Baggrunds handle ødelagt.\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch.\n"
-msgstr "Bindnings handle passede ikke.\n"
+msgstr "Binding handle passede ikke.\n"
 
 #: winerror.mc:3306
 msgid "Cannot get call handle.\n"
@@ -6317,7 +6305,7 @@ msgstr "Ukendt media.\n"
 
 #: winerror.mc:3341
 msgid "No trust secret.\n"
-msgstr "Der er ingen tillids hemmelighed tilgængelig.\n"
+msgstr "Der er ingen tillidshemmelighed tilgængelig.\n"
 
 #: winerror.mc:3346
 msgid "No trust SAM account.\n"
@@ -6325,11 +6313,11 @@ msgstr "Der er ingen tillids SAM konto tilgængelig.\n"
 
 #: winerror.mc:3351
 msgid "Trusted domain failure.\n"
-msgstr "Fejl i tillids domænet.\n"
+msgstr "Fejl i tillidsdomænet.\n"
 
 #: winerror.mc:3356
 msgid "Trusted relationship failure.\n"
-msgstr "Fejl i tillids forholdet.\n"
+msgstr "Fejl i tillidsforholdet.\n"
 
 #: winerror.mc:3361
 msgid "Trust logon failure.\n"
@@ -6381,7 +6369,7 @@ msgstr "Ugyldigt printer navn.\n"
 
 #: winerror.mc:3421
 msgid "Printer already exists.\n"
-msgstr ""
+msgstr "Printer findes allerede.\n"
 
 #: winerror.mc:3426
 msgid "Invalid printer command.\n"
@@ -6482,7 +6470,7 @@ msgstr "Tråd ikke aflyst.\n"
 
 #: winerror.mc:3546
 msgid "Invalid handle operation.\n"
-msgstr "Ugyldig handle operation.\n"
+msgstr "Ugyldig handlingsoperation.\n"
 
 #: winerror.mc:3551
 msgid "Wrong serialising package version.\n"
@@ -6601,7 +6589,7 @@ msgstr "Ingen sikkerheds sammenhæng til rådighed.\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed.\n"
-msgstr ""
+msgstr "Filen kan ikke åbnes.\n"
 
 #: winerror.mc:3691
 #, fuzzy
@@ -6616,7 +6604,7 @@ msgstr "Maskintype passer ikke.\n"
 #: winerror.mc:3701
 #, fuzzy
 msgid "Not all objects could be exported.\n"
-msgstr "Ikke alle objekter var exporteret.\n"
+msgstr "Ikke alle objekter var eksporteret.\n"
 
 #: winerror.mc:3706
 #, fuzzy
@@ -6699,7 +6687,7 @@ msgstr ""
 
 #: mapi32.rc:29
 msgid "Send Mail"
-msgstr ""
+msgstr "Send mail"
 
 #: mpr.rc:32 wininet.rc:34
 msgid "Enter Network Password"
@@ -6715,7 +6703,7 @@ msgstr "Proxy"
 
 #: mpr.rc:38 wininet.rc:40 wininet.rc:60
 msgid "User"
-msgstr "Brugernavn"
+msgstr "Bruger"
 
 #: mpr.rc:39 wininet.rc:41 wininet.rc:61
 msgid "Password"
@@ -6751,7 +6739,7 @@ msgstr "Hyperlink"
 
 #: mshtml.rc:40
 msgid "Hyperlink Information"
-msgstr "Information om Hyperlink'en"
+msgstr "Information om Hyperlink'et"
 
 #: mshtml.rc:41 winecfg.rc:236
 msgid "&Type:"
@@ -6771,11 +6759,11 @@ msgstr "HTML dokument"
 
 #: mshtml.rc:26
 msgid "Downloading from %s..."
-msgstr ""
+msgstr "Henter fra %s..."
 
 #: mshtml.rc:25
 msgid "Done"
-msgstr ""
+msgstr "Færdig"
 
 #: msi.rc:27
 #, fuzzy
@@ -6902,16 +6890,16 @@ msgstr "Wine Video 1 videokodeks"
 
 #: oleacc.rc:27
 msgid "unknown object"
-msgstr ""
+msgstr "Ukendt objekt"
 
 #: oleacc.rc:28
 #, fuzzy
 msgid "title bar"
-msgstr "Skjul Titel&linie"
+msgstr "Skjul Titel&linje"
 
 #: oleacc.rc:29
 msgid "menu bar"
-msgstr ""
+msgstr "Menu bar"
 
 #: oleacc.rc:30
 #, fuzzy
@@ -6920,23 +6908,23 @@ msgstr "Rul her"
 
 #: oleacc.rc:31
 msgid "grip"
-msgstr ""
+msgstr "Greb"
 
 #: oleacc.rc:32
 msgid "sound"
-msgstr ""
+msgstr "Lyd"
 
 #: oleacc.rc:33
 msgid "cursor"
-msgstr ""
+msgstr "Markør"
 
 #: oleacc.rc:34
 msgid "caret"
-msgstr ""
+msgstr "Karet"
 
 #: oleacc.rc:35
 msgid "alert"
-msgstr ""
+msgstr "Alarm"
 
 #: oleacc.rc:36
 #, fuzzy
@@ -6945,28 +6933,24 @@ msgstr "Vind&ue"
 
 #: oleacc.rc:37
 msgid "client"
-msgstr ""
+msgstr "Klient"
 
 #: oleacc.rc:38
 msgid "popup menu"
-msgstr ""
+msgstr "Popup menu"
 
 #: oleacc.rc:39
 msgid "menu item"
-msgstr ""
+msgstr "Menupunkt"
 
 #: oleacc.rc:40
 msgid "tool tip"
-msgstr ""
+msgstr "Tooltip"
 
 #: oleacc.rc:41
 #, fuzzy
 msgid "application"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Programmer\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Applikationer"
+msgstr "Applikation"
 
 #: oleacc.rc:42
 #, fuzzy
@@ -6975,36 +6959,36 @@ msgstr "Dokument"
 
 #: oleacc.rc:43
 msgid "pane"
-msgstr ""
+msgstr "Rude"
 
 #: oleacc.rc:44
 msgid "chart"
-msgstr ""
+msgstr "diagram"
 
 #: oleacc.rc:45
 msgid "dialog"
-msgstr ""
+msgstr "Dialog"
 
 #: oleacc.rc:46
 msgid "border"
-msgstr ""
+msgstr "Kant"
 
 #: oleacc.rc:47
 msgid "grouping"
-msgstr ""
+msgstr "Gruppering"
 
 #: oleacc.rc:48
 msgid "separator"
-msgstr ""
+msgstr "Separator"
 
 #: oleacc.rc:49
 msgid "tool bar"
-msgstr ""
+msgstr "Toolbar"
 
 #: oleacc.rc:50
 #, fuzzy
 msgid "status bar"
-msgstr "&Statuslinie"
+msgstr "&Statuslinje"
 
 #: oleacc.rc:51
 #, fuzzy
@@ -7013,70 +6997,70 @@ msgstr "Tabel"
 
 #: oleacc.rc:52
 msgid "column header"
-msgstr ""
+msgstr "Kolonnehoved"
 
 #: oleacc.rc:53
 msgid "row header"
-msgstr ""
+msgstr "Rækkehoved"
 
 #: oleacc.rc:54
 #, fuzzy
 msgid "column"
-msgstr "&Kolone"
+msgstr "&Kolonne"
 
 #: oleacc.rc:55
 msgid "row"
-msgstr ""
+msgstr "Række"
 
 #: oleacc.rc:56
 msgid "cell"
-msgstr ""
+msgstr "Celle"
 
 #: oleacc.rc:57
 msgid "link"
-msgstr ""
+msgstr "Link"
 
 #: oleacc.rc:58
 msgid "help balloon"
-msgstr ""
+msgstr "Hjælpe ballon"
 
 #: oleacc.rc:59
 #, fuzzy
 msgid "character"
-msgstr "Tegn&format"
+msgstr "Tegn"
 
 #: oleacc.rc:60
 msgid "list"
-msgstr ""
+msgstr "Liste"
 
 #: oleacc.rc:61
 msgid "list item"
-msgstr ""
+msgstr "Listepunkt"
 
 #: oleacc.rc:62
 msgid "outline"
-msgstr ""
+msgstr "Skitse"
 
 #: oleacc.rc:63
 msgid "outline item"
-msgstr ""
+msgstr "Skitsepunkt"
 
 #: oleacc.rc:64
 msgid "page tab"
-msgstr ""
+msgstr "Sidefane"
 
 #: oleacc.rc:65
 #, fuzzy
 msgid "property page"
-msgstr "Næste side"
+msgstr "Ejendom side"
 
 #: oleacc.rc:66
 msgid "indicator"
-msgstr ""
+msgstr "Indikator"
 
 #: oleacc.rc:67
 msgid "graphic"
-msgstr ""
+msgstr "Grafik"
 
 #: oleacc.rc:68
 #, fuzzy
@@ -7090,76 +7074,76 @@ msgstr "&Hent tekst"
 
 #: oleacc.rc:70
 msgid "push button"
-msgstr ""
+msgstr "Tryk knap"
 
 #: oleacc.rc:71
 msgid "check button"
-msgstr ""
+msgstr "Tjek knap"
 
 #: oleacc.rc:72
 msgid "radio button"
-msgstr ""
+msgstr "Radio knap"
 
 #: oleacc.rc:73
 msgid "combo box"
-msgstr ""
+msgstr "Kombo boks"
 
 #: oleacc.rc:74
 msgid "drop down"
-msgstr ""
+msgstr "Dropdown"
 
 #: oleacc.rc:75
 msgid "progress bar"
-msgstr ""
+msgstr "Fremgangsbar"
 
 #: oleacc.rc:76
 msgid "dial"
-msgstr ""
+msgstr "Ring"
 
 #: oleacc.rc:77
 msgid "hot key field"
-msgstr ""
+msgstr "Hotkey felt"
 
 #: oleacc.rc:78
 msgid "slider"
-msgstr ""
+msgstr "Slider"
 
 #: oleacc.rc:79
 msgid "spin box"
-msgstr ""
+msgstr "Spin boks"
 
 #: oleacc.rc:80
 msgid "diagram"
-msgstr ""
+msgstr "Diagram"
 
 #: oleacc.rc:81
 #, fuzzy
 msgid "animation"
-msgstr "Information"
+msgstr "Animation"
 
 #: oleacc.rc:82
 msgid "equation"
-msgstr ""
+msgstr "Ligning"
 
 #: oleacc.rc:83
 msgid "drop down button"
-msgstr ""
+msgstr "Dropdown knap"
 
 #: oleacc.rc:84
 msgid "menu button"
-msgstr ""
+msgstr "Menu knap"
 
 #: oleacc.rc:85
 msgid "grid drop down button"
-msgstr ""
+msgstr "Gitter dropdown knap"
 
 #: oleacc.rc:86
 msgid "white space"
-msgstr ""
+msgstr "Mellemrum"
 
 #: oleacc.rc:87
 msgid "page tab list"
-msgstr ""
+msgstr "Sidefane liste"
 
 #: oleacc.rc:88
 #, fuzzy
@@ -7168,15 +7152,15 @@ msgstr "Ur"
 
 #: oleacc.rc:89
 msgid "split button"
-msgstr ""
+msgstr "Opdel knap"
 
 #: oleacc.rc:90 ipconfig.rc:33
 msgid "IP address"
-msgstr ""
+msgstr "IP adresse"
 
 #: oleacc.rc:91
 msgid "outline button"
-msgstr ""
+msgstr "Skitse knap"
 
 #: oleaut32.rc:27 oleview.rc:144
 msgid "True"
@@ -7185,11 +7169,7 @@ msgstr "Sand"
 #: oleaut32.rc:28 oleview.rc:145
 #, fuzzy
 msgid "False"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Falsk\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Falst"
+msgstr "Falsk"
 
 #: oleaut32.rc:31
 msgid "On"
@@ -7305,51 +7285,48 @@ msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
-"Indsætter indholdet fra klippebordet ind i dokumentet, så du kan aktivere "
+"Indsætter indholdet fra udklipsholderen ind i dokumentet, så du kan aktivere "
 "det med %s."
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
-"Indsætter indholdet fra klippebordet ind i dokumentet, så du kan aktivere "
-"det med %s. Det vises som et ikon."
+"Indsætter indholdet fra udklipsholderen ind i dokumentet, så du kan aktivere "
+"det med %s. Det vil blive vist som et ikon."
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"Indsætter indholdet fra klippebordet ind i dokumentet som %s. Den kobles til "
-"kildefilen så ændreringer også sker i dokumentet."
+"Indsætter indholdet fra udklipsholderen ind i dokumentet som %s. Dataen er "
+"koblet til kildefilen så ændringer også sker i dit dokument."
 
 #: oledlg.rc:38
-#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"Indsætter et billede af klippebordet i dokumentet. Billedet kobles til "
+"Indsætter et billede af udklipsholderen i dokumentet. Billedet kobles til "
 "kildefilen så ændringer også sker i dokumentet ."
 
 #: oledlg.rc:39
-#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"Indsætter en genvej som peger på placeringen af indholdet på klippebordet. "
-"Genvejen kobles til kildefilen så ændringer også sker i dokumentet."
+"Indsætter en genvej, som peger på placeringen af indholdet i "
+"udklipsholderen. Genvejen kobles til kildefilen så ændringer også sker i "
+"dokumentet."
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
-msgstr "Indsætter indholdet fra klippebordet ind i dokumentet."
+msgstr "Indsætter indholdet fra udklipsholderen ind i dokumentet."
 
 #: oledlg.rc:41
 msgid "Unknown Type"
@@ -7399,7 +7376,7 @@ msgstr "µs"
 #: serialui.rc:25
 #, fuzzy
 msgid "Settings for %s"
-msgstr "Egenskaper for %s"
+msgstr "Egenskaber for %s"
 
 #: serialui.rc:28
 msgid "Baud Rate"
@@ -7485,11 +7462,7 @@ msgstr "Brug som skrivebor&dsobjekt"
 #: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
 #, fuzzy
 msgid "Select &All"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Markér &alt\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Marker &Alt"
+msgstr "Markér &alt"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -7513,11 +7486,11 @@ msgstr "Udskr&iv"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
-msgstr "Åben &link"
+msgstr "Åbn &link"
 
 #: shdoclc.rc:64 shdoclc.rc:147 shdoclc.rc:171
 msgid "Open Link in &New Window"
-msgstr "Åben link i &nyt vindue"
+msgstr "Åbn link i &nyt vindue"
 
 #: shdoclc.rc:65 shdoclc.rc:126 shdoclc.rc:148 shdoclc.rc:172
 msgid "Save Target &As..."
@@ -7565,11 +7538,7 @@ msgstr "&Klip"
 #: wordpad.rc:102
 #, fuzzy
 msgid "&Copy"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"K&opier\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Kopier"
+msgstr "&Kopier"
 
 #: shdoclc.rc:78 shdoclc.rc:131 shdoclc.rc:158 shdoclc.rc:182
 msgid "Copy Shor&tcut"
@@ -7614,11 +7583,11 @@ msgstr "&Tabel"
 
 #: shdoclc.rc:108
 msgid "&Cell Properties"
-msgstr "Egenskaper for &celle"
+msgstr "Egenskaber for &celle"
 
 #: shdoclc.rc:109
 msgid "&Table Properties"
-msgstr "Egenskaper for &tabel"
+msgstr "Egenskaber for &tabel"
 
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
@@ -7627,15 +7596,11 @@ msgstr "Indsæt"
 #: shdoclc.rc:118
 #, fuzzy
 msgid "&Print"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Udskriv\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Udskriv emne"
+msgstr "&Udskriv"
 
 #: shdoclc.rc:125
 msgid "Open in &New Window"
-msgstr "Åben i &nyt vindue"
+msgstr "Åbn i &nyt vindue"
 
 #: shdoclc.rc:129
 msgid "Cut"
@@ -7731,7 +7696,7 @@ msgstr "Side op"
 
 #: shdoclc.rc:222
 msgid "Page Down"
-msgstr "Side ne"
+msgstr "Side ned"
 
 #: shdoclc.rc:224
 msgid "Scroll Up"
@@ -7739,7 +7704,7 @@ msgstr "Rul op"
 
 #: shdoclc.rc:225
 msgid "Scroll Down"
-msgstr "Rul ne"
+msgstr "Rul ned"
 
 #: shdoclc.rc:232
 msgid "Left Edge"
@@ -7777,21 +7742,13 @@ msgstr "&w&bSide &p"
 #: taskmgr.rc:110 taskmgr.rc:252
 #, fuzzy
 msgid "Lar&ge Icons"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"S&tore ikoner\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Store Ikoner"
+msgstr "&Store ikoner"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:120 shell32.rc:160 taskmgr.rc:66
 #: taskmgr.rc:111 taskmgr.rc:253
 #, fuzzy
 msgid "S&mall Icons"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"S&må ikoner\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"S&må Ikoner"
+msgstr "S&må ikoner"
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:121 shell32.rc:161
 msgid "&List"
@@ -7854,15 +7811,11 @@ msgstr "Egenskaber"
 #, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Genop&ret\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Gendan"
+msgstr "&Gendan"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "&Slet"
 
 #: shell32.rc:95
 msgid "E&xplore"
@@ -7904,7 +7857,7 @@ msgstr "&Lav ny folder"
 
 #: shell32.rc:303
 msgid "Message"
-msgstr ""
+msgstr "Meddelelse"
 
 #: shell32.rc:306 shlwapi.rc:43 user32.rc:82
 msgid "&Yes"
@@ -7973,7 +7926,7 @@ msgstr "Størrelse ledig"
 
 #: shell32.rc:142
 msgid "Comments"
-msgstr "Kommentare"
+msgstr "Kommentarer"
 
 #: shell32.rc:143
 msgid "Owner"
@@ -7998,17 +7951,12 @@ msgid "Desktop"
 msgstr "Skrivebord"
 
 #: shell32.rc:154 regedit.rc:200
-#, fuzzy
 msgid "My Computer"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Min Computer\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Min computer"
+msgstr "Min computer"
 
 #: shell32.rc:156
 msgid "Control Panel"
-msgstr ""
+msgstr "Kontrolpanel"
 
 #: shell32.rc:163
 msgid "Select"
@@ -8037,19 +7985,15 @@ msgstr "Programmer"
 #: shell32.rc:201
 #, fuzzy
 msgid "My Documents"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Mine Dokumenter\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Mine dokumenter"
+msgstr "Mine dokumenter"
 
 #: shell32.rc:202
 msgid "Favorites"
-msgstr "Favoriter"
+msgstr "Favoritter"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "Start op"
 
 #: shell32.rc:204
 msgid "Start Menu"
@@ -8096,11 +8040,11 @@ msgstr "Mine Billeder"
 #: shell32.rc:215
 #, fuzzy
 msgid "Common Files"
-msgstr "Kopierer filer..."
+msgstr "Almindelige filer"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
-msgstr "Documenter"
+msgstr "Dokumenter"
 
 #: shell32.rc:217
 #, fuzzy
@@ -8124,7 +8068,7 @@ msgstr "Mine Film"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
-msgstr ""
+msgstr "Programmer"
 
 #: shell32.rc:221
 #, fuzzy
@@ -8137,7 +8081,7 @@ msgstr "Genveje"
 
 #: shell32.rc:223
 msgid "Slide Shows"
-msgstr ""
+msgstr "Slideshows"
 
 #: shell32.rc:224
 #, fuzzy
@@ -8178,11 +8122,7 @@ msgstr "Gem video &som..."
 #: shell32.rc:229
 #, fuzzy
 msgid "Saved Games"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Gem so&m...\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Gemme &som..."
+msgstr "Gemte spil"
 
 #: shell32.rc:230
 #, fuzzy
@@ -8192,12 +8132,12 @@ msgstr "&Søg"
 #: shell32.rc:231
 #, fuzzy
 msgid "Users"
-msgstr "Brugernavn"
+msgstr "Brugere"
 
 #: shell32.rc:233
 #, fuzzy
 msgid "Downloads"
-msgstr "Henter..."
+msgstr "Nedhentninger"
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
@@ -8259,7 +8199,7 @@ msgstr "Er du sikker på at du vil sende disse %1 filer til papirkurven?"
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr ""
 "Filen '%1' kunne ikke sendes til papirkurven. Ønsker du at slette den "
-"permanent istedet for?"
+"permanent i stedet for?"
 
 #: shell32.rc:183
 msgid ""
@@ -8302,44 +8242,40 @@ msgstr ""
 "Der er ikke noget Windows program, konfigureret til at åbne denne type fil."
 
 #: shell32.rc:243
-#, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "Er du sikker på du vil slette '%1'?"
+msgstr "Er du sikker på, at du permanent vil slette '%1'?"
 
 #: shell32.rc:244
-#, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "Er du sikker på du vil slette disse %1 filer?"
+msgstr "Er du sikker på, at du permanent vil slette disse %1 filer?"
 
 #: shell32.rc:245
-#, fuzzy
 msgid "Confirm deletion"
-msgstr "Bekræft sletning af fil"
+msgstr "Bekræft filsletning"
 
 #: shell32.rc:246
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Filen findes allerede.\n"
+"En fil findes allerede i stien %1.\n"
+"\n"
 "Vil du erstatte den?"
 
 #: shell32.rc:247
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Filen findes allerede.\n"
+"En mappe findes allerede i stien %1.\n"
+"\n"
 "Vil du erstatte den?"
 
 #: shell32.rc:248
-#, fuzzy
 msgid "Confirm overwrite"
-msgstr "Bekræft overskrivning af fil"
+msgstr "Bekræft overskrivning"
 
 #: shell32.rc:265
 #, fuzzy
@@ -8358,8 +8294,8 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"Wine er fri software; du må distribuere det og/eller ændre det i henhold til "
-"vilkårene i «GNU Lesser General Public License», udgivet af the Free "
+"Wine er fri software; du må gendistribuere det og/eller ændre det i henhold "
+"til vilkårene i «GNU Lesser General Public License», udgivet af the Free "
 "Software Foundation; enten version 2.1 af Licensen, eller (hvis du ønsker "
 "det) en nyere version.\n"
 "\n"
@@ -8394,32 +8330,24 @@ msgid "%d bytes"
 msgstr "%ld bytes"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
-msgstr " hr"
+msgstr " t"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
 msgstr " min"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr " sec"
+msgstr " sek"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
-#, fuzzy
 msgctxt "window"
 msgid "&Restore"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Genop&ret\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Gendan"
+msgstr "&Gendan"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"
@@ -8434,13 +8362,8 @@ msgid "Mi&nimize"
 msgstr "Mi&nimer"
 
 #: user32.rc:31 user32.rc:44 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
-#, fuzzy
 msgid "Ma&ximize"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Ma&ksimér\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Ma&ksimer"
+msgstr "Ma&ksimer"
 
 #: user32.rc:33
 msgid "&Close\tAlt+F4"
@@ -8456,7 +8379,7 @@ msgstr "&Luk\tCtrl+F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl+F6"
-msgstr ""
+msgstr "Næs&te/tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -8511,19 +8434,16 @@ msgid "Server"
 msgstr "Server"
 
 #: wininet.rc:74
-#, fuzzy
 msgid "Security Warning"
-msgstr "Sikkerhed"
+msgstr "Sikkerhedsadvarsel"
 
 #: wininet.rc:77
-#, fuzzy
 msgid "There is a problem with the certificate for this site."
-msgstr "Det specificerede enheds handle er ugyldigt."
+msgstr "Der er et problem med certifikatet for denne side."
 
 #: wininet.rc:79
-#, fuzzy
 msgid "Do you want to continue anyway?"
-msgstr "Vil du simulere en genstart af Windows?"
+msgstr "Vil du fortsætte alligevel?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -8531,21 +8451,20 @@ msgstr "Lokal netværksforbindelse"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
-msgstr ""
+msgstr "Certifikatet er udstedt af en ukendt eller utroværdig udgiver."
 
 #: wininet.rc:27
-#, fuzzy
 msgid "The date on the certificate is invalid."
-msgstr "Det specificerede enheds handle er ugyldigt."
+msgstr "Datoen på certifikatet er ugyldigt."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
-msgstr ""
+msgstr "Navnet på certifikatet matcher ikke siden."
 
 #: wininet.rc:29
 msgid ""
 "There is at least one unspecified security problem with this certificate."
-msgstr ""
+msgstr "Der er mindst et uspecificeret sikkerhedsproblem med dette certifikat."
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -8576,9 +8495,8 @@ msgid "The specified device handle is invalid."
 msgstr "Det specificerede enheds handle er ugyldigt."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "Det er ingen driver installeret på systemet.\n"
+msgstr "Det er ingen driver installeret på dit system!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -8594,7 +8512,7 @@ msgid ""
 "which functions and messages the driver supports."
 msgstr ""
 "Denne funktion understøttes ikke. Brug funktionen 'Capabilities' for at "
-"finde ud af hvilke funktioner og meddelser driveren understøtter."
+"finde ud af hvilke funktioner og meddelelser driveren understøtter."
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
@@ -8614,7 +8532,7 @@ msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
 msgstr ""
-"Det specificerede format understøttes ikke eller kan ikke oversættes. Brug "
+"Det specificerede format understøttes ikke, eller kan ikke oversættes. Brug "
 "funktionen 'Capabilities' for at se de understøttede formater."
 
 #: winmm.rc:43 winmm.rc:49
@@ -8630,7 +8548,7 @@ msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"Wafe headeren var ikke klargjort. Brug funktionen 'Prepare' for at klargøre "
+"Wave headeren var ikke klargjort. Brug funktionen 'Prepare' for at klargøre "
 "headeren og prøv derefter igen."
 
 #: winmm.rc:45
@@ -8638,7 +8556,7 @@ msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-"Kan ikke åbne enheden uden at bruke flagget 'WAVE_ALLOWSYNC. Brug flagget og "
+"Kan ikke åbne enheden uden at bruge flagget 'WAVE_ALLOWSYNC. Brug flagget og "
 "prøv igen."
 
 #: winmm.rc:48
@@ -8661,8 +8579,7 @@ msgstr ""
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
-msgstr ""
-"Porten sender data til enheden. Vent til dataerne er sendt og prøv igen."
+msgstr "Porten sender data til enheden. Vent til dataen er sendt og prøv igen."
 
 #: winmm.rc:52
 msgid ""
@@ -8670,7 +8587,7 @@ msgid ""
 "on the system. Use MIDI Mapper to edit the setup."
 msgstr ""
 "Den nuværende Mapper opsætning peger på en MIDI enhed der ikke er "
-"installeret i systemet. brug MIDI Mapper'en til editere opsætningen."
+"installeret i systemet. Brug MIDI Mapper'en til at redigere opsætningen."
 
 #: winmm.rc:53
 msgid ""
@@ -8710,7 +8627,7 @@ msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
 msgstr ""
-"Enhedsnafnet bruges allerede som et alies af dette program. Brug et unikt "
+"Enhedsnavnet bruges allerede som et alias af dette program. Brug et unikt "
 "alias."
 
 #: winmm.rc:63
@@ -8769,7 +8686,7 @@ msgstr "MCI enheden som bruges understøtter ikke den specificerede kommando."
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
-"Kunne ikke finde den specificerede fil. Kontroller at stien og filnafnet er "
+"Kunne ikke finde den specificerede fil. Kontroller at stien og filnavnet er "
 "rigtigt."
 
 #: winmm.rc:73
@@ -8791,16 +8708,15 @@ msgstr ""
 
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
-msgstr "Kan ikke bruge 'all' som enhedsnafn med den specificerede kommando."
+msgstr "Kan ikke bruge 'all' som enhedsnavn med den angivede kommando."
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
-"Der opstod fejl i mere end en enhed. Angiv hver kommando og enhed seperat "
-"for at finde ud hvilken enhed som forårsagede fejlen."
+"Der opstod fejl i mere end en enhed. Angiv hver kommando og enhed separat "
+"for at finde ud hvilke enheder som forårsagede fejlen."
 
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
@@ -8829,8 +8745,8 @@ msgid ""
 "Cannot find the specified device. Make sure it is installed or that the "
 "device name is spelled correctly."
 msgstr ""
-"Fandt ikke den specificerede enhedn. Kontroller at den er installeret eller "
-"at enhedsnafnet er rigtigt stafet."
+"Fandt ikke den specificerede enhed. Kontroller at den er installeret eller "
+"at enhedsnavnet er rigtigt stavet."
 
 #: winmm.rc:83
 msgid ""
@@ -8865,7 +8781,7 @@ msgid ""
 "Please supply one."
 msgstr ""
 "Den specificerede kommando kræver et alias, en fil, driver eller et "
-"enhedsnafn."
+"enhedsnavn."
 
 #: winmm.rc:88
 msgid ""
@@ -8900,7 +8816,7 @@ msgstr "En null parameter blok blev givet til MCI."
 
 #: winmm.rc:93
 msgid "Cannot save an unnamed file. Supply a filename."
-msgstr "Kan ikke gemme en fil uden nafn. Angiv et filnafn."
+msgstr "Kan ikke gemme en fil uden nafn. Angiv et filnavn."
 
 #: winmm.rc:94
 msgid "You must specify an alias when using the 'new' parameter."
@@ -8912,7 +8828,7 @@ msgstr "Kan ikke bruge flagget 'notify' med automatisk åbnede enheder."
 
 #: winmm.rc:96
 msgid "Cannot use a filename with the specified device."
-msgstr "Kan ikke bruge et filnafn med den specificerede enhed."
+msgstr "Kan ikke bruge et filnavn med den specificerede enhed."
 
 #: winmm.rc:97
 msgid ""
@@ -8935,7 +8851,7 @@ msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
 msgstr ""
-"Filnafnet er ugyldigt. Kontroller at filnafnet ikke er længere end 8 tegn, "
+"Filnavnet er ugyldigt. Kontroller at filnavnet ikke er længere end 8 tegn, "
 "efterfulgt af et punktum og en fil type (3 tegn)."
 
 #: winmm.rc:100
@@ -8978,11 +8894,11 @@ msgstr ""
 
 #: winmm.rc:105
 msgid "Specify a device or driver name that is less than 79 characters."
-msgstr "Specificer en enhed eller drivernafn som er mindre en 79 tegn."
+msgstr "Specificer en enhed eller drivernavn som er mindre en 79 tegn."
 
 #: winmm.rc:106
 msgid "Specify a device or driver name that is less than 69 characters."
-msgstr "Specificer en enhed eller drivernafn som er mindre en 69 tegn."
+msgstr "Specificer en enhed eller drivernavn som er mindre en 69 tegn."
 
 #: winmm.rc:107
 msgid ""
@@ -9024,11 +8940,11 @@ msgstr ""
 
 #: winmm.rc:112
 msgid "Any compatible waveform playback device may be used."
-msgstr "Enhver kompatibel enhed til lydafspilling kan bruges."
+msgstr "Enhver kompatibel enhed til lydafspilning kan bruges."
 
 #: winmm.rc:113
 msgid "Any compatible waveform recording device may be used."
-msgstr "Enhver kompatibel enhed til lydoptagening kan bruges."
+msgstr "Enhver kompatibel enhed til lydoptagning kan bruges."
 
 #: winmm.rc:114
 msgid ""
@@ -9079,7 +8995,7 @@ msgid ""
 "option from the Control Panel to install a MIDI device."
 msgstr ""
 "Den specificerede MIDI enhed er ikke installeret på systemet. Brug 'Drivere' "
-"i Kontrollpanelet for at installere en MIDI enhed."
+"i Kontrolpanelet for at installere en MIDI enhed."
 
 #: winmm.rc:125
 msgid ""
@@ -9100,7 +9016,7 @@ msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
 msgstr ""
-"Alle multimediatidstagere bruges af andre programmer. Luk et af de "
+"Alle multimedietidstagere bruges af andre programmer. Luk et af de "
 "programmer og prøv igen."
 
 #: winmm.rc:128
@@ -9158,7 +9074,7 @@ msgstr "Kunne ikke gemme filen."
 
 #: wldap32.rc:27
 msgid "Success"
-msgstr ""
+msgstr "Vellykket"
 
 #: wldap32.rc:28
 msgid "Operations Error"
@@ -9186,11 +9102,11 @@ msgstr "Sammenligning sand"
 
 #: wldap32.rc:34
 msgid "Authentication Method Not Supported"
-msgstr "Autentikeringsmetoden understøttes ikke"
+msgstr "Godkendelsesmetoden understøttes ikke"
 
 #: wldap32.rc:35
 msgid "Strong Authentication Required"
-msgstr "Stærk autentisering kræves"
+msgstr "Stærk godkendelse kræves"
 
 #: wldap32.rc:36
 msgid "Referral (v2)"
@@ -9258,7 +9174,7 @@ msgstr "Problem med alias dereference"
 
 #: wldap32.rc:75
 msgid "Inappropriate Authentication"
-msgstr "Upassende autenticering"
+msgstr "Upassende godkendelse"
 
 #: wldap32.rc:76
 msgid "Invalid Credentials"
@@ -9294,7 +9210,7 @@ msgstr "Fejl i indeksrækkeviden"
 
 #: wldap32.rc:91
 msgid "Naming Violation"
-msgstr "Navngivings overtrædelse"
+msgstr "Navngivnings overtrædelse"
 
 #: wldap32.rc:92
 msgid "Object Class Violation"
@@ -9342,7 +9258,7 @@ msgstr "Kodings fejl"
 
 #: wldap32.rc:111
 msgid "Decoding Error"
-msgstr "Dekodings fejl"
+msgstr "Dekodingsfejl"
 
 #: wldap32.rc:112
 msgid "Timeout"
@@ -9378,7 +9294,7 @@ msgstr "Operationen understøttes ikke af denne version af LDAP protokollen"
 
 #: wldap32.rc:120
 msgid "Specified control was not found in message"
-msgstr "Den specificerede kontroller blev ikke funndt i beskeden"
+msgstr "Den specificerede kontroller blev ikke fundet i beskeden"
 
 #: wldap32.rc:121
 msgid "No result present in message"
@@ -9444,7 +9360,7 @@ msgstr "&Skrifttype..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
-msgstr "Skjul Titel&linie"
+msgstr "Skjul Titel&linje"
 
 #: clock.rc:36
 msgid "&Seconds"
@@ -9479,10 +9395,10 @@ msgid ""
 msgstr ""
 "«CALL <batchfilnavn>» bruges i en batch fil for at udføre kommandoer\n"
 "fra en anden batchfil. Når den batchfil afslutter, returneres\n"
-"kontrollen til filen som kalte den. CALL-kommandoen kan give parametere\n"
+"kontrollen til filen som kaldte den. CALL-kommandoen kan give parametere\n"
 "til den kaldte procedure.\n"
 "\n"
-"ændringer i standardkatalogen, miljøvariabler etc. lavet af den kaldte\n"
+"ændringer i standardkataloget, miljøvariabler etc. lavet af den kaldte\n"
 "proceduren arves af kalderen.\n"
 
 #: cmd.rc:40
@@ -9581,10 +9497,11 @@ msgid ""
 msgstr ""
 "GOTO-kommandoen flytter kørslen til et andet sted i en batchfil.\n"
 "\n"
-"Labelen som er destination til GOTO kan være op til 255 tegn langt, men må\n"
+"Etiketten som er destination til GOTO kan være op til 255 tegn langt, men "
+"må\n"
 "ikke indeholde mellemrum (dette er forskelligt fra andre operativsystemer).\n"
-"Hvis der findes to eller flere identiske labeler i en batchfil, køres den\n"
-"første altid. Hvis en GOTO peger på en ikke eksisterende label afbryders\n"
+"Hvis der findes to eller flere identiske etiketter i en batchfil, køres den\n"
+"første altid. Hvis en GOTO peger på en ikke eksisterende etiket afbryders\n"
 "kørslen af den batchfil.\n"
 "\n"
 "GOTO har ingen effekt når den bruges interaktivt.\n"
@@ -9654,7 +9571,7 @@ msgstr ""
 "MOVE flytter en fil eller katalog til et nyt sted indenfor filsystemet.\n"
 "\n"
 "Hvis elementet som flyttes er en katalog, så flyttes filerne og\n"
-"underkatalogene også i den.\n"
+"underkatalogerne også i den.\n"
 "\n"
 "MOVE fejler hvis den gamle og nye pladsering har forskellige drevbogstaver.\n"
 
@@ -9719,17 +9636,17 @@ msgstr ""
 "PROMPT sætter kommandolinje-tekststrenget.\n"
 "\n"
 "Strengen som efterfølger PROMPT-kommandoen (og mellemrummet lige efter)\n"
-"vises i begyndelsen af linien når cmd venter på inddata.\n"
+"vises i begyndelsen af linjen når cmd venter på inddata.\n"
 "\n"
 "Følgende tekststrenge har den specielle betydning:\n"
 "\n"
-"$$   Dollar tegn       $_   Ny Linie            $b   Pipe tegn (|)\n"
+"$$   Dollar tegn       $_   Ny Linje            $b   Pipe tegn (|)\n"
 "$d   Gældende dato     $e   Escape              $g   > tegn\n"
 "$l   < tegn            $n   Gældende drev       $p   Gældende sti\n"
 "$q   = tegn            $t   Gældende tid        $v   CMD version\n"
 "\n"
 "Bemærk at bruge PROMPT-kommandoen uden en tekststrenge tilbagestiller\n"
-"klartegnet til standardværdien, som er arbejdskatalogen (inkluderet\n"
+"klartegnet til standardværdien, som er arbejdskataloget (inkluderet\n"
 "drev) efterfulgt af et større end (>) tegn.\n"
 "(Som en kommando PROMPT $p$g.)\n"
 "\n"
@@ -9742,7 +9659,7 @@ msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
-"En kommandolinie som begynner med REM (efterfulgt af et mellemrum)\n"
+"En kommandolinje som begynner med REM (efterfulgt af et mellemrum)\n"
 "udfører ingen handling, og kan derfor bruges som kommentar i en batch\n"
 "fil.\n"
 
@@ -9810,8 +9727,8 @@ msgid ""
 "if called from the command line.\n"
 msgstr ""
 "SHIFT bruges i en batchfil for at fjerne den første parameter i en\n"
-"liste, sådan at parameter 2 blir parameter 1 og så videre. Den har ingen\n"
-"effekt hvis det bruges fra kommandolinien.\n"
+"liste, sådan at parameter 2 bliver parameter 1 og så videre. Den har ingen\n"
+"effekt hvis det bruges fra kommandolinjen.\n"
 
 #: cmd.rc:176
 #, fuzzy
@@ -10089,7 +10006,7 @@ msgstr "Mere..."
 
 #: cmd.rc:314
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "Linie i batchfil muligvis forkortet. Using:\n"
+msgstr "Linje i batchfil muligvis forkortet. Using:\n"
 
 #: cmd.rc:316
 msgid "Argument missing\n"
@@ -10138,7 +10055,7 @@ msgstr "Kunne ikke åbne «%s»\n"
 
 #: cmd.rc:327
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "Kunn ikke kalde batch label udefra batchskriptet\n"
+msgstr "Kan ikke kalde batch label udefra batchscriptet\n"
 
 #: cmd.rc:328 xcopy.rc:42
 msgctxt "All key"
@@ -10181,7 +10098,7 @@ msgstr ""
 #: cmd.rc:335
 #, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "Volumen's label (11 karaktere, ENTER for ingen)?"
+msgstr "Volumen's etiket (11 karakterer, ENTER for ingen)?"
 
 #: cmd.rc:336
 msgid "PATH not found\n"
@@ -10190,11 +10107,11 @@ msgstr "PATH ikke fundet\n"
 #: cmd.rc:337
 #, fuzzy
 msgid "Press any key to continue... "
-msgstr "Tryk Return for at fortsætte: "
+msgstr "Tryk på en tast for at fortsætte... "
 
 #: cmd.rc:338
 msgid "Wine Command Prompt"
-msgstr ""
+msgstr "Wine kommandoprompt"
 
 #: cmd.rc:339
 #, fuzzy
@@ -10220,20 +10137,20 @@ msgstr ""
 #: cmd.rc:344
 #, fuzzy
 msgid " (Yes|No)"
-msgstr "%s? (Ja|Nei)\n"
+msgstr " (Ja|Nej)"
 
 #: cmd.rc:345
 #, fuzzy
 msgid " (Yes|No|All)"
-msgstr "%s? (Ja|Nei)\n"
+msgstr " (Ja|Nej|Alle)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "DirectX diagnostiskværktøj"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr ""
+msgstr "Brug: dxdiag [/whql:off | /whql:on] [/t filnavn | /x filnavn]"
 
 #: explorer.rc:28
 #, fuzzy
@@ -10247,7 +10164,7 @@ msgstr "Placering"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "Brug: hostname\n"
 
 #: hostname.rc:28
 #, fuzzy
@@ -10259,14 +10176,15 @@ msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
+"Fejl: At sætte systemets hostname er ikke muligt med hostname værktøjet.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr ""
+msgstr "Brug: ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr ""
+msgstr "Fejl: Ukendt eller ugyldig kommandolinje parametrer angivet\n"
 
 #: ipconfig.rc:29
 msgid "%1 adapter %2\n"
@@ -10274,15 +10192,15 @@ msgstr ""
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
+msgstr "Ethernet"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr ""
+msgstr "Forbindelsespecifikt DNS suffiks"
 
 #: ipconfig.rc:34
 msgid "Hostname"
-msgstr ""
+msgstr "Hostname"
 
 #: ipconfig.rc:35
 msgid "Node type"
@@ -10306,19 +10224,19 @@ msgstr ""
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
-msgstr ""
+msgstr "IP routing aktiveret"
 
 #: ipconfig.rc:42
 msgid "Physical address"
-msgstr ""
+msgstr "Fysisk adresse"
 
 #: ipconfig.rc:43
 msgid "DHCP enabled"
-msgstr ""
+msgstr "DHCP aktiveret"
 
 #: ipconfig.rc:46
 msgid "Default gateway"
-msgstr ""
+msgstr "Standard gateway"
 
 #: net.rc:27
 #, fuzzy
@@ -10429,12 +10347,12 @@ msgstr "%s      %s      %s      Åbne resourser: %lu\n"
 #: net.rc:45
 #, fuzzy
 msgid "Paused"
-msgstr "&Pause"
+msgstr "&Pauset"
 
 #: net.rc:46
 #, fuzzy
 msgid "Disconnected"
-msgstr "Rør forbundet\n"
+msgstr "Forbindelse mistet"
 
 #: net.rc:47
 #, fuzzy
@@ -10442,41 +10360,28 @@ msgid "A network error occurred"
 msgstr "Der opstod en printer fejl."
 
 #: net.rc:48
-#, fuzzy
 msgid "Connection is being made"
-msgstr "Forbindelsen er aktiv\n"
+msgstr "Forbindelse ertableres"
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Tilslutter til %s"
+msgstr "Genskaber forbindelse"
 
 #: net.rc:40
-#, fuzzy
 msgid "The following services are running:\n"
-msgstr "Afhængige tjenester kører\n"
+msgstr "Følgende tjenester kører:\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Ny\tCtrl+N"
 
 #: notepad.rc:28 wordpad.rc:29
-#, fuzzy
 msgid "&Open...\tCtrl+O"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Å&bn...\tCtrl+O\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Åben...\tCtrl+O"
+msgstr "Å&bn...\tCtrl+O"
 
 #: notepad.rc:29 wordpad.rc:30
-#, fuzzy
 msgid "&Save\tCtrl+S"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Gem\tCtrl+S\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Gemme\tCtrl+S"
+msgstr "&Gem\tCtrl+S"
 
 #: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
@@ -10491,13 +10396,8 @@ msgid "P&rinter Setup..."
 msgstr "&Indstil printer..."
 
 #: notepad.rc:38 regedit.rc:40 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
-#, fuzzy
 msgid "&Edit"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Rediger\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"R&ediger"
+msgstr "R&ediger"
 
 #: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
@@ -10541,18 +10441,12 @@ msgid "&Search next\tF3"
 msgstr "&Find næste\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
-#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Erstat...\tCtrl+H\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"E&rstat...\tCtrl+H"
+msgstr "E&rstat...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:82
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "&Indhold"
+msgstr "&Indhold\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -10620,27 +10514,27 @@ msgstr "O"
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -10653,11 +10547,7 @@ msgstr "Notesblok"
 #: notepad.rc:69 progman.rc:61 winhlp32.rc:79
 #, fuzzy
 msgid "ERROR"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"FEJL\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"FEIL"
+msgstr "FEJL"
 
 #: notepad.rc:71
 msgid "Untitled"
@@ -10702,7 +10592,7 @@ msgstr "Unicode (UTF-16 big-endian)"
 #: notepad.rc:84
 #, fuzzy
 msgid "Unicode (UTF-8)"
-msgstr "Unicode (UTF-16)"
+msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:91
 #, fuzzy
@@ -10798,11 +10688,11 @@ msgstr "Skjult&e komponent kategorier"
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:62 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
-msgstr "&Værktøjslinie"
+msgstr "&Værktøjslinje"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:64
 msgid "&Status Bar"
-msgstr "&Statuslinie"
+msgstr "&Statuslinje"
 
 #: oleview.rc:67 regedit.rc:69 winefile.rc:78
 msgid "&Refresh\tF5"
@@ -10911,7 +10801,7 @@ msgstr "Knyt til fil via File Moniker"
 
 #: oleview.rc:104
 msgid "Open a TypeLib file and view the contents"
-msgstr "Åben en TypeLib fil og vis indholdet"
+msgstr "Åbn en TypeLib fil og vis indholdet"
 
 #: oleview.rc:105
 msgid "Change machine wide Distributed COM settings"
@@ -10919,7 +10809,7 @@ msgstr "Ændre indstillinger for distribueret COM for hele maskinen"
 
 #: oleview.rc:106
 msgid "Run the Wine registry editor"
-msgstr "Kør registeringsdatabase editor"
+msgstr "Kør registreringsdatabase editor"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
@@ -10943,11 +10833,11 @@ msgstr "Kopier det valgte elements GUID til klippebordet"
 
 #: oleview.rc:112
 msgid "Display the viewer for the selected item"
-msgstr "Åben viseren for det valgte element"
+msgstr "Åbn viseren for det valgte element"
 
 #: oleview.rc:117
 msgid "Toggle between expert and novice display mode"
-msgstr "Skift mellem ekspert- og nybegynner mode"
+msgstr "Skift mellem ekspert- og nybegynder mode"
 
 #: oleview.rc:118
 msgid ""
@@ -10956,11 +10846,11 @@ msgstr "Skift visningen af komponent kategorier som ikke er ment at synlige"
 
 #: oleview.rc:119
 msgid "Show or hide the toolbar"
-msgstr "Slå verktøjslinien af/på"
+msgstr "Slå værktøjslinjen af/på"
 
 #: oleview.rc:120
 msgid "Show or hide the status bar"
-msgstr "Vis eller skjul statuslinien"
+msgstr "Vis eller skjul statuslinjen"
 
 #: oleview.rc:121
 msgid "Refresh all lists"
@@ -11026,7 +10916,7 @@ msgstr "Grænseflade"
 
 #: oleview.rc:138
 msgid "Registry"
-msgstr "Registeringsdatabase"
+msgstr "Registreringsdatabase"
 
 #: oleview.rc:139
 msgid "Implementation"
@@ -11075,7 +10965,7 @@ msgstr "&Ny..."
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
-msgstr "Åben\tEnter"
+msgstr "Åbn\tEnter"
 
 #: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
@@ -11086,18 +10976,16 @@ msgid "&Copy...\tF8"
 msgstr "&Kopier...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "&Egenskaper...\tAlt+Enter"
+msgstr "&Egenskaber\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "K&ør..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "A&fslut Wine..."
+msgstr "A&fslut Windows"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:59 winhlp32.rc:44
 msgid "&Options"
@@ -11105,34 +10993,19 @@ msgstr "&Indstillinger"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
-msgstr "&Auto arrangér"
+msgstr "&Arranger automatisk"
 
 #: progman.rc:43
-#, fuzzy
 msgid "&Minimize on run"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Minimér ved opstart\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Minimer ved start"
+msgstr "&Minimer ved start"
 
 #: progman.rc:44 winefile.rc:69
-#, fuzzy
 msgid "&Save settings on exit"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Gem ændringer ved af&slutting\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Gem ind&stillinger ved afslutning"
+msgstr "Gem ind&stillinger ved afslutning"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
-#, fuzzy
 msgid "&Windows"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Vinduer\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Vin&duer"
+msgstr "Vin&duer"
 
 #: progman.rc:47
 msgid "&Overlapped\tShift+F5"
@@ -11147,9 +11020,8 @@ msgid "&Arrange Icons"
 msgstr "Arrangér &ikoner"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Programbehandling"
+msgstr "&Om Programbehandling"
 
 #: progman.rc:100
 msgid "Program &group"
@@ -11197,7 +11069,7 @@ msgstr "Programattributter"
 
 #: progman.rc:169 progman.rc:209
 msgid "&Command line:"
-msgstr "&Kommandolinie:"
+msgstr "&Kommandolinje:"
 
 #: progman.rc:171
 msgid "&Working directory:"
@@ -11209,7 +11081,7 @@ msgstr "Taste kombination:"
 
 #: progman.rc:176 progman.rc:212
 msgid "&Minimize at launch"
-msgstr "&Minimér ved opstart"
+msgstr "&Minimer ved opstart"
 
 #: progman.rc:180
 msgid "Change &icon..."
@@ -11257,7 +11129,7 @@ msgstr "Ikke implementeret"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
-msgstr "Fejl ved læsing af '%s'."
+msgstr "Fejl ved læsning af '%s'."
 
 #: progman.rc:69
 msgid "Error writing `%s'."
@@ -11269,12 +11141,12 @@ msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
-"Kunne ikke ?pne gruppefilen '%s'.\n"
-"Vil du pr?ve mer?"
+"Kunne ikke åbne gruppefilen '%s'.\n"
+"Vil du prøve mere?"
 
 #: progman.rc:74
 msgid "Help not available."
-msgstr "hjælp er ikke tilgjengelig."
+msgstr "Hjælp er ikke tilgængelig."
 
 #: progman.rc:75
 msgid "Unknown feature in %s"
@@ -11356,11 +11228,11 @@ msgstr "&Register"
 
 #: regedit.rc:33
 msgid "&Import Registry File..."
-msgstr "&Importér registeringsfil..."
+msgstr "&Importer registreringsfil..."
 
 #: regedit.rc:34
 msgid "&Export Registry File..."
-msgstr "&Eksportér registeringsfil..."
+msgstr "&Eksporter registreringsfil..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
@@ -11405,16 +11277,12 @@ msgstr "Find &næste\tF3"
 
 #: regedit.rc:65
 msgid "Status &Bar"
-msgstr "&Statuslinie"
+msgstr "&Statuslinje"
 
 #: regedit.rc:67 winefile.rc:46
 #, fuzzy
 msgid "Sp&lit"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Visning opdeling\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Split"
+msgstr "&Split"
 
 #: regedit.rc:74
 msgid "&Remove Favorite..."
@@ -11422,16 +11290,16 @@ msgstr "Fje&rn favorit..."
 
 #: regedit.rc:79
 msgid "&About Registry Editor"
-msgstr "&Om Registeringsdatabase editor"
+msgstr "&Om Registreringsdatabase editor"
 
 #: regedit.rc:88
 #, fuzzy
 msgid "Modify Binary Data..."
-msgstr "Ændre binærdata"
+msgstr "Ændr binærdata..."
 
 #: regedit.rc:215
 msgid "Export registry"
-msgstr "&Eksporter registeringsdatabase"
+msgstr "&Eksporter registreringsdatabase"
 
 #: regedit.rc:217
 msgid "S&elected branch:"
@@ -11439,7 +11307,7 @@ msgstr "&Markeret del:"
 
 #: regedit.rc:226
 msgid "Find:"
-msgstr ""
+msgstr "Find:"
 
 #: regedit.rc:228
 msgid "Find in:"
@@ -11530,7 +11398,7 @@ msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
 "Indeholder kommandoer for at vise hjælp og information om "
-"Registeringsdatabase editor"
+"Registreringsdatabase editor"
 
 #: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
@@ -11542,20 +11410,20 @@ msgstr "Data"
 
 #: regedit.rc:129
 msgid "Registry Editor"
-msgstr "Registeringsdatabase editor"
+msgstr "Registreringsdatabase editor"
 
 #: regedit.rc:191
 msgid "Import Registry File"
-msgstr "Importer registeringsdatabasefil"
+msgstr "Importer registreringsdatabasefil"
 
 #: regedit.rc:192
 msgid "Export Registry File"
-msgstr "Eksporter registeringsdatabasefil"
+msgstr "Eksporter registreringsdatabasefil"
 
 #: regedit.rc:193
 #, fuzzy
 msgid "Registry files (*.reg)"
-msgstr "Registeringsdatabasefiler (*.reg)"
+msgstr "Registreringsdatabasefiler (*.reg)"
 
 #: regedit.rc:194
 #, fuzzy
@@ -11580,7 +11448,7 @@ msgstr "(ukendt %d)"
 
 #: regedit.rc:160
 msgid "Quits the registry editor"
-msgstr "Afslutter Registeringsdatabase editor"
+msgstr "Afslutter Registreringsdatabase editor"
 
 #: regedit.rc:161
 msgid "Adds keys to the favorites list"
@@ -11592,11 +11460,11 @@ msgstr "Fjerner nøgler fra favoritlisten"
 
 #: regedit.rc:163
 msgid "Shows or hides the status bar"
-msgstr "Viser eller skjuler statuslinien"
+msgstr "Viser eller skjuler statuslinjen"
 
 #: regedit.rc:164
 msgid "Change position of split between two panes"
-msgstr "Ændrer positionen til delingslinien mellem to ruder"
+msgstr "Ændrer positionen til delingslinjen mellem to ruder"
 
 #: regedit.rc:165
 msgid "Refreshes the window"
@@ -11604,15 +11472,15 @@ msgstr "Opdaterer vinduet"
 
 #: regedit.rc:166
 msgid "Deletes the selection"
-msgstr "Sletter utvalget"
+msgstr "Sletter markeringen"
 
 #: regedit.rc:167
 msgid "Renames the selection"
-msgstr "Omdøber navn til utvalget"
+msgstr "Omdøber markeringen"
 
 #: regedit.rc:168
 msgid "Copies the name of the selected key to the clipboard"
-msgstr "Kopierer navnet til den valgte nøgle til utklippstavlen"
+msgstr "Kopierer navnet af den valgte nøgle til udklipstavlen"
 
 #: regedit.rc:169
 msgid "Finds a text string in a key, value or data"
@@ -11644,15 +11512,15 @@ msgstr "Tilføj en ny DWORD værdi"
 
 #: regedit.rc:150
 msgid "Imports a text file into the registry"
-msgstr "Importerer en tekstfil ind i registeringsdatabase"
+msgstr "Importerer en tekstfil ind i registreringsdatabasen"
 
 #: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
-msgstr "Eksporterer hele eller dele af registeringsdatabase til en tekstfil"
+msgstr "Eksporterer hele eller dele af registreringsdatabasen til en tekstfil"
 
 #: regedit.rc:153
 msgid "Prints all or part of the registry"
-msgstr "Skriver ut hele eller deler av registeret"
+msgstr "Skriver ud hele eller deler af registeret"
 
 #: regedit.rc:155
 msgid "Displays program information, version number and copyright"
@@ -11696,7 +11564,7 @@ msgstr "Ny værdi #%d"
 
 #: regedit.rc:177
 msgid "Can't query key '%s'"
-msgstr "Kunne ikke tilgå nøgleen '%s'"
+msgstr "Kunne ikke tilgå nøglen '%s'"
 
 #: regedit.rc:149
 msgid "Adds a new multi string value"
@@ -11876,11 +11744,11 @@ msgstr "&Afslut opgavebehandleren"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
-msgstr "&Minimér ved brug"
+msgstr "&Minimer ved brug"
 
 #: taskmgr.rc:47
 msgid "&Hide When Minimized"
-msgstr "S&kjul når minimert"
+msgstr "S&kjul når minimeret"
 
 #: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
@@ -11933,11 +11801,7 @@ msgstr "Vi&s kernetider"
 #: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:75
 #, fuzzy
 msgid "Tile &Horizontally"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Opstil &vandret\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Stil &vandret"
+msgstr "Stil &vandret"
 
 #: taskmgr.rc:81 taskmgr.rc:97 taskmgr.rc:124
 msgid "Tile &Vertically"
@@ -11945,7 +11809,7 @@ msgstr "Opstil &lodret"
 
 #: taskmgr.rc:82 taskmgr.rc:98 taskmgr.rc:125
 msgid "&Minimize"
-msgstr "&Minimér"
+msgstr "&Minimer"
 
 #: taskmgr.rc:84 taskmgr.rc:100 taskmgr.rc:127
 msgid "&Cascade"
@@ -11969,15 +11833,15 @@ msgstr "Afslut opgav&e"
 
 #: taskmgr.rc:130
 msgid "&Go To Process"
-msgstr "&Gå til process"
+msgstr "&Gå til proces"
 
 #: taskmgr.rc:149 taskmgr.rc:363
 msgid "&End Process"
-msgstr "Afslut proc&ess"
+msgstr "Afslut proc&es"
 
 #: taskmgr.rc:150
 msgid "End Process &Tree"
-msgstr "Afslu&t processtræ"
+msgstr "Afslu&t procestræ"
 
 #: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
@@ -11985,19 +11849,17 @@ msgstr "&Fejlsøg"
 
 #: taskmgr.rc:154
 msgid "Set &Priority"
-msgstr "Angi &prioritet"
+msgstr "Sæt &prioritet"
 
 #: taskmgr.rc:156
 msgid "&Realtime"
 msgstr "&Samtid"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
 msgstr "Over norm&al"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
 msgstr "&Under normal"
 
@@ -12022,9 +11884,8 @@ msgid "&Show processes from all users"
 msgstr "Vi&s processer fra alle brugere"
 
 #: taskmgr.rc:372
-#, fuzzy
 msgid "CPU usage"
-msgstr "Processorbrug"
+msgstr "Processorforbrug"
 
 #: taskmgr.rc:373
 #, fuzzy
@@ -12098,7 +11959,7 @@ msgstr "Historik for hukommelsesbrug"
 
 #: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
-msgstr "Fejlsøgnings Kanaler"
+msgstr "Fejlsøgningskanaler"
 
 #: taskmgr.rc:439
 msgid "Processor Affinity"
@@ -12360,15 +12221,15 @@ msgstr "Kører et nyt program"
 #: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
 msgstr ""
-"Opgavebehandleren vises foran andre programmer med mindre den minimerés"
+"Opgavebehandleren vises foran andre programmer med mindre den minimeres"
 
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
-msgstr "Opgavebehandler minimerés når du skifter til en anden process"
+msgstr "Opgavebehandler minimeres når du skifter til en anden process"
 
 #: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
-msgstr "Skjul opgavebehandleren når den minimerés"
+msgstr "Skjul opgavebehandleren når den minimeres"
 
 #: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
@@ -12412,11 +12273,11 @@ msgstr "Stiller vinduerne på skrivebordet op lodret"
 
 #: taskmgr.rc:207
 msgid "Minimizes the windows"
-msgstr "Minimerér vinduerne"
+msgstr "Minimerer vinduerne"
 
 #: taskmgr.rc:208
 msgid "Maximizes the windows"
-msgstr "Maksimerér vinduerne"
+msgstr "Maksimerer vinduerne"
 
 #: taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
@@ -12615,7 +12476,7 @@ msgstr ""
 
 #: taskmgr.rc:305
 msgid "Unable to Change Priority"
-msgstr "Kunne ikke skifte priotet"
+msgstr "Kunne ikke skifte prioritet"
 
 #: taskmgr.rc:310
 msgid ""
@@ -12685,9 +12546,9 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"Køring af afinstallerings kommandoen '%s' fejlede, måske er det på grund af "
+"Kørsel af afinstalleringskommandoen '%s' fejlede, måske er det på grund af "
 "en manglende programfil.\n"
-"Vil du fjerne afinstallerings opførselen fra registeringsdatabasen?"
+"Vil du fjerne afinstalleringsartiklen fra registerdatabasen?"
 
 #: view.rc:33
 msgid "&Pan"
@@ -12743,13 +12604,12 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"Dette bibliotek er fri software; du må re-distribuere det og/eller "
+"Dette bibliotek er fri software; du må gendistribuere det og/eller "
 "modificere det under betingelserne givet i GNU Lesser General Public License "
 "som  publiceret af Free Software Foundation; enten version 2.1, eller (efter "
 "dit valg) en senere version."
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
 msgstr " Windows registreringsoplysninger "
 
@@ -12759,23 +12619,22 @@ msgstr "Ejer:"
 
 #: winecfg.rc:137
 msgid "Organi&zation:"
-msgstr "Organisationen:"
+msgstr "Organisation:"
 
 #: winecfg.rc:145
-#, fuzzy
 msgid "Application settings"
-msgstr " Program indstillinger "
+msgstr "Programindstillinger"
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
 "Wine kan efterligne forskellige Windows-versioner for hvert program. Denne "
-"fane er knyttet til Biblioteker og Grafik faner, for at give dig mulighed "
-"for at ændre systemsider eller per program indstillinger i disse faneblade."
+"fane er knyttet til Biblioteker og Grafik fanerne, for at give dig mulighed "
+"for at ændre indstillinger på hele systemet eller per program i disse "
+"faneblade."
 
 #: winecfg.rc:150
 msgid "&Add application..."
@@ -12790,13 +12649,12 @@ msgid "&Windows Version:"
 msgstr "&Windows version:"
 
 #: winecfg.rc:160
-#, fuzzy
 msgid "Window settings"
-msgstr " Vindues indstillinger "
+msgstr "Vindueindstillinger"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr ""
+msgstr "Automatisk fang &musen i vinduer med fuld skærm"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
@@ -12808,25 +12666,23 @@ msgstr "Tillad vindues manageren at styre vinduerne"
 
 #: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
-msgstr "Emulér et virtuel &skrivebord"
+msgstr "Emuler et virtuel &skrivebord"
 
 #: winecfg.rc:166
 msgid "Desktop &size:"
-msgstr "Skrivebords &størrelse:"
+msgstr "Skrivebord &størrelse:"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Skærm &Opløsning "
+msgstr "Skærmopløsning"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Dette er en eksempel tekst med 10 punkts Tahoma"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "DLL overrides"
-msgstr " DLL prioritetter"
+msgstr "DLL overstyringer"
 
 #: winecfg.rc:183
 msgid ""
@@ -12835,11 +12691,11 @@ msgid ""
 "application)."
 msgstr ""
 "Dynamiske Link Biblioteker kan specificeres individuelt for enten indbygget "
-"(fra Wine) eller indfødt (taget fra Windows eller program)."
+"(fra Wine) eller indfødt (taget fra Windows eller et program)."
 
 #: winecfg.rc:185
 msgid "&New override for library:"
-msgstr "&Nye prioritetter for bibliotek:"
+msgstr "&Nye overstyringer for bibliotek:"
 
 #: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
@@ -12847,20 +12703,19 @@ msgstr "&Tilføj"
 
 #: winecfg.rc:188
 msgid "Existing &overrides:"
-msgstr "Eksisterende indlæsnings &prioritetter:"
+msgstr "Eksisterende &overstyringer:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "&Editér..."
+msgstr "&Rediger..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
-msgstr "Editér indlæsnings prioritet"
+msgstr "Rediger overstyring"
 
 #: winecfg.rc:199
-#, fuzzy
 msgid "Load order"
-msgstr " Indlæsnings rækkefølge "
+msgstr "Indlæsningsrækkefølge"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -12880,7 +12735,7 @@ msgstr "I&ndfødt derefter indbygget"
 
 #: winecfg.rc:204
 msgid "&Disable"
-msgstr ""
+msgstr "&Deaktiver"
 
 #: winecfg.rc:211
 msgid "Select Drive Letter"
@@ -12889,13 +12744,15 @@ msgstr "Vælg Drevbogstav"
 #: winecfg.rc:223
 #, fuzzy
 msgid "Drive mappings"
-msgstr " Enhedsoversættelse "
+msgstr "Enhedsoversættelse"
 
 #: winecfg.rc:224
 msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
+"Det lykkedes ikke at forbinde til mount manageren. Drevkonfigurationen kan "
+"ikke redigeres."
 
 #: winecfg.rc:227
 msgid "&Add..."
@@ -12911,11 +12768,11 @@ msgstr "&Sti:"
 
 #: winecfg.rc:239 winecfg.rc:35
 msgid "Show &Advanced"
-msgstr "Vis &advanceret"
+msgstr "Vis &avanceret"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr ""
+msgstr "Enhed"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12923,7 +12780,7 @@ msgstr "G&ennemse..."
 
 #: winecfg.rc:244
 msgid "&Label:"
-msgstr ""
+msgstr "Etiket:"
 
 #: winecfg.rc:246
 msgid "S&erial:"
@@ -12931,41 +12788,39 @@ msgstr "Se&riel:"
 
 #: winecfg.rc:249
 msgid "Show &dot files"
-msgstr "Vis &punktum filer"
+msgstr "Vis &dot filer"
 
 #: winecfg.rc:256
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr "Driver diagnostik"
 
 #: winecfg.rc:258
 msgid "Defaults"
-msgstr ""
+msgstr "Standarder"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr ""
+msgstr "Output enhed:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr ""
+msgstr "Stemme output enhed:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr ""
+msgstr "Input enhed:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr ""
+msgstr "Stemme input enhed:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
 msgstr "&Test lyd"
 
 #: winecfg.rc:274
-#, fuzzy
 msgid "Appearance"
-msgstr " Udseende "
+msgstr "Udseende"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -12984,13 +12839,12 @@ msgid "C&olor:"
 msgstr "F&arve:"
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
-msgstr "Shell folder"
+msgstr "Mapper"
 
 #: winecfg.rc:293
 msgid "&Link to:"
-msgstr ""
+msgstr "&Link til:"
 
 #: winecfg.rc:31
 msgid "Libraries"
@@ -13003,11 +12857,11 @@ msgstr "Enheder"
 #: winecfg.rc:33
 #, fuzzy
 msgid "Select the Unix target directory, please."
-msgstr "Vælg venlight en unix folder."
+msgstr "Vælg venligst Unix mappen."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
-msgstr "Gem &advanceret"
+msgstr "Skjul &avanceret"
 
 #: winecfg.rc:36
 msgid "(No Theme)"
@@ -13019,7 +12873,7 @@ msgstr "Grafik"
 
 #: winecfg.rc:38
 msgid "Desktop Integration"
-msgstr "Desktop integrering"
+msgstr "Skrivebord integrering"
 
 #: winecfg.rc:39
 msgid "Audio"
@@ -13031,11 +12885,11 @@ msgstr "Om"
 
 #: winecfg.rc:41
 msgid "Wine configuration"
-msgstr "Wine configurering"
+msgstr "Wine konfiguration"
 
 #: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
-msgstr "Tema filer (*.msstyles; *.theme)"
+msgstr "Tema filer (*.msstyles, *.theme)"
 
 #: winecfg.rc:44
 msgid "Select a theme file"
@@ -13043,41 +12897,38 @@ msgstr "Vælg en tema fil"
 
 #: winecfg.rc:45
 msgid "Folder"
-msgstr ""
+msgstr "Mappe"
 
 #: winecfg.rc:46
 msgid "Links to"
-msgstr ""
+msgstr "Link til"
 
 #: winecfg.rc:42
 msgid "Wine configuration for %s"
-msgstr "Wine configurering for %s"
+msgstr "Wine konfiguration for %s"
 
 #: winecfg.rc:81
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Valgt driver: %s"
 
 #: winecfg.rc:82
-#, fuzzy
 msgid "(None)"
-msgstr "Ingen"
+msgstr "(Ingen)"
 
 #: winecfg.rc:83
-#, fuzzy
 msgid "Audio test failed!"
-msgstr "Harddisk reset mislykkedes\n"
+msgstr "Lyd test fejlede!"
 
 #: winecfg.rc:85
-#, fuzzy
 msgid "(System default)"
-msgstr "System sti"
+msgstr "(System standard)"
 
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
 msgstr ""
-"At ændre indlæsnings rækkefølge af dette bibliotek er ikke recommenderet.\n"
+"At ændre indlæsningsrækkefølge af dette bibliotek er ikke anbefalet.\n"
 "Er du sikker på at du vil gøre dette?"
 
 #: winecfg.rc:52
@@ -13102,16 +12953,15 @@ msgstr "indbygget, indfødt"
 
 #: winecfg.rc:57
 msgid "disabled"
-msgstr ""
+msgstr "Deaktiveret"
 
 #: winecfg.rc:58
 msgid "Default Settings"
 msgstr "Standard indstillinger"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Wine programmer (*.exe,*.exe.so)"
+msgstr "Wine programmer (*.exe, *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -13119,12 +12969,12 @@ msgstr "Brug globale indstillinger"
 
 #: winecfg.rc:61
 msgid "Select an executable file"
-msgstr "Vælg en program fil"
+msgstr "Vælg en programfil"
 
 #: winecfg.rc:66
 #, fuzzy
 msgid "Autodetect..."
-msgstr "Autodetekter"
+msgstr "Autoopdag..."
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -13140,10 +12990,9 @@ msgstr "Diskettedrev"
 
 #: winecfg.rc:70
 msgid "CD-ROM"
-msgstr "Cd-rom"
+msgstr "CD-Rom"
 
 #: winecfg.rc:71
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -13151,7 +13000,8 @@ msgid ""
 msgstr ""
 "Du kan ikke tilføje flere drev.\n"
 "\n"
-"Hvert drev skal have et bogstav, fra A to Z, så du kan ikke have mere end 26."
+"Hvert drev skal have et bogstav, fra A til Z, så du kan ikke have mere end "
+"26."
 
 #: winecfg.rc:72
 msgid "System drive"
@@ -13164,13 +13014,12 @@ msgid ""
 "Most Windows applications expect drive C to exist, and will die messily if "
 "it doesn't. If you proceed remember to recreate it!"
 msgstr ""
-"Er du sikker på at du vil slette C drever?\n"
+"Er du sikker på at du vil slette C drevet?\n"
 "\n"
-"De fleste Windows programmer regner med at C drevet eksistere, og vil gå ned "
-"hvis det ikke gør. Hvis du forsætter, så husk at lave det igen!"
+"De fleste Windows programmer regner med at C drevet eksisterer, og vil gå "
+"ned hvis det ikke gør. Hvis du forsætter, så husk at lave det igen!"
 
 #: winecfg.rc:74
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Bogstav"
@@ -13235,7 +13084,7 @@ msgstr "vinduestekst"
 
 #: winecfg.rc:102
 msgid "Active Title Bar"
-msgstr "Aktiv titellinie"
+msgstr "Aktiv titellinje"
 
 #: winecfg.rc:103
 msgid "Active Title Text"
@@ -13243,7 +13092,7 @@ msgstr "Aktiv titeltekst"
 
 #: winecfg.rc:104
 msgid "Inactive Title Bar"
-msgstr "Inaktiv titellinie"
+msgstr "Inaktiv titellinje"
 
 #: winecfg.rc:105
 msgid "Inactive Title Text"
@@ -13299,11 +13148,11 @@ msgstr "Markeret element"
 
 #: winecfg.rc:118
 msgid "Active Title Bar Gradient"
-msgstr "Gradient for aktiv titellinie"
+msgstr "Gradient for aktiv titellinje"
 
 #: winecfg.rc:119
 msgid "Inactive Title Bar Gradient"
-msgstr "Gradient for Inaktiv titellinie"
+msgstr "Gradient for Inaktiv titellinje"
 
 #: winecfg.rc:120
 msgid "Menu Highlight"
@@ -13311,7 +13160,7 @@ msgstr "Markeret menu"
 
 #: winecfg.rc:121
 msgid "Menu Bar"
-msgstr "Menulinie"
+msgstr "Menulinje"
 
 #: wineconsole.rc:60
 msgid "Cursor size"
@@ -13335,11 +13184,11 @@ msgstr "Control"
 
 #: wineconsole.rc:66
 msgid "Popup menu"
-msgstr ""
+msgstr "Popup menu"
 
 #: wineconsole.rc:67
 msgid "&Control"
-msgstr ""
+msgstr "Kontrol"
 
 #: wineconsole.rc:68
 msgid "S&hift"
@@ -13358,7 +13207,6 @@ msgid "Command history"
 msgstr "Kommando historik"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
 msgstr "A&ntal af genkaldte kommandoer:"
 
@@ -13375,21 +13223,18 @@ msgid "&Color"
 msgstr "&Farve"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
 msgstr "Konfiguration"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
-msgstr ""
+msgstr "Buffer zone"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
 msgstr "&Bredde:"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
 msgstr "&Højde:"
 
@@ -13398,12 +13243,10 @@ msgid "Window size"
 msgstr "Vindue størrelse"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
 msgstr "B&redde:"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
 msgstr "H&øjde:"
 
@@ -13461,7 +13304,7 @@ msgstr "Setup - Aktuelle indstillinger"
 
 #: wineconsole.rc:38
 msgid "Configuration error"
-msgstr "Konfiguration fejl"
+msgstr "Konfigurationfejl"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
@@ -13493,11 +13336,12 @@ msgid "Starts a program in a Wine console\n"
 msgstr "Starter et program i en Wine konsol\n"
 
 #: wineconsole.rc:45
-#, fuzzy
 msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
-msgstr "wineconsole: Start af programmet %s mislykkedet.\n"
+msgstr ""
+"wineconsole: Start af programmet %s mislykkede.\n"
+"Kommandoen er ugyldig.\n"
 
 #: wineconsole.rc:47
 msgid ""
@@ -13529,7 +13373,7 @@ msgstr ""
 #: wineconsole.rc:50
 #, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <kommando>              Wine program der skal kører i konsollen\n"
+msgstr "  <kommando>              Wine program der skal kører i konsollen.\n"
 
 #: wineconsole.rc:51
 #, fuzzy
@@ -13555,32 +13399,26 @@ msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
 msgstr ""
-"Programmet %s er stødt på et alvorligt problem, og er nød til at lukke. Vi "
+"Programmet %s er stødt på et alvorligt problem, og er nødt til at lukke. Vi "
 "beklager ulejligheden."
 
 #: winedbg.rc:55
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
 "Dette kan være forårsaget af et problem i programmet, eller en mangel i "
-"Wine. Du kan evt. tjekke http://appdb.winehq.org for tips til at køre dette "
-"program.\n"
-"\n"
-"Hvis dette problem ikke er til stede under Windows, og ikke har været "
-"rapporteret endnu, kan du indberette det til http://bugs.winehq.org."
+"Wine. Du kan evt. tjekke <a href=\"http://appdb.winehq.org\">Program "
+"Database</a> for tips til at køre dette program."
 
 #: winedbg.rc:58
-#, fuzzy
 msgid "Show &Details"
-msgstr "&Detaljer"
+msgstr "Vis &detaljer"
 
 #: winedbg.rc:63
-#, fuzzy
 msgid "Program Error Details"
-msgstr "Program Fejl"
+msgstr "Programfejlsdetaljer"
 
 #: winedbg.rc:70
 msgid ""
@@ -13589,10 +13427,14 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"Hvis dette problem ikke er til stede under Windows, og det endnu ikke er "
+"blevet rapporteret, så kan du gemme den detaljerede information til en fil "
+"ved brug af \"Gem som\" knappen. Derefter <a href=\"http://wiki.winehq.org/"
+"Bugs\">insend en fejlrapport</a> og vedhæft filen til rapporten."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
-msgstr "Wine Program Nedbrud"
+msgstr "Wine program nedbrud"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
@@ -13603,26 +13445,24 @@ msgid "(unidentified)"
 msgstr "(Uidentificerede)"
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "Åbning mislykkede\n"
+msgstr "Gemning mislykkedes"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "Indlæser detaljeret information. Vent venligst..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
-msgstr "&Åben\tEnter"
+msgstr "&Åbn\tEnter"
 
 #: winefile.rc:30
 msgid "Re&name..."
-msgstr "Omdøb..."
+msgstr "&Omdøb..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "&Egenskaper...\tAlt+Enter"
+msgstr "&Egenskaber\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -13637,13 +13477,12 @@ msgid "&Disk"
 msgstr "&Diskette"
 
 #: winefile.rc:41
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "&Tilslut netværksdrev"
+msgstr "Tilslut &netværksdrev..."
 
 #: winefile.rc:42
 msgid "&Disconnect Network Drive"
-msgstr "Frakobl &netværksdrev"
+msgstr "Frakobl netværks&drev"
 
 #: winefile.rc:48
 msgid "&Name"
@@ -13670,13 +13509,12 @@ msgid "Sort by &Date"
 msgstr "Sorter efter &dato"
 
 #: winefile.rc:56
-#, fuzzy
 msgid "Filter by&..."
-msgstr "Filtrer med '&'..."
+msgstr "Filtrer efter '&'..."
 
 #: winefile.rc:63
 msgid "&Drivebar"
-msgstr "&Enhedslinie"
+msgstr "&Enhedslinje"
 
 #: winefile.rc:66
 msgid "F&ull Screen\tCtrl+Shift+S"
@@ -13695,9 +13533,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Stil &lodret\tCtrl+F4"
 
 #: winefile.rc:83
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "Filbehandling"
+msgstr "Om Wine Filbeh&andler"
 
 #: winefile.rc:124
 msgid "Select destination"
@@ -13708,7 +13545,6 @@ msgid "By File Type"
 msgstr "Efter filtype"
 
 #: winefile.rc:142
-#, fuzzy
 msgid "File type"
 msgstr "Filtype"
 
@@ -13738,7 +13574,7 @@ msgstr "&Filnavn:"
 
 #: winefile.rc:164
 msgid "Full &Path:"
-msgstr "&Full sti:"
+msgstr "&Fuld sti:"
 
 #: winefile.rc:166
 msgid "Last Change:"
@@ -13769,9 +13605,8 @@ msgid "&Compressed"
 msgstr "Kompr&imeret"
 
 #: winefile.rc:180
-#, fuzzy
 msgid "Version information"
-msgstr "&Versioninformation"
+msgstr "Versioninformation"
 
 #: winefile.rc:197
 msgctxt "accelerator Fullscreen"
@@ -13823,28 +13658,27 @@ msgid "Index/Inode"
 msgstr "Indeks/Inode"
 
 #: winefile.rc:116
-#, fuzzy
 msgid "%1 of %2 free"
-msgstr "%s af %s ledig"
+msgstr "%1 af %2 ledig"
 
 #: winefile.rc:117
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:118
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:119
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "Spil"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -13852,7 +13686,7 @@ msgstr "&Nyt spil\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "Spørgs&målstegn"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -13871,21 +13705,18 @@ msgid "&Custom..."
 msgstr "B&rugerdefineret..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
 msgstr "&Bedste tider"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&Om Wine"
+msgstr "&Om WineMine"
 
 #: winemine.rc:56
 msgid "Fastest Times"
 msgstr "Bedste tider"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
 msgstr "Bedste tider"
 
@@ -13918,9 +13749,8 @@ msgid "Rows"
 msgstr "Rækker"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "&Kolone"
+msgstr "Kolonner"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -13928,7 +13758,7 @@ msgstr "Miner"
 
 #: winemine.rc:27
 msgid "WineMine"
-msgstr "Minerydder"
+msgstr "WineMine"
 
 #: winemine.rc:28
 msgid "Nobody"
@@ -13960,7 +13790,7 @@ msgstr "Skrifttype"
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr ""
+msgstr "Lille"
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
@@ -13968,12 +13798,12 @@ msgstr "Normal"
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr ""
+msgstr "Stor"
 
 #: winhlp32.rc:54
 #, fuzzy
 msgid "&Help on help\tF1"
-msgstr "&Brug af Hjælp"
+msgstr "Brug af &Hjælp\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -13981,7 +13811,7 @@ msgstr "Altid &øverst"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr ""
+msgstr "Om Wine hjælp"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -13993,7 +13823,7 @@ msgstr "Kopier"
 
 #: winhlp32.rc:97
 msgid "Index"
-msgstr ""
+msgstr "Indeks"
 
 #: winhlp32.rc:105
 msgid "Search"
@@ -14009,7 +13839,7 @@ msgstr "Fejl ved indlæsning af filen `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr ""
+msgstr "Resumé"
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -14029,7 +13859,7 @@ msgstr "Kan ikke finde en 'richedit' implementering... Afbryder"
 
 #: winhlp32.rc:91
 msgid "Help topics: "
-msgstr ""
+msgstr "Hjælp emner: "
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
@@ -14037,12 +13867,11 @@ msgstr "&Ny...\tCtrl+N"
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"
-msgstr "&Gendag\tCtrl+Y"
+msgstr "&Gendan\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
-msgstr "&Fjern\tDEL"
+msgstr "&Ryd\tDel"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
@@ -14086,7 +13915,7 @@ msgstr "&Hent tekst"
 
 #: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
-msgstr "&Formatteringlinie"
+msgstr "&Formateringlinje"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
@@ -14094,7 +13923,7 @@ msgstr "&Lineal"
 
 #: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
-msgstr "&Statuslinie"
+msgstr "&Statuslinje"
 
 #: wordpad.rc:75
 msgid "&Insert"
@@ -14110,7 +13939,7 @@ msgstr "F&ormat"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
-msgstr "&Bullets"
+msgstr "&Punkttegn"
 
 #: wordpad.rc:83 wordpad.rc:106
 msgid "&Paragraph..."
@@ -14129,9 +13958,8 @@ msgid "&System\tCtrl+1"
 msgstr "&System\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
-msgstr "&Huskeseddel\tCtrl+2"
+msgstr "&Bleggul\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
@@ -14139,7 +13967,7 @@ msgstr "&Om Wine Wordpad"
 
 #: wordpad.rc:130
 msgid "Automatic"
-msgstr ""
+msgstr "Automatisk"
 
 #: wordpad.rc:199
 msgid "Date and time"
@@ -14171,7 +13999,7 @@ msgstr "Højrestillet"
 
 #: wordpad.rc:229
 msgid "First line"
-msgstr "Første linie"
+msgstr "Første linje"
 
 #: wordpad.rc:231
 msgid "Alignment"
@@ -14187,19 +14015,19 @@ msgstr "Tabulatorstop"
 
 #: wordpad.rc:248
 msgid "Remove al&l"
-msgstr "Fjern all&e"
+msgstr "Fjern a&lle"
 
 #: wordpad.rc:256
 msgid "Line wrapping"
-msgstr "Liniebrydning"
+msgstr "Linjeombrydning"
 
 #: wordpad.rc:257
 msgid "&No line wrapping"
-msgstr "No line wrapping"
+msgstr "&Ingen linjeombrydning"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
-msgstr "Bryd tekst efter v&indusbredden"
+msgstr "Bryd tekst efter v&induesbredden"
 
 #: wordpad.rc:259
 msgid "Wrap text by the &margin"
@@ -14207,22 +14035,22 @@ msgstr "Bryd tekst efter &margen"
 
 #: wordpad.rc:260
 msgid "Toolbars"
-msgstr "Værktøjslinier"
+msgstr "Værktøjslinjer"
 
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "R"
 
 #: wordpad.rc:282
 msgctxt "accelerator Redo"
@@ -14232,17 +14060,17 @@ msgstr "Y"
 #: wordpad.rc:283
 msgctxt "accelerator Bold"
 msgid "B"
-msgstr ""
+msgstr "F"
 
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
@@ -14303,15 +14131,15 @@ msgstr "To sider"
 
 #: wordpad.rc:166
 msgid "One page"
-msgstr "Én side"
+msgstr "En side"
 
 #: wordpad.rc:167
 msgid "Zoom in"
-msgstr ""
+msgstr "Zoom ind"
 
 #: wordpad.rc:168
 msgid "Zoom out"
-msgstr ""
+msgstr "Zoom ud"
 
 #: wordpad.rc:170
 msgid "Page"
@@ -14322,13 +14150,11 @@ msgid "Pages"
 msgstr "Sider"
 
 #: wordpad.rc:172
-#, fuzzy
 msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "cm"
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
 msgstr "tomme"
@@ -14338,7 +14164,6 @@ msgid "inch"
 msgstr "tommer"
 
 #: wordpad.rc:175
-#, fuzzy
 msgctxt "unit: point"
 msgid "pt"
 msgstr "pkt"
@@ -14349,7 +14174,7 @@ msgstr "Dokument"
 
 #: wordpad.rc:181
 msgid "Save changes to '%s'?"
-msgstr "Gemme ændringer i «%s»?"
+msgstr "Vil du gemme ændringer i '%s'?"
 
 #: wordpad.rc:182
 msgid "Finished searching the document."
@@ -14368,7 +14193,6 @@ msgstr ""
 "formatering går tabt. Er du sikker på at du vil fortsætte?"
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
 msgstr "Ugyldigt talformat"
 
@@ -14394,7 +14218,6 @@ msgid "You do not have access to open the file."
 msgstr "Filen kunne ikke åbnes, adgang nægtet."
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
 msgstr "Udskrivning er endnu ikke implementeret."
 
@@ -14408,12 +14231,12 @@ msgstr "Kunne ikke starte Wordpad"
 
 #: xcopy.rc:27
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr "Ugyldigt antal parametere; brug «xcopy /?» for hjelp\n"
+msgstr "Ugyldigt antal parametre; brug «xcopy /?» for hjælp\n"
 
 #: xcopy.rc:28
 #, fuzzy
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "Ugyldigt parameter «%s»; brug «xcopy /?» for hjelp\n"
+msgstr "Ugyldigt parameter «%s»; brug «xcopy /?» for hjælp\n"
 
 #: xcopy.rc:29
 #, fuzzy
@@ -14444,12 +14267,12 @@ msgstr ""
 #: xcopy.rc:35
 #, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s? (Ja|Nei)\n"
+msgstr "%1? (Ja|Nej)\n"
 
 #: xcopy.rc:36
 #, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Overskrive «%s»? (Ja|Nei|Alle)\n"
+msgstr "Overskriv «%s»? (Ja|Nej|Alle)\n"
 
 #: xcopy.rc:37
 #, fuzzy
