@@ -9917,6 +9917,7 @@ msgid "Select &all\tCtrl+A"
 msgstr "เลือกทั้งหมด\tCtrl+A"
 
 #: notepad.rc:47
+#, fuzzy
 msgid "&Time/Date\tF5"
 msgstr "วันที่/\tF5"
 
