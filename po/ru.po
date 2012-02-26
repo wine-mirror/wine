@@ -9163,7 +9163,7 @@ msgstr ""
 
 #: attrib.rc:28 cmd.rc:318
 msgid "%1: File Not Found\n"
-msgstr "%1 : Файл не найден\n"
+msgstr "%1: Файл не найден\n"
 
 #: attrib.rc:47
 msgid ""
@@ -10413,10 +10413,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"Файл '%s'\n"
-"не существует\n"
+"Файл '%s' не существует.\n"
 "\n"
-" Хотите создать новый файл?"
+"Хотите создать новый файл?"
 
 #: notepad.rc:79
 msgid ""
@@ -10424,10 +10423,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Файл '%s'\n"
-"был изменён\n"
+"Файл '%s' был изменён.\n"
 "\n"
-" Хотите сохранить изменения?"
+"Хотите сохранить изменения?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
@@ -10962,11 +10960,11 @@ msgstr "Информация"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "Удалить группу `%s' ?"
+msgstr "Удалить группу `%s'?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "Удалить программу `%s' ?"
+msgstr "Удалить программу `%s'?"
 
 #: progman.rc:67
 msgid "Not implemented"
