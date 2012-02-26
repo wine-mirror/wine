@@ -8075,6 +8075,7 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "경로 %1에 파일은 이미 존재합니다.\n"
+"\n"
 "바꾸기를 원합니까?"
 
 #: shell32.rc:247
@@ -8084,6 +8085,7 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "경로 %1에 폴더 이미 존재합니다.\n"
+"\n"
 "바꾸기를 원합니까?"
 
 #: shell32.rc:248
