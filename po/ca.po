@@ -1184,7 +1184,7 @@ msgstr ""
 "Tenir el bloqueig de majúscules activat pot causar que introduïu la\n"
 "contrasenya de forma incorrecta.\n"
 "\n"
-"Premeu la tecla Bloc Maj en el vostre teclat per desactivar el bloqueig de "
+"Premeu la tecla Bloc Maj en el vostre teclat per desactivar el bloqueig de\n"
 "majúscules abans d'introduir la vostre contrasenya."
 
 #: credui.rc:31
