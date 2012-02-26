@@ -8174,19 +8174,22 @@ msgstr "Dokumenter"
 #: shell32.rc:217
 #, fuzzy
 msgid "Administrative Tools"
-msgstr "Start-meny\\Programmer\\Administrative verktøy"
+msgstr "Administrative verktøy"
 
 #: shell32.rc:218
+#, fuzzy
 msgid "Music"
-msgstr "Dokumenter\\Min musikk"
+msgstr "Min musikk"
 
 #: shell32.rc:219
+#, fuzzy
 msgid "Pictures"
-msgstr "Dokumenter\\Mine bilder"
+msgstr "Mine bilder"
 
 #: shell32.rc:220
+#, fuzzy
 msgid "Videos"
-msgstr "Dokumenter\\Mine videoklipp"
+msgstr "Mine videoklipp"
 
 #: shell32.rc:213
 #, fuzzy
