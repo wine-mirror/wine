@@ -6735,7 +6735,7 @@ msgstr "設定(&F)..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "情報(&A)..."
+msgstr "情報(&A)"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7682,7 +7682,7 @@ msgstr "終了(&X)"
 
 #: shell32.rc:127
 msgid "&About Control Panel"
-msgstr "バージョン情報(&A)..."
+msgstr "バージョン情報(&A)"
 
 #: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
@@ -12510,7 +12510,7 @@ msgstr "既存のオーバーライド(&O):"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "編集(&E)"
+msgstr "編集(&E)..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -13498,7 +13498,7 @@ msgstr "上級(&E)"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "盤面の変更(&C)"
+msgstr "盤面の変更(&C)..."
 
 #: winemine.rc:44
 msgid "&Fastest Times"
