@@ -2191,7 +2191,7 @@ msgstr "&Dosya adı:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "Gözat"
+msgstr "Gözat..."
 
 #: cryptui.rc:294
 msgid ""
@@ -6995,7 +6995,7 @@ msgstr "Ya&pılandır..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&Hakkında..."
+msgstr "&Hakkında"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -8058,7 +8058,7 @@ msgstr "&Aç:"
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
 msgid "&Browse..."
-msgstr "&Gözat"
+msgstr "&Gözat..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
@@ -9448,7 +9448,7 @@ msgstr "LDAP sunucusuna bağlanamıyor"
 
 #: wldap32.rc:119
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr "İşlem LDAP iletişim kuralının bu sürümünce desteklenmiyor."
+msgstr "İşlem LDAP iletişim kuralının bu sürümünce desteklenmiyor"
 
 #: wldap32.rc:120
 msgid "Specified control was not found in message"
@@ -9513,7 +9513,7 @@ msgstr "Sa&yısal"
 
 #: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
 msgid "&Font..."
-msgstr "Font"
+msgstr ""
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -9572,7 +9572,7 @@ msgstr "CHDIR hakkında yardım\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS konsol ekranını temizler\n"
+msgstr "CLS konsol ekranını temizler.\n"
 
 #: cmd.rc:45
 #, fuzzy
@@ -10698,10 +10698,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"'%s' dosyası\n"
-"mevcut değil\n"
+"'%s' dosyası mevcut değil.\n"
 "\n"
-" Yeni bir dosya oluşturmak ister misiniz?"
+"Yeni bir dosya oluşturmak ister misiniz?"
 
 #: notepad.rc:79
 msgid ""
@@ -10709,10 +10708,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"'%s' dosyası\n"
-"değiştirildi\n"
+"'%s' dosyası değiştirildi.\n"
 "\n"
-" Değişiklikleri kaydetmek ister misiniz?"
+"Değişiklikleri kaydetmek ister misiniz?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
@@ -12856,7 +12854,7 @@ msgstr "Var olan öncelikler:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
-msgstr "&Düzenle"
+msgstr "&Düzenle..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12909,7 +12907,7 @@ msgstr "&Ekle..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr "Otomatik &Algıla..."
+msgstr "Otomatik &Algıla"
 
 #: winecfg.rc:232
 msgid "&Path:"
@@ -13861,7 +13859,7 @@ msgstr "&Uzman"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "&Özel"
+msgstr "&Özel..."
 
 #: winemine.rc:44
 #, fuzzy
@@ -13979,7 +13977,7 @@ msgstr "&Her Zaman Üstte"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Bilgi..."
+msgstr ""
 
 #: winhlp32.rc:64
 msgid "Annotation..."
