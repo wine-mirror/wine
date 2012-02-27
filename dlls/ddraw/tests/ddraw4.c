@@ -1310,7 +1310,7 @@ static void test_texture_load_ckey(void)
     IDirectDraw4_Release(ddraw);
 }
 
-static LONG get_refcount(IUnknown *test_iface)
+static ULONG get_refcount(IUnknown *test_iface)
 {
     IUnknown_AddRef(test_iface);
     return IUnknown_Release(test_iface);
@@ -1321,7 +1321,7 @@ static void test_viewport_interfaces(void)
     IDirectDraw4 *ddraw;
     IDirect3D3 *d3d;
     HRESULT hr, old_d3d_ref;
-    LONG ref;
+    ULONG ref;
     IDirect3DViewport *viewport;
     IDirect3DViewport2 *viewport2;
     IDirect3DViewport3 *viewport3;
@@ -1346,9 +1346,9 @@ static void test_viewport_interfaces(void)
     hr = IDirect3D3_CreateViewport(d3d, &viewport3, NULL);
     ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
     ref = get_refcount((IUnknown *)viewport3);
-    ok(ref == 1, "Initial IDirect3DViewport3 refcount is %d\n", ref);
+    ok(ref == 1, "Initial IDirect3DViewport3 refcount is %u\n", ref);
     ref = get_refcount((IUnknown *)d3d);
-    ok(ref == old_d3d_ref, "IDirect3D3 refcount is %d\n", ref);
+    ok(ref == old_d3d_ref, "IDirect3D3 refcount is %u\n", ref);
 
     gamma = (IDirectDrawGammaControl *)0xdeadbeef;
     hr = IDirect3DViewport2_QueryInterface(viewport3, &IID_IDirectDrawGammaControl, (void **)&gamma);
@@ -1362,9 +1362,9 @@ static void test_viewport_interfaces(void)
     if (viewport)
     {
         ref = get_refcount((IUnknown *)viewport);
-        ok(ref == 2, "IDirect3DViewport refcount is %d\n", ref);
+        ok(ref == 2, "IDirect3DViewport refcount is %u\n", ref);
         ref = get_refcount((IUnknown *)viewport3);
-        ok(ref == 2, "IDirect3DViewport3 refcount is %d\n", ref);
+        ok(ref == 2, "IDirect3DViewport3 refcount is %u\n", ref);
         IDirect3DViewport_Release(viewport);
         viewport = NULL;
     }
@@ -1374,20 +1374,20 @@ static void test_viewport_interfaces(void)
     if (viewport2)
     {
         ref = get_refcount((IUnknown *)viewport2);
-        ok(ref == 2, "IDirect3DViewport2 refcount is %d\n", ref);
+        ok(ref == 2, "IDirect3DViewport2 refcount is %u\n", ref);
         ref = get_refcount((IUnknown *)viewport3);
-        ok(ref == 2, "IDirect3DViewport3 refcount is %d\n", ref);
+        ok(ref == 2, "IDirect3DViewport3 refcount is %u\n", ref);
         IDirect3DViewport3_Release(viewport2);
     }
 
-    hr = IDirect3DViewport3_QueryInterface(viewport2, &IID_IUnknown, (void **)&unknown);
+    hr = IDirect3DViewport3_QueryInterface(viewport3, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Failed to QI IUnknown, hr %#x.\n", hr);
     if (unknown)
     {
         ref = get_refcount((IUnknown *)viewport3);
-        ok(ref == 2, "IDirect3DViewport3 refcount is %d\n", ref);
+        ok(ref == 2, "IDirect3DViewport3 refcount is %u\n", ref);
         ref = get_refcount(unknown);
-        ok(ref == 2, "IUnknown refcount is %d\n", ref);
+        ok(ref == 2, "IUnknown refcount is %u\n", ref);
         IUnknown_Release(unknown);
     }
 

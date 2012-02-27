@@ -884,7 +884,7 @@ static void test_coop_level_threaded(void)
     destroy_window_thread(&p);
 }
 
-static LONG get_refcount(IUnknown *test_iface)
+static ULONG get_refcount(IUnknown *test_iface)
 {
     IUnknown_AddRef(test_iface);
     return IUnknown_Release(test_iface);
@@ -895,7 +895,7 @@ static void test_viewport_interfaces(void)
     IDirectDraw *ddraw;
     IDirect3D *d3d;
     HRESULT hr;
-    LONG ref;
+    ULONG ref;
     IDirect3DViewport *viewport;
     IDirect3DViewport2 *viewport2;
     IDirect3DViewport3 *viewport3;
@@ -921,9 +921,9 @@ static void test_viewport_interfaces(void)
     hr = IDirect3D_CreateViewport(d3d, &viewport, NULL);
     ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
     ref = get_refcount((IUnknown *)viewport);
-    ok(ref == 1, "Initial IDirect3DViewport refcount is %d\n", ref);
+    ok(ref == 1, "Initial IDirect3DViewport refcount is %u\n", ref);
     ref = get_refcount((IUnknown *)d3d);
-    ok(ref == 2, "IDirect3D refcount is %d\n", ref);
+    ok(ref == 2, "IDirect3D refcount is %u\n", ref);
 
     /* E_FAIL return values are returned by Winetestbot Windows NT machines. While not supporting
      * newer interfaces is legitimate for old ddraw versions, E_FAIL violates Microsoft's rules
@@ -936,25 +936,27 @@ static void test_viewport_interfaces(void)
     /* NULL iid: Segfaults */
 
     hr = IDirect3DViewport_QueryInterface(viewport, &IID_IDirect3DViewport2, (void **)&viewport2);
-    ok(SUCCEEDED(hr) || broken(hr == E_FAIL), "Failed to QI IDirect3DViewport2, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr) || hr == E_NOINTERFACE || broken(hr == E_FAIL),
+            "Failed to QI IDirect3DViewport2, hr %#x.\n", hr);
     if (viewport2)
     {
         ref = get_refcount((IUnknown *)viewport);
-        ok(ref == 2, "IDirect3DViewport refcount is %d\n", ref);
+        ok(ref == 2, "IDirect3DViewport refcount is %u\n", ref);
         ref = get_refcount((IUnknown *)viewport2);
-        ok(ref == 2, "IDirect3DViewport2 refcount is %d\n", ref);
+        ok(ref == 2, "IDirect3DViewport2 refcount is %u\n", ref);
         IDirect3DViewport2_Release(viewport2);
         viewport2 = NULL;
     }
 
     hr = IDirect3DViewport_QueryInterface(viewport, &IID_IDirect3DViewport3, (void **)&viewport3);
-    ok(SUCCEEDED(hr) || broken(hr == E_FAIL), "Failed to QI IDirect3DViewport3, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr) || hr == E_NOINTERFACE || broken(hr == E_FAIL),
+            "Failed to QI IDirect3DViewport3, hr %#x.\n", hr);
     if (viewport3)
     {
         ref = get_refcount((IUnknown *)viewport);
-        ok(ref == 2, "IDirect3DViewport refcount is %d\n", ref);
+        ok(ref == 2, "IDirect3DViewport refcount is %u\n", ref);
         ref = get_refcount((IUnknown *)viewport3);
-        ok(ref == 2, "IDirect3DViewport3 refcount is %d\n", ref);
+        ok(ref == 2, "IDirect3DViewport3 refcount is %u\n", ref);
         IDirect3DViewport3_Release(viewport3);
     }
 
@@ -963,9 +965,9 @@ static void test_viewport_interfaces(void)
     if (unknown)
     {
         ref = get_refcount((IUnknown *)viewport);
-        ok(ref == 2, "IDirect3DViewport refcount is %d\n", ref);
+        ok(ref == 2, "IDirect3DViewport refcount is %u\n", ref);
         ref = get_refcount(unknown);
-        ok(ref == 2, "IUnknown refcount is %d\n", ref);
+        ok(ref == 2, "IUnknown refcount is %u\n", ref);
         IUnknown_Release(unknown);
     }
 
