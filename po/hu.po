@@ -117,7 +117,6 @@ msgid "Wine Gecko Installer"
 msgstr "Wine Gecko telepítő"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -2009,14 +2008,12 @@ msgid "Signature CA"
 msgstr "Aláírás CA"
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
-msgstr "Tanúsítvány szabályok"
+msgstr "Tanúsítványtípus"
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
-msgstr "Hitelesítési kulcs azonosító"
+msgstr "Hitelesítési kulcs azonosító:"
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -2052,28 +2049,20 @@ msgid "General"
 msgstr "Általános"
 
 #: cryptui.rc:188
-#, fuzzy
 msgid "&Install Certificate..."
-msgstr "Tanúsítvány beszerzés"
+msgstr "&Tanúsítvány telepítés..."
 
 #: cryptui.rc:189
-#, fuzzy
 msgid "Issuer &Statement"
 msgstr "Kiadó alternatív neve"
 
 #: cryptui.rc:197
-#, fuzzy
 msgid "&Show:"
-msgstr "Megjelenítés"
+msgstr "&Megjelenítés:"
 
 #: cryptui.rc:202
-#, fuzzy
 msgid "&Edit Properties..."
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Beállítások\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Tula&jdonságok"
+msgstr "Tula&jdonságok..."
 
 #: cryptui.rc:203
 msgid "&Copy to File..."
@@ -2141,14 +2130,12 @@ msgid ""
 msgstr "Az objektum azonosító (OID) hozzáadása, a felhasználási cél érdekében:"
 
 #: cryptui.rc:265 cryptui.rc:66
-#, fuzzy
 msgid "Select Certificate Store"
-msgstr "Tanúsítvány beszerzés"
+msgstr "Jelölje meg a tanúsítvány tárat"
 
 #: cryptui.rc:268
-#, fuzzy
 msgid "Select the certificate store you want to use:"
-msgstr "Tanúsítvány beszerzés"
+msgstr "Jelölje meg a tanúsítvány tárat, amit használni szeretne:"
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
@@ -2388,14 +2375,12 @@ msgid "You have successfully completed the Certificate Export Wizard."
 msgstr "Sikeresen befejeződött az export varázsló."
 
 #: cryptui.rc:27 cryptui.rc:90
-#, fuzzy
 msgid "Certificate"
-msgstr "Tanúsítvány beszerzés"
+msgstr "Tanúsítvány"
 
 #: cryptui.rc:28
-#, fuzzy
 msgid "Certificate Information"
-msgstr "Tanúsítvány sablon információ"
+msgstr "Tanúsítvány információ"
 
 #: cryptui.rc:29
 msgid ""
@@ -2490,13 +2475,8 @@ msgid "Critical Extensions Only"
 msgstr "Csak fontos kiterjesztések"
 
 #: cryptui.rc:50
-#, fuzzy
 msgid "Properties Only"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Beállítások\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Tula&jdonságok"
+msgstr "Csak Tulajdonságok"
 
 #: cryptui.rc:52
 msgid "Serial number"
@@ -2545,9 +2525,8 @@ msgid "Description"
 msgstr "Leírás"
 
 #: cryptui.rc:63
-#, fuzzy
 msgid "Certificate Properties"
-msgstr "Tanúsítvány szabályok"
+msgstr "Tanúsítvány tulajdonságok"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
@@ -2578,9 +2557,8 @@ msgid "Specify the file you want to import."
 msgstr "Adja meg az importálandó fájlt."
 
 #: cryptui.rc:72 cryptui.rc:95
-#, fuzzy
 msgid "Certificate Store"
-msgstr "Tanúsítványok"
+msgstr "Tanúsítvány tár"
 
 #: cryptui.rc:73
 msgid ""
@@ -2635,9 +2613,8 @@ msgid "Please select a store"
 msgstr "Kérem válasszon ki egy útvonalat"
 
 #: cryptui.rc:86
-#, fuzzy
 msgid "Certificate Store Selected"
-msgstr "Tanúsítvány útvonal"
+msgstr "Tanúsítvány tár megadva"
 
 #: cryptui.rc:87
 msgid "Automatically determined by the program"
@@ -2652,7 +2629,6 @@ msgid "Content"
 msgstr "Tartalom"
 
 #: cryptui.rc:91
-#, fuzzy
 msgid "Certificate Revocation List"
 msgstr "Tanúsítvány visszavonási lista"
 
@@ -2889,9 +2865,8 @@ msgid "Serialized Certificate Store (*.sst)"
 msgstr "Sorozat tanúsítvány tár (*.sst)"
 
 #: cryptui.rc:160
-#, fuzzy
 msgid "File Format"
-msgstr "F&ormátum"
+msgstr "Fájl formátum"
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
@@ -2989,14 +2964,12 @@ msgid "Show Assigned First"
 msgstr "Már létezik"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Hely"
+msgstr "Művelet"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "Tárgy típus="
+msgstr "Tárgy"
 
 #: dxdiagn.rc:25
 msgid "Regional Setting"
@@ -3289,7 +3262,7 @@ msgstr "Nyomtatás..."
 
 #: ieframe.rc:73
 msgid "Address"
-msgstr "IP cím="
+msgstr "Cím"
 
 #: ieframe.rc:78
 msgid "Searching for %s"
@@ -3426,13 +3399,8 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr "Wine Internet Böngésző beállítása"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Beállítások &mentése kilépéskor\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Megszüntetés a tárolás végén"
+msgstr "Zóna biztonsági beállításai: "
 
 #: inetcpl.rc:31
 msgid "Custom"
@@ -3471,9 +3439,8 @@ msgid "Subscript out of range"
 msgstr "Érvénytelen alszkript"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "Objektumot vártam"
+msgstr "Objektum szükséges"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -3484,9 +3451,8 @@ msgid "Object doesn't support this property or method"
 msgstr "Az objektum nem támogatja ezt a tulajdonságot vagy metódust"
 
 #: jscript.rc:31
-#, fuzzy
 msgid "Object doesn't support this action"
-msgstr "Az objektum nem támogatja ezt a tulajdonságot vagy metódust"
+msgstr "Az objektum nem támogatja ezt a műveletet"
 
 #: jscript.rc:32
 msgid "Argument not optional"
@@ -3621,9 +3587,8 @@ msgid "Invalid handle.\n"
 msgstr "Érvénytelen leíró.\n"
 
 #: winerror.mc:61
-#, fuzzy
 msgid "Memory trashed.\n"
-msgstr "Memóriafigyelő.\n"
+msgstr "Memória töredezve.\n"
 
 #: winerror.mc:66
 msgid "Not enough memory.\n"
@@ -3854,9 +3819,8 @@ msgid "Out of structures.\n"
 msgstr "Struktúrán kívüli.\n"
 
 #: winerror.mc:351
-#, fuzzy
 msgid "Already assigned.\n"
-msgstr "Már létezik.\n"
+msgstr "Már hozzárendelve.\n"
 
 #: winerror.mc:356 winerror.mc:1711
 msgid "Invalid password.\n"
@@ -4136,9 +4100,8 @@ msgid "Invalid segment number.\n"
 msgstr "Nem valós szegmens szám.\n"
 
 #: winerror.mc:711
-#, fuzzy
 msgid "Invalid ordinal for %1.\n"
-msgstr "Érvénytelen azonosítók %1\n"
+msgstr "Érvénytelen sorrend %1.\n"
 
 #: winerror.mc:716
 msgid "File already exists.\n"
@@ -4277,9 +4240,8 @@ msgid "More data available.\n"
 msgstr "Több adat elérhetõ.\n"
 
 #: winerror.mc:886
-#, fuzzy
 msgid "Session canceled.\n"
-msgstr "Felhasználó megszakította.\n"
+msgstr "Munkamenet megszakatt.\n"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name.\n"
@@ -5991,13 +5953,8 @@ msgid "Can't create endpoint.\n"
 msgstr "Endpoint nem hozható létre.\n"
 
 #: winerror.mc:3036
-#, fuzzy
 msgid "Out of resources.\n"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Rendkívül kevés a memória\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Elfogyott a memória."
+msgstr "Erőforráshiány.\n"
 
 #: winerror.mc:3041
 msgid "RPC server unavailable.\n"
@@ -7188,44 +7145,40 @@ msgstr ""
 "használatával aktiválhat: %s."
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
 "A vágólap tartalmának beillesztése az Ön dokumentumába, amit a következő "
-"használatával aktiválhat: %s. Ikonként fog megjelnni."
+"használatával aktiválhat %s. Ikonként fog megjelnni."
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"A vágólap tartalmának beillesztése az Ön dokumentumába mint: %s. Az adat "
+"A vágólap tartalmának beillesztése az Ön dokumentumába mint %s. Az adat "
 "össze van kapcsolva a forrásfájllal, így a fájl módosítása hatással lesz a "
 "dokumentumra."
 
 #: oledlg.rc:38
-#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"A vágólap tartalmának képe beillesztése az Ön dokumentumába mint: %s. A kép "
-"össze van kapcsolva a forrásfájllal, így a fájl módosítása hatással lesz a "
+"A vágólapon lévő kép beillesztése az Ön dokumentumába. A kép össze van "
+"kapcsolva a forrásfájllal, így a fájl módosítása hatással lesz a "
 "dokumentumra."
 
 #: oledlg.rc:39
-#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"A vágólapra mutató parancsikon beillesztése az Ön dokumentumába mint: %s. A "
+"Parancsikon beillesztése, amely a vágólapon lévő tartalomra mutat. A "
 "parancsikon össze van kapcsolva a forrásfájllal, így a fájl módosítása "
 "hatással lesz a dokumentumra."
 
@@ -7784,8 +7737,8 @@ msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
-"Írjon be programot, mappát, dokumentumot, Internetes erőforrást és a Wine "
-"megnyitja Önnek."
+"Adja meg a program, a mappa, a dokumentum, vagy az internetes erőforrás "
+"nevét és a Wine megnyitja azt."
 
 #: shell32.rc:335
 msgid "&Open:"
@@ -7955,9 +7908,8 @@ msgid "Program Files (x86)"
 msgstr "Programok (x86)"
 
 #: shell32.rc:221
-#, fuzzy
 msgid "Contacts"
-msgstr "&Tartalom"
+msgstr "Szerződések"
 
 #: shell32.rc:222 winefile.rc:112
 msgid "Links"
@@ -7968,9 +7920,8 @@ msgid "Slide Shows"
 msgstr "Diavetítés"
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
-msgstr "lista"
+msgstr "Lejátszási listák"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -8314,9 +8265,8 @@ msgid "There is a problem with the certificate for this site."
 msgstr "Problma van az oldalhoz tartozó tanusítvánnyal."
 
 #: wininet.rc:79
-#, fuzzy
 msgid "Do you want to continue anyway?"
-msgstr "Szimulálni szeretne egy Windows újraindítást?"
+msgstr "Folytatni akarja mindenképpen?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -9667,12 +9617,12 @@ msgstr "Biztos benne?"
 #: cmd.rc:308 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
-msgstr ""
+msgstr "I"
 
 #: cmd.rc:309 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
-msgstr ""
+msgstr "N"
 
 #: cmd.rc:310
 msgid "File association missing for extension %1\n"
@@ -9741,7 +9691,7 @@ msgstr "Nem lehet hívi batch címkét a batch szkripten kívűl\n"
 #: cmd.rc:328 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr "A"
+msgstr "M"
 
 #: cmd.rc:329
 msgid "Delete %1?"
@@ -9809,11 +9759,11 @@ msgstr "%1!c! kötetnek nincs címkéje.\n"
 
 #: cmd.rc:344
 msgid " (Yes|No)"
-msgstr ""
+msgstr "(Igen|Nem)"
 
 #: cmd.rc:345
 msgid " (Yes|No|All)"
-msgstr ""
+msgstr "(Igen|Nem|Mind)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10185,7 +10135,7 @@ msgstr "Z"
 
 #: notepad.rc:66
 msgid "Page &p"
-msgstr "Oldalszám &p"
+msgstr "&p oldal"
 
 #: notepad.rc:68
 msgid "Notepad"
