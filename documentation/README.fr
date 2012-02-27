@@ -8,82 +8,76 @@ Winelib) qui implémente les appels de l'API de Windows par leur
 équivalent Unix ou X11. Cette bibliothèque peut également être utilisée
 pour porter du code Windows vers un exécutable Unix natif.
 
-Wine est un logiciel libre, distribué sous GNU LGPL ; lisez le fichier
+Wine est un logiciel libre, distribué sous GNU LGPL ; lisez le fichier
 LICENSE pour plus de détails.
 
 2. DÉMARRAGE RAPIDE
 
 Quand vous compilez à partir des sources, il est recommandé d'utiliser
 l'installeur de Wine pour construire et installer Wine. À partir du
-répertoire racine des sources de Wine, exécutez :
+répertoire racine des sources de Wine, exécutez :
 
 ./tools/wineinstall
 
-Pour exécuter un programme, tapez « wine [options] programme ». Pour des
-informations complémentaires et la résolutions de problèmes, lisez le
-reste de ce fichier, les pages de manuel de Wine, et surtout les nombreuses
+Pour exécuter un programme, tapez « wine [options] programme ». Pour des
+informations complémentaires et la résolutions de problèmes, lisez la
+suite de ce fichier, les pages de manuel de Wine, et surtout les nombreuses
 informations que vous trouverez sur http://www.winehq.org.
 
 3. CONFIGURATION NÉCESSAIRE
 
 Pour compiler et exécuter Wine, vous devez disposer d'un des systèmes
-d'exploitation suivants :
+d'exploitation suivants :
 
 	Linux version 2.0.36 ou ultérieur
-	FreeBSD 6.3 ou ultérieur
+	FreeBSD 7.0 ou ultérieur
 	Solaris x86 9 ou ultérieur
 	NetBSD-current
 	Mac OS X 10.4 ou ultérieur
 
-Étant donné que Wine nécessite une implémentation des « threads » (processus
+Étant donné que Wine nécessite une implémentation des « threads » (processus
 légers) au niveau du noyau, seuls les systèmes d'exploitation mentionnés
-ci-haut sont supportés. D'autres systèmes d'exploitation implémentant les
+ci-dessus sont supportés. D'autres systèmes d'exploitation implémentant les
 threads noyau peuvent être pris en charge dans le futur.
 
-Informations Linux :
-  Bien que Linux 2.2.x doive encore fonctionner et que Linux 2.0.x puisse
-  encore marcher (les versions les plus anciennes de 2.0.x avaient des plantages
-  dus aux threads), il est préférable d'utiliser un noyau récent tel que 2.4.x
-  ou 2.6.x.
-
-Informations FreeBSD :
+Informations FreeBSD :
   Wine ne fonctionnera généralement pas bien avec les versions FreeBSD
-  antérieures à 6.3 ou 7.0 (certains patches additionnels sont disponibles pour
-  FreeBSD 6.3). Voyez http://wiki.freebsd.org/Wine pour plus d'informations.
+  antérieures à 7.0.  Voyez http://wiki.freebsd.org/Wine pour plus
+  d'informations.
 
-Informations Solaris :
+Informations Solaris :
   Il est plus que probable que vous deviez construire Wine avec la chaîne
-  d'outils GNU (gcc, gas, etc.). Attention : installer gas n'assure pas
+  d'outils GNU (gcc, gas, etc.). Attention : installer gas n'assure pas
   qu'il sera utilisé par gcc.  Recompiler gcc après l'installation de gas
   ou créer un lien symbolique de cc, as et ld vers les outils GNU correspondants
   semble nécessaire.
 
-Informations NetBSD :
-  Assurez-vous d'avoir les options USER_LDT, SYSVSHM, SYSVSEM et SYSVMSG
+Informations NetBSD :
+  Assurez-vous que les options USER_LDT, SYSVSHM, SYSVSEM et SYSVMSG sont
   activées dans votre noyau.
 
-Informations Mac OS X :
+Informations Mac OS X :
   Xcode 2.4 ou ultérieur est nécessaire pour compiler Wine sous x86.
 
 
-Systèmes de fichiers pris en charge :
+Systèmes de fichiers pris en charge :
   Wine devrait fonctionner sur la plupart des systèmes de fichiers. Certains
   problèmes de compatibilité ont été rapportés lors de l'utilisation de fichiers
   accédés via Samba. De plus, NTFS ne fournit pas toutes les fonctionnalités de
   système de fichiers nécessaires pour certains applications. L'utilisation d'un
-  système de fichiers Linux natif comme ext3 est recommandée.
+  système de fichiers Linux natif est recommandée.
 
-Configuration de base requise :
-  Les fichiers « include » de X11 (appelés xlib6g-dev sous Debian et
-  XFree86-devel sous RedHat) doivent être installés.
+Configuration de base requise :
+  Les fichiers d'en-tête de X11 (appelés xlib6g-dev sous Debian et XFree86-devel
+  sous RedHat) doivent être installés.
 
-  Bien entendu, vous aurez besoin du programme « make » (très probablement GNU
+  Bien entendu, vous aurez besoin du programme « make » (très probablement GNU
   make).
 
   flex 2.5.33 ou ultérieur, ainsi que bison, sont également requis.
 
-Bibliothèques optionnelles :
-  « configure » affiche des messages quand des bibliothèques optionnelles ne
+Bibliothèques optionnelles :
+  « configure » affiche des messages quand des bibliothèques optionnelles ne
   sont pas détectées sur votre système.
   Consultez http://wiki.winehq.org/Recommended_Packages (en anglais) pour des
   indications sur les paquets logiciels que vous devriez installer.
@@ -92,32 +86,32 @@ Bibliothèques optionnelles :
   (mode par défaut), les versions 32 bits de ces bibliothèques doivent être
   installées. Voyez http://wiki.winehq.org/WineOn64bit pour les détails.
   Si vous désirez un Wine 64 bits pur (ou une configuration mixte 32/64 bits),
-  consultez http://wiki.winehq.org/Wine64 pour les détails.
+  consultez http://wiki.winehq.org/Wine64.
 
 4. COMPILATION
 
 Au cas où vous choisiriez de ne pas utiliser wineinstall, exécutez les commandes
-suivantes pour construire Wine :
+suivantes pour construire Wine :
 
 ./configure
 make
 
-Cela va construire le programme « wine », ainsi que nombreux binaires et
+Cela va construire le programme « wine », ainsi que nombreux binaires et
 bibliothèques de support.
-Le programme « wine » charge et exécute les exécutables Windows.
-La bibliothèque « libwine » (alias « Winelib ») peut être utilisée pour compiler
+Le programme « wine » charge et exécute les exécutables Windows.
+La bibliothèque « libwine » (alias « Winelib ») peut être utilisée pour compiler
 et lier du code source Windows sous Unix.
 
-Pour voir les options de compilation, tapez « ./configure --help ».
+Pour voir les options de compilation, tapez « ./configure --help ».
 
 5. INSTALLATION
 
-Une fois Wine construit correctement, « make install » installe l'exécutable
+Une fois Wine construit correctement, « make install » installe l'exécutable
 wine, les bibliothèques associées, les pages de manuel de Wine et quelques
 autres fichiers nécessaires.
 
-N'oubliez pas de désinstaller toutes les installations précédentes : essayez
-« dpkg -r wine », « rpm -e wine » ou « make uninstall » avant d'installer
+N'oubliez pas de désinstaller toutes les installations précédentes : essayez
+« dpkg -r wine », « rpm -e wine » ou « make uninstall » avant d'installer
 une nouvelle version.
 
 Une fois l'installation terminée, vous pouvez naviguer dans la section Support
@@ -129,7 +123,7 @@ sur http://www.winehq.org/ pour obtenir des astuces de configuration.
 Lorsque l'on invoque Wine, vous pouvez spécifier le chemin entier vers
 l'exécutable ou seulement le nom de fichier.
 
-Pour exécuter le bloc-notes par exemple :
+Pour exécuter le bloc-notes par exemple :
 
     wine notepad               (en utilisant le chemin d'accès spécifié
     wine notepad.exe            dans la base de registre pour localiser
@@ -151,7 +145,7 @@ attacher à un éventuel rapport de bogue.
 
 WWW
     Beaucoup d'informations à propos de Wine sont disponibles sur WineHQ
-    (http://www.winehq.org) : divers guides, base de données d'applications,
+    (http://www.winehq.org) : divers guides, base de données d'applications,
     suivi de bogues. C'est probablement le meilleur point de départ.
 
 FAQ
@@ -162,7 +156,7 @@ Wiki
 
 Listes de diffusion
     Il existe plusieurs listes de diffusion pour les utilisateurs et
-    développeurs Wine ; voyez http://www.winehq.org/forums pour de plus
+    développeurs Wine ; voyez http://www.winehq.org/forums pour de plus
     amples informations.
 
 Bogues
