@@ -192,7 +192,7 @@ void* CDECL _recalloc(void* mem, size_t num, size_t size)
     }
 
     if(size>old_size)
-        memset((BYTE*)mem+old_size, 0, size-old_size);
+        memset((BYTE*)ret+old_size, 0, size-old_size);
     return ret;
 }
 
