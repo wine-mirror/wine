@@ -1,5 +1,6 @@
 # Turkish translations for Wine
 #
+# zeugma, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
@@ -14,9 +15,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: appwiz.rc:55
-#, fuzzy
 msgid "Install/Uninstall"
-msgstr "Kuruluyor..."
+msgstr ""
 
 #: appwiz.rc:58
 msgid ""
@@ -25,9 +25,8 @@ msgid ""
 msgstr ""
 
 #: appwiz.rc:59
-#, fuzzy
 msgid "&Install..."
-msgstr "&Kur"
+msgstr "&Kur..."
 
 #: appwiz.rc:62
 msgid ""
@@ -37,9 +36,8 @@ msgid ""
 msgstr ""
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "Bilgi"
+msgstr ""
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 #, fuzzy
@@ -49,12 +47,11 @@ msgstr "&Değiştir"
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
 msgid "&Remove"
-msgstr "&Sil"
+msgstr "&Kaldır"
 
 #: appwiz.rc:72
-#, fuzzy
 msgid "Support Information"
-msgstr "Bilgi"
+msgstr ""
 
 #: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:226 comdlg32.rc:256
 #: comdlg32.rc:299 comdlg32.rc:353 comdlg32.rc:392 comdlg32.rc:446
@@ -87,32 +84,28 @@ msgid "Version:"
 msgstr "Sürüm:"
 
 #: appwiz.rc:79
-#, fuzzy
 msgid "Contact:"
-msgstr "&İçindekiler"
+msgstr ""
 
 #: appwiz.rc:80
-#, fuzzy
 msgid "Support Information:"
-msgstr "Bilgi"
+msgstr ""
 
 #: appwiz.rc:81
 msgid "Support Telephone:"
 msgstr ""
 
 #: appwiz.rc:82
-#, fuzzy
 msgid "Readme:"
-msgstr "Hazır"
+msgstr ""
 
 #: appwiz.rc:83
 msgid "Product Updates:"
 msgstr ""
 
 #: appwiz.rc:84
-#, fuzzy
 msgid "Comments:"
-msgstr "Açıklamalar"
+msgstr "Açıklamalar:"
 
 #: appwiz.rc:97
 msgid "Wine Gecko Installer"
@@ -206,9 +199,8 @@ msgid "Installation programs"
 msgstr "Yeni bir program çalıştırır"
 
 #: appwiz.rc:39
-#, fuzzy
 msgid "Programs (*.exe)"
-msgstr "Programlar"
+msgstr "Programlar (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winedbg.rc:39 winhlp32.rc:87
@@ -240,7 +232,7 @@ msgstr "Sıkıştırma seçenekleri"
 
 #: avifil32.rc:42
 msgid "&Choose a stream:"
-msgstr "Bir akış se&çin:"
+msgstr "&Bir akış seçin:"
 
 #: avifil32.rc:45 wordpad.rc:73
 msgid "&Options..."
@@ -272,7 +264,7 @@ msgstr "Tüm çokluortam dosyaları"
 
 #: avifil32.rc:31
 msgid "video"
-msgstr "vidyo"
+msgstr "video"
 
 #: avifil32.rc:32
 msgid "audio"
@@ -288,7 +280,7 @@ msgstr "sıkıştırılmamış"
 
 #: browseui.rc:25
 msgid "Canceling..."
-msgstr "Kuruluyor..."
+msgstr "İptal ediliyor..."
 
 #: comctl32.rc:49 winefile.rc:159
 msgid "Properties for %s"
@@ -329,7 +321,7 @@ msgstr "&Kapat"
 
 #: comctl32.rc:82
 msgid "R&eset"
-msgstr "S&ıfırla"
+msgstr "&Sıfırla"
 
 #: comctl32.rc:83 comdlg32.rc:166 comdlg32.rc:188 comdlg32.rc:259
 #: comdlg32.rc:323 comdlg32.rc:343 comdlg32.rc:355 comdlg32.rc:472
@@ -370,7 +362,6 @@ msgid "Separator"
 msgstr "Ayraç"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
 msgstr "Hiçbiri"
@@ -440,7 +431,7 @@ msgstr "&Tümü"
 
 #: comdlg32.rc:202
 msgid "S&election"
-msgstr "S&eçim"
+msgstr "&Seçim"
 
 #: comdlg32.rc:203
 msgid "&Pages"
@@ -711,7 +702,7 @@ msgstr "Biti&ş:"
 
 #: comdlg32.rc:410 winecfg.rc:286
 msgid "Si&ze:"
-msgstr "Size:"
+msgstr "&Size:"
 
 #: comdlg32.rc:412
 msgid "&Source:"
@@ -782,14 +773,12 @@ msgid "&Open"
 msgstr "&Aç"
 
 #: comdlg32.rc:481
-#, fuzzy
 msgid "File name:"
-msgstr "&Dosya adı:"
+msgstr "Dosya adı:"
 
 #: comdlg32.rc:484
-#, fuzzy
 msgid "Files of type:"
-msgstr "Dosya &türü:"
+msgstr "Dosya türü:"
 
 #: comdlg32.rc:29
 msgid "File not found"
@@ -1147,15 +1136,13 @@ msgid "Margins [mm]"
 msgstr "Kenarlıklar [mm]"
 
 #: comdlg32.rc:77 sane.rc:33
-#, fuzzy
 msgctxt "unit: millimeters"
 msgid "mm"
-msgstr "mm"
+msgstr ""
 
 #: credui.rc:42
-#, fuzzy
 msgid "&User name:"
-msgstr "Kullanıcı &Adı"
+msgstr "&Kullanıcı adı:"
 
 #: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
@@ -1166,9 +1153,8 @@ msgid "&Remember my password"
 msgstr ""
 
 #: credui.rc:27
-#, fuzzy
 msgid "Connect to %s"
-msgstr "&Ağ Sürücüsüne Bağlan"
+msgstr "%s Bağlan"
 
 #: credui.rc:28
 msgid "Connecting to %s"
@@ -1702,9 +1688,8 @@ msgid "Smart Card Logon"
 msgstr ""
 
 #: crypt32.rc:153 cryptui.rc:139
-#, fuzzy
 msgid "Digital Rights"
-msgstr "Sa&yısal"
+msgstr ""
 
 #: crypt32.rc:154 cryptui.rc:135
 msgid "Qualified Subordination"
@@ -1840,7 +1825,6 @@ msgid "Path Length Constraint="
 msgstr ""
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "path length"
 msgid "None"
 msgstr "Hiçbiri"
@@ -2055,52 +2039,40 @@ msgid "General"
 msgstr ""
 
 #: cryptui.rc:188
-#, fuzzy
 msgid "&Install Certificate..."
-msgstr "&Hücre Özellikleri"
+msgstr ""
 
 #: cryptui.rc:189
 msgid "Issuer &Statement"
 msgstr ""
 
 #: cryptui.rc:197
-#, fuzzy
 msgid "&Show:"
-msgstr "Göster"
+msgstr "&Göster:"
 
 #: cryptui.rc:202
-#, fuzzy
 msgid "&Edit Properties..."
 msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Özellikler\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Ö&zellikler"
 
 #: cryptui.rc:203
-#, fuzzy
 msgid "&Copy to File..."
-msgstr "Dosyalar Kopyalanıyor..."
+msgstr ""
 
 #: cryptui.rc:207
-#, fuzzy
 msgid "Certification Path"
-msgstr "&Hücre Özellikleri"
+msgstr ""
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "&Hücre Özellikleri"
+msgstr ""
 
 #: cryptui.rc:214
-#, fuzzy
 msgid "&View Certificate"
-msgstr "&Hücre Özellikleri"
+msgstr ""
 
 #: cryptui.rc:215
-#, fuzzy
 msgid "Certificate &status:"
-msgstr "&Hücre Özellikleri"
+msgstr ""
 
 #: cryptui.rc:221
 msgid "Disclaimer"
@@ -2111,18 +2083,16 @@ msgid "More &Info"
 msgstr ""
 
 #: cryptui.rc:236
-#, fuzzy
 msgid "&Friendly name:"
-msgstr "&Dosya adı:"
+msgstr ""
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
 msgstr "&Açıklama:"
 
 #: cryptui.rc:240
-#, fuzzy
 msgid "Certificate purposes"
-msgstr "&Hücre Özellikleri"
+msgstr ""
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
@@ -2137,9 +2107,8 @@ msgid "Enable &only the following purposes for this certificate:"
 msgstr ""
 
 #: cryptui.rc:250
-#, fuzzy
 msgid "Add &Purpose..."
-msgstr "&Gözat"
+msgstr ""
 
 #: cryptui.rc:254
 msgid "Add Purpose"
@@ -2167,9 +2136,8 @@ msgid "Certificate Import Wizard"
 msgstr ""
 
 #: cryptui.rc:280
-#, fuzzy
 msgid "Welcome to the Certificate Import Wizard"
-msgstr "Belirtilen aygıt işleyici geçersiz."
+msgstr ""
 
 #: cryptui.rc:283
 msgid ""
@@ -2185,7 +2153,6 @@ msgid ""
 msgstr ""
 
 #: cryptui.rc:291 cryptui.rc:427
-#, fuzzy
 msgid "&File name:"
 msgstr "&Dosya adı:"
 
@@ -2246,23 +2213,20 @@ msgid "I&ntended purpose:"
 msgstr ""
 
 #: cryptui.rc:341
-#, fuzzy
 msgid "&Import..."
-msgstr "Font"
+msgstr ""
 
 #: cryptui.rc:342 regedit.rc:109
 msgid "&Export..."
 msgstr ""
 
 #: cryptui.rc:344
-#, fuzzy
 msgid "&Advanced..."
-msgstr "&Gelişmiş"
+msgstr "&Gelişmiş..."
 
 #: cryptui.rc:345
-#, fuzzy
 msgid "Certificate intended purposes"
-msgstr "&Hücre Özellikleri"
+msgstr ""
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
@@ -2271,14 +2235,12 @@ msgid "&View"
 msgstr "&Görünüm"
 
 #: cryptui.rc:352
-#, fuzzy
 msgid "Advanced Options"
-msgstr "Geçersiz Sözdizimi"
+msgstr ""
 
 #: cryptui.rc:355
-#, fuzzy
 msgid "Certificate purpose"
-msgstr "&Hücre Özellikleri"
+msgstr ""
 
 #: cryptui.rc:356
 msgid ""
@@ -2286,9 +2248,8 @@ msgid ""
 msgstr ""
 
 #: cryptui.rc:358
-#, fuzzy
 msgid "&Certificate purposes:"
-msgstr "&Hücre Özellikleri"
+msgstr ""
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
@@ -2296,9 +2257,8 @@ msgid "Certificate Export Wizard"
 msgstr ""
 
 #: cryptui.rc:370
-#, fuzzy
 msgid "Welcome to the Certificate Export Wizard"
-msgstr "Belirtilen aygıt işleyici geçersiz."
+msgstr ""
 
 #: cryptui.rc:373
 msgid ""
@@ -2332,9 +2292,8 @@ msgid "N&o, do not export the private key"
 msgstr ""
 
 #: cryptui.rc:396
-#, fuzzy
 msgid "&Confirm password:"
-msgstr "Geçersiz Sözdizimi"
+msgstr ""
 
 #: cryptui.rc:404
 msgid "Select the format you want to use:"
@@ -2385,9 +2344,8 @@ msgid "Certificate"
 msgstr ""
 
 #: cryptui.rc:28
-#, fuzzy
 msgid "Certificate Information"
-msgstr "Bilgi"
+msgstr ""
 
 #: cryptui.rc:29
 msgid ""
@@ -2406,9 +2364,8 @@ msgid "This certificate could not be validated to a trusted root certificate."
 msgstr ""
 
 #: cryptui.rc:32
-#, fuzzy
 msgid "This certificate's issuer could not be found."
-msgstr "'%s' bulunamıyor."
+msgstr ""
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
@@ -2475,18 +2432,12 @@ msgid "Extensions Only"
 msgstr ""
 
 #: cryptui.rc:49
-#, fuzzy
 msgid "Critical Extensions Only"
-msgstr "Kullanılabilir Olmayan Kritik Uzantı"
+msgstr ""
 
 #: cryptui.rc:50
-#, fuzzy
 msgid "Properties Only"
 msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Özellikler\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Ö&zellikler"
 
 #: cryptui.rc:52
 msgid "Serial number"
@@ -2501,14 +2452,12 @@ msgid "Valid from"
 msgstr ""
 
 #: cryptui.rc:55
-#, fuzzy
 msgid "Valid to"
-msgstr "Geçersiz Sözdizimi"
+msgstr ""
 
 #: cryptui.rc:56
-#, fuzzy
 msgid "Subject"
-msgstr "Böyle Bir Nesne Yok"
+msgstr ""
 
 #: cryptui.rc:57
 msgid "Public key"
@@ -2535,9 +2484,8 @@ msgid "Description"
 msgstr ""
 
 #: cryptui.rc:63
-#, fuzzy
 msgid "Certificate Properties"
-msgstr "&Hücre Özellikleri"
+msgstr ""
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
@@ -2608,9 +2556,8 @@ msgid "The file format is not recognized. Please select another file."
 msgstr ""
 
 #: cryptui.rc:83
-#, fuzzy
 msgid "Could not open "
-msgstr "Pencere oluşturulamıyor veya kullanılamıyor."
+msgstr ""
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -2633,9 +2580,8 @@ msgid "File"
 msgstr "Dosya"
 
 #: cryptui.rc:89 inetcpl.rc:105
-#, fuzzy
 msgid "Content"
-msgstr "&İçindekiler"
+msgstr ""
 
 #: cryptui.rc:91
 msgid "Certificate Revocation List"
@@ -2682,9 +2628,8 @@ msgid "Friendly Name"
 msgstr ""
 
 #: cryptui.rc:106 cryptui.rc:120
-#, fuzzy
 msgid "<None>"
-msgstr "Hiçbiri"
+msgstr "<Hiçbiri>"
 
 #: cryptui.rc:107
 msgid ""
@@ -2801,9 +2746,8 @@ msgid "Private Key Archival"
 msgstr ""
 
 #: cryptui.rc:148
-#, fuzzy
 msgid "Export Format"
-msgstr "&Biçim"
+msgstr ""
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
@@ -2818,11 +2762,8 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr ""
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
 msgstr ""
-"Dosya zaten var.\n"
-"Değiştirmek ister misiniz?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -2845,9 +2786,8 @@ msgid "Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:160
-#, fuzzy
 msgid "File Format"
-msgstr "&Biçim"
+msgstr ""
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
@@ -2892,9 +2832,8 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr ""
 
 #: cryptui.rc:173
-#, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
-msgstr "Belirtilen aygıt işleyici geçersiz."
+msgstr ""
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -2913,52 +2852,44 @@ msgid "Default MidiOut Device"
 msgstr ""
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "Ya&pılandır..."
+msgstr "Aygıtları Yapılandır"
 
 #: dinput.rc:45
 msgid "Reset"
 msgstr ""
 
 #: dinput.rc:48
-#, fuzzy
 msgid "Player"
-msgstr "Yürüt"
+msgstr ""
 
 #: dinput.rc:49
 msgid "Device"
 msgstr ""
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "LAN Bağlantısı"
+msgstr "Eylemler"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "Sürücü Eşleme"
+msgstr ""
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Zaten Var"
+msgstr ""
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "LAN Bağlantısı"
+msgstr ""
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "Böyle Bir Nesne Yok"
+msgstr ""
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Öntanımlı Ayarlar"
+msgstr ""
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
@@ -2977,9 +2908,8 @@ msgid "Cyrillic"
 msgstr ""
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Yeşil"
+msgstr ""
 
 #: gdi32.rc:29
 msgid "Turkish"
@@ -3034,9 +2964,8 @@ msgid "OEM/DOS"
 msgstr ""
 
 #: gphoto2.rc:27
-#, fuzzy
 msgid "Files on Camera"
-msgstr "&Dosya adı:"
+msgstr ""
 
 #: gphoto2.rc:31
 msgid "Import Selected"
@@ -3067,9 +2996,8 @@ msgid "Transferring... Please Wait"
 msgstr ""
 
 #: gphoto2.rc:48
-#, fuzzy
 msgid "Connecting to camera"
-msgstr "&Ağ Sürücüsüne Bağlan"
+msgstr ""
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
@@ -3089,19 +3017,13 @@ msgid "&Forward"
 msgstr "İleri"
 
 #: hhctrl.rc:59
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
-msgstr "Ev"
+msgstr "&Ev"
 
 #: hhctrl.rc:60
-#, fuzzy
 msgid "&Stop"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Dur\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Durdur"
+msgstr "&Durdur"
 
 #: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
@@ -3120,13 +3042,8 @@ msgid "I&ndex"
 msgstr "Di&zin"
 
 #: hhctrl.rc:30 notepad.rc:52
-#, fuzzy
 msgid "&Search"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Ara\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Bul"
+msgstr "&Ara"
 
 #: hhctrl.rc:31
 msgid "Favor&ites"
@@ -3149,13 +3066,8 @@ msgid "Hide"
 msgstr "Gizle"
 
 #: hhctrl.rc:41 ieframe.rc:65 shdoclc.rc:164 shdoclc.rc:188
-#, fuzzy
 msgid "Stop"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Dur\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Durdur"
+msgstr "Durdur"
 
 #: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 msgid "Refresh"
@@ -3166,7 +3078,6 @@ msgid "Back"
 msgstr "Geri"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
 msgstr "Ev"
@@ -3202,36 +3113,28 @@ msgid "&Window"
 msgstr "&Pencere"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
-#, fuzzy
 msgid "&Open..."
-msgstr "&Aç"
+msgstr "&Aç..."
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "&Farklı Kaydet..."
 
 #: ieframe.rc:35
-#, fuzzy
 msgid "Print &format..."
-msgstr "Yazdır"
+msgstr ""
 
 #: ieframe.rc:36
-#, fuzzy
 msgid "Pr&int..."
-msgstr "Yazdır"
+msgstr "&Yazdır"
 
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
 msgstr ""
 
 #: ieframe.rc:44
-#, fuzzy
 msgid "&Toolbars"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Araç Çubuğu\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Toolbar"
+msgstr "&Araç Çubuğu"
 
 #: ieframe.rc:46
 msgid "&Standard bar"
@@ -3250,62 +3153,53 @@ msgid "&Add to Favorites..."
 msgstr "Sık Kullanılanlara Ekle..."
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "Winefile hakkında &bilgi..."
+msgstr ""
 
 #: ieframe.rc:87
-#, fuzzy
 msgid "Open URL"
-msgstr "&Bağlantıyı Aç"
+msgstr "Bağlantıyı Aç"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
 msgstr ""
 
 #: ieframe.rc:91
-#, fuzzy
 msgid "Open:"
-msgstr "Aç"
+msgstr "Aç:"
 
 #: ieframe.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
 msgstr "Ev"
 
 #: ieframe.rc:68 winhlp32.rc:66
-#, fuzzy
 msgid "Print..."
-msgstr "Yazdır"
+msgstr "Yazdır..."
 
 #: ieframe.rc:73
 msgid "Address"
 msgstr ""
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "%s Özellikleri"
+msgstr ""
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
 msgstr ""
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "İndiriliyor..."
+msgstr "%s İndiriliyor"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "%s Özellikleri"
+msgstr ""
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr "Ev"
+msgstr "Ana sayfa"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3316,18 +3210,16 @@ msgid "&Current page"
 msgstr ""
 
 #: inetcpl.rc:51
-#, fuzzy
 msgid "&Default page"
-msgstr "Öntanımlı Ayarlar"
+msgstr ""
 
 #: inetcpl.rc:52
 msgid "&Blank page"
 msgstr ""
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr "Komut geçmişi"
+msgstr ""
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3338,9 +3230,8 @@ msgid "Delete &files..."
 msgstr ""
 
 #: inetcpl.rc:57
-#, fuzzy
 msgid "&Settings..."
-msgstr "&Farklı Kaydet..."
+msgstr ""
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
@@ -3392,9 +3283,8 @@ msgid ""
 msgstr ""
 
 #: inetcpl.rc:111
-#, fuzzy
 msgid "Certificates..."
-msgstr "&Hücre Özellikleri"
+msgstr ""
 
 #: inetcpl.rc:112
 msgid "Publishers..."
@@ -3409,27 +3299,20 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr ""
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
 msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Çıkışta ayarları sakla\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Çıkışta ayarları kaydet"
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "Özelleştir"
+msgstr ""
 
 #: inetcpl.rc:32
 msgid "Very Low"
 msgstr ""
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "&Düşük"
+msgstr "Düşük"
 
 #: inetcpl.rc:34
 msgid "Medium"
@@ -3440,9 +3323,8 @@ msgid "Increased"
 msgstr ""
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "&Yüksek"
+msgstr "Yüksek"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3509,9 +3391,8 @@ msgid "Label redefined"
 msgstr ""
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
-msgstr "Dosya bulunamadı"
+msgstr ""
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
@@ -3546,9 +3427,8 @@ msgid "Boolean object expected"
 msgstr ""
 
 #: jscript.rc:50
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Silinme tarihi"
+msgstr ""
 
 #: jscript.rc:51
 msgid "VBArray object expected"
@@ -3579,24 +3459,20 @@ msgid "Array object expected"
 msgstr ""
 
 #: winerror.mc:26
-#, fuzzy
 msgid "Success.\n"
 msgstr "Başarılı.\n"
 
 #: winerror.mc:31
-#, fuzzy
 msgid "Invalid function.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:36
-#, fuzzy
 msgid "File not found.\n"
 msgstr "Dosya bulunamadı.\n"
 
 #: winerror.mc:41
-#, fuzzy
 msgid "Path not found.\n"
-msgstr "%s yolu bulunamadı.\n"
+msgstr "%s yolu  bulunamadı.\n"
 
 #: winerror.mc:46
 msgid "Too many open files.\n"
@@ -3607,23 +3483,20 @@ msgid "Access denied.\n"
 msgstr ""
 
 #: winerror.mc:56
-#, fuzzy
 msgid "Invalid handle.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:61
 msgid "Memory trashed.\n"
 msgstr ""
 
 #: winerror.mc:66
-#, fuzzy
 msgid "Not enough memory.\n"
-msgstr "Bellek dolu."
+msgstr ""
 
 #: winerror.mc:71
-#, fuzzy
 msgid "Invalid block.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:76
 msgid "Bad environment.\n"
@@ -3634,24 +3507,20 @@ msgid "Bad format.\n"
 msgstr ""
 
 #: winerror.mc:86
-#, fuzzy
 msgid "Invalid access.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:91
-#, fuzzy
 msgid "Invalid data.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:96
-#, fuzzy
 msgid "Out of memory.\n"
-msgstr "Bellek dolu."
+msgstr ""
 
 #: winerror.mc:101
-#, fuzzy
 msgid "Invalid drive.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:106
 msgid "Can't delete current directory.\n"
@@ -3698,14 +3567,12 @@ msgid "Not DOS disk.\n"
 msgstr ""
 
 #: winerror.mc:161
-#, fuzzy
 msgid "Sector not found.\n"
-msgstr "Dosya bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:166
-#, fuzzy
 msgid "Out of paper.\n"
-msgstr "Kağıt yok; .\n"
+msgstr ""
 
 #: winerror.mc:171
 msgid "Write fault.\n"
@@ -3720,14 +3587,12 @@ msgid "General failure.\n"
 msgstr ""
 
 #: winerror.mc:186
-#, fuzzy
 msgid "Sharing violation.\n"
-msgstr "Adlandırma İhlali.\n"
+msgstr ""
 
 #: winerror.mc:191
-#, fuzzy
 msgid "Lock violation.\n"
-msgstr "LAN Bağlantısı.\n"
+msgstr ""
 
 #: winerror.mc:196
 msgid "Wrong disk.\n"
@@ -3738,9 +3603,8 @@ msgid "Sharing buffer exceeded.\n"
 msgstr ""
 
 #: winerror.mc:206
-#, fuzzy
 msgid "End of file.\n"
-msgstr "Sık Ku&llanılanlara Ekle..."
+msgstr ""
 
 #: winerror.mc:211 winerror.mc:436
 msgid "Disk full.\n"
@@ -3763,14 +3627,12 @@ msgid "Bad network path.\n"
 msgstr ""
 
 #: winerror.mc:236
-#, fuzzy
 msgid "Network busy.\n"
-msgstr "Ağ paylaşımı.\n"
+msgstr ""
 
 #: winerror.mc:241
-#, fuzzy
 msgid "Device does not exist.\n"
-msgstr "Dosya mevcut değil.\n"
+msgstr ""
 
 #: winerror.mc:246
 msgid "Too many commands.\n"
@@ -3785,9 +3647,8 @@ msgid "Bad network response.\n"
 msgstr ""
 
 #: winerror.mc:261
-#, fuzzy
 msgid "Unexpected network error.\n"
-msgstr "Tanımlanamayan dış hata."
+msgstr ""
 
 #: winerror.mc:266
 msgid "Bad remote adaptor.\n"
@@ -3802,14 +3663,12 @@ msgid "No spool space.\n"
 msgstr ""
 
 #: winerror.mc:281
-#, fuzzy
 msgid "Print canceled.\n"
-msgstr "Kullanıcı İptal Etti.\n"
+msgstr ""
 
 #: winerror.mc:286
-#, fuzzy
 msgid "Network name deleted.\n"
-msgstr "Silinme tarihi.\n"
+msgstr ""
 
 #: winerror.mc:291
 msgid "Network access denied.\n"
@@ -3820,9 +3679,8 @@ msgid "Bad device type.\n"
 msgstr ""
 
 #: winerror.mc:301
-#, fuzzy
 msgid "Bad network name.\n"
-msgstr "Ağ paylaşımı.\n"
+msgstr ""
 
 #: winerror.mc:306
 msgid "Too many network names.\n"
@@ -3833,9 +3691,8 @@ msgid "Too many network sessions.\n"
 msgstr ""
 
 #: winerror.mc:316
-#, fuzzy
 msgid "Sharing paused.\n"
-msgstr "&Dizge Değeri.\n"
+msgstr ""
 
 #: winerror.mc:321
 msgid "Request not accepted.\n"
@@ -3846,9 +3703,8 @@ msgid "Redirector paused.\n"
 msgstr ""
 
 #: winerror.mc:331
-#, fuzzy
 msgid "File exists.\n"
-msgstr "Dosya mevcut değil.\n"
+msgstr ""
 
 #: winerror.mc:336
 msgid "Cannot create.\n"
@@ -3863,24 +3719,20 @@ msgid "Out of structures.\n"
 msgstr ""
 
 #: winerror.mc:351
-#, fuzzy
 msgid "Already assigned.\n"
-msgstr "Zaten Var.\n"
+msgstr ""
 
 #: winerror.mc:356 winerror.mc:1711
-#, fuzzy
 msgid "Invalid password.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr "Geçersiz parola.\n"
 
 #: winerror.mc:361
-#, fuzzy
 msgid "Invalid parameter.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr "Geçersiz parametre.\n"
 
 #: winerror.mc:366
-#, fuzzy
 msgid "Net write fault.\n"
-msgstr "&Öntanımlı Ayarlar.\n"
+msgstr ""
 
 #: winerror.mc:371
 msgid "No process slots.\n"
@@ -3915,9 +3767,8 @@ msgid "Semaphore user limit.\n"
 msgstr ""
 
 #: winerror.mc:411
-#, fuzzy
 msgid "Insert disk for drive %1.\n"
-msgstr "%s nolu diski yerleştirin.\n"
+msgstr ""
 
 #: winerror.mc:416
 msgid "Drive locked.\n"
@@ -3928,9 +3779,8 @@ msgid "Broken pipe.\n"
 msgstr ""
 
 #: winerror.mc:426
-#, fuzzy
 msgid "Open failed.\n"
-msgstr "Dosya Aç.\n"
+msgstr ""
 
 #: winerror.mc:431
 msgid "Buffer overflow.\n"
@@ -3941,14 +3791,12 @@ msgid "No more search handles.\n"
 msgstr ""
 
 #: winerror.mc:446
-#, fuzzy
 msgid "Invalid target handle.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:451
-#, fuzzy
 msgid "Invalid IOCTL.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:456
 msgid "Invalid verify switch.\n"
@@ -3959,41 +3807,32 @@ msgid "Bad driver level.\n"
 msgstr ""
 
 #: winerror.mc:466
-#, fuzzy
 msgid "Call not implemented.\n"
 msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Henüz Tanımlanmadı\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Henüz tamamlanmadı.\n"
 
 #: winerror.mc:471
 msgid "Semaphore timeout.\n"
 msgstr ""
 
 #: winerror.mc:476
-#, fuzzy
 msgid "Insufficient buffer.\n"
-msgstr "Geçersiz Yetkiler.\n"
+msgstr ""
 
 #: winerror.mc:481
-#, fuzzy
 msgid "Invalid name.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:486
-#, fuzzy
 msgid "Invalid level.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:491
 msgid "No volume label.\n"
 msgstr ""
 
 #: winerror.mc:496
-#, fuzzy
 msgid "Module not found.\n"
-msgstr "Dosya bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:501
 msgid "Procedure not found.\n"
@@ -4052,23 +3891,20 @@ msgid "Attempt to SUBST to a JOINed drive.\n"
 msgstr ""
 
 #: winerror.mc:576
-#, fuzzy
 msgid "Drive is busy.\n"
-msgstr "Sürücüler.\n"
+msgstr ""
 
 #: winerror.mc:581
-#, fuzzy
 msgid "Same drive.\n"
-msgstr "Sistem sürücüsü.\n"
+msgstr ""
 
 #: winerror.mc:586
 msgid "Not toplevel directory.\n"
 msgstr ""
 
 #: winerror.mc:591
-#, fuzzy
 msgid "Directory is not empty.\n"
-msgstr "Yalnızca &Dizin.\n"
+msgstr ""
 
 #: winerror.mc:596
 msgid "Path is in use as a SUBST.\n"
@@ -4151,9 +3987,8 @@ msgid "Resource in use.\n"
 msgstr ""
 
 #: winerror.mc:696
-#, fuzzy
 msgid "Cancel violation.\n"
-msgstr "Adlandırma İhlali.\n"
+msgstr ""
 
 #: winerror.mc:701
 msgid "Atomic locks not supported.\n"
@@ -4164,23 +3999,20 @@ msgid "Invalid segment number.\n"
 msgstr ""
 
 #: winerror.mc:711
-#, fuzzy
 msgid "Invalid ordinal for %1.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:716
-#, fuzzy
 msgid "File already exists.\n"
-msgstr "Zaten Var.\n"
+msgstr ""
 
 #: winerror.mc:721
 msgid "Invalid flag number.\n"
 msgstr ""
 
 #: winerror.mc:726
-#, fuzzy
 msgid "Semaphore name not found.\n"
-msgstr "%s yolu bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1.\n"
@@ -4299,19 +4131,16 @@ msgid "Pipe closed.\n"
 msgstr ""
 
 #: winerror.mc:876
-#, fuzzy
 msgid "Pipe not connected.\n"
-msgstr "Dosya bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:881
-#, fuzzy
 msgid "More data available.\n"
-msgstr "Kullanılabilir değil; .\n"
+msgstr ""
 
 #: winerror.mc:886
-#, fuzzy
 msgid "Session canceled.\n"
-msgstr "Kullanıcı İptal Etti.\n"
+msgstr ""
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name.\n"
@@ -4322,18 +4151,16 @@ msgid "Extended attribute list inconsistent.\n"
 msgstr ""
 
 #: winerror.mc:901
-#, fuzzy
 msgid "No more data available.\n"
-msgstr "Kullanılabilir değil; .\n"
+msgstr ""
 
 #: winerror.mc:906
 msgid "Cannot use Copy API.\n"
 msgstr ""
 
 #: winerror.mc:911
-#, fuzzy
 msgid "Directory name invalid.\n"
-msgstr "Yalnızca &Dizin.\n"
+msgstr ""
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit.\n"
@@ -4372,18 +4199,16 @@ msgid "The oplock wasn't granted.\n"
 msgstr ""
 
 #: winerror.mc:961
-#, fuzzy
 msgid "Invalid oplock message received.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2.\n"
 msgstr ""
 
 #: winerror.mc:971
-#, fuzzy
 msgid "Invalid address.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:976
 msgid "Arithmetic overflow.\n"
@@ -4402,9 +4227,8 @@ msgid "Extended attribute access denied.\n"
 msgstr ""
 
 #: winerror.mc:996
-#, fuzzy
 msgid "I/O operation aborted.\n"
-msgstr "İşlem Hatası.\n"
+msgstr ""
 
 #: winerror.mc:1001
 msgid "Overlapped I/O incomplete.\n"
@@ -4427,18 +4251,16 @@ msgid "Stack overflow.\n"
 msgstr ""
 
 #: winerror.mc:1026
-#, fuzzy
 msgid "Invalid message.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:1031
 msgid "Cannot complete.\n"
 msgstr ""
 
 #: winerror.mc:1036
-#, fuzzy
 msgid "Invalid flags.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:1041
 msgid "Unrecognised volume.\n"
@@ -4457,52 +4279,44 @@ msgid "Nonexistent token.\n"
 msgstr ""
 
 #: winerror.mc:1061
-#, fuzzy
 msgid "Registry corrupt.\n"
-msgstr "Kayıt DÜzenleyici.\n"
+msgstr ""
 
 #: winerror.mc:1066
-#, fuzzy
 msgid "Invalid key.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:1071
-#, fuzzy
 msgid "Can't open registry key.\n"
-msgstr "Kayıt düzenleyicisinden çıkar.\n"
+msgstr ""
 
 #: winerror.mc:1076
 msgid "Can't read registry key.\n"
 msgstr ""
 
 #: winerror.mc:1081
-#, fuzzy
 msgid "Can't write registry key.\n"
-msgstr "Kayıt düzenleyicisinden çıkar.\n"
+msgstr ""
 
 #: winerror.mc:1086
 msgid "Registry has been recovered.\n"
 msgstr ""
 
 #: winerror.mc:1091
-#, fuzzy
 msgid "Registry is corrupt.\n"
-msgstr "Kayıt DÜzenleyici.\n"
+msgstr ""
 
 #: winerror.mc:1096
-#, fuzzy
 msgid "I/O to registry failed.\n"
-msgstr "Kayıt Dosyası &Al..."
+msgstr ""
 
 #: winerror.mc:1101
-#, fuzzy
 msgid "Not registry file.\n"
-msgstr "Kayıt Dosyası &Al..."
+msgstr ""
 
 #: winerror.mc:1106
-#, fuzzy
 msgid "Key deleted.\n"
-msgstr "Silinme tarihi.\n"
+msgstr ""
 
 #: winerror.mc:1111
 msgid "No registry log space.\n"
@@ -4525,9 +4339,8 @@ msgid "Dependent services are running.\n"
 msgstr ""
 
 #: winerror.mc:1136
-#, fuzzy
 msgid "Invalid service control.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:1141
 msgid "Service request timeout.\n"
@@ -4558,9 +4371,8 @@ msgid "Circular dependency.\n"
 msgstr ""
 
 #: winerror.mc:1176
-#, fuzzy
 msgid "Service does not exist.\n"
-msgstr "Dosya mevcut değil.\n"
+msgstr ""
 
 #: winerror.mc:1181
 msgid "Service cannot accept control message.\n"
@@ -4579,18 +4391,16 @@ msgid "Exception in service.\n"
 msgstr ""
 
 #: winerror.mc:1201
-#, fuzzy
 msgid "Database does not exist.\n"
-msgstr "Dosya yolu mevcut değil.\n"
+msgstr ""
 
 #: winerror.mc:1206
 msgid "Service-specific error.\n"
 msgstr ""
 
 #: winerror.mc:1211
-#, fuzzy
 msgid "Process aborted.\n"
-msgstr "Süreci &Sonlandır.\n"
+msgstr ""
 
 #: winerror.mc:1216
 msgid "Service dependency failed.\n"
@@ -4645,22 +4455,16 @@ msgid "Driver failure cannot be detected.\n"
 msgstr ""
 
 #: winerror.mc:1281
-#, fuzzy
 msgid "Process abort cannot be detected.\n"
-msgstr "Süreci &Sonlandır.\n"
+msgstr ""
 
 #: winerror.mc:1286
 msgid "No recovery program for service.\n"
 msgstr ""
 
 #: winerror.mc:1291
-#, fuzzy
 msgid "Service not implemented by exe.\n"
 msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Henüz Tanımlanmadı\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Henüz tamamlanmadı.\n"
 
 #: winerror.mc:1296
 msgid "End of media.\n"
@@ -4679,9 +4483,8 @@ msgid "Setmark detected.\n"
 msgstr ""
 
 #: winerror.mc:1316
-#, fuzzy
 msgid "No data detected.\n"
-msgstr "Döngü Algılandı.\n"
+msgstr ""
 
 #: winerror.mc:1321
 msgid "Partition failure.\n"
@@ -4760,9 +4563,8 @@ msgid "Floppy reports wrong cylinder.\n"
 msgstr ""
 
 #: winerror.mc:1416
-#, fuzzy
 msgid "Unknown floppy error.\n"
-msgstr "%s içinde bilinmeyen özellik.\n"
+msgstr ""
 
 #: winerror.mc:1421
 msgid "Floppy registers inconsistent.\n"
@@ -4821,14 +4623,12 @@ msgid "Single-instance application.\n"
 msgstr ""
 
 #: winerror.mc:1491
-#, fuzzy
 msgid "Real-mode application.\n"
-msgstr "Seçenekler.\n"
+msgstr ""
 
 #: winerror.mc:1496
-#, fuzzy
 msgid "Invalid DLL.\n"
-msgstr "Geçersiz DN Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:1501
 msgid "No associated application.\n"
@@ -4843,9 +4643,8 @@ msgid "DLL not found.\n"
 msgstr ""
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles.\n"
-msgstr "Bellek dolu."
+msgstr ""
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls.\n"
@@ -4860,9 +4659,8 @@ msgid "The destination element is full.\n"
 msgstr ""
 
 #: winerror.mc:1536
-#, fuzzy
 msgid "The element address is invalid.\n"
-msgstr "Belirtilen aygıt işleyici geçersiz."
+msgstr ""
 
 #: winerror.mc:1541
 msgid "The magazine is not present.\n"
@@ -4873,46 +4671,40 @@ msgid "The device needs reinitialization.\n"
 msgstr ""
 
 #: winerror.mc:1551
-#, fuzzy
 msgid "The device requires cleaning.\n"
-msgstr "Aygıt sürücüsü hazır değil."
+msgstr ""
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open.\n"
-msgstr "Yazıcı kapısı açık; .\n"
+msgstr ""
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected.\n"
-msgstr "Dosya bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:1566
 msgid "Element not found.\n"
 msgstr ""
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found.\n"
-msgstr "%s yolu bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:1576
 msgid "Property set not found.\n"
 msgstr ""
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found.\n"
-msgstr "%s yolu bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:1586
 msgid "No running tracking service.\n"
 msgstr ""
 
 #: winerror.mc:1591
-#, fuzzy
 msgid "No such volume ID.\n"
-msgstr "Böyle Bir Öznitelik Yok.\n"
+msgstr ""
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced.\n"
@@ -4927,9 +4719,8 @@ msgid "Moving the replacement file failed.\n"
 msgstr ""
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted.\n"
-msgstr "Silinme tarihi.\n"
+msgstr ""
 
 #: winerror.mc:1616
 msgid "The journal is not active.\n"
@@ -4944,14 +4735,12 @@ msgid "The journal entry was deleted.\n"
 msgstr ""
 
 #: winerror.mc:1631
-#, fuzzy
 msgid "Invalid device name.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:1636
-#, fuzzy
 msgid "Connection unavailable.\n"
-msgstr "Kullanılabilir değil; .\n"
+msgstr ""
 
 #: winerror.mc:1641
 msgid "Device already remembered.\n"
@@ -4982,43 +4771,36 @@ msgid "Extended error.\n"
 msgstr ""
 
 #: winerror.mc:1676
-#, fuzzy
 msgid "Invalid group name.\n"
-msgstr "Geçersiz DN Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:1681
-#, fuzzy
 msgid "Invalid computer name.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:1686
-#, fuzzy
 msgid "Invalid event name.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:1691
 msgid "Invalid domain name.\n"
 msgstr ""
 
 #: winerror.mc:1696
-#, fuzzy
 msgid "Invalid service name.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:1701
-#, fuzzy
 msgid "Invalid network name.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:1706
-#, fuzzy
 msgid "Invalid share name.\n"
-msgstr "Dosya yolunda geçersiz karakter(ler).\n"
+msgstr ""
 
 #: winerror.mc:1716
-#, fuzzy
 msgid "Invalid message name.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:1721
 msgid "Invalid message destination.\n"
@@ -5029,9 +4811,8 @@ msgid "Session credential conflict.\n"
 msgstr ""
 
 #: winerror.mc:1731
-#, fuzzy
 msgid "Remote session limit exceeded.\n"
-msgstr "Paketin gönderildiği yönlendirici sınırı aşıldı.\n"
+msgstr ""
 
 #: winerror.mc:1736
 msgid "Duplicate domain or workgroup name.\n"
@@ -5042,18 +4823,16 @@ msgid "No network.\n"
 msgstr ""
 
 #: winerror.mc:1746
-#, fuzzy
 msgid "Operation canceled by user.\n"
-msgstr "Yeni bir program çalıştırır.\n"
+msgstr ""
 
 #: winerror.mc:1751
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
 #: winerror.mc:1756 winerror.mc:3741
-#, fuzzy
 msgid "Connection refused.\n"
-msgstr "&Ağ Sürücüsüne Bağlan.\n"
+msgstr ""
 
 #: winerror.mc:1761
 msgid "Connection gracefully closed.\n"
@@ -5068,18 +4847,16 @@ msgid "Address not associated with transport endpoint.\n"
 msgstr ""
 
 #: winerror.mc:1776
-#, fuzzy
 msgid "Connection invalid.\n"
-msgstr "LAN Bağlantısı.\n"
+msgstr ""
 
 #: winerror.mc:1781
 msgid "Connection is active.\n"
 msgstr ""
 
 #: winerror.mc:1786
-#, fuzzy
 msgid "Network unreachable.\n"
-msgstr "Ağ paylaşımı.\n"
+msgstr ""
 
 #: winerror.mc:1791
 msgid "Host unreachable.\n"
@@ -5098,9 +4875,8 @@ msgid "Request aborted.\n"
 msgstr ""
 
 #: winerror.mc:1811
-#, fuzzy
 msgid "Connection aborted.\n"
-msgstr "LAN Bağlantısı.\n"
+msgstr ""
 
 #: winerror.mc:1816
 msgid "Please retry operation.\n"
@@ -5127,9 +4903,8 @@ msgid "Service already registered.\n"
 msgstr ""
 
 #: winerror.mc:1846
-#, fuzzy
 msgid "Service not found.\n"
-msgstr "Dosya bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:1851
 msgid "User not authenticated.\n"
@@ -5144,37 +4919,32 @@ msgid "Continue work in progress.\n"
 msgstr ""
 
 #: winerror.mc:1866
-#, fuzzy
 msgid "Already initialised.\n"
-msgstr "Zaten Var.\n"
+msgstr ""
 
 #: winerror.mc:1871
 msgid "No more local devices.\n"
 msgstr ""
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist.\n"
-msgstr "Dosya mevcut değil.\n"
+msgstr ""
 
 #: winerror.mc:1881
-#, fuzzy
 msgid "The domain controller already exists.\n"
-msgstr "Zaten Var.\n"
+msgstr ""
 
 #: winerror.mc:1886
-#, fuzzy
 msgid "Supported only when connected.\n"
-msgstr "Dosya bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed.\n"
 msgstr ""
 
 #: winerror.mc:1896
-#, fuzzy
 msgid "The user profile is invalid.\n"
-msgstr "Belirtilen aygıt işleyici geçersiz."
+msgstr ""
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server.\n"
@@ -5201,23 +4971,20 @@ msgid "Password too complex for LM.\n"
 msgstr ""
 
 #: winerror.mc:1931
-#, fuzzy
 msgid "Unknown revision.\n"
-msgstr "%s içinde bilinmeyen özellik.\n"
+msgstr ""
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels.\n"
 msgstr ""
 
 #: winerror.mc:1941
-#, fuzzy
 msgid "Invalid owner.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:1946
-#, fuzzy
 msgid "Invalid primary group.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:1951
 msgid "No impersonation token.\n"
@@ -5244,24 +5011,20 @@ msgid "Privilege not held.\n"
 msgstr ""
 
 #: winerror.mc:1981
-#, fuzzy
 msgid "Invalid account name.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:1986
-#, fuzzy
 msgid "User already exists.\n"
-msgstr "Zaten Var.\n"
+msgstr ""
 
 #: winerror.mc:1991
-#, fuzzy
 msgid "No such user.\n"
-msgstr "Böyle Bir Öznitelik Yok.\n"
+msgstr ""
 
 #: winerror.mc:1996
-#, fuzzy
 msgid "Group already exists.\n"
-msgstr "Zaten Var.\n"
+msgstr ""
 
 #: winerror.mc:2001
 msgid "No such group.\n"
@@ -5304,18 +5067,16 @@ msgid "Invalid logon hours.\n"
 msgstr ""
 
 #: winerror.mc:2051
-#, fuzzy
 msgid "Invalid workstation.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2056
 msgid "Password expired.\n"
 msgstr ""
 
 #: winerror.mc:2061
-#, fuzzy
 msgid "Account disabled.\n"
-msgstr "devre dışı.\n"
+msgstr ""
 
 #: winerror.mc:2066
 msgid "No security ID mapped.\n"
@@ -5334,14 +5095,12 @@ msgid "Invalid sub authority.\n"
 msgstr ""
 
 #: winerror.mc:2086
-#, fuzzy
 msgid "Invalid ACL.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2091
-#, fuzzy
 msgid "Invalid SID.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2096
 msgid "Invalid security descriptor.\n"
@@ -5352,14 +5111,12 @@ msgid "Bad inherited ACL.\n"
 msgstr ""
 
 #: winerror.mc:2106
-#, fuzzy
 msgid "Server disabled.\n"
-msgstr "devre dışı.\n"
+msgstr ""
 
 #: winerror.mc:2111
-#, fuzzy
 msgid "Server not disabled.\n"
-msgstr "Sürücü etkinleştirilmemiş."
+msgstr ""
 
 #: winerror.mc:2116
 msgid "Invalid ID authority.\n"
@@ -5398,14 +5155,12 @@ msgid "Can't access domain information.\n"
 msgstr ""
 
 #: winerror.mc:2161
-#, fuzzy
 msgid "Invalid server state.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:2166
-#, fuzzy
 msgid "Invalid domain state.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2171
 msgid "Invalid domain role.\n"
@@ -5416,14 +5171,12 @@ msgid "No such domain.\n"
 msgstr ""
 
 #: winerror.mc:2181
-#, fuzzy
 msgid "Domain already exists.\n"
-msgstr "Zaten Var.\n"
+msgstr ""
 
 #: winerror.mc:2186
-#, fuzzy
 msgid "Domain limit exceeded.\n"
-msgstr "Zaman Sınırı Aşıldı.\n"
+msgstr ""
 
 #: winerror.mc:2191
 msgid "Internal database corruption.\n"
@@ -5462,28 +5215,24 @@ msgid "Logon session ID collision.\n"
 msgstr ""
 
 #: winerror.mc:2236
-#, fuzzy
 msgid "Invalid logon type.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2241
-#, fuzzy
 msgid "Cannot impersonate.\n"
-msgstr "Yazıcı bulunamıyor."
+msgstr ""
 
 #: winerror.mc:2246
-#, fuzzy
 msgid "Invalid transaction state.\n"
-msgstr "Dosya yolunda geçersiz karakter(ler).\n"
+msgstr ""
 
 #: winerror.mc:2251
 msgid "Security DB commit failure.\n"
 msgstr ""
 
 #: winerror.mc:2256
-#, fuzzy
 msgid "Account is built-in.\n"
-msgstr "doğal, yerleşik.\n"
+msgstr ""
 
 #: winerror.mc:2261
 msgid "Group is built-in.\n"
@@ -5514,9 +5263,8 @@ msgid "User already in local group.\n"
 msgstr ""
 
 #: winerror.mc:2296
-#, fuzzy
 msgid "Local group already exists.\n"
-msgstr "Zaten Var.\n"
+msgstr ""
 
 #: winerror.mc:2301 winerror.mc:2326
 msgid "Logon type not granted.\n"
@@ -5543,9 +5291,8 @@ msgid "Cross-encrypted NT password required.\n"
 msgstr ""
 
 #: winerror.mc:2336
-#, fuzzy
 msgid "No such member.\n"
-msgstr "Böyle Bir Nesne Yok.\n"
+msgstr ""
 
 #: winerror.mc:2341
 msgid "Invalid member.\n"
@@ -5580,28 +5327,24 @@ msgid "Licence quota exceeded.\n"
 msgstr ""
 
 #: winerror.mc:2381
-#, fuzzy
 msgid "Wrong target name.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:2386
-#, fuzzy
 msgid "Mutual authentication failed.\n"
-msgstr "Uygunsuz Yetkilendirme.\n"
+msgstr ""
 
 #: winerror.mc:2391
 msgid "Time skew between client and server.\n"
 msgstr ""
 
 #: winerror.mc:2396
-#, fuzzy
 msgid "Invalid window handle.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2401
-#, fuzzy
 msgid "Invalid menu handle.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:2406
 msgid "Invalid cursor handle.\n"
@@ -5616,9 +5359,8 @@ msgid "Invalid hook handle.\n"
 msgstr ""
 
 #: winerror.mc:2421
-#, fuzzy
 msgid "Invalid DWP handle.\n"
-msgstr "Geçersiz DN Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2426
 msgid "Can't create top-level child window.\n"
@@ -5633,52 +5375,44 @@ msgid "Window owned by another thread.\n"
 msgstr ""
 
 #: winerror.mc:2441
-#, fuzzy
 msgid "Hotkey already registered.\n"
-msgstr "Zaten Var.\n"
+msgstr ""
 
 #: winerror.mc:2446
-#, fuzzy
 msgid "Class already exists.\n"
-msgstr "Zaten Var.\n"
+msgstr ""
 
 #: winerror.mc:2451
-#, fuzzy
 msgid "Class does not exist.\n"
-msgstr "Dosya yolu mevcut değil.\n"
+msgstr ""
 
 #: winerror.mc:2456
-#, fuzzy
 msgid "Class has open windows.\n"
-msgstr "&Pencere.\n"
+msgstr ""
 
 #: winerror.mc:2461
-#, fuzzy
 msgid "Invalid index.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2466
-#, fuzzy
 msgid "Invalid icon handle.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2471
 msgid "Private dialog index.\n"
 msgstr ""
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found.\n"
-msgstr "%s yolu bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:2481
 msgid "No wildcard characters.\n"
 msgstr ""
 
 #: winerror.mc:2486
-#, fuzzy
 msgid "Clipboard not open.\n"
-msgstr "Pencere oluşturulamıyor veya kullanılamıyor."
+msgstr ""
 
 #: winerror.mc:2491
 msgid "Hotkey not registered.\n"
@@ -5689,9 +5423,8 @@ msgid "Not a dialog window.\n"
 msgstr ""
 
 #: winerror.mc:2501
-#, fuzzy
 msgid "Control ID not found.\n"
-msgstr "%s yolu bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:2506
 msgid "Invalid combobox message.\n"
@@ -5702,9 +5435,8 @@ msgid "Not a combobox window.\n"
 msgstr ""
 
 #: winerror.mc:2516
-#, fuzzy
 msgid "Invalid edit height.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:2521
 msgid "DC not found.\n"
@@ -5735,9 +5467,8 @@ msgid "Hook procedure not installed.\n"
 msgstr ""
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent.\n"
@@ -5760,9 +5491,8 @@ msgid "Window has no system menu.\n"
 msgstr ""
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter.\n"
@@ -5781,14 +5511,12 @@ msgid "Not a child window.\n"
 msgstr ""
 
 #: winerror.mc:2611
-#, fuzzy
 msgid "Invalid GW command.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2616
-#, fuzzy
 msgid "Invalid thread ID.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2621
 msgid "Not an MDI child window.\n"
@@ -5799,9 +5527,8 @@ msgid "Popup menu already active.\n"
 msgstr ""
 
 #: winerror.mc:2631
-#, fuzzy
 msgid "No scrollbars.\n"
-msgstr "Buraya Kaydır.\n"
+msgstr ""
 
 #: winerror.mc:2636
 msgid "Invalid scrollbar range.\n"
@@ -5836,14 +5563,12 @@ msgid "Exceeded commitment limit.\n"
 msgstr ""
 
 #: winerror.mc:2676
-#, fuzzy
 msgid "Menu item not found.\n"
-msgstr "Dosya bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:2686
 msgid "Hook type not allowed.\n"
@@ -5854,14 +5579,12 @@ msgid "Interactive window station required.\n"
 msgstr ""
 
 #: winerror.mc:2696
-#, fuzzy
 msgid "Timeout.\n"
 msgstr "Zaman Aşımı.\n"
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:2706
 msgid "Event log file corrupt.\n"
@@ -5880,100 +5603,84 @@ msgid "Event log file changed.\n"
 msgstr ""
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user.\n"
-msgstr "Yeni bir program çalıştırır.\n"
+msgstr ""
 
 #: winerror.mc:2736
-#, fuzzy
 msgid "Installation failure.\n"
-msgstr "Yeni bir program çalıştırır.\n"
+msgstr ""
 
 #: winerror.mc:2741
-#, fuzzy
 msgid "Installation suspended.\n"
-msgstr "Yeni bir program çalıştırır.\n"
+msgstr ""
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product.\n"
-msgstr "%s içinde bilinmeyen özellik.\n"
+msgstr ""
 
 #: winerror.mc:2751
-#, fuzzy
 msgid "Unknown feature.\n"
-msgstr "%s içinde bilinmeyen özellik.\n"
+msgstr ""
 
 #: winerror.mc:2756
-#, fuzzy
 msgid "Unknown component.\n"
-msgstr "%s içinde bilinmeyen özellik.\n"
+msgstr ""
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property.\n"
-msgstr "%s içinde bilinmeyen özellik.\n"
+msgstr ""
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration.\n"
-msgstr "Wine yapılandırması.\n"
+msgstr ""
 
 #: winerror.mc:2776
 msgid "Index is missing.\n"
 msgstr ""
 
 #: winerror.mc:2781
-#, fuzzy
 msgid "Installation source is missing.\n"
-msgstr "eksik özellik için kurulum kaynağı.\n"
+msgstr ""
 
 #: winerror.mc:2786
 msgid "Wrong installation package version.\n"
 msgstr ""
 
 #: winerror.mc:2791
-#, fuzzy
 msgid "Product uninstalled.\n"
-msgstr "Kullanıcı İptal Etti.\n"
+msgstr ""
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2806
 msgid "Device removed.\n"
 msgstr ""
 
 #: winerror.mc:2811
-#, fuzzy
 msgid "Installation already running.\n"
-msgstr "Yeni bir program çalıştırır.\n"
+msgstr ""
 
 #: winerror.mc:2816
 msgid "Installation package failed to open.\n"
 msgstr ""
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid.\n"
-msgstr "Yeni bir program çalıştırır.\n"
+msgstr ""
 
 #: winerror.mc:2826
 msgid "Installer user interface failed.\n"
@@ -5984,32 +5691,28 @@ msgid "Failed to open installation log file.\n"
 msgstr ""
 
 #: winerror.mc:2836
-#, fuzzy
 msgid "Installation language not supported.\n"
-msgstr "Yetkilendirme Yöntemi Desteklenmiyor.\n"
+msgstr ""
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply.\n"
 msgstr ""
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected.\n"
-msgstr "Yeni bir program çalıştırır.\n"
+msgstr ""
 
 #: winerror.mc:2851
 msgid "Function could not be called.\n"
 msgstr ""
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed.\n"
-msgstr "Dosya Aç.\n"
+msgstr ""
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2866
 msgid "Data type mismatch.\n"
@@ -6020,32 +5723,28 @@ msgid "Unsupported type.\n"
 msgstr ""
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed.\n"
-msgstr "Dosya Aç.\n"
+msgstr ""
 
 #: winerror.mc:2881
 msgid "Temporary directory not writable.\n"
 msgstr ""
 
 #: winerror.mc:2886
-#, fuzzy
 msgid "Installation platform not supported.\n"
-msgstr "Yetkilendirme Yöntemi Desteklenmiyor.\n"
+msgstr ""
 
 #: winerror.mc:2891
-#, fuzzy
 msgid "Installer not used.\n"
-msgstr "Dosya bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:2896
 msgid "Failed to open the patch package.\n"
 msgstr ""
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2906
 msgid "Unsupported patch package.\n"
@@ -6056,9 +5755,8 @@ msgid "Another version is installed.\n"
 msgstr ""
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed.\n"
@@ -6077,9 +5775,8 @@ msgid "Wrong kind of binding.\n"
 msgstr ""
 
 #: winerror.mc:2941
-#, fuzzy
 msgid "Invalid binding.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2946
 msgid "RPC protocol sequence not supported.\n"
@@ -6090,14 +5787,12 @@ msgid "Invalid RPC protocol sequence.\n"
 msgstr ""
 
 #: winerror.mc:2956
-#, fuzzy
 msgid "Invalid string UUID.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2961
-#, fuzzy
 msgid "Invalid endpoint format.\n"
-msgstr "Geçersiz Belgeler.\n"
+msgstr ""
 
 #: winerror.mc:2966
 msgid "Invalid network address.\n"
@@ -6108,14 +5803,12 @@ msgid "No endpoint found.\n"
 msgstr ""
 
 #: winerror.mc:2976
-#, fuzzy
 msgid "Invalid timeout value.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:2981
-#, fuzzy
 msgid "Object UUID not found.\n"
-msgstr "%s yolu bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:2986
 msgid "UUID already registered.\n"
@@ -6138,14 +5831,12 @@ msgid "RPC server not listening.\n"
 msgstr ""
 
 #: winerror.mc:3011
-#, fuzzy
 msgid "Unknown manager type.\n"
-msgstr "Tanımlanmamış Tür.\n"
+msgstr ""
 
 #: winerror.mc:3016
-#, fuzzy
 msgid "Unknown interface.\n"
-msgstr "%s içinde bilinmeyen özellik.\n"
+msgstr ""
 
 #: winerror.mc:3021
 msgid "No bindings.\n"
@@ -6160,9 +5851,8 @@ msgid "Can't create endpoint.\n"
 msgstr ""
 
 #: winerror.mc:3036
-#, fuzzy
 msgid "Out of resources.\n"
-msgstr "Bellek dolu."
+msgstr ""
 
 #: winerror.mc:3041
 msgid "RPC server unavailable.\n"
@@ -6173,9 +5863,8 @@ msgid "RPC server too busy.\n"
 msgstr ""
 
 #: winerror.mc:3051
-#, fuzzy
 msgid "Invalid network options.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3056
 msgid "No RPC call active.\n"
@@ -6190,18 +5879,16 @@ msgid "RPC call failed and didn't execute.\n"
 msgstr ""
 
 #: winerror.mc:3071
-#, fuzzy
 msgid "RPC protocol error.\n"
-msgstr "İletişim Kuralı Hatası.\n"
+msgstr ""
 
 #: winerror.mc:3076
 msgid "Unsupported transfer syntax.\n"
 msgstr ""
 
 #: winerror.mc:3086
-#, fuzzy
 msgid "Invalid tag.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3091
 msgid "Invalid array bounds.\n"
@@ -6212,27 +5899,24 @@ msgid "No entry name.\n"
 msgstr ""
 
 #: winerror.mc:3101
-#, fuzzy
 msgid "Invalid name syntax.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3106
 msgid "Unsupported name syntax.\n"
 msgstr ""
 
 #: winerror.mc:3111
-#, fuzzy
 msgid "No network address.\n"
-msgstr "Ağ paylaşımı.\n"
+msgstr ""
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint.\n"
 msgstr ""
 
 #: winerror.mc:3121
-#, fuzzy
 msgid "Unknown authentication type.\n"
-msgstr "Güçlü Yerkilendirme Gerekli.\n"
+msgstr ""
 
 #: winerror.mc:3126
 msgid "Maximum calls too low.\n"
@@ -6255,37 +5939,32 @@ msgid "Binding has no authentication data.\n"
 msgstr ""
 
 #: winerror.mc:3151
-#, fuzzy
 msgid "Unknown authentication service.\n"
-msgstr "Güçlü Yerkilendirme Gerekli.\n"
+msgstr ""
 
 #: winerror.mc:3156
-#, fuzzy
 msgid "Unknown authentication level.\n"
-msgstr "Güçlü Yerkilendirme Gerekli.\n"
+msgstr ""
 
 #: winerror.mc:3161
-#, fuzzy
 msgid "Invalid authentication identity.\n"
-msgstr "Uygunsuz Yetkilendirme.\n"
+msgstr ""
 
 #: winerror.mc:3166
 msgid "Unknown authorisation service.\n"
 msgstr ""
 
 #: winerror.mc:3171
-#, fuzzy
 msgid "Invalid entry.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3176
 msgid "Can't perform operation.\n"
 msgstr ""
 
 #: winerror.mc:3181
-#, fuzzy
 msgid "Endpoints not registered.\n"
-msgstr "Kayıt düzenleyicisinden çıkar.\n"
+msgstr ""
 
 #: winerror.mc:3186
 msgid "Nothing to export.\n"
@@ -6296,9 +5975,8 @@ msgid "Incomplete name.\n"
 msgstr ""
 
 #: winerror.mc:3196
-#, fuzzy
 msgid "Invalid version option.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3201
 msgid "No more members.\n"
@@ -6309,32 +5987,28 @@ msgid "Not all objects unexported.\n"
 msgstr ""
 
 #: winerror.mc:3211
-#, fuzzy
 msgid "Interface not found.\n"
-msgstr "Dosya bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:3216
-#, fuzzy
 msgid "Entry already exists.\n"
-msgstr "Zaten Var.\n"
+msgstr ""
 
 #: winerror.mc:3221
 msgid "Entry not found.\n"
 msgstr ""
 
 #: winerror.mc:3226
-#, fuzzy
 msgid "Name service unavailable.\n"
-msgstr "Kullanılabilir Alan.\n"
+msgstr ""
 
 #: winerror.mc:3231
 msgid "Invalid network address family.\n"
 msgstr ""
 
 #: winerror.mc:3236
-#, fuzzy
 msgid "Operation not supported.\n"
-msgstr "Yetkilendirme Yöntemi Desteklenmiyor.\n"
+msgstr ""
 
 #: winerror.mc:3241
 msgid "No security context available.\n"
@@ -6457,53 +6131,44 @@ msgid "Printer driver already installed.\n"
 msgstr ""
 
 #: winerror.mc:3391
-#, fuzzy
 msgid "Unknown port.\n"
-msgstr "%s içinde bilinmeyen özellik.\n"
+msgstr ""
 
 #: winerror.mc:3396
-#, fuzzy
 msgid "Unknown printer driver.\n"
-msgstr "Bilinmeyen yazıcı sürücüsü."
+msgstr "Bilinmeyen yazıcı sürücüsü.\n"
 
 #: winerror.mc:3401
-#, fuzzy
 msgid "Unknown print processor.\n"
-msgstr "Bilinmeyen yazıcı sürücüsü."
+msgstr ""
 
 #: winerror.mc:3406
 msgid "Invalid separator file.\n"
 msgstr ""
 
 #: winerror.mc:3411
-#, fuzzy
 msgid "Invalid priority.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3416
-#, fuzzy
 msgid "Invalid printer name.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3421
-#, fuzzy
 msgid "Printer already exists.\n"
-msgstr "Zaten Var.\n"
+msgstr ""
 
 #: winerror.mc:3426
-#, fuzzy
 msgid "Invalid printer command.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3436
-#, fuzzy
 msgid "Invalid environment.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3441
 msgid "No more bindings.\n"
@@ -6554,18 +6219,12 @@ msgid "No interfaces.\n"
 msgstr ""
 
 #: winerror.mc:3501
-#, fuzzy
 msgid "RPC call canceled.\n"
-msgstr "Kullanıcı İptal Etti.\n"
+msgstr ""
 
 #: winerror.mc:3506
-#, fuzzy
 msgid "Binding incomplete.\n"
 msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Henüz Tanımlanmadı\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Henüz tamamlanmadı.\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure.\n"
@@ -6592,14 +6251,12 @@ msgid "Security package error.\n"
 msgstr ""
 
 #: winerror.mc:3541
-#, fuzzy
 msgid "Thread not canceled.\n"
-msgstr "Kullanıcı İptal Etti.\n"
+msgstr ""
 
 #: winerror.mc:3546
-#, fuzzy
 msgid "Invalid handle operation.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3551
 msgid "Wrong serialising package version.\n"
@@ -6610,9 +6267,8 @@ msgid "Wrong stub version.\n"
 msgstr ""
 
 #: winerror.mc:3561
-#, fuzzy
 msgid "Invalid pipe object.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3566
 msgid "Wrong pipe order.\n"
@@ -6623,28 +6279,24 @@ msgid "Wrong pipe version.\n"
 msgstr ""
 
 #: winerror.mc:3576
-#, fuzzy
 msgid "Group member not found.\n"
-msgstr "%s yolu bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB.\n"
 msgstr ""
 
 #: winerror.mc:3586
-#, fuzzy
 msgid "Invalid object.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3591
-#, fuzzy
 msgid "Invalid time.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3596
-#, fuzzy
 msgid "Invalid form name.\n"
-msgstr "Geçersiz DN Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3601
 msgid "Invalid form size.\n"
@@ -6655,56 +6307,48 @@ msgid "Already awaiting printer handle.\n"
 msgstr ""
 
 #: winerror.mc:3611
-#, fuzzy
 msgid "Printer deleted.\n"
-msgstr "Silinme tarihi.\n"
+msgstr ""
 
 #: winerror.mc:3616
-#, fuzzy
 msgid "Invalid printer state.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3621
 msgid "User must change password.\n"
 msgstr ""
 
 #: winerror.mc:3626
-#, fuzzy
 msgid "Domain controller not found.\n"
-msgstr "Dosya bulunamadı.\n"
+msgstr ""
 
 #: winerror.mc:3631
 msgid "Account locked out.\n"
 msgstr ""
 
 #: winerror.mc:3636
-#, fuzzy
 msgid "Invalid pixel format.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3641
-#, fuzzy
 msgid "Invalid driver.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send.\n"
 msgstr ""
 
 #: winerror.mc:3656
-#, fuzzy
 msgid "Invalid asynchronous RPC handle.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3661
-#, fuzzy
 msgid "Invalid asynchronous RPC call.\n"
-msgstr "Geçersiz Sözdizimi.\n"
+msgstr ""
 
 #: winerror.mc:3666
 msgid "RPC pipe closed.\n"
@@ -6719,18 +6363,16 @@ msgid "No data on RPC pipe.\n"
 msgstr ""
 
 #: winerror.mc:3681
-#, fuzzy
 msgid "No site name available.\n"
-msgstr "Kullanılabilir değil; .\n"
+msgstr ""
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed.\n"
 msgstr ""
 
 #: winerror.mc:3691
-#, fuzzy
 msgid "The filename cannot be resolved.\n"
-msgstr "'%s' bulunamıyor."
+msgstr ""
 
 #: winerror.mc:3696
 msgid "RPC entry type mismatch.\n"
@@ -6741,39 +6383,32 @@ msgid "Not all objects could be exported.\n"
 msgstr ""
 
 #: winerror.mc:3706
-#, fuzzy
 msgid "The interface could not be exported.\n"
-msgstr "'%s' bulunamıyor."
+msgstr ""
 
 #: winerror.mc:3711
-#, fuzzy
 msgid "The profile could not be added.\n"
-msgstr "'%s' bulunamıyor."
+msgstr ""
 
 #: winerror.mc:3716
-#, fuzzy
 msgid "The profile element could not be added.\n"
-msgstr "'%s' bulunamıyor."
+msgstr ""
 
 #: winerror.mc:3721
-#, fuzzy
 msgid "The profile element could not be removed.\n"
-msgstr "'%s' bulunamıyor."
+msgstr ""
 
 #: winerror.mc:3726
-#, fuzzy
 msgid "The group element could not be added.\n"
-msgstr "'%s' bulunamıyor."
+msgstr ""
 
 #: winerror.mc:3731
-#, fuzzy
 msgid "The group element could not be removed.\n"
-msgstr "'%s' bulunamıyor."
+msgstr ""
 
 #: winerror.mc:3736
-#, fuzzy
 msgid "The username could not be found.\n"
-msgstr "'%s' bulunamıyor."
+msgstr ""
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
@@ -6784,9 +6419,8 @@ msgid "Local Monitor"
 msgstr ""
 
 #: localui.rc:36
-#, fuzzy
 msgid "Add a Local Port"
-msgstr "Yerel Bağlantı Noktası"
+msgstr ""
 
 #: localui.rc:39
 msgid "&Enter the port name to add:"
@@ -6809,9 +6443,8 @@ msgid "'%s' is not a valid port name"
 msgstr ""
 
 #: localui.rc:30
-#, fuzzy
 msgid "Port %s already exists"
-msgstr "Zaten Var"
+msgstr ""
 
 #: localui.rc:31
 msgid "This port has no options to configure"
@@ -6874,9 +6507,8 @@ msgid "Hyperlink"
 msgstr ""
 
 #: mshtml.rc:40
-#, fuzzy
 msgid "Hyperlink Information"
-msgstr "S&ürüm Bilgisi"
+msgstr ""
 
 #: mshtml.rc:41 winecfg.rc:236
 msgid "&Type:"
@@ -7010,9 +6642,8 @@ msgid "&Data Rate"
 msgstr "&Veri Oranı"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "KB/sec"
+msgstr "KB/san"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -7027,18 +6658,16 @@ msgid "unknown object"
 msgstr ""
 
 #: oleacc.rc:28
-#, fuzzy
 msgid "title bar"
-msgstr "&Başlık Çubuğunu Kaldır"
+msgstr ""
 
 #: oleacc.rc:29
 msgid "menu bar"
 msgstr ""
 
 #: oleacc.rc:30
-#, fuzzy
 msgid "scroll bar"
-msgstr "Buraya Kaydır"
+msgstr ""
 
 #: oleacc.rc:31
 msgid "grip"
@@ -7061,9 +6690,8 @@ msgid "alert"
 msgstr ""
 
 #: oleacc.rc:36
-#, fuzzy
 msgid "window"
-msgstr "&Pencere"
+msgstr "Pencere"
 
 #: oleacc.rc:37
 msgid "client"
@@ -7082,9 +6710,8 @@ msgid "tool tip"
 msgstr ""
 
 #: oleacc.rc:41
-#, fuzzy
 msgid "application"
-msgstr "Seçenekler"
+msgstr "uygulamalar"
 
 #: oleacc.rc:42
 msgid "document"
@@ -7111,9 +6738,8 @@ msgid "grouping"
 msgstr ""
 
 #: oleacc.rc:48
-#, fuzzy
 msgid "separator"
-msgstr "Ayraç"
+msgstr "ayraç"
 
 #: oleacc.rc:49
 msgid "tool bar"
@@ -7136,9 +6762,8 @@ msgid "row header"
 msgstr ""
 
 #: oleacc.rc:54
-#, fuzzy
 msgid "column"
-msgstr "&Sütun"
+msgstr "sütun"
 
 #: oleacc.rc:55
 msgid "row"
@@ -7157,9 +6782,8 @@ msgid "help balloon"
 msgstr ""
 
 #: oleacc.rc:59
-#, fuzzy
 msgid "character"
-msgstr "Karakter bi&çimi"
+msgstr "karakter"
 
 #: oleacc.rc:60
 msgid "list"
@@ -7194,14 +6818,12 @@ msgid "graphic"
 msgstr ""
 
 #: oleacc.rc:68
-#, fuzzy
 msgid "static text"
-msgstr "&Metni al"
+msgstr ""
 
 #: oleacc.rc:69
-#, fuzzy
 msgid "text"
-msgstr "&Metni al"
+msgstr "metin"
 
 #: oleacc.rc:70
 msgid "push button"
@@ -7248,9 +6870,8 @@ msgid "diagram"
 msgstr ""
 
 #: oleacc.rc:81
-#, fuzzy
 msgid "animation"
-msgstr "Bilgi"
+msgstr "animasyon"
 
 #: oleacc.rc:82
 msgid "equation"
@@ -7277,9 +6898,8 @@ msgid "page tab list"
 msgstr ""
 
 #: oleacc.rc:88
-#, fuzzy
 msgid "clock"
-msgstr "Saat"
+msgstr "saat"
 
 #: oleacc.rc:89
 msgid "split button"
@@ -7359,30 +6979,22 @@ msgstr "Kaynak:"
 
 #: oledlg.rc:79 shdoclc.rc:47 shdoclc.rc:79 shdoclc.rc:92 shdoclc.rc:132
 #: shdoclc.rc:159 shdoclc.rc:183 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
-#, fuzzy
 msgid "&Paste"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Yapıştır\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Ya&pıştır"
+msgstr "&Yapıştır"
 
 #: oledlg.rc:81
-#, fuzzy
 msgid "Paste &Link"
-msgstr "Kısayol Yapıştır"
+msgstr ""
 
 #: oledlg.rc:83
 msgid "&As:"
 msgstr ""
 
 #: oledlg.rc:90
-#, fuzzy
 msgid "&Display As Icon"
-msgstr "Simge Olarak Göster"
+msgstr "&Simge Olarak Göster"
 
 #: oledlg.rc:92
-#, fuzzy
 msgid "Change &Icon..."
 msgstr "Simge &değiştir..."
 
@@ -7414,37 +7026,27 @@ msgid "Add Control"
 msgstr "Denetim Ekle"
 
 #: oledlg.rc:34
-#, fuzzy
 msgid "Inserts the contents of the clipboard into your document as %s."
-msgstr "Belgenize yeni bir %s nesnesi ekle"
+msgstr ""
 
 #: oledlg.rc:35
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
-"Dosya içeriğini belgenize nesne olarak ekleyin. Böylece kendisini oluşturan "
-"programı kullanarak onu etkinleştirebilirsiniz."
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
-"Dosya içeriğini belgenize nesne olarak ekleyin. Böylece kendisini oluşturan "
-"programı kullanarak onu etkinleştirebilirsiniz."
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"Dosya içeriğini belgenize nesne olarak ekleyin. Böylece kendisini oluşturan "
-"programı kullanarak onu etkinleştirebilirsiniz."
 
 #: oledlg.rc:38
 msgid ""
@@ -7461,19 +7063,16 @@ msgid ""
 msgstr ""
 
 #: oledlg.rc:40
-#, fuzzy
 msgid "Inserts the contents of the clipboard into your document."
-msgstr "Belgenize yeni bir %s nesnesi ekle"
+msgstr ""
 
 #: oledlg.rc:41
-#, fuzzy
 msgid "Unknown Type"
 msgstr "Tanımlanmamış Tür"
 
 #: oledlg.rc:42
-#, fuzzy
 msgid "Unknown Source"
-msgstr "%s içinde bilinmeyen özellik"
+msgstr ""
 
 #: oledlg.rc:43
 msgid "the program which created it"
@@ -7508,15 +7107,13 @@ msgid "%"
 msgstr ""
 
 #: sane.rc:36
-#, fuzzy
 msgctxt "unit: microseconds"
 msgid "us"
-msgstr "Meşgul"
+msgstr ""
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "%s Özellikleri"
+msgstr ""
 
 #: serialui.rc:28
 msgid "Baud Rate"
@@ -7547,9 +7144,8 @@ msgid "Destination:"
 msgstr "Hedef:"
 
 #: setupapi.rc:49
-#, fuzzy
 msgid "Files Needed"
-msgstr "&Dosya Adı:"
+msgstr ""
 
 #: setupapi.rc:52
 msgid ""
@@ -7667,24 +7263,14 @@ msgstr "Masaüstü Ö&ğesi Yap..."
 
 #: shdoclc.rc:76 shdoclc.rc:90 shdoclc.rc:114 shdoclc.rc:156 shdoclc.rc:180
 #: user32.rc:57 wordpad.rc:101
-#, fuzzy
 msgid "Cu&t"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"K&es\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Ke&s"
+msgstr "&Kes"
 
 #: shdoclc.rc:77 shdoclc.rc:91 shdoclc.rc:115 shdoclc.rc:130 shdoclc.rc:157
 #: shdoclc.rc:181 shell32.rc:99 user32.rc:58 wineconsole.rc:29 winhlp32.rc:37
 #: wordpad.rc:102
-#, fuzzy
 msgid "&Copy"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"K&opyala\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Kopyala"
+msgstr "&Kopyala"
 
 #: shdoclc.rc:78 shdoclc.rc:131 shdoclc.rc:158 shdoclc.rc:182
 msgid "Copy Shor&tcut"
@@ -7731,22 +7317,12 @@ msgid "&Table Properties"
 msgstr "&Tablo Özellikleri"
 
 #: shdoclc.rc:116 shell32.rc:61
-#, fuzzy
 msgid "Paste"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Ya&pıştır\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Yapıştır"
+msgstr "Yapıştır"
 
 #: shdoclc.rc:118
-#, fuzzy
 msgid "&Print"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Yazdır\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Ya&zdır"
+msgstr "&Yazdır"
 
 #: shdoclc.rc:125
 msgid "Open in &New Window"
@@ -7885,9 +7461,8 @@ msgid "Wine Internet Explorer"
 msgstr ""
 
 #: shdoclc.rc:30
-#, fuzzy
 msgid "&w&bPage &p"
-msgstr "Üstteki Sayfa"
+msgstr ""
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
@@ -7984,13 +7559,8 @@ msgstr "&Yeniden Adlandır"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
 #: winefile.rc:37 winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
-#, fuzzy
 msgid "E&xit"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Çıkış\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Çık"
+msgstr "&Çıkış"
 
 #: shell32.rc:127
 msgid "&About Control Panel"
@@ -8001,19 +7571,16 @@ msgid "Browse for Folder"
 msgstr "Dizine Gözat"
 
 #: shell32.rc:290
-#, fuzzy
 msgid "Folder:"
-msgstr "Klasör"
+msgstr "Klasör:"
 
 #: shell32.rc:296
-#, fuzzy
 msgid "&Make New Folder"
-msgstr "Yeni Dizin Oluştur"
+msgstr ""
 
 #: shell32.rc:303
-#, fuzzy
 msgid "Message"
-msgstr "BLK Kullanımı"
+msgstr ""
 
 #: shell32.rc:306 shlwapi.rc:43 user32.rc:82
 msgid "&Yes"
@@ -8101,7 +7668,6 @@ msgid "Date deleted"
 msgstr "Silinme tarihi"
 
 #: shell32.rc:153 winecfg.rc:92 winefile.rc:99
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Masaüstü"
@@ -8155,17 +7721,14 @@ msgid "Start Menu"
 msgstr ""
 
 #: shell32.rc:205
-#, fuzzy
 msgid "My Music"
 msgstr "Müziğim"
 
 #: shell32.rc:206
-#, fuzzy
 msgid "My Videos"
-msgstr "Vidyolarım"
+msgstr "Videolarım"
 
 #: shell32.rc:207
-#, fuzzy
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Masaüstü"
@@ -8191,47 +7754,40 @@ msgid "Program Files"
 msgstr ""
 
 #: shell32.rc:214
-#, fuzzy
 msgid "My Pictures"
 msgstr "Resimlerim"
 
 #: shell32.rc:215
-#, fuzzy
 msgid "Common Files"
-msgstr "Dosyalar Kopyalanıyor..."
+msgstr ""
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
 msgstr "Belgeler"
 
 #: shell32.rc:217
-#, fuzzy
 msgid "Administrative Tools"
 msgstr "Yönetimsel Araçlar"
 
 #: shell32.rc:218
-#, fuzzy
 msgid "Music"
-msgstr "Müziğim"
+msgstr "Müzik"
 
 #: shell32.rc:219
-#, fuzzy
 msgid "Pictures"
-msgstr "Resimlerim"
+msgstr "Resimler"
 
 #: shell32.rc:220
-#, fuzzy
 msgid "Videos"
-msgstr "Videolarım"
+msgstr "Videolar"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
 msgstr ""
 
 #: shell32.rc:221
-#, fuzzy
 msgid "Contacts"
-msgstr "&İçindekiler"
+msgstr ""
 
 #: shell32.rc:222 winefile.rc:112
 msgid "Links"
@@ -8242,64 +7798,52 @@ msgid "Slide Shows"
 msgstr ""
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
-msgstr "Yürüt"
+msgstr ""
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
 msgstr ""
 
 #: shell32.rc:149
-#, fuzzy
 msgid "Location"
-msgstr "LAN Bağlantısı"
+msgstr ""
 
 #: shell32.rc:150
 msgid "Model"
 msgstr ""
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
-msgstr "Örnek"
+msgstr ""
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
-msgstr "&Resmi Farklı Kaydet..."
+msgstr ""
 
 #: shell32.rc:227
 msgid "Sample Playlists"
 msgstr ""
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
-msgstr "&Vidyoyu Farklı Kaydet..."
+msgstr ""
 
 #: shell32.rc:229
-#, fuzzy
 msgid "Saved Games"
-msgstr "&Farklı Kaydet..."
+msgstr ""
 
 #: shell32.rc:230
-#, fuzzy
 msgid "Searches"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Ara\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Bul"
+msgstr "Aramalar"
 
 #: shell32.rc:231
 msgid "Users"
 msgstr ""
 
 #: shell32.rc:233
-#, fuzzy
 msgid "Downloads"
-msgstr "İndiriliyor..."
+msgstr ""
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
@@ -8384,53 +7928,42 @@ msgid "Unable to display Browse dialog box (internal error)"
 msgstr ""
 
 #: shell32.rc:195
-#, fuzzy
 msgid "Executable files (*.exe)"
-msgstr "Metin Dosyaları (*.txt)"
+msgstr ""
 
 #: shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 
 #: shell32.rc:243
-#, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "'%1' öğesini silmek istediğinizden emin misiniz?"
 
 #: shell32.rc:244
-#, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "Bu %1 öğeyi silmek istediğinizden emin misiniz?"
 
 #: shell32.rc:245
-#, fuzzy
 msgid "Confirm deletion"
-msgstr "Dosya silmeyi onayla"
+msgstr ""
 
 #: shell32.rc:246
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Dosya zaten var.\n"
-"Değiştirmek ister misiniz?"
 
 #: shell32.rc:247
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Dosya zaten var.\n"
-"Değiştirmek ister misiniz?"
 
 #: shell32.rc:248
-#, fuzzy
 msgid "Confirm overwrite"
-msgstr "Dosya Üzerine Yazmayı Onayla"
+msgstr "Üzerine yazmayı onayla"
 
 #: shell32.rc:265
 msgid ""
@@ -8450,9 +7983,8 @@ msgid ""
 msgstr ""
 
 #: shell32.rc:253
-#, fuzzy
 msgid "Wine License"
-msgstr "Wine Mayın Tarlası"
+msgstr "Wine Lisans"
 
 #: shell32.rc:155
 msgid "Trash"
@@ -8471,25 +8003,21 @@ msgid "%d bytes"
 msgstr ""
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
-msgstr " hr"
+msgstr " sa"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
-msgstr " min"
+msgstr " dak"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr " sec"
+msgstr " san"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
-#, fuzzy
 msgctxt "window"
 msgid "&Restore"
 msgstr "&Geri Yükle"
@@ -8571,24 +8099,20 @@ msgid "&Save this password (insecure)"
 msgstr "Bu parolayı &sakla (güvensiz)"
 
 #: wininet.rc:54
-#, fuzzy
 msgid "Authentication Required"
-msgstr "Güçlü Yerkilendirme Gerekli"
+msgstr "Yerkilendirme Gerekli"
 
 #: wininet.rc:58
-#, fuzzy
 msgid "Server"
-msgstr "Sunucu Kapalı"
+msgstr "Sunucu"
 
 #: wininet.rc:74
-#, fuzzy
 msgid "Security Warning"
-msgstr "Güvenlik"
+msgstr "Güvenlik Uyarısı"
 
 #: wininet.rc:77
-#, fuzzy
 msgid "There is a problem with the certificate for this site."
-msgstr "Belirtilen aygıt işleyici geçersiz."
+msgstr ""
 
 #: wininet.rc:79
 #, fuzzy
@@ -9477,9 +9001,8 @@ msgid ""
 msgstr ""
 
 #: attrib.rc:28 cmd.rc:318
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "Dosya bulunamadı"
+msgstr ""
 
 #: attrib.rc:47
 msgid ""
@@ -9532,7 +9055,6 @@ msgid "&Always on Top"
 msgstr "&Her zaman üstte"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
 msgstr "&Saat Hakkında..."
 
@@ -9815,7 +9337,6 @@ msgstr ""
 "Yani 'SET PROMPT=metin' ile 'PROMPT metin' aynı işi görür.\n"
 
 #: cmd.rc:153
-#, fuzzy
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -9825,27 +9346,22 @@ msgstr ""
 "açıklama olarak kullanılabilir.\n"
 
 #: cmd.rc:156
-#, fuzzy
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "REN hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:157
-#, fuzzy
 msgid "RENAME <filename> renames a file.\n"
-msgstr "RENAME hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:159
-#, fuzzy
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr "RD hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:160
-#, fuzzy
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr "RMDIR hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:194
-#, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9932,12 +9448,10 @@ msgstr ""
 "under certain conditions; run 'start /L' for details.\n"
 
 #: cmd.rc:201
-#, fuzzy
 msgid "TIME sets or shows the current system time.\n"
-msgstr "TIME hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:203
-#, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr ""
 "cmd penceresi için pencere başlığını değiştirir. Sözdizimi: TITLE [dize]\n"
@@ -9951,7 +9465,6 @@ msgstr ""
 "yönlendirilmişse başka yere). Dosyanın okunabilirliği denetlenmez.\n"
 
 #: cmd.rc:216
-#, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9970,14 +9483,12 @@ msgstr ""
 "Doğrulama bayrağının Wine'da bir işlevi yoktur.\n"
 
 #: cmd.rc:219
-#, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
-msgstr "VER kullandığınız cmd sürümünü gösterir\n"
+msgstr ""
 
 #: cmd.rc:221
-#, fuzzy
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL hakkında yardım\n"
+msgstr ""
 
 #: cmd.rc:225
 msgid ""
@@ -10051,7 +9562,6 @@ msgstr ""
 "yerden işletim sistemine döner.\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10093,9 +9603,11 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "CMD dahili komutları:\n"
+"ASSOC\t\tShow or modify file extension associations\n"
 "ATTRIB\t\tDOS dosya özelliklerini göster veya değiştir\n"
 "CALL\t\tToplu işlem dosyası içerisinden bir diğerini çalıştır\n"
 "CD (CHDIR)\tGeçerli dizini değiştir\n"
+"CHOICE\t\tWait for an keypress from a selectable list\n"
 "CLS\t\tKonsol ekranını temizle\n"
 "COPY\t\tDosya kopyala\n"
 "CTTY\t\tGiriş/çıkış aygıtını değiştir\n"
@@ -10103,22 +9615,28 @@ msgstr ""
 "DEL (ERASE)\tBir veya daha fazla dosyayı sil\n"
 "DIR\t\tDizin içeriğini listele\n"
 "ECHO\t\tMetni doğrudan konsol çıkışına kopyala\n"
+"ENDLOCAL\tEnd localization of environment changes in a batch file\n"
+"FTYPE\t\tShow or modify open commands associated with file types\n"
 "HELP\t\tBir konu üzerinde özet yardım göster\n"
 "MD (MKDIR)\tAlt dizin oluştur\n"
 "MORE\t\tDisplay output in pages\n"
 "MOVE\t\tBir veya daha fazla dosyayı ya da dizin ağacını taşı\n"
 "PATH\t\tArama yolunu düzenle veya göster\n"
+"PAUSE\t\tSuspend execution of a batch file\n"
 "POPD\t\tRestores the directory to the last one saved with PUSHD\n"
 "PROMPT\t\tKomut istemini değiştir\n"
 "PUSHD\t\tChanges to a new directory, saving the current one\n"
 "REN (RENAME)\tDosyayı yeniden adlandır\n"
 "RD (RMDIR)\tAlt dizini sil\n"
 "SET\t\tÇevre değişkenlerini düzenle veya göster\n"
+"SETLOCAL\tStart localization of environment changes in a batch file\n"
+"START\t\tStart a program, or open a document in the associated program\n"
 "TIME\t\tGeçerli sistem saatini düzenle veya göster\n"
 "TITLE\t\tCMD oturumu için pencere başlığını belirle\n"
 "TYPE\t\tMetin dosyasının içeriğini göster\n"
 "VER\t\tGeçerli CMD sürümünü göster\n"
 "VOL\t\tDisk aygıtının bölüm etiketini göster\n"
+"XCOPY\t\tCopy source files or directory trees to a destination\n"
 "EXIT\t\tCMD'yi kapat\n"
 "\n"
 "Yukarıdaki komutlar hakkında daha fazla bilgi için HELP <komut> girin\n"
@@ -10166,9 +9684,8 @@ msgid "Syntax error\n"
 msgstr ""
 
 #: cmd.rc:319
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "Kullanılabilir değil; "
+msgstr ""
 
 #: cmd.rc:320
 msgid "Target to GOTO not found\n"
@@ -10208,9 +9725,8 @@ msgid "A"
 msgstr ""
 
 #: cmd.rc:329
-#, fuzzy
 msgid "Delete %1?"
-msgstr "Sil"
+msgstr ""
 
 #: cmd.rc:330
 msgid "Echo is %1\n"
@@ -10287,23 +9803,20 @@ msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr ""
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
-msgstr "A&raştır"
+msgstr ""
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "LAN Bağlantısı"
+msgstr ""
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr ""
 
 #: hostname.rc:28
-#, fuzzy
 msgid "Error: Invalid option '%c'.\n"
-msgstr "Geçersiz Sözdizimi"
+msgstr ""
 
 #: hostname.rc:29
 msgid ""
@@ -10406,9 +9919,8 @@ msgid "Stopping dependent service: %1\n"
 msgstr ""
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "Pencere oluşturulamıyor veya kullanılamıyor."
+msgstr ""
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -10419,32 +9931,28 @@ msgid "Could not get handle to service.\n"
 msgstr ""
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "Aygıt sürücüsü hazır değil."
+msgstr ""
 
 #: net.rc:35
 msgid "The %1 service was started successfully.\n"
 msgstr ""
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "Geçersiz Belgeler"
+msgstr ""
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "Yazıcı kapısı açık; "
+msgstr ""
 
 #: net.rc:38
 msgid "The %1 service was stopped successfully.\n"
 msgstr ""
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "Geçersiz Belgeler"
+msgstr ""
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -10462,29 +9970,24 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
 #: net.rc:45
-#, fuzzy
 msgid "Paused"
-msgstr "D&uraklamış"
+msgstr "Duraklatıldı"
 
 #: net.rc:46
-#, fuzzy
 msgid "Disconnected"
-msgstr "Dosya bulunamadı"
+msgstr ""
 
 #: net.rc:47
-#, fuzzy
 msgid "A network error occurred"
-msgstr "Bir yazıcı hatası oluştu."
+msgstr ""
 
 #: net.rc:48
-#, fuzzy
 msgid "Connection is being made"
-msgstr "LAN Bağlantısı"
+msgstr ""
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Öntanımlı Ayarlar"
+msgstr ""
 
 #: net.rc:40
 msgid "The following services are running:\n"
@@ -10503,13 +10006,8 @@ msgid "&Save\tCtrl+S"
 msgstr "&Kaydet\tCtrl+S"
 
 #: notepad.rc:32 regedit.rc:36 wordpad.rc:33
-#, fuzzy
 msgid "&Print...\tCtrl+P"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Ya&zdır...\tCtrl+P\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Print...\tCtrl+P"
+msgstr "&Yazdır...\tCtrl+P"
 
 #: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
@@ -10528,22 +10026,12 @@ msgid "&Undo\tCtrl+Z"
 msgstr "&Geri Al\tCtrl+Z"
 
 #: notepad.rc:41 wordpad.rc:44
-#, fuzzy
 msgid "Cu&t\tCtrl+X"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Kes\tCtrl+X\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Ke&s\tCtrl+X"
+msgstr "&Kes\tCtrl+X"
 
 #: notepad.rc:42 wordpad.rc:45
-#, fuzzy
 msgid "&Copy\tCtrl+C"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"K&opyala\tCtrl+C\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Kopyala\tCtrl+C"
+msgstr "&Kopyala\tCtrl+C"
 
 #: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
@@ -10579,9 +10067,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr ""
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:82
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "&İçindekiler"
+msgstr ""
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -10600,9 +10087,8 @@ msgid "&Footer:"
 msgstr "&Sayfa Sonu:"
 
 #: notepad.rc:104
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "&Kenarlıklar:"
+msgstr ""
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10613,9 +10099,8 @@ msgid "&Top:"
 msgstr "&Üst:"
 
 #: notepad.rc:123
-#, fuzzy
 msgid "Encoding:"
-msgstr "&Kodlama"
+msgstr ""
 
 #: notepad.rc:129 wordpad.rc:278
 msgctxt "accelerator Select All"
@@ -10739,27 +10224,24 @@ msgid ""
 msgstr ""
 
 #: oleview.rc:29
-#, fuzzy
 msgid "&Bind to file..."
-msgstr "Sık Ku&llanılanlara Ekle..."
+msgstr ""
 
 #: oleview.rc:30
 msgid "&View TypeLib..."
 msgstr ""
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "&Onaylama..."
+msgstr ""
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
 msgstr ""
 
 #: oleview.rc:37
-#, fuzzy
 msgid "&Object"
-msgstr "Böyle Bir Nesne Yok"
+msgstr ""
 
 #: oleview.rc:39
 msgid "&CoCreateInstance Flag"
@@ -10774,24 +10256,20 @@ msgid "In-process &handler"
 msgstr ""
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "Yerel Hata"
+msgstr ""
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "Paylaşımı S&il..."
+msgstr ""
 
 #: oleview.rc:47
-#, fuzzy
 msgid "View &Type information"
-msgstr "Bilgi"
+msgstr ""
 
 #: oleview.rc:49
-#, fuzzy
 msgid "Create &Instance"
-msgstr "Kısayol O&luştur"
+msgstr ""
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
@@ -10810,43 +10288,30 @@ msgid "Copy &HTML object Tag to clipboard"
 msgstr ""
 
 #: oleview.rc:60
-#, fuzzy
 msgid "&Expert mode"
-msgstr "&Uzman"
+msgstr "&Uzman modu"
 
 #: oleview.rc:62
 msgid "&Hidden component categories"
 msgstr ""
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:62 wordpad.rc:68 wordpad.rc:261
-#, fuzzy
 msgid "&Toolbar"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Araç Çubuğu\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Toolbar"
+msgstr "&Araç Çubuğu"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:64
 msgid "&Status Bar"
 msgstr "&Durum Çubuğu"
 
 #: oleview.rc:67 regedit.rc:69 winefile.rc:78
-#, fuzzy
 msgid "&Refresh\tF5"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Ye&nile\tF5\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Yenile\tF5"
+msgstr "&Yenile\tF5"
 
 #: oleview.rc:71
-#, fuzzy
 msgid "&About OleView"
-msgstr "&Wine Hakkında"
+msgstr "&OleView Hakkında"
 
 #: oleview.rc:79
-#, fuzzy
 msgid "&Save as..."
 msgstr "&Farklı Kaydet..."
 
@@ -10863,14 +10328,12 @@ msgid "&Machine name:"
 msgstr ""
 
 #: oleview.rc:165
-#, fuzzy
 msgid "System Configuration"
-msgstr "&Onaylama..."
+msgstr "Sistem Yapılandırma"
 
 #: oleview.rc:168
-#, fuzzy
 msgid "System Settings"
-msgstr "Öntanımlı Ayarlar"
+msgstr "Sistem Ayarları"
 
 #: oleview.rc:169
 msgid "&Enable Distributed COM"
@@ -10887,23 +10350,20 @@ msgid ""
 msgstr ""
 
 #: oleview.rc:178
-#, fuzzy
 msgid "Default Interface Viewer"
-msgstr "Öntanımlı yazıcı; "
+msgstr ""
 
 #: oleview.rc:181
-#, fuzzy
 msgid "Interface"
-msgstr "Dosya bulunamadı"
+msgstr ""
 
 #: oleview.rc:183
 msgid "IID:"
 msgstr ""
 
 #: oleview.rc:186
-#, fuzzy
 msgid "&View Type Info"
-msgstr "Bilgi"
+msgstr ""
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
@@ -10922,9 +10382,8 @@ msgid "IPersistStream Interface Viewer"
 msgstr ""
 
 #: oleview.rc:93 oleview.rc:94
-#, fuzzy
 msgid "OleView"
-msgstr "&Görünüm"
+msgstr ""
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
@@ -11004,7 +10463,6 @@ msgid "Refresh all lists"
 msgstr ""
 
 #: oleview.rc:122
-#, fuzzy
 msgid "Display program information, version number and copyright"
 msgstr "Program bilgisi, sürüm numarası ve telif hakkını gösterir"
 
@@ -11025,32 +10483,28 @@ msgid "Ask for a remote server when calling CoGetClassObject"
 msgstr ""
 
 #: oleview.rc:128
-#, fuzzy
 msgid "ObjectClasses"
-msgstr "Nesne Sınıfı Modülleri Yok"
+msgstr ""
 
 #: oleview.rc:129
 msgid "Grouped by Component Category"
 msgstr ""
 
 #: oleview.rc:130
-#, fuzzy
 msgid "OLE 1.0 Objects"
-msgstr "Böyle Bir Nesne Yok"
+msgstr ""
 
 #: oleview.rc:131
 msgid "COM Library Objects"
 msgstr ""
 
 #: oleview.rc:132
-#, fuzzy
 msgid "All Objects"
-msgstr "Böyle Bir Nesne Yok"
+msgstr ""
 
 #: oleview.rc:133
-#, fuzzy
 msgid "Application IDs"
-msgstr "Seçenekler"
+msgstr ""
 
 #: oleview.rc:134
 msgid "Type Libraries"
@@ -11073,18 +10527,16 @@ msgid "Implementation"
 msgstr ""
 
 #: oleview.rc:140
-#, fuzzy
 msgid "Activation"
-msgstr "LAN Bağlantısı"
+msgstr ""
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
 msgstr ""
 
 #: oleview.rc:143
-#, fuzzy
 msgid "Unknown error"
-msgstr "%s içinde bilinmeyen özellik"
+msgstr ""
 
 #: oleview.rc:146
 msgid "bytes"
@@ -11103,9 +10555,8 @@ msgid "Save as an .IDL or .H file"
 msgstr ""
 
 #: oleview.rc:125
-#, fuzzy
 msgid "Close window"
-msgstr "&Pencere"
+msgstr ""
 
 #: oleview.rc:126
 msgid "Group typeinfos by kind"
@@ -11124,27 +10575,20 @@ msgid "&Move...\tF7"
 msgstr "&Taşı...\tF7"
 
 #: progman.rc:33 winefile.rc:28
-#, fuzzy
 msgid "&Copy...\tF8"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Kopyala...\tF8\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"K&opyala...\tF8"
+msgstr "&Kopyala...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "&Özellikler...\tAlt+Enter"
+msgstr "&Özellikler\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "Çalı&ştır..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "Windows'tan &Çık..."
+msgstr ""
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:59 winhlp32.rc:44
 msgid "&Options"
@@ -11155,22 +10599,12 @@ msgid "&Arrange automatically"
 msgstr "Otomatik &düzenle"
 
 #: progman.rc:43
-#, fuzzy
 msgid "&Minimize on run"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Simge halinde çalıştır\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Açılışta &küçült"
+msgstr "&Simge halinde çalıştır"
 
 #: progman.rc:44 winefile.rc:69
-#, fuzzy
 msgid "&Save settings on exit"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Çıkışta ayarları sakla\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Çıkışta ayarları kaydet"
+msgstr "&Çıkışta ayarları kaydet"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
 msgid "&Windows"
@@ -11189,9 +10623,8 @@ msgid "&Arrange Icons"
 msgstr "&Simgeleri düzenle"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Program Yöneticisi"
+msgstr "&Program Yöneticisi Hakkında"
 
 #: progman.rc:100
 msgid "Program &group"
@@ -11294,13 +10727,8 @@ msgid "Delete program `%s'?"
 msgstr "'%s' programı silinsin mi?"
 
 #: progman.rc:67
-#, fuzzy
 msgid "Not implemented"
 msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Henüz Tanımlanmadı\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Henüz tamamlanmadı"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
@@ -11422,9 +10850,8 @@ msgid "&Multi String Value"
 msgstr ""
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "&Dizge Değeri"
+msgstr ""
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -11447,13 +10874,8 @@ msgid "Status &Bar"
 msgstr "Durum &Çubuğu"
 
 #: regedit.rc:67 winefile.rc:46
-#, fuzzy
 msgid "Sp&lit"
 msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Ay&raç\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"A&yraç"
 
 #: regedit.rc:74
 msgid "&Remove Favorite..."
@@ -11464,14 +10886,12 @@ msgid "&About Registry Editor"
 msgstr "Sistem Kayıt Düzenleyicisi &Hakkında"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "İkili Veriyi Değiştir"
+msgstr ""
 
 #: regedit.rc:215
-#, fuzzy
 msgid "Export registry"
-msgstr "Kayıt Dosyası &Kaydet..."
+msgstr ""
 
 #: regedit.rc:217
 msgid "S&elected branch:"
@@ -11546,9 +10966,8 @@ msgid "Edit Binary"
 msgstr "İkiliyi Düzenle"
 
 #: regedit.rc:303
-#, fuzzy
 msgid "Edit Multi String"
-msgstr "Dizgeyi Düzenle"
+msgstr ""
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
@@ -11585,19 +11004,16 @@ msgid "Registry Editor"
 msgstr "Kayıt DÜzenleyici"
 
 #: regedit.rc:191
-#, fuzzy
 msgid "Import Registry File"
-msgstr "Kayıt Dosyası &Al..."
+msgstr ""
 
 #: regedit.rc:192
-#, fuzzy
 msgid "Export Registry File"
-msgstr "Kayıt Dosyası &Kaydet..."
+msgstr ""
 
 #: regedit.rc:193
-#, fuzzy
 msgid "Registry files (*.reg)"
-msgstr "Kayıt Dosyası &Al..."
+msgstr ""
 
 #: regedit.rc:194
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
@@ -12036,31 +11452,26 @@ msgid "&Show processes from all users"
 msgstr "&Tüm kullanıcı süreçlerini göster"
 
 #: taskmgr.rc:372
-#, fuzzy
 msgid "CPU usage"
-msgstr "MİB Kullanımı"
+msgstr "CPU Kullanımı"
 
 #: taskmgr.rc:373
-#, fuzzy
 msgid "MEM usage"
-msgstr "BLK Kullanımı"
+msgstr "BELLEK Kullanımı"
 
 #: taskmgr.rc:374
 msgid "Totals"
 msgstr "Toplamlar"
 
 #: taskmgr.rc:375
-#, fuzzy
 msgid "Commit charge (K)"
-msgstr "Commit Charge (K)"
+msgstr ""
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "Physical memory (K)"
 msgstr "Fiziksel Bellek (K)"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "Kernel memory (K)"
 msgstr "Çekirdek Belleği (K)"
 
@@ -12101,12 +11512,10 @@ msgid "Nonpaged"
 msgstr "Sayfalanmamış"
 
 #: taskmgr.rc:414
-#, fuzzy
 msgid "CPU usage history"
-msgstr "MİB Kullanım Geçmişi"
+msgstr "CPU Kullanım Geçmişi"
 
 #: taskmgr.rc:415
-#, fuzzy
 msgid "Memory usage history"
 msgstr "Bellek Kullanım Geçmişi"
 
@@ -12575,14 +11984,12 @@ msgid "Peak Mem Usage"
 msgstr ""
 
 #: taskmgr.rc:279
-#, fuzzy
 msgid "Page Faults"
-msgstr "Soldaki Sayfa"
+msgstr ""
 
 #: taskmgr.rc:280
-#, fuzzy
 msgid "USER Objects"
-msgstr "Böyle Bir Nesne Yok"
+msgstr ""
 
 #: taskmgr.rc:283
 msgid "Session ID"
@@ -12601,9 +12008,8 @@ msgid "VM Size"
 msgstr ""
 
 #: taskmgr.rc:287
-#, fuzzy
 msgid "Paged Pool"
-msgstr "Alttaki Sayfa"
+msgstr ""
 
 #: taskmgr.rc:288
 msgid "NP Pool"
@@ -12614,9 +12020,8 @@ msgid "Base Pri"
 msgstr ""
 
 #: taskmgr.rc:301
-#, fuzzy
 msgid "Task Manager Warning"
-msgstr "Görev Yöneticisi"
+msgstr ""
 
 #: taskmgr.rc:304
 msgid ""
@@ -12657,9 +12062,8 @@ msgid "The process must have affinity with at least one processor"
 msgstr ""
 
 #: taskmgr.rc:316
-#, fuzzy
 msgid "Invalid Option"
-msgstr "Geçersiz Sözdizimi"
+msgstr ""
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
@@ -12678,9 +12082,8 @@ msgid "Running"
 msgstr ""
 
 #: taskmgr.rc:325
-#, fuzzy
 msgid "Task"
-msgstr "&Görevi Sonlandır"
+msgstr ""
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
@@ -12716,14 +12119,12 @@ msgid "Regular Metafile Viewer"
 msgstr ""
 
 #: wineboot.rc:28
-#, fuzzy
 msgid "Waiting for Program"
-msgstr "Yürütmeye İsteksiz"
+msgstr ""
 
 #: wineboot.rc:32
-#, fuzzy
 msgid "Terminate Process"
-msgstr "Süreci &Sonlandır"
+msgstr ""
 
 #: wineboot.rc:33
 msgid ""
@@ -12734,9 +12135,8 @@ msgid ""
 msgstr ""
 
 #: wineboot.rc:39
-#, fuzzy
 msgid "Wine"
-msgstr "Wine Mayın Tarlası"
+msgstr "Wine"
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
@@ -12751,9 +12151,8 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Windows Registration Information "
+msgstr ""
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12764,12 +12163,10 @@ msgid "Organi&zation:"
 msgstr "Organization:"
 
 #: winecfg.rc:145
-#, fuzzy
 msgid "Application settings"
-msgstr " Uygulama Ayarları "
+msgstr "Uygulama ayarları "
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
@@ -12792,9 +12189,8 @@ msgid "&Windows Version:"
 msgstr "&Windows Sürümü:"
 
 #: winecfg.rc:160
-#, fuzzy
 msgid "Window settings"
-msgstr " Pencere ayarları "
+msgstr "Pencere ayarları "
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12817,18 +12213,16 @@ msgid "Desktop &size:"
 msgstr "Masaüstü büyüklüğü:"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Screen &Resolution "
+msgstr ""
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
 msgstr ""
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "DLL overrides"
-msgstr " DLL Öncelikleri "
+msgstr "DLL Öncelikleri "
 
 #: winecfg.rc:183
 msgid ""
@@ -12861,9 +12255,8 @@ msgid "Edit Override"
 msgstr "Öncelik Düzenle"
 
 #: winecfg.rc:199
-#, fuzzy
 msgid "Load order"
-msgstr " Yükleme Sırası "
+msgstr "Yükleme Sırası "
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -12886,14 +12279,12 @@ msgid "&Disable"
 msgstr "&Etkisizleştir"
 
 #: winecfg.rc:211
-#, fuzzy
 msgid "Select Drive Letter"
-msgstr "Seçim &bilgisi"
+msgstr ""
 
 #: winecfg.rc:223
-#, fuzzy
 msgid "Drive mappings"
-msgstr " Sürücü Eşleştirmesi "
+msgstr ""
 
 #: winecfg.rc:224
 msgid ""
@@ -12966,9 +12357,8 @@ msgid "&Test Sound"
 msgstr ""
 
 #: winecfg.rc:274
-#, fuzzy
 msgid "Appearance"
-msgstr " Görünüm "
+msgstr ""
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -12987,9 +12377,8 @@ msgid "C&olor:"
 msgstr "Color:"
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
-msgstr "Klasör"
+msgstr "Klasörler"
 
 #: winecfg.rc:293
 msgid "&Link to:"
@@ -13004,9 +12393,8 @@ msgid "Drives"
 msgstr "Sürücüler"
 
 #: winecfg.rc:33
-#, fuzzy
 msgid "Select the Unix target directory, please."
-msgstr "Lütfen haritalanacak unix dizinini seçin."
+msgstr ""
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -13061,18 +12449,16 @@ msgid "Selected driver: %s"
 msgstr ""
 
 #: winecfg.rc:82
-#, fuzzy
 msgid "(None)"
-msgstr "Hiçbiri"
+msgstr "(Hiçbiri)"
 
 #: winecfg.rc:83
 msgid "Audio test failed!"
 msgstr ""
 
 #: winecfg.rc:85
-#, fuzzy
 msgid "(System default)"
-msgstr "Sistem Yolu"
+msgstr ""
 
 #: winecfg.rc:51
 msgid ""
@@ -13174,10 +12560,9 @@ msgstr ""
 "oluşturmayı unutmayın!"
 
 #: winecfg.rc:74
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
-msgstr "Harf"
+msgstr ""
 
 #: winecfg.rc:75
 msgid "Drive Mapping"
@@ -13194,61 +12579,52 @@ msgstr ""
 "Bir tane oluşturmak için Sürücüler sekmesinden Ekle'yi tıklamayı unutmayın!\n"
 
 #: winecfg.rc:90
-#, fuzzy
 msgid "Controls Background"
-msgstr "Arkaplanı Ko&pyala"
+msgstr ""
 
 #: winecfg.rc:91
 msgid "Controls Text"
 msgstr ""
 
 #: winecfg.rc:93
-#, fuzzy
 msgid "Menu Background"
-msgstr "&Arkaplan"
+msgstr ""
 
 #: winecfg.rc:94
 msgid "Menu Text"
 msgstr ""
 
 #: winecfg.rc:95
-#, fuzzy
 msgid "Scrollbar"
-msgstr "Buraya Kaydır"
+msgstr ""
 
 #: winecfg.rc:96
-#, fuzzy
 msgid "Selection Background"
-msgstr "Arka&plan Yap"
+msgstr ""
 
 #: winecfg.rc:97
-#, fuzzy
 msgid "Selection Text"
-msgstr "Seçim &bilgisi"
+msgstr ""
 
 #: winecfg.rc:98
-#, fuzzy
 msgid "ToolTip Background"
-msgstr "Arkaplanı Ko&pyala"
+msgstr ""
 
 #: winecfg.rc:99
 msgid "ToolTip Text"
 msgstr ""
 
 #: winecfg.rc:100
-#, fuzzy
 msgid "Window Background"
-msgstr "Arkaplanı Ko&pyala"
+msgstr ""
 
 #: winecfg.rc:101
-#, fuzzy
 msgid "Window Text"
-msgstr "&Pencere"
+msgstr ""
 
 #: winecfg.rc:102
-#, fuzzy
 msgid "Active Title Bar"
-msgstr "&Başlık Çubuğunu Kaldır"
+msgstr ""
 
 #: winecfg.rc:103
 msgid "Active Title Text"
@@ -13267,14 +12643,12 @@ msgid "Message Box Text"
 msgstr ""
 
 #: winecfg.rc:107
-#, fuzzy
 msgid "Application Workspace"
-msgstr "Seçenekler"
+msgstr ""
 
 #: winecfg.rc:108
-#, fuzzy
 msgid "Window Frame"
-msgstr "&Pencere"
+msgstr ""
 
 #: winecfg.rc:109
 msgid "Active Border"
@@ -13289,9 +12663,8 @@ msgid "Controls Shadow"
 msgstr ""
 
 #: winecfg.rc:112
-#, fuzzy
 msgid "Gray Text"
-msgstr "Gri"
+msgstr ""
 
 #: winecfg.rc:113
 msgid "Controls Highlight"
@@ -13374,9 +12747,8 @@ msgid "Command history"
 msgstr "Komut geçmişi"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
-msgstr "Çağrılabilecek komut &sayısı:"
+msgstr ""
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
@@ -13391,21 +12763,18 @@ msgid "&Color"
 msgstr "&Renk"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " Yapılandırma "
+msgstr "Yapılandırma "
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
 msgstr "Tampon bölge"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
 msgstr "&Genişlik :"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
 msgstr "&Yükseklik :"
 
@@ -13414,14 +12783,12 @@ msgid "Window size"
 msgstr "Pencere boyutu"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
-msgstr "G&enişlik :"
+msgstr "&Genişlik :"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
-msgstr "Y&ükseklik :"
+msgstr "&Yükseklik :"
 
 #: wineconsole.rc:116
 msgid "End of program"
@@ -13484,9 +12851,8 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "Ekran tamponu en az pencereninki kadar büyük olmalıdır"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "Her karakter %ld piksel genişliğinde ve %ld piksel yüksekliğinde"
+msgstr ""
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -13545,9 +12911,8 @@ msgid ""
 msgstr ""
 
 #: winedbg.rc:46
-#, fuzzy
 msgid "Program Error"
-msgstr "Program &grubu"
+msgstr ""
 
 #: winedbg.rc:51
 msgid ""
@@ -13563,14 +12928,12 @@ msgid ""
 msgstr ""
 
 #: winedbg.rc:58
-#, fuzzy
 msgid "Show &Details"
-msgstr "&Ayrıntılı"
+msgstr ""
 
 #: winedbg.rc:63
-#, fuzzy
 msgid "Program Error Details"
-msgstr "Program &grubu"
+msgstr ""
 
 #: winedbg.rc:70
 msgid ""
@@ -13593,9 +12956,8 @@ msgid "(unidentified)"
 msgstr ""
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "Dosya Aç"
+msgstr ""
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
@@ -13610,7 +12972,6 @@ msgid "Re&name..."
 msgstr "Ye&niden Adlandır..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
 msgstr "&Özellikler...\tAlt+Enter"
 
@@ -13627,7 +12988,6 @@ msgid "&Disk"
 msgstr "&Disk"
 
 #: winefile.rc:41
-#, fuzzy
 msgid "Connect &Network Drive..."
 msgstr "&Ağ Sürücüsüne Bağlan"
 
@@ -13660,7 +13020,6 @@ msgid "Sort by &Date"
 msgstr "&Tarihe Göre Sırala"
 
 #: winefile.rc:56
-#, fuzzy
 msgid "Filter by&..."
 msgstr "Süzgeç &..."
 
@@ -13685,9 +13044,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Di&key Döşe\tCtrl+F4"
 
 #: winefile.rc:83
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "Winefile"
+msgstr "&Wine Dosya Yöneticisi Hakkında"
 
 #: winefile.rc:124
 msgid "Select destination"
@@ -13698,9 +13056,8 @@ msgid "By File Type"
 msgstr "Dosya Türüne Göre"
 
 #: winefile.rc:142
-#, fuzzy
 msgid "File type"
-msgstr "Dosya Türü"
+msgstr "Dosya türü"
 
 #: winefile.rc:143
 msgid "&Directories"
@@ -13759,9 +13116,8 @@ msgid "&Compressed"
 msgstr "S&ıkışık"
 
 #: winefile.rc:180
-#, fuzzy
 msgid "Version information"
-msgstr "S&ürüm Bilgisi"
+msgstr "Sürüm Bilgisi"
 
 #: winefile.rc:197
 msgctxt "accelerator Fullscreen"
@@ -13777,9 +13133,8 @@ msgid "Error while selecting new font."
 msgstr "Yeni yazı tipi seçerken hata."
 
 #: winefile.rc:95
-#, fuzzy
 msgid "Wine File Manager"
-msgstr "Winefile"
+msgstr "Wine Dosya Yöneticisi"
 
 #: winefile.rc:97
 msgid "root fs"
@@ -13862,23 +13217,20 @@ msgid "&Custom..."
 msgstr "&Özel..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
-msgstr "&En Kısa Süreler"
+msgstr ""
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&Wine Hakkında"
+msgstr "&WineMine Hakkında"
 
 #: winemine.rc:56
 msgid "Fastest Times"
 msgstr "En Kısa Süreler"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
-msgstr "En Kısa Süreler"
+msgstr ""
 
 #: winemine.rc:59
 msgid "Beginner"
@@ -13909,9 +13261,8 @@ msgid "Rows"
 msgstr "Satırlar"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "&Sütun"
+msgstr "Sütunlar"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -13946,13 +13297,8 @@ msgid "&Define..."
 msgstr "&Tanımla..."
 
 #: winhlp32.rc:46 winhlp32.rc:67
-#, fuzzy
 msgid "Fonts"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Fonts\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Yazı Tipleri"
+msgstr "Yazı Tipleri"
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
@@ -13967,9 +13313,8 @@ msgid "Large"
 msgstr ""
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "&Yardım kullanımı"
+msgstr ""
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -13984,23 +13329,16 @@ msgid "Annotation..."
 msgstr ""
 
 #: winhlp32.rc:65
-#, fuzzy
 msgid "Copy"
-msgstr "K&opyala"
+msgstr "Kopyala"
 
 #: winhlp32.rc:97
-#, fuzzy
 msgid "Index"
-msgstr "&İçindekiler"
+msgstr "İçindekiler"
 
 #: winhlp32.rc:105
-#, fuzzy
 msgid "Search"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Ara\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Bul"
+msgstr "Ara"
 
 #: winhlp32.rc:78
 msgid "Wine Help"
@@ -14145,39 +13483,32 @@ msgid "Automatic"
 msgstr ""
 
 #: wordpad.rc:199
-#, fuzzy
 msgid "Date and time"
-msgstr "Silinme tarihi"
+msgstr ""
 
 #: wordpad.rc:202
-#, fuzzy
 msgid "Available formats"
-msgstr "&Biçim"
+msgstr ""
 
 #: wordpad.rc:213
-#, fuzzy
 msgid "New document type"
-msgstr "Metin Dosyaları (*.txt)"
+msgstr ""
 
 #: wordpad.rc:221
-#, fuzzy
 msgid "Paragraph format"
-msgstr "Paragra&f biçimi"
+msgstr "Paragraf biçimi"
 
 #: wordpad.rc:224
-#, fuzzy
 msgid "Indentation"
-msgstr "Bilgi"
+msgstr ""
 
 #: wordpad.rc:225 wordpad.rc:148
-#, fuzzy
 msgid "Left"
-msgstr "S&ol"
+msgstr ""
 
 #: wordpad.rc:227 wordpad.rc:149
-#, fuzzy
 msgid "Right"
-msgstr "S&ağ"
+msgstr ""
 
 #: wordpad.rc:229
 msgid "First line"
@@ -14196,19 +13527,16 @@ msgid "Tab stops"
 msgstr ""
 
 #: wordpad.rc:248
-#, fuzzy
 msgid "Remove al&l"
-msgstr "Paylaşımı S&il..."
+msgstr ""
 
 #: wordpad.rc:256
-#, fuzzy
 msgid "Line wrapping"
-msgstr "Sürücü Eşleme"
+msgstr ""
 
 #: wordpad.rc:257
-#, fuzzy
 msgid "&No line wrapping"
-msgstr "Sürücü Eşleme"
+msgstr ""
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
@@ -14219,13 +13547,8 @@ msgid "Wrap text by the &margin"
 msgstr ""
 
 #: wordpad.rc:260
-#, fuzzy
 msgid "Toolbars"
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Araç Çubuğu\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Toolbar"
+msgstr "Araç Çubuğu"
 
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
@@ -14263,14 +13586,12 @@ msgid "U"
 msgstr ""
 
 #: wordpad.rc:136
-#, fuzzy
 msgid "All documents (*.*)"
-msgstr "Tüm dosyalar (*.*)"
+msgstr "Tüm belgeler (*.*)"
 
 #: wordpad.rc:137
-#, fuzzy
 msgid "Text documents (*.txt)"
-msgstr "Metin Dosyaları (*.txt)"
+msgstr "Metin belgeleri (*.txt)"
 
 #: wordpad.rc:138
 msgid "Unicode text document (*.txt)"
@@ -14293,9 +13614,8 @@ msgid "Unicode text document"
 msgstr ""
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "Metin Dosyaları (*.txt)"
+msgstr ""
 
 #: wordpad.rc:150
 msgid "Center"
@@ -14326,24 +13646,20 @@ msgid "One page"
 msgstr ""
 
 #: wordpad.rc:167
-#, fuzzy
 msgid "Zoom in"
-msgstr "Yaklaştır"
+msgstr "Yakınlaştır"
 
 #: wordpad.rc:168
-#, fuzzy
 msgid "Zoom out"
-msgstr "Yaklaştır"
+msgstr "Uzaklaştır"
 
 #: wordpad.rc:170
-#, fuzzy
 msgid "Page"
-msgstr "Üstteki Sayfa"
+msgstr "Sayfa"
 
 #: wordpad.rc:171
-#, fuzzy
 msgid "Pages"
-msgstr "Üstteki Sayfa"
+msgstr "Sayfalar"
 
 #: wordpad.rc:172
 msgctxt "unit: centimeter"
@@ -14351,10 +13667,9 @@ msgid "cm"
 msgstr ""
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
-msgstr " min"
+msgstr ""
 
 #: wordpad.rc:174
 msgid "inch"
@@ -14388,18 +13703,16 @@ msgid ""
 msgstr ""
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
-msgstr "Geçersiz Sözdizimi"
+msgstr ""
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported."
 msgstr ""
 
 #: wordpad.rc:189
-#, fuzzy
 msgid "Could not save the file."
-msgstr "Pencere oluşturulamıyor veya kullanılamıyor."
+msgstr ""
 
 #: wordpad.rc:190
 msgid "You do not have access to save the file."
@@ -14414,13 +13727,8 @@ msgid "You do not have access to open the file."
 msgstr ""
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
 msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Henüz Tanımlanmadı\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Henüz tamamlanmadı"
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
