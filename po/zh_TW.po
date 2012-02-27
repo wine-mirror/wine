@@ -2125,11 +2125,11 @@ msgstr ""
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
-msgstr ""
+msgstr "憑證匯入精靈"
 
 #: cryptui.rc:280
 msgid "Welcome to the Certificate Import Wizard"
-msgstr ""
+msgstr "歡迎使用憑證匯入精靈"
 
 #: cryptui.rc:283
 msgid ""
@@ -2186,11 +2186,11 @@ msgstr ""
 
 #: cryptui.rc:322
 msgid "Completing the Certificate Import Wizard"
-msgstr ""
+msgstr "正在完成憑證匯入精靈"
 
 #: cryptui.rc:324
 msgid "You have successfully completed the Certificate Import Wizard."
-msgstr ""
+msgstr "您已經成功地完成憑證匯入精靈。"
 
 #: cryptui.rc:326 cryptui.rc:440
 msgid "You have specified the following settings:"
@@ -2246,11 +2246,11 @@ msgstr ""
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
 msgid "Certificate Export Wizard"
-msgstr ""
+msgstr "憑證匯出精靈"
 
 #: cryptui.rc:370
 msgid "Welcome to the Certificate Export Wizard"
-msgstr ""
+msgstr "歡迎使用憑證匯出精靈"
 
 #: cryptui.rc:373
 msgid ""
@@ -2289,7 +2289,7 @@ msgstr "確認密碼(&C)："
 
 #: cryptui.rc:404
 msgid "Select the format you want to use:"
-msgstr ""
+msgstr "請選擇您要使用的格式："
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (.cer)"
@@ -2325,11 +2325,11 @@ msgstr ""
 
 #: cryptui.rc:436
 msgid "Completing the Certificate Export Wizard"
-msgstr ""
+msgstr "正在完成憑證匯出精靈"
 
 #: cryptui.rc:438
 msgid "You have successfully completed the Certificate Export Wizard."
-msgstr ""
+msgstr "您已經成功地完成憑證匯出精靈"
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -2433,7 +2433,7 @@ msgstr ""
 
 #: cryptui.rc:52
 msgid "Serial number"
-msgstr ""
+msgstr "序號"
 
 #: cryptui.rc:53
 msgid "Issuer"
@@ -2457,7 +2457,7 @@ msgstr ""
 
 #: cryptui.rc:58
 msgid "%1 (%2!d! bits)"
-msgstr ""
+msgstr "%1 (%2!d! 位元)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -2565,7 +2565,7 @@ msgstr ""
 
 #: cryptui.rc:87
 msgid "Automatically determined by the program"
-msgstr ""
+msgstr "由程式自動決定"
 
 #: cryptui.rc:88 shell32.rc:134
 msgid "File"
@@ -2787,7 +2787,7 @@ msgstr ""
 
 #: cryptui.rc:162
 msgid "Export keys"
-msgstr ""
+msgstr "匯出密鑰"
 
 #: cryptui.rc:165
 msgid "The export was successful."
@@ -3331,7 +3331,7 @@ msgstr ""
 
 #: jscript.rc:28
 msgid "Object required"
-msgstr ""
+msgstr "需要物件"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -3343,7 +3343,7 @@ msgstr ""
 
 #: jscript.rc:31
 msgid "Object doesn't support this action"
-msgstr ""
+msgstr "物件不支援此動作"
 
 #: jscript.rc:32
 msgid "Argument not optional"
@@ -3379,7 +3379,7 @@ msgstr ""
 
 #: jscript.rc:40
 msgid "Label redefined"
-msgstr ""
+msgstr "標籤重複定義"
 
 #: jscript.rc:41
 msgid "Label not found"
@@ -3387,7 +3387,7 @@ msgstr "找不到標籤"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
-msgstr ""
+msgstr "條件編譯已被關閉"
 
 #: jscript.rc:45
 msgid "Number expected"
@@ -3451,7 +3451,7 @@ msgstr ""
 
 #: winerror.mc:26
 msgid "Success.\n"
-msgstr ""
+msgstr "成功。\n"
 
 #: winerror.mc:31
 msgid "Invalid function.\n"
@@ -3499,7 +3499,7 @@ msgstr ""
 
 #: winerror.mc:86
 msgid "Invalid access.\n"
-msgstr ""
+msgstr "無效的存取。\n"
 
 #: winerror.mc:91
 msgid "Invalid data.\n"
@@ -3699,11 +3699,11 @@ msgstr "檔案已存在。\n"
 
 #: winerror.mc:336
 msgid "Cannot create.\n"
-msgstr ""
+msgstr "無法建立。\n"
 
 #: winerror.mc:341
 msgid "Int24 failure.\n"
-msgstr ""
+msgstr "中斷 24H 失敗。\n"
 
 #: winerror.mc:346
 msgid "Out of structures.\n"
@@ -3711,11 +3711,11 @@ msgstr ""
 
 #: winerror.mc:351
 msgid "Already assigned.\n"
-msgstr ""
+msgstr "已經指定。\n"
 
 #: winerror.mc:356 winerror.mc:1711
 msgid "Invalid password.\n"
-msgstr ""
+msgstr "無效的密碼。\n"
 
 #: winerror.mc:361
 msgid "Invalid parameter.\n"
@@ -3763,7 +3763,7 @@ msgstr ""
 
 #: winerror.mc:416
 msgid "Drive locked.\n"
-msgstr ""
+msgstr "已鎖定儲存裝置。\n"
 
 #: winerror.mc:421
 msgid "Broken pipe.\n"
@@ -3907,7 +3907,7 @@ msgstr ""
 
 #: winerror.mc:606
 msgid "Path is busy.\n"
-msgstr ""
+msgstr "該路徑忙碌中。\n"
 
 #: winerror.mc:611
 msgid "Already a SUBST target.\n"
@@ -3971,7 +3971,7 @@ msgstr ""
 
 #: winerror.mc:686
 msgid "Lock failed.\n"
-msgstr ""
+msgstr "鎖定失敗。\n"
 
 #: winerror.mc:691
 msgid "Resource in use.\n"
@@ -4075,7 +4075,7 @@ msgstr ""
 
 #: winerror.mc:816
 msgid "File name is too long.\n"
-msgstr ""
+msgstr "檔案名稱過長。\n"
 
 #: winerror.mc:821
 msgid "Ring 2 stack in use.\n"
@@ -11810,10 +11810,8 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"這個程式是自由軟體﹐您可以遵照\n"
-"自由軟體基金會出版的 GNU LGPL 2.1\n"
-"版或新版的許可條款來修改和重新\n"
-"散佈這個程式。"
+"這個程式是自由軟體；您可以遵照自由軟體基金會所制定的 GNU LGPL 2.1 版或者更新"
+"版本的許可條款來修改和重新散佈這個程式。"
 
 #: winecfg.rc:134
 msgid "Windows registration information"
@@ -11837,9 +11835,8 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine 可以對不同程式偽裝成不同版本的 Windows。\n"
-"「函式庫」與「顯示」分頁將連結到這個分頁，除了調整預設設定，\n"
-"也能調整個別程式的設定。"
+"Wine 可以對不同程式偽裝成不同版本的 Windows。「函式庫」與「顯示」分頁將連結到"
+"這個分頁，除了調整預設設定，也能調整個別程式的設定。"
 
 #: winecfg.rc:150
 msgid "&Add application..."
@@ -12066,7 +12063,7 @@ msgstr "隱藏進階選項(&A)"
 
 #: winecfg.rc:36
 msgid "(No Theme)"
-msgstr "（無佈景主題）"
+msgstr "(無佈景主題)"
 
 #: winecfg.rc:37
 msgid "Graphics"
@@ -12765,7 +12762,7 @@ msgstr "隱藏(&I)"
 
 #: winefile.rc:177
 msgid "&Archive"
-msgstr ""
+msgstr "保存(&A)"
 
 #: winefile.rc:178
 msgid "&System"
@@ -12794,7 +12791,7 @@ msgstr ""
 
 #: winefile.rc:95
 msgid "Wine File Manager"
-msgstr ""
+msgstr "Wine 檔案管理員"
 
 #: winefile.rc:97
 msgid "root fs"
@@ -13272,7 +13269,7 @@ msgstr "統一碼文字文件"
 
 #: wordpad.rc:143
 msgid "Printer files (*.prn)"
-msgstr "列印檔案 (*.prn)"
+msgstr "印表機檔案 (*.prn)"
 
 #: wordpad.rc:150
 msgid "Center"
@@ -13385,7 +13382,7 @@ msgstr "您沒有開啟檔案的權限。"
 
 #: wordpad.rc:193
 msgid "Printing not implemented."
-msgstr ""
+msgstr "列印功能尚未實作。"
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
@@ -13405,7 +13402,7 @@ msgstr ""
 
 #: xcopy.rc:29
 msgid "Press <Enter> to begin copying\n"
-msgstr ""
+msgstr "請按 <Enter> 鍵開始複製\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
@@ -13413,7 +13410,7 @@ msgstr ""
 
 #: xcopy.rc:31
 msgid "%1!d! file(s) copied\n"
-msgstr ""
+msgstr "已複製 %1!d! 個檔案\n"
 
 #: xcopy.rc:34
 msgid ""
@@ -13424,11 +13421,11 @@ msgstr ""
 
 #: xcopy.rc:35
 msgid "%1? (Yes|No)\n"
-msgstr ""
+msgstr "%1？ (是｜否)\n"
 
 #: xcopy.rc:36
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr ""
+msgstr "是否覆蓋 %1？ (是｜否｜全部皆是)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
