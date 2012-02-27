@@ -3221,9 +3221,8 @@ msgid "Pr&int..."
 msgstr "&Imprimir..."
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "&Vista previa de impresión..."
+msgstr "&Vista previa de impresión"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -7635,13 +7634,8 @@ msgstr "A&ñadir al escritorio..."
 
 #: shdoclc.rc:76 shdoclc.rc:90 shdoclc.rc:114 shdoclc.rc:156 shdoclc.rc:180
 #: user32.rc:57 wordpad.rc:101
-#, fuzzy
 msgid "Cu&t"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Cor&tar\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Co&rtar"
+msgstr "Co&rtar"
 
 #: shdoclc.rc:77 shdoclc.rc:91 shdoclc.rc:115 shdoclc.rc:130 shdoclc.rc:157
 #: shdoclc.rc:181 shell32.rc:99 user32.rc:58 wineconsole.rc:29 winhlp32.rc:37
@@ -10556,7 +10550,7 @@ msgstr "Seleccionar t&odo\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
-msgstr "&Hora y fecha\tF5"
+msgstr "&Fecha y hora\tF5"
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
@@ -10595,9 +10589,8 @@ msgid "&Footer:"
 msgstr "&Pie:"
 
 #: notepad.rc:104
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "&Márgenes (mm):"
+msgstr "Márgenes (milímetros)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10614,12 +10607,12 @@ msgstr "Codificación:"
 #: notepad.rc:129 wordpad.rc:278
 msgctxt "accelerator Select All"
 msgid "A"
-msgstr ""
+msgstr "A"
 
 #: notepad.rc:130 wordpad.rc:280
 msgctxt "accelerator Copy"
 msgid "C"
-msgstr ""
+msgstr "C"
 
 #: notepad.rc:131 regedit.rc:320 wordpad.rc:276
 msgctxt "accelerator Find"
@@ -10629,7 +10622,7 @@ msgstr "F"
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
@@ -10649,22 +10642,22 @@ msgstr "P"
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -10719,12 +10712,10 @@ msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 big-endian)"
 
 #: notepad.rc:84
-#, fuzzy
 msgid "Unicode (UTF-8)"
-msgstr "Unicode (UTF-16)"
+msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:91
-#, fuzzy
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -10733,13 +10724,13 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
+"%1\n"
 "Este archivo contiene caracteres Unicode que se perderán si\n"
-"guarda este archivo en la codificación %s.\n"
-"Para mantener estos caracteres, haga clic en Cancelar y, a continuación, "
-"seleccione\n"
-"una de las opciones de Unicode en la lista desplegable de codificaciones.\n"
-"Continuar?"
+"lo guarda con la codificación actual %2.\n"
+"Si desea mantener estos caracteres, haga clic en Cancelar y, a\n"
+"continuación, seleccione una de las opciones de Unicode en la\n"
+"lista desplegable de codificaciones.\n"
+"¿Desea continuar?"
 
 #: oleview.rc:29
 #, fuzzy
@@ -14073,225 +14064,195 @@ msgid "Help topics: "
 msgstr "Temas de ayuda: "
 
 #: wordpad.rc:28
-#, fuzzy
 msgid "&New...\tCtrl+N"
-msgstr "&Nuevo\tCtrl+N"
+msgstr "&Nuevo...\tCtrl+N"
 
 #: wordpad.rc:42
-#, fuzzy
 msgid "R&edo\tCtrl+Y"
-msgstr "&Deshacer\tCtrl+Z"
+msgstr "R&ehacer\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Borrar\tDel\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Eliminar\tDel"
+msgstr "&Eliminar\tDel"
 
 #: wordpad.rc:48
-#, fuzzy
 msgid "&Select all\tCtrl+A"
 msgstr "Seleccionar t&odo\tCtrl+A"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"
-msgstr ""
+msgstr "Buscar &siguiente\tF3"
 
 #: wordpad.rc:54
 msgid "Read-&only"
-msgstr ""
+msgstr "Sólo &lectura"
 
 #: wordpad.rc:55
 msgid "&Modified"
-msgstr ""
+msgstr "&Modificado"
 
 #: wordpad.rc:57
 msgid "E&xtras"
-msgstr ""
+msgstr "E&xtras"
 
 #: wordpad.rc:59
-#, fuzzy
 msgid "Selection &info"
-msgstr "Seleccionar &todo"
+msgstr "&Info. de la selección"
 
 #: wordpad.rc:60
 msgid "Character &format"
-msgstr ""
+msgstr "&Formato del carácter"
 
 #: wordpad.rc:61
 msgid "&Def. char format"
-msgstr ""
+msgstr "&Def. formato del carácter"
 
 #: wordpad.rc:62
 msgid "Paragrap&h format"
-msgstr ""
+msgstr "Formato del pá&rrafo"
 
 #: wordpad.rc:63
 msgid "&Get text"
-msgstr ""
+msgstr "&Obtener texto"
 
 #: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
-msgstr ""
+msgstr "Barra de &formato"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
-msgstr ""
+msgstr "&Regla"
 
 #: wordpad.rc:71 wordpad.rc:264
-#, fuzzy
 msgid "&Statusbar"
 msgstr "Barra de &estado"
 
 #: wordpad.rc:75
 msgid "&Insert"
-msgstr ""
+msgstr "&Insertar"
 
 #: wordpad.rc:77
 msgid "&Date and time..."
-msgstr ""
+msgstr "Fecha y &hora..."
 
 #: wordpad.rc:79
-#, fuzzy
 msgid "F&ormat"
-msgstr "Ade&lante"
+msgstr "F&ormato"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
-msgstr ""
+msgstr "&Viñetas"
 
 #: wordpad.rc:83 wordpad.rc:106
-#, fuzzy
 msgid "&Paragraph..."
-msgstr "&Buscar..."
+msgstr "&Párrafo..."
 
 #: wordpad.rc:84
-#, fuzzy
 msgid "&Tabs..."
-msgstr "Guardar &como..."
+msgstr "&Tabulaciones..."
 
 #: wordpad.rc:85
-#, fuzzy
 msgid "Backgroun&d"
-msgstr "&Copiar fondo"
+msgstr "&Fondo"
 
 #: wordpad.rc:87
-#, fuzzy
 msgid "&System\tCtrl+1"
-msgstr "&Pegar\tCtrl+V"
+msgstr "Del &sistema\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
-msgstr "Seleccionar t&odo\tCtrl+A"
+msgstr "&Amarillo pálido\tCtrl+2"
 
 #: wordpad.rc:93
-#, fuzzy
 msgid "&About Wine Wordpad"
-msgstr "&Info..."
+msgstr "&Acerca de Wordpad para Wine"
 
 #: wordpad.rc:130
-#, fuzzy
 msgid "Automatic"
-msgstr "A&linear automáticamente"
+msgstr "Automático"
 
 #: wordpad.rc:199
-#, fuzzy
 msgid "Date and time"
-msgstr "Fecha de borrado"
+msgstr "Fecha y hora"
 
 #: wordpad.rc:202
-#, fuzzy
 msgid "Available formats"
-msgstr "Ade&lante"
+msgstr "Formatos disponibles"
 
 #: wordpad.rc:213
-#, fuzzy
 msgid "New document type"
-msgstr "Argumento faltante\n"
+msgstr "Nuevo tipo de documento"
 
 #: wordpad.rc:221
-#, fuzzy
 msgid "Paragraph format"
-msgstr "&Buscar..."
+msgstr "Formato del párrafo"
 
 #: wordpad.rc:224
-#, fuzzy
 msgid "Indentation"
-msgstr "&Anotar..."
+msgstr "Sangría"
 
 #: wordpad.rc:225 wordpad.rc:148
-#, fuzzy
 msgid "Left"
-msgstr "&Izquierda"
+msgstr "Izquierda"
 
 #: wordpad.rc:227 wordpad.rc:149
-#, fuzzy
 msgid "Right"
-msgstr "&Derecha"
+msgstr "Derecha"
 
 #: wordpad.rc:229
 msgid "First line"
-msgstr ""
+msgstr "Primera línea"
 
 #: wordpad.rc:231
 msgid "Alignment"
-msgstr ""
+msgstr "Alineamiento"
 
 #: wordpad.rc:239
-#, fuzzy
 msgid "Tabs"
-msgstr "Guardar &como..."
+msgstr "Tabulación"
 
 #: wordpad.rc:242
 msgid "Tab stops"
-msgstr ""
+msgstr "Fin de la tabulación"
 
 #: wordpad.rc:248
-#, fuzzy
 msgid "Remove al&l"
-msgstr "&Quitar..."
+msgstr "&Quitar todo"
 
 #: wordpad.rc:256
-#, fuzzy
 msgid "Line wrapping"
-msgstr "Mapeo de unidad"
+msgstr "Salto de línea"
 
 #: wordpad.rc:257
-#, fuzzy
 msgid "&No line wrapping"
-msgstr "Mapeo de unidad"
+msgstr "&Sin salto de línea"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
-msgstr ""
+msgstr "Salto de línea al &borde de la página"
 
 #: wordpad.rc:259
 msgid "Wrap text by the &margin"
-msgstr ""
+msgstr "Salto de línea en el &margen"
 
 #: wordpad.rc:260
-#, fuzzy
 msgid "Toolbars"
-msgstr "&Barra de herramientas"
+msgstr "Barra de herramientas"
 
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "C"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "D"
 
 #: wordpad.rc:282
 msgctxt "accelerator Redo"
@@ -14301,180 +14262,168 @@ msgstr "Y"
 #: wordpad.rc:283
 msgctxt "accelerator Bold"
 msgid "B"
-msgstr ""
+msgstr "B"
 
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:136
-#, fuzzy
 msgid "All documents (*.*)"
-msgstr "Todos los archivos (*.*)"
+msgstr "Todos los documentos (*.*)"
 
 #: wordpad.rc:137
-#, fuzzy
 msgid "Text documents (*.txt)"
 msgstr "Documentos de texto (*.txt)"
 
 #: wordpad.rc:138
 msgid "Unicode text document (*.txt)"
-msgstr ""
+msgstr "Documentos de texto Unicode (*.txt)"
 
 #: wordpad.rc:139
 msgid "Rich text format (*.rtf)"
-msgstr ""
+msgstr "Documentos de texto enriquecido (*.rtf)"
 
 #: wordpad.rc:140
 msgid "Rich text document"
-msgstr ""
+msgstr "Documentos de texto enriquecido"
 
 #: wordpad.rc:141
 msgid "Text document"
-msgstr ""
+msgstr "Documentos de texto"
 
 #: wordpad.rc:142
 msgid "Unicode text document"
-msgstr ""
+msgstr "Documentos de texto Unicode"
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "Documentos de texto (*.txt)"
+msgstr "Archivos de impresión (*.prn)"
 
 #: wordpad.rc:150
 msgid "Center"
-msgstr ""
+msgstr "Centrado"
 
 #: wordpad.rc:156
 msgid "Text"
-msgstr ""
+msgstr "Texto"
 
 #: wordpad.rc:157
 msgid "Rich text"
-msgstr ""
+msgstr "Texto enriquecido"
 
 #: wordpad.rc:163
 msgid "Next page"
-msgstr ""
+msgstr "Siguiente página"
 
 #: wordpad.rc:164
 msgid "Previous page"
-msgstr ""
+msgstr "Página anterior"
 
 #: wordpad.rc:165
 msgid "Two pages"
-msgstr ""
+msgstr "Dos páginas"
 
 #: wordpad.rc:166
 msgid "One page"
-msgstr ""
+msgstr "Una página"
 
 #: wordpad.rc:167
 msgid "Zoom in"
-msgstr ""
+msgstr "Más zoom"
 
 #: wordpad.rc:168
 msgid "Zoom out"
-msgstr ""
+msgstr "Menos zoom"
 
 #: wordpad.rc:170
-#, fuzzy
 msgid "Page"
-msgstr "Página a&rriba"
+msgstr "Página"
 
 #: wordpad.rc:171
-#, fuzzy
 msgid "Pages"
-msgstr "Página a&rriba"
+msgstr "Páginas"
 
 #: wordpad.rc:172
 msgctxt "unit: centimeter"
 msgid "cm"
-msgstr ""
+msgstr "cm"
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
-msgstr " min"
+msgstr "in"
 
 #: wordpad.rc:174
 msgid "inch"
-msgstr ""
+msgstr "pulg"
 
 #: wordpad.rc:175
 msgctxt "unit: point"
 msgid "pt"
-msgstr ""
+msgstr "pts"
 
 #: wordpad.rc:180
-#, fuzzy
 msgid "Document"
-msgstr "Argumento faltante\n"
+msgstr "Documento"
 
 #: wordpad.rc:181
 msgid "Save changes to '%s'?"
-msgstr ""
+msgstr "¿Guardar cambios a '%s'?"
 
 #: wordpad.rc:182
 msgid "Finished searching the document."
-msgstr ""
+msgstr "Finalizada la búsqueda en el documento."
 
 #: wordpad.rc:183
 msgid "Failed to load the RichEdit library."
-msgstr ""
+msgstr "Ha ocurrido un error intentando cargar la librería RichEdit."
 
 #: wordpad.rc:184
 msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
 msgstr ""
+"Ha elegido salvar el documento en texto plano, esto ocasionara que todo el "
+"formato se pierda. ¿Está seguro de que desea continuar?"
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
-msgstr "Sintaxis inválida"
+msgstr "Formato de número inválido."
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported."
-msgstr ""
+msgstr "Los documentos OLE storage no están soportados."
 
 #: wordpad.rc:189
-#, fuzzy
 msgid "Could not save the file."
-msgstr "No puede crearse o usar una ventana."
+msgstr "No se pudo salvar el documento."
 
 #: wordpad.rc:190
 msgid "You do not have access to save the file."
-msgstr ""
+msgstr "No tienes permisos para salvar el documento."
 
 #: wordpad.rc:191
 msgid "Could not open the file."
-msgstr ""
+msgstr "No se pudo abrir el archivo."
 
 #: wordpad.rc:192
 msgid "You do not have access to open the file."
-msgstr ""
+msgstr "No tienes permisos para abrir el documento."
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"No implementado\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Aún no implementado"
+msgstr "Impresión no implementada."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
-msgstr ""
+msgstr "No se puede añadir más de 32 finales de tabulación."
 
 #: write.rc:27
 msgid "Starting Wordpad failed"
