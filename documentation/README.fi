@@ -28,7 +28,7 @@ ennen kaikkea Internetissä osoitteessa http://www.winehq.org/.
 Winen kääntämiseen tarvitaan jokin seuraavista:
 
   Linuxin versio 2.0.36 tai uudempi
-  FreeBSD 6.3 tai uudempi
+  FreeBSD 7.0 tai uudempi
   Solaris x86 9 tai uudempi
   NetBSD-current
   Mac OS X 10.4 tai uudempi
@@ -37,15 +37,9 @@ Wine vaatii kerneliltä tuen säikeille. Tämän takia toistaiseksi vain yllä
 mainittuja käyttöjärjestelmiä tuetaan; tulevaisuudessa saatetaan lisätä tuki
 muillekin käyttöjärjestelmille, joissa on tarvittava tuki säikeille.
 
-Tietoa Linuxille:
-  Vaikka Linux 2.2.x:n pitäisi yhä toimia ja Linux 2.0.x saattaa toimia
-  (varhaisissa 2.0.x-versioissa oli säikeisiin liittyviä ongelmia),
-  on parasta käyttää ajantasaista versiota kuten 2.4.x tai 2.6.x.
-
 Tietoa FreeBSD:lle:
-  Pääsääntöisesti Wine ei toimi vanhemmilla versioilla kuin 6.3 tai 7.0.
-  FreeBSD 6.3 on mahdollista päivittää niin, että se tukee Wineä; osoitteessa
-  http://wiki.freebsd.org/Wine kerrotaan tästä lisää.
+  Pääsääntöisesti Wine ei toimi vanhemmilla versioilla kuin FreeBSD 7.0.
+  Osoitteessa http://wiki.freebsd.org/Wine kerrotaan tästä lisää.
 
 Tietoa Solarikselle:
   Wine täytyy luultavasti kääntää GNU-työkaluilla (gcc, gas jne.).
@@ -63,8 +57,8 @@ Tietoa Mac OS X:lle:
 Tuetut tiedostojärjestelmät:
   Wine toimii useimmilla tiedostojärjestelmillä, mutta Samban kanssa on
   ilmoitettu ilmenevän ongelmia. Myöskään NTFS ei tue kaikkia ominaisuuksia,
-  joita jotkin ohjelmat vaativat. Linuxin tyypillisten tiedostojärjestelmien
-  (ext3 ym.) käyttö on suositeltavaa.
+  joita jotkin ohjelmat vaativat. Natiivin Unix-tiedostojärjestelmän käyttö
+  on suotavaa.
 
 Perusvaatimukset:
   Koneella täytyy olla X11:n kehitystiedostot (Debianissa xlib6g-dev,
