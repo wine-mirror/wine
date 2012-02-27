@@ -28,8 +28,8 @@ especially the wealth of information found at http://www.winehq.org.
 
 To compile and run Wine, you must have one of the following:
 
-  Linux version 2.0.36 or above
-  FreeBSD 6.3 or later
+  Linux version 2.0.36 or later
+  FreeBSD 7.0 or later
   Solaris x86 9 or later
   NetBSD-current
   Mac OS X 10.4 or later
@@ -38,15 +38,9 @@ As Wine requires kernel-level thread support to run, only the operating
 systems mentioned above are supported.  Other operating systems which
 support kernel threads may be supported in the future.
 
-Linux info:
-  While Linux 2.2.x should still work and Linux 2.0.x may still work
-  (older 2.0.x versions had thread-related crashes),
-  it's best to have a current kernel such as 2.4.x or 2.6.x.
-
 FreeBSD info:
-  Wine will generally not work properly on versions before FreeBSD
-  6.3 or 7.0, and FreeBSD 6.3 has additional patches available. See
-  http://wiki.freebsd.org/Wine for more information.
+  Wine will generally not work properly on versions before FreeBSD 7.0.
+  See http://wiki.freebsd.org/Wine for more information.
 
 Solaris info:
   You will most likely need to build Wine with the GNU toolchain
@@ -66,8 +60,7 @@ Supported file systems:
   Wine should run on most file systems. A few compatibility problems
   have also been reported using files accessed through Samba. Also,
   NTFS does not provide all the file system features needed by some
-  applications.  Using a native Linux file system such as ext3 is
-  recommended.
+  applications.  Using a native Unix file system is recommended.
 
 Basic requirements:
   You need to have the X11 development include files installed
