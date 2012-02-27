@@ -75,7 +75,7 @@ msgstr "확인"
 
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
-msgstr "이 정보는 %s 에서 기술 지원을 받기 위해 사용됩니다:"
+msgstr "이 정보는 %s: 에서 기술 지원을 받기 위해 사용됨:"
 
 #: appwiz.rc:77
 msgid "Publisher:"
@@ -345,7 +345,7 @@ msgstr "아래로 이동(&D)"
 
 #: comctl32.rc:86
 msgid "A&vailable buttons:"
-msgstr "가능한 버튼(&V):"
+msgstr "사용 가능한 버튼(&V):"
 
 #: comctl32.rc:88
 msgid "&Add ->"
@@ -940,7 +940,7 @@ msgstr ""
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
-msgstr " '여기로부터'엔트리는  여기까지'엔트리에 도달 할 수 없습니다."
+msgstr "'여기로부터'엔트리는  여기까지'엔트리에 도달 할 수 없습니다."
 
 #: comdlg32.rc:58
 msgid ""
@@ -952,7 +952,7 @@ msgstr ""
 
 #: comdlg32.rc:60
 msgid "The 'Number of copies' field cannot be empty."
-msgstr " '복사본 수'의 숫자값은 빈 값이 올 수 없습니다."
+msgstr "'복사본 수'의 숫자값은 빈 값이 올 수 없습니다."
 
 #: comdlg32.rc:62
 msgid ""
@@ -960,7 +960,7 @@ msgid ""
 "Please enter a value between 1 and %d."
 msgstr ""
 "이 복사본의 많은 수는 당신의  프린터에서 지원하지 않습니다.\n"
-"  1 과 %d사이의 값을 입력하십시오."
+"1 과 %d사이의 값을 입력하십시오."
 
 #: comdlg32.rc:63
 msgid "A printer error occurred."
@@ -1153,11 +1153,11 @@ msgstr "내 암호 기억(&R)"
 
 #: credui.rc:27
 msgid "Connect to %s"
-msgstr " %s 연결"
+msgstr "%s 연결"
 
 #: credui.rc:28
 msgid "Connecting to %s"
-msgstr " %s 연결중"
+msgstr "%s 연결중"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
@@ -1180,7 +1180,7 @@ msgid ""
 msgstr ""
 "Caps Lock 이 커져 있으면 암호가 잘못 입력될 수 있습니다.\n"
 "\n"
-" 암호를 입력하기 전에\n"
+"암호를 입력하기 전에\n"
 "키보드의 Caps Lock 키를 끄시기 바랍니다."
 
 #: credui.rc:31
@@ -1770,7 +1770,7 @@ msgstr "키 아이디="
 
 #: crypt32.rc:180
 msgid "Certificate Issuer"
-msgstr "인증서 발행자 "
+msgstr "인증서 발행자"
 
 #: crypt32.rc:181
 msgid "Certificate Serial Number="
@@ -2009,7 +2009,7 @@ msgstr "인증 방침"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "접근 키 식별자: "
+msgstr "접근 키 식별자:"
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -2178,7 +2178,7 @@ msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"주의:  이 파일 형식은 아마도 하나 이상의 인증서,인증서 파기 목록,인증서 신뢰 "
+"주의:  이 파일 형식은 아마도 하나 이상의 인증서,인증서 파기 목록,인증서 신뢰"
 "목록을 가지고 있을 수 있음:"
 
 #: cryptui.rc:296
@@ -2380,16 +2380,16 @@ msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
-"이 인증서는 올바르지 않은 서명을 가지고 있습니다.  이 인증서는 아마도 고쳐졌"
-"거나 망가진 것같습니가."
+"이 인증서는 올바르지 않은 서명을 가지고 있습니다. 이 인증서는 아마도 고쳐졌거"
+"나 망가진 것같습니가."
 
 #: cryptui.rc:30
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
-"이 루트 인증서는 신뢰 할 수 없습니다.  이것을 신뢰하려면, 당신의 시스템의 신"
-"뢰된루트 인증서 보관소에 추가하십시오."
+"이 루트 인증서는 신뢰 할 수 없습니다. 이것을 신뢰하려면, 당신의 시스템의 신뢰"
+"된루트 인증서 보관소에 추가하십시오."
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
@@ -2421,7 +2421,7 @@ msgstr "유효기간(시작) "
 
 #: cryptui.rc:38
 msgid " to "
-msgstr "유효기간(끝) "
+msgstr " 유효기간(끝) "
 
 #: cryptui.rc:39
 msgid "This certificate has an invalid signature."
@@ -3036,7 +3036,7 @@ msgstr "선택된 것을 불러오기"
 
 #: gphoto2.rc:32
 msgid "Preview"
-msgstr " 미리 보기"
+msgstr "미리 보기"
 
 #: gphoto2.rc:33
 msgid "Import All"
@@ -3064,7 +3064,7 @@ msgstr "카메라하고 연결중"
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
-msgstr "카메라하고 연결중...  잠시만 기다리십시오"
+msgstr "카메라하고 연결중... 잠시만 기다리십시오"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -3281,7 +3281,7 @@ msgstr "빈 페이지(&B)"
 
 #: inetcpl.rc:53
 msgid "Browsing history"
-msgstr "방문 기록 "
+msgstr "방문 기록"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3353,7 +3353,7 @@ msgstr "보안"
 msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
-msgstr " 인증서는 당신의 개인 식별과 인증기관과 게시자 식별에 사용됩니다."
+msgstr "인증서는 당신의 개인 식별과 인증기관과 게시자 식별에 사용됩니다."
 
 #: inetcpl.rc:111
 msgid "Certificates..."
@@ -6673,7 +6673,7 @@ msgstr ""
 "패치 추가:\n"
 "\t/p patchpackage [property]\n"
 "\t/p patchpackage /a package [property]\n"
-"위의 명령어를 위한 Log 와 UI 한정자 :\n"
+"위의 명령어를 위한 Log 와 UI 한정자:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
 "MSI 서비스  등록:\n"
@@ -7155,8 +7155,8 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"당신의 문서 %s에 클립보드의 내용을 삽입합니다.  이 데이터는 원본 파일에 연결"
-"되어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다."
+"당신의 문서 %s에 클립보드의 내용을 삽입합니다. 이 데이터는 원본 파일에 연결되"
+"어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다."
 
 #: oledlg.rc:38
 msgid ""
@@ -7164,8 +7164,8 @@ msgid ""
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"당신의 문서에 클립보드에 있는 그림을 집어넣습니다.  이 그림은 원본 파일에 연"
-"결되어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다."
+"당신의 문서에 클립보드에 있는 그림을 집어넣습니다. 이 그림은 원본 파일에 연결"
+"되어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다."
 
 #: oledlg.rc:39
 msgid ""
@@ -7173,7 +7173,7 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"당신의 문서에 클립보드에 있는 단축아이콘을 집어넣습니다.  이 단축아이콘은 원"
+"당신의 문서에 클립보드에 있는 단축아이콘을 집어넣습니다. 이 단축아이콘은 원"
 "본 파일에 연결되어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다."
 
 #: oledlg.rc:40
@@ -7266,7 +7266,7 @@ msgid ""
 "Insert the manufacturer's installation disk, and then\n"
 "make sure the correct drive is selected below"
 msgstr ""
-"제작사의 설치 디스크를 삽입하고,  아래의 선택된 드라이브가 올바른지 확인하시"
+"제작사의 설치 디스크를 삽입하고, 아래의 선택된 드라이브가 올바른지 확인하시"
 "오 "
 
 #: setupapi.rc:54
@@ -8029,8 +8029,8 @@ msgstr ""
 "이 폴더는 이미 '%1'이란 이름을 가진 폴더를 포함하고 있습니다.\n"
 "\n"
 "만약 당신이 같은 이름으로 대상 폴더를 지정한다면 선택된 폴더는 대체될 것입니"
-"다\n"
-" 대체될 것입니다. 당신은 이 폴더를 이동시키거나 복사하겠습니까?"
+"다.\n"
+"당신은 이 폴더를 이동시키거나 복사하겠습니까?"
 
 #: shell32.rc:235
 msgid "New Folder"
@@ -8307,7 +8307,7 @@ msgstr "지정된 장치 핸들은 적합하지 않습니다."
 
 #: winmm.rc:34
 msgid "There is no driver installed on your system!"
-msgstr "당신의 시스템에는 어떤 드라이버도 설치되어 있지 않습니다 !"
+msgstr "당신의 시스템에는 어떤 드라이버도 설치되어 있지 않습니다!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -8322,8 +8322,8 @@ msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
 msgstr ""
-"이 기능은 지원되지 않습니다.  드라이버가 지원하는 메세지와 함수들을 결정할 "
-"수 있는 함수를 사용하십시오."
+"이 기능은 지원되지 않습니다. 드라이버가 지원하는 메세지와 함수들을 결정할 수 "
+"있는 함수를 사용하십시오."
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
@@ -8366,8 +8366,8 @@ msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-" WAVE_ALLOWSYNC 플래그를 사용하지 않고 장치를 열 수 없습니다. 이 플래그를 사"
-"용해서 다시 시도하십시오."
+"WAVE_ALLOWSYNC 플래그를 사용하지 않고 장치를 열 수 없습니다. 이 플래그를 사용"
+"해서 다시 시도하십시오."
 
 #: winmm.rc:48
 msgid ""
@@ -8406,12 +8406,12 @@ msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
 msgstr ""
-"현재 MIDI  설정은 손상되었습니다. 본래  MIDIMAP.CFG  파일을 윈도우즈 SYSTEM "
-"디렉토리에 복사하고, 다시 시도하십시오."
+"현재 MIDI  설정은 손상되었습니다. 본래  MIDIMAP.CFG 파일을 윈도우즈 SYSTEM 디"
+"렉토리에 복사하고, 다시 시도하십시오."
 
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
-msgstr "잘못된 MCI 장치 ID.  MCI 장치를 열 때 반환한 ID를 사용하십시오."
+msgstr "잘못된 MCI 장치 ID. MCI 장치를 열 때 반환한 ID를 사용하십시오."
 
 #: winmm.rc:57
 msgid "The driver cannot recognize the specified command parameter."
@@ -8472,8 +8472,8 @@ msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"이 장치 드라이버는 잘못된 반환 값을 반환하였습니다.  장치 제조자에게서 새 드"
-"라이버를 얻을수 있는지 체크하십시오."
+"이 장치 드라이버는 잘못된 반환 값을 반환하였습니다. 장치 제조자에게서 새 드라"
+"이버를 얻을수 있는지 체크하십시오."
 
 #: winmm.rc:69
 msgid ""
@@ -8623,7 +8623,7 @@ msgstr "이름없는 파일을 저장할 수 없습니다. 파일 이름을 지�
 
 #: winmm.rc:94
 msgid "You must specify an alias when using the 'new' parameter."
-msgstr " '반드시 new'매개변수를 사용할  별명을 지정해주어야 합니다."
+msgstr "'반드시 new'매개변수를 사용할  별명을 지정해주어야 합니다."
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
@@ -8654,7 +8654,7 @@ msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
 msgstr ""
-"이 파일이름은 올바르지 않습니다.  파일이름이 점과 확장자를 더해서 8자보다 길"
+"이 파일이름은 올바르지 않습니다. 파일이름이 점과 확장자를 더해서 8자보다 길"
 "지 않은지 확인하십시오."
 
 #: winmm.rc:100
@@ -8675,7 +8675,7 @@ msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
 msgstr ""
-"지정된 파일이나 MCI 장치에 접근할 수 없습니다.  디렉토리를 바꾸거나 컴퓨터를 "
+"지정된 파일이나 MCI 장치에 접근할 수 없습니다. 디렉토리를 바꾸거나 컴퓨터를 "
 "재시작하십시오."
 
 #: winmm.rc:103
@@ -8829,7 +8829,7 @@ msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
 msgstr ""
-"이 시스템에는 설치된 MIDI 장치가 없습니다.  제어판의 장치 옵션에서MIDI 드라이"
+"이 시스템에는 설치된 MIDI 장치가 없습니다. 제어판의 장치 옵션에서MIDI 드라이"
 "버를 설치하십시오."
 
 #: winmm.rc:118
@@ -9122,7 +9122,7 @@ msgstr ""
 
 #: attrib.rc:28 cmd.rc:318
 msgid "%1: File Not Found\n"
-msgstr "%1 :파일을 찾을 수 없습니다\n"
+msgstr "%1:파일을 찾을 수 없습니다\n"
 
 #: attrib.rc:47
 msgid ""
@@ -9212,7 +9212,7 @@ msgid ""
 msgstr ""
 "<배치파일 이름>을 호출(CALL)하는 것은 배치 파일안에서  다른 배치 파일 안의\n"
 "명령을 사용하는 것입니다. 배치 파일이 종료하면 , 제어권은  그것을 호출한\n"
-"파일한테 돌아갑니다.  CALL 명령은 호출하는 과정에서 매개변수를 가집니다.\n"
+"파일한테 돌아갑니다. CALL 명령은 호출하는 과정에서 매개변수를 가집니다.\n"
 "\n"
 "기본 디렉토리나 환경변수나 기타를 바꾸는 것은 호출자에 의해 상속되어서 호출"
 "된\n"
@@ -9337,9 +9337,9 @@ msgid ""
 msgstr ""
 "IF는 명령을 선택적으로 실행 할 때 사용한다.\n"
 "\n"
-"문법:   IF [NOT] EXIST 파일이름 명령\n"
-"     IF [NOT] string1==string2 명령\n"
-"     IF [NOT] ERRORLEVEL 숫자 명령\n"
+"문법: IF [NOT] EXIST 파일이름 명령\n"
+"      IF [NOT] string1==string2 명령\n"
+"      IF [NOT] ERRORLEVEL 숫자 명령\n"
 "\n"
 "명령의 두번째 형식에서, string1 과 string2는 반드시 2개의 따옴표로\n"
 "둘려놓아야 합니다.이 비교는 대소문자를 구분하지 않습니다.\n"
@@ -9447,11 +9447,10 @@ msgstr ""
 "\n"
 "뒤의 문자의 문자열의 특별한 의미 설명:\n"
 "\n"
-"$$       달러 기호         $_        라인피드            $b    파이프 기호 "
-"(|)\n"
-"$d    현재 날짜         $e   이스케이프           $g    > 기호\n"
-"$l    < 기호            $n    현재 드라이브      $p    현재 경로\n"
-"$q    등호 기호         $t    현재 시간            $v    cmd 버젼\n"
+"$$    달러 기호        $_    라인피드             $b    파이프 기호 (|)\n"
+"$d    현재 날짜        $e    이스케이프           $g    > 기호\n"
+"$l    < 기호           $n    현재 드라이브        $p    현재 경로\n"
+"$q    등호 기호        $t    현재 시간            $v    cmd 버젼\n"
 "\n"
 "프롬프트가 기본상태인 채로 프롬프트문자를 재설정하지 않고 PROMPT 명령을\n"
 "사용했을 때 ,이것은 현재 디렉토리 (포함해서현재 드라이브 문자) 에 \"보다 큰"
@@ -9791,7 +9790,7 @@ msgstr ""
 "XCOPY\t\t원본 파일이나 디렉토리 구조를 대상으로 복사함\n"
 "EXIT\t\tCMD 닫기\n"
 "\n"
-"HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌.\n"
+"HELP <명령>을 치면 그 명령의 상세한 정보를 보여줍니다.\n"
 
 #: cmd.rc:307
 msgid "Are you sure?"
@@ -9966,7 +9965,7 @@ msgstr "위치:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr "사용법:hostname\n"
+msgstr "사용법: hostname\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
@@ -10053,7 +10052,7 @@ msgstr ""
 "\n"
 "NET 명령어[매개변수]\n"
 "       -나-\n"
-"NET 명령어  /HELP\n"
+"NET 명령어 /HELP\n"
 "\n"
 "명령어에 들어갈 수 있는 것은  HELP, START, STOP이나 USE중의 하나임.\n"
 
@@ -10070,7 +10069,7 @@ msgstr ""
 "\n"
 "NET START [서비스]\n"
 "\n"
-" '서비스'가 생략하는 경우 실행 중인 서비스 목록을 표시합니다. 그렇지 않으면  "
+"'서비스'가 생략하는 경우 실행 중인 서비스 목록을 표시합니다. 그렇지 않으면  "
 "'서비스'는  시작할 서비스의 이름입니다.\n"
 
 #: net.rc:29
@@ -10361,7 +10360,7 @@ msgid ""
 msgstr ""
 "%s 파일이 없습니다.\n"
 "\n"
-" 파일을 새로 만드시겠습니까?"
+"파일을 새로 만드시겠습니까?"
 
 #: notepad.rc:79
 msgid ""
@@ -10371,7 +10370,7 @@ msgid ""
 msgstr ""
 "%s 파일 내용이 변경되었습니다.\n"
 "\n"
-" 변경 내용을 저장하시겠습니까?"
+"변경 내용을 저장하시겠습니까?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
@@ -10904,11 +10903,11 @@ msgstr "정보"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "그룹 `%s'을 지우겠습니까 ?"
+msgstr "그룹 `%s'을 지우겠습니까?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "풀그림 `%s'을 지우겠습니까 ?"
+msgstr "프로그램 `%s'을 지우겠습니까?"
 
 #: progman.rc:67
 msgid "Not implemented"
@@ -11462,11 +11461,11 @@ msgstr "오류: /im 니 /pid  옵션중의 하나는 반드시 지정되어야�
 
 #: taskkill.rc:31
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "오류: 롭션 %1 는 하나의 명령어라인 매개변수가 올것으로 예상합니다.\n"
+msgstr "오류: 옵션 %1 는 하나의 명령어라인 매개변수가 올것으로 예상합니다.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr "오류:  /im 와 /pid 옵션은 같이 사용할 수 없습니다.\n"
+msgstr "오류: /im 와 /pid 옵션은 같이 사용할 수 없습니다.\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
@@ -12055,11 +12054,11 @@ msgstr "풀그림 정보,버젼 그리고 저작권 보여주기"
 
 #: taskmgr.rc:213
 msgid "Exits the Task Manager application"
-msgstr "작엄 관리자 풀그림 나가기"
+msgstr "작업 관리자 프로그램 나가기"
 
 #: taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
-msgstr " ntvdm.exe 연결 밑의 16비트 작업 보여주기"
+msgstr "ntvdm.exe 연결 밑의 16비트 작업 보여주기"
 
 #: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
@@ -12303,8 +12302,8 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"언인스톨 명령 '%s' 실행 실패,  실행파일이 없는 것 같습니다.\n"
-"당신은 레지스트리에서 언인스톨 등록키를 제거하겠습니까 ?"
+"언인스톨 명령 '%s' 실행 실패, 실행파일이 없는 것 같습니다.\n"
+"당신은 레지스트리에서 언인스톨 등록키를 제거하겠습니까?"
 
 #: view.rc:33
 msgid "&Pan"
@@ -12354,7 +12353,7 @@ msgstr "Wine"
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr ""
-"Wine 설정  %s 이 업데이트되는 중입니다,  잠시만 기다려주시기 바랍니다..."
+"Wine 설정  %s 이 업데이트되는 중입니다, 잠시만 기다려주시기 바랍니다..."
 
 #: winecfg.rc:132
 msgid ""
@@ -12370,7 +12369,7 @@ msgstr ""
 
 #: winecfg.rc:134
 msgid "Windows registration information"
-msgstr "윈도우즈 등록 정보 "
+msgstr "윈도우즈 등록 정보"
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12382,7 +12381,7 @@ msgstr "단체(&Z):"
 
 #: winecfg.rc:145
 msgid "Application settings"
-msgstr "응용프로그램 설정 "
+msgstr "응용프로그램 설정"
 
 #: winecfg.rc:146
 msgid ""
@@ -12432,7 +12431,7 @@ msgstr "데스크탑 크기(&S):"
 
 #: winecfg.rc:171
 msgid "Screen resolution"
-msgstr "화면 해상도 "
+msgstr "화면 해상도"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
@@ -12440,7 +12439,7 @@ msgstr ""
 
 #: winecfg.rc:182
 msgid "DLL overrides"
-msgstr "DLL 덮어쓰기 "
+msgstr "DLL 덮어쓰기"
 
 #: winecfg.rc:183
 msgid ""
@@ -12473,7 +12472,7 @@ msgstr "덮어쓰기 고치기"
 
 #: winecfg.rc:199
 msgid "Load order"
-msgstr "불러오기 순서 "
+msgstr "불러오기 순서"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -12501,7 +12500,7 @@ msgstr "드라이브 문자 선택"
 
 #: winecfg.rc:223
 msgid "Drive mappings"
-msgstr "드라이브 연결 "
+msgstr "드라이브 연결"
 
 #: winecfg.rc:224
 msgid ""
@@ -12548,11 +12547,11 @@ msgstr "숨은 파일 보이기(&D)"
 
 #: winecfg.rc:256
 msgid "Driver diagnostics"
-msgstr "드라이버 진단 "
+msgstr "드라이버 진단"
 
 #: winecfg.rc:258
 msgid "Defaults"
-msgstr "기본 "
+msgstr "기본"
 
 #: winecfg.rc:259
 msgid "Output device:"
@@ -12770,7 +12769,7 @@ msgid ""
 msgstr ""
 "당신은 하드 드라이브  C를 지우기를 원합니까?\n"
 "\n"
-"대부분의 윈도우 프로그램은 C드라이브가 있다고 예상하고,  없으면 다운될것입니"
+"대부분의 윈도우 프로그램은 C드라이브가 있다고 예상하고, 없으면 다운될것입니"
 "다. 만약 당신이 계속 진행하기를 원한다면 반드시 다시 만드십시오!"
 
 #: winecfg.rc:74
@@ -12978,7 +12977,7 @@ msgstr "색상(&C)"
 
 #: wineconsole.rc:97
 msgid "Configuration"
-msgstr "설정 "
+msgstr "설정"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
@@ -13018,7 +13017,7 @@ msgstr "에디션"
 
 #: wineconsole.rc:125
 msgid "Console parameters"
-msgstr " 콘솔 매개변수"
+msgstr "콘솔 매개변수"
 
 #: wineconsole.rc:128
 msgid "Retain these settings for later sessions"
@@ -13260,7 +13259,7 @@ msgstr "날짜로 정렬(&D)"
 #: winefile.rc:56
 #, fuzzy
 msgid "Filter by&..."
-msgstr "&...로 걸려내기"
+msgstr "...(&.)로 걸려내기"
 
 #: winefile.rc:63
 msgid "&Drivebar"
@@ -13492,7 +13491,7 @@ msgstr "당신의 이름을 적어주세요"
 
 #: winemine.rc:84
 msgid "Custom Game"
-msgstr "게임 사용자 정의 "
+msgstr "게임 사용자 정의"
 
 #: winemine.rc:86
 msgid "Rows"
@@ -13605,7 +13604,7 @@ msgstr "%s을 찾을 수 없습니다'. 이 파일을 직접 찾겠습니까?"
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "richedit 구현을 찾을수 업습니다... 취소중"
+msgstr "richedit 구현을 찾을수 없습니다... 취소중"
 
 #: winhlp32.rc:91
 msgid "Help topics: "
