@@ -36,6 +36,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 typedef struct BitmapScaler {
     IWICBitmapScaler IWICBitmapScaler_iface;
     LONG ref;
+    IWICBitmapSource *source;
+    UINT width, height;
+    WICBitmapInterpolationMode mode;
+    CRITICAL_SECTION lock; /* must be held when initialized */
 } BitmapScaler;
 
 static inline BitmapScaler *impl_from_IWICBitmapScaler(IWICBitmapScaler *iface)
@@ -86,6 +90,9 @@ static ULONG WINAPI BitmapScaler_Release(IWICBitmapScaler *iface)
 
     if (ref == 0)
     {
+        This->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->lock);
+        if (This->source) IWICBitmapSource_Release(This->source);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -136,9 +143,30 @@ static HRESULT WINAPI BitmapScaler_Initialize(IWICBitmapScaler *iface,
     IWICBitmapSource *pISource, UINT uiWidth, UINT uiHeight,
     WICBitmapInterpolationMode mode)
 {
-    FIXME("(%p,%p,%u,%u,%u): stub\n", iface, pISource, uiWidth, uiHeight, mode);
+    BitmapScaler *This = impl_from_IWICBitmapScaler(iface);
+    HRESULT hr=S_OK;
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p,%u,%u,%u)\n", iface, pISource, uiWidth, uiHeight, mode);
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->source)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    IWICBitmapSource_AddRef(pISource);
+    This->source = pISource;
+
+    This->width = uiWidth;
+    This->height = uiHeight;
+    This->mode = mode;
+
+end:
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static const IWICBitmapScalerVtbl BitmapScaler_Vtbl = {
@@ -162,6 +190,12 @@ HRESULT BitmapScaler_Create(IWICBitmapScaler **scaler)
 
     This->IWICBitmapScaler_iface.lpVtbl = &BitmapScaler_Vtbl;
     This->ref = 1;
+    This->source = NULL;
+    This->width = 0;
+    This->height = 0;
+    This->mode = 0;
+    InitializeCriticalSection(&This->lock);
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BitmapScaler.lock");
 
     *scaler = &This->IWICBitmapScaler_iface;
 
