@@ -120,9 +120,16 @@ static HRESULT WINAPI BitmapScaler_GetSize(IWICBitmapScaler *iface,
 static HRESULT WINAPI BitmapScaler_GetPixelFormat(IWICBitmapScaler *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%p): stub\n", iface, pPixelFormat);
+    BitmapScaler *This = impl_from_IWICBitmapScaler(iface);
+    TRACE("(%p,%p)\n", iface, pPixelFormat);
 
-    return E_NOTIMPL;
+    if (!pPixelFormat)
+        return E_INVALIDARG;
+
+    if (!This->source)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    return IWICBitmapSource_GetPixelFormat(This->source, pPixelFormat);
 }
 
 static HRESULT WINAPI BitmapScaler_GetResolution(IWICBitmapScaler *iface,
