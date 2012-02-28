@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 static const WCHAR mimetypes_valuename[] = {'M','i','m','e','T','y','p','e','s',0};
 static const WCHAR pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
+static const WCHAR containerformat_valuename[] = {'C','o','n','t','a','i','n','e','r','F','o','r','m','a','t',0};
 
 static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
     UINT buffer_size, WCHAR *buffer, UINT *actual_size)
@@ -62,6 +63,34 @@ static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
         return WINCODEC_ERR_INSUFFICIENTBUFFER;
 
     return HRESULT_FROM_WIN32(ret);
+}
+
+static HRESULT ComponentInfo_GetGUIDValue(HKEY classkey, LPCWSTR value,
+    GUID *result)
+{
+    LONG ret;
+    WCHAR guid_string[39];
+    DWORD cbdata = sizeof(guid_string);
+    HRESULT hr;
+
+    if (!result)
+        return E_INVALIDARG;
+
+    ret = RegGetValueW(classkey, NULL, value, RRF_RT_REG_SZ|RRF_NOEXPAND, NULL,
+        guid_string, &cbdata);
+
+    if (ret != ERROR_SUCCESS)
+        return HRESULT_FROM_WIN32(ret);
+
+    if (cbdata < sizeof(guid_string))
+    {
+        ERR("incomplete GUID value\n");
+        return E_FAIL;
+    }
+
+    hr = CLSIDFromString(guid_string, result);
+
+    return hr;
 }
 
 typedef struct {
@@ -191,8 +220,9 @@ static HRESULT WINAPI BitmapDecoderInfo_GetFriendlyName(IWICBitmapDecoderInfo *i
 static HRESULT WINAPI BitmapDecoderInfo_GetContainerFormat(IWICBitmapDecoderInfo *iface,
     GUID *pguidContainerFormat)
 {
-    FIXME("(%p,%p): stub\n", iface, pguidContainerFormat);
-    return E_NOTIMPL;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
+    TRACE("(%p,%p)\n", iface, pguidContainerFormat);
+    return ComponentInfo_GetGUIDValue(This->classkey, containerformat_valuename, pguidContainerFormat);
 }
 
 static HRESULT WINAPI BitmapDecoderInfo_GetPixelFormats(IWICBitmapDecoderInfo *iface,
@@ -635,8 +665,9 @@ static HRESULT WINAPI BitmapEncoderInfo_GetFriendlyName(IWICBitmapEncoderInfo *i
 static HRESULT WINAPI BitmapEncoderInfo_GetContainerFormat(IWICBitmapEncoderInfo *iface,
     GUID *pguidContainerFormat)
 {
-    FIXME("(%p,%p): stub\n", iface, pguidContainerFormat);
-    return E_NOTIMPL;
+    BitmapEncoderInfo *This = impl_from_IWICBitmapEncoderInfo(iface);
+    TRACE("(%p,%p)\n", iface, pguidContainerFormat);
+    return ComponentInfo_GetGUIDValue(This->classkey, containerformat_valuename, pguidContainerFormat);
 }
 
 static HRESULT WINAPI BitmapEncoderInfo_GetPixelFormats(IWICBitmapEncoderInfo *iface,

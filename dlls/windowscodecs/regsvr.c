@@ -59,6 +59,7 @@ struct regsvr_decoder
     LPCSTR friendlyname;
     LPCSTR version;
     GUID const *vendor;
+    GUID const *container_format;
     LPCSTR mimetypes;
     LPCSTR extensions;
     GUID const * const *formats;
@@ -75,6 +76,7 @@ struct regsvr_encoder
     LPCSTR friendlyname;
     LPCSTR version;
     GUID const *vendor;
+    GUID const *container_format;
     LPCSTR mimetypes;
     LPCSTR extensions;
     GUID const * const *formats;
@@ -119,6 +121,7 @@ static const char tmodel_valuename[] = "ThreadingModel";
 static const char author_valuename[] = "Author";
 static const char friendlyname_valuename[] = "FriendlyName";
 static const WCHAR vendor_valuename[] = {'V','e','n','d','o','r',0};
+static const WCHAR containerformat_valuename[] = {'C','o','n','t','a','i','n','e','r','F','o','r','m','a','t',0};
 static const char version_valuename[] = "Version";
 static const char mimetypes_valuename[] = "MimeTypes";
 static const char extensions_valuename[] = "FileExtensions";
@@ -197,6 +200,13 @@ static HRESULT register_decoders(struct regsvr_decoder const *list)
         if (list->vendor) {
             StringFromGUID2(list->vendor, buf, 39);
 	    res = RegSetValueExW(clsid_key, vendor_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(buf), 78);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->container_format) {
+            StringFromGUID2(list->container_format, buf, 39);
+	    res = RegSetValueExW(clsid_key, containerformat_valuename, 0, REG_SZ,
 				 (CONST BYTE*)(buf), 78);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
         }
@@ -405,6 +415,13 @@ static HRESULT register_encoders(struct regsvr_encoder const *list)
         if (list->vendor) {
             StringFromGUID2(list->vendor, buf, 39);
 	    res = RegSetValueExW(clsid_key, vendor_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(buf), 78);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->container_format) {
+            StringFromGUID2(list->container_format, buf, 39);
+	    res = RegSetValueExW(clsid_key, containerformat_valuename, 0, REG_SZ,
 				 (CONST BYTE*)(buf), 78);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
         }
@@ -819,6 +836,7 @@ static struct regsvr_decoder const decoder_list[] = {
 	"BMP Decoder",
 	"1.0.0.0",
 	&GUID_VendorMicrosoft,
+	&GUID_ContainerFormatBmp,
 	"image/bmp",
 	".bmp,.dib,.rle",
 	bmp_formats,
@@ -829,6 +847,7 @@ static struct regsvr_decoder const decoder_list[] = {
 	"GIF Decoder",
 	"1.0.0.0",
 	&GUID_VendorMicrosoft,
+	&GUID_ContainerFormatGif,
 	"image/gif",
 	".gif",
 	gif_formats,
@@ -839,6 +858,7 @@ static struct regsvr_decoder const decoder_list[] = {
 	"ICO Decoder",
 	"1.0.0.0",
 	&GUID_VendorMicrosoft,
+	&GUID_ContainerFormatIco,
 	"image/vnd.microsoft.icon",
 	".ico",
 	ico_formats,
@@ -849,6 +869,7 @@ static struct regsvr_decoder const decoder_list[] = {
 	"JPEG Decoder",
 	"1.0.0.0",
 	&GUID_VendorMicrosoft,
+	&GUID_ContainerFormatJpeg,
 	"image/jpeg",
 	".jpg;.jpeg;.jfif",
 	jpeg_formats,
@@ -859,6 +880,7 @@ static struct regsvr_decoder const decoder_list[] = {
 	"PNG Decoder",
 	"1.0.0.0",
 	&GUID_VendorMicrosoft,
+	&GUID_ContainerFormatPng,
 	"image/png",
 	".png",
 	png_formats,
@@ -869,6 +891,7 @@ static struct regsvr_decoder const decoder_list[] = {
 	"TIFF Decoder",
 	"1.0.0.0",
 	&GUID_VendorMicrosoft,
+	&GUID_ContainerFormatTiff,
 	"image/tiff",
 	".tif;.tiff",
 	tiff_decode_formats,
@@ -879,6 +902,7 @@ static struct regsvr_decoder const decoder_list[] = {
 	"TGA Decoder",
 	"1.0.0.0",
 	&GUID_VendorWine,
+	&GUID_WineContainerFormatTga,
 	"image/x-targa",
 	".tga;.tpic",
 	tga_formats,
@@ -933,6 +957,7 @@ static struct regsvr_encoder const encoder_list[] = {
 	"BMP Encoder",
 	"1.0.0.0",
 	&GUID_VendorMicrosoft,
+	&GUID_ContainerFormatBmp,
 	"image/bmp",
 	".bmp,.dib,.rle",
 	bmp_encode_formats
@@ -942,6 +967,7 @@ static struct regsvr_encoder const encoder_list[] = {
 	"JPEG Encoder",
 	"1.0.0.0",
 	&GUID_VendorMicrosoft,
+	&GUID_ContainerFormatJpeg,
 	"image/jpeg",
 	".jpg;.jpeg;.jfif",
 	jpeg_formats
@@ -951,6 +977,7 @@ static struct regsvr_encoder const encoder_list[] = {
 	"PNG Encoder",
 	"1.0.0.0",
 	&GUID_VendorMicrosoft,
+	&GUID_ContainerFormatPng,
 	"image/png",
 	".png",
 	png_encode_formats
@@ -960,6 +987,7 @@ static struct regsvr_encoder const encoder_list[] = {
 	"TIFF Encoder",
 	"1.0.0.0",
 	&GUID_VendorMicrosoft,
+	&GUID_ContainerFormatTiff,
 	"image/tiff",
 	".tif;.tiff",
 	tiff_encode_formats
@@ -969,6 +997,7 @@ static struct regsvr_encoder const encoder_list[] = {
 	"ICNS Encoder",
 	"1.0.0.0",
 	&GUID_VendorWine,
+	NULL, /* no container format guid */
 	"image/icns",
 	".icns",
 	icns_encode_formats
