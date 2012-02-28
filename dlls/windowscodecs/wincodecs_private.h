@@ -44,6 +44,7 @@ extern HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void*
 
 extern HRESULT TgaDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
 
+extern HRESULT BitmapScaler_Create(IWICBitmapScaler **scaler) DECLSPEC_HIDDEN;
 extern HRESULT FlipRotator_Create(IWICBitmapFlipRotator **fliprotator) DECLSPEC_HIDDEN;
 extern HRESULT PaletteImpl_Create(IWICPalette **palette) DECLSPEC_HIDDEN;
 extern HRESULT StreamImpl_Create(IWICStream **stream) DECLSPEC_HIDDEN;

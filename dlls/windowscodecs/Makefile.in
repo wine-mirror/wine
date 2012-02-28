@@ -24,6 +24,7 @@ C_SRCS = \
 	propertybag.c \
 	proxy.c \
 	regsvr.c \
+	scaler.c \
 	stream.c \
 	tgaformat.c \
 	tiffformat.c \

@@ -356,8 +356,9 @@ static HRESULT WINAPI ComponentFactory_CreateFormatConverter(IWICComponentFactor
 static HRESULT WINAPI ComponentFactory_CreateBitmapScaler(IWICComponentFactory *iface,
     IWICBitmapScaler **ppIBitmapScaler)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIBitmapScaler);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIBitmapScaler);
+
+    return BitmapScaler_Create(ppIBitmapScaler);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateBitmapClipper(IWICComponentFactory *iface,
