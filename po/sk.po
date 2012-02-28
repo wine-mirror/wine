@@ -6,7 +6,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
 "PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
+"Last-Translator: Ivan Vojtko\n"
 "Language-Team: none\n"
 "Language: Slovak\n"
 "MIME-Version: 1.0\n"
@@ -22,9 +22,10 @@ msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
 msgstr ""
+"K inštalácii nového programu z diskety, CD-ROM mechaniky alebo pevného "
+"disku, kliknite na Inštalovať."
 
 #: appwiz.rc:59
-#, fuzzy
 msgid "&Install..."
 msgstr "&Inštalovať..."
 
@@ -36,28 +37,24 @@ msgid ""
 msgstr ""
 "Nasledujúci program môže byť automaticky odinštalovaný. K odstráneniu "
 "programu alebo k modifukácii jeho inštalovaných súčastí, zvoľte možnosť zo "
-"zoznamu a kliknite Zmeniť/Odstrániť"
+"zoznamu a kliknite Zmeniť/Odstrániť."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "&Informácie"
+msgstr "&Informácie o podpore"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
-#, fuzzy
 msgid "&Modify..."
-msgstr "&Zmeniť"
+msgstr "&Zmeniť..."
 
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
-#, fuzzy
 msgid "&Remove"
 msgstr "&Odstrániť"
 
 #: appwiz.rc:72
-#, fuzzy
 msgid "Support Information"
-msgstr "Informácie"
+msgstr "Informácie o podpore"
 
 #: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:226 comdlg32.rc:256
 #: comdlg32.rc:299 comdlg32.rc:353 comdlg32.rc:392 comdlg32.rc:446
@@ -85,36 +82,33 @@ msgstr ""
 
 #: appwiz.rc:77
 msgid "Publisher:"
-msgstr "Vydavateľ"
+msgstr "Vydavateľ:"
 
 #: appwiz.rc:78 winefile.rc:168
 msgid "Version:"
-msgstr "Verzia"
+msgstr "Verzia:"
 
 #: appwiz.rc:79
 msgid "Contact:"
-msgstr "Kontakt"
+msgstr "Kontakt:"
 
 #: appwiz.rc:80
-#, fuzzy
 msgid "Support Information:"
-msgstr "Informácie"
+msgstr "Informácie o podpore:"
 
 #: appwiz.rc:81
 msgid "Support Telephone:"
-msgstr "Telefonická podpora"
+msgstr "Telefonická podpora:"
 
 #: appwiz.rc:82
-#, fuzzy
 msgid "Readme:"
 msgstr "Čítaj ma"
 
 #: appwiz.rc:83
 msgid "Product Updates:"
-msgstr "Aktualizácie produktu"
+msgstr "Aktualizácie produktu:"
 
 #: appwiz.rc:84
-#, fuzzy
 msgid "Comments:"
 msgstr "Komentáre:"
 
@@ -141,9 +135,8 @@ msgstr ""
 "bližšie informácie."
 
 #: appwiz.rc:106
-#, fuzzy
 msgid "&Install"
-msgstr "&Inštalovať..."
+msgstr "&Inštalovať"
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
 #: comdlg32.rc:165 comdlg32.rc:187 comdlg32.rc:205 comdlg32.rc:227
@@ -174,6 +167,8 @@ msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
+"Umožňuje Vám inštaláciu nových programov alebo odstránenie starých z Vášho "
+"počítača."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
@@ -184,11 +179,12 @@ msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
+"Nepodarilo sa spustiť odinštalátor, '%s'. Prajete si zmazať odinštalačný "
+"záznam pre tento program z registrov?"
 
 #: appwiz.rc:33
-#, fuzzy
 msgid "Not specified"
-msgstr "Nebol špecifikovaný žiadny príkaz."
+msgstr "Nešpecifikovaný"
 
 #: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:106
 msgid "Name"
@@ -204,7 +200,7 @@ msgstr "Verzia"
 
 #: appwiz.rc:38
 msgid "Installation programs"
-msgstr ""
+msgstr "Inštalačné programy"
 
 #: appwiz.rc:39
 msgid "Programs (*.exe)"
@@ -216,7 +212,6 @@ msgid "All files (*.*)"
 msgstr "Všetky súbory (*.*)"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
 msgstr "&Upraviť/Odstrániť"
 
@@ -233,6 +228,8 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
+"Neočakávaný kontrolný súčet sťahovaného súboru. Prerušená inštalácia "
+"poškodeného súboru."
 
 #: avifil32.rc:39
 msgid "Compress options"
@@ -248,24 +245,23 @@ msgstr "&NMožnosti..."
 
 #: avifil32.rc:46
 msgid "&Interleave every"
-msgstr ""
+msgstr "&Prekladať každých"
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
 msgstr "snímkov"
 
 #: avifil32.rc:49
-#, fuzzy
 msgid "Current format:"
 msgstr "Aktuálny formát"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
-msgstr ""
+msgstr "Priebeh: %s"
 
 #: avifil32.rc:28
 msgid "Waveform"
-msgstr ""
+msgstr "Priebeh"
 
 #: avifil32.rc:29
 msgid "All multimedia files"
@@ -285,7 +281,7 @@ msgstr ""
 
 #: avifil32.rc:34
 msgid "uncompressed"
-msgstr ""
+msgstr "nekomprimované"
 
 #: browseui.rc:25
 msgid "Canceling..."
@@ -371,7 +367,6 @@ msgid "Separator"
 msgstr "Oddeľovač"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
 msgstr "Žiadne"
@@ -473,7 +468,7 @@ msgstr "Kondenzované"
 
 #: comdlg32.rc:218 comdlg32.rc:389
 msgid "Print Setup"
-msgstr "Nastavenie spôsobu tlače"
+msgstr "Nastavenie tlače"
 
 #: comdlg32.rc:221 comdlg32.rc:357 comdlg32.rc:396
 msgid "Printer"
@@ -553,7 +548,7 @@ msgstr "Vzorka"
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
-msgstr ""
+msgstr "Pí&smo:"
 
 #: comdlg32.rc:276
 msgid "Color"
@@ -588,13 +583,11 @@ msgid "&Hue:"
 msgstr "Od&tieň:"
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Sýtosť:"
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Jas:"
@@ -613,7 +606,7 @@ msgstr "Hľadanie"
 
 #: comdlg32.rc:313 comdlg32.rc:332
 msgid "Fi&nd What:"
-msgstr "&Nájsť:"
+msgstr "&Nájsť čo:"
 
 #: comdlg32.rc:315 comdlg32.rc:336
 msgid "Match &Whole Word Only"
@@ -657,7 +650,7 @@ msgstr "Zameniť vo vý&bere"
 
 #: comdlg32.rc:358
 msgid "Print to fi&le"
-msgstr "tlačiť do &súboru"
+msgstr "Tlačiť do &súboru"
 
 #: comdlg32.rc:359 comdlg32.rc:397 ieframe.rc:39 shdoclc.rc:58 shell32.rc:105
 #: clock.rc:28 wineconsole.rc:27
@@ -694,7 +687,7 @@ msgstr "Počet &kópií:"
 
 #: comdlg32.rc:374
 msgid "C&ollate"
-msgstr ""
+msgstr "Z&oradiť"
 
 #: comdlg32.rc:379
 msgid "Pa&ges"
@@ -730,7 +723,7 @@ msgstr "Na ší&rku"
 
 #: comdlg32.rc:423
 msgid "Setup Page"
-msgstr ""
+msgstr "Nastav stranu"
 
 #: comdlg32.rc:432
 msgid "&Tray:"
@@ -742,27 +735,27 @@ msgstr "Na výš&ku"
 
 #: comdlg32.rc:437
 msgid "Borders"
-msgstr ""
+msgstr "Ohraničenia"
 
 #: comdlg32.rc:438
 msgid "L&eft:"
-msgstr ""
+msgstr "Ľ&avé:"
 
 #: comdlg32.rc:440 notepad.rc:109
 msgid "&Right:"
-msgstr ""
+msgstr "&Pravé:"
 
 #: comdlg32.rc:442
 msgid "T&op:"
-msgstr ""
+msgstr "H&orné:"
 
 #: comdlg32.rc:444 notepad.rc:111
 msgid "&Bottom:"
-msgstr ""
+msgstr "&Spodné:"
 
 #: comdlg32.rc:448
 msgid "P&rinter..."
-msgstr ""
+msgstr "T&lačiareň..."
 
 #: comdlg32.rc:456
 msgid "Look &in:"
@@ -774,7 +767,7 @@ msgstr "&Názov súboru:"
 
 #: comdlg32.rc:465
 msgid "Files of &type:"
-msgstr "&Typ súborov:"
+msgstr "&Súbory typu:"
 
 #: comdlg32.rc:468
 msgid "Open as &read-only"
@@ -785,14 +778,12 @@ msgid "&Open"
 msgstr "&Otvoriť"
 
 #: comdlg32.rc:481
-#, fuzzy
 msgid "File name:"
-msgstr "&Súbor"
+msgstr "Súbor:"
 
 #: comdlg32.rc:484
-#, fuzzy
 msgid "Files of type:"
-msgstr "&Typ súborov"
+msgstr "Súbory typu:"
 
 #: comdlg32.rc:29
 msgid "File not found"
@@ -800,23 +791,27 @@ msgstr "Súbor nenájdený"
 
 #: comdlg32.rc:30
 msgid "Please verify that the correct file name was given"
-msgstr ""
+msgstr "Prosím overte si, že bol zadaný správny názov súboru."
 
 #: comdlg32.rc:31
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
+"Súbor neexistuje.\n"
+"Prajete si ho vytvoriť?"
 
 #: comdlg32.rc:32
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
 msgstr ""
+"Súbor už existuje.\n"
+"Prajete si ho prepísať?"
 
 #: comdlg32.rc:33
 msgid "Invalid character(s) in path"
-msgstr ""
+msgstr "Nepovolený znak(y) v ceste"
 
 #: comdlg32.rc:34
 msgid ""
@@ -856,7 +851,7 @@ msgstr "Listovať pracovnú plochu"
 
 #: comdlg32.rc:109
 msgid "Regular"
-msgstr ""
+msgstr "Normálne"
 
 #: comdlg32.rc:110
 msgid "Bold"
@@ -876,7 +871,7 @@ msgstr "Čierna"
 
 #: comdlg32.rc:118 wordpad.rc:115
 msgid "Maroon"
-msgstr ""
+msgstr "Gaštanová"
 
 #: comdlg32.rc:119 wordpad.rc:116
 msgid "Green"
@@ -888,11 +883,11 @@ msgstr "Olivová"
 
 #: comdlg32.rc:121 wordpad.rc:118
 msgid "Navy"
-msgstr "Navy"
+msgstr "Tmavomodrá"
 
 #: comdlg32.rc:122 wordpad.rc:119
 msgid "Purple"
-msgstr ""
+msgstr "Purpurová"
 
 #: comdlg32.rc:123 wordpad.rc:120
 msgid "Teal"
@@ -912,7 +907,7 @@ msgstr "Červená"
 
 #: comdlg32.rc:127 wordpad.rc:124
 msgid "Lime"
-msgstr ""
+msgstr "Limetková"
 
 #: comdlg32.rc:128 wordpad.rc:125
 msgid "Yellow"
@@ -956,17 +951,19 @@ msgstr ""
 
 #: comdlg32.rc:60
 msgid "The 'Number of copies' field cannot be empty."
-msgstr ""
+msgstr "Pole 'Počet kópií' nemôže byť prázdne."
 
 #: comdlg32.rc:62
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
+"Takéto veľké množstvo kópií nie je podporované Vašou tlačiarňou.\n"
+"Prosím zvoľte si hodnotu medzi 1 a %d."
 
 #: comdlg32.rc:63
 msgid "A printer error occurred."
-msgstr ""
+msgstr "Chyba tlačiarne."
 
 #: comdlg32.rc:64
 msgid "No default printer defined."
@@ -996,7 +993,7 @@ msgstr ""
 
 #: comdlg32.rc:137
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr ""
+msgstr "Zvoľte si veľkosť písma medzi %1!d! a %2!d! bodov."
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
@@ -1004,7 +1001,7 @@ msgstr "&Uložiť"
 
 #: comdlg32.rc:139
 msgid "Save &in:"
-msgstr ""
+msgstr "Uložiť &do:"
 
 #: comdlg32.rc:140
 msgid "Save"
@@ -1028,7 +1025,7 @@ msgstr "Chyba; "
 
 #: comdlg32.rc:82
 msgid "Pending deletion; "
-msgstr ""
+msgstr "Čaká na odstránenie;"
 
 #: comdlg32.rc:83
 msgid "Paper jam; "
@@ -1064,7 +1061,7 @@ msgstr "Prebieha tlač; "
 
 #: comdlg32.rc:91
 msgid "Output tray is full; "
-msgstr ""
+msgstr "Výstupný zásobník je plný; "
 
 #: comdlg32.rc:92
 msgid "Not available; "
@@ -1124,7 +1121,7 @@ msgstr "Implicitná tlačiareň; "
 
 #: comdlg32.rc:74
 msgid "There are %d documents in the queue"
-msgstr ""
+msgstr "Momentálne je %d dokumentov vo fronte"
 
 #: comdlg32.rc:75
 msgid "Margins [inches]"
@@ -1135,13 +1132,11 @@ msgid "Margins [mm]"
 msgstr "Okraje [mm]"
 
 #: comdlg32.rc:77 sane.rc:33
-#, fuzzy
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
 #: credui.rc:42
-#, fuzzy
 msgid "&User name:"
 msgstr "&Užívateľské meno:"
 
@@ -1180,6 +1175,10 @@ msgid ""
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
 msgstr ""
+"Zapnutý Caps Lock môže spôsobiť že zadáte zlé heslo.\n"
+"\n"
+"Stlačte Caps Lock klávesu na klávesnici pre vypnutie Caps Locku pred\n"
+"zadaním Vášho hesla."
 
 #: credui.rc:31
 msgid "Caps Lock is On"
@@ -1191,15 +1190,15 @@ msgstr ""
 
 #: crypt32.rc:28
 msgid "Key Attributes"
-msgstr ""
+msgstr "Atribúty kľúča"
 
 #: crypt32.rc:29
 msgid "Key Usage Restriction"
-msgstr ""
+msgstr "Obmedzenie použitia kľúča"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr ""
+msgstr "Alternatívny názov predmetu"
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
@@ -1207,15 +1206,15 @@ msgstr ""
 
 #: crypt32.rc:32
 msgid "Basic Constraints"
-msgstr ""
+msgstr "Základné obmedzenie"
 
 #: crypt32.rc:33
 msgid "Key Usage"
-msgstr ""
+msgstr "Použitie kľúča"
 
 #: crypt32.rc:34
 msgid "Certificate Policies"
-msgstr ""
+msgstr "Politika certifikátu"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
@@ -1231,7 +1230,7 @@ msgstr ""
 
 #: crypt32.rc:38
 msgid "Enhanced Key Usage"
-msgstr ""
+msgstr "Použitie rozšíreného kľúča"
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
@@ -1239,7 +1238,7 @@ msgstr ""
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
-msgstr ""
+msgstr "Rozšírenia certifikátu"
 
 #: crypt32.rc:41
 msgid "Next Update Location"
@@ -1251,19 +1250,19 @@ msgstr ""
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr ""
+msgstr "Email adresa"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
-msgstr ""
+msgstr "Neštruktúrované meno"
 
 #: crypt32.rc:45
 msgid "Content Type"
-msgstr ""
+msgstr "Typ obsahu"
 
 #: crypt32.rc:46
 msgid "Message Digest"
-msgstr ""
+msgstr "Skrátená správa"
 
 #: crypt32.rc:47
 msgid "Signing Time"
@@ -1279,7 +1278,7 @@ msgstr ""
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
-msgstr ""
+msgstr "Neštruktúrovaná adresa"
 
 #: crypt32.rc:51
 msgid "S/MIME Capabilities"
@@ -1287,12 +1286,12 @@ msgstr ""
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
-msgstr ""
+msgstr "Upredňostňuj podpísané dáta"
 
 #: crypt32.rc:53 cryptdlg.rc:31
 msgctxt "Certification Practice Statement"
 msgid "CPS"
-msgstr ""
+msgstr "CPS"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
@@ -1372,23 +1371,23 @@ msgstr ""
 
 #: crypt32.rc:73
 msgid "State or Province"
-msgstr ""
+msgstr "Štát alebo oblasť"
 
 #: crypt32.rc:74
 msgid "Title"
-msgstr ""
+msgstr "Titul"
 
 #: crypt32.rc:75
 msgid "Given Name"
-msgstr ""
+msgstr "Krstné meno"
 
 #: crypt32.rc:76
 msgid "Initials"
-msgstr ""
+msgstr "Iniciálky"
 
 #: crypt32.rc:77
 msgid "Surname"
-msgstr ""
+msgstr "Priezvisko"
 
 #: crypt32.rc:78
 msgid "Domain Component"
@@ -1396,7 +1395,7 @@ msgstr ""
 
 #: crypt32.rc:79
 msgid "Street Address"
-msgstr ""
+msgstr "Ulica"
 
 #: crypt32.rc:80
 msgid "Serial Number"
@@ -1428,7 +1427,7 @@ msgstr ""
 
 #: crypt32.rc:87
 msgid "OS Version"
-msgstr ""
+msgstr "Verzia OS"
 
 #: crypt32.rc:88
 msgid "Enrollment CSP"
@@ -1691,7 +1690,6 @@ msgid "Smart Card Logon"
 msgstr ""
 
 #: crypt32.rc:153 cryptui.rc:139
-#, fuzzy
 msgid "Digital Rights"
 msgstr "Digi&tálne práva"
 
@@ -1753,7 +1751,7 @@ msgstr ""
 
 #: crypt32.rc:172
 msgid "Other People"
-msgstr ""
+msgstr "Ostatný ludia"
 
 #: crypt32.rc:173
 msgid "Trusted Publishers"
@@ -1829,14 +1827,13 @@ msgid "Path Length Constraint="
 msgstr ""
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "path length"
 msgid "None"
 msgstr "Žiadne"
 
 #: crypt32.rc:196
 msgid "Information Not Available"
-msgstr ""
+msgstr "Informácie nedostupné"
 
 #: crypt32.rc:197
 msgid "Authority Info Access"
@@ -1873,7 +1870,7 @@ msgstr ""
 
 #: crypt32.rc:205
 msgid "Full Name"
-msgstr ""
+msgstr "Celé meno"
 
 #: crypt32.rc:206
 msgid "RDN Name"
@@ -2044,7 +2041,6 @@ msgid "General"
 msgstr ""
 
 #: cryptui.rc:188
-#, fuzzy
 msgid "&Install Certificate..."
 msgstr "&Nainštaluj certifikát..."
 
@@ -2057,81 +2053,68 @@ msgid "&Show:"
 msgstr "&Ukáž:"
 
 #: cryptui.rc:202
-#, fuzzy
 msgid "&Edit Properties..."
-msgstr ""
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Vlastnosti\n"
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Properties"
+msgstr "&Uprav vlastnosti..."
 
 #: cryptui.rc:203
-#, fuzzy
 msgid "&Copy to File..."
-msgstr "Kopírovanie súborov..."
+msgstr "&Kopírovanie súborov..."
 
 #: cryptui.rc:207
-#, fuzzy
 msgid "Certification Path"
 msgstr "Cesta k certifikátu"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
 msgstr "Cesta k certifikátu"
 
 #: cryptui.rc:214
-#, fuzzy
 msgid "&View Certificate"
 msgstr "&Ukáž certifikát"
 
 #: cryptui.rc:215
-#, fuzzy
 msgid "Certificate &status:"
 msgstr "Stav &certifikátu:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
-msgstr ""
+msgstr "Odvolanie"
 
 #: cryptui.rc:228
 msgid "More &Info"
-msgstr ""
+msgstr "Viac &informácií"
 
 #: cryptui.rc:236
-#, fuzzy
 msgid "&Friendly name:"
-msgstr "&Priateľné meno"
+msgstr "&Popisný názov"
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
 msgstr "&Popis:"
 
 #: cryptui.rc:240
-#, fuzzy
 msgid "Certificate purposes"
 msgstr "Účel certifikátu"
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
-msgstr ""
+msgstr "&Povoľ všetky účely pre tento certifikát"
 
 #: cryptui.rc:243
 msgid "D&isable all purposes for this certificate"
-msgstr ""
+msgstr "&Zakáž všetky účely pre tento certifikát"
 
 #: cryptui.rc:245
 msgid "Enable &only the following purposes for this certificate:"
-msgstr ""
+msgstr "Povoľ &len nasledujúce účely pre tento certifikát:"
 
 #: cryptui.rc:250
-#, fuzzy
 msgid "Add &Purpose..."
 msgstr "Pridaj &účel..."
 
 #: cryptui.rc:254
 msgid "Add Purpose"
-msgstr ""
+msgstr "Pridaj účel"
 
 #: cryptui.rc:257
 msgid ""
@@ -2172,13 +2155,12 @@ msgid ""
 msgstr ""
 
 #: cryptui.rc:291 cryptui.rc:427
-#, fuzzy
 msgid "&File name:"
 msgstr "&Súbor:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "Prechádzaj..."
+msgstr "P&rechádzaj..."
 
 #: cryptui.rc:294
 msgid ""
@@ -2226,14 +2208,13 @@ msgstr ""
 
 #: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
-msgstr ""
+msgstr "Certifikáty"
 
 #: cryptui.rc:337
 msgid "I&ntended purpose:"
 msgstr ""
 
 #: cryptui.rc:341
-#, fuzzy
 msgid "&Import..."
 msgstr "&Importovať..."
 
@@ -2253,10 +2234,9 @@ msgstr ""
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
 #: wordpad.rc:66
 msgid "&View"
-msgstr ""
+msgstr "&Ukáž"
 
 #: cryptui.rc:352
-#, fuzzy
 msgid "Advanced Options"
 msgstr "Pokročilé možnosti"
 
@@ -2363,10 +2343,9 @@ msgstr ""
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
-msgstr ""
+msgstr "Certifikát"
 
 #: cryptui.rc:28
-#, fuzzy
 msgid "Certificate Information"
 msgstr "Informácie o certifikáte"
 
@@ -2436,7 +2415,7 @@ msgstr ""
 
 #: cryptui.rc:44
 msgid "Field"
-msgstr ""
+msgstr "Pole"
 
 #: cryptui.rc:45
 msgid "Value"
@@ -2488,7 +2467,7 @@ msgstr "Verejný kľúč"
 
 #: cryptui.rc:58
 msgid "%1 (%2!d! bits)"
-msgstr ""
+msgstr "%1 (%2!d! bitov)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -2500,14 +2479,13 @@ msgstr ""
 
 #: cryptui.rc:61
 msgid "Friendly name"
-msgstr ""
+msgstr "Popisný názov"
 
 #: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
 msgstr "Popis"
 
 #: cryptui.rc:63
-#, fuzzy
 msgid "Certificate Properties"
 msgstr "Vlastnosti certifikátu"
 
@@ -2580,7 +2558,6 @@ msgid "The file format is not recognized. Please select another file."
 msgstr ""
 
 #: cryptui.rc:83
-#, fuzzy
 msgid "Could not open "
 msgstr "Nemôžem otvoriť"
 
@@ -2650,10 +2627,9 @@ msgstr ""
 
 #: cryptui.rc:104
 msgid "Friendly Name"
-msgstr ""
+msgstr "Popisný názov"
 
 #: cryptui.rc:106 cryptui.rc:120
-#, fuzzy
 msgid "<None>"
 msgstr "<Žiadne>"
 
@@ -2878,24 +2854,22 @@ msgid "Default MidiOut Device"
 msgstr ""
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "Nastaviť zariadenia..."
+msgstr "Nastaviť zariadenia"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Vynulovať"
 
 #: dinput.rc:48
 msgid "Player"
-msgstr ""
+msgstr "Prehrávač"
 
 #: dinput.rc:49
 msgid "Device"
 msgstr "Zariadenie"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
 msgstr "Akcie"
 
@@ -2908,7 +2882,6 @@ msgid "Show Assigned First"
 msgstr ""
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
 msgstr "Akcia"
 
@@ -2926,7 +2899,7 @@ msgstr ""
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr "Western"
+msgstr "Západné"
 
 #: gdi32.rc:26
 msgid "Central European"
@@ -2934,7 +2907,7 @@ msgstr "Stredná Európa"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr "Cyrilica"
+msgstr "Cyrilika"
 
 #: gdi32.rc:28
 msgid "Greek"
@@ -2993,7 +2966,6 @@ msgid "OEM/DOS"
 msgstr ""
 
 #: gphoto2.rc:27
-#, fuzzy
 msgid "Files on Camera"
 msgstr "Súbory na fotoaparáte"
 
@@ -3002,7 +2974,6 @@ msgid "Import Selected"
 msgstr "Importuj zvolené"
 
 #: gphoto2.rc:32
-#, fuzzy
 msgid "Preview"
 msgstr "Náhľad"
 
@@ -3036,7 +3007,7 @@ msgstr "Pripájam sa k fotoaparátu... Prosím počkajte"
 
 #: hhctrl.rc:56
 msgid "S&ync"
-msgstr ""
+msgstr "S&ynchronizácia"
 
 #: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
@@ -3060,9 +3031,8 @@ msgid "&Refresh"
 msgstr "&Obnoviť"
 
 #: hhctrl.rc:62 winhlp32.rc:31
-#, fuzzy
 msgid "&Print..."
-msgstr "&Tlačiť"
+msgstr "&Tlačiť..."
 
 #: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
@@ -3070,7 +3040,7 @@ msgstr ""
 
 #: hhctrl.rc:29
 msgid "I&ndex"
-msgstr ""
+msgstr "Z&oznam"
 
 #: hhctrl.rc:30 notepad.rc:52
 msgid "&Search"
@@ -3115,7 +3085,7 @@ msgstr "Domov"
 
 #: hhctrl.rc:45
 msgid "Sync"
-msgstr ""
+msgstr "Synchronizovať"
 
 #: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
@@ -3144,7 +3114,6 @@ msgid "&Window"
 msgstr "&Okno"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
-#, fuzzy
 msgid "&Open..."
 msgstr "&Otvoriť..."
 
@@ -3153,23 +3122,20 @@ msgid "Save &as..."
 msgstr "Uložiť &ako..."
 
 #: ieframe.rc:35
-#, fuzzy
 msgid "Print &format..."
-msgstr "&Tlačiť"
+msgstr "&Tlačiť..."
 
 #: ieframe.rc:36
-#, fuzzy
 msgid "Pr&int..."
 msgstr "&Tlačiť"
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
 msgstr "&Tlačiť náhľad"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
-msgstr ""
+msgstr "&Panely nástrojov"
 
 #: ieframe.rc:46
 msgid "&Standard bar"
@@ -3192,18 +3158,16 @@ msgid "&About Internet Explorer"
 msgstr "&O aplikácii Internet Explorer"
 
 #: ieframe.rc:87
-#, fuzzy
 msgid "Open URL"
 msgstr "Otvoriť URL"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr ""
+msgstr "Zadajte adresu URL, ktorú si prajete otvoriť v Internet Explorer"
 
 #: ieframe.rc:91
-#, fuzzy
 msgid "Open:"
-msgstr "&Otvoriť"
+msgstr "Otvoriť:"
 
 #: ieframe.rc:67
 msgctxt "home page"
@@ -3211,22 +3175,16 @@ msgid "Home"
 msgstr "Domov"
 
 #: ieframe.rc:68 winhlp32.rc:66
-#, fuzzy
 msgid "Print..."
-msgstr "&Tlačiť"
+msgstr "Tlačiť..."
 
 #: ieframe.rc:73
 msgid "Address"
 msgstr "Adresa"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr ""
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Vlastnosti\n"
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Properties"
+msgstr "Hľadanie %s"
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
@@ -3258,7 +3216,6 @@ msgid "&Current page"
 msgstr "&Aktuálna stránka"
 
 #: inetcpl.rc:51
-#, fuzzy
 msgid "&Default page"
 msgstr "&Predvolená stránka"
 
@@ -3291,6 +3248,8 @@ msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
+"Dočasné internetové súbory\n"
+"Uložené kópie webových stránok, obrázkov a certifikátov."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3304,6 +3263,8 @@ msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"História\n"
+"Zoznam stránok ktoré ste navštívili."
 
 #: inetcpl.rc:74
 msgid ""
@@ -3332,9 +3293,8 @@ msgid ""
 msgstr ""
 
 #: inetcpl.rc:111
-#, fuzzy
 msgid "Certificates..."
-msgstr "Certifikáty"
+msgstr "Certifikáty..."
 
 #: inetcpl.rc:112
 msgid "Publishers..."
@@ -3441,7 +3401,6 @@ msgid "Label redefined"
 msgstr ""
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
 msgstr "Pole nenájdené"
 
@@ -3511,19 +3470,17 @@ msgstr ""
 
 #: winerror.mc:26
 msgid "Success.\n"
-msgstr ""
+msgstr "Úspech.\n"
 
 #: winerror.mc:31
 msgid "Invalid function.\n"
-msgstr ""
+msgstr "Nesprávna funkcia.\n"
 
 #: winerror.mc:36
-#, fuzzy
 msgid "File not found.\n"
 msgstr "Súbor nenájdený.\n"
 
 #: winerror.mc:41
-#, fuzzy
 msgid "Path not found.\n"
 msgstr "Cesta nenájdená.\n"
 
@@ -3544,7 +3501,6 @@ msgid "Memory trashed.\n"
 msgstr ""
 
 #: winerror.mc:66
-#, fuzzy
 msgid "Not enough memory.\n"
 msgstr "Nedostatok pamäte.\n"
 
@@ -3562,24 +3518,23 @@ msgstr "Zlý formát.\n"
 
 #: winerror.mc:86
 msgid "Invalid access.\n"
-msgstr ""
+msgstr "Nesprávny prístup.\n"
 
 #: winerror.mc:91
 msgid "Invalid data.\n"
-msgstr ""
+msgstr "Nesprávne údaje.\n"
 
 #: winerror.mc:96
-#, fuzzy
 msgid "Out of memory.\n"
 msgstr "Nedostatok pamäte.\n"
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
-msgstr ""
+msgstr "Nesprávne zariadenie.\n"
 
 #: winerror.mc:106
 msgid "Can't delete current directory.\n"
-msgstr ""
+msgstr "Nemôžem zmazať aktuálny priečinok.\n"
 
 #: winerror.mc:111
 msgid "Not same device.\n"
@@ -3591,7 +3546,7 @@ msgstr ""
 
 #: winerror.mc:121
 msgid "Write protected.\n"
-msgstr ""
+msgstr "Ochrana proti zápisu.\n"
 
 #: winerror.mc:126
 msgid "Bad unit.\n"
@@ -3599,7 +3554,7 @@ msgstr ""
 
 #: winerror.mc:131
 msgid "Not ready.\n"
-msgstr ""
+msgstr "Nepripravené.\n"
 
 #: winerror.mc:136
 msgid "Bad command.\n"
@@ -3611,7 +3566,7 @@ msgstr ""
 
 #: winerror.mc:146
 msgid "Bad length.\n"
-msgstr ""
+msgstr "Zlá dĺžka.\n"
 
 #: winerror.mc:151 winerror.mc:526
 msgid "Seek error.\n"
@@ -3622,26 +3577,24 @@ msgid "Not DOS disk.\n"
 msgstr ""
 
 #: winerror.mc:161
-#, fuzzy
 msgid "Sector not found.\n"
 msgstr "Sektor nenájdený.\n"
 
 #: winerror.mc:166
-#, fuzzy
 msgid "Out of paper.\n"
 msgstr "Chýba papier; .\n"
 
 #: winerror.mc:171
 msgid "Write fault.\n"
-msgstr ""
+msgstr "Chyba zapisovania.\n"
 
 #: winerror.mc:176
 msgid "Read fault.\n"
-msgstr ""
+msgstr "Chyba čítania.\n"
 
 #: winerror.mc:181
 msgid "General failure.\n"
-msgstr ""
+msgstr "Všeobecná chyba.\n"
 
 #: winerror.mc:186
 msgid "Sharing violation.\n"
@@ -3661,7 +3614,7 @@ msgstr ""
 
 #: winerror.mc:206
 msgid "End of file.\n"
-msgstr ""
+msgstr "Koniec súboru.\n"
 
 #: winerror.mc:211 winerror.mc:436
 msgid "Disk full.\n"
@@ -3681,16 +3634,15 @@ msgstr ""
 
 #: winerror.mc:231
 msgid "Bad network path.\n"
-msgstr ""
+msgstr "Zlá sieťová cesta.\n"
 
 #: winerror.mc:236
 msgid "Network busy.\n"
-msgstr ""
+msgstr "Sieť zaneprázdnená.\n"
 
 #: winerror.mc:241
-#, fuzzy
 msgid "Device does not exist.\n"
-msgstr "Súbor neexistuje.\n"
+msgstr "Zariadenie neexistuje.\n"
 
 #: winerror.mc:246
 msgid "Too many commands.\n"
@@ -3702,12 +3654,11 @@ msgstr ""
 
 #: winerror.mc:256
 msgid "Bad network response.\n"
-msgstr ""
+msgstr "Zlá odpoveď siete.\n"
 
 #: winerror.mc:261
-#, fuzzy
 msgid "Unexpected network error.\n"
-msgstr "Nedefinovaná sieťová chyba."
+msgstr "Neočakávaná sieťová chyba.\n"
 
 #: winerror.mc:266
 msgid "Bad remote adaptor.\n"
@@ -3715,7 +3666,7 @@ msgstr ""
 
 #: winerror.mc:271
 msgid "Print queue full.\n"
-msgstr ""
+msgstr "Fronta na tlač je plná.\n"
 
 #: winerror.mc:276
 msgid "No spool space.\n"
@@ -3723,11 +3674,11 @@ msgstr ""
 
 #: winerror.mc:281
 msgid "Print canceled.\n"
-msgstr ""
+msgstr "Tlač zrušená.\n"
 
 #: winerror.mc:286
 msgid "Network name deleted.\n"
-msgstr ""
+msgstr "Sieťové meno odstránené.\n"
 
 #: winerror.mc:291
 msgid "Network access denied.\n"
@@ -3735,11 +3686,11 @@ msgstr ""
 
 #: winerror.mc:296
 msgid "Bad device type.\n"
-msgstr ""
+msgstr "Zlý druh zariadenia.\n"
 
 #: winerror.mc:301
 msgid "Bad network name.\n"
-msgstr ""
+msgstr "Zlé sieťové meno.\n"
 
 #: winerror.mc:306
 msgid "Too many network names.\n"
@@ -3762,13 +3713,12 @@ msgid "Redirector paused.\n"
 msgstr ""
 
 #: winerror.mc:331
-#, fuzzy
 msgid "File exists.\n"
-msgstr "Súbor neexistuje.\n"
+msgstr "Súbor existuje.\n"
 
 #: winerror.mc:336
 msgid "Cannot create.\n"
-msgstr ""
+msgstr "Nemožno vytvoriť.\n"
 
 #: winerror.mc:341
 msgid "Int24 failure.\n"
@@ -3784,11 +3734,11 @@ msgstr ""
 
 #: winerror.mc:356 winerror.mc:1711
 msgid "Invalid password.\n"
-msgstr ""
+msgstr "Nesprávne heslo.\n"
 
 #: winerror.mc:361
 msgid "Invalid parameter.\n"
-msgstr ""
+msgstr "Nesprávny parameter.\n"
 
 #: winerror.mc:366
 msgid "Net write fault.\n"
@@ -3839,13 +3789,12 @@ msgid "Broken pipe.\n"
 msgstr ""
 
 #: winerror.mc:426
-#, fuzzy
 msgid "Open failed.\n"
-msgstr "Otvoriť súbor.\n"
+msgstr "Otvorenie sa nepodarilo.\n"
 
 #: winerror.mc:431
 msgid "Buffer overflow.\n"
-msgstr ""
+msgstr "Pretečenie zásobníka.\n"
 
 #: winerror.mc:441
 msgid "No more search handles.\n"
@@ -3868,9 +3817,8 @@ msgid "Bad driver level.\n"
 msgstr ""
 
 #: winerror.mc:466
-#, fuzzy
 msgid "Call not implemented.\n"
-msgstr "Neimplementované.\n"
+msgstr "Volanie neimplementované.\n"
 
 #: winerror.mc:471
 msgid "Semaphore timeout.\n"
@@ -3883,7 +3831,7 @@ msgstr "Digi&tálne.\n"
 
 #: winerror.mc:481
 msgid "Invalid name.\n"
-msgstr ""
+msgstr "Nesprávny názov.\n"
 
 #: winerror.mc:486
 msgid "Invalid level.\n"
@@ -3894,9 +3842,8 @@ msgid "No volume label.\n"
 msgstr ""
 
 #: winerror.mc:496
-#, fuzzy
 msgid "Module not found.\n"
-msgstr "Súbor nenájdený.\n"
+msgstr "Modul nenájdený.\n"
 
 #: winerror.mc:501
 #, fuzzy
@@ -3957,7 +3904,7 @@ msgstr ""
 
 #: winerror.mc:576
 msgid "Drive is busy.\n"
-msgstr ""
+msgstr "Zariadenei je zaneprázdnené.\n"
 
 #: winerror.mc:581
 msgid "Same drive.\n"
@@ -4049,7 +3996,7 @@ msgstr ""
 
 #: winerror.mc:691
 msgid "Resource in use.\n"
-msgstr ""
+msgstr "Zdroj sa používa.\n"
 
 #: winerror.mc:696
 #, fuzzy
@@ -4069,9 +4016,8 @@ msgid "Invalid ordinal for %1.\n"
 msgstr ""
 
 #: winerror.mc:716
-#, fuzzy
 msgid "File already exists.\n"
-msgstr "Súbor neexistuje.\n"
+msgstr "Súbor už existuje.\n"
 
 #: winerror.mc:721
 msgid "Invalid flag number.\n"
@@ -4175,7 +4121,7 @@ msgstr ""
 
 #: winerror.mc:846
 msgid "Too many modules.\n"
-msgstr ""
+msgstr "Príliš veľa modulov.\n"
 
 #: winerror.mc:851
 msgid "Nesting LoadModule calls not allowed.\n"
@@ -4716,9 +4662,8 @@ msgid "DDE failure.\n"
 msgstr ""
 
 #: winerror.mc:1511
-#, fuzzy
 msgid "DLL not found.\n"
-msgstr "Súbor nenájdený.\n"
+msgstr "DLL nenájdené.\n"
 
 #: winerror.mc:1516
 #, fuzzy
@@ -4755,14 +4700,12 @@ msgid "The device requires cleaning.\n"
 msgstr "Ovládač zariadenia nie je pripravený."
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open.\n"
-msgstr "Dvierka tlačiarne sú otvorené; .\n"
+msgstr "Dvierka zariadenia sú otvorené; .\n"
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected.\n"
-msgstr "Súbor nenájdený.\n"
+msgstr "Zariadenie je nepripojené.\n"
 
 #: winerror.mc:1566
 #, fuzzy
@@ -4825,9 +4768,8 @@ msgid "Invalid device name.\n"
 msgstr ""
 
 #: winerror.mc:1636
-#, fuzzy
 msgid "Connection unavailable.\n"
-msgstr "Nie je k dispozícii; .\n"
+msgstr "Pripojenie nedostupné.\n"
 
 #: winerror.mc:1641
 msgid "Device already remembered.\n"
@@ -4910,9 +4852,8 @@ msgid "No network.\n"
 msgstr ""
 
 #: winerror.mc:1746
-#, fuzzy
 msgid "Operation canceled by user.\n"
-msgstr "Prerušenie užívateľom; .\n"
+msgstr "Operácia prerušená užívateľom.\n"
 
 #: winerror.mc:1751
 msgid "File has a user-mapped section.\n"
@@ -4940,11 +4881,11 @@ msgstr ""
 
 #: winerror.mc:1781
 msgid "Connection is active.\n"
-msgstr ""
+msgstr "Pripojenie je aktícne.\n"
 
 #: winerror.mc:1786
 msgid "Network unreachable.\n"
-msgstr ""
+msgstr "Sieť nedosiahnuteľná.\n"
 
 #: winerror.mc:1791
 msgid "Host unreachable.\n"
@@ -4991,9 +4932,8 @@ msgid "Service already registered.\n"
 msgstr ""
 
 #: winerror.mc:1846
-#, fuzzy
 msgid "Service not found.\n"
-msgstr "Súbor nenájdený.\n"
+msgstr "Služba nenájdená.\n"
 
 #: winerror.mc:1851
 msgid "User not authenticated.\n"
@@ -5108,35 +5048,35 @@ msgstr ""
 
 #: winerror.mc:1986
 msgid "User already exists.\n"
-msgstr ""
+msgstr "Užívateľ už existuje.\n"
 
 #: winerror.mc:1991
 msgid "No such user.\n"
-msgstr ""
+msgstr "Neexistujúci užívateľ.\n"
 
 #: winerror.mc:1996
 msgid "Group already exists.\n"
-msgstr ""
+msgstr "Skupina už existuje.\n"
 
 #: winerror.mc:2001
 msgid "No such group.\n"
-msgstr ""
+msgstr "Neexistujúca skupina.\n"
 
 #: winerror.mc:2006
 msgid "User already in group.\n"
-msgstr ""
+msgstr "Užívateľ už je v skupine.\n"
 
 #: winerror.mc:2011
 msgid "User not in group.\n"
-msgstr ""
+msgstr "Užívateľ nie je v skupine.\n"
 
 #: winerror.mc:2016
 msgid "Can't delete last admin user.\n"
-msgstr ""
+msgstr "Nemožno zmazať posledného admin používateľa.\n"
 
 #: winerror.mc:2021
 msgid "Wrong password.\n"
-msgstr ""
+msgstr "Nesprávne heslo.\n"
 
 #: winerror.mc:2026
 msgid "Ill-formed password.\n"
@@ -5164,11 +5104,11 @@ msgstr ""
 
 #: winerror.mc:2056
 msgid "Password expired.\n"
-msgstr ""
+msgstr "Heslo vypršalo.\n"
 
 #: winerror.mc:2061
 msgid "Account disabled.\n"
-msgstr ""
+msgstr "Účet zablokovaný.\n"
 
 #: winerror.mc:2066
 msgid "No security ID mapped.\n"
@@ -5204,11 +5144,11 @@ msgstr ""
 
 #: winerror.mc:2106
 msgid "Server disabled.\n"
-msgstr ""
+msgstr "Server zablokovaný.\n"
 
 #: winerror.mc:2111
 msgid "Server not disabled.\n"
-msgstr ""
+msgstr "Server nezablokovaný.\n"
 
 #: winerror.mc:2116
 msgid "Invalid ID authority.\n"
@@ -5275,9 +5215,8 @@ msgid "Internal database corruption.\n"
 msgstr ""
 
 #: winerror.mc:2196
-#, fuzzy
 msgid "Internal error.\n"
-msgstr "Nedefinovaná externá chyba."
+msgstr "Vnútorná chyba.\n"
 
 #: winerror.mc:2201
 msgid "Generic access types not mapped.\n"
@@ -5662,9 +5601,8 @@ msgid "Exceeded commitment limit.\n"
 msgstr ""
 
 #: winerror.mc:2676
-#, fuzzy
 msgid "Menu item not found.\n"
-msgstr "Súbor nenájdený.\n"
+msgstr "Položka menu nenájdená.\n"
 
 #: winerror.mc:2681
 msgid "Invalid keyboard handle.\n"
@@ -5708,9 +5646,8 @@ msgid "Installer service failed.\n"
 msgstr "Veľkosť k dispozícii.\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user.\n"
-msgstr "Prerušenie užívateľom; .\n"
+msgstr "Prerušenie inštalácie užívateľom.\n"
 
 #: winerror.mc:2736
 msgid "Installation failure.\n"
@@ -5721,9 +5658,8 @@ msgid "Installation suspended.\n"
 msgstr ""
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product.\n"
-msgstr "Neznámy ovládač tlačiarne.\n"
+msgstr "Neznámy produkt.\n"
 
 #: winerror.mc:2751
 #, fuzzy
@@ -5745,9 +5681,8 @@ msgid "Invalid handle state.\n"
 msgstr ""
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration.\n"
-msgstr "Informácie.\n"
+msgstr "Zlé nastavenie.\n"
 
 #: winerror.mc:2776
 msgid "Index is missing.\n"
@@ -5775,7 +5710,7 @@ msgstr ""
 
 #: winerror.mc:2806
 msgid "Device removed.\n"
-msgstr ""
+msgstr "Zariadenie odstránené.\n"
 
 #: winerror.mc:2811
 msgid "Installation already running.\n"
@@ -5828,7 +5763,7 @@ msgstr ""
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type.\n"
-msgstr ""
+msgstr "Nepodporovaný typ.\n"
 
 #: winerror.mc:2876
 #, fuzzy
@@ -5844,9 +5779,8 @@ msgid "Installation platform not supported.\n"
 msgstr ""
 
 #: winerror.mc:2891
-#, fuzzy
 msgid "Installer not used.\n"
-msgstr "Súbor nenájdený.\n"
+msgstr "Inštalátor nepoužitý.\n"
 
 #: winerror.mc:2896
 msgid "Failed to open the patch package.\n"
@@ -5906,7 +5840,7 @@ msgstr ""
 
 #: winerror.mc:2966
 msgid "Invalid network address.\n"
-msgstr ""
+msgstr "Nesprávna sieťová adresa.\n"
 
 #: winerror.mc:2971
 #, fuzzy
@@ -12944,9 +12878,8 @@ msgid "Sort by &Date"
 msgstr ""
 
 #: winefile.rc:56
-#, fuzzy
 msgid "Filter by&..."
-msgstr "&Nastavenie tlače..."
+msgstr "Filtrovať podľa&..."
 
 #: winefile.rc:63
 msgid "&Drivebar"
@@ -12958,7 +12891,7 @@ msgstr ""
 
 #: winefile.rc:73
 msgid "New &Window"
-msgstr ""
+msgstr "Nové &okno"
 
 #: winefile.rc:74
 msgid "Cascading\tCtrl+F5"
@@ -12970,16 +12903,15 @@ msgstr ""
 
 #: winefile.rc:83
 msgid "&About Wine File Manager"
-msgstr ""
+msgstr "&O programe Wine File Manager"
 
 #: winefile.rc:124
 msgid "Select destination"
-msgstr ""
+msgstr "Zvoľte cieľ"
 
 #: winefile.rc:137
-#, fuzzy
 msgid "By File Type"
-msgstr "Typ"
+msgstr "Podľa typu súboru"
 
 #: winefile.rc:142
 #, fuzzy
@@ -12988,73 +12920,63 @@ msgstr "Súbor"
 
 #: winefile.rc:143
 msgid "&Directories"
-msgstr ""
+msgstr "&Priečinky"
 
 #: winefile.rc:145
-#, fuzzy
 msgid "&Programs"
-msgstr ""
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Vlastnosti\n"
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Properties"
+msgstr "&Programy"
 
 #: winefile.rc:147
-#, fuzzy
 msgid "Docu&ments"
-msgstr "Moje dokumenty"
+msgstr "Doku&menty"
 
 #: winefile.rc:149
 msgid "&Other files"
-msgstr ""
+msgstr "&Ostatné súbory"
 
 #: winefile.rc:151
 msgid "Show Hidden/&System Files"
-msgstr ""
+msgstr "Ukáž skryté/&systémové súbory"
 
 #: winefile.rc:162
-#, fuzzy
 msgid "&File Name:"
-msgstr "&Súbor"
+msgstr "&Súbor:"
 
 #: winefile.rc:164
 msgid "Full &Path:"
-msgstr ""
+msgstr "Celá &cesta:"
 
 #: winefile.rc:166
 msgid "Last Change:"
-msgstr ""
+msgstr "Posledná zmena:"
 
 #: winefile.rc:170
 msgid "Cop&yright:"
 msgstr ""
 
 #: winefile.rc:172
-#, fuzzy
 msgid "Size:"
-msgstr "Veľkosť"
+msgstr "Veľkosť:"
 
 #: winefile.rc:176
 msgid "H&idden"
-msgstr ""
+msgstr "S&kryté"
 
 #: winefile.rc:177
 msgid "&Archive"
 msgstr ""
 
 #: winefile.rc:178
-#, fuzzy
 msgid "&System"
-msgstr "Systémová cesta"
+msgstr "&Systém"
 
 #: winefile.rc:179
 msgid "&Compressed"
 msgstr ""
 
 #: winefile.rc:180
-#, fuzzy
 msgid "Version information"
-msgstr "Informácie"
+msgstr "Informácie o verzii"
 
 #: winefile.rc:197
 msgctxt "accelerator Fullscreen"
@@ -13116,93 +13038,93 @@ msgstr ""
 #: winefile.rc:117
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:118
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:119
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "&Hra"
 
 #: winemine.rc:35
 msgid "&New\tF2"
-msgstr ""
+msgstr "&Nová\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "&Otázniky"
 
 #: winemine.rc:39
 msgid "&Beginner"
-msgstr ""
+msgstr "&Začiatočník"
 
 #: winemine.rc:40
 msgid "&Advanced"
-msgstr ""
+msgstr "&Pokročilý"
 
 #: winemine.rc:41
 msgid "&Expert"
-msgstr ""
+msgstr "&Skúsený"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr ""
+msgstr "&Vlastná..."
 
 #: winemine.rc:44
 msgid "&Fastest Times"
-msgstr ""
+msgstr "&Najrýchlejšie časy"
 
 #: winemine.rc:49
 msgid "&About WineMine"
-msgstr ""
+msgstr "&O programe WineMine"
 
 #: winemine.rc:56
 msgid "Fastest Times"
-msgstr ""
+msgstr "Najrýchlejšie časy"
 
 #: winemine.rc:58
 msgid "Fastest times"
-msgstr ""
+msgstr "Najrýchlejšie časy"
 
 #: winemine.rc:59
 msgid "Beginner"
-msgstr ""
+msgstr "Začiatočník"
 
 #: winemine.rc:60
 msgid "Advanced"
-msgstr ""
+msgstr "Pokročilý"
 
 #: winemine.rc:61
 msgid "Expert"
-msgstr ""
+msgstr "Skúsený"
 
 #: winemine.rc:74
 msgid "Congratulations!"
-msgstr ""
+msgstr "Gratulujem!"
 
 #: winemine.rc:76
 msgid "Please enter your name"
-msgstr ""
+msgstr "Prosím vložte svoje meno"
 
 #: winemine.rc:84
 msgid "Custom Game"
-msgstr ""
+msgstr "Vlastná hra"
 
 #: winemine.rc:86
 msgid "Rows"
-msgstr ""
+msgstr "Riadky"
 
 #: winemine.rc:87
 msgid "Columns"
-msgstr ""
+msgstr "Stĺpce"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -13214,7 +13136,7 @@ msgstr ""
 
 #: winemine.rc:28
 msgid "Nobody"
-msgstr ""
+msgstr "Nikto"
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
@@ -13242,15 +13164,15 @@ msgstr "Písma"
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr ""
+msgstr "Malé"
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
-msgstr ""
+msgstr "Normálne"
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr ""
+msgstr "Veľké"
 
 #: winhlp32.rc:54
 msgid "&Help on help\tF1"
@@ -13265,23 +13187,20 @@ msgid "&About Wine Help"
 msgstr ""
 
 #: winhlp32.rc:64
-#, fuzzy
 msgid "Annotation..."
-msgstr "&Skomentovať..."
+msgstr "Anotácia"
 
 #: winhlp32.rc:65
-#, fuzzy
 msgid "Copy"
-msgstr "Kopí&rovať..."
+msgstr "Kopírovať"
 
 #: winhlp32.rc:97
-#, fuzzy
 msgid "Index"
-msgstr "&Obsah"
+msgstr "Obsah"
 
 #: winhlp32.rc:105
 msgid "Search"
-msgstr ""
+msgstr "Hľadať"
 
 #: winhlp32.rc:78
 msgid "Wine Help"
@@ -13317,7 +13236,7 @@ msgstr ""
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
-msgstr ""
+msgstr "&Nový...\tCtrl+N"
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"
@@ -13329,19 +13248,19 @@ msgstr ""
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
-msgstr ""
+msgstr "&Zvoľ všetko\tCtrl+A"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"
-msgstr ""
+msgstr "&Nájdi ďalšie\tF3"
 
 #: wordpad.rc:54
 msgid "Read-&only"
-msgstr ""
+msgstr "Len na &čítanie"
 
 #: wordpad.rc:55
 msgid "&Modified"
-msgstr ""
+msgstr "&Upravené"
 
 #: wordpad.rc:57
 msgid "E&xtras"
@@ -13373,7 +13292,7 @@ msgstr ""
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
-msgstr ""
+msgstr "&Pravítko"
 
 #: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
@@ -13381,11 +13300,11 @@ msgstr ""
 
 #: wordpad.rc:75
 msgid "&Insert"
-msgstr ""
+msgstr "&Vložiť"
 
 #: wordpad.rc:77
 msgid "&Date and time..."
-msgstr ""
+msgstr "&Dátum a čas..."
 
 #: wordpad.rc:79
 msgid "F&ormat"
@@ -13405,7 +13324,7 @@ msgstr ""
 
 #: wordpad.rc:85
 msgid "Backgroun&d"
-msgstr ""
+msgstr "Poza&die"
 
 #: wordpad.rc:87
 msgid "&System\tCtrl+1"
@@ -13417,7 +13336,7 @@ msgstr ""
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
-msgstr ""
+msgstr "&O programe Wine Wordpad"
 
 #: wordpad.rc:130
 msgid "Automatic"
@@ -13425,7 +13344,7 @@ msgstr ""
 
 #: wordpad.rc:199
 msgid "Date and time"
-msgstr ""
+msgstr "Dátum a čas"
 
 #: wordpad.rc:202
 msgid "Available formats"
@@ -13440,25 +13359,24 @@ msgid "Paragraph format"
 msgstr ""
 
 #: wordpad.rc:224
-#, fuzzy
 msgid "Indentation"
-msgstr "&Skomentovať..."
+msgstr "Odsadenie"
 
 #: wordpad.rc:225 wordpad.rc:148
 msgid "Left"
-msgstr ""
+msgstr "Vľavo"
 
 #: wordpad.rc:227 wordpad.rc:149
 msgid "Right"
-msgstr ""
+msgstr "Vpravo"
 
 #: wordpad.rc:229
 msgid "First line"
-msgstr ""
+msgstr "Prvý riadok"
 
 #: wordpad.rc:231
 msgid "Alignment"
-msgstr ""
+msgstr "Zarovnanie"
 
 #: wordpad.rc:239
 msgid "Tabs"
@@ -13469,9 +13387,8 @@ msgid "Tab stops"
 msgstr ""
 
 #: wordpad.rc:248
-#, fuzzy
 msgid "Remove al&l"
-msgstr "&Skomentovať..."
+msgstr "Odstrániť &všetko"
 
 #: wordpad.rc:256
 msgid "Line wrapping"
@@ -13496,46 +13413,45 @@ msgstr ""
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "L"
 
 #: wordpad.rc:274
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: wordpad.rc:275
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "R"
 
 #: wordpad.rc:282
 msgctxt "accelerator Redo"
 msgid "Y"
-msgstr ""
+msgstr "Y"
 
 #: wordpad.rc:283
 msgctxt "accelerator Bold"
 msgid "B"
-msgstr ""
+msgstr "B"
 
 #: wordpad.rc:284
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:285
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:136
-#, fuzzy
 msgid "All documents (*.*)"
-msgstr "Všetky súbory (*.*)"
+msgstr "Všetky dokumenty (*.*)"
 
 #: wordpad.rc:137
 msgid "Text documents (*.txt)"
-msgstr ""
+msgstr "Textový dokument (*.txt)"
 
 #: wordpad.rc:138
 msgid "Unicode text document (*.txt)"
@@ -13551,7 +13467,7 @@ msgstr ""
 
 #: wordpad.rc:141
 msgid "Text document"
-msgstr ""
+msgstr "Textový dokument"
 
 #: wordpad.rc:142
 msgid "Unicode text document"
@@ -13576,40 +13492,40 @@ msgstr ""
 
 #: wordpad.rc:163
 msgid "Next page"
-msgstr ""
+msgstr "Ďalšia strana"
 
 #: wordpad.rc:164
 msgid "Previous page"
-msgstr ""
+msgstr "Predchádzajúca strana"
 
 #: wordpad.rc:165
 msgid "Two pages"
-msgstr ""
+msgstr "Dve stránky"
 
 #: wordpad.rc:166
 msgid "One page"
-msgstr ""
+msgstr "Jedna stránka"
 
 #: wordpad.rc:167
 msgid "Zoom in"
-msgstr ""
+msgstr "Priblížiť"
 
 #: wordpad.rc:168
 msgid "Zoom out"
-msgstr ""
+msgstr "Oddialiť"
 
 #: wordpad.rc:170
 msgid "Page"
-msgstr ""
+msgstr "Strana"
 
 #: wordpad.rc:171
 msgid "Pages"
-msgstr ""
+msgstr "Strany"
 
 #: wordpad.rc:172
 msgctxt "unit: centimeter"
 msgid "cm"
-msgstr ""
+msgstr "cm"
 
 #: wordpad.rc:173
 #, fuzzy
