@@ -23,6 +23,11 @@
 
 static HRESULT (WINAPI *pDirectDrawCreateEx)(GUID *guid, void **ddraw, REFIID iid, IUnknown *outer_unknown);
 
+struct vec2
+{
+    float x, y;
+};
+
 struct vec3
 {
     float x, y, z;
@@ -1277,6 +1282,158 @@ static void test_zenable(void)
     DestroyWindow(window);
 }
 
+static void test_ck_rgba(void)
+{
+    static struct
+    {
+        struct vec4 position;
+        struct vec2 texcoord;
+    }
+    tquad[] =
+    {
+        {{  0.0f, 480.0f, 0.25f, 1.0f}, {0.0f, 0.0f}},
+        {{  0.0f,   0.0f, 0.25f, 1.0f}, {0.0f, 1.0f}},
+        {{640.0f, 480.0f, 0.25f, 1.0f}, {1.0f, 0.0f}},
+        {{640.0f,   0.0f, 0.25f, 1.0f}, {1.0f, 1.0f}},
+        {{  0.0f, 480.0f, 0.75f, 1.0f}, {0.0f, 0.0f}},
+        {{  0.0f,   0.0f, 0.75f, 1.0f}, {0.0f, 1.0f}},
+        {{640.0f, 480.0f, 0.75f, 1.0f}, {1.0f, 0.0f}},
+        {{640.0f,   0.0f, 0.75f, 1.0f}, {1.0f, 1.0f}},
+    };
+    static const struct
+    {
+        D3DCOLOR fill_color;
+        BOOL color_key;
+        BOOL blend;
+        D3DCOLOR result1;
+        D3DCOLOR result2;
+    }
+    tests[] =
+    {
+        {0xff00ff00, TRUE,  TRUE,  0x00ff0000, 0x000000ff},
+        {0xff00ff00, TRUE,  FALSE, 0x00ff0000, 0x000000ff},
+        {0xff00ff00, FALSE, TRUE,  0x0000ff00, 0x0000ff00},
+        {0xff00ff00, FALSE, FALSE, 0x0000ff00, 0x0000ff00},
+        {0x7f00ff00, TRUE,  TRUE,  0x00807f00, 0x00807f00},
+        {0x7f00ff00, TRUE,  FALSE, 0x0000ff00, 0x0000ff00},
+        {0x7f00ff00, FALSE, TRUE,  0x00807f00, 0x00807f00},
+        {0x7f00ff00, FALSE, FALSE, 0x0000ff00, 0x0000ff00},
+    };
+
+    IDirectDrawSurface7 *texture;
+    DDSURFACEDESC2 surface_desc;
+    IDirect3DDevice7 *device;
+    IDirectDrawSurface7 *rt;
+    IDirectDraw7 *ddraw;
+    IDirect3D7 *d3d;
+    D3DCOLOR color;
+    HWND window;
+    DDBLTFX fx;
+    HRESULT hr;
+    UINT i;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
+    IDirect3D7_Release(d3d);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CKSRCBLT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    surface_desc.dwWidth = 256;
+    surface_desc.dwHeight = 256;
+    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
+    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    U5(U4(surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0xff000000;
+    surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = 0xff00ff00;
+    surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue = 0xff00ff00;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &texture, NULL);
+    ok(SUCCEEDED(hr), "Failed to create destination surface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetTexture(device, 0, texture);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+    ok(SUCCEEDED(hr), "Failed to enable alpha blending, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    ok(SUCCEEDED(hr), "Failed to enable alpha blending, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_COLORKEYENABLE, tests[i].color_key);
+        ok(SUCCEEDED(hr), "Failed to enable color keying, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, tests[i].blend);
+        ok(SUCCEEDED(hr), "Failed to enable alpha blending, hr %#x.\n", hr);
+
+        memset(&fx, 0, sizeof(fx));
+        fx.dwSize = sizeof(fx);
+        U5(fx).dwFillColor = tests[i].fill_color;
+        hr = IDirectDrawSurface7_Blt(texture, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+        ok(SUCCEEDED(hr), "Failed to fill texture, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 1.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZRHW | D3DFVF_TEX1, &tquad[0], 4, 0);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color = get_surface_color(rt, 320, 240);
+        if (i == 2)
+            todo_wine ok(compare_color(color, tests[i].result1, 1), "Expected color 0x%08x for test %u, got 0x%08x.\n",
+                    tests[i].result1, i, color);
+        else
+            ok(compare_color(color, tests[i].result1, 1), "Expected color 0x%08x for test %u, got 0x%08x.\n",
+                    tests[i].result1, i, color);
+
+        U5(fx).dwFillColor = 0xff0000ff;
+        hr = IDirectDrawSurface7_Blt(texture, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+        ok(SUCCEEDED(hr), "Failed to fill texture, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZRHW | D3DFVF_TEX1, &tquad[4], 4, 0);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        /* This tests that fragments that are masked out by the color key are
+         * discarded, instead of just fully transparent. */
+        color = get_surface_color(rt, 320, 240);
+        if (i == 2)
+            todo_wine ok(compare_color(color, tests[i].result2, 1), "Expected color 0x%08x for test %u, got 0x%08x.\n",
+                    tests[i].result2, i, color);
+        else
+            ok(compare_color(color, tests[i].result2, 1), "Expected color 0x%08x for test %u, got 0x%08x.\n",
+                    tests[i].result2, i, color);
+    }
+
+    IDirectDrawSurface7_Release(rt);
+    IDirectDrawSurface7_Release(texture);
+    IDirectDraw7_Release(ddraw);
+    IDirect3DDevice7_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -1296,4 +1453,5 @@ START_TEST(ddraw7)
     test_depth_blit();
     test_texture_load_ckey();
     test_zenable();
+    test_ck_rgba();
 }
