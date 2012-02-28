@@ -102,9 +102,19 @@ static ULONG WINAPI BitmapScaler_Release(IWICBitmapScaler *iface)
 static HRESULT WINAPI BitmapScaler_GetSize(IWICBitmapScaler *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, puiWidth, puiHeight);
+    BitmapScaler *This = impl_from_IWICBitmapScaler(iface);
+    TRACE("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
 
-    return E_NOTIMPL;
+    if (!puiWidth || !puiHeight)
+        return E_INVALIDARG;
+
+    if (!This->source)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    *puiWidth = This->width;
+    *puiHeight = This->height;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapScaler_GetPixelFormat(IWICBitmapScaler *iface,
