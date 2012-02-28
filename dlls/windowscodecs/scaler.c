@@ -135,9 +135,16 @@ static HRESULT WINAPI BitmapScaler_GetPixelFormat(IWICBitmapScaler *iface,
 static HRESULT WINAPI BitmapScaler_GetResolution(IWICBitmapScaler *iface,
     double *pDpiX, double *pDpiY)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, pDpiX, pDpiY);
+    BitmapScaler *This = impl_from_IWICBitmapScaler(iface);
+    TRACE("(%p,%p,%p)\n", iface, pDpiX, pDpiY);
 
-    return E_NOTIMPL;
+    if (!pDpiX || !pDpiY)
+        return E_INVALIDARG;
+
+    if (!This->source)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    return IWICBitmapSource_GetResolution(This->source, pDpiX, pDpiY);
 }
 
 static HRESULT WINAPI BitmapScaler_CopyPalette(IWICBitmapScaler *iface,
