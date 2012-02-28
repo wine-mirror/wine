@@ -4554,6 +4554,14 @@ HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_c
             }
             break;
 
+        case WINED3DFMT_B8G8R8A8_UNORM:
+            if (colorkey_active)
+            {
+                *conversion_type = WINED3D_CT_CK_ARGB32;
+                format->conv_byte_count = 4;
+            }
+            break;
+
         default:
             break;
     }
@@ -4758,6 +4766,26 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                     if (!color_in_range(&surface->src_blt_color_key, color))
                         dstcolor |= 0xff;
                     *(DWORD*)dest = dstcolor;
+                    source += 4;
+                    dest += 4;
+                }
+            }
+        }
+        break;
+
+        case WINED3D_CT_CK_ARGB32:
+        {
+            unsigned int x, y;
+            for (y = 0; y < height; ++y)
+            {
+                source = src + pitch * y;
+                dest = dst + outpitch * y;
+                for (x = 0; x < width; ++x)
+                {
+                    DWORD color = *(const DWORD *)source;
+                    if (color_in_range(&surface->src_blt_color_key, color))
+                        color &= ~0xff000000;
+                    *(DWORD*)dest = color;
                     source += 4;
                     dest += 4;
                 }

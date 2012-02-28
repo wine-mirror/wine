@@ -538,12 +538,7 @@ static void state_alpha(struct wined3d_context *context, const struct wined3d_st
             struct wined3d_surface *surf = surface_from_resource(texture->sub_resources[0]);
 
             if (surf->CKeyFlags & WINEDDSD_CKSRCBLT)
-            {
-                /* The surface conversion does not do color keying conversion for surfaces that have an alpha
-                 * channel on their own. Likewise, the alpha test shouldn't be set up for color keying if the
-                 * surface has alpha bits */
-                if (!surf->resource.format->alpha_mask) enable_ckey = TRUE;
-            }
+                enable_ckey = TRUE;
         }
     }
 

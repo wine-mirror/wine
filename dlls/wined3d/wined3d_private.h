@@ -2192,6 +2192,7 @@ enum wined3d_conversion_type
     WINED3D_CT_CK_5551,
     WINED3D_CT_CK_RGB24,
     WINED3D_CT_RGB32_888,
+    WINED3D_CT_CK_ARGB32,
 };
 
 HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_ck, BOOL use_texturing,
