@@ -40,9 +40,8 @@ msgstr ""
 "clique em Adicionar/Remover."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "Informação de Suporte"
+msgstr "Informação de &Suporte"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -102,7 +101,7 @@ msgstr "Telefone de Suporte:"
 
 #: appwiz.rc:82
 msgid "Readme:"
-msgstr "Readme:"
+msgstr "Leia-me:"
 
 #: appwiz.rc:83
 msgid "Product Updates:"
@@ -130,7 +129,7 @@ msgstr ""
 "aplicações com HTML embutido funcionarem corretamente. O Wine pode "
 "automaticamente efetuar o download e instalá-lo por si.\n"
 "\n"
-"Nota: é recomendável usar os pacotes da sua distribuição em vez disso. Veja  "
+"Nota: é recomendável usar os pacotes da sua distribuição em vez disso. Veja "
 "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
 "para mais detalhes."
 
@@ -217,9 +216,8 @@ msgstr ""
 "Todos os ficheiros (*.*)"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "&Modificar/Remover..."
+msgstr "&Modificar/Remover"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -234,6 +232,8 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
+"Soma de verificação do ficheiro descarregado é inesperada. Instalação "
+"interrompida do ficheiro corrompido."
 
 #: avifil32.rc:39
 msgid "Compress options"
@@ -249,7 +249,7 @@ msgstr "&Opções..."
 
 #: avifil32.rc:46
 msgid "&Interleave every"
-msgstr "&Interlaçar a todos os"
+msgstr "&Entrelaçar a todos os"
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
@@ -714,7 +714,7 @@ msgstr "&de:"
 
 #: comdlg32.rc:384
 msgid "&to:"
-msgstr "&até"
+msgstr "&até:"
 
 #: comdlg32.rc:410 winecfg.rc:286
 msgid "Si&ze:"
@@ -812,7 +812,7 @@ msgid ""
 "Do you want to create file?"
 msgstr ""
 "O ficheiro não existe\n"
-"Gostaria de o criar"
+"Gostaria de o criar?"
 
 #: comdlg32.rc:32
 msgid ""
@@ -824,7 +824,7 @@ msgstr ""
 
 #: comdlg32.rc:33
 msgid "Invalid character(s) in path"
-msgstr "Caracter(es) inválidos na localização"
+msgstr "Caractere(s) inválidos na localização"
 
 #: comdlg32.rc:34
 msgid ""
@@ -947,13 +947,12 @@ msgid "Unreadable Entry"
 msgstr "Entrada Ilegível"
 
 #: comdlg32.rc:54
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
-"Este valor não se encaixa na faixa de páginas.\n"
-"Por favor indique um valor entre %d e %d."
+"Este valor não se encaixa no intervalo de páginas.\n"
+"Por favor indique um valor entre %1!d! e %2!d!."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -968,9 +967,8 @@ msgstr ""
 "Por favor indique as margens."
 
 #: comdlg32.rc:60
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "O número de cópias não pode ter valor vazio."
+msgstr "O campo 'Número de cópias' não pode estar vazio."
 
 #: comdlg32.rc:62
 msgid ""
@@ -1021,7 +1019,7 @@ msgstr ""
 #: comdlg32.rc:137
 #, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Seleccione o tamanho do tipo de letra entre %d e %d pontos."
+msgstr "Seleccione o tamanho do tipo de letra entre %1!d! e %2!d! pontos."
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
@@ -1310,9 +1308,8 @@ msgid "Unstructured Address"
 msgstr "Endereço não Estruturado"
 
 #: crypt32.rc:51
-#, fuzzy
 msgid "S/MIME Capabilities"
-msgstr "Capacidades SMIME"
+msgstr "Capacidades S/MIME"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
@@ -1417,9 +1414,8 @@ msgid "Initials"
 msgstr "Iniciais"
 
 #: crypt32.rc:77
-#, fuzzy
 msgid "Surname"
-msgstr "Nome de Utilizador"
+msgstr "Apelido"
 
 #: crypt32.rc:78
 msgid "Domain Component"
@@ -1869,7 +1865,7 @@ msgstr ""
 
 #: crypt32.rc:180
 msgid "Certificate Issuer"
-msgstr "Emissor do Certificado: "
+msgstr "Emissor do Certificado"
 
 #: crypt32.rc:181
 msgid "Certificate Serial Number="
@@ -1889,7 +1885,7 @@ msgstr "Nome DNS="
 
 #: crypt32.rc:185
 msgid "Directory Address"
-msgstr "Nome do Directório="
+msgstr "Nome do Directório"
 
 #: crypt32.rc:186
 msgid "URL="
@@ -2051,11 +2047,11 @@ msgstr "Não-Repudiação"
 
 #: crypt32.rc:223
 msgid "Key Encipherment"
-msgstr "Ciframento de Chaves"
+msgstr "Cifragem de Chaves"
 
 #: crypt32.rc:224
 msgid "Data Encipherment"
-msgstr "Ciframento de Dados"
+msgstr "Cifragem de Dados"
 
 #: crypt32.rc:225
 msgid "Key Agreement"
@@ -2110,14 +2106,12 @@ msgid "Signature CA"
 msgstr "CA de Assinatura"
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
-msgstr "Políticas de Certificados"
+msgstr "Política de Certificados"
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
-msgstr "Identificador da Chave de Autoridade"
+msgstr "Identificador de Política:"
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -2136,9 +2130,8 @@ msgid "Notice Reference"
 msgstr ""
 
 #: cryptdlg.rc:35
-#, fuzzy
 msgid "Organization="
-msgstr "Organização"
+msgstr "Organização="
 
 #: cryptdlg.rc:36
 #, fuzzy
@@ -2178,9 +2171,8 @@ msgid "Certification Path"
 msgstr "Caminho de Certificação"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "&Caminho de Certificação"
+msgstr "Caminho de Certificação"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
@@ -3609,7 +3601,7 @@ msgstr "Argumento ou chamada de procedimento inválida"
 
 #: jscript.rc:27
 msgid "Subscript out of range"
-msgstr "Subscript fora de alcance"
+msgstr "Subscripto fora de alcance"
 
 #: jscript.rc:28
 #, fuzzy
@@ -4346,11 +4338,11 @@ msgstr "Anel para segmento 2 tem de ser amovível.\n"
 
 #: winerror.mc:796
 msgid "Relocation chain exceeds segment limit in %1.\n"
-msgstr "Corrente de realocação excede o limite de segmento em %1.\n"
+msgstr "Cadeia de realocamento excede o limite de segmento em %1.\n"
 
 #: winerror.mc:801
 msgid "Infinite loop in relocation chain in %1.\n"
-msgstr "Loop infinito em corrente de realocação em %1.\n"
+msgstr "Loop infinito em cadeia de realocamento em %1.\n"
 
 #: winerror.mc:806
 msgid "Environment variable not found.\n"
@@ -4426,7 +4418,7 @@ msgstr "Nome de atributo extendido inválido.\n"
 
 #: winerror.mc:896
 msgid "Extended attribute list inconsistent.\n"
-msgstr "Lista de atributos extendida inconsistente.\n"
+msgstr "Lista de atributos estendidos inconsistente.\n"
 
 #: winerror.mc:901
 msgid "No more data available.\n"
@@ -4442,15 +4434,15 @@ msgstr "Nome de directório inválido.\n"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit.\n"
-msgstr "Atributos extendidos não couberam.\n"
+msgstr "Não há espaço para os atributos estendidos.\n"
 
 #: winerror.mc:921
 msgid "Extended attribute file corrupt.\n"
-msgstr "Ficheiro de atributos extendido corrompido.\n"
+msgstr "O ficheiro de atributos estendidos está corrompido.\n"
 
 #: winerror.mc:926
 msgid "Extended attribute table full.\n"
-msgstr "Tabela de atributos extendida cheia.\n"
+msgstr "A tabela de atributos extendidos está cheia.\n"
 
 #: winerror.mc:931
 msgid "Invalid extended attribute handle.\n"
@@ -4608,7 +4600,7 @@ msgstr "Chave de registo tem subchaves.\n"
 
 #: winerror.mc:1121
 msgid "Subkey must be volatile.\n"
-msgstr "Subchave tem de ser volátil.\n"
+msgstr "Sub-chave tem de ser volátil.\n"
 
 #: winerror.mc:1126
 msgid "Notify change request in progress.\n"
@@ -5132,7 +5124,7 @@ msgstr "Ligação recusada.\n"
 
 #: winerror.mc:1761
 msgid "Connection gracefully closed.\n"
-msgstr "Ligação fechada graceosamente.\n"
+msgstr "Ligação fechada graciosamente.\n"
 
 #: winerror.mc:1766
 msgid "Address already associated with transport endpoint.\n"
@@ -5424,7 +5416,7 @@ msgstr "Autoridade de ID inválida.\n"
 
 #: winerror.mc:2121
 msgid "Allotted space exceeded.\n"
-msgstr "Espaço alotado excedido.\n"
+msgstr "Espaço reservado excedido.\n"
 
 #: winerror.mc:2126
 msgid "Invalid group attributes.\n"
@@ -5806,7 +5798,7 @@ msgstr "Parâmetro SPI inválido.\n"
 
 #: winerror.mc:2596
 msgid "Screen already locked.\n"
-msgstr "Ecrâ já bloqueado.\n"
+msgstr "Ecrã já bloqueado.\n"
 
 #: winerror.mc:2601
 msgid "Window handles have different parents.\n"
@@ -6967,7 +6959,7 @@ msgstr "indique que pasta contém %s"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
-msgstr "Wine MS-RLE codificador/decodificador de vídeo"
+msgstr "Wine MS-RLE codificador/descodificador de vídeo"
 
 #: msrle32.rc:29
 msgid ""
@@ -7384,7 +7376,7 @@ msgid ""
 "File does not appear to be a valid OLE module. Unable to register OLE "
 "control."
 msgstr ""
-"O ficheiro não parece ser um módulo OLE válido. Impossível registrar o "
+"O ficheiro não parece ser um módulo OLE válido. Impossível registar o "
 "controlo OLE."
 
 #: oledlg.rc:29
@@ -8315,7 +8307,10 @@ msgid ""
 "This folder already contains a file called '%1'.\n"
 "\n"
 "Do you want to replace it?"
-msgstr "Substituir ficheiro %1?"
+msgstr ""
+"Este directório já contém um ficheiro chamado '%1'.\n"
+"\n"
+"Quer substitui-lo?"
 
 #: shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
@@ -8352,8 +8347,8 @@ msgstr ""
 "Esta pasta já contém uma pasta chamada '%1'.\n"
 "\n"
 "Se os ficheiros na pasta de destino tiverem os mesmos nomes de ficheiros na\n"
-"pasta seleccionada eles serão substituídos. Ainda deseja mover ou copiar a "
-"pasta?"
+"pasta seleccionada eles serão substituídos. Ainda deseja mover ou copiar\n"
+"a pasta?"
 
 #: shell32.rc:235
 msgid "New Folder"
@@ -8693,7 +8688,7 @@ msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
-"Não é possível executar esta operação enquando os dados da média estiverem a "
+"Não é possível executar esta operação enquanto os dados da média estiverem a "
 "reproduzir. Reinicie o dispositivo, ou aguarde até que a reprodução dos "
 "dados termine."
 
@@ -8804,7 +8799,7 @@ msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
 msgstr ""
-"A string de saída era demasdiado comprida para ser colocada no 'buffer' de "
+"A string de saída era demasiado comprida para ser colocada no 'buffer' de "
 "retorno. Aumente o tamanho do 'buffer'."
 
 #: winmm.rc:66
@@ -8915,7 +8910,7 @@ msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
 msgstr ""
-"O dispositivo inicado está a ser fechado agora. Aguarde alguns segundos, e "
+"O dispositivo iniciado está a ser fechado agora. Aguarde alguns segundos, e "
 "então tente novamente."
 
 #: winmm.rc:84
@@ -8923,7 +8918,7 @@ msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr ""
-"A 'alias' indicada já está a ser usada nesta aplicação. Use uma alias única."
+"O 'alias' indicado já está a ser usada nesta aplicação. Use um alias único."
 
 #: winmm.rc:85
 msgid "The specified parameter is invalid for this command."
@@ -9014,8 +9009,8 @@ msgid ""
 "the device is closed, and then try again."
 msgstr ""
 "Não é possível descarregar o comando indicado num dispositivo aberto "
-"automanticamente. Aguarde até que o dispositivo esteja fechado, e então "
-"tente novamente."
+"automaticamente. Aguarde até que o dispositivo esteja fechado, e então tente "
+"novamente."
 
 #: winmm.rc:99
 msgid ""
@@ -9110,7 +9105,7 @@ msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Não foi possivel definir o dispositivo wave actual para gravar porque está "
+"Não foi possível definir o dispositivo wave actual para gravar porque está "
 "em uso. Aguarde até que o dispositivo fique livre, e então tente novamente."
 
 #: winmm.rc:112
@@ -9160,8 +9155,8 @@ msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr ""
-"O formato de hora do \"song pointer\" e SMPTE são mutualmente exclusivos. "
-"Não pode usá-los juntos."
+"O formato de hora do \"song pointer\" e SMPTE são mutuamente exclusivos. Não "
+"pode usá-los juntos."
 
 #: winmm.rc:124
 msgid ""
@@ -9574,13 +9569,10 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <ficheiro_de_lote> é usado dentro de um ficheiro de lote para executar "
-"o\n"
-"comando de outro ficheiro de lote. Quando o ficheiro existe, o controle "
-"retorna\n"
-"ao ficheiro que o chamou. O comando CALL pode passar parâmetros ao "
-"procedimento\n"
-"chamado.\n"
+"CALL <ficheiro_de_lote> é usado dentro de um ficheiro de lote para executar\n"
+"o comando de outro ficheiro de lote. Quando o ficheiro existe, o controlo\n"
+"regressa ao ficheiro que o chamou. O comando CALL pode passar parâmetros ao\n"
+"procedimento chamado.\n"
 "\n"
 "Mudanças no directório padrão, variáveis de ambiente, etc, feitas dentro\n"
 "do procedimente chamado são herdados pelo chamador.\n"
@@ -9760,8 +9752,8 @@ msgstr ""
 "MOVE realoca um ficheiro ou directório num novo ponto no sistema de "
 "ficheiros.\n"
 "\n"
-"Se o item ao ser movido é um directório então todos os ficheiros e "
-"subdirectórios\n"
+"Se o item ao ser movido é um directório então todos os ficheiros e sub-"
+"directórios\n"
 "abaixo do item serão movidos com o mesmo.\n"
 "\n"
 "MOVE falhará se o local antigo e o novo local estão em diferentes unidades.\n"
@@ -9920,7 +9912,7 @@ msgid ""
 "if called from the command line.\n"
 msgstr ""
 "SHIFT é usado em ficheiros de lote para remover um parâmetro que inicia a\n"
-"lista, assim então o parâmentro2 sobrepôe o parametro1 e assim por diante.\n"
+"lista, assim o parâmetro 2 sobrepõe o parametro 1 e assim por diante.\n"
 "Isto não tem efeito se chamado a partir da linha de comando.\n"
 
 #: cmd.rc:176
@@ -9980,7 +9972,7 @@ msgid ""
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
 "TYPE <ficheiro> copia <ficheiro> para o dispositivo consola (ou outro, se\n"
-"redireccionado). Nehuma verificação é feita se o ficheiro pode ser lido.\n"
+"redireccionado). Nenhuma verificação é feita se o ficheiro pode ser lido.\n"
 
 #: cmd.rc:216
 #, fuzzy
@@ -10775,8 +10767,7 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"Ficheiro '%s'\n"
-"não existe\n"
+"O ficheiro '%s' não existe\n"
 "\n"
 " Deseja criar um novo ficheiro?"
 
@@ -11048,7 +11039,7 @@ msgstr "Libertar a instância de objecto seleccionada"
 
 #: oleview.rc:111
 msgid "Copy the GUID of the currently selected item to the clipboard"
-msgstr "Copiar a GUID do objecto seleccionado para a àrea de transferência"
+msgstr "Copiar a GUID do objecto seleccionado para a área de transferência"
 
 #: oleview.rc:112
 msgid "Display the viewer for the selected item"
@@ -11339,7 +11330,7 @@ msgstr "Executar programa"
 
 #: progman.rc:60
 msgid "Program Manager"
-msgstr "Gerênciador de programas"
+msgstr "Gestor de programas"
 
 #: progman.rc:62 winhlp32.rc:80
 msgid "WARNING"
@@ -13095,7 +13086,7 @@ msgstr "&Instalar tema..."
 
 #: winecfg.rc:282
 msgid "It&em:"
-msgstr "Ít&em:"
+msgstr "It&em:"
 
 #: winecfg.rc:284
 msgid "C&olor:"
@@ -13310,7 +13301,7 @@ msgid ""
 msgstr ""
 "se não tem uma unidade C. Isto não é nada bom.\n"
 "\n"
-"Certifique-se que clica em  ?Adicionar? no seprador Unidades para criar "
+"Certifique-se que clica em  ?Adicionar? no separador Unidades para criar "
 "uma!\n"
 
 #: winecfg.rc:90
@@ -13949,9 +13940,8 @@ msgid "Index/Inode"
 msgstr "Índice/Inode"
 
 #: winefile.rc:116
-#, fuzzy
 msgid "%1 of %2 free"
-msgstr "%s de %s livre"
+msgstr "%1 de %2 livre"
 
 #: winefile.rc:117
 msgctxt "unit kilobyte"
@@ -14287,7 +14277,7 @@ msgstr "Parágrafo"
 
 #: wordpad.rc:224
 msgid "Indentation"
-msgstr "Identação"
+msgstr "Indentação"
 
 #: wordpad.rc:225 wordpad.rc:148
 msgid "Left"
