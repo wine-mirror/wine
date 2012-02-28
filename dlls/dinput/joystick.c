@@ -456,7 +456,7 @@ HRESULT WINAPI JoystickWGenericImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
             if (type & object_types[j])
             {
                 /* Assure that the object exists */
-                LPDIOBJECTDATAFORMAT odf = dataformat_to_odf_by_type(This->base.data_format.wine_df, inst, DIDFT_BUTTON);
+                LPDIOBJECTDATAFORMAT odf = dataformat_to_odf_by_type(This->base.data_format.wine_df, inst, object_types[j]);
 
                 if (odf != NULL)
                 {
