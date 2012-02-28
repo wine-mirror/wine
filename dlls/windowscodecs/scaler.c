@@ -150,9 +150,16 @@ static HRESULT WINAPI BitmapScaler_GetResolution(IWICBitmapScaler *iface,
 static HRESULT WINAPI BitmapScaler_CopyPalette(IWICBitmapScaler *iface,
     IWICPalette *pIPalette)
 {
-    FIXME("(%p,%p): stub\n", iface, pIPalette);
+    BitmapScaler *This = impl_from_IWICBitmapScaler(iface);
+    TRACE("(%p,%p)\n", iface, pIPalette);
 
-    return E_NOTIMPL;
+    if (!pIPalette)
+        return E_INVALIDARG;
+
+    if (!This->source)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    return IWICBitmapSource_CopyPalette(This->source, pIPalette);
 }
 
 static HRESULT WINAPI BitmapScaler_CopyPixels(IWICBitmapScaler *iface,
