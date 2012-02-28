@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-18 10:08+0200\n"
+"PO-Revision-Date: 2012-02-28 23:01+0200\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Finnish\n"
@@ -1246,7 +1246,7 @@ msgstr "Seuraavan päivityksen sijainti"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr ""
+msgstr "Luotetaanko vai ei"
 
 #: crypt32.rc:43
 msgid "Email Address"
@@ -1282,7 +1282,7 @@ msgstr "Rakenteeton osoite"
 
 #: crypt32.rc:51
 msgid "S/MIME Capabilities"
-msgstr ""
+msgstr "S/MIME-ominaisuudet"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
@@ -1299,7 +1299,7 @@ msgstr "Huomautus käyttäjälle"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr "On-line Certificate Status Protocol"
+msgstr "Online Certificate Status Protocol"
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
@@ -1427,7 +1427,7 @@ msgstr ""
 
 #: crypt32.rc:87
 msgid "OS Version"
-msgstr ""
+msgstr "Käyttöjärjestelmän versio"
 
 #: crypt32.rc:88
 msgid "Enrollment CSP"
@@ -1451,7 +1451,7 @@ msgstr "Tuorein sulkulista"
 
 #: crypt32.rc:93
 msgid "Name Constraints"
-msgstr ""
+msgstr "Nimen rajoitukset"
 
 #: crypt32.rc:94
 msgid "Policy Mappings"
@@ -1459,15 +1459,15 @@ msgstr ""
 
 #: crypt32.rc:95
 msgid "Policy Constraints"
-msgstr ""
+msgstr "Politiikan rajoitukset"
 
 #: crypt32.rc:96
 msgid "Cross-Certificate Distribution Points"
-msgstr ""
+msgstr "Ristikkäisten varmenteiden julkaisupaikat"
 
 #: crypt32.rc:97
 msgid "Application Policies"
-msgstr ""
+msgstr "Sovelluspolitiikat"
 
 #: crypt32.rc:98
 msgid "Application Policy Mappings"
@@ -1475,7 +1475,7 @@ msgstr ""
 
 #: crypt32.rc:99
 msgid "Application Policy Constraints"
-msgstr ""
+msgstr "Sovelluspolitiikan rajoitukset"
 
 #: crypt32.rc:100
 msgid "CMC Data"
@@ -1559,15 +1559,15 @@ msgstr ""
 
 #: crypt32.rc:120
 msgid "Encrypted Private Key"
-msgstr ""
+msgstr "Salattu yksityinen avain"
 
 #: crypt32.rc:121
 msgid "Published CRL Locations"
-msgstr ""
+msgstr "Julkaistut sulkulistojen sijainnit"
 
 #: crypt32.rc:122
 msgid "Enforce Certificate Chain Policy"
-msgstr ""
+msgstr "Pakota varmenneketjupolitikka"
 
 #: crypt32.rc:123
 msgid "Transaction Id"
@@ -1595,19 +1595,19 @@ msgstr "Nouda sulkulista"
 
 #: crypt32.rc:129
 msgid "Revoke Request"
-msgstr ""
+msgstr "Peru pyyntö"
 
 #: crypt32.rc:130
 msgid "Query Pending"
-msgstr ""
+msgstr "Kysely vireillä"
 
 #: crypt32.rc:131 cryptui.rc:92
 msgid "Certificate Trust List"
-msgstr ""
+msgstr "Luotettujen varmenteiden lista"
 
 #: crypt32.rc:132
 msgid "Archived Key Certificate Hash"
-msgstr ""
+msgstr "Arkistoitu avainvarmenteen tiiviste"
 
 #: crypt32.rc:133
 msgid "Private Key Usage Period"
@@ -1679,7 +1679,7 @@ msgstr "Sulautetun Windowsin järjestelmäkomponenttien varmennus"
 
 #: crypt32.rc:150 cryptui.rc:140
 msgid "Key Pack Licenses"
-msgstr ""
+msgstr "Avainpaketin lisenssit"
 
 #: crypt32.rc:151 cryptui.rc:141
 msgid "License Server Verification"
@@ -1715,7 +1715,7 @@ msgstr "Tiedostojen palautus"
 
 #: crypt32.rc:159 cryptui.rc:134
 msgid "Root List Signer"
-msgstr ""
+msgstr "Juurilistan allekirjoittaja"
 
 #: crypt32.rc:160
 msgid "All application policies"
@@ -1727,11 +1727,11 @@ msgstr "Sähköpostin kopiointi hakemistopalvelussa"
 
 #: crypt32.rc:162 cryptui.rc:142
 msgid "Certificate Request Agent"
-msgstr ""
+msgstr "Varmennepyyntövirkailija"
 
 #: crypt32.rc:163 cryptui.rc:138
 msgid "Lifetime Signing"
-msgstr ""
+msgstr "Elinikäinen allekirjoittaminen"
 
 #: crypt32.rc:164
 msgid "All issuance policies"
@@ -1787,7 +1787,7 @@ msgstr "DNS-nimi="
 
 #: crypt32.rc:185
 msgid "Directory Address"
-msgstr ""
+msgstr "Hakemiston osoite"
 
 #: crypt32.rc:186
 msgid "URL="
@@ -1841,7 +1841,7 @@ msgstr "Pääsy varmentajan tietoihin"
 
 #: crypt32.rc:198
 msgid "Access Method="
-msgstr ""
+msgstr "Saantimenetelmä="
 
 #: crypt32.rc:199
 msgctxt "Online Certificate Status Protocol"
@@ -1854,7 +1854,7 @@ msgstr ""
 
 #: crypt32.rc:201
 msgid "Unknown Access Method"
-msgstr ""
+msgstr "Tuntematon saantimenetelmä"
 
 #: crypt32.rc:202
 msgid "Alternative Name"
@@ -1958,7 +1958,7 @@ msgstr "Varmenteiden allekirjoitus"
 
 #: crypt32.rc:227
 msgid "Off-line CRL Signing"
-msgstr ""
+msgstr "Sulkulistojen allekirjoitus ilman verkkoyhteyttä"
 
 #: crypt32.rc:228
 msgid "CRL Signing"
@@ -1998,7 +1998,7 @@ msgstr "S/MIME-varmentaja"
 
 #: crypt32.rc:237
 msgid "Signature CA"
-msgstr ""
+msgstr "Allekirjoituksen varmentaja"
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
@@ -2010,19 +2010,19 @@ msgstr "Politiikan tunnus: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Politiikan määreen tiedot"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Politiikan määreen tunniste="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Määre"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Viittaus huomautukseen"
 
 #: cryptdlg.rc:35
 msgid "Organization="
@@ -2030,11 +2030,11 @@ msgstr "Organisaatio="
 
 #: cryptdlg.rc:36
 msgid "Notice Number="
-msgstr ""
+msgstr "Huomautusnumero="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Huomautusteksti="
 
 #: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
 msgid "General"
@@ -2177,19 +2177,19 @@ msgid ""
 "certificate revocation list, or certificate trust list:"
 msgstr ""
 "Huomio: Seuraavat tiedostomuodot voivat sisältää useampia kuin yhden "
-"varmenteen tai listan."
+"varmenteen tai listan:"
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
-msgstr ""
+msgstr "Cryptographic Message Syntax Standard/PKCS #7 -viestit (.p7b)"
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
-msgstr ""
+msgstr "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
 
 #: cryptui.rc:300
 msgid "Microsoft Serialized Certificate Store (.sst)"
-msgstr ""
+msgstr "Microsoft Serialized Certificate Store (.sst)"
 
 #: cryptui.rc:308
 msgid ""
@@ -2329,15 +2329,15 @@ msgstr "Valitse käytettävä muoto:"
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (.cer)"
-msgstr ""
+msgstr "&DER-enkoodattu X.509 (.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr ""
+msgstr "Ba&se64-enkoodattu X.509 (.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
-msgstr ""
+msgstr "&Cryptographic Message Syntax Standard/PKCS #7 -viesti (.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
@@ -2345,7 +2345,7 @@ msgstr "Sisällytä kaikki varmennuspolun varmenteet, jos mahdollista"
 
 #: cryptui.rc:413
 msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
-msgstr ""
+msgstr "&Personal Information Exchange/PKCS #12 (.pfx)"
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
@@ -2421,7 +2421,7 @@ msgstr "Kelpaa "
 
 #: cryptui.rc:38
 msgid " to "
-msgstr " – "
+msgstr " – "
 
 #: cryptui.rc:39
 msgid "This certificate has an invalid signature."
@@ -2561,27 +2561,27 @@ msgstr ""
 
 #: cryptui.rc:74
 msgid "X.509 Certificate (*.cer; *.crt)"
-msgstr "X.509 Certificate (*.cer; *.crt)"
+msgstr "X.509-varmenne (*.cer; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
-msgstr ""
+msgstr "Personal Information Exchange (*.pfx; *.p12)"
 
 #: cryptui.rc:76 cryptui.rc:155
 msgid "Certificate Revocation List (*.crl)"
-msgstr ""
+msgstr "Varmenteiden sulkulista (*.crl)"
 
 #: cryptui.rc:77 cryptui.rc:156
 msgid "Certificate Trust List (*.stl)"
-msgstr ""
+msgstr "Luotettujen varmenteiden lista (*.stl)"
 
 #: cryptui.rc:78
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr ""
+msgstr "Microsoft Serialized Certificate Store (*.sst)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 -viestit (*.spc; *.p7b)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -2625,11 +2625,11 @@ msgstr "Varmenteiden sulkulista"
 
 #: cryptui.rc:93
 msgid "CMS/PKCS #7 Message"
-msgstr ""
+msgstr "CMS/PKCS #7 -viesti"
 
 #: cryptui.rc:94
 msgid "Personal Information Exchange"
-msgstr ""
+msgstr "Personal Information Exchange"
 
 #: cryptui.rc:96
 msgid "The import was successful."
@@ -3935,39 +3935,39 @@ msgstr "Negatiivinen haku.\n"
 
 #: winerror.mc:531
 msgid "Drive is a JOIN target.\n"
-msgstr ""
+msgstr "Asema on JOIN-kohde.\n"
 
 #: winerror.mc:536
 msgid "Drive is already JOINed.\n"
-msgstr ""
+msgstr "Asemalle on jo tehty JOIN.\n"
 
 #: winerror.mc:541
 msgid "Drive is already SUBSTed.\n"
-msgstr ""
+msgstr "Asemalle on jo tehty SUBST.\n"
 
 #: winerror.mc:546
 msgid "Drive is not JOINed.\n"
-msgstr ""
+msgstr "Asemalle ei ole tehty JOINia.\n"
 
 #: winerror.mc:551
 msgid "Drive is not SUBSTed.\n"
-msgstr ""
+msgstr "Asemalle ei ole tehty SUBSTia.\n"
 
 #: winerror.mc:556
 msgid "Attempt to JOIN onto a JOINed drive.\n"
-msgstr ""
+msgstr "Yritettiin tehdä JOIN asemalle, jolle on jo tehty JOIN.\n"
 
 #: winerror.mc:561
 msgid "Attempt to SUBST onto a SUBSTed drive.\n"
-msgstr ""
+msgstr "Yritettiin tehdä SUBST asemalle, jolle on jo tehty SUBST.\n"
 
 #: winerror.mc:566
 msgid "Attempt to JOIN to a SUBSTed drive.\n"
-msgstr ""
+msgstr "Yritettiin tehdä JOIN asemalle, jolle on jo tehty SUBST.\n"
 
 #: winerror.mc:571
 msgid "Attempt to SUBST to a JOINed drive.\n"
-msgstr ""
+msgstr "Yritettiin tehdä SUBST asemalle, jolle on jo tehty JOIN.\n"
 
 #: winerror.mc:576
 msgid "Drive is busy.\n"
@@ -3987,11 +3987,11 @@ msgstr "Hakemisto ei ole tyhjä.\n"
 
 #: winerror.mc:596
 msgid "Path is in use as a SUBST.\n"
-msgstr ""
+msgstr "Polku on käytössä SUBST-toiminnossa.\n"
 
 #: winerror.mc:601
 msgid "Path is in use as a JOIN.\n"
-msgstr ""
+msgstr "Polku on käytössä JOIN-toiminnossa.\n"
 
 #: winerror.mc:606
 msgid "Path is busy.\n"
@@ -3999,7 +3999,7 @@ msgstr "Polku on käytössä.\n"
 
 #: winerror.mc:611
 msgid "Already a SUBST target.\n"
-msgstr ""
+msgstr "Asema on jo SUBST-kohde.\n"
 
 #: winerror.mc:616
 msgid "System trace not specified or disallowed.\n"
@@ -5363,11 +5363,11 @@ msgstr "Sisäinen virhe turvallisuustietokannassa.\n"
 
 #: winerror.mc:2321
 msgid "Too many context IDs.\n"
-msgstr ""
+msgstr "Liian monta kontekstin ID:tä.\n"
 
 #: winerror.mc:2331
 msgid "Cross-encrypted NT password required.\n"
-msgstr ""
+msgstr "Tarvitaan ristiinsalattu NT-salasana.\n"
 
 #: winerror.mc:2336
 msgid "No such member.\n"
@@ -5379,11 +5379,11 @@ msgstr "Viallinen jäsen.\n"
 
 #: winerror.mc:2346
 msgid "Too many SIDs.\n"
-msgstr ""
+msgstr "Liian monta SID:tä.\n"
 
 #: winerror.mc:2351
 msgid "Cross-encrypted LM password required.\n"
-msgstr ""
+msgstr "Tarvitaan ristiinsalattu LM-salasana.\n"
 
 #: winerror.mc:2356
 msgid "No inheritable components.\n"
@@ -5435,11 +5435,11 @@ msgstr "Viallinen pikanäppäintaulun kahva.\n"
 
 #: winerror.mc:2416
 msgid "Invalid hook handle.\n"
-msgstr ""
+msgstr "Viallinen koukun kahva.\n"
 
 #: winerror.mc:2421
 msgid "Invalid DWP handle.\n"
-msgstr ""
+msgstr "Viallinen DWP-kahva.\n"
 
 #: winerror.mc:2426
 msgid "Can't create top-level child window.\n"
@@ -5479,7 +5479,7 @@ msgstr "Viallinen kuvakkeen kahva.\n"
 
 #: winerror.mc:2471
 msgid "Private dialog index.\n"
-msgstr ""
+msgstr "Yksityinen dialogin indeksi.\n"
 
 #: winerror.mc:2476
 msgid "List box ID not found.\n"
@@ -5523,27 +5523,27 @@ msgstr "DC:tä ei löydy.\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter.\n"
-msgstr ""
+msgstr "Viallinen koukun suodatin.\n"
 
 #: winerror.mc:2531
 msgid "Invalid filter procedure.\n"
-msgstr ""
+msgstr "Viallinen suodatinproseduuri.\n"
 
 #: winerror.mc:2536
 msgid "Hook procedure needs module handle.\n"
-msgstr ""
+msgstr "Koukku tarvitsee moduulin kahvan.\n"
 
 #: winerror.mc:2541
 msgid "Global-only hook procedure.\n"
-msgstr ""
+msgstr "Tämän koukun voi asettaa vain globaalisti.\n"
 
 #: winerror.mc:2546
 msgid "Journal hook already set.\n"
-msgstr ""
+msgstr "Lokiin on jo asennettu koukku.\n"
 
 #: winerror.mc:2551
 msgid "Hook procedure not installed.\n"
-msgstr ""
+msgstr "Koukkua ei asennettu.\n"
 
 #: winerror.mc:2556
 msgid "Invalid list box message.\n"
@@ -5651,7 +5651,7 @@ msgstr "Viallinen näppäimistökahva.\n"
 
 #: winerror.mc:2686
 msgid "Hook type not allowed.\n"
-msgstr ""
+msgstr "Koukun tyyppi ei ole sallittu.\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required.\n"
@@ -5663,7 +5663,7 @@ msgstr "Aikakatkaisu.\n"
 
 #: winerror.mc:2701
 msgid "Invalid monitor handle.\n"
-msgstr ""
+msgstr "Viallinen näytön kahva.\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt.\n"
@@ -6123,35 +6123,35 @@ msgstr "Ei enempää merkintöjä.\n"
 
 #: winerror.mc:3281
 msgid "Character translation table open failed.\n"
-msgstr ""
+msgstr "Merkistönmuunnostaulua ei saatu avattua.\n"
 
 #: winerror.mc:3286
 msgid "Character translation table file too small.\n"
-msgstr ""
+msgstr "Merkistönmuunnostaulun tiedosto on liian pieni.\n"
 
 #: winerror.mc:3291
 msgid "Null context handle.\n"
-msgstr ""
+msgstr "Kontekstin kahva on NULL.\n"
 
 #: winerror.mc:3296
 msgid "Context handle damaged.\n"
-msgstr ""
+msgstr "Kontekstin kahva on vioittunut.\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch.\n"
-msgstr ""
+msgstr "Sidosten kahvat eivät täsmää.\n"
 
 #: winerror.mc:3306
 msgid "Cannot get call handle.\n"
-msgstr ""
+msgstr "Kutsun kahvaa ei saada.\n"
 
 #: winerror.mc:3311
 msgid "Null reference pointer.\n"
-msgstr ""
+msgstr "Osoitin on NULL.\n"
 
 #: winerror.mc:3316
 msgid "Enumeration value out of range.\n"
-msgstr ""
+msgstr "Arvo on luettelon ulkopuolella.\n"
 
 #: winerror.mc:3321
 msgid "Byte count too small.\n"
@@ -6159,11 +6159,11 @@ msgstr "Tavumäärä on liian pieni.\n"
 
 #: winerror.mc:3326
 msgid "Bad stub data.\n"
-msgstr ""
+msgstr "Tyngälle annettiin viallista dataa.\n"
 
 #: winerror.mc:3331
 msgid "Invalid user buffer.\n"
-msgstr ""
+msgstr "Annettu puskuri ei kelpaa.\n"
 
 #: winerror.mc:3336
 msgid "Unrecognised media.\n"
@@ -6307,7 +6307,7 @@ msgstr "Sidos epätäydellinen.\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure.\n"
-msgstr ""
+msgstr "Yhteysvirhe RPC-kutsussa.\n"
 
 #: winerror.mc:3516
 msgid "Unsupported authorisation level.\n"
@@ -6335,7 +6335,7 @@ msgstr "Säiettä ei peruutettu.\n"
 
 #: winerror.mc:3546
 msgid "Invalid handle operation.\n"
-msgstr ""
+msgstr "Virheellinen kahvaoperaatio.\n"
 
 #: winerror.mc:3551
 msgid "Wrong serialising package version.\n"
@@ -6343,19 +6343,19 @@ msgstr ""
 
 #: winerror.mc:3556
 msgid "Wrong stub version.\n"
-msgstr ""
+msgstr "Väärä tyngän versio.\n"
 
 #: winerror.mc:3561
 msgid "Invalid pipe object.\n"
-msgstr ""
+msgstr "Viallinen putkiobjekti.\n"
 
 #: winerror.mc:3566
 msgid "Wrong pipe order.\n"
-msgstr ""
+msgstr "Väärä putkien järjestys.\n"
 
 #: winerror.mc:3571
 msgid "Wrong pipe version.\n"
-msgstr ""
+msgstr "Väärä putken versio.\n"
 
 #: winerror.mc:3576
 msgid "Group member not found.\n"
@@ -6407,7 +6407,7 @@ msgstr "Tilin käyttö on estetty.\n"
 
 #: winerror.mc:3636
 msgid "Invalid pixel format.\n"
-msgstr ""
+msgstr "Viallinen pikselimuoto.\n"
 
 #: winerror.mc:3641
 msgid "Invalid driver.\n"
@@ -6419,27 +6419,27 @@ msgstr ""
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send.\n"
-msgstr ""
+msgstr "Vajavainen RPC-lähetys.\n"
 
 #: winerror.mc:3656
 msgid "Invalid asynchronous RPC handle.\n"
-msgstr ""
+msgstr "Viallinen asynkroninen RPC-kahva.\n"
 
 #: winerror.mc:3661
 msgid "Invalid asynchronous RPC call.\n"
-msgstr ""
+msgstr "Viallinen asynkroninen RPC-kutsu.\n"
 
 #: winerror.mc:3666
 msgid "RPC pipe closed.\n"
-msgstr ""
+msgstr "RPC-putki suljettu.\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe.\n"
-msgstr ""
+msgstr "RPC-putkien järjestysvirhe.\n"
 
 #: winerror.mc:3676
 msgid "No data on RPC pipe.\n"
-msgstr ""
+msgstr "Ei dataa RPC-putkessa.\n"
 
 #: winerror.mc:3681
 msgid "No site name available.\n"
@@ -6782,7 +6782,7 @@ msgstr "vierityspalkki"
 
 #: oleacc.rc:31
 msgid "grip"
-msgstr ""
+msgstr "kahva"
 
 #: oleacc.rc:32
 msgid "sound"
@@ -6914,11 +6914,11 @@ msgstr ""
 
 #: oleacc.rc:64
 msgid "page tab"
-msgstr ""
+msgstr "välilehti"
 
 #: oleacc.rc:65
 msgid "property page"
-msgstr ""
+msgstr "ominaisuussivu"
 
 #: oleacc.rc:66
 msgid "indicator"
@@ -6974,7 +6974,7 @@ msgstr "liukusäädin"
 
 #: oleacc.rc:79
 msgid "spin box"
-msgstr ""
+msgstr "askelluskenttä"
 
 #: oleacc.rc:80
 msgid "diagram"
@@ -7006,7 +7006,7 @@ msgstr ""
 
 #: oleacc.rc:87
 msgid "page tab list"
-msgstr ""
+msgstr "välilehtilista"
 
 #: oleacc.rc:88
 msgid "clock"
@@ -10075,7 +10075,7 @@ msgstr ""
 "    -tai-\n"
 "NET komento /HELP\n"
 "\n"
-"Missä 'komento' on joko HELP, START, STOP tai USE.\n"
+"Missä 'komento' on HELP, START, STOP tai USE.\n"
 
 #: net.rc:28
 msgid ""
@@ -10090,8 +10090,8 @@ msgstr ""
 "\n"
 "NET START [palvelu]\n"
 "\n"
-"Näyttää listan käytettävistä palveluista, jos 'palvelu' jätetään pois. "
-"Muuten 'palvelu' on käynnistyvän palvelun nimi.\n"
+"Pelkkä NET START näyttää listan käynnissä olevista palveluista. Muussa "
+"tapauksessa 'palvelu' on käynnistettävän palvelun nimi.\n"
 
 #: net.rc:29
 msgid ""
@@ -10179,7 +10179,7 @@ msgstr "Verkkovirhe"
 
 #: net.rc:48
 msgid "Connection is being made"
-msgstr "Yhteyttä luodaan"
+msgstr "Yhteyttä muodostetaan"
 
 #: net.rc:49
 msgid "Reconnecting"
@@ -10830,7 +10830,7 @@ msgstr "&Järjestä kuvakkeet"
 
 #: progman.rc:54
 msgid "&About Program Manager"
-msgstr "&Tietoja Program Managerista"
+msgstr "&Tietoja Ohjelmienhallinnasta"
 
 #: progman.rc:100
 msgid "Program &group"
