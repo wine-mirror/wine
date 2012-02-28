@@ -335,9 +335,65 @@ static HRESULT WINAPI ComponentFactory_CreateEncoder(IWICComponentFactory *iface
     REFGUID guidContainerFormat, const GUID *pguidVendor,
     IWICBitmapEncoder **ppIEncoder)
 {
-    FIXME("(%p,%s,%s,%p): stub\n", iface, debugstr_guid(guidContainerFormat),
+    static int fixme=0;
+    IEnumUnknown *enumencoders;
+    IUnknown *unkencoderinfo;
+    IWICBitmapEncoderInfo *encoderinfo;
+    IWICBitmapEncoder *encoder=NULL;
+    HRESULT res=S_OK;
+    ULONG num_fetched;
+    GUID actual_containerformat;
+
+    TRACE("(%p,%s,%s,%p)\n", iface, debugstr_guid(guidContainerFormat),
         debugstr_guid(pguidVendor), ppIEncoder);
-    return E_NOTIMPL;
+
+    if (pguidVendor && !fixme++)
+        FIXME("ignoring vendor GUID\n");
+
+    res = CreateComponentEnumerator(WICEncoder, WICComponentEnumerateDefault, &enumencoders);
+    if (FAILED(res)) return res;
+
+    while (!encoder)
+    {
+        res = IEnumUnknown_Next(enumencoders, 1, &unkencoderinfo, &num_fetched);
+
+        if (res == S_OK)
+        {
+            res = IUnknown_QueryInterface(unkencoderinfo, &IID_IWICBitmapEncoderInfo, (void**)&encoderinfo);
+
+            if (SUCCEEDED(res))
+            {
+                res = IWICBitmapEncoderInfo_GetContainerFormat(encoderinfo, &actual_containerformat);
+
+                if (SUCCEEDED(res) && IsEqualGUID(guidContainerFormat, &actual_containerformat))
+                {
+                    res = IWICBitmapEncoderInfo_CreateInstance(encoderinfo, &encoder);
+                    if (FAILED(res))
+                        encoder = NULL;
+                }
+
+                IWICBitmapEncoderInfo_Release(encoderinfo);
+            }
+
+            IUnknown_Release(unkencoderinfo);
+        }
+        else
+            break;
+    }
+
+    IEnumUnknown_Release(enumencoders);
+
+    if (encoder)
+    {
+        *ppIEncoder = encoder;
+        return S_OK;
+    }
+    else
+    {
+        WARN("failed to create encoder\n");
+        *ppIEncoder = NULL;
+        return WINCODEC_ERR_COMPONENTNOTFOUND;
+    }
 }
 
 static HRESULT WINAPI ComponentFactory_CreatePalette(IWICComponentFactory *iface,
