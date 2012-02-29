@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-27 12:30+0200\n"
+"PO-Revision-Date: 2012-02-29 17:17+0200\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Swedish\n"
@@ -246,7 +246,7 @@ msgstr "&Interfoliera varje"
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
-msgstr "frames"
+msgstr "bildrutor"
 
 #: avifil32.rc:49
 msgid "Current format:"
@@ -561,7 +561,7 @@ msgstr "&Egendefinierade färger:"
 
 #: comdlg32.rc:281 comdlg32.rc:304
 msgid "Color |  Sol&id"
-msgstr "Enfärgat"
+msgstr "Färg |  Enfärgat"
 
 #: comdlg32.rc:282
 msgid "&Red:"
@@ -3390,7 +3390,7 @@ msgstr "Låg"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr "Medium"
+msgstr "Medel"
 
 #: inetcpl.rc:35
 msgid "Increased"
@@ -9205,11 +9205,9 @@ msgid ""
 "called procedure are inherited by the caller.\n"
 msgstr ""
 "CALL <batchfilename> används inom en batchfil för att exekvera kommandon\n"
-"från en annan batchfil. När den anropade batchfilen stängs ner, så återfår "
-"den\n"
-"anropande batchfilen återigen kontrollen. Med CALL går det även att skicka "
-"med\n"
-"parametrar till den anropade metoden.\n"
+"från en annan batchfil. När den anropade batchfilen stängs ner, så återfår\n"
+"den anropande batchfilen återigen kontrollen. Med CALL går det även att\n"
+"skicka med parametrar till den anropade metoden.\n"
 "\n"
 "Ändringar av standardsökväg, miljövariabler o.s.v. som görs inom en anropad\n"
 "process ärvs av den som anropar processen.\n"
@@ -9382,7 +9380,7 @@ msgstr ""
 "Om du flyttar på en mapp, så flyttas allting under mappen med.\n"
 "\n"
 "MOVE misslyckas om den gamla och det den nya stället är på olika\n"
-"DOS-enhetsbokstäver. Till exempel från C: till D:.\n"
+"DOS-enhetsbokstäver.\n"
 
 #: cmd.rc:122
 msgid ""
@@ -9527,11 +9525,9 @@ msgid ""
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
 "if called from the command line.\n"
 msgstr ""
-"SHIFT används i batchfiler för att ta bort en parameter högst upp på "
-"listan.\n"
-"Parametrar i turordning flyttas ner ett steg, parameter 2 blir parameter 1 o."
-"s.v.\n"
-"SHIFT har ingen effekt om det anropas ifrån kommandoraden.\n"
+"SHIFT används i batchfiler för att ta bort en parameter högst upp på\n"
+"listan så att parameter 2 blir parameter 1 o.s.v. SHIFT har ingen effekt\n"
+"om det anropas ifrån kommandoraden.\n"
 
 #: cmd.rc:176
 msgid ""
@@ -9669,9 +9665,7 @@ msgstr ""
 
 #: cmd.rc:259
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr ""
-"MORE skriver ut filers utskrift eller vidarebefodrade förfrågningar på "
-"sidor.\n"
+msgstr "MORE visar filer eller inmatad text på sidor.\n"
 
 #: cmd.rc:263
 msgid ""
@@ -10122,7 +10116,7 @@ msgstr "Kopplat ifrån"
 
 #: net.rc:47
 msgid "A network error occurred"
-msgstr "Ett nätverksfel inträffade."
+msgstr "Ett nätverksfel inträffade"
 
 #: net.rc:48
 msgid "Connection is being made"
@@ -13696,7 +13690,7 @@ msgstr "&Om Wine Wordpad"
 
 #: wordpad.rc:130
 msgid "Automatic"
-msgstr "Automatic"
+msgstr "Automatisk"
 
 #: wordpad.rc:199
 msgid "Date and time"
