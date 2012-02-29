@@ -1191,7 +1191,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         REAL min_yf, max_yf, line1_xf, line2_xf;
         INT min_y, max_y, min_x, max_x;
         INT x, y;
-        ARGB outer_color=0xffffffff;
+        ARGB outer_color;
 
         if (fill->focus.X != 0.0 || fill->focus.Y != 0.0)
         {
@@ -1241,6 +1241,8 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
             int start_center_line=0, end_center_line=0;
             int seen_start=0, seen_end=0, seen_center=0;
             REAL center_distance;
+            ARGB start_color, end_color;
+            REAL dy, dx;
 
             type = flat_path->pathdata.Types[i];
 
@@ -1249,12 +1251,22 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
 
             start_point = flat_path->pathdata.Points[i];
 
+            start_color = fill->surroundcolors[min(i, fill->surroundcolorcount-1)];
+
             if ((type&PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath || i+1 >= flat_path->pathdata.Count)
+            {
                 end_point = flat_path->pathdata.Points[figure_start];
+                end_color = fill->surroundcolors[min(figure_start, fill->surroundcolorcount-1)];
+            }
             else if ((flat_path->pathdata.Types[i+1] & PathPointTypePathTypeMask) == PathPointTypeLine)
+            {
                 end_point = flat_path->pathdata.Points[i+1];
+                end_color = fill->surroundcolors[min(i+1, fill->surroundcolorcount-1)];
+            }
             else
                 continue;
+
+            outer_color = start_color;
 
             min_yf = center_point.Y;
             if (min_yf > start_point.Y) min_yf = start_point.Y;
@@ -1274,9 +1286,12 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
             else
                 max_y = (INT)ceil(max_yf);
 
+            dy = end_point.Y - start_point.Y;
+            dx = end_point.X - start_point.X;
+
             /* This is proportional to the distance from start-end line to center point. */
-            center_distance = (end_point.Y - start_point.Y) * (start_point.X - center_point.X) +
-                (end_point.X - start_point.X) * (center_point.Y - start_point.Y);
+            center_distance = dy * (start_point.X - center_point.X) +
+                dx * (center_point.Y - start_point.Y);
 
             for (y=min_y; y<max_y; y++)
             {
@@ -1327,9 +1342,19 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
 
                 for (x=min_x; x<max_x; x++)
                 {
+                    REAL xf = (REAL)x;
                     REAL distance;
 
-                    distance = (end_point.Y - start_point.Y) * (start_point.X - (REAL)x) +
+                    if (start_color != end_color)
+                    {
+                        REAL blend_amount, pdy, pdx;
+                        pdy = yf - center_point.Y;
+                        pdx = xf - center_point.X;
+                        blend_amount = ( (center_point.Y - start_point.Y) * pdx + (start_point.X - center_point.X) * pdy ) / ( dy * pdx - dx * pdy );
+                        outer_color = blend_colors(start_color, end_color, blend_amount);
+                    }
+
+                    distance = (end_point.Y - start_point.Y) * (start_point.X - xf) +
                         (end_point.X - start_point.X) * (yf - start_point.Y);
 
                     distance = distance / center_distance;
