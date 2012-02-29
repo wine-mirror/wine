@@ -32,25 +32,18 @@ Um Wine kompilieren und ausführen zu können, brauchen Sie eines der
 folgenden Betriebssysteme:
 
   Linux version 2.0.36 oder neuer
-  FreeBSD 6.3 oder neuer
+  FreeBSD 7.0 oder neuer
   Solaris x86 9 oder neuer
   NetBSD-current
   Mac OS X 10.4 oder neuer
 
-Da Wine Thread-Support auf Kernelebene benötigt, werden nur die oben
+Da Wine Thread-Unterstützung auf Kernelebene benötigt, werden nur die oben
 aufgeführten Betriebssysteme unterstützt.
 Andere Betriebssysteme, die Kernel-Threads unterstützen, werden unter
 Umständen in der Zukunft unterstützt.
 
-Linux-Info:
-  Obwohl Linux 2.2.x immer noch funktionieren sollte und Linux 2.0.x
-  vielleicht auch noch funktioniert (ältere 2.0.x-Versionen verzeichneten
-  Abstürze im Zusammenhang mit Threads), sollte man am besten einen
-  aktuellen Kernel wie 2.4.x oder 2.6.x verwenden.
-
 FreeBSD-Info:
-  Wine läuft prinzipiell erst ab FreeBSD 6.3 oder 7.0 richtig, wobei für
-  FreeBSD 6.3 zusätzliche Patches erhältlich sind. Siehe dazu auch
+  Wine läuft prinzipiell erst ab FreeBSD 7.0 richtig. Siehe dazu auch
   http://wiki.freebsd.org/Wine für weitere Informationen.
 
 Solaris-Info:
@@ -68,11 +61,10 @@ Mac OS X Info:
   Sie benötigen mindestens Xcode 2.4 um richtig unter x86 kompilieren zu können.
 
 Unterstützte Dateisysteme:
-  Wine sollte auf den meisten Dateisystemen laufen. Ein paar
-  Kompatibilitäts-Probleme wurden auch gemeldet beim Dateizugriff über Samba.
+  Wine sollte auf den meisten Dateisystemen laufen. Kompatibilitätsprobleme
+  wurden allerdings beim Dateizugriff über Samba gemeldet.
   Weiterhin bietet NTFS nicht alle Dateisystemfunktionen, die von einigen
-  Programmen benötigt werden. Ein natives Linux Dateisystem wie ext3 wird
-  empfohlen.
+  Programmen benötigt werden. Ein natives Unix-Dateisystem wird empfohlen.
 
 Grundsätzliche Voraussetzungen:
   Sie müssen die Include-Dateien für X11-Entwicklung installiert haben
