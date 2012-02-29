@@ -1023,7 +1023,7 @@ msgstr "Pripravljen"
 
 #: comdlg32.rc:80
 msgid "Paused; "
-msgstr "V premoru, "
+msgstr "V premoru; "
 
 #: comdlg32.rc:81
 msgid "Error; "
@@ -1031,43 +1031,43 @@ msgstr "Napaka; "
 
 #: comdlg32.rc:82
 msgid "Pending deletion; "
-msgstr "Brisanje je na čakanju, "
+msgstr "Brisanje je na čakanju; "
 
 #: comdlg32.rc:83
 msgid "Paper jam; "
-msgstr "Papir se je zataknil, "
+msgstr "Papir se je zataknil; "
 
 #: comdlg32.rc:84
 msgid "Out of paper; "
-msgstr "Zmanjkalo je papirja, "
+msgstr "Zmanjkalo je papirja; "
 
 #: comdlg32.rc:85
 msgid "Feed paper manual; "
-msgstr "Podajanje papirja je ročno, "
+msgstr "Podajanje papirja je ročno; "
 
 #: comdlg32.rc:86
 msgid "Paper problem; "
-msgstr "Težava s papirjem, "
+msgstr "Težava s papirjem; "
 
 #: comdlg32.rc:87
 msgid "Printer offline; "
-msgstr "Tiskalnik ni povezan, "
+msgstr "Tiskalnik ni povezan; "
 
 #: comdlg32.rc:88
 msgid "I/O Active; "
-msgstr "V/I je dejaven, "
+msgstr "V/I je dejaven; "
 
 #: comdlg32.rc:89
 msgid "Busy; "
-msgstr "Zaposleno, "
+msgstr "Zaposleno; "
 
 #: comdlg32.rc:90
 msgid "Printing; "
-msgstr "Tiskanje, "
+msgstr "Tiskanje; "
 
 #: comdlg32.rc:91
 msgid "Output tray is full; "
-msgstr "Izhodni pladenj je poln, "
+msgstr "Izhodni pladenj je poln; "
 
 #: comdlg32.rc:92
 msgid "Not available; "
@@ -1075,51 +1075,51 @@ msgstr "Ni na voljo; "
 
 #: comdlg32.rc:93
 msgid "Waiting; "
-msgstr "Čakanje, "
+msgstr "Čakanje; "
 
 #: comdlg32.rc:94
 msgid "Processing; "
-msgstr "Obdelovanje, "
+msgstr "Obdelovanje; "
 
 #: comdlg32.rc:95
 msgid "Initialising; "
-msgstr "Začenjanje, "
+msgstr "Začenjanje; "
 
 #: comdlg32.rc:96
 msgid "Warming up; "
-msgstr "Ogrevanje, "
+msgstr "Ogrevanje; "
 
 #: comdlg32.rc:97
 msgid "Toner low; "
-msgstr "Zmanjkuje črnila, "
+msgstr "Zmanjkuje črnila; "
 
 #: comdlg32.rc:98
 msgid "No toner; "
-msgstr "Ni črnila, "
+msgstr "Ni črnila; "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
-msgstr "Upor strani, "
+msgstr "Upor strani; "
 
 #: comdlg32.rc:100
 msgid "Interrupted by user; "
-msgstr "Preklic s strani uporabnika, "
+msgstr "Preklic s strani uporabnika; "
 
 #: comdlg32.rc:101
 msgid "Out of memory; "
-msgstr "Zmanjkalo je pomnilnika, "
+msgstr "Zmanjkalo je pomnilnika; "
 
 #: comdlg32.rc:102
 msgid "The printer door is open; "
-msgstr "Ohišje tiskalnika je odprto, "
+msgstr "Ohišje tiskalnika je odprto; "
 
 #: comdlg32.rc:103
 msgid "Print server unknown; "
-msgstr "Strežnik za tiskanje ni znan, "
+msgstr "Strežnik za tiskanje ni znan; "
 
 #: comdlg32.rc:104
 msgid "Power save mode; "
-msgstr "Način varčevanja z energijo, "
+msgstr "Način varčevanja z energijo; "
 
 #: comdlg32.rc:73
 msgid "Default Printer; "
