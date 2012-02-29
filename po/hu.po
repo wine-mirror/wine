@@ -9759,11 +9759,11 @@ msgstr "%1!c! kötetnek nincs címkéje.\n"
 
 #: cmd.rc:344
 msgid " (Yes|No)"
-msgstr "(Igen|Nem)"
+msgstr " (Igen|Nem)"
 
 #: cmd.rc:345
 msgid " (Yes|No|All)"
-msgstr "(Igen|Nem|Mind)"
+msgstr " (Igen|Nem|Mind)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -13826,7 +13826,7 @@ msgstr "F"
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr "D"
+msgstr "M"
 
 #: xcopy.rc:77
 msgid ""
