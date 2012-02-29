@@ -1207,14 +1207,7 @@ GpStatus WINGDIPAPI GdipFlattenPath(GpPath *path, GpMatrix* matrix, REAL flatnes
             continue;
         }
 
-        /* Bezier curve always stored as 4 points */
-        if((path->pathdata.Types[i-1] & PathPointTypePathTypeMask) != PathPointTypeStart){
-            type = (path->pathdata.Types[i] & ~PathPointTypePathTypeMask) | PathPointTypeLine;
-            if(!add_path_list_node(node, pt.X, pt.Y, type))
-                goto memout;
-
-            node = node->next;
-        }
+        /* Bezier curve */
 
         /* test for closed figure */
         if(path->pathdata.Types[i+1] & PathPointTypeCloseSubpath){
