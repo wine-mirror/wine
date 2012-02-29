@@ -196,6 +196,8 @@ struct GpPathGradient{
     REAL* blendfac;  /* blend factors */
     REAL* blendpos;  /* blend positions */
     INT blendcount;
+    ARGB *surroundcolors;
+    INT surroundcolorcount;
 };
 
 struct GpLineGradient{
