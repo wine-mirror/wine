@@ -866,6 +866,16 @@ static void test_gradientsurroundcolorcount(void)
     todo_wine expect(0x0000ff00, color[1]);
     expect(0xdeadbeef, color[2]);
 
+    count = 1;
+    status = GdipSetPathGradientSurroundColorsWithCount(grad, color, &count);
+    todo_wine expect(Ok, status);
+    expect(1, count);
+
+    count = 0;
+    status = GdipSetPathGradientSurroundColorsWithCount(grad, color, &count);
+    todo_wine expect(InvalidParameter, status);
+    expect(0, count);
+
     GdipDeleteBrush((GpBrush*)grad);
 
     status = GdipCreatePathGradient(getbounds_ptf, 3, WrapModeClamp, &grad);
