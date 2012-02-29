@@ -1009,11 +1009,11 @@ msgstr "Έτοιμο"
 
 #: comdlg32.rc:80
 msgid "Paused; "
-msgstr "Σταματημένος; "
+msgstr "Σταματημένος, "
 
 #: comdlg32.rc:81
 msgid "Error; "
-msgstr "Σφάλμα; "
+msgstr "Σφάλμα, "
 
 #: comdlg32.rc:82
 msgid "Pending deletion; "
@@ -1025,7 +1025,7 @@ msgstr ""
 
 #: comdlg32.rc:84
 msgid "Out of paper; "
-msgstr "Τέλος χαρτιού; "
+msgstr "Τέλος χαρτιού, "
 
 #: comdlg32.rc:85
 msgid "Feed paper manual; "
@@ -1033,11 +1033,11 @@ msgstr ""
 
 #: comdlg32.rc:86
 msgid "Paper problem; "
-msgstr "Πρόβλημα χαρτιού; "
+msgstr "Πρόβλημα χαρτιού, "
 
 #: comdlg32.rc:87
 msgid "Printer offline; "
-msgstr "Εκτυπωτής αποσυνδεδεμένος; "
+msgstr "Εκτυπωτής αποσυνδεδεμένος, "
 
 #: comdlg32.rc:88
 msgid "I/O Active; "
@@ -1045,11 +1045,11 @@ msgstr ""
 
 #: comdlg32.rc:89
 msgid "Busy; "
-msgstr "Απασχολημένος; "
+msgstr "Απασχολημένος, "
 
 #: comdlg32.rc:90
 msgid "Printing; "
-msgstr "Γίνεται εκτύπωση; "
+msgstr "Γίνεται εκτύπωση, "
 
 #: comdlg32.rc:91
 msgid "Output tray is full; "
@@ -1057,11 +1057,11 @@ msgstr ""
 
 #: comdlg32.rc:92
 msgid "Not available; "
-msgstr "ΜΗ διαθέσιμος; "
+msgstr "ΜΗ διαθέσιμος, "
 
 #: comdlg32.rc:93
 msgid "Waiting; "
-msgstr "Αναμονή; "
+msgstr "Αναμονή, "
 
 #: comdlg32.rc:94
 msgid "Processing; "
@@ -1069,19 +1069,19 @@ msgstr ""
 
 #: comdlg32.rc:95
 msgid "Initialising; "
-msgstr "Εκκίνηση; "
+msgstr "Εκκίνηση, "
 
 #: comdlg32.rc:96
 msgid "Warming up; "
-msgstr "Γίνεται προθέρμανση; "
+msgstr "Γίνεται προθέρμανση, "
 
 #: comdlg32.rc:97
 msgid "Toner low; "
-msgstr "Τόνερ χαμηλό; "
+msgstr "Τόνερ χαμηλό, "
 
 #: comdlg32.rc:98
 msgid "No toner; "
-msgstr "Δεν υπάρχει τόνερ; "
+msgstr "Δεν υπάρχει τόνερ, "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
@@ -1109,7 +1109,7 @@ msgstr ""
 
 #: comdlg32.rc:73
 msgid "Default Printer; "
-msgstr "Προεπιλεγμένος εκτυπωτής; "
+msgstr "Προεπιλεγμένος εκτυπωτής, "
 
 #: comdlg32.rc:74
 msgid "There are %d documents in the queue"
