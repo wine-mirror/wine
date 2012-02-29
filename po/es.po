@@ -9437,11 +9437,10 @@ msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
-"No implementado\n"
+"Aún no implementado\n"
 "\n"
 
 #: attrib.rc:28 cmd.rc:317
-#, fuzzy
 msgid "%1: File Not Found\n"
 msgstr "%1: Archivo no encontrado\n"
 
@@ -9514,55 +9513,55 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <nombre de archivo por lotes> se utiliza dentro de un archivo por\n"
-"lotes para ejecutar comandos desde otro archivo por lotes. Cuando el\n"
-"archivo por lotes existe, el control regresa al archivo que lo llamó. El\n"
-"comando CALL puede proporcionar parámetros para el procedimiento llamado.\n"
+"CALL <nombre de archivo de lotes> se utiliza dentro de un archivo de\n"
+"lotes para ejecutar comandos existentes dentro de otro archivo de lotes.\n"
+"Cuando el archivo de lotes existe, el control regresa al archivo desde el\n"
+"que fue llamado. Con el comando CALL se pueden pasar parámetros al\n"
+"procedimiento llamado.\n"
 "\n"
-"Los cambios sobre el directorio por defecto, variables de entorno, etc.\n"
-"realizados desde dentro de un procedimiento llamado son heredados por el\n"
-"llamante.\n"
+"Cualquier cambio sobre el directorio por defecto, las variables de entorno "
+"u\n"
+"otro cámbio realizado desde una llamada a procedimiento son heredados por "
+"el\n"
+"procedimiento que realizo la llamada.\n"
 
 #: cmd.rc:40
-#, fuzzy
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
-msgstr "Ayuda sobre CD\n"
+msgstr ""
+"CD <directorio> es la versión corta del comando CHDIR. Este\n"
+"comando cambia el directorio actual.\n"
 
 #: cmd.rc:41
-#, fuzzy
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "Ayuda sobre CHDIR\n"
+msgstr "CHDIR <directorio> cambia el directorio actual.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS limpia la pantalla de la consola.\n"
+msgstr "CLS limpia la consola actual.\n"
 
 #: cmd.rc:45
-#, fuzzy
 msgid "COPY <filename> copies a file.\n"
-msgstr "Ayuda sobre COPY\n"
+msgstr "COPY <archivo> copia un archivo.\n"
 
 #: cmd.rc:46
-#, fuzzy
 msgid "CTTY changes the input/output device.\n"
-msgstr "Ayuda sobre CTTY\n"
+msgstr ""
+"CTTY cambia el dispositivo de entrada/salida\n"
+"por defecto.\n"
 
 #: cmd.rc:47
-#, fuzzy
 msgid "DATE shows or changes the system date.\n"
-msgstr "Ayuda sobre DATE\n"
+msgstr "DATE muestra o cambia la fecha del sistema.\n"
 
 #: cmd.rc:48
-#, fuzzy
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "Ayuda sobre DEL\n"
+msgstr "DEL <archivo> borra un archivo o grupo de archivos.\n"
 
 #: cmd.rc:49
-#, fuzzy
 msgid "DIR lists the contents of a directory.\n"
-msgstr "Ayuda sobre DIR\n"
+msgstr "DIR muestra el contenido de un directorio.\n"
 
 #: cmd.rc:59
 msgid ""
@@ -9575,19 +9574,18 @@ msgid ""
 "default). The ECHO OFF command can be prevented from displaying by\n"
 "preceding it with an @ sign.\n"
 msgstr ""
-"ECHO <cadena> muestra <cadena> en el dispositivo de terminal actual.\n"
+"ECHO <cadena> muestra la <cadena> suministrada en el terminal actual.\n"
 "\n"
-"ECHO ON provoca que todos los comandos subsiguientes en un archivo por\n"
-"lotes sean mostrados en el terminal antes de ser ejecutados.\n"
+"ECHO ON muestra en pantalla los comandos de un archivo de lotes\n"
+"previamente a su ejecución.\n"
 "\n"
-"ECHO OFF invierte el efecto de un previo ECHO ON (ECHO es OFF por\n"
-"defecto). El comando ECHO OFF puede prevenirse de ser mostrado\n"
-"precediéndolo por un signo @.\n"
+"ECHO OFF invierte el efecto de un ECHO ON previamente activado (ECHO\n"
+"por defecto es OFF). Es posible ocultar el comando ECHO OFF añadiendo\n"
+"un signo @ delante de él.\n"
 
 #: cmd.rc:61
-#, fuzzy
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "Ayuda sobre ERASE\n"
+msgstr "ERASE <archivo> borra un archivo o grupo de archivos.\n"
 
 #: cmd.rc:69
 msgid ""
@@ -9598,13 +9596,13 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
-"El comando FOR se utiliza para ejecutar un comando para cada uno de\n"
-"un conjunto de archivos.\n"
+"El comando FOR se utiliza para ejecutar un comando en una lista de\n"
+"archivos.\n"
 "\n"
-"Sintaxis: FOR %variable IN (conjunto) DO comando\n"
+"Sintaxis: FOR %variable IN (lista) DO comando\n"
 "\n"
-"La necesidad de doblar el signo % cuando se utiliza FOR en un archivo\n"
-"por lotes no existe en cmd.\n"
+"La necesidad de repetir el signo % cuando se utiliza FOR en un\n"
+"archivo de lotes no existe en el cmd de Wine.\n"
 
 #: cmd.rc:81
 msgid ""
@@ -9619,27 +9617,27 @@ msgid ""
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
-"El comando GOTO transfiere la ejecución a otro mandato dentro de un\n"
-"archivo por lotes.\n"
+"El comando GOTO mueve la ejecución a otro mandato dentro de un\n"
+"archivo de lotes.\n"
 "\n"
 "La etiqueta que es el objetivo de un comando GOTO puede ser de hasta\n"
 "255 caracteres de longitud pero no puede incluir espacios (esto es\n"
 "diferente a otros sistemas operativos). Si dos o más etiquetas\n"
-"idénticas existen en un archivo por lotes, la primera de ellas será\n"
-"siempre la que se ejecutará. El intento de hacer GOTO a una etiqueta\n"
-"no existente termina la ejecución del archivo por lotes.\n"
+"idénticas existen en un archivo de lotes, siempre se ejecutará la\n"
+"primera de ellas. Una llamada GOTO a una etiqueta inexistente\n"
+"terminara la ejecución del archivo de lotes.\n"
 "\n"
-"GOTO no tiene efecto cuando se usa interactivamente.\n"
+"El comanndo GOTO no tiene ningún efecto cuando se usa interactivamente.\n"
 
 #: cmd.rc:84
-#, fuzzy
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
-msgstr "Ayuda sobre HELP\n"
+msgstr ""
+"HELP <comando> muestra una breve ayuda sobre un comando.\n"
+"HELP sin ningún otro arguento muestra los comandos CMD por defecto.\n"
 
 #: cmd.rc:94
-#, fuzzy
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9652,9 +9650,9 @@ msgid ""
 msgstr ""
 "IF se utiliza para ejecutar condicionalmente un comando.\n"
 "\n"
-"Sintaxis:\tIF [NOT] EXIST nombre_archivo comando\n"
-"IF [NOT] cadena1==cadena2 comando\n"
-"IF [NOT] ERRORLEVEL número comando\n"
+"Sintaxis: IF [NOT] EXIST archivo comando\n"
+"          IF [NOT] cadena1==cadena2 comando\n"
+"          IF [NOT] ERRORLEVEL número comando\n"
 "\n"
 "En la segunda forma del comando, cadena1 y cadena2 deben estar entre\n"
 "comillas dobles. La comparación no distingue mayúsculas de minúsculas.\n"
@@ -9667,22 +9665,21 @@ msgid ""
 "The command will prompt you for the new volume label for the given drive.\n"
 "You can display the disk volume label with the VOL command.\n"
 msgstr ""
-"LABEL se utiliza para ajustar una etiqueta de volumen\n"
-"de disco.\n"
+"LABEL se utiliza para establecer la etiqueta de volumen de disco.\n"
 "\n"
 "Sintaxis: LABEL [unidad:]\n"
-"El comando le pedirá la nueva etiqueta de volumen para la unidad dada.\n"
-"Puede ver la etiqueta de volumen del disco con el comando VOL.\n"
+"El comando le solicitará una nueva etiqueta de volumen para la unidad.\n"
+"Puede ver la etiqueta actual del disco con el comando VOL.\n"
 
 #: cmd.rc:103
-#, fuzzy
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "Ayuda sobre MD\n"
+msgstr ""
+"MD <nombre> es la versión corta de MKDIR. Este comando crea un\n"
+"subdirectorio.\n"
 
 #: cmd.rc:104
-#, fuzzy
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "Ayuda sobre MKDIR\n"
+msgstr "Ayuda <nombre> crea un subdirectorio.\n"
 
 #: cmd.rc:111
 msgid ""
@@ -9694,14 +9691,14 @@ msgid ""
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
-"MOVE realoja un archivo o directorio a un nuevo punto del sistema de\n"
+"MOVE mueve un archivo o directorio a un nuevo lugar dentro del sistema de\n"
 "archivos.\n"
 "\n"
-"Si el elemento siendo movido es un directorio, entonces todos los\n"
-"archivos y subdirectorios por debajo del elemento son movidos también.\n"
+"Si el elemento movido es un directorio, todos los archivos y subdirectorios\n"
+"por debajo de él son movidos también.\n"
 "\n"
-"MOVE falla si la localización vieja y la nueva están en diferentes\n"
-"letras de unidad de DOS.\n"
+"MOVE fallara si la antigua localización y la nueva están en diferentes\n"
+"unidades de DOS.\n"
 
 #: cmd.rc:122
 msgid ""
@@ -9715,32 +9712,31 @@ msgid ""
 "variable, for example:\n"
 "PATH %PATH%;c:\\temp\n"
 msgstr ""
-"PATH muestra o cambia la ruta de búsqueda de cmd.\n"
+"PATH cambia o muestra la ruta de búsqueda cmd.\n"
 "\n"
-"Al introducir PATH se mostrará la configuración actual de PATH\n"
-"(inicialmente esto es el valor dado en su archivo wine.conf). Para\n"
-"cambiar la configuración acompañe al comando PATH con el nuevo valor.\n"
+"Ejecutar PATH sin argumentos mostrará la configuración actual de PATH\n"
+"(inicialmente este válor se obtiene del registro). Para cambiar la\n"
+"configuración ejecute PATH seguido del nuevo valor.\n"
 "\n"
 "También es posible modificar el PATH usando la variable de entorno\n"
-"PATH, por ejamplo:\n"
+"PATH, por ejémplo:\n"
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
-#, fuzzy
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE muestra un mensaje en la pantalla 'Pulse la tecla Return para\n"
-"continuar' y espera que el usuario pulse la tecla Return. Es\n"
-"principalmente útil en archivos por lotes para permitir al usuario\n"
-"leer la salida de un comando anterior antes de que se desplace fuera\n"
-"de la pantalla.\n"
+"PAUSE muestra un mensaje en pantalla pidiendo al usuario que pulse\n"
+"qualquier tecla para continuar.\n"
+"\n"
+"Este comando es útil en archivos de lotes para permitir al usuario\n"
+"leer la salida de un comando antes de que este desaparezca de la\n"
+"pantalla.\n"
 
 #: cmd.rc:149
-#, fuzzy
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9766,18 +9762,18 @@ msgstr ""
 "\n"
 "La cadena que sigue al comando PROMPT (y el espacio inmediatamente\n"
 "después) aparece al principio de la línea cuando cmd está esperando\n"
-"la entrada.\n"
+"la entrada de comandos.\n"
 "\n"
-"Las siguientes cadenas de caracteres tienen el significado especial\n"
-"que se muestra:\n"
+"Las siguientes cadenas de caracteres tienen el significado que se\n"
+"muestra:\n"
 "\n"
-"$$    Signo dólar         $_    Nueva línea         $b    Signo de tubo (|)\n"
+"$$    Signo dólar         $_    Nueva línea         $b    Signo tubería (|)\n"
 "$d    Fecha actual        $e    Escape              $g    Signo >\n"
 "$l    Signo <             $n    Unidad actual       $p    Ruta actual\n"
 "$q    Signo igual         $t    Hora actual         $v    Versión de cmd\n"
 "\n"
 "Nótese que si se introduce el comando PROMPT sin una cadena de prompt\n"
-"reinicializa el prompt al valor por defecto, que es el directorio\n"
+"reinicializará el prompt al valor por defecto, que es el directorio\n"
 "actual (que incluye la letra de la unidad actual) seguido por un signo\n"
 "mayor que (>).\n"
 "(como un comando PROMPT $p$g).\n"
@@ -9787,37 +9783,37 @@ msgstr ""
 "que 'PROMPT texto'\n"
 
 #: cmd.rc:153
-#, fuzzy
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
-"Una línea de comandos que empieza por REM (seguido de un espacio) no\n"
-"realiza ninguna acción, y puede por tanto ser utilizada como un\n"
-"comentario en un archivo por lotes.\n"
+"Un comando que empieza por REM (seguido de un espacio) no ejecuta\n"
+"ninguna acción, y por tanto puede ser utilizada como un comentario\n"
+"en un archivo de lotes.\n"
 
 #: cmd.rc:156
-#, fuzzy
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "Ayuda sobre REN\n"
+msgstr ""
+"REN <archivo> es la versión corta de RENAME. Este comando renombra\n"
+"un archivo.\n"
 
 #: cmd.rc:157
-#, fuzzy
 msgid "RENAME <filename> renames a file.\n"
-msgstr "Ayuda sobre RENAME\n"
+msgstr "RENAME <archivo> renombra un archivo.\n"
 
 #: cmd.rc:159
-#, fuzzy
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr "Ayuda sobre RD\n"
+msgstr ""
+"RD <directorio> es la versión corta de RMDIR. Este comando borra\n"
+"un subdirectorio.\n"
 
 #: cmd.rc:160
-#, fuzzy
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr "Ayuda sobre RMDIR\n"
+msgstr ""
+"RMDIR <directorio> es la versión corta de RMDIR. Este comando borra\n"
+"un subdirectorio.\n"
 
 #: cmd.rc:193
-#, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9836,7 +9832,7 @@ msgid ""
 "many more values than in a native Win32 implementation. Note that it is\n"
 "not possible to affect the operating system environment from within cmd.\n"
 msgstr ""
-"SET muestra o cambia las variables de entorno de cmd.\n"
+"SET cambia o muestra las variables de entorno de cmd.\n"
 "\n"
 "SET sin parámetros muestra todas las variables de entorno actuales.\n"
 "\n"
@@ -9846,11 +9842,11 @@ msgstr ""
 "\n"
 "donde <variable> y <valor> son cadenas de caracteres. No debe haber\n"
 "espacios antes del signo igual, ni la variable puede contener espacios\n"
-"embebidos.\n"
+"intermedios.\n"
 "\n"
-"Bajo Wine, el entorno del sistema operativo que hay por debajo se\n"
-"incluye en el entorno de Win32 por lo que, por lo general, habrá muchos\n"
-"más valores que en una implementación Win32 nativa. Nótese que no es\n"
+"Bajo Wine, el entorno del sistema operativo subyacente se incluye\n"
+"en el entorno de Win32 por lo que, por lo general, habrá muchos más\n"
+"valores que en una implementación Win32 nativa. Nótese que no es\n"
 "posible afectar al entorno del sistema operativo desde cmd.\n"
 
 #: cmd.rc:198
@@ -9859,13 +9855,12 @@ msgid ""
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
 "if called from the command line.\n"
 msgstr ""
-"SHIFT se utiliza en un archivo por lotes para eliminar un parámetro\n"
+"SHIFT se utiliza en un archivo de lotes para eliminar un parámetro\n"
 "de la cabeza de la lista, por lo que el parámetro 2 se convierte en\n"
 "el parámetro 1 y demás. No tiene efecto si se llama desde la línea\n"
 "de comando.\n"
 
 #: cmd.rc:175 start.rc:39
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9883,8 +9878,8 @@ msgid ""
 "/ProgIDOpen  Open a document using the following progID.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
-"Inicia un programa, o abre un documento con el programa que se suele "
-"utilizar para archivos con esa extensión.\n"
+"Inicia un programa, o abre un documento con el programa por defecto para "
+"archivos con esa extensión.\n"
 "Uso:\n"
 "start [opciones] fichero_programa [...]\n"
 "start [opciones] fichero_documento\n"
@@ -9893,33 +9888,31 @@ msgstr ""
 "/M[inimized] Inicia el programa minimizado.\n"
 "/MAX[imized] Inicia el programa maximizado.\n"
 "/R[estored]  Inicia el programa normalmente (ni minimizado ni maximizado).\n"
-"/W[ait]      Espera que termine el programa iniciado y después sale con su "
+"/W[ait]      Espera a que el programa iniciado termine y después sale con su "
 "código de salida.\n"
-"/Unix        Usa un nombre de archivo de Unix e inicia el archivo como en el "
+"/Unix        Usa un nombre de archivo Unix e inicia el archivo como en el "
 "explorador de windows.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
+"/?           Muesta esta ayuda y finaliza.\n"
 
 #: cmd.rc:200
-#, fuzzy
 msgid "TIME sets or shows the current system time.\n"
-msgstr "Ayuda sobre TIME\n"
+msgstr "TIME muestra o cambia la hora actual del sistema.\n"
 
 #: cmd.rc:202
-#, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr "Ajusta el título de la ventana de cmd, sintaxis TITLE [cadena]\n"
+msgstr "TITLE <cadena> ajusta el título de la ventana de cmd.\n"
 
 #: cmd.rc:206
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
-"TYPE <nombre de archivo> copia <nombre de archivo> al dispositivo de\n"
-"consola (o a donde sea si se redirecciona). No se realiza ninguna\n"
-"comprobación de si el archivo es texto legible.\n"
+"TYPE <archivo> copia el <archivo> al dispositivo de consola (o a donde\n"
+"sea si se redirecciona). No se realiza ninguna comprobación de si el\n"
+"archivo es texto legible.\n"
 
 #: cmd.rc:215
-#, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9932,27 +9925,27 @@ msgstr ""
 "VERIFY se usa para poner, quitar o probar la etiqueta de verificación.\n"
 "Las formas válidas son:\n"
 "\n"
-"VERIFY ON\tPoner la bandera.\n"
-"VERIFY OFF\tQuitar la bandera.\n"
+"VERIFY ON\tPone la bandera.\n"
+"VERIFY OFF\tQuita la bandera.\n"
 "VERIFY\t\tMuestra ON u OFF como corresponda.\n"
 "\n"
 "La bandera de verificación no tiene funcionalidad en Wine.\n"
 
 #: cmd.rc:218
-#, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
-msgstr "VER muestra la versión de cmd que está ejecutando\n"
+msgstr "VER muestra la versión de cmd que se está ejecutando.\n"
 
 #: cmd.rc:220
-#, fuzzy
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "Ayuda sobre VOL\n"
+msgstr "VOL muestra la etiqueta de un volumen de disco.\n"
 
 #: cmd.rc:224
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
+"ENDLOCAL finaliza la localización del entorno en un archivo de lotes\n"
+"que se introdujo por una llamada a SETLOCAL.\n"
 
 #: cmd.rc:232
 msgid ""
@@ -9963,21 +9956,25 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL inicia la localización de cambios de entorno en un archivo de\n"
+"lotes.\n"
+"\n"
+"Los cambios en el entorno realizados tras una llamada a SETLOCAL son\n"
+"locales al archivo de lotes, y son mantenidos hasta que se encuentr un\n"
+"ENDLOCAL (o al final del archivo, lo que primero suceda), en este punto\n"
+"los parámetros de entorno anteriores son restaurados.\n"
 
 #: cmd.rc:235
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <nombre de directorio> almacena el directorio actual a una\n"
-"pila, y luego cambia el directorio actual al proporcionado.\n"
+"PUSHD <directorio> almacena el directorio actual en una\n"
+"pila, y después accede al directorio pasado como argumento.\n"
 
 #: cmd.rc:237
-#, fuzzy
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
-msgstr ""
-"POPD cambia el directorio actual al último almacenado con\n"
-"PUSHD.\n"
+msgstr "POPD cambia el directorio actual al que se almacenó con PUSHD.\n"
 
 #: cmd.rc:245
 msgid ""
@@ -9990,6 +9987,15 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC modifica o muestra las asociaciones de las extensiones dearchivo.\n"
+"\n"
+"Sintaxis: ASSOC [.ext[=[fileType]]]\n"
+"\n"
+"ASSOC sin argumentos muestra las asociaciones de archivo actuales.\n"
+"Si se usa con con una extensión de archivo, muestra la asociación\n"
+"actual.\n"
+"Si no se especifica un tipo de archivo despues del igual, se borra\n"
+"la asociación actual, si existe alguna.\n"
 
 #: cmd.rc:256
 msgid ""
@@ -10004,10 +10010,21 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE modifica o muestra las asociaciones de las comandos de apertura\n"
+"asociadas con extensiones de archivos.\n"
+"\n"
+"sintaxis: FTYPE [fileType[=[openCommand]]]\n"
+"\n"
+"Sin argumentos, muestra los tipos de archivo que están definidos para los\n"
+"comandos de apertura.\n"
+"Si solo se uso un tipo de archivo, muestra las cadenas de comando asociadas\n"
+"si existe alguna.\n"
+"Si no se especifica un comando después del igual, se borra la cadena\n"
+"asociada al tipo de archivo.\n"
 
 #: cmd.rc:258
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr "MORE muestra la salida de archivos o entrada entubada por páginas.\n"
+msgstr "MORE muestra la salida de archivos o entrada de tubería por páginas.\n"
 
 #: cmd.rc:262
 msgid ""
@@ -10015,6 +10032,10 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
+"CHOICE muestra un texto y espera, hasta que el usuario\n"
+"presiona una tecla válida de la opciones mostradas.\n"
+"CHOICE se usa principalmente para crear menús de selección\n"
+"en archivos de lotes.\n"
 
 #: cmd.rc:266
 msgid ""
@@ -10100,9 +10121,8 @@ msgstr ""
 "de arriba\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Are you sure?"
-msgstr "Está seguro"
+msgstr "¿Está seguro?"
 
 #: cmd.rc:307 xcopy.rc:40
 msgctxt "Yes key"
@@ -10115,19 +10135,16 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:309
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "Falta una asociación de archivo para la extensión %s\n"
+msgstr "Falta una asociación de archivo para la extensión %1\n"
 
 #: cmd.rc:310
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "Ningún comando de apertura asociado con el tipo de archivo '%s'\n"
+msgstr "Ningún comando de apertura asociado con el tipo de archivo '%1'\n"
 
 #: cmd.rc:311
-#, fuzzy
 msgid "Overwrite %1?"
-msgstr "Sobrescribir %s"
+msgstr "¿Sobrescribir %1?"
 
 #: cmd.rc:312
 msgid "More..."
@@ -10139,30 +10156,27 @@ msgstr "Línea en procesamiento por lotes posiblemente truncada. Usando:\n"
 
 #: cmd.rc:315
 msgid "Argument missing\n"
-msgstr "Argumento faltante\n"
+msgstr "Falta un argumento\n"
 
 #: cmd.rc:316
 msgid "Syntax error\n"
 msgstr "Error de sintaxis\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "No hay ayuda disponible para %s\n"
+msgstr "No hay ayuda disponible para %1\n"
 
 #: cmd.rc:319
 msgid "Target to GOTO not found\n"
 msgstr "El destino de la instrucción GOTO no se ha encontrado\n"
 
 #: cmd.rc:320
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "La fecha actual es %s\n"
+msgstr "La fecha actual es %1\n"
 
 #: cmd.rc:321
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "La hora actual es %s\n"
+msgstr "La hora actual es %1\n"
 
 #: cmd.rc:322
 msgid "Enter new date: "
@@ -10173,83 +10187,73 @@ msgid "Enter new time: "
 msgstr "Ingrese la nueva hora: "
 
 #: cmd.rc:324
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "Variable de entorno %s no definida\n"
+msgstr "Variable de entorno %1 no definida\n"
 
 #: cmd.rc:325 xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "No se pudo abrir '%s'\n"
+msgstr "No se pudo abrir '%1'\n"
 
 #: cmd.rc:326
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "No se puede llamar a una etiqueta fuera de un script por lotes\n"
+msgstr "No se puede llamar a una etiqueta fuera de un archivo de lotes\n"
 
 #: cmd.rc:327 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr ""
+msgstr "T"
 
 #: cmd.rc:328
-#, fuzzy
 msgid "Delete %1?"
-msgstr "Eliminar"
+msgstr "¿Eliminar %1?"
 
 #: cmd.rc:329
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "Echo es %s\n"
+msgstr "Echo es %1\n"
 
 #: cmd.rc:330
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "Verificar es %s\n"
+msgstr "Verificar es %1\n"
 
 #: cmd.rc:331
 msgid "Verify must be ON or OFF\n"
-msgstr "Verificar debe estar ON o OFF\n"
+msgstr "Verificar debe ser ON o OFF\n"
 
 #: cmd.rc:332
 msgid "Parameter error\n"
 msgstr "Error de parámetro\n"
 
 #: cmd.rc:333
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"El volumen en la unidad %c es %s\n"
-"El número de serie del volumen es %04x-%04x\n"
+"El número de serie del volumen es %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:334
-#, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "Etiqueta del volumen (11 caracteres, Return para ninguno)?"
+msgstr "¿Etiqueta del volumen (11 caracteres, <Return> para ninguno)?"
 
 #: cmd.rc:335
 msgid "PATH not found\n"
 msgstr "PATH no encontrado\n"
 
 #: cmd.rc:336
-#, fuzzy
 msgid "Press any key to continue... "
-msgstr "Pulse la tecla Return para continuar: "
+msgstr "Pulse cualquier tecla para continuar... "
 
 #: cmd.rc:337
 msgid "Wine Command Prompt"
-msgstr "Wine Símbolo del sistema"
+msgstr "Símbolo del sistema de Wine"
 
 #: cmd.rc:338
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "CMD Versión %s\n"
+msgstr "CMD Versión %1!S!\n"
 
 #: cmd.rc:339
 msgid "More? "
-msgstr "Más? "
+msgstr "¿Más? "
 
 #: cmd.rc:340
 msgid "The input line is too long.\n"
@@ -10257,21 +10261,19 @@ msgstr "La línea de entrada es demasiado larga.\n"
 
 #: cmd.rc:341
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "El volumen en la unidad %1!c! es %2\n"
 
 #: cmd.rc:342
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "El volumen en la unidad %1!c! no tiene etiqueta.\n"
 
 #: cmd.rc:343
-#, fuzzy
 msgid " (Yes|No)"
-msgstr "Sobrescribir %s"
+msgstr " (Sí|No)"
 
 #: cmd.rc:344
-#, fuzzy
 msgid " (Yes|No|All)"
-msgstr "Sobrescribir %s"
+msgstr " (Sí|No|Todo)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
