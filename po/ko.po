@@ -13257,7 +13257,6 @@ msgid "Sort by &Date"
 msgstr "날짜로 정렬(&D)"
 
 #: winefile.rc:56
-#, fuzzy
 msgid "Filter by&..."
 msgstr "...(&.)로 걸려내기"
 
@@ -13558,9 +13557,8 @@ msgid "Always on &top"
 msgstr "항상 위(&T)"
 
 #: winhlp32.rc:56
-#, fuzzy
 msgid "&About Wine Help"
-msgstr "Wine 도움말 정보(&I)"
+msgstr "Wine 도움말 정보(&A)"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
