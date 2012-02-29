@@ -340,7 +340,7 @@ static void update_travellog(DocHost *This)
     }else if(This->travellog_size < This->travellog_position+1) {
         travellog_entry_t *new_travellog;
 
-        new_travellog = heap_realloc(This->travellog, This->travellog_size*2);
+        new_travellog = heap_realloc(This->travellog, This->travellog_size*2*sizeof(*This->travellog));
         if(!new_travellog)
             return;
 
