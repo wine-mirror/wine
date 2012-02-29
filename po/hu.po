@@ -8906,7 +8906,7 @@ msgstr "Kimeneti &fájlnév:"
 
 #: winspool.rc:28
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "A kimeneti fájl már létezik.  Kattintson az OK gombra a felülíráshoz."
+msgstr "A kimeneti fájl már létezik. Kattintson az OK gombra a felülíráshoz."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -12183,7 +12183,7 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"A Wine különböző Windows verzióként tud viselkedni alkalmazásonként.  Ez a "
+"A Wine különböző Windows verzióként tud viselkedni alkalmazásonként. Ez a "
 "fül összeköttetésben áll a Függvénykönyvtár és Grafika füllel, hogy lehetővé "
 "tegye a rendszerszintű vagy alkalmazásonkénti beállításokat ezeken a füleken "
 "is."
