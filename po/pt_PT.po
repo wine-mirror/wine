@@ -8190,19 +8190,22 @@ msgstr "Os Meus Documentos"
 #: shell32.rc:217
 #, fuzzy
 msgid "Administrative Tools"
-msgstr "Menu Iniciar\\Programas\\Ferramentas Administrativas"
+msgstr "Ferramentas Administrativas"
 
 #: shell32.rc:218
+#, fuzzy
 msgid "Music"
-msgstr "Os Meus Documentos\\As Minhas Músicas"
+msgstr "As Minhas Músicas"
 
 #: shell32.rc:219
+#, fuzzy
 msgid "Pictures"
-msgstr "Os Meus Documentos\\As Minhas Imagens"
+msgstr "As Minhas Imagens"
 
 #: shell32.rc:220
+#, fuzzy
 msgid "Videos"
-msgstr "Os Meus Documentos\\Os Meus Vídeos"
+msgstr "Os Meus Vídeos"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
@@ -8219,12 +8222,12 @@ msgstr "Ligações"
 #: shell32.rc:223
 #, fuzzy
 msgid "Slide Shows"
-msgstr "Imagens\\Apresentações"
+msgstr "Apresentações"
 
 #: shell32.rc:224
 #, fuzzy
 msgid "Playlists"
-msgstr "Músicas\\Listas de reprodução"
+msgstr "Listas de reprodução"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -8241,22 +8244,22 @@ msgstr "Modelo"
 #: shell32.rc:225
 #, fuzzy
 msgid "Sample Music"
-msgstr "Músicas\\Amostra de músicas"
+msgstr "Amostra de músicas"
 
 #: shell32.rc:226
 #, fuzzy
 msgid "Sample Pictures"
-msgstr "Imagens\\Amostra de imagens"
+msgstr "Amostra de imagens"
 
 #: shell32.rc:227
 #, fuzzy
 msgid "Sample Playlists"
-msgstr "Músicas\\Amostra de listas de reprodução"
+msgstr "Amostra de listas de reprodução"
 
 #: shell32.rc:228
 #, fuzzy
 msgid "Sample Videos"
-msgstr "Videos\\Amostra de vídeos"
+msgstr "Amostra de vídeos"
 
 #: shell32.rc:229
 msgid "Saved Games"
