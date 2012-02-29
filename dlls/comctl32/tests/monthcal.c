@@ -385,6 +385,7 @@ static void test_monthcal(void)
 
     /* set both limits, then set max < min */
     GetSystemTime(&st[0]);
+    st[0].wDay = 25;
     st[1] = st[0];
     st[1].wYear++;
     ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MIN|GDTR_MAX, (LPARAM)st), "Failed to set limits\n");
