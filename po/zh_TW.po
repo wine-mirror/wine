@@ -122,6 +122,7 @@ msgid ""
 msgstr ""
 "Wine 需要安裝 Gecko 套件才能正確顯示嵌在應用程式中的 HTML 網頁。Wine 可以自動"
 "幫您下載並安裝 Gecko。\n"
+"\n"
 "備註：建議您使用發行版所附的套件。詳情請見 <a href=\"http://wiki.winehq.org/"
 "Gecko\">http://wiki.winehq.org/Gecko</a>"
 
