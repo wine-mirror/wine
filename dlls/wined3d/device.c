@@ -5357,7 +5357,13 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
     if (swapchain_desc->device_window
             && swapchain_desc->device_window != swapchain->desc.device_window)
-        FIXME("Cannot change the device window yet.\n");
+    {
+        TRACE("Changing the device window from %p to %p.\n",
+                swapchain->desc.device_window, swapchain_desc->device_window);
+        swapchain->desc.device_window = swapchain_desc->device_window;
+        swapchain->device_window = swapchain_desc->device_window;
+        wined3d_swapchain_set_window(swapchain, NULL);
+    }
 
     if (swapchain_desc->enable_auto_depth_stencil && !device->auto_depth_stencil)
     {
