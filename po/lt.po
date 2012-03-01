@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-22 21:51+0300\n"
+"PO-Revision-Date: 2012-03-01 21:21+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -9587,7 +9587,6 @@ msgstr ""
 "jokio poveikio, kai kviečiama iš komandos eilutės.\n"
 
 #: cmd.rc:175 start.rc:39
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9620,7 +9619,6 @@ msgstr ""
 "/Unix        Naudoti Unix failo vardą ir paleisti failą kaip windows "
 "naršyklėje.\n"
 "/ProgIDOpen  Atverti dokumentą naudojant šį progID.\n"
-"/L           Parodyti galutinio naudotojo licenciją.\n"
 "/?           Parodyti šį pranešimą ir išeiti.\n"
 
 #: cmd.rc:200
