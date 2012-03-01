@@ -102,7 +102,7 @@ msgstr "Telefonická podpora:"
 
 #: appwiz.rc:82
 msgid "Readme:"
-msgstr "Čítaj ma"
+msgstr "Čítaj ma:"
 
 #: appwiz.rc:83
 msgid "Product Updates:"
@@ -253,7 +253,7 @@ msgstr "snímkov"
 
 #: avifil32.rc:49
 msgid "Current format:"
-msgstr "Aktuálny formát"
+msgstr "Aktuálny formát:"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
@@ -791,7 +791,7 @@ msgstr "Súbor nenájdený"
 
 #: comdlg32.rc:30
 msgid "Please verify that the correct file name was given"
-msgstr "Prosím overte si, že bol zadaný správny názov súboru."
+msgstr "Prosím overte si, že bol zadaný správny názov súboru"
 
 #: comdlg32.rc:31
 msgid ""
@@ -1025,7 +1025,7 @@ msgstr "Chyba; "
 
 #: comdlg32.rc:82
 msgid "Pending deletion; "
-msgstr "Čaká na odstránenie;"
+msgstr "Čaká na odstránenie; "
 
 #: comdlg32.rc:83
 msgid "Paper jam; "
@@ -2086,7 +2086,7 @@ msgstr "Viac &informácií"
 
 #: cryptui.rc:236
 msgid "&Friendly name:"
-msgstr "&Popisný názov"
+msgstr "&Popisný názov:"
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
@@ -2559,7 +2559,7 @@ msgstr ""
 
 #: cryptui.rc:83
 msgid "Could not open "
-msgstr "Nemôžem otvoriť"
+msgstr "Nemôžem otvoriť "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -3127,7 +3127,7 @@ msgstr "&Tlačiť..."
 
 #: ieframe.rc:36
 msgid "Pr&int..."
-msgstr "&Tlačiť"
+msgstr "Tlač&iť..."
 
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
@@ -3188,7 +3188,7 @@ msgstr "Hľadanie %s"
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
-msgstr "Začať sťahovanie"
+msgstr "Začať sťahovanie %s"
 
 #: ieframe.rc:80
 msgid "Downloading %s"
@@ -3237,7 +3237,7 @@ msgstr "Zmazať &súbory..."
 
 #: inetcpl.rc:57
 msgid "&Settings..."
-msgstr "&Nastavenia"
+msgstr "&Nastavenia..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
@@ -9816,27 +9816,27 @@ msgstr ""
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
-msgstr ""
+msgstr "&Nový\tCtrl+N"
 
 #: notepad.rc:28 wordpad.rc:29
 msgid "&Open...\tCtrl+O"
-msgstr ""
+msgstr "&Otvoriť...\tCtrl+O"
 
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
-msgstr ""
+msgstr "&Uložiť\tCtrl+S"
 
 #: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
-msgstr ""
+msgstr "&Tlačiť...\tCtrl+P"
 
 #: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
-msgstr ""
+msgstr "Nastavenia str&any..."
 
 #: notepad.rc:34
 msgid "P&rinter Setup..."
-msgstr ""
+msgstr "N&astavenia tlačiarne..."
 
 #: notepad.rc:38 regedit.rc:40 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
 msgid "&Edit"
@@ -9844,48 +9844,48 @@ msgstr "&Upraviť"
 
 #: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
-msgstr ""
+msgstr "&Späť\tCtrl+Z"
 
 #: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
-msgstr ""
+msgstr "V&ystrihnúť\tCtrl+X"
 
 #: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
-msgstr ""
+msgstr "&Kopírovať\tCtrl+C"
 
 #: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
-msgstr ""
+msgstr "&Vložiť\tCtrl+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:90 regedit.rc:106
 #: winefile.rc:29
 msgid "&Delete\tDel"
-msgstr ""
+msgstr "&Zmazať\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
-msgstr ""
+msgstr "Vybrať &všetko\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
-msgstr ""
+msgstr "&Čas/Dátum\tF5"
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
-msgstr ""
+msgstr "&Zalamuj dlhé riadky"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr ""
+msgstr "&Nájsť...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
-msgstr ""
+msgstr "&Nájsť ďalšie\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
-msgstr ""
+msgstr "&Nahradiť...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:82
 msgid "&Contents\tF1"
@@ -9893,24 +9893,23 @@ msgstr ""
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr ""
+msgstr "&O aplikácii Poznámkový blok"
 
 #: notepad.rc:97
 msgid "Page Setup"
-msgstr ""
+msgstr "Nastavenie strany"
 
 #: notepad.rc:99
 msgid "&Header:"
-msgstr ""
+msgstr "&Hlavička:"
 
 #: notepad.rc:101
 msgid "&Footer:"
-msgstr ""
+msgstr "&Päta:"
 
 #: notepad.rc:104
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "Okraje [mm]"
+msgstr "Okraje (milimetre)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -9922,32 +9921,32 @@ msgstr ""
 
 #: notepad.rc:123
 msgid "Encoding:"
-msgstr ""
+msgstr "Kódovanie:"
 
 #: notepad.rc:129 wordpad.rc:278
 msgctxt "accelerator Select All"
 msgid "A"
-msgstr ""
+msgstr "A"
 
 #: notepad.rc:130 wordpad.rc:280
 msgctxt "accelerator Copy"
 msgid "C"
-msgstr ""
+msgstr "C"
 
 #: notepad.rc:131 regedit.rc:320 wordpad.rc:276
 msgctxt "accelerator Find"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
 msgid "N"
-msgstr ""
+msgstr "N"
 
 #: notepad.rc:134 wordpad.rc:287
 msgctxt "accelerator Open"
@@ -9957,35 +9956,35 @@ msgstr "O"
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:66
 msgid "Page &p"
-msgstr ""
+msgstr "Strana &p"
 
 #: notepad.rc:68
 msgid "Notepad"
-msgstr ""
+msgstr "Poznámkový blok"
 
 #: notepad.rc:69 progman.rc:61 winhlp32.rc:79
 msgid "ERROR"
@@ -9993,11 +9992,11 @@ msgstr "CHYBA"
 
 #: notepad.rc:71
 msgid "Untitled"
-msgstr ""
+msgstr "Nepomenovaný"
 
 #: notepad.rc:74 winedbg.rc:38
 msgid "Text files (*.txt)"
-msgstr ""
+msgstr "Textové súbory (*.txt)"
 
 #: notepad.rc:77
 msgid ""
@@ -10048,9 +10047,8 @@ msgid "&View TypeLib..."
 msgstr ""
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "Informácie"
+msgstr "&Systémová konfigurácia"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -10073,14 +10071,12 @@ msgid "In-process &handler"
 msgstr ""
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "Lokálne pevné disky"
+msgstr "Lokálny server"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "&Skomentovať..."
+msgstr "&Vzdialený server"
 
 #: oleview.rc:47
 #, fuzzy
@@ -10117,7 +10113,7 @@ msgstr ""
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:62 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
-msgstr ""
+msgstr "&Panel nástrojov"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:64
 msgid "&Status Bar"
@@ -10125,16 +10121,15 @@ msgstr ""
 
 #: oleview.rc:67 regedit.rc:69 winefile.rc:78
 msgid "&Refresh\tF5"
-msgstr ""
+msgstr "&Obnoviť\tF5"
 
 #: oleview.rc:71
-#, fuzzy
 msgid "&About OleView"
-msgstr "O programe &Wine"
+msgstr "&O programe OleView"
 
 #: oleview.rc:79
 msgid "&Save as..."
-msgstr ""
+msgstr "&Uložiť ako..."
 
 #: oleview.rc:84
 msgid "&Group by type kind"
@@ -10142,21 +10137,19 @@ msgstr ""
 
 #: oleview.rc:154
 msgid "Connect to another machine"
-msgstr ""
+msgstr "Pripojiť sa k inému stroju"
 
 #: oleview.rc:157
 msgid "&Machine name:"
-msgstr ""
+msgstr "&Názov stroja:"
 
 #: oleview.rc:165
-#, fuzzy
 msgid "System Configuration"
-msgstr "Informácie"
+msgstr "Systémová konfigurácia"
 
 #: oleview.rc:168
-#, fuzzy
 msgid "System Settings"
-msgstr "Systémové adresáre"
+msgstr "Systémové nastavenia"
 
 #: oleview.rc:169
 msgid "&Enable Distributed COM"
@@ -10178,9 +10171,8 @@ msgid "Default Interface Viewer"
 msgstr "Implicitná tlačiareň; "
 
 #: oleview.rc:181
-#, fuzzy
 msgid "Interface"
-msgstr "Súbor nenájdený"
+msgstr "Rozhranie"
 
 #: oleview.rc:183
 msgid "IID:"
@@ -10221,7 +10213,7 @@ msgstr ""
 
 #: oleview.rc:97
 msgid "version 1.0"
-msgstr ""
+msgstr "verzia 1.0"
 
 #: oleview.rc:100
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
@@ -10278,7 +10270,7 @@ msgstr ""
 
 #: oleview.rc:119
 msgid "Show or hide the toolbar"
-msgstr ""
+msgstr "Ukáž alebo skry panel nástorjov"
 
 #: oleview.rc:120
 msgid "Show or hide the status bar"
@@ -10286,7 +10278,7 @@ msgstr ""
 
 #: oleview.rc:121
 msgid "Refresh all lists"
-msgstr ""
+msgstr "Obnoviť všetky zoznamy"
 
 #: oleview.rc:122
 msgid "Display program information, version number and copyright"
@@ -10326,7 +10318,7 @@ msgstr ""
 
 #: oleview.rc:132
 msgid "All Objects"
-msgstr ""
+msgstr "Všetky objekty"
 
 #: oleview.rc:133
 msgid "Application IDs"
@@ -10353,9 +10345,8 @@ msgid "Implementation"
 msgstr ""
 
 #: oleview.rc:140
-#, fuzzy
 msgid "Activation"
-msgstr "Informácie"
+msgstr "Aktivácia"
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
@@ -10363,12 +10354,11 @@ msgstr ""
 
 #: oleview.rc:143
 msgid "Unknown error"
-msgstr ""
+msgstr "Neznáma chyba"
 
 #: oleview.rc:146
-#, fuzzy
 msgid "bytes"
-msgstr "%ld bajtov"
+msgstr "bajtov"
 
 #: oleview.rc:148
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
@@ -10380,11 +10370,11 @@ msgstr ""
 
 #: oleview.rc:124
 msgid "Save as an .IDL or .H file"
-msgstr ""
+msgstr "Uložiť .IDL alebo .H súbor"
 
 #: oleview.rc:125
 msgid "Close window"
-msgstr ""
+msgstr "Zatvoriť okno"
 
 #: oleview.rc:126
 msgid "Group typeinfos by kind"
@@ -10392,32 +10382,27 @@ msgstr ""
 
 #: progman.rc:30
 msgid "&New..."
-msgstr ""
+msgstr "&Nový..."
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
-msgstr ""
+msgstr "O&tvoriť\tEnter"
 
 #: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
-msgstr ""
+msgstr "&Presunúť...\tF7"
 
 #: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
-msgstr ""
+msgstr "&Kopírovať...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr ""
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Vlastnosti\n"
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Properties"
+msgstr "&Vlastnosti\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
-msgstr ""
+msgstr "&Spustiť..."
 
 #: progman.rc:39
 #, fuzzy
@@ -10426,7 +10411,7 @@ msgstr "&Viac okien..."
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:59 winhlp32.rc:44
 msgid "&Options"
-msgstr ""
+msgstr "&Nastavenia"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -10458,7 +10443,7 @@ msgstr ""
 
 #: progman.rc:54
 msgid "&About Program Manager"
-msgstr ""
+msgstr "&O aplikácii Program Manager"
 
 #: progman.rc:100
 #, fuzzy
@@ -10470,47 +10455,32 @@ msgstr ""
 "&Properties"
 
 #: progman.rc:102
-#, fuzzy
 msgid "&Program"
-msgstr ""
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Vlastnosti\n"
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Properties"
+msgstr "&Program"
 
 #: progman.rc:113
-#, fuzzy
 msgid "Move Program"
-msgstr ""
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Vlastnosti\n"
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Properties"
+msgstr "Presunúť program"
 
 #: progman.rc:115
 msgid "Move program:"
-msgstr ""
+msgstr "Presunúť program:"
 
 #: progman.rc:117 progman.rc:135
 msgid "From group:"
-msgstr ""
+msgstr "Zo skupiny:"
 
 #: progman.rc:119 progman.rc:137
 msgid "&To group:"
-msgstr ""
+msgstr "&Do skupiny:"
 
 #: progman.rc:131
-#, fuzzy
 msgid "Copy Program"
-msgstr ""
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Vlastnosti\n"
-"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
-"&Properties"
+msgstr "Kopírovať program"
 
 #: progman.rc:133
 msgid "Copy program:"
-msgstr ""
+msgstr "Kopírovať program:"
 
 #: progman.rc:149
 msgid "Program Group Attributes"
@@ -10521,13 +10491,12 @@ msgid "&Group file:"
 msgstr ""
 
 #: progman.rc:165
-#, fuzzy
 msgid "Program Attributes"
-msgstr "Atribúty"
+msgstr "Atribúty programu"
 
 #: progman.rc:169 progman.rc:209
 msgid "&Command line:"
-msgstr ""
+msgstr "&Príkazový riadok:"
 
 #: progman.rc:171
 msgid "&Working directory:"
@@ -10543,20 +10512,19 @@ msgstr ""
 
 #: progman.rc:180
 msgid "Change &icon..."
-msgstr ""
+msgstr "Zmeniť &ikonu..."
 
 #: progman.rc:189
 msgid "Change Icon"
-msgstr ""
+msgstr "Zmeniť ikonu"
 
 #: progman.rc:191
-#, fuzzy
 msgid "&Filename:"
-msgstr "&Súbor"
+msgstr "&Súbor:"
 
 #: progman.rc:193
 msgid "Current &icon:"
-msgstr ""
+msgstr "Aktuálna &ikona:"
 
 #: progman.rc:207
 msgid "Execute Program"
@@ -10576,11 +10544,11 @@ msgstr "Informácie"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr ""
+msgstr "Zmazať skupinu `%s'?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr ""
+msgstr "Zmazať program `%s'?"
 
 #: progman.rc:67
 msgid "Not implemented"
@@ -10602,7 +10570,7 @@ msgstr ""
 
 #: progman.rc:74
 msgid "Help not available."
-msgstr ""
+msgstr "Nápoveda nedostupná."
 
 #: progman.rc:75
 msgid "Unknown feature in %s"
@@ -10618,15 +10586,15 @@ msgstr ""
 
 #: progman.rc:81
 msgid "Libraries (*.dll)"
-msgstr ""
+msgstr "Knižnice (*.dll)"
 
 #: progman.rc:82
 msgid "Icon files"
-msgstr ""
+msgstr "Súbory ikon"
 
 #: progman.rc:83
 msgid "Icons (*.ico)"
-msgstr ""
+msgstr "Icony (*.ico)"
 
 #: reg.rc:27
 msgid ""
@@ -10673,35 +10641,35 @@ msgstr ""
 
 #: regedit.rc:31
 msgid "&Registry"
-msgstr ""
+msgstr "&Registry"
 
 #: regedit.rc:33
 msgid "&Import Registry File..."
-msgstr ""
+msgstr "&Importuj súbor registrov..."
 
 #: regedit.rc:34
 msgid "&Export Registry File..."
-msgstr ""
+msgstr "&Exportuj súbor registrov..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
-msgstr ""
+msgstr "&Kľúč"
 
 #: regedit.rc:48 regedit.rc:99
 msgid "&String Value"
-msgstr ""
+msgstr "&Reťazcová hodnota"
 
 #: regedit.rc:49 regedit.rc:100
 msgid "&Binary Value"
-msgstr ""
+msgstr "&Binárna hodnota"
 
 #: regedit.rc:50 regedit.rc:101
 msgid "&DWORD Value"
-msgstr ""
+msgstr "&DWORD hodnota"
 
 #: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
-msgstr ""
+msgstr "&Viac reťazcová hodnota"
 
 #: regedit.rc:52 regedit.rc:103
 msgid "&Expandable String Value"
@@ -10717,11 +10685,11 @@ msgstr ""
 
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 msgid "&Find...\tCtrl+F"
-msgstr ""
+msgstr "&Nájdi...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
-msgstr ""
+msgstr "Nájdi ďa&lšie\tF3"
 
 #: regedit.rc:65
 msgid "Status &Bar"
@@ -10729,25 +10697,23 @@ msgstr ""
 
 #: regedit.rc:67 winefile.rc:46
 msgid "Sp&lit"
-msgstr ""
+msgstr "Sp&ojiť"
 
 #: regedit.rc:74
-#, fuzzy
 msgid "&Remove Favorite..."
-msgstr "&Skomentovať..."
+msgstr "&Odstrániť obľúbené..."
 
 #: regedit.rc:79
 msgid "&About Registry Editor"
-msgstr ""
+msgstr "&O programe Registry Editor"
 
 #: regedit.rc:88
 msgid "Modify Binary Data..."
 msgstr ""
 
 #: regedit.rc:215
-#, fuzzy
 msgid "Export registry"
-msgstr "Súbory pomoci (*.hlp)"
+msgstr "Exportuj registry"
 
 #: regedit.rc:217
 msgid "S&elected branch:"
@@ -10755,52 +10721,47 @@ msgstr ""
 
 #: regedit.rc:226
 msgid "Find:"
-msgstr ""
+msgstr "Hľadať:"
 
 #: regedit.rc:228
 msgid "Find in:"
-msgstr ""
+msgstr "Hľadať v:"
 
 #: regedit.rc:229
 msgid "Keys"
-msgstr ""
+msgstr "Kľúče"
 
 #: regedit.rc:230
 msgid "Value names"
-msgstr ""
+msgstr "Náov hodnoty"
 
 #: regedit.rc:231
 msgid "Value content"
-msgstr ""
+msgstr "Obsah hodnoty"
 
 #: regedit.rc:232
 msgid "Whole string only"
-msgstr ""
+msgstr "Len celý reťazec"
 
 #: regedit.rc:239
-#, fuzzy
 msgid "Add Favorite"
-msgstr "Obľúbené položky"
+msgstr "Pridať obľúbené"
 
 #: regedit.rc:242 regedit.rc:253
-#, fuzzy
 msgid "Name:"
-msgstr "&Súbor"
+msgstr "Súbor:"
 
 #: regedit.rc:250
-#, fuzzy
 msgid "Remove Favorite"
-msgstr "&Skomentovať..."
+msgstr "Odstrániť obľúbené"
 
 #: regedit.rc:261
-#, fuzzy
 msgid "Edit String"
-msgstr "&Upraviť"
+msgstr "Upraviť reťazec"
 
 #: regedit.rc:264 regedit.rc:277 regedit.rc:293 regedit.rc:306
-#, fuzzy
 msgid "Value name:"
-msgstr "&Súbor"
+msgstr "Názov hodnoty:"
 
 #: regedit.rc:266 regedit.rc:279 regedit.rc:295 regedit.rc:308
 msgid "Value data:"
@@ -10862,28 +10823,27 @@ msgstr ""
 
 #: regedit.rc:129
 msgid "Registry Editor"
-msgstr ""
+msgstr "Editor registrov"
 
 #: regedit.rc:191
 msgid "Import Registry File"
-msgstr ""
+msgstr "Importuj súbor registrov"
 
 #: regedit.rc:192
 msgid "Export Registry File"
-msgstr ""
+msgstr "Exportuje súbor registrov"
 
 #: regedit.rc:193
-#, fuzzy
 msgid "Registry files (*.reg)"
-msgstr "Súbory pomoci (*.hlp)"
+msgstr "Súbory registrov (*.reg)"
 
 #: regedit.rc:194
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr ""
+msgstr "Win9x/NT4 súbory registrov (REGEDIT4)"
 
 #: regedit.rc:201
 msgid "(Default)"
-msgstr ""
+msgstr "(Predvolené)"
 
 #: regedit.rc:202
 msgid "(value not set)"
@@ -10891,27 +10851,27 @@ msgstr ""
 
 #: regedit.rc:203
 msgid "(cannot display value)"
-msgstr ""
+msgstr "(nemôžem zobraziť hodnotu)"
 
 #: regedit.rc:204
 msgid "(unknown %d)"
-msgstr ""
+msgstr "(neznáme %d)"
 
 #: regedit.rc:160
 msgid "Quits the registry editor"
-msgstr ""
+msgstr "Ukončí editor registrov"
 
 #: regedit.rc:161
 msgid "Adds keys to the favorites list"
-msgstr ""
+msgstr "Pridá kľúče k obľúbeným"
 
 #: regedit.rc:162
 msgid "Removes keys from the favorites list"
-msgstr ""
+msgstr "Odstráni kľúče z obľúbených"
 
 #: regedit.rc:163
 msgid "Shows or hides the status bar"
-msgstr ""
+msgstr "Ukáže alebo schová stavový riadok"
 
 #: regedit.rc:164
 msgid "Change position of split between two panes"
@@ -10919,19 +10879,19 @@ msgstr ""
 
 #: regedit.rc:165
 msgid "Refreshes the window"
-msgstr ""
+msgstr "Obnoví okno"
 
 #: regedit.rc:166
 msgid "Deletes the selection"
-msgstr ""
+msgstr "Zmaže výber"
 
 #: regedit.rc:167
 msgid "Renames the selection"
-msgstr ""
+msgstr "Premenuje výber"
 
 #: regedit.rc:168
 msgid "Copies the name of the selected key to the clipboard"
-msgstr ""
+msgstr "Skopíruje názov zvoleného kľúča do schránky"
 
 #: regedit.rc:169
 msgid "Finds a text string in a key, value or data"
@@ -10947,31 +10907,31 @@ msgstr ""
 
 #: regedit.rc:145
 msgid "Adds a new key"
-msgstr ""
+msgstr "Pridá nový kľúč"
 
 #: regedit.rc:146
 msgid "Adds a new string value"
-msgstr ""
+msgstr "Pridá novú textovú hodnotu"
 
 #: regedit.rc:147
 msgid "Adds a new binary value"
-msgstr ""
+msgstr "Pridá novú binárnu hodnotu"
 
 #: regedit.rc:148
 msgid "Adds a new double word value"
-msgstr ""
+msgstr "Pridá novú dvojslovnú hodnotu"
 
 #: regedit.rc:150
 msgid "Imports a text file into the registry"
-msgstr ""
+msgstr "Importovať textový súbor do registrov"
 
 #: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
-msgstr ""
+msgstr "Exportovať všetky alebo časť registrov do textového súboru"
 
 #: regedit.rc:153
 msgid "Prints all or part of the registry"
-msgstr ""
+msgstr "Vytlačiť všetky alebo časť registrov"
 
 #: regedit.rc:155
 msgid "Displays program information, version number and copyright"
@@ -10987,31 +10947,31 @@ msgstr ""
 
 #: regedit.rc:180
 msgid "Value is too big (%u)"
-msgstr ""
+msgstr "Hodnota je príliš veľká (%u)"
 
 #: regedit.rc:181
 msgid "Confirm Value Delete"
-msgstr ""
+msgstr "Potvrdenie zmazania hodnoty"
 
 #: regedit.rc:182
 msgid "Are you sure you want to delete value '%s'?"
-msgstr ""
+msgstr "Ste si istý že chcete zmazať túto hodnotu '%s'?"
 
 #: regedit.rc:186
 msgid "Search string '%s' not found"
-msgstr ""
+msgstr "Hľadaný výraz '%s' nebol nájdený"
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
-msgstr ""
+msgstr "Ste si istý že chcete zmazať tieto hodnoty?"
 
 #: regedit.rc:184
 msgid "New Key #%d"
-msgstr ""
+msgstr "Nový kľúč #%d"
 
 #: regedit.rc:185
 msgid "New Value #%d"
-msgstr ""
+msgstr "Nová hodnota #%d"
 
 #: regedit.rc:177
 msgid "Can't query key '%s'"
@@ -11079,7 +11039,7 @@ msgstr ""
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%1\".\n"
-msgstr ""
+msgstr "Chyba: Nemôžno nájsť proces \"%1\".\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
@@ -11087,7 +11047,7 @@ msgstr ""
 
 #: taskkill.rc:39
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr ""
+msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
@@ -11095,11 +11055,11 @@ msgstr ""
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
-msgstr ""
+msgstr "&Nová úloha (Spusti...)"
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
-msgstr ""
+msgstr "Uko&nči správcu úloh"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -11115,7 +11075,7 @@ msgstr ""
 
 #: taskmgr.rc:54
 msgid "&Refresh Now"
-msgstr ""
+msgstr "&Obnov teraz"
 
 #: taskmgr.rc:55
 msgid "&Update Speed"
@@ -11135,7 +11095,7 @@ msgstr ""
 
 #: taskmgr.rc:61
 msgid "&Paused"
-msgstr ""
+msgstr "&Pozastavené"
 
 #: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
@@ -11187,7 +11147,7 @@ msgstr ""
 
 #: taskmgr.rc:129 taskmgr.rc:353
 msgid "&End Task"
-msgstr ""
+msgstr "&Ukonči úlohu"
 
 #: taskmgr.rc:130
 msgid "&Go To Process"
@@ -11233,11 +11193,11 @@ msgstr ""
 
 #: taskmgr.rc:338 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
-msgstr ""
+msgstr "Správca úloh"
 
 #: taskmgr.rc:351
 msgid "&New Task..."
-msgstr ""
+msgstr "&Nová úloha..."
 
 #: taskmgr.rc:364
 msgid "&Show processes from all users"
@@ -11245,7 +11205,7 @@ msgstr ""
 
 #: taskmgr.rc:372
 msgid "CPU usage"
-msgstr ""
+msgstr "CPU využitie"
 
 #: taskmgr.rc:373
 msgid "MEM usage"
@@ -11273,15 +11233,15 @@ msgstr ""
 
 #: taskmgr.rc:379 taskmgr.rc:291
 msgid "Threads"
-msgstr ""
+msgstr "Vlákna"
 
 #: taskmgr.rc:380 taskmgr.rc:263
 msgid "Processes"
-msgstr ""
+msgstr "Procesy"
 
 #: taskmgr.rc:387 taskmgr.rc:396 taskmgr.rc:405
 msgid "Total"
-msgstr ""
+msgstr "Celkovo"
 
 #: taskmgr.rc:388
 msgid "Limit"
@@ -11866,19 +11826,19 @@ msgstr ""
 
 #: taskmgr.rc:322
 msgid "System Idle Process"
-msgstr ""
+msgstr "Nečinné procesy systému"
 
 #: taskmgr.rc:323
 msgid "Not Responding"
-msgstr ""
+msgstr "Neodpovedá"
 
 #: taskmgr.rc:324
 msgid "Running"
-msgstr ""
+msgstr "Beží"
 
 #: taskmgr.rc:325
 msgid "Task"
-msgstr ""
+msgstr "Úloha"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
@@ -11916,9 +11876,8 @@ msgid "Waiting for Program"
 msgstr ""
 
 #: wineboot.rc:32
-#, fuzzy
 msgid "Terminate Process"
-msgstr "&Vlastnosti"
+msgstr "Ukončiť proces"
 
 #: wineboot.rc:33
 msgid ""
@@ -11929,13 +11888,12 @@ msgid ""
 msgstr ""
 
 #: wineboot.rc:39
-#, fuzzy
 msgid "Wine"
-msgstr "Wine Pomoc"
+msgstr "Wine"
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr ""
+msgstr "Wine konfigurácia sa v %s aktualizuje, prosím počkajte..."
 
 #: winecfg.rc:132
 msgid ""
@@ -11946,22 +11904,20 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
-msgstr "Informácie"
+msgstr "Informácie o registrácii Windows"
 
 #: winecfg.rc:135
 msgid "&Owner:"
-msgstr ""
+msgstr "&Vlastník:"
 
 #: winecfg.rc:137
-#, fuzzy
 msgid "Organi&zation:"
-msgstr "Informácie"
+msgstr "Organi&zácia:"
 
 #: winecfg.rc:145
 msgid "Application settings"
-msgstr ""
+msgstr "Nastavenia aplikácie"
 
 #: winecfg.rc:146
 msgid ""
@@ -11969,23 +11925,25 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
+"Wine môže predstierať inú verziu Windows pre každú aplikáciu. Táto karta je "
+"prepojená s Knižnice a Grafika kartami aby Vám dovolila zmeniť systémovo "
+"alebo pre konkrétnu aplikáciu nastavenia v týchto kartách."
 
 #: winecfg.rc:150
 msgid "&Add application..."
-msgstr ""
+msgstr "&Pridať aplikáciu..."
 
 #: winecfg.rc:151
-#, fuzzy
 msgid "&Remove application"
-msgstr "&Skomentovať..."
+msgstr "&Odstrániť aplikáciu"
 
 #: winecfg.rc:152
 msgid "&Windows Version:"
-msgstr ""
+msgstr "&Verzia Windows:"
 
 #: winecfg.rc:160
 msgid "Window settings"
-msgstr ""
+msgstr "Nastavenia okna"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12001,16 +11959,15 @@ msgstr ""
 
 #: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
-msgstr ""
+msgstr "&Vytvoriť virtuálnu plochu"
 
 #: winecfg.rc:166
-#, fuzzy
 msgid "Desktop &size:"
-msgstr "Pracovná plocha"
+msgstr "Veľkosť &plochy:"
 
 #: winecfg.rc:171
 msgid "Screen resolution"
-msgstr ""
+msgstr "Rozlíšenie obrazovky"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
@@ -12018,7 +11975,7 @@ msgstr ""
 
 #: winecfg.rc:182
 msgid "DLL overrides"
-msgstr ""
+msgstr "DLL prepísania"
 
 #: winecfg.rc:183
 msgid ""
@@ -12026,52 +11983,53 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
+"Dynamické knižnice môžu byť špecifikované individuálne aby boli buď vstavané "
+"(poskytnuté z Wine) alebo natívne (prevziate z Windows alebo poskytnuté "
+"aplikáciou)."
 
 #: winecfg.rc:185
 msgid "&New override for library:"
-msgstr ""
+msgstr "&Nové prepísanie pre knižnicu:"
 
 #: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
-msgstr ""
+msgstr "&Pridať"
 
 #: winecfg.rc:188
 msgid "Existing &overrides:"
-msgstr ""
+msgstr "Existujúce &prepísania:"
 
 #: winecfg.rc:190
-#, fuzzy
 msgid "&Edit..."
-msgstr "&Upraviť"
+msgstr "&Upraviť..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
-msgstr ""
+msgstr "Upraviť prepísanie"
 
 #: winecfg.rc:199
 msgid "Load order"
-msgstr ""
+msgstr "Poradie načítavania"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
-msgstr ""
+msgstr "&Vstavané (Wine)"
 
 #: winecfg.rc:201
-#, fuzzy
 msgid "&Native (Windows)"
-msgstr "&Viac okien..."
+msgstr "&Natívne (Windows)"
 
 #: winecfg.rc:202
 msgid "Bui&ltin then Native"
-msgstr ""
+msgstr "Vst&avané potom natívne"
 
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
-msgstr ""
+msgstr "Natí&vne potom vstavané"
 
 #: winecfg.rc:204
 msgid "&Disable"
-msgstr ""
+msgstr "&Zakázať"
 
 #: winecfg.rc:211
 msgid "Select Drive Letter"
@@ -12089,31 +12047,31 @@ msgstr ""
 
 #: winecfg.rc:227
 msgid "&Add..."
-msgstr ""
+msgstr "&Pridať..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
-msgstr ""
+msgstr "Automatická &detekcia"
 
 #: winecfg.rc:232
 msgid "&Path:"
-msgstr ""
+msgstr "&Cesta:"
 
 #: winecfg.rc:239 winecfg.rc:35
 msgid "Show &Advanced"
-msgstr ""
+msgstr "Ukáž &pokročilé"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr ""
+msgstr "Za&riadenie:"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
-msgstr ""
+msgstr "Pre&chádzať..."
 
 #: winecfg.rc:244
 msgid "&Label:"
-msgstr ""
+msgstr "&Označenie:"
 
 #: winecfg.rc:246
 msgid "S&erial:"
@@ -12125,37 +12083,35 @@ msgstr ""
 
 #: winecfg.rc:256
 msgid "Driver diagnostics"
-msgstr ""
+msgstr "Diagnostika ovládača"
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr "Implicitná tlačiareň; "
+msgstr "Predvolené"
 
 #: winecfg.rc:259
-#, fuzzy
 msgid "Output device:"
-msgstr "&Súbor"
+msgstr "Výstupné zariadenie:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr ""
+msgstr "Hlasové výstupné zariadenie:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr ""
+msgstr "Vstupné zariadenie:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr ""
+msgstr "Hlasové vstupné zariadenie:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
-msgstr ""
+msgstr "&Skúška zvuku"
 
 #: winecfg.rc:274
 msgid "Appearance"
-msgstr ""
+msgstr "Vzhľad"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -12338,7 +12294,7 @@ msgstr ""
 
 #: winecfg.rc:72
 msgid "System drive"
-msgstr ""
+msgstr "Systémová jednotka"
 
 #: winecfg.rc:73
 msgid ""
@@ -12351,7 +12307,7 @@ msgstr ""
 #: winecfg.rc:74
 msgctxt "Drive letter"
 msgid "Letter"
-msgstr ""
+msgstr "Písmeno"
 
 #: winecfg.rc:75
 msgid "Drive Mapping"
@@ -12402,7 +12358,7 @@ msgstr ""
 
 #: winecfg.rc:100
 msgid "Window Background"
-msgstr ""
+msgstr "Pozadie okna"
 
 #: winecfg.rc:101
 msgid "Window Text"
@@ -13130,7 +13086,7 @@ msgstr "Veľké"
 
 #: winhlp32.rc:54
 msgid "&Help on help\tF1"
-msgstr ""
+msgstr "&Nápoveda k nápovede\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -13138,11 +13094,11 @@ msgstr "Vždy na &vrchu"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr ""
+msgstr "&O programe Wine Help"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
-msgstr "Anotácia"
+msgstr "Anotácia..."
 
 #: winhlp32.rc:65
 msgid "Copy"
@@ -13166,7 +13122,7 @@ msgstr "Chyba počas čítania súboru `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr ""
+msgstr "Zhrnutie"
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -13194,11 +13150,11 @@ msgstr "&Nový...\tCtrl+N"
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"
-msgstr ""
+msgstr "Z&nova\tCtrl+Y"
 
 #: wordpad.rc:47
 msgid "&Clear\tDel"
-msgstr ""
+msgstr "&Vyčistiť\tDel"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
@@ -13218,7 +13174,7 @@ msgstr "&Upravené"
 
 #: wordpad.rc:57
 msgid "E&xtras"
-msgstr ""
+msgstr "D&oplnky"
 
 #: wordpad.rc:59
 msgid "Selection &info"
@@ -13274,7 +13230,7 @@ msgstr ""
 
 #: wordpad.rc:84
 msgid "&Tabs..."
-msgstr ""
+msgstr "&Karty..."
 
 #: wordpad.rc:85
 msgid "Backgroun&d"
@@ -13302,7 +13258,7 @@ msgstr "Dátum a čas"
 
 #: wordpad.rc:202
 msgid "Available formats"
-msgstr ""
+msgstr "Dostupné formáty"
 
 #: wordpad.rc:213
 msgid "New document type"
@@ -13334,7 +13290,7 @@ msgstr "Zarovnanie"
 
 #: wordpad.rc:239
 msgid "Tabs"
-msgstr ""
+msgstr "Karty"
 
 #: wordpad.rc:242
 msgid "Tab stops"
@@ -13346,23 +13302,23 @@ msgstr "Odstrániť &všetko"
 
 #: wordpad.rc:256
 msgid "Line wrapping"
-msgstr ""
+msgstr "Zalamovanie riadkov"
 
 #: wordpad.rc:257
 msgid "&No line wrapping"
-msgstr ""
+msgstr "&Žiadne zalamovanie"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
-msgstr ""
+msgstr "Zalamovanie textu k orámovaniu &okna"
 
 #: wordpad.rc:259
 msgid "Wrap text by the &margin"
-msgstr ""
+msgstr "Zalamovanie textu podľa &okraju"
 
 #: wordpad.rc:260
 msgid "Toolbars"
-msgstr ""
+msgstr "Panely nástrojov"
 
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
@@ -13409,7 +13365,7 @@ msgstr "Textový dokument (*.txt)"
 
 #: wordpad.rc:138
 msgid "Unicode text document (*.txt)"
-msgstr ""
+msgstr "Unicode textový dokument (*.txt)"
 
 #: wordpad.rc:139
 msgid "Rich text format (*.rtf)"
@@ -13425,20 +13381,19 @@ msgstr "Textový dokument"
 
 #: wordpad.rc:142
 msgid "Unicode text document"
-msgstr ""
+msgstr "Unicode textový dokument"
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "Súbory pomoci (*.hlp)"
+msgstr "Súbory tlačiarne (*.prn)"
 
 #: wordpad.rc:150
 msgid "Center"
-msgstr ""
+msgstr "Centrovať"
 
 #: wordpad.rc:156
 msgid "Text"
-msgstr ""
+msgstr "Text"
 
 #: wordpad.rc:157
 msgid "Rich text"
@@ -13494,15 +13449,15 @@ msgstr ""
 #: wordpad.rc:175
 msgctxt "unit: point"
 msgid "pt"
-msgstr ""
+msgstr "pt"
 
 #: wordpad.rc:180
 msgid "Document"
-msgstr ""
+msgstr "Dokument"
 
 #: wordpad.rc:181
 msgid "Save changes to '%s'?"
-msgstr ""
+msgstr "Uložiť zmeny do '%s'?"
 
 #: wordpad.rc:182
 msgid "Finished searching the document."
@@ -13527,26 +13482,24 @@ msgid "OLE storage documents are not supported."
 msgstr ""
 
 #: wordpad.rc:189
-#, fuzzy
 msgid "Could not save the file."
-msgstr "Nemôžem vytvoriť alebo použiť okno."
+msgstr "Nemôžem uložiť súbor."
 
 #: wordpad.rc:190
 msgid "You do not have access to save the file."
-msgstr ""
+msgstr "Nemáte povolenie uložiť súbor."
 
 #: wordpad.rc:191
 msgid "Could not open the file."
-msgstr ""
+msgstr "Nemôžem otvoriť súbor."
 
 #: wordpad.rc:192
 msgid "You do not have access to open the file."
-msgstr ""
+msgstr "Nemáte povolenie otvoriť súbor."
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
-msgstr "Neimplementované"
+msgstr "Tlač neimplementovaná."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
@@ -13554,7 +13507,7 @@ msgstr ""
 
 #: write.rc:27
 msgid "Starting Wordpad failed"
-msgstr ""
+msgstr "Spustenie Wordpad sa nepodarilo"
 
 #: xcopy.rc:27
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
@@ -13566,7 +13519,7 @@ msgstr ""
 
 #: xcopy.rc:29
 msgid "Press <Enter> to begin copying\n"
-msgstr ""
+msgstr "Stlačte <Enter> pre začatie kopírovania\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
@@ -13585,11 +13538,11 @@ msgstr ""
 
 #: xcopy.rc:35
 msgid "%1? (Yes|No)\n"
-msgstr ""
+msgstr "%1? (Áno|Nie)\n"
 
 #: xcopy.rc:36
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr ""
+msgstr "Prepísať %1? (Áno|Nie|Všetky)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
@@ -13602,12 +13555,12 @@ msgstr ""
 #: xcopy.rc:43
 msgctxt "File key"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr ""
+msgstr "D"
 
 #: xcopy.rc:77
 msgid ""
