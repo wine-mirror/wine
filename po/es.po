@@ -244,7 +244,7 @@ msgstr "&Opciones..."
 
 #: avifil32.rc:46
 msgid "&Interleave every"
-msgstr "&Interleave cada"
+msgstr "&Intercalar cada"
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
@@ -256,11 +256,11 @@ msgstr "Formato actual:"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
-msgstr "Formato de ondas: %s"
+msgstr "Forma de onda: %s"
 
 #: avifil32.rc:28
 msgid "Waveform"
-msgstr "Formato de ondas"
+msgstr "Forma de onda"
 
 #: avifil32.rc:29
 msgid "All multimedia files"
@@ -276,7 +276,7 @@ msgstr "audio"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
-msgstr "Manejador de archivos AVI por defecto de Wine"
+msgstr "Manejador AVI por defecto de Wine"
 
 #: avifil32.rc:34
 msgid "uncompressed"
@@ -1161,7 +1161,7 @@ msgstr "Conectar a %s"
 
 #: credui.rc:28
 msgid "Connecting to %s"
-msgstr "Conectando to %s"
+msgstr "Conectando a %s"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
@@ -1182,7 +1182,7 @@ msgid ""
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
 msgstr ""
-"El Bloq Mayus activado puede hacer que entre su contraseña incorrectamente.\n"
+"El Bloq Mayus activado puede hacer que meta su contraseña incorrectamente.\n"
 "\n"
 "Pulse la tecla Bloq Mayus de su teclado para desactivar Bloq Mayus antes\n"
 "de introducir su contraseña."
@@ -1193,758 +1193,743 @@ msgstr "Bloq Mayus está activado"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
-msgstr ""
+msgstr "Identificador de la clave de la autoridad"
 
 #: crypt32.rc:28
 msgid "Key Attributes"
-msgstr ""
+msgstr "Atributos de la clave"
 
 #: crypt32.rc:29
 msgid "Key Usage Restriction"
-msgstr ""
+msgstr "Restricciones en el uso de la clave"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr ""
+msgstr "Nombre alternativo del sujeto"
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
-msgstr ""
+msgstr "Nombre alternativo del emisor"
 
 #: crypt32.rc:32
 msgid "Basic Constraints"
-msgstr ""
+msgstr "Restricciones básicas"
 
 #: crypt32.rc:33
 msgid "Key Usage"
-msgstr ""
+msgstr "Uso de la clave"
 
 #: crypt32.rc:34
 msgid "Certificate Policies"
-msgstr ""
+msgstr "Políticas de Certificado"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr ""
+msgstr "Identificador del Sujeto de la Clave"
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
-msgstr ""
+msgstr "Código de Razón de CRL"
 
 #: crypt32.rc:37
 msgid "CRL Distribution Points"
-msgstr ""
+msgstr "Puntos de distribución CRL"
 
 #: crypt32.rc:38
 msgid "Enhanced Key Usage"
-msgstr ""
+msgstr "Uso de la clave mejorado"
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
-msgstr ""
+msgstr "Acceso de la Información de la Autoridad"
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
-msgstr ""
+msgstr "Extensiones del Certificado"
 
 #: crypt32.rc:41
 msgid "Next Update Location"
-msgstr ""
+msgstr "Lugar para la próxima actualización"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr ""
+msgstr "Confiar Sí o No"
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr ""
+msgstr "Dirección de Email"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
-msgstr ""
+msgstr "Nombre No Estructurado"
 
 #: crypt32.rc:45
 msgid "Content Type"
-msgstr ""
+msgstr "Tipo de Contenido"
 
 #: crypt32.rc:46
 msgid "Message Digest"
-msgstr ""
+msgstr "Digest del Mensaje"
 
 #: crypt32.rc:47
 msgid "Signing Time"
-msgstr ""
+msgstr "Hora de la Firma"
 
 #: crypt32.rc:48
 msgid "Counter Sign"
-msgstr ""
+msgstr "Contra-Firma"
 
 #: crypt32.rc:49
 msgid "Challenge Password"
-msgstr ""
+msgstr "Contraseña de Desafío"
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
-msgstr ""
+msgstr "Dirección no Estructurada"
 
 #: crypt32.rc:51
 msgid "S/MIME Capabilities"
-msgstr ""
+msgstr "Capacidades S/MIME"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
-msgstr ""
+msgstr "Preferir Datos Firmados"
 
 #: crypt32.rc:53 cryptdlg.rc:31
 msgctxt "Certification Practice Statement"
 msgid "CPS"
-msgstr ""
+msgstr "CPS"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
-msgstr ""
+msgstr "Notificación de Usuario"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr ""
+msgstr "Protocolo en Línea de Estado del Certificado"
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
-msgstr ""
+msgstr "Emisor de Autoridad de Certificación"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr ""
+msgstr "Nombre de la Plantilla de Certificación"
 
 #: crypt32.rc:58
 msgid "Certificate Type"
-msgstr ""
+msgstr "Tipo de Certificado"
 
 #: crypt32.rc:59
 msgid "Certificate Manifold"
-msgstr ""
+msgstr "Certificado Múltiple"
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
-msgstr ""
+msgstr "Tipo de Certificado Netscape"
 
 #: crypt32.rc:61
 msgid "Netscape Base URL"
-msgstr ""
+msgstr "URL Base de Netscape"
 
 #: crypt32.rc:62
 msgid "Netscape Revocation URL"
-msgstr ""
+msgstr "URL de Revocación de Netscape"
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
-msgstr ""
+msgstr "URL de Revocación de CA de Netscape"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
-msgstr ""
+msgstr "URL de Renovación del Certificado de Netscape"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
-msgstr ""
+msgstr "URL de Política de CA de Netscape"
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
-msgstr ""
+msgstr "SSL ServerName de Netscape"
 
 #: crypt32.rc:67
 msgid "Netscape Comment"
-msgstr ""
+msgstr "Comentario de Netscape"
 
 #: crypt32.rc:68
 msgid "Country/Region"
-msgstr ""
+msgstr "País/Región"
 
 #: crypt32.rc:69
 msgid "Organization"
-msgstr ""
+msgstr "Organización"
 
 #: crypt32.rc:70
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Unidad Organizativa"
 
 #: crypt32.rc:71
 msgid "Common Name"
-msgstr ""
+msgstr "Nombre Común"
 
 #: crypt32.rc:72
 msgid "Locality"
-msgstr ""
+msgstr "Localidad"
 
 #: crypt32.rc:73
 msgid "State or Province"
-msgstr ""
+msgstr "Estado o Provincia"
 
 #: crypt32.rc:74
 msgid "Title"
-msgstr ""
+msgstr "Título"
 
 #: crypt32.rc:75
 msgid "Given Name"
-msgstr ""
+msgstr "Nombre Dado"
 
 #: crypt32.rc:76
 msgid "Initials"
-msgstr ""
+msgstr "Iniciales"
 
 #: crypt32.rc:77
 msgid "Surname"
-msgstr ""
+msgstr "Apellido"
 
 #: crypt32.rc:78
 msgid "Domain Component"
-msgstr ""
+msgstr "Componente de Dominio"
 
 #: crypt32.rc:79
 msgid "Street Address"
-msgstr ""
+msgstr "Dirección de la Calle"
 
 #: crypt32.rc:80
 msgid "Serial Number"
-msgstr ""
+msgstr "Número de Serie"
 
 #: crypt32.rc:81
-#, fuzzy
 msgid "CA Version"
-msgstr ""
-"CMD Versión %s\n"
-"\n"
+msgstr "Versión de CA"
 
 #: crypt32.rc:82
 msgid "Cross CA Version"
-msgstr ""
+msgstr "Versión de CA Mutua"
 
 #: crypt32.rc:83
 msgid "Serialized Signature Serial Number"
-msgstr ""
+msgstr "Número de Serie de Firma en Serie"
 
 #: crypt32.rc:84
 msgid "Principal Name"
-msgstr ""
+msgstr "Nombre Principal"
 
 #: crypt32.rc:85
 msgid "Windows Product Update"
-msgstr ""
+msgstr "Actualización de Producto de Windows"
 
 #: crypt32.rc:86
 msgid "Enrollment Name Value Pair"
-msgstr ""
+msgstr "Par de Nombre Valor de Inscripción"
 
 #: crypt32.rc:87
-#, fuzzy
 msgid "OS Version"
-msgstr ""
-"CMD Versión %s\n"
-"\n"
+msgstr "Versión del SO"
 
 #: crypt32.rc:88
 msgid "Enrollment CSP"
-msgstr ""
+msgstr "CSP de Inscripción"
 
 #: crypt32.rc:89
 msgid "CRL Number"
-msgstr ""
+msgstr "Número CRL"
 
 #: crypt32.rc:90
 msgid "Delta CRL Indicator"
-msgstr ""
+msgstr "Indicador Delta CRL"
 
 #: crypt32.rc:91
 msgid "Issuing Distribution Point"
-msgstr ""
+msgstr "Punto de Distribución de Emisión"
 
 #: crypt32.rc:92
 msgid "Freshest CRL"
-msgstr ""
+msgstr "CRL Más Reciente"
 
 #: crypt32.rc:93
 msgid "Name Constraints"
-msgstr ""
+msgstr "Restricciones de Nombre"
 
 #: crypt32.rc:94
 msgid "Policy Mappings"
-msgstr ""
+msgstr "Mapeos de Política"
 
 #: crypt32.rc:95
 msgid "Policy Constraints"
-msgstr ""
+msgstr "Restricciones de Política"
 
 #: crypt32.rc:96
 msgid "Cross-Certificate Distribution Points"
-msgstr ""
+msgstr "Puntos de Distribución de Certificados Mutuos"
 
 #: crypt32.rc:97
 msgid "Application Policies"
-msgstr ""
+msgstr "Políticas de Aplicación"
 
 #: crypt32.rc:98
 msgid "Application Policy Mappings"
-msgstr ""
+msgstr "Mapeos en la Política de Aplicación"
 
 #: crypt32.rc:99
 msgid "Application Policy Constraints"
-msgstr ""
+msgstr "Restricciones en la Política de Aplicación"
 
 #: crypt32.rc:100
 msgid "CMC Data"
-msgstr ""
+msgstr "Datos CMC"
 
 #: crypt32.rc:101
 msgid "CMC Response"
-msgstr ""
+msgstr "Respuesta CMC"
 
 #: crypt32.rc:102
 msgid "Unsigned CMC Request"
-msgstr ""
+msgstr "Petición CMC sin Firmar"
 
 #: crypt32.rc:103
 msgid "CMC Status Info"
-msgstr ""
+msgstr "Información de Estado CMC"
 
 #: crypt32.rc:104
-#, fuzzy
 msgid "CMC Extensions"
-msgstr ""
-"CMD Versión %s\n"
-"\n"
+msgstr "Extensiones CMC"
 
 #: crypt32.rc:105
 msgid "CMC Attributes"
-msgstr ""
+msgstr "Atributos CMC"
 
 #: crypt32.rc:106
 msgid "PKCS 7 Data"
-msgstr ""
+msgstr "Datos PKCS 7"
 
 #: crypt32.rc:107
 msgid "PKCS 7 Signed"
-msgstr ""
+msgstr "PKCS 7 Firmado"
 
 #: crypt32.rc:108
 msgid "PKCS 7 Enveloped"
-msgstr ""
+msgstr "PKCS 7 Envuelto"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Signed Enveloped"
-msgstr ""
+msgstr "PKCS 7 Firmado y Envuelto"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Digested"
-msgstr ""
+msgstr "PKCS 7 en Digest"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Encrypted"
-msgstr ""
+msgstr "PKCS 7 Cifrado"
 
 #: crypt32.rc:112
 msgid "Previous CA Certificate Hash"
-msgstr ""
+msgstr "Hash de Certificado CA Anterior"
 
 #: crypt32.rc:113
 msgid "Virtual Base CRL Number"
-msgstr ""
+msgstr "Número Base Virtual CRL"
 
 #: crypt32.rc:114
 msgid "Next CRL Publish"
-msgstr ""
+msgstr "Próxima Publicación de CRL"
 
 #: crypt32.rc:115
 msgid "CA Encryption Certificate"
-msgstr ""
+msgstr "Certificado de Cifrado CA"
 
 #: crypt32.rc:116 cryptui.rc:145
 msgid "Key Recovery Agent"
-msgstr ""
+msgstr "Agente de Recuperación de Clave"
 
 #: crypt32.rc:117
 msgid "Certificate Template Information"
-msgstr ""
+msgstr "Información de la Plantilla del Certificado"
 
 #: crypt32.rc:118
 msgid "Enterprise Root OID"
-msgstr ""
+msgstr "OID Raíz de Empresa"
 
 #: crypt32.rc:119
 msgid "Dummy Signer"
-msgstr ""
+msgstr "Firmante de Paja"
 
 #: crypt32.rc:120
 msgid "Encrypted Private Key"
-msgstr ""
+msgstr "Clave Privada Cifrada"
 
 #: crypt32.rc:121
 msgid "Published CRL Locations"
-msgstr ""
+msgstr "Ubicaciones Publicadas del CRL"
 
 #: crypt32.rc:122
 msgid "Enforce Certificate Chain Policy"
-msgstr ""
+msgstr "Aplicar la Política de Cadena de Certificados"
 
 #: crypt32.rc:123
 msgid "Transaction Id"
-msgstr ""
+msgstr "Id de Transacción"
 
 #: crypt32.rc:124
 msgid "Sender Nonce"
-msgstr ""
+msgstr "Nonce del Emisor"
 
 #: crypt32.rc:125
 msgid "Recipient Nonce"
-msgstr ""
+msgstr "Nonce del Receptor"
 
 #: crypt32.rc:126
 msgid "Reg Info"
-msgstr ""
+msgstr "Información de Reg"
 
 #: crypt32.rc:127
 msgid "Get Certificate"
-msgstr ""
+msgstr "Obtener Certificado"
 
 #: crypt32.rc:128
 msgid "Get CRL"
-msgstr ""
+msgstr "Obtener CRL"
 
 #: crypt32.rc:129
 msgid "Revoke Request"
-msgstr ""
+msgstr "Revocar Solicitud"
 
 #: crypt32.rc:130
 msgid "Query Pending"
-msgstr ""
+msgstr "Consulta Pendiente"
 
 #: crypt32.rc:131 cryptui.rc:92
 msgid "Certificate Trust List"
-msgstr ""
+msgstr "Lista de Confianza del Certificado"
 
 #: crypt32.rc:132
 msgid "Archived Key Certificate Hash"
-msgstr ""
+msgstr "Hash de la Clave de Certificado Archivado"
 
 #: crypt32.rc:133
 msgid "Private Key Usage Period"
-msgstr ""
+msgstr "Periodo de Uso de la Clave Privada"
 
 #: crypt32.rc:134
 msgid "Client Information"
-msgstr ""
+msgstr "Información de Cliente"
 
 #: crypt32.rc:135
 msgid "Server Authentication"
-msgstr ""
+msgstr "Autenticación de Servidor"
 
 #: crypt32.rc:136
 msgid "Client Authentication"
-msgstr ""
+msgstr "Autenticación de Cliente"
 
 #: crypt32.rc:137
 msgid "Code Signing"
-msgstr ""
+msgstr "Firma de Código"
 
 #: crypt32.rc:138
 msgid "Secure Email"
-msgstr ""
+msgstr "Email Seguro"
 
 #: crypt32.rc:139
 msgid "Time Stamping"
-msgstr ""
+msgstr "Marcado de Tiempo"
 
 #: crypt32.rc:140
 msgid "Microsoft Trust List Signing"
-msgstr ""
+msgstr "Firmado de Lista de Confianza de Microsoft"
 
 #: crypt32.rc:141
 msgid "Microsoft Time Stamping"
-msgstr ""
+msgstr "Marcado de Tiempo de Microsoft"
 
 #: crypt32.rc:142
 msgid "IP security end system"
-msgstr ""
+msgstr "Sistema final de seguridad IP"
 
 #: crypt32.rc:143
 msgid "IP security tunnel termination"
-msgstr ""
+msgstr "Terminación de túnel de seguridad IP"
 
 #: crypt32.rc:144
 msgid "IP security user"
-msgstr ""
+msgstr "Usuario de seguridad IP"
 
 #: crypt32.rc:145
 msgid "Encrypting File System"
-msgstr ""
+msgstr "Cifrando Sistema de Ficheros"
 
 #: crypt32.rc:146 cryptui.rc:130
 msgid "Windows Hardware Driver Verification"
-msgstr ""
+msgstr "Verificación de Controladores de Hardware de Windows"
 
 #: crypt32.rc:147 cryptui.rc:131
 msgid "Windows System Component Verification"
-msgstr ""
+msgstr "Verificación de Componentes de Sistema de Windows"
 
 #: crypt32.rc:148 cryptui.rc:132
 msgid "OEM Windows System Component Verification"
-msgstr ""
+msgstr "Verificación de Componentes de Sistema de Windows OEM"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
-msgstr ""
+msgstr "Verificación de Componentes de Sistema de Windows Embebido"
 
 #: crypt32.rc:150 cryptui.rc:140
 msgid "Key Pack Licenses"
-msgstr ""
+msgstr "Licencias del Paquete de Claves"
 
 #: crypt32.rc:151 cryptui.rc:141
 msgid "License Server Verification"
-msgstr ""
+msgstr "Verificación del Servidor de Licencias"
 
 #: crypt32.rc:152 cryptui.rc:143
 msgid "Smart Card Logon"
-msgstr ""
+msgstr "Inicio con Tarjeta Inteligente"
 
 #: crypt32.rc:153 cryptui.rc:139
 msgid "Digital Rights"
-msgstr ""
+msgstr "Derechos Digitales"
 
 #: crypt32.rc:154 cryptui.rc:135
 msgid "Qualified Subordination"
-msgstr ""
+msgstr "Subordinación Cualificada"
 
 #: crypt32.rc:155 cryptui.rc:136
 msgid "Key Recovery"
-msgstr ""
+msgstr "Recuperación de Claves"
 
 #: crypt32.rc:156 cryptui.rc:137
-#, fuzzy
 msgid "Document Signing"
-msgstr "Argumento faltante\n"
+msgstr "Firmado de Documento"
 
 #: crypt32.rc:157
 msgid "IP security IKE intermediate"
-msgstr ""
+msgstr "IKE Intermedio de seguridad IP"
 
 #: crypt32.rc:158 cryptui.rc:129
 msgid "File Recovery"
-msgstr ""
+msgstr "Recuperación de Ficheros"
 
 #: crypt32.rc:159 cryptui.rc:134
 msgid "Root List Signer"
-msgstr ""
+msgstr "Firmante Raíz de la Lista"
 
 #: crypt32.rc:160
 msgid "All application policies"
-msgstr ""
+msgstr "Todas las políticas de aplicación"
 
 #: crypt32.rc:161 cryptui.rc:146
 msgid "Directory Service Email Replication"
-msgstr ""
+msgstr "Replicación de Email del Servicio de Directorio"
 
 #: crypt32.rc:162 cryptui.rc:142
 msgid "Certificate Request Agent"
-msgstr ""
+msgstr "Agente de Petición de Certificados"
 
 #: crypt32.rc:163 cryptui.rc:138
 msgid "Lifetime Signing"
-msgstr ""
+msgstr "Firmado de por vida"
 
 #: crypt32.rc:164
 msgid "All issuance policies"
-msgstr ""
+msgstr "Todas las políticas de emisión"
 
 #: crypt32.rc:169
 msgid "Trusted Root Certification Authorities"
-msgstr ""
+msgstr "Autoridades de Certificación de Raíz de Confianza"
 
 #: crypt32.rc:170
 msgid "Personal"
-msgstr ""
+msgstr "Personal"
 
 #: crypt32.rc:171
 msgid "Intermediate Certification Authorities"
-msgstr ""
+msgstr "Autoridades de Certificación Intermedias"
 
 #: crypt32.rc:172
 msgid "Other People"
-msgstr ""
+msgstr "Otra Gente"
 
 #: crypt32.rc:173
 msgid "Trusted Publishers"
-msgstr ""
+msgstr "Publicadores de Confianza"
 
 #: crypt32.rc:174
 msgid "Untrusted Certificates"
-msgstr ""
+msgstr "Certificados no de Confianza"
 
 #: crypt32.rc:179
 msgid "KeyID="
-msgstr ""
+msgstr "KeyID="
 
 #: crypt32.rc:180
 msgid "Certificate Issuer"
-msgstr ""
+msgstr "Emisor de Certificado"
 
 #: crypt32.rc:181
 msgid "Certificate Serial Number="
-msgstr ""
+msgstr "Número de Serie del Certificado="
 
 #: crypt32.rc:182
 msgid "Other Name="
-msgstr ""
+msgstr "Otro Nombre="
 
 #: crypt32.rc:183
 msgid "Email Address="
-msgstr ""
+msgstr "Dirección Email="
 
 #: crypt32.rc:184
 msgid "DNS Name="
-msgstr ""
+msgstr "Nombre DNS="
 
 #: crypt32.rc:185
 msgid "Directory Address"
-msgstr ""
+msgstr "Dirección de Directorio"
 
 #: crypt32.rc:186
 msgid "URL="
-msgstr ""
+msgstr "URL="
 
 #: crypt32.rc:187
 msgid "IP Address="
-msgstr ""
+msgstr "Dirección IP="
 
 #: crypt32.rc:188
 msgid "Mask="
-msgstr ""
+msgstr "Máscara="
 
 #: crypt32.rc:189
 msgid "Registered ID="
-msgstr ""
+msgstr "ID Registrado="
 
 #: crypt32.rc:190
 msgid "Unknown Key Usage"
-msgstr ""
+msgstr "Uso de Clave Desconocido"
 
 #: crypt32.rc:191
 msgid "Subject Type="
-msgstr ""
+msgstr "Tipo del Sujeto="
 
 #: crypt32.rc:192
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr ""
+msgstr "CA"
 
 #: crypt32.rc:193
 msgid "End Entity"
-msgstr ""
+msgstr "Entidad Final"
 
 #: crypt32.rc:194
 msgid "Path Length Constraint="
-msgstr ""
+msgstr "Restricción de la Longitud de Camino="
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "path length"
 msgid "None"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Ninguna\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Ninguno"
+msgstr "Ninguno"
 
 #: crypt32.rc:196
 msgid "Information Not Available"
-msgstr ""
+msgstr "Información No Disponible"
 
 #: crypt32.rc:197
 msgid "Authority Info Access"
-msgstr ""
+msgstr "Acceso a la información de la Autoridad"
 
 #: crypt32.rc:198
 msgid "Access Method="
-msgstr ""
+msgstr "Método de acceso="
 
 #: crypt32.rc:199
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
-msgstr ""
+msgstr "OCSP"
 
 #: crypt32.rc:200
 msgid "CA Issuers"
-msgstr ""
+msgstr "Emisores CA"
 
 #: crypt32.rc:201
 msgid "Unknown Access Method"
-msgstr ""
+msgstr "Método de acceso desconocido"
 
 #: crypt32.rc:202
 msgid "Alternative Name"
-msgstr ""
+msgstr "Nombre alternativo"
 
 #: crypt32.rc:203
 msgid "CRL Distribution Point"
-msgstr ""
+msgstr "Punto de distribución CRL"
 
 #: crypt32.rc:204
 msgid "Distribution Point Name"
-msgstr ""
+msgstr "Nombre del punto de distribución"
 
 #: crypt32.rc:205
 msgid "Full Name"
-msgstr ""
+msgstr "Nombre completo"
 
 #: crypt32.rc:206
 msgid "RDN Name"
-msgstr ""
+msgstr "Nombre RDN"
 
 #: crypt32.rc:207
 msgid "CRL Reason="
-msgstr ""
+msgstr "Razón de CRL="
 
 #: crypt32.rc:208
 msgid "CRL Issuer"
-msgstr ""
+msgstr "Emisor de CRL"
 
 #: crypt32.rc:209
 msgid "Key Compromise"
-msgstr ""
+msgstr "Compromiso de Clave"
 
 #: crypt32.rc:210
 msgid "CA Compromise"
-msgstr ""
+msgstr "Compromiso de CA"
 
 #: crypt32.rc:211
 msgid "Affiliation Changed"
-msgstr ""
+msgstr "Cambio de Afiliación"
 
 #: crypt32.rc:212
 msgid "Superseded"
-msgstr ""
+msgstr "Reemplazado"
 
 #: crypt32.rc:213
 msgid "Operation Ceased"
-msgstr ""
+msgstr "Cese de Operaciones"
 
 #: crypt32.rc:214
 msgid "Certificate Hold"
-msgstr ""
+msgstr "Mantener el Certificado"
 
 #: crypt32.rc:215
 msgid "Financial Information="
-msgstr ""
+msgstr "Información financiera="
 
 #: crypt32.rc:216 taskmgr.rc:397
 msgid "Available"
-msgstr ""
+msgstr "Disponible"
 
 #: crypt32.rc:217
 msgid "Not Available"
-msgstr ""
+msgstr "No Disponible"
 
 #: crypt32.rc:218
 msgid "Meets Criteria="
-msgstr ""
+msgstr "Cumple con los Criterios="
 
 #: crypt32.rc:219 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
 msgid "Yes"
@@ -1956,229 +1941,214 @@ msgstr "No"
 
 #: crypt32.rc:221
 msgid "Digital Signature"
-msgstr ""
+msgstr "Firma Digital"
 
 #: crypt32.rc:222
 msgid "Non-Repudiation"
-msgstr ""
+msgstr "No-Repudiación"
 
 #: crypt32.rc:223
 msgid "Key Encipherment"
-msgstr ""
+msgstr "Cifrado de Clave"
 
 #: crypt32.rc:224
 msgid "Data Encipherment"
-msgstr ""
+msgstr "Cifrado de Datos"
 
 #: crypt32.rc:225
 msgid "Key Agreement"
-msgstr ""
+msgstr "Acuerdo de Clave"
 
 #: crypt32.rc:226
 msgid "Certificate Signing"
-msgstr ""
+msgstr "Firmado de Certificado"
 
 #: crypt32.rc:227
 msgid "Off-line CRL Signing"
-msgstr ""
+msgstr "Firmado de Certificado Fuera de Línea"
 
 #: crypt32.rc:228
 msgid "CRL Signing"
-msgstr ""
+msgstr "Firmado de CRL"
 
 #: crypt32.rc:229
 msgid "Encipher Only"
-msgstr ""
+msgstr "Sólo Cifrar"
 
 #: crypt32.rc:230
 msgid "Decipher Only"
-msgstr ""
+msgstr "Sólo Descifrar"
 
 #: crypt32.rc:231
 msgid "SSL Client Authentication"
-msgstr ""
+msgstr "Autenticación de Cliente SSL"
 
 #: crypt32.rc:232
 msgid "SSL Server Authentication"
-msgstr ""
+msgstr "Autenticación de Servidor SSL"
 
 #: crypt32.rc:233
 msgid "S/MIME"
-msgstr ""
+msgstr "S/MIME"
 
 #: crypt32.rc:234
 msgid "Signature"
-msgstr ""
+msgstr "Firma"
 
 #: crypt32.rc:235
 msgid "SSL CA"
-msgstr ""
+msgstr "CA SSL"
 
 #: crypt32.rc:236
 msgid "S/MIME CA"
-msgstr ""
+msgstr "CA S/MIME"
 
 #: crypt32.rc:237
 msgid "Signature CA"
-msgstr ""
+msgstr "Firma de la CA"
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
-msgstr ""
+msgstr "Política del Certificado"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr ""
+msgstr "Identificador de Política: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Información de Cualifiación de Política"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Id de Cualificación de Política="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Cualificador"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Referencia de Notificación"
 
 #: cryptdlg.rc:35
 msgid "Organization="
-msgstr ""
+msgstr "Organización="
 
 #: cryptdlg.rc:36
 msgid "Notice Number="
-msgstr ""
+msgstr "Número de Notificación="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Texto de Notificación="
 
 #: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
 msgid "General"
-msgstr ""
+msgstr "General"
 
 #: cryptui.rc:188
-#, fuzzy
 msgid "&Install Certificate..."
-msgstr "Propiedades de &celda"
+msgstr "&Instalar Certificado..."
 
 #: cryptui.rc:189
 msgid "Issuer &Statement"
-msgstr ""
+msgstr "Declaración de Emi&sión"
 
 #: cryptui.rc:197
-#, fuzzy
 msgid "&Show:"
-msgstr "Mostrar"
+msgstr "Mo&strar:"
 
 #: cryptui.rc:202
-#, fuzzy
 msgid "&Edit Properties..."
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Propiedades\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Propie&dades"
+msgstr "Propi&edades de Edición..."
 
 #: cryptui.rc:203
-#, fuzzy
 msgid "&Copy to File..."
-msgstr "Copiando archivos..."
+msgstr "&Copiar a Fichero..."
 
 #: cryptui.rc:207
-#, fuzzy
 msgid "Certification Path"
-msgstr "Propiedades de &celda"
+msgstr "Trayectoria de Certificación"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "Propiedades de &celda"
+msgstr "Trayectoria de certificación"
 
 #: cryptui.rc:214
-#, fuzzy
 msgid "&View Certificate"
-msgstr "Propiedades de &celda"
+msgstr "&Ver Certificado"
 
 #: cryptui.rc:215
-#, fuzzy
 msgid "Certificate &status:"
-msgstr "Propiedades de &celda"
+msgstr "E&stado del Certificado:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
-msgstr ""
+msgstr "Descargo de Responsabilidad"
 
 #: cryptui.rc:228
-#, fuzzy
 msgid "More &Info"
-msgstr "Más? "
+msgstr "Más &Info"
 
 #: cryptui.rc:236
-#, fuzzy
 msgid "&Friendly name:"
-msgstr "&Nombre de archivo:"
+msgstr "&Nombre Descriptivo:"
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
 msgstr "&Descripción:"
 
 #: cryptui.rc:240
-#, fuzzy
 msgid "Certificate purposes"
-msgstr "Propiedades de &celda"
+msgstr "Usos del Certificado"
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
-msgstr ""
+msgstr "Activar todos los usos para este c&ertificado"
 
 #: cryptui.rc:243
 msgid "D&isable all purposes for this certificate"
-msgstr ""
+msgstr "Desact&ivar todos los usos para este certificado"
 
 #: cryptui.rc:245
 msgid "Enable &only the following purposes for this certificate:"
-msgstr ""
+msgstr "Activar sól&o los siguientes usos para este certificado:"
 
 #: cryptui.rc:250
-#, fuzzy
 msgid "Add &Purpose..."
-msgstr "&Examinar"
+msgstr "Añadir &Uso..."
 
 #: cryptui.rc:254
 msgid "Add Purpose"
-msgstr ""
+msgstr "Añadir Uso"
 
 #: cryptui.rc:257
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
 msgstr ""
+"Añada el identificador de objeto (OID) para el uso de certificado que quiera "
+"añadir:"
 
 #: cryptui.rc:265 cryptui.rc:66
 msgid "Select Certificate Store"
-msgstr ""
+msgstr "Seleccionar Almacenamiento para el Certificado"
 
 #: cryptui.rc:268
 msgid "Select the certificate store you want to use:"
-msgstr ""
+msgstr "Seleccione el almacenamiento de certificado que quiera usar:"
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
-msgstr ""
+msgstr "Mo&strar almacenamientos físicos"
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
-msgstr ""
+msgstr "Asistente de Importación de Certificados"
 
 #: cryptui.rc:280
-#, fuzzy
 msgid "Welcome to the Certificate Import Wizard"
-msgstr "El handle de dispositivo especificado es inválido."
+msgstr "Bienvenida al Asistente de Importación de Certificados"
 
 #: cryptui.rc:283
 msgid ""
@@ -2192,87 +2162,98 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Este asistente está para ayudarte a importar certificados, listas de "
+"revocación de certificados, y listas de confianza de certificados desde "
+"unfichero a un almacén de certificados.\n"
+"\n"
+"Un certificado puede ser utilizado para identificarte o al ordenador con el "
+"que te estás comunicando. También puede usarse para autenticación, y para "
+"firmar mensajes. Los almacenes de certificados son colecciones de "
+"certificados  listas de revocación, y listas de confianza.\n"
+"\n"
+"Para continuar, pulse sobre Siguiente."
 
 #: cryptui.rc:291 cryptui.rc:427
-#, fuzzy
 msgid "&File name:"
-msgstr "&Nombre de archivo:"
+msgstr "Nombre de &fichero:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "E&xplorar..."
+msgstr "Explo&rar..."
 
 #: cryptui.rc:294
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
+"Nota: Los siguientes formatos de fichero pueden contener más de un "
+"certificado, lista de revocación o lista de confianza:"
 
 #: cryptui.rc:296
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
 msgstr ""
+"Estándar de Síntaxis de Mensajes Criptográficos/Mensajes PKCS #7 (.p7b)"
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
-msgstr ""
+msgstr "Intercambio de Información Personal/PKCS #12 ((.pfx, .p12)"
 
 #: cryptui.rc:300
 msgid "Microsoft Serialized Certificate Store (.sst)"
-msgstr ""
+msgstr "Almacén de Certificados Serializado de Microsoft (.sst)"
 
 #: cryptui.rc:308
 msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
+"Wine puede seleccionar el almacén de certificados automáticamente, o puedes "
+"seleccionar una ubicación para los certificados."
 
 #: cryptui.rc:310
-#, fuzzy
 msgid "&Automatically select certificate store"
-msgstr "Servidor de automatización no puede crear el objeto"
+msgstr "Seleccionar el almacén de certificados &automáticamente"
 
 #: cryptui.rc:312
 msgid "&Place all certificates in the following store:"
-msgstr ""
+msgstr "&Poner todos los certificados en el siguiente almacén:"
 
 #: cryptui.rc:322
 msgid "Completing the Certificate Import Wizard"
-msgstr ""
+msgstr "Finalizando el Asistente de Importación de Certificados"
 
 #: cryptui.rc:324
 msgid "You have successfully completed the Certificate Import Wizard."
 msgstr ""
+"Ha finalizado el Asistente de Importación de Certificados correctamente."
 
 #: cryptui.rc:326 cryptui.rc:440
 msgid "You have specified the following settings:"
-msgstr ""
+msgstr "Ha especificado los siguientes ajustes:"
 
 #: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
-msgstr ""
+msgstr "Certificados"
 
 #: cryptui.rc:337
 msgid "I&ntended purpose:"
-msgstr ""
+msgstr "Fi&nalidad prevista:"
 
 #: cryptui.rc:341
-#, fuzzy
 msgid "&Import..."
-msgstr "&Exportar..."
+msgstr "&Emportar..."
 
 #: cryptui.rc:342 regedit.rc:109
 msgid "&Export..."
 msgstr "&Exportar..."
 
 #: cryptui.rc:344
-#, fuzzy
 msgid "&Advanced..."
-msgstr "&Avanzado"
+msgstr "&Avanzado..."
 
 #: cryptui.rc:345
-#, fuzzy
 msgid "Certificate intended purposes"
-msgstr "Propiedades de &celda"
+msgstr "Usos previstos para el certificado"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
@@ -2281,34 +2262,32 @@ msgid "&View"
 msgstr "&Ver"
 
 #: cryptui.rc:352
-#, fuzzy
 msgid "Advanced Options"
-msgstr "Sintaxis inválida"
+msgstr "Opciones Avanzadas"
 
 #: cryptui.rc:355
-#, fuzzy
 msgid "Certificate purpose"
-msgstr "Propiedades de &celda"
+msgstr "Finalidad del certificado"
 
 #: cryptui.rc:356
 msgid ""
 "Select one or more purposes to be listed when Advanced Purposes is selected."
 msgstr ""
+"Seleccione uno o más usos para ser listados cuando se seleccione Usos "
+"Avanzados."
 
 #: cryptui.rc:358
-#, fuzzy
 msgid "&Certificate purposes:"
-msgstr "Propiedades de &celda"
+msgstr "Finalidades de &Certificado:"
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
 msgid "Certificate Export Wizard"
-msgstr ""
+msgstr "Asistente de Exportación de Certificados"
 
 #: cryptui.rc:370
-#, fuzzy
 msgid "Welcome to the Certificate Export Wizard"
-msgstr "El handle de dispositivo especificado es inválido."
+msgstr "Bienvenida al Asistente Exportación de Certificados"
 
 #: cryptui.rc:373
 msgid ""
@@ -2322,387 +2301,391 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Este asistente le ayudará a exportar certificados, listas de revocación, y "
+"listas de confianza de un almacén de certificados a un fichero.\n"
+"\n"
+"Un certificado puede ser utilizado para identificarte o al ordenador con el "
+"que te estás comunicando. También puede usarse para autenticación, y para "
+"firmar mensajes. Los almacenes de certificados son colecciones de "
+"certificados, listas de revocación y listas de confianza de certificados.\n"
+"\n"
+"Para continuar, pulse sobre Siguiente."
 
 #: cryptui.rc:381
 msgid ""
 "If you choose to export the private key, you will be prompted for a password "
 "to protect the private key on a later page."
 msgstr ""
+"Si elige exportar la clave privada, le será requerida una clave para "
+"proteger la clave privada en una página subsiguiente."
 
 #: cryptui.rc:382
 msgid "Do you wish to export the private key?"
-msgstr ""
+msgstr "Quiere exportar la clave privada?"
 
 #: cryptui.rc:383
 msgid "&Yes, export the private key"
-msgstr ""
+msgstr "&Sí, exportar la clave privada"
 
 #: cryptui.rc:385
 msgid "N&o, do not export the private key"
-msgstr ""
+msgstr "N&o, no exportar la clave privada"
 
 #: cryptui.rc:396
-#, fuzzy
 msgid "&Confirm password:"
-msgstr "&Contraseña:"
+msgstr "&Confirmar contraseña:"
 
 #: cryptui.rc:404
 msgid "Select the format you want to use:"
-msgstr ""
+msgstr "Seleccione el formato que quiere utilizar:"
 
 #: cryptui.rc:405
 msgid "&DER-encoded X.509 (.cer)"
-msgstr ""
+msgstr "X.509 con codificación &DER (.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr ""
+msgstr "X.509 con codificación Ba&se64 (.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
 msgstr ""
+"Estándar de Síntaxis de Mensajes &Criptográficos/Mensaje PKCS #7 (.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
 msgstr ""
+"&Incluir todos los certificados en la ruta de certificación si es posible"
 
 #: cryptui.rc:413
 msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
-msgstr ""
+msgstr "Intercambio de Información &Personal/PKCS #12 (.pfx)"
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
 msgstr ""
+"Incl&uir todos los certificados en la ruta de certificación si es posible"
 
 #: cryptui.rc:417
 msgid "&Enable strong encryption"
-msgstr ""
+msgstr "&Activar cifrado fuerte"
 
 #: cryptui.rc:419
 msgid "Delete the private &key if the export is successful"
-msgstr ""
+msgstr "&Borrar la clave privada si se exporta correctamente"
 
 #: cryptui.rc:436
 msgid "Completing the Certificate Export Wizard"
-msgstr ""
+msgstr "Finalizando el Asistente de Exportación de Certificados"
 
 #: cryptui.rc:438
 msgid "You have successfully completed the Certificate Export Wizard."
 msgstr ""
+"Ha finalizado el Asistente de Exportación de Certificados correctamente."
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
-msgstr ""
+msgstr "Certificado"
 
 #: cryptui.rc:28
-#, fuzzy
 msgid "Certificate Information"
-msgstr "Información"
+msgstr "Información del Certificado"
 
 #: cryptui.rc:29
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
+"Este certificado tiene una firma inválida. El certificado puede haber sido "
+"alterado o estar corrompido."
 
 #: cryptui.rc:30
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
+"Este certificado raíz no es de confianza. Para confiar en él, añádalo al "
+"almacén de certificados raíz de confianza de su sistema."
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
 msgstr ""
+"Este certificado no pudo ser validad con ningún certificado raíz de "
+"confianza."
 
 #: cryptui.rc:32
-#, fuzzy
 msgid "This certificate's issuer could not be found."
-msgstr "No se encontró '%s'."
+msgstr "No se ha podido encontrar el emisor de este certificado."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
 msgstr ""
+"No se han podido verificar todos los usos previstos de este certificado."
 
 #: cryptui.rc:34
 msgid "This certificate is intended for the following purposes:"
-msgstr ""
+msgstr "Este certificado está previsto para las siguientes finalidades:"
 
 #: cryptui.rc:35
 msgid "Issued to: "
-msgstr ""
+msgstr "Emitido para: "
 
 #: cryptui.rc:36
 msgid "Issued by: "
-msgstr ""
+msgstr "Emitido por: "
 
 #: cryptui.rc:37
 msgid "Valid from "
-msgstr ""
+msgstr "Válido desde "
 
 #: cryptui.rc:38
 msgid " to "
-msgstr ""
+msgstr " hasta "
 
 #: cryptui.rc:39
 msgid "This certificate has an invalid signature."
-msgstr ""
+msgstr "Este certificado tiene una firma inválida."
 
 #: cryptui.rc:40
 msgid "This certificate has expired or is not yet valid."
-msgstr ""
+msgstr "Este certificado ha caducado o todavía no es válido."
 
 #: cryptui.rc:41
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr ""
+msgstr "El periodo de validez del certificado excede al del emisor."
 
 #: cryptui.rc:42
 msgid "This certificate was revoked by its issuer."
-msgstr ""
+msgstr "Este certificado fué revocado por su emisor."
 
 #: cryptui.rc:43
 msgid "This certificate is OK."
-msgstr ""
+msgstr "Este certificado es Correcto."
 
 #: cryptui.rc:44
 msgid "Field"
-msgstr ""
+msgstr "Campo"
 
 #: cryptui.rc:45
 msgid "Value"
-msgstr ""
+msgstr "Valor"
 
 #: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
 msgid "<All>"
-msgstr ""
+msgstr "<Todos>"
 
 #: cryptui.rc:47
 msgid "Version 1 Fields Only"
-msgstr ""
+msgstr "Solamente Campos de Versión 1"
 
 #: cryptui.rc:48
-#, fuzzy
 msgid "Extensions Only"
-msgstr ""
-"CMD Versión %s\n"
-"\n"
+msgstr "Solamente Extensiones"
 
 #: cryptui.rc:49
-#, fuzzy
 msgid "Critical Extensions Only"
-msgstr "Extensión crítica no disponible"
+msgstr "Solamente Extensiones Críticas"
 
 #: cryptui.rc:50
-#, fuzzy
 msgid "Properties Only"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Propiedades\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Propie&dades"
+msgstr "Solamente Propiedades"
 
 #: cryptui.rc:52
 msgid "Serial number"
-msgstr ""
+msgstr "Número de serie"
 
 #: cryptui.rc:53
 msgid "Issuer"
-msgstr ""
+msgstr "Emisor"
 
 #: cryptui.rc:54
 msgid "Valid from"
-msgstr ""
+msgstr "Válido desde"
 
 #: cryptui.rc:55
-#, fuzzy
 msgid "Valid to"
-msgstr "Sintaxis inválida"
+msgstr "Válido hasta"
 
 #: cryptui.rc:56
-#, fuzzy
 msgid "Subject"
-msgstr "No existe dicho objeto"
+msgstr "Sujeto"
 
 #: cryptui.rc:57
 msgid "Public key"
-msgstr ""
+msgstr "Clave pública"
 
 #: cryptui.rc:58
 msgid "%1 (%2!d! bits)"
-msgstr ""
+msgstr "%1 (%2!d! bits)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
-msgstr ""
+msgstr "Hash SHA1"
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
-msgstr ""
+msgstr "Uso de clave mejorada (propiedad)"
 
 #: cryptui.rc:61
 msgid "Friendly name"
-msgstr ""
+msgstr "Nombre descriptivo"
 
 #: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
 msgstr "Descripción"
 
 #: cryptui.rc:63
-#, fuzzy
 msgid "Certificate Properties"
-msgstr "Propiedades de &celda"
+msgstr "Propiedades del Certificado"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr ""
+msgstr "Introduzca un OID de la forma 1.2.3.4, por favor"
 
 #: cryptui.rc:65
 msgid "The OID you entered already exists."
-msgstr ""
+msgstr "El OID introducido ya existe."
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
-msgstr ""
+msgstr "Seleccione un almacén de certificado, por favor."
 
 #: cryptui.rc:69
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
+"Este fichero contiene objetos que no corresponden con los criterios dados. "
+"Por favor seleccione otro fichero."
 
 #: cryptui.rc:70
 msgid "File to Import"
-msgstr ""
+msgstr "Fichero a Importar"
 
 #: cryptui.rc:71
 msgid "Specify the file you want to import."
-msgstr ""
+msgstr "Especifique el fichero que quiere importar."
 
 #: cryptui.rc:72 cryptui.rc:95
 msgid "Certificate Store"
-msgstr ""
+msgstr "Almacén de Certificados"
 
 #: cryptui.rc:73
 msgid ""
 "Certificate stores are collections of certificates, certificate revocation "
 "lists, and certificate trust lists."
 msgstr ""
+"Los almacenes de certificados son colecciones de certificados, listas de "
+"revocacion de certificados, y listas de confianza de certificados."
 
 #: cryptui.rc:74
 msgid "X.509 Certificate (*.cer; *.crt)"
-msgstr ""
+msgstr "Certificado X.509 (*.cer; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
-msgstr ""
+msgstr "Intercambio de Información Personal (*.pfx; *.p12)"
 
 #: cryptui.rc:76 cryptui.rc:155
 msgid "Certificate Revocation List (*.crl)"
-msgstr ""
+msgstr "Lista de Revocación de Certificados (*.crl)"
 
 #: cryptui.rc:77 cryptui.rc:156
 msgid "Certificate Trust List (*.stl)"
-msgstr ""
+msgstr "Lista de Confianza de Certificados (*.stl)"
 
 #: cryptui.rc:78
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr ""
+msgstr "Almacén de Certificados Serializado de Microsoft (*.sst)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr ""
+msgstr "Mensajes CMS/PKCS #7 (*.spc; *.p7b)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
-msgstr ""
+msgstr "Seleccione un fichero por favor."
 
 #: cryptui.rc:82
 msgid "The file format is not recognized. Please select another file."
 msgstr ""
+"El formato del fichero no pudo ser reconocido. Seleccione otro fichero."
 
 #: cryptui.rc:83
-#, fuzzy
 msgid "Could not open "
-msgstr "No puede crearse o usar una ventana."
+msgstr "No se pudo abrir "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
-msgstr ""
+msgstr "Determinado por el programa"
 
 #: cryptui.rc:85
 msgid "Please select a store"
-msgstr ""
+msgstr "Seleccione un almacén por favor"
 
 #: cryptui.rc:86
 msgid "Certificate Store Selected"
-msgstr ""
+msgstr "Almacén de Certificados Seleccionado"
 
 #: cryptui.rc:87
 msgid "Automatically determined by the program"
-msgstr ""
+msgstr "Automáticamente determinado por el programa"
 
 #: cryptui.rc:88 shell32.rc:134
 msgid "File"
 msgstr "Archivo"
 
 #: cryptui.rc:89 inetcpl.rc:105
-#, fuzzy
 msgid "Content"
-msgstr "&Contenido"
+msgstr "Contenido"
 
 #: cryptui.rc:91
 msgid "Certificate Revocation List"
-msgstr ""
+msgstr "Lista de Revocación de Certificados"
 
 #: cryptui.rc:93
 msgid "CMS/PKCS #7 Message"
-msgstr ""
+msgstr "Mensaje CMS/PKCS #7"
 
 #: cryptui.rc:94
 msgid "Personal Information Exchange"
-msgstr ""
+msgstr "Intercambio de Información Personal"
 
 #: cryptui.rc:96
-#, fuzzy
 msgid "The import was successful."
-msgstr "La operación finalizó con éxito\n"
+msgstr "La importación se realizó con éxito."
 
 #: cryptui.rc:97
 msgid "The import failed."
-msgstr ""
+msgstr "La importación ha fallado."
 
 #: cryptui.rc:98
 msgid "Arial"
-msgstr ""
+msgstr "Arial"
 
 #: cryptui.rc:100
 msgid "<Advanced Purposes>"
-msgstr ""
+msgstr "<Usos Avanzados>"
 
 #: cryptui.rc:101
 msgid "Issued To"
-msgstr ""
+msgstr "Emitido Para"
 
 #: cryptui.rc:102
 msgid "Issued By"
-msgstr ""
+msgstr "Emitido Por"
 
 #: cryptui.rc:103
 msgid "Expiration Date"
-msgstr ""
+msgstr "Fecha de Caducidad"
 
 #: cryptui.rc:104
 msgid "Friendly Name"
-msgstr ""
+msgstr "Nombre Descriptivo"
 
 #: cryptui.rc:106 cryptui.rc:120
-#, fuzzy
 msgid "<None>"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Ninguna\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Ninguno"
+msgstr "<Ninguno>"
 
 #: cryptui.rc:107
 msgid ""
@@ -2710,6 +2693,9 @@ msgid ""
 "sign messages with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Ya no podrá descifrar mensajes con este certificado, o firmar mensajes con "
+"él.\n"
+"Está seguro de que quiere eliminar este certificado?"
 
 #: cryptui.rc:108
 msgid ""
@@ -2717,6 +2703,9 @@ msgid ""
 "sign messages with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Ya no podrá descrifrar mensajes con estos certificados, o firmar mensajes "
+"con ellos.\n"
+"Está seguro de que quiere eliminar estos certificados?"
 
 #: cryptui.rc:109
 msgid ""
@@ -2724,6 +2713,9 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Ya no podrá cifrar mensajes con este certificado, o verificar mensajes "
+"firmados con él.\n"
+"Está seguro de que quiere eliminar este certificado?"
 
 #: cryptui.rc:110
 msgid ""
@@ -2731,6 +2723,9 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Ya no podrá cifrar mensajes con estos certificados, o verificar mensajes "
+"firmados con ellos.\n"
+"Está seguro de que quiere eliminar estos certificados?"
 
 #: cryptui.rc:111
 msgid ""
@@ -2738,6 +2733,9 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"Los certificados emitidos por esta autoridad certificadora ya no serán de "
+"confianza.\n"
+"Está seguro de que quiere eliminar este certificado?"
 
 #: cryptui.rc:112
 msgid ""
@@ -2745,6 +2743,9 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"Los certificados emitidos por estas autoridades certificadoras ya no serán "
+"de confianza.\n"
+"Está seguro de que quiere eliminar estos certificados?"
 
 #: cryptui.rc:113
 msgid ""
@@ -2752,6 +2753,9 @@ msgid ""
 "certification authorities it issued, will no longer be trusted.\n"
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
+"Los certificados emitidos por esta autoridad certificadora raíz, o cualquier "
+"autoridad certificadora emitida por esta ya no serán de confianza.\n"
+"Está seguro de que quiere eliminiar este certificado raíz de confianza?"
 
 #: cryptui.rc:114
 msgid ""
@@ -2759,161 +2763,166 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
+"Los certificados emitidos por estas autoridades certificadoras raíz, o "
+"cualquier autoridad certificadora emitida por estas ya no serán de "
+"confianza.\n"
+"Está seguro de que quiere eliminiar estos certificados raíz de confianza?"
 
 #: cryptui.rc:115
 msgid ""
 "Software signed by this publisher will no longer be trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"El software firmado por este publicador ya no será de confianza.\n"
+"Está seguro de que quiere eliminar este certificado?"
 
 #: cryptui.rc:116
 msgid ""
 "Software signed by these publishers will no longer be trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"El software firmado por estos publicadores ya no serán de confianza.\n"
+"Está seguro de que quiere eliminar estos certificados?"
 
 #: cryptui.rc:117
 msgid "Are you sure you want to remove this certificate?"
-msgstr ""
+msgstr "Está seguro de que quiere eliminar este certificado?"
 
 #: cryptui.rc:118
 msgid "Are you sure you want to remove these certificates?"
-msgstr ""
+msgstr "Está seguro de que quiere eliminar estos certificados?"
 
 #: cryptui.rc:121
 msgid "Ensures the identity of a remote computer"
-msgstr ""
+msgstr "Asegura la identidad de un ordenador remoto"
 
 #: cryptui.rc:122
 msgid "Proves your identity to a remote computer"
-msgstr ""
+msgstr "Prueba tu identidad a un ordenador remoto"
 
 #: cryptui.rc:123
 msgid ""
 "Ensures software came from software publisher\n"
 "Protects software from alteration after publication"
 msgstr ""
+"Asegura que el software viene de un publicador de software\n"
+"Protege el software de alteraciones posteriores a su publicación"
 
 #: cryptui.rc:124
 msgid "Protects e-mail messages"
-msgstr ""
+msgstr "Protege mensajes de e-mail"
 
 #: cryptui.rc:125
 msgid "Allows secure communication over the Internet"
-msgstr ""
+msgstr "Permite comunicaciones seguras en Internet"
 
 #: cryptui.rc:126
 msgid "Allows data to be signed with the current time"
-msgstr ""
+msgstr "Permite que los datos de firmen con el tiempo actual"
 
 #: cryptui.rc:127
 msgid "Allows you to digitally sign a certificate trust list"
-msgstr ""
+msgstr "Permite firmar digitalmente una lista de confianza de certificados"
 
 #: cryptui.rc:128
 msgid "Allows data on disk to be encrypted"
-msgstr ""
+msgstr "Permite cifrar los datos en el disco duro"
 
 #: cryptui.rc:144
 msgid "Private Key Archival"
-msgstr ""
+msgstr "Archivo de Claves Privadas"
 
 #: cryptui.rc:148
-#, fuzzy
 msgid "Export Format"
-msgstr "Ade&lante"
+msgstr "Formato de Exportación"
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
-msgstr ""
+msgstr "Elija un formato en el que el contenido será guardado."
 
 #: cryptui.rc:150
 msgid "Export Filename"
-msgstr ""
+msgstr "Nombre del Fichero Exportado"
 
 #: cryptui.rc:151
 msgid "Specify the name of the file in which the content will be saved."
-msgstr ""
+msgstr "Especifique el nombre del fichero en el que se guardará el contenido."
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
-msgstr ""
-"El archivo ya existe.\n"
-"¿Desea reemplazarlo?"
+msgstr "El archivo ya existe. ¿Desea reemplazarlo?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr ""
+msgstr "Binario X.509 Codificado en DER (*.cer)"
 
 #: cryptui.rc:154
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr ""
+msgstr "X.509 Codificado en Base64 (*.cer)"
 
 #: cryptui.rc:157
 msgid "CMS/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "Mensajes CMS/PKCS #7 (*.p7b)"
 
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
-msgstr ""
+msgstr "Intercambio de Información Personal (*.pfx)"
 
 #: cryptui.rc:159
 msgid "Serialized Certificate Store (*.sst)"
-msgstr ""
+msgstr "Almacén de Certificados Serializados (*.sst)"
 
 #: cryptui.rc:160
-#, fuzzy
 msgid "File Format"
-msgstr "Ade&lante"
+msgstr "Formato del Fichero"
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
-msgstr ""
+msgstr "Incluir todos los certificados en la ruta del certificado"
 
 #: cryptui.rc:162
 msgid "Export keys"
-msgstr ""
+msgstr "Exportar claves"
 
 #: cryptui.rc:165
-#, fuzzy
 msgid "The export was successful."
-msgstr "La operación finalizó con éxito\n"
+msgstr "La exportación finalizó con éxito."
 
 #: cryptui.rc:166
 msgid "The export failed."
-msgstr ""
+msgstr "La exportación ha fallado."
 
 #: cryptui.rc:167
 msgid "Export Private Key"
-msgstr ""
+msgstr "Exportar una Clave Privada"
 
 #: cryptui.rc:168
 msgid ""
 "The certificate contains a private key which may be exported along with the "
 "certificate."
 msgstr ""
+"Este certificado continene una clave privada, que puede ser exportada junto "
+"con el certificado."
 
 #: cryptui.rc:169
 msgid "Enter Password"
-msgstr ""
+msgstr "Introduzca la Contraseña"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
-msgstr ""
+msgstr "Puede proteger una clave privada con una contraseña."
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
-msgstr ""
+msgstr "Las contraseñas no coinciden."
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
-msgstr ""
+msgstr "Nota: No se pudo abrir la clave privada para este certificado."
 
 #: cryptui.rc:173
-#, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
-msgstr "El handle de dispositivo especificado es inválido."
+msgstr "Nota: La clave privada de este certificado no es exportable."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -2977,48 +2986,47 @@ msgstr "%1!u!MB usados, %2!u!MB disponibles"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Occidental"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Central Europeo"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Cirílico"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Verde"
+msgstr "Griego"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Turco"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "Hebreo"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Árabe"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Báltico"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamita"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Tailandés"
 
 #: gdi32.rc:35
 msgid "Japanese"
-msgstr ""
+msgstr "Japonés"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
@@ -3046,7 +3054,7 @@ msgstr ""
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
-msgstr "Ficheros de la cámara"
+msgstr "Archivos de la cámara"
 
 #: gphoto2.rc:31
 msgid "Import Selected"
@@ -3278,55 +3286,52 @@ msgid "Asking for %s"
 msgstr "Preguntando por %s"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr "Inicio"
+msgstr "Página de Inicio"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr ""
+msgstr "Puedes elegir la dirección que será usada como página de inicio."
 
 #: inetcpl.rc:50
-#, fuzzy
 msgid "&Current page"
-msgstr "La fecha actual es %s\n"
+msgstr "Página a&ctual"
 
 #: inetcpl.rc:51
-#, fuzzy
 msgid "&Default page"
-msgstr "(Por defecto)"
+msgstr "Página por &defecto"
 
 #: inetcpl.rc:52
 msgid "&Blank page"
-msgstr ""
+msgstr "Página en &blanco"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr "Historial de comandos"
+msgstr "Historial de navegación"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr ""
+msgstr "Puedes borrar las páginas cacheadas, cookies u otros datos."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr ""
+msgstr "Borrar &ficheros..."
 
 #: inetcpl.rc:57
-#, fuzzy
 msgid "&Settings..."
-msgstr "&Opciones"
+msgstr "&Opciones..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr ""
+msgstr "Borrar el historial de navegación"
 
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
+"Ficheros temporales de internet\n"
+"Copias cacheadas de páginas web, imágenes y certificados."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3334,24 +3339,33 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"Cookies\n"
+"Ficheros guardados en tu ordenador por sitios web, que guardan cosas como "
+"preferencias e información de logueo."
 
 #: inetcpl.rc:72
 msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"Historial\n"
+"Lista de sitios web a los que has accedido."
 
 #: inetcpl.rc:74
 msgid ""
 "Form data\n"
 "Usernames and other information you have entered into forms."
 msgstr ""
+"Datos de formularios\n"
+"Nombres de usuario y otra información que hayas introducido en formularios."
 
 #: inetcpl.rc:76
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
+"Contraseñas\n"
+"Contraseñas guardadas que hayas introducido en formularios."
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -3366,58 +3380,52 @@ msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
 msgstr ""
+"Los certificados se usan para tu identificación personal y para identificar "
+"autoridades certificadoras y publicadores."
 
 #: inetcpl.rc:111
-#, fuzzy
 msgid "Certificates..."
-msgstr "Propiedades de &celda"
+msgstr "Certificados..."
 
 #: inetcpl.rc:112
-#, fuzzy
 msgid "Publishers..."
-msgstr "Editor"
+msgstr "Publicadores..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
-msgstr ""
+msgstr "Preferencias de Internet"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
-msgstr ""
+msgstr "Configurar el Navegador de Internet de Wine y opciones relacionadas"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Guardar configuración al salir\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Guardar opciones al salir"
+msgstr "Preferencias de seguridad para la zona: "
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "Personalizar"
+msgstr "A Medida"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Muy Baja"
 
 #: inetcpl.rc:33
 msgid "Low"
-msgstr ""
+msgstr "Baja"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Media"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Aumentada"
 
 #: inetcpl.rc:36
 msgid "High"
-msgstr ""
+msgstr "Alta"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3425,14 +3433,13 @@ msgstr "Error al convertir objeto a tipo primitivo"
 
 #: jscript.rc:26
 msgid "Invalid procedure call or argument"
-msgstr "Llamada a procedimiento no válido o argumento"
+msgstr "Argumento o llamada a procedimiento no válido"
 
 #: jscript.rc:27
 msgid "Subscript out of range"
-msgstr ""
+msgstr "Subíndice fuera de rango"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
 msgstr "Objeto esperado"
 
@@ -3445,9 +3452,8 @@ msgid "Object doesn't support this property or method"
 msgstr "El objeto no acepta esta propiedad o método"
 
 #: jscript.rc:31
-#, fuzzy
 msgid "Object doesn't support this action"
-msgstr "El objeto no acepta esta propiedad o método"
+msgstr "El objeto no acepta esta acción"
 
 #: jscript.rc:32
 msgid "Argument not optional"
@@ -3475,28 +3481,27 @@ msgstr "Constante de cadena no terminada"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "No se puede usar 'break' fuera de un bucle"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "No se puede usar 'continue' fuera de un bucle"
 
 #: jscript.rc:40
 msgid "Label redefined"
-msgstr ""
+msgstr "Etiqueta vuelta a definir"
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
-msgstr "Archivo no encontrado"
+msgstr "Etiqueta no encontrada"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
-msgstr ""
+msgstr "La compilación condicional está desactivada"
 
 #: jscript.rc:45
 msgid "Number expected"
-msgstr "Numero esperado"
+msgstr "Número esperado"
 
 #: jscript.rc:43
 msgid "Function expected"
@@ -3504,7 +3509,7 @@ msgstr "Función esperada"
 
 #: jscript.rc:44
 msgid "'[object]' is not a date object"
-msgstr "'[objeto]' no es un objeto fecha"
+msgstr "'[objeto]' no es un objeto de fecha"
 
 #: jscript.rc:46
 msgid "Object expected"
@@ -3523,14 +3528,12 @@ msgid "Boolean object expected"
 msgstr "Objeto Booleano esperado"
 
 #: jscript.rc:50
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Fecha de borrado"
+msgstr "No se puede borrar '|'"
 
 #: jscript.rc:51
-#, fuzzy
 msgid "VBArray object expected"
-msgstr "Objeto Arreglo esperado"
+msgstr "Objeto VBArray esperado"
 
 #: jscript.rc:52
 msgid "JScript object expected"
@@ -3538,24 +3541,23 @@ msgstr "Objeto JScript esperado"
 
 #: jscript.rc:53
 msgid "Syntax error in regular expression"
-msgstr "Error de sintaxis en la expresion regular"
+msgstr "Error de sintaxis en la expresión regular"
 
 #: jscript.rc:55
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI a codificar contiene caracteres no válidos"
 
 #: jscript.rc:54
-#, fuzzy
 msgid "URI to be decoded is incorrect"
-msgstr "URI a codificar contiene caracteres no válidos"
+msgstr "URI a decodificar es incorrecta"
 
 #: jscript.rc:56
 msgid "Array length must be a finite positive integer"
-msgstr "La longitud del arreglo debe ser un entero positivo finito"
+msgstr "La longitud del array debe ser un entero positivo finito"
 
 #: jscript.rc:57
 msgid "Array object expected"
-msgstr "Objeto Arreglo esperado"
+msgstr "Objeto array esperado"
 
 #: winerror.mc:26
 msgid "Success.\n"
@@ -3699,7 +3701,7 @@ msgstr "Disco equivocado.\n"
 
 #: winerror.mc:201
 msgid "Sharing buffer exceeded.\n"
-msgstr "Se excedió el buffer compartido.\n"
+msgstr "Se excedió el búfer compartido.\n"
 
 #: winerror.mc:206
 msgid "End of file.\n"
@@ -3759,7 +3761,7 @@ msgstr "Cola de impresión llena.\n"
 
 #: winerror.mc:276
 msgid "No spool space.\n"
-msgstr "Sin espacio en el buffer.\n"
+msgstr "Sin espacio en el búfer.\n"
 
 #: winerror.mc:281
 msgid "Print canceled.\n"
@@ -3883,7 +3885,7 @@ msgstr "Error en la apertura.\n"
 
 #: winerror.mc:431
 msgid "Buffer overflow.\n"
-msgstr "Desbordamiento de buffer.\n"
+msgstr "Desbordamiento de búfer.\n"
 
 #: winerror.mc:441
 msgid "No more search handles.\n"
@@ -3915,7 +3917,7 @@ msgstr "Semáforo expirado.\n"
 
 #: winerror.mc:476
 msgid "Insufficient buffer.\n"
-msgstr "Buffer insuficiente.\n"
+msgstr "Búfer insuficiente.\n"
 
 #: winerror.mc:481
 msgid "Invalid name.\n"
@@ -4283,399 +4285,375 @@ msgstr "Atributos extendidos no soportados.\n"
 
 #: winerror.mc:941
 msgid "Mutex not owned by caller.\n"
-msgstr ""
+msgstr "Mutex no perteneciente al ejecutor.\n"
 
 #: winerror.mc:946
 msgid "Too many posts to semaphore.\n"
-msgstr ""
+msgstr "Demasiados envíos al semáforo.\n"
 
 #: winerror.mc:951
 msgid "Read/WriteProcessMemory partially completed.\n"
-msgstr ""
+msgstr "Read/WriteProcessMemory parcialmente completado.\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted.\n"
-msgstr ""
+msgstr "No se pudo garantizar el oplock.\n"
 
 #: winerror.mc:961
-#, fuzzy
 msgid "Invalid oplock message received.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "Mensaje oplock inválido recibido.\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2.\n"
-msgstr ""
+msgstr "El mensaje 0x%1 no pudo encontrarse en el fichero %2.\n"
 
 #: winerror.mc:971
-#, fuzzy
 msgid "Invalid address.\n"
-msgstr "Credenciales inválidos.\n"
+msgstr "Dirección inválida.\n"
 
 #: winerror.mc:976
 msgid "Arithmetic overflow.\n"
-msgstr ""
+msgstr "Desbordamiento aritmético.\n"
 
 #: winerror.mc:981
 msgid "Pipe connected.\n"
-msgstr ""
+msgstr "La tubería está conectada.\n"
 
 #: winerror.mc:986
 msgid "Pipe listening.\n"
-msgstr ""
+msgstr "La tubería está escuchando.\n"
 
 #: winerror.mc:991
 msgid "Extended attribute access denied.\n"
-msgstr ""
+msgstr "El acceso a los atributos extendidos ha sido denegado.\n"
 
 #: winerror.mc:996
-#, fuzzy
 msgid "I/O operation aborted.\n"
-msgstr "Error en operacioens.\n"
+msgstr "Operación de E/S abortada.\n"
 
 #: winerror.mc:1001
 msgid "Overlapped I/O incomplete.\n"
-msgstr ""
+msgstr "E/S solapada sin finalizar.\n"
 
 #: winerror.mc:1006
 msgid "Overlapped I/O pending.\n"
-msgstr ""
+msgstr "E/S solapada pendiente.\n"
 
 #: winerror.mc:1011
 msgid "No access to memory location.\n"
-msgstr ""
+msgstr "No se puede acceder a la posición de memoria.\n"
 
 #: winerror.mc:1016
-#, fuzzy
 msgid "Swap error.\n"
-msgstr "Error de sintaxis.\n"
+msgstr "Error en la swap.\n"
 
 #: winerror.mc:1021
 msgid "Stack overflow.\n"
-msgstr ""
+msgstr "Desbordamiento de la pila.\n"
 
 #: winerror.mc:1026
-#, fuzzy
 msgid "Invalid message.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Mensaje inválido.\n"
 
 #: winerror.mc:1031
 msgid "Cannot complete.\n"
-msgstr ""
+msgstr "No se puede completar.\n"
 
 #: winerror.mc:1036
-#, fuzzy
 msgid "Invalid flags.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Flags inválidos.\n"
 
 #: winerror.mc:1041
 msgid "Unrecognised volume.\n"
-msgstr ""
+msgstr "No se ha reconocido el volúmen.\n"
 
 #: winerror.mc:1046
 msgid "File invalid.\n"
-msgstr ""
+msgstr "Fichero inválido.\n"
 
 #: winerror.mc:1051
 msgid "Cannot run full-screen.\n"
-msgstr ""
+msgstr "No se puede ejecutar en pantalla completa.\n"
 
 #: winerror.mc:1056
 msgid "Nonexistent token.\n"
-msgstr ""
+msgstr "El token no existe.\n"
 
 #: winerror.mc:1061
-#, fuzzy
 msgid "Registry corrupt.\n"
-msgstr "Editor del registro.\n"
+msgstr "Registro corrompido.\n"
 
 #: winerror.mc:1066
-#, fuzzy
 msgid "Invalid key.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Clave inválida.\n"
 
 #: winerror.mc:1071
-#, fuzzy
 msgid "Can't open registry key.\n"
-msgstr "Sale del editor de registro.\n"
+msgstr "No se puede abrir la clave del registro.\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key.\n"
-msgstr ""
+msgstr "No se puede leer la clave del registro.\n"
 
 #: winerror.mc:1081
-#, fuzzy
 msgid "Can't write registry key.\n"
-msgstr "Sale del editor de registro.\n"
+msgstr "No se pudo escribir la clave del registro.\n"
 
 #: winerror.mc:1086
 msgid "Registry has been recovered.\n"
-msgstr ""
+msgstr "El registro se ha recuperado.\n"
 
 #: winerror.mc:1091
-#, fuzzy
 msgid "Registry is corrupt.\n"
-msgstr "Editor del registro.\n"
+msgstr "El registro está corrompido.\n"
 
 #: winerror.mc:1096
-#, fuzzy
 msgid "I/O to registry failed.\n"
-msgstr "Importar archivo de registro.\n"
+msgstr "E/S al registro ha fallado.\n"
 
 #: winerror.mc:1101
-#, fuzzy
 msgid "Not registry file.\n"
-msgstr "Importar archivo de registro.\n"
+msgstr "No es un fichero de registro.\n"
 
 #: winerror.mc:1106
-#, fuzzy
 msgid "Key deleted.\n"
-msgstr "Fecha de borrado.\n"
+msgstr "La clave ha sido borrada.\n"
 
 #: winerror.mc:1111
 msgid "No registry log space.\n"
-msgstr ""
+msgstr "No queda espacio de bitácora en el registro.\n"
 
 #: winerror.mc:1116
 msgid "Registry key has subkeys.\n"
-msgstr ""
+msgstr "La clave del registro tiene subclaves.\n"
 
 #: winerror.mc:1121
 msgid "Subkey must be volatile.\n"
-msgstr ""
+msgstr "La subclave debe ser volátil.\n"
 
 #: winerror.mc:1126
 msgid "Notify change request in progress.\n"
-msgstr ""
+msgstr "Notificar de petición de cambios en marcha.\n"
 
 #: winerror.mc:1131
 msgid "Dependent services are running.\n"
-msgstr ""
+msgstr "Hay servicios que dependen de este ejecutándose.\n"
 
 #: winerror.mc:1136
-#, fuzzy
 msgid "Invalid service control.\n"
-msgstr "Credenciales inválidos.\n"
+msgstr "Control de servicio inválido.\n"
 
 #: winerror.mc:1141
 msgid "Service request timeout.\n"
-msgstr ""
+msgstr "Se agotó el tiempo de espera de la petición al servicio.\n"
 
 #: winerror.mc:1146
 msgid "Cannot create service thread.\n"
-msgstr ""
+msgstr "No se pudo crear el hilo del servicio.\n"
 
 #: winerror.mc:1151
 msgid "Service database locked.\n"
-msgstr ""
+msgstr "Base de datos del servicio bloqueada.\n"
 
 #: winerror.mc:1156
 msgid "Service already running.\n"
-msgstr ""
+msgstr "El servicio ya se está ejecutando.\n"
 
 #: winerror.mc:1161
 msgid "Invalid service account.\n"
-msgstr ""
+msgstr "Cuenta del servicio inválida.\n"
 
 #: winerror.mc:1166
 msgid "Service is disabled.\n"
-msgstr ""
+msgstr "El servicio está deshabilitado.\n"
 
 #: winerror.mc:1171
 msgid "Circular dependency.\n"
-msgstr ""
+msgstr "Dependencia circular.\n"
 
 #: winerror.mc:1176
-#, fuzzy
 msgid "Service does not exist.\n"
-msgstr "El archivo no existe.\n"
+msgstr "El servicio no existe.\n"
 
 #: winerror.mc:1181
 msgid "Service cannot accept control message.\n"
-msgstr ""
+msgstr "El servicio no puede aceptar el mensaje de control.\n"
 
 #: winerror.mc:1186
 msgid "Service not active.\n"
-msgstr ""
+msgstr "El servicio no está activo.\n"
 
 #: winerror.mc:1191
 msgid "Service controller connect failed.\n"
-msgstr ""
+msgstr "Falló la conexión al controlador del servicio.\n"
 
 #: winerror.mc:1196
 msgid "Exception in service.\n"
-msgstr ""
+msgstr "Excepción en el servicio.\n"
 
 #: winerror.mc:1201
-#, fuzzy
 msgid "Database does not exist.\n"
-msgstr "La ruta no existe.\n"
+msgstr "La base de datos no existe.\n"
 
 #: winerror.mc:1206
 msgid "Service-specific error.\n"
-msgstr ""
+msgstr "Error específico del servicio.\n"
 
 #: winerror.mc:1211
 msgid "Process aborted.\n"
-msgstr ""
+msgstr "Proceso abortado.\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed.\n"
-msgstr ""
+msgstr "El servicio de dependencias ha fallado.\n"
 
 #: winerror.mc:1221
 msgid "Service login failed.\n"
-msgstr ""
+msgstr "El servicio no ha podido loguear en el sistema.\n"
 
 #: winerror.mc:1226
 msgid "Service start-hang.\n"
-msgstr ""
+msgstr "Bloqueo del servicio en el arranque.\n"
 
 #: winerror.mc:1231
 msgid "Invalid service lock.\n"
-msgstr ""
+msgstr "Lock de servicio inválido.\n"
 
 #: winerror.mc:1236
 msgid "Service marked for delete.\n"
-msgstr ""
+msgstr "Servicio marcado para su eliminación.\n"
 
 #: winerror.mc:1241
 msgid "Service exists.\n"
-msgstr ""
+msgstr "El servicio ya existe.\n"
 
 #: winerror.mc:1246
 msgid "System running last-known-good config.\n"
-msgstr ""
+msgstr "El sistema está ejecutando la última config válida conocida.\n"
 
 #: winerror.mc:1251
 msgid "Service dependency deleted.\n"
-msgstr ""
+msgstr "El servicio de dependencias ha sido eliminado.\n"
 
 #: winerror.mc:1256
 msgid "Boot already accepted as last-good config.\n"
-msgstr ""
+msgstr "El arranque ha sido aceptado como última config válida conocida.\n"
 
 #: winerror.mc:1261
 msgid "Service not started since last boot.\n"
-msgstr ""
+msgstr "El servicio no ha comenzado desde el último arranque del sistema.\n"
 
 #: winerror.mc:1266
 msgid "Duplicate service name.\n"
-msgstr ""
+msgstr "Nombre del servicio duplicado.\n"
 
 #: winerror.mc:1271
 msgid "Different service account.\n"
-msgstr ""
+msgstr "Cuenta de servicio diferente.\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected.\n"
-msgstr ""
+msgstr "No puede detectarse un fallo del dispositivo.\n"
 
 #: winerror.mc:1281
-#, fuzzy
 msgid "Process abort cannot be detected.\n"
-msgstr "Bucle detectado.\n"
+msgstr "No puede detectarse un proceso que aborta.\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service.\n"
-msgstr ""
+msgstr "No hay programa de recuperación para el servicio.\n"
 
 #: winerror.mc:1291
-#, fuzzy
 msgid "Service not implemented by exe.\n"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"No implementado\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Aún no implementado.\n"
+msgstr "El servicio no está implementado por el exe.\n"
 
 #: winerror.mc:1296
 msgid "End of media.\n"
-msgstr ""
+msgstr "Fin del medio.\n"
 
 #: winerror.mc:1301
 msgid "Filemark detected.\n"
-msgstr ""
+msgstr "Filemark detectado.\n"
 
 #: winerror.mc:1306
 msgid "Beginning of media.\n"
-msgstr ""
+msgstr "Principio del medio.\n"
 
 #: winerror.mc:1311
 msgid "Setmark detected.\n"
-msgstr ""
+msgstr "Setmark detectado.\n"
 
 #: winerror.mc:1316
-#, fuzzy
 msgid "No data detected.\n"
-msgstr "Bucle detectado.\n"
+msgstr "No se han detectado datos.\n"
 
 #: winerror.mc:1321
 msgid "Partition failure.\n"
-msgstr ""
+msgstr "Fallo de partición.\n"
 
 #: winerror.mc:1326
 msgid "Invalid block length.\n"
-msgstr ""
+msgstr "Longitud de bloque incorrecta.\n"
 
 #: winerror.mc:1331
 msgid "Device not partitioned.\n"
-msgstr ""
+msgstr "El dispositivo no está particionado.\n"
 
 #: winerror.mc:1336
 msgid "Unable to lock media.\n"
-msgstr ""
+msgstr "No se ha podido bloquear el medio.\n"
 
 #: winerror.mc:1341
 msgid "Unable to unload media.\n"
-msgstr ""
+msgstr "No se ha podido expulsar el medio.\n"
 
 #: winerror.mc:1346
 msgid "Media changed.\n"
-msgstr ""
+msgstr "El medio ha cambiado.\n"
 
 #: winerror.mc:1351
 msgid "I/O bus reset.\n"
-msgstr ""
+msgstr "Reset del bus de E/S.\n"
 
 #: winerror.mc:1356
 msgid "No media in drive.\n"
-msgstr ""
+msgstr "No hay ningún medio en la unidad.\n"
 
 #: winerror.mc:1361
 msgid "No Unicode translation.\n"
-msgstr ""
+msgstr "No hay traducción Unicode.\n"
 
 #: winerror.mc:1366
 msgid "DLL init failed.\n"
-msgstr ""
+msgstr "Inicialización de DLL ha fallado.\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress.\n"
-msgstr ""
+msgstr "El sistema se está apagando.\n"
 
 #: winerror.mc:1376
 msgid "No shutdown in progress.\n"
-msgstr ""
+msgstr "El sistema no se está apagando.\n"
 
 #: winerror.mc:1381
 msgid "I/O device error.\n"
-msgstr ""
+msgstr "Error de dispositivo de E/S.\n"
 
 #: winerror.mc:1386
 msgid "No serial devices found.\n"
-msgstr ""
+msgstr "No se han encontrado dispositivos serie.\n"
 
 #: winerror.mc:1391
 msgid "Shared IRQ busy.\n"
-msgstr ""
+msgstr "IRQ compartida ocupada.\n"
 
 #: winerror.mc:1396
 msgid "Serial I/O completed.\n"
-msgstr ""
+msgstr "La E/S serie se ha completado.\n"
 
 #: winerror.mc:1401
 msgid "Serial I/O counter timeout.\n"
-msgstr ""
+msgstr "Se ha agotado el tiempo de espera del contador de E/S serie.\n"
 
 #: winerror.mc:1406
 msgid "Floppy ID address mark not found.\n"
@@ -4683,36 +4661,35 @@ msgstr ""
 
 #: winerror.mc:1411
 msgid "Floppy reports wrong cylinder.\n"
-msgstr ""
+msgstr "El disquete informa de un número incorrecto de cilindros.\n"
 
 #: winerror.mc:1416
-#, fuzzy
 msgid "Unknown floppy error.\n"
-msgstr "Origen desconocido.\n"
+msgstr "Error desconocido en el disquete.\n"
 
 #: winerror.mc:1421
 msgid "Floppy registers inconsistent.\n"
-msgstr ""
+msgstr "Los registros del disquete son inconsistentes.\n"
 
 #: winerror.mc:1426
 msgid "Hard disk recalibrate failed.\n"
-msgstr ""
+msgstr "La recalibración del disco duro ha fallado.\n"
 
 #: winerror.mc:1431
 msgid "Hard disk operation failed.\n"
-msgstr ""
+msgstr "La operación del disco duro ha fallado.\n"
 
 #: winerror.mc:1436
 msgid "Hard disk reset failed.\n"
-msgstr ""
+msgstr "El reset del disco duro ha fallado.\n"
 
 #: winerror.mc:1441
 msgid "End of tape media.\n"
-msgstr ""
+msgstr "Fin de la cinta.\n"
 
 #: winerror.mc:1446
 msgid "Not enough server memory.\n"
-msgstr ""
+msgstr "No hay suficiente memoria.\n"
 
 #: winerror.mc:1451
 msgid "Possible deadlock.\n"
@@ -4720,77 +4697,71 @@ msgstr ""
 
 #: winerror.mc:1456
 msgid "Incorrect alignment.\n"
-msgstr ""
+msgstr "Alineamiento incorrecto.\n"
 
 #: winerror.mc:1461
 msgid "Set-power-state vetoed.\n"
-msgstr ""
+msgstr "Set-power-state ha sido vetado.\n"
 
 #: winerror.mc:1466
 msgid "Set-power-state failed.\n"
-msgstr ""
+msgstr "Set-power-state ha fallado.\n"
 
 #: winerror.mc:1471
 msgid "Too many links.\n"
-msgstr ""
+msgstr "Demasiados enlaces.\n"
 
 #: winerror.mc:1476
 msgid "Newer windows version needed.\n"
-msgstr ""
+msgstr "Se necesita una versión de windows más reciente.\n"
 
 #: winerror.mc:1481
 msgid "Wrong operating system.\n"
-msgstr ""
+msgstr "Sistema operativo incorrecto.\n"
 
 #: winerror.mc:1486
 msgid "Single-instance application.\n"
-msgstr ""
+msgstr "Aplicación de una sola instancia.\n"
 
 #: winerror.mc:1491
-#, fuzzy
 msgid "Real-mode application.\n"
-msgstr "Aplicaciones.\n"
+msgstr "Aplicación de modo real.\n"
 
 #: winerror.mc:1496
-#, fuzzy
 msgid "Invalid DLL.\n"
-msgstr "Sintaxis inválida de DN.\n"
+msgstr "DLL inválida.\n"
 
 #: winerror.mc:1501
 msgid "No associated application.\n"
-msgstr ""
+msgstr "No hay ninguna aplicación asociada.\n"
 
 #: winerror.mc:1506
 msgid "DDE failure.\n"
-msgstr ""
+msgstr "Fallo de DDE.\n"
 
 #: winerror.mc:1511
-#, fuzzy
 msgid "DLL not found.\n"
-msgstr "PATH no encontrado.\n"
+msgstr "DLL no encontrada.\n"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles.\n"
-msgstr "Sin memoria."
+msgstr "Se han agotado los descriptores de usuario.\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls.\n"
-msgstr ""
+msgstr "El mensaje sólo puede usarse en llamadas síncronas.\n"
 
 #: winerror.mc:1526
 msgid "The source element is empty.\n"
-msgstr ""
+msgstr "El elemento origen está vacío.\n"
 
 #: winerror.mc:1531
-#, fuzzy
 msgid "The destination element is full.\n"
-msgstr "La operación finalizó con éxito.\n"
+msgstr "El elemento de destino está lleno.\n"
 
 #: winerror.mc:1536
-#, fuzzy
 msgid "The element address is invalid.\n"
-msgstr "El handle de dispositivo especificado es inválido."
+msgstr "La dirección del elemento es inválida.\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present.\n"
@@ -4798,1553 +4769,1415 @@ msgstr ""
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization.\n"
-msgstr ""
+msgstr "El dispositivo debe reiniciarse.\n"
 
 #: winerror.mc:1551
-#, fuzzy
 msgid "The device requires cleaning.\n"
-msgstr "El controlador de dispositivo no está listo."
+msgstr "El dispositivo necesita una limpieza.\n"
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open.\n"
-msgstr "Puerta de la impresora abierta; .\n"
+msgstr "La puerta del dispositivo está abierta.\n"
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected.\n"
-msgstr "Archivo no encontrado.\n"
+msgstr "Eldispositivo no está conectado.\n"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found.\n"
-msgstr "PATH no encontrado.\n"
+msgstr "El elemento no se ha encontrado.\n"
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found.\n"
-msgstr "ruta %s no encontrada.\n"
+msgstr "No se han encontrado coincidencias.\n"
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found.\n"
-msgstr "PATH no encontrado.\n"
+msgstr "No se ha encontrado el conjunto de propiedades.\n"
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found.\n"
-msgstr "ruta %s no encontrada.\n"
+msgstr "Punto no encontrado.\n"
 
 #: winerror.mc:1586
 msgid "No running tracking service.\n"
-msgstr ""
+msgstr "No hay ningún servicio de seguimiendo ejecutándose.\n"
 
 #: winerror.mc:1591
-#, fuzzy
 msgid "No such volume ID.\n"
-msgstr "No existe dicho atributo.\n"
+msgstr "No existe dicho ID de volumen.\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced.\n"
-msgstr ""
+msgstr "No se ha podido borrar el fichero que va a ser reemplazado.\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place.\n"
-msgstr ""
+msgstr "No se ha podido mover el fichero de reemplazo a su sitio.\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed.\n"
-msgstr ""
+msgstr "Ha fallado mover el fichero de reemplazo.\n"
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted.\n"
-msgstr "Fecha de borrado.\n"
+msgstr "El registro está siendo borrado.\n"
 
 #: winerror.mc:1616
 msgid "The journal is not active.\n"
-msgstr ""
+msgstr "El registro no está activo.\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found.\n"
-msgstr ""
+msgstr "Fichero potencialmente coincidente encontrado.\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted.\n"
-msgstr ""
+msgstr "La entrada fue borrada del registro.\n"
 
 #: winerror.mc:1631
-#, fuzzy
 msgid "Invalid device name.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "Nombre de dispositivo inválido.\n"
 
 #: winerror.mc:1636
-#, fuzzy
 msgid "Connection unavailable.\n"
-msgstr "No disponible; .\n"
+msgstr "Conexión no disponible.\n"
 
 #: winerror.mc:1641
 msgid "Device already remembered.\n"
-msgstr ""
+msgstr "El dispositivo ya se ha recordado.\n"
 
 #: winerror.mc:1646
 msgid "No network or bad path.\n"
-msgstr ""
+msgstr "No hay red o ruta incorrecta.\n"
 
 #: winerror.mc:1651
 msgid "Invalid network provider name.\n"
-msgstr ""
+msgstr "Nombre del proveedor de red inválido.\n"
 
 #: winerror.mc:1656
 msgid "Cannot open network connection profile.\n"
-msgstr ""
+msgstr "No se puede abrir el perfil de conexión de red.\n"
 
 #: winerror.mc:1661
 msgid "Corrupt network connection profile.\n"
-msgstr ""
+msgstr "Perfil de conexión de red corrompido.\n"
 
 #: winerror.mc:1666
 msgid "Not a container.\n"
-msgstr ""
+msgstr "No es un contenedor.\n"
 
 #: winerror.mc:1671
 msgid "Extended error.\n"
-msgstr ""
+msgstr "Error extendido.\n"
 
 #: winerror.mc:1676
-#, fuzzy
 msgid "Invalid group name.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "Nombre de grupo inválido.\n"
 
 #: winerror.mc:1681
-#, fuzzy
 msgid "Invalid computer name.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "Nombre de ordenador inválido.\n"
 
 #: winerror.mc:1686
-#, fuzzy
 msgid "Invalid event name.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "Nombre de evento inválido.\n"
 
 #: winerror.mc:1691
-#, fuzzy
 msgid "Invalid domain name.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "Nombre de dominio inválido.\n"
 
 #: winerror.mc:1696
-#, fuzzy
 msgid "Invalid service name.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "Nombre del servicio inválido.\n"
 
 #: winerror.mc:1701
-#, fuzzy
 msgid "Invalid network name.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "El nombre de red no es válido.\n"
 
 #: winerror.mc:1706
-#, fuzzy
 msgid "Invalid share name.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "Nombre de recurso compartido inválido.\n"
 
 #: winerror.mc:1716
-#, fuzzy
 msgid "Invalid message name.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "El nombre del mensaje es inválido.\n"
 
 #: winerror.mc:1721
 msgid "Invalid message destination.\n"
-msgstr ""
+msgstr "El destino del mensaje es inválido.\n"
 
 #: winerror.mc:1726
 msgid "Session credential conflict.\n"
-msgstr ""
+msgstr "Conflicto de credenciales de sesión.\n"
 
 #: winerror.mc:1731
-#, fuzzy
 msgid "Remote session limit exceeded.\n"
-msgstr "Límite de saltos de remisiones excedido.\n"
+msgstr "Se ha superado el limite de número de sesiones remotas.\n"
 
 #: winerror.mc:1736
 msgid "Duplicate domain or workgroup name.\n"
-msgstr ""
+msgstr "Nombre duplicado de dominio o de grupo de trabajo.\n"
 
 #: winerror.mc:1741
 msgid "No network.\n"
-msgstr ""
+msgstr "No hay red.\n"
 
 #: winerror.mc:1746
-#, fuzzy
 msgid "Operation canceled by user.\n"
-msgstr "Programas de instalación.\n"
+msgstr "Operación cancelada por el usuario.\n"
 
 #: winerror.mc:1751
 msgid "File has a user-mapped section.\n"
-msgstr ""
+msgstr "El fichero tiene una sección mapeada por el usuario.\n"
 
 #: winerror.mc:1756 winerror.mc:3741
-#, fuzzy
 msgid "Connection refused.\n"
-msgstr "Conectando to %s.\n"
+msgstr "Conexión rechazada.\n"
 
 #: winerror.mc:1761
 msgid "Connection gracefully closed.\n"
-msgstr ""
+msgstr "La conexión se cerró suavemente.\n"
 
 #: winerror.mc:1766
 msgid "Address already associated with transport endpoint.\n"
-msgstr ""
+msgstr "La dirección ya está asociada con un punto final de transporte.\n"
 
 #: winerror.mc:1771
 msgid "Address not associated with transport endpoint.\n"
-msgstr ""
+msgstr "La dirección no está asociada con un punto final de transporte.\n"
 
 #: winerror.mc:1776
-#, fuzzy
 msgid "Connection invalid.\n"
-msgstr "Conexión LAN.\n"
+msgstr "Conexión inválida.\n"
 
 #: winerror.mc:1781
 msgid "Connection is active.\n"
-msgstr ""
+msgstr "La conexión está activa.\n"
 
 #: winerror.mc:1786
-#, fuzzy
 msgid "Network unreachable.\n"
-msgstr "Compartición de red.\n"
+msgstr "No se puede llegar a la red.\n"
 
 #: winerror.mc:1791
 msgid "Host unreachable.\n"
-msgstr ""
+msgstr "No se puede llegar al servidor.\n"
 
 #: winerror.mc:1796
 msgid "Protocol unreachable.\n"
-msgstr ""
+msgstr "No se puede llegar al protocolo.\n"
 
 #: winerror.mc:1801
 msgid "Port unreachable.\n"
-msgstr ""
+msgstr "No se puede llegar al puerto.\n"
 
 #: winerror.mc:1806
 msgid "Request aborted.\n"
-msgstr ""
+msgstr "Petición abortada.\n"
 
 #: winerror.mc:1811
-#, fuzzy
 msgid "Connection aborted.\n"
-msgstr "Conectando to %s.\n"
+msgstr "Conexión abortada.\n"
 
 #: winerror.mc:1816
 msgid "Please retry operation.\n"
-msgstr ""
+msgstr "Por favor vuelva a intentar la operación.\n"
 
 #: winerror.mc:1821
 msgid "Connection count limit reached.\n"
-msgstr ""
+msgstr "Límite de conexiones alcanzado.\n"
 
 #: winerror.mc:1826
 msgid "Login time restriction.\n"
-msgstr ""
+msgstr "Restricción temporal de entrada.\n"
 
 #: winerror.mc:1831
 msgid "Login workstation restriction.\n"
-msgstr ""
+msgstr "Restricción de logueo de estación de trabajo.\n"
 
 #: winerror.mc:1836
 msgid "Incorrect network address.\n"
-msgstr ""
+msgstr "Dirección de red incorrecta.\n"
 
 #: winerror.mc:1841
 msgid "Service already registered.\n"
-msgstr ""
+msgstr "El servicio ya se ha registrado.\n"
 
 #: winerror.mc:1846
-#, fuzzy
 msgid "Service not found.\n"
-msgstr "Archivo no encontrado.\n"
+msgstr "Servicio no encontrado.\n"
 
 #: winerror.mc:1851
 msgid "User not authenticated.\n"
-msgstr ""
+msgstr "El usuario no está autenticado.\n"
 
 #: winerror.mc:1856
 msgid "User not logged on.\n"
-msgstr ""
+msgstr "El usuario no está registrado.\n"
 
 #: winerror.mc:1861
 msgid "Continue work in progress.\n"
-msgstr ""
+msgstr "Continuar los trabajos en marcha.\n"
 
 #: winerror.mc:1866
-#, fuzzy
 msgid "Already initialised.\n"
-msgstr "Ya existe.\n"
+msgstr "Ya se ha inicializado.\n"
 
 #: winerror.mc:1871
 msgid "No more local devices.\n"
-msgstr ""
+msgstr "No hay más dispositivos locales.\n"
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist.\n"
-msgstr "El archivo no existe.\n"
+msgstr "El sitio no existe.\n"
 
 #: winerror.mc:1881
-#, fuzzy
 msgid "The domain controller already exists.\n"
-msgstr "El puerto %s ya existe.\n"
+msgstr "El controlador de dominio ya existe.\n"
 
 #: winerror.mc:1886
-#, fuzzy
 msgid "Supported only when connected.\n"
-msgstr "Archivo no encontrado.\n"
+msgstr "Soportado solamente cuando se está conectado.\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed.\n"
-msgstr ""
+msgstr "Realizar la operación incluso cuando nada ha cambiado.\n"
 
 #: winerror.mc:1896
-#, fuzzy
 msgid "The user profile is invalid.\n"
-msgstr "El handle de dispositivo especificado es inválido."
+msgstr "El perfil de usuario es inválido.\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server.\n"
-msgstr ""
+msgstr "No está soportado en Servidores para Pequeños Negocios.\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned.\n"
-msgstr ""
+msgstr "No se han podido asignar todos los privilegios.\n"
 
 #: winerror.mc:1911
 msgid "Some security IDs not mapped.\n"
-msgstr ""
+msgstr "No se han podido mapear algunos IDs de seguridad.\n"
 
 #: winerror.mc:1916
 msgid "No quotas for account.\n"
-msgstr ""
+msgstr "No hay cuotas para la cuenta.\n"
 
 #: winerror.mc:1921
 msgid "Local user session key.\n"
-msgstr ""
+msgstr "Clave de sesión de usuario local.\n"
 
 #: winerror.mc:1926
 msgid "Password too complex for LM.\n"
-msgstr ""
+msgstr "La contraseña es demasiado compleja para LM.\n"
 
 #: winerror.mc:1931
-#, fuzzy
 msgid "Unknown revision.\n"
-msgstr "Origen desconocido.\n"
+msgstr "Revisión desconocida.\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels.\n"
-msgstr ""
+msgstr "Niveles de revisión incompatibles.\n"
 
 #: winerror.mc:1941
-#, fuzzy
 msgid "Invalid owner.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Dueño inválido.\n"
 
 #: winerror.mc:1946
-#, fuzzy
 msgid "Invalid primary group.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Grupo primario inválido.\n"
 
 #: winerror.mc:1951
 msgid "No impersonation token.\n"
-msgstr ""
+msgstr "No hay token de personificación.\n"
 
 #: winerror.mc:1956
 msgid "Can't disable mandatory group.\n"
-msgstr ""
+msgstr "No se puede deshabilitar un grupo obligatorio.\n"
 
 #: winerror.mc:1961
 msgid "No logon servers available.\n"
-msgstr ""
+msgstr "No hay servidores de acreditación disponibles.\n"
 
 #: winerror.mc:1966
 msgid "No such logon session.\n"
-msgstr ""
+msgstr "No existe la sesión de logueo.\n"
 
 #: winerror.mc:1971
 msgid "No such privilege.\n"
-msgstr ""
+msgstr "No existe el privilegio.\n"
 
 #: winerror.mc:1976
 msgid "Privilege not held.\n"
-msgstr ""
+msgstr "El privilegio no se ha mantenido.\n"
 
 #: winerror.mc:1981
-#, fuzzy
 msgid "Invalid account name.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Nombre de cuenta inválido.\n"
 
 #: winerror.mc:1986
-#, fuzzy
 msgid "User already exists.\n"
-msgstr "El puerto %s ya existe.\n"
+msgstr "El usuario ya existe.\n"
 
 #: winerror.mc:1991
-#, fuzzy
 msgid "No such user.\n"
-msgstr "No existe dicho atributo.\n"
+msgstr "El usuario no existe.\n"
 
 #: winerror.mc:1996
-#, fuzzy
 msgid "Group already exists.\n"
-msgstr "El puerto %s ya existe.\n"
+msgstr "El grupo ya existe.\n"
 
 #: winerror.mc:2001
 msgid "No such group.\n"
-msgstr ""
+msgstr "No existe el grupo.\n"
 
 #: winerror.mc:2006
 msgid "User already in group.\n"
-msgstr ""
+msgstr "El usuario ya está en el grupo.\n"
 
 #: winerror.mc:2011
 msgid "User not in group.\n"
-msgstr ""
+msgstr "El usuario no está en el grupo.\n"
 
 #: winerror.mc:2016
 msgid "Can't delete last admin user.\n"
-msgstr ""
+msgstr "No se puede borrar al último administrador.\n"
 
 #: winerror.mc:2021
 msgid "Wrong password.\n"
-msgstr ""
+msgstr "Contraseña incorrecta.\n"
 
 #: winerror.mc:2026
 msgid "Ill-formed password.\n"
-msgstr ""
+msgstr "Contraseña mal formada.\n"
 
 #: winerror.mc:2031
 msgid "Password restriction.\n"
-msgstr ""
+msgstr "Restricción en la clave.\n"
 
 #: winerror.mc:2036
 msgid "Logon failure.\n"
-msgstr ""
+msgstr "Fallo en la entrada.\n"
 
 #: winerror.mc:2041
 msgid "Account restriction.\n"
-msgstr ""
+msgstr "Restricción de la cuenta.\n"
 
 #: winerror.mc:2046
 msgid "Invalid logon hours.\n"
-msgstr ""
+msgstr "Horas de logueo inválidas.\n"
 
 #: winerror.mc:2051
-#, fuzzy
 msgid "Invalid workstation.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Estación de trabajo inválida.\n"
 
 #: winerror.mc:2056
 msgid "Password expired.\n"
-msgstr ""
+msgstr "Contraseña caducada.\n"
 
 #: winerror.mc:2061
-#, fuzzy
 msgid "Account disabled.\n"
-msgstr "deshabilitada.\n"
+msgstr "Cuenta deshabilitada.\n"
 
 #: winerror.mc:2066
 msgid "No security ID mapped.\n"
-msgstr ""
+msgstr "No hay un ID de seguridad mapeado.\n"
 
 #: winerror.mc:2071
 msgid "Too many LUIDs requested.\n"
-msgstr ""
+msgstr "Se han pedido demasiados LUIDs.\n"
 
 #: winerror.mc:2076
 msgid "LUIDs exhausted.\n"
-msgstr ""
+msgstr "Se han agotado los LUIDs.\n"
 
 #: winerror.mc:2081
 msgid "Invalid sub authority.\n"
-msgstr ""
+msgstr "Sub autoridad inválida.\n"
 
 #: winerror.mc:2086
-#, fuzzy
 msgid "Invalid ACL.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "ACL inválida.\n"
 
 #: winerror.mc:2091
-#, fuzzy
 msgid "Invalid SID.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "SID inválido.\n"
 
 #: winerror.mc:2096
 msgid "Invalid security descriptor.\n"
-msgstr ""
+msgstr "Descriptor de seguridad incorrecto.\n"
 
 #: winerror.mc:2101
 msgid "Bad inherited ACL.\n"
-msgstr ""
+msgstr "ACL heredada incorrecta.\n"
 
 #: winerror.mc:2106
-#, fuzzy
 msgid "Server disabled.\n"
-msgstr "deshabilitada.\n"
+msgstr "Servidor deshabilitado.\n"
 
 #: winerror.mc:2111
-#, fuzzy
 msgid "Server not disabled.\n"
-msgstr "El manejador no fue activado."
+msgstr "No se ha deshabilitado el servidor.\n"
 
 #: winerror.mc:2116
 msgid "Invalid ID authority.\n"
-msgstr ""
+msgstr "ID de la autoridad incorrecto.\n"
 
 #: winerror.mc:2121
 msgid "Allotted space exceeded.\n"
-msgstr ""
+msgstr "Se ha excedido el espacio asignado.\n"
 
 #: winerror.mc:2126
 msgid "Invalid group attributes.\n"
-msgstr ""
+msgstr "Atributos de grupo inválidos.\n"
 
 #: winerror.mc:2131
 msgid "Bad impersonation level.\n"
-msgstr ""
+msgstr "Nivel de personificación incorrecto.\n"
 
 #: winerror.mc:2136
 msgid "Can't open anonymous security token.\n"
-msgstr ""
+msgstr "No se pudo abrir el token de seguridad anónimo.\n"
 
 #: winerror.mc:2141
 msgid "Bad validation class.\n"
-msgstr ""
+msgstr "Clase de validación incorrecta.\n"
 
 #: winerror.mc:2146
 msgid "Bad token type.\n"
-msgstr ""
+msgstr "Tipo de token incorrecto.\n"
 
 #: winerror.mc:2151
 msgid "No security on object.\n"
-msgstr ""
+msgstr "No hay seguridad en el objeto.\n"
 
 #: winerror.mc:2156
 msgid "Can't access domain information.\n"
-msgstr ""
+msgstr "No se puede acceder a la información del dominio.\n"
 
 #: winerror.mc:2161
-#, fuzzy
 msgid "Invalid server state.\n"
-msgstr "Credenciales inválidos.\n"
+msgstr "Estado inválido del servidor.\n"
 
 #: winerror.mc:2166
-#, fuzzy
 msgid "Invalid domain state.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Estado inválido del dominio.\n"
 
 #: winerror.mc:2171
 msgid "Invalid domain role.\n"
-msgstr ""
+msgstr "Rol de dominio inválido.\n"
 
 #: winerror.mc:2176
 msgid "No such domain.\n"
-msgstr ""
+msgstr "No existe dicho dominio.\n"
 
 #: winerror.mc:2181
-#, fuzzy
 msgid "Domain already exists.\n"
-msgstr "El puerto %s ya existe.\n"
+msgstr "El dominio ya existe.\n"
 
 #: winerror.mc:2186
-#, fuzzy
 msgid "Domain limit exceeded.\n"
-msgstr "Límite de tiempo excedido.\n"
+msgstr "Límite de dominio excedido.\n"
 
 #: winerror.mc:2191
 msgid "Internal database corruption.\n"
-msgstr ""
+msgstr "Corrupción de la base de datos interna.\n"
 
 #: winerror.mc:2196
-#, fuzzy
 msgid "Internal error.\n"
-msgstr "Error de sintaxis.\n"
+msgstr "Error interno.\n"
 
 #: winerror.mc:2201
 msgid "Generic access types not mapped.\n"
-msgstr ""
+msgstr "Los tipos de acceso genérico no pueden mapearse.\n"
 
 #: winerror.mc:2206
 msgid "Bad descriptor format.\n"
-msgstr ""
+msgstr "Formato incorrecto del descriptor.\n"
 
 #: winerror.mc:2211
 msgid "Not a logon process.\n"
-msgstr ""
+msgstr "No es un proceso de logueo.\n"
 
 #: winerror.mc:2216
 msgid "Logon session ID exists.\n"
-msgstr ""
+msgstr "El ID de sesión de entrada ya existe.\n"
 
 #: winerror.mc:2221
 msgid "Unknown authentication package.\n"
-msgstr ""
+msgstr "Paquete de autenticación incorrecto.\n"
 
 #: winerror.mc:2226
 msgid "Bad logon session state.\n"
-msgstr ""
+msgstr "Estado de sesión de logueo incorrecto.\n"
 
 #: winerror.mc:2231
 msgid "Logon session ID collision.\n"
-msgstr ""
+msgstr "Colisión de ID de sesión de entrada.\n"
 
 #: winerror.mc:2236
-#, fuzzy
 msgid "Invalid logon type.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Tipo de logueo inválido.\n"
 
 #: winerror.mc:2241
-#, fuzzy
 msgid "Cannot impersonate.\n"
-msgstr "No se encuentra la impresora."
+msgstr "No se puede personificar.\n"
 
 #: winerror.mc:2246
-#, fuzzy
 msgid "Invalid transaction state.\n"
-msgstr "Caracter(es) inválidos en la ruta.\n"
+msgstr "Estado inválido de la transacción.\n"
 
 #: winerror.mc:2251
 msgid "Security DB commit failure.\n"
-msgstr ""
+msgstr "Fallo acometiendo en la BBDD de seguridad.\n"
 
 #: winerror.mc:2256
-#, fuzzy
 msgid "Account is built-in.\n"
-msgstr "nativa, interna.\n"
+msgstr "La cuenta es interna.\n"
 
 #: winerror.mc:2261
 msgid "Group is built-in.\n"
-msgstr ""
+msgstr "El grupo es interno.\n"
 
 #: winerror.mc:2266
 msgid "User is built-in.\n"
-msgstr ""
+msgstr "El usuario es interno.\n"
 
 #: winerror.mc:2271
 msgid "Group is primary for user.\n"
-msgstr ""
+msgstr "El grupo es primario para el usuario.\n"
 
 #: winerror.mc:2276
 msgid "Token already in use.\n"
-msgstr ""
+msgstr "El token ya está en uso.\n"
 
 #: winerror.mc:2281
 msgid "No such local group.\n"
-msgstr ""
+msgstr "No existe dicho grupo local.\n"
 
 #: winerror.mc:2286
 msgid "User not in local group.\n"
-msgstr ""
+msgstr "El usuario no está en un grupo local.\n"
 
 #: winerror.mc:2291
 msgid "User already in local group.\n"
-msgstr ""
+msgstr "El usuario ya está en el grupo local.\n"
 
 #: winerror.mc:2296
-#, fuzzy
 msgid "Local group already exists.\n"
-msgstr "El puerto %s ya existe.\n"
+msgstr "El grupo local ya existe.\n"
 
 #: winerror.mc:2301 winerror.mc:2326
 msgid "Logon type not granted.\n"
-msgstr ""
+msgstr "Tipo de entrada no garantizado.\n"
 
 #: winerror.mc:2306
 msgid "Too many secrets.\n"
-msgstr ""
+msgstr "Demasiados secretos.\n"
 
 #: winerror.mc:2311
 msgid "Secret too long.\n"
-msgstr ""
+msgstr "El secreto es demasiado largo.\n"
 
 #: winerror.mc:2316
 msgid "Internal security DB error.\n"
-msgstr ""
+msgstr "Error de interno de la BBDD de seguridad.\n"
 
 #: winerror.mc:2321
 msgid "Too many context IDs.\n"
-msgstr ""
+msgstr "Demasiados IDs de contexto.\n"
 
 #: winerror.mc:2331
 msgid "Cross-encrypted NT password required.\n"
-msgstr ""
+msgstr "Se requiere una contraseña NT cifrada cruzada.\n"
 
 #: winerror.mc:2336
-#, fuzzy
 msgid "No such member.\n"
-msgstr "No existe dicho objeto.\n"
+msgstr "No existe dicho miembro.\n"
 
 #: winerror.mc:2341
-#, fuzzy
 msgid "Invalid member.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "Miembro inválido.\n"
 
 #: winerror.mc:2346
 msgid "Too many SIDs.\n"
-msgstr ""
+msgstr "Demasiados SIDs.\n"
 
 #: winerror.mc:2351
 msgid "Cross-encrypted LM password required.\n"
-msgstr ""
+msgstr "Se requiere una contraseña LM cifrada cruzada.\n"
 
 #: winerror.mc:2356
 msgid "No inheritable components.\n"
-msgstr ""
+msgstr "No hay componentes que se puedan heredar.\n"
 
 #: winerror.mc:2361
 msgid "File or directory corrupt.\n"
-msgstr ""
+msgstr "Fichero o directorio corrompido.\n"
 
 #: winerror.mc:2366
 msgid "Disk is corrupt.\n"
-msgstr ""
+msgstr "El disco está corrompido.\n"
 
 #: winerror.mc:2371
 msgid "No user session key.\n"
-msgstr ""
+msgstr "No hay clave de sesión del usuario.\n"
 
 #: winerror.mc:2376
 msgid "Licence quota exceeded.\n"
-msgstr ""
+msgstr "La cuota de la licencia ha sido superada.\n"
 
 #: winerror.mc:2381
-#, fuzzy
 msgid "Wrong target name.\n"
-msgstr "Credenciales inválidos.\n"
+msgstr "Nombre incorrecto de objetivo.\n"
 
 #: winerror.mc:2386
-#, fuzzy
 msgid "Mutual authentication failed.\n"
-msgstr "Autentificación inapropriada.\n"
+msgstr "La Autenticación mutua ha fallado.\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server.\n"
-msgstr ""
+msgstr "Desplazamiento de reloj entre el cliente y el servidor.\n"
 
 #: winerror.mc:2396
-#, fuzzy
 msgid "Invalid window handle.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Descriptor de ventana inválido.\n"
 
 #: winerror.mc:2401
-#, fuzzy
 msgid "Invalid menu handle.\n"
-msgstr "Credenciales inválidos.\n"
+msgstr "Descriptor del menú inválido.\n"
 
 #: winerror.mc:2406
 msgid "Invalid cursor handle.\n"
-msgstr ""
+msgstr "Descriptor de cursor inválido.\n"
 
 #: winerror.mc:2411
 msgid "Invalid accelerator table handle.\n"
-msgstr ""
+msgstr "Descriptor de tabla de aceleradores inválida.\n"
 
 #: winerror.mc:2416
 msgid "Invalid hook handle.\n"
-msgstr ""
+msgstr "Descriptor de enganche inválido.\n"
 
 #: winerror.mc:2421
-#, fuzzy
 msgid "Invalid DWP handle.\n"
-msgstr "Sintaxis inválida de DN.\n"
+msgstr "Descriptor DWP inválido.\n"
 
 #: winerror.mc:2426
 msgid "Can't create top-level child window.\n"
-msgstr ""
+msgstr "No se pudo crear la ventana hija de nivel superior.\n"
 
 #: winerror.mc:2431
 msgid "Can't find window class.\n"
-msgstr ""
+msgstr "No se pudo encontrar la clase de la ventana.\n"
 
 #: winerror.mc:2436
 msgid "Window owned by another thread.\n"
-msgstr ""
+msgstr "La ventana es propiedad de otro hilo.\n"
 
 #: winerror.mc:2441
-#, fuzzy
 msgid "Hotkey already registered.\n"
-msgstr "El puerto %s ya existe.\n"
+msgstr "La tecla de acceso directo ya está registrada.\n"
 
 #: winerror.mc:2446
-#, fuzzy
 msgid "Class already exists.\n"
-msgstr "El puerto %s ya existe.\n"
+msgstr "La clase ya existe.\n"
 
 #: winerror.mc:2451
-#, fuzzy
 msgid "Class does not exist.\n"
-msgstr "La ruta no existe.\n"
+msgstr "La clase no existe.\n"
 
 #: winerror.mc:2456
-#, fuzzy
 msgid "Class has open windows.\n"
-msgstr "&Ventana.\n"
+msgstr "La clase tiene ventanas abiertas.\n"
 
 #: winerror.mc:2461
-#, fuzzy
 msgid "Invalid index.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Índice inválido.\n"
 
 #: winerror.mc:2466
-#, fuzzy
 msgid "Invalid icon handle.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Descriptor de icono inválido.\n"
 
 #: winerror.mc:2471
 msgid "Private dialog index.\n"
-msgstr ""
+msgstr "Indice de diálogo privado.\n"
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found.\n"
-msgstr "ruta %s no encontrada.\n"
+msgstr "No se ha encontrado el ID de la caja de lista.\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters.\n"
-msgstr ""
+msgstr "No hay carácteres comodín.\n"
 
 #: winerror.mc:2486
-#, fuzzy
 msgid "Clipboard not open.\n"
-msgstr "No puede crearse o usar una ventana."
+msgstr "No pudo abrirse el portapapeles.\n"
 
 #: winerror.mc:2491
 msgid "Hotkey not registered.\n"
-msgstr ""
+msgstr "La tecla de acceso directo no se ha registrado.\n"
 
 #: winerror.mc:2496
 msgid "Not a dialog window.\n"
-msgstr ""
+msgstr "No es una ventana de diálogo.\n"
 
 #: winerror.mc:2501
-#, fuzzy
 msgid "Control ID not found.\n"
-msgstr "ruta %s no encontrada.\n"
+msgstr "No se ha encontrado el Control ID.\n"
 
 #: winerror.mc:2506
 msgid "Invalid combobox message.\n"
-msgstr ""
+msgstr "Mensaje combobox inválido.\n"
 
 #: winerror.mc:2511
 msgid "Not a combobox window.\n"
-msgstr ""
+msgstr "No es una ventana combobox.\n"
 
 #: winerror.mc:2516
-#, fuzzy
 msgid "Invalid edit height.\n"
-msgstr "Credenciales inválidos.\n"
+msgstr "Altura de edición inválida.\n"
 
 #: winerror.mc:2521
-#, fuzzy
 msgid "DC not found.\n"
-msgstr "PATH no encontrado.\n"
+msgstr "DC no encontrado.\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter.\n"
-msgstr ""
+msgstr "Filtro de enganche inválido.\n"
 
 #: winerror.mc:2531
 msgid "Invalid filter procedure.\n"
-msgstr ""
+msgstr "Procedimiento de filtro inválido.\n"
 
 #: winerror.mc:2536
 msgid "Hook procedure needs module handle.\n"
-msgstr ""
+msgstr "El procedimiento de enganche necesita un descriptor de módulo.\n"
 
 #: winerror.mc:2541
 msgid "Global-only hook procedure.\n"
-msgstr ""
+msgstr "Procedimiento de enganche sólo global.\n"
 
 #: winerror.mc:2546
 msgid "Journal hook already set.\n"
-msgstr ""
+msgstr "El enganche del registro ya se ha establecido.\n"
 
 #: winerror.mc:2551
 msgid "Hook procedure not installed.\n"
-msgstr ""
+msgstr "El procedimiento de gancho no se ha instalado.\n"
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Mensaje de caja de lista inválido.\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent.\n"
-msgstr ""
+msgstr "Se ha enviado un LB_SETCOUNT inválido.\n"
 
 #: winerror.mc:2566
 msgid "No tab stops on this list box.\n"
-msgstr ""
+msgstr "No hay paradas de pestaña en caja de lista.\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread.\n"
-msgstr ""
+msgstr "No se puede destruir un objeto propiedad de otro hilo.\n"
 
 #: winerror.mc:2576
 msgid "Child window menus not allowed.\n"
-msgstr ""
+msgstr "Los menús nos están permitidos en ventanas hijas.\n"
 
 #: winerror.mc:2581
 msgid "Window has no system menu.\n"
-msgstr ""
+msgstr "La ventana no tiene menú de sistema.\n"
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "Estilo de caja de mensajes inválido.\n"
 
 #: winerror.mc:2591
-#, fuzzy
 msgid "Invalid SPI parameter.\n"
-msgstr "Error: parámetros de línea de comandos inválidos.\n"
+msgstr "Parámetro SPI inválido.\n"
 
 #: winerror.mc:2596
 msgid "Screen already locked.\n"
-msgstr ""
+msgstr "La pantalla ya está bloqueada.\n"
 
 #: winerror.mc:2601
 msgid "Window handles have different parents.\n"
-msgstr ""
+msgstr "Los descriptores de ventana tienen distintos padres.\n"
 
 #: winerror.mc:2606
 msgid "Not a child window.\n"
-msgstr ""
+msgstr "No es una ventana hija.\n"
 
 #: winerror.mc:2611
-#, fuzzy
 msgid "Invalid GW command.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Comando GW inválido.\n"
 
 #: winerror.mc:2616
-#, fuzzy
 msgid "Invalid thread ID.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "ID de hilo inválido.\n"
 
 #: winerror.mc:2621
 msgid "Not an MDI child window.\n"
-msgstr ""
+msgstr "No es una ventana hija MDI.\n"
 
 #: winerror.mc:2626
 msgid "Popup menu already active.\n"
-msgstr ""
+msgstr "El menú emergente ya está activo.\n"
 
 #: winerror.mc:2631
-#, fuzzy
 msgid "No scrollbars.\n"
-msgstr "Desplazar &aquí.\n"
+msgstr "No hay barras de desplazamiento.\n"
 
 #: winerror.mc:2636
 msgid "Invalid scrollbar range.\n"
-msgstr ""
+msgstr "Intervalo de la barra de desplazamiento inválido.\n"
 
 #: winerror.mc:2641
 msgid "Invalid ShowWin command.\n"
-msgstr ""
+msgstr "Comando ShowWin inválido.\n"
 
 #: winerror.mc:2646
 msgid "No system resources.\n"
-msgstr ""
+msgstr "El sistema ha agotado los recursos.\n"
 
 #: winerror.mc:2651
 msgid "No non-paged system resources.\n"
-msgstr ""
+msgstr "No hay recursos del sistema no paginados.\n"
 
 #: winerror.mc:2656
 msgid "No paged system resources.\n"
-msgstr ""
+msgstr "No hay recursos paginados del sistema.\n"
 
 #: winerror.mc:2661
 msgid "No working set quota.\n"
-msgstr ""
+msgstr "No hay cuota de conjunto de trabajo.\n"
 
 #: winerror.mc:2666
 msgid "No page file quota.\n"
-msgstr ""
+msgstr "No hay cuota de fichero de paginación.\n"
 
 #: winerror.mc:2671
 msgid "Exceeded commitment limit.\n"
-msgstr ""
+msgstr "Número máximo de acometidas excedido.\n"
 
 #: winerror.mc:2676
-#, fuzzy
 msgid "Menu item not found.\n"
-msgstr "Archivo no encontrado.\n"
+msgstr "Elemento del menú no encontrado.\n"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle.\n"
-msgstr "Credenciales inválidos.\n"
+msgstr "Descriptor del teclado inválido.\n"
 
 #: winerror.mc:2686
-#, fuzzy
 msgid "Hook type not allowed.\n"
-msgstr "El destino de la instrucción GOTO no se ha encontrado.\n"
+msgstr "Tipo del gancho no permitido.\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required.\n"
-msgstr ""
+msgstr "Se requiere entorno gráfico interactivo.\n"
 
 #: winerror.mc:2696
-#, fuzzy
 msgid "Timeout.\n"
-msgstr "Tiempo de espera superado.\n"
+msgstr "Tiempo de espera excedido.\n"
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle.\n"
-msgstr "Credenciales inválidos.\n"
+msgstr "Descriptor de monitorización inválido.\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt.\n"
-msgstr ""
+msgstr "El fichero de registro de eventos está corrompido.\n"
 
 #: winerror.mc:2711
 msgid "Event log can't start.\n"
-msgstr ""
+msgstr "El registro de eventos no puede comenzar.\n"
 
 #: winerror.mc:2716
 msgid "Event log file full.\n"
-msgstr ""
+msgstr "El fichero de registro de eventos está lleno.\n"
 
 #: winerror.mc:2721
 msgid "Event log file changed.\n"
-msgstr ""
+msgstr "El fichero de registro de eventos ha cambiado.\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "El servicio de instalación ha fallado.\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user.\n"
-msgstr "Programas de instalación.\n"
+msgstr "Instalación abortada por el usuario.\n"
 
 #: winerror.mc:2736
-#, fuzzy
 msgid "Installation failure.\n"
-msgstr "Programas de instalación.\n"
+msgstr "Fallo en la instalación.\n"
 
 #: winerror.mc:2741
-#, fuzzy
 msgid "Installation suspended.\n"
-msgstr "Programas de instalación.\n"
+msgstr "Instalación suspendida.\n"
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product.\n"
-msgstr "Origen desconocido.\n"
+msgstr "Producto desconocido.\n"
 
 #: winerror.mc:2751
-#, fuzzy
 msgid "Unknown feature.\n"
-msgstr "Característica desconocida en %s.\n"
+msgstr "Característica desconocida.\n"
 
 #: winerror.mc:2756
-#, fuzzy
 msgid "Unknown component.\n"
-msgstr "Origen desconocido.\n"
+msgstr "Componente desconocido.\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property.\n"
-msgstr "Origen desconocido.\n"
+msgstr "Propiedad desconocida.\n"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Estado inválido del descriptor.\n"
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration.\n"
-msgstr "Configuración de Wine.\n"
+msgstr "Mala configuración.\n"
 
 #: winerror.mc:2776
 msgid "Index is missing.\n"
-msgstr ""
+msgstr "Falta el índice.\n"
 
 #: winerror.mc:2781
-#, fuzzy
 msgid "Installation source is missing.\n"
-msgstr "instalar fuente para característica ausente.\n"
+msgstr "Falta la fuente de la instalación.\n"
 
 #: winerror.mc:2786
 msgid "Wrong installation package version.\n"
-msgstr ""
+msgstr "Versión del paquete de instalación errónea.\n"
 
 #: winerror.mc:2791
-#, fuzzy
 msgid "Product uninstalled.\n"
-msgstr "Cancelado por el usuario.\n"
+msgstr "Producto desinstalado.\n"
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Síntaxis inválida de la consulta.\n"
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Campo inválido.\n"
 
 #: winerror.mc:2806
 msgid "Device removed.\n"
-msgstr ""
+msgstr "Dispositivo eliminado.\n"
 
 #: winerror.mc:2811
-#, fuzzy
 msgid "Installation already running.\n"
-msgstr "Programas de instalación.\n"
+msgstr "La instalación ya se está ejecutando.\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open.\n"
-msgstr ""
+msgstr "No pudo abrirse el paquete de instalación.\n"
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid.\n"
-msgstr "Programas de instalación.\n"
+msgstr "El paquete de instalación es inválido.\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed.\n"
-msgstr ""
+msgstr "El interfaz de usuario del instalador ha fallado.\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file.\n"
-msgstr ""
+msgstr "No se ha podido abrir el registro de la instalación.\n"
 
 #: winerror.mc:2836
-#, fuzzy
 msgid "Installation language not supported.\n"
-msgstr "Método de autentificación no soportado.\n"
+msgstr "Lenguaje de instalación no soportado.\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply.\n"
-msgstr ""
+msgstr "No pudo aplicarse la transformación en la instalación.\n"
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected.\n"
-msgstr "Programas de instalación.\n"
+msgstr "El paquete de instalación ha sido rechazado.\n"
 
 #: winerror.mc:2851
 msgid "Function could not be called.\n"
-msgstr ""
+msgstr "No se pudo llamar a la función.\n"
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed.\n"
-msgstr "Función esperada.\n"
+msgstr "La función ha fallado.\n"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Tabla inválida.\n"
 
 #: winerror.mc:2866
 msgid "Data type mismatch.\n"
-msgstr ""
+msgstr "El tipo de datos no coincide.\n"
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type.\n"
-msgstr ""
+msgstr "Tipo no soportado.\n"
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed.\n"
-msgstr "Abrir archivo.\n"
+msgstr "La creación ha fallado.\n"
 
 #: winerror.mc:2881
 msgid "Temporary directory not writable.\n"
-msgstr ""
+msgstr "El directorio temporal no es escribible.\n"
 
 #: winerror.mc:2886
-#, fuzzy
 msgid "Installation platform not supported.\n"
-msgstr "Método de autentificación no soportado.\n"
+msgstr "Plataforma no soportada por la instalación.\n"
 
 #: winerror.mc:2891
-#, fuzzy
 msgid "Installer not used.\n"
-msgstr "Archivo no encontrado.\n"
+msgstr "El instalador no se ha utilizado.\n"
 
 #: winerror.mc:2896
-#, fuzzy
 msgid "Failed to open the patch package.\n"
-msgstr "No se pudo abrir '%s'.\n"
+msgstr "No se pudo abrir el paquete de parches.\n"
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Paquete de parches inválido.\n"
 
 #: winerror.mc:2906
 msgid "Unsupported patch package.\n"
-msgstr ""
+msgstr "Paquete de parches no soportado.\n"
 
 #: winerror.mc:2911
 msgid "Another version is installed.\n"
-msgstr ""
+msgstr "Hay otra versión instalada.\n"
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Línea de comandos inválida.\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed.\n"
-msgstr ""
+msgstr "Instalación remota no permitida.\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install.\n"
-msgstr ""
+msgstr "Reinicio iniciado tras instalar satisfactoriamente.\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding.\n"
-msgstr ""
+msgstr "Enlace de cadena de texto inválido.\n"
 
 #: winerror.mc:2936
 msgid "Wrong kind of binding.\n"
-msgstr ""
+msgstr "Tipo de enlace inválido.\n"
 
 #: winerror.mc:2941
-#, fuzzy
 msgid "Invalid binding.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Enlace inválido.\n"
 
 #: winerror.mc:2946
 msgid "RPC protocol sequence not supported.\n"
-msgstr ""
+msgstr "Secuencia de protocolo RPC no soportada.\n"
 
 #: winerror.mc:2951
 msgid "Invalid RPC protocol sequence.\n"
-msgstr ""
+msgstr "Secuencia de protocolo RPC inválida.\n"
 
 #: winerror.mc:2956
-#, fuzzy
 msgid "Invalid string UUID.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Cadena de texto UUID inválida.\n"
 
 #: winerror.mc:2961
-#, fuzzy
 msgid "Invalid endpoint format.\n"
-msgstr "Credenciales inválidos.\n"
+msgstr "Formato de punto final inválido.\n"
 
 #: winerror.mc:2966
 msgid "Invalid network address.\n"
-msgstr ""
+msgstr "Dirección de red inválida.\n"
 
 #: winerror.mc:2971
-#, fuzzy
 msgid "No endpoint found.\n"
-msgstr "PATH no encontrado.\n"
+msgstr "No se ha encontrado el punto final.\n"
 
 #: winerror.mc:2976
-#, fuzzy
 msgid "Invalid timeout value.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Valor para el tiempo de espera inválido.\n"
 
 #: winerror.mc:2981
-#, fuzzy
 msgid "Object UUID not found.\n"
-msgstr "ruta %s no encontrada.\n"
+msgstr "UUID del objeto no encontrado.\n"
 
 #: winerror.mc:2986
 msgid "UUID already registered.\n"
-msgstr ""
+msgstr "El UUID ya está registrado.\n"
 
 #: winerror.mc:2991
 msgid "UUID type already registered.\n"
-msgstr ""
+msgstr "El tipo de UUID ya está registrado.\n"
 
 #: winerror.mc:2996
 msgid "Server already listening.\n"
-msgstr ""
+msgstr "El servidor ya está escuchando.\n"
 
 #: winerror.mc:3001
 msgid "No protocol sequences registered.\n"
-msgstr ""
+msgstr "No hay secuencias de protocolo registradas.\n"
 
 #: winerror.mc:3006
 msgid "RPC server not listening.\n"
-msgstr ""
+msgstr "El servidor RPC no está escuchando.\n"
 
 #: winerror.mc:3011
-#, fuzzy
 msgid "Unknown manager type.\n"
-msgstr "Tipo desconocido.\n"
+msgstr "Tipo de gestor desconocido.\n"
 
 #: winerror.mc:3016
-#, fuzzy
 msgid "Unknown interface.\n"
-msgstr "Origen desconocido.\n"
+msgstr "Interfaz desconocida.\n"
 
 #: winerror.mc:3021
 msgid "No bindings.\n"
-msgstr ""
+msgstr "Sin enlaces.\n"
 
 #: winerror.mc:3026
 msgid "No protocol sequences.\n"
-msgstr ""
+msgstr "No hay secuencias del protocolo.\n"
 
 #: winerror.mc:3031
 msgid "Can't create endpoint.\n"
-msgstr ""
+msgstr "No se pudo crear el punto final.\n"
 
 #: winerror.mc:3036
-#, fuzzy
 msgid "Out of resources.\n"
-msgstr "Sin memoria."
+msgstr "Los recursos se han agotado.\n"
 
 #: winerror.mc:3041
 msgid "RPC server unavailable.\n"
-msgstr ""
+msgstr "El servidor RPC no está disponible.\n"
 
 #: winerror.mc:3046
 msgid "RPC server too busy.\n"
-msgstr ""
+msgstr "El servidor RPC está demasiado ocupado.\n"
 
 #: winerror.mc:3051
-#, fuzzy
 msgid "Invalid network options.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Opciones de red inválidas.\n"
 
 #: winerror.mc:3056
 msgid "No RPC call active.\n"
-msgstr ""
+msgstr "No hay ninguna llamada RPC activa.\n"
 
 #: winerror.mc:3061
 msgid "RPC call failed.\n"
-msgstr ""
+msgstr "La llamada RPC ha fallado.\n"
 
 #: winerror.mc:3066
 msgid "RPC call failed and didn't execute.\n"
-msgstr ""
+msgstr "La llamada RPC ha fallado y no se ha ejecutado.\n"
 
 #: winerror.mc:3071
-#, fuzzy
 msgid "RPC protocol error.\n"
-msgstr "Error de protocolo.\n"
+msgstr "Error de protocolo RPC.\n"
 
 #: winerror.mc:3076
 msgid "Unsupported transfer syntax.\n"
-msgstr ""
+msgstr "Síntaxis de transferencia no soportada.\n"
 
 #: winerror.mc:3086
-#, fuzzy
 msgid "Invalid tag.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Etiqueta inválida.\n"
 
 #: winerror.mc:3091
 msgid "Invalid array bounds.\n"
-msgstr ""
+msgstr "Límites del array inválidos.\n"
 
 #: winerror.mc:3096
 msgid "No entry name.\n"
-msgstr ""
+msgstr "La entrada no tiene nombre.\n"
 
 #: winerror.mc:3101
-#, fuzzy
 msgid "Invalid name syntax.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Síntaxis inválida para el nombre.\n"
 
 #: winerror.mc:3106
 msgid "Unsupported name syntax.\n"
-msgstr ""
+msgstr "Síntaxis no soportada para el nombre.\n"
 
 #: winerror.mc:3111
-#, fuzzy
 msgid "No network address.\n"
-msgstr "Compartición de red.\n"
+msgstr "Sin dirección de red.\n"
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint.\n"
-msgstr ""
+msgstr "Punto final duplicado.\n"
 
 #: winerror.mc:3121
-#, fuzzy
 msgid "Unknown authentication type.\n"
-msgstr "Autentificación fuerte requerida.\n"
+msgstr "Tipo de autenticación desconocido.\n"
 
 #: winerror.mc:3126
 msgid "Maximum calls too low.\n"
-msgstr ""
+msgstr "Número máximo de llamadas demasiado bajo.\n"
 
 #: winerror.mc:3131
 msgid "String too long.\n"
-msgstr ""
+msgstr "La cadena es demasiado larga.\n"
 
 #: winerror.mc:3136
 msgid "Protocol sequence not found.\n"
-msgstr ""
+msgstr "Secuencia del protocolo no encontrada.\n"
 
 #: winerror.mc:3141
 msgid "Procedure number out of range.\n"
-msgstr ""
+msgstr "Número de procedimiento fuera de rango.\n"
 
 #: winerror.mc:3146
 msgid "Binding has no authentication data.\n"
-msgstr ""
+msgstr "El enlace no tiene datos de autenticación.\n"
 
 #: winerror.mc:3151
-#, fuzzy
 msgid "Unknown authentication service.\n"
-msgstr "Autentificación fuerte requerida.\n"
+msgstr "Servicio de autenticación desconocido.\n"
 
 #: winerror.mc:3156
-#, fuzzy
 msgid "Unknown authentication level.\n"
-msgstr "Autentificación fuerte requerida.\n"
+msgstr "Nivel de autenticación desconocido.\n"
 
 #: winerror.mc:3161
-#, fuzzy
 msgid "Invalid authentication identity.\n"
-msgstr "Autentificación inapropriada.\n"
+msgstr "Identidad de autenticación inválida.\n"
 
 #: winerror.mc:3166
 msgid "Unknown authorisation service.\n"
-msgstr ""
+msgstr "Servicio de autorización desconocido.\n"
 
 #: winerror.mc:3171
-#, fuzzy
 msgid "Invalid entry.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Entrada inválida.\n"
 
 #: winerror.mc:3176
 msgid "Can't perform operation.\n"
-msgstr ""
+msgstr "No se puede realizar la operación.\n"
 
 #: winerror.mc:3181
-#, fuzzy
 msgid "Endpoints not registered.\n"
-msgstr "Sale del editor de registro.\n"
+msgstr "Los puntos finales no están registrados.\n"
 
 #: winerror.mc:3186
 msgid "Nothing to export.\n"
-msgstr ""
+msgstr "No hay nada que exportar.\n"
 
 #: winerror.mc:3191
 msgid "Incomplete name.\n"
-msgstr ""
+msgstr "Nombre incompleto.\n"
 
 #: winerror.mc:3196
-#, fuzzy
 msgid "Invalid version option.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Opción de versión inválida.\n"
 
 #: winerror.mc:3201
 msgid "No more members.\n"
-msgstr ""
+msgstr "No hay más miembros.\n"
 
 #: winerror.mc:3206
-#, fuzzy
 msgid "Not all objects unexported.\n"
-msgstr "Objeto Booleano esperado.\n"
+msgstr "No todos los objetos fueron desexportados.\n"
 
 #: winerror.mc:3211
-#, fuzzy
 msgid "Interface not found.\n"
-msgstr "Archivo no encontrado.\n"
+msgstr "Interfaz no encontrado.\n"
 
 #: winerror.mc:3216
-#, fuzzy
 msgid "Entry already exists.\n"
-msgstr "El puerto %s ya existe.\n"
+msgstr "La entrada ya existe.\n"
 
 #: winerror.mc:3221
-#, fuzzy
 msgid "Entry not found.\n"
-msgstr "PATH no encontrado.\n"
+msgstr "Entrada no encontrada.\n"
 
 #: winerror.mc:3226
-#, fuzzy
 msgid "Name service unavailable.\n"
-msgstr "Tamaño disponible.\n"
+msgstr "Servicio de nombres no disponible.\n"
 
 #: winerror.mc:3231
 msgid "Invalid network address family.\n"
-msgstr ""
+msgstr "Familia de direcciones de red inválida.\n"
 
 #: winerror.mc:3236
-#, fuzzy
 msgid "Operation not supported.\n"
-msgstr "Método de autentificación no soportado.\n"
+msgstr "Operación no soportada.\n"
 
 #: winerror.mc:3241
 msgid "No security context available.\n"
-msgstr ""
+msgstr "No hay un contexto de seguridad disponible.\n"
 
 #: winerror.mc:3246
-#, fuzzy
 msgid "RPCInternal error.\n"
-msgstr "Error de parámetro.\n"
+msgstr "Error interno en la RPC.\n"
 
 #: winerror.mc:3251
 msgid "RPC divide-by-zero.\n"
-msgstr ""
+msgstr "División por cero en la RPC.\n"
 
 #: winerror.mc:3256
-#, fuzzy
 msgid "Address error.\n"
-msgstr "Barra de &direcciones.\n"
+msgstr "Error en la dirección.\n"
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero.\n"
-msgstr ""
+msgstr "División por cero de punto flotante.\n"
 
 #: winerror.mc:3266
 msgid "Floating-point underflow.\n"
-msgstr ""
+msgstr "Underflow de punto flotante.\n"
 
 #: winerror.mc:3271
 msgid "Floating-point overflow.\n"
-msgstr ""
+msgstr "Desbordamiento de punto flotante.\n"
 
 #: winerror.mc:3276
 msgid "No more entries.\n"
-msgstr ""
+msgstr "No hay más entradas.\n"
 
 #: winerror.mc:3281
 msgid "Character translation table open failed.\n"
-msgstr ""
+msgstr "Falló la apertura de la tabla de traducción de carácteres.\n"
 
 #: winerror.mc:3286
 msgid "Character translation table file too small.\n"
-msgstr ""
+msgstr "Tabla de traducción de carácteres demasiado pequeña.\n"
 
 #: winerror.mc:3291
 msgid "Null context handle.\n"
-msgstr ""
+msgstr "Descriptor del contexto nulo.\n"
 
 #: winerror.mc:3296
 msgid "Context handle damaged.\n"
-msgstr ""
+msgstr "Descriptor del contexto dañado.\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch.\n"
-msgstr ""
+msgstr "Falta de coincidencia en el descriptor del enlace.\n"
 
 #: winerror.mc:3306
 msgid "Cannot get call handle.\n"
-msgstr ""
+msgstr "No se pudede obtener un descriptor para la llamada.\n"
 
 #: winerror.mc:3311
 msgid "Null reference pointer.\n"
-msgstr ""
+msgstr "Puntero de referencia nulo.\n"
 
 #: winerror.mc:3316
 msgid "Enumeration value out of range.\n"
-msgstr ""
+msgstr "Valor de la enumeración fuera de rango.\n"
 
 #: winerror.mc:3321
 msgid "Byte count too small.\n"
-msgstr ""
+msgstr "Númer de bytes demasiado pequeño.\n"
 
 #: winerror.mc:3326
 msgid "Bad stub data.\n"
@@ -6352,285 +6185,256 @@ msgstr ""
 
 #: winerror.mc:3331
 msgid "Invalid user buffer.\n"
-msgstr ""
+msgstr "Búfer del usuario inválido.\n"
 
 #: winerror.mc:3336
 msgid "Unrecognised media.\n"
-msgstr ""
+msgstr "No se ha reconocido el medio.\n"
 
 #: winerror.mc:3341
 msgid "No trust secret.\n"
-msgstr ""
+msgstr "No hay secreto de confianza.\n"
 
 #: winerror.mc:3346
 msgid "No trust SAM account.\n"
-msgstr ""
+msgstr "No hay cuenta SAM de confianza.\n"
 
 #: winerror.mc:3351
 msgid "Trusted domain failure.\n"
-msgstr ""
+msgstr "Fallo de dominio de confianza.\n"
 
 #: winerror.mc:3356
 msgid "Trusted relationship failure.\n"
-msgstr ""
+msgstr "Fallo de relación de confianza.\n"
 
 #: winerror.mc:3361
 msgid "Trust logon failure.\n"
-msgstr ""
+msgstr "Fallo de confianza en el logueo al sistema.\n"
 
 #: winerror.mc:3366
 msgid "RPC call already in progress.\n"
-msgstr ""
+msgstr "La llamada RPC ya está en progreso.\n"
 
 #: winerror.mc:3371
 msgid "NETLOGON is not started.\n"
-msgstr ""
+msgstr "El NETLOGON no ha comenzado.\n"
 
 #: winerror.mc:3376
 msgid "Account expired.\n"
-msgstr ""
+msgstr "Cuenta caducada.\n"
 
 #: winerror.mc:3381
 msgid "Redirector has open handles.\n"
-msgstr ""
+msgstr "El redireccionador tiene descriptores abiertos.\n"
 
 #: winerror.mc:3386
 msgid "Printer driver already installed.\n"
-msgstr ""
+msgstr "El controlador de la impresora ya está instalado.\n"
 
 #: winerror.mc:3391
-#, fuzzy
 msgid "Unknown port.\n"
-msgstr "Origen desconocido.\n"
+msgstr "Puerto desconocido.\n"
 
 #: winerror.mc:3396
-#, fuzzy
 msgid "Unknown printer driver.\n"
-msgstr "Manejador de la impresora desconocido."
+msgstr "Controlador de la impresora desconocido.\n"
 
 #: winerror.mc:3401
-#, fuzzy
 msgid "Unknown print processor.\n"
-msgstr "Manejador de la impresora desconocido."
+msgstr "Procesador de impresión desconocido.\n"
 
 #: winerror.mc:3406
 msgid "Invalid separator file.\n"
-msgstr ""
+msgstr "Fichero separador inválido.\n"
 
 #: winerror.mc:3411
-#, fuzzy
 msgid "Invalid priority.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Prioridad inválida.\n"
 
 #: winerror.mc:3416
-#, fuzzy
 msgid "Invalid printer name.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "Nombre de la impresora inválido.\n"
 
 #: winerror.mc:3421
-#, fuzzy
 msgid "Printer already exists.\n"
-msgstr "El puerto %s ya existe.\n"
+msgstr "La impresora ya existe.\n"
 
 #: winerror.mc:3426
-#, fuzzy
 msgid "Invalid printer command.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Comando de la impresora no válido.\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Tipo de datos inválido.\n"
 
 #: winerror.mc:3436
-#, fuzzy
 msgid "Invalid environment.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Entorno inválido.\n"
 
 #: winerror.mc:3441
 msgid "No more bindings.\n"
-msgstr ""
+msgstr "No hay más enlaces.\n"
 
 #: winerror.mc:3446
 msgid "Can't logon with interdomain trust account.\n"
-msgstr ""
+msgstr "No se puede loguear con una cuenta de confianza inter-dominio.\n"
 
 #: winerror.mc:3451
 msgid "Can't logon with workstation trust account.\n"
 msgstr ""
+"No se puede loguear con una cuenta de confianza del puesto de trabajo.\n"
 
 #: winerror.mc:3456
 msgid "Can't logon with server trust account.\n"
-msgstr ""
+msgstr "No se puede loguear con una cuenta de confianza del servidor.\n"
 
 #: winerror.mc:3461
 msgid "Domain trust information inconsistent.\n"
-msgstr ""
+msgstr "La información de confianza del dominio es inconsistente.\n"
 
 #: winerror.mc:3466
 msgid "Server has open handles.\n"
-msgstr ""
+msgstr "El servidor tiene descriptores abiertos.\n"
 
 #: winerror.mc:3471
-#, fuzzy
 msgid "Resource data not found.\n"
-msgstr "El destino de la instrucción GOTO no se ha encontrado.\n"
+msgstr "Datos del recurso no encontrados.\n"
 
 #: winerror.mc:3476
-#, fuzzy
 msgid "Resource type not found.\n"
-msgstr "El destino de la instrucción GOTO no se ha encontrado.\n"
+msgstr "Tipo del recurso no encontrado.\n"
 
 #: winerror.mc:3481
 msgid "Resource name not found.\n"
-msgstr ""
+msgstr "Nombre del recurso no encontrado.\n"
 
 #: winerror.mc:3486
 msgid "Resource language not found.\n"
-msgstr ""
+msgstr "Lenguaje del recurso no encontrado.\n"
 
 #: winerror.mc:3491
 msgid "Not enough quota.\n"
-msgstr ""
+msgstr "Cuota insuficiente.\n"
 
 #: winerror.mc:3496
 msgid "No interfaces.\n"
-msgstr ""
+msgstr "No hay interfaces.\n"
 
 #: winerror.mc:3501
-#, fuzzy
 msgid "RPC call canceled.\n"
-msgstr "Cancelado por el usuario.\n"
+msgstr "Llamada RPC cancelada.\n"
 
 #: winerror.mc:3506
-#, fuzzy
 msgid "Binding incomplete.\n"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"No implementado\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Aún no implementado.\n"
+msgstr "Enlazado incompleto.\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure.\n"
-msgstr ""
+msgstr "Fallo de comm RPC.\n"
 
 #: winerror.mc:3516
 msgid "Unsupported authorisation level.\n"
-msgstr ""
+msgstr "Nivel de autorización no soportado.\n"
 
 #: winerror.mc:3521
 msgid "No principal name registered.\n"
-msgstr ""
+msgstr "No se ha registrado un nombre principal.\n"
 
 #: winerror.mc:3526
-#, fuzzy
 msgid "Not an RPC error.\n"
-msgstr "Error de sintaxis.\n"
+msgstr "No es un error RPC.\n"
 
 #: winerror.mc:3531
 msgid "UUID is local only.\n"
-msgstr ""
+msgstr "El UUID es sólo local.\n"
 
 #: winerror.mc:3536
 msgid "Security package error.\n"
-msgstr ""
+msgstr "Error en el paquete de seguridad.\n"
 
 #: winerror.mc:3541
-#, fuzzy
 msgid "Thread not canceled.\n"
-msgstr "Cancelado por el usuario.\n"
+msgstr "Hilo no cancelado.\n"
 
 #: winerror.mc:3546
-#, fuzzy
 msgid "Invalid handle operation.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Operación de descriptor inválida.\n"
 
 #: winerror.mc:3551
 msgid "Wrong serialising package version.\n"
-msgstr ""
+msgstr "Versión del paquete de serialización incorrecta.\n"
 
 #: winerror.mc:3556
 msgid "Wrong stub version.\n"
 msgstr ""
 
 #: winerror.mc:3561
-#, fuzzy
 msgid "Invalid pipe object.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Objeto de tubería incorrecto.\n"
 
 #: winerror.mc:3566
 msgid "Wrong pipe order.\n"
-msgstr ""
+msgstr "Orden de tubería incorrecto.\n"
 
 #: winerror.mc:3571
 msgid "Wrong pipe version.\n"
-msgstr ""
+msgstr "Versión de la tubería incorrecta.\n"
 
 #: winerror.mc:3576
-#, fuzzy
 msgid "Group member not found.\n"
-msgstr "ruta %s no encontrada.\n"
+msgstr "Miembro del grupo no encontrado.\n"
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB.\n"
-msgstr ""
+msgstr "No se pudo crear la base de datos de mapeo de puntos finales.\n"
 
 #: winerror.mc:3586
-#, fuzzy
 msgid "Invalid object.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Objecto inválido.\n"
 
 #: winerror.mc:3591
-#, fuzzy
 msgid "Invalid time.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Tiempo incorrecto.\n"
 
 #: winerror.mc:3596
-#, fuzzy
 msgid "Invalid form name.\n"
-msgstr "Error: nombre de clave no válido.\n"
+msgstr "Nombre del formulario incorrecto.\n"
 
 #: winerror.mc:3601
 msgid "Invalid form size.\n"
-msgstr ""
+msgstr "Tamaño del formulario incorrecto.\n"
 
 #: winerror.mc:3606
 msgid "Already awaiting printer handle.\n"
-msgstr ""
+msgstr "Ya se está esperando el descriptor de la impresora.\n"
 
 #: winerror.mc:3611
-#, fuzzy
 msgid "Printer deleted.\n"
-msgstr "Fecha de borrado.\n"
+msgstr "Impresora borrada.\n"
 
 #: winerror.mc:3616
-#, fuzzy
 msgid "Invalid printer state.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Estado inválido de la impresora.\n"
 
 #: winerror.mc:3621
 msgid "User must change password.\n"
-msgstr ""
+msgstr "El usuario debe cambiar la contraseña.\n"
 
 #: winerror.mc:3626
-#, fuzzy
 msgid "Domain controller not found.\n"
-msgstr "Archivo no encontrado.\n"
+msgstr "Controlador del dominio no encontrado.\n"
 
 #: winerror.mc:3631
 msgid "Account locked out.\n"
-msgstr ""
+msgstr "Contraseña bloqueada.\n"
 
 #: winerror.mc:3636
-#, fuzzy
 msgid "Invalid pixel format.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Formato de pixel inválido.\n"
 
 #: winerror.mc:3641
-#, fuzzy
 msgid "Invalid driver.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Controlador inválido.\n"
 
 #: winerror.mc:3646
 #, fuzzy
@@ -6639,88 +6443,75 @@ msgstr "Sintaxis inválida.\n"
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send.\n"
-msgstr ""
+msgstr "Envío RPC incompleto.\n"
 
 #: winerror.mc:3656
-#, fuzzy
 msgid "Invalid asynchronous RPC handle.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Descriptor de RPC asíncrona inválido.\n"
 
 #: winerror.mc:3661
-#, fuzzy
 msgid "Invalid asynchronous RPC call.\n"
-msgstr "Sintaxis inválida.\n"
+msgstr "Llamada RPC asíncrona inválida.\n"
 
 #: winerror.mc:3666
 msgid "RPC pipe closed.\n"
-msgstr ""
+msgstr "Tubería RPC cerrada.\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe.\n"
-msgstr ""
+msgstr "Error de disciplina en la tubería RPC.\n"
 
 #: winerror.mc:3676
-#, fuzzy
 msgid "No data on RPC pipe.\n"
-msgstr "Error de sintaxis.\n"
+msgstr "No hay datos en la tubería RPC.\n"
 
 #: winerror.mc:3681
-#, fuzzy
 msgid "No site name available.\n"
-msgstr "No disponible; .\n"
+msgstr "No hay ningun nombre de sitio disponible.\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed.\n"
-msgstr ""
+msgstr "El fichero no puede ser accedido.\n"
 
 #: winerror.mc:3691
-#, fuzzy
 msgid "The filename cannot be resolved.\n"
-msgstr "No se encontró '%s'."
+msgstr "No puede resolverse el nombre del fichero.\n"
 
 #: winerror.mc:3696
 msgid "RPC entry type mismatch.\n"
-msgstr ""
+msgstr "Falta de coincidencia en el tipo de entrada RPC.\n"
 
 #: winerror.mc:3701
-#, fuzzy
 msgid "Not all objects could be exported.\n"
-msgstr "Objeto Booleano esperado.\n"
+msgstr "No pudieron exportarse todos los objetos.\n"
 
 #: winerror.mc:3706
-#, fuzzy
 msgid "The interface could not be exported.\n"
-msgstr "No se encontró '%s'."
+msgstr "No pudo exportarse la interfaz.\n"
 
 #: winerror.mc:3711
-#, fuzzy
 msgid "The profile could not be added.\n"
-msgstr "No se encontró '%s'."
+msgstr "El perfil no ha podido ser añadido.\n"
 
 #: winerror.mc:3716
-#, fuzzy
 msgid "The profile element could not be added.\n"
-msgstr "No se encontró '%s'."
+msgstr "No pudo añadirse el elemento al perfil.\n"
 
 #: winerror.mc:3721
-#, fuzzy
 msgid "The profile element could not be removed.\n"
-msgstr "No se encontró '%s'."
+msgstr "No pudo eliminarse el elemento del perfil.\n"
 
 #: winerror.mc:3726
-#, fuzzy
 msgid "The group element could not be added.\n"
-msgstr "No se encontró '%s'."
+msgstr "No pudo añadirse el elemento del grupo.\n"
 
 #: winerror.mc:3731
-#, fuzzy
 msgid "The group element could not be removed.\n"
-msgstr "No se encontró '%s'."
+msgstr "No pudo eliminarse el elemento del grupo.\n"
 
 #: winerror.mc:3736
-#, fuzzy
 msgid "The username could not be found.\n"
-msgstr "No se encontró '%s'."
+msgstr "No pudo encontrarse el nombre de usuario.\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
@@ -6830,11 +6621,11 @@ msgstr "&Tipo:"
 
 #: mshtml.rc:43
 msgid "&URL:"
-msgstr "&URL :"
+msgstr "&URL:"
 
 #: mshtml.rc:31
 msgid "HTML rendering is currently disabled."
-msgstr "El renderizado HTML está actualmente deshabilitado."
+msgstr "El renderizado HTML está deshabilitado."
 
 #: mshtml.rc:32
 msgid "HTML Document"
@@ -6849,7 +6640,6 @@ msgid "Done"
 msgstr "Listo"
 
 #: msi.rc:27
-#, fuzzy
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
@@ -6897,6 +6687,35 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
+"Instalador de Windows %s\n"
+"\n"
+"Uso:\n"
+"msiexec comando {parámetro requerido} [parámetro opcional]\n"
+"\n"
+"Instalar un producto:\n"
+"\t/i {paquete|código_de_producto} [propiedad]\n"
+"\t/package {paquete|código_de_producto} [propiedad]\n"
+"\t/a paquete [propiedad]\n"
+"Reparar una instalación:\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {paquete|código_de_producto}\n"
+"Desinstalar un producto:\n"
+"\t/uninstall {paquete|código_de_producto} [propiedad]\n"
+"\t/x {paquete|código_de_producto} [propiedad]\n"
+"Anunciar un producto:\n"
+"\t/j[u|m] paquete [/t transformación] [/g idlenguaje]\n"
+"Aplicar un parche:\n"
+"\t/p paquete_de_parche [propiedad]\n"
+"\t/p paquete_de_parche /a paquete [propiedad]\n"
+"Modificadores de registro y de UI para los comandos anteriores:\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] fichero_de_registro\n"
+"\t/q{|n|b|r|f|n+|b+|b-}\n"
+"Registrar un Servicio MSI:\n"
+"\t/y\n"
+"Desregistrar un Service MSI:\n"
+"\t/z\n"
+"Mostrar esta ayuda:\n"
+"\t/help\n"
+"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
@@ -6920,7 +6739,7 @@ msgstr "elija qué carpeta contiene %s"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
-msgstr "Codec de vídeo MS-RLE de Wine"
+msgstr "Códec de vídeo MS-RLE de Wine"
 
 #: msrle32.rc:29
 msgid ""
@@ -6969,37 +6788,35 @@ msgstr "Cuadros completos (no comprimidos)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
-msgstr "códec de video Wine Video 1"
+msgstr "Códec de vídeo Wine Video 1"
 
 #: oleacc.rc:27
 msgid "unknown object"
-msgstr ""
+msgstr "objeto desconocido"
 
 #: oleacc.rc:28
-#, fuzzy
 msgid "title bar"
-msgstr "Sin barra de &título"
+msgstr "barra de título"
 
 #: oleacc.rc:29
 msgid "menu bar"
-msgstr ""
+msgstr "barra de menú"
 
 #: oleacc.rc:30
-#, fuzzy
 msgid "scroll bar"
-msgstr "Desplazar &aquí"
+msgstr "barra de desplazamiento"
 
 #: oleacc.rc:31
 msgid "grip"
-msgstr ""
+msgstr "agarre"
 
 #: oleacc.rc:32
 msgid "sound"
-msgstr ""
+msgstr "sonido"
 
 #: oleacc.rc:33
 msgid "cursor"
-msgstr ""
+msgstr "cursor"
 
 #: oleacc.rc:34
 msgid "caret"
@@ -7007,126 +6824,119 @@ msgstr ""
 
 #: oleacc.rc:35
 msgid "alert"
-msgstr ""
+msgstr "alerta"
 
 #: oleacc.rc:36
-#, fuzzy
 msgid "window"
-msgstr "&Ventana"
+msgstr "ventana"
 
 #: oleacc.rc:37
 msgid "client"
-msgstr ""
+msgstr "cliente"
 
 #: oleacc.rc:38
 msgid "popup menu"
-msgstr ""
+msgstr "menú emergente"
 
 #: oleacc.rc:39
 msgid "menu item"
-msgstr ""
+msgstr "elemento de menú"
 
 #: oleacc.rc:40
 msgid "tool tip"
-msgstr ""
+msgstr "leyenda informativa"
 
 #: oleacc.rc:41
-#, fuzzy
 msgid "application"
-msgstr "Aplicaciones"
+msgstr "aplicación"
 
 #: oleacc.rc:42
-#, fuzzy
 msgid "document"
-msgstr "Argumento faltante\n"
+msgstr "documento"
 
 #: oleacc.rc:43
 msgid "pane"
-msgstr ""
+msgstr "panel"
 
 #: oleacc.rc:44
 msgid "chart"
-msgstr ""
+msgstr "gráfico"
 
 #: oleacc.rc:45
 msgid "dialog"
-msgstr ""
+msgstr "diálogo"
 
 #: oleacc.rc:46
 msgid "border"
-msgstr ""
+msgstr "borde"
 
 #: oleacc.rc:47
 msgid "grouping"
-msgstr ""
+msgstr "agrupamiento"
 
 #: oleacc.rc:48
-#, fuzzy
 msgid "separator"
-msgstr "Separador"
+msgstr "separador"
 
 #: oleacc.rc:49
 msgid "tool bar"
-msgstr ""
+msgstr "barra de herramientas"
 
 #: oleacc.rc:50
-#, fuzzy
 msgid "status bar"
-msgstr "Barra de &estado"
+msgstr "barra de estado"
 
 #: oleacc.rc:51
-#, fuzzy
 msgid "table"
-msgstr "Table"
+msgstr "table"
 
 #: oleacc.rc:52
 msgid "column header"
-msgstr ""
+msgstr "encabezado de la columna"
 
 #: oleacc.rc:53
 msgid "row header"
-msgstr ""
+msgstr "encabezado de la fila"
 
 #: oleacc.rc:54
-#, fuzzy
 msgid "column"
-msgstr "C&olumna"
+msgstr "columna"
 
 #: oleacc.rc:55
 msgid "row"
-msgstr ""
+msgstr "fila"
 
 #: oleacc.rc:56
 msgid "cell"
-msgstr ""
+msgstr "celda"
 
 #: oleacc.rc:57
 msgid "link"
-msgstr ""
+msgstr "enlace"
 
 #: oleacc.rc:58
 msgid "help balloon"
-msgstr ""
+msgstr "globo de ayuda"
 
 #: oleacc.rc:59
 msgid "character"
-msgstr ""
+msgstr "carácter"
 
 #: oleacc.rc:60
 msgid "list"
-msgstr ""
+msgstr "lista"
 
 #: oleacc.rc:61
 msgid "list item"
-msgstr ""
+msgstr "elemento de lista"
 
 #: oleacc.rc:62
 msgid "outline"
-msgstr ""
+msgstr "esquema"
 
 #: oleacc.rc:63
 msgid "outline item"
-msgstr ""
+msgstr "elemento de esquema"
 
 #: oleacc.rc:64
 msgid "page tab"
@@ -7134,35 +6944,35 @@ msgstr ""
 
 #: oleacc.rc:65
 msgid "property page"
-msgstr ""
+msgstr "página de propiedades"
 
 #: oleacc.rc:66
 msgid "indicator"
-msgstr ""
+msgstr "indicador"
 
 #: oleacc.rc:67
 msgid "graphic"
-msgstr ""
+msgstr "gráfico"
 
 #: oleacc.rc:68
 msgid "static text"
-msgstr ""
+msgstr "texto estático"
 
 #: oleacc.rc:69
 msgid "text"
-msgstr ""
+msgstr "texto"
 
 #: oleacc.rc:70
 msgid "push button"
-msgstr ""
+msgstr "botón presionable"
 
 #: oleacc.rc:71
 msgid "check button"
-msgstr ""
+msgstr "botón marcable"
 
 #: oleacc.rc:72
 msgid "radio button"
-msgstr ""
+msgstr "botón de radio"
 
 #: oleacc.rc:73
 msgid "combo box"
@@ -7170,24 +6980,23 @@ msgstr ""
 
 #: oleacc.rc:74
 msgid "drop down"
-msgstr ""
+msgstr "desplegable"
 
 #: oleacc.rc:75
-#, fuzzy
 msgid "progress bar"
-msgstr "Barra de &direcciones"
+msgstr "barra de progreso"
 
 #: oleacc.rc:76
 msgid "dial"
-msgstr ""
+msgstr "marcador"
 
 #: oleacc.rc:77
 msgid "hot key field"
-msgstr ""
+msgstr "campo de tecla rápida"
 
 #: oleacc.rc:78
 msgid "slider"
-msgstr ""
+msgstr "deslizador"
 
 #: oleacc.rc:79
 msgid "spin box"
@@ -7195,53 +7004,51 @@ msgstr ""
 
 #: oleacc.rc:80
 msgid "diagram"
-msgstr ""
+msgstr "diagrama"
 
 #: oleacc.rc:81
-#, fuzzy
 msgid "animation"
-msgstr "Información"
+msgstr "animación"
 
 #: oleacc.rc:82
 msgid "equation"
-msgstr ""
+msgstr "ecuación"
 
 #: oleacc.rc:83
 msgid "drop down button"
-msgstr ""
+msgstr "botón con desplegable"
 
 #: oleacc.rc:84
 msgid "menu button"
-msgstr ""
+msgstr "botón de menú"
 
 #: oleacc.rc:85
 msgid "grid drop down button"
-msgstr ""
+msgstr "botón desplegable en parrilla"
 
 #: oleacc.rc:86
 msgid "white space"
-msgstr ""
+msgstr "espacio en blanco"
 
 #: oleacc.rc:87
 msgid "page tab list"
 msgstr ""
 
 #: oleacc.rc:88
-#, fuzzy
 msgid "clock"
-msgstr "Reloj"
+msgstr "reloj"
 
 #: oleacc.rc:89
 msgid "split button"
-msgstr ""
+msgstr "botón dividido"
 
 #: oleacc.rc:90 ipconfig.rc:33
 msgid "IP address"
-msgstr ""
+msgstr "dirección IP"
 
 #: oleacc.rc:91
 msgid "outline button"
-msgstr ""
+msgstr "botón con contorno"
 
 #: oleaut32.rc:27 oleview.rc:144
 msgid "True"
@@ -7369,7 +7176,6 @@ msgstr ""
 "activarlo usando %s."
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
@@ -7378,7 +7184,6 @@ msgstr ""
 "activarlo usando %s.  Será mostrado como un icono."
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
@@ -7389,7 +7194,6 @@ msgstr ""
 "se reflejarán en su documento."
 
 #: oledlg.rc:38
-#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
@@ -7400,7 +7204,6 @@ msgstr ""
 "archivo se reflejarán en su documento."
 
 #: oledlg.rc:39
-#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
@@ -7432,7 +7235,7 @@ msgstr "Escaneando"
 
 #: sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr "Escaneando... Por favor espere"
+msgstr "ESCANEANDO... Por favor espere"
 
 #: sane.rc:31
 msgctxt "unit: pixels"
@@ -8401,7 +8204,6 @@ msgid " sec"
 msgstr " sec"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
-#, fuzzy
 msgctxt "window"
 msgid "&Restore"
 msgstr "&Restaurar"
@@ -8436,7 +8238,7 @@ msgstr "&Cerrar\tCtrl+F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl+F6"
-msgstr ""
+msgstr "Siguien&te\t\tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -8452,11 +8254,11 @@ msgstr "&Ignorar"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr ""
+msgstr "&Volver a Intentar"
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr ""
+msgstr "&Continuar"
 
 #: user32.rc:91
 msgid "Select Window"
@@ -8472,7 +8274,7 @@ msgstr "&Tamaño de papel:"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr ""
+msgstr "Dúplex:"
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
@@ -8484,26 +8286,23 @@ msgstr "&Guardar esta contraseña (inseguro)"
 
 #: wininet.rc:54
 msgid "Authentication Required"
-msgstr "Autentificación Requerida"
+msgstr "Autenticación Requerida"
 
 #: wininet.rc:58
 msgid "Server"
 msgstr "Servidor"
 
 #: wininet.rc:74
-#, fuzzy
 msgid "Security Warning"
-msgstr "Seguridad"
+msgstr "Advertencia de Seguridad"
 
 #: wininet.rc:77
-#, fuzzy
 msgid "There is a problem with the certificate for this site."
-msgstr "El handle de dispositivo especificado es inválido."
+msgstr "Hay un problema con el certificado de este sitio."
 
 #: wininet.rc:79
-#, fuzzy
 msgid "Do you want to continue anyway?"
-msgstr "¿Desea simular un reinicio de Windows?"
+msgstr "¿Quieres continuar igualmente?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -8511,21 +8310,22 @@ msgstr "Conexión LAN"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
-msgstr ""
+msgstr "El certificado fue emitido por un emisor desconocido o no confiable."
 
 #: wininet.rc:27
-#, fuzzy
 msgid "The date on the certificate is invalid."
-msgstr "El handle de dispositivo especificado es inválido."
+msgstr "La fecha en el certificado no es válida."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
-msgstr ""
+msgstr "El nombre en el certificado no coincide con el del sitio."
 
 #: wininet.rc:29
 msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr ""
+"Hay por lo menos un problema de seguridad sin especificar con este "
+"certificado."
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -9168,7 +8968,7 @@ msgstr "Éxito"
 
 #: wldap32.rc:28
 msgid "Operations Error"
-msgstr "Error en operacioens"
+msgstr "Error en operaciones"
 
 #: wldap32.rc:29
 msgid "Protocol Error"
@@ -9192,11 +8992,11 @@ msgstr "Comparación verdadera"
 
 #: wldap32.rc:34
 msgid "Authentication Method Not Supported"
-msgstr "Método de autentificación no soportado"
+msgstr "Método de autenticación no soportado"
 
 #: wldap32.rc:35
 msgid "Strong Authentication Required"
-msgstr "Autentificación fuerte requerida"
+msgstr "Autenticación fuerte requerida"
 
 #: wldap32.rc:36
 msgid "Referral (v2)"
@@ -9264,7 +9064,7 @@ msgstr "Problema de dereferencia de alias"
 
 #: wldap32.rc:75
 msgid "Inappropriate Authentication"
-msgstr "Autentificación inapropriada"
+msgstr "Autenticación inapropriada"
 
 #: wldap32.rc:76
 msgid "Invalid Credentials"
@@ -9356,7 +9156,7 @@ msgstr "Tiempo de espera superado"
 
 #: wldap32.rc:113
 msgid "Auth Unknown"
-msgstr "Autentificación desconocida"
+msgstr "Autenticación desconocida"
 
 #: wldap32.rc:114
 msgid "Filter Error"
@@ -9435,6 +9235,24 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - Muestra o cambia atributos de fichero\n"
+"Sintaxis:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [disco:][ruta][fichero]\n"
+"       [/S [/D]]\n"
+"\n"
+"Donde:\n"
+"\n"
+"  +   Define un atributo.\n"
+"  -   Despejar un atributo.\n"
+"  R   Atributo de fichero sólo lectura.\n"
+"  A   Atributo de fichero de archivo.\n"
+"  S   Atributo de fichero de sistema.\n"
+"  H   Atributo de fichero oculto.\n"
+"  [disco:][ruta][fichero]\n"
+"      Especifica un fichero o ficheros sobre los que aplicar los atributos.\n"
+"  /S  Aplicar sobre todos los ficheros coincidentes en la carpeta actual y\n"
+"      sus subcarpetas.\n"
+"  /D  Aplicar también sobre carpetas.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -10251,21 +10069,19 @@ msgstr " (Sí|No|Todo)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "Utilidad de Diagnóstico de DirectX"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr ""
+msgstr "Uso: dxdiag [/whql:off | /whql:on] [/t fichero | /x fichero]"
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
-msgstr "Internet Explorer de Wine"
+msgstr "Explorador de Wine"
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "Ubicación"
+msgstr "Ubicación:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -10285,63 +10101,63 @@ msgstr ""
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr ""
+msgstr "Uso: ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr ""
+msgstr "Error: Parámetros de línea de comandos inválidos o desconocidos\n"
 
 #: ipconfig.rc:29
 msgid "%1 adapter %2\n"
-msgstr ""
+msgstr "%1 adaptador %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
+msgstr "Ethernet"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr ""
+msgstr "Sufijo de DNS específico de la conexión"
 
 #: ipconfig.rc:34
 msgid "Hostname"
-msgstr ""
+msgstr "Nombre de máquina"
 
 #: ipconfig.rc:35
 msgid "Node type"
-msgstr ""
+msgstr "Tipo de nodo"
 
 #: ipconfig.rc:36
 msgid "Broadcast"
-msgstr ""
+msgstr "Broadcast"
 
 #: ipconfig.rc:37
 msgid "Peer-to-peer"
-msgstr ""
+msgstr "Peer-to-peer"
 
 #: ipconfig.rc:38
 msgid "Mixed"
-msgstr ""
+msgstr "Mezclado"
 
 #: ipconfig.rc:39
 msgid "Hybrid"
-msgstr ""
+msgstr "Híbrido"
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
-msgstr ""
+msgstr "Enrutado IP activado"
 
 #: ipconfig.rc:42
 msgid "Physical address"
-msgstr ""
+msgstr "Dirección física"
 
 #: ipconfig.rc:43
 msgid "DHCP enabled"
-msgstr ""
+msgstr "DHCP activado"
 
 #: ipconfig.rc:46
 msgid "Default gateway"
-msgstr ""
+msgstr "Puerta de enlace por defecto"
 
 #: net.rc:27
 msgid ""
@@ -10353,6 +10169,13 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
+"La sintaxis para este comando es:\n"
+"\n"
+"NET comando [argumentos]\n"
+"    -or-\n"
+"NET comando /HELP\n"
+"\n"
+"Donde 'comando' es uno de entre HELP, START, STOP o USE.\n"
 
 #: net.rc:28
 msgid ""
@@ -10363,6 +10186,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"La sintaxis para este comando es:\n"
+"\n"
+"NET START [servicio]\n"
+"\n"
+"Muestra la lista de servicios en ejecución si se omite 'servicio'. De lo "
+"contrario 'servicio' es el nombre del servicio a arrancar.\n"
 
 #: net.rc:29
 msgid ""
@@ -10372,57 +10201,56 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"La sintaxis para este comando es:\n"
+"\n"
+"NET STOP servicio\n"
+"\n"
+"Donde 'servicio' es el nombre del servicio a parar.\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %1\n"
-msgstr ""
+msgstr "Parando el servicio dependiente: %1\n"
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "No puede crearse o usar una ventana."
+msgstr "No se pudo parar el servicio %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
 msgstr ""
+"No se pudo obtener el descriptor para el gestor de control de servicios.\n"
 
 #: net.rc:33
 msgid "Could not get handle to service.\n"
-msgstr ""
+msgstr "No se pudo obtener el descriptor del servicio.\n"
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "La operación finalizó con éxito\n"
+msgstr "El servicio %1 está arrancando.\n"
 
 #: net.rc:35
-#, fuzzy
 msgid "The %1 service was started successfully.\n"
-msgstr "La operación finalizó con éxito\n"
+msgstr "El servicio %1 ha sido arrancado con éxito.\n"
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "La operación finalizó con éxito\n"
+msgstr "El servicio %1 no ha podido arrancar.\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "La operación finalizó con éxito\n"
+msgstr "El servicio %1 se está parando.\n"
 
 #: net.rc:38
-#, fuzzy
 msgid "The %1 service was stopped successfully.\n"
-msgstr "La operación finalizó con éxito\n"
+msgstr "El servicio %1 se paró con éxito.\n"
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "Error: nombre de clave no válido\n"
+msgstr "El servicio %1 no ha podidio pararse.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
-msgstr ""
+msgstr "No hay entradas en el listado.\n"
 
 #: net.rc:42
 msgid ""
@@ -10430,39 +10258,37 @@ msgid ""
 "Status  Local   Remote\n"
 "---------------------------------------------------------------\n"
 msgstr ""
+"\n"
+"Estado  Local   Remoto\n"
+"---------------------------------------------------------------\n"
 
 #: net.rc:43
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr ""
+msgstr "%1      %2      %3      Recursos abiertos: %4!u!\n"
 
 #: net.rc:45
-#, fuzzy
 msgid "Paused"
-msgstr "Pausada; "
+msgstr "Pausado"
 
 #: net.rc:46
-#, fuzzy
 msgid "Disconnected"
-msgstr "Archivo no encontrado"
+msgstr "Desconectado"
 
 #: net.rc:47
-#, fuzzy
 msgid "A network error occurred"
-msgstr "Ocurrió un error en la impresora."
+msgstr "Ha ocurrido un error de red"
 
 #: net.rc:48
-#, fuzzy
 msgid "Connection is being made"
-msgstr "Conexión LAN"
+msgstr "Se está realizando la conexión"
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Conectando to %s"
+msgstr "Reconectando"
 
 #: net.rc:40
 msgid "The following services are running:\n"
-msgstr ""
+msgstr "Los siguientes servicios están en ejecución:\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -10702,84 +10528,76 @@ msgstr ""
 "¿Desea continuar?"
 
 #: oleview.rc:29
-#, fuzzy
 msgid "&Bind to file..."
-msgstr "&Añadir a Favoritos..."
+msgstr "V&incular a archivo..."
 
 #: oleview.rc:30
 msgid "&View TypeLib..."
-msgstr ""
+msgstr "&Ver TypeLib..."
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "&Confirmación..."
+msgstr "Configuración del &Sistema"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
-msgstr ""
+msgstr "&Ejecutar el Editor del Registro"
 
 #: oleview.rc:37
-#, fuzzy
 msgid "&Object"
-msgstr "No existe dicho objeto"
+msgstr "&Objeto"
 
 #: oleview.rc:39
 msgid "&CoCreateInstance Flag"
-msgstr ""
+msgstr "Indicador &CoCreateInstance"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "Servidor &En-proceso"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "&Descriptor En-proceso"
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "Error local"
+msgstr "Servidor &local"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "&Quitar..."
+msgstr "Servidor &remoto"
 
 #: oleview.rc:47
-#, fuzzy
 msgid "View &Type information"
-msgstr "Información"
+msgstr "Ver información de &tipos"
 
 #: oleview.rc:49
-#, fuzzy
 msgid "Create &Instance"
-msgstr "C&rear acceso directo"
+msgstr "Crear &Instancia"
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
-msgstr ""
+msgstr "Crear Instancia S&obre..."
 
 #: oleview.rc:51
 msgid "&Release Instance"
-msgstr ""
+msgstr "Libe&rar Instancia"
 
 #: oleview.rc:53
 msgid "Copy C&LSID to clipboard"
-msgstr ""
+msgstr "Copiar C&LSID al portapapeles"
 
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
-msgstr ""
+msgstr "Copiar etiqueta &HTML al portapapeles"
 
 #: oleview.rc:60
-#, fuzzy
 msgid "&Expert mode"
-msgstr "&Experto"
+msgstr "Modo &Experto"
 
 #: oleview.rc:62
 msgid "&Hidden component categories"
-msgstr ""
+msgstr "Categorías de componente &ocultas"
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:62 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
@@ -10794,276 +10612,262 @@ msgid "&Refresh\tF5"
 msgstr "&Actualizar\tF5"
 
 #: oleview.rc:71
-#, fuzzy
 msgid "&About OleView"
-msgstr "&Acerca de Wine"
+msgstr "&Acerca de OleView"
 
 #: oleview.rc:79
-#, fuzzy
 msgid "&Save as..."
 msgstr "Guardar &como..."
 
 #: oleview.rc:84
 msgid "&Group by type kind"
-msgstr ""
+msgstr "A&grupar por tipo"
 
 #: oleview.rc:154
 msgid "Connect to another machine"
-msgstr ""
+msgstr "Conectar a otra máquina"
 
 #: oleview.rc:157
 msgid "&Machine name:"
-msgstr ""
+msgstr "Nombre de &máquina:"
 
 #: oleview.rc:165
-#, fuzzy
 msgid "System Configuration"
-msgstr "&Confirmación..."
+msgstr "Configuración del Sistema"
 
 #: oleview.rc:168
-#, fuzzy
 msgid "System Settings"
-msgstr "Configuración por defecto"
+msgstr "Preferencias del Sistema"
 
 #: oleview.rc:169
 msgid "&Enable Distributed COM"
-msgstr ""
+msgstr "&Activar COM Distribuido"
 
 #: oleview.rc:170
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr ""
+msgstr "Activar Conexiones &Remotas (sólo Win95)"
 
 #: oleview.rc:171
 msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
+"Estas opciones sólo cambian valores del registro.\n"
+"No tienen ningún efecto sobre el rendimiento de Wine."
 
 #: oleview.rc:178
-#, fuzzy
 msgid "Default Interface Viewer"
-msgstr "Impresora por defecto; "
+msgstr "Visor de Interfaces por Defecto"
 
 #: oleview.rc:181
-#, fuzzy
 msgid "Interface"
-msgstr "Archivo no encontrado"
+msgstr "Interfaz"
 
 #: oleview.rc:183
 msgid "IID:"
-msgstr ""
+msgstr "IID:"
 
 #: oleview.rc:186
-#, fuzzy
 msgid "&View Type Info"
-msgstr "Información"
+msgstr "&Ver Información de Tipos"
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
-msgstr ""
+msgstr "Visor de Interfaces IPersist"
 
 #: oleview.rc:194 oleview.rc:206
 msgid "Class Name:"
-msgstr ""
+msgstr "Nombre de Clase:"
 
 #: oleview.rc:196 oleview.rc:208
 msgid "CLSID:"
-msgstr ""
+msgstr "CLSID:"
 
 #: oleview.rc:203
 msgid "IPersistStream Interface Viewer"
-msgstr ""
+msgstr "Visor de Interfaces IPersistStream"
 
 #: oleview.rc:93 oleview.rc:94
-#, fuzzy
 msgid "OleView"
-msgstr "&Ver"
+msgstr "OleView"
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
-msgstr ""
+msgstr "Visor ITypeLib"
 
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
-msgstr ""
+msgstr "OleView - Visor de Objetos OLE/COM"
 
 #: oleview.rc:97
-#, fuzzy
 msgid "version 1.0"
-msgstr "Versión"
+msgstr "versión 1.0"
 
 #: oleview.rc:100
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr ""
+msgstr "Ficheros TypeLib (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
-msgstr ""
+msgstr "Vincular a un archivo a través de File Moniker"
 
 #: oleview.rc:104
 msgid "Open a TypeLib file and view the contents"
-msgstr ""
+msgstr "Abrir un archivo TypeLib y ver su contenido"
 
 #: oleview.rc:105
 msgid "Change machine wide Distributed COM settings"
-msgstr ""
+msgstr "Cambiar las opciones de COM Distribuido generales"
 
 #: oleview.rc:106
 msgid "Run the Wine registry editor"
-msgstr ""
+msgstr "Ejecutar el editor de registro de Wine"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
-msgstr ""
+msgstr "Salir de la aplicación. Pregunta si grabar los cambios"
 
 #: oleview.rc:108
 msgid "Create an instance of the selected object"
-msgstr ""
+msgstr "Crear una instancia del objeto seleccionado"
 
 #: oleview.rc:109
 msgid "Create an instance of the selected object on a specific machine"
-msgstr ""
+msgstr "Crear una instancia del objeto seleccionado en la máquina especificada"
 
 #: oleview.rc:110
 msgid "Release the currently selected object instance"
-msgstr ""
+msgstr "Liberar la instancia de objeto seleccionada"
 
 #: oleview.rc:111
 msgid "Copy the GUID of the currently selected item to the clipboard"
-msgstr ""
+msgstr "Copiar el GUID del elemento seleccionado al portapapeles"
 
 #: oleview.rc:112
 msgid "Display the viewer for the selected item"
-msgstr ""
+msgstr "Mostrar el visor para el elemento seleccionado"
 
 #: oleview.rc:117
 msgid "Toggle between expert and novice display mode"
-msgstr ""
+msgstr "Cambiar entre modo experto y novato"
 
 #: oleview.rc:118
 msgid ""
 "Toggle the display of component categories that are not meant to be visible"
 msgstr ""
+"Activar/desactivar la visualización de categorías de componente ocultas"
 
 #: oleview.rc:119
 msgid "Show or hide the toolbar"
-msgstr ""
+msgstr "Mostrar u ocultar la barra de herramientas"
 
 #: oleview.rc:120
 msgid "Show or hide the status bar"
-msgstr ""
+msgstr "Mostrar u ocultar la barra de estado"
 
 #: oleview.rc:121
 msgid "Refresh all lists"
-msgstr ""
+msgstr "Refrescar todos los listados"
 
 #: oleview.rc:122
 msgid "Display program information, version number and copyright"
-msgstr ""
+msgstr "Mostrar información sobre el programa, número de versión y copyright"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "Pedir un servidor en-proceso cuando se llame a CoGetClassObject"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "Pedir un descriptor en-proceso cuando se llame a CoGetClassObject"
 
 #: oleview.rc:115
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr ""
+msgstr "Pedir un servidor local cuando se llame a CoGetClassObject"
 
 #: oleview.rc:116
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr ""
+msgstr "Pedir un servidor remoto cuando se llame a CoGetClassObject"
 
 #: oleview.rc:128
-#, fuzzy
 msgid "ObjectClasses"
-msgstr "No Mods de clase de objeto"
+msgstr "Clases de Objeto"
 
 #: oleview.rc:129
 msgid "Grouped by Component Category"
-msgstr ""
+msgstr "Agrupado por Categoría de Componente"
 
 #: oleview.rc:130
-#, fuzzy
 msgid "OLE 1.0 Objects"
-msgstr "No existe dicho objeto"
+msgstr "Objetos OLE 1.0"
 
 #: oleview.rc:131
 msgid "COM Library Objects"
-msgstr ""
+msgstr "Objetos de Librería COM"
 
 #: oleview.rc:132
-#, fuzzy
 msgid "All Objects"
-msgstr "No existe dicho objeto"
+msgstr "Todos los Objetos"
 
 #: oleview.rc:133
-#, fuzzy
 msgid "Application IDs"
-msgstr "Aplicaciones"
+msgstr "IDs de Aplicación"
 
 #: oleview.rc:134
 msgid "Type Libraries"
-msgstr ""
+msgstr "Librerias de Tipos"
 
 #: oleview.rc:135
 msgid "ver."
-msgstr ""
+msgstr "ver."
 
 #: oleview.rc:136
 msgid "Interfaces"
-msgstr ""
+msgstr "Interfaces"
 
 #: oleview.rc:138
 msgid "Registry"
-msgstr ""
+msgstr "Registro"
 
 #: oleview.rc:139
 msgid "Implementation"
-msgstr ""
+msgstr "Implementación"
 
 #: oleview.rc:140
-#, fuzzy
 msgid "Activation"
-msgstr "Ubicación"
+msgstr "Activación"
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
-msgstr ""
+msgstr "CoGetClassObject falló."
 
 #: oleview.rc:143
-#, fuzzy
 msgid "Unknown error"
-msgstr "Origen desconocido"
+msgstr "Error desconocido"
 
 #: oleview.rc:146
-#, fuzzy
 msgid "bytes"
-msgstr "%ld bytes"
+msgstr "bytes"
 
 #: oleview.rc:148
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr ""
+msgstr "LoadTypeLib( %1 ) falló ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
-msgstr ""
+msgstr "Interfaces Heredados"
 
 #: oleview.rc:124
 msgid "Save as an .IDL or .H file"
-msgstr ""
+msgstr "Grabar como fichero .IDL o .H"
 
 #: oleview.rc:125
-#, fuzzy
 msgid "Close window"
-msgstr "&Ventana"
+msgstr "Cerrar ventana"
 
 #: oleview.rc:126
 msgid "Group typeinfos by kind"
-msgstr ""
+msgstr "Agrupar typeinfos por especie"
 
 #: progman.rc:30
 msgid "&New..."
@@ -11082,16 +10886,14 @@ msgid "&Copy...\tF8"
 msgstr "&Copiar...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "&Propiedades...\tAlt+Enter"
+msgstr "&Propiedades\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "&Ejecutar..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
 msgstr "&Salir de Windows..."
 
@@ -11101,16 +10903,11 @@ msgstr "&Opciones"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
-msgstr "&Ordenar automáticamente"
+msgstr "O&rdenar automáticamente"
 
 #: progman.rc:43
-#, fuzzy
 msgid "&Minimize on run"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Minimizar al lanzarse\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Minimizar al ejecutarse"
+msgstr "&Minimizar al lanzarse"
 
 #: progman.rc:44 winefile.rc:69
 msgid "&Save settings on exit"
@@ -11133,13 +10930,12 @@ msgid "&Arrange Icons"
 msgstr "&Ordenar iconos"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Gestor de programas"
+msgstr "&Acerca del Gestor de Programas"
 
 #: progman.rc:100
 msgid "Program &group"
-msgstr "&Grupo de programa"
+msgstr "&Grupo de programas"
 
 #: progman.rc:102
 msgid "&Program"
@@ -11155,7 +10951,7 @@ msgstr "Mover programa:"
 
 #: progman.rc:117 progman.rc:135
 msgid "From group:"
-msgstr "&Del grupo:"
+msgstr "Del grupo:"
 
 #: progman.rc:119 progman.rc:137
 msgid "&To group:"
@@ -11171,7 +10967,7 @@ msgstr "Copiar programa:"
 
 #: progman.rc:149
 msgid "Program Group Attributes"
-msgstr "Atributos del grupo de programa"
+msgstr "Atributos de grupo del programa"
 
 #: progman.rc:153
 msgid "&Group file:"
@@ -11203,7 +10999,7 @@ msgstr "Cambiar &icono..."
 
 #: progman.rc:189
 msgid "Change Icon"
-msgstr "Cambiar icono"
+msgstr "Cambiar Icono"
 
 #: progman.rc:191
 msgid "&Filename:"
@@ -11219,7 +11015,7 @@ msgstr "Ejecutar programa"
 
 #: progman.rc:60
 msgid "Program Manager"
-msgstr "Gestor de programas"
+msgstr "Gestor de Programas"
 
 #: progman.rc:62 winhlp32.rc:80
 msgid "WARNING"
@@ -11238,13 +11034,8 @@ msgid "Delete program `%s'?"
 msgstr "¿Eliminar programa `%s'?"
 
 #: progman.rc:67
-#, fuzzy
 msgid "Not implemented"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"No implementado\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Aún no implementado"
+msgstr "No implementado"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
@@ -11272,21 +11063,21 @@ msgstr "Característica desconocida en %s"
 
 #: progman.rc:76
 msgid "File `%s' exists. Not overwritten."
-msgstr "El archivo `%s' existe. No se ha sobreescrito."
+msgstr "El archivo `%s' ya existe. No se ha sobreescrito."
 
 #: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr ""
-"Guarde el grupo como `%s' para prevenir la sobreescritura de los archivos "
+"Guardar el grupo como `%s para prevenir la sobreescritura de los archivos "
 "originales."
 
 #: progman.rc:81
 msgid "Libraries (*.dll)"
-msgstr "Librarías (*.dll)"
+msgstr "Librerías (*.dll)"
 
 #: progman.rc:82
 msgid "Icon files"
-msgstr "Archivos de iconos"
+msgstr "Archivos de icono"
 
 #: progman.rc:83
 msgid "Icons (*.ico)"
@@ -11710,132 +11501,128 @@ msgstr ""
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr ""
+msgstr "Uso: taskkill [/?] [/f] [/im NombreProceso | /pid IDProceso]\n"
 
 #: taskkill.rc:28
-#, fuzzy
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "Error: parámetros de línea de comandos inválidos\n"
+msgstr "Error: Parámetros de línea de comandos desconocidos o inválidos\n"
 
 #: taskkill.rc:29
-#, fuzzy
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "Error: parámetros de línea de comandos inválidos\n"
+msgstr "Error: Parámetros de línea de comandos inválidos\n"
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr ""
+msgstr "Error: Una de las opciones /im o /pid debe ser utilizada.\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Error: parámetros de línea de comandos inválidos\n"
+msgstr "Error: La Opción %1 espera un parámetro de línea de comandos.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr ""
+msgstr "Error: Las opciones /im y /pid son mutuamente excluyentes.\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
+"Mensaje de cerrar ha sido enviado a las ventanas de nivel superior del "
+"proceso con el PID %1!u!.\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
+"Mensaje de cerrar ha sido enviado a las ventanas de nivel superior del "
+"proceso \"%1\" con el PID %2!u!.\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr ""
+msgstr "El proceso con el PID %1!u! ha sido terminado forzosamente.\n"
 
 #: taskkill.rc:36
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr ""
+msgstr "El proceso \"%1\" con el PID %2!u! ha sido terminado forzosamente.\n"
 
 #: taskkill.rc:37
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "Error: No se pudo encontrar el proceso \"%1\".\n"
 
 #: taskkill.rc:38
-#, fuzzy
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "Error: No se puedo enumerar la lista de procesos.\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "Error: No se pudo terminar el proceso \"%1\".\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr ""
+msgstr "Error: La auto-terminación de un proceso no está permitida.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
-msgstr ""
+msgstr "&Nueva Tarea (Ejecutar...)"
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
-msgstr ""
+msgstr "&Salir del Gestor de Programas"
 
 #: taskmgr.rc:45
-#, fuzzy
 msgid "&Minimize On Use"
-msgstr "&Minimizar al lanzarse"
+msgstr "&Minimizar al Lanzarse"
 
 #: taskmgr.rc:47
 msgid "&Hide When Minimized"
-msgstr ""
+msgstr "&Esconder Cuando se Minimice"
 
 #: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
-msgstr ""
+msgstr "&Mostrar tareas de 16 bits"
 
 #: taskmgr.rc:54
-#, fuzzy
 msgid "&Refresh Now"
-msgstr "&Recargar"
+msgstr "&Recargar Ahora"
 
 #: taskmgr.rc:55
 msgid "&Update Speed"
-msgstr ""
+msgstr "&Velocidad de Actualización"
 
 #: taskmgr.rc:57 taskmgr.rc:158
 msgid "&High"
-msgstr ""
+msgstr "&Alta"
 
 #: taskmgr.rc:58 taskmgr.rc:162
 msgid "&Normal"
-msgstr ""
+msgstr "&Normal"
 
 #: taskmgr.rc:60 taskmgr.rc:166
 msgid "&Low"
-msgstr ""
+msgstr "&Baja"
 
 #: taskmgr.rc:61
 msgid "&Paused"
-msgstr ""
+msgstr "&Pausado"
 
 #: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
-msgstr ""
+msgstr "&Seleccionar Columnas..."
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
-msgstr ""
+msgstr "Historial de &CPU"
 
 #: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
-msgstr ""
+msgstr "&Una Gráfica, Todas las CPUs"
 
 #: taskmgr.rc:73 taskmgr.rc:260
 msgid "One Graph &Per CPU"
-msgstr ""
+msgstr "Una Gráfica &Por CPU"
 
 #: taskmgr.rc:76 taskmgr.rc:261
 msgid "&Show Kernel Times"
-msgstr ""
+msgstr "&Mostar Tiempos de Núcleo"
 
 #: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:75
 msgid "Tile &Horizontally"
@@ -11843,46 +11630,43 @@ msgstr "Mosaico &horizontal"
 
 #: taskmgr.rc:81 taskmgr.rc:97 taskmgr.rc:124
 msgid "Tile &Vertically"
-msgstr ""
+msgstr "Mosaico &vertical"
 
 #: taskmgr.rc:82 taskmgr.rc:98 taskmgr.rc:125
-#, fuzzy
 msgid "&Minimize"
-msgstr "&Minimizar al lanzarse"
+msgstr "&Minimizar"
 
 #: taskmgr.rc:84 taskmgr.rc:100 taskmgr.rc:127
 msgid "&Cascade"
-msgstr ""
+msgstr "En &Cascada"
 
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
-msgstr ""
+msgstr "Traer al &Frente"
 
 #: taskmgr.rc:90
-#, fuzzy
 msgid "&About Task Manager"
-msgstr "&Acerca de Wine"
+msgstr "&Acerca del Gestor de Programas"
 
 #: taskmgr.rc:120 taskmgr.rc:352
 msgid "&Switch To"
-msgstr ""
+msgstr "&Cambiar A"
 
 #: taskmgr.rc:129 taskmgr.rc:353
 msgid "&End Task"
-msgstr ""
+msgstr "&Finalizar Tarea"
 
 #: taskmgr.rc:130
-#, fuzzy
 msgid "&Go To Process"
-msgstr "I&r a Mis imágenes"
+msgstr "I&r al Proceso"
 
 #: taskmgr.rc:149 taskmgr.rc:363
 msgid "&End Process"
-msgstr ""
+msgstr "&Finalizar Proceso"
 
 #: taskmgr.rc:150
 msgid "End Process &Tree"
-msgstr ""
+msgstr "Finalizar el Á&rbol de Procesos"
 
 #: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
@@ -11890,56 +11674,51 @@ msgstr "&Depurar"
 
 #: taskmgr.rc:154
 msgid "Set &Priority"
-msgstr ""
+msgstr "Definir &Prioridad"
 
 #: taskmgr.rc:156
 msgid "&Realtime"
-msgstr ""
+msgstr "Tiempo &Real"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
-msgstr "Normal"
+msgstr "Por &Encima de lo Normal"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
-msgstr "Normal"
+msgstr "Por &Debajo de lo Normal"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
-msgstr ""
+msgstr "Definir &Afinidad..."
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
-msgstr ""
+msgstr "Editar &Canales de Depuración..."
 
 #: taskmgr.rc:338 taskmgr.rc:180 taskmgr.rc:181
-#, fuzzy
 msgid "Task Manager"
 msgstr "Gestor de programas"
 
 #: taskmgr.rc:351
-#, fuzzy
 msgid "&New Task..."
-msgstr "&Nuevo..."
+msgstr "&Nueva Tarea..."
 
 #: taskmgr.rc:364
 msgid "&Show processes from all users"
-msgstr ""
+msgstr "&Mostrar procesos de todos los usuarios"
 
 #: taskmgr.rc:372
 msgid "CPU usage"
-msgstr ""
+msgstr "Uso de CPU"
 
 #: taskmgr.rc:373
-#, fuzzy
 msgid "MEM usage"
-msgstr "Mensaje"
+msgstr "Uso de Memoria"
 
 #: taskmgr.rc:374
 msgid "Totals"
-msgstr ""
+msgstr "Totales"
 
 #: taskmgr.rc:375
 msgid "Commit charge (K)"
@@ -11947,584 +11726,567 @@ msgstr ""
 
 #: taskmgr.rc:376
 msgid "Physical memory (K)"
-msgstr ""
+msgstr "Memoria física (K)"
 
 #: taskmgr.rc:377
 msgid "Kernel memory (K)"
-msgstr ""
+msgstr "Memoria de Núcleo (K)"
 
 #: taskmgr.rc:378 taskmgr.rc:290
 msgid "Handles"
-msgstr ""
+msgstr "Manejadores"
 
 #: taskmgr.rc:379 taskmgr.rc:291
 msgid "Threads"
-msgstr ""
+msgstr "Hilos"
 
 #: taskmgr.rc:380 taskmgr.rc:263
 msgid "Processes"
-msgstr ""
+msgstr "Procesos"
 
 #: taskmgr.rc:387 taskmgr.rc:396 taskmgr.rc:405
 msgid "Total"
-msgstr ""
+msgstr "Total"
 
 #: taskmgr.rc:388
 msgid "Limit"
-msgstr ""
+msgstr "Límite"
 
 #: taskmgr.rc:389
 msgid "Peak"
-msgstr ""
+msgstr "Pico"
 
 #: taskmgr.rc:398
-#, fuzzy
 msgid "System Cache"
-msgstr "Ruta del sistema"
+msgstr "Cache del Sistema"
 
 #: taskmgr.rc:406
-#, fuzzy
 msgid "Paged"
-msgstr "Página a&rriba"
+msgstr "Paginada"
 
 #: taskmgr.rc:407
 msgid "Nonpaged"
-msgstr ""
+msgstr "No paginada"
 
 #: taskmgr.rc:414
-#, fuzzy
 msgid "CPU usage history"
-msgstr "Monitor de &memoria"
+msgstr "Historial de uso de la CPU"
 
 #: taskmgr.rc:415
-#, fuzzy
 msgid "Memory usage history"
-msgstr "Monitor de &memoria"
+msgstr "Historial de uso de la memoria"
 
 #: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
-msgstr ""
+msgstr "Canales de Depuración"
 
 #: taskmgr.rc:439
-#, fuzzy
 msgid "Processor Affinity"
-msgstr "Procesando; "
+msgstr "Afinidad de Procesadores"
 
 #: taskmgr.rc:444
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
 msgstr ""
+"La opción de Afinidad de Procesadores controla en qué CPUs podrá ejecutarse "
+"el proceso."
 
 #: taskmgr.rc:446
 msgid "CPU 0"
-msgstr ""
+msgstr "CPU 0"
 
 #: taskmgr.rc:448
 msgid "CPU 1"
-msgstr ""
+msgstr "CPU 1"
 
 #: taskmgr.rc:450
 msgid "CPU 2"
-msgstr ""
+msgstr "CPU 2"
 
 #: taskmgr.rc:452
 msgid "CPU 3"
-msgstr ""
+msgstr "CPU 3"
 
 #: taskmgr.rc:454
 msgid "CPU 4"
-msgstr ""
+msgstr "CPU 4"
 
 #: taskmgr.rc:456
 msgid "CPU 5"
-msgstr ""
+msgstr "CPU 5"
 
 #: taskmgr.rc:458
 msgid "CPU 6"
-msgstr ""
+msgstr "CPU 6"
 
 #: taskmgr.rc:460
 msgid "CPU 7"
-msgstr ""
+msgstr "CPU 7"
 
 #: taskmgr.rc:462
 msgid "CPU 8"
-msgstr ""
+msgstr "CPU 8"
 
 #: taskmgr.rc:464
 msgid "CPU 9"
-msgstr ""
+msgstr "CPU 9"
 
 #: taskmgr.rc:466
 msgid "CPU 10"
-msgstr ""
+msgstr "CPU 10"
 
 #: taskmgr.rc:468
 msgid "CPU 11"
-msgstr ""
+msgstr "CPU 11"
 
 #: taskmgr.rc:470
 msgid "CPU 12"
-msgstr ""
+msgstr "CPU 12"
 
 #: taskmgr.rc:472
 msgid "CPU 13"
-msgstr ""
+msgstr "CPU 13"
 
 #: taskmgr.rc:474
 msgid "CPU 14"
-msgstr ""
+msgstr "CPU 14"
 
 #: taskmgr.rc:476
 msgid "CPU 15"
-msgstr ""
+msgstr "CPU 15"
 
 #: taskmgr.rc:478
 msgid "CPU 16"
-msgstr ""
+msgstr "CPU 16"
 
 #: taskmgr.rc:480
 msgid "CPU 17"
-msgstr ""
+msgstr "CPU 17"
 
 #: taskmgr.rc:482
 msgid "CPU 18"
-msgstr ""
+msgstr "CPU 18"
 
 #: taskmgr.rc:484
 msgid "CPU 19"
-msgstr ""
+msgstr "CPU 19"
 
 #: taskmgr.rc:486
 msgid "CPU 20"
-msgstr ""
+msgstr "CPU 20"
 
 #: taskmgr.rc:488
 msgid "CPU 21"
-msgstr ""
+msgstr "CPU 21"
 
 #: taskmgr.rc:490
 msgid "CPU 22"
-msgstr ""
+msgstr "CPU 22"
 
 #: taskmgr.rc:492
 msgid "CPU 23"
-msgstr ""
+msgstr "CPU 23"
 
 #: taskmgr.rc:494
 msgid "CPU 24"
-msgstr ""
+msgstr "CPU 24"
 
 #: taskmgr.rc:496
 msgid "CPU 25"
-msgstr ""
+msgstr "CPU 25"
 
 #: taskmgr.rc:498
 msgid "CPU 26"
-msgstr ""
+msgstr "CPU 26"
 
 #: taskmgr.rc:500
 msgid "CPU 27"
-msgstr ""
+msgstr "CPU 27"
 
 #: taskmgr.rc:502
 msgid "CPU 28"
-msgstr ""
+msgstr "CPU 28"
 
 #: taskmgr.rc:504
 msgid "CPU 29"
-msgstr ""
+msgstr "CPU 29"
 
 #: taskmgr.rc:506
 msgid "CPU 30"
-msgstr ""
+msgstr "CPU 30"
 
 #: taskmgr.rc:508
 msgid "CPU 31"
-msgstr ""
+msgstr "CPU 31"
 
 #: taskmgr.rc:514
-#, fuzzy
 msgid "Select Columns"
-msgstr "C&olumna"
+msgstr "Seleccionar Columnas"
 
 #: taskmgr.rc:519
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
 msgstr ""
+"Seleccionar las columnas que aparecerán en la página de procesos del Gestor "
+"de Programas."
 
 #: taskmgr.rc:521
-#, fuzzy
 msgid "&Image Name"
-msgstr "Image"
+msgstr "Nombre de la &Image"
 
 #: taskmgr.rc:523
 msgid "&PID (Process Identifier)"
-msgstr ""
+msgstr "&PID (Identificador del Proceso)"
 
 #: taskmgr.rc:525
 msgid "&CPU Usage"
-msgstr ""
+msgstr "Uso de &CPU"
 
 #: taskmgr.rc:527
 msgid "CPU Tim&e"
-msgstr ""
+msgstr "Ti&empo de CPU"
 
 #: taskmgr.rc:529
-#, fuzzy
 msgid "&Memory Usage"
-msgstr "Monitor de &memoria"
+msgstr "Uso de &Memoria"
 
 #: taskmgr.rc:531
 msgid "Memory Usage &Delta"
-msgstr ""
+msgstr "&Delta de uso de memoria"
 
 #: taskmgr.rc:533
 msgid "Pea&k Memory Usage"
-msgstr ""
+msgstr "P&ico en el uso de memoria"
 
 #: taskmgr.rc:535
-#, fuzzy
 msgid "Page &Faults"
-msgstr "Página a la i&zquierda"
+msgstr "&Fallos de Página"
 
 #: taskmgr.rc:537
-#, fuzzy
 msgid "&USER Objects"
-msgstr "No existe dicho objeto"
+msgstr "Objetos de &Usuario"
 
 #: taskmgr.rc:539 taskmgr.rc:281
 msgid "I/O Reads"
-msgstr ""
+msgstr "Lecturas E/S"
 
 #: taskmgr.rc:541 taskmgr.rc:282
 msgid "I/O Read Bytes"
-msgstr ""
+msgstr "Bytes Leídos de E/S"
 
 #: taskmgr.rc:543
-#, fuzzy
 msgid "&Session ID"
-msgstr ""
-"CMD Versión %s\n"
-"\n"
+msgstr "ID de &Sesión"
 
 #: taskmgr.rc:545
-#, fuzzy
 msgid "User &Name"
-msgstr "Por &nombre"
+msgstr "&Nombre de Usuario"
 
 #: taskmgr.rc:547
-#, fuzzy
 msgid "Page F&aults Delta"
-msgstr "Página a la i&zquierda"
+msgstr "Delta de F&allos de Página"
 
 #: taskmgr.rc:549
 msgid "&Virtual Memory Size"
-msgstr ""
+msgstr "Tamaño de la Memoria &Virtual"
 
 #: taskmgr.rc:551
-#, fuzzy
 msgid "Pa&ged Pool"
-msgstr "Página a&bajo"
+msgstr "Reserva &Paginada"
 
 #: taskmgr.rc:553
-#, fuzzy
 msgid "N&on-paged Pool"
-msgstr "Página a&bajo"
+msgstr "Reserva &No Paginada"
 
 #: taskmgr.rc:555
 msgid "Base P&riority"
-msgstr ""
+msgstr "P&rioridad Base"
 
 #: taskmgr.rc:557
 msgid "&Handle Count"
-msgstr ""
+msgstr "Número de &Manejadores"
 
 #: taskmgr.rc:559
 msgid "&Thread Count"
-msgstr ""
+msgstr "Número de &Hilos"
 
 #: taskmgr.rc:561 taskmgr.rc:292
 msgid "GDI Objects"
-msgstr ""
+msgstr "Objetos GDI"
 
 #: taskmgr.rc:563 taskmgr.rc:293
 msgid "I/O Writes"
-msgstr ""
+msgstr "Escrituras E/S"
 
 #: taskmgr.rc:565 taskmgr.rc:294
 msgid "I/O Write Bytes"
-msgstr ""
+msgstr "Bytes Escritos de E/S"
 
 #: taskmgr.rc:567 taskmgr.rc:295
-#, fuzzy
 msgid "I/O Other"
-msgstr "Otro"
+msgstr "Otros E/S"
 
 #: taskmgr.rc:569 taskmgr.rc:296
 msgid "I/O Other Bytes"
-msgstr ""
+msgstr "Otros Bytes de E/S"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
-msgstr ""
+msgstr "Crear una Nueva Tarea"
 
 #: taskmgr.rc:187
 msgid "Runs a new program"
-msgstr ""
+msgstr "Ejecuta un nuevo programa"
 
 #: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
 msgstr ""
+"El Gestor de Programas se mantiene sobre otras ventanas a no se que sea "
+"minimizado"
 
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr ""
+"El Gestor de Programas se minimiza cuando se realiza una operación SwitchTo"
 
 #: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
-msgstr ""
+msgstr "Esconder el Gestor de Programas cuando esté minimizado"
 
 #: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
 msgstr ""
+"Forzar al Gestor de Programas a actualizarse ahora, independientemente de la "
+"opción de velocidad de actualización"
 
 #: taskmgr.rc:193
 msgid "Displays tasks by using large icons"
-msgstr ""
+msgstr "Muestra las tareas usando iconos grandes"
 
 #: taskmgr.rc:194
 msgid "Displays tasks by using small icons"
-msgstr ""
+msgstr "Muestra las tareas usando iconos pequeños"
 
 #: taskmgr.rc:195
 msgid "Displays information about each task"
-msgstr ""
+msgstr "Muestra la información acerca de cada tarea"
 
 #: taskmgr.rc:196
 msgid "Updates the display twice per second"
-msgstr ""
+msgstr "Actualiza la pantalla dos veces por segundo"
 
 #: taskmgr.rc:197
 msgid "Updates the display every two seconds"
-msgstr ""
+msgstr "Actualiza la pantalla cada dos segundos"
 
 #: taskmgr.rc:198
 msgid "Updates the display every four seconds"
-msgstr ""
+msgstr "Actualiza la pantalla cada cuatro segundos"
 
 #: taskmgr.rc:203
 msgid "Does not automatically update"
-msgstr ""
+msgstr "No actualiza automáticamente"
 
 #: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
-msgstr ""
+msgstr "Pone las ventanas en un mosaico horizontal en el escritorio"
 
 #: taskmgr.rc:206
 msgid "Tiles the windows vertically on the desktop"
-msgstr ""
+msgstr "Pone las ventanas en un mosaico vertical en el escritorio"
 
 #: taskmgr.rc:207
 msgid "Minimizes the windows"
-msgstr ""
+msgstr "Minimiza las ventanas"
 
 #: taskmgr.rc:208
 msgid "Maximizes the windows"
-msgstr ""
+msgstr "Maximiza las ventanas"
 
 #: taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
-msgstr ""
+msgstr "Pone las ventanas en una cascada diagonal en el escritorio"
 
 #: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
-msgstr ""
+msgstr "Trae la ventana al frente, pero no cambia a ella"
 
 #: taskmgr.rc:211
 msgid "Displays Task Manager help topics"
-msgstr ""
+msgstr "Muestra temas de ayuda del Gestor de Programas"
 
 #: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
-msgstr ""
+msgstr "Muestra información del programa, número de versión, y copyright"
 
 #: taskmgr.rc:213
 msgid "Exits the Task Manager application"
-msgstr ""
+msgstr "Sale de la aplicación de Gestor de Programas"
 
 #: taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
-msgstr ""
+msgstr "Muestra tareas de 16 bits bajo ntvdm.exe"
 
 #: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
-msgstr ""
+msgstr "Selecciona qué columnas serán visibles en la página de Procesos"
 
 #: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
-msgstr ""
+msgstr "Muestra el tiempo de núcleo en las gráficas de rendimiento"
 
 #: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
-msgstr ""
+msgstr "Una sola gráfica de historial muestra el uso total de CPU"
 
 #: taskmgr.rc:220
 msgid "Each CPU has its own history graph"
-msgstr ""
+msgstr "Cada CPU tiene su propia gráfica de historial"
 
 #: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
-msgstr ""
+msgstr "Trae una tarea al frente, y cambia el foco a esa tarea"
 
 #: taskmgr.rc:227
 msgid "Tells the selected tasks to close"
-msgstr ""
+msgstr "Pedir a las tareas seleccionados que se cierren"
 
 #: taskmgr.rc:228
 msgid "Switches the focus to the process of the selected task"
-msgstr ""
+msgstr "Cambia el foco al proceso de la tarea seleccionada"
 
 #: taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
-msgstr ""
+msgstr "Restaura el Gestor de Programas de su estado escondido"
 
 #: taskmgr.rc:230
 msgid "Removes the process from the system"
-msgstr ""
+msgstr "Elimina el proceso del sistema"
 
 #: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
-msgstr ""
+msgstr "Elimina el proceso y todos sus descendientes del sistema"
 
 #: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
-msgstr ""
+msgstr "Vincula el depurador a este proceso"
 
 #: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
-msgstr ""
+msgstr "Controla en qué procesadores podrá ejecutarse el proceso"
 
 #: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
-msgstr ""
+msgstr "Define la prioridad del proceso a TIEMPO REAL"
 
 #: taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
-msgstr ""
+msgstr "Define la prioridad del proceso a ALTA"
 
 #: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
-msgstr ""
+msgstr "Define la prioridad del proceso a MÁS QUE NORMAL"
 
 #: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
-msgstr ""
+msgstr "Define la prioridad del proceso a NORMAL"
 
 #: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
-msgstr ""
+msgstr "Define la prioridad del proceso a MÁS QUE NORMAL"
 
 #: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
-msgstr ""
+msgstr "Define la prioridad del proceso a BAJA"
 
 #: taskmgr.rc:247
 msgid "Controls Debug Channels"
-msgstr ""
+msgstr "Controla los Canales de Depuración"
 
 #: taskmgr.rc:264
-#, fuzzy
 msgid "Performance"
-msgstr "Medidores de re&ndimiento"
+msgstr "Rendimiento"
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
-msgstr ""
+msgstr "Uso de CPU: %3d%%"
 
 #: taskmgr.rc:266
 msgid "Processes: %d"
-msgstr ""
+msgstr "Procesos: %d"
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr ""
+msgstr "Uso de Memoria: %1!u!kB / %2!u!kB"
 
 #: taskmgr.rc:272
-#, fuzzy
 msgid "Image Name"
-msgstr "Image"
+msgstr "Nombre de la Imágen"
 
 #: taskmgr.rc:273
 msgid "PID"
-msgstr ""
+msgstr "PID"
 
 #: taskmgr.rc:274
 msgid "CPU"
-msgstr ""
+msgstr "CPU"
 
 #: taskmgr.rc:275
 msgid "CPU Time"
-msgstr ""
+msgstr "Tiempo de CPU"
 
 #: taskmgr.rc:276
 msgid "Mem Usage"
-msgstr ""
+msgstr "Uso de Mem"
 
 #: taskmgr.rc:277
 msgid "Mem Delta"
-msgstr ""
+msgstr "Delta de Mem"
 
 #: taskmgr.rc:278
 msgid "Peak Mem Usage"
-msgstr ""
+msgstr "Pico en uso de Mem"
 
 #: taskmgr.rc:279
-#, fuzzy
 msgid "Page Faults"
-msgstr "Página a la i&zquierda"
+msgstr "Fallos de Página"
 
 #: taskmgr.rc:280
-#, fuzzy
 msgid "USER Objects"
-msgstr "No existe dicho objeto"
+msgstr "Objetos de usuario"
 
 #: taskmgr.rc:283
-#, fuzzy
 msgid "Session ID"
-msgstr ""
-"CMD Versión %s\n"
-"\n"
+msgstr "ID de Sesión"
 
 #: taskmgr.rc:284
 msgid "Username"
-msgstr ""
+msgstr "Nombre de usuario"
 
 #: taskmgr.rc:285
 msgid "PF Delta"
-msgstr ""
+msgstr "Delta PF"
 
 #: taskmgr.rc:286
 msgid "VM Size"
-msgstr ""
+msgstr "Tamaño de VM"
 
 #: taskmgr.rc:287
-#, fuzzy
 msgid "Paged Pool"
-msgstr "Página a&bajo"
+msgstr "Reserva Paginada"
 
 #: taskmgr.rc:288
 msgid "NP Pool"
-msgstr ""
+msgstr "Reserva NP"
 
 #: taskmgr.rc:289
 msgid "Base Pri"
-msgstr ""
+msgstr "Pri Base"
 
 #: taskmgr.rc:301
 msgid "Task Manager Warning"
-msgstr ""
+msgstr "Advertencia del Gestor de Programas"
 
 #: taskmgr.rc:304
 msgid ""
@@ -12532,10 +12294,13 @@ msgid ""
 "cause undesired results including system instability. Are you\n"
 "sure you want to change the priority class?"
 msgstr ""
+"ADVERTENCIA: Cambiar la prioridad de este proceso puede\n"
+"tener resultados no deseados incluyendo inestabilidad del sistema.\n"
+"¿Seguro que quiere cambiar la prioridad?"
 
 #: taskmgr.rc:305
 msgid "Unable to Change Priority"
-msgstr ""
+msgstr "No se pudo cambiar la prioridad"
 
 #: taskmgr.rc:310
 msgid ""
@@ -12545,50 +12310,55 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
+"ADVERTENCIA: Terminar un proceso puede tener resultados no\n"
+"deseados incluyendo la pérdida de datos e inestabilidad en el\n"
+"sistema. El proceso no tendrá la oportunidad de guardar su\n"
+"estado o datos antes de ser terminado. ¿Seguro que quiere\n"
+"terminar el proceso?"
 
 #: taskmgr.rc:311
-#, fuzzy
 msgid "Unable to Terminate Process"
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "No se pudo terminar el proceso"
 
 #: taskmgr.rc:313
 msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
+"ADVERTENCIA: Depurar este proceso puede resultar en la pérdida\n"
+"de datos. ¿Seguro que desea vincular el depurador?"
 
 #: taskmgr.rc:314
 msgid "Unable to Debug Process"
-msgstr ""
+msgstr "No se pudo Depurar el Proceso"
 
 #: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
-msgstr ""
+msgstr "El proceso debe tener afinidad por lo menos con un procesador"
 
 #: taskmgr.rc:316
-#, fuzzy
 msgid "Invalid Option"
-msgstr "Sintaxis inválida"
+msgstr "Opción Inválida"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
-msgstr ""
+msgstr "No se pudo acceder o definir la afinidad de procesadores"
 
 #: taskmgr.rc:322
 msgid "System Idle Process"
-msgstr ""
+msgstr "Proceso desocupado del sistema"
 
 #: taskmgr.rc:323
 msgid "Not Responding"
-msgstr ""
+msgstr "No Responde"
 
 #: taskmgr.rc:324
 msgid "Running"
-msgstr ""
+msgstr "Ejecutándose"
 
 #: taskmgr.rc:325
 msgid "Task"
-msgstr ""
+msgstr "Tarea"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
@@ -12606,7 +12376,7 @@ msgstr ""
 
 #: view.rc:33
 msgid "&Pan"
-msgstr "&Pan"
+msgstr "Des&plazar"
 
 #: view.rc:35
 msgid "&Scale to Window"
@@ -12622,7 +12392,7 @@ msgstr "&Derecha"
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
-msgstr ""
+msgstr "Visor de Metaficheros Regular"
 
 #: wineboot.rc:28
 msgid "Waiting for Program"
