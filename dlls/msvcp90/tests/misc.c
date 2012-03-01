@@ -60,6 +60,7 @@ static char* (__cdecl *p_Copy_s)(char*, size_t, const char*, size_t);
 static unsigned short (__cdecl *p_wctype)(const char*);
 static MSVCP__Ctypevec (__cdecl *p__Getctype)(void);
 
+#undef __thiscall
 #ifdef __i386__
 #define __thiscall __stdcall
 #else

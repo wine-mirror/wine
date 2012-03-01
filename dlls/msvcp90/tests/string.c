@@ -52,6 +52,7 @@ static void* (__cdecl *p_set_invalid_parameter_handler)(void*);
 static basic_string_char* (__cdecl *p_basic_string_char_concatenate)(basic_string_char*, const basic_string_char*, const basic_string_char*);
 static basic_string_char* (__cdecl *p_basic_string_char_concatenate_cstr)(basic_string_char*, const basic_string_char*, const char*);
 
+#undef __thiscall
 #ifdef __i386__
 #define __thiscall __stdcall
 #else
