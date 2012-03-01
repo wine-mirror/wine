@@ -313,7 +313,7 @@ msgstr "< &Voltar"
 
 #: comctl32.rc:66
 msgid "&Next >"
-msgstr "&Avançar >"
+msgstr "&Seguinte >"
 
 #: comctl32.rc:67
 msgid "Finish"
@@ -641,7 +641,7 @@ msgstr "A&baixo"
 
 #: comdlg32.rc:321 comdlg32.rc:339
 msgid "&Find Next"
-msgstr "&Procurar"
+msgstr "&Procurar Seguinte"
 
 #: comdlg32.rc:329
 msgid "Replace"
@@ -2115,32 +2115,31 @@ msgstr "Identificador de Política:"
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Informação do Qualificador de Política"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Id do Qualificador de Política="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Qualificador"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Referência do Aviso"
 
 #: cryptdlg.rc:35
 msgid "Organization="
 msgstr "Organização="
 
 #: cryptdlg.rc:36
-#, fuzzy
 msgid "Notice Number="
-msgstr "Número de Série do Certificado="
+msgstr "Número do Aviso="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Texto do Aviso="
 
 #: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
 msgid "General"
@@ -2226,20 +2225,20 @@ msgstr "Adicionar Propósito"
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
 msgstr ""
-"Adicione o identificador de objecto (OID) para o propósito que deseja "
-"adicionar:"
+"Adicione o identificador de objecto (OID) para o propósito do certificado "
+"que deseja adicionar:"
 
 #: cryptui.rc:265 cryptui.rc:66
 msgid "Select Certificate Store"
-msgstr "Seleccione o Conjunto de Certificados"
+msgstr "Seleccione o Depósito de Certificados"
 
 #: cryptui.rc:268
 msgid "Select the certificate store you want to use:"
-msgstr "Seleccione o conjunto de certificados que deseja usar:"
+msgstr "Seleccione o depósito de certificados que deseja usar:"
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
-msgstr "&Mostrar conjuntos físicos"
+msgstr "&Mostrar depósitos físicos"
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
@@ -2250,7 +2249,6 @@ msgid "Welcome to the Certificate Import Wizard"
 msgstr "Benvindo ao Assistente de Importação de Certificados"
 
 #: cryptui.rc:283
-#, fuzzy
 msgid ""
 "This wizard helps you import certificates, certificate revocation lists, and "
 "certificate trust lists from a file to a certificate store.\n"
@@ -2262,10 +2260,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Um certificado pode ser usado para identificá-lo ou ao computador do qual "
-"está a comunicar. Também pode ser usado para autenticação e para assinar "
-"mensagens. Conjuntos de certificados são colecções de certificados, listas "
-"de revogação de certificados e listas de certificados confiáveis."
+"Este assistente ajuda-o a importar certificados, listas de revogação de "
+"certificados, e listas de certificados de confiança, a partir de um depósito "
+"de certificados.\n"
+"\n"
+"Um certificado pode ser usado para identificá-lo a si ou ao computador do "
+"qual está a comunicar. Também pode ser usado para autenticação e para "
+"assinar mensagens. Depósitos de certificados são colecções de certificados, "
+"listas de revogação de certificados e listas de certificados confiáveis.\n"
+"Para continuar, clique em Seguinte."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2276,12 +2279,11 @@ msgid "B&rowse..."
 msgstr "P&rocurar..."
 
 #: cryptui.rc:294
-#, fuzzy
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"Nota: os seguintes formatos de ficheiro podem conter mais que um "
+"Nota: os seguintes formatos de ficheiro podem conter mais do que um "
 "certificado, lista de revogação de certificados ou lista de certificados "
 "confiáveis:"
 
@@ -2295,23 +2297,23 @@ msgstr "Troca de Informações Pessoais/PKCS #12 (.pfx, .p12)"
 
 #: cryptui.rc:300
 msgid "Microsoft Serialized Certificate Store (.sst)"
-msgstr "Conjunto de Certificados Serializados da Microsoft (.sst)"
+msgstr "Depósito de Certificados Serializados da Microsoft (.sst)"
 
 #: cryptui.rc:308
 msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
-"O Wine pode automaticamente seleccionar o conjunto de certificados ou você "
+"O Wine pode automaticamente seleccionar o depósito de certificados ou você "
 "pode especificar a localização para os certificados."
 
 #: cryptui.rc:310
 msgid "&Automatically select certificate store"
-msgstr "&Seleccionar conjunto de certificados automaticamente"
+msgstr "&Seleccionar depósito de certificados automaticamente"
 
 #: cryptui.rc:312
 msgid "&Place all certificates in the following store:"
-msgstr "&Colocar todos os certificados no seguinte conjunto:"
+msgstr "&Colocar todos os certificados no seguinte depósito:"
 
 #: cryptui.rc:322
 msgid "Completing the Certificate Import Wizard"
@@ -2384,7 +2386,6 @@ msgid "Welcome to the Certificate Export Wizard"
 msgstr "Benvindo ao Assistente de Exportação de Certificados"
 
 #: cryptui.rc:373
-#, fuzzy
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2396,10 +2397,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Um certificado pode ser usado para identificá-lo ou ao computador do qual "
-"está a comunicar. Também pode ser usado para autenticação e para assinar "
-"mensagens. Conjuntos de certificados são colecções de certificados, listas "
-"de revogação de certificados e listas de certificados confiáveis."
+"Este assistente ajuda-o a importar certificados, listas de revogação de "
+"certificados, e listas de certificados de confiança, a partir de um depósito "
+"de certificados.\n"
+"\n"
+"Um certificado pode ser usado para identificá-lo a si ou ao computador do "
+"qual está a comunicar. Também pode ser usado para autenticação e para "
+"assinar mensagens. Depósitos de certificados são colecções de certificados, "
+"listas de revogação de certificados e listas de certificados confiáveis.\n"
+"Para continuar, clique em Seguinte."
 
 #: cryptui.rc:381
 msgid ""
@@ -2478,7 +2484,6 @@ msgid "Certificate Information"
 msgstr "Informação do Certificado"
 
 #: cryptui.rc:29
-#, fuzzy
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
@@ -2487,13 +2492,12 @@ msgstr ""
 "alterado ou corrompido."
 
 #: cryptui.rc:30
-#, fuzzy
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
 "Este certificado raíz não é confiável. Para ficar confiável, adicione-o ao "
-"conjunto de certificados raíz confiáveis do seu sistema."
+"depósito de certificados raíz confiáveis do seu sistema."
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
@@ -2593,16 +2597,15 @@ msgstr "Válido até"
 
 #: cryptui.rc:56
 msgid "Subject"
-msgstr "Sujeito"
+msgstr "Assunto"
 
 #: cryptui.rc:57
 msgid "Public key"
 msgstr "Chave Pública"
 
 #: cryptui.rc:58
-#, fuzzy
 msgid "%1 (%2!d! bits)"
-msgstr "%s (%d bits)"
+msgstr "%1 (%2!d! bits)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -2610,7 +2613,7 @@ msgstr ""
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
-msgstr "Uso de chave avançado (propriedade)"
+msgstr "Uso de chave avançada (propriedade)"
 
 #: cryptui.rc:61
 msgid "Friendly name"
@@ -2634,10 +2637,9 @@ msgstr "O OID inserido já existe."
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
-msgstr "Por favor seleccione um conjunto de certificados."
+msgstr "Por favor seleccione um depósito de certificados."
 
 #: cryptui.rc:69
-#, fuzzy
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
@@ -2651,18 +2653,18 @@ msgstr "Ficheiro a Importar"
 
 #: cryptui.rc:71
 msgid "Specify the file you want to import."
-msgstr "Especifique o ficheiro que deseja importar."
+msgstr "Indique o ficheiro que deseja importar."
 
 #: cryptui.rc:72 cryptui.rc:95
 msgid "Certificate Store"
-msgstr "Conjunto de Certificados"
+msgstr "Depósito de Certificados"
 
 #: cryptui.rc:73
 msgid ""
 "Certificate stores are collections of certificates, certificate revocation "
 "lists, and certificate trust lists."
 msgstr ""
-"Os Conjuntos de Certificados são coleccões de certificados, listas de "
+"Os depósitos de certificados são coleccões de certificados, listas de "
 "revogação de certificados e listas de certificados confiáveis."
 
 #: cryptui.rc:74
@@ -2683,7 +2685,7 @@ msgstr "Lista de Certificados Confiáveis (*.stl)"
 
 #: cryptui.rc:78
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr "Conjunto de Certificados Serializados da Microsoft (*.sst)"
+msgstr "Depósito de Certificados Serializados da Microsoft (*.sst)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
@@ -2694,7 +2696,6 @@ msgid "Please select a file."
 msgstr "Por favor seleccione um ficheiro."
 
 #: cryptui.rc:82
-#, fuzzy
 msgid "The file format is not recognized. Please select another file."
 msgstr ""
 "O formato do ficheiro não é reconhecido. Por favor seleccione outro ficheiro."
@@ -2709,11 +2710,11 @@ msgstr "Determinado pelo programa"
 
 #: cryptui.rc:85
 msgid "Please select a store"
-msgstr "Por favor seleccione um conjunto"
+msgstr "Por favor seleccione um depósito"
 
 #: cryptui.rc:86
 msgid "Certificate Store Selected"
-msgstr "Conjunto de certificados seleccionado"
+msgstr "Depósito de certificados seleccionado"
 
 #: cryptui.rc:87
 msgid "Automatically determined by the program"
@@ -2781,7 +2782,7 @@ msgid ""
 "sign messages with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Não vai poder continuar a decifrar ou assinar mensagens com este "
+"Não vai poder continuar a decifrar nem assinar mensagens com este "
 "certificado.\n"
 "Tem a certeza que deseja remover este certificado?"
 
@@ -2791,7 +2792,7 @@ msgid ""
 "sign messages with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Não vai poder continuar a decifrar ou assinar mensagens com estes "
+"Não vai poder continuar a decifrar nem assinar mensagens com estes "
 "certificados.\n"
 "Tem a certeza que deseja remover estes certificados?"
 
@@ -2801,7 +2802,7 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Não vai poder continuar a cifrar ou verificar mensagens com este "
+"Não vai poder continuar a cifrar nem a verificar mensagens com este "
 "certificado.\n"
 "Tem a certeza que deseja remover este certificado?"
 
@@ -2811,7 +2812,7 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Não vai poder continuar a cifrar ou verificar mensagens com estes "
+"Não vai poder continuar a cifrar nem a verificar mensagens com estes "
 "certificados.\n"
 "Tem a certeza que deseja remover estes certificados?"
 
@@ -2938,7 +2939,6 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "Especifique o nome do ficheiro em que o conteúdo será guardado."
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
 msgstr "O ficheiro especificado já existe. Deseja substituí-lo?"
 
@@ -2960,7 +2960,7 @@ msgstr "Troca de Informações Pessoais (*.pfx)"
 
 #: cryptui.rc:159
 msgid "Serialized Certificate Store (*.sst)"
-msgstr "Conjunto de Certificados Serializados (*.sst)"
+msgstr "Depósito de Certificados Serializados (*.sst)"
 
 #: cryptui.rc:160
 msgid "File Format"
@@ -3011,7 +3011,6 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "Nota: A chave privada para este certificado não conseguiu ser aberta."
 
 #: cryptui.rc:173
-#, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
 msgstr "Nota: A chave privada para este certificado não é exportável."
 
@@ -3032,103 +3031,92 @@ msgid "Default MidiOut Device"
 msgstr "Dispositivo padrão MidiOut"
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "Con&figurar..."
+msgstr "Configurar Dispositivos"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Reinicializar"
 
 #: dinput.rc:48
-#, fuzzy
 msgid "Player"
-msgstr "I&niciar"
+msgstr "Leitor"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "De&vice:"
+msgstr "Dispositivo"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "Activação"
+msgstr "Ações"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "Unidades"
+msgstr "Associações"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Já designado\n"
+msgstr "Mostra Atribuído Primeiro"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Activação"
+msgstr "Ação"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "&Objecto"
+msgstr "Objecto"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Definições Predefinidas"
+msgstr "Definição Regional"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr ""
+msgstr "%1!u!MB usados, %2!u!MB disponíveis"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Oriental"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Europeu Central"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Cirílico"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Verde"
+msgstr "Grego"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Turco"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "Judaico"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Arabico"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Baltico"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamita"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Tailandês"
 
 #: gdi32.rc:35
-#, fuzzy
 msgid "Japanese"
-msgstr "painel"
+msgstr "Japonês"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
@@ -3208,9 +3196,8 @@ msgstr ""
 "&Voltar"
 
 #: hhctrl.rc:58
-#, fuzzy
 msgid "&Forward"
-msgstr "Avançar"
+msgstr "&Avançar"
 
 #: hhctrl.rc:59
 #, fuzzy
@@ -3349,19 +3336,16 @@ msgstr ""
 "Guardar &como..."
 
 #: ieframe.rc:35
-#, fuzzy
 msgid "Print &format..."
-msgstr "Imprimir..."
+msgstr "Imprimir &formato..."
 
 #: ieframe.rc:36
-#, fuzzy
 msgid "Pr&int..."
-msgstr "Imprimir..."
+msgstr "&Imprimir..."
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "&Pré visualizar..."
+msgstr "&Pré visualizar"
 
 #: ieframe.rc:44
 #, fuzzy
@@ -3373,46 +3357,38 @@ msgstr ""
 "&Barra de Ferramentas"
 
 #: ieframe.rc:46
-#, fuzzy
 msgid "&Standard bar"
-msgstr "Barra de &Estado"
+msgstr "&Barra padrão"
 
 #: ieframe.rc:47
-#, fuzzy
 msgid "&Address bar"
-msgstr "Endereço IP="
+msgstr "Barra de &Endereços"
 
 #: ieframe.rc:50 regedit.rc:71
-#, fuzzy
 msgid "&Favorites"
 msgstr "&Favoritos"
 
 #: ieframe.rc:52 regedit.rc:73
-#, fuzzy
 msgid "&Add to Favorites..."
 msgstr "Adicionar aos &Favoritos..."
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "Explorador de Internet Wine"
+msgstr "Sobre o Explorador de Internet"
 
 #: ieframe.rc:87
-#, fuzzy
 msgid "Open URL"
-msgstr "&Abrir Ligação"
+msgstr "Abrir URL"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr ""
+msgstr "Especifique o URL que desja abrir no Internet Explorer"
 
 #: ieframe.rc:91
-#, fuzzy
 msgid "Open:"
-msgstr "Abrir"
+msgstr "Abrir:"
 
 #: ieframe.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
 msgstr "Início"
@@ -3422,81 +3398,72 @@ msgid "Print..."
 msgstr "Imprimir..."
 
 #: ieframe.rc:73
-#, fuzzy
 msgid "Address"
-msgstr "Endereço IP="
+msgstr "Endereço"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "Propriedades de %s"
+msgstr "À procura de %s"
 
 #: ieframe.rc:79
-#, fuzzy
 msgid "Start downloading %s"
-msgstr "A descarregar de %s..."
+msgstr "Iniciar descarregamento %s"
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "A descarregar..."
+msgstr "A descarregar %s"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "Propriedades de %s"
+msgstr "Pedindo %s"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr "Uma página"
+msgstr "Página inicial"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr ""
+msgstr "Pode escolher o endereço para a sua página inicial."
 
 #: inetcpl.rc:50
-#, fuzzy
 msgid "&Current page"
-msgstr "Próxima página"
+msgstr "Página &actual"
 
 #: inetcpl.rc:51
-#, fuzzy
 msgid "&Default page"
-msgstr "(Omissão)"
+msgstr "Página &padrão"
 
 #: inetcpl.rc:52
-#, fuzzy
 msgid "&Blank page"
-msgstr "Uma página"
+msgstr "Página &vazia"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr "Histórico de comandos"
+msgstr "Histórico de navegação"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr ""
+msgstr "Pode remover páginas em cache, cookies e outros dados."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr ""
+msgstr "Apager &ficheiros..."
 
 #: inetcpl.rc:57
-#, fuzzy
 msgid "&Settings..."
 msgstr "&Opções..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr ""
+msgstr "Apagar história de navegação"
 
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
+"Ficheiros temporários da Internet\n"
+"Cópias de paginas de Internet em cache, images e certificados"
 
 #: inetcpl.rc:70
 msgid ""
@@ -3504,6 +3471,9 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"Cookies\n"
+"Ficheiros guardados no seu computer pelos sítios web, que registam dados "
+"como preferências de utilisador e dados de login."
 
 #: inetcpl.rc:72
 msgid ""
@@ -3538,18 +3508,16 @@ msgid ""
 msgstr ""
 
 #: inetcpl.rc:111
-#, fuzzy
 msgid "Certificates..."
-msgstr "Certificados"
+msgstr "Certificados..."
 
 #: inetcpl.rc:112
-#, fuzzy
 msgid "Publishers..."
-msgstr "Editor"
+msgstr "Editores..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
-msgstr ""
+msgstr "Opções de Internet"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
@@ -14320,7 +14288,7 @@ msgstr "Rich text"
 
 #: wordpad.rc:163
 msgid "Next page"
-msgstr "Próxima página"
+msgstr "Página seguinte"
 
 #: wordpad.rc:164
 msgid "Previous page"
