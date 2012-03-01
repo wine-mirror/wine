@@ -9185,7 +9185,7 @@ msgstr "Pętla przed obsługą odwołań"
 msgid "Referral hop limit exceeded"
 msgstr "Przekroczono limit skoków odwołań"
 
-#: attrib.rc:27 cmd.rc:315
+#: attrib.rc:27 cmd.rc:314
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9193,7 +9193,7 @@ msgstr ""
 "Jeszcze niezaimplementowane\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:318
+#: attrib.rc:28 cmd.rc:317
 msgid "%1: File Not Found\n"
 msgstr "%1: Nie znaleziono pliku\n"
 
@@ -9569,7 +9569,7 @@ msgstr "RD <katalog> jest krótką wersją RMDIR. usuwa podkatalog.\n"
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <katalog> usuwa podkatalog.\n"
 
-#: cmd.rc:194
+#: cmd.rc:193
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9605,7 +9605,7 @@ msgstr ""
 "w implementacji Win32. Wine nie modyfikuje zmiennych środowiskowych\n"
 "systemu.\n"
 
-#: cmd.rc:199
+#: cmd.rc:198
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9615,7 +9615,7 @@ msgstr ""
 "parametrów, parametr 2 staje się 1 itd. Polecenie to nie ma efektu gdy jest\n"
 "wywoływane z linii komend.\n"
 
-#: cmd.rc:176
+#: cmd.rc:175 start.rc:39
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9631,7 +9631,6 @@ msgid ""
 "code.\n"
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Show end-user license.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
 "Uruchamia program lub otwiera dokument w programie, który jest zwykle "
@@ -9650,18 +9649,17 @@ msgstr ""
 "/Unix        Użyj Uniksowej nazwy pliku i uruchom plik tak jak w eksplorerze "
 "windowsa.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Pokaż licencję użytkownika.\n"
 "/?           Wyświetl tą pomoc i wyjdź.\n"
 
-#: cmd.rc:201
+#: cmd.rc:200
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME ustawia lub pokazuje aktualny czas systemowy.\n"
 
-#: cmd.rc:203
+#: cmd.rc:202
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <ciąg znaków> ustawia tytuł okna dla okna wiersza poleceń.\n"
 
-#: cmd.rc:207
+#: cmd.rc:206
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9669,7 +9667,7 @@ msgstr ""
 "TYPE <nazwa pliku> wyświetla zawartość pliku, nie jest sprawdzane, czy\n"
 "jest on plikiem tekstowym.\n"
 
-#: cmd.rc:216
+#: cmd.rc:215
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9688,15 +9686,15 @@ msgstr ""
 "\n"
 "Flaga verify nie ma funkcji w Wine.\n"
 
-#: cmd.rc:219
+#: cmd.rc:218
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER wyświetla wersję uruchomionego wiersza poleceń.\n"
 
-#: cmd.rc:221
+#: cmd.rc:220
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL pokazuje etykietę woluminu urządzenia dyskowego.\n"
 
-#: cmd.rc:225
+#: cmd.rc:224
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -9704,7 +9702,7 @@ msgstr ""
 "ENDLOCAL kończy zmiany ustawień regionalnych środowiska w pliku wsadowym,\n"
 "które zostały wprowadzone przez poprzedzające SETLOCAL.\n"
 
-#: cmd.rc:233
+#: cmd.rc:232
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9721,7 +9719,7 @@ msgstr ""
 "cokolwiek nastąpi pierwsze), przy którym zostają przywrócone poprzednie\n"
 "ustawienia środowiska.\n"
 
-#: cmd.rc:236
+#: cmd.rc:235
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9729,11 +9727,11 @@ msgstr ""
 "PUSHD <nazwakatalogu> zapamiętuje aktualny katalog na stosie, a\n"
 "następnie przechodzi do katalogu podanego jako parametr.\n"
 
-#: cmd.rc:238
+#: cmd.rc:237
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD zmienia bieżący katalog na ostatni zachowany przez PUSHD.\n"
 
-#: cmd.rc:246
+#: cmd.rc:245
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9754,7 +9752,7 @@ msgstr ""
 "Nie określanie typu pliku po znaku równości usuwa obecne skojarzenie, jeśli "
 "jakiekolwiek istnieje.\n"
 
-#: cmd.rc:257
+#: cmd.rc:256
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9778,11 +9776,11 @@ msgstr ""
 "Nie określanie polecenia otwarcia po znaku równości usuwa ciąg znaków "
 "polecenia skojarzony z określonym typem pliku.\n"
 
-#: cmd.rc:259
+#: cmd.rc:258
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE wyświetla strona po stronie wyjście pliku lub potoku.\n"
 
-#: cmd.rc:263
+#: cmd.rc:262
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9792,7 +9790,7 @@ msgstr ""
 "naciśnie dozwolony Przycisk z wybieralnej listy.\n"
 "CHOICE jest używany głównie do budowania menu wyboru w plikach typu bat.\n"
 
-#: cmd.rc:267
+#: cmd.rc:266
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9800,7 +9798,7 @@ msgstr ""
 "EXIT kończy bieżącą sesję cmd i powraca do systemu operacyjnego\n"
 "lub powłoki, w której uruchomiono cmd.\n"
 
-#: cmd.rc:305
+#: cmd.rc:304
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9883,110 +9881,110 @@ msgstr ""
 "Wpisz HELP <polecenie> dla dalszych informacji o którymkolwiek z tych "
 "poleceń.\n"
 
-#: cmd.rc:307
+#: cmd.rc:306
 msgid "Are you sure?"
 msgstr "Czy jesteś pewien?"
 
-#: cmd.rc:308 xcopy.rc:40
+#: cmd.rc:307 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "T"
 
-#: cmd.rc:309 xcopy.rc:41
+#: cmd.rc:308 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:310
+#: cmd.rc:309
 msgid "File association missing for extension %1\n"
 msgstr "Brak skojarzenia pliku dla rozszerzenia %1\n"
 
-#: cmd.rc:311
+#: cmd.rc:310
 msgid "No open command associated with file type '%1'\n"
 msgstr "Brak skojarzenia polecenia otwórz z typem plików '%1'\n"
 
-#: cmd.rc:312
+#: cmd.rc:311
 msgid "Overwrite %1?"
 msgstr "Czy zastąpić %1?"
 
-#: cmd.rc:313
+#: cmd.rc:312
 msgid "More..."
 msgstr "Więcej..."
 
-#: cmd.rc:314
+#: cmd.rc:313
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Linia przy przetwarzaniu pliku bat prawdopodobnie obcięta. Używam:\n"
 
-#: cmd.rc:316
+#: cmd.rc:315
 msgid "Argument missing\n"
 msgstr "Brakuje argumentu\n"
 
-#: cmd.rc:317
+#: cmd.rc:316
 msgid "Syntax error\n"
 msgstr "Błąd składni\n"
 
-#: cmd.rc:319
+#: cmd.rc:318
 msgid "No help available for %1\n"
 msgstr "Brak pliku pomocy dla %1\n"
 
-#: cmd.rc:320
+#: cmd.rc:319
 msgid "Target to GOTO not found\n"
 msgstr "Nie znaleziono przeznaczenia dla GOTO\n"
 
-#: cmd.rc:321
+#: cmd.rc:320
 msgid "Current Date is %1\n"
 msgstr "Obecna data to %1\n"
 
-#: cmd.rc:322
+#: cmd.rc:321
 msgid "Current Time is %1\n"
 msgstr "Obecny czas to %1\n"
 
-#: cmd.rc:323
+#: cmd.rc:322
 msgid "Enter new date: "
 msgstr "Wpisz nową datę: "
 
-#: cmd.rc:324
+#: cmd.rc:323
 msgid "Enter new time: "
 msgstr "Wpisz nowy czas: "
 
-#: cmd.rc:325
+#: cmd.rc:324
 msgid "Environment variable %1 not defined\n"
 msgstr "Zmienna środowiskowa %1 jest niezdefiniowana\n"
 
-#: cmd.rc:326 xcopy.rc:38
+#: cmd.rc:325 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "Nieudane otwarcie '%1'\n"
 
-#: cmd.rc:327
+#: cmd.rc:326
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Nie można wywołać etykiety bat poza skryptem bat\n"
 
-#: cmd.rc:328 xcopy.rc:42
+#: cmd.rc:327 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:329
+#: cmd.rc:328
 msgid "Delete %1?"
 msgstr "Czy usunąć %1?"
 
-#: cmd.rc:330
+#: cmd.rc:329
 msgid "Echo is %1\n"
 msgstr "Echo jest %1\n"
 
-#: cmd.rc:331
+#: cmd.rc:330
 msgid "Verify is %1\n"
 msgstr "Verify jest %1\n"
 
-#: cmd.rc:332
+#: cmd.rc:331
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify musi być ON lub OFF\n"
 
-#: cmd.rc:333
+#: cmd.rc:332
 msgid "Parameter error\n"
 msgstr "Błąd parametru\n"
 
-#: cmd.rc:334
+#: cmd.rc:333
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -9994,47 +9992,47 @@ msgstr ""
 "Numer seryny wolumenu to %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:335
+#: cmd.rc:334
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Etykieta Wolumenu (11 znaków, <Enter> aby pominąć)?"
 
-#: cmd.rc:336
+#: cmd.rc:335
 msgid "PATH not found\n"
 msgstr "Nie znaleziono PATH\n"
 
-#: cmd.rc:337
+#: cmd.rc:336
 msgid "Press any key to continue... "
 msgstr "Naciśnij jakikolwiek klawisz, aby kontynuować... "
 
-#: cmd.rc:338
+#: cmd.rc:337
 msgid "Wine Command Prompt"
 msgstr "Wiersz Poleceń Wine"
 
-#: cmd.rc:339
+#: cmd.rc:338
 msgid "CMD Version %1!S!\n"
 msgstr "Wersja CMD %1!S!\n"
 
-#: cmd.rc:340
+#: cmd.rc:339
 msgid "More? "
 msgstr "Więcej? "
 
-#: cmd.rc:341
+#: cmd.rc:340
 msgid "The input line is too long.\n"
 msgstr "Wpisany tekst jest zbyt długi.\n"
 
-#: cmd.rc:342
+#: cmd.rc:341
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Wolumen w napędzie %1!c! to %2\n"
 
-#: cmd.rc:343
+#: cmd.rc:342
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Wolumen w napędzie %1!c! nie ma etykiety.\n"
 
-#: cmd.rc:344
+#: cmd.rc:343
 msgid " (Yes|No)"
 msgstr " (Tak|Nie)"
 
-#: cmd.rc:345
+#: cmd.rc:344
 msgid " (Yes|No|All)"
 msgstr " (Tak|Nie|Wszystkie)"
 
@@ -11446,94 +11444,7 @@ msgstr "Dodaje nową wartość ciągu rozwijalnego"
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Eksportuje zaznaczoną gałąź rejestru do pliku tekstowego"
 
-#: start.rc:46
-msgid ""
-"Start a program, or open a document in the program normally used for files "
-"with that suffix.\n"
-"Usage:\n"
-"start [options] program_filename [...]\n"
-"start [options] document_filename\n"
-"\n"
-"Options:\n"
-"/M[inimized] Start the program minimized.\n"
-"/MAX[imized] Start the program maximized.\n"
-"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
-"/W[ait]      Wait for started program to finish, then exit with its exit "
-"code.\n"
-"/Unix        Use a Unix filename and start the file like windows explorer.\n"
-"/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Show end-user license.\n"
-"/?           Display this help and exit.\n"
-"\n"
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
-"This is free software, and you are welcome to redistribute it\n"
-"under certain conditions; run 'start /L' for details.\n"
-msgstr ""
-"Uruchamia program lub otwiera dokument w programie, który jest zwykle "
-"używany dla tego rozszerzenia.\n"
-"Użycie:\n"
-"start [opcje] nazwa_programu [...]\n"
-"start [opcje] nazwa_dokumentu\n"
-"\n"
-"Opcje:\n"
-"/M[inimized] Uruchamia program zminimalizowany.\n"
-"/MAX[imized] Uruchamia program zmaksymalizowany.\n"
-"/R[estored]  Uruchamia program normalnie (bez minimalizacji ani "
-"maksymalizacji).\n"
-"/W[ait]      Zaczekaj aż program zakończy działanie (i zakończkodem wyjścia "
-"programu).\n"
-"/Unix        Użyj Uniksowej nazwy pliku i uruchom plik tak jak w eksplorerze "
-"windowsa.\n"
-"/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Pokaż licencję użytkownika.\n"
-"/?           Wyświetl tą pomoc i wyjdź.\n"
-"\n"
-"start.exe wersja 0.2 Prawa autorskie (C) 2003, Dan Kegel\n"
-"Start jest dostarczany BEZ ŻADNEJ GWARANCJI; szczegóły w opcji /L.\n"
-"To jest wolne oprogramowanie i możesz je rozpowszechniać (pod pewnymi\n"
-"warunkami); uruchom 'start /L' aby poznać szczegóły.\n"
-
-#: start.rc:64
-msgid ""
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
-"\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
-"GNU Lesser Public License for more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
-"\n"
-"See the COPYING.LIB file for license information.\n"
-msgstr ""
-"start.exe wersja 0.2 Prawa autorskie (C) 2003, Dan Kegel\n"
-"Ten program jest wolnym oprogramowaniem; wolno ci je rozpowszechniać i/lub\n"
-"modyfikować zgodnie z warunkami zawartymi w GNU Lesser General Public "
-"License (z ang. Mniejsza Powszechna Licencja Publiczna GNU)\n"
-"opublikowanej przez Free Software Foundation (z ang. Fundacja Wolnego "
-"Oprogramowania); albo w wersji 2.1\n"
-"licencji lub (do twojego wyboru) jakiejkolwiek późniejszej wersji.\n"
-"\n"
-"Ten program jest rozpowszechniany w nadziei, że będzie użyteczny,\n"
-"ale BEZ ŻADNEJ GWARANCJI; nawet bez odpowiedzialności za dorozumianą "
-"gwarancję\n"
-"SPRZEDAWALNOŚCI i PRZYDATNOŚCI PRODUKTU DO KONKRETNEGO CELU. Zajrzyj do\n"
-"GNU Lesser Public License po więcej informacji.\n"
-"\n"
-"Powinieneś był otrzymać kopię licencji GNU Lesser General Public License\n"
-"wraz z tą biblioteką; jeżeli tak nie jest, napisz do Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
-"\n"
-"Zajrzyj do pliku COPYING.LIB po informacje o licencji.\n"
-
-#: start.rc:66
+#: start.rc:41
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -11543,7 +11454,7 @@ msgstr ""
 "plikiem.\n"
 "ShellExecuteEx nie powiodło się"
 
-#: start.rc:68
+#: start.rc:43
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "Nie da się przetłumaczyć danej ścieżki Unix na ścieżkę DOS."
 

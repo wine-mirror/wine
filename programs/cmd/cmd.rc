@@ -172,7 +172,6 @@ Options:\n\
 /W[ait]      Wait for started program to finish, then exit with its exit code.\n\
 /Unix        Use a Unix filename and start the file like windows explorer.\n\
 /ProgIDOpen  Open a document using the following progID.\n\
-/L           Show end-user license.\n\
 /?           Display this help and exit.\n"
 
   WCMD_SET,

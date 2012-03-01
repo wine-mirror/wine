@@ -9195,7 +9195,7 @@ msgstr "Cicla mentre processant referències"
 msgid "Referral hop limit exceeded"
 msgstr "Límit de salta de referències superat"
 
-#: attrib.rc:27 cmd.rc:315
+#: attrib.rc:27 cmd.rc:314
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9203,7 +9203,7 @@ msgstr ""
 "Encara no Implementat\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:318
+#: attrib.rc:28 cmd.rc:317
 msgid "%1: File Not Found\n"
 msgstr "%1: Fitxer No Trobat\n"
 
@@ -9580,7 +9580,7 @@ msgstr "RD <dir> és la versió curta de RMDIR. Suprimeix un subdirectori.\n"
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <dir> suprimeix un subdirectori.\n"
 
-#: cmd.rc:194
+#: cmd.rc:193
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9616,7 +9616,7 @@ msgstr ""
 "implementació nativa de Win32. Tingueu en compte que no és possible\n"
 "afectar l'entorn del sistema operatiu dins cmd.\n"
 
-#: cmd.rc:199
+#: cmd.rc:198
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9626,7 +9626,7 @@ msgstr ""
 "la llista, de manera que el paràmetre 2 es converteix en el paràmetre 1\n"
 "etc. No té cap efecte si es truca des de la línia d'ordres.\n"
 
-#: cmd.rc:176
+#: cmd.rc:175 start.rc:39
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9642,7 +9642,6 @@ msgid ""
 "code.\n"
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Show end-user license.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
 "Inicia un programa o obrir un document en el programa normalment usat pels\n"
@@ -9660,18 +9659,17 @@ msgstr ""
 "/Unix        Usar un nom de fitxer Unix i iniciar el fitxer com el\n"
 "             Explorador de Windows.\n"
 "/ProgIDOpen  Obrir un document usant el progID següent.\n"
-"/L           Mostrar la llicència d'usuari final.\n"
 "/?           Mostrar aquesta ajuda i sortir.\n"
 
-#: cmd.rc:201
+#: cmd.rc:200
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME estableix o mostra l'hora actual del sistema.\n"
 
-#: cmd.rc:203
+#: cmd.rc:202
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <cadena> estableix el títol de la finestra de cmd.\n"
 
-#: cmd.rc:207
+#: cmd.rc:206
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9679,7 +9677,7 @@ msgstr ""
 "TYPE <nom de fitxer> copia <nom de fitxer> al dispositiu de consola (o un\n"
 "altre lloc si redirigit). No es comprova que el fitxer és text llegible.\n"
 
-#: cmd.rc:216
+#: cmd.rc:215
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9698,15 +9696,15 @@ msgstr ""
 "\n"
 "La bandera de verificació no té cap funció en el Wine.\n"
 
-#: cmd.rc:219
+#: cmd.rc:218
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER mostra la versió de cmd que s'està executant.\n"
 
-#: cmd.rc:221
+#: cmd.rc:220
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL mostra l'etiqueta de volum d'un dispositiu de disc.\n"
 
-#: cmd.rc:225
+#: cmd.rc:224
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -9714,7 +9712,7 @@ msgstr ""
 "ENDLOCAL acaba la localització de canvis en l'entorn en un fitxer\n"
 "batch, els quals un SETLOCAL anterior ha introduït.\n"
 
-#: cmd.rc:233
+#: cmd.rc:232
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9730,7 +9728,7 @@ msgstr ""
 "fitxer, el que passi primer), al qual punt la configuració de l'entorn\n"
 "anterior es restaura.\n"
 
-#: cmd.rc:236
+#: cmd.rc:235
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9738,11 +9736,11 @@ msgstr ""
 "PUSHD <nom de directori> desa el directori actual en una pila, i\n"
 "després canvia el directori actual al proporcionat.\n"
 
-#: cmd.rc:238
+#: cmd.rc:237
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD canvia el directori actual al últim desat amb PUSHD.\n"
 
-#: cmd.rc:246
+#: cmd.rc:245
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9762,7 +9760,7 @@ msgstr ""
 "actual. Especificar cap tipus de fitxer després del signe igual treu\n"
 "l'associació actual, si hi ha.\n"
 
-#: cmd.rc:257
+#: cmd.rc:256
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9787,12 +9785,12 @@ msgstr ""
 "cap ordre d'obertura després del signe igual treu la cadena de ordre\n"
 "associada al tipus de fitxer especificat.\n"
 
-#: cmd.rc:259
+#: cmd.rc:258
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
 "MORE mostra la sortida dels fitxers o entrada de canonada en pàgines.\n"
 
-#: cmd.rc:263
+#: cmd.rc:262
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9803,7 +9801,7 @@ msgstr ""
 "CHOICE s'usa principalment per construir un menú de selecció en un fitxer\n"
 "batch.\n"
 
-#: cmd.rc:267
+#: cmd.rc:266
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9812,7 +9810,7 @@ msgstr ""
 "des\n"
 "del qual heu invocat cmd.\n"
 
-#: cmd.rc:305
+#: cmd.rc:304
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9895,110 +9893,110 @@ msgstr ""
 "Introduïu HELP <ordre> per més informació sobre qualsevol de les ordres\n"
 "anteriors.\n"
 
-#: cmd.rc:307
+#: cmd.rc:306
 msgid "Are you sure?"
 msgstr "Esteu segur?"
 
-#: cmd.rc:308 xcopy.rc:40
+#: cmd.rc:307 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "S"
 
-#: cmd.rc:309 xcopy.rc:41
+#: cmd.rc:308 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:310
+#: cmd.rc:309
 msgid "File association missing for extension %1\n"
 msgstr "Falta l'associació de fitxer per l'extensió %1\n"
 
-#: cmd.rc:311
+#: cmd.rc:310
 msgid "No open command associated with file type '%1'\n"
 msgstr "Cap ordre d'obertura associat amb el tipus de fitxer '%1'\n"
 
-#: cmd.rc:312
+#: cmd.rc:311
 msgid "Overwrite %1?"
 msgstr "Sobreescriure %1?"
 
-#: cmd.rc:313
+#: cmd.rc:312
 msgid "More..."
 msgstr "Més..."
 
-#: cmd.rc:314
+#: cmd.rc:313
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Línia en processament batch possiblement truncada. Usant:\n"
 
-#: cmd.rc:316
+#: cmd.rc:315
 msgid "Argument missing\n"
 msgstr "Falta la paràmetre\n"
 
-#: cmd.rc:317
+#: cmd.rc:316
 msgid "Syntax error\n"
 msgstr "Error de sintaxi\n"
 
-#: cmd.rc:319
+#: cmd.rc:318
 msgid "No help available for %1\n"
 msgstr "Cap ajuda disponible per %1\n"
 
-#: cmd.rc:320
+#: cmd.rc:319
 msgid "Target to GOTO not found\n"
 msgstr "Destinació del GOTO no trobat\n"
 
-#: cmd.rc:321
+#: cmd.rc:320
 msgid "Current Date is %1\n"
 msgstr "La Data Actual és %1\n"
 
-#: cmd.rc:322
+#: cmd.rc:321
 msgid "Current Time is %1\n"
 msgstr "L'Hora Actual és %1\n"
 
-#: cmd.rc:323
+#: cmd.rc:322
 msgid "Enter new date: "
 msgstr "Introduïu data nova: "
 
-#: cmd.rc:324
+#: cmd.rc:323
 msgid "Enter new time: "
 msgstr "Introduïu hora nova: "
 
-#: cmd.rc:325
+#: cmd.rc:324
 msgid "Environment variable %1 not defined\n"
 msgstr "Variable d'entorn %1 no definida\n"
 
-#: cmd.rc:326 xcopy.rc:38
+#: cmd.rc:325 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "S'ha fallat en obrir '%1'\n"
 
-#: cmd.rc:327
+#: cmd.rc:326
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "No es pot trucar a una etiqueta batch fora d'un script batch\n"
 
-#: cmd.rc:328 xcopy.rc:42
+#: cmd.rc:327 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr ""
 
-#: cmd.rc:329
+#: cmd.rc:328
 msgid "Delete %1?"
 msgstr "Suprimeix %1?"
 
-#: cmd.rc:330
+#: cmd.rc:329
 msgid "Echo is %1\n"
 msgstr "L'eco està %1\n"
 
-#: cmd.rc:331
+#: cmd.rc:330
 msgid "Verify is %1\n"
 msgstr "La verificació està %1\n"
 
-#: cmd.rc:332
+#: cmd.rc:331
 msgid "Verify must be ON or OFF\n"
 msgstr "La verificació ha d'estar ON o OFF\n"
 
-#: cmd.rc:333
+#: cmd.rc:332
 msgid "Parameter error\n"
 msgstr "Error de paràmetre\n"
 
-#: cmd.rc:334
+#: cmd.rc:333
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -10006,47 +10004,47 @@ msgstr ""
 "El Nombre de Sèrie del Volum és %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:335
+#: cmd.rc:334
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Etiqueta de volum (11 caràcters, <Enter> per cap)?"
 
-#: cmd.rc:336
+#: cmd.rc:335
 msgid "PATH not found\n"
 msgstr "PATH no trobada\n"
 
-#: cmd.rc:337
+#: cmd.rc:336
 msgid "Press any key to continue... "
 msgstr "Premeu qualsevol tecla per continuar... "
 
-#: cmd.rc:338
+#: cmd.rc:337
 msgid "Wine Command Prompt"
 msgstr "Línia d'Ordres del Wine"
 
-#: cmd.rc:339
+#: cmd.rc:338
 msgid "CMD Version %1!S!\n"
 msgstr "Versió de CMD %1!S!\n"
 
-#: cmd.rc:340
+#: cmd.rc:339
 msgid "More? "
 msgstr "Més? "
 
-#: cmd.rc:341
+#: cmd.rc:340
 msgid "The input line is too long.\n"
 msgstr "La línia d'entrada és massa llarga.\n"
 
-#: cmd.rc:342
+#: cmd.rc:341
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "El volum en la unitat %1!c! és %2\n"
 
-#: cmd.rc:343
+#: cmd.rc:342
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "El volum en la unitat %1!c! no té etiqueta.\n"
 
-#: cmd.rc:344
+#: cmd.rc:343
 msgid " (Yes|No)"
 msgstr " (Sí|No)"
 
-#: cmd.rc:345
+#: cmd.rc:344
 msgid " (Yes|No|All)"
 msgstr " (Sí|No|Tots)"
 
@@ -11463,92 +11461,7 @@ msgstr "Afegeix un valor de cadena múltiple nou"
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Exporta la branca del registre seleccionada a un fitxer de text"
 
-#: start.rc:46
-msgid ""
-"Start a program, or open a document in the program normally used for files "
-"with that suffix.\n"
-"Usage:\n"
-"start [options] program_filename [...]\n"
-"start [options] document_filename\n"
-"\n"
-"Options:\n"
-"/M[inimized] Start the program minimized.\n"
-"/MAX[imized] Start the program maximized.\n"
-"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
-"/W[ait]      Wait for started program to finish, then exit with its exit "
-"code.\n"
-"/Unix        Use a Unix filename and start the file like windows explorer.\n"
-"/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Show end-user license.\n"
-"/?           Display this help and exit.\n"
-"\n"
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
-"This is free software, and you are welcome to redistribute it\n"
-"under certain conditions; run 'start /L' for details.\n"
-msgstr ""
-"Inicia un programa o obrir un document en el programa normalment usat amb\n"
-"els fitxers amb aquell sufix.\n"
-"Ús:\n"
-"start [opcions] nom_de_fitxer_del_programa [...]\n"
-"start [opcions] nom_de_fitxer_del_document\n"
-"\n"
-"Opcions:\n"
-"/M[inimized] Iniciar el programa minimitzat.\n"
-"/MAX[imized] Iniciar el programa maximitzat.\n"
-"/R[estored]  Iniciar el programa normalment (ni minimitzat ni maximitzat).\n"
-"/W[ait]      Esperar que el programa iniciat termini, després surt amb el\n"
-"             seu codi de sortida.\n"
-"/Unix        Usar un nom de fitxer Unix i iniciar el fitxer com el\n"
-"             Explorador de Windows.\n"
-"/ProgIDOpen  Obrir un document usant el progID següent.\n"
-"/L           Mostrar la llicència d'usuari final.\n"
-"/?           Mostrar aquesta ajuda i sortir.\n"
-"\n"
-"start.exe versió 0.2 © 2003, Dan Kegel\n"
-"Start ve amb ABSOLUTAMENT CAP GARANTIA; per més detalls executar amb "
-"l'opció\n"
-"/L.\n"
-"Això és programari lliure, i esteu benvingut a redistribuir-lo sota certes\n"
-"condicions; executeu 'start /L' pels detalls.\n"
-
-#: start.rc:64
-msgid ""
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
-"\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
-"GNU Lesser Public License for more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
-"\n"
-"See the COPYING.LIB file for license information.\n"
-msgstr ""
-"start.exe versió 0.2 © 2003, Dan Kegel\n"
-"Aquest programari és programari lliure; podeu redistribuir i/o modificar-lo\n"
-"sota els termes de la Llicència Pública General Menor GNU com publicada per\n"
-"la Free Software Foundation; o la versió 2.1 de la Llicència, o (a la seva\n"
-"elecció) qualsevol versió posterior.\n"
-"\n"
-"Aquest programari es distribueix en l'esperança que sigui útil, però SENSE\n"
-"CAP GARANTIA, fins i tot sense la garantia implícita de COMERCIABILITAT o\n"
-"APTITUD PER A PROPÒSITS DETERMINATS. Consulteu la Llicència Pública General\n"
-"Menor GNU per més detalls.\n"
-"\n"
-"Hauríeu d'haver rebut una còpia de la Llicència Pública General Menor GNU\n"
-"juntament amb aquest programari, si no, escriviu a la Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, EUA.\n"
-"\n"
-"Vegeu el fitxer COPYING.LIB per informació de llicència.\n"
-
-#: start.rc:66
+#: start.rc:41
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -11558,7 +11471,7 @@ msgstr ""
 "fitxer especificat.\n"
 "Ha fallat ShellExecuteEx"
 
-#: start.rc:68
+#: start.rc:43
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr ""
 "No s'ha pogut traduir el nom de fitxer Unix especificat a un nom de fitxer "

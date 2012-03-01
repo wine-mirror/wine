@@ -124,11 +124,6 @@ static void usage(void)
 	fatal_string(STRING_USAGE);
 }
 
-static void license(void)
-{
-	fatal_string(STRING_LICENSE);
-}
-
 static WCHAR *build_args( int argc, WCHAR **argvW )
 {
 	int i, wlen = 1;
@@ -224,10 +219,6 @@ int wmain (int argc, WCHAR *argv[])
 			case 'i':
 			case 'I':
 				break; /* FIXME: should ignore any changes to current environment */
-			case 'l':
-			case 'L':
-				license();
-				break;	/* notreached */
 			case 'm':
 			case 'M':
 				if (argv[i][ci+1] == 'a' || argv[i][ci+1] == 'A')

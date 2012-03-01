@@ -9140,7 +9140,7 @@ msgstr "Kroži v zanki med upravljanjem napotiteljev"
 msgid "Referral hop limit exceeded"
 msgstr "Meja preskoka napotitev je bila presežena"
 
-#: attrib.rc:27 cmd.rc:315
+#: attrib.rc:27 cmd.rc:314
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9148,7 +9148,7 @@ msgstr ""
 "Ni še podprto\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:318
+#: attrib.rc:28 cmd.rc:317
 msgid "%1: File Not Found\n"
 msgstr "%1: datoteke ni mogoče najti\n"
 
@@ -9521,7 +9521,7 @@ msgstr "RD je kratka različica RMDIR. Izbriše podmapo.\n"
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <mapa> izbriše podmapo.\n"
 
-#: cmd.rc:194
+#: cmd.rc:193
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9558,7 +9558,7 @@ msgstr ""
 "okolje Win32. S programom cmd ni mogoče vplivati na okolje matičnega\n"
 "operacijskega sistema.\n"
 
-#: cmd.rc:199
+#: cmd.rc:198
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9569,7 +9569,7 @@ msgstr ""
 "parametrov; parameter 2 tako postane parameter 1, itd. Ukaz nima nobenega\n"
 "učinka pri uporabi iz ukazne vrstice.\n"
 
-#: cmd.rc:176
+#: cmd.rc:175 start.rc:39
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9585,7 +9585,6 @@ msgid ""
 "code.\n"
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Show end-user license.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
 "Zažene program oziroma odpre dokument v programu, ki je povezan z datotekami "
@@ -9602,18 +9601,17 @@ msgstr ""
 "kodo ob končanju programa.\n"
 "/Unix        Odpre datoteko podano z UNIX potjo, kot bi jo Raziskovalec.\n"
 "/ProgIDOpen  Odpre dokument z uporabo naslednjega IDprograma.\n"
-"/L           Prikaže licenčno pogodbo.\n"
-"/?            Prikaže to pomoč in konča.\n"
+"/?           Prikaže to pomoč in konča.\n"
 
-#: cmd.rc:201
+#: cmd.rc:200
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME nastavi ali prikaže trenutni sistemski čas.\n"
 
-#: cmd.rc:203
+#: cmd.rc:202
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "Nastavi naslov za okno cmd. Skladnja je: TITLE <niz>.\n"
 
-#: cmd.rc:207
+#: cmd.rc:206
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9622,7 +9620,7 @@ msgstr ""
 "drugje, če gre za preusmeritev). Ukaz ne preveri, ali je vsebina datoteke v\n"
 "resnici berljivo besedilo.\n"
 
-#: cmd.rc:216
+#: cmd.rc:215
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9641,15 +9639,15 @@ msgstr ""
 "\n"
 "Zastavica preverjanja v Wine nima nobene zmožnosti.\n"
 
-#: cmd.rc:219
+#: cmd.rc:218
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER prikaže različico cmd, ki jo poganjate.\n"
 
-#: cmd.rc:221
+#: cmd.rc:220
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL pokaže oznako nosilca diskovne naprave.\n"
 
-#: cmd.rc:225
+#: cmd.rc:224
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -9657,7 +9655,7 @@ msgstr ""
 "ENDLOCAL konča prevajanje okoljskih sprememb v paketni datoteki,\n"
 "ki so bile uvedene z vnosom  SETLOCAL.\n"
 
-#: cmd.rc:233
+#: cmd.rc:232
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9673,7 +9671,7 @@ msgstr ""
 "karkoli je prej). Takrat so obnovljene predhodne nastavitve\n"
 "okolja.\n"
 
-#: cmd.rc:236
+#: cmd.rc:235
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9681,13 +9679,13 @@ msgstr ""
 "PUSHD <ime_mape> shrani trenutno mapo v sklad in se nato\n"
 "preseli v navedeno mapo.\n"
 
-#: cmd.rc:238
+#: cmd.rc:237
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 "POPD se preseli iz trenutne mape v mapo, ki je bila nazadnje\n"
 "shranjena z ukazom PUSHD.\n"
 
-#: cmd.rc:246
+#: cmd.rc:245
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9707,7 +9705,7 @@ msgstr ""
 "Če za enačajem ne določite vrste datoteke, so morebitne povezave datotek "
 "odstranjene.\n"
 
-#: cmd.rc:257
+#: cmd.rc:256
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -9731,11 +9729,11 @@ msgstr ""
 "Če ukaza odpiranja ne določite ukaz za enačajem odstrani ukazni niz, ki je "
 "povezan z določeno vrsto datoteke.\n"
 
-#: cmd.rc:259
+#: cmd.rc:258
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE prikaže vsebino datotek ali preusmerjenega vnosa v straneh.\n"
 
-#: cmd.rc:263
+#: cmd.rc:262
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -9746,7 +9744,7 @@ msgstr ""
 "CHOICE se uporablja predvsem za izgradnjo izberljivega menija v paketni "
 "datoteki.\n"
 
-#: cmd.rc:267
+#: cmd.rc:266
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -9755,7 +9753,7 @@ msgstr ""
 "sistemu\n"
 "ali ukazni lupini, iz katere ste priklicali cmd.\n"
 
-#: cmd.rc:305
+#: cmd.rc:304
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9834,110 +9832,110 @@ msgstr ""
 "Uporabite HELP <ukaz> za več podrobnosti o kateremkoli od zgoraj navedenih\n"
 "ukazov.\n"
 
-#: cmd.rc:307
+#: cmd.rc:306
 msgid "Are you sure?"
 msgstr "Ali ste prepričani?"
 
-#: cmd.rc:308 xcopy.rc:40
+#: cmd.rc:307 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "D"
 
-#: cmd.rc:309 xcopy.rc:41
+#: cmd.rc:308 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:310
+#: cmd.rc:309
 msgid "File association missing for extension %1\n"
 msgstr "Manjka povezava datoteke za pripono %1\n"
 
-#: cmd.rc:311
+#: cmd.rc:310
 msgid "No open command associated with file type '%1'\n"
 msgstr "Noben ukaz za odprtje ni povezan z vrsto datotek '%1'\n"
 
-#: cmd.rc:312
+#: cmd.rc:311
 msgid "Overwrite %1?"
 msgstr "Prepiši %1?"
 
-#: cmd.rc:313
+#: cmd.rc:312
 msgid "More..."
 msgstr "Več ..."
 
-#: cmd.rc:314
+#: cmd.rc:313
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Vrstica v paketni datoteki je morda skrajšana. Uporaba:\n"
 
-#: cmd.rc:316
+#: cmd.rc:315
 msgid "Argument missing\n"
 msgstr "Argument manjka\n"
 
-#: cmd.rc:317
+#: cmd.rc:316
 msgid "Syntax error\n"
 msgstr "Napaka skladnje\n"
 
-#: cmd.rc:319
+#: cmd.rc:318
 msgid "No help available for %1\n"
 msgstr "Za %1 ni pomoči na voljo\n"
 
-#: cmd.rc:320
+#: cmd.rc:319
 msgid "Target to GOTO not found\n"
 msgstr "Cilja ukaza GOTO ni mogoče najti\n"
 
-#: cmd.rc:321
+#: cmd.rc:320
 msgid "Current Date is %1\n"
 msgstr "Trenutni datum je %1\n"
 
-#: cmd.rc:322
+#: cmd.rc:321
 msgid "Current Time is %1\n"
 msgstr "Trenutni čas je %1\n"
 
-#: cmd.rc:323
+#: cmd.rc:322
 msgid "Enter new date: "
 msgstr "Vnesite nov datum: "
 
-#: cmd.rc:324
+#: cmd.rc:323
 msgid "Enter new time: "
 msgstr "Vnesite nov čas: "
 
-#: cmd.rc:325
+#: cmd.rc:324
 msgid "Environment variable %1 not defined\n"
 msgstr "Okoljska spremenljivka %1 ni določena\n"
 
-#: cmd.rc:326 xcopy.rc:38
+#: cmd.rc:325 xcopy.rc:38
 msgid "Failed to open '%1'\n"
 msgstr "Odpiranje '%1' je spodletelo\n"
 
-#: cmd.rc:327
+#: cmd.rc:326
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Klic paketne oznake zunaj paketnega skripta ni mogoč\n"
 
-#: cmd.rc:328 xcopy.rc:42
+#: cmd.rc:327 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "V"
 
-#: cmd.rc:329
+#: cmd.rc:328
 msgid "Delete %1?"
 msgstr "Izbriši %1?"
 
-#: cmd.rc:330
+#: cmd.rc:329
 msgid "Echo is %1\n"
 msgstr "Odmev je %1\n"
 
-#: cmd.rc:331
+#: cmd.rc:330
 msgid "Verify is %1\n"
 msgstr "Preverjanje je %1\n"
 
-#: cmd.rc:332
+#: cmd.rc:331
 msgid "Verify must be ON or OFF\n"
 msgstr "Vrednost zastavice preverjanja mora biti ON ali OFF\n"
 
-#: cmd.rc:333
+#: cmd.rc:332
 msgid "Parameter error\n"
 msgstr "Napaka parametra\n"
 
-#: cmd.rc:334
+#: cmd.rc:333
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -9945,47 +9943,47 @@ msgstr ""
 "Zaporedna št. nosilca je %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:335
+#: cmd.rc:334
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Oznaka nosilca (11 znakov, <Enter> za brez)?"
 
-#: cmd.rc:336
+#: cmd.rc:335
 msgid "PATH not found\n"
 msgstr "POTI ni mogoče najti\n"
 
-#: cmd.rc:337
+#: cmd.rc:336
 msgid "Press any key to continue... "
 msgstr "Pritisnite katerokoli tipko za nadaljevanje ... "
 
-#: cmd.rc:338
+#: cmd.rc:337
 msgid "Wine Command Prompt"
 msgstr "Ukazni poziv Wine"
 
-#: cmd.rc:339
+#: cmd.rc:338
 msgid "CMD Version %1!S!\n"
 msgstr "Različica CMD %1!S!\n"
 
-#: cmd.rc:340
+#: cmd.rc:339
 msgid "More? "
 msgstr "Več? "
 
-#: cmd.rc:341
+#: cmd.rc:340
 msgid "The input line is too long.\n"
 msgstr "Vhodna vrstica je predolga.\n"
 
-#: cmd.rc:342
+#: cmd.rc:341
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Nosilec v pogonu %1!c! je %2\n"
 
-#: cmd.rc:343
+#: cmd.rc:342
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Nosilec v pogonu %1!c! nima oznake.\n"
 
-#: cmd.rc:344
+#: cmd.rc:343
 msgid " (Yes|No)"
 msgstr " (Da|Ne)"
 
-#: cmd.rc:345
+#: cmd.rc:344
 msgid " (Yes|No|All)"
 msgstr " (Da|Ne|Vse)"
 
@@ -11399,91 +11397,7 @@ msgstr "Doda novo več-nizno vrednost"
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Izvozi izbrano vejo registra v besedilno datoteko"
 
-#: start.rc:46
-msgid ""
-"Start a program, or open a document in the program normally used for files "
-"with that suffix.\n"
-"Usage:\n"
-"start [options] program_filename [...]\n"
-"start [options] document_filename\n"
-"\n"
-"Options:\n"
-"/M[inimized] Start the program minimized.\n"
-"/MAX[imized] Start the program maximized.\n"
-"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
-"/W[ait]      Wait for started program to finish, then exit with its exit "
-"code.\n"
-"/Unix        Use a Unix filename and start the file like windows explorer.\n"
-"/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Show end-user license.\n"
-"/?           Display this help and exit.\n"
-"\n"
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
-"This is free software, and you are welcome to redistribute it\n"
-"under certain conditions; run 'start /L' for details.\n"
-msgstr ""
-"Zažene program oziroma odpre dokument v programu, ki je povezan z datotekami "
-"s to pripono.\n"
-"Uporaba:\n"
-"start [možnosti] ime_programa [...]\n"
-"start [možnosti] ime_dokumenta\n"
-"\n"
-"Možnosti:\n"
-"/M[inimized] Zažene program s skrčenim oknom.\n"
-"/MAX[imized] Zažene program z razpetim oknom.\n"
-"/R[estored]  Zažene program z običajno velikostjo okna.\n"
-"/W[ait]      Počaka, da se zagnani program zaključi, nato se konča in vrne "
-"kodo ob končanju programa.\n"
-"/ProgIDOpen  Odpre dokument z uporabo naslednjega IDprograma.\n"
-"/L           Prikaže licenčno pogodbo.\n"
-"/?            Prikaže to pomoč in konča.\n"
-"\n"
-"start.exe različica 0.2 Avtorske pravice (C) 2003, Dan Kegel\n"
-"Start prihaja POPOLNOMA BREZ ZAGOTOVIL. Za podrobnosti program zaženite z "
-"možnostjo /L.\n"
-"To je prost program, ki ga lahko razširjate pod določenimi pogoji.\n"
-"Za podrobnosti zaženite 'start /L'.\n"
-
-#: start.rc:64
-msgid ""
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
-"\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
-"GNU Lesser Public License for more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
-"\n"
-"See the COPYING.LIB file for license information.\n"
-msgstr ""
-"start.exe različica 0.2 Avtorske pravice (C) 2003, Dan Kegel\n"
-"Program je opredeljen kot prosta programska oprema; lahko ga razširjate\n"
-"in/ali spreminjate pod pogoji Splošnega Javnega Dovoljenja GNU (angleško:\n"
-"GNU Lesser Public License), kot ga je objavila ustanova Free Software\n"
-"Foundation; različice 2.1 ali (po želji) katerekoli kasnejše različice.\n"
-"\n"
-"Program se razširja v upanju, da bo uporabniku koristen, vendar BREZ\n"
-"VSAKRŠNE GARANCIJE; tudi brez posrednega zagotovila JAMSTVA CENOVNE\n"
-"VREDNOSTI in PRIMERNOSTI ZA DOLOČENO UPORABO. Za več podrobnosti\n"
-"si poglejte določila Splošnega Javnega Dovoljenja GNU.\n"
-"\n"
-"Kopijo Splošnega Javnega Dovoljenja GNU (angleško: GNU Lesser Public\n"
-"License) bi morali prejeti skupaj s programom, v kolikor pa je niste, "
-"pišite\n"
-"na naslov Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,\n"
-"Boston, MA 02110-1301, USA in zahtevajte kopijo.\n"
-"\n"
-"Za informacije o licenciranju si oglejte datoteko COPYING.LIB.\n"
-
-#: start.rc:66
+#: start.rc:41
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -11493,7 +11407,7 @@ msgstr ""
 "program.\n"
 "Ukaz ShellExecuteEx ni uspel"
 
-#: start.rc:68
+#: start.rc:43
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "Navedenega imena datoteke Unix ni mogoče prevesti v DOS ime datoteke."
 

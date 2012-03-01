@@ -9454,13 +9454,13 @@ msgstr "Løkke under håndtering av henvisninger"
 msgid "Referral hop limit exceeded"
 msgstr "Grense for henvisningshopp overskredet"
 
-#: attrib.rc:27 cmd.rc:315
+#: attrib.rc:27 cmd.rc:314
 msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
 
-#: attrib.rc:28 cmd.rc:318
+#: attrib.rc:28 cmd.rc:317
 #, fuzzy
 msgid "%1: File Not Found\n"
 msgstr "Fant ikke filen\n"
@@ -9825,7 +9825,7 @@ msgstr "Hjelp til RD.\n"
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "Hjelp til RMDIR.\n"
 
-#: cmd.rc:194
+#: cmd.rc:193
 #, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
@@ -9862,7 +9862,7 @@ msgstr ""
 "verdier enn i et vanlig Win32-miljø. Vær oppmerksom på at det ikke går\n"
 "an å endre mijøet i det underliggende operativsystemet fra CMD.\n"
 
-#: cmd.rc:199
+#: cmd.rc:198
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -9872,7 +9872,7 @@ msgstr ""
 "liste, sånn at parameter 2 blir parameter 1 og så videre. Det har ingen\n"
 "effekt hvis det brukes fra kommandolinjen.\n"
 
-#: cmd.rc:176
+#: cmd.rc:175 start.rc:39
 #, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
@@ -9889,7 +9889,6 @@ msgid ""
 "code.\n"
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Show end-user license.\n"
 "/?           Display this help and exit.\n"
 msgstr ""
 "Starte et program, eller åpne et dokument i programmet som er tilknyttet "
@@ -9906,27 +9905,20 @@ msgstr ""
 "             avsluttingskode.\n"
 "/Unix        Bruk et Unix-filnavn og start filen som Windows Utforsker "
 "(explorer).\n"
-"/L           Vis sluttbruker-lisensen.\n"
-"\n"
-"start.exe versjon 0.2 Kopirett for 2003 tilhører Dan Kegel\n"
-"Oversatt av Alexander N. Sørnes\n"
-"Start kommer UTEN ENHVER FORM FOR GARANTI; kjør med /L-valget for detaljer.\n"
-"Dette er fri programvare, og du kan redistribuere det under visse vilkår; "
-"kjør 'start /L' for detaljer.\n"
 
-#: cmd.rc:201
+#: cmd.rc:200
 #, fuzzy
 msgid "TIME sets or shows the current system time.\n"
 msgstr "Hjelp til TIME.\n"
 
-#: cmd.rc:203
+#: cmd.rc:202
 #, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr ""
 "Angir tittelen for CMD-vinduet, syntaksen er\n"
 "TITLE [streng]\n"
 
-#: cmd.rc:207
+#: cmd.rc:206
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -9935,7 +9927,7 @@ msgstr ""
 "sted hvis det omdirigeres). Det kontrolleres ikke om filen er leselig "
 "tekst.\n"
 
-#: cmd.rc:216
+#: cmd.rc:215
 #, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
@@ -9955,23 +9947,23 @@ msgstr ""
 "\n"
 "«Verify»-flagget har ingen funksjon i Wine.\n"
 
-#: cmd.rc:219
+#: cmd.rc:218
 #, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER viser versjonnummeret til CMD\n"
 
-#: cmd.rc:221
+#: cmd.rc:220
 #, fuzzy
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "Hjelp til VOL.\n"
 
-#: cmd.rc:225
+#: cmd.rc:224
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
 
-#: cmd.rc:233
+#: cmd.rc:232
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9981,7 +9973,7 @@ msgid ""
 "settings are restored.\n"
 msgstr ""
 
-#: cmd.rc:236
+#: cmd.rc:235
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -9989,12 +9981,12 @@ msgstr ""
 "PUSHD <katalognavn> lagrer arbeidskatalogen i en stabel, og endrer deretter\n"
 "arbeidskatalog til den som er oppgitt.\n"
 
-#: cmd.rc:238
+#: cmd.rc:237
 #, fuzzy
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD endrer arbeidskatalog til den som sist ble brukt med PUSHD.\n"
 
-#: cmd.rc:246
+#: cmd.rc:245
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -10006,7 +9998,7 @@ msgid ""
 "association, if any.\n"
 msgstr ""
 
-#: cmd.rc:257
+#: cmd.rc:256
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -10020,18 +10012,18 @@ msgid ""
 "associated to the specified file type.\n"
 msgstr ""
 
-#: cmd.rc:259
+#: cmd.rc:258
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE lar deg bla gjennom innholdet i filer eller inndata i rør.\n"
 
-#: cmd.rc:263
+#: cmd.rc:262
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
 
-#: cmd.rc:267
+#: cmd.rc:266
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -10039,7 +10031,7 @@ msgstr ""
 "EXIT avslutter gjeldende kommandoøkt og returnerer til operativsystemet\n"
 "eller skallet CMD ble startet fra.\n"
 
-#: cmd.rc:305
+#: cmd.rc:304
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -10112,166 +10104,166 @@ msgstr ""
 "\n"
 "Skriv «HELP <kommando>» for mer informasjon om kommandoene ovenfor\n"
 
-#: cmd.rc:307
+#: cmd.rc:306
 #, fuzzy
 msgid "Are you sure?"
 msgstr "Er du sikker"
 
-#: cmd.rc:308 xcopy.rc:40
+#: cmd.rc:307 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "J"
 
-#: cmd.rc:309 xcopy.rc:41
+#: cmd.rc:308 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:310
+#: cmd.rc:309
 #, fuzzy
 msgid "File association missing for extension %1\n"
 msgstr "Manglende filtilknytning for etternavnet %s\n"
 
-#: cmd.rc:311
+#: cmd.rc:310
 #, fuzzy
 msgid "No open command associated with file type '%1'\n"
 msgstr "Ingen åpnekommando er tilknyttet filtypene '%s'\n"
 
-#: cmd.rc:312
+#: cmd.rc:311
 #, fuzzy
 msgid "Overwrite %1?"
 msgstr "Skrive over «%s»? (Ja|Nei|Alle)\n"
 
-#: cmd.rc:313
+#: cmd.rc:312
 msgid "More..."
 msgstr "Mer..."
 
-#: cmd.rc:314
+#: cmd.rc:313
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr ""
 
-#: cmd.rc:316
+#: cmd.rc:315
 msgid "Argument missing\n"
 msgstr ""
 
-#: cmd.rc:317
+#: cmd.rc:316
 msgid "Syntax error\n"
 msgstr ""
 
-#: cmd.rc:319
+#: cmd.rc:318
 #, fuzzy
 msgid "No help available for %1\n"
 msgstr "Ikke tilgjengelig; "
 
-#: cmd.rc:320
+#: cmd.rc:319
 msgid "Target to GOTO not found\n"
 msgstr ""
 
-#: cmd.rc:321
+#: cmd.rc:320
 #, fuzzy
 msgid "Current Date is %1\n"
 msgstr "Neste side"
 
-#: cmd.rc:322
+#: cmd.rc:321
 msgid "Current Time is %1\n"
 msgstr ""
 
-#: cmd.rc:323
+#: cmd.rc:322
 msgid "Enter new date: "
 msgstr ""
 
-#: cmd.rc:324
+#: cmd.rc:323
 msgid "Enter new time: "
 msgstr ""
 
-#: cmd.rc:325
+#: cmd.rc:324
 #, fuzzy
 msgid "Environment variable %1 not defined\n"
 msgstr "Fant ikke miljøvariablen\n"
 
-#: cmd.rc:326 xcopy.rc:38
+#: cmd.rc:325 xcopy.rc:38
 #, fuzzy
 msgid "Failed to open '%1'\n"
 msgstr "Klarte ikke åpne «%s»\n"
 
-#: cmd.rc:327
+#: cmd.rc:326
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr ""
 
-#: cmd.rc:328 xcopy.rc:42
+#: cmd.rc:327 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:329
+#: cmd.rc:328
 #, fuzzy
 msgid "Delete %1?"
 msgstr "Slett"
 
-#: cmd.rc:330
+#: cmd.rc:329
 msgid "Echo is %1\n"
 msgstr ""
 
-#: cmd.rc:331
+#: cmd.rc:330
 msgid "Verify is %1\n"
 msgstr ""
 
-#: cmd.rc:332
+#: cmd.rc:331
 msgid "Verify must be ON or OFF\n"
 msgstr ""
 
-#: cmd.rc:333
+#: cmd.rc:332
 msgid "Parameter error\n"
 msgstr ""
 
-#: cmd.rc:334
+#: cmd.rc:333
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
 
-#: cmd.rc:335
+#: cmd.rc:334
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr ""
 
-#: cmd.rc:336
+#: cmd.rc:335
 msgid "PATH not found\n"
 msgstr ""
 
-#: cmd.rc:337
+#: cmd.rc:336
 msgid "Press any key to continue... "
 msgstr ""
 
-#: cmd.rc:338
+#: cmd.rc:337
 msgid "Wine Command Prompt"
 msgstr ""
 
-#: cmd.rc:339
+#: cmd.rc:338
 #, fuzzy
 msgid "CMD Version %1!S!\n"
 msgstr "CA-versjon"
 
-#: cmd.rc:340
+#: cmd.rc:339
 msgid "More? "
 msgstr ""
 
-#: cmd.rc:341
+#: cmd.rc:340
 msgid "The input line is too long.\n"
 msgstr ""
 
-#: cmd.rc:342
+#: cmd.rc:341
 msgid "Volume in drive %1!c! is %2\n"
 msgstr ""
 
-#: cmd.rc:343
+#: cmd.rc:342
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
-#: cmd.rc:344
+#: cmd.rc:343
 msgid " (Yes|No)"
 msgstr " (Ja|Nei)"
 
-#: cmd.rc:345
+#: cmd.rc:344
 msgid " (Yes|No|All)"
 msgstr " (Ja|Nei|Alle)"
 
@@ -11722,92 +11714,7 @@ msgstr "Legger til en ny flerstrengverdi"
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Eksporterer den valgte greinen av registeret til en tekstfil"
 
-#: start.rc:46
-#, fuzzy
-msgid ""
-"Start a program, or open a document in the program normally used for files "
-"with that suffix.\n"
-"Usage:\n"
-"start [options] program_filename [...]\n"
-"start [options] document_filename\n"
-"\n"
-"Options:\n"
-"/M[inimized] Start the program minimized.\n"
-"/MAX[imized] Start the program maximized.\n"
-"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
-"/W[ait]      Wait for started program to finish, then exit with its exit "
-"code.\n"
-"/Unix        Use a Unix filename and start the file like windows explorer.\n"
-"/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Show end-user license.\n"
-"/?           Display this help and exit.\n"
-"\n"
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
-"This is free software, and you are welcome to redistribute it\n"
-"under certain conditions; run 'start /L' for details.\n"
-msgstr ""
-"Starte et program, eller åpne et dokument i programmet som er tilknyttet "
-"filer med det etternavnet.\n"
-"Bruk:\n"
-"start [valg] program_filnavn [...]\n"
-"start [valg] dokument_filnavn\n"
-"\n"
-"Valg:\n"
-"/M[inimized] Start programmet minimert.\n"
-"/MAX[imized] Start programmet maksimert.\n"
-"/R[estored]  Start programmet normalt (hverken minimert eller maksimert).\n"
-"/W[ait]      Vent til programmet avslutter, og avslutt med programmets\n"
-"             avsluttingskode.\n"
-"/Unix        Bruk et Unix-filnavn og start filen som Windows Utforsker "
-"(explorer).\n"
-"/L           Vis sluttbruker-lisensen.\n"
-"\n"
-"start.exe versjon 0.2 Kopirett for 2003 tilhører Dan Kegel\n"
-"Oversatt av Alexander N. Sørnes\n"
-"Start kommer UTEN ENHVER FORM FOR GARANTI; kjør med /L-valget for detaljer.\n"
-"Dette er fri programvare, og du kan redistribuere det under visse vilkår; "
-"kjør 'start /L' for detaljer.\n"
-
-#: start.rc:64
-#, fuzzy
-msgid ""
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
-"\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
-"GNU Lesser Public License for more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
-"\n"
-"See the COPYING.LIB file for license information.\n"
-msgstr ""
-"start.exe versjon 0.2 Kopirett for 2003 tilhører Dan Kegel\n"
-"Oversatt av Alexander N. Sørnes\n"
-"Dette programmet er fri programvare; du kan redistribuere det\n"
-"og/eller endre det i henhold til vilkårene i 'GNU Lesser Public\n"
-"License' som utgitt av 'the Free Software Foundation'; enten\n"
-"versjon 2.1 av Lisensen, eller (hvis du ønsker det) en nyere versjon.\n"
-"\n"
-"Dette programmet er distribuert med det håp at det er nyttig,\n"
-"men UTEN ENHVER FORM FOR GARANTI; ikke engang den antydete garantien\n"
-"for HANDELSDYKTIGHET eller EGNETHET FOR ET BESTEMT FORMÅL. Se\n"
-"'GNU Lesser Public License' for flere detaljer.\n"
-"\n"
-"Du skal ha mottatt en kopi av 'GNU Lesser Public License sammen\n"
-"med dette programmet; hvis ikke, skriv til 'the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.'\n"
-"\n"
-"Se filen 'COPYING.LIB' for lisensinformasjon.\n"
-
-#: start.rc:66
+#: start.rc:41
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -11817,7 +11724,7 @@ msgstr ""
 "filen.\n"
 "'ShellExecuteEx' feilet"
 
-#: start.rc:68
+#: start.rc:43
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "Klarte ikke å konvertere Unix-filnavnet til et DOS-filnavn."
 
