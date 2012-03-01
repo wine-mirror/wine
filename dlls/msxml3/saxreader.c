@@ -1135,8 +1135,14 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
 
     for(index=0; index<nb_attributes; index++)
     {
+        static const xmlChar xmlA[] = "xml";
+
+        if (xmlStrEqual(xmlAttributes[index*5+1], xmlA))
+            attrs[index].szURI = bstr_from_xmlChar(xmlAttributes[index*5+2]);
+        else
+            attrs[index].szURI = find_element_uri(locator, xmlAttributes[index*5+2]);
+
         attrs[index].szLocalname = bstr_from_xmlChar(xmlAttributes[index*5]);
-        attrs[index].szURI = find_element_uri(locator, xmlAttributes[index*5+2]);
         attrs[index].szValue = bstr_from_xmlCharN(xmlAttributes[index*5+3],
                 xmlAttributes[index*5+4]-xmlAttributes[index*5+3]);
         attrs[index].szQName = QName_from_xmlChar(xmlAttributes[index*5+1],

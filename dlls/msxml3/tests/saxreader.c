@@ -249,6 +249,20 @@ static content_handler_test contentHandlerTestAttributes6[] = {
     { CH_ENDTEST }
 };
 
+static content_handler_test xmlspaceattr_test[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0 },
+    { CH_STARTDOCUMENT, 0, 0, 1, 39 },
+    { CH_STARTELEMENT, 1, 64, 1, 63, "", "a", "a" },
+    { CH_CHARACTERS, 1, 64, 1, 80, " Some text data " },
+    { CH_ENDELEMENT, 1, 82, 1, 83, "", "a", "a" },
+    { CH_ENDDOCUMENT, 0, 0, 1, 83 },
+    { CH_ENDTEST }
+};
+
+static const char xmlspace_attr[] =
+    "<?xml version=\"1.0\" encoding=\"UTF-16\"?>"
+    "<a xml:space=\"preserve\"> Some text data </a>";
+
 static content_handler_test *expectCall;
 static ISAXLocator *locator;
 int msxml_version;
@@ -266,8 +280,10 @@ static void test_saxstr(unsigned line, const WCHAR *szStr, int nStr, const char 
 
     len = strlen(szTest);
     ok_(__FILE__,line) (len == nStr, "nStr = %d, expected %d (%s)\n", nStr, len, szTest);
-    if(len != nStr)
+    if(len != nStr) {
+        ok_(__FILE__,line)(0, "got string %s, expected %s\n", wine_dbgstr_wn(szStr, nStr), szTest);
         return;
+    }
 
     MultiByteToWideChar(CP_ACP, 0, szTest, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok_(__FILE__,line) (!memcmp(szStr, buf, len*sizeof(WCHAR)), "unexpected szStr %s, expected %s\n",
@@ -379,8 +395,13 @@ static HRESULT WINAPI contentHandler_endDocument(
     if(!test_expect_call(CH_ENDDOCUMENT))
         return E_FAIL;
 
-    test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
-            msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
+    if(expectCall == xmlspaceattr_test+5 && msxml_version>=6) {
+    todo_wine
+        test_locator(__LINE__, expectCall->line_v6, expectCall->column_v6);
+    }
+    else
+        test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
+                msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
 
     return (expectCall++)->ret;
 }
@@ -534,6 +555,24 @@ static HRESULT WINAPI contentHandler_startElement(
         test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "http://www.w3.org/2000/xmlns/");
         test_saxstr(__LINE__, pLocalName, nLocalName, "");
         test_saxstr(__LINE__, pQName, nQName, "xmlns");
+    } else if(expectCall == xmlspaceattr_test+2) {
+        const WCHAR *value;
+        int valuelen;
+
+        hres = ISAXAttributes_getLength(pAttr, &len);
+        EXPECT_HR(hres, S_OK);
+        ok(len == 1, "Incorrect number of attributes: %d\n", len);
+
+        hres = ISAXAttributes_getName(pAttr, 0, &pNamespaceUri, &nNamespaceUri,
+                &pLocalName, &nLocalName, &pQName, &nQName);
+        EXPECT_HR(hres, S_OK);
+        test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "http://www.w3.org/XML/1998/namespace");
+        test_saxstr(__LINE__, pLocalName, nLocalName, "space");
+        test_saxstr(__LINE__, pQName, nQName, "xml:space");
+
+        hres = ISAXAttributes_getValue(pAttr, 0, &value, &valuelen);
+        EXPECT_HR(hres, S_OK);
+        test_saxstr(__LINE__, value, valuelen, "preserve");
     }
 
     return (expectCall++)->ret;
@@ -1426,8 +1465,16 @@ static void test_saxreader(int version)
     test_expect_call(CH_ENDTEST);
     IXMLDOMDocument_Release(domDocument);
 
+    expectCall = xmlspaceattr_test;
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = _bstr_(xmlspace_attr);
+    hr = ISAXXMLReader_parse(reader, var);
+    EXPECT_HR(hr, S_OK);
+    test_expect_call(CH_ENDTEST);
+
     ISAXXMLReader_Release(reader);
     SysFreeString(bstrData);
+    free_bstrs();
 }
 
 struct saxreader_props_test_t
