@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-17 16:03-0200\n"
+"PO-Revision-Date: 2012-02-29 21:39-0300\n"
 "Last-Translator: Gustavo Henrique Milaré <gugamilare@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Portuguese (Brazil)\n"
@@ -9550,7 +9550,7 @@ msgid ""
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
 "Uma linha de comando iniciando com REM (seguindo de um espaço) não faz\n"
-"nada e, portanto, pode ser usado como um comentário em umarquivo de lote.\n"
+"nada e, portanto, pode ser usado como um comentário em um arquivo de lote.\n"
 
 #: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
@@ -14019,9 +14019,8 @@ msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
 msgstr "Parâmetro inválido '%1' - Use xcopy /? para ajuda\n"
 
 #: xcopy.rc:29
-#, fuzzy
 msgid "Press <Enter> to begin copying\n"
-msgstr "Pressione <Enter> para \n"
+msgstr "Pressione <Enter> para começar a copiar\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
