@@ -3367,9 +3367,9 @@ BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, LPABCFLOAT a
         /* convert device units to logical */
         for (i = first; i <= last; i++, abcf++)
         {
-            abcf->abcfA = abc->abcA * dc->xformVport2World.eM11;
-            abcf->abcfB = abc->abcB * dc->xformVport2World.eM11;
-            abcf->abcfC = abc->abcC * dc->xformVport2World.eM11;
+            abcf->abcfA = abc[i - first].abcA * dc->xformVport2World.eM11;
+            abcf->abcfB = abc[i - first].abcB * dc->xformVport2World.eM11;
+            abcf->abcfC = abc[i - first].abcC * dc->xformVport2World.eM11;
         }
     }
     HeapFree( GetProcessHeap(), 0, abc );
