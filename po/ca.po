@@ -961,7 +961,7 @@ msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
-"Aquest gran nombre de còpies no és compatible amb la vostre impressora.\n"
+"Aquest gran nombre de còpies no és compatible amb la vostra impressora.\n"
 "Si us plau, introduïu un valor entre 1 i %d."
 
 #: comdlg32.rc:63
@@ -1185,7 +1185,7 @@ msgstr ""
 "contrasenya de forma incorrecta.\n"
 "\n"
 "Premeu la tecla Bloc Maj en el vostre teclat per desactivar el bloqueig de\n"
-"majúscules abans d'introduir la vostre contrasenya."
+"majúscules abans d'introduir la vostra contrasenya."
 
 #: credui.rc:31
 msgid "Caps Lock is On"
@@ -2795,7 +2795,7 @@ msgstr "Assegura la identitat d'un ordinador remot"
 
 #: cryptui.rc:122
 msgid "Proves your identity to a remote computer"
-msgstr "Prova la vostre identitat a un ordinador remot"
+msgstr "Prova la vostra identitat a un ordinador remot"
 
 #: cryptui.rc:123
 msgid ""
@@ -7848,7 +7848,7 @@ msgstr "Atura"
 
 #: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
-msgstr "Voleu aturar la vostre sessió del Wine?"
+msgstr "Voleu aturar la vostra sessió del Wine?"
 
 #: shell32.rc:200 progman.rc:80
 msgid "Programs"
