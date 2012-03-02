@@ -2932,57 +2932,48 @@ msgid "Default MidiOut Device"
 msgstr "Dispositivo MidiOut por defecto"
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "C&onfigurar..."
+msgstr "Configurar dispositivos"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Resetear"
 
 #: dinput.rc:48
-#, fuzzy
 msgid "Player"
-msgstr "&Reproducir"
+msgstr "Jugador"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "Dispositi&vo:"
+msgstr "Dispositivo:"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "Ubicación"
+msgstr "Acciones"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "Mapeo de unidad"
+msgstr "Mapeo"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Ya existe"
+msgstr "Mostrar primero asignados"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Ubicación"
+msgstr "Acción"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "No existe dicho objeto"
+msgstr "Objeto"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Configuración por defecto"
+msgstr "Configuración regional"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr ""
+msgstr "%1!u!MB usados, %2!u!MB disponibles"
 
 #: gdi32.rc:25
 msgid "Western"
@@ -3095,27 +3086,24 @@ msgstr "Conectando a la cámara... Por favor espere"
 
 #: hhctrl.rc:56
 msgid "S&ync"
-msgstr ""
+msgstr "Sincr&onizar"
 
 #: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "&Atrás"
 
 #: hhctrl.rc:58
-#, fuzzy
 msgid "&Forward"
-msgstr "Adelante"
+msgstr "A&delante"
 
 #: hhctrl.rc:59
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
-msgstr "Inicio"
+msgstr "&Inicio"
 
 #: hhctrl.rc:60
-#, fuzzy
 msgid "&Stop"
-msgstr "Detener"
+msgstr "&Detener"
 
 #: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
@@ -3143,11 +3131,11 @@ msgstr "Favor&itos"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "Ocultar &Pestañas"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "Mostrar &Pestañas"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -3245,9 +3233,8 @@ msgid "&Add to Favorites..."
 msgstr "&Añadir a Favoritos..."
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "Acerca &de Internet Explorer..."
+msgstr "Acerca &de Internet Explorer"
 
 #: ieframe.rc:87
 msgid "Open URL"
@@ -3262,10 +3249,9 @@ msgid "Open:"
 msgstr "Abrir:"
 
 #: ieframe.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
-msgstr "Inicio"
+msgstr "Página de inicio"
 
 #: ieframe.rc:68 winhlp32.rc:66
 msgid "Print..."
@@ -3276,24 +3262,20 @@ msgid "Address"
 msgstr "Dirección"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "Propiedades de %s"
+msgstr "Buscando por %s"
 
 #: ieframe.rc:79
-#, fuzzy
 msgid "Start downloading %s"
-msgstr "Descargando desde %s..."
+msgstr "Comenzando descarga %s"
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "Descargando..."
+msgstr "Descargando %s"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "Propiedades de %s"
+msgstr "Preguntando por %s"
 
 #: inetcpl.rc:46
 #, fuzzy
@@ -4177,7 +4159,7 @@ msgstr "SEGDPL inválido en %1.\n"
 
 #: winerror.mc:786
 msgid "Auto data segment exceeds 64k.\n"
-msgstr "Segemento de datos excede 64k.\n"
+msgstr "Segmento de datos excede 64k.\n"
 
 #: winerror.mc:791
 msgid "Ring 2 segment must be movable.\n"
@@ -4233,7 +4215,7 @@ msgstr "Llamadas anidadas a LoadModule no permitidas.\n"
 
 #: winerror.mc:856
 msgid "Machine type mismatch.\n"
-msgstr "Tipo de maquina incorrecta.\n"
+msgstr "Tipo de máquina incorrecta.\n"
 
 #: winerror.mc:861
 msgid "Bad pipe.\n"
@@ -6783,7 +6765,7 @@ msgstr "Este puerto no tiene opciones para configurar"
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
 msgstr ""
-"El envío de correo ha fallado debido a que no tiene instalado un cliente de "
+"El envío del correo falló debido a que no tiene instalado un cliente de "
 "correo MAPI."
 
 #: mapi32.rc:29
@@ -7478,7 +7460,6 @@ msgid "us"
 msgstr "µs"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
 msgstr "Propiedades de %s"
 
@@ -7527,9 +7508,8 @@ msgid "Copy manufacturer's files from:"
 msgstr "Copiar archivos del fabricante desde:"
 
 #: setupapi.rc:28
-#, fuzzy
 msgid "The file '%1' on %2 is needed"
-msgstr "El archivo '%s' en %s es necesario"
+msgstr "El archivo '%1' en %2 es necesario"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -7701,7 +7681,7 @@ msgstr "Abrir en una &nueva ventana"
 
 #: shdoclc.rc:129
 msgid "Cut"
-msgstr "Cor&tar"
+msgstr "Cortar"
 
 #: shdoclc.rc:152
 msgid "&Save Video As..."
@@ -7709,63 +7689,63 @@ msgstr "Guardar &vídeo como..."
 
 #: shdoclc.rc:163 shdoclc.rc:187
 msgid "Play"
-msgstr "&Reproducir"
+msgstr "Reproducir"
 
 #: shdoclc.rc:189
 msgid "Rewind"
-msgstr "Re&bobinar"
+msgstr "Rebobinar"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
-msgstr "Trazar &etiquetas"
+msgstr "Etiquetas de traza"
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
-msgstr "Fallos de &recursos"
+msgstr "Fallo en los recursos"
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
-msgstr "Volcar info de se&guimiento"
+msgstr "Volcar info de seguimiento"
 
 #: shdoclc.rc:199
 msgid "Debug Break"
-msgstr "Depurar &parada"
+msgstr "Parada de depuración"
 
 #: shdoclc.rc:200
 msgid "Debug View"
-msgstr "Depurar &vista"
+msgstr "Vista de depuración"
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
-msgstr "Volcar &Tree"
+msgstr "Volcar Tree"
 
 #: shdoclc.rc:202
 msgid "Dump Lines"
-msgstr "Volcar &Lines"
+msgstr "Volcar Líneas"
 
 #: shdoclc.rc:203
 msgid "Dump DisplayTree"
-msgstr "Volcar &DisplayTree"
+msgstr "Volcar DisplayTree"
 
 #: shdoclc.rc:204
 msgid "Dump FormatCaches"
-msgstr "Volcar &FormatCaches"
+msgstr "Volcar FormatCaches"
 
 #: shdoclc.rc:205
 msgid "Dump LayoutRects"
-msgstr "Volcar La&youtRects"
+msgstr "Volcar LayoutRects"
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
-msgstr "Monitor de &memoria"
+msgstr "Monitor de memoria"
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
-msgstr "Medidores de re&ndimiento"
+msgstr "Medidores de rendimiento"
 
 #: shdoclc.rc:208
 msgid "Save HTML"
-msgstr "Guardar &HTML"
+msgstr "Guardar HTML"
 
 #: shdoclc.rc:210
 msgid "&Browse View"
@@ -7777,55 +7757,55 @@ msgstr "Ed&itar vista"
 
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
-msgstr "Desplazar &aquí"
+msgstr "Desplazar aquí"
 
 #: shdoclc.rc:218
 msgid "Top"
-msgstr "&Principio"
+msgstr "Principio"
 
 #: shdoclc.rc:219
 msgid "Bottom"
-msgstr "&Final"
+msgstr "Final"
 
 #: shdoclc.rc:221
 msgid "Page Up"
-msgstr "Página a&rriba"
+msgstr "Página arriba"
 
 #: shdoclc.rc:222
 msgid "Page Down"
-msgstr "Página a&bajo"
+msgstr "Página abajo"
 
 #: shdoclc.rc:224
 msgid "Scroll Up"
-msgstr "Desplazar arr&iba"
+msgstr "Desplazar arriba"
 
 #: shdoclc.rc:225
 msgid "Scroll Down"
-msgstr "Desplazar aba&jo"
+msgstr "Desplazar abajo"
 
 #: shdoclc.rc:232
 msgid "Left Edge"
-msgstr "Borde &izquierdo"
+msgstr "Borde izquierdo"
 
 #: shdoclc.rc:233
 msgid "Right Edge"
-msgstr "Borde &derecho"
+msgstr "Borde derecho"
 
 #: shdoclc.rc:235
 msgid "Page Left"
-msgstr "Página a la i&zquierda"
+msgstr "Página a la izquierda"
 
 #: shdoclc.rc:236
 msgid "Page Right"
-msgstr "Página a la d&erecha"
+msgstr "Página a la derecha"
 
 #: shdoclc.rc:238
 msgid "Scroll Left"
-msgstr "Desplazar a la iz&quierda"
+msgstr "Desplazar a la izquierda"
 
 #: shdoclc.rc:239
 msgid "Scroll Right"
-msgstr "Desplazar a la de&recha"
+msgstr "Desplazar a la derecha"
 
 #: shdoclc.rc:25
 msgid "Wine Internet Explorer"
@@ -7979,7 +7959,7 @@ msgstr "Ejecutándose en %s"
 
 #: shell32.rc:326
 msgid "Wine was brought to you by:"
-msgstr "Wine le ha sido proporcionado por:"
+msgstr "Wine es posible gracias a:"
 
 #: shell32.rc:334
 msgid ""
@@ -7987,7 +7967,7 @@ msgid ""
 "will open it for you."
 msgstr ""
 "Introduzca el nombre de un programa, carpeta, documento o recurso de "
-"Internet; y Wine lo abrirá para usted."
+"Internet, y Wine lo abrirá para usted."
 
 #: shell32.rc:335
 msgid "&Open:"
@@ -8402,24 +8382,20 @@ msgid "Don't show me th&is message again"
 msgstr "No volver a mostrar este &mensaje"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld bytes"
+msgstr "%d bytes"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
 msgstr " hr"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
 msgstr " min"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " sec"
@@ -8562,12 +8538,11 @@ msgstr "Error externo indefinido."
 #: winmm.rc:30
 msgid "A device ID has been used that is out of range for your system."
 msgstr ""
-"Un identificador de dispositivo que ha sido usado está fuera de rango para "
-"su sistema."
+"Un identificador de dispositivo usado está fuera del rango para su sistema."
 
 #: winmm.rc:31
 msgid "The driver was not enabled."
-msgstr "El manejador no fue activado."
+msgstr "El controlador no fue activado."
 
 #: winmm.rc:32
 msgid ""
@@ -8575,16 +8550,15 @@ msgid ""
 "again."
 msgstr ""
 "El dispositivo especificado aún está en uso. Espere hasta que esté libre e "
-"intente nuevamente."
+"intente de nuevo."
 
 #: winmm.rc:33
 msgid "The specified device handle is invalid."
-msgstr "El handle de dispositivo especificado es inválido."
+msgstr "El código de control del dispositivo especificado es inválido."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "¡No hay un manejador instalado en su sistema!\n"
+msgstr "¡No hay un controlador instalado en su sistema!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -8609,14 +8583,13 @@ msgstr ""
 
 #: winmm.rc:38
 msgid "An invalid flag was passed to a system function."
-msgstr "Se ha pasado una bandera no válida a una función del sistema."
+msgstr "Se ha pasado una bandera inválida a una función del sistema."
 
 #: winmm.rc:39
 msgid "An invalid parameter was passed to a system function."
-msgstr "Se ha pasado un parámetro no válido a una función del sistema."
+msgstr "Se ha pasado un parámetro inválido a una función del sistema."
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -8629,7 +8602,7 @@ msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
-"Esta operación no puede ejecutarse mientras continúa la reproducción. "
+"Esta operación no puede realizarse mientras continúa la reproducción. "
 "Reinicie el dispositivo, o espere hasta que la reproducción termine."
 
 #: winmm.rc:44
@@ -8645,7 +8618,7 @@ msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-"No puede abrirse el dispositivo sin usar la bandera WAVE_ALLOWSYNC. "
+"No se puede abrir el dispositivo sin usar la bandera WAVE_ALLOWSYNC. "
 "Utilícela, e inténtelo de nuevo."
 
 #: winmm.rc:48
@@ -8809,12 +8782,11 @@ msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Utilice un nombre de dispositivo específico para este comando."
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
-"Han ocurrido errores en más de un dispositivo. Especifique cada comando y "
+"Ocurrieron errores en varios dispositivos. Especifique cada comando y "
 "dispositivo por separado para determinar que dispositivos causaron el error."
 
 #: winmm.rc:78
@@ -8837,8 +8809,8 @@ msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
 msgstr ""
-"No puede grabarse el fichero especificado. Asegúrese de tener suficiente "
-"espacio en disco o de que permanece conectado a la red."
+"No se ha podido grabar el fichero especificado. Asegúrese de tener "
+"suficiente espacio en disco o de que permanece conectado a la red."
 
 #: winmm.rc:82
 msgid ""
@@ -8897,8 +8869,7 @@ msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
 msgstr ""
-"Una comilla de cierre está faltando en el valor del parámetro. Por favor "
-"provea una."
+"Una comilla de cierre falta en el valor del parámetro. Por favor añada una."
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
@@ -8910,7 +8881,7 @@ msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
 msgstr ""
-"El fichero especificado no puede ser tocado en el dispositivo MCI "
+"El fichero especificado no puede ser reproducido en el dispositivo MCI "
 "especificado. El fichero puede estar corrupto o en un formato incorrecto."
 
 #: winmm.rc:92
@@ -9184,9 +9155,8 @@ msgid "&Output File Name:"
 msgstr "&Nombre del archivo:"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "El archivo de salida ya existe.  Pulse Aceptar para sobreescribir."
+msgstr "El archivo ya existe. Pulse Aceptar para sobreescribir."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -10122,7 +10092,7 @@ msgstr ""
 "EXIT\t\tSale de CMD\n"
 "\n"
 "Escriba HELP <comando> para más información sobre cualquiera de los\n"
-"comandos de superiores\n"
+"comandos superiores\n"
 
 #: cmd.rc:306
 msgid "Are you sure?"
@@ -10299,18 +10269,19 @@ msgstr "Ubicación"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "Uso: hostname\n"
 
 #: hostname.rc:28
-#, fuzzy
 msgid "Error: Invalid option '%c'.\n"
-msgstr "Error: nombre de clave no válido\n"
+msgstr "Error: Opción '%c' inválida.\n"
 
 #: hostname.rc:29
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
+"Error: Establecer el nombre de host del sistema no es posible con la "
+"utilidad hostname.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
@@ -11103,13 +11074,8 @@ msgid "O&pen\tEnter"
 msgstr "A&brir\tEnter"
 
 #: progman.rc:32 winefile.rc:27
-#, fuzzy
 msgid "&Move...\tF7"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Mover...\tF7\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"Mo&ver...\tF7"
+msgstr "&Mover...\tF7"
 
 #: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
@@ -11147,13 +11113,8 @@ msgstr ""
 "&Minimizar al ejecutarse"
 
 #: progman.rc:44 winefile.rc:69
-#, fuzzy
 msgid "&Save settings on exit"
-msgstr ""
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Guardar configuración al salir\n"
-"#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
-"&Guardar opciones al salir"
+msgstr "&Guardar opciones al salir"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
 msgid "&Windows"
@@ -11365,7 +11326,7 @@ msgstr "La operación finalizó con éxito\n"
 
 #: reg.rc:32
 msgid "Error: Invalid key name\n"
-msgstr "Error: nombre de clave no válido\n"
+msgstr "Error: nombre de clave inválido\n"
 
 #: reg.rc:33
 msgid "Error: Invalid command line parameters\n"
@@ -12639,8 +12600,8 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"Ejecución del comando de desinstalación '%s' ha fallado, tal vez se deba a "
-"que no exista el ejecutable.\n"
+"La ejecución del comando de desinstalación '%s' ha fallado, tal vez se deba "
+"a un ejecutable inexistente.\n"
 "¿Desea eliminar la entrada de desinstalación de esta aplicación del registro?"
 
 #: view.rc:33
@@ -13298,9 +13259,8 @@ msgid "Command history"
 msgstr "Historial de comandos"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
-msgstr "&Número de comandos recordados :"
+msgstr "&Número de comandos recordados:"
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
@@ -13315,23 +13275,20 @@ msgid "&Color"
 msgstr "&Color"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " Configuración "
+msgstr "Configuración"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
 msgstr "Zona de buffer"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
-msgstr "&Anchura :"
+msgstr "&Anchura:"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
-msgstr "&Altura :"
+msgstr "&Altura:"
 
 #: wineconsole.rc:108
 msgid "Window size"
@@ -13343,9 +13300,8 @@ msgid "W&idth:"
 msgstr "A&nchura :"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
-msgstr "A&ltura :"
+msgstr "A&ltura:"
 
 #: wineconsole.rc:116
 msgid "End of program"
@@ -13410,9 +13366,8 @@ msgstr ""
 "ventana"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "Cada caracter tiene %ld píxeles de ancho por %ld píxeles de alto"
+msgstr "Cada carácter tiene %1!u! píxeles de ancho por %2!u! píxeles de alto"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -13424,11 +13379,11 @@ msgstr "wineconsole: No se pudo procesar el id del evento\n"
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole: Final invalido\n"
+msgstr "wineconsole: Final inválido\n"
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole: Linea de comando no reconocida\n"
+msgstr "wineconsole: Línea de comando no reconocida\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
@@ -13457,7 +13412,6 @@ msgstr ""
 "Opciones:\n"
 
 #: wineconsole.rc:49
-#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
@@ -13466,18 +13420,16 @@ msgid ""
 msgstr ""
 "  --backend={user|curses}  Seleccionando user generará una nueva ventana, "
 "curses\n"
-"                            intentara configurar el terminal actual como una "
-"consola de Wine\n"
+"                           intentará configurar el terminal actual como una "
+"consola de Wine.\n"
 
 #: wineconsole.rc:50
-#, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
-"  <comando>                 EL programa de Wine que se iniciará en la "
-"consola\n"
+"  <comando>                 El programa de Wine que se iniciará en la "
+"consola.\n"
 
 #: wineconsole.rc:51
-#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
@@ -13488,7 +13440,7 @@ msgstr ""
 "\n"
 "Ejemplo:\n"
 "  wineconsole cmd\n"
-"Inicia el simbolo del sistema de Wine en una consola Wine\n"
+"Inicia el símbolo del sistema de Wine en una consola Wine.\n"
 "\n"
 
 #: winedbg.rc:46
@@ -13504,28 +13456,22 @@ msgstr ""
 "disculpamos por los inconvenientes."
 
 #: winedbg.rc:55
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
 "Esto puede ser causado por un problema en el programa o a una deficiencia en "
-"Wine. Quizá quieras verificar en http://appdb.winehq.org consejos sobre cómo "
-"ejecutar esta aplicación.\n"
-"\n"
-"Si este problema no esta presente en Windows y no ha sido reportado todavía, "
-"lo puedes reportar en http://bugs.winehq.org."
+"Wine. Quizá quieras verificar en <a href=\"http://appdb.winehq.org\">Base de "
+"Aplicaciones</a> consejos sobre cómo ejecutar esta aplicación."
 
 #: winedbg.rc:58
-#, fuzzy
 msgid "Show &Details"
-msgstr "&Detalles"
+msgstr "Mostrar &Detalles"
 
 #: winedbg.rc:63
-#, fuzzy
 msgid "Program Error Details"
-msgstr "Error del programa"
+msgstr "Detalles del error de programa"
 
 #: winedbg.rc:70
 msgid ""
@@ -13534,6 +13480,10 @@ msgid ""
 "button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
+"Si este problema no esta presente en Windows y no ha sido reportado todavía, "
+"puedes salvar la información detallada usando el botón \"Salvar Como\", "
+"entonces podrás <a href=\"http://wiki.winehq.org/Bugs\">informar de un "
+"error</a> y adjuntar ese archivo al reporte de fallo."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13548,13 +13498,12 @@ msgid "(unidentified)"
 msgstr "(no identificado)"
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "Abrir archivo"
+msgstr "Fallo guardando"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "Cargando información detallada, por favor espere..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -13565,9 +13514,8 @@ msgid "Re&name..."
 msgstr "&Renombrar..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "&Propiedades...\tAlt+Enter"
+msgstr "&Propiedades\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -13582,9 +13530,8 @@ msgid "&Disk"
 msgstr "&Disco"
 
 #: winefile.rc:41
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "C&onectar unidad de red"
+msgstr "C&onectar unidad de red..."
 
 #: winefile.rc:42
 msgid "&Disconnect Network Drive"
@@ -13615,9 +13562,8 @@ msgid "Sort by &Date"
 msgstr "Ordenar por &fecha"
 
 #: winefile.rc:56
-#, fuzzy
 msgid "Filter by&..."
-msgstr "Ordenar por &..."
+msgstr "Ordenar por&..."
 
 #: winefile.rc:63
 msgid "&Drivebar"
@@ -13633,16 +13579,15 @@ msgstr "&Nueva ventana"
 
 #: winefile.rc:74
 msgid "Cascading\tCtrl+F5"
-msgstr "&Cascada\tCtrl+F5"
+msgstr "Cascada\tCtrl+F5"
 
 #: winefile.rc:76
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Mosaico &vertical\tCtrl+F4"
 
 #: winefile.rc:83
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "Winefile"
+msgstr "&Acerca del gestor de archivos Wine"
 
 #: winefile.rc:124
 msgid "Select destination"
@@ -13653,7 +13598,6 @@ msgid "By File Type"
 msgstr "Por tipo de archivo"
 
 #: winefile.rc:142
-#, fuzzy
 msgid "File type"
 msgstr "Tipo de archivo"
 
@@ -13679,7 +13623,7 @@ msgstr "Mostrar archivos de &sistema/ocultos"
 
 #: winefile.rc:162
 msgid "&File Name:"
-msgstr "Nombre:"
+msgstr "&Nombre:"
 
 #: winefile.rc:164
 msgid "Full &Path:"
@@ -13714,14 +13658,13 @@ msgid "&Compressed"
 msgstr "&Comprimido"
 
 #: winefile.rc:180
-#, fuzzy
 msgid "Version information"
-msgstr "Información de &versión"
+msgstr "Información sobre la versión"
 
 #: winefile.rc:197
 msgctxt "accelerator Fullscreen"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: winefile.rc:89
 msgid "Applying font settings"
@@ -13729,16 +13672,15 @@ msgstr "Aplicando configuración de fuente"
 
 #: winefile.rc:90
 msgid "Error while selecting new font."
-msgstr "Error al seleccionar la nueva fuente."
+msgstr "Error seleccionando la nueva fuente."
 
 #: winefile.rc:95
-#, fuzzy
 msgid "Wine File Manager"
-msgstr "Winefile"
+msgstr "Gestor de archivos Wine"
 
 #: winefile.rc:97
 msgid "root fs"
-msgstr "SF raíz"
+msgstr "FS raíz"
 
 #: winefile.rc:98
 msgid "unixfs"
@@ -13766,31 +13708,31 @@ msgstr "FechaM"
 
 #: winefile.rc:111
 msgid "Index/Inode"
-msgstr "Índice/Nodo-i"
+msgstr "Índice/Inodo"
 
 #: winefile.rc:116
 #, fuzzy
 msgid "%1 of %2 free"
-msgstr "%s de %s libre"
+msgstr "%1 de %2 libre"
 
 #: winefile.rc:117
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:118
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:119
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "&Juego"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -13798,7 +13740,7 @@ msgstr "&Nuevo\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "&Marcar (Interrogación)"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -13864,9 +13806,8 @@ msgid "Rows"
 msgstr "Filas"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "C&olumna"
+msgstr "Columnas"
 
 #: winemine.rc:88
 msgid "Mines"
