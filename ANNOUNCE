@@ -1,12 +1,12 @@
-The Wine development release 1.4-rc5 is now available.
+The Wine development release 1.4-rc6 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.4-rc5.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-1.4-rc5.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.4-rc6.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.4-rc6.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -22,192 +22,219 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.4-rc5:
+Bugs fixed in 1.4-rc6:
 
-   5485  Command and Conquer Generals (and Zero Hour) hang on splash screen
-   8871  No text displayed in Bloodrayne2
-  11133  Shade: Wrath of Angels Demo - no graphics drawn in game
-  13156  ETO_OPAQUE and clear style are not transparent on a bitmap
-  14075  Beyond Divinity: screen corruption
-  15397  gdi32: path.c fails to build with gcc 4.2, -Werror -O3
-  16557  print preview broken
-  17201  No add-ins loadable in Office 2003 PowerPoint
-  18975  RealMYST crashes on launch
-  19531  Earthworm Jim: sound crackles, stutters and repeats.
-  20202  Everquest 1 (eqgame.exe) crashes right before character enters world
-  20333  Azteca and Diamond Drop 2 crash
-  20783  TradeTiger does not show the login window correctly
-  21293  Comanche 3 freezes after a mission
-  21577  MYOB: Cannot add custom logo to template
-  22187  Alice 2.2 fails with "can't create Java VM"
-  22269  Cry of the Infected demo fails with "runtime error 7018"
-  22838  Corel Draw 11 not loading
-  25153  Windows Live Essentials beta (webc variant) doesn't detect .NET Framework 3.0 installation (Mono/Registry)
-  25214  MS Office PowerPoint 2007 freezes when right-click on top bar
-  26878  No sound in Sim City 3000 Unlimited
-  26918  Atlantis II crashes when changing screen resolution
-  27254  Astro Avenger crashes on launch (with built-in d3dxof.dll)
-  27971  Installation of FooBar.msi using msiexec fails with /qb switch (unattended with basic UI)
-  28066  Sound stops after some time (restarting sound in game usually possible)
-  28404  Incoming Forces: visual glitches
-  28579  Comanche 3 menu is unusable because of graphic issues
-  28618  BC Kings refuses to start without DirectSound hardware acceleration
-  28620  Assassin's Creed: eagle's eye graphic glitch with postprocessing enabled
-  28859  SDP Downloader: access violations when deleting url
-  29750  Spotify crashes when searching song or artist with the search box
-  29767  ellipse_first_quadrant() runs into dead loop for large width and height because of negative overflow
-  29904  Perfect World: Latest Descent patch crashes Launcher window
-  29905  Microsoft Visual Studio 2008: attaching to process fails with "unknown error: 0x80070003" (support of "Session" namespace for named objects needed)
-  29919  PanzerKiller hangs with a black screen on start
-  29939  MS Paint's bucket fill tool doesn't work
-  29967  Cyberboard Player hangs when opening a game
-  29988  Wordpad crashes on opening the printer setup dialog
+   3325  Time Adjuster's toolbar stays always on top
+   4084  SonicStage 3.1 installer fails with 'Windows version not supported'
+   5897  PixelFormat_DD2WineD3D Unknown Pixelformat
+   8166  notepad does fully not display long (>32K) one-line files
+   8495  missing graphic objects in Re-volt
+  10176  rFactor Dedicated not working anymore after update
+  11430  Applications based on CodeJock Software ToolkitPro fail with division by zero
+  12212  DeusEx: running at big resolutions result in screen shift&crop
+  12739  Improper drawing of radio buttons
+  13248  Multiple Error MessageBoxes in Incomedia Website X5 installer
+  13792  Abomination: The Nemesis Project Crashes at startup
+  14769  Firefox 3 window size isn't restored after returning from fullscreen (dogfood)
+  16189  Google Earth install fails (service related)
+  17564  7-zip file manager interface selection problem
+  17723  Audiosurf: unable to fill textfields
+  18569  TeamViewer: App doesn't start, probably heap corruption
+  19106  Touhou Fuujinroku ~ Mountain of Faith: Stage backgrounds aren't always rendered properly
+  19159  Command & Conquer 3: Tiberium Wars hangs at splash screen
+  21019  Igor pro "Help brower" has no window decorations
+  21745  Magic Workstation: icons and some text appear upside-down
+  21981  Igor Pro: Drop-down menu only works when arrow key is pressed
+  21984  Glumbuster crashes on load
+  22216  Problem with freopen("CONOUT$", "w", stdout);
+  22359  Wolfenstein water displays strange rays
+  22414  Grand Theft Auto: Vice City - full screen window does not take focus
+  22558  Harbinger (demo) graphical issue: green artefacts around objects
+  22703  Running Galcon Fusion demo gives error message
+  22842  Can't select screen mode / resolution on PSOBB and PSU
+  22987  Irfan view - "Can't paste image from clipboard !"
+  24259  World of Warcraft in Windowed/Maximized OpenGL mode takes 100% cpu
+  24267  Touhou 12.3 Hisoutensoku: Don't draw some sprites.
+  24695  Saira crashes when fullscreen mode is selected
+  25164  Sound dies on video in binkplay 1.0 after mouse has been moved outside window/video paused
+  25324  GL_INVALID_OPERATION (0x502) on x86_64 installations.
+  25447  Men of War does not let me select anti-aliasing options
+  26416  Fullscreen problems with Phantasy Star Online
+  26613  painkiller redemption steam mouse wheel not working
+  26872  Cannot create new profile in Dawn of War demo
+  27220  Internet Explorer 8 always show error message on startup
+  27293  PSO:BB - Cannot type a character name during character creation
+  27609  GTA Vice City hangs in initial menu
+  28087  foobar 2000: Crashes when editing tags (with configured media library)
+  28598  ArchiCAD 12: crashes when creating a new file or open an existing one
+  28801  stack_set_frame_internal passes undefined value into SymSetContext()?
+  29167  Star Wars: The Old Republic launcher locks up on icon highlighting
+  29689  Crash wincfg on graphics tab with LC_ALL=ja_JP
+  29869  Re-Volt is missing an HUD element
+  29883  Game created with RPG Tkool VX Ace (Japanese version of RPG Maker VX Ace): can not write save data (Save*.rvdata2)
+  29949  PAF (Personal Ancestral File) help viewer unhandled page fault
+  29981  Galactic Civilizations 2 is unplayable due to possible severe memory leak
+  29992  Rally Trophy: crashes on startup when Logitech G25 plugged in
+  30038  Detect CPU speed by using sysctl "hw.clockrate" instead of "dev.cpu.0.freq"
+  30040  comctl32/monthcal test fails on leap years?
+  30053  Finale 2012 font spacing is too wide
 
 ----------------------------------------------------------------
 
-Changes since 1.4-rc4:
+Changes since 1.4-rc5:
 
 Alex Henrie (1):
-      po: Update Catalan translation.
+      po: Fix spelling errors in Catalan translation.
 
-Alexandre Julliard (7):
-      gdi32: Paint everything in ExtFloodFill when the DIB doesn't have a clip region.
-      gdi32: Don't paint the text rectangle in transparent mode unless a rectangle is explicitly specified.
-      gdi32: Avoid overflows for invalid coordinates in line clipping.
-      wineps: Convert path points to device coords since GetPath returns logical coords.
-      comdlg32: Avoid crash when driver name doesn't contain a backslash.
-      gdi32: Use 64-bit values when computing ellipses to avoid overflows.
-      gdi32: Avoid using uninitialized value in DIB pattern enhmetafile record.
+Alexander Morozov (1):
+      msvcr90: realloc can move memory block.
 
-Andrew Eikum (1):
-      wineoss.drv: Fix DeleteTimerQueueTimer usage.
+Alexandre Julliard (3):
+      README: Updates.
+      gdi32: Fix missing increment of integer data in GetCharABCWidthsFloat.
+      Updated the authors list.
 
-André Hentschel (1):
-      progman: Remove dead code.
+Aric Stewart (1):
+      usp10: Better handle 0 cases when caching scripts, languages and features.
 
 Aurimas Fišeras (1):
       po: Update Lithuanian translation.
 
-Christian Costa (5):
-      d3dxof: Add tests for IDirectXFileData_GetName.
-      d3dxof: Fix parsing of empty array + tests.
-      d3dxof: Accept bigger names for objects.
-      d3dxof: Fix leaking of IDirectXFileObject object in tests.
-      d3dxof: Make sure the returned object pointer is null when there is no more object.
+Austin English (1):
+      ntdll: Use proper CPU speed detection on FreeBSD.
 
-Detlef Riekenberg (1):
-      commdlg: Fix GlobalReAlloc16 parameter order.
+Bruno Jesus (1):
+      imm32/tests: Add ImmGetDescription tests.
 
-Dmitry Timoshkov (2):
-      kernel32: Add a test to show that NtMapViewOfSection should not perform an image relocation.
-      kernel32: Add a test for LoadLibrary called on a not DLL image.
+Christian Costa (1):
+      d3dxof: Empty arrays can have the semicolon at the end or not so handle both cases and add tests for them.
 
-Eduardo Garcia (1):
-      po: Spanish translation update.
+Eduardo García (4):
+      po: Update Spanish translation.
+      po: Update Spanish translation.
+      po: Update Spanish translation.
+      po: Update Spanish translation.
 
-Eduardo García (1):
-      po: Spanish translation update.
+Fernando Martins (3):
+      po: Update Portuguese translation.
+      po: Update Portuguese translation.
+      po: Update Portuguese translation.
 
-Eric Pouech (1):
-      kernel32: Enhance bare fd check by checking that the handle is a real console handle.
-
-Francois Gouget (21):
-      comctl32/tests: Make cbt_hook_proc() static.
-      winedbg: The winedbg debug channel is unused in crashdlg.c so remove it.
-      winex11: The x11drv debug channel is unused in pen.c so remove it.
-      shell32: Make extracticon_create() static.
-      msxml3/tests: Make test_XPath() static.
-      po: Use full width full stops in the Chinese (Taiwan) translation.
-      po: Mark a couple of incomplete / invalid Chinese (Taiwan) translations as fuzzy.
-      po: Mark an incomplete Chinese (PRC) translation as fuzzy.
-      po: Use full width full stops in the Chinese (PRC) translation.
-      po: Remove some invalid shell folder path translations from the Chinese (PRC) translation.
-      po: Fix some typography issues in the Chinese (PRC) translation.
-      po: Fix some typography issues in the Chinese (Taiwan) translation.
-      po: The msiexec usage should be translated to Hebrew.
-      po: Don't translate the name or options of command line tools.
-      po: Fix a couple of line wrapping issues in the Lithuanian translation.
-      po: Restore some 'About' Norwegian Bokmål translations or improve the suggestions.
-      po: Restore or add some 'Yes/No' Norwegian Bokmål translations.
-      po: Remove English strings from the Polish shell folder path translations.
-      po: Remove a few spaces before question marks in the Polish translation.
-      po: Remove English strings from the Japanese shell folder path translations.
-      po: Fix some typography issues in the Slovak translation.
+Francois Gouget (36):
+      ddraw/tests: Fix compilation on systems that don't support nameless unions.
+      po: The Thai 'Time/Date' translation is incomplete so mark it as fuzzy.
+      po: Remove or mark as fuzzy the invalid Danish shell folder names.
+      po: Remove a duplicate space after a comma in the German translation.
+      po: Fix the trailing ellipses in the Japanese translation.
+      po: Fix a line wrapping and ellipsis issue in the Japanese translation.
+      po: Fix a typography issue in the Japanese translation.
+      po: Tweak the wrapping of the cmd MOVE Norwegian Bokmål usage message translation.
+      po: Fix some typography issues in the Norwegian Bokmål translation.
+      po: Remove some invalid Norwegian Bokmål shell folder name translations.
+      po: Wrap the 'Caps Lock' Catalan warning tooltip like the English one.
+      po: Mark an invalid Korean translation as fuzzy.
+      po: Add a couple of missing newlines in the Korean translation.
+      po: Fix some typography issues in the Korean translation.
+      po: Remove a couple of duplicate spaces from the Polish translation.
+      po: Remove the copyright notice from the second start.exe Polish translation.
+      po: Fix some space issues in the Portuguese (Brazil) translation.
+      po: Tweak the wrapping of a few Portuguese (Brazil) translations.
+      po: Mark an incomplete Portuguese (Brazil) translation as fuzzy.
+      po: Fix a few typography issues in the Portuguese (Brazil) translation.
+      po: Tweak the wrapping of a few Russian translations.
+      po: Fix some typography issues in the Russian translation.
+      po: Fix some typography issues in the Turkish translation.
+      po: Fix a line wrapping issue in the Slovenian translation.
+      po: Fix the references to the LGPL in the Slovenian translation.
+      po: Remove English strings from the Ukrainian shell folder name translations.
+      po: Fix some space and typography issues in the Ukrainian translation.
+      po: A linefeed was missing in the Russian translation.
+      po: Add full stops to the VERIFY ON / OFF usage lists.
+      po: Add a missing linefeed to a Chinese (Taiwan) translation.
+      po: Remove some invalid Portuguese (Portugal) shell folder name translations.
+      po: Fix the Directory key mapping and Yes/No/All questions in the Hungarian translation.
+      po: Remove a couple of duplicate spaces in the Hungarian translation.
+      po: Use semicolons for the Slovenian comdlg32 printer status enumeration.
+      po: Use commas in the Greek translation of comdlg32's printer status enumeration.
+      start: Remove the license and the /L option.
 
 Frédéric Delanoy (1):
-      comctl32/tests: Use initialized window handle when rebuilding toolbar (Coverity).
-
-Gaurav Jain (1):
-      wined3d: Recognize Nvidia GeForce 320M, 8600M GT & 9400M.
+      readme: Update French translation.
 
 Gustavo Henrique Milaré (1):
       po: Update Brazilian Portuguese translation.
 
-Henri Verbeet (7):
-      wined3d: Don't take the wined3d mutex during WM_DISPLAYCHANGE either.
-      ddraw: Always pin surfaces.
-      wined3d: Specify the depth range in surface_depth_blt().
-      wined3d: Disable z-clipping for transformed vertices when WINED3D_RS_ZENABLE is disabled.
-      ddraw/tests: Add tests for z-clipping with D3DRENDERSTATE_ZENABLE disabled.
-      d3d8/tests: Add tests for z-clipping with D3DRS_ZENABLE disabled.
-      d3d9/tests: Add tests for z-clipping with D3DRS_ZENABLE disabled.
+Hasan Kiran (1):
+      po: Update Turkish translation.
 
-Huw Davies (1):
-      ole32: Trace the drop effect in hex.
+Henri Verbeet (5):
+      wined3d: Support color keyed WINED3DFMT_B8G8R8A8_UNORM surfaces.
+      ddraw/tests: Add tests for color keyed texturing with an alpha channel.
+      wined3d: Implement resetting the device window in wined3d_device_reset().
+      d3d8/tests: Add some tests for resetting the device window.
+      d3d9/tests: Add some tests for resetting the device window.
 
-Jaka Kranjc (2):
-      po: Update Slovenian translation.
-      po: Fixed remaining Slovenian true positives in the winepo error report.
+Hwang YunSong (2):
+      po: Update Korean translation.
+      po: Update Korean translation.
 
-Jan-Peter Nilsson (1):
-      winhttp: Set the context on the request handle earlier.
+Ilia Mirkin (2):
+      po: Fix typo in Russian translation.
+      po: Fix ENTER -> Enter, CMD help text, remove fuzzy annotations.
 
-Juan Lang (1):
-      cryptnet: Don't call HttpEndRequest on a request that was never sent.
+Ivan Vojtko (3):
+      po: Update Slovak translation.
+      po: Update Slovak translation.
+      po: Update Slovak translation.
 
-Julian Rüger (1):
+Jacek Caban (1):
+      ieframe: Fixed reallocation size.
+
+Julian Rüger (2):
       po: Update German translation.
+      readme: Update German translation.
 
-Jörg Höhle (1):
-      mmdevapi/tests: Fix some render test failures.
-
-Kusanagi Kouichi (1):
-      gdi32: Initialize font signature of "System" font link.
-
-Lauri Kenttä (2):
+Lauri Kenttä (6):
+      po: Update Swedish translation.
       po: Update Finnish translation.
+      readme: Update Finnish translation.
+      readme: Update Swedish translation.
       po: Update Finnish translation.
+      po: Update Swedish translation.
 
 Luca Bennati (2):
       po: Update Italian translation.
-      po: Update Italian translation.
+      readme: Update Italian translation.
+
+Lucas Zawacki (1):
+      dinput: Search for device objects of the correct type in BuildActionMap.
 
 Maarten Lankhorst (1):
-      mmdevapi: Fix exclusive test.
+      mmdevapi: Add tests for checking events to capture.
 
-Marcus Meissner (2):
-      user32: Remove duplicated call to GetSystemMenu (Coverity).
-      quartz: Fixed sizeof()s to IsBadReadPtr (Coverity).
+Martin Jesper Low Madsen (1):
+      po: Update Danish translation.
 
-Michael Stefaniuc (1):
-      avicap32: Add "stub" to the FIXME in a no yet implemented function.
+Milan Ševčík (1):
+      po: Updating Czech translation.
 
-Nikolay Sivov (3):
-      wpp: Properly use va_start/va_end around vsnprintf().
-      msxml3/tests: Some tests for IMXAttributes::addAttribute().
-      msxml3/tests: Tests for IMXAttributes::clear().
+Nikolay Sivov (4):
+      msxml3: Properly escape character data in text nodes.
+      comctl32/tests: Fix test failures running on February 29.
+      msxml3: Return default namespace uri for 'xml'-prefixed attributes.
+      po: Russian translation update.
 
-Piotr Caban (1):
-      urlmon/tests: Fixed protocol tests on IE9.
-
-Ruei-Yuan Lu (2):
-      po: Update Chinese (Taiwan) translation.
+Ruei-Yuan Lu (1):
       po: Update Chinese (Taiwan) translation.
 
-Thomas Faber (1):
-      user32/tests: Do not depend on argument evaluation order.
+Stefan Dösinger (1):
+      ddraw/tests: LONG/ULONG and error checking fixes.
 
-Zoltan Nagy (2):
+Vincent Povirk (1):
+      shell32: Properly double-null-terminate the filter in the run/browse dialog.
+
+Zoltan Nagy (3):
+      po: Update Hungarian translation.
       po: Update Hungarian translation.
       po: Update Hungarian translation.
 
