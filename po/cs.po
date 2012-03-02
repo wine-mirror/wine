@@ -22,6 +22,8 @@ msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
 msgstr ""
+"Pro instalaci nového programu z diskety, CD mechaniky nebo pevného disku "
+"klikněte na Instalovat."
 
 #: appwiz.rc:59
 msgid "&Install..."
@@ -33,16 +35,17 @@ msgid ""
 "to modify its installed components, select it from the list and click Change/"
 "Remove."
 msgstr ""
+"Následující software je možné automaticky odstranit. Pro odstranění nějakého "
+"programu nebo pro změnu jeho nainstalovaných komponent ho vyberte v seznamu "
+"a klikněte na Změnit/Odebrat."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "Informace"
+msgstr "I&nformace o podpoře"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
-#, fuzzy
 msgid "&Modify..."
-msgstr "Z&měnit"
+msgstr "Z&měnit..."
 
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
@@ -50,9 +53,8 @@ msgid "&Remove"
 msgstr "Odeb&rat"
 
 #: appwiz.rc:72
-#, fuzzy
 msgid "Support Information"
-msgstr "Informace"
+msgstr "Informace o podpoře"
 
 #: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:226 comdlg32.rc:256
 #: comdlg32.rc:299 comdlg32.rc:353 comdlg32.rc:392 comdlg32.rc:446
@@ -74,7 +76,7 @@ msgstr "OK"
 
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
-msgstr ""
+msgstr "Následující informace mohou být využity k získání podpory pro %s:"
 
 #: appwiz.rc:77
 msgid "Publisher:"
@@ -122,6 +124,13 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
+"Wine se nepodařilo najít balíček Gecko potřebný pro správnou funkčnost "
+"aplikací využívajících HTML. Wine ho pro Vás může automaticky stáhnout a "
+"nainstalovat.\n"
+"\n"
+"Poznámka: Je doporučeno využít namísto toho balíček Vaší distribuce. Pro "
+"více detailů čtěte <a href=\"http://wiki.winehq.org/Gecko\">http://wiki."
+"winehq.org/Gecko</a>."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -156,19 +165,21 @@ msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
+"Umožňuje instalovat nový software nebo odstranit existující software z "
+"Vašeho počítače."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Programy"
 
 #: appwiz.rc:32
-#, fuzzy
 msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"Spuštění příkazu %s selhalo, možná příčína je chybějící aplikace.\n"
-"Přejete si odstranit instalační záznam z registru?"
+"Spuštění odinstalování %s selhalo, možná příčína je předchozí smazání "
+"aplikace.\n"
+"Přejete si odstranit záznam odinstalace tohoto programu z registru?"
 
 #: appwiz.rc:33
 #, fuzzy
@@ -223,6 +234,8 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
+"Neočekávaný kontrolní součet staženého souboru. Instalace poškozeného "
+"souboru byla přerušena."
 
 #: avifil32.rc:39
 msgid "Compress options"
@@ -278,7 +291,7 @@ msgstr "nekomprimovaný"
 
 #: browseui.rc:25
 msgid "Canceling..."
-msgstr ""
+msgstr "Ukončuji..."
 
 #: comctl32.rc:49 winefile.rc:159
 msgid "Properties for %s"
@@ -728,7 +741,7 @@ msgstr "Nastavení stránky"
 
 #: comdlg32.rc:432
 msgid "&Tray:"
-msgstr ""
+msgstr "Zásobník"
 
 #: comdlg32.rc:435 wineps.rc:32
 msgid "&Portrait"
@@ -937,13 +950,12 @@ msgid "Unreadable Entry"
 msgstr "Nečitelný vstup"
 
 #: comdlg32.rc:54
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
-"Tato hodnota přesahuje možnosti stránky.\n"
-"Zadejte prosím hodnotu mezi %d a %d."
+"Tato hodnota přesahuje velikost stránky.\n"
+"Zadejte prosím hodnotu mezi %1!d! a %2!d!."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -1152,36 +1164,36 @@ msgid "mm"
 msgstr "mm"
 
 #: credui.rc:42
-#, fuzzy
 msgid "&User name:"
-msgstr "Podle &Názvu"
+msgstr "&Uživatelské jméno"
 
 #: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
-msgstr ""
+msgstr "&Heslo"
 
 #: credui.rc:47
 msgid "&Remember my password"
-msgstr ""
+msgstr "&Pamatovat si heslo"
 
 #: credui.rc:27
-#, fuzzy
 msgid "Connect to %s"
-msgstr "Připojit &síťové zařízení"
+msgstr "Připojit síťové zařízení %s"
 
 #: credui.rc:28
 msgid "Connecting to %s"
-msgstr ""
+msgstr "Připojuji se k %s"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
-msgstr ""
+msgstr "Přihlášení proběhlo úspěšně"
 
 #: credui.rc:30
 msgid ""
 "Make sure that your user name\n"
 "and password are correct."
 msgstr ""
+"Ujistěte se, že jste zadali\n"
+"správné jméno a heslo."
 
 #: credui.rc:32
 msgid ""
@@ -1193,7 +1205,7 @@ msgstr ""
 
 #: credui.rc:31
 msgid "Caps Lock is On"
-msgstr ""
+msgstr "Caps Lock je zapnutý"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
@@ -8062,7 +8074,7 @@ msgstr "Programy"
 
 #: shell32.rc:214
 msgid "My Pictures"
-msgstr ""
+msgstr "Moje obrázky"
 
 #: shell32.rc:215
 #, fuzzy
@@ -8071,7 +8083,7 @@ msgstr "Kopíruji soubory..."
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
-msgstr ""
+msgstr "Dokumenty"
 
 #: shell32.rc:217
 msgid "Administrative Tools"
@@ -8079,16 +8091,15 @@ msgstr ""
 
 #: shell32.rc:218
 msgid "Music"
-msgstr ""
+msgstr "Hudba"
 
 #: shell32.rc:219
 msgid "Pictures"
-msgstr ""
+msgstr "Obrázky"
 
 #: shell32.rc:220
-#, fuzzy
 msgid "Videos"
-msgstr "video"
+msgstr "Video"
 
 #: shell32.rc:213
 #, fuzzy
@@ -8098,7 +8109,7 @@ msgstr "Programy"
 #: shell32.rc:221
 #, fuzzy
 msgid "Contacts"
-msgstr "&Obsah"
+msgstr "Obsah"
 
 #: shell32.rc:222 winefile.rc:112
 msgid "Links"
@@ -8110,11 +8121,11 @@ msgstr ""
 
 #: shell32.rc:224
 msgid "Playlists"
-msgstr ""
+msgstr "Seznamy skladeb"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
-msgstr ""
+msgstr "Stav"
 
 #: shell32.rc:149
 #, fuzzy
@@ -8132,11 +8143,11 @@ msgstr "Ukázka"
 
 #: shell32.rc:226
 msgid "Sample Pictures"
-msgstr ""
+msgstr "Ukázky obrázků"
 
 #: shell32.rc:227
 msgid "Sample Playlists"
-msgstr ""
+msgstr "Ukázky seznamů skladeb"
 
 #: shell32.rc:228
 #, fuzzy
@@ -10423,7 +10434,7 @@ msgstr "&Obsah"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr ""
+msgstr "O &aplikaci Poznámkový blok"
 
 #: notepad.rc:97
 msgid "Page Setup"
@@ -10438,9 +10449,8 @@ msgid "&Footer:"
 msgstr "&Zápatí:"
 
 #: notepad.rc:104
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "&Okraje:"
+msgstr "Okraje (v milimetrech)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10948,22 +10958,16 @@ msgid "O&pen\tEnter"
 msgstr "O&tevřít\tEnter"
 
 #: progman.rc:32 winefile.rc:27
-#, fuzzy
 msgid "&Move...\tF7"
-msgstr ""
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"Př&esunout...\tF7\n"
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"&Přesunout...\tF7"
+msgstr "&Přesunout...\tF7"
 
 #: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
 msgstr "&Kopírovat...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "V&lastnosti...\tAlt+Enter"
+msgstr "V&lastnosti\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
@@ -11198,24 +11202,24 @@ msgstr ""
 
 #: reg.rc:31
 msgid "The operation completed successfully\n"
-msgstr ""
+msgstr "Operace byla úspěšně dokončena\n"
 
 #: reg.rc:32
 msgid "Error: Invalid key name\n"
-msgstr ""
+msgstr "Chyba: Neplatný název klíče\n"
 
 #: reg.rc:33
 msgid "Error: Invalid command line parameters\n"
-msgstr ""
+msgstr "Chyba: Neplatné parametry příkazové řádky\n"
 
 #: reg.rc:34
 msgid "Error: Unable to add keys to remote machine\n"
-msgstr ""
+msgstr "Chyba: Nepodařilo se přidat klíče na vzdálený stroj\n"
 
 #: reg.rc:35
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
-msgstr ""
+msgstr "Chyba: Systém nemohl najít specifikovaný klíč registru nebo hodnotu\n"
 
 #: regedit.rc:31
 msgid "&Registry"
@@ -11290,7 +11294,7 @@ msgstr "Odeb&rat oblíbené..."
 
 #: regedit.rc:79
 msgid "&About Registry Editor"
-msgstr "&O aplikaci Registry Editor"
+msgstr "&O aplikaci Editor registru"
 
 #: regedit.rc:88
 #, fuzzy
@@ -11298,9 +11302,8 @@ msgid "Modify Binary Data..."
 msgstr "Upravit binární data"
 
 #: regedit.rc:215
-#, fuzzy
 msgid "Export registry"
-msgstr "&Exportovat soubor registru..."
+msgstr "Exportovat soubor registru"
 
 #: regedit.rc:217
 msgid "S&elected branch:"
@@ -11308,29 +11311,27 @@ msgstr ""
 
 #: regedit.rc:226
 msgid "Find:"
-msgstr ""
+msgstr "Hledat:"
 
 #: regedit.rc:228
 msgid "Find in:"
-msgstr ""
+msgstr "Hledat v:"
 
 #: regedit.rc:229
 msgid "Keys"
-msgstr ""
+msgstr "Klíče"
 
 #: regedit.rc:230
-#, fuzzy
 msgid "Value names"
-msgstr "Název:"
+msgstr "Názvy hodnot"
 
 #: regedit.rc:231
-#, fuzzy
 msgid "Value content"
-msgstr "Název:"
+msgstr "Obsah hodnot"
 
 #: regedit.rc:232
 msgid "Whole string only"
-msgstr ""
+msgstr "Pouze celý výraz"
 
 #: regedit.rc:239
 #, fuzzy
@@ -11343,9 +11344,8 @@ msgid "Name:"
 msgstr "&Jméno"
 
 #: regedit.rc:250
-#, fuzzy
 msgid "Remove Favorite"
-msgstr "Odeb&rat oblíbené..."
+msgstr "Odebrat oblíbené"
 
 #: regedit.rc:261
 msgid "Edit String"
@@ -11369,16 +11369,15 @@ msgstr "Základ"
 
 #: regedit.rc:282
 msgid "Hexadecimal"
-msgstr "šestnáctkový"
+msgstr "Šestnáctkový"
 
 #: regedit.rc:283
 msgid "Decimal"
 msgstr "Desitkový"
 
 #: regedit.rc:290
-#, fuzzy
 msgid "Edit Binary"
-msgstr "Edice"
+msgstr "Úprava binární položky"
 
 #: regedit.rc:303
 #, fuzzy
@@ -11435,7 +11434,7 @@ msgstr "&Importovat soubor registru..."
 
 #: regedit.rc:194
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr ""
+msgstr "Soubory registrů Win9x/NT4 (REGEDIT4)"
 
 #: regedit.rc:201
 msgid "(Default)"
@@ -11471,7 +11470,7 @@ msgstr "Ukáže nebo skryje status bar"
 
 #: regedit.rc:164
 msgid "Change position of split between two panes"
-msgstr ""
+msgstr "Změní pozici oddělovače mezi dvěma panely"
 
 #: regedit.rc:165
 msgid "Refreshes the window"
@@ -12507,6 +12506,7 @@ msgstr "WineMine"
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr ""
+"Konfigurace Wine umístěná v %s je právě aktualizována, prosím čekejte..."
 
 #: winecfg.rc:132
 msgid ""
@@ -12515,18 +12515,22 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
+"Tento program je svobodným softwarem; můžete ho distribuovat a nebo "
+"modifikovat v souladu s licencí GNU Lesser General Public License ve znění "
+"publikovaném Free Software Foundation; platná je verze 2.1 zmíněné licence "
+"nebo (pokud je lépe vyhovující) jakákoli novější verze."
 
 #: winecfg.rc:134
 msgid "Windows registration information"
-msgstr ""
+msgstr "Informace o registraci Windows"
 
 #: winecfg.rc:135
 msgid "&Owner:"
-msgstr ""
+msgstr "&Vlastník:"
 
 #: winecfg.rc:137
 msgid "Organi&zation:"
-msgstr ""
+msgstr "&Organizace:"
 
 #: winecfg.rc:145
 #, fuzzy
@@ -12557,17 +12561,16 @@ msgid "&Windows Version:"
 msgstr "Verze &Windows:"
 
 #: winecfg.rc:160
-#, fuzzy
 msgid "Window settings"
-msgstr " Nastavení oken "
+msgstr "Nastavení oken"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr ""
+msgstr "Automaticky odchytávat myš v režimu celé obrazovky"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr ""
+msgstr "Povolit správci oken &dekorovat okna"
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
@@ -12583,11 +12586,11 @@ msgstr "Velikost desktopu:"
 
 #: winecfg.rc:171
 msgid "Screen resolution"
-msgstr ""
+msgstr "Rozlišení obrazovky"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr ""
+msgstr "Toto je testovací text - 10 bodů, Tahoma"
 
 #: winecfg.rc:182
 #, fuzzy
@@ -12605,7 +12608,7 @@ msgstr ""
 
 #: winecfg.rc:185
 msgid "&New override for library:"
-msgstr "Nová náhrada pro DLL:"
+msgstr "&Nová náhrada knihovny:"
 
 #: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
@@ -12613,7 +12616,7 @@ msgstr "Přid&at"
 
 #: winecfg.rc:188
 msgid "Existing &overrides:"
-msgstr "Stávající náhrady:"
+msgstr "&Stávající náhrady:"
 
 #: winecfg.rc:190
 msgid "&Edit..."
@@ -12621,12 +12624,11 @@ msgstr "&Upravit..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
-msgstr ""
+msgstr "Úprava náhrady"
 
 #: winecfg.rc:199
-#, fuzzy
 msgid "Load order"
-msgstr " Pořadí nahravání "
+msgstr "Pořadí nahravání"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -12638,25 +12640,23 @@ msgstr "&Nativní (Windows)"
 
 #: winecfg.rc:202
 msgid "Bui&ltin then Native"
-msgstr "&Vestavěná (Wine)"
+msgstr "V&estavěná pak nativní"
 
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
-msgstr "Nati&vní a pak vestavěná"
+msgstr "N&ativní a pak vestavěná"
 
 #: winecfg.rc:204
 msgid "&Disable"
 msgstr "&Zakázat"
 
 #: winecfg.rc:211
-#, fuzzy
 msgid "Select Drive Letter"
-msgstr "Písmo výběru"
+msgstr "Vyberte písmeno disku"
 
 #: winecfg.rc:223
-#, fuzzy
 msgid "Drive mappings"
-msgstr " Mapování disků "
+msgstr "Mapování disků"
 
 #: winecfg.rc:224
 msgid ""
@@ -12682,7 +12682,7 @@ msgstr "Zobrazit rozšířené možnosti"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr ""
+msgstr "&Zařízení"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12698,40 +12698,39 @@ msgstr "&Sériové číslo:"
 
 #: winecfg.rc:249
 msgid "Show &dot files"
-msgstr "Zobrazit soubory s tečkou na začátku názvu"
+msgstr "Zo&brazit soubory s tečkou na začátku názvu"
 
 #: winecfg.rc:256
 msgid "Driver diagnostics"
-msgstr ""
+msgstr "Diagnostika ovladače"
 
 #: winecfg.rc:258
 msgid "Defaults"
-msgstr ""
+msgstr "Výchozí nastavení"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr ""
+msgstr "Výstupní zařízení:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr ""
+msgstr "Zařízení hlasového výstupu:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr ""
+msgstr "Vstupní zařízení:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr ""
+msgstr "Zařízení hlasového vstupu:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
-msgstr ""
+msgstr "O&testovat zvuk"
 
 #: winecfg.rc:274
-#, fuzzy
 msgid "Appearance"
-msgstr " Vzhled "
+msgstr "Vzhled"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -12809,7 +12808,7 @@ msgstr "Zvolte soubor s tématem vzhledu"
 
 #: winecfg.rc:45
 msgid "Folder"
-msgstr "Domácí adresáře"
+msgstr "Adresář"
 
 #: winecfg.rc:46
 msgid "Links to"
@@ -13377,9 +13376,8 @@ msgid "Re&name..."
 msgstr "Př&ejmenovat..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "V&lastnosti...\tAlt+Enter"
+msgstr "V&lastnosti\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
