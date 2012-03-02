@@ -6,8 +6,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
+"PO-Revision-Date: 2012-03-03 01:29+0200\n"
+"Last-Translator: zeugma\n"
 "Language-Team: none\n"
 "Language: Turkish\n"
 "MIME-Version: 1.0\n"
@@ -37,12 +37,11 @@ msgstr ""
 
 #: appwiz.rc:64
 msgid "&Support Information"
-msgstr ""
+msgstr "&Destek Bilgileri"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
-#, fuzzy
 msgid "&Modify..."
-msgstr "&Değiştir"
+msgstr "&Değiştir..."
 
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
@@ -51,7 +50,7 @@ msgstr "&Kaldır"
 
 #: appwiz.rc:72
 msgid "Support Information"
-msgstr ""
+msgstr "Destek Bilgileri"
 
 #: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:226 comdlg32.rc:256
 #: comdlg32.rc:299 comdlg32.rc:353 comdlg32.rc:392 comdlg32.rc:446
@@ -77,7 +76,7 @@ msgstr ""
 
 #: appwiz.rc:77
 msgid "Publisher:"
-msgstr ""
+msgstr "Yayımcı:"
 
 #: appwiz.rc:78 winefile.rc:168
 msgid "Version:"
@@ -85,7 +84,7 @@ msgstr "Sürüm:"
 
 #: appwiz.rc:79
 msgid "Contact:"
-msgstr ""
+msgstr "Bağlantı:"
 
 #: appwiz.rc:80
 msgid "Support Information:"
@@ -97,11 +96,11 @@ msgstr ""
 
 #: appwiz.rc:82
 msgid "Readme:"
-msgstr ""
+msgstr "Benioku:"
 
 #: appwiz.rc:83
 msgid "Product Updates:"
-msgstr ""
+msgstr "Ürün Güncellemeleri:"
 
 #: appwiz.rc:84
 msgid "Comments:"
@@ -112,7 +111,6 @@ msgid "Wine Gecko Installer"
 msgstr "Wine Gecko Kurucusu"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -122,12 +120,6 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"Wine could not find a Gecko package which is needed for applications "
-"embedding HTML to work correctly. Wine can automatically download and "
-"install it for you.\n"
-"\n"
-"Note: it's recommended to use distro packages instead. See http://wiki."
-"winehq.org/Gecko for details."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -155,7 +147,7 @@ msgstr "İptal"
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
-msgstr ""
+msgstr "Programları Ekle/Kaldır"
 
 #: appwiz.rc:29
 msgid ""
@@ -177,9 +169,8 @@ msgstr ""
 "Sistem kaydından bu kaldırma girişini silmek ister misiniz?"
 
 #: appwiz.rc:33
-#, fuzzy
 msgid "Not specified"
-msgstr "Komut belirtilmemiş."
+msgstr "belirlenmedi"
 
 #: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:106
 msgid "Name"
@@ -187,11 +178,11 @@ msgstr "Ad"
 
 #: appwiz.rc:36
 msgid "Publisher"
-msgstr ""
+msgstr "Yayıncı"
 
 #: appwiz.rc:37 cryptui.rc:51
 msgid "Version"
-msgstr ""
+msgstr "Sürüm"
 
 #: appwiz.rc:38
 #, fuzzy
@@ -208,9 +199,8 @@ msgid "All files (*.*)"
 msgstr "Tüm dosyalar (*.*)"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "Paylaşımı S&il..."
+msgstr "&Değiştir/Kaldır"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -244,7 +234,7 @@ msgstr ""
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
-msgstr ""
+msgstr "kareler"
 
 #: avifil32.rc:49
 msgid "Current format:"
@@ -929,13 +919,12 @@ msgid "Unreadable Entry"
 msgstr "Okunamayan Giriş"
 
 #: comdlg32.rc:54
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Bu değer sayfa aralığında değil.\n"
-"Lütfen %d ve %d değerleri arasında bir değer girin."
+"Lütfen %1!d! ve %2!d! değerleri arasında bir değer girin."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -950,9 +939,8 @@ msgstr ""
 "Lütfen kenarlıkları yeniden girin."
 
 #: comdlg32.rc:60
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "'Kopya sayısı' değeri boş olamaz."
+msgstr "'Kopya sayısı' alanı boş olamaz."
 
 #: comdlg32.rc:62
 msgid ""
@@ -995,9 +983,8 @@ msgstr ""
 "yazıcı sürücüsü kurmalısınız. Lütfen bir tane kurun ve yeniden deneyin."
 
 #: comdlg32.rc:137
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "%d ile %d arasında bir yazı tipi boyutu seçin."
+msgstr "%1!d! ile %2!d! arasında bir yazı tipi boyutu seçin."
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
@@ -1138,7 +1125,7 @@ msgstr "Kenarlıklar [mm]"
 #: comdlg32.rc:77 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
-msgstr ""
+msgstr "mm"
 
 #: credui.rc:42
 msgid "&User name:"
@@ -1146,11 +1133,11 @@ msgstr "&Kullanıcı adı:"
 
 #: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
-msgstr ""
+msgstr "&Parola:"
 
 #: credui.rc:47
 msgid "&Remember my password"
-msgstr ""
+msgstr "&Parolamı hatırla"
 
 #: credui.rc:27
 msgid "Connect to %s"
@@ -1236,7 +1223,7 @@ msgstr ""
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
-msgstr ""
+msgstr "Sertifika Uzantıları"
 
 #: crypt32.rc:41
 msgid "Next Update Location"
@@ -1248,7 +1235,7 @@ msgstr ""
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr ""
+msgstr "E-posta Adresi"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
@@ -1309,7 +1296,7 @@ msgstr ""
 
 #: crypt32.rc:58
 msgid "Certificate Type"
-msgstr ""
+msgstr "Sertifika Türü"
 
 #: crypt32.rc:59
 msgid "Certificate Manifold"
@@ -1349,11 +1336,11 @@ msgstr ""
 
 #: crypt32.rc:68
 msgid "Country/Region"
-msgstr ""
+msgstr "Ülke/Bölge"
 
 #: crypt32.rc:69
 msgid "Organization"
-msgstr ""
+msgstr "Organizasyon"
 
 #: crypt32.rc:70
 msgid "Organizational Unit"
@@ -1397,7 +1384,7 @@ msgstr ""
 
 #: crypt32.rc:80
 msgid "Serial Number"
-msgstr ""
+msgstr "Seri Numarası"
 
 #: crypt32.rc:81
 msgid "CA Version"
@@ -1417,7 +1404,7 @@ msgstr ""
 
 #: crypt32.rc:85
 msgid "Windows Product Update"
-msgstr ""
+msgstr "Windows Ürün Güncelleme"
 
 #: crypt32.rc:86
 msgid "Enrollment Name Value Pair"
@@ -1613,7 +1600,7 @@ msgstr ""
 
 #: crypt32.rc:134
 msgid "Client Information"
-msgstr ""
+msgstr "İstemci Bilgisi"
 
 #: crypt32.rc:135
 msgid "Server Authentication"
@@ -1769,31 +1756,31 @@ msgstr ""
 
 #: crypt32.rc:181
 msgid "Certificate Serial Number="
-msgstr ""
+msgstr "Sertifika Seri Numarası="
 
 #: crypt32.rc:182
 msgid "Other Name="
-msgstr ""
+msgstr "Diğer Adı="
 
 #: crypt32.rc:183
 msgid "Email Address="
-msgstr ""
+msgstr "E-posta Adresi="
 
 #: crypt32.rc:184
 msgid "DNS Name="
-msgstr ""
+msgstr "DNS Adı="
 
 #: crypt32.rc:185
 msgid "Directory Address"
-msgstr ""
+msgstr "Dizin Adresi"
 
 #: crypt32.rc:186
 msgid "URL="
-msgstr ""
+msgstr "URL="
 
 #: crypt32.rc:187
 msgid "IP Address="
-msgstr ""
+msgstr "IP Adresi="
 
 #: crypt32.rc:188
 msgid "Mask="
@@ -1839,7 +1826,7 @@ msgstr ""
 
 #: crypt32.rc:198
 msgid "Access Method="
-msgstr ""
+msgstr "Erişim Yöntemi="
 
 #: crypt32.rc:199
 msgctxt "Online Certificate Status Protocol"
@@ -1852,11 +1839,11 @@ msgstr ""
 
 #: crypt32.rc:201
 msgid "Unknown Access Method"
-msgstr ""
+msgstr "Bilinmeyen Erişim Methodu"
 
 #: crypt32.rc:202
 msgid "Alternative Name"
-msgstr ""
+msgstr "Alternatif İisim"
 
 #: crypt32.rc:203
 msgid "CRL Distribution Point"
@@ -1868,7 +1855,7 @@ msgstr ""
 
 #: crypt32.rc:205
 msgid "Full Name"
-msgstr ""
+msgstr "Tam Adı"
 
 #: crypt32.rc:206
 msgid "RDN Name"
@@ -2024,7 +2011,7 @@ msgstr ""
 
 #: cryptdlg.rc:35
 msgid "Organization="
-msgstr ""
+msgstr "Organizasyon="
 
 #: cryptdlg.rc:36
 msgid "Notice Number="
@@ -2036,7 +2023,7 @@ msgstr ""
 
 #: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
 msgid "General"
-msgstr ""
+msgstr "Genel"
 
 #: cryptui.rc:188
 msgid "&Install Certificate..."
@@ -2052,7 +2039,7 @@ msgstr "&Göster:"
 
 #: cryptui.rc:202
 msgid "&Edit Properties..."
-msgstr ""
+msgstr "&Özellikleri Düzenle ..."
 
 #: cryptui.rc:203
 msgid "&Copy to File..."
@@ -2072,7 +2059,7 @@ msgstr ""
 
 #: cryptui.rc:215
 msgid "Certificate &status:"
-msgstr ""
+msgstr "Sertifika &durumu:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
@@ -2206,7 +2193,7 @@ msgstr ""
 
 #: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
-msgstr ""
+msgstr "Sertifikalar"
 
 #: cryptui.rc:337
 msgid "I&ntended purpose:"
@@ -2236,7 +2223,7 @@ msgstr "&Görünüm"
 
 #: cryptui.rc:352
 msgid "Advanced Options"
-msgstr ""
+msgstr "Gelişmiş Seçenekler"
 
 #: cryptui.rc:355
 msgid "Certificate purpose"
@@ -2341,11 +2328,11 @@ msgstr ""
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
-msgstr ""
+msgstr "Sertifika"
 
 #: cryptui.rc:28
 msgid "Certificate Information"
-msgstr ""
+msgstr "Sertifika Bilgisi"
 
 #: cryptui.rc:29
 msgid ""
@@ -2417,7 +2404,7 @@ msgstr ""
 
 #: cryptui.rc:45
 msgid "Value"
-msgstr ""
+msgstr "Değer"
 
 #: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
 msgid "<All>"
@@ -2429,11 +2416,11 @@ msgstr ""
 
 #: cryptui.rc:48
 msgid "Extensions Only"
-msgstr ""
+msgstr "Sadece Eklentiler"
 
 #: cryptui.rc:49
 msgid "Critical Extensions Only"
-msgstr ""
+msgstr "Sadece Kritik Eklentile"
 
 #: cryptui.rc:50
 msgid "Properties Only"
@@ -2441,7 +2428,7 @@ msgstr ""
 
 #: cryptui.rc:52
 msgid "Serial number"
-msgstr ""
+msgstr "Seri numarası"
 
 #: cryptui.rc:53
 msgid "Issuer"
@@ -2481,11 +2468,11 @@ msgstr ""
 
 #: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
-msgstr ""
+msgstr "Tanımlama"
 
 #: cryptui.rc:63
 msgid "Certificate Properties"
-msgstr ""
+msgstr "Sertifika Özellikleri"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
@@ -2549,7 +2536,7 @@ msgstr ""
 
 #: cryptui.rc:81
 msgid "Please select a file."
-msgstr ""
+msgstr "Lütfen bir dosya seçin."
 
 #: cryptui.rc:82
 msgid "The file format is not recognized. Please select another file."
@@ -2621,7 +2608,7 @@ msgstr ""
 
 #: cryptui.rc:103
 msgid "Expiration Date"
-msgstr ""
+msgstr "Son Kullanma Tarihi"
 
 #: cryptui.rc:104
 msgid "Friendly Name"
@@ -2787,7 +2774,7 @@ msgstr ""
 
 #: cryptui.rc:160
 msgid "File Format"
-msgstr ""
+msgstr "Dosya Biçimi"
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
@@ -2817,7 +2804,7 @@ msgstr ""
 
 #: cryptui.rc:169
 msgid "Enter Password"
-msgstr ""
+msgstr "Parola Gir"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
@@ -2857,7 +2844,7 @@ msgstr "Aygıtları Yapılandır"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Sıfırla"
 
 #: dinput.rc:48
 msgid "Player"
@@ -2865,7 +2852,7 @@ msgstr ""
 
 #: dinput.rc:49
 msgid "Device"
-msgstr ""
+msgstr "Aygıt"
 
 #: dinput.rc:50
 msgid "Actions"
@@ -2881,7 +2868,7 @@ msgstr ""
 
 #: dinput.rc:34
 msgid "Action"
-msgstr ""
+msgstr "Eylem"
 
 #: dinput.rc:35
 msgid "Object"
@@ -2893,7 +2880,7 @@ msgstr ""
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr ""
+msgstr "%2!u!MB mevcut, %1!u!MB kullanımda"
 
 #: gdi32.rc:25
 msgid "Western"
@@ -2901,43 +2888,43 @@ msgstr ""
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Merkezi Avrupa"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Kril"
 
 #: gdi32.rc:28
 msgid "Greek"
-msgstr ""
+msgstr "Yunanca"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Turkçe"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "İbranice"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Arapça"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Baltık"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamca"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Tayca"
 
 #: gdi32.rc:35
 msgid "Japanese"
-msgstr ""
+msgstr "Japonca"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
@@ -2961,7 +2948,7 @@ msgstr ""
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
@@ -2985,7 +2972,7 @@ msgstr ""
 
 #: gphoto2.rc:35
 msgid "Exit"
-msgstr ""
+msgstr "Çıkış"
 
 #: gphoto2.rc:40
 msgid "Transferring"
@@ -3154,7 +3141,7 @@ msgstr "Sık Kullanılanlara Ekle..."
 
 #: ieframe.rc:57
 msgid "&About Internet Explorer"
-msgstr ""
+msgstr "&İnternet Explorer Hakkında"
 
 #: ieframe.rc:87
 msgid "Open URL"
@@ -3179,7 +3166,7 @@ msgstr "Yazdır..."
 
 #: ieframe.rc:73
 msgid "Address"
-msgstr ""
+msgstr "Adres"
 
 #: ieframe.rc:78
 msgid "Searching for %s"
@@ -3231,7 +3218,7 @@ msgstr ""
 
 #: inetcpl.rc:57
 msgid "&Settings..."
-msgstr ""
+msgstr "&Ayarlar..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
@@ -3284,15 +3271,15 @@ msgstr ""
 
 #: inetcpl.rc:111
 msgid "Certificates..."
-msgstr ""
+msgstr "Sertifikalar..."
 
 #: inetcpl.rc:112
 msgid "Publishers..."
-msgstr ""
+msgstr "Yayımcılar..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
-msgstr ""
+msgstr "İnternet Ayarları"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
@@ -3464,7 +3451,7 @@ msgstr "Başarılı.\n"
 
 #: winerror.mc:31
 msgid "Invalid function.\n"
-msgstr ""
+msgstr "Geçersiz fonksiyon.\n"
 
 #: winerror.mc:36
 msgid "File not found.\n"
@@ -3476,11 +3463,11 @@ msgstr "%s yolu  bulunamadı.\n"
 
 #: winerror.mc:46
 msgid "Too many open files.\n"
-msgstr ""
+msgstr "Çok fazla dosya açık.\n"
 
 #: winerror.mc:51
 msgid "Access denied.\n"
-msgstr ""
+msgstr "Erişim engellendi.\n"
 
 #: winerror.mc:56
 msgid "Invalid handle.\n"
@@ -3504,15 +3491,15 @@ msgstr ""
 
 #: winerror.mc:81
 msgid "Bad format.\n"
-msgstr ""
+msgstr "Kötü biçim.\n"
 
 #: winerror.mc:86
 msgid "Invalid access.\n"
-msgstr ""
+msgstr "Geçersiz erişim.\n"
 
 #: winerror.mc:91
 msgid "Invalid data.\n"
-msgstr ""
+msgstr "Geçersiz veri.\n"
 
 #: winerror.mc:96
 msgid "Out of memory.\n"
@@ -3520,7 +3507,7 @@ msgstr ""
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
-msgstr ""
+msgstr "Geçersiz sürücü.\n"
 
 #: winerror.mc:106
 msgid "Can't delete current directory.\n"
@@ -3544,11 +3531,11 @@ msgstr ""
 
 #: winerror.mc:131
 msgid "Not ready.\n"
-msgstr ""
+msgstr "Hazır değil.\n"
 
 #: winerror.mc:136
 msgid "Bad command.\n"
-msgstr ""
+msgstr "Kötü komut.\n"
 
 #: winerror.mc:141
 msgid "CRC error.\n"
@@ -3608,7 +3595,7 @@ msgstr ""
 
 #: winerror.mc:211 winerror.mc:436
 msgid "Disk full.\n"
-msgstr ""
+msgstr "Disk dolu.\n"
 
 #: winerror.mc:216
 msgid "Request not supported.\n"
@@ -3624,7 +3611,7 @@ msgstr ""
 
 #: winerror.mc:231
 msgid "Bad network path.\n"
-msgstr ""
+msgstr "Kötü ağ yolu.\n"
 
 #: winerror.mc:236
 msgid "Network busy.\n"
@@ -3664,11 +3651,11 @@ msgstr ""
 
 #: winerror.mc:281
 msgid "Print canceled.\n"
-msgstr ""
+msgstr "Yazma iptal edildi.\n"
 
 #: winerror.mc:286
 msgid "Network name deleted.\n"
-msgstr ""
+msgstr "Ağ adı silindi.\n"
 
 #: winerror.mc:291
 msgid "Network access denied.\n"
@@ -3676,11 +3663,11 @@ msgstr ""
 
 #: winerror.mc:296
 msgid "Bad device type.\n"
-msgstr ""
+msgstr "Kötü aygıt türü.\n"
 
 #: winerror.mc:301
 msgid "Bad network name.\n"
-msgstr ""
+msgstr "Kötü ağ adı.\n"
 
 #: winerror.mc:306
 msgid "Too many network names.\n"
@@ -3820,11 +3807,11 @@ msgstr ""
 
 #: winerror.mc:481
 msgid "Invalid name.\n"
-msgstr ""
+msgstr "Geçersiz ad.\n"
 
 #: winerror.mc:486
 msgid "Invalid level.\n"
-msgstr ""
+msgstr "Geçersiz seviye.\n"
 
 #: winerror.mc:491
 msgid "No volume label.\n"
@@ -3832,7 +3819,7 @@ msgstr ""
 
 #: winerror.mc:496
 msgid "Module not found.\n"
-msgstr ""
+msgstr "Modül bulunamadı.\n"
 
 #: winerror.mc:501
 msgid "Procedure not found.\n"
@@ -4024,7 +4011,7 @@ msgstr ""
 
 #: winerror.mc:741
 msgid "Invalid module type for %1.\n"
-msgstr ""
+msgstr "%1 için geçersiz modül türü.\n"
 
 #: winerror.mc:746
 msgid "Invalid EXE signature in %1.\n"
@@ -4036,7 +4023,7 @@ msgstr ""
 
 #: winerror.mc:756
 msgid "Bad EXE format for %1.\n"
-msgstr ""
+msgstr "Geçersiz dizin adı.\n"
 
 #: winerror.mc:761
 msgid "Iterated data exceeds 64k in %1.\n"
@@ -4208,7 +4195,7 @@ msgstr ""
 
 #: winerror.mc:971
 msgid "Invalid address.\n"
-msgstr ""
+msgstr "Geçersiz adres.\n"
 
 #: winerror.mc:976
 msgid "Arithmetic overflow.\n"
@@ -4252,7 +4239,7 @@ msgstr ""
 
 #: winerror.mc:1026
 msgid "Invalid message.\n"
-msgstr ""
+msgstr "Geçersiz mesaj.\n"
 
 #: winerror.mc:1031
 msgid "Cannot complete.\n"
@@ -4268,7 +4255,7 @@ msgstr ""
 
 #: winerror.mc:1046
 msgid "File invalid.\n"
-msgstr ""
+msgstr "Dosya geçersiz.\n"
 
 #: winerror.mc:1051
 msgid "Cannot run full-screen.\n"
@@ -4340,7 +4327,7 @@ msgstr ""
 
 #: winerror.mc:1136
 msgid "Invalid service control.\n"
-msgstr ""
+msgstr "Servis kontrolü geçersiz.\n"
 
 #: winerror.mc:1141
 msgid "Service request timeout.\n"
@@ -4540,7 +4527,7 @@ msgstr ""
 
 #: winerror.mc:1386
 msgid "No serial devices found.\n"
-msgstr ""
+msgstr "Aygıt seri numarası bulunamadı.\n"
 
 #: winerror.mc:1391
 msgid "Shared IRQ busy.\n"
@@ -4628,7 +4615,7 @@ msgstr ""
 
 #: winerror.mc:1496
 msgid "Invalid DLL.\n"
-msgstr ""
+msgstr "Geçersiz DLL.\n"
 
 #: winerror.mc:1501
 msgid "No associated application.\n"
@@ -4640,7 +4627,7 @@ msgstr ""
 
 #: winerror.mc:1511
 msgid "DLL not found.\n"
-msgstr ""
+msgstr "DLL bulunamadı.\n"
 
 #: winerror.mc:1516
 msgid "Out of user handles.\n"
@@ -4688,7 +4675,7 @@ msgstr ""
 
 #: winerror.mc:1571
 msgid "No match found.\n"
-msgstr ""
+msgstr "Eşleşme bulunamadı.\n"
 
 #: winerror.mc:1576
 msgid "Property set not found.\n"
@@ -4736,7 +4723,7 @@ msgstr ""
 
 #: winerror.mc:1631
 msgid "Invalid device name.\n"
-msgstr ""
+msgstr "Geçersiz aygıt adı.\n"
 
 #: winerror.mc:1636
 msgid "Connection unavailable.\n"
@@ -4772,11 +4759,11 @@ msgstr ""
 
 #: winerror.mc:1676
 msgid "Invalid group name.\n"
-msgstr ""
+msgstr "Geçersiz grup adı.\n"
 
 #: winerror.mc:1681
 msgid "Invalid computer name.\n"
-msgstr ""
+msgstr "Geçersiz bilgisayar adı.\n"
 
 #: winerror.mc:1686
 msgid "Invalid event name.\n"
@@ -4788,15 +4775,15 @@ msgstr ""
 
 #: winerror.mc:1696
 msgid "Invalid service name.\n"
-msgstr ""
+msgstr "Geçersiz servis adı.\n"
 
 #: winerror.mc:1701
 msgid "Invalid network name.\n"
-msgstr ""
+msgstr "Geçersiz ağ adı.\n"
 
 #: winerror.mc:1706
 msgid "Invalid share name.\n"
-msgstr ""
+msgstr "Geçersiz paylaşım adı.\n"
 
 #: winerror.mc:1716
 msgid "Invalid message name.\n"
@@ -4904,7 +4891,7 @@ msgstr ""
 
 #: winerror.mc:1846
 msgid "Service not found.\n"
-msgstr ""
+msgstr "Servis bulunamadı.\n"
 
 #: winerror.mc:1851
 msgid "User not authenticated.\n"
@@ -4972,7 +4959,7 @@ msgstr ""
 
 #: winerror.mc:1931
 msgid "Unknown revision.\n"
-msgstr ""
+msgstr "Bilinmeyen revizyon.\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels.\n"
@@ -5012,7 +4999,7 @@ msgstr ""
 
 #: winerror.mc:1981
 msgid "Invalid account name.\n"
-msgstr ""
+msgstr "Geçersiz hesap adı.\n"
 
 #: winerror.mc:1986
 msgid "User already exists.\n"
@@ -5640,7 +5627,7 @@ msgstr ""
 
 #: winerror.mc:2771
 msgid "Bad configuration.\n"
-msgstr ""
+msgstr "Kötü yapılandırma.\n"
 
 #: winerror.mc:2776
 msgid "Index is missing.\n"
@@ -5668,7 +5655,7 @@ msgstr ""
 
 #: winerror.mc:2806
 msgid "Device removed.\n"
-msgstr ""
+msgstr "Aygıt kaldırıldı.\n"
 
 #: winerror.mc:2811
 msgid "Installation already running.\n"
@@ -5796,7 +5783,7 @@ msgstr ""
 
 #: winerror.mc:2966
 msgid "Invalid network address.\n"
-msgstr ""
+msgstr "Geçersiz ağ adresi.\n"
 
 #: winerror.mc:2971
 msgid "No endpoint found.\n"
@@ -5804,7 +5791,7 @@ msgstr ""
 
 #: winerror.mc:2976
 msgid "Invalid timeout value.\n"
-msgstr ""
+msgstr "Zaman aşımı değeri geçersiz.\n"
 
 #: winerror.mc:2981
 msgid "Object UUID not found.\n"
@@ -5832,11 +5819,11 @@ msgstr ""
 
 #: winerror.mc:3011
 msgid "Unknown manager type.\n"
-msgstr ""
+msgstr "Bilinmeyen yönetici tipi.\n"
 
 #: winerror.mc:3016
 msgid "Unknown interface.\n"
-msgstr ""
+msgstr "Bilinmeyen arayüz.\n"
 
 #: winerror.mc:3021
 msgid "No bindings.\n"
@@ -5956,7 +5943,7 @@ msgstr ""
 
 #: winerror.mc:3171
 msgid "Invalid entry.\n"
-msgstr ""
+msgstr "Geçersiz giriş.\n"
 
 #: winerror.mc:3176
 msgid "Can't perform operation.\n"
@@ -5976,7 +5963,7 @@ msgstr ""
 
 #: winerror.mc:3196
 msgid "Invalid version option.\n"
-msgstr ""
+msgstr "Geçersiz sürüm seçeneği.\n"
 
 #: winerror.mc:3201
 msgid "No more members.\n"
@@ -5988,7 +5975,7 @@ msgstr ""
 
 #: winerror.mc:3211
 msgid "Interface not found.\n"
-msgstr ""
+msgstr "Arayüz bulunamadı.\n"
 
 #: winerror.mc:3216
 msgid "Entry already exists.\n"
@@ -6004,7 +5991,7 @@ msgstr ""
 
 #: winerror.mc:3231
 msgid "Invalid network address family.\n"
-msgstr ""
+msgstr "AĞ adresi ailesi geçersiz.\n"
 
 #: winerror.mc:3236
 msgid "Operation not supported.\n"
@@ -6024,7 +6011,7 @@ msgstr ""
 
 #: winerror.mc:3256
 msgid "Address error.\n"
-msgstr ""
+msgstr "Adres hatası.\n"
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero.\n"
@@ -6152,7 +6139,7 @@ msgstr ""
 
 #: winerror.mc:3416
 msgid "Invalid printer name.\n"
-msgstr ""
+msgstr "Geçersiz yazıcı adı.\n"
 
 #: winerror.mc:3421
 msgid "Printer already exists.\n"
@@ -6160,11 +6147,11 @@ msgstr ""
 
 #: winerror.mc:3426
 msgid "Invalid printer command.\n"
-msgstr ""
+msgstr "Geçersiz yazıcı komutu.\n"
 
 #: winerror.mc:3431
 msgid "Invalid data type.\n"
-msgstr ""
+msgstr "Geçersiz veri türü.\n"
 
 #: winerror.mc:3436
 msgid "Invalid environment.\n"
@@ -6292,7 +6279,7 @@ msgstr ""
 
 #: winerror.mc:3591
 msgid "Invalid time.\n"
-msgstr ""
+msgstr "Geçeriz zaman.\n"
 
 #: winerror.mc:3596
 msgid "Invalid form name.\n"
@@ -6308,7 +6295,7 @@ msgstr ""
 
 #: winerror.mc:3611
 msgid "Printer deleted.\n"
-msgstr ""
+msgstr "Yazıcı silindi.\n"
 
 #: winerror.mc:3616
 msgid "Invalid printer state.\n"
@@ -6332,7 +6319,7 @@ msgstr ""
 
 #: winerror.mc:3641
 msgid "Invalid driver.\n"
-msgstr ""
+msgstr "Geçersiz sürücü.\n"
 
 #: winerror.mc:3646
 msgid "Invalid object resolver set.\n"
@@ -6432,7 +6419,7 @@ msgstr ""
 
 #: localui.rc:51
 msgid "Timeout (seconds)"
-msgstr ""
+msgstr "Zaman aşımı (saniye)"
 
 #: localui.rc:52
 msgid "&Transmission Retry:"
@@ -6516,7 +6503,7 @@ msgstr "&Tür:"
 
 #: mshtml.rc:43
 msgid "&URL:"
-msgstr ""
+msgstr "&URL:"
 
 #: mshtml.rc:31
 msgid "HTML rendering is currently disabled."
@@ -6655,7 +6642,7 @@ msgstr "Wine Vidyo 1 vidyo çözücü"
 
 #: oleacc.rc:27
 msgid "unknown object"
-msgstr ""
+msgstr "bilinmeyen nesne"
 
 #: oleacc.rc:28
 msgid "title bar"
@@ -6695,11 +6682,11 @@ msgstr "Pencere"
 
 #: oleacc.rc:37
 msgid "client"
-msgstr ""
+msgstr "istemci"
 
 #: oleacc.rc:38
 msgid "popup menu"
-msgstr ""
+msgstr "açılır menü"
 
 #: oleacc.rc:39
 msgid "menu item"
@@ -6715,7 +6702,7 @@ msgstr "uygulamalar"
 
 #: oleacc.rc:42
 msgid "document"
-msgstr ""
+msgstr "belge"
 
 #: oleacc.rc:43
 msgid "pane"
@@ -6743,11 +6730,11 @@ msgstr "ayraç"
 
 #: oleacc.rc:49
 msgid "tool bar"
-msgstr ""
+msgstr "araç çubuğu"
 
 #: oleacc.rc:50
 msgid "status bar"
-msgstr ""
+msgstr "durum çubuğu"
 
 #: oleacc.rc:51
 msgid "table"
@@ -6779,7 +6766,7 @@ msgstr ""
 
 #: oleacc.rc:58
 msgid "help balloon"
-msgstr ""
+msgstr "yardım balonu"
 
 #: oleacc.rc:59
 msgid "character"
@@ -6787,7 +6774,7 @@ msgstr "karakter"
 
 #: oleacc.rc:60
 msgid "list"
-msgstr ""
+msgstr "liste"
 
 #: oleacc.rc:61
 msgid "list item"
@@ -6815,7 +6802,7 @@ msgstr ""
 
 #: oleacc.rc:67
 msgid "graphic"
-msgstr ""
+msgstr "grafik"
 
 #: oleacc.rc:68
 msgid "static text"
@@ -6907,7 +6894,7 @@ msgstr ""
 
 #: oleacc.rc:90 ipconfig.rc:33
 msgid "IP address"
-msgstr ""
+msgstr "İP adresi"
 
 #: oleacc.rc:91
 msgid "outline button"
@@ -7072,7 +7059,7 @@ msgstr "Tanımlanmamış Tür"
 
 #: oledlg.rc:42
 msgid "Unknown Source"
-msgstr ""
+msgstr "Bilinmeyen Kaynak"
 
 #: oledlg.rc:43
 msgid "the program which created it"
@@ -7163,7 +7150,7 @@ msgstr ""
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
-msgstr ""
+msgstr "Bilinmiyor"
 
 #: setupapi.rc:30
 msgid "Copy files from:"
@@ -7290,7 +7277,7 @@ msgstr "&Sil"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
-msgstr ""
+msgstr "&Seç"
 
 #: shdoclc.rc:102
 msgid "&Cell"
@@ -7564,7 +7551,7 @@ msgstr "&Çıkış"
 
 #: shell32.rc:127
 msgid "&About Control Panel"
-msgstr ""
+msgstr "&Kontrol Paneli Hakkında"
 
 #: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
@@ -7580,7 +7567,7 @@ msgstr ""
 
 #: shell32.rc:303
 msgid "Message"
-msgstr ""
+msgstr "Mesaj"
 
 #: shell32.rc:306 shlwapi.rc:43 user32.rc:82
 msgid "&Yes"
@@ -7600,7 +7587,7 @@ msgstr "%s Hakkında"
 
 #: shell32.rc:320
 msgid "Wine &license"
-msgstr ""
+msgstr "Wine &lisans"
 
 #: shell32.rc:325
 msgid "Running on %s"
@@ -7678,7 +7665,7 @@ msgstr "Bilgisayarım"
 
 #: shell32.rc:156
 msgid "Control Panel"
-msgstr ""
+msgstr "Kontrol Paneli"
 
 #: shell32.rc:163
 msgid "Select"
@@ -7747,11 +7734,11 @@ msgstr ""
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
-msgstr ""
+msgstr "Geçmiş"
 
 #: shell32.rc:212
 msgid "Program Files"
-msgstr ""
+msgstr "Program Dosyaları"
 
 #: shell32.rc:214
 msgid "My Pictures"
@@ -7783,11 +7770,11 @@ msgstr "Videolar"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
-msgstr ""
+msgstr "Program Dosyaları (x86)"
 
 #: shell32.rc:221
 msgid "Contacts"
-msgstr ""
+msgstr "Bağlantılar"
 
 #: shell32.rc:222 winefile.rc:112
 msgid "Links"
@@ -7803,31 +7790,31 @@ msgstr ""
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
-msgstr ""
+msgstr "Durum"
 
 #: shell32.rc:149
 msgid "Location"
-msgstr ""
+msgstr "Konum"
 
 #: shell32.rc:150
 msgid "Model"
-msgstr ""
+msgstr "Model"
 
 #: shell32.rc:225
 msgid "Sample Music"
-msgstr ""
+msgstr "Örnek Müzik"
 
 #: shell32.rc:226
 msgid "Sample Pictures"
-msgstr ""
+msgstr "Örnek Resimler"
 
 #: shell32.rc:227
 msgid "Sample Playlists"
-msgstr ""
+msgstr "Örnek Çalma listesi"
 
 #: shell32.rc:228
 msgid "Sample Videos"
-msgstr ""
+msgstr "Örnek Videolar"
 
 #: shell32.rc:229
 msgid "Saved Games"
@@ -7839,11 +7826,11 @@ msgstr "Aramalar"
 
 #: shell32.rc:231
 msgid "Users"
-msgstr ""
+msgstr "Kullanıcılar"
 
 #: shell32.rc:233
 msgid "Downloads"
-msgstr ""
+msgstr "İndirilenler"
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
@@ -7913,11 +7900,11 @@ msgstr ""
 
 #: shell32.rc:235
 msgid "New Folder"
-msgstr ""
+msgstr "Yeni Klasör"
 
 #: shell32.rc:237
 msgid "Wine Control Panel"
-msgstr ""
+msgstr "Wine Kontrol Paneli"
 
 #: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
@@ -9636,17 +9623,17 @@ msgstr ""
 
 #: cmd.rc:306
 msgid "Are you sure?"
-msgstr ""
+msgstr "Emin misin?"
 
 #: cmd.rc:307 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
-msgstr ""
+msgstr "E"
 
 #: cmd.rc:308 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
-msgstr ""
+msgstr "H"
 
 #: cmd.rc:309
 msgid "File association missing for extension %1\n"
@@ -9694,11 +9681,11 @@ msgstr ""
 
 #: cmd.rc:322
 msgid "Enter new date: "
-msgstr ""
+msgstr "Yeni tarih gir: "
 
 #: cmd.rc:323
 msgid "Enter new time: "
-msgstr ""
+msgstr "Yeni zaman gir: "
 
 #: cmd.rc:324
 msgid "Environment variable %1 not defined\n"
@@ -9715,11 +9702,11 @@ msgstr ""
 #: cmd.rc:327 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr ""
+msgstr "T"
 
 #: cmd.rc:328
 msgid "Delete %1?"
-msgstr ""
+msgstr "%1 sil ?"
 
 #: cmd.rc:329
 msgid "Echo is %1\n"
@@ -9781,11 +9768,11 @@ msgstr ""
 
 #: cmd.rc:343
 msgid " (Yes|No)"
-msgstr ""
+msgstr " (Evet|Hayır)"
 
 #: cmd.rc:344
 msgid " (Yes|No|All)"
-msgstr ""
+msgstr " (Evet|Hayır|Tümü)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -9797,7 +9784,7 @@ msgstr ""
 
 #: explorer.rc:28
 msgid "Wine Explorer"
-msgstr ""
+msgstr "Wine Gezgin"
 
 #: explorer.rc:29
 msgid "Location:"
@@ -9809,7 +9796,7 @@ msgstr ""
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
-msgstr ""
+msgstr "Hata: '%c' geçersiz seçenek.\n"
 
 #: hostname.rc:29
 msgid ""
@@ -10065,7 +10052,7 @@ msgstr ""
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr ""
+msgstr "&Notepad Hakkında"
 
 #: notepad.rc:97
 msgid "Page Setup"
@@ -10098,22 +10085,22 @@ msgstr ""
 #: notepad.rc:129 wordpad.rc:278
 msgctxt "accelerator Select All"
 msgid "A"
-msgstr ""
+msgstr "A"
 
 #: notepad.rc:130 wordpad.rc:280
 msgctxt "accelerator Copy"
 msgid "C"
-msgstr ""
+msgstr "C"
 
 #: notepad.rc:131 regedit.rc:320 wordpad.rc:276
 msgctxt "accelerator Find"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
@@ -10128,27 +10115,27 @@ msgstr "O"
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -10196,7 +10183,7 @@ msgstr "'%s' bulunamıyor."
 
 #: notepad.rc:82
 msgid "Unicode (UTF-16)"
-msgstr ""
+msgstr "Unicode (UTF-16)"
 
 #: notepad.rc:83
 msgid "Unicode (UTF-16 big-endian)"
@@ -10204,7 +10191,7 @@ msgstr ""
 
 #: notepad.rc:84
 msgid "Unicode (UTF-8)"
-msgstr ""
+msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:91
 msgid ""
@@ -10226,7 +10213,7 @@ msgstr ""
 
 #: oleview.rc:32
 msgid "&System Configuration"
-msgstr ""
+msgstr "&Sistem Yapılandırma"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -10250,11 +10237,11 @@ msgstr ""
 
 #: oleview.rc:43
 msgid "&Local server"
-msgstr ""
+msgstr "&Yerel sunucu"
 
 #: oleview.rc:44
 msgid "&Remote server"
-msgstr ""
+msgstr "&Uzak sunucu"
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -10318,7 +10305,7 @@ msgstr ""
 
 #: oleview.rc:157
 msgid "&Machine name:"
-msgstr ""
+msgstr "&Makina adı:"
 
 #: oleview.rc:165
 msgid "System Configuration"
@@ -10348,7 +10335,7 @@ msgstr ""
 
 #: oleview.rc:181
 msgid "Interface"
-msgstr ""
+msgstr "Arayüz"
 
 #: oleview.rc:183
 msgid "IID:"
@@ -10388,7 +10375,7 @@ msgstr ""
 
 #: oleview.rc:97
 msgid "version 1.0"
-msgstr ""
+msgstr "sürüm 1.0"
 
 #: oleview.rc:100
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
@@ -10445,15 +10432,15 @@ msgstr ""
 
 #: oleview.rc:119
 msgid "Show or hide the toolbar"
-msgstr ""
+msgstr "Araç çubuğunu göster veya gizle"
 
 #: oleview.rc:120
 msgid "Show or hide the status bar"
-msgstr ""
+msgstr "Durum çubuğunu göster veya gizle"
 
 #: oleview.rc:121
 msgid "Refresh all lists"
-msgstr ""
+msgstr "Tüm listeyi yenile"
 
 #: oleview.rc:122
 msgid "Display program information, version number and copyright"
@@ -10521,7 +10508,7 @@ msgstr ""
 
 #: oleview.rc:140
 msgid "Activation"
-msgstr ""
+msgstr "Aktivasyon"
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
@@ -10529,7 +10516,7 @@ msgstr ""
 
 #: oleview.rc:143
 msgid "Unknown error"
-msgstr ""
+msgstr "Bilinmeyen hata"
 
 #: oleview.rc:146
 msgid "bytes"
@@ -10856,7 +10843,7 @@ msgstr "&Anahtar Adını Kopyala"
 
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 msgid "&Find...\tCtrl+F"
-msgstr ""
+msgstr "&Bul...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -11699,7 +11686,7 @@ msgstr "G/Ç Diğer Baytlar"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
-msgstr ""
+msgstr "Yeni Görev Oluştur"
 
 #: taskmgr.rc:187
 msgid "Runs a new program"
@@ -11868,11 +11855,11 @@ msgstr ""
 
 #: taskmgr.rc:264
 msgid "Performance"
-msgstr ""
+msgstr "Performans"
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
-msgstr ""
+msgstr "CPU Kullanımı: %3d%%"
 
 #: taskmgr.rc:266
 msgid "Processes: %d"
@@ -11880,7 +11867,7 @@ msgstr ""
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr ""
+msgstr "Bel Kullanımı: %1!u!kB / %2!u!kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -11892,7 +11879,7 @@ msgstr ""
 
 #: taskmgr.rc:274
 msgid "CPU"
-msgstr ""
+msgstr "CPU"
 
 #: taskmgr.rc:275
 msgid "CPU Time"
@@ -11924,7 +11911,7 @@ msgstr ""
 
 #: taskmgr.rc:284
 msgid "Username"
-msgstr ""
+msgstr "Kullanıcı adı"
 
 #: taskmgr.rc:285
 msgid "PF Delta"
@@ -11990,7 +11977,7 @@ msgstr ""
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
-msgstr ""
+msgstr "eçersiz Seçenek"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
@@ -12010,7 +11997,7 @@ msgstr ""
 
 #: taskmgr.rc:325
 msgid "Task"
-msgstr ""
+msgstr "Görev"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
@@ -12141,7 +12128,7 @@ msgstr "Masaüstü büyüklüğü:"
 
 #: winecfg.rc:171
 msgid "Screen resolution"
-msgstr ""
+msgstr "Ekran Çözünürlüğü"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
@@ -12237,7 +12224,7 @@ msgstr "Gelişmiş Ayarlar"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr ""
+msgstr "Ay&gıt:"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12373,7 +12360,7 @@ msgstr "%s için Wine yapılandırması"
 
 #: winecfg.rc:81
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Seçili sürücü: %s"
 
 #: winecfg.rc:82
 msgid "(None)"
@@ -12424,7 +12411,6 @@ msgid "Default Settings"
 msgstr "Öntanımlı Ayarlar"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Wine Programları (*.exe,*.exe.so)"
 
@@ -12437,9 +12423,8 @@ msgid "Select an executable file"
 msgstr "Çalıştırılabilir bir dosya seçin"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect..."
-msgstr "Otomatik Algıla"
+msgstr "Otomatik Algıla..."
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -12655,7 +12640,7 @@ msgstr "Açılır menü"
 
 #: wineconsole.rc:67
 msgid "&Control"
-msgstr ""
+msgstr "&Kontrol"
 
 #: wineconsole.rc:68
 msgid "S&hift"
@@ -12839,7 +12824,7 @@ msgstr ""
 
 #: winedbg.rc:46
 msgid "Program Error"
-msgstr ""
+msgstr "Program Hatası"
 
 #: winedbg.rc:51
 msgid ""
@@ -12856,11 +12841,11 @@ msgstr ""
 
 #: winedbg.rc:58
 msgid "Show &Details"
-msgstr ""
+msgstr "Detayları &Göster"
 
 #: winedbg.rc:63
 msgid "Program Error Details"
-msgstr ""
+msgstr "Program Hata Detayları"
 
 #: winedbg.rc:70
 msgid ""
@@ -13103,21 +13088,21 @@ msgstr "%s / %s boş"
 #: winefile.rc:117
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:118
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:119
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "&Oyun"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -13249,7 +13234,7 @@ msgstr "&Her Zaman Üstte"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr ""
+msgstr "&Wine Yardım Hakkında"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -13297,7 +13282,7 @@ msgstr ""
 
 #: winhlp32.rc:91
 msgid "Help topics: "
-msgstr ""
+msgstr "Yardım konuları: "
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
@@ -13308,7 +13293,6 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Yinele\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
 msgstr "&Sil\tDel"
 
@@ -13370,7 +13354,7 @@ msgstr ""
 
 #: wordpad.rc:77
 msgid "&Date and time..."
-msgstr ""
+msgstr "&Tarih ve zaman..."
 
 #: wordpad.rc:79
 msgid "F&ormat"
@@ -13403,23 +13387,23 @@ msgstr "&Sarımtırak\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
-msgstr ""
+msgstr "&Wine Wordpad Hakkında"
 
 #: wordpad.rc:130
 msgid "Automatic"
-msgstr ""
+msgstr "Otomatik"
 
 #: wordpad.rc:199
 msgid "Date and time"
-msgstr ""
+msgstr "Tarih ve zaman"
 
 #: wordpad.rc:202
 msgid "Available formats"
-msgstr ""
+msgstr "Mevcut biçimler"
 
 #: wordpad.rc:213
 msgid "New document type"
-msgstr ""
+msgstr "Yeni belge türü"
 
 #: wordpad.rc:221
 msgid "Paragraph format"
@@ -13455,7 +13439,7 @@ msgstr ""
 
 #: wordpad.rc:248
 msgid "Remove al&l"
-msgstr ""
+msgstr "Tümünü &kaldır"
 
 #: wordpad.rc:256
 msgid "Line wrapping"
@@ -13534,7 +13518,7 @@ msgstr ""
 
 #: wordpad.rc:141
 msgid "Text document"
-msgstr ""
+msgstr "Metin belgesi"
 
 #: wordpad.rc:142
 msgid "Unicode text document"
@@ -13542,15 +13526,15 @@ msgstr ""
 
 #: wordpad.rc:143
 msgid "Printer files (*.prn)"
-msgstr ""
+msgstr "Yazıcı dosyaları (*.prn"
 
 #: wordpad.rc:150
 msgid "Center"
-msgstr ""
+msgstr "Merkez"
 
 #: wordpad.rc:156
 msgid "Text"
-msgstr ""
+msgstr "Metin"
 
 #: wordpad.rc:157
 msgid "Rich text"
@@ -13558,19 +13542,19 @@ msgstr ""
 
 #: wordpad.rc:163
 msgid "Next page"
-msgstr ""
+msgstr "Sonraki sayfa"
 
 #: wordpad.rc:164
 msgid "Previous page"
-msgstr ""
+msgstr "Önceki sayfa"
 
 #: wordpad.rc:165
 msgid "Two pages"
-msgstr ""
+msgstr "İki sayfa"
 
 #: wordpad.rc:166
 msgid "One page"
-msgstr ""
+msgstr "Tek sayfa"
 
 #: wordpad.rc:167
 msgid "Zoom in"
@@ -13591,16 +13575,16 @@ msgstr "Sayfalar"
 #: wordpad.rc:172
 msgctxt "unit: centimeter"
 msgid "cm"
-msgstr ""
+msgstr "cm"
 
 #: wordpad.rc:173
 msgctxt "unit: inch"
 msgid "in"
-msgstr ""
+msgstr "inç"
 
 #: wordpad.rc:174
 msgid "inch"
-msgstr ""
+msgstr "inç"
 
 #: wordpad.rc:175
 msgctxt "unit: point"
@@ -13609,7 +13593,7 @@ msgstr ""
 
 #: wordpad.rc:180
 msgid "Document"
-msgstr ""
+msgstr "Belge"
 
 #: wordpad.rc:181
 msgid "Save changes to '%s'?"
@@ -13694,7 +13678,7 @@ msgstr ""
 
 #: xcopy.rc:35
 msgid "%1? (Yes|No)\n"
-msgstr ""
+msgstr "%1? (Evet|Hayır)\n"
 
 #: xcopy.rc:36
 msgid "Overwrite %1? (Yes|No|All)\n"
