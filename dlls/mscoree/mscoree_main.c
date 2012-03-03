@@ -644,6 +644,11 @@ HRESULT WINAPI DllCanUnloadNow(VOID)
     return S_FALSE;
 }
 
+void WINAPI CoEEShutDownCOM(void)
+{
+    FIXME("stub.\n");
+}
+
 INT WINAPI ND_RU1( const void *ptr, INT offset )
 {
     return *((const BYTE *)ptr + offset);
