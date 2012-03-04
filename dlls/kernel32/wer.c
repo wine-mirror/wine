@@ -39,3 +39,15 @@ HRESULT WINAPI WerRegisterFile(PCWSTR file, WER_REGISTER_FILE_TYPE regfiletype, 
     FIXME("(%s, %d, %d) stub!\n", debugstr_w(file), regfiletype, flags);
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ * WerRegisterRuntimeExceptionModule (KERNEL32.@)
+ *
+ * Register a custom runtime exception handler.
+ */
+
+HRESULT WINAPI WerRegisterRuntimeExceptionModule(PCWSTR callbackdll, PVOID context)
+{
+    FIXME("(%s, %p) stub!\n", debugstr_w(callbackdll), context);
+    return S_OK;
+}

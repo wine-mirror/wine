@@ -1244,6 +1244,7 @@
 @ stdcall WaitNamedPipeA (str long)
 @ stdcall WaitNamedPipeW (wstr long)
 @ stdcall WerRegisterFile(wstr long long)
+@ stdcall WerRegisterRuntimeExceptionModule(wstr ptr)
 @ stdcall WideCharToMultiByte(long long wstr long ptr long ptr ptr)
 @ stdcall WinExec(str long)
 @ stdcall Wow64EnableWow64FsRedirection(long)
