@@ -651,13 +651,21 @@ static void queue_timer_expire(struct timer_queue *q)
     RtlEnterCriticalSection(&q->cs);
     if (list_head(&q->timers))
     {
+        ULONGLONG now, next;
         t = LIST_ENTRY(list_head(&q->timers), struct queue_timer, entry);
-        if (!t->destroy && t->expire <= queue_current_time())
+        if (!t->destroy && t->expire <= ((now = queue_current_time())))
         {
             ++t->runcount;
-            queue_move_timer(
-                t, t->period ? queue_current_time() + t->period : EXPIRE_NEVER,
-                FALSE);
+            if (t->period)
+            {
+                next = t->expire + t->period;
+                /* avoid trigger cascade if overloaded / hibernated */
+                if (next < now)
+                    next = now + t->period;
+            }
+            else
+                next = EXPIRE_NEVER;
+            queue_move_timer(t, next, FALSE);
         }
         else
             t = NULL;
