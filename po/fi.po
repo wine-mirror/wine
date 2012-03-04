@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-28 23:01+0200\n"
+"PO-Revision-Date: 2012-03-04 21:45+0200\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Finnish\n"
@@ -1303,11 +1303,11 @@ msgstr "Online Certificate Status Protocol"
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
-msgstr ""
+msgstr "Varmentajan julkaisija"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr ""
+msgstr "Varmennemallin nimi"
 
 #: crypt32.rc:58
 msgid "Certificate Type"
@@ -1315,39 +1315,39 @@ msgstr "Varmenteen tyyppi"
 
 #: crypt32.rc:59
 msgid "Certificate Manifold"
-msgstr ""
+msgstr "Varmenteen haaraumien määrä"
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
-msgstr ""
+msgstr "Netscapen varmennetyyppi"
 
 #: crypt32.rc:61
 msgid "Netscape Base URL"
-msgstr ""
+msgstr "Netscapen juuri-URL"
 
 #: crypt32.rc:62
 msgid "Netscape Revocation URL"
-msgstr ""
+msgstr "Netscapen sulku-URL"
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
-msgstr ""
+msgstr "Netscapen varmentajien sulku-URL"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
-msgstr ""
+msgstr "Netscapen varmenteiden uusimis-URL"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
-msgstr ""
+msgstr "Netscapen varmentajan politiikan URL"
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
-msgstr ""
+msgstr "Netscapen SSL-palvelimen nimi"
 
 #: crypt32.rc:67
 msgid "Netscape Comment"
-msgstr ""
+msgstr "Netscapen kommentti"
 
 #: crypt32.rc:68
 msgid "Country/Region"
@@ -1411,7 +1411,7 @@ msgstr "Ristikkäisen varmentajan versio"
 
 #: crypt32.rc:83
 msgid "Serialized Signature Serial Number"
-msgstr ""
+msgstr "Sarjoitetun allekirjoituksen sarjanumero"
 
 #: crypt32.rc:84
 msgid "Principal Name"
@@ -1419,11 +1419,11 @@ msgstr "Ensisijainen nimi"
 
 #: crypt32.rc:85
 msgid "Windows Product Update"
-msgstr ""
+msgstr "Windows-tuotepäivitys"
 
 #: crypt32.rc:86
 msgid "Enrollment Name Value Pair"
-msgstr ""
+msgstr "Liittymisnimen arvopari"
 
 #: crypt32.rc:87
 msgid "OS Version"
@@ -1431,7 +1431,7 @@ msgstr "Käyttöjärjestelmän versio"
 
 #: crypt32.rc:88
 msgid "Enrollment CSP"
-msgstr ""
+msgstr "Liittymis-CSP"
 
 #: crypt32.rc:89
 msgid "CRL Number"
@@ -1439,11 +1439,11 @@ msgstr "Sulkulistan numero"
 
 #: crypt32.rc:90
 msgid "Delta CRL Indicator"
-msgstr ""
+msgstr "Sulkulistan muutos -merkintä"
 
 #: crypt32.rc:91
 msgid "Issuing Distribution Point"
-msgstr ""
+msgstr "Julkaiseva julkaisupaikka"
 
 #: crypt32.rc:92
 msgid "Freshest CRL"
@@ -1455,7 +1455,7 @@ msgstr "Nimen rajoitukset"
 
 #: crypt32.rc:94
 msgid "Policy Mappings"
-msgstr ""
+msgstr "Politiikkojen kuvaukset"
 
 #: crypt32.rc:95
 msgid "Policy Constraints"
@@ -1471,7 +1471,7 @@ msgstr "Sovelluspolitiikat"
 
 #: crypt32.rc:98
 msgid "Application Policy Mappings"
-msgstr ""
+msgstr "Sovelluspolitiikkojen kuvaukset"
 
 #: crypt32.rc:99
 msgid "Application Policy Constraints"
@@ -1479,83 +1479,83 @@ msgstr "Sovelluspolitiikan rajoitukset"
 
 #: crypt32.rc:100
 msgid "CMC Data"
-msgstr ""
+msgstr "CMC:n tieto"
 
 #: crypt32.rc:101
 msgid "CMC Response"
-msgstr ""
+msgstr "CMC-vastaus"
 
 #: crypt32.rc:102
 msgid "Unsigned CMC Request"
-msgstr ""
+msgstr "Allekirjoittamaton CMC-pyyntö"
 
 #: crypt32.rc:103
 msgid "CMC Status Info"
-msgstr ""
+msgstr "CMC:n tilannetieto"
 
 #: crypt32.rc:104
 msgid "CMC Extensions"
-msgstr ""
+msgstr "CMC:n laajennukset"
 
 #: crypt32.rc:105
 msgid "CMC Attributes"
-msgstr ""
+msgstr "CMC:n määritteet"
 
 #: crypt32.rc:106
 msgid "PKCS 7 Data"
-msgstr ""
+msgstr "PKCS 7, vain data"
 
 #: crypt32.rc:107
 msgid "PKCS 7 Signed"
-msgstr ""
+msgstr "PKCS 7, allekirjoitettu"
 
 #: crypt32.rc:108
 msgid "PKCS 7 Enveloped"
-msgstr ""
+msgstr "PKCS 7, kääritty"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Signed Enveloped"
-msgstr ""
+msgstr "PKCS 7, allekirjoitettu ja kääritty"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Digested"
-msgstr ""
+msgstr "PKCS 7, tiivisteellinen"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Encrypted"
-msgstr ""
+msgstr "PKCS 7, salattu"
 
 #: crypt32.rc:112
 msgid "Previous CA Certificate Hash"
-msgstr ""
+msgstr "Varmentajan edellisen varmenteen tiiviste"
 
 #: crypt32.rc:113
 msgid "Virtual Base CRL Number"
-msgstr ""
+msgstr "Näennäisen kantasulkulistan numero"
 
 #: crypt32.rc:114
 msgid "Next CRL Publish"
-msgstr ""
+msgstr "Sulkulistan seuraava julkaisu"
 
 #: crypt32.rc:115
 msgid "CA Encryption Certificate"
-msgstr ""
+msgstr "Varmentajan salausvarmenne"
 
 #: crypt32.rc:116 cryptui.rc:145
 msgid "Key Recovery Agent"
-msgstr ""
+msgstr "Avaimenpalautusvirkailija"
 
 #: crypt32.rc:117
 msgid "Certificate Template Information"
-msgstr ""
+msgstr "Varmennemallin tiedot"
 
 #: crypt32.rc:118
 msgid "Enterprise Root OID"
-msgstr ""
+msgstr "Yrityksen juuren OID"
 
 #: crypt32.rc:119
 msgid "Dummy Signer"
-msgstr ""
+msgstr "Valeallekirjoittaja"
 
 #: crypt32.rc:120
 msgid "Encrypted Private Key"
@@ -1571,19 +1571,19 @@ msgstr "Pakota varmenneketjupolitikka"
 
 #: crypt32.rc:123
 msgid "Transaction Id"
-msgstr ""
+msgstr "Tapahtuman id"
 
 #: crypt32.rc:124
 msgid "Sender Nonce"
-msgstr ""
+msgstr "Lähettäjän nonce"
 
 #: crypt32.rc:125
 msgid "Recipient Nonce"
-msgstr ""
+msgstr "Vastaanottajan nonce"
 
 #: crypt32.rc:126
 msgid "Reg Info"
-msgstr ""
+msgstr "Rekisteröintitiedot"
 
 #: crypt32.rc:127
 msgid "Get Certificate"
@@ -1639,23 +1639,23 @@ msgstr "Aikaleimaus"
 
 #: crypt32.rc:140
 msgid "Microsoft Trust List Signing"
-msgstr ""
+msgstr "Microsoftin luottamuslistan allekirjoitus"
 
 #: crypt32.rc:141
 msgid "Microsoft Time Stamping"
-msgstr ""
+msgstr "Microsoftin aikaleimaus"
 
 #: crypt32.rc:142
 msgid "IP security end system"
-msgstr ""
+msgstr "IPsec-päätelaite"
 
 #: crypt32.rc:143
 msgid "IP security tunnel termination"
-msgstr ""
+msgstr "IPsec-tunnelin päättäminen"
 
 #: crypt32.rc:144
 msgid "IP security user"
-msgstr ""
+msgstr "IPsec-käyttäjä"
 
 #: crypt32.rc:145
 msgid "Encrypting File System"
@@ -1707,7 +1707,7 @@ msgstr "Asiakirjojen allekirjoitus"
 
 #: crypt32.rc:157
 msgid "IP security IKE intermediate"
-msgstr ""
+msgstr "IPsec IKE -välisolmu"
 
 #: crypt32.rc:158 cryptui.rc:129
 msgid "File Recovery"
@@ -1850,7 +1850,7 @@ msgstr "OCSP"
 
 #: crypt32.rc:200
 msgid "CA Issuers"
-msgstr ""
+msgstr "Varmentajan julkaisijat"
 
 #: crypt32.rc:201
 msgid "Unknown Access Method"
@@ -3719,7 +3719,7 @@ msgstr "Liian monta komentoa.\n"
 
 #: winerror.mc:251
 msgid "Adaptor hardware error.\n"
-msgstr ""
+msgstr "Verkkosovittimessa tapahtui virhe.\n"
 
 #: winerror.mc:256
 msgid "Bad network response.\n"
@@ -3731,7 +3731,7 @@ msgstr "Odottamaton verkkovirhe.\n"
 
 #: winerror.mc:266
 msgid "Bad remote adaptor.\n"
-msgstr ""
+msgstr "Vastapuolen verkkosovitin ei ole yhteensopiva.\n"
 
 #: winerror.mc:271
 msgid "Print queue full.\n"
@@ -3739,7 +3739,7 @@ msgstr "Tulostusjono täysi.\n"
 
 #: winerror.mc:276
 msgid "No spool space.\n"
-msgstr ""
+msgstr "Tulostuksen väliaikaistiedostolle ei ole tilaa.\n"
 
 #: winerror.mc:281
 msgid "Print canceled.\n"
@@ -4223,11 +4223,11 @@ msgstr "Istunto peruttu.\n"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name.\n"
-msgstr "Virheellinen laajennetun attribuutin nimi.\n"
+msgstr "Virheellinen lisämääritteen nimi.\n"
 
 #: winerror.mc:896
 msgid "Extended attribute list inconsistent.\n"
-msgstr "Laajennettujen attribuuttien lista ei ole johdonmukainen.\n"
+msgstr "Lisämääritelista ei ole johdonmukainen.\n"
 
 #: winerror.mc:901
 msgid "No more data available.\n"
@@ -4243,23 +4243,23 @@ msgstr "Hakemiston nimi virheellinen.\n"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit.\n"
-msgstr "Laajennetut attribuutit eivät mahtuneet.\n"
+msgstr "Lisämääritteet eivät mahtuneet.\n"
 
 #: winerror.mc:921
 msgid "Extended attribute file corrupt.\n"
-msgstr "Laajennettujen attribuuttien tiedosto on viallinen.\n"
+msgstr "Lisämääritetiedosto on viallinen.\n"
 
 #: winerror.mc:926
 msgid "Extended attribute table full.\n"
-msgstr "Laajennettujen attribuuttien taulu on täynnä.\n"
+msgstr "Lisämääritetaulu on täynnä.\n"
 
 #: winerror.mc:931
 msgid "Invalid extended attribute handle.\n"
-msgstr "Virheellinen laajennetun attribuutin kahva.\n"
+msgstr "Virheellinen lisämääritteen kahva.\n"
 
 #: winerror.mc:936
 msgid "Extended attributes not supported.\n"
-msgstr "Laajennettuja attribuutteja ei tueta.\n"
+msgstr "Lisämääritteitä ei tueta.\n"
 
 #: winerror.mc:941
 msgid "Mutex not owned by caller.\n"
@@ -4303,7 +4303,7 @@ msgstr "Putki kuuntelee.\n"
 
 #: winerror.mc:991
 msgid "Extended attribute access denied.\n"
-msgstr "Pääsy laajennettuihin attribuutteihin estetty.\n"
+msgstr "Pääsy lisämääritteisiin estetty.\n"
 
 #: winerror.mc:996
 msgid "I/O operation aborted.\n"
@@ -4355,7 +4355,7 @@ msgstr "Ei voida suorittaa koko ruudulla.\n"
 
 #: winerror.mc:1056
 msgid "Nonexistent token.\n"
-msgstr ""
+msgstr "Lipuketta ei ole.\n"
 
 #: winerror.mc:1061
 msgid "Registry corrupt.\n"
@@ -4743,7 +4743,7 @@ msgstr "Elementin osoite on virheellinen.\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present.\n"
-msgstr ""
+msgstr "Kokoelmaa ei ole.\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization.\n"
@@ -5035,7 +5035,7 @@ msgstr "Kaikkia oikeuksia ei ole asetettu.\n"
 
 #: winerror.mc:1911
 msgid "Some security IDs not mapped.\n"
-msgstr ""
+msgstr "Joitain SID:itä ei kuvattu.\n"
 
 #: winerror.mc:1916
 msgid "No quotas for account.\n"
@@ -5067,7 +5067,7 @@ msgstr "Virheellinen ensisijainen ryhmä.\n"
 
 #: winerror.mc:1951
 msgid "No impersonation token.\n"
-msgstr ""
+msgstr "Ei ole tekeytymislipuke.\n"
 
 #: winerror.mc:1956
 msgid "Can't disable mandatory group.\n"
@@ -5159,7 +5159,7 @@ msgstr "Tunnus ei käytössä.\n"
 
 #: winerror.mc:2066
 msgid "No security ID mapped.\n"
-msgstr ""
+msgstr "Mitään SID:tä ei kuvattu.\n"
 
 #: winerror.mc:2071
 msgid "Too many LUIDs requested.\n"
@@ -5171,7 +5171,7 @@ msgstr "LUID:t loppuivat.\n"
 
 #: winerror.mc:2081
 msgid "Invalid sub authority.\n"
-msgstr ""
+msgstr "SID:n aliauktoriteetti ei kelpaa.\n"
 
 #: winerror.mc:2086
 msgid "Invalid ACL.\n"
@@ -5183,7 +5183,7 @@ msgstr "Viallinen SID.\n"
 
 #: winerror.mc:2096
 msgid "Invalid security descriptor.\n"
-msgstr ""
+msgstr "Suojauskuvaus ei kelpaa.\n"
 
 #: winerror.mc:2101
 msgid "Bad inherited ACL.\n"
@@ -5199,7 +5199,7 @@ msgstr "Palvelin käytössä.\n"
 
 #: winerror.mc:2116
 msgid "Invalid ID authority.\n"
-msgstr ""
+msgstr "Virheellinen ID-auktoriteetti.\n"
 
 #: winerror.mc:2121
 msgid "Allotted space exceeded.\n"
@@ -5211,15 +5211,15 @@ msgstr "Virheelliset ryhmäominaisuudet.\n"
 
 #: winerror.mc:2131
 msgid "Bad impersonation level.\n"
-msgstr ""
+msgstr "Tekeytymistaso ei kelpaa.\n"
 
 #: winerror.mc:2136
 msgid "Can't open anonymous security token.\n"
-msgstr ""
+msgstr "Nimetöntä suojauslipuketta ei voida avata.\n"
 
 #: winerror.mc:2141
 msgid "Bad validation class.\n"
-msgstr ""
+msgstr "Vahvistusluokka ei kelpaa.\n"
 
 #: winerror.mc:2146
 msgid "Bad token type.\n"
@@ -5227,7 +5227,7 @@ msgstr "Väärä avaintyyppi.\n"
 
 #: winerror.mc:2151
 msgid "No security on object.\n"
-msgstr ""
+msgstr "Objektilla ei ole suojausta.\n"
 
 #: winerror.mc:2156
 msgid "Can't access domain information.\n"
@@ -5267,11 +5267,11 @@ msgstr "Sisäinen virhe.\n"
 
 #: winerror.mc:2201
 msgid "Generic access types not mapped.\n"
-msgstr ""
+msgstr "Yleisiä käyttöoikeustyyppejä on kuvaamatta.\n"
 
 #: winerror.mc:2206
 msgid "Bad descriptor format.\n"
-msgstr ""
+msgstr "Kuvauksen muoto ei kelpaa.\n"
 
 #: winerror.mc:2211
 msgid "Not a logon process.\n"
@@ -5299,7 +5299,7 @@ msgstr "Virheellinen kirjautumistyyppi.\n"
 
 #: winerror.mc:2241
 msgid "Cannot impersonate.\n"
-msgstr ""
+msgstr "Ei voida tekeytyä.\n"
 
 #: winerror.mc:2246
 msgid "Invalid transaction state.\n"
@@ -5307,7 +5307,7 @@ msgstr "Virheellinen tapahtuman tila.\n"
 
 #: winerror.mc:2251
 msgid "Security DB commit failure.\n"
-msgstr ""
+msgstr "Suojaustietokanta on vioittunut.\n"
 
 #: winerror.mc:2256
 msgid "Account is built-in.\n"
@@ -5327,7 +5327,7 @@ msgstr "Ryhmä on ensisijaisesti käyttäjälle.\n"
 
 #: winerror.mc:2276
 msgid "Token already in use.\n"
-msgstr ""
+msgstr "Lipuke on jo käytössä.\n"
 
 #: winerror.mc:2281
 msgid "No such local group.\n"
@@ -5655,7 +5655,7 @@ msgstr "Koukun tyyppi ei ole sallittu.\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required.\n"
-msgstr ""
+msgstr "Tarvitaan vuorovaikutteinen ikkunasäilö.\n"
 
 #: winerror.mc:2696
 msgid "Timeout.\n"
@@ -5775,7 +5775,7 @@ msgstr "Asennuskieltä ei tueta.\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply.\n"
-msgstr ""
+msgstr "Muunnoksissa tapahtui virhe.\n"
 
 #: winerror.mc:2846
 msgid "Installation package rejected.\n"
@@ -5911,7 +5911,7 @@ msgstr "RPC-palvelin ei kuuntele.\n"
 
 #: winerror.mc:3011
 msgid "Unknown manager type.\n"
-msgstr ""
+msgstr "Tuntematon hallintatoiminnon tyyppi.\n"
 
 #: winerror.mc:3016
 msgid "Unknown interface.\n"
@@ -5975,7 +5975,7 @@ msgstr "Virheelliset taulukon rajat.\n"
 
 #: winerror.mc:3096
 msgid "No entry name.\n"
-msgstr ""
+msgstr "Merkinnän nimi puuttuu.\n"
 
 #: winerror.mc:3101
 msgid "Invalid name syntax.\n"
@@ -6031,7 +6031,7 @@ msgstr "Tuntematon identiteetti tunnistautumisessa.\n"
 
 #: winerror.mc:3166
 msgid "Unknown authorisation service.\n"
-msgstr ""
+msgstr "Tuntematon valtuutuspalvelu.\n"
 
 #: winerror.mc:3171
 msgid "Invalid entry.\n"
@@ -6091,7 +6091,7 @@ msgstr "Tehtävää ei tueta.\n"
 
 #: winerror.mc:3241
 msgid "No security context available.\n"
-msgstr ""
+msgstr "Suojauskontekstia ei ole saatavilla.\n"
 
 #: winerror.mc:3246
 msgid "RPCInternal error.\n"
@@ -6171,23 +6171,23 @@ msgstr "Tuntematon media.\n"
 
 #: winerror.mc:3341
 msgid "No trust secret.\n"
-msgstr ""
+msgstr "Ei luottamussalaisuutta.\n"
 
 #: winerror.mc:3346
 msgid "No trust SAM account.\n"
-msgstr ""
+msgstr "Suojaustilien hallinnassa ei ole tiliä tälle luottamussuhteelle.\n"
 
 #: winerror.mc:3351
 msgid "Trusted domain failure.\n"
-msgstr ""
+msgstr "Toimialueiden välinen luottamussuhde epäonnistui.\n"
 
 #: winerror.mc:3356
 msgid "Trusted relationship failure.\n"
-msgstr ""
+msgstr "Luottamussuhde epäonnistui.\n"
 
 #: winerror.mc:3361
 msgid "Trust logon failure.\n"
-msgstr ""
+msgstr "Kirjautuminen epäonnistui.\n"
 
 #: winerror.mc:3366
 msgid "RPC call already in progress.\n"
@@ -6203,7 +6203,7 @@ msgstr "Tili vanhentunut.\n"
 
 #: winerror.mc:3381
 msgid "Redirector has open handles.\n"
-msgstr ""
+msgstr "Uudelleenohjaimella on avoimia kahvoja.\n"
 
 #: winerror.mc:3386
 msgid "Printer driver already installed.\n"
@@ -6219,11 +6219,11 @@ msgstr "Tuntematon tulostinajuri.\n"
 
 #: winerror.mc:3401
 msgid "Unknown print processor.\n"
-msgstr ""
+msgstr "Tulostuksen käsittelijä on tuntematon.\n"
 
 #: winerror.mc:3406
 msgid "Invalid separator file.\n"
-msgstr ""
+msgstr "Erotintiedosto ei kelpaa.\n"
 
 #: winerror.mc:3411
 msgid "Invalid priority.\n"
@@ -6255,19 +6255,19 @@ msgstr "Ei enempää sidoksia.\n"
 
 #: winerror.mc:3446
 msgid "Can't logon with interdomain trust account.\n"
-msgstr ""
+msgstr "Toimialueiden välisellä luottamustilillä ei voi kirjautua.\n"
 
 #: winerror.mc:3451
 msgid "Can't logon with workstation trust account.\n"
-msgstr ""
+msgstr "Tietokoneen luottamustilillä ei voi kirjautua.\n"
 
 #: winerror.mc:3456
 msgid "Can't logon with server trust account.\n"
-msgstr ""
+msgstr "Palvelimen luottamustilillä ei voi kirjautua.\n"
 
 #: winerror.mc:3461
 msgid "Domain trust information inconsistent.\n"
-msgstr ""
+msgstr "Toimialueen luottamustiedot eivät ole johdonmukaiset.\n"
 
 #: winerror.mc:3466
 msgid "Server has open handles.\n"
@@ -6311,7 +6311,7 @@ msgstr "Yhteysvirhe RPC-kutsussa.\n"
 
 #: winerror.mc:3516
 msgid "Unsupported authorisation level.\n"
-msgstr ""
+msgstr "Valtuutuksen tasoa ei tueta.\n"
 
 #: winerror.mc:3521
 msgid "No principal name registered.\n"
@@ -6327,7 +6327,7 @@ msgstr "UUID on vain paikallinen.\n"
 
 #: winerror.mc:3536
 msgid "Security package error.\n"
-msgstr ""
+msgstr "Suojauspakkausvirhe.\n"
 
 #: winerror.mc:3541
 msgid "Thread not canceled.\n"
@@ -6339,7 +6339,7 @@ msgstr "Virheellinen kahvaoperaatio.\n"
 
 #: winerror.mc:3551
 msgid "Wrong serialising package version.\n"
-msgstr ""
+msgstr "Sarjoituspaketin versio on väärä.\n"
 
 #: winerror.mc:3556
 msgid "Wrong stub version.\n"
@@ -6363,7 +6363,7 @@ msgstr "Ryhmän jäsentä ei löytynyt.\n"
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB.\n"
-msgstr ""
+msgstr "Päätepisteiden kuvaustietokantaa ei voida luoda.\n"
 
 #: winerror.mc:3586
 msgid "Invalid object.\n"
@@ -6415,7 +6415,7 @@ msgstr "Viallinen ajuri.\n"
 
 #: winerror.mc:3646
 msgid "Invalid object resolver set.\n"
-msgstr ""
+msgstr "Objektinratkaisijajoukko ei kelpaa.\n"
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send.\n"
@@ -6451,11 +6451,11 @@ msgstr "Tiedostoon ei ole pääsyä.\n"
 
 #: winerror.mc:3691
 msgid "The filename cannot be resolved.\n"
-msgstr ""
+msgstr "Tiedostonimeä ei pystytä tulkitsemaan.\n"
 
 #: winerror.mc:3696
 msgid "RPC entry type mismatch.\n"
-msgstr ""
+msgstr "RPC-merkinnän tyyppi ei täsmää.\n"
 
 #: winerror.mc:3701
 msgid "Not all objects could be exported.\n"
@@ -6906,11 +6906,11 @@ msgstr "listan jäsen"
 
 #: oleacc.rc:62
 msgid "outline"
-msgstr "ääriviiva"
+msgstr "runko"
 
 #: oleacc.rc:63
 msgid "outline item"
-msgstr ""
+msgstr "rungon kohta"
 
 #: oleacc.rc:64
 msgid "page tab"
@@ -6998,11 +6998,11 @@ msgstr "valikkopainike"
 
 #: oleacc.rc:85
 msgid "grid drop down button"
-msgstr ""
+msgstr "ruudukon avaava painike"
 
 #: oleacc.rc:86
 msgid "white space"
-msgstr ""
+msgstr "tyhjä tila"
 
 #: oleacc.rc:87
 msgid "page tab list"
@@ -7014,7 +7014,7 @@ msgstr "kello"
 
 #: oleacc.rc:89
 msgid "split button"
-msgstr ""
+msgstr "jaettu painike"
 
 #: oleacc.rc:90 ipconfig.rc:33
 msgid "IP address"
@@ -7022,7 +7022,7 @@ msgstr "IP-osoite"
 
 #: oleacc.rc:91
 msgid "outline button"
-msgstr ""
+msgstr "rungon painike"
 
 #: oleaut32.rc:27 oleview.rc:144
 msgid "True"
