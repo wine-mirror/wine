@@ -9609,7 +9609,6 @@ msgstr ""
 "visszatérési értékkel.\n"
 "/Unix        Unix fájlnév használata és elindítása windows böngészővel.\n"
 "/ProgIDOpen  Egy dokumentum megnyitása a progID használatával.\n"
-"/L           Végfelhasználói licensz megjelenítése.\n"
 "/?           Megjeleníti ezt a súgót és kilép.\n"
 
 #: cmd.rc:200
