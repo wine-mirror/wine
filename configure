@@ -5150,11 +5150,31 @@ $as_echo "yes ($icotool_version_major.$icotool_version_minor)" >&6; }
 fi
 
 test "x$with_gettext" != xno || MSGFMT=false
+if test "$MSGFMT" != "false"
+then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether msgfmt supports contexts" >&5
+$as_echo_n "checking whether msgfmt supports contexts... " >&6; }
+  cat >conftest.po <<EOF
+# comment
+msgctxt "ctxt"
+msgid "id"
+msgstr "str"
+EOF
+  if $MSGFMT -o /dev/null conftest.po 2>&5
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    MSGFMT=false
+  fi
+fi
 if test "$MSGFMT" = false; then :
   case "x$with_gettext" in
-  x)   as_fn_append wine_warnings "|gettext tools not found, translations won't be built." ;;
+  x)   as_fn_append wine_warnings "|gettext tools not found (or too old), translations won't be built." ;;
   xno) ;;
-  *)   as_fn_error $? "gettext tools not found, translations won't be built.
+  *)   as_fn_error $? "gettext tools not found (or too old), translations won't be built.
 This is an error since --with-gettext was requested." "$LINENO" 5 ;;
 esac
 fi

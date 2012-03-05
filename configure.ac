@@ -349,8 +349,25 @@ else
 fi
 
 test "x$with_gettext" != xno || MSGFMT=false
+if test "$MSGFMT" != "false"
+then
+  AC_MSG_CHECKING([whether msgfmt supports contexts])
+  cat >conftest.po <<EOF
+# comment
+msgctxt "ctxt"
+msgid "id"
+msgstr "str"
+EOF
+  if $MSGFMT -o /dev/null conftest.po 2>&AS_MESSAGE_LOG_FD
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    MSGFMT=false
+  fi
+fi
 WINE_WARNING_WITH(gettext,[test "$MSGFMT" = false],
-                  [gettext tools not found, translations won't be built.])
+                  [gettext tools not found (or too old), translations won't be built.])
 
 dnl **** Check for some libraries ****
 
