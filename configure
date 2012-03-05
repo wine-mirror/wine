@@ -15362,6 +15362,7 @@ wine_fn_config_dll w32sys.dll16 enable_win16
 wine_fn_config_dll wbemprox enable_wbemprox
 wine_fn_config_dll wer enable_wer implib
 wine_fn_config_test dlls/wer/tests wer_test
+wine_fn_config_dll wevtapi enable_wevtapi
 wine_fn_config_dll wiaservc enable_wiaservc
 wine_fn_config_dll win32s16.dll16 enable_win16
 wine_fn_config_dll win87em.dll16 enable_win16
