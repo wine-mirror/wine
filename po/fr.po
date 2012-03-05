@@ -12636,7 +12636,7 @@ msgstr "&Chemin :"
 
 #: winecfg.rc:239 winecfg.rc:35
 msgid "Show &Advanced"
-msgstr "Montrer les paramètres a&vancés"
+msgstr "Afficher les dé&tails"
 
 #: winecfg.rc:240
 msgid "De&vice:"
@@ -12728,7 +12728,7 @@ msgstr "Veuillez sélectionner le répertoire Unix cible."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
-msgstr "Cacher les paramètres a&vancés"
+msgstr "Cacher les dé&tails"
 
 #: winecfg.rc:36
 msgid "(No Theme)"
@@ -12840,7 +12840,7 @@ msgstr "Sélectionnez un fichier exécutable"
 
 #: winecfg.rc:66
 msgid "Autodetect..."
-msgstr "Détection automatique..."
+msgstr "Autodétection..."
 
 #: winecfg.rc:67
 msgid "Local hard disk"
