@@ -13176,7 +13176,7 @@ msgstr "날짜로 정렬(&D)"
 
 #: winefile.rc:56
 msgid "Filter by&..."
-msgstr "...(&.)로 걸려내기"
+msgstr "로 걸려내기&..."
 
 #: winefile.rc:63
 msgid "&Drivebar"
