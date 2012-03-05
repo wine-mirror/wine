@@ -9865,7 +9865,7 @@ msgstr "%1 kiterjesztéshez hiányzik a fájl társítás\n"
 
 #: cmd.rc:310
 msgid "No open command associated with file type '%1'\n"
-msgstr "'%' fájltípushoz nincs társított parancs\n"
+msgstr "'%1' fájltípushoz nincs társított parancs\n"
 
 #: cmd.rc:311
 msgid "Overwrite %1?"
