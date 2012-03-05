@@ -12521,7 +12521,7 @@ msgstr ""
 
 #: winecfg.rc:134
 msgid "Windows registration information"
-msgstr " Windows registreringsoplysninger "
+msgstr "Windows registreringsoplysninger"
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -14104,7 +14104,7 @@ msgstr ""
 
 #: wordpad.rc:187
 msgid "Invalid number format."
-msgstr "Ugyldigt talformat"
+msgstr "Ugyldigt talformat."
 
 #: wordpad.rc:188
 #, fuzzy
