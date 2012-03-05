@@ -2013,7 +2013,7 @@ msgstr "Tanúsítványtípus"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "Hitelesítési kulcs azonosító:"
+msgstr "Hitelesítési kulcs azonosító: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -14083,7 +14083,7 @@ msgstr ""
 "[/H]  Rejtett- és rendszer fájlok is másolódnak.\n"
 "[/C]  Akkor is folytatja a másolást, ha hiba történik a másolás közben.\n"
 "[/A]  Csak archív fájlok másolása.\n"
-"[/M]  Csak archív fájlok másolása, megszünteti az \n"
+"[/M]  Csak archív fájlok másolása, megszünteti az\n"
 "\tarchív jelzést.\n"
 "[/D | /D:m-d-y] Új fájlok vagy a megadott dátum után módosult fájlok "
 "másolása.\n"
