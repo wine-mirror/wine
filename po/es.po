@@ -2954,7 +2954,7 @@ msgstr "Jugador"
 
 #: dinput.rc:49
 msgid "Device"
-msgstr "Dispositivo:"
+msgstr "Dispositivo"
 
 #: dinput.rc:50
 msgid "Actions"
@@ -3030,27 +3030,27 @@ msgstr "Japonés"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "CHINESE_GB2312"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "Hangul"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "CHINESE_BIG5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Hangul(Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Symbol"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
@@ -3813,7 +3813,7 @@ msgstr "No se pudo crear.\n"
 
 #: winerror.mc:341
 msgid "Int24 failure.\n"
-msgstr "Error Int24\n"
+msgstr "Error Int24.\n"
 
 #: winerror.mc:346
 msgid "Out of structures.\n"
@@ -4657,7 +4657,7 @@ msgstr "Se ha agotado el tiempo de espera del contador de E/S serie.\n"
 
 #: winerror.mc:1406
 msgid "Floppy ID address mark not found.\n"
-msgstr ""
+msgstr "No se encontró una marca de dirección ID en el disquete.\n"
 
 #: winerror.mc:1411
 msgid "Floppy reports wrong cylinder.\n"
@@ -4693,7 +4693,7 @@ msgstr "No hay suficiente memoria.\n"
 
 #: winerror.mc:1451
 msgid "Possible deadlock.\n"
-msgstr ""
+msgstr "Posible bloqueo mutuo.\n"
 
 #: winerror.mc:1456
 msgid "Incorrect alignment.\n"
@@ -4765,7 +4765,7 @@ msgstr "La dirección del elemento es inválida.\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present.\n"
-msgstr ""
+msgstr "La colección no está presente.\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization.\n"
@@ -6181,7 +6181,7 @@ msgstr "Númer de bytes demasiado pequeño.\n"
 
 #: winerror.mc:3326
 msgid "Bad stub data.\n"
-msgstr ""
+msgstr "Datos stub erróneos.\n"
 
 #: winerror.mc:3331
 msgid "Invalid user buffer.\n"
@@ -6366,7 +6366,7 @@ msgstr "Versión del paquete de serialización incorrecta.\n"
 
 #: winerror.mc:3556
 msgid "Wrong stub version.\n"
-msgstr ""
+msgstr "Versión de stub errónea.\n"
 
 #: winerror.mc:3561
 msgid "Invalid pipe object.\n"
@@ -6778,9 +6778,8 @@ msgid "&Data Rate"
 msgstr "&Tasa de datos"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "KB/s"
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -6820,7 +6819,7 @@ msgstr "cursor"
 
 #: oleacc.rc:34
 msgid "caret"
-msgstr ""
+msgstr "cursor de texto"
 
 #: oleacc.rc:35
 msgid "alert"
@@ -6940,7 +6939,7 @@ msgstr "elemento de esquema"
 
 #: oleacc.rc:64
 msgid "page tab"
-msgstr ""
+msgstr "pestaña"
 
 #: oleacc.rc:65
 msgid "property page"
@@ -6976,7 +6975,7 @@ msgstr "botón de radio"
 
 #: oleacc.rc:73
 msgid "combo box"
-msgstr ""
+msgstr "lista desplegable"
 
 #: oleacc.rc:74
 msgid "drop down"
@@ -7000,7 +6999,7 @@ msgstr "deslizador"
 
 #: oleacc.rc:79
 msgid "spin box"
-msgstr ""
+msgstr "control numérico"
 
 #: oleacc.rc:80
 msgid "diagram"
@@ -7032,7 +7031,7 @@ msgstr "espacio en blanco"
 
 #: oleacc.rc:87
 msgid "page tab list"
-msgstr ""
+msgstr "lista de pestañas"
 
 #: oleacc.rc:88
 msgid "clock"
@@ -7686,7 +7685,6 @@ msgid "Properties"
 msgstr "Propiedades"
 
 #: shell32.rc:82
-#, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&Restaurar"
@@ -7988,7 +7986,6 @@ msgid "Saved Games"
 msgstr "Juegos guardados"
 
 #: shell32.rc:230
-#, fuzzy
 msgid "Searches"
 msgstr "Búsquedas"
 
@@ -9236,6 +9233,7 @@ msgid ""
 "  /D  Processes folders as well.\n"
 msgstr ""
 "ATTRIB - Muestra o cambia atributos de fichero\n"
+"\n"
 "Sintaxis:\n"
 "ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [disco:][ruta][fichero]\n"
 "       [/S [/D]]\n"
@@ -9283,9 +9281,8 @@ msgid "&Always on Top"
 msgstr "Siempre &visible"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "&Acerca de Reloj..."
+msgstr "&Acerca de Reloj"
 
 #: clock.rc:48
 msgid "Clock"
@@ -9333,9 +9330,7 @@ msgstr "COPY <archivo> copia un archivo.\n"
 
 #: cmd.rc:46
 msgid "CTTY changes the input/output device.\n"
-msgstr ""
-"CTTY cambia el dispositivo de entrada/salida\n"
-"por defecto.\n"
+msgstr "CTTY cambia el dispositivo de entrada/salida por defecto.\n"
 
 #: cmd.rc:47
 msgid "DATE shows or changes the system date.\n"
@@ -9460,7 +9455,7 @@ msgstr ""
 #: cmd.rc:103
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr ""
-"MD <nombre> es la versión corta de MKDIR. Este comando crea un\n"
+"MD <nombre> es la versión corta de MKDIR. Este comando crea un "
 "subdirectorio.\n"
 
 #: cmd.rc:104
@@ -9566,7 +9561,7 @@ msgstr ""
 "\n"
 "El prompt puede también ser cambiado alterando la variable de entorno\n"
 "PROMPT, por lo que el comando 'SET PROMPT=texto' tiene el mismo efecto\n"
-"que 'PROMPT texto'\n"
+"que 'PROMPT texto'.\n"
 
 #: cmd.rc:153
 msgid ""
@@ -9596,8 +9591,8 @@ msgstr ""
 #: cmd.rc:160
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr ""
-"RMDIR <directorio> es la versión corta de RMDIR. Este comando borra\n"
-"un subdirectorio.\n"
+"RMDIR <directorio> es la versión corta de RMDIR. Este comando borra un "
+"subdirectorio.\n"
 
 #: cmd.rc:193
 msgid ""
@@ -9910,7 +9905,7 @@ msgstr ""
 "EXIT\t\tSale de CMD\n"
 "\n"
 "Escriba HELP <comando> para más información sobre cualquiera de los\n"
-"comandos superiores\n"
+"comandos superiores.\n"
 
 #: cmd.rc:306
 msgid "Are you sure?"
@@ -10895,7 +10890,7 @@ msgstr "&Ejecutar..."
 
 #: progman.rc:39
 msgid "E&xit Windows"
-msgstr "&Salir de Windows..."
+msgstr "&Salir de Windows"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:59 winhlp32.rc:44
 msgid "&Options"
@@ -11505,11 +11500,11 @@ msgstr "Uso: taskkill [/?] [/f] [/im NombreProceso | /pid IDProceso]\n"
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "Error: Parámetros de línea de comandos desconocidos o inválidos\n"
+msgstr "Error: Parámetros de línea de comandos desconocidos o inválidos.\n"
 
 #: taskkill.rc:29
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "Error: Parámetros de línea de comandos inválidos\n"
+msgstr "Error: Parámetros de línea de comandos inválidos.\n"
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
@@ -11722,7 +11717,7 @@ msgstr "Totales"
 
 #: taskmgr.rc:375
 msgid "Commit charge (K)"
-msgstr ""
+msgstr "Carga de transacciones (K)"
 
 #: taskmgr.rc:376
 msgid "Physical memory (K)"
@@ -12624,19 +12619,19 @@ msgstr "Configuraciones por defecto"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr "Dispositivo de salida"
+msgstr "Dispositivo de salida:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr "Dispositivo de salida de voz"
+msgstr "Dispositivo de salida de voz:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr "Dispositivo de entrada"
+msgstr "Dispositivo de entrada:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr "Dispositivo de entrada de voz"
+msgstr "Dispositivo de entrada de voz:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
@@ -12823,7 +12818,7 @@ msgstr ""
 "No puede añadir más unidades.\n"
 "\n"
 "Cada unidad debe tener una letra, de la A a la Z, el número máximo de "
-"unidades es 26"
+"unidades es 26."
 
 #: winecfg.rc:72
 msgid "System drive"
@@ -13065,9 +13060,8 @@ msgid "Window size"
 msgstr "Tamaño de ventana"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
-msgstr "A&nchura :"
+msgstr "A&nchura:"
 
 #: wineconsole.rc:112
 msgid "H&eight:"
@@ -13481,7 +13475,6 @@ msgid "Index/Inode"
 msgstr "Índice/Inodo"
 
 #: winefile.rc:116
-#, fuzzy
 msgid "%1 of %2 free"
 msgstr "%1 de %2 libre"
 
@@ -13529,21 +13522,18 @@ msgid "&Custom..."
 msgstr "P&ersonalizado..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
 msgstr "&Mejores tiempos"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&Acerca de Wine"
+msgstr "&Acerca de WineMine"
 
 #: winemine.rc:56
 msgid "Fastest Times"
 msgstr "Mejores tiempos"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
 msgstr "Mejores tiempos"
 
@@ -14055,13 +14045,11 @@ msgstr "Fallo iniciando Wordpad"
 
 #: xcopy.rc:27
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr ""
-"Número de argumentos inválido - Escribe xcopy /?\n"
-"para ayuda.\n"
+msgstr "Número de argumentos inválido - Escribe xcopy /? para ayuda\n"
 
 #: xcopy.rc:28
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "Argumento inválido - Escribe xcopy /? para ayuda.\n"
+msgstr "Argumento inválido '%1' - Escribe xcopy /? para ayuda\n"
 
 #: xcopy.rc:29
 msgid "Press <Enter> to begin copying\n"
@@ -14154,7 +14142,6 @@ msgstr ""
 "\n"
 "Donde:\n"
 "\n"
-"[/I]  Assume directory if destination does not exist and copying two or\n"
 "[/I]  Asumir directorio si el destino no existe y se copian dos o más\n"
 "\tarchivos.\n"
 "[/S]  Copia directorios and subdirectorios.\n"
