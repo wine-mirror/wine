@@ -2033,7 +2033,7 @@ msgstr ""
 
 #: cryptui.rc:188
 msgid "&Install Certificate..."
-msgstr "安裝憑證(&I)"
+msgstr "安裝憑證(&I)..."
 
 #: cryptui.rc:189
 msgid "Issuer &Statement"
@@ -2065,7 +2065,7 @@ msgstr "檢視憑證(&V)"
 
 #: cryptui.rc:215
 msgid "Certificate &status:"
-msgstr "憑證狀態(&S)"
+msgstr "憑證狀態(&S)："
 
 #: cryptui.rc:221
 msgid "Disclaimer"
@@ -3183,7 +3183,7 @@ msgstr "開始下載 %s"
 
 #: ieframe.rc:80
 msgid "Downloading %s"
-msgstr "正在下載 %s ..."
+msgstr "正在下載 %s"
 
 #: ieframe.rc:81
 msgid "Asking for %s"
@@ -7558,7 +7558,7 @@ msgstr "結束(&X)"
 
 #: shell32.rc:127
 msgid "&About Control Panel"
-msgstr "關於控制台(&A)..."
+msgstr "關於控制台(&A)"
 
 #: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
@@ -8933,7 +8933,7 @@ msgstr "總是在最上面(&A)"
 
 #: clock.rc:42
 msgid "&About Clock"
-msgstr "關於時鐘(&A)..."
+msgstr "關於時鐘(&A)"
 
 #: clock.rc:48
 msgid "Clock"
@@ -9773,7 +9773,7 @@ msgstr "頁尾(&F):"
 
 #: notepad.rc:104
 msgid "Margins (millimeters)"
-msgstr "邊界 (公釐):"
+msgstr "邊界 (公釐)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10267,7 +10267,7 @@ msgstr "複製(&C)...\tF8"
 
 #: progman.rc:35
 msgid "&Properties\tAlt+Enter"
-msgstr "屬性(&P)...\tAlt+Enter"
+msgstr "屬性(&P)\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
@@ -11926,7 +11926,7 @@ msgstr "顯示進階選項(&A)"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "裝置(&V)"
+msgstr "裝置(&V)："
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12585,7 +12585,7 @@ msgstr "重新命名(&N)..."
 
 #: winefile.rc:31
 msgid "Propert&ies\tAlt+Enter"
-msgstr "屬性(&I)...\tAlt+Enter"
+msgstr "屬性(&I)\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
