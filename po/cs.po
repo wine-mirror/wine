@@ -283,7 +283,7 @@ msgstr "audio"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
-msgstr ""
+msgstr "Výchozí obsluha formátu AVI ve Wine"
 
 #: avifil32.rc:34
 msgid "uncompressed"
@@ -1015,11 +1015,13 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
+"Před provedením akce související s tiskárou jako je nastavení vzhledu "
+"stránky nebo tisk dokumentu je nejdříve nutné instalovat tiskárnu. "
+"Nainstalujte ji prosím a opakujte akci."
 
 #: comdlg32.rc:137
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Určete velikost fontu mezi %d a %d body."
+msgstr "Určete velikost fontu mezi %1!d! a %2!d! body."
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
@@ -1202,6 +1204,10 @@ msgid ""
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
 msgstr ""
+"Zapnutý Caps Lock může způsobit nesprávné zadání hesla.\n"
+"\n"
+"Stiskněte klávesu Caps Lock na své klávesnici pro vypnutí funkce Caps Lock "
+"před napsáním hesla."
 
 #: credui.rc:31
 msgid "Caps Lock is On"
@@ -1273,15 +1279,15 @@ msgstr ""
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr ""
+msgstr "Emailová adresa"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
-msgstr ""
+msgstr "Nestrukturované jméno"
 
 #: crypt32.rc:45
 msgid "Content Type"
-msgstr ""
+msgstr "Typ obsahu"
 
 #: crypt32.rc:46
 msgid "Message Digest"
@@ -1301,7 +1307,7 @@ msgstr ""
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
-msgstr ""
+msgstr "Nestrukturovaná adresa"
 
 #: crypt32.rc:51
 msgid "S/MIME Capabilities"
@@ -1374,15 +1380,15 @@ msgstr ""
 
 #: crypt32.rc:68
 msgid "Country/Region"
-msgstr ""
+msgstr "Země/oblast"
 
 #: crypt32.rc:69
 msgid "Organization"
-msgstr ""
+msgstr "Organizace"
 
 #: crypt32.rc:70
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Organizační jednotka"
 
 #: crypt32.rc:71
 msgid "Common Name"
@@ -1390,7 +1396,7 @@ msgstr ""
 
 #: crypt32.rc:72
 msgid "Locality"
-msgstr ""
+msgstr "Lokalita"
 
 #: crypt32.rc:73
 msgid "State or Province"
@@ -1450,7 +1456,7 @@ msgstr ""
 
 #: crypt32.rc:87
 msgid "OS Version"
-msgstr ""
+msgstr "Verze OS"
 
 #: crypt32.rc:88
 msgid "Enrollment CSP"
@@ -1594,7 +1600,7 @@ msgstr ""
 
 #: crypt32.rc:123
 msgid "Transaction Id"
-msgstr ""
+msgstr "Identifikátor transakce"
 
 #: crypt32.rc:124
 msgid "Sender Nonce"
@@ -1610,7 +1616,7 @@ msgstr ""
 
 #: crypt32.rc:127
 msgid "Get Certificate"
-msgstr ""
+msgstr "Získat certifikát"
 
 #: crypt32.rc:128
 msgid "Get CRL"
@@ -1963,7 +1969,7 @@ msgstr "Ne"
 
 #: crypt32.rc:221
 msgid "Digital Signature"
-msgstr ""
+msgstr "Digitální podpis"
 
 #: crypt32.rc:222
 msgid "Non-Repudiation"
@@ -2067,7 +2073,7 @@ msgstr ""
 
 #: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
 msgid "General"
-msgstr ""
+msgstr "Obecné"
 
 #: cryptui.rc:188
 #, fuzzy
@@ -2919,7 +2925,7 @@ msgstr "Ukazatel na zařízení je neplatný."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
-msgstr "Dafaultní DirectSound"
+msgstr "Výchozí DirectSound"
 
 #: devenum.rc:33
 msgid "DirectSound: %s"
@@ -2981,7 +2987,7 @@ msgstr "Standardní nastavení"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr ""
+msgstr "%1!u!MB využito, %2!u!MB dostupných"
 
 #: gdi32.rc:25
 msgid "Western"
@@ -3097,32 +3103,28 @@ msgstr ""
 
 #: hhctrl.rc:56
 msgid "S&ync"
-msgstr ""
+msgstr "S&ynchronizovat"
 
 #: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "&Zpět"
 
 #: hhctrl.rc:58
-#, fuzzy
 msgid "&Forward"
-msgstr "Vpřed"
+msgstr "&Vpřed"
 
 #: hhctrl.rc:59
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
-msgstr "Domů"
+msgstr "&Domů"
 
 #: hhctrl.rc:60
-#, fuzzy
 msgid "&Stop"
-msgstr "Zastavit"
+msgstr "Za&stavit"
 
 #: hhctrl.rc:61 shdoclc.rc:56
-#, fuzzy
 msgid "&Refresh"
-msgstr "Obnovit"
+msgstr "&Obnovit"
 
 #: hhctrl.rc:62 winhlp32.rc:31
 msgid "&Print..."
@@ -3134,7 +3136,7 @@ msgstr "&Obsah"
 
 #: hhctrl.rc:29
 msgid "I&ndex"
-msgstr ""
+msgstr "&Rejstřík"
 
 #: hhctrl.rc:30 notepad.rc:52
 #, fuzzy
@@ -3219,42 +3221,36 @@ msgid "&Window"
 msgstr "&Okno"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
-#, fuzzy
 msgid "&Open..."
-msgstr "&Otevřít"
+msgstr "&Otevřít..."
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "Uložit j&ako..."
 
 #: ieframe.rc:35
-#, fuzzy
 msgid "Print &format..."
-msgstr "Tisk"
+msgstr "&Formát tisku..."
 
 #: ieframe.rc:36
-#, fuzzy
 msgid "Pr&int..."
-msgstr "Tisk"
+msgstr "&Tisk..."
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "Tisk"
+msgstr "Ná&hled před tiskem"
 
 #: ieframe.rc:44
-#, fuzzy
 msgid "&Toolbars"
-msgstr "&Panel nástrojů"
+msgstr "&Panely"
 
 #: ieframe.rc:46
-#, fuzzy
 msgid "&Standard bar"
-msgstr "&Stavový řádek"
+msgstr "&Standardní řádek"
 
 #: ieframe.rc:47
 msgid "&Address bar"
-msgstr ""
+msgstr "&Adresní řádek"
 
 #: ieframe.rc:50 regedit.rc:71
 msgid "&Favorites"
@@ -3265,23 +3261,20 @@ msgid "&Add to Favorites..."
 msgstr "Přid&at k oblíbeným..."
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "&Informace o Winefile..."
+msgstr "&O Internet Exploreru"
 
 #: ieframe.rc:87
-#, fuzzy
 msgid "Open URL"
-msgstr "Otevřít"
+msgstr "Otevřít URL"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr ""
+msgstr "Zadejte URL, kterou si přejete otevřít v Internet Exploreru"
 
 #: ieframe.rc:91
-#, fuzzy
 msgid "Open:"
-msgstr "Otevřít"
+msgstr "Otevřít:"
 
 #: ieframe.rc:67
 #, fuzzy
@@ -3290,81 +3283,76 @@ msgid "Home"
 msgstr "Domů"
 
 #: ieframe.rc:68 winhlp32.rc:66
-#, fuzzy
 msgid "Print..."
-msgstr "Tisk"
+msgstr "Tisk..."
 
 #: ieframe.rc:73
 msgid "Address"
-msgstr ""
+msgstr "Adresa"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "&Vlastnosti"
+msgstr "Vyhledávám %s"
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
-msgstr ""
+msgstr "Začínám stahovat %s"
 
 #: ieframe.rc:80
 msgid "Downloading %s"
-msgstr ""
+msgstr "Stahuji %s"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "&Vlastnosti"
+msgstr "Dotazuji se na %s"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr "Domů"
+msgstr "Domovská stránka"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr ""
+msgstr "Můžete zvolit adresu, která bude použita jako domovská stránka."
 
 #: inetcpl.rc:50
 msgid "&Current page"
-msgstr ""
+msgstr "&Aktuální stránka"
 
 #: inetcpl.rc:51
-#, fuzzy
 msgid "&Default page"
-msgstr "Standardní nastavení"
+msgstr "&Standardní nastavení"
 
 #: inetcpl.rc:52
 msgid "&Blank page"
-msgstr ""
+msgstr "&Prázdná stránka"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr "Historie příkazů"
+msgstr "Historie prohlížení"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr ""
+msgstr "Můžete vymazat mezipaměť stránek, cookies a další data."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr ""
+msgstr "S&mazat soubory..."
 
 #: inetcpl.rc:57
-#, fuzzy
 msgid "&Settings..."
-msgstr "&Nastavení"
+msgstr "&Nastavení..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr ""
+msgstr "Vymazat historii prohlížení"
 
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
+"Dočasné soubory internetu\n"
+"Mezipaměť kopií webových stránek, obrázků a certifikátů."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3372,24 +3360,33 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"Cookies\n"
+"Soubory uložené ve vašem počítači webovými stránkami ukládajícími věci jako "
+"nastavení nebo přihlašovací informace."
 
 #: inetcpl.rc:72
 msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"Historie\n"
+"Seznam navštívených webových stránek."
 
 #: inetcpl.rc:74
 msgid ""
 "Form data\n"
 "Usernames and other information you have entered into forms."
 msgstr ""
+"Data formulářů\n"
+"Uživatelská jména a jiné informace, které jste vyplnili do formulářů."
 
 #: inetcpl.rc:76
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
+"Hesla\n"
+"Uložená hesla, která jste vyplnili do formulářů."
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -3404,57 +3401,52 @@ msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
 msgstr ""
+"Certifikáty jsou využívány pro Vaši osobní identifikaci a k identifikaci "
+"certifikačních autorit a vydavatelů."
 
 #: inetcpl.rc:111
-#, fuzzy
 msgid "Certificates..."
-msgstr "&Vlastnosti"
+msgstr "Certifikáty..."
 
 #: inetcpl.rc:112
 msgid "Publishers..."
-msgstr ""
+msgstr "Vydavatelé..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
-msgstr ""
+msgstr "Nastavení internetu"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
-msgstr ""
+msgstr "Konfigurovat Wine Internet Browser a související nastavení"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr ""
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"U&ložit nastavení při ukončení\n"
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"&Uložit nastavení při vypnutí"
+msgstr "Nastavení bezpečnosti pro zónu: "
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "Přizpůsobit"
+msgstr "Vlastní"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Velmi nízká"
 
 #: inetcpl.rc:33
 msgid "Low"
-msgstr ""
+msgstr "Nízká"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Střední"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Zvýšená"
 
 #: inetcpl.rc:36
 msgid "High"
-msgstr ""
+msgstr "Vysoká"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -12734,28 +12726,27 @@ msgstr "Vzhled"
 
 #: winecfg.rc:275
 msgid "&Theme:"
-msgstr "Téma:"
+msgstr "&Téma:"
 
 #: winecfg.rc:277
 msgid "&Install theme..."
-msgstr "Instalovat téma..."
+msgstr "&Instalovat téma..."
 
 #: winecfg.rc:282
 msgid "It&em:"
-msgstr "Položka:"
+msgstr "Po&ložka:"
 
 #: winecfg.rc:284
 msgid "C&olor:"
-msgstr "Barva:"
+msgstr "&Barva:"
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
-msgstr "Domácí adresáře"
+msgstr "Adresáře"
 
 #: winecfg.rc:293
 msgid "&Link to:"
-msgstr "Odkaz na:"
+msgstr "&Odkaz na:"
 
 #: winecfg.rc:31
 msgid "Libraries"
@@ -12766,9 +12757,8 @@ msgid "Drives"
 msgstr "Disky"
 
 #: winecfg.rc:33
-#, fuzzy
 msgid "Select the Unix target directory, please."
-msgstr "Vyberte prosím unixový cílový adresář."
+msgstr "Vyberte, prosím, unixový cílový adresář."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -12887,12 +12877,11 @@ msgstr "Použít všeobecná nastavení"
 
 #: winecfg.rc:61
 msgid "Select an executable file"
-msgstr "Zvolte spustitelný soubor"
+msgstr "Vyberte spustitelný soubor"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect..."
-msgstr "Autodetekce"
+msgstr "Autodetekce..."
 
 #: winecfg.rc:67
 msgid "Local hard disk"
