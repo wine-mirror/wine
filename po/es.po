@@ -4693,7 +4693,7 @@ msgstr "No hay suficiente memoria.\n"
 
 #: winerror.mc:1451
 msgid "Possible deadlock.\n"
-msgstr "Posible bloqueo mutuo.\n"
+msgstr "Posible bloqueo.\n"
 
 #: winerror.mc:1456
 msgid "Incorrect alignment.\n"
