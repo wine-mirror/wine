@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-14 23:30+0900\n"
+"PO-Revision-Date: 2012-03-06 22:28+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -785,11 +785,11 @@ msgstr "ファイルの種類:"
 
 #: comdlg32.rc:29
 msgid "File not found"
-msgstr "ファイルが見つかりません。"
+msgstr "ファイルが見つかりません"
 
 #: comdlg32.rc:30
 msgid "Please verify that the correct file name was given"
-msgstr "ファイル名を確認してください。"
+msgstr "ファイル名を確認してください"
 
 #: comdlg32.rc:31
 msgid ""
@@ -1023,111 +1023,111 @@ msgstr "待機中"
 
 #: comdlg32.rc:80
 msgid "Paused; "
-msgstr "一時停止 -"
+msgstr "一時停止 - "
 
 #: comdlg32.rc:81
 msgid "Error; "
-msgstr "エラー -"
+msgstr "エラー - "
 
 #: comdlg32.rc:82
 msgid "Pending deletion; "
-msgstr "削除待ち -"
+msgstr "削除待ち - "
 
 #: comdlg32.rc:83
 msgid "Paper jam; "
-msgstr "紙詰まり -"
+msgstr "紙詰まり - "
 
 #: comdlg32.rc:84
 msgid "Out of paper; "
-msgstr "用紙切れ -"
+msgstr "用紙切れ - "
 
 #: comdlg32.rc:85
 msgid "Feed paper manual; "
-msgstr "手差し -"
+msgstr "手差し - "
 
 #: comdlg32.rc:86
 msgid "Paper problem; "
-msgstr "用紙の問題 -"
+msgstr "用紙の問題 - "
 
 #: comdlg32.rc:87
 msgid "Printer offline; "
-msgstr "オフライン -"
+msgstr "オフライン - "
 
 #: comdlg32.rc:88
 msgid "I/O Active; "
-msgstr "入出力中 -"
+msgstr "入出力中 - "
 
 #: comdlg32.rc:89
 msgid "Busy; "
-msgstr "ビジー -"
+msgstr "ビジー - "
 
 #: comdlg32.rc:90
 msgid "Printing; "
-msgstr "印刷中 -"
+msgstr "印刷中 - "
 
 #: comdlg32.rc:91
 msgid "Output tray is full; "
-msgstr "出力トレイが満杯 -"
+msgstr "出力トレイが満杯 - "
 
 #: comdlg32.rc:92
 msgid "Not available; "
-msgstr "利用不可 -"
+msgstr "利用不可 - "
 
 #: comdlg32.rc:93
 msgid "Waiting; "
-msgstr "待機中 -"
+msgstr "待機中 - "
 
 #: comdlg32.rc:94
 msgid "Processing; "
-msgstr "処理中 -"
+msgstr "処理中 - "
 
 #: comdlg32.rc:95
 msgid "Initialising; "
-msgstr "初期化中 -"
+msgstr "初期化中 - "
 
 #: comdlg32.rc:96
 msgid "Warming up; "
-msgstr "ウォーミング アップ -"
+msgstr "ウォーミング アップ - "
 
 #: comdlg32.rc:97
 msgid "Toner low; "
-msgstr "トナー少量 -"
+msgstr "トナー少量 - "
 
 #: comdlg32.rc:98
 msgid "No toner; "
-msgstr "トナーなし -"
+msgstr "トナーなし - "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
-msgstr "処理不能 -"
+msgstr "処理不能 - "
 
 #: comdlg32.rc:100
 msgid "Interrupted by user; "
-msgstr "ユーザー操作が必要 -"
+msgstr "ユーザー操作が必要 - "
 
 #: comdlg32.rc:101
 msgid "Out of memory; "
-msgstr "メモリ不足 -"
+msgstr "メモリ不足 - "
 
 #: comdlg32.rc:102
 msgid "The printer door is open; "
-msgstr "プリンタ カバー開放 -"
+msgstr "プリンタ カバー開放 - "
 
 #: comdlg32.rc:103
 msgid "Print server unknown; "
-msgstr "プリント サーバ不明 -"
+msgstr "プリント サーバ不明 - "
 
 #: comdlg32.rc:104
 msgid "Power save mode; "
-msgstr "省電力モード -"
+msgstr "省電力モード - "
 
 #: comdlg32.rc:73
 msgid "Default Printer; "
-msgstr "既定のプリンタ "
+msgstr "既定のプリンタ - "
 
 #: comdlg32.rc:74
 msgid "There are %d documents in the queue"
-msgstr "キューに %d つの文書"
+msgstr "キューに %d の文書"
 
 #: comdlg32.rc:75
 msgid "Margins [inches]"
@@ -2524,11 +2524,11 @@ msgstr "証明書のプロパティ"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr "OID を 1.2.3.4 形式で入力してください。"
+msgstr "OID を 1.2.3.4 形式で入力してください"
 
 #: cryptui.rc:65
 msgid "The OID you entered already exists."
-msgstr "入力した OID はすでに存在します。"
+msgstr "入力した OID はすでに存在します"
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
@@ -3005,7 +3005,7 @@ msgstr "日本語"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr "CHINESE_GB2312"
+msgstr "中国語(簡体)"
 
 #: gdi32.rc:37
 msgid "Hangul"
@@ -3013,7 +3013,7 @@ msgstr "韓国語"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr "CHINESE_BIG5"
+msgstr "中国語(繁体)"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
@@ -3225,7 +3225,7 @@ msgstr "URLを開く"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr "Internet Explorerで開きたいURLを入力してください。"
+msgstr "Internet Explorerで開きたいURLを入力してください"
 
 #: ieframe.rc:91
 msgid "Open:"
@@ -7270,7 +7270,7 @@ msgid ""
 "make sure the correct drive is selected below"
 msgstr ""
 "製造元のインストールディスクを挿入し、\n"
-"以下で正しいドライブが選択されていることを確認してください。"
+"以下で正しいドライブが選択されていることを確認してください"
 
 #: setupapi.rc:54
 msgid "Copy manufacturer's files from:"
@@ -7278,7 +7278,7 @@ msgstr "製造元のファイルのコピー元:"
 
 #: setupapi.rc:28
 msgid "The file '%1' on %2 is needed"
-msgstr "%2 上のファイル '%1' が必要です。"
+msgstr "%2 上のファイル '%1' が必要です"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -9837,11 +9837,11 @@ msgstr "N"
 
 #: cmd.rc:309
 msgid "File association missing for extension %1\n"
-msgstr "拡張子 %1 に対するファイル関連付けがありません。\n"
+msgstr "拡張子 %1 に対するファイル関連付けがありません\n"
 
 #: cmd.rc:310
 msgid "No open command associated with file type '%1'\n"
-msgstr "ファイル タイプ '%1' に関連付けられた開くコマンドがありません。\n"
+msgstr "ファイル タイプ '%1' に関連付けられた開くコマンドがありません\n"
 
 #: cmd.rc:311
 msgid "Overwrite %1?"
@@ -10121,7 +10121,7 @@ msgstr "依存するサービスを停止中: %1\n"
 
 #: net.rc:31
 msgid "Could not stop service %1\n"
-msgstr "サービス %1 を停止できませんでした。\n"
+msgstr "サービス %1 を停止できませんでした\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -11388,7 +11388,7 @@ msgid ""
 msgstr ""
 "アプリケーションを開始できません。もしくは、指定したファイルにアプリケーショ"
 "ンが関連付けられていません。\n"
-"ShellExecuteEx が失敗しました。"
+"ShellExecuteEx が失敗"
 
 #: start.rc:43
 msgid "Could not translate the specified Unix filename to a DOS filename."
@@ -11930,135 +11930,133 @@ msgstr "新しいタスクの作成"
 
 #: taskmgr.rc:187
 msgid "Runs a new program"
-msgstr "新しいプログラムを実行します。"
+msgstr "新しいプログラムを実行します"
 
 #: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
 msgstr ""
 "最小化されない限り、常にタスク マネージャがほかのすべてのウィンドウよりも手前"
-"に表示されます。"
+"に表示されます"
 
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
-msgstr "[切り替え] 操作を実行すると、タスク マネージャが最小化されます。"
+msgstr "[切り替え] 操作を実行すると、タスク マネージャが最小化されます"
 
 #: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
-msgstr "最小化されたときに、タスク マネージャを隠します。"
+msgstr "最小化されたときに、タスク マネージャを隠します"
 
 #: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
-msgstr "[更新の頻度] の設定にかかわらず、今すぐタスク マネージャを更新します。"
+msgstr "[更新の頻度] の設定にかかわらず、今すぐタスク マネージャを更新します"
 
 #: taskmgr.rc:193
 msgid "Displays tasks by using large icons"
-msgstr "タスクの表示に 大きいアイコン を使用します。"
+msgstr "タスクの表示に 大きいアイコン を使用します"
 
 #: taskmgr.rc:194
 msgid "Displays tasks by using small icons"
-msgstr "タスクの表示に 小さいアイコン を使用します。"
+msgstr "タスクの表示に 小さいアイコン を使用します"
 
 #: taskmgr.rc:195
 msgid "Displays information about each task"
-msgstr "各タスクの情報を表示します。"
+msgstr "各タスクの情報を表示します"
 
 #: taskmgr.rc:196
 msgid "Updates the display twice per second"
-msgstr "毎秒 2回表示を更新します。"
+msgstr "毎秒 2回表示を更新します"
 
 #: taskmgr.rc:197
 msgid "Updates the display every two seconds"
-msgstr "2秒に 1回表示を更新します。"
+msgstr "2秒に 1回表示を更新します"
 
 #: taskmgr.rc:198
 msgid "Updates the display every four seconds"
-msgstr "4秒に 1回表示を更新します。"
+msgstr "4秒に 1回表示を更新します"
 
 #: taskmgr.rc:203
 msgid "Does not automatically update"
-msgstr "表示を自動的に更新しません。"
+msgstr "表示を自動的に更新しません"
 
 #: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
-msgstr "デスクトップ上でウィンドウが重ならないように上下に並べて表示します。"
+msgstr "デスクトップ上でウィンドウが重ならないように上下に並べて表示します"
 
 #: taskmgr.rc:206
 msgid "Tiles the windows vertically on the desktop"
-msgstr "デスクトップ上でウィンドウが重ならないように左右に並べて表示します。"
+msgstr "デスクトップ上でウィンドウが重ならないように左右に並べて表示します"
 
 #: taskmgr.rc:207
 msgid "Minimizes the windows"
-msgstr "ウィンドウを最小化します。"
+msgstr "ウィンドウを最小化します"
 
 #: taskmgr.rc:208
 msgid "Maximizes the windows"
-msgstr "ウィンドウを画面いっぱいに拡大します。"
+msgstr "ウィンドウを最大化します"
 
 #: taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
-msgstr "デスクトップ上でウィンドウを重ねて表示します。"
+msgstr "デスクトップ上でウィンドウを重ねて表示します"
 
 #: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
-msgstr "ウィンドウを手前に表示しますが、切り替えません。"
+msgstr "ウィンドウを手前に表示しますが、切り替えません"
 
 #: taskmgr.rc:211
 msgid "Displays Task Manager help topics"
-msgstr "タスク マネージャのヘルプ トピックを表示します。"
+msgstr "タスク マネージャのヘルプ トピックを表示します"
 
 #: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
-msgstr "プログラム情報、バージョン番号、著作権を表示します。"
+msgstr "プログラム情報、バージョン番号、著作権を表示します"
 
 #: taskmgr.rc:213
 msgid "Exits the Task Manager application"
-msgstr "タスク マネージャ アプリケーションを終了します。"
+msgstr "タスク マネージャ アプリケーションを終了します"
 
 #: taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
-msgstr ""
-"16 ビット Windows タスクを、関連付けられた ntvdm.exe の下に表示します。"
+msgstr "16 ビット Windows タスクを、関連付けられた ntvdm.exe の下に表示します"
 
 #: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
-msgstr "[プロセス] ページに表示する列を選択します。"
+msgstr "[プロセス] ページに表示する列を選択します"
 
 #: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
-msgstr "カーネル時間をパフォーマンスグラフ上に表示します。"
+msgstr "カーネル時間をパフォーマンスグラフ上に表示します"
 
 #: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
-msgstr "1 つの履歴グラフで CPU 使用率の合計を表示します。"
+msgstr "1 つの履歴グラフで CPU 使用率の合計を表示します"
 
 #: taskmgr.rc:220
 msgid "Each CPU has its own history graph"
-msgstr "CPU 使用率の履歴を CPU ごとにグラフで表示します。"
+msgstr "CPU 使用率の履歴を CPU ごとにグラフで表示します"
 
 #: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
-msgstr "選択したタスクを手前に表示して切り替えます。"
+msgstr "選択したタスクを手前に表示して切り替えます"
 
 #: taskmgr.rc:227
 msgid "Tells the selected tasks to close"
-msgstr "タスクを閉じます。"
+msgstr "タスクを閉じます"
 
 #: taskmgr.rc:228
 msgid "Switches the focus to the process of the selected task"
-msgstr "フォーカスを選択したタスクのプロセスに移動します。"
+msgstr "フォーカスを選択したタスクのプロセスに移動します"
 
 #: taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
-msgstr "最小化状態から タスク マネージャ を復元します。"
+msgstr "最小化状態から タスク マネージャ を復元します"
 
 #: taskmgr.rc:230
 msgid "Removes the process from the system"
-msgstr "選択したプロセスを終了します。"
+msgstr "選択したプロセスを終了します"
 
 #: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
-msgstr ""
-"選択したプロセスおよび、プロセスに関連するすべてのプロセスを終了します。"
+msgstr "選択したプロセスおよび、プロセスに関連するすべてのプロセスを終了します"
 
 #: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
@@ -12066,35 +12064,35 @@ msgstr "デバッガをこのプロセスに付けます"
 
 #: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
-msgstr "プロセスを実行するプロセッサを制御します。"
+msgstr "プロセスを実行するプロセッサを制御します"
 
 #: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
-msgstr "プロセスの優先クラスを リアルタイム に設定します。"
+msgstr "プロセスの優先クラスを リアルタイム に設定します"
 
 #: taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
-msgstr "プロセスの優先クラスを 高 に設定します。"
+msgstr "プロセスの優先クラスを 高 に設定します"
 
 #: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
-msgstr "プロセスの優先クラスを 通常以上 に設定します。"
+msgstr "プロセスの優先クラスを 通常以上 に設定します"
 
 #: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
-msgstr "プロセスの優先クラスを 通常 に設定します。"
+msgstr "プロセスの優先クラスを 通常 に設定します"
 
 #: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
-msgstr "プロセスの優先クラスを 通常以下 に設定します。"
+msgstr "プロセスの優先クラスを 通常以下 に設定します"
 
 #: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
-msgstr "プロセスの優先クラスを 低 に設定します。"
+msgstr "プロセスの優先クラスを 低 に設定します"
 
 #: taskmgr.rc:247
 msgid "Controls Debug Channels"
-msgstr "デバッグのチャンネルをコントロールします。"
+msgstr "デバッグのチャンネルをコントロールします"
 
 #: taskmgr.rc:264
 msgid "Performance"
@@ -12225,7 +12223,7 @@ msgstr "プロセスをデバッグできません"
 
 #: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
-msgstr "プロセスは少なくとも 1 つのプロセッサと関係付ける必要があります。"
+msgstr "プロセスは少なくとも 1 つのプロセッサと関係付ける必要があります"
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
@@ -12233,7 +12231,7 @@ msgstr "無効なオプション"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
-msgstr "プロセスの関係を設定またはアクセスできませんでした。"
+msgstr "プロセスの関係を設定またはアクセスできませんでした"
 
 #: taskmgr.rc:322
 msgid "System Idle Process"
@@ -13022,7 +13020,7 @@ msgstr "構成エラー"
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr ""
-"スクリーン バッファ サイズはウィンドウ バッファ サイズ以上にしてください。"
+"スクリーン バッファ サイズはウィンドウ バッファ サイズ以上にしてください"
 
 #: wineconsole.rc:34
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
@@ -13948,7 +13946,7 @@ msgstr "コピーを開始するには <Enter> を押してください\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
-msgstr "%1!d! ファイルがコピーされる見込みです。\n"
+msgstr "%1!d! ファイルがコピーされる見込みです\n"
 
 #: xcopy.rc:31
 msgid "%1!d! file(s) copied\n"
