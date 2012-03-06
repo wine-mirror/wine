@@ -780,6 +780,28 @@ static void testScreenBuffer(HANDLE hConOut)
        "GetLastError: expecting %u got %u\n",
        ERROR_INVALID_HANDLE, GetLastError());
 
+    /* trying to write non-console handle */
+    SetLastError(0xdeadbeef);
+    ok(!WriteConsoleA(hFileOutRW, test_str1, lstrlenA(test_str1), &len, NULL),
+        "Shouldn't succeed\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "GetLastError: expecting %u got %u\n",
+       ERROR_INVALID_HANDLE, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ok(!WriteConsoleA(hFileOutRO, test_str1, lstrlenA(test_str1), &len, NULL),
+        "Shouldn't succeed\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "GetLastError: expecting %u got %u\n",
+       ERROR_INVALID_HANDLE, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ok(!WriteConsoleA(hFileOutWT, test_str1, lstrlenA(test_str1), &len, NULL),
+        "Shouldn't succeed\n");
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "GetLastError: expecting %u got %u\n",
+       ERROR_INVALID_HANDLE, GetLastError());
+
     CloseHandle(hFileOutRW);
     CloseHandle(hFileOutRO);
     CloseHandle(hFileOutWT);
