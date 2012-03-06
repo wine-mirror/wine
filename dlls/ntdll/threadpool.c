@@ -1015,7 +1015,11 @@ NTSTATUS WINAPI RtlDeleteTimer(HANDLE TimerQueue, HANDLE Timer,
         return STATUS_INVALID_PARAMETER_1;
     q = t->q;
     if (CompletionEvent == INVALID_HANDLE_VALUE)
+    {
         status = NtCreateEvent(&event, EVENT_ALL_ACCESS, NULL, SynchronizationEvent, FALSE);
+        if (status == STATUS_SUCCESS)
+            status = STATUS_PENDING;
+    }
     else if (CompletionEvent)
         event = CompletionEvent;
 
@@ -1029,7 +1033,10 @@ NTSTATUS WINAPI RtlDeleteTimer(HANDLE TimerQueue, HANDLE Timer,
     if (CompletionEvent == INVALID_HANDLE_VALUE && event)
     {
         if (status == STATUS_PENDING)
+        {
             NtWaitForSingleObject(event, FALSE, NULL);
+            status = STATUS_SUCCESS;
+        }
         NtClose(event);
     }
 
