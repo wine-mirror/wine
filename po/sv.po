@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-02-29 17:17+0200\n"
+"PO-Revision-Date: 2012-03-06 21:30+0200\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Swedish\n"
@@ -36,7 +36,7 @@ msgid ""
 "Remove."
 msgstr ""
 "Följande programvara kan automatiskt tas bort. Markera den från listan och "
-"klicka på Lägg till/Ta bort för att ta bort eller ändra dess installerade "
+"klicka på Ändra/Ta bort för att ta bort eller ändra dess installerade "
 "komponenter."
 
 #: appwiz.rc:64
@@ -45,7 +45,7 @@ msgstr "&Supportinformation"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
-msgstr ""
+msgstr "&Ändra..."
 
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
@@ -545,7 +545,7 @@ msgstr "Test"
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
-msgstr ""
+msgstr "Skr&ift:"
 
 #: comdlg32.rc:276
 msgid "Color"
@@ -880,7 +880,7 @@ msgstr "Oliv"
 
 #: comdlg32.rc:121 wordpad.rc:118
 msgid "Navy"
-msgstr ""
+msgstr "Marinblå"
 
 #: comdlg32.rc:122 wordpad.rc:119
 msgid "Purple"
@@ -888,7 +888,7 @@ msgstr "Lila"
 
 #: comdlg32.rc:123 wordpad.rc:120
 msgid "Teal"
-msgstr ""
+msgstr "Teal"
 
 #: comdlg32.rc:124 wordpad.rc:121
 msgid "Gray"
@@ -904,7 +904,7 @@ msgstr "Röd"
 
 #: comdlg32.rc:127 wordpad.rc:124
 msgid "Lime"
-msgstr ""
+msgstr "Limegrön"
 
 #: comdlg32.rc:128 wordpad.rc:125
 msgid "Yellow"
@@ -2147,7 +2147,6 @@ msgid "Welcome to the Certificate Import Wizard"
 msgstr "Välkommen till guiden för import av certifikat"
 
 #: cryptui.rc:283
-#, fuzzy
 msgid ""
 "This wizard helps you import certificates, certificate revocation lists, and "
 "certificate trust lists from a file to a certificate store.\n"
@@ -2159,10 +2158,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Denna guide hjälper dig på att importera certifikat och listor över "
+"återkallade och betrodda certifikat.\n"
+"\n"
 "Ett certifikat kan användas för att identifiera dig eller datorn som du "
 "kommunicerar med.  Det kan även användas för autentisering samt för att "
 "signera meddelanden.  Certifikatlager är samlingar av certifikat, listor "
-"över återkallade certifikat, och listor över betrodda certifikat."
+"över återkallade certifikat, och listor över betrodda certifikat.\n"
+"\n"
+"Klicka Nästa för att fortsätta."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2277,7 +2281,6 @@ msgid "Welcome to the Certificate Export Wizard"
 msgstr "Välkommen till guiden för export av certifikat"
 
 #: cryptui.rc:373
-#, fuzzy
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2289,10 +2292,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Denna guide hjälper dig på att exportera certifikat och listor över "
+"återkallade och betrodda certifikat.\n"
+"\n"
 "Ett certifikat kan användas för att identifiera dig eller datorn som du "
 "kommunicerar med.  Det kan även användas för autentisering samt för att "
 "signera meddelanden.  Certifikatlager är samlingar av certifikat, listor "
-"över återkallade certifikat, och listor över betrodda certifikat."
+"över återkallade certifikat, och listor över betrodda certifikat.\n"
+"\n"
+"Klicka Nästa för att fortsätta."
 
 #: cryptui.rc:381
 msgid ""
@@ -2921,7 +2929,7 @@ msgstr "Konfigurera enheter"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Återställa"
 
 #: dinput.rc:48
 msgid "Player"
@@ -2932,29 +2940,24 @@ msgid "Device"
 msgstr "Enhet"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "Aktivering"
+msgstr "Handlingar"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "Enhetsmappning"
+msgstr "Mapping"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Redan tilldelad\n"
+msgstr "Visa tilldelade först"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Aktivering"
+msgstr "Handling"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "&Objekt"
+msgstr "Objekt"
 
 #: dxdiagn.rc:25
 msgid "Regional Setting"
@@ -2966,11 +2969,11 @@ msgstr "%1!u!MB använda, %2!u!MB tillgängliga"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Västerländska"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Centraleuropeiska"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
@@ -2982,7 +2985,7 @@ msgstr "Grekiska"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Turkiska"
 
 #: gdi32.rc:30
 msgid "Hebrew"
@@ -2994,15 +2997,15 @@ msgstr "Arabiska"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Baltiska"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamesiska"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Thailändska"
 
 #: gdi32.rc:35
 msgid "Japanese"
@@ -3010,19 +3013,19 @@ msgstr "Japanska"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "Förenklad kinesiska GB 2312"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "Koreanska"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "Traditionell kinesiska Big5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Koreanska (Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
@@ -3085,10 +3088,9 @@ msgid "&Forward"
 msgstr "&Framåt"
 
 #: hhctrl.rc:59
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
-msgstr "&Hem"
+msgstr "S&tartsida"
 
 #: hhctrl.rc:60
 msgid "&Stop"
@@ -3120,11 +3122,11 @@ msgstr "Favor&iter"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr "Dölj &flikar"
+msgstr "Dölj fl&ikar"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr "Visa &flikar"
+msgstr "Visa fl&ikar"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -3147,10 +3149,9 @@ msgid "Back"
 msgstr "Bakåt"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
-msgstr "Hem"
+msgstr "Startsida"
 
 #: hhctrl.rc:45
 msgid "Sync"
@@ -3199,9 +3200,8 @@ msgid "Pr&int..."
 msgstr "Skriv &ut..."
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "&Förhandsgranskning..."
+msgstr "&Förhandsgranska"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -3240,10 +3240,9 @@ msgid "Open:"
 msgstr "Öppna:"
 
 #: ieframe.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
-msgstr "Hem"
+msgstr "Startsida"
 
 #: ieframe.rc:68 winhlp32.rc:66
 msgid "Print..."
@@ -3682,7 +3681,7 @@ msgstr "Filslut.\n"
 
 #: winerror.mc:211 winerror.mc:436
 msgid "Disk full.\n"
-msgstr ""
+msgstr "Disken är full.\n"
 
 #: winerror.mc:216
 msgid "Request not supported.\n"
@@ -3830,7 +3829,7 @@ msgstr "För många semaforförfrågningar.\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time.\n"
-msgstr ""
+msgstr "Ogiltigt begär vid avbrott.\n"
 
 #: winerror.mc:401
 msgid "Semaphore owner died.\n"
@@ -4046,7 +4045,7 @@ msgstr "Ogiltig sökväg.\n"
 
 #: winerror.mc:676
 msgid "Signal pending.\n"
-msgstr ""
+msgstr "En signal väntar.\n"
 
 #: winerror.mc:681
 msgid "Max system-wide thread count reached.\n"
@@ -4062,7 +4061,7 @@ msgstr "Resursen används.\n"
 
 #: winerror.mc:696
 msgid "Cancel violation.\n"
-msgstr ""
+msgstr "Avbrytningsfel.\n"
 
 #: winerror.mc:701
 msgid "Atomic locks not supported.\n"
@@ -4270,7 +4269,7 @@ msgstr "Read/WriteProcessMemory delvis fullbordat.\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted.\n"
-msgstr ""
+msgstr "Oplock-begäran nekades.\n"
 
 #: winerror.mc:961
 msgid "Invalid oplock message received.\n"
@@ -4738,7 +4737,7 @@ msgstr "Elementets adress är ogiltig.\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present.\n"
-msgstr ""
+msgstr "Magasinet är inte tillgängligt.\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization.\n"
@@ -5410,7 +5409,7 @@ msgstr "Ömsesidig autentisering misslyckades.\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server.\n"
-msgstr ""
+msgstr "Det finns en tidsskillnad mellan klienten och servern.\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle.\n"
@@ -5650,7 +5649,7 @@ msgstr "Hook-typen ej tillåten.\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required.\n"
-msgstr ""
+msgstr "En interaktiv fönsterstation krävs.\n"
 
 #: winerror.mc:2696
 msgid "Timeout.\n"
@@ -7062,7 +7061,7 @@ msgstr "Skapa från fil"
 
 #: oledlg.rc:65
 msgid "&Add Control..."
-msgstr ""
+msgstr "&Lägg till kontroll..."
 
 #: oledlg.rc:66
 msgid "Display As Icon"
@@ -7078,7 +7077,7 @@ msgstr "Fil:"
 
 #: oledlg.rc:75
 msgid "Paste Special"
-msgstr ""
+msgstr "Klistra in special"
 
 #: oledlg.rc:78 setupapi.rc:40
 msgid "Source:"
@@ -7127,7 +7126,7 @@ msgstr ""
 
 #: oledlg.rc:29
 msgid "Add Control"
-msgstr ""
+msgstr "Lägg till kontroll"
 
 #: oledlg.rc:34
 msgid "Inserts the contents of the clipboard into your document as %s."
@@ -7172,15 +7171,15 @@ msgstr ""
 
 #: oledlg.rc:41
 msgid "Unknown Type"
-msgstr ""
+msgstr "Okänd typ"
 
 #: oledlg.rc:42
 msgid "Unknown Source"
-msgstr ""
+msgstr "Okänd källa"
 
 #: oledlg.rc:43
 msgid "the program which created it"
-msgstr ""
+msgstr "programmet som skapade det"
 
 #: sane.rc:41
 msgid "Scanning"
@@ -7644,7 +7643,7 @@ msgstr "&Återställ"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "&Töm"
 
 #: shell32.rc:95
 msgid "E&xplore"
@@ -8068,23 +8067,23 @@ msgid "Confirm deletion"
 msgstr "Bekräfta borttagning"
 
 #: shell32.rc:246
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Filen finns redan.\n"
+"Det finns redan en fil i %1.\n"
+"\n"
 "Vill du ersätta den?"
 
 #: shell32.rc:247
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Filen finns redan.\n"
+"Det finns redan en mapp i %1.\n"
+"\n"
 "Vill du ersätta den?"
 
 #: shell32.rc:248
@@ -8179,7 +8178,7 @@ msgstr "Ma&ximera"
 
 #: user32.rc:33
 msgid "&Close\tAlt+F4"
-msgstr "A&vsluta\tAlt+F4"
+msgstr "&Stäng\tAlt+F4"
 
 #: user32.rc:35
 msgid "&About Wine"
@@ -8187,19 +8186,19 @@ msgstr "&Om Wine"
 
 #: user32.rc:46
 msgid "&Close\tCtrl+F4"
-msgstr "A&vsluta\tCtrl+F4"
+msgstr "&Stäng\tCtrl+F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl+F6"
-msgstr ""
+msgstr "&Nästa\tCtrl+F6"
 
 #: user32.rc:79
 msgid "&Abort"
-msgstr "&Stoppa"
+msgstr "&Avbryt"
 
 #: user32.rc:80
 msgid "&Retry"
-msgstr ""
+msgstr "&Försök igen"
 
 #: user32.rc:81
 msgid "&Ignore"
@@ -10619,14 +10618,12 @@ msgid "Ask for an in-process handler when calling CoGetClassObject"
 msgstr ""
 
 #: oleview.rc:115
-#, fuzzy
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr "Använd CLSCTX_LOCAL_SERVER vid anrop till CoGetClassObject"
+msgstr "Använd en lokal server vid anrop till CoGetClassObject"
 
 #: oleview.rc:116
-#, fuzzy
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr "Använd CLSCTX_LOCAL_SERVER vid anrop till CoGetClassObject"
+msgstr "Använd en fjärrserver vid anrop till CoGetClassObject"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
@@ -12418,7 +12415,7 @@ msgstr "Visa &avancerat"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr ""
+msgstr "E&nhet:"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
@@ -12485,9 +12482,8 @@ msgid "C&olor:"
 msgstr "Fä&rg:"
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
-msgstr "Shell-mapp"
+msgstr "Mappar"
 
 #: winecfg.rc:293
 msgid "&Link to:"
@@ -12900,7 +12896,7 @@ msgstr ""
 
 #: wineconsole.rc:117
 msgid "&Close console"
-msgstr ""
+msgstr "&Stäng konsoll"
 
 #: wineconsole.rc:119
 msgid "Edition"
@@ -12912,11 +12908,11 @@ msgstr "Konsollparametrar"
 
 #: wineconsole.rc:128
 msgid "Retain these settings for later sessions"
-msgstr ""
+msgstr "Spara dessa inställningar för följande sessioner"
 
 #: wineconsole.rc:129
 msgid "Modify only current session"
-msgstr ""
+msgstr "Ändra enbart den aktuella sessionen"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"
@@ -13145,9 +13141,8 @@ msgid "Sort by &Date"
 msgstr "Sortera efter dat&um"
 
 #: winefile.rc:56
-#, fuzzy
 msgid "Filter by&..."
-msgstr "Sortera efter &..."
+msgstr "&Filtrera efter..."
 
 #: winefile.rc:63
 msgid "&Drivebar"
@@ -13301,17 +13296,17 @@ msgstr "%1 av %2 ledigt"
 #: winefile.rc:117
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kbyte"
 
 #: winefile.rc:118
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "Mbyte"
 
 #: winefile.rc:119
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "Gbyte"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -13506,9 +13501,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "Å&terställ\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
-msgstr "Ta &bort\tDEL"
+msgstr "Ta &bort\tDel"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
