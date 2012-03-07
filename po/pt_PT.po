@@ -2013,7 +2013,7 @@ msgstr "Política de Certificados"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "Identificador de Política:"
+msgstr "Identificador de Política: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -3325,7 +3325,7 @@ msgid ""
 "Cached copies of webpages, images and certificates."
 msgstr ""
 "Ficheiros temporários da Internet\n"
-"Cópias de paginas de Internet em cache, imagens e certificados"
+"Cópias de paginas de Internet em cache, imagens e certificados."
 
 #: inetcpl.rc:70
 msgid ""
@@ -8285,7 +8285,7 @@ msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr ""
 "Existe pelo menos um problema de segurança não especificado com este "
-"certificado"
+"certificado."
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -9844,7 +9844,8 @@ msgstr ""
 "VOL\t\tMostra o rótulo do volume de uma unidade de disco\n"
 "XCOPY\t\tCopia ficheiros ou uma árvore de directório para um destino\n"
 "\n"
-"Digite HELP <comando> para mais informações sobre alguns dos comandos acima\n"
+"Digite HELP <comando> para mais informações sobre alguns dos comandos "
+"acima.\n"
 
 #: cmd.rc:306
 msgid "Are you sure?"
@@ -10414,9 +10415,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"O ficheiro '%s' não existe\n"
+"O ficheiro '%s' não existe.\n"
 "\n"
-" Deseja criar um novo ficheiro?"
+"Deseja criar um novo ficheiro?"
 
 #: notepad.rc:79
 msgid ""
@@ -10961,11 +10962,11 @@ msgstr "Informação"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "Excluir grupo '%s' ?"
+msgstr "Excluir grupo '%s'?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "Excluir programa '%s' ?"
+msgstr "Excluir programa '%s'?"
 
 #: progman.rc:67
 msgid "Not implemented"
@@ -12300,7 +12301,7 @@ msgid ""
 msgstr ""
 "Execução do comando de desinstalação '%s' falhado, talvez devido a faltar o "
 "executável.\n"
-"Deseja remover a entrada de desinstalação do registo ?"
+"Deseja remover a entrada de desinstalação do registo?"
 
 #: view.rc:33
 msgid "&Pan"
@@ -12365,7 +12366,7 @@ msgstr ""
 
 #: winecfg.rc:134
 msgid "Windows registration information"
-msgstr " Informações de registro do Windows "
+msgstr "Informações de registro do Windows"
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12377,7 +12378,7 @@ msgstr "&Organização:"
 
 #: winecfg.rc:145
 msgid "Application settings"
-msgstr " Definições da aplicação"
+msgstr "Definições da aplicação"
 
 #: winecfg.rc:146
 msgid ""
