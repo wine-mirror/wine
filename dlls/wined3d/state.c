@@ -4318,29 +4318,11 @@ static void load_vertex_data(const struct wined3d_context *context,
             curVBO = e->data.buffer_object;
         }
 
-        /* min(WINED3D_ATR_FORMAT(position),3) to Disable RHW mode as 'w' coord
-           handling for rhw mode should not impact screen position whereas in GL it does.
-           This may result in very slightly distorted textures in rhw mode.
-           There's always the other option of fixing the view matrix to
-           prevent w from having any effect.
-
-           This only applies to user pointer sources, in VBOs the vertices are fixed up
-         */
-        if (!e->data.buffer_object)
-        {
-            TRACE("glVertexPointer(3, %#x, %#x, %p);\n", e->format->gl_vtx_type, e->stride,
-                    e->data.addr + state->load_base_vertex_index * e->stride);
-            glVertexPointer(3 /* min(e->format->gl_vtx_format, 3) */, e->format->gl_vtx_type, e->stride,
-                    e->data.addr + state->load_base_vertex_index * e->stride);
-        }
-        else
-        {
-            TRACE("glVertexPointer(%#x, %#x, %#x, %p);\n",
-                    e->format->gl_vtx_format, e->format->gl_vtx_type, e->stride,
-                    e->data.addr + state->load_base_vertex_index * e->stride);
-            glVertexPointer(e->format->gl_vtx_format, e->format->gl_vtx_type, e->stride,
-                    e->data.addr + state->load_base_vertex_index * e->stride);
-        }
+        TRACE("glVertexPointer(%#x, %#x, %#x, %p);\n",
+                e->format->gl_vtx_format, e->format->gl_vtx_type, e->stride,
+                e->data.addr + state->load_base_vertex_index * e->stride);
+        glVertexPointer(e->format->gl_vtx_format, e->format->gl_vtx_type, e->stride,
+                e->data.addr + state->load_base_vertex_index * e->stride);
         checkGLcall("glVertexPointer(...)");
         glEnableClientState(GL_VERTEX_ARRAY);
         checkGLcall("glEnableClientState(GL_VERTEX_ARRAY)");
