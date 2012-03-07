@@ -13052,8 +13052,8 @@ msgstr "Velg en programfil"
 
 #: winecfg.rc:66
 #, fuzzy
-msgid "Autodetect..."
-msgstr "Automatisk"
+msgid "Autodetect"
+msgstr "&Automatisk"
 
 #: winecfg.rc:67
 msgid "Local hard disk"

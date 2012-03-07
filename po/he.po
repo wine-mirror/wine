@@ -12834,7 +12834,7 @@ msgstr "נא לבחור בקובץ הפעלה"
 
 #: winecfg.rc:66
 #, fuzzy
-msgid "Autodetect..."
+msgid "Autodetect"
 msgstr "זיהוי אוטומטי"
 
 #: winecfg.rc:67

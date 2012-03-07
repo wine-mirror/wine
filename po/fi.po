@@ -12672,8 +12672,9 @@ msgid "Select an executable file"
 msgstr "Valitse suoritettava tiedosto"
 
 #: winecfg.rc:66
-msgid "Autodetect..."
-msgstr "Hae automaattisesti..."
+#, fuzzy
+msgid "Autodetect"
+msgstr "&Hae automaattisesti"
 
 #: winecfg.rc:67
 msgid "Local hard disk"

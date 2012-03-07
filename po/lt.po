@@ -12716,8 +12716,9 @@ msgid "Select an executable file"
 msgstr "Pasirinkite vykdomąjį failą"
 
 #: winecfg.rc:66
-msgid "Autodetect..."
-msgstr "Automatiškai aptikti..."
+#, fuzzy
+msgid "Autodetect"
+msgstr "Automatiškai &aptikti"
 
 #: winecfg.rc:67
 msgid "Local hard disk"

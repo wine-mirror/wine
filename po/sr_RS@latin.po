@@ -12898,8 +12898,8 @@ msgstr "Izaberi izvršni fajl"
 
 #: winecfg.rc:66
 #, fuzzy
-msgid "Autodetect..."
-msgstr "Automatski"
+msgid "Autodetect"
+msgstr "Auto&matski"
 
 #: winecfg.rc:67
 msgid "Local hard disk"

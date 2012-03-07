@@ -12883,8 +12883,8 @@ msgstr "Vælg en programfil"
 
 #: winecfg.rc:66
 #, fuzzy
-msgid "Autodetect..."
-msgstr "Autoopdag..."
+msgid "Autodetect"
+msgstr "Auto&detekter"
 
 #: winecfg.rc:67
 msgid "Local hard disk"

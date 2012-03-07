@@ -12790,8 +12790,9 @@ msgid "Select an executable file"
 msgstr "Seleccione un fichero ejecutable"
 
 #: winecfg.rc:66
-msgid "Autodetect..."
-msgstr "Autodetectar..."
+#, fuzzy
+msgid "Autodetect"
+msgstr "Auto&detectar"
 
 #: winecfg.rc:67
 msgid "Local hard disk"

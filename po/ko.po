@@ -12644,8 +12644,9 @@ msgid "Select an executable file"
 msgstr "실행 파일 선택"
 
 #: winecfg.rc:66
-msgid "Autodetect..."
-msgstr "자동으로 찾기..."
+#, fuzzy
+msgid "Autodetect"
+msgstr "자동찾기(&D)"
 
 #: winecfg.rc:67
 msgid "Local hard disk"

@@ -12717,8 +12717,9 @@ msgid "Select an executable file"
 msgstr "Válasszon ki egy futtatható fájlt"
 
 #: winecfg.rc:66
-msgid "Autodetect..."
-msgstr "Automatikus detektálás..."
+#, fuzzy
+msgid "Autodetect"
+msgstr "Automata &felismerés"
 
 #: winecfg.rc:67
 msgid "Local hard disk"

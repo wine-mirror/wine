@@ -12632,8 +12632,8 @@ msgstr "选择可执行文件"
 
 #: winecfg.rc:66
 #, fuzzy
-msgid "Autodetect..."
-msgstr "自动侦测"
+msgid "Autodetect"
+msgstr "自动侦测(&D)"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
