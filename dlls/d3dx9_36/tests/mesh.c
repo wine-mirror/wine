@@ -2471,10 +2471,6 @@ static void D3DXCreateBoxTest(void)
         return;
     }
 
-    hr = D3DXCreateBuffer(36 * sizeof(DWORD), &ppBuffer);
-    ok(hr==D3D_OK, "Expected D3D_OK, received %#x\n", hr);
-    if (FAILED(hr)) goto end;
-
     hr = D3DXCreateBox(device,2.0f,20.0f,4.9f,NULL, &ppBuffer);
     todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
 
@@ -2490,6 +2486,7 @@ static void D3DXCreateBoxTest(void)
     hr = D3DXCreateBox(device,22.0f,20.0f,-4.9f,&box, &ppBuffer);
     todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
 
+    ppBuffer = NULL;
     hr = D3DXCreateBox(device,10.9f,20.0f,4.9f,&box, &ppBuffer);
     todo_wine ok(hr==D3D_OK, "Expected D3D_OK, received %#x\n", hr);
 
@@ -2508,7 +2505,7 @@ static void D3DXCreateBoxTest(void)
 end:
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
-    ID3DXBuffer_Release(ppBuffer);
+    if (ppBuffer) ID3DXBuffer_Release(ppBuffer);
     DestroyWindow(wnd);
 }
 
