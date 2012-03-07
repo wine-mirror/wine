@@ -45,9 +45,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
-/* Default set of drivers to be loaded */
-#define WINE_DEFAULT_WINMM_DRIVER "alsa,oss,coreaudio"
-
 /* each known type of driver has an instance of this structure */
 typedef struct tagWINE_LLTYPE {
     /* those attributes depend on the specification of the type */
