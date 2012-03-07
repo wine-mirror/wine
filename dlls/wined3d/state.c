@@ -4352,14 +4352,6 @@ static void load_vertex_data(const struct wined3d_context *context,
     }
 
     /* Diffuse Colour --------------------------------------------*/
-    /*  WARNING: Data here MUST be in RGBA format, so cannot      */
-    /*     go directly into fast mode from app pgm, because       */
-    /*     directx requires data in BGRA format.                  */
-    /* currently fixupVertices swizzles the format, but this isn't*/
-    /* very practical when using VBOs                             */
-    /* NOTE: Unless we write a vertex shader to swizzle the colour*/
-    /* , or the user doesn't care and wants the speed advantage   */
-
     if (si->use_map & (1 << WINED3D_FFP_DIFFUSE))
     {
         e = &si->elements[WINED3D_FFP_DIFFUSE];
