@@ -2429,7 +2429,7 @@ static void multisample_copy_rects_test(IDirect3DDevice8 *device)
     ok(SUCCEEDED(hr), "Failed to read render target back, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_CopyRects(device, ds, NULL, 0, ds_plain, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Depth buffer copy, hr %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Depth buffer copy, hr %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
     ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);

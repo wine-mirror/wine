@@ -944,12 +944,26 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
     wined3d_mutex_lock();
     wined3d_resource = wined3d_surface_get_resource(Source->wined3d_surface);
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
+    if (wined3d_desc.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    {
+        WARN("Source %p is a depth stencil surface, returning D3DERR_INVALIDCALL.\n",
+                pSourceSurface);
+        wined3d_mutex_unlock();
+        return D3DERR_INVALIDCALL;
+    }
     srcFormat = wined3d_desc.format;
     src_w = wined3d_desc.width;
     src_h = wined3d_desc.height;
 
     wined3d_resource = wined3d_surface_get_resource(Dest->wined3d_surface);
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
+    if (wined3d_desc.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    {
+        WARN("Dest %p is a depth stencil surface, returning D3DERR_INVALIDCALL.\n",
+                pDestinationSurface);
+        wined3d_mutex_unlock();
+        return D3DERR_INVALIDCALL;
+    }
     destFormat = wined3d_desc.format;
 
     /* Check that the source and destination formats match */

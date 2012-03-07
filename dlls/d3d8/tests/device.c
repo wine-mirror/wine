@@ -3091,6 +3091,78 @@ done:
     UnregisterClassA("d3d8_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static void depth_blit_test(void)
+{
+    HWND hwnd = NULL;
+    IDirect3D8 *d3d8 = NULL;
+    IDirect3DDevice8 *device = NULL;
+    IDirect3DSurface8 *backbuffer, *ds1, *ds2, *ds3;
+    RECT src_rect;
+    const POINT dst_point = {0, 0};
+    HRESULT hr;
+
+    d3d8 = pDirect3DCreate8(D3D_SDK_VERSION);
+    ok(d3d8 != NULL, "Direct3DCreate8 failed.\n");
+    hwnd = CreateWindow("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindow failed.\n");
+    if (!d3d8 || !hwnd)
+        goto done;
+
+    device = create_device(d3d8, hwnd, hwnd, TRUE);
+    if (!device)
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice8_GetRenderTarget(device, &backbuffer);
+    ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &ds1);
+    ok(SUCCEEDED(hr), "GetDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateDepthStencilSurface(device, 640, 480, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, &ds2);
+    ok(SUCCEEDED(hr), "CreateDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateDepthStencilSurface(device, 640, 480, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, &ds3);
+    ok(SUCCEEDED(hr), "CreateDepthStencilSurface failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_ZBUFFER, 0, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+
+    /* Partial blit. */
+    SetRect(&src_rect, 0, 0, 320, 240);
+    hr = IDirect3DDevice8_CopyRects(device, ds1, &src_rect, 1, ds2, &dst_point);
+    ok(hr == D3DERR_INVALIDCALL, "CopyRects returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    /* Flipped. */
+    SetRect(&src_rect, 0, 480, 640, 0);
+    hr = IDirect3DDevice8_CopyRects(device, ds1, &src_rect, 1, ds2, &dst_point);
+    ok(hr == D3DERR_INVALIDCALL, "CopyRects returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    /* Full, explicit. */
+    SetRect(&src_rect, 0, 0, 640, 480);
+    hr = IDirect3DDevice8_CopyRects(device, ds1, &src_rect, 1, ds2, &dst_point);
+    ok(hr == D3DERR_INVALIDCALL, "CopyRects returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    /* Depth -> color blit.*/
+    hr = IDirect3DDevice8_CopyRects(device, ds1, &src_rect, 1, backbuffer, &dst_point);
+    ok(hr == D3DERR_INVALIDCALL, "CopyRects returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    /* Full, NULL rects, current depth stencil -> unbound depth stencil */
+    hr = IDirect3DDevice8_CopyRects(device, ds1, NULL, 0, ds2, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "CopyRects returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    /* Full, NULL rects, unbound depth stencil -> current depth stencil */
+    hr = IDirect3DDevice8_CopyRects(device, ds2, NULL, 0, ds1, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "CopyRects returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    /* Full, NULL rects, unbound depth stencil -> unbound depth stencil */
+    hr = IDirect3DDevice8_CopyRects(device, ds2, NULL, 0, ds3, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "CopyRects returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+
+    IDirect3DSurface8_Release(backbuffer);
+    IDirect3DSurface8_Release(ds3);
+    IDirect3DSurface8_Release(ds2);
+    IDirect3DSurface8_Release(ds1);
+
+done:
+    if (device) IDirect3DDevice8_Release(device);
+    if (d3d8) IDirect3D8_Release(d3d8);
+    if (hwnd) DestroyWindow(hwnd);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -3145,6 +3217,7 @@ START_TEST(device)
         test_wrong_shader();
         test_mode_change();
         test_device_window_reset();
+        depth_blit_test();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
