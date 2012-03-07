@@ -215,7 +215,7 @@ MSVCP_bool CDECL MSVCP_char_traits_wchar_lt(const wchar_t *ch1,
 int CDECL MSVCP_char_traits_wchar_compare(const wchar_t *s1,
         const wchar_t *s2, MSVCP_size_t count)
 {
-    int ret = memcmp(s1, s2, sizeof(wchar_t[count]));
+    int ret = memcmp(s1, s2, count * sizeof(wchar_t));
     return (ret>0 ? 1 : (ret<0 ? -1 : 0));
 }
 
@@ -238,7 +238,7 @@ wchar_t* CDECL MSVCP_char_traits_wchar__Copy_s(wchar_t *dest,
         return dest;
     }
 
-    return memcpy(dest, src, sizeof(wchar_t[count]));
+    return memcpy(dest, src, count * sizeof(wchar_t));
 }
 
 /* ?copy@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z */
@@ -275,7 +275,7 @@ wchar_t* CDECL MSVCP_char_traits_wchar__Move_s(wchar_t *dest,
         return dest;
     }
 
-    return memmove(dest, src, sizeof(WCHAR[count]));
+    return memmove(dest, src, count * sizeof(WCHAR));
 }
 
 /* ?move@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z */
@@ -395,7 +395,7 @@ unsigned short * CDECL MSVCP_char_traits_short__Copy_s(unsigned short *dest,
         return dest;
     }
 
-    return memcpy(dest, src, sizeof(unsigned short[count]));
+    return memcpy(dest, src, count * sizeof(unsigned short));
 }
 
 /* ?copy@?$char_traits@G@std@@SAPAGPAGPBGI@Z */
@@ -430,7 +430,7 @@ unsigned short* CDECL MSVCP_char_traits_short__Move_s(unsigned short *dest,
         return dest;
     }
 
-    return memmove(dest, src, sizeof(unsigned short[count]));
+    return memmove(dest, src, count * sizeof(unsigned short));
 }
 
 /* ?move@?$char_traits@G@std@@SAPAGPAGPBGI@Z */
