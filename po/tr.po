@@ -9621,7 +9621,7 @@ msgstr ""
 "XCOPY\t\tCopy source files or directory trees to a destination\n"
 "EXIT\t\tCMD'yi kapat\n"
 "\n"
-"Yukarıdaki komutlar hakkında daha fazla bilgi için HELP <komut> girin\n"
+"Yukarıdaki komutlar hakkında daha fazla bilgi için HELP <komut> girin.\n"
 
 #: cmd.rc:306
 msgid "Are you sure?"
@@ -12080,7 +12080,7 @@ msgstr "Organization:"
 
 #: winecfg.rc:145
 msgid "Application settings"
-msgstr "Uygulama ayarları "
+msgstr "Uygulama ayarları"
 
 #: winecfg.rc:146
 msgid ""
@@ -12106,7 +12106,7 @@ msgstr "&Windows Sürümü:"
 
 #: winecfg.rc:160
 msgid "Window settings"
-msgstr "Pencere ayarları "
+msgstr "Pencere ayarları"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12138,7 +12138,7 @@ msgstr ""
 
 #: winecfg.rc:182
 msgid "DLL overrides"
-msgstr "DLL Öncelikleri "
+msgstr "DLL Öncelikleri"
 
 #: winecfg.rc:183
 msgid ""
@@ -12172,7 +12172,7 @@ msgstr "Öncelik Düzenle"
 
 #: winecfg.rc:199
 msgid "Load order"
-msgstr "Yükleme Sırası "
+msgstr "Yükleme Sırası"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -12903,7 +12903,7 @@ msgstr "&Disk"
 
 #: winefile.rc:41
 msgid "Connect &Network Drive..."
-msgstr "&Ağ Sürücüsüne Bağlan"
+msgstr "&Ağ Sürücüsüne Bağlan..."
 
 #: winefile.rc:42
 msgid "&Disconnect Network Drive"
