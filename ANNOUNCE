@@ -1,12 +1,26 @@
-The Wine development release 1.4-rc6 is now available.
+The Wine team is proud to announce that the stable release Wine 1.4
+is now available.
 
-What's new in this release (see below for details):
-  - Bug fixes only, we are in code freeze.
+This release represents 20 months of development effort and over
+16,000 individual changes. The main highlights are the new DIB
+graphics engine, a redesigned audio stack, and full support for
+bidirectional text and character shaping.
+
+It also contains a lot of improvements across the board, as well as
+support for many new applications, notably Microsoft Office 2010. See
+the release notes below for a summary of the major changes.
+
+This release is dedicated to the memory of Gé (Greg) van Geldorp, who
+passed away in May 2011. Greg single-handedly designed, built, and
+maintained the Wine Testbot, which has become a cornerstone of our
+development process. The high quality of this release owes a lot to
+his work. He is greatly missed by us all.
+
 
 The source is available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.4-rc6.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-1.4-rc6.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.4.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.4.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -22,221 +36,457 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.4-rc6:
+What's new in Wine 1.4
+======================
 
-   3325  Time Adjuster's toolbar stays always on top
-   4084  SonicStage 3.1 installer fails with 'Windows version not supported'
-   5897  PixelFormat_DD2WineD3D Unknown Pixelformat
-   8166  notepad does fully not display long (>32K) one-line files
-   8495  missing graphic objects in Re-volt
-  10176  rFactor Dedicated not working anymore after update
-  11430  Applications based on CodeJock Software ToolkitPro fail with division by zero
-  12212  DeusEx: running at big resolutions result in screen shift&crop
-  12739  Improper drawing of radio buttons
-  13248  Multiple Error MessageBoxes in Incomedia Website X5 installer
-  13792  Abomination: The Nemesis Project Crashes at startup
-  14769  Firefox 3 window size isn't restored after returning from fullscreen (dogfood)
-  16189  Google Earth install fails (service related)
-  17564  7-zip file manager interface selection problem
-  17723  Audiosurf: unable to fill textfields
-  18569  TeamViewer: App doesn't start, probably heap corruption
-  19106  Touhou Fuujinroku ~ Mountain of Faith: Stage backgrounds aren't always rendered properly
-  19159  Command & Conquer 3: Tiberium Wars hangs at splash screen
-  21019  Igor pro "Help brower" has no window decorations
-  21745  Magic Workstation: icons and some text appear upside-down
-  21981  Igor Pro: Drop-down menu only works when arrow key is pressed
-  21984  Glumbuster crashes on load
-  22216  Problem with freopen("CONOUT$", "w", stdout);
-  22359  Wolfenstein water displays strange rays
-  22414  Grand Theft Auto: Vice City - full screen window does not take focus
-  22558  Harbinger (demo) graphical issue: green artefacts around objects
-  22703  Running Galcon Fusion demo gives error message
-  22842  Can't select screen mode / resolution on PSOBB and PSU
-  22987  Irfan view - "Can't paste image from clipboard !"
-  24259  World of Warcraft in Windowed/Maximized OpenGL mode takes 100% cpu
-  24267  Touhou 12.3 Hisoutensoku: Don't draw some sprites.
-  24695  Saira crashes when fullscreen mode is selected
-  25164  Sound dies on video in binkplay 1.0 after mouse has been moved outside window/video paused
-  25324  GL_INVALID_OPERATION (0x502) on x86_64 installations.
-  25447  Men of War does not let me select anti-aliasing options
-  26416  Fullscreen problems with Phantasy Star Online
-  26613  painkiller redemption steam mouse wheel not working
-  26872  Cannot create new profile in Dawn of War demo
-  27220  Internet Explorer 8 always show error message on startup
-  27293  PSO:BB - Cannot type a character name during character creation
-  27609  GTA Vice City hangs in initial menu
-  28087  foobar 2000: Crashes when editing tags (with configured media library)
-  28598  ArchiCAD 12: crashes when creating a new file or open an existing one
-  28801  stack_set_frame_internal passes undefined value into SymSetContext()?
-  29167  Star Wars: The Old Republic launcher locks up on icon highlighting
-  29689  Crash wincfg on graphics tab with LC_ALL=ja_JP
-  29869  Re-Volt is missing an HUD element
-  29883  Game created with RPG Tkool VX Ace (Japanese version of RPG Maker VX Ace): can not write save data (Save*.rvdata2)
-  29949  PAF (Personal Ancestral File) help viewer unhandled page fault
-  29981  Galactic Civilizations 2 is unplayable due to possible severe memory leak
-  29992  Rally Trophy: crashes on startup when Logitech G25 plugged in
-  30038  Detect CPU speed by using sysctl "hw.clockrate" instead of "dev.cpu.0.freq"
-  30040  comctl32/monthcal test fails on leap years?
-  30053  Finale 2012 font spacing is too wide
+*** Graphics
 
-----------------------------------------------------------------
+- There is a new graphics engine for rendering into Device Independent
+  Bitmaps (DIB). DIB rendering no longer requires access faults or
+  round-trips to the X server, which yields large performance gains in
+  DIB-intensive applications.
 
-Changes since 1.4-rc5:
+- The DIB engine can also be used for fall-back implementations of
+  some graphics primitives, like alpha blending, when the display
+  driver doesn't support them directly.
 
-Alex Henrie (1):
-      po: Fix spelling errors in Catalan translation.
+- All possible color formats are supported by the DIB engine, so DIB
+  operations are no longer limited by the color resolution of the
+  display. Rendering of the various palette formats is also improved.
 
-Alexander Morozov (1):
-      msvcr90: realloc can move memory block.
+- Custom styles of dashed lines are supported.
 
-Alexandre Julliard (3):
-      README: Updates.
-      gdi32: Fix missing increment of integer data in GetCharABCWidthsFloat.
-      Updated the authors list.
+- Cosmetic pens using hashes or patterns are supported.
 
-Aric Stewart (1):
-      usp10: Better handle 0 cases when caching scripts, languages and features.
+- Gradients use dithering on low color resolution devices for a nicer
+  appearance.
 
-Aurimas Fišeras (1):
-      po: Update Lithuanian translation.
+- The XRender extension is used for gradients when supported.
 
-Austin English (1):
-      ntdll: Use proper CPU speed detection on FreeBSD.
+- PostScript output quality is improved, particularly for bitmaps and
+  paths.
 
-Bruno Jesus (1):
-      imm32/tests: Add ImmGetDescription tests.
+- Rotated text works better for all output device types.
 
-Christian Costa (1):
-      d3dxof: Empty arrays can have the semicolon at the end or not so handle both cases and add tests for them.
+- GdiPlus supports more image formats, including formats that are not
+  supported through GDI.
 
-Eduardo García (4):
-      po: Update Spanish translation.
-      po: Update Spanish translation.
-      po: Update Spanish translation.
-      po: Update Spanish translation.
+- More image codecs are implemented, including support for TGA and CMYK
+  JPEG decoding, as well as BMP, TIFF, PNG, and ICNS encoding.
 
-Fernando Martins (3):
-      po: Update Portuguese translation.
-      po: Update Portuguese translation.
-      po: Update Portuguese translation.
 
-Francois Gouget (36):
-      ddraw/tests: Fix compilation on systems that don't support nameless unions.
-      po: The Thai 'Time/Date' translation is incomplete so mark it as fuzzy.
-      po: Remove or mark as fuzzy the invalid Danish shell folder names.
-      po: Remove a duplicate space after a comma in the German translation.
-      po: Fix the trailing ellipses in the Japanese translation.
-      po: Fix a line wrapping and ellipsis issue in the Japanese translation.
-      po: Fix a typography issue in the Japanese translation.
-      po: Tweak the wrapping of the cmd MOVE Norwegian Bokmål usage message translation.
-      po: Fix some typography issues in the Norwegian Bokmål translation.
-      po: Remove some invalid Norwegian Bokmål shell folder name translations.
-      po: Wrap the 'Caps Lock' Catalan warning tooltip like the English one.
-      po: Mark an invalid Korean translation as fuzzy.
-      po: Add a couple of missing newlines in the Korean translation.
-      po: Fix some typography issues in the Korean translation.
-      po: Remove a couple of duplicate spaces from the Polish translation.
-      po: Remove the copyright notice from the second start.exe Polish translation.
-      po: Fix some space issues in the Portuguese (Brazil) translation.
-      po: Tweak the wrapping of a few Portuguese (Brazil) translations.
-      po: Mark an incomplete Portuguese (Brazil) translation as fuzzy.
-      po: Fix a few typography issues in the Portuguese (Brazil) translation.
-      po: Tweak the wrapping of a few Russian translations.
-      po: Fix some typography issues in the Russian translation.
-      po: Fix some typography issues in the Turkish translation.
-      po: Fix a line wrapping issue in the Slovenian translation.
-      po: Fix the references to the LGPL in the Slovenian translation.
-      po: Remove English strings from the Ukrainian shell folder name translations.
-      po: Fix some space and typography issues in the Ukrainian translation.
-      po: A linefeed was missing in the Russian translation.
-      po: Add full stops to the VERIFY ON / OFF usage lists.
-      po: Add a missing linefeed to a Chinese (Taiwan) translation.
-      po: Remove some invalid Portuguese (Portugal) shell folder name translations.
-      po: Fix the Directory key mapping and Yes/No/All questions in the Hungarian translation.
-      po: Remove a couple of duplicate spaces in the Hungarian translation.
-      po: Use semicolons for the Slovenian comdlg32 printer status enumeration.
-      po: Use commas in the Greek translation of comdlg32's printer status enumeration.
-      start: Remove the license and the /L option.
+*** Audio
 
-Frédéric Delanoy (1):
-      readme: Update French translation.
+- The audio stack is completely redesigned, based on the Vista
+  model. WinMM and DirectSound are implemented on top of the new
+  MMDevAPI library.
 
-Gustavo Henrique Milaré (1):
-      po: Update Brazilian Portuguese translation.
+- The Alsa, OSS, and CoreAudio drivers have been rewritten to use the
+  new model. They now serve as back-ends to the MMDevAPI dll, which no
+  longer needs to rely on the OpenAL library.
 
-Hasan Kiran (1):
-      po: Update Turkish translation.
+- The Jack, NAS, AudioIO, and ESD audio subsystems are no longer
+  supported. Version 3 of the OSS subsystem is no longer supported
+  either, version 4 is required.
 
-Henri Verbeet (5):
-      wined3d: Support color keyed WINED3DFMT_B8G8R8A8_UNORM surfaces.
-      ddraw/tests: Add tests for color keyed texturing with an alpha channel.
-      wined3d: Implement resetting the device window in wined3d_device_reset().
-      d3d8/tests: Add some tests for resetting the device window.
-      d3d9/tests: Add some tests for resetting the device window.
+- The Audio tab in the Wine Configuration tool has been redesigned for
+  the new audio subsystem. The appropriate driver is automatically
+  selected and no longer needs to be configured manually.
 
-Hwang YunSong (2):
-      po: Update Korean translation.
-      po: Update Korean translation.
 
-Ilia Mirkin (2):
-      po: Fix typo in Russian translation.
-      po: Fix ENTER -> Enter, CMD help text, remove fuzzy annotations.
+*** Input devices
 
-Ivan Vojtko (3):
-      po: Update Slovak translation.
-      po: Update Slovak translation.
-      po: Update Slovak translation.
+- The XInput 2 extension is used to provide better mouse control in
+  games and other full-screen applications.
 
-Jacek Caban (1):
-      ieframe: Fixed reallocation size.
+- The mouse is automatically clipped to prevent it from leaving a
+  full-screen window when running in desktop mode. Switching to a
+  different application with Alt-Tab releases the mouse. Clipping can
+  be disabled through the Wine Configuration tool.
 
-Julian Rüger (2):
-      po: Update German translation.
-      readme: Update German translation.
+- Animated mouse cursors are fully supported.
 
-Lauri Kenttä (6):
-      po: Update Swedish translation.
-      po: Update Finnish translation.
-      readme: Update Finnish translation.
-      readme: Update Swedish translation.
-      po: Update Finnish translation.
-      po: Update Swedish translation.
+- Joystick action mapping is supported, including a configuration dialog.
 
-Luca Bennati (2):
-      po: Update Italian translation.
-      readme: Update Italian translation.
 
-Lucas Zawacki (1):
-      dinput: Search for device objects of the correct type in BuildActionMap.
+*** Internationalization
 
-Maarten Lankhorst (1):
-      mmdevapi: Add tests for checking events to capture.
+- Bidirectional text rendering is fully supported.
 
-Martin Jesper Low Madsen (1):
-      po: Update Danish translation.
+- Font shaping and reordering is supported for all the scripts
+  specified in the Unicode standard.
 
-Milan Ševčík (1):
-      po: Updating Czech translation.
+- Bidirectional text editing is supported in the standard edit
+  control.
 
-Nikolay Sivov (4):
-      msxml3: Properly escape character data in text nodes.
-      comctl32/tests: Fix test failures running on February 29.
-      msxml3: Return default namespace uri for 'xml'-prefixed attributes.
-      po: Russian translation update.
+- Vertical fonts (e.g. for Japanese) are supported.
 
-Ruei-Yuan Lu (1):
-      po: Update Chinese (Taiwan) translation.
+- Mirroring of windows, menus, and window controls for right-to-left
+  languages is fully supported.
 
-Stefan Dösinger (1):
-      ddraw/tests: LONG/ULONG and error checking fixes.
+- All resources (strings, menus, dialogs, accelerators) contained in
+  Wine can be translated through standard gettext-style po files.
 
-Vincent Povirk (1):
-      shell32: Properly double-null-terminate the filter in the run/browse dialog.
+- The Unicode character data tables have been updated to version 6.0
+  of the Unicode standard.
 
-Zoltan Nagy (3):
-      po: Update Hungarian translation.
-      po: Update Hungarian translation.
-      po: Update Hungarian translation.
+- Wine is translated to French, German, Spanish, Italian, Dutch,
+  Swedish, Finnish, Portuguese, Catalan, Hungarian, Polish, Russian,
+  Slovenian, Lithuanian, Japanese, and Korean. It has partial
+  translations for another fifteen languages.
+
+
+*** User interface
+
+- The new Vista style of file dialogs is supported.
+
+- Common controls are improved, particularly the calendar, tree view,
+  system link, and image list controls.
+
+- Parts of the Game Explorer API are implemented.
+
+- Wine can take advantage of the GStreamer framework for audio and
+  video playback. This makes it possible to support all formats that
+  have a GStreamer codec. On Mac OS X, the QuickTime framework is used
+  for the same purpose.
+
+
+*** Desktop integration
+
+- System tray notification balloons are implemented.
+
+- The system tray is displayed as a task bar at the bottom of the
+  screen in desktop mode.
+
+- The system tray is automatically registered again when the Unix tray
+  manager is restarted.
+
+- The standard mouse cursors are remapped to the cursor theme of the
+  Unix desktop.
+
+- Drag & drop of OLE objects across applications is supported.
+
+- Icons for menu entries are exported in multiple sizes and in PNG
+  format.
+
+- Icons are displayed for the Unix desktop "Open with..." menu
+  entries.
+
+
+*** Internet and networking
+
+- The built-in Internet Explorer has a user interface, including a
+  menu, an address bar, a tool bar, and configuration dialogs.
+
+- There is an "Internet Settings" control panel that allows
+  configuring various aspects of web browsing, as well as managing
+  security certificates.
+
+- The VBScript language is fully supported.
+
+- The built-in (Gecko-based) web browser engine supports ActiveX.
+
+- The Gecko engine has been updated to the version from Firefox 8.
+
+- The Gecko engine is packaged as an MSI file, and its installation
+  can be managed from the "Add/Remove Programs" control panel.
+
+- The Gecko engine is available on 64-bit.
+
+- Persistent HTTP connections are supported.
+
+- HTTP proxies are better supported, including PAC scripts.
+
+- Changing network passwords is supported.
+
+- The HTML Help support is improved, including a nicer user interface
+  and better navigation support.
+
+- Asynchronous I/O on network socket is improved, particularly
+  asynchronous accepts. This helps with various networked games.
+
+
+*** Direct3D
+
+- Reloading sRGB textures uses either EXT_texture_sRGB_decode or FBO
+  blits when available. This is much faster. This affects Source
+  Engine games and Unreal Engine 3 games in particular.
+
+- WineD3D supports multisample anti-aliasing.
+
+- D3D8 and D3D9 properly support v-sync / swap intervals.
+
+- The WineD3D blitter code is improved both for correctness and
+  performance.
+
+- The WineD3D graphics card database has been updated to recognize new
+  graphics cards and Mesa drivers.
+
+- WineD3D no longer uses COM for its implementation. This makes it
+  much nicer to work with.
+
+- The context management code is improved. The window being destroyed
+  while the WineD3D device is still active in particular is handled
+  much better.
+
+- There have been some performance improvements related to WineD3D
+  state management and resource updates.
+
+- Focus and device window handling work better for D3D8 and D3D9. This
+  mostly affects things like changing graphics settings, switching
+  from full-screen to windowed and back, etc.
+
+- NVDB is supported on cards that support GL_EXT_depth_bounds_test.
+
+- The INTZ and NULL formats are supported.
+
+- Depth surface blits are implemented in WineD3D.
+
+- Depth bias handling is improved. This fixes flickering shadows and
+  decals in a couple of games, like Mass Effect 2 and Unreal
+  Tournament 2004.
+
+- GL_ARB_draw_elements_base_vertex is supported. This allows draws to
+  be more efficient in some cases.
+
+- GL_ARB_map_buffer_alignment is supported. This allows for more
+  efficient mapping of textures and buffers in some cases.
+
+- Handling projected textures works better in early shader model
+  versions.
+
+- Shaders are strictly checked against the hardware capabilities. This
+  means we won't try to create e.g. a shader model 3 shader on shader
+  model 2 hardware.
+
+- D3D9EX texture creation from system memory is supported. This
+  affects some Source Engine games like Team Fortress 2.
+
+- The D3DX9 shader assembler is mostly finished. It is now part of the
+  new d3dcompiler dll.
+
+- Various parts of D3DX9 are more complete, including:
+  - The surface / texture loading functions.
+  - The mesh creation and manipulation functions.
+  - The vertex declaration handling functions.
+  - The effects framework, binary effect parsing in particular.
+
+
+*** DirectDraw
+
+- OpenGL is used by default for DirectDraw as well, just like D3D8 and
+  D3D9. For most applications this is an improvement, but nevertheless
+  the old GDI renderer may still work better for specific applications
+  or if the graphics driver's OpenGL implementation is inadequate.
+
+- Flips are properly supported. The back buffer now contains the front
+  buffer contents after a flip instead of being undefined.
+
+- Improved support for viewports in early versions of DirectDraw that
+  include an extra clipspace transformation. This affects the original
+  Half-Life.
+
+- Fixes for cooperative levels and associated window handling and mode
+  changes.
+
+- DirectDraw clippers are supported.
+
+
+*** Kernel
+
+- DOSBox is used to run DOS applications on platforms that don't
+  support vm86 mode.
+
+- The Windows console is emulated as best as possible on Unix
+  terminals without requiring switching into curses mode.
+
+- Volume label and serial number can be retrieved from UDF filesystems
+  (used on DVDs).
+
+- Side-by-side manifests are installed for a number of built-in
+  libraries to make them more compatible with applications using
+  manifest resources.
+
+- The Wine preloader is also used on 64-bit for a more compatible
+  address space layout.
+
+
+*** Installer support
+
+- Applying installer patches is supported. This is needed for various
+  Service Pack installers, particularly for the .NET ones.
+
+- Installing side-by-side assemblies is supported.
+
+- Rollbacks of failed installs is supported.
+
+- Installing services is better supported.
+
+- MSI installers can be created entirely under Wine, using the
+  'cabarc' and 'winemsibuilder' tools.
+
+
+*** Build environment
+
+- The IDL compiler (widl) can generate format strings for both
+  old-style and new-style COM interpreted stubs.
+
+- Registrations for dlls and typelibs are based on scripts generated
+  at compile time, for faster Wine prefix creation and updates.
+
+- The Resource Compiler (wrc) and Message Compiler (wmc) can generate
+  translated resources from po files, as well as create po files from
+  existing translated resources.
+
+- Fake PE dlls are generated and installed for all built-in dlls,
+  since many applications expect to find the PE dlls on disk.
+
+- The ARM platform is supported by the Wine tool chain.
+
+- The windows.h header can now be used in Wine code, the compile time
+  gains are no longer worth the header incompatibilities.
+
+- Some headers have been modified to make them easier to share with
+  the Mingw-w64 project.
+
+
+*** Platform-specific changes
+
+- Wine compiles on ARM platforms.
+
+- On Mac OS X, the secure channel implementation uses the Security
+  framework instead of the GnuTLS library.
+
+- On Linux, dynamic device management can use the new UDisks service
+  in addition to HAL.
+
+- Stubless OLE proxies are supported also on 64-bit platforms.
+
+
+*** Built-in applications
+
+- The new 'cabarc' program allows manipulation of cabinet files,
+  including creation of new cabinets.
+
+- The new 'wscript' program implements the Windows Script Host, to run
+  VBScript and JavaScript scripts.
+
+- The new 'taskkill' program allows killing Windows processes by name
+  or process id.
+
+- The new 'ipconfig' program displays the IP configuration seen by
+  Windows programs.
+
+- The new 'hostname' program displays the hostname seen by Windows
+  programs.
+
+- The 'explorer' program implements a shell namespace explorer instead
+  of launching the file manager.
+
+- The 'view' program can display enhanced metafiles.
+
+- The 'dxdiag' tool outputs real information about the system.
+
+- The new 'winemsibuilder' tool allows creating MSI installers; it is
+  used to build the Gecko add-on package.
+
+- Almost all built-in applications are fully Unicode.
+
+- All applications installed to /usr/bin have a manual page.
+
+
+*** Quality assurance & debugging
+
+- The test suite no longer attempts to support Win9x platforms, this
+  was too much effort for little benefit.
+
+- The Wine debugger offers to save crash information to a file, to
+  make it easier to provide good information in bug reports.
+
+- Parsing of debugging information from various object file formats is
+  improved, which should yield better quality crash information,
+  particularly for 64-bit.
+
+
+*** Miscellaneous
+
+- XML support is improved, including support for schemas, namespaces,
+  MSXML version 6, and an XML file writer. This is particularly useful
+  for the new Microsoft Office XML-based document formats.
+
+- The new "secure" versions of the C runtime functions are almost all
+  implemented.
+
+- There is an initial implementation of the Microsoft C++ standard
+  class libraries, including string, locale, and stream classes.
+
+- Creation of compressed cabinet files is supported.
+
+- There is an implementation of the OpenCL library, as a wrapper
+  around the equivalent Unix library.
+
+- Print jobs are submitted to CUPS directly instead of requiring the
+  'lpr' command-line tool.
+
+- There is support for managing multiple .NET runtime versions and
+  their corresponding Mono versions.
+
+
+*** New external dependencies
+
+- The XInput 2 library is used for mouse control in games.
+
+- The libopencl library is used by the OpenCL wrapper dll.
+
+- The libgettextpo library is optionally used at build time to update
+  po files from the rc sources.
+
+- The msgfmt tool (from the gettext library) is used at build time to
+  compile po files.
+
+- The zlib library is used to implement cabinet file compression.
+
+- The libfreetype library needs to be at least version 2.2, older
+  versions are no longer supported.
+
+- The libdbus library is used for the UDisks device support on Linux.
+
+- The smbpasswd tool (part of Samba) is used for changing network
+  passwords.
+
+- DOSBox is used to run DOS applications. It is recommended to use the
+  latest SVN version of DOSBox since it contains some Wine-specific
+  improvements.
+
+
+*** Useful configuration options
+
+Note: More details abouts these and other configuration options can be
+      found at http://wiki.winehq.org/UsefulRegistryKeys
+
+- The correct audio driver is detected automatically, but can still be
+  overridden through the HKCU\Software\Wine\Drivers\Audio key like in
+  previous versions. It is recommended to delete this key entirely to
+  enable the auto-detection.
+
+- Multisample anti-aliasing can be disabled by setting "Multisampling"
+  to "disabled" under HKCU\Software\Wine\Direct3D.
+
+- Setting "AlwaysOffscreen" to "enabled" under
+  HKCU\Software\Wine\Direct3D simplifies sharing depth / stencil
+  surfaces between on-screen and off-screen render targets in
+  WineD3D. This will likely become the default for the next release.
+
+- The DirectDraw renderer can be switched back to the old GDI mode by
+  setting "DirectDrawRenderer" to "gdi" under HKCU\Software\Wine\Direct3D.
+
+
+*** Known issues
+
+- Support for PulseAudio is improved, but very recent versions of
+  PulseAudio (>= 1.0) and alsa-plugins (>= 1.0.25) are required for
+  good results, since older versions contain various bugs.
+  See http://wiki.winehq.org/Sound for details.
 
 --
 Alexandre Julliard
