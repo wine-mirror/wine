@@ -1122,7 +1122,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
-    IMAGE_SECTION_HEADER *sec;
+    IMAGE_SECTION_HEADER *sec = NULL;
     IMAGE_DATA_DIRECTORY *imports;
     NTSTATUS status = STATUS_CONFLICTING_ADDRESSES;
     int i;
@@ -1130,7 +1130,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     sigset_t sigset;
     struct stat st;
     struct file_view *view = NULL;
-    char *ptr, *header_end;
+    char *ptr, *header_end, *header_start;
     INT_PTR delta = 0;
 
     /* zero-map the whole range */
@@ -1167,8 +1167,17 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     header_end = ptr + ROUND_SIZE( 0, header_size );
     memset( ptr + header_size, 0, header_end - (ptr + header_size) );
     if ((char *)(nt + 1) > header_end) goto error;
-    sec = (IMAGE_SECTION_HEADER*)((char*)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader);
-    if ((char *)(sec + nt->FileHeader.NumberOfSections) > header_end) goto error;
+    header_start = (char*)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader;
+    if (header_start + sizeof(*sec) * nt->FileHeader.NumberOfSections > header_end) goto error;
+    /* Some applications (e.g. the Steam version of Borderlands) map over the top of the section headers,
+     * copying the headers into local memory is necessary to properly load such applications. */
+    sec = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*sec) * nt->FileHeader.NumberOfSections);
+    if (!sec)
+    {
+        status = STATUS_NO_MEMORY;
+        goto error;
+    }
+    memcpy(sec, header_start, sizeof(*sec) * nt->FileHeader.NumberOfSections);
 
     imports = nt->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_IMPORT;
     if (!imports->Size || !imports->VirtualAddress) imports = NULL;
@@ -1364,6 +1373,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     }
 
  done:
+    RtlFreeHeap( GetProcessHeap(), 0, sec );
     view->mapping = dup_mapping;
     view->map_protect = map_vprot;
     server_leave_uninterrupted_section( &csVirtual, &sigset );
@@ -1376,6 +1386,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     return STATUS_SUCCESS;
 
  error:
+    RtlFreeHeap( GetProcessHeap(), 0, sec );
     if (view) delete_view( view );
     server_leave_uninterrupted_section( &csVirtual, &sigset );
     if (dup_mapping) NtClose( dup_mapping );
