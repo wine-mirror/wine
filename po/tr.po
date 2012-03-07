@@ -3458,6 +3458,7 @@ msgid "File not found.\n"
 msgstr "Dosya bulunamadı.\n"
 
 #: winerror.mc:41
+#, fuzzy
 msgid "Path not found.\n"
 msgstr "%s yolu  bulunamadı.\n"
 
@@ -4022,6 +4023,7 @@ msgid "EXE %1 is marked invalid.\n"
 msgstr ""
 
 #: winerror.mc:756
+#, fuzzy
 msgid "Bad EXE format for %1.\n"
 msgstr "Geçersiz dizin adı.\n"
 
