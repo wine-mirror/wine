@@ -205,8 +205,6 @@ static void state_ditherenable(struct wined3d_context *context, const struct win
 
 static void state_zwritenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    /* TODO: Test if in d3d z writing is enabled even if ZENABLE is off.
-     * If yes, this has to be merged with ZENABLE and ZFUNC. */
     if (state->render_states[WINED3D_RS_ZWRITEENABLE])
     {
         glDepthMask(1);
