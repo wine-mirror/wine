@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-03-05 19:49+0100\n"
-"Last-Translator: André Hentschel\n"
+"PO-Revision-Date: 2012-03-07 04:28+0100\n"
+"Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
 "MIME-Version: 1.0\n"
@@ -8584,7 +8584,8 @@ msgstr ""
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
 msgstr ""
-"Kann keinen Gerätetyp aus der angegebenen Dateinamenserweiterung ermitteln."
+"Der Gerätetyp konnte nicht anhand der angegebenen Dateinamenserweiterung "
+"ermittelt werden."
 
 #: winmm.rc:79
 msgid "The specified parameter is out of range for the specified command."
@@ -8594,16 +8595,16 @@ msgstr ""
 
 #: winmm.rc:80
 msgid "The specified parameters cannot be used together."
-msgstr "Die Parameter können nicht zusammen verwendet werden."
+msgstr "Die angegebenen Parameter können nicht zusammen verwendet werden."
 
 #: winmm.rc:81
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
 msgstr ""
-"Die Datei kann nicht gespeichert werden. Stellen Sie sicher, dass genügend "
-"Platz auf dem Datenträger verfügbar ist oder Ihre Netzwerkverbindung noch "
-"besteht."
+"Die angegebene Datei konnte nicht gespeichert werden. Stellen Sie sicher, "
+"dass ausreichend Speicherplatz verfügbar ist und Ihre Netzwerkverbindung "
+"noch besteht."
 
 #: winmm.rc:82
 msgid ""
@@ -8611,7 +8612,7 @@ msgid ""
 "device name is spelled correctly."
 msgstr ""
 "Das angegebene Gerät wurde nicht gefunden. Stellen Sie sicher, dass es "
-"installiert ist oder der Gerätename richtig geschrieben ist."
+"installiert und der Gerätename richtig geschrieben ist."
 
 #: winmm.rc:83
 msgid ""
@@ -8631,15 +8632,15 @@ msgstr ""
 
 #: winmm.rc:85
 msgid "The specified parameter is invalid for this command."
-msgstr "Der angegebene Parameter für diesen Befehl ungültig."
+msgstr "Der angegebene Parameter ist für diesen Befehl ungültig."
 
 #: winmm.rc:86
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
 msgstr ""
-"Das Gerät ist bereits geöffnet. Benutzen Sie den 'shareable' - Parameter bei "
-"jedem 'open' - Befehl."
+"Der Gerätetreiber ist bereits in Benutzung. Um ihn mehrfach zu benutzen, "
+"geben Sie den Parameter 'shareable' bei jedem 'open'-Befehl an."
 
 #: winmm.rc:87
 msgid ""
@@ -8654,33 +8655,34 @@ msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr ""
-"Der angegebene Wert für das Zeitformat ist ungültig. Lesen Sie in der MCI - "
-"Dokumentation nach gültigen Formaten nach."
+"Der angegebene Wert für das Zeitformat ist ungültig. Gültige Formate finden "
+"Sie in der MCI-Dokumentation."
 
 #: winmm.rc:89
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
 msgstr ""
-"Ein abschließendes Anführungszeichen fehlt im Parameter. Bitte geben Sie "
-"eins an."
+"Ein abschließendes Anführungszeichen fehlt im Parameter. Bitte überprüfen "
+"Sie die Eingabe."
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr ""
-"Ein Parameter oder Wert wurde zweimal angegeben. Geben Sie in nur einzeln an."
+"Ein Parameter oder Wert wurde mehrfach angegeben. Bitte geben Sie jeden Wert "
+"nur einmal an."
 
 #: winmm.rc:91
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
 msgstr ""
-"Die angegebene Datei kann auf dem MCI - Gerät nicht wiedergegeben werden. "
-"Die Datei ist wahrscheinlich beschädigt oder in einem ungültigen Format."
+"Die angegebene Datei kann auf dem MCI-Gerät nicht wiedergegeben werden. Die "
+"Datei ist möglicherweise beschädigt oder hat ein ungültiges Format."
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
-msgstr "Der Parameterblock, der zu MCI übergeben wurde, war NULL."
+msgstr "Ein NULL-Parameterblock wurde an das MCI übergeben."
 
 #: winmm.rc:93
 msgid "Cannot save an unnamed file. Supply a filename."
@@ -8690,11 +8692,11 @@ msgstr ""
 
 #: winmm.rc:94
 msgid "You must specify an alias when using the 'new' parameter."
-msgstr "Sie müssen einen Alias mit dem 'new' - Parameter angeben."
+msgstr "Sie müssen einen Alias mit dem 'new'-Parameter angeben."
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
-msgstr "Das 'notify' Flag ist unzulässig für selbst öffnende Geräte."
+msgstr "Das 'notify'-Flag ist unzulässig für automatisch geöffnete Geräte."
 
 #: winmm.rc:96
 msgid "Cannot use a filename with the specified device."
@@ -8713,7 +8715,7 @@ msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
 msgstr ""
-"Der Befehl kann nicht auf ein selbst öffnendes Gerät angewandt werden. "
+"Der Befehl kann nicht auf ein automatisch geöffnetes Gerät angewandt werden. "
 "Warten Sie, bis das Gerät geschlossen wurde und versuchen Sie es erneut."
 
 #: winmm.rc:99
@@ -8721,14 +8723,14 @@ msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
 msgstr ""
-"Der Dateiname ist ungültig. Der Dateiname muss aus maximal 8 Zeichen, "
-"gefolgt von einem Punkt und einer Dateinamenserweiterung bestehen."
+"Der Dateiname ist ungültig. Stellen Sie sicher, dass er aus maximal 8 "
+"Zeichen besteht, gefolgt von einem Punkt und der Erweiterung."
 
 #: winmm.rc:100
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr ""
-"Zusätzliche Zeichen nach einer Zeichenkette mit Anführungszeichen sind nicht "
+"Zusätzliche Zeichen nach einer Zeichenkette in Anführungszeichen sind nicht "
 "erlaubt."
 
 #: winmm.rc:101
@@ -8736,7 +8738,7 @@ msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
 msgstr ""
-"Das angegebene Gerät ist nicht auf Ihren System installiert. Benutzen Sie "
+"Das angegebene Gerät ist nicht auf Ihrem System installiert. Benutzen Sie "
 "die Hardwareerkennung in der Systemsteuerung, um das Gerät zu installieren."
 
 #: winmm.rc:102
@@ -8744,7 +8746,7 @@ msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
 msgstr ""
-"Auf die angegebene Datei oder das MCI - Gerät kann nicht zugegriffen werden. "
+"Auf die angegebene Datei oder das MCI-Gerät kann nicht zugegriffen werden. "
 "Versuchen Sie, das Verzeichnis zu wechseln oder das System neu zu starten."
 
 #: winmm.rc:103
@@ -8752,7 +8754,7 @@ msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
 msgstr ""
-"Auf die angegebene Datei oder das MCI - Gerät kann nicht zugegriffen werden, "
+"Auf die angegebene Datei oder das MCI-Gerät kann nicht zugegriffen werden, "
 "weil die Anwendung nicht das Verzeichnis wechseln kann."
 
 #: winmm.rc:104
@@ -8760,7 +8762,7 @@ msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
 msgstr ""
-"Auf die angegebene Datei oder das MCI - Gerät kann nicht zugegriffen werden, "
+"Auf die angegebene Datei oder das MCI-Gerät kann nicht zugegriffen werden, "
 "weil die Anwendung nicht das Laufwerk wechseln kann."
 
 #: winmm.rc:105
@@ -8785,8 +8787,8 @@ msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
-"Alle Wave Geräte, die diese Dateien in dem gegenwärtigen Format wiedergeben "
-"könnten, sind in Benutzung. Warten Sie, bis ein Wave Gerät frei ist, und "
+"Alle Wave-Geräte, die Dateien im gegenwärtigen Format wiedergeben können, "
+"sind in Benutzung. Warten Sie, bis eines dieser Geräte frei ist, und "
 "wiederholen Sie den Vorgang."
 
 #: winmm.rc:109
@@ -8794,41 +8796,42 @@ msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Das gegenwärtige Wave Gerät kann nicht wiedergeben, weil es gerade benutzt "
-"wird. Warten Sie, bis das Gerät frei ist, und wiederholen Sie den Vorgang."
+"Das gegenwärtige Wave-Gerät kann nicht wiedergeben, es ist in Benutzung. "
+"Warten Sie, bis das Gerät frei ist, und wiederholen Sie den Vorgang."
 
 #: winmm.rc:110
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"Es ist kein Wave Gerät frei, das das gegenwärtige Format aufzeichnen könnte. "
-"Warten Sie, bis ein Wave Gerät frei ist, und wiederholen Sie den Vorgang."
+"Alle Wave-Geräte, die Dateien im gegenwärtigen Format aufzeichnen können, "
+"sind in Benutzung. Warten Sie, bis eines dieser Geräte frei ist, und "
+"wiederholen Sie den Vorgang."
 
 #: winmm.rc:111
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Das gegenwärtige Wave Gerät kann nicht aufzeichnen, weil es gerade verwendet "
-"wird. Warten Sie, bis das Gerät frei ist, und wiederholen Sie den Vorgang."
+"Das gegenwärtige Wave-Gerät kann nicht aufzeichnen, es ist in Benutzung. "
+"Warten Sie, bis das Gerät frei ist, und wiederholen Sie den Vorgang."
 
 #: winmm.rc:112
 msgid "Any compatible waveform playback device may be used."
-msgstr "Jedes kompatible Waveform - Wiedergabegerät kann verwendet werden."
+msgstr "Jedes kompatible Wave-Wiedergabegerät kann verwendet werden."
 
 #: winmm.rc:113
 msgid "Any compatible waveform recording device may be used."
-msgstr "Jedes kompatible Waveform - Aufnahmegerät kann verwendet werden."
+msgstr "Jedes kompatible Wave-Aufnahmegerät kann verwendet werden."
 
 #: winmm.rc:114
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Es ist kein Wave Gerät installiert, das Dateien im aktuellen Format "
+"Es ist kein Wave-Gerät installiert, das Dateien im aktuellen Format "
 "wiedergeben kann. Benutzen Sie die Hardwareerkennung in der Systemsteuerung, "
-"um ein Wave Gerät zu installieren."
+"um solch ein Gerät zu installieren."
 
 #: winmm.rc:115
 msgid ""
@@ -8841,17 +8844,15 @@ msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Es ist kein Wave Gerät installiert, das Dateien im aktuellen Format "
-"aufnehmen kann. Benutzen Sie die Hardwareerkennung in der Systemsteuerung, "
-"um ein Wave Gerät zu installieren."
+"Es ist kein Wave-Gerät installiert, das Dateien im aktuellen Format "
+"aufzeichnen kann. Benutzen Sie die Hardwareerkennung in der Systemsteuerung, "
+"um solch ein Gerät zu installieren."
 
 #: winmm.rc:117
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
-msgstr ""
-"Das Gerät, mit dem Sie aufzeichnen möchten, erkennt das gegenwärtige "
-"Dateiformat nicht."
+msgstr "Das Aufnahmegerät erkennt das gegenwärtige Dateiformat nicht."
 
 #: winmm.rc:122
 msgid ""
@@ -8866,7 +8867,7 @@ msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
 msgstr ""
-"Der angegebene MIDI - Anschluss wird bereits verwendet. Warten Sie bis der "
+"Der angegebene MIDI-Anschluss wird bereits verwendet. Warten Sie, bis der "
 "Anschluss frei ist, und versuchen Sie es erneut."
 
 #: winmm.rc:127
@@ -8874,8 +8875,8 @@ msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
 msgstr ""
-"Das angegebene MIDI Gerät ist auf dem System nicht installiert. Benutzen Sie "
-"die Hardwareerkennung in der Systemsteuerung, um ein MIDI Gerät zu "
+"Das angegebene MIDI-Gerät ist auf Ihrem System nicht installiert. Benutzen "
+"Sie die Hardwareerkennung in der Systemsteuerung, um ein MIDI-Gerät zu "
 "installieren."
 
 #: winmm.rc:125
@@ -8884,13 +8885,13 @@ msgid ""
 "on the system. Use the MIDI Mapper option from the Control Panel to edit the "
 "setup."
 msgstr ""
-"Das gegenwärtige MIDI - Mapper Setup benutzt ein MIDI - Gerät, dass nicht "
-"auf Ihren System installiert ist. Benutzen Sie den MIDI - Mapper in der "
-"Systemsteuerung, um das Setup zu ändern."
+"Die gegenwärtigen MIDI-Mapper Einstellungen beziehen sich auf ein MIDI-"
+"Gerät, das nicht installiert ist. Benutzen Sie die MIDI-Mapper Option in der "
+"Systemsteuerung, um dies zu ändern."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."
-msgstr "Beim Benutzen des angegebenen Anschlusses trat ein Fehler auf."
+msgstr "Es ist ein Fehler mit dem angegebenen Anschluss aufgetreten."
 
 #: winmm.rc:129
 msgid ""
@@ -8902,20 +8903,20 @@ msgstr ""
 
 #: winmm.rc:128
 msgid "The system doesn't have a current MIDI port specified."
-msgstr "Es gibt keinen aktuellen MIDI - Anschluss auf dem System."
+msgstr "Es ist kein aktueller MIDI-Anschluss für das System angegeben."
 
 #: winmm.rc:123
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
 msgstr ""
-"Es sind keine MIDI - Geräte auf dem System installiert. Benutzen Sie die "
-"Hardwareerkennung in der Systemsteuerung, um einen MIDI - Treiber zu "
+"Es sind keine MIDI-Geräte auf dem System installiert. Benutzen Sie die "
+"Hardwareerkennung in der Systemsteuerung, um einen MIDI-Treiber zu "
 "installieren."
 
 #: winmm.rc:118
 msgid "There is no display window."
-msgstr "Es gibt kein Anzeigefenster."
+msgstr "Es existiert kein Anzeigefenster."
 
 #: winmm.rc:119
 msgid "Could not create or use window."
@@ -8926,16 +8927,16 @@ msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
 msgstr ""
-"Die Datei konnte nicht gelesen werden. Stellen Sie sicher, dass die Datei "
-"existiert oder Ihre Netzwerkverbindung noch besteht."
+"Die angegebene Datei konnte nicht gelesen werden. Stellen Sie sicher, dass "
+"die Datei existiert und Ihre Netzwerkverbindung noch besteht."
 
 #: winmm.rc:121
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr ""
-"Die Datei konnte nicht geschrieben werden. Stellen Sie sicher, dass genügend "
-"Platz auf dem Datenträger verfügbar ist, oder dass die Netzwerkverbindung "
+"Die angegebene Datei konnte nicht gespeichert werden. Stellen Sie sicher, "
+"dass ausreichend Speicherplatz verfügbar ist und Ihre Netzwerkverbindung "
 "noch besteht."
 
 #: winspool.rc:34
@@ -8948,11 +8949,11 @@ msgstr "&Dateiname:"
 
 #: winspool.rc:28
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "Die Ausgabedatei existiert schon. Drücken Sie OK zum Überschreiben."
+msgstr "Die Ausgabedatei existiert bereits. Klicken Sie OK zum Überschreiben."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
-msgstr "Die Ausgabedatei konnte nicht erzeugt werden."
+msgstr "Die Ausgabedatei konnte nicht angelegt werden."
 
 #: wldap32.rc:27
 msgid "Success"
@@ -9044,7 +9045,7 @@ msgstr "Aliasproblem"
 
 #: wldap32.rc:61
 msgid "Invalid DN Syntax"
-msgstr "Ungültige DN Syntax"
+msgstr "Ungültige DN-Syntax"
 
 #: wldap32.rc:62
 msgid "Is Leaf"
@@ -9064,7 +9065,7 @@ msgstr "Anmeldeinformationen fehlerhaft"
 
 #: wldap32.rc:77
 msgid "Insufficient Rights"
-msgstr "Nicht ausreichende Rechte"
+msgstr "Unzureichende Rechte"
 
 #: wldap32.rc:78
 msgid "Busy"
@@ -9377,9 +9378,8 @@ msgstr ""
 "\n"
 "Syntax: FOR %Variable IN (set) DO Befehl\n"
 "\n"
-"Die Anforderung, das % Zeichen zu verdoppeln, sobald FOR in einer "
-"Batchdatei\n"
-"benutzt wird, existiert in CMD nicht.\n"
+"Die Notwendigkeit, das % Zeichen zu verdoppeln, sobald FOR in einer\n"
+"Batchdatei benutzt wird, existiert in Wines CMD nicht.\n"
 
 #: cmd.rc:81
 msgid ""
@@ -9397,7 +9397,7 @@ msgstr ""
 "Der GOTO Befehl transferiert die Ausführung zu einer anderen Stelle in\n"
 "einer Batchdatei.\n"
 "\n"
-"Das Label, das Ziel eines GOTO's ist, kann bis zu 255 Zeichen lang sein,\n"
+"Das Label, das Ziel eines GOTOs ist, kann bis zu 255 Zeichen lang sein,\n"
 "darf aber keine Leerzeichen enthalten (dies ist ein Unterschied\n"
 "zu anderen Betriebssystemen). Wenn zwei oder mehr identische Labels\n"
 "in einer Batchdatei existieren, dann wird stets zum ersten davon\n"
@@ -9766,7 +9766,7 @@ msgstr ""
 "\n"
 "ASSOC zeigt ohne Parameter die aktuellen Zuordnungen der Dateierweiterungen\n"
 "an. Mit nur einer Dateierweiterung, wird die aktuelle Zuordnung angezeigt.\n"
-"Ohne Zuordnung nach dem Gleichheitszeichen wird die aktuelle Zuordnung "
+"Ohne Zuordnung nach dem Gleichheitszeichen wird die aktuelle Zuordnung\n"
 "gelöscht, falls es eine gab.\n"
 
 #: cmd.rc:256
@@ -9858,21 +9858,20 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "In CMD eingebaute Befehle sind:\n"
-"ASSOC\t\tZeigt oder ändert Zuordnung von Dateierweiterungen\n"
+"ASSOC\t\tZeigt oder ändert die Zuordnung von Dateierweiterungen\n"
 "ATTRIB\t\tZeigt oder ändert die DOS Dateieigenschaften\n"
 "CALL\t\tRuft eine Batch-Datei innerhalb einer anderen auf\n"
 "CD (CHDIR)\tWechselt in ein Verzeichnis\n"
 "CHOICE\t\tWartet auf einen Tastendruck aus einer wählbaren Liste\n"
 "CLS\t\tLöscht den Inhalt der Konsole\n"
 "COPY\t\tKopiert eine Datei\n"
-"CTTY\t\tÄndert das Eingabe/Ausgabe - Gerät\n"
+"CTTY\t\tÄndert das Eingabe/Ausgabe-Gerät\n"
 "DATE\t\tZeigt oder ändert das Systemdatum\n"
 "DEL (ERASE)\tLöscht eine oder mehrere Dateien\n"
 "DIR\t\tListet den Inhalt eines Verzeichnisses\n"
 "ECHO\t\tKopiert den Text direkt zur Konsolenausgabe\n"
 "ENDLOCAL\tBeendet die Begrenzung der Gültigkeit von Änderungen\n"
-"FTYPE\t\tZeigt oder ändert den Öffnen-Befehl der Zuordnung einer "
-"Dateierweiterung\n"
+"FTYPE\t\tZeigt oder ändert den Öffnen-Befehl für eine Dateierweiterung\n"
 "HELP\t\tZeigt detaillierte Informationen zu einen Thema\n"
 "MD (MKDIR)\tErzeugt ein Unterverzeichnis\n"
 "MORE\t\tZeigt die Ausgabe seitenweise an\n"
@@ -9895,8 +9894,8 @@ msgstr ""
 "XCOPY\t\tKopiert Dateien oder Verzeichnisse an einen Zielort\n"
 "EXIT\t\tBeendet den CMD\n"
 "\n"
-"Geben Sie HELP <Befehl> ein, damit Sie weitere Informationen für einen der\n"
-"obigen Befehle erhalten.\n"
+"Geben Sie HELP <Befehl> ein, um weitere Informationen zu einem der obigen\n"
+"Befehle zu erhalten.\n"
 
 #: cmd.rc:306
 msgid "Are you sure?"
