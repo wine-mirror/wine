@@ -1285,7 +1285,8 @@ static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
         format->glType = format_texture_info[i].gl_type;
         format->color_fixup = COLOR_FIXUP_IDENTITY;
         format->flags |= format_texture_info[i].flags;
-        format->heightscale = 1.0f;
+        format->height_scale.numerator = 1;
+        format->height_scale.denominator = 1;
 
         if (format->glGammaInternal != format->glInternal)
         {
@@ -1581,7 +1582,8 @@ static void apply_format_fixups(struct wined3d_gl_info *gl_info)
 
     idx = getFmtIdx(WINED3DFMT_YV12);
     gl_info->formats[idx].flags |= WINED3DFMT_FLAG_HEIGHT_SCALE;
-    gl_info->formats[idx].heightscale = 1.5f;
+    gl_info->formats[idx].height_scale.numerator = 3;
+    gl_info->formats[idx].height_scale.denominator = 2;
     gl_info->formats[idx].color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_YV12);
 
     if (gl_info->supported[EXT_PALETTED_TEXTURE] || gl_info->supported[ARB_FRAGMENT_PROGRAM])
@@ -1709,7 +1711,8 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT ali
     if (format->flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
     {
         /* The D3D format requirements make sure that the resulting format is an integer again */
-        size = (UINT) (size * format->heightscale);
+        size *= format->height_scale.numerator;
+        size /= format->height_scale.denominator;
     }
 
     return size;

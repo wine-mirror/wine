@@ -2805,6 +2805,12 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN
 #define WINED3DFMT_FLAG_BLOCKS                      0x00020000
 #define WINED3DFMT_FLAG_HEIGHT_SCALE                0x00040000
 
+struct wined3d_rational
+{
+    UINT numerator;
+    UINT denominator;
+};
+
 struct wined3d_format
 {
     enum wined3d_format_id id;
@@ -2835,7 +2841,7 @@ struct wined3d_format
     GLint glType;
     UINT  conv_byte_count;
     unsigned int flags;
-    float heightscale;
+    struct wined3d_rational height_scale;
     struct color_fixup_desc color_fixup;
     void (*convert)(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height);
 };
