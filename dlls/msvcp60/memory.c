@@ -80,7 +80,7 @@ void __thiscall MSVCP_allocator_char_deallocate(void *this, char *ptr, MSVCP_siz
 DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_allocate, 8)
 char* __thiscall MSVCP_allocator_char_allocate(void *this, MSVCP_size_t count)
 {
-    return MSVCRT_operator_new(sizeof(char[count]));
+    return MSVCRT_operator_new(count);
 }
 
 /* ?allocate@?$allocator@D@std@@QAEPADIPBX@Z */
@@ -177,7 +177,7 @@ wchar_t* __thiscall MSVCP_allocator_wchar_allocate(void *this, MSVCP_size_t coun
         return NULL;
     }
 
-    return MSVCRT_operator_new(sizeof(wchar_t[count]));
+    return MSVCRT_operator_new(count * sizeof(wchar_t));
 }
 
 /* ?allocate@?$allocator@_W@std@@QAEPA_WIPBX@Z */
@@ -276,7 +276,7 @@ unsigned short* __thiscall MSVCP_allocator_short_allocate(
         return NULL;
     }
 
-    return MSVCRT_operator_new(sizeof(unsigned short[count]));
+    return MSVCRT_operator_new(count * sizeof(unsigned short));
 }
 
 /* ?allocate@?$allocator@G@std@@QAEPAGIPBX@Z */
