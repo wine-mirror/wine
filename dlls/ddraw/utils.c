@@ -622,7 +622,7 @@ DDRAW_dump_PTR(const void *in)
 static void
 DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *ddck)
 {
-    TRACE("Low : %d  - High : %d\n", ddck->dwColorSpaceLowValue, ddck->dwColorSpaceHighValue);
+    TRACE("Low : 0x%08x  - High : 0x%08x\n", ddck->dwColorSpaceLowValue, ddck->dwColorSpaceHighValue);
 }
 
 static void DDRAW_dump_flags_nolf(DWORD flags, const flag_info* names,
