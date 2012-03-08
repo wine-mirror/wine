@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
+"PO-Revision-Date: 2012-03-03 01:57-0500\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: Esperanto\n"
@@ -15,18 +15,19 @@ msgstr ""
 
 #: appwiz.rc:55
 msgid "Install/Uninstall"
-msgstr ""
+msgstr "Instali/Malinstali"
 
 #: appwiz.rc:58
 msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
 msgstr ""
+"Por instali novan programon de fleksa disko, lumdisko, aŭ via diskaparato "
+"klaku sur \"Instali\"."
 
 #: appwiz.rc:59
-#, fuzzy
 msgid "&Install..."
-msgstr "&Notu..."
+msgstr "&Instali..."
 
 #: appwiz.rc:62
 msgid ""
@@ -34,27 +35,26 @@ msgid ""
 "to modify its installed components, select it from the list and click Change/"
 "Remove."
 msgstr ""
+"La jenaj programoj eblas aŭtomate foriĝi. Por forigi programon aŭ modifi "
+"ĝiajn instalitajn komponantojn elekti ĝin el la listo kaj klaku sur \"Ŝanĝi/"
+"Forigi\"."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "Informo pri"
+msgstr "Por &Helpo"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
-#, fuzzy
 msgid "&Modify..."
-msgstr "Modifita"
+msgstr "&Modifi..."
 
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
-#, fuzzy
 msgid "&Remove"
-msgstr "&Notu..."
+msgstr "&Forigi..."
 
 #: appwiz.rc:72
-#, fuzzy
 msgid "Support Information"
-msgstr "Informo pri"
+msgstr "Informoj pri Helpo"
 
 #: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:226 comdlg32.rc:256
 #: comdlg32.rc:299 comdlg32.rc:353 comdlg32.rc:392 comdlg32.rc:446
@@ -76,48 +76,43 @@ msgstr "Bone"
 
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
-msgstr ""
+msgstr "La jenaj informoj povas uziĝi por atingi teknikan helpon por %s:"
 
 #: appwiz.rc:77
 msgid "Publisher:"
-msgstr ""
+msgstr "Eldonisto:"
 
 #: appwiz.rc:78 winefile.rc:168
 msgid "Version:"
-msgstr ""
+msgstr "Eldono:"
 
 #: appwiz.rc:79
-#, fuzzy
 msgid "Contact:"
-msgstr "Enhavo"
+msgstr "Kontakti:"
 
 #: appwiz.rc:80
-#, fuzzy
 msgid "Support Information:"
-msgstr "Informo pri"
+msgstr "Por Helpo:"
 
 #: appwiz.rc:81
 msgid "Support Telephone:"
-msgstr ""
+msgstr "Helpa telefonnumero:"
 
 #: appwiz.rc:82
-#, fuzzy
 msgid "Readme:"
-msgstr "Preta"
+msgstr "Legumin:"
 
 #: appwiz.rc:83
 msgid "Product Updates:"
-msgstr ""
+msgstr "Produktaĵaj ĝisdatigoj:"
 
 #: appwiz.rc:84
-#, fuzzy
 msgid "Comments:"
-msgstr "Komentario"
+msgstr "Komentoj:"
 
 #: appwiz.rc:97
-#, fuzzy
 msgid "Wine Gecko Installer"
-msgstr "Wine Programa Malinstalilo"
+msgstr "Instalilo de Wine-Gecko"
 
 #: appwiz.rc:100
 msgid ""
@@ -131,9 +126,8 @@ msgid ""
 msgstr ""
 
 #: appwiz.rc:106
-#, fuzzy
 msgid "&Install"
-msgstr "&Notu..."
+msgstr "&Instali..."
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
 #: comdlg32.rc:165 comdlg32.rc:187 comdlg32.rc:205 comdlg32.rc:227
@@ -157,31 +151,30 @@ msgstr "Rezigni"
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
-msgstr ""
+msgstr "Aldoni/Forigi programojn"
 
 #: appwiz.rc:29
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
+"Lasas, ke vi instalu novan programon aŭ forigi jaman de via komputilon."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
-#, fuzzy
 msgid "Applications"
-msgstr "Wine Programa Malinstalilo"
+msgstr "Programoj"
 
 #: appwiz.rc:32
-#, fuzzy
 msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"Malinstalad-komando '%s' malsukcesis, eble æar mankas programo.\n"
-"Æu vi volas forigi la malinstalada 'entry' de la registro?"
+"Ne eblis plenumigi malinstalilon, '%s'. Ĉu vi deziras forigi la malinstalan "
+"eron por tiu programo el la registrejo?"
 
 #: appwiz.rc:33
 msgid "Not specified"
-msgstr ""
+msgstr "Ne specifita"
 
 #: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:106
 msgid "Name"
@@ -189,37 +182,36 @@ msgstr "Nomo"
 
 #: appwiz.rc:36
 msgid "Publisher"
-msgstr ""
+msgstr "Eldonisto"
 
 #: appwiz.rc:37 cryptui.rc:51
 msgid "Version"
-msgstr ""
+msgstr "Eldono"
 
 #: appwiz.rc:38
 msgid "Installation programs"
-msgstr ""
+msgstr "Instalaj programoj"
 
 #: appwiz.rc:39
 msgid "Programs (*.exe)"
-msgstr ""
+msgstr "Programoj (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winedbg.rc:39 winhlp32.rc:87
 msgid "All files (*.*)"
-msgstr "Tutaj dosieroj (*.*)"
+msgstr "Ĉiuj dosieroj (*.*)"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "Modifita"
+msgstr "&Modifi/Forigi"
 
 #: appwiz.rc:48
 msgid "Downloading..."
-msgstr ""
+msgstr "Elŝutante..."
 
 #: appwiz.rc:49
 msgid "Installing..."
-msgstr ""
+msgstr "Instalante..."
 
 #: appwiz.rc:50
 msgid ""
@@ -229,15 +221,15 @@ msgstr ""
 
 #: avifil32.rc:39
 msgid "Compress options"
-msgstr ""
+msgstr "Kunmetaj elektoj"
 
 #: avifil32.rc:42
 msgid "&Choose a stream:"
-msgstr ""
+msgstr "&Elekti fluon:"
 
 #: avifil32.rc:45 wordpad.rc:73
 msgid "&Options..."
-msgstr ""
+msgstr "&Agordo..."
 
 #: avifil32.rc:46
 msgid "&Interleave every"
@@ -245,12 +237,11 @@ msgstr ""
 
 #: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
-msgstr ""
+msgstr "kadroj"
 
 #: avifil32.rc:49
-#, fuzzy
 msgid "Current format:"
-msgstr "&Presu"
+msgstr "Aktuala formato:"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
@@ -266,11 +257,11 @@ msgstr ""
 
 #: avifil32.rc:31
 msgid "video"
-msgstr ""
+msgstr "video"
 
 #: avifil32.rc:32
 msgid "audio"
-msgstr ""
+msgstr "sono"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
@@ -282,15 +273,15 @@ msgstr ""
 
 #: browseui.rc:25
 msgid "Canceling..."
-msgstr ""
+msgstr "Nuligante..."
 
 #: comctl32.rc:49 winefile.rc:159
 msgid "Properties for %s"
-msgstr "Ecoj laý %s"
+msgstr "Ecoj laŭ %s"
 
 #: comctl32.rc:54 comdlg32.rc:258
 msgid "&Apply"
-msgstr "&Apliku"
+msgstr "&Apliki"
 
 #: comctl32.rc:55 comctl32.rc:69 comdlg32.rc:301 user32.rc:86
 msgid "Help"
@@ -306,7 +297,7 @@ msgstr "< &Retro"
 
 #: comctl32.rc:66
 msgid "&Next >"
-msgstr "&Antaýen >"
+msgstr "&Antaŭen >"
 
 #: comctl32.rc:67
 msgid "Finish"
@@ -314,16 +305,16 @@ msgstr "Konkludi"
 
 #: comctl32.rc:78
 msgid "Customize Toolbar"
-msgstr "Agordu stangon de la iloj"
+msgstr "Agordi ilobreton"
 
 #: comctl32.rc:81 cryptui.rc:348 ieframe.rc:40 oleview.rc:80 oleview.rc:185
 #: oleview.rc:198 oleview.rc:210 taskmgr.rc:139
 msgid "&Close"
-msgstr "&Fermu"
+msgstr "&Fermi"
 
 #: comctl32.rc:82
 msgid "R&eset"
-msgstr "R&ee agordu"
+msgstr "R&estarigi"
 
 #: comctl32.rc:83 comdlg32.rc:166 comdlg32.rc:188 comdlg32.rc:259
 #: comdlg32.rc:323 comdlg32.rc:343 comdlg32.rc:355 comdlg32.rc:472
@@ -337,11 +328,11 @@ msgstr "&Helpo"
 
 #: comctl32.rc:84
 msgid "Move &Up"
-msgstr "&Supre forþovu"
+msgstr "&Supre forŝovi"
 
 #: comctl32.rc:85
 msgid "Move &Down"
-msgstr "Su&be forþovu"
+msgstr "Su&be forŝovi"
 
 #: comctl32.rc:86
 msgid "A&vailable buttons:"
@@ -349,11 +340,11 @@ msgstr "&Disponeblaj butonoj:"
 
 #: comctl32.rc:88
 msgid "&Add ->"
-msgstr "&Aldonu ->"
+msgstr "&Aldoni ->"
 
 #: comctl32.rc:89
 msgid "<- &Remove"
-msgstr "<- &Forigu"
+msgstr "<- &Forigi"
 
 #: comctl32.rc:90
 msgid "&Toolbar buttons:"
@@ -364,7 +355,6 @@ msgid "Separator"
 msgstr "Dividilo"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
 msgstr "Neniu"
@@ -372,20 +362,20 @@ msgstr "Neniu"
 #: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:434 winedbg.rc:57
 #: winedbg.rc:72 wordpad.rc:169
 msgid "Close"
-msgstr "Fermu"
+msgstr "Fermi"
 
 #: comctl32.rc:33
 msgid "Today:"
-msgstr "Hodiaý:"
+msgstr "Hodiaŭ:"
 
 #: comctl32.rc:34
 msgid "Go to today"
-msgstr "Iru a la hodiaý"
+msgstr "Iri a la hodiaŭa"
 
 #: comdlg32.rc:151 comdlg32.rc:164 comdlg32.rc:453 comdlg32.rc:478
 #: shell32.rc:164 oleview.rc:99
 msgid "Open"
-msgstr "Malfermu"
+msgstr "Malfermi"
 
 #: comdlg32.rc:154 comdlg32.rc:176
 msgid "File &Name:"
@@ -401,7 +391,7 @@ msgstr "Dosier&speco:"
 
 #: comdlg32.rc:162 comdlg32.rc:184
 msgid "Dri&ves:"
-msgstr "&Drajvo:"
+msgstr "&Aparatoj:"
 
 #: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:175
 msgid "&Read Only"
@@ -409,16 +399,16 @@ msgstr "Nur &legebla"
 
 #: comdlg32.rc:173
 msgid "Save As..."
-msgstr "Konservu kiel..."
+msgstr "Konservi kiel..."
 
 #: comdlg32.rc:186 comdlg32.rc:141
 msgid "Save As"
-msgstr "Konservu"
+msgstr "Konservi"
 
 #: comdlg32.rc:195 comdlg32.rc:204 comdlg32.rc:350 comdlg32.rc:50 hhctrl.rc:46
 #: wordpad.rc:162
 msgid "Print"
-msgstr "Presu"
+msgstr "Printi"
 
 #: comdlg32.rc:198
 msgid "Printer:"
@@ -426,11 +416,11 @@ msgstr "Printilo:"
 
 #: comdlg32.rc:200 comdlg32.rc:377
 msgid "Print range"
-msgstr "Etendiøon"
+msgstr "Etendiĝon"
 
 #: comdlg32.rc:201 comdlg32.rc:378 regedit.rc:216
 msgid "&All"
-msgstr "æ&iujn"
+msgstr "ĉ&iujn"
 
 #: comdlg32.rc:202
 msgid "S&election"
@@ -438,11 +428,11 @@ msgstr "&elekton"
 
 #: comdlg32.rc:203
 msgid "&Pages"
-msgstr "&paøojn"
+msgstr "&paĝojn"
 
 #: comdlg32.rc:206 comdlg32.rc:228
 msgid "&Setup"
-msgstr "&Aranøu"
+msgstr "&Agordi"
 
 #: comdlg32.rc:207
 msgid "&From:"
@@ -450,7 +440,7 @@ msgstr "de:"
 
 #: comdlg32.rc:208
 msgid "&To:"
-msgstr "øis:"
+msgstr "ĝis:"
 
 #: comdlg32.rc:209
 msgid "Print &Quality:"
@@ -458,15 +448,15 @@ msgstr "&Kvalito:"
 
 #: comdlg32.rc:211
 msgid "Print to Fi&le"
-msgstr "Presu &dosieren"
+msgstr "Eligi al &dosiero"
 
 #: comdlg32.rc:212
 msgid "Condensed"
-msgstr "Mallarøtipe"
+msgstr "Mallarĝtipe"
 
 #: comdlg32.rc:218 comdlg32.rc:389
 msgid "Print Setup"
-msgstr "Presadaj Agordoj"
+msgstr "Printila Agordo"
 
 #: comdlg32.rc:221 comdlg32.rc:357 comdlg32.rc:396
 msgid "Printer"
@@ -478,7 +468,7 @@ msgstr "&Implicita Presilo"
 
 #: comdlg32.rc:223
 msgid "[none]"
-msgstr ""
+msgstr "[neniu]"
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
@@ -526,7 +516,7 @@ msgstr "&Dimensio:"
 
 #: comdlg32.rc:260
 msgid "Effects"
-msgstr "Eficoj"
+msgstr "Efektoj"
 
 #: comdlg32.rc:261
 msgid "Stri&keout"
@@ -546,7 +536,7 @@ msgstr "Ekzemplo"
 
 #: comdlg32.rc:268
 msgid "Scr&ipt:"
-msgstr "Scri&pt:"
+msgstr "&Skribmaniero:"
 
 #: comdlg32.rc:276
 msgid "Color"
@@ -566,7 +556,7 @@ msgstr "Sol&idkoloro"
 
 #: comdlg32.rc:282
 msgid "&Red:"
-msgstr "&Ruøo:"
+msgstr "&Ruĝo:"
 
 #: comdlg32.rc:284
 msgid "&Green:"
@@ -581,32 +571,30 @@ msgid "&Hue:"
 msgstr "&Farbo:"
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Saturo:"
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Helo:"
 
 #: comdlg32.rc:302
 msgid "&Add to Custom Colors"
-msgstr "&Aldonu al Koloraro"
+msgstr "&Aldoni al Koloraro"
 
 #: comdlg32.rc:303
 msgid "&Define Custom Colors >>"
-msgstr "&Forv&iþu Koloraron >>"
+msgstr "&Forv&iŝi Koloraron >>"
 
 #: comdlg32.rc:310 regedit.rc:223 regedit.rc:233
 msgid "Find"
-msgstr "Seræu"
+msgstr "Serĉi"
 
 #: comdlg32.rc:313 comdlg32.rc:332
 msgid "Fi&nd What:"
-msgstr "&Seræu:"
+msgstr "&Serĉi:"
 
 #: comdlg32.rc:315 comdlg32.rc:336
 msgid "Match &Whole Word Only"
@@ -614,7 +602,7 @@ msgstr "Nur tutan &vorton"
 
 #: comdlg32.rc:316 comdlg32.rc:337
 msgid "Match &Case"
-msgstr "Atentu &Usklecon"
+msgstr "Atenti &Usklecon"
 
 #: comdlg32.rc:317
 msgid "Direction"
@@ -630,11 +618,11 @@ msgstr "&Sube"
 
 #: comdlg32.rc:321 comdlg32.rc:339
 msgid "&Find Next"
-msgstr "&Pluseræu"
+msgstr "&Pluserĉi"
 
 #: comdlg32.rc:329
 msgid "Replace"
-msgstr "Anstataýigu"
+msgstr "Anstataŭigi"
 
 #: comdlg32.rc:334
 msgid "Re&place With:"
@@ -642,15 +630,15 @@ msgstr "&per:"
 
 #: comdlg32.rc:340
 msgid "&Replace"
-msgstr "&Anstataýigu"
+msgstr "&Anstataŭigi"
 
 #: comdlg32.rc:341
 msgid "Replace &All"
-msgstr "Anstataýigu æ&iujn"
+msgstr "Anstataŭigi ĉ&iujn"
 
 #: comdlg32.rc:358
 msgid "Print to fi&le"
-msgstr "Prezu kiel &dosiero"
+msgstr "Eligi al &dosiero"
 
 #: comdlg32.rc:359 comdlg32.rc:397 ieframe.rc:39 shdoclc.rc:58 shell32.rc:105
 #: clock.rc:28 wineconsole.rc:27
@@ -687,11 +675,11 @@ msgstr "Nombro da &ekzempleroj:"
 
 #: comdlg32.rc:374
 msgid "C&ollate"
-msgstr "Laý&kajere"
+msgstr "Laŭ&kajere"
 
 #: comdlg32.rc:379
 msgid "Pa&ges"
-msgstr "&paøojn"
+msgstr "&paĝojn"
 
 #: comdlg32.rc:380
 msgid "&Selection"
@@ -703,7 +691,7 @@ msgstr "de:"
 
 #: comdlg32.rc:384
 msgid "&to:"
-msgstr "øis:"
+msgstr "ĝis:"
 
 #: comdlg32.rc:410 winecfg.rc:286
 msgid "Si&ze:"
@@ -723,7 +711,7 @@ msgstr "&Horizontala"
 
 #: comdlg32.rc:423
 msgid "Setup Page"
-msgstr "Impozu Paøon"
+msgstr "Agordi Paĝon"
 
 #: comdlg32.rc:432
 msgid "&Tray:"
@@ -735,7 +723,7 @@ msgstr "&Vertikala"
 
 #: comdlg32.rc:437
 msgid "Borders"
-msgstr "Marøenoj"
+msgstr "Marĝenoj"
 
 #: comdlg32.rc:438
 msgid "L&eft:"
@@ -759,7 +747,7 @@ msgstr "&Printilo..."
 
 #: comdlg32.rc:456
 msgid "Look &in:"
-msgstr "Seræu &en:"
+msgstr "Serĉi &en:"
 
 #: comdlg32.rc:462
 msgid "File &name:"
@@ -775,19 +763,13 @@ msgstr "Nur &legebla"
 
 #: comdlg32.rc:470 comdlg32.rc:488 shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
-msgstr "&Malfermu"
+msgstr "&Malfermi"
 
 #: comdlg32.rc:481
-#, fuzzy
 msgid "File name:"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Dosiero\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Dosiero"
+msgstr "Dosiernomo:"
 
 #: comdlg32.rc:484
-#, fuzzy
 msgid "Files of type:"
 msgstr "Dosier&speco:"
 
@@ -797,7 +779,7 @@ msgstr "Dosiero ne estis trovita"
 
 #: comdlg32.rc:30
 msgid "Please verify that the correct file name was given"
-msgstr "Kontrolu la øustecon je havigita dosiernomo"
+msgstr "Kontroli la ĝustecon je havigita dosiernomo"
 
 #: comdlg32.rc:31
 msgid ""
@@ -805,7 +787,7 @@ msgid ""
 "Do you want to create file?"
 msgstr ""
 "Dosiero estas neekzistanta\n"
-"Æu vi volas krei dosieron?"
+"Ĉu vi volas krei dosieron?"
 
 #: comdlg32.rc:32
 msgid ""
@@ -813,7 +795,7 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "Dosiero estas jam ekzistanta.\n"
-"Æu vi volas superskribi øin?"
+"Ĉu vi volas anstataŭi ĝin?"
 
 #: comdlg32.rc:33
 msgid "Invalid character(s) in path"
@@ -837,11 +819,11 @@ msgstr "Dosiero estas neekzistanta"
 
 #: comdlg32.rc:41
 msgid "Up One Level"
-msgstr "Suriru da unu nivelo"
+msgstr "Supreniri je unu nivelo"
 
 #: comdlg32.rc:42
 msgid "Create New Folder"
-msgstr "Kreu Novan Dosieujon"
+msgstr "Krei Novan Dosierujon"
 
 #: comdlg32.rc:43
 msgid "List"
@@ -853,15 +835,15 @@ msgstr "Detale"
 
 #: comdlg32.rc:45
 msgid "Browse to Desktop"
-msgstr "Foliu Desktop"
+msgstr "Foliumi labortablon"
 
 #: comdlg32.rc:109
 msgid "Regular"
-msgstr ""
+msgstr "Ordinara"
 
 #: comdlg32.rc:110
 msgid "Bold"
-msgstr ""
+msgstr "Dika"
 
 #: comdlg32.rc:111
 msgid "Italic"
@@ -877,7 +859,7 @@ msgstr "Nigro"
 
 #: comdlg32.rc:118 wordpad.rc:115
 msgid "Maroon"
-msgstr "Duonruøbruna koloro"
+msgstr "Duonruĝbruna koloro"
 
 #: comdlg32.rc:119 wordpad.rc:116
 msgid "Green"
@@ -893,7 +875,7 @@ msgstr "Ultramara bluo"
 
 #: comdlg32.rc:122 wordpad.rc:119
 msgid "Purple"
-msgstr "Purpurruøo"
+msgstr "Purpurruĝo"
 
 #: comdlg32.rc:123 wordpad.rc:120
 msgid "Teal"
@@ -905,11 +887,11 @@ msgstr "Grizo"
 
 #: comdlg32.rc:125 wordpad.rc:122
 msgid "Silver"
-msgstr "Arøento"
+msgstr "Arĝento"
 
 #: comdlg32.rc:126 wordpad.rc:123
 msgid "Red"
-msgstr "Ruøo"
+msgstr "Ruĝo"
 
 #: comdlg32.rc:127 wordpad.rc:124
 msgid "Lime"
@@ -940,30 +922,28 @@ msgid "Unreadable Entry"
 msgstr "Nelegebla Entry"
 
 #: comdlg32.rc:54
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
-"Æi tiu valoro ne estas en la paøo.\n"
-"Enigu valoron inter %d kaj %d."
+"Ĉi tiu valoro ne estas en la paĝoj printeblaj.\n"
+"Enigi valoron inter %1!d! kaj %2!d!."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
-msgstr "La 'de:' valoro ne povas superi la 'øis:' valoron."
+msgstr "La 'de:' valoro ne povas superi la 'ĝis:' valoron."
 
 #: comdlg32.rc:58
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
 msgstr ""
-"Marøenoj surmetiøas inter si aý estas ekster paperfolio.\n"
-"Difinu denove la marøenojn."
+"Marĝenoj surmetiĝas inter si aŭ estas ekster paperfolio.\n"
+"Difini denove la marĝenojn."
 
 #: comdlg32.rc:60
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "La nombrvaloro je 'Nombro da &ekzempleroj' ne povas esti malplena."
+msgstr "La kampo 'Nombro da &ekzempleroj' ne povas vaki."
 
 #: comdlg32.rc:62
 msgid ""
@@ -971,15 +951,15 @@ msgid ""
 "Please enter a value between 1 and %d."
 msgstr ""
 "La via printilo ne povas presi tiel granda nombro da ekzempleroj\n"
-"Enigu valoron inter 1 kaj %d."
+"Enigi valoron inter 1 kaj %d."
 
 #: comdlg32.rc:63
 msgid "A printer error occurred."
-msgstr "Okazis printila eroro."
+msgstr "Okazis printila eraro."
 
 #: comdlg32.rc:64
 msgid "No default printer defined."
-msgstr "Ne estas defaýlta printilo."
+msgstr "Ne estas defaŭlta printilo."
 
 #: comdlg32.rc:65
 msgid "Cannot find the printer."
@@ -987,11 +967,11 @@ msgstr "Mi ne povas trovi la printilon."
 
 #: comdlg32.rc:66 progman.rc:73
 msgid "Out of memory."
-msgstr "La memoro estas elæerpita."
+msgstr "La memoro estas elĉerpita."
 
 #: comdlg32.rc:67
 msgid "An error occurred."
-msgstr "Okazis eroro."
+msgstr "Okazis eraro."
 
 #: comdlg32.rc:68
 msgid "Unknown printer driver."
@@ -1002,30 +982,29 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Antaý ol vi povos plenumi printiltaskojn kvazaý impozi paøon aý presi "
-"dokumenton, estas necese ke vi instalu printilon. Oni konsilas instali øin "
+"Antaŭ ol vi povos plenumi printiltaskojn kvazaŭ impozi paĝon aŭ presi "
+"dokumenton, estas necese ke vi instali printilon. Oni konsilas instali ĝin "
 "kaj reprovi."
 
 #: comdlg32.rc:137
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Elektu tiparan grandecvaloron inter %d kaj %d punktoj."
+msgstr "Elekti tiparan grandecon inter %1!d! kaj %2!d! punktoj."
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
-msgstr "Kon&servu"
+msgstr "Kon&servi"
 
 #: comdlg32.rc:139
 msgid "Save &in:"
-msgstr "Konservu &en:"
+msgstr "Konservi &en:"
 
 #: comdlg32.rc:140
 msgid "Save"
-msgstr "Konservu"
+msgstr "Konservi"
 
 #: comdlg32.rc:142
 msgid "Open File"
-msgstr "Malfermu Dosieron"
+msgstr "Malfermi Dosieron"
 
 #: comdlg32.rc:79 oleview.rc:95
 msgid "Ready"
@@ -1033,11 +1012,11 @@ msgstr "Preta"
 
 #: comdlg32.rc:80
 msgid "Paused; "
-msgstr "Paýse; "
+msgstr "Paŭse; "
 
 #: comdlg32.rc:81
 msgid "Error; "
-msgstr "Eroro; "
+msgstr "Eraro; "
 
 #: comdlg32.rc:82
 msgid "Pending deletion; "
@@ -1049,11 +1028,11 @@ msgstr "Blokita papero; "
 
 #: comdlg32.rc:84
 msgid "Out of paper; "
-msgstr "Elæerpita papero; "
+msgstr "Elĉerpita papero; "
 
 #: comdlg32.rc:85
 msgid "Feed paper manual; "
-msgstr "Mane enþovo de papero; "
+msgstr "Mane enŝovo de papero; "
 
 #: comdlg32.rc:86
 msgid "Paper problem; "
@@ -1085,7 +1064,7 @@ msgstr "Ne disponebla; "
 
 #: comdlg32.rc:93
 msgid "Waiting; "
-msgstr "Atendando; "
+msgstr "Atendado; "
 
 #: comdlg32.rc:94
 msgid "Processing; "
@@ -1101,15 +1080,15 @@ msgstr "Varmigo de la printilo; "
 
 #: comdlg32.rc:97
 msgid "Toner low; "
-msgstr "Kseroprintila nivelo estas basa; "
+msgstr "Farbopulvora nivelo estas nesufiĉa; "
 
 #: comdlg32.rc:98
 msgid "No toner; "
-msgstr "Neniu kseroprintilo; "
+msgstr "Neniu farbopulvoro; "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
-msgstr "Paøa 'punt'; "
+msgstr "Paĝa 'punt'; "
 
 #: comdlg32.rc:100
 msgid "Interrupted by user; "
@@ -1117,7 +1096,7 @@ msgstr "Interrompita far uzanto; "
 
 #: comdlg32.rc:101
 msgid "Out of memory; "
-msgstr "Elæerpita memoro; "
+msgstr "Elĉerpita memoro; "
 
 #: comdlg32.rc:102
 msgid "The printer door is open; "
@@ -1129,60 +1108,60 @@ msgstr "Nekonata pres-servanto; "
 
 #: comdlg32.rc:104
 msgid "Power save mode; "
-msgstr "Energiþpare; "
+msgstr "Energiŝpare; "
 
 #: comdlg32.rc:73
 msgid "Default Printer; "
-msgstr "Defaýlta Printilo; "
+msgstr "Defaŭlta Printilo; "
 
 #: comdlg32.rc:74
 msgid "There are %d documents in the queue"
-msgstr "%d dokumento(j) estas en presvico"
+msgstr "%d dokumento(j) estas en printila atendovico"
 
 #: comdlg32.rc:75
 msgid "Margins [inches]"
-msgstr "Marøenoj [inches]"
+msgstr "Marĝenoj [inches]"
 
 #: comdlg32.rc:76
 msgid "Margins [mm]"
-msgstr "Marøenoj [mm]"
+msgstr "Marĝenoj [mm]"
 
 #: comdlg32.rc:77 sane.rc:33
-#, fuzzy
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
 #: credui.rc:42
-#, fuzzy
 msgid "&User name:"
-msgstr "Laý­ &Nomo"
+msgstr "&Salutnomo:"
 
 #: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
-msgstr ""
+msgstr "&Pasvorto:"
 
 #: credui.rc:47
 msgid "&Remember my password"
-msgstr ""
+msgstr "&Konservi mian pasvorton"
 
 #: credui.rc:27
 msgid "Connect to %s"
-msgstr ""
+msgstr "Konektiĝi al %s"
 
 #: credui.rc:28
 msgid "Connecting to %s"
-msgstr ""
+msgstr "Konektiĝante al %s"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
-msgstr ""
+msgstr "Ensaluto nesukcesis"
 
 #: credui.rc:30
 msgid ""
 "Make sure that your user name\n"
 "and password are correct."
 msgstr ""
+"Certigi, ke via salutnomo\n"
+"kaj pasvorto estas ĝustaj."
 
 #: credui.rc:32
 msgid ""
@@ -1702,9 +1681,8 @@ msgid "Smart Card Logon"
 msgstr ""
 
 #: crypt32.rc:153 cryptui.rc:139
-#, fuzzy
 msgid "Digital Rights"
-msgstr "Diøi&ta"
+msgstr "Ciferecaj rajtoj"
 
 #: crypt32.rc:154 cryptui.rc:135
 msgid "Qualified Subordination"
@@ -1840,7 +1818,6 @@ msgid "Path Length Constraint="
 msgstr ""
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "path length"
 msgid "None"
 msgstr "Neniu"
@@ -2055,9 +2032,8 @@ msgid "General"
 msgstr ""
 
 #: cryptui.rc:188
-#, fuzzy
 msgid "&Install Certificate..."
-msgstr "&Ecoj"
+msgstr "&Instali atestilon..."
 
 #: cryptui.rc:189
 msgid "Issuer &Statement"
@@ -2068,38 +2044,28 @@ msgid "&Show:"
 msgstr ""
 
 #: cryptui.rc:202
-#, fuzzy
 msgid "&Edit Properties..."
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Ecoj\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"E&coj"
+msgstr "&Redakti ecojn..."
 
 #: cryptui.rc:203
-#, fuzzy
 msgid "&Copy to File..."
-msgstr "Plenume dosierkopiadon..."
+msgstr "&Kopii al dosiero..."
 
 #: cryptui.rc:207
-#, fuzzy
 msgid "Certification Path"
-msgstr "&Ecoj"
+msgstr "&Atestila vojo"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "&Ecoj"
+msgstr "Atestila vojo"
 
 #: cryptui.rc:214
-#, fuzzy
 msgid "&View Certificate"
-msgstr "&Ecoj"
+msgstr "&Rigardi atestilon"
 
 #: cryptui.rc:215
-#, fuzzy
 msgid "Certificate &status:"
-msgstr "&Ecoj"
+msgstr "Atestila &stato:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
@@ -2110,23 +2076,16 @@ msgid "More &Info"
 msgstr ""
 
 #: cryptui.rc:236
-#, fuzzy
 msgid "&Friendly name:"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Dosiero\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Dosiero"
+msgstr "&Karesnomo:"
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
-#, fuzzy
 msgid "&Description:"
-msgstr "Description"
+msgstr "&Priskribo:"
 
 #: cryptui.rc:240
-#, fuzzy
 msgid "Certificate purposes"
-msgstr "&Ecoj"
+msgstr "&Atestilaj celoj"
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
@@ -2141,9 +2100,8 @@ msgid "Enable &only the following purposes for this certificate:"
 msgstr ""
 
 #: cryptui.rc:250
-#, fuzzy
 msgid "Add &Purpose..."
-msgstr "Foliu..."
+msgstr "Aldoni &celon..."
 
 #: cryptui.rc:254
 msgid "Add Purpose"
@@ -2188,17 +2146,12 @@ msgid ""
 msgstr ""
 
 #: cryptui.rc:291 cryptui.rc:427
-#, fuzzy
 msgid "&File name:"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Dosiero\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Dosiero"
+msgstr "&Dosiernomo:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr ""
+msgstr "&Foliumi..."
 
 #: cryptui.rc:294
 msgid ""
@@ -2253,31 +2206,20 @@ msgid "I&ntended purpose:"
 msgstr ""
 
 #: cryptui.rc:341
-#, fuzzy
 msgid "&Import..."
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Ti&paro\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Impozu tiparon..."
+msgstr "&Importi..."
 
 #: cryptui.rc:342 regedit.rc:109
-#, fuzzy
 msgid "&Export..."
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Ti&paro\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Impozu tiparon..."
+msgstr "&Eksporti"
 
 #: cryptui.rc:344
 msgid "&Advanced..."
 msgstr ""
 
 #: cryptui.rc:345
-#, fuzzy
 msgid "Certificate intended purposes"
-msgstr "&Ecoj"
+msgstr "Intenca celo de atestilo"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
@@ -2286,14 +2228,12 @@ msgid "&View"
 msgstr "&Vido"
 
 #: cryptui.rc:352
-#, fuzzy
 msgid "Advanced Options"
-msgstr " Opcioj "
+msgstr "Altnivelaj elektoj"
 
 #: cryptui.rc:355
-#, fuzzy
 msgid "Certificate purpose"
-msgstr "&Ecoj"
+msgstr "Atestila celo"
 
 #: cryptui.rc:356
 msgid ""
@@ -2301,9 +2241,8 @@ msgid ""
 msgstr ""
 
 #: cryptui.rc:358
-#, fuzzy
 msgid "&Certificate purposes:"
-msgstr "&Ecoj"
+msgstr "&Atestilaj celoj"
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
@@ -2398,9 +2337,8 @@ msgid "Certificate"
 msgstr ""
 
 #: cryptui.rc:28
-#, fuzzy
 msgid "Certificate Information"
-msgstr "Informo pri"
+msgstr "Atestilaj informoj"
 
 #: cryptui.rc:29
 msgid ""
@@ -2419,9 +2357,8 @@ msgid "This certificate could not be validated to a trusted root certificate."
 msgstr ""
 
 #: cryptui.rc:32
-#, fuzzy
 msgid "This certificate's issuer could not be found."
-msgstr "Mi ne trovis '%s'."
+msgstr "La atestila eldonisto ne estis trovebla."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
@@ -2492,13 +2429,8 @@ msgid "Critical Extensions Only"
 msgstr ""
 
 #: cryptui.rc:50
-#, fuzzy
 msgid "Properties Only"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Ecoj\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"E&coj"
+msgstr "Nur ecoj"
 
 #: cryptui.rc:52
 msgid "Serial number"
@@ -2542,12 +2474,11 @@ msgstr ""
 
 #: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
-msgstr "Description"
+msgstr "Priskribo"
 
 #: cryptui.rc:63
-#, fuzzy
 msgid "Certificate Properties"
-msgstr "&Ecoj"
+msgstr "&Atestilaj ecoj"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
@@ -2642,7 +2573,6 @@ msgid "File"
 msgstr "Dosiero"
 
 #: cryptui.rc:89 inetcpl.rc:105
-#, fuzzy
 msgid "Content"
 msgstr "Enhavo"
 
@@ -2691,9 +2621,8 @@ msgid "Friendly Name"
 msgstr ""
 
 #: cryptui.rc:106 cryptui.rc:120
-#, fuzzy
 msgid "<None>"
-msgstr "Neniu"
+msgstr "<Neniu>"
 
 #: cryptui.rc:107
 msgid ""
@@ -2826,11 +2755,10 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr ""
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
 msgstr ""
 "Dosiero estas jam ekzistanta.\n"
-"Æu vi volas superskribi øin?"
+"Ĉu vi volas anstataŭi ĝin?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -2919,9 +2847,8 @@ msgid "Default MidiOut Device"
 msgstr ""
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "&Difinu..."
+msgstr "Agordi aparatojn"
 
 #: dinput.rc:45
 msgid "Reset"
@@ -2936,9 +2863,8 @@ msgid "Device"
 msgstr ""
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "LAN Interkonekto"
+msgstr "Agoj"
 
 #: dinput.rc:51
 msgid "Mapping"
@@ -2949,18 +2875,16 @@ msgid "Show Assigned First"
 msgstr ""
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "LAN Interkonekto"
+msgstr "Ago"
 
 #: dinput.rc:35
 msgid "Object"
 msgstr ""
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Defaýltaj Agordoj"
+msgstr "Regiona agordo"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
@@ -2968,94 +2892,87 @@ msgstr ""
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Okcidenta"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Centra Eŭropo"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Cirila"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Verdo"
+msgstr "Greka"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Turka"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "Hebra"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Araba"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Balta"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vjetnama"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Taja"
 
 #: gdi32.rc:35
 msgid "Japanese"
-msgstr ""
+msgstr "Japana"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "Ĉina (laŭ GB2312)"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "Hangula"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "Ĉina (laŭ BIG5)"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Hangula (laŭ Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Simbola"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
 msgstr ""
 
 #: gphoto2.rc:27
-#, fuzzy
 msgid "Files on Camera"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Dosiero\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Dosiero"
+msgstr "Dosieroj en la fotilo"
 
 #: gphoto2.rc:31
 msgid "Import Selected"
-msgstr ""
+msgstr "Importaĵo elektita"
 
 #: gphoto2.rc:32
-#, fuzzy
 msgid "Preview"
-msgstr "&Presu"
+msgstr "Antaŭvido"
 
 #: gphoto2.rc:33
 msgid "Import All"
-msgstr ""
+msgstr "Importi ĉiujn"
 
 #: gphoto2.rc:34
 msgid "Skip This Dialog"
@@ -3063,7 +2980,7 @@ msgstr ""
 
 #: gphoto2.rc:35
 msgid "Exit"
-msgstr ""
+msgstr "Eliri"
 
 #: gphoto2.rc:40
 msgid "Transferring"
@@ -3074,13 +2991,12 @@ msgid "Transferring... Please Wait"
 msgstr ""
 
 #: gphoto2.rc:48
-#, fuzzy
 msgid "Connecting to camera"
-msgstr "LAN Interkonekto"
+msgstr "Konektiĝante al fotilo"
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
-msgstr ""
+msgstr "Konektiĝante al fotilo... Bonvolu atendi"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -3105,12 +3021,11 @@ msgstr ""
 
 #: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
-msgstr ""
+msgstr "&Reŝargi"
 
 #: hhctrl.rc:62 winhlp32.rc:31
-#, fuzzy
 msgid "&Print..."
-msgstr "&Presu"
+msgstr "&Printi..."
 
 #: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
@@ -3122,7 +3037,7 @@ msgstr ""
 
 #: hhctrl.rc:30 notepad.rc:52
 msgid "&Search"
-msgstr "&Seræu"
+msgstr "&Serĉi"
 
 #: hhctrl.rc:31
 msgid "Favor&ites"
@@ -3150,7 +3065,7 @@ msgstr ""
 
 #: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 msgid "Refresh"
-msgstr "Relegu"
+msgstr "Relegi"
 
 #: hhctrl.rc:43 ieframe.rc:63
 msgid "Back"
@@ -3180,85 +3095,72 @@ msgstr ""
 #: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
 #: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
 #: wordpad.rc:26
-#, fuzzy
 msgid "&File"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Dosiero\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Dosiero"
+msgstr "&Dosiero"
 
 #: ieframe.rc:27 regedit.rc:44 regedit.rc:95
 msgid "&New"
-msgstr ""
+msgstr "&Nova"
 
 #: ieframe.rc:29 winefile.rc:72
-#, fuzzy
 msgid "&Window"
-msgstr "&Aløustigu la fenestron"
+msgstr "&Fenestro"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
-#, fuzzy
 msgid "&Open..."
-msgstr "&Malfermu"
+msgstr "&Malfermi..."
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
-msgstr "Konservu &kiel..."
+msgstr "Konservi &kiel..."
 
 #: ieframe.rc:35
-#, fuzzy
 msgid "Print &format..."
-msgstr "&Presu..."
+msgstr "Printa &formato..."
 
 #: ieframe.rc:36
-#, fuzzy
 msgid "Pr&int..."
-msgstr "&Presu..."
+msgstr "Pr&inti..."
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "&Presu"
+msgstr "Printa anta&ŭvido"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
-msgstr ""
+msgstr "&Ilara"
 
 #: ieframe.rc:46
 msgid "&Standard bar"
-msgstr ""
+msgstr "&Ordinara zono"
 
 #: ieframe.rc:47
 msgid "&Address bar"
-msgstr ""
+msgstr "&Adresa zono"
 
 #: ieframe.rc:50 regedit.rc:71
 msgid "&Favorites"
-msgstr ""
+msgstr "&Favoratoj"
 
 #: ieframe.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
-msgstr ""
+msgstr "&Aldoni al favoratoj..."
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "Pri Notepad"
+msgstr "Pri Interreta Esplorilo"
 
 #: ieframe.rc:87
-#, fuzzy
 msgid "Open URL"
-msgstr "Malfermu"
+msgstr "Malfermi retadreson"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
 msgstr ""
 
 #: ieframe.rc:91
-#, fuzzy
 msgid "Open:"
-msgstr "Malfermu"
+msgstr "Malfermi:"
 
 #: ieframe.rc:67
 msgctxt "home page"
@@ -3266,18 +3168,16 @@ msgid "Home"
 msgstr ""
 
 #: ieframe.rc:68 winhlp32.rc:66
-#, fuzzy
 msgid "Print..."
-msgstr "&Presu"
+msgstr "Printi..."
 
 #: ieframe.rc:73
 msgid "Address"
 msgstr ""
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "Ecoj"
+msgstr "Serĉante por %s"
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
@@ -3288,9 +3188,8 @@ msgid "Downloading %s"
 msgstr ""
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "Ecoj"
+msgstr "Petante por %s"
 
 #: inetcpl.rc:46
 msgid "Home page"
@@ -3305,18 +3204,16 @@ msgid "&Current page"
 msgstr ""
 
 #: inetcpl.rc:51
-#, fuzzy
 msgid "&Default page"
-msgstr "Defaýltaj Agordoj"
+msgstr "&Defaŭlta paĝo"
 
 #: inetcpl.rc:52
 msgid "&Blank page"
 msgstr ""
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr "Kronologio"
+msgstr "Retumanta historio"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3327,9 +3224,8 @@ msgid "Delete &files..."
 msgstr ""
 
 #: inetcpl.rc:57
-#, fuzzy
 msgid "&Settings..."
-msgstr "Konservu &kiel"
+msgstr "&Agordo"
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
@@ -3367,9 +3263,8 @@ msgid ""
 msgstr ""
 
 #: inetcpl.rc:79 progman.rc:64
-#, fuzzy
 msgid "Delete"
-msgstr "Forigu\tDel"
+msgstr "Forigi"
 
 #: inetcpl.rc:87 winefile.rc:114
 msgid "Security"
@@ -3382,9 +3277,8 @@ msgid ""
 msgstr ""
 
 #: inetcpl.rc:111
-#, fuzzy
 msgid "Certificates..."
-msgstr "&Ecoj"
+msgstr "Atestiloj"
 
 #: inetcpl.rc:112
 msgid "Publishers..."
@@ -3491,9 +3385,8 @@ msgid "Label redefined"
 msgstr ""
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
-msgstr "Dosiero ne estis trovita"
+msgstr "Etikedo ne trovita"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
@@ -3568,14 +3461,12 @@ msgid "Invalid function.\n"
 msgstr ""
 
 #: winerror.mc:36
-#, fuzzy
 msgid "File not found.\n"
 msgstr "Dosiero ne estis trovita.\n"
 
 #: winerror.mc:41
-#, fuzzy
 msgid "Path not found.\n"
-msgstr "Mi ne trovis la vojon %s.\n"
+msgstr "Mi ne trovis la vojon.\n"
 
 #: winerror.mc:46
 msgid "Too many open files.\n"
@@ -3594,9 +3485,8 @@ msgid "Memory trashed.\n"
 msgstr ""
 
 #: winerror.mc:66
-#, fuzzy
 msgid "Not enough memory.\n"
-msgstr "La memoro estas elæerpita."
+msgstr "Nesufiĉa memoro.\n"
 
 #: winerror.mc:71
 msgid "Invalid block.\n"
@@ -3619,9 +3509,8 @@ msgid "Invalid data.\n"
 msgstr ""
 
 #: winerror.mc:96
-#, fuzzy
 msgid "Out of memory.\n"
-msgstr "La memoro estas elæerpita."
+msgstr "La memoro estas elĉerpita.\n"
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
@@ -3672,14 +3561,12 @@ msgid "Not DOS disk.\n"
 msgstr ""
 
 #: winerror.mc:161
-#, fuzzy
 msgid "Sector not found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Sektoro ne estis trovita.\n"
 
 #: winerror.mc:166
-#, fuzzy
 msgid "Out of paper.\n"
-msgstr "Elæerpita papero; .\n"
+msgstr "Elĉerpita papero.\n"
 
 #: winerror.mc:171
 msgid "Write fault.\n"
@@ -3698,9 +3585,8 @@ msgid "Sharing violation.\n"
 msgstr ""
 
 #: winerror.mc:191
-#, fuzzy
 msgid "Lock violation.\n"
-msgstr "LAN Interkonekto.\n"
+msgstr "Ŝlosa eraro.\n"
 
 #: winerror.mc:196
 msgid "Wrong disk.\n"
@@ -3739,9 +3625,8 @@ msgid "Network busy.\n"
 msgstr ""
 
 #: winerror.mc:241
-#, fuzzy
 msgid "Device does not exist.\n"
-msgstr "Dosiero estas neekzistanta.\n"
+msgstr "Aparato estas neekzistanta.\n"
 
 #: winerror.mc:246
 msgid "Too many commands.\n"
@@ -3812,9 +3697,8 @@ msgid "Redirector paused.\n"
 msgstr ""
 
 #: winerror.mc:331
-#, fuzzy
 msgid "File exists.\n"
-msgstr "Dosiero estas neekzistanta.\n"
+msgstr "Dosiero ekzistas.\n"
 
 #: winerror.mc:336
 msgid "Cannot create.\n"
@@ -3837,14 +3721,12 @@ msgid "Invalid password.\n"
 msgstr ""
 
 #: winerror.mc:361
-#, fuzzy
 msgid "Invalid parameter.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida parametro.\n"
 
 #: winerror.mc:366
-#, fuzzy
 msgid "Net write fault.\n"
-msgstr "Agordu &Defaýltojn.\n"
+msgstr "Eraro je reta skribo.\n"
 
 #: winerror.mc:371
 msgid "No process slots.\n"
@@ -3879,9 +3761,8 @@ msgid "Semaphore user limit.\n"
 msgstr ""
 
 #: winerror.mc:411
-#, fuzzy
 msgid "Insert disk for drive %1.\n"
-msgstr "enþovu la diskon %s.\n"
+msgstr "Enmetu la diskon por aparato %1.\n"
 
 #: winerror.mc:416
 msgid "Drive locked.\n"
@@ -3892,9 +3773,8 @@ msgid "Broken pipe.\n"
 msgstr ""
 
 #: winerror.mc:426
-#, fuzzy
 msgid "Open failed.\n"
-msgstr "Malfermu Dosieron.\n"
+msgstr "Malfermo fiaskis.\n"
 
 #: winerror.mc:431
 msgid "Buffer overflow.\n"
@@ -3921,18 +3801,16 @@ msgid "Bad driver level.\n"
 msgstr ""
 
 #: winerror.mc:466
-#, fuzzy
 msgid "Call not implemented.\n"
-msgstr "Ne-implementata.\n"
+msgstr "Ne jam funkcias.\n"
 
 #: winerror.mc:471
 msgid "Semaphore timeout.\n"
 msgstr ""
 
 #: winerror.mc:476
-#, fuzzy
 msgid "Insufficient buffer.\n"
-msgstr "Diøi&ta.\n"
+msgstr "Nesufiĉa bufro.\n"
 
 #: winerror.mc:481
 msgid "Invalid name.\n"
@@ -3947,14 +3825,12 @@ msgid "No volume label.\n"
 msgstr ""
 
 #: winerror.mc:496
-#, fuzzy
 msgid "Module not found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Modulo ne estis trovita.\n"
 
 #: winerror.mc:501
-#, fuzzy
 msgid "Procedure not found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Proceduro ne estis trovita.\n"
 
 #: winerror.mc:506
 msgid "No children to wait for.\n"
@@ -4105,9 +3981,8 @@ msgid "Resource in use.\n"
 msgstr ""
 
 #: winerror.mc:696
-#, fuzzy
 msgid "Cancel violation.\n"
-msgstr "Informo pri.\n"
+msgstr "Rezigna eraro.\n"
 
 #: winerror.mc:701
 msgid "Atomic locks not supported.\n"
@@ -4122,18 +3997,16 @@ msgid "Invalid ordinal for %1.\n"
 msgstr ""
 
 #: winerror.mc:716
-#, fuzzy
 msgid "File already exists.\n"
-msgstr "Dosiero estas neekzistanta.\n"
+msgstr "Dosiero jam ekzistas.\n"
 
 #: winerror.mc:721
 msgid "Invalid flag number.\n"
 msgstr ""
 
 #: winerror.mc:726
-#, fuzzy
 msgid "Semaphore name not found.\n"
-msgstr "Mi ne trovis la vojon %s.\n"
+msgstr "Semafora nomo ne troviĝis.\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1.\n"
@@ -4252,19 +4125,16 @@ msgid "Pipe closed.\n"
 msgstr ""
 
 #: winerror.mc:876
-#, fuzzy
 msgid "Pipe not connected.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Tubo ne konektita.\n"
 
 #: winerror.mc:881
-#, fuzzy
 msgid "More data available.\n"
-msgstr "Ne disponebla; .\n"
+msgstr "Pliaj datumoj haveblas.\n"
 
 #: winerror.mc:886
-#, fuzzy
 msgid "Session canceled.\n"
-msgstr "Malfermu Dosieron.\n"
+msgstr "Seanco nuligita.\n"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name.\n"
@@ -4275,9 +4145,8 @@ msgid "Extended attribute list inconsistent.\n"
 msgstr ""
 
 #: winerror.mc:901
-#, fuzzy
 msgid "No more data available.\n"
-msgstr "Ne disponebla; .\n"
+msgstr "Neniuj pliaj datumoj haveblas.\n"
 
 #: winerror.mc:906
 msgid "Cannot use Copy API.\n"
@@ -4412,9 +4281,8 @@ msgid "Invalid key.\n"
 msgstr ""
 
 #: winerror.mc:1071
-#, fuzzy
 msgid "Can't open registry key.\n"
-msgstr "Tekstdosieroj (*.txt).\n"
+msgstr "Ne eblas malfermi registrejan ŝlosilon.\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key.\n"
@@ -4429,18 +4297,16 @@ msgid "Registry has been recovered.\n"
 msgstr ""
 
 #: winerror.mc:1091
-#, fuzzy
 msgid "Registry is corrupt.\n"
-msgstr "Tekstdosieroj (*.txt).\n"
+msgstr "Registrejo estas koruptita.\n"
 
 #: winerror.mc:1096
 msgid "I/O to registry failed.\n"
 msgstr ""
 
 #: winerror.mc:1101
-#, fuzzy
 msgid "Not registry file.\n"
-msgstr "Tekstdosieroj (*.txt).\n"
+msgstr "Ne registreja dosiero.\n"
 
 #: winerror.mc:1106
 msgid "Key deleted.\n"
@@ -4499,9 +4365,8 @@ msgid "Circular dependency.\n"
 msgstr ""
 
 #: winerror.mc:1176
-#, fuzzy
 msgid "Service does not exist.\n"
-msgstr "Dosiero estas neekzistanta.\n"
+msgstr "Servo estas neekzistanta.\n"
 
 #: winerror.mc:1181
 msgid "Service cannot accept control message.\n"
@@ -4520,9 +4385,8 @@ msgid "Exception in service.\n"
 msgstr ""
 
 #: winerror.mc:1201
-#, fuzzy
 msgid "Database does not exist.\n"
-msgstr "Vojo estas neekzistanta.\n"
+msgstr "Datumbazo estas neekzistanta.\n"
 
 #: winerror.mc:1206
 msgid "Service-specific error.\n"
@@ -4593,9 +4457,8 @@ msgid "No recovery program for service.\n"
 msgstr ""
 
 #: winerror.mc:1291
-#, fuzzy
 msgid "Service not implemented by exe.\n"
-msgstr "Ne-implementata.\n"
+msgstr "Servo ne haveblas en la programo.\n"
 
 #: winerror.mc:1296
 msgid "End of media.\n"
@@ -4754,9 +4617,8 @@ msgid "Single-instance application.\n"
 msgstr ""
 
 #: winerror.mc:1491
-#, fuzzy
 msgid "Real-mode application.\n"
-msgstr "Wine Programa Malinstalilo.\n"
+msgstr "Realreĝima programo.\n"
 
 #: winerror.mc:1496
 msgid "Invalid DLL.\n"
@@ -4771,14 +4633,12 @@ msgid "DDE failure.\n"
 msgstr ""
 
 #: winerror.mc:1511
-#, fuzzy
 msgid "DLL not found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "DLL ne estis trovita.\n"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles.\n"
-msgstr "La memoro estas elæerpita."
+msgstr "La uzanto-prezentoj estas elĉerpitaj.\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls.\n"
@@ -4809,34 +4669,28 @@ msgid "The device requires cleaning.\n"
 msgstr ""
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open.\n"
-msgstr "La printila pordo estas malfermita; .\n"
+msgstr "La printila pordo estas malfermita;\n"
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "La aparato ne estas konektita.\n"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Elemento ne estis trovita.\n"
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found.\n"
-msgstr "Mi ne trovis la vojon %s.\n"
+msgstr "Neniu egalaĵo troviĝis.\n"
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Ecaro ne estis trovita.\n"
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found.\n"
-msgstr "Mi ne trovis la vojon %s.\n"
+msgstr "Punkto ne troviĝis.\n"
 
 #: winerror.mc:1586
 msgid "No running tracking service.\n"
@@ -4879,9 +4733,8 @@ msgid "Invalid device name.\n"
 msgstr ""
 
 #: winerror.mc:1636
-#, fuzzy
 msgid "Connection unavailable.\n"
-msgstr "Ne disponebla; .\n"
+msgstr "Konekto nehavebla.\n"
 
 #: winerror.mc:1641
 msgid "Device already remembered.\n"
@@ -4916,9 +4769,8 @@ msgid "Invalid group name.\n"
 msgstr ""
 
 #: winerror.mc:1681
-#, fuzzy
 msgid "Invalid computer name.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida komputilnomo.\n"
 
 #: winerror.mc:1686
 msgid "Invalid event name.\n"
@@ -4937,9 +4789,8 @@ msgid "Invalid network name.\n"
 msgstr ""
 
 #: winerror.mc:1706
-#, fuzzy
 msgid "Invalid share name.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida nomo de kunuzata aparato.\n"
 
 #: winerror.mc:1716
 msgid "Invalid message name.\n"
@@ -4966,18 +4817,16 @@ msgid "No network.\n"
 msgstr ""
 
 #: winerror.mc:1746
-#, fuzzy
 msgid "Operation canceled by user.\n"
-msgstr "Interrompita far uzanto; .\n"
+msgstr "Operacio nuligita de uzanto.\n"
 
 #: winerror.mc:1751
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
 #: winerror.mc:1756 winerror.mc:3741
-#, fuzzy
 msgid "Connection refused.\n"
-msgstr "LAN Interkonekto.\n"
+msgstr "Konekto rifuzita.\n"
 
 #: winerror.mc:1761
 msgid "Connection gracefully closed.\n"
@@ -4992,9 +4841,8 @@ msgid "Address not associated with transport endpoint.\n"
 msgstr ""
 
 #: winerror.mc:1776
-#, fuzzy
 msgid "Connection invalid.\n"
-msgstr "LAN Interkonekto.\n"
+msgstr "Konekto nevalida.\n"
 
 #: winerror.mc:1781
 msgid "Connection is active.\n"
@@ -5021,9 +4869,8 @@ msgid "Request aborted.\n"
 msgstr ""
 
 #: winerror.mc:1811
-#, fuzzy
 msgid "Connection aborted.\n"
-msgstr "LAN Interkonekto.\n"
+msgstr "Konekto ĉesigita.\n"
 
 #: winerror.mc:1816
 msgid "Please retry operation.\n"
@@ -5050,9 +4897,8 @@ msgid "Service already registered.\n"
 msgstr ""
 
 #: winerror.mc:1846
-#, fuzzy
 msgid "Service not found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Servo ne estis trovita.\n"
 
 #: winerror.mc:1851
 msgid "User not authenticated.\n"
@@ -5075,19 +4921,16 @@ msgid "No more local devices.\n"
 msgstr ""
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist.\n"
-msgstr "Dosiero estas neekzistanta.\n"
+msgstr "Ejo estas neekzistanta.\n"
 
 #: winerror.mc:1881
-#, fuzzy
 msgid "The domain controller already exists.\n"
-msgstr "Dosiero estas neekzistanta.\n"
+msgstr "Eja regilo estas neekzistanta.\n"
 
 #: winerror.mc:1886
-#, fuzzy
 msgid "Supported only when connected.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Subtenita nur kiam konektita.\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed.\n"
@@ -5370,14 +5213,12 @@ msgid "Invalid logon type.\n"
 msgstr ""
 
 #: winerror.mc:2241
-#, fuzzy
 msgid "Cannot impersonate.\n"
-msgstr "Mi ne povas trovi la printilon."
+msgstr "Ne eblas trompi.\n"
 
 #: winerror.mc:2246
-#, fuzzy
 msgid "Invalid transaction state.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida transkacia stato.\n"
 
 #: winerror.mc:2251
 msgid "Security DB commit failure.\n"
@@ -5536,14 +5377,12 @@ msgid "Class already exists.\n"
 msgstr ""
 
 #: winerror.mc:2451
-#, fuzzy
 msgid "Class does not exist.\n"
-msgstr "Vojo estas neekzistanta.\n"
+msgstr "Klaso estas neekzistanta.\n"
 
 #: winerror.mc:2456
-#, fuzzy
 msgid "Class has open windows.\n"
-msgstr "&Aløustigu la fenestron.\n"
+msgstr "Klaso havas malfermitajn fenestrojn.\n"
 
 #: winerror.mc:2461
 msgid "Invalid index.\n"
@@ -5558,9 +5397,8 @@ msgid "Private dialog index.\n"
 msgstr ""
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found.\n"
-msgstr "Mi ne trovis la vojon %s.\n"
+msgstr "Identigilo de la lista kampo ne troviĝis.\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters.\n"
@@ -5579,9 +5417,8 @@ msgid "Not a dialog window.\n"
 msgstr ""
 
 #: winerror.mc:2501
-#, fuzzy
 msgid "Control ID not found.\n"
-msgstr "Mi ne trovis la vojon %s.\n"
+msgstr "Fenestraĵa identigilo ne troviĝis.\n"
 
 #: winerror.mc:2506
 msgid "Invalid combobox message.\n"
@@ -5596,9 +5433,8 @@ msgid "Invalid edit height.\n"
 msgstr ""
 
 #: winerror.mc:2521
-#, fuzzy
 msgid "DC not found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "DC ne estis trovita.\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter.\n"
@@ -5625,9 +5461,8 @@ msgid "Hook procedure not installed.\n"
 msgstr ""
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida mesaĝo de lista kampo.\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent.\n"
@@ -5650,9 +5485,8 @@ msgid "Window has no system menu.\n"
 msgstr ""
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida stilo de la mesaĝa dialogujo.\n"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter.\n"
@@ -5687,9 +5521,8 @@ msgid "Popup menu already active.\n"
 msgstr ""
 
 #: winerror.mc:2631
-#, fuzzy
 msgid "No scrollbars.\n"
-msgstr "&Ruliøu.\n"
+msgstr "Neniuj rulumiloj.\n"
 
 #: winerror.mc:2636
 msgid "Invalid scrollbar range.\n"
@@ -5724,14 +5557,12 @@ msgid "Exceeded commitment limit.\n"
 msgstr ""
 
 #: winerror.mc:2676
-#, fuzzy
 msgid "Menu item not found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Menuero ne estis trovita.\n"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida klavara numero.\n"
 
 #: winerror.mc:2686
 msgid "Hook type not allowed.\n"
@@ -5746,9 +5577,8 @@ msgid "Timeout.\n"
 msgstr ""
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida ekranbloka numero.\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt.\n"
@@ -5767,14 +5597,12 @@ msgid "Event log file changed.\n"
 msgstr ""
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
-msgstr "Disponebla Spaco.\n"
+msgstr "Instalilo malsukcesis.\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user.\n"
-msgstr "Interrompita far uzanto; .\n"
+msgstr "Instalado ĉesigita de uzanto.\n"
 
 #: winerror.mc:2736
 msgid "Installation failure.\n"
@@ -5785,43 +5613,36 @@ msgid "Installation suspended.\n"
 msgstr ""
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product.\n"
-msgstr "Nekonata printilzorgilo."
+msgstr "Nekonata produktaĵo.\n"
 
 #: winerror.mc:2751
-#, fuzzy
 msgid "Unknown feature.\n"
-msgstr "Nekonata printilzorgilo."
+msgstr "Nekonata trajto.\n"
 
 #: winerror.mc:2756
-#, fuzzy
 msgid "Unknown component.\n"
-msgstr "Nekonata printilzorgilo."
+msgstr "Nekonata komponanto.\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property.\n"
-msgstr "Nekonata printilzorgilo."
+msgstr "Nekonata eco.\n"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida numera stato.\n"
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration.\n"
-msgstr "Informo pri.\n"
+msgstr "Erara agordo.\n"
 
 #: winerror.mc:2776
 msgid "Index is missing.\n"
 msgstr ""
 
 #: winerror.mc:2781
-#, fuzzy
 msgid "Installation source is missing.\n"
-msgstr "instalad-fonto por mankanta taýgeco.\n"
+msgstr "instala fonto mankas.\n"
 
 #: winerror.mc:2786
 msgid "Wrong installation package version.\n"
@@ -5832,14 +5653,12 @@ msgid "Product uninstalled.\n"
 msgstr ""
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida menda sintakso.\n"
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida kampo.\n"
 
 #: winerror.mc:2806
 msgid "Device removed.\n"
@@ -5882,14 +5701,12 @@ msgid "Function could not be called.\n"
 msgstr ""
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed.\n"
-msgstr "Malfermu Dosieron.\n"
+msgstr "Funkcio malsukcesis.\n"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida tabelo.\n"
 
 #: winerror.mc:2866
 msgid "Data type mismatch.\n"
@@ -5900,9 +5717,8 @@ msgid "Unsupported type.\n"
 msgstr ""
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed.\n"
-msgstr "Malfermu Dosieron.\n"
+msgstr "Kreado malsukcesis.\n"
 
 #: winerror.mc:2881
 msgid "Temporary directory not writable.\n"
@@ -5913,18 +5729,16 @@ msgid "Installation platform not supported.\n"
 msgstr ""
 
 #: winerror.mc:2891
-#, fuzzy
 msgid "Installer not used.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Instalilo ne uziĝis.\n"
 
 #: winerror.mc:2896
 msgid "Failed to open the patch package.\n"
 msgstr ""
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida flikaĵo.\n"
 
 #: winerror.mc:2906
 msgid "Unsupported patch package.\n"
@@ -5935,9 +5749,8 @@ msgid "Another version is installed.\n"
 msgstr ""
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida komandlinio.\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed.\n"
@@ -5980,18 +5793,16 @@ msgid "Invalid network address.\n"
 msgstr ""
 
 #: winerror.mc:2971
-#, fuzzy
 msgid "No endpoint found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Finpunkto ne estis trovita.\n"
 
 #: winerror.mc:2976
 msgid "Invalid timeout value.\n"
 msgstr ""
 
 #: winerror.mc:2981
-#, fuzzy
 msgid "Object UUID not found.\n"
-msgstr "Mi ne trovis la vojon %s.\n"
+msgstr "Mi ne trovis la objektan UUID-on %s.\n"
 
 #: winerror.mc:2986
 msgid "UUID already registered.\n"
@@ -6018,9 +5829,8 @@ msgid "Unknown manager type.\n"
 msgstr ""
 
 #: winerror.mc:3016
-#, fuzzy
 msgid "Unknown interface.\n"
-msgstr "Nekonata printilzorgilo."
+msgstr "Nekonata interfaco.\n"
 
 #: winerror.mc:3021
 msgid "No bindings.\n"
@@ -6035,9 +5845,8 @@ msgid "Can't create endpoint.\n"
 msgstr ""
 
 #: winerror.mc:3036
-#, fuzzy
 msgid "Out of resources.\n"
-msgstr "La memoro estas elæerpita."
+msgstr "La risurcoj estas elĉerpitaj.\n"
 
 #: winerror.mc:3041
 msgid "RPC server unavailable.\n"
@@ -6160,9 +5969,8 @@ msgid "Incomplete name.\n"
 msgstr ""
 
 #: winerror.mc:3196
-#, fuzzy
 msgid "Invalid version option.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida eldono-elekto.\n"
 
 #: winerror.mc:3201
 msgid "No more members.\n"
@@ -6173,23 +5981,20 @@ msgid "Not all objects unexported.\n"
 msgstr ""
 
 #: winerror.mc:3211
-#, fuzzy
 msgid "Interface not found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Interfaco ne estis trovita.\n"
 
 #: winerror.mc:3216
 msgid "Entry already exists.\n"
 msgstr ""
 
 #: winerror.mc:3221
-#, fuzzy
 msgid "Entry not found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Ero ne estis trovita.\n"
 
 #: winerror.mc:3226
-#, fuzzy
 msgid "Name service unavailable.\n"
-msgstr "Disponebla Spaco.\n"
+msgstr "Noma servo ne disponeblas.\n"
 
 #: winerror.mc:3231
 msgid "Invalid network address family.\n"
@@ -6320,19 +6125,16 @@ msgid "Printer driver already installed.\n"
 msgstr ""
 
 #: winerror.mc:3391
-#, fuzzy
 msgid "Unknown port.\n"
-msgstr "Nekonata printilzorgilo."
+msgstr "Nekonata pordo.\n"
 
 #: winerror.mc:3396
-#, fuzzy
 msgid "Unknown printer driver.\n"
-msgstr "Nekonata printilzorgilo."
+msgstr "Nekonata printila pelilo.\n"
 
 #: winerror.mc:3401
-#, fuzzy
 msgid "Unknown print processor.\n"
-msgstr "Nekonata printilzorgilo."
+msgstr "Nekonata printila traktilo.\n"
 
 #: winerror.mc:3406
 msgid "Invalid separator file.\n"
@@ -6343,9 +6145,8 @@ msgid "Invalid priority.\n"
 msgstr ""
 
 #: winerror.mc:3416
-#, fuzzy
 msgid "Invalid printer name.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida printila nomo.\n"
 
 #: winerror.mc:3421
 msgid "Printer already exists.\n"
@@ -6356,9 +6157,8 @@ msgid "Invalid printer command.\n"
 msgstr ""
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida datumtipo.\n"
 
 #: winerror.mc:3436
 msgid "Invalid environment.\n"
@@ -6417,9 +6217,8 @@ msgid "RPC call canceled.\n"
 msgstr ""
 
 #: winerror.mc:3506
-#, fuzzy
 msgid "Binding incomplete.\n"
-msgstr "Ne-implementata.\n"
+msgstr "Ligado nekompleta.\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure.\n"
@@ -6446,9 +6245,8 @@ msgid "Security package error.\n"
 msgstr ""
 
 #: winerror.mc:3541
-#, fuzzy
 msgid "Thread not canceled.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Fadeno ne nuligita.\n"
 
 #: winerror.mc:3546
 msgid "Invalid handle operation.\n"
@@ -6475,9 +6273,8 @@ msgid "Wrong pipe version.\n"
 msgstr ""
 
 #: winerror.mc:3576
-#, fuzzy
 msgid "Group member not found.\n"
-msgstr "Mi ne trovis la vojon %s.\n"
+msgstr "Mi ne trovis la grupanon.\n"
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB.\n"
@@ -6508,18 +6305,16 @@ msgid "Printer deleted.\n"
 msgstr ""
 
 #: winerror.mc:3616
-#, fuzzy
 msgid "Invalid printer state.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida printila stato.\n"
 
 #: winerror.mc:3621
 msgid "User must change password.\n"
 msgstr ""
 
 #: winerror.mc:3626
-#, fuzzy
 msgid "Domain controller not found.\n"
-msgstr "Dosiero ne estis trovita.\n"
+msgstr "Domajna regilo ne estis trovita.\n"
 
 #: winerror.mc:3631
 msgid "Account locked out.\n"
@@ -6534,9 +6329,8 @@ msgid "Invalid driver.\n"
 msgstr ""
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set.\n"
-msgstr "Nekorekta(j) tipo(j) en vojo.\n"
+msgstr "Nevalida solvila aro por la objekto.\n"
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send.\n"
@@ -6563,18 +6357,16 @@ msgid "No data on RPC pipe.\n"
 msgstr ""
 
 #: winerror.mc:3681
-#, fuzzy
 msgid "No site name available.\n"
-msgstr "Ne disponebla; .\n"
+msgstr "Neniu eja nomo haveblas.\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed.\n"
 msgstr ""
 
 #: winerror.mc:3691
-#, fuzzy
 msgid "The filename cannot be resolved.\n"
-msgstr "Mi ne trovis '%s'."
+msgstr "La dosiernomo ne eblas solvi.\n"
 
 #: winerror.mc:3696
 msgid "RPC entry type mismatch.\n"
@@ -6585,39 +6377,32 @@ msgid "Not all objects could be exported.\n"
 msgstr ""
 
 #: winerror.mc:3706
-#, fuzzy
 msgid "The interface could not be exported.\n"
-msgstr "Mi ne trovis '%s'."
+msgstr "La interfaco ne eblis eksportiĝi.\n"
 
 #: winerror.mc:3711
-#, fuzzy
 msgid "The profile could not be added.\n"
-msgstr "Mi ne trovis '%s'."
+msgstr "La profilo ne eblis aldoniĝi.\n"
 
 #: winerror.mc:3716
-#, fuzzy
 msgid "The profile element could not be added.\n"
-msgstr "Mi ne trovis '%s'."
+msgstr "La profila ero ne eblis aldoniĝi.\n"
 
 #: winerror.mc:3721
-#, fuzzy
 msgid "The profile element could not be removed.\n"
-msgstr "Mi ne trovis '%s'."
+msgstr "La profila elemento ne eblis foriĝi.\n"
 
 #: winerror.mc:3726
-#, fuzzy
 msgid "The group element could not be added.\n"
-msgstr "Mi ne trovis '%s'."
+msgstr "La grupa elemento ne eblis aldoniĝi.\n"
 
 #: winerror.mc:3731
-#, fuzzy
 msgid "The group element could not be removed.\n"
-msgstr "Mi ne trovis '%s'."
+msgstr "La grupa elemento ne eblis foriĝi.\n"
 
 #: winerror.mc:3736
-#, fuzzy
 msgid "The username could not be found.\n"
-msgstr "Mi ne trovis '%s'."
+msgstr "La salutnomo ne eblis troviĝi.\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
@@ -6628,9 +6413,8 @@ msgid "Local Monitor"
 msgstr ""
 
 #: localui.rc:36
-#, fuzzy
 msgid "Add a Local Port"
-msgstr "Loka Pordo"
+msgstr "Aldoni lokan pordon"
 
 #: localui.rc:39
 msgid "&Enter the port name to add:"
@@ -6670,15 +6454,15 @@ msgstr ""
 
 #: mpr.rc:32 wininet.rc:34
 msgid "Enter Network Password"
-msgstr "Enmetu Retan Pasvorton"
+msgstr "Enmeti Retan Pasvorton"
 
 #: mpr.rc:35 wininet.rc:37 wininet.rc:57
 msgid "Please enter your username and password:"
-msgstr "Enmetu uzantonomon kaj pasvorton:"
+msgstr "Enmeti salutnomon kaj pasvorton:"
 
 #: mpr.rc:36 wininet.rc:38
 msgid "Proxy"
-msgstr "Proxy"
+msgstr "Prokurilo"
 
 #: mpr.rc:38 wininet.rc:40 wininet.rc:60
 msgid "User"
@@ -6690,45 +6474,39 @@ msgstr "Pasvorto"
 
 #: mpr.rc:44
 msgid "&Save this password (Insecure)"
-msgstr "&Storu pasvorton ( RISKE! )"
+msgstr "&Konservi pasvorton ( RISKE! )"
 
 #: mpr.rc:27
 msgid "Entire Network"
 msgstr "Tuta Reto"
 
 #: msacm32.rc:27
-#, fuzzy
 msgid "Sound Selection"
-msgstr "Konfirmu forigon de dosiero"
+msgstr "Sona elekto"
 
 #: msacm32.rc:36 winedbg.rc:73
-#, fuzzy
 msgid "&Save As..."
-msgstr "Konservu &kiel"
+msgstr "Konservu &kiel..."
 
 #: msacm32.rc:39
-#, fuzzy
 msgid "&Format:"
-msgstr "Normal"
+msgstr "&Formato:"
 
 #: msacm32.rc:44
-#, fuzzy
 msgid "&Attributes:"
-msgstr "Atributoj"
+msgstr "&Atributoj:"
 
 #: mshtml.rc:37
 msgid "Hyperlink"
 msgstr ""
 
 #: mshtml.rc:40
-#, fuzzy
 msgid "Hyperlink Information"
-msgstr "Informo pri"
+msgstr "Ligilaj informoj"
 
 #: mshtml.rc:41 winecfg.rc:236
-#, fuzzy
 msgid "&Type:"
-msgstr "Tipo"
+msgstr "&Tipo:"
 
 #: mshtml.rc:43
 msgid "&URL:"
@@ -6762,7 +6540,7 @@ msgstr "Mi ne trovis la vojon %s"
 
 #: msi.rc:29
 msgid "insert disk %s"
-msgstr "enþovu la diskon %s"
+msgstr "enŝovu la diskon %s"
 
 #: msi.rc:30
 msgid ""
@@ -6799,23 +6577,23 @@ msgstr ""
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
-msgstr "enigu la nomon de dosierujo kiu enhavas %s"
+msgstr "enigi la nomon de dosierujo kiu enhavas %s"
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr "instalad-fonto por mankanta taýgeco"
+msgstr "instalad-fonto por mankanta taŭgeco"
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr "retdrajvo por mankanta taýgeco"
+msgstr "retdisko por trajto mankas"
 
 #: msi.rc:60
 msgid "feature from:"
-msgstr "taýgeco el:"
+msgstr "taŭgeco el:"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
-msgstr "elektu la dosierujo kiu enhavas %s"
+msgstr "elekti la dosierujo kiu enhavas %s"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
@@ -6836,14 +6614,12 @@ msgid "&Compressor:"
 msgstr ""
 
 #: msvfw32.rc:39
-#, fuzzy
 msgid "Con&figure..."
-msgstr "&Difinu..."
+msgstr "A&gordi..."
 
 #: msvfw32.rc:40
-#, fuzzy
 msgid "&About"
-msgstr "Pri Notepad"
+msgstr "&Pri"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -6854,13 +6630,12 @@ msgid "&Key Frame Every"
 msgstr ""
 
 #: msvfw32.rc:50
-#, fuzzy
 msgid "&Data Rate"
-msgstr "&Dato"
+msgstr "&Datuma rapido"
 
 #: msvfw32.rc:52
 msgid "kB/s"
-msgstr ""
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -6875,9 +6650,8 @@ msgid "unknown object"
 msgstr ""
 
 #: oleacc.rc:28
-#, fuzzy
 msgid "title bar"
-msgstr "Se&n titolstango"
+msgstr "Titolzono"
 
 #: oleacc.rc:29
 msgid "menu bar"
@@ -6908,9 +6682,8 @@ msgid "alert"
 msgstr ""
 
 #: oleacc.rc:36
-#, fuzzy
 msgid "window"
-msgstr "&Aløustigu la fenestron"
+msgstr "fenestro"
 
 #: oleacc.rc:37
 msgid "client"
@@ -6929,9 +6702,8 @@ msgid "tool tip"
 msgstr ""
 
 #: oleacc.rc:41
-#, fuzzy
 msgid "application"
-msgstr "Wine Programa Malinstalilo"
+msgstr "programo"
 
 #: oleacc.rc:42
 msgid "document"
@@ -6958,9 +6730,8 @@ msgid "grouping"
 msgstr ""
 
 #: oleacc.rc:48
-#, fuzzy
 msgid "separator"
-msgstr "Dividilo"
+msgstr "apartigilo"
 
 #: oleacc.rc:49
 msgid "tool bar"
@@ -7091,9 +6862,8 @@ msgid "diagram"
 msgstr ""
 
 #: oleacc.rc:81
-#, fuzzy
 msgid "animation"
-msgstr "Informo pri"
+msgstr "animaciaĵo"
 
 #: oleacc.rc:82
 msgid "equation"
@@ -7120,9 +6890,8 @@ msgid "page tab list"
 msgstr ""
 
 #: oleacc.rc:88
-#, fuzzy
 msgid "clock"
-msgstr "Horloøo"
+msgstr "horloĝo"
 
 #: oleacc.rc:89
 msgid "split button"
@@ -7146,11 +6915,11 @@ msgstr ""
 
 #: oleaut32.rc:31
 msgid "On"
-msgstr "Kondukta"
+msgstr "Ŝaltita"
 
 #: oleaut32.rc:32
 msgid "Off"
-msgstr "Elkluda"
+msgstr "Malŝaltita"
 
 #: oledlg.rc:48
 msgid "Insert Object"
@@ -7165,24 +6934,20 @@ msgid "Result"
 msgstr ""
 
 #: oledlg.rc:58
-#, fuzzy
 msgid "Create New"
-msgstr "Kreu Novan Dosieujon"
+msgstr "Krei Novan"
 
 #: oledlg.rc:60
-#, fuzzy
 msgid "Create Control"
 msgstr "Regado"
 
 #: oledlg.rc:62
-#, fuzzy
 msgid "Create From File"
-msgstr "Kreu Novan Dosieujon"
+msgstr "Krei Novan Dosieron"
 
 #: oledlg.rc:65
-#, fuzzy
 msgid "&Add Control..."
-msgstr "&Control"
+msgstr "&Aldoni umaĵon..."
 
 #: oledlg.rc:66
 msgid "Display As Icon"
@@ -7193,9 +6958,8 @@ msgid "Browse..."
 msgstr ""
 
 #: oledlg.rc:69
-#, fuzzy
 msgid "File:"
-msgstr "Dosiero"
+msgstr "Dosiero:"
 
 #: oledlg.rc:75
 msgid "Paste Special"
@@ -7207,31 +6971,24 @@ msgstr "Fonto:"
 
 #: oledlg.rc:79 shdoclc.rc:47 shdoclc.rc:79 shdoclc.rc:92 shdoclc.rc:132
 #: shdoclc.rc:159 shdoclc.rc:183 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
-#, fuzzy
 msgid "&Paste"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"En&metu\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Enmetu"
+msgstr "&Alglui"
 
 #: oledlg.rc:81
-#, fuzzy
 msgid "Paste &Link"
-msgstr "Enmetu kiel Ligo"
+msgstr "Alglui &ligilon"
 
 #: oledlg.rc:83
 msgid "&As:"
-msgstr ""
+msgstr "&Kiel:"
 
 #: oledlg.rc:90
 msgid "&Display As Icon"
 msgstr ""
 
 #: oledlg.rc:92
-#, fuzzy
 msgid "Change &Icon..."
-msgstr "Aranøu &Ikonojn"
+msgstr "Ŝanĝi &piktogramon..."
 
 #: oledlg.rc:25
 msgid "Insert a new %s object into your document"
@@ -7344,9 +7101,8 @@ msgid "us"
 msgstr ""
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "Ecoj"
+msgstr "Agordaĵoj por %s"
 
 #: serialui.rc:28
 msgid "Baud Rate"
@@ -7358,7 +7114,7 @@ msgstr "Pareco"
 
 #: serialui.rc:32
 msgid "Flow Control"
-msgstr "Fluksa Kontrolo"
+msgstr "Flua regado"
 
 #: serialui.rc:34
 msgid "Data Bits"
@@ -7377,13 +7133,8 @@ msgid "Destination:"
 msgstr "Finpunkto:"
 
 #: setupapi.rc:49
-#, fuzzy
 msgid "Files Needed"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Dosiero\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Dosiero"
+msgstr "Dosieroj bezonatoj"
 
 #: setupapi.rc:52
 msgid ""
@@ -7433,7 +7184,7 @@ msgstr ""
 
 #: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
 msgid "Select &All"
-msgstr "Elektu æion"
+msgstr "Elektu ĉion"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -7441,7 +7192,7 @@ msgstr ""
 
 #: shdoclc.rc:50 shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Add to &Favorites..."
-msgstr ""
+msgstr "Aldoni al &Favoratoj..."
 
 #: shdoclc.rc:51
 msgid "&View Source"
@@ -7515,7 +7266,6 @@ msgid "Copy Shor&tcut"
 msgstr ""
 
 #: shdoclc.rc:83 shdoclc.rc:136 shdoclc.rc:165 shdoclc.rc:191
-#, fuzzy
 msgid "P&roperties"
 msgstr "&Ecoj"
 
@@ -7524,13 +7274,8 @@ msgid "&Undo"
 msgstr "&Nuligu"
 
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
-#, fuzzy
 msgid "&Delete"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Forigu\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Forigu"
+msgstr "&Forigi"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -7553,14 +7298,12 @@ msgid "&Table"
 msgstr ""
 
 #: shdoclc.rc:108
-#, fuzzy
 msgid "&Cell Properties"
-msgstr "&Ecoj"
+msgstr "Ĉelaj ecoj"
 
 #: shdoclc.rc:109
-#, fuzzy
 msgid "&Table Properties"
-msgstr "&Ecoj"
+msgstr "&Tabelaj ecoj"
 
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
@@ -7713,12 +7456,12 @@ msgstr ""
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
 msgid "Lar&ge Icons"
-msgstr "&Grandaj Ikonoj"
+msgstr "&Grandaj piktogramoj"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:120 shell32.rc:160 taskmgr.rc:66
 #: taskmgr.rc:111 taskmgr.rc:253
 msgid "S&mall Icons"
-msgstr "Malgrandaj Ikonoj"
+msgstr "Malgrandaj piktogramoj"
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:121 shell32.rc:161
 msgid "&List"
@@ -7731,31 +7474,31 @@ msgstr "&Detale"
 
 #: shell32.rc:48 winefile.rc:77
 msgid "Arrange &Icons"
-msgstr "Aranøu &Ikonojn"
+msgstr "Aranĝi &piktogramojn"
 
 #: shell32.rc:50
 msgid "By &Name"
-msgstr "Laý­ &Nomo"
+msgstr "Laŭ &Nomo"
 
 #: shell32.rc:51
 msgid "By &Type"
-msgstr "Laý­ &Tipo"
+msgstr "Laŭ &Tipo"
 
 #: shell32.rc:52
 msgid "By &Size"
-msgstr "Laý­ Grandeco"
+msgstr "Laŭ Grando"
 
 #: shell32.rc:53
 msgid "By &Date"
-msgstr "Laý­ &Dato"
+msgstr "Laŭ &Dato"
 
 #: shell32.rc:55
 msgid "&Auto Arrange"
-msgstr "&Aranøu Aýtomate"
+msgstr "&Aranĝu Aŭtomate"
 
 #: shell32.rc:57
 msgid "Line up Icons"
-msgstr "Vicigu Ikonojn"
+msgstr "Vicigu piktogramojn"
 
 #: shell32.rc:62
 msgid "Paste as Link"
@@ -7778,10 +7521,9 @@ msgid "Properties"
 msgstr "Ecoj"
 
 #: shell32.rc:82
-#, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
-msgstr "&Renormaligu"
+msgstr "&Restarigi"
 
 #: shell32.rc:83
 msgid "&Erase"
@@ -7789,51 +7531,44 @@ msgstr ""
 
 #: shell32.rc:95
 msgid "E&xplore"
-msgstr "E&sploru"
+msgstr "E&splori"
 
 #: shell32.rc:98
 msgid "C&ut"
-msgstr "Enmetu"
+msgstr "Enmeti"
 
 #: shell32.rc:101
 msgid "Create &Link"
-msgstr "Kreu Ligon"
+msgstr "Krei &ligilon"
 
 #: shell32.rc:103 regedit.rc:91
 msgid "&Rename"
-msgstr "Alinomu"
+msgstr "Alinomi"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
 #: winefile.rc:37 winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
-#, fuzzy
 msgid "E&xit"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Finu\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Fermu"
+msgstr "&Eliri"
 
 #: shell32.rc:127
 msgid "&About Control Panel"
-msgstr ""
+msgstr "&Pri Regilo"
 
 #: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
-msgstr "Foliu Dosierujon"
+msgstr "Foliumi por dosierujo"
 
 #: shell32.rc:290
-#, fuzzy
 msgid "Folder:"
-msgstr "New Folder"
+msgstr "Dosierujon:"
 
 #: shell32.rc:296
-#, fuzzy
 msgid "&Make New Folder"
-msgstr "Kreu Novan Dosieujon"
+msgstr "&Krei Novan Dosierujon"
 
 #: shell32.rc:303
 msgid "Message"
-msgstr ""
+msgstr "Mesaĝo"
 
 #: shell32.rc:306 shlwapi.rc:43 user32.rc:82
 msgid "&Yes"
@@ -7841,7 +7576,7 @@ msgstr "&Jes"
 
 #: shell32.rc:307
 msgid "Yes to &all"
-msgstr ""
+msgstr "Jes al &ĉio"
 
 #: shell32.rc:308 shlwapi.rc:44 user32.rc:83
 msgid "&No"
@@ -7853,36 +7588,36 @@ msgstr "Pri %s"
 
 #: shell32.rc:320
 msgid "Wine &license"
-msgstr ""
+msgstr "Wine-&permesilo"
 
 #: shell32.rc:325
 msgid "Running on %s"
-msgstr ""
+msgstr "Rulante en %s"
 
 #: shell32.rc:326
 msgid "Wine was brought to you by:"
-msgstr "Wine estas disponebla dank'al:"
+msgstr "Wine estas disponebla danke al:"
 
 #: shell32.rc:334
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
-"Skribu nomon de programo, de dosierujo, de documento aý de Interreta fonto, "
-"kaj Wine malfermos øin."
+"Skribi nomon de programo, de dosierujo, de documento aŭ de Interreta fonto, "
+"kaj Wine malfermos ĝin."
 
 #: shell32.rc:335
 msgid "&Open:"
-msgstr "Malfermu:"
+msgstr "&Malfermi:"
 
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
 #: winefile.rc:132
 msgid "&Browse..."
-msgstr "Foliu..."
+msgstr "&Foliumi..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:107
 msgid "Size"
-msgstr "Gandeco"
+msgstr "Grando"
 
 #: shell32.rc:136 regedit.rc:123
 msgid "Type"
@@ -7902,66 +7637,60 @@ msgstr "Disponebla Spaco"
 
 #: shell32.rc:142
 msgid "Comments"
-msgstr "Komentario"
+msgstr "Komentoj"
 
 #: shell32.rc:143
 msgid "Owner"
-msgstr ""
+msgstr "Estro"
 
 #: shell32.rc:144
 msgid "Group"
-msgstr ""
+msgstr "Grupo"
 
 #: shell32.rc:145
 msgid "Original location"
-msgstr ""
+msgstr "Komenca loko"
 
 #: shell32.rc:146
 msgid "Date deleted"
-msgstr ""
+msgstr "Dato forigita"
 
 #: shell32.rc:153 winecfg.rc:92 winefile.rc:99
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
-msgstr "Desktop"
+msgstr "Labortablo"
 
 #: shell32.rc:154 regedit.rc:200
-#, fuzzy
 msgid "My Computer"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Mea Komputero\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Mia Komputero"
+msgstr "Mia komputilo"
 
 #: shell32.rc:156
 msgid "Control Panel"
-msgstr ""
+msgstr "Regilo"
 
 #: shell32.rc:163
 msgid "Select"
-msgstr "Elektu"
+msgstr "Elekti"
 
 #: shell32.rc:186
 msgid "Restart"
-msgstr "Restartigu"
+msgstr "Restartigi"
 
 #: shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
-msgstr "Æu vi volas simuli Vindozan restartigon?"
+msgstr "Ĉu vi volas simuli Vindozan restartigon?"
 
 #: shell32.rc:188
 msgid "Shutdown"
-msgstr "Adiaýu"
+msgstr "Adiaŭi"
 
 #: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
-msgstr "Æu vi volas adiaýi Wine?"
+msgstr "Ĉu vi volas adiaŭi Wine?"
 
 #: shell32.rc:200 progman.rc:80
 msgid "Programs"
-msgstr ""
+msgstr "Programoj"
 
 #: shell32.rc:201
 msgid "My Documents"
@@ -7969,97 +7698,88 @@ msgstr "Miaj Dokumentoj"
 
 #: shell32.rc:202
 msgid "Favorites"
-msgstr ""
+msgstr "Favoratoj"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "Starto"
 
 #: shell32.rc:204
 msgid "Start Menu"
-msgstr ""
+msgstr "Starta menuo"
 
 #: shell32.rc:205
-#, fuzzy
 msgid "My Music"
-msgstr "Muziko"
+msgstr "Mia Muziko"
 
 #: shell32.rc:206
-#, fuzzy
 msgid "My Videos"
-msgstr "Video"
+msgstr "Miaj Videoj"
 
 #: shell32.rc:207
-#, fuzzy
 msgctxt "directory"
 msgid "Desktop"
-msgstr "Desktop"
+msgstr "Labortablo"
 
 #: shell32.rc:208
 msgid "NetHood"
-msgstr ""
+msgstr "Retoj"
 
 #: shell32.rc:209
 msgid "Templates"
-msgstr ""
+msgstr "Ŝablonoj"
 
 #: shell32.rc:210
 msgid "PrintHood"
-msgstr ""
+msgstr "Printiloj"
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
-msgstr ""
+msgstr "Historio"
 
 #: shell32.rc:212
 msgid "Program Files"
-msgstr ""
+msgstr "Programaj Dosieroj"
 
 #: shell32.rc:214
-#, fuzzy
 msgid "My Pictures"
-msgstr "Bildoj"
+msgstr "Miaj Bildoj"
 
 #: shell32.rc:215
-#, fuzzy
 msgid "Common Files"
-msgstr "Plenume dosierkopiadon..."
+msgstr "Komunaj dosieroj"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
-msgstr ""
+msgstr "Dokumentoj"
 
 #: shell32.rc:217
 msgid "Administrative Tools"
-msgstr ""
+msgstr "Administriloj"
 
 #: shell32.rc:218
-#, fuzzy
 msgid "Music"
-msgstr "Musiko"
+msgstr "Muziko"
 
 #: shell32.rc:219
-#, fuzzy
 msgid "Pictures"
 msgstr "Bildoj"
 
 #: shell32.rc:220
-#, fuzzy
 msgid "Videos"
 msgstr "Video"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
-msgstr ""
+msgstr "Programaj dosieroj (x86)"
 
 #: shell32.rc:221
-#, fuzzy
 msgid "Contacts"
-msgstr "Enhavo"
+msgstr "Kontaktoj"
 
 #: shell32.rc:222 winefile.rc:112
 msgid "Links"
-msgstr ""
+msgstr "Ligiloj"
 
 #: shell32.rc:223
 msgid "Slide Shows"
@@ -8067,85 +7787,79 @@ msgstr ""
 
 #: shell32.rc:224
 msgid "Playlists"
-msgstr ""
+msgstr "Leglistoj"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
-msgstr ""
+msgstr "Stato"
 
 #: shell32.rc:149
-#, fuzzy
 msgid "Location"
-msgstr "LAN Interkonekto"
+msgstr "Loko"
 
 #: shell32.rc:150
 msgid "Model"
-msgstr ""
+msgstr "Modelo"
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
-msgstr "Ekzemplo"
+msgstr "Ekzemplaj muzikaĵoj"
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
-msgstr "Bildoj"
+msgstr "Ekzemplaj bildoj"
 
 #: shell32.rc:227
 msgid "Sample Playlists"
-msgstr ""
+msgstr "Ekzemplaj Ludlistoj"
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
-msgstr "Video"
+msgstr "Ekzemplaj videoj"
 
 #: shell32.rc:229
-#, fuzzy
 msgid "Saved Games"
-msgstr "Konservu &kiel"
+msgstr "Konservitaj ludoj"
 
 #: shell32.rc:230
-#, fuzzy
 msgid "Searches"
-msgstr "&Seræu"
+msgstr "Serĉoj"
 
 #: shell32.rc:231
 msgid "Users"
-msgstr ""
+msgstr "Uzantoj"
 
 #: shell32.rc:233
 msgid "Downloads"
-msgstr ""
+msgstr "Elŝutaĵoj"
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
-msgstr "Mi ne povas crei novan Dosierujon: Aliro rifuzita."
+msgstr "Mi ne povas krei novan Dosierujon: Aliro rifuzita."
 
 #: shell32.rc:167
 msgid "Error during creation of a new folder"
-msgstr "Eraro dum kreiøo de dosierujo"
+msgstr "Eraro dum kreiĝo de dosierujo"
 
 #: shell32.rc:168
 msgid "Confirm file deletion"
-msgstr "Konfirmu forigon de dosiero"
+msgstr "Konfirmi forigon de dosiero"
 
 #: shell32.rc:169
 msgid "Confirm folder deletion"
-msgstr "Konfirmu forigon de dosierujo"
+msgstr "Konfirmi forigon de dosierujo"
 
 #: shell32.rc:170
 msgid "Are you sure you want to delete '%1'?"
-msgstr "Æu vi estas certa pri forigo de '%1'?"
+msgstr "Ĉu vi estas certa pri forigo de '%1'?"
 
 #: shell32.rc:171
 msgid "Are you sure you want to delete these %1 items?"
-msgstr "Æu vi estas certa pri forigo de æi tiuj %1 komponantoj?"
+msgstr "Ĉu vi estas certa pri forigo de ĉi tiuj %1 komponantoj?"
 
 #: shell32.rc:178
 msgid "Confirm file overwrite"
-msgstr "Konfirmu supreskribiton de dosieron"
+msgstr "Konfirmi anstataŭon de dosiero"
 
 #: shell32.rc:177
 msgid ""
@@ -8201,53 +7915,46 @@ msgid "Unable to display Browse dialog box (internal error)"
 msgstr ""
 
 #: shell32.rc:195
-#, fuzzy
 msgid "Executable files (*.exe)"
-msgstr "Tekstdosieroj (*.txt)"
+msgstr "Plenumeblaj dosieroj (*.exe)"
 
 #: shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 
 #: shell32.rc:243
-#, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "Æu vi estas certa pri forigo de '%1'?"
+msgstr "Ĉu vi estas certa pri forigo de '%1'?"
 
 #: shell32.rc:244
-#, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "Æu vi estas certa pri forigo de æi tiuj %1 komponantoj?"
+msgstr "Ĉu vi estas certa pri forigo de ĉi tiuj %1 eroj?"
 
 #: shell32.rc:245
-#, fuzzy
 msgid "Confirm deletion"
-msgstr "Konfirmu forigon de dosiero"
+msgstr "Konfirmi forigon"
 
 #: shell32.rc:246
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Dosiero estas jam ekzistanta.\n"
-"Æu vi volas superskribi øin?"
+"Dosiero jam ekzistas je vojo %1.\n"
+"Ĉu vi volas anstataŭi ĝin?"
 
 #: shell32.rc:247
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Dosiero estas jam ekzistanta.\n"
-"Æu vi volas superskribi øin?"
+"Dosierujo jam ekzistas je %1.\n"
+"Ĉu vi volas anstataŭi ĝin?"
 
 #: shell32.rc:248
-#, fuzzy
 msgid "Confirm overwrite"
-msgstr "Konfirmu supreskribiton de dosieron"
+msgstr "Konfirmi anstataŭon"
 
 #: shell32.rc:265
 msgid ""
@@ -8267,50 +7974,44 @@ msgid ""
 msgstr ""
 
 #: shell32.rc:253
-#, fuzzy
 msgid "Wine License"
-msgstr "Wine Helpanto"
+msgstr "Wine-permesilo"
 
 #: shell32.rc:155
 msgid "Trash"
-msgstr ""
+msgstr "Rubujo"
 
 #: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:84 winefile.rc:96
 msgid "Error"
-msgstr "Eroro"
+msgstr "Eraro"
 
 #: shlwapi.rc:40
 msgid "Don't show me th&is message again"
-msgstr "Ne elmontru ree &æi mesaøon"
+msgstr "Ne elmontri ree &ĉi mesaĝon"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld bytes"
+msgstr "%d bajtoj"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
 msgstr " hr"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
 msgstr " min"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr " sec"
+msgstr " sek"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
-#, fuzzy
 msgctxt "window"
 msgid "&Restore"
-msgstr "&Renormaligu"
+msgstr "&Renormaligi"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"
@@ -8318,32 +8019,31 @@ msgstr "&Movi"
 
 #: user32.rc:29 user32.rc:42 wineconsole.rc:89
 msgid "&Size"
-msgstr "&Grandeco"
+msgstr "&Grando"
 
 #: user32.rc:30 user32.rc:43
 msgid "Mi&nimize"
-msgstr "E&tigu"
+msgstr "E&tigi"
 
 #: user32.rc:31 user32.rc:44 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
-msgstr "&Egigu"
+msgstr "G&randigi"
 
 #: user32.rc:33
 msgid "&Close\tAlt+F4"
-msgstr "&Fermu\tAlt+F4"
+msgstr "&Fermi\tAlt+F4"
 
 #: user32.rc:35
-#, fuzzy
 msgid "&About Wine"
-msgstr "Pri Notepad"
+msgstr "&Pri Wine"
 
 #: user32.rc:46
 msgid "&Close\tCtrl+F4"
-msgstr "&Fermu\tCtrl+F4"
+msgstr "&Fermi\tStir+F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl+F6"
-msgstr ""
+msgstr "&Sekva\tStir+F6"
 
 #: user32.rc:79
 msgid "&Abort"
@@ -8351,43 +8051,43 @@ msgstr "&Nuligi"
 
 #: user32.rc:80
 msgid "&Retry"
-msgstr "&Reprovu"
+msgstr "&Reprovi"
 
 #: user32.rc:81
 msgid "&Ignore"
-msgstr "&Ignoru"
+msgstr "&Ignori"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr ""
+msgstr "&Reprovi"
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr ""
+msgstr "&Daŭrigi"
 
 #: user32.rc:91
 msgid "Select Window"
-msgstr "Elektu Fenestron"
+msgstr "Elekti Fenestron"
 
 #: user32.rc:69
 msgid "&More Windows..."
-msgstr "&Pli Fenestroj..."
+msgstr "&Pliaj fenestroj..."
 
 #: wineps.rc:28
 msgid "Paper Si&ze:"
-msgstr ""
+msgstr "Papera &Grando:"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr ""
+msgstr "Duobla:"
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
-msgstr "Realm"
+msgstr "Regno"
 
 #: wininet.rc:46 wininet.rc:66
 msgid "&Save this password (insecure)"
-msgstr "&Storu pasvorton ( RISKE! )"
+msgstr "&Konservi pasvorton ( RISKE! )"
 
 #: wininet.rc:54
 msgid "Authentication Required"
@@ -8406,13 +8106,12 @@ msgid "There is a problem with the certificate for this site."
 msgstr ""
 
 #: wininet.rc:79
-#, fuzzy
 msgid "Do you want to continue anyway?"
-msgstr "Æu vi volas simuli Vindozan restartigon?"
+msgstr "Ĉu vi volas malgraŭe daŭri?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
-msgstr "LAN Interkonekto"
+msgstr "LAN konektiĝo"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
@@ -8918,16 +8617,15 @@ msgstr ""
 
 #: winspool.rc:34
 msgid "Print to File"
-msgstr "Presu kiel dosiero"
+msgstr "Eligi en dosieron"
 
 #: winspool.rc:37
 msgid "&Output File Name:"
 msgstr "&Elira dosiernomo:"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "La elira dosiero jam ekzistas.  Kliku 'Bone' por surskribi øin."
+msgstr "La elira dosiero jam ekzistas.  Klaki sur 'Bone' por anstataŭi ĝin."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -8935,7 +8633,7 @@ msgstr "Estas neeble krei la eliran dosieron."
 
 #: wldap32.rc:27
 msgid "Success"
-msgstr ""
+msgstr "Sukceso"
 
 #: wldap32.rc:28
 msgid "Operations Error"
@@ -9042,9 +8740,8 @@ msgid "Invalid Credentials"
 msgstr ""
 
 #: wldap32.rc:77
-#, fuzzy
 msgid "Insufficient Rights"
-msgstr "Diøi&ta"
+msgstr "Nesufiĉaj rajtoj"
 
 #: wldap32.rc:78
 msgid "Busy"
@@ -9181,9 +8878,8 @@ msgid ""
 msgstr ""
 
 #: attrib.rc:28 cmd.rc:317
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "Dosiero ne estis trovita"
+msgstr "%1: Dosiero ne trovita\n"
 
 #: attrib.rc:47
 msgid ""
@@ -9213,20 +8909,15 @@ msgstr "Ana&loga"
 
 #: clock.rc:30
 msgid "Digi&tal"
-msgstr "Diøi&ta"
+msgstr "&Cifereca"
 
 #: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
-#, fuzzy
 msgid "&Font..."
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Ti&paro\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Impozu tiparon..."
+msgstr "&Tiparo..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
-msgstr "Se&n titolstango"
+msgstr "Se&n titolzono"
 
 #: clock.rc:36
 msgid "&Seconds"
@@ -9238,16 +8929,15 @@ msgstr "&Dato"
 
 #: clock.rc:39 taskmgr.rc:43 taskmgr.rc:141
 msgid "&Always on Top"
-msgstr "&Æiam supre"
+msgstr "&Ĉiam supre"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "&Pri Horloøo"
+msgstr "&Pri Horloĝo"
 
 #: clock.rc:48
 msgid "Clock"
-msgstr "Horloøo"
+msgstr "Horloĝo"
 
 #: cmd.rc:37
 msgid ""
@@ -9679,9 +9369,8 @@ msgid "Syntax error\n"
 msgstr ""
 
 #: cmd.rc:318
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "Ne disponebla; "
+msgstr "Ne disponebla por %1\n"
 
 #: cmd.rc:319
 msgid "Target to GOTO not found\n"
@@ -9721,9 +9410,8 @@ msgid "A"
 msgstr ""
 
 #: cmd.rc:328
-#, fuzzy
 msgid "Delete %1?"
-msgstr "Forigu\tDel"
+msgstr "Ĉu forigi %1?"
 
 #: cmd.rc:329
 msgid "Echo is %1\n"
@@ -9800,14 +9488,12 @@ msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr ""
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
-msgstr "E&sploru"
+msgstr "Esplorilo de Wine"
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "LAN Interkonekto"
+msgstr "Loko:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -9938,23 +9624,20 @@ msgid "The %1 service was started successfully.\n"
 msgstr ""
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "Disponebla Spaco"
+msgstr "La servo %1 ne startis.\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "La printila pordo estas malfermita; "
+msgstr "La servo %1 ĉesas.\n"
 
 #: net.rc:38
 msgid "The %1 service was stopped successfully.\n"
 msgstr ""
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "Disponebla Spaco"
+msgstr "La servo %1 malsukcesis ĉesi.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -9972,29 +9655,24 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
 #: net.rc:45
-#, fuzzy
 msgid "Paused"
-msgstr "Paýse; "
+msgstr "Paŭzinta"
 
 #: net.rc:46
-#, fuzzy
 msgid "Disconnected"
-msgstr "Dosiero ne estis trovita"
+msgstr "Malkonektita"
 
 #: net.rc:47
-#, fuzzy
 msgid "A network error occurred"
-msgstr "Okazis printila eroro."
+msgstr "Okazis reta eraro."
 
 #: net.rc:48
-#, fuzzy
 msgid "Connection is being made"
-msgstr "LAN Interkonekto"
+msgstr "Konekto fariĝas"
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Defaýltaj Agordoj"
+msgstr "Rekonektante"
 
 #: net.rc:40
 msgid "The following services are running:\n"
@@ -10002,112 +9680,100 @@ msgstr ""
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
-msgstr "&Nova\tCtrl+N"
+msgstr "&Nova\tStir+N"
 
 #: notepad.rc:28 wordpad.rc:29
-#, fuzzy
 msgid "&Open...\tCtrl+O"
-msgstr "Malfermu...\tCtrl+O"
+msgstr "Malfermu...\tStir+O"
 
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
-msgstr "Kon&servu\tCtrl+S"
+msgstr "Kon&servi\tStir+S"
 
 #: notepad.rc:32 regedit.rc:36 wordpad.rc:33
-#, fuzzy
 msgid "&Print...\tCtrl+P"
-msgstr "Presu...\tCtrl+P"
+msgstr "&Printi...\tStir+P"
 
 #: notepad.rc:33 wordpad.rc:35
-#, fuzzy
 msgid "Page Se&tup..."
-msgstr "Impozu paøon..."
+msgstr "Paĝa agor&do..."
 
 #: notepad.rc:34
-#, fuzzy
 msgid "P&rinter Setup..."
-msgstr "Impozu Printilon..."
+msgstr "Printila agordo..."
 
 #: notepad.rc:38 regedit.rc:40 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
-#, fuzzy
 msgid "&Edit"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Redakto\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Redaktu"
+msgstr "&Redakti"
 
 #: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
-msgstr "Nuligu\tCtrl+Z"
+msgstr "Malfari\tStir+Z"
 
 #: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
-msgstr "Tondu\tCtrl+X"
+msgstr "&Eltondi\tStir+X"
 
 #: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
-msgstr "Kopiu\tCtrl+C"
+msgstr "&Kopii\tStir+C"
 
 #: notepad.rc:43 wordpad.rc:46
 msgid "&Paste\tCtrl+V"
-msgstr "Enmetu\tCtrl+V"
+msgstr "&Alglui\tStir+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:90 regedit.rc:106
 #: winefile.rc:29
 msgid "&Delete\tDel"
-msgstr "Forigu\tDel"
+msgstr "&Forigi\tFor"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
-msgstr "Elek&tu æion\tCtrl+A"
+msgstr "Elek&ti ĉion\tStir+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
-msgstr "Horo/Dato\tF5"
+msgstr "&Tempo/Dato\tF5"
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
-msgstr "&Alineu aýtomate"
+msgstr "&Aŭtomate faldi liniojn"
 
 #: notepad.rc:53
-#, fuzzy
 msgid "&Search...\tCtrl+F"
-msgstr "Seræu...\tCtrl+F"
+msgstr "Serĉi...\tStir+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
-msgstr "Seræu sekvanta\tF3"
+msgstr "Serĉi sekvanta\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
-msgstr ""
+msgstr "&Anstataŭi...\tStir+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:82
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "Enhavo"
+msgstr "&Enhavo\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "Pri Notepad"
+msgstr "&Pri Notbloko"
 
 #: notepad.rc:97
 msgid "Page Setup"
-msgstr "Impozu la paøon"
+msgstr "Paĝa agordo"
 
 #: notepad.rc:99
 msgid "&Header:"
-msgstr "Kapnotoj:"
+msgstr "&Ĉapo:"
 
 #: notepad.rc:101
 msgid "&Footer:"
-msgstr "Piednotoj:"
+msgstr "Piedo:"
 
 #: notepad.rc:104
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "&Marøenoj:"
+msgstr "Marĝenoj (milimetroj)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10119,7 +9785,7 @@ msgstr "&Supra:"
 
 #: notepad.rc:123
 msgid "Encoding:"
-msgstr ""
+msgstr "Tekstoprezento:"
 
 #: notepad.rc:129 wordpad.rc:278
 msgctxt "accelerator Select All"
@@ -10134,12 +9800,12 @@ msgstr ""
 #: notepad.rc:131 regedit.rc:320 wordpad.rc:276
 msgctxt "accelerator Find"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
@@ -10154,52 +9820,47 @@ msgstr "O"
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:136 wordpad.rc:288
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:137
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:138 wordpad.rc:279
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:139 wordpad.rc:281
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:66
 msgid "Page &p"
-msgstr "Paøo &p"
+msgstr "Paĝo &p"
 
 #: notepad.rc:68
 msgid "Notepad"
 msgstr "Notbloko"
 
 #: notepad.rc:69 progman.rc:61 winhlp32.rc:79
-#, fuzzy
 msgid "ERROR"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"ERORO\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"ERARO"
+msgstr "ERARO"
 
 #: notepad.rc:71
 msgid "Untitled"
-msgstr "(sen-nomo)"
+msgstr "(sennoma)"
 
 #: notepad.rc:74 winedbg.rc:38
 msgid "Text files (*.txt)"
-msgstr "Tekstdosieroj (*.txt)"
+msgstr "Tekstodosieroj (*.txt)"
 
 #: notepad.rc:77
 msgid ""
@@ -10207,9 +9868,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"La dosiero '%s' ne eksistas\n"
+"La dosiero '%s' ne ekzistas\n"
 "\n"
-"Æu mi devas krei novan dosieron?"
+"Ĉu mi devas krei novan dosieron?"
 
 #: notepad.rc:79
 msgid ""
@@ -10217,9 +9878,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"La dosiero'%s' estis þanøita\n"
+"La dosiero'%s' estis ŝanĝita\n"
 "\n"
-"Æu vi volas konservi la þanøojn?"
+"Ĉu vi volas konservi la ŝanĝojn?"
 
 #: notepad.rc:80
 msgid "'%s' could not be found."
@@ -10227,15 +9888,15 @@ msgstr "Mi ne trovis '%s'."
 
 #: notepad.rc:82
 msgid "Unicode (UTF-16)"
-msgstr ""
+msgstr "Unikodo (UTF-16)"
 
 #: notepad.rc:83
 msgid "Unicode (UTF-16 big-endian)"
-msgstr ""
+msgstr "Unikodo (UTF-16 pezkomenca)"
 
 #: notepad.rc:84
 msgid "Unicode (UTF-8)"
-msgstr ""
+msgstr "Unikodo (UTF-8)"
 
 #: notepad.rc:91
 msgid ""
@@ -10256,9 +9917,8 @@ msgid "&View TypeLib..."
 msgstr ""
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "Informo pri"
+msgstr "&Sistema agordo"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -10281,24 +9941,20 @@ msgid "In-process &handler"
 msgstr ""
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "Loka Pordo"
+msgstr "Loka servilo"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "&Notu..."
+msgstr "&Defora servilo"
 
 #: oleview.rc:47
-#, fuzzy
 msgid "View &Type information"
-msgstr "Informo pri"
+msgstr "Vidi &tipajn informojn"
 
 #: oleview.rc:49
-#, fuzzy
 msgid "Create &Instance"
-msgstr "Kreu Ligon"
+msgstr "Krei okazon"
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
@@ -10330,21 +9986,19 @@ msgstr ""
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:64
 msgid "&Status Bar"
-msgstr ""
+msgstr "&Stata linio"
 
 #: oleview.rc:67 regedit.rc:69 winefile.rc:78
 msgid "&Refresh\tF5"
-msgstr ""
+msgstr "&Reŝargi\tF5"
 
 #: oleview.rc:71
-#, fuzzy
 msgid "&About OleView"
-msgstr "Pri Notepad"
+msgstr "&Pri OleView"
 
 #: oleview.rc:79
-#, fuzzy
 msgid "&Save as..."
-msgstr "Konservu &kiel"
+msgstr "Konservi &kiel..."
 
 #: oleview.rc:84
 msgid "&Group by type kind"
@@ -10359,14 +10013,12 @@ msgid "&Machine name:"
 msgstr ""
 
 #: oleview.rc:165
-#, fuzzy
 msgid "System Configuration"
-msgstr "Informo pri"
+msgstr "Sistema agordo"
 
 #: oleview.rc:168
-#, fuzzy
 msgid "System Settings"
-msgstr "Defaýltaj Agordoj"
+msgstr "Sistema agordo"
 
 #: oleview.rc:169
 msgid "&Enable Distributed COM"
@@ -10383,23 +10035,20 @@ msgid ""
 msgstr ""
 
 #: oleview.rc:178
-#, fuzzy
 msgid "Default Interface Viewer"
-msgstr "Defaýlta Printilo; "
+msgstr "Defaŭlta interfaco-legilo"
 
 #: oleview.rc:181
-#, fuzzy
 msgid "Interface"
-msgstr "Dosiero ne estis trovita"
+msgstr "Interfaco"
 
 #: oleview.rc:183
 msgid "IID:"
 msgstr ""
 
 #: oleview.rc:186
-#, fuzzy
 msgid "&View Type Info"
-msgstr "Informo pri"
+msgstr "&Vidi tipinformojn"
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
@@ -10418,9 +10067,8 @@ msgid "IPersistStream Interface Viewer"
 msgstr ""
 
 #: oleview.rc:93 oleview.rc:94
-#, fuzzy
 msgid "OleView"
-msgstr "&Vido"
+msgstr "OleView"
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
@@ -10497,7 +10145,7 @@ msgstr ""
 
 #: oleview.rc:121
 msgid "Refresh all lists"
-msgstr ""
+msgstr "Reŝargi ĉiujn listojn"
 
 #: oleview.rc:122
 msgid "Display program information, version number and copyright"
@@ -10540,9 +10188,8 @@ msgid "All Objects"
 msgstr ""
 
 #: oleview.rc:133
-#, fuzzy
 msgid "Application IDs"
-msgstr "Wine Programa Malinstalilo"
+msgstr "Programaj identigiloj"
 
 #: oleview.rc:134
 msgid "Type Libraries"
@@ -10565,9 +10212,8 @@ msgid "Implementation"
 msgstr ""
 
 #: oleview.rc:140
-#, fuzzy
 msgid "Activation"
-msgstr "LAN Interkonekto"
+msgstr "Aktivigo"
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
@@ -10578,9 +10224,8 @@ msgid "Unknown error"
 msgstr ""
 
 #: oleview.rc:146
-#, fuzzy
 msgid "bytes"
-msgstr "%ld bytes"
+msgstr "bajtoj"
 
 #: oleview.rc:148
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
@@ -10595,9 +10240,8 @@ msgid "Save as an .IDL or .H file"
 msgstr ""
 
 #: oleview.rc:125
-#, fuzzy
 msgid "Close window"
-msgstr "&Aløustigu la fenestron"
+msgstr "Fermi la fenestron"
 
 #: oleview.rc:126
 msgid "Group typeinfos by kind"
@@ -10620,18 +10264,16 @@ msgid "&Copy...\tF8"
 msgstr ""
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "Ecoj"
+msgstr "&Ecoj\tAlt+Enen"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr ""
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "&Aløustigu la fenestron"
+msgstr "Eliri Vindozon"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:59 winhlp32.rc:44
 msgid "&Options"
@@ -10666,29 +10308,24 @@ msgid "&Arrange Icons"
 msgstr ""
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Pri Notepad"
+msgstr "Pri Programa Administrilo"
 
 #: progman.rc:100
-#, fuzzy
 msgid "Program &group"
-msgstr "Program Files"
+msgstr "Programa &grupo"
 
 #: progman.rc:102
-#, fuzzy
 msgid "&Program"
-msgstr "Program Files"
+msgstr "&Programo"
 
 #: progman.rc:113
-#, fuzzy
 msgid "Move Program"
-msgstr "Program Files"
+msgstr "Movi programon"
 
 #: progman.rc:115
-#, fuzzy
 msgid "Move program:"
-msgstr "Programfino"
+msgstr "Movi programon:"
 
 #: progman.rc:117 progman.rc:135
 msgid "From group:"
@@ -10699,14 +10336,12 @@ msgid "&To group:"
 msgstr ""
 
 #: progman.rc:131
-#, fuzzy
 msgid "Copy Program"
-msgstr "Program Files"
+msgstr "Kopii programon"
 
 #: progman.rc:133
-#, fuzzy
 msgid "Copy program:"
-msgstr "Programfino"
+msgstr "Kopii programon:"
 
 #: progman.rc:149
 msgid "Program Group Attributes"
@@ -10717,14 +10352,12 @@ msgid "&Group file:"
 msgstr ""
 
 #: progman.rc:165
-#, fuzzy
 msgid "Program Attributes"
-msgstr "Atributoj"
+msgstr "Programaj atributoj"
 
 #: progman.rc:169 progman.rc:209
-#, fuzzy
 msgid "&Command line:"
-msgstr "Nekorekta(j) tipo(j) en vojo"
+msgstr "&Komandlinio:"
 
 #: progman.rc:171
 msgid "&Working directory:"
@@ -10739,23 +10372,16 @@ msgid "&Minimize at launch"
 msgstr ""
 
 #: progman.rc:180
-#, fuzzy
 msgid "Change &icon..."
-msgstr "Aranøu &Ikonojn"
+msgstr "Aranĝi &piktogramojn"
 
 #: progman.rc:189
-#, fuzzy
 msgid "Change Icon"
-msgstr "Aranøu &Ikonojn"
+msgstr "Aranĝi &piktogramojn"
 
 #: progman.rc:191
-#, fuzzy
 msgid "&Filename:"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Dosiero\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Dosiero"
+msgstr "&Dosiernomo:"
 
 #: progman.rc:193
 msgid "Current &icon:"
@@ -10771,7 +10397,7 @@ msgstr ""
 
 #: progman.rc:62 winhlp32.rc:80
 msgid "WARNING"
-msgstr "ATENTU"
+msgstr "AVERTO"
 
 #: progman.rc:63 winhlp32.rc:81
 msgid "Information"
@@ -10787,7 +10413,7 @@ msgstr ""
 
 #: progman.rc:67
 msgid "Not implemented"
-msgstr "Ne-implementata"
+msgstr "Ne realigita"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
@@ -10876,273 +10502,257 @@ msgstr ""
 
 #: regedit.rc:31
 msgid "&Registry"
-msgstr ""
+msgstr "&Registrejo"
 
 #: regedit.rc:33
 msgid "&Import Registry File..."
-msgstr ""
+msgstr "&Importi registrejan dosieron..."
 
 #: regedit.rc:34
 msgid "&Export Registry File..."
-msgstr ""
+msgstr "&Eksporti registrejan dosieron..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
-msgstr ""
+msgstr "&Ŝlosilo"
 
 #: regedit.rc:48 regedit.rc:99
 msgid "&String Value"
-msgstr ""
+msgstr "&Ĉena valora"
 
 #: regedit.rc:49 regedit.rc:100
 msgid "&Binary Value"
-msgstr ""
+msgstr "&Duuma valoro"
 
 #: regedit.rc:50 regedit.rc:101
 msgid "&DWORD Value"
-msgstr ""
+msgstr "&Entjera valoro"
 
 #: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
-msgstr ""
+msgstr "&Plurĉena valoro"
 
 #: regedit.rc:52 regedit.rc:103
 msgid "&Expandable String Value"
-msgstr ""
+msgstr "&Etendebla ĉena valora"
 
 #: regedit.rc:56 regedit.rc:107
-#, fuzzy
 msgid "&Rename\tF2"
-msgstr "Alinomu"
+msgstr "&Alinomi\tF2"
 
 #: regedit.rc:58 regedit.rc:110
 msgid "&Copy Key Name"
-msgstr ""
+msgstr "&Kopii ŝlosilan nomon"
 
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
-#, fuzzy
 msgid "&Find...\tCtrl+F"
-msgstr "Presu...\tCtrl+P"
+msgstr "&Trovi...\tStir+P"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
-msgstr ""
+msgstr "Trovi &sekvan\tF3"
 
 #: regedit.rc:65
 msgid "Status &Bar"
-msgstr ""
+msgstr "Stata &linio"
 
 #: regedit.rc:67 winefile.rc:46
 msgid "Sp&lit"
-msgstr ""
+msgstr "&Dividi"
 
 #: regedit.rc:74
-#, fuzzy
 msgid "&Remove Favorite..."
-msgstr "&Notu..."
+msgstr "&Forigi favoraton..."
 
 #: regedit.rc:79
 msgid "&About Registry Editor"
-msgstr ""
+msgstr "&Pri Registreja Redaktilo"
 
 #: regedit.rc:88
 msgid "Modify Binary Data..."
-msgstr ""
+msgstr "Modifi duuman datumon..."
 
 #: regedit.rc:215
-#, fuzzy
 msgid "Export registry"
-msgstr "Tekstdosieroj (*.txt)"
+msgstr "Eksporti registrejon"
 
 #: regedit.rc:217
 msgid "S&elected branch:"
-msgstr ""
+msgstr "&Elekti branĉon:"
 
 #: regedit.rc:226
 msgid "Find:"
-msgstr ""
+msgstr "Serĉi:"
 
 #: regedit.rc:228
 msgid "Find in:"
-msgstr ""
+msgstr "Serĉi en:"
 
 #: regedit.rc:229
 msgid "Keys"
-msgstr ""
+msgstr "Ŝlosiloj"
 
 #: regedit.rc:230
-#, fuzzy
 msgid "Value names"
-msgstr "Konservu &kiel"
+msgstr "Valoraj nomoj"
 
 #: regedit.rc:231
-#, fuzzy
 msgid "Value content"
-msgstr "Enhavo"
+msgstr "Valoraj enhavo"
 
 #: regedit.rc:232
 msgid "Whole string only"
-msgstr ""
+msgstr "Nur tuta ĉeno"
 
 #: regedit.rc:239
-#, fuzzy
 msgid "Add Favorite"
-msgstr "Favorites"
+msgstr "Aldoni favoraton"
 
 #: regedit.rc:242 regedit.rc:253
-#, fuzzy
 msgid "Name:"
-msgstr "Nomo"
+msgstr "Nomo:"
 
 #: regedit.rc:250
-#, fuzzy
 msgid "Remove Favorite"
-msgstr "&Notu..."
+msgstr "&Forigi favoraton"
 
 #: regedit.rc:261
-#, fuzzy
 msgid "Edit String"
-msgstr "Redaktado"
+msgstr "Redakti ĉenon"
 
 #: regedit.rc:264 regedit.rc:277 regedit.rc:293 regedit.rc:306
-#, fuzzy
 msgid "Value name:"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Dosiero\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Dosiero"
+msgstr "Valora nomo:"
 
 #: regedit.rc:266 regedit.rc:279 regedit.rc:295 regedit.rc:308
 msgid "Value data:"
-msgstr ""
+msgstr "Valora datumo:"
 
 #: regedit.rc:274
 msgid "Edit DWORD"
-msgstr ""
+msgstr "Redakti entjeran"
 
 #: regedit.rc:281
 msgid "Base"
-msgstr ""
+msgstr "Baza"
 
 #: regedit.rc:282
 msgid "Hexadecimal"
-msgstr ""
+msgstr "Deksesuma"
 
 #: regedit.rc:283
 msgid "Decimal"
-msgstr ""
+msgstr "Dekuma"
 
 #: regedit.rc:290
-#, fuzzy
 msgid "Edit Binary"
-msgstr "Redaktado"
+msgstr "Redakti duuman"
 
 #: regedit.rc:303
 msgid "Edit Multi String"
-msgstr ""
+msgstr "Redakti plurĉenon"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
-msgstr ""
+msgstr "Enhavas komandojn por prilabori la tutan registrejon"
 
 #: regedit.rc:135
 msgid "Contains commands for editing values or keys"
-msgstr ""
+msgstr "Enhavas komandojn por redakti valorojn aŭ ŝlosilojn"
 
 #: regedit.rc:136
 msgid "Contains commands for customising the registry window"
-msgstr ""
+msgstr "Enhavas komandojn por alĝustigi la registrejan fenestron"
 
 #: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
-msgstr ""
+msgstr "Enhavas komandojn por atingi ofte uzatajn ŝlosilojn"
 
 #: regedit.rc:138
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
+"Enhavas komandojn por elmontri helpon kaj informojn pri registreja redaktilo"
 
 #: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
-msgstr ""
+msgstr "Enhavas komandojn por krei novajn ŝlosilojn aŭ valorojn"
 
 #: regedit.rc:124
 msgid "Data"
-msgstr ""
+msgstr "Datumo"
 
 #: regedit.rc:129
 msgid "Registry Editor"
-msgstr ""
+msgstr "Registreja Redaktilo"
 
 #: regedit.rc:191
 msgid "Import Registry File"
-msgstr ""
+msgstr "Importi registrejan dosieron"
 
 #: regedit.rc:192
 msgid "Export Registry File"
-msgstr ""
+msgstr "Eksporti registrejan dosieron"
 
 #: regedit.rc:193
-#, fuzzy
 msgid "Registry files (*.reg)"
-msgstr "Tekstdosieroj (*.txt)"
+msgstr "Registrejaj dosieroj (*.reg)"
 
 #: regedit.rc:194
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr ""
+msgstr "Arkaikaj registreja dosieroj (REGEDIT4)"
 
 #: regedit.rc:201
 msgid "(Default)"
-msgstr ""
+msgstr "(Defaŭlta)"
 
 #: regedit.rc:202
 msgid "(value not set)"
-msgstr ""
+msgstr "(valoro ne elektita)"
 
 #: regedit.rc:203
 msgid "(cannot display value)"
-msgstr ""
+msgstr "(ne eblas elmontri valoron)"
 
 #: regedit.rc:204
 msgid "(unknown %d)"
-msgstr ""
+msgstr "(nekonata %d)"
 
 #: regedit.rc:160
 msgid "Quits the registry editor"
-msgstr ""
+msgstr "Eliras la registrejan redaktilon"
 
 #: regedit.rc:161
 msgid "Adds keys to the favorites list"
-msgstr ""
+msgstr "Aldonas ŝlosilojn al la favoratoj"
 
 #: regedit.rc:162
 msgid "Removes keys from the favorites list"
-msgstr ""
+msgstr "Forigas ŝlosilojn el la favoratoj"
 
 #: regedit.rc:163
 msgid "Shows or hides the status bar"
-msgstr ""
+msgstr "Montras aŭ kaŝas la statan linion"
 
 #: regedit.rc:164
 msgid "Change position of split between two panes"
-msgstr ""
+msgstr "Ŝanĝi loko de dividilo inter du kadroj"
 
 #: regedit.rc:165
 msgid "Refreshes the window"
-msgstr ""
+msgstr "Reŝargas la fenestron"
 
 #: regedit.rc:166
 msgid "Deletes the selection"
-msgstr ""
+msgstr "Forigas la elekton"
 
 #: regedit.rc:167
 msgid "Renames the selection"
-msgstr ""
+msgstr "Alinoman la elekton"
 
 #: regedit.rc:168
 msgid "Copies the name of the selected key to the clipboard"
-msgstr ""
+msgstr "Kopias la nomon de la elektita ŝlosilo al la poŝo"
 
 #: regedit.rc:169
 msgid "Finds a text string in a key, value or data"
@@ -11182,7 +10792,7 @@ msgstr ""
 
 #: regedit.rc:153
 msgid "Prints all or part of the registry"
-msgstr ""
+msgstr "Eligas ĉiujn aŭ parton el la tuta registrejo"
 
 #: regedit.rc:155
 msgid "Displays program information, version number and copyright"
@@ -11190,55 +10800,51 @@ msgstr ""
 
 #: regedit.rc:178
 msgid "Can't query value '%s'"
-msgstr ""
+msgstr "Ne eblas mendi valoron '%s'"
 
 #: regedit.rc:179
 msgid "Can't edit keys of this type (%u)"
-msgstr ""
+msgstr "Ne eblas redakti ŝlosilon de tiu tipo (%u)"
 
 #: regedit.rc:180
 msgid "Value is too big (%u)"
-msgstr ""
+msgstr "Valoro estas tro granda (%u)"
 
 #: regedit.rc:181
-#, fuzzy
 msgid "Confirm Value Delete"
-msgstr "Konfirmu forigon de dosiero"
+msgstr "Konfirmi forigon de valoro"
 
 #: regedit.rc:182
-#, fuzzy
 msgid "Are you sure you want to delete value '%s'?"
-msgstr "Æu vi estas certa pri forigo de '%1'?"
+msgstr "Ĉu vi certas pri forigo de '%s'?"
 
 #: regedit.rc:186
-#, fuzzy
 msgid "Search string '%s' not found"
-msgstr "Mi ne trovis la vojon %s"
+msgstr "Mi ne trovis la ĉenon %s"
 
 #: regedit.rc:183
-#, fuzzy
 msgid "Are you sure you want to delete these values?"
-msgstr "Æu vi estas certa pri forigo de æi tiuj %1 komponantoj?"
+msgstr "Ĉu vi certas pri forigo de ĉi tiuj valoroj?"
 
 #: regedit.rc:184
 msgid "New Key #%d"
-msgstr ""
+msgstr "Nova ŝlosilo #%d"
 
 #: regedit.rc:185
 msgid "New Value #%d"
-msgstr ""
+msgstr "Nova valoro #%d"
 
 #: regedit.rc:177
 msgid "Can't query key '%s'"
-msgstr ""
+msgstr "Ne eblas trovi ŝlosilon '%s'"
 
 #: regedit.rc:149
 msgid "Adds a new multi string value"
-msgstr ""
+msgstr "Aldonis novan ĉenan valoron"
 
 #: regedit.rc:171
 msgid "Exports selected branch of the registry to a text file"
-msgstr ""
+msgstr "Eksportas elektitan branĉon de la registrejo al tekstodosiero"
 
 #: start.rc:41
 msgid ""
@@ -11330,7 +10936,7 @@ msgstr ""
 
 #: taskmgr.rc:54
 msgid "&Refresh Now"
-msgstr ""
+msgstr "&Reŝargi nun"
 
 #: taskmgr.rc:55
 msgid "&Update Speed"
@@ -11393,9 +10999,8 @@ msgid "&Bring To Front"
 msgstr ""
 
 #: taskmgr.rc:90
-#, fuzzy
 msgid "&About Task Manager"
-msgstr "Pri Notepad"
+msgstr "&Pri taska administrilo"
 
 #: taskmgr.rc:120 taskmgr.rc:352
 msgid "&Switch To"
@@ -11430,14 +11035,12 @@ msgid "&Realtime"
 msgstr ""
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
-msgstr "Normal"
+msgstr "&Supre de Normalo"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
-msgstr "Normal"
+msgstr "&Malsupre de Normalo"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
@@ -11508,37 +11111,32 @@ msgid "Peak"
 msgstr ""
 
 #: taskmgr.rc:398
-#, fuzzy
 msgid "System Cache"
-msgstr "Sistemvojo"
+msgstr "Sistema tenejo"
 
 #: taskmgr.rc:406
-#, fuzzy
 msgid "Paged"
-msgstr "Paøo &p"
+msgstr "Paĝa"
 
 #: taskmgr.rc:407
 msgid "Nonpaged"
-msgstr ""
+msgstr "Senpaĝa"
 
 #: taskmgr.rc:414
-#, fuzzy
 msgid "CPU usage history"
-msgstr "Kronologio"
+msgstr "Ĉefprocesoro uzado"
 
 #: taskmgr.rc:415
-#, fuzzy
 msgid "Memory usage history"
-msgstr "Kronologio"
+msgstr "Memora uzado"
 
 #: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
 msgstr ""
 
 #: taskmgr.rc:439
-#, fuzzy
 msgid "Processor Affinity"
-msgstr "Procezo; "
+msgstr "Procesora emo"
 
 #: taskmgr.rc:444
 msgid ""
@@ -11675,9 +11273,8 @@ msgid "CPU 31"
 msgstr ""
 
 #: taskmgr.rc:514
-#, fuzzy
 msgid "Select Columns"
-msgstr "Elektu æion"
+msgstr "Elekti kolumnoj"
 
 #: taskmgr.rc:519
 msgid ""
@@ -11685,13 +11282,8 @@ msgid ""
 msgstr ""
 
 #: taskmgr.rc:521
-#, fuzzy
 msgid "&Image Name"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Dosiero\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Dosiero"
+msgstr "&Bilda nomo"
 
 #: taskmgr.rc:523
 msgid "&PID (Process Identifier)"
@@ -11718,9 +11310,8 @@ msgid "Pea&k Memory Usage"
 msgstr ""
 
 #: taskmgr.rc:535
-#, fuzzy
 msgid "Page &Faults"
-msgstr "Agordu &Defaýltojn"
+msgstr "Paĝaj &misoj"
 
 #: taskmgr.rc:537
 msgid "&USER Objects"
@@ -11739,9 +11330,8 @@ msgid "&Session ID"
 msgstr ""
 
 #: taskmgr.rc:545
-#, fuzzy
 msgid "User &Name"
-msgstr "Laý­ &Nomo"
+msgstr "Salut&nomo"
 
 #: taskmgr.rc:547
 msgid "Page F&aults Delta"
@@ -12115,8 +11705,8 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"Malinstalad-komando '%s' malsukcesis, eble æar mankas programo.\n"
-"Æu vi volas forigi la malinstalada 'entry' de la registro?"
+"Malinstalad-komando '%s' malsukcesis, eble ĉar mankas programo.\n"
+"Ĉu vi volas forigi la malinstalada 'entry' de la registro?"
 
 #: view.rc:33
 msgid "&Pan"
@@ -12124,7 +11714,7 @@ msgstr "&Movo"
 
 #: view.rc:35
 msgid "&Scale to Window"
-msgstr "&Aløustigu la fenestron"
+msgstr "&Skali je fenestro"
 
 #: view.rc:37
 msgid "&Left"
@@ -12136,16 +11726,15 @@ msgstr "&Dekstre"
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
-msgstr "Videbligilo laý Regulaj Metadosieroj"
+msgstr "Legilo de Regulaj Metadosieroj"
 
 #: wineboot.rc:28
 msgid "Waiting for Program"
 msgstr ""
 
 #: wineboot.rc:32
-#, fuzzy
 msgid "Terminate Process"
-msgstr "&Ecoj"
+msgstr "Mortigi procezon"
 
 #: wineboot.rc:33
 msgid ""
@@ -12156,13 +11745,12 @@ msgid ""
 msgstr ""
 
 #: wineboot.rc:39
-#, fuzzy
 msgid "Wine"
-msgstr "Wine Helpanto"
+msgstr "Wine"
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr ""
+msgstr "La Wine-agordo en %s aktualiĝas, bonvolu atendi..."
 
 #: winecfg.rc:132
 msgid ""
@@ -12173,24 +11761,20 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
-msgstr "Informo pri"
+msgstr "Informoj pri vindoza registriĝo"
 
 #: winecfg.rc:135
-#, fuzzy
 msgid "&Owner:"
-msgstr "Owner"
+msgstr "&Estro:"
 
 #: winecfg.rc:137
-#, fuzzy
 msgid "Organi&zation:"
-msgstr "Informo pri"
+msgstr "Organi&zaĵo:"
 
 #: winecfg.rc:145
-#, fuzzy
 msgid "Application settings"
-msgstr "Wine Programa Malinstalilo"
+msgstr "Programa agordo"
 
 #: winecfg.rc:146
 msgid ""
@@ -12198,59 +11782,57 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
+"Wine eblas imiti diversajn eldonojn de Vindozo por ĉiu programo. Ĉi tiu "
+"langeto estas kunligata al la langetoj Bibliotekoj kaj Grafikaĵoj por "
+"permesi, ke vi ŝanĝu agordaĵojn tutsisteme aŭ ĉiuprograme."
 
 #: winecfg.rc:150
-#, fuzzy
 msgid "&Add application..."
-msgstr "Wine Programa Malinstalilo"
+msgstr "&Aldoni programon..."
 
 #: winecfg.rc:151
-#, fuzzy
 msgid "&Remove application"
-msgstr "Wine Programa Malinstalilo"
+msgstr "&Forigi programon"
 
 #: winecfg.rc:152
-#, fuzzy
 msgid "&Windows Version:"
-msgstr "Fenestro"
+msgstr "&Vindoza eldono:"
 
 #: winecfg.rc:160
-#, fuzzy
 msgid "Window settings"
-msgstr "&Aløustigu la fenestron"
+msgstr "Fenestra agordo"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr ""
+msgstr "Aŭtomate kapti la &muson en tutekranaj fenestroj"
 
 #: winecfg.rc:162
 msgid "Allow the window manager to &decorate the windows"
-msgstr ""
+msgstr "Permesi la fenestroadministrol &ornami la fenestrojn"
 
 #: winecfg.rc:163
 msgid "Allow the &window manager to control the windows"
-msgstr ""
+msgstr "Permesi la &fenestroadministrilon regi la fenestrojn"
 
 #: winecfg.rc:164
 msgid "&Emulate a virtual desktop"
-msgstr ""
+msgstr "&Simuli virtualan labortablon"
 
 #: winecfg.rc:166
-#, fuzzy
 msgid "Desktop &size:"
-msgstr "Desktop"
+msgstr "Labortabla &grando:"
 
 #: winecfg.rc:171
 msgid "Screen resolution"
-msgstr ""
+msgstr "Ekrana distingivo"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
-msgstr ""
+msgstr "Jen ekzempla teksto kun 10-punkta Tahoma"
 
 #: winecfg.rc:182
 msgid "DLL overrides"
-msgstr ""
+msgstr "DLL superregoj"
 
 #: winecfg.rc:183
 msgid ""
@@ -12265,20 +11847,15 @@ msgstr ""
 
 #: winecfg.rc:187 wordpad.rc:244
 msgid "&Add"
-msgstr ""
+msgstr "&Aldoni"
 
 #: winecfg.rc:188
 msgid "Existing &overrides:"
 msgstr ""
 
 #: winecfg.rc:190
-#, fuzzy
 msgid "&Edit..."
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Redakto\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Redaktu"
+msgstr "&Redakti..."
 
 #: winecfg.rc:196
 msgid "Edit Override"
@@ -12289,36 +11866,32 @@ msgid "Load order"
 msgstr ""
 
 #: winecfg.rc:200
-#, fuzzy
 msgid "&Builtin (Wine)"
-msgstr "Pri Notepad"
+msgstr "&Ena (Wino)"
 
 #: winecfg.rc:201
-#, fuzzy
 msgid "&Native (Windows)"
-msgstr "&Aløustigu la fenestron"
+msgstr "&Indiĝena (Vindozo)"
 
 #: winecfg.rc:202
 msgid "Bui&ltin then Native"
-msgstr ""
+msgstr "&Post ena indiĝena"
 
 #: winecfg.rc:203
 msgid "Nati&ve then Builtin"
-msgstr ""
+msgstr "&Antaŭ ena indiĝena"
 
 #: winecfg.rc:204
-#, fuzzy
 msgid "&Disable"
-msgstr "&kapabligu"
+msgstr "&Malaktivigi"
 
 #: winecfg.rc:211
-#, fuzzy
 msgid "Select Drive Letter"
-msgstr "Elektu"
+msgstr "Elekti aparatajn literojn"
 
 #: winecfg.rc:223
 msgid "Drive mappings"
-msgstr ""
+msgstr "Efektiva voja"
 
 #: winecfg.rc:224
 msgid ""
@@ -12328,7 +11901,7 @@ msgstr ""
 
 #: winecfg.rc:227
 msgid "&Add..."
-msgstr ""
+msgstr "&Aldoni..."
 
 #: winecfg.rc:229
 msgid "Auto&detect"
@@ -12336,45 +11909,43 @@ msgstr ""
 
 #: winecfg.rc:232
 msgid "&Path:"
-msgstr ""
+msgstr "&Vojo:"
 
 #: winecfg.rc:239 winecfg.rc:35
 msgid "Show &Advanced"
-msgstr ""
+msgstr "Montri &Altnivele"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr ""
+msgstr "&Aparato:"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
-msgstr ""
+msgstr "&Foliumi..."
 
 #: winecfg.rc:244
 msgid "&Label:"
-msgstr ""
+msgstr "&Etikedo:"
 
 #: winecfg.rc:246
 msgid "S&erial:"
-msgstr ""
+msgstr "&Seria:"
 
 #: winecfg.rc:249
 msgid "Show &dot files"
-msgstr ""
+msgstr "Montri &punktajn dosierojn"
 
 #: winecfg.rc:256
 msgid "Driver diagnostics"
 msgstr ""
 
 #: winecfg.rc:258
-#, fuzzy
 msgid "Defaults"
-msgstr "Agordu &Defaýltojn"
+msgstr "Defaŭltojn"
 
 #: winecfg.rc:259
-#, fuzzy
 msgid "Output device:"
-msgstr "&Elira dosiernomo:"
+msgstr "&Eliga dosiernomo:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
@@ -12382,7 +11953,7 @@ msgstr ""
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr ""
+msgstr "Ena aparato:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
@@ -12390,34 +11961,31 @@ msgstr ""
 
 #: winecfg.rc:267
 msgid "&Test Sound"
-msgstr ""
+msgstr "&Provo sona"
 
 #: winecfg.rc:274
 msgid "Appearance"
-msgstr ""
+msgstr "Aspekto"
 
 #: winecfg.rc:275
 msgid "&Theme:"
-msgstr ""
+msgstr "&Etoso:"
 
 #: winecfg.rc:277
-#, fuzzy
 msgid "&Install theme..."
-msgstr "&Notu..."
+msgstr "&Instali etoson..."
 
 #: winecfg.rc:282
 msgid "It&em:"
 msgstr ""
 
 #: winecfg.rc:284
-#, fuzzy
 msgid "C&olor:"
-msgstr "&Koloro"
+msgstr "&Koloro:"
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
-msgstr "New Folder"
+msgstr "Dosierujoj"
 
 #: winecfg.rc:293
 msgid "&Link to:"
@@ -12425,15 +11993,15 @@ msgstr ""
 
 #: winecfg.rc:31
 msgid "Libraries"
-msgstr ""
+msgstr "Bibliotekoj"
 
 #: winecfg.rc:32
 msgid "Drives"
-msgstr ""
+msgstr "Aparatoj"
 
 #: winecfg.rc:33
 msgid "Select the Unix target directory, please."
-msgstr ""
+msgstr "Bonvolu elekti la celan dosierujon."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -12441,70 +12009,63 @@ msgstr ""
 
 #: winecfg.rc:36
 msgid "(No Theme)"
-msgstr ""
+msgstr "(Neniu etoso)"
 
 #: winecfg.rc:37
 msgid "Graphics"
-msgstr ""
+msgstr "Grafikaĵoj"
 
 #: winecfg.rc:38
 msgid "Desktop Integration"
-msgstr ""
+msgstr "Labortabla integriĝo"
 
 #: winecfg.rc:39
 msgid "Audio"
-msgstr ""
+msgstr "Sono"
 
 #: winecfg.rc:40
-#, fuzzy
 msgid "About"
-msgstr "Pri Notepad"
+msgstr "Pri"
 
 #: winecfg.rc:41
-#, fuzzy
 msgid "Wine configuration"
-msgstr "Informo pri"
+msgstr "Wine-agordo"
 
 #: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr ""
 
 #: winecfg.rc:44
-#, fuzzy
 msgid "Select a theme file"
-msgstr "&Elekton æion"
+msgstr "&Elekti etosan dosieron"
 
 #: winecfg.rc:45
-#, fuzzy
 msgid "Folder"
-msgstr "New Folder"
+msgstr "Dosierujo"
 
 #: winecfg.rc:46
 msgid "Links to"
-msgstr ""
+msgstr "Ligiĝas al"
 
 #: winecfg.rc:42
-#, fuzzy
 msgid "Wine configuration for %s"
-msgstr "Eroro de agordado"
+msgstr "Wine-agordo por %s"
 
 #: winecfg.rc:81
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Elektita pelilo: %s"
 
 #: winecfg.rc:82
-#, fuzzy
 msgid "(None)"
-msgstr "Neniu"
+msgstr "(Neniu)"
 
 #: winecfg.rc:83
 msgid "Audio test failed!"
-msgstr ""
+msgstr "Sona provo malsukcesis"
 
 #: winecfg.rc:85
-#, fuzzy
 msgid "(System default)"
-msgstr "Sistemvojo"
+msgstr "(Sistema defaŭlta)"
 
 #: winecfg.rc:51
 msgid ""
@@ -12537,18 +12098,16 @@ msgid "disabled"
 msgstr ""
 
 #: winecfg.rc:58
-#, fuzzy
 msgid "Default Settings"
-msgstr "Defaýltaj Agordoj"
+msgstr "Defaŭltaj Agordoj"
 
 #: winecfg.rc:59
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr ""
 
 #: winecfg.rc:60
-#, fuzzy
 msgid "Use global settings"
-msgstr "Defaýltaj Agordoj"
+msgstr "Uzi unuecan agordon"
 
 #: winecfg.rc:61
 msgid "Select an executable file"
@@ -12596,11 +12155,11 @@ msgstr ""
 #: winecfg.rc:74
 msgctxt "Drive letter"
 msgid "Letter"
-msgstr ""
+msgstr "Litero"
 
 #: winecfg.rc:75
 msgid "Drive Mapping"
-msgstr ""
+msgstr "Efektiva vojo"
 
 #: winecfg.rc:76
 msgid ""
@@ -12610,14 +12169,12 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:90
-#, fuzzy
 msgid "Controls Background"
-msgstr "Control Panel"
+msgstr "Fenestraĵa fono"
 
 #: winecfg.rc:91
-#, fuzzy
 msgid "Controls Text"
-msgstr "Control Panel"
+msgstr "Fenestraĵa teksto"
 
 #: winecfg.rc:93
 msgid "Menu Background"
@@ -12628,18 +12185,16 @@ msgid "Menu Text"
 msgstr ""
 
 #: winecfg.rc:95
-#, fuzzy
 msgid "Scrollbar"
-msgstr "&Ruliøu"
+msgstr "Rulumilo"
 
 #: winecfg.rc:96
 msgid "Selection Background"
 msgstr ""
 
 #: winecfg.rc:97
-#, fuzzy
 msgid "Selection Text"
-msgstr "Elektu"
+msgstr "Elektita teksto"
 
 #: winecfg.rc:98
 msgid "ToolTip Background"
@@ -12654,14 +12209,12 @@ msgid "Window Background"
 msgstr ""
 
 #: winecfg.rc:101
-#, fuzzy
 msgid "Window Text"
-msgstr "&Aløustigu la fenestron"
+msgstr "Fenestra teksto"
 
 #: winecfg.rc:102
-#, fuzzy
 msgid "Active Title Bar"
-msgstr "Se&n titolstango"
+msgstr "Aktiva titolzono"
 
 #: winecfg.rc:103
 msgid "Active Title Text"
@@ -12680,14 +12233,12 @@ msgid "Message Box Text"
 msgstr ""
 
 #: winecfg.rc:107
-#, fuzzy
 msgid "Application Workspace"
-msgstr "Wine Programa Malinstalilo"
+msgstr "Programa laborspaco"
 
 #: winecfg.rc:108
-#, fuzzy
 msgid "Window Frame"
-msgstr "&Aløustigu la fenestron"
+msgstr "Fenestra kadro"
 
 #: winecfg.rc:109
 msgid "Active Border"
@@ -12698,9 +12249,8 @@ msgid "Inactive Border"
 msgstr ""
 
 #: winecfg.rc:111
-#, fuzzy
 msgid "Controls Shadow"
-msgstr "Control Panel"
+msgstr "Regas ombrojn"
 
 #: winecfg.rc:112
 msgid "Gray Text"
@@ -12740,11 +12290,11 @@ msgstr ""
 
 #: winecfg.rc:121
 msgid "Menu Bar"
-msgstr ""
+msgstr "Menuzono"
 
 #: wineconsole.rc:60
 msgid "Cursor size"
-msgstr "Kursor-grandezo"
+msgstr "Kursor-grando"
 
 #: wineconsole.rc:61
 msgid "&Small"
@@ -12756,7 +12306,7 @@ msgstr "&Meza"
 
 #: wineconsole.rc:63
 msgid "&Large"
-msgstr "&Larøa"
+msgstr "&Larĝa"
 
 #: wineconsole.rc:65
 msgid "Control"
@@ -12764,15 +12314,15 @@ msgstr "Regado"
 
 #: wineconsole.rc:66
 msgid "Popup menu"
-msgstr "Apera menuo"
+msgstr "Ŝprucmenuo"
 
 #: wineconsole.rc:67
 msgid "&Control"
-msgstr "&Control"
+msgstr "&Stirklavo"
 
 #: wineconsole.rc:68
 msgid "S&hift"
-msgstr "S&hift"
+msgstr "&Registrumo"
 
 #: wineconsole.rc:69
 msgid "Quick edit"
@@ -12780,20 +12330,19 @@ msgstr "Rapida Redaktado"
 
 #: wineconsole.rc:70
 msgid "&enable"
-msgstr "&kapabligu"
+msgstr "&aktivigi"
 
 #: wineconsole.rc:72
 msgid "Command history"
 msgstr "Kronologio"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
-msgstr "&Nombro da plurfoje vokitaj komandoj :"
+msgstr "&Nombro da revokitaj komandoj:"
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
-msgstr "&Forigu duobla¼ojn"
+msgstr "&Forigi duoblaĵojn"
 
 #: wineconsole.rc:84
 msgid "&Font"
@@ -12804,37 +12353,32 @@ msgid "&Color"
 msgstr "&Koloro"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " Agordoj "
+msgstr "Agordo"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
 msgstr "Bufro"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
-msgstr "&Larøeco :"
+msgstr "&Larĝo:"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
-msgstr "&Alteco :"
+msgstr "&Alto:"
 
 #: wineconsole.rc:108
 msgid "Window size"
 msgstr "Fenestro"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
-msgstr "La&røeco :"
+msgstr "La&rĝo:"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
-msgstr "Al&teco :"
+msgstr "Al&to:"
 
 #: wineconsole.rc:116
 msgid "End of program"
@@ -12842,7 +12386,7 @@ msgstr "Programfino"
 
 #: wineconsole.rc:117
 msgid "&Close console"
-msgstr "&Fermu terminalon"
+msgstr "&Fermi terminalon"
 
 #: wineconsole.rc:119
 msgid "Edition"
@@ -12854,15 +12398,15 @@ msgstr "Terminala parametoj"
 
 #: wineconsole.rc:128
 msgid "Retain these settings for later sessions"
-msgstr "Konservu æi tiujn agordadojn"
+msgstr "Konserrvi ĉi tiujn agordadojn"
 
 #: wineconsole.rc:129
 msgid "Modify only current session"
-msgstr "Modifu nur nunan sesion"
+msgstr "Modifi nur nunan sesion"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"
-msgstr "Agordu &Defaýltojn"
+msgstr "Agordi &Defaŭltojn"
 
 #: wineconsole.rc:28
 msgid "&Mark"
@@ -12870,19 +12414,19 @@ msgstr "&Punkto"
 
 #: wineconsole.rc:31
 msgid "&Select all"
-msgstr "&Elekton æion"
+msgstr "&Elekton ĉion"
 
 #: wineconsole.rc:32
 msgid "Sc&roll"
-msgstr "&Ruliøu"
+msgstr "&Rulumi"
 
 #: wineconsole.rc:33
 msgid "S&earch"
-msgstr "&Seræu"
+msgstr "&Serĉi"
 
 #: wineconsole.rc:36
 msgid "Setup - Default settings"
-msgstr "Defaýltaj Agordoj"
+msgstr "Defaŭltaj Agordoj"
 
 #: wineconsole.rc:37
 msgid "Setup - Current settings"
@@ -12890,21 +12434,20 @@ msgstr "Nunaj Agordoj"
 
 #: wineconsole.rc:38
 msgid "Configuration error"
-msgstr "Eroro de agordado"
+msgstr "Eraro de agordado"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr ""
-"Ekran-bufra grandeco devas esti pli granda aý egala ol fenestr-bufra tiu"
+"Ekran-bufra grandeco devas esti pli granda aŭ egala ol fenestr-bufra tiu"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "Tipo estas larøa %ld bilderojn kaj alta %ld bilderojn"
+msgstr "Tipo estas larĝa %1!u! rastrumerojn kaj alta %2!u! rastrumerojn"
 
 #: wineconsole.rc:35
 msgid "This is a test"
-msgstr "Æi tiu estas provo"
+msgstr "Ĉi tiu estas provo"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
@@ -12959,9 +12502,8 @@ msgid ""
 msgstr ""
 
 #: winedbg.rc:46
-#, fuzzy
 msgid "Program Error"
-msgstr "Program Files"
+msgstr "Programa eraro"
 
 #: winedbg.rc:51
 msgid ""
@@ -12977,14 +12519,12 @@ msgid ""
 msgstr ""
 
 #: winedbg.rc:58
-#, fuzzy
 msgid "Show &Details"
-msgstr "&Detale"
+msgstr "Pliaj &detaloj"
 
 #: winedbg.rc:63
-#, fuzzy
 msgid "Program Error Details"
-msgstr "Program Files"
+msgstr "Detaloj pri programa eraro"
 
 #: winedbg.rc:70
 msgid ""
@@ -13007,28 +12547,24 @@ msgid "(unidentified)"
 msgstr ""
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "Malfermu Dosieron"
+msgstr "Konservi malsukcesis"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
 msgstr ""
 
 #: winefile.rc:26
-#, fuzzy
 msgid "&Open\tEnter"
-msgstr "&Malfermu"
+msgstr "&Malfermi\tEnen"
 
 #: winefile.rc:30
-#, fuzzy
 msgid "Re&name..."
-msgstr "&Notu..."
+msgstr "Ali&nomi..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "Ecoj"
+msgstr "E&coj\tAlt+Enen"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -13075,9 +12611,8 @@ msgid "Sort by &Date"
 msgstr ""
 
 #: winefile.rc:56
-#, fuzzy
 msgid "Filter by&..."
-msgstr "&Impozu Printilon..."
+msgstr "Filtri laŭ&..."
 
 #: winefile.rc:63
 msgid "&Drivebar"
@@ -13096,42 +12631,36 @@ msgid "Cascading\tCtrl+F5"
 msgstr ""
 
 #: winefile.rc:76
-#, fuzzy
 msgid "Tile &Vertically\tCtrl+F4"
-msgstr "Elek&tu æion\tCtrl+A"
+msgstr "&Vertikale kvadratigi\tStir+A"
 
 #: winefile.rc:83
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "Pri Notepad"
+msgstr "Pri Dosiera Administrilo de Wine"
 
 #: winefile.rc:124
 msgid "Select destination"
 msgstr ""
 
 #: winefile.rc:137
-#, fuzzy
 msgid "By File Type"
-msgstr "Laý­ &Tipo"
+msgstr "Laŭ &Dosiertipo"
 
 #: winefile.rc:142
-#, fuzzy
 msgid "File type"
-msgstr "Dosiero"
+msgstr "Dosiertipo"
 
 #: winefile.rc:143
 msgid "&Directories"
 msgstr ""
 
 #: winefile.rc:145
-#, fuzzy
 msgid "&Programs"
-msgstr "Program Files"
+msgstr "&Programoj"
 
 #: winefile.rc:147
-#, fuzzy
 msgid "Docu&ments"
-msgstr "Documents"
+msgstr "Doku&mentoj"
 
 #: winefile.rc:149
 msgid "&Other files"
@@ -13142,13 +12671,8 @@ msgid "Show Hidden/&System Files"
 msgstr ""
 
 #: winefile.rc:162
-#, fuzzy
 msgid "&File Name:"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Dosiero\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Dosiero"
+msgstr "&Dosiernomo:"
 
 #: winefile.rc:164
 msgid "Full &Path:"
@@ -13159,14 +12683,12 @@ msgid "Last Change:"
 msgstr ""
 
 #: winefile.rc:170
-#, fuzzy
 msgid "Cop&yright:"
-msgstr "&Dekstra:"
+msgstr "Kop&irajto::"
 
 #: winefile.rc:172
-#, fuzzy
 msgid "Size:"
-msgstr "Gandeco"
+msgstr "Grando"
 
 #: winefile.rc:176
 msgid "H&idden"
@@ -13177,18 +12699,16 @@ msgid "&Archive"
 msgstr ""
 
 #: winefile.rc:178
-#, fuzzy
 msgid "&System"
-msgstr "Enmetu\tCtrl+V"
+msgstr "&Sistemo"
 
 #: winefile.rc:179
 msgid "&Compressed"
 msgstr ""
 
 #: winefile.rc:180
-#, fuzzy
 msgid "Version information"
-msgstr "Informo pri"
+msgstr "Eldonaj informoj"
 
 #: winefile.rc:197
 msgctxt "accelerator Fullscreen"
@@ -13220,24 +12740,20 @@ msgid "Shell"
 msgstr ""
 
 #: winefile.rc:101 winhlp32.rc:107 winhlp32.rc:82
-#, fuzzy
 msgid "Not yet implemented"
-msgstr "Ne-implementata"
+msgstr "Ne jam funkcias"
 
 #: winefile.rc:108
-#, fuzzy
 msgid "CDate"
-msgstr "&Dato"
+msgstr "NDato"
 
 #: winefile.rc:109
-#, fuzzy
 msgid "ADate"
-msgstr "&Dato"
+msgstr "ADato"
 
 #: winefile.rc:110
-#, fuzzy
 msgid "MDate"
-msgstr "&Dato"
+msgstr "MDato"
 
 #: winefile.rc:111
 msgid "Index/Inode"
@@ -13264,104 +12780,103 @@ msgstr ""
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "&Ludo"
 
 #: winemine.rc:35
 msgid "&New\tF2"
-msgstr ""
+msgstr "&Nova\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "&Demandosignoj"
 
 #: winemine.rc:39
 msgid "&Beginner"
-msgstr ""
+msgstr "&Komencanta"
 
 #: winemine.rc:40
 msgid "&Advanced"
-msgstr ""
+msgstr "&Altnivela"
 
 #: winemine.rc:41
 msgid "&Expert"
-msgstr ""
+msgstr "&Sperta"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr ""
+msgstr "K&utima..."
 
 #: winemine.rc:44
 msgid "&Fastest Times"
-msgstr ""
+msgstr "&Plej rapidaj tempoj"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "Pri Notepad"
+msgstr "&Pri WineMine"
 
 #: winemine.rc:56
 msgid "Fastest Times"
-msgstr ""
+msgstr "Plej rapidaj tempoj"
 
 #: winemine.rc:58
 msgid "Fastest times"
-msgstr ""
+msgstr "Plej rapidaj tempoj"
 
 #: winemine.rc:59
 msgid "Beginner"
-msgstr ""
+msgstr "Komencanta"
 
 #: winemine.rc:60
 msgid "Advanced"
-msgstr ""
+msgstr "Altnivela"
 
 #: winemine.rc:61
 msgid "Expert"
-msgstr ""
+msgstr "Sperta"
 
 #: winemine.rc:74
 msgid "Congratulations!"
-msgstr ""
+msgstr "Gratulon!"
 
 #: winemine.rc:76
 msgid "Please enter your name"
-msgstr ""
+msgstr "Bonvolu enmeti vian nomon"
 
 #: winemine.rc:84
 msgid "Custom Game"
-msgstr ""
+msgstr "Kutima ludo"
 
 #: winemine.rc:86
 msgid "Rows"
-msgstr ""
+msgstr "Vicoj"
 
 #: winemine.rc:87
 msgid "Columns"
-msgstr ""
+msgstr "Kolumnoj"
 
 #: winemine.rc:88
 msgid "Mines"
-msgstr ""
+msgstr "Minoj"
 
 #: winemine.rc:27
 msgid "WineMine"
-msgstr ""
+msgstr "WineMine"
 
 #: winemine.rc:28
 msgid "Nobody"
-msgstr ""
+msgstr "Neniu"
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
-msgstr ""
+msgstr "Kopirajto 2000 Joshua THIELEN"
 
 #: winhlp32.rc:32
 msgid "Printer &setup..."
-msgstr "&Impozu Printilon..."
+msgstr "&Agordi Printilon..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
-msgstr "&Notu..."
+msgstr "&Noti..."
 
 #: winhlp32.rc:41
 msgid "&Bookmark"
@@ -13369,61 +12884,51 @@ msgstr "&Legosigno"
 
 #: winhlp32.rc:42
 msgid "&Define..."
-msgstr "&Difinu..."
+msgstr "&Difini..."
 
 #: winhlp32.rc:46 winhlp32.rc:67
-#, fuzzy
 msgid "Fonts"
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Fonts\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"Tiparoj"
+msgstr "Tiparoj"
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr ""
+msgstr "Malgranda"
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
-msgstr ""
+msgstr "Ordinara"
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr ""
+msgstr "Granda"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "Pri Helpanto"
+msgstr "&Helpo pri helpo\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
-msgstr "Æiam &supre"
+msgstr "Ĉiam &supre"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr ""
+msgstr "&Pri Wine-Help"
 
 #: winhlp32.rc:64
-#, fuzzy
 msgid "Annotation..."
-msgstr "&Notu..."
+msgstr "Prinoto..."
 
 #: winhlp32.rc:65
-#, fuzzy
 msgid "Copy"
-msgstr "&Kopiu"
+msgstr "Kopii"
 
 #: winhlp32.rc:97
-#, fuzzy
 msgid "Index"
-msgstr "&Enhavo"
+msgstr "Indekso"
 
 #: winhlp32.rc:105
-#, fuzzy
 msgid "Search"
-msgstr "&Seræu"
+msgstr "Serĉi"
 
 #: winhlp32.rc:78
 msgid "Wine Help"
@@ -13435,7 +12940,7 @@ msgstr "Eraro dum la legado de helpdosiero `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr ""
+msgstr "Resumo"
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -13447,59 +12952,55 @@ msgstr "Helpaj dosieroj (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr ""
+msgstr "'%s' ne troveblas. Ĉu vi volas trovi la dosieron per vi si?"
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr ""
+msgstr "Ne eblas trovi realigon de richedit... Ĉesigante"
 
 #: winhlp32.rc:91
 msgid "Help topics: "
-msgstr ""
+msgstr "Helpaj tempoj: "
 
 #: wordpad.rc:28
-#, fuzzy
 msgid "&New...\tCtrl+N"
-msgstr "&Nova...\tCtrl+N"
+msgstr "&Nova...\tStir+N"
 
 #: wordpad.rc:42
-#, fuzzy
 msgid "R&edo\tCtrl+Y"
-msgstr "Nuligu\tCtrl+Z"
+msgstr "Refari\tStir+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
-msgstr "Forigu\tDel"
+msgstr "&Verŝi\tDel"
 
 #: wordpad.rc:48
-#, fuzzy
 msgid "&Select all\tCtrl+A"
-msgstr "Elek&tu æion\tCtrl+A"
+msgstr "Elek&ti ĉion\tStir+A"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"
-msgstr ""
+msgstr "Trovi &sekvan\tF3"
 
 #: wordpad.rc:54
 msgid "Read-&only"
-msgstr ""
+msgstr "&Nurlega"
 
 #: wordpad.rc:55
 msgid "&Modified"
-msgstr ""
+msgstr "&Modifita"
 
 #: wordpad.rc:57
 msgid "E&xtras"
-msgstr ""
+msgstr "&Ekstroj"
 
 #: wordpad.rc:59
 msgid "Selection &info"
-msgstr ""
+msgstr "Elektaj &informoj"
 
 #: wordpad.rc:60
 msgid "Character &format"
-msgstr ""
+msgstr "Signa &formato"
 
 #: wordpad.rc:61
 msgid "&Def. char format"
@@ -13507,11 +13008,11 @@ msgstr ""
 
 #: wordpad.rc:62
 msgid "Paragrap&h format"
-msgstr ""
+msgstr "&Alinea formato"
 
 #: wordpad.rc:63
 msgid "&Get text"
-msgstr ""
+msgstr "&Atingi tekston"
 
 #: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
@@ -13519,124 +13020,111 @@ msgstr ""
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
-msgstr ""
+msgstr "&Mezurilo"
 
 #: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
-msgstr ""
+msgstr "&Stata linio"
 
 #: wordpad.rc:75
 msgid "&Insert"
-msgstr ""
+msgstr "&Enmeti"
 
 #: wordpad.rc:77
 msgid "&Date and time..."
-msgstr ""
+msgstr "&Dato kaj tempo..."
 
 #: wordpad.rc:79
-#, fuzzy
 msgid "F&ormat"
-msgstr "Normal"
+msgstr "F&ormato"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
-msgstr ""
+msgstr "&Buletaj punktoj"
 
 #: wordpad.rc:83 wordpad.rc:106
-#, fuzzy
 msgid "&Paragraph..."
-msgstr "Seræu..."
+msgstr "&Alineo..."
 
 #: wordpad.rc:84
-#, fuzzy
 msgid "&Tabs..."
-msgstr "Konservu &kiel"
+msgstr "&Taboj..."
 
 #: wordpad.rc:85
 msgid "Backgroun&d"
-msgstr ""
+msgstr "&Fono"
 
 #: wordpad.rc:87
-#, fuzzy
 msgid "&System\tCtrl+1"
-msgstr "Enmetu\tCtrl+V"
+msgstr "&Sistemo\tStir+V"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
-msgstr "Elek&tu æion\tCtrl+A"
+msgstr "&Helflava\tStir+A"
 
 #: wordpad.rc:93
-#, fuzzy
 msgid "&About Wine Wordpad"
-msgstr "&Pri..."
+msgstr "&Pri Wordpad de Wine"
 
 #: wordpad.rc:130
 msgid "Automatic"
-msgstr ""
+msgstr "Aŭtomata"
 
 #: wordpad.rc:199
 msgid "Date and time"
-msgstr ""
+msgstr "Dato kaj tempo"
 
 #: wordpad.rc:202
 msgid "Available formats"
-msgstr ""
+msgstr "Disponeblaj formatoj"
 
 #: wordpad.rc:213
-#, fuzzy
 msgid "New document type"
-msgstr "Tekstdosieroj (*.txt)"
+msgstr "Nova dokumentotipo"
 
 #: wordpad.rc:221
-#, fuzzy
 msgid "Paragraph format"
-msgstr "Seræu..."
+msgstr "Alinea formato"
 
 #: wordpad.rc:224
-#, fuzzy
 msgid "Indentation"
-msgstr "&Notu..."
+msgstr "Deŝovo..."
 
 #: wordpad.rc:225 wordpad.rc:148
-#, fuzzy
 msgid "Left"
-msgstr "&Maldekstre"
+msgstr "Maldekstre"
 
 #: wordpad.rc:227 wordpad.rc:149
-#, fuzzy
 msgid "Right"
-msgstr "&Dekstre"
+msgstr "Dekstre"
 
 #: wordpad.rc:229
 msgid "First line"
-msgstr ""
+msgstr "Unua linio"
 
 #: wordpad.rc:231
 msgid "Alignment"
-msgstr ""
+msgstr "Alniveligo"
 
 #: wordpad.rc:239
-#, fuzzy
 msgid "Tabs"
-msgstr "Konservu &kiel"
+msgstr "Taboj"
 
 #: wordpad.rc:242
 msgid "Tab stops"
-msgstr ""
+msgstr "Tabaj celoj"
 
 #: wordpad.rc:248
-#, fuzzy
 msgid "Remove al&l"
-msgstr "&Notu..."
+msgstr "Forigi ĉion"
 
 #: wordpad.rc:256
 msgid "Line wrapping"
-msgstr ""
+msgstr "Linia faldado"
 
 #: wordpad.rc:257
 msgid "&No line wrapping"
-msgstr ""
+msgstr "&Neniu faldado"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
@@ -13647,9 +13135,8 @@ msgid "Wrap text by the &margin"
 msgstr ""
 
 #: wordpad.rc:260
-#, fuzzy
 msgid "Toolbars"
-msgstr "&Ruliøu"
+msgstr "Ilobretoj"
 
 #: wordpad.rc:273
 msgctxt "accelerator Align Left"
@@ -13687,14 +13174,12 @@ msgid "U"
 msgstr ""
 
 #: wordpad.rc:136
-#, fuzzy
 msgid "All documents (*.*)"
-msgstr "Tutaj dosieroj (*.*)"
+msgstr "Ĉiaj dokumentoj (*.*)"
 
 #: wordpad.rc:137
-#, fuzzy
 msgid "Text documents (*.txt)"
-msgstr "Tekstdosieroj (*.txt)"
+msgstr "Tekstodokumentoj (*.txt)"
 
 #: wordpad.rc:138
 msgid "Unicode text document (*.txt)"
@@ -13717,9 +13202,8 @@ msgid "Unicode text document"
 msgstr ""
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "Tekstdosieroj (*.txt)"
+msgstr "Printilaj dosieroj (*.prn)"
 
 #: wordpad.rc:150
 msgid "Center"
@@ -13758,14 +13242,12 @@ msgid "Zoom out"
 msgstr ""
 
 #: wordpad.rc:170
-#, fuzzy
 msgid "Page"
-msgstr "Paøo &p"
+msgstr "Paĝo"
 
 #: wordpad.rc:171
-#, fuzzy
 msgid "Pages"
-msgstr "Paøo &p"
+msgstr "Paĝoj"
 
 #: wordpad.rc:172
 msgctxt "unit: centimeter"
@@ -13773,14 +13255,13 @@ msgid "cm"
 msgstr ""
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
-msgstr " min"
+msgstr "colo"
 
 #: wordpad.rc:174
 msgid "inch"
-msgstr ""
+msgstr "colo"
 
 #: wordpad.rc:175
 msgctxt "unit: point"
@@ -13810,9 +13291,8 @@ msgid ""
 msgstr ""
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
-msgstr "Nekorekta(j) tipo(j) en vojo"
+msgstr "Malĝusta nombra formato."
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported."
@@ -13835,9 +13315,8 @@ msgid "You do not have access to open the file."
 msgstr ""
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
-msgstr "Ne-implementata"
+msgstr "Printado ne jam funkcias."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
