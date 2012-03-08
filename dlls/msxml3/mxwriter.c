@@ -389,9 +389,6 @@ static HRESULT write_data_to_stream(mxwriter *This)
     if (!This->dest)
         return S_OK;
 
-    /* The xmlOutputBuffer doesn't copy its contents from its 'buffer' to the
-     * 'conv' buffer when UTF8 encoding is used.
-     */
     if (This->xml_enc != XmlEncoding_UTF16)
         buffer = &This->buffer->encoded;
     else
@@ -1312,10 +1309,25 @@ static ULONG WINAPI SAXDeclHandler_Release(ISAXDeclHandler *iface)
 static HRESULT WINAPI SAXDeclHandler_elementDecl(ISAXDeclHandler *iface,
     const WCHAR *name, int n_name, const WCHAR *model, int n_model)
 {
+    static const WCHAR elementW[] = {'<','!','E','L','E','M','E','N','T',' '};
+    static const WCHAR closeelementW[] = {'>','\r','\n'};
     mxwriter *This = impl_from_ISAXDeclHandler( iface );
-    FIXME("(%p)->(%s:%d %s:%d): stub\n", This, debugstr_wn(name, n_name), n_name,
+
+    TRACE("(%p)->(%s:%d %s:%d)\n", This, debugstr_wn(name, n_name), n_name,
         debugstr_wn(model, n_model), n_model);
-    return E_NOTIMPL;
+
+    if (!name || !model) return E_INVALIDARG;
+
+    write_output_buffer(This->buffer, elementW, sizeof(elementW)/sizeof(WCHAR));
+    if (n_name) {
+        write_output_buffer(This->buffer, name, n_name);
+        write_output_buffer(This->buffer, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+    }
+    if (n_model)
+        write_output_buffer(This->buffer, model, n_model);
+    write_output_buffer(This->buffer, closeelementW, sizeof(closeelementW)/sizeof(WCHAR));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXDeclHandler_attributeDecl(ISAXDeclHandler *iface,

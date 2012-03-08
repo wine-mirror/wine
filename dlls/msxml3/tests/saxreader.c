@@ -3124,11 +3124,13 @@ static void test_mxwriter_cdata(void)
 
 static void test_mxwriter_dtd(void)
 {
+    static const WCHAR contentW[] = {'c','o','n','t','e','n','t'};
     static const WCHAR nameW[] = {'n','a','m','e'};
     static const WCHAR pubW[] = {'p','u','b'};
     static const WCHAR sysW[] = {'s','y','s'};
     ISAXContentHandler *content;
     ISAXLexicalHandler *lexical;
+    ISAXDeclHandler *decl;
     IMXWriter *writer;
     VARIANT dest;
     HRESULT hr;
@@ -3141,6 +3143,9 @@ static void test_mxwriter_dtd(void)
     EXPECT_HR(hr, S_OK);
 
     hr = IMXWriter_QueryInterface(writer, &IID_ISAXLexicalHandler, (void**)&lexical);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXDeclHandler, (void**)&decl);
     EXPECT_HR(hr, S_OK);
 
     hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
@@ -3202,8 +3207,46 @@ static void test_mxwriter_dtd(void)
         V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
+    /* element declaration */
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXDeclHandler_elementDecl(decl, NULL, 0, NULL, 0);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    hr = ISAXDeclHandler_elementDecl(decl, nameW, sizeof(nameW)/sizeof(WCHAR), NULL, 0);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    hr = ISAXDeclHandler_elementDecl(decl, nameW, sizeof(nameW)/sizeof(WCHAR), contentW, sizeof(contentW)/sizeof(WCHAR));
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<!ELEMENT name content>\r\n"),
+        V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXDeclHandler_elementDecl(decl, nameW, sizeof(nameW)/sizeof(WCHAR), contentW, 0);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<!ELEMENT name >\r\n"),
+        V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
     ISAXContentHandler_Release(content);
     ISAXLexicalHandler_Release(lexical);
+    ISAXDeclHandler_Release(decl);
     IMXWriter_Release(writer);
     free_bstrs();
 }
