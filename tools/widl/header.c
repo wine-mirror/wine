@@ -1371,8 +1371,8 @@ void write_header(const statement_list_t *stmts)
   fprintf(header, "#include <ole2.h>\n");
   fprintf(header, "#endif\n\n");
 
-  fprintf(header, "#ifndef __WIDL_%s\n", header_token);
-  fprintf(header, "#define __WIDL_%s\n\n", header_token);
+  fprintf(header, "#ifndef __%s__\n", header_token);
+  fprintf(header, "#define __%s__\n\n", header_token);
 
   fprintf(header, "/* Forward declarations */\n\n");
   write_forward_decls(header, stmts);
@@ -1394,7 +1394,7 @@ void write_header(const statement_list_t *stmts)
   fprintf(header, "\n");
 
   end_cplusplus_guard(header);
-  fprintf(header, "#endif /* __WIDL_%s */\n", header_token);
+  fprintf(header, "#endif /* __%s__ */\n", header_token);
 
   fclose(header);
 }

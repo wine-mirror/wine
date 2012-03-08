@@ -197,7 +197,7 @@ static char *make_token(const char *name)
   token = xstrdup(name);
   for (i=0; token[i]; i++) {
     if (!isalnum(token[i])) token[i] = '_';
-    else token[i] = toupper(token[i]);
+    else token[i] = tolower(token[i]);
   }
   return token;
 }

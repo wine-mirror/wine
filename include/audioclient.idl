@@ -19,9 +19,6 @@
  *
  */
 
-cpp_quote("#ifndef __audioclient_h__")
-cpp_quote("#define __audioclient_h__")
-
 import "wtypes.idl";
 import "unknwn.idl";
 import "audiosessiontypes.h";
@@ -322,5 +319,3 @@ cpp_quote("#define AUDCLNT_E_INVALID_DEVICE_PERIOD AUDCLNT_ERR(0x20)")
 cpp_quote("#define AUDCLNT_S_BUFFER_EMPTY AUDCLNT_SUCCESS(0x1)")
 cpp_quote("#define AUDCLNT_S_THREAD_ALREADY_REGISTERED AUDCLNT_SUCCESS(0x2)")
 cpp_quote("#define AUDCLNT_S_POSITION_STALLED AUDCLNT_SUCCESS(0x3)")
-
-cpp_quote("#endif /*__audioclient_h__*/")

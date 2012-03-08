@@ -19,9 +19,6 @@
  *
  */
 
-cpp_quote("#ifndef __audiopolicy_h__")
-cpp_quote("#define __audiopolicy_h__")
-
 import "oaidl.idl";
 import "ocidl.idl";
 import "propidl.idl";
@@ -241,5 +238,3 @@ interface IAudioSessionManager2 : IAudioSessionManager
         [in] IAudioVolumeDuckNotification *duckNotification
     );
 };
-
-cpp_quote("#endif /*__audiopolicy_h__*/")

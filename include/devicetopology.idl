@@ -19,9 +19,6 @@
  *
  */
 
-cpp_quote("#ifndef __devicetopology_h__")
-cpp_quote("#define __devicetopology_h__")
-
 interface IPart;
 interface IControlInterface;
 interface IDeviceTopology;
@@ -737,5 +734,3 @@ library DevTopologyLib
         interface IDeviceTopology;
     }
 }
-
-cpp_quote("#endif /*__devicetopology_h__*/")
