@@ -108,6 +108,8 @@ typedef struct
     LPWSTR proxyBypass;
 } proxyinfo_t;
 
+static ULONG max_conns = 2, max_1_0_conns = 4;
+
 static const WCHAR szInternetSettings[] =
     { 'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
       'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
@@ -2336,7 +2338,7 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
         if (*size < sizeof(ULONG))
             return ERROR_INSUFFICIENT_BUFFER;
 
-        *(ULONG*)buffer = 2;
+        *(ULONG*)buffer = max_conns;
         *size = sizeof(ULONG);
 
         return ERROR_SUCCESS;
@@ -2347,7 +2349,7 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
             if (*size < sizeof(ULONG))
                 return ERROR_INSUFFICIENT_BUFFER;
 
-            *(ULONG*)buffer = 4;
+            *(ULONG*)buffer = max_1_0_conns;
             *size = sizeof(ULONG);
 
             return ERROR_SUCCESS;
@@ -2535,6 +2537,10 @@ DWORD INET_SetOption(object_header_t *hdr, DWORD option, void *buf, DWORD size)
     case INTERNET_OPTION_CALLBACK:
         WARN("Not settable option %u\n", option);
         return ERROR_INTERNET_OPTION_NOT_SETTABLE;
+    case INTERNET_OPTION_MAX_CONNS_PER_SERVER:
+    case INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER:
+        WARN("Called on global option %u\n", option);
+        return ERROR_INTERNET_INVALID_OPERATION;
     }
 
     return ERROR_INTERNET_INVALID_OPTION;
@@ -2546,6 +2552,28 @@ static DWORD set_global_option(DWORD option, void *buf, DWORD size)
     case INTERNET_OPTION_CALLBACK:
         WARN("Not global option %u\n", option);
         return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
+
+    case INTERNET_OPTION_MAX_CONNS_PER_SERVER:
+        TRACE("INTERNET_OPTION_MAX_CONNS_PER_SERVER\n");
+
+        if(size != sizeof(max_conns))
+            return ERROR_INTERNET_BAD_OPTION_LENGTH;
+        if(!*(ULONG*)buf)
+            return ERROR_BAD_ARGUMENTS;
+
+        max_conns = *(ULONG*)buf;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER:
+        TRACE("INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER\n");
+
+        if(size != sizeof(max_1_0_conns))
+            return ERROR_INTERNET_BAD_OPTION_LENGTH;
+        if(!*(ULONG*)buf)
+            return ERROR_BAD_ARGUMENTS;
+
+        max_1_0_conns = *(ULONG*)buf;
+        return ERROR_SUCCESS;
     }
 
     return ERROR_INTERNET_INVALID_OPTION;
@@ -2675,18 +2703,6 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
       {
         ULONG receivetimeout = *(ULONG *)lpBuffer;
         FIXME("Option INTERNET_OPTION_DATA_RECEIVE_TIMEOUT (%d): STUB\n", receivetimeout);
-      }
-      break;
-    case INTERNET_OPTION_MAX_CONNS_PER_SERVER:
-      {
-        ULONG conns = *(ULONG *)lpBuffer;
-        FIXME("Option INTERNET_OPTION_MAX_CONNS_PER_SERVER (%d): STUB\n", conns);
-      }
-      break;
-    case INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER:
-      {
-        ULONG conns = *(ULONG *)lpBuffer;
-        FIXME("Option INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER (%d): STUB\n", conns);
       }
       break;
     case INTERNET_OPTION_RESET_URLCACHE_SESSION:
