@@ -177,7 +177,7 @@ static inline BOOL call_dll_entry_point( DLLENTRYPROC proc, void *module,
 #endif /* __i386__ */
 
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__arm__)
 /*************************************************************************
  *		stub_entry_point
  *
@@ -208,6 +208,19 @@ struct stub
     const char *dll;
     BYTE        call;       /* call stub_entry_point */
     DWORD       entry;
+};
+#elif defined(__arm__)
+struct stub
+{
+    BYTE ldr_r0[4];        /* ldr r0, $dll */
+    BYTE mov_pc_pc1[4];    /* mov pc,pc */
+    const char *dll;
+    BYTE ldr_r1[4];        /* ldr r1, $name */
+    BYTE mov_pc_pc2[4];    /* mov pc,pc */
+    const char *name;
+    BYTE mov_r2_lr[4];     /* mov r2, lr */
+    BYTE ldr_pc_pc[4];     /* ldr pc, [pc, #-4] */
+    const void* entry;
 };
 #else
 struct stub
@@ -253,6 +266,34 @@ static ULONG_PTR allocate_stub( const char *dll, const char *name )
     stub->dll       = dll;
     stub->call      = 0xe8;  /* call stub_entry_point */
     stub->entry     = (BYTE *)stub_entry_point - (BYTE *)(&stub->entry + 1);
+#elif defined(__arm__)
+    stub->ldr_r0[0]     = 0x00;   /* ldr r0, $dll */
+    stub->ldr_r0[1]     = 0x00;
+    stub->ldr_r0[2]     = 0x9f;
+    stub->ldr_r0[3]     = 0xe5;
+    stub->mov_pc_pc1[0] = 0x0f;   /* mov pc,pc */
+    stub->mov_pc_pc1[1] = 0xf0;
+    stub->mov_pc_pc1[2] = 0xa0;
+    stub->mov_pc_pc1[3] = 0xe1;
+    stub->dll           = dll;
+    stub->ldr_r1[0]     = 0x00;   /* ldr r1, $name */
+    stub->ldr_r1[1]     = 0x10;
+    stub->ldr_r1[2]     = 0x9f;
+    stub->ldr_r1[3]     = 0xe5;
+    stub->mov_pc_pc2[0] = 0x0f;   /* mov pc,pc */
+    stub->mov_pc_pc2[1] = 0xf0;
+    stub->mov_pc_pc2[2] = 0xa0;
+    stub->mov_pc_pc2[3] = 0xe1;
+    stub->name          = name;
+    stub->mov_r2_lr[0]  = 0x0e;   /* mov r2, lr */
+    stub->mov_r2_lr[1]  = 0x20;
+    stub->mov_r2_lr[2]  = 0xa0;
+    stub->mov_r2_lr[3]  = 0xe1;
+    stub->ldr_pc_pc[0]  = 0x04;   /* ldr pc, [pc, #-4] */
+    stub->ldr_pc_pc[1]  = 0xf0;
+    stub->ldr_pc_pc[2]  = 0x1f;
+    stub->ldr_pc_pc[3]  = 0xe5;
+    stub->entry         = stub_entry_point;
 #else
     stub->movq_rdi[0]     = 0x48;  /* movq $dll,%rdi */
     stub->movq_rdi[1]     = 0xbf;
