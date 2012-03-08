@@ -353,14 +353,17 @@ static BOOL MONTHCAL_IsDateInValidRange(const MONTHCAL_INFO *infoPtr,
   else if(MONTHCAL_CompareSystemTime(date, &min_allowed_date) == -1) {
      fix_st = &min_allowed_date;
   }
-  else if(infoPtr->rangeValid & GDTR_MAX) {
-     if((MONTHCAL_CompareSystemTime(date, &infoPtr->maxDate) == 1)) {
-       fix_st = &infoPtr->maxDate;
+  else {
+     if(infoPtr->rangeValid & GDTR_MAX) {
+        if((MONTHCAL_CompareSystemTime(date, &infoPtr->maxDate) == 1)) {
+           fix_st = &infoPtr->maxDate;
+        }
      }
-  }
-  else if(infoPtr->rangeValid & GDTR_MIN) {
-     if((MONTHCAL_CompareSystemTime(date, &infoPtr->minDate) == -1)) {
-       fix_st = &infoPtr->minDate;
+
+     if(infoPtr->rangeValid & GDTR_MIN) {
+        if((MONTHCAL_CompareSystemTime(date, &infoPtr->minDate) == -1)) {
+           fix_st = &infoPtr->minDate;
+        }
      }
   }
 
