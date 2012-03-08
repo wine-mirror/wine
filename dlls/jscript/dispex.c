@@ -1095,7 +1095,7 @@ HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, VARIANT *val, jsexcept_t *e
     return jsdisp_propput_name(obj, buf, val, ei, caller);
 }
 
-HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val, jsexcept_t *ei)
 {
     jsdisp_t *jsdisp;
     HRESULT hres;
@@ -1106,7 +1106,7 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val
 
         prop = get_prop(jsdisp, id);
         if(prop)
-            hres = prop_put(jsdisp, prop, val, ei, caller);
+            hres = prop_put(jsdisp, prop, val, ei, NULL);
         else
             hres = DISP_E_MEMBERNOTFOUND;
 

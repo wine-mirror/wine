@@ -617,7 +617,7 @@ static HRESULT interp_forin(exec_ctx_t *ctx)
 
         V_VT(&v) = VT_BSTR;
         V_BSTR(&v) = name;
-        hres = disp_propput(ctx->parser->script, var_obj, var_id, &v, ctx->ei, NULL/*FIXME*/);
+        hres = disp_propput(ctx->parser->script, var_obj, var_id, &v, ctx->ei);
         SysFreeString(name);
         if(FAILED(hres))
             return hres;
@@ -1903,7 +1903,7 @@ static HRESULT interp_postinc(exec_ctx_t *ctx)
         hres = to_number(ctx->parser->script, &v, ctx->ei, &n);
         if(SUCCEEDED(hres)) {
             num_set_val(&inc, num_val(&n)+(double)arg);
-            hres = disp_propput(ctx->parser->script, obj, id, &inc, ctx->ei, NULL/*FIXME*/);
+            hres = disp_propput(ctx->parser->script, obj, id, &inc, ctx->ei);
         }
         if(FAILED(hres))
             VariantClear(&v);
@@ -1938,7 +1938,7 @@ static HRESULT interp_preinc(exec_ctx_t *ctx)
         VariantClear(&v);
         if(SUCCEEDED(hres)) {
             num_set_val(&v, num_val(&n)+(double)arg);
-            hres = disp_propput(ctx->parser->script, obj, id, &v, ctx->ei, NULL/*FIXME*/);
+            hres = disp_propput(ctx->parser->script, obj, id, &v, ctx->ei);
         }
     }
     IDispatch_Release(obj);
@@ -2364,7 +2364,7 @@ static HRESULT interp_assign(exec_ctx_t *ctx)
     if(!disp)
         return throw_reference_error(ctx->parser->script, ctx->ei, JS_E_ILLEGAL_ASSIGN, NULL);
 
-    hres = disp_propput(ctx->parser->script, disp, id, v, ctx->ei, NULL/*FIXME*/);
+    hres = disp_propput(ctx->parser->script, disp, id, v, ctx->ei);
     IDispatch_Release(disp);
     if(FAILED(hres)) {
         VariantClear(v);
