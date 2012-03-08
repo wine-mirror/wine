@@ -661,11 +661,15 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
   TRACE("(%p/%p)->(%p)\n", This, iface, ppChildObj);
 
   if (This->cur_enum_object >= This->pobj->nb_children)
+  {
+    *ppChildObj = NULL;
     return DXFILEERR_NOMOREOBJECTS;
+  }
 
   if (This->from_ref && (This->level >= 1))
   {
     /* Only 2 levels can be enumerated if the object is obtained from a reference */
+    *ppChildObj = NULL;
     return DXFILEERR_NOMOREOBJECTS;
   }
 
