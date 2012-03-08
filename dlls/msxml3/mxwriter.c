@@ -1,7 +1,7 @@
 /*
  *    MXWriter implementation
  *
- * Copyright 2011 Nikolay Sivov for CodeWeavers
+ * Copyright 2011-2012 Nikolay Sivov for CodeWeavers
  * Copyright 2011 Thomas Mullaly
  *
  * This library is free software; you can redistribute it and/or
@@ -94,6 +94,7 @@ typedef struct
     IMXWriter IMXWriter_iface;
     ISAXContentHandler ISAXContentHandler_iface;
     ISAXLexicalHandler ISAXLexicalHandler_iface;
+    ISAXDeclHandler    ISAXDeclHandler_iface;
 
     LONG ref;
     MSXML_VERSION class_version;
@@ -482,6 +483,11 @@ static inline mxwriter *impl_from_ISAXLexicalHandler(ISAXLexicalHandler *iface)
     return CONTAINING_RECORD(iface, mxwriter, ISAXLexicalHandler_iface);
 }
 
+static inline mxwriter *impl_from_ISAXDeclHandler(ISAXDeclHandler *iface)
+{
+    return CONTAINING_RECORD(iface, mxwriter, ISAXDeclHandler_iface);
+}
+
 static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, void **obj)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
@@ -503,6 +509,10 @@ static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, voi
     else if ( IsEqualGUID( riid, &IID_ISAXLexicalHandler ) )
     {
         *obj = &This->ISAXLexicalHandler_iface;
+    }
+    else if ( IsEqualGUID( riid, &IID_ISAXDeclHandler ) )
+    {
+        *obj = &This->ISAXDeclHandler_iface;
     }
     else if (dispex_query_interface(&This->dispex, riid, obj))
     {
@@ -1279,6 +1289,76 @@ static const struct ISAXLexicalHandlerVtbl SAXLexicalHandlerVtbl =
     SAXLexicalHandler_comment
 };
 
+/*** ISAXDeclHandler ***/
+static HRESULT WINAPI SAXDeclHandler_QueryInterface(ISAXDeclHandler *iface,
+    REFIID riid, void **obj)
+{
+    mxwriter *This = impl_from_ISAXDeclHandler( iface );
+    return IMXWriter_QueryInterface(&This->IMXWriter_iface, riid, obj);
+}
+
+static ULONG WINAPI SAXDeclHandler_AddRef(ISAXDeclHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXDeclHandler( iface );
+    return IMXWriter_AddRef(&This->IMXWriter_iface);
+}
+
+static ULONG WINAPI SAXDeclHandler_Release(ISAXDeclHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXDeclHandler( iface );
+    return IMXWriter_Release(&This->IMXWriter_iface);
+}
+
+static HRESULT WINAPI SAXDeclHandler_elementDecl(ISAXDeclHandler *iface,
+    const WCHAR *name, int n_name, const WCHAR *model, int n_model)
+{
+    mxwriter *This = impl_from_ISAXDeclHandler( iface );
+    FIXME("(%p)->(%s:%d %s:%d): stub\n", This, debugstr_wn(name, n_name), n_name,
+        debugstr_wn(model, n_model), n_model);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SAXDeclHandler_attributeDecl(ISAXDeclHandler *iface,
+    const WCHAR *element, int n_element, const WCHAR *attr, int n_attr,
+    const WCHAR *type, int n_type, const WCHAR *Default, int n_default,
+    const WCHAR *value, int n_value)
+{
+    mxwriter *This = impl_from_ISAXDeclHandler( iface );
+    FIXME("(%p)->(%s:%d %s:%d %s:%d %s:%d %s:%d): stub\n", This, debugstr_wn(element, n_element), n_element,
+        debugstr_wn(attr, n_attr), n_attr, debugstr_wn(type, n_type), n_type, debugstr_wn(Default, n_default), n_default,
+        debugstr_wn(value, n_value), n_value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SAXDeclHandler_internalEntityDecl(ISAXDeclHandler *iface,
+    const WCHAR *name, int n_name, const WCHAR *value, int n_value)
+{
+    mxwriter *This = impl_from_ISAXDeclHandler( iface );
+    FIXME("(%p)->(%s:%d %s:%d): stub\n", This, debugstr_wn(name, n_name), n_name,
+        debugstr_wn(value, n_value), n_value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SAXDeclHandler_externalEntityDecl(ISAXDeclHandler *iface,
+    const WCHAR *name, int n_name, const WCHAR *publicId, int n_publicId,
+    const WCHAR *systemId, int n_systemId)
+{
+    mxwriter *This = impl_from_ISAXDeclHandler( iface );
+    FIXME("(%p)->(%s:%d %s:%d %s:%d): stub\n", This, debugstr_wn(name, n_name), n_name,
+        debugstr_wn(publicId, n_publicId), n_publicId, debugstr_wn(systemId, n_systemId), n_systemId);
+    return E_NOTIMPL;
+}
+
+static const ISAXDeclHandlerVtbl SAXDeclHandlerVtbl = {
+    SAXDeclHandler_QueryInterface,
+    SAXDeclHandler_AddRef,
+    SAXDeclHandler_Release,
+    SAXDeclHandler_elementDecl,
+    SAXDeclHandler_attributeDecl,
+    SAXDeclHandler_internalEntityDecl,
+    SAXDeclHandler_externalEntityDecl
+};
+
 static const tid_t mxwriter_iface_tids[] = {
     IMXWriter_tid,
     0
@@ -1308,6 +1388,7 @@ HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *outer, void **ppObj)
     This->IMXWriter_iface.lpVtbl = &MXWriterVtbl;
     This->ISAXContentHandler_iface.lpVtbl = &SAXContentHandlerVtbl;
     This->ISAXLexicalHandler_iface.lpVtbl = &SAXLexicalHandlerVtbl;
+    This->ISAXDeclHandler_iface.lpVtbl = &SAXDeclHandlerVtbl;
     This->ref = 1;
     This->class_version = version;
 

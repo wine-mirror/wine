@@ -1685,6 +1685,7 @@ static void test_mxwriter_handlers(void)
 {
     ISAXContentHandler *handler;
     IMXWriter *writer, *writer2;
+    ISAXDeclHandler *decl;
     ISAXLexicalHandler *lh;
     HRESULT hr;
 
@@ -1720,6 +1721,21 @@ static void test_mxwriter_handlers(void)
     EXPECT_REF(writer, 3);
     EXPECT_REF(writer2, 3);
     IMXWriter_Release(writer2);
+    ISAXLexicalHandler_Release(lh);
+
+    /* ISAXDeclHandler */
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXDeclHandler, (void**)&decl);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    EXPECT_REF(writer, 2);
+    EXPECT_REF(lh, 2);
+
+    hr = ISAXDeclHandler_QueryInterface(decl, &IID_IMXWriter, (void**)&writer2);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(writer2 == writer, "got %p, expected %p\n", writer2, writer);
+    EXPECT_REF(writer, 3);
+    EXPECT_REF(writer2, 3);
+    IMXWriter_Release(writer2);
+    ISAXDeclHandler_Release(decl);
 
     IMXWriter_Release(writer);
 }
