@@ -224,8 +224,16 @@ static const char* arm_fetch_regname(unsigned regno)
 
 static BOOL arm_fetch_minidump_thread(struct dump_context* dc, unsigned index, unsigned flags, const CONTEXT* ctx)
 {
-    FIXME("NIY\n");
-    return FALSE;
+    if (ctx->ContextFlags && (flags & ThreadWriteInstructionWindow))
+    {
+        /* FIXME: crop values across module boundaries, */
+#ifdef __arm__
+        ULONG base = ctx->Pc <= 0x80 ? 0 : ctx->Pc - 0x80;
+        minidump_add_memory_block(dc, base, ctx->Pc + 0x80 - base, 0);
+#endif
+    }
+
+    return TRUE;
 }
 
 static BOOL arm_fetch_minidump_module(struct dump_context* dc, unsigned index, unsigned flags)
