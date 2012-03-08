@@ -458,7 +458,7 @@
 @ stub IoSetSystemPartition
 @ stdcall IoSetThreadHardErrorMode(long)
 @ stub IoSetTopLevelIrp
-@ stub IoStartNextPacket
+@ stdcall IoStartNextPacket(ptr long)
 @ stub IoStartNextPacketByKey
 @ stub IoStartPacket
 @ stdcall IoStartTimer(ptr)

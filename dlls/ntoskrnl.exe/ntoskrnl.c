@@ -1760,3 +1760,11 @@ PKEVENT WINAPI IoCreateSynchronizationEvent(PUNICODE_STRING name, PHANDLE handle
     FIXME("(%p %p) stub\n", name, handle);
     return NULL;
 }
+
+/*****************************************************
+ *           IoStartNextPacket  (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI IoStartNextPacket(PDEVICE_OBJECT deviceobject, BOOLEAN cancelable)
+{
+    FIXME("(%p %d) stub\n", deviceobject, cancelable);
+}
