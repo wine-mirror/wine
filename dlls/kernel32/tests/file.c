@@ -1763,7 +1763,7 @@ static BOOL create_fake_dll( LPCSTR filename )
 # error You must specify the machine type
 #endif
     nt->FileHeader.NumberOfSections = 1;
-    nt->FileHeader.SizeOfOptionalHeader = IMAGE_SIZEOF_NT_OPTIONAL_HEADER;
+    nt->FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
     nt->FileHeader.Characteristics = IMAGE_FILE_DLL | IMAGE_FILE_EXECUTABLE_IMAGE;
     nt->OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR_MAGIC;
     nt->OptionalHeader.MajorLinkerVersion = 1;
