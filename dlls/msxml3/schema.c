@@ -786,9 +786,21 @@ static LONG cache_entry_release(cache_entry* entry)
     return ref;
 }
 
+static const struct IXMLDOMSchemaCollection2Vtbl XMLDOMSchemaCollection2Vtbl;
+
 static inline schema_cache* impl_from_IXMLDOMSchemaCollection2(IXMLDOMSchemaCollection2* iface)
 {
     return CONTAINING_RECORD(iface, schema_cache, IXMLDOMSchemaCollection2_iface);
+}
+
+static inline schema_cache* impl_from_IXMLDOMSchemaCollection(IXMLDOMSchemaCollection* iface)
+{
+    return CONTAINING_RECORD(iface, schema_cache, IXMLDOMSchemaCollection2_iface);
+}
+
+static inline schema_cache* unsafe_impl_from_IXMLDOMSchemaCollection(IXMLDOMSchemaCollection *iface)
+{
+    return iface->lpVtbl == (void*)&XMLDOMSchemaCollection2Vtbl ? impl_from_IXMLDOMSchemaCollection(iface) : NULL;
 }
 
 static inline CacheEntryType cache_type_from_xmlDocPtr(xmlDocPtr schema)
@@ -1292,14 +1304,22 @@ static void cache_copy(void* data, void* dest, xmlChar* name)
 }
 
 static HRESULT WINAPI schema_cache_addCollection(IXMLDOMSchemaCollection2* iface,
-                                                 IXMLDOMSchemaCollection* otherCollection)
+                                                 IXMLDOMSchemaCollection* collection)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    schema_cache* That = impl_from_IXMLDOMSchemaCollection2((IXMLDOMSchemaCollection2*)otherCollection);
-    TRACE("(%p)->(%p)\n", This, That);
+    schema_cache* That;
 
-    if (!otherCollection)
+    TRACE("(%p)->(%p)\n", This, collection);
+
+    if (!collection)
         return E_POINTER;
+
+    That = unsafe_impl_from_IXMLDOMSchemaCollection(collection);
+    if (!That)
+    {
+        ERR("external collection implementation\n");
+        return E_FAIL;
+    }
 
     /* TODO: detect errors while copying & return E_FAIL */
     xmlHashScan(That->cache, cache_copy, This);
