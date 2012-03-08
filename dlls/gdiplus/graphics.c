@@ -90,8 +90,158 @@ static REAL graphics_res(GpGraphics *graphics)
     else return (REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSX);
 }
 
+static COLORREF get_gdi_brush_color(const GpBrush *brush)
+{
+    ARGB argb;
+
+    switch (brush->bt)
+    {
+        case BrushTypeSolidColor:
+        {
+            const GpSolidFill *sf = (const GpSolidFill *)brush;
+            argb = sf->color;
+            break;
+        }
+        case BrushTypeHatchFill:
+        {
+            const GpHatch *hatch = (const GpHatch *)brush;
+            argb = hatch->forecol;
+            break;
+        }
+        case BrushTypeLinearGradient:
+        {
+            const GpLineGradient *line = (const GpLineGradient *)brush;
+            argb = line->startcolor;
+            break;
+        }
+        case BrushTypePathGradient:
+        {
+            const GpPathGradient *grad = (const GpPathGradient *)brush;
+            argb = grad->centercolor;
+            break;
+        }
+        default:
+            FIXME("unhandled brush type %d\n", brush->bt);
+            argb = 0;
+            break;
+    }
+    return ARGB2COLORREF(argb);
+}
+
+static HBITMAP create_hatch_bitmap(const GpHatch *hatch)
+{
+    HBITMAP hbmp;
+    HDC hdc;
+    BITMAPINFOHEADER bmih;
+    DWORD *bits;
+    int x, y;
+
+    hdc = CreateCompatibleDC(0);
+
+    if (!hdc) return 0;
+
+    bmih.biSize = sizeof(bmih);
+    bmih.biWidth = 8;
+    bmih.biHeight = 8;
+    bmih.biPlanes = 1;
+    bmih.biBitCount = 32;
+    bmih.biCompression = BI_RGB;
+    bmih.biSizeImage = 0;
+
+    hbmp = CreateDIBSection(hdc, (BITMAPINFO *)&bmih, DIB_RGB_COLORS, (void **)&bits, NULL, 0);
+    if (hbmp)
+    {
+        const char *hatch_data;
+
+        if (get_hatch_data(hatch->hatchstyle, &hatch_data) == Ok)
+        {
+            for (y = 0; y < 8; y++)
+            {
+                for (x = 0; x < 8; x++)
+                {
+                    if (hatch_data[y] & (0x80 >> x))
+                        bits[y * 8 + x] = hatch->forecol;
+                    else
+                        bits[y * 8 + x] = hatch->backcol;
+                }
+            }
+        }
+        else
+        {
+            FIXME("Unimplemented hatch style %d\n", hatch->hatchstyle);
+
+            for (y = 0; y < 64; y++)
+                bits[y] = hatch->forecol;
+        }
+    }
+
+    DeleteDC(hdc);
+    return hbmp;
+}
+
+static GpStatus create_gdi_logbrush(const GpBrush *brush, LOGBRUSH *lb)
+{
+    switch (brush->bt)
+    {
+        case BrushTypeSolidColor:
+        {
+            const GpSolidFill *sf = (const GpSolidFill *)brush;
+            lb->lbStyle = BS_SOLID;
+            lb->lbColor = ARGB2COLORREF(sf->color);
+            lb->lbHatch = 0;
+            return Ok;
+        }
+
+        case BrushTypeHatchFill:
+        {
+            const GpHatch *hatch = (const GpHatch *)brush;
+            HBITMAP hbmp;
+
+            hbmp = create_hatch_bitmap(hatch);
+            if (!hbmp) return OutOfMemory;
+
+            lb->lbStyle = BS_PATTERN;
+            lb->lbColor = 0;
+            lb->lbHatch = (ULONG_PTR)hbmp;
+            return Ok;
+        }
+
+        default:
+            FIXME("unhandled brush type %d\n", brush->bt);
+            lb->lbStyle = BS_SOLID;
+            lb->lbColor = get_gdi_brush_color(brush);
+            lb->lbHatch = 0;
+            return Ok;
+    }
+}
+
+static GpStatus free_gdi_logbrush(LOGBRUSH *lb)
+{
+    switch (lb->lbStyle)
+    {
+        case BS_PATTERN:
+            DeleteObject((HGDIOBJ)(ULONG_PTR)lb->lbHatch);
+            break;
+    }
+    return Ok;
+}
+
+static HBRUSH create_gdi_brush(const GpBrush *brush)
+{
+    LOGBRUSH lb;
+    HBRUSH gdibrush;
+
+    if (create_gdi_logbrush(brush, &lb) != Ok) return 0;
+
+    gdibrush = CreateBrushIndirect(&lb);
+    free_gdi_logbrush(&lb);
+
+    return gdibrush;
+}
+
 static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
 {
+    LOGBRUSH lb;
     HPEN gdipen;
     REAL width;
     INT save_state, i, numdashes;
@@ -130,11 +280,17 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
         }
         TRACE("\n and the pen style is %x\n", pen->style);
 
-        gdipen = ExtCreatePen(pen->style, roundr(width), &pen->brush->lb,
+        create_gdi_logbrush(pen->brush, &lb);
+        gdipen = ExtCreatePen(pen->style, roundr(width), &lb,
                               numdashes, dash_array);
+        free_gdi_logbrush(&lb);
     }
     else
-        gdipen = ExtCreatePen(pen->style, roundr(width), &pen->brush->lb, 0, NULL);
+    {
+        create_gdi_logbrush(pen->brush, &lb);
+        gdipen = ExtCreatePen(pen->style, roundr(width), &lb, 0, NULL);
+        free_gdi_logbrush(&lb);
+    }
 
     SelectObject(graphics->hdc, gdipen);
 
@@ -723,9 +879,18 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
         /* else fall through */
     }
     default:
-        SelectObject(graphics->hdc, brush->gdibrush);
+    {
+        HBRUSH gdibrush, old_brush;
+
+        gdibrush = create_gdi_brush(brush);
+        if (!gdibrush) return;
+
+        old_brush = SelectObject(graphics->hdc, gdibrush);
         FillPath(graphics->hdc);
+        SelectObject(graphics->hdc, old_brush);
+        DeleteObject(gdibrush);
         break;
+    }
     }
 }
 
@@ -1253,9 +1418,9 @@ static GpStatus draw_polyline(GpGraphics *graphics, GpPen *pen,
                              &ptcopy[0].X, &ptcopy[0].Y,
                              pen->customstart->inset * pen->width);
 
-        draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
+        draw_cap(graphics, get_gdi_brush_color(pen->brush), pen->endcap, pen->width, pen->customend,
                  pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X, pt[count - 1].Y);
-        draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
+        draw_cap(graphics, get_gdi_brush_color(pen->brush), pen->startcap, pen->width, pen->customstart,
                          pt[1].X, pt[1].Y, pt[0].X, pt[0].Y);
     }
 
@@ -1351,12 +1516,12 @@ static GpStatus draw_polybezier(GpGraphics *graphics, GpPen *pen,
         /* the direction of the line cap is parallel to the direction at the
          * end of the bezier (which, if it has been shortened, is not the same
          * as the direction from pt[count-2] to pt[count-1]) */
-        draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
+        draw_cap(graphics, get_gdi_brush_color(pen->brush), pen->endcap, pen->width, pen->customend,
             pt[count - 1].X - (ptcopy[count - 1].X - ptcopy[count - 2].X),
             pt[count - 1].Y - (ptcopy[count - 1].Y - ptcopy[count - 2].Y),
             pt[count - 1].X, pt[count - 1].Y);
 
-        draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
+        draw_cap(graphics, get_gdi_brush_color(pen->brush), pen->startcap, pen->width, pen->customstart,
             pt[0].X - (ptcopy[0].X - ptcopy[1].X),
             pt[0].Y - (ptcopy[0].Y - ptcopy[1].Y), pt[0].X, pt[0].Y);
     }
@@ -1417,7 +1582,7 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
                     shorten_bezier_amt(&ptcopy[count - 4],
                                        pen->width * pen->customend->inset, FALSE);
 
-                draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
+                draw_cap(graphics, get_gdi_brush_color(pen->brush), pen->endcap, pen->width, pen->customend,
                     pt[count - 1].X - (ptcopy[count - 1].X - ptcopy[count - 2].X),
                     pt[count - 1].Y - (ptcopy[count - 1].Y - ptcopy[count - 2].Y),
                     pt[count - 1].X, pt[count - 1].Y);
@@ -1433,7 +1598,7 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
                                      &ptcopy[count - 1].X, &ptcopy[count - 1].Y,
                                      pen->customend->inset * pen->width);
 
-                draw_cap(graphics, pen->brush->lb.lbColor, pen->endcap, pen->width, pen->customend,
+                draw_cap(graphics, get_gdi_brush_color(pen->brush), pen->endcap, pen->width, pen->customend,
                          pt[count - 2].X, pt[count - 2].Y, pt[count - 1].X,
                          pt[count - 1].Y);
 
@@ -1455,7 +1620,7 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
                     shorten_bezier_amt(&ptcopy[j - 1],
                                        pen->width * pen->customstart->inset, TRUE);
 
-                draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
+                draw_cap(graphics, get_gdi_brush_color(pen->brush), pen->startcap, pen->width, pen->customstart,
                     pt[j - 1].X - (ptcopy[j - 1].X - ptcopy[j].X),
                     pt[j - 1].Y - (ptcopy[j - 1].Y - ptcopy[j].Y),
                     pt[j - 1].X, pt[j - 1].Y);
@@ -1471,7 +1636,7 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
                                      &ptcopy[j - 1].X, &ptcopy[j - 1].Y,
                                      pen->customstart->inset * pen->width);
 
-                draw_cap(graphics, pen->brush->lb.lbColor, pen->startcap, pen->width, pen->customstart,
+                draw_cap(graphics, get_gdi_brush_color(pen->brush), pen->startcap, pen->width, pen->customstart,
                          pt[j].X, pt[j].Y, pt[j - 1].X,
                          pt[j - 1].Y);
 
@@ -5787,7 +5952,7 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
 
     save_state = SaveDC(graphics->hdc);
     SetBkMode(graphics->hdc, TRANSPARENT);
-    SetTextColor(graphics->hdc, brush->lb.lbColor);
+    SetTextColor(graphics->hdc, get_gdi_brush_color(brush));
 
     pt = positions[0];
     GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &pt, 1);
