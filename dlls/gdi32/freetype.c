@@ -281,6 +281,7 @@ typedef struct tagFamily {
     const WCHAR *FamilyName;
     const WCHAR *EnglishName;
     struct list faces;
+    struct list *replacement;
 } Family;
 
 typedef struct {
@@ -1323,6 +1324,7 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
         family->FamilyName = strdupW(family_name);
         family->EnglishName = english_family;
         list_init(&family->faces);
+        family->replacement = &family->faces;
         list_add_tail(&font_list, &family->entry);
 
         if(english_family)
@@ -1540,6 +1542,7 @@ static void AddFaceToList(FT_Face ft_face, char *fake_family, const char *file, 
             family->FamilyName = strdupW(localised_family ? localised_family : english_family);
             family->EnglishName = localised_family ? strdupW(english_family) : NULL;
             list_init(&family->faces);
+            family->replacement = &family->faces;
             list_add_tail(&font_list, &family->entry);
 
             if(localised_family) {
@@ -1900,20 +1903,18 @@ static void LoadReplaceList(void)
 
             if(!find_family_from_any_name(value))
             {
-                /* Find the old family and hence all of the font files
-                   in that family */
-                const Family * const family = find_family_from_any_name(data);
+                Family * const family = find_family_from_any_name(data);
                 if (family != NULL)
                 {
-                    const struct list *face_elem_ptr;
-                    LIST_FOR_EACH(face_elem_ptr, &family->faces) {
-                        const Face * const face = LIST_ENTRY(face_elem_ptr, Face, entry);
-                        TRACE("mapping %s %s to %s\n", debugstr_w(family->FamilyName),
-                              debugstr_w(face->StyleName), familyA);
-                        /* Now add a new entry with the new family name */
-                        AddFontToList(face->file, face->font_data_ptr, face->font_data_size,
-                                      familyA, family->FamilyName,
-                                      ADDFONT_FORCE_BITMAP | (face->external ? ADDFONT_EXTERNAL_FONT : 0));
+                    Family * const new_family = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_family));
+                    if (new_family != NULL)
+                    {
+                        TRACE("mapping %s to %s\n", debugstr_w(data), debugstr_w(value));
+                        new_family->FamilyName = strdupW(value);
+                        new_family->EnglishName = NULL;
+                        list_init(&new_family->faces);
+                        new_family->replacement = &family->faces;
+                        list_add_tail(&font_list, &new_family->entry);
                     }
                 }
                 else
@@ -1991,7 +1992,10 @@ static SYSTEM_LINKS *find_font_link(const WCHAR *name)
 
 static const struct list *get_face_list_from_family(const Family *family)
 {
-    return &family->faces;
+    if (!list_empty(&family->faces))
+        return &family->faces;
+    else
+        return family->replacement;
 }
 
 static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
@@ -4674,24 +4678,24 @@ static BOOL family_matches(Family *family, const LOGFONTW *lf)
     return FALSE;
 }
 
-static BOOL face_matches(Face *face, const LOGFONTW *lf)
+static BOOL face_matches(const WCHAR *family_name, Face *face, const LOGFONTW *lf)
 {
     WCHAR full_family_name[LF_FULLFACESIZE];
 
-    if (!strcmpiW(lf->lfFaceName, face->family->FamilyName)) return TRUE;
+    if (!strcmpiW(lf->lfFaceName, family_name)) return TRUE;
 
-    if (strlenW(face->family->FamilyName) + strlenW(face->StyleName) + 2 > LF_FULLFACESIZE)
+    if (strlenW(family_name) + strlenW(face->StyleName) + 2 > LF_FULLFACESIZE)
     {
         FIXME("Length of %s + %s + 2 is longer than LF_FULLFACESIZE\n",
-              debugstr_w(face->family->FamilyName), debugstr_w(face->StyleName));
+              debugstr_w(family_name), debugstr_w(face->StyleName));
         return FALSE;
     }
 
-    create_full_name(full_family_name, face->family->FamilyName, face->StyleName);
+    create_full_name(full_family_name, family_name, face->StyleName);
     return !strcmpiW(lf->lfFaceName, full_family_name);
 }
 
-static BOOL enum_face_charsets(Face *face, struct enum_charset_list *list,
+static BOOL enum_face_charsets(const Family *family, Face *face, struct enum_charset_list *list,
                                FONTENUMPROCW proc, LPARAM lparam)
 {
     ENUMLOGFONTEXW elf;
@@ -4712,6 +4716,12 @@ static BOOL enum_face_charsets(Face *face, struct enum_charset_list *list,
             strcpyW(elf.elfScript, list->element[i].name);
             if (!elf.elfScript[0])
                 FIXME("Unknown elfscript for bit %d\n", ffs(list->element[i].mask) - 1);
+        }
+        /* Font Replacement */
+        if (family != face->family)
+        {
+            strcpyW(elf.elfLogFont.lfFaceName, family->FamilyName);
+            create_full_name(elf.elfFullName, family->FamilyName, face->StyleName);
         }
         TRACE("enuming face %s full %s style %s charset = %d type %d script %s it %d weight %d ntmflags %08x\n",
               debugstr_w(elf.elfLogFont.lfFaceName),
@@ -4770,8 +4780,8 @@ static BOOL freetype_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc,
                 face_list = get_face_list_from_family(family);
                 LIST_FOR_EACH(face_elem_ptr, face_list) {
                     face = LIST_ENTRY(face_elem_ptr, Face, entry);
-                    if (!face_matches(face, plf)) continue;
-                    if (!enum_face_charsets(face, &enum_charsets, proc, lparam)) return FALSE;
+                    if (!face_matches(family->FamilyName, face, plf)) continue;
+                    if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam)) return FALSE;
 		}
 	    }
 	}
@@ -4781,7 +4791,7 @@ static BOOL freetype_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc,
             face_list = get_face_list_from_family(family);
             face_elem_ptr = list_head(face_list);
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            if (!enum_face_charsets(face, &enum_charsets, proc, lparam)) return FALSE;
+            if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam)) return FALSE;
 	}
     }
     LeaveCriticalSection( &freetype_cs );
