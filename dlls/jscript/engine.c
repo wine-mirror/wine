@@ -230,7 +230,7 @@ static HRESULT exprval_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *ei, 
             return E_FAIL;
         }
 
-        return disp_propget(ctx, val->u.idref.disp, val->u.idref.id, ret, ei, NULL/*FIXME*/);
+        return disp_propget(ctx, val->u.idref.disp, val->u.idref.id, ret, ei);
     case EXPRVAL_INVALID:
         assert(0);
     }
@@ -843,7 +843,7 @@ static HRESULT interp_array(exec_ctx_t *ctx)
     hres = disp_get_id(ctx->parser->script, obj, name, 0, &id);
     SysFreeString(name);
     if(SUCCEEDED(hres)) {
-        hres = disp_propget(ctx->parser->script, obj, id, &v, ctx->ei, NULL/*FIXME*/);
+        hres = disp_propget(ctx->parser->script, obj, id, &v, ctx->ei);
     }else if(hres == DISP_E_UNKNOWNNAME) {
         V_VT(&v) = VT_EMPTY;
         hres = S_OK;
@@ -873,7 +873,7 @@ static HRESULT interp_member(exec_ctx_t *ctx)
     hres = disp_get_id(ctx->parser->script, obj, arg, 0, &id);
     if(SUCCEEDED(hres)) {
         V_VT(&v) = VT_EMPTY;
-        hres = disp_propget(ctx->parser->script, obj, id, &v, ctx->ei, NULL/*FIXME*/);
+        hres = disp_propget(ctx->parser->script, obj, id, &v, ctx->ei);
     }else if(hres == DISP_E_UNKNOWNNAME) {
         V_VT(&v) = VT_EMPTY;
         hres = S_OK;
@@ -940,7 +940,7 @@ static HRESULT interp_refval(exec_ctx_t *ctx)
     if(!disp)
         return throw_reference_error(ctx->parser->script, ctx->ei, JS_E_ILLEGAL_ASSIGN, NULL);
 
-    hres = disp_propget(ctx->parser->script, disp, id, &v, ctx->ei, NULL/*FIXME*/);
+    hres = disp_propget(ctx->parser->script, disp, id, &v, ctx->ei);
     if(FAILED(hres))
         return hres;
 
@@ -1784,7 +1784,7 @@ static HRESULT interp_typeofid(exec_ctx_t *ctx)
         return stack_push_string(ctx, undefinedW);
 
     V_VT(&v) = VT_EMPTY;
-    hres = disp_propget(ctx->parser->script, obj, id, &v, ctx->ei, NULL/*FIXME*/);
+    hres = disp_propget(ctx->parser->script, obj, id, &v, ctx->ei);
     IDispatch_Release(obj);
     if(FAILED(hres))
         return stack_push_string(ctx, unknownW);
@@ -1896,7 +1896,7 @@ static HRESULT interp_postinc(exec_ctx_t *ctx)
     if(!obj)
         return throw_type_error(ctx->parser->script, ctx->ei, JS_E_OBJECT_EXPECTED, NULL);
 
-    hres = disp_propget(ctx->parser->script, obj, id, &v, ctx->ei, NULL/*FIXME*/);
+    hres = disp_propget(ctx->parser->script, obj, id, &v, ctx->ei);
     if(SUCCEEDED(hres)) {
         VARIANT n, inc;
 
@@ -1930,7 +1930,7 @@ static HRESULT interp_preinc(exec_ctx_t *ctx)
     if(!obj)
         return throw_type_error(ctx->parser->script, ctx->ei, JS_E_OBJECT_EXPECTED, NULL);
 
-    hres = disp_propget(ctx->parser->script, obj, id, &v, ctx->ei, NULL/*FIXME*/);
+    hres = disp_propget(ctx->parser->script, obj, id, &v, ctx->ei);
     if(SUCCEEDED(hres)) {
         VARIANT n;
 

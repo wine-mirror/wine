@@ -1184,7 +1184,7 @@ HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, VARIANT *val, jsexcept_t *ei
     return prop_get(jsdisp, prop, &dp, val, ei, caller);
 }
 
-HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val, jsexcept_t *ei)
 {
     DISPPARAMS dp  = {NULL,NULL,0,0};
     IDispatchEx *dispex;
@@ -1193,7 +1193,7 @@ HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val
 
     jsdisp = iface_to_jsdisp((IUnknown*)disp);
     if(jsdisp) {
-        hres = jsdisp_propget(jsdisp, id, val, ei, caller);
+        hres = jsdisp_propget(jsdisp, id, val, ei, NULL);
         jsdisp_release(jsdisp);
         return hres;
     }
