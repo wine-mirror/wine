@@ -673,11 +673,11 @@ static void test_dump(void)
 
     if (!ReadFile(hFile, pvData, 10000, &cbSize, NULL))
     {
-      skip("Template file is too big\n");
+      skip("Templates file is too big\n");
       goto exit;
     }
 
-    printf("Load %d bytes\n", cbSize);
+    printf("Load templates file (%d bytes)\n", cbSize);
 
     hr = pDirectXFileCreate(&lpDirectXFile);
     ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
