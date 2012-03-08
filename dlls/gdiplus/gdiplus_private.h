@@ -170,9 +170,7 @@ struct GpGraphics{
 };
 
 struct GpBrush{
-    HBRUSH gdibrush;
     GpBrushType bt;
-    LOGBRUSH lb;
 };
 
 struct GpHatch{
