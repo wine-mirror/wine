@@ -662,7 +662,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 {
     PARSEDURLW base, relative;
     DWORD myflags, sizeloc = 0;
-    DWORD len, res1, res2, process_case = 0;
+    DWORD i, len, res1, res2, process_case = 0;
     LPWSTR work, preliminary, mbase, mrelative;
     static const WCHAR myfilestr[] = {'f','i','l','e',':','/','/','/','\0'};
     HRESULT ret;
@@ -702,6 +702,10 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
     }
     else do {
         BOOL manual_search = FALSE;
+
+        work = (LPWSTR)base.pszProtocol;
+        for(i=0; i<base.cchProtocol; i++)
+            work[i] = tolowerW(work[i]);
 
         /* mk is a special case */
         if(base.nScheme == URL_SCHEME_MK) {
@@ -826,7 +830,11 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
             }
             process_case = (*base.pszSuffix == '/' || base.nScheme == URL_SCHEME_MK) ? 5 : 3;
 	    break;
-	}
+	}else {
+            work = (LPWSTR)relative.pszProtocol;
+            for(i=0; i<relative.cchProtocol; i++)
+                work[i] = tolowerW(work[i]);
+        }
 
 	/* handle cases where pszRelative has scheme */
 	if ((base.cchProtocol == relative.cchProtocol) &&

@@ -343,7 +343,7 @@ static const TEST_URL_COMBINE TEST_COMBINE[] = {
     {"foo:today", "foo:calendar", 0, S_OK, "foo:calendar"},
     {"foo:today", "bar:calendar", 0, S_OK, "bar:calendar"},
     {"foo:/today", "foo:calendar", 0, S_OK, "foo:/calendar"},
-    {"foo:/today/", "foo:calendar", 0, S_OK, "foo:/today/calendar"},
+    {"Foo:/today/", "fOo:calendar", 0, S_OK, "foo:/today/calendar"},
     {"mk:@MSITStore:dir/test.chm::dir/index.html", "image.jpg", 0, S_OK, "mk:@MSITStore:dir/test.chm::dir/image.jpg"},
     {"mk:@MSITStore:dir/test.chm::dir/dir2/index.html", "../image.jpg", 0, S_OK, "mk:@MSITStore:dir/test.chm::dir/image.jpg"},
     /* UrlCombine case 2 tests.  Schemes do not match */
@@ -365,7 +365,7 @@ static const TEST_URL_COMBINE TEST_COMBINE[] = {
     {"outbind://xxxxxxxxx/","http:wine16/dir",0, S_OK,"http:wine16/dir"},
     {"http://xxxxxxxxx","outbind:wine17/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"outbind:wine17/dir"},
     {"xxx://xxxxxxxxx","ftp:wine18/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"ftp:wine18/dir"},
-    {"ftp://xxxxxxxxx/","xxx:wine19/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"xxx:wine19/dir"},
+    {"ftp://xxxxxxxxx/","xXx:wine19/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"xxx:wine19/dir"},
     {"outbind://xxxxxxxxx/","http:wine20/dir",URL_PLUGGABLE_PROTOCOL, S_OK,"http:wine20/dir"},
     {"file:///c:/dir/file.txt","index.html?test=c:/abc",URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,S_OK,"file:///c:/dir/index.html?test=c:/abc"}
 };
