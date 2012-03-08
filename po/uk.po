@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
+"PO-Revision-Date: 2012-03-08 23:51+0300\n"
+"Last-Translator: Igor Paliychuk <mansonigor@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Ukrainian\n"
 "MIME-Version: 1.0\n"
@@ -39,9 +39,8 @@ msgstr ""
 "склад, виберіть її зі списку та натисніть Змінити/Видалити."
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "Дані підтримки"
+msgstr "&Дані підтримки"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -115,7 +114,6 @@ msgid "Wine Gecko Installer"
 msgstr "Встановлювач Wine Gecko"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -130,7 +128,8 @@ msgstr ""
 "його для Вас.\n"
 "\n"
 "Зауважте: Рекомендується використати пакет з вашого дистрибутиву. Детальніше "
-"читайте http://wiki.winehq.org/Gecko."
+"читайте <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/"
+"Gecko</a>."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -576,19 +575,17 @@ msgstr "С&иній:"
 
 #: comdlg32.rc:288
 msgid "&Hue:"
-msgstr "Від&тінок:"
+msgstr "Від&т:"
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr "&Контраст:"
+msgstr "&Контр:"
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
-msgstr "&Яскравість:"
+msgstr "&Яскр:"
 
 #: comdlg32.rc:302
 msgid "&Add to Custom Colors"
@@ -776,14 +773,12 @@ msgid "&Open"
 msgstr "&Відкрити"
 
 #: comdlg32.rc:481
-#, fuzzy
 msgid "File name:"
-msgstr "&Ім'я файлу:"
+msgstr "Ім'я файлу:"
 
 #: comdlg32.rc:484
-#, fuzzy
 msgid "Files of type:"
-msgstr "Файли &типу"
+msgstr "Файли типу"
 
 #: comdlg32.rc:29
 msgid "File not found"
@@ -934,13 +929,12 @@ msgid "Unreadable Entry"
 msgstr "Нечитаємий елемент"
 
 #: comdlg32.rc:54
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Це значення не лежить у діапазоні сторінок.\n"
-"Введіть значення між %d та %d."
+"Введіть значення між %1!d! та %2!d!."
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -999,9 +993,8 @@ msgstr ""
 "встановити принтер. Встановіть принтер та спробуйте знов."
 
 #: comdlg32.rc:137
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Биберіть шрифт розміром %d - %d пунктів."
+msgstr "Биберіть шрифт розміром %1!d! - %2!d! пунктів."
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
@@ -1297,10 +1290,9 @@ msgid "Prefer Signed Data"
 msgstr "Віддати перевагу підписаним даним"
 
 #: crypt32.rc:53 cryptdlg.rc:31
-#, fuzzy
 msgctxt "Certification Practice Statement"
 msgid "CPS"
-msgstr "CPS"
+msgstr ""
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
@@ -1395,9 +1387,8 @@ msgid "Initials"
 msgstr "Ініціали"
 
 #: crypt32.rc:77
-#, fuzzy
 msgid "Surname"
-msgstr "Ім'я користувача"
+msgstr "Прізвище"
 
 #: crypt32.rc:78
 msgid "Domain Component"
@@ -1824,10 +1815,9 @@ msgid "Subject Type="
 msgstr "Тип предмету="
 
 #: crypt32.rc:192
-#, fuzzy
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr "CA"
+msgstr ""
 
 #: crypt32.rc:193
 msgid "End Entity"
@@ -1855,10 +1845,9 @@ msgid "Access Method="
 msgstr "Метод доступу="
 
 #: crypt32.rc:199
-#, fuzzy
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
-msgstr "OCSP"
+msgstr ""
 
 #: crypt32.rc:200
 msgid "CA Issuers"
@@ -2077,9 +2066,8 @@ msgid "Certification Path"
 msgstr "Шлях сертифікації"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "&Шлях сертифікації"
+msgstr "Шлях сертифікації"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
@@ -2157,7 +2145,6 @@ msgid "Welcome to the Certificate Import Wizard"
 msgstr "Вас вітає Майстер імпорту сертифікатів"
 
 #: cryptui.rc:283
-#, fuzzy
 msgid ""
 "This wizard helps you import certificates, certificate revocation lists, and "
 "certificate trust lists from a file to a certificate store.\n"
@@ -2169,11 +2156,16 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Цей майстер дозволяє імпортувати сертифікати, списки відхилених та довірених "
+"сертифікатів.\n"
+"\n"
 "Сертифікат може бути використаний для вашої ідентифікації або ідентифікації "
 "комп'ютера, з яким ви з'єднані.  Також він може бути використаний для "
 "завірення і для підписуваня повідомлень.  Сховищами сертифікатів є колекції "
 "сертифікатів, списки анульованих сертифікатів та списки довірених "
-"сертифікатів."
+"сертифікатів.\n"
+"\n"
+"Натисніть Далі для продовження."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2184,12 +2176,11 @@ msgid "B&rowse..."
 msgstr "&Огляд..."
 
 #: cryptui.rc:294
-#, fuzzy
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"Увага:  Наступні формати файлів можуть містити більше одного сертифікату, "
+"Увага: Наступні формати файлів можуть містити більше одного сертифікату, "
 "списку анульованих сертифікатів, чи списку довірених сертифікатів:"
 
 #: cryptui.rc:296
@@ -2291,7 +2282,6 @@ msgid "Welcome to the Certificate Export Wizard"
 msgstr "Вас вітає Майстер експорту сертифікатів"
 
 #: cryptui.rc:373
-#, fuzzy
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2303,11 +2293,16 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Цей майстер дозволяє експортувати сертифікати, списки відхилених та "
+"довірених сертифікатів з сховища сертифікатів до файлу.\n"
+"\n"
 "Сертифікат може бути використаний для вашої ідентифікації або ідентифікації "
-"комп'ютера, з яким ви з'єднані.  Також він може бути використаний для "
+"комп'ютера, з яким ви з'єднані. Також він може бути використаний для "
 "завірення і для підписуваня повідомлень.  Сховищами сертифікатів є колекції "
 "сертифікатів, списки анульованих сертифікатів та списки довірених "
-"сертифікатів."
+"сертифікатів.\n"
+"\n"
+"Для продовження натисніть Далі."
 
 #: cryptui.rc:381
 msgid ""
@@ -2386,21 +2381,19 @@ msgid "Certificate Information"
 msgstr "Інформація про сертифікат"
 
 #: cryptui.rc:29
-#, fuzzy
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
-"Цей сертифікат має недійсний підпис.  Сертифікат може бути змінений або "
+"Цей сертифікат має недійсний підпис. Сертифікат може бути змінений або "
 "пошкоджений."
 
 #: cryptui.rc:30
-#, fuzzy
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
-"Цей кореневий сертифікат не є довіреним.  Щоб довіряти йому, додайте його в "
+"Цей кореневий сертифікат не є довіреним. Щоб довіряти йому, додайте його в "
 "системне сховище довірених кореневих сертифікатів."
 
 #: cryptui.rc:31
@@ -2509,9 +2502,8 @@ msgid "Public key"
 msgstr "Публічний ключ"
 
 #: cryptui.rc:58
-#, fuzzy
 msgid "%1 (%2!d! bits)"
-msgstr "%s (%d біт)"
+msgstr "%1 (%2!d! біт)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -2546,12 +2538,11 @@ msgid "Please select a certificate store."
 msgstr "Будь-ласка, виберіть сховище сертифікатів."
 
 #: cryptui.rc:69
-#, fuzzy
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
-"Файл містить об'єкти, що не відповідають заданим критеріям.  Виберіть інший "
+"Файл містить об'єкти, що не відповідають заданим критеріям. Виберіть інший "
 "файл."
 
 #: cryptui.rc:70
@@ -2603,9 +2594,8 @@ msgid "Please select a file."
 msgstr "Виберіть файл."
 
 #: cryptui.rc:82
-#, fuzzy
 msgid "The file format is not recognized. Please select another file."
-msgstr "Формат файлу не розпізнаний.  Виберіть інший файл."
+msgstr "Формат файлу не розпізнаний. Виберіть інший файл."
 
 #: cryptui.rc:83
 msgid "Could not open "
@@ -2842,9 +2832,8 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr "Вкажіть ім'я файлу, в якому буде збережений вміст."
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
-msgstr "Вказаний файл вже існує.  Ви хочете його замінити?"
+msgstr "Вказаний файл вже існує. Ви хочете його замінити?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -2915,7 +2904,6 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "Увага: Приватний ключ для цього сертифікату не може бути відкритий."
 
 #: cryptui.rc:173
-#, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
 msgstr ""
 "Увага: Приватний ключ для цього сертифікату не може бути експортований."
@@ -2937,103 +2925,92 @@ msgid "Default MidiOut Device"
 msgstr "Пристрій виводу Midi по замовчуванні"
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "Налаштува&ти..."
+msgstr "Налаштувати пристрої"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Скинути"
 
 #: dinput.rc:48
-#, fuzzy
 msgid "Player"
-msgstr "Грати"
+msgstr "Програвач"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "&Привід:"
+msgstr "Пристрій"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "Активація"
+msgstr "Дії"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "Показ диску"
+msgstr "Картографія"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Вже призначено\n"
+msgstr "Показати призначені спершу"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Активація"
+msgstr "Дія"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "&Об'єкт"
+msgstr "Об'єкт"
 
 #: dxdiagn.rc:25
 msgid "Regional Setting"
 msgstr "Регіональні Налаштування"
 
 #: dxdiagn.rc:26
-#, fuzzy
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr "%uМБ використано, %uМБ доступно"
+msgstr "%1!u!МБ використано, %2!u!МБ доступно"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Західне"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Центральна Європа"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Кирилиця"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Зелений"
+msgstr "Грецьке"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Турецьке"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "Іврит"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Арабське"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Балтійське"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "В'єтнамське"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Тайське"
 
 #: gdi32.rc:35
-#, fuzzy
 msgid "Japanese"
-msgstr "сектор"
+msgstr "Японське"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
@@ -3041,7 +3018,7 @@ msgstr ""
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "Хангул"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
@@ -3049,11 +3026,11 @@ msgstr ""
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Хангул(Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Символ"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
@@ -3277,29 +3254,24 @@ msgid "Address"
 msgstr "Адреса"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "Властивості для %s"
+msgstr "Шукається %s"
 
 #: ieframe.rc:79
-#, fuzzy
 msgid "Start downloading %s"
-msgstr "Завантаження з %s..."
+msgstr "Завантаження %s"
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "Завантаження..."
+msgstr "Завантаження %s"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "Властивості для %s"
+msgstr "Запит %s"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr " Домашня сторінка "
+msgstr "Домашня сторінка"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3311,7 +3283,7 @@ msgstr "&Поточна сторінка"
 
 #: inetcpl.rc:51
 msgid "&Default page"
-msgstr "&За замовчуванням"
+msgstr "&Типова сторінка"
 
 #: inetcpl.rc:52
 msgid "&Blank page"
@@ -3319,29 +3291,31 @@ msgstr "По&рожня сторінка"
 
 #: inetcpl.rc:53
 msgid "Browsing history"
-msgstr ""
+msgstr "Історія перегляду"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr ""
+msgstr "Ви можете видалити кешовані сторінки, куки та інші дані."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr ""
+msgstr "Видалити &файли..."
 
 #: inetcpl.rc:57
 msgid "&Settings..."
-msgstr ""
+msgstr "&Параметри..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr ""
+msgstr "Очистити історію перегляду"
 
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
+"Тимчасові файли інтернету\n"
+"Кешовані копії сторінок, зображень та сертифікатів."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3349,24 +3323,33 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"Куки\n"
+"Файли, збережені на комп'ютері сайтами, що зберігають такі дані як "
+"налаштування користувача та дані входу."
 
 #: inetcpl.rc:72
 msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"Історія\n"
+"Список сайтів, на які ви заходили."
 
 #: inetcpl.rc:74
 msgid ""
 "Form data\n"
 "Usernames and other information you have entered into forms."
 msgstr ""
+"Дані форм\n"
+"Ім'я користувача та інші дані, введені вами в форми."
 
 #: inetcpl.rc:76
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
+"Паролі\n"
+"Збережені паролі, які ви вводили в форми."
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -3441,9 +3424,8 @@ msgid "Subscript out of range"
 msgstr "Індекс поза діапазоном"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "Очікується об'єкт"
+msgstr "Вимагається об'єкт"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -3483,20 +3465,19 @@ msgstr "Незавершена рядкова константа"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "'break' не може знаходитись за циклом"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "'continue' не може знаходитись за циклом"
 
 #: jscript.rc:40
 msgid "Label redefined"
-msgstr ""
+msgstr "Мітка перевизначена"
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
-msgstr "Файл не знайдено"
+msgstr "Мітку не знайдено"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
@@ -3531,9 +3512,8 @@ msgid "Boolean object expected"
 msgstr "Очікується об'єкт Boolean"
 
 #: jscript.rc:50
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Неможливо завершити\n"
+msgstr "Неможливо видалити '|'"
 
 #: jscript.rc:51
 msgid "VBArray object expected"
@@ -3552,9 +3532,8 @@ msgid "URI to be encoded contains invalid characters"
 msgstr "URI, що буде закодований, містить неприпустимі символи"
 
 #: jscript.rc:54
-#, fuzzy
 msgid "URI to be decoded is incorrect"
-msgstr "URI, що буде закодований, містить неприпустимі символи"
+msgstr "URI, що буде закодований, некоректний"
 
 #: jscript.rc:56
 msgid "Array length must be a finite positive integer"
@@ -3594,7 +3573,7 @@ msgstr "Невірний дескриптор.\n"
 
 #: winerror.mc:61
 msgid "Memory trashed.\n"
-msgstr ""
+msgstr "Пам'ять засмічена.\n"
 
 #: winerror.mc:66
 msgid "Not enough memory.\n"
@@ -3646,7 +3625,7 @@ msgstr "Захищено від запису.\n"
 
 #: winerror.mc:126
 msgid "Bad unit.\n"
-msgstr ""
+msgstr "Поганий модуль.\n"
 
 #: winerror.mc:131
 msgid "Not ready.\n"
@@ -3666,7 +3645,7 @@ msgstr "Невірна довжина.\n"
 
 #: winerror.mc:151 winerror.mc:526
 msgid "Seek error.\n"
-msgstr ""
+msgstr "Помилка пошуку.\n"
 
 #: winerror.mc:156
 msgid "Not DOS disk.\n"
@@ -3806,7 +3785,7 @@ msgstr "Запит не прийнято.\n"
 
 #: winerror.mc:326
 msgid "Redirector paused.\n"
-msgstr ""
+msgstr "Перенаправник призупинено.\n"
 
 #: winerror.mc:331
 msgid "File exists.\n"
@@ -3822,7 +3801,7 @@ msgstr "Помилка переривання Int24.\n"
 
 #: winerror.mc:346
 msgid "Out of structures.\n"
-msgstr ""
+msgstr "Немає вільних структур.\n"
 
 #: winerror.mc:351
 msgid "Already assigned.\n"
@@ -3838,27 +3817,27 @@ msgstr "Невірний параметр.\n"
 
 #: winerror.mc:366
 msgid "Net write fault.\n"
-msgstr ""
+msgstr "Помилка запису мережі.\n"
 
 #: winerror.mc:371
 msgid "No process slots.\n"
-msgstr ""
+msgstr "Немає процесних слотів.\n"
 
 #: winerror.mc:376
 msgid "Too many semaphores.\n"
-msgstr ""
+msgstr "Забагато семафорів.\n"
 
 #: winerror.mc:381
 msgid "Exclusive semaphore already owned.\n"
-msgstr ""
+msgstr "Екслюзивний семафор вже має власника.\n"
 
 #: winerror.mc:386
 msgid "Semaphore is set.\n"
-msgstr ""
+msgstr "Семафор встановлений.\n"
 
 #: winerror.mc:391
 msgid "Too many semaphore requests.\n"
-msgstr ""
+msgstr "Забагато запитів семафорів.\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time.\n"
@@ -3866,7 +3845,7 @@ msgstr ""
 
 #: winerror.mc:401
 msgid "Semaphore owner died.\n"
-msgstr ""
+msgstr "Власник семафору вмер.\n"
 
 #: winerror.mc:406
 msgid "Semaphore user limit.\n"
@@ -3882,7 +3861,7 @@ msgstr "Диск зайнятий чи заблокований.\n"
 
 #: winerror.mc:421
 msgid "Broken pipe.\n"
-msgstr ""
+msgstr "Зламаний канал.\n"
 
 #: winerror.mc:426
 msgid "Open failed.\n"
@@ -3910,7 +3889,7 @@ msgstr ""
 
 #: winerror.mc:461
 msgid "Bad driver level.\n"
-msgstr ""
+msgstr "Поганий рівень драйвера.\n"
 
 #: winerror.mc:466
 msgid "Call not implemented.\n"
@@ -3958,7 +3937,7 @@ msgstr "Неправильне використання рукоятки пря�
 
 #: winerror.mc:521
 msgid "Negative seek.\n"
-msgstr ""
+msgstr "Негативний пошук.\n"
 
 #: winerror.mc:531
 msgid "Drive is a JOIN target.\n"
@@ -4006,7 +3985,7 @@ msgstr "Той же привід.\n"
 
 #: winerror.mc:586
 msgid "Not toplevel directory.\n"
-msgstr ""
+msgstr "Тека не верхнього рівня.\n"
 
 #: winerror.mc:591
 msgid "Directory is not empty.\n"
@@ -4118,7 +4097,7 @@ msgstr "Невірний номер прапорця.\n"
 
 #: winerror.mc:726
 msgid "Semaphore name not found.\n"
-msgstr ""
+msgstr "Ім'я семафору не знайдено.\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1.\n"
@@ -4194,7 +4173,7 @@ msgstr "Ім'я файлу занадто довге.\n"
 
 #: winerror.mc:821
 msgid "Ring 2 stack in use.\n"
-msgstr ""
+msgstr "Стек кільця 2 використовується.\n"
 
 #: winerror.mc:826
 msgid "Error in use of filename wildcards.\n"
@@ -4226,19 +4205,19 @@ msgstr ""
 
 #: winerror.mc:861
 msgid "Bad pipe.\n"
-msgstr ""
+msgstr "Поганий канал.\n"
 
 #: winerror.mc:866
 msgid "Pipe busy.\n"
-msgstr ""
+msgstr "Канал зайнятий.\n"
 
 #: winerror.mc:871
 msgid "Pipe closed.\n"
-msgstr ""
+msgstr "Канал закритий.\n"
 
 #: winerror.mc:876
 msgid "Pipe not connected.\n"
-msgstr ""
+msgstr "Канал не приєднаний.\n"
 
 #: winerror.mc:881
 msgid "More data available.\n"
@@ -4322,7 +4301,7 @@ msgstr ""
 
 #: winerror.mc:981
 msgid "Pipe connected.\n"
-msgstr ""
+msgstr "Канал приєднаний.\n"
 
 #: winerror.mc:986
 msgid "Pipe listening.\n"
@@ -4350,7 +4329,7 @@ msgstr ""
 
 #: winerror.mc:1016
 msgid "Swap error.\n"
-msgstr ""
+msgstr "Помилка довантаження.\n"
 
 #: winerror.mc:1021
 msgid "Stack overflow.\n"
@@ -4374,15 +4353,15 @@ msgstr ""
 
 #: winerror.mc:1046
 msgid "File invalid.\n"
-msgstr ""
+msgstr "Файл невірний.\n"
 
 #: winerror.mc:1051
 msgid "Cannot run full-screen.\n"
-msgstr ""
+msgstr "Не може відкрити на весь екран.\n"
 
 #: winerror.mc:1056
 msgid "Nonexistent token.\n"
-msgstr ""
+msgstr "Неіснуючий знак.\n"
 
 #: winerror.mc:1061
 msgid "Registry corrupt.\n"
@@ -4850,7 +4829,7 @@ msgstr "Під'єднання недоступне.\n"
 
 #: winerror.mc:1641
 msgid "Device already remembered.\n"
-msgstr ""
+msgstr "Пристрій вже запам'ятований.\n"
 
 #: winerror.mc:1646
 msgid "No network or bad path.\n"
@@ -5078,7 +5057,7 @@ msgstr ""
 
 #: winerror.mc:1931
 msgid "Unknown revision.\n"
-msgstr ""
+msgstr "Невідома ревізія.\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels.\n"
@@ -5262,15 +5241,15 @@ msgstr ""
 
 #: winerror.mc:2161
 msgid "Invalid server state.\n"
-msgstr ""
+msgstr "Невірний стан сервера.\n"
 
 #: winerror.mc:2166
 msgid "Invalid domain state.\n"
-msgstr ""
+msgstr "Невірний стан домену.\n"
 
 #: winerror.mc:2171
 msgid "Invalid domain role.\n"
-msgstr ""
+msgstr "Невірна роль домену.\n"
 
 #: winerror.mc:2176
 msgid "No such domain.\n"
@@ -5709,7 +5688,6 @@ msgid "Event log file changed.\n"
 msgstr ""
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
 msgstr "Сервіс встановлення зламався.\n"
 
@@ -6595,7 +6573,7 @@ msgstr "Вся Мережа"
 
 #: msacm32.rc:27
 msgid "Sound Selection"
-msgstr ""
+msgstr "Вибір звуку"
 
 #: msacm32.rc:36 winedbg.rc:73
 msgid "&Save As..."
@@ -6642,12 +6620,11 @@ msgid "Done"
 msgstr "Готово"
 
 #: msi.rc:27
-#, fuzzy
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
-"Не вдалося відкрити вказаний пакет інсталяції.  Перевірте шлях до файлу та "
+"Не вдалося відкрити вказаний пакет інсталяції. Перевірте шлях до файлу та "
 "спробуйте знов."
 
 #: msi.rc:28
@@ -6781,9 +6758,8 @@ msgid "&Data Rate"
 msgstr "&Потік даних"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "KB/sec"
+msgstr "кБ/с"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -7179,7 +7155,6 @@ msgstr ""
 "допомогою %s."
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
@@ -7188,7 +7163,6 @@ msgstr ""
 "допомогою %s. Об'єкт буде показано як значок."
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
@@ -7198,7 +7172,6 @@ msgstr ""
 "вихідним файлом, що дасть змогу відображувати в документі внесені зміни."
 
 #: oledlg.rc:38
-#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
@@ -7208,7 +7181,6 @@ msgstr ""
 "вихідним файлом, що дасть змогу відображувати в документі внесені зміни."
 
 #: oledlg.rc:39
-#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
@@ -7268,9 +7240,8 @@ msgid "us"
 msgstr "µs"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "Властивості для %s"
+msgstr "Параметри для %s"
 
 #: serialui.rc:28
 msgid "Baud Rate"
@@ -7317,9 +7288,8 @@ msgid "Copy manufacturer's files from:"
 msgstr "Скопіюйте файли виробника з:"
 
 #: setupapi.rc:28
-#, fuzzy
 msgid "The file '%1' on %2 is needed"
-msgstr "Файл '%s' на %s потрібний"
+msgstr "Потрібний файл '%1' на %2"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -7546,23 +7516,23 @@ msgstr ""
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
-msgstr ""
+msgstr "Монітор пам'яті"
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
-msgstr ""
+msgstr "Лічильники швидкодії"
 
 #: shdoclc.rc:208
 msgid "Save HTML"
-msgstr ""
+msgstr "Зберегти HTML"
 
 #: shdoclc.rc:210
 msgid "&Browse View"
-msgstr ""
+msgstr "&Вибрати вигляд"
 
 #: shdoclc.rc:211
 msgid "&Edit View"
-msgstr ""
+msgstr "&Змінити вигляд"
 
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
@@ -7692,14 +7662,13 @@ msgid "Properties"
 msgstr "Властивості"
 
 #: shell32.rc:82
-#, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&Відновити"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "&Стерти"
 
 #: shell32.rc:95
 msgid "E&xplore"
@@ -7828,10 +7797,9 @@ msgid "Date deleted"
 msgstr "Дата видалення"
 
 #: shell32.rc:153 winecfg.rc:92 winefile.rc:99
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
-msgstr "Робочий стіл"
+msgstr "Стільниця"
 
 #: shell32.rc:154 regedit.rc:200
 msgid "My Computer"
@@ -7875,7 +7843,7 @@ msgstr "Обране"
 
 #: shell32.rc:203
 msgid "StartUp"
-msgstr ""
+msgstr "Автозавантаження"
 
 #: shell32.rc:204
 msgid "Start Menu"
@@ -7890,10 +7858,9 @@ msgid "My Videos"
 msgstr "Мої Фільми"
 
 #: shell32.rc:207
-#, fuzzy
 msgctxt "directory"
 msgid "Desktop"
-msgstr "Робочий стіл"
+msgstr "Стільниця"
 
 #: shell32.rc:208
 msgid "NetHood"
@@ -7920,9 +7887,8 @@ msgid "My Pictures"
 msgstr "Мої Малюнки"
 
 #: shell32.rc:215
-#, fuzzy
 msgid "Common Files"
-msgstr "Загальна назва"
+msgstr ""
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
@@ -7957,14 +7923,12 @@ msgid "Links"
 msgstr "Посилання"
 
 #: shell32.rc:223
-#, fuzzy
 msgid "Slide Shows"
-msgstr "Малюнки\\Слайд Покази"
+msgstr "Слайд Покази"
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
-msgstr "Музика\\Плейлисти"
+msgstr "Плейлисти"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -7979,24 +7943,20 @@ msgid "Model"
 msgstr "Модель"
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
-msgstr "Музика\\Приклади Музики"
+msgstr "Зразки Музики"
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
-msgstr "Малюнки\\Приклади Малюнків"
+msgstr "Зразки Малюнків"
 
 #: shell32.rc:227
-#, fuzzy
 msgid "Sample Playlists"
-msgstr "Музика\\Приклади Плейлистів"
+msgstr "Зразки Плейлистів"
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
-msgstr "Фільми\\Приклади Відео"
+msgstr "Зразки Відео"
 
 #: shell32.rc:229
 msgid "Saved Games"
@@ -8113,47 +8073,42 @@ msgid "There is no Windows program configured to open this type of file."
 msgstr "Не сконфігуровано програми Windows для відкриття файлів цього типу."
 
 #: shell32.rc:243
-#, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "Ви впевнені, що хочете вилучити '%1'?"
+msgstr "Ви впевнені, що хочете остаточно вилучити '%1'?"
 
 #: shell32.rc:244
-#, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "Ви впевнені, що хочете вилучити ці %1 елементи(ів)?"
+msgstr "Ви впевнені, що хочете остаточно вилучити ці %1 елементи(ів)?"
 
 #: shell32.rc:245
-#, fuzzy
 msgid "Confirm deletion"
-msgstr "Підтвердження вилучення файлу"
+msgstr "Підтвердження вилучення"
 
 #: shell32.rc:246
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Файл уже існує.\n"
+"Файл уже існує в %1.\n"
+"\n"
 "Замінити його?"
 
 #: shell32.rc:247
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Файл уже існує.\n"
-"Замінити його?"
+"Тека за шляхом %1 вже існує.\n"
+"\n"
+"Замінити її?"
 
 #: shell32.rc:248
-#, fuzzy
 msgid "Confirm overwrite"
-msgstr "Підтвердження Перезапису Файлу"
+msgstr "Підтвердження перезапису"
 
 #: shell32.rc:265
-#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -8174,8 +8129,8 @@ msgstr ""
 "Foundation; версії 2.1 Ліцензії, чи (на ваш розсуд) новішої версії.\n"
 "\n"
 "Wine розповсюджується з надією, що буде корисним, але БЕЗ БУДЬ-ЯКИХ "
-"ГАРАНТІЙ; навіть без непрямих гарантій щодоПРОДАЖУ чи ПРИДАТНОСТІ ДЛЯ ПЕВНИХ "
-"ЦІЛЕЙ.  Дивіться GNU Lesser General Public License для детальної "
+"ГАРАНТІЙ; навіть без непрямих гарантій щодо ПРОДАЖУ чи ПРИДАТНОСТІ ДЛЯ "
+"ПЕВНИХ ЦІЛЕЙ. Дивіться GNU Lesser General Public License для детальної "
 "інформації.\n"
 "\n"
 "Ви повинні були отримати копію GNU Lesser General Public License разом з "
@@ -8199,30 +8154,25 @@ msgid "Don't show me th&is message again"
 msgstr "&Більше не показувати це повідомлення"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld байт"
+msgstr "%d байт"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
 msgstr " год"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
 msgstr " хв"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr " сек."
+msgstr " сек"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
-#, fuzzy
 msgctxt "window"
 msgid "&Restore"
 msgstr "&Відновити"
@@ -8293,7 +8243,7 @@ msgstr "&Розмір паперу:"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr ""
+msgstr "Дуплекс:"
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
@@ -8312,19 +8262,16 @@ msgid "Server"
 msgstr "Сервер"
 
 #: wininet.rc:74
-#, fuzzy
 msgid "Security Warning"
-msgstr "Безпека"
+msgstr "Попередження безпеки"
 
 #: wininet.rc:77
-#, fuzzy
 msgid "There is a problem with the certificate for this site."
-msgstr "Ім'я сертифікату не збігається з сайтом"
+msgstr "Існує проблеиа з сертифікатом для цього сайту."
 
 #: wininet.rc:79
-#, fuzzy
 msgid "Do you want to continue anyway?"
-msgstr "Симулювати перезавантаження Windows?"
+msgstr "Продовжити попри все?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -8376,7 +8323,6 @@ msgid "The specified device handle is invalid."
 msgstr "Вказано неправильний дескриптор пристрою."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
 msgstr "У системі немає встановлених драйверів!"
 
@@ -8952,9 +8898,8 @@ msgid "&Output File Name:"
 msgstr "&Ім'я кінцевого файлу:"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "Кінцевий файл вже існує.  Натисніть OK щоб його перезаписати."
+msgstr "Кінцевий файл вже існує. Натисніть OK щоб його перезаписати."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -9209,7 +9154,6 @@ msgstr ""
 "\n"
 
 #: attrib.rc:28 cmd.rc:317
-#, fuzzy
 msgid "%1: File Not Found\n"
 msgstr "%1: Файл не знайдено\n"
 
@@ -9234,6 +9178,24 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - Показує чи змінює атрибути файлів.\n"
+"\n"
+"Синтаксис:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [диск:][шлях][назва_файлу]\n"
+"       [/S [/D]]\n"
+"\n"
+"Де:\n"
+"\n"
+"  +   Задає атрибут.\n"
+"  -   Очищує атрибут.\n"
+"  R   Атрибут файлу лише-читання.\n"
+"  A   Атрибут архівного файлу.\n"
+"  S   Атрибут системного файлу.\n"
+"  H   АТрибут прихованого файлу.\n"
+"  [диск][шлях][назва_файлу]\n"
+"      Вказує файл чи файли для обробки атрибутів.\n"
+"  /S  Обробляє відповідні файли в поточній теці та всіх підтеках.\n"
+"  /D  Обробляє також теки.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -9398,7 +9360,6 @@ msgstr ""
 "HELP без аргументів показує всі вбудовані команди CMD.\n"
 
 #: cmd.rc:94
-#, fuzzy
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9411,12 +9372,13 @@ msgid ""
 msgstr ""
 "IF використовується для умовної обробки команди.\n"
 "\n"
-"Синтаксис:\tIF [NOT] EXIST ім'я_файлу команда\n"
-"IF [NOT] рядок1==рядок2 команда\n"
-"IF [NOT] ERRORLEVEL число команда\n"
+"Синтаксис: IF [NOT] EXIST ім'я_файлу команда\n"
+"           IF [NOT] рядок1==рядок2 команда\n"
+"           IF [NOT] ERRORLEVEL число команда\n"
 "\n"
 "В другій формі команди, рядок1 та рядок2 повинні бути в\n"
-"подвійних лапках. Порівняння не чутливе до регістру.\n"
+"подвійних\n"
+"лапках. Порівняння не чутливе до регістру.\n"
 
 #: cmd.rc:100
 msgid ""
@@ -9480,20 +9442,18 @@ msgstr ""
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
-#, fuzzy
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE показує на екрані повідомлення 'Натисніть Enter для продовження'\n"
-"та очікує натиснення користувачем клавіші. В основному корисно в\n"
-"пакетних файлах щоб користувач міг прочитати вивід попередньої команди\n"
-"перед її зникненням з екрану.\n"
+"PAUSE показує на екрані повідомлення 'Натисніть клавішу для продовження'\n"
+"\n"
+"В основному корисно в пакетних файлах щоб користувач міг прочитати вивід\n"
+"попередньої команди перед її зникненням з екрану.\n"
 
 #: cmd.rc:149
-#, fuzzy
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9517,18 +9477,19 @@ msgid ""
 msgstr ""
 "PROMPT задає запрошення командного рядка.\n"
 "\n"
-"Рядок, що йде після команди PROMPT і пробілу після команди,\n"
+"Рядок, що йде після команди PROMPT (і пробілу після команди),\n"
 "появляється на початку рядка, коли cmd очікує введення.\n"
+"\n"
 "\n"
 "Наступні символьні рядки мають спеціальні значення і відображення:\n"
 "\n"
-"$$    Знак долара         $_    Linefeed            $b    Знак Pipe (|)\n"
+"$$    Знак долара         $_    Linefeed            $b    Знак (|)\n"
 "$d    Поточна дата        $e    Escape              $g    Знак >\n"
 "$l    Знак <              $n    Поточний диск       $p    Поточний шлях\n"
 "$q    Знак рівності       $t    Поточний час        $v    Версія cmd\n"
 "\n"
 "Зауважте, що при вводі команди PROMPT без рядка запрошення налаштування\n"
-"скидаються до стандатрних, тобто поточна тека (включаючи\n"
+"скидаються до типових, тобто до поточної теки (включаючи\n"
 "букву поточного диску) з наступним знаком більше (>).\n"
 "(як в команді PROMPT $p$g).\n"
 "\n"
@@ -9536,7 +9497,6 @@ msgstr ""
 "тому команда 'SET PROMPT=text' має той же ефект, що і 'PROMPT text'\n"
 
 #: cmd.rc:153
-#, fuzzy
 msgid ""
 "A command line beginning with REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -9561,7 +9521,6 @@ msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <тека> видаляє підтеку.\n"
 
 #: cmd.rc:193
-#, fuzzy
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9609,7 +9568,6 @@ msgstr ""
 "її виклику з командного рядка.\n"
 
 #: cmd.rc:175 start.rc:39
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9639,17 +9597,18 @@ msgstr ""
 "/R[estored]  Запустити програму зі звичайним розміром вікна.\n"
 "/W[ait]      Очікувати завершення запущеної програми і вийти з кодом її "
 "виходу.\n"
-"/Unix        Сприймати шлях до документу записаним в Unix-форматі.\n"
+"/Unix        Сприймати шлях до документу записаним в Unix-форматі і "
+"запускати як windows explorer.\n"
 "/ProgIDOpen  Відкрити документ, використовуючи зазначений progID.\n"
+"/?           Показати довідку та вийти.\n"
 
 #: cmd.rc:200
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME задає чи показує поточний системний час.\n"
 
 #: cmd.rc:202
-#, fuzzy
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr "Задає заголовок вікна для вікна cmd, синтаксис TITLE [рядок]\n"
+msgstr "TITLE <рядок> задає заголовок вікна для вікна cmd.\n"
 
 #: cmd.rc:206
 msgid ""
@@ -9662,7 +9621,6 @@ msgstr ""
 "для читання.\n"
 
 #: cmd.rc:215
-#, fuzzy
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9694,6 +9652,8 @@ msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
+"ENDLOCAL завершує локазізацію змін оточення в пакетному файлі\n"
+"що були впроваджені командою SETLOCAL.\n"
 
 #: cmd.rc:232
 msgid ""
@@ -9704,6 +9664,12 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL починає локалізацію змін оточення в пакетному файлі.\n"
+"\n"
+"Зміни в оточення здійснені після SETLOCAL локальні для пакетного файлу, і\n"
+"діють до наступної появи ENDLOCAL (або до кінця файлу, залежно від того, що\n"
+"трапиться раніше), після чого відновлюються попередні налаштування\n"
+"оточення.\n"
 
 #: cmd.rc:235
 msgid ""
@@ -9714,11 +9680,8 @@ msgstr ""
 "а потім змінює поточну теку на вказану.\n"
 
 #: cmd.rc:237
-#, fuzzy
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
-msgstr ""
-"POPD змінює поточну теку на останню збережену\n"
-"командою PUSHD.\n"
+msgstr "POPD змінює поточну теку на останню збережену командою PUSHD.\n"
 
 #: cmd.rc:245
 msgid ""
@@ -9731,6 +9694,14 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC показує чи змінює асоціації файлових типів.\n"
+"\n"
+"Синтаксис: ASSOC [.розш[=[тип_файлу]]]\n"
+"\n"
+"ASSOC без параметрів показує поточні файлові асоціації.\n"
+"Якщо використовується лише з розширенням то відображає поточну асоціацію.\n"
+"Якщо не вказати тип файлу після знаку рівності то існуюча асоціація буде "
+"видалена.\n"
 
 #: cmd.rc:256
 msgid ""
@@ -9745,6 +9716,16 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE показує або змінює команди відкриття, асоційовані з типами файлів.\n"
+"\n"
+"Синтаксис: FTYPE [тип_файлу[=[командаВідкриття]]]\n"
+"\n"
+"Без параметрів, показує типи файлів, для яких на даний момент задані рядки "
+"команд відкриття.\n"
+"Якщо вказаний лише тип файлу, відображає асоційовані команди відкриття, якщо "
+"такі є.\n"
+"Якщо не вказана команда відкриття після знаку рівності то це видалить\n"
+"команду для вказаного типу файлів.\n"
 
 #: cmd.rc:258
 msgid "MORE displays output of files or piped input in pages.\n"
@@ -9770,7 +9751,6 @@ msgstr ""
 "до операційної системи чи оболонки, з якої ви запустили cmd.\n"
 
 #: cmd.rc:304
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -9812,6 +9792,7 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "Вбудовані команди CMD:\n"
+"ASSOC\t\tПоказати та змінити асоціації файлових розширень\n"
 "ATTRIB\t\tВідображення чи зміна атрибутів файлу DOS\n"
 "CALL\t\tЗапуск пакетного файлу всередині іншого\n"
 "CD (CHDIR)\tЗміна поточної теки за замовчуванням\n"
@@ -9822,30 +9803,35 @@ msgstr ""
 "DEL (ERASE)\tВидалення файлу чи набору файлів\n"
 "DIR\t\tВідображення вмісту теки\n"
 "ECHO\t\tКопіювання тексту прямо в консольний вивід\n"
+"ENDLOCAL\tКінець локалізації змін оточення в пакетному файлі\n"
+"FTYPE\t\tПоказ та зміна команд відкриття, асоційованих з типами файлів\n"
 "HELP\t\tПоказ короткої довідкової інформації про команду\n"
 "MD (MKDIR)\tСтворення підтеки\n"
 "MORE\t\tВідображення виводу сторінками\n"
 "MOVE\t\tПереміщення файлу, набору файлів чи дерева каталогів\n"
 "PATH\t\tЗадання чи відображення шляху пошуку\n"
+"PAUSE\t\tПризупиинити виконання пакету\n"
 "POPD\t\tВідновлює теку до останньої збереженої командою PUSHD\n"
 "PROMPT\t\tЗміна запрошення командного рядка\n"
 "PUSHD\t\tПереходить до нової теки, зберігаючи поточну\n"
 "REN (RENAME)\tПереіменування файлу\n"
 "RD (RMDIR)\tВидалення підтеки\n"
 "SET\t\tЗадання чи відображення змінних оточення\n"
+"SETLOCAL\tПочаток локалізації змін оточення в пакетному файлі\n"
+"START\t\tЗапустити програму чи відкрити документ в приєднаній програмі\n"
 "TIME\t\tЗадання чи відображення поточного системного часу\n"
 "TITLE\t\tЗадання заголовка вікна для поточної сесії CMD\n"
 "TYPE\t\tВиведення вмісту текстового файлу\n"
 "VER\t\tВідображення поточної версії CMD\n"
 "VOL\t\tВідображення мітки тому дискового пристрою\n"
+"XCOPY\t\tКопіювання файлів та дерева каталогів\n"
 "EXIT\t\tВихід з CMD\n"
 "\n"
-"Введіть HELP <команда> для детальнішої інформації про вищенаведені команди\n"
+"Введіть HELP <команда> для детальнішої інформації про вищенаведені команди.\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Are you sure?"
-msgstr "Ви впевнені"
+msgstr "Ви впевнені?"
 
 #: cmd.rc:307 xcopy.rc:40
 msgctxt "Yes key"
@@ -9858,19 +9844,16 @@ msgid "N"
 msgstr ""
 
 #: cmd.rc:309
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "Файлова асоціація для розширення %s втрачена\n"
+msgstr "Файлова асоціація для розширення %1 відсутня\n"
 
 #: cmd.rc:310
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "Немає команди відкриття, асоційованої з файловим типом '%s'\n"
+msgstr "Немає команди відкриття, асоційованої з файловим типом '%1'\n"
 
 #: cmd.rc:311
-#, fuzzy
 msgid "Overwrite %1?"
-msgstr "Перезаписати %s"
+msgstr "Перезаписати %1?"
 
 #: cmd.rc:312
 msgid "More..."
@@ -9889,23 +9872,20 @@ msgid "Syntax error\n"
 msgstr "Синтаксична помилка\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "Немає довідки для %s\n"
+msgstr "Немає довідки для %1\n"
 
 #: cmd.rc:319
 msgid "Target to GOTO not found\n"
 msgstr "Не знайдена ціль для GOTO\n"
 
 #: cmd.rc:320
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "Поточна дата: %s\n"
+msgstr "Поточна дата: %1\n"
 
 #: cmd.rc:321
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "Поточний час: %s\n"
+msgstr "Поточний час: %1\n"
 
 #: cmd.rc:322
 msgid "Enter new date: "
@@ -9916,14 +9896,12 @@ msgid "Enter new time: "
 msgstr "Введіть новий час: "
 
 #: cmd.rc:324
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "Змінна оточення %s не визначена\n"
+msgstr "Змінна оточення %1 не визначена\n"
 
 #: cmd.rc:325 xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "Не вдалось відкрити '%s'\n"
+msgstr "Не вдалось відкрити '%1'\n"
 
 #: cmd.rc:326
 msgid "Cannot call batch label outside of a batch script\n"
@@ -9935,19 +9913,16 @@ msgid "A"
 msgstr ""
 
 #: cmd.rc:328
-#, fuzzy
 msgid "Delete %1?"
-msgstr "Видалити"
+msgstr "Видалити %1?"
 
 #: cmd.rc:329
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "Echo зараз %s\n"
+msgstr "Echo зараз %1\n"
 
 #: cmd.rc:330
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "Verify зараз %s\n"
+msgstr "Verify зараз %1\n"
 
 #: cmd.rc:331
 msgid "Verify must be ON or OFF\n"
@@ -9958,37 +9933,32 @@ msgid "Parameter error\n"
 msgstr "Помилка параметру\n"
 
 #: cmd.rc:333
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Диск %c має мітку %s\n"
-"Серійний номер диску: %04x-%04x\n"
+"Серійний номер диску: %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:334
-#, fuzzy
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "Мітка диску (11 символів, ENTER - без мітки)?"
+msgstr "Мітка диску (11 символів, <Enter> - без мітки)?"
 
 #: cmd.rc:335
 msgid "PATH not found\n"
 msgstr "PATH не знайдено\n"
 
 #: cmd.rc:336
-#, fuzzy
 msgid "Press any key to continue... "
-msgstr "Натисніть Enter для продовження: "
+msgstr "Натисніть будь-яку клавішу, щоб продовжити... "
 
 #: cmd.rc:337
 msgid "Wine Command Prompt"
 msgstr "Командний рядок Wine"
 
 #: cmd.rc:338
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "Версія CMD %s\n"
+msgstr "Версія CMD %1!S!\n"
 
 #: cmd.rc:339
 msgid "More? "
@@ -10000,21 +9970,19 @@ msgstr "Введений рядок задовгий.\n"
 
 #: cmd.rc:341
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Том в приводі %1!c! : %2\n"
 
 #: cmd.rc:342
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Том в приводі %1!c! не має мітки.\n"
 
 #: cmd.rc:343
-#, fuzzy
 msgid " (Yes|No)"
-msgstr "Переписати %s? (Yes|No|All)\n"
+msgstr ""
 
 #: cmd.rc:344
-#, fuzzy
 msgid " (Yes|No|All)"
-msgstr "Переписати %s? (Yes|No|All)\n"
+msgstr ""
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10030,9 +9998,8 @@ msgid "Wine Explorer"
 msgstr "Оглядач Інтернету Wine"
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "Розміщення"
+msgstr "Розміщення:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -10059,13 +10026,12 @@ msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr "Помилка: Вказані невідомі чи невірні параметри командного рядка\n"
 
 #: ipconfig.rc:29
-#, fuzzy
 msgid "%1 adapter %2\n"
-msgstr "%s адаптер %s\n"
+msgstr "%1 адаптер %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr "Ethernet"
+msgstr ""
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
@@ -10112,7 +10078,6 @@ msgid "Default gateway"
 msgstr "Шлюз за замовчуванням"
 
 #: net.rc:27
-#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -10124,12 +10089,11 @@ msgid ""
 msgstr ""
 "Синтаксис цієї команди:\n"
 "\n"
-"NET HELP команда\n"
+"NET команда [аргументи]\n"
 "    -чи-\n"
 "NET команда /HELP\n"
 "\n"
-"   Доступні команди:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
+"Де 'команда' одна з HELP, START, STOP чи USE.\n"
 
 #: net.rc:28
 msgid ""
@@ -10140,6 +10104,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"Синтаксис команди наступний:\n"
+"\n"
+"NET START [служба]\n"
+"\n"
+"Показує список запущених служб якщо 'служба' не вказана. Інакше 'служба' з "
+"відповідною назвою буде запущена.\n"
 
 #: net.rc:29
 msgid ""
@@ -10149,16 +10119,19 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"Синтаксис команди наступний:\n"
+"\n"
+"NET STOP служба\n"
+"\n"
+"Де 'служба' це назва служби для зупинки.\n"
 
 #: net.rc:30
-#, fuzzy
 msgid "Stopping dependent service: %1\n"
-msgstr "Зупинка залежної служби: %s\n"
+msgstr "Зупинка залежної служби: %1\n"
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "Неможливо зупинити службу %s\n"
+msgstr "Неможливо зупинити службу %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -10169,34 +10142,28 @@ msgid "Could not get handle to service.\n"
 msgstr "Неможливо отримати доступ до служби.\n"
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "Запуск служби %s .\n"
+msgstr "Запуск служби %1.\n"
 
 #: net.rc:35
-#, fuzzy
 msgid "The %1 service was started successfully.\n"
-msgstr "Служба %s успішно запущена.\n"
+msgstr "Служба %1 успішно запущена.\n"
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "Помилка запуску служби %s .\n"
+msgstr "Помилка запуску служби %1.\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "Зупинка служби %s .\n"
+msgstr "Зупинка служби %1.\n"
 
 #: net.rc:38
-#, fuzzy
 msgid "The %1 service was stopped successfully.\n"
-msgstr "Служба %s успішно зупинена.\n"
+msgstr "Служба %1 успішно зупинена.\n"
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "Помилка зупинки служби %s .\n"
+msgstr "Помилка зупинки служби %1.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -10213,37 +10180,32 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-#, fuzzy
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%s      %s      %s      Відкритих ресурсів: %lu\n"
+msgstr "%1      %2      %3      Відкритих ресурсів: %4!u!\n"
 
 #: net.rc:45
-#, fuzzy
 msgid "Paused"
-msgstr "&Призупинити"
+msgstr "Призупинено"
 
 #: net.rc:46
 msgid "Disconnected"
-msgstr ""
+msgstr "Від'єднано"
 
 #: net.rc:47
-#, fuzzy
 msgid "A network error occurred"
-msgstr "Виникла помилка принтера."
+msgstr "Виникла помилка мережі"
 
 #: net.rc:48
-#, fuzzy
 msgid "Connection is being made"
-msgstr "З'єднання активне\n"
+msgstr "З'єднання здійснене"
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Під'єднуюсь до %s"
+msgstr "Повторне з’єднання"
 
 #: net.rc:40
 msgid "The following services are running:\n"
-msgstr ""
+msgstr "Запущені наступні служби:\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -10339,9 +10301,8 @@ msgid "&Footer:"
 msgstr "&Нижній колонтитул:"
 
 #: notepad.rc:104
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "&Поля (мм):"
+msgstr "Поля (міліметри)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10358,17 +10319,17 @@ msgstr "Кодування:"
 #: notepad.rc:129 wordpad.rc:278
 msgctxt "accelerator Select All"
 msgid "A"
-msgstr "A"
+msgstr ""
 
 #: notepad.rc:130 wordpad.rc:280
 msgctxt "accelerator Copy"
 msgid "C"
-msgstr "C"
+msgstr ""
 
 #: notepad.rc:131 regedit.rc:320 wordpad.rc:276
 msgctxt "accelerator Find"
 msgid "F"
-msgstr "F"
+msgstr ""
 
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
@@ -10378,12 +10339,12 @@ msgstr ""
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
 msgid "N"
-msgstr "N"
+msgstr ""
 
 #: notepad.rc:134 wordpad.rc:287
 msgctxt "accelerator Open"
 msgid "O"
-msgstr "O"
+msgstr ""
 
 #: notepad.rc:135 regedit.rc:321 wordpad.rc:289
 msgctxt "accelerator Print"
@@ -10467,7 +10428,6 @@ msgid "Unicode (UTF-8)"
 msgstr "Юнікод (UTF-8)"
 
 #: notepad.rc:91
-#, fuzzy
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -10476,9 +10436,9 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
-"Файл містить Юнікод-текст, який буде втрачено при збереженні файлу\n"
-"в кодуванні %s .\n"
+"%1\n"
+"Файл містить Юнікод-текст, який буде втрачено при збереженні\n"
+"файлу в кодуванні %2.\n"
 "Щоб не втратити цей текст, натисніть Скасувати, та\n"
 "виберіть зі списку один з варіантів Юнікод.\n"
 "Продовжити?"
@@ -10505,25 +10465,23 @@ msgstr "&Об'єкт"
 
 #: oleview.rc:39
 msgid "&CoCreateInstance Flag"
-msgstr ""
+msgstr "Прапор &CoCreateInstance"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "&Внутрішньопроцесний сервер"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "Внутрішньопроцесний &обробник"
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "Локальна помилка"
+msgstr "&Локальний сервер"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "&Видалити"
+msgstr "&Віддалений сервер"
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -10615,7 +10573,7 @@ msgstr ""
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
-msgstr ""
+msgstr "Типовий переглядач інтерфейсів"
 
 #: oleview.rc:181
 msgid "Interface"
@@ -10631,7 +10589,7 @@ msgstr "&Дивитись дані про тип"
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
-msgstr ""
+msgstr "Переглядач інтерфейсу IPersist"
 
 #: oleview.rc:194 oleview.rc:206
 msgid "Class Name:"
@@ -10643,7 +10601,7 @@ msgstr "CLSID:"
 
 #: oleview.rc:203
 msgid "IPersistStream Interface Viewer"
-msgstr ""
+msgstr "Переглядач інтерфейсу IPersistStream"
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
@@ -10651,7 +10609,7 @@ msgstr "OleView"
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
-msgstr ""
+msgstr "Переглядач ITypeLib"
 
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
@@ -10662,9 +10620,8 @@ msgid "version 1.0"
 msgstr "версія 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr "Файли TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr "Файли TypeLib (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
@@ -10734,21 +10691,19 @@ msgstr "Показати інформацію про програму, номе�
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "Питати внутрішньопроцесний сервер при виклику CoGetClassObject"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "Питати внутрішньопроцесний обробник при виклику CoGetClassObject"
 
 #: oleview.rc:115
-#, fuzzy
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr "Використовувати CLSCTX_LOCAL_SERVER при виклику CoGetClassObject"
+msgstr "Питати локальний сервер при виклику CoGetClassObject"
 
 #: oleview.rc:116
-#, fuzzy
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr "Використовувати CLSCTX_LOCAL_SERVER при виклику CoGetClassObject"
+msgstr "Питати віддалений сервер при виклику CoGetClassObject"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
@@ -10811,9 +10766,8 @@ msgid "bytes"
 msgstr "байт"
 
 #: oleview.rc:148
-#, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr "LoadTypeLib( %s ) не зміг ($%x)"
+msgstr "LoadTypeLib( %1 ) не зміг ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
@@ -11469,51 +11423,45 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr "Помилка: Повинна бути вказана одна з опцій /im чи /pid.\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Помилка: Опція %s очікує параметр командного рядка.\n"
+msgstr "Помилка: Опція %1 очікує параметр командного рядка.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "Помилка: Опції /im та /pid є взаємновиключними.\n"
 
 #: taskkill.rc:33
-#, fuzzy
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
-"Надіслано повідомлення закриття до вікон верхнього рівня процесу з PID %u.\n"
+"Надіслано повідомлення закриття до вікон верхнього рівня процесу з PID %1!"
+"u!.\n"
 
 #: taskkill.rc:34
-#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"Надіслано повідомлення закриття до вікон верхнього рівня процесу \"%s\" з "
-"PID %u.\n"
+"Надіслано повідомлення закриття до вікон верхнього рівня процесу \"%1\" з "
+"PID %2!u!.\n"
 
 #: taskkill.rc:35
-#, fuzzy
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "Процес з PID %u був завершений примусово.\n"
+msgstr "Процес з PID %1!u! був завершений примусово.\n"
 
 #: taskkill.rc:36
-#, fuzzy
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "Процес \"%s\" з PID %u був завершений примусово.\n"
+msgstr "Процес \"%1\" з PID %2!u! був завершений примусово.\n"
 
 #: taskkill.rc:37
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "Помилка: Не вдалось знайти процес \"%s\".\n"
+msgstr "Помилка: Не вдалось знайти процес \"%1\".\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
 msgstr "Помилка: Неможливо перелічити список процесів.\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "Помилка: Не вдається завершити процес \"%s\".\n"
+msgstr "Помилка: Не вдається завершити процес \"%1\".\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
@@ -11640,12 +11588,10 @@ msgid "&Realtime"
 msgstr "&Реального часу"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
 msgstr "&Вище середнього"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
 msgstr "&Нижче середнього"
 
@@ -11670,12 +11616,10 @@ msgid "&Show processes from all users"
 msgstr "&Показувати процеси всіх користувачів"
 
 #: taskmgr.rc:372
-#, fuzzy
 msgid "CPU usage"
 msgstr "Викорис. ЦП"
 
 #: taskmgr.rc:373
-#, fuzzy
 msgid "MEM usage"
 msgstr "Викорис. пам'яті"
 
@@ -11684,17 +11628,14 @@ msgid "Totals"
 msgstr "Всього"
 
 #: taskmgr.rc:375
-#, fuzzy
 msgid "Commit charge (K)"
 msgstr "Виділення пам'яті (K)"
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "Physical memory (K)"
 msgstr "Фізична пам'ять (K)"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "Kernel memory (K)"
 msgstr "Пам'ять ядра (K)"
 
@@ -11735,12 +11676,10 @@ msgid "Nonpaged"
 msgstr "Невивантажувана"
 
 #: taskmgr.rc:414
-#, fuzzy
 msgid "CPU usage history"
 msgstr "Історія використання ЦП"
 
 #: taskmgr.rc:415
-#, fuzzy
 msgid "Memory usage history"
 msgstr "Історія використання пам'яті"
 
@@ -12182,9 +12121,8 @@ msgid "Processes: %d"
 msgstr "Процесів: %d"
 
 #: taskmgr.rc:267
-#, fuzzy
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "Використання пам'яті: %dK / %dK"
+msgstr "Використання пам'яті: %1!u!кБ / %2!u!кБ"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -12398,9 +12336,8 @@ msgstr ""
 "Foundation; версії 2.1 Ліцензії, чи (на ваш розсуд) новішої версії."
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Реєстраційна інформація Windows "
+msgstr "Реєстраційна інформація Windows"
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12411,18 +12348,16 @@ msgid "Organi&zation:"
 msgstr "Органі&зація:"
 
 #: winecfg.rc:145
-#, fuzzy
 msgid "Application settings"
-msgstr " Налаштування програм "
+msgstr "Налаштування програми"
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine може імітувати різні версії Windows для кожної програми.  Ця вкладка "
+"Wine може імітувати різні версії Windows для кожної програми. Ця вкладка "
 "пов'язана з вкладками Бібліотеки та Графіка, що дозволяє зміну налаштувань в "
 "цих вкладках як для окремої програми, так і глобально."
 
@@ -12439,9 +12374,8 @@ msgid "&Windows Version:"
 msgstr "&Версія Windows:"
 
 #: winecfg.rc:160
-#, fuzzy
 msgid "Window settings"
-msgstr " Параметри вікна "
+msgstr "Параметри вікна"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12464,18 +12398,16 @@ msgid "Desktop &size:"
 msgstr "Розмір робочого &столу:"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " &Розширення екрану "
+msgstr "Розширення екрану"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Приклад тексту. Шрифт Tahoma 10 пунктів"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "DLL overrides"
-msgstr " Заміщення DLL "
+msgstr "Заміщення DLL"
 
 #: winecfg.rc:183
 msgid ""
@@ -12507,9 +12439,8 @@ msgid "Edit Override"
 msgstr "Змінити заміщення"
 
 #: winecfg.rc:199
-#, fuzzy
 msgid "Load order"
-msgstr " Порядок завантаження "
+msgstr "Порядок завантаження"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -12536,9 +12467,8 @@ msgid "Select Drive Letter"
 msgstr "Виберіть букву диску"
 
 #: winecfg.rc:223
-#, fuzzy
 msgid "Drive mappings"
-msgstr " Парамет&ри дисків "
+msgstr "Карта дисків"
 
 #: winecfg.rc:224
 msgid ""
@@ -12586,36 +12516,35 @@ msgstr "Показати &файли, що починаються з крапк�
 
 #: winecfg.rc:256
 msgid "Driver diagnostics"
-msgstr ""
+msgstr "Діагностика драйвера"
 
 #: winecfg.rc:258
 msgid "Defaults"
-msgstr ""
+msgstr "Типове"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr ""
+msgstr "Пристрій виводу:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr ""
+msgstr "Пристрій виводу голосу:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr ""
+msgstr "Пристрій вводу:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr ""
+msgstr "Пристрій вводу голосу:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
 msgstr "&Тест звуку"
 
 #: winecfg.rc:274
-#, fuzzy
 msgid "Appearance"
-msgstr " Вигляд "
+msgstr "Вигляд"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -12634,9 +12563,8 @@ msgid "C&olor:"
 msgstr "Ко&лір:"
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
-msgstr "Тека"
+msgstr "Теки"
 
 #: winecfg.rc:293
 msgid "&Link to:"
@@ -12651,9 +12579,8 @@ msgid "Drives"
 msgstr "Диски"
 
 #: winecfg.rc:33
-#, fuzzy
 msgid "Select the Unix target directory, please."
-msgstr "Виберіть цільову теку в системі."
+msgstr "Виберіть цільову теку Unix, будь ласка."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -12705,21 +12632,19 @@ msgstr "Параметри Wine для %s"
 
 #: winecfg.rc:81
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Вибраний драйвер: %s"
 
 #: winecfg.rc:82
-#, fuzzy
 msgid "(None)"
-msgstr "Немає"
+msgstr "(Немає)"
 
 #: winecfg.rc:83
 msgid "Audio test failed!"
-msgstr ""
+msgstr "Аудіотест провалився!"
 
 #: winecfg.rc:85
-#, fuzzy
 msgid "(System default)"
-msgstr "Системний шлях"
+msgstr "(Типовий системний)"
 
 #: winecfg.rc:51
 msgid ""
@@ -12758,9 +12683,8 @@ msgid "Default Settings"
 msgstr "Стандартні налаштування"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Програми Wine (*.exe,*.exe.so)"
+msgstr "Програми Wine (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -12818,7 +12742,6 @@ msgstr ""
 "вирішили видалити диск, не забудьте створити новий!"
 
 #: winecfg.rc:74
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Буква"
@@ -13006,9 +12929,8 @@ msgid "Command history"
 msgstr "Історія команд"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
-msgstr "&Кількість нагаданих команд :"
+msgstr "&Кількість нагаданих команд:"
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
@@ -13023,37 +12945,32 @@ msgid "&Color"
 msgstr "&Колір"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " Конфігурація "
+msgstr "Конфігурація"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
 msgstr "Зона буфера"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
-msgstr "&Ширина :"
+msgstr "&Ширина:"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
-msgstr "&Висота :"
+msgstr "&Висота:"
 
 #: wineconsole.rc:108
 msgid "Window size"
 msgstr "Розмір вікна"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
-msgstr "Ш&ирина :"
+msgstr "Ш&ирина:"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
-msgstr "Висо&та :"
+msgstr "Висо&та:"
 
 #: wineconsole.rc:116
 msgid "End of program"
@@ -13116,9 +13033,8 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "Розмір буфера екрану повинен бути не менший буфера вікна"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "Кожен символ має %ld пікселів в ширину і %ld пікселів в висоту"
+msgstr "Кожен символ має %1!u! пікселів в ширину і %2!u! пікселів в висоту"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -13163,7 +13079,6 @@ msgstr ""
 "Параметри:\n"
 
 #: wineconsole.rc:49
-#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
@@ -13171,16 +13086,14 @@ msgid ""
 "console.\n"
 msgstr ""
 "  --backend={user|curses}  Вибір user відкриє нове вікно, curses спробує\n"
-"                            налаштувати поточний термінал як консоль Wine\n"
+"                           налаштувати поточний термінал як консоль Wine.\n"
 
 #: wineconsole.rc:50
-#, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
-"  <команда>                 Назва програми для запуску в консолі Wine\n"
+"  <команда>                Назва програми для запуску в консолі Wine.\n"
 
 #: wineconsole.rc:51
-#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
@@ -13191,7 +13104,7 @@ msgstr ""
 "\n"
 "Приклад:\n"
 "  wineconsole cmd\n"
-"Запуск командного рядка Wine в консолі Wine\n"
+"Запуск командного рядка Wine в консолі Wine.\n"
 "\n"
 
 #: winedbg.rc:46
@@ -13207,28 +13120,22 @@ msgstr ""
 "Вибачте за незручності."
 
 #: winedbg.rc:55
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
 "Це могло бути викликане проблемою в програмі або недоробкою в Wine. Ви "
-"можете відвідати http://appdb.winehq.org та пошукати поради щодо запуску "
-"цієї програми.\n"
-"\n"
-"Якщо ця проблема не присутня під Windows і ще не була зареєстрована, ви "
-"можете повідомити про неї на http://bugs.winehq.org."
+"можете відвідати <a href=\"http://appdb.winehq.org\">Базу даних програм</a> "
+"та пошукати поради щодо запуску цієї програми."
 
 #: winedbg.rc:58
-#, fuzzy
 msgid "Show &Details"
 msgstr "&Детально"
 
 #: winedbg.rc:63
-#, fuzzy
 msgid "Program Error Details"
-msgstr "Помилка програми"
+msgstr "Дані про помилку програми"
 
 #: winedbg.rc:70
 msgid ""
@@ -13251,13 +13158,12 @@ msgid "(unidentified)"
 msgstr "(не визначено)"
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "Помилка створення\n"
+msgstr "Помилка збереження"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "Завантажую детальну інформацію, зачекайте..."
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -13340,9 +13246,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Вікна зліва &направо\tCtrl+F4"
 
 #: winefile.rc:83
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "Файловий Менеджер Wine"
+msgstr "&Про Файловий Менеджер Wine"
 
 #: winefile.rc:124
 msgid "Select destination"
@@ -13353,7 +13258,6 @@ msgid "By File Type"
 msgstr "За типом файлів"
 
 #: winefile.rc:142
-#, fuzzy
 msgid "File type"
 msgstr "Тип файлу"
 
@@ -13414,9 +13318,8 @@ msgid "&Compressed"
 msgstr "С&тиснутий"
 
 #: winefile.rc:180
-#, fuzzy
 msgid "Version information"
-msgstr "Дані про ве&рсію"
+msgstr "Дані про версію"
 
 #: winefile.rc:197
 msgctxt "accelerator Fullscreen"
@@ -13468,24 +13371,23 @@ msgid "Index/Inode"
 msgstr ""
 
 #: winefile.rc:116
-#, fuzzy
 msgid "%1 of %2 free"
-msgstr "%s з %s вільно"
+msgstr "%1 з %2 вільно"
 
 #: winefile.rc:117
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "КБ"
 
 #: winefile.rc:118
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "МБ"
 
 #: winefile.rc:119
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "ГБ"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -13528,9 +13430,8 @@ msgid "Fastest Times"
 msgstr "Кращий час"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
-msgstr "Кращий час"
+msgstr "Кращі часи"
 
 #: winemine.rc:59
 msgid "Beginner"
@@ -13561,9 +13462,8 @@ msgid "Rows"
 msgstr "Рядків"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "&Стовпчик"
+msgstr "Стовпчики"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -13575,7 +13475,7 @@ msgstr "WineMine"
 
 #: winemine.rc:28
 msgid "Nobody"
-msgstr ""
+msgstr "Ніхто"
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
@@ -13623,7 +13523,7 @@ msgstr "Завжди &зверху"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr ""
+msgstr "Про &Довідку Wine"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -13682,7 +13582,6 @@ msgid "R&edo\tCtrl+Y"
 msgstr "&Назад\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
 msgstr "О&чистити\tDEL"
 
@@ -13914,9 +13813,8 @@ msgid "Unicode text document"
 msgstr "Текстовий документ юнікод"
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "Файли принтера (*.PRN)"
+msgstr "Файли принтера (*.prn)"
 
 #: wordpad.rc:150
 msgid "Center"
@@ -13963,13 +13861,11 @@ msgid "Pages"
 msgstr "Сторінки"
 
 #: wordpad.rc:172
-#, fuzzy
 msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "см"
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
 msgstr "дй"
@@ -13979,7 +13875,6 @@ msgid "inch"
 msgstr "дюйм"
 
 #: wordpad.rc:175
-#, fuzzy
 msgctxt "unit: point"
 msgid "pt"
 msgstr "тч"
@@ -14009,14 +13904,12 @@ msgstr ""
 "всього форматування. Ви дійсно хочете зробити це?"
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
-msgstr "Невірний числовий формат"
+msgstr "Невірний числовий формат."
 
 #: wordpad.rc:188
-#, fuzzy
 msgid "OLE storage documents are not supported."
-msgstr "Документи зберігання OLE не підтримуються"
+msgstr "Документи зберігання OLE не підтримуються."
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -14035,9 +13928,8 @@ msgid "You do not have access to open the file."
 msgstr "У вас немає доступу на відкриття файлу."
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
-msgstr "Друк не реалізований"
+msgstr "Друк не реалізований."
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
@@ -14052,67 +13944,57 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Невірна кількість параметрів - Введіть xcopy /? для довідки\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "Невірний параметр '%s' -  Введіть xcopy /? для довідки\n"
+msgstr "Невірний параметр '%1' - Введіть xcopy /? для довідки\n"
 
 #: xcopy.rc:29
-#, fuzzy
 msgid "Press <Enter> to begin copying\n"
-msgstr "Натисніть <enter> щоб почати копіювання\n"
+msgstr "Натисніть <Enter> щоб почати копіювання\n"
 
 #: xcopy.rc:30
-#, fuzzy
 msgid "%1!d! file(s) would be copied\n"
-msgstr "%d файл(ів) буде скопійовано\n"
+msgstr "%1!d! файл(ів) буде скопійовано\n"
 
 #: xcopy.rc:31
-#, fuzzy
 msgid "%1!d! file(s) copied\n"
-msgstr "%d файл(ів) скопійовано\n"
+msgstr "%1!d! файл(ів) скопійовано\n"
 
 #: xcopy.rc:34
-#, fuzzy
 msgid ""
 "Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"'%s' є файлом чи директорією?\n"
+"'%1' є файлом чи директорією?\n"
 "(F - Файл, D - Директорія)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "Переписати %s? (Yes|No|All)\n"
+msgstr ""
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Переписати %s? (Yes|No|All)\n"
+msgstr "Переписати %1? (Yes|No|All)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "Під час копіювання '%s' в '%s' сталась помилка r/c %d\n"
+msgstr "Під час копіювання '%1' в '%2' сталась помилка r/c %3!d!\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%1'\n"
-msgstr "Помилка читання '%s'\n"
+msgstr "Помилка читання '%1'\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
 msgid "F"
-msgstr "F"
+msgstr ""
 
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr "D"
+msgstr ""
 
 #: xcopy.rc:77
-#, fuzzy
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -14150,15 +14032,16 @@ msgstr ""
 "XCOPY - Копіює файли та дерева директорій за призначенням\n"
 "\n"
 "Синтаксис:\n"
-"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"XCOPY джерело [призначення] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t      [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
 "\n"
 "Де:\n"
 "\n"
-"[/I]  Якщо кінцева папка відсутня і копіюється бiльше одного файлу,\n"
-"\tто припускається, що мiсце призначення є папкою\n"
+"[/I]  Якщо кінцева тека відсутня і копіюється бiльше одного файлу, то "
+"припускається,\n"
+"\tщо мiсце призначення є текою\n"
 "[/S]  Копіює директорії та піддиректорії\n"
-"[/E]  Копіює директорії та піддиректорії, включно з порожніми\n"
+"[/E]  Копіює директорії та піддиректорії, включно з порожніми.\n"
 "[/Q]  Не відображає імена файлів під час копіювання.\n"
 "[/F]  Під час копіювання відображає повні імена початкових і кінцевих "
 "файлів\n"
@@ -14177,7 +14060,6 @@ msgstr ""
 "[/M]  Копіює лише файли з властивістю АРХІВНИЙ, видаляє\n"
 "\tвластивість АРХІВНИЙ\n"
 "[/D | /D:m-d-y] Копіює лише нові файли або ті, які були змінені після "
-"вказаної\n"
-"дати. Якщо дата не вказана, копіює лише ті файли, які новіші\n"
-"в початковій папці\n"
+"вказаної дати.\n"
+"\tЯкщо дата не вказана, копіює лише ті файли, які новіші в початковій теці\n"
 "\n"
