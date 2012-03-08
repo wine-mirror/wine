@@ -3938,11 +3938,10 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
             {
-                shader_addline(buffer, "gl_FogFragCoord = OUT[%u].%c;\n", i, reg_mask[1]);
+                shader_addline(buffer, "gl_FogFragCoord = clamp(OUT[%u].%c, 0.0, 1.0);\n", i, reg_mask[1]);
             }
         }
         shader_addline(buffer, "}\n");
-
     }
     else
     {
