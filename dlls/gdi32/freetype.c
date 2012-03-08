@@ -1978,6 +1978,19 @@ static const struct font_links_defaults_list
 };
 
 
+static SYSTEM_LINKS *find_font_link(const WCHAR *name)
+{
+    SYSTEM_LINKS *font_link;
+
+    LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
+    {
+        if(!strcmpiW(font_link->font_name, name))
+            return font_link;
+    }
+
+    return NULL;
+}
+
 static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
 {
     const WCHAR *value;
@@ -1992,7 +2005,6 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
     if (values)
     {
         SYSTEM_LINKS *font_link;
-        BOOL existing = FALSE;
 
         memset(&fs, 0, sizeof(fs));
         psub = get_font_subst(&font_subst_list, name, -1);
@@ -2003,20 +2015,13 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
             return;
         }
 
-        LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
-        {
-            if(!strcmpiW(font_link->font_name, name))
-            {
-                existing = TRUE;
-                break;
-            }
-        }
-
-        if (!existing)
+        font_link = find_font_link(name);
+        if (font_link == NULL)
         {
             font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*font_link));
             font_link->font_name = strdupW(name);
             list_init(&font_link->links);
+            list_add_tail(&system_links, &font_link->entry);
         }
 
         for (i = 0; values[i] != NULL; i++)
@@ -2076,8 +2081,6 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
                 face->fs_links = fs;
             }
         }
-        if (!existing)
-            list_add_tail(&system_links, &font_link->entry);
     }
 }
 
@@ -2225,22 +2228,19 @@ skip_internal:
         TRACE("Found Tahoma in %s index %ld\n", child_font->face->file, child_font->face->face_index);
         list_add_tail(&system_font_link->links, &child_font->entry);
     }
-    LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
+    font_link = find_font_link(Tahoma);
+    if (font_link != NULL)
     {
-        if(!strcmpiW(font_link->font_name, Tahoma))
+        CHILD_FONT *font_link_entry;
+        LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
         {
-            CHILD_FONT *font_link_entry;
-            LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
-            {
-                CHILD_FONT *new_child;
-                new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
-                new_child->face = font_link_entry->face;
-                new_child->font = NULL;
-                fs.fsCsb[0] |= font_link_entry->face->fs.fsCsb[0];
-                fs.fsCsb[1] |= font_link_entry->face->fs.fsCsb[1];
-                list_add_tail(&system_font_link->links, &new_child->entry);
-            }
-            break;
+            CHILD_FONT *new_child;
+            new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
+            new_child->face = font_link_entry->face;
+            new_child->font = NULL;
+            fs.fsCsb[0] |= font_link_entry->face->fs.fsCsb[0];
+            fs.fsCsb[1] |= font_link_entry->face->fs.fsCsb[1];
+            list_add_tail(&system_font_link->links, &new_child->entry);
         }
     }
     family = find_family_from_name(system_font_link->font_name);
@@ -3793,11 +3793,32 @@ static BOOL create_child_font_list(GdiFont *font)
 
     psub = get_font_subst(&font_subst_list, font->name, -1);
     font_name = psub ? psub->to.name : font->name;
-    LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
+    font_link = find_font_link(font_name);
+    if (font_link != NULL)
     {
-        if(!strcmpiW(font_link->font_name, font_name))
+        TRACE("found entry in system list\n");
+        LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
         {
-            TRACE("found entry in system list\n");
+            new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
+            new_child->face = font_link_entry->face;
+            new_child->font = NULL;
+            list_add_tail(&font->child_fonts, &new_child->entry);
+            TRACE("font %s %ld\n", debugstr_a(new_child->face->file), new_child->face->face_index);
+        }
+        ret = TRUE;
+    }
+    /*
+     * if not SYMBOL or OEM then we also get all the fonts for Microsoft
+     * Sans Serif.  This is how asian windows get default fallbacks for fonts
+     */
+    if (use_default_fallback && font->charset != SYMBOL_CHARSET &&
+        font->charset != OEM_CHARSET &&
+        strcmpiW(font_name,szDefaultFallbackLink) != 0)
+    {
+        font_link = find_font_link(szDefaultFallbackLink);
+        if (font_link != NULL)
+        {
+            TRACE("found entry in default fallback list\n");
             LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
             {
                 new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
@@ -3807,33 +3828,8 @@ static BOOL create_child_font_list(GdiFont *font)
                 TRACE("font %s %ld\n", debugstr_a(new_child->face->file), new_child->face->face_index);
             }
             ret = TRUE;
-            break;
         }
     }
-    /*
-     * if not SYMBOL or OEM then we also get all the fonts for Microsoft
-     * Sans Serif.  This is how asian windows get default fallbacks for fonts
-     */
-    if (use_default_fallback && font->charset != SYMBOL_CHARSET &&
-        font->charset != OEM_CHARSET &&
-        strcmpiW(font_name,szDefaultFallbackLink) != 0)
-        LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
-        {
-            if(!strcmpiW(font_link->font_name,szDefaultFallbackLink))
-            {
-                TRACE("found entry in default fallback list\n");
-                LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
-                {
-                    new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
-                    new_child->face = font_link_entry->face;
-                    new_child->font = NULL;
-                    list_add_tail(&font->child_fonts, &new_child->entry);
-                    TRACE("font %s %ld\n", debugstr_a(new_child->face->file), new_child->face->face_index);
-                }
-                ret = TRUE;
-                break;
-            }
-        }
 
     return ret;
 }
