@@ -977,6 +977,9 @@ sub source_scan_project_file($$$)
         push @{@$project_settings[$T_CEXTRA]},$prj_target_cflags;
         push @{@$project_settings[$T_CXXEXTRA]},$prj_target_cflags;
         push @{@$project_settings[$T_DEFINES]},$prj_target_defines;
+    } else {
+        print STDERR "File format not supported for file: $filename\n";
+        return;
     }
 
     # Add this project to the project list, except for
