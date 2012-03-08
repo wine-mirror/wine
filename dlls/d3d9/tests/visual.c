@@ -1719,7 +1719,8 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
     unsigned int i, j;
 
     /* basic vertex shader without fog computation ("non foggy") */
-    static const DWORD vertex_shader_code1[] = {
+    static const DWORD vertex_shader_code1[] =
+    {
         0xfffe0101,                                                             /* vs_1_1                       */
         0x0000001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0              */
         0x0000001f, 0x8000000a, 0x900f0001,                                     /* dcl_color0 v1                */
@@ -1728,7 +1729,8 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
         0x0000ffff
     };
     /* basic vertex shader with reversed fog computation ("foggy") */
-    static const DWORD vertex_shader_code2[] = {
+    static const DWORD vertex_shader_code2[] =
+    {
         0xfffe0101,                                                             /* vs_1_1                        */
         0x0000001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0               */
         0x0000001f, 0x8000000a, 0x900f0001,                                     /* dcl_color0 v1                 */
@@ -1739,10 +1741,31 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
         0x00000005, 0xc00f0001, 0x80000000, 0xa0000000,                         /* mul oFog, r0.x, c0.x          */
         0x0000ffff
     };
+    /* basic vertex shader with reversed fog computation ("foggy"), vs_2_0 */
+    static const DWORD vertex_shader_code3[] =
+    {
+        0xfffe0200,                                                             /* vs_2_0                        */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0               */
+        0x0200001f, 0x8000000a, 0x900f0001,                                     /* dcl_color0 v1                 */
+        0x05000051, 0xa00f0000, 0xbfa00000, 0x00000000, 0xbf666666, 0x00000000, /* def c0, -1.25, 0.0, -0.9, 0.0 */
+        0x02000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                  */
+        0x02000001, 0xd00f0000, 0x90e40001,                                     /* mov oD0, v1                   */
+        0x03000002, 0x800f0000, 0x90aa0000, 0xa0aa0000,                         /* add r0, v0.z, c0.z            */
+        0x03000005, 0xc00f0001, 0x80000000, 0xa0000000,                         /* mul oFog, r0.x, c0.x          */
+        0x0000ffff
+    };
     /* basic pixel shader */
-    static const DWORD pixel_shader_code[] = {
+    static const DWORD pixel_shader_code[] =
+    {
         0xffff0101,                                                             /* ps_1_1     */
-        0x00000001, 0x800f0000, 0x90e40000,                                     /* mov r0, vo */
+        0x00000001, 0x800f0000, 0x90e40000,                                     /* mov r0, v0 */
+        0x0000ffff
+    };
+    static const DWORD pixel_shader_code2[] =
+    {
+        0xffff0200,                                                             /* ps_2_0     */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl v0 */
+        0x02000001, 0x800f0800, 0x90e40000,                                     /* mov oC0, v0 */
         0x0000ffff
     };
 
@@ -1760,8 +1783,8 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
     };
 
     IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
-    IDirect3DVertexShader9      *vertex_shader[3]   = {NULL, NULL, NULL};
-    IDirect3DPixelShader9       *pixel_shader[2]    = {NULL, NULL};
+    IDirect3DVertexShader9      *vertex_shader[4]   = {NULL, NULL, NULL, NULL};
+    IDirect3DPixelShader9       *pixel_shader[3]    = {NULL, NULL, NULL};
 
     /* This reference data was collected on a nVidia GeForce 7600GS driver version 84.19 DirectX version 9.0c on Windows XP */
     static const struct test_data_t {
@@ -1862,9 +1885,23 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
          0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
 
+        {3, 0, D3DFOG_NONE, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+        {3, 0, D3DFOG_EXP, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+        {3, 0, D3DFOG_EXP2, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+        {3, 0, D3DFOG_LINEAR, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+
         /* foggy vertex shader and pixel shader. First 4 tests with vertex fog,
          * all using the fixed fog-coord linear fog
          */
+        /* vs_1_1 with ps_1_1 */
         {2, 1, D3DFOG_NONE, D3DFOG_NONE,
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
          0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
@@ -1875,6 +1912,48 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
          0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
         {2, 1, D3DFOG_LINEAR, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+
+        /* vs_2_0 with ps_1_1 */
+        {3, 1, D3DFOG_NONE, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+        {3, 1, D3DFOG_EXP, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+        {3, 1, D3DFOG_EXP2, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+        {3, 1, D3DFOG_LINEAR, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+
+        /* vs_1_1 with ps_2_0 */
+        {2, 2, D3DFOG_NONE, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+        {2, 2, D3DFOG_EXP, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+        {2, 2, D3DFOG_EXP2, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+        {2, 2, D3DFOG_LINEAR, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+
+        /* vs_2_0 with ps_2_0 */
+        {3, 2, D3DFOG_NONE, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+        {3, 2, D3DFOG_EXP, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+        {3, 2, D3DFOG_EXP2, D3DFOG_NONE,
+        {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
+         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
+        {3, 2, D3DFOG_LINEAR, D3DFOG_NONE,
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
          0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
 
@@ -1900,7 +1979,11 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
     hr = IDirect3DDevice9_CreateVertexShader(device, vertex_shader_code2, &vertex_shader[2]);
     ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_CreateVertexShader(device, vertex_shader_code3, &vertex_shader[3]);
+    ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
     hr = IDirect3DDevice9_CreatePixelShader(device, pixel_shader_code, &pixel_shader[1]);
+    ok(SUCCEEDED(hr), "CreatePixelShader failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(device, pixel_shader_code2, &pixel_shader[2]);
     ok(SUCCEEDED(hr), "CreatePixelShader failed (%08x)\n", hr);
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
@@ -1979,7 +2062,9 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
 
     IDirect3DVertexShader9_Release(vertex_shader[1]);
     IDirect3DVertexShader9_Release(vertex_shader[2]);
+    IDirect3DVertexShader9_Release(vertex_shader[3]);
     IDirect3DPixelShader9_Release(pixel_shader[1]);
+    IDirect3DPixelShader9_Release(pixel_shader[2]);
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
 }
 
@@ -14022,11 +14107,11 @@ START_TEST(visual)
     }
     else skip("No vs_2_0 support\n");
 
-    if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1) && caps.PixelShaderVersion >= D3DPS_VERSION(1, 1))
+    if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0) && caps.PixelShaderVersion >= D3DPS_VERSION(2, 0))
     {
         fog_with_shader_test(device_ptr);
     }
-    else skip("No vs_1_1 and ps_1_1 support\n");
+    else skip("No vs_2_0 and ps_2_0 support\n");
 
     if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 1))
     {
