@@ -237,8 +237,20 @@ static int be_arm_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
 static int be_arm_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
                               long double* ret)
 {
-    dbg_printf("be_arm_fetch_float: not done\n");
-    return FALSE;
+    char        tmp[sizeof(long double)];
+
+    /* FIXME: this assumes that debuggee and debugger use the same
+     * representation for reals
+     */
+    if (!memory_read_value(lvalue, size, tmp)) return FALSE;
+
+    switch (size)
+    {
+    case sizeof(float):         *ret = *(float*)tmp;            break;
+    case sizeof(double):        *ret = *(double*)tmp;           break;
+    default:                    return FALSE;
+    }
+    return TRUE;
 }
 
 struct backend_cpu be_arm =
