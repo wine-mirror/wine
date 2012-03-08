@@ -2277,10 +2277,10 @@ BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
     return res == ERROR_SUCCESS;
 }
 
-DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
+static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
-    static BOOL warn = TRUE;
-
+    /* FIXME: This function currently handles more options than it should. Options requiring
+     * proper handles should be moved to proper functions */
     switch(option) {
     case INTERNET_OPTION_REQUEST_FLAGS:
         TRACE("INTERNET_OPTION_REQUEST_FLAGS\n");
@@ -2307,10 +2307,8 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
         return ERROR_SUCCESS;
 
     case INTERNET_OPTION_CONNECTED_STATE:
-        if (warn) {
-            FIXME("INTERNET_OPTION_CONNECTED_STATE: semi-stub\n");
-            warn = FALSE;
-        }
+        FIXME("INTERNET_OPTION_CONNECTED_STATE: semi-stub\n");
+
         if (*size < sizeof(ULONG))
             return ERROR_INSUFFICIENT_BUFFER;
 
@@ -2440,15 +2438,20 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
         return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
     case INTERNET_OPTION_POLICY:
         return ERROR_INVALID_PARAMETER;
+    }
+
+    FIXME("Stub for %d\n", option);
+    return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
+}
+
+DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
+{
+    switch(option) {
     case INTERNET_OPTION_CONTEXT_VALUE:
-    {
-        if (!hdr)
-            return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
         if (!size)
             return ERROR_INVALID_PARAMETER;
 
-        if (*size < sizeof(DWORD_PTR))
-        {
+        if (*size < sizeof(DWORD_PTR)) {
             *size = sizeof(DWORD_PTR);
             return ERROR_INSUFFICIENT_BUFFER;
         }
@@ -2458,11 +2461,15 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
         *(DWORD_PTR *)buffer = hdr->dwContext;
         *size = sizeof(DWORD_PTR);
         return ERROR_SUCCESS;
-    }
+
+    case INTERNET_OPTION_MAX_CONNS_PER_SERVER:
+    case INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER:
+        WARN("Called on global option %u\n", option);
+        return ERROR_INTERNET_INVALID_OPERATION;
     }
 
-    FIXME("Stub for %d\n", option);
-    return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
+    /* FIXME: we shouldn't call it here */
+    return query_global_option(option, buffer, size, unicode);
 }
 
 /***********************************************************************
@@ -2490,7 +2497,7 @@ BOOL WINAPI InternetQueryOptionW(HINTERNET hInternet, DWORD dwOption,
             WININET_Release(hdr);
         }
     }else {
-        res = INET_QueryOption(NULL, dwOption, lpBuffer, lpdwBufferLength, TRUE);
+        res = query_global_option(dwOption, lpBuffer, lpdwBufferLength, TRUE);
     }
 
     if(res != ERROR_SUCCESS)
@@ -2523,7 +2530,7 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
             WININET_Release(hdr);
         }
     }else {
-        res = INET_QueryOption(NULL, dwOption, lpBuffer, lpdwBufferLength, FALSE);
+        res = query_global_option(dwOption, lpBuffer, lpdwBufferLength, FALSE);
     }
 
     if(res != ERROR_SUCCESS)
