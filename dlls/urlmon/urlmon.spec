@@ -28,7 +28,7 @@
 @ stdcall CoInternetQueryInfo(ptr long long ptr long ptr long)
 @ stdcall CoInternetSetFeatureEnabled(long long long)
 @ stdcall CompareSecurityIds(ptr long ptr long long)
-@ stub CopyBindInfo
+@ stdcall CopyBindInfo(ptr ptr)
 @ stdcall CopyStgMedium(ptr ptr)
 @ stdcall CreateAsyncBindCtx(long ptr ptr ptr)
 @ stdcall CreateAsyncBindCtxEx(ptr long ptr ptr ptr long)
