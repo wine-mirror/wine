@@ -204,6 +204,7 @@ static BOOL complete, loading_js, loading_hash;
 static DWORD status_code = HTTP_STATUS_OK;
 static BOOL asynchronous_binding = FALSE;
 static BOOL support_wbapp, allow_new_window;
+static BOOL report_mime;
 static int stream_read, protocol_read;
 static enum load_state_t {
     LD_DOLOAD,
@@ -590,10 +591,12 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
             BINDSTATUS_CACHEFILENAMEAVAILABLE, &empty_str);
     ok(hres == S_OK, "ReportProgress(BINDSTATUS_CACHEFILENAMEAVAILABLE) failed: %08x\n", hres);
 
-    hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
-            BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE, wszTextCss);
-    ok(hres == S_OK,
-       "ReportProgress(BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE) failed: %08x\n", hres);
+    if(report_mime) {
+        hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
+                BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE, wszTextCss);
+        ok(hres == S_OK,
+                "ReportProgress(BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE) failed: %08x\n", hres);
+    }
 
     hres = IInternetProtocolSink_ReportData(pOIProtSink,
             BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION, 13, 13);
@@ -645,7 +648,7 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
     ok(pv != NULL, "pv == NULL\n");
     ok(cb > sizeof(css_data), "cb < sizeof(css_data)\n");
     ok(pcbRead != NULL, "pcbRead == NULL\n");
-    ok(!*pcbRead, "*pcbRead=%d\n", *pcbRead);
+    ok(!*pcbRead || *pcbRead==sizeof(css_data)-1, "*pcbRead=%d\n", *pcbRead);
 
     if(protocol_read)
         return S_FALSE;
@@ -1298,9 +1301,11 @@ static void continue_binding(IBindStatusCallback *callback)
 
     static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 
-    hres = IBindStatusCallback_OnProgress(callback, 0, 0, BINDSTATUS_MIMETYPEAVAILABLE,
-            wszTextHtml);
-    ok(hres == S_OK, "OnProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
+    if(report_mime) {
+        hres = IBindStatusCallback_OnProgress(callback, 0, 0, BINDSTATUS_MIMETYPEAVAILABLE,
+                wszTextHtml);
+        ok(hres == S_OK, "OnProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
+    }
 
     hres = IBindStatusCallback_OnProgress(callback, sizeof(html_page)-1, sizeof(html_page)-1,
             BINDSTATUS_BEGINDOWNLOADDATA, doc_url);
@@ -6575,13 +6580,15 @@ static void init_test(enum load_state_t ls) {
     expect_uihandler_iface = &DocHostUIHandler;
 }
 
-static void test_HTMLDocument(BOOL do_load)
+static void test_HTMLDocument(BOOL do_load, BOOL mime)
 {
     IHTMLDocument2 *doc;
 
-    trace("Testing HTMLDocument (%s)...\n", (do_load ? "load" : "no load"));
+    trace("Testing HTMLDocument (%s, %s)...\n", (do_load ? "load" : "no load"),
+            (report_mime ? "mime" : "no mime"));
 
     init_test(do_load ? LD_DOLOAD : LD_NO);
+    report_mime = mime;
 
     doc = create_document();
     doc_unk = (IUnknown*)doc;
@@ -7387,8 +7394,9 @@ START_TEST(htmldoc)
 
     asynchronous_binding = FALSE;
     test_HTMLDocument_hlink(HTTP_STATUS_OK);
-    test_HTMLDocument(FALSE);
-    test_HTMLDocument(TRUE);
+    test_HTMLDocument(FALSE, TRUE);
+    test_HTMLDocument(TRUE, FALSE);
+    test_HTMLDocument(TRUE, TRUE);
     test_HTMLDocument_StreamLoad();
     test_HTMLDocument_StreamInitNew();
     test_editing_mode(FALSE);
