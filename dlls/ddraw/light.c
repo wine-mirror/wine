@@ -204,7 +204,7 @@ static HRESULT WINAPI IDirect3DLightImpl_SetLight(IDirect3DLight *iface, D3DLIGH
          return DDERR_INVALIDPARAMS;
 
     if ( lpLight->dltType == D3DLIGHT_PARALLELPOINT )
-        FIXME("D3DLIGHT_PARALLELPOINT no supported\n");
+        FIXME("D3DLIGHT_PARALLELPOINT not supported\n");
 
     /* Translate D3DLIGH2 structure to D3DLIGHT7 */
     light7->dltType        = lpLight->dltType;
