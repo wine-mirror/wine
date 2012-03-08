@@ -2540,6 +2540,17 @@ DWORD INET_SetOption(object_header_t *hdr, DWORD option, void *buf, DWORD size)
     return ERROR_INTERNET_INVALID_OPTION;
 }
 
+static DWORD set_global_option(DWORD option, void *buf, DWORD size)
+{
+    switch(option) {
+    case INTERNET_OPTION_CALLBACK:
+        WARN("Not global option %u\n", option);
+        return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
+    }
+
+    return ERROR_INTERNET_INVALID_OPTION;
+}
+
 /***********************************************************************
  *           InternetSetOptionW (WININET.@)
  *
@@ -2555,37 +2566,28 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 {
     object_header_t *lpwhh;
     BOOL ret = TRUE;
+    DWORD res;
 
     TRACE("(%p %d %p %d)\n", hInternet, dwOption, lpBuffer, dwBufferLength);
 
     lpwhh = (object_header_t*) get_handle_object( hInternet );
-    if(lpwhh) {
-        DWORD res;
-
+    if(lpwhh)
         res = lpwhh->vtbl->SetOption(lpwhh, dwOption, lpBuffer, dwBufferLength);
-        if(res != ERROR_INTERNET_INVALID_OPTION) {
-            WININET_Release( lpwhh );
+    else
+        res = set_global_option(dwOption, lpBuffer, dwBufferLength);
 
-            if(res != ERROR_SUCCESS)
-                SetLastError(res);
+    if(res != ERROR_INTERNET_INVALID_OPTION) {
+        if(lpwhh)
+            WININET_Release(lpwhh);
 
-            return res == ERROR_SUCCESS;
-        }
+        if(res != ERROR_SUCCESS)
+            SetLastError(res);
+
+        return res == ERROR_SUCCESS;
     }
 
     switch (dwOption)
     {
-    case INTERNET_OPTION_CALLBACK:
-      {
-        if (!lpwhh)
-        {
-            SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-            return FALSE;
-        }
-        WININET_Release(lpwhh);
-        SetLastError(ERROR_INTERNET_OPTION_NOT_SETTABLE);
-        return FALSE;
-      }
     case INTERNET_OPTION_HTTP_VERSION:
       {
         HTTP_VERSION_INFO* pVersion=(HTTP_VERSION_INFO*)lpBuffer;
