@@ -1,0 +1,5 @@
+MODULE = mgmtapi.dll
+
+C_SRCS = mgmtapi.c
+
+@MAKE_DLL_RULES@
