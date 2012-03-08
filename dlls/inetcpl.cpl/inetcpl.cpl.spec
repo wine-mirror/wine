@@ -3,7 +3,7 @@
 @ stub AddInternetPropertySheetsEx
 @ stdcall CPlApplet(long long long long)
 @ stub DisplayPopupWindowManagementDialog
-@ stub DllInstall
+@ stdcall -private DllInstall(long wstr)
 @ stub GetAddSitesDisplayUrl
 @ stub ImportExportPFX
 @ stub LaunchAddSitesDialog

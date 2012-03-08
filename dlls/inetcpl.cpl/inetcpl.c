@@ -60,6 +60,15 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
+/***********************************************************************
+ *  DllInstall (inetcpl.@)
+ */
+HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
+{
+    FIXME("(%s, %s): stub\n", bInstall ? "TRUE" : "FALSE", debugstr_w(cmdline));
+    return S_OK;
+}
+
 /******************************************************************************
  * propsheet_callback [internal]
  *
