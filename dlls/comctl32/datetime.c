@@ -138,6 +138,9 @@ static BOOL DATETIME_SendDateTimeChangeNotify (const DATETIME_INFO *infoPtr);
 static const WCHAR allowedformatchars[] = {'d', 'h', 'H', 'm', 'M', 's', 't', 'y', 'X', 0};
 static const int maxrepetition [] = {4,2,2,2,4,2,2,4,-1};
 
+/* valid date limits */
+static const SYSTEMTIME max_allowed_date = { /* wYear */ 9999, /* wMonth */ 12, /* wDayOfWeek */ 0, /* wDay */ 31 };
+static const SYSTEMTIME min_allowed_date = { /* wYear */ 1752, /* wMonth */ 9,  /* wDayOfWeek */ 0, /* wDay */ 14 };
 
 static DWORD
 DATETIME_GetSystemTime (const DATETIME_INFO *infoPtr, SYSTEMTIME *systime)
@@ -153,6 +156,43 @@ DATETIME_GetSystemTime (const DATETIME_INFO *infoPtr, SYSTEMTIME *systime)
     return GDT_VALID;
 }
 
+/* Checks value is within configured date range
+ *
+ * PARAMETERS
+ *
+ *  [I] infoPtr : valid pointer to control data
+ *  [I] date    : pointer to valid date data to check
+ *
+ * RETURN VALUE
+ *
+ *  TRUE  - date within configured range
+ *  FALSE - date is outside configured range
+ */
+static BOOL DATETIME_IsDateInValidRange(const DATETIME_INFO *infoPtr, const SYSTEMTIME *date)
+{
+    SYSTEMTIME range[2];
+    DWORD limits;
+
+    if ((MONTHCAL_CompareSystemTime(date, &max_allowed_date) == 1) ||
+        (MONTHCAL_CompareSystemTime(date, &min_allowed_date) == -1))
+        return FALSE;
+
+    limits = SendMessageW (infoPtr->hMonthCal, MCM_GETRANGE, 0, (LPARAM) &range);
+
+    if (limits & GDTR_MAX)
+    {
+        if (MONTHCAL_CompareSystemTime(date, &range[1]) == 1)
+           return FALSE;
+    }
+
+    if (limits & GDTR_MIN)
+    {
+        if (MONTHCAL_CompareSystemTime(date, &range[0]) == -1)
+           return FALSE;
+    }
+
+    return TRUE;
+}
 
 static BOOL
 DATETIME_SetSystemTime (DATETIME_INFO *infoPtr, DWORD flag, const SYSTEMTIME *systime)
@@ -164,7 +204,7 @@ DATETIME_SetSystemTime (DATETIME_INFO *infoPtr, DWORD flag, const SYSTEMTIME *sy
           systime->wHour, systime->wMinute, systime->wSecond);
 
     if (flag == GDT_VALID) {
-      if (systime->wYear < 1601 || systime->wYear > 30827 ||
+      if (systime->wYear == 0 ||
           systime->wMonth < 1 || systime->wMonth > 12 ||
           systime->wDay < 1 ||
           systime->wDay > MONTHCAL_MonthLength(systime->wMonth, systime->wYear) ||
@@ -174,6 +214,10 @@ DATETIME_SetSystemTime (DATETIME_INFO *infoPtr, DWORD flag, const SYSTEMTIME *sy
           systime->wMilliseconds > 999
           )
         return FALSE;
+
+        /* Windows returns true if the date is valid but outside the limits set */
+        if (DATETIME_IsDateInValidRange(infoPtr, systime) == FALSE)
+            return TRUE;
 
         infoPtr->dateValid = TRUE;
         infoPtr->date = *systime;
