@@ -69,6 +69,7 @@ static HRESULT (WINAPI *pCoInternetGetSession)(DWORD, IInternetSession **, DWORD
 static HRESULT (WINAPI *pCoInternetParseUrl)(LPCWSTR, PARSEACTION, DWORD, LPWSTR, DWORD, DWORD *, DWORD);
 static HRESULT (WINAPI *pCoInternetQueryInfo)(LPCWSTR, QUERYOPTION, DWORD, LPVOID, DWORD, DWORD *, DWORD);
 static HRESULT (WINAPI *pCopyStgMedium)(const STGMEDIUM *, STGMEDIUM *);
+static HRESULT (WINAPI *pCopyBindInfo)(const BINDINFO *, BINDINFO *);
 static HRESULT (WINAPI *pFindMimeFromData)(LPBC, LPCWSTR, LPVOID, DWORD, LPCWSTR,
                         DWORD, LPWSTR*, DWORD);
 static HRESULT (WINAPI *pObtainUserAgentString)(DWORD, LPSTR, DWORD*);
@@ -1238,6 +1239,117 @@ static void test_CopyStgMedium(void)
     ok(hres == E_POINTER, "CopyStgMedium failed: %08x, expected E_POINTER\n", hres);
 }
 
+static void test_CopyBindInfo(void)
+{
+    BINDINFO src[2], dest[2];
+    SECURITY_DESCRIPTOR sec_desc;
+    HRESULT hres;
+    int i;
+
+    hres = pCopyBindInfo(NULL, NULL);
+    ok(hres == E_POINTER, "CopyBindInfo returned %08x, expected E_POINTER\n", hres);
+
+    memset(src, 0, sizeof(BINDINFO[2]));
+    memset(dest, 0xde, sizeof(BINDINFO[2]));
+    hres = pCopyBindInfo(src, dest);
+    ok(hres == E_INVALIDARG, "CopyBindInfo retuned: %08x, expected E_INVALIDARG\n", hres);
+
+    memset(src, 0, sizeof(BINDINFO[2]));
+    memset(dest, 0xde, sizeof(BINDINFO[2]));
+    src[0].cbSize = sizeof(BINDINFO);
+    dest[0].cbSize = 0;
+    hres = pCopyBindInfo(src, dest);
+    ok(hres == E_INVALIDARG, "CopyBindInfo retuned: %08x, expected E_INVALIDARG\n", hres);
+
+    memset(src, 0, sizeof(BINDINFO[2]));
+    memset(dest, 0xde, sizeof(BINDINFO[2]));
+    src[0].cbSize = 1;
+    dest[0].cbSize = sizeof(BINDINFO)+sizeof(DWORD);
+    hres = pCopyBindInfo(src, dest);
+    ok(hres == S_OK, "CopyBindInfo failed: %08x\n", hres);
+    ok(dest[0].cbSize == sizeof(BINDINFO)+sizeof(DWORD), "incorrect cbSize: %d\n", dest[0].cbSize);
+    for(i=1; i<dest[0].cbSize/sizeof(int); i++)
+        ok(((int*)dest)[i] == 0, "unset values should be set to 0, got %d on %d\n", ((int*)dest)[i], i);
+
+    memset(src, 0, sizeof(BINDINFO[2]));
+    memset(dest, 0xde, sizeof(BINDINFO[2]));
+    src[0].cbSize = sizeof(BINDINFO)+2*sizeof(DWORD);
+    dest[0].cbSize = sizeof(BINDINFO)+sizeof(DWORD);
+    hres = pCopyBindInfo(src, dest);
+    ok(hres == S_OK, "CopyBindInfo failed: %08x\n", hres);
+    ok(dest[1].cbSize == src[1].cbSize, "additional data should be copied\n");
+    ok(dest[1].szExtraInfo != src[1].szExtraInfo,
+            "data not fitting in destination buffer should not be copied\n");
+
+    memset(src, 0xf0, sizeof(BINDINFO[2]));
+    memset(dest, 0xde, sizeof(BINDINFO[2]));
+    src[0].cbSize = sizeof(BINDINFO);
+    src[0].szExtraInfo = CoTaskMemAlloc(sizeof(WCHAR));
+    src[0].szExtraInfo[0] = 0;
+    src[0].szCustomVerb = NULL;
+    src[0].pUnk = NULL;
+    src[0].stgmedData.tymed = TYMED_NULL;
+    src[0].stgmedData.pUnkForRelease = NULL;
+    dest[0].cbSize = sizeof(BINDINFO);
+    hres = pCopyBindInfo(src, dest);
+    ok(hres == S_OK, "CopyBindInfo failed: %08x\n", hres);
+
+    ok(dest[0].cbSize == sizeof(BINDINFO), "incorrect cbSize: %d\n", dest[0].cbSize);
+    ok(dest[0].szExtraInfo && !dest[0].szExtraInfo[0] && dest[0].szExtraInfo!=src[0].szExtraInfo,
+            "incorrect szExtraInfo: (%p!=%p) %d\n", dest[0].szExtraInfo,
+            src[0].szExtraInfo, dest[0].szExtraInfo[0]);
+    ok(!memcmp(&dest[0].stgmedData, &src[0].stgmedData, sizeof(STGMEDIUM)),
+            "incorrect stgmedData value\n");
+    ok(src[0].grfBindInfoF == dest[0].grfBindInfoF, "grfBindInfoF = %x, expected %x\n",
+            dest[0].grfBindInfoF, src[0].grfBindInfoF);
+    ok(src[0].dwBindVerb == dest[0].dwBindVerb, "dwBindVerb = %x, expected %x\n",
+            dest[0].dwBindVerb, src[0].dwBindVerb);
+    ok(!dest[0].szCustomVerb, "szCustmoVerb != NULL\n");
+    ok(src[0].cbstgmedData == dest[0].cbstgmedData, "cbstgmedData = %x, expected %x\n",
+            dest[0].cbstgmedData, src[0].cbstgmedData);
+    ok(src[0].dwOptions == dest[0].dwOptions, "dwOptions = %x, expected %x\n",
+            dest[0].dwOptions, src[0].dwOptions);
+    ok(src[0].dwOptionsFlags == dest[0].dwOptionsFlags, "dwOptionsFlags = %x, expected %x\n",
+            dest[0].dwOptionsFlags, src[0].dwOptionsFlags);
+    ok(src[0].dwCodePage == dest[0].dwCodePage, "dwCodePage = %x, expected %x\n",
+            dest[0].dwCodePage, src[0].dwCodePage);
+    ok(!dest[0].securityAttributes.nLength,
+            "unexpected securityAttributes.nLength value: %d\n",
+            dest[0].securityAttributes.nLength);
+    ok(!dest[0].securityAttributes.lpSecurityDescriptor,
+            "unexpected securityAttributes.lpSecurityDescriptor value: %p\n",
+            dest[0].securityAttributes.lpSecurityDescriptor);
+    ok(!dest[0].securityAttributes.bInheritHandle,
+            "unexpected securityAttributes.bInheritHandle value: %d\n",
+            dest[0].securityAttributes.bInheritHandle);
+    ok(!memcmp(&dest[0].iid, &src[0].iid, sizeof(IID)),
+            "incorrect iid value\n");
+    ok(!dest[0].pUnk, "pUnk != NULL\n");
+    ok(src[0].dwReserved == dest[0].dwReserved, "dwReserved = %x, expected %x\n",
+            dest[0].dwReserved, src[0].dwReserved);
+
+    CoTaskMemFree(src[0].szExtraInfo);
+    CoTaskMemFree(dest[0].szExtraInfo);
+
+    src[0].szExtraInfo = NULL;
+    src[0].securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+    ok(InitializeSecurityDescriptor(&sec_desc, SECURITY_DESCRIPTOR_REVISION),
+            "InitializeSecurityDescriptor failed\n");
+    src[0].securityAttributes.lpSecurityDescriptor = (void*)&sec_desc;
+    src[0].securityAttributes.bInheritHandle = TRUE;
+    hres = pCopyBindInfo(src, dest);
+    ok(hres == S_OK, "CopyBindInfo failed: %08x\n", hres);
+    ok(!dest[0].securityAttributes.nLength,
+            "unexpected securityAttributes.nLength value: %d\n",
+            dest[0].securityAttributes.nLength);
+    ok(!dest[0].securityAttributes.lpSecurityDescriptor,
+            "unexpected securityAttributes.lpSecurityDescriptor value: %p\n",
+            dest[0].securityAttributes.lpSecurityDescriptor);
+    ok(!dest[0].securityAttributes.bInheritHandle,
+            "unexpected securityAttributes.bInheritHandle value: %d\n",
+            dest[0].securityAttributes.bInheritHandle);
+}
+
 static void test_UrlMkGetSessionOption(void)
 {
     DWORD encoding, size;
@@ -1760,6 +1872,7 @@ START_TEST(misc)
     pCoInternetParseUrl = (void*) GetProcAddress(hurlmon, "CoInternetParseUrl");
     pCoInternetQueryInfo = (void*) GetProcAddress(hurlmon, "CoInternetQueryInfo");
     pCopyStgMedium = (void*) GetProcAddress(hurlmon, "CopyStgMedium");
+    pCopyBindInfo = (void*) GetProcAddress(hurlmon, "CopyBindInfo");
     pFindMimeFromData = (void*) GetProcAddress(hurlmon, "FindMimeFromData");
     pObtainUserAgentString = (void*) GetProcAddress(hurlmon, "ObtainUserAgentString");
     pReleaseBindInfo = (void*) GetProcAddress(hurlmon, "ReleaseBindInfo");
@@ -1789,6 +1902,7 @@ START_TEST(misc)
     test_MimeFilter();
     test_ReleaseBindInfo();
     test_CopyStgMedium();
+    test_CopyBindInfo();
     test_UrlMkGetSessionOption();
     test_user_agent();
     test_MkParseDisplayNameEx();
