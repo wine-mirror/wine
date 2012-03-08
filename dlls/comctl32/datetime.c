@@ -852,8 +852,13 @@ DATETIME_ApplySelectedField (DATETIME_INFO *infoPtr)
     if (infoPtr->select == -1 || infoPtr->nCharsEntered == 0)
         return;
 
-    for (i=0; i<infoPtr->nCharsEntered; i++)
-        val = val * 10 + infoPtr->charsEntered[i] - '0';
+    if ((infoPtr->fieldspec[fieldNum] == ONELETTERAMPM) ||
+        (infoPtr->fieldspec[fieldNum] == TWOLETTERAMPM))
+        val = infoPtr->charsEntered[0];
+    else {
+        for (i=0; i<infoPtr->nCharsEntered; i++)
+            val = val * 10 + infoPtr->charsEntered[i] - '0';
+    }
 
     infoPtr->nCharsEntered = 0;
 
@@ -903,6 +908,16 @@ DATETIME_ApplySelectedField (DATETIME_INFO *infoPtr)
         case ONEDIGITSECOND:
         case TWODIGITSECOND:
             date.wSecond = val;
+            break;
+        case ONELETTERAMPM:
+        case TWOLETTERAMPM:
+            if (val == 'a' || val == 'A') {
+                if (date.wHour >= 12)
+                    date.wHour -= 12;
+            } else if (val == 'p' || val == 'P') {
+                if (date.wHour < 12)
+                    date.wHour += 12;
+            }
             break;
     }
 
@@ -1197,15 +1212,20 @@ DATETIME_KeyDown (DATETIME_INFO *infoPtr, DWORD vkCode)
 static LRESULT
 DATETIME_Char (DATETIME_INFO *infoPtr, WPARAM vkCode)
 {
-    int fieldNum = infoPtr->select & DTHT_DATEFIELD;
+    int fieldNum, fieldSpec;
 
-    if (vkCode >= '0' && vkCode <= '9') {
+    fieldNum = infoPtr->select & DTHT_DATEFIELD;
+    fieldSpec = infoPtr->fieldspec[fieldNum];
+
+    if (fieldSpec == ONELETTERAMPM || fieldSpec == TWOLETTERAMPM) {
+        infoPtr->charsEntered[0] = vkCode;
+        infoPtr->nCharsEntered = 1;
+
+        DATETIME_ApplySelectedField(infoPtr);
+    } else if (vkCode >= '0' && vkCode <= '9') {
         int maxChars;
-        int fieldSpec;
 
         infoPtr->charsEntered[infoPtr->nCharsEntered++] = vkCode;
-
-        fieldSpec = infoPtr->fieldspec[fieldNum];
 
         if (fieldSpec == INVALIDFULLYEAR || fieldSpec == FULLYEAR)
             maxChars = 4;
@@ -1215,6 +1235,7 @@ DATETIME_Char (DATETIME_INFO *infoPtr, WPARAM vkCode)
         if (maxChars == infoPtr->nCharsEntered)
             DATETIME_ApplySelectedField(infoPtr);
     }
+
     return 0;
 }
 
