@@ -279,10 +279,19 @@ typedef struct {
 
 void release_cc(cc_ctx_t*) DECLSPEC_HIDDEN;
 
+typedef struct {
+    IServiceProvider IServiceProvider_iface;
+
+    LONG ref;
+
+    script_ctx_t *ctx;
+} JSCaller;
+
 struct _script_ctx_t {
     LONG ref;
 
     SCRIPTSTATE state;
+
     exec_ctx_t *exec_ctx;
     named_item_t *named_items;
     IActiveScriptSite *site;
@@ -291,6 +300,7 @@ struct _script_ctx_t {
     DWORD version;
     LCID lcid;
     cc_ctx_t *cc;
+    JSCaller *jscaller;
 
     jsheap_t tmp_heap;
 
@@ -344,6 +354,7 @@ HRESULT create_string_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN
 HRESULT create_vbarray_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 
 IUnknown *create_ax_site(script_ctx_t*) DECLSPEC_HIDDEN;
+HRESULT create_jscaller(script_ctx_t*) DECLSPEC_HIDDEN;
 
 typedef struct {
     const WCHAR *str;

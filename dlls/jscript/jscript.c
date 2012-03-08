@@ -72,6 +72,8 @@ void script_release(script_ctx_t *ctx)
     jsheap_free(&ctx->tmp_heap);
     SysFreeString(ctx->last_match);
 
+    IServiceProvider_Release(&ctx->jscaller->IServiceProvider_iface);
+
     heap_free(ctx);
 }
 
@@ -694,6 +696,7 @@ static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
 {
     JScript *This = impl_from_IActiveScriptParse(iface);
     script_ctx_t *ctx;
+    HRESULT hres;
 
     TRACE("(%p)\n", This);
 
@@ -709,6 +712,12 @@ static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
     ctx->safeopt = This->safeopt;
     ctx->version = This->version;
     jsheap_init(&ctx->tmp_heap);
+
+    hres = create_jscaller(ctx);
+    if(FAILED(hres)) {
+        heap_free(ctx);
+        return hres;
+    }
 
     ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
     if(ctx) {

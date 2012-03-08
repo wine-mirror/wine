@@ -656,3 +656,84 @@ HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
 
     return S_OK;
 }
+
+static inline JSCaller *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, JSCaller, IServiceProvider_iface);
+}
+
+static HRESULT WINAPI JSCaller_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    JSCaller *This = impl_from_IServiceProvider(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IServiceProvider_iface;
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
+        *ppv = &This->IServiceProvider_iface;
+    }else {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI JSCaller_AddRef(IServiceProvider *iface)
+{
+    JSCaller *This = impl_from_IServiceProvider(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI JSCaller_Release(IServiceProvider *iface)
+{
+    JSCaller *This = impl_from_IServiceProvider(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI JSCaller_QueryService(IServiceProvider *iface, REFGUID guidService,
+        REFIID riid, void **ppv)
+{
+    JSCaller *This = impl_from_IServiceProvider(iface);
+
+    FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    JSCaller_QueryInterface,
+    JSCaller_AddRef,
+    JSCaller_Release,
+    JSCaller_QueryService
+};
+
+HRESULT create_jscaller(script_ctx_t *ctx)
+{
+    JSCaller *ret;
+
+    ret = heap_alloc(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
+    ret->ref = 1;
+
+    ctx->jscaller = ret;
+    return S_OK;
+}
