@@ -296,7 +296,7 @@ static void MONTHCAL_CopyDate(const SYSTEMTIME *from, SYSTEMTIME *to)
  *
  *  Note that no date validation performed, already validated values expected.
  */
-static LONG MONTHCAL_CompareSystemTime(const SYSTEMTIME *first, const SYSTEMTIME *second)
+LONG MONTHCAL_CompareSystemTime(const SYSTEMTIME *first, const SYSTEMTIME *second)
 {
   FILETIME ft_first, ft_second;
 

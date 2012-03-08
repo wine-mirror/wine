@@ -710,7 +710,7 @@ static void test_dtm_set_and_get_systemtime_with_limits(void)
     expect(1, r);
     r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt[0]);
     ok(r == GDT_VALID, "Expected %d, not %d(GDT_NONE) or %d(GDT_ERROR), got %ld\n", GDT_VALID, GDT_NONE, GDT_ERROR, r);
-    todo_wine expect_systime(&refSt, &getSt[0]);
+    expect_systime(&refSt, &getSt[0]);
 
     fill_systime_struct(&st[0], 1977, 1, 0, 1, 0, 0, 0, 0);
 
@@ -718,7 +718,7 @@ static void test_dtm_set_and_get_systemtime_with_limits(void)
     expect(1, r);
     r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt[0]);
     ok(r == GDT_VALID, "Expected %d, not %d(GDT_NONE) or %d(GDT_ERROR), got %ld\n", GDT_VALID, GDT_NONE, GDT_ERROR, r);
-    todo_wine expect_systime(&refSt, &getSt[0]);
+    expect_systime(&refSt, &getSt[0]);
 
     ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_and_get_systime_with_limits, "test_dtm_set_and_get_systime_with_limits", FALSE);
 
