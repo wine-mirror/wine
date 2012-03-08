@@ -60,6 +60,7 @@ PUBLIC_IDL_H_SRCS = \
 	msdadc.idl \
 	mshtmhst.idl \
 	mshtml.idl \
+	msident.idl \
 	msinkaut.idl \
 	mstask.idl \
 	msxml.idl \

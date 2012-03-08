@@ -192,6 +192,7 @@ include/msctf.h
 include/msdadc.h
 include/mshtmhst.h
 include/mshtml.h
+include/msident.h
 include/msinkaut.h
 include/mstask.h
 include/msxml.h
