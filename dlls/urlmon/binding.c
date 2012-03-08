@@ -1150,19 +1150,7 @@ static HRESULT WINAPI InternetBindInfo_GetBindInfo(IInternetBindInfo *iface,
     TRACE("(%p)->(%p %p)\n", This, grfBINDF, pbindinfo);
 
     *grfBINDF = This->bindf;
-
-    *pbindinfo = This->bindinfo;
-
-    if(pbindinfo->szExtraInfo || pbindinfo->szCustomVerb)
-        FIXME("copy strings\n");
-
-    if(pbindinfo->stgmedData.pUnkForRelease)
-        IUnknown_AddRef(pbindinfo->stgmedData.pUnkForRelease);
-
-    if(pbindinfo->pUnk)
-        IUnknown_AddRef(pbindinfo->pUnk);
-
-    return S_OK;
+    return CopyBindInfo(&This->bindinfo, pbindinfo);
 }
 
 static HRESULT WINAPI InternetBindInfo_GetBindString(IInternetBindInfo *iface,

@@ -641,6 +641,11 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     }
 
     memset(&bindinfo, 0, sizeof(bindinfo));
+    bindinfo.cbSize = 0;
+    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &bind_info, &bindinfo);
+    ok(hres == E_INVALIDARG, "GetBindInfo returned: %08x, expected E_INVALIDARG\n", hres);
+
+    memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(bindinfo);
     hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &bind_info, &bindinfo);
     ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
