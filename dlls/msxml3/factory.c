@@ -86,7 +86,12 @@ static const struct clsid_version_t clsid_versions_table[] =
     { &CLSID_SAXXMLReader,   MSXML_DEFAULT },
     { &CLSID_SAXXMLReader30, MSXML3 },
     { &CLSID_SAXXMLReader40, MSXML4 },
-    { &CLSID_SAXXMLReader60, MSXML6 }
+    { &CLSID_SAXXMLReader60, MSXML6 },
+
+    { &CLSID_SAXAttributes,   MSXML_DEFAULT },
+    { &CLSID_SAXAttributes30, MSXML3 },
+    { &CLSID_SAXAttributes40, MSXML4 },
+    { &CLSID_SAXAttributes60, MSXML6 }
 };
 
 static MSXML_VERSION get_msxml_version(const GUID *clsid)
@@ -346,6 +351,13 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
              IsEqualCLSID( rclsid, &CLSID_MXXMLWriter60 ) )
     {
         return DOMClassFactory_Create(rclsid, riid, ppv, MXWriter_create);
+    }
+    else if( IsEqualCLSID( rclsid, &CLSID_SAXAttributes) ||
+             IsEqualCLSID( rclsid, &CLSID_SAXAttributes30 ) ||
+             IsEqualCLSID( rclsid, &CLSID_SAXAttributes40 ) ||
+             IsEqualCLSID( rclsid, &CLSID_SAXAttributes60 ))
+    {
+        return DOMClassFactory_Create(rclsid, riid, ppv, SAXAttributes_create);
     }
     else if( IsEqualCLSID( rclsid, &CLSID_MXNamespaceManager ) ||
              IsEqualCLSID( rclsid, &CLSID_MXNamespaceManager40 ) ||

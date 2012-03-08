@@ -449,8 +449,12 @@ static HRESULT WINAPI contentHandler_startElement(
         int nQName,
         ISAXAttributes *pAttr)
 {
-    int len;
+    IMXAttributes *mxattr;
     HRESULT hres;
+    int len;
+
+    hres = ISAXAttributes_QueryInterface(pAttr, &IID_IMXAttributes, (void**)&mxattr);
+    EXPECT_HR(hres, E_NOINTERFACE);
 
     if(!test_expect_call(CH_STARTELEMENT))
         return E_FAIL;
@@ -3309,7 +3313,15 @@ static void test_mxattr_addAttribute(void)
         EXPECT_HR(hr, S_OK);
 
         hr = IMXAttributes_QueryInterface(mxattr, &IID_ISAXAttributes, (void**)&saxattr);
+todo_wine
         EXPECT_HR(hr, S_OK);
+        if (hr != S_OK)
+        {
+            IMXAttributes_Release(mxattr);
+            table++;
+            i++;
+            continue;
+        }
 
         /* SAXAttributes30 and SAXAttributes60 both crash on this test */
         if (IsEqualGUID(table->clsid, &CLSID_SAXAttributes) ||
@@ -3359,7 +3371,13 @@ static void test_mxattr_clear(void)
     EXPECT_HR(hr, S_OK);
 
     hr = IMXAttributes_QueryInterface(mxattr, &IID_ISAXAttributes, (void**)&saxattr);
+todo_wine
     EXPECT_HR(hr, S_OK);
+    if (hr != S_OK)
+    {
+        IMXAttributes_Release(mxattr);
+        return;
+    }
 
     hr = ISAXAttributes_getQName(saxattr, 0, NULL, NULL);
     EXPECT_HR(hr, E_INVALIDARG);
@@ -3410,6 +3428,27 @@ static void test_mxattr_clear(void)
     IMXAttributes_Release(mxattr);
     ISAXAttributes_Release(saxattr);
     free_bstrs();
+}
+
+static void test_mxattr_dispex(void)
+{
+    IMXAttributes *mxattr;
+    IDispatchEx *dispex;
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_SAXAttributes, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXAttributes, (void**)&mxattr);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXAttributes_QueryInterface(mxattr, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, S_OK);
+    hr = IDispatchEx_QueryInterface(dispex, &IID_IUnknown, (void**)&unk);
+    test_obj_dispex(unk);
+    IUnknown_Release(unk);
+    IDispatchEx_Release(dispex);
+
+    IMXAttributes_Release(mxattr);
 }
 
 START_TEST(saxreader)
@@ -3465,6 +3504,7 @@ START_TEST(saxreader)
     {
         test_mxattr_addAttribute();
         test_mxattr_clear();
+        test_mxattr_dispex();
     }
     else
         skip("SAXAttributes not supported\n");
