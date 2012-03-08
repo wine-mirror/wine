@@ -238,7 +238,9 @@ static BOOL arm_fetch_minidump_thread(struct dump_context* dc, unsigned index, u
 
 static BOOL arm_fetch_minidump_module(struct dump_context* dc, unsigned index, unsigned flags)
 {
-    FIXME("NIY\n");
+    /* FIXME: actually, we should probably take care of FPO data, unless it's stored in
+     * function table minidump stream
+     */
     return FALSE;
 }
 
