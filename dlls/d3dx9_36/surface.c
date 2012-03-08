@@ -670,6 +670,57 @@ static DWORD make_argb_color(CONST struct argb_conversion_info *info, CONST DWOR
     return val;
 }
 
+static void format_to_vec4(const PixelFormatDesc *format, const DWORD *src, struct vec4 *dst)
+{
+    DWORD mask;
+
+    if (format->bits[1])
+    {
+        mask = (1 << format->bits[1]) - 1;
+        dst->x = (float)((*src >> format->shift[1]) & mask) / mask;
+    }
+    else
+        dst->x = 1.0f;
+
+    if (format->bits[2])
+    {
+        mask = (1 << format->bits[2]) - 1;
+        dst->y = (float)((*src >> format->shift[2]) & mask) / mask;
+    }
+    else
+        dst->y = 1.0f;
+
+    if (format->bits[3])
+    {
+        mask = (1 << format->bits[3]) - 1;
+        dst->z = (float)((*src >> format->shift[3]) & mask) / mask;
+    }
+    else
+        dst->z = 1.0f;
+
+    if (format->bits[0])
+    {
+        mask = (1 << format->bits[0]) - 1;
+        dst->w = (float)((*src >> format->shift[0]) & mask) / mask;
+    }
+    else
+        dst->w = 1.0f;
+}
+
+static void format_from_vec4(const PixelFormatDesc *format, const struct vec4 *src, DWORD *dst)
+{
+    *dst = 0;
+
+    if (format->bits[1])
+        *dst |= (DWORD)(src->x * ((1 << format->bits[1]) - 1) + 0.5f) << format->shift[1];
+    if (format->bits[2])
+        *dst |= (DWORD)(src->y * ((1 << format->bits[2]) - 1) + 0.5f) << format->shift[2];
+    if (format->bits[3])
+        *dst |= (DWORD)(src->z * ((1 << format->bits[3]) - 1) + 0.5f) << format->shift[3];
+    if (format->bits[0])
+        *dst |= (DWORD)(src->w * ((1 << format->bits[0]) - 1) + 0.5f) << format->shift[0];
+}
+
 /************************************************************
  * copy_simple_data
  *
@@ -685,6 +736,7 @@ static void copy_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsize,
                              D3DCOLOR colorkey)
 {
     struct argb_conversion_info conv_info, ck_conv_info;
+    const PixelFormatDesc *ck_format = NULL;
     DWORD channels[4], pixel;
     UINT minwidth, minheight;
     UINT x, y;
@@ -695,33 +747,58 @@ static void copy_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsize,
     minwidth  = (srcsize.x < destsize.x) ? srcsize.x : destsize.x;
     minheight = (srcsize.y < destsize.y) ? srcsize.y : destsize.y;
 
-    if(colorkey) {
-        /* color keys are always represented in D3DFMT_A8R8G8B8 format */
-        const PixelFormatDesc *ckformatdesc;
-
-        ckformatdesc = get_format_info(D3DFMT_A8R8G8B8);
-        init_argb_conversion_info(srcformat, ckformatdesc, &ck_conv_info);
+    if (colorkey)
+    {
+        /* Color keys are always represented in D3DFMT_A8R8G8B8 format. */
+        ck_format = get_format_info(D3DFMT_A8R8G8B8);
+        init_argb_conversion_info(srcformat, ck_format, &ck_conv_info);
     }
 
     for(y = 0;y < minheight;y++) {
         const BYTE *srcptr = src + y * srcpitch;
         BYTE *destptr = dest + y * destpitch;
-        DWORD val = 0;
+        DWORD val;
 
         for(x = 0;x < minwidth;x++) {
             /* extract source color components */
             pixel = dword_from_bytes(srcptr, srcformat->bytes_per_pixel);
-            get_relevant_argb_components(&conv_info, pixel, channels);
 
-            /* recombine the components */
-            val = make_argb_color(&conv_info, channels);
+            if (!srcformat->to_rgba && !destformat->from_rgba)
+            {
+                get_relevant_argb_components(&conv_info, pixel, channels);
+                val = make_argb_color(&conv_info, channels);
 
-            if(colorkey) {
-                get_relevant_argb_components(&ck_conv_info, pixel, channels);
-                pixel = make_argb_color(&ck_conv_info, channels);
-                if(pixel == colorkey)
-                    /* make this pixel transparent */
-                    val &= ~conv_info.destmask[0];
+                if (colorkey)
+                {
+                    get_relevant_argb_components(&ck_conv_info, pixel, channels);
+                    pixel = make_argb_color(&ck_conv_info, channels);
+                    if (pixel == colorkey)
+                        val &= ~conv_info.destmask[0];
+                }
+            }
+            else
+            {
+                struct vec4 color, tmp;
+
+                format_to_vec4(srcformat, &pixel, &color);
+                if (srcformat->to_rgba)
+                    srcformat->to_rgba(&color, &tmp);
+                else
+                    tmp = color;
+
+                if (ck_format)
+                {
+                    format_from_vec4(ck_format, &tmp, &pixel);
+                    if (pixel == colorkey)
+                        tmp.w = 0.0f;
+                }
+
+                if (destformat->from_rgba)
+                    destformat->from_rgba(&tmp, &color);
+                else
+                    color = tmp;
+
+                format_from_vec4(destformat, &color, &val);
             }
 
             dword_to_bytes(destptr, val, destformat->bytes_per_pixel);
@@ -751,6 +828,7 @@ static void point_filter_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsi
                                      D3DCOLOR colorkey)
 {
     struct argb_conversion_info conv_info, ck_conv_info;
+    const PixelFormatDesc *ck_format = NULL;
     DWORD channels[4], pixel;
 
     UINT x, y;
@@ -758,12 +836,11 @@ static void point_filter_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsi
     ZeroMemory(channels, sizeof(channels));
     init_argb_conversion_info(srcformat, destformat, &conv_info);
 
-    if(colorkey) {
-        /* color keys are always represented in D3DFMT_A8R8G8B8 format */
-        const PixelFormatDesc *ckformatdesc;
-
-        ckformatdesc = get_format_info(D3DFMT_A8R8G8B8);
-        init_argb_conversion_info(srcformat, ckformatdesc, &ck_conv_info);
+    if (colorkey)
+    {
+        /* Color keys are always represented in D3DFMT_A8R8G8B8 format. */
+        ck_format = get_format_info(D3DFMT_A8R8G8B8);
+        init_argb_conversion_info(srcformat, ck_format, &ck_conv_info);
     }
 
     for(y = 0;y < destsize.y;y++) {
@@ -772,21 +849,47 @@ static void point_filter_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsi
 
         for(x = 0;x < destsize.x;x++) {
             const BYTE *srcptr = bufptr + (x * srcsize.x / destsize.x) * srcformat->bytes_per_pixel;
-            DWORD val = 0;
+            DWORD val;
 
             /* extract source color components */
             pixel = dword_from_bytes(srcptr, srcformat->bytes_per_pixel);
-            get_relevant_argb_components(&conv_info, pixel, channels);
 
-            /* recombine the components */
-            val = make_argb_color(&conv_info, channels);
+            if (!srcformat->to_rgba && !destformat->from_rgba)
+            {
+                get_relevant_argb_components(&conv_info, pixel, channels);
+                val = make_argb_color(&conv_info, channels);
 
-            if(colorkey) {
-                get_relevant_argb_components(&ck_conv_info, pixel, channels);
-                pixel = make_argb_color(&ck_conv_info, channels);
-                if(pixel == colorkey)
-                    /* make this pixel transparent */
-                    val &= ~conv_info.destmask[0];
+                if (colorkey)
+                {
+                    get_relevant_argb_components(&ck_conv_info, pixel, channels);
+                    pixel = make_argb_color(&ck_conv_info, channels);
+                    if (pixel == colorkey)
+                        val &= ~conv_info.destmask[0];
+                }
+            }
+            else
+            {
+                struct vec4 color, tmp;
+
+                format_to_vec4(srcformat, &pixel, &color);
+                if (srcformat->to_rgba)
+                    srcformat->to_rgba(&color, &tmp);
+                else
+                    tmp = color;
+
+                if (ck_format)
+                {
+                    format_from_vec4(ck_format, &tmp, &pixel);
+                    if (pixel == colorkey)
+                        tmp.w = 0.0f;
+                }
+
+                if (destformat->from_rgba)
+                    destformat->from_rgba(&tmp, &color);
+                else
+                    color = tmp;
+
+                format_from_vec4(destformat, &color, &val);
             }
 
             dword_to_bytes(destptr, val, destformat->bytes_per_pixel);

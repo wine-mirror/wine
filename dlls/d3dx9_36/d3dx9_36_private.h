@@ -32,6 +32,11 @@
 
 #define ARRAY_SIZE(array) (sizeof(array)/sizeof(*array))
 
+struct vec4
+{
+    float x, y, z, w;
+};
+
 /* for internal use */
 typedef enum _FormatType {
     FORMAT_ARGB,   /* unsigned */
@@ -44,6 +49,8 @@ typedef struct _PixelFormatDesc {
     BYTE shift[4];
     UINT bytes_per_pixel;
     FormatType type;
+    void (*from_rgba)(const struct vec4 *src, struct vec4 *dst);
+    void (*to_rgba)(const struct vec4 *src, struct vec4 *dst);
 } PixelFormatDesc;
 
 HRESULT map_view_of_file(LPCWSTR filename, LPVOID *buffer, DWORD *length) DECLSPEC_HIDDEN;
