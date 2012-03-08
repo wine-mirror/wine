@@ -847,6 +847,7 @@ DATETIME_ApplySelectedField (DATETIME_INFO *infoPtr)
     int fieldNum = infoPtr->select & DTHT_DATEFIELD;
     int i, val=0, clamp_day=0;
     SYSTEMTIME date = infoPtr->date;
+    int oldyear;
 
     if (infoPtr->select == -1 || infoPtr->nCharsEntered == 0)
         return;
@@ -859,13 +860,25 @@ DATETIME_ApplySelectedField (DATETIME_INFO *infoPtr)
     switch (infoPtr->fieldspec[fieldNum]) {
         case ONEDIGITYEAR:
         case TWODIGITYEAR:
+            oldyear = date.wYear;
             date.wYear = date.wYear - (date.wYear%100) + val;
-            clamp_day = 1;
+
+            if (DATETIME_IsDateInValidRange(infoPtr, &date))
+                clamp_day = 1;
+            else
+                date.wYear = oldyear;
+
             break;
         case INVALIDFULLYEAR:
         case FULLYEAR:
+            oldyear = date.wYear;
             date.wYear = val;
-            clamp_day = 1;
+
+            if (DATETIME_IsDateInValidRange(infoPtr, &date))
+                clamp_day = 1;
+            else
+                date.wYear = oldyear;
+
             break;
         case ONEDIGITMONTH:
         case TWODIGITMONTH:
