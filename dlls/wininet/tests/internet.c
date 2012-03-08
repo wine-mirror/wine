@@ -159,6 +159,7 @@ static void test_InternetQueryOptionA(void)
   static const char useragent[] = {"Wininet Test"};
   char *buffer;
   int retval;
+  BOOL res;
 
   hinet = InternetOpenA(useragent,INTERNET_OPEN_TYPE_DIRECT,NULL,NULL, 0);
   ok((hinet != 0x0),"InternetOpen Failed\n");
@@ -237,20 +238,64 @@ static void test_InternetQueryOptionA(void)
   ok(retval == 0,"Got wrong return value %d\n",retval);
   ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code%d\n",err);
 
+  len = sizeof(val);
+  val = 0xdeadbeef;
+  res = InternetQueryOptionA(hinet, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, &len);
+  ok(!res, "InternetQueryOptionA(INTERNET_OPTION_MAX_CONNS_PER_SERVER) succeeded\n");
+  ok(GetLastError() == ERROR_INTERNET_INVALID_OPERATION, "GetLastError() = %u\n", GetLastError());
+
+  val = 2;
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, sizeof(val));
+  ok(!res, "InternetSetOptionA(INTERNET_OPTION_MAX_CONNS_PER_SERVER) succeeded\n");
+  ok(GetLastError() == ERROR_INTERNET_INVALID_OPERATION, "GetLastError() = %u\n", GetLastError());
+
   InternetCloseHandle(hinet);
+}
 
-  len = sizeof(val);
-  retval = InternetQueryOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, &len);
-  ok(retval == TRUE,"Got wrong return value %d\n", retval);
-  ok(len == sizeof(val), "got %d\n", len);
-  ok(val == 2, "got %d\n", val);
+static void test_max_conns(void)
+{
+    DWORD len, val;
+    BOOL res;
 
-  len = sizeof(val);
-  retval = InternetQueryOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER, &val, &len);
-  ok(retval == TRUE,"Got wrong return value %d\n", retval);
-  ok(len == sizeof(val), "got %d\n", len);
-  ok(val == 4, "got %d\n", val);
+    len = sizeof(val);
+    val = 0xdeadbeef;
+    res = InternetQueryOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, &len);
+    ok(res,"Got wrong return value %x\n", res);
+    ok(len == sizeof(val), "got %d\n", len);
+    ok(val == 2, "got %d\n", val);
 
+    len = sizeof(val);
+    val = 0xdeadbeef;
+    res = InternetQueryOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER, &val, &len);
+    ok(res,"Got wrong return value %x\n", res);
+    ok(len == sizeof(val), "got %d\n", len);
+    ok(val == 4, "got %d\n", val);
+
+    val = 3;
+    res = InternetSetOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, sizeof(val));
+    ok(res, "InternetSetOptionA(INTERNET_OPTION_MAX_CONNS_PER_SERVER) failed: %x\n", res);
+
+    len = sizeof(val);
+    val = 0xdeadbeef;
+    res = InternetQueryOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, &len);
+    ok(res,"Got wrong return value %x\n", res);
+    ok(len == sizeof(val), "got %d\n", len);
+    ok(val == 3, "got %d\n", val);
+
+    val = 0;
+    res = InternetSetOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, sizeof(val));
+    ok(!res, "InternetSetOptionA(INTERNET_OPTION_MAX_CONNS_PER_SERVER, 0) succeeded\n");
+    ok(GetLastError() == ERROR_BAD_ARGUMENTS, "GetLastError() = %u\n", GetLastError());
+
+    val = 2;
+    res = InternetSetOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, sizeof(val)-1);
+    ok(!res, "InternetSetOptionA(INTERNET_OPTION_MAX_CONNS_PER_SERVER) succeeded\n");
+    ok(GetLastError() == ERROR_INTERNET_BAD_OPTION_LENGTH, "GetLastError() = %u\n", GetLastError());
+
+    val = 2;
+    res = InternetSetOptionA(NULL, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, sizeof(val)+1);
+    ok(!res, "InternetSetOptionA(INTERNET_OPTION_MAX_CONNS_PER_SERVER) succeeded\n");
+    ok(GetLastError() == ERROR_INTERNET_BAD_OPTION_LENGTH, "GetLastError() = %u\n", GetLastError());
 }
 
 static void test_get_cookie(void)
@@ -1311,6 +1356,7 @@ START_TEST(internet)
     test_Option_PerConnectionOption();
     test_Option_PerConnectionOptionA();
     test_InternetErrorDlg();
+    test_max_conns();
 
     if (!pInternetTimeFromSystemTimeA)
         win_skip("skipping the InternetTime tests\n");
