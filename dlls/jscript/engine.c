@@ -1509,8 +1509,11 @@ static HRESULT add_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcep
 
             V_VT(retv) = VT_BSTR;
             V_BSTR(retv) = SysAllocStringLen(NULL, len1+len2);
-            memcpy(V_BSTR(retv), lstr, len1*sizeof(WCHAR));
-            memcpy(V_BSTR(retv)+len1, rstr, (len2+1)*sizeof(WCHAR));
+            if(len1)
+                memcpy(V_BSTR(retv), lstr, len1*sizeof(WCHAR));
+            if(len2)
+                memcpy(V_BSTR(retv)+len1, rstr, len2*sizeof(WCHAR));
+            V_BSTR(retv)[len1+len2] = 0;
         }
 
         if(V_VT(&l) != VT_BSTR)
