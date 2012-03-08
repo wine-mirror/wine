@@ -4,6 +4,7 @@
  * Copyright 1998, 1999 Eric Kohl
  * Copyright 1999, 2000 Alex Priem <alexp@sci.kun.nl>
  * Copyright 2000 Chris Morgan <cmorgan@wpi.edu>
+ * Copyright 2012 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -896,9 +897,20 @@ DATETIME_ApplySelectedField (DATETIME_INFO *infoPtr)
             break;
         case ONEDIGIT12HOUR:
         case TWODIGIT12HOUR:
+            if (val >= 24)
+                val -= 20;
+
+            if (val >= 13)
+                date.wHour = val;
+            else if (val != 0) {
+                if (date.wHour >= 12) /* preserve current AM/PM state */
+                    date.wHour = (val == 12 ? 12 : val + 12);
+                else
+                    date.wHour = (val == 12 ? 0 : val);
+            }
+            break;
         case ONEDIGIT24HOUR:
         case TWODIGIT24HOUR:
-            /* FIXME: Preserve AM/PM for 12HOUR? */
             date.wHour = val;
             break;
         case ONEDIGITMINUTE:
@@ -1231,6 +1243,16 @@ DATETIME_Char (DATETIME_INFO *infoPtr, WPARAM vkCode)
             maxChars = 4;
         else
             maxChars = 2;
+
+        if ((fieldSpec == ONEDIGIT12HOUR ||
+             fieldSpec == TWODIGIT12HOUR ||
+             fieldSpec == ONEDIGIT24HOUR ||
+             fieldSpec == TWODIGIT24HOUR) &&
+            (infoPtr->nCharsEntered == 1))
+        {
+            if (vkCode >= '3')
+                 maxChars = 1;
+        }
 
         if (maxChars == infoPtr->nCharsEntered)
             DATETIME_ApplySelectedField(infoPtr);
