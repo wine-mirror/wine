@@ -1989,6 +1989,11 @@ static SYSTEM_LINKS *find_font_link(const WCHAR *name)
     return NULL;
 }
 
+static const struct list *get_face_list_from_family(const Family *family)
+{
+    return &family->faces;
+}
+
 static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
 {
     const WCHAR *value;
@@ -2023,6 +2028,7 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
         memset(&font_link->fs, 0, sizeof font_link->fs);
         for (i = 0; values[i] != NULL; i++)
         {
+            const struct list *face_list;
             CHILD_FONT *child_font;
 
             value = values[i];
@@ -2036,7 +2042,8 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
                 continue;
             file = NULL;
             /* Use first extant filename for this Family */
-            LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
+            face_list = get_face_list_from_family(family);
+            LIST_FOR_EACH_ENTRY(face, face_list, Face, entry)
             {
                 if (!face->file)
                     continue;
@@ -3902,7 +3909,7 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
     GdiFont *ret;
     Face *face, *best, *best_bitmap;
     Family *family, *last_resort_family;
-    struct list *family_elem_ptr, *face_elem_ptr;
+    const struct list *family_elem_ptr, *face_list, *face_elem_ptr;
     INT height, width = 0;
     unsigned int score = 0, new_score;
     signed int diff = 0, newdiff;
@@ -4034,7 +4041,8 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
                 (psub && !strcmpiW(family->FamilyName, psub->to.name)))
             {
                 font_link = find_font_link(family->FamilyName);
-                LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
+                face_list = get_face_list_from_family(family);
+                LIST_FOR_EACH(face_elem_ptr, face_list) {
                     face = LIST_ENTRY(face_elem_ptr, Face, entry);
                     if (!(face->scalable || can_use_bitmap))
                         continue;
@@ -4052,7 +4060,8 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
         /* Search by full face name. */
         LIST_FOR_EACH(family_elem_ptr, &font_list) {
             family = LIST_ENTRY(family_elem_ptr, Family, entry);
-            LIST_FOR_EACH(face_elem_ptr, &family->faces) {
+            face_list = get_face_list_from_family(family);
+            LIST_FOR_EACH(face_elem_ptr, face_list) {
                 face = LIST_ENTRY(face_elem_ptr, Face, entry);
                 if(face->FullName && !strcmpiW(face->FullName, FaceName) &&
                    (face->scalable || can_use_bitmap))
@@ -4127,7 +4136,8 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
         family = LIST_ENTRY(family_elem_ptr, Family, entry);
         if(!strcmpiW(family->FamilyName, lf.lfFaceName)) {
             font_link = find_font_link(family->FamilyName);
-            LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
+            face_list = get_face_list_from_family(family);
+            LIST_FOR_EACH(face_elem_ptr, face_list) {
                 face = LIST_ENTRY(face_elem_ptr, Face, entry);
                 if (!(face->scalable || can_use_bitmap))
                     continue;
@@ -4143,7 +4153,8 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
     LIST_FOR_EACH(family_elem_ptr, &font_list) {
         family = LIST_ENTRY(family_elem_ptr, Family, entry);
         font_link = find_font_link(family->FamilyName);
-        LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
+        face_list = get_face_list_from_family(family);
+        LIST_FOR_EACH(face_elem_ptr, face_list) {
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
             if(face->vertical == want_vertical &&
                (csi.fs.fsCsb[0] & face->fs.fsCsb[0] ||
@@ -4164,7 +4175,8 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
 
     LIST_FOR_EACH(family_elem_ptr, &font_list) {
         family = LIST_ENTRY(family_elem_ptr, Family, entry);
-        LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
+        face_list = get_face_list_from_family(family);
+        LIST_FOR_EACH(face_elem_ptr, face_list) {
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
             if(face->scalable && face->vertical == want_vertical) {
                 csi.fs.fsCsb[0] = 0;
@@ -4194,7 +4206,8 @@ found:
 
     face = best = best_bitmap = NULL;
     font_link = find_font_link(family->FamilyName);
-    LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
+    face_list = get_face_list_from_family(family);
+    LIST_FOR_EACH_ENTRY(face, face_list, Face, entry)
     {
         if (csi.fs.fsCsb[0] & face->fs.fsCsb[0] ||
             (font_link != NULL && csi.fs.fsCsb[0] & font_link->fs.fsCsb[0]) ||
@@ -4637,11 +4650,12 @@ static void create_full_name(WCHAR *full_name, const WCHAR *family_name, const W
 
 static BOOL family_matches(Family *family, const LOGFONTW *lf)
 {
-    struct list *face_elem_ptr;
+    const struct list *face_list, *face_elem_ptr;
 
     if (!strcmpiW(lf->lfFaceName, family->FamilyName)) return TRUE;
 
-    LIST_FOR_EACH(face_elem_ptr, &family->faces)
+    face_list = get_face_list_from_family(family);
+    LIST_FOR_EACH(face_elem_ptr, face_list)
     {
         WCHAR full_family_name[LF_FULLFACESIZE];
         Face *face = LIST_ENTRY(face_elem_ptr, Face, entry);
@@ -4720,7 +4734,7 @@ static BOOL freetype_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc,
 {
     Family *family;
     Face *face;
-    struct list *family_elem_ptr, *face_elem_ptr;
+    const struct list *family_elem_ptr, *face_list, *face_elem_ptr;
     LOGFONTW lf;
     struct enum_charset_list enum_charsets;
 
@@ -4753,7 +4767,8 @@ static BOOL freetype_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc,
         LIST_FOR_EACH(family_elem_ptr, &font_list) {
             family = LIST_ENTRY(family_elem_ptr, Family, entry);
             if(family_matches(family, plf)) {
-                LIST_FOR_EACH(face_elem_ptr, &family->faces) {
+                face_list = get_face_list_from_family(family);
+                LIST_FOR_EACH(face_elem_ptr, face_list) {
                     face = LIST_ENTRY(face_elem_ptr, Face, entry);
                     if (!face_matches(face, plf)) continue;
                     if (!enum_face_charsets(face, &enum_charsets, proc, lparam)) return FALSE;
@@ -4763,7 +4778,8 @@ static BOOL freetype_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc,
     } else {
         LIST_FOR_EACH(family_elem_ptr, &font_list) {
             family = LIST_ENTRY(family_elem_ptr, Family, entry);
-            face_elem_ptr = list_head(&family->faces);
+            face_list = get_face_list_from_family(family);
+            face_elem_ptr = list_head(face_list);
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
             if (!enum_face_charsets(face, &enum_charsets, proc, lparam)) return FALSE;
 	}
