@@ -16711,6 +16711,20 @@ interface IMarkupPointer : IUnknown
 }
 
 /*****************************************************************************
+ *    IXMLGenericParse interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(E4E23071-4D07-11d2-AE76-0080C73BC199)
+]
+interface IXMLGenericParse : IUnknown
+{
+    HRESULT SetGenericParse(
+        [in] VARIANT_BOOL fDoGeneric);
+}
+
+/*****************************************************************************
  *    ISegment interface
  */
 [
