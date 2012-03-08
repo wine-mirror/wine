@@ -576,7 +576,7 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int* plevel)
         printf("  ");
     debugstr_guid(str_clsid, &clsid);
     debugstr_guid(str_clsid_type, clsid_type);
-    printf("Found object '%s' - %s - %s - %d\n", name, str_clsid, str_clsid_type, size);
+    printf("Found object '%s' - %s - %s - %d\n", len ? name : "", str_clsid, str_clsid_type, size);
 
     if (EXPAND_STRING && size == 4)
     {
