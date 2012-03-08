@@ -148,8 +148,8 @@
 # @ stub CredIsMarshaledCredentialW
 # @ stub CredIsProtectedA
 # @ stub CredIsProtectedW
-# @ stub CredMarshalCredentialA
-# @ stub CredMarshalCredentialW
+@ stdcall CredMarshalCredentialA(long ptr ptr)
+@ stdcall CredMarshalCredentialW(long ptr ptr)
 # @ stub CredpConvertOneCredentialSize
 # @ stub CredpEncodeSecret
 @ stub CredProfileLoaded
@@ -164,8 +164,8 @@
 # @ stub CredRenameA
 # @ stub CredRenameW
 # @ stub CredRestoreCredentials
-# @ stub CredUnmarshalCredentialA
-# @ stub CredUnmarshalCredentialW
+@ stdcall CredUnmarshalCredentialA(str ptr ptr)
+@ stdcall CredUnmarshalCredentialW(wstr ptr ptr)
 # @ stub CredUnprotectA
 # @ stub CredUnprotectW
 @ stdcall CredWriteA(ptr long)
