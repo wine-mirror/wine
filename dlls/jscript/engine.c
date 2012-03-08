@@ -990,7 +990,7 @@ static HRESULT interp_new(exec_ctx_t *ctx)
 
     jsstack_to_dp(ctx, arg, &dp);
     hres = disp_call(ctx->parser->script, V_DISPATCH(constr), DISPID_VALUE,
-            DISPATCH_CONSTRUCT, &dp, &v, ctx->ei, NULL/*FIXME*/);
+            DISPATCH_CONSTRUCT, &dp, &v, ctx->ei);
     if(FAILED(hres))
         return hres;
 
@@ -1015,7 +1015,7 @@ static HRESULT interp_call(exec_ctx_t *ctx)
 
     jsstack_to_dp(ctx, argn, &dp);
     hres = disp_call(ctx->parser->script, V_DISPATCH(objv), DISPID_VALUE, DISPATCH_METHOD, &dp,
-            do_ret ? &v : NULL, ctx->ei, NULL/*FIXME*/);
+            do_ret ? &v : NULL, ctx->ei);
     if(FAILED(hres))
         return hres;
 
@@ -1042,7 +1042,7 @@ static HRESULT interp_call_member(exec_ctx_t *ctx)
         return throw_type_error(ctx->parser->script, ctx->ei, id, NULL);
 
     jsstack_to_dp(ctx, argn, &dp);
-    hres = disp_call(ctx->parser->script, obj, id, DISPATCH_METHOD, &dp, do_ret ? &v : NULL, ctx->ei, NULL/*FIXME*/);
+    hres = disp_call(ctx->parser->script, obj, id, DISPATCH_METHOD, &dp, do_ret ? &v : NULL, ctx->ei);
     if(FAILED(hres))
         return hres;
 

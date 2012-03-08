@@ -368,7 +368,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, jsdisp_t *jsthis, dispex_prop_t 
         if(FAILED(hres))
             return hres;
 
-        hres = disp_call(This->ctx, V_DISPATCH(&prop->u.var), DISPID_VALUE, flags, &new_dp, retv, ei, caller);
+        hres = disp_call(This->ctx, V_DISPATCH(&prop->u.var), DISPID_VALUE, flags, &new_dp, retv, ei);
 
         if(new_dp.rgvarg != dp->rgvarg) {
             heap_free(new_dp.rgvarg);
@@ -991,8 +991,7 @@ HRESULT jsdisp_call_value(jsdisp_t *jsthis, WORD flags, DISPPARAMS *dp, VARIANT 
     return hres;
 }
 
-HRESULT jsdisp_call(jsdisp_t *disp, DISPID id, WORD flags, DISPPARAMS *dp, VARIANT *retv,
-        jsexcept_t *ei, IServiceProvider *caller)
+HRESULT jsdisp_call(jsdisp_t *disp, DISPID id, WORD flags, DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei)
 {
     dispex_prop_t *prop;
 
@@ -1004,7 +1003,7 @@ HRESULT jsdisp_call(jsdisp_t *disp, DISPID id, WORD flags, DISPPARAMS *dp, VARIA
     if(!prop)
         return DISP_E_MEMBERNOTFOUND;
 
-    return invoke_prop_func(disp, disp, prop, flags, dp, retv, ei, caller);
+    return invoke_prop_func(disp, disp, prop, flags, dp, retv, ei, NULL);
 }
 
 HRESULT jsdisp_call_name(jsdisp_t *disp, const WCHAR *name, WORD flags, DISPPARAMS *dp, VARIANT *retv,
@@ -1024,8 +1023,7 @@ HRESULT jsdisp_call_name(jsdisp_t *disp, const WCHAR *name, WORD flags, DISPPARA
     return invoke_prop_func(disp, disp, prop, flags, dp, retv, ei, caller);
 }
 
-HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, DISPPARAMS *dp, VARIANT *retv,
-        jsexcept_t *ei, IServiceProvider *caller)
+HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei)
 {
     jsdisp_t *jsdisp;
     IDispatchEx *dispex;
@@ -1033,7 +1031,7 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, DIS
 
     jsdisp = iface_to_jsdisp((IUnknown*)disp);
     if(jsdisp) {
-        hres = jsdisp_call(jsdisp, id, flags, dp, retv, ei, caller);
+        hres = jsdisp_call(jsdisp, id, flags, dp, retv, ei);
         jsdisp_release(jsdisp);
         return hres;
     }
