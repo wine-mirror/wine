@@ -1847,7 +1847,7 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
         {0x00fd0200, 0x00f50200, 0x00f50a00, 0x00e91600, 0x00d92600, 0x00c73800,
         0x00b24d00, 0x009c6300, 0x00867900, 0x00728d00, 0x005ea100}},
 
-#if 0  /* FIXME: these fail on GeForce 8500 */
+        /* These tests fail on older Nvidia drivers */
         /* foggy vertex shader */
         {2, 0, D3DFOG_NONE, D3DFOG_NONE,
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
@@ -1861,7 +1861,6 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
         {2, 0, D3DFOG_LINEAR, D3DFOG_NONE,
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
          0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
-#endif
 
         /* foggy vertex shader and pixel shader. First 4 tests with vertex fog,
          * all using the fixed fog-coord linear fog
