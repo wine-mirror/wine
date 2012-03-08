@@ -6,9 +6,9 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-03-03 01:29+0200\n"
+"PO-Revision-Date: 2012-03-08 23:20+0200\n"
 "Last-Translator: zeugma\n"
-"Language-Team: none\n"
+"Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: Turkish\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -88,11 +88,11 @@ msgstr "Bağlantı:"
 
 #: appwiz.rc:80
 msgid "Support Information:"
-msgstr ""
+msgstr "Destek Bilgileri:"
 
 #: appwiz.rc:81
 msgid "Support Telephone:"
-msgstr ""
+msgstr "Destek Telefon:"
 
 #: appwiz.rc:82
 msgid "Readme:"
@@ -509,7 +509,7 @@ msgstr "Yazı Tipi St&ili:"
 
 #: comdlg32.rc:253 comdlg32.rc:430 winecfg.rc:280
 msgid "&Size:"
-msgstr "Boyut:"
+msgstr "&Boyut:"
 
 #: comdlg32.rc:260
 msgid "Effects"
@@ -525,7 +525,7 @@ msgstr "&Altı Çizili"
 
 #: comdlg32.rc:263 winecfg.rc:278
 msgid "&Color:"
-msgstr "Renk:"
+msgstr "&Renk:"
 
 #: comdlg32.rc:266
 msgid "Sample"
@@ -1080,7 +1080,7 @@ msgstr ""
 
 #: comdlg32.rc:98
 msgid "No toner; "
-msgstr ""
+msgstr "Toner yok; "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
@@ -1145,7 +1145,7 @@ msgstr "%s Bağlan"
 
 #: credui.rc:28
 msgid "Connecting to %s"
-msgstr ""
+msgstr "%s bağlanıyor"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
@@ -1356,11 +1356,11 @@ msgstr ""
 
 #: crypt32.rc:73
 msgid "State or Province"
-msgstr ""
+msgstr "Eyalet veya Vilayet"
 
 #: crypt32.rc:74
 msgid "Title"
-msgstr ""
+msgstr "Başlık"
 
 #: crypt32.rc:75
 msgid "Given Name"
@@ -1372,7 +1372,7 @@ msgstr ""
 
 #: crypt32.rc:77
 msgid "Surname"
-msgstr ""
+msgstr "Soyisim"
 
 #: crypt32.rc:78
 msgid "Domain Component"
@@ -1380,7 +1380,7 @@ msgstr ""
 
 #: crypt32.rc:79
 msgid "Street Address"
-msgstr ""
+msgstr "Sokak Adresi"
 
 #: crypt32.rc:80
 msgid "Serial Number"
@@ -1452,7 +1452,7 @@ msgstr ""
 
 #: crypt32.rc:97
 msgid "Application Policies"
-msgstr ""
+msgstr "Uygulama Politikaları"
 
 #: crypt32.rc:98
 msgid "Application Policy Mappings"
@@ -1652,11 +1652,11 @@ msgstr ""
 
 #: crypt32.rc:147 cryptui.rc:131
 msgid "Windows System Component Verification"
-msgstr ""
+msgstr "Windows Sistem Bileşeni Doğrulama"
 
 #: crypt32.rc:148 cryptui.rc:132
 msgid "OEM Windows System Component Verification"
-msgstr ""
+msgstr "OEM Windows Sistem Bileşen Doğrulama"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
@@ -1728,7 +1728,7 @@ msgstr ""
 
 #: crypt32.rc:170
 msgid "Personal"
-msgstr ""
+msgstr "Kişisel"
 
 #: crypt32.rc:171
 msgid "Intermediate Certification Authorities"
@@ -1895,7 +1895,7 @@ msgstr ""
 
 #: crypt32.rc:215
 msgid "Financial Information="
-msgstr ""
+msgstr "Finansal Bilgiler="
 
 #: crypt32.rc:216 taskmgr.rc:397
 msgid "Available"
@@ -1919,7 +1919,7 @@ msgstr "Hayır"
 
 #: crypt32.rc:221
 msgid "Digital Signature"
-msgstr ""
+msgstr "Dijital İmza"
 
 #: crypt32.rc:222
 msgid "Non-Repudiation"
@@ -1967,11 +1967,11 @@ msgstr ""
 
 #: crypt32.rc:233
 msgid "S/MIME"
-msgstr ""
+msgstr "S/MIME"
 
 #: crypt32.rc:234
 msgid "Signature"
-msgstr ""
+msgstr "İmza"
 
 #: crypt32.rc:235
 msgid "SSL CA"
@@ -1987,7 +1987,7 @@ msgstr ""
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
-msgstr ""
+msgstr "Sertifika İlkeleri"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
@@ -2124,7 +2124,7 @@ msgstr ""
 
 #: cryptui.rc:280
 msgid "Welcome to the Certificate Import Wizard"
-msgstr ""
+msgstr "Sertifika Alma Sihirbazına Hoş Geldiniz"
 
 #: cryptui.rc:283
 msgid ""
@@ -2145,7 +2145,7 @@ msgstr "&Dosya adı:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:295
 msgid "B&rowse..."
-msgstr "Gözat..."
+msgstr "&Gözat..."
 
 #: cryptui.rc:294
 msgid ""
@@ -2280,7 +2280,7 @@ msgstr ""
 
 #: cryptui.rc:396
 msgid "&Confirm password:"
-msgstr ""
+msgstr "&Parola onayla:"
 
 #: cryptui.rc:404
 msgid "Select the format you want to use:"
@@ -2512,7 +2512,7 @@ msgstr ""
 
 #: cryptui.rc:74
 msgid "X.509 Certificate (*.cer; *.crt)"
-msgstr ""
+msgstr "X.509 Sertifika (*.cer; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
@@ -2544,7 +2544,7 @@ msgstr ""
 
 #: cryptui.rc:83
 msgid "Could not open "
-msgstr ""
+msgstr "Açılamadı "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -2812,7 +2812,7 @@ msgstr ""
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
-msgstr ""
+msgstr "Parolalar eşleşmedi."
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
@@ -2976,11 +2976,11 @@ msgstr "Çıkış"
 
 #: gphoto2.rc:40
 msgid "Transferring"
-msgstr ""
+msgstr "Aktarılıyor"
 
 #: gphoto2.rc:43
 msgid "Transferring... Please Wait"
-msgstr ""
+msgstr "Aktarılıyor...Lütfen Bekleyin"
 
 #: gphoto2.rc:48
 msgid "Connecting to camera"
@@ -2988,7 +2988,7 @@ msgstr ""
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
-msgstr ""
+msgstr "Kameraya bağlanılıyor...Lütfen Bekleyin"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -3214,7 +3214,7 @@ msgstr ""
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr ""
+msgstr "&Dosyaları sil..."
 
 #: inetcpl.rc:57
 msgid "&Settings..."
@@ -3660,7 +3660,7 @@ msgstr "Ağ adı silindi.\n"
 
 #: winerror.mc:291
 msgid "Network access denied.\n"
-msgstr ""
+msgstr "Ağ erişimi engellendi.\n"
 
 #: winerror.mc:296
 msgid "Bad device type.\n"
@@ -3784,7 +3784,7 @@ msgstr ""
 
 #: winerror.mc:451
 msgid "Invalid IOCTL.\n"
-msgstr ""
+msgstr "IOCTL geçersiz.\n"
 
 #: winerror.mc:456
 msgid "Invalid verify switch.\n"
@@ -4809,7 +4809,7 @@ msgstr ""
 
 #: winerror.mc:1741
 msgid "No network.\n"
-msgstr ""
+msgstr "Ağ yok.\n"
 
 #: winerror.mc:1746
 msgid "Operation canceled by user.\n"
@@ -5877,7 +5877,7 @@ msgstr ""
 
 #: winerror.mc:3086
 msgid "Invalid tag.\n"
-msgstr ""
+msgstr "Geçersiz etiket.\n"
 
 #: winerror.mc:3091
 msgid "Invalid array bounds.\n"
@@ -5885,7 +5885,7 @@ msgstr ""
 
 #: winerror.mc:3096
 msgid "No entry name.\n"
-msgstr ""
+msgstr "İsim girilmedi.\n"
 
 #: winerror.mc:3101
 msgid "Invalid name syntax.\n"
@@ -5897,7 +5897,7 @@ msgstr ""
 
 #: winerror.mc:3111
 msgid "No network address.\n"
-msgstr ""
+msgstr "Ağ adresi yok.\n"
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint.\n"
@@ -5985,7 +5985,7 @@ msgstr ""
 
 #: winerror.mc:3221
 msgid "Entry not found.\n"
-msgstr ""
+msgstr "Girdi bulunamadı.\n"
 
 #: winerror.mc:3226
 msgid "Name service unavailable.\n"
@@ -7093,7 +7093,7 @@ msgstr ""
 #: sane.rc:35
 msgctxt "unit: percent"
 msgid "%"
-msgstr ""
+msgstr "%"
 
 #: sane.rc:36
 msgctxt "unit: microseconds"
@@ -7989,7 +7989,7 @@ msgstr "Bu iletiyi bir daha &gösterme"
 
 #: shlwapi.rc:27
 msgid "%d bytes"
-msgstr ""
+msgstr "%d bayt"
 
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
@@ -9025,7 +9025,7 @@ msgstr "Sa&yısal"
 
 #: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
 msgid "&Font..."
-msgstr ""
+msgstr "&Yazıtipi"
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -11003,7 +11003,7 @@ msgstr ""
 
 #: regedit.rc:201
 msgid "(Default)"
-msgstr ""
+msgstr "(Standart)"
 
 #: regedit.rc:202
 msgid "(value not set)"
@@ -11015,7 +11015,7 @@ msgstr ""
 
 #: regedit.rc:204
 msgid "(unknown %d)"
-msgstr ""
+msgstr "(%d bilinmiyor)"
 
 #: regedit.rc:160
 msgid "Quits the registry editor"
@@ -11865,7 +11865,7 @@ msgstr "CPU Kullanımı: %3d%%"
 
 #: taskmgr.rc:266
 msgid "Processes: %d"
-msgstr ""
+msgstr "Süreçler: %d"
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
@@ -12250,27 +12250,27 @@ msgstr ""
 
 #: winecfg.rc:258
 msgid "Defaults"
-msgstr ""
+msgstr "Varsayılanlar"
 
 #: winecfg.rc:259
 msgid "Output device:"
-msgstr ""
+msgstr "Çıktı aygıtı:"
 
 #: winecfg.rc:260
 msgid "Voice output device:"
-msgstr ""
+msgstr "Ses çıkış aygıtı:"
 
 #: winecfg.rc:261
 msgid "Input device:"
-msgstr ""
+msgstr "Girdi aygıtı:"
 
 #: winecfg.rc:262
 msgid "Voice input device:"
-msgstr ""
+msgstr "Ses giriş aygıtı:"
 
 #: winecfg.rc:267
 msgid "&Test Sound"
-msgstr ""
+msgstr "&Ses Testi"
 
 #: winecfg.rc:274
 msgid "Appearance"
@@ -12286,7 +12286,7 @@ msgstr "Tema kur..."
 
 #: winecfg.rc:282
 msgid "It&em:"
-msgstr "Item:"
+msgstr "&Öğe:"
 
 #: winecfg.rc:284
 msgid "C&olor:"
@@ -12370,11 +12370,11 @@ msgstr "(Hiçbiri)"
 
 #: winecfg.rc:83
 msgid "Audio test failed!"
-msgstr ""
+msgstr "Ses testi başarısız!"
 
 #: winecfg.rc:85
 msgid "(System default)"
-msgstr ""
+msgstr "(Varsayılan sistem)"
 
 #: winecfg.rc:51
 msgid ""
