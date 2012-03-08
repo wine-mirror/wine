@@ -92,7 +92,7 @@ static inline PLARGE_INTEGER get_nt_timeout( PLARGE_INTEGER pTime, DWORD timeout
 /***********************************************************************
  *              Sleep  (KERNEL32.@)
  */
-VOID WINAPI Sleep( DWORD timeout )
+VOID WINAPI DECLSPEC_HOTPATCH Sleep( DWORD timeout )
 {
     SleepEx( timeout, FALSE );
 }
