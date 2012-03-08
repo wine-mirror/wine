@@ -344,6 +344,7 @@ static BOOL need_helper_const(const struct arb_vshader_private *shader_data,
     if (!use_nv_clip(gl_info)) return TRUE; /* Init the clip texcoord */
     if (reg_maps->usesnrm) return TRUE; /* 0.0 */
     if (reg_maps->usespow) return TRUE; /* EPS, 0.0 and 1.0 */
+    if (reg_maps->fog) return TRUE; /* Clamping fog coord, 0.0 and 1.0 */
     return FALSE;
 }
 
@@ -962,7 +963,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
         const struct wined3d_shader_register *reg, char *register_name, BOOL *is_color)
 {
     /* oPos, oFog and oPts in D3D */
-    static const char * const rastout_reg_names[] = {"TMP_OUT", "result.fogcoord", "result.pointsize"};
+    static const char * const rastout_reg_names[] = {"TMP_OUT", "TMP_FOGCOORD", "result.pointsize"};
     const struct wined3d_shader *shader = ins->ctx->shader;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     BOOL pshader = shader_is_pshader_version(reg_maps->shader_version.type);
@@ -3139,10 +3140,26 @@ static void vshader_add_footer(struct shader_arb_ctx_priv *priv_ctx,
      * the shader, it is set to 0.0(fully fogged, since start = 1.0, end = 0.0)
      */
     if (args->super.fog_src == VS_FOG_Z)
+    {
         shader_addline(buffer, "MOV result.fogcoord, TMP_OUT.z;\n");
-    else if (!reg_maps->fog)
-        /* posFixup.x is always 1.0, so we can safely use it */
-        shader_addline(buffer, "ADD result.fogcoord, posFixup.x, -posFixup.x;\n");
+    }
+    else
+    {
+        if (!reg_maps->fog)
+        {
+            /* posFixup.x is always 1.0, so we can safely use it */
+            shader_addline(buffer, "ADD result.fogcoord, posFixup.x, -posFixup.x;\n");
+        }
+        else
+        {
+            /* Clamp fogcoord */
+            const char *zero = arb_get_helper_value(reg_maps->shader_version.type, ARB_ZERO);
+            const char *one = arb_get_helper_value(reg_maps->shader_version.type, ARB_ONE);
+
+            shader_addline(buffer, "MIN TMP_FOGCOORD.x, TMP_FOGCOORD.x, %s;\n", one);
+            shader_addline(buffer, "MAX result.fogcoord.x, TMP_FOGCOORD.x, %s;\n", zero);
+        }
+    }
 
     /* Clipplanes are always stored without y inversion */
     if (use_nv_clip(gl_info) && priv_ctx->target_version >= NV2)
@@ -3962,7 +3979,7 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
         }
         priv_ctx->color_output[0] = "result.color.primary";
         priv_ctx->color_output[1] = "result.color.secondary";
-        priv_ctx->fog_output = "result.fogcoord";
+        priv_ctx->fog_output = "TMP_FOGCOORD";
 
         /* Map declared regs to builtins. Use "TA" to /dev/null unread output */
         for (i = 0; i < (sizeof(shader->output_signature) / sizeof(*shader->output_signature)); ++i)
@@ -4148,6 +4165,8 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     }
 
     shader_addline(buffer, "TEMP TMP_OUT;\n");
+    if (reg_maps->fog)
+        shader_addline(buffer, "TEMP TMP_FOGCOORD;\n");
     if (need_helper_const(shader_data, reg_maps, gl_info))
     {
         shader_addline(buffer, "PARAM helper_const = { 0.0, 1.0, 2.0, %1.10f};\n", eps);
