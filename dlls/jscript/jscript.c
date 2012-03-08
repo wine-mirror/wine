@@ -46,6 +46,7 @@ typedef struct {
     IActiveScriptParseProcedure2 IActiveScriptParseProcedure2_iface;
     IActiveScriptProperty        IActiveScriptProperty_iface;
     IObjectSafety                IObjectSafety_iface;
+    IVariantChangeType           IVariantChangeType_iface;
 
     LONG ref;
 
@@ -70,6 +71,7 @@ void script_release(script_ctx_t *ctx)
         release_cc(ctx->cc);
     jsheap_free(&ctx->tmp_heap);
     SysFreeString(ctx->last_match);
+
     heap_free(ctx);
 }
 
@@ -373,6 +375,9 @@ static HRESULT WINAPI JScript_QueryInterface(IActiveScript *iface, REFIID riid, 
     }else if(IsEqualGUID(riid, &IID_IObjectSafety)) {
         TRACE("(%p)->(IID_IObjectSafety %p)\n", This, ppv);
         *ppv = &This->IObjectSafety_iface;
+    }else if(IsEqualGUID(riid, &IID_IVariantChangeType)) {
+        TRACE("(%p)->(IID_IVariantChangeType %p)\n", This, ppv);
+        *ppv = &This->IVariantChangeType_iface;
     }
 
     if(*ppv) {
@@ -962,6 +967,43 @@ static const IObjectSafetyVtbl JScriptSafetyVtbl = {
     JScriptSafety_SetInterfaceSafetyOptions
 };
 
+static inline JScript *impl_from_IVariantChangeType(IVariantChangeType *iface)
+{
+    return CONTAINING_RECORD(iface, JScript, IVariantChangeType_iface);
+}
+
+static HRESULT WINAPI VariantChangeType_QueryInterface(IVariantChangeType *iface, REFIID riid, void **ppv)
+{
+    JScript *This = impl_from_IVariantChangeType(iface);
+    return IActiveScript_QueryInterface(&This->IActiveScript_iface, riid, ppv);
+}
+
+static ULONG WINAPI VariantChangeType_AddRef(IVariantChangeType *iface)
+{
+    JScript *This = impl_from_IVariantChangeType(iface);
+    return IActiveScript_AddRef(&This->IActiveScript_iface);
+}
+
+static ULONG WINAPI VariantChangeType_Release(IVariantChangeType *iface)
+{
+    JScript *This = impl_from_IVariantChangeType(iface);
+    return IActiveScript_Release(&This->IActiveScript_iface);
+}
+
+static HRESULT WINAPI VariantChangeType_ChangeType(IVariantChangeType *iface, VARIANT *dst, VARIANT *src, LCID lcid, VARTYPE vt)
+{
+    JScript *This = impl_from_IVariantChangeType(iface);
+    FIXME("(%p)->(%p %s %x %d)\n", This, dst, debugstr_variant(src), lcid, vt);
+    return E_NOTIMPL;
+}
+
+static const IVariantChangeTypeVtbl VariantChangeTypeVtbl = {
+    VariantChangeType_QueryInterface,
+    VariantChangeType_AddRef,
+    VariantChangeType_Release,
+    VariantChangeType_ChangeType
+};
+
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter,
                                              REFIID riid, void **ppv)
 {
@@ -986,6 +1028,7 @@ HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUn
     ret->IActiveScriptParseProcedure2_iface.lpVtbl = &JScriptParseProcedureVtbl;
     ret->IActiveScriptProperty_iface.lpVtbl = &JScriptPropertyVtbl;
     ret->IObjectSafety_iface.lpVtbl = &JScriptSafetyVtbl;
+    ret->IVariantChangeType_iface.lpVtbl = &VariantChangeTypeVtbl;
     ret->ref = 1;
     ret->safeopt = INTERFACE_USES_DISPEX;
 
