@@ -506,6 +506,9 @@ static void
 DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number, int delta)
 {
     SYSTEMTIME *date = &infoPtr->date;
+    SYSTEMTIME range[2];
+    DWORD limits;
+    BOOL min;
 
     TRACE ("%d\n", number);
     if ((number > infoPtr->nrFields) || (number < 0)) return;
@@ -516,7 +519,13 @@ DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number, int delta)
 	case ONEDIGITYEAR:
 	case TWODIGITYEAR:
 	case FULLYEAR:
-	    date->wYear = wrap(date->wYear, delta, 1752, 9999);
+            if (delta == INT_MIN)
+                date->wYear = 1752;
+            else if (delta == INT_MAX)
+                date->wYear = 9999;
+            else
+                date->wYear = max(min(date->wYear + delta, 9999), 1752);
+
 	    if (date->wDay > MONTHCAL_MonthLength(date->wMonth, date->wYear))
 	        /* This can happen when moving away from a leap year. */
 	        date->wDay = MONTHCAL_MonthLength(date->wMonth, date->wYear);
@@ -573,8 +582,28 @@ DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number, int delta)
 	date->wMinute = 0;
 	date->wHour = 0;
     }
-}
 
+    /* Ensure time is within bounds */
+    limits = SendMessageW (infoPtr->hMonthCal, MCM_GETRANGE, 0, (LPARAM) &range);
+    min = ((delta < 0) ? TRUE : FALSE);
+
+    if (limits & (min ? GDTR_MIN : GDTR_MAX))
+    {
+        int i = (min ? 0 : 1);
+
+        if (MONTHCAL_CompareSystemTime(date, &range[i]) == (min ? -1 : 1))
+        {
+            date->wYear = range[i].wYear;
+            date->wMonth = range[i].wMonth;
+            date->wDayOfWeek = range[i].wDayOfWeek;
+            date->wDay = range[i].wDay;
+            date->wHour = range[i].wHour;
+            date->wMinute = range[i].wMinute;
+            date->wSecond = range[i].wSecond;
+            date->wMilliseconds = range[i].wMilliseconds;
+        }
+    }
+}
 
 static void
 DATETIME_ReturnFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int count, SHORT *width)
