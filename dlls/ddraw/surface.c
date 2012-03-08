@@ -5503,7 +5503,7 @@ HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
                 levels, 0, format, pool, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
 }
 
-HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
+HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, struct ddraw *ddraw,
         DDSURFACEDESC2 *desc, UINT mip_level, UINT version)
 {
     enum wined3d_pool pool = WINED3D_POOL_DEFAULT;

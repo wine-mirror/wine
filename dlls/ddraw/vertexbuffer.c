@@ -539,7 +539,7 @@ static const struct IDirect3DVertexBufferVtbl d3d_vertex_buffer1_vtbl =
     IDirect3DVertexBufferImpl_1_Optimize
 };
 
-HRESULT d3d_vertex_buffer_create(IDirect3DVertexBufferImpl **vertex_buf, IDirectDrawImpl *ddraw,
+HRESULT d3d_vertex_buffer_create(IDirect3DVertexBufferImpl **vertex_buf, struct ddraw *ddraw,
         D3DVERTEXBUFFERDESC *desc)
 {
     IDirect3DVertexBufferImpl *buffer;

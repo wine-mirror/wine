@@ -276,7 +276,7 @@ static const struct IDirect3DLightVtbl d3d_light_vtbl =
     IDirect3DLightImpl_GetLight
 };
 
-void d3d_light_init(IDirect3DLightImpl *light, IDirectDrawImpl *ddraw)
+void d3d_light_init(IDirect3DLightImpl *light, struct ddraw *ddraw)
 {
     light->IDirect3DLight_iface.lpVtbl = &d3d_light_vtbl;
     light->ref = 1;

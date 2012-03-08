@@ -41,7 +41,6 @@ extern const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops DECLSPEC
 extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HIDDEN;
 
 /* Typdef the interfaces */
-typedef struct IDirectDrawImpl            IDirectDrawImpl;
 typedef struct IDirectDrawSurfaceImpl     IDirectDrawSurfaceImpl;
 typedef struct IDirectDrawPaletteImpl     IDirectDrawPaletteImpl;
 typedef struct IDirect3DDeviceImpl        IDirect3DDeviceImpl;
@@ -62,7 +61,7 @@ struct FvfToDecl
     struct wined3d_vertex_declaration *decl;
 };
 
-struct IDirectDrawImpl
+struct ddraw
 {
     /* Interfaces */
     IDirectDraw7 IDirectDraw7_iface;
@@ -122,10 +121,10 @@ struct IDirectDrawImpl
 
 #define DDRAW_WINDOW_CLASS_NAME "DirectDrawDeviceWnd"
 
-HRESULT ddraw_init(IDirectDrawImpl *ddraw, enum wined3d_device_type device_type) DECLSPEC_HIDDEN;
-void ddraw_destroy_swapchain(IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
+HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type) DECLSPEC_HIDDEN;
+void ddraw_destroy_swapchain(struct ddraw *ddraw) DECLSPEC_HIDDEN;
 
-static inline void ddraw_set_swapchain_window(struct IDirectDrawImpl *ddraw, HWND window)
+static inline void ddraw_set_swapchain_window(struct ddraw *ddraw, HWND window)
 {
     if (window == GetDesktopWindow())
         window = NULL;
@@ -135,7 +134,7 @@ static inline void ddraw_set_swapchain_window(struct IDirectDrawImpl *ddraw, HWN
 /* Utility functions */
 void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS *pIn, DDSCAPS2 *pOut) DECLSPEC_HIDDEN;
 void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2 *pIn, DDDEVICEIDENTIFIER *pOut) DECLSPEC_HIDDEN;
-struct wined3d_vertex_declaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD fvf) DECLSPEC_HIDDEN;
+struct wined3d_vertex_declaration *ddraw_find_decl(struct ddraw *ddraw, DWORD fvf) DECLSPEC_HIDDEN;
 
 /* The default surface type */
 extern enum wined3d_surface_type DefaultSurfaceType DECLSPEC_HIDDEN;
@@ -162,7 +161,7 @@ struct IDirectDrawSurfaceImpl
     int                     version;
 
     /* Connections to other Objects */
-    IDirectDrawImpl         *ddraw;
+    struct ddraw *ddraw;
     struct wined3d_surface *wined3d_surface;
     struct wined3d_texture *wined3d_texture;
 
@@ -200,7 +199,7 @@ struct IDirectDrawSurfaceImpl
 };
 
 HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface) DECLSPEC_HIDDEN;
-HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
+HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, struct ddraw *ddraw,
         DDSURFACEDESC2 *desc, UINT mip_level, UINT version) DECLSPEC_HIDDEN;
 ULONG ddraw_surface_release_iface(IDirectDrawSurfaceImpl *This) DECLSPEC_HIDDEN;
 
@@ -288,7 +287,7 @@ struct IDirect3DDeviceImpl
 
     /* Other object connections */
     struct wined3d_device *wined3d_device;
-    IDirectDrawImpl         *ddraw;
+    struct ddraw *ddraw;
     struct wined3d_buffer *indexbuffer;
     IDirectDrawSurfaceImpl  *target;
 
@@ -321,7 +320,7 @@ struct IDirect3DDeviceImpl
     D3DMATRIXHANDLE          world, proj, view;
 };
 
-HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw,
+HRESULT d3d_device_init(IDirect3DDeviceImpl *device, struct ddraw *ddraw,
         IDirectDrawSurfaceImpl *target) DECLSPEC_HIDDEN;
 
 /* The IID */
@@ -392,7 +391,7 @@ static inline IDirectDrawPaletteImpl *impl_from_IDirectDrawPalette(IDirectDrawPa
 IDirectDrawPaletteImpl *unsafe_impl_from_IDirectDrawPalette(IDirectDrawPalette *iface) DECLSPEC_HIDDEN;
 
 HRESULT ddraw_palette_init(IDirectDrawPaletteImpl *palette,
-        IDirectDrawImpl *ddraw, DWORD flags, PALETTEENTRY *entries) DECLSPEC_HIDDEN;
+        struct ddraw *ddraw, DWORD flags, PALETTEENTRY *entries) DECLSPEC_HIDDEN;
 
 /* Helper structures */
 struct object_creation_info
@@ -411,7 +410,7 @@ struct IDirect3DLightImpl
     LONG ref;
 
     /* IDirect3DLight fields */
-    IDirectDrawImpl           *ddraw;
+    struct ddraw *ddraw;
 
     /* If this light is active for one viewport, put the viewport here */
     IDirect3DViewportImpl     *active_viewport;
@@ -427,7 +426,7 @@ struct IDirect3DLightImpl
 /* Helper functions */
 void light_activate(IDirect3DLightImpl *light) DECLSPEC_HIDDEN;
 void light_deactivate(IDirect3DLightImpl *light) DECLSPEC_HIDDEN;
-void d3d_light_init(IDirect3DLightImpl *light, IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
+void d3d_light_init(IDirect3DLightImpl *light, struct ddraw *ddraw) DECLSPEC_HIDDEN;
 IDirect3DLightImpl *unsafe_impl_from_IDirect3DLight(IDirect3DLight *iface) DECLSPEC_HIDDEN;
 
 /******************************************************************************
@@ -441,7 +440,7 @@ struct IDirect3DMaterialImpl
     LONG  ref;
 
     /* IDirect3DMaterial2 fields */
-    IDirectDrawImpl               *ddraw;
+    struct ddraw *ddraw;
     IDirect3DDeviceImpl           *active_device;
 
     D3DMATERIAL mat;
@@ -450,7 +449,7 @@ struct IDirect3DMaterialImpl
 
 /* Helper functions */
 void material_activate(IDirect3DMaterialImpl* This) DECLSPEC_HIDDEN;
-IDirect3DMaterialImpl *d3d_material_create(IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
+IDirect3DMaterialImpl *d3d_material_create(struct ddraw *ddraw) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DViewport - Wraps to D3D7
@@ -461,7 +460,7 @@ struct IDirect3DViewportImpl
     LONG ref;
 
     /* IDirect3DViewport fields */
-    IDirectDrawImpl           *ddraw;
+    struct ddraw *ddraw;
 
     /* If this viewport is active for one device, put the device here */
     IDirect3DDeviceImpl       *active_device;
@@ -490,7 +489,7 @@ IDirect3DViewportImpl *unsafe_impl_from_IDirect3DViewport(IDirect3DViewport *ifa
 
 /* Helper functions */
 void viewport_activate(IDirect3DViewportImpl* This, BOOL ignore_lights) DECLSPEC_HIDDEN;
-void d3d_viewport_init(IDirect3DViewportImpl *viewport, IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
+void d3d_viewport_init(IDirect3DViewportImpl *viewport, struct ddraw *ddraw) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DExecuteBuffer - Wraps to D3D7
@@ -500,7 +499,7 @@ struct IDirect3DExecuteBufferImpl
     IDirect3DExecuteBuffer IDirect3DExecuteBuffer_iface;
     LONG ref;
     /* IDirect3DExecuteBuffer fields */
-    IDirectDrawImpl      *ddraw;
+    struct ddraw *ddraw;
     IDirect3DDeviceImpl  *d3ddev;
 
     D3DEXECUTEBUFFERDESC desc;
@@ -537,14 +536,14 @@ struct IDirect3DVertexBufferImpl
     /*** WineD3D and ddraw links ***/
     struct wined3d_buffer *wineD3DVertexBuffer;
     struct wined3d_vertex_declaration *wineD3DVertexDeclaration;
-    IDirectDrawImpl *ddraw;
+    struct ddraw *ddraw;
 
     /*** Storage for D3D7 specific things ***/
     DWORD                Caps;
     DWORD                fvf;
 };
 
-HRESULT d3d_vertex_buffer_create(IDirect3DVertexBufferImpl **vertex_buf, IDirectDrawImpl *ddraw,
+HRESULT d3d_vertex_buffer_create(IDirect3DVertexBufferImpl **vertex_buf, struct ddraw *ddraw,
         D3DVERTEXBUFFERDESC *desc) DECLSPEC_HIDDEN;
 IDirect3DVertexBufferImpl *unsafe_impl_from_IDirect3DVertexBuffer(IDirect3DVertexBuffer *iface) DECLSPEC_HIDDEN;
 IDirect3DVertexBufferImpl *unsafe_impl_from_IDirect3DVertexBuffer7(IDirect3DVertexBuffer7 *iface) DECLSPEC_HIDDEN;

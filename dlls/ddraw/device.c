@@ -7019,7 +7019,7 @@ enum wined3d_depth_buffer_type IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DD
     return WINED3D_ZB_TRUE;
 }
 
-HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *target)
+HRESULT d3d_device_init(IDirect3DDeviceImpl *device, struct ddraw *ddraw, IDirectDrawSurfaceImpl *target)
 {
     static const D3DMATRIX ident =
     {

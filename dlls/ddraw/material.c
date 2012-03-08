@@ -506,7 +506,7 @@ static const struct IDirect3DMaterialVtbl d3d_material1_vtbl =
     IDirect3DMaterialImpl_Unreserve
 };
 
-IDirect3DMaterialImpl *d3d_material_create(IDirectDrawImpl *ddraw)
+IDirect3DMaterialImpl *d3d_material_create(struct ddraw *ddraw)
 {
     IDirect3DMaterialImpl *material;
 

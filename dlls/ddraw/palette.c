@@ -269,7 +269,7 @@ IDirectDrawPaletteImpl *unsafe_impl_from_IDirectDrawPalette(IDirectDrawPalette *
 }
 
 HRESULT ddraw_palette_init(IDirectDrawPaletteImpl *palette,
-        IDirectDrawImpl *ddraw, DWORD flags, PALETTEENTRY *entries)
+        struct ddraw *ddraw, DWORD flags, PALETTEENTRY *entries)
 {
     HRESULT hr;
 

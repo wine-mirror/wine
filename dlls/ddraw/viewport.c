@@ -1191,7 +1191,7 @@ IDirect3DViewportImpl *unsafe_impl_from_IDirect3DViewport(IDirect3DViewport *ifa
     return CONTAINING_RECORD(iface, IDirect3DViewportImpl, IDirect3DViewport3_iface);
 }
 
-void d3d_viewport_init(IDirect3DViewportImpl *viewport, IDirectDrawImpl *ddraw)
+void d3d_viewport_init(IDirect3DViewportImpl *viewport, struct ddraw *ddraw)
 {
     viewport->IDirect3DViewport3_iface.lpVtbl = &d3d_viewport_vtbl;
     viewport->ref = 1;
