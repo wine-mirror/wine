@@ -1058,6 +1058,8 @@ static void on_stop_nsrequest(nsChannelBSC *This, HRESULT result)
 
 static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
 {
+    static const WCHAR mimeTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
+
     DWORD read;
     nsresult nsres;
     HRESULT hres;
@@ -1094,7 +1096,8 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
             if(!This->nschannel->content_type) {
                 WCHAR *mime;
 
-                hres = FindMimeFromData(NULL, NULL, This->nsstream->buf, This->nsstream->buf_size, NULL, 0, &mime, 0);
+                hres = FindMimeFromData(NULL, NULL, This->nsstream->buf, This->nsstream->buf_size,
+                        This->window ? mimeTextHtml : NULL, 0, &mime, 0);
                 if(FAILED(hres))
                     return hres;
 
