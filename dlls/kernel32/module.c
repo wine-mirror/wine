@@ -558,7 +558,7 @@ BOOL WINAPI GetModuleHandleExW( DWORD flags, LPCWSTR name, HMODULE *module )
  *  Success: A handle to the loaded dll.
  *  Failure: A NULL handle. Use GetLastError() to determine the cause.
  */
-HMODULE WINAPI GetModuleHandleA(LPCSTR module)
+HMODULE WINAPI DECLSPEC_HOTPATCH GetModuleHandleA(LPCSTR module)
 {
     HMODULE ret;
 
