@@ -4626,6 +4626,15 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     free_font(font);
 }
 
+static void create_full_name(WCHAR *full_name, const WCHAR *family_name, const WCHAR *style_name)
+{
+    static const WCHAR spaceW[] = { ' ', 0 };
+
+    strcpyW(full_name, family_name);
+    strcatW(full_name, spaceW);
+    strcatW(full_name, style_name);
+}
+
 static BOOL family_matches(Family *family, const LOGFONTW *lf)
 {
     struct list *face_elem_ptr;
@@ -4634,7 +4643,6 @@ static BOOL family_matches(Family *family, const LOGFONTW *lf)
 
     LIST_FOR_EACH(face_elem_ptr, &family->faces)
     {
-        static const WCHAR spaceW[] = { ' ',0 };
         WCHAR full_family_name[LF_FULLFACESIZE];
         Face *face = LIST_ENTRY(face_elem_ptr, Face, entry);
 
@@ -4645,9 +4653,7 @@ static BOOL family_matches(Family *family, const LOGFONTW *lf)
             continue;
         }
 
-        strcpyW(full_family_name, family->FamilyName);
-        strcatW(full_family_name, spaceW);
-        strcatW(full_family_name, face->StyleName);
+        create_full_name(full_family_name, family->FamilyName, face->StyleName);
         if (!strcmpiW(lf->lfFaceName, full_family_name)) return TRUE;
     }
 
@@ -4656,7 +4662,6 @@ static BOOL family_matches(Family *family, const LOGFONTW *lf)
 
 static BOOL face_matches(Face *face, const LOGFONTW *lf)
 {
-    static const WCHAR spaceW[] = { ' ',0 };
     WCHAR full_family_name[LF_FULLFACESIZE];
 
     if (!strcmpiW(lf->lfFaceName, face->family->FamilyName)) return TRUE;
@@ -4668,9 +4673,7 @@ static BOOL face_matches(Face *face, const LOGFONTW *lf)
         return FALSE;
     }
 
-    strcpyW(full_family_name, face->family->FamilyName);
-    strcatW(full_family_name, spaceW);
-    strcatW(full_family_name, face->StyleName);
+    create_full_name(full_family_name, face->family->FamilyName, face->StyleName);
     return !strcmpiW(lf->lfFaceName, full_family_name);
 }
 
