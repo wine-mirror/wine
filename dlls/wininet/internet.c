@@ -881,7 +881,7 @@ static const object_vtbl_t APPINFOVtbl = {
     APPINFO_Destroy,
     NULL,
     APPINFO_QueryOption,
-    NULL,
+    INET_SetOption,
     NULL,
     NULL,
     NULL,
@@ -2529,6 +2529,16 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
     return res == ERROR_SUCCESS;
 }
 
+DWORD INET_SetOption(object_header_t *hdr, DWORD option, void *buf, DWORD size)
+{
+    switch(option) {
+    case INTERNET_OPTION_CALLBACK:
+        WARN("Not settable option %u\n", option);
+        return ERROR_INTERNET_OPTION_NOT_SETTABLE;
+    }
+
+    return ERROR_INTERNET_INVALID_OPTION;
+}
 
 /***********************************************************************
  *           InternetSetOptionW (WININET.@)
@@ -2549,7 +2559,7 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     TRACE("(%p %d %p %d)\n", hInternet, dwOption, lpBuffer, dwBufferLength);
 
     lpwhh = (object_header_t*) get_handle_object( hInternet );
-    if(lpwhh && lpwhh->vtbl->SetOption) {
+    if(lpwhh) {
         DWORD res;
 
         res = lpwhh->vtbl->SetOption(lpwhh, dwOption, lpBuffer, dwBufferLength);
@@ -2845,19 +2855,6 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
 
     switch( dwOption )
     {
-    case INTERNET_OPTION_CALLBACK:
-        {
-        object_header_t *lpwh;
-
-        if (!(lpwh = get_handle_object(hInternet)))
-        {
-            INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-            return FALSE;
-        }
-        WININET_Release(lpwh);
-        INTERNET_SetLastError(ERROR_INTERNET_OPTION_NOT_SETTABLE);
-        return FALSE;
-        }
     case INTERNET_OPTION_PROXY:
         {
         LPINTERNET_PROXY_INFOA pi = (LPINTERNET_PROXY_INFOA) lpBuffer;

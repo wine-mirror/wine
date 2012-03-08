@@ -2212,7 +2212,7 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
         return ERROR_SUCCESS;
     }
 
-    return ERROR_INTERNET_INVALID_OPTION;
+    return INET_SetOption(hdr, option, buffer, size);
 }
 
 /* read some more data into the read buffer (the read section must be held) */
@@ -5515,7 +5515,7 @@ static DWORD HTTPSESSION_SetOption(object_header_t *hdr, DWORD option, void *buf
     default: break;
     }
 
-    return ERROR_INTERNET_INVALID_OPTION;
+    return INET_SetOption(hdr, option, buffer, size);
 }
 
 static const object_vtbl_t HTTPSESSIONVtbl = {

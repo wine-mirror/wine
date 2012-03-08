@@ -486,7 +486,8 @@ object_header_t *get_handle_object( HINTERNET hinternet ) DECLSPEC_HIDDEN;
 object_header_t *WININET_AddRef( object_header_t *info ) DECLSPEC_HIDDEN;
 BOOL WININET_Release( object_header_t *info ) DECLSPEC_HIDDEN;
 
-DWORD INET_QueryOption( object_header_t *, DWORD, void *, DWORD *, BOOL ) DECLSPEC_HIDDEN;
+DWORD INET_QueryOption(object_header_t*,DWORD,void*,DWORD*,BOOL) DECLSPEC_HIDDEN;
+DWORD INET_SetOption(object_header_t*,DWORD,void*,DWORD) DECLSPEC_HIDDEN;
 
 time_t ConvertTimeString(LPCWSTR asctime) DECLSPEC_HIDDEN;
 
