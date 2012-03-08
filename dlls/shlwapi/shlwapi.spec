@@ -804,6 +804,8 @@
 @ stdcall StrStrNW(wstr wstr long)
 @ stdcall StrStrNIW(wstr wstr long)
 @ stdcall StrStrW(wstr wstr)
+@ stdcall StrToInt64ExA(str long ptr)
+@ stdcall StrToInt64ExW(wstr long ptr)
 @ stdcall StrToIntA(str)
 @ stdcall StrToIntExA(str long ptr)
 @ stdcall StrToIntExW(wstr long ptr)

@@ -65,6 +65,8 @@ static LPWSTR  (WINAPI *pStrStrNIW)(LPCWSTR,LPCWSTR,UINT);
 static INT     (WINAPIV *pwnsprintfA)(LPSTR,INT,LPCSTR, ...);
 static INT     (WINAPIV *pwnsprintfW)(LPWSTR,INT,LPCWSTR, ...);
 static LPWSTR  (WINAPI *pStrChrNW)(LPWSTR,WCHAR,UINT);
+static BOOL    (WINAPI *pStrToInt64ExA)(LPCSTR,DWORD,LONGLONG*);
+static BOOL    (WINAPI *pStrToInt64ExW)(LPCWSTR,DWORD,LONGLONG*);
 
 static int strcmpW(const WCHAR *str1, const WCHAR *str2)
 {
@@ -77,17 +79,19 @@ typedef struct tagStrToIntResult
 {
   const char* string;
   int str_to_int;
-  int str_to_int_ex;
-  int str_to_int_hex;
+  LONGLONG str_to_int64_ex;
+  LONGLONG str_to_int64_hex;
 } StrToIntResult;
 
 static const StrToIntResult StrToInt_results[] = {
      { "1099", 1099, 1099, 1099 },
+     { "4294967319", 23, ((LONGLONG)1 << 32) | 23, ((LONGLONG)1 << 32) | 23 },
      { "+88987", 0, 88987, 88987 },
      { "012", 12, 12, 12 },
      { "-55", -55, -55, -55 },
      { "-0", 0, 0, 0 },
      { "0x44ff", 0, 0, 0x44ff },
+     { "0x2bdc546291f4b1", 0, 0, ((LONGLONG)0x2bdc54 << 32) | 0x6291f4b1 },
      { "+0x44f4", 0, 0, 0x44f4 },
      { "-0x44fd", 0, 0, 0x44fd },
      { "+ 88987", 0, 0, 0 },
@@ -480,7 +484,7 @@ static void test_StrToIntExA(void)
     ok(!bRet || return_val != -1, "No result returned from '%s'\n",
        result->string);
     if (bRet)
-      ok(return_val == result->str_to_int_ex, "converted '%s' wrong (%d)\n",
+      ok(return_val == (int)result->str_to_int64_ex, "converted '%s' wrong (%d)\n",
          result->string, return_val);
     result++;
   }
@@ -493,7 +497,7 @@ static void test_StrToIntExA(void)
     ok(!bRet || return_val != -1, "No result returned from '%s'\n",
        result->string);
     if (bRet)
-      ok(return_val == result->str_to_int_hex, "converted '%s' wrong (%d)\n",
+      ok(return_val == (int)result->str_to_int64_hex, "converted '%s' wrong (%d)\n",
          result->string, return_val);
     result++;
   }
@@ -514,7 +518,7 @@ static void test_StrToIntExW(void)
     ok(!bRet || return_val != -1, "No result returned from '%s'\n",
        result->string);
     if (bRet)
-      ok(return_val == result->str_to_int_ex, "converted '%s' wrong (%d)\n",
+      ok(return_val == (int)result->str_to_int64_ex, "converted '%s' wrong (%d)\n",
          result->string, return_val);
     result++;
   }
@@ -528,8 +532,87 @@ static void test_StrToIntExW(void)
     ok(!bRet || return_val != -1, "No result returned from '%s'\n",
        result->string);
     if (bRet)
-      ok(return_val == result->str_to_int_hex, "converted '%s' wrong (%d)\n",
+      ok(return_val == (int)result->str_to_int64_hex, "converted '%s' wrong (%d)\n",
          result->string, return_val);
+    result++;
+  }
+}
+
+static void test_StrToInt64ExA(void)
+{
+  const StrToIntResult *result = StrToInt_results;
+  LONGLONG return_val;
+  BOOL bRet;
+
+  if (!pStrToInt64ExA)
+  {
+    win_skip("StrToInt64ExA() is not available\n");
+    return;
+  }
+
+  while (result->string)
+  {
+    return_val = -1;
+    bRet = pStrToInt64ExA(result->string,0,&return_val);
+    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
+       result->string);
+    if (bRet)
+      ok(return_val == result->str_to_int64_ex, "converted '%s' wrong (%08x%08x)\n",
+         result->string, (DWORD)(return_val >> 32), (DWORD)return_val);
+    result++;
+  }
+
+  result = StrToInt_results;
+  while (result->string)
+  {
+    return_val = -1;
+    bRet = pStrToInt64ExA(result->string,STIF_SUPPORT_HEX,&return_val);
+    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
+       result->string);
+    if (bRet)
+      ok(return_val == result->str_to_int64_hex, "converted '%s' wrong (%08x%08x)\n",
+         result->string, (DWORD)(return_val >> 32), (DWORD)return_val);
+    result++;
+  }
+}
+
+static void test_StrToInt64ExW(void)
+{
+  WCHAR szBuff[256];
+  const StrToIntResult *result = StrToInt_results;
+  LONGLONG return_val;
+  BOOL bRet;
+
+  if (!pStrToInt64ExW)
+  {
+    win_skip("StrToInt64ExW() is not available\n");
+    return;
+  }
+
+  while (result->string)
+  {
+    return_val = -1;
+    MultiByteToWideChar(0,0,result->string,-1,szBuff,sizeof(szBuff)/sizeof(WCHAR));
+    bRet = pStrToInt64ExW(szBuff, 0, &return_val);
+    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
+       result->string);
+    if (bRet)
+      ok(return_val == result->str_to_int64_ex, "converted '%s' wrong (%08x%08x)\n",
+         result->string, (DWORD)(return_val >> 32), (DWORD)return_val);
+    result++;
+  }
+
+  result = StrToInt_results;
+  while (result->string)
+  {
+    return_val = -1;
+    MultiByteToWideChar(0,0,result->string,-1,szBuff,sizeof(szBuff)/sizeof(WCHAR));
+    bRet = pStrToInt64ExW(szBuff, STIF_SUPPORT_HEX, &return_val);
+    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
+       result->string);
+    if (bRet)
+      ok(return_val == result->str_to_int64_hex, "converted '%s' wrong (%08x%08x)\n",
+         result->string, (DWORD)(return_val >> 32), (DWORD)return_val);
     result++;
   }
 }
@@ -1422,6 +1505,8 @@ START_TEST(string)
   pStrStrNIW = (void *)GetProcAddress(hShlwapi, "StrStrNIW");
   pwnsprintfA = (void *)GetProcAddress(hShlwapi, "wnsprintfA");
   pwnsprintfW = (void *)GetProcAddress(hShlwapi, "wnsprintfW");
+  pStrToInt64ExA = (void *)GetProcAddress(hShlwapi, "StrToInt64ExA");
+  pStrToInt64ExW = (void *)GetProcAddress(hShlwapi, "StrToInt64ExW");
 
   test_StrChrA();
   test_StrChrW();
@@ -1435,6 +1520,8 @@ START_TEST(string)
   test_StrToIntW();
   test_StrToIntExA();
   test_StrToIntExW();
+  test_StrToInt64ExA();
+  test_StrToInt64ExW();
   test_StrDupA();
 
   /* language-dependent test */
