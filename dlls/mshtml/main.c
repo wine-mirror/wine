@@ -484,7 +484,7 @@ HRESULT WINAPI DllRegisterServer(void)
     if(SUCCEEDED(hres))
         hres = register_server(TRUE);
     if(SUCCEEDED(hres))
-        load_gecko(FALSE);
+        load_gecko();
 
     return hres;
 }

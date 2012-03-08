@@ -230,7 +230,7 @@ static void register_nscontainer_class(void)
     nscontainer_class = RegisterClassExW(&wndclass);
 }
 
-static BOOL install_wine_gecko(BOOL silent)
+static BOOL install_wine_gecko(void)
 {
     PROCESS_INFORMATION pi;
     STARTUPINFOW si;
@@ -573,7 +573,7 @@ static CRITICAL_SECTION_DEBUG cs_load_gecko_dbg =
 };
 static CRITICAL_SECTION cs_load_gecko = { &cs_load_gecko_dbg, -1, 0, 0, 0, 0 };
 
-BOOL load_gecko(BOOL silent)
+BOOL load_gecko(void)
 {
     PRUnichar gre_path[MAX_PATH];
     BOOL ret = FALSE;
@@ -592,7 +592,7 @@ BOOL load_gecko(BOOL silent)
         loading_thread = GetCurrentThreadId();
 
         if(load_wine_gecko(gre_path)
-           || (install_wine_gecko(silent) && load_wine_gecko(gre_path)))
+           || (install_wine_gecko() && load_wine_gecko(gre_path)))
             ret = init_xpcom(gre_path);
         else
            MESSAGE("Could not load wine-gecko. HTML rendering will be disabled.\n");
@@ -1862,7 +1862,7 @@ HRESULT create_nscontainer(HTMLDocumentObj *doc, NSContainer *parent, NSContaine
     NSContainer *ret;
     HRESULT hres;
 
-    if(!load_gecko(TRUE))
+    if(!load_gecko())
         return CLASS_E_CLASSNOTAVAILABLE;
 
     ret = heap_alloc_zero(sizeof(NSContainer));

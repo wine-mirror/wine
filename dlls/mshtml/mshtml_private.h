@@ -671,7 +671,7 @@ HRESULT get_client_disp_property(IOleClientSite*,DISPID,VARIANT*) DECLSPEC_HIDDE
 
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**) DECLSPEC_HIDDEN;
 
-BOOL load_gecko(BOOL) DECLSPEC_HIDDEN;
+BOOL load_gecko(void) DECLSPEC_HIDDEN;
 void close_gecko(void) DECLSPEC_HIDDEN;
 void register_nsservice(nsIComponentRegistrar*,nsIServiceManager*) DECLSPEC_HIDDEN;
 void init_nsio(nsIComponentManager*,nsIComponentRegistrar*) DECLSPEC_HIDDEN;
