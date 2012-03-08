@@ -528,16 +528,10 @@ static void state_alpha(struct wined3d_context *context, const struct wined3d_st
      */
     if (state->textures[0])
     {
-        struct wined3d_texture *texture = state->textures[0];
-        GLenum texture_dimensions = texture->target;
+        struct wined3d_surface *surface = surface_from_resource(state->textures[0]->sub_resources[0]);
 
-        if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
-        {
-            struct wined3d_surface *surf = surface_from_resource(texture->sub_resources[0]);
-
-            if (surf->CKeyFlags & WINEDDSD_CKSRCBLT)
-                enable_ckey = TRUE;
-        }
+        if (surface->CKeyFlags & WINEDDSD_CKSRCBLT)
+            enable_ckey = TRUE;
     }
 
     if (enable_ckey || context->last_was_ckey)
