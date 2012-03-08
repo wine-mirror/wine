@@ -1032,8 +1032,8 @@ static ULONG get_dns_suffix(WCHAR *suffix, ULONG *len)
     return ERROR_SUCCESS;
 }
 
-ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
-                                  PIP_ADAPTER_ADDRESSES aa, PULONG buflen)
+ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
+                                                    PIP_ADAPTER_ADDRESSES aa, PULONG buflen)
 {
     InterfaceIndexTable *table;
     ULONG i, size, dns_server_size, dns_suffix_size, total_size, ret = ERROR_NO_DATA;
