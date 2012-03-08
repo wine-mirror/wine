@@ -653,11 +653,11 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
             LONG state = State_Stopped;
             IMediaControl_GetState(wma->pmctrl, -1, &state);
             if (state == State_Stopped)
-                state = MCI_MODE_STOP;
+                lpParms->dwReturn = MCI_MODE_STOP;
             else if (state == State_Running)
-                state = MCI_MODE_PLAY;
+                lpParms->dwReturn = MCI_MODE_PLAY;
             else if (state == State_Paused)
-                state = MCI_MODE_PAUSE;
+                lpParms->dwReturn = MCI_MODE_PAUSE;
             break;
         }
         case MCI_STATUS_MEDIA_PRESENT:
