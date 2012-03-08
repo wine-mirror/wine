@@ -118,6 +118,7 @@ struct ACImpl {
     UINT32 bufsize_frames, held_frames, tmp_buffer_frames, mmdev_period_frames;
     snd_pcm_uframes_t remapping_buf_frames;
     UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
+    UINT32 wri_offs_frames; /* where to write fresh data in local_buffer */
     UINT32 hidden_frames;   /* ALSA reserve to ensure continuous rendering */
 
     HANDLE timer;
@@ -1960,13 +1961,28 @@ static snd_pcm_sframes_t alsa_write_best_effort(snd_pcm_t *handle, BYTE *buf,
     return written;
 }
 
+/* The callback and mmdevapi API functions execute concurrently.
+ * Shared state & life time after Start:
+ * This            constant until _Release
+ *->pcm_handle     likewise
+ *->fmt            likewise
+ *->alsa_format, hidden_frames likewise
+ *->local_buffer, bufsize_frames, alsa_bufsize_frames likewise
+ *->event          Read Only, even constant until _Release(!)
+ *->started        Read Only from cb POV, constant if _Stop kills the cb
+ *
+ *->held_frames is the only R/W object.
+ *->lcl_offs_frames/wri_offs_frames are written by one side exclusively:
+ *  lcl_offs_frames by CaptureClient & write callback
+ *  wri_offs_frames by read callback & RenderClient
+ */
 static void alsa_write_data(ACImpl *This)
 {
     snd_pcm_sframes_t written, in_alsa;
     snd_pcm_uframes_t to_write, avail, write_limit, max_period;
     int err;
     BYTE *buf =
-        This->local_buffer + (This->lcl_offs_frames * This->fmt->nBlockAlign);
+        This->local_buffer + This->lcl_offs_frames * This->fmt->nBlockAlign;
 
     /* this call seems to be required to get an accurate snd_pcm_state() */
     avail = snd_pcm_avail_update(This->pcm_handle);
@@ -2064,14 +2080,16 @@ static void alsa_write_data(ACImpl *This)
 
 static void alsa_read_data(ACImpl *This)
 {
-    snd_pcm_sframes_t pos, readable, nread;
+    snd_pcm_sframes_t nread;
+    UINT32 pos = This->wri_offs_frames, limit = This->held_frames;
 
-    pos = (This->held_frames + This->lcl_offs_frames) % This->bufsize_frames;
-    readable = This->bufsize_frames - pos;
+    /* FIXME: Detect overrun and signal DATA_DISCONTINUITY
+     * How to count overrun frames and report them as position increase? */
+    limit = This->bufsize_frames - max(limit, pos);
 
     nread = snd_pcm_readi(This->pcm_handle,
-            This->local_buffer + pos * This->fmt->nBlockAlign, readable);
-    TRACE("read %ld from %u limit %lu\n", nread, This->held_frames + This->lcl_offs_frames, readable);
+            This->local_buffer + pos * This->fmt->nBlockAlign, limit);
+    TRACE("read %ld from %u limit %u\n", nread, pos, limit);
     if(nread < 0){
         int ret;
 
@@ -2087,7 +2105,7 @@ static void alsa_read_data(ACImpl *This)
         }
 
         nread = snd_pcm_readi(This->pcm_handle,
-                This->local_buffer + pos * This->fmt->nBlockAlign, readable);
+                This->local_buffer + pos * This->fmt->nBlockAlign, limit);
         if(nread < 0){
             WARN("read failed: %ld (%s)\n", nread, snd_strerror(nread));
             return;
@@ -2103,14 +2121,9 @@ static void alsa_read_data(ACImpl *This)
                     snd_strerror(err));
     }
 
+    This->wri_offs_frames += nread;
+    This->wri_offs_frames %= This->bufsize_frames;
     This->held_frames += nread;
-
-    if(This->held_frames > This->bufsize_frames){
-        WARN("Overflow of unread data\n");
-        This->lcl_offs_frames += This->held_frames;
-        This->lcl_offs_frames %= This->bufsize_frames;
-        This->held_frames = This->bufsize_frames;
-    }
 }
 
 static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
@@ -2256,6 +2269,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
     }
     This->held_frames = 0;
     This->lcl_offs_frames = 0;
+    This->wri_offs_frames = 0;
 
     LeaveCriticalSection(&This->lock);
 
@@ -2463,8 +2477,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         return AUDCLNT_E_BUFFER_TOO_LARGE;
     }
 
-    write_pos =
-        (This->lcl_offs_frames + This->held_frames) % This->bufsize_frames;
+    write_pos = This->wri_offs_frames;
     if(write_pos + frames > This->bufsize_frames){
         if(This->tmp_buffer_frames < frames){
             HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
@@ -2490,8 +2503,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
 
 static void alsa_wrap_buffer(ACImpl *This, BYTE *buffer, UINT32 written_frames)
 {
-    snd_pcm_uframes_t write_offs_frames =
-        (This->lcl_offs_frames + This->held_frames) % This->bufsize_frames;
+    snd_pcm_uframes_t write_offs_frames = This->wri_offs_frames;
     UINT32 write_offs_bytes = write_offs_frames * This->fmt->nBlockAlign;
     snd_pcm_uframes_t chunk_frames = This->bufsize_frames - write_offs_frames;
     UINT32 chunk_bytes = chunk_frames * This->fmt->nBlockAlign;
@@ -2533,8 +2545,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
     }
 
     if(This->getbuf_last >= 0)
-        buffer = This->local_buffer + This->fmt->nBlockAlign *
-          ((This->lcl_offs_frames + This->held_frames) % This->bufsize_frames);
+        buffer = This->local_buffer + This->wri_offs_frames * This->fmt->nBlockAlign;
     else
         buffer = This->tmp_buffer;
 
@@ -2548,6 +2559,8 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
     if(This->getbuf_last < 0)
         alsa_wrap_buffer(This, buffer, written_frames);
 
+    This->wri_offs_frames += written_frames;
+    This->wri_offs_frames %= This->bufsize_frames;
     This->held_frames += written_frames;
     This->written_frames += written_frames;
     This->getbuf_last = 0;
