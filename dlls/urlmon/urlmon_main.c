@@ -637,13 +637,30 @@ static BOOL text_html_filter(const BYTE *b, DWORD size)
             && (b[i+2] == 't' || b[i+2] == 'T')
             && (b[i+3] == 'm' || b[i+3] == 'M')
             && (b[i+4] == 'l' || b[i+4] == 'L')) ||
-           ((size - i >= 6)
-            &&  b[i]   == '<'
+           (b[i] == '<'
             && (b[i+1] == 'h' || b[i+1] == 'H')
             && (b[i+2] == 'e' || b[i+2] == 'E')
             && (b[i+3] == 'a' || b[i+3] == 'A')
             && (b[i+4] == 'd' || b[i+4] == 'D')
             &&  b[i+5] == '>')) return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL text_xml_filter(const BYTE *b, DWORD size)
+{
+    DWORD i;
+
+    if(size < 6)
+        return FALSE;
+
+    for(i=0; i<size-6; i++) {
+        if(b[i] == '<' && b[i+1] == '?'
+            && (b[i+2] == 'x' || b[i+2] == 'X')
+            && (b[i+3] == 'm' || b[i+3] == 'M')
+            && (b[i+4] == 'l' || b[i+4] == 'L')
+            && b[i+5] == ' ') return TRUE;
     }
 
     return FALSE;
@@ -767,6 +784,7 @@ static HRESULT find_mime_from_buffer(const BYTE *buf, DWORD size, const WCHAR *p
 
     static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
     static const WCHAR text_richtextW[] = {'t','e','x','t','/','r','i','c','h','t','e','x','t',0};
+    static const WCHAR text_xmlW[] = {'t','e','x','t','/','x','m','l',0};
     static const WCHAR audio_basicW[] = {'a','u','d','i','o','/','b','a','s','i','c',0};
     static const WCHAR audio_wavW[] = {'a','u','d','i','o','/','w','a','v',0};
     static const WCHAR image_gifW[] = {'i','m','a','g','e','/','g','i','f',0};
@@ -796,6 +814,7 @@ static HRESULT find_mime_from_buffer(const BYTE *buf, DWORD size, const WCHAR *p
         BOOL (*filter)(const BYTE *,DWORD);
     } mime_filters[] = {
         {text_htmlW,       text_html_filter},
+        {text_xmlW,        text_xml_filter},
         {text_richtextW,   text_richtext_filter},
      /* {audio_xaiffW,     audio_xaiff_filter}, */
         {audio_basicW,     audio_basic_filter},
