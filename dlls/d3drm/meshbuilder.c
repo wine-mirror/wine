@@ -340,6 +340,7 @@ static ULONG WINAPI IDirect3DRMMeshBuilder2Impl_Release(IDirect3DRMMeshBuilder2*
         HeapFree(GetProcessHeap(), 0, This->pVertices);
         HeapFree(GetProcessHeap(), 0, This->pNormals);
         HeapFree(GetProcessHeap(), 0, This->pFaceData);
+        HeapFree(GetProcessHeap(), 0, This->pCoords2d);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
