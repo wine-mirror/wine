@@ -440,6 +440,7 @@ static void test_CoInternetQueryInfo(void)
 static const WCHAR mimeTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 static const WCHAR mimeTextPlain[] = {'t','e','x','t','/','p','l','a','i','n',0};
 static const WCHAR mimeTextRichtext[] = {'t','e','x','t','/','r','i','c','h','t','e','x','t',0};
+static const WCHAR mimeTextXml[] = {'t','e','x','t','/','x','m','l',0};
 static const WCHAR mimeAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
     'o','c','t','e','t','-','s','t','r','e','a','m',0};
 static const WCHAR mimeImagePjpeg[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
@@ -568,6 +569,12 @@ static BYTE data87[] = {' ','<','h','e','a','d'};
 static BYTE data88[] = {' ','<','h','e','a','d','>'};
 static BYTE data89[] = {'\t','\r','<','h','e','a','d','>'};
 static BYTE data90[] = {'<','H','e','A','d','>'};
+static BYTE data91[] = {'<','?','x','m','l',' ',0};
+static BYTE data92[] = {'a','b','c','<','?','x','m','l',' ',' '};
+static BYTE data93[] = {'<','?','x','m','l',' ',' ','<','h','t','m','l','>'};
+static BYTE data94[] = {'<','h','t','m','l','>','<','?','x','m','l',' ',' '};
+static BYTE data95[] = {'{','\\','r','t','f','<','?','x','m','l',' ',' '};
+static BYTE data96[] = {'<','?','x','m','l',' '};
 
 static const struct {
     BYTE *data;
@@ -663,7 +670,13 @@ static const struct {
     {data87, sizeof(data87), mimeTextPlain},
     {data88, sizeof(data88), mimeTextHtml, mimeTextPlain /* IE8 */},
     {data89, sizeof(data89), mimeTextHtml, mimeTextPlain /* IE8 */},
-    {data90, sizeof(data90), mimeTextHtml, mimeTextPlain /* IE8 */}
+    {data90, sizeof(data90), mimeTextHtml, mimeTextPlain /* IE8 */},
+    {data91, sizeof(data91), mimeTextXml, mimeTextPlain /* IE9 */},
+    {data92, sizeof(data92), mimeTextXml, mimeTextPlain /* IE9 */},
+    {data93, sizeof(data93), mimeTextXml, mimeTextPlain /* IE9 */},
+    {data94, sizeof(data94), mimeTextHtml, mimeTextPlain /* IE9 */},
+    {data95, sizeof(data95), mimeTextXml, mimeTextRichtext /* IE9 */},
+    {data96, sizeof(data96), mimeTextPlain}
 };
 
 static void test_FindMimeFromData(void)
@@ -715,7 +728,7 @@ static void test_FindMimeFromData(void)
                 mimeTextHtml, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         if(!lstrcmpW(mimeAppOctetStream, mime_tests2[i].mime)
-           || !lstrcmpW(mimeTextPlain, mime_tests2[i].mime))
+           || !lstrcmpW(mimeTextPlain, mime_tests2[i].mime) || i==92)
             ok(!lstrcmpW(mime, mimeTextHtml), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         else
             ok(!lstrcmpW(mime, mime_tests2[i].mime), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
