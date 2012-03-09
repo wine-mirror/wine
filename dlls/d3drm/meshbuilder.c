@@ -1145,7 +1145,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
         hr =  IDirectXFileData_GetNextObject(pData, &pObject);
         if (hr == DXFILEERR_NOMOREOBJECTS)
         {
-            FIXME("no more object\n");
+            TRACE("No more object\n");
             break;
         }
         if (hr != DXFILE_OK)
@@ -1163,7 +1163,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
             goto end;
         }
 
-        FIXME("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
+        TRACE("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
 
         if (!IsEqualGUID(pGuid, &TID_D3DRMMeshNormals))
         {
@@ -1176,7 +1176,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
             This->nb_normals = *(DWORD*)ptr;
             tmp = *(DWORD*)(ptr + sizeof(DWORD) + This->nb_normals * sizeof(D3DVECTOR));
 
-            FIXME("MeshNormals: nb_normals = %d, nb_faces_normals = %d\n", This->nb_normals, tmp);
+            TRACE("MeshNormals: nb_normals = %d, nb_faces_normals = %d\n", This->nb_normals, tmp);
 
             This->pNormals = HeapAlloc(GetProcessHeap(), 0, This->nb_normals * sizeof(D3DVECTOR));
             memcpy(This->pNormals, ptr + sizeof(DWORD), This->nb_normals * sizeof(D3DVECTOR));
@@ -1189,7 +1189,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
 
             This->nb_coords2d = *(DWORD*)ptr;
 
-            FIXME("MeshTextureCoords: nb_coords2d = %d\n", This->nb_coords2d);
+            TRACE("MeshTextureCoords: nb_coords2d = %d\n", This->nb_coords2d);
 
             This->pCoords2d = HeapAlloc(GetProcessHeap(), 0, This->nb_coords2d * sizeof(Coords2d));
             memcpy(This->pCoords2d, ptr + sizeof(DWORD), This->nb_coords2d * sizeof(Coords2d));
