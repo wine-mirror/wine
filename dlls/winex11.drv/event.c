@@ -759,6 +759,7 @@ static void X11DRV_FocusOut( HWND hwnd, XEvent *xev )
         if (!hwnd && event->window == x11drv_thread_data()->clip_window) reset_clipping_window();
         return;
     }
+    if (!hwnd) return;
     if (ximInComposeMode) return;
 
     x11drv_thread_data()->last_focus = hwnd;
