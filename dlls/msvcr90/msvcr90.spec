@@ -161,6 +161,7 @@
 @ stub __AdjustPointer
 @ stub __BuildCatchObject
 @ stub __BuildCatchObjectHelper
+@ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr) msvcrt.__C_specific_handler
 @ cdecl __CppXcptFilter(long ptr) msvcrt.__CppXcptFilter
 @ stub __CxxCallUnwindDelDtor
 @ stub __CxxCallUnwindDtor
