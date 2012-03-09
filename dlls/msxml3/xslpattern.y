@@ -255,6 +255,7 @@ static void xslpattern_error(parser_param* param, void const* scanner, char cons
                             }
                             | BoolExpr
                             | Attribute
+                            | TOK_NCName
     ;
     /* [2.5] Abbreviated Syntax */
     AbbreviatedAbsoluteLocationPath : TOK_DblFSlash RelativeLocationPath

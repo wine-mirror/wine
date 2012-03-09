@@ -1403,6 +1403,7 @@ static const char szExampleXML[] =
 "        <a>A1 field</a>\n"
 "        <b>B1 field</b>\n"
 "        <c>C1 field</c>\n"
+"        <d>D1 field</d>\n"
 "        <description xmlns:foo='http://www.winehq.org' xmlns:bar='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'>\n"
 "            <html xmlns='http://www.w3.org/1999/xhtml'>\n"
 "                This is <strong>a</strong> <i>description</i>. <bar:x/>\n"
@@ -1417,6 +1418,7 @@ static const char szExampleXML[] =
 "        <a>A2 field</a>\n"
 "        <b>B2 field</b>\n"
 "        <c type=\"old\">C2 field</c>\n"
+"        <d>D2 field</d>\n"
 "    </elem>\n"
 "\n"
 "    <elem xmlns='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'>\n"
@@ -1429,6 +1431,7 @@ static const char szExampleXML[] =
 "        <a>A4 field</a>\n"
 "        <b>B4 field</b>\n"
 "        <foo:c>C4 field</foo:c>\n"
+"        <d>D4 field</d>\n"
 "    </elem>\n"
 "</root>\n";
 
@@ -5359,10 +5362,10 @@ static inline void _check_ws_ignored(int line, IXMLDOMDocument2* doc, char const
     helper_ole_check(IXMLDOMNodeList_get_item(list, 0, &node1));
     helper_ole_check(IXMLDOMNodeList_get_item(list, 1, &node2));
     helper_ole_check(IXMLDOMNodeList_reset(list));
-    helper_expect_list_and_release(list, "E1.E4.E1.E2.D1 E2.E4.E1.E2.D1");
+    helper_expect_list_and_release(list, "E1.E5.E1.E2.D1 E2.E5.E1.E2.D1");
 
     helper_ole_check(IXMLDOMNode_get_childNodes(node1, &list));
-    helper_expect_list_and_release(list, "T1.E1.E4.E1.E2.D1 E2.E1.E4.E1.E2.D1 E3.E1.E4.E1.E2.D1 T4.E1.E4.E1.E2.D1 E5.E1.E4.E1.E2.D1");
+    helper_expect_list_and_release(list, "T1.E1.E5.E1.E2.D1 E2.E1.E5.E1.E2.D1 E3.E1.E5.E1.E2.D1 T4.E1.E5.E1.E2.D1 E5.E1.E5.E1.E2.D1");
     helper_ole_check(IXMLDOMNode_get_text(node1, &bstr));
     if (str)
     {
@@ -5375,7 +5378,7 @@ static inline void _check_ws_ignored(int line, IXMLDOMDocument2* doc, char const
     IXMLDOMNode_Release(node1);
 
     helper_ole_check(IXMLDOMNode_get_childNodes(node2, &list));
-    helper_expect_list_and_release(list, "T1.E2.E4.E1.E2.D1 E2.E2.E4.E1.E2.D1 T3.E2.E4.E1.E2.D1 E4.E2.E4.E1.E2.D1 T5.E2.E4.E1.E2.D1 E6.E2.E4.E1.E2.D1 T7.E2.E4.E1.E2.D1");
+    helper_expect_list_and_release(list, "T1.E2.E5.E1.E2.D1 E2.E2.E5.E1.E2.D1 T3.E2.E5.E1.E2.D1 E4.E2.E5.E1.E2.D1 T5.E2.E5.E1.E2.D1 E6.E2.E5.E1.E2.D1 T7.E2.E5.E1.E2.D1");
     helper_ole_check(IXMLDOMNode_get_text(node2, &bstr));
     helper_expect_bstr_and_release(bstr, "\n                This is a description with preserved whitespace. \n            ");
     IXMLDOMNode_Release(node2);
@@ -5392,10 +5395,10 @@ static inline void _check_ws_preserved(int line, IXMLDOMDocument2* doc, char con
     helper_ole_check(IXMLDOMNodeList_get_item(list, 0, &node1));
     helper_ole_check(IXMLDOMNodeList_get_item(list, 1, &node2));
     helper_ole_check(IXMLDOMNodeList_reset(list));
-    helper_expect_list_and_release(list, "E2.E8.E2.E2.D1 E4.E8.E2.E2.D1");
+    helper_expect_list_and_release(list, "E2.E10.E2.E2.D1 E4.E10.E2.E2.D1");
 
     helper_ole_check(IXMLDOMNode_get_childNodes(node1, &list));
-    helper_expect_list_and_release(list, "T1.E2.E8.E2.E2.D1 E2.E2.E8.E2.E2.D1 T3.E2.E8.E2.E2.D1 E4.E2.E8.E2.E2.D1 T5.E2.E8.E2.E2.D1 E6.E2.E8.E2.E2.D1 T7.E2.E8.E2.E2.D1");
+    helper_expect_list_and_release(list, "T1.E2.E10.E2.E2.D1 E2.E2.E10.E2.E2.D1 T3.E2.E10.E2.E2.D1 E4.E2.E10.E2.E2.D1 T5.E2.E10.E2.E2.D1 E6.E2.E10.E2.E2.D1 T7.E2.E10.E2.E2.D1");
     helper_ole_check(IXMLDOMNode_get_text(node1, &bstr));
     if (str)
     {
@@ -5408,7 +5411,7 @@ static inline void _check_ws_preserved(int line, IXMLDOMDocument2* doc, char con
     IXMLDOMNode_Release(node1);
 
     helper_ole_check(IXMLDOMNode_get_childNodes(node2, &list));
-    helper_expect_list_and_release(list, "T1.E4.E8.E2.E2.D1 E2.E4.E8.E2.E2.D1 T3.E4.E8.E2.E2.D1 E4.E4.E8.E2.E2.D1 T5.E4.E8.E2.E2.D1 E6.E4.E8.E2.E2.D1 T7.E4.E8.E2.E2.D1");
+    helper_expect_list_and_release(list, "T1.E4.E10.E2.E2.D1 E2.E4.E10.E2.E2.D1 T3.E4.E10.E2.E2.D1 E4.E4.E10.E2.E2.D1 T5.E4.E10.E2.E2.D1 E6.E4.E10.E2.E2.D1 T7.E4.E10.E2.E2.D1");
     helper_ole_check(IXMLDOMNode_get_text(node2, &bstr));
     helper_expect_bstr_and_release(bstr, "\n                This is a description with preserved whitespace. \n            ");
     IXMLDOMNode_Release(node2);
@@ -5658,7 +5661,7 @@ if (0)
     ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_("//test:c"), &list));
     expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
     ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_(".//test:x"), &list));
-    expect_list_and_release(list, "E5.E1.E4.E1.E2.D1 E6.E2.E4.E1.E2.D1");
+    expect_list_and_release(list, "E5.E1.E5.E1.E2.D1 E6.E2.E5.E1.E2.D1");
 
     /* SelectionNamespaces syntax error - the namespaces doesn't work anymore but the value is stored */
     ole_expect(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"),
@@ -7872,12 +7875,42 @@ static const xslpattern_test_t xslpattern_test[] = {
     { "root//elem[index()>0 and $not$ end()]", "E2.E2.D1 E3.E2.D1" },
     { "root//elem[index()>0 $and$ $not$ end()]", "E2.E2.D1 E3.E2.D1" },
     { "root//elem[index()>0 && $not$ end()]", "E2.E2.D1 E3.E2.D1" },
+    { "root/elem[0]", "E1.E2.D1" },
+    { "root/elem[index()=1]", "E2.E2.D1" },
+    { "root/elem[index() $eq$ 1]", "E2.E2.D1" },
+    { "root/elem[end()]", "E4.E2.D1" },
+    { "root/elem[$not$ end()]", "E1.E2.D1 E2.E2.D1 E3.E2.D1" },
+    { "root/elem[index() != 0]", "E2.E2.D1 E3.E2.D1 E4.E2.D1" },
+    { "root/elem[index() $ne$ 0]", "E2.E2.D1 E3.E2.D1 E4.E2.D1" },
+    { "root/elem[index() < 2]", "E1.E2.D1 E2.E2.D1" },
+    { "root/elem[index() $lt$ 2]", "E1.E2.D1 E2.E2.D1" },
+    { "root/elem[index() <= 1]", "E1.E2.D1 E2.E2.D1" },
+    { "root/elem[index() $le$ 1]", "E1.E2.D1 E2.E2.D1" },
+    { "root/elem[index() > 1]", "E3.E2.D1 E4.E2.D1" },
+    { "root/elem[index() $gt$ 1]", "E3.E2.D1 E4.E2.D1" },
+    { "root/elem[index() >= 2]", "E3.E2.D1 E4.E2.D1" },
+    { "root/elem[index() $ge$ 2]", "E3.E2.D1 E4.E2.D1" },
+    { "root/elem[a $ieq$ 'a2 field']", "E2.E2.D1" },
+    { "root/elem[a $ine$ 'a2 field']", "E1.E2.D1 E3.E2.D1 E4.E2.D1" },
+    { "root/elem[a $ilt$ 'a3 field']", "E1.E2.D1 E2.E2.D1" },
+    { "root/elem[a $ile$ 'a2 field']", "E1.E2.D1 E2.E2.D1" },
+    { "root/elem[a $igt$ 'a2 field']", "E3.E2.D1 E4.E2.D1" },
+    { "root/elem[a $ige$ 'a3 field']", "E3.E2.D1 E4.E2.D1" },
+    { "root/elem[$any$ *='B2 field']", "E2.E2.D1" },
+    { "root/elem[$all$ *!='B2 field']", "E1.E2.D1 E3.E2.D1 E4.E2.D1" },
+    { "root/elem[index()=0 or end()]", "E1.E2.D1 E4.E2.D1" },
+    { "root/elem[index()=0 $or$ end()]", "E1.E2.D1 E4.E2.D1" },
+    { "root/elem[index()=0 || end()]", "E1.E2.D1 E4.E2.D1" },
+    { "root/elem[index()>0 and $not$ end()]", "E2.E2.D1 E3.E2.D1" },
+    { "root/elem[index()>0 $and$ $not$ end()]", "E2.E2.D1 E3.E2.D1" },
+    { "root/elem[index()>0 && $not$ end()]", "E2.E2.D1 E3.E2.D1" },
+    { "root/elem[d]", "E1.E2.D1 E2.E2.D1 E4.E2.D1" },
     { NULL }
 };
 
 static const xslpattern_test_t xslpattern_test_no_ns[] = {
     /* prefixes don't need to be registered, you may use them as they are in the doc */
-    { "//bar:x", "E5.E1.E4.E1.E2.D1 E6.E2.E4.E1.E2.D1" },
+    { "//bar:x", "E5.E1.E5.E1.E2.D1 E6.E2.E5.E1.E2.D1" },
     /* prefixes must be explicitly specified in the name */
     { "//foo:elem", "" },
     { "//foo:c", "E3.E4.E2.D1" },
