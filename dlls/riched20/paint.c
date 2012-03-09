@@ -316,7 +316,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText,
       hPen = CreatePen(PS_DOT, 1, rgb);
       break;
     default:
-      WINE_FIXME("Unknown underline type (%u)\n", s->fmt.bUnderlineType);
+      FIXME("Unknown underline type (%u)\n", s->fmt.bUnderlineType);
       /* fall through */
     case CFU_CF1UNDERLINE: /* this type is supported in the font, do nothing */
     case CFU_UNDERLINENONE:
