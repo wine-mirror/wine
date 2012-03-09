@@ -554,7 +554,7 @@ LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC fccIOProc, LPMMIOPROC16 pIOProc,
         }
         break;
     default:
-        WINE_FIXME("Unsupported flags %08x\n", dwFlags);
+        FIXME("Unsupported flags %08x\n", dwFlags);
         pIOProc = NULL;
     }
     LeaveCriticalSection(&mmio_cs);
