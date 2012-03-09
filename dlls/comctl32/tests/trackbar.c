@@ -33,11 +33,7 @@ static HWND hWndParent;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCE];
 
-static const struct message create_trackbar_wnd_seq[] = {
-    {0}
-};
-
-static const struct message parent_empty_test_seq[] = {
+static const struct message empty_seq[] = {
     {0}
 };
 
@@ -545,7 +541,7 @@ static void test_line_size(HWND hWndTrackbar){
     expect(4, r);
 
     ok_sequence(sequences, TRACKBAR_SEQ_INDEX, line_size_test_seq, "linesize test sequence", FALSE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent line test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "parent line test sequence", FALSE);
 }
 
 
@@ -565,7 +561,7 @@ static void test_page_size(HWND hWndTrackbar){
     expect(20, r);
 
     ok_sequence(sequences, TRACKBAR_SEQ_INDEX, page_size_test_seq, "page size test sequence", FALSE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent page size test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "parent page size test sequence", FALSE);
 
     /* check for zero page size */
     r = SendMessage(hWndTrackbar, TBM_SETPAGESIZE, 0, 0);
@@ -861,7 +857,7 @@ static void test_tic_placement(HWND hWndTrackbar){
     ok(r > 0, "Expected r > 0, got %d\n", r);
 
     ok_sequence(sequences, TRACKBAR_SEQ_INDEX, tic_placement_test_seq, "get tic placement test sequence", FALSE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent get tic placement test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "parent get tic placement test sequence", FALSE);
 }
 
 
@@ -905,7 +901,7 @@ static void test_tool_tips(HWND hWndTrackbar){
     ok(rTest == hWndTooltip, "Expected hWndTooltip\n");
 
     ok_sequence(sequences, TRACKBAR_SEQ_INDEX, tool_tips_test_seq, "tool tips test sequence", FALSE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent tool tips test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "parent tool tips test sequence", FALSE);
 }
 
 
@@ -924,7 +920,7 @@ static void test_unicode(HWND hWndTrackbar){
     ok(r == FALSE, "Expected FALSE, got %d\n",r);
 
     ok_sequence(sequences, TRACKBAR_SEQ_INDEX, unicode_test_seq, "unicode test sequence", FALSE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent unicode test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "parent unicode test sequence", FALSE);
 }
 
 static void test_ignore_selection(HWND hWndTrackbar){
@@ -966,7 +962,7 @@ static void test_ignore_selection(HWND hWndTrackbar){
     expect(0, r);
 
     ok_sequence(sequences, TRACKBAR_SEQ_INDEX, ignore_selection_test_seq, "ignore selection setting test sequence", FALSE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent ignore selection setting test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "parent ignore selection setting test sequence", FALSE);
 }
 
 static void test_initial_state(void)
@@ -1075,7 +1071,7 @@ START_TEST(trackbar)
         return;
     }
 
-    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, create_trackbar_wnd_seq, "create Trackbar Window", FALSE);
+    ok_sequence(sequences, TRACKBAR_SEQ_INDEX, empty_seq, "create Trackbar Window", FALSE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_create_trackbar_wnd_seq, "parent trackbar window", TRUE);
     flush_sequences(sequences, NUM_MSG_SEQUENCE);
 
