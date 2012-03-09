@@ -8060,12 +8060,6 @@ static void test_weld_vertices(void)
             skip("Couldn't allocate face_remap array.\n");
             goto cleanup;
         }
-        hr = D3DXCreateBuffer(tc[i].num_vertices * sizeof(DWORD), &vertex_remap);
-        if (FAILED(hr))
-        {
-            skip("Couldn't create vertex_remap buffer.\n");
-            goto cleanup;
-        }
 
         hr = D3DXWeldVertices(mesh, tc[i].flags, tc[i].epsilons, tc[i].adjacency,
                               adjacency_out, face_remap, &vertex_remap);
