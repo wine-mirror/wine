@@ -1159,10 +1159,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
 
         hr = IDirectXFileData_GetType(pData2, &pGuid);
         if (hr != DXFILE_OK)
-        {
-            IDirectXFileData_Release(pData2);
             goto end;
-        }
 
         TRACE("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
 
@@ -1206,11 +1203,14 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
         }
 
         IDirectXFileData_Release(pData2);
+        pData2 = NULL;
     }
 
     ret = D3DRM_OK;
 
 end:
+    if (pData2)
+        IDirectXFileData_Release(pData2);
     if (pData)
         IDirectXFileData_Release(pData);
     if (pEnumObject)
