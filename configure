@@ -15150,6 +15150,7 @@ wine_fn_config_dll mshtml enable_mshtml implib,po
 wine_fn_config_test dlls/mshtml/tests mshtml_test
 wine_fn_config_dll msi enable_msi implib,po
 wine_fn_config_test dlls/msi/tests msi_test
+wine_fn_config_dll msident enable_msident
 wine_fn_config_dll msimg32 enable_msimg32 implib
 wine_fn_config_dll msimsg enable_msimsg
 wine_fn_config_dll msimtf enable_msimtf

@@ -1,0 +1,6 @@
+MODULE    = msident.dll
+
+C_SRCS = \
+	msident.c
+
+@MAKE_DLL_RULES@
