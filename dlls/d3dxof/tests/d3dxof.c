@@ -118,6 +118,27 @@ static char object_syntax_empty_array_nosemicolon[] =
 "1234;\n"
 "}\n";
 
+static char template_syntax_string[] =
+"xof 0302txt 0064\n"
+"template Filename\n"
+"{\n"
+"<3D82AB43-62DA-11CF-AB39-0020AF71E433>\n"
+"STRING filename;\n"
+"}\n";
+
+static char object_syntax_string_normal[] =
+"xof 0302txt 0064\n"
+"Filename\n"
+"{\n"
+"\"foobar\";\n"
+"}\n";
+
+static char object_syntax_string_with_separator[] =
+"xof 0302txt 0064\n"
+"Filename\n"
+"{\n"
+"\"foo;bar\";\n"
+"}\n";
 
 static void init_function_pointers(void)
 {
@@ -493,6 +514,8 @@ static void test_syntax(void)
     LPDIRECTXFILEENUMOBJECT lpdxfeo;
     LPDIRECTXFILEDATA lpdxfd;
     DXFILELOADMEMORY dxflm;
+    DWORD size;
+    char** string;
 
     if (!pDirectXFileCreate)
     {
@@ -532,6 +555,47 @@ static void test_syntax(void)
     ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
     ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+
+    ref = IDirectXFileEnumObject_Release(lpdxfeo);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    if (hr == DXFILE_OK)
+    {
+        ref = IDirectXFileData_Release(lpdxfd);
+        ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    }
+
+    hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template_syntax_string, sizeof(template_syntax_string) - 1);
+    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+
+    dxflm.lpMemory = &object_syntax_string_normal;
+    dxflm.dSize = sizeof(object_syntax_string_normal) - 1;
+    hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
+    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
+    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    hr = IDirectXFileData_GetData(lpdxfd, NULL, &size, (void**)&string);
+    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+    ok(size == sizeof(char*), "Got wrong data size %d\n", size);
+    ok(!strcmp(*string, "foobar"), "Got string %s, expected foobar\n", *string);
+
+    ref = IDirectXFileEnumObject_Release(lpdxfeo);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    if (hr == DXFILE_OK)
+    {
+        ref = IDirectXFileData_Release(lpdxfd);
+        ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    }
+
+    dxflm.lpMemory = &object_syntax_string_with_separator;
+    dxflm.dSize = sizeof(object_syntax_string_with_separator) - 1;
+    hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
+    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
+    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    hr = IDirectXFileData_GetData(lpdxfd, NULL, &size, (void**)&string);
+    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+    ok(size == sizeof(char*), "Got wrong data size %d\n", size);
+    ok(!strcmp(*string, "foo;bar"), "Got string %s, expected foo;bar\n", *string);
 
     ref = IDirectXFileEnumObject_Release(lpdxfeo);
     ok(ref == 0, "Got refcount %d, expected 0\n", ref);

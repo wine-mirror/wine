@@ -605,8 +605,9 @@ static BOOL is_string(parse_buffer* buf)
   if (*buf->buffer != '"')
     return FALSE;
 
-  while ((pos+1) < buf->rem_bytes && !is_operator(c = *(buf->buffer+pos+1)))
+  while ((pos+1) < buf->rem_bytes)
   {
+    c = *(buf->buffer+pos+1);
     if (c == '"')
     {
       ok = 1;
