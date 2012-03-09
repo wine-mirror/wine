@@ -824,12 +824,12 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
         rects[i].top = top + i;
         rects[i].bottom = rects[i].top + 1;
     }
-    rects[i - 1].bottom = bottom - ellipse_height + i;  /* extend to bottom of rectangle */
     for (; i < ellipse_height; i++)
     {
         rects[i].top = bottom - ellipse_height + i;
         rects[i].bottom = rects[i].top + 1;
     }
+    rects[ellipse_height / 2].top = top + ellipse_height / 2;  /* extend to top of rectangle */
 
     hrgn = alloc_gdi_handle( &obj->header, OBJ_REGION, &region_funcs );
 
