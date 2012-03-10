@@ -774,7 +774,10 @@ void pp_writestring(const char *format, ...)
 		if(!bep)
 		{
 			if(YY_START != INITIAL)
+			{
 				ppy_error("Unexpected end of file during preprocessing");
+				BEGIN(INITIAL);
+			}
 			yyterminate();
 		}
 		else if(bep->should_pop == 2)
