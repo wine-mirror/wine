@@ -1574,6 +1574,13 @@ static void d3dpreprocess_test(void)
         "vs.1.1\n"
         "mov DEF2, v0\n"
     };
+    const char quotation_marks_test[] =
+    {
+        "vs.1.1\n"
+        "; ' comment\n"
+        "; \" comment\n"
+        "mov 0, v0\n"
+    };
     const char testshader[] =
     {
         "#include \"incl.vsh\"\n"
@@ -1630,6 +1637,19 @@ static void d3dpreprocess_test(void)
         trace("D3DPreprocess messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));
         ID3D10Blob_Release(messages);
     }
+
+    /* quotation marks test */
+    shader = NULL;
+    messages = NULL;
+    hr = D3DPreprocess(quotation_marks_test, strlen(quotation_marks_test), NULL,
+            NULL, NULL, &shader, &messages);
+    todo_wine ok(hr == S_OK, "quotation marks test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if (messages)
+    {
+        trace("D3DPreprocess messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));
+        ID3D10Blob_Release(messages);
+    }
+    if (shader) ID3D10Blob_Release(shader);
 
     /* pInclude test */
     shader = NULL;
