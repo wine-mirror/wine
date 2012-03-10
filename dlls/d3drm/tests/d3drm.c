@@ -1,5 +1,6 @@
 /*
  * Copyright 2010 Christian Costa
+ * Copyright 2012 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -268,6 +269,9 @@ static void test_Frame(void)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
         ok(count == 0, "count = %u\n", count);
+        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        ok(hr == D3DRMERR_BADVALUE, "Should have returned D3DRMERR_BADVALUE (hr = %x)\n", hr);
+        ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
         IDirect3DRMFrameArray_Release(pArray);
     }
 
@@ -301,6 +305,10 @@ static void test_Frame(void)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
         ok(count == 1, "count = %u\n", count);
+        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
+        ok(pFrameTmp == pFrameC, "pFrameTmp = %p\n", pFrameTmp);
+        IDirect3DRMFrame_Release(pFrameTmp);
         IDirect3DRMFrameArray_Release(pArray);
     }
 
@@ -325,6 +333,10 @@ static void test_Frame(void)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
         ok(count == 1, "count = %u\n", count);
+        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
+        ok(pFrameTmp == pFrameC, "pFrameTmp = %p\n", pFrameTmp);
+        IDirect3DRMFrame_Release(pFrameTmp);
         IDirect3DRMFrameArray_Release(pArray);
     }
 
@@ -335,6 +347,9 @@ static void test_Frame(void)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
         ok(count == 0, "count = %u\n", count);
+        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        ok(hr == D3DRMERR_BADVALUE, "Should have returned D3DRMERR_BADVALUE (hr = %x)\n", hr);
+        ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
         IDirect3DRMFrameArray_Release(pArray);
     }
 
@@ -357,6 +372,10 @@ static void test_Frame(void)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
         ok(count == 1, "count = %u\n", count);
+        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
+        ok(pFrameTmp == pFrameC, "pFrameTmp = %p\n", pFrameTmp);
+        IDirect3DRMFrame_Release(pFrameTmp);
         IDirect3DRMFrameArray_Release(pArray);
     }
 
@@ -372,6 +391,9 @@ static void test_Frame(void)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
         ok(count == 0, "count = %u\n", count);
+        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        ok(hr == D3DRMERR_BADVALUE, "Should have returned D3DRMERR_BADVALUE (hr = %x)\n", hr);
+        ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
         IDirect3DRMFrameArray_Release(pArray);
     }
 
@@ -396,6 +418,14 @@ static void test_Frame(void)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
         ok(count == 2, "count = %u\n", count);
+        hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
+        ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
+        ok(pFrameTmp == pFrameC, "pFrameTmp = %p\n", pFrameTmp);
+        IDirect3DRMFrame_Release(pFrameTmp);
+        hr = IDirect3DRMFrameArray_GetElement(pArray, 1, &pFrameTmp);
+        ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
+        ok(pFrameTmp == pFrameP1, "pFrameTmp = %p\n", pFrameTmp);
+        IDirect3DRMFrame_Release(pFrameTmp);
         IDirect3DRMFrameArray_Release(pArray);
     }
 
