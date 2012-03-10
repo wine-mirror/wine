@@ -278,6 +278,11 @@ static void test_Frame(void)
     hr = IDirect3DRM_CreateFrame(pD3DRM, NULL, &pFrameP1);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
 
+    /* GetParent with NULL pointer */
+    hr = IDirect3DRMFrame_GetParent(pFrameP1, NULL);
+    todo_wine ok(hr == D3DRMERR_BADVALUE, "Should have returned D3DRMERR_BADVALUE (hr = %x)\n", hr);
+    CHECK_REFCOUNT(pFrameP1, 1);
+
     /* [Add/Delete]Child with NULL pointer */
     hr = IDirect3DRMFrame_AddChild(pFrameP1, NULL);
     todo_wine ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
