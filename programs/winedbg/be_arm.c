@@ -205,13 +205,15 @@ static void be_arm_clear_watchpoint(CONTEXT* ctx, unsigned idx)
 
 static int be_arm_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
 {
+    INT step = (ctx->Cpsr & 0x20) ? 2 : 4;
+
     if (way)
     {
-        ctx->Pc-=4;
-        return -4;
+        ctx->Pc -= step;
+        return -step;
     }
-    ctx->Pc+=4;
-    return 4;
+    ctx->Pc += step;
+    return step;
 }
 
 static int be_arm_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
