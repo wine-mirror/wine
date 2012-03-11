@@ -183,7 +183,6 @@ struct GpHatch{
 struct GpSolidFill{
     GpBrush brush;
     ARGB color;
-    HBITMAP bmp;
 };
 
 struct GpPathGradient{

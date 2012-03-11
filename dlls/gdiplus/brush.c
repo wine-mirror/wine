@@ -47,15 +47,9 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
     switch(brush->bt){
         case BrushTypeSolidColor:
         {
-            GpSolidFill *fill;
             *clone = GdipAlloc(sizeof(GpSolidFill));
             if (!*clone) return OutOfMemory;
-
-            fill = (GpSolidFill*)*clone;
-
             memcpy(*clone, brush, sizeof(GpSolidFill));
-
-            fill->bmp = ARGB2BMP(fill->color);
             break;
         }
         case BrushTypeHatchFill:
@@ -654,7 +648,6 @@ GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
 
     (*sf)->brush.bt = BrushTypeSolidColor;
     (*sf)->color = color;
-    (*sf)->bmp = ARGB2BMP(color);
 
     TRACE("<-- %p\n", *sf);
 
@@ -898,10 +891,6 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
             GdipFree(((GpPathGradient*) brush)->pathdata.Types);
             GdipFree(((GpPathGradient*) brush)->blendfac);
             GdipFree(((GpPathGradient*) brush)->blendpos);
-            break;
-        case BrushTypeSolidColor:
-            if (((GpSolidFill*)brush)->bmp)
-                DeleteObject(((GpSolidFill*)brush)->bmp);
             break;
         case BrushTypeLinearGradient:
             GdipFree(((GpLineGradient*)brush)->blendfac);
