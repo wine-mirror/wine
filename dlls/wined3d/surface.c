@@ -6623,86 +6623,12 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     const BYTE *sbase = NULL;
     HRESULT hr = WINED3D_OK;
     const BYTE *sbuf;
-    RECT xdst,xsrc;
     BYTE *dbuf;
     int x, y;
 
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
             dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
             flags, fx, debug_d3dtexturefiltertype(filter));
-
-    xsrc = *src_rect;
-
-    if (!src_surface)
-    {
-        RECT full_rect;
-
-        full_rect.left = 0;
-        full_rect.top = 0;
-        full_rect.right = dst_surface->resource.width;
-        full_rect.bottom = dst_surface->resource.height;
-        IntersectRect(&xdst, &full_rect, dst_rect);
-    }
-    else
-    {
-        BOOL clip_horiz, clip_vert;
-
-        xdst = *dst_rect;
-        clip_horiz = xdst.left < 0 || xdst.right > (int)dst_surface->resource.width;
-        clip_vert = xdst.top < 0 || xdst.bottom > (int)dst_surface->resource.height;
-
-        if (clip_vert || clip_horiz)
-        {
-            /* Now check if this is a special case or not... */
-            if ((flags & WINEDDBLT_DDFX)
-                    || (clip_horiz && xdst.right - xdst.left != xsrc.right - xsrc.left)
-                    || (clip_vert && xdst.bottom - xdst.top != xsrc.bottom - xsrc.top))
-            {
-                WARN("Out of screen rectangle in special case. Not handled right now.\n");
-                return WINED3D_OK;
-            }
-
-            if (clip_horiz)
-            {
-                if (xdst.left < 0)
-                {
-                    xsrc.left -= xdst.left;
-                    xdst.left = 0;
-                }
-                if (xdst.right > dst_surface->resource.width)
-                {
-                    xsrc.right -= (xdst.right - (int)dst_surface->resource.width);
-                    xdst.right = (int)dst_surface->resource.width;
-                }
-            }
-
-            if (clip_vert)
-            {
-                if (xdst.top < 0)
-                {
-                    xsrc.top -= xdst.top;
-                    xdst.top = 0;
-                }
-                if (xdst.bottom > dst_surface->resource.height)
-                {
-                    xsrc.bottom -= (xdst.bottom - (int)dst_surface->resource.height);
-                    xdst.bottom = (int)dst_surface->resource.height;
-                }
-            }
-
-            /* And check if after clipping something is still to be done... */
-            if ((xdst.right <= 0) || (xdst.bottom <= 0)
-                    || (xdst.left >= (int)dst_surface->resource.width)
-                    || (xdst.top >= (int)dst_surface->resource.height)
-                    || (xsrc.right <= 0) || (xsrc.bottom <= 0)
-                    || (xsrc.left >= (int)src_surface->resource.width)
-                    || (xsrc.top >= (int)src_surface->resource.height))
-            {
-                TRACE("Nothing to be done after clipping.\n");
-                return WINED3D_OK;
-            }
-        }
-    }
 
     if (src_surface == dst_surface)
     {
@@ -6733,29 +6659,27 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
         {
             src_format = dst_format;
         }
-        if (dst_rect)
-            wined3d_surface_map(dst_surface, &dst_map, &xdst, 0);
-        else
-            wined3d_surface_map(dst_surface, &dst_map, NULL, 0);
+
+        wined3d_surface_map(dst_surface, &dst_map, dst_rect, 0);
     }
 
     bpp = dst_surface->resource.format->byte_count;
-    srcheight = xsrc.bottom - xsrc.top;
-    srcwidth = xsrc.right - xsrc.left;
-    dstheight = xdst.bottom - xdst.top;
-    dstwidth = xdst.right - xdst.left;
-    width = (xdst.right - xdst.left) * bpp;
+    srcheight = src_rect->bottom - src_rect->top;
+    srcwidth = src_rect->right - src_rect->left;
+    dstheight = dst_rect->bottom - dst_rect->top;
+    dstwidth = dst_rect->right - dst_rect->left;
+    width = (dst_rect->right - dst_rect->left) * bpp;
 
     if (src_surface)
         sbase = (BYTE *)src_map.data
-                + ((xsrc.top / src_format->block_height) * src_map.row_pitch)
-                + ((xsrc.left / src_format->block_width) * src_format->block_byte_count);
-    if (dst_rect && src_surface != dst_surface)
+                + ((src_rect->top / src_format->block_height) * src_map.row_pitch)
+                + ((src_rect->left / src_format->block_width) * src_format->block_byte_count);
+    if (src_surface != dst_surface)
         dbuf = dst_map.data;
     else
         dbuf = (BYTE *)dst_map.data
-                + ((xdst.top / dst_format->block_height) * dst_map.row_pitch)
-                + ((xdst.left / dst_format->block_width) * dst_format->block_byte_count);
+                + ((dst_rect->top / dst_format->block_height) * dst_map.row_pitch)
+                + ((dst_rect->left / dst_format->block_width) * dst_format->block_byte_count);
 
     if (src_format->flags & dst_format->flags & WINED3DFMT_FLAG_BLOCKS)
     {
@@ -6854,8 +6778,8 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
                     sbuf = sbase;
 
                     /* Check for overlapping surfaces. */
-                    if (src_surface != dst_surface || xdst.top < xsrc.top
-                            || xdst.right <= xsrc.left || xsrc.right <= xdst.left)
+                    if (src_surface != dst_surface || dst_rect->top < src_rect->top
+                            || dst_rect->right <= src_rect->left || src_rect->right <= dst_rect->left)
                     {
                         /* No overlap, or dst above src, so copy from top downwards. */
                         for (y = 0; y < dstheight; ++y)
@@ -6865,7 +6789,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
                             dbuf += dst_map.row_pitch;
                         }
                     }
-                    else if (xdst.top > xsrc.top)
+                    else if (dst_rect->top > src_rect->top)
                     {
                         /* Copy from bottom upwards. */
                         sbuf += src_map.row_pitch * dstheight;
