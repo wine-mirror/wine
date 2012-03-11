@@ -41,7 +41,6 @@ extern const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops DECLSPEC
 extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HIDDEN;
 
 /* Typdef the interfaces */
-typedef struct IDirectDrawSurfaceImpl     IDirectDrawSurfaceImpl;
 typedef struct IDirectDrawPaletteImpl     IDirectDrawPaletteImpl;
 typedef struct IDirect3DDeviceImpl        IDirect3DDeviceImpl;
 typedef struct IDirect3DLightImpl         IDirect3DLightImpl;
@@ -82,7 +81,7 @@ struct ddraw
     struct wined3d_device *wined3d_device;
     BOOL                    d3d_initialized;
 
-    IDirectDrawSurfaceImpl *primary;
+    struct ddraw_surface *primary;
     RECT primary_lock;
     struct wined3d_surface *wined3d_frontbuffer;
     struct wined3d_swapchain *wined3d_swapchain;
@@ -105,7 +104,7 @@ struct ddraw
     HWND                    dest_window;
 
     /* Helpers for surface creation */
-    IDirectDrawSurfaceImpl *tex_root;
+    struct ddraw_surface *tex_root;
 
     /* For the dll unload cleanup code */
     struct list ddraw_list_entry;
@@ -143,7 +142,7 @@ extern enum wined3d_surface_type DefaultSurfaceType DECLSPEC_HIDDEN;
  * IDirectDrawSurface implementation structure
  *****************************************************************************/
 
-struct IDirectDrawSurfaceImpl
+struct ddraw_surface
 {
     /* IUnknown fields */
     IDirectDrawSurface7 IDirectDrawSurface7_iface;
@@ -166,8 +165,8 @@ struct IDirectDrawSurfaceImpl
     struct wined3d_texture *wined3d_texture;
 
     /* This implementation handles attaching surfaces to other surfaces */
-    IDirectDrawSurfaceImpl  *next_attached;
-    IDirectDrawSurfaceImpl  *first_attached;
+    struct ddraw_surface *next_attached;
+    struct ddraw_surface *first_attached;
     IUnknown                *attached_iface;
 
     /* Complex surfaces are organized in a tree, although the tree is degenerated to a list in most cases.
@@ -176,7 +175,7 @@ struct IDirectDrawSurfaceImpl
      * to them. So hardcode the array to 6, a dynamic array or a list would be an overkill.
      */
 #define MAX_COMPLEX_ATTACHED 6
-    IDirectDrawSurfaceImpl  *complex_array[MAX_COMPLEX_ATTACHED];
+    struct ddraw_surface *complex_array[MAX_COMPLEX_ATTACHED];
     /* You can't traverse the tree upwards. Only a flag for Surface::Release because its needed there,
      * but no pointer to prevent temptations to traverse it in the wrong direction.
      */
@@ -198,52 +197,52 @@ struct IDirectDrawSurfaceImpl
     DWORD                   Handle;
 };
 
-HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface) DECLSPEC_HIDDEN;
-HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, struct ddraw *ddraw,
+HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface) DECLSPEC_HIDDEN;
+HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
         DDSURFACEDESC2 *desc, UINT mip_level, UINT version) DECLSPEC_HIDDEN;
-ULONG ddraw_surface_release_iface(IDirectDrawSurfaceImpl *This) DECLSPEC_HIDDEN;
+ULONG ddraw_surface_release_iface(struct ddraw_surface *This) DECLSPEC_HIDDEN;
 
-static inline IDirectDrawSurfaceImpl *impl_from_IDirect3DTexture(IDirect3DTexture *iface)
+static inline struct ddraw_surface *impl_from_IDirect3DTexture(IDirect3DTexture *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirect3DTexture_iface);
+    return CONTAINING_RECORD(iface, struct ddraw_surface, IDirect3DTexture_iface);
 }
 
-static inline IDirectDrawSurfaceImpl *impl_from_IDirect3DTexture2(IDirect3DTexture2 *iface)
+static inline struct ddraw_surface *impl_from_IDirect3DTexture2(IDirect3DTexture2 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirect3DTexture2_iface);
+    return CONTAINING_RECORD(iface, struct ddraw_surface, IDirect3DTexture2_iface);
 }
 
-static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface(IDirectDrawSurface *iface)
+static inline struct ddraw_surface *impl_from_IDirectDrawSurface(IDirectDrawSurface *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface_iface);
+    return CONTAINING_RECORD(iface, struct ddraw_surface, IDirectDrawSurface_iface);
 }
 
-static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface2(IDirectDrawSurface2 *iface)
+static inline struct ddraw_surface *impl_from_IDirectDrawSurface2(IDirectDrawSurface2 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface2_iface);
+    return CONTAINING_RECORD(iface, struct ddraw_surface, IDirectDrawSurface2_iface);
 }
 
-static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface)
+static inline struct ddraw_surface *impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_iface);
+    return CONTAINING_RECORD(iface, struct ddraw_surface, IDirectDrawSurface3_iface);
 }
 
-static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *iface)
+static inline struct ddraw_surface *impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface4_iface);
+    return CONTAINING_RECORD(iface, struct ddraw_surface, IDirectDrawSurface4_iface);
 }
 
-static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface7(IDirectDrawSurface7 *iface)
+static inline struct ddraw_surface *impl_from_IDirectDrawSurface7(IDirectDrawSurface7 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface7_iface);
+    return CONTAINING_RECORD(iface, struct ddraw_surface, IDirectDrawSurface7_iface);
 }
 
-IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface(IDirectDrawSurface *iface) DECLSPEC_HIDDEN;
-IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *iface) DECLSPEC_HIDDEN;
-IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface7(IDirectDrawSurface7 *iface) DECLSPEC_HIDDEN;
+struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface(IDirectDrawSurface *iface) DECLSPEC_HIDDEN;
+struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *iface) DECLSPEC_HIDDEN;
+struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface7(IDirectDrawSurface7 *iface) DECLSPEC_HIDDEN;
 
-IDirectDrawSurfaceImpl *unsafe_impl_from_IDirect3DTexture(IDirect3DTexture *iface) DECLSPEC_HIDDEN;
-IDirectDrawSurfaceImpl *unsafe_impl_from_IDirect3DTexture2(IDirect3DTexture2 *iface) DECLSPEC_HIDDEN;
+struct ddraw_surface *unsafe_impl_from_IDirect3DTexture(IDirect3DTexture *iface) DECLSPEC_HIDDEN;
+struct ddraw_surface *unsafe_impl_from_IDirect3DTexture2(IDirect3DTexture2 *iface) DECLSPEC_HIDDEN;
 
 #define DDRAW_INVALID_HANDLE ~0U
 
@@ -289,7 +288,7 @@ struct IDirect3DDeviceImpl
     struct wined3d_device *wined3d_device;
     struct ddraw *ddraw;
     struct wined3d_buffer *indexbuffer;
-    IDirectDrawSurfaceImpl  *target;
+    struct ddraw_surface *target;
 
     /* Viewport management */
     struct list viewport_list;
@@ -321,7 +320,7 @@ struct IDirect3DDeviceImpl
 };
 
 HRESULT d3d_device_init(IDirect3DDeviceImpl *device, struct ddraw *ddraw,
-        IDirectDrawSurfaceImpl *target) DECLSPEC_HIDDEN;
+        struct ddraw_surface *target) DECLSPEC_HIDDEN;
 
 /* The IID */
 extern const GUID IID_D3DDEVICE_WineD3D DECLSPEC_HIDDEN;

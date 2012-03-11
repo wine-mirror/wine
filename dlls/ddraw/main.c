@@ -762,7 +762,7 @@ DestroyCallback(IDirectDrawSurface7 *surf,
                 DDSURFACEDESC2 *desc,
                 void *context)
 {
-    IDirectDrawSurfaceImpl *Impl = impl_from_IDirectDrawSurface7(surf);
+    struct ddraw_surface *Impl = impl_from_IDirectDrawSurface7(surf);
     ULONG ref7, ref4, ref3, ref2, ref1, gamma_count, iface_count;
 
     ref7 = IDirectDrawSurface7_Release(surf);  /* For the EnumSurfaces */

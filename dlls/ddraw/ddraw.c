@@ -2083,8 +2083,8 @@ static HRESULT WINAPI ddraw7_GetGDISurface(IDirectDraw7 *iface, IDirectDrawSurfa
 static HRESULT WINAPI ddraw4_GetGDISurface(IDirectDraw4 *iface, IDirectDrawSurface4 **surface)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw4(iface);
+    struct ddraw_surface *surface_impl;
     IDirectDrawSurface7 *surface7;
-    IDirectDrawSurfaceImpl *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, surface %p.\n", iface, surface);
@@ -2106,8 +2106,8 @@ static HRESULT WINAPI ddraw4_GetGDISurface(IDirectDraw4 *iface, IDirectDrawSurfa
 static HRESULT WINAPI ddraw2_GetGDISurface(IDirectDraw2 *iface, IDirectDrawSurface **surface)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw2(iface);
+    struct ddraw_surface *surface_impl;
     IDirectDrawSurface7 *surface7;
-    IDirectDrawSurfaceImpl *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, surface %p.\n", iface, surface);
@@ -2129,8 +2129,8 @@ static HRESULT WINAPI ddraw2_GetGDISurface(IDirectDraw2 *iface, IDirectDrawSurfa
 static HRESULT WINAPI ddraw1_GetGDISurface(IDirectDraw *iface, IDirectDrawSurface **surface)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw(iface);
+    struct ddraw_surface *surface_impl;
     IDirectDrawSurface7 *surface7;
-    IDirectDrawSurfaceImpl *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, surface %p.\n", iface, surface);
@@ -2486,8 +2486,8 @@ static HRESULT WINAPI ddraw4_GetSurfaceFromDC(IDirectDraw4 *iface, HDC dc,
         IDirectDrawSurface4 **surface)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw4(iface);
+    struct ddraw_surface *surface_impl;
     IDirectDrawSurface7 *surface7;
-    IDirectDrawSurfaceImpl *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, dc %p, surface %p.\n", iface, dc, surface);
@@ -2597,12 +2597,12 @@ static HRESULT WINAPI ddraw7_StartModeTest(IDirectDraw7 *iface, SIZE *Modes, DWO
  *
  *****************************************************************************/
 static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *pDDSD,
-        IDirectDrawSurfaceImpl **ppSurf, UINT level, UINT version)
+        struct ddraw_surface **surface, UINT level, UINT version)
 {
     HRESULT hr;
 
     TRACE("ddraw %p, surface_desc %p, surface %p, level %u.\n",
-            ddraw, pDDSD, ppSurf, level);
+            ddraw, pDDSD, surface, level);
 
     if (TRACE_ON(ddraw))
     {
@@ -2617,25 +2617,25 @@ static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *pDDSD,
     }
 
     /* Create the Surface object */
-    *ppSurf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectDrawSurfaceImpl));
-    if(!*ppSurf)
+    *surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**surface));
+    if (!*surface)
     {
         ERR("Failed to allocate surface memory.\n");
         return DDERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = ddraw_surface_init(*ppSurf, ddraw, pDDSD, level, version);
+    hr = ddraw_surface_init(*surface, ddraw, pDDSD, level, version);
     if (FAILED(hr))
     {
         WARN("Failed to initialize surface, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, *ppSurf);
+        HeapFree(GetProcessHeap(), 0, *surface);
         return hr;
     }
 
     /* Increase the surface counter, and attach the surface */
-    list_add_head(&ddraw->surface_list, &(*ppSurf)->surface_list_entry);
+    list_add_head(&ddraw->surface_list, &(*surface)->surface_list_entry);
 
-    TRACE("Created surface %p.\n", *ppSurf);
+    TRACE("Created surface %p.\n", *surface);
 
     return DD_OK;
 }
@@ -2653,16 +2653,16 @@ static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *pDDSD,
  *                creates an additional surface without the mipmapping flags
  *
  *****************************************************************************/
-static HRESULT CreateAdditionalSurfaces(struct ddraw *ddraw, IDirectDrawSurfaceImpl *root,
+static HRESULT CreateAdditionalSurfaces(struct ddraw *ddraw, struct ddraw_surface *root,
         UINT count, DDSURFACEDESC2 DDSD, BOOL CubeFaceRoot, UINT version)
 {
+    struct ddraw_surface *last = root;
     UINT i, j, level = 0;
     HRESULT hr;
-    IDirectDrawSurfaceImpl *last = root;
 
-    for(i = 0; i < count; i++)
+    for (i = 0; i < count; ++i)
     {
-        IDirectDrawSurfaceImpl *object2 = NULL;
+        struct ddraw_surface *object2 = NULL;
 
         /* increase the mipmap level, but only if a mipmap is created
          * In this case, also halve the size
@@ -2788,16 +2788,16 @@ static HRESULT CDECL ddraw_reset_enum_callback(struct wined3d_resource *resource
  *
  *****************************************************************************/
 static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
-        IDirectDrawSurfaceImpl **Surf, IUnknown *UnkOuter, UINT version)
+        struct ddraw_surface **surface, IUnknown *UnkOuter, UINT version)
 {
-    IDirectDrawSurfaceImpl *object = NULL;
+    struct ddraw_surface *object = NULL;
     struct wined3d_display_mode mode;
     HRESULT hr;
     LONG extra_surfaces = 0;
     DDSURFACEDESC2 desc2;
     const DWORD sysvidmem = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
 
-    TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p.\n", ddraw, DDSD, Surf, UnkOuter);
+    TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p.\n", ddraw, DDSD, surface, UnkOuter);
 
     /* Some checks before we start */
     if (TRACE_ON(ddraw))
@@ -2812,7 +2812,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         return CLASS_E_NOAGGREGATION; /* unchecked */
     }
 
-    if (Surf == NULL)
+    if (!surface)
     {
         FIXME("(%p) You want to get back a surface? Don't give NULL ptrs!\n", ddraw);
         return E_POINTER; /* unchecked */
@@ -2842,7 +2842,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     {
         TRACE("(%p): Attempt to create a flipable primary surface without DDSCL_EXCLUSIVE set\n",
                 ddraw);
-        *Surf = NULL;
+        *surface = NULL;
         return DDERR_NOEXCLUSIVEMODE;
     }
 
@@ -2856,7 +2856,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     {
         /* This is a special switch in ddrawex.dll, but not allowed in ddraw.dll */
         WARN("Application tries to put the surface in both system and video memory\n");
-        *Surf = NULL;
+        *surface = NULL;
         return DDERR_INVALIDCAPS;
     }
 
@@ -2941,7 +2941,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         if(!(desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
         {
             WARN("Creating a non-Primary surface without Width or Height info, returning DDERR_INVALIDPARAMS\n");
-            *Surf = NULL;
+            *surface = NULL;
             return DDERR_INVALIDPARAMS;
         }
 
@@ -3037,7 +3037,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     }
     object->is_complex_root = TRUE;
 
-    *Surf = object;
+    *surface = object;
 
     /* Create Additional surfaces if necessary
      * This applies to Primary surfaces which have a back buffer count
@@ -3106,7 +3106,7 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface, DDSURFACEDESC2 *
         IDirectDrawSurface7 **surface, IUnknown *outer_unknown)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
-    IDirectDrawSurfaceImpl *impl;
+    struct ddraw_surface *impl;
     HRESULT hr;
 
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
@@ -3160,7 +3160,7 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
         DDSURFACEDESC2 *surface_desc, IDirectDrawSurface4 **surface, IUnknown *outer_unknown)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw4(iface);
-    IDirectDrawSurfaceImpl *impl;
+    struct ddraw_surface *impl;
     HRESULT hr;
 
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
@@ -3214,7 +3214,7 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
         DDSURFACEDESC *surface_desc, IDirectDrawSurface **surface, IUnknown *outer_unknown)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw2(iface);
-    IDirectDrawSurfaceImpl *impl;
+    struct ddraw_surface *impl;
     HRESULT hr;
     DDSURFACEDESC2 surface_desc2;
 
@@ -3269,7 +3269,7 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
         DDSURFACEDESC *surface_desc, IDirectDrawSurface **surface, IUnknown *outer_unknown)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw(iface);
-    IDirectDrawSurfaceImpl *impl;
+    struct ddraw_surface *impl;
     HRESULT hr;
     DDSURFACEDESC2 surface_desc2;
 
@@ -3437,7 +3437,7 @@ struct surfacescallback_context
 static HRESULT CALLBACK EnumSurfacesCallback2Thunk(IDirectDrawSurface7 *surface,
         DDSURFACEDESC2 *surface_desc, void *context)
 {
-    IDirectDrawSurfaceImpl *surface_impl = impl_from_IDirectDrawSurface7(surface);
+    struct ddraw_surface *surface_impl = impl_from_IDirectDrawSurface7(surface);
     struct surfacescallback2_context *cbcontext = context;
 
     IDirectDrawSurface4_AddRef(&surface_impl->IDirectDrawSurface4_iface);
@@ -3450,7 +3450,7 @@ static HRESULT CALLBACK EnumSurfacesCallback2Thunk(IDirectDrawSurface7 *surface,
 static HRESULT CALLBACK EnumSurfacesCallbackThunk(IDirectDrawSurface7 *surface,
         DDSURFACEDESC2 *surface_desc, void *context)
 {
-    IDirectDrawSurfaceImpl *surface_impl = impl_from_IDirectDrawSurface7(surface);
+    struct ddraw_surface *surface_impl = impl_from_IDirectDrawSurface7(surface);
     struct surfacescallback_context *cbcontext = context;
 
     IDirectDrawSurface_AddRef(&surface_impl->IDirectDrawSurface_iface);
@@ -3483,7 +3483,7 @@ static HRESULT WINAPI ddraw7_EnumSurfaces(IDirectDraw7 *iface, DWORD Flags,
         DDSURFACEDESC2 *DDSD, void *Context, LPDDENUMSURFACESCALLBACK7 Callback)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
-    IDirectDrawSurfaceImpl *surf;
+    struct ddraw_surface *surf;
     BOOL all, nomatch;
     DDSURFACEDESC2 desc;
     struct list *entry, *entry2;
@@ -3502,7 +3502,7 @@ static HRESULT WINAPI ddraw7_EnumSurfaces(IDirectDraw7 *iface, DWORD Flags,
     /* Use the _SAFE enumeration, the app may destroy enumerated surfaces */
     LIST_FOR_EACH_SAFE(entry, entry2, &ddraw->surface_list)
     {
-        surf = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
+        surf = LIST_ENTRY(entry, struct ddraw_surface, surface_list_entry);
 
         if (!surf->iface_count)
         {
@@ -3823,24 +3823,21 @@ static HRESULT WINAPI ddraw1_CreatePalette(IDirectDraw *iface, DWORD flags,
 static HRESULT WINAPI ddraw7_DuplicateSurface(IDirectDraw7 *iface,
         IDirectDrawSurface7 *Src, IDirectDrawSurface7 **Dest)
 {
-    IDirectDrawSurfaceImpl *Surf = unsafe_impl_from_IDirectDrawSurface7(Src);
+    struct ddraw_surface *src_surface = unsafe_impl_from_IDirectDrawSurface7(Src);
 
     FIXME("iface %p, src %p, dst %p partial stub!\n", iface, Src, Dest);
 
     /* For now, simply create a new, independent surface */
-    return IDirectDraw7_CreateSurface(iface,
-                                      &Surf->surface_desc,
-                                      Dest,
-                                      NULL);
+    return IDirectDraw7_CreateSurface(iface, &src_surface->surface_desc, Dest, NULL);
 }
 
 static HRESULT WINAPI ddraw4_DuplicateSurface(IDirectDraw4 *iface, IDirectDrawSurface4 *src,
         IDirectDrawSurface4 **dst)
 {
+    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface4(src);
     struct ddraw *ddraw = impl_from_IDirectDraw4(iface);
-    IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface4(src);
+    struct ddraw_surface *dst_impl;
     IDirectDrawSurface7 *dst7;
-    IDirectDrawSurfaceImpl *dst_impl;
     HRESULT hr;
 
     TRACE("iface %p, src %p, dst %p.\n", iface, src, dst);
@@ -3863,10 +3860,10 @@ static HRESULT WINAPI ddraw4_DuplicateSurface(IDirectDraw4 *iface, IDirectDrawSu
 static HRESULT WINAPI ddraw2_DuplicateSurface(IDirectDraw2 *iface,
         IDirectDrawSurface *src, IDirectDrawSurface **dst)
 {
+    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface(src);
     struct ddraw *ddraw = impl_from_IDirectDraw2(iface);
-    IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface(src);
+    struct ddraw_surface *dst_impl;
     IDirectDrawSurface7 *dst7;
-    IDirectDrawSurfaceImpl *dst_impl;
     HRESULT hr;
 
     TRACE("iface %p, src %p, dst %p.\n", iface, src, dst);
@@ -3886,10 +3883,10 @@ static HRESULT WINAPI ddraw2_DuplicateSurface(IDirectDraw2 *iface,
 static HRESULT WINAPI ddraw1_DuplicateSurface(IDirectDraw *iface, IDirectDrawSurface *src,
         IDirectDrawSurface **dst)
 {
+    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface(src);
     struct ddraw *ddraw = impl_from_IDirectDraw(iface);
-    IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface(src);
+    struct ddraw_surface *dst_impl;
     IDirectDrawSurface7 *dst7;
-    IDirectDrawSurfaceImpl *dst_impl;
     HRESULT hr;
 
     TRACE("iface %p, src %p, dst %p.\n", iface, src, dst);
@@ -4421,7 +4418,7 @@ static HRESULT WINAPI d3d1_FindDevice(IDirect3D *iface, D3DFINDDEVICESEARCH *fds
 static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
         IDirectDrawSurface7 *surface, IDirect3DDevice7 **device)
 {
-    IDirectDrawSurfaceImpl *target = unsafe_impl_from_IDirectDrawSurface7(surface);
+    struct ddraw_surface *target = unsafe_impl_from_IDirectDrawSurface7(surface);
     struct ddraw *ddraw = impl_from_IDirect3D7(iface);
     IDirect3DDeviceImpl *object;
     HRESULT hr;
@@ -4478,8 +4475,8 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
 static HRESULT WINAPI d3d3_CreateDevice(IDirect3D3 *iface, REFCLSID riid,
         IDirectDrawSurface4 *surface, IDirect3DDevice3 **device, IUnknown *outer_unknown)
 {
+    struct ddraw_surface *surface_impl = unsafe_impl_from_IDirectDrawSurface4(surface);
     struct ddraw *ddraw = impl_from_IDirect3D3(iface);
-    IDirectDrawSurfaceImpl *surface_impl = unsafe_impl_from_IDirectDrawSurface4(surface);
     IDirect3DDevice7 *device7;
     IDirect3DDeviceImpl *device_impl;
     HRESULT hr;
@@ -4503,8 +4500,8 @@ static HRESULT WINAPI d3d3_CreateDevice(IDirect3D3 *iface, REFCLSID riid,
 static HRESULT WINAPI d3d2_CreateDevice(IDirect3D2 *iface, REFCLSID riid,
         IDirectDrawSurface *surface, IDirect3DDevice2 **device)
 {
+    struct ddraw_surface *surface_impl = unsafe_impl_from_IDirectDrawSurface(surface);
     struct ddraw *ddraw = impl_from_IDirect3D2(iface);
-    IDirectDrawSurfaceImpl *surface_impl = unsafe_impl_from_IDirectDrawSurface(surface);
     IDirect3DDevice7 *device7;
     IDirect3DDeviceImpl *device_impl;
     HRESULT hr;
@@ -5391,7 +5388,7 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
         enum wined3d_pool pool, UINT level, enum wined3d_cubemap_face face, struct wined3d_surface **surface)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
-    IDirectDrawSurfaceImpl *surf = NULL;
+    struct ddraw_surface *surf = NULL;
     UINT i = 0;
     DDSCAPS2 searchcaps = ddraw->tex_root->surface_desc.ddsCaps;
 
