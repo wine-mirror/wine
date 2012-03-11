@@ -1310,6 +1310,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         else if (GetVersion() & 0x80000000)
         {
             vxd_name = filename + 4;
+            if (!creation) creation = OPEN_EXISTING;
         }
     }
     else dosdev = RtlIsDosDeviceName_U( filename );
