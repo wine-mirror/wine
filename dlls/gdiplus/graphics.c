@@ -847,7 +847,9 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
     case BrushTypeSolidColor:
     {
         GpSolidFill *fill = (GpSolidFill*)brush;
-        if (fill->bmp)
+        HBITMAP bmp = ARGB2BMP(fill->color);
+
+        if (bmp)
         {
             RECT rc;
             /* partially transparent fill */
@@ -856,12 +858,11 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
             if (GetClipBox(graphics->hdc, &rc) != NULLREGION)
             {
                 HDC hdc = CreateCompatibleDC(NULL);
-                HBITMAP oldbmp;
                 BLENDFUNCTION bf;
 
                 if (!hdc) break;
 
-                oldbmp = SelectObject(hdc, fill->bmp);
+                SelectObject(hdc, bmp);
 
                 bf.BlendOp = AC_SRC_OVER;
                 bf.BlendFlags = 0;
@@ -870,10 +871,10 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
 
                 GdiAlphaBlend(graphics->hdc, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, hdc, 0, 0, 1, 1, bf);
 
-                SelectObject(hdc, oldbmp);
                 DeleteDC(hdc);
             }
 
+            DeleteObject(bmp);
             break;
         }
         /* else fall through */
