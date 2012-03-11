@@ -6614,6 +6614,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     const struct wined3d_format *src_format, *dst_format;
     struct wined3d_surface *orig_src = src_surface;
     struct wined3d_mapped_rect dst_map, src_map;
+    const BYTE *sbase = NULL;
     HRESULT hr = WINED3D_OK;
     const BYTE *sbuf;
     RECT xdst,xsrc;
@@ -6739,6 +6740,17 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     dstwidth = xdst.right - xdst.left;
     width = (xdst.right - xdst.left) * bpp;
 
+    if (src_surface)
+        sbase = (BYTE *)src_map.data
+                + ((xsrc.top / src_format->block_height) * src_map.row_pitch)
+                + ((xsrc.left / src_format->block_width) * src_format->block_byte_count);
+    if (dst_rect && src_surface != dst_surface)
+        dbuf = dst_map.data;
+    else
+        dbuf = (BYTE *)dst_map.data
+                + ((xdst.top / dst_format->block_height) * dst_map.row_pitch)
+                + ((xdst.left / dst_format->block_width) * dst_format->block_byte_count);
+
     if (src_format->flags & dst_format->flags & WINED3DFMT_FLAG_BLOCKS)
     {
         TRACE("%s -> %s copy.\n", debug_d3dformat(src_format->id), debug_d3dformat(dst_format->id));
@@ -6764,16 +6776,11 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             goto release;
         }
 
-        hr = surface_cpu_blt_compressed(src_map.data, dst_map.data,
+        hr = surface_cpu_blt_compressed(sbase, dbuf,
                 src_map.row_pitch, dst_map.row_pitch, dstwidth, dstheight,
                 src_format, flags, fx);
         goto release;
     }
-
-    if (dst_rect && src_surface != dst_surface)
-        dbuf = dst_map.data;
-    else
-        dbuf = (BYTE *)dst_map.data + (xdst.top * dst_map.row_pitch) + (xdst.left * bpp);
 
     /* First, all the 'source-less' blits */
     if (flags & WINEDDBLT_COLORFILL)
@@ -6814,7 +6821,6 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     /* Now the 'with source' blits. */
     if (src_surface)
     {
-        const BYTE *sbase;
         int sx, xinc, sy, yinc;
 
         if (!dstwidth || !dstheight) /* Hmm... stupid program? */
@@ -6827,7 +6833,6 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             FIXME("Filter %s not supported in software blit.\n", debug_d3dtexturefiltertype(filter));
         }
 
-        sbase = (BYTE *)src_map.data + (xsrc.top * src_map.row_pitch) + xsrc.left * bpp;
         xinc = (srcwidth << 16) / dstwidth;
         yinc = (srcheight << 16) / dstheight;
 
