@@ -228,6 +228,7 @@ struct _exec_ctx_t {
     LONG ref;
 
     parser_ctx_t *parser;
+    bytecode_t *code;
     scope_chain_t *scope_chain;
     jsdisp_t *var_disp;
     IDispatch *this_obj;
