@@ -20,6 +20,7 @@
 #include "wine/port.h"
 
 #include <math.h>
+#include <assert.h>
 
 #include "jscript.h"
 #include "engine.h"
@@ -769,8 +770,10 @@ static ULONG WINAPI JSCaller_Release(IServiceProvider *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        assert(!This->ctx);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -779,6 +782,11 @@ static HRESULT WINAPI JSCaller_QueryService(IServiceProvider *iface, REFGUID gui
         REFIID riid, void **ppv)
 {
     JSCaller *This = impl_from_IServiceProvider(iface);
+
+    if(IsEqualGUID(guidService, &SID_VariantConversion) && This->ctx && This->ctx->active_script) {
+        TRACE("(%p)->(SID_VariantConversion)\n", This);
+        return IActiveScript_QueryInterface(This->ctx->active_script, riid, ppv);
+    }
 
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
 
@@ -803,6 +811,7 @@ HRESULT create_jscaller(script_ctx_t *ctx)
 
     ret->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
     ret->ref = 1;
+    ret->ctx = ctx;
 
     ctx->jscaller = ret;
     return S_OK;

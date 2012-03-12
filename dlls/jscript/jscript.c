@@ -72,6 +72,7 @@ void script_release(script_ctx_t *ctx)
     jsheap_free(&ctx->tmp_heap);
     SysFreeString(ctx->last_match);
 
+    ctx->jscaller->ctx = NULL;
     IServiceProvider_Release(&ctx->jscaller->IServiceProvider_iface);
 
     heap_free(ctx);
@@ -411,8 +412,10 @@ static ULONG WINAPI JScript_Release(IActiveScript *iface)
     if(!ref) {
         if(This->ctx && This->ctx->state != SCRIPTSTATE_CLOSED)
             IActiveScript_Close(&This->IActiveScript_iface);
-        if(This->ctx)
+        if(This->ctx) {
+            This->ctx->active_script = NULL;
             script_release(This->ctx);
+        }
         heap_free(This);
         unlock_module();
     }
@@ -709,6 +712,7 @@ static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
 
     ctx->ref = 1;
     ctx->state = SCRIPTSTATE_UNINITIALIZED;
+    ctx->active_script = &This->IActiveScript_iface;
     ctx->safeopt = This->safeopt;
     ctx->version = This->version;
     jsheap_init(&ctx->tmp_heap);

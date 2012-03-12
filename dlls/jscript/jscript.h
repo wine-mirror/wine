@@ -293,6 +293,7 @@ struct _script_ctx_t {
     LONG ref;
 
     SCRIPTSTATE state;
+    IActiveScript *active_script;
 
     exec_ctx_t *exec_ctx;
     named_item_t *named_items;
