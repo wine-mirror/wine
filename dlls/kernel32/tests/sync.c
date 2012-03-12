@@ -133,12 +133,23 @@ static void test_mutex(void)
     int i;
     DWORD failed = 0;
 
+    SetLastError(0xdeadbeef);
+    hOpened = OpenMutex(0, FALSE, "WineTestMutex");
+    ok(hOpened == NULL, "OpenMutex succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     hCreated = CreateMutex(NULL, FALSE, "WineTestMutex");
     ok(hCreated != NULL, "CreateMutex failed with error %d\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
     hOpened = OpenMutex(0, FALSE, "WineTestMutex");
+todo_wine
     ok(hOpened == NULL, "OpenMutex succeeded\n");
+todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
     hOpened = OpenMutex(GENERIC_EXECUTE, FALSE, "WineTestMutex");
     ok(hOpened != NULL, "OpenMutex failed with error %d\n", GetLastError());
     wait_ret = WaitForSingleObject(hOpened, INFINITE);
@@ -151,6 +162,7 @@ static void test_mutex(void)
         ok(wait_ret == WAIT_OBJECT_0, "WaitForSingleObject failed with error 0x%08x\n", wait_ret);
     }
 
+    SetLastError(0xdeadbeef);
     hOpened = OpenMutex(GENERIC_READ | GENERIC_WRITE, FALSE, "WineTestMutex");
     ok(hOpened != NULL, "OpenMutex failed with error %d\n", GetLastError());
     wait_ret = WaitForSingleObject(hOpened, INFINITE);
@@ -159,22 +171,30 @@ static void test_mutex(void)
 
     for (i = 0; i < 32; i++)
     {
+        SetLastError(0xdeadbeef);
         hOpened = OpenMutex(0x1 << i, FALSE, "WineTestMutex");
         if(hOpened != NULL)
         {
+            SetLastError(0xdeadbeef);
             ret = ReleaseMutex(hOpened);
             ok(ret, "ReleaseMutex failed with error %d, access %x\n", GetLastError(), 1 << i);
             CloseHandle(hOpened);
         }
         else
         {
+            if ((1 << i) == ACCESS_SYSTEM_SECURITY)
+                todo_wine ok(GetLastError() == ERROR_PRIVILEGE_NOT_HELD, "wrong error %u, access %x\n", GetLastError(), 1 << i);
+            else
+                todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u, , access %x\n", GetLastError(), 1 << i);
             ReleaseMutex(hCreated);
             failed |=0x1 << i;
         }
     }
 
+todo_wine
     ok( failed == 0x0de0fffe, "open succeeded when it shouldn't: %x\n", failed);
 
+    SetLastError(0xdeadbeef);
     ret = ReleaseMutex(hCreated);
     ok(!ret && (GetLastError() == ERROR_NOT_OWNER),
         "ReleaseMutex should have failed with ERROR_NOT_OWNER instead of %d\n", GetLastError());
