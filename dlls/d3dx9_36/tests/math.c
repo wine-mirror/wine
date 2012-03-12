@@ -1197,9 +1197,9 @@ static void D3DXVector3Test(void)
     expect_vec3(expectedvec,gotvec);
 
 /*_______________D3DXVec3Length__________________________*/
-   expected = 11.0f;
-   got = D3DXVec3Length(&u);
-   ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    expected = 11.0f;
+    got = D3DXVec3Length(&u);
+    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
    /* Tests the case NULL */
     expected=0.0f;
     got = D3DXVec3Length(NULL);
@@ -1298,6 +1298,10 @@ static void D3DXVector3Test(void)
     expectedvec.x = -2.913411f; expectedvec.y = 1.593215f; expectedvec.z = 0.380724f;
     D3DXMatrixPerspectiveFovLH(&projection,D3DX_PI/4.0f,20.0f/17.0f,1.0f,1000.0f);
     D3DXVec3Unproject(&gotvec,&u,&viewport,&projection,&view,&world);
+    expect_vec3(expectedvec,gotvec);
+    /* World matrix can be omitted */
+    D3DXMatrixMultiply(&mat,&world,&view);
+    D3DXVec3Unproject(&gotvec,&u,&viewport,&projection,&mat,NULL);
     expect_vec3(expectedvec,gotvec);
 }
 

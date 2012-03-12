@@ -1661,8 +1661,12 @@ D3DXVECTOR3* WINAPI D3DXVec3Unproject(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv, 
     D3DXMATRIX m;
     D3DXVECTOR3 out;
 
-    D3DXMatrixMultiply(&m, pworld, pview);
-    D3DXMatrixMultiply(&m, &m, pprojection);
+    if (pworld) {
+        D3DXMatrixMultiply(&m, pworld, pview);
+        D3DXMatrixMultiply(&m, &m, pprojection);
+    } else {
+        D3DXMatrixMultiply(&m, pview, pprojection);
+    }
     D3DXMatrixInverse(&m, NULL, &m);
     out.x = 2.0f * ( pv->x - pviewport->X ) / pviewport->Width - 1.0f;
     out.y = 1.0f - 2.0f * ( pv->y - pviewport->Y ) / pviewport->Height;
