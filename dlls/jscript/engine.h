@@ -43,8 +43,6 @@ typedef struct _func_stack {
 } func_stack_t;
 
 typedef struct {
-    LONG ref;
-
     WCHAR *begin;
     const WCHAR *end;
     const WCHAR *ptr;
@@ -195,11 +193,6 @@ HRESULT script_parse(script_ctx_t*,const WCHAR*,const WCHAR*,BOOL,parser_ctx_t**
 void parser_release(parser_ctx_t*) DECLSPEC_HIDDEN;
 
 int parser_lex(void*,parser_ctx_t*) DECLSPEC_HIDDEN;
-
-static inline void parser_addref(parser_ctx_t *ctx)
-{
-    ctx->ref++;
-}
 
 static inline void *parser_alloc(parser_ctx_t *ctx, DWORD size)
 {
