@@ -780,7 +780,7 @@ static int msvcrt_flush_all_buffers(int mask)
  */
 int CDECL MSVCRT__flushall(void)
 {
-    return msvcrt_flush_all_buffers(MSVCRT__IOWRT);
+    return msvcrt_flush_all_buffers(MSVCRT__IOWRT | MSVCRT__IOREAD);
 }
 
 /*********************************************************************
@@ -789,7 +789,7 @@ int CDECL MSVCRT__flushall(void)
 int CDECL MSVCRT_fflush(MSVCRT_FILE* file)
 {
     if(!file) {
-        MSVCRT__flushall();
+        msvcrt_flush_all_buffers(MSVCRT__IOWRT);
     } else if(file->_flag & MSVCRT__IOWRT) {
         int res;
 
