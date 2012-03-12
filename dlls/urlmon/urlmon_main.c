@@ -607,6 +607,7 @@ HRESULT WINAPI CopyBindInfo(const BINDINFO *pcbiSrc, BINDINFO *pcbiDest)
             ReleaseStgMedium(&pcbiDest->stgmedData);
             return E_OUTOFMEMORY;
         }
+        memcpy(pcbiDest->szCustomVerb, pcbiSrc->szCustomVerb, size);
     }
 
     size = FIELD_OFFSET(BINDINFO, securityAttributes)+sizeof(SECURITY_ATTRIBUTES);
