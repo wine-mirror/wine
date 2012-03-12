@@ -2021,6 +2021,7 @@ WINBASEAPI BOOL        WINAPI QueryFullProcessImageNameA(HANDLE,DWORD,LPSTR,PDWO
 WINBASEAPI BOOL        WINAPI QueryFullProcessImageNameW(HANDLE,DWORD,LPWSTR,PDWORD);
 #define                       QueryFullProcessImageName WINELIB_NAME_AW(QueryFullProcessImageName)
 WINBASEAPI BOOL        WINAPI QueryInformationJobObject(HANDLE,JOBOBJECTINFOCLASS,LPVOID,DWORD,DWORD*);
+WINBASEAPI BOOL        WINAPI QueryMemoryResourceNotification(HANDLE,PBOOL);
 WINBASEAPI BOOL        WINAPI QueryPerformanceCounter(LARGE_INTEGER*);
 WINBASEAPI BOOL        WINAPI QueryPerformanceFrequency(LARGE_INTEGER*);
 WINBASEAPI DWORD       WINAPI QueueUserAPC(PAPCFUNC,HANDLE,ULONG_PTR);

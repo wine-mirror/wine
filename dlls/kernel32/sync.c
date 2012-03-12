@@ -2179,21 +2179,63 @@ BOOL WINAPI BindIoCompletionCallback( HANDLE FileHandle, LPOVERLAPPED_COMPLETION
 /***********************************************************************
  *           CreateMemoryResourceNotification   (KERNEL32.@)
  */
-HANDLE WINAPI CreateMemoryResourceNotification(MEMORY_RESOURCE_NOTIFICATION_TYPE nt)
+HANDLE WINAPI CreateMemoryResourceNotification(MEMORY_RESOURCE_NOTIFICATION_TYPE type)
 {
-    FIXME("(%d) stub\n", nt);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return NULL;
+    static const WCHAR lowmemW[] =
+        {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
+         '\\','L','o','w','M','e','m','o','r','y','C','o','n','d','i','t','i','o','n',0};
+    static const WCHAR highmemW[] =
+        {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
+         '\\','H','i','g','h','M','e','m','o','r','y','C','o','n','d','i','t','i','o','n',0};
+    HANDLE ret;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    switch (type)
+    {
+    case LowMemoryResourceNotification:
+        RtlInitUnicodeString( &nameW, lowmemW );
+        break;
+    case HighMemoryResourceNotification:
+        RtlInitUnicodeString( &nameW, highmemW );
+        break;
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = &nameW;
+    attr.Attributes               = 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+    status = NtOpenEvent( &ret, EVENT_ALL_ACCESS, &attr );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
+    }
+    return ret;
 }
 
 /***********************************************************************
  *          QueryMemoryResourceNotification   (KERNEL32.@)
  */
-BOOL WINAPI QueryMemoryResourceNotification(HANDLE rnh, PBOOL rs)
+BOOL WINAPI QueryMemoryResourceNotification(HANDLE handle, PBOOL state)
 {
-    FIXME("(%p, %p) stub\n", rnh, rs);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    switch (WaitForSingleObject( handle, 0 ))
+    {
+    case WAIT_OBJECT_0:
+        *state = TRUE;
+        return TRUE;
+    case WAIT_TIMEOUT:
+        *state = FALSE;
+        return TRUE;
+    }
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return FALSE;
 }
 
 #ifdef __i386__
