@@ -364,3 +364,18 @@ coclass XMLParser30
 {
     [default] interface IXMLParser;
 };
+
+[
+    helpstring("XML Document"),
+    threading(apartment),
+    uuid(48123bc4-99d9-11d1-a6b3-00c04fd91555),
+    progid("xmlfile"),
+    version(1.0)
+]
+coclass XMLView
+{
+    interface IPersistMoniker;
+    interface IPersistHistory;
+    interface IOleCommandTarget;
+    interface IOleObject;
+}
