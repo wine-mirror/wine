@@ -1139,101 +1139,13 @@ UINT WINAPI MsiEnumProductsA(DWORD index, LPSTR lpguid)
 
 UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
 {
-    static const WCHAR pathW[] = {
-        'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-        'I','n','s','t','a','l','l','e','r','\\','P','r','o','d','u','c','t','s',0};
-    UINT r;
-    WCHAR szKeyName[SQUISH_GUID_SIZE];
-    HKEY key;
-    REGSAM access = KEY_WOW64_64KEY | KEY_ALL_ACCESS;
-    DWORD machine_count, managed_count, unmanaged_count;
-    WCHAR keypath[MAX_PATH];
-    LPWSTR usersid = NULL;
-
-    static DWORD last_index;
-
     TRACE("%d %p\n", index, lpguid);
 
     if (NULL == lpguid)
         return ERROR_INVALID_PARAMETER;
 
-    if (index && index - last_index != 1)
-        return ERROR_INVALID_PARAMETER;
-
-    key = 0;
-    r = RegCreateKeyExW(HKEY_LOCAL_MACHINE, szInstaller_LocalClassesProducts, 0, NULL, 0, access, NULL, &key, NULL);
-    if( r != ERROR_SUCCESS ) goto failed;
-
-    r = RegQueryInfoKeyW(key, NULL, NULL, NULL, &machine_count, NULL, NULL,
-                         NULL, NULL, NULL, NULL, NULL);
-    if( r != ERROR_SUCCESS ) goto failed;
-
-    if (machine_count && index <= machine_count)
-    {
-        r = RegEnumKeyW(key, index, szKeyName, SQUISH_GUID_SIZE);
-        if( r == ERROR_SUCCESS )
-        {
-            unsquash_guid(szKeyName, lpguid);
-            last_index = index;
-            RegCloseKey(key);
-            return ERROR_SUCCESS;
-        }
-    }
-    RegCloseKey(key);
-
-    key = 0;
-    if (!(usersid = get_user_sid()))
-    {
-        ERR("Failed to retrieve user SID\n");
-        last_index = 0;
-        return ERROR_FUNCTION_FAILED;
-    }
-    sprintfW(keypath, szInstaller_LocalManaged_fmt, usersid);
-    LocalFree(usersid);
-
-    r = RegCreateKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &key, NULL);
-    if( r != ERROR_SUCCESS ) goto failed;
-
-    r = RegQueryInfoKeyW(key, NULL, NULL, NULL, &managed_count, NULL, NULL,
-                         NULL, NULL, NULL, NULL, NULL);
-    if( r != ERROR_SUCCESS ) goto failed;
-
-    if (managed_count && index <= machine_count + managed_count)
-    {
-        r = RegEnumKeyW(key, index - machine_count, szKeyName, SQUISH_GUID_SIZE);
-        if( r == ERROR_SUCCESS )
-        {
-            unsquash_guid(szKeyName, lpguid);
-            last_index = index;
-            RegCloseKey(key);
-            return ERROR_SUCCESS;
-        }
-    }
-    RegCloseKey(key);
-
-    key = 0;
-    r = RegCreateKeyW(HKEY_CURRENT_USER, pathW, &key);
-    if( r != ERROR_SUCCESS ) goto failed;
-
-    r = RegQueryInfoKeyW(key, NULL, NULL, NULL, &unmanaged_count, NULL, NULL,
-                         NULL, NULL, NULL, NULL, NULL);
-    if( r != ERROR_SUCCESS ) goto failed;
-
-    if (unmanaged_count && index <= machine_count + managed_count + unmanaged_count)
-    {
-        r = RegEnumKeyW(key, index - machine_count - managed_count, szKeyName, SQUISH_GUID_SIZE);
-        if( r == ERROR_SUCCESS )
-        {
-            unsquash_guid(szKeyName, lpguid);
-            last_index = index;
-            RegCloseKey(key);
-            return ERROR_SUCCESS;
-        }
-    }
-failed:
-    RegCloseKey(key);
-    last_index = 0;
-    return ERROR_NO_MORE_ITEMS;
+    return MsiEnumProductsExW( NULL, szAllSid, MSIINSTALLCONTEXT_ALL, index, lpguid,
+                               NULL, NULL, NULL );
 }
 
 UINT WINAPI MsiEnumFeaturesA(LPCSTR szProduct, DWORD index, 
