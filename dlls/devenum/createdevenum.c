@@ -670,8 +670,11 @@ static HRESULT DEVENUM_CreateSpecialCategories(void)
 
                 /* FIXME: do additional stuff with IMoniker here, depending on what RegisterFilter does */
 
-		if (pMoniker)
-		    IMoniker_Release(pMoniker);
+                if (pMoniker)
+                {
+                    IMoniker_Release(pMoniker);
+                    pMoniker = NULL;
+                }
 
 		wsprintfW(szDSoundName, szDSoundNameFormat, wocaps.szPname);
 	        res = IFilterMapper2_RegisterFilter(pMapper,
