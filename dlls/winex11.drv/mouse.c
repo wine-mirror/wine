@@ -369,7 +369,7 @@ static void disable_xinput2(void)
  *
  * Start a pointer grab on the clip window.
  */
-static BOOL grab_clipping_window( const RECT *clip, BOOL only_with_xinput )
+static BOOL grab_clipping_window( const RECT *clip )
 {
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
     struct x11drv_thread_data *data = x11drv_thread_data();
@@ -386,14 +386,7 @@ static BOOL grab_clipping_window( const RECT *clip, BOOL only_with_xinput )
     /* enable XInput2 unless we are already clipping */
     if (!data->clip_hwnd) enable_xinput2();
 
-    /* don't clip to 1x1 rectangle if we don't have XInput */
-    if (clip->right - clip->left == 1 && clip->bottom - clip->top == 1) only_with_xinput = TRUE;
-    /* don't clip to fullscreen rectangle either (with 1-pixel offset to catch the dinput case) */
-    if (clip->left <= virtual_screen_rect.left + 1 || clip->right >= virtual_screen_rect.right - 1 ||
-        clip->top <= virtual_screen_rect.top + 1 || clip->bottom >= virtual_screen_rect.bottom - 1)
-        only_with_xinput = TRUE;
-
-    if (only_with_xinput && data->xi2_state != xi_enabled)
+    if (data->xi2_state != xi_enabled)
     {
         WARN( "XInput2 not supported, refusing to clip to %s\n", wine_dbgstr_rect(clip) );
         DestroyWindow( msg_hwnd );
@@ -499,7 +492,7 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
         GetClipCursor( &clip );
         if (clip.left > virtual_screen_rect.left || clip.right < virtual_screen_rect.right ||
             clip.top > virtual_screen_rect.top   || clip.bottom < virtual_screen_rect.bottom)
-            return grab_clipping_window( &clip, FALSE );
+            return grab_clipping_window( &clip );
     }
     return 0;
 }
@@ -534,7 +527,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
         if (root_window != DefaultRootWindow( gdi_display )) return FALSE;
     }
     TRACE( "win %p clipping fullscreen\n", hwnd );
-    return grab_clipping_window( &rect, TRUE );
+    return grab_clipping_window( &rect );
 }
 
 /***********************************************************************
@@ -1310,7 +1303,7 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
                 SendNotifyMessageW( foreground, WM_X11DRV_CLIP_CURSOR, 0, 0 );
                 return TRUE;
             }
-            else if (grab_clipping_window( clip, FALSE )) return TRUE;
+            else if (grab_clipping_window( clip )) return TRUE;
         }
         else /* if currently clipping, check if we should switch to fullscreen clipping */
         {
