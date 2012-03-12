@@ -160,10 +160,6 @@ typedef struct {
 
 void release_bytecode(bytecode_t*);
 
-typedef struct _compiler_ctx_t compiler_ctx_t;
-
-void release_compiler(compiler_ctx_t*);
-
 typedef struct _parser_ctx_t {
     LONG ref;
 
@@ -183,7 +179,6 @@ typedef struct _parser_ctx_t {
     func_stack_t *func_stack;
 
     bytecode_t *code;
-    compiler_ctx_t *compiler;
 
     struct _parser_ctx_t *next;
 } parser_ctx_t;

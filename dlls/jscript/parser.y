@@ -1537,8 +1537,6 @@ void parser_release(parser_ctx_t *ctx)
 
     if(ctx->code)
         release_bytecode(ctx->code);
-    if(ctx->compiler)
-        release_compiler(ctx->compiler);
     script_release(ctx->script);
     heap_free(ctx->begin);
     jsheap_free(&ctx->heap);

@@ -40,7 +40,7 @@ typedef struct _statement_ctx_t {
     struct _statement_ctx_t *next;
 } statement_ctx_t;
 
-struct _compiler_ctx_t {
+typedef struct {
     parser_ctx_t *parser;
     bytecode_t *code;
 
@@ -52,7 +52,7 @@ struct _compiler_ctx_t {
     unsigned labels_cnt;
 
     statement_ctx_t *stat_ctx;
-};
+} compiler_ctx_t;
 
 static const struct {
     const char *op_str;
@@ -1703,44 +1703,22 @@ void release_bytecode(bytecode_t *code)
     heap_free(code);
 }
 
-void release_compiler(compiler_ctx_t *ctx)
+static HRESULT init_code(compiler_ctx_t *compiler)
 {
-    heap_free(ctx);
-}
-
-static HRESULT init_compiler(parser_ctx_t *parser)
-{
-    compiler_ctx_t *compiler;
-
-    if(parser->compiler)
-        return S_OK;
-
-    compiler = heap_alloc_zero(sizeof(*compiler));
-    if(!compiler)
-        return E_OUTOFMEMORY;
-
     compiler->code = heap_alloc_zero(sizeof(bytecode_t));
-    if(!compiler->code) {
-        release_compiler(compiler);
+    if(!compiler->code)
         return E_OUTOFMEMORY;
-    }
 
     jsheap_init(&compiler->code->heap);
 
     compiler->code->instrs = heap_alloc(64 * sizeof(instr_t));
     if(!compiler->code->instrs) {
         release_bytecode(compiler->code);
-        release_compiler(compiler);
         return E_OUTOFMEMORY;
     }
 
     compiler->code_size = 64;
     compiler->code_off = 1;
-
-    compiler->parser = parser;
-
-    parser->code = compiler->code;
-    parser->compiler = compiler;
     return S_OK;
 }
 
@@ -1781,21 +1759,26 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
 HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimiter, BOOL from_eval,
         parser_ctx_t **ret)
 {
-    parser_ctx_t *parser;
+    compiler_ctx_t compiler = {0};
     HRESULT hres;
 
-    hres = script_parse(ctx, code, delimiter, from_eval, &parser);
+    hres = script_parse(ctx, code, delimiter, from_eval, &compiler.parser);
     if(FAILED(hres))
         return hres;
 
-    hres = init_compiler(parser);
-    if(SUCCEEDED(hres))
-        hres = compile_function(parser->compiler, parser->source, from_eval);
+    hres = init_code(&compiler);
+    if(SUCCEEDED(hres)) {
+        hres = compile_function(&compiler, compiler.parser->source, from_eval);
+        if(FAILED(hres))
+            release_bytecode(compiler.code);
+    }
+
     if(FAILED(hres)) {
-        parser_release(parser);
+        parser_release(compiler.parser);
         return hres;
     }
 
-    *ret = parser;
+    compiler.parser->code = compiler.code;
+    *ret = compiler.parser;
     return S_OK;
 }
