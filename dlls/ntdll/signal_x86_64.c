@@ -2118,7 +2118,7 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
                rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
                context->Rip, GetCurrentThreadId() );
         for (c = 0; c < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); c++)
-            TRACE( " info[%d]=%08lx\n", c, rec->ExceptionInformation[c] );
+            TRACE( " info[%d]=%016lx\n", c, rec->ExceptionInformation[c] );
         if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
         {
             if (rec->ExceptionInformation[1] >> 16)
@@ -2893,7 +2893,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     CONTEXT new_context;
     LDR_MODULE *module;
     NTSTATUS status;
-    DWORD size;
+    DWORD i, size;
 
     RtlCaptureContext( context );
     new_context = *context;
@@ -2913,6 +2913,8 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 
     TRACE( "code=%x flags=%x end_frame=%p target_ip=%p rip=%016lx\n",
            rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip, context->Rip );
+    for (i = 0; i < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); i++)
+        TRACE( " info[%d]=%016lx\n", i, rec->ExceptionInformation[i] );
     TRACE(" rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
           context->Rax, context->Rbx, context->Rcx, context->Rdx );
     TRACE(" rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
