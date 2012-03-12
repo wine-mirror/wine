@@ -357,8 +357,7 @@ static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     return S_OK;
 }
 
-static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, jsexcept_t *ei, IServiceProvider *caller,
-        DISPPARAMS *args)
+static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, jsexcept_t *ei, DISPPARAMS *args)
 {
     VARIANT var, *argv;
     DWORD length, i;
@@ -378,7 +377,7 @@ static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, jsexcept_t 
         return E_OUTOFMEMORY;
 
     for(i=0; i<length; i++) {
-        hres = jsdisp_get_idx(arg_array, i, argv+i, ei, caller);
+        hres = jsdisp_get_idx(arg_array, i, argv+i, ei);
         if(hres == DISP_E_UNKNOWNNAME)
             V_VT(argv+i) = VT_EMPTY;
         else if(FAILED(hres)) {
@@ -432,7 +431,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
         }
 
         if(arg_array) {
-            hres = array_to_args(ctx, arg_array, ei, caller, &args);
+            hres = array_to_args(ctx, arg_array, ei, &args);
             jsdisp_release(arg_array);
         }else {
             FIXME("throw TypeError\n");

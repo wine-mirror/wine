@@ -1148,7 +1148,7 @@ HRESULT jsdisp_propget_name(jsdisp_t *obj, const WCHAR *name, VARIANT *var, jsex
     return prop_get(obj, prop, &dp, var, ei, NULL);
 }
 
-HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, VARIANT *var, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, VARIANT *var, jsexcept_t *ei)
 {
     WCHAR name[12];
     DISPPARAMS dp = {NULL, NULL, 0, 0};
@@ -1167,7 +1167,7 @@ HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, VARIANT *var, jsexcept_t *ei, I
     if(!prop || prop->type==PROP_DELETED)
         return DISP_E_UNKNOWNNAME;
 
-    return prop_get(obj, prop, &dp, var, ei, caller);
+    return prop_get(obj, prop, &dp, var, ei, NULL);
 }
 
 HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, VARIANT *val, jsexcept_t *ei)
