@@ -425,6 +425,11 @@ BOOL add_request_headers( request_t *request, LPCWSTR headers, DWORD len, DWORD 
         q = p;
         while (*q)
         {
+            if (q[0] == '\n' && q[1] == '\r')
+            {
+                q[0] = '\r';
+                q[1] = '\n';
+            }
             if (q[0] == '\r' && q[1] == '\n') break;
             q++;
         }
