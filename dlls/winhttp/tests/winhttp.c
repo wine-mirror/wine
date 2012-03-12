@@ -1754,11 +1754,6 @@ static const char okmsg[] =
 "Server: winetest\r\n"
 "\r\n";
 
-static const char notokmsg[] =
-"HTTP/1.1 400 Bad Request\r\n"
-"Server: winetest\r\n"
-"\r\n";
-
 static const char noauthmsg[] =
 "HTTP/1.1 401 Unauthorized\r\n"
 "Server: winetest\r\n"
@@ -1982,6 +1977,43 @@ static void test_no_headers(int port)
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
     WinHttpCloseHandle(ses);
+}
+
+static void test_bad_header( int port )
+{
+    static const WCHAR bad_headerW[] =
+        {'C','o','n','t','e','n','t','-','T','y','p','e',':',' ',
+         't','e','x','t','/','h','t','m','l','\n','\r',0};
+    static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
+    static const WCHAR content_typeW[] = {'C','o','n','t','e','n','t','-','T','y','p','e',0};
+    WCHAR buffer[32];
+    HINTERNET ses, con, req;
+    DWORD index, len;
+    BOOL ret;
+
+    ses = WinHttpOpen( test_useragent, 0, NULL, NULL, 0 );
+    ok( ses != NULL, "failed to open session %u\n", GetLastError() );
+
+    con = WinHttpConnect( ses, localhostW, port, 0 );
+    ok( con != NULL, "failed to open a connection %u\n", GetLastError() );
+
+    req = WinHttpOpenRequest( con, NULL, NULL, NULL, NULL, NULL, 0 );
+    ok( req != NULL, "failed to open a request %u\n", GetLastError() );
+
+    ret = WinHttpAddRequestHeaders( req, bad_headerW, ~0u, WINHTTP_ADDREQ_FLAG_ADD );
+    ok( ret, "failed to add header %u\n", GetLastError() );
+
+    index = 0;
+    buffer[0] = 0;
+    len = sizeof(buffer);
+    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_CUSTOM|WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                               content_typeW, buffer, &len, &index );
+    ok( ret, "failed to query headers %u\n", GetLastError() );
+    ok( !lstrcmpW( buffer, text_htmlW ), "got %s\n", wine_dbgstr_w(buffer) );
+
+    WinHttpCloseHandle( req );
+    WinHttpCloseHandle( con );
+    WinHttpCloseHandle( ses );
 }
 
 static void test_credentials(void)
@@ -2713,6 +2745,7 @@ START_TEST (winhttp)
     test_basic_request(si.port, NULL, basicW);
     test_no_headers(si.port);
     test_basic_authentication(si.port);
+    test_bad_header(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, NULL, quitW);
