@@ -29,33 +29,37 @@ static inline IDirect3D9Impl *impl_from_IDirect3D9Ex(IDirect3D9Ex *iface)
     return CONTAINING_RECORD(iface, IDirect3D9Impl, IDirect3D9Ex_iface);
 }
 
-static HRESULT WINAPI IDirect3D9Impl_QueryInterface(IDirect3D9Ex *iface, REFIID riid, void **ppobj)
+static HRESULT WINAPI IDirect3D9Impl_QueryInterface(IDirect3D9Ex *iface, REFIID riid, void **object)
 {
-    IDirect3D9Impl *This = impl_from_IDirect3D9Ex(iface);
+    IDirect3D9Impl *d3d9 = impl_from_IDirect3D9Ex(iface);
 
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IDirect3D9)) {
-        IDirect3D9Ex_AddRef(iface);
-        *ppobj = This;
-        TRACE("Returning IDirect3D9 interface at %p\n", *ppobj);
+    if (IsEqualGUID(riid, &IID_IDirect3D9)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IDirect3D9Ex_AddRef(&d3d9->IDirect3D9Ex_iface);
+        *object = &d3d9->IDirect3D9Ex_iface;
         return S_OK;
-    } else if(IsEqualGUID(riid, &IID_IDirect3D9Ex)) {
-        if(This->extended) {
-            *ppobj = This;
-            TRACE("Returning IDirect3D9Ex interface at %p\n", *ppobj);
-            IDirect3D9Ex_AddRef((IDirect3D9Ex *)*ppobj);
-        } else {
-            WARN("Application asks for IDirect3D9Ex, but this instance wasn't created with Direct3DCreate9Ex\n");
-            WARN("Returning E_NOINTERFACE\n");
-            *ppobj = NULL;
-            return E_NOINTERFACE;
-        }
     }
 
-    WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
-    *ppobj = NULL;
+    if (IsEqualGUID(riid, &IID_IDirect3D9Ex))
+    {
+        if (!d3d9->extended)
+        {
+            WARN("Application asks for IDirect3D9Ex, but this instance wasn't created with Direct3DCreate9Ex.\n");
+            *object = NULL;
+            return E_NOINTERFACE;
+        }
+
+        IDirect3D9Ex_AddRef(&d3d9->IDirect3D9Ex_iface);
+        *object = &d3d9->IDirect3D9Ex_iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
     return E_NOINTERFACE;
 }
 
