@@ -2927,7 +2927,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     dispatch.ContextRecord    = context;
     dispatch.HistoryTable     = table;
 
-    while (dispatch.EstablisherFrame != (ULONG64)end_frame)
+    for (;;)
     {
         /* FIXME: should use the history table to make things faster */
 
@@ -3031,6 +3031,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
             dispatch.EstablisherFrame = new_context.Rsp;
         }
 
+        if (dispatch.EstablisherFrame == (ULONG64)end_frame) break;
         *context = new_context;
     }
 
