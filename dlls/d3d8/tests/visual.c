@@ -282,7 +282,7 @@ static void lighting_test(IDirect3DDevice8 *device)
                                                     2 /*PrimCount */, Indices, D3DFMT_INDEX16, litnquad, sizeof(litnquad[0]));
         ok(hr == D3D_OK, "IDirect3DDevice8_DrawIndexedPrimitiveUP failed with %#08x\n", hr);
 
-        IDirect3DDevice8_EndScene(device);
+        hr = IDirect3DDevice8_EndScene(device);
         ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed with %#08x\n", hr);
     }
 
@@ -1018,7 +1018,7 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_CreateVertexShader(device, decl, rcp_test, &shader, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned with %#08x\n", hr);
 
-    IDirect3DDevice8_SetVertexShader(device, shader);
+    hr = IDirect3DDevice8_SetVertexShader(device, shader);
     ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %#08x\n", hr);
     IDirect3DDevice8_SetVertexShaderConstant(device, 0, constant, 1);
 
@@ -1048,7 +1048,7 @@ static void test_rcp_rsq(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_CreateVertexShader(device, decl, rsq_test, &shader, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned with %#08x\n", hr);
 
-    IDirect3DDevice8_SetVertexShader(device, shader);
+    hr = IDirect3DDevice8_SetVertexShader(device, shader);
     ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %#08x\n", hr);
     IDirect3DDevice8_SetVertexShaderConstant(device, 0, constant, 1);
 
@@ -2267,7 +2267,7 @@ static void intz_test(IDirect3DDevice8 *device)
     /* Render offscreen, using the INTZ texture as depth buffer */
     hr = IDirect3DDevice8_SetRenderTarget(device, rt, ds);
     ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
-    IDirect3DDevice8_SetPixelShader(device, 0);
+    hr = IDirect3DDevice8_SetPixelShader(device, 0);
     ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
 
     /* Setup the depth/stencil surface. */
@@ -2324,7 +2324,7 @@ static void intz_test(IDirect3DDevice8 *device)
     ok(SUCCEEDED(hr), "GetSurfaceLevel failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_SetRenderTarget(device, original_rt, ds);
     ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
-    IDirect3DDevice8_SetPixelShader(device, 0);
+    hr = IDirect3DDevice8_SetPixelShader(device, 0);
     ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_ZBUFFER, 0, 0.0f, 0);
@@ -2380,7 +2380,7 @@ static void intz_test(IDirect3DDevice8 *device)
     ok(SUCCEEDED(hr), "GetSurfaceLevel failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_SetRenderTarget(device, rt, ds);
     ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
-    IDirect3DDevice8_SetPixelShader(device, 0);
+    hr = IDirect3DDevice8_SetPixelShader(device, 0);
     ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_ZBUFFER, 0, 0.0f, 0);
@@ -2594,7 +2594,7 @@ static void shadow_test(IDirect3DDevice8 *device)
         hr = IDirect3DDevice8_SetRenderTarget(device, rt, ds);
         ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
 
-        IDirect3DDevice8_SetPixelShader(device, 0);
+        hr = IDirect3DDevice8_SetPixelShader(device, 0);
         ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
 
         /* Setup the depth/stencil surface. */

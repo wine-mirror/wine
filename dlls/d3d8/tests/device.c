@@ -1953,7 +1953,7 @@ static void test_render_zero_triangles(void)
                                                     0 /*PrimCount */, NULL, D3DFMT_INDEX16, quad, sizeof(quad[0]));
         ok(hr == D3D_OK, "IDirect3DDevice8_DrawIndexedPrimitiveUP failed with %#08x\n", hr);
 
-        IDirect3DDevice8_EndScene(device);
+        hr = IDirect3DDevice8_EndScene(device);
         ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed with %#08x\n", hr);
     }
 
@@ -2675,13 +2675,13 @@ static void test_ApplyStateBlock(void)
     ok(hr == D3D_OK, "Expected D3D_OK, received %#x.\n", hr);
     ok(!received, "Expected = FALSE, received TRUE.\n");
 
-    IDirect3DDevice8_ApplyStateBlock(device, 0);
+    hr = IDirect3DDevice8_ApplyStateBlock(device, 0);
     ok(hr == D3D_OK, "Expected D3D_OK, received %#x.\n", hr);
     hr = IDirect3DDevice8_GetRenderState(device, D3DRS_ZENABLE, &received);
     ok(hr == D3D_OK, "Expected D3D_OK, received %#x.\n", hr);
     ok(!received, "Expected FALSE, received TRUE.\n");
 
-    IDirect3DDevice8_ApplyStateBlock(device, token);
+    hr = IDirect3DDevice8_ApplyStateBlock(device, token);
     ok(hr == D3D_OK, "Expected D3D_OK, received %#x.\n", hr);
     hr = IDirect3DDevice8_GetRenderState(device, D3DRS_ZENABLE, &received);
     ok(hr == D3D_OK, "Expected D3D_OK, received %#x.\n", hr);
