@@ -3062,6 +3062,12 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
         context->u.s.Xmm14 = jmp->Xmm14;
         context->u.s.Xmm15 = jmp->Xmm15;
     }
+    else if (rec->ExceptionCode == STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters >= 1)
+    {
+        PVOID (CALLBACK *consolidate)(EXCEPTION_RECORD *) = (void *)rec->ExceptionInformation[0];
+        TRACE( "calling consolidate callback %p\n", consolidate );
+        target_ip = consolidate( rec );
+    }
     context->Rax = (ULONG64)retval;
     context->Rip = (ULONG64)target_ip;
     TRACE( "returning to %lx stack %lx\n", context->Rip, context->Rsp );
