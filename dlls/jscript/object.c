@@ -90,7 +90,7 @@ static HRESULT Object_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
         return E_FAIL;
     }
 
-    return jsdisp_call_name(jsthis->u.jsdisp, toStringW, DISPATCH_METHOD, &params, retv, ei, sp);
+    return jsdisp_call_name(jsthis->u.jsdisp, toStringW, DISPATCH_METHOD, &params, retv, ei);
 }
 
 static HRESULT Object_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
