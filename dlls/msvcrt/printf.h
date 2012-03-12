@@ -508,8 +508,14 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             i = 0;
         } else if(flags.Format && strchr("diouxX", flags.Format)) {
             APICHAR *tmp = buf;
-            int max_len = (flags.FieldLength>flags.Precision ? flags.FieldLength : flags.Precision) + 10;
+            int max_len;
 
+            /* 0 padding is added after '0x' in Alternate flag is in use */
+            if((flags.Format=='x' || flags.Format=='X') && flags.PadZero && flags.Alternate
+                    && !flags.LeftAlign && flags.Precision<flags.FieldLength-2)
+                flags.Precision = flags.FieldLength - 2;
+
+            max_len = (flags.FieldLength>flags.Precision ? flags.FieldLength : flags.Precision) + 10;
             if(max_len > sizeof(buf)/sizeof(APICHAR))
                 tmp = HeapAlloc(GetProcessHeap(), 0, max_len);
             if(!tmp)

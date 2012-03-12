@@ -323,6 +323,22 @@ static void test_sprintf( void )
     ok(!strcmp(buffer,"1   "),"Character zero-padded and/or not left-adjusted \"%s\"\n",buffer);
     ok( r==4, "return count wrong\n");
 
+    format = "%#012x";
+    r = sprintf(buffer,format,1);
+    ok(!strcmp(buffer,"0x0000000001"),"Hexadecimal zero-padded \"%s\"\n",buffer);
+
+    format = "%#04.8x";
+    r = sprintf(buffer,format,1);
+    ok(!strcmp(buffer,"0x00000001"), "Hexadecimal zero-padded precision \"%s\"\n",buffer);
+
+    format = "%#-08.2x";
+    r = sprintf(buffer,format,1);
+    ok(!strcmp(buffer,"0x01    "), "Hexadecimal zero-padded not left-adjusted \"%s\"\n",buffer);
+
+    format = "%#08o";
+    r = sprintf(buffer,format,1);
+    ok(!strcmp(buffer,"00000001"), "Octal zero-padded \"%s\"\n",buffer);
+
     if (sizeof(void *) == 8)
     {
         format = "%p";
