@@ -657,6 +657,76 @@ HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
     return S_OK;
 }
 
+HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTYPE vt)
+{
+    jsexcept_t ei;
+    HRESULT hres;
+
+    memset(&ei, 0, sizeof(ei));
+
+    switch(vt) {
+    case VT_I2:
+    case VT_I4: {
+        INT i;
+
+        hres = to_int32(ctx, src, &ei, &i);
+        if(SUCCEEDED(hres)) {
+            if(vt == VT_I4)
+                V_I4(dst) = i;
+            else
+                V_I2(dst) = i;
+        }
+        break;
+    }
+    case VT_R8:
+        hres = to_number(ctx, src, &ei, dst);
+        if(SUCCEEDED(hres) && V_VT(dst) == VT_I4)
+            V_R8(dst) = V_I4(dst);
+        break;
+    case VT_R4: {
+        VARIANT n;
+
+        hres = to_number(ctx, src, &ei, &n);
+        if(SUCCEEDED(hres))
+            V_R4(dst) = num_val(&n);
+        break;
+    }
+    case VT_BOOL: {
+        VARIANT_BOOL b;
+
+        hres = to_boolean(src, &b);
+        if(SUCCEEDED(hres))
+            V_BOOL(dst) = b;
+        break;
+    }
+    case VT_BSTR: {
+        BSTR str;
+
+        hres = to_string(ctx, src, &ei, &str);
+        if(SUCCEEDED(hres))
+            V_BSTR(dst) = str;
+        break;
+    }
+    case VT_EMPTY:
+        hres = V_VT(src) == VT_EMPTY ? S_OK : E_NOTIMPL;
+        break;
+    case VT_NULL:
+        hres = V_VT(src) == VT_NULL ? S_OK : E_NOTIMPL;
+        break;
+    default:
+        FIXME("vt %d not implemented\n", vt);
+        hres = E_NOTIMPL;
+    }
+
+    if(FAILED(hres)) {
+        VariantClear(&ei.var);
+        return hres;
+    }
+
+    V_VT(dst) = vt;
+    return S_OK;
+}
+
 static inline JSCaller *impl_from_IServiceProvider(IServiceProvider *iface)
 {
     return CONTAINING_RECORD(iface, JSCaller, IServiceProvider_iface);

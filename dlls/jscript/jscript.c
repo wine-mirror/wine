@@ -1002,8 +1002,20 @@ static ULONG WINAPI VariantChangeType_Release(IVariantChangeType *iface)
 static HRESULT WINAPI VariantChangeType_ChangeType(IVariantChangeType *iface, VARIANT *dst, VARIANT *src, LCID lcid, VARTYPE vt)
 {
     JScript *This = impl_from_IVariantChangeType(iface);
-    FIXME("(%p)->(%p %s %x %d)\n", This, dst, debugstr_variant(src), lcid, vt);
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %s %x %d)\n", This, dst, debugstr_variant(src), lcid, vt);
+
+    if(!This->ctx) {
+        FIXME("Object uninitialized\n");
+        return E_UNEXPECTED;
+    }
+
+    hres = VariantClear(dst);
+    if(FAILED(hres))
+        return hres;
+
+    return variant_change_type(This->ctx, dst, src, vt);
 }
 
 static const IVariantChangeTypeVtbl VariantChangeTypeVtbl = {

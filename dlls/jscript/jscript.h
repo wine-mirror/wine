@@ -260,6 +260,8 @@ HRESULT to_uint32(script_ctx_t*,VARIANT*,jsexcept_t*,DWORD*) DECLSPEC_HIDDEN;
 HRESULT to_string(script_ctx_t*,VARIANT*,jsexcept_t*,BSTR*) DECLSPEC_HIDDEN;
 HRESULT to_object(script_ctx_t*,VARIANT*,IDispatch**) DECLSPEC_HIDDEN;
 
+HRESULT variant_change_type(script_ctx_t*,VARIANT*,VARIANT*,VARTYPE);
+
 BSTR int_to_bstr(int) DECLSPEC_HIDDEN;
 HRESULT double_to_bstr(double,BSTR*) DECLSPEC_HIDDEN;
 
