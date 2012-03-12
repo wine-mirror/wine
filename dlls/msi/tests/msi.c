@@ -55,6 +55,8 @@ static INSTALLSTATE (WINAPI *pMsiUseFeatureExA)
     (LPCSTR, LPCSTR ,DWORD, DWORD);
 static UINT (WINAPI *pMsiGetPatchInfoExA)
     (LPCSTR, LPCSTR, LPCSTR, MSIINSTALLCONTEXT, LPCSTR, LPSTR, DWORD *);
+static UINT (WINAPI *pMsiEnumProductsExA)
+    (LPCSTR, LPCSTR, DWORD, DWORD, CHAR[39], MSIINSTALLCONTEXT *, LPSTR, LPDWORD);
 
 static void init_functionpointers(void)
 {
@@ -76,6 +78,7 @@ static void init_functionpointers(void)
     GET_PROC(hmsi, MsiQueryComponentStateA)
     GET_PROC(hmsi, MsiUseFeatureExA)
     GET_PROC(hmsi, MsiGetPatchInfoExA)
+    GET_PROC(hmsi, MsiEnumProductsExA)
 
     GET_PROC(hadvapi32, ConvertSidToStringSidA)
     GET_PROC(hadvapi32, RegDeleteKeyExA)
@@ -538,8 +541,11 @@ static void create_test_guid(LPSTR prodcode, LPSTR squashed)
     ok(size == 39, "Expected 39, got %d\n", hr);
 
     WideCharToMultiByte(CP_ACP, 0, guidW, size, prodcode, MAX_PATH, NULL, NULL);
-    squash_guid(guidW, squashedW);
-    WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
+    if (squashed)
+    {
+        squash_guid(guidW, squashedW);
+        WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
+    }
 }
 
 static char *get_user_sid(void)
@@ -11794,6 +11800,157 @@ static void test_MsiGetFileSignatureInformation(void)
     DeleteFileA( "signature.bin" );
 }
 
+static void test_MsiEnumProductsEx(void)
+{
+    UINT r;
+    DWORD len, index;
+    MSIINSTALLCONTEXT context;
+    char product0[39], product1[39], product2[39], product3[39], guid[39], sid[128];
+    char product_squashed1[33], product_squashed2[33], product_squashed3[33];
+    char keypath1[MAX_PATH], keypath2[MAX_PATH], keypath3[MAX_PATH];
+    HKEY key1, key2, key3;
+    REGSAM access = KEY_ALL_ACCESS;
+    char *usersid = get_user_sid();
+
+    create_test_guid( product0, NULL );
+    create_test_guid( product1, product_squashed1 );
+    create_test_guid( product2, product_squashed2 );
+    create_test_guid( product3, product_squashed3 );
+
+    if (is_wow64) access |= KEY_WOW64_64KEY;
+
+    strcpy( keypath1, "Software\\Classes\\Installer\\Products\\" );
+    strcat( keypath1, product_squashed1 );
+
+    r = RegCreateKeyExA( HKEY_LOCAL_MACHINE, keypath1, 0, NULL, 0, access, NULL, &key1, NULL );
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+
+    strcpy( keypath2, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\" );
+    strcat( keypath2, usersid );
+    strcat( keypath2, "\\Installer\\Products\\" );
+    strcat( keypath2, product_squashed2 );
+
+    r = RegCreateKeyExA( HKEY_LOCAL_MACHINE, keypath2, 0, NULL, 0, access, NULL, &key2, NULL );
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+
+    strcpy( keypath3, usersid );
+    strcat( keypath3, "\\Software\\Microsoft\\Installer\\Products\\" );
+    strcat( keypath3, product_squashed3 );
+
+    r = RegCreateKeyExA( HKEY_USERS, keypath3, 0, NULL, 0, access, NULL, &key3, NULL );
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+
+    r = pMsiEnumProductsExA( NULL, NULL, 0, 0, NULL, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "got %u\n", r );
+
+    len = sizeof(sid);
+    r = pMsiEnumProductsExA( NULL, NULL, 0, 0, NULL, NULL, NULL, &len );
+    ok( r == ERROR_INVALID_PARAMETER, "got %u\n", r );
+    ok( len == sizeof(sid), "got %u\n", len );
+
+    r = pMsiEnumProductsExA( NULL, NULL, MSIINSTALLCONTEXT_ALL, 0, NULL, NULL, NULL, NULL );
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+
+    sid[0] = 0;
+    len = sizeof(sid);
+    r = pMsiEnumProductsExA( product0, NULL, MSIINSTALLCONTEXT_ALL, 0, NULL, NULL, sid, &len );
+    ok( r == ERROR_NO_MORE_ITEMS, "got %u\n", r );
+    ok( len == sizeof(sid), "got %u\n", len );
+    ok( !sid[0], "got %s\n", sid );
+
+    sid[0] = 0;
+    len = sizeof(sid);
+    r = pMsiEnumProductsExA( product0, usersid, MSIINSTALLCONTEXT_ALL, 0, NULL, NULL, sid, &len );
+    ok( r == ERROR_NO_MORE_ITEMS, "got %u\n", r );
+    ok( len == sizeof(sid), "got %u\n", len );
+    ok( !sid[0], "got %s\n", sid );
+
+    guid[0] = 0;
+    context = 0xdeadbeef;
+    sid[0] = 0;
+    len = sizeof(sid);
+    r = pMsiEnumProductsExA( NULL, NULL, MSIINSTALLCONTEXT_ALL, 0, guid, &context, sid, &len );
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+    ok( guid[0], "empty guid\n" );
+    ok( context != 0xdeadbeef, "context unchanged\n" );
+    ok( !len, "got %u\n", len );
+    ok( !sid[0], "got %s\n", sid );
+
+    guid[0] = 0;
+    context = 0xdeadbeef;
+    sid[0] = 0;
+    len = sizeof(sid);
+    r = pMsiEnumProductsExA( NULL, usersid, MSIINSTALLCONTEXT_ALL, 0, guid, &context, sid, &len );
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+    ok( guid[0], "empty guid\n" );
+    ok( context != 0xdeadbeef, "context unchanged\n" );
+    ok( !len, "got %u\n", len );
+    ok( !sid[0], "got %s\n", sid );
+
+    guid[0] = 0;
+    context = 0xdeadbeef;
+    sid[0] = 0;
+    len = sizeof(sid);
+    r = pMsiEnumProductsExA( NULL, "S-1-1-0", MSIINSTALLCONTEXT_ALL, 0, guid, &context, sid, &len );
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+    ok( guid[0], "empty guid\n" );
+    ok( context != 0xdeadbeef, "context unchanged\n" );
+    ok( !len, "got %u\n", len );
+    ok( !sid[0], "got %s\n", sid );
+
+    index = 0;
+    guid[0] = 0;
+    context = 0xdeadbeef;
+    sid[0] = 0;
+    len = sizeof(sid);
+    while (!pMsiEnumProductsExA( NULL, "S-1-1-0", MSIINSTALLCONTEXT_ALL, index, guid, &context, sid, &len ))
+    {
+        if (!strcmp( product1, guid ))
+        {
+            ok( context == MSIINSTALLCONTEXT_MACHINE, "got %u\n", context );
+            ok( !sid[0], "got \"%s\"\n", sid );
+            ok( !len, "unexpected length %u\n", len );
+        }
+        if (!strcmp( product2, guid ))
+        {
+            ok( context == MSIINSTALLCONTEXT_USERMANAGED, "got %u\n", context );
+            ok( sid[0], "empty sid\n" );
+            ok( len == strlen(sid), "unexpected length %u\n", len );
+        }
+        if (!strcmp( product3, guid ))
+        {
+            ok( context == MSIINSTALLCONTEXT_USERUNMANAGED, "got %u\n", context );
+            ok( sid[0], "empty sid\n" );
+            ok( len == strlen(sid), "unexpected length %u\n", len );
+        }
+        index++;
+        guid[0] = 0;
+        context = 0xdeadbeef;
+        sid[0] = 0;
+        len = sizeof(sid);
+    }
+
+    delete_key( key1, "", access );
+    delete_key( key2, "", access );
+    delete_key( key3, "", access );
+    RegCloseKey( key1 );
+    RegCloseKey( key2 );
+    RegCloseKey( key3 );
+    LocalFree( usersid );
+}
+
 START_TEST(msi)
 {
     init_functionpointers();
@@ -11826,6 +11983,7 @@ START_TEST(msi)
         test_MsiGetPatchInfoEx();
         test_MsiGetPatchInfo();
         test_MsiEnumProducts();
+        test_MsiEnumProductsEx();
     }
     test_MsiGetFileVersion();
     test_MsiGetFileSignatureInformation();

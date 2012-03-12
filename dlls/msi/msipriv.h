@@ -1077,6 +1077,7 @@ static const WCHAR szSOURCEDIR[] = {'S','O','U','R','C','E','D','I','R',0};
 static const WCHAR szRootDrive[] = {'R','O','O','T','D','R','I','V','E',0};
 static const WCHAR szTargetDir[] = {'T','A','R','G','E','T','D','I','R',0};
 static const WCHAR szLocalSid[] = {'S','-','1','-','5','-','1','8',0};
+static const WCHAR szAllSid[] = {'S','-','1','-','1','-','0',0};
 static const WCHAR szEmpty[] = {0};
 static const WCHAR szAll[] = {'A','L','L',0};
 static const WCHAR szOne[] = {'1',0};
