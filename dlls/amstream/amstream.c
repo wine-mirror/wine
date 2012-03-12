@@ -106,11 +106,20 @@ static ULONG WINAPI IAMMultiMediaStreamImpl_Release(IAMMultiMediaStream* iface)
 {
     IAMMultiMediaStreamImpl *This = impl_from_IAMMultiMediaStream(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
+    ULONG i;
 
     TRACE("(%p/%p)\n", iface, This);
 
     if (!ref)
+    {
+        for(i = 0; i < This->nbStreams; i++)
+            IMediaStream_Release(This->pStreams[i]);
+        if (This->ipin)
+            IPin_Release(This->ipin);
+        if (This->pFilterGraph)
+            IGraphBuilder_Release(This->pFilterGraph);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
