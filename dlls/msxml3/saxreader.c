@@ -2423,13 +2423,19 @@ static HRESULT internal_parseURL(
         const WCHAR *url,
         BOOL vbInterface)
 {
+    IMoniker *mon;
     bsc_t *bsc;
     HRESULT hr;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(url));
 
-    if(vbInterface) hr = bind_url(url, internal_vbonDataAvailable, This, &bsc);
-    else hr = bind_url(url, internal_onDataAvailable, This, &bsc);
+    hr = create_moniker_from_url(url, &mon);
+    if(FAILED(hr))
+        return hr;
+
+    if(vbInterface) hr = bind_url(mon, internal_vbonDataAvailable, This, &bsc);
+    else hr = bind_url(mon, internal_onDataAvailable, This, &bsc);
+    IMoniker_Release(mon);
 
     if(FAILED(hr))
         return hr;

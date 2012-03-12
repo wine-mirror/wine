@@ -1996,12 +1996,13 @@ static HRESULT domdoc_onDataAvailable(void *obj, char *ptr, DWORD len)
     return S_OK;
 }
 
-static HRESULT doread( domdoc *This, LPWSTR filename )
+HRESULT domdoc_load_moniker(IXMLDOMDocument3 *iface, IMoniker *mon)
 {
+    domdoc *This = impl_from_IXMLDOMDocument3(iface);
     bsc_t *bsc;
     HRESULT hr;
 
-    hr = bind_url(filename, domdoc_onDataAvailable, This, &bsc);
+    hr = bind_url(mon, domdoc_onDataAvailable, This, &bsc);
     if(FAILED(hr))
         return hr;
 
@@ -2145,7 +2146,14 @@ static HRESULT WINAPI domdoc_load(
 
     if ( filename )
     {
-        hr = doread( This, filename );
+        IMoniker *mon;
+
+        hr = create_moniker_from_url( filename, &mon);
+        if ( SUCCEEDED(hr) )
+        {
+            hr = domdoc_load_moniker( iface, mon );
+            IMoniker_Release(mon);
+        }
 
         if ( FAILED(hr) )
             This->error = E_FAIL;
