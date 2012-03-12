@@ -371,6 +371,7 @@ void init_directories(void)
     static const WCHAR dir_mailslotW[] = {'\\','D','e','v','i','c','e','\\','M','a','i','l','S','l','o','t'};
     static const WCHAR dir_objtypeW[] = {'O','b','j','e','c','t','T','y','p','e','s',};
     static const WCHAR dir_sessionsW[] = {'S','e','s','s','i','o','n','s'};
+    static const WCHAR dir_kernelW[] = {'K','e','r','n','e','l','O','b','j','e','c','t','s'};
     static const struct unicode_str dir_global_str = {dir_globalW, sizeof(dir_globalW)};
     static const struct unicode_str dir_driver_str = {dir_driverW, sizeof(dir_driverW)};
     static const struct unicode_str dir_device_str = {dir_deviceW, sizeof(dir_deviceW)};
@@ -379,6 +380,7 @@ void init_directories(void)
     static const struct unicode_str dir_mailslot_str = {dir_mailslotW, sizeof(dir_mailslotW)};
     static const struct unicode_str dir_objtype_str = {dir_objtypeW, sizeof(dir_objtypeW)};
     static const struct unicode_str dir_sessions_str = {dir_sessionsW, sizeof(dir_sessionsW)};
+    static const struct unicode_str dir_kernel_str = {dir_kernelW, sizeof(dir_kernelW)};
 
     /* symlinks */
     static const WCHAR link_dosdevW[] = {'D','o','s','D','e','v','i','c','e','s'};
@@ -404,18 +406,36 @@ void init_directories(void)
     static const struct unicode_str named_pipe_str = {named_pipeW, sizeof(named_pipeW)};
     static const struct unicode_str mailslot_str = {mailslotW, sizeof(mailslotW)};
 
-    struct directory *dir_driver, *dir_device, *dir_global, *dir_basenamed, *dir_sessions;
+    /* events */
+    static const WCHAR event_low_memW[] = {'L','o','w','M','e','m','o','r','y','C','o','n','d','i','t','i','o','n'};
+    static const WCHAR event_low_pagedW[] = {'L','o','w','P','a','g','e','d','P','o','o','l','C','o','n','d','i','t','i','o','n'};
+    static const WCHAR event_low_nonpgW[] = {'L','o','w','N','o','n','P','a','g','e','d','P','o','o','l','C','o','n','d','i','t','i','o','n'};
+    static const WCHAR event_high_memW[] = {'H','i','g','h','M','e','m','o','r','y','C','o','n','d','i','t','i','o','n'};
+    static const WCHAR event_high_pagedW[] = {'H','i','g','h','P','a','g','e','d','P','o','o','l','C','o','n','d','i','t','i','o','n'};
+    static const WCHAR event_high_nonpgW[] = {'H','i','g','h','N','o','n','P','a','g','e','d','P','o','o','l','C','o','n','d','i','t','i','o','n'};
+    static const struct unicode_str kernel_events[] =
+    {
+        { event_low_memW, sizeof(event_low_memW) },
+        { event_low_pagedW, sizeof(event_low_pagedW) },
+        { event_low_nonpgW, sizeof(event_low_nonpgW) },
+        { event_high_memW, sizeof(event_high_memW) },
+        { event_high_pagedW, sizeof(event_high_pagedW) },
+        { event_high_nonpgW, sizeof(event_high_nonpgW) }
+    };
+
+    struct directory *dir_driver, *dir_device, *dir_global, *dir_basenamed, *dir_sessions, *dir_kernel;
     struct symlink *link_dosdev, *link_global1, *link_global2, *link_local, *link_pipe, *link_mailslot, *link_0, *link_session;
+    unsigned int i;
 
     root_directory = create_directory( NULL, NULL, 0, HASH_SIZE );
     dir_driver     = create_directory( root_directory, &dir_driver_str, 0, HASH_SIZE );
     dir_device     = create_directory( root_directory, &dir_device_str, 0, HASH_SIZE );
     dir_objtype    = create_directory( root_directory, &dir_objtype_str, 0, HASH_SIZE );
     dir_sessions   = create_directory( root_directory, &dir_sessions_str, 0, HASH_SIZE );
+    dir_kernel     = create_directory( root_directory, &dir_kernel_str, 0, HASH_SIZE );
     make_object_static( &root_directory->obj );
     make_object_static( &dir_driver->obj );
     make_object_static( &dir_objtype->obj );
-    make_object_static( &dir_sessions->obj );
 
     dir_global     = create_directory( NULL, &dir_global_str, 0, HASH_SIZE );
     /* use a larger hash table for this one since it can contain a lot of objects */
@@ -443,10 +463,19 @@ void init_directories(void)
     make_object_static( (struct object *)link_0 );
     make_object_static( (struct object *)link_session );
 
-    /* the symlinks or devices hold references so we can release these */
+    /* events */
+    for (i = 0; i < sizeof(kernel_events)/sizeof(kernel_events[0]); i++)
+    {
+        struct event *event = create_event( dir_kernel, &kernel_events[i], 0, 1, 0, NULL );
+        make_object_static( (struct object *)event );
+    }
+
+    /* the objects hold references so we can release these directories */
     release_object( dir_global );
     release_object( dir_device );
     release_object( dir_basenamed );
+    release_object( dir_sessions );
+    release_object( dir_kernel );
 }
 
 /* create a directory object */
