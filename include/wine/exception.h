@@ -252,6 +252,7 @@ static inline EXCEPTION_REGISTRATION_RECORD *__wine_get_frame(void)
 #define EH_EXIT_UNWIND      0x04
 #define EH_STACK_INVALID    0x08
 #define EH_NESTED_CALL      0x10
+#define EH_TARGET_UNWIND    0x20
 
 /* Wine-specific exceptions codes */
 
