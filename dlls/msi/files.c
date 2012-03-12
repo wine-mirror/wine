@@ -247,6 +247,17 @@ static UINT msi_create_directory( MSIPACKAGE *package, const WCHAR *dir )
     return ERROR_SUCCESS;
 }
 
+static MSIFILE *find_file( MSIPACKAGE *package, const WCHAR *filename )
+{
+    MSIFILE *file;
+
+    LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
+    {
+        if (!strcmpiW( filename, file->File )) return file;
+    }
+    return NULL;
+}
+
 static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
                             LPWSTR *path, DWORD *attrs, PVOID user)
 {
@@ -255,8 +266,7 @@ static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
 
     if (action == MSICABEXTRACT_BEGINEXTRACT)
     {
-        f = msi_get_loaded_file(package, file);
-        if (!f)
+        if (!(f = find_file( package, file )))
         {
             TRACE("unknown file in cabinet (%s)\n", debugstr_w(file));
             return FALSE;
