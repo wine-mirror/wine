@@ -635,7 +635,7 @@ static void test_fflush( void )
   ok(ret >= 0, "unexpected ret %d\n", ret);
   memset(buf2, '?', sizeof(buf2));
   fread(buf2, 1, sizeof(buf2), tempfh);
-  todo_wine ok(memcmp(buf1, buf2, sizeof(buf1)) == 0, "Got unexpected data (%c)\n", buf2[0]);
+  ok(memcmp(buf1, buf2, sizeof(buf1)) == 0, "Got unexpected data (%c)\n", buf2[0]);
 
   fclose(tempfh);
 
