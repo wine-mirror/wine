@@ -748,13 +748,11 @@ int CDECL MSVCRT__wunlink(const MSVCRT_wchar_t *path)
   return -1;
 }
 
-/* _flushall calls MSVCRT_fflush which calls _flushall */
+/* flush_all_buffers calls MSVCRT_fflush which calls flush_all_buffers */
 int CDECL MSVCRT_fflush(MSVCRT_FILE* file);
 
-/*********************************************************************
- *		_flushall (MSVCRT.@)
- */
-int CDECL MSVCRT__flushall(void)
+/* INTERNAL: Flush all stream buffer */
+static int msvcrt_flush_all_buffers(int mask)
 {
   int i, num_flushed = 0;
   MSVCRT_FILE *file;
@@ -765,7 +763,7 @@ int CDECL MSVCRT__flushall(void)
 
     if (file->_flag)
     {
-      if(file->_flag & MSVCRT__IOWRT) {
+      if(file->_flag & mask) {
 	MSVCRT_fflush(file);
         num_flushed++;
       }
@@ -775,6 +773,14 @@ int CDECL MSVCRT__flushall(void)
 
   TRACE(":flushed (%d) handles\n",num_flushed);
   return num_flushed;
+}
+
+/*********************************************************************
+ *		_flushall (MSVCRT.@)
+ */
+int CDECL MSVCRT__flushall(void)
+{
+    return msvcrt_flush_all_buffers(MSVCRT__IOWRT);
 }
 
 /*********************************************************************
