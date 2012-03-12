@@ -887,6 +887,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_ENDDIALOG;
 				WINE_FIXME("Unknown modifier: !\n");
 			}
+			else if(msi_strequal(argvW[i]+2, "b!"))
+			{
+				InstallUILevel = INSTALLUILEVEL_BASIC;
+				WINE_FIXME("Unknown modifier: !\n");
+			}
 			else
 			{
 				fprintf(stderr, "Unknown option \"%s\" for UI level\n",
