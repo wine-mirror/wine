@@ -1749,13 +1749,11 @@ MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
 
 INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIRECORD *record )
 {
-    static const WCHAR szActionData[] =
-        {'A','c','t','i','o','n','D','a','t','a',0};
-    static const WCHAR szSetProgress[] =
-        {'S','e','t','P','r','o','g','r','e','s','s',0};
-    static const WCHAR szActionText[] =
-        {'A','c','t','i','o','n','T','e','x','t',0};
-    LPWSTR message;
+    static const WCHAR szActionData[] = {'A','c','t','i','o','n','D','a','t','a',0};
+    static const WCHAR szSetProgress[] = {'S','e','t','P','r','o','g','r','e','s','s',0};
+    static const WCHAR szActionText[] = {'A','c','t','i','o','n','T','e','x','t',0};
+    MSIRECORD *uirow;
+    LPWSTR deformated, message;
     DWORD i, len, total_len, log_type = 0;
     INT rc = 0;
     char *msg;
@@ -1894,27 +1892,27 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
     switch (eMessageType & 0xff000000)
     {
     case INSTALLMESSAGE_ACTIONDATA:
-        /* FIXME: format record here instead of in ui_actiondata to get the
-         * correct action data for external scripts */
-        ControlEvent_FireSubscribedEvent(package, szActionData, record);
-        break;
-    case INSTALLMESSAGE_ACTIONSTART:
-    {
-        MSIRECORD *uirow;
-        LPWSTR deformated;
-        LPCWSTR action_text = MSI_RecordGetString(record, 2);
-
-        deformat_string(package, action_text, &deformated);
+        deformat_string(package, MSI_RecordGetString(record, 2), &deformated);
         uirow = MSI_CreateRecord(1);
         MSI_RecordSetStringW(uirow, 1, deformated);
-        TRACE("INSTALLMESSAGE_ACTIONSTART: %s\n", debugstr_w(deformated));
+        msi_free(deformated);
+
+        ControlEvent_FireSubscribedEvent(package, szActionData, uirow);
+
+        msiobj_release(&uirow->hdr);
+        break;
+
+    case INSTALLMESSAGE_ACTIONSTART:
+        deformat_string(package, MSI_RecordGetString(record, 2), &deformated);
+        uirow = MSI_CreateRecord(1);
+        MSI_RecordSetStringW(uirow, 1, deformated);
         msi_free(deformated);
 
         ControlEvent_FireSubscribedEvent(package, szActionText, uirow);
 
         msiobj_release(&uirow->hdr);
         break;
-    }
+
     case INSTALLMESSAGE_PROGRESS:
         ControlEvent_FireSubscribedEvent(package, szSetProgress, record);
         break;
