@@ -31,7 +31,7 @@ typedef struct {
     source_elements_t *source;
     parameter_t *parameters;
     scope_chain_t *scope_chain;
-    parser_ctx_t *parser;
+    bytecode_t *code;
     const WCHAR *src_str;
     DWORD src_len;
     DWORD length;
@@ -217,7 +217,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
 
         prev_args = function->arguments;
         function->arguments = arg_disp;
-        hres = exec_source(exec_ctx, function->parser, function->source, FALSE, ei, retv);
+        hres = exec_source(exec_ctx, function->code, function->source, FALSE, ei, retv);
         function->arguments = prev_args;
 
         jsdisp_release(arg_disp);
@@ -567,8 +567,8 @@ static void Function_destructor(jsdisp_t *dispex)
 {
     FunctionInstance *This = (FunctionInstance*)dispex;
 
-    if(This->parser)
-        parser_release(This->parser);
+    if(This->code)
+        release_bytecode(This->code);
     if(This->scope_chain)
         scope_release(This->scope_chain);
     heap_free(This);
@@ -660,7 +660,7 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
     return S_OK;
 }
 
-HRESULT create_source_function(parser_ctx_t *ctx, parameter_t *parameters, source_elements_t *source,
+HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, parameter_t *parameters, source_elements_t *source,
         scope_chain_t *scope_chain, const WCHAR *src_str, DWORD src_len, jsdisp_t **ret)
 {
     FunctionInstance *function;
@@ -669,13 +669,13 @@ HRESULT create_source_function(parser_ctx_t *ctx, parameter_t *parameters, sourc
     DWORD length = 0;
     HRESULT hres;
 
-    hres = create_object(ctx->script, NULL, &prototype);
+    hres = create_object(ctx, NULL, &prototype);
     if(FAILED(hres))
         return hres;
 
-    hres = create_function(ctx->script, NULL, PROPF_CONSTR, FALSE, NULL, &function);
+    hres = create_function(ctx, NULL, PROPF_CONSTR, FALSE, NULL, &function);
     if(SUCCEEDED(hres)) {
-        hres = set_prototype(ctx->script, &function->dispex, prototype);
+        hres = set_prototype(ctx, &function->dispex, prototype);
         if(FAILED(hres))
             jsdisp_release(&function->dispex);
     }
@@ -691,8 +691,8 @@ HRESULT create_source_function(parser_ctx_t *ctx, parameter_t *parameters, sourc
         function->scope_chain = scope_chain;
     }
 
-    parser_addref(ctx);
-    function->parser = ctx;
+    bytecode_addref(code);
+    function->code = code;
 
     for(iter = parameters; iter; iter = iter->next)
         length++;
@@ -711,6 +711,7 @@ static HRESULT construct_function(script_ctx_t *ctx, DISPPARAMS *dp, jsexcept_t 
     WCHAR *str = NULL, *ptr;
     DWORD argc, len = 0, l;
     parser_ctx_t *parser;
+    bytecode_t *code;
     jsdisp_t *function;
     BSTR *params = NULL;
     int i=0, j=0;
@@ -774,21 +775,22 @@ static HRESULT construct_function(script_ctx_t *ctx, DISPPARAMS *dp, jsexcept_t 
     if(FAILED(hres))
         return hres;
 
-    hres = compile_script(ctx, str, NULL, FALSE, &parser);
+    hres = compile_script(ctx, str, NULL, FALSE, &code);
     heap_free(str);
     if(FAILED(hres))
         return hres;
 
+    parser = code->parser;
     if(!parser->source || !parser->source->functions || parser->source->functions->next || parser->source->variables) {
         ERR("Invalid parser result!\n");
-        parser_release(parser);
+        release_bytecode(code);
         return E_UNEXPECTED;
     }
     expr = parser->source->functions->expr;
 
-    hres = create_source_function(parser, expr->parameter_list, expr->source_elements, NULL, expr->src_str,
+    hres = create_source_function(ctx, code, expr->parameter_list, expr->source_elements, NULL, expr->src_str,
             expr->src_len, &function);
-    parser_release(parser);
+    release_bytecode(code);
     if(FAILED(hres))
         return hres;
 

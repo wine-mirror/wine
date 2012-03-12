@@ -810,7 +810,7 @@ static HRESULT interp_func(exec_ctx_t *ctx)
 
     TRACE("\n");
 
-    hres = create_source_function(ctx->parser, expr->parameter_list, expr->source_elements, ctx->scope_chain,
+    hres = create_source_function(ctx->script, ctx->code, expr->parameter_list, expr->source_elements, ctx->scope_chain,
             expr->src_str, expr->src_len, &dispex);
     if(FAILED(hres))
         return hres;
@@ -2571,12 +2571,10 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, unsigned ip, 
     return S_OK;
 }
 
-HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, BOOL from_eval,
+HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, source_elements_t *source, BOOL from_eval,
         jsexcept_t *ei, VARIANT *retv)
 {
-    script_ctx_t *script = parser->script;
     function_declaration_t *func;
-    parser_ctx_t *prev_parser;
     var_list_t *var;
     VARIANT val;
     exec_ctx_t *prev_ctx;
@@ -2589,7 +2587,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
         if(!func->expr->identifier)
             continue;
 
-        hres = create_source_function(parser, func->expr->parameter_list, func->expr->source_elements,
+        hres = create_source_function(ctx->script, code, func->expr->parameter_list, func->expr->source_elements,
                 ctx->scope_chain, func->expr->src_str, func->expr->src_len, &func_obj);
         if(FAILED(hres))
             return hres;
@@ -2609,28 +2607,25 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
         if(!name)
             return E_OUTOFMEMORY;
 
-        if(!ctx->is_global || !lookup_global_members(parser->script, name, NULL))
+        if(!ctx->is_global || !lookup_global_members(ctx->script, name, NULL))
             hres = jsdisp_get_id(ctx->var_disp, var->identifier, fdexNameEnsure, &id);
         SysFreeString(name);
         if(FAILED(hres))
             return hres;
     }
 
-    prev_ctx = script->exec_ctx;
-    script->exec_ctx = ctx;
-
-    prev_parser = ctx->parser;
-    ctx->parser = parser;
+    prev_ctx = ctx->script->exec_ctx;
+    ctx->script->exec_ctx = ctx;
 
     if(source->statement) {
         assert(source->instr_off);
-        hres = enter_bytecode(script, parser->code, source->instr_off, ei, &val);
+        hres = enter_bytecode(ctx->script, code, source->instr_off, ei, &val);
     }else {
         V_VT(&val) = VT_EMPTY;
     }
 
-    script->exec_ctx = prev_ctx;
-    ctx->parser = prev_parser;
+    assert(ctx->script->exec_ctx == ctx);
+    ctx->script->exec_ctx = prev_ctx;
 
     if(FAILED(hres)) {
         VariantClear(&val);

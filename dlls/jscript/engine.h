@@ -42,6 +42,25 @@ typedef struct _func_stack {
     struct _func_stack *next;
 } func_stack_t;
 
+typedef struct {
+    LONG ref;
+
+    WCHAR *begin;
+    const WCHAR *end;
+    const WCHAR *ptr;
+
+    script_ctx_t *script;
+    source_elements_t *source;
+    BOOL nl;
+    BOOL is_html;
+    BOOL lexer_error;
+    HRESULT hres;
+
+    jsheap_t heap;
+
+    func_stack_t *func_stack;
+} parser_ctx_t;
+
 #define OP_LIST                            \
     X(add,        1, 0,0)                  \
     X(and,        1, 0,0)                  \
@@ -149,39 +168,28 @@ typedef struct {
     instr_arg_t arg2;
 } instr_t;
 
-typedef struct {
+typedef struct _bytecode_t {
+    LONG ref;
+
     instr_t *instrs;
     jsheap_t heap;
 
     BSTR *bstr_pool;
     unsigned bstr_pool_size;
     unsigned bstr_cnt;
+
+    parser_ctx_t *parser;
+
+    struct _bytecode_t *next;
 } bytecode_t;
 
-void release_bytecode(bytecode_t*);
+HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,BOOL,bytecode_t**) DECLSPEC_HIDDEN;
+void release_bytecode(bytecode_t*) DECLSPEC_HIDDEN;
 
-typedef struct _parser_ctx_t {
-    LONG ref;
-
-    WCHAR *begin;
-    const WCHAR *end;
-    const WCHAR *ptr;
-
-    script_ctx_t *script;
-    source_elements_t *source;
-    BOOL nl;
-    BOOL is_html;
-    BOOL lexer_error;
-    HRESULT hres;
-
-    jsheap_t heap;
-
-    func_stack_t *func_stack;
-
-    bytecode_t *code;
-
-    struct _parser_ctx_t *next;
-} parser_ctx_t;
+static inline void bytecode_addref(bytecode_t *code)
+{
+    code->ref++;
+}
 
 HRESULT script_parse(script_ctx_t*,const WCHAR*,const WCHAR*,BOOL,parser_ctx_t**) DECLSPEC_HIDDEN;
 void parser_release(parser_ctx_t*) DECLSPEC_HIDDEN;
@@ -246,11 +254,11 @@ static inline void exec_addref(exec_ctx_t *ctx)
 
 void exec_release(exec_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT create_exec_ctx(script_ctx_t*,IDispatch*,jsdisp_t*,scope_chain_t*,BOOL,exec_ctx_t**) DECLSPEC_HIDDEN;
-HRESULT exec_source(exec_ctx_t*,parser_ctx_t*,source_elements_t*,BOOL,jsexcept_t*,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT exec_source(exec_ctx_t*,bytecode_t*,source_elements_t*,BOOL,jsexcept_t*,VARIANT*) DECLSPEC_HIDDEN;
 
 typedef struct _parameter_t parameter_t;
 
-HRESULT create_source_function(parser_ctx_t*,parameter_t*,source_elements_t*,scope_chain_t*,
+HRESULT create_source_function(script_ctx_t*,bytecode_t*,parameter_t*,source_elements_t*,scope_chain_t*,
         const WCHAR*,DWORD,jsdisp_t**) DECLSPEC_HIDDEN;
 
 typedef enum {
@@ -572,5 +580,3 @@ typedef struct {
     expression_t expr;
     prop_val_t *property_list;
 } property_value_expression_t;
-
-HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,BOOL,parser_ctx_t**) DECLSPEC_HIDDEN;

@@ -58,8 +58,8 @@ typedef struct {
 
     IActiveScriptSite *site;
 
-    parser_ctx_t *queue_head;
-    parser_ctx_t *queue_tail;
+    bytecode_t *queue_head;
+    bytecode_t *queue_tail;
 } JScript;
 
 void script_release(script_ctx_t *ctx)
@@ -95,7 +95,7 @@ static inline BOOL is_started(script_ctx_t *ctx)
         || ctx->state == SCRIPTSTATE_DISCONNECTED;
 }
 
-static HRESULT exec_global_code(JScript *This, parser_ctx_t *parser_ctx)
+static HRESULT exec_global_code(JScript *This, bytecode_t *code)
 {
     exec_ctx_t *exec_ctx;
     jsexcept_t jsexcept;
@@ -108,7 +108,7 @@ static HRESULT exec_global_code(JScript *This, parser_ctx_t *parser_ctx)
     IActiveScriptSite_OnEnterScript(This->site);
 
     memset(&jsexcept, 0, sizeof(jsexcept));
-    hres = exec_source(exec_ctx, parser_ctx, parser_ctx->source, FALSE, &jsexcept, NULL);
+    hres = exec_source(exec_ctx, code, code->parser->source, FALSE, &jsexcept, NULL);
     VariantClear(&jsexcept.var);
     exec_release(exec_ctx);
 
@@ -118,7 +118,7 @@ static HRESULT exec_global_code(JScript *This, parser_ctx_t *parser_ctx)
 
 static void clear_script_queue(JScript *This)
 {
-    parser_ctx_t *iter, *iter2;
+    bytecode_t *iter, *iter2;
 
     if(!This->queue_head)
         return;
@@ -127,7 +127,7 @@ static void clear_script_queue(JScript *This)
     while(iter) {
         iter2 = iter->next;
         iter->next = NULL;
-        parser_release(iter);
+        release_bytecode(iter);
         iter = iter2;
     }
 
@@ -136,7 +136,7 @@ static void clear_script_queue(JScript *This)
 
 static void exec_queued_code(JScript *This)
 {
-    parser_ctx_t *iter;
+    bytecode_t *iter;
 
     for(iter = This->queue_head; iter; iter = iter->next)
         exec_global_code(This, iter);
@@ -752,7 +752,7 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
     JScript *This = impl_from_IActiveScriptParse(iface);
-    parser_ctx_t *parser_ctx;
+    bytecode_t *code;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %p %s %s %u %x %p %p)\n", This, debugstr_w(pstrCode),
@@ -762,21 +762,21 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(This->thread_id != GetCurrentThreadId() || This->ctx->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, FALSE, &parser_ctx);
+    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, FALSE, &code);
     if(FAILED(hres))
         return hres;
 
     if(!is_started(This->ctx)) {
         if(This->queue_tail)
-            This->queue_tail = This->queue_tail->next = parser_ctx;
+            This->queue_tail = This->queue_tail->next = code;
         else
-            This->queue_head = This->queue_tail = parser_ctx;
+            This->queue_head = This->queue_tail = code;
         return S_OK;
     }
 
-    hres = exec_global_code(This, parser_ctx);
+    hres = exec_global_code(This, code);
 
-    parser_release(parser_ctx);
+    release_bytecode(code);
     return hres;
 }
 
@@ -818,7 +818,7 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
         CTXARG_T dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags, IDispatch **ppdisp)
 {
     JScript *This = impl_from_IActiveScriptParseProcedure2(iface);
-    parser_ctx_t *parser_ctx;
+    bytecode_t *code;
     jsdisp_t *dispex;
     HRESULT hres;
 
@@ -829,14 +829,14 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
     if(This->thread_id != GetCurrentThreadId() || This->ctx->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, FALSE, &parser_ctx);
+    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, FALSE, &code);
     if(FAILED(hres)) {
         WARN("Parse failed %08x\n", hres);
         return hres;
     }
 
-    hres = create_source_function(parser_ctx, NULL, parser_ctx->source, NULL, NULL, 0, &dispex);
-    parser_release(parser_ctx);
+    hres = create_source_function(This->ctx, code, NULL, code->parser->source, NULL, NULL, 0, &dispex);
+    release_bytecode(code);
     if(FAILED(hres))
         return hres;
 

@@ -344,7 +344,7 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    parser_ctx_t *parser_ctx;
+    bytecode_t *code;
     VARIANT *arg;
     HRESULT hres;
 
@@ -371,15 +371,15 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
     }
 
     TRACE("parsing %s\n", debugstr_w(V_BSTR(arg)));
-    hres = compile_script(ctx, V_BSTR(arg), NULL, TRUE, &parser_ctx);
+    hres = compile_script(ctx, V_BSTR(arg), NULL, TRUE, &code);
     if(FAILED(hres)) {
         WARN("parse (%s) failed: %08x\n", debugstr_w(V_BSTR(arg)), hres);
         return throw_syntax_error(ctx, ei, hres, NULL);
     }
 
-    hres = exec_source(ctx->exec_ctx, parser_ctx, parser_ctx->source, TRUE, ei, retv);
-    parser_release(parser_ctx);
+    hres = exec_source(ctx->exec_ctx, code, code->parser->source, TRUE, ei, retv);
 
+    release_bytecode(code);
     return hres;
 }
 

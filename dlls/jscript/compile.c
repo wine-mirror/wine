@@ -1694,6 +1694,12 @@ void release_bytecode(bytecode_t *code)
 {
     unsigned i;
 
+    if(--code->ref)
+        return;
+
+    if(code->parser)
+        parser_release(code->parser);
+
     for(i=0; i < code->bstr_cnt; i++)
         SysFreeString(code->bstr_pool[i]);
 
@@ -1709,6 +1715,7 @@ static HRESULT init_code(compiler_ctx_t *compiler)
     if(!compiler->code)
         return E_OUTOFMEMORY;
 
+    compiler->code->ref = 1;
     jsheap_init(&compiler->code->heap);
 
     compiler->code->instrs = heap_alloc(64 * sizeof(instr_t));
@@ -1757,7 +1764,7 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
 }
 
 HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimiter, BOOL from_eval,
-        parser_ctx_t **ret)
+        bytecode_t **ret)
 {
     compiler_ctx_t compiler = {0};
     HRESULT hres;
@@ -1767,18 +1774,19 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimi
         return hres;
 
     hres = init_code(&compiler);
-    if(SUCCEEDED(hres)) {
-        hres = compile_function(&compiler, compiler.parser->source, from_eval);
-        if(FAILED(hres))
-            release_bytecode(compiler.code);
-    }
-
     if(FAILED(hres)) {
         parser_release(compiler.parser);
         return hres;
     }
 
-    compiler.parser->code = compiler.code;
-    *ret = compiler.parser;
+    compiler.code->parser = compiler.parser;
+
+    hres = compile_function(&compiler, compiler.parser->source, from_eval);
+    if(FAILED(hres)) {
+        release_bytecode(compiler.code);
+        return hres;
+    }
+
+    *ret = compiler.code;
     return S_OK;
 }
