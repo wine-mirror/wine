@@ -215,7 +215,7 @@ HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*,jsexcept_t*) DECLS
 HRESULT jsdisp_propget(jsdisp_t*,DISPID,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propput_name(jsdisp_t*,const WCHAR*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propput_const(jsdisp_t*,const WCHAR*,VARIANT*) DECLSPEC_HIDDEN;
-HRESULT jsdisp_propput_idx(jsdisp_t*,DWORD,VARIANT*,jsexcept_t*,IServiceProvider*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_propput_idx(jsdisp_t*,DWORD,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_propget_name(jsdisp_t*,LPCWSTR,VARIANT*,jsexcept_t*,IServiceProvider*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_get_idx(jsdisp_t*,DWORD,VARIANT*,jsexcept_t*,IServiceProvider*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_get_id(jsdisp_t*,const WCHAR*,DWORD,DISPID*) DECLSPEC_HIDDEN;

@@ -166,7 +166,7 @@ static HRESULT VBArray_toArray(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DI
     }
 
     for(i=0; i<size; i++) {
-        hres = jsdisp_propput_idx(array, i, v, ei, caller);
+        hres = jsdisp_propput_idx(array, i, v, ei);
         if(FAILED(hres)) {
             SafeArrayUnaccessData(vbarray->safearray);
             jsdisp_release(array);

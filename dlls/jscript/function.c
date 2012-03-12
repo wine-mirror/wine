@@ -113,7 +113,7 @@ static const builtin_info_t Arguments_info = {
 };
 
 static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, DISPPARAMS *dp,
-        jsexcept_t *ei, IServiceProvider *caller, jsdisp_t **ret)
+        jsexcept_t *ei, jsdisp_t **ret)
 {
     jsdisp_t *args;
     VARIANT var;
@@ -133,7 +133,7 @@ static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, DISPPARAMS 
     }
 
     for(i=0; i < arg_cnt(dp); i++) {
-        hres = jsdisp_propput_idx(args, i, get_arg(dp,i), ei, caller);
+        hres = jsdisp_propput_idx(args, i, get_arg(dp,i), ei);
         if(FAILED(hres))
             break;
     }
@@ -196,8 +196,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         return E_FAIL;
     }
 
-    hres = create_arguments(ctx, to_disp(&function->dispex),
-            dp, ei, caller, &arg_disp);
+    hres = create_arguments(ctx, to_disp(&function->dispex), dp, ei, &arg_disp);
     if(FAILED(hres))
         return hres;
 

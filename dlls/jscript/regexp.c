@@ -3605,7 +3605,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
             break;
         }
 
-        hres = jsdisp_propput_idx(array, i+1, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_idx(array, i+1, &var, ei);
         SysFreeString(V_BSTR(&var));
         if(FAILED(hres))
             break;
@@ -3989,7 +3989,7 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, BSTR str,
             break;
         }
 
-        hres = jsdisp_propput_idx(array, i, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_idx(array, i, &var, ei);
         SysFreeString(V_BSTR(&var));
         if(FAILED(hres))
             break;

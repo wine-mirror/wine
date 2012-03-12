@@ -1233,7 +1233,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
                 break;
             }
 
-            hres = jsdisp_propput_idx(array, i, &var, ei, sp);
+            hres = jsdisp_propput_idx(array, i, &var, ei);
             SysFreeString(V_BSTR(&var));
             if(FAILED(hres))
                 break;
@@ -1255,7 +1255,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
             V_BSTR(&var) = SysAllocStringLen(ptr, len);
 
             if(V_BSTR(&var)) {
-                hres = jsdisp_propput_idx(array, i, &var, ei, sp);
+                hres = jsdisp_propput_idx(array, i, &var, ei);
                 SysFreeString(V_BSTR(&var));
             }else {
                 hres = E_OUTOFMEMORY;

@@ -1222,7 +1222,7 @@ static HRESULT interp_carray(exec_ctx_t *ctx)
     i = arg;
     while(i--) {
         v = stack_pop(ctx);
-        hres = jsdisp_propput_idx(array, i, v, ctx->ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_idx(array, i, v, ctx->ei);
         VariantClear(v);
         if(FAILED(hres)) {
             jsdisp_release(array);

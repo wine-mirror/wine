@@ -175,7 +175,7 @@ static HRESULT concat_array(jsdisp_t *array, ArrayInstance *obj, DWORD *len,
         if(FAILED(hres))
             return hres;
 
-        hres = jsdisp_propput_idx(array, *len+i, &var, ei, caller);
+        hres = jsdisp_propput_idx(array, *len+i, &var, ei);
         VariantClear(&var);
         if(FAILED(hres))
             return hres;
@@ -203,7 +203,7 @@ static HRESULT concat_obj(jsdisp_t *array, IDispatch *obj, DWORD *len, jsexcept_
 
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = obj;
-    return jsdisp_propput_idx(array, (*len)++, &var, ei, caller);
+    return jsdisp_propput_idx(array, (*len)++, &var, ei);
 }
 
 static HRESULT Array_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
@@ -229,7 +229,7 @@ static HRESULT Array_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
             if(V_VT(arg) == VT_DISPATCH)
                 hres = concat_obj(ret, V_DISPATCH(arg), &len, ei, caller);
             else
-                hres = jsdisp_propput_idx(ret, len++, arg, ei, caller);
+                hres = jsdisp_propput_idx(ret, len++, arg, ei);
             if(FAILED(hres))
                 break;
         }
@@ -443,7 +443,7 @@ static HRESULT Array_push(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPAR
 
     n = arg_cnt(dp);
     for(i=0; i < n; i++) {
-        hres = jsdisp_propput_idx(jsthis, length+i, get_arg(dp, i), ei, sp);
+        hres = jsdisp_propput_idx(jsthis, length+i, get_arg(dp, i), ei);
         if(FAILED(hres))
             return hres;
     }
@@ -489,7 +489,7 @@ static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
         if(hres1 == DISP_E_UNKNOWNNAME)
             hres1 = jsdisp_delete_idx(jsthis, l);
         else
-            hres1 = jsdisp_propput_idx(jsthis, l, &v1, ei, sp);
+            hres1 = jsdisp_propput_idx(jsthis, l, &v1, ei);
 
         if(FAILED(hres1)) {
             VariantClear(&v1);
@@ -500,7 +500,7 @@ static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
         if(hres2 == DISP_E_UNKNOWNNAME)
             hres2 = jsdisp_delete_idx(jsthis, k);
         else
-            hres2 = jsdisp_propput_idx(jsthis, k, &v2, ei, sp);
+            hres2 = jsdisp_propput_idx(jsthis, k, &v2, ei);
 
         if(FAILED(hres2)) {
             VariantClear(&v2);
@@ -554,7 +554,7 @@ static HRESULT Array_shift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPA
         if(hres == DISP_E_UNKNOWNNAME)
             hres = jsdisp_delete_idx(jsthis, i-1);
         else if(SUCCEEDED(hres))
-            hres = jsdisp_propput_idx(jsthis, i-1, &v, ei, caller);
+            hres = jsdisp_propput_idx(jsthis, i-1, &v, ei);
     }
 
     if(SUCCEEDED(hres)) {
@@ -630,7 +630,7 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPA
             continue;
 
         if(SUCCEEDED(hres)) {
-            hres = jsdisp_propput_idx(arr, idx-start, &v, ei, sp);
+            hres = jsdisp_propput_idx(arr, idx-start, &v, ei);
             VariantClear(&v);
         }
 
@@ -836,7 +836,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPAR
         }
 
         for(i=0; SUCCEEDED(hres) && i < length; i++)
-            hres = jsdisp_propput_idx(jsthis, i, sorttab[i], ei, caller);
+            hres = jsdisp_propput_idx(jsthis, i, sorttab[i], ei);
     }
 
     if(vtab) {
@@ -915,7 +915,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPP
             if(hres == DISP_E_UNKNOWNNAME)
                 hres = S_OK;
             else if(SUCCEEDED(hres))
-                hres = jsdisp_propput_idx(ret_array, i, &v, ei, caller);
+                hres = jsdisp_propput_idx(ret_array, i, &v, ei);
         }
 
         if(SUCCEEDED(hres)) {
@@ -932,7 +932,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPP
             if(hres == DISP_E_UNKNOWNNAME)
                 hres = jsdisp_delete_idx(jsthis, i+add_args);
             else if(SUCCEEDED(hres))
-                hres = jsdisp_propput_idx(jsthis, i+add_args, &v, ei, caller);
+                hres = jsdisp_propput_idx(jsthis, i+add_args, &v, ei);
         }
 
         for(i=length; SUCCEEDED(hres) && i != length-delete_cnt+add_args; i--)
@@ -943,12 +943,12 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPP
             if(hres == DISP_E_UNKNOWNNAME)
                 hres = jsdisp_delete_idx(jsthis, i+add_args-1);
             else if(SUCCEEDED(hres))
-                hres = jsdisp_propput_idx(jsthis, i+add_args-1, &v, ei, caller);
+                hres = jsdisp_propput_idx(jsthis, i+add_args-1, &v, ei);
         }
     }
 
     for(i=0; SUCCEEDED(hres) && i < add_args; i++)
-        hres = jsdisp_propput_idx(jsthis, start+i, get_arg(dp,i+2), ei, caller);
+        hres = jsdisp_propput_idx(jsthis, start+i, get_arg(dp,i+2), ei);
 
     if(SUCCEEDED(hres)) {
         V_VT(&v) = VT_I4;
@@ -1021,7 +1021,7 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
                 if(FAILED(hres))
                     return hres;
 
-                hres = jsdisp_propput_idx(jsthis, i+argc, &var, ei, caller);
+                hres = jsdisp_propput_idx(jsthis, i+argc, &var, ei);
                 VariantClear(&var);
             }else if(hres == DISP_E_UNKNOWNNAME) {
                 hres = IDispatchEx_DeleteMemberByDispID(vthis->u.dispex, id);
@@ -1033,7 +1033,7 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
     }
 
     for(i=0; i<argc; i++) {
-        hres = jsdisp_propput_idx(jsthis, i, get_arg(dp,i), ei, caller);
+        hres = jsdisp_propput_idx(jsthis, i, get_arg(dp,i), ei);
         if(FAILED(hres))
             return hres;
     }
@@ -1155,7 +1155,7 @@ static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, 
             return hres;
 
         for(i=0; i < arg_cnt(dp); i++) {
-            hres = jsdisp_propput_idx(obj, i, get_arg(dp, i), ei, caller);
+            hres = jsdisp_propput_idx(obj, i, get_arg(dp, i), ei);
             if(FAILED(hres))
                 break;
         }

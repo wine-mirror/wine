@@ -1084,7 +1084,7 @@ HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, VARIANT *val)
     return VariantCopy(&prop->u.var, val);
 }
 
-HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, VARIANT *val, jsexcept_t *ei)
 {
     WCHAR buf[12];
 
