@@ -619,7 +619,7 @@ static void test_fflush( void )
   ok(ret == 0, "expected 0, got %d\n", ret);
   memset(buf2, '?', sizeof(buf2));
   fread(buf2, 1, sizeof(buf2), tempfh);
-  todo_wine ok(memcmp(buf1, buf2, sizeof(buf1)) == 0, "Got unexpected data (%c)\n", buf2[0]);
+  ok(memcmp(buf1, buf2, sizeof(buf1)) == 0, "Got unexpected data (%c)\n", buf2[0]);
 
   /* fflush(NULL) doesn't clear input buffer. */
   _lseek(_fileno(tempfh), 0, SEEK_SET);

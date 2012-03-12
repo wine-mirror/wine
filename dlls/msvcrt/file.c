@@ -792,6 +792,13 @@ int CDECL MSVCRT_fflush(MSVCRT_FILE* file)
         MSVCRT__unlock_file(file);
 
         return res;
+    } else if(file->_flag & MSVCRT__IOREAD) {
+        MSVCRT__lock_file(file);
+        file->_cnt = 0;
+        file->_ptr = file->_base;
+        MSVCRT__unlock_file(file);
+
+        return 0;
     }
     return 0;
 }
