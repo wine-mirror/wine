@@ -3016,6 +3016,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                 ERR( "invalid end frame %lx/%p\n", dispatch.EstablisherFrame, end_frame );
                 raise_status( STATUS_INVALID_UNWIND_TARGET, rec );
             }
+            if (dispatch.EstablisherFrame == (ULONG64)end_frame) rec->ExceptionFlags |= EH_TARGET_UNWIND;
             call_unwind_handler( rec, &dispatch );
         }
         else  /* hack: call builtin handlers registered in the tib list */
