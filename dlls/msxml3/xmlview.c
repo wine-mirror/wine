@@ -16,10 +16,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
 #include "config.h"
 
 #include <stdarg.h>
+
+#define COBJMACROS
+#define NONAMELESSUNION
+
 #ifdef HAVE_LIBXML2
 #include <libxml/parser.h>
 #endif
@@ -29,6 +32,7 @@
 #include "ole2.h"
 #include "msxml6.h"
 #include "mshtml.h"
+#include "mshtmhst.h"
 #include "perhist.h"
 #include "docobj.h"
 
@@ -48,7 +52,798 @@ typedef struct
     LONG ref;
 
     IUnknown *html_doc;
+    IMoniker *mon;
 } XMLView;
+
+typedef struct
+{
+    IMoniker IMoniker_iface;
+    LONG ref;
+    IMoniker *mon;
+
+    IStream *stream;
+} Moniker;
+
+typedef struct
+{
+    IBindStatusCallback IBindStatusCallback_iface;
+    LONG ref;
+    IBindStatusCallback *bsc;
+
+    IMoniker *mon;
+    IStream *stream;
+} BindStatusCallback;
+
+typedef struct
+{
+    IBinding IBinding_iface;
+    LONG ref;
+    IBinding *binding;
+} Binding;
+
+static inline Binding* impl_from_IBinding(IBinding *iface)
+{
+    return CONTAINING_RECORD(iface, Binding, IBinding_iface);
+}
+
+static HRESULT WINAPI XMLView_Binding_QueryInterface(
+        IBinding *iface, REFIID riid, void **ppvObject)
+{
+    Binding *This = impl_from_IBinding(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
+
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IBinding)) {
+        *ppvObject = iface;
+        IBinding_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppvObject = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI XMLView_Binding_AddRef(IBinding *iface)
+{
+    Binding *This = impl_from_IBinding(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI XMLView_Binding_Release(IBinding *iface)
+{
+    Binding *This = impl_from_IBinding(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if(!ref) {
+        IBinding_Release(This->binding);
+        heap_free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI XMLView_Binding_Abort(IBinding *iface)
+{
+    Binding *This = impl_from_IBinding(iface);
+    TRACE("(%p)\n", This);
+
+    return IBinding_Abort(This->binding);
+}
+
+static HRESULT WINAPI XMLView_Binding_Suspend(IBinding *iface)
+{
+    Binding *This = impl_from_IBinding(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Binding_Resume(IBinding *iface)
+{
+    Binding *This = impl_from_IBinding(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Binding_SetPriority(
+        IBinding *iface, LONG nPriority)
+{
+    Binding *This = impl_from_IBinding(iface);
+    TRACE("(%p)->(%d)\n", This, nPriority);
+
+    return IBinding_SetPriority(This->binding, nPriority);
+}
+
+static HRESULT WINAPI XMLView_Binding_GetPriority(
+        IBinding *iface, LONG *pnPriority)
+{
+    Binding *This = impl_from_IBinding(iface);
+    TRACE("(%p)->(%p)\n", This, pnPriority);
+
+    return IBinding_GetPriority(This->binding, pnPriority);
+}
+
+static HRESULT WINAPI XMLView_Binding_GetBindResult(IBinding *iface,
+        CLSID *pclsidProtocol, DWORD *pdwResult, LPOLESTR *pszResult,
+        DWORD *pdwReserved)
+{
+    Binding *This = impl_from_IBinding(iface);
+    FIXME("(%p)->(%s %p %p %p)\n", This, debugstr_guid(pclsidProtocol),
+            pdwResult, pszResult, pdwReserved);
+    return E_NOTIMPL;
+}
+
+static IBindingVtbl XMLView_BindingVtbl = {
+    XMLView_Binding_QueryInterface,
+    XMLView_Binding_AddRef,
+    XMLView_Binding_Release,
+    XMLView_Binding_Abort,
+    XMLView_Binding_Suspend,
+    XMLView_Binding_Resume,
+    XMLView_Binding_SetPriority,
+    XMLView_Binding_GetPriority,
+    XMLView_Binding_GetBindResult
+};
+
+static inline HRESULT XMLView_Binding_Create(IBinding *binding, IBinding **ret)
+{
+    Binding *bind;
+
+    bind = heap_alloc_zero(sizeof(Binding));
+    if(!bind)
+        return E_OUTOFMEMORY;
+
+    bind->IBinding_iface.lpVtbl = &XMLView_BindingVtbl;
+    bind->ref = 1;
+
+    bind->binding = binding;
+    IBinding_AddRef(binding);
+
+    *ret = &bind->IBinding_iface;
+    return S_OK;
+}
+
+static inline BindStatusCallback* impl_from_IBindStatusCallback(
+        IBindStatusCallback *iface)
+{
+    return CONTAINING_RECORD(iface, BindStatusCallback,
+            IBindStatusCallback_iface);
+}
+
+static HRESULT WINAPI XMLView_BindStatusCallback_QueryInterface(
+        IBindStatusCallback *iface, REFIID riid, void **ppvObject)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
+
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IBindStatusCallback)) {
+        *ppvObject = iface;
+        IBindStatusCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppvObject = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI XMLView_BindStatusCallback_AddRef(
+        IBindStatusCallback *iface)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI XMLView_BindStatusCallback_Release(
+        IBindStatusCallback *iface)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if(!ref) {
+        if(This->stream)
+            IStream_Release(This->stream);
+        IBindStatusCallback_Release(This->bsc);
+        IMoniker_Release(This->mon);
+        heap_free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI XMLView_BindStatusCallback_OnStartBinding(
+        IBindStatusCallback *iface, DWORD dwReserved, IBinding *pib)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    IBinding *binding;
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %p)\n", This, dwReserved, pib);
+
+    hres = XMLView_Binding_Create(pib, &binding);
+    if(FAILED(hres)) {
+        IBinding_Abort(pib);
+        return hres;
+    }
+
+    hres = IBindStatusCallback_OnStartBinding(This->bsc, dwReserved, binding);
+    if(FAILED(hres)) {
+        IBinding_Abort(binding);
+        return hres;
+    }
+
+    IBinding_Release(binding);
+    return hres;
+}
+
+static HRESULT WINAPI XMLView_BindStatusCallback_GetPriority(
+        IBindStatusCallback *iface, LONG *pnPriority)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    FIXME("(%p)->(%p)\n", This, pnPriority);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_BindStatusCallback_OnLowResource(
+        IBindStatusCallback *iface, DWORD reserved)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    FIXME("(%p)->(%x)\n", This, reserved);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_BindStatusCallback_OnProgress(
+        IBindStatusCallback *iface, ULONG ulProgress, ULONG ulProgressMax,
+        ULONG ulStatusCode, LPCWSTR szStatusText)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    TRACE("(%p)->(%d %d %x %s)\n", This, ulProgress, ulProgressMax,
+            ulStatusCode, debugstr_w(szStatusText));
+
+    switch(ulStatusCode) {
+    case BINDSTATUS_BEGINDOWNLOADDATA:
+        return IBindStatusCallback_OnProgress(This->bsc, ulProgress,
+                ulProgressMax, ulStatusCode, szStatusText);
+    case BINDSTATUS_MIMETYPEAVAILABLE:
+        return S_OK;
+    default:
+        FIXME("ulStatusCode: %d\n", ulStatusCode);
+        return E_NOTIMPL;
+    }
+}
+
+static HRESULT WINAPI XMLView_BindStatusCallback_OnStopBinding(
+        IBindStatusCallback *iface, HRESULT hresult, LPCWSTR szError)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    TRACE("(%p)->(%x %s)\n", This, hresult, debugstr_w(szError));
+    return IBindStatusCallback_OnStopBinding(This->bsc, hresult, szError);
+}
+
+static HRESULT WINAPI XMLView_BindStatusCallback_GetBindInfo(
+        IBindStatusCallback *iface, DWORD *grfBINDF, BINDINFO *pbindinfo)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    TRACE("(%p)->(%p %p)\n", This, grfBINDF, pbindinfo);
+    return IBindStatusCallback_GetBindInfo(This->bsc, grfBINDF, pbindinfo);
+}
+
+static inline HRESULT report_data(BindStatusCallback *This)
+{
+    FORMATETC formatetc = {0, NULL, 1, -1, TYMED_ISTREAM};
+    STGMEDIUM stgmedium;
+    LARGE_INTEGER off;
+    ULARGE_INTEGER size;
+    HRESULT hres;
+
+    hres = IStream_Seek(This->stream, off, STREAM_SEEK_CUR, &size);
+    if(FAILED(hres))
+        return hres;
+
+    off.QuadPart = 0;
+    hres = IStream_Seek(This->stream, off, STREAM_SEEK_SET, NULL);
+    if(FAILED(hres))
+        return hres;
+
+    stgmedium.tymed = TYMED_ISTREAM;
+    stgmedium.u.pstm = This->stream;
+    stgmedium.pUnkForRelease = NULL;
+
+    hres = IBindStatusCallback_OnDataAvailable(This->bsc,
+            BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION,
+            size.u.LowPart, &formatetc, &stgmedium);
+
+    IStream_Release(This->stream);
+    This->stream = NULL;
+    return hres;
+}
+
+static inline HRESULT display_error_page(BindStatusCallback *This)
+{
+    FIXME("Error page not implemented yet.\n");
+    return report_data(This);
+}
+
+static inline HRESULT handle_xml_load(BindStatusCallback *This)
+{
+    static const WCHAR selectW[] = {'p','r','o','c','e','s','s','i','n','g','-',
+        'i','n','s','t','r','u','c','t','i','o','n','(','\'','x','m','l',
+        '-','s','t','y','l','e','s','h','e','e','t','\'',')',0};
+    static const WCHAR hrefW[] = {'h','r','e','f','=',0};
+
+    IXMLDOMDocument3 *xml = NULL, *xsl = NULL;
+    IXMLDOMNode *stylesheet;
+    IBindCtx *pbc;
+    IMoniker *mon;
+    LPOLESTR xsl_url;
+    LARGE_INTEGER off;
+    VARIANT_BOOL succ;
+    VARIANT var;
+    WCHAR *href = NULL, *p;
+    BSTR bstr;
+    HRESULT hres;
+
+    off.QuadPart = 0;
+    hres = IStream_Seek(This->stream, off, STREAM_SEEK_SET, NULL);
+    if(FAILED(hres))
+        return display_error_page(This);
+
+    hres = DOMDocument_create(MSXML_DEFAULT, NULL, (void**)&xml);
+    if(FAILED(hres))
+        return display_error_page(This);
+
+    V_VT(&var) = VT_UNKNOWN;
+    V_UNKNOWN(&var) = (IUnknown*)This->stream;
+    hres = IXMLDOMDocument3_load(xml, var, &succ);
+    if(FAILED(hres) || !succ) {
+        IXMLDOMDocument3_Release(xml);
+        return display_error_page(This);
+    }
+    V_VT(&var) = VT_EMPTY;
+
+    bstr = SysAllocString(selectW);
+    hres = IXMLDOMDocument3_selectSingleNode(xml, bstr, &stylesheet);
+    SysFreeString(bstr);
+    if(hres != S_OK) {
+        IXMLDOMDocument3_Release(xml);
+        return display_error_page(This);
+    }
+
+    hres = IXMLDOMNode_get_nodeValue(stylesheet, &var);
+    IXMLDOMNode_Release(stylesheet);
+    if(SUCCEEDED(hres) && V_VT(&var)!=VT_BSTR) {
+        FIXME("Variant type %d not supported\n", V_VT(&var));
+        VariantClear(&var);
+        hres = E_FAIL;
+    }
+    if(FAILED(hres)) {
+        IXMLDOMDocument3_Release(xml);
+        return display_error_page(This);
+    }
+
+    /* TODO: fix parsing processing instruction value */
+    if((p = strstrW(V_BSTR(&var), hrefW))) {
+        p += sizeof(hrefW)/sizeof(WCHAR)-1;
+        if(*p!='\'' && *p!='\"') p = NULL;
+        else {
+            href = p+1;
+            p = strchrW(href, *p);
+        }
+    }
+    if(p) {
+        *p = 0;
+    } else {
+        VariantClear(&var);
+        IXMLDOMDocument3_Release(xml);
+        return display_error_page(This);
+    }
+
+    hres = CreateURLMonikerEx(This->mon, href, &mon, 0);
+    VariantClear(&var);
+    if(FAILED(hres)) {
+        IXMLDOMDocument3_Release(xml);
+        return display_error_page(This);
+    }
+
+    hres = CreateBindCtx(0, &pbc);
+    if(SUCCEEDED(hres)) {
+        hres = IMoniker_GetDisplayName(mon, pbc, NULL, &xsl_url);
+        IMoniker_Release(mon);
+        IBindCtx_Release(pbc);
+    }
+    if(FAILED(hres)) {
+        IXMLDOMDocument3_Release(xml);
+        return display_error_page(This);
+    }
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(xsl_url);
+    CoTaskMemFree(xsl_url);
+    if(!V_BSTR(&var)) {
+        IXMLDOMDocument3_Release(xml);
+        return display_error_page(This);
+    }
+
+    hres = DOMDocument_create(MSXML_DEFAULT, NULL, (void**)&xsl);
+    if(FAILED(hres)) {
+        VariantClear(&var);
+        IXMLDOMDocument3_Release(xml);
+        return display_error_page(This);
+    }
+
+    /* TODO: do the binding asynchronously */
+    hres = IXMLDOMDocument3_load(xsl, var, &succ);
+    VariantClear(&var);
+    if(FAILED(hres) || !succ) {
+        IXMLDOMDocument3_Release(xsl);
+        IXMLDOMDocument3_Release(xml);
+        return display_error_page(This);
+    }
+
+    hres = IXMLDOMDocument_transformNode(xml, (IXMLDOMNode*)xsl, &bstr);
+    IXMLDOMDocument3_Release(xsl);
+    IXMLDOMDocument3_Release(xml);
+    if(FAILED(hres))
+        return display_error_page(This);
+
+    hres = IStream_Seek(This->stream, off, STREAM_SEEK_SET, NULL);
+    if(FAILED(hres)) {
+        SysFreeString(bstr);
+        return display_error_page(This);
+    }
+
+    hres = IStream_Write(This->stream, (BYTE*)bstr,
+            SysStringLen(bstr)*sizeof(WCHAR), NULL);
+    SysFreeString(bstr);
+    if(FAILED(hres))
+        return display_error_page(This);
+
+    return report_data(This);
+}
+
+static HRESULT WINAPI XMLView_BindStatusCallback_OnDataAvailable(
+        IBindStatusCallback *iface, DWORD grfBSCF, DWORD dwSize,
+        FORMATETC *pformatetc, STGMEDIUM *pstgmed)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    char buf[1024];
+    DWORD size;
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %d %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+
+    if(!This->stream)
+        return E_FAIL;
+
+    do {
+        hres = IStream_Read(pstgmed->u.pstm, buf, sizeof(buf), &size);
+        IStream_Write(This->stream, buf, size, &size);
+    } while(hres==S_OK && size);
+
+    if(FAILED(hres) && hres!=E_PENDING)
+        return hres;
+    if(hres != S_FALSE)
+        return S_OK;
+
+    return handle_xml_load(This);
+}
+
+static HRESULT WINAPI XMLView_BindStatusCallback_OnObjectAvailable(
+        IBindStatusCallback *iface, REFIID riid, IUnknown *punk)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), punk);
+    return E_NOTIMPL;
+}
+
+static IBindStatusCallbackVtbl XMLView_BindStatusCallbackVtbl = {
+    XMLView_BindStatusCallback_QueryInterface,
+    XMLView_BindStatusCallback_AddRef,
+    XMLView_BindStatusCallback_Release,
+    XMLView_BindStatusCallback_OnStartBinding,
+    XMLView_BindStatusCallback_GetPriority,
+    XMLView_BindStatusCallback_OnLowResource,
+    XMLView_BindStatusCallback_OnProgress,
+    XMLView_BindStatusCallback_OnStopBinding,
+    XMLView_BindStatusCallback_GetBindInfo,
+    XMLView_BindStatusCallback_OnDataAvailable,
+    XMLView_BindStatusCallback_OnObjectAvailable
+};
+
+static inline HRESULT XMLView_BindStatusCallback_Create(IBindStatusCallback *bsc_html,
+        IMoniker *mon, IStream *stream, IBindStatusCallback **ret)
+{
+    BindStatusCallback *bsc;
+
+    bsc = heap_alloc_zero(sizeof(BindStatusCallback));
+    if(!bsc)
+        return E_OUTOFMEMORY;
+
+    bsc->IBindStatusCallback_iface.lpVtbl = &XMLView_BindStatusCallbackVtbl;
+    bsc->ref = 1;
+
+    bsc->bsc = bsc_html;
+    IBindStatusCallback_AddRef(bsc_html);
+    bsc->stream = stream;
+    IStream_AddRef(bsc->stream);
+    bsc->mon = mon;
+    IMoniker_AddRef(mon);
+
+    *ret = &bsc->IBindStatusCallback_iface;
+    return S_OK;
+}
+
+static inline Moniker* impl_from_IMoniker(IMoniker *iface)
+{
+    return CONTAINING_RECORD(iface, Moniker, IMoniker_iface);
+}
+
+static HRESULT WINAPI XMLView_Moniker_QueryInterface(
+        IMoniker *iface, REFIID riid, void **ppvObject)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
+
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IPersist)
+            || IsEqualGUID(riid, &IID_IPersistStream) || IsEqualGUID(riid, &IID_IMoniker)) {
+        *ppvObject = iface;
+        IMoniker_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppvObject = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI XMLView_Moniker_AddRef(IMoniker *iface)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI XMLView_Moniker_Release(IMoniker *iface)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if(!ref) {
+        IMoniker_Release(This->mon);
+        heap_free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI XMLView_Moniker_GetClassID(IMoniker *iface, CLSID *pClassID)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p)\n", This, pClassID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_IsDirty(IMoniker *iface)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_Load(IMoniker *iface, IStream *pStm)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p)\n", This, pStm);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_Save(IMoniker *iface,
+        IStream *pStm, BOOL fClearDirty)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p %x)\n", This, pStm, fClearDirty);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_GetSizeMax(
+        IMoniker *iface, ULARGE_INTEGER *pcbSize)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p)\n", This, pcbSize);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_BindToObject(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *pmkToLeft, REFIID riidResult, void **ppvResult)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p %p %s %p)\n", This, pbc, pmkToLeft,
+            debugstr_guid(riidResult), ppvResult);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *pmkToLeft, REFIID riid, void **ppvObj)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+
+    TRACE("(%p)->(%p %p %s %p)\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppvObj);
+
+    if(IsEqualGUID(riid, &IID_IStream)) {
+        if(!This->stream)
+            return E_FAIL;
+
+        *ppvObj = This->stream;
+        This->stream = NULL;
+        return S_ASYNCHRONOUS;
+    }
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_Reduce(IMoniker *iface, IBindCtx *pbc,
+        DWORD dwReduceHowFar, IMoniker **ppmkToLeft, IMoniker **ppmkReduced)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p %d %p %p)\n", This, pbc, dwReduceHowFar, ppmkToLeft, ppmkReduced);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_ComposeWith(IMoniker *iface, IMoniker *pmkRight,
+        BOOL fOnlyIfNotGeneric, IMoniker **ppmkComposite)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p %x %p)\n", This, pmkRight, fOnlyIfNotGeneric, ppmkComposite);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_Enum(IMoniker *iface,
+        BOOL fForward, IEnumMoniker **ppenumMoniker)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%x %p)\n", This, fForward, ppenumMoniker);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_IsEqual(IMoniker *iface,
+        IMoniker *pmkOtherMoniker)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p)\n", This, pmkOtherMoniker);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_Hash(IMoniker *iface, DWORD *pdwHash)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p)\n", This, pdwHash);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_IsRunning(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *pmkToLeft, IMoniker *pmkNewlyRunning)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p %p %p)\n", This, pbc, pmkToLeft, pmkNewlyRunning);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_GetTimeOfLastChange(IMoniker *iface,
+        IBindCtx *pbc, IMoniker *pmkToLeft, FILETIME *pFileTime)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p %p %p)\n", This, pbc, pmkToLeft, pFileTime);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_Inverse(IMoniker *iface, IMoniker **ppmk)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p)\n", This, ppmk);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_CommonPrefixWith(IMoniker *iface,
+        IMoniker *pmkOther, IMoniker **ppmkPrefix)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p %p)\n", This, pmkOther, ppmkPrefix);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_RelativePathTo(IMoniker *iface,
+        IMoniker *pmkOther, IMoniker **ppmkRelPath)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p %p)\n", This, pmkOther, ppmkRelPath);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_GetDisplayName(IMoniker *iface,
+        IBindCtx *pbc, IMoniker *pmkToLeft, LPOLESTR *ppszDisplayName)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    TRACE("(%p)->(%p %p %p)\n", This, pbc, pmkToLeft, ppszDisplayName);
+    return IMoniker_GetDisplayName(This->mon, pbc, pmkToLeft, ppszDisplayName);
+}
+
+static HRESULT WINAPI XMLView_Moniker_ParseDisplayName(IMoniker *iface,
+        IBindCtx *pbc, IMoniker *pmkToLeft, LPOLESTR pszDisplayName,
+        ULONG *pchEaten, IMoniker **ppmkOut)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p %p %s %p %p)\n", This, pbc, pmkToLeft,
+            debugstr_w(pszDisplayName), pchEaten, ppmkOut);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XMLView_Moniker_IsSystemMoniker(
+        IMoniker *iface, DWORD *pdwMksys)
+{
+    Moniker *This = impl_from_IMoniker(iface);
+    FIXME("(%p)->(%p)\n", This, pdwMksys);
+    return E_NOTIMPL;
+}
+
+static IMonikerVtbl XMLView_MonikerVtbl = {
+    XMLView_Moniker_QueryInterface,
+    XMLView_Moniker_AddRef,
+    XMLView_Moniker_Release,
+    XMLView_Moniker_GetClassID,
+    XMLView_Moniker_IsDirty,
+    XMLView_Moniker_Load,
+    XMLView_Moniker_Save,
+    XMLView_Moniker_GetSizeMax,
+    XMLView_Moniker_BindToObject,
+    XMLView_Moniker_BindToStorage,
+    XMLView_Moniker_Reduce,
+    XMLView_Moniker_ComposeWith,
+    XMLView_Moniker_Enum,
+    XMLView_Moniker_IsEqual,
+    XMLView_Moniker_Hash,
+    XMLView_Moniker_IsRunning,
+    XMLView_Moniker_GetTimeOfLastChange,
+    XMLView_Moniker_Inverse,
+    XMLView_Moniker_CommonPrefixWith,
+    XMLView_Moniker_RelativePathTo,
+    XMLView_Moniker_GetDisplayName,
+    XMLView_Moniker_ParseDisplayName,
+    XMLView_Moniker_IsSystemMoniker
+};
+
+static inline HRESULT XMLView_Moniker_Create(IMoniker *mon,
+        IStream *stream, IMoniker **ret)
+{
+    Moniker *wrap;
+
+    wrap = heap_alloc_zero(sizeof(Moniker));
+    if(!wrap)
+        return E_OUTOFMEMORY;
+
+    wrap->IMoniker_iface.lpVtbl = &XMLView_MonikerVtbl;
+    wrap->ref = 1;
+
+    wrap->mon = mon;
+    IMoniker_AddRef(mon);
+    wrap->stream = stream;
+    IStream_AddRef(stream);
+
+    *ret = &wrap->IMoniker_iface;
+    return S_OK;
+}
 
 static inline XMLView* impl_from_IPersistMoniker(IPersistMoniker *iface)
 {
@@ -96,6 +891,8 @@ static ULONG WINAPI XMLView_PersistMoniker_Release(IPersistMoniker *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if(!ref) {
+        if(This->mon)
+            IMoniker_Release(This->mon);
         IUnknown_Release(This->html_doc);
         heap_free(This);
     }
@@ -120,9 +917,131 @@ static HRESULT WINAPI XMLView_PersistMoniker_IsDirty(IPersistMoniker *iface)
 static HRESULT WINAPI XMLView_PersistMoniker_Load(IPersistMoniker *iface,
         BOOL fFullyAvailable, IMoniker *pimkName, LPBC pibc, DWORD grfMode)
 {
+    static const WCHAR XSLParametersW[] = {'X','S','L','P','a','r','a','m','e','t','e','r','s',0};
+    static const WCHAR XMLBufferStreamW[] = {'X','M','L','B','u','f','f','e','r','S','t','r','e','a','m',0};
+    static const WCHAR DWNBINDINFOW[] = {'_','_','D','W','N','B','I','N','D','I','N','F','O',0};
+    static const WCHAR HTMLLOADOPTIONSW[] = {'_','_','H','T','M','L','L','O','A','D','O','P','T','I','O','N','S',0};
+    static const WCHAR BSCBHolderW[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
+
     XMLView *This = impl_from_IPersistMoniker(iface);
-    FIXME("(%p)->(%x %p %p %x)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
-    return E_NOTIMPL;
+    IPersistMoniker *html_persist_mon;
+    IBindStatusCallback *bsc, *bsc_html;
+    IBindCtx *bindctx;
+    IStream *stream;
+    IMoniker *mon;
+    IUnknown *unk;
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %p %p %x)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
+
+    hres = IBindCtx_GetObjectParam(pibc, (LPOLESTR)XSLParametersW, &unk);
+    if(SUCCEEDED(hres)) {
+        FIXME("ignoring XSLParameters\n");
+        IUnknown_Release(unk);
+    }
+    hres = IBindCtx_GetObjectParam(pibc, (LPOLESTR)XMLBufferStreamW, &unk);
+    if(SUCCEEDED(hres)) {
+        FIXME("ignoring XMLBufferStream\n");
+        IUnknown_Release(unk);
+    }
+
+    hres = CreateBindCtx(0, &bindctx);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IBindCtx_GetObjectParam(pibc, (LPOLESTR)DWNBINDINFOW, &unk);
+    if(SUCCEEDED(hres)) {
+        IBindCtx_RegisterObjectParam(bindctx, (LPOLESTR)DWNBINDINFOW, unk);
+        IUnknown_Release(unk);
+    }
+    hres = IBindCtx_GetObjectParam(pibc, (LPOLESTR)HTMLLOADOPTIONSW, &unk);
+    if(SUCCEEDED(hres)) {
+        IBindCtx_RegisterObjectParam(bindctx, (LPOLESTR)HTMLLOADOPTIONSW, unk);
+        IUnknown_Release(unk);
+    }
+    hres = IBindCtx_GetObjectParam(pibc, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM, &unk);
+    if(SUCCEEDED(hres)) {
+        IBindCtx_RegisterObjectParam(bindctx, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM, unk);
+        IUnknown_Release(unk);
+    }
+
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    if(FAILED(hres)) {
+        IBindCtx_Release(bindctx);
+        return hres;
+    }
+
+    if(This->mon)
+        IMoniker_Release(This->mon);
+    This->mon = pimkName;
+    IMoniker_AddRef(This->mon);
+
+    hres = XMLView_Moniker_Create(This->mon, stream, &mon);
+    if(FAILED(hres)) {
+        IStream_Release(stream);
+        IBindCtx_Release(bindctx);
+        return hres;
+    }
+
+    hres = IUnknown_QueryInterface(This->html_doc,
+            &IID_IPersistMoniker, (void**)&html_persist_mon);
+    if(FAILED(hres)) {
+        IMoniker_Release(mon);
+        IStream_Release(stream);
+        IBindCtx_Release(bindctx);
+        return hres;
+    }
+
+    hres = IPersistMoniker_Load(html_persist_mon, FALSE, mon, bindctx, 0);
+    IPersistMoniker_Release(html_persist_mon);
+    IMoniker_Release(mon);
+    if(FAILED(hres)) {
+        IStream_Release(stream);
+        IBindCtx_Release(bindctx);
+        return hres;
+    }
+
+    hres = IBindCtx_GetObjectParam(bindctx, (LPOLESTR)BSCBHolderW, &unk);
+    IBindCtx_Release(bindctx);
+    if(FAILED(hres)) {
+        IStream_Release(stream);
+        return hres;
+    }
+    hres = IUnknown_QueryInterface(unk, &IID_IBindStatusCallback, (void**)&bsc_html);
+    IUnknown_Release(unk);
+    if(FAILED(hres)) {
+        IStream_Release(stream);
+        return hres;
+    }
+
+    hres = XMLView_BindStatusCallback_Create(bsc_html, This->mon, stream, &bsc);
+    IStream_Release(stream);
+    if(FAILED(hres)) {
+        IBindStatusCallback_OnStopBinding(bsc_html, hres, NULL);
+        IBindStatusCallback_Release(bsc_html);
+        return hres;
+    }
+
+    hres = RegisterBindStatusCallback(pibc, bsc, NULL, 0);
+    IBindStatusCallback_Release(bsc);
+    if(FAILED(hres)) {
+        IBindStatusCallback_OnStopBinding(bsc_html, hres, NULL);
+        IBindStatusCallback_Release(bsc_html);
+        return hres;
+    }
+
+    hres = IMoniker_BindToStorage(pimkName, pibc, NULL,
+            &IID_IStream, (void**)&stream);
+    if(FAILED(hres)) {
+        IBindStatusCallback_OnStopBinding(bsc_html, hres, NULL);
+        IBindStatusCallback_Release(bsc_html);
+        return hres;
+    }
+
+    if(stream)
+        IStream_Release(stream);
+    IBindStatusCallback_Release(bsc_html);
+    return S_OK;
 }
 
 static HRESULT WINAPI XMLView_PersistMoniker_Save(IPersistMoniker *iface,
@@ -503,6 +1422,7 @@ static IOleObjectVtbl XMLView_OleObjectVtbl = {
     XMLView_OleObject_SetColorScheme
 };
 
+#ifdef HAVE_LIBXML2
 HRESULT XMLView_create(IUnknown *outer, void **ppObj)
 {
     XMLView *This;
@@ -513,7 +1433,7 @@ HRESULT XMLView_create(IUnknown *outer, void **ppObj)
     if(outer)
         return E_FAIL;
 
-    This = heap_alloc(sizeof(*This));
+    This = heap_alloc_zero(sizeof(*This));
     if(!This)
         return E_OUTOFMEMORY;
 
@@ -533,3 +1453,11 @@ HRESULT XMLView_create(IUnknown *outer, void **ppObj)
     *ppObj = &This->IPersistMoniker_iface;
     return S_OK;
 }
+#else
+HRESULT XMLView_create(IUnknown *outer, void **ppObj)
+{
+    MESSAGE("This program tried to use a XMLView object, but\n"
+            "libxml2 support was not present at compile time.\n");
+    return E_NOTIMPL;
+}
+#endif

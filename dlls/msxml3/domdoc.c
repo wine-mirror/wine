@@ -1996,9 +1996,8 @@ static HRESULT domdoc_onDataAvailable(void *obj, char *ptr, DWORD len)
     return S_OK;
 }
 
-HRESULT domdoc_load_moniker(IXMLDOMDocument3 *iface, IMoniker *mon)
+static HRESULT domdoc_load_moniker(domdoc *This, IMoniker *mon)
 {
-    domdoc *This = impl_from_IXMLDOMDocument3(iface);
     bsc_t *bsc;
     HRESULT hr;
 
@@ -2151,7 +2150,7 @@ static HRESULT WINAPI domdoc_load(
         hr = create_moniker_from_url( filename, &mon);
         if ( SUCCEEDED(hr) )
         {
-            hr = domdoc_load_moniker( iface, mon );
+            hr = domdoc_load_moniker( This, mon );
             IMoniker_Release(mon);
         }
 
