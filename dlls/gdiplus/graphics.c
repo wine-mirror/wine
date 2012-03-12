@@ -2000,47 +2000,19 @@ GpStatus WINGDIPAPI GdipCreateFromHWNDICM(HWND hwnd, GpGraphics **graphics)
 GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
     GpMetafile **metafile)
 {
-    static int calls;
+    IStream *stream = NULL;
+    UINT read;
+    ENHMETAHEADER *copy;
+    GpStatus retval = Ok;
 
     TRACE("(%p,%i,%p)\n", hemf, delete, metafile);
 
     if(!hemf || !metafile)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
-
-    return NotImplemented;
-}
-
-GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
-    GDIPCONST WmfPlaceableFileHeader * placeable, GpMetafile **metafile)
-{
-    IStream *stream = NULL;
-    UINT read;
-    BYTE* copy;
-    HENHMETAFILE hemf;
-    GpStatus retval = Ok;
-
-    TRACE("(%p, %d, %p, %p)\n", hwmf, delete, placeable, metafile);
-
-    if(!hwmf || !metafile || !placeable)
-        return InvalidParameter;
-
-    *metafile = NULL;
-    read = GetMetaFileBitsEx(hwmf, 0, NULL);
-    if(!read)
-        return GenericError;
-    copy = GdipAlloc(read);
-    GetMetaFileBitsEx(hwmf, read, copy);
-
-    hemf = SetWinMetaFileBits(read, copy, NULL, NULL);
-    GdipFree(copy);
-
     read = GetEnhMetaFileBits(hemf, 0, NULL);
     copy = GdipAlloc(read);
-    GetEnhMetaFileBits(hemf, read, copy);
-    DeleteEnhMetaFile(hemf);
+    GetEnhMetaFileBits(hemf, read, (BYTE *)copy);
 
     if(CreateStreamOnHGlobal(copy, TRUE, &stream) != S_OK){
         ERR("could not make stream\n");
@@ -2069,18 +2041,16 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
     (*metafile)->image.palette_count = 0;
     (*metafile)->image.palette_size = 0;
     (*metafile)->image.palette_entries = NULL;
-    (*metafile)->image.xres = (REAL)placeable->Inch;
-    (*metafile)->image.yres = (REAL)placeable->Inch;
-    (*metafile)->bounds.X = ((REAL) placeable->BoundingBox.Left) / ((REAL) placeable->Inch);
-    (*metafile)->bounds.Y = ((REAL) placeable->BoundingBox.Top) / ((REAL) placeable->Inch);
-    (*metafile)->bounds.Width = ((REAL) (placeable->BoundingBox.Right
-                    - placeable->BoundingBox.Left));
-    (*metafile)->bounds.Height = ((REAL) (placeable->BoundingBox.Bottom
-                   - placeable->BoundingBox.Top));
+    (*metafile)->image.xres = (REAL)copy->szlDevice.cx;
+    (*metafile)->image.yres = (REAL)copy->szlDevice.cy;
+    (*metafile)->bounds.X = (REAL)copy->rclBounds.left;
+    (*metafile)->bounds.Y = (REAL)copy->rclBounds.top;
+    (*metafile)->bounds.Width = (REAL)(copy->rclBounds.right - copy->rclBounds.left);
+    (*metafile)->bounds.Height = (REAL)(copy->rclBounds.bottom - copy->rclBounds.top);
     (*metafile)->unit = UnitPixel;
 
     if(delete)
-        DeleteMetaFile(hwmf);
+        DeleteEnhMetaFile(hemf);
 
     TRACE("<-- %p\n", *metafile);
 
@@ -2088,6 +2058,47 @@ err:
     if (retval != Ok)
         GdipFree(*metafile);
     IStream_Release(stream);
+    return retval;
+}
+
+GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
+    GDIPCONST WmfPlaceableFileHeader * placeable, GpMetafile **metafile)
+{
+    UINT read;
+    BYTE *copy;
+    HENHMETAFILE hemf;
+    GpStatus retval = Ok;
+
+    TRACE("(%p, %d, %p, %p)\n", hwmf, delete, placeable, metafile);
+
+    if(!hwmf || !metafile || !placeable)
+        return InvalidParameter;
+
+    *metafile = NULL;
+    read = GetMetaFileBitsEx(hwmf, 0, NULL);
+    if(!read)
+        return GenericError;
+    copy = GdipAlloc(read);
+    GetMetaFileBitsEx(hwmf, read, copy);
+
+    hemf = SetWinMetaFileBits(read, copy, NULL, NULL);
+    GdipFree(copy);
+
+    retval = GdipCreateMetafileFromEmf(hemf, FALSE, metafile);
+
+    if (retval == Ok)
+    {
+        (*metafile)->image.xres = (REAL)placeable->Inch;
+        (*metafile)->image.yres = (REAL)placeable->Inch;
+        (*metafile)->bounds.X = ((REAL)placeable->BoundingBox.Left) / ((REAL)placeable->Inch);
+        (*metafile)->bounds.Y = ((REAL)placeable->BoundingBox.Top) / ((REAL)placeable->Inch);
+        (*metafile)->bounds.Width = (REAL)(placeable->BoundingBox.Right -
+                                           placeable->BoundingBox.Left);
+        (*metafile)->bounds.Height = (REAL)(placeable->BoundingBox.Bottom -
+                                            placeable->BoundingBox.Top);
+
+        if (delete) DeleteMetaFile(hwmf);
+    }
     return retval;
 }
 
