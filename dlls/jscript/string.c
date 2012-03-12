@@ -711,7 +711,7 @@ static HRESULT strbuf_append(strbuf_t *buf, const WCHAR *str, DWORD len)
 }
 
 static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, const WCHAR *str, match_result_t *match,
-        match_result_t *parens, DWORD parens_cnt, BSTR *ret, jsexcept_t *ei, IServiceProvider *caller)
+        match_result_t *parens, DWORD parens_cnt, BSTR *ret, jsexcept_t *ei)
 {
     DISPPARAMS dp = {NULL, NULL, 0, 0};
     VARIANTARG *args, *arg;
@@ -755,7 +755,7 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, const WCHAR *str, mat
     }
 
     if(SUCCEEDED(hres))
-        hres = jsdisp_call_value(func, DISPATCH_METHOD, &dp, &var, ei, caller);
+        hres = jsdisp_call_value(func, DISPATCH_METHOD, &dp, &var, ei);
 
     for(i=0; i < parens_cnt+3; i++) {
         if(i != parens_cnt+1)
@@ -884,7 +884,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
             if(rep_func) {
                 BSTR cstr;
 
-                hres = rep_call(ctx, rep_func, str, &match, parens, parens_cnt, &cstr, ei, caller);
+                hres = rep_call(ctx, rep_func, str, &match, parens, parens_cnt, &cstr, ei);
                 if(FAILED(hres))
                     break;
 

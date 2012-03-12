@@ -648,8 +648,7 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPA
     return S_OK;
 }
 
-static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, VARIANT *v1, VARIANT *v2, jsexcept_t *ei,
-        IServiceProvider *caller, INT *cmp)
+static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, VARIANT *v1, VARIANT *v2, jsexcept_t *ei, INT *cmp)
 {
     HRESULT hres;
 
@@ -662,7 +661,7 @@ static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, VARIANT *v1, VARI
         args[0] = *v2;
         args[1] = *v1;
 
-        hres = jsdisp_call_value(cmp_func, DISPATCH_METHOD, &dp, &res, ei, caller);
+        hres = jsdisp_call_value(cmp_func, DISPATCH_METHOD, &dp, &res, ei);
         if(FAILED(hres))
             return hres;
 
@@ -786,7 +785,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPAR
             sorttab[i] = vtab+i;
 
         for(i=0; i < length/2; i++) {
-            hres = sort_cmp(ctx, cmp_func, sorttab[2*i+1], sorttab[2*i], ei, caller, &cmp);
+            hres = sort_cmp(ctx, cmp_func, sorttab[2*i+1], sorttab[2*i], ei, &cmp);
             if(FAILED(hres))
                 break;
 
@@ -811,7 +810,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPAR
                     memcpy(tmpbuf, sorttab+i, k*sizeof(VARIANT*));
 
                     while(a < k && b < bend) {
-                        hres = sort_cmp(ctx, cmp_func, tmpbuf[a], sorttab[i+k+b], ei, caller, &cmp);
+                        hres = sort_cmp(ctx, cmp_func, tmpbuf[a], sorttab[i+k+b], ei, &cmp);
                         if(FAILED(hres))
                             break;
 

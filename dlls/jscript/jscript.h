@@ -207,7 +207,7 @@ HRESULT init_dispex(jsdisp_t*,script_ctx_t*,const builtin_info_t*,jsdisp_t*) DEC
 HRESULT init_dispex_from_constr(jsdisp_t*,script_ctx_t*,const builtin_info_t*,jsdisp_t*) DECLSPEC_HIDDEN;
 
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
-HRESULT jsdisp_call_value(jsdisp_t*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_call_value(jsdisp_t*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_call(jsdisp_t*,DISPID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_call_name(jsdisp_t*,const WCHAR*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*) DECLSPEC_HIDDEN;
 HRESULT disp_propget(script_ctx_t*,IDispatch*,DISPID,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;

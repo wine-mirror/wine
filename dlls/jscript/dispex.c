@@ -979,14 +979,13 @@ HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *
     return DISP_E_UNKNOWNNAME;
 }
 
-HRESULT jsdisp_call_value(jsdisp_t *jsthis, WORD flags, DISPPARAMS *dp, VARIANT *retv,
-        jsexcept_t *ei, IServiceProvider *caller)
+HRESULT jsdisp_call_value(jsdisp_t *jsthis, WORD flags, DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei)
 {
     vdisp_t vdisp;
     HRESULT hres;
 
     set_jsdisp(&vdisp, jsthis);
-    hres = jsthis->builtin_info->value_prop.invoke(jsthis->ctx, &vdisp, flags, dp, retv, ei, caller);
+    hres = jsthis->builtin_info->value_prop.invoke(jsthis->ctx, &vdisp, flags, dp, retv, ei, NULL);
     vdisp_release(&vdisp);
     return hres;
 }
