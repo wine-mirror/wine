@@ -35,6 +35,8 @@ static HANDLE (WINAPI *pCreateWaitableTimerA)(SECURITY_ATTRIBUTES*,BOOL,LPCSTR);
 static BOOL   (WINAPI *pDeleteTimerQueueEx)(HANDLE, HANDLE);
 static BOOL   (WINAPI *pDeleteTimerQueueTimer)(HANDLE, HANDLE, HANDLE);
 static HANDLE (WINAPI *pOpenWaitableTimerA)(DWORD,BOOL,LPCSTR);
+static HANDLE (WINAPI *pCreateMemoryResourceNotification)(MEMORY_RESOURCE_NOTIFICATION_TYPE);
+static BOOL   (WINAPI *pQueryMemoryResourceNotification)(HANDLE, PBOOL);
 
 static void test_signalandwait(void)
 {
@@ -300,6 +302,8 @@ static void test_event(void)
     SECURITY_ATTRIBUTES sa;
     SECURITY_DESCRIPTOR sd;
     ACL acl;
+    DWORD ret;
+    BOOL val;
 
     /* no sd */
     handle = CreateEventA(NULL, FALSE, FALSE, __FILE__ ": Test Event");
@@ -359,6 +363,39 @@ static void test_event(void)
     ok( !handle2, "OpenEvent succeeded\n");
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
+    CloseHandle( handle );
+
+    /* resource notifications are events too */
+
+    if (!pCreateMemoryResourceNotification || !pQueryMemoryResourceNotification)
+    {
+        trace( "memory resource notifications not supported\n" );
+        return;
+    }
+    handle = pCreateMemoryResourceNotification( HighMemoryResourceNotification + 1 );
+    ok( !handle, "CreateMemoryResourceNotification succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    ret = pQueryMemoryResourceNotification( handle, &val );
+    ok( !ret, "QueryMemoryResourceNotification succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    handle = pCreateMemoryResourceNotification( LowMemoryResourceNotification );
+    ok( handle != 0, "CreateMemoryResourceNotification failed err %u\n", GetLastError() );
+    ret = WaitForSingleObject( handle, 10 );
+    ok( ret == WAIT_OBJECT_0 || ret == WAIT_TIMEOUT, "WaitForSingleObject wrong ret %u\n", ret );
+
+    val = ~0;
+    ret = pQueryMemoryResourceNotification( handle, &val );
+    ok( ret, "QueryMemoryResourceNotification failed err %u\n", GetLastError() );
+    ok( val == FALSE || val == TRUE, "wrong value %u\n", val );
+    ret = CloseHandle( handle );
+    ok( ret, "CloseHandle failed err %u\n", GetLastError() );
+
+    handle = CreateEventA(NULL, FALSE, FALSE, __FILE__ ": Test Event");
+    val = ~0;
+    ret = pQueryMemoryResourceNotification( handle, &val );
+    ok( ret, "QueryMemoryResourceNotification failed err %u\n", GetLastError() );
+    ok( val == FALSE || val == TRUE, "wrong value %u\n", val );
     CloseHandle( handle );
 }
 
@@ -1074,6 +1111,8 @@ START_TEST(sync)
     pDeleteTimerQueueEx = (void*)GetProcAddress(hdll, "DeleteTimerQueueEx");
     pDeleteTimerQueueTimer = (void*)GetProcAddress(hdll, "DeleteTimerQueueTimer");
     pOpenWaitableTimerA = (void*)GetProcAddress(hdll, "OpenWaitableTimerA");
+    pCreateMemoryResourceNotification = (void *)GetProcAddress(hdll, "CreateMemoryResourceNotification");
+    pQueryMemoryResourceNotification = (void *)GetProcAddress(hdll, "QueryMemoryResourceNotification");
 
     test_signalandwait();
     test_mutex();
