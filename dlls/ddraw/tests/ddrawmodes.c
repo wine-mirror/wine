@@ -624,7 +624,7 @@ static void testsurface(void)
     SetBkColor(hdc, RGB(0, 0, 255));
     SetTextColor(hdc, RGB(255, 255, 0));
     TextOut(hdc, 0, 0, testMsg, lstrlen(testMsg));
-    IDirectDrawSurface_ReleaseDC(lpDDSBack, hdc);
+    rc = IDirectDrawSurface_ReleaseDC(lpDDSBack, hdc);
     ok(rc==DD_OK, "IDirectDrawSurface_ReleaseDC returned: %x\n",rc);
 
     while (1)

@@ -2947,7 +2947,7 @@ static void PaletteTest(void)
     if (FAILED(hr)) goto err;
     /* Read back the palette and verify the entries. Without DDPCAPS_ALLOW256 set
     /  entry 0 and 255 should have been overwritten with black and white */
-    IDirectDrawPalette_GetEntries(palette , 0, 0, 256, &palEntries[0]);
+    hr = IDirectDrawPalette_GetEntries(palette , 0, 0, 256, &palEntries[0]);
     ok(hr == DD_OK, "GetEntries failed with %08x\n", hr);
     if(hr == DD_OK)
     {
@@ -2967,9 +2967,9 @@ static void PaletteTest(void)
 
     /* CreatePalette without DDPCAPS_ALLOW256 ignores entry 0 and 255,
     /  now check we are able to update the entries afterwards. */
-    IDirectDrawPalette_SetEntries(palette , 0, 0, 256, &Table[0]);
+    hr = IDirectDrawPalette_SetEntries(palette , 0, 0, 256, &Table[0]);
     ok(hr == DD_OK, "SetEntries failed with %08x\n", hr);
-    IDirectDrawPalette_GetEntries(palette , 0, 0, 256, &palEntries[0]);
+    hr = IDirectDrawPalette_GetEntries(palette , 0, 0, 256, &palEntries[0]);
     ok(hr == DD_OK, "GetEntries failed with %08x\n", hr);
     if(hr == DD_OK)
     {
@@ -2987,7 +2987,7 @@ static void PaletteTest(void)
     ok(hr == DD_OK, "CreatePalette failed with %08x\n", hr);
     if (FAILED(hr)) goto err;
 
-    IDirectDrawPalette_GetEntries(palette , 0, 0, 256, &palEntries[0]);
+    hr = IDirectDrawPalette_GetEntries(palette , 0, 0, 256, &palEntries[0]);
     ok(hr == DD_OK, "GetEntries failed with %08x\n", hr);
     if(hr == DD_OK)
     {
@@ -3752,7 +3752,7 @@ static void GetDCFormatTest(void)
 
         if(SUCCEEDED(hr))
         {
-            IDirectDrawSurface7_ReleaseDC(surface, dc);
+            hr = IDirectDrawSurface7_ReleaseDC(surface, dc);
             ok(hr == DD_OK, "IDirectDrawSurface7_ReleaseDC failed, hr = 0x%08x\n", hr);
             dc = 0;
         }

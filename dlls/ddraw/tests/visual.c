@@ -234,7 +234,7 @@ static void set_viewport_size(IDirect3DDevice7 *device)
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    IDirectDrawSurface7_GetSurfaceDesc(target, &ddsd);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(target, &ddsd);
     ok(hr == D3D_OK, "IDirectDrawSurface7_GetSurfaceDesc returned %08x\n", hr);
     IDirectDrawSurface7_Release(target);
 
@@ -360,7 +360,7 @@ static void lighting_test(IDirect3DDevice7 *device)
                                                     Indices, 6 /* Indexcount */, 0 /* flags */);
         ok(hr == D3D_OK, "IDirect3DDevice7_DrawIndexedPrimitiveUP failed with %08x\n", hr);
 
-        IDirect3DDevice7_EndScene(device);
+        hr = IDirect3DDevice7_EndScene(device);
         ok(hr == D3D_OK, "IDirect3DDevice7_EndScene failed with %08x\n", hr);
     }
 

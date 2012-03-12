@@ -1249,7 +1249,7 @@ static void test_ck_rgba(void)
     ok(SUCCEEDED(hr), "Failed to create destination surface, hr %#x.\n", hr);
     hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirect3DTexture, (void **)&texture);
     ok(SUCCEEDED(hr), "Failed to get texture interface, hr %#x.\n", hr);
-    IDirect3DTexture_GetHandle(texture, device, &texture_handle);
+    hr = IDirect3DTexture_GetHandle(texture, device, &texture_handle);
     ok(SUCCEEDED(hr), "Failed to get texture handle, hr %#x.\n", hr);
     IDirect3DTexture_Release(texture);
 
