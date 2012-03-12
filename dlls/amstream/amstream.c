@@ -316,6 +316,10 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
     if(ret != S_OK)
         return ret;
 
+    ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, pszFileName, pszFileName, &BaseFilter);
+    if (FAILED(ret))
+        goto end;
+
     ret = IFileSourceFilter_Load(SourceFilter, pszFileName, NULL);
     if(ret != S_OK)
     {
@@ -337,22 +341,17 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
     }
 
     ret = IEnumPins_Next(EnumPins, 1, &ipin, NULL);
-    if(ret == S_OK)
+    if (ret == S_OK)
     {
         ret = IPin_QueryDirection(ipin, &pin_direction);
         IEnumPins_Release(EnumPins);
-        if(ret == S_OK && pin_direction == PINDIR_OUTPUT)
+        if (ret == S_OK && pin_direction == PINDIR_OUTPUT)
             This->ipin = ipin;
-        else
-            goto end;
     }
     else
     {
         IEnumPins_Release(EnumPins);
-        goto end;
     }
-
-    ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, pszFileName, pszFileName, &BaseFilter);
 
 end:
     IBaseFilter_Release(BaseFilter);
