@@ -3,6 +3,7 @@ IMPORTS   = oleaut32 ole32 advapi32
 
 C_SRCS = \
 	activex.c \
+	caller.c \
 	jscript.c \
 	run.c
 
