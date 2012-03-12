@@ -1756,10 +1756,7 @@ HRESULT compile_subscript_stat(parser_ctx_t *parser, statement_t *stat, BOOL fro
         return hres;
 
     off = parser->compiler->code_off;
-    if(stat->next)
-        hres = compile_block_statement(parser->compiler, stat);
-    else
-        hres = compile_statement(parser->compiler, NULL, stat);
+    hres = compile_block_statement(parser->compiler, stat);
     if(FAILED(hres))
         return hres;
 
