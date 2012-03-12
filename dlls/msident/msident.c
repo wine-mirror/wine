@@ -27,7 +27,119 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msident);
 
+static inline void *heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
 static HINSTANCE msident_instance;
+
+typedef struct {
+    IEnumUserIdentity IEnumUserIdentity_iface;
+    LONG ref;
+} EnumUserIdentity;
+
+static inline EnumUserIdentity *impl_from_IEnumUserIdentity(IEnumUserIdentity *iface)
+{
+    return CONTAINING_RECORD(iface, EnumUserIdentity, IEnumUserIdentity_iface);
+}
+
+static HRESULT WINAPI EnumUserIdentity_QueryInterface(IEnumUserIdentity *iface, REFIID riid, void **ppv)
+{
+    EnumUserIdentity *This = impl_from_IEnumUserIdentity(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(IID_IUnknown %p)\n", ppv);
+        *ppv = &This->IEnumUserIdentity_iface;
+    }else if(IsEqualGUID(&IID_IEnumUserIdentity, riid)) {
+        TRACE("(IID_IEnumUserIdentity %p)\n", ppv);
+        *ppv = &This->IEnumUserIdentity_iface;
+    }else {
+        WARN("(%s %p)\n", debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI EnumUserIdentity_AddRef(IEnumUserIdentity *iface)
+{
+    EnumUserIdentity *This = impl_from_IEnumUserIdentity(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI EnumUserIdentity_Release(IEnumUserIdentity *iface)
+{
+    EnumUserIdentity *This = impl_from_IEnumUserIdentity(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI EnumUserIdentity_Next(IEnumUserIdentity *iface, ULONG celt, IUnknown **rgelt, ULONG *pceltFetched)
+{
+    EnumUserIdentity *This = impl_from_IEnumUserIdentity(iface);
+    FIXME("(%p)->(%u %p %p)\n", This, celt, rgelt, pceltFetched);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EnumUserIdentity_Skip(IEnumUserIdentity *iface, ULONG celt)
+{
+    EnumUserIdentity *This = impl_from_IEnumUserIdentity(iface);
+    FIXME("(%p)->(%u)\n", This, celt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EnumUserIdentity_Reset(IEnumUserIdentity *iface)
+{
+    EnumUserIdentity *This = impl_from_IEnumUserIdentity(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EnumUserIdentity_Clone(IEnumUserIdentity *iface, IEnumUserIdentity **ppenum)
+{
+    EnumUserIdentity *This = impl_from_IEnumUserIdentity(iface);
+    FIXME("(%p)->(%p)\n", This, ppenum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EnumUserIdentity_GetCount(IEnumUserIdentity *iface, ULONG *pnCount)
+{
+    EnumUserIdentity *This = impl_from_IEnumUserIdentity(iface);
+
+    FIXME("(%p)->(%p)\n", This, pnCount);
+
+    *pnCount = 0;
+    return S_OK;
+}
+
+static const IEnumUserIdentityVtbl EnumUserIdentityVtbl = {
+    EnumUserIdentity_QueryInterface,
+    EnumUserIdentity_AddRef,
+    EnumUserIdentity_Release,
+    EnumUserIdentity_Next,
+    EnumUserIdentity_Skip,
+    EnumUserIdentity_Reset,
+    EnumUserIdentity_Clone,
+    EnumUserIdentity_GetCount
+};
 
 static HRESULT WINAPI UserIdentityManager_QueryInterface(IUserIdentityManager *iface, REFIID riid, void **ppv)
 {
@@ -61,8 +173,19 @@ static ULONG WINAPI UserIdentityManager_Release(IUserIdentityManager *iface)
 
 static HRESULT WINAPI UserIdentityManager_EnumIdentities(IUserIdentityManager *iface, IEnumUserIdentity **ppEnumUser)
 {
-    FIXME("(%p)\n", ppEnumUser);
-    return E_NOTIMPL;
+    EnumUserIdentity *ret;
+
+    TRACE("(%p)\n", ppEnumUser);
+
+    ret = heap_alloc(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->IEnumUserIdentity_iface.lpVtbl = &EnumUserIdentityVtbl;
+    ret->ref = 1;
+
+    *ppEnumUser = &ret->IEnumUserIdentity_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI UserIdentityManager_ManageIdentities(IUserIdentityManager *iface, HWND hwndParent, DWORD dwFlags)
