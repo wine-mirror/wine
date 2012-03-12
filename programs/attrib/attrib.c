@@ -1,7 +1,7 @@
 /*
  * ATTRIB - Wine-compatible attrib program
  *
- * Copyright 2010-2011 Christian Costa
+ * Copyright 2010-2012 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,7 +29,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(attrib);
  * Load a string from the resource file, handling any error
  * Returns string retrieved from resource file
  * ========================================================================= */
-static WCHAR *ATTRIB_LoadMessage(UINT id) {
+static WCHAR *ATTRIB_LoadMessage(UINT id)
+{
     static WCHAR msg[MAXSTRING];
     const WCHAR failedMsg[]  = {'F', 'a', 'i', 'l', 'e', 'd', '!', 0};
 
@@ -45,8 +46,8 @@ static WCHAR *ATTRIB_LoadMessage(UINT id) {
  *  and hence required WriteConsoleW to output it, however if file i/o is
  *  redirected, it needs to be WriteFile'd using OEM (not ANSI) format
  * ========================================================================= */
-static int __cdecl ATTRIB_wprintf(const WCHAR *format, ...) {
-
+static int __cdecl ATTRIB_wprintf(const WCHAR *format, ...)
+{
     static WCHAR *output_bufW = NULL;
     static char  *output_bufA = NULL;
     static BOOL  toConsole    = TRUE;
@@ -128,43 +129,49 @@ int wmain(int argc, WCHAR *argv[])
     WIN32_FIND_DATAW fd;
     WCHAR flags[] = {' ',' ',' ',' ',' ',' ',' ',' ','\0'};
     WCHAR name[128];
-    WCHAR *param = argc >= 2 ? argv[1] : NULL;
     DWORD attrib_set = 0;
     DWORD attrib_clear = 0;
-    WCHAR help_option[] = {'/','?','\0'};
+    const WCHAR help_option[] = {'/','?','\0'};
+    const WCHAR slashStarW[]  = {'\\','*','\0'};
+    int i = 1;
 
-    if (param && !strcmpW(param, help_option))
-    {
+    if ((argc >= 2) && !strcmpW(argv[1], help_option)) {
         ATTRIB_wprintf(ATTRIB_LoadMessage(STRING_HELP));
         return 0;
     }
 
-    if (param && (param[0] == '+' || param[0] == '-')) {
-        DWORD attrib = 0;
-        /* FIXME: the real cmd can handle many more than two args; this should be in a loop */
-        switch (param[1]) {
-        case 'H': case 'h': attrib |= FILE_ATTRIBUTE_HIDDEN; break;
-        case 'S': case 's': attrib |= FILE_ATTRIBUTE_SYSTEM; break;
-        case 'R': case 'r': attrib |= FILE_ATTRIBUTE_READONLY; break;
-        case 'A': case 'a': attrib |= FILE_ATTRIBUTE_ARCHIVE; break;
-        default:
-            ATTRIB_wprintf(ATTRIB_LoadMessage(STRING_NYI));
-            return 0;
-        }
-        switch (param[0]) {
-        case '+': attrib_set = attrib; break;
-        case '-': attrib_clear = attrib; break;
-        }
-        param = argc >= 3 ? argv[2] : NULL;
-    }
+    /* By default all files from current directory are taken into account */
+    GetCurrentDirectoryW(sizeof(name)/sizeof(WCHAR), name);
+    strcatW (name, slashStarW);
 
-    if (!param || strlenW(param) == 0) {
-        static const WCHAR slashStarW[]  = {'\\','*','\0'};
-
-        GetCurrentDirectoryW(sizeof(name)/sizeof(WCHAR), name);
-        strcatW (name, slashStarW);
-    } else {
-        strcpyW(name, param);
+    while (i < argc) {
+        WCHAR *param = argv[i++];
+        if ((param[0] == '+') || (param[0] == '-')) {
+            DWORD attrib = 0;
+            switch (param[1]) {
+            case 'H': case 'h': attrib |= FILE_ATTRIBUTE_HIDDEN; break;
+            case 'S': case 's': attrib |= FILE_ATTRIBUTE_SYSTEM; break;
+            case 'R': case 'r': attrib |= FILE_ATTRIBUTE_READONLY; break;
+            case 'A': case 'a': attrib |= FILE_ATTRIBUTE_ARCHIVE; break;
+            default:
+                ATTRIB_wprintf(ATTRIB_LoadMessage(STRING_NYI));
+                return 0;
+            }
+            switch (param[0]) {
+            case '+': attrib_set = attrib; break;
+            case '-': attrib_clear = attrib; break;
+            }
+        } else if (param[0] == '/') {
+            if (((param[1] == 'D') || (param[1] == 'd')) && !param[2]) {
+                WINE_FIXME("Option /D not yet supported\n");
+            } else if (((param[1] == 'R') || (param[1] == 'r')) && !param[2]) {
+                WINE_FIXME("Option /R not yet supported\n");
+            } else {
+                WINE_FIXME("Unrecognize option\n");
+            }
+        } else if (param[0]) {
+            strcpyW(name, param);
+        }
     }
 
     hff = FindFirstFileW(name, &fd);
