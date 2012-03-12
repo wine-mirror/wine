@@ -1310,11 +1310,21 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
 
     if (version)
     {
-        return CLRMetaHost_GetRuntime(0, version, &IID_ICLRRuntimeInfo, (void**)result);
+        hr = CLRMetaHost_GetRuntime(0, version, &IID_ICLRRuntimeInfo, (void**)result);
+        if(SUCCEEDED(hr))
+            return hr;
     }
 
     if (runtimeinfo_flags & RUNTIME_INFO_UPGRADE_VERSION)
     {
+        DWORD major, minor, build;
+
+        if (version && !parse_runtime_version(version, &major, &minor, &build))
+        {
+            ERR("Cannot parse %s\n", debugstr_w(version));
+            return CLR_E_SHIM_RUNTIME;
+        }
+
         find_runtimes();
 
         if (legacy)
@@ -1325,8 +1335,16 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
         while (i--)
         {
             if (runtimes[i].mono_abi_version)
-                return ICLRRuntimeInfo_QueryInterface(&runtimes[i].ICLRRuntimeInfo_iface,
-                        &IID_ICLRRuntimeInfo, (void **)result);
+            {
+                /* Must be greater or equal to the version passed in. */
+                if (!version || ((runtimes[i].major >= major && runtimes[i].minor >= minor && runtimes[i].build >= build) ||
+                     (runtimes[i].major >= major && runtimes[i].minor > minor) ||
+                     (runtimes[i].major > major)))
+                {
+                    return ICLRRuntimeInfo_QueryInterface(&runtimes[i].ICLRRuntimeInfo_iface,
+                            &IID_ICLRRuntimeInfo, (void **)result);
+                }
+            }
         }
 
         if (legacy)
