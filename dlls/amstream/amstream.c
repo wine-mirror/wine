@@ -36,7 +36,6 @@ typedef struct {
     LONG ref;
     IGraphBuilder* pFilterGraph;
     IPin* ipin;
-    IGraphBuilder* GraphBuilder;
     ULONG nbStreams;
     IMediaStream** pStreams;
     STREAM_TYPE StreamType;
@@ -313,10 +312,6 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
             return ret;
     }
 
-    ret = IFilterGraph_QueryInterface(This->pFilterGraph, &IID_IGraphBuilder, (void**)&This->GraphBuilder);
-    if (ret != S_OK)
-        goto end;
-
     ret = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER, &IID_IFileSourceFilter, (void**)&SourceFilter);
     if(ret != S_OK)
         return ret;
@@ -357,7 +352,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
         goto end;
     }
 
-    ret = IGraphBuilder_AddSourceFilter(This->GraphBuilder, pszFileName, pszFileName, &BaseFilter);
+    ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, pszFileName, pszFileName, &BaseFilter);
 
 end:
     IBaseFilter_Release(BaseFilter);
@@ -383,7 +378,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Render(IAMMultiMediaStream* iface,
     if(dwFlags != AMMSF_NOCLOCK)
         return E_INVALIDARG;
 
-    return IGraphBuilder_Render(This->GraphBuilder, This->ipin);
+    return IGraphBuilder_Render(This->pFilterGraph, This->ipin);
 }
 
 static const IAMMultiMediaStreamVtbl AM_Vtbl =
