@@ -2586,7 +2586,7 @@ static int get_opcode_size( struct opcode op )
     }
 }
 
-static BOOL is_inside_epilog( BYTE *pc )
+static BOOL is_inside_epilog( BYTE *pc, ULONG64 base, const RUNTIME_FUNCTION *function )
 {
     /* add or lea must be the first instruction, and it must have a rex.W prefix */
     if ((pc[0] & 0xf8) == 0x48)
@@ -2629,9 +2629,9 @@ static BOOL is_inside_epilog( BYTE *pc )
 
     for (;;)
     {
-        BYTE rex = 0;
+        DWORD offset;
 
-        if ((*pc & 0xf0) == 0x40) rex = *pc++ & 0x0f;  /* rex prefix */
+        if ((*pc & 0xf0) == 0x40) pc++;  /* rex prefix */
 
         switch (*pc)
         {
@@ -2648,9 +2648,14 @@ static BOOL is_inside_epilog( BYTE *pc )
         case 0xc2: /* ret $nn */
         case 0xc3: /* ret */
             return TRUE;
+        case 0xe9: /* jmp nnnn */
+            offset = pc + 5 + *(LONG *)(pc + 1) - (BYTE *)base;
+            return (offset >= function->BeginAddress && offset < function->EndAddress);
+        case 0xeb: /* jmp n */
+            offset = pc + 2 + (signed char)pc[1] - (BYTE *)base;
+            return (offset >= function->BeginAddress && offset < function->EndAddress);
         case 0xf3: /* rep; ret (for amd64 prediction bug) */
             return pc[1] == 0xc3;
-        /* FIXME: add various jump instructions */
         }
         return FALSE;
     }
@@ -2708,7 +2713,12 @@ static void interpret_epilog( BYTE *pc, CONTEXT *context, KNONVOLATILE_CONTEXT_P
             context->Rip = *(ULONG64 *)context->Rsp;
             context->Rsp += sizeof(ULONG64);
             return;
-        /* FIXME: add various jump instructions */
+        case 0xe9: /* jmp nnnn */
+            pc += 5 + *(LONG *)(pc + 1);
+            continue;
+        case 0xeb: /* jmp n */
+            pc += 2 + (signed char)pc[1];
+            continue;
         }
         return;
     }
@@ -2753,7 +2763,7 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
         else
         {
             prolog_offset = ~0;
-            if (is_inside_epilog( (BYTE *)pc ))
+            if (is_inside_epilog( (BYTE *)pc, base, function ))
             {
                 interpret_epilog( (BYTE *)pc, context, ctx_ptr );
                 *frame_ret = frame;
