@@ -2648,6 +2648,8 @@ static BOOL is_inside_epilog( BYTE *pc )
         case 0xc2: /* ret $nn */
         case 0xc3: /* ret */
             return TRUE;
+        case 0xf3: /* rep; ret (for amd64 prediction bug) */
+            return pc[1] == 0xc3;
         /* FIXME: add various jump instructions */
         }
         return FALSE;
@@ -2702,6 +2704,7 @@ static void interpret_epilog( BYTE *pc, CONTEXT *context, KNONVOLATILE_CONTEXT_P
             context->Rsp += sizeof(ULONG64) + *(WORD *)(pc + 1);
             return;
         case 0xc3: /* ret */
+        case 0xf3: /* rep; ret */
             context->Rip = *(ULONG64 *)context->Rsp;
             context->Rsp += sizeof(ULONG64);
             return;
