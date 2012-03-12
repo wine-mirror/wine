@@ -3614,18 +3614,18 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
     while(SUCCEEDED(hres)) {
         V_VT(&var) = VT_I4;
         V_I4(&var) = result->str-input;
-        hres = jsdisp_propput_name(array, indexW, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(array, indexW, &var, ei);
         if(FAILED(hres))
             break;
 
         V_I4(&var) = result->str-input+result->len;
-        hres = jsdisp_propput_name(array, lastIndexW, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(array, lastIndexW, &var, ei);
         if(FAILED(hres))
             break;
 
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = input;
-        hres = jsdisp_propput_name(array, inputW, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(array, inputW, &var, ei);
         if(FAILED(hres))
             break;
 
@@ -3634,7 +3634,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
             hres = E_OUTOFMEMORY;
             break;
         }
-        hres = jsdisp_propput_name(array, zeroW, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(array, zeroW, &var, ei);
         SysFreeString(V_BSTR(&var));
         break;
     }
@@ -3998,18 +3998,18 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, BSTR str,
     while(SUCCEEDED(hres)) {
         V_VT(&var) = VT_I4;
         V_I4(&var) = match_result[match_cnt-1].str-str;
-        hres = jsdisp_propput_name(array, indexW, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(array, indexW, &var, ei);
         if(FAILED(hres))
             break;
 
         V_I4(&var) = match_result[match_cnt-1].str-str+match_result[match_cnt-1].len;
-        hres = jsdisp_propput_name(array, lastIndexW, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(array, lastIndexW, &var, ei);
         if(FAILED(hres))
             break;
 
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = str;
-        hres = jsdisp_propput_name(array, inputW, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(array, inputW, &var, ei);
         break;
     }
 

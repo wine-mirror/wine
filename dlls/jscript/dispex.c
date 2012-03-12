@@ -1060,7 +1060,7 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, DIS
     return hres;
 }
 
-HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, VARIANT *val, jsexcept_t *ei)
 {
     dispex_prop_t *prop;
     HRESULT hres;
@@ -1069,7 +1069,7 @@ HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, VARIANT *val, jsex
     if(FAILED(hres))
         return hres;
 
-    return prop_put(obj, prop, val, ei, caller);
+    return prop_put(obj, prop, val, ei, NULL);
 }
 
 HRESULT jsdisp_propput_const(jsdisp_t *obj, const WCHAR *name, VARIANT *val)
@@ -1091,7 +1091,7 @@ HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, VARIANT *val, jsexcept_t *e
     static const WCHAR formatW[] = {'%','d',0};
 
     sprintfW(buf, formatW, idx);
-    return jsdisp_propput_name(obj, buf, val, ei, caller);
+    return jsdisp_propput_name(obj, buf, val, ei);
 }
 
 HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val, jsexcept_t *ei)
@@ -1170,7 +1170,7 @@ HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, VARIANT *var, jsexcept_t *ei, I
     return prop_get(obj, prop, &dp, var, ei, caller);
 }
 
-HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, VARIANT *val, jsexcept_t *ei)
 {
     DISPPARAMS dp  = {NULL,NULL,0,0};
     dispex_prop_t *prop;
@@ -1180,7 +1180,7 @@ HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, VARIANT *val, jsexcept_t *ei
         return DISP_E_MEMBERNOTFOUND;
 
     V_VT(val) = VT_EMPTY;
-    return prop_get(jsdisp, prop, &dp, val, ei, caller);
+    return prop_get(jsdisp, prop, &dp, val, ei, NULL);
 }
 
 HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val, jsexcept_t *ei)
@@ -1192,7 +1192,7 @@ HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val
 
     jsdisp = iface_to_jsdisp((IUnknown*)disp);
     if(jsdisp) {
-        hres = jsdisp_propget(jsdisp, id, val, ei, NULL);
+        hres = jsdisp_propget(jsdisp, id, val, ei);
         jsdisp_release(jsdisp);
         return hres;
     }

@@ -96,7 +96,7 @@ static HRESULT set_length(jsdisp_t *obj, jsexcept_t *ei, DWORD length)
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = length;
-    return jsdisp_propput_name(obj, lengthW, &var, ei, NULL/*FIXME*/);
+    return jsdisp_propput_name(obj, lengthW, &var, ei);
 }
 
 static WCHAR *idx_to_str(DWORD idx, WCHAR *ptr)
@@ -922,7 +922,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPP
             V_VT(&v) = VT_I4;
             V_I4(&v) = delete_cnt;
 
-            hres = jsdisp_propput_name(ret_array, lengthW, &v, ei, caller);
+            hres = jsdisp_propput_name(ret_array, lengthW, &v, ei);
         }
     }
 
@@ -953,7 +953,7 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPP
     if(SUCCEEDED(hres)) {
         V_VT(&v) = VT_I4;
         V_I4(&v) = length-delete_cnt+add_args;
-        hres = jsdisp_propput_name(jsthis, lengthW, &v, ei, caller);
+        hres = jsdisp_propput_name(jsthis, lengthW, &v, ei);
     }
 
     if(FAILED(hres)) {
@@ -1017,7 +1017,7 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
 
             hres = jsdisp_get_id(jsthis, str, 0, &id);
             if(SUCCEEDED(hres)) {
-                hres = jsdisp_propget(jsthis, id, &var, ei, caller);
+                hres = jsdisp_propget(jsthis, id, &var, ei);
                 if(FAILED(hres))
                     return hres;
 

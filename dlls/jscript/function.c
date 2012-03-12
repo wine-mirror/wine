@@ -75,7 +75,7 @@ static IDispatch *get_this(DISPPARAMS *dp)
 }
 
 static HRESULT init_parameters(jsdisp_t *var_disp, FunctionInstance *function, DISPPARAMS *dp,
-        jsexcept_t *ei, IServiceProvider *caller)
+        jsexcept_t *ei)
 {
     parameter_t *param;
     VARIANT var_empty;
@@ -87,7 +87,7 @@ static HRESULT init_parameters(jsdisp_t *var_disp, FunctionInstance *function, D
 
     for(param = function->parameters; param; param = param->next) {
         hres = jsdisp_propput_name(var_disp, param->identifier,
-                i < cargs ? get_arg(dp,i) : &var_empty, ei, caller);
+                i < cargs ? get_arg(dp,i) : &var_empty, ei);
         if(FAILED(hres))
             return hres;
 
@@ -141,12 +141,12 @@ static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, DISPPARAMS 
     if(SUCCEEDED(hres)) {
         V_VT(&var) = VT_I4;
         V_I4(&var) = arg_cnt(dp);
-        hres = jsdisp_propput_name(args, lengthW, &var, ei, caller);
+        hres = jsdisp_propput_name(args, lengthW, &var, ei);
 
         if(SUCCEEDED(hres)) {
             V_VT(&var) = VT_DISPATCH;
             V_DISPATCH(&var) = calee;
-            hres = jsdisp_propput_name(args, caleeW, &var, ei, caller);
+            hres = jsdisp_propput_name(args, caleeW, &var, ei);
         }
     }
 
@@ -160,7 +160,7 @@ static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, DISPPARAMS 
 }
 
 static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, jsdisp_t *arg_disp,
-        DISPPARAMS *dp, jsexcept_t *ei, IServiceProvider *caller, jsdisp_t **ret)
+        DISPPARAMS *dp, jsexcept_t *ei, jsdisp_t **ret)
 {
     jsdisp_t *var_disp;
     VARIANT var;
@@ -171,9 +171,9 @@ static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, js
         return hres;
 
     var_set_jsdisp(&var, arg_disp);
-    hres = jsdisp_propput_name(var_disp, argumentsW, &var, ei, caller);
+    hres = jsdisp_propput_name(var_disp, argumentsW, &var, ei);
     if(SUCCEEDED(hres))
-        hres = init_parameters(var_disp, function, dp, ei, caller);
+        hres = init_parameters(var_disp, function, dp, ei);
     if(FAILED(hres)) {
         jsdisp_release(var_disp);
         return hres;
@@ -201,7 +201,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
     if(FAILED(hres))
         return hres;
 
-    hres = create_var_disp(ctx, function, arg_disp, dp, ei, caller, &var_disp);
+    hres = create_var_disp(ctx, function, arg_disp, dp, ei, &var_disp);
     if(FAILED(hres)) {
         jsdisp_release(arg_disp);
         return hres;
@@ -627,7 +627,7 @@ static HRESULT set_prototype(script_ctx_t *ctx, jsdisp_t *dispex, jsdisp_t *prot
     var_set_jsdisp(&var, prototype);
     memset(&jsexcept, 0, sizeof(jsexcept));
 
-    return jsdisp_propput_name(dispex, prototypeW, &var, &jsexcept, NULL/*FIXME*/);
+    return jsdisp_propput_name(dispex, prototypeW, &var, &jsexcept);
 }
 
 HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,

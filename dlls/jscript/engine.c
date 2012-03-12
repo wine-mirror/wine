@@ -559,7 +559,7 @@ static HRESULT interp_var_set(exec_ctx_t *ctx)
     TRACE("%s\n", debugstr_w(name));
 
     v = stack_pop(ctx);
-    hres = jsdisp_propput_name(ctx->var_disp, name, v, ctx->ei, NULL/*FIXME*/);
+    hres = jsdisp_propput_name(ctx->var_disp, name, v, ctx->ei);
     VariantClear(v);
     return hres;
 }
@@ -1266,7 +1266,7 @@ static HRESULT interp_obj_prop(exec_ctx_t *ctx)
     assert(V_VT(stack_top(ctx)) == VT_DISPATCH);
     obj = as_jsdisp(V_DISPATCH(stack_top(ctx)));
 
-    hres = jsdisp_propput_name(obj, name, v, ctx->ei, NULL/*FIXME*/);
+    hres = jsdisp_propput_name(obj, name, v, ctx->ei);
     VariantClear(v);
     return hres;
 }
@@ -2475,7 +2475,7 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
 
         hres = create_dispex(ctx->parser->script, NULL, NULL, &scope_obj);
         if(SUCCEEDED(hres)) {
-            hres = jsdisp_propput_name(scope_obj, ident, &except_val, ctx->ei, NULL/*FIXME*/);
+            hres = jsdisp_propput_name(scope_obj, ident, &except_val, ctx->ei);
             if(FAILED(hres))
                 jsdisp_release(scope_obj);
         }
@@ -2583,7 +2583,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
             return hres;
 
         var_set_jsdisp(&var, func_obj);
-        hres = jsdisp_propput_name(ctx->var_disp, func->expr->identifier, &var, ei, NULL);
+        hres = jsdisp_propput_name(ctx->var_disp, func->expr->identifier, &var, ei);
         jsdisp_release(func_obj);
         if(FAILED(hres))
             return hres;

@@ -200,7 +200,7 @@ static HRESULT create_error(script_ctx_t *ctx, jsdisp_t *constr,
 
     V_VT(&v) = VT_I4;
     V_I4(&v) = number;
-    hres = jsdisp_propput_name(err, numberW, &v, NULL/*FIXME*/, NULL/*FIXME*/);
+    hres = jsdisp_propput_name(err, numberW, &v, NULL/*FIXME*/);
     if(FAILED(hres)) {
         jsdisp_release(err);
         return hres;
@@ -210,9 +210,9 @@ static HRESULT create_error(script_ctx_t *ctx, jsdisp_t *constr,
     if(msg) V_BSTR(&v) = SysAllocString(msg);
     else V_BSTR(&v) = SysAllocStringLen(NULL, 0);
     if(V_BSTR(&v)) {
-        hres = jsdisp_propput_name(err, messageW, &v, NULL/*FIXME*/, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(err, messageW, &v, NULL/*FIXME*/);
         if(SUCCEEDED(hres))
-            hres = jsdisp_propput_name(err, descriptionW, &v, NULL/*FIXME*/, NULL/*FIXME*/);
+            hres = jsdisp_propput_name(err, descriptionW, &v, NULL/*FIXME*/);
         SysFreeString(V_BSTR(&v));
     }else {
         hres = E_OUTOFMEMORY;
@@ -369,7 +369,7 @@ HRESULT init_error_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
             return E_OUTOFMEMORY;
         }
 
-        hres = jsdisp_propput_name(err, nameW, &v, NULL/*FIXME*/, NULL/*FIXME*/);
+        hres = jsdisp_propput_name(err, nameW, &v, NULL/*FIXME*/);
 
         if(SUCCEEDED(hres))
             hres = create_builtin_function(ctx, constr_val[i], names[i], NULL,

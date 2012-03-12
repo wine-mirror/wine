@@ -1274,22 +1274,22 @@ HRESULT init_global(script_ctx_t *ctx)
         return hres;
 
     var_set_jsdisp(&var, math);
-    hres = jsdisp_propput_name(ctx->global, MathW, &var, NULL/*FIXME*/, NULL/*FIXME*/);
+    hres = jsdisp_propput_name(ctx->global, MathW, &var, NULL/*FIXME*/);
     jsdisp_release(math);
     if(FAILED(hres))
         return hres;
 
     V_VT(&var) = VT_EMPTY;
-    hres = jsdisp_propput_name(ctx->global, undefinedW, &var, NULL/*FIXME*/, NULL/*FIXME*/);
+    hres = jsdisp_propput_name(ctx->global, undefinedW, &var, NULL/*FIXME*/);
     if(FAILED(hres))
         return hres;
 
     num_set_nan(&var);
-    hres = jsdisp_propput_name(ctx->global, NaNW, &var, NULL/*FIXME*/, NULL/*FIXME*/);
+    hres = jsdisp_propput_name(ctx->global, NaNW, &var, NULL/*FIXME*/);
     if(FAILED(hres))
         return hres;
 
     num_set_inf(&var, TRUE);
-    hres = jsdisp_propput_name(ctx->global, InfinityW, &var, NULL/*FIXME*/, NULL/*FIXME*/);
+    hres = jsdisp_propput_name(ctx->global, InfinityW, &var, NULL/*FIXME*/);
     return hres;
 }
