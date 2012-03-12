@@ -40,8 +40,8 @@ static void test_QueryInterface(void)
 
     hres = CoCreateInstance(&CLSID_XMLView, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IUnknown, (void**)&xmlview);
-    if(hres == REGDB_E_CLASSNOTREG) {
-        win_skip("XMLView class not registered\n");
+    if(FAILED(hres)) {
+        win_skip("Failed to create XMLView instance\n");
         return;
     }
     ok(hres == S_OK, "CoCreateInstance returned %x, expected S_OK\n", hres);
