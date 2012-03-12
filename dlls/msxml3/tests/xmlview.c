@@ -24,13 +24,127 @@
 #include "windows.h"
 #include "ole2.h"
 #include "mshtml.h"
+#include "mshtmdid.h"
 #include "initguid.h"
 #include "perhist.h"
 #include "docobj.h"
+#include "urlmon.h"
 
 #include "wine/test.h"
 
 DEFINE_GUID(CLSID_XMLView, 0x48123bc4, 0x99d9, 0x11d1, 0xa6,0xb3, 0x00,0xc0,0x4f,0xd9,0x15,0x55);
+
+HRESULT (WINAPI *pCreateURLMoniker)(IMoniker*, LPCWSTR, IMoniker**);
+
+static const char xmlview_html[] =
+"\r\n"
+"<BODY><H2>Generated HTML</H2>\r\n"
+"<TABLE>\r\n"
+"<TBODY>\r\n"
+"<TR bgColor=green>\r\n"
+"<TH>Title</TH>\r\n"
+"<TH>Value</TH></TR>\r\n"
+"<TR>\r\n"
+"<TD>title1</TD>\r\n"
+"<TD>value1</TD></TR>\r\n"
+"<TR>\r\n"
+"<TD>title2</TD>\r\n"
+"<TD>value2</TD></TR></TBODY></TABLE></BODY>";
+
+IHTMLDocument2 *html_doc;
+BOOL loaded;
+
+static int html_src_compare(LPCWSTR strw, const char *stra)
+{
+    char buf[2048], *p1;
+    const char *p2;
+
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
+
+    p1 = buf;
+    p2 = stra;
+    while(1) {
+        while(*p1=='\r' || *p1=='\n' || *p1=='\"') p1++;
+        while(*p2=='\r' || *p2=='\n') p2++;
+
+        if(!*p1 || !*p2 || tolower(*p1)!=tolower(*p2))
+            break;
+
+        p1++;
+        p2++;
+    }
+
+    return *p1 != *p2;
+}
+
+static HRESULT WINAPI HTMLEvents_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "Unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HTMLEvents_AddRef(IDispatch *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI HTMLEvents_Release(IDispatch *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI HTMLEvents_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEvents_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid,
+        ITypeInfo **ppTInfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEvents_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEvents_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    if(dispIdMember == DISPID_HTMLDOCUMENTEVENTS2_ONREADYSTATECHANGE) {
+        static const WCHAR completeW[] = {'c','o','m','p','l','e','t','e',0};
+        BSTR state;
+
+        IHTMLDocument2_get_readyState(html_doc, &state);
+        if(!memcmp(state, completeW, sizeof(completeW)))
+            loaded = TRUE;
+    }
+
+    return S_OK;
+}
+
+static const IDispatchVtbl HTMLEventsVtbl = {
+    HTMLEvents_QueryInterface,
+    HTMLEvents_AddRef,
+    HTMLEvents_Release,
+    HTMLEvents_GetTypeInfoCount,
+    HTMLEvents_GetTypeInfo,
+    HTMLEvents_GetIDsOfNames,
+    HTMLEvents_Invoke
+};
+
+static IDispatch HTMLEvents = { &HTMLEventsVtbl };
 
 static void test_QueryInterface(void)
 {
@@ -73,9 +187,85 @@ static void test_QueryInterface(void)
     IUnknown_Release(xmlview);
 }
 
+static void test_Load(void)
+{
+    static const WCHAR xmlview_xmlW[] = {'/','x','m','l','/','x','m','l','v','i','e','w','.','x','m','l',0};
+    static const WCHAR res[] = {'r','e','s',':','/','/',0};
+
+    WCHAR buf[1024];
+    IPersistMoniker *pers_mon;
+    IConnectionPointContainer *cpc;
+    IConnectionPoint *cp;
+    IMoniker *mon;
+    IBindCtx *bctx;
+    IHTMLElement *elem;
+    HRESULT hres;
+    MSG msg;
+    BSTR source;
+
+    lstrcpyW(buf, res);
+    GetModuleFileNameW(NULL, buf+lstrlenW(buf), (sizeof(buf)-sizeof(res))/sizeof(WCHAR));
+    lstrcatW(buf, xmlview_xmlW);
+
+    if(!pCreateURLMoniker) {
+        win_skip("CreateURLMoniker not available\n");
+        return;
+    }
+
+    hres = CoCreateInstance(&CLSID_XMLView, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IPersistMoniker, (void**)&pers_mon);
+    if(FAILED(hres)) {
+        win_skip("Failed to create XMLView instance\n");
+        return;
+    }
+    ok(hres == S_OK, "CoCreateInstance returned %x, expected S_OK\n", hres);
+
+    hres = IPersistMoniker_QueryInterface(pers_mon, &IID_IHTMLDocument2, (void**)&html_doc);
+    ok(hres == S_OK, "QueryInterface(HTMLDocument2) returned %x, expected S_OK\n", hres);
+    hres = IPersistMoniker_QueryInterface(pers_mon, &IID_IConnectionPointContainer, (void**)&cpc);
+    ok(hres == S_OK, "QueryInterface(IConnectionPointContainer) returned %x, expected S_OK\n", hres);
+    hres = IConnectionPointContainer_FindConnectionPoint(cpc, &IID_IDispatch, &cp);
+    ok(hres == S_OK, "FindConnectionPoint returned %x, expected S_OK\n", hres);
+    hres = IConnectionPoint_Advise(cp, (IUnknown*)&HTMLEvents, NULL);
+    ok(hres == S_OK, "Advise returned %x, expected S_OK\n", hres);
+    IConnectionPoint_Release(cp);
+    IConnectionPointContainer_Release(cpc);
+
+    hres = CreateBindCtx(0, &bctx);
+    ok(hres == S_OK, "CreateBindCtx returned %x, expected S_OK\n", hres);
+    hres = pCreateURLMoniker(NULL, buf, &mon);
+    ok(hres == S_OK, "CreateUrlMoniker returned %x, expected S_OK\n", hres);
+    loaded = FALSE;
+    hres = IPersistMoniker_Load(pers_mon, TRUE, mon, bctx, 0);
+    ok(hres == S_OK, "Load returned %x, expected S_OK\n", hres);
+    IBindCtx_Release(bctx);
+    IMoniker_Release(mon);
+
+    while(!loaded && GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    hres = IHTMLDocument2_get_body(html_doc, &elem);
+    ok(hres == S_OK, "get_body returned %x, expected S_OK\n", hres);
+    hres = IHTMLElement_get_outerHTML(elem, &source);
+    ok(hres == S_OK, "get_outerHTML returned %x, expected S_OK\n", hres);
+    ok(!html_src_compare(source, xmlview_html), "Incorrect HTML source: %s\n", wine_dbgstr_w(source));
+    IHTMLElement_Release(elem);
+    SysFreeString(source);
+
+    IHTMLDocument2_Release(html_doc);
+    html_doc = NULL;
+    IPersistMoniker_Release(pers_mon);
+}
+
 START_TEST(xmlview)
 {
+    HMODULE urlmon = LoadLibraryA("urlmon.dll");
+    pCreateURLMoniker = (void*)GetProcAddress(urlmon, "CreateURLMoniker");
+
     CoInitialize(NULL);
     test_QueryInterface();
+    test_Load();
     CoUninitialize();
 }
