@@ -19,10 +19,14 @@
 #define COBJMACROS
 
 #include "windows.h"
+#include "msident.h"
+#include "rpcproxy.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msident);
+
+static HINSTANCE msident_instance;
 
 /******************************************************************
  *              DllMain (msident.@)
@@ -36,6 +40,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     case DLL_WINE_PREATTACH:
         return FALSE;  /* prefer native version */
     case DLL_PROCESS_ATTACH:
+        msident_instance = hInstDLL;
         DisableThreadLibraryCalls(hInstDLL);
         break;
     }
@@ -58,4 +63,22 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return S_FALSE;
+}
+
+/***********************************************************************
+ *          DllRegisterServer (msident.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    TRACE("()\n");
+    return __wine_register_resources(msident_instance);
+}
+
+/***********************************************************************
+ *          DllUnregisterServer (msident.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    TRACE("()\n");
+    return __wine_unregister_resources(msident_instance);
 }

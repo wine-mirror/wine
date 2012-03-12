@@ -3,4 +3,6 @@ MODULE    = msident.dll
 C_SRCS = \
 	msident.c
 
+IDL_R_SRCS = msident_classes.idl
+
 @MAKE_DLL_RULES@
