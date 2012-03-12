@@ -1582,8 +1582,6 @@ HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
     parser_parse(parser_ctx);
     jsheap_clear(mark);
     hres = parser_ctx->hres;
-    if(SUCCEEDED(hres))
-        hres = compile_script(parser_ctx, from_eval);
     if(FAILED(hres)) {
         parser_release(parser_ctx);
         return hres;

@@ -774,7 +774,7 @@ static HRESULT construct_function(script_ctx_t *ctx, DISPPARAMS *dp, jsexcept_t 
     if(FAILED(hres))
         return hres;
 
-    hres = script_parse(ctx, str, NULL, FALSE, &parser);
+    hres = compile_script(ctx, str, NULL, FALSE, &parser);
     heap_free(str);
     if(FAILED(hres))
         return hres;

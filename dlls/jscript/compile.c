@@ -1778,13 +1778,24 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     return S_OK;
 }
 
-HRESULT compile_script(parser_ctx_t *parser, BOOL from_eval)
+HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimiter, BOOL from_eval,
+        parser_ctx_t **ret)
 {
+    parser_ctx_t *parser;
     HRESULT hres;
 
-    hres = init_compiler(parser);
+    hres = script_parse(ctx, code, delimiter, from_eval, &parser);
     if(FAILED(hres))
         return hres;
 
-    return compile_function(parser->compiler, parser->source, from_eval);
+    hres = init_compiler(parser);
+    if(SUCCEEDED(hres))
+        hres = compile_function(parser->compiler, parser->source, from_eval);
+    if(FAILED(hres)) {
+        parser_release(parser);
+        return hres;
+    }
+
+    *ret = parser;
+    return S_OK;
 }

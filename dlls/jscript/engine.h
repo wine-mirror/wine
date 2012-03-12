@@ -577,4 +577,4 @@ typedef struct {
     prop_val_t *property_list;
 } property_value_expression_t;
 
-HRESULT compile_script(parser_ctx_t*,BOOL) DECLSPEC_HIDDEN;
+HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,BOOL,parser_ctx_t**) DECLSPEC_HIDDEN;
