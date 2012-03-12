@@ -72,7 +72,7 @@ static HRESULT get_length(script_ctx_t *ctx, vdisp_t *vdisp, jsexcept_t *ei, jsd
     if(!is_jsdisp(vdisp))
         return throw_type_error(ctx, ei, JS_E_JSCRIPT_EXPECTED, NULL);
 
-    hres = jsdisp_propget_name(vdisp->u.jsdisp, lengthW, &var, ei, NULL/*FIXME*/);
+    hres = jsdisp_propget_name(vdisp->u.jsdisp, lengthW, &var, ei);
     if(FAILED(hres))
         return hres;
 

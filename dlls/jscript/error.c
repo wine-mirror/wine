@@ -56,7 +56,7 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
         return S_OK;
     }
 
-    hres = jsdisp_propget_name(jsthis, nameW, &v, ei, caller);
+    hres = jsdisp_propget_name(jsthis, nameW, &v, ei);
     if(FAILED(hres))
         return hres;
 
@@ -71,7 +71,7 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
         }
     }
 
-    hres = jsdisp_propget_name(jsthis, messageW, &v, ei, caller);
+    hres = jsdisp_propget_name(jsthis, messageW, &v, ei);
     if(SUCCEEDED(hres)) {
         if(V_VT(&v) != VT_EMPTY) {
             hres = to_string(ctx, &v, ei, &msg);

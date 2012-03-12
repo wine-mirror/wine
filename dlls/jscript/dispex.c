@@ -1131,7 +1131,7 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val
     return hres;
 }
 
-HRESULT jsdisp_propget_name(jsdisp_t *obj, const WCHAR *name, VARIANT *var, jsexcept_t *ei, IServiceProvider *caller)
+HRESULT jsdisp_propget_name(jsdisp_t *obj, const WCHAR *name, VARIANT *var, jsexcept_t *ei)
 {
     DISPPARAMS dp = {NULL, NULL, 0, 0};
     dispex_prop_t *prop;
@@ -1145,7 +1145,7 @@ HRESULT jsdisp_propget_name(jsdisp_t *obj, const WCHAR *name, VARIANT *var, jsex
     if(!prop || prop->type==PROP_DELETED)
         return S_OK;
 
-    return prop_get(obj, prop, &dp, var, ei, caller);
+    return prop_get(obj, prop, &dp, var, ei, NULL);
 }
 
 HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, VARIANT *var, jsexcept_t *ei, IServiceProvider *caller)

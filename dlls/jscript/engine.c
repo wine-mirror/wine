@@ -1396,7 +1396,7 @@ static HRESULT interp_instanceof(exec_ctx_t *ctx)
     }
 
     if(is_class(obj, JSCLASS_FUNCTION)) {
-        hres = jsdisp_propget_name(obj, prototypeW, &prot, ctx->ei, NULL/*FIXME*/);
+        hres = jsdisp_propget_name(obj, prototypeW, &prot, ctx->ei);
     }else {
         hres = throw_type_error(ctx->parser->script, ctx->ei, JS_E_FUNCTION_EXPECTED, NULL);
     }

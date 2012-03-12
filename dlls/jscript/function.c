@@ -364,7 +364,7 @@ static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, jsexcept_t 
     DWORD length, i;
     HRESULT hres;
 
-    hres = jsdisp_propget_name(arg_array, lengthW, &var, ei, NULL/*FIXME*/);
+    hres = jsdisp_propget_name(arg_array, lengthW, &var, ei);
     if(FAILED(hres))
         return hres;
 
