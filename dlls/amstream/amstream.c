@@ -305,6 +305,18 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
 
     TRACE("(%p/%p)->(%s,%x)\n", This, iface, debugstr_w(pszFileName), dwFlags);
 
+    /* If Initialize was not called before, we do it here */
+    if (!This->pFilterGraph)
+    {
+        ret = IAMMultiMediaStream_Initialize(iface, STREAMTYPE_READ, 0, NULL);
+        if (FAILED(ret))
+            return ret;
+    }
+
+    ret = IFilterGraph_QueryInterface(This->pFilterGraph, &IID_IGraphBuilder, (void**)&This->GraphBuilder);
+    if (ret != S_OK)
+        goto end;
+
     ret = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER, &IID_IFileSourceFilter, (void**)&SourceFilter);
     if(ret != S_OK)
         return ret;
@@ -342,20 +354,6 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
     else
     {
         IEnumPins_Release(EnumPins);
-        goto end;
-    }
-
-    /* If Initialize was not called before, we do it here */
-    if (!This->pFilterGraph)
-    {
-        ret = IAMMultiMediaStream_Initialize(iface, STREAMTYPE_READ, 0, NULL);
-        if (FAILED(ret))
-            goto end;
-    }
-
-    ret = IFilterGraph_QueryInterface(This->pFilterGraph, &IID_IGraphBuilder, (void**)&This->GraphBuilder);
-    if(ret != S_OK)
-    {
         goto end;
     }
 
