@@ -4685,9 +4685,9 @@ static HRESULT WINAPI ddraw_surface1_SetColorKey(IDirectDrawSurface *iface, DWOR
 static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDirectDrawPalette *Pal)
 {
     struct ddraw_surface *This = impl_from_IDirectDrawSurface7(iface);
+    struct ddraw_palette *palette_impl = unsafe_impl_from_IDirectDrawPalette(Pal);
     IDirectDrawPalette *oldPal;
     struct ddraw_surface *surf;
-    IDirectDrawPaletteImpl *PalImpl = unsafe_impl_from_IDirectDrawPalette(Pal);
     HRESULT hr;
 
     TRACE("iface %p, palette %p.\n", iface, Pal);
@@ -4713,7 +4713,7 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
     if(oldPal) IDirectDrawPalette_Release(oldPal);  /* For the GetPalette */
 
     /* Set the new Palette */
-    wined3d_surface_set_palette(This->wined3d_surface, PalImpl ? PalImpl->wineD3DPalette : NULL);
+    wined3d_surface_set_palette(This->wined3d_surface, palette_impl ? palette_impl->wineD3DPalette : NULL);
     /* AddRef the Palette */
     if(Pal) IDirectDrawPalette_AddRef(Pal);
 
@@ -4723,7 +4723,7 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
     /* Update the wined3d frontbuffer if this is the frontbuffer. */
     if ((This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER) && This->ddraw->wined3d_frontbuffer)
     {
-        hr = wined3d_surface_set_palette(This->ddraw->wined3d_frontbuffer, PalImpl ? PalImpl->wineD3DPalette : NULL);
+        hr = wined3d_surface_set_palette(This->ddraw->wined3d_frontbuffer, palette_impl ? palette_impl->wineD3DPalette : NULL);
         if (FAILED(hr))
             ERR("Failed to set frontbuffer palette, hr %#x.\n", hr);
     }

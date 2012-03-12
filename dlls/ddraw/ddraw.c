@@ -3700,7 +3700,7 @@ static HRESULT WINAPI ddraw7_CreatePalette(IDirectDraw7 *iface, DWORD Flags,
         PALETTEENTRY *ColorTable, IDirectDrawPalette **Palette, IUnknown *pUnkOuter)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
-    IDirectDrawPaletteImpl *object;
+    struct ddraw_palette *object;
     HRESULT hr;
 
     TRACE("iface %p, flags %#x, color_table %p, palette %p, outer_unknown %p.\n",
@@ -3719,8 +3719,8 @@ static HRESULT WINAPI ddraw7_CreatePalette(IDirectDraw7 *iface, DWORD Flags,
         return DDERR_NOCOOPERATIVELEVELSET;
     }
 
-    object = HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectDrawPaletteImpl));
-    if(!object)
+    object = HeapAlloc(GetProcessHeap(), 0, sizeof(*object));
+    if (!object)
     {
         ERR("Out of memory when allocating memory for a palette implementation\n");
         wined3d_mutex_unlock();
@@ -3755,7 +3755,7 @@ static HRESULT WINAPI ddraw4_CreatePalette(IDirectDraw4 *iface, DWORD flags, PAL
     hr = ddraw7_CreatePalette(&ddraw->IDirectDraw7_iface, flags, entries, palette, outer_unknown);
     if (SUCCEEDED(hr) && *palette)
     {
-        IDirectDrawPaletteImpl *impl = impl_from_IDirectDrawPalette(*palette);
+        struct ddraw_palette *impl = impl_from_IDirectDrawPalette(*palette);
         IDirectDraw7_Release(&ddraw->IDirectDraw7_iface);
         IDirectDraw4_AddRef(iface);
         impl->ifaceToRelease = (IUnknown *)iface;
@@ -3775,7 +3775,7 @@ static HRESULT WINAPI ddraw2_CreatePalette(IDirectDraw2 *iface, DWORD flags,
     hr = ddraw7_CreatePalette(&ddraw->IDirectDraw7_iface, flags, entries, palette, outer_unknown);
     if (SUCCEEDED(hr) && *palette)
     {
-        IDirectDrawPaletteImpl *impl = impl_from_IDirectDrawPalette(*palette);
+        struct ddraw_palette *impl = impl_from_IDirectDrawPalette(*palette);
         IDirectDraw7_Release(&ddraw->IDirectDraw7_iface);
         impl->ifaceToRelease = NULL;
     }
@@ -3795,7 +3795,7 @@ static HRESULT WINAPI ddraw1_CreatePalette(IDirectDraw *iface, DWORD flags,
     hr = ddraw7_CreatePalette(&ddraw->IDirectDraw7_iface, flags, entries, palette, outer_unknown);
     if (SUCCEEDED(hr) && *palette)
     {
-        IDirectDrawPaletteImpl *impl = impl_from_IDirectDrawPalette(*palette);
+        struct ddraw_palette *impl = impl_from_IDirectDrawPalette(*palette);
         IDirectDraw7_Release(&ddraw->IDirectDraw7_iface);
         impl->ifaceToRelease = NULL;
     }

@@ -41,7 +41,6 @@ extern const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops DECLSPEC
 extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HIDDEN;
 
 /* Typdef the interfaces */
-typedef struct IDirectDrawPaletteImpl     IDirectDrawPaletteImpl;
 typedef struct IDirect3DDeviceImpl        IDirect3DDeviceImpl;
 typedef struct IDirect3DLightImpl         IDirect3DLightImpl;
 typedef struct IDirect3DViewportImpl      IDirect3DViewportImpl;
@@ -370,7 +369,7 @@ struct ddraw_clipper *unsafe_impl_from_IDirectDrawClipper(IDirectDrawClipper *if
 /*****************************************************************************
  * IDirectDrawPalette implementation structure
  *****************************************************************************/
-struct IDirectDrawPaletteImpl
+struct ddraw_palette
 {
     /* IUnknown fields */
     IDirectDrawPalette IDirectDrawPalette_iface;
@@ -382,14 +381,14 @@ struct IDirectDrawPaletteImpl
     IUnknown                  *ifaceToRelease;
 };
 
-static inline IDirectDrawPaletteImpl *impl_from_IDirectDrawPalette(IDirectDrawPalette *iface)
+static inline struct ddraw_palette *impl_from_IDirectDrawPalette(IDirectDrawPalette *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawPaletteImpl, IDirectDrawPalette_iface);
+    return CONTAINING_RECORD(iface, struct ddraw_palette, IDirectDrawPalette_iface);
 }
 
-IDirectDrawPaletteImpl *unsafe_impl_from_IDirectDrawPalette(IDirectDrawPalette *iface) DECLSPEC_HIDDEN;
+struct ddraw_palette *unsafe_impl_from_IDirectDrawPalette(IDirectDrawPalette *iface) DECLSPEC_HIDDEN;
 
-HRESULT ddraw_palette_init(IDirectDrawPaletteImpl *palette,
+HRESULT ddraw_palette_init(struct ddraw_palette *palette,
         struct ddraw *ddraw, DWORD flags, PALETTEENTRY *entries) DECLSPEC_HIDDEN;
 
 /* Helper structures */
