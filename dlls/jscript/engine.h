@@ -188,7 +188,7 @@ typedef struct _parser_ctx_t {
     struct _parser_ctx_t *next;
 } parser_ctx_t;
 
-HRESULT script_parse(script_ctx_t*,const WCHAR*,const WCHAR*,parser_ctx_t**) DECLSPEC_HIDDEN;
+HRESULT script_parse(script_ctx_t*,const WCHAR*,const WCHAR*,BOOL,parser_ctx_t**) DECLSPEC_HIDDEN;
 void parser_release(parser_ctx_t*) DECLSPEC_HIDDEN;
 
 int parser_lex(void*,parser_ctx_t*) DECLSPEC_HIDDEN;
@@ -577,4 +577,4 @@ typedef struct {
     prop_val_t *property_list;
 } property_value_expression_t;
 
-HRESULT compile_subscript_stat(parser_ctx_t*,statement_t*,BOOL,unsigned*) DECLSPEC_HIDDEN;
+HRESULT compile_script(parser_ctx_t*,BOOL) DECLSPEC_HIDDEN;

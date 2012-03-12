@@ -2581,6 +2581,9 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
         jsdisp_t *func_obj;
         VARIANT var;
 
+        if(!func->expr->identifier)
+            continue;
+
         hres = create_source_function(parser, func->expr->parameter_list, func->expr->source_elements,
                 ctx->scope_chain, func->expr->src_str, func->expr->src_len, &func_obj);
         if(FAILED(hres))
@@ -2615,13 +2618,8 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
     ctx->parser = parser;
 
     if(source->statement) {
-        if(!source->instr_off) {
-            hres = compile_subscript_stat(ctx->parser, source->statement, from_eval, &source->instr_off);
-            if(FAILED(hres) && is_jscript_error(hres))
-                hres = throw_syntax_error(script, ei, hres, NULL);
-        }
-        if(SUCCEEDED(hres))
-            hres = enter_bytecode(script, parser->code, source->instr_off, ei, &val);
+        assert(source->instr_off);
+        hres = enter_bytecode(script, parser->code, source->instr_off, ei, &val);
     }else {
         V_VT(&val) = VT_EMPTY;
     }

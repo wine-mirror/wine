@@ -1744,32 +1744,47 @@ static HRESULT init_compiler(parser_ctx_t *parser)
     return S_OK;
 }
 
-HRESULT compile_subscript_stat(parser_ctx_t *parser, statement_t *stat, BOOL from_eval, unsigned *ret_off)
+static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, BOOL from_eval)
 {
+    function_declaration_t *iter;
     unsigned off;
     HRESULT hres;
 
     TRACE("\n");
 
+    off = ctx->code_off;
+    hres = compile_block_statement(ctx, source->statement);
+    if(FAILED(hres))
+        return hres;
+
+    resolve_labels(ctx, off);
+
+    if(!from_eval && !push_instr(ctx, OP_pop))
+        return E_OUTOFMEMORY;
+    if(!push_instr(ctx, OP_ret))
+        return E_OUTOFMEMORY;
+
+    if(TRACE_ON(jscript_disas))
+        dump_code(ctx, off);
+
+    source->instr_off = off;
+
+    for(iter = source->functions; iter; iter = iter->next) {
+        hres = compile_function(ctx, iter->expr->source_elements, FALSE);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
+}
+
+HRESULT compile_script(parser_ctx_t *parser, BOOL from_eval)
+{
+    HRESULT hres;
+
     hres = init_compiler(parser);
     if(FAILED(hres))
         return hres;
 
-    off = parser->compiler->code_off;
-    hres = compile_block_statement(parser->compiler, stat);
-    if(FAILED(hres))
-        return hres;
-
-    resolve_labels(parser->compiler, off);
-
-    if(!from_eval && !push_instr(parser->compiler, OP_pop))
-        return E_OUTOFMEMORY;
-    if(!push_instr(parser->compiler, OP_ret))
-        return E_OUTOFMEMORY;
-
-    if(TRACE_ON(jscript_disas))
-        dump_code(parser->compiler, off);
-
-    *ret_off = off;
-    return S_OK;
+    return compile_function(parser->compiler, parser->source, from_eval);
 }
