@@ -260,9 +260,17 @@ HRESULT get_protocol_handler(IUri *uri, CLSID *clsid, BOOL *urlmon_protocol, ICl
 
 IInternetProtocol *get_mime_filter(LPCWSTR mime)
 {
+    static const WCHAR filtersW[] = {'P','r','o','t','o','c','o','l','s',
+        '\\','F','i','l','t','e','r',0 };
+    static const WCHAR CLSIDW[] = {'C','L','S','I','D',0};
+
     IClassFactory *cf = NULL;
     IInternetProtocol *ret;
     mime_filter *iter;
+    HKEY hlist, hfilter;
+    WCHAR clsidw[64];
+    CLSID clsid;
+    DWORD res, type, size;
     HRESULT hres;
 
     EnterCriticalSection(&session_cs);
@@ -276,12 +284,44 @@ IInternetProtocol *get_mime_filter(LPCWSTR mime)
 
     LeaveCriticalSection(&session_cs);
 
-    if(!cf)
+    if(cf) {
+        hres = IClassFactory_CreateInstance(cf, NULL, &IID_IInternetProtocol, (void**)&ret);
+        if(FAILED(hres)) {
+            WARN("CreateInstance failed: %08x\n", hres);
+            return NULL;
+        }
+
+        return ret;
+    }
+
+    res = RegOpenKeyW(HKEY_CLASSES_ROOT, filtersW, &hlist);
+    if(res != ERROR_SUCCESS) {
+        TRACE("Could not open MIME filters key\n");
+        return NULL;
+    }
+
+    res = RegOpenKeyW(hlist, mime, &hfilter);
+    CloseHandle(hlist);
+    if(res != ERROR_SUCCESS)
         return NULL;
 
-    hres = IClassFactory_CreateInstance(cf, NULL, &IID_IInternetProtocol, (void**)&ret);
+    size = sizeof(clsidw);
+    res = RegQueryValueExW(hfilter, CLSIDW, NULL, &type, (LPBYTE)clsidw, &size);
+    CloseHandle(hfilter);
+    if(res!=ERROR_SUCCESS || type!=REG_SZ) {
+        WARN("Could not get filter CLSID for %s\n", debugstr_w(mime));
+        return NULL;
+    }
+
+    hres = CLSIDFromString(clsidw, &clsid);
     if(FAILED(hres)) {
-        WARN("CreateInstance failed: %08x\n", hres);
+        WARN("CLSIDFromString failed for %s (%x)\n", debugstr_w(mime), hres);
+        return NULL;
+    }
+
+    hres = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IInternetProtocol, (void**)&ret);
+    if(FAILED(hres)) {
+        WARN("CoCreateInstance failed: %08x\n", hres);
         return NULL;
     }
 
