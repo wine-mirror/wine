@@ -23,25 +23,25 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
-typedef struct name_space {
+typedef struct {
     LPWSTR protocol;
     IClassFactory *cf;
     CLSID clsid;
     BOOL urlmon;
 
-    struct name_space *next;
+    struct list entry;
 } name_space;
 
-typedef struct mime_filter {
+typedef struct {
     IClassFactory *cf;
     CLSID clsid;
     LPWSTR mime;
 
-    struct mime_filter *next;
+    struct list entry;
 } mime_filter;
 
-static name_space *name_space_list = NULL;
-static mime_filter *mime_filter_list = NULL;
+static struct list name_space_list = LIST_INIT(name_space_list);
+static struct list mime_filter_list = LIST_INIT(mime_filter_list);
 
 static CRITICAL_SECTION session_cs;
 static CRITICAL_SECTION_DEBUG session_cs_dbg =
@@ -63,7 +63,7 @@ static name_space *find_name_space(LPCWSTR protocol)
 {
     name_space *iter;
 
-    for(iter = name_space_list; iter; iter = iter->next) {
+    LIST_FOR_EACH_ENTRY(iter, &name_space_list, name_space, entry) {
         if(!strcmpW(iter->protocol, protocol))
             return iter;
     }
@@ -134,8 +134,7 @@ static HRESULT register_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR proto
 
     EnterCriticalSection(&session_cs);
 
-    new_name_space->next = name_space_list;
-    name_space_list = new_name_space;
+    list_add_head(&name_space_list, &new_name_space->entry);
 
     LeaveCriticalSection(&session_cs);
 
@@ -144,32 +143,25 @@ static HRESULT register_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR proto
 
 static HRESULT unregister_namespace(IClassFactory *cf, LPCWSTR protocol)
 {
-    name_space *iter, *last = NULL;
+    name_space *iter;
 
     EnterCriticalSection(&session_cs);
 
-    for(iter = name_space_list; iter; iter = iter->next) {
-        if(iter->cf == cf && !strcmpW(iter->protocol, protocol))
-            break;
-        last = iter;
-    }
+    LIST_FOR_EACH_ENTRY(iter, &name_space_list, name_space, entry) {
+        if(iter->cf == cf && !strcmpW(iter->protocol, protocol)) {
+            list_remove(&iter->entry);
 
-    if(iter) {
-        if(last)
-            last->next = iter->next;
-        else
-            name_space_list = iter->next;
+            LeaveCriticalSection(&session_cs);
+
+            if(!iter->urlmon)
+                IClassFactory_Release(iter->cf);
+            heap_free(iter->protocol);
+            heap_free(iter);
+            return S_OK;
+        }
     }
 
     LeaveCriticalSection(&session_cs);
-
-    if(iter) {
-        if(!iter->urlmon)
-            IClassFactory_Release(iter->cf);
-        heap_free(iter->protocol);
-        heap_free(iter);
-    }
-
     return S_OK;
 }
 
@@ -284,7 +276,7 @@ IInternetProtocol *get_mime_filter(LPCWSTR mime)
 
     EnterCriticalSection(&session_cs);
 
-    for(iter = mime_filter_list; iter; iter = iter->next) {
+    LIST_FOR_EACH_ENTRY(iter, &mime_filter_list, mime_filter, entry) {
         if(!strcmpW(iter->mime, mime)) {
             cf = iter->cf;
             break;
@@ -379,8 +371,7 @@ static HRESULT WINAPI InternetSession_RegisterMimeFilter(IInternetSession *iface
 
     EnterCriticalSection(&session_cs);
 
-    filter->next = mime_filter_list;
-    mime_filter_list = filter;
+    list_add_head(&mime_filter_list, &filter->entry);
 
     LeaveCriticalSection(&session_cs);
 
@@ -390,33 +381,26 @@ static HRESULT WINAPI InternetSession_RegisterMimeFilter(IInternetSession *iface
 static HRESULT WINAPI InternetSession_UnregisterMimeFilter(IInternetSession *iface,
         IClassFactory *pCF, LPCWSTR pwzType)
 {
-    mime_filter *iter, *prev = NULL;
+    mime_filter *iter;
 
     TRACE("(%p %s)\n", pCF, debugstr_w(pwzType));
 
     EnterCriticalSection(&session_cs);
 
-    for(iter = mime_filter_list; iter; iter = iter->next) {
-        if(iter->cf == pCF && !strcmpW(iter->mime, pwzType))
-            break;
-        prev = iter;
-    }
+    LIST_FOR_EACH_ENTRY(iter, &mime_filter_list, mime_filter, entry) {
+        if(iter->cf == pCF && !strcmpW(iter->mime, pwzType)) {
+            list_remove(&iter->entry);
 
-    if(iter) {
-        if(prev)
-            prev->next = iter->next;
-        else
-            mime_filter_list = iter->next;
+            LeaveCriticalSection(&session_cs);
+
+            IClassFactory_Release(iter->cf);
+            heap_free(iter->mime);
+            heap_free(iter);
+            return S_OK;
+        }
     }
 
     LeaveCriticalSection(&session_cs);
-
-    if(iter) {
-        IClassFactory_Release(iter->cf);
-        heap_free(iter->mime);
-        heap_free(iter);
-    }
-
     return S_OK;
 }
 
