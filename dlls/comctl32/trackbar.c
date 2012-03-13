@@ -457,7 +457,7 @@ TRACKBAR_AutoPage (TRACKBAR_INFO *infoPtr, POINT clickPoint)
 	TRACKBAR_PageUp(infoPtr);
     else return FALSE;
 
-    infoPtr->flags |= TB_THUMBPOSCHANGED;
+    TRACKBAR_UpdateThumb (infoPtr);
     TRACKBAR_InvalidateThumbMove (infoPtr, prevPos, infoPtr->lPos);
 
     return TRUE;
