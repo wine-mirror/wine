@@ -3315,34 +3315,30 @@ static void test_mxattr_addAttribute(void)
         hr = IMXAttributes_QueryInterface(mxattr, &IID_ISAXAttributes, (void**)&saxattr);
         EXPECT_HR(hr, S_OK);
 
-        /* SAXAttributes30 and SAXAttributes60 both crash on this test */
+        /* SAXAttributes40 and SAXAttributes60 both crash on this test */
         if (IsEqualGUID(table->clsid, &CLSID_SAXAttributes) ||
             IsEqualGUID(table->clsid, &CLSID_SAXAttributes30))
         {
             hr = ISAXAttributes_getLength(saxattr, NULL);
-        todo_wine
             EXPECT_HR(hr, E_POINTER);
         }
 
         len = -1;
         hr = ISAXAttributes_getLength(saxattr, &len);
-todo_wine {
         EXPECT_HR(hr, S_OK);
         ok(len == 0, "got %d\n", len);
-}
+
         hr = IMXAttributes_addAttribute(mxattr, _bstr_(table->uri), _bstr_(table->local),
             _bstr_(table->qname), _bstr_(table->type), _bstr_(table->value));
         ok(hr == table->hr, "%d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
 
         len = -1;
         hr = ISAXAttributes_getLength(saxattr, &len);
-todo_wine {
         EXPECT_HR(hr, S_OK);
         if (table->hr == S_OK)
             ok(len == 1, "%d: got %d length, expected 0\n", i, len);
         else
             ok(len == 0, "%d: got %d length, expected 1\n", i, len);
-}
 
         ISAXAttributes_Release(saxattr);
         IMXAttributes_Release(mxattr);
@@ -3383,10 +3379,8 @@ todo_wine
 
     len = -1;
     hr = ISAXAttributes_getLength(saxattr, &len);
-todo_wine {
     EXPECT_HR(hr, S_OK);
     ok(len == 1, "got %d\n", len);
-}
 
     len = -1;
     hr = ISAXAttributes_getQName(saxattr, 0, NULL, &len);
@@ -3415,10 +3409,9 @@ todo_wine
 
     len = -1;
     hr = ISAXAttributes_getLength(saxattr, &len);
-todo_wine {
     EXPECT_HR(hr, S_OK);
+todo_wine
     ok(len == 0, "got %d\n", len);
-}
 
     len = -1;
     ptr = (void*)0xdeadbeef;

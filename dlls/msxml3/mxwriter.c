@@ -1727,8 +1727,14 @@ static ULONG WINAPI SAXAttributes_Release(ISAXAttributes *iface)
 static HRESULT WINAPI SAXAttributes_getLength(ISAXAttributes *iface, int *length)
 {
     mxattributes *This = impl_from_ISAXAttributes( iface );
-    FIXME("(%p)->(%p): stub\n", This, length);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, length);
+
+    if (!length && (This->class_version == MSXML_DEFAULT || This->class_version == MSXML3))
+       return E_POINTER;
+
+    *length = This->length;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXAttributes_getURI(ISAXAttributes *iface, int nIndex, const WCHAR **pUrl,
