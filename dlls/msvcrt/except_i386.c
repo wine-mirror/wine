@@ -26,6 +26,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#ifdef __i386__
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -37,8 +39,6 @@
 #include "wine/debug.h"
 
 #include "cppexcept.h"
-
-#ifdef __i386__  /* CxxFrameHandler is not supported on non-i386 */
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
@@ -455,9 +455,6 @@ void __stdcall __CxxLongjmpUnwind( const struct MSVCRT___JUMP_BUFFER *buf )
     cxx_local_unwind( frame, descr, buf->TryLevel );
 }
 
-#endif  /* __i386__ */
-
-
 /*********************************************************************
  *		__CppXcptFilter (MSVCRT.@)
  */
@@ -466,19 +463,6 @@ int CDECL __CppXcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
     /* only filter c++ exceptions */
     if (ex != CXX_EXCEPTION) return EXCEPTION_CONTINUE_SEARCH;
     return _XcptFilter( ex, ptr );
-}
-
-/*********************************************************************
- *		_CxxThrowException (MSVCRT.@)
- */
-void WINAPI _CxxThrowException( exception *object, const cxx_exception_type *type )
-{
-    ULONG_PTR args[3];
-
-    args[0] = CXX_FRAME_MAGIC_VC6;
-    args[1] = (ULONG_PTR)object;
-    args[2] = (ULONG_PTR)type;
-    RaiseException( CXX_EXCEPTION, EH_NONCONTINUABLE, 3, args );
 }
 
 /*********************************************************************
@@ -511,3 +495,5 @@ unsigned int CDECL __CxxQueryExceptionSize(void)
 {
   return sizeof(cxx_exception_type);
 }
+
+#endif  /* __i386__ */

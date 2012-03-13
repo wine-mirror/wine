@@ -145,18 +145,18 @@
 @ extern _HUGE MSVCRT__HUGE
 @ cdecl _Strftime(str long str ptr ptr)
 @ cdecl _XcptFilter(long ptr)
-@ cdecl __CppXcptFilter(long ptr)
+@ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
+@ cdecl -i386 __CppXcptFilter(long ptr)
 # stub __CxxCallUnwindDelDtor
 # stub __CxxCallUnwindDtor
 # stub __CxxCallUnwindVecDtor
-@ cdecl __CxxDetectRethrow(ptr)
+@ cdecl -i386 __CxxDetectRethrow(ptr)
 # stub __CxxExceptionFilter
 @ cdecl -i386 -norelay __CxxFrameHandler(ptr ptr ptr ptr)
 @ cdecl -i386 -norelay __CxxFrameHandler2(ptr ptr ptr ptr) __CxxFrameHandler
 @ cdecl -i386 -norelay __CxxFrameHandler3(ptr ptr ptr ptr) __CxxFrameHandler
-@ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
 @ stdcall -i386 __CxxLongjmpUnwind(ptr)
-@ cdecl __CxxQueryExceptionSize()
+@ cdecl -i386 __CxxQueryExceptionSize()
 # stub __CxxRegisterExceptionObject
 # stub __CxxUnregisterExceptionObject
 # stub __DestructExceptionObject

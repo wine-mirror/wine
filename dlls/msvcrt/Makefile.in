@@ -6,13 +6,13 @@ DELAYIMPORTS = advapi32 user32
 C_SRCS = \
 	console.c \
 	cpp.c \
-	cppexcept.c \
 	ctype.c \
 	data.c \
 	dir.c \
 	environ.c \
 	errno.c \
 	except.c \
+	except_i386.c \
 	exit.c \
 	file.c \
 	heap.c \
