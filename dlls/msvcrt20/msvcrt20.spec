@@ -793,7 +793,7 @@
 @ stdcall _CxxThrowException(long long) msvcrt._CxxThrowException
 @ extern _HUGE msvcrt._HUGE
 @ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
-@ cdecl -i386 -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
+@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
 @ stdcall -i386 __CxxLongjmpUnwind(ptr) msvcrt.__CxxLongjmpUnwind
 @ cdecl __STRINGTOLD(ptr ptr str long) msvcrt.__STRINGTOLD
 @ extern __argc msvcrt.__argc

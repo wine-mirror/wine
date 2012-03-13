@@ -39,6 +39,83 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
+struct _DISPATCHER_CONTEXT;
+
+typedef LONG (WINAPI *PC_LANGUAGE_EXCEPTION_HANDLER)( EXCEPTION_POINTERS *ptrs, ULONG64 frame );
+typedef EXCEPTION_DISPOSITION (WINAPI *PEXCEPTION_ROUTINE)( EXCEPTION_RECORD *rec,
+                                                            ULONG64 frame,
+                                                            CONTEXT *context,
+                                                            struct _DISPATCHER_CONTEXT *dispatch );
+
+typedef struct _DISPATCHER_CONTEXT
+{
+    ULONG64               ControlPc;
+    ULONG64               ImageBase;
+    PRUNTIME_FUNCTION     FunctionEntry;
+    ULONG64               EstablisherFrame;
+    ULONG64               TargetIp;
+    PCONTEXT              ContextRecord;
+    PEXCEPTION_ROUTINE    LanguageHandler;
+    PVOID                 HandlerData;
+    PUNWIND_HISTORY_TABLE HistoryTable;
+    ULONG                 ScopeIndex;
+} DISPATCHER_CONTEXT;
+
+
+/*********************************************************************
+ *		__CxxFrameHandler (MSVCRT.@)
+ */
+EXCEPTION_DISPOSITION CDECL __CxxFrameHandler( EXCEPTION_RECORD *rec, ULONG64 frame,
+                                               CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
+{
+    FIXME( "%p %lx %p %p: not implemented\n", rec, frame, context, dispatch );
+    return ExceptionContinueSearch;
+}
+
+
+/*********************************************************************
+ *		__CppXcptFilter (MSVCRT.@)
+ */
+int CDECL __CppXcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
+{
+    /* only filter c++ exceptions */
+    if (ex != CXX_EXCEPTION) return EXCEPTION_CONTINUE_SEARCH;
+    return _XcptFilter( ex, ptr );
+}
+
+
+/*********************************************************************
+ *		__CxxDetectRethrow (MSVCRT.@)
+ */
+BOOL CDECL __CxxDetectRethrow(PEXCEPTION_POINTERS ptrs)
+{
+    PEXCEPTION_RECORD rec;
+
+    if (!ptrs)
+        return FALSE;
+
+    rec = ptrs->ExceptionRecord;
+
+    if (rec->ExceptionCode == CXX_EXCEPTION &&
+        rec->NumberParameters == 3 &&
+        rec->ExceptionInformation[0] == CXX_FRAME_MAGIC_VC6 &&
+        rec->ExceptionInformation[2])
+    {
+        ptrs->ExceptionRecord = msvcrt_get_thread_data()->exc_record;
+        return TRUE;
+    }
+    return (msvcrt_get_thread_data()->exc_record == rec);
+}
+
+
+/*********************************************************************
+ *		__CxxQueryExceptionSize (MSVCRT.@)
+ */
+unsigned int CDECL __CxxQueryExceptionSize(void)
+{
+    return sizeof(cxx_exception_type);
+}
+
 
 /*******************************************************************
  *		_setjmp (MSVCRT.@)

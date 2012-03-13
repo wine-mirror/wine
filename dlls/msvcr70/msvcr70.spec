@@ -118,11 +118,11 @@
 @ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
 @ stub __CxxCallUnwindDtor
 @ stub __CxxCallUnwindVecDtor
-@ cdecl __CxxDetectRethrow(ptr) msvcrt.__CxxDetectRethrow
+@ cdecl -arch=i386,x86_64 __CxxDetectRethrow(ptr) msvcrt.__CxxDetectRethrow
 @ stub __CxxExceptionFilter
-@ cdecl -i386 -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
+@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
 @ stdcall -i386 __CxxLongjmpUnwind(ptr) msvcrt.__CxxLongjmpUnwind
-@ cdecl __CxxQueryExceptionSize() msvcrt.__CxxQueryExceptionSize
+@ cdecl -arch=i386,x86_64 __CxxQueryExceptionSize() msvcrt.__CxxQueryExceptionSize
 @ stub __CxxRegisterExceptionObject
 @ stub __CxxUnregisterExceptionObject
 @ stub __DestructExceptionObject

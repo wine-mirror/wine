@@ -868,7 +868,7 @@
 @ cdecl -i386 -norelay _EH_prolog() msvcrt._EH_prolog
 @ extern _HUGE msvcrt._HUGE
 @ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
-@ cdecl -i386 -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
+@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
 @ stdcall -i386 __CxxLongjmpUnwind(ptr) msvcrt.__CxxLongjmpUnwind
 @ cdecl __RTCastToVoid(ptr) msvcrt.__RTCastToVoid
 @ cdecl __RTDynamicCast(ptr long ptr ptr long) msvcrt.__RTDynamicCast

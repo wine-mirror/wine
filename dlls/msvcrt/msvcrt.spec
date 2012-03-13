@@ -146,17 +146,17 @@
 @ cdecl _Strftime(str long str ptr ptr)
 @ cdecl _XcptFilter(long ptr)
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
-@ cdecl -i386 __CppXcptFilter(long ptr)
+@ cdecl -arch=i386,x86_64 __CppXcptFilter(long ptr)
 # stub __CxxCallUnwindDelDtor
 # stub __CxxCallUnwindDtor
 # stub __CxxCallUnwindVecDtor
-@ cdecl -i386 __CxxDetectRethrow(ptr)
+@ cdecl -arch=i386,x86_64 __CxxDetectRethrow(ptr)
 # stub __CxxExceptionFilter
-@ cdecl -i386 -norelay __CxxFrameHandler(ptr ptr ptr ptr)
-@ cdecl -i386 -norelay __CxxFrameHandler2(ptr ptr ptr ptr) __CxxFrameHandler
-@ cdecl -i386 -norelay __CxxFrameHandler3(ptr ptr ptr ptr) __CxxFrameHandler
+@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler(ptr ptr ptr ptr)
+@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler2(ptr ptr ptr ptr) __CxxFrameHandler
+@ cdecl -arch=i386,x86_64 -norelay __CxxFrameHandler3(ptr ptr ptr ptr) __CxxFrameHandler
 @ stdcall -i386 __CxxLongjmpUnwind(ptr)
-@ cdecl -i386 __CxxQueryExceptionSize()
+@ cdecl -arch=i386,x86_64 __CxxQueryExceptionSize()
 # stub __CxxRegisterExceptionObject
 # stub __CxxUnregisterExceptionObject
 # stub __DestructExceptionObject
