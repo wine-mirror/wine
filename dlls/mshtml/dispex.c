@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -47,7 +48,10 @@ typedef struct {
     DISPID id;
     BSTR name;
     tid_t tid;
-    int func_disp_idx;
+    SHORT put_vtbl_off;
+    SHORT get_vtbl_off;
+    SHORT func_disp_idx;
+    VARTYPE prop_vt;
 } func_info_t;
 
 struct dispex_data_t {
@@ -185,23 +189,48 @@ HRESULT get_htmldoc_classinfo(ITypeInfo **typeinfo)
 
 static void add_func_info(dispex_data_t *data, DWORD *size, tid_t tid, const FUNCDESC *desc, ITypeInfo *dti)
 {
+    func_info_t *info;
     HRESULT hres;
 
-    if(data->func_cnt && data->funcs[data->func_cnt-1].id == desc->memid)
-        return;
+    if(data->func_cnt && data->funcs[data->func_cnt-1].id == desc->memid) {
+        info = data->funcs+data->func_cnt-1;
+    }else {
+        if(data->func_cnt == *size)
+            data->funcs = heap_realloc(data->funcs, (*size <<= 1)*sizeof(func_info_t));
 
-    if(data->func_cnt == *size)
-        data->funcs = heap_realloc(data->funcs, (*size <<= 1)*sizeof(func_info_t));
+        info = data->funcs+data->func_cnt;
+        hres = ITypeInfo_GetDocumentation(dti, desc->memid, &info->name, NULL, NULL, NULL);
+        if(FAILED(hres))
+            return;
 
-    hres = ITypeInfo_GetDocumentation(dti, desc->memid, &data->funcs[data->func_cnt].name, NULL, NULL, NULL);
-    if(FAILED(hres))
-        return;
+        data->func_cnt++;
 
-    data->funcs[data->func_cnt].id = desc->memid;
-    data->funcs[data->func_cnt].tid = tid;
-    data->funcs[data->func_cnt].func_disp_idx = (desc->invkind & DISPATCH_METHOD) ? data->func_disp_cnt++ : -1;
+        info->id = desc->memid;
+        info->tid = tid;
+        info->func_disp_idx = -1;
+        info->prop_vt = VT_EMPTY;
+        info->put_vtbl_off = 0;
+        info->get_vtbl_off = 0;
+    }
 
-    data->func_cnt++;
+    if(desc->invkind & DISPATCH_METHOD) {
+        info->func_disp_idx = data->func_disp_cnt++;
+    }else if(desc->invkind & (DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYGET)) {
+        VARTYPE vt = VT_EMPTY;
+
+        if(desc->invkind & DISPATCH_PROPERTYGET) {
+            vt = desc->elemdescFunc.tdesc.vt;
+            info->get_vtbl_off = desc->oVft/sizeof(void*);
+        }
+        if(desc->invkind & DISPATCH_PROPERTYPUT) {
+            assert(desc->cParams == 1);
+            vt = desc->lprgelemdescParam->tdesc.vt;
+            info->put_vtbl_off = desc->oVft/sizeof(void*);
+        }
+
+        assert(info->prop_vt == VT_EMPTY || vt == info->prop_vt);
+        info->prop_vt = vt;
+    }
 }
 
 static int dispid_cmp(const void *p1, const void *p2)
