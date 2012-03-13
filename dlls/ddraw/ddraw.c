@@ -161,7 +161,7 @@ static HRESULT WINAPI ddraw7_QueryInterface(IDirectDraw7 *iface, REFIID refiid, 
     if ( IsEqualGUID( &IID_IUnknown, refiid ) ||
          IsEqualGUID( &IID_IDirectDraw7, refiid ) )
     {
-        *obj = This;
+        *obj = &This->IDirectDraw7_iface;
         TRACE("(%p) Returning IDirectDraw7 interface at %p\n", This, *obj);
     }
     else if ( IsEqualGUID( &IID_IDirectDraw4, refiid ) )
