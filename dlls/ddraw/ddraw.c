@@ -4123,7 +4123,7 @@ static HRESULT WINAPI d3d3_CreateLight(IDirect3D3 *iface, IDirect3DLight **light
         IUnknown *outer_unknown)
 {
     struct ddraw *ddraw = impl_from_IDirect3D3(iface);
-    IDirect3DLightImpl *object;
+    struct d3d_light *object;
 
     TRACE("iface %p, light %p, outer_unknown %p.\n", iface, light, outer_unknown);
 

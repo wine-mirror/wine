@@ -63,10 +63,10 @@ void viewport_activate(IDirect3DViewportImpl *This, BOOL ignore_lights)
 
     if (!ignore_lights)
     {
-        IDirect3DLightImpl *light;
+        struct d3d_light *light;
 
         /* Activate all the lights associated with this context */
-        LIST_FOR_EACH_ENTRY(light, &This->light_list, IDirect3DLightImpl, entry)
+        LIST_FOR_EACH_ENTRY(light, &This->light_list, struct d3d_light, entry)
         {
             light_activate(light);
         }
@@ -764,7 +764,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_AddLight(IDirect3DViewport3 *iface,
         IDirect3DLight *lpDirect3DLight)
 {
     IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
-    IDirect3DLightImpl *lpDirect3DLightImpl = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
+    struct d3d_light *light_impl = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
     DWORD i = 0;
     DWORD map = This->map_lights;
 
@@ -784,20 +784,20 @@ static HRESULT WINAPI IDirect3DViewportImpl_AddLight(IDirect3DViewport3 *iface,
         map >>= 1;
         ++i;
     }
-    lpDirect3DLightImpl->dwLightIndex = i;
+    light_impl->dwLightIndex = i;
     This->num_lights++;
     This->map_lights |= 1<<i;
 
     /* Add the light in the 'linked' chain */
-    list_add_head(&This->light_list, &lpDirect3DLightImpl->entry);
+    list_add_head(&This->light_list, &light_impl->entry);
     IDirect3DLight_AddRef(lpDirect3DLight);
 
     /* Attach the light to the viewport */
-    lpDirect3DLightImpl->active_viewport = This;
+    light_impl->active_viewport = This;
 
     /* If active, activate the light */
     if (This->active_device)
-        light_activate(lpDirect3DLightImpl);
+        light_activate(light_impl);
 
     wined3d_mutex_unlock();
 
@@ -821,7 +821,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_DeleteLight(IDirect3DViewport3 *ifac
         IDirect3DLight *lpDirect3DLight)
 {
     IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
-    IDirect3DLightImpl *l = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
+    struct d3d_light *l = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
 
     TRACE("iface %p, light %p.\n", iface, lpDirect3DLight);
 
@@ -863,7 +863,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_NextLight(IDirect3DViewport3 *iface,
         IDirect3DLight *lpDirect3DLight, IDirect3DLight **lplpDirect3DLight, DWORD dwFlags)
 {
     IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
-    IDirect3DLightImpl *l = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
+    struct d3d_light *l = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
     struct list *entry;
     HRESULT hr;
 
@@ -904,7 +904,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_NextLight(IDirect3DViewport3 *iface,
 
     if (entry)
     {
-        *lplpDirect3DLight = (IDirect3DLight *)LIST_ENTRY(entry, IDirect3DLightImpl, entry);
+        *lplpDirect3DLight = (IDirect3DLight *)LIST_ENTRY(entry, struct d3d_light, entry);
         IDirect3DLight_AddRef(*lplpDirect3DLight);
         hr = D3D_OK;
     }

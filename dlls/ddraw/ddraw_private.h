@@ -42,7 +42,6 @@ extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HI
 
 /* Typdef the interfaces */
 typedef struct IDirect3DDeviceImpl        IDirect3DDeviceImpl;
-typedef struct IDirect3DLightImpl         IDirect3DLightImpl;
 typedef struct IDirect3DViewportImpl      IDirect3DViewportImpl;
 typedef struct IDirect3DMaterialImpl      IDirect3DMaterialImpl;
 typedef struct IDirect3DExecuteBufferImpl IDirect3DExecuteBufferImpl;
@@ -402,7 +401,7 @@ struct object_creation_info
 /******************************************************************************
  * IDirect3DLight implementation structure - Wraps to D3D7
  ******************************************************************************/
-struct IDirect3DLightImpl
+struct d3d_light
 {
     IDirect3DLight IDirect3DLight_iface;
     LONG ref;
@@ -422,10 +421,10 @@ struct IDirect3DLightImpl
 };
 
 /* Helper functions */
-void light_activate(IDirect3DLightImpl *light) DECLSPEC_HIDDEN;
-void light_deactivate(IDirect3DLightImpl *light) DECLSPEC_HIDDEN;
-void d3d_light_init(IDirect3DLightImpl *light, struct ddraw *ddraw) DECLSPEC_HIDDEN;
-IDirect3DLightImpl *unsafe_impl_from_IDirect3DLight(IDirect3DLight *iface) DECLSPEC_HIDDEN;
+void light_activate(struct d3d_light *light) DECLSPEC_HIDDEN;
+void light_deactivate(struct d3d_light *light) DECLSPEC_HIDDEN;
+void d3d_light_init(struct d3d_light *light, struct ddraw *ddraw) DECLSPEC_HIDDEN;
+struct d3d_light *unsafe_impl_from_IDirect3DLight(IDirect3DLight *iface) DECLSPEC_HIDDEN;
 
 /******************************************************************************
  * IDirect3DMaterial implementation structure - Wraps to D3D7
