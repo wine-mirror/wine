@@ -129,6 +129,8 @@ DEFINE_EXPECT(AXSetInterfaceSafetyOptions_IDispatch_data);
 DEFINE_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller_secmgr);
 DEFINE_EXPECT(AXSetInterfaceSafetyOptions_IDispatchEx_caller);
 DEFINE_EXPECT(external_success);
+DEFINE_EXPECT(QS_VariantConversion);
+DEFINE_EXPECT(ChangeType);
 
 #define TESTSCRIPT_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80746}"
 #define TESTACTIVEX_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80646}"
@@ -269,6 +271,88 @@ static IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
 };
 
 static IPropertyNotifySink PropertyNotifySink = { &PropertyNotifySinkVtbl };
+
+static HRESULT WINAPI VariantChangeType_QueryInterface(IVariantChangeType *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI VariantChangeType_AddRef(IVariantChangeType *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI VariantChangeType_Release(IVariantChangeType *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI VariantChangeType_ChangeType(IVariantChangeType *iface, VARIANT *dst, VARIANT *src, LCID lcid, VARTYPE vt)
+{
+    CHECK_EXPECT(ChangeType);
+
+    ok(dst != NULL, "dst = NULL\n");
+    ok(V_VT(dst) == VT_EMPTY, "V_VT(dst) = %d\n", V_VT(dst));
+    ok(src != NULL, "src = NULL\n");
+    ok(V_VT(src) == VT_I4, "V_VT(src) = %d\n", V_VT(src));
+    ok(V_I4(src) == 0xf0f0f0, "V_I4(src) = %x\n", V_I4(src));
+    ok(lcid == LOCALE_NEUTRAL, "lcid = %d\n", lcid);
+    ok(vt == VT_BSTR, "vt = %d\n", vt);
+
+    V_VT(dst) = VT_BSTR;
+    V_BSTR(dst) = a2bstr("red");
+    return S_OK;
+}
+
+static const IVariantChangeTypeVtbl VariantChangeTypeVtbl = {
+    VariantChangeType_QueryInterface,
+    VariantChangeType_AddRef,
+    VariantChangeType_Release,
+    VariantChangeType_ChangeType
+};
+
+static IVariantChangeType VChangeType = { &VariantChangeTypeVtbl };
+
+static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
+        REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(guidService, &SID_VariantConversion)) {
+        CHECK_EXPECT(QS_VariantConversion);
+        ok(IsEqualGUID(riid, &IID_IVariantChangeType), "uenxpected riid %s\n", debugstr_guid(riid));
+        *ppv = &VChangeType;
+        return S_OK;
+    }
+
+    ok(0, "unexpected service %s\n", debugstr_guid(guidService));
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    ServiceProvider_QueryInterface,
+    ServiceProvider_AddRef,
+    ServiceProvider_Release,
+    ServiceProvider_QueryService
+};
+
+static IServiceProvider caller_sp = { &ServiceProviderVtbl };
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
 {
@@ -1761,13 +1845,13 @@ static HRESULT WINAPI ActiveScriptParse_AddScriptlet(IActiveScriptParse *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT dispex_propput(IDispatchEx *obj, DISPID id, DWORD flags, VARIANT *var)
+static HRESULT dispex_propput(IDispatchEx *obj, DISPID id, DWORD flags, VARIANT *var, IServiceProvider *caller_sp)
 {
     DISPID propput_arg = DISPID_PROPERTYPUT;
     DISPPARAMS dp = {var, &propput_arg, 1, 1};
     EXCEPINFO ei = {0};
 
-    return IDispatchEx_InvokeEx(obj, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT|flags, &dp, NULL, &ei, NULL);
+    return IDispatchEx_InvokeEx(obj, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT|flags, &dp, NULL, &ei, caller_sp);
 }
 
 static void test_func(IDispatchEx *obj)
@@ -1815,7 +1899,7 @@ static void test_func(IDispatchEx *obj)
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = 100;
-    hres = dispex_propput(obj, id, 0, &var);
+    hres = dispex_propput(obj, id, 0, &var, NULL);
     ok(hres == E_NOTIMPL, "InvokeEx failed: %08x\n", hres);
 
     IDispatchEx_Release(dispex);
@@ -1834,7 +1918,7 @@ static void test_nextdispid(IDispatchEx *dispex)
     SysFreeString(name);
 
     V_VT(&var) = VT_EMPTY;
-    hres = dispex_propput(dispex, dyn_id, 0, &var);
+    hres = dispex_propput(dispex, dyn_id, 0, &var, NULL);
     ok(hres == S_OK, "dispex_propput failed: %08x\n", hres);
 
     while(last_id != dyn_id) {
@@ -1885,6 +1969,37 @@ static void test_global_id(void)
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
     ok(V_VT(&var) == VT_DISPATCH, "V_VT(var) = %d\n", V_VT(&var));
     VariantClear(&var);
+}
+
+static void test_arg_conv(IHTMLWindow2 *window)
+{
+    IHTMLDocument2 *doc;
+    IDispatchEx *dispex;
+    IHTMLElement *elem;
+    VARIANT v;
+    HRESULT hres;
+
+    hres = IHTMLWindow2_get_document(window, &doc);
+    ok(hres == S_OK, "get_document failed: %08x\n", hres);
+
+    hres = IHTMLDocument2_get_body(doc, &elem);
+    IHTMLDocument2_Release(doc);
+    ok(hres == S_OK, "get_body failed: %08x\n", hres);
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IDispatchEx, (void**)&dispex);
+    IHTMLElement_Release(elem);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+
+    SET_EXPECT(QS_VariantConversion);
+    SET_EXPECT(ChangeType);
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0xf0f0f0;
+    hres = dispex_propput(dispex, DISPID_IHTMLBODYELEMENT_BACKGROUND, 0, &v, &caller_sp);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    CHECK_CALLED(QS_VariantConversion);
+    CHECK_CALLED(ChangeType);
+
+    IDispatchEx_Release(dispex);
 }
 
 static void test_script_run(void)
@@ -1943,7 +2058,7 @@ static void test_script_run(void)
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = 100;
-    hres = dispex_propput(document, id, 0, &var);
+    hres = dispex_propput(document, id, 0, &var, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
 
     tmp = SysAllocString(testW);
@@ -1964,7 +2079,7 @@ static void test_script_run(void)
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = 200;
-    hres = dispex_propput(document, id, DISPATCH_PROPERTYPUTREF, &var);
+    hres = dispex_propput(document, id, DISPATCH_PROPERTYPUTREF, &var, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
 
     VariantInit(&var);
@@ -1994,7 +2109,7 @@ static void test_script_run(void)
 
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = NULL;
-    dispex_propput(document, id, 0,&var);
+    dispex_propput(document, id, 0, &var, NULL);
 
     VariantInit(&var);
     memset(&dp, 0, sizeof(dp));
@@ -2047,7 +2162,6 @@ static void test_script_run(void)
     ok(hres == S_OK, "Could not get IHTMLWindow2 iface: %08x\n", hres);
 
     hres = IHTMLWindow2_get_navigator(window, &navigator);
-    IHTMLWindow2_Release(window);
     ok(hres == S_OK, "get_navigator failed: %08x\n", hres);
 
     hres = IOmNavigator_QueryInterface(navigator, &IID_IDispatchEx, (void**)&dispex);
@@ -2056,6 +2170,9 @@ static void test_script_run(void)
 
     test_func(dispex);
     test_nextdispid(dispex);
+
+    test_arg_conv(window);
+    IHTMLWindow2_Release(window);
 
     tmp = a2bstr("test");
     hres = IDispatchEx_DeleteMemberByName(dispex, tmp, fdexNameCaseSensitive);
