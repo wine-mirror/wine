@@ -215,6 +215,8 @@ static void start_dos_exe( LPCSTR filename, LPCSTR cmdline )
     MEMORY_BASIC_INFORMATION mem_info;
     const char *reason;
 
+    start_dosbox( filename, cmdline );
+
     if (VirtualQuery( NULL, &mem_info, sizeof(mem_info) ) && mem_info.State != MEM_FREE)
     {
         __wine_load_dos_exe( filename, cmdline );
@@ -225,11 +227,9 @@ static void start_dos_exe( LPCSTR filename, LPCSTR cmdline )
     }
     else reason = "because the DOS memory range is unavailable";
 
-    start_dosbox( filename, cmdline );
-
     WINE_MESSAGE( "winevdm: Cannot start DOS application %s\n", filename );
     WINE_MESSAGE( "         %s.\n", reason );
-    WINE_MESSAGE( "         Try running this application with DOSBox.\n" );
+    WINE_MESSAGE( "         You should install DOSBox.\n" );
     ExitProcess(1);
 }
 
