@@ -3366,11 +3366,9 @@ static void test_mxattr_clear(void)
     EXPECT_HR(hr, S_OK);
 
     hr = ISAXAttributes_getQName(saxattr, 0, NULL, NULL);
-todo_wine
     EXPECT_HR(hr, E_INVALIDARG);
 
     hr = ISAXAttributes_getQName(saxattr, 0, &ptr, &len);
-todo_wine
     EXPECT_HR(hr, E_INVALIDARG);
 
     hr = IMXAttributes_addAttribute(mxattr, _bstr_("uri"), _bstr_("local"),
@@ -3384,24 +3382,19 @@ todo_wine
 
     len = -1;
     hr = ISAXAttributes_getQName(saxattr, 0, NULL, &len);
-todo_wine
     EXPECT_HR(hr, E_POINTER);
     ok(len == -1, "got %d\n", len);
 
     ptr = (void*)0xdeadbeef;
     hr = ISAXAttributes_getQName(saxattr, 0, &ptr, NULL);
-todo_wine
     EXPECT_HR(hr, E_POINTER);
     ok(ptr == (void*)0xdeadbeef, "got %p\n", ptr);
 
     len = 0;
     hr = ISAXAttributes_getQName(saxattr, 0, &ptr, &len);
-todo_wine {
     EXPECT_HR(hr, S_OK);
     ok(len == 5, "got %d\n", len);
-    if (hr == S_OK)
-        ok(!lstrcmpW(ptr, _bstr_("qname")), "got %s\n", wine_dbgstr_w(ptr));
-}
+    ok(!lstrcmpW(ptr, _bstr_("qname")), "got %s\n", wine_dbgstr_w(ptr));
 
     hr = IMXAttributes_clear(mxattr);
 todo_wine
@@ -3416,11 +3409,11 @@ todo_wine
     len = -1;
     ptr = (void*)0xdeadbeef;
     hr = ISAXAttributes_getQName(saxattr, 0, &ptr, &len);
-todo_wine
+todo_wine {
     EXPECT_HR(hr, E_INVALIDARG);
     ok(len == -1, "got %d\n", len);
     ok(ptr == (void*)0xdeadbeef, "got %p\n", ptr);
-
+}
     IMXAttributes_Release(mxattr);
     ISAXAttributes_Release(saxattr);
     free_bstrs();

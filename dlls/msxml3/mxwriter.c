@@ -1756,8 +1756,16 @@ static HRESULT WINAPI SAXAttributes_getLocalName(ISAXAttributes *iface, int nInd
 static HRESULT WINAPI SAXAttributes_getQName(ISAXAttributes *iface, int index, const WCHAR **qname, int *length)
 {
     mxattributes *This = impl_from_ISAXAttributes( iface );
-    FIXME("(%p)->(%d %p %p): stub\n", This, index, qname, length);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p %p)\n", This, index, qname, length);
+
+    if (index >= This->length) return E_INVALIDARG;
+    if (!qname || !length) return E_POINTER;
+
+    *qname = This->attr[index].qname;
+    *length = SysStringLen(This->attr[index].qname);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXAttributes_getName(ISAXAttributes *iface, int nIndex, const WCHAR **pUri, int *pUriLength,
