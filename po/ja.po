@@ -2576,7 +2576,7 @@ msgstr "証明書失効リスト (*.crl)"
 msgid "Certificate Trust List (*.stl)"
 msgstr "証明書信頼リスト (*.stl)"
 
-#: cryptui.rc:78
+#: cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr "Microsoft シリアル化された証明書ストア (*.sst)"
 
@@ -2844,10 +2844,6 @@ msgstr "CMS/PKCS #7 メッセージ (*.p7b)"
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
 msgstr ""
-
-#: cryptui.rc:159
-msgid "Serialized Certificate Store (*.sst)"
-msgstr "シリアル化された証明書ストア (*.sst)"
 
 #: cryptui.rc:160
 msgid "File Format"

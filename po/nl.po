@@ -2598,7 +2598,7 @@ msgstr "Certificaat terugroeplijst (*.crl)"
 msgid "Certificate Trust List (*.stl)"
 msgstr "Certificaat vertrouwenslijst (*.stl)"
 
-#: cryptui.rc:78
+#: cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr "Microsoft seriële certificatenopslag (*.sst)"
 
@@ -2872,10 +2872,6 @@ msgstr "CMS/PKCS #7 berichten (*.p7b)"
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
 msgstr "Persoonlijke informatie uitwisseling (*.pfx)"
-
-#: cryptui.rc:159
-msgid "Serialized Certificate Store (*.sst)"
-msgstr "Seriële certificatenopslag (*.sst)"
 
 #: cryptui.rc:160
 msgid "File Format"

@@ -2583,7 +2583,7 @@ msgstr "Seznam preklicanih potrdil (*.crl)"
 msgid "Certificate Trust List (*.stl)"
 msgstr "Seznam zaupanih potrdil (*.stl)"
 
-#: cryptui.rc:78
+#: cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr "Microsoftova shramba potrdil v zaporedjih (*.sst)"
 
@@ -2854,10 +2854,6 @@ msgstr "Sporočila CMS/PCKS #7 (*.p7b)"
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
 msgstr "Izmenjava osebnih podatkov (*.pfx)"
-
-#: cryptui.rc:159
-msgid "Serialized Certificate Store (*.sst)"
-msgstr "Shramba potrdila v zaporedju (*.sst)"
 
 #: cryptui.rc:160
 msgid "File Format"

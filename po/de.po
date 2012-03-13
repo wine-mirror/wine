@@ -2580,7 +2580,7 @@ msgstr "Zertifikatssperrliste (*.crl)"
 msgid "Certificate Trust List (*.stl)"
 msgstr "Zertifikatsvertrauensliste (*.stl)"
 
-#: cryptui.rc:78
+#: cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr "Microsoft Speicher serieller Zertifikate (*.sst)"
 
@@ -2853,10 +2853,6 @@ msgstr "CMS/PKCS #7 Zertifikate (*.p7b)"
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
 msgstr "Privater Informationsaustausch (*.pfx)"
-
-#: cryptui.rc:159
-msgid "Serialized Certificate Store (*.sst)"
-msgstr "Zertifikatsspeicher (*.sst)"
 
 #: cryptui.rc:160
 msgid "File Format"
