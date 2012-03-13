@@ -190,7 +190,7 @@ NTSTATUS WINAPI NtDeleteValueKey( HANDLE hkey, const UNICODE_STRING *name )
     NTSTATUS ret;
 
     TRACE( "(%p,%s)\n", hkey, debugstr_us(name) );
-    if (name->Length > MAX_VALUE_LENGTH) return STATUS_BUFFER_OVERFLOW;
+    if (name->Length > MAX_VALUE_LENGTH) return STATUS_OBJECT_NAME_NOT_FOUND;
 
     SERVER_START_REQ( delete_key_value )
     {
@@ -483,7 +483,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
 
     TRACE( "(%p,%s,%d,%p,%d)\n", handle, debugstr_us(name), info_class, info, length );
 
-    if (name->Length > MAX_VALUE_LENGTH) return STATUS_BUFFER_OVERFLOW;
+    if (name->Length > MAX_VALUE_LENGTH) return STATUS_OBJECT_NAME_NOT_FOUND;
 
     /* compute the length we want to retrieve */
     switch(info_class)
@@ -771,7 +771,7 @@ NTSTATUS WINAPI NtSetValueKey( HANDLE hkey, const UNICODE_STRING *name, ULONG Ti
 
     TRACE( "(%p,%s,%d,%p,%d)\n", hkey, debugstr_us(name), type, data, count );
 
-    if (name->Length > MAX_VALUE_LENGTH) return STATUS_BUFFER_OVERFLOW;
+    if (name->Length > MAX_VALUE_LENGTH) return STATUS_INVALID_PARAMETER;
 
     SERVER_START_REQ( set_key_value )
     {
