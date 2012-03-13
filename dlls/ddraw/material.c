@@ -94,7 +94,7 @@ static HRESULT WINAPI IDirect3DMaterialImpl_QueryInterface(IDirect3DMaterial3 *i
     }
     if ( IsEqualGUID( &IID_IDirect3DMaterial3, riid ) ) {
         IDirect3DMaterial3_AddRef(&This->IDirect3DMaterial3_iface);
-        *obp = This;
+        *obp = &This->IDirect3DMaterial3_iface;
         TRACE("  Creating IDirect3DMaterial3 interface %p\n", *obp);
         return S_OK;
     }
