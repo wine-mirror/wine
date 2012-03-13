@@ -289,8 +289,8 @@
 @ stdcall DeleteTimerQueue(long)
 @ stdcall DeleteTimerQueueEx (long long)
 @ stdcall DeleteTimerQueueTimer(long long long)
-# @ stub DeleteVolumeMountPointA
-# @ stub DeleteVolumeMountPointW
+@ stdcall DeleteVolumeMountPointA(str)
+@ stdcall DeleteVolumeMountPointW(wstr)
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr)
 @ stdcall DisableThreadLibraryCalls(long)
 @ stdcall DisconnectNamedPipe(long)

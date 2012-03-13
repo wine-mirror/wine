@@ -2058,3 +2058,21 @@ BOOL WINAPI FindVolumeMountPointClose(HANDLE h)
     FIXME("(%p), stub!\n", h);
     return FALSE;
 }
+
+/***********************************************************************
+ *           DeleteVolumeMountPointA   (KERNEL32.@)
+ */
+BOOL WINAPI DeleteVolumeMountPointA(LPCSTR mountpoint)
+{
+    FIXME("(%s), stub!\n", debugstr_a(mountpoint));
+    return FALSE;
+}
+
+/***********************************************************************
+ *           DeleteVolumeMountPointW (KERNEL32.@)
+ */
+BOOL WINAPI DeleteVolumeMountPointW(LPCWSTR mountpoint)
+{
+    FIXME("(%s), stub!\n", debugstr_w(mountpoint));
+    return FALSE;
+}
