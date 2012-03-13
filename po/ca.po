@@ -2190,16 +2190,20 @@ msgstr ""
 "llista de revocació de certificats o llista de certificats de confiança:"
 
 #: cryptui.rc:296
-msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+#, fuzzy
+#| msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
 msgstr ""
 "Estàndard de Sintaxi dels Missatges Criptogràfics/Missatges PKCS #7 (*.p7b)"
 
 #: cryptui.rc:298
-msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
+#, fuzzy
+#| msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
+msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
 msgstr "Intercanvi d'Informació Personal/PKCS #12 (.pfx, .p12)"
 
-#: cryptui.rc:300
-msgid "Microsoft Serialized Certificate Store (.sst)"
+#: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
+msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr "Magatzem de Certificats Serialitzat de Microsoft (*.sst)"
 
 #: cryptui.rc:308
@@ -2340,15 +2344,21 @@ msgid "Select the format you want to use:"
 msgstr "Seleccioneu el format que voleu usar:"
 
 #: cryptui.rc:405
-msgid "&DER-encoded X.509 (.cer)"
+#, fuzzy
+#| msgid "&DER-encoded X.509 (.cer)"
+msgid "&DER-encoded X.509 (*.cer)"
 msgstr "Codificat en &DER X.509 (*.cer)"
 
 #: cryptui.rc:407
-msgid "Ba&se64-encoded X.509 (.cer):"
+#, fuzzy
+#| msgid "Ba&se64-encoded X.509 (.cer):"
+msgid "Ba&se64-encoded X.509 (*.cer):"
 msgstr "Codificat en &base64 X.509 (*.cer):"
 
 #: cryptui.rc:409
-msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+#, fuzzy
+#| msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
 msgstr ""
 "&Estàndard de Sintaxi dels Missatges Criptogràfics/Missatges PKCS #7 (*.p7b)"
 
@@ -2357,7 +2367,9 @@ msgid "&Include all certificates in the certification path if possible"
 msgstr "&Inclou tots els certificats en la ruta de certificat si és possible"
 
 #: cryptui.rc:413
-msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
+#, fuzzy
+#| msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
+msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
 msgstr "Intercanvi d'Informació &Personal/PKCS #12 (.pfx, .p12)"
 
 #: cryptui.rc:415
@@ -2589,10 +2601,6 @@ msgstr "Llista de Certificats Revocats (*.crl)"
 #: cryptui.rc:77 cryptui.rc:156
 msgid "Certificate Trust List (*.stl)"
 msgstr "Llista de Certificats de Confiança (*.stl)"
-
-#: cryptui.rc:78 cryptui.rc:159
-msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr "Magatzem de Certificats Serialitzat de Microsoft (*.sst)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"

@@ -2154,15 +2154,15 @@ msgid ""
 msgstr ""
 
 #: cryptui.rc:296
-msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
 msgstr ""
 
 #: cryptui.rc:298
-msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
+msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
 msgstr ""
 
-#: cryptui.rc:300
-msgid "Microsoft Serialized Certificate Store (.sst)"
+#: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
+msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:308
@@ -2287,15 +2287,15 @@ msgid "Select the format you want to use:"
 msgstr ""
 
 #: cryptui.rc:405
-msgid "&DER-encoded X.509 (.cer)"
+msgid "&DER-encoded X.509 (*.cer)"
 msgstr ""
 
 #: cryptui.rc:407
-msgid "Ba&se64-encoded X.509 (.cer):"
+msgid "Ba&se64-encoded X.509 (*.cer):"
 msgstr ""
 
 #: cryptui.rc:409
-msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
 msgstr ""
 
 #: cryptui.rc:411
@@ -2303,7 +2303,7 @@ msgid "&Include all certificates in the certification path if possible"
 msgstr ""
 
 #: cryptui.rc:413
-msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
+msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
 msgstr ""
 
 #: cryptui.rc:415
@@ -2524,10 +2524,6 @@ msgstr ""
 
 #: cryptui.rc:77 cryptui.rc:156
 msgid "Certificate Trust List (*.stl)"
-msgstr ""
-
-#: cryptui.rc:78 cryptui.rc:159
-msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:79

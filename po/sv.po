@@ -2185,15 +2185,17 @@ msgstr ""
 "återkallade eller betrodda certifikat:"
 
 #: cryptui.rc:296
-msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+#, fuzzy
+#| msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
 msgstr "Standard för kryptografisk meddelandesyntax/PKCS #7-meddelande (.p7b)"
 
 #: cryptui.rc:298
-msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
+msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
 msgstr ""
 
-#: cryptui.rc:300
-msgid "Microsoft Serialized Certificate Store (.sst)"
+#: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
+msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:308
@@ -2331,15 +2333,21 @@ msgid "Select the format you want to use:"
 msgstr "Välj formatet du vill använda:"
 
 #: cryptui.rc:405
-msgid "&DER-encoded X.509 (.cer)"
+#, fuzzy
+#| msgid "&DER-encoded X.509 (.cer)"
+msgid "&DER-encoded X.509 (*.cer)"
 msgstr "&DER-kodad X.509 (.cer)"
 
 #: cryptui.rc:407
-msgid "Ba&se64-encoded X.509 (.cer):"
+#, fuzzy
+#| msgid "Ba&se64-encoded X.509 (.cer):"
+msgid "Ba&se64-encoded X.509 (*.cer):"
 msgstr "Ba&se64-kodad X.509 (.cer):"
 
 #: cryptui.rc:409
-msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+#, fuzzy
+#| msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
 msgstr "Standard för &kryptografisk meddelandesyntax/PKCS #7 (.p7b)"
 
 #: cryptui.rc:411
@@ -2347,7 +2355,7 @@ msgid "&Include all certificates in the certification path if possible"
 msgstr "&Inkludera alla certifikat i certifieringssökvägen om möjligt"
 
 #: cryptui.rc:413
-msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
+msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
 msgstr ""
 
 #: cryptui.rc:415
@@ -2577,10 +2585,6 @@ msgstr "Lista över återkallade certifikat (*.crl)"
 #: cryptui.rc:77 cryptui.rc:156
 msgid "Certificate Trust List (*.stl)"
 msgstr "Lista över betrodda certifikat (*.stl)"
-
-#: cryptui.rc:78 cryptui.rc:159
-msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr ""
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"

@@ -293,11 +293,11 @@ BEGIN
   PUSHBUTTON "B&rowse...", IDC_IMPORT_BROWSE_FILE, 236,11,60,14
   LTEXT "Note: The following file formats may contain more than one certificate, certificate revocation list, or certificate trust list:",
     -1, 21,30,265,16
-  LTEXT "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)",
+  LTEXT "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)",
     -1, 31,53,265,10
-  LTEXT "Personal Information Exchange/PKCS #12 (.pfx, .p12)",
+  LTEXT "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)",
     -1, 31,68,265,10
-  LTEXT "Microsoft Serialized Certificate Store (.sst)",
+  LTEXT "Microsoft Serialized Certificate Store (*.sst)",
     -1, 31,83,265,10
 END
 
@@ -402,15 +402,15 @@ CAPTION "Certificate Export Wizard"
 FONT 8, "MS Shell Dlg"
 BEGIN
   LTEXT "Select the format you want to use:", -1, 21,1,195,10
-  AUTORADIOBUTTON "&DER-encoded X.509 (.cer)",
+  AUTORADIOBUTTON "&DER-encoded X.509 (*.cer)",
     IDC_EXPORT_FORMAT_DER, 31,18,280,12, BS_AUTORADIOBUTTON|WS_TABSTOP
-  AUTORADIOBUTTON "Ba&se64-encoded X.509 (.cer):",
+  AUTORADIOBUTTON "Ba&se64-encoded X.509 (*.cer):",
     IDC_EXPORT_FORMAT_BASE64, 31,30,280,12, BS_AUTORADIOBUTTON
-  AUTORADIOBUTTON "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)",
+  AUTORADIOBUTTON "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)",
     IDC_EXPORT_FORMAT_CMS, 31,42,280,12, BS_AUTORADIOBUTTON
   CHECKBOX "&Include all certificates in the certification path if possible",
     IDC_EXPORT_CMS_INCLUDE_CHAIN, 44,57,280,8, BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED
-  AUTORADIOBUTTON "&Personal Information Exchange/PKCS #12 (.pfx)",
+  AUTORADIOBUTTON "&Personal Information Exchange/PKCS #12 (*.pfx)",
     IDC_EXPORT_FORMAT_PFX, 31,72,280,12, BS_AUTORADIOBUTTON|WS_DISABLED
   CHECKBOX "Incl&ude all certificates in the certification path if possible",
     IDC_EXPORT_PFX_INCLUDE_CHAIN, 44,87,280,8, BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED

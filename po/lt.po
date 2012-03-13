@@ -2190,16 +2190,20 @@ msgstr ""
 "atšauktų liudijimų sąrašą ar patikintų liudijimų sąrašą:"
 
 #: cryptui.rc:296
-msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+#, fuzzy
+#| msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
 msgstr "Kriptografinio pranešimo sintaksės standarto/PKCS #7 pranešimai (.p7b)"
 
 #: cryptui.rc:298
-msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
+#, fuzzy
+#| msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
+msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
 msgstr "Asmeninės informacijos mainai/PKCS #12 (.pfx, .p12)"
 
-#: cryptui.rc:300
-msgid "Microsoft Serialized Certificate Store (.sst)"
-msgstr "Microsoft išdėstyta serijomis liudijimų saugykla (.sst)"
+#: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
+msgid "Microsoft Serialized Certificate Store (*.sst)"
+msgstr "Išdėstyta serijomis liudijimų saugykla (*.sst)"
 
 #: cryptui.rc:308
 msgid ""
@@ -2338,15 +2342,21 @@ msgid "Select the format you want to use:"
 msgstr "Išrinkite formatą, kurį norite naudoti:"
 
 #: cryptui.rc:405
-msgid "&DER-encoded X.509 (.cer)"
+#, fuzzy
+#| msgid "&DER-encoded X.509 (.cer)"
+msgid "&DER-encoded X.509 (*.cer)"
 msgstr "&DER-užkoduotas X.509 (.cer)"
 
 #: cryptui.rc:407
-msgid "Ba&se64-encoded X.509 (.cer):"
+#, fuzzy
+#| msgid "Ba&se64-encoded X.509 (.cer):"
+msgid "Ba&se64-encoded X.509 (*.cer):"
 msgstr "Ba&se64-užkoduotas X.509 (.cer):"
 
 #: cryptui.rc:409
-msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+#, fuzzy
+#| msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
 msgstr ""
 "&Kriptografinio pranešimo sintaksės standarto/PKCS #7 pranešimas (.p7b)"
 
@@ -2355,7 +2365,9 @@ msgid "&Include all certificates in the certification path if possible"
 msgstr "&Jei įmanoma, apimti visus liudijimus liudijimų kelyje"
 
 #: cryptui.rc:413
-msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
+#, fuzzy
+#| msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
+msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
 msgstr "&Asmeninės informacijos mainai/PKCS #12 (.pfx)"
 
 #: cryptui.rc:415
@@ -2586,10 +2598,6 @@ msgstr "Atšauktų liudijimų sąrašas (*.crl)"
 #: cryptui.rc:77 cryptui.rc:156
 msgid "Certificate Trust List (*.stl)"
 msgstr "Patikintų liudijimų sąrašas (*.stl)"
-
-#: cryptui.rc:78 cryptui.rc:159
-msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr "Išdėstyta serijomis liudijimų saugykla (*.sst)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
