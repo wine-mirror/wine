@@ -2587,7 +2587,7 @@ msgstr "Atšauktų liudijimų sąrašas (*.crl)"
 msgid "Certificate Trust List (*.stl)"
 msgstr "Patikintų liudijimų sąrašas (*.stl)"
 
-#: cryptui.rc:78
+#: cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr "Išdėstyta serijomis liudijimų saugykla (*.sst)"
 
@@ -2856,10 +2856,6 @@ msgstr "CMS/PKCS #7 pranešimai (*.p7b)"
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
 msgstr "Asmeninės informacijos mainai (*.pfx)"
-
-#: cryptui.rc:159
-msgid "Serialized Certificate Store (*.sst)"
-msgstr "Išdėstyta serijomis liudijimų saugykla (*.sst)"
 
 #: cryptui.rc:160
 msgid "File Format"

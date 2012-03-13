@@ -2681,7 +2681,7 @@ msgstr "Liste over tilbakekalte sertifikater (*.crl)"
 msgid "Certificate Trust List (*.stl)"
 msgstr "Liste over tiltrodde sertifikater (*.stl)"
 
-#: cryptui.rc:78
+#: cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr ""
 
@@ -2954,10 +2954,6 @@ msgstr "CMS/PKCS #7 meldinger (*.p7b)"
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
 msgstr "Personlig informasjonsutveksling (*.pfx)"
-
-#: cryptui.rc:159
-msgid "Serialized Certificate Store (*.sst)"
-msgstr ""
 
 #: cryptui.rc:160
 msgid "File Format"

@@ -2574,7 +2574,7 @@ msgstr "인증소 파기 목록 (*.crl)"
 msgid "Certificate Trust List (*.stl)"
 msgstr "인증서 신뢰 목록 (*.stl)"
 
-#: cryptui.rc:78
+#: cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr "Microsoft 연속 인증서 보관소 (*.sst)"
 
@@ -2843,10 +2843,6 @@ msgstr "CMS/PKCS #7 메세지 (*.p7b)"
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
 msgstr "개인 정보 교환 (*.pfx)"
-
-#: cryptui.rc:159
-msgid "Serialized Certificate Store (*.sst)"
-msgstr "나열된 인증서 저장소 (*.sst)"
 
 #: cryptui.rc:160
 msgid "File Format"

@@ -156,7 +156,7 @@ STRINGTABLE
     IDS_EXPORT_FILTER_CTL "Certificate Trust List (*.stl)"
     IDS_EXPORT_FILTER_CMS "CMS/PKCS #7 Messages (*.p7b)"
     IDS_EXPORT_FILTER_PFX "Personal Information Exchange (*.pfx)"
-    IDS_EXPORT_FILTER_SERIALIZED_CERT_STORE "Serialized Certificate Store (*.sst)"
+    IDS_EXPORT_FILTER_SERIALIZED_CERT_STORE "Microsoft Serialized Certificate Store (*.sst)"
     IDS_EXPORT_FORMAT "File Format"
     IDS_EXPORT_INCLUDE_CHAIN "Include all certificates in certificate path"
     IDS_EXPORT_KEYS "Export keys"

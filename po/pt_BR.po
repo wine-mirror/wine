@@ -2585,7 +2585,7 @@ msgstr "Lista de Revogação de Certificados (*.crl)"
 msgid "Certificate Trust List (*.stl)"
 msgstr "Lista de Certificados Confiáveis (*.stl)"
 
-#: cryptui.rc:78
+#: cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr "Conjunto de Certificados Serializados da Microsoft (*.sst)"
 
@@ -2861,10 +2861,6 @@ msgstr "Mensagens CMS/PKCS #7 (*.p7b)"
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
 msgstr "Troca de Informações Pessoais (*.pfx)"
-
-#: cryptui.rc:159
-msgid "Serialized Certificate Store (*.sst)"
-msgstr "Conjunto de Certificados Serializados (*.sst)"
 
 #: cryptui.rc:160
 msgid "File Format"

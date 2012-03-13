@@ -2580,7 +2580,7 @@ msgstr ""
 msgid "Certificate Trust List (*.stl)"
 msgstr ""
 
-#: cryptui.rc:78
+#: cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
 msgstr ""
 
@@ -2831,10 +2831,6 @@ msgstr ""
 
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
-msgstr ""
-
-#: cryptui.rc:159
-msgid "Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:160
