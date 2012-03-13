@@ -5913,28 +5913,25 @@ static UINT ITERATE_DeleteService( MSIRECORD *rec, LPVOID param )
     MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
     MSIRECORD *uirow;
-    LPCWSTR component;
     LPWSTR name = NULL, display_name = NULL;
     DWORD event, len;
     SC_HANDLE scm = NULL, service = NULL;
 
-    event = MSI_RecordGetInteger( rec, 3 );
-    if (!(event & msidbServiceControlEventDelete))
-        return ERROR_SUCCESS;
-
-    component = MSI_RecordGetString(rec, 6);
-    comp = msi_get_loaded_component(package, component);
+    comp = msi_get_loaded_component( package, MSI_RecordGetString(rec, 6) );
     if (!comp)
         return ERROR_SUCCESS;
 
+    event = MSI_RecordGetInteger( rec, 3 );
+    deformat_string( package, MSI_RecordGetString(rec, 2), &name );
+
     comp->Action = msi_get_component_action( package, comp );
-    if (comp->Action != INSTALLSTATE_ABSENT)
+    if (!(comp->Action == INSTALLSTATE_LOCAL && (event & msidbServiceControlEventDelete)) &&
+        !(comp->Action == INSTALLSTATE_ABSENT && (event & msidbServiceControlEventUninstallDelete)))
     {
-        TRACE("component not scheduled for removal %s\n", debugstr_w(component));
+        TRACE("service %s not scheduled for removal\n", debugstr_w(name));
+        msi_free( name );
         return ERROR_SUCCESS;
     }
-
-    deformat_string( package, MSI_RecordGetString(rec, 2), &name );
     stop_service( name );
 
     scm = OpenSCManagerW( NULL, NULL, SC_MANAGER_ALL_ACCESS );
