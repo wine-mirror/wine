@@ -810,6 +810,54 @@ static HRESULT builtin_propget(DispatchEx *This, func_info_t *func, DISPPARAMS *
     return S_OK;
 }
 
+static HRESULT builtin_propput(DispatchEx *This, func_info_t *func, DISPPARAMS *dp)
+{
+    VARIANT *v, tmpv;
+    IUnknown *iface;
+    HRESULT hres;
+
+    if(dp->cArgs != 1 || (dp->cNamedArgs == 1 && *dp->rgdispidNamedArgs != DISPID_PROPERTYPUT)
+            || dp->cNamedArgs > 1) {
+        FIXME("invalid args\n");
+        return E_INVALIDARG;
+    }
+
+    if(!func->put_vtbl_off) {
+        FIXME("No setter\n");
+        return E_FAIL;
+    }
+
+    v = dp->rgvarg;
+    if(func->prop_vt != VT_VARIANT && V_VT(v) != func->prop_vt) {
+        V_VT(&tmpv) = VT_EMPTY;
+        VariantChangeType(&tmpv, v, 0, func->prop_vt);
+        if(FAILED(hres))
+            return hres;
+        v = &tmpv;
+    }
+
+    hres = IUnknown_QueryInterface(This->outer, tid_ids[func->tid], (void**)&iface);
+    if(SUCCEEDED(hres)) {
+        switch(func->prop_vt) {
+#define CASE_VT(vt,type,access) \
+        case vt: \
+            hres = ((HRESULT (WINAPI*)(IUnknown*,type))((void**)iface->lpVtbl)[func->put_vtbl_off])(iface,access(v)); \
+            break
+        BUILTIN_TYPES_SWITCH;
+#undef CASE_VT
+        default:
+            FIXME("Unimplemented vt %d\n", func->prop_vt);
+            hres = E_NOTIMPL;
+        }
+
+        IUnknown_Release(iface);
+    }
+
+    if(v == &tmpv)
+        VariantClear(v);
+    return hres;
+}
+
 static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -831,6 +879,11 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
         return function_invoke(This, func, flags, dp, res, ei);
 
     switch(flags) {
+    case DISPATCH_PROPERTYPUT:
+        if(res)
+            V_VT(res) = VT_EMPTY;
+        hres = builtin_propput(This, func, dp);
+        break;
     case DISPATCH_PROPERTYGET:
         hres = builtin_propget(This, func, dp, res);
         break;
