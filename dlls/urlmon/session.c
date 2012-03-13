@@ -119,7 +119,7 @@ static HRESULT get_protocol_cf(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, 
     return SUCCEEDED(hres) ? S_OK : MK_E_SYNTAX;
 }
 
-static HRESULT register_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR protocol, BOOL urlmon_protocol)
+HRESULT register_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR protocol, BOOL urlmon_protocol)
 {
     name_space *new_name_space;
 
@@ -163,15 +163,6 @@ static HRESULT unregister_namespace(IClassFactory *cf, LPCWSTR protocol)
 
     LeaveCriticalSection(&session_cs);
     return S_OK;
-}
-
-
-void register_urlmon_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR protocol, BOOL do_register)
-{
-    if(do_register)
-        register_namespace(cf, clsid, protocol, TRUE);
-    else
-        unregister_namespace(cf, protocol);
 }
 
 BOOL is_registered_protocol(LPCWSTR url)
@@ -675,5 +666,21 @@ HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPSTR pcszUAOut, DWORD *cbS
 
 void free_session(void)
 {
+    name_space *ns_iter, *ns_last;
+    mime_filter *mf_iter, *mf_last;
+
+    LIST_FOR_EACH_ENTRY_SAFE(ns_iter, ns_last, &name_space_list, name_space, entry) {
+            if(!ns_iter->urlmon)
+                IClassFactory_Release(ns_iter->cf);
+            heap_free(ns_iter->protocol);
+            heap_free(ns_iter);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(mf_iter, mf_last, &mime_filter_list, mime_filter, entry) {
+            IClassFactory_Release(mf_iter->cf);
+            heap_free(mf_iter->mime);
+            heap_free(mf_iter);
+    }
+
     heap_free(user_agent);
 }

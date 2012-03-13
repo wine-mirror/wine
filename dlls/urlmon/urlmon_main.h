@@ -68,7 +68,7 @@ IInternetProtocolInfo *get_protocol_info(LPCWSTR) DECLSPEC_HIDDEN;
 HRESULT get_protocol_handler(IUri*,CLSID*,BOOL*,IClassFactory**) DECLSPEC_HIDDEN;
 IInternetProtocol *get_mime_filter(LPCWSTR) DECLSPEC_HIDDEN;
 BOOL is_registered_protocol(LPCWSTR) DECLSPEC_HIDDEN;
-void register_urlmon_namespace(IClassFactory*,REFIID,LPCWSTR,BOOL) DECLSPEC_HIDDEN;
+HRESULT register_namespace(IClassFactory*,REFIID,LPCWSTR,BOOL) DECLSPEC_HIDDEN;
 HINTERNET get_internet_session(IInternetBindInfo*) DECLSPEC_HIDDEN;
 LPWSTR get_useragent(void) DECLSPEC_HIDDEN;
 void free_session(void) DECLSPEC_HIDDEN;

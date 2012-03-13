@@ -42,7 +42,7 @@ LONG URLMON_refCount = 0;
 static HMODULE hCabinet = NULL;
 static DWORD urlmon_tls = TLS_OUT_OF_INDEXES;
 
-static void init_session(BOOL);
+static void init_session(void);
 
 static struct list tls_list = LIST_INIT(tls_list);
 
@@ -136,7 +136,6 @@ static void process_detach(void)
     if (hCabinet)
         FreeLibrary(hCabinet);
 
-    init_session(FALSE);
     free_session();
     free_tls_list();
 }
@@ -152,7 +151,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
-        init_session(TRUE);
+        init_session();
         break;
 
     case DLL_PROCESS_DETACH:
@@ -327,15 +326,14 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_CUri,                    &CUriCF.IClassFactory_iface,            NULL    }
 };
 
-static void init_session(BOOL init)
+static void init_session(void)
 {
     unsigned int i;
 
     for(i=0; i < sizeof(object_creation)/sizeof(object_creation[0]); i++) {
-
         if(object_creation[i].protocol)
-            register_urlmon_namespace(object_creation[i].cf, object_creation[i].clsid,
-                                      object_creation[i].protocol, init);
+            register_namespace(object_creation[i].cf, object_creation[i].clsid,
+                                      object_creation[i].protocol, TRUE);
     }
 }
 
