@@ -771,6 +771,25 @@ static HRESULT get_builtin_id(DispatchEx *This, BSTR name, DWORD grfdex, DISPID 
     CASE_VT(VT_UNKNOWN, IUnknown*, V_UNKNOWN);          \
     CASE_VT(VT_DISPATCH, IDispatch*, V_DISPATCH)
 
+static HRESULT change_type(VARIANT *dst, VARIANT *src, VARTYPE vt, IServiceProvider *caller)
+{
+    V_VT(dst) = VT_EMPTY;
+
+    if(caller) {
+        IVariantChangeType *change_type = NULL;
+        HRESULT hres;
+
+        hres = IServiceProvider_QueryService(caller, &SID_VariantConversion, &IID_IVariantChangeType, (void**)&change_type);
+        if(SUCCEEDED(hres)) {
+            hres = IVariantChangeType_ChangeType(change_type, dst, src, LOCALE_NEUTRAL, vt);
+            IVariantChangeType_Release(change_type);
+            return hres;
+        }
+    }
+
+    return VariantChangeType(dst, src, 0, vt);
+}
+
 static HRESULT builtin_propget(DispatchEx *This, func_info_t *func, DISPPARAMS *dp, VARIANT *res)
 {
     IUnknown *iface;
@@ -810,7 +829,7 @@ static HRESULT builtin_propget(DispatchEx *This, func_info_t *func, DISPPARAMS *
     return S_OK;
 }
 
-static HRESULT builtin_propput(DispatchEx *This, func_info_t *func, DISPPARAMS *dp)
+static HRESULT builtin_propput(DispatchEx *This, func_info_t *func, DISPPARAMS *dp, IServiceProvider *caller)
 {
     VARIANT *v, tmpv;
     IUnknown *iface;
@@ -829,8 +848,7 @@ static HRESULT builtin_propput(DispatchEx *This, func_info_t *func, DISPPARAMS *
 
     v = dp->rgvarg;
     if(func->prop_vt != VT_VARIANT && V_VT(v) != func->prop_vt) {
-        V_VT(&tmpv) = VT_EMPTY;
-        VariantChangeType(&tmpv, v, 0, func->prop_vt);
+        hres = change_type(&tmpv, v, func->prop_vt, caller);
         if(FAILED(hres))
             return hres;
         v = &tmpv;
@@ -882,7 +900,7 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
     case DISPATCH_PROPERTYPUT:
         if(res)
             V_VT(res) = VT_EMPTY;
-        hres = builtin_propput(This, func, dp);
+        hres = builtin_propput(This, func, dp, caller);
         break;
     case DISPATCH_PROPERTYGET:
         hres = builtin_propget(This, func, dp, res);
