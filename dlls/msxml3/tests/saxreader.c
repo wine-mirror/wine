@@ -3332,7 +3332,6 @@ todo_wine {
 }
         hr = IMXAttributes_addAttribute(mxattr, _bstr_(table->uri), _bstr_(table->local),
             _bstr_(table->qname), _bstr_(table->type), _bstr_(table->value));
-todo_wine
         ok(hr == table->hr, "%d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
 
         len = -1;
@@ -3380,7 +3379,6 @@ todo_wine
 
     hr = IMXAttributes_addAttribute(mxattr, _bstr_("uri"), _bstr_("local"),
         _bstr_("qname"), _bstr_("type"), _bstr_("value"));
-todo_wine
     EXPECT_HR(hr, S_OK);
 
     len = -1;

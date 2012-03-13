@@ -120,10 +120,25 @@ typedef struct
 
 typedef struct
 {
+    BSTR qname;
+    BSTR local;
+    BSTR uri;
+    BSTR type;
+    BSTR value;
+} mxattribute;
+
+typedef struct
+{
     DispatchEx dispex;
     IMXAttributes IMXAttributes_iface;
     ISAXAttributes ISAXAttributes_iface;
     LONG ref;
+
+    MSXML_VERSION class_version;
+
+    mxattribute *attr;
+    int length;
+    int allocated;
 } mxattributes;
 
 static inline mxattributes *impl_from_IMXAttributes( IMXAttributes *iface )
@@ -134,6 +149,16 @@ static inline mxattributes *impl_from_IMXAttributes( IMXAttributes *iface )
 static inline mxattributes *impl_from_ISAXAttributes( ISAXAttributes *iface )
 {
     return CONTAINING_RECORD(iface, mxattributes, ISAXAttributes_iface);
+}
+
+static HRESULT mxattributes_grow(mxattributes *This)
+{
+    if (This->length < This->allocated) return S_OK;
+
+    This->allocated *= 2;
+    This->attr = heap_realloc(This->attr, This->allocated*sizeof(mxattribute));
+
+    return This->attr ? S_OK : E_OUTOFMEMORY;
 }
 
 static xml_encoding parse_encoding_name(const WCHAR *encoding)
@@ -1505,7 +1530,19 @@ static ULONG WINAPI MXAttributes_Release(IMXAttributes *iface)
 
     if (ref == 0)
     {
+        int i;
+
+        for (i = 0; i < This->length; i++)
+        {
+            SysFreeString(This->attr[i].qname);
+            SysFreeString(This->attr[i].local);
+            SysFreeString(This->attr[i].uri);
+            SysFreeString(This->attr[i].type);
+            SysFreeString(This->attr[i].value);
+        }
+
         release_dispex(&This->dispex);
+        heap_free(This->attr);
         heap_free(This);
     }
 
@@ -1557,9 +1594,29 @@ static HRESULT WINAPI MXAttributes_addAttribute(IMXAttributes *iface,
     BSTR uri, BSTR localName, BSTR QName, BSTR type, BSTR value)
 {
     mxattributes *This = impl_from_IMXAttributes( iface );
-    FIXME("(%p)->(%s %s %s %s %s): stub\n", This, debugstr_w(uri), debugstr_w(localName),
+    mxattribute *attr;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %s %s %s %s)\n", This, debugstr_w(uri), debugstr_w(localName),
         debugstr_w(QName), debugstr_w(type), debugstr_w(value));
-    return E_NOTIMPL;
+
+    if ((!uri || !localName || !QName || !type || !value) && This->class_version != MSXML6)
+        return E_INVALIDARG;
+
+    /* ensure array is large enough */
+    hr = mxattributes_grow(This);
+    if (hr != S_OK) return hr;
+
+    attr = &This->attr[This->length];
+
+    attr->qname = SysAllocString(QName);
+    attr->local = SysAllocString(localName);
+    attr->uri   = SysAllocString(uri);
+    attr->type  = SysAllocString(type);
+    attr->value = SysAllocString(value);
+    This->length++;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MXAttributes_addAttributeFromIndex(IMXAttributes *iface,
@@ -1806,6 +1863,7 @@ static dispex_static_data_t mxattrs_dispex = {
 
 HRESULT SAXAttributes_create(MSXML_VERSION version, IUnknown *outer, void **ppObj)
 {
+    static const int default_count = 10;
     mxattributes *This;
 
     TRACE("(%p, %p)\n", outer, ppObj);
@@ -1817,6 +1875,12 @@ HRESULT SAXAttributes_create(MSXML_VERSION version, IUnknown *outer, void **ppOb
     This->IMXAttributes_iface.lpVtbl = &MXAttributesVtbl;
     This->ISAXAttributes_iface.lpVtbl = &SAXAttributesVtbl;
     This->ref = 1;
+
+    This->class_version = version;
+
+    This->attr = heap_alloc(default_count*sizeof(mxattribute));
+    This->length = 0;
+    This->allocated = default_count;
 
     *ppObj = &This->IMXAttributes_iface;
 
