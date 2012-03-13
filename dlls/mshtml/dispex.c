@@ -759,6 +759,57 @@ static HRESULT get_builtin_id(DispatchEx *This, BSTR name, DWORD grfdex, DISPID 
     return DISP_E_UNKNOWNNAME;
 }
 
+/* List all types used by IDispatchEx-based properties */
+#define BUILTIN_TYPES_SWITCH                            \
+    CASE_VT(VT_I2, INT16, V_I2);                        \
+    CASE_VT(VT_I4, INT32, V_I4);                        \
+    CASE_VT(VT_R4, float, V_R4);                        \
+    CASE_VT(VT_BSTR, BSTR, V_BSTR);                     \
+    CASE_VT(VT_BOOL, VARIANT_BOOL, V_BOOL);             \
+    CASE_VT(VT_VARIANT, VARIANT, *);                    \
+    CASE_VT(VT_PTR, void*, V_BYREF);                    \
+    CASE_VT(VT_UNKNOWN, IUnknown*, V_UNKNOWN);          \
+    CASE_VT(VT_DISPATCH, IDispatch*, V_DISPATCH)
+
+static HRESULT builtin_propget(DispatchEx *This, func_info_t *func, DISPPARAMS *dp, VARIANT *res)
+{
+    IUnknown *iface;
+    HRESULT hres;
+
+    if(dp->cArgs) {
+        FIXME("cArgs %d\n", dp->cArgs);
+        return E_NOTIMPL;
+    }
+
+    assert(func->get_vtbl_off);
+
+    hres = IUnknown_QueryInterface(This->outer, tid_ids[func->tid], (void**)&iface);
+    if(SUCCEEDED(hres)) {
+        switch(func->prop_vt) {
+#define CASE_VT(vt,type,access) \
+        case vt: { \
+            type val; \
+            hres = ((HRESULT (WINAPI*)(IUnknown*,type*))((void**)iface->lpVtbl)[func->get_vtbl_off])(iface,&val); \
+            if(SUCCEEDED(hres)) \
+                access(res) = val; \
+            } \
+            break
+        BUILTIN_TYPES_SWITCH;
+#undef CASE_VT
+        default:
+            FIXME("Unhandled vt %d\n", func->prop_vt);
+            hres = E_NOTIMPL;
+        }
+        IUnknown_Release(iface);
+    }
+
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(res) = func->prop_vt == VT_PTR ? VT_DISPATCH : func->prop_vt;
+    return S_OK;
+}
+
 static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -776,10 +827,16 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
     if(FAILED(hres))
         return hres;
 
-    if(func->func_disp_idx == -1)
+    if(func->func_disp_idx != -1)
+        return function_invoke(This, func, flags, dp, res, ei);
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET:
+        hres = builtin_propget(This, func, dp, res);
+        break;
+    default:
         hres = typeinfo_invoke(This, func, flags, dp, res, ei);
-    else
-        hres = function_invoke(This, func, flags, dp, res, ei);
+    }
 
     return hres;
 }
