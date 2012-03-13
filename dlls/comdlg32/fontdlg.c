@@ -1194,9 +1194,14 @@ static INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, 
     case WM_DESTROY:
         return CFn_WMDestroy(hDlg, lpcfw);
     case WM_CHOOSEFONT_GETLOGFONT:
+    {
+        LOGFONTA *logfont = (LOGFONTA *)lParam;
         TRACE("WM_CHOOSEFONT_GETLOGFONT lParam=%08lX\n", lParam);
-        FIXME("current logfont back to caller\n");
+        memcpy( logfont, lpcfw->lpLogFont, FIELD_OFFSET( LOGFONTA, lfFaceName ));
+        WideCharToMultiByte( CP_ACP, 0, lpcfw->lpLogFont->lfFaceName, LF_FACESIZE,
+                             logfont->lfFaceName, LF_FACESIZE, NULL, NULL );
         break;
+    }
     case WM_PAINT:
         return CFn_WMPaint(hDlg, wParam, lParam, lpcfw);
     }
@@ -1242,7 +1247,7 @@ static INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, 
         return TRUE;
     case WM_CHOOSEFONT_GETLOGFONT:
         TRACE("WM_CHOOSEFONT_GETLOGFONT lParam=%08lX\n", lParam);
-        FIXME("current logfont back to caller\n");
+        memcpy( (LOGFONTW *)lParam, lpcf->lpLogFont, sizeof(LOGFONTW) );
         break;
     case WM_PAINT:
         return CFn_WMPaint(hDlg, wParam, lParam, lpcf);
