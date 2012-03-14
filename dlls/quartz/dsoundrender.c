@@ -386,7 +386,7 @@ static HRESULT WINAPI DSoundRender_Receive(BaseInputPin *pin, IMediaSample * pSa
     }
 
     if (IMediaSample_GetMediaTime(pSample, &tStart, &tStop) == S_OK)
-        MediaSeekingPassThru_RegisterMediaTime(This->seekthru_unk, tStart);
+        RendererPosPassThru_RegisterMediaTime(This->seekthru_unk, tStart);
     hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
     if (FAILED(hr)) {
         ERR("Cannot get sample time (%x)\n", hr);
@@ -670,7 +670,7 @@ static HRESULT WINAPI DSoundRender_Stop(IBaseFilter * iface)
         This->writepos = This->buf_size;
         SetEvent(This->state_change);
         SetEvent(This->blocked);
-        MediaSeekingPassThru_ResetMediaTime(This->seekthru_unk);
+        RendererPosPassThru_ResetMediaTime(This->seekthru_unk);
     }
     LeaveCriticalSection(&This->filter.csFilter);
     
@@ -922,7 +922,7 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
     }
 
     hr = DSoundRender_HandleEndOfStream(me);
-    MediaSeekingPassThru_EOS(me->seekthru_unk);
+    RendererPosPassThru_EOS(me->seekthru_unk);
     SetEvent(me->state_change);
     LeaveCriticalSection(This->pin.pCritSec);
 
@@ -977,7 +977,7 @@ static HRESULT WINAPI DSoundRender_InputPin_EndFlush(IPin * iface)
     QualityControlRender_Start(&pFilter->qcimpl, pFilter->filter.rtStreamStart);
     hr = BaseInputPinImpl_EndFlush(iface);
     LeaveCriticalSection(This->pin.pCritSec);
-    MediaSeekingPassThru_ResetMediaTime(pFilter->seekthru_unk);
+    RendererPosPassThru_ResetMediaTime(pFilter->seekthru_unk);
 
     return hr;
 }

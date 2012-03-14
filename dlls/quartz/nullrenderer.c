@@ -71,7 +71,7 @@ static HRESULT WINAPI NullRenderer_Receive(BaseInputPin *pin, IMediaSample * pSa
     TRACE("%p %p\n", pin, pSample);
 
     if (SUCCEEDED(IMediaSample_GetMediaTime(pSample, &start, &stop)))
-        MediaSeekingPassThru_RegisterMediaTime(This->seekthru_unk, start);
+        RendererPosPassThru_RegisterMediaTime(This->seekthru_unk, start);
     EnterCriticalSection(&This->filter.csFilter);
     if (This->pInputPin->flushing || This->pInputPin->end_of_stream)
         hr = S_FALSE;
@@ -308,7 +308,7 @@ static HRESULT WINAPI NullRenderer_Stop(IBaseFilter * iface)
     EnterCriticalSection(&This->filter.csFilter);
     {
         This->filter.state = State_Stopped;
-        MediaSeekingPassThru_ResetMediaTime(This->seekthru_unk);
+        RendererPosPassThru_ResetMediaTime(This->seekthru_unk);
     }
     LeaveCriticalSection(&This->filter.csFilter);
 
@@ -428,7 +428,7 @@ static HRESULT WINAPI NullRenderer_InputPin_EndOfStream(IPin * iface)
             IMediaEventSink_Release(pEventSink);
         }
     }
-    MediaSeekingPassThru_EOS(pNull->seekthru_unk);
+    RendererPosPassThru_EOS(pNull->seekthru_unk);
 
     return hr;
 }
@@ -443,7 +443,7 @@ static HRESULT WINAPI NullRenderer_InputPin_EndFlush(IPin * iface)
 
     hr = BaseInputPinImpl_EndOfStream(iface);
     pNull = (NullRendererImpl*)This->pin.pinInfo.pFilter;
-    MediaSeekingPassThru_ResetMediaTime(pNull->seekthru_unk);
+    RendererPosPassThru_ResetMediaTime(pNull->seekthru_unk);
     return hr;
 }
 

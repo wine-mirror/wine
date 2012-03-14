@@ -567,7 +567,7 @@ static HRESULT WINAPI MediaSeekingPassThru_GetPreroll(IMediaSeeking * iface, LON
     return hr;
 }
 
-HRESULT WINAPI MediaSeekingPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start)
+HRESULT WINAPI RendererPosPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start)
 {
     ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
     EnterCriticalSection(&This->time_cs);
@@ -577,7 +577,7 @@ HRESULT WINAPI MediaSeekingPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE
     return S_OK;
 }
 
-HRESULT WINAPI MediaSeekingPassThru_ResetMediaTime(IUnknown *iface)
+HRESULT WINAPI RendererPosPassThru_ResetMediaTime(IUnknown *iface)
 {
     ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
     EnterCriticalSection(&This->time_cs);
@@ -586,7 +586,7 @@ HRESULT WINAPI MediaSeekingPassThru_ResetMediaTime(IUnknown *iface)
     return S_OK;
 }
 
-HRESULT WINAPI MediaSeekingPassThru_EOS(IUnknown *iface)
+HRESULT WINAPI RendererPosPassThru_EOS(IUnknown *iface)
 {
     ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
     REFERENCE_TIME time;
