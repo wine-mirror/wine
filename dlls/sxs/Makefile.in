@@ -3,6 +3,7 @@ IMPORTS   = oleaut32 ole32
 
 C_SRCS = \
 	cache.c \
+	name.c \
 	sxs.c
 
 @MAKE_DLL_RULES@
