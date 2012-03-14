@@ -1819,12 +1819,22 @@ static HRESULT WINAPI SAXAttributes_getTypeFromQName(ISAXAttributes *iface, cons
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI SAXAttributes_getValue(ISAXAttributes *iface, int nIndex, const WCHAR ** pValue,
-    int * nValue)
+static HRESULT WINAPI SAXAttributes_getValue(ISAXAttributes *iface, int index, const WCHAR **value,
+    int *len)
 {
     mxattributes *This = impl_from_ISAXAttributes( iface );
-    FIXME("(%p)->(%d %p %p): stub\n", This, nIndex, pValue, nValue);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p %p)\n", This, index, value, len);
+
+    if (index >= This->length) return E_INVALIDARG;
+
+    if ((!value || !len) && (This->class_version == MSXML_DEFAULT || This->class_version == MSXML3))
+       return E_POINTER;
+
+    *value = This->attr[index].value;
+    *len = SysStringLen(This->attr[index].value);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXAttributes_getValueFromName(ISAXAttributes *iface, const WCHAR * pUri,

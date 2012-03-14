@@ -3298,6 +3298,7 @@ static void test_mxattr_addAttribute(void)
     {
         ISAXAttributes *saxattr;
         IMXAttributes *mxattr;
+        const WCHAR *value;
         HRESULT hr;
         int len;
 
@@ -3328,9 +3329,45 @@ static void test_mxattr_addAttribute(void)
         EXPECT_HR(hr, S_OK);
         ok(len == 0, "got %d\n", len);
 
+        hr = ISAXAttributes_getValue(saxattr, 0, &value, &len);
+        EXPECT_HR(hr, E_INVALIDARG);
+
+        hr = ISAXAttributes_getValue(saxattr, 0, NULL, &len);
+        EXPECT_HR(hr, E_INVALIDARG);
+
+        hr = ISAXAttributes_getValue(saxattr, 0, &value, NULL);
+        EXPECT_HR(hr, E_INVALIDARG);
+
+        hr = ISAXAttributes_getValue(saxattr, 0, NULL, NULL);
+        EXPECT_HR(hr, E_INVALIDARG);
+
         hr = IMXAttributes_addAttribute(mxattr, _bstr_(table->uri), _bstr_(table->local),
             _bstr_(table->qname), _bstr_(table->type), _bstr_(table->value));
         ok(hr == table->hr, "%d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
+
+        if (hr == S_OK)
+        {
+            /* SAXAttributes40 and SAXAttributes60 both crash on this test */
+            if (IsEqualGUID(table->clsid, &CLSID_SAXAttributes) ||
+                IsEqualGUID(table->clsid, &CLSID_SAXAttributes30))
+            {
+               hr = ISAXAttributes_getValue(saxattr, 0, NULL, &len);
+               EXPECT_HR(hr, E_POINTER);
+
+               hr = ISAXAttributes_getValue(saxattr, 0, &value, NULL);
+               EXPECT_HR(hr, E_POINTER);
+
+               hr = ISAXAttributes_getValue(saxattr, 0, NULL, NULL);
+               EXPECT_HR(hr, E_POINTER);
+            }
+
+            len = -1;
+            hr = ISAXAttributes_getValue(saxattr, 0, &value, &len);
+            EXPECT_HR(hr, S_OK);
+            ok(!lstrcmpW(_bstr_(table->value), value), "%d: got %s, expected %s\n", i, wine_dbgstr_w(value),
+                table->value);
+            ok(lstrlenW(value) == len, "%d: got wrong value length %d\n", i, len);
+        }
 
         len = -1;
         hr = ISAXAttributes_getLength(saxattr, &len);
