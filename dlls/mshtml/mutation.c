@@ -634,14 +634,14 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
     }
 }
 
-static nsresult NSAPI nsDocumentObserver_DoneAddingChildren(nsIDocumentObserver *iface, nsIContent *aContent,
-        PRBool aHaveNotified, nsIParser *aParser)
+static void NSAPI nsDocumentObserver_AttemptToExecuteScript(nsIDocumentObserver *iface, nsIContent *aContent,
+        nsIParser *aParser, PRBool *aBlock)
 {
     HTMLDocumentNode *This = impl_from_nsIDocumentObserver(iface);
     nsIDOMHTMLScriptElement *nsscript;
     nsresult nsres;
 
-    TRACE("(%p)->(%p %x)\n", This, aContent, aHaveNotified);
+    TRACE("(%p)->(%p %p %p)\n", This, aContent, aParser, aBlock);
 
     nsres = nsISupports_QueryInterface(aContent, &IID_nsIDOMHTMLScriptElement, (void**)&nsscript);
     if(NS_SUCCEEDED(nsres)) {
@@ -650,8 +650,6 @@ static nsresult NSAPI nsDocumentObserver_DoneAddingChildren(nsIDocumentObserver 
         add_script_runner(This, run_insert_script, (nsISupports*)nsscript, (nsISupports*)aParser);
         nsIDOMHTMLScriptElement_Release(nsscript);
     }
-
-    return NS_OK;
 }
 
 static const nsIDocumentObserverVtbl nsDocumentObserverVtbl = {
@@ -680,7 +678,7 @@ static const nsIDocumentObserverVtbl nsDocumentObserverVtbl = {
     nsDocumentObserver_StyleRuleAdded,
     nsDocumentObserver_StyleRuleRemoved,
     nsDocumentObserver_BindToDocument,
-    nsDocumentObserver_DoneAddingChildren
+    nsDocumentObserver_AttemptToExecuteScript
 };
 
 void init_document_mutation(HTMLDocumentNode *doc)

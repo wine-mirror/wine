@@ -613,22 +613,13 @@ static HRESULT WINAPI HTMLElement2_getClientRects(IHTMLElement2 *iface, IHTMLRec
 static HRESULT WINAPI HTMLElement2_getBoundingClientRect(IHTMLElement2 *iface, IHTMLRect **pRect)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSElement *nselem;
     nsIDOMClientRect *nsrect;
     nsresult nsres;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, pRect);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(This->node.nsnode, &IID_nsIDOMNSElement,
-            (void**)&nselem);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNSElement iface: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMNSElement_GetBoundingClientRect(nselem, &nsrect);
-    nsIDOMNSElement_Release(nselem);
+    nsres = nsIDOMElement_GetBoundingClientRect(This->nselem, &nsrect);
     if(NS_FAILED(nsres) || !nsrect) {
         ERR("GetBoindingClientRect failed: %08x\n", nsres);
         return E_FAIL;
@@ -668,19 +659,11 @@ static HRESULT WINAPI HTMLElement2_removeExpression(IHTMLElement2 *iface, BSTR p
 static HRESULT WINAPI HTMLElement2_put_tabIndex(IHTMLElement2 *iface, short v)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSHTMLElement *nselem;
     nsresult nsres;
 
     TRACE("(%p)->(%d)\n", This, v);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLNSElement: %08x\n", nsres);
-        return S_OK;
-    }
-
-    nsres = nsIDOMNSHTMLElement_SetTabIndex(nselem, v);
-    nsIDOMNSHTMLElement_Release(nselem);
+    nsres = nsIDOMHTMLElement_SetTabIndex(This->nselem, v);
     if(NS_FAILED(nsres))
         ERR("GetTabIndex failed: %08x\n", nsres);
 
@@ -690,20 +673,12 @@ static HRESULT WINAPI HTMLElement2_put_tabIndex(IHTMLElement2 *iface, short v)
 static HRESULT WINAPI HTMLElement2_get_tabIndex(IHTMLElement2 *iface, short *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSHTMLElement *nselem;
     PRInt32 index = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLNSElement: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMNSHTMLElement_GetTabIndex(nselem, &index);
-    nsIDOMNSHTMLElement_Release(nselem);
+    nsres = nsIDOMHTMLElement_GetTabIndex(This->nselem, &index);
     if(NS_FAILED(nsres)) {
         ERR("GetTabIndex failed: %08x\n", nsres);
         return E_FAIL;
@@ -822,19 +797,11 @@ static HRESULT WINAPI HTMLElement2_removeFilter(IHTMLElement2 *iface, IUnknown *
 static HRESULT WINAPI HTMLElement2_get_clientHeight(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSElement *nselem;
     PRInt32 height=0;
-    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSElement, (void**)&nselem);
-    if(NS_SUCCEEDED(nsres)) {
-        nsIDOMNSElement_GetClientHeight(nselem, &height);
-        nsIDOMNSElement_Release(nselem);
-    }else {
-        ERR("Could not get nsIDOMNSElement: %08x\n", nsres);
-    }
+    nsIDOMElement_GetClientHeight(This->nselem, &height);
 
     *p = height;
     return S_OK;
@@ -843,19 +810,11 @@ static HRESULT WINAPI HTMLElement2_get_clientHeight(IHTMLElement2 *iface, LONG *
 static HRESULT WINAPI HTMLElement2_get_clientWidth(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSElement *nselem;
     PRInt32 width=0;
-    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSElement, (void**)&nselem);
-    if(NS_SUCCEEDED(nsres)) {
-        nsIDOMNSElement_GetClientWidth(nselem, &width);
-        nsIDOMNSElement_Release(nselem);
-    }else {
-        ERR("Could not get nsIDOMNSElement: %08x\n", nsres);
-    }
+    nsIDOMElement_GetClientWidth(This->nselem, &width);
 
     *p = width;
     return S_OK;
@@ -864,21 +823,14 @@ static HRESULT WINAPI HTMLElement2_get_clientWidth(IHTMLElement2 *iface, LONG *p
 static HRESULT WINAPI HTMLElement2_get_clientTop(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSElement *nselem;
     PRInt32 client_top = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMElement_QueryInterface(This->nselem, &IID_nsIDOMNSElement, (void**)&nselem);
-    if(NS_SUCCEEDED(nsres)) {
-        nsres = nsIDOMNSElement_GetClientTop(nselem, &client_top);
-        nsIDOMNSElement_Release(nselem);
-        if(NS_FAILED(nsres))
-            ERR("GetScrollHeight failed: %08x\n", nsres);
-    }else {
-        ERR("Could not get nsIDOMNSElement interface: %08x\n", nsres);
-    }
+    nsres = nsIDOMElement_GetClientTop(This->nselem, &client_top);
+    if(NS_FAILED(nsres))
+        ERR("GetScrollHeight failed: %08x\n", nsres);
 
     *p = client_top;
     TRACE("*p = %d\n", *p);
@@ -888,21 +840,14 @@ static HRESULT WINAPI HTMLElement2_get_clientTop(IHTMLElement2 *iface, LONG *p)
 static HRESULT WINAPI HTMLElement2_get_clientLeft(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSElement *nselem;
     PRInt32 client_left = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMElement_QueryInterface(This->nselem, &IID_nsIDOMNSElement, (void**)&nselem);
-    if(NS_SUCCEEDED(nsres)) {
-        nsres = nsIDOMNSElement_GetClientLeft(nselem, &client_left);
-        nsIDOMNSElement_Release(nselem);
-        if(NS_FAILED(nsres))
-            ERR("GetScrollHeight failed: %08x\n", nsres);
-    }else {
-        ERR("Could not get nsIDOMNSElement interface: %08x\n", nsres);
-    }
+    nsres = nsIDOMElement_GetClientLeft(This->nselem, &client_left);
+    if(NS_FAILED(nsres))
+        ERR("GetScrollHeight failed: %08x\n", nsres);
 
     *p = client_left;
     TRACE("*p = %d\n", *p);
@@ -1062,58 +1007,40 @@ static HRESULT WINAPI HTMLElement2_createControlRange(IHTMLElement2 *iface, IDis
 static HRESULT WINAPI HTMLElement2_get_scrollHeight(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSElement *nselem;
     PRInt32 height = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMElement_QueryInterface(This->nselem, &IID_nsIDOMNSElement, (void**)&nselem);
-    if(NS_SUCCEEDED(nsres)) {
-        nsres = nsIDOMNSElement_GetScrollHeight(nselem, &height);
-        nsIDOMNSElement_Release(nselem);
-        if(NS_FAILED(nsres))
-            ERR("GetScrollHeight failed: %08x\n", nsres);
-    }else {
-        ERR("Could not get nsIDOMNSElement interface: %08x\n", nsres);
-    }
+    nsres = nsIDOMElement_GetScrollHeight(This->nselem, &height);
+    if(NS_FAILED(nsres))
+        ERR("GetScrollHeight failed: %08x\n", nsres);
 
     *p = height;
     TRACE("*p = %d\n", *p);
-
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_get_scrollWidth(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSElement *nselem;
     PRInt32 width = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMElement_QueryInterface(This->nselem, &IID_nsIDOMNSElement, (void**)&nselem);
-    if(NS_SUCCEEDED(nsres)) {
-        nsres = nsIDOMNSElement_GetScrollWidth(nselem, &width);
-        nsIDOMNSElement_Release(nselem);
-        if(NS_FAILED(nsres))
-            ERR("GetScrollWidth failed: %08x\n", nsres);
-    }else {
-        ERR("Could not get nsIDOMNSElement interface: %08x\n", nsres);
-    }
+    nsres = nsIDOMElement_GetScrollWidth(This->nselem, &width);
+    if(NS_FAILED(nsres))
+        ERR("GetScrollWidth failed: %08x\n", nsres);
 
     *p = width;
     TRACE("*p = %d\n", *p);
-
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_put_scrollTop(IHTMLElement2 *iface, LONG v)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSElement *nselem;
-    nsresult nsres;
 
     TRACE("(%p)->(%d)\n", This, v);
 
@@ -1122,47 +1049,30 @@ static HRESULT WINAPI HTMLElement2_put_scrollTop(IHTMLElement2 *iface, LONG v)
         return E_NOTIMPL;
     }
 
-    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSElement, (void**)&nselem);
-    if(NS_SUCCEEDED(nsres)) {
-        nsIDOMNSElement_SetScrollTop(nselem, v);
-        nsIDOMNSElement_Release(nselem);
-    }else {
-        ERR("Could not get nsIDOMNSElement interface: %08x\n", nsres);
-    }
-
+    nsIDOMElement_SetScrollTop(This->nselem, v);
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_get_scrollTop(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSElement *nselem;
     PRInt32 top = 0;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMElement_QueryInterface(This->nselem, &IID_nsIDOMNSElement, (void**)&nselem);
-    if(NS_SUCCEEDED(nsres)) {
-        nsres = nsIDOMNSElement_GetScrollTop(nselem, &top);
-        nsIDOMNSElement_Release(nselem);
-        if(NS_FAILED(nsres))
-            ERR("GetScrollTop failed: %08x\n", nsres);
-    }else {
-        ERR("Could not get nsIDOMNSElement interface: %08x\n", nsres);
-    }
+    nsres = nsIDOMElement_GetScrollTop(This->nselem, &top);
+    if(NS_FAILED(nsres))
+        ERR("GetScrollTop failed: %08x\n", nsres);
 
     *p = top;
     TRACE("*p = %d\n", *p);
-
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_put_scrollLeft(IHTMLElement2 *iface, LONG v)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSElement *nselem;
-    nsresult nsres;
 
     TRACE("(%p)->(%d)\n", This, v);
 
@@ -1171,23 +1081,14 @@ static HRESULT WINAPI HTMLElement2_put_scrollLeft(IHTMLElement2 *iface, LONG v)
         return E_NOTIMPL;
     }
 
-    nsres = nsIDOMElement_QueryInterface(This->nselem, &IID_nsIDOMNSElement, (void**)&nselem);
-    if(NS_SUCCEEDED(nsres)) {
-        nsIDOMNSElement_SetScrollLeft(nselem, v);
-        nsIDOMNSElement_Release(nselem);
-    }else {
-        ERR("Could not get nsIDOMNSElement interface: %08x\n", nsres);
-    }
-
+    nsIDOMElement_SetScrollLeft(This->nselem, v);
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_get_scrollLeft(IHTMLElement2 *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSElement *nselem;
     PRInt32 left = 0;
-    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -1200,18 +1101,10 @@ static HRESULT WINAPI HTMLElement2_get_scrollLeft(IHTMLElement2 *iface, LONG *p)
         return E_NOTIMPL;
     }
 
-    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSElement, (void**)&nselem);
-    if(NS_SUCCEEDED(nsres))
-    {
-        nsres = nsIDOMNSElement_GetScrollLeft(nselem, &left);
-        nsIDOMNSElement_Release(nselem);
-        if(NS_FAILED(nsres))
-            left = 0;
-    }
+    nsIDOMElement_GetScrollLeft(This->nselem, &left);
 
     *p = left;
     TRACE("*p = %d\n", *p);
-
     return S_OK;
 }
 

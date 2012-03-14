@@ -1123,6 +1123,27 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     return nsres;
 }
 
+static nsresult NSAPI nsChannel_GetContentDisposition(nsIHttpChannel *iface, PRUint32 *aContentDisposition)
+{
+    nsChannel *This = impl_from_nsIHttpChannel(iface);
+    FIXME("(%p)->(%p)\n", This, aContentDisposition);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsChannel_GetContentDispositionFilename(nsIHttpChannel *iface, nsAString *aContentDispositionFilename)
+{
+    nsChannel *This = impl_from_nsIHttpChannel(iface);
+    FIXME("(%p)->(%p)\n", This, aContentDispositionFilename);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsChannel_GetContentDispositionHeader(nsIHttpChannel *iface, nsACString *aContentDispositionHeader)
+{
+    nsChannel *This = impl_from_nsIHttpChannel(iface);
+    FIXME("(%p)->(%p)\n", This, aContentDispositionHeader);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 static nsresult NSAPI nsChannel_GetRequestMethod(nsIHttpChannel *iface, nsACString *aRequestMethod)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
@@ -1373,6 +1394,9 @@ static const nsIHttpChannelVtbl nsChannelVtbl = {
     nsChannel_SetContentLength,
     nsChannel_Open,
     nsChannel_AsyncOpen,
+    nsChannel_GetContentDisposition,
+    nsChannel_GetContentDispositionFilename,
+    nsChannel_GetContentDispositionHeader,
     nsChannel_GetRequestMethod,
     nsChannel_SetRequestMethod,
     nsChannel_GetReferrer,
@@ -1653,6 +1677,28 @@ static nsresult NSAPI nsHttpChannelInternal_SetCacheKeysRedirectChain(nsIHttpCha
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+static nsresult NSAPI nsHttpChannelInternal_HTTPUpgrade(nsIHttpChannelInternal *iface,
+        const nsACString *aProtocolName, nsIHttpUpgradeListener *aListener)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_nsacstr(aProtocolName), aListener);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsHttpChannelInternal_GetAllowSpdy(nsIHttpChannelInternal *iface, PRBool *aAllowSpdy)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+    FIXME("(%p)->(%p)\n", This, aAllowSpdy);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsHttpChannelInternal_SetAllowSpdy(nsIHttpChannelInternal *iface, PRBool aAllowSpdy)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+    FIXME("(%p)->(%x)\n", This, aAllowSpdy);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_QueryInterface,
     nsHttpChannelInternal_AddRef,
@@ -1672,7 +1718,10 @@ static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_GetLocalPort,
     nsHttpChannelInternal_GetRemoteAddress,
     nsHttpChannelInternal_GetRemotePort,
-    nsHttpChannelInternal_SetCacheKeysRedirectChain
+    nsHttpChannelInternal_SetCacheKeysRedirectChain,
+    nsHttpChannelInternal_HTTPUpgrade,
+    nsHttpChannelInternal_GetAllowSpdy,
+    nsHttpChannelInternal_SetAllowSpdy
 };
 
 
@@ -2492,27 +2541,6 @@ static nsresult NSAPI nsURL_SetFilePath(nsIURL *iface, const nsACString *aFilePa
     return nsIURL_SetPath(&This->nsIURL_iface, aFilePath);
 }
 
-static nsresult NSAPI nsURL_GetParam(nsIURL *iface, nsACString *aParam)
-{
-    nsWineURI *This = impl_from_nsIURL(iface);
-
-    WARN("(%p)->(%p)\n", This, aParam);
-
-    /* This is a leftover of ';' special handling in URLs. It will be removed from Gecko soon */
-    nsACString_SetData(aParam, "");
-    return NS_OK;
-}
-
-static nsresult NSAPI nsURL_SetParam(nsIURL *iface, const nsACString *aParam)
-{
-    nsWineURI *This = impl_from_nsIURL(iface);
-
-    WARN("(%p)->(%s)\n", This, debugstr_nsacstr(aParam));
-
-    /* Not implemented by Gecko */
-    return NS_ERROR_NOT_IMPLEMENTED;
-}
-
 static nsresult NSAPI nsURL_GetQuery(nsIURL *iface, nsACString *aQuery)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
@@ -2720,8 +2748,6 @@ static const nsIURLVtbl nsURLVtbl = {
     nsURI_GetHasRef,
     nsURL_GetFilePath,
     nsURL_SetFilePath,
-    nsURL_GetParam,
-    nsURL_SetParam,
     nsURL_GetQuery,
     nsURL_SetQuery,
     nsURL_GetDirectory,
