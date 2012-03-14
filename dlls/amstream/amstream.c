@@ -318,16 +318,13 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
         ret = IAMMultiMediaStream_Initialize(iface, STREAMTYPE_READ, 0, NULL);
 
     if (SUCCEEDED(ret))
-        ret = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER, &IID_IFileSourceFilter, (void**)&SourceFilter);
-
-    if (SUCCEEDED(ret))
         ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, pszFileName, pszFileName, &BaseFilter);
 
     if (SUCCEEDED(ret))
-        ret = IFileSourceFilter_Load(SourceFilter, pszFileName, NULL);
+        ret = IBaseFilter_QueryInterface(BaseFilter, &IID_IFileSourceFilter, (void**)&SourceFilter);
 
     if (SUCCEEDED(ret))
-        ret = IFileSourceFilter_QueryInterface(SourceFilter, &IID_IBaseFilter, (void**)&BaseFilter);
+        ret = IFileSourceFilter_Load(SourceFilter, pszFileName, NULL);
 
     if (SUCCEEDED(ret))
         ret = IBaseFilter_EnumPins(BaseFilter, &EnumPins);
