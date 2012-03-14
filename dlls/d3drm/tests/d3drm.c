@@ -96,6 +96,44 @@ static char data_ok[] =
 "3; 3, 1, 2;;\n"
 "}\n";
 
+static char data_full[] =
+"xof 0302txt 0064\n"
+"Header { 1; 0; 1; }\n"
+"Mesh {\n"
+" 3;\n"
+" 0.1; 0.2; 0.3;,\n"
+" 0.4; 0.5; 0.6;,\n"
+" 0.7; 0.8; 0.9;;\n"
+" 1;\n"
+" 3; 0, 1, 2;;\n"
+" MeshMaterialList {\n"
+"  1; 1; 0;\n"
+"  Material {\n"
+"   0.0; 1.0; 0.0; 1.0;;\n"
+"   30.0;\n"
+"   1.0; 0.0; 0.0;;\n"
+"   0.5; 0.5; 0.5;;\n"
+"   TextureFileName {\n"
+"    \"Texture.bmp\";\n"
+"   }\n"
+"  }\n"
+" }\n"
+" MeshNormals {\n"
+"  3;\n"
+"  1.1; 1.2; 1.3;,\n"
+"  1.4; 1.5; 1.6;,\n"
+"  1.7; 1.8; 1.9;;\n"
+"  1;"
+"  3; 0, 1, 2;;\n"
+" }\n"
+" MeshTextureCoords {\n"
+"  3;\n"
+"  0.13; 0.17;,\n"
+"  0.23; 0.27;,\n"
+"  0.33; 0.37;;\n"
+" }\n"
+"}\n";
+
 static void test_MeshBuilder(void)
 {
     HRESULT hr;
@@ -105,6 +143,9 @@ static void test_MeshBuilder(void)
     int val;
     DWORD val1, val2, val3;
     D3DVALUE valu, valv;
+    D3DVECTOR v[3];
+    D3DVECTOR n[3];
+    DWORD f[8];
 
     hr = pDirect3DRMCreate(&pD3DRM);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
@@ -137,7 +178,7 @@ static void test_MeshBuilder(void)
     ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
     ok(val1 == 4, "Wrong number of vertices %d (must be 4)\n", val1);
     todo_wine ok(val2 == 4, "Wrong number of normals %d (must be 4)\n", val2);
-    todo_wine ok(val3 == 22, "Wrong number of face data bytes %d (must be 22)\n", val3);
+    ok(val3 == 22, "Wrong number of face data bytes %d (must be 22)\n", val3);
 
     valu = 1.23f;
     valv = 3.21f;
@@ -157,6 +198,54 @@ static void test_MeshBuilder(void)
     todo_wine ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
     todo_wine ok(valu == 1.23f, "Wrong coordinate %f (must be 1.23)\n", valu);
     todo_wine ok(valv == 3.21f, "Wrong coordinate %f (must be 3.21)\n", valv);
+
+    IDirect3DRMMeshBuilder_Release(pMeshBuilder);
+
+    hr = IDirect3DRM_CreateMeshBuilder(pD3DRM, &pMeshBuilder);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder interface (hr = %x)\n", hr);
+
+    info.lpMemory = data_full;
+    info.dSize = strlen(data_full);
+    hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
+    ok(hr == D3DRM_OK, "Cannot load mesh data (hr = %x)\n", hr);
+
+    val = IDirect3DRMMeshBuilder_GetVertexCount(pMeshBuilder);
+    ok(val == 3, "Wrong number of vertices %d (must be 3)\n", val);
+
+    val = IDirect3DRMMeshBuilder_GetFaceCount(pMeshBuilder);
+    ok(val == 1, "Wrong number of faces %d (must be 1)\n", val);
+
+    hr = IDirect3DRMMeshBuilder_GetVertices(pMeshBuilder, &val1, v, &val2, n, &val3, f);
+    ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
+    ok(val1 == 3, "Wrong number of vertices %d (must be 3)\n", val1);
+    ok(val2 == 3, "Wrong number of normals %d (must be 3)\n", val2);
+    ok(val3 == 8, "Wrong number of face data bytes %d (must be 8)\n", val3);
+    ok(v[0].x == 0.1f, "Wrong component v[0].x = %f (expected 0.1)\n", v[0].x);
+    ok(v[0].y == 0.2f, "Wrong component v[0].y = %f (expected 0.2)\n", v[0].y);
+    ok(v[0].z == 0.3f, "Wrong component v[0].z = %f (expected 0.3)\n", v[0].z);
+    ok(v[1].x == 0.4f, "Wrong component v[1].x = %f (expected 0.4)\n", v[1].x);
+    ok(v[1].y == 0.5f, "Wrong component v[1].y = %f (expected 0.5)\n", v[1].y);
+    ok(v[1].z == 0.6f, "Wrong component v[1].z = %f (expected 0.6)\n", v[1].z);
+    ok(v[2].x == 0.7f, "Wrong component v[2].x = %f (expected 0.7)\n", v[2].x);
+    ok(v[2].y == 0.8f, "Wrong component v[2].y = %f (expected 0.8)\n", v[2].y);
+    ok(v[2].z == 0.9f, "Wrong component v[2].z = %f (expected 0.9)\n", v[2].z);
+    ok(n[0].x == 1.1f, "Wrong component n[0].x = %f (expected 1.1)\n", n[0].x);
+    ok(n[0].y == 1.2f, "Wrong component n[0].y = %f (expected 1.2)\n", n[0].y);
+    ok(n[0].z == 1.3f, "Wrong component n[0].z = %f (expected 1.3)\n", n[0].z);
+    ok(n[1].x == 1.4f, "Wrong component n[1].x = %f (expected 1.4)\n", n[1].x);
+    ok(n[1].y == 1.5f, "Wrong component n[1].y = %f (expected 1.5)\n", n[1].y);
+    ok(n[1].z == 1.6f, "Wrong component n[1].z = %f (expected 1.6)\n", n[1].z);
+    ok(n[2].x == 1.7f, "Wrong component n[2].x = %f (expected 1.7)\n", n[2].x);
+    ok(n[2].y == 1.8f, "Wrong component n[2].y = %f (expected 1.8)\n", n[2].y);
+    ok(n[2].z == 1.9f, "Wrong component n[2].z = %f (expected 1.9)\n", n[2].z);
+    ok(f[0] == 3 , "Wrong component f[0] = %d (expected 3)\n", f[0]);
+    ok(f[1] == 0 , "Wrong component f[1] = %d (expected 0)\n", f[1]);
+    ok(f[2] == 0 , "Wrong component f[2] = %d (expected 0)\n", f[2]);
+    ok(f[3] == 1 , "Wrong component f[3] = %d (expected 1)\n", f[3]);
+    ok(f[4] == 1 , "Wrong component f[4] = %d (expected 1)\n", f[4]);
+    ok(f[5] == 2 , "Wrong component f[5] = %d (expected 2)\n", f[5]);
+    ok(f[6] == 2 , "Wrong component f[6] = %d (expected 2)\n", f[6]);
+    ok(f[7] == 0 , "Wrong component f[7] = %d (expected 0)\n", f[7]);
 
     IDirect3DRMMeshBuilder_Release(pMeshBuilder);
 
