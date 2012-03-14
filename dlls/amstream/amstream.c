@@ -35,6 +35,8 @@ typedef struct {
     IAMMultiMediaStream IAMMultiMediaStream_iface;
     LONG ref;
     IGraphBuilder* pFilterGraph;
+    IMediaSeeking* media_seeking;
+    IMediaControl* media_control;
     IPin* ipin;
     ULONG nbStreams;
     IMediaStream** pStreams;
@@ -116,6 +118,10 @@ static ULONG WINAPI IAMMultiMediaStreamImpl_Release(IAMMultiMediaStream* iface)
             IMediaStream_Release(This->pStreams[i]);
         if (This->ipin)
             IPin_Release(This->ipin);
+        if (This->media_seeking)
+            IMediaSeeking_Release(This->media_seeking);
+        if (This->media_control)
+            IMediaControl_Release(This->media_control);
         if (This->pFilterGraph)
             IGraphBuilder_Release(This->pFilterGraph);
         HeapFree(GetProcessHeap(), 0, This);
@@ -240,6 +246,22 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Initialize(IAMMultiMediaStream* if
     if (SUCCEEDED(hr))
     {
         This->StreamType = StreamType;
+        hr = IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IMediaSeeking, (void**)&This->media_seeking);
+        if (SUCCEEDED(hr))
+            IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IMediaControl, (void**)&This->media_control);
+    }
+
+    if (FAILED(hr))
+    {
+        if (This->media_seeking)
+            IMediaSeeking_Release(This->media_seeking);
+        This->media_seeking = NULL;
+        if (This->media_control)
+            IMediaControl_Release(This->media_control);
+        This->media_control = NULL;
+        if (This->pFilterGraph)
+            IGraphBuilder_Release(This->pFilterGraph);
+        This->pFilterGraph = NULL;
     }
 
     return hr;
