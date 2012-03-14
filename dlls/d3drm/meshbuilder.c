@@ -1167,7 +1167,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
         {
             DWORD tmp;
 
-            hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&ptr);
+            hr = IDirectXFileData_GetData(pData2, NULL, &size, (void**)&ptr);
             if (hr != DXFILE_OK)
                 goto end;
 
@@ -1181,7 +1181,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
         }
         else if (IsEqualGUID(pGuid, &TID_D3DRMMeshTextureCoords))
         {
-            hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&ptr);
+            hr = IDirectXFileData_GetData(pData2, NULL, &size, (void**)&ptr);
             if (hr != DXFILE_OK)
                 goto end;
 
