@@ -42,6 +42,7 @@ typedef struct {
     ULONG nbStreams;
     IMediaStream** pStreams;
     STREAM_TYPE StreamType;
+    OAEVENT event;
 } IAMMultiMediaStreamImpl;
 
 static inline IAMMultiMediaStreamImpl *impl_from_IAMMultiMediaStream(IAMMultiMediaStream *iface)
@@ -257,6 +258,17 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Initialize(IAMMultiMediaStream* if
             hr = CoCreateInstance(&CLSID_MediaStreamFilter, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&This->media_stream_filter);
         if (SUCCEEDED(hr))
             IGraphBuilder_AddFilter(This->pFilterGraph, This->media_stream_filter, filternameW);
+        if (SUCCEEDED(hr))
+        {
+            IMediaEventEx* media_event = NULL;
+            hr = IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IMediaEventEx, (void**)&media_event);
+            if (SUCCEEDED(hr))
+                hr = IMediaEventEx_GetEventHandle(media_event, &This->event);
+            if (SUCCEEDED(hr))
+                hr = IMediaEventEx_SetNotifyFlags(media_event, AM_MEDIAEVENT_NONOTIFY);
+            if (media_event)
+                IMediaEventEx_Release(media_event);
+        }
     }
 
     if (FAILED(hr))
