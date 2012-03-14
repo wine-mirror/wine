@@ -3341,6 +3341,18 @@ static void test_mxattr_addAttribute(void)
         hr = ISAXAttributes_getValue(saxattr, 0, NULL, NULL);
         EXPECT_HR(hr, E_INVALIDARG);
 
+        hr = ISAXAttributes_getType(saxattr, 0, &value, &len);
+        EXPECT_HR(hr, E_INVALIDARG);
+
+        hr = ISAXAttributes_getType(saxattr, 0, NULL, &len);
+        EXPECT_HR(hr, E_INVALIDARG);
+
+        hr = ISAXAttributes_getType(saxattr, 0, &value, NULL);
+        EXPECT_HR(hr, E_INVALIDARG);
+
+        hr = ISAXAttributes_getType(saxattr, 0, NULL, NULL);
+        EXPECT_HR(hr, E_INVALIDARG);
+
         hr = IMXAttributes_addAttribute(mxattr, _bstr_(table->uri), _bstr_(table->local),
             _bstr_(table->qname), _bstr_(table->type), _bstr_(table->value));
         ok(hr == table->hr, "%d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
@@ -3359,6 +3371,15 @@ static void test_mxattr_addAttribute(void)
 
                hr = ISAXAttributes_getValue(saxattr, 0, NULL, NULL);
                EXPECT_HR(hr, E_POINTER);
+
+               hr = ISAXAttributes_getType(saxattr, 0, NULL, &len);
+               EXPECT_HR(hr, E_POINTER);
+
+               hr = ISAXAttributes_getType(saxattr, 0, &value, NULL);
+               EXPECT_HR(hr, E_POINTER);
+
+               hr = ISAXAttributes_getType(saxattr, 0, NULL, NULL);
+               EXPECT_HR(hr, E_POINTER);
             }
 
             len = -1;
@@ -3367,6 +3388,23 @@ static void test_mxattr_addAttribute(void)
             ok(!lstrcmpW(_bstr_(table->value), value), "%d: got %s, expected %s\n", i, wine_dbgstr_w(value),
                 table->value);
             ok(lstrlenW(value) == len, "%d: got wrong value length %d\n", i, len);
+
+            len = -1;
+            value = (void*)0xdeadbeef;
+            hr = ISAXAttributes_getType(saxattr, 0, &value, &len);
+            EXPECT_HR(hr, S_OK);
+
+            if (table->type)
+            {
+                ok(!lstrcmpW(_bstr_(table->type), value), "%d: got %s, expected %s\n", i, wine_dbgstr_w(value),
+                    table->type);
+                ok(lstrlenW(value) == len, "%d: got wrong type value length %d\n", i, len);
+            }
+            else
+            {
+                ok(*value == 0, "%d: got type value %s\n", i, wine_dbgstr_w(value));
+                ok(len == 0, "%d: got wrong type value length %d\n", i, len);
+            }
         }
 
         len = -1;

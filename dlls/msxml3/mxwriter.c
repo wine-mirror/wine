@@ -1612,7 +1612,7 @@ static HRESULT WINAPI MXAttributes_addAttribute(IMXAttributes *iface,
     attr->qname = SysAllocString(QName);
     attr->local = SysAllocString(localName);
     attr->uri   = SysAllocString(uri);
-    attr->type  = SysAllocString(type);
+    attr->type  = SysAllocString(type ? type : emptyW);
     attr->value = SysAllocString(value);
     This->length++;
 
@@ -1794,12 +1794,22 @@ static HRESULT WINAPI SAXAttributes_getIndexFromQName(ISAXAttributes *iface, con
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI SAXAttributes_getType(ISAXAttributes *iface, int nIndex, const WCHAR ** pType,
-    int * pTypeLength)
+static HRESULT WINAPI SAXAttributes_getType(ISAXAttributes *iface, int index, const WCHAR **type,
+    int *len)
 {
     mxattributes *This = impl_from_ISAXAttributes( iface );
-    FIXME("(%p)->(%d %p %p): stub\n", This, nIndex, pType, pTypeLength);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p %p)\n", This, index, type, len);
+
+    if (index >= This->length) return E_INVALIDARG;
+
+    if ((!type || !len) && (This->class_version == MSXML_DEFAULT || This->class_version == MSXML3))
+       return E_POINTER;
+
+    *type = This->attr[index].type;
+    *len = SysStringLen(This->attr[index].type);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXAttributes_getTypeFromName(ISAXAttributes *iface, const WCHAR * pUri, int nUri,
