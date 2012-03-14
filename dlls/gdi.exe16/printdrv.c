@@ -398,7 +398,7 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
 INT16 WINAPI CloseJob16(HPJOB16 hJob)
 {
     int nRet = SP_ERROR;
-    PPRINTJOB pPrintJob = NULL;
+    PPRINTJOB pPrintJob;
 
     TRACE("%04x\n", hJob);
 
@@ -418,7 +418,7 @@ INT16 WINAPI CloseJob16(HPJOB16 hJob)
 INT16 WINAPI WriteSpool16(HPJOB16 hJob, LPSTR lpData, INT16 cch)
 {
     int nRet = SP_ERROR;
-    PPRINTJOB pPrintJob = NULL;
+    PPRINTJOB pPrintJob;
 
     TRACE("%04x %p %04x\n", hJob, lpData, cch);
 
