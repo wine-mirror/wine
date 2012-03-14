@@ -1,7 +1,7 @@
 /*
  * Implementation of IAMMultiMediaStream Interface
  *
- * Copyright 2004 Christian Costa
+ * Copyright 2004, 2012 Christian Costa
  * Copyright 2006 Ivan Leo Puoti
  *
  * This library is free software; you can redistribute it and/or
@@ -309,6 +309,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
     IEnumPins *EnumPins = NULL;
     IPin *ipin;
     PIN_DIRECTION pin_direction;
+    const WCHAR sourceW[] = {'S','o','u','r','c','e',0};
 
     TRACE("(%p/%p)->(%s,%x)\n", This, iface, debugstr_w(pszFileName), dwFlags);
 
@@ -317,7 +318,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
         ret = IAMMultiMediaStream_Initialize(iface, STREAMTYPE_READ, 0, NULL);
 
     if (SUCCEEDED(ret))
-        ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, pszFileName, pszFileName, &BaseFilter);
+        ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, pszFileName, sourceW, &BaseFilter);
 
     if (SUCCEEDED(ret))
         ret = IBaseFilter_EnumPins(BaseFilter, &EnumPins);
