@@ -1163,7 +1163,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
 
         TRACE("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
 
-        if (!IsEqualGUID(pGuid, &TID_D3DRMMeshNormals))
+        if (IsEqualGUID(pGuid, &TID_D3DRMMeshNormals))
         {
             DWORD tmp;
 
@@ -1179,7 +1179,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
             This->pNormals = HeapAlloc(GetProcessHeap(), 0, This->nb_normals * sizeof(D3DVECTOR));
             memcpy(This->pNormals, ptr + sizeof(DWORD), This->nb_normals * sizeof(D3DVECTOR));
         }
-        else if(!IsEqualGUID(pGuid, &TID_D3DRMMeshTextureCoords))
+        else if (IsEqualGUID(pGuid, &TID_D3DRMMeshTextureCoords))
         {
             hr = IDirectXFileData_GetData(pData, NULL, &size, (void**)&ptr);
             if (hr != DXFILE_OK)
@@ -1193,7 +1193,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
             memcpy(This->pCoords2d, ptr + sizeof(DWORD), This->nb_coords2d * sizeof(Coords2d));
 
         }
-        else if(!IsEqualGUID(pGuid, &TID_D3DRMMeshMaterialList))
+        else if (IsEqualGUID(pGuid, &TID_D3DRMMeshMaterialList))
         {
             FIXME("MeshMaterialList not supported yet, ignoring...\n");
         }
