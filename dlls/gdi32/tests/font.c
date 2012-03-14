@@ -3756,6 +3756,11 @@ static INT CALLBACK enum_all_fonts_proc(const LOGFONT *elf, const TEXTMETRIC *nt
     return 1;
 }
 
+static INT CALLBACK enum_with_magic_retval_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lparam)
+{
+    return lparam;
+}
+
 static void test_EnumFonts(void)
 {
     int ret;
@@ -3776,6 +3781,10 @@ static void test_EnumFonts(void)
     }
 
     hdc = CreateCompatibleDC(0);
+
+    /* check that the enumproc's retval is returned */
+    ret = EnumFontFamilies(hdc, NULL, enum_with_magic_retval_proc, 0xcafe);
+    ok(ret == 0xcafe, "got %08x\n", ret);
 
     ret = EnumFontFamilies(hdc, "Arial", enum_fonts_proc, (LPARAM)&lf);
     ok(!ret, "font Arial is not enumerated\n");

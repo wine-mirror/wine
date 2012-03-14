@@ -121,6 +121,7 @@ struct font_enum
   LPARAM              lpData;
   BOOL                unicode;
   HDC                 hdc;
+  INT                 retval;
 };
 
 /*
@@ -721,6 +722,7 @@ static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *p
             ptm = (TEXTMETRICW *)&tmA;
         }
         ret = pfe->lpEnumFunc( plf, ptm, fType, pfe->lpData );
+        pfe->retval = ret;
     }
     return ret;
 }
@@ -745,10 +747,11 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCW efpro
         fe.lpData = lParam;
         fe.unicode = unicode;
         fe.hdc = hDC;
-	ret = physdev->funcs->pEnumFonts( physdev, plf, FONT_EnumInstance, (LPARAM)&fe );
+        fe.retval = 1;
+        ret = physdev->funcs->pEnumFonts( physdev, plf, FONT_EnumInstance, (LPARAM)&fe );
         release_dc_ptr( dc );
     }
-    return ret;
+    return ret ? fe.retval : 0;
 }
 
 /***********************************************************************
