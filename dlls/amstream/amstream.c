@@ -37,6 +37,7 @@ typedef struct {
     IGraphBuilder* pFilterGraph;
     IMediaSeeking* media_seeking;
     IMediaControl* media_control;
+    IBaseFilter* media_stream_filter;
     IPin* ipin;
     ULONG nbStreams;
     IMediaStream** pStreams;
@@ -118,6 +119,8 @@ static ULONG WINAPI IAMMultiMediaStreamImpl_Release(IAMMultiMediaStream* iface)
             IMediaStream_Release(This->pStreams[i]);
         if (This->ipin)
             IPin_Release(This->ipin);
+        if (This->media_stream_filter)
+            IBaseFilter_Release(This->media_stream_filter);
         if (This->media_seeking)
             IMediaSeeking_Release(This->media_seeking);
         if (This->media_control)
@@ -230,6 +233,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Initialize(IAMMultiMediaStream* if
 {
     IAMMultiMediaStreamImpl *This = impl_from_IAMMultiMediaStream(iface);
     HRESULT hr = S_OK;
+    const WCHAR filternameW[] = {'M','e','d','i','a','S','t','r','e','a','m','F','i','l','t','e','r',0};
 
     TRACE("(%p/%p)->(%x,%x,%p)\n", This, iface, (DWORD)StreamType, dwFlags, pFilterGraph);
 
@@ -249,10 +253,17 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Initialize(IAMMultiMediaStream* if
         hr = IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IMediaSeeking, (void**)&This->media_seeking);
         if (SUCCEEDED(hr))
             IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IMediaControl, (void**)&This->media_control);
+        if (SUCCEEDED(hr))
+            hr = CoCreateInstance(&CLSID_MediaStreamFilter, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&This->media_stream_filter);
+        if (SUCCEEDED(hr))
+            IGraphBuilder_AddFilter(This->pFilterGraph, This->media_stream_filter, filternameW);
     }
 
     if (FAILED(hr))
     {
+        if (This->media_stream_filter)
+            IBaseFilter_Release(This->media_stream_filter);
+        This->media_stream_filter = NULL;
         if (This->media_seeking)
             IMediaSeeking_Release(This->media_seeking);
         This->media_seeking = NULL;
