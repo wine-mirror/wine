@@ -890,6 +890,14 @@ static inline FT_Fixed FT_FixedFromFIXED(FIXED f)
 }
 
 
+static const struct list *get_face_list_from_family(const Family *family)
+{
+    if (!list_empty(&family->faces))
+        return &family->faces;
+    else
+        return family->replacement;
+}
+
 static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_name)
 {
     Family *family;
@@ -903,9 +911,11 @@ static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_n
 
     LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
     {
+        const struct list *face_list;
         if(face_name && strcmpiW(face_name, family->FamilyName))
             continue;
-        LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
+        face_list = get_face_list_from_family(family);
+        LIST_FOR_EACH_ENTRY(face, face_list, Face, entry)
         {
             if (!face->file)
                 continue;
@@ -1955,14 +1965,6 @@ static SYSTEM_LINKS *find_font_link(const WCHAR *name)
     }
 
     return NULL;
-}
-
-static const struct list *get_face_list_from_family(const Family *family)
-{
-    if (!list_empty(&family->faces))
-        return &family->faces;
-    else
-        return family->replacement;
 }
 
 static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
