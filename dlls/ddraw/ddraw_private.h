@@ -42,7 +42,6 @@ extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HI
 
 /* Typdef the interfaces */
 typedef struct IDirect3DDeviceImpl        IDirect3DDeviceImpl;
-typedef struct IDirect3DViewportImpl      IDirect3DViewportImpl;
 typedef struct IDirect3DMaterialImpl      IDirect3DMaterialImpl;
 typedef struct IDirect3DExecuteBufferImpl IDirect3DExecuteBufferImpl;
 typedef struct IDirect3DVertexBufferImpl  IDirect3DVertexBufferImpl;
@@ -290,7 +289,7 @@ struct IDirect3DDeviceImpl
 
     /* Viewport management */
     struct list viewport_list;
-    IDirect3DViewportImpl *current_viewport;
+    struct d3d_viewport *current_viewport;
     D3DVIEWPORT7 active_viewport;
 
     /* Required to keep track which of two available texture blending modes in d3ddevice3 is used */
@@ -410,7 +409,7 @@ struct d3d_light
     struct ddraw *ddraw;
 
     /* If this light is active for one viewport, put the viewport here */
-    IDirect3DViewportImpl     *active_viewport;
+    struct d3d_viewport *active_viewport;
 
     D3DLIGHT2 light;
     D3DLIGHT7 light7;
@@ -451,7 +450,7 @@ IDirect3DMaterialImpl *d3d_material_create(struct ddraw *ddraw) DECLSPEC_HIDDEN;
 /*****************************************************************************
  * IDirect3DViewport - Wraps to D3D7
  *****************************************************************************/
-struct IDirect3DViewportImpl
+struct d3d_viewport
 {
     IDirect3DViewport3 IDirect3DViewport3_iface;
     LONG ref;
@@ -480,13 +479,13 @@ struct IDirect3DViewportImpl
     IDirect3DMaterialImpl     *background;
 };
 
-IDirect3DViewportImpl *unsafe_impl_from_IDirect3DViewport3(IDirect3DViewport3 *iface) DECLSPEC_HIDDEN;
-IDirect3DViewportImpl *unsafe_impl_from_IDirect3DViewport2(IDirect3DViewport2 *iface) DECLSPEC_HIDDEN;
-IDirect3DViewportImpl *unsafe_impl_from_IDirect3DViewport(IDirect3DViewport *iface) DECLSPEC_HIDDEN;
+struct d3d_viewport *unsafe_impl_from_IDirect3DViewport3(IDirect3DViewport3 *iface) DECLSPEC_HIDDEN;
+struct d3d_viewport *unsafe_impl_from_IDirect3DViewport2(IDirect3DViewport2 *iface) DECLSPEC_HIDDEN;
+struct d3d_viewport *unsafe_impl_from_IDirect3DViewport(IDirect3DViewport *iface) DECLSPEC_HIDDEN;
 
 /* Helper functions */
-void viewport_activate(IDirect3DViewportImpl* This, BOOL ignore_lights) DECLSPEC_HIDDEN;
-void d3d_viewport_init(IDirect3DViewportImpl *viewport, struct ddraw *ddraw) DECLSPEC_HIDDEN;
+void viewport_activate(struct d3d_viewport *viewport, BOOL ignore_lights) DECLSPEC_HIDDEN;
+void d3d_viewport_init(struct d3d_viewport *viewport, struct ddraw *ddraw) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DExecuteBuffer - Wraps to D3D7
@@ -519,7 +518,7 @@ IDirect3DExecuteBufferImpl *unsafe_impl_from_IDirect3DExecuteBuffer(IDirect3DExe
 
 /* The execute function */
 HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *execute_buffer,
-        IDirect3DDeviceImpl *device, IDirect3DViewportImpl *viewport) DECLSPEC_HIDDEN;
+        IDirect3DDeviceImpl *device, struct d3d_viewport *viewport) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DVertexBuffer

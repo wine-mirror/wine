@@ -4271,7 +4271,7 @@ static HRESULT WINAPI d3d3_CreateViewport(IDirect3D3 *iface, IDirect3DViewport3 
         IUnknown *outer_unknown)
 {
     struct ddraw *ddraw = impl_from_IDirect3D3(iface);
-    IDirect3DViewportImpl *object;
+    struct d3d_viewport *object;
 
     TRACE("iface %p, viewport %p, outer_unknown %p.\n", iface, viewport, outer_unknown);
 
