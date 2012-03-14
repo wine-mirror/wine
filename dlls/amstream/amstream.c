@@ -305,7 +305,6 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
 {
     IAMMultiMediaStreamImpl *This = impl_from_IAMMultiMediaStream(iface);
     HRESULT ret = S_OK;
-    IFileSourceFilter *SourceFilter = NULL;
     IBaseFilter *BaseFilter = NULL;
     IEnumPins *EnumPins = NULL;
     IPin *ipin;
@@ -319,12 +318,6 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
 
     if (SUCCEEDED(ret))
         ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, pszFileName, pszFileName, &BaseFilter);
-
-    if (SUCCEEDED(ret))
-        ret = IBaseFilter_QueryInterface(BaseFilter, &IID_IFileSourceFilter, (void**)&SourceFilter);
-
-    if (SUCCEEDED(ret))
-        ret = IFileSourceFilter_Load(SourceFilter, pszFileName, NULL);
 
     if (SUCCEEDED(ret))
         ret = IBaseFilter_EnumPins(BaseFilter, &EnumPins);
@@ -343,8 +336,6 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
         IEnumPins_Release(EnumPins);
     if (BaseFilter)
         IBaseFilter_Release(BaseFilter);
-    if (SourceFilter)
-        IFileSourceFilter_Release(SourceFilter);
     return ret;
 }
 
