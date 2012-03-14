@@ -666,6 +666,7 @@ COREAUDIO
 SECURITYLIB
 DISKARBITRATIONLIB
 LDEXECFLAGS
+CORESERVICESLIB
 APPLICATIONSERVICESLIB
 IOKITLIB
 COREFOUNDATIONLIB
@@ -5752,6 +5753,7 @@ for ac_header in \
 	CL/cl.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
+	CoreServices/CoreServices.h \
 	DiskArbitration/DiskArbitration.h \
 	IOKit/IOKitLib.h \
 	IOKit/hid/IOHIDLib.h \
@@ -6494,6 +6496,8 @@ fi
     IOKITLIB="-framework IOKit -framework CoreFoundation"
 
     APPLICATIONSERVICESLIB="-framework ApplicationServices"
+
+    CORESERVICESLIB="-framework CoreServices"
 
     case $host_os in
       darwin11*)
