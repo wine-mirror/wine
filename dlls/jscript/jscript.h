@@ -152,7 +152,7 @@ static inline jsdisp_t *get_jsdisp(vdisp_t *vdisp)
     return is_jsdisp(vdisp) ? vdisp->u.jsdisp : NULL;
 }
 
-typedef HRESULT (*builtin_invoke_t)(script_ctx_t*,vdisp_t*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
+typedef HRESULT (*builtin_invoke_t)(script_ctx_t*,vdisp_t*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*);
 
 typedef struct {
     const WCHAR *name;
@@ -224,7 +224,7 @@ VARIANT_BOOL jsdisp_is_own_prop(jsdisp_t *obj, BSTR name) DECLSPEC_HIDDEN;
 
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,const builtin_info_t*,DWORD,
         jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
-HRESULT Function_value(script_ctx_t*,vdisp_t*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*) DECLSPEC_HIDDEN;
+HRESULT Function_value(script_ctx_t*,vdisp_t*,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*) DECLSPEC_HIDDEN;
 
 HRESULT throw_eval_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
 HRESULT throw_generic_error(script_ctx_t*,jsexcept_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;

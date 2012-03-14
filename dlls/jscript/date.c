@@ -603,7 +603,7 @@ static HRESULT dateobj_to_string(DateInstance *date, VARIANT *retv)
 }
 
 static HRESULT Date_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -617,7 +617,7 @@ static HRESULT Date_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 
 /* ECMA-262 3rd Edition    15.9.1.5 */
 static HRESULT Date_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
     SYSTEMTIME st;
@@ -662,7 +662,7 @@ static HRESULT Date_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 }
 
 static HRESULT Date_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -781,14 +781,14 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis,
 
 /* ECMA-262 3rd Edition    15.9.5.42 */
 static HRESULT Date_toUTCString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     TRACE("\n");
     return create_utc_string(ctx, jsthis, retv, ei);
 }
 
 static HRESULT Date_toGMTString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     TRACE("\n");
     return create_utc_string(ctx, jsthis, retv, ei);
@@ -893,7 +893,7 @@ static HRESULT dateobj_to_date_string(DateInstance *date, VARIANT *retv)
 }
 
 static HRESULT Date_toDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -905,7 +905,7 @@ static HRESULT Date_toDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 
 /* ECMA-262 3rd Edition    15.9.5.4 */
 static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
     static const WCHAR formatW[] = { '%','0','2','d',':','%','0','2','d',':','%','0','2','d',
@@ -965,7 +965,7 @@ static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 
 /* ECMA-262 3rd Edition    15.9.5.6 */
 static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
     SYSTEMTIME st;
@@ -1008,7 +1008,7 @@ static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
 
 /* ECMA-262 3rd Edition    15.9.5.7 */
 static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
     SYSTEMTIME st;
@@ -1034,7 +1034,7 @@ static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
     st = create_systemtime(local_time(date->time, date));
 
     if(st.wYear<1601 || st.wYear>9999)
-        return Date_toTimeString(ctx, jsthis, flags, dp, retv, ei, caller);
+        return Date_toTimeString(ctx, jsthis, flags, dp, retv, ei);
 
     if(retv) {
         len = GetTimeFormatW(ctx->lcid, 0, &st, NULL, NULL, 0);
@@ -1051,7 +1051,7 @@ static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
 
 /* ECMA-262 3rd Edition    15.9.5.9 */
 static HRESULT Date_getTime(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1067,7 +1067,7 @@ static HRESULT Date_getTime(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 
 /* ECMA-262 3rd Edition    15.9.5.10 */
 static HRESULT Date_getFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1086,7 +1086,7 @@ static HRESULT Date_getFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
 /* ECMA-262 3rd Edition    15.9.5.11 */
 static HRESULT Date_getUTCFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1102,7 +1102,7 @@ static HRESULT Date_getUTCFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 
 /* ECMA-262 3rd Edition    15.9.5.12 */
 static HRESULT Date_getMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1121,7 +1121,7 @@ static HRESULT Date_getMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 
 /* ECMA-262 3rd Edition    15.9.5.13 */
 static HRESULT Date_getUTCMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1137,7 +1137,7 @@ static HRESULT Date_getUTCMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
 /* ECMA-262 3rd Edition    15.9.5.14 */
 static HRESULT Date_getDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1156,7 +1156,7 @@ static HRESULT Date_getDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 
 /* ECMA-262 3rd Edition    15.9.5.15 */
 static HRESULT Date_getUTCDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1172,7 +1172,7 @@ static HRESULT Date_getUTCDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 
 /* ECMA-262 3rd Edition    15.9.5.16 */
 static HRESULT Date_getDay(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1191,7 +1191,7 @@ static HRESULT Date_getDay(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPP
 
 /* ECMA-262 3rd Edition    15.9.5.17 */
 static HRESULT Date_getUTCDay(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1207,7 +1207,7 @@ static HRESULT Date_getUTCDay(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
 
 /* ECMA-262 3rd Edition    15.9.5.18 */
 static HRESULT Date_getHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1226,7 +1226,7 @@ static HRESULT Date_getHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 
 /* ECMA-262 3rd Edition    15.9.5.19 */
 static HRESULT Date_getUTCHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1242,7 +1242,7 @@ static HRESULT Date_getUTCHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
 /* ECMA-262 3rd Edition    15.9.5.20 */
 static HRESULT Date_getMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1261,7 +1261,7 @@ static HRESULT Date_getMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 
 /* ECMA-262 3rd Edition    15.9.5.21 */
 static HRESULT Date_getUTCMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1277,7 +1277,7 @@ static HRESULT Date_getUTCMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
 /* ECMA-262 3rd Edition    15.9.5.22 */
 static HRESULT Date_getSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1296,7 +1296,7 @@ static HRESULT Date_getSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 
 /* ECMA-262 3rd Edition    15.9.5.23 */
 static HRESULT Date_getUTCSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1312,7 +1312,7 @@ static HRESULT Date_getUTCSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
 /* ECMA-262 3rd Edition    15.9.5.24 */
 static HRESULT Date_getMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1331,7 +1331,7 @@ static HRESULT Date_getMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
 
 /* ECMA-262 3rd Edition    15.9.5.25 */
 static HRESULT Date_getUTCMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1347,7 +1347,7 @@ static HRESULT Date_getUTCMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
 
 /* ECMA-262 3rd Edition    15.9.5.26 */
 static HRESULT Date_getTimezoneOffset(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
 
@@ -1364,7 +1364,7 @@ static HRESULT Date_getTimezoneOffset(script_ctx_t *ctx, vdisp_t *jsthis, WORD f
 
 /* ECMA-262 3rd Edition    15.9.5.27 */
 static HRESULT Date_setTime(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1392,7 +1392,7 @@ static HRESULT Date_setTime(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 
 /* ECMA-262 3rd Edition    15.9.5.28 */
 static HRESULT Date_setMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1424,7 +1424,7 @@ static HRESULT Date_setMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
 
 /* ECMA-262 3rd Edition    15.9.5.29 */
 static HRESULT Date_setUTCMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1456,7 +1456,7 @@ static HRESULT Date_setUTCMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
 
 /* ECMA-262 3rd Edition    15.9.5.30 */
 static HRESULT Date_setSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1498,7 +1498,7 @@ static HRESULT Date_setSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 
 /* ECMA-262 3rd Edition    15.9.5.31 */
 static HRESULT Date_setUTCSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1540,7 +1540,7 @@ static HRESULT Date_setUTCSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
 /* ECMA-262 3rd Edition    15.9.5.33 */
 static HRESULT Date_setMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1590,7 +1590,7 @@ static HRESULT Date_setMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 
 /* ECMA-262 3rd Edition    15.9.5.34 */
 static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1640,7 +1640,7 @@ static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
 /* ECMA-262 3rd Edition    15.9.5.35 */
 static HRESULT Date_setHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1697,7 +1697,7 @@ static HRESULT Date_setHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 
 /* ECMA-262 3rd Edition    15.9.5.36 */
 static HRESULT Date_setUTCHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
     VARIANT v;
@@ -1754,7 +1754,7 @@ static HRESULT Date_setUTCHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
 /* ECMA-262 3rd Edition    15.9.5.36 */
 static HRESULT Date_setDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1786,7 +1786,7 @@ static HRESULT Date_setDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 
 /* ECMA-262 3rd Edition    15.9.5.37 */
 static HRESULT Date_setUTCDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1818,7 +1818,7 @@ static HRESULT Date_setUTCDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 
 /* ECMA-262 3rd Edition    15.9.5.38 */
 static HRESULT Date_setMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1860,7 +1860,7 @@ static HRESULT Date_setMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 
 /* ECMA-262 3rd Edition    15.9.5.39 */
 static HRESULT Date_setUTCMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1902,7 +1902,7 @@ static HRESULT Date_setUTCMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
 /* ECMA-262 3rd Edition    15.9.5.40 */
 static HRESULT Date_setFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -1951,7 +1951,7 @@ static HRESULT Date_setFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
 /* ECMA-262 3rd Edition    15.9.5.41 */
 static HRESULT Date_setUTCFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -2000,7 +2000,7 @@ static HRESULT Date_setUTCFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 
 /* ECMA-262 3rd Edition    B2.4 */
 static HRESULT Date_getYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
     DOUBLE t, year;
@@ -2026,7 +2026,7 @@ static HRESULT Date_getYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 
 /* ECMA-262 3rd Edition    B2.5 */
 static HRESULT Date_setYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
     DOUBLE t, year;
@@ -2067,7 +2067,7 @@ static HRESULT Date_setYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 }
 
 static HRESULT Date_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     TRACE("\n");
 
@@ -2431,7 +2431,7 @@ static inline HRESULT date_parse(BSTR input, VARIANT *retv) {
 }
 
 static HRESULT DateConstr_parse(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     BSTR parse_str;
     HRESULT hres;
@@ -2545,7 +2545,7 @@ static HRESULT date_utc(script_ctx_t *ctx, DISPPARAMS *dp, VARIANT *retv, jsexce
 }
 
 static HRESULT DateConstr_UTC(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     TRACE("\n");
 
@@ -2553,7 +2553,7 @@ static HRESULT DateConstr_UTC(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
 }
 
 static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     jsdisp_t *date;
     HRESULT hres;

@@ -39,7 +39,7 @@ static inline BoolInstance *bool_this(vdisp_t *jsthis)
 
 /* ECMA-262 3rd Edition    15.6.4.2 */
 static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     BoolInstance *bool;
 
@@ -69,7 +69,7 @@ static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 
 /* ECMA-262 3rd Edition    15.6.4.3 */
 static HRESULT Bool_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     BoolInstance *bool;
 
@@ -87,7 +87,7 @@ static HRESULT Bool_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 }
 
 static HRESULT Bool_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     TRACE("\n");
 
@@ -118,7 +118,7 @@ static const builtin_info_t Bool_info = {
 };
 
 static HRESULT BoolConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     HRESULT hres;
     VARIANT_BOOL value = VARIANT_FALSE;

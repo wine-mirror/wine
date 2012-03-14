@@ -45,7 +45,7 @@ static inline VBArrayInstance *vbarray_this(vdisp_t *jsthis)
 }
 
 static HRESULT VBArray_dimensions(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VBArrayInstance *vbarray;
 
@@ -61,7 +61,7 @@ static HRESULT VBArray_dimensions(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
 }
 
 static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VBArrayInstance *vbarray;
     int i, *indexes, size;
@@ -104,7 +104,7 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DI
 }
 
 static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VBArrayInstance *vbarray;
     int dim;
@@ -135,7 +135,7 @@ static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
 }
 
 static HRESULT VBArray_toArray(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VBArrayInstance *vbarray;
     jsdisp_t *array;
@@ -183,7 +183,7 @@ static HRESULT VBArray_toArray(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DI
 }
 
 static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VBArrayInstance *vbarray;
     int dim;
@@ -214,7 +214,7 @@ static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DIS
 }
 
 static HRESULT VBArray_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     FIXME("\n");
 
@@ -276,7 +276,7 @@ static HRESULT alloc_vbarray(script_ctx_t *ctx, jsdisp_t *object_prototype, VBAr
 }
 
 static HRESULT VBArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT *arg;
     VBArrayInstance *vbarray;

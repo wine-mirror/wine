@@ -59,7 +59,7 @@ static const WCHAR tanW[] = {'t','a','n',0};
 
 /* ECMA-262 3rd Edition    15.8.2.12 */
 static HRESULT Math_abs(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     DOUBLE d;
@@ -84,7 +84,7 @@ static HRESULT Math_abs(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 }
 
 static HRESULT Math_acos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -111,7 +111,7 @@ static HRESULT Math_acos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
 }
 
 static HRESULT Math_asin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -138,7 +138,7 @@ static HRESULT Math_asin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
 }
 
 static HRESULT Math_atan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -159,7 +159,7 @@ static HRESULT Math_atan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
 }
 
 static HRESULT Math_atan2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v1, v2;
     HRESULT hres;
@@ -185,7 +185,7 @@ static HRESULT Math_atan2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
 
 /* ECMA-262 3rd Edition    15.8.2.6 */
 static HRESULT Math_ceil(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -208,7 +208,7 @@ static HRESULT Math_ceil(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
 }
 
 static HRESULT Math_cos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -229,7 +229,7 @@ static HRESULT Math_cos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 }
 
 static HRESULT Math_exp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -250,7 +250,7 @@ static HRESULT Math_exp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 }
 
 static HRESULT Math_floor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -273,7 +273,7 @@ static HRESULT Math_floor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
 }
 
 static HRESULT Math_log(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -302,7 +302,7 @@ static HRESULT Math_log(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 
 /* ECMA-262 3rd Edition    15.8.2.11 */
 static HRESULT Math_max(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DOUBLE max, d;
     VARIANT v;
@@ -339,7 +339,7 @@ static HRESULT Math_max(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 
 /* ECMA-262 3rd Edition    15.8.2.12 */
 static HRESULT Math_min(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     DOUBLE min, d;
     VARIANT v;
@@ -376,7 +376,7 @@ static HRESULT Math_min(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 
 /* ECMA-262 3rd Edition    15.8.2.13 */
 static HRESULT Math_pow(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT x, y;
     HRESULT hres;
@@ -403,7 +403,7 @@ static HRESULT Math_pow(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 
 /* ECMA-262 3rd Edition    15.8.2.14 */
 static HRESULT Math_random(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     UINT r;
 
@@ -420,7 +420,7 @@ static HRESULT Math_random(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPP
 
 /* ECMA-262 3rd Edition    15.8.2.15 */
 static HRESULT Math_round(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -442,7 +442,7 @@ static HRESULT Math_round(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
 }
 
 static HRESULT Math_sin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -463,7 +463,7 @@ static HRESULT Math_sin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 }
 
 static HRESULT Math_sqrt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;
@@ -484,7 +484,7 @@ static HRESULT Math_sqrt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
 }
 
 static HRESULT Math_tan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei)
 {
     VARIANT v;
     HRESULT hres;

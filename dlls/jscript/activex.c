@@ -139,7 +139,7 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
 }
 
 static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+        VARIANT *retv, jsexcept_t *ei)
 {
     IDispatch *disp;
     IUnknown *obj;

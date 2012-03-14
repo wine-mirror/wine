@@ -348,7 +348,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, jsdisp_t *jsthis, dispex_prop_t 
         }
 
         set_jsdisp(&vthis, jsthis);
-        hres = prop->u.p->invoke(This->ctx, &vthis, flags, dp, retv, ei, caller);
+        hres = prop->u.p->invoke(This->ctx, &vthis, flags, dp, retv, ei);
         vdisp_release(&vthis);
         return hres;
     }
@@ -406,7 +406,7 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
             vdisp_t vthis;
 
             set_jsdisp(&vthis, This);
-            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYGET, dp, retv, ei, caller);
+            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYGET, dp, retv, ei);
             vdisp_release(&vthis);
         }
         break;
@@ -445,7 +445,7 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, VARIANT *val,
             vdisp_t vthis;
 
             set_jsdisp(&vthis, This);
-            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYPUT, &dp, NULL, ei, caller);
+            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYPUT, &dp, NULL, ei);
             vdisp_release(&vthis);
             return hres;
         }
@@ -985,7 +985,7 @@ HRESULT jsdisp_call_value(jsdisp_t *jsthis, WORD flags, DISPPARAMS *dp, VARIANT 
     HRESULT hres;
 
     set_jsdisp(&vdisp, jsthis);
-    hres = jsthis->builtin_info->value_prop.invoke(jsthis->ctx, &vdisp, flags, dp, retv, ei, NULL);
+    hres = jsthis->builtin_info->value_prop.invoke(jsthis->ctx, &vdisp, flags, dp, retv, ei);
     vdisp_release(&vdisp);
     return hres;
 }
