@@ -22,7 +22,20 @@
 
 #include "config.h"
 
+#ifdef HAVE_CORESERVICES_CORESERVICES_H
+#define GetCurrentThread MacGetCurrentThread
+#define LoadResource MacLoadResource
+#include <CoreServices/CoreServices.h>
+#undef GetCurrentThread
+#undef LoadResource
+#undef DPRINTF
+#endif
+
 #include <stdarg.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <time.h>
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
@@ -41,16 +54,77 @@
 #include "winreg.h"
 #include "shlwapi.h"
 #include "winternl.h"
-
-#include <stdio.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <time.h>
 #include "wine/debug.h"
 #include "shell32_main.h"
 #include "xdg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(trash);
+
+#ifdef HAVE_CORESERVICES_CORESERVICES_H
+
+BOOL TRASH_CanTrashFile(LPCWSTR wszPath)
+{
+    char *unix_path;
+    OSStatus status;
+    FSRef ref;
+    FSCatalogInfo catalogInfo;
+
+    TRACE("(%s)\n", debugstr_w(wszPath));
+    if (!(unix_path = wine_get_unix_file_name(wszPath)))
+        return FALSE;
+
+    status = FSPathMakeRef((UInt8*)unix_path, &ref, NULL);
+    HeapFree(GetProcessHeap(), 0, unix_path);
+    if (status == noErr)
+        status = FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalogInfo, NULL,
+                                  NULL, NULL);
+    if (status == noErr)
+        status = FSFindFolder(catalogInfo.volume, kTrashFolderType,
+                              kCreateFolder, &ref);
+
+    return (status == noErr);
+}
+
+BOOL TRASH_TrashFile(LPCWSTR wszPath)
+{
+    char *unix_path;
+    OSStatus status;
+
+    TRACE("(%s)\n", debugstr_w(wszPath));
+    if (!(unix_path = wine_get_unix_file_name(wszPath)))
+        return FALSE;
+
+    status = FSPathMoveObjectToTrashSync(unix_path, NULL, kFSFileOperationSkipPreflight);
+
+    HeapFree(GetProcessHeap(), 0, unix_path);
+    return (status == noErr);
+}
+
+HRESULT TRASH_EnumItems(LPITEMIDLIST **pidls, int *count)
+{
+    FIXME("stub!\n");
+    return E_NOTIMPL;
+}
+
+HRESULT TRASH_UnpackItemID(LPCSHITEMID id, WIN32_FIND_DATAW *data)
+{
+    FIXME("stub!\n");
+    return E_NOTIMPL;
+}
+
+HRESULT TRASH_RestoreItem(LPCITEMIDLIST pidl)
+{
+    FIXME("stub!\n");
+    return E_NOTIMPL;
+}
+
+HRESULT TRASH_EraseItem(LPCITEMIDLIST pidl)
+{
+    FIXME("stub!\n");
+    return E_NOTIMPL;
+}
+
+#else /* HAVE_CORESERVICES_CORESERVICES_H */
 
 static CRITICAL_SECTION TRASH_Creating;
 static CRITICAL_SECTION_DEBUG TRASH_Creating_Debug =
@@ -603,3 +677,5 @@ HRESULT TRASH_EraseItem(LPCITEMIDLIST pidl)
     SHFree(file_path);
     return S_OK;
 }
+
+#endif /* HAVE_CORESERVICES_CORESERVICES_H */
