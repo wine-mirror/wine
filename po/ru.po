@@ -2186,16 +2186,12 @@ msgstr ""
 "содержаться в файлах следующих форматов:"
 
 #: cryptui.rc:296
-#, fuzzy
-#| msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
-msgstr "Сообщения CMS/PKCS #7 (.p7b)"
+msgstr "Сообщения CMS/PKCS #7 (*.p7b)"
 
 #: cryptui.rc:298
-#, fuzzy
-#| msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
-msgstr "Формат обмена личной информацией/PKCS #12 (.pfx, .p12)"
+msgstr "Формат обмена личной информацией/PKCS #12 (*.pfx, *.p12)"
 
 #: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
@@ -2340,32 +2336,24 @@ msgid "Select the format you want to use:"
 msgstr "Выберите формат для экспорта:"
 
 #: cryptui.rc:405
-#, fuzzy
-#| msgid "&DER-encoded X.509 (.cer)"
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr "X.509 в кодировке &DER (.cer)"
+msgstr "X.509 в кодировке &DER (*.cer)"
 
 #: cryptui.rc:407
-#, fuzzy
-#| msgid "Ba&se64-encoded X.509 (.cer):"
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "X.509 в кодировке Ba&se64 (.cer):"
+msgstr "X.509 в кодировке Ba&se64 (*.cer):"
 
 #: cryptui.rc:409
-#, fuzzy
-#| msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr "Сообщение &CMS/PKCS #7 (.p7b)"
+msgstr "Сообщение &CMS/PKCS #7 (*.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
 msgstr "&По возможности включить все сертификаты в путь сертификации"
 
 #: cryptui.rc:413
-#, fuzzy
-#| msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr "&Формат обмена личной информацией/PKCS #12 (.pfx)"
+msgstr "&Формат обмена личной информацией/PKCS #12 (*.pfx)"
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
@@ -12708,9 +12696,8 @@ msgid "Select an executable file"
 msgstr "Выберите исполняемый файл"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect"
-msgstr "&Автоопределение"
+msgstr "Автоопределение"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
