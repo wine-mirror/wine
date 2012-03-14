@@ -303,11 +303,11 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
 
 static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* iface, LPCWSTR pszFileName, DWORD dwFlags)
 {
-    HRESULT ret;
     IAMMultiMediaStreamImpl *This = impl_from_IAMMultiMediaStream(iface);
-    IFileSourceFilter *SourceFilter;
-    IBaseFilter *BaseFilter;
-    IEnumPins *EnumPins;
+    HRESULT ret = S_OK;
+    IFileSourceFilter *SourceFilter = NULL;
+    IBaseFilter *BaseFilter = NULL;
+    IEnumPins *EnumPins = NULL;
     IPin *ipin;
     PIN_DIRECTION pin_direction;
 
@@ -315,56 +315,39 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
 
     /* If Initialize was not called before, we do it here */
     if (!This->pFilterGraph)
-    {
         ret = IAMMultiMediaStream_Initialize(iface, STREAMTYPE_READ, 0, NULL);
-        if (FAILED(ret))
-            return ret;
-    }
 
-    ret = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER, &IID_IFileSourceFilter, (void**)&SourceFilter);
-    if(ret != S_OK)
-        return ret;
+    if (SUCCEEDED(ret))
+        ret = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER, &IID_IFileSourceFilter, (void**)&SourceFilter);
 
-    ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, pszFileName, pszFileName, &BaseFilter);
-    if (FAILED(ret))
-        goto end;
+    if (SUCCEEDED(ret))
+        ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, pszFileName, pszFileName, &BaseFilter);
 
-    ret = IFileSourceFilter_Load(SourceFilter, pszFileName, NULL);
-    if(ret != S_OK)
-    {
-        IFileSourceFilter_Release(SourceFilter);
-        return ret;
-    }
+    if (SUCCEEDED(ret))
+        ret = IFileSourceFilter_Load(SourceFilter, pszFileName, NULL);
 
-    ret = IFileSourceFilter_QueryInterface(SourceFilter, &IID_IBaseFilter, (void**)&BaseFilter);
-    if(ret != S_OK)
-    {
-        IFileSourceFilter_Release(SourceFilter);
-        return ret;
-    }
+    if (SUCCEEDED(ret))
+        ret = IFileSourceFilter_QueryInterface(SourceFilter, &IID_IBaseFilter, (void**)&BaseFilter);
 
-    ret = IBaseFilter_EnumPins(BaseFilter, &EnumPins);
-    if(ret != S_OK)
-    {
-        goto end;
-    }
+    if (SUCCEEDED(ret))
+        ret = IBaseFilter_EnumPins(BaseFilter, &EnumPins);
 
-    ret = IEnumPins_Next(EnumPins, 1, &ipin, NULL);
-    if (ret == S_OK)
+    if (SUCCEEDED(ret))
+        ret = IEnumPins_Next(EnumPins, 1, &ipin, NULL);
+
+    if (SUCCEEDED(ret))
     {
         ret = IPin_QueryDirection(ipin, &pin_direction);
-        IEnumPins_Release(EnumPins);
         if (ret == S_OK && pin_direction == PINDIR_OUTPUT)
             This->ipin = ipin;
     }
-    else
-    {
-        IEnumPins_Release(EnumPins);
-    }
 
-end:
-    IBaseFilter_Release(BaseFilter);
-    IFileSourceFilter_Release(SourceFilter);
+    if (EnumPins)
+        IEnumPins_Release(EnumPins);
+    if (BaseFilter)
+        IBaseFilter_Release(BaseFilter);
+    if (SourceFilter)
+        IFileSourceFilter_Release(SourceFilter);
     return ret;
 }
 
