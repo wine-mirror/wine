@@ -1786,12 +1786,29 @@ static HRESULT WINAPI SAXAttributes_getIndexFromName(ISAXAttributes *iface, cons
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI SAXAttributes_getIndexFromQName(ISAXAttributes *iface, const WCHAR * pQName,
-    int nQNameLength, int * index)
+static HRESULT WINAPI SAXAttributes_getIndexFromQName(ISAXAttributes *iface, const WCHAR *qname,
+    int len, int *index)
 {
     mxattributes *This = impl_from_ISAXAttributes( iface );
-    FIXME("(%p)->(%s:%d %p): stub\n", This, debugstr_wn(pQName, nQNameLength), nQNameLength, index);
-    return E_NOTIMPL;
+    int i;
+
+    TRACE("(%p)->(%s:%d %p)\n", This, debugstr_wn(qname, len), len, index);
+
+    if (!index && (This->class_version == MSXML_DEFAULT || This->class_version == MSXML3))
+        return E_POINTER;
+
+    if (!qname || !index || !len) return E_INVALIDARG;
+
+    for (i = 0; i < This->length; i++)
+    {
+        if (len != SysStringLen(This->attr[i].qname)) continue;
+        if (strncmpW(qname, This->attr[i].qname, len)) continue;
+
+        *index = i;
+        return S_OK;
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI SAXAttributes_getType(ISAXAttributes *iface, int index, const WCHAR **type,

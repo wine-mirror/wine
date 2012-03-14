@@ -3299,8 +3299,8 @@ static void test_mxattr_addAttribute(void)
         ISAXAttributes *saxattr;
         IMXAttributes *mxattr;
         const WCHAR *value;
+        int len, index;
         HRESULT hr;
-        int len;
 
         if (!is_clsid_supported(table->clsid, mxattributes_support_data))
         {
@@ -3405,6 +3405,38 @@ static void test_mxattr_addAttribute(void)
                 ok(*value == 0, "%d: got type value %s\n", i, wine_dbgstr_w(value));
                 ok(len == 0, "%d: got wrong type value length %d\n", i, len);
             }
+
+            hr = ISAXAttributes_getIndexFromQName(saxattr, NULL, 0, NULL);
+            if (IsEqualGUID(table->clsid, &CLSID_SAXAttributes) ||
+                IsEqualGUID(table->clsid, &CLSID_SAXAttributes30))
+            {
+                EXPECT_HR(hr, E_POINTER);
+            }
+            else
+                EXPECT_HR(hr, E_INVALIDARG);
+
+            hr = ISAXAttributes_getIndexFromQName(saxattr, NULL, 0, &index);
+            EXPECT_HR(hr, E_INVALIDARG);
+
+            index = -1;
+            hr = ISAXAttributes_getIndexFromQName(saxattr, _bstr_("nonexistent"), 11, &index);
+            EXPECT_HR(hr, E_INVALIDARG);
+            ok(index == -1, "%d: got wrong index %d\n", i, index);
+
+            index = -1;
+            hr = ISAXAttributes_getIndexFromQName(saxattr, _bstr_(table->qname), 0, &index);
+            EXPECT_HR(hr, E_INVALIDARG);
+            ok(index == -1, "%d: got wrong index %d\n", i, index);
+
+            index = -1;
+            hr = ISAXAttributes_getIndexFromQName(saxattr, _bstr_(table->qname), strlen(table->qname), &index);
+            EXPECT_HR(hr, S_OK);
+            ok(index == 0, "%d: got wrong index %d\n", i, index);
+
+            index = -1;
+            hr = ISAXAttributes_getIndexFromQName(saxattr, _bstr_(table->qname), strlen(table->qname)-1, &index);
+            EXPECT_HR(hr, E_INVALIDARG);
+            ok(index == -1, "%d: got wrong index %d\n", i, index);
         }
 
         len = -1;
