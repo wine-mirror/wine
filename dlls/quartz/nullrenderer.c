@@ -24,7 +24,6 @@
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 #include "quartz_private.h"
-#include "control_private.h"
 #include "pin.h"
 
 #include "uuids.h"
@@ -148,15 +147,11 @@ HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (SUCCEEDED(hr))
     {
-        ISeekingPassThru *passthru;
-        hr = CoCreateInstance(&CLSID_SeekingPassThru, pUnkOuter ? pUnkOuter : (IUnknown*)&pNullRenderer->IInner_vtbl, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&pNullRenderer->seekthru_unk);
+        hr = CreatePosPassThru(pUnkOuter ? pUnkOuter : (IUnknown*)&pNullRenderer->IInner_vtbl, TRUE, (IPin*)pNullRenderer->pInputPin, &pNullRenderer->seekthru_unk);
         if (FAILED(hr)) {
             IUnknown_Release((IUnknown*)pNullRenderer);
             return hr;
         }
-        IUnknown_QueryInterface(pNullRenderer->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-        ISeekingPassThru_Init(passthru, TRUE, (IPin*)pNullRenderer->pInputPin);
-        ISeekingPassThru_Release(passthru);
         *ppv = pNullRenderer;
     }
     else

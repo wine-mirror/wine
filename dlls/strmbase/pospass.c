@@ -2,6 +2,7 @@
  * Filter Seeking and Control Interfaces
  *
  * Copyright 2003 Robert Shearman
+ * Copyright 2012 Aric Stewart, CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,15 +20,19 @@
  */
 /* FIXME: critical sections */
 
-#include "quartz_private.h"
-#include "control_private.h"
+#define COBJMACROS
 
+#include "dshow.h"
 #include "uuids.h"
+
 #include "wine/debug.h"
+#include "wine/strmbase.h"
 
 #include <assert.h>
 
-WINE_DEFAULT_DEBUG_CHANNEL(quartz);
+WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
+
+#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
 static const IMediaSeekingVtbl IMediaSeekingPassThru_Vtbl;
 
@@ -200,13 +205,27 @@ static const ISeekingPassThruVtbl ISeekingPassThru_Vtbl =
     SeekingPassThru_Init
 };
 
-HRESULT SeekingPassThru_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT WINAPI CreatePosPassThru(IUnknown* pUnkOuter, BOOL bRenderer, IPin *pPin, IUnknown **ppPassThru)
+{
+    HRESULT hr;
+    ISeekingPassThru *passthru;
+
+    hr = CoCreateInstance(&CLSID_SeekingPassThru, pUnkOuter, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)ppPassThru);
+
+    IUnknown_QueryInterface(*ppPassThru, &IID_ISeekingPassThru, (void**)&passthru);
+    hr = ISeekingPassThru_Init(passthru, bRenderer, pPin);
+    ISeekingPassThru_Release(passthru);
+
+    return hr;
+}
+
+HRESULT WINAPI PosPassThru_Construct(IUnknown *pUnkOuter, LPVOID *ppPassThru)
 {
     PassThruImpl *fimpl;
 
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+    TRACE("(%p,%p)\n", pUnkOuter, ppPassThru);
 
-    *ppObj = fimpl = CoTaskMemAlloc(sizeof(*fimpl));
+    *ppPassThru = fimpl = CoTaskMemAlloc(sizeof(*fimpl));
     if (!fimpl)
         return E_OUTOFMEMORY;
 
@@ -302,7 +321,7 @@ static HRESULT WINAPI MediaSeekingPassThru_IsFormatSupported(IMediaSeeking * ifa
     ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
     IMediaSeeking *seek;
     HRESULT hr;
-    TRACE("(%p/%p)->(%s)\n", iface, This, qzdebugstr_guid(pFormat));
+    TRACE("(%p/%p)->(%s)\n", iface, This, debugstr_guid(pFormat));
     hr = get_connected(This, &seek);
     if (SUCCEEDED(hr)) {
         hr = IMediaSeeking_IsFormatSupported(seek, pFormat);
@@ -350,7 +369,7 @@ static HRESULT WINAPI MediaSeekingPassThru_IsUsingTimeFormat(IMediaSeeking * ifa
     ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
     IMediaSeeking *seek;
     HRESULT hr;
-    TRACE("(%p/%p)->(%s)\n", iface, This, qzdebugstr_guid(pFormat));
+    TRACE("(%p/%p)->(%s)\n", iface, This, debugstr_guid(pFormat));
     hr = get_connected(This, &seek);
     if (SUCCEEDED(hr)) {
         hr = IMediaSeeking_IsUsingTimeFormat(seek, pFormat);
@@ -366,7 +385,7 @@ static HRESULT WINAPI MediaSeekingPassThru_SetTimeFormat(IMediaSeeking * iface, 
     ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
     IMediaSeeking *seek;
     HRESULT hr;
-    TRACE("(%p/%p)->(%s)\n", iface, This, qzdebugstr_guid(pFormat));
+    TRACE("(%p/%p)->(%s)\n", iface, This, debugstr_guid(pFormat));
     hr = get_connected(This, &seek);
     if (SUCCEEDED(hr)) {
         hr = IMediaSeeking_SetTimeFormat(seek, pFormat);
@@ -548,22 +567,27 @@ static HRESULT WINAPI MediaSeekingPassThru_GetPreroll(IMediaSeeking * iface, LON
     return hr;
 }
 
-void MediaSeekingPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start) {
+HRESULT WINAPI MediaSeekingPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start)
+{
     ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
     EnterCriticalSection(&This->time_cs);
     This->time_earliest = start;
     This->timevalid = 1;
     LeaveCriticalSection(&This->time_cs);
+    return S_OK;
 }
 
-void MediaSeekingPassThru_ResetMediaTime(IUnknown *iface) {
+HRESULT WINAPI MediaSeekingPassThru_ResetMediaTime(IUnknown *iface)
+{
     ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
     EnterCriticalSection(&This->time_cs);
     This->timevalid = 0;
     LeaveCriticalSection(&This->time_cs);
+    return S_OK;
 }
 
-void MediaSeekingPassThru_EOS(IUnknown *iface) {
+HRESULT WINAPI MediaSeekingPassThru_EOS(IUnknown *iface)
+{
     ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
     REFERENCE_TIME time;
     HRESULT hr;
@@ -575,6 +599,7 @@ void MediaSeekingPassThru_EOS(IUnknown *iface) {
     } else
         This->timevalid = 0;
     LeaveCriticalSection(&This->time_cs);
+    return hr;
 }
 
 static const IMediaSeekingVtbl IMediaSeekingPassThru_Vtbl =

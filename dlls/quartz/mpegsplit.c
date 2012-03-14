@@ -25,7 +25,6 @@
 #include <math.h>
 
 #include "quartz_private.h"
-#include "control_private.h"
 #include "pin.h"
 
 #include "uuids.h"

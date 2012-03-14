@@ -39,6 +39,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return QUARTZ_DllMain( hInstDLL, fdwReason, lpv );
 }
 
+HRESULT SeekingPassThru_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+{
+    return PosPassThru_Construct(pUnkOuter,ppObj); /* from strmbase */
+}
+
 /******************************************************************************
  * DirectShow ClassFactory
  */

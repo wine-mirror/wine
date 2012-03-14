@@ -23,7 +23,6 @@
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 #include "quartz_private.h"
-#include "control_private.h"
 #include "pin.h"
 
 #include "uuids.h"
@@ -545,7 +544,6 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     HRESULT hr;
     PIN_INFO piInput;
     VideoRendererImpl * pVideoRenderer;
-    ISeekingPassThru *passthru;
 
     TRACE("(%p, %p)\n", pUnkOuter, ppv);
 
@@ -580,14 +578,12 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (SUCCEEDED(hr))
     {
-        hr = CoCreateInstance(&CLSID_SeekingPassThru, pUnkOuter ? pUnkOuter : (IUnknown*)&pVideoRenderer->IInner_vtbl, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&pVideoRenderer->seekthru_unk);
+        hr = CreatePosPassThru(pUnkOuter ? pUnkOuter : (IUnknown*)&pVideoRenderer->IInner_vtbl, TRUE, (IPin*)pVideoRenderer->pInputPin, &pVideoRenderer->seekthru_unk);
+
         if (FAILED(hr)) {
             IPin_Release((IPin*)pVideoRenderer->pInputPin);
             goto fail;
         }
-        IUnknown_QueryInterface(pVideoRenderer->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-        ISeekingPassThru_Init(passthru, TRUE, (IPin*)pVideoRenderer->pInputPin);
-        ISeekingPassThru_Release(passthru);
         pVideoRenderer->sample_held = NULL;
         *ppv = pVideoRenderer;
     }

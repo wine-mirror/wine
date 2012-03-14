@@ -21,7 +21,6 @@
 #include "config.h"
 
 #include "quartz_private.h"
-#include "control_private.h"
 #include "pin.h"
 
 #include "uuids.h"
@@ -538,19 +537,17 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (SUCCEEDED(hr))
     {
-        ISeekingPassThru *passthru;
         pDSoundRender->state_change = CreateEventW(NULL, TRUE, TRUE, NULL);
         pDSoundRender->blocked = CreateEventW(NULL, TRUE, TRUE, NULL);
-        hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)pDSoundRender, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&pDSoundRender->seekthru_unk);
+
+        hr = CreatePosPassThru((IUnknown*)pDSoundRender, TRUE, (IPin*)pDSoundRender->pInputPin, &pDSoundRender->seekthru_unk);
+
         if (!pDSoundRender->state_change || !pDSoundRender->blocked || FAILED(hr))
         {
             IUnknown_Release((IUnknown *)pDSoundRender);
             return HRESULT_FROM_WIN32(GetLastError());
         }
 
-        IUnknown_QueryInterface(pDSoundRender->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-        ISeekingPassThru_Init(passthru, TRUE, (IPin*)pDSoundRender->pInputPin);
-        ISeekingPassThru_Release(passthru);
         QualityControlImpl_init(&pDSoundRender->qcimpl, (IPin*)pDSoundRender->pInputPin, (IBaseFilter*)pDSoundRender);
         pDSoundRender->qcimpl.lpVtbl = &DSoundRender_QualityControl_Vtbl;
         *ppv = pDSoundRender;
