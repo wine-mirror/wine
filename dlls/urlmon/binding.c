@@ -92,6 +92,7 @@ typedef struct {
     BOOL use_cache_file;
     DWORD state;
     HRESULT hres;
+    CLSID clsid;
     download_state_t download_state;
     IUnknown *obj;
     IMoniker *mon;
@@ -178,8 +179,8 @@ static void stop_binding(Binding *binding, HRESULT hres, LPCWSTR str)
     if(!(binding->state & BINDING_STOPPED)) {
         binding->state |= BINDING_STOPPED;
 
-        IBindStatusCallback_OnStopBinding(binding->callback, hres, str);
         binding->hres = hres;
+        IBindStatusCallback_OnStopBinding(binding->callback, hres, str);
     }
 }
 
@@ -310,6 +311,7 @@ static void create_object(Binding *binding)
     heap_free(clsid_str);
 
     IBindStatusCallback_OnProgress(binding->callback, 0, 0, BINDSTATUS_ENDSYNCOPERATION, NULL);
+    binding->clsid = CLSID_NULL;
 
     stop_binding(binding, hres, NULL);
     if(FAILED(hres))
@@ -881,8 +883,23 @@ static HRESULT WINAPI Binding_GetBindResult(IBinding *iface, CLSID *pclsidProtoc
         DWORD *pdwResult, LPOLESTR *pszResult, DWORD *pdwReserved)
 {
     Binding *This = impl_from_IBinding(iface);
-    FIXME("(%p)->(%p %p %p %p)\n", This, pclsidProtocol, pdwResult, pszResult, pdwReserved);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p %p %p)\n", This, pclsidProtocol, pdwResult, pszResult, pdwReserved);
+
+    if(!pdwResult || !pszResult || pdwReserved)
+        return E_INVALIDARG;
+
+    if(!(This->state & BINDING_STOPPED)) {
+        *pclsidProtocol = CLSID_NULL;
+        *pdwResult = 0;
+        *pszResult = NULL;
+        return S_OK;
+    }
+
+    *pclsidProtocol = This->hres==S_OK ? CLSID_NULL : This->clsid;
+    *pdwResult = This->hres;
+    *pszResult = NULL;
+    return S_OK;
 }
 
 static const IBindingVtbl BindingVtbl = {
@@ -983,6 +1000,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
         on_progress(This, 0, 0, BINDSTATUS_SENDINGREQUEST, szStatusText);
         break;
     case BINDSTATUS_PROTOCOLCLASSID:
+        CLSIDFromString(szStatusText, &This->clsid);
         break;
     case BINDSTATUS_MIMETYPEAVAILABLE:
     case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
