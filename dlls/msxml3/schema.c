@@ -718,7 +718,7 @@ static xmlParserInputPtr external_entity_loader(const char *URL, const char *ID,
 void schemasInit(void)
 {
     int len;
-    char* buf;
+    xmlChar* buf;
     if (!(datatypes_rsrc = FindResourceA(MSXML_hInstance, "DATATYPES", "XML")))
     {
         FIXME("failed to find resource for %s\n", DT_nsURI);
@@ -737,7 +737,7 @@ void schemasInit(void)
      * need a null-terminated string */
     while (buf[len] != '>')
         buf[len--] = 0;
-    datatypes_src = BAD_CAST buf;
+    datatypes_src = buf;
     datatypes_len = len + 1;
 
     if (xmlGetExternalEntityLoader() != external_entity_loader)
