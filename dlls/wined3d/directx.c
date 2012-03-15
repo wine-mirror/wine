@@ -72,13 +72,14 @@ enum wined3d_gl_vendor
 static const GUID IID_D3DDEVICE_D3DUID = { 0xaeb2cdd4, 0x6e41, 0x43ea, { 0x94,0x1c,0x83,0x61,0xcc,0x76,0x07,0x81 } };
 
 /* Extension detection */
-static const struct
+struct wined3d_extension_map
 {
     const char *extension_string;
     enum wined3d_gl_extension extension;
     DWORD version;
-}
-EXTENSION_MAP[] =
+};
+
+static const struct wined3d_extension_map EXTENSION_MAP[] =
 {
     /* APPLE */
     {"GL_APPLE_client_storage",             APPLE_CLIENT_STORAGE,           0                           },
@@ -2277,6 +2278,40 @@ static const struct blit_shader *select_blit_implementation(const struct wined3d
     else return &ffp_blit;
 }
 
+static void parse_extension_string(struct wined3d_gl_info *gl_info, const char *extensions,
+        const struct wined3d_extension_map *map, UINT entry_count)
+{
+    while (*extensions)
+    {
+        const char *start;
+        size_t len;
+        UINT i;
+
+        while (isspace(*extensions))
+            ++extensions;
+        start = extensions;
+        while (!isspace(*extensions) && *extensions)
+            ++extensions;
+
+        len = extensions - start;
+        if (!len)
+            continue;
+
+        TRACE_(d3d_caps)("- %s\n", debugstr_an(start, len));
+
+        for (i = 0; i < entry_count; ++i)
+        {
+            if (len == strlen(map[i].extension_string)
+                    && !memcmp(start, map[i].extension_string, len))
+            {
+                TRACE_(d3d_caps)(" FOUND: %s support.\n", map[i].extension_string);
+                gl_info->supported[map[i].extension] = TRUE;
+                break;
+            }
+        }
+    }
+}
+
 static void load_gl_funcs(struct wined3d_gl_info *gl_info, DWORD gl_version)
 {
     DWORD ver;
@@ -2404,30 +2439,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     gl_info->supported[WINED3D_GL_EXT_NONE] = TRUE;
 
-    while (*GL_Extensions)
-    {
-        const char *start;
-
-        while (isspace(*GL_Extensions)) ++GL_Extensions;
-        start = GL_Extensions;
-        while (!isspace(*GL_Extensions) && *GL_Extensions) ++GL_Extensions;
-
-        len = GL_Extensions - start;
-        if (!len) continue;
-
-        TRACE_(d3d_caps)("- %s\n", debugstr_an(start, len));
-
-        for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i)
-        {
-            if (len == strlen(EXTENSION_MAP[i].extension_string)
-                    && !memcmp(start, EXTENSION_MAP[i].extension_string, len))
-            {
-                TRACE_(d3d_caps)(" FOUND: %s support.\n", EXTENSION_MAP[i].extension_string);
-                gl_info->supported[EXTENSION_MAP[i].extension] = TRUE;
-                break;
-            }
-        }
-    }
+    parse_extension_string(gl_info, GL_Extensions, EXTENSION_MAP, sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP));
 
     /* Now work out what GL support this card really has */
     load_gl_funcs( gl_info, gl_version );
