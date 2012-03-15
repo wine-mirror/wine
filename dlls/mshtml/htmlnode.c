@@ -436,7 +436,7 @@ static HRESULT WINAPI HTMLDOMNode_get_parentNode(IHTMLDOMNode *iface, IHTMLDOMNo
 static HRESULT WINAPI HTMLDOMNode_hasChildNodes(IHTMLDOMNode *iface, VARIANT_BOOL *fChildren)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
-    PRBool has_child = FALSE;
+    cpp_bool has_child = FALSE;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, fChildren);

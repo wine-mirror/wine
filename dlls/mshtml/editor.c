@@ -147,7 +147,7 @@ static nsresult get_ns_command_state(NSContainer *This, const char *cmd, nsIComm
 static DWORD query_ns_edit_status(HTMLDocument *This, const char *nscmd)
 {
     nsICommandParams *nsparam;
-    PRBool b = FALSE;
+    cpp_bool b = FALSE;
 
     if(This->doc_obj->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
@@ -183,7 +183,7 @@ static DWORD query_align_status(HTMLDocument *This, const WCHAR *align)
 {
     DWORD ret = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
     nsAString justify_str;
-    PRBool b;
+    cpp_bool b;
     nsresult nsres;
 
     if(This->doc_obj->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
@@ -214,7 +214,7 @@ static nsISelection *get_ns_selection(HTMLDocument *This)
 
 static void remove_child_attr(nsIDOMElement *elem, LPCWSTR tag, nsAString *attr_str)
 {
-    PRBool has_children;
+    cpp_bool has_children;
     PRUint32 child_cnt, i;
     nsIDOMNode *child_node;
     nsIDOMNodeList *node_list;
@@ -330,7 +330,7 @@ static void get_font_size(HTMLDocument *This, WCHAR *ret)
 static void set_font_size(HTMLDocument *This, LPCWSTR size)
 {
     nsISelection *nsselection;
-    PRBool collapsed;
+    cpp_bool collapsed;
     nsIDOMHTMLElement *elem;
     nsIDOMRange *range;
     PRInt32 range_cnt = 0;
@@ -389,7 +389,7 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
 static void handle_arrow_key(HTMLDocument *This, nsIDOMKeyEvent *event, const char * const cmds[4])
 {
     int i=0;
-    PRBool b;
+    cpp_bool b;
 
     nsIDOMKeyEvent_GetCtrlKey(event, &b);
     if(b)
@@ -1127,7 +1127,7 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     nsAString href_str, ns_url;
     nsIHTMLEditor *html_editor;
     nsIDOMHTMLElement *anchor_elem;
-    PRBool insert_link_at_caret;
+    cpp_bool insert_link_at_caret;
     nsISelection *nsselection;
     BSTR url = NULL;
     INT ret;
@@ -1253,7 +1253,7 @@ void init_editor(HTMLDocument *This)
 
 HRESULT editor_is_dirty(HTMLDocument *This)
 {
-    PRBool modified;
+    cpp_bool modified;
 
     if(!This->doc_obj->nscontainer || !This->doc_obj->nscontainer->editor)
         return S_FALSE;

@@ -101,7 +101,7 @@ typedef struct {
 HRESULT set_http_header(struct list*,const WCHAR*,int,const WCHAR*,int) DECLSPEC_HIDDEN;
 HRESULT create_redirect_nschannel(const WCHAR*,nsChannel*,nsChannel**) DECLSPEC_HIDDEN;
 
-nsresult on_start_uri_open(NSContainer*,nsIURI*,PRBool*) DECLSPEC_HIDDEN;
+nsresult on_start_uri_open(NSContainer*,nsIURI*,cpp_bool*) DECLSPEC_HIDDEN;
 HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsChannel*,DWORD,BOOL*) DECLSPEC_HIDDEN;
 HRESULT create_doc_uri(HTMLWindow*,WCHAR*,nsWineURI**) DECLSPEC_HIDDEN;
 HRESULT load_nsuri(HTMLWindow*,nsWineURI*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;

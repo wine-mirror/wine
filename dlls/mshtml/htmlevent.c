@@ -345,7 +345,7 @@ static HRESULT WINAPI HTMLEventObj_get_srcElement(IHTMLEventObj *iface, IHTMLEle
 static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    PRBool ret = FALSE;
+    cpp_bool ret = FALSE;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -375,7 +375,7 @@ static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL
 static HRESULT WINAPI HTMLEventObj_get_ctrlKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    PRBool ret = FALSE;
+    cpp_bool ret = FALSE;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -405,7 +405,7 @@ static HRESULT WINAPI HTMLEventObj_get_ctrlKey(IHTMLEventObj *iface, VARIANT_BOO
 static HRESULT WINAPI HTMLEventObj_get_shiftKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    PRBool ret = FALSE;
+    cpp_bool ret = FALSE;
 
     TRACE("(%p)->(%p)\n", This, p);
 

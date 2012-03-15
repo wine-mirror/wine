@@ -397,7 +397,7 @@ static void get_cur_pos(HTMLTxtRange *This, BOOL start, dompos_t *pos)
     pos->p = NULL;
 
     if(!start) {
-        PRBool collapsed;
+        cpp_bool collapsed;
         nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
         start = collapsed;
     }
@@ -485,7 +485,7 @@ static void range_to_string(HTMLTxtRange *This, wstrbuf_t *buf)
 {
     nsIDOMNode *iter, *tmp;
     dompos_t start_pos, end_pos;
-    PRBool collapsed;
+    cpp_bool collapsed;
 
     nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
     if(collapsed) {
@@ -1324,7 +1324,7 @@ static HRESULT WINAPI HTMLTxtRange_expand(IHTMLTxtRange *iface, BSTR Unit, VARIA
     switch(unit) {
     case RU_WORD: {
         dompos_t end_pos, start_pos, new_start_pos, new_end_pos;
-        PRBool collapsed;
+        cpp_bool collapsed;
 
         nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
 
@@ -1468,7 +1468,7 @@ static HRESULT WINAPI HTMLTxtRange_moveStart(IHTMLTxtRange *iface, BSTR Unit,
     switch(unit) {
     case RU_CHAR: {
         dompos_t start_pos, end_pos, new_pos;
-        PRBool collapsed;
+        cpp_bool collapsed;
 
         get_cur_pos(This, TRUE, &start_pos);
         get_cur_pos(This, FALSE, &end_pos);
@@ -1519,7 +1519,7 @@ static HRESULT WINAPI HTMLTxtRange_moveEnd(IHTMLTxtRange *iface, BSTR Unit,
     switch(unit) {
     case RU_CHAR: {
         dompos_t start_pos, end_pos, new_pos;
-        PRBool collapsed;
+        cpp_bool collapsed;
 
         get_cur_pos(This, TRUE, &start_pos);
         get_cur_pos(This, FALSE, &end_pos);

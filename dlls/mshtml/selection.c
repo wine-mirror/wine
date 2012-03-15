@@ -204,7 +204,7 @@ static HRESULT WINAPI HTMLSelectionObject_clear(IHTMLSelectionObject *iface)
 static HRESULT WINAPI HTMLSelectionObject_get_type(IHTMLSelectionObject *iface, BSTR *p)
 {
     HTMLSelectionObject *This = impl_from_IHTMLSelectionObject(iface);
-    PRBool collapsed = TRUE;
+    cpp_bool collapsed = TRUE;
 
     static const WCHAR wszNone[] = {'N','o','n','e',0};
     static const WCHAR wszText[] = {'T','e','x','t',0};

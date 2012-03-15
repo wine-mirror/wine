@@ -562,17 +562,17 @@ static void NSAPI nsDocumentObserver_DocumentStatesChanged(nsIDocumentObserver *
 }
 
 static void NSAPI nsDocumentObserver_StyleSheetAdded(nsIDocumentObserver *iface, nsIDocument *aDocument,
-        nsIStyleSheet *aStyleSheet, PRBool aDocumentSheet)
+        nsIStyleSheet *aStyleSheet, cpp_bool aDocumentSheet)
 {
 }
 
 static void NSAPI nsDocumentObserver_StyleSheetRemoved(nsIDocumentObserver *iface, nsIDocument *aDocument,
-        nsIStyleSheet *aStyleSheet, PRBool aDocumentSheet)
+        nsIStyleSheet *aStyleSheet, cpp_bool aDocumentSheet)
 {
 }
 
 static void NSAPI nsDocumentObserver_StyleSheetApplicableStateChanged(nsIDocumentObserver *iface,
-        nsIDocument *aDocument, nsIStyleSheet *aStyleSheet, PRBool aApplicable)
+        nsIDocument *aDocument, nsIStyleSheet *aStyleSheet, cpp_bool aApplicable)
 {
 }
 
@@ -635,7 +635,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 }
 
 static void NSAPI nsDocumentObserver_AttemptToExecuteScript(nsIDocumentObserver *iface, nsIContent *aContent,
-        nsIParser *aParser, PRBool *aBlock)
+        nsIParser *aParser, cpp_bool *aBlock)
 {
     HTMLDocumentNode *This = impl_from_nsIDocumentObserver(iface);
     nsIDOMHTMLScriptElement *nsscript;

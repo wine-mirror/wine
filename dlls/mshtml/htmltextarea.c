@@ -291,7 +291,7 @@ static HRESULT WINAPI HTMLTextAreaElement_put_readOnly(IHTMLTextAreaElement *ifa
 static HRESULT WINAPI HTMLTextAreaElement_get_readOnly(IHTMLTextAreaElement *iface, VARIANT_BOOL *p)
 {
     HTMLTextAreaElement *This = impl_from_IHTMLTextAreaElement(iface);
-    PRBool b;
+    cpp_bool b;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

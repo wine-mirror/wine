@@ -262,7 +262,7 @@ static HRESULT WINAPI HTMLInputElement_put_disabled(IHTMLInputElement *iface, VA
 static HRESULT WINAPI HTMLInputElement_get_disabled(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
-    PRBool disabled = FALSE;
+    cpp_bool disabled = FALSE;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -419,7 +419,7 @@ static HRESULT WINAPI HTMLInputElement_put_defaultChecked(IHTMLInputElement *ifa
 static HRESULT WINAPI HTMLInputElement_get_defaultChecked(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
-    PRBool default_checked = FALSE;
+    cpp_bool default_checked = FALSE;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -453,7 +453,7 @@ static HRESULT WINAPI HTMLInputElement_put_checked(IHTMLInputElement *iface, VAR
 static HRESULT WINAPI HTMLInputElement_get_checked(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
-    PRBool checked;
+    cpp_bool checked;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

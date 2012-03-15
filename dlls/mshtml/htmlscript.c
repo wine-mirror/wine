@@ -180,7 +180,7 @@ static HRESULT WINAPI HTMLScriptElement_put_defer(IHTMLScriptElement *iface, VAR
 static HRESULT WINAPI HTMLScriptElement_get_defer(IHTMLScriptElement *iface, VARIANT_BOOL *p)
 {
     HTMLScriptElement *This = impl_from_IHTMLScriptElement(iface);
-    PRBool defer = FALSE;
+    cpp_bool defer = FALSE;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

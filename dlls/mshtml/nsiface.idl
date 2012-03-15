@@ -55,7 +55,6 @@ typedef PRUint32 nsLoadFlags;
 
 typedef unsigned char cpp_bool;
 #define bool cpp_bool
-cpp_quote("#define PRBool cpp_bool") /* FIXME */
 
 typedef struct {
     void *v;

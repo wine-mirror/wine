@@ -349,7 +349,7 @@ static HRESULT WINAPI HTMLSelectElement_put_disabled(IHTMLSelectElement *iface, 
 static HRESULT WINAPI HTMLSelectElement_get_disabled(IHTMLSelectElement *iface, VARIANT_BOOL *p)
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
-    PRBool disabled = FALSE;
+    cpp_bool disabled = FALSE;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

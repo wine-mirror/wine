@@ -117,7 +117,7 @@ static HRESULT WINAPI HTMLOptionElement_put_selected(IHTMLOptionElement *iface, 
 static HRESULT WINAPI HTMLOptionElement_get_selected(IHTMLOptionElement *iface, VARIANT_BOOL *p)
 {
     HTMLOptionElement *This = impl_from_IHTMLOptionElement(iface);
-    PRBool selected;
+    cpp_bool selected;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

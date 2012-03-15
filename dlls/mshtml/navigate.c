@@ -186,7 +186,7 @@ static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
     return nsres;
 }
 
-static nsresult NSAPI nsInputStream_IsNonBlocking(nsIInputStream *iface, PRBool *_retval)
+static nsresult NSAPI nsInputStream_IsNonBlocking(nsIInputStream *iface, cpp_bool *_retval)
 {
     nsProtocolStream *This = impl_from_nsIInputStream(iface);
     FIXME("(%p)->(%p)\n", This, _retval);
