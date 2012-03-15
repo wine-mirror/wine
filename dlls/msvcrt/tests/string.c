@@ -901,12 +901,8 @@ static void test_mbcjmsjis(void)
             unsigned int ret, exp;
             ret = _mbcjmstojis(jmsjis[j][0]);
             exp = (cp[i] == 932) ? jmsjis[j][1] : jmsjis[j][0];
-            if (cp[i] == 932)
-                todo_wine ok(ret == exp, "Expected 0x%x, got 0x%x (0x%x, codepage=%d)\n",
-                   exp, ret, jmsjis[j][0], cp[i]);
-            else
-                ok(ret == exp, "Expected 0x%x, got 0x%x (0x%x, codepage=%d)\n",
-                   exp, ret, jmsjis[j][0], cp[i]);
+            ok(ret == exp, "Expected 0x%x, got 0x%x (0x%x, codepage=%d)\n",
+               exp, ret, jmsjis[j][0], cp[i]);
         }
     }
     _setmbcp(prev_cp);
