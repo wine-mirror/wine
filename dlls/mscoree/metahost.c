@@ -988,7 +988,7 @@ static BOOL parse_runtime_version(LPCWSTR version, DWORD *major, DWORD *minor, D
     *minor = 0;
     *build = 0;
 
-    if (version[0] == 'v')
+    if (version[0] == 'v' || version[0] == 'V')
     {
         version++;
         if (!isdigit(*version))
