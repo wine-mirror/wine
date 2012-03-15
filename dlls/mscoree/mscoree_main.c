@@ -347,6 +347,9 @@ HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWST
 
         if (SUCCEEDED(ret))
         {
+            if(pwszVersion)
+                pVersion[0] = pwszVersion[0];
+
             *dwDirectoryLength = dwDirectory;
             ret = ICLRRuntimeInfo_GetRuntimeDirectory(info, pDirectory, dwDirectoryLength);
         }
