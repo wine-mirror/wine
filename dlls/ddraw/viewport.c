@@ -541,7 +541,7 @@ static HRESULT WINAPI d3d_viewport_LightElements(IDirect3DViewport3 *iface,
 static HRESULT WINAPI d3d_viewport_SetBackground(IDirect3DViewport3 *iface, D3DMATERIALHANDLE hMat)
 {
     struct d3d_viewport *viewport = impl_from_IDirect3DViewport3(iface);
-    IDirect3DMaterialImpl *m;
+    struct d3d_material *m;
 
     TRACE("iface %p, material %#x.\n", iface, hMat);
 

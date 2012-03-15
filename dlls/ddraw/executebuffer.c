@@ -237,7 +237,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
 			ERR("Unexpected Light State Type %d\n", ci->u1.dlstLightStateType);
                     else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */)
                     {
-                        IDirect3DMaterialImpl *m;
+                        struct d3d_material *m;
 
                         m = ddraw_get_object(&lpDevice->handle_table, ci->u2.dwArg[0] - 1, DDRAW_HANDLE_MATERIAL);
                         if (!m)

@@ -330,7 +330,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
 
                 case DDRAW_HANDLE_MATERIAL:
                 {
-                    IDirect3DMaterialImpl *m = entry->object;
+                    struct d3d_material *m = entry->object;
                     FIXME("Material handle %#x (%p) not unset properly.\n", i + 1, m);
                     m->Handle = 0;
                     break;
@@ -3034,7 +3034,7 @@ IDirect3DDeviceImpl_3_SetLightState(IDirect3DDevice3 *iface,
     wined3d_mutex_lock();
     if (LightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */)
     {
-        IDirect3DMaterialImpl *m = ddraw_get_object(&This->handle_table, Value - 1, DDRAW_HANDLE_MATERIAL);
+        struct d3d_material *m = ddraw_get_object(&This->handle_table, Value - 1, DDRAW_HANDLE_MATERIAL);
         if (!m)
         {
             WARN("Invalid material handle.\n");

@@ -42,7 +42,6 @@ extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HI
 
 /* Typdef the interfaces */
 typedef struct IDirect3DDeviceImpl        IDirect3DDeviceImpl;
-typedef struct IDirect3DMaterialImpl      IDirect3DMaterialImpl;
 typedef struct IDirect3DExecuteBufferImpl IDirect3DExecuteBufferImpl;
 typedef struct IDirect3DVertexBufferImpl  IDirect3DVertexBufferImpl;
 
@@ -428,7 +427,7 @@ struct d3d_light *unsafe_impl_from_IDirect3DLight(IDirect3DLight *iface) DECLSPE
 /******************************************************************************
  * IDirect3DMaterial implementation structure - Wraps to D3D7
  ******************************************************************************/
-struct IDirect3DMaterialImpl
+struct d3d_material
 {
     IDirect3DMaterial3 IDirect3DMaterial3_iface;
     IDirect3DMaterial2 IDirect3DMaterial2_iface;
@@ -444,8 +443,8 @@ struct IDirect3DMaterialImpl
 };
 
 /* Helper functions */
-void material_activate(IDirect3DMaterialImpl* This) DECLSPEC_HIDDEN;
-IDirect3DMaterialImpl *d3d_material_create(struct ddraw *ddraw) DECLSPEC_HIDDEN;
+void material_activate(struct d3d_material *material) DECLSPEC_HIDDEN;
+struct d3d_material *d3d_material_create(struct ddraw *ddraw) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DViewport - Wraps to D3D7
@@ -474,9 +473,7 @@ struct d3d_viewport
 
     struct list entry;
     struct list light_list;
-
-    /* Background material */
-    IDirect3DMaterialImpl     *background;
+    struct d3d_material *background;
 };
 
 struct d3d_viewport *unsafe_impl_from_IDirect3DViewport3(IDirect3DViewport3 *iface) DECLSPEC_HIDDEN;

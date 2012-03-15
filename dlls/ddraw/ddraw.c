@@ -4186,7 +4186,7 @@ static HRESULT WINAPI d3d3_CreateMaterial(IDirect3D3 *iface, IDirect3DMaterial3 
         IUnknown *outer_unknown)
 {
     struct ddraw *ddraw = impl_from_IDirect3D3(iface);
-    IDirect3DMaterialImpl *object;
+    struct d3d_material *object;
 
     TRACE("iface %p, material %p, outer_unknown %p.\n", iface, material, outer_unknown);
 
@@ -4209,7 +4209,7 @@ static HRESULT WINAPI d3d2_CreateMaterial(IDirect3D2 *iface, IDirect3DMaterial2 
         IUnknown *outer_unknown)
 {
     struct ddraw *ddraw = impl_from_IDirect3D2(iface);
-    IDirect3DMaterialImpl *object;
+    struct d3d_material *object;
 
     TRACE("iface %p, material %p, outer_unknown %p.\n", iface, material, outer_unknown);
 
@@ -4230,7 +4230,7 @@ static HRESULT WINAPI d3d1_CreateMaterial(IDirect3D *iface, IDirect3DMaterial **
         IUnknown *outer_unknown)
 {
     struct ddraw *ddraw = impl_from_IDirect3D(iface);
-    IDirect3DMaterialImpl *object;
+    struct d3d_material *object;
 
     TRACE("iface %p, material %p, outer_unknown %p.\n", iface, material, outer_unknown);
 
