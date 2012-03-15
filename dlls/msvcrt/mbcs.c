@@ -464,6 +464,23 @@ unsigned int CDECL _mbcjistojms(unsigned int c)
 }
 
 /*********************************************************************
+ *		_mbcjmstojis(MSVCRT.@)
+ *
+ *		Converts a sjis character to jis.
+ */
+unsigned int CDECL _mbcjmstojis(unsigned int c)
+{
+  /* Conversion takes place only when codepage is 932.
+     In all other cases, c is returned unchanged */
+  if(get_mbcinfo()->mbcodepage == 932)
+  {
+    FIXME("(%x): stub\n", c);
+  }
+
+  return c;
+}
+
+/*********************************************************************
  *		_mbsdec(MSVCRT.@)
  */
 unsigned char* CDECL _mbsdec(const unsigned char* start, const unsigned char* cur)
