@@ -243,8 +243,8 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
                 code       = reply->code;
                 ioctl      = reply->next;
                 device     = wine_server_get_ptr( reply->user_ptr );
-                client_tid = reply->client_pid;
-                client_pid = reply->client_tid;
+                client_tid = reply->client_tid;
+                client_pid = reply->client_pid;
                 in_size    = reply->in_size;
                 out_size   = reply->out_size;
             }
