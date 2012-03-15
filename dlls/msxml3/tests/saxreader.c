@@ -3437,6 +3437,40 @@ static void test_mxattr_addAttribute(void)
             hr = ISAXAttributes_getIndexFromQName(saxattr, _bstr_(table->qname), strlen(table->qname)-1, &index);
             EXPECT_HR(hr, E_INVALIDARG);
             ok(index == -1, "%d: got wrong index %d\n", i, index);
+
+            if (IsEqualGUID(table->clsid, &CLSID_SAXAttributes40) ||
+                IsEqualGUID(table->clsid, &CLSID_SAXAttributes60))
+            {
+                hr = ISAXAttributes_getValueFromQName(saxattr, NULL, 0, NULL, NULL);
+                EXPECT_HR(hr, E_INVALIDARG);
+
+                hr = ISAXAttributes_getValueFromQName(saxattr, _bstr_(table->qname), 0, NULL, NULL);
+                EXPECT_HR(hr, E_INVALIDARG);
+
+                hr = ISAXAttributes_getValueFromQName(saxattr, _bstr_(table->qname), 0, &value, NULL);
+                EXPECT_HR(hr, E_INVALIDARG);
+            }
+            else
+            {
+                hr = ISAXAttributes_getValueFromQName(saxattr, NULL, 0, NULL, NULL);
+                EXPECT_HR(hr, E_POINTER);
+
+                hr = ISAXAttributes_getValueFromQName(saxattr, _bstr_(table->qname), 0, NULL, NULL);
+                EXPECT_HR(hr, E_POINTER);
+
+                hr = ISAXAttributes_getValueFromQName(saxattr, _bstr_(table->qname), 0, &value, NULL);
+                EXPECT_HR(hr, E_POINTER);
+
+                /* versions 4 and 6 crash */
+                hr = ISAXAttributes_getValueFromQName(saxattr, _bstr_(table->qname), strlen(table->qname), NULL, NULL);
+                EXPECT_HR(hr, E_POINTER);
+
+                hr = ISAXAttributes_getValueFromQName(saxattr, _bstr_(table->qname), strlen(table->qname), NULL, &len);
+                EXPECT_HR(hr, E_POINTER);
+            }
+
+            hr = ISAXAttributes_getValueFromQName(saxattr, _bstr_(table->qname), strlen(table->qname), &value, &len);
+            EXPECT_HR(hr, S_OK);
         }
 
         len = -1;
