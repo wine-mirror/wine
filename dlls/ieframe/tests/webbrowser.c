@@ -1946,6 +1946,54 @@ static void test_ClassInfo(IUnknown *unk)
     IProvideClassInfo2_Release(class_info);
 }
 
+static void test_EnumVerbs(IWebBrowser2 *wb)
+{
+    IEnumOLEVERB *enum_verbs;
+    IOleObject *oleobj;
+    OLEVERB verbs[20];
+    ULONG fetched;
+    HRESULT hres;
+
+    hres = IWebBrowser2_QueryInterface(wb, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08x\n", hres);
+
+    hres = IOleObject_EnumVerbs(oleobj, &enum_verbs);
+    IOleObject_Release(oleobj);
+    ok(hres == S_OK, "EnumVerbs failed: %08x\n", hres);
+    ok(enum_verbs != NULL, "enum_verbs == NULL\n");
+
+    fetched = 0xdeadbeef;
+    hres = IEnumOLEVERB_Next(enum_verbs, sizeof(verbs)/sizeof(*verbs), verbs, &fetched);
+    ok(hres == S_OK, "Next failed: %08x\n", hres);
+    ok(!fetched, "fetched = %d\n", fetched);
+
+    fetched = 0xdeadbeef;
+    hres = IEnumOLEVERB_Next(enum_verbs, 1, verbs, &fetched);
+    ok(hres == S_OK, "Next failed: %08x\n", hres);
+    ok(!fetched, "fetched = %d\n", fetched);
+
+    hres = IEnumOLEVERB_Reset(enum_verbs);
+    ok(hres == S_OK, "Reset failed: %08x\n", hres);
+
+    fetched = 0xdeadbeef;
+    hres = IEnumOLEVERB_Next(enum_verbs, 1, verbs, &fetched);
+    ok(hres == S_OK, "Next failed: %08x\n", hres);
+    ok(!fetched, "fetched = %d\n", fetched);
+
+    hres = IEnumOLEVERB_Next(enum_verbs, 1, verbs, NULL);
+    ok(hres == S_OK, "Next failed: %08x\n", hres);
+
+    hres = IEnumOLEVERB_Skip(enum_verbs, 20);
+    ok(hres == S_OK, "Reset failed: %08x\n", hres);
+
+    fetched = 0xdeadbeef;
+    hres = IEnumOLEVERB_Next(enum_verbs, 1, verbs, &fetched);
+    ok(hres == S_OK, "Next failed: %08x\n", hres);
+    ok(!fetched, "fetched = %d\n", fetched);
+
+    IEnumOLEVERB_Release(enum_verbs);
+}
+
 static void test_ie_funcs(IUnknown *unk)
 {
     IWebBrowser2 *wb;
@@ -3201,6 +3249,7 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
     test_QueryInterface(unk);
     test_ready_state(READYSTATE_UNINITIALIZED);
     test_ClassInfo(unk);
+    test_EnumVerbs(wb);
     test_LocationURL(unk, "");
     test_ConnectionPoint(unk, TRUE);
     test_ClientSite(unk, &ClientSite, !do_download);
@@ -3248,6 +3297,7 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
             test_download(DWL_FROM_GOBACK|DWL_HTTP);
         }
 
+        test_EnumVerbs(wb);
         test_TranslateAccelerator(unk);
 
         test_dochost_qs(unk);
@@ -3279,12 +3329,14 @@ static void test_WebBrowserV1(void)
     hres = CoCreateInstance(&CLSID_WebBrowser_V1, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IWebBrowser2, (void**)&wb);
     ok(hres == S_OK, "Could not get WebBrowserV1 instance: %08x\n", hres);
+    trace("%08x %p\n", hres, wb);
 
     test_QueryStatusWB(wb, FALSE, FALSE);
     test_ExecWB(wb, FALSE, FALSE);
     test_QueryInterface((IUnknown*)wb);
     test_ready_state(READYSTATE_UNINITIALIZED);
     test_ClassInfo((IUnknown*)wb);
+    test_EnumVerbs(wb);
 
     ref = IWebBrowser2_Release(wb);
     ok(ref == 0, "ref=%d, expected 0\n", ref);
