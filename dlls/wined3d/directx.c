@@ -79,7 +79,7 @@ struct wined3d_extension_map
     DWORD version;
 };
 
-static const struct wined3d_extension_map EXTENSION_MAP[] =
+static const struct wined3d_extension_map gl_extension_map[] =
 {
     /* APPLE */
     {"GL_APPLE_client_storage",             APPLE_CLIENT_STORAGE,           0                           },
@@ -198,6 +198,13 @@ static const struct wined3d_extension_map EXTENSION_MAP[] =
 
     /* SGI */
     {"GL_SGIS_generate_mipmap",             SGIS_GENERATE_MIPMAP,           0                           },
+};
+
+static const struct wined3d_extension_map wgl_extension_map[] =
+{
+    {"WGL_ARB_pixel_format",                WGL_ARB_PIXEL_FORMAT,               0                        },
+    {"WGL_EXT_swap_control",                WGL_EXT_SWAP_CONTROL,               0                        },
+    {"WGL_WINE_pixel_format_passthrough",   WGL_WINE_PIXEL_FORMAT_PASSTHROUGH,  0                        },
 };
 
 /**********************************************************
@@ -447,10 +454,11 @@ static inline BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_inf
 static DWORD ver_for_ext(enum wined3d_gl_extension ext)
 {
     unsigned int i;
-    for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i) {
-        if(EXTENSION_MAP[i].extension == ext) {
-            return EXTENSION_MAP[i].version;
-        }
+
+    for (i = 0; i < (sizeof(gl_extension_map) / sizeof(*gl_extension_map)); ++i)
+    {
+        if (gl_extension_map[i].extension == ext)
+            return gl_extension_map[i].version;
     }
     return 0;
 }
@@ -2346,7 +2354,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     unsigned    i;
     HDC         hdc;
     DWORD gl_version;
-    size_t len;
 
     TRACE_(d3d_caps)("(%p)\n", gl_info);
 
@@ -2439,7 +2446,8 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     gl_info->supported[WINED3D_GL_EXT_NONE] = TRUE;
 
-    parse_extension_string(gl_info, GL_Extensions, EXTENSION_MAP, sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP));
+    parse_extension_string(gl_info, GL_Extensions, gl_extension_map,
+            sizeof(gl_extension_map) / sizeof(*gl_extension_map));
 
     /* Now work out what GL support this card really has */
     load_gl_funcs( gl_info, gl_version );
@@ -2449,13 +2457,13 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     /* Now mark all the extensions supported which are included in the opengl core version. Do this *after*
      * loading the functions, otherwise the code above will load the extension entry points instead of the
      * core functions, which may not work. */
-    for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i)
+    for (i = 0; i < (sizeof(gl_extension_map) / sizeof(*gl_extension_map)); ++i)
     {
-        if (!gl_info->supported[EXTENSION_MAP[i].extension]
-                && EXTENSION_MAP[i].version <= gl_version && EXTENSION_MAP[i].version)
+        if (!gl_info->supported[gl_extension_map[i].extension]
+                && gl_extension_map[i].version <= gl_version && gl_extension_map[i].version)
         {
-            TRACE_(d3d_caps)(" GL CORE: %s support.\n", EXTENSION_MAP[i].extension_string);
-            gl_info->supported[EXTENSION_MAP[i].extension] = TRUE;
+            TRACE_(d3d_caps)(" GL CORE: %s support.\n", gl_extension_map[i].extension_string);
+            gl_info->supported[gl_extension_map[i].extension] = TRUE;
         }
     }
 
@@ -2842,44 +2850,8 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     if (!WGL_Extensions)
         WARN_(d3d_caps)("WGL extensions not supported.\n");
     else
-    {
-        TRACE_(d3d_caps)("WGL_Extensions reported:\n");
-        while (*WGL_Extensions)
-        {
-            const char *start;
-            char current_ext[256];
-
-            while (isspace(*WGL_Extensions))
-                ++WGL_Extensions;
-            start = WGL_Extensions;
-            while (!isspace(*WGL_Extensions) && *WGL_Extensions)
-                ++WGL_Extensions;
-
-            len = WGL_Extensions - start;
-            if (!len || len >= sizeof(current_ext))
-                continue;
-
-            memcpy(current_ext, start, len);
-            current_ext[len] = '\0';
-            TRACE_(d3d_caps)("- %s\n", debugstr_a(current_ext));
-
-            if (!strcmp(current_ext, "WGL_ARB_pixel_format"))
-            {
-                gl_info->supported[WGL_ARB_PIXEL_FORMAT] = TRUE;
-                TRACE_(d3d_caps)("FOUND: WGL_ARB_pixel_format support\n");
-            }
-            if (!strcmp(current_ext, "WGL_EXT_swap_control"))
-            {
-                gl_info->supported[WGL_EXT_SWAP_CONTROL] = TRUE;
-                TRACE_(d3d_caps)("FOUND: WGL_EXT_swap_control support\n");
-            }
-            if (!strcmp(current_ext, "WGL_WINE_pixel_format_passthrough"))
-            {
-                gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH] = TRUE;
-                TRACE_(d3d_caps)("FOUND: WGL_WINE_pixel_format_passthrough support\n");
-            }
-        }
-    }
+        parse_extension_string(gl_info, WGL_Extensions, wgl_extension_map,
+                sizeof(wgl_extension_map) / sizeof(*wgl_extension_map));
 
     fixup_extensions(gl_info, gl_renderer_str, gl_vendor, card_vendor, device);
     init_driver_info(driver_info, card_vendor, device);
