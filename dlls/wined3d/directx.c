@@ -2823,49 +2823,48 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     gl_info->wrap_lookup[WINED3D_TADDRESS_MIRROR_ONCE - WINED3D_TADDRESS_WRAP] =
             gl_info->supported[ATI_TEXTURE_MIRROR_ONCE] ? GL_MIRROR_CLAMP_TO_EDGE_ATI : GL_REPEAT;
 
-    /* Make sure there's an active HDC else the WGL extensions will fail */
     hdc = pwglGetCurrentDC();
-    if (hdc) {
-        /* Not all GL drivers might offer WGL extensions e.g. VirtualBox */
-        if(GL_EXTCALL(wglGetExtensionsStringARB))
-            WGL_Extensions = GL_EXTCALL(wglGetExtensionsStringARB(hdc));
+    /* Not all GL drivers might offer WGL extensions e.g. VirtualBox. */
+    if (GL_EXTCALL(wglGetExtensionsStringARB))
+        WGL_Extensions = GL_EXTCALL(wglGetExtensionsStringARB(hdc));
+    if (!WGL_Extensions)
+        WARN_(d3d_caps)("WGL extensions not supported.\n");
+    else
+    {
+        TRACE_(d3d_caps)("WGL_Extensions reported:\n");
+        while (*WGL_Extensions)
+        {
+            const char *start;
+            char current_ext[256];
 
-        if (!WGL_Extensions)
-        {
-            ERR("   WGL_Extensions returns NULL\n");
-        }
-        else
-        {
-            TRACE_(d3d_caps)("WGL_Extensions reported:\n");
-            while (*WGL_Extensions)
+            while (isspace(*WGL_Extensions))
+                ++WGL_Extensions;
+            start = WGL_Extensions;
+            while (!isspace(*WGL_Extensions) && *WGL_Extensions)
+                ++WGL_Extensions;
+
+            len = WGL_Extensions - start;
+            if (!len || len >= sizeof(current_ext))
+                continue;
+
+            memcpy(current_ext, start, len);
+            current_ext[len] = '\0';
+            TRACE_(d3d_caps)("- %s\n", debugstr_a(current_ext));
+
+            if (!strcmp(current_ext, "WGL_ARB_pixel_format"))
             {
-                const char *Start;
-                char ThisExtn[256];
-
-                while (isspace(*WGL_Extensions)) WGL_Extensions++;
-                Start = WGL_Extensions;
-                while (!isspace(*WGL_Extensions) && *WGL_Extensions) ++WGL_Extensions;
-
-                len = WGL_Extensions - Start;
-                if (!len || len >= sizeof(ThisExtn))
-                    continue;
-
-                memcpy(ThisExtn, Start, len);
-                ThisExtn[len] = '\0';
-                TRACE_(d3d_caps)("- %s\n", debugstr_a(ThisExtn));
-
-                if (!strcmp(ThisExtn, "WGL_ARB_pixel_format")) {
-                    gl_info->supported[WGL_ARB_PIXEL_FORMAT] = TRUE;
-                    TRACE_(d3d_caps)("FOUND: WGL_ARB_pixel_format support\n");
-                }
-                if (!strcmp(ThisExtn, "WGL_EXT_swap_control")) {
-                    gl_info->supported[WGL_EXT_SWAP_CONTROL] = TRUE;
-                    TRACE_(d3d_caps)("FOUND: WGL_EXT_swap_control support\n");
-                }
-                if (!strcmp(ThisExtn, "WGL_WINE_pixel_format_passthrough")) {
-                    gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH] = TRUE;
-                    TRACE_(d3d_caps)("FOUND: WGL_WINE_pixel_format_passthrough support\n");
-                }
+                gl_info->supported[WGL_ARB_PIXEL_FORMAT] = TRUE;
+                TRACE_(d3d_caps)("FOUND: WGL_ARB_pixel_format support\n");
+            }
+            if (!strcmp(current_ext, "WGL_EXT_swap_control"))
+            {
+                gl_info->supported[WGL_EXT_SWAP_CONTROL] = TRUE;
+                TRACE_(d3d_caps)("FOUND: WGL_EXT_swap_control support\n");
+            }
+            if (!strcmp(current_ext, "WGL_WINE_pixel_format_passthrough"))
+            {
+                gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH] = TRUE;
+                TRACE_(d3d_caps)("FOUND: WGL_WINE_pixel_format_passthrough support\n");
             }
         }
     }
