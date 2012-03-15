@@ -62,9 +62,9 @@ static nsresult (CDECL *NS_StringContainerFinish)(nsStringContainer*);
 static nsresult (CDECL *NS_CStringContainerFinish)(nsCStringContainer*);
 static nsresult (CDECL *NS_StringSetData)(nsAString*,const PRUnichar*,PRUint32);
 static nsresult (CDECL *NS_CStringSetData)(nsACString*,const char*,PRUint32);
-static nsresult (CDECL *NS_NewLocalFile)(const nsAString*,PRBool,nsIFile**);
-static PRUint32 (CDECL *NS_StringGetData)(const nsAString*,const PRUnichar **,PRBool*);
-static PRUint32 (CDECL *NS_CStringGetData)(const nsACString*,const char**,PRBool*);
+static nsresult (CDECL *NS_NewLocalFile)(const nsAString*,cpp_bool,nsIFile**);
+static PRUint32 (CDECL *NS_StringGetData)(const nsAString*,const PRUnichar **,cpp_bool*);
+static PRUint32 (CDECL *NS_CStringGetData)(const nsACString*,const char**,cpp_bool*);
 
 static HINSTANCE xul_handle = NULL;
 
@@ -114,7 +114,7 @@ static nsresult create_profile_directory(void)
 
     WCHAR path[MAX_PATH + sizeof(wine_geckoW)/sizeof(WCHAR)];
     nsAString str;
-    PRBool exists;
+    cpp_bool exists;
     nsresult nsres;
     HRESULT hres;
 
@@ -149,7 +149,7 @@ static nsresult create_profile_directory(void)
 }
 
 static nsresult NSAPI nsDirectoryServiceProvider_GetFile(nsIDirectoryServiceProvider *iface,
-        const char *prop, PRBool *persistent, nsIFile **_retval)
+        const char *prop, cpp_bool *persistent, nsIFile **_retval)
 {
     TRACE("(%s %p %p)\n", debugstr_a(prop), persistent, _retval);
 
@@ -748,7 +748,7 @@ nsresult get_nsinterface(nsISupports *iface, REFIID riid, void **ppv)
 static HRESULT nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode *nsnode, nsAString *str)
 {
     nsIDOMNodeList *node_list = NULL;
-    PRBool has_children = FALSE;
+    cpp_bool has_children = FALSE;
     nsIContent *nscontent;
     PRUint16 type;
     nsresult nsres;
@@ -1178,7 +1178,7 @@ static nsresult NSAPI nsWebBrowserChrome_ShowAsModal(nsIWebBrowserChrome *iface)
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static nsresult NSAPI nsWebBrowserChrome_IsWindowModal(nsIWebBrowserChrome *iface, PRBool *_retval)
+static nsresult NSAPI nsWebBrowserChrome_IsWindowModal(nsIWebBrowserChrome *iface, cpp_bool *_retval)
 {
     NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
     WARN("(%p)->(%p)\n", This, _retval);
@@ -1326,7 +1326,7 @@ static nsrefcnt NSAPI nsURIContentListener_Release(nsIURIContentListener *iface)
 }
 
 static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener *iface,
-                                                          nsIURI *aURI, PRBool *_retval)
+                                                          nsIURI *aURI, cpp_bool *_retval)
 {
     NSContainer *This = impl_from_nsIURIContentListener(iface);
     nsACString spec_str;
@@ -1351,8 +1351,8 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
 }
 
 static nsresult NSAPI nsURIContentListener_DoContent(nsIURIContentListener *iface,
-        const char *aContentType, PRBool aIsContentPreferred, nsIRequest *aRequest,
-        nsIStreamListener **aContentHandler, PRBool *_retval)
+        const char *aContentType, cpp_bool aIsContentPreferred, nsIRequest *aRequest,
+        nsIStreamListener **aContentHandler, cpp_bool *_retval)
 {
     NSContainer *This = impl_from_nsIURIContentListener(iface);
 
@@ -1366,7 +1366,7 @@ static nsresult NSAPI nsURIContentListener_DoContent(nsIURIContentListener *ifac
 }
 
 static nsresult NSAPI nsURIContentListener_IsPreferred(nsIURIContentListener *iface,
-        const char *aContentType, char **aDesiredContentType, PRBool *_retval)
+        const char *aContentType, char **aDesiredContentType, cpp_bool *_retval)
 {
     NSContainer *This = impl_from_nsIURIContentListener(iface);
 
@@ -1382,8 +1382,8 @@ static nsresult NSAPI nsURIContentListener_IsPreferred(nsIURIContentListener *if
 }
 
 static nsresult NSAPI nsURIContentListener_CanHandleContent(nsIURIContentListener *iface,
-        const char *aContentType, PRBool aIsContentPreferred, char **aDesiredContentType,
-        PRBool *_retval)
+        const char *aContentType, cpp_bool aIsContentPreferred, char **aDesiredContentType,
+        cpp_bool *_retval)
 {
     NSContainer *This = impl_from_nsIURIContentListener(iface);
 
@@ -1522,7 +1522,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_SetFocus(nsIEmbeddingSiteWindow *ifa
 }
 
 static nsresult NSAPI nsEmbeddingSiteWindow_GetVisibility(nsIEmbeddingSiteWindow *iface,
-        PRBool *aVisibility)
+        cpp_bool *aVisibility)
 {
     NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
 
@@ -1533,7 +1533,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_GetVisibility(nsIEmbeddingSiteWindow
 }
 
 static nsresult NSAPI nsEmbeddingSiteWindow_SetVisibility(nsIEmbeddingSiteWindow *iface,
-        PRBool aVisibility)
+        cpp_bool aVisibility)
 {
     NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
 
