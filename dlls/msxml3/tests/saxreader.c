@@ -3581,6 +3581,44 @@ static void test_mxattr_dispex(void)
     IMXAttributes_Release(mxattr);
 }
 
+static void test_mxattr_qi(void)
+{
+    IVBSAXAttributes *vbsaxattr, *vbsaxattr2;
+    ISAXAttributes *saxattr;
+    IMXAttributes *mxattr;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_SAXAttributes, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXAttributes, (void**)&mxattr);
+    EXPECT_HR(hr, S_OK);
+
+    EXPECT_REF(mxattr, 1);
+    hr = IMXAttributes_QueryInterface(mxattr, &IID_ISAXAttributes, (void**)&saxattr);
+    EXPECT_HR(hr, S_OK);
+
+    EXPECT_REF(mxattr, 2);
+    EXPECT_REF(saxattr, 2);
+
+    hr = IMXAttributes_QueryInterface(mxattr, &IID_IVBSAXAttributes, (void**)&vbsaxattr);
+    EXPECT_HR(hr, S_OK);
+
+    EXPECT_REF(vbsaxattr, 3);
+    EXPECT_REF(mxattr, 3);
+    EXPECT_REF(saxattr, 3);
+
+    hr = ISAXAttributes_QueryInterface(saxattr, &IID_IVBSAXAttributes, (void**)&vbsaxattr2);
+    EXPECT_HR(hr, S_OK);
+
+    EXPECT_REF(vbsaxattr, 4);
+    EXPECT_REF(mxattr, 4);
+    EXPECT_REF(saxattr, 4);
+
+    IMXAttributes_Release(mxattr);
+    ISAXAttributes_Release(saxattr);
+    IVBSAXAttributes_Release(vbsaxattr);
+    IVBSAXAttributes_Release(vbsaxattr2);
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -3632,6 +3670,7 @@ START_TEST(saxreader)
     get_mxattributes_support_data(mxattributes_support_data);
     if (is_clsid_supported(&CLSID_SAXAttributes, mxattributes_support_data))
     {
+        test_mxattr_qi();
         test_mxattr_addAttribute();
         test_mxattr_clear();
         test_mxattr_dispex();
