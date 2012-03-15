@@ -2452,6 +2452,16 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     /* Now work out what GL support this card really has */
     load_gl_funcs( gl_info, gl_version );
 
+    hdc = pwglGetCurrentDC();
+    /* Not all GL drivers might offer WGL extensions e.g. VirtualBox. */
+    if (GL_EXTCALL(wglGetExtensionsStringARB))
+        WGL_Extensions = GL_EXTCALL(wglGetExtensionsStringARB(hdc));
+    if (!WGL_Extensions)
+        WARN_(d3d_caps)("WGL extensions not supported.\n");
+    else
+        parse_extension_string(gl_info, WGL_Extensions, wgl_extension_map,
+                sizeof(wgl_extension_map) / sizeof(*wgl_extension_map));
+
     ENTER_GL();
 
     /* Now mark all the extensions supported which are included in the opengl core version. Do this *after*
@@ -2842,16 +2852,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
             gl_info->supported[ARB_TEXTURE_BORDER_CLAMP] ? GL_CLAMP_TO_BORDER_ARB : GL_REPEAT;
     gl_info->wrap_lookup[WINED3D_TADDRESS_MIRROR_ONCE - WINED3D_TADDRESS_WRAP] =
             gl_info->supported[ATI_TEXTURE_MIRROR_ONCE] ? GL_MIRROR_CLAMP_TO_EDGE_ATI : GL_REPEAT;
-
-    hdc = pwglGetCurrentDC();
-    /* Not all GL drivers might offer WGL extensions e.g. VirtualBox. */
-    if (GL_EXTCALL(wglGetExtensionsStringARB))
-        WGL_Extensions = GL_EXTCALL(wglGetExtensionsStringARB(hdc));
-    if (!WGL_Extensions)
-        WARN_(d3d_caps)("WGL extensions not supported.\n");
-    else
-        parse_extension_string(gl_info, WGL_Extensions, wgl_extension_map,
-                sizeof(wgl_extension_map) / sizeof(*wgl_extension_map));
 
     fixup_extensions(gl_info, gl_renderer_str, gl_vendor, card_vendor, device);
     init_driver_info(driver_info, card_vendor, device);
