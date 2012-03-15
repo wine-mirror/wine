@@ -362,7 +362,12 @@ HRESULT WINAPI STRMBASE_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *
 
     if (i == g_cTemplates)
     {
-        FIXME("%s: no class found.\n", debugstr_guid(rclsid));
+        ERR("%s: no class found.\n", debugstr_guid(rclsid));
+        return CLASS_E_CLASSNOTAVAILABLE;
+    }
+    else if (!pList->m_lpfnNew)
+    {
+        FIXME("%s: class not implemented yet.\n", debugstr_guid(rclsid));
         return CLASS_E_CLASSNOTAVAILABLE;
     }
 
