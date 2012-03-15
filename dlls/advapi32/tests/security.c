@@ -35,6 +35,9 @@
 
 #include "wine/test.h"
 
+/* PROCESS_ALL_ACCESS in Vista+ PSDKs is incompatible with older Windows versions */
+#define PROCESS_ALL_ACCESS_NT4 (PROCESS_ALL_ACCESS & ~0xf000)
+
 /* copied from Wine winternl.h - not included in the Windows SDK */
 typedef enum _OBJECT_INFORMATION_CLASS {
     ObjectBasicInformation,
@@ -2545,7 +2548,7 @@ static void test_process_security(void)
     /* Doesn't matter what ACL say we should get full access for ourselves */
     res = CreateProcessA( NULL, buffer, &psa, NULL, FALSE, 0, NULL, NULL, &startup, &info );
     ok(res, "CreateProcess with err:%d\n", GetLastError());
-    TEST_GRANTED_ACCESS2( info.hProcess, PROCESS_ALL_ACCESS,
+    TEST_GRANTED_ACCESS2( info.hProcess, PROCESS_ALL_ACCESS_NT4,
                           STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
     winetest_wait_child_process( info.hProcess );
 
@@ -2597,7 +2600,7 @@ static void test_process_security_child(void)
     ret = DuplicateHandle( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
                            &handle, 0, TRUE, DUPLICATE_SAME_ACCESS );
     ok(ret, "duplicating handle err:%d\n", GetLastError());
-    TEST_GRANTED_ACCESS2( handle, PROCESS_ALL_ACCESS,
+    TEST_GRANTED_ACCESS2( handle, PROCESS_ALL_ACCESS_NT4,
                           STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
 
     CloseHandle( handle );
@@ -2606,7 +2609,7 @@ static void test_process_security_child(void)
     ret = DuplicateHandle( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
                            &handle, PROCESS_ALL_ACCESS, TRUE, 0 );
     ok(ret, "duplicating handle err:%d\n", GetLastError());
-    TEST_GRANTED_ACCESS2( handle, PROCESS_ALL_ACCESS,
+    TEST_GRANTED_ACCESS2( handle, PROCESS_ALL_ACCESS_NT4,
                           PROCESS_ALL_ACCESS | PROCESS_QUERY_LIMITED_INFORMATION );
     ret = DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
                            &handle1, PROCESS_VM_READ, TRUE, 0 );
