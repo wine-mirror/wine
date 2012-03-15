@@ -2182,16 +2182,12 @@ msgstr ""
 "목록을 가지고 있을 수 있음:"
 
 #: cryptui.rc:296
-#, fuzzy
-#| msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
-msgstr "암호화 메세지 문법 표준/PKCS #7 메시지 (.p7b)"
+msgstr "암호화 메세지 문법 표준/PKCS #7 메시지 (*.p7b)"
 
 #: cryptui.rc:298
-#, fuzzy
-#| msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
-msgstr "개인 정보 교환/PKCS #12 (.pfx, .p12)"
+msgstr "개인 정보 교환/PKCS #12 (*.pfx;*.p12)"
 
 #: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
@@ -2332,32 +2328,24 @@ msgid "Select the format you want to use:"
 msgstr "사용할 파일 형식 선택:"
 
 #: cryptui.rc:405
-#, fuzzy
-#| msgid "&DER-encoded X.509 (.cer)"
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr "&DER-암호화된 X.509 (.cer)"
+msgstr "&DER-암호화된 X.509 (*.cer)"
 
 #: cryptui.rc:407
-#, fuzzy
-#| msgid "Ba&se64-encoded X.509 (.cer):"
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "Ba&se64-암호화된 X.509 (.cer):"
+msgstr "Ba&se64-암호화된 X.509 (*.cer):"
 
 #: cryptui.rc:409
-#, fuzzy
-#| msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr "암호 메시지 문법 표준/PKCS #7 메시지(&C) (.p7b)"
+msgstr "암호 메시지 문법 표준/PKCS #7 메시지(&C) (*.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
 msgstr "가능한 인증서 경로에 있는 모든 인증서 포함(&I)"
 
 #: cryptui.rc:413
-#, fuzzy
-#| msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr "개인 정보 교환(&P)/PKCS #12 (.pfx)"
+msgstr "개인 정보 교환(&P)/PKCS #12 (*.pfx)"
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
@@ -12648,9 +12636,8 @@ msgid "Select an executable file"
 msgstr "실행 파일 선택"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect"
-msgstr "자동찾기(&D)"
+msgstr "자동으로 찾기"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
