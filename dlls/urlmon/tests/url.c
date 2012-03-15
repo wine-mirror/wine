@@ -42,6 +42,7 @@ static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(CLSID_IdentityUnmarshal,0x0000001b,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 DEFINE_GUID(IID_IBindStatusCallbackHolder,0x79eac9cc,0xbaf9,0x11ce,0x8c,0x82,0x00,0xaa,0x00,0x4b,0xa9,0x0b);
+extern CLSID CLSID_AboutProtocol;
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -1593,6 +1594,9 @@ static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallbackEx *iface, DWO
     IWinInetHttpInfo *http_info;
     HRESULT hres;
     IMoniker *mon;
+    DWORD res;
+    CLSID clsid;
+    LPOLESTR res_str;
 
     if(iface == &objbsc)
         CHECK_EXPECT(Obj_OnStartBinding);
@@ -1616,6 +1620,23 @@ static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallbackEx *iface, DWO
 
     hres = IBinding_QueryInterface(pib, &IID_IWinInetHttpInfo, (void**)&http_info);
     ok(hres == E_NOINTERFACE, "Could not get IID_IWinInetHttpInfo: %08x\n", hres);
+
+    if(0) { /* crashes with native urlmon */
+        hres = IBinding_GetBindResult(pib, NULL, &res, &res_str, NULL);
+        ok(hres == E_INVALIDARG, "GetBindResult failed: %08x\n", hres);
+    }
+    hres = IBinding_GetBindResult(pib, &clsid, NULL, &res_str, NULL);
+    ok(hres == E_INVALIDARG, "GetBindResult failed: %08x\n", hres);
+    hres = IBinding_GetBindResult(pib, &clsid, &res, NULL, NULL);
+    ok(hres == E_INVALIDARG, "GetBindResult failed: %08x\n", hres);
+    hres = IBinding_GetBindResult(pib, &clsid, &res, &res_str, (void*)0xdeadbeef);
+    ok(hres == E_INVALIDARG, "GetBindResult failed: %08x\n", hres);
+
+    hres = IBinding_GetBindResult(pib, &clsid, &res, &res_str, NULL);
+    ok(hres == S_OK, "GetBindResult failed: %08x, expected S_OK\n", hres);
+    ok(IsEqualCLSID(&clsid, &CLSID_NULL), "incorrect clsid: %s\n", debugstr_guid(&clsid));
+    ok(!res, "incorrect res: %x\n", res);
+    ok(!res_str, "incorrect res_str: %s\n", wine_dbgstr_w(res_str));
 
     if(abort_start) {
         binding_hres = abort_hres;
@@ -1857,6 +1878,50 @@ static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallbackEx *iface, HRES
     } else
         ok(hresult == binding_hres, "binding failed: %08x, expected %08x\n", hresult, binding_hres);
     ok(szError == NULL, "szError should be NULL\n");
+
+    if(current_binding) {
+        CLSID clsid;
+        DWORD res;
+        LPOLESTR res_str;
+        HRESULT hres;
+
+        hres = IBinding_GetBindResult(current_binding, &clsid, &res, &res_str, NULL);
+        ok(hres == S_OK, "GetBindResult failed: %08x, expected S_OK\n", hres);
+        ok(res == hresult, "res = %08x, expected %08x\n", res, binding_hres);
+        ok(!res_str, "incorrect res_str = %s\n", wine_dbgstr_w(res_str));
+
+        if(hresult==S_OK || (abort_start && hresult!=S_FALSE)) {
+            ok(IsEqualCLSID(&clsid, &CLSID_NULL),
+                    "incorrect protocol CLSID: %s, expected CLSID_NULL\n",
+                    debugstr_guid(&clsid));
+        }else if(emulate_protocol) {
+            todo_wine ok(IsEqualCLSID(&clsid, &CLSID_FtpProtocol),
+                    "incorrect protocol CLSID: %s, expected CLSID_FtpProtocol\n",
+                    debugstr_guid(&clsid));
+        }else if(test_protocol == FTP_TEST) {
+            ok(IsEqualCLSID(&clsid, &CLSID_FtpProtocol),
+                    "incorrect protocol CLSID: %s, expected CLSID_FtpProtocol\n",
+                    debugstr_guid(&clsid));
+        }else if(test_protocol == FILE_TEST) {
+            ok(IsEqualCLSID(&clsid, &CLSID_FileProtocol),
+                    "incorrect protocol CLSID: %s, expected CLSID_FileProtocol\n",
+                    debugstr_guid(&clsid));
+        }else if(test_protocol == HTTP_TEST) {
+            ok(IsEqualCLSID(&clsid, &CLSID_HttpProtocol),
+                    "incorrect protocol CLSID: %s, expected CLSID_HttpProtocol\n",
+                    debugstr_guid(&clsid));
+        }else if(test_protocol == HTTPS_TEST) {
+            ok(IsEqualCLSID(&clsid, &CLSID_HttpSProtocol),
+                    "incorrect protocol CLSID: %s, expected CLSID_HttpSProtocol\n",
+                    debugstr_guid(&clsid));
+        }else if(test_protocol == ABOUT_TEST) {
+            ok(IsEqualCLSID(&clsid, &CLSID_AboutProtocol),
+                    "incorrect protocol CLSID: %s, expected CLSID_AboutProtocol\n",
+                    debugstr_guid(&clsid));
+        }else {
+            ok(0, "unexpected (%d)\n", test_protocol);
+        }
+    }
 
     if((test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST) && emulate_protocol) {
         SetEvent(complete_event);
