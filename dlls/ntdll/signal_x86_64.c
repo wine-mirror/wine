@@ -2629,8 +2629,6 @@ static BOOL is_inside_epilog( BYTE *pc, ULONG64 base, const RUNTIME_FUNCTION *fu
 
     for (;;)
     {
-        DWORD offset;
-
         if ((*pc & 0xf0) == 0x40) pc++;  /* rex prefix */
 
         switch (*pc)
@@ -2649,11 +2647,15 @@ static BOOL is_inside_epilog( BYTE *pc, ULONG64 base, const RUNTIME_FUNCTION *fu
         case 0xc3: /* ret */
             return TRUE;
         case 0xe9: /* jmp nnnn */
-            offset = pc + 5 + *(LONG *)(pc + 1) - (BYTE *)base;
-            return (offset >= function->BeginAddress && offset < function->EndAddress);
+            pc += 5 + *(LONG *)(pc + 1);
+            if (pc - (BYTE *)base >= function->BeginAddress && pc - (BYTE *)base < function->EndAddress)
+                continue;
+            break;
         case 0xeb: /* jmp n */
-            offset = pc + 2 + (signed char)pc[1] - (BYTE *)base;
-            return (offset >= function->BeginAddress && offset < function->EndAddress);
+            pc += 2 + (signed char)pc[1];
+            if (pc - (BYTE *)base >= function->BeginAddress && pc - (BYTE *)base < function->EndAddress)
+                continue;
+            break;
         case 0xf3: /* rep; ret (for amd64 prediction bug) */
             return pc[1] == 0xc3;
         }
