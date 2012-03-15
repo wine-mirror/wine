@@ -290,6 +290,102 @@ static void release_client_site(WebBrowser *This)
     }
 }
 
+typedef struct {
+    IEnumOLEVERB IEnumOLEVERB_iface;
+
+    LONG ref;
+} EnumOLEVERB;
+
+static inline EnumOLEVERB *impl_from_IEnumOLEVERB(IEnumOLEVERB *iface)
+{
+    return CONTAINING_RECORD(iface, EnumOLEVERB, IEnumOLEVERB_iface);
+}
+
+static HRESULT WINAPI EnumOLEVERB_QueryInterface(IEnumOLEVERB *iface, REFIID riid, void **ppv)
+{
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IEnumOLEVERB_iface;
+    }else if(IsEqualGUID(&IID_IEnumOLEVERB, riid)) {
+        TRACE("(%p)->(IID_IEnumOLEVERB %p)\n", This, ppv);
+        *ppv = &This->IEnumOLEVERB_iface;
+    }else {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI EnumOLEVERB_AddRef(IEnumOLEVERB *iface)
+{
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI EnumOLEVERB_Release(IEnumOLEVERB *iface)
+{
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI EnumOLEVERB_Next(IEnumOLEVERB *iface, ULONG celt, OLEVERB *rgelt, ULONG *pceltFetched)
+{
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
+
+    TRACE("(%p)->(%u %p %p)\n", This, celt, rgelt, pceltFetched);
+
+    if(pceltFetched)
+        *pceltFetched = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumOLEVERB_Skip(IEnumOLEVERB *iface, ULONG celt)
+{
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
+    TRACE("(%p)->(%u)\n", This, celt);
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumOLEVERB_Reset(IEnumOLEVERB *iface)
+{
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
+    TRACE("(%p)\n", This);
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumOLEVERB_Clone(IEnumOLEVERB *iface, IEnumOLEVERB **ppenum)
+{
+    EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
+    FIXME("(%p)->(%p)\n", This, ppenum);
+    return E_NOTIMPL;
+}
+
+static const IEnumOLEVERBVtbl EnumOLEVERBVtbl = {
+    EnumOLEVERB_QueryInterface,
+    EnumOLEVERB_AddRef,
+    EnumOLEVERB_Release,
+    EnumOLEVERB_Next,
+    EnumOLEVERB_Skip,
+    EnumOLEVERB_Reset,
+    EnumOLEVERB_Clone
+};
+
 /**********************************************************************
  * Implement the IOleObject interface for the WebBrowser control
  */
@@ -491,8 +587,19 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
 static HRESULT WINAPI OleObject_EnumVerbs(IOleObject *iface, IEnumOLEVERB **ppEnumOleVerb)
 {
     WebBrowser *This = impl_from_IOleObject(iface);
+    EnumOLEVERB *ret;
+
     TRACE("(%p)->(%p)\n", This, ppEnumOleVerb);
-    return OleRegEnumVerbs(&CLSID_WebBrowser, ppEnumOleVerb);
+
+    ret = heap_alloc(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->IEnumOLEVERB_iface.lpVtbl = &EnumOLEVERBVtbl;
+    ret->ref = 1;
+
+    *ppEnumOleVerb = &ret->IEnumOLEVERB_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_Update(IOleObject *iface)
