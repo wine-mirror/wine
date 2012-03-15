@@ -64,7 +64,7 @@ static name_space *find_name_space(LPCWSTR protocol)
     name_space *iter;
 
     LIST_FOR_EACH_ENTRY(iter, &name_space_list, name_space, entry) {
-        if(!strcmpW(iter->protocol, protocol))
+        if(!strcmpiW(iter->protocol, protocol))
             return iter;
     }
 
@@ -148,7 +148,7 @@ static HRESULT unregister_namespace(IClassFactory *cf, LPCWSTR protocol)
     EnterCriticalSection(&session_cs);
 
     LIST_FOR_EACH_ENTRY(iter, &name_space_list, name_space, entry) {
-        if(iter->cf == cf && !strcmpW(iter->protocol, protocol)) {
+        if(iter->cf == cf && !strcmpiW(iter->protocol, protocol)) {
             list_remove(&iter->entry);
 
             LeaveCriticalSection(&session_cs);
