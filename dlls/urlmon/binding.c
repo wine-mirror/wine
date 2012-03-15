@@ -1095,8 +1095,19 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
         formatetc.tymed = stgmed.tymed;
         formatetc.cfFormat = This->clipboard_format;
 
-        IBindStatusCallback_OnDataAvailable(This->callback, bscf, progress,
+        hres = IBindStatusCallback_OnDataAvailable(This->callback, bscf, progress,
                 &formatetc, &stgmed);
+        if(hres != S_OK) {
+            if(This->download_state != END_DOWNLOAD) {
+                This->download_state = END_DOWNLOAD;
+                IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
+                        BINDSTATUS_ENDDOWNLOADDATA, This->url);
+            }
+
+            WARN("OnDataAvailable returned %x\n", hres);
+            stop_binding(This, hres, NULL);
+            return;
+        }
 
         if(This->download_state == END_DOWNLOAD)
             stop_binding(This, S_OK, NULL);
