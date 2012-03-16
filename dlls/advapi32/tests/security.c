@@ -4060,6 +4060,26 @@ todo_wine {
     ok(status == 1, "expected 1, got %d\n", status);
     ok(granted == mapping->GenericAll, "expected %#x, got %#x\n", mapping->GenericAll, granted);
 }
+    priv_set_len = sizeof(priv_set);
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = AccessCheck(sd, token, 0, mapping, &priv_set, &priv_set_len, &granted, &status);
+todo_wine {
+    ok(ret, "AccessCheck error %d\n", GetLastError());
+    ok(status == 0 || broken(status == 1) /* NT4 */, "expected 0, got %d\n", status);
+    ok(granted == 0 || broken(granted == mapping->GenericRead) /* NT4 */, "expected 0, got %#x\n", granted);
+}
+    priv_set_len = sizeof(priv_set);
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = AccessCheck(sd, token, ACCESS_SYSTEM_SECURITY, mapping, &priv_set, &priv_set_len, &granted, &status);
+todo_wine {
+    ok(ret, "AccessCheck error %d\n", GetLastError());
+    ok(status == 0, "expected 0, got %d\n", status);
+    ok(granted == 0, "expected 0, got %#x\n", granted);
+}
     HeapFree(GetProcessHeap(), 0, sd);
 }
 
