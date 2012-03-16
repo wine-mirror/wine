@@ -681,9 +681,10 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetTextureCoordinates(IDirect3
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    FIXME("(%p)->(%f,%f): stub\n", This, u, v);
+    TRACE("(%p)->(%u,%f,%f)\n", This, index, u, v);
 
-    return E_NOTIMPL;
+    return IDirect3DRMMeshBuilder3_SetTextureCoordinates(&This->IDirect3DRMMeshBuilder3_iface,
+                                                         index, u, v);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_SetVertexColor(IDirect3DRMMeshBuilder2* iface,
@@ -1555,9 +1556,15 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetTextureCoordinates(IDirect3
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    FIXME("(%p)->(%f,%f): stub\n", This, u, v);
+    TRACE("(%p)->(%u,%f,%f)\n", This, index, u, v);
 
-    return E_NOTIMPL;
+    if (index >= This->nb_coords2d)
+        return D3DRMERR_BADVALUE;
+
+    This->pCoords2d[index].u = u;
+    This->pCoords2d[index].v = v;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_SetVertexColor(IDirect3DRMMeshBuilder3* iface,

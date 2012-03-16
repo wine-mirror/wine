@@ -210,15 +210,17 @@ static void test_MeshBuilder(void)
 
     valu = 1.23f;
     valv = 3.21f;
-    hr = IDirect3DRMMeshBuilder_SetTextureCoordinates(pMeshBuilder, 1, valu, valv);
-    todo_wine ok(hr == D3DRM_OK, "Cannot set texture coordinates (hr = %x)\n", hr);
+    hr = IDirect3DRMMeshBuilder_SetTextureCoordinates(pMeshBuilder, 0, valu, valv);
+    ok(hr == D3DRM_OK, "Cannot set texture coordinates (hr = %x)\n", hr);
+    hr = IDirect3DRMMeshBuilder_SetTextureCoordinates(pMeshBuilder, 4, valu, valv);
+    ok(hr == D3DRMERR_BADVALUE, "Should fail and return D3DRM_BADVALUE (hr = %x)\n", hr);
 
     valu = 0.0f;
     valv = 0.0f;
-    hr = IDirect3DRMMeshBuilder_GetTextureCoordinates(pMeshBuilder, 1, &valu, &valv);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
-    todo_wine ok(valu == 1.23f, "Wrong coordinate %f (must be 1.23)\n", valu);
-    todo_wine ok(valv == 3.21f, "Wrong coordinate %f (must be 3.21)\n", valv);
+    hr = IDirect3DRMMeshBuilder_GetTextureCoordinates(pMeshBuilder, 0, &valu, &valv);
+    ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
+    ok(valu == 1.23f, "Wrong coordinate %f (must be 1.23)\n", valu);
+    ok(valv == 3.21f, "Wrong coordinate %f (must be 3.21)\n", valv);
 
     IDirect3DRMMeshBuilder_Release(pMeshBuilder);
 
@@ -353,15 +355,17 @@ static void test_MeshBuilder3(void)
 
     valu = 1.23f;
     valv = 3.21f;
-    hr = IDirect3DRMMeshBuilder3_SetTextureCoordinates(pMeshBuilder3, 1, valu, valv);
-    todo_wine ok(hr == D3DRM_OK, "Cannot set texture coordinates (hr = %x)\n", hr);
+    hr = IDirect3DRMMeshBuilder3_SetTextureCoordinates(pMeshBuilder3, 0, valu, valv);
+    ok(hr == D3DRM_OK, "Cannot set texture coordinates (hr = %x)\n", hr);
+    hr = IDirect3DRMMeshBuilder3_SetTextureCoordinates(pMeshBuilder3, 4, valu, valv);
+    ok(hr == D3DRMERR_BADVALUE, "Should fail and return D3DRM_BADVALUE (hr = %x)\n", hr);
 
     valu = 0.0f;
     valv = 0.0f;
-    hr = IDirect3DRMMeshBuilder3_GetTextureCoordinates(pMeshBuilder3, 1, &valu, &valv);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
-    todo_wine ok(valu == 1.23f, "Wrong coordinate %f (must be 1.23)\n", valu);
-    todo_wine ok(valv == 3.21f, "Wrong coordinate %f (must be 3.21)\n", valv);
+    hr = IDirect3DRMMeshBuilder3_GetTextureCoordinates(pMeshBuilder3, 0, &valu, &valv);
+    ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
+    ok(valu == 1.23f, "Wrong coordinate %f (must be 1.23)\n", valu);
+    ok(valv == 3.21f, "Wrong coordinate %f (must be 3.21)\n", valv);
 
     IDirect3DRMMeshBuilder3_Release(pMeshBuilder3);
     IDirect3DRM3_Release(pD3DRM3);
