@@ -42,6 +42,7 @@ struct HTMLCurrentStyle {
     LONG ref;
 
     nsIDOMCSSStyleDeclaration *nsstyle;
+    HTMLElement *elem;
 };
 
 static inline HTMLCurrentStyle *impl_from_IHTMLCurrentStyle(IHTMLCurrentStyle *iface)
@@ -118,6 +119,7 @@ static ULONG WINAPI HTMLCurrentStyle_Release(IHTMLCurrentStyle *iface)
     if(!ref) {
         if(This->nsstyle)
             nsIDOMCSSStyleDeclaration_Release(This->nsstyle);
+        IHTMLElement_Release(&This->elem->IHTMLElement_iface);
         release_dispex(&This->dispex);
         heap_free(This);
     }
@@ -1054,8 +1056,18 @@ static HRESULT WINAPI HTMLCurrentStyle2_get_zoom(IHTMLCurrentStyle2 *iface, VARI
 static HRESULT WINAPI HTMLCurrentStyle2_get_filter(IHTMLCurrentStyle2 *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->elem->filter) {
+        *p = SysAllocString(This->elem->filter);
+        if(!*p)
+            return E_OUTOFMEMORY;
+    }else {
+        *p = NULL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLCurrentStyle2_get_textAlignLast(IHTMLCurrentStyle2 *iface, BSTR *p)
@@ -1348,6 +1360,9 @@ HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
     ret->nsstyle = nsstyle;
 
     init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLCurrentStyle_iface,  &HTMLCurrentStyle_dispex);
+
+    IHTMLElement_AddRef(&elem->IHTMLElement_iface);
+    ret->elem = elem;
 
     *p = &ret->IHTMLCurrentStyle_iface;
     return S_OK;
