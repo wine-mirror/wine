@@ -1854,6 +1854,14 @@ static HRESULT dispex_propput(IDispatchEx *obj, DISPID id, DWORD flags, VARIANT 
     return IDispatchEx_InvokeEx(obj, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT|flags, &dp, NULL, &ei, caller_sp);
 }
 
+static HRESULT dispex_propget(IDispatchEx *obj, DISPID id, VARIANT *res, IServiceProvider *caller_sp)
+{
+    DISPPARAMS dp = {NULL};
+    EXCEPINFO ei = {0};
+
+    return IDispatchEx_InvokeEx(obj, id, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dp, res, &ei, caller_sp);
+}
+
 static void test_func(IDispatchEx *obj)
 {
     DISPID id;
@@ -1998,6 +2006,12 @@ static void test_arg_conv(IHTMLWindow2 *window)
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
     CHECK_CALLED(QS_VariantConversion);
     CHECK_CALLED(ChangeType);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = dispex_propget(dispex, DISPID_IHTMLBODYELEMENT_BGCOLOR, &v, &caller_sp);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(var)=%d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(&var) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
 
     IDispatchEx_Release(dispex);
 }

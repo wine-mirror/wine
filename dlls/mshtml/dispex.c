@@ -825,7 +825,8 @@ static HRESULT builtin_propget(DispatchEx *This, func_info_t *func, DISPPARAMS *
     if(FAILED(hres))
         return hres;
 
-    V_VT(res) = func->prop_vt == VT_PTR ? VT_DISPATCH : func->prop_vt;
+    if(func->prop_vt != VT_VARIANT)
+        V_VT(res) = func->prop_vt == VT_PTR ? VT_DISPATCH : func->prop_vt;
     return S_OK;
 }
 
