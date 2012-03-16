@@ -438,7 +438,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_Load(IDirect3DRMMeshBuilder2* 
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    TRACE("(%p)->(%p,%p,%x,%p,%p): partial stub\n", This, filename, name, loadflags, cb, arg);
+    TRACE("(%p)->(%p,%p,%x,%p,%p)\n", This, filename, name, loadflags, cb, arg);
 
     return IDirect3DRMMeshBuilder3_Load(&This->IDirect3DRMMeshBuilder3_iface, filename, name,
                                         loadflags, (D3DRMLOADTEXTURE3CALLBACK)cb, arg);
@@ -745,7 +745,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GetTextureCoordinates(IDirect3
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    TRACE("(%p)->(%d,%p,%p)\n", This, index, u, v);
+    TRACE("(%p)->(%u,%p,%p)\n", This, index, u, v);
 
     return IDirect3DRMMeshBuilder3_GetTextureCoordinates(&This->IDirect3DRMMeshBuilder3_iface,
                                                          index, u, v);
