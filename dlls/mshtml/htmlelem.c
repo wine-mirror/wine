@@ -507,7 +507,7 @@ static HRESULT WINAPI HTMLElement_get_style(IHTMLElement *iface, IHTMLStyle **p)
             return E_FAIL;
         }
 
-        hres = HTMLStyle_Create(nsstyle, &This->style);
+        hres = HTMLStyle_Create(This, nsstyle, &This->style);
         nsIDOMCSSStyleDeclaration_Release(nsstyle);
         if(FAILED(hres))
             return hres;
@@ -1648,8 +1648,10 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
 
     if(This->nselem)
         nsIDOMHTMLElement_Release(This->nselem);
-    if(This->style)
+    if(This->style) {
+        This->style->elem = NULL;
         IHTMLStyle_Release(&This->style->IHTMLStyle_iface);
+    }
     if(This->attrs) {
         HTMLDOMAttribute *attr;
 
@@ -1659,6 +1661,8 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
         This->attrs->elem = NULL;
         IHTMLAttributeCollection_Release(&This->attrs->IHTMLAttributeCollection_iface);
     }
+
+    heap_free(This->filter);
 
     HTMLDOMNode_destructor(&This->node);
 }

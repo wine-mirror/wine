@@ -556,6 +556,7 @@ typedef struct {
     nsIDOMHTMLElement *nselem;
     HTMLStyle *style;
     HTMLAttributeCollection *attrs;
+    WCHAR *filter;
 } HTMLElement;
 
 #define HTMLELEMENT_TIDS    \
@@ -722,7 +723,7 @@ void set_ready_state(HTMLWindow*,READYSTATE) DECLSPEC_HIDDEN;
 
 HRESULT HTMLSelectionObject_Create(HTMLDocumentNode*,nsISelection*,IHTMLSelectionObject**) DECLSPEC_HIDDEN;
 HRESULT HTMLTxtRange_Create(HTMLDocumentNode*,nsIDOMRange*,IHTMLTxtRange**) DECLSPEC_HIDDEN;
-HRESULT HTMLStyle_Create(nsIDOMCSSStyleDeclaration*,HTMLStyle**) DECLSPEC_HIDDEN;
+HRESULT HTMLStyle_Create(HTMLElement*,nsIDOMCSSStyleDeclaration*,HTMLStyle**) DECLSPEC_HIDDEN;
 IHTMLStyleSheet *HTMLStyleSheet_Create(nsIDOMStyleSheet*) DECLSPEC_HIDDEN;
 IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetList*) DECLSPEC_HIDDEN;
 

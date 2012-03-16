@@ -694,7 +694,6 @@ static ULONG WINAPI HTMLStyle_Release(IHTMLStyle *iface)
     if(!ref) {
         if(This->nsstyle)
             nsIDOMCSSStyleDeclaration_Release(This->nsstyle);
-        heap_free(This->filter);
         release_dispex(&This->dispex);
         heap_free(This);
     }
@@ -2597,7 +2596,7 @@ static void set_opacity(HTMLStyle *This, const WCHAR *val)
 
 static void update_filter(HTMLStyle *This)
 {
-    const WCHAR *ptr = This->filter, *ptr2;
+    const WCHAR *ptr = This->elem->filter, *ptr2;
 
     static const WCHAR alphaW[] = {'a','l','p','h','a'};
 
@@ -2683,14 +2682,19 @@ static HRESULT WINAPI HTMLStyle_put_filter(IHTMLStyle *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
+    if(!This->elem) {
+        FIXME("Element already destroyed\n");
+        return E_UNEXPECTED;
+    }
+
     if(v) {
         new_filter = heap_strdupW(v);
         if(!new_filter)
             return E_OUTOFMEMORY;
     }
 
-    heap_free(This->filter);
-    This->filter = new_filter;
+    heap_free(This->elem->filter);
+    This->elem->filter = new_filter;
 
     update_filter(This);
     return S_OK;
@@ -2702,8 +2706,13 @@ static HRESULT WINAPI HTMLStyle_get_filter(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->filter) {
-        *p = SysAllocString(This->filter);
+    if(!This->elem) {
+        FIXME("Element already destroyed\n");
+        return E_UNEXPECTED;
+    }
+
+    if(This->elem->filter) {
+        *p = SysAllocString(This->elem->filter);
         if(!*p)
             return E_OUTOFMEMORY;
     }else {
@@ -3038,7 +3047,7 @@ static dispex_static_data_t HTMLStyle_dispex = {
     HTMLStyle_iface_tids
 };
 
-HRESULT HTMLStyle_Create(nsIDOMCSSStyleDeclaration *nsstyle, HTMLStyle **ret)
+HRESULT HTMLStyle_Create(HTMLElement *elem, nsIDOMCSSStyleDeclaration *nsstyle, HTMLStyle **ret)
 {
     HTMLStyle *style;
 
@@ -3049,6 +3058,7 @@ HRESULT HTMLStyle_Create(nsIDOMCSSStyleDeclaration *nsstyle, HTMLStyle **ret)
     style->IHTMLStyle_iface.lpVtbl = &HTMLStyleVtbl;
     style->ref = 1;
     style->nsstyle = nsstyle;
+    style->elem = elem;
     HTMLStyle2_Init(style);
     HTMLStyle3_Init(style);
 
