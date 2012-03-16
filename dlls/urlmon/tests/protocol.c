@@ -133,7 +133,8 @@ static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
 static const WCHAR hostW[] = {'w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
 static const WCHAR winehq_ipW[] = {'2','0','9','.','4','6','.','2','5','.','1','3','4',0};
 static const WCHAR emptyW[] = {0};
-static const WCHAR gzipW[] = {'g','z','i','p',0};
+static const WCHAR pjpegW[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
+static const WCHAR gifW[] = {'i','m','a','g','e','/','g','i','f',0};
 
 static HRESULT expect_hrResult;
 static LPCWSTR file_name, http_url, expect_wsz;
@@ -151,7 +152,7 @@ static PROTOCOLDATA protocoldata, *pdata, continue_protdata;
 static DWORD prot_read, filter_state, http_post_test, thread_id;
 static BOOL security_problem, test_async_req, impl_protex;
 static BOOL async_read_pending, mimefilter_test, direct_read, wait_for_switch, emulate_prot, short_read, test_abort;
-static BOOL empty_file;
+static BOOL empty_file, no_mime;
 
 enum {
     STATE_CONNECTING,
@@ -707,6 +708,11 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
                    "szStatusText != text/plain\n");
             else if(empty_file)
                 ok(!strcmp_wa(szStatusText, "application/javascript"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
+            else if((pi & PI_MIMEVERIFICATION) && emulate_prot && !mimefilter_test
+                    && tested_protocol==HTTP_TEST && !short_read)
+                ok(lstrlenW(gifW) <= lstrlenW(szStatusText) &&
+                   !memcmp(szStatusText, gifW, lstrlenW(gifW)*sizeof(WCHAR)),
+                   "szStatusText != image/gif\n");
             else if(!mimefilter_test)
                 ok(lstrlenW(text_htmlW) <= lstrlenW(szStatusText) &&
                    !memcmp(szStatusText, text_htmlW, lstrlenW(text_htmlW)*sizeof(WCHAR)),
@@ -795,7 +801,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         break;
     case BINDSTATUS_DECODING:
         CHECK_EXPECT(ReportProgress_DECODING);
-        ok(!lstrcmpW(szStatusText, gzipW), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
+        ok(!lstrcmpW(szStatusText, pjpegW), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
     default:
         ok(0, "Unexpected status %d\n", ulStatusCode);
@@ -1065,10 +1071,11 @@ static HRESULT WINAPI MimeProtocolSink_ReportData(IInternetProtocolSink *iface, 
     DWORD read = 0;
     BYTE buf[8192];
     HRESULT hres;
+    BOOL report_mime = FALSE;
 
     CHECK_EXPECT(MimeFilter_ReportData);
 
-    if(!filter_state) {
+    if(!filter_state && !no_mime) {
         SET_EXPECT(Read);
         hres = IInternetProtocol_Read(filtered_protocol, buf, sizeof(buf), &read);
         if(tested_protocol == HTTP_TEST)
@@ -1082,15 +1089,34 @@ static HRESULT WINAPI MimeProtocolSink_ReportData(IInternetProtocolSink *iface, 
         ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
         CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
 
+        SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+        hres = IInternetProtocolSink_ReportProgress(filtered_sink, BINDSTATUS_MIMETYPEAVAILABLE, text_htmlW);
+        ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
+        CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+
         /* FIXME: test BINDSTATUS_CACHEFILENAMEAVAILABLE */
     }
 
-    if(!read_report_data)
+    if(no_mime && prot_read<200) {
+        SET_EXPECT(Read);
+    }else if(no_mime && prot_read<300) {
+        report_mime = TRUE;
+        SET_EXPECT(Read);
+        SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
         SET_EXPECT(ReportData);
+    }else if(!read_report_data) {
+        SET_EXPECT(ReportData);
+    }
     hres = IInternetProtocolSink_ReportData(filtered_sink, grfBSCF, ulProgress, ulProgressMax);
     ok(hres == S_OK, "ReportData failed: %08x\n", hres);
-    if(!read_report_data)
+    if(no_mime && prot_read<=200) {
+        CHECK_CALLED(Read);
+    }else if(report_mime) {
+        CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(ReportData);
+    }else if(!read_report_data) {
+        CHECK_CALLED(ReportData);
+    }
 
     if(!filter_state)
         filter_state = 1;
@@ -1610,7 +1636,7 @@ static void protocol_start(IInternetProtocolSink *pOIProtSink, IInternetBindInfo
     }
     SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
     hres = IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE,
-            mimefilter_test ? gzipW : (expect_wsz = text_htmlW));
+            mimefilter_test ? pjpegW : (expect_wsz = text_htmlW));
     ok(hres == S_OK,
        "ReportProgress(BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE) failed: %08x\n", hres);
     if(mimefilter_test) {
@@ -1725,7 +1751,7 @@ static HRESULT WINAPI ProtocolEmul_Continue(IInternetProtocolEx *iface,
             SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
         }
         hres = IInternetProtocolSink_ReportProgress(binding_sink,
-                BINDSTATUS_MIMETYPEAVAILABLE, mimefilter_test ? gzipW : text_htmlW);
+                BINDSTATUS_MIMETYPEAVAILABLE, mimefilter_test ? pjpegW : text_htmlW);
         if(mimefilter_test) {
             CHECK_CALLED(MimeFilter_CreateInstance);
             CHECK_CALLED(MimeFilter_Start);
@@ -1746,9 +1772,9 @@ static HRESULT WINAPI ProtocolEmul_Continue(IInternetProtocolEx *iface,
     }
 
     pr = prot_read;
-    if(mimefilter_test) {
+    if(mimefilter_test)
         SET_EXPECT(MimeFilter_ReportData);
-    }else if(pi & PI_MIMEVERIFICATION) {
+    if((!mimefilter_test || no_mime) && (pi & PI_MIMEVERIFICATION)) {
         if(pr < 200)
             SET_EXPECT(Read); /* checked in ReportData for short_read */
         if(pr == 200) {
@@ -1862,8 +1888,12 @@ static HRESULT WINAPI ProtocolEmul_Read(IInternetProtocolEx *iface, void *pv,
         else
             CHECK_CALLED(ReportResult);
 
-        memset(pv, 'x', 100);
-        prot_read += *pcbRead = 100;
+        if(cb > 100)
+            cb = 100;
+        memset(pv, 'x', cb);
+        if(cb>6)
+            memcpy(pv, "gif87a", 6);
+        prot_read += *pcbRead = cb;
         return S_OK;
     }if(prot_state == 4) {
         *pcbRead = 0;
@@ -1875,8 +1905,12 @@ static HRESULT WINAPI ProtocolEmul_Read(IInternetProtocolEx *iface, void *pv,
         return tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST ? E_PENDING : S_FALSE;
     }
 
-    memset(pv, 'x', 100);
-    prot_read += *pcbRead = 100;
+    if(cb > 100)
+        cb = 100;
+    memset(pv, 'x', cb);
+    if(cb>6)
+        memcpy(pv, "gif87a", 6);
+    prot_read += *pcbRead = cb;
     return S_OK;
 }
 
@@ -1952,7 +1986,7 @@ static HRESULT WINAPI MimeProtocol_Start(IInternetProtocolEx *iface, LPCWSTR szU
 
     CHECK_EXPECT(MimeFilter_Start);
 
-    ok(!lstrcmpW(szUrl, gzipW), "wrong url %s\n", wine_dbgstr_w(szUrl));
+    ok(!lstrcmpW(szUrl, pjpegW), "wrong url %s\n", wine_dbgstr_w(szUrl));
     ok(grfPI == (PI_FILTER_MODE|PI_FORCE_ASYNC), "grfPI=%x, expected PI_FILTER_MODE|PI_FORCE_ASYNC\n", grfPI);
     ok(dwReserved, "dwReserved == 0\n");
     ok(pOIProtSink != NULL, "pOIProtSink == NULL\n");
@@ -1996,7 +2030,7 @@ static HRESULT WINAPI MimeProtocol_Start(IInternetProtocolEx *iface, LPCWSTR szU
     filtered_sink = pOIProtSink;
 
     SET_EXPECT(ReportProgress_DECODING);
-    hres = IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_DECODING, gzipW);
+    hres = IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_DECODING, pjpegW);
     ok(hres == S_OK, "ReportProgress(BINDSTATUS_DECODING) failed: %08x\n", hres);
     CHECK_CALLED(ReportProgress_DECODING);
 
@@ -2202,6 +2236,7 @@ static IClassFactory mimefilter_cf = { &MimeFilterCFVtbl };
 #define TEST_USEIURI     0x0400
 #define TEST_IMPLPROTEX  0x0800
 #define TEST_EMPTY       0x1000
+#define TEST_NOMIME      0x2000
 
 static void register_filter(BOOL do_register)
 {
@@ -2212,10 +2247,14 @@ static void register_filter(BOOL do_register)
     ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
 
     if(do_register) {
-        hres = IInternetSession_RegisterMimeFilter(session, &mimefilter_cf, &IID_IInternetProtocol, gzipW);
+        hres = IInternetSession_RegisterMimeFilter(session, &mimefilter_cf, &IID_IInternetProtocol, pjpegW);
+        ok(hres == S_OK, "RegisterMimeFilter failed: %08x\n", hres);
+        hres = IInternetSession_RegisterMimeFilter(session, &mimefilter_cf, &IID_IInternetProtocol, gifW);
         ok(hres == S_OK, "RegisterMimeFilter failed: %08x\n", hres);
     }else {
-        hres = IInternetSession_UnregisterMimeFilter(session, &mimefilter_cf, gzipW);
+        hres = IInternetSession_UnregisterMimeFilter(session, &mimefilter_cf, pjpegW);
+        ok(hres == S_OK, "RegisterMimeFilter failed: %08x\n", hres);
+        hres = IInternetSession_UnregisterMimeFilter(session, &mimefilter_cf, gifW);
         ok(hres == S_OK, "RegisterMimeFilter failed: %08x\n", hres);
     }
 
@@ -2231,6 +2270,7 @@ static void init_test(int prot, DWORD flags)
     prot_state = 0;
     async_read_pending = TRUE;
     mimefilter_test = (flags & TEST_FILTER) != 0;
+    no_mime = (flags & TEST_NOMIME) != 0;
     filter_state = 0;
     post_stream_read = 0;
     ResetEvent(event_complete);
@@ -3540,6 +3580,8 @@ START_TEST(protocol)
     test_binding(FILE_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_FILTER);
     trace("Testing http binding (mime verification, emulate prot, mime filter)...\n");
     test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_FILTER);
+    trace("Testing http binding (mime verification, emulate prot, mime filter, no mime)...\n");
+    test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_FILTER|TEST_NOMIME);
     trace("Testing http binding (mime verification, emulate prot, direct read)...\n");
     test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_DIRECT_READ);
     trace("Testing http binding (mime verification, emulate prot, abort)...\n");
