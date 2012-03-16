@@ -428,7 +428,7 @@ static INT_PTR cabinet_copy_file(FDINOTIFICATIONTYPE fdint,
         goto done;
     }
 
-    TRACE("extracting %s\n", debugstr_w(path));
+    TRACE("extracting %s -> %s\n", debugstr_w(data->curfile), debugstr_w(path));
 
     attrs = attrs & (FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
     if (!attrs) attrs = FILE_ATTRIBUTE_NORMAL;

@@ -253,7 +253,7 @@ static MSIFILE *find_file( MSIPACKAGE *package, const WCHAR *filename )
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        if (!strcmpiW( filename, file->File )) return file;
+        if (file->state != msifs_installed && !strcmpiW( filename, file->File )) return file;
     }
     return NULL;
 }
