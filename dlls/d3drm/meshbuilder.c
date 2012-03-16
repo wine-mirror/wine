@@ -1272,6 +1272,18 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_Load(IDirect3DRMMeshBuilder3* 
     /* Set size (in number of DWORD) of all faces data */
     This->face_data_size = faces_data_size;
 
+    /* If there is no texture coordinates, generate default texture coordinates (0.0f, 0.0f) for each vertex */
+    if (!This->pCoords2d)
+    {
+        This->nb_coords2d = This->nb_vertices;
+        This->pCoords2d = HeapAlloc(GetProcessHeap(), 0, This->nb_coords2d * sizeof(Coords2d));
+        for (i = 0; i < This->nb_coords2d; i++)
+        {
+            This->pCoords2d[i].u = 0.0f;
+            This->pCoords2d[i].v = 0.0f;
+        }
+    }
+
     ret = D3DRM_OK;
 
 end:
@@ -1603,7 +1615,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetTextureCoordinates(IDirect3
     TRACE("(%p)->(%d,%p,%p)\n", This, index, u, v);
 
     if (index >= This->nb_coords2d)
-        return D3DRMERR_NOTFOUND;
+        return D3DRMERR_BADVALUE;
 
     *u = This->pCoords2d[index].u;
     *v = This->pCoords2d[index].v;

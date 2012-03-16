@@ -180,12 +180,33 @@ static void test_MeshBuilder(void)
     todo_wine ok(val2 == 4, "Wrong number of normals %d (must be 4)\n", val2);
     ok(val3 == 22, "Wrong number of face data bytes %d (must be 22)\n", val3);
 
+    /* Check that Load method generated default texture coordinates (0.0f, 0.0f) for each vertex */
+    valu = 1.23f;
+    valv = 3.21f;
+    hr = IDirect3DRMMeshBuilder_GetTextureCoordinates(pMeshBuilder, 0, &valu, &valv);
+    ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
+    ok(valu == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valu);
+    ok(valv == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valv);
     valu = 1.23f;
     valv = 3.21f;
     hr = IDirect3DRMMeshBuilder_GetTextureCoordinates(pMeshBuilder, 1, &valu, &valv);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
-    todo_wine ok(valu == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valu);
-    todo_wine ok(valv == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valv);
+    ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
+    ok(valu == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valu);
+    ok(valv == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valv);
+    valu = 1.23f;
+    valv = 3.21f;
+    hr = IDirect3DRMMeshBuilder_GetTextureCoordinates(pMeshBuilder, 2, &valu, &valv);
+    ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
+    ok(valu == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valu);
+    ok(valv == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valv);
+    valu = 1.23f;
+    valv = 3.21f;
+    hr = IDirect3DRMMeshBuilder_GetTextureCoordinates(pMeshBuilder, 3, &valu, &valv);
+    ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
+    ok(valu == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valu);
+    ok(valv == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valv);
+    hr = IDirect3DRMMeshBuilder_GetTextureCoordinates(pMeshBuilder, 4, &valu, &valv);
+    ok(hr == D3DRMERR_BADVALUE, "Should fail and return D3DRM_BADVALUE (hr = %x)\n", hr);
 
     valu = 1.23f;
     valv = 3.21f;
@@ -302,12 +323,33 @@ static void test_MeshBuilder3(void)
     ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
     ok(val1 == 4, "Wrong number of vertices %d (must be 4)\n", val1);
 
+    /* Check that Load method generated default texture coordinates (0.0f, 0.0f) for each vertex */
+    valu = 1.23f;
+    valv = 3.21f;
+    hr = IDirect3DRMMeshBuilder3_GetTextureCoordinates(pMeshBuilder3, 0, &valu, &valv);
+    ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
+    ok(valu == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valu);
+    ok(valv == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valv);
     valu = 1.23f;
     valv = 3.21f;
     hr = IDirect3DRMMeshBuilder3_GetTextureCoordinates(pMeshBuilder3, 1, &valu, &valv);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
-    todo_wine ok(valu == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valu);
-    todo_wine ok(valv == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valv);
+    ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
+    ok(valu == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valu);
+    ok(valv == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valv);
+    valu = 1.23f;
+    valv = 3.21f;
+    hr = IDirect3DRMMeshBuilder3_GetTextureCoordinates(pMeshBuilder3, 2, &valu, &valv);
+    ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
+    ok(valu == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valu);
+    ok(valv == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valv);
+    valu = 1.23f;
+    valv = 3.21f;
+    hr = IDirect3DRMMeshBuilder3_GetTextureCoordinates(pMeshBuilder3, 3, &valu, &valv);
+    ok(hr == D3DRM_OK, "Cannot get texture coordinates (hr = %x)\n", hr);
+    ok(valu == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valu);
+    ok(valv == 0.0f, "Wrong coordinate %f (must be 0.0)\n", valv);
+    hr = IDirect3DRMMeshBuilder3_GetTextureCoordinates(pMeshBuilder3, 4, &valu, &valv);
+    ok(hr == D3DRMERR_BADVALUE, "Should fail and return D3DRM_BADVALUE (hr = %x)\n", hr);
 
     valu = 1.23f;
     valv = 3.21f;
