@@ -42,6 +42,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
+#ifdef HAVE_LIBXML2
+
 typedef struct
 {
     IPersistMoniker IPersistMoniker_iface;
@@ -1422,7 +1424,6 @@ static IOleObjectVtbl XMLView_OleObjectVtbl = {
     XMLView_OleObject_SetColorScheme
 };
 
-#ifdef HAVE_LIBXML2
 HRESULT XMLView_create(IUnknown *outer, void **ppObj)
 {
     XMLView *This;
@@ -1453,11 +1454,14 @@ HRESULT XMLView_create(IUnknown *outer, void **ppObj)
     *ppObj = &This->IPersistMoniker_iface;
     return S_OK;
 }
+
 #else
+
 HRESULT XMLView_create(IUnknown *outer, void **ppObj)
 {
     MESSAGE("This program tried to use a XMLView object, but\n"
             "libxml2 support was not present at compile time.\n");
     return E_NOTIMPL;
 }
-#endif
+
+#endif /* HAVE_LIBXML2 */
