@@ -322,10 +322,11 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_QueryInterface(IDirect3DRMMesh
 static ULONG WINAPI IDirect3DRMMeshBuilder2Impl_AddRef(IDirect3DRMMeshBuilder2* iface)
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)->(): new ref = %d\n", This, ref);
 
-    return InterlockedIncrement(&This->ref);
+    return ref;
 }
 
 static ULONG WINAPI IDirect3DRMMeshBuilder2Impl_Release(IDirect3DRMMeshBuilder2* iface)
@@ -333,7 +334,7 @@ static ULONG WINAPI IDirect3DRMMeshBuilder2Impl_Release(IDirect3DRMMeshBuilder2*
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)->(): new ref = %d\n", This, ref);
 
     if (!ref)
     {

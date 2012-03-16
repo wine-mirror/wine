@@ -93,10 +93,11 @@ static HRESULT WINAPI IDirect3DRMDevice2Impl_QueryInterface(IDirect3DRMDevice2* 
 static ULONG WINAPI IDirect3DRMDevice2Impl_AddRef(IDirect3DRMDevice2* iface)
 {
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)->(): new ref = %d\n", iface, ref);
 
-    return InterlockedIncrement(&This->ref);
+    return ref;
 }
 
 static ULONG WINAPI IDirect3DRMDevice2Impl_Release(IDirect3DRMDevice2* iface)
@@ -104,7 +105,7 @@ static ULONG WINAPI IDirect3DRMDevice2Impl_Release(IDirect3DRMDevice2* iface)
     IDirect3DRMDeviceImpl *This = impl_from_IDirect3DRMDevice2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)->(): new ref = %d\n", iface, ref);
 
     if (!ref)
         HeapFree(GetProcessHeap(), 0, This);

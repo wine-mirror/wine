@@ -80,10 +80,11 @@ static HRESULT WINAPI IDirect3DRMViewportImpl_QueryInterface(IDirect3DRMViewport
 static ULONG WINAPI IDirect3DRMViewportImpl_AddRef(IDirect3DRMViewport* iface)
 {
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)->(): new ref = %d\n", This, ref);
 
-    return InterlockedIncrement(&This->ref);
+    return ref;
 }
 
 static ULONG WINAPI IDirect3DRMViewportImpl_Release(IDirect3DRMViewport* iface)
@@ -91,7 +92,7 @@ static ULONG WINAPI IDirect3DRMViewportImpl_Release(IDirect3DRMViewport* iface)
     IDirect3DRMViewportImpl *This = impl_from_IDirect3DRMViewport(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)->(): new ref = %d\n", This, ref);
 
     if (!ref)
         HeapFree(GetProcessHeap(), 0, This);
