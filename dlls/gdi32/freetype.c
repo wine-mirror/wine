@@ -1707,7 +1707,6 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
 {
     FT_Face ft_face;
     TT_OS2 *pOS2;
-    TT_Header *pHeader = NULL;
     FT_Error err;
     FT_Long face_index = 0, num_faces;
     INT ret = 0;
@@ -1769,7 +1768,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
         {
             if(!(pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2)) ||
                !pFT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea) ||
-               !(pHeader = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_head)))
+               !pFT_Get_Sfnt_Table(ft_face, ft_sfnt_head))
             {
                 TRACE("Font %s/%p lacks either an OS2, HHEA or HEAD table.\n"
                       "Skipping this font.\n", debugstr_a(file), font_data_ptr);
