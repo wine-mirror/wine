@@ -4104,6 +4104,27 @@ static void test_mutex_security(HANDLE token)
     CloseHandle (mutex);
 }
 
+static void test_event_security(HANDLE token)
+{
+    HANDLE event;
+    GENERIC_MAPPING mapping = { STANDARD_RIGHTS_READ, STANDARD_RIGHTS_WRITE,
+                                STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
+                                STANDARD_RIGHTS_ALL | EVENT_ALL_ACCESS };
+
+    SetLastError(0xdeadbeef);
+    event = OpenEvent(0, FALSE, "WineTestEvent");
+    ok(!event, "event should not exist\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    event = CreateEvent(NULL, FALSE, FALSE, "WineTestEvent");
+    ok(event != 0, "CreateEvent error %d\n", GetLastError());
+
+    test_default_handle_security(token, event, &mapping);
+
+    CloseHandle(event);
+}
+
 static BOOL validate_impersonation_token(HANDLE token, DWORD *token_type)
 {
     DWORD ret, needed;
@@ -4175,6 +4196,7 @@ static void test_kernel_objects_security(void)
     ok(token_type == TokenImpersonation, "expected TokenImpersonation, got %d\n", token_type);
 
     test_mutex_security(token);
+    test_event_security(token);
     /* FIXME: test other kernel object types */
 
     CloseHandle(process_token);
