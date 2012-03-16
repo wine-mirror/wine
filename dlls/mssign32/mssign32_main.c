@@ -50,7 +50,7 @@ HRESULT WINAPI PvkGetCryptProv(HWND hwnd, LPCWSTR pwszCaption, LPCWSTR pwszCapiP
                     DWORD dwProviderType, LPCWSTR pwszPvkFile, LPCWSTR pwszKeyContainerName,
                     DWORD *pdwKeySpec, LPWSTR *ppwszTmpContainer, HCRYPTPROV *phCryptProv)
 {
-    FIXME("%p %s %s %d %s %s %p %p %p stub", hwnd, debugstr_w(pwszCaption), debugstr_w(pwszCapiProvider),
+    FIXME("%p %s %s %d %s %s %p %p %p stub\n", hwnd, debugstr_w(pwszCaption), debugstr_w(pwszCapiProvider),
                     dwProviderType, debugstr_w(pwszPvkFile), debugstr_w(pwszKeyContainerName),
                     pdwKeySpec, ppwszTmpContainer, phCryptProv);
 
@@ -61,7 +61,7 @@ BOOL WINAPI PvkPrivateKeyAcquireContextFromMemory(LPCWSTR pwszProvName, DWORD dw
                     BYTE *pbData, DWORD cbData, HWND hwndOwner, LPCWSTR pwszKeyName,
                     DWORD *pdwKeySpec, HCRYPTPROV *phCryptProv, LPWSTR *ppwszTmpContainer)
 {
-    FIXME("%s %d %p %d %p %s %p %p %p stub", debugstr_w(pwszProvName), dwProvType,
+    FIXME("%s %d %p %d %p %s %p %p %p stub\n", debugstr_w(pwszProvName), dwProvType,
                     pbData, cbData, hwndOwner, debugstr_w(pwszKeyName), pdwKeySpec,
                     phCryptProv, ppwszTmpContainer);
 
@@ -71,6 +71,6 @@ BOOL WINAPI PvkPrivateKeyAcquireContextFromMemory(LPCWSTR pwszProvName, DWORD dw
 void WINAPI PvkFreeCryptProv(HCRYPTPROV hProv, LPCWSTR pwszCapiProvider, DWORD dwProviderType,
                     LPWSTR pwszTmpContainer)
 {
-    FIXME("%08lx %s %d %s stub", hProv, debugstr_w(pwszCapiProvider), dwProviderType,
+    FIXME("%08lx %s %d %s stub\n", hProv, debugstr_w(pwszCapiProvider), dwProviderType,
                     debugstr_w(pwszTmpContainer));
 }
