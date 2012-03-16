@@ -290,9 +290,11 @@ static int get_opcode_size(UNWIND_CODE op)
     }
 }
 
-static BOOL is_inside_epilog(struct cpu_stack_walk* csw, DWORD64 pc)
+static BOOL is_inside_epilog(struct cpu_stack_walk* csw, DWORD64 pc,
+                             DWORD64 base, const RUNTIME_FUNCTION *function )
 {
-    BYTE        op0, op1, op2;
+    BYTE op0, op1, op2;
+    LONG val32;
 
     if (!sw_read_mem(csw, pc, &op0, 1)) return FALSE;
 
@@ -338,12 +340,9 @@ static BOOL is_inside_epilog(struct cpu_stack_walk* csw, DWORD64 pc)
     /* now check for various pop instructions */
     for (;;)
     {
-        BYTE rex = 0;
-
         if (!sw_read_mem(csw, pc, &op0, 1)) return FALSE;
-        if ((op0 & 0xf0) == 0x40)
+        if ((op0 & 0xf0) == 0x40)  /* rex prefix */
         {
-            rex = op0 & 0x0f;  /* rex prefix */
             if (!sw_read_mem(csw, ++pc, &op0, 1)) return FALSE;
         }
 
@@ -362,7 +361,21 @@ static BOOL is_inside_epilog(struct cpu_stack_walk* csw, DWORD64 pc)
         case 0xc2: /* ret $nn */
         case 0xc3: /* ret */
             return TRUE;
-        /* FIXME: add various jump instructions */
+        case 0xe9: /* jmp nnnn */
+            if (!sw_read_mem(csw, pc + 1, &val32, sizeof(LONG))) return FALSE;
+            pc += 5 + val32;
+            if (pc - base >= function->BeginAddress && pc - base < function->EndAddress)
+                continue;
+            break;
+        case 0xeb: /* jmp n */
+            if (!sw_read_mem(csw, pc + 1, &op1, 1)) return FALSE;
+            pc += 2 + (signed char)op1;
+            if (pc - base >= function->BeginAddress && pc - base < function->EndAddress)
+                continue;
+            break;
+        case 0xf3: /* rep; ret (for amd64 prediction bug) */
+            if (!sw_read_mem(csw, pc + 1, &op1, 1)) return FALSE;
+            return op1 == 0xc3;
         }
         return FALSE;
     }
@@ -402,8 +415,8 @@ static BOOL interpret_epilog(struct cpu_stack_walk* csw, ULONG64 pc, CONTEXT *co
             pc++;
             continue;
         case 0x81: /* add $nnnn,%rsp */
-            if (!sw_read_mem(csw, pc + 2, &val32, sizeof(ULONG))) return FALSE;
-            context->Rsp += (LONG)val32;
+            if (!sw_read_mem(csw, pc + 2, &val32, sizeof(LONG))) return FALSE;
+            context->Rsp += val32;
             pc += 2 + sizeof(LONG);
             continue;
         case 0x83: /* add $n,%rsp */
@@ -421,8 +434,8 @@ static BOOL interpret_epilog(struct cpu_stack_walk* csw, ULONG64 pc, CONTEXT *co
             }
             else  /* lea nnnn(reg),%rsp */
             {
-                if (!sw_read_mem(csw, pc + 2, &val32, sizeof(ULONG))) return FALSE;
-                context->Rsp = get_int_reg( context, (insn & 7) + (rex & 1) * 8 ) + (LONG)val32;
+                if (!sw_read_mem(csw, pc + 2, &val32, sizeof(LONG))) return FALSE;
+                context->Rsp = get_int_reg( context, (insn & 7) + (rex & 1) * 8 ) + val32;
                 pc += 2 + sizeof(LONG);
             }
             continue;
@@ -433,11 +446,19 @@ static BOOL interpret_epilog(struct cpu_stack_walk* csw, ULONG64 pc, CONTEXT *co
             context->Rsp += sizeof(ULONG64) + val16;
             return TRUE;
         case 0xc3: /* ret */
+        case 0xf3: /* rep; ret */
             if (!sw_read_mem(csw, context->Rsp, &val64, sizeof(DWORD64))) return FALSE;
             context->Rip = val64;
             context->Rsp += sizeof(ULONG64);
             return TRUE;
-        /* FIXME: add various jump instructions */
+        case 0xe9: /* jmp nnnn */
+            if (!sw_read_mem(csw, pc + 1, &val32, sizeof(LONG))) return FALSE;
+            pc += 5 + val32;
+            continue;
+        case 0xeb: /* jmp n */
+            if (!sw_read_mem(csw, pc + 1, &val8, sizeof(BYTE))) return FALSE;
+            pc += 2 + (signed char)val8;
+            continue;
         }
         FIXME("unsupported insn %x\n", insn);
         return FALSE;
@@ -497,7 +518,7 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw,
         else
         {
             prolog_offset = ~0;
-            if (is_inside_epilog(csw, context->Rip))
+            if (is_inside_epilog(csw, context->Rip, base, function))
             {
                 interpret_epilog(csw, context->Rip, context);
                 return TRUE;
