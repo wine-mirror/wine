@@ -35,9 +35,8 @@ msgid ""
 msgstr "下列软件可以自动卸载。 按'添加/删除'可卸载选定程序或者调整已安装部件。"
 
 #: appwiz.rc:64
-#, fuzzy
 msgid "&Support Information"
-msgstr "技术支持信息"
+msgstr "技术支持信息(&S)"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -111,7 +110,6 @@ msgid "Wine Gecko Installer"
 msgstr "Wine Gecko 安装"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -123,7 +121,8 @@ msgid ""
 msgstr ""
 "Wine 未找到到用于支持嵌入 HTML 的 Gecko 引擎。Wine 可以自动并下载安装它。\n"
 "\n"
-"注意: 推荐您安装为发行版定制的软件包。具体参看 http://wiki.winehq.org/Gecko。"
+"注意: 推荐您安装为发行版定制的软件包。具体请参看 <a href=\"http://wiki."
+"winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a>。"
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -199,9 +198,8 @@ msgid "All files (*.*)"
 msgstr "所有文件 (*.*)"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "修改或删除 (&M)..."
+msgstr "修改或删除 (&M)"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -353,14 +351,9 @@ msgid "Separator"
 msgstr "分隔符"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"未定义\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"无"
+msgstr "无"
 
 #: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:434 winedbg.rc:57
 #: winedbg.rc:72 wordpad.rc:169
@@ -574,13 +567,11 @@ msgid "&Hue:"
 msgstr "色调(&E)："
 
 #: comdlg32.rc:290
-#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "饱和度(&S)："
 
 #: comdlg32.rc:292
-#, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "亮度(&L)："
@@ -771,14 +762,12 @@ msgid "&Open"
 msgstr "打开(&O)"
 
 #: comdlg32.rc:481
-#, fuzzy
 msgid "File name:"
-msgstr "文件名(&F):"
+msgstr "文件名:"
 
 #: comdlg32.rc:484
-#, fuzzy
 msgid "Files of type:"
-msgstr "文件类型(&T)"
+msgstr "文件类型"
 
 #: comdlg32.rc:29
 msgid "File not found"
@@ -929,13 +918,12 @@ msgid "Unreadable Entry"
 msgstr "数值不可读"
 
 #: comdlg32.rc:54
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "这个值不在页数范围内。\n"
-"请输入一个 %d 和 %d 之间的数。"
+"请输入一个 %1!d! 和 %2!d! 之间的数。"
 
 #: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -950,7 +938,6 @@ msgstr ""
 "请重新输入页边距。"
 
 #: comdlg32.rc:60
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
 msgstr "“份数”项不能空。"
 
@@ -975,13 +962,8 @@ msgid "Cannot find the printer."
 msgstr "找不到打印机。"
 
 #: comdlg32.rc:66 progman.rc:73
-#, fuzzy
 msgid "Out of memory."
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"内存溢出。\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"内存不够。"
+msgstr "内存不足。"
 
 #: comdlg32.rc:67
 msgid "An error occurred."
@@ -998,9 +980,8 @@ msgid ""
 msgstr "在安装打印机后才能使用和打印机相关的功能。请安装后再试。"
 
 #: comdlg32.rc:137
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "选择 %d 到 %d 之间的字号。"
+msgstr "选择 %1!d! 到 %2!d! 之间的字号。"
 
 #: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
@@ -1176,13 +1157,15 @@ msgstr ""
 "是否正确。"
 
 #: credui.rc:32
-#, fuzzy
 msgid ""
 "Having Caps Lock on may cause you to enter your password incorrectly.\n"
 "\n"
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
-msgstr "开着大写锁定可能导致你输入错误的密码。"
+msgstr ""
+"开着大写锁定可能导致你输入错误的密码。\n"
+"\n"
+"建议你按下键盘上的 Caps Lock 键以关闭大写锁定，然后再输入密码。"
 
 #: credui.rc:31
 msgid "Caps Lock is On"
@@ -1832,14 +1815,9 @@ msgid "Path Length Constraint="
 msgstr ""
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "path length"
 msgid "None"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"未定义\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"无"
+msgstr "无"
 
 #: crypt32.rc:196
 msgid "Information Not Available"
@@ -2051,57 +2029,48 @@ msgid "General"
 msgstr ""
 
 #: cryptui.rc:188
-#, fuzzy
 msgid "&Install Certificate..."
-msgstr "格属性(&C)"
+msgstr "安装证书(&I)..."
 
 #: cryptui.rc:189
 msgid "Issuer &Statement"
 msgstr ""
 
 #: cryptui.rc:197
-#, fuzzy
 msgid "&Show:"
-msgstr "显示"
+msgstr "显示(&S):"
 
 #: cryptui.rc:202
-#, fuzzy
 msgid "&Edit Properties..."
-msgstr "属性(&P)"
+msgstr "编辑属性(&E)"
 
 #: cryptui.rc:203
-#, fuzzy
 msgid "&Copy to File..."
-msgstr "复制文件..."
+msgstr "复制文件(&C)..."
 
 #: cryptui.rc:207
-#, fuzzy
 msgid "Certification Path"
-msgstr "格属性(&C)"
+msgstr "鉴定路径"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "格属性(&C)"
+msgstr "鉴定路径"
 
 #: cryptui.rc:214
-#, fuzzy
 msgid "&View Certificate"
-msgstr "格属性(&C)"
+msgstr "查看证书(&V)"
 
 #: cryptui.rc:215
-#, fuzzy
 msgid "Certificate &status:"
-msgstr "格属性(&C)"
+msgstr "证书状态(&S)"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
 msgstr ""
 
 #: cryptui.rc:228
-#, fuzzy
 msgid "More &Info"
-msgstr "技术支持(&S)..."
+msgstr "更多信息(&I)"
 
 #: cryptui.rc:236
 #, fuzzy
@@ -2113,9 +2082,8 @@ msgid "&Description:"
 msgstr "描述(&D):"
 
 #: cryptui.rc:240
-#, fuzzy
 msgid "Certificate purposes"
-msgstr "格属性(&C)"
+msgstr "证书用途"
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
@@ -2130,9 +2098,8 @@ msgid "Enable &only the following purposes for this certificate:"
 msgstr ""
 
 #: cryptui.rc:250
-#, fuzzy
 msgid "Add &Purpose..."
-msgstr "浏览(&B)..."
+msgstr "添加用途(&P)..."
 
 #: cryptui.rc:254
 msgid "Add Purpose"
@@ -2177,7 +2144,6 @@ msgid ""
 msgstr ""
 
 #: cryptui.rc:291 cryptui.rc:427
-#, fuzzy
 msgid "&File name:"
 msgstr "文件名(&F):"
 
@@ -2238,44 +2204,34 @@ msgid "I&ntended purpose:"
 msgstr ""
 
 #: cryptui.rc:341
-#, fuzzy
 msgid "&Import..."
-msgstr "导出(&E)..."
+msgstr "导入(&I)..."
 
 #: cryptui.rc:342 regedit.rc:109
 msgid "&Export..."
 msgstr "导出(&E)..."
 
 #: cryptui.rc:344
-#, fuzzy
 msgid "&Advanced..."
 msgstr "高级(&A)"
 
 #: cryptui.rc:345
-#, fuzzy
 msgid "Certificate intended purposes"
-msgstr "格属性(&C)"
+msgstr "证书的预期用途"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:45
 #: wordpad.rc:66
-#, fuzzy
 msgid "&View"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"视图(&V)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"查看 (&V)"
+msgstr "视图(&V)"
 
 #: cryptui.rc:352
-#, fuzzy
 msgid "Advanced Options"
-msgstr "高级"
+msgstr "高级选项"
 
 #: cryptui.rc:355
-#, fuzzy
 msgid "Certificate purpose"
-msgstr "格属性(&C)"
+msgstr "证书用途"
 
 #: cryptui.rc:356
 msgid ""
@@ -2283,9 +2239,8 @@ msgid ""
 msgstr ""
 
 #: cryptui.rc:358
-#, fuzzy
 msgid "&Certificate purposes:"
-msgstr "格属性(&C)"
+msgstr "证书用途(&C):"
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
@@ -2328,9 +2283,8 @@ msgid "N&o, do not export the private key"
 msgstr ""
 
 #: cryptui.rc:396
-#, fuzzy
 msgid "&Confirm password:"
-msgstr "密码(&P):"
+msgstr "确认密码(&C):"
 
 #: cryptui.rc:404
 msgid "Select the format you want to use:"
@@ -2381,9 +2335,8 @@ msgid "Certificate"
 msgstr ""
 
 #: cryptui.rc:28
-#, fuzzy
 msgid "Certificate Information"
-msgstr "信息"
+msgstr "证书信息"
 
 #: cryptui.rc:29
 msgid ""
@@ -2402,9 +2355,8 @@ msgid "This certificate could not be validated to a trusted root certificate."
 msgstr ""
 
 #: cryptui.rc:32
-#, fuzzy
 msgid "This certificate's issuer could not be found."
-msgstr "找不到“%s”。"
+msgstr "找不到这个证书的颁发者。"
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
@@ -2475,9 +2427,8 @@ msgid "Critical Extensions Only"
 msgstr ""
 
 #: cryptui.rc:50
-#, fuzzy
 msgid "Properties Only"
-msgstr "属性(&P)"
+msgstr "仅属性"
 
 #: cryptui.rc:52
 msgid "Serial number"
@@ -2524,9 +2475,8 @@ msgid "Description"
 msgstr "描述"
 
 #: cryptui.rc:63
-#, fuzzy
 msgid "Certificate Properties"
-msgstr "格属性(&C)"
+msgstr "证书属性"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
@@ -2593,9 +2543,8 @@ msgid "The file format is not recognized. Please select another file."
 msgstr ""
 
 #: cryptui.rc:83
-#, fuzzy
 msgid "Could not open "
-msgstr "不能打开文件。"
+msgstr "不能打开 "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -2618,9 +2567,8 @@ msgid "File"
 msgstr "文件"
 
 #: cryptui.rc:89 inetcpl.rc:105
-#, fuzzy
 msgid "Content"
-msgstr "内容(&C)"
+msgstr "内容"
 
 #: cryptui.rc:91
 msgid "Certificate Revocation List"
@@ -2667,13 +2615,8 @@ msgid "Friendly Name"
 msgstr ""
 
 #: cryptui.rc:106 cryptui.rc:120
-#, fuzzy
 msgid "<None>"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"未定义\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"无"
+msgstr "<无>"
 
 #: cryptui.rc:107
 msgid ""
@@ -2790,9 +2733,8 @@ msgid "Private Key Archival"
 msgstr ""
 
 #: cryptui.rc:148
-#, fuzzy
 msgid "Export Format"
-msgstr "格式(&O)"
+msgstr "导出格式"
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
@@ -2807,11 +2749,8 @@ msgid "Specify the name of the file in which the content will be saved."
 msgstr ""
 
 #: cryptui.rc:152
-#, fuzzy
 msgid "The specified file already exists. Do you want to replace it?"
-msgstr ""
-"文件已经存在。\n"
-"是否替换？"
+msgstr "指定文件已经存在。是否替换？"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -2830,9 +2769,8 @@ msgid "Personal Information Exchange (*.pfx)"
 msgstr ""
 
 #: cryptui.rc:160
-#, fuzzy
 msgid "File Format"
-msgstr "格式(&O)"
+msgstr "文件格式"
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
@@ -2897,9 +2835,8 @@ msgid "Default MidiOut Device"
 msgstr ""
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "配置(&F)..."
+msgstr "配置设备"
 
 #: dinput.rc:45
 msgid "Reset"
@@ -2911,38 +2848,32 @@ msgid "Player"
 msgstr "播放"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "设备(&V)："
+msgstr "设备"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "激活"
+msgstr "动作"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "驱动器映射"
+msgstr "映射"
 
 #: dinput.rc:53
 msgid "Show Assigned First"
 msgstr ""
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "激活"
+msgstr "动作"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "对象(&O)"
+msgstr "对象"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "默认设置"
+msgstr "区域设置"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
@@ -2961,9 +2892,8 @@ msgid "Cyrillic"
 msgstr ""
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "绿色"
+msgstr "希腊语"
 
 #: gdi32.rc:29
 msgid "Turkish"
@@ -3062,29 +2992,21 @@ msgid "S&ync"
 msgstr ""
 
 #: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
-#, fuzzy
 msgid "&Back"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"向后(&B)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"返回(&B)"
+msgstr "向后(&B)"
 
 #: hhctrl.rc:58
-#, fuzzy
 msgid "&Forward"
-msgstr "向前"
+msgstr "向前(&F)"
 
 #: hhctrl.rc:59
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
-msgstr "首页"
+msgstr "首页(&H)"
 
 #: hhctrl.rc:60
-#, fuzzy
 msgid "&Stop"
-msgstr "停止"
+msgstr "停止(&S)"
 
 #: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
@@ -3103,13 +3025,8 @@ msgid "I&ndex"
 msgstr "目录(&N)"
 
 #: hhctrl.rc:30 notepad.rc:52
-#, fuzzy
 msgid "&Search"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"搜寻(&S)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"搜索(&S)"
+msgstr "搜索(&S)"
 
 #: hhctrl.rc:31
 msgid "Favor&ites"
@@ -3144,7 +3061,6 @@ msgid "Back"
 msgstr "向后"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
 msgstr "首页"
@@ -3180,42 +3096,32 @@ msgid "&Window"
 msgstr "窗口(&W)"
 
 #: ieframe.rc:31 view.rc:30 winhlp32.rc:29
-#, fuzzy
 msgid "&Open..."
-msgstr "打开(&O)"
+msgstr "打开(&O)..."
 
 #: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
 msgid "Save &as..."
 msgstr "另存为(&A)..."
 
 #: ieframe.rc:35
-#, fuzzy
 msgid "Print &format..."
-msgstr "打印..."
+msgstr "打印格式(&F)..."
 
 #: ieframe.rc:36
-#, fuzzy
 msgid "Pr&int..."
-msgstr "打印..."
+msgstr "打印(&I)..."
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "打印预览(&W)..."
+msgstr "打印预览(&W)"
 
 #: ieframe.rc:44
-#, fuzzy
 msgid "&Toolbars"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"工具条(&T)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"工具栏(&T)"
+msgstr "工具栏(&T)"
 
 #: ieframe.rc:46
-#, fuzzy
 msgid "&Standard bar"
-msgstr "状态栏(&S)"
+msgstr "标准栏(&S)"
 
 #: ieframe.rc:47
 msgid "&Address bar"
@@ -3230,26 +3136,22 @@ msgid "&Add to Favorites..."
 msgstr "添加到收藏夹(&A)..."
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "Wine Internet Explorer"
+msgstr "关于 Internet Explorer (&A)"
 
 #: ieframe.rc:87
-#, fuzzy
 msgid "Open URL"
-msgstr "打开链接(&O)"
+msgstr "打开 URL"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
 msgstr ""
 
 #: ieframe.rc:91
-#, fuzzy
 msgid "Open:"
-msgstr "打开"
+msgstr "打开:"
 
 #: ieframe.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
 msgstr "首页"
@@ -3263,52 +3165,44 @@ msgid "Address"
 msgstr ""
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "属性"
+msgstr "搜索 %s"
 
 #: ieframe.rc:79
 msgid "Start downloading %s"
 msgstr ""
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "正在下载..."
+msgstr "正在下载 %s"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "属性"
+msgstr "请求 %s"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr "单页"
+msgstr "首页"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
 msgstr ""
 
 #: inetcpl.rc:50
-#, fuzzy
 msgid "&Current page"
-msgstr "下一页"
+msgstr "当前页面(&C)"
 
 #: inetcpl.rc:51
-#, fuzzy
 msgid "&Default page"
-msgstr "(默认)"
+msgstr "默认页面(&D)"
 
 #: inetcpl.rc:52
-#, fuzzy
 msgid "&Blank page"
-msgstr "单页"
+msgstr "空白页面(&B)"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr "命令历史"
+msgstr "浏览历史"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3319,9 +3213,8 @@ msgid "Delete &files..."
 msgstr ""
 
 #: inetcpl.rc:57
-#, fuzzy
 msgid "&Settings..."
-msgstr "选项(&O)..."
+msgstr "设置(&S)..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
@@ -3363,9 +3256,8 @@ msgid "Delete"
 msgstr "删除"
 
 #: inetcpl.rc:87 winefile.rc:114
-#, fuzzy
 msgid "Security"
-msgstr "安全(&S)"
+msgstr "安全"
 
 #: inetcpl.rc:109
 msgid ""
@@ -3374,14 +3266,12 @@ msgid ""
 msgstr ""
 
 #: inetcpl.rc:111
-#, fuzzy
 msgid "Certificates..."
-msgstr "格属性(&C)"
+msgstr "证书..."
 
 #: inetcpl.rc:112
-#, fuzzy
 msgid "Publishers..."
-msgstr "生产商"
+msgstr "发布者..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -3406,9 +3296,8 @@ msgid "Very Low"
 msgstr ""
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "慢(&L)"
+msgstr "低"
 
 #: inetcpl.rc:34
 msgid "Medium"
@@ -3419,9 +3308,8 @@ msgid "Increased"
 msgstr ""
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "快(&H)"
+msgstr "高"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3488,9 +3376,8 @@ msgid "Label redefined"
 msgstr ""
 
 #: jscript.rc:41
-#, fuzzy
 msgid "Label not found"
-msgstr "找不到文件"
+msgstr "找不到标签"
 
 #: jscript.rc:42
 msgid "Conditional compilation is turned off"
@@ -3525,9 +3412,8 @@ msgid "Boolean object expected"
 msgstr ""
 
 #: jscript.rc:50
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "删除日期"
+msgstr "不能删除 '|'"
 
 #: jscript.rc:51
 msgid "VBArray object expected"
@@ -3566,14 +3452,12 @@ msgid "Invalid function.\n"
 msgstr ""
 
 #: winerror.mc:36
-#, fuzzy
 msgid "File not found.\n"
 msgstr "找不到文件。\n"
 
 #: winerror.mc:41
-#, fuzzy
 msgid "Path not found.\n"
-msgstr "路径 %s 没找到。\n"
+msgstr "找不到路径。\n"
 
 #: winerror.mc:46
 msgid "Too many open files.\n"
@@ -3593,13 +3477,8 @@ msgid "Memory trashed.\n"
 msgstr "内存监视器。\n"
 
 #: winerror.mc:66
-#, fuzzy
 msgid "Not enough memory.\n"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"内存溢出。\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"内存不够。"
+msgstr "内存不足。\n"
 
 #: winerror.mc:71
 msgid "Invalid block.\n"
@@ -3622,13 +3501,8 @@ msgid "Invalid data.\n"
 msgstr ""
 
 #: winerror.mc:96
-#, fuzzy
 msgid "Out of memory.\n"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"内存溢出。\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"内存不够。"
+msgstr "内存不足。\n"
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
@@ -3684,19 +3558,16 @@ msgid "Sector not found.\n"
 msgstr "找不到文件。\n"
 
 #: winerror.mc:166
-#, fuzzy
 msgid "Out of paper.\n"
-msgstr "缺纸; 。\n"
+msgstr "缺纸。\n"
 
 #: winerror.mc:171
-#, fuzzy
 msgid "Write fault.\n"
-msgstr "默认。\n"
+msgstr "写入错误。\n"
 
 #: winerror.mc:176
-#, fuzzy
 msgid "Read fault.\n"
-msgstr "默认。\n"
+msgstr "读取错误。\n"
 
 #: winerror.mc:181
 msgid "General failure.\n"
@@ -3720,9 +3591,8 @@ msgid "Sharing buffer exceeded.\n"
 msgstr ""
 
 #: winerror.mc:206
-#, fuzzy
 msgid "End of file.\n"
-msgstr "文件绑定(&B)..."
+msgstr "文件尾。\n"
 
 #: winerror.mc:211 winerror.mc:436
 msgid "Disk full.\n"
@@ -3745,14 +3615,12 @@ msgid "Bad network path.\n"
 msgstr ""
 
 #: winerror.mc:236
-#, fuzzy
 msgid "Network busy.\n"
-msgstr "网络共享文件夹。\n"
+msgstr "网络忙。\n"
 
 #: winerror.mc:241
-#, fuzzy
 msgid "Device does not exist.\n"
-msgstr "文件不存在。\n"
+msgstr "设备不存在。\n"
 
 #: winerror.mc:246
 msgid "Too many commands.\n"
@@ -3783,14 +3651,12 @@ msgid "No spool space.\n"
 msgstr ""
 
 #: winerror.mc:281
-#, fuzzy
 msgid "Print canceled.\n"
-msgstr "删除日期。\n"
+msgstr "打印已取消。\n"
 
 #: winerror.mc:286
-#, fuzzy
 msgid "Network name deleted.\n"
-msgstr "删除日期。\n"
+msgstr "网络名已删除。\n"
 
 #: winerror.mc:291
 msgid "Network access denied.\n"
@@ -3801,9 +3667,8 @@ msgid "Bad device type.\n"
 msgstr ""
 
 #: winerror.mc:301
-#, fuzzy
 msgid "Bad network name.\n"
-msgstr "网络共享文件夹。\n"
+msgstr "错误的网络名。\n"
 
 #: winerror.mc:306
 msgid "Too many network names.\n"
@@ -3827,9 +3692,8 @@ msgid "Redirector paused.\n"
 msgstr ""
 
 #: winerror.mc:331
-#, fuzzy
 msgid "File exists.\n"
-msgstr "文件不存在。\n"
+msgstr "文件存在。\n"
 
 #: winerror.mc:336
 msgid "Cannot create.\n"
@@ -3852,9 +3716,8 @@ msgid "Invalid password.\n"
 msgstr ""
 
 #: winerror.mc:361
-#, fuzzy
 msgid "Invalid parameter.\n"
-msgstr "路径中包含无效字符。\n"
+msgstr "无效参数。\n"
 
 #: winerror.mc:366
 #, fuzzy
@@ -3907,9 +3770,8 @@ msgid "Broken pipe.\n"
 msgstr ""
 
 #: winerror.mc:426
-#, fuzzy
 msgid "Open failed.\n"
-msgstr "打开文件。\n"
+msgstr "打开失败。\n"
 
 #: winerror.mc:431
 msgid "Buffer overflow.\n"
@@ -3936,27 +3798,20 @@ msgid "Bad driver level.\n"
 msgstr ""
 
 #: winerror.mc:466
-#, fuzzy
 msgid "Call not implemented.\n"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"此功能未实现\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"未实现。\n"
+msgstr "调用尚未实现。\n"
 
 #: winerror.mc:471
 msgid "Semaphore timeout.\n"
 msgstr ""
 
 #: winerror.mc:476
-#, fuzzy
 msgid "Insufficient buffer.\n"
-msgstr "数字时钟(&T)。\n"
+msgstr "缓冲区不足。\n"
 
 #: winerror.mc:481
-#, fuzzy
 msgid "Invalid name.\n"
-msgstr "数字格式无效。\n"
+msgstr "无效名字。\n"
 
 #: winerror.mc:486
 msgid "Invalid level.\n"
@@ -3967,14 +3822,12 @@ msgid "No volume label.\n"
 msgstr ""
 
 #: winerror.mc:496
-#, fuzzy
 msgid "Module not found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到模块。\n"
 
 #: winerror.mc:501
-#, fuzzy
 msgid "Procedure not found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到过程。\n"
 
 #: winerror.mc:506
 msgid "No children to wait for.\n"
@@ -4029,9 +3882,8 @@ msgid "Attempt to SUBST to a JOINed drive.\n"
 msgstr ""
 
 #: winerror.mc:576
-#, fuzzy
 msgid "Drive is busy.\n"
-msgstr "驱动器。\n"
+msgstr "驱动器忙。\n"
 
 #: winerror.mc:581
 #, fuzzy
@@ -4043,9 +3895,8 @@ msgid "Not toplevel directory.\n"
 msgstr ""
 
 #: winerror.mc:591
-#, fuzzy
 msgid "Directory is not empty.\n"
-msgstr "仅显示目录内容(&O)。\n"
+msgstr "目录非空。\n"
 
 #: winerror.mc:596
 msgid "Path is in use as a SUBST.\n"
@@ -4134,33 +3985,28 @@ msgid "Cancel violation.\n"
 msgstr "信息。\n"
 
 #: winerror.mc:701
-#, fuzzy
 msgid "Atomic locks not supported.\n"
-msgstr "不支持 OLE 储存文件。\n"
+msgstr "不支持原子锁。\n"
 
 #: winerror.mc:706
-#, fuzzy
 msgid "Invalid segment number.\n"
-msgstr "数字格式无效。\n"
+msgstr "段编号无效。\n"
 
 #: winerror.mc:711
 msgid "Invalid ordinal for %1.\n"
 msgstr ""
 
 #: winerror.mc:716
-#, fuzzy
 msgid "File already exists.\n"
-msgstr "端口 %s 已经存在。\n"
+msgstr "文件已存在。\n"
 
 #: winerror.mc:721
-#, fuzzy
 msgid "Invalid flag number.\n"
-msgstr "数字格式无效。\n"
+msgstr "标志数无效。\n"
 
 #: winerror.mc:726
-#, fuzzy
 msgid "Semaphore name not found.\n"
-msgstr "路径 %s 没找到。\n"
+msgstr "找不到信号量名字。\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1.\n"
@@ -4243,9 +4089,8 @@ msgid "Error in use of filename wildcards.\n"
 msgstr ""
 
 #: winerror.mc:831
-#, fuzzy
 msgid "Invalid signal number.\n"
-msgstr "数字格式无效。\n"
+msgstr "信号编号无效。\n"
 
 #: winerror.mc:836
 msgid "Error setting signal handler.\n"
@@ -4280,9 +4125,8 @@ msgid "Pipe closed.\n"
 msgstr ""
 
 #: winerror.mc:876
-#, fuzzy
 msgid "Pipe not connected.\n"
-msgstr "找不到文件。\n"
+msgstr "管道未连接。\n"
 
 #: winerror.mc:881
 #, fuzzy
@@ -4290,9 +4134,8 @@ msgid "More data available.\n"
 msgstr "不可用; 。\n"
 
 #: winerror.mc:886
-#, fuzzy
 msgid "Session canceled.\n"
-msgstr "打开文件。\n"
+msgstr "会话取消。\n"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name.\n"
@@ -4312,9 +4155,8 @@ msgid "Cannot use Copy API.\n"
 msgstr ""
 
 #: winerror.mc:911
-#, fuzzy
 msgid "Directory name invalid.\n"
-msgstr "仅显示目录内容(&O)。\n"
+msgstr "目录名无效。\n"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit.\n"
@@ -4333,9 +4175,8 @@ msgid "Invalid extended attribute handle.\n"
 msgstr ""
 
 #: winerror.mc:936
-#, fuzzy
 msgid "Extended attributes not supported.\n"
-msgstr "不支持 OLE 储存文件。\n"
+msgstr "不支持扩展属性。\n"
 
 #: winerror.mc:941
 msgid "Mutex not owned by caller.\n"
@@ -4382,9 +4223,8 @@ msgid "Extended attribute access denied.\n"
 msgstr ""
 
 #: winerror.mc:996
-#, fuzzy
 msgid "I/O operation aborted.\n"
-msgstr "选项。\n"
+msgstr "I/O 操作被终止。\n"
 
 #: winerror.mc:1001
 msgid "Overlapped I/O incomplete.\n"
@@ -4435,46 +4275,40 @@ msgid "Nonexistent token.\n"
 msgstr ""
 
 #: winerror.mc:1061
-#, fuzzy
 msgid "Registry corrupt.\n"
-msgstr "注册表编辑器。\n"
+msgstr "注册表损坏。\n"
 
 #: winerror.mc:1066
 msgid "Invalid key.\n"
 msgstr ""
 
 #: winerror.mc:1071
-#, fuzzy
 msgid "Can't open registry key.\n"
-msgstr "运行 Wine 注册表编辑器。\n"
+msgstr "无法打开注册表键。\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key.\n"
-msgstr ""
+msgstr "无法读取注册表键。\n"
 
 #: winerror.mc:1081
-#, fuzzy
 msgid "Can't write registry key.\n"
-msgstr "运行 Wine 注册表编辑器。\n"
+msgstr "无法写入注册表键。\n"
 
 #: winerror.mc:1086
 msgid "Registry has been recovered.\n"
 msgstr ""
 
 #: winerror.mc:1091
-#, fuzzy
 msgid "Registry is corrupt.\n"
-msgstr "注册表编辑器。\n"
+msgstr "注册表损坏。\n"
 
 #: winerror.mc:1096
-#, fuzzy
 msgid "I/O to registry failed.\n"
-msgstr "导入注册表文件。\n"
+msgstr "注册表 I/O 失败。\n"
 
 #: winerror.mc:1101
-#, fuzzy
 msgid "Not registry file.\n"
-msgstr "导入注册表文件。\n"
+msgstr "不是注册表文件。\n"
 
 #: winerror.mc:1106
 #, fuzzy
@@ -4534,9 +4368,8 @@ msgid "Circular dependency.\n"
 msgstr ""
 
 #: winerror.mc:1176
-#, fuzzy
 msgid "Service does not exist.\n"
-msgstr "文件不存在。\n"
+msgstr "服务不存在。\n"
 
 #: winerror.mc:1181
 msgid "Service cannot accept control message.\n"
@@ -4555,18 +4388,16 @@ msgid "Exception in service.\n"
 msgstr ""
 
 #: winerror.mc:1201
-#, fuzzy
 msgid "Database does not exist.\n"
-msgstr "路径不存在。\n"
+msgstr "数据库不存在。\n"
 
 #: winerror.mc:1206
 msgid "Service-specific error.\n"
 msgstr ""
 
 #: winerror.mc:1211
-#, fuzzy
 msgid "Process aborted.\n"
-msgstr "结束进程(&E)。\n"
+msgstr "进程被终止。\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed.\n"
@@ -4731,9 +4562,8 @@ msgid "Floppy reports wrong cylinder.\n"
 msgstr ""
 
 #: winerror.mc:1416
-#, fuzzy
 msgid "Unknown floppy error.\n"
-msgstr "未知错误。\n"
+msgstr "未知软盘错误。\n"
 
 #: winerror.mc:1421
 msgid "Floppy registers inconsistent.\n"
@@ -4792,9 +4622,8 @@ msgid "Single-instance application.\n"
 msgstr ""
 
 #: winerror.mc:1491
-#, fuzzy
 msgid "Real-mode application.\n"
-msgstr "应用程序。\n"
+msgstr "实地址模式应用程序。\n"
 
 #: winerror.mc:1496
 msgid "Invalid DLL.\n"
@@ -4809,9 +4638,8 @@ msgid "DDE failure.\n"
 msgstr ""
 
 #: winerror.mc:1511
-#, fuzzy
 msgid "DLL not found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到 DLL。\n"
 
 #: winerror.mc:1516
 #, fuzzy
@@ -4851,24 +4679,20 @@ msgid "The device requires cleaning.\n"
 msgstr ""
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open.\n"
-msgstr "打印机盖是打开的; 。\n"
+msgstr "设备盖是打开的。\n"
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected.\n"
-msgstr "找不到文件。\n"
+msgstr "设备未连接。\n"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到元素。\n"
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found.\n"
-msgstr "路径 %s 没找到。\n"
+msgstr "没有找到匹配。\n"
 
 #: winerror.mc:1576
 #, fuzzy
@@ -4922,9 +4746,8 @@ msgid "Invalid device name.\n"
 msgstr ""
 
 #: winerror.mc:1636
-#, fuzzy
 msgid "Connection unavailable.\n"
-msgstr "不可用; 。\n"
+msgstr "连接不可用。\n"
 
 #: winerror.mc:1641
 msgid "Device already remembered.\n"
@@ -4959,9 +4782,8 @@ msgid "Invalid group name.\n"
 msgstr ""
 
 #: winerror.mc:1681
-#, fuzzy
 msgid "Invalid computer name.\n"
-msgstr "数字格式无效。\n"
+msgstr "无效计算机名。\n"
 
 #: winerror.mc:1686
 msgid "Invalid event name.\n"
@@ -4976,14 +4798,12 @@ msgid "Invalid service name.\n"
 msgstr ""
 
 #: winerror.mc:1701
-#, fuzzy
 msgid "Invalid network name.\n"
-msgstr "数字格式无效。\n"
+msgstr "无效网络名。\n"
 
 #: winerror.mc:1706
-#, fuzzy
 msgid "Invalid share name.\n"
-msgstr "路径中包含无效字符。\n"
+msgstr "共享名字无效。\n"
 
 #: winerror.mc:1716
 msgid "Invalid message name.\n"
@@ -5010,18 +4830,16 @@ msgid "No network.\n"
 msgstr ""
 
 #: winerror.mc:1746
-#, fuzzy
 msgid "Operation canceled by user.\n"
-msgstr "安装程序。\n"
+msgstr "操作被用户取消。\n"
 
 #: winerror.mc:1751
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
 #: winerror.mc:1756 winerror.mc:3741
-#, fuzzy
 msgid "Connection refused.\n"
-msgstr "正在连接到 %s。\n"
+msgstr "连接被拒绝。\n"
 
 #: winerror.mc:1761
 msgid "Connection gracefully closed.\n"
@@ -5036,18 +4854,16 @@ msgid "Address not associated with transport endpoint.\n"
 msgstr ""
 
 #: winerror.mc:1776
-#, fuzzy
 msgid "Connection invalid.\n"
-msgstr "局域网连接。\n"
+msgstr "连接无效。\n"
 
 #: winerror.mc:1781
 msgid "Connection is active.\n"
 msgstr ""
 
 #: winerror.mc:1786
-#, fuzzy
 msgid "Network unreachable.\n"
-msgstr "网络共享文件夹。\n"
+msgstr "网络不可达。\n"
 
 #: winerror.mc:1791
 msgid "Host unreachable.\n"
@@ -5066,9 +4882,8 @@ msgid "Request aborted.\n"
 msgstr ""
 
 #: winerror.mc:1811
-#, fuzzy
 msgid "Connection aborted.\n"
-msgstr "正在连接到 %s。\n"
+msgstr "连接被终止。\n"
 
 #: winerror.mc:1816
 msgid "Please retry operation.\n"
@@ -5095,9 +4910,8 @@ msgid "Service already registered.\n"
 msgstr ""
 
 #: winerror.mc:1846
-#, fuzzy
 msgid "Service not found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到服务。\n"
 
 #: winerror.mc:1851
 msgid "User not authenticated.\n"
@@ -5176,9 +4990,8 @@ msgid "Incompatible revision levels.\n"
 msgstr ""
 
 #: winerror.mc:1941
-#, fuzzy
 msgid "Invalid owner.\n"
-msgstr "数字格式无效。\n"
+msgstr "所有者无效。\n"
 
 #: winerror.mc:1946
 msgid "Invalid primary group.\n"
@@ -5213,18 +5026,16 @@ msgid "Invalid account name.\n"
 msgstr ""
 
 #: winerror.mc:1986
-#, fuzzy
 msgid "User already exists.\n"
-msgstr "端口 %s 已经存在。\n"
+msgstr "用户已经存在。\n"
 
 #: winerror.mc:1991
 msgid "No such user.\n"
 msgstr ""
 
 #: winerror.mc:1996
-#, fuzzy
 msgid "Group already exists.\n"
-msgstr "端口 %s 已经存在。\n"
+msgstr "组已经存在。\n"
 
 #: winerror.mc:2001
 msgid "No such group.\n"
@@ -5275,9 +5086,8 @@ msgid "Password expired.\n"
 msgstr ""
 
 #: winerror.mc:2061
-#, fuzzy
 msgid "Account disabled.\n"
-msgstr "停用。\n"
+msgstr "帐号停用。\n"
 
 #: winerror.mc:2066
 msgid "No security ID mapped.\n"
@@ -5313,9 +5123,8 @@ msgid "Bad inherited ACL.\n"
 msgstr ""
 
 #: winerror.mc:2106
-#, fuzzy
 msgid "Server disabled.\n"
-msgstr "停用。\n"
+msgstr "服务器停用。\n"
 
 #: winerror.mc:2111
 msgid "Server not disabled.\n"
@@ -5358,9 +5167,8 @@ msgid "Can't access domain information.\n"
 msgstr ""
 
 #: winerror.mc:2161
-#, fuzzy
 msgid "Invalid server state.\n"
-msgstr "数字格式无效。\n"
+msgstr "服务器状态无效。\n"
 
 #: winerror.mc:2166
 msgid "Invalid domain state.\n"
@@ -5438,9 +5246,8 @@ msgid "Security DB commit failure.\n"
 msgstr ""
 
 #: winerror.mc:2256
-#, fuzzy
 msgid "Account is built-in.\n"
-msgstr "原装先于内建。\n"
+msgstr "帐号是内建的。\n"
 
 #: winerror.mc:2261
 msgid "Group is built-in.\n"
@@ -5471,9 +5278,8 @@ msgid "User already in local group.\n"
 msgstr ""
 
 #: winerror.mc:2296
-#, fuzzy
 msgid "Local group already exists.\n"
-msgstr "端口 %s 已经存在。\n"
+msgstr "本地组已经存在。\n"
 
 #: winerror.mc:2301 winerror.mc:2326
 msgid "Logon type not granted.\n"
@@ -5504,9 +5310,8 @@ msgid "No such member.\n"
 msgstr ""
 
 #: winerror.mc:2341
-#, fuzzy
 msgid "Invalid member.\n"
-msgstr "数字格式无效。\n"
+msgstr "成员无效。\n"
 
 #: winerror.mc:2346
 msgid "Too many SIDs.\n"
@@ -5586,9 +5391,8 @@ msgid "Window owned by another thread.\n"
 msgstr ""
 
 #: winerror.mc:2441
-#, fuzzy
 msgid "Hotkey already registered.\n"
-msgstr "端口 %s 已经存在。\n"
+msgstr "热键已被注册。\n"
 
 #: winerror.mc:2446
 #, fuzzy
@@ -5749,9 +5553,8 @@ msgid "Popup menu already active.\n"
 msgstr ""
 
 #: winerror.mc:2631
-#, fuzzy
 msgid "No scrollbars.\n"
-msgstr "滚动这里。\n"
+msgstr "没有滚动条。\n"
 
 #: winerror.mc:2636
 msgid "Invalid scrollbar range.\n"
@@ -5786,9 +5589,8 @@ msgid "Exceeded commitment limit.\n"
 msgstr ""
 
 #: winerror.mc:2676
-#, fuzzy
 msgid "Menu item not found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到菜单项。\n"
 
 #: winerror.mc:2681
 #, fuzzy
@@ -5834,14 +5636,12 @@ msgid "Installer service failed.\n"
 msgstr "剩余空间。\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user.\n"
-msgstr "安装程序。\n"
+msgstr "安装被用户终止。\n"
 
 #: winerror.mc:2736
-#, fuzzy
 msgid "Installation failure.\n"
-msgstr "安装程序。\n"
+msgstr "安装失败。\n"
 
 #: winerror.mc:2741
 #, fuzzy
@@ -5849,24 +5649,20 @@ msgid "Installation suspended.\n"
 msgstr "安装程序。\n"
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product.\n"
-msgstr "未知错误。\n"
+msgstr "未知产品。\n"
 
 #: winerror.mc:2751
-#, fuzzy
 msgid "Unknown feature.\n"
-msgstr "在 %s 中发现未知特性。\n"
+msgstr "未知特性。\n"
 
 #: winerror.mc:2756
-#, fuzzy
 msgid "Unknown component.\n"
-msgstr "未知错误。\n"
+msgstr "未知组件。\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property.\n"
-msgstr "未知错误。\n"
+msgstr "未知属性。\n"
 
 #: winerror.mc:2766
 #, fuzzy
@@ -5883,9 +5679,8 @@ msgid "Index is missing.\n"
 msgstr ""
 
 #: winerror.mc:2781
-#, fuzzy
 msgid "Installation source is missing.\n"
-msgstr "本功能的安装源不存在。\n"
+msgstr "安装源不存在。\n"
 
 #: winerror.mc:2786
 msgid "Wrong installation package version.\n"
@@ -5896,32 +5691,28 @@ msgid "Product uninstalled.\n"
 msgstr ""
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax.\n"
-msgstr "数字格式无效。\n"
+msgstr "请求语法无效。\n"
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field.\n"
-msgstr "数字格式无效。\n"
+msgstr "字段无效。\n"
 
 #: winerror.mc:2806
 msgid "Device removed.\n"
 msgstr ""
 
 #: winerror.mc:2811
-#, fuzzy
 msgid "Installation already running.\n"
-msgstr "安装程序。\n"
+msgstr "安装程序已经在运行。\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open.\n"
 msgstr ""
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid.\n"
-msgstr "安装程序。\n"
+msgstr "安装包无效。\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed.\n"
@@ -6106,13 +5897,8 @@ msgid "Can't create endpoint.\n"
 msgstr ""
 
 #: winerror.mc:3036
-#, fuzzy
 msgid "Out of resources.\n"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"内存溢出。\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"内存不够。"
+msgstr "资源不足。\n"
 
 #: winerror.mc:3041
 msgid "RPC server unavailable.\n"
@@ -6123,9 +5909,8 @@ msgid "RPC server too busy.\n"
 msgstr ""
 
 #: winerror.mc:3051
-#, fuzzy
 msgid "Invalid network options.\n"
-msgstr "数字格式无效。\n"
+msgstr "网络选项无效。\n"
 
 #: winerror.mc:3056
 msgid "No RPC call active.\n"
@@ -6160,18 +5945,16 @@ msgid "No entry name.\n"
 msgstr ""
 
 #: winerror.mc:3101
-#, fuzzy
 msgid "Invalid name syntax.\n"
-msgstr "数字格式无效。\n"
+msgstr "名字语法无效。\n"
 
 #: winerror.mc:3106
 msgid "Unsupported name syntax.\n"
 msgstr ""
 
 #: winerror.mc:3111
-#, fuzzy
 msgid "No network address.\n"
-msgstr "网络共享文件夹。\n"
+msgstr "没有网络地址。\n"
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint.\n"
@@ -6838,11 +6621,10 @@ msgid "Done"
 msgstr ""
 
 #: msi.rc:27
-#, fuzzy
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
-msgstr "不能打开所指定的安装软件包。 请检查文件路径后再试。"
+msgstr "不能打开指定的安装包。请检查文件路径后再试。"
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -6944,9 +6726,8 @@ msgid "&Data Rate"
 msgstr "数据速度(&D)"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "KB/sec"
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -6961,18 +6742,16 @@ msgid "unknown object"
 msgstr ""
 
 #: oleacc.rc:28
-#, fuzzy
 msgid "title bar"
-msgstr "无标题栏(&W)"
+msgstr "标题栏"
 
 #: oleacc.rc:29
 msgid "menu bar"
 msgstr ""
 
 #: oleacc.rc:30
-#, fuzzy
 msgid "scroll bar"
-msgstr "滚动这里"
+msgstr "滚动条"
 
 #: oleacc.rc:31
 msgid "grip"
@@ -6995,9 +6774,8 @@ msgid "alert"
 msgstr ""
 
 #: oleacc.rc:36
-#, fuzzy
 msgid "window"
-msgstr "窗口(&W)"
+msgstr "窗口"
 
 #: oleacc.rc:37
 msgid "client"
@@ -7016,12 +6794,10 @@ msgid "tool tip"
 msgstr ""
 
 #: oleacc.rc:41
-#, fuzzy
 msgid "application"
 msgstr "应用程序"
 
 #: oleacc.rc:42
-#, fuzzy
 msgid "document"
 msgstr "文档"
 
@@ -7046,7 +6822,6 @@ msgid "grouping"
 msgstr ""
 
 #: oleacc.rc:48
-#, fuzzy
 msgid "separator"
 msgstr "分隔符"
 
@@ -7055,12 +6830,10 @@ msgid "tool bar"
 msgstr ""
 
 #: oleacc.rc:50
-#, fuzzy
 msgid "status bar"
-msgstr "状态栏(&S)"
+msgstr "状态栏"
 
 #: oleacc.rc:51
-#, fuzzy
 msgid "table"
 msgstr "表格"
 
@@ -7073,9 +6846,8 @@ msgid "row header"
 msgstr ""
 
 #: oleacc.rc:54
-#, fuzzy
 msgid "column"
-msgstr "列(&O)"
+msgstr "列"
 
 #: oleacc.rc:55
 msgid "row"
@@ -7094,9 +6866,8 @@ msgid "help balloon"
 msgstr ""
 
 #: oleacc.rc:59
-#, fuzzy
 msgid "character"
-msgstr "文字格式(&F)"
+msgstr "字符"
 
 #: oleacc.rc:60
 msgid "list"
@@ -7132,14 +6903,12 @@ msgid "graphic"
 msgstr ""
 
 #: oleacc.rc:68
-#, fuzzy
 msgid "static text"
-msgstr "富文本格式"
+msgstr "静态文本"
 
 #: oleacc.rc:69
-#, fuzzy
 msgid "text"
-msgstr "获取文字(&G)"
+msgstr "文本"
 
 #: oleacc.rc:70
 msgid "push button"
@@ -7186,9 +6955,8 @@ msgid "diagram"
 msgstr ""
 
 #: oleacc.rc:81
-#, fuzzy
 msgid "animation"
-msgstr "信息"
+msgstr "动画"
 
 #: oleacc.rc:82
 msgid "equation"
@@ -7215,7 +6983,6 @@ msgid "page tab list"
 msgstr ""
 
 #: oleacc.rc:88
-#, fuzzy
 msgid "clock"
 msgstr "时钟"
 
@@ -7385,8 +7152,8 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"将剪贴板的捷径插入到你的文件。 捷径是链接到源文件的, 对源文件的任何改动都会反"
-"应到你的文件。"
+"插入指向剪切板中文件的快捷方式。快捷方式是链接到源文件的,对源文件的任何改动都"
+"会反映到你的文档中。"
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
@@ -7438,9 +7205,8 @@ msgid "us"
 msgstr "µs"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "属性"
+msgstr "%s 的设置"
 
 #: serialui.rc:28
 msgid "Baud Rate"
@@ -7471,9 +7237,8 @@ msgid "Destination:"
 msgstr "目标文件:"
 
 #: setupapi.rc:49
-#, fuzzy
 msgid "Files Needed"
-msgstr "计算机名称(&M)："
+msgstr "需要文件"
 
 #: setupapi.rc:52
 msgid ""
@@ -7609,13 +7374,8 @@ msgid "P&roperties"
 msgstr "属性(&R)"
 
 #: shdoclc.rc:88 user32.rc:55
-#, fuzzy
 msgid "&Undo"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"撤销(&U)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"撤消(&U)"
+msgstr "撤消(&U)"
 
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
@@ -7799,23 +7559,13 @@ msgstr ""
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
-#, fuzzy
 msgid "Lar&ge Icons"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"大图标(&G)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"大图标 (&G)"
+msgstr "大图标(&G)"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:120 shell32.rc:160 taskmgr.rc:66
 #: taskmgr.rc:111 taskmgr.rc:253
-#, fuzzy
 msgid "S&mall Icons"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"小图标(&M)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"小图标 (&M)"
+msgstr "小图标(&M)"
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:121 shell32.rc:161
 msgid "&List"
@@ -7823,13 +7573,8 @@ msgstr "列表 (&L)"
 
 #: shell32.rc:30 shell32.rc:45 shell32.rc:122 shell32.rc:162 taskmgr.rc:67
 #: taskmgr.rc:112 taskmgr.rc:254
-#, fuzzy
 msgid "&Details"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"详情列表(&D)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"详细信息 (&D)"
+msgstr "详细信息(&D)"
 
 #: shell32.rc:48 winefile.rc:77
 msgid "Arrange &Icons"
@@ -7880,10 +7625,9 @@ msgid "Properties"
 msgstr "属性"
 
 #: shell32.rc:82
-#, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
-msgstr "恢复(&R)"
+msgstr "还原(&R)"
 
 #: shell32.rc:83
 msgid "&Erase"
@@ -7907,18 +7651,12 @@ msgstr "改名(&R)"
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
 #: winefile.rc:37 winemine.rc:46 winhlp32.rc:34 wordpad.rc:37
-#, fuzzy
 msgid "E&xit"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"退出(&X)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"退出(&x)"
+msgstr "退出(&X)"
 
 #: shell32.rc:127
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "关于控制面板(&A)..."
+msgstr "关于控制面板(&A)"
 
 #: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
@@ -8020,7 +7758,6 @@ msgid "Date deleted"
 msgstr "删除日期"
 
 #: shell32.rc:153 winecfg.rc:92 winefile.rc:99
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
 msgstr "桌面"
@@ -8058,7 +7795,6 @@ msgid "Programs"
 msgstr "程序"
 
 #: shell32.rc:201
-#, fuzzy
 msgid "My Documents"
 msgstr "我的文档"
 
@@ -8083,7 +7819,6 @@ msgid "My Videos"
 msgstr ""
 
 #: shell32.rc:207
-#, fuzzy
 msgctxt "directory"
 msgid "Desktop"
 msgstr "桌面"
@@ -8113,9 +7848,8 @@ msgid "My Pictures"
 msgstr ""
 
 #: shell32.rc:215
-#, fuzzy
 msgid "Common Files"
-msgstr "复制文件..."
+msgstr "公共文件"
 
 #: shell32.rc:216 shell32.rc:147 shell32.rc:232
 msgid "Documents"
@@ -8297,42 +8031,38 @@ msgid "There is no Windows program configured to open this type of file."
 msgstr "找不到用于打开此类文件的 Windows 程序。"
 
 #: shell32.rc:243
-#, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "真的删除 '%1'?"
+msgstr "真的永久删除 '%1'?"
 
 #: shell32.rc:244
-#, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "真的删除这 %1 项?"
+msgstr "真的永久删除这 %1 项?"
 
 #: shell32.rc:245
-#, fuzzy
 msgid "Confirm deletion"
 msgstr "确认删除文件"
 
 #: shell32.rc:246
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"文件已经存在。\n"
+"文件 %1 已经存在。\n"
+"\n"
 "是否替换？"
 
 #: shell32.rc:247
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"文件已经存在。\n"
+"文件夹 %1 已经存在。\n"
+"\n"
 "是否替换？"
 
 #: shell32.rc:248
-#, fuzzy
 msgid "Confirm overwrite"
 msgstr "确认覆盖文件"
 
@@ -8370,30 +8100,25 @@ msgid "Don't show me th&is message again"
 msgstr "不要再显示这个讯息"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld 字节"
+msgstr "%d 字节"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
-msgstr " 小时"
+msgstr " 时"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
 msgstr " 分"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " 秒"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
-#, fuzzy
 msgctxt "window"
 msgid "&Restore"
 msgstr "恢复(&R)"
@@ -8479,23 +8204,20 @@ msgid "Authentication Required"
 msgstr ""
 
 #: wininet.rc:58
-#, fuzzy
 msgid "Server"
-msgstr "向下滚动"
+msgstr "服务器"
 
 #: wininet.rc:74
-#, fuzzy
 msgid "Security Warning"
-msgstr "安全(&S)"
+msgstr "安全警告"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
 msgstr ""
 
 #: wininet.rc:79
-#, fuzzy
 msgid "Do you want to continue anyway?"
-msgstr "要模拟 Windows 重启吗?"
+msgstr "还是要继续吗？"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -9012,22 +8734,20 @@ msgid "&Output File Name:"
 msgstr "输出文件名(&O):"
 
 #: winspool.rc:28
-#, fuzzy
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "输出文件已存在, 按'确定'覆盖。"
+msgstr "输出文件已存在。按“确定”覆盖。"
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
-msgstr "不能打开输出文件。"
+msgstr "不能创建输出文件。"
 
 #: wldap32.rc:27
 msgid "Success"
 msgstr ""
 
 #: wldap32.rc:28
-#, fuzzy
 msgid "Operations Error"
-msgstr "选项"
+msgstr "操作错误"
 
 #: wldap32.rc:29
 msgid "Protocol Error"
@@ -9130,9 +8850,8 @@ msgid "Invalid Credentials"
 msgstr ""
 
 #: wldap32.rc:77
-#, fuzzy
 msgid "Insufficient Rights"
-msgstr "数字时钟(&T)"
+msgstr "权限不足"
 
 #: wldap32.rc:78
 msgid "Busy"
@@ -9195,19 +8914,16 @@ msgid "Other"
 msgstr ""
 
 #: wldap32.rc:108
-#, fuzzy
 msgid "Server Down"
-msgstr "向下滚动"
+msgstr "服务器不可用"
 
 #: wldap32.rc:109
-#, fuzzy
 msgid "Local Error"
-msgstr "本地端口"
+msgstr "本地错误"
 
 #: wldap32.rc:110
-#, fuzzy
 msgid "Encoding Error"
-msgstr "语言编码(&E)"
+msgstr "编码错误"
 
 #: wldap32.rc:111
 msgid "Decoding Error"
@@ -9272,9 +8988,8 @@ msgid ""
 msgstr ""
 
 #: attrib.rc:28 cmd.rc:317
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "找不到文件\n"
+msgstr "%1: 找不到文件\n"
 
 #: attrib.rc:47
 msgid ""
@@ -9327,9 +9042,8 @@ msgid "&Always on Top"
 msgstr "总是在最前面(&A)"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "关于 Wine(&A)..."
+msgstr "关于时钟(&A)"
 
 #: clock.rc:48
 msgid "Clock"
@@ -9765,18 +9479,16 @@ msgid "Syntax error\n"
 msgstr ""
 
 #: cmd.rc:318
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "不可用; "
+msgstr "%1 的帮助不可用\n"
 
 #: cmd.rc:319
 msgid "Target to GOTO not found\n"
 msgstr ""
 
 #: cmd.rc:320
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "下一页"
+msgstr "当前日期是 %1\n"
 
 #: cmd.rc:321
 msgid "Current Time is %1\n"
@@ -9808,9 +9520,8 @@ msgid "A"
 msgstr ""
 
 #: cmd.rc:328
-#, fuzzy
 msgid "Delete %1?"
-msgstr "删除"
+msgstr "删除 %1？"
 
 #: cmd.rc:329
 msgid "Echo is %1\n"
@@ -9887,14 +9598,12 @@ msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr ""
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
-msgstr "Wine Internet Explorer"
+msgstr "Wine Explorer"
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "位置"
+msgstr "位置:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -10005,9 +9714,8 @@ msgid "Stopping dependent service: %1\n"
 msgstr ""
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "不能打开文件。"
+msgstr "不能停止服务 %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -10026,23 +9734,20 @@ msgid "The %1 service was started successfully.\n"
 msgstr ""
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "剩余空间"
+msgstr "服务 %1 启动失败。\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "打印机盖是打开的; "
+msgstr "服务 %1 正在停止。\n"
 
 #: net.rc:38
 msgid "The %1 service was stopped successfully.\n"
 msgstr ""
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "剩余空间"
+msgstr "服务 %1 停止失败。\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -10060,29 +9765,24 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
 #: net.rc:45
-#, fuzzy
 msgid "Paused"
-msgstr "暂停(&P)"
+msgstr "已暂停"
 
 #: net.rc:46
-#, fuzzy
 msgid "Disconnected"
-msgstr "找不到文件"
+msgstr "连接断开"
 
 #: net.rc:47
-#, fuzzy
 msgid "A network error occurred"
-msgstr "打印机错误。"
+msgstr "网络错误"
 
 #: net.rc:48
-#, fuzzy
 msgid "Connection is being made"
-msgstr "局域网连接"
+msgstr "正在发起连接"
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "正在连接到 %s"
+msgstr "正在重新连接"
 
 #: net.rc:40
 msgid "The following services are running:\n"
@@ -10117,13 +9817,8 @@ msgid "&Edit"
 msgstr "编辑(&E)"
 
 #: notepad.rc:39 wordpad.rc:41
-#, fuzzy
 msgid "&Undo\tCtrl+Z"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"撤消(&U)\tCtrl+Z\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"撤销(&U)\tCtrl+Z"
+msgstr "撤销(&U)\tCtrl+Z"
 
 #: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
@@ -10139,13 +9834,8 @@ msgstr "粘贴(&P)\tCtrl+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:90 regedit.rc:106
 #: winefile.rc:29
-#, fuzzy
 msgid "&Delete\tDel"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"删除(&D)\tDel\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"删除(&D)\tDEL"
+msgstr "删除(&D)\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -10168,18 +9858,12 @@ msgid "&Search next\tF3"
 msgstr "搜索下一个(&S)\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
-#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"替换...\tCtrl+H\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"替换(&R)...\tCtrl+H"
+msgstr "替换(&R)...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:82
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "内容(&C)"
+msgstr "帮助内容(&C)\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -10198,9 +9882,8 @@ msgid "&Footer:"
 msgstr "页脚(&F)："
 
 #: notepad.rc:104
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "边距（毫米）(&M)："
+msgstr "边距(毫米)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10322,12 +10005,10 @@ msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 大尾)"
 
 #: notepad.rc:84
-#, fuzzy
 msgid "Unicode (UTF-8)"
-msgstr "Unicode (UTF-16)"
+msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:91
-#, fuzzy
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -10336,8 +10017,8 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
-"此文件包含 Unicode 字符。如果用 %s 编码保存，这些字符将会丢失。\n"
+"%1\n"
+"此文件包含 Unicode 字符。如果用 %2 编码保存，这些字符将会丢失。\n"
 "要保留这些字符，请点“取消”，然后选择一种 Unicode 编码。\n"
 "要继续吗？"
 
@@ -10350,9 +10031,8 @@ msgid "&View TypeLib..."
 msgstr "查看 &TypeLib..."
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "系统设置(&S)..."
+msgstr "系统配置(&S)"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -10375,14 +10055,12 @@ msgid "In-process &handler"
 msgstr ""
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "本地端口"
+msgstr "本地服务器(&L)"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "删除 (&R)..."
+msgstr "远程服务器(&R)"
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -10521,9 +10199,8 @@ msgid "version 1.0"
 msgstr "版本 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr "TypeLib 文件 (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr "TypeLib 文件 (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
@@ -10599,14 +10276,12 @@ msgid "Ask for an in-process handler when calling CoGetClassObject"
 msgstr ""
 
 #: oleview.rc:115
-#, fuzzy
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr "呼叫 CoGetClassObject 时使用 CLSCTX_LOCAL_SERVER"
+msgstr "呼叫 CoGetClassObject 时请求本地服务器"
 
 #: oleview.rc:116
-#, fuzzy
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr "呼叫 CoGetClassObject 时使用 CLSCTX_LOCAL_SERVER"
+msgstr "呼叫 CoGetClassObject 时请求远程服务器"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
@@ -10669,9 +10344,8 @@ msgid "bytes"
 msgstr "字节"
 
 #: oleview.rc:148
-#, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr "LoadTypeLib( %s ) 失败 ($%x)"
+msgstr "LoadTypeLib( %1 ) 失败 ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
@@ -10706,18 +10380,16 @@ msgid "&Copy...\tF8"
 msgstr "复制(&C)...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "属性(&I)...\tAlt+Enter"
+msgstr "属性(&P)...\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "执行(&E)..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "退出 Windows(&X)..."
+msgstr "退出 Windows(&X)"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:59 winhlp32.rc:44
 msgid "&Options"
@@ -10728,13 +10400,8 @@ msgid "&Arrange automatically"
 msgstr "自动排列(&A)"
 
 #: progman.rc:43
-#, fuzzy
 msgid "&Minimize on run"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"运行时最小化(&M)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"启动后最小化(&M)"
+msgstr "启动后最小化(&M)"
 
 #: progman.rc:44 winefile.rc:69
 msgid "&Save settings on exit"
@@ -10757,9 +10424,8 @@ msgid "&Arrange Icons"
 msgstr "排列图标(&A)"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "程序管理器"
+msgstr "关于程序管理器(&A)"
 
 #: progman.rc:100
 msgid "Program &group"
@@ -10862,13 +10528,8 @@ msgid "Delete program `%s'?"
 msgstr "是否删除程序组 `%s'?"
 
 #: progman.rc:67
-#, fuzzy
 msgid "Not implemented"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"此功能未实现\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"未实现"
+msgstr "尚未实现"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
@@ -10990,9 +10651,8 @@ msgid "&Multi String Value"
 msgstr "多字符串值(&M)"
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "字符串值(&S)"
+msgstr "可展开的字符串值(&E)"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -11015,13 +10675,8 @@ msgid "Status &Bar"
 msgstr "状态栏(&B)"
 
 #: regedit.rc:67 winefile.rc:46
-#, fuzzy
 msgid "Sp&lit"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"分割(&L)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"调整分隔线(&L)"
+msgstr "调整分隔线(&L)"
 
 #: regedit.rc:74
 msgid "&Remove Favorite..."
@@ -11032,9 +10687,8 @@ msgid "&About Registry Editor"
 msgstr "关于注册表编辑器(&A)"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "修改二进制数据"
+msgstr "修改二进制数据..."
 
 #: regedit.rc:215
 msgid "Export registry"
@@ -11158,12 +10812,10 @@ msgid "Export Registry File"
 msgstr "导出注册表文件"
 
 #: regedit.rc:193
-#, fuzzy
 msgid "Registry files (*.reg)"
 msgstr "注册表文件 (*.reg)"
 
 #: regedit.rc:194
-#, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 注册表文件 (REGEDIT4)"
 
@@ -11444,13 +11096,8 @@ msgid "&Show Kernel Times"
 msgstr "显示内核时间(&S)"
 
 #: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:75
-#, fuzzy
 msgid "Tile &Horizontally"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"横向平铺(&H)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"水平平铺(&H)"
+msgstr "横向平铺(&H)"
 
 #: taskmgr.rc:81 taskmgr.rc:97 taskmgr.rc:124
 msgid "Tile &Vertically"
@@ -11505,14 +11152,12 @@ msgid "&Realtime"
 msgstr "实时(&R)"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
-msgstr "正常以上(&A)"
+msgstr "高于正常(&A)"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
-msgstr "正常以下(&B)"
+msgstr "低于正常(&B)"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
@@ -11535,12 +11180,10 @@ msgid "&Show processes from all users"
 msgstr "显示所有用户的进程(&S)"
 
 #: taskmgr.rc:372
-#, fuzzy
 msgid "CPU usage"
 msgstr "CPU 用量"
 
 #: taskmgr.rc:373
-#, fuzzy
 msgid "MEM usage"
 msgstr "内存用量"
 
@@ -11549,17 +11192,14 @@ msgid "Totals"
 msgstr "总共"
 
 #: taskmgr.rc:375
-#, fuzzy
 msgid "Commit charge (K)"
-msgstr "虚存总量(K)"
+msgstr "提交负荷(K)"
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "Physical memory (K)"
 msgstr "物理内存(K)"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "Kernel memory (K)"
 msgstr "内核内存(K)"
 
@@ -11600,12 +11240,10 @@ msgid "Nonpaged"
 msgstr "未分页"
 
 #: taskmgr.rc:414
-#, fuzzy
 msgid "CPU usage history"
 msgstr "CPU 用量历史"
 
 #: taskmgr.rc:415
-#, fuzzy
 msgid "Memory usage history"
 msgstr "内存用量历史"
 
@@ -12029,9 +11667,8 @@ msgid "Controls Debug Channels"
 msgstr "控制调试频道"
 
 #: taskmgr.rc:264
-#, fuzzy
 msgid "Performance"
-msgstr "性能表"
+msgstr "性能"
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
@@ -12046,9 +11683,8 @@ msgid "Mem Usage: %1!u!kB / %2!u!kB"
 msgstr ""
 
 #: taskmgr.rc:272
-#, fuzzy
 msgid "Image Name"
-msgstr "图片"
+msgstr "映像名字"
 
 #: taskmgr.rc:273
 msgid "PID"
@@ -12075,9 +11711,8 @@ msgid "Peak Mem Usage"
 msgstr ""
 
 #: taskmgr.rc:279
-#, fuzzy
 msgid "Page Faults"
-msgstr "向左翻页"
+msgstr "页错误"
 
 #: taskmgr.rc:280
 msgid "USER Objects"
@@ -12113,9 +11748,8 @@ msgid "Base Pri"
 msgstr ""
 
 #: taskmgr.rc:301
-#, fuzzy
 msgid "Task Manager Warning"
-msgstr "任务管理器"
+msgstr "任务管理器警告"
 
 #: taskmgr.rc:304
 msgid ""
@@ -12176,9 +11810,8 @@ msgid "Running"
 msgstr ""
 
 #: taskmgr.rc:325
-#, fuzzy
 msgid "Task"
-msgstr "结束任务(&E)"
+msgstr "任务"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
@@ -12249,9 +11882,8 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:134
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Windows 注册信息 "
+msgstr "Windows 注册信息"
 
 #: winecfg.rc:135
 msgid "&Owner:"
@@ -12262,12 +11894,10 @@ msgid "Organi&zation:"
 msgstr "单位："
 
 #: winecfg.rc:145
-#, fuzzy
 msgid "Application settings"
-msgstr " 应用程序设置 "
+msgstr "应用程序设置"
 
 #: winecfg.rc:146
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
@@ -12289,9 +11919,8 @@ msgid "&Windows Version:"
 msgstr "&Windows 版本:"
 
 #: winecfg.rc:160
-#, fuzzy
 msgid "Window settings"
-msgstr " 窗口设置 "
+msgstr "窗口设置"
 
 #: winecfg.rc:161
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12314,18 +11943,16 @@ msgid "Desktop &size:"
 msgstr "桌面大小(&S):"
 
 #: winecfg.rc:171
-#, fuzzy
 msgid "Screen resolution"
-msgstr " 屏幕分辨率(&R) "
+msgstr "屏幕分辨率"
 
 #: winecfg.rc:175
 msgid "This is a sample text using 10 point Tahoma"
 msgstr ""
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "DLL overrides"
-msgstr " DLL 顶替 "
+msgstr "DLL 顶替"
 
 #: winecfg.rc:183
 msgid ""
@@ -12357,9 +11984,8 @@ msgid "Edit Override"
 msgstr "编辑顶替"
 
 #: winecfg.rc:199
-#, fuzzy
 msgid "Load order"
-msgstr " 载入顺序 "
+msgstr "载入顺序"
 
 #: winecfg.rc:200
 msgid "&Builtin (Wine)"
@@ -12386,9 +12012,8 @@ msgid "Select Drive Letter"
 msgstr "选择驱动器盘符"
 
 #: winecfg.rc:223
-#, fuzzy
 msgid "Drive mappings"
-msgstr " 驱动器映射(&M) "
+msgstr "驱动器映射"
 
 #: winecfg.rc:224
 msgid ""
@@ -12461,9 +12086,8 @@ msgid "&Test Sound"
 msgstr "测试音频(&T)"
 
 #: winecfg.rc:274
-#, fuzzy
 msgid "Appearance"
-msgstr " 外观 "
+msgstr "外观"
 
 #: winecfg.rc:275
 msgid "&Theme:"
@@ -12482,9 +12106,8 @@ msgid "C&olor:"
 msgstr "颜色(&O):"
 
 #: winecfg.rc:290
-#, fuzzy
 msgid "Folders"
-msgstr "特殊文件夹"
+msgstr "文件夹"
 
 #: winecfg.rc:293
 msgid "&Link to:"
@@ -12499,9 +12122,8 @@ msgid "Drives"
 msgstr "驱动器"
 
 #: winecfg.rc:33
-#, fuzzy
 msgid "Select the Unix target directory, please."
-msgstr "请选择目标 unix 文件夹。"
+msgstr "请选择目标 Unix 文件夹。"
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -12556,22 +12178,16 @@ msgid "Selected driver: %s"
 msgstr ""
 
 #: winecfg.rc:82
-#, fuzzy
 msgid "(None)"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"未定义\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"无"
+msgstr "(无)"
 
 #: winecfg.rc:83
 msgid "Audio test failed!"
 msgstr ""
 
 #: winecfg.rc:85
-#, fuzzy
 msgid "(System default)"
-msgstr "系统路径"
+msgstr "(系统默认)"
 
 #: winecfg.rc:51
 msgid ""
@@ -12610,9 +12226,8 @@ msgid "Default Settings"
 msgstr "默认设置"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Wine 程序 (*.exe,*.exe.so)"
+msgstr "Wine 程序 (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -12623,9 +12238,8 @@ msgid "Select an executable file"
 msgstr "选择可执行文件"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect"
-msgstr "自动侦测(&D)"
+msgstr "自动侦测"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -12644,7 +12258,6 @@ msgid "CD-ROM"
 msgstr ""
 
 #: winecfg.rc:71
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -12671,7 +12284,6 @@ msgstr ""
 "得重新建立一个！"
 
 #: winecfg.rc:74
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "盘符"
@@ -12859,9 +12471,8 @@ msgid "Command history"
 msgstr "命令历史"
 
 #: wineconsole.rc:73
-#, fuzzy
 msgid "&Number of recalled commands:"
-msgstr "最大记录命令数："
+msgstr "最大记录命令数(&N)："
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
@@ -12876,21 +12487,18 @@ msgid "&Color"
 msgstr "颜色(&C)"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " 配置 "
+msgstr "配置"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
 msgstr "缓冲区"
 
 #: wineconsole.rc:101
-#, fuzzy
 msgid "&Width:"
 msgstr "宽度(&W)："
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height:"
 msgstr "高度(&H)："
 
@@ -12899,12 +12507,10 @@ msgid "Window size"
 msgstr "窗口大小"
 
 #: wineconsole.rc:109
-#, fuzzy
 msgid "W&idth:"
 msgstr "宽度(&I)："
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight:"
 msgstr "高度(&E)："
 
@@ -12969,9 +12575,8 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "屏幕缓冲区大小必须不小于窗口"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "每个字符都是 %ld 像素宽，%ld 像素高"
+msgstr "每个字符都是 %1!u! 像素宽，%2!u! 像素高"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -13016,7 +12621,6 @@ msgstr ""
 "选项：\n"
 
 #: wineconsole.rc:49
-#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
@@ -13024,15 +12628,13 @@ msgid ""
 "console.\n"
 msgstr ""
 "  --backend={user|curses}   选 user 会打开新窗口；选 curses 会试图在当前\n"
-"                            终端中运行 Wine 控制台\n"
+"                            终端中运行 Wine 控制台。\n"
 
 #: wineconsole.rc:50
-#, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <command>                 要在控制台运行的 Wine 程序\n"
+msgstr "  <command>                 要在控制台运行的 Wine 程序。\n"
 
 #: wineconsole.rc:51
-#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
@@ -13043,13 +12645,12 @@ msgstr ""
 "\n"
 "示例：\n"
 "  wineconsole cmd\n"
-"在 Wine 控制台中运行 Wine 命令行\n"
+"在 Wine 控制台中运行 Wine 命令行。\n"
 "\n"
 
 #: winedbg.rc:46
-#, fuzzy
 msgid "Program Error"
-msgstr "程序组(&G)"
+msgstr "程序错误"
 
 #: winedbg.rc:51
 msgid ""
@@ -13065,18 +12666,12 @@ msgid ""
 msgstr ""
 
 #: winedbg.rc:58
-#, fuzzy
 msgid "Show &Details"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"详情列表(&D)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"详细信息 (&D)"
+msgstr "详细信息 (&D)"
 
 #: winedbg.rc:63
-#, fuzzy
 msgid "Program Error Details"
-msgstr "程序组(&G)"
+msgstr "程序错误详情"
 
 #: winedbg.rc:70
 msgid ""
@@ -13099,9 +12694,8 @@ msgid "(unidentified)"
 msgstr ""
 
 #: winedbg.rc:40
-#, fuzzy
 msgid "Saving failed"
-msgstr "打开文件"
+msgstr "保存失败"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
@@ -13116,9 +12710,8 @@ msgid "Re&name..."
 msgstr "改名(&N)..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "属性(&I)...\tAlt+Enter"
+msgstr "属性(&I)\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -13133,9 +12726,8 @@ msgid "&Disk"
 msgstr "磁盘(&D)"
 
 #: winefile.rc:41
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "连接网络驱动器(&N)"
+msgstr "连接网络驱动器(&N)..."
 
 #: winefile.rc:42
 msgid "&Disconnect Network Drive"
@@ -13166,9 +12758,8 @@ msgid "Sort by &Date"
 msgstr "按日期排序(&D)"
 
 #: winefile.rc:56
-#, fuzzy
 msgid "Filter by&..."
-msgstr "定制排序..."
+msgstr "过滤标准&..."
 
 #: winefile.rc:63
 msgid "&Drivebar"
@@ -13191,38 +12782,32 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "垂直平铺(&)\tCtrl+F4"
 
 #: winefile.rc:83
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "&关于 Winefile..."
+msgstr "关于 Wine 文件管理器(&A)"
 
 #: winefile.rc:124
-#, fuzzy
 msgid "Select destination"
-msgstr "选中信息(&I)"
+msgstr "选择目的地"
 
 #: winefile.rc:137
-#, fuzzy
 msgid "By File Type"
-msgstr "按类型 (&T)"
+msgstr "按类型"
 
 #: winefile.rc:142
-#, fuzzy
 msgid "File type"
-msgstr "文件"
+msgstr "文件类型"
 
 #: winefile.rc:143
 msgid "&Directories"
 msgstr ""
 
 #: winefile.rc:145
-#, fuzzy
 msgid "&Programs"
-msgstr "程序"
+msgstr "程序(&P)"
 
 #: winefile.rc:147
-#, fuzzy
 msgid "Docu&ments"
-msgstr "Documents"
+msgstr "文档(&M)"
 
 #: winefile.rc:149
 msgid "&Other files"
@@ -13233,9 +12818,8 @@ msgid "Show Hidden/&System Files"
 msgstr ""
 
 #: winefile.rc:162
-#, fuzzy
 msgid "&File Name:"
-msgstr "计算机名称(&M)："
+msgstr "文件名(&F)："
 
 #: winefile.rc:164
 msgid "Full &Path:"
@@ -13246,14 +12830,12 @@ msgid "Last Change:"
 msgstr ""
 
 #: winefile.rc:170
-#, fuzzy
 msgid "Cop&yright:"
-msgstr "右(&R)："
+msgstr "版权(&Y)："
 
 #: winefile.rc:172
-#, fuzzy
 msgid "Size:"
-msgstr "大小"
+msgstr "大小:"
 
 #: winefile.rc:176
 msgid "H&idden"
@@ -13264,19 +12846,16 @@ msgid "&Archive"
 msgstr ""
 
 #: winefile.rc:178
-#, fuzzy
 msgid "&System"
-msgstr "系统(&S)\tCtrl+1"
+msgstr "系统(&S)"
 
 #: winefile.rc:179
-#, fuzzy
 msgid "&Compressed"
-msgstr "未压缩"
+msgstr "已压缩(&C)"
 
 #: winefile.rc:180
-#, fuzzy
 msgid "Version information"
-msgstr "信息"
+msgstr "版本信息"
 
 #: winefile.rc:197
 msgctxt "accelerator Fullscreen"
@@ -13308,28 +12887,20 @@ msgid "Shell"
 msgstr ""
 
 #: winefile.rc:101 winhlp32.rc:107 winhlp32.rc:82
-#, fuzzy
 msgid "Not yet implemented"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"此功能未实现\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"未实现"
+msgstr "尚未实现"
 
 #: winefile.rc:108
-#, fuzzy
 msgid "CDate"
-msgstr "日期(&D)"
+msgstr "创建日期"
 
 #: winefile.rc:109
-#, fuzzy
 msgid "ADate"
-msgstr "日期(&D)"
+msgstr "访问日期"
 
 #: winefile.rc:110
-#, fuzzy
 msgid "MDate"
-msgstr "日期(&D)"
+msgstr "修改日期"
 
 #: winefile.rc:111
 msgid "Index/Inode"
@@ -13383,21 +12954,18 @@ msgid "&Custom..."
 msgstr "自定义(&C)..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
 msgstr "最快时间(&F)"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "关于 Wine(&A)"
+msgstr "关于 WineMine (&A)"
 
 #: winemine.rc:56
 msgid "Fastest Times"
 msgstr "最快时间"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
 msgstr "最快时间"
 
@@ -13430,9 +12998,8 @@ msgid "Rows"
 msgstr "行"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "列(&O)"
+msgstr "列"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -13483,9 +13050,8 @@ msgid "Large"
 msgstr "大号"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "如何使用帮助(&H)"
+msgstr "如何使用帮助(&H)\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -13552,9 +13118,8 @@ msgid "R&edo\tCtrl+Y"
 msgstr "重做(&E)\tCtrl+Y"
 
 #: wordpad.rc:47
-#, fuzzy
 msgid "&Clear\tDel"
-msgstr "删除(&D)\tDEL"
+msgstr "清除(&C)\tDel"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
@@ -13641,13 +13206,12 @@ msgid "&System\tCtrl+1"
 msgstr "系统(&S)\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
 msgstr "淡黄色(&P)\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
-msgstr "关于 &Wine 写字板"
+msgstr "关于 Wine 写字板(&A)"
 
 #: wordpad.rc:130
 msgid "Automatic"
@@ -13785,9 +13349,8 @@ msgid "Unicode text document"
 msgstr "Unicode 文本文件"
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "打印文件 (*.PRN)"
+msgstr "打印机文件 (*.prn)"
 
 #: wordpad.rc:150
 msgid "Center"
@@ -13834,13 +13397,11 @@ msgid "Pages"
 msgstr "页"
 
 #: wordpad.rc:172
-#, fuzzy
 msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "cm"
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
 msgstr "in"
@@ -13850,7 +13411,6 @@ msgid "inch"
 msgstr "英寸"
 
 #: wordpad.rc:175
-#, fuzzy
 msgctxt "unit: point"
 msgid "pt"
 msgstr "pt"
@@ -13878,14 +13438,12 @@ msgid ""
 msgstr "你已经选择保存为文本文件，而这可能导致格式丢失。你确定要这么做吗？"
 
 #: wordpad.rc:187
-#, fuzzy
 msgid "Invalid number format."
-msgstr "数字格式无效"
+msgstr "数字格式无效。"
 
 #: wordpad.rc:188
-#, fuzzy
 msgid "OLE storage documents are not supported."
-msgstr "不支持 OLE 储存文件"
+msgstr "不支持 OLE 储存文件。"
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -13904,9 +13462,8 @@ msgid "You do not have access to open the file."
 msgstr "你没有打开文件的权限。"
 
 #: wordpad.rc:193
-#, fuzzy
 msgid "Printing not implemented."
-msgstr "打印功能尚未实现"
+msgstr "打印功能尚未实现。"
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
