@@ -148,7 +148,7 @@ static void *expect_pv;
 static HANDLE event_complete, event_complete2, event_continue, event_continue_done;
 static BOOL binding_test;
 static PROTOCOLDATA protocoldata, *pdata, continue_protdata;
-static DWORD prot_read, pi, filter_state, http_post_test, thread_id;
+static DWORD prot_read, filter_state, http_post_test, thread_id;
 static BOOL security_problem, test_async_req, impl_protex;
 static BOOL async_read_pending, mimefilter_test, direct_read, wait_for_switch, emulate_prot, short_read, test_abort;
 static BOOL empty_file;
@@ -1617,7 +1617,7 @@ static void protocol_start(IInternetProtocolSink *pOIProtSink, IInternetBindInfo
         CHECK_CALLED(MimeFilter_CreateInstance);
         CHECK_CALLED(MimeFilter_Start);
         CHECK_CALLED(ReportProgress_LOADINGMIMEHANDLER);
-        todo_wine CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+        CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
     }else {
         CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
     }
@@ -2207,8 +2207,6 @@ static void register_filter(BOOL do_register)
 {
     IInternetSession *session;
     HRESULT hres;
-
-    static const WCHAR gzipW[] = {'g','z','i','p',0};
 
     hres = pCoInternetGetSession(0, &session, 0);
     ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
