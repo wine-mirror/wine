@@ -52,6 +52,17 @@ static BSTR a2bstr(const char *str)
     return ret;
 }
 
+#define get_elem2_iface(u) _get_elem2_iface(__LINE__,u)
+static IHTMLElement2 *_get_elem2_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLElement2 *elem;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement2, (void**)&elem);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLElement2: %08x\n", hres);
+    return elem;
+}
+
 static IHTMLElement *get_element_by_id(IHTMLDocument2 *doc, const char *id)
 {
     HRESULT hres;
@@ -1837,6 +1848,23 @@ static void _test_style_filter(unsigned line, IHTMLStyle *style, const char *exv
     SysFreeString(str);
 }
 
+#define test_current_style_filter(a,b) _test_current_style_filter(__LINE__,a,b)
+static void _test_current_style_filter(unsigned line, IHTMLCurrentStyle2 *style, const char *exval)
+{
+    BSTR str;
+    HRESULT hres;
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLCurrentStyle2_get_filter(style, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_filter failed: %08x\n", hres);
+    if(exval)
+        ok_(__FILE__,line)(str && !strcmp_wa(str, exval), "filter = %s, expected %s\n", wine_dbgstr_w(str), exval);
+    else
+        ok_(__FILE__,line)(!str, "str = %s, expected NULL\n", wine_dbgstr_w(str));
+
+    SysFreeString(str);
+}
+
 #define set_style_filter(a,b) _set_style_filter(__LINE__,a,b)
 static void _set_style_filter(unsigned line, IHTMLStyle *style, const char *val)
 {
@@ -1852,14 +1880,26 @@ static void _set_style_filter(unsigned line, IHTMLStyle *style, const char *val)
 
 static void test_style_filters(IHTMLElement *elem)
 {
+    IHTMLElement2 *elem2 = get_elem2_iface((IUnknown*)elem);
+    IHTMLCurrentStyle2 *current_style2;
+    IHTMLCurrentStyle *current_style;
     IHTMLStyle *style;
     HRESULT hres;
 
     hres = IHTMLElement_get_style(elem, &style);
     ok(hres == S_OK, "get_style failed: %08x\n", hres);
 
+    hres = IHTMLElement2_get_currentStyle(elem2, &current_style);
+    ok(hres == S_OK, "get_style failed: %08x\n", hres);
+
+    hres = IHTMLCurrentStyle_QueryInterface(current_style, &IID_IHTMLCurrentStyle2, (void**)&current_style2);
+    IHTMLCurrentStyle_Release(current_style);
+    ok(hres == S_OK, "Could not get IHTMLCurrentStyle2 iface: %08x\n", hres);
+
     test_style_filter(style, NULL);
+    test_current_style_filter(current_style2, NULL);
     set_style_filter(style, "alpha(opacity=50.0040)");
+    test_current_style_filter(current_style2, "alpha(opacity=50.0040)");
     set_style_filter(style, "alpha(opacity=100)");
 
     IHTMLStyle_Release(style);
@@ -1871,7 +1911,9 @@ static void test_style_filters(IHTMLElement *elem)
     set_style_filter(style, "xxx(a,b,c) alpha(opacity=100)");
     set_style_filter(style, NULL);
 
+    IHTMLCurrentStyle2_Release(current_style2);
     IHTMLStyle_Release(style);
+    IHTMLElement2_Release(elem2);
 }
 
 static void test_current_style(IHTMLCurrentStyle *current_style)
