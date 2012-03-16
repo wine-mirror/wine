@@ -440,8 +440,11 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_Load(IDirect3DRMMeshBuilder2* 
 
     TRACE("(%p)->(%p,%p,%x,%p,%p)\n", This, filename, name, loadflags, cb, arg);
 
+    if (cb)
+        FIXME("Texture callback is not yet supported\n");
+
     return IDirect3DRMMeshBuilder3_Load(&This->IDirect3DRMMeshBuilder3_iface, filename, name,
-                                        loadflags, (D3DRMLOADTEXTURE3CALLBACK)cb, arg);
+                                        loadflags, NULL, arg);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_Save(IDirect3DRMMeshBuilder2* iface,
