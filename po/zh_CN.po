@@ -1677,9 +1677,8 @@ msgid "Smart Card Logon"
 msgstr ""
 
 #: crypt32.rc:153 cryptui.rc:139
-#, fuzzy
 msgid "Digital Rights"
-msgstr "数字时钟(&T)"
+msgstr "数字权利"
 
 #: crypt32.rc:154 cryptui.rc:135
 msgid "Qualified Subordination"
@@ -2073,9 +2072,8 @@ msgid "More &Info"
 msgstr "更多信息(&I)"
 
 #: cryptui.rc:236
-#, fuzzy
 msgid "&Friendly name:"
-msgstr "文件名(&F):"
+msgstr "易记名字(&F):"
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
@@ -3286,14 +3284,12 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr ""
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr "退出时保存设置(&S)"
+msgstr "此区域的安全设置"
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "个性化"
+msgstr "自定义"
 
 #: inetcpl.rc:32
 msgid "Very Low"
@@ -3557,9 +3553,8 @@ msgid "Not DOS disk.\n"
 msgstr ""
 
 #: winerror.mc:161
-#, fuzzy
 msgid "Sector not found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到扇区。\n"
 
 #: winerror.mc:166
 msgid "Out of paper.\n"
@@ -3683,9 +3678,8 @@ msgid "Too many network sessions.\n"
 msgstr ""
 
 #: winerror.mc:316
-#, fuzzy
 msgid "Sharing paused.\n"
-msgstr "字符串值(&S)。\n"
+msgstr "共享已暂停。\n"
 
 #: winerror.mc:321
 msgid "Request not accepted.\n"
@@ -3724,9 +3718,8 @@ msgid "Invalid parameter.\n"
 msgstr "无效参数。\n"
 
 #: winerror.mc:366
-#, fuzzy
 msgid "Net write fault.\n"
-msgstr "设置默认值(&D)。\n"
+msgstr "网络写入错误。\n"
 
 #: winerror.mc:371
 msgid "No process slots.\n"
@@ -3761,9 +3754,8 @@ msgid "Semaphore user limit.\n"
 msgstr ""
 
 #: winerror.mc:411
-#, fuzzy
 msgid "Insert disk for drive %1.\n"
-msgstr "插入软盘 %s。\n"
+msgstr "插入驱动器 %1 的磁盘。\n"
 
 #: winerror.mc:416
 msgid "Drive locked.\n"
@@ -3890,9 +3882,8 @@ msgid "Drive is busy.\n"
 msgstr "驱动器忙。\n"
 
 #: winerror.mc:581
-#, fuzzy
 msgid "Same drive.\n"
-msgstr "系统驱动器。\n"
+msgstr "同一个驱动器。\n"
 
 #: winerror.mc:586
 msgid "Not toplevel directory.\n"
@@ -3979,9 +3970,8 @@ msgid "Lock failed.\n"
 msgstr ""
 
 #: winerror.mc:691
-#, fuzzy
 msgid "Resource in use.\n"
-msgstr "资源失败。\n"
+msgstr "资源已被占用。\n"
 
 #: winerror.mc:696
 #, fuzzy
@@ -4133,9 +4123,8 @@ msgid "Pipe not connected.\n"
 msgstr "管道未连接。\n"
 
 #: winerror.mc:881
-#, fuzzy
 msgid "More data available.\n"
-msgstr "不可用; 。\n"
+msgstr "有更多可用数据。\n"
 
 #: winerror.mc:886
 msgid "Session canceled.\n"
@@ -4150,9 +4139,8 @@ msgid "Extended attribute list inconsistent.\n"
 msgstr ""
 
 #: winerror.mc:901
-#, fuzzy
 msgid "No more data available.\n"
-msgstr "不可用; 。\n"
+msgstr "没有更多可用数据。\n"
 
 #: winerror.mc:906
 msgid "Cannot use Copy API.\n"
@@ -4315,9 +4303,8 @@ msgid "Not registry file.\n"
 msgstr "不是注册表文件。\n"
 
 #: winerror.mc:1106
-#, fuzzy
 msgid "Key deleted.\n"
-msgstr "删除日期。\n"
+msgstr "键已删除。\n"
 
 #: winerror.mc:1111
 msgid "No registry log space.\n"
@@ -4646,13 +4633,8 @@ msgid "DLL not found.\n"
 msgstr "找不到 DLL。\n"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles.\n"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"内存溢出。\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"内存不够。"
+msgstr "用户句柄不足。\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls.\n"
@@ -4699,9 +4681,8 @@ msgid "No match found.\n"
 msgstr "没有找到匹配。\n"
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到属性集。\n"
 
 #: winerror.mc:1581
 #, fuzzy
@@ -4729,9 +4710,8 @@ msgid "Moving the replacement file failed.\n"
 msgstr ""
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted.\n"
-msgstr "删除日期。\n"
+msgstr "日志正在被删除。\n"
 
 #: winerror.mc:1616
 msgid "The journal is not active.\n"
@@ -4938,9 +4918,8 @@ msgid "No more local devices.\n"
 msgstr ""
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist.\n"
-msgstr "文件不存在。\n"
+msgstr "站点不存在。\n"
 
 #: winerror.mc:1881
 #, fuzzy
@@ -4948,9 +4927,8 @@ msgid "The domain controller already exists.\n"
 msgstr "端口 %s 已经存在。\n"
 
 #: winerror.mc:1886
-#, fuzzy
 msgid "Supported only when connected.\n"
-msgstr "找不到文件。\n"
+msgstr "只有已连接时才支持。\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed.\n"
@@ -4985,9 +4963,8 @@ msgid "Password too complex for LM.\n"
 msgstr ""
 
 #: winerror.mc:1931
-#, fuzzy
 msgid "Unknown revision.\n"
-msgstr "未知错误。\n"
+msgstr "未知修订版。\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels.\n"
@@ -5106,9 +5083,8 @@ msgid "LUIDs exhausted.\n"
 msgstr ""
 
 #: winerror.mc:2081
-#, fuzzy
 msgid "Invalid sub authority.\n"
-msgstr "数字格式无效。\n"
+msgstr "子权威无效。\n"
 
 #: winerror.mc:2086
 msgid "Invalid ACL.\n"
@@ -5241,9 +5217,8 @@ msgid "Cannot impersonate.\n"
 msgstr "找不到打印机。"
 
 #: winerror.mc:2246
-#, fuzzy
 msgid "Invalid transaction state.\n"
-msgstr "路径中包含无效字符。\n"
+msgstr "事务状态无效。\n"
 
 #: winerror.mc:2251
 msgid "Security DB commit failure.\n"
@@ -5426,18 +5401,16 @@ msgid "Private dialog index.\n"
 msgstr ""
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found.\n"
-msgstr "路径 %s 没找到。\n"
+msgstr "找不到列表框 ID。\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters.\n"
 msgstr ""
 
 #: winerror.mc:2486
-#, fuzzy
 msgid "Clipboard not open.\n"
-msgstr "不能打开文件。"
+msgstr "剪贴板未打开。\n"
 
 #: winerror.mc:2491
 msgid "Hotkey not registered.\n"
@@ -5445,12 +5418,11 @@ msgstr ""
 
 #: winerror.mc:2496
 msgid "Not a dialog window.\n"
-msgstr ""
+msgstr "不是对话框窗口。\n"
 
 #: winerror.mc:2501
-#, fuzzy
 msgid "Control ID not found.\n"
-msgstr "路径 %s 没找到。\n"
+msgstr "找不到控件 ID。\n"
 
 #: winerror.mc:2506
 msgid "Invalid combobox message.\n"
@@ -5465,9 +5437,8 @@ msgid "Invalid edit height.\n"
 msgstr ""
 
 #: winerror.mc:2521
-#, fuzzy
 msgid "DC not found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到 DC。\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter.\n"
@@ -5494,9 +5465,8 @@ msgid "Hook procedure not installed.\n"
 msgstr ""
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message.\n"
-msgstr "数字格式无效。\n"
+msgstr "列表框消息无效。\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent.\n"
@@ -5519,9 +5489,8 @@ msgid "Window has no system menu.\n"
 msgstr ""
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style.\n"
-msgstr "数字格式无效。\n"
+msgstr "消息框风格无效。\n"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter.\n"
@@ -5540,9 +5509,8 @@ msgid "Not a child window.\n"
 msgstr ""
 
 #: winerror.mc:2611
-#, fuzzy
 msgid "Invalid GW command.\n"
-msgstr "数字格式无效。\n"
+msgstr "GW 命令无效。\n"
 
 #: winerror.mc:2616
 msgid "Invalid thread ID.\n"
@@ -5597,9 +5565,8 @@ msgid "Menu item not found.\n"
 msgstr "找不到菜单项。\n"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle.\n"
-msgstr "数字格式无效。\n"
+msgstr "键盘句柄无效。\n"
 
 #: winerror.mc:2686
 msgid "Hook type not allowed.\n"
@@ -5614,9 +5581,8 @@ msgid "Timeout.\n"
 msgstr ""
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle.\n"
-msgstr "数字格式无效。\n"
+msgstr "显示器句柄无效。\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt.\n"
@@ -5635,9 +5601,8 @@ msgid "Event log file changed.\n"
 msgstr ""
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
-msgstr "剩余空间。\n"
+msgstr "安装程序服务失败。\n"
 
 #: winerror.mc:2731
 msgid "Installation aborted by user.\n"
@@ -5648,9 +5613,8 @@ msgid "Installation failure.\n"
 msgstr "安装失败。\n"
 
 #: winerror.mc:2741
-#, fuzzy
 msgid "Installation suspended.\n"
-msgstr "安装程序。\n"
+msgstr "安装被挂起。\n"
 
 #: winerror.mc:2746
 msgid "Unknown product.\n"
@@ -5669,14 +5633,12 @@ msgid "Unknown property.\n"
 msgstr "未知属性。\n"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state.\n"
-msgstr "数字格式无效。\n"
+msgstr "句柄状态无效。\n"
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration.\n"
-msgstr "Wine 设置。\n"
+msgstr "配置有错。\n"
 
 #: winerror.mc:2776
 msgid "Index is missing.\n"
@@ -5736,23 +5698,20 @@ msgid "Installation transform failed to apply.\n"
 msgstr ""
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected.\n"
-msgstr "安装程序。\n"
+msgstr "安装包被拒绝。\n"
 
 #: winerror.mc:2851
 msgid "Function could not be called.\n"
 msgstr ""
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed.\n"
-msgstr "打开文件。\n"
+msgstr "函数文件。\n"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table.\n"
-msgstr "数字格式无效。\n"
+msgstr "表格无效。\n"
 
 #: winerror.mc:2866
 msgid "Data type mismatch.\n"
@@ -5763,9 +5722,8 @@ msgid "Unsupported type.\n"
 msgstr ""
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed.\n"
-msgstr "打开文件。\n"
+msgstr "创建失败。\n"
 
 #: winerror.mc:2881
 msgid "Temporary directory not writable.\n"
@@ -5786,9 +5744,8 @@ msgid "Failed to open the patch package.\n"
 msgstr ""
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package.\n"
-msgstr "数字格式无效。\n"
+msgstr "补丁包无效。\n"
 
 #: winerror.mc:2906
 msgid "Unsupported patch package.\n"
@@ -5799,9 +5756,8 @@ msgid "Another version is installed.\n"
 msgstr ""
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line.\n"
-msgstr "数字格式无效。\n"
+msgstr "命令行无效。\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed.\n"
@@ -5854,9 +5810,8 @@ msgid "Invalid timeout value.\n"
 msgstr ""
 
 #: winerror.mc:2981
-#, fuzzy
 msgid "Object UUID not found.\n"
-msgstr "路径 %s 没找到。\n"
+msgstr "未找到对象 UUID。\n"
 
 #: winerror.mc:2986
 msgid "UUID already registered.\n"
@@ -6026,9 +5981,8 @@ msgid "Incomplete name.\n"
 msgstr ""
 
 #: winerror.mc:3196
-#, fuzzy
 msgid "Invalid version option.\n"
-msgstr "路径中包含无效字符。\n"
+msgstr "版本选项无效。\n"
 
 #: winerror.mc:3201
 msgid "No more members.\n"
@@ -6054,18 +6008,16 @@ msgid "Entry not found.\n"
 msgstr "找不到文件。\n"
 
 #: winerror.mc:3226
-#, fuzzy
 msgid "Name service unavailable.\n"
-msgstr "剩余空间。\n"
+msgstr "名字服务不可用。\n"
 
 #: winerror.mc:3231
 msgid "Invalid network address family.\n"
 msgstr ""
 
 #: winerror.mc:3236
-#, fuzzy
 msgid "Operation not supported.\n"
-msgstr "不支持 OLE 储存文件。\n"
+msgstr "不支持此操作。\n"
 
 #: winerror.mc:3241
 msgid "No security context available.\n"
@@ -6140,9 +6092,8 @@ msgid "Bad stub data.\n"
 msgstr ""
 
 #: winerror.mc:3331
-#, fuzzy
 msgid "Invalid user buffer.\n"
-msgstr "数字格式无效。\n"
+msgstr "用户缓冲区无效。\n"
 
 #: winerror.mc:3336
 msgid "Unrecognised media.\n"
@@ -6189,14 +6140,12 @@ msgid "Printer driver already installed.\n"
 msgstr ""
 
 #: winerror.mc:3391
-#, fuzzy
 msgid "Unknown port.\n"
-msgstr "未知错误。\n"
+msgstr "未知端口。\n"
 
 #: winerror.mc:3396
-#, fuzzy
 msgid "Unknown printer driver.\n"
-msgstr "找不到打印机驱动程序。"
+msgstr "未知打印机驱动。\n"
 
 #: winerror.mc:3401
 #, fuzzy
@@ -6208,34 +6157,28 @@ msgid "Invalid separator file.\n"
 msgstr ""
 
 #: winerror.mc:3411
-#, fuzzy
 msgid "Invalid priority.\n"
-msgstr "数字格式无效。\n"
+msgstr "优先级无效。\n"
 
 #: winerror.mc:3416
-#, fuzzy
 msgid "Invalid printer name.\n"
-msgstr "数字格式无效。\n"
+msgstr "打印机名无效。\n"
 
 #: winerror.mc:3421
-#, fuzzy
 msgid "Printer already exists.\n"
-msgstr "端口 %s 已经存在。\n"
+msgstr "打印机已存在。\n"
 
 #: winerror.mc:3426
-#, fuzzy
 msgid "Invalid printer command.\n"
-msgstr "数字格式无效。\n"
+msgstr "打印机命令无效。\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type.\n"
-msgstr "数字格式无效。\n"
+msgstr "日期格式无效。\n"
 
 #: winerror.mc:3436
-#, fuzzy
 msgid "Invalid environment.\n"
-msgstr "数字格式无效。\n"
+msgstr "环境无效。\n"
 
 #: winerror.mc:3441
 msgid "No more bindings.\n"
@@ -6284,7 +6227,7 @@ msgstr ""
 #: winerror.mc:3496
 #, fuzzy
 msgid "No interfaces.\n"
-msgstr "界面。\n"
+msgstr "没有界面。\n"
 
 #: winerror.mc:3501
 msgid "RPC call canceled.\n"
@@ -6325,9 +6268,8 @@ msgid "Thread not canceled.\n"
 msgstr "找不到文件。\n"
 
 #: winerror.mc:3546
-#, fuzzy
 msgid "Invalid handle operation.\n"
-msgstr "数字格式无效。\n"
+msgstr "句柄操作无效。\n"
 
 #: winerror.mc:3551
 msgid "Wrong serialising package version.\n"
@@ -6359,37 +6301,32 @@ msgid "Can't create endpoint mapper DB.\n"
 msgstr ""
 
 #: winerror.mc:3586
-#, fuzzy
 msgid "Invalid object.\n"
-msgstr "数字格式无效。\n"
+msgstr "对象无效。\n"
 
 #: winerror.mc:3591
 msgid "Invalid time.\n"
 msgstr ""
 
 #: winerror.mc:3596
-#, fuzzy
 msgid "Invalid form name.\n"
-msgstr "数字格式无效。\n"
+msgstr "窗体名无效。\n"
 
 #: winerror.mc:3601
-#, fuzzy
 msgid "Invalid form size.\n"
-msgstr "数字格式无效。\n"
+msgstr "窗体大小无效。\n"
 
 #: winerror.mc:3606
 msgid "Already awaiting printer handle.\n"
 msgstr ""
 
 #: winerror.mc:3611
-#, fuzzy
 msgid "Printer deleted.\n"
-msgstr "删除日期。\n"
+msgstr "打印机已删除。\n"
 
 #: winerror.mc:3616
-#, fuzzy
 msgid "Invalid printer state.\n"
-msgstr "数字格式无效。\n"
+msgstr "打印机状态无效。\n"
 
 #: winerror.mc:3621
 msgid "User must change password.\n"
@@ -6423,9 +6360,8 @@ msgid "Incomplete RPC send.\n"
 msgstr ""
 
 #: winerror.mc:3656
-#, fuzzy
 msgid "Invalid asynchronous RPC handle.\n"
-msgstr "数字格式无效。\n"
+msgstr "异步 RPC 句柄无效。\n"
 
 #: winerror.mc:3661
 msgid "Invalid asynchronous RPC call.\n"
@@ -6444,18 +6380,16 @@ msgid "No data on RPC pipe.\n"
 msgstr ""
 
 #: winerror.mc:3681
-#, fuzzy
 msgid "No site name available.\n"
-msgstr "不可用; 。\n"
+msgstr "没有可用的站点名。\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed.\n"
 msgstr ""
 
 #: winerror.mc:3691
-#, fuzzy
 msgid "The filename cannot be resolved.\n"
-msgstr "找不到“%s”。"
+msgstr "不能解析文件名。\n"
 
 #: winerror.mc:3696
 msgid "RPC entry type mismatch.\n"
@@ -6466,9 +6400,8 @@ msgid "Not all objects could be exported.\n"
 msgstr ""
 
 #: winerror.mc:3706
-#, fuzzy
 msgid "The interface could not be exported.\n"
-msgstr "找不到“%s”。"
+msgstr "不能导出接口。\n"
 
 #: winerror.mc:3711
 #, fuzzy
@@ -6496,9 +6429,8 @@ msgid "The group element could not be removed.\n"
 msgstr "找不到“%s”。"
 
 #: winerror.mc:3736
-#, fuzzy
 msgid "The username could not be found.\n"
-msgstr "找不到“%s”。"
+msgstr "找不到用户名。\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
@@ -7123,41 +7055,38 @@ msgid ""
 msgstr "将剪贴板的内容插入到你的文件以便你可以使用 %s。"
 
 #: oledlg.rc:36
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
-msgstr "将剪贴板的内容插入到你的文件以便你可以用 %s 激活它, 一般显示为图标。"
+msgstr ""
+"将剪贴板的内容插入到你的文件，你可以用 %s 激活它。插入的内容会显示为图标。"
 
 #: oledlg.rc:37
-#, fuzzy
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
 "将剪贴板的内容以 %s 插入到你的文件。 数据是链接到源文件的, 对源文件的任何改动"
-"都会反应到你的文件。"
+"都会反映到反映到你的文档中。"
 
 #: oledlg.rc:38
-#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"将剪贴板的图像插入到你的文件。 图像是链接到源文件的, 对源文件的任何改动都会反"
-"应到你的文件。"
+"插入剪贴板中的图片。图片是链接到源文件的，对源文件的任何改动都会反映到你的文"
+"档中。"
 
 #: oledlg.rc:39
-#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"插入指向剪切板中文件的快捷方式。快捷方式是链接到源文件的,对源文件的任何改动都"
-"会反映到你的文档中。"
+"插入指向剪贴板中文件的快捷方式。快捷方式是链接到源文件的，对源文件的任何改动"
+"都会反映到你的文档中。"
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
