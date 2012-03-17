@@ -457,7 +457,7 @@
 457 stdcall GdipResetClip(ptr)
 458 stub GdipResetImageAttributes
 459 stdcall GdipResetLineTransform(ptr)
-460 stub GdipResetPageTransform
+460 stdcall GdipResetPageTransform(ptr)
 461 stdcall GdipResetPath(ptr)
 462 stub GdipResetPathGradientTransform
 463 stdcall GdipResetPenTransform(ptr)

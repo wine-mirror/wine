@@ -6501,3 +6501,15 @@ cleanup:
     GdipDeleteRegion(rgn);
     return stat;
 }
+
+GpStatus WINGDIPAPI GdipResetPageTransform(GpGraphics *graphics)
+{
+    static int calls;
+
+    TRACE("(%p) stub\n", graphics);
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
