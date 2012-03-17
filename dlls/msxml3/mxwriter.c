@@ -1131,8 +1131,14 @@ static HRESULT WINAPI SAXContentHandler_ignorableWhitespace(
     int nchars)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
-    FIXME("(%p)->(%s)\n", This, debugstr_wn(chars, nchars));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_wn(chars, nchars));
+
+    if (!chars) return E_INVALIDARG;
+
+    write_output_buffer(This->buffer, chars, nchars);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXContentHandler_processingInstruction(

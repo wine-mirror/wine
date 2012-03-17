@@ -3182,6 +3182,45 @@ static void test_mxwriter_pi(void)
     ok(!lstrcmpW(_bstr_("<?target?>\r\n"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
+
+    ISAXContentHandler_Release(content);
+    IMXWriter_Release(writer);
+}
+
+static void test_mxwriter_ignorablespaces(void)
+{
+    static const WCHAR dataW[] = {'d','a','t','a',0};
+    ISAXContentHandler *content;
+    IMXWriter *writer;
+    VARIANT dest;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_ignorableWhitespace(content, NULL, 0);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    hr = ISAXContentHandler_ignorableWhitespace(content, dataW, 0);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_ignorableWhitespace(content, dataW, 4);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_ignorableWhitespace(content, dataW, 1);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("datad"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
     ISAXContentHandler_Release(content);
     IMXWriter_Release(writer);
 }
@@ -3717,6 +3756,7 @@ START_TEST(saxreader)
         test_mxwriter_comment();
         test_mxwriter_cdata();
         test_mxwriter_pi();
+        test_mxwriter_ignorablespaces();
         test_mxwriter_dtd();
         test_mxwriter_properties();
         test_mxwriter_flush();
