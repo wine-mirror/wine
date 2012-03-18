@@ -36,34 +36,12 @@
 /* ########################### */
 
 static HMODULE  hcomdlg32;
-static HRESULT (WINAPI * pPrintDlgExA)(LPPRINTDLGEXA);
 static HRESULT (WINAPI * pPrintDlgExW)(LPPRINTDLGEXW);
 
 /* ########################### */
 
 static const CHAR emptyA[] = "";
 static const CHAR PrinterPortsA[] = "PrinterPorts";
-
-/* ########################### */
-
-static LPCSTR load_functions(void)
-{
-    LPCSTR  ptr;
-
-    ptr = "comdlg32.dll";
-    hcomdlg32 = GetModuleHandleA(ptr);
-
-    ptr = "PrintDlgExA";
-    pPrintDlgExA = (void *) GetProcAddress(hcomdlg32, ptr);
-    if (!pPrintDlgExA) return ptr;
-
-    ptr = "PrintDlgExW";
-    pPrintDlgExW = (void *) GetProcAddress(hcomdlg32, ptr);
-    if (!pPrintDlgExW) return ptr;
-
-    return NULL;
-
-}
 
 /* ########################### */
 
@@ -237,15 +215,16 @@ static void test_PrintDlgExW(void)
     LPPRINTDLGEXW pDlg;
     HRESULT res;
 
+    /* PrintDlgEx not present before w2k */
+    if (!pPrintDlgExW) {
+        skip("PrintDlgExW not available\n");
+        return;
+    }
+
     /* Set CommDlgExtendedError != 0 */
     PrintDlg(NULL);
     SetLastError(0xdeadbeef);
     res = pPrintDlgExW(NULL);
-    if(res == E_NOTIMPL)
-    {
-        win_skip("PrintDlgExW returns not implemented\n");
-        return;
-    }
     ok( (res == E_INVALIDARG),
         "got 0x%x with %u and %u (expected 'E_INVALIDARG')\n",
         res, GetLastError(), CommDlgExtendedError());
@@ -371,19 +350,11 @@ end:
 
 START_TEST(printdlg)
 {
-    LPCSTR  ptr;
-
-    ptr = load_functions();
+    hcomdlg32 = GetModuleHandleA("comdlg32.dll");
+    pPrintDlgExW = (void *) GetProcAddress(hcomdlg32, "PrintDlgExW");
 
     test_PageSetupDlgA();
     test_PrintDlgA();
-    test_abort_proc();
-
-    /* PrintDlgEx not present before w2k */
-    if (ptr) {
-        win_skip("%s\n", ptr);
-        return;
-    }
-
     test_PrintDlgExW();
+    test_abort_proc();
 }
