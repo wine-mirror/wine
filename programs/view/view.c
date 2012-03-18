@@ -25,7 +25,8 @@
 static HINSTANCE hInst;
 static HWND hMainWnd;
 static WCHAR szAppName[5] = {'V','i','e','w',0};
-static WCHAR szTitle[80];
+static WCHAR szTitle[MAX_PATH];
+static WCHAR szFileTitle[MAX_PATH];
 
 static HMETAFILE hmf;
 static HENHMETAFILE enhmf;
@@ -204,6 +205,27 @@ static void DoOpenFile(LPCWSTR filename)
   InvalidateRect( hMainWnd, NULL, TRUE );
 }
 
+static void UpdateWindowCaption(void)
+{
+  WCHAR szCaption[MAX_PATH];
+  WCHAR szView[MAX_PATH];
+  static const WCHAR hyphenW[] = { ' ','-',' ',0 };
+
+  LoadStringW(hInst, IDS_DESCRIPTION, szView, sizeof(szView)/sizeof(WCHAR));
+
+  if (szFileTitle[0] != '\0')
+  {
+    lstrcpyW(szCaption, szFileTitle);
+    LoadStringW(hInst, IDS_DESCRIPTION, szView, sizeof(szView)/sizeof(WCHAR));
+    lstrcatW(szCaption, hyphenW);
+    lstrcatW(szCaption, szView);
+  }
+  else
+    lstrcpyW(szCaption, szView);
+
+  SetWindowTextW(hMainWnd, szCaption);
+}
+
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMessage, WPARAM wparam, LPARAM lparam)
 {
   switch (uMessage)
@@ -236,7 +258,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMessage, WPARAM wparam, LPARAM 
 	  {
               WCHAR filename[MAX_PATH];
               if (FileOpen(hwnd, filename, sizeof(filename)/sizeof(WCHAR)))
+              {
+                  szFileTitle[0] = 0;
+                  GetFileTitleW(filename, szFileTitle, sizeof(szFileTitle));
                   DoOpenFile(filename);
+                  UpdateWindowCaption();
+              }
 	  }
 	  break;
 
