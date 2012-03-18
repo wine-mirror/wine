@@ -344,6 +344,32 @@ static void test_PrintDlgExW(void)
     GlobalFree(pDlg->hDevMode);
     GlobalFree(pDlg->hDevNames);
 
+    /* this works: PD_RETURNDC with PD_RETURNDEFAULT */
+    ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
+    pDlg->lStructSize = sizeof(PRINTDLGEXW);
+    pDlg->hwndOwner = GetDesktopWindow();
+    pDlg->Flags = PD_RETURNDEFAULT | PD_NOWARNING | PD_NOPAGENUMS | PD_RETURNDC;
+    pDlg->nStartPage = START_PAGE_GENERAL;
+    res = pPrintDlgExW(pDlg);
+    ok(res == S_OK, "got 0x%x (expected S_OK)\n", res);
+    ok(pDlg->hDC != NULL, "HDC missing for PD_RETURNDC\n");
+    GlobalFree(pDlg->hDevMode);
+    GlobalFree(pDlg->hDevNames);
+    DeleteDC(pDlg->hDC);
+
+    /* this works: PD_RETURNIC with PD_RETURNDEFAULT */
+    ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
+    pDlg->lStructSize = sizeof(PRINTDLGEXW);
+    pDlg->hwndOwner = GetDesktopWindow();
+    pDlg->Flags = PD_RETURNDEFAULT | PD_NOWARNING | PD_NOPAGENUMS | PD_RETURNIC;
+    pDlg->nStartPage = START_PAGE_GENERAL;
+    res = pPrintDlgExW(pDlg);
+    ok(res == S_OK, "got 0x%x (expected S_OK)\n", res);
+    ok(pDlg->hDC != NULL, "HDC missing for PD_RETURNIC\n");
+    GlobalFree(pDlg->hDevMode);
+    GlobalFree(pDlg->hDevNames);
+    DeleteDC(pDlg->hDC);
+
     HeapFree(GetProcessHeap(), 0, pDlg);
     return;
 
