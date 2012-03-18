@@ -539,6 +539,7 @@ SRCDIR_INCLUDES = \
 	wine/library.h \
 	wine/unicode.h \
 	winerror.h \
+	winevt.h \
 	wingdi.h \
 	winhttp.h \
 	wininet.h \

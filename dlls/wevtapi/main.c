@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Austin English
+ * Copyright 2012 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winevt.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wevtapi);
@@ -42,4 +44,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+EVT_HANDLE WINAPI EvtOpenChannelConfig(EVT_HANDLE Session, LPCWSTR ChannelPath, DWORD Flags)
+{
+    FIXME("(%p %s %u) stub\n", Session, debugstr_w(ChannelPath), Flags);
+    return NULL;
 }
