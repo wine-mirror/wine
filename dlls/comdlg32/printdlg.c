@@ -4002,7 +4002,19 @@ HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lppd)
         hr = E_FAIL;
 
     lppd->hDevMode = update_devmode_handleA(lppd->hDevMode, dm);
-    if (!lppd->hDevMode)
+    if (!hr && lppd->hDevMode) {
+        if (lppd->Flags & PD_RETURNDC) {
+            lppd->hDC = CreateDCA(dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName, dm);
+            if (!lppd->hDC)
+                hr = E_FAIL;
+        }
+        else if (lppd->Flags & PD_RETURNIC) {
+            lppd->hDC = CreateICA(dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName, dm);
+            if (!lppd->hDC)
+                hr = E_FAIL;
+        }
+    }
+    else
         hr = E_FAIL;
 
     HeapFree(GetProcessHeap(), 0, pbuf);
@@ -4111,7 +4123,19 @@ HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lppd)
         hr = E_FAIL;
 
     lppd->hDevMode = update_devmode_handleW(lppd->hDevMode, dm);
-    if (!lppd->hDevMode)
+    if (!hr && lppd->hDevMode) {
+        if (lppd->Flags & PD_RETURNDC) {
+            lppd->hDC = CreateDCW(dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName, dm);
+            if (!lppd->hDC)
+                hr = E_FAIL;
+        }
+        else if (lppd->Flags & PD_RETURNIC) {
+            lppd->hDC = CreateICW(dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName, dm);
+            if (!lppd->hDC)
+                hr = E_FAIL;
+        }
+    }
+    else
         hr = E_FAIL;
 
     HeapFree(GetProcessHeap(), 0, pbuf);
