@@ -106,6 +106,10 @@ my @dll_groups =
   "setupapi",
   "cfgmgr32",
  ],
+ [
+  "vcomp",
+  "vcomp100",
+ ],
 );
 
 my $update_flags = 0;
