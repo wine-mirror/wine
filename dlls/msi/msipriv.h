@@ -338,7 +338,8 @@ enum platform
 {
     PLATFORM_INTEL,
     PLATFORM_INTEL64,
-    PLATFORM_X64
+    PLATFORM_X64,
+    PLATFORM_ARM
 };
 
 enum clr_version
@@ -1148,6 +1149,7 @@ static const WCHAR szIntel[] = {'I','n','t','e','l',0};
 static const WCHAR szIntel64[] = {'I','n','t','e','l','6','4',0};
 static const WCHAR szX64[] = {'x','6','4',0};
 static const WCHAR szAMD64[] = {'A','M','D','6','4',0};
+static const WCHAR szARM[] = {'A','r','m',0};
 static const WCHAR szWow6432NodeCLSID[] = {'W','o','w','6','4','3','2','N','o','d','e','\\','C','L','S','I','D',0};
 static const WCHAR szWow6432Node[] = {'W','o','w','6','4','3','2','N','o','d','e',0};
 static const WCHAR szStreams[] = {'_','S','t','r','e','a','m','s',0};

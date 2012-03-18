@@ -1297,6 +1297,8 @@ static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
         package->platform = PLATFORM_INTEL64;
     else if (!strcmpW( template, szX64 ) || !strcmpW( template, szAMD64 ))
         package->platform = PLATFORM_X64;
+    else if (!strcmpW( template, szARM ))
+        package->platform = PLATFORM_ARM;
     else
     {
         WARN("unknown platform %s\n", debugstr_w(template));
@@ -1341,9 +1343,11 @@ static UINT validate_package( MSIPACKAGE *package )
     UINT i;
 
     if (package->platform == PLATFORM_INTEL64)
-    {
         return ERROR_INSTALL_PLATFORM_UNSUPPORTED;
-    }
+#ifndef __arm__
+    if (package->platform == PLATFORM_ARM)
+        return ERROR_INSTALL_PLATFORM_UNSUPPORTED;
+#endif
     IsWow64Process( GetCurrentProcess(), &is_wow64 );
     if (package->platform == PLATFORM_X64)
     {
