@@ -69,7 +69,7 @@ msgstr "Support information"
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:442
 #: taskmgr.rc:517 winecfg.rc:205 winecfg.rc:215 wineconsole.rc:131
-#: winefile.rc:130 winefile.rc:153 winefile.rc:183 winemine.rc:68
+#: winefile.rc:128 winefile.rc:151 winefile.rc:181 winemine.rc:68
 #: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
 #: wordpad.rc:246
 msgid "OK"
@@ -83,7 +83,7 @@ msgstr "Følgende oplysninger kan bruges til at få teknisk support for %s:"
 msgid "Publisher:"
 msgstr "Udgiver:"
 
-#: appwiz.rc:78 winefile.rc:168
+#: appwiz.rc:78 winefile.rc:166
 msgid "Version:"
 msgstr "Version:"
 
@@ -150,8 +150,8 @@ msgstr "&Installer"
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
 #: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
 #: regedit.rc:311 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:31 winecfg.rc:206
-#: winecfg.rc:216 wineconsole.rc:132 winefile.rc:131 winefile.rc:154
-#: winefile.rc:184 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: winecfg.rc:216 wineconsole.rc:132 winefile.rc:129 winefile.rc:152
+#: winefile.rc:182 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
 #: wordpad.rc:247
 msgid "Cancel"
 msgstr "Annuller"
@@ -184,7 +184,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ikke specificeret"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:106
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:238 regedit.rc:122 winefile.rc:104
 msgid "Name"
 msgstr "Navn"
 
@@ -284,7 +284,7 @@ msgstr "ukomprimeret"
 msgid "Canceling..."
 msgstr "Annullering..."
 
-#: comctl32.rc:49 winefile.rc:159
+#: comctl32.rc:49 winefile.rc:157
 msgid "Properties for %s"
 msgstr "Egenskaber for %s"
 
@@ -330,7 +330,7 @@ msgstr "N&ulstil"
 #: comdlg32.rc:490 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
 #: clock.rc:41 notepad.rc:57 notepad.rc:116 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
-#: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:81
+#: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:79
 #: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "&Hjælp"
@@ -402,7 +402,7 @@ msgstr "&Oversigt over filer af type:"
 msgid "Dri&ves:"
 msgstr "&Drev:"
 
-#: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:175
+#: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:173
 msgid "&Read Only"
 msgstr "Sk&rivebeskyttet"
 
@@ -656,7 +656,7 @@ msgstr "Udskriv til fi&l"
 msgid "&Properties"
 msgstr "&Egenskaber"
 
-#: comdlg32.rc:360 comdlg32.rc:398 msacm32.rc:31 winefile.rc:140
+#: comdlg32.rc:360 comdlg32.rc:398 msacm32.rc:31 winefile.rc:138
 msgid "&Name:"
 msgstr "&Navn:"
 
@@ -3207,7 +3207,7 @@ msgstr "&Fil"
 msgid "&New"
 msgstr "&Ny"
 
-#: ieframe.rc:29 winefile.rc:72
+#: ieframe.rc:29 winefile.rc:70
 msgid "&Window"
 msgstr "Vind&ue"
 
@@ -3394,7 +3394,7 @@ msgstr ""
 msgid "Delete"
 msgstr "Slet"
 
-#: inetcpl.rc:87 winefile.rc:114
+#: inetcpl.rc:87 winefile.rc:112
 msgid "Security"
 msgstr "Sikkerhed"
 
@@ -7757,7 +7757,7 @@ msgstr "&Liste"
 msgid "&Details"
 msgstr "&Detaljer"
 
-#: shell32.rc:48 winefile.rc:77
+#: shell32.rc:48 winefile.rc:75
 msgid "Arrange &Icons"
 msgstr "Sortere &Ikoner"
 
@@ -7898,11 +7898,11 @@ msgid "&Open:"
 msgstr "&Åbn:"
 
 #: shell32.rc:339 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:234
-#: winefile.rc:132
+#: winefile.rc:130
 msgid "&Browse..."
 msgstr "&Gennemse..."
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:107
+#: shell32.rc:135 shell32.rc:139 winefile.rc:105
 msgid "Size"
 msgstr "Størrelse"
 
@@ -7914,7 +7914,7 @@ msgstr "Type"
 msgid "Modified"
 msgstr "Modificeret"
 
-#: shell32.rc:138 winefile.rc:174 winefile.rc:113
+#: shell32.rc:138 winefile.rc:172 winefile.rc:111
 msgid "Attributes"
 msgstr "Attributter"
 
@@ -7942,7 +7942,7 @@ msgstr "Original sted"
 msgid "Date deleted"
 msgstr "Dato slettet"
 
-#: shell32.rc:153 winecfg.rc:92 winefile.rc:99
+#: shell32.rc:153 winecfg.rc:92 winefile.rc:97
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -8073,7 +8073,7 @@ msgstr "Programmer"
 msgid "Contacts"
 msgstr "&Indhold"
 
-#: shell32.rc:222 winefile.rc:112
+#: shell32.rc:222 winefile.rc:110
 msgid "Links"
 msgstr "Genveje"
 
@@ -8314,7 +8314,7 @@ msgstr "Licensbetingelser"
 msgid "Trash"
 msgstr "Papirkurven"
 
-#: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:84 winefile.rc:96
+#: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:84 winefile.rc:94
 msgid "Error"
 msgstr "Fejl"
 
@@ -10435,7 +10435,7 @@ msgstr "&Find næste\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "E&rstat...\tCtrl+H"
 
-#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:82
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:80
 msgid "&Contents\tF1"
 msgstr "&Indhold\tF1"
 
@@ -10685,7 +10685,7 @@ msgstr "&Værktøjslinje"
 msgid "&Status Bar"
 msgstr "&Statuslinje"
 
-#: oleview.rc:67 regedit.rc:69 winefile.rc:78
+#: oleview.rc:67 regedit.rc:69 winefile.rc:76
 msgid "&Refresh\tF5"
 msgstr "Opdate&r\tF5"
 
@@ -10990,7 +10990,7 @@ msgstr "&Arranger automatisk"
 msgid "&Minimize on run"
 msgstr "&Minimer ved start"
 
-#: progman.rc:44 winefile.rc:69
+#: progman.rc:44 winefile.rc:67
 msgid "&Save settings on exit"
 msgstr "Gem ind&stillinger ved afslutning"
 
@@ -11706,7 +11706,7 @@ msgstr "En graf &per processor"
 msgid "&Show Kernel Times"
 msgstr "Vi&s kernetider"
 
-#: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:75
+#: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:73
 #, fuzzy
 msgid "Tile &Horizontally"
 msgstr "Stil &vandret"
@@ -13424,162 +13424,162 @@ msgstr "Filtrer efter '&'..."
 msgid "&Drivebar"
 msgstr "&Enhedslinje"
 
-#: winefile.rc:66
+#: winefile.rc:65
 msgid "F&ull Screen\tCtrl+Shift+S"
 msgstr "F&uldskærm\tCtrl+Shift+S"
 
-#: winefile.rc:73
+#: winefile.rc:71
 msgid "New &Window"
 msgstr "Nyt &vindue"
 
-#: winefile.rc:74
+#: winefile.rc:72
 msgid "Cascading\tCtrl+F5"
 msgstr "Kortstak\tCtrl+F5"
 
-#: winefile.rc:76
+#: winefile.rc:74
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Stil &lodret\tCtrl+F4"
 
-#: winefile.rc:83
+#: winefile.rc:81
 msgid "&About Wine File Manager"
 msgstr "Om Wine Filbeh&andler"
 
-#: winefile.rc:124
+#: winefile.rc:122
 msgid "Select destination"
 msgstr "Vælg destination"
 
-#: winefile.rc:137
+#: winefile.rc:135
 msgid "By File Type"
 msgstr "Efter filtype"
 
-#: winefile.rc:142
+#: winefile.rc:140
 msgid "File type"
 msgstr "Filtype"
 
-#: winefile.rc:143
+#: winefile.rc:141
 msgid "&Directories"
 msgstr "&Kataloger"
 
-#: winefile.rc:145
+#: winefile.rc:143
 msgid "&Programs"
 msgstr "&Programmer"
 
-#: winefile.rc:147
+#: winefile.rc:145
 msgid "Docu&ments"
 msgstr "Doku&menter"
 
-#: winefile.rc:149
+#: winefile.rc:147
 msgid "&Other files"
 msgstr "&Andre filer"
 
-#: winefile.rc:151
+#: winefile.rc:149
 msgid "Show Hidden/&System Files"
 msgstr "Vi&s skjulte/systemfiler"
 
-#: winefile.rc:162
+#: winefile.rc:160
 msgid "&File Name:"
 msgstr "&Filnavn:"
 
-#: winefile.rc:164
+#: winefile.rc:162
 msgid "Full &Path:"
 msgstr "&Fuld sti:"
 
-#: winefile.rc:166
+#: winefile.rc:164
 msgid "Last Change:"
 msgstr "Sidst ændret:"
 
-#: winefile.rc:170
+#: winefile.rc:168
 msgid "Cop&yright:"
 msgstr "&Ophavsret:"
 
-#: winefile.rc:172
+#: winefile.rc:170
 msgid "Size:"
 msgstr "Størrelse:"
 
-#: winefile.rc:176
+#: winefile.rc:174
 msgid "H&idden"
 msgstr "Sk&jult"
 
-#: winefile.rc:177
+#: winefile.rc:175
 msgid "&Archive"
 msgstr "&Arkiv"
 
-#: winefile.rc:178
+#: winefile.rc:176
 msgid "&System"
 msgstr "&System"
 
-#: winefile.rc:179
+#: winefile.rc:177
 msgid "&Compressed"
 msgstr "Kompr&imeret"
 
-#: winefile.rc:180
+#: winefile.rc:178
 msgid "Version information"
 msgstr "Versioninformation"
 
-#: winefile.rc:197
+#: winefile.rc:194
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr ""
 
-#: winefile.rc:89
+#: winefile.rc:87
 msgid "Applying font settings"
 msgstr "Aktiver skriftindstillinger"
 
-#: winefile.rc:90
+#: winefile.rc:88
 msgid "Error while selecting new font."
 msgstr "Fejl ved valg af ny skrifttype."
 
-#: winefile.rc:95
+#: winefile.rc:93
 msgid "Wine File Manager"
 msgstr "Filbehandling"
 
-#: winefile.rc:97
+#: winefile.rc:95
 msgid "root fs"
 msgstr "Rodfilsystem"
 
-#: winefile.rc:98
+#: winefile.rc:96
 msgid "unixfs"
 msgstr "Unix-filsystem"
 
-#: winefile.rc:100
+#: winefile.rc:98
 msgid "Shell"
 msgstr "Skal"
 
-#: winefile.rc:101 winhlp32.rc:107 winhlp32.rc:82
+#: winefile.rc:99 winhlp32.rc:107 winhlp32.rc:82
 msgid "Not yet implemented"
 msgstr "Ikke implementeret endnu"
 
-#: winefile.rc:108
+#: winefile.rc:106
 msgid "CDate"
 msgstr "C-dato"
 
-#: winefile.rc:109
+#: winefile.rc:107
 msgid "ADate"
 msgstr "A-dato"
 
-#: winefile.rc:110
+#: winefile.rc:108
 msgid "MDate"
 msgstr "M-dato"
 
-#: winefile.rc:111
+#: winefile.rc:109
 msgid "Index/Inode"
 msgstr "Indeks/Inode"
 
-#: winefile.rc:116
+#: winefile.rc:114
 msgid "%1 of %2 free"
 msgstr "%1 af %2 ledig"
 
-#: winefile.rc:117
+#: winefile.rc:115
 msgctxt "unit kilobyte"
 msgid "kB"
 msgstr "kB"
 
-#: winefile.rc:118
+#: winefile.rc:116
 msgctxt "unit megabyte"
 msgid "MB"
 msgstr "MB"
 
-#: winefile.rc:119
+#: winefile.rc:117
 msgctxt "unit gigabyte"
 msgid "GB"
 msgstr "GB"

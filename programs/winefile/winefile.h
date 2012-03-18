@@ -46,10 +46,6 @@
 #include <shellapi.h>   /* for ShellExecuteW() */
 #include <shlobj.h>
 
-#ifndef _NO_EXTENSIONS
-#define _SHELL_FOLDERS
-#endif /* _NO_EXTENSIONS */
-
 #ifndef FILE_ATTRIBUTE_NOT_CONTENT_INDEXED
 #define FILE_ATTRIBUTE_ENCRYPTED            0x00000040
 #define FILE_ATTRIBUTE_SPARSE_FILE          0x00000200
@@ -92,12 +88,7 @@ enum IMAGE {
 
 #define COLOR_COMPRESSED    RGB(0,0,255)
 #define COLOR_SELECTION     RGB(0,0,128)
-
-#ifdef _NO_EXTENSIONS
-#define COLOR_SPLITBAR      WHITE_BRUSH
-#else
 #define COLOR_SPLITBAR      LTGRAY_BRUSH
-#endif
 
 #define FRM_CALC_CLIENT     0xBF83
 #define Frame_CalcFrameClient(hwnd, prt) (SendMessageW(hwnd, FRM_CALC_CLIENT, 0, (LPARAM)(PRECT)prt))
@@ -135,12 +126,10 @@ typedef struct
   WCHAR     drives[BUFFER_LEN];
   BOOL      prescan_node;   /*TODO*/
   BOOL      saveSettings;
-  
-#ifdef _SHELL_FOLDERS
+
   IShellFolder* iDesktop;
   IMalloc*      iMalloc;
   UINT          cfStrFName;
-#endif
 } WINEFILE_GLOBALS;
 
 extern WINEFILE_GLOBALS Globals;
