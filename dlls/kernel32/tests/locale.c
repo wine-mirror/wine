@@ -71,6 +71,8 @@ static BOOL (WINAPI *pEnumSystemLanguageGroupsA)(LANGUAGEGROUP_ENUMPROC, DWORD, 
 static BOOL (WINAPI *pEnumLanguageGroupLocalesA)(LANGGROUPLOCALE_ENUMPROC, LGRPID, DWORD, LONG_PTR);
 static BOOL (WINAPI *pEnumUILanguagesA)(UILANGUAGE_ENUMPROC, DWORD, LONG_PTR);
 static BOOL (WINAPI *pEnumSystemLocalesEx)(LOCALE_ENUMPROCEX, DWORD, LPARAM, LPVOID);
+static LCID (WINAPI *pLocaleNameToLCID)(LPCWSTR, DWORD);
+static INT  (WINAPI *pLCIDToLocaleName)(LCID, LPWSTR, INT, DWORD);
 static INT (WINAPI *pFoldStringA)(DWORD, LPCSTR, INT, LPSTR, INT);
 static INT (WINAPI *pFoldStringW)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static BOOL (WINAPI *pIsValidLanguageGroup)(LGRPID, DWORD);
@@ -80,6 +82,8 @@ static void InitFunctionPointers(void)
   hKernel32 = GetModuleHandleA("kernel32");
   pEnumSystemLanguageGroupsA = (void*)GetProcAddress(hKernel32, "EnumSystemLanguageGroupsA");
   pEnumLanguageGroupLocalesA = (void*)GetProcAddress(hKernel32, "EnumLanguageGroupLocalesA");
+  pLocaleNameToLCID = (void*)GetProcAddress(hKernel32, "LocaleNameToLCID");
+  pLCIDToLocaleName = (void*)GetProcAddress(hKernel32, "LCIDToLocaleName");
   pFoldStringA = (void*)GetProcAddress(hKernel32, "FoldStringA");
   pFoldStringW = (void*)GetProcAddress(hKernel32, "FoldStringW");
   pIsValidLanguageGroup = (void*)GetProcAddress(hKernel32, "IsValidLanguageGroup");
@@ -1637,6 +1641,43 @@ static void test_LCMapStringW(void)
        "unexpected error code %d\n", GetLastError());
 }
 
+static void test_LocaleNames(void)
+{
+    LCID lcid;
+    INT ret;
+    WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
+
+    if (!pLocaleNameToLCID)
+    {
+        win_skip( "LocaleNameToLCID not available\n" );
+        return;
+    }
+
+    /* special cases */
+    buffer[0] = 0;
+    lcid = pLocaleNameToLCID(LOCALE_NAME_USER_DEFAULT, 0);
+    ok(lcid == GetUserDefaultLCID() || broken(GetLastError() == ERROR_INVALID_PARAMETER /* Vista */),
+       "Expected lcid == %08x, got %08x, error %d\n", lcid, GetUserDefaultLCID(), GetLastError());
+    ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
+    ok(ret > 0, "Expected ret > 0, got %d, error %d\n", ret, GetLastError());
+    trace("%08x, %s\n", lcid, wine_dbgstr_w(buffer));
+
+    buffer[0] = 0;
+    lcid = pLocaleNameToLCID(LOCALE_NAME_SYSTEM_DEFAULT, 0);
+    todo_wine ok(!lcid && GetLastError() == ERROR_INVALID_PARAMETER,
+                 "Expected lcid != 0, got %08x, error %d\n", lcid, GetLastError());
+    ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
+    ok(ret > 0, "Expected ret > 0, got %d, error %d\n", ret, GetLastError());
+    trace("%08x, %s\n", lcid, wine_dbgstr_w(buffer));
+
+    buffer[0] = 0;
+    lcid = pLocaleNameToLCID(LOCALE_NAME_INVARIANT, 0);
+    todo_wine ok(lcid == 0x7F, "Expected lcid = 0x7F, got %08x, error %d\n", lcid, GetLastError());
+    ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
+    ok(ret > 0, "Expected ret > 0, got %d, error %d\n", ret, GetLastError());
+    trace("%08x, %s\n", lcid, wine_dbgstr_w(buffer));
+}
+
 /* this requires collation table patch to make it MS compatible */
 static const char * const strings_sorted[] =
 {
@@ -2782,6 +2823,7 @@ START_TEST(locale)
   test_CompareStringA();
   test_LCMapStringA();
   test_LCMapStringW();
+  test_LocaleNames();
   test_FoldStringA();
   test_FoldStringW();
   test_ConvertDefaultLocale();

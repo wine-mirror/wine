@@ -976,6 +976,10 @@ LCID WINAPI LocaleNameToLCID( LPCWSTR name, DWORD flags )
 
     if (flags) FIXME( "unsupported flags %x\n", flags );
 
+    if (name == LOCALE_NAME_USER_DEFAULT)
+        return GetUserDefaultLCID();
+
+    /* string parsing */
     parse_locale_name( name, &locale_name );
 
     TRACE( "found lcid %x for %s, matches %d\n",
