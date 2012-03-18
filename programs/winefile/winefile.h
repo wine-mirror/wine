@@ -30,16 +30,12 @@
 
 #define NONAMELESSUNION
 #include <windows.h>
-#include <commctrl.h>
 #include <commdlg.h>
 
 #ifdef UNICODE
 #define _UNICODE
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <ctype.h>
 #include <locale.h>
 #include <time.h>
 

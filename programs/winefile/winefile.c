@@ -1761,6 +1761,7 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCWSTR st
 	static WCHAR sTranslation[] = {'\\','V','a','r','F','i','l','e','I','n','f','o','\\','T','r','a','n','s','l','a','t','i','o','n','\0'};
 	static WCHAR sStringFileInfo[] = {'\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o','\\',
 										'%','0','4','x','%','0','4','x','\\','%','s','\0'};
+        static WCHAR sFmt[] = {'%','d','.','%','d','.','%','d','.','%','d','\0'};
 	DWORD dwVersionDataLen = GetFileVersionInfoSizeW(strFilename, NULL);
 
 	if (dwVersionDataLen) {
@@ -1773,13 +1774,13 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCWSTR st
 			if (VerQueryValueW(dlg->pVersionData, sBackSlash, &pVal, &nValLen)) {
 				if (nValLen == sizeof(VS_FIXEDFILEINFO)) {
 					VS_FIXEDFILEINFO* pFixedFileInfo = (VS_FIXEDFILEINFO*)pVal;
-					char buffer[BUFFER_LEN];
+                                        WCHAR buffer[BUFFER_LEN];
 
-					sprintf(buffer, "%d.%d.%d.%d",
-						HIWORD(pFixedFileInfo->dwFileVersionMS), LOWORD(pFixedFileInfo->dwFileVersionMS),
-						HIWORD(pFixedFileInfo->dwFileVersionLS), LOWORD(pFixedFileInfo->dwFileVersionLS));
+                                        sprintfW(buffer, sFmt,
+                                                 HIWORD(pFixedFileInfo->dwFileVersionMS), LOWORD(pFixedFileInfo->dwFileVersionMS),
+                                                 HIWORD(pFixedFileInfo->dwFileVersionLS), LOWORD(pFixedFileInfo->dwFileVersionLS));
 
-					SetDlgItemTextA(hwnd, IDC_STATIC_PROP_VERSION, buffer);
+                                        SetDlgItemTextW(hwnd, IDC_STATIC_PROP_VERSION, buffer);
 				}
 			}
 
@@ -4377,13 +4378,13 @@ static void ExitInstance(void)
 	ImageList_Destroy(Globals.himl);
 }
 
-static int winefile_main(HINSTANCE hinstance, int cmdshow, LPCWSTR path)
+int APIENTRY wWinMain(HINSTANCE hinstance, HINSTANCE previnstance, LPWSTR cmdline, int cmdshow)
 {
 	MSG msg;
 
 	InitInstance(hinstance);
 
-	if( !show_frame(0, cmdshow, path) )
+        if( !show_frame(0, cmdshow, cmdline) )
 	{
 		ExitInstance();
 		return 1;
@@ -4403,20 +4404,4 @@ static int winefile_main(HINSTANCE hinstance, int cmdshow, LPCWSTR path)
 	ExitInstance();
 
 	return msg.wParam;
-}
-
-
-#if defined(_MSC_VER)
-int APIENTRY wWinMain(HINSTANCE hinstance, HINSTANCE previnstance, LPWSTR cmdline, int cmdshow)
-#else
-int APIENTRY WinMain(HINSTANCE hinstance, HINSTANCE previnstance, LPSTR cmdline, int cmdshow)
-#endif
-{
-	{ /* convert ANSI cmdline into WCS path string */
-	WCHAR buffer[MAX_PATH];
-	MultiByteToWideChar(CP_ACP, 0, cmdline, -1, buffer, MAX_PATH);
-	winefile_main(hinstance, cmdshow, buffer);
-	}
-
-	return 0;
 }
