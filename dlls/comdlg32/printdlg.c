@@ -3785,6 +3785,20 @@ HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lppd)
     if (!IsWindow(lppd->hwndOwner))
         return E_HANDLE;
 
+    if (lppd->nStartPage != START_PAGE_GENERAL)
+    {
+        if (!lppd->nPropertyPages)
+            return E_INVALIDARG;
+
+        FIXME("custom property sheets (%d at %p) not supported\n", lppd->nPropertyPages, lppd->lphPropertyPages);
+    }
+
+    /* Use PD_NOPAGENUMS or set nMaxPageRanges and lpPageRanges */
+    if (!(lppd->Flags & PD_NOPAGENUMS) && (!lppd->nMaxPageRanges || !lppd->lpPageRanges))
+    {
+        return E_INVALIDARG;
+    }
+
     if (lppd->Flags & PD_RETURNDEFAULT)
     {
         PRINTER_INFO_2A *pbuf;
@@ -3907,6 +3921,20 @@ HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lppd)
 
     if (!IsWindow(lppd->hwndOwner)) {
         return E_HANDLE;
+    }
+
+    if (lppd->nStartPage != START_PAGE_GENERAL)
+    {
+        if (!lppd->nPropertyPages)
+            return E_INVALIDARG;
+
+        FIXME("custom property sheets (%d at %p) not supported\n", lppd->nPropertyPages, lppd->lphPropertyPages);
+    }
+
+    /* Use PD_NOPAGENUMS or set nMaxPageRanges and lpPageRanges */
+    if (!(lppd->Flags & PD_NOPAGENUMS) && (!lppd->nMaxPageRanges || !lppd->lpPageRanges))
+    {
+        return E_INVALIDARG;
     }
 
     if (lppd->Flags & PD_RETURNDEFAULT) {
