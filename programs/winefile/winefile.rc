@@ -125,9 +125,9 @@ FONT 8, "MS Shell Dlg"
     CONTROL         "", 101, "Static", SS_SIMPLE|SS_NOPREFIX, 3, 6, 162, 10
     CONTROL         "&Path:", -1, "Static", SS_LEFTNOWORDWRAP|WS_GROUP, 3, 18, 60, 10
     EDITTEXT        201, 3, 29, 134, 12, ES_AUTOHSCROLL
-    DEFPUSHBUTTON   "OK", 1, 158, 6, 47, 14
-    PUSHBUTTON      "Cancel", 2, 158, 23, 47, 14
-    PUSHBUTTON      "&Browse...", 254, 158, 43, 47, 14
+    DEFPUSHBUTTON   "OK", 1, 145, 6, 60, 14
+    PUSHBUTTON      "Cancel", 2, 145, 23, 60, 14
+    PUSHBUTTON      "&Browse...", 254, 145, 43, 60, 14
 }
 
 IDD_DIALOG_VIEW_TYPE DIALOG 15, 13, 161, 105
