@@ -162,6 +162,53 @@ static LPWSTR strdupW(LPCWSTR p)
 }
 
 /***********************************************************************
+ * get_driver_info [internal]
+ *
+ * get DRIVER_INFO_3W for the current printer handle,
+ * alloc the buffer, when needed
+ */
+static DRIVER_INFO_3W * get_driver_infoW(HANDLE hprn)
+{
+    DRIVER_INFO_3W *di3 = NULL;
+    DWORD needed = 0;
+    BOOL res;
+
+    res = GetPrinterDriverW(hprn, NULL, 3, NULL, 0, &needed);
+    if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+        di3 = HeapAlloc(GetProcessHeap(), 0, needed);
+        res = GetPrinterDriverW(hprn, NULL, 3, (LPBYTE)di3, needed, &needed);
+    }
+
+    if (res)
+        return di3;
+
+    TRACE("GetPrinterDriverW failed with %u\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, di3);
+    return NULL;
+}
+
+static DRIVER_INFO_3A * get_driver_infoA(HANDLE hprn)
+{
+    DRIVER_INFO_3A *di3 = NULL;
+    DWORD needed = 0;
+    BOOL res;
+
+    res = GetPrinterDriverA(hprn, NULL, 3, NULL, 0, &needed);
+    if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+        di3 = HeapAlloc(GetProcessHeap(), 0, needed);
+        res = GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)di3, needed, &needed);
+    }
+
+    if (res)
+        return di3;
+
+    TRACE("GetPrinterDriverA failed with %u\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, di3);
+    return NULL;
+}
+
+
+/***********************************************************************
  * get_printer_info [internal]
  *
  * get PRINTER_INFO_2W for the current printer handle,
@@ -3848,10 +3895,8 @@ HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lppd)
     if (lppd->Flags & PD_RETURNDEFAULT)
     {
         PRINTER_INFO_2A *pbuf;
-        DRIVER_INFO_2A  *dbuf;
+        DRIVER_INFO_3A  *dbuf;
         HANDLE hprn;
-        DWORD needed = 1024;
-        BOOL bRet;
 
         if (lppd->hDevMode || lppd->hDevNames)
         {
@@ -3873,19 +3918,9 @@ HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lppd)
             return E_FAIL;
         }
 
-        dbuf = HeapAlloc(GetProcessHeap(), 0, needed);
-        bRet = GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed);
-        if (!bRet && (GetLastError() == ERROR_INSUFFICIENT_BUFFER))
+        dbuf = get_driver_infoA(hprn);
+        if (!dbuf)
         {
-            HeapFree(GetProcessHeap(), 0, dbuf);
-            dbuf = HeapAlloc(GetProcessHeap(), 0, needed);
-            bRet = GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed);
-        }
-        if (!bRet)
-        {
-            ERR("GetPrinterDriverА failed, last error %d, fix your config for printer %s!\n",
-                GetLastError(), pbuf->pPrinterName);
-            HeapFree(GetProcessHeap(), 0, dbuf);
             HeapFree(GetProcessHeap(), 0, pbuf);
             COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE);
             ClosePrinter(hprn);
@@ -3976,10 +4011,8 @@ HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lppd)
 
     if (lppd->Flags & PD_RETURNDEFAULT) {
         PRINTER_INFO_2W *pbuf;
-        DRIVER_INFO_2W  *dbuf;
+        DRIVER_INFO_3W  *dbuf;
         HANDLE hprn;
-        DWORD needed = 1024;
-        BOOL bRet;
 
         if (lppd->hDevMode || lppd->hDevNames) {
             WARN("hDevMode or hDevNames non-zero for PD_RETURNDEFAULT\n");
@@ -3999,17 +4032,9 @@ HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lppd)
             return E_FAIL;
         }
 
-        dbuf = HeapAlloc(GetProcessHeap(), 0, needed);
-        bRet = GetPrinterDriverW(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed);
-        if (!bRet && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-            HeapFree(GetProcessHeap(), 0, dbuf);
-            dbuf = HeapAlloc(GetProcessHeap(), 0, needed);
-            bRet = GetPrinterDriverW(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed);
-        }
-        if (!bRet) {
-            ERR("GetPrinterDriverW failed, last error %d, fix your config for printer %s!\n",
-                GetLastError(), debugstr_w(pbuf->pPrinterName));
-            HeapFree(GetProcessHeap(), 0, dbuf);
+        dbuf = get_driver_infoW(hprn);
+        if (!dbuf)
+        {
             HeapFree(GetProcessHeap(), 0, pbuf);
             COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE);
             ClosePrinter(hprn);
