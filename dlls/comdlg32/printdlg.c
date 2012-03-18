@@ -161,6 +161,52 @@ static LPWSTR strdupW(LPCWSTR p)
     return ret;
 }
 
+/***********************************************************************
+ * get_printer_info [internal]
+ *
+ * get PRINTER_INFO_2W for the current printer handle,
+ * alloc the buffer, when needed
+ */
+static PRINTER_INFO_2W * get_printer_infoW(HANDLE hprn)
+{
+    PRINTER_INFO_2W *pi2 = NULL;
+    DWORD needed = 0;
+    BOOL res;
+
+    res = GetPrinterW(hprn, 2, NULL, 0, &needed);
+    if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+        pi2 = HeapAlloc(GetProcessHeap(), 0, needed);
+        res = GetPrinterW(hprn, 2, (LPBYTE)pi2, needed, &needed);
+    }
+
+    if (res)
+        return pi2;
+
+    TRACE("GetPrinterW failed with %u\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, pi2);
+    return NULL;
+}
+
+static PRINTER_INFO_2A * get_printer_infoA(HANDLE hprn)
+{
+    PRINTER_INFO_2A *pi2 = NULL;
+    DWORD needed = 0;
+    BOOL res;
+
+    res = GetPrinterA(hprn, 2, NULL, 0, &needed);
+    if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+        pi2 = HeapAlloc(GetProcessHeap(), 0, needed);
+        res = GetPrinterA(hprn, 2, (LPBYTE)pi2, needed, &needed);
+    }
+
+    if (res)
+        return pi2;
+
+    TRACE("GetPrinterA failed with %u\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, pi2);
+    return NULL;
+}
+
 /***********************************************************
  * convert_to_devmodeA
  *
@@ -3820,22 +3866,13 @@ HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lppd)
             return E_FAIL;
         }
 
-        pbuf = HeapAlloc(GetProcessHeap(), 0, needed);
-        bRet = GetPrinterA(hprn, 2, (LPBYTE)pbuf, needed, &needed);
-        if (!bRet && (GetLastError() == ERROR_INSUFFICIENT_BUFFER))
+        pbuf = get_printer_infoA(hprn);
+        if (!pbuf)
         {
-            HeapFree(GetProcessHeap(), 0, pbuf);
-            pbuf = HeapAlloc(GetProcessHeap(), 0, needed);
-            bRet = GetPrinterA(hprn, 2, (LPBYTE)pbuf, needed, &needed);
-        }
-        if (!bRet)
-        {
-            HeapFree(GetProcessHeap(), 0, pbuf);
             ClosePrinter(hprn);
             return E_FAIL;
         }
 
-        needed = 1024;
         dbuf = HeapAlloc(GetProcessHeap(), 0, needed);
         bRet = GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed);
         if (!bRet && (GetLastError() == ERROR_INSUFFICIENT_BUFFER))
@@ -3955,20 +3992,13 @@ HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lppd)
             return E_FAIL;
         }
 
-        pbuf = HeapAlloc(GetProcessHeap(), 0, needed);
-        bRet = GetPrinterW(hprn, 2, (LPBYTE)pbuf, needed, &needed);
-        if (!bRet && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-            HeapFree(GetProcessHeap(), 0, pbuf);
-            pbuf = HeapAlloc(GetProcessHeap(), 0, needed);
-            bRet = GetPrinterW(hprn, 2, (LPBYTE)pbuf, needed, &needed);
-        }
-        if (!bRet) {
-            HeapFree(GetProcessHeap(), 0, pbuf);
+        pbuf = get_printer_infoW(hprn);
+        if (!pbuf)
+        {
             ClosePrinter(hprn);
             return E_FAIL;
         }
 
-        needed = 1024;
         dbuf = HeapAlloc(GetProcessHeap(), 0, needed);
         bRet = GetPrinterDriverW(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed);
         if (!bRet && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
