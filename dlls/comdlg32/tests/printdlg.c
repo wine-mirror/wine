@@ -212,7 +212,9 @@ static void test_PrintDlgA(void)
 
 static void test_PrintDlgExW(void)
 {
+    PRINTPAGERANGE pagerange[2];
     LPPRINTDLGEXW pDlg;
+    DEVNAMES *dn;
     HRESULT res;
 
     /* PrintDlgEx not present before w2k */
@@ -262,6 +264,85 @@ static void test_PrintDlgExW(void)
         "got 0x%x with %u and %u (expected 'E_HANDLE')\n",
         res, GetLastError(), CommDlgExtendedError());
 
+    /* nStartPage must be START_PAGE_GENERAL for the general page or a valid property sheet index */
+    ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
+    pDlg->lStructSize = sizeof(PRINTDLGEXW);
+    pDlg->hwndOwner = GetDesktopWindow();
+    pDlg->Flags = PD_RETURNDEFAULT | PD_NOWARNING | PD_NOPAGENUMS;
+    res = pPrintDlgExW(pDlg);
+    ok((res == E_INVALIDARG), "got 0x%x (expected 'E_INVALIDARG')\n", res);
+
+    /* Use PD_NOPAGENUMS or set nMaxPageRanges and lpPageRanges */
+    ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
+    pDlg->lStructSize = sizeof(PRINTDLGEXW);
+    pDlg->hwndOwner = GetDesktopWindow();
+    pDlg->Flags = PD_RETURNDEFAULT | PD_NOWARNING;
+    pDlg->nStartPage = START_PAGE_GENERAL;
+    res = pPrintDlgExW(pDlg);
+    ok((res == E_INVALIDARG), "got 0x%x (expected 'E_INVALIDARG')\n", res);
+
+    /* this is invalid: a valid lpPageRanges with 0 for nMaxPageRanges */
+    ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
+    pDlg->lStructSize = sizeof(PRINTDLGEXW);
+    pDlg->hwndOwner = GetDesktopWindow();
+    pDlg->Flags = PD_RETURNDEFAULT | PD_NOWARNING;
+    pDlg->lpPageRanges = pagerange;
+    pDlg->nStartPage = START_PAGE_GENERAL;
+    res = pPrintDlgExW(pDlg);
+    ok((res == E_INVALIDARG), "got 0x%x (expected 'E_INVALIDARG')\n", res);
+
+    /* this is invalid: NULL for lpPageRanges with a valid nMaxPageRanges */
+    ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
+    pDlg->lStructSize = sizeof(PRINTDLGEXW);
+    pDlg->hwndOwner = GetDesktopWindow();
+    pDlg->Flags = PD_RETURNDEFAULT | PD_NOWARNING;
+    pDlg->nMaxPageRanges = 1;
+    pDlg->nStartPage = START_PAGE_GENERAL;
+    res = pPrintDlgExW(pDlg);
+    ok((res == E_INVALIDARG), "got 0x%x (expected 'E_INVALIDARG')\n", res);
+
+    /* this works: lpPageRanges with a valid nMaxPageRanges */
+    ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
+    pDlg->lStructSize = sizeof(PRINTDLGEXW);
+    pDlg->hwndOwner = GetDesktopWindow();
+    pDlg->Flags = PD_RETURNDEFAULT | PD_NOWARNING;
+    pDlg->nMaxPageRanges = 1;
+    pDlg->lpPageRanges = pagerange;
+    pDlg->nStartPage = START_PAGE_GENERAL;
+    res = pPrintDlgExW(pDlg);
+    if (res == E_FAIL)
+    {
+        skip("No printer configured.\n");
+        HeapFree(GetProcessHeap(), 0, pDlg);
+        return;
+    }
+
+    ok(res == S_OK, "got 0x%x (expected S_OK)\n", res);
+
+    dn = GlobalLock(pDlg->hDevNames);
+    ok(dn != NULL, "expected '!= NULL' for GlobalLock(%p)\n",pDlg->hDevNames);
+    if (dn)
+    {
+        ok(dn->wDriverOffset, "(expected '!= 0' for wDriverOffset)\n");
+        ok(dn->wDeviceOffset, "(expected '!= 0' for wDeviceOffset)\n");
+        ok(dn->wOutputOffset, "(expected '!= 0' for wOutputOffset)\n");
+        ok(dn->wDefault == DN_DEFAULTPRN, "got 0x%x (expected DN_DEFAULTPRN)\n", dn->wDefault);
+
+        GlobalUnlock(pDlg->hDevNames);
+    }
+    GlobalFree(pDlg->hDevMode);
+    GlobalFree(pDlg->hDevNames);
+
+    /* this works also: PD_NOPAGENUMS */
+    ZeroMemory(pDlg, sizeof(PRINTDLGEXW));
+    pDlg->lStructSize = sizeof(PRINTDLGEXW);
+    pDlg->hwndOwner = GetDesktopWindow();
+    pDlg->Flags = PD_RETURNDEFAULT | PD_NOWARNING | PD_NOPAGENUMS;
+    pDlg->nStartPage = START_PAGE_GENERAL;
+    res = pPrintDlgExW(pDlg);
+    ok(res == S_OK, "got 0x%x (expected S_OK)\n", res);
+    GlobalFree(pDlg->hDevMode);
+    GlobalFree(pDlg->hDevNames);
 
     HeapFree(GetProcessHeap(), 0, pDlg);
     return;
