@@ -6,7 +6,7 @@
 @ stub EvtCreateRenderContext
 @ stub EvtExportLog
 @ stub EvtFormatMessage
-@ stub EvtGetChannelConfigProperty
+@ stdcall EvtGetChannelConfigProperty(ptr long long long ptr ptr)
 @ stub EvtGetEventInfo
 @ stub EvtGetEventMetadataProperty
 @ stub EvtGetExtendedStatus
@@ -40,7 +40,7 @@
 @ stub EvtRender
 @ stub EvtSaveChannelConfig
 @ stub EvtSeek
-@ stub EvtSetChannelConfigProperty
+@ stdcall EvtSetChannelConfigProperty(ptr long long ptr)
 @ stub EvtSetObjectArrayProperty
-@ stub EvtSubscribe
+@ stdcall EvtSubscribe(ptr ptr wstr wstr ptr ptr ptr long)
 @ stub EvtUpdateBookmark

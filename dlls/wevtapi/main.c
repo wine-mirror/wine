@@ -46,6 +46,36 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+BOOL WINAPI EvtGetChannelConfigProperty(EVT_HANDLE ChannelConfig,
+                                        EVT_CHANNEL_CONFIG_PROPERTY_ID PropertyId,
+                                        DWORD Flags,
+                                        DWORD PropertyValueBufferSize,
+                                        PEVT_VARIANT PropertyValueBuffer,
+                                        DWORD *PropertyValueBufferUsed)
+{
+    FIXME("(%p %i %u %u %p %p) stub\n", ChannelConfig, PropertyId, Flags, PropertyValueBufferSize,
+          PropertyValueBuffer, PropertyValueBufferUsed);
+    return FALSE;
+}
+
+BOOL WINAPI EvtSetChannelConfigProperty(EVT_HANDLE ChannelConfig,
+                                        EVT_CHANNEL_CONFIG_PROPERTY_ID PropertyId,
+                                        DWORD Flags,
+                                        PEVT_VARIANT PropertyValue)
+{
+    FIXME("(%p %i %u %p) stub\n", ChannelConfig, PropertyId, Flags, PropertyValue);
+    return FALSE;
+}
+
+EVT_HANDLE WINAPI EvtSubscribe(EVT_HANDLE Session, HANDLE SignalEvent, LPCWSTR ChannelPath,
+                               LPCWSTR Query, EVT_HANDLE Bookmark, PVOID context,
+                               EVT_SUBSCRIBE_CALLBACK Callback, DWORD Flags)
+{
+    FIXME("(%p %p %s %s %p %p %p %u) stub\n", Session, SignalEvent, debugstr_w(ChannelPath),
+          debugstr_w(Query), Bookmark, context, Callback, Flags);
+    return NULL;
+}
+
 EVT_HANDLE WINAPI EvtOpenChannelConfig(EVT_HANDLE Session, LPCWSTR ChannelPath, DWORD Flags)
 {
     FIXME("(%p %s %u) stub\n", Session, debugstr_w(ChannelPath), Flags);
