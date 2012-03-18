@@ -510,7 +510,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             APICHAR *tmp = buf;
             int max_len;
 
-            /* 0 padding is added after '0x' in Alternate flag is in use */
+            /* 0 padding is added after '0x' if Alternate flag is in use */
             if((flags.Format=='x' || flags.Format=='X') && flags.PadZero && flags.Alternate
                     && !flags.LeftAlign && flags.Precision<flags.FieldLength-2)
                 flags.Precision = flags.FieldLength - 2;
