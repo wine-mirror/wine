@@ -1766,7 +1766,7 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
                           MSIRECORD *rec, UINT row)
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
-    UINT r, column;
+    UINT r, frow, column;
 
     TRACE("%p %d %p\n", view, eModifyMode, rec );
 
@@ -1811,8 +1811,18 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
         r = msi_table_assign( view, rec );
         break;
 
-    case MSIMODIFY_REPLACE:
     case MSIMODIFY_MERGE:
+        /* check row that matches this record */
+        r = msi_table_find_row( tv, rec, &frow, &column );
+        if (r != ERROR_SUCCESS)
+        {
+            r = table_validate_new( tv, rec, NULL );
+            if (r == ERROR_SUCCESS)
+                r = TABLE_insert_row( view, rec, -1, FALSE );
+        }
+        break;
+
+    case MSIMODIFY_REPLACE:
     case MSIMODIFY_VALIDATE:
     case MSIMODIFY_VALIDATE_FIELD:
     case MSIMODIFY_VALIDATE_DELETE:
