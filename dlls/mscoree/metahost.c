@@ -564,6 +564,14 @@ HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **res
     return CLRRuntimeInfo_GetRuntimeHost(This, result);
 }
 
+#ifdef __i386__
+static const WCHAR libmono2_arch_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','-','2','.','0','-','x','8','6','.','d','l','l',0};
+#elif defined(__x86_64__)
+static const WCHAR libmono2_arch_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','-','2','.','0','-','x','8','6','_','6','4','.','d','l','l',0};
+#else
+static const WCHAR libmono2_arch_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','-','2','.','0','.','d','l','l',0};
+#endif
+
 static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path, int abi_version)
 {
     static const WCHAR mono_dll[] = {'\\','b','i','n','\\','m','o','n','o','.','d','l','l',0};
@@ -588,8 +596,15 @@ static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path, int abi_version)
     else if (abi_version == 2)
     {
         strcpyW(dll_path, path);
-        strcatW(dll_path, mono2_dll);
+        strcatW(dll_path, libmono2_arch_dll);
         attributes = GetFileAttributesW(dll_path);
+
+        if (attributes == INVALID_FILE_ATTRIBUTES)
+        {
+            strcpyW(dll_path, path);
+            strcatW(dll_path, mono2_dll);
+            attributes = GetFileAttributesW(dll_path);
+        }
 
         if (attributes == INVALID_FILE_ATTRIBUTES)
         {
