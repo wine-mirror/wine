@@ -1204,7 +1204,11 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTR
   LARGE_INTEGER liMove; /* used when skipping chunks */
 
   TRACE("(%p, %p): Loading\n", This, pStm);
-  IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
+  hr = IStream_Read (pStm, &Chunk, sizeof(Chunk), NULL);
+  if(hr != S_OK){
+    WARN("IStream_Read failed: %08x\n", hr);
+    return DMUS_E_UNSUPPORTED_STREAM;
+  }
   TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
   switch (Chunk.fccID) {	
   case FOURCC_RIFF: {
@@ -1246,7 +1250,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTR
       TRACE_(dmfile)(": unexpected chunk (loading failed)\n");
       liMove.QuadPart = StreamSize;
       IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-      return E_FAIL;
+      return DMUS_E_UNSUPPORTED_STREAM;
     }
     }
     TRACE_(dmfile)(": reading finished\n");
@@ -1254,9 +1258,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTR
   }
   default: {
     TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-    liMove.QuadPart = Chunk.dwSize;
-    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-    return E_FAIL;
+    return DMUS_E_UNSUPPORTED_STREAM;
   }
   }
   
