@@ -2665,7 +2665,8 @@ HRESULT WINAPI ScriptBreak(const WCHAR *chars, int count, const SCRIPT_ANALYSIS 
 {
     TRACE("(%s, %d, %p, %p)\n", debugstr_wn(chars, count), count, sa, la);
 
-    if (!la) return S_FALSE;
+    if (count < 0 || !la) return E_INVALIDARG;
+    if (count == 0) return E_FAIL;
 
     BREAK_line(chars, count, sa, la);
 
