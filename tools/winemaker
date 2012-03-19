@@ -3,7 +3,7 @@ use strict;
 
 # Copyright 2000-2004 Francois Gouget for CodeWeavers
 # Copyright 2004 Dimitrie O. Paun
-# Copyright 2009-2011 André Hentschel
+# Copyright 2009-2012 André Hentschel
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ use strict;
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 #
 
-my $version="0.8.2";
+my $version="0.8.3";
 
 use Cwd;
 use File::Basename;
@@ -2109,6 +2109,11 @@ sub fix_file($$$)
       print FILEO "$1$2$real_include_name$4$'";
       $modified|=($real_include_name ne $3);
 
+    } elsif (/^(\s*)\#\s*pragma\s+comment\s*\(\s*lib\s*,\s*\"(\w+)\.lib\"\s*\)/) {
+      my $pragma_indent=$1;
+      my $pragma_lib=$2;
+      push @{@$target[$T_LIBRARIES]},$pragma_lib;
+      print FILEO "$pragma_indent/* winemaker: Added -l$pragma_lib to the libraries */\n";
     } elsif (s/^(\s*)(\#\s*pragma\s+pack\s*\(\s*)//) {
       # Pragma pack handling
       #
@@ -2658,7 +2663,7 @@ sub print_banner()
   print "Winemaker $version\n";
   print "Copyright 2000-2004 Francois Gouget <fgouget\@codeweavers.com> for CodeWeavers\n";
   print "Copyright 2004 Dimitrie O. Paun\n";
-  print "Copyright 2009-2011 André Hentschel\n";
+  print "Copyright 2009-2012 André Hentschel\n";
 }
 
 sub usage()
