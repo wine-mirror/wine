@@ -304,7 +304,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_GetObject (LPDIR
 	result = IPersistStream_Load (pPersistStream, pStream);
 	if (result != S_OK) {
 		WARN(": failed to (completely) load object (%s)\n", debugstr_dmreturn(result));
-		ret = DMUS_S_PARTIALLOAD /*result*/;
+		return result;
 	}
 	/* get descriptor */
 	DM_STRUCT_INIT(&GotDesc);
