@@ -8809,26 +8809,31 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, const PO
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] nItem : item index
- * [I] lpLVItem : item or subitem info
+ * [I] item  : item or subitem info
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, const LVITEMW *lpLVItem)
+static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, const LVITEMW *item)
 {
-    BOOL bResult = TRUE;
+    BOOL ret = TRUE;
     LVITEMW lvItem;
+
+    if (!item) return FALSE;
 
     lvItem.iItem = nItem;
     lvItem.iSubItem = 0;
     lvItem.mask = LVIF_STATE;
-    lvItem.state = lpLVItem->state;
-    lvItem.stateMask = lpLVItem->stateMask;
-    TRACE("lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
+    lvItem.state = item->state;
+    lvItem.stateMask = item->stateMask;
+    TRACE("item=%s\n", debuglvitem_t(&lvItem, TRUE));
 
     if (nItem == -1)
     {
+        UINT oldstate = 0;
+        BOOL notify;
+
 	/* select all isn't allowed in LVS_SINGLESEL */
 	if ((lvItem.state & lvItem.stateMask & LVIS_SELECTED) && (infoPtr->dwStyle & LVS_SINGLESEL))
 	    return FALSE;
@@ -8836,14 +8841,40 @@ static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, const LVITE
 	/* focus all isn't allowed */
 	if (lvItem.state & lvItem.stateMask & LVIS_FOCUSED) return FALSE;
 
+        notify = infoPtr->bDoChangeNotify;
+        if (infoPtr->dwStyle & LVS_OWNERDATA)
+        {
+            infoPtr->bDoChangeNotify = FALSE;
+            if (!(lvItem.state & LVIS_SELECTED) && LISTVIEW_GetSelectedCount(infoPtr))
+                oldstate |= LVIS_SELECTED;
+            if (infoPtr->nFocusedItem != -1) oldstate |= LVIS_FOCUSED;
+        }
+
     	/* apply to all items */
     	for (lvItem.iItem = 0; lvItem.iItem < infoPtr->nItemCount; lvItem.iItem++)
-	    if (!LISTVIEW_SetItemT(infoPtr, &lvItem, TRUE)) bResult = FALSE;
+	    if (!LISTVIEW_SetItemT(infoPtr, &lvItem, TRUE)) ret = FALSE;
+
+        if (infoPtr->dwStyle & LVS_OWNERDATA)
+        {
+            NMLISTVIEW nmlv;
+
+            infoPtr->bDoChangeNotify = notify;
+
+            nmlv.iItem = -1;
+            nmlv.iSubItem = 0;
+            nmlv.uNewState = lvItem.state & lvItem.stateMask;
+            nmlv.uOldState = oldstate & lvItem.stateMask;
+            nmlv.uChanged = LVIF_STATE;
+            nmlv.ptAction.x = nmlv.ptAction.y = 0;
+            nmlv.lParam = 0;
+
+            notify_listview(infoPtr, LVN_ITEMCHANGED, &nmlv);
+        }
     }
     else
-	bResult = LISTVIEW_SetItemT(infoPtr, &lvItem, TRUE);
+	ret = LISTVIEW_SetItemT(infoPtr, &lvItem, TRUE);
 
-    return bResult;
+    return ret;
 }
 
 /***
@@ -11410,7 +11441,6 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_SetItemPosition(infoPtr, (INT)wParam, (POINT*)lParam);
 
   case LVM_SETITEMSTATE:
-    if (lParam == 0) return FALSE;
     return LISTVIEW_SetItemState(infoPtr, (INT)wParam, (LPLVITEMW)lParam);
 
   case LVM_SETITEMTEXTA:
