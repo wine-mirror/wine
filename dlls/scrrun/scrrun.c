@@ -15,6 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#define COBJMACROS
 
 #include "config.h"
 #include <stdarg.h>
@@ -24,11 +25,68 @@
 #include "ole2.h"
 #include "rpcproxy.h"
 
+#include <initguid.h>
+#include "scrrun.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 
 static HINSTANCE scrrun_instance;
+
+typedef HRESULT (*fnCreateInstance)(LPVOID *ppObj);
+
+extern HRESULT WINAPI FileSystem_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+
+static HRESULT WINAPI scrruncf_QueryInterface(IClassFactory *iface, REFIID riid, LPVOID *ppv )
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(&IID_IClassFactory, riid)) {
+        TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+        *ppv = iface;
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI scrruncf_AddRef(IClassFactory *iface )
+{
+    TRACE("(%p)\n", iface);
+    return 2;
+}
+
+static ULONG WINAPI scrruncf_Release(IClassFactory *iface )
+{
+    TRACE("(%p)\n", iface);
+    return 1;
+}
+
+static HRESULT WINAPI scrruncf_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    TRACE("(%p)->(%x)\n", iface, fLock);
+    return S_OK;
+}
+
+static const struct IClassFactoryVtbl scrruncf_vtbl =
+{
+    scrruncf_QueryInterface,
+    scrruncf_AddRef,
+    scrruncf_Release,
+    FileSystem_CreateInstance,
+    scrruncf_LockServer
+};
+
+static IClassFactory FileSystemFactory = { &scrruncf_vtbl };
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
@@ -72,11 +130,13 @@ HRESULT WINAPI DllUnregisterServer(void)
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
 {
-    FIXME("(%s, %s, %p): stub\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-    if(!ppv)
-        return E_INVALIDARG;
+    if(IsEqualGUID(&CLSID_FileSystemObject, rclsid)) {
+        TRACE("(CLSID_WshShell %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&FileSystemFactory, riid, ppv);
+    }
 
-    return E_NOTIMPL;
+    FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 /***********************************************************************

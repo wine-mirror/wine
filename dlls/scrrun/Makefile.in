@@ -1,9 +1,14 @@
 MODULE    = scrrun.dll
+IMPORTS   = uuid
 
-C_SRCS = scrrun.c
+C_SRCS = \
+	filesystem.c \
+	scrrun.c
 
 RC_SRCS = scrrun.rc
 
 IDL_TLB_SRCS = scrrun.idl
+
+IDL_H_SRCS = scrrun.idl
 
 @MAKE_DLL_RULES@
