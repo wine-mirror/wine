@@ -243,7 +243,7 @@ static HRESULT WINAPI MediaDet_put_CurrentStream(IMediaDet* iface, LONG newVal)
 static HRESULT WINAPI MediaDet_get_StreamType(IMediaDet* iface, GUID *pVal)
 {
     MediaDetImpl *This = impl_from_IMediaDet(iface);
-    FIXME("(%p)->(%p): not implemented!\n", This, debugstr_guid(pVal));
+    FIXME("(%p)->(%s): not implemented!\n", This, debugstr_guid(pVal));
     return E_NOTIMPL;
 }
 
