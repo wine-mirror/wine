@@ -141,7 +141,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     int i = 0;
 
-    TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     /*
     if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
     	*ppv = (LPVOID)&DPNET_CF;
@@ -158,7 +158,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
       ++i;
     }
 
-    FIXME("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    FIXME("(%s,%s,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
