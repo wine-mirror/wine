@@ -908,6 +908,36 @@ static void test_mbcjmsjis(void)
     _setmbcp(prev_cp);
 }
 
+static void test_mbbtombc(void)
+{
+    static const unsigned int mbbmbc[][2] = {
+        {0x1f, 0x1f}, {0x20, 0x8140}, {0x39, 0x8258}, {0x40, 0x8197},
+        {0x41, 0x8260}, {0x5e, 0x814f}, {0x7e, 0x8150}, {0x7f, 0x7f},
+        {0x80, 0x80}, {0x81, 0x81}, {0xa0, 0xa0}, {0xa7, 0x8340},
+        {0xb0, 0x815b}, {0xd1, 0x8380}, {0xff, 0xff}, {0,0}};
+    int cp[] = { 932, 936, 939, 950, 1361, _MB_CP_SBCS };
+    int i, j;
+    int prev_cp = _getmbcp();
+
+    for (i = 0; i < sizeof(cp)/sizeof(cp[0]); i++)
+    {
+        _setmbcp(cp[i]);
+        for (j = 0; mbbmbc[j][0] != 0; j++)
+        {
+            unsigned int exp, ret;
+            ret = _mbbtombc(mbbmbc[j][0]);
+            exp = (cp[i] == 932) ? mbbmbc[j][1] : mbbmbc[j][0];
+            if (cp[i] == 932 && exp > 255)
+              todo_wine ok(ret == exp, "Expected 0x%x, got 0x%x (0x%x, codepage %d)\n",
+                 exp, ret, mbbmbc[j][0], cp[i]);
+            else
+              ok(ret == exp, "Expected 0x%x, got 0x%x (0x%x, codepage %d)\n",
+                 exp, ret, mbbmbc[j][0], cp[i]);
+        }
+    }
+    _setmbcp(prev_cp);
+}
+
 static void test_mbctombb(void)
 {
     static const unsigned int mbcmbb_932[][2] = {
@@ -2134,6 +2164,7 @@ START_TEST(string)
     test__mbsnbcpy_s();
     test_mbcjisjms();
     test_mbcjmsjis();
+    test_mbbtombc();
     test_mbctombb();
     test_ismbclegal();
     test_strtok();
