@@ -392,7 +392,7 @@ static HRESULT WINAPI HTMLAnchorElement_get_protocol(IHTMLAnchorElement *iface, 
 static HRESULT WINAPI HTMLAnchorElement_put_search(IHTMLAnchorElement *iface, BSTR v)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
-    FIXME("(%p)->(%p)\n", This, debugstr_w(v));
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
