@@ -683,7 +683,7 @@ static HRESULT GAMEUX_UpdateGame(LPGUID InstanceID) {
     LPWSTR lpRegistryPath;
     LPWSTR lpGDFBinaryPath, lpGameInstallDirectory;
 
-    TRACE("(%p)\n", debugstr_guid(InstanceID));
+    TRACE("(%s)\n", debugstr_guid(InstanceID));
 
     /* first, check is game exists in CURRENT_USER scope  */
     installScope = GIS_CURRENT_USER;
