@@ -673,8 +673,9 @@ HRESULT WINAPI D3DXCreateTextureFromFileExW(LPDIRECT3DDEVICE9 device,
     DWORD size;
     LPVOID buffer;
 
-    TRACE("(%p, %p, %u, %u, %u, %x, %x, %x, %u, %u, %x, %p, %p, %p): relay\n", device, debugstr_w(srcfile), width,
-        height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinfo, palette, texture);
+    TRACE("(%p, %s, %u, %u, %u, %x, %x, %x, %u, %u, %x, %p, %p, %p): relay\n",
+            device, debugstr_w(srcfile), width, height, miplevels, usage, format, pool, filter,
+            mipfilter, colorkey, srcinfo, palette, texture);
 
     if (!srcfile)
         return D3DERR_INVALIDCALL;
@@ -710,8 +711,9 @@ HRESULT WINAPI D3DXCreateTextureFromFileExA(LPDIRECT3DDEVICE9 device,
     HRESULT hr;
     DWORD len;
 
-    TRACE("(%p, %p, %u, %u, %u, %x, %x, %x, %u, %u, %x, %p, %p, %p): relay\n", device, debugstr_a(srcfile), width,
-        height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinfo, palette, texture);
+    TRACE("(%p, %s, %u, %u, %u, %x, %x, %x, %u, %u, %x, %p, %p, %p): relay\n",
+            device, debugstr_a(srcfile), width, height, miplevels, usage, format, pool, filter,
+            mipfilter, colorkey, srcinfo, palette, texture);
 
     if (!device || !srcfile || !texture)
         return D3DERR_INVALIDCALL;
