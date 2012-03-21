@@ -377,7 +377,7 @@ HRESULT WINAPI TransformFilterImpl_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin
 {
     TransformFilter *This = (TransformFilter *)iface;
 
-    TRACE("(%p/%p)->(%p,%p)\n", This, iface, debugstr_w(Id), ppPin);
+    TRACE("(%p/%p)->(%s,%p)\n", This, iface, debugstr_w(Id), ppPin);
 
     return E_NOTIMPL;
 }
