@@ -461,7 +461,7 @@ unsigned int CDECL _mbcjistojms(unsigned int c)
       else
         c += 0x7d;
 
-      if(LOBYTE(c) > 0x7F)
+      if(LOBYTE(c) >= 0x7F)
         c += 0x1;
 
       c = (((HIBYTE(c) - 0x21)/2 + 0x81) << 8) | LOBYTE(c);

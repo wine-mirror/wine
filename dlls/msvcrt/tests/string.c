@@ -877,11 +877,6 @@ static void test_mbcjisjms(void)
             unsigned int ret, exp;
             ret = _mbcjistojms(jisjms[j][0]);
             exp = (cp[i] == 932) ? jisjms[j][1] : jisjms[j][0];
-            if (LOBYTE(exp) == 0x80 && cp[i] == 932) {
-                todo_wine ok(ret == exp, "Expected 0x%x, got 0x%x (0x%x, codepage=%d)\n",
-                   exp, ret, jisjms[j][0], cp[i]);
-                continue;
-            }
             ok(ret == exp, "Expected 0x%x, got 0x%x (0x%x, codepage=%d)\n",
                exp, ret, jisjms[j][0], cp[i]);
         }
