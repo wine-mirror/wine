@@ -4686,6 +4686,11 @@ GpStatus gdip_format_string(HDC hdc,
     StringAlignment halign;
     GpStatus stat = Ok;
     SIZE size;
+    HotkeyPrefix hkprefix;
+    INT *hotkeyprefix_offsets=NULL;
+    INT hotkeyprefix_count=0;
+    INT hotkeyprefix_pos=0, hotkeyprefix_end_pos=0;
+    int seen_prefix=0;
 
     if(length == -1) length = lstrlenW(string);
 
@@ -4698,10 +4703,39 @@ GpStatus gdip_format_string(HDC hdc,
     if (rect->Width >= INT_MAX || rect->Width < 0.5) nwidth = INT_MAX;
     if (rect->Height >= INT_MAX || rect->Height < 0.5) nheight = INT_MAX;
 
+    if (format)
+        hkprefix = format->hkprefix;
+    else
+        hkprefix = HotkeyPrefixNone;
+
+    if (hkprefix == HotkeyPrefixShow)
+    {
+        for (i=0; i<length; i++)
+        {
+            if (string[i] == '&')
+                hotkeyprefix_count++;
+        }
+    }
+
+    if (hotkeyprefix_count)
+        hotkeyprefix_offsets = GdipAlloc(sizeof(INT) * hotkeyprefix_count);
+
+    hotkeyprefix_count = 0;
+
     for(i = 0, j = 0; i < length; i++){
         /* FIXME: This makes the indexes passed to callback inaccurate. */
         if(!isprintW(string[i]) && (string[i] != '\n'))
             continue;
+
+        if (seen_prefix && hkprefix == HotkeyPrefixShow && string[i] != '&')
+            hotkeyprefix_offsets[hotkeyprefix_count++] = j;
+        else if (!seen_prefix && hkprefix != HotkeyPrefixNone && string[i] == '&')
+        {
+            seen_prefix = 1;
+            continue;
+        }
+
+        seen_prefix = 0;
 
         stringdup[j] = string[i];
         j++;
@@ -4777,8 +4811,14 @@ GpStatus gdip_format_string(HDC hdc,
             break;
         }
 
+        for (hotkeyprefix_end_pos=hotkeyprefix_pos; hotkeyprefix_end_pos<hotkeyprefix_count; hotkeyprefix_end_pos++)
+            if (hotkeyprefix_offsets[hotkeyprefix_end_pos] >= sum + lineend)
+                break;
+
         stat = callback(hdc, stringdup, sum, lineend,
-            font, rect, format, lineno, &bounds, user_data);
+            font, rect, format, lineno, &bounds,
+            &hotkeyprefix_offsets[hotkeyprefix_pos],
+            hotkeyprefix_end_pos-hotkeyprefix_pos, user_data);
 
         if (stat != Ok)
             break;
@@ -4786,6 +4826,8 @@ GpStatus gdip_format_string(HDC hdc,
         sum += fit + (lret < fitcpy ? 1 : 0);
         height += size.cy;
         lineno++;
+
+        hotkeyprefix_pos = hotkeyprefix_end_pos;
 
         if(height > nheight)
             break;
@@ -4796,6 +4838,7 @@ GpStatus gdip_format_string(HDC hdc,
     }
 
     GdipFree(stringdup);
+    GdipFree(hotkeyprefix_offsets);
 
     return stat;
 }
@@ -4807,7 +4850,8 @@ struct measure_ranges_args {
 static GpStatus measure_ranges_callback(HDC hdc,
     GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
-    INT lineno, const RectF *bounds, void *user_data)
+    INT lineno, const RectF *bounds, INT *underlined_indexes,
+    INT underlined_index_count, void *user_data)
 {
     int i;
     GpStatus stat = Ok;
@@ -4904,7 +4948,8 @@ struct measure_string_args {
 static GpStatus measure_string_callback(HDC hdc,
     GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
-    INT lineno, const RectF *bounds, void *user_data)
+    INT lineno, const RectF *bounds, INT *underlined_indexes,
+    INT underlined_index_count, void *user_data)
 {
     struct measure_string_args *args = user_data;
 
@@ -4988,10 +5033,14 @@ struct draw_string_args {
 static GpStatus draw_string_callback(HDC hdc,
     GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
-    INT lineno, const RectF *bounds, void *user_data)
+    INT lineno, const RectF *bounds, INT *underlined_indexes,
+    INT underlined_index_count, void *user_data)
 {
     struct draw_string_args *args = user_data;
     PointF position;
+
+    if (underlined_index_count)
+        FIXME("hotkey underlines not drawn yet\n");
 
     position.X = args->x + bounds->X / args->rel_width;
     position.Y = args->y + bounds->Y / args->rel_height + args->ascent;

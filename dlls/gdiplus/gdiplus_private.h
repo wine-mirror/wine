@@ -424,7 +424,8 @@ struct GpRegion{
 typedef GpStatus (*gdip_format_string_callback)(HDC hdc,
     GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
-    INT lineno, const RectF *bounds, void *user_data);
+    INT lineno, const RectF *bounds, INT *underlined_indexes,
+    INT underlined_index_count, void *user_data);
 
 GpStatus gdip_format_string(HDC hdc,
     GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,

@@ -846,7 +846,8 @@ struct format_string_args
 static GpStatus format_string_callback(HDC dc,
     GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
-    INT lineno, const RectF *bounds, void *priv)
+    INT lineno, const RectF *bounds, INT *underlined_indexes,
+    INT underlined_index_count, void *priv)
 {
     static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
     struct format_string_args *args = priv;
@@ -855,6 +856,9 @@ static GpStatus format_string_callback(HDC dc,
     float x = bounds->X;
     float y = bounds->Y;
     int i;
+
+    if (underlined_index_count)
+        FIXME("hotkey underlines not drawn yet\n");
 
     for (i = index; i < length; ++i)
     {
