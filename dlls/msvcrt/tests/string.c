@@ -927,12 +927,8 @@ static void test_mbbtombc(void)
             unsigned int exp, ret;
             ret = _mbbtombc(mbbmbc[j][0]);
             exp = (cp[i] == 932) ? mbbmbc[j][1] : mbbmbc[j][0];
-            if (cp[i] == 932 && exp > 255)
-              todo_wine ok(ret == exp, "Expected 0x%x, got 0x%x (0x%x, codepage %d)\n",
-                 exp, ret, mbbmbc[j][0], cp[i]);
-            else
-              ok(ret == exp, "Expected 0x%x, got 0x%x (0x%x, codepage %d)\n",
-                 exp, ret, mbbmbc[j][0], cp[i]);
+            ok(ret == exp, "Expected 0x%x, got 0x%x (0x%x, codepage %d)\n",
+               exp, ret, mbbmbc[j][0], cp[i]);
         }
     }
     _setmbcp(prev_cp);
