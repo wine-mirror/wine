@@ -1435,7 +1435,7 @@ HRESULT WINAPI IUnknown_GetClassID(IUnknown *lpUnknown, CLSID* lpClassId)
   IPersist* lpPersist;
   HRESULT hRet = E_FAIL;
 
-  TRACE("(%p,%p)\n", lpUnknown, debugstr_guid(lpClassId));
+  TRACE("(%p,%s)\n", lpUnknown, debugstr_guid(lpClassId));
 
   if (lpUnknown)
   {
