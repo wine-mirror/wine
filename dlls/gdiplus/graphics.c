@@ -5038,16 +5038,43 @@ static GpStatus draw_string_callback(HDC hdc,
 {
     struct draw_string_args *args = user_data;
     PointF position;
-
-    if (underlined_index_count)
-        FIXME("hotkey underlines not drawn yet\n");
+    GpStatus stat;
 
     position.X = args->x + bounds->X / args->rel_width;
     position.Y = args->y + bounds->Y / args->rel_height + args->ascent;
 
-    return GdipDrawDriverString(args->graphics, &string[index], length, font,
+    stat = GdipDrawDriverString(args->graphics, &string[index], length, font,
         args->brush, &position,
         DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance, NULL);
+
+    if (stat == Ok && underlined_index_count)
+    {
+        OUTLINETEXTMETRICW otm;
+        REAL underline_y, underline_height;
+        int i;
+
+        GetOutlineTextMetricsW(hdc, sizeof(otm), &otm);
+
+        underline_height = otm.otmsUnderscoreSize / args->rel_height;
+        underline_y = position.Y - otm.otmsUnderscorePosition / args->rel_height - underline_height / 2;
+
+        for (i=0; i<underlined_index_count; i++)
+        {
+            REAL start_x, end_x;
+            SIZE text_size;
+            INT ofs = underlined_indexes[i] - index;
+
+            GetTextExtentExPointW(hdc, string + index, ofs, INT_MAX, NULL, NULL, &text_size);
+            start_x = text_size.cx / args->rel_width;
+
+            GetTextExtentExPointW(hdc, string + index, ofs+1, INT_MAX, NULL, NULL, &text_size);
+            end_x = text_size.cx / args->rel_width;
+
+            GdipFillRectangle(args->graphics, (GpBrush*)args->brush, position.X+start_x, underline_y, end_x-start_x, underline_height);
+        }
+    }
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string,
