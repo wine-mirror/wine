@@ -864,20 +864,23 @@ static void test_mbcjisjms(void)
     unsigned int jisjms[][2] = { {0x2020, 0}, {0x2021, 0}, {0x2120, 0}, {0x2121, 0x8140},
                                  {0x7f7f, 0}, {0x7f7e, 0}, {0x7e7f, 0}, {0x7e7e, 0xeffc},
                                  {0x2121FFFF, 0}, {0x2223, 0x81a1}, {0x237e, 0x829e}, {0, 0}};
-    unsigned int ret, exp, i;
+    int cp[] = { 932, 936, 939, 950, 1361, _MB_CP_SBCS };
+    unsigned int i, j;
+    int prev_cp = _getmbcp();
 
-    i = 0;
-    do
+    for (i = 0; i < sizeof(cp)/sizeof(cp[0]); i++)
     {
-        ret = _mbcjistojms(jisjms[i][0]);
-
-        if(_getmbcp() == 932)   /* Japanese codepage? */
-            exp = jisjms[i][1];
-        else
-            exp = jisjms[i][0]; /* If not, no conversion */
-
-        ok(ret == exp, "Expected 0x%x, got 0x%x\n", exp, ret);
-    } while(jisjms[i++][0] != 0);
+        _setmbcp(cp[i]);
+        for (j = 0; jisjms[j][0] != 0; j++)
+        {
+            unsigned int ret, exp;
+            ret = _mbcjistojms(jisjms[j][0]);
+            exp = (cp[i] == 932) ? jisjms[j][1] : jisjms[j][0];
+            ok(ret == exp, "Expected 0x%x, got 0x%x (0x%x, codepage=%d)\n",
+               exp, ret, jisjms[j][0], cp[i]);
+        }
+    }
+    _setmbcp(prev_cp);
 }
 
 static void test_mbcjmsjis(void)
