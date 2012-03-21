@@ -78,8 +78,8 @@ HANDLE WINAPI FindDebugInfoFileEx(PCSTR FileName, PCSTR SymbolPath,
                                   PFIND_DEBUG_FILE_CALLBACK Callback,
                                   PVOID CallerData)
 {
-    FIXME("(%s %s %p %p %p): stub\n", 
-          debugstr_a(FileName), debugstr_a(SymbolPath), debugstr_a(DebugFilePath), Callback, CallerData);
+    FIXME("(%s %s %s %p %p): stub\n", debugstr_a(FileName), debugstr_a(SymbolPath),
+            debugstr_a(DebugFilePath), Callback, CallerData);
     return NULL;
 }
 
