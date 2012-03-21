@@ -326,7 +326,7 @@ struct color_matrix{
 struct color_remap_table{
     BOOL enabled;
     INT mapsize;
-    GDIPCONST ColorMap *colormap;
+    ColorMap *colormap;
 };
 
 struct GpImageAttributes{
