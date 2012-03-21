@@ -6640,6 +6640,13 @@ HRESULT WINAPI D3DXWeldVertices(LPD3DXMESH mesh,
                 BYTE *from = &vertices[vertex_size*point_reps[index] + decl_ptr->Offset];
                 FLOAT epsilon = get_component_epsilon(decl_ptr, epsilons);
 
+                /* Don't weld self */
+                if (index == point_reps[index])
+                {
+                    matches++;
+                    continue;
+                }
+
                 if (weld_component(to, from, decl_ptr->Type, epsilon))
                     matches++;
             }
