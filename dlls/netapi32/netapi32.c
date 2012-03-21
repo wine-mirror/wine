@@ -88,10 +88,10 @@ NET_API_STATUS WINAPI NetServerEnumEx(
     LMCSTR domain,
     LMCSTR FirstNameToReturn)
 {
-    FIXME("Stub (%s %d %p %d %p %p %d %s %p)\n", debugstr_w(ServerName),
-     Level, Bufptr, PrefMaxlen, EntriesRead, totalentries, servertype,
-     debugstr_w(domain), debugstr_w(FirstNameToReturn));
-                                                                                
+    FIXME("Stub (%s %d %p %d %p %p %d %s %s)\n",
+           debugstr_w(ServerName), Level, Bufptr, PrefMaxlen, EntriesRead, totalentries,
+           servertype, debugstr_w(domain), debugstr_w(FirstNameToReturn));
+
     return ERROR_NO_BROWSER_SERVERS_FOUND;
 }
 
