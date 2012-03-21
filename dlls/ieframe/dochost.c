@@ -520,8 +520,8 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
 {
     DocHost *This = impl_from_IOleCommandTarget(iface);
 
-    TRACE("(%p)->(%s %d %d %p %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID,
-          nCmdexecopt, debugstr_variant(pvaIn), debugstr_variant(pvaOut));
+    TRACE("(%p)->(%s %d %d %s %s)\n", This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt,
+            debugstr_variant(pvaIn), debugstr_variant(pvaOut));
 
     if(!pguidCmdGroup) {
         switch(nCmdID) {
