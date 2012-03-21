@@ -998,9 +998,8 @@ HRESULT WINAPI GetClassFileOrMime(LPBC pBC, LPCWSTR pszFilename,
         LPVOID pBuffer, DWORD cbBuffer, LPCWSTR pszMimeType, DWORD dwReserved,
         CLSID *pclsid)
 {
-    FIXME("(%p, %s, %p, %d, %p, 0x%08x, %p): stub\n", pBC,
-        debugstr_w(pszFilename), pBuffer, cbBuffer, debugstr_w(pszMimeType),
-        dwReserved, pclsid);
+    FIXME("(%p, %s, %p, %d, %s, 0x%08x, %p): stub\n", pBC, debugstr_w(pszFilename), pBuffer,
+            cbBuffer, debugstr_w(pszMimeType), dwReserved, pclsid);
     return E_NOTIMPL;
 }
 
