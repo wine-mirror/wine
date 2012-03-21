@@ -883,7 +883,7 @@ static HRESULT WINAPI VideoRenderer_FindPin(IBaseFilter * iface, LPCWSTR Id, IPi
 {
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
-    FIXME("(%p/%p)->(%p,%p): stub !!!\n", This, iface, debugstr_w(Id), ppPin);
+    FIXME("(%p/%p)->(%s,%p): stub !!!\n", This, iface, debugstr_w(Id), ppPin);
 
     /* FIXME: critical section */
 

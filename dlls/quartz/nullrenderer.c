@@ -372,7 +372,7 @@ static HRESULT WINAPI NullRenderer_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin
 {
     NullRendererImpl *This = (NullRendererImpl *)iface;
 
-    TRACE("(%p/%p)->(%p,%p)\n", This, iface, debugstr_w(Id), ppPin);
+    TRACE("(%p/%p)->(%s,%p)\n", This, iface, debugstr_w(Id), ppPin);
 
     if (!Id || !ppPin)
         return E_POINTER;
