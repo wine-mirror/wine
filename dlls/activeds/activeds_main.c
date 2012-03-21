@@ -116,7 +116,7 @@ HRESULT WINAPI ADsBuildVarArrayInt(LPDWORD lpdwObjectTypes, DWORD dwObjectTypes,
  */
 HRESULT WINAPI ADsOpenObject(LPCWSTR lpszPathName, LPCWSTR lpszUserName, LPCWSTR lpszPassword, DWORD dwReserved, REFIID riid, VOID** ppObject)
 {
-    FIXME("(%s,%s,%u,%p,%p)!stub\n", debugstr_w(lpszPathName),
+    FIXME("(%s,%s,%u,%s,%p)!stub\n", debugstr_w(lpszPathName),
           debugstr_w(lpszUserName), dwReserved, debugstr_guid(riid), ppObject);
     return E_NOTIMPL;
 }
