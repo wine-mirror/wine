@@ -2951,7 +2951,7 @@ static HRESULT WINAPI domdoc_getProperty(
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
 
-    TRACE("(%p)->(%p)\n", This, debugstr_w(p));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
 
     if (!var)
         return E_INVALIDARG;

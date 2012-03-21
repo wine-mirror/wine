@@ -380,7 +380,7 @@ static HRESULT WINAPI domcdata_put_text(
     BSTR p)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    TRACE("(%p)->(%p)\n", This, debugstr_w(p));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
     return node_put_text( &This->node, p );
 }
 
