@@ -896,7 +896,7 @@ int CDECL _mbsnbcmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_s
       if (_ismbblead(*cmp))
         cmpc=(len>=2)?_mbsnextc(cmp):0;
       else
-        cmpc=*str;
+        cmpc=*cmp;
       if(strc != cmpc)
         return strc < cmpc ? -1 : 1;
       len -= clen;
@@ -967,7 +967,7 @@ int CDECL _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_
       if (_ismbblead(*cmp))
         cmpc=(len>=2)?_mbsnextc(cmp):0;
       else
-        cmpc=*str;
+        cmpc=*cmp;
       strc = _mbctolower(strc);
       cmpc = _mbctolower(cmpc);
       if(strc != cmpc)
