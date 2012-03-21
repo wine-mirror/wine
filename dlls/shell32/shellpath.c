@@ -3578,7 +3578,7 @@ static HRESULT WINAPI knownfolder_SetPath(
     struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
     HRESULT hr = S_OK;
 
-    TRACE("(%p, 0x%08x, %p)\n", knownfolder, dwFlags, debugstr_w(pszPath));
+    TRACE("(%p, 0x%08x, %s)\n", knownfolder, dwFlags, debugstr_w(pszPath));
 
     /* check if the known folder is registered */
     if(!knownfolder->registryPath)
