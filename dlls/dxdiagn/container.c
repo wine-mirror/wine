@@ -269,8 +269,8 @@ static const IDxDiagContainerVtbl DxDiagContainer_Vtbl =
 HRESULT DXDiag_CreateDXDiagContainer(REFIID riid, IDxDiagContainerImpl_Container *cont, IDxDiagProvider *pProv, LPVOID *ppobj) {
   IDxDiagContainerImpl* container;
 
-  TRACE("(%p, %p)\n", debugstr_guid(riid), ppobj);
-  
+  TRACE("(%s, %p)\n", debugstr_guid(riid), ppobj);
+
   container = HeapAlloc(GetProcessHeap(), 0, sizeof(IDxDiagContainerImpl));
   if (NULL == container) {
     *ppobj = NULL;
