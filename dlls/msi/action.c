@@ -480,8 +480,7 @@ UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
 
 static BOOL needs_ui_sequence(MSIPACKAGE *package)
 {
-    INT level = msi_get_property_int(package->db, szUILevel, 0);
-    return (level & INSTALLUILEVEL_MASK) >= INSTALLUILEVEL_REDUCED;
+    return (gUILevel & INSTALLUILEVEL_MASK) >= INSTALLUILEVEL_REDUCED;
 }
 
 UINT msi_set_context(MSIPACKAGE *package)
