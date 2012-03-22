@@ -178,15 +178,20 @@ static void test_GetProcessMemoryInfo(void)
     DWORD ret;
 
     SetLastError(0xdeadbeef);
-    pGetProcessMemoryInfo(NULL, &pmc, sizeof(pmc));
+    ret = pGetProcessMemoryInfo(NULL, &pmc, sizeof(pmc));
+    ok(!ret, "GetProcessMemoryInfo should fail\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "expected error=ERROR_INVALID_HANDLE but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    pGetProcessMemoryInfo(hpSR, &pmc, sizeof(pmc));
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
+    ret = pGetProcessMemoryInfo(hpSR, &pmc, sizeof(pmc));
+todo_wine
+    ok(!ret, "GetProcessMemoryInfo should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    pGetProcessMemoryInfo(hpQI, &pmc, sizeof(pmc)-1);
+    ret = pGetProcessMemoryInfo(hpQI, &pmc, sizeof(pmc)-1);
+    ok(!ret, "GetProcessMemoryInfo should fail\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "expected error=ERROR_INSUFFICIENT_BUFFER but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -239,13 +244,16 @@ static void test_GetMappedFileName(void)
     HANDLE hfile, hmap;
 
     SetLastError(0xdeadbeef);
-    pGetMappedFileNameA(NULL, hMod, szMapPath, sizeof(szMapPath));
+    ret = pGetMappedFileNameA(NULL, hMod, szMapPath, sizeof(szMapPath));
+    ok(!ret, "GetMappedFileName should fail\n");
 todo_wine
     ok(GetLastError() == ERROR_INVALID_HANDLE, "expected error=ERROR_INVALID_HANDLE but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    pGetMappedFileNameA(hpSR, hMod, szMapPath, sizeof(szMapPath));
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
+    ret = pGetMappedFileNameA(hpSR, hMod, szMapPath, sizeof(szMapPath));
+    ok(!ret, "GetMappedFileName should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
 
     SetLastError( 0xdeadbeef );
     ret = pGetMappedFileNameA(hpQI, hMod, szMapPath, sizeof(szMapPath));
