@@ -1,0 +1,9 @@
+TESTDLL   = scrrun.dll
+IMPORTS   = ole32 shlwapi uuid
+
+C_SRCS = \
+	filesystem.c
+
+IDL_H_SRCS = scrrun.idl
+
+@MAKE_TEST_RULES@

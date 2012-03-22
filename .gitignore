@@ -121,6 +121,7 @@ dlls/rpcrt4/tests/server.h
 dlls/rpcrt4/tests/server_c.c
 dlls/rpcrt4/tests/server_s.c
 dlls/scrrun/scrrun.h
+dlls/scrrun/tests/scrrun.h
 dlls/shell32/AUTHORS
 dlls/sti/sti_wia.h
 dlls/sti/sti_wia_p.c
