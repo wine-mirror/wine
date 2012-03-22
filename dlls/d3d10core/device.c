@@ -26,41 +26,36 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
 /* Inner IUnknown methods */
 
-static inline struct d3d10_device *d3d10_device_from_inner_unknown(IUnknown *iface)
+static inline struct d3d10_device *impl_from_IUnknown(IUnknown *iface)
 {
-    return (struct d3d10_device *)((char*)iface - FIELD_OFFSET(struct d3d10_device, inner_unknown_vtbl));
+    return CONTAINING_RECORD(iface, struct d3d10_device, IUnknown_inner);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_inner_QueryInterface(IUnknown *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE d3d10_device_inner_QueryInterface(IUnknown *iface, REFIID riid,
+        void **ppv)
 {
-    struct d3d10_device *This = d3d10_device_from_inner_unknown(iface);
+    struct d3d10_device *This = impl_from_IUnknown(iface);
 
-    TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
+    TRACE("iface %p, riid %s, ppv %p\n", iface, debugstr_guid(riid), ppv);
 
-    if (IsEqualGUID(riid, &IID_IUnknown)
-            || IsEqualGUID(riid, &IID_ID3D10Device))
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ID3D10Device))
+        *ppv = &This->ID3D10Device_iface;
+    else if (IsEqualGUID(riid, &IID_IWineDXGIDeviceParent))
+        *ppv = &This->IWineDXGIDeviceParent_iface;
+    else
     {
-        ID3D10Device_AddRef(&This->ID3D10Device_iface);
-        *object = This;
-        return S_OK;
+        WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
     }
 
-    if (IsEqualGUID(riid, &IID_IWineDXGIDeviceParent))
-    {
-        IWineDXGIDeviceParent_AddRef(&This->IWineDXGIDeviceParent_iface);
-        *object = &This->IWineDXGIDeviceParent_iface;
-        return S_OK;
-    }
-
-    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
-
-    *object = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_device_inner_AddRef(IUnknown *iface)
 {
-    struct d3d10_device *This = d3d10_device_from_inner_unknown(iface);
+    struct d3d10_device *This = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -70,7 +65,7 @@ static ULONG STDMETHODCALLTYPE d3d10_device_inner_AddRef(IUnknown *iface)
 
 static ULONG STDMETHODCALLTYPE d3d10_device_inner_Release(IUnknown *iface)
 {
-    struct d3d10_device *This = d3d10_device_from_inner_unknown(iface);
+    struct d3d10_device *This = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -92,25 +87,22 @@ static inline struct d3d10_device *impl_from_ID3D10Device(ID3D10Device *iface)
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_QueryInterface(ID3D10Device *iface, REFIID riid,
-        void **object)
+        void **ppv)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
-    TRACE("Forwarding to outer IUnknown\n");
-    return IUnknown_QueryInterface(This->outer_unknown, riid, object);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_device_AddRef(ID3D10Device *iface)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
-    TRACE("Forwarding to outer IUnknown\n");
-    return IUnknown_AddRef(This->outer_unknown);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_device_Release(ID3D10Device *iface)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
-    TRACE("Forwarding to outer IUnknown\n");
-    return IUnknown_Release(This->outer_unknown);
+    return IUnknown_Release(This->outer_unk);
 }
 
 /* ID3D10Device methods */
@@ -1306,22 +1298,22 @@ static inline struct d3d10_device *device_from_dxgi_device_parent(IWineDXGIDevic
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_parent_QueryInterface(IWineDXGIDeviceParent *iface,
-        REFIID riid, void **object)
+        REFIID riid, void **ppv)
 {
     struct d3d10_device *device = device_from_dxgi_device_parent(iface);
-    return d3d10_device_QueryInterface(&device->ID3D10Device_iface, riid, object);
+    return IUnknown_QueryInterface(device->outer_unk, riid, ppv);
 }
 
 static ULONG STDMETHODCALLTYPE dxgi_device_parent_AddRef(IWineDXGIDeviceParent *iface)
 {
     struct d3d10_device *device = device_from_dxgi_device_parent(iface);
-    return d3d10_device_AddRef(&device->ID3D10Device_iface);
+    return IUnknown_AddRef(device->outer_unk);
 }
 
 static ULONG STDMETHODCALLTYPE dxgi_device_parent_Release(IWineDXGIDeviceParent *iface)
 {
     struct d3d10_device *device = device_from_dxgi_device_parent(iface);
-    return d3d10_device_Release(&device->ID3D10Device_iface);
+    return IUnknown_Release(device->outer_unk);
 }
 
 static struct wined3d_device_parent * STDMETHODCALLTYPE dxgi_device_parent_get_wined3d_device_parent(
@@ -1554,9 +1546,10 @@ static const struct wined3d_device_parent_ops d3d10_wined3d_device_parent_ops =
 void d3d10_device_init(struct d3d10_device *device, void *outer_unknown)
 {
     device->ID3D10Device_iface.lpVtbl = &d3d10_device_vtbl;
-    device->inner_unknown_vtbl = &d3d10_device_inner_unknown_vtbl;
+    device->IUnknown_inner.lpVtbl = &d3d10_device_inner_unknown_vtbl;
     device->IWineDXGIDeviceParent_iface.lpVtbl = &d3d10_dxgi_device_parent_vtbl;
     device->device_parent.ops = &d3d10_wined3d_device_parent_ops;
     device->refcount = 1;
-    device->outer_unknown = outer_unknown;
+    /* COM aggregation always takes place */
+    device->outer_unk = outer_unknown;
 }

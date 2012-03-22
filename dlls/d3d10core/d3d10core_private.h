@@ -69,10 +69,10 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
 /* IDirect3D10Device */
 struct d3d10_device
 {
+    IUnknown IUnknown_inner;
     ID3D10Device ID3D10Device_iface;
-    const struct IUnknownVtbl *inner_unknown_vtbl;
     IWineDXGIDeviceParent IWineDXGIDeviceParent_iface;
-    IUnknown *outer_unknown;
+    IUnknown *outer_unk;
     LONG refcount;
 
     struct wined3d_device_parent device_parent;
