@@ -10031,6 +10031,7 @@ static void test_installprops(void)
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
     SYSTEM_INFO si;
+    INSTALLUILEVEL uilevel;
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -10039,6 +10040,8 @@ static void test_installprops(void)
     lstrcat(path, "\\");
     lstrcat(path, msifile);
 
+    uilevel = MsiSetInternalUI(INSTALLUILEVEL_BASIC|INSTALLUILEVEL_SOURCERESONLY, NULL);
+
     hdb = create_package_db();
     ok( hdb, "failed to create database\n");
 
@@ -10046,6 +10049,7 @@ static void test_installprops(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        MsiSetInternalUI(uilevel, NULL);
         DeleteFile(msifile);
         return;
     }
@@ -10053,6 +10057,21 @@ static void test_installprops(void)
 
     MsiCloseHandle(hdb);
 
+    buf[0] = 0;
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "UILevel", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrcmp(buf, "3"), "Expected \"3\", got \"%s\"\n", buf);
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    buf[0] = 0;
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "UILevel", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrcmp(buf, "3"), "Expected \"3\", got \"%s\"\n", buf);
+
+    buf[0] = 0;
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "DATABASE", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
@@ -10071,6 +10090,7 @@ static void test_installprops(void)
         RegQueryValueEx(hkey2, "RegisteredOwner", NULL, &type, (LPBYTE)path, &size);
     }
 
+    buf[0] = 0;
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "USERNAME", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
@@ -10088,37 +10108,44 @@ static void test_installprops(void)
 
     if (*path)
     {
+        buf[0] = 0;
         size = MAX_PATH;
         r = MsiGetProperty(hpkg, "COMPANYNAME", buf, &size);
         ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
         ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
     }
 
+    buf[0] = 0;
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "VersionDatabase", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("VersionDatabase = %s\n", buf);
 
+    buf[0] = 0;
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "VersionMsi", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("VersionMsi = %s\n", buf);
 
+    buf[0] = 0;
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "Date", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("Date = %s\n", buf);
 
+    buf[0] = 0;
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "Time", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("Time = %s\n", buf);
 
+    buf[0] = 0;
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "PackageCode", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("PackageCode = %s\n", buf);
 
+    buf[0] = 0;
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "ComputerName", buf, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
@@ -10127,18 +10154,21 @@ static void test_installprops(void)
     langid = GetUserDefaultLangID();
     sprintf(path, "%d", langid);
 
+    buf[0] = 0;
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "UserLanguageID", buf, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     ok( !lstrcmpA(buf, path), "Expected \"%s\", got \"%s\"\n", path, buf);
 
     res = GetSystemMetrics(SM_CXSCREEN);
+    buf[0] = 0;
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "ScreenX", buf, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     ok(atol(buf) == res, "Expected %d, got %ld\n", res, atol(buf));
 
     res = GetSystemMetrics(SM_CYSCREEN);
+    buf[0] = 0;
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "ScreenY", buf, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
@@ -10350,6 +10380,7 @@ static void test_installprops(void)
     CloseHandle(hkey2);
     MsiCloseHandle(hpkg);
     DeleteFile(msifile);
+    MsiSetInternalUI(uilevel, NULL);
 }
 
 static void test_launchconditions(void)

@@ -1154,9 +1154,9 @@ void msi_adjust_privilege_properties( MSIPACKAGE *package )
 
 MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
 {
-    static const WCHAR szpi[] = {'%','i',0};
+    static const WCHAR fmtW[] = {'%','u',0};
     MSIPACKAGE *package;
-    WCHAR uilevel[10];
+    WCHAR uilevel[11];
     UINT r;
 
     TRACE("%p\n", db);
@@ -1181,7 +1181,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
         set_installed_prop( package );
         set_installer_properties( package );
 
-        sprintfW(uilevel,szpi,gUILevel);
+        sprintfW( uilevel, fmtW, gUILevel & INSTALLUILEVEL_MASK );
         msi_set_property(package->db, szUILevel, uilevel);
 
         r = msi_load_summary_properties( package );
