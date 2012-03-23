@@ -5203,6 +5203,33 @@ static void test_WSAAsyncGetServByPort(void)
     DestroyWindow(hwnd);
 }
 
+static void test_WSAAsyncGetServByName(void)
+{
+    HWND hwnd = create_async_message_window();
+    HANDLE ret;
+    char buffer[MAXGETHOSTSTRUCT];
+
+    if (!hwnd)
+        return;
+
+    /* FIXME: The asynchronous window messages should be tested. */
+
+    /* Parameters are not checked when initiating the asynchronous operation.  */
+    ret = WSAAsyncGetServByName(hwnd, WM_ASYNCCOMPLETE, "", NULL, NULL, 0);
+    ok(ret != NULL, "WSAAsyncGetServByName returned NULL\n");
+
+    ret = WSAAsyncGetServByName(hwnd, WM_ASYNCCOMPLETE, "", "", buffer, MAXGETHOSTSTRUCT);
+    ok(ret != NULL, "WSAAsyncGetServByName returned NULL\n");
+
+    ret = WSAAsyncGetServByName(hwnd, WM_ASYNCCOMPLETE, "http", NULL, NULL, 0);
+    ok(ret != NULL, "WSAAsyncGetServByName returned NULL\n");
+
+    ret = WSAAsyncGetServByName(hwnd, WM_ASYNCCOMPLETE, "http", "tcp", buffer, MAXGETHOSTSTRUCT);
+    ok(ret != NULL, "WSAAsyncGetServByName returned NULL\n");
+
+    DestroyWindow(hwnd);
+}
+
 static void test_completion_port(void)
 {
     HANDLE previous_port, io_port;
@@ -5770,6 +5797,7 @@ START_TEST( sock )
     test_sioRoutingInterfaceQuery();
 
     test_WSAAsyncGetServByPort();
+    test_WSAAsyncGetServByName();
 
     test_completion_port();
 
