@@ -384,7 +384,7 @@ HANDLE WINAPI WSAAsyncGetServByName(HWND hWnd, UINT uMsg, LPCSTR name,
 {
     struct async_query_getservbyname *aq;
     unsigned int len1 = strlen(name) + 1;
-    unsigned int len2 = strlen(proto) + 1;
+    unsigned int len2 = proto ? strlen(proto) + 1 : 0;
 
     TRACE("hwnd %p, msg %04x, name %s, proto %s\n", hWnd, uMsg, debugstr_a(name), debugstr_a(proto));
 
@@ -393,10 +393,18 @@ HANDLE WINAPI WSAAsyncGetServByName(HWND hWnd, UINT uMsg, LPCSTR name,
         SetLastError( WSAEWOULDBLOCK );
         return 0;
     }
+
     aq->serv_name  = (char *)(aq + 1);
-    aq->serv_proto = aq->serv_name + len1;
     strcpy( aq->serv_name, name );
-    strcpy( aq->serv_proto, proto );
+
+    if (proto)
+    {
+        aq->serv_proto = aq->serv_name + len1;
+        strcpy( aq->serv_proto, proto );
+    }
+    else
+        aq->serv_proto = NULL;
+
     return run_query( hWnd, uMsg, async_getservbyname, &aq->query, sbuf, buflen );
 }
 
