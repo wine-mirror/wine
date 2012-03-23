@@ -2787,6 +2787,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     HWND old_parent = 0;
     BOOL was_visible;
     WND *wndPtr;
+    POINT pt;
     BOOL ret;
 
     if (is_broadcast(hwnd) || is_broadcast(parent))
@@ -2828,6 +2829,9 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     wndPtr = WIN_GetPtr( hwnd );
     if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return 0;
 
+    pt.x = wndPtr->rectWindow.left;
+    pt.y = wndPtr->rectWindow.top;
+
     SERVER_START_REQ( set_parent )
     {
         req->handle = wine_server_user_handle( hwnd );
@@ -2849,10 +2853,9 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
        in the x-order and send the expected WM_WINDOWPOSCHANGING and
        WM_WINDOWPOSCHANGED notification messages.
     */
-    SetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0,
-                  SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | (was_visible ? SWP_SHOWWINDOW : 0) );
-    /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
-     * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
+    SetWindowPos( hwnd, HWND_TOP, pt.x, pt.y, 0, 0, SWP_NOSIZE );
+
+    if (was_visible) ShowWindow( hwnd, SW_SHOW );
 
     return old_parent;
 }
