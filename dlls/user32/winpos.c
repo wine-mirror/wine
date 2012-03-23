@@ -1849,6 +1849,7 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
 {
     HWND parent;
     RECT window_rect;
+    POINT pt;
     WND *wndPtr = WIN_GetPtr( winpos->hwnd );
     BOOL ret = TRUE;
 
@@ -1880,12 +1881,15 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
         if (!(winpos->flags & SWP_SHOWWINDOW)) winpos->flags |= SWP_NOREDRAW;
     }
 
-    WIN_GetRectangles( winpos->hwnd, COORDS_PARENT, &window_rect, NULL );
+    WIN_GetRectangles( winpos->hwnd, COORDS_SCREEN, &window_rect, NULL );
     if ((window_rect.right - window_rect.left == winpos->cx) &&
         (window_rect.bottom - window_rect.top == winpos->cy))
         winpos->flags |= SWP_NOSIZE;    /* Already the right size */
 
-    if ((window_rect.left == winpos->x) && (window_rect.top == winpos->y))
+    pt.x = winpos->x;
+    pt.y = winpos->y;
+    ClientToScreen( parent, &pt );
+    if ((window_rect.left == pt.x) && (window_rect.top == pt.y))
         winpos->flags |= SWP_NOMOVE;    /* Already the right position */
 
     if ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)
