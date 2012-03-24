@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
 
@@ -27,9 +28,43 @@
 #include "wincodecsdk.h"
 #include "wine/test.h"
 
-static void test_decoder_info(void)
+#include "initguid.h"
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+
+static const char *debugstr_guid(GUID *guid)
+{
+    static char buf[50];
+
+    if(!guid)
+        return "(null)";
+
+    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+            guid->Data1, guid->Data2, guid->Data3, guid->Data4[0],
+            guid->Data4[1], guid->Data4[2], guid->Data4[3], guid->Data4[4],
+            guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+
+    return buf;
+}
+
+static HRESULT get_component_info(const GUID *clsid, IWICComponentInfo **result)
 {
     IWICImagingFactory *factory;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICImagingFactory, (void**)&factory);
+    ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
+    if (FAILED(hr)) return hr;
+
+    hr = IWICImagingFactory_CreateComponentInfo(factory, clsid, result);
+
+    IWICImagingFactory_Release(factory);
+
+    return hr;
+}
+
+static void test_decoder_info(void)
+{
     IWICComponentInfo *info;
     IWICBitmapDecoderInfo *decoder_info;
     HRESULT hr;
@@ -38,13 +73,7 @@ static void test_decoder_info(void)
     const WCHAR expected_mimetype[] = {'i','m','a','g','e','/','b','m','p',0};
     CLSID clsid;
 
-    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
-        &IID_IWICImagingFactory, (void**)&factory);
-    ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
-    if (FAILED(hr)) return;
-
-    hr = IWICImagingFactory_CreateComponentInfo(factory, &CLSID_WICBmpDecoder, &info);
-    ok(hr == S_OK, "CreateComponentInfo failed, hr=%x\n", hr);
+    hr = get_component_info(&CLSID_WICBmpDecoder, &info);
 
     hr = IWICComponentInfo_QueryInterface(info, &IID_IWICBitmapDecoderInfo, (void**)&decoder_info);
     ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);
@@ -88,8 +117,107 @@ static void test_decoder_info(void)
     IWICBitmapDecoderInfo_Release(decoder_info);
 
     IWICComponentInfo_Release(info);
+}
 
-    IWICImagingFactory_Release(factory);
+static void test_pixelformat_info(void)
+{
+    IWICComponentInfo *info;
+    HRESULT hr;
+    ULONG len, known_len;
+    WCHAR value[256];
+    GUID guid;
+    WICComponentType componenttype;
+    DWORD signing;
+
+    hr = get_component_info(&GUID_WICPixelFormat32bppBGRA, &info);
+    todo_wine ok(hr == S_OK, "CreateComponentInfo failed, hr=%x\n", hr);
+
+    if (FAILED(hr))
+        return;
+
+    hr = IWICComponentInfo_GetAuthor(info, 0, NULL, 0);
+    ok(hr == E_INVALIDARG, "GetAuthor failed, hr=%x\n", hr);
+
+    len = 0xdeadbeef;
+    hr = IWICComponentInfo_GetAuthor(info, 0, NULL, &len);
+    ok(hr == S_OK, "GetAuthor failed, hr=%x\n", hr);
+    ok(len < 255 && len > 0, "invalid length 0x%x\n", len);
+    known_len = len;
+
+    memset(value, 0xaa, 256 * sizeof(WCHAR));
+    hr = IWICComponentInfo_GetAuthor(info, len-1, value, NULL);
+    ok(hr == E_INVALIDARG, "GetAuthor failed, hr=%x\n", hr);
+    ok(value[0] = 0xaaaa, "string modified\n");
+
+    len = 0xdeadbeef;
+    memset(value, 0xaa, 256 * sizeof(WCHAR));
+    hr = IWICComponentInfo_GetAuthor(info, known_len-1, value, &len);
+    ok(hr == WINCODEC_ERR_INSUFFICIENTBUFFER, "GetAuthor failed, hr=%x\n", hr);
+    ok(len == known_len, "got length of 0x%x, expected 0x%x\n", len, known_len);
+    ok(value[known_len-1] == 0xaaaa, "string modified past given length\n");
+    ok(value[0] == 0xaaaa, "string modified\n");
+
+    len = 0xdeadbeef;
+    memset(value, 0xaa, 256 * sizeof(WCHAR));
+    hr = IWICComponentInfo_GetAuthor(info, known_len, value, &len);
+    ok(hr == S_OK, "GetAuthor failed, hr=%x\n", hr);
+    ok(len == known_len, "got length of 0x%x, expected 0x%x\n", len, known_len);
+    ok(value[known_len-1] == 0, "string not terminated at expected length\n");
+    ok(value[known_len-2] != 0xaaaa, "string not modified at given length\n");
+
+    len = 0xdeadbeef;
+    memset(value, 0xaa, 256 * sizeof(WCHAR));
+    hr = IWICComponentInfo_GetAuthor(info, known_len+1, value, &len);
+    ok(hr == S_OK, "GetAuthor failed, hr=%x\n", hr);
+    ok(len == known_len, "got length of 0x%x, expected 0x%x\n", len, known_len);
+    ok(value[known_len] == 0xaaaa, "string modified past end\n");
+    ok(value[known_len-1] == 0, "string not terminated at expected length\n");
+    ok(value[known_len-2] != 0xaaaa, "string not modified at given length\n");
+
+    hr = IWICComponentInfo_GetCLSID(info, NULL);
+    ok(hr == E_INVALIDARG, "GetCLSID failed, hr=%x\n", hr);
+
+    memset(&guid, 0xaa, sizeof(guid));
+    hr = IWICComponentInfo_GetCLSID(info, &guid);
+    ok(hr == S_OK, "GetCLSID failed, hr=%x\n", hr);
+    ok(IsEqualGUID(&guid, &GUID_WICPixelFormat32bppBGRA), "unexpected CLSID %s\n", debugstr_guid(&guid));
+
+    hr = IWICComponentInfo_GetComponentType(info, NULL);
+    ok(hr == E_INVALIDARG, "GetComponentType failed, hr=%x\n", hr);
+
+    hr = IWICComponentInfo_GetComponentType(info, &componenttype);
+    ok(hr == S_OK, "GetComponentType failed, hr=%x\n", hr);
+    ok(componenttype == WICPixelFormat, "unexpected component type 0x%x\n", componenttype);
+
+    len = 0xdeadbeef;
+    hr = IWICComponentInfo_GetFriendlyName(info, 0, NULL, &len);
+    ok(hr == S_OK, "GetFriendlyName failed, hr=%x\n", hr);
+    ok(len < 255 && len > 0, "invalid length 0x%x\n", len);
+
+    hr = IWICComponentInfo_GetSigningStatus(info, NULL);
+    ok(hr == E_INVALIDARG, "GetSigningStatus failed, hr=%x\n", hr);
+
+    hr = IWICComponentInfo_GetSigningStatus(info, &signing);
+    ok(hr == S_OK, "GetSigningStatus failed, hr=%x\n", hr);
+    ok(signing == WICComponentSigned, "unexpected signing status 0x%x\n", signing);
+
+    len = 0xdeadbeef;
+    hr = IWICComponentInfo_GetSpecVersion(info, 0, NULL, &len);
+    ok(hr == S_OK, "GetSpecVersion failed, hr=%x\n", hr);
+    ok(len == 0, "invalid length 0x%x\n", len); /* spec version does not apply to pixel formats */
+
+    memset(&guid, 0xaa, sizeof(guid));
+    hr = IWICComponentInfo_GetVendorGUID(info, &guid);
+    ok(hr == S_OK, "GetVendorGUID failed, hr=%x\n", hr);
+    ok(IsEqualGUID(&guid, &GUID_VendorMicrosoft) ||
+       broken(IsEqualGUID(&guid, &GUID_NULL)) /* XP */, "unexpected GUID %s\n", debugstr_guid(&guid));
+
+    len = 0xdeadbeef;
+    hr = IWICComponentInfo_GetVersion(info, 0, NULL, &len);
+    ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
+    ok(len == 0, "invalid length 0x%x\n", len); /* version does not apply to pixel formats */
+
+    IWICComponentInfo_Release(info);
 }
 
 static void test_reader_info(void)
@@ -239,6 +367,7 @@ START_TEST(info)
 
     test_decoder_info();
     test_reader_info();
+    test_pixelformat_info();
 
     CoUninitialize();
 }
