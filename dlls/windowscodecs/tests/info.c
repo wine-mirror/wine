@@ -122,12 +122,18 @@ static void test_decoder_info(void)
 static void test_pixelformat_info(void)
 {
     IWICComponentInfo *info;
+    IWICPixelFormatInfo *pixelformat_info;
+    IWICPixelFormatInfo2 *pixelformat_info2;
     HRESULT hr;
     ULONG len, known_len;
     WCHAR value[256];
     GUID guid;
     WICComponentType componenttype;
+    WICPixelFormatNumericRepresentation numericrepresentation;
     DWORD signing;
+    UINT uiresult;
+    BYTE abbuffer[256];
+    BOOL supportstransparency;
 
     hr = get_component_info(&GUID_WICPixelFormat32bppBGRA, &info);
     ok(hr == S_OK, "CreateComponentInfo failed, hr=%x\n", hr);
@@ -216,6 +222,88 @@ static void test_pixelformat_info(void)
     hr = IWICComponentInfo_GetVersion(info, 0, NULL, &len);
     ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
     ok(len == 0, "invalid length 0x%x\n", len); /* version does not apply to pixel formats */
+
+    hr = IWICComponentInfo_QueryInterface(info, &IID_IWICPixelFormatInfo, (void**)&pixelformat_info);
+    ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICPixelFormatInfo_GetBitsPerPixel(pixelformat_info, NULL);
+        ok(hr == E_INVALIDARG, "GetBitsPerPixel failed, hr=%x\n", hr);
+
+        hr = IWICPixelFormatInfo_GetBitsPerPixel(pixelformat_info, &uiresult);
+        ok(hr == S_OK, "GetBitsPerPixel failed, hr=%x\n", hr);
+        ok(uiresult == 32, "unexpected bpp %i\n", uiresult);
+
+        hr = IWICPixelFormatInfo_GetChannelCount(pixelformat_info, &uiresult);
+        ok(hr == S_OK, "GetChannelCount failed, hr=%x\n", hr);
+        ok(uiresult == 4, "unexpected channel count %i\n", uiresult);
+
+        hr = IWICPixelFormatInfo_GetChannelMask(pixelformat_info, 0, 0, NULL, NULL);
+        ok(hr == E_INVALIDARG, "GetChannelMask failed, hr=%x\n", hr);
+
+        uiresult = 0xdeadbeef;
+        hr = IWICPixelFormatInfo_GetChannelMask(pixelformat_info, 0, 0, NULL, &uiresult);
+        ok(hr == S_OK, "GetChannelMask failed, hr=%x\n", hr);
+        ok(uiresult == 4, "unexpected length %i\n", uiresult);
+
+        memset(abbuffer, 0xaa, sizeof(abbuffer));
+        hr = IWICPixelFormatInfo_GetChannelMask(pixelformat_info, 0, known_len, abbuffer, NULL);
+        ok(hr == E_INVALIDARG, "GetChannelMask failed, hr=%x\n", hr);
+        ok(abbuffer[0] == 0xaa, "buffer modified\n");
+
+        uiresult = 0xdeadbeef;
+        memset(abbuffer, 0xaa, sizeof(abbuffer));
+        hr = IWICPixelFormatInfo_GetChannelMask(pixelformat_info, 0, 3, abbuffer, &uiresult);
+        ok(hr == E_INVALIDARG, "GetChannelMask failed, hr=%x\n", hr);
+        ok(abbuffer[0] == 0xaa, "buffer modified\n");
+        ok(uiresult == 4, "unexpected length %i\n", uiresult);
+
+        memset(abbuffer, 0xaa, sizeof(abbuffer));
+        hr = IWICPixelFormatInfo_GetChannelMask(pixelformat_info, 0, 4, abbuffer, &uiresult);
+        ok(hr == S_OK, "GetChannelMask failed, hr=%x\n", hr);
+        ok(*((ULONG*)abbuffer) == 0xff, "unexpected mask 0x%x\n", *((ULONG*)abbuffer));
+        ok(uiresult == 4, "unexpected length %i\n", uiresult);
+
+        memset(abbuffer, 0xaa, sizeof(abbuffer));
+        hr = IWICPixelFormatInfo_GetChannelMask(pixelformat_info, 0, 5, abbuffer, &uiresult);
+        ok(hr == S_OK, "GetChannelMask failed, hr=%x\n", hr);
+        ok(*((ULONG*)abbuffer) == 0xff, "unexpected mask 0x%x\n", *((ULONG*)abbuffer));
+        ok(abbuffer[4] == 0xaa, "buffer modified past actual length\n");
+        ok(uiresult == 4, "unexpected length %i\n", uiresult);
+
+        memset(&guid, 0xaa, sizeof(guid));
+        hr = IWICPixelFormatInfo_GetFormatGUID(pixelformat_info, &guid);
+        ok(hr == S_OK, "GetFormatGUID failed, hr=%x\n", hr);
+        ok(IsEqualGUID(&guid, &GUID_WICPixelFormat32bppBGRA), "unexpected GUID %s\n", debugstr_guid(&guid));
+
+        IWICPixelFormatInfo_Release(pixelformat_info);
+    }
+
+    hr = IWICComponentInfo_QueryInterface(info, &IID_IWICPixelFormatInfo2, (void**)&pixelformat_info2);
+
+    if (FAILED(hr))
+        win_skip("IWICPixelFormatInfo2 not supported\n");
+    else
+    {
+        hr = IWICPixelFormatInfo2_GetNumericRepresentation(pixelformat_info2, NULL);
+        ok(hr == E_INVALIDARG, "GetNumericRepresentation failed, hr=%x\n", hr);
+
+        numericrepresentation = 0xdeadbeef;
+        hr = IWICPixelFormatInfo2_GetNumericRepresentation(pixelformat_info2, &numericrepresentation);
+        ok(hr == S_OK, "GetNumericRepresentation failed, hr=%x\n", hr);
+        ok(numericrepresentation == WICPixelFormatNumericRepresentationUnsignedInteger, "unexpected numeric representation %i\n", numericrepresentation);
+
+        hr = IWICPixelFormatInfo2_SupportsTransparency(pixelformat_info2, NULL);
+        ok(hr == E_INVALIDARG, "SupportsTransparency failed, hr=%x\n", hr);
+
+        supportstransparency = 0xdeadbeef;
+        hr = IWICPixelFormatInfo2_SupportsTransparency(pixelformat_info2, &supportstransparency);
+        ok(hr == S_OK, "SupportsTransparency failed, hr=%x\n", hr);
+        ok(supportstransparency == 1, "unexpected value %i\n", supportstransparency);
+
+        IWICPixelFormatInfo2_Release(pixelformat_info2);
+    }
 
     IWICComponentInfo_Release(info);
 }
