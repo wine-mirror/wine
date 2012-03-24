@@ -308,32 +308,32 @@ void _copy_diactionformatWtoA(LPDIACTIONFORMATA to, LPDIACTIONFORMATW from)
     }
 }
 
-/* _diactionformat_priority
+/* diactionformat_priority
  *
  *  Given a DIACTIONFORMAT structure and a DI genre, returns the enumeration
  *  priority. Joysticks should pass the game genre, and mouse or keyboard their
  *  respective DI*_MASK
  */
-static DWORD _diactionformat_priorityA(LPDIACTIONFORMATA lpdiaf, DWORD genre)
+static DWORD diactionformat_priorityA(LPDIACTIONFORMATA lpdiaf, DWORD genre)
 {
     int i;
     DWORD priorityFlags = 0;
 
     /* If there's at least one action for the device it's priority 1 */
-    for(i=0; i < lpdiaf->dwActionSize; i++)
+    for(i=0; i < lpdiaf->dwNumActions; i++)
         if ((lpdiaf->rgoAction[i].dwSemantic & genre) == genre)
             priorityFlags |= DIEDBS_MAPPEDPRI1;
 
     return priorityFlags;
 }
 
-static DWORD _diactionformat_priorityW(LPDIACTIONFORMATW lpdiaf, DWORD genre)
+static DWORD diactionformat_priorityW(LPDIACTIONFORMATW lpdiaf, DWORD genre)
 {
     int i;
     DWORD priorityFlags = 0;
 
     /* If there's at least one action for the device it's priority 1 */
-    for(i=0; i < lpdiaf->dwActionSize; i++)
+    for(i=0; i < lpdiaf->dwNumActions; i++)
         if ((lpdiaf->rgoAction[i].dwSemantic & genre) == genre)
             priorityFlags |= DIEDBS_MAPPEDPRI1;
 
@@ -913,7 +913,7 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
         {
             TRACE(" - checking device %u ('%s')\n", i, dinput_devices[i]->name);
 
-            callbackFlags = _diactionformat_priorityA(lpdiActionFormat, lpdiActionFormat->dwGenre);
+            callbackFlags = diactionformat_priorityA(lpdiActionFormat, lpdiActionFormat->dwGenre);
             /* Default behavior is to enumerate attached game controllers */
             enumSuccess = dinput_devices[i]->enum_deviceA(DI8DEVCLASS_GAMECTRL, DIEDFL_ATTACHEDONLY | dwFlags, &didevi, This->dwVersion, j);
             if (enumSuccess)
@@ -931,7 +931,7 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
     /* Enumerate keyboard and mouse */
     for(i=0; i < sizeof(guids)/sizeof(guids[0]); i++)
     {
-        callbackFlags = _diactionformat_priorityA(lpdiActionFormat, actionMasks[i]);
+        callbackFlags = diactionformat_priorityA(lpdiActionFormat, actionMasks[i]);
 
         IDirectInput_CreateDevice(iface, guids[i], &lpdid, NULL);
         IDirectInputDevice_GetDeviceInfo(lpdid, &didevi);
@@ -973,7 +973,7 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
         {
             TRACE(" - checking device %u ('%s')\n", i, dinput_devices[i]->name);
 
-            callbackFlags = _diactionformat_priorityW(lpdiActionFormat, lpdiActionFormat->dwGenre);
+            callbackFlags = diactionformat_priorityW(lpdiActionFormat, lpdiActionFormat->dwGenre);
             /* Default behavior is to enumerate attached game controllers */
             enumSuccess = dinput_devices[i]->enum_deviceW(DI8DEVCLASS_GAMECTRL, DIEDFL_ATTACHEDONLY | dwFlags, &didevi, This->dwVersion, j);
             if (enumSuccess)
@@ -991,7 +991,7 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
     /* Enumerate keyboard and mouse */
     for(i=0; i < sizeof(guids)/sizeof(guids[0]); i++)
     {
-        callbackFlags = _diactionformat_priorityW(lpdiActionFormat, actionMasks[i]);
+        callbackFlags = diactionformat_priorityW(lpdiActionFormat, actionMasks[i]);
 
         IDirectInput_CreateDevice(iface, guids[i], &lpdid, NULL);
         IDirectInputDevice_GetDeviceInfo(lpdid, &didevi);
