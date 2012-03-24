@@ -186,7 +186,7 @@ static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinI
                             QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, STOPPROCESSPROC pDone, LPCRITICAL_SECTION pCritSec, PullPin * pPinImpl)
 {
     /* Common attributes */
-    pPinImpl->pin.lpVtbl = PullPin_Vtbl;
+    pPinImpl->pin.IPin_iface.lpVtbl = PullPin_Vtbl;
     pPinImpl->pin.refCount = 1;
     pPinImpl->pin.pConnectedTo = NULL;
     pPinImpl->pin.pCritSec = pCritSec;
@@ -240,7 +240,7 @@ HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInf
 
     if (SUCCEEDED(PullPin_Init(PullPin_Vtbl, pPinInfo, pSampleProc, pUserData, pQueryAccept, pCleanUp, pCustomRequest, pDone, pCritSec, pPinImpl)))
     {
-        *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
+        *ppPin = &pPinImpl->pin.IPin_iface;
         return S_OK;
     }
 

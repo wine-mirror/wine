@@ -1062,7 +1062,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *punkout, HRESULT *phr) {
     piInput->dir = PINDIR_INPUT;
     piInput->pFilter = (IBaseFilter *)This;
     lstrcpynW(piInput->achName, wcsInputPinName, sizeof(piInput->achName) / sizeof(piInput->achName[0]));
-    This->pInputPin.pin.lpVtbl = &GST_InputPin_Vtbl;
+    This->pInputPin.pin.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
     This->pInputPin.pin.refCount = 1;
     This->pInputPin.pin.pConnectedTo = NULL;
     This->pInputPin.pin.pCritSec = &This->filter.csFilter;
@@ -1604,7 +1604,7 @@ static ULONG WINAPI GSTInPin_Release(IPin *iface) {
         if (This->pAlloc)
             IMemAllocator_Release(This->pAlloc);
         This->pAlloc = NULL;
-        This->pin.lpVtbl = NULL;
+        This->pin.IPin_iface.lpVtbl = NULL;
         return 0;
     } else
         return refCount;

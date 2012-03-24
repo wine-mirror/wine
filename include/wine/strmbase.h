@@ -28,7 +28,7 @@ void WINAPI DeleteMediaType(AM_MEDIA_TYPE * pMediaType);
 
 typedef struct BasePin
 {
-	const struct IPinVtbl * lpVtbl;
+	IPin IPin_iface;
 	LONG refCount;
 	LPCRITICAL_SECTION pCritSec;
 	PIN_INFO pinInfo;
@@ -82,7 +82,7 @@ typedef struct BaseInputPin
 	/* inheritance C style! */
 	BasePin pin;
 
-	const IMemInputPinVtbl * lpVtblMemInput;
+	IMemInputPin IMemInputPin_iface;
 	IMemAllocator * pAllocator;
 	BOOL flushing, end_of_stream;
 	IMemAllocator *preferred_allocator;

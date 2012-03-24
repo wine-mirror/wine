@@ -118,7 +118,7 @@ HRESULT WINAPI EnumMediaTypes_Construct(BasePin *basePin, BasePin_GetMediaType e
     pEnumMediaTypes->uIndex = 0;
     pEnumMediaTypes->enumMediaFunction = enumFunc;
     pEnumMediaTypes->mediaVersionFunction = versionFunc;
-    IPin_AddRef((IPin*)basePin);
+    IPin_AddRef(&basePin->IPin_iface);
     pEnumMediaTypes->basePin = basePin;
 
     i = 0;
@@ -188,7 +188,7 @@ static ULONG WINAPI IEnumMediaTypesImpl_Release(IEnumMediaTypes * iface)
             if (This->enumMediaDetails.pMediaTypes[i].pbFormat)
                 CoTaskMemFree(This->enumMediaDetails.pMediaTypes[i].pbFormat);
         CoTaskMemFree(This->enumMediaDetails.pMediaTypes);
-        IPin_Release((IPin*)This->basePin);
+        IPin_Release(&This->basePin->IPin_iface);
         CoTaskMemFree(This);
     }
     return refCount;
