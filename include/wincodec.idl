@@ -140,6 +140,16 @@ typedef enum WICComponentEnumerateOptions {
     WICComponentEnumerateDisabled = 0x80000000
 } WICComponentEnumerateOptions;
 
+typedef enum WICPixelFormatNumericRepresentation {
+    WICPixelFormatNumericRepresentationUnspecified = 0x00000000,
+    WICPixelFormatNumericRepresentationIndexed = 0x00000001,
+    WICPixelFormatNumericRepresentationUnsignedInteger = 0x00000002,
+    WICPixelFormatNumericRepresentationSignedInteger = 0x00000003,
+    WICPixelFormatNumericRepresentationFixed = 0x00000004,
+    WICPixelFormatNumericRepresentationFloat = 0x00000005,
+    WICPIXELFORMATNUMERICREPRESENTATION_FORCE_DWORD = CODEC_FORCE_DWORD
+} WICPixelFormatNumericRepresentation;
+
 typedef GUID WICPixelFormatGUID;
 typedef REFGUID REFWICPixelFormatGUID;
 
@@ -442,6 +452,44 @@ interface IWICBitmapFrameDecode : IWICBitmapSource
 
     HRESULT GetThumbnail(
         [out] IWICBitmapSource **ppIThumbnail);
+}
+
+[
+    object,
+    uuid(e8eda601-3d48-431a-ab44-69059be88bbe)
+]
+interface IWICPixelFormatInfo : IWICComponentInfo
+{
+    HRESULT GetFormatGUID(
+        [out] GUID* pFormat);
+
+    HRESULT GetColorContext(
+        [out] IWICColorContext **ppIColorContext);
+
+    HRESULT GetBitsPerPixel(
+        [out] UINT *puiBitsPerPixel);
+
+    HRESULT GetChannelCount(
+        [out] UINT *puiChannelCount);
+
+    HRESULT GetChannelMask(
+        [in] UINT uiChannelIndex,
+        [in] UINT cbMaskBuffer,
+        [in, out, unique, size_is(cbMaskBuffer)] BYTE *pbMaskBuffer,
+        [out] UINT *pcbActual);
+}
+
+[
+    object,
+    uuid(a9db33a2-af5f-43c7-b679-74f5984b5aa4)
+]
+interface IWICPixelFormatInfo2 : IWICPixelFormatInfo
+{
+    HRESULT SupportsTransparency(
+        [out] BOOL *pfSupportsTransparency);
+
+    HRESULT GetNumericRepresentation(
+        [out] WICPixelFormatNumericRepresentation *pNumericRepresentation);
 }
 
 [
