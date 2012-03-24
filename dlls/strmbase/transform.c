@@ -233,7 +233,7 @@ HRESULT TransformFilter_Construct(const IBaseFilterVtbl *pVtbl, LONG filter_size
 
     if (SUCCEEDED(TransformFilter_Init(pVtbl, pClsid, pFuncsTable, pTf)))
     {
-        *ppTransformFilter = (IBaseFilter*)(&pTf->filter.lpVtbl);
+        *ppTransformFilter = &pTf->filter.IBaseFilter_iface;
         return S_OK;
     }
 

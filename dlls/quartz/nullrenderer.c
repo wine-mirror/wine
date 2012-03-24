@@ -227,7 +227,6 @@ static ULONG WINAPI NullRendererInner_Release(IUnknown * iface)
         IPin_Disconnect((IPin *)This->pInputPin);
         IPin_Release((IPin *)This->pInputPin);
 
-        This->filter.lpVtbl = NULL;
         if (This->seekthru_unk)
             IUnknown_Release(This->seekthru_unk);
 

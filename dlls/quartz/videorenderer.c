@@ -694,7 +694,6 @@ static ULONG WINAPI VideoRendererInner_Release(IUnknown * iface)
 
         IPin_Release((IPin *)This->pInputPin);
 
-        This->filter.lpVtbl = NULL;
         IUnknown_Release(This->seekthru_unk);
         This->filter.csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->filter.csFilter);

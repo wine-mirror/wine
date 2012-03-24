@@ -29,9 +29,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
+static inline BaseFilter *impl_from_IBaseFilter(IBaseFilter *iface)
+{
+    return CONTAINING_RECORD(iface, BaseFilter, IBaseFilter_iface);
+}
+
 HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
-    BaseFilter *This = (BaseFilter *)iface;
+    BaseFilter *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
 
     *ppv = NULL;
@@ -56,7 +61,7 @@ HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, L
 
 ULONG WINAPI BaseFilterImpl_AddRef(IBaseFilter * iface)
 {
-    BaseFilter *This = (BaseFilter*)iface;
+    BaseFilter *This = impl_from_IBaseFilter(iface);
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
     TRACE("(%p)->() AddRef from %d\n", This, refCount - 1);
@@ -66,7 +71,7 @@ ULONG WINAPI BaseFilterImpl_AddRef(IBaseFilter * iface)
 
 ULONG WINAPI BaseFilterImpl_Release(IBaseFilter * iface)
 {
-    BaseFilter *This = (BaseFilter *)iface;
+    BaseFilter *This = impl_from_IBaseFilter(iface);
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
     TRACE("(%p)->() Release from %d\n", This, refCount + 1);
@@ -76,7 +81,7 @@ ULONG WINAPI BaseFilterImpl_Release(IBaseFilter * iface)
         if (This->pClock)
             IReferenceClock_Release(This->pClock);
 
-        This->lpVtbl = NULL;
+        This->IBaseFilter_iface.lpVtbl = NULL;
         This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
     }
@@ -86,7 +91,7 @@ ULONG WINAPI BaseFilterImpl_Release(IBaseFilter * iface)
 
 HRESULT WINAPI BaseFilterImpl_GetClassID(IBaseFilter * iface, CLSID * pClsid)
 {
-    BaseFilter *This = (BaseFilter*)iface;
+    BaseFilter *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)->(%p)\n", This, pClsid);
 
     *pClsid = This->clsid;
@@ -96,7 +101,7 @@ HRESULT WINAPI BaseFilterImpl_GetClassID(IBaseFilter * iface, CLSID * pClsid)
 
 HRESULT WINAPI BaseFilterImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState )
 {
-    BaseFilter *This = (BaseFilter*)iface;
+    BaseFilter *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)->(%d, %p)\n", This, dwMilliSecsTimeout, pState);
 
     EnterCriticalSection(&This->csFilter);
@@ -110,7 +115,7 @@ HRESULT WINAPI BaseFilterImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTim
 
 HRESULT WINAPI BaseFilterImpl_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock)
 {
-    BaseFilter *This = (BaseFilter*)iface;
+    BaseFilter *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)->(%p)\n", This, pClock);
 
     EnterCriticalSection(&This->csFilter);
@@ -128,7 +133,7 @@ HRESULT WINAPI BaseFilterImpl_SetSyncSource(IBaseFilter * iface, IReferenceClock
 
 HRESULT WINAPI BaseFilterImpl_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock)
 {
-    BaseFilter *This = (BaseFilter*)iface;
+    BaseFilter *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)->(%p)\n", This, ppClock);
 
     EnterCriticalSection(&This->csFilter);
@@ -144,7 +149,7 @@ HRESULT WINAPI BaseFilterImpl_GetSyncSource(IBaseFilter * iface, IReferenceClock
 
 HRESULT WINAPI BaseFilterImpl_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
-    BaseFilter *This = (BaseFilter*)iface;
+    BaseFilter *This = impl_from_IBaseFilter(iface);
 
     TRACE("(%p)->(%p)\n", iface, ppEnum);
 
@@ -154,7 +159,7 @@ HRESULT WINAPI BaseFilterImpl_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 
 HRESULT WINAPI BaseFilterImpl_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
 {
-    BaseFilter *This = (BaseFilter*)iface;
+    BaseFilter *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)->(%p)\n", This, pInfo);
 
     strcpyW(pInfo->achName, This->filterInfo.achName);
@@ -169,7 +174,7 @@ HRESULT WINAPI BaseFilterImpl_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *
 HRESULT WINAPI BaseFilterImpl_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName )
 {
     HRESULT hr = S_OK;
-    BaseFilter *This = (BaseFilter*)iface;
+    BaseFilter *This = impl_from_IBaseFilter(iface);
 
     TRACE("(%p)->(%p, %s)\n", This, pGraph, debugstr_w(pName));
 
@@ -206,7 +211,7 @@ VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter * This)
 
 HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo, const BaseFilterFuncTable* pBaseFuncsTable)
 {
-    This->lpVtbl = Vtbl;
+    This->IBaseFilter_iface.lpVtbl = Vtbl;
     This->refCount = 1;
     InitializeCriticalSection(&This->csFilter);
     This->state = State_Stopped;

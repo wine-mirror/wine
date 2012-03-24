@@ -66,7 +66,7 @@ HRESULT WINAPI EnumPins_Construct(BaseFilter *base,  BaseFilter_GetPin receive_p
     pEnumPins->receive_pincount = receive_pincount;
     pEnumPins->receive_version = receive_version;
     pEnumPins->base = base;
-    IBaseFilter_AddRef((IBaseFilter*)base);
+    IBaseFilter_AddRef(&base->IBaseFilter_iface);
     *ppEnum = &pEnumPins->IEnumPins_iface;
     pEnumPins->Version = receive_version(base);
 
@@ -115,7 +115,7 @@ static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
 
     if (!refCount)
     {
-        IBaseFilter_Release((IBaseFilter*)This->base);
+        IBaseFilter_Release(&This->base->IBaseFilter_iface);
         CoTaskMemFree(This);
         return 0;
     }

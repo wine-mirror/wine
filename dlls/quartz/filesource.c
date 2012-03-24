@@ -529,21 +529,21 @@ static HRESULT WINAPI FileSource_QueryInterface(IFileSourceFilter * iface, REFII
 {
     AsyncReader *This = impl_from_IFileSourceFilter(iface);
 
-    return IBaseFilter_QueryInterface((IFileSourceFilter*)&This->filter.lpVtbl, riid, ppv);
+    return IBaseFilter_QueryInterface(&This->filter.IBaseFilter_iface, riid, ppv);
 }
 
 static ULONG WINAPI FileSource_AddRef(IFileSourceFilter * iface)
 {
     AsyncReader *This = impl_from_IFileSourceFilter(iface);
 
-    return IBaseFilter_AddRef((IFileSourceFilter*)&This->filter.lpVtbl);
+    return IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
 }
 
 static ULONG WINAPI FileSource_Release(IFileSourceFilter * iface)
 {
     AsyncReader *This = impl_from_IFileSourceFilter(iface);
 
-    return IBaseFilter_Release((IFileSourceFilter*)&This->filter.lpVtbl);
+    return IBaseFilter_Release(&This->filter.IBaseFilter_iface);
 }
 
 static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFileName, const AM_MEDIA_TYPE * pmt)
@@ -565,8 +565,8 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     }
 
     /* create pin */
-    hr = FileAsyncReader_Construct(hFile, (IBaseFilter *)&This->filter.lpVtbl, &This->filter.csFilter, &This->pOutputPin);
-    BaseFilterImpl_IncrementPinVersion((BaseFilter *)&This->filter.lpVtbl);
+    hr = FileAsyncReader_Construct(hFile, &This->filter.IBaseFilter_iface, &This->filter.csFilter, &This->pOutputPin);
+    BaseFilterImpl_IncrementPinVersion(&This->filter);
 
     if (SUCCEEDED(hr))
         hr = IPin_QueryInterface(This->pOutputPin, &IID_IAsyncReader, (LPVOID *)&pReader);

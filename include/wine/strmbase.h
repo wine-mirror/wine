@@ -148,7 +148,7 @@ HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * p
 
 typedef struct BaseFilter
 {
-	const struct IBaseFilterVtbl *lpVtbl;
+	IBaseFilter IBaseFilter_iface;
 	LONG refCount;
 	CRITICAL_SECTION csFilter;
 

@@ -139,7 +139,7 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)
     pVfwCapture->IPersistPropertyBag_iface.lpVtbl = &IPersistPropertyBag_VTable;
     pVfwCapture->init = FALSE;
 
-    hr = VfwPin_Construct((IBaseFilter *)&pVfwCapture->filter.lpVtbl,
+    hr = VfwPin_Construct(&pVfwCapture->filter.IBaseFilter_iface,
                    &pVfwCapture->filter.csFilter, &pVfwCapture->pOutputPin);
     if (FAILED(hr))
     {
