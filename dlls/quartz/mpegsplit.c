@@ -78,7 +78,7 @@ typedef struct MPEGSplitterImpl
 
 static inline MPEGSplitterImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
-    return (MPEGSplitterImpl *)((char*)iface - FIELD_OFFSET(MPEGSplitterImpl, Parser.sourceSeeking.lpVtbl));
+    return CONTAINING_RECORD(iface, MPEGSplitterImpl, Parser.sourceSeeking.IMediaSeeking_iface);
 }
 
 static int MPEGSplitter_head_check(const BYTE *header)

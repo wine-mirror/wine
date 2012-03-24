@@ -185,7 +185,7 @@ static HRESULT WINAPI QTSplitter_ChangeRate(IMediaSeeking *iface);
 
 static inline QTSplitter *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
-    return (QTSplitter *)((char*)iface - FIELD_OFFSET(QTSplitter, sourceSeeking.lpVtbl));
+    return CONTAINING_RECORD(iface, QTSplitter, sourceSeeking.IMediaSeeking_iface);
 }
 
 /*

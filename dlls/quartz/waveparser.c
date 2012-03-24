@@ -50,7 +50,7 @@ typedef struct WAVEParserImpl
 
 static inline WAVEParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
-    return (WAVEParserImpl*)((char*)iface - FIELD_OFFSET(WAVEParserImpl, Parser.sourceSeeking.lpVtbl));
+    return CONTAINING_RECORD(iface, WAVEParserImpl, Parser.sourceSeeking.IMediaSeeking_iface);
 }
 
 static LONGLONG bytepos_to_duration(WAVEParserImpl *This, LONGLONG bytepos)

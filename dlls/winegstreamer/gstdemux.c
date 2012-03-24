@@ -998,7 +998,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
 }
 
 static inline GSTOutPin *impl_from_IMediaSeeking( IMediaSeeking *iface ) {
-    return (GSTOutPin *)((char*)iface - FIELD_OFFSET(GSTOutPin, seek.lpVtbl));
+    return CONTAINING_RECORD(iface, GSTOutPin, seek.IMediaSeeking_iface);
 }
 
 static IPin* WINAPI GST_GetPin(BaseFilter *iface, int pos)

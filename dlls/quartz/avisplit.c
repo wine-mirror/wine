@@ -102,7 +102,7 @@ struct thread_args {
 
 static inline AVISplitterImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
-    return (AVISplitterImpl *)((char*)iface - FIELD_OFFSET(AVISplitterImpl, Parser.sourceSeeking.lpVtbl));
+    return CONTAINING_RECORD(iface, AVISplitterImpl, Parser.sourceSeeking.IMediaSeeking_iface);
 }
 
 /* The threading stuff cries for an explanation

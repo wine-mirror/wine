@@ -50,7 +50,7 @@ static HRESULT WINAPI Parser_OutputPin_BreakConnect(BaseOutputPin *This);
 
 static inline ParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
-    return (ParserImpl *)((char*)iface - FIELD_OFFSET(ParserImpl, sourceSeeking.lpVtbl));
+    return CONTAINING_RECORD(iface, ParserImpl, sourceSeeking.IMediaSeeking_iface);
 }
 
 /* FIXME: WRONG */

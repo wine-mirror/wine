@@ -287,7 +287,7 @@ typedef HRESULT (WINAPI *SourceSeeking_ChangeStop)(IMediaSeeking *iface);
 
 typedef struct SourceSeeking
 {
-	const IMediaSeekingVtbl * lpVtbl;
+	IMediaSeeking IMediaSeeking_iface;
 
 	ULONG refCount;
 	SourceSeeking_ChangeStop fnChangeStop;

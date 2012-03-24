@@ -32,11 +32,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
+static inline SourceSeeking *impl_from_IMediaSeeking(IMediaSeeking *iface)
+{
+    return CONTAINING_RECORD(iface, SourceSeeking, IMediaSeeking_iface);
+}
+
 HRESULT SourceSeeking_Init(SourceSeeking *pSeeking, const IMediaSeekingVtbl *Vtbl, SourceSeeking_ChangeStop fnChangeStop, SourceSeeking_ChangeStart fnChangeStart, SourceSeeking_ChangeRate fnChangeRate, PCRITICAL_SECTION crit_sect)
 {
     assert(fnChangeStop && fnChangeStart && fnChangeRate);
 
-    pSeeking->lpVtbl = Vtbl;
+    pSeeking->IMediaSeeking_iface.lpVtbl = Vtbl;
     pSeeking->refCount = 1;
     pSeeking->fnChangeRate = fnChangeRate;
     pSeeking->fnChangeStop = fnChangeStop;
@@ -57,7 +62,7 @@ HRESULT SourceSeeking_Init(SourceSeeking *pSeeking, const IMediaSeekingVtbl *Vtb
 
 HRESULT WINAPI SourceSeekingImpl_GetCapabilities(IMediaSeeking * iface, DWORD * pCapabilities)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
 
     TRACE("(%p)\n", pCapabilities);
 
@@ -68,7 +73,7 @@ HRESULT WINAPI SourceSeekingImpl_GetCapabilities(IMediaSeeking * iface, DWORD * 
 
 HRESULT WINAPI SourceSeekingImpl_CheckCapabilities(IMediaSeeking * iface, DWORD * pCapabilities)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
     HRESULT hr;
     DWORD dwCommonCaps;
 
@@ -104,7 +109,7 @@ HRESULT WINAPI SourceSeekingImpl_QueryPreferredFormat(IMediaSeeking * iface, GUI
 
 HRESULT WINAPI SourceSeekingImpl_GetTimeFormat(IMediaSeeking * iface, GUID * pFormat)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
     TRACE("(%s)\n", debugstr_guid(pFormat));
 
     EnterCriticalSection(This->crst);
@@ -116,7 +121,7 @@ HRESULT WINAPI SourceSeekingImpl_GetTimeFormat(IMediaSeeking * iface, GUID * pFo
 
 HRESULT WINAPI SourceSeekingImpl_IsUsingTimeFormat(IMediaSeeking * iface, const GUID * pFormat)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
     HRESULT hr = S_OK;
 
     TRACE("(%s)\n", debugstr_guid(pFormat));
@@ -131,7 +136,7 @@ HRESULT WINAPI SourceSeekingImpl_IsUsingTimeFormat(IMediaSeeking * iface, const 
 
 HRESULT WINAPI SourceSeekingImpl_SetTimeFormat(IMediaSeeking * iface, const GUID * pFormat)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
     TRACE("%p %s\n", This, debugstr_guid(pFormat));
     return (IsEqualIID(pFormat, &TIME_FORMAT_MEDIA_TIME) ? S_OK : E_INVALIDARG);
 }
@@ -139,7 +144,7 @@ HRESULT WINAPI SourceSeekingImpl_SetTimeFormat(IMediaSeeking * iface, const GUID
 
 HRESULT WINAPI SourceSeekingImpl_GetDuration(IMediaSeeking * iface, LONGLONG * pDuration)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
 
     TRACE("(%p)\n", pDuration);
 
@@ -152,7 +157,7 @@ HRESULT WINAPI SourceSeekingImpl_GetDuration(IMediaSeeking * iface, LONGLONG * p
 
 HRESULT WINAPI SourceSeekingImpl_GetStopPosition(IMediaSeeking * iface, LONGLONG * pStop)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
 
     TRACE("(%p)\n", pStop);
 
@@ -166,7 +171,7 @@ HRESULT WINAPI SourceSeekingImpl_GetStopPosition(IMediaSeeking * iface, LONGLONG
 /* FIXME: Make use of the info the filter should expose */
 HRESULT WINAPI SourceSeekingImpl_GetCurrentPosition(IMediaSeeking * iface, LONGLONG * pCurrent)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
 
     TRACE("(%p)\n", pCurrent);
 
@@ -179,7 +184,7 @@ HRESULT WINAPI SourceSeekingImpl_GetCurrentPosition(IMediaSeeking * iface, LONGL
 
 HRESULT WINAPI SourceSeekingImpl_ConvertTimeFormat(IMediaSeeking * iface, LONGLONG * pTarget, const GUID * pTargetFormat, LONGLONG Source, const GUID * pSourceFormat)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
     if (!pTargetFormat)
         pTargetFormat = &This->timeformat;
     if (!pSourceFormat)
@@ -212,7 +217,7 @@ static inline LONGLONG Adjust(LONGLONG value, const LONGLONG * pModifier, DWORD 
 
 HRESULT WINAPI SourceSeekingImpl_SetPositions(IMediaSeeking * iface, LONGLONG * pCurrent, DWORD dwCurrentFlags, LONGLONG * pStop, DWORD dwStopFlags)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
     BOOL bChangeCurrent = FALSE, bChangeStop = FALSE;
     LONGLONG llNewCurrent, llNewStop;
 
@@ -248,7 +253,7 @@ HRESULT WINAPI SourceSeekingImpl_SetPositions(IMediaSeeking * iface, LONGLONG * 
 
 HRESULT WINAPI SourceSeekingImpl_GetPositions(IMediaSeeking * iface, LONGLONG * pCurrent, LONGLONG * pStop)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
 
     TRACE("(%p, %p)\n", pCurrent, pStop);
 
@@ -262,7 +267,7 @@ HRESULT WINAPI SourceSeekingImpl_GetPositions(IMediaSeeking * iface, LONGLONG * 
 
 HRESULT WINAPI SourceSeekingImpl_GetAvailable(IMediaSeeking * iface, LONGLONG * pEarliest, LONGLONG * pLatest)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
 
     TRACE("(%p, %p)\n", pEarliest, pLatest);
 
@@ -276,7 +281,7 @@ HRESULT WINAPI SourceSeekingImpl_GetAvailable(IMediaSeeking * iface, LONGLONG * 
 
 HRESULT WINAPI SourceSeekingImpl_SetRate(IMediaSeeking * iface, double dRate)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
     BOOL bChangeRate = (dRate != This->dRate);
     HRESULT hr = S_OK;
 
@@ -299,7 +304,7 @@ HRESULT WINAPI SourceSeekingImpl_SetRate(IMediaSeeking * iface, double dRate)
 
 HRESULT WINAPI SourceSeekingImpl_GetRate(IMediaSeeking * iface, double * dRate)
 {
-    SourceSeeking *This = (SourceSeeking *)iface;
+    SourceSeeking *This = impl_from_IMediaSeeking(iface);
 
     TRACE("(%p)\n", dRate);
 
