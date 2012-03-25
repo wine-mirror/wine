@@ -1334,7 +1334,7 @@ void be_i386_disasm_one_insn(ADDRESS64 *addr, int display)
 	struct i_addr	address;
 
 	/*
-	 * Set this so we get can suppress the printout if we need to.
+         * Set this so we can suppress the printout if we need to.
 	 */
 	db_display = display;
         switch (addr->Mode)
