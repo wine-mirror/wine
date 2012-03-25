@@ -44,18 +44,18 @@ static inline IDirect3D8Impl *impl_from_IDirect3D8(IDirect3D8 *iface)
 
 static HRESULT WINAPI IDirect3D8Impl_QueryInterface(LPDIRECT3D8 iface, REFIID riid,LPVOID *ppobj)
 {
-    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
-
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
 
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IDirect3D8)) {
+    if (IsEqualGUID(riid, &IID_IDirect3D8)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
         IUnknown_AddRef(iface);
-        *ppobj = This;
+        *ppobj = iface;
         return S_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid),ppobj);
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
     *ppobj = NULL;
     return E_NOINTERFACE;
 }
