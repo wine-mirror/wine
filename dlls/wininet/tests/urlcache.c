@@ -347,6 +347,7 @@ static void test_urlcacheA(void)
     HANDLE hFile;
     BYTE zero_byte = 0;
     LPINTERNET_CACHE_ENTRY_INFO lpCacheEntryInfo;
+    LPINTERNET_CACHE_ENTRY_INFO lpCacheEntryInfo2;
     DWORD cbCacheEntryInfo;
     static const FILETIME filetime_zero;
     FILETIME now;
@@ -361,7 +362,7 @@ static void test_urlcacheA(void)
 
     create_and_write_file(filenameA, &zero_byte, sizeof(zero_byte));
 
-    ret = CommitUrlCacheEntry(TEST_URL1, NULL, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, NULL, 0, NULL, NULL);
+    ret = CommitUrlCacheEntry(TEST_URL1, NULL, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, NULL, 0, "html", NULL);
     ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
     cbCacheEntryInfo = 0;
     ret = GetUrlCacheEntryInfo(TEST_URL1, NULL, &cbCacheEntryInfo);
@@ -381,9 +382,11 @@ static void test_urlcacheA(void)
        lpCacheEntryInfo->CacheEntryType);
     ok(!U(*lpCacheEntryInfo).dwExemptDelta, "expected dwExemptDelta 0, got %d\n",
        U(*lpCacheEntryInfo).dwExemptDelta);
-    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 
-    /* A subsequent commit with a different time/type doesn't change the type */
+    /* Make sure there is a notable change in timestamps */
+    Sleep(1000);
+
+    /* A subsequent commit with a different time/type doesn't change most of the entry */
     GetSystemTimeAsFileTime(&now);
     ret = CommitUrlCacheEntry(TEST_URL1, NULL, now, now, NORMAL_CACHE_ENTRY,
             (LPBYTE)ok_header, strlen(ok_header), NULL, NULL);
@@ -393,26 +396,41 @@ static void test_urlcacheA(void)
     ok(!ret, "GetUrlCacheEntryInfo should have failed\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
-    ret = GetUrlCacheEntryInfo(TEST_URL1, lpCacheEntryInfo, &cbCacheEntryInfo);
+    lpCacheEntryInfo2 = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
+    ret = GetUrlCacheEntryInfo(TEST_URL1, lpCacheEntryInfo2, &cbCacheEntryInfo);
     ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
     /* but it does change the time.. */
     todo_wine
-    ok(memcmp(&lpCacheEntryInfo->ExpireTime, &filetime_zero, sizeof(FILETIME)),
+    ok(memcmp(&lpCacheEntryInfo2->ExpireTime, &filetime_zero, sizeof(FILETIME)),
        "expected positive ExpireTime\n");
     todo_wine
-    ok(memcmp(&lpCacheEntryInfo->LastModifiedTime, &filetime_zero, sizeof(FILETIME)),
+    ok(memcmp(&lpCacheEntryInfo2->LastModifiedTime, &filetime_zero, sizeof(FILETIME)),
        "expected positive LastModifiedTime\n");
-    ok(lpCacheEntryInfo->CacheEntryType == (NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY) ||
-       broken(lpCacheEntryInfo->CacheEntryType == NORMAL_CACHE_ENTRY /* NT4/W2k */),
+    ok(lpCacheEntryInfo2->CacheEntryType == (NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY) ||
+       broken(lpCacheEntryInfo2->CacheEntryType == NORMAL_CACHE_ENTRY /* NT4/W2k */),
        "expected type NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, got %08x\n",
-       lpCacheEntryInfo->CacheEntryType);
+       lpCacheEntryInfo2->CacheEntryType);
     /* and set the headers. */
     todo_wine
-    ok(lpCacheEntryInfo->dwHeaderInfoSize == 19,
-       "expected headers size 19, got %d\n",
-       lpCacheEntryInfo->dwHeaderInfoSize);
+    ok(lpCacheEntryInfo2->dwHeaderInfoSize == 19,
+        "expected headers size 19, got %d\n",
+        lpCacheEntryInfo2->dwHeaderInfoSize);
+    /* Hit rate gets incremented by 1 */
+    todo_wine
+    ok((lpCacheEntryInfo->dwHitRate + 1) == lpCacheEntryInfo2->dwHitRate,
+        "HitRate not incremented by one on commit\n");
+    /* Last access time should be updated */
+    todo_wine
+    ok(!(lpCacheEntryInfo->LastAccessTime.dwHighDateTime == lpCacheEntryInfo2->LastAccessTime.dwHighDateTime &&
+        lpCacheEntryInfo->LastAccessTime.dwLowDateTime == lpCacheEntryInfo2->LastAccessTime.dwLowDateTime),
+        "Last accessed time was not updated by commit\n");
+    /* File extension should be unset */
+    todo_wine
+    ok(lpCacheEntryInfo2->lpszFileExtension == NULL,
+        "Fileextension isn't unset: %s\n",
+        lpCacheEntryInfo2->lpszFileExtension);
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo2);
 
     ret = CommitUrlCacheEntry(TEST_URL, filenameA, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY, NULL, 0, "html", NULL);
     ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
@@ -560,6 +578,18 @@ static void test_urlcacheA(void)
            "Expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
         check_file_exists(filenameA);
     }
+
+    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
+    memset(lpCacheEntryInfo, 0, cbCacheEntryInfo);
+    ret = GetUrlCacheEntryInfo(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo);
+    todo_wine
+    ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
+    todo_wine
+    ok(lpCacheEntryInfo->CacheEntryType & DELETED_CACHE_ENTRY,
+        "CacheEntryType hasn't DELETED_CACHE_ENTRY set, (flags %08x)\n",
+        lpCacheEntryInfo->CacheEntryType);
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+
     if (pUnlockUrlCacheEntryFileA)
     {
         check_file_exists(filenameA);
@@ -637,6 +667,7 @@ static void test_urlcacheA(void)
     ok(!ret, "expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
     ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filenameA, 0);
     ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
     create_and_write_file(filenameA, &zero_byte, sizeof(zero_byte));
@@ -705,7 +736,30 @@ static void test_urlcacheA(void)
     ok(lpCacheEntryInfo->CacheEntryType & (NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY),
        "expected cache entry type NORMAL_CACHE_ENTRY | STICKY_CACHE_ENTRY, got %d (0x%08x)\n",
        lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
+
+    /* Recommit of Url entry keeps dwExemptDelta */
+    U(*lpCacheEntryInfo).dwExemptDelta = 8600;
+    ret = SetUrlCacheEntryInfoA(TEST_URL, lpCacheEntryInfo,
+            CACHE_ENTRY_EXEMPT_DELTA_FC);
+    ok(ret, "SetUrlCacheEntryInfo failed: %d\n", GetLastError());
+
+    ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filenameA1, 0);
+    ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
+    create_and_write_file(filenameA1, &zero_byte, sizeof(zero_byte));
+
+    ret = CommitUrlCacheEntry(TEST_URL, filenameA1, filetime_zero, filetime_zero,
+            NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY,
+            (LPBYTE)ok_header, strlen(ok_header), "html", NULL);
+    ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
+
+    ret = GetUrlCacheEntryInfo(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo);
+    ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
+    ok(U(*lpCacheEntryInfo).dwExemptDelta == 8600,
+       "expected dwExemptDelta 8600, got %d\n",
+       U(*lpCacheEntryInfo).dwExemptDelta);
+
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+
     if (pDeleteUrlCacheEntryA)
     {
         ret = pDeleteUrlCacheEntryA(TEST_URL);
