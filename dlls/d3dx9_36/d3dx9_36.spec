@@ -38,7 +38,7 @@
 @ stub D3DXCreateCubeTextureFromFileA(ptr ptr ptr)
 @ stub D3DXCreateCubeTextureFromFileExA(ptr ptr long long long long long long long long ptr ptr ptr)
 @ stub D3DXCreateCubeTextureFromFileExW(ptr ptr long long long long long long long long ptr ptr ptr)
-@ stub D3DXCreateCubeTextureFromFileInMemory(ptr ptr long ptr)
+@ stdcall D3DXCreateCubeTextureFromFileInMemory(ptr ptr long ptr)
 @ stdcall D3DXCreateCubeTextureFromFileInMemoryEx(ptr ptr long long long long long long long long long ptr ptr ptr)
 @ stub D3DXCreateCubeTextureFromFileW(ptr ptr ptr)
 @ stub D3DXCreateCubeTextureFromResourceA(ptr long ptr ptr)

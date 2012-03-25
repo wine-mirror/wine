@@ -908,6 +908,17 @@ HRESULT WINAPI D3DXCreateCubeTexture(LPDIRECT3DDEVICE9 device,
     return IDirect3DDevice9_CreateCubeTexture(device, size, miplevels, usage, format, pool, texture, NULL);
 }
 
+HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemory(LPDIRECT3DDEVICE9 device,
+                                                     LPCVOID data,
+                                                     UINT datasize,
+                                                     LPDIRECT3DCUBETEXTURE9 *texture)
+{
+    TRACE("(%p, %p, %u, %p)\n", device, data, datasize, texture);
+
+    return D3DXCreateCubeTextureFromFileInMemoryEx(device, data, datasize, D3DX_DEFAULT, D3DX_DEFAULT,
+        0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, texture);
+}
+
 HRESULT WINAPI D3DXCreateVolumeTexture(LPDIRECT3DDEVICE9 device,
                                        UINT width,
                                        UINT height,
