@@ -37,7 +37,6 @@
 #include "wine/list.h"
 #include "wine/wined3d.h"
 
-extern const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops DECLSPEC_HIDDEN;
 extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HIDDEN;
 
 /* Typdef the interfaces */

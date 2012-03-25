@@ -5585,7 +5585,7 @@ static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *paren
     HeapFree(GetProcessHeap(), 0, surface);
 }
 
-const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops =
+static const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops =
 {
     ddraw_surface_wined3d_object_destroyed,
 };
