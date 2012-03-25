@@ -271,7 +271,7 @@ static void test_action_mapping(void)
     DIACTIONFORMAT af;
     struct enum_data data =  {pDI, &af, NULL, NULL, NULL, 0};
 
-    hr = CoCreateInstance(&CLSID_DirectInput8, 0, 1, &IID_IDirectInput8A, (LPVOID*)&pDI);
+    hr = CoCreateInstance(&CLSID_DirectInput8, 0, CLSCTX_INPROC_SERVER, &IID_IDirectInput8A, (LPVOID*)&pDI);
     if (hr == DIERR_OLDDIRECTINPUTVERSION ||
         hr == DIERR_BETADIRECTINPUTVERSION ||
         hr == REGDB_E_CLASSNOTREG)
