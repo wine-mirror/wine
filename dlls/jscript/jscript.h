@@ -505,7 +505,7 @@ static inline BOOL is_jscript_error(HRESULT hres)
 
 const char *debugstr_variant(const VARIANT*) DECLSPEC_HIDDEN;
 
-HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+HRESULT create_jscript_object(BOOL,REFIID,void**) DECLSPEC_HIDDEN;
 
 extern LONG module_ref DECLSPEC_HIDDEN;
 

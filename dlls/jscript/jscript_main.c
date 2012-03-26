@@ -83,6 +83,19 @@ static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
     return S_OK;
 }
 
+static HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
+        REFIID riid, void **ppv)
+{
+    TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
+
+    if(outer) {
+        *ppv = NULL;
+        return CLASS_E_NOAGGREGATION;
+    }
+
+    return create_jscript_object(FALSE, riid, ppv);
+}
+
 static const IClassFactoryVtbl JScriptFactoryVtbl = {
     ClassFactory_QueryInterface,
     ClassFactory_AddRef,
@@ -92,6 +105,29 @@ static const IClassFactoryVtbl JScriptFactoryVtbl = {
 };
 
 static IClassFactory JScriptFactory = { &JScriptFactoryVtbl };
+
+static HRESULT WINAPI JScriptEncodeFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
+        REFIID riid, void **ppv)
+{
+    TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
+
+    if(outer) {
+        *ppv = NULL;
+        return CLASS_E_NOAGGREGATION;
+    }
+
+    return create_jscript_object(TRUE, riid, ppv);
+}
+
+static const IClassFactoryVtbl JScriptEncodeFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    JScriptEncodeFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory JScriptEncodeFactory = { &JScriptEncodeFactoryVtbl };
 
 /******************************************************************
  *              DllMain (jscript.@)
@@ -121,6 +157,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     if(IsEqualGUID(&CLSID_JScript, rclsid)) {
         TRACE("(CLSID_JScript %s %p)\n", debugstr_guid(riid), ppv);
         return IClassFactory_QueryInterface(&JScriptFactory, riid, ppv);
+    }
+
+    if(IsEqualGUID(&CLSID_JScriptEncode, rclsid)) {
+        TRACE("(CLSID_JScriptEncode %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&JScriptEncodeFactory, riid, ppv);
     }
 
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);

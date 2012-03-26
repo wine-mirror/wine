@@ -55,6 +55,7 @@ typedef struct {
     LONG thread_id;
     LCID lcid;
     DWORD version;
+    BOOL is_encode;
 
     IActiveScriptSite *site;
 
@@ -1029,24 +1030,16 @@ static const IVariantChangeTypeVtbl VariantChangeTypeVtbl = {
     VariantChangeType_ChangeType
 };
 
-HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter,
-                                             REFIID riid, void **ppv)
+HRESULT create_jscript_object(BOOL is_encode, REFIID riid, void **ppv)
 {
     JScript *ret;
     HRESULT hres;
 
-    TRACE("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppv);
-
-    if(pUnkOuter) {
-        *ppv = NULL;
-        return CLASS_E_NOAGGREGATION;
-    }
-
-    lock_module();
-
     ret = heap_alloc_zero(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
+
+    lock_module();
 
     ret->IActiveScript_iface.lpVtbl = &JScriptVtbl;
     ret->IActiveScriptParse_iface.lpVtbl = &JScriptParseVtbl;
@@ -1056,6 +1049,7 @@ HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUn
     ret->IVariantChangeType_iface.lpVtbl = &VariantChangeTypeVtbl;
     ret->ref = 1;
     ret->safeopt = INTERFACE_USES_DISPEX;
+    ret->is_encode = is_encode;
 
     hres = IActiveScript_QueryInterface(&ret->IActiveScript_iface, riid, ppv);
     IActiveScript_Release(&ret->IActiveScript_iface);
