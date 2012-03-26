@@ -339,6 +339,31 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
         This->pStreams[This->nbStreams] = pStream;
         This->nbStreams++;
 
+        if (dwFlags & AMMSF_ADDDEFAULTRENDERER)
+        {
+            if (IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
+            {
+                IBaseFilter* dsoundrender_filter;
+
+                hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&dsoundrender_filter);
+                if (SUCCEEDED(hr))
+                {
+                     hr = IGraphBuilder_AddFilter(This->pFilterGraph, dsoundrender_filter, NULL);
+                     IBaseFilter_Release(dsoundrender_filter);
+                }
+                if (FAILED(hr))
+                {
+                     IMediaStream_Release(pStream);
+                     pStream = NULL;
+                     This->nbStreams--;
+                }
+            }
+            else
+            {
+                FIXME("Default renderer only supported for audio\n");
+            }
+        }
+
         if (ppNewStream)
             *ppNewStream = pStream;
     }
