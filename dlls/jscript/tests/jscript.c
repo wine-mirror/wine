@@ -31,6 +31,8 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static const CLSID CLSID_JScript =
     {0xf414c260,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
+static const CLSID CLSID_JScriptEncode =
+    {0xf414c262,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -65,6 +67,8 @@ DEFINE_EXPECT(OnStateChange_CLOSED);
 DEFINE_EXPECT(OnStateChange_INITIALIZED);
 DEFINE_EXPECT(OnEnterScript);
 DEFINE_EXPECT(OnLeaveScript);
+
+static const CLSID *engine_clsid = &CLSID_JScript;
 
 static BSTR a2bstr(const char *str)
 {
@@ -409,7 +413,7 @@ static IActiveScript *create_jscript(void)
     IActiveScript *ret;
     HRESULT hres;
 
-    hres = CoCreateInstance(&CLSID_JScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+    hres = CoCreateInstance(engine_clsid, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IActiveScript, (void**)&ret);
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
 
@@ -662,10 +666,15 @@ START_TEST(jscript)
     CoInitialize(NULL);
 
     if(check_jscript()) {
+        trace("Testing JScript object...\n");
         test_jscript();
         test_jscript2();
         test_jscript_uninitializing();
         test_aggregation();
+
+        trace("Testing JScriptEncode object...\n");
+        engine_clsid = &CLSID_JScriptEncode;
+        test_jscript();
     }else {
         win_skip("Broken engine, probably too old\n");
     }
