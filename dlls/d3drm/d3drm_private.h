@@ -22,11 +22,22 @@
 #define __D3DRM_PRIVATE_INCLUDED__
 
 #include "d3drm.h"
+#include "dxfile.h"
 
 HRESULT Direct3DRM_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMDevice_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMViewport_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
+
+HRESULT load_mesh_data(IDirect3DRMMeshBuilder3* iface, LPDIRECTXFILEDATA pData) DECLSPEC_HIDDEN;
+
+typedef struct {
+    WORD major;
+    WORD minor;
+    DWORD flags;
+} Header;
+
+extern char templates[];
 
 #endif /* __D3DRM_PRIVATE_INCLUDED__ */
