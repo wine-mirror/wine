@@ -167,7 +167,7 @@ int wmain(int argc, WCHAR *argv[])
             } else if (((param[1] == 'R') || (param[1] == 'r')) && !param[2]) {
                 WINE_FIXME("Option /R not yet supported\n");
             } else {
-                WINE_FIXME("Unrecognized option\n");
+                WINE_FIXME("Unknown option %s\n", debugstr_w(param));
             }
         } else if (param[0]) {
             strcpyW(name, param);
