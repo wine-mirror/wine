@@ -164,16 +164,6 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     }
 
     LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
-        if((item->flags & SCRIPTITEM_GLOBALMEMBERS)) {
-            hres = disp_get_id(item->disp, name, invoke_type, FALSE, &id);
-            if(SUCCEEDED(hres)) {
-                ref->type = REF_DISP;
-                ref->u.d.disp = item->disp;
-                ref->u.d.id = id;
-                return S_OK;
-            }
-        }
-
         if((item->flags & SCRIPTITEM_ISVISIBLE) && !strcmpiW(item->name, name)) {
             if(!item->disp) {
                 IUnknown *unk;
@@ -195,6 +185,18 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
             ref->type = REF_OBJ;
             ref->u.obj = item->disp;
             return S_OK;
+        }
+    }
+
+    LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
+        if((item->flags & SCRIPTITEM_GLOBALMEMBERS)) {
+            hres = disp_get_id(item->disp, name, invoke_type, FALSE, &id);
+            if(SUCCEEDED(hres)) {
+                ref->type = REF_DISP;
+                ref->u.d.disp = item->disp;
+                ref->u.d.id = id;
+                return S_OK;
+            }
         }
     }
 
