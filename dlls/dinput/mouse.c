@@ -530,8 +530,8 @@ static HRESULT WINAPI SysMouseWImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
     /* And put the mouse cursor back where it was at acquire time */
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE || This->warp_override == WARP_FORCE_ON)
     {
-      TRACE(" warping mouse back to (%d , %d)\n", This->org_coords.x, This->org_coords.y);
-      SetCursorPos(This->org_coords.x, This->org_coords.y);
+        TRACE("warping mouse back to %s\n", wine_dbgstr_point(&This->org_coords));
+        SetCursorPos(This->org_coords.x, This->org_coords.y);
     }
 
     return DI_OK;
