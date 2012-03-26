@@ -211,6 +211,16 @@ static void test_media_streams(void)
     hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &video_stream);
     ok(hr == S_OK, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
 
+    /* Verify the video stream has been added to the media stream filter */
+    if (media_stream_filter)
+    {
+        hr = IMediaStreamFilter_GetMediaStream(media_stream_filter, &MSPID_PrimaryVideo, &dummy_stream);
+        todo_wine ok(hr == S_OK, "IMediaStreamFilter_GetMediaStream returned: %x\n", hr);
+        todo_wine ok(dummy_stream == video_stream, "Got wrong returned pointer %p, expected %p\n", dummy_stream, video_stream);
+        if (SUCCEEDED(hr))
+            IMediaStream_Release(dummy_stream);
+    }
+
     /* Verify there is no audio media stream */
     hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryAudio, &audio_stream);
     ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
@@ -226,6 +236,16 @@ static void test_media_streams(void)
     ok(hr == S_OK, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
     hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryAudio, &audio_stream);
     ok(hr == S_OK, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
+
+    /* verify the audio stream has been added to the media stream filter */
+    if (media_stream_filter)
+    {
+        hr = IMediaStreamFilter_GetMediaStream(media_stream_filter, &MSPID_PrimaryAudio, &dummy_stream);
+        todo_wine ok(hr == S_OK, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
+        todo_wine ok(dummy_stream == audio_stream, "Got wrong returned pointer %p, expected %p\n", dummy_stream, audio_stream);
+        if (SUCCEEDED(hr))
+            IMediaStream_Release(dummy_stream);
+    }
 
     /* Verify behaviour with invalid purpose id */
     hr = IAMMultiMediaStream_GetMediaStream(pams, &IID_IUnknown, &dummy_stream);
