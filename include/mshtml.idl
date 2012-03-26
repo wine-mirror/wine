@@ -15851,6 +15851,36 @@ interface IHTMLObjectElement : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLObjectElement2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4cd-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLObjectElement2 : IDispatch
+{
+    [id(DISPID_IHTMLOBJECTELEMENT2_NAMEDRECORDSET)]
+    HRESULT namedRecordset(
+            [in] BSTR dataMember,
+            [in, optional] VARIANT *hierarchy,
+            [out, retval] IDispatch **ppRecordset);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT2_CLASSID), hidden]
+    HRESULT classid([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT2_CLASSID), hidden]
+    HRESULT classid([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLOBJECTELEMENT2_DATA), hidden]
+    HRESULT data([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLOBJECTELEMENT2_DATA), hidden]
+    HRESULT data([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
  *    IHTMLParamElement interface
  */
 [
