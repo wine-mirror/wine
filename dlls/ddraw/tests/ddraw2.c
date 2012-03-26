@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Henri Verbeet for CodeWeavers
+ * Copyright 2011-2012 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -251,6 +251,47 @@ static IDirect3DDevice2 *create_device(IDirectDraw2 *ddraw, HWND window, DWORD c
         return NULL;
 
     return device;
+}
+
+static IDirect3DViewport2 *create_viewport(IDirect3DDevice2 *device, UINT x, UINT y, UINT w, UINT h)
+{
+    IDirect3DViewport2 *viewport;
+    D3DVIEWPORT2 vp;
+    IDirect3D2 *d3d;
+    HRESULT hr;
+
+    hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    hr = IDirect3D2_CreateViewport(d3d, &viewport, NULL);
+    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_AddViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to add viewport, hr %#x.\n", hr);
+    memset(&vp, 0, sizeof(vp));
+    vp.dwSize = sizeof(vp);
+    vp.dwX = x;
+    vp.dwY = y;
+    vp.dwWidth = w;
+    vp.dwHeight = h;
+    vp.dvClipX = -1.0f;
+    vp.dvClipY =  1.0f;
+    vp.dvClipWidth = 2.0f;
+    vp.dvClipHeight = 2.0f;
+    vp.dvMinZ = 0.0f;
+    vp.dvMaxZ = 1.0f;
+    hr = IDirect3DViewport2_SetViewport2(viewport, &vp);
+    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+    IDirect3D2_Release(d3d);
+
+    return viewport;
+}
+
+static void destroy_viewport(IDirect3DDevice2 *device, IDirect3DViewport2 *viewport)
+{
+    HRESULT hr;
+
+    hr = IDirect3DDevice2_DeleteViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to delete viewport, hr %#x.\n", hr);
+    IDirect3DViewport2_Release(viewport);
 }
 
 static HRESULT CALLBACK restore_callback(IDirectDrawSurface *surface, DDSURFACEDESC *desc, void *context)
@@ -574,7 +615,6 @@ static void test_coop_level_d3d_state(void)
     IDirect3DDevice2 *device;
     D3DMATERIAL material;
     IDirectDraw2 *ddraw;
-    D3DVIEWPORT2 vp;
     IDirect3D2 *d3d;
     D3DCOLOR color;
     DWORD value;
@@ -599,28 +639,11 @@ static void test_coop_level_d3d_state(void)
 
     hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
     ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
-    hr = IDirect3D2_CreateViewport(d3d, &viewport, NULL);
-    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
     hr = IDirect3D2_CreateMaterial(d3d, &background, NULL);
     ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
     IDirect3D2_Release(d3d);
 
-    hr = IDirect3DDevice2_AddViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to add viewport, hr %#x.\n", hr);
-    memset(&vp, 0, sizeof(vp));
-    vp.dwSize = sizeof(vp);
-    vp.dwX = 0;
-    vp.dwY = 0;
-    vp.dwWidth = 640;
-    vp.dwHeight = 480;
-    vp.dvClipX = -1.0f;
-    vp.dvClipY =  1.0f;
-    vp.dvClipWidth = 2.0f;
-    vp.dvClipHeight = 2.0f;
-    vp.dvMinZ = 0.0f;
-    vp.dvMaxZ = 1.0f;
-    hr = IDirect3DViewport2_SetViewport2(viewport, &vp);
-    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+    viewport = create_viewport(device, 0, 0, 640, 480);
 
     memset(&material, 0, sizeof(material));
     material.dwSize = sizeof(material);
@@ -680,10 +703,8 @@ static void test_coop_level_d3d_state(void)
     color = get_surface_color(rt, 320, 240);
     ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
 
-    hr = IDirect3DDevice2_DeleteViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to delete viewport, hr %#x.\n", hr);
+    destroy_viewport(device, viewport);
     IDirect3DMaterial2_Release(background);
-    IDirect3DViewport2_Release(viewport);
     IDirectDrawSurface_Release(surface);
     IDirectDrawSurface_Release(rt);
     IDirect3DDevice2_Release(device);
@@ -706,7 +727,6 @@ static void test_surface_interface_mismatch(void)
     HRESULT hr;
     D3DCOLOR color;
     HWND window;
-    D3DVIEWPORT2 vp;
     D3DMATERIAL material;
     D3DMATERIALHANDLE background_handle;
     D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
@@ -780,27 +800,10 @@ static void test_surface_interface_mismatch(void)
     if (FAILED(hr))
         goto cleanup;
 
-    hr = IDirect3D2_CreateViewport(d3d, &viewport, NULL);
-    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
     hr = IDirect3D2_CreateMaterial(d3d, &background, NULL);
     ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice2_AddViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to add viewport, hr %#x.\n", hr);
-    memset(&vp, 0, sizeof(vp));
-    vp.dwSize = sizeof(vp);
-    vp.dwX = 0;
-    vp.dwY = 0;
-    vp.dwWidth = 640;
-    vp.dwHeight = 480;
-    vp.dvClipX = -1.0f;
-    vp.dvClipY =  1.0f;
-    vp.dvClipWidth = 2.0f;
-    vp.dvClipHeight = 2.0f;
-    vp.dvMinZ = 0.0f;
-    vp.dvMaxZ = 1.0f;
-    hr = IDirect3DViewport2_SetViewport2(viewport, &vp);
-    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+    viewport = create_viewport(device, 0, 0, 640, 480);
 
     memset(&material, 0, sizeof(material));
     material.dwSize = sizeof(material);
@@ -822,10 +825,7 @@ static void test_surface_interface_mismatch(void)
 
 cleanup:
     if (viewport)
-    {
-        IDirect3DDevice2_DeleteViewport(device, viewport);
-        IDirect3DViewport2_Release(viewport);
-    }
+        destroy_viewport(device, viewport);
     if (background) IDirect3DMaterial2_Release(background);
     if (surface3) IDirectDrawSurface3_Release(surface3);
     if (surface) IDirectDrawSurface_Release(surface);
@@ -883,7 +883,6 @@ static void test_depth_blit(void)
     IDirect3DDevice2 *device;
     IDirectDrawSurface *ds1, *ds2, *ds3, *rt;
     IDirect3DViewport2 *viewport;
-    D3DVIEWPORT2 vp_data;
     RECT src_rect, dst_rect;
     unsigned int i, j;
     D3DCOLOR color;
@@ -915,8 +914,6 @@ static void test_depth_blit(void)
 
     hr = IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d);
     ok(SUCCEEDED(hr), "Failed to get Direct3D2 interface, hr %#x.\n", hr);
-    hr = IDirect3D2_CreateViewport(d3d, &viewport, NULL);
-    ok(SUCCEEDED(hr), "Failed to create a viewport, hr %#x.\n", hr);
     hr = IDirect3D2_CreateMaterial(d3d, &background, NULL);
     ok(SUCCEEDED(hr), "Failed to create a material, hr %#x.\n", hr);
 
@@ -937,19 +934,7 @@ static void test_depth_blit(void)
     hr = IDirectDraw2_CreateSurface(ddraw, &ddsd_new, &ds3, NULL);
     ok(SUCCEEDED(hr), "Failed to create a surface, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice2_AddViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to add viewport to device, hr %#x.\n", hr);
-    memset(&vp_data, 0, sizeof(vp_data));
-    vp_data.dwSize = sizeof(vp_data);
-    vp_data.dwWidth = ddsd_existing.dwWidth;
-    vp_data.dwHeight = ddsd_existing.dwHeight;
-    vp_data.dvMaxZ = 1.0;
-    vp_data.dvClipX = -1.0f;
-    vp_data.dvClipWidth = 2.0f;
-    vp_data.dvClipY = 1.0f;
-    vp_data.dvClipHeight = 2.0f;
-    hr = IDirect3DViewport2_SetViewport2(viewport, &vp_data);
-    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+    viewport = create_viewport(device, 0, 0, ddsd_existing.dwWidth, ddsd_existing.dwHeight);
     hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to activate the viewport, hr %#x.\n", hr);
 
@@ -972,7 +957,7 @@ static void test_depth_blit(void)
     ok(SUCCEEDED(hr), "Failed to set the z function, hr %#x.\n", hr);
 
     U1(d3drect).x1 = U2(d3drect).y1 = 0;
-    U3(d3drect).x2 = vp_data.dwWidth; U4(d3drect).y2 = vp_data.dwHeight;
+    U3(d3drect).x2 = ddsd_existing.dwWidth; U4(d3drect).y2 = ddsd_existing.dwHeight;
     hr = IDirect3DViewport2_Clear(viewport, 1, &d3drect, D3DCLEAR_ZBUFFER);
     ok(SUCCEEDED(hr), "Failed to clear the z buffer, hr %#x.\n", hr);
 
@@ -1069,10 +1054,8 @@ static void test_depth_blit(void)
     }
     IDirectDrawSurface_Release(rt);
 
-    hr = IDirect3DDevice2_DeleteViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to delete viewport from device, hr %#x.\n", hr);
+    destroy_viewport(device, viewport);
     IDirect3DMaterial2_Release(background);
-    IDirect3DViewport2_Release(viewport);
     IDirect3D2_Release(d3d);
     IDirect3DDevice2_Release(device);
     IDirectDraw2_Release(ddraw);
@@ -1283,7 +1266,6 @@ static void test_zenable(void)
     IDirectDrawSurface *rt;
     D3DMATERIAL material;
     IDirectDraw2 *ddraw;
-    D3DVIEWPORT2 vp;
     IDirect3D2 *d3d;
     D3DCOLOR color;
     HWND window;
@@ -1311,25 +1293,8 @@ static void test_zenable(void)
     ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
     hr = IDirect3D2_CreateMaterial(d3d, &background, NULL);
     ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
-    hr = IDirect3D2_CreateViewport(d3d, &viewport, NULL);
-    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice2_AddViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to add viewport, hr %#x.\n", hr);
-    memset(&vp, 0, sizeof(vp));
-    vp.dwSize = sizeof(vp);
-    vp.dwX = 0;
-    vp.dwY = 0;
-    vp.dwWidth = 640;
-    vp.dwHeight = 480;
-    vp.dvClipX = -1.0f;
-    vp.dvClipY =  1.0f;
-    vp.dvClipWidth = 2.0f;
-    vp.dvClipHeight = 2.0f;
-    vp.dvMinZ = 0.0f;
-    vp.dvMaxZ = 1.0f;
-    hr = IDirect3DViewport2_SetViewport2(viewport, &vp);
-    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+    viewport = create_viewport(device, 0, 0, 640, 480);
     hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
 
@@ -1373,10 +1338,8 @@ static void test_zenable(void)
     }
     IDirectDrawSurface_Release(rt);
 
+    destroy_viewport(device, viewport);
     IDirect3DMaterial2_Release(background);
-    hr = IDirect3DDevice2_DeleteViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to delete viewport, hr %#x.\n", hr);
-    IDirect3DViewport2_Release(viewport);
     IDirect3D2_Release(d3d);
     IDirect3DDevice2_Release(device);
     IDirectDraw2_Release(ddraw);
@@ -1428,7 +1391,6 @@ static void test_ck_rgba(void)
     IDirectDrawSurface *rt;
     D3DMATERIAL material;
     IDirectDraw2 *ddraw;
-    D3DVIEWPORT2 vp;
     IDirect3D2 *d3d;
     D3DCOLOR color;
     HWND window;
@@ -1454,24 +1416,7 @@ static void test_ck_rgba(void)
     hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
     ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
 
-    hr = IDirect3D2_CreateViewport(d3d, &viewport, NULL);
-    ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
-    hr = IDirect3DDevice2_AddViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to add viewport, hr %#x.\n", hr);
-    memset(&vp, 0, sizeof(vp));
-    vp.dwSize = sizeof(vp);
-    vp.dwX = 0;
-    vp.dwY = 0;
-    vp.dwWidth = 640;
-    vp.dwHeight = 480;
-    vp.dvClipX = -1.0f;
-    vp.dvClipY =  1.0f;
-    vp.dvClipWidth = 2.0f;
-    vp.dvClipHeight = 2.0f;
-    vp.dvMinZ = 0.0f;
-    vp.dvMaxZ = 1.0f;
-    hr = IDirect3DViewport2_SetViewport2(viewport, &vp);
-    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+    viewport = create_viewport(device, 0, 0, 640, 480);
     hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
 
@@ -1581,10 +1526,8 @@ static void test_ck_rgba(void)
     hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, 0);
     ok(SUCCEEDED(hr), "Failed to unset texture, hr %#x.\n", hr);
     IDirectDrawSurface_Release(surface);
+    destroy_viewport(device, viewport);
     IDirect3DMaterial2_Release(background);
-    hr = IDirect3DDevice2_DeleteViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to delete viewport, hr %#x.\n", hr);
-    IDirect3DViewport2_Release(viewport);
     IDirect3DDevice2_Release(device);
     IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
