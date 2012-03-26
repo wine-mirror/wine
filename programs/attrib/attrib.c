@@ -128,11 +128,13 @@ int wmain(int argc, WCHAR *argv[])
     HANDLE hff;
     WIN32_FIND_DATAW fd;
     WCHAR flags[] = {' ',' ',' ',' ',' ',' ',' ',' ','\0'};
-    WCHAR name[128];
+    WCHAR name[MAX_PATH];
+    WCHAR curdir[MAX_PATH];
     DWORD attrib_set = 0;
     DWORD attrib_clear = 0;
     const WCHAR help_option[] = {'/','?','\0'};
-    const WCHAR slashStarW[]  = {'\\','*','\0'};
+    const WCHAR slash[]  = {'\\','\0'};
+    const WCHAR start[]  = {'*','\0'};
     int i = 1;
 
     if ((argc >= 2) && !strcmpW(argv[1], help_option)) {
@@ -141,8 +143,10 @@ int wmain(int argc, WCHAR *argv[])
     }
 
     /* By default all files from current directory are taken into account */
-    GetCurrentDirectoryW(sizeof(name)/sizeof(WCHAR), name);
-    strcatW (name, slashStarW);
+    GetCurrentDirectoryW(sizeof(curdir)/sizeof(WCHAR), curdir);
+    strcatW(curdir, slash);
+    strcpyW(name, curdir);
+    strcatW(name, start);
 
     while (i < argc) {
         WCHAR *param = argv[i++];
@@ -212,7 +216,9 @@ int wmain(int argc, WCHAR *argv[])
                 if (fd.dwFileAttributes & FILE_ATTRIBUTE_COMPRESSED) {
                     flags[5] = 'C';
                 }
-                ATTRIB_wprintf(fmt, flags, fd.cFileName);
+                strcpyW(name, curdir);
+                strcatW(name, fd.cFileName);
+                ATTRIB_wprintf(fmt, flags, name);
                 for (count=0; count < 8; count++) flags[count] = ' ';
             }
         } while (FindNextFileW(hff, &fd) != 0);
