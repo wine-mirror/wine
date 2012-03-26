@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
 static LONG objects_ref = 0;
 
-static const WCHAR wAudioCaptFilter[] =
+static const WCHAR wAudioCaptureFilter[] =
 {'A','u','d','i','o',' ','C','a','p','t','u','r','e',' ','F','i','l','t','e','r',0};
 static const WCHAR wAVICompressor[] =
 {'A','V','I',' ','C','o','m','p','r','e','s','s','o','r',0};
@@ -76,48 +76,47 @@ static const WCHAR wAudioInMixerProp[] =
  'p','e','r','t','y',' ','P','a','g','e',0};
  
 FactoryTemplate const g_Templates[] = {
-/*
     {
-        wAudioCaptureFilter, 
-        &CLSID_AudioCaptureFilter,
-        QCAP_createAudioCaptureFilter,
+        wAudioCaptureFilter,
+        &CLSID_AudioRecord,
+        NULL, /* FIXME: Implement QCAP_createAudioCaptureFilter */
         NULL
     },{
-        wAVICompressor, 
-        &CLSID_AVICompressor, 
-        QCAP_createAVICompressor,
+        wAVICompressor,
+        &CLSID_AVICo,
+        NULL, /* FIXME: Implement QCAP_createAVICompressor */
         NULL
-    },*/{
+    },{
         wVFWCaptFilter,
         &CLSID_VfwCapture,
         QCAP_createVFWCaptureFilter,
         NULL
-    },/*{
+    },{
         wVFWCaptFilterProp,
-        &CLSID_VFWCaptureFilterPropertyPage,
-        QCAP_createVFWCaptureFilterPropertyPage,
+        &CLSID_CaptureProperties,
+        NULL, /* FIXME: Implement QCAP_createVFWCaptureFilterPropertyPage */
         NULL
     },{
         wAVIMux,
-        &CLSID_AVImux,
-        QCAP_createAVImux,
+        &CLSID_AviDest,
+        NULL, /* FIXME: Implement QCAP_createAVImux */
         NULL
     },{
         wAVIMuxPropPage,
-        &CLSID_AVImuxPropertyPage,
-        QCAP_createAVImuxPropertyPage,
+        &CLSID_AviMuxProptyPage,
+        NULL, /* FIXME: Implement QCAP_createAVImuxPropertyPage */
         NULL
     },{
         wAVIMuxPropPage1,
-        &CLSID_AVImuxPropertyPage1,
-        QCAP_createAVImuxPropertyPage1,
+        &CLSID_AviMuxProptyPage1,
+        NULL, /* FIXME: Implement QCAP_createAVImuxPropertyPage1 */
         NULL
     },{
         wFileWriter,
         &CLSID_FileWriter,
-        QCAP_createFileWriter,
+        NULL, /* FIXME: Implement QCAP_createFileWriter */
         NULL
-    },*/{
+    },{
         wCaptGraphBuilder,
         &CLSID_CaptureGraphBuilder,
         QCAP_createCaptureGraphBuilder2,
@@ -127,22 +126,22 @@ FactoryTemplate const g_Templates[] = {
         &CLSID_CaptureGraphBuilder2,
         QCAP_createCaptureGraphBuilder2,
         NULL
-    }/*,{
+    },{
         wInfPinTeeFilter, 
-        &CLSID_InfinitePinTeeFilter, 
-        QCAP_createInfinitePinTeeFilter,
+        &CLSID_InfTee,
+        NULL, /* FIXME: Implement QCAP_createInfinitePinTeeFilter */
         NULL
     },{
         wSmartTeeFilter,
-        &CLSID_SmartTeeFilter,
-        QCAP_createSmartTeeFilter,
+        &CLSID_SmartTee,
+        NULL, /* FIXME: Implement QCAP_createSmartTeeFilter */
         NULL
     },{
         wAudioInMixerProp,
-        &CLSID_AudioInputMixerPropertyPage,
-        QCAP_createAudioInputMixerPropertyPage,
+        &CLSID_AudioInputMixerProperties,
+        NULL, /* FIXME: Implement QCAP_createAudioInputMixerPropertyPage */
         NULL
-    }*/
+    }
 };
 
 int g_cTemplates = sizeof(g_Templates) / sizeof(g_Templates[0]);
