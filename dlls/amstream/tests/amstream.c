@@ -23,6 +23,7 @@
 #include "wine/test.h"
 #include "initguid.h"
 #include "amstream.h"
+#include "vfwmsgs.h"
 
 static const WCHAR filenameW[] = {'t','e','s','t','.','a','v','i',0};
 
@@ -163,11 +164,100 @@ error:
     release_ammultimediastream();
 }
 
+static void test_media_streams(void)
+{
+    HRESULT hr;
+    IMediaStream *video_stream = NULL;
+    IMediaStream *audio_stream = NULL;
+    IMediaStream *dummy_stream;
+    IDirectDrawMediaStream *ddraw_stream = NULL;
+    IDirectDrawStreamSample *ddraw_sample = NULL;
+
+    if (!create_ammultimediastream())
+        return;
+    if (!create_directdraw())
+    {
+        release_ammultimediastream();
+        return;
+    }
+
+    hr = IAMMultiMediaStream_Initialize(pams, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "IAMMultiMediaStream_Initialize returned: %x\n", hr);
+
+    /* Verify there is no video media stream */
+    hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &video_stream);
+    ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
+
+    /* Verify there is no default renderer for video stream */
+    hr = IAMMultiMediaStream_AddMediaStream(pams, (IUnknown*)pdd7, &MSPID_PrimaryVideo, AMMSF_ADDDEFAULTRENDERER, NULL);
+    todo_wine ok(hr == MS_E_PURPOSEID, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
+    hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &video_stream);
+    todo_wine ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
+    hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &MSPID_PrimaryVideo, AMMSF_ADDDEFAULTRENDERER, NULL);
+    todo_wine ok(hr == MS_E_PURPOSEID, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
+    hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &video_stream);
+    todo_wine ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
+
+    /* Verify normal case for video stream */
+    hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &MSPID_PrimaryVideo, 0, NULL);
+    ok(hr == S_OK, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
+    hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &video_stream);
+    ok(hr == S_OK, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
+
+    /* Verify there is no audio media stream */
+    hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryAudio, &audio_stream);
+    ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
+
+    /* Verify no stream is created when using the default renderer for audio stream */
+    hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &MSPID_PrimaryAudio, AMMSF_ADDDEFAULTRENDERER, NULL);
+    ok((hr == S_OK) || (hr == VFW_E_NO_AUDIO_HARDWARE), "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
+    hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryAudio, &audio_stream);
+    todo_wine ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
+
+    /* Verify a stream is created when no default renderer is used */
+    hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &MSPID_PrimaryAudio, 0, NULL);
+    ok(hr == S_OK, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
+    hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryAudio, &audio_stream);
+    ok(hr == S_OK, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
+
+    /* Verify behaviour with invalid purpose id */
+    hr = IAMMultiMediaStream_GetMediaStream(pams, &IID_IUnknown, &dummy_stream);
+    ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
+    hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &IID_IUnknown, 0, NULL);
+    todo_wine ok(hr == MS_E_PURPOSEID, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
+
+    if (video_stream)
+    {
+        hr = IMediaStream_QueryInterface(video_stream, &IID_IDirectDrawMediaStream, (LPVOID*)&ddraw_stream);
+        ok(hr == S_OK, "IMediaStream_QueryInterface returned: %x\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &ddraw_sample);
+            todo_wine ok(hr==S_OK, "IDirectDrawMediaStream_CreateSample returned: %x\n", hr);
+        }
+    }
+
+    if (ddraw_sample)
+        IDirectDrawMediaSample_Release(ddraw_sample);
+    if (ddraw_stream)
+        IDirectDrawMediaStream_Release(ddraw_stream);
+    if (video_stream)
+        IMediaStream_Release(video_stream);
+    if (audio_stream)
+        IMediaStream_Release(audio_stream);
+
+    release_directdraw();
+    release_ammultimediastream();
+}
+
 START_TEST(amstream)
 {
     HANDLE file;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    test_media_streams();
 
     file = CreateFileW(filenameW, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     if (file != INVALID_HANDLE_VALUE)
