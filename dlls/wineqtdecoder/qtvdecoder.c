@@ -147,6 +147,16 @@ typedef struct QTVDecoderImpl
 
 } QTVDecoderImpl;
 
+static inline QTVDecoderImpl *impl_from_IBaseFilter( IBaseFilter *iface )
+{
+    return CONTAINING_RECORD(iface, QTVDecoderImpl, tf.filter.IBaseFilter_iface);
+}
+
+static inline QTVDecoderImpl *impl_from_TransformFilter( TransformFilter *iface )
+{
+    return CONTAINING_RECORD(iface, QTVDecoderImpl, tf.filter);
+}
+
 static const IBaseFilterVtbl QTVDecoder_Vtbl;
 
 static void trackingCallback(
@@ -246,7 +256,7 @@ error:
 
 static HRESULT WINAPI QTVDecoder_StartStreaming(TransformFilter* pTransformFilter)
 {
-    QTVDecoderImpl* This = (QTVDecoderImpl*)pTransformFilter;
+    QTVDecoderImpl* This = impl_from_TransformFilter(pTransformFilter);
     OSErr err = noErr;
     ICMDecompressionSessionOptionsRef sessionOptions = NULL;
     ICMDecompressionTrackingCallbackRecord trackingCallbackRecord;
@@ -269,7 +279,7 @@ static HRESULT WINAPI QTVDecoder_StartStreaming(TransformFilter* pTransformFilte
 
 static HRESULT WINAPI QTVDecoder_Receive(TransformFilter *tf, IMediaSample *pSample)
 {
-    QTVDecoderImpl* This = (QTVDecoderImpl *)tf;
+    QTVDecoderImpl* This = impl_from_TransformFilter(tf);
     HRESULT hr;
     DWORD cbSrcStream;
     LPBYTE pbSrcStream;
@@ -322,7 +332,7 @@ error:
 
 static HRESULT WINAPI QTVDecoder_StopStreaming(TransformFilter* pTransformFilter)
 {
-    QTVDecoderImpl* This = (QTVDecoderImpl*)pTransformFilter;
+    QTVDecoderImpl* This = impl_from_TransformFilter(pTransformFilter);
 
     TRACE("(%p)->()\n", This);
 
@@ -335,7 +345,7 @@ static HRESULT WINAPI QTVDecoder_StopStreaming(TransformFilter* pTransformFilter
 
 static HRESULT WINAPI QTVDecoder_SetMediaType(TransformFilter *tf, PIN_DIRECTION dir, const AM_MEDIA_TYPE * pmt)
 {
-    QTVDecoderImpl* This = (QTVDecoderImpl*)tf;
+    QTVDecoderImpl* This = impl_from_TransformFilter(tf);
     HRESULT hr = VFW_E_TYPE_NOT_ACCEPTED;
     OSErr err = noErr;
     AM_MEDIA_TYPE *outpmt = &This->tf.pmt;
@@ -464,7 +474,7 @@ failed:
 
 static HRESULT WINAPI QTVDecoder_BreakConnect(TransformFilter *tf, PIN_DIRECTION dir)
 {
-    QTVDecoderImpl *This = (QTVDecoderImpl *)tf;
+    QTVDecoderImpl *This = impl_from_TransformFilter(tf);
 
     TRACE("(%p)->()\n", This);
 
@@ -481,7 +491,7 @@ static HRESULT WINAPI QTVDecoder_BreakConnect(TransformFilter *tf, PIN_DIRECTION
 
 static HRESULT WINAPI QTVDecoder_DecideBufferSize(TransformFilter *tf, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
-    QTVDecoderImpl *This = (QTVDecoderImpl*)tf;
+    QTVDecoderImpl *This = impl_from_TransformFilter(tf);
     ALLOCATOR_PROPERTIES actual;
 
     TRACE("()\n");
@@ -540,7 +550,7 @@ IUnknown * CALLBACK QTVDecoder_create(IUnknown * pUnkOuter, HRESULT* phr)
         ISeekingPassThru *passthru;
         hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)This, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&This->seekthru_unk);
         IUnknown_QueryInterface(This->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-        ISeekingPassThru_Init(passthru, FALSE, (IPin*)This->tf.ppPins[0]);
+        ISeekingPassThru_Init(passthru, FALSE, This->tf.ppPins[0]);
         ISeekingPassThru_Release(passthru);
     }
 
@@ -551,7 +561,7 @@ IUnknown * CALLBACK QTVDecoder_create(IUnknown * pUnkOuter, HRESULT* phr)
 HRESULT WINAPI QTVDecoder_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
     HRESULT hr;
-    QTVDecoderImpl *This = (QTVDecoderImpl *)iface;
+    QTVDecoderImpl *This = impl_from_IBaseFilter(iface);
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
 
     if (IsEqualIID(riid, &IID_IMediaSeeking))
