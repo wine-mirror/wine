@@ -219,7 +219,7 @@ int wmain(int argc, WCHAR *argv[])
                 strcpyW(name, curdir);
                 strcatW(name, fd.cFileName);
                 ATTRIB_wprintf(fmt, flags, name);
-                for (count=0; count < 8; count++) flags[count] = ' ';
+                for (count = 0; count < (sizeof(flags)/sizeof(WCHAR) - 1); count++) flags[count] = ' ';
             }
         } while (FindNextFileW(hff, &fd) != 0);
     }
