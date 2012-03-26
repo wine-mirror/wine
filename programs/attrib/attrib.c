@@ -197,7 +197,7 @@ int wmain(int argc, WCHAR *argv[])
                     fd.dwFileAttributes |= FILE_ATTRIBUTE_NORMAL;
                 SetFileAttributesW(name, fd.dwFileAttributes);
             } else {
-                static const WCHAR fmt[] = {'%','1',' ',' ',' ','%','2','\n','\0'};
+                static const WCHAR fmt[] = {'%','1',' ',' ',' ',' ',' ','%','2','\n','\0'};
                 if (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) {
                     flags[0] = 'H';
                 }
