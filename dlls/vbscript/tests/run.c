@@ -1288,6 +1288,12 @@ static void run_tests(void)
     CHECK_CALLED(global_propargput_d);
     CHECK_CALLED(global_propargput_i);
 
+    SET_EXPECT(global_propargput_d);
+    SET_EXPECT(global_propargput_i);
+    parse_script_a("test.propargput(counter(), counter()) = counter()");
+    CHECK_CALLED(global_propargput_d);
+    CHECK_CALLED(global_propargput_i);
+
     parse_script_a("x = 1\n Call ok(x = 1, \"x = \" & x)");
 
     parse_script_a("x = _    \n3");
