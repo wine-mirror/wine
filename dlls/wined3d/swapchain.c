@@ -449,13 +449,14 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
 static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT *src_rect_in,
         const RECT *dst_rect_in, const RGNDATA *dirty_region, DWORD flags)
 {
+    struct wined3d_surface *back_buffer = swapchain->back_buffers[0];
     const struct wined3d_fb_state *fb = &swapchain->device->fb;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     RECT src_rect, dst_rect;
     BOOL render_to_fbo;
 
-    context = context_acquire(swapchain->device, swapchain->back_buffers[0]);
+    context = context_acquire(swapchain->device, back_buffer);
     if (!context->valid)
     {
         context_release(context);
@@ -504,8 +505,8 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
          */
         if (swapchain->desc.windowed)
             MapWindowPoints(NULL, swapchain->win_handle, (POINT *)&destRect, 2);
-        wined3d_surface_blt(swapchain->back_buffers[0], &destRect,
-                &cursor, NULL, WINEDDBLT_KEYSRC, NULL, WINED3D_TEXF_POINT);
+        wined3d_surface_blt(back_buffer, &destRect, &cursor, NULL, WINEDDBLT_KEYSRC,
+                NULL, WINED3D_TEXF_POINT);
     }
 
     if (swapchain->device->logo_surface)
@@ -514,8 +515,8 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
         RECT rect = {0, 0, src_surface->resource.width, src_surface->resource.height};
 
         /* Blit the logo into the upper left corner of the drawable. */
-        wined3d_surface_blt(swapchain->back_buffers[0], &rect, src_surface, &rect,
-                 WINEDDBLT_KEYSRC, NULL, WINED3D_TEXF_POINT);
+        wined3d_surface_blt(back_buffer, &rect, src_surface, &rect, WINEDDBLT_KEYSRC,
+                NULL, WINED3D_TEXF_POINT);
     }
 
     TRACE("Presenting HDC %p.\n", context->hdc);
@@ -559,10 +560,14 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
      */
     if (!swapchain->render_to_fbo && render_to_fbo && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        surface_load_location(swapchain->back_buffers[0], SFLAG_INTEXTURE, NULL);
-        surface_modify_location(swapchain->back_buffers[0], SFLAG_INDRAWABLE, FALSE);
+        surface_load_location(back_buffer, SFLAG_INTEXTURE, NULL);
+        surface_modify_location(back_buffer, SFLAG_INDRAWABLE, FALSE);
         swapchain->render_to_fbo = TRUE;
         swapchain_update_draw_bindings(swapchain);
+    }
+    else
+    {
+        surface_load_location(back_buffer, back_buffer->draw_binding, NULL);
     }
 
     if (swapchain->render_to_fbo)
@@ -626,17 +631,17 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
     }
 
     if (!swapchain->render_to_fbo && ((swapchain->front_buffer->flags & SFLAG_INSYSMEM)
-            || (swapchain->back_buffers[0]->flags & SFLAG_INSYSMEM)))
+            || (back_buffer->flags & SFLAG_INSYSMEM)))
     {
         /* Both memory copies of the surfaces are ok, flip them around too instead of dirtifying
          * Doesn't work with render_to_fbo because we're not flipping
          */
         struct wined3d_surface *front = swapchain->front_buffer;
-        struct wined3d_surface *back = swapchain->back_buffers[0];
 
-        if(front->resource.size == back->resource.size) {
+        if (front->resource.size == back_buffer->resource.size)
+        {
             DWORD fbflags;
-            flip_surface(front, back);
+            flip_surface(front, back_buffer);
 
             /* Tell the front buffer surface that is has been modified. However,
              * the other locations were preserved during that, so keep the flags.
@@ -648,7 +653,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
         else
         {
             surface_modify_location(front, SFLAG_INDRAWABLE, TRUE);
-            surface_modify_location(back, SFLAG_INDRAWABLE, TRUE);
+            surface_modify_location(back_buffer, SFLAG_INDRAWABLE, TRUE);
         }
     }
     else
@@ -660,7 +665,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
          * the texture / sysmem copy needs to be reloaded from the drawable
          */
         if (swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_FLIP)
-            surface_modify_location(swapchain->back_buffers[0], swapchain->back_buffers[0]->draw_binding, TRUE);
+            surface_modify_location(back_buffer, back_buffer->draw_binding, TRUE);
     }
 
     if (fb->depth_stencil)
