@@ -709,7 +709,7 @@ Read-only file forcibly deleted
 @todo_wine@A    R       @pwd@\foobar\baz\level2@or_broken@A    R     @pwd@\foobar\baz\level2@or_broken@A    R  I    @pwd@\foobar\baz\level2
 @todo_wine@A            @pwd@\foobar\bar@or_broken@A          @pwd@\foobar\bar@or_broken@A       I    @pwd@\foobar\bar
 --- folders processing
-@todo_wine@             @pwd@\foobar@or_broken@           @pwd@\foobar@or_broken@        I    @pwd@\foobar
+             @pwd@\foobar@or_broken@           @pwd@\foobar@or_broken@        I    @pwd@\foobar
 @todo_wine@     R       @pwd@\foobar\baz@or_broken@     R     @pwd@\foobar\baz@or_broken@           @pwd@\foobar\baz@or_broken@     R  I    @pwd@\foobar\baz
 @todo_wine@A            @pwd@\foobar\baz\toto@or_broken@A          @pwd@\foobar\baz\toto@or_broken@A       I    @pwd@\foobar\baz\toto
 toto
