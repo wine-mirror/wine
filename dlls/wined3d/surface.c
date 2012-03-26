@@ -953,10 +953,8 @@ static void surface_unmap(struct wined3d_surface *surface)
         goto done;
     }
 
-    if ((surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
+    if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
             && surface->container.u.swapchain->front_buffer == surface)
-            || (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER
-            && device->fb.render_targets && surface == device->fb.render_targets[0]))
     {
         if (!surface->dirtyRect.left && !surface->dirtyRect.top
                 && surface->dirtyRect.right == surface->resource.width
