@@ -229,6 +229,7 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name, BOOL is_const
     if(own_val) {
         new_var->v = *val;
     }else {
+        V_VT(&new_var->v) = VT_EMPTY;
         hres = VariantCopy(&new_var->v, val);
         if(FAILED(hres))
             return hres;
