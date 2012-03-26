@@ -119,7 +119,7 @@ HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**) DECLSPEC_HIDDEN;
 HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*) DECLSPEC_HIDDEN;
 HRESULT vbdisp_get_id(vbdisp_t*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*) DECLSPEC_HIDDEN;
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
-HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*) DECLSPEC_HIDDEN;
 void collect_objects(script_ctx_t*) DECLSPEC_HIDDEN;
 
 static inline unsigned arg_cnt(const DISPPARAMS *dp)

@@ -576,23 +576,21 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, DISPPARAMS *dp,
     return hres;
 }
 
-HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val)
+HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, DISPPARAMS *dp)
 {
-    DISPID propput_dispid = DISPID_PROPERTYPUT;
-    DISPPARAMS dp  = {val, &propput_dispid, 1, 1};
     IDispatchEx *dispex;
     EXCEPINFO ei = {0};
     HRESULT hres;
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(SUCCEEDED(hres)) {
-        hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ei, NULL /* FIXME! */);
+        hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, DISPATCH_PROPERTYPUT, dp, NULL, &ei, NULL /* FIXME! */);
         IDispatchEx_Release(dispex);
     }else {
         ULONG err = 0;
 
         TRACE("using IDispatch\n");
-        hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ei, &err);
+        hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, DISPATCH_PROPERTYPUT, dp, NULL, &ei, &err);
     }
 
     return hres;

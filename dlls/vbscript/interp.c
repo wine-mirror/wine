@@ -315,6 +315,35 @@ static HRESULT stack_pop_val(exec_ctx_t *ctx, variant_val_t *v)
     return S_OK;
 }
 
+static HRESULT stack_assume_val(exec_ctx_t *ctx, unsigned n)
+{
+    VARIANT *v = stack_top(ctx, n);
+    HRESULT hres;
+
+    if(V_VT(v) == (VT_BYREF|VT_VARIANT)) {
+        VARIANT *ref = V_VARIANTREF(v);
+
+        V_VT(v) = VT_EMPTY;
+        hres = VariantCopy(v, ref);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(V_VT(v) == VT_DISPATCH) {
+        DISPPARAMS dp = {0};
+        IDispatch *disp;
+
+        disp = V_DISPATCH(v);
+        V_VT(v) = VT_EMPTY;
+        hres = disp_call(ctx->script, disp, DISPID_VALUE, &dp, v);
+        IDispatch_Release(disp);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
+}
+
 static inline void release_val(variant_val_t *v)
 {
     if(v->owned)
@@ -380,11 +409,13 @@ static inline void instr_jmp(exec_ctx_t *ctx, unsigned addr)
     ctx->instr = ctx->code->instrs + addr;
 }
 
-static void vbstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, DISPPARAMS *dp)
+static void vbstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, BOOL is_propput, DISPPARAMS *dp)
 {
-    dp->cArgs = arg_cnt;
-    dp->rgdispidNamedArgs = NULL;
-    dp->cNamedArgs = 0;
+    static DISPID propput_dispid = DISPID_PROPERTYPUT;
+
+    dp->cNamedArgs = is_propput ? 1 : 0;
+    dp->cArgs = arg_cnt + dp->cNamedArgs;
+    dp->rgdispidNamedArgs = is_propput ? &propput_dispid : NULL;
 
     if(arg_cnt) {
         VARIANT tmp;
@@ -398,9 +429,9 @@ static void vbstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, DISPPARAMS *dp)
             ctx->stack[ctx->top-arg_cnt+i-1] = tmp;
         }
 
-        dp->rgvarg = ctx->stack + ctx->top-arg_cnt;
+        dp->rgvarg = ctx->stack + ctx->top-dp->cArgs;
     }else {
-        dp->rgvarg = NULL;
+        dp->rgvarg = is_propput ? ctx->stack+ctx->top-1 : NULL;
     }
 }
 
@@ -416,7 +447,7 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
     if(FAILED(hres))
         return hres;
 
-    vbstack_to_dp(ctx, arg_cnt, &dp);
+    vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
 
     switch(ref.type) {
     case REF_VAR:
@@ -503,7 +534,7 @@ static HRESULT do_mcall(exec_ctx_t *ctx, VARIANT *res)
         return E_FAIL;
     }
 
-    vbstack_to_dp(ctx, arg_cnt, &dp);
+    vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
 
     hres = disp_get_id(obj, identifier, VBDISP_CALLGET, FALSE, &id);
     if(SUCCEEDED(hres))
@@ -537,7 +568,7 @@ static HRESULT interp_mcallv(exec_ctx_t *ctx)
     return do_mcall(ctx, NULL);
 }
 
-static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_val)
+static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, DISPPARAMS *dp)
 {
     ref_t ref;
     HRESULT hres;
@@ -550,22 +581,19 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_v
     case REF_VAR: {
         VARIANT *v = ref.u.v;
 
+        if(arg_cnt(dp)) {
+            FIXME("arg_cnt %d not supported\n", arg_cnt(dp));
+            return E_NOTIMPL;
+        }
+
         if(V_VT(v) == (VT_VARIANT|VT_BYREF))
             v = V_VARIANTREF(v);
 
-        if(own_val) {
-            VariantClear(v);
-            *v = *val;
-            hres = S_OK;
-        }else {
-            hres = VariantCopy(v, val);
-        }
+        hres = VariantCopy(v, dp->rgvarg);
         break;
     }
     case REF_DISP:
-        hres = disp_propput(ctx->script, ref.u.d.disp, ref.u.d.id, val);
-        if(own_val)
-            VariantClear(val);
+        hres = disp_propput(ctx->script, ref.u.d.disp, ref.u.d.id, dp);
         break;
     case REF_FUNC:
         FIXME("functions not implemented\n");
@@ -581,8 +609,13 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_v
             FIXME("throw exception\n");
             hres = E_FAIL;
         }else {
+            if(arg_cnt(dp)) {
+                FIXME("arg_cnt %d not supported\n", arg_cnt(dp));
+                return E_NOTIMPL;
+            }
+
             TRACE("creating variable %s\n", debugstr_w(name));
-            hres = add_dynamic_var(ctx, name, FALSE, val, own_val);
+            hres = add_dynamic_var(ctx, name, FALSE, dp->rgvarg, FALSE);
         }
     }
 
@@ -593,29 +626,29 @@ static HRESULT interp_assign_ident(exec_ctx_t *ctx)
 {
     const BSTR arg = ctx->instr->arg1.bstr;
     const unsigned arg_cnt = ctx->instr->arg2.uint;
-    variant_val_t v;
+    DISPPARAMS dp;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(arg));
 
-    if(arg_cnt) {
-        FIXME("arguments not supported\n");
-        return E_NOTIMPL;
-    }
-
-    hres = stack_pop_val(ctx, &v);
+    hres = stack_assume_val(ctx, arg_cnt);
     if(FAILED(hres))
         return hres;
 
-    return assign_ident(ctx, arg, v.v, v.owned);
+    vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
+    hres = assign_ident(ctx, arg, &dp);
+    if(FAILED(hres))
+        return hres;
+
+    stack_popn(ctx, arg_cnt+1);
+    return S_OK;
 }
 
 static HRESULT interp_set_ident(exec_ctx_t *ctx)
 {
     const BSTR arg = ctx->instr->arg1.bstr;
     const unsigned arg_cnt = ctx->instr->arg2.uint;
-    IDispatch *disp;
-    VARIANT v;
+    DISPPARAMS dp;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(arg));
@@ -625,21 +658,25 @@ static HRESULT interp_set_ident(exec_ctx_t *ctx)
         return E_NOTIMPL;
     }
 
-    hres = stack_pop_disp(ctx, &disp);
+    hres = stack_assume_disp(ctx, 0, NULL);
     if(FAILED(hres))
         return hres;
 
-    V_VT(&v) = VT_DISPATCH;
-    V_DISPATCH(&v) = disp;
-    return assign_ident(ctx, ctx->instr->arg1.bstr, &v, TRUE);
+    vbstack_to_dp(ctx, 0, TRUE, &dp);
+    hres = assign_ident(ctx, ctx->instr->arg1.bstr, &dp);
+    if(FAILED(hres))
+        return hres;
+
+    stack_popn(ctx, 1);
+    return S_OK;
 }
 
 static HRESULT interp_assign_member(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
     const unsigned arg_cnt = ctx->instr->arg2.uint;
-    variant_val_t val;
     IDispatch *obj;
+    DISPPARAMS dp;
     DISPID id;
     HRESULT hres;
 
@@ -659,18 +696,19 @@ static HRESULT interp_assign_member(exec_ctx_t *ctx)
         return E_FAIL;
     }
 
-    hres = stack_pop_val(ctx, &val);
+    hres = stack_assume_val(ctx, arg_cnt);
     if(FAILED(hres))
         return hres;
 
     hres = disp_get_id(obj, identifier, VBDISP_LET, FALSE, &id);
-    if(SUCCEEDED(hres))
-        hres = disp_propput(ctx->script, obj, id, val.v);
-    release_val(&val);
+    if(SUCCEEDED(hres)) {
+        vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
+        hres = disp_propput(ctx->script, obj, id, &dp);
+    }
     if(FAILED(hres))
         return hres;
 
-    stack_popn(ctx, 1);
+    stack_popn(ctx, 2);
     return S_OK;
 }
 
@@ -679,6 +717,7 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
     BSTR identifier = ctx->instr->arg1.bstr;
     const unsigned arg_cnt = ctx->instr->arg2.uint;
     IDispatch *obj;
+    DISPPARAMS dp;
     DISPID id;
     HRESULT hres;
 
@@ -703,8 +742,10 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
         return hres;
 
     hres = disp_get_id(obj, identifier, VBDISP_SET, FALSE, &id);
-    if(SUCCEEDED(hres))
-        hres = disp_propput(ctx->script, obj, id, stack_top(ctx, 0));
+    if(SUCCEEDED(hres)) {
+        vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
+        hres = disp_propput(ctx->script, obj, id, &dp);
+    }
     if(FAILED(hres))
         return hres;
 
