@@ -697,10 +697,6 @@ static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *
     vbsop_t op;
     HRESULT hres;
 
-    hres = compile_expression(ctx, stat->value_expr);
-    if(FAILED(hres))
-        return hres;
-
     if(stat->member_expr->obj_expr) {
         hres = compile_expression(ctx, stat->member_expr->obj_expr);
         if(FAILED(hres))
@@ -710,6 +706,10 @@ static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *
     }else {
         op = is_set ? OP_set_ident : OP_assign_ident;
     }
+
+    hres = compile_expression(ctx, stat->value_expr);
+    if(FAILED(hres))
+        return hres;
 
     hres = compile_args(ctx, stat->member_expr->args, &args_cnt);
     if(FAILED(hres))

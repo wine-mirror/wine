@@ -348,6 +348,33 @@ static HRESULT stack_pop_disp(exec_ctx_t *ctx, IDispatch **ret)
     return S_OK;
 }
 
+static HRESULT stack_assume_disp(exec_ctx_t *ctx, unsigned n, IDispatch **disp)
+{
+    VARIANT *v = stack_top(ctx, n), *ref;
+
+    if(V_VT(v) != VT_DISPATCH) {
+        if(V_VT(v) != (VT_VARIANT|VT_BYREF)) {
+            FIXME("not supported type: %s\n", debugstr_variant(v));
+            return E_FAIL;
+        }
+
+        ref = V_VARIANTREF(v);
+        if(V_VT(ref) != VT_DISPATCH) {
+            FIXME("not disp %s\n", debugstr_variant(ref));
+            return E_FAIL;
+        }
+
+        V_VT(v) = VT_DISPATCH;
+        V_DISPATCH(v) = V_DISPATCH(ref);
+        if(V_DISPATCH(v))
+            IDispatch_AddRef(V_DISPATCH(v));
+    }
+
+    if(disp)
+        *disp = V_DISPATCH(v);
+    return S_OK;
+}
+
 static inline void instr_jmp(exec_ctx_t *ctx, unsigned addr)
 {
     ctx->instr = ctx->code->instrs + addr;
@@ -623,7 +650,7 @@ static HRESULT interp_assign_member(exec_ctx_t *ctx)
         return E_NOTIMPL;
     }
 
-    hres = stack_pop_disp(ctx, &obj);
+    hres = stack_assume_disp(ctx, arg_cnt+1, &obj);
     if(FAILED(hres))
         return hres;
 
@@ -633,25 +660,25 @@ static HRESULT interp_assign_member(exec_ctx_t *ctx)
     }
 
     hres = stack_pop_val(ctx, &val);
-    if(FAILED(hres)) {
-        IDispatch_Release(obj);
+    if(FAILED(hres))
         return hres;
-    }
 
     hres = disp_get_id(obj, identifier, VBDISP_LET, FALSE, &id);
     if(SUCCEEDED(hres))
         hres = disp_propput(ctx->script, obj, id, val.v);
-
     release_val(&val);
-    IDispatch_Release(obj);
-    return hres;
+    if(FAILED(hres))
+        return hres;
+
+    stack_popn(ctx, 1);
+    return S_OK;
 }
 
 static HRESULT interp_set_member(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
     const unsigned arg_cnt = ctx->instr->arg2.uint;
-    IDispatch *obj, *val;
+    IDispatch *obj;
     DISPID id;
     HRESULT hres;
 
@@ -662,7 +689,7 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
         return E_NOTIMPL;
     }
 
-    hres = stack_pop_disp(ctx, &obj);
+    hres = stack_assume_disp(ctx, 1, &obj);
     if(FAILED(hres))
         return hres;
 
@@ -671,25 +698,18 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
         return E_FAIL;
     }
 
-    hres = stack_pop_disp(ctx, &val);
-    if(FAILED(hres)) {
-        IDispatch_Release(obj);
+    hres = stack_assume_disp(ctx, 0, NULL);
+    if(FAILED(hres))
         return hres;
-    }
 
     hres = disp_get_id(obj, identifier, VBDISP_SET, FALSE, &id);
-    if(SUCCEEDED(hres)) {
-        VARIANT v;
+    if(SUCCEEDED(hres))
+        hres = disp_propput(ctx->script, obj, id, stack_top(ctx, 0));
+    if(FAILED(hres))
+        return hres;
 
-        V_VT(&v) = VT_DISPATCH;
-        V_DISPATCH(&v) = val;
-        hres = disp_propput(ctx->script, obj, id, &v);
-    }
-
-    if(val)
-        IDispatch_Release(val);
-    IDispatch_Release(obj);
-    return hres;
+    stack_popn(ctx, 2);
+    return S_OK;
 }
 
 static HRESULT interp_const(exec_ctx_t *ctx)
