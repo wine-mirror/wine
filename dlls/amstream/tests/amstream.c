@@ -1,7 +1,7 @@
 /*
  * Unit tests for MultiMedia Stream functions
  *
- * Copyright (C) 2009 Christian Costa
+ * Copyright (C) 2009, 2012 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,8 +24,7 @@
 #include "initguid.h"
 #include "amstream.h"
 
-#define FILE_LEN 9
-static const char fileA[FILE_LEN] = "test.avi";
+static const WCHAR filenameW[] = {'t','e','s','t','.','a','v','i',0};
 
 static IAMMultiMediaStream* pams;
 static IDirectDraw7* pdd7;
@@ -88,21 +87,11 @@ static void release_directdraw(void)
 
 static void test_openfile(void)
 {
-    HANDLE h;
     HRESULT hr;
-    WCHAR fileW[FILE_LEN];
     IGraphBuilder* pgraph;
 
     if (!create_ammultimediastream())
         return;
-
-    h = CreateFileA(fileA, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    if (h == INVALID_HANDLE_VALUE) {
-        release_ammultimediastream();
-        return;
-    }
-
-    MultiByteToWideChar(CP_ACP, 0, fileA, -1, fileW, FILE_LEN);
 
     hr = IAMMultiMediaStream_GetFilterGraph(pams, &pgraph);
     ok(hr==S_OK, "IAMMultiMediaStream_GetFilterGraph returned: %x\n", hr);
@@ -111,7 +100,7 @@ static void test_openfile(void)
     if (pgraph)
         IGraphBuilder_Release(pgraph);
 
-    hr = IAMMultiMediaStream_OpenFile(pams, fileW, 0);
+    hr = IAMMultiMediaStream_OpenFile(pams, filenameW, 0);
     ok(hr==S_OK, "IAMMultiMediaStream_OpenFile returned: %x\n", hr);
 
     hr = IAMMultiMediaStream_GetFilterGraph(pams, &pgraph);
@@ -124,18 +113,20 @@ static void test_openfile(void)
     release_ammultimediastream();
 }
 
-static void renderfile(const char * fileA)
+static void test_renderfile(void)
 {
     HRESULT hr;
-    WCHAR fileW[FILE_LEN];
     IMediaStream *pvidstream = NULL;
     IDirectDrawMediaStream *pddstream = NULL;
     IDirectDrawStreamSample *pddsample = NULL;
 
-    if (!create_directdraw())
+    if (!create_ammultimediastream())
         return;
-
-    MultiByteToWideChar(CP_ACP, 0, fileA, -1, fileW, FILE_LEN);
+    if (!create_directdraw())
+    {
+        release_ammultimediastream();
+        return;
+    }
 
     hr = IAMMultiMediaStream_Initialize(pams, STREAMTYPE_READ, 0, NULL);
     ok(hr==S_OK, "IAMMultiMediaStream_Initialize returned: %x\n", hr);
@@ -146,7 +137,7 @@ static void renderfile(const char * fileA)
     hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &MSPID_PrimaryAudio, AMMSF_ADDDEFAULTRENDERER, NULL);
     ok(hr==S_OK, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
 
-    hr = IAMMultiMediaStream_OpenFile(pams, fileW, 0);
+    hr = IAMMultiMediaStream_OpenFile(pams, filenameW, 0);
     ok(hr==S_OK, "IAMMultiMediaStream_OpenFile returned: %x\n", hr);
 
     hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &pvidstream);
@@ -169,28 +160,23 @@ error:
         IMediaStream_Release(pvidstream);
 
     release_directdraw();
-}
-
-static void test_render(void)
-{
-    HANDLE h;
-
-    if (!create_ammultimediastream())
-        return;
-
-    h = CreateFileA(fileA, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    if (h != INVALID_HANDLE_VALUE) {
-        CloseHandle(h);
-        renderfile(fileA);
-    }
-
     release_ammultimediastream();
 }
 
 START_TEST(amstream)
 {
+    HANDLE file;
+
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    test_openfile();
-    test_render();
+
+    file = CreateFileW(filenameW, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (file != INVALID_HANDLE_VALUE)
+    {
+        CloseHandle(file);
+
+        test_openfile();
+        test_renderfile();
+    }
+
     CoUninitialize();
 }
