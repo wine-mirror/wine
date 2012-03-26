@@ -199,22 +199,22 @@ int wmain(int argc, WCHAR *argv[])
             } else {
                 static const WCHAR fmt[] = {'%','1',' ',' ',' ',' ',' ','%','2','\n','\0'};
                 if (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) {
-                    flags[0] = 'H';
+                    flags[4] = 'H';
                 }
                 if (fd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) {
                     flags[1] = 'S';
                 }
                 if (fd.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) {
-                    flags[2] = 'A';
+                    flags[0] = 'A';
                 }
                 if (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
-                    flags[3] = 'R';
+                    flags[5] = 'R';
                 }
                 if (fd.dwFileAttributes & FILE_ATTRIBUTE_TEMPORARY) {
-                    flags[4] = 'T';
+                    flags[6] = 'T';
                 }
                 if (fd.dwFileAttributes & FILE_ATTRIBUTE_COMPRESSED) {
-                    flags[5] = 'C';
+                    flags[7] = 'C';
                 }
                 strcpyW(name, curdir);
                 strcatW(name, fd.cFileName);
