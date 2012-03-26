@@ -61,6 +61,8 @@ DEFINE_EXPECT(testobj_propget_d);
 DEFINE_EXPECT(testobj_propget_i);
 DEFINE_EXPECT(testobj_propput_d);
 DEFINE_EXPECT(testobj_propput_i);
+DEFINE_EXPECT(global_propargput_d);
+DEFINE_EXPECT(global_propargput_i);
 
 #define DISPID_GLOBAL_REPORTSUCCESS 1000
 #define DISPID_GLOBAL_TRACE         1001
@@ -72,6 +74,8 @@ DEFINE_EXPECT(testobj_propput_i);
 #define DISPID_GLOBAL_ISNULLDISP    1007
 #define DISPID_GLOBAL_TESTDISP      1008
 #define DISPID_GLOBAL_REFOBJ        1009
+#define DISPID_GLOBAL_PROPARGPUT    1010
+#define DISPID_GLOBAL_COUNTER       1011
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -80,6 +84,7 @@ static const WCHAR testW[] = {'t','e','s','t',0};
 
 static BOOL strict_dispid_check;
 static const char *test_name = "(null)";
+static int test_counter;
 
 static BSTR a2bstr(const char *str)
 {
@@ -598,6 +603,17 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_REFOBJ;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "propargput")) {
+        CHECK_EXPECT(global_propargput_d);
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_PROPARGPUT;
+        return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "counter")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_COUNTER;
+        return S_OK;
+    }
 
     if(strict_dispid_check && strcmp_wa(bstrName, "x"))
         ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
@@ -717,7 +733,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(wFlags == (DISPATCH_PROPERTYGET|DISPATCH_METHOD), "wFlags = %x\n", wFlags);
 
         ok(pdp != NULL, "pdp == NULL\n");
-        ok(!pdp->rgvarg, "rgvarg == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
         ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
         ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
@@ -778,6 +794,43 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
         test_disp(V_DISPATCH(pdp->rgvarg));
+        return S_OK;
+
+    case DISPID_GLOBAL_PROPARGPUT:
+        CHECK_EXPECT(global_propargput_i);
+
+        ok(wFlags == DISPATCH_PROPERTYPUT, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pdp->rgdispidNamedArgs != NULL, "rgdispidNamedArgs == NULL\n");
+        ok(pdp->cArgs == 3, "cArgs = %d\n", pdp->cArgs);
+        ok(pdp->cNamedArgs == 1, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pdp->rgdispidNamedArgs[0] == DISPID_PROPERTYPUT, "pdp->rgdispidNamedArgs[0] = %d\n", pdp->rgdispidNamedArgs[0]);
+        ok(!pvarRes, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_I2, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_I2(pdp->rgvarg) == 0, "V_I2(psp->rgvargs) = %d\n", V_I2(pdp->rgvarg));
+
+        ok(V_VT(pdp->rgvarg+1) == VT_I2, "V_VT(psp->rgvargs+1) = %d\n", V_VT(pdp->rgvarg+1));
+        ok(V_I2(pdp->rgvarg+1) == 2, "V_I2(psp->rgvargs+1) = %d\n", V_I2(pdp->rgvarg+1));
+
+        ok(V_VT(pdp->rgvarg+2) == VT_I2, "V_VT(psp->rgvargs+2) = %d\n", V_VT(pdp->rgvarg+2));
+        ok(V_I2(pdp->rgvarg+2) == 1, "V_I2(psp->rgvargs+2) = %d\n", V_I2(pdp->rgvarg+2));
+        return S_OK;
+
+    case DISPID_GLOBAL_COUNTER:
+        ok(pdp != NULL, "pdp == NULL\n");
+        todo_wine ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_I2;
+        V_I2(pvarRes) = test_counter++;
         return S_OK;
     }
 
@@ -947,6 +1000,8 @@ static HRESULT parse_script(DWORD flags, BSTR script_str)
     ok(hres == S_OK, "GetScriptDispatch failed: %08x\n", hres);
     ok(script_disp != NULL, "script_disp == NULL\n");
     ok(script_disp != (IDispatch*)&Global, "script_disp == Global\n");
+
+    test_counter = 0;
 
     hres = IActiveScriptParse64_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
 
@@ -1226,6 +1281,12 @@ static void run_tests(void)
     parse_script_a("testObj.propput = 1");
     CHECK_CALLED(testobj_propput_d);
     CHECK_CALLED(testobj_propput_i);
+
+    SET_EXPECT(global_propargput_d);
+    SET_EXPECT(global_propargput_i);
+    parse_script_a("propargput(counter(), counter()) = counter()");
+    CHECK_CALLED(global_propargput_d);
+    CHECK_CALLED(global_propargput_i);
 
     parse_script_a("x = 1\n Call ok(x = 1, \"x = \" & x)");
 
