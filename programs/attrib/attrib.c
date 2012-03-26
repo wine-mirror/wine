@@ -180,6 +180,12 @@ int wmain(int argc, WCHAR *argv[])
     }
     else {
         do {
+            const WCHAR dot[] = {'.', 0};
+            const WCHAR dotdot[] = {'.', '.', 0};
+
+            if (!strcmpW(fd.cFileName, dot) || !strcmpW(fd.cFileName, dotdot))
+                continue;
+
             if (attrib_set || attrib_clear) {
                 fd.dwFileAttributes &= ~attrib_clear;
                 fd.dwFileAttributes |= attrib_set;
