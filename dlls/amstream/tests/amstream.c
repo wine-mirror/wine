@@ -172,6 +172,7 @@ static void test_media_streams(void)
     IMediaStream *dummy_stream;
     IDirectDrawMediaStream *ddraw_stream = NULL;
     IDirectDrawStreamSample *ddraw_sample = NULL;
+    IMediaStreamFilter* media_stream_filter = NULL;
 
     if (!create_ammultimediastream())
         return;
@@ -183,6 +184,12 @@ static void test_media_streams(void)
 
     hr = IAMMultiMediaStream_Initialize(pams, STREAMTYPE_READ, 0, NULL);
     ok(hr == S_OK, "IAMMultiMediaStream_Initialize returned: %x\n", hr);
+
+    /* Retreive media stream filter */
+    hr = IAMMultiMediaStream_GetFilter(pams, NULL);
+    ok(hr == E_POINTER, "IAMMultiMediaStream_GetFilter returned: %x\n", hr);
+    hr = IAMMultiMediaStream_GetFilter(pams, &media_stream_filter);
+    ok(hr == S_OK, "IAMMultiMediaStream_GetFilter returned: %x\n", hr);
 
     /* Verify there is no video media stream */
     hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &video_stream);
@@ -246,6 +253,8 @@ static void test_media_streams(void)
         IMediaStream_Release(video_stream);
     if (audio_stream)
         IMediaStream_Release(audio_stream);
+    if (media_stream_filter)
+        IMediaStreamFilter_Release(media_stream_filter);
 
     release_directdraw();
     release_ammultimediastream();

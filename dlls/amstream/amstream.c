@@ -310,10 +310,19 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetFilterGraph(IAMMultiMediaStream
 static HRESULT WINAPI IAMMultiMediaStreamImpl_GetFilter(IAMMultiMediaStream* iface, IMediaStreamFilter** ppFilter)
 {
     IAMMultiMediaStreamImpl *This = impl_from_IAMMultiMediaStream(iface);
+    HRESULT hr = S_OK;
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppFilter); 
+    TRACE("(%p/%p)->(%p)\n", This, iface, ppFilter);
 
-    return E_NOTIMPL;
+    if (!ppFilter)
+        return E_POINTER;
+
+    *ppFilter = NULL;
+
+    if (This->media_stream_filter)
+        hr = IBaseFilter_QueryInterface(This->media_stream_filter, &IID_IMediaStreamFilter, (LPVOID*)ppFilter);
+
+    return hr;
 }
 
 static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream* iface, IUnknown* pStreamObject, const MSPID* PurposeId,
