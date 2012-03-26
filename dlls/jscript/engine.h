@@ -43,7 +43,7 @@ typedef struct _func_stack {
 } func_stack_t;
 
 typedef struct {
-    WCHAR *begin;
+    const WCHAR *begin;
     const WCHAR *end;
     const WCHAR *ptr;
 
@@ -171,6 +171,8 @@ typedef struct _bytecode_t {
 
     instr_t *instrs;
     jsheap_t heap;
+
+    WCHAR *source;
 
     BSTR *bstr_pool;
     unsigned bstr_pool_size;

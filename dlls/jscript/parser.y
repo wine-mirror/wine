@@ -1533,7 +1533,6 @@ static void program_parsed(parser_ctx_t *ctx, source_elements_t *source)
 void parser_release(parser_ctx_t *ctx)
 {
     script_release(ctx->script);
-    heap_free(ctx->begin);
     jsheap_free(&ctx->heap);
     heap_free(ctx);
 }
@@ -1554,13 +1553,7 @@ HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
     parser_ctx->hres = JS_E_SYNTAX;
     parser_ctx->is_html = delimiter && !strcmpiW(delimiter, html_tagW);
 
-    parser_ctx->begin = heap_strdupW(code);
-    if(!parser_ctx->begin) {
-        heap_free(parser_ctx);
-        return E_OUTOFMEMORY;
-    }
-
-    parser_ctx->ptr = parser_ctx->begin;
+    parser_ctx->begin = parser_ctx->ptr = code;
     parser_ctx->end = parser_ctx->begin + strlenW(parser_ctx->begin);
 
     script_addref(ctx);
