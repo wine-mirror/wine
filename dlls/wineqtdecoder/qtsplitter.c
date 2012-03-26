@@ -133,6 +133,7 @@ extern CLSID CLSID_QTSplitter;
 
 typedef struct QTOutPin {
     BaseOutputPin pin;
+    IQualityControl IQualityControl_iface;
 
     AM_MEDIA_TYPE * pmt;
     OutputQueue * queue;
@@ -1246,6 +1247,8 @@ static HRESULT WINAPI QTOutPin_QueryInterface(IPin *iface, REFIID riid, void **p
         *ppv = iface;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
         return IBaseFilter_QueryInterface(This->pin.pin.pinInfo.pFilter, &IID_IMediaSeeking, ppv);
+    else if (IsEqualIID(riid, &IID_IQualityControl))
+        *ppv = &This->IQualityControl_iface;
 
     if (*ppv)
     {
@@ -1346,6 +1349,52 @@ static const IPinVtbl QT_OutputPin_Vtbl = {
     BasePinImpl_NewSegment
 };
 
+static inline QTOutPin *impl_from_IQualityControl( IQualityControl *iface )
+{
+    return CONTAINING_RECORD(iface, QTOutPin, IQualityControl_iface);
+}
+
+HRESULT WINAPI QT_QualityControl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv)
+{
+    QTOutPin *This = impl_from_IQualityControl(iface);
+    return IPin_QueryInterface(&This->pin.pin.IPin_iface, riid, ppv);
+}
+
+ULONG WINAPI QT_QualityControl_AddRef(IQualityControl *iface)
+{
+    QTOutPin *This = impl_from_IQualityControl(iface);
+    return IPin_AddRef(&This->pin.pin.IPin_iface);
+}
+
+ULONG WINAPI QT_QualityControl_Release(IQualityControl *iface)
+{
+    QTOutPin *This = impl_from_IQualityControl(iface);
+    return IPin_Release(&This->pin.pin.IPin_iface);
+}
+
+static HRESULT WINAPI QT_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm)
+{
+    REFERENCE_TIME late = qm.Late;
+    if (qm.Late < 0 && -qm.Late > qm.TimeStamp)
+        late = -qm.TimeStamp;
+    /* TODO: Do Something */
+    return S_OK;
+}
+
+HRESULT WINAPI QT_QualityControl_SetSink(IQualityControl *iface, IQualityControl *tonotify)
+{
+    /* Do nothing */
+    return S_OK;
+}
+
+static const IQualityControlVtbl QTOutPin_QualityControl_Vtbl = {
+    QT_QualityControl_QueryInterface,
+    QT_QualityControl_AddRef,
+    QT_QualityControl_Release,
+    QT_QualityControl_Notify,
+    QT_QualityControl_SetSink
+};
+
 static const BasePinFuncTable output_BaseFuncTable = {
     NULL,
     BaseOutputPinImpl_AttemptConnection,
@@ -1386,6 +1435,7 @@ static HRESULT QT_AddPin(QTSplitter *This, const PIN_INFO *piOutput, const AM_ME
         pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
         CopyMediaType(pin->pmt, amt);
         pin->pin.pin.pinInfo.pFilter = (LPVOID)This;
+        pin->IQualityControl_iface.lpVtbl = &QTOutPin_QualityControl_Vtbl;
 
         BaseFilterImpl_IncrementPinVersion(&This->filter);
 
