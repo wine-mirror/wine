@@ -315,7 +315,11 @@ static void test_output(const char *out_data, DWORD out_size, const char *exp_da
         if(is_todo_wine) winetest_end_todo("wine");
 
         if (is_exp_resync && err && is_todo_wine)
+        {
             exp_ptr -= sizeof(todo_wine_cmd);
+            /* If we rewind to the beginning of the line, don't increment line number */
+            line--;
+        }
         else if (!is_exp_resync || (is_exp_resync && !err))
         {
             exp_ptr = exp_nl+1;
