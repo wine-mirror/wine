@@ -329,6 +329,9 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
     if (!IsEqualGUID(PurposeId, &MSPID_PrimaryVideo) && !IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
         return MS_E_PURPOSEID;
 
+    if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo) && (dwFlags & AMMSF_ADDDEFAULTRENDERER))
+        return MS_E_PURPOSEID;
+
     hr = mediastream_create((IMultiMediaStream*)iface, PurposeId, This->StreamType, &pStream);
     if (SUCCEEDED(hr))
     {
