@@ -763,7 +763,7 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(This->thread_id != GetCurrentThreadId() || This->ctx->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, FALSE, &code);
+    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, FALSE, This->is_encode, &code);
     if(FAILED(hres))
         return hres;
 
@@ -830,7 +830,7 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
     if(This->thread_id != GetCurrentThreadId() || This->ctx->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, FALSE, &code);
+    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, FALSE, This->is_encode, &code);
     if(FAILED(hres)) {
         WARN("Parse failed %08x\n", hres);
         return hres;

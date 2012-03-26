@@ -34,6 +34,7 @@
 #define IDS_SEMICOLON                       0x03EC
 #define IDS_LBRACKET                        0x03ED
 #define IDS_RBRACKET                        0x03EE
+#define IDS_INVALID_CHAR                    0x03F6
 #define IDS_UNTERMINATED_STR                0x03F7
 #define IDS_INVALID_BREAK                   0x03FB
 #define IDS_INVALID_CONTINUE                0x03FC

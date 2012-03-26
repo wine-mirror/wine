@@ -3475,86 +3475,92 @@ msgid "Expected ')'"
 msgstr "')' esperado"
 
 #: jscript.rc:37
+#, fuzzy
+#| msgid "Invalid parameter.\n"
+msgid "Invalid character"
+msgstr "Parâmetro inválido.\n"
+
+#: jscript.rc:38
 msgid "Unterminated string constant"
 msgstr "Constante de string não terminada"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Can't have 'break' outside of loop"
 msgstr "Não pode haver 'break' fora de um loop"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Can't have 'continue' outside of loop"
 msgstr "Não pode haver 'continue' fora de um loop"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Label redefined"
 msgstr "Rótulo redefinido"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Label not found"
 msgstr "Rótulo não encontrado"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Conditional compilation is turned off"
 msgstr "Compilação condicional está desligada"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Number expected"
 msgstr "Número esperado"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Function expected"
 msgstr "Função esperada"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'[object]' is not a date object"
 msgstr "'[object]' não é um objeto de data"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Object expected"
 msgstr "Objeto esperado"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Illegal assignment"
 msgstr "Atribuição ilegal"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "'|' is undefined"
 msgstr "'|' é indefinido"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Boolean object expected"
 msgstr "Objeto booleano esperado"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Cannot delete '|'"
 msgstr "Não é possível excluir '|'"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "VBArray object expected"
 msgstr "Objeto VBArray esperado"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "JScript object expected"
 msgstr "Objeto JScript esperado"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "Syntax error in regular expression"
 msgstr "Erro de sintaxe na expressão regular"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI a ser codificado contém caracteres inválidos"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "URI to be decoded is incorrect"
 msgstr "URI a ser codificado está incorreto"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Array length must be a finite positive integer"
 msgstr "Tamanho do vetor tem que ser um inteiro finito positivo"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "Array object expected"
 msgstr "Objeto Vetor esperado"
 

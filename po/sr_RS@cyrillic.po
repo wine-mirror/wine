@@ -3476,89 +3476,95 @@ msgid "Expected ')'"
 msgstr "Очекивано ')'"
 
 #: jscript.rc:37
+#, fuzzy
+msgid "Invalid character"
+msgstr ""
+"Грешка: унесени су непознати или неисправни параметри наредбене линије.\n"
+
+#: jscript.rc:38
 msgid "Unterminated string constant"
 msgstr "Незавршена константа ниски"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Can't have 'break' outside of loop"
 msgstr ""
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Can't have 'continue' outside of loop"
 msgstr ""
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Label redefined"
 msgstr ""
 
-#: jscript.rc:41
+#: jscript.rc:42
 #, fuzzy
 msgid "Label not found"
 msgstr "Датотека није пронађена"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Conditional compilation is turned off"
 msgstr ""
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Number expected"
 msgstr "Очекивани број"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Function expected"
 msgstr "Очекивана функција"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'[object]' is not a date object"
 msgstr "„[object]“ није временски објекат"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Object expected"
 msgstr "Очекивани објекат"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Illegal assignment"
 msgstr "Недозвољен задатак"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "'|' is undefined"
 msgstr "„|“ није одређено"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Boolean object expected"
 msgstr "Очекивани објекат истинитосне вредности"
 
-#: jscript.rc:50
+#: jscript.rc:51
 #, fuzzy
 msgid "Cannot delete '|'"
 msgstr "Датум брисања"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "VBArray object expected"
 msgstr "VBArray објекат се очекује"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "JScript object expected"
 msgstr "Очекивани објекат JScript врсте"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "Syntax error in regular expression"
 msgstr "Синтаксна грешка у регуларном изразу"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI садржи неисправне знакове"
 
-#: jscript.rc:54
+#: jscript.rc:55
 #, fuzzy
 msgid "URI to be decoded is incorrect"
 msgstr "URI садржи неисправне знакове"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Array length must be a finite positive integer"
 msgstr "Низ дужине мора бити коначан позитиван цео број"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "Array object expected"
 msgstr "Очекивани низ објекта"
 

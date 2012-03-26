@@ -34,6 +34,7 @@ STRINGTABLE
     IDS_SEMICOLON           "Expected ';'"
     IDS_LBRACKET            "Expected '('"
     IDS_RBRACKET            "Expected ')'"
+    IDS_INVALID_CHAR        "Invalid character"
     IDS_UNTERMINATED_STR    "Unterminated string constant"
     IDS_INVALID_BREAK       "Can't have 'break' outside of loop"
     IDS_INVALID_CONTINUE    "Can't have 'continue' outside of loop"

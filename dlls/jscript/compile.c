@@ -1770,7 +1770,7 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     return S_OK;
 }
 
-HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimiter, BOOL from_eval,
+HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimiter, BOOL from_eval, BOOL use_decode,
         bytecode_t **ret)
 {
     compiler_ctx_t compiler = {0};
@@ -1779,6 +1779,14 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimi
     hres = init_code(&compiler, code);
     if(FAILED(hres))
         return hres;
+
+    if(use_decode) {
+        hres = decode_source(compiler.code->source);
+        if(FAILED(hres)) {
+            WARN("Decoding failed\n");
+            return hres;
+        }
+    }
 
     hres = script_parse(ctx, compiler.code->source, delimiter, from_eval, &compiler.parser);
     if(FAILED(hres)) {
