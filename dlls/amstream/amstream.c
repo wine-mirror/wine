@@ -329,8 +329,29 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
     if (!IsEqualGUID(PurposeId, &MSPID_PrimaryVideo) && !IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
         return MS_E_PURPOSEID;
 
-    if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo) && (dwFlags & AMMSF_ADDDEFAULTRENDERER))
-        return MS_E_PURPOSEID;
+    if (dwFlags & AMMSF_ADDDEFAULTRENDERER)
+    {
+        if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo))
+        {
+            /* Default renderer not supported by video stream */
+            return MS_E_PURPOSEID;
+        }
+        else
+        {
+            IBaseFilter* dsoundrender_filter;
+
+            /* Create the default renderer for audio */
+            hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&dsoundrender_filter);
+            if (SUCCEEDED(hr))
+            {
+                 hr = IGraphBuilder_AddFilter(This->pFilterGraph, dsoundrender_filter, NULL);
+                 IBaseFilter_Release(dsoundrender_filter);
+            }
+
+            /* No media stream created when the default renderer is used */
+            return hr;
+        }
+    }
 
     hr = mediastream_create((IMultiMediaStream*)iface, PurposeId, This->StreamType, &pStream);
     if (SUCCEEDED(hr))
@@ -344,31 +365,6 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
         This->pStreams = pNewStreams;
         This->pStreams[This->nbStreams] = pStream;
         This->nbStreams++;
-
-        if (dwFlags & AMMSF_ADDDEFAULTRENDERER)
-        {
-            if (IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
-            {
-                IBaseFilter* dsoundrender_filter;
-
-                hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&dsoundrender_filter);
-                if (SUCCEEDED(hr))
-                {
-                     hr = IGraphBuilder_AddFilter(This->pFilterGraph, dsoundrender_filter, NULL);
-                     IBaseFilter_Release(dsoundrender_filter);
-                }
-                if (FAILED(hr))
-                {
-                     IMediaStream_Release(pStream);
-                     pStream = NULL;
-                     This->nbStreams--;
-                }
-            }
-            else
-            {
-                FIXME("Default renderer only supported for audio\n");
-            }
-        }
 
         if (ppNewStream)
             *ppNewStream = pStream;
