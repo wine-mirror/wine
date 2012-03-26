@@ -784,17 +784,8 @@ static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, const char *gl_re
     return gl_vendor == GL_VENDOR_FGLRX;
 }
 
-static void quirk_arb_constants(struct wined3d_gl_info *gl_info)
-{
-    TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->limits.arb_vs_native_constants);
-    gl_info->limits.glsl_vs_float_constants = gl_info->limits.arb_vs_native_constants;
-    TRACE_(d3d_caps)("Using ARB ps constant limit(=%u) for GLSL.\n", gl_info->limits.arb_ps_native_constants);
-    gl_info->limits.glsl_ps_float_constants = gl_info->limits.arb_ps_native_constants;
-}
-
 static void quirk_apple_glsl_constants(struct wined3d_gl_info *gl_info)
 {
-    quirk_arb_constants(gl_info);
     /* MacOS needs uniforms for relative addressing offsets. This can accumulate to quite a few uniforms.
      * Beyond that the general uniform isn't optimal, so reserve a number of uniforms. 12 vec4's should
      * allow 48 different offsets or other helper immediate values. */
@@ -918,12 +909,6 @@ static const struct driver_quirk quirk_table[] =
         quirk_amd_dx9,
         "AMD normalized texrect quirk"
     },
-    /* MacOS advertises more GLSL vertex shader uniforms than supported by the hardware, and if more are
-     * used it falls back to software. While the compiler can detect if the shader uses all declared
-     * uniforms, the optimization fails if the shader uses relative addressing. So any GLSL shader
-     * using relative addressing falls back to software.
-     *
-     * ARB vp gives the correct amount of uniforms, so use it instead of GLSL. */
     {
         match_apple,
         quirk_apple_glsl_constants,
