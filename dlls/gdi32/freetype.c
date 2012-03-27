@@ -1568,6 +1568,16 @@ static Family *get_family( FT_Face ft_face, BOOL vertical )
     return family;
 }
 
+static inline FT_Fixed get_font_version( FT_Face ft_face )
+{
+    FT_Fixed version = 0;
+    TT_Header *header;
+
+    header = pFT_Get_Sfnt_Table( ft_face, ft_sfnt_head );
+    if (header) version = header->Font_Revision;
+
+    return version;
+}
 
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
@@ -1581,7 +1591,6 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
 
     do {
         TT_OS2 *pOS2;
-        TT_Header *pHeader;
         Face *face;
         struct list *face_elem_ptr;
         FT_WinFNT_HeaderRec winfnt_header;
@@ -1589,6 +1598,7 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
         FONTSIGNATURE fs;
         My_FT_Bitmap_Size *size = NULL;
         FT_ULong tmp_size;
+        FT_Fixed version;
 
         if(!FT_IS_SCALABLE(ft_face))
             size = (My_FT_Bitmap_Size *)ft_face->available_sizes + bitmap_num;
@@ -1626,16 +1636,15 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
             internal_leading = winfnt_header.internal_leading;
         }
 
-        pHeader = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_head);
+        version = get_font_version( ft_face );
         LIST_FOR_EACH(face_elem_ptr, &family->faces) {
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
             if(!strcmpiW(face->StyleName, StyleW) &&
                (FT_IS_SCALABLE(ft_face) || ((size->y_ppem == face->size.y_ppem) && !memcmp(&fs, &face->fs, sizeof(fs)) ))) {
                 TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
                       debugstr_w(family->FamilyName), debugstr_w(StyleW),
-                      face->font_version,  pHeader ? pHeader->Font_Revision : 0);
-
-                if(!pHeader || pHeader->Font_Revision <= face->font_version) {
+                      face->font_version, version);
+                if(version <= face->font_version) {
                     TRACE("Original font is newer so skipping this one\n");
                     HeapFree(GetProcessHeap(), 0, StyleW);
                     return;
@@ -1673,7 +1682,7 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
         if (ft_face->style_flags & FT_STYLE_FLAG_BOLD)
             face->ntmFlags |= NTM_BOLD;
         if (face->ntmFlags == 0) face->ntmFlags = NTM_REGULAR;
-        face->font_version = pHeader ? pHeader->Font_Revision : 0;
+        face->font_version = version;
         face->family = family;
         face->vertical = vertical;
         face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
