@@ -1683,97 +1683,101 @@ static inline void free_face( Face *face )
 
 static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr, DWORD font_data_size, FT_Long face_index, DWORD flags, BOOL vertical)
 {
-    int bitmap_num = 0;
     Family *family;
     WCHAR *StyleW;
+    Face *face;
+    struct list *face_elem_ptr;
+    FONTSIGNATURE fs;
+    My_FT_Bitmap_Size *size = NULL;
+    FT_Fixed version;
 
-    do {
-        Face *face;
-        struct list *face_elem_ptr;
-        FONTSIGNATURE fs;
-        My_FT_Bitmap_Size *size = NULL;
-        FT_Fixed version;
+    if(!FT_IS_SCALABLE(ft_face))
+        size = (My_FT_Bitmap_Size *)ft_face->available_sizes;
 
-        if(!FT_IS_SCALABLE(ft_face))
-            size = (My_FT_Bitmap_Size *)ft_face->available_sizes + bitmap_num;
+    family = get_family( ft_face, vertical );
 
-        family = get_family( ft_face, vertical );
+    StyleW = towstr(CP_ACP, ft_face->style_name);
 
-        StyleW = towstr(CP_ACP, ft_face->style_name);
+    get_fontsig( ft_face, &fs );
 
-        get_fontsig( ft_face, &fs );
-
-        version = get_font_version( ft_face );
-        LIST_FOR_EACH(face_elem_ptr, &family->faces) {
-            face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            if(!strcmpiW(face->StyleName, StyleW) &&
-               (FT_IS_SCALABLE(ft_face) || ((size->y_ppem == face->size.y_ppem) && !memcmp(&fs, &face->fs, sizeof(fs)) ))) {
-                TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
-                      debugstr_w(family->FamilyName), debugstr_w(StyleW),
-                      face->font_version, version);
-                if(version <= face->font_version) {
-                    TRACE("Original font is newer so skipping this one\n");
-                    HeapFree(GetProcessHeap(), 0, StyleW);
-                    return;
-                } else {
-                    TRACE("Replacing original with this one\n");
-                    list_remove(&face->entry);
-                    free_face( face );
-                    break;
-                }
+    version = get_font_version( ft_face );
+    LIST_FOR_EACH(face_elem_ptr, &family->faces)
+    {
+        face = LIST_ENTRY(face_elem_ptr, Face, entry);
+        if(!strcmpiW(face->StyleName, StyleW) &&
+           (FT_IS_SCALABLE(ft_face) || ((size->y_ppem == face->size.y_ppem) && !memcmp(&fs, &face->fs, sizeof(fs)) )))
+        {
+            TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
+                  debugstr_w(family->FamilyName), debugstr_w(StyleW),
+                  face->font_version, version);
+            if(version <= face->font_version)
+            {
+                TRACE("Original font is newer so skipping this one\n");
+                HeapFree(GetProcessHeap(), 0, StyleW);
+                return;
+            }
+            else
+            {
+                TRACE("Replacing original with this one\n");
+                list_remove(&face->entry);
+                free_face( face );
+                break;
             }
         }
-        face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
-        face->cached_enum_data = NULL;
-        face->StyleName = StyleW;
-        face->FullName = get_face_name(ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES);
-        if (file)
-        {
-            face->file = strdupA(file);
-            face->font_data_ptr = NULL;
-            face->font_data_size = 0;
-        }
-        else
-        {
-            face->file = NULL;
-            face->font_data_ptr = font_data_ptr;
-            face->font_data_size = font_data_size;
-        }
-        face->face_index = face_index;
-        face->ntmFlags = get_ntm_flags( ft_face );
-        face->font_version = version;
-        face->family = family;
-        face->vertical = vertical;
-        face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
-        face->fs = fs;
+    }
 
-        if(FT_IS_SCALABLE(ft_face)) {
-            memset(&face->size, 0, sizeof(face->size));
-            face->scalable = TRUE;
-        } else {
-            TRACE("Adding bitmap size h %d w %d size %ld x_ppem %ld y_ppem %ld\n",
-                  size->height, size->width, size->size >> 6,
-                  size->x_ppem >> 6, size->y_ppem >> 6);
-            face->size.height = size->height;
-            face->size.width = size->width;
-            face->size.size = size->size;
-            face->size.x_ppem = size->x_ppem;
-            face->size.y_ppem = size->y_ppem;
-            face->size.internal_leading = get_bitmap_internal_leading( ft_face );
-            face->scalable = FALSE;
-        }
+    face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
+    face->cached_enum_data = NULL;
+    face->StyleName = StyleW;
+    face->FullName = get_face_name(ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+    if (file)
+    {
+        face->file = strdupA(file);
+        face->font_data_ptr = NULL;
+        face->font_data_size = 0;
+    }
+    else
+    {
+        face->file = NULL;
+        face->font_data_ptr = font_data_ptr;
+        face->font_data_size = font_data_size;
+    }
+    face->face_index = face_index;
+    face->ntmFlags = get_ntm_flags( ft_face );
+    face->font_version = version;
+    face->family = family;
+    face->vertical = vertical;
+    face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
+    face->fs = fs;
 
-        TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
-              face->fs.fsCsb[0], face->fs.fsCsb[1],
-              face->fs.fsUsb[0], face->fs.fsUsb[1],
-              face->fs.fsUsb[2], face->fs.fsUsb[3]);
+    if(FT_IS_SCALABLE(ft_face))
+    {
+        memset(&face->size, 0, sizeof(face->size));
+        face->scalable = TRUE;
+    }
+    else
+    {
+        TRACE("Adding bitmap size h %d w %d size %ld x_ppem %ld y_ppem %ld\n",
+              size->height, size->width, size->size >> 6,
+              size->x_ppem >> 6, size->y_ppem >> 6);
+        face->size.height = size->height;
+        face->size.width = size->width;
+        face->size.size = size->size;
+        face->size.x_ppem = size->x_ppem;
+        face->size.y_ppem = size->y_ppem;
+        face->size.internal_leading = get_bitmap_internal_leading( ft_face );
+        face->scalable = FALSE;
+    }
 
-        if(flags & ADDFONT_ADD_TO_CACHE)
-            add_face_to_cache(face);
+    TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
+          face->fs.fsCsb[0], face->fs.fsCsb[1],
+          face->fs.fsUsb[0], face->fs.fsUsb[1],
+          face->fs.fsUsb[2], face->fs.fsUsb[3]);
 
-        AddFaceToFamily(face, family);
+    if(flags & ADDFONT_ADD_TO_CACHE)
+        add_face_to_cache(face);
 
-    } while(!FT_IS_SCALABLE(ft_face) && ++bitmap_num < ft_face->num_fixed_sizes);
+    AddFaceToFamily(face, family);
 
     TRACE("Added font %s %s\n", debugstr_w(family->FamilyName),
           debugstr_w(StyleW));
