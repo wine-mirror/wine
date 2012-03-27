@@ -215,8 +215,8 @@ static void test_media_streams(void)
     if (media_stream_filter)
     {
         hr = IMediaStreamFilter_GetMediaStream(media_stream_filter, &MSPID_PrimaryVideo, &dummy_stream);
-        todo_wine ok(hr == S_OK, "IMediaStreamFilter_GetMediaStream returned: %x\n", hr);
-        todo_wine ok(dummy_stream == video_stream, "Got wrong returned pointer %p, expected %p\n", dummy_stream, video_stream);
+        ok(hr == S_OK, "IMediaStreamFilter_GetMediaStream returned: %x\n", hr);
+        ok(dummy_stream == video_stream, "Got wrong returned pointer %p, expected %p\n", dummy_stream, video_stream);
         if (SUCCEEDED(hr))
             IMediaStream_Release(dummy_stream);
     }
@@ -241,8 +241,8 @@ static void test_media_streams(void)
     if (media_stream_filter)
     {
         hr = IMediaStreamFilter_GetMediaStream(media_stream_filter, &MSPID_PrimaryAudio, &dummy_stream);
-        todo_wine ok(hr == S_OK, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
-        todo_wine ok(dummy_stream == audio_stream, "Got wrong returned pointer %p, expected %p\n", dummy_stream, audio_stream);
+        ok(hr == S_OK, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
+        ok(dummy_stream == audio_stream, "Got wrong returned pointer %p, expected %p\n", dummy_stream, audio_stream);
         if (SUCCEEDED(hr))
             IMediaStream_Release(dummy_stream);
     }

@@ -333,7 +333,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
     IMediaStream* pStream;
     IMediaStream** pNewStreams;
 
-    FIXME("(%p/%p)->(%p,%s,%x,%p) partial stub!\n", This, iface, pStreamObject, debugstr_guid(PurposeId), dwFlags, ppNewStream);
+    TRACE("(%p/%p)->(%p,%s,%x,%p)\n", This, iface, pStreamObject, debugstr_guid(PurposeId), dwFlags, ppNewStream);
 
     if (!IsEqualGUID(PurposeId, &MSPID_PrimaryVideo) && !IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
         return MS_E_PURPOSEID;
@@ -377,6 +377,12 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
 
         if (ppNewStream)
             *ppNewStream = pStream;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        /* Add stream to the media stream filter */
+        IMediaStreamFilter_AddMediaStream((IMediaStreamFilter*)This->media_stream_filter, (IAMMediaStream*)pStream);
     }
 
     return hr;
