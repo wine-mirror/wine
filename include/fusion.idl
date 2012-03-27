@@ -38,6 +38,7 @@ typedef enum
     peI386      = 0x00000002,
     peIA64      = 0x00000003,
     peAMD64     = 0x00000004,
+    peARM       = 0x00000005,
     peInvalid   = 0xffffffff
 } PEKIND;
 
