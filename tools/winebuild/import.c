@@ -1256,6 +1256,21 @@ void output_stubs( DLLSPEC *spec )
                 output( "\tmovq $%d,%%rsi\n", odp->ordinal );
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
             break;
+        case CPU_ARM:
+            output( "\tldr r0,[PC,#0]\n");
+            output( "\tmov PC,PC\n");
+            output( "\t.long .L__wine_spec_file_name\n" );
+            output( "\tldr r1,[PC,#0]\n");
+            output( "\tmov PC,PC\n");
+            if (exp_name)
+            {
+                output( "\t.long .L%s_string\n", name );
+                count++;
+            }
+            else
+                output( "\t.long %d\n", odp->ordinal );
+            output( "\tbl %s\n", asm_name("__wine_spec_unimplemented_stub") );
+            break;
         default:
             assert(0);
         }
