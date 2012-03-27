@@ -13201,7 +13201,7 @@ msgstr "Zásobník obrazovky musí být větší nebo stejně velký jakzásobn�
 
 #: wineconsole.rc:34
 #, fuzzy
-msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
+msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "Každý znak je %ld pixelů široký a %ld pixelů vysoký"
 
 #: wineconsole.rc:35

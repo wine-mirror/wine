@@ -13408,7 +13408,7 @@ msgstr "Skjermens hurtigminnestørrelse må være større eller lik vinduets"
 
 #: wineconsole.rc:34
 #, fuzzy
-msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
+msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "Hvert tegn er %ld piksler bredt og %ld piksler høyt"
 
 #: wineconsole.rc:35

@@ -12978,7 +12978,7 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "스크린 버퍼 크기는 반드시 창보다 같거나 커야합니다"
 
 #: wineconsole.rc:34
-msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
+msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "각각의 글자는 %1!u!  픽셀 너비에 %2!u! 픽셀 높이를 가집니다"
 
 #: wineconsole.rc:35

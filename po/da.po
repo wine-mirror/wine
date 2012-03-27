@@ -13220,7 +13220,7 @@ msgstr "Skærm buffer størrelsen, skal være større eller lig med vinduet"
 
 #: wineconsole.rc:34
 #, fuzzy
-msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
+msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "Hvert tegn er %ld pixel bred og %ld pixel høj"
 
 #: wineconsole.rc:35

@@ -12958,7 +12958,7 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr ""
 
 #: wineconsole.rc:34
-msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
+msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "Varje bokstav är %1!u! bildpunkter bred och %2!u! bildpunkter hög"
 
 #: wineconsole.rc:35
