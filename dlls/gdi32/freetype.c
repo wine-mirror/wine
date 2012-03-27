@@ -1496,6 +1496,30 @@ static WCHAR *prepend_at(WCHAR *family)
     return str;
 }
 
+static void get_family_names( FT_Face ft_face, WCHAR **name, WCHAR **english, BOOL vertical )
+{
+    *english = get_face_name( ft_face, TT_NAME_ID_FONT_FAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES );
+    if (!*english) *english = towstr( CP_ACP, ft_face->family_name );
+
+    *name = get_face_name( ft_face, TT_NAME_ID_FONT_FAMILY, GetUserDefaultLCID() );
+    if (!*name)
+    {
+        *name = *english;
+        *english = NULL;
+    }
+    else if (!strcmpiW( *name, *english ))
+    {
+        HeapFree( GetProcessHeap(), 0, *english );
+        *english = NULL;
+    }
+
+    if (vertical)
+    {
+        *name = prepend_at( *name );
+        *english = prepend_at( *english );
+    }
+}
+
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
@@ -1509,7 +1533,7 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
     do {
         TT_OS2 *pOS2;
         TT_Header *pHeader;
-        WCHAR *english_family, *localised_family;
+        WCHAR *family_name, *english_family;
         Face *face;
         struct list *face_elem_ptr;
         FT_WinFNT_HeaderRec winfnt_header;
@@ -1521,42 +1545,27 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
         if(!FT_IS_SCALABLE(ft_face))
             size = (My_FT_Bitmap_Size *)ft_face->available_sizes + bitmap_num;
 
-        english_family = get_face_name(ft_face, TT_NAME_ID_FONT_FAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES);
-        if (!english_family)
-            english_family = towstr(CP_ACP, ft_face->family_name);
+        get_family_names( ft_face, &family_name, &english_family, vertical );
 
-        localised_family = get_face_name(ft_face, TT_NAME_ID_FONT_FAMILY, GetUserDefaultLCID());
-        if (localised_family && !strcmpiW(localised_family, english_family))
-        {
-            HeapFree(GetProcessHeap(), 0, localised_family);
-            localised_family = NULL;
-        }
-
-        if (vertical)
-        {
-            english_family = prepend_at(english_family);
-            localised_family = prepend_at(localised_family);
-        }
-
-        family = find_family_from_name(localised_family ? localised_family : english_family);
+        family = find_family_from_name( family_name );
         if(!family) {
             family = HeapAlloc(GetProcessHeap(), 0, sizeof(*family));
-            family->FamilyName = strdupW(localised_family ? localised_family : english_family);
-            family->EnglishName = localised_family ? strdupW(english_family) : NULL;
+            family->FamilyName = strdupW( family_name );
+            family->EnglishName = english_family ? strdupW( english_family ) : NULL;
             list_init(&family->faces);
             family->replacement = &family->faces;
             list_add_tail(&font_list, &family->entry);
 
-            if(localised_family) {
+            if(english_family) {
                 FontSubst *subst = HeapAlloc(GetProcessHeap(), 0, sizeof(*subst));
                 subst->from.name = strdupW(english_family);
                 subst->from.charset = -1;
-                subst->to.name = strdupW(localised_family);
+                subst->to.name = strdupW(family_name);
                 subst->to.charset = -1;
                 add_font_subst(&font_subst_list, subst, 0);
             }
         }
-        HeapFree(GetProcessHeap(), 0, localised_family);
+        HeapFree(GetProcessHeap(), 0, family_name);
         HeapFree(GetProcessHeap(), 0, english_family);
 
         StyleW = towstr(CP_ACP, ft_face->style_name);
