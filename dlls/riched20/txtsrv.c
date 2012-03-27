@@ -54,53 +54,57 @@
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 typedef struct ITextServicesImpl {
+   IUnknown IUnknown_inner;
    ITextServices ITextServices_iface;
-   ITextHost *pMyHost;
+   IUnknown *outer_unk;
    LONG ref;
+   ITextHost *pMyHost;
    CRITICAL_SECTION csTxtSrv;
    ME_TextEditor *editor;
    char spare[256];
 } ITextServicesImpl;
 
-static inline ITextServicesImpl *impl_from_ITextServices(ITextServices *iface)
+static inline ITextServicesImpl *impl_from_IUnknown(IUnknown *iface)
 {
-   return CONTAINING_RECORD(iface, ITextServicesImpl, ITextServices_iface);
+   return CONTAINING_RECORD(iface, ITextServicesImpl, IUnknown_inner);
 }
 
-static HRESULT WINAPI fnTextSrv_QueryInterface(ITextServices *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI ITextServicesImpl_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
-   ITextServicesImpl *This = impl_from_ITextServices(iface);
+   ITextServicesImpl *This = impl_from_IUnknown(iface);
 
-   TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
-   *ppv = NULL;
-   if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_ITextServices))
-      *ppv = This;
+   TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
 
-   if (*ppv)
-   {
-      IUnknown_AddRef((IUnknown *)(*ppv));
-      TRACE ("-- Interface = %p\n", *ppv);
-      return S_OK;
+   if (IsEqualIID(riid, &IID_IUnknown))
+      *ppv = &This->IUnknown_inner;
+   else if IsEqualIID(riid, &IID_ITextServices)
+      *ppv = &This->ITextServices_iface;
+   else {
+      *ppv = NULL;
+      FIXME("Unknown interface: %s\n", debugstr_guid(riid));
+      return E_NOINTERFACE;
    }
-   FIXME("Unknown interface: %s\n", debugstr_guid(riid));
-   return E_NOINTERFACE;
+
+   IUnknown_AddRef((IUnknown*)*ppv);
+   return S_OK;
 }
 
-static ULONG WINAPI fnTextSrv_AddRef(ITextServices *iface)
+static ULONG WINAPI ITextServicesImpl_AddRef(IUnknown *iface)
 {
-   ITextServicesImpl *This = impl_from_ITextServices(iface);
-   DWORD ref = InterlockedIncrement(&This->ref);
+   ITextServicesImpl *This = impl_from_IUnknown(iface);
+   LONG ref = InterlockedIncrement(&This->ref);
 
-   TRACE("(%p/%p)->() AddRef from %d\n", This, iface, ref - 1);
+   TRACE("(%p) ref=%d\n", This, ref);
+
    return ref;
 }
 
-static ULONG WINAPI fnTextSrv_Release(ITextServices *iface)
+static ULONG WINAPI ITextServicesImpl_Release(IUnknown *iface)
 {
-   ITextServicesImpl *This = impl_from_ITextServices(iface);
-   DWORD ref = InterlockedDecrement(&This->ref);
+   ITextServicesImpl *This = impl_from_IUnknown(iface);
+   LONG ref = InterlockedDecrement(&This->ref);
 
-   TRACE("(%p/%p)->() Release from %d\n", This, iface, ref + 1);
+   TRACE("(%p) ref=%d\n", This, ref);
 
    if (!ref)
    {
@@ -110,6 +114,36 @@ static ULONG WINAPI fnTextSrv_Release(ITextServices *iface)
       CoTaskMemFree(This);
    }
    return ref;
+}
+
+static const IUnknownVtbl textservices_inner_vtbl =
+{
+   ITextServicesImpl_QueryInterface,
+   ITextServicesImpl_AddRef,
+   ITextServicesImpl_Release
+};
+
+static inline ITextServicesImpl *impl_from_ITextServices(ITextServices *iface)
+{
+   return CONTAINING_RECORD(iface, ITextServicesImpl, ITextServices_iface);
+}
+
+static HRESULT WINAPI fnTextSrv_QueryInterface(ITextServices *iface, REFIID riid, void **ppv)
+{
+   ITextServicesImpl *This = impl_from_ITextServices(iface);
+   return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
+}
+
+static ULONG WINAPI fnTextSrv_AddRef(ITextServices *iface)
+{
+   ITextServicesImpl *This = impl_from_ITextServices(iface);
+   return IUnknown_AddRef(This->outer_unk);
+}
+
+static ULONG WINAPI fnTextSrv_Release(ITextServices *iface)
+{
+   ITextServicesImpl *This = impl_from_ITextServices(iface);
+   return IUnknown_Release(This->outer_unk);
 }
 
 DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxSendMessage(ITextServices *iface, UINT msg, WPARAM wparam,
@@ -371,6 +405,7 @@ HRESULT WINAPI CreateTextServices(IUnknown  *pUnkOuter, ITextHost *pITextHost, I
    ITextImpl->ref = 1;
    ITextHost_AddRef(pITextHost);
    ITextImpl->pMyHost = pITextHost;
+   ITextImpl->IUnknown_inner.lpVtbl = &textservices_inner_vtbl;
    ITextImpl->ITextServices_iface.lpVtbl = &textservices_vtbl;
    ITextImpl->editor = ME_MakeEditor(pITextHost, FALSE);
    ITextImpl->editor->exStyleFlags = 0;
@@ -382,11 +417,10 @@ HRESULT WINAPI CreateTextServices(IUnknown  *pUnkOuter, ITextHost *pITextHost, I
    ME_HandleMessage(ITextImpl->editor, WM_CREATE, 0, 0, TRUE, &hres);
 
    if (pUnkOuter)
-   {
-      FIXME("Support aggregation\n");
-      return CLASS_E_NOAGGREGATION;
-   }
+      ITextImpl->outer_unk = pUnkOuter;
+   else
+      ITextImpl->outer_unk = &ITextImpl->IUnknown_inner;
 
-   *ppUnk = (IUnknown *)&ITextImpl->ITextServices_iface;
+   *ppUnk = &ITextImpl->IUnknown_inner;
    return S_OK;
 }
