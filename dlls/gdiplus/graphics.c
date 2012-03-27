@@ -4943,6 +4943,7 @@ struct measure_string_args {
     RectF *bounds;
     INT *codepointsfitted;
     INT *linesfilled;
+    REAL rel_width, rel_height;
 };
 
 static GpStatus measure_string_callback(HDC hdc,
@@ -4952,12 +4953,16 @@ static GpStatus measure_string_callback(HDC hdc,
     INT underlined_index_count, void *user_data)
 {
     struct measure_string_args *args = user_data;
+    REAL new_width, new_height;
 
-    if (bounds->Width > args->bounds->Width)
-        args->bounds->Width = bounds->Width;
+    new_width = bounds->Width / args->rel_width;
+    new_height = (bounds->Height + bounds->Y - args->bounds->Y) / args->rel_height;
 
-    if (bounds->Height + bounds->Y > args->bounds->Height + args->bounds->Y)
-        args->bounds->Height = bounds->Height + bounds->Y - args->bounds->Y;
+    if (new_width > args->bounds->Width)
+        args->bounds->Width = new_width;
+
+    if (new_height > args->bounds->Height)
+        args->bounds->Height = new_height;
 
     if (args->codepointsfitted)
         *args->codepointsfitted = index + length;
@@ -4977,9 +4982,10 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, RectF *bounds,
     INT *codepointsfitted, INT *linesfilled)
 {
-    HFONT oldfont;
+    HFONT oldfont, gdifont;
     struct measure_string_args args;
     HDC temp_hdc=NULL, hdc;
+    GpPointF pt[3];
 
     TRACE("(%p, %s, %i, %p, %s, %p, %p, %p, %p)\n", graphics,
         debugstr_wn(string, length), length, font, debugstr_rectf(rect), format,
@@ -5002,7 +5008,20 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     if(format)
         TRACE("may be ignoring some format flags: attr %x\n", format->attr);
 
-    oldfont = SelectObject(hdc, CreateFontIndirectW(&font->lfw));
+    pt[0].X = 0.0;
+    pt[0].Y = 0.0;
+    pt[1].X = 1.0;
+    pt[1].Y = 0.0;
+    pt[2].X = 0.0;
+    pt[2].Y = 1.0;
+    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
+    args.rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
+                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
+    args.rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
+                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+
+    get_font_hfont(graphics, font, &gdifont);
+    oldfont = SelectObject(hdc, gdifont);
 
     bounds->X = rect->X;
     bounds->Y = rect->Y;
@@ -5016,7 +5035,8 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     gdip_format_string(hdc, string, length, font, rect, format,
         measure_string_callback, &args);
 
-    DeleteObject(SelectObject(hdc, oldfont));
+    SelectObject(hdc, oldfont);
+    DeleteObject(gdifont);
 
     if (temp_hdc)
         DeleteDC(temp_hdc);
