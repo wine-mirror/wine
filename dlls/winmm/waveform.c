@@ -2797,6 +2797,20 @@ UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
         return WINMM_QueryInstanceID(HandleToULong(hWaveOut), (WCHAR*)dwParam1, dwParam2, TRUE);
     case DRV_QUERYMAPPABLE:
         return MMSYSERR_NOERROR;
+    case DRVM_MAPPER_PREFERRED_GET:
+        if(dwParam1) {
+            if(g_outmmdevices_count > 0)
+                /* Device 0 is always the default device */
+                *(DWORD *)dwParam1 = 0;
+            else
+                *(DWORD *)dwParam1 = -1;
+        }
+
+        if(dwParam2)
+            /* Status flags */
+            *(DWORD *)dwParam2 = 0;
+
+        return MMSYSERR_NOERROR;
     }
 
     TRACE("Message not supported: %u\n", uMessage);
@@ -3172,6 +3186,20 @@ UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
     case DRV_QUERYFUNCTIONINSTANCEID:
         return WINMM_QueryInstanceID(HandleToULong(hWaveIn), (WCHAR*)dwParam1, dwParam2, FALSE);
     case DRV_QUERYMAPPABLE:
+        return MMSYSERR_NOERROR;
+    case DRVM_MAPPER_PREFERRED_GET:
+        if(dwParam1) {
+            if(g_inmmdevices_count > 0)
+                /* Device 0 is always the default device */
+                *(DWORD *)dwParam1 = 0;
+            else
+                *(DWORD *)dwParam1 = -1;
+        }
+
+        if(dwParam2)
+            /* Status flags */
+            *(DWORD *)dwParam2 = 0;
+
         return MMSYSERR_NOERROR;
     }
 

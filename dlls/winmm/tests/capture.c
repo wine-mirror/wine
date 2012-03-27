@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "mmddk.h"
 #include "mmsystem.h"
 #define NOBITMAP
 #include "mmreg.h"
@@ -639,10 +640,19 @@ static void wave_in_tests(void)
     WAVEFORMATEX format;
     HWAVEIN win;
     MMRESULT rc;
+    DWORD preferred, status;
     UINT ndev,d;
 
     ndev=waveInGetNumDevs();
     trace("found %d WaveIn devices\n",ndev);
+
+    rc = waveInMessage((HWAVEIN)WAVE_MAPPER, DRVM_MAPPER_PREFERRED_GET,
+            (DWORD_PTR)&preferred, (DWORD_PTR)&status);
+    ok((ndev == 0 && rc == MMSYSERR_NODRIVER) ||
+            rc == MMSYSERR_NOERROR, "waveInMessage(DRVM_MAPPER_PREFERRED_GET) failed: %u\n", rc);
+
+    ok((ndev == 0 && (preferred == -1 || broken(preferred != -1))) ||
+            preferred < ndev, "Got invalid preferred device: 0x%x\n", preferred);
 
     rc=waveInGetDevCapsA(ndev+1,&capsA,sizeof(capsA));
     ok(rc==MMSYSERR_BADDEVICEID,
