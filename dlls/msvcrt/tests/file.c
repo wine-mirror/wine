@@ -434,6 +434,37 @@ static void test_asciimode2(void)
     unlink("ascii2.tst");
 }
 
+static void test_filemodeT(void)
+{
+    char DATA  [] = {26, 't', 'e', 's' ,'t'};
+    char DATA2 [100];
+    char temppath[MAX_PATH];
+    char tempfile[MAX_PATH];
+    FILE* f;
+    size_t bytesWritten;
+    size_t bytesRead;
+    WIN32_FIND_DATA findData;
+    HANDLE h;
+
+    GetTempPath (MAX_PATH, temppath);
+    GetTempFileName (temppath, "", 0, tempfile);
+
+    f = fopen(tempfile, "w+bDT");
+    bytesWritten = fwrite(DATA, 1, sizeof(DATA), f);
+    rewind(f);
+    bytesRead = fread(DATA2, 1, sizeof(DATA2), f);
+    fclose(f);
+
+    ok (bytesRead == bytesWritten && bytesRead == sizeof(DATA),
+        "fopen file mode 'T' wrongly interpreted as 't'\n" );
+
+    h = FindFirstFile(tempfile, &findData);
+
+    ok (h == INVALID_HANDLE_VALUE, "file wasn't deleted when closed.\n" );
+
+    if (h != INVALID_HANDLE_VALUE) FindClose(h);
+}
+
 static WCHAR* AtoW( const char* p )
 {
     WCHAR* buffer;
@@ -1628,6 +1659,7 @@ START_TEST(file)
     test_fileops();
     test_asciimode();
     test_asciimode2();
+    test_filemodeT();
     test_readmode(FALSE); /* binary mode */
     test_readmode(TRUE);  /* ascii mode */
     test_readboundary();
