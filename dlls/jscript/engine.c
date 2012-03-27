@@ -145,20 +145,15 @@ static void stack_popn(exec_ctx_t *ctx, unsigned n)
         VariantClear(stack_pop(ctx));
 }
 
-static HRESULT stack_pop_number(exec_ctx_t *ctx, VARIANT *r)
+static HRESULT stack_pop_number(exec_ctx_t *ctx, double *r)
 {
     VARIANT *v;
-    double n;
     HRESULT hres;
 
     v = stack_pop(ctx);
-    hres = to_number(ctx->script, v, ctx->ei, &n);
+    hres = to_number(ctx->script, v, ctx->ei, r);
     VariantClear(v);
-    if(FAILED(hres))
-        return hres;
-
-    num_set_val(r, n);
-    return S_OK;
+    return hres;
 }
 
 static HRESULT stack_pop_object(exec_ctx_t *ctx, IDispatch **r)
@@ -1569,7 +1564,7 @@ static HRESULT interp_add(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.6.2 */
 static HRESULT interp_sub(exec_ctx_t *ctx)
 {
-    VARIANT l, r;
+    double l, r;
     HRESULT hres;
 
     TRACE("\n");
@@ -1582,13 +1577,13 @@ static HRESULT interp_sub(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    return stack_push_number(ctx, num_val(&l)-num_val(&r));
+    return stack_push_number(ctx, l-r);
 }
 
 /* ECMA-262 3rd Edition    11.5.1 */
 static HRESULT interp_mul(exec_ctx_t *ctx)
 {
-    VARIANT l, r;
+    double l, r;
     HRESULT hres;
 
     TRACE("\n");
@@ -1601,13 +1596,13 @@ static HRESULT interp_mul(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    return stack_push_number(ctx, num_val(&l)*num_val(&r));
+    return stack_push_number(ctx, l*r);
 }
 
 /* ECMA-262 3rd Edition    11.5.2 */
 static HRESULT interp_div(exec_ctx_t *ctx)
 {
-    VARIANT l, r;
+    double l, r;
     HRESULT hres;
 
     TRACE("\n");
@@ -1620,13 +1615,13 @@ static HRESULT interp_div(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    return stack_push_number(ctx, num_val(&l)/num_val(&r));
+    return stack_push_number(ctx, l/r);
 }
 
 /* ECMA-262 3rd Edition    11.5.3 */
 static HRESULT interp_mod(exec_ctx_t *ctx)
 {
-    VARIANT l, r;
+    double l, r;
     HRESULT hres;
 
     TRACE("\n");
@@ -1639,7 +1634,7 @@ static HRESULT interp_mod(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    return stack_push_number(ctx, fmod(num_val(&l), num_val(&r)));
+    return stack_push_number(ctx, fmod(l, r));
 }
 
 /* ECMA-262 3rd Edition    11.4.2 */
@@ -1862,7 +1857,7 @@ static HRESULT interp_typeof(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.4.7 */
 static HRESULT interp_minus(exec_ctx_t *ctx)
 {
-    VARIANT n;
+    double n;
     HRESULT hres;
 
     TRACE("\n");
@@ -1871,7 +1866,7 @@ static HRESULT interp_minus(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    return stack_push_number(ctx, -num_val(&n));
+    return stack_push_number(ctx, -n);
 }
 
 /* ECMA-262 3rd Edition    11.4.6 */
