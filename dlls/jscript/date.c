@@ -2431,7 +2431,7 @@ static HRESULT DateConstr_parse(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     return S_OK;
 }
 
-static HRESULT date_utc(script_ctx_t *ctx, DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei)
+static HRESULT date_utc(script_ctx_t *ctx, DISPPARAMS *dp, double *ret, jsexcept_t *ei)
 {
     double year, month, vdate, hours, minutes, seconds, ms;
     int arg_no = arg_cnt(dp);
@@ -2497,22 +2497,23 @@ static HRESULT date_utc(script_ctx_t *ctx, DISPPARAMS *dp, VARIANT *retv, jsexce
         ms = 0;
     }
 
-    if(retv) {
-        V_VT(retv) = VT_R8;
-        V_R8(retv) = time_clip(make_date(
-                    make_day(year, month, vdate),
-                    make_time(hours, minutes,seconds, ms)));
-    }
-
+    *ret = time_clip(make_date(make_day(year, month, vdate),
+            make_time(hours, minutes,seconds, ms)));
     return S_OK;
 }
 
 static HRESULT DateConstr_UTC(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
+    double n;
+    HRESULT hres;
+
     TRACE("\n");
 
-    return date_utc(ctx, dp, retv, ei);
+    hres = date_utc(ctx, dp, &n, ei);
+    if(SUCCEEDED(hres) && retv)
+        num_set_val(retv, n);
+    return hres;
 }
 
 static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
@@ -2567,14 +2568,14 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
         /* ECMA-262 3rd Edition    15.9.3.1 */
         default: {
-            VARIANT ret_date;
+            double ret_date;
             DateInstance *di;
 
             hres = date_utc(ctx, dp, &ret_date, ei);
             if(FAILED(hres))
                 return hres;
 
-            hres = create_date(ctx, NULL, num_val(&ret_date), &date);
+            hres = create_date(ctx, NULL, ret_date, &date);
             if(FAILED(hres))
                 return hres;
 
