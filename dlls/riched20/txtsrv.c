@@ -62,49 +62,6 @@ typedef struct ITextServicesImpl {
    char spare[256];
 } ITextServicesImpl;
 
-static const ITextServicesVtbl textservices_Vtbl;
-
-/******************************************************************
- *        CreateTextServices (RICHED20.4)
- */
-HRESULT WINAPI CreateTextServices(IUnknown  * pUnkOuter,
-                                  ITextHost * pITextHost,
-                                  IUnknown  **ppUnk)
-{
-   ITextServicesImpl *ITextImpl;
-   HRESULT hres;
-   TRACE("%p %p --> %p\n", pUnkOuter, pITextHost, ppUnk);
-   if (pITextHost == NULL)
-      return E_POINTER;
-
-   ITextImpl = CoTaskMemAlloc(sizeof(*ITextImpl));
-   if (ITextImpl == NULL)
-      return E_OUTOFMEMORY;
-   InitializeCriticalSection(&ITextImpl->csTxtSrv);
-   ITextImpl->csTxtSrv.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ITextServicesImpl.csTxtSrv");
-   ITextImpl->ref = 1;
-   ITextHost_AddRef(pITextHost);
-   ITextImpl->pMyHost = pITextHost;
-   ITextImpl->ITextServices_iface.lpVtbl = &textservices_Vtbl;
-   ITextImpl->editor = ME_MakeEditor(pITextHost, FALSE);
-   ITextImpl->editor->exStyleFlags = 0;
-   ITextImpl->editor->rcFormat.left = 0;
-   ITextImpl->editor->rcFormat.top = 0;
-   ITextImpl->editor->rcFormat.right = 0;
-   ITextImpl->editor->rcFormat.bottom = 0;
-
-   ME_HandleMessage(ITextImpl->editor, WM_CREATE, 0, 0, TRUE, &hres);
-
-   if (pUnkOuter)
-   {
-      FIXME("Support aggregation\n");
-      return CLASS_E_NOAGGREGATION;
-   }
-
-   *ppUnk = (IUnknown *)&ITextImpl->ITextServices_iface;
-   return S_OK;
-}
-
 static inline ITextServicesImpl *impl_from_ITextServices(ITextServices *iface)
 {
    return CONTAINING_RECORD(iface, ITextServicesImpl, ITextServices_iface);
@@ -370,7 +327,7 @@ DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetDropTarget,8)
 DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxPropertyBitsChange,12)
 DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetCachedSize,12)
 
-static const ITextServicesVtbl textservices_Vtbl =
+static const ITextServicesVtbl textservices_vtbl =
 {
    fnTextSrv_QueryInterface,
    fnTextSrv_AddRef,
@@ -394,3 +351,42 @@ static const ITextServicesVtbl textservices_Vtbl =
    THISCALL(fnTextSrv_OnTxPropertyBitsChange),
    THISCALL(fnTextSrv_TxGetCachedSize)
 };
+
+/******************************************************************
+ *        CreateTextServices (RICHED20.4)
+ */
+HRESULT WINAPI CreateTextServices(IUnknown  *pUnkOuter, ITextHost *pITextHost, IUnknown  **ppUnk)
+{
+   ITextServicesImpl *ITextImpl;
+   HRESULT hres;
+   TRACE("%p %p --> %p\n", pUnkOuter, pITextHost, ppUnk);
+   if (pITextHost == NULL)
+      return E_POINTER;
+
+   ITextImpl = CoTaskMemAlloc(sizeof(*ITextImpl));
+   if (ITextImpl == NULL)
+      return E_OUTOFMEMORY;
+   InitializeCriticalSection(&ITextImpl->csTxtSrv);
+   ITextImpl->csTxtSrv.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ITextServicesImpl.csTxtSrv");
+   ITextImpl->ref = 1;
+   ITextHost_AddRef(pITextHost);
+   ITextImpl->pMyHost = pITextHost;
+   ITextImpl->ITextServices_iface.lpVtbl = &textservices_vtbl;
+   ITextImpl->editor = ME_MakeEditor(pITextHost, FALSE);
+   ITextImpl->editor->exStyleFlags = 0;
+   ITextImpl->editor->rcFormat.left = 0;
+   ITextImpl->editor->rcFormat.top = 0;
+   ITextImpl->editor->rcFormat.right = 0;
+   ITextImpl->editor->rcFormat.bottom = 0;
+
+   ME_HandleMessage(ITextImpl->editor, WM_CREATE, 0, 0, TRUE, &hres);
+
+   if (pUnkOuter)
+   {
+      FIXME("Support aggregation\n");
+      return CLASS_E_NOAGGREGATION;
+   }
+
+   *ppUnk = (IUnknown *)&ITextImpl->ITextServices_iface;
+   return S_OK;
+}
