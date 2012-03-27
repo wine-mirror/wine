@@ -13115,7 +13115,7 @@ msgstr ""
 "la finestra"
 
 #: wineconsole.rc:34
-msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
+msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "Cada caràcter és %1!u! píxels d'ampla per %2!u! píxels d'alta"
 
 #: wineconsole.rc:35

@@ -13019,7 +13019,7 @@ msgstr ""
 "スクリーン バッファ サイズはウィンドウ バッファ サイズ以上にしてください"
 
 #: wineconsole.rc:34
-msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
+msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "それぞれの文字は %1!u! ピクセルの幅、%2!u! ピクセルの高さ"
 
 #: wineconsole.rc:35

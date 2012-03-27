@@ -13038,7 +13038,7 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "Velikost zaslonskega medpomnilnika mora biti večja ali enaka okenskemu"
 
 #: wineconsole.rc:34
-msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
+msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "Vsak znak je širok %1!u! točk in visok %2!u! točk"
 
 #: wineconsole.rc:35

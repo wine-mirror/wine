@@ -12459,7 +12459,7 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "螢幕緩衝區大小必須大於或等於視窗緩衝區"
 
 #: wineconsole.rc:34
-msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
+msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "每個字都是 %1!u! 個像素寬，%2!u! 個像素高"
 
 #: wineconsole.rc:35

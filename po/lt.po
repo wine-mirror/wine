@@ -13050,7 +13050,7 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "Ekrano buferio dydis turi būti didesnis arba lygus lango buferiui"
 
 #: wineconsole.rc:34
-msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
+msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr ""
 "Kiekvienas simbolis yra %1!u! pikselių pločio ir %2!u! pikselių aukščio"
 
