@@ -623,7 +623,7 @@ HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
         break;
     case VT_I4:
     case VT_R8:
-        hres = create_number(ctx, v, &dispex);
+        hres = create_number(ctx, num_val(v), &dispex);
         if(FAILED(hres))
             return hres;
 

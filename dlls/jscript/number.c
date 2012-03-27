@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 typedef struct {
     jsdisp_t dispex;
 
-    VARIANT num;
+    double value;
 } NumberInstance;
 
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
@@ -76,17 +76,16 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
             return throw_type_error(ctx, ei, JS_E_INVALIDARG, NULL);
     }
 
-    if(V_VT(&number->num) == VT_I4)
-        val = V_I4(&number->num);
-    else
-        val = V_R8(&number->num);
+    val = number->value;
 
     if(radix==10 || isnan(val) || isinf(val)) {
-        hres = to_string(ctx, &number->num, ei, &str);
+        VARIANT v;
+
+        num_set_val(&v, val);
+        hres = to_string(ctx, &v, ei, &str);
         if(FAILED(hres))
             return hres;
-    }
-    else {
+    }else {
         INT idx = 0;
         DOUBLE integ, frac, log_radix = 0;
         WCHAR buf[NUMBER_TOSTRING_BUF_SIZE+16];
@@ -218,7 +217,7 @@ static HRESULT Number_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
         return throw_type_error(ctx, ei, JS_E_NUMBER_EXPECTED, NULL);
 
     if(retv)
-        *retv = number->num;
+        num_set_val(retv, number->value);
     return S_OK;
 }
 
@@ -231,7 +230,7 @@ static HRESULT Number_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     case INVOKE_FUNC:
         return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
     case DISPATCH_PROPERTYGET:
-        *retv = number->num;
+        num_set_val(retv, number->value);
         break;
 
     default:
@@ -288,20 +287,16 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
     case DISPATCH_CONSTRUCT: {
         jsdisp_t *obj;
-        VARIANT v;
 
         if(arg_cnt(dp)) {
             hres = to_number(ctx, get_arg(dp, 0), ei, &n);
             if(FAILED(hres))
                 return hres;
-
-            num_set_val(&v, n);
         }else {
-            V_VT(&v) = VT_I4;
-            V_I4(&v) = 0;
+            n = 0;
         }
 
-        hres = create_number(ctx, &v, &obj);
+        hres = create_number(ctx, n, &obj);
         if(FAILED(hres))
             return hres;
 
@@ -347,7 +342,7 @@ HRESULT create_number_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdi
     if(FAILED(hres))
         return hres;
 
-    V_VT(&number->num) = VT_I4;
+    number->value = 0;
     hres = create_builtin_function(ctx, NumberConstr_value, NumberW, NULL,
             PROPF_CONSTR|1, &number->dispex, ret);
 
@@ -355,7 +350,7 @@ HRESULT create_number_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdi
     return hres;
 }
 
-HRESULT create_number(script_ctx_t *ctx, VARIANT *num, jsdisp_t **ret)
+HRESULT create_number(script_ctx_t *ctx, double value, jsdisp_t **ret)
 {
     NumberInstance *number;
     HRESULT hres;
@@ -364,7 +359,7 @@ HRESULT create_number(script_ctx_t *ctx, VARIANT *num, jsdisp_t **ret)
     if(FAILED(hres))
         return hres;
 
-    number->num = *num;
+    number->value = value;
 
     *ret = &number->dispex;
     return S_OK;

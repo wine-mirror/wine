@@ -242,7 +242,7 @@ HRESULT create_regexp(script_ctx_t*,const WCHAR *,int,DWORD,jsdisp_t**) DECLSPEC
 HRESULT create_regexp_var(script_ctx_t*,VARIANT*,VARIANT*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_string(script_ctx_t*,const WCHAR*,DWORD,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_bool(script_ctx_t*,VARIANT_BOOL,jsdisp_t**) DECLSPEC_HIDDEN;
-HRESULT create_number(script_ctx_t*,VARIANT*,jsdisp_t**) DECLSPEC_HIDDEN;
+HRESULT create_number(script_ctx_t*,double,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_vbarray(script_ctx_t*,SAFEARRAY*,jsdisp_t**) DECLSPEC_HIDDEN;
 
 typedef enum {
