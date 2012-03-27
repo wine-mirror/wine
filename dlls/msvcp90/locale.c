@@ -182,9 +182,7 @@ locale_facet* __thiscall MSVCP_locale_facet_vector_dtor(locale_facet *this, unsi
     return this;
 }
 
-const vtable_ptr MSVCP_locale_facet_vtable[] = {
-    (vtable_ptr)THISCALL_NAME(MSVCP_locale_facet_vector_dtor)
-};
+extern const vtable_ptr MSVCP_locale_facet_vtable;
 
 /* ??0id@locale@std@@QAE@I@Z */
 /* ??0id@locale@std@@QEAA@_K@Z */
@@ -240,7 +238,7 @@ DEFINE_THISCALL_WRAPPER(locale_facet_ctor, 4)
 locale_facet* __thiscall locale_facet_ctor(locale_facet *this)
 {
     TRACE("(%p)\n", this);
-    this->vtable = MSVCP_locale_facet_vtable;
+    this->vtable = &MSVCP_locale_facet_vtable;
     this->refs = 0;
     return this;
 }
@@ -251,7 +249,7 @@ DEFINE_THISCALL_WRAPPER(locale_facet_ctor_refs, 8)
 locale_facet* __thiscall locale_facet_ctor_refs(locale_facet *this, MSVCP_size_t refs)
 {
     TRACE("(%p %lu)\n", this, refs);
-    this->vtable = MSVCP_locale_facet_vtable;
+    this->vtable = &MSVCP_locale_facet_vtable;
     this->refs = refs;
     return this;
 }
@@ -665,12 +663,6 @@ _Timevec*__thiscall _Locinfo__Gettnames(const _Locinfo *this, _Timevec *ret)
     _Timevec_ctor_timeptr(ret, _Gettnames());
     return ret;
 }
-
-static const type_info locale_facet_type_info = {
-    MSVCP_locale_facet_vtable,
-    NULL,
-    ".?AVfacet@locale@std@@"
-};
 
 /* ?id@?$collate@D@std@@2V0locale@2@A */
 locale_id collate_char_id = {0};
@@ -4127,13 +4119,7 @@ basic_string_char* __thiscall locale_name(const locale *this, basic_string_char 
     return ret;
 }
 
-static const rtti_base_descriptor locale_facet_rtti_base_descriptor = {
-    &locale_facet_type_info,
-    0,
-    { 0, -1, 0},
-    64
-};
-
+DEFINE_RTTI_DATA(locale_facet, 0, 0, NULL, NULL, NULL, ".?AVfacet@locale@std@@");
 DEFINE_RTTI_DATA(collate_char, 0, 1, &locale_facet_rtti_base_descriptor, NULL, NULL, ".?AV?$collate@D@std@@");
 DEFINE_RTTI_DATA(collate_wchar, 0, 1, &locale_facet_rtti_base_descriptor, NULL, NULL, ".?AV?$collate@_W@std@@");
 DEFINE_RTTI_DATA(collate_short, 0, 1, &locale_facet_rtti_base_descriptor, NULL, NULL, ".?AV?$collate@G@std@@");
@@ -4151,6 +4137,7 @@ DEFINE_RTTI_DATA(num_get_short, 0, 1, &locale_facet_rtti_base_descriptor, NULL, 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
+    __ASM_VTABLE(locale_facet, "");
     __ASM_VTABLE(collate_char,
             VTABLE_ADD_FUNC(collate_char_do_compare)
             VTABLE_ADD_FUNC(collate_char_do_transform)
