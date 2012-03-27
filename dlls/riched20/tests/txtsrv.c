@@ -38,6 +38,7 @@ static HMODULE hmoduleRichEdit;
 static IID *pIID_ITextServices;
 static IID *pIID_ITextHost;
 static IID *pIID_ITextHost2;
+static PCreateTextServices pCreateTextServices;
 
 static const char *debugstr_guid(REFIID riid)
 {
@@ -620,7 +621,6 @@ static BOOL init_texthost(void)
 {
     IUnknown *init;
     HRESULT result;
-    PCreateTextServices pCreateTextServices;
 
     dummyTextHost = CoTaskMemAlloc(sizeof(*dummyTextHost));
     if (dummyTextHost == NULL) {
@@ -633,7 +633,6 @@ static BOOL init_texthost(void)
     /* MSDN states that an IUnknown object is returned by
        CreateTextServices which is then queried to obtain a
        ITextServices object. */
-    pCreateTextServices = (void*)GetProcAddress(hmoduleRichEdit, "CreateTextServices");
     result = (*pCreateTextServices)(NULL, &dummyTextHost->ITextHost_iface, &init);
     ok(result == S_OK, "Did not return S_OK when created (result =  %x)\n", result);
     if (result != S_OK) {
@@ -825,6 +824,8 @@ START_TEST( txtsrv )
     pIID_ITextServices = (IID*)GetProcAddress(hmoduleRichEdit, "IID_ITextServices");
     pIID_ITextHost = (IID*)GetProcAddress(hmoduleRichEdit, "IID_ITextHost");
     pIID_ITextHost2 = (IID*)GetProcAddress(hmoduleRichEdit, "IID_ITextHost2");
+    pCreateTextServices = (void*)GetProcAddress(hmoduleRichEdit, "CreateTextServices");
+
     test_IIDs();
 
     if (init_texthost())
