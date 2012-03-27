@@ -32,18 +32,18 @@ static inline IDirect3DVolume9Impl *impl_from_IDirect3DVolume9(IDirect3DVolume9 
 static HRESULT WINAPI IDirect3DVolume9Impl_QueryInterface(IDirect3DVolume9 *iface, REFIID riid,
         void **ppobj)
 {
-    IDirect3DVolume9Impl *This = impl_from_IDirect3DVolume9(iface);
-
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
 
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IDirect3DVolume9)) {
+    if (IsEqualGUID(riid, &IID_IDirect3DVolume9)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
         IDirect3DVolume9_AddRef(iface);
-        *ppobj = This;
+        *ppobj = iface;
         return S_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
     *ppobj = NULL;
     return E_NOINTERFACE;
 }
