@@ -1594,6 +1594,17 @@ static inline DWORD get_ntm_flags( FT_Face ft_face )
     return flags;
 }
 
+static inline int get_bitmap_internal_leading( FT_Face ft_face )
+{
+    int internal_leading = 0;
+    FT_WinFNT_HeaderRec winfnt_header;
+
+    if (!pFT_Get_WinFNT_Header( ft_face, &winfnt_header ))
+        internal_leading = winfnt_header.internal_leading;
+
+    return internal_leading;
+}
+
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
@@ -1609,7 +1620,6 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
         Face *face;
         struct list *face_elem_ptr;
         FT_WinFNT_HeaderRec winfnt_header;
-        int internal_leading;
         FONTSIGNATURE fs;
         My_FT_Bitmap_Size *size = NULL;
         FT_Fixed version;
@@ -1621,7 +1631,6 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
 
         StyleW = towstr(CP_ACP, ft_face->style_name);
 
-        internal_leading = 0;
         memset(&fs, 0, sizeof(fs));
 
         pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
@@ -1647,7 +1656,6 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
                   winfnt_header.vertical_resolution,winfnt_header.horizontal_resolution, winfnt_header.nominal_point_size);
             if(TranslateCharsetInfo((DWORD*)(UINT_PTR)winfnt_header.charset, &csi, TCI_SRCCHARSET))
                 fs = csi.fs;
-            internal_leading = winfnt_header.internal_leading;
         }
 
         version = get_font_version( ft_face );
@@ -1709,7 +1717,7 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
             face->size.size = size->size;
             face->size.x_ppem = size->x_ppem;
             face->size.y_ppem = size->y_ppem;
-            face->size.internal_leading = internal_leading;
+            face->size.internal_leading = get_bitmap_internal_leading( ft_face );
             face->scalable = FALSE;
         }
 
