@@ -1281,9 +1281,15 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
       *open_flags |=  MSVCRT__O_BINARY;
       *open_flags &= ~MSVCRT__O_TEXT;
       break;
-    case 'T': case 't':
+    case 't':
       *open_flags |=  MSVCRT__O_TEXT;
       *open_flags &= ~MSVCRT__O_BINARY;
+      break;
+    case 'D':
+      *open_flags |= MSVCRT__O_TEMPORARY;
+      break;
+    case 'T':
+      *open_flags |= MSVCRT__O_SHORT_LIVED;
       break;
     case '+':
     case ' ':
