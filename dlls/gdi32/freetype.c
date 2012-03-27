@@ -1448,7 +1448,7 @@ static inline int TestStyles(DWORD flags, DWORD styles)
     return (flags & styles) == styles;
 }
 
-static int StyleOrdering(Face *face)
+static inline int style_order(Face *face)
 {
     if (TestStyles(face->ntmFlags, NTM_BOLD | NTM_ITALIC))
         return 3;
@@ -1465,21 +1465,6 @@ static int StyleOrdering(Face *face)
          face->ntmFlags);
 
     return 9999;
-}
-
-/* Add a style of face to a font family using an ordering of the list such
-   that regular fonts come before bold and italic, and single styles come
-   before compound styles.  */
-static void AddFaceToFamily(Face *face, Family *family)
-{
-    struct list *entry;
-
-    LIST_FOR_EACH( entry, &family->faces )
-    {
-        Face *ent = LIST_ENTRY(entry, Face, entry);
-        if (StyleOrdering(face) < StyleOrdering(ent)) break;
-    }
-    list_add_before( entry, &face->entry );
 }
 
 static WCHAR *prepend_at(WCHAR *family)
@@ -1681,58 +1666,17 @@ static inline void free_face( Face *face )
 #define ADDFONT_FORCE_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
 
-static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr, DWORD font_data_size, FT_Long face_index, DWORD flags, BOOL vertical)
+static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file, void *font_data_ptr, DWORD font_data_size,
+                          DWORD flags, BOOL vertical )
 {
-    Family *family;
-    WCHAR *StyleW;
-    Face *face;
-    struct list *face_elem_ptr;
-    FONTSIGNATURE fs;
-    My_FT_Bitmap_Size *size = NULL;
-    FT_Fixed version;
+    Face *face = HeapAlloc( GetProcessHeap(), 0, sizeof(*face) );
+    My_FT_Bitmap_Size *size = (My_FT_Bitmap_Size *)ft_face->available_sizes;
 
-    if(!FT_IS_SCALABLE(ft_face))
-        size = (My_FT_Bitmap_Size *)ft_face->available_sizes;
-
-    family = get_family( ft_face, vertical );
-
-    StyleW = towstr(CP_ACP, ft_face->style_name);
-
-    get_fontsig( ft_face, &fs );
-
-    version = get_font_version( ft_face );
-    LIST_FOR_EACH(face_elem_ptr, &family->faces)
-    {
-        face = LIST_ENTRY(face_elem_ptr, Face, entry);
-        if(!strcmpiW(face->StyleName, StyleW) &&
-           (FT_IS_SCALABLE(ft_face) || ((size->y_ppem == face->size.y_ppem) && !memcmp(&fs, &face->fs, sizeof(fs)) )))
-        {
-            TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
-                  debugstr_w(family->FamilyName), debugstr_w(StyleW),
-                  face->font_version, version);
-            if(version <= face->font_version)
-            {
-                TRACE("Original font is newer so skipping this one\n");
-                HeapFree(GetProcessHeap(), 0, StyleW);
-                return;
-            }
-            else
-            {
-                TRACE("Replacing original with this one\n");
-                list_remove(&face->entry);
-                free_face( face );
-                break;
-            }
-        }
-    }
-
-    face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
-    face->cached_enum_data = NULL;
-    face->StyleName = StyleW;
-    face->FullName = get_face_name(ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+    face->StyleName = towstr( CP_ACP, ft_face->style_name );
+    face->FullName = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES );
     if (file)
     {
-        face->file = strdupA(file);
+        face->file = strdupA( file );
         face->font_data_ptr = NULL;
         face->font_data_size = 0;
     }
@@ -1742,17 +1686,15 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
         face->font_data_ptr = font_data_ptr;
         face->font_data_size = font_data_size;
     }
-    face->face_index = face_index;
-    face->ntmFlags = get_ntm_flags( ft_face );
-    face->font_version = version;
-    face->family = family;
-    face->vertical = vertical;
-    face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
-    face->fs = fs;
 
-    if(FT_IS_SCALABLE(ft_face))
+    face->face_index = face_index;
+    get_fontsig( ft_face, &face->fs );
+    face->ntmFlags = get_ntm_flags( ft_face );
+    face->font_version = get_font_version( ft_face );
+
+    if (FT_IS_SCALABLE( ft_face ))
     {
-        memset(&face->size, 0, sizeof(face->size));
+        memset( &face->size, 0, sizeof(face->size) );
         face->scalable = TRUE;
     }
     else
@@ -1769,18 +1711,82 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
         face->scalable = FALSE;
     }
 
+    face->vertical = vertical;
+    face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
+    face->family = NULL;
+    face->cached_enum_data = NULL;
+
     TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
           face->fs.fsCsb[0], face->fs.fsCsb[1],
           face->fs.fsUsb[0], face->fs.fsUsb[1],
           face->fs.fsUsb[2], face->fs.fsUsb[3]);
 
-    if(flags & ADDFONT_ADD_TO_CACHE)
-        add_face_to_cache(face);
+    return face;
+}
 
-    AddFaceToFamily(face, family);
+static inline BOOL faces_equal( Face *f1, Face *f2 )
+{
+    if (strcmpiW( f1->StyleName, f2->StyleName )) return FALSE;
+    if (f1->scalable) return TRUE;
+    if (f2->size.y_ppem != f2->size.y_ppem) return FALSE;
+    return !memcmp( &f1->fs, &f2->fs, sizeof(f1->fs) );
+}
+
+static BOOL insert_face_in_family_list( Face *face, Family *family )
+{
+    Face *cursor;
+
+    LIST_FOR_EACH_ENTRY( cursor, &family->faces, Face, entry )
+    {
+        if (faces_equal( face, cursor ))
+        {
+            TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
+                  debugstr_w(family->FamilyName), debugstr_w(face->StyleName),
+                  cursor->font_version, face->font_version);
+
+            if (face->font_version <= cursor->font_version)
+            {
+                TRACE("Original font is newer so skipping this one\n");
+                return FALSE;
+            }
+            else
+            {
+                TRACE("Replacing original with this one\n");
+                list_add_before( &cursor->entry, &face->entry );
+                face->family = family;
+                list_remove( &cursor->entry);
+                free_face( cursor );
+                return TRUE;
+            }
+        }
+
+        if (style_order( face ) < style_order( cursor )) break;
+    }
+
+    list_add_before( &cursor->entry, &face->entry );
+    face->family = family;
+    return TRUE;
+}
+
+static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr, DWORD font_data_size,
+                          FT_Long face_index, DWORD flags, BOOL vertical)
+{
+    Face *face;
+    Family *family;
+
+    face = create_face( ft_face, face_index, file, font_data_ptr, font_data_size, flags, vertical );
+    family = get_family( ft_face, vertical );
+    if (!insert_face_in_family_list( face, family ))
+    {
+        free_face( face );
+        return;
+    }
+
+    if (flags & ADDFONT_ADD_TO_CACHE)
+        add_face_to_cache( face );
 
     TRACE("Added font %s %s\n", debugstr_w(family->FamilyName),
-          debugstr_w(StyleW));
+          debugstr_w(face->StyleName));
 }
 
 static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_size, DWORD flags)
