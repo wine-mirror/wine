@@ -215,27 +215,28 @@ static HRESULT WINAPI IQueryAssociations_fnInit(
         return E_INVALIDARG;
 }
 
-static HRESULT ASSOC_GetValue(HKEY hkey, WCHAR ** pszText)
+static HRESULT ASSOC_GetValue(HKEY hkey, const WCHAR *name, void **data, DWORD *data_size)
 {
-  DWORD len;
+  DWORD size;
   LONG ret;
 
-  assert(pszText);
-  ret = RegQueryValueExW(hkey, NULL, 0, NULL, NULL, &len);
+  assert(data);
+  ret = RegQueryValueExW(hkey, name, 0, NULL, NULL, &size);
   if (ret != ERROR_SUCCESS)
     return HRESULT_FROM_WIN32(ret);
-  if (!len)
+  if (!size)
     return E_FAIL;
-  *pszText = HeapAlloc(GetProcessHeap(), 0, len);
-  if (!*pszText)
+  *data = HeapAlloc(GetProcessHeap(), 0, size);
+  if (!*data)
     return E_OUTOFMEMORY;
-  ret = RegQueryValueExW(hkey, NULL, 0, NULL, (LPBYTE)*pszText,
-                         &len);
+  ret = RegQueryValueExW(hkey, name, 0, NULL, (LPBYTE)*data, &size);
   if (ret != ERROR_SUCCESS)
   {
-    HeapFree(GetProcessHeap(), 0, *pszText);
+    HeapFree(GetProcessHeap(), 0, *data);
     return HRESULT_FROM_WIN32(ret);
   }
+  if(data_size)
+      *data_size = size;
   return S_OK;
 }
 
@@ -253,7 +254,7 @@ static HRESULT ASSOC_GetCommand(IQueryAssociationsImpl *This,
   static const WCHAR commandW[] = { 'c','o','m','m','a','n','d',0 };
   static const WCHAR shellW[] = { 's','h','e','l','l',0 };
 
-  hr = ASSOC_GetValue(This->hkeySource, &pszFileType);
+  hr = ASSOC_GetValue(This->hkeySource, NULL, (void**)&pszFileType, NULL);
   if (FAILED(hr))
     return hr;
   ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, pszFileType, 0, KEY_READ, &hkeyFile);
@@ -268,7 +269,7 @@ static HRESULT ASSOC_GetCommand(IQueryAssociationsImpl *This,
 
   if (!pszExtra)
   {
-    hr = ASSOC_GetValue(hkeyShell, &pszExtraFromReg);
+    hr = ASSOC_GetValue(hkeyShell, NULL, (void**)&pszExtraFromReg, NULL);
     /* if no default action */
     if (hr == E_FAIL || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
     {
@@ -311,7 +312,7 @@ static HRESULT ASSOC_GetCommand(IQueryAssociationsImpl *This,
   RegCloseKey(hkeyVerb);
   if (ret != ERROR_SUCCESS)
     return HRESULT_FROM_WIN32(ret);
-  hr = ASSOC_GetValue(hkeyCommand, ppszCommand);
+  hr = ASSOC_GetValue(hkeyCommand, NULL, (void**)ppszCommand, NULL);
   RegCloseKey(hkeyCommand);
   return hr;
 }
@@ -361,7 +362,7 @@ static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
   return S_OK;
 }
 
-static HRESULT ASSOC_ReturnData(LPWSTR out, DWORD *outlen, LPCWSTR data,
+static HRESULT ASSOC_ReturnData(void *out, DWORD *outlen, const void *data,
                                 DWORD datalen)
 {
   assert(outlen);
@@ -374,7 +375,7 @@ static HRESULT ASSOC_ReturnData(LPWSTR out, DWORD *outlen, LPCWSTR data,
       return E_POINTER;
     }
     *outlen = datalen;
-    lstrcpynW(out, data, datalen);
+    memcpy(out, data, datalen);
     return S_OK;
   }
   else
@@ -382,6 +383,19 @@ static HRESULT ASSOC_ReturnData(LPWSTR out, DWORD *outlen, LPCWSTR data,
     *outlen = datalen;
     return S_FALSE;
   }
+}
+
+static HRESULT ASSOC_ReturnString(LPWSTR out, DWORD *outlen, LPCWSTR data,
+        DWORD datalen)
+{
+    HRESULT hres;
+
+    assert(outlen);
+
+    *outlen *= sizeof(WCHAR);
+    hres = ASSOC_ReturnData(out, outlen, data, datalen*sizeof(WCHAR));
+    *outlen /= sizeof(WCHAR);
+    return hres;
 }
 
 /**************************************************************************
@@ -432,7 +446,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
       hr = ASSOC_GetCommand(This, pszExtra, &command);
       if (SUCCEEDED(hr))
       {
-        hr = ASSOC_ReturnData(pszOut, pcchOut, command, strlenW(command) + 1);
+        hr = ASSOC_ReturnString(pszOut, pcchOut, command, strlenW(command) + 1);
         HeapFree(GetProcessHeap(), 0, command);
       }
       return hr;
@@ -444,7 +458,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
       if (FAILED(hr))
         return hr;
       len++;
-      return ASSOC_ReturnData(pszOut, pcchOut, path, len);
+      return ASSOC_ReturnString(pszOut, pcchOut, path, len);
     }
 
     case ASSOCSTR_FRIENDLYDOCNAME:
@@ -453,7 +467,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
       DWORD ret;
       DWORD size;
 
-      hr = ASSOC_GetValue(This->hkeySource, &pszFileType);
+      hr = ASSOC_GetValue(This->hkeySource, NULL, (void**)&pszFileType, NULL);
       if (FAILED(hr))
         return hr;
       size = 0;
@@ -465,7 +479,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
         {
           ret = RegGetValueW(HKEY_CLASSES_ROOT, pszFileType, NULL, RRF_RT_REG_SZ, NULL, docName, &size);
           if (ret == ERROR_SUCCESS)
-            hr = ASSOC_ReturnData(pszOut, pcchOut, docName, strlenW(docName) + 1);
+            hr = ASSOC_ReturnString(pszOut, pcchOut, docName, strlenW(docName) + 1);
           else
             hr = HRESULT_FROM_WIN32(ret);
           HeapFree(GetProcessHeap(), 0, docName);
@@ -521,7 +535,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
             /* Does strlenW(bufW) == 0 mean we use the filename? */
             len = strlenW(bufW) + 1;
             TRACE("found FileDescription: %s\n", debugstr_w(bufW));
-            hr = ASSOC_ReturnData(pszOut, pcchOut, bufW, len);
+            hr = ASSOC_ReturnString(pszOut, pcchOut, bufW, len);
             HeapFree(GetProcessHeap(), 0, verinfoW);
             return hr;
           }
@@ -531,7 +545,7 @@ get_friendly_name_fail:
       PathRemoveExtensionW(path);
       PathStripPathW(path);
       TRACE("using filename: %s\n", debugstr_w(path));
-      hr = ASSOC_ReturnData(pszOut, pcchOut, path, strlenW(path) + 1);
+      hr = ASSOC_ReturnString(pszOut, pcchOut, path, strlenW(path) + 1);
       HeapFree(GetProcessHeap(), 0, verinfoW);
       return hr;
     }
@@ -552,7 +566,7 @@ get_friendly_name_fail:
       {
         ret = RegGetValueW(This->hkeySource, NULL, Content_TypeW, RRF_RT_REG_SZ, NULL, contentType, &size);
         if (ret == ERROR_SUCCESS)
-          hr = ASSOC_ReturnData(pszOut, pcchOut, contentType, strlenW(contentType) + 1);
+          hr = ASSOC_ReturnString(pszOut, pcchOut, contentType, strlenW(contentType) + 1);
         else
           hr = HRESULT_FROM_WIN32(ret);
         HeapFree(GetProcessHeap(), 0, contentType);
@@ -570,7 +584,7 @@ get_friendly_name_fail:
       DWORD size;
       HKEY hkeyFile;
 
-      hr = ASSOC_GetValue(This->hkeySource, &pszFileType);
+      hr = ASSOC_GetValue(This->hkeySource, NULL, (void**)&pszFileType, NULL);
       if (FAILED(hr))
         return hr;
       ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, pszFileType, 0, KEY_READ, &hkeyFile);
@@ -585,7 +599,7 @@ get_friendly_name_fail:
           {
             ret = RegGetValueW(hkeyFile, DefaultIconW, NULL, RRF_RT_REG_SZ, NULL, icon, &size);
             if (ret == ERROR_SUCCESS)
-              hr = ASSOC_ReturnData(pszOut, pcchOut, icon, strlenW(icon) + 1);
+              hr = ASSOC_ReturnString(pszOut, pcchOut, icon, strlenW(icon) + 1);
             else
               hr = HRESULT_FROM_WIN32(ret);
             HeapFree(GetProcessHeap(), 0, icon);
