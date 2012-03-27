@@ -190,8 +190,6 @@ static HRESULT WINAPI IDirect3DDevice9Impl_QueryInterface(IDirect3DDevice9Ex *if
         void **ppobj)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3D9 *d3d;
-    IDirect3D9Impl *d3dimpl;
 
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
 
@@ -203,20 +201,16 @@ static HRESULT WINAPI IDirect3DDevice9Impl_QueryInterface(IDirect3DDevice9Ex *if
         return S_OK;
     } else if(IsEqualGUID(riid, &IID_IDirect3DDevice9Ex)) {
         /* Find out if the creating d3d9 interface was created with Direct3DCreate9Ex.
-         * It doesn't matter with which function the device was created.
-         */
-        IDirect3DDevice9_GetDirect3D(iface, &d3d);
-        d3dimpl = (IDirect3D9Impl *) d3d;
+         * It doesn't matter with which function the device was created. */
 
-        if(d3dimpl->extended) {
+        if (This->d3d_parent->extended)
+        {
             *ppobj = iface;
             IDirect3DDevice9Ex_AddRef((IDirect3DDevice9Ex *) *ppobj);
-            IDirect3D9_Release(d3d);
             TRACE("Returning IDirect3DDevice9Ex interface at %p\n", *ppobj);
             return S_OK;
         } else {
             WARN("IDirect3D9 instance wasn't created with CreateDirect3D9Ex, returning E_NOINTERFACE\n");
-            IDirect3D9_Release(d3d);
             *ppobj = NULL;
             return E_NOINTERFACE;
         }
@@ -265,7 +259,7 @@ static ULONG WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Release(IDirect3DDevi
       wined3d_device_decref(This->wined3d_device);
       wined3d_mutex_unlock();
 
-      IDirect3D9_Release(This->d3d_parent);
+      IDirect3D9Ex_Release(&This->d3d_parent->IDirect3D9Ex_iface);
 
       HeapFree(GetProcessHeap(), 0, This);
     }
@@ -325,7 +319,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetDirect3D(IDirect3DDevice9Ex *iface
         return D3DERR_INVALIDCALL;
     }
 
-    return IDirect3D9Ex_QueryInterface(This->d3d_parent, &IID_IDirect3D9, (void **)ppD3D9);
+    return IDirect3D9Ex_QueryInterface(&This->d3d_parent->IDirect3D9Ex_iface,
+            &IID_IDirect3D9, (void **)ppD3D9);
 }
 
 static HRESULT WINAPI IDirect3DDevice9Impl_GetDeviceCaps(IDirect3DDevice9Ex *iface, D3DCAPS9 *pCaps)
@@ -3513,8 +3508,8 @@ HRESULT device_init(IDirect3DDevice9Impl *device, IDirect3D9Impl *parent, struct
         return E_OUTOFMEMORY;
     }
 
-    device->d3d_parent = &parent->IDirect3D9Ex_iface;
-    IDirect3D9_AddRef(device->d3d_parent);
+    IDirect3D9Ex_AddRef(&parent->IDirect3D9Ex_iface);
+    device->d3d_parent = parent;
 
     return D3D_OK;
 }
