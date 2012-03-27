@@ -1579,6 +1579,21 @@ static inline FT_Fixed get_font_version( FT_Face ft_face )
     return version;
 }
 
+static inline DWORD get_ntm_flags( FT_Face ft_face )
+{
+    DWORD flags = 0;
+    FT_ULong table_size = 0;
+
+    if (ft_face->style_flags & FT_STYLE_FLAG_ITALIC) flags |= NTM_ITALIC;
+    if (ft_face->style_flags & FT_STYLE_FLAG_BOLD)   flags |= NTM_BOLD;
+    if (flags == 0) flags = NTM_REGULAR;
+
+    if (!pFT_Load_Sfnt_Table( ft_face, FT_MAKE_TAG( 'C','F','F',' ' ), 0, NULL, &table_size ))
+        flags |= NTM_PS_OPENTYPE;
+
+    return flags;
+}
+
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
@@ -1597,7 +1612,6 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
         int internal_leading;
         FONTSIGNATURE fs;
         My_FT_Bitmap_Size *size = NULL;
-        FT_ULong tmp_size;
         FT_Fixed version;
 
         if(!FT_IS_SCALABLE(ft_face))
@@ -1676,12 +1690,7 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
             face->font_data_size = font_data_size;
         }
         face->face_index = face_index;
-        face->ntmFlags = 0;
-        if (ft_face->style_flags & FT_STYLE_FLAG_ITALIC)
-            face->ntmFlags |= NTM_ITALIC;
-        if (ft_face->style_flags & FT_STYLE_FLAG_BOLD)
-            face->ntmFlags |= NTM_BOLD;
-        if (face->ntmFlags == 0) face->ntmFlags = NTM_REGULAR;
+        face->ntmFlags = get_ntm_flags( ft_face );
         face->font_version = version;
         face->family = family;
         face->vertical = vertical;
@@ -1702,14 +1711,6 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
             face->size.y_ppem = size->y_ppem;
             face->size.internal_leading = internal_leading;
             face->scalable = FALSE;
-        }
-
-        /* check for the presence of the 'CFF ' table to check if the font is Type1 */
-        tmp_size = 0;
-        if (!pFT_Load_Sfnt_Table(ft_face, FT_MAKE_TAG('C','F','F',' '), 0, NULL, &tmp_size))
-        {
-            TRACE("Font %s/%p is OTF Type1\n", wine_dbgstr_a(file), font_data_ptr);
-            face->ntmFlags |= NTM_PS_OPENTYPE;
         }
 
         TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
