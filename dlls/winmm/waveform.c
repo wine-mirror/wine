@@ -3671,7 +3671,7 @@ static UINT WINMM_GetSourceLineInfo(WINMM_MMDevice *mmdevice, UINT mmdev_index,
         memcpy(info->Target.szPname, mmdevice->out_caps.szPname,
                 sizeof(info->Target.szPname));
     }else{
-        info->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_LINE;
+        info->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_MICROPHONE;
         info->Target.dwType = MIXERLINE_TARGETTYPE_UNDEFINED;
         info->Target.szPname[0] = '\0';
     }
@@ -3740,7 +3740,7 @@ static UINT WINMM_GetComponentTypeLineInfo(WINMM_MMDevice *mmdevice,
         return WINMM_GetDestinationLineInfo(mmdevice, mmdev_index, info, flags);
     }
 
-    if(info->dwComponentType == MIXERLINE_COMPONENTTYPE_SRC_LINE){
+    if(info->dwComponentType == MIXERLINE_COMPONENTTYPE_SRC_MICROPHONE){
         if(is_out)
             return MIXERR_INVALLINE;
         info->dwSource = 0;
