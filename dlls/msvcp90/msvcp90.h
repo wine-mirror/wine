@@ -166,7 +166,6 @@ typedef enum __exception_type {
     EXCEPTION_RUNTIME_ERROR
 } exception_type;
 void throw_exception(exception_type, const char *);
-void set_exception_vtable(void);
 
 /* rtti */
 typedef struct __type_info
