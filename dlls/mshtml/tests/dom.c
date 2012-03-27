@@ -309,6 +309,7 @@ static const IID * const title_iids[] = {
 static const IID * const object_iids[] = {
     ELEM_IFACES,
     &IID_IHTMLObjectElement,
+    &IID_IHTMLObjectElement2,
     /* FIXME: No IConnectionPointContainer */
     NULL
 };

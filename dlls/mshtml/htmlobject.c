@@ -37,6 +37,7 @@ typedef struct {
     HTMLPluginContainer plugin_container;
 
     IHTMLObjectElement IHTMLObjectElement_iface;
+    IHTMLObjectElement2 IHTMLObjectElement2_iface;
 
     nsIDOMHTMLObjectElement *nsobject;
 } HTMLObjectElement;
@@ -397,6 +398,117 @@ static const IHTMLObjectElementVtbl HTMLObjectElementVtbl = {
     HTMLObjectElement_get_hspace
 };
 
+static inline HTMLObjectElement *impl_from_IHTMLObjectElement2(IHTMLObjectElement2 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLObjectElement, IHTMLObjectElement2_iface);
+}
+
+static HRESULT WINAPI HTMLObjectElement2_QueryInterface(IHTMLObjectElement2 *iface,
+        REFIID riid, void **ppv)
+{
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
+
+    return IHTMLDOMNode_QueryInterface(&This->plugin_container.element.node.IHTMLDOMNode_iface,
+            riid, ppv);
+}
+
+static ULONG WINAPI HTMLObjectElement2_AddRef(IHTMLObjectElement2 *iface)
+{
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
+
+    return IHTMLDOMNode_AddRef(&This->plugin_container.element.node.IHTMLDOMNode_iface);
+}
+
+static ULONG WINAPI HTMLObjectElement2_Release(IHTMLObjectElement2 *iface)
+{
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
+
+    return IHTMLDOMNode_Release(&This->plugin_container.element.node.IHTMLDOMNode_iface);
+}
+
+static HRESULT WINAPI HTMLObjectElement2_GetTypeInfoCount(IHTMLObjectElement2 *iface, UINT *pctinfo)
+{
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->plugin_container.element.node.dispex.IDispatchEx_iface,
+            pctinfo);
+}
+
+static HRESULT WINAPI HTMLObjectElement2_GetTypeInfo(IHTMLObjectElement2 *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
+    return IDispatchEx_GetTypeInfo(&This->plugin_container.element.node.dispex.IDispatchEx_iface,
+            iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLObjectElement2_GetIDsOfNames(IHTMLObjectElement2 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
+    return IDispatchEx_GetIDsOfNames(&This->plugin_container.element.node.dispex.IDispatchEx_iface,
+            riid, rgszNames, cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLObjectElement2_Invoke(IHTMLObjectElement2 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
+    return IDispatchEx_Invoke(&This->plugin_container.element.node.dispex.IDispatchEx_iface,
+            dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLObjectElement2_namedRecordset(IHTMLObjectElement2 *iface, BSTR dataMember,
+        VARIANT *hierarchy, IDispatch **ppRecordset)
+{
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
+    FIXME("(%p)->(%s %p %p)\n", This, debugstr_w(dataMember), hierarchy, ppRecordset);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLObjectElement2_put_classid(IHTMLObjectElement2 *iface, BSTR v)
+{
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLObjectElement2_get_classid(IHTMLObjectElement2 *iface, BSTR *p)
+{
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLObjectElement2_put_data(IHTMLObjectElement2 *iface, BSTR v)
+{
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLObjectElement2_get_data(IHTMLObjectElement2 *iface, BSTR *p)
+{
+    HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const IHTMLObjectElement2Vtbl HTMLObjectElement2Vtbl = {
+    HTMLObjectElement2_QueryInterface,
+    HTMLObjectElement2_AddRef,
+    HTMLObjectElement2_Release,
+    HTMLObjectElement2_GetTypeInfoCount,
+    HTMLObjectElement2_GetTypeInfo,
+    HTMLObjectElement2_GetIDsOfNames,
+    HTMLObjectElement2_Invoke,
+    HTMLObjectElement2_namedRecordset,
+    HTMLObjectElement2_put_classid,
+    HTMLObjectElement2_get_classid,
+    HTMLObjectElement2_put_data,
+    HTMLObjectElement2_get_data
+};
+
 static inline HTMLObjectElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
 {
     return CONTAINING_RECORD(iface, HTMLObjectElement, plugin_container.element.node);
@@ -415,6 +527,9 @@ static HRESULT HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IHTMLObjectElement, riid)) {
         TRACE("(%p)->(IID_IHTMLObjectElement %p)\n", This, ppv);
         *ppv = &This->IHTMLObjectElement_iface;
+    }else if(IsEqualGUID(&IID_IHTMLObjectElement2, riid)) {
+        TRACE("(%p)->(IID_IHTMLObjectElement2 %p)\n", This, ppv);
+        *ppv = &This->IHTMLObjectElement2_iface;
     }else if(IsEqualGUID(&IID_HTMLPluginContainer, riid)) {
         TRACE("(%p)->(IID_HTMLPluginContainer %p)\n", This, ppv);
         *ppv = &This->plugin_container;
@@ -504,6 +619,7 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
 static const tid_t HTMLObjectElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLObjectElement_tid,
+    IHTMLObjectElement2_tid,
     0
 };
 static dispex_static_data_t HTMLObjectElement_dispex = {
@@ -523,6 +639,7 @@ HRESULT HTMLObjectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
         return E_OUTOFMEMORY;
 
     ret->IHTMLObjectElement_iface.lpVtbl = &HTMLObjectElementVtbl;
+    ret->IHTMLObjectElement2_iface.lpVtbl = &HTMLObjectElement2Vtbl;
     ret->plugin_container.element.node.vtbl = &HTMLObjectElementImplVtbl;
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLObjectElement, (void**)&ret->nsobject);
