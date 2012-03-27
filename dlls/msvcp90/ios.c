@@ -149,6 +149,8 @@ typedef struct {
     basic_ios_char child;
 } basic_ostream_char;
 
+extern const vtable_ptr MSVCP_iosb_vtable;
+
 /* ??_7ios_base@std@@6B@ */
 extern const vtable_ptr MSVCP_ios_base_vtable;
 
@@ -164,19 +166,7 @@ extern const vtable_ptr MSVCP_basic_streambuf_char_vtable;
 /* ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_char_vtable;
 
-static const type_info iosb_type_info = {
-    &MSVCP_ios_base_vtable,
-    NULL,
-    ".?AV?$_Iosb@H@std@@"
-};
-    
-static const rtti_base_descriptor iosb_rtti_base_descriptor = {
-    &iosb_type_info,
-    0,
-    { 4, -1, 0 },
-    64
-};
-
+DEFINE_RTTI_DATA(iosb, 0, 0, NULL, NULL, NULL, ".?AV?$_Iosb@H@std@@");
 DEFINE_RTTI_DATA(ios_base, 0, 1, &iosb_rtti_base_descriptor, NULL, NULL, ".?AV?$_Iosb@H@std@@");
 DEFINE_RTTI_DATA(basic_ios_char, 0, 2, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         NULL, ".?AV?$basic_ios@DU?$char_traits@D@std@@@std@@");
@@ -190,6 +180,7 @@ DEFINE_RTTI_DATA(basic_ostream_char, 4, 3, &basic_ios_char_rtti_base_descriptor,
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
+    __ASM_VTABLE(iosb, "");
     __ASM_VTABLE(ios_base, "");
     __ASM_VTABLE(basic_ios_char, "");
     __ASM_VTABLE(basic_ios_wchar, "");
@@ -258,6 +249,12 @@ ios_base* __thiscall MSVCP_ios_base_vector_dtor(ios_base *this, unsigned int fla
     }
 
     return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_iosb_vector_dtor, 8)
+ios_base* __thiscall MSVCP_iosb_vector_dtor(ios_base *this, unsigned int flags)
+{
+    return MSVCP_ios_base_vector_dtor(this, flags);
 }
 
 /* ??4ios_base@std@@QAEAAV01@ABV01@@Z */
