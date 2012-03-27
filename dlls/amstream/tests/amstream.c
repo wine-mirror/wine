@@ -22,6 +22,7 @@
 
 #include "wine/test.h"
 #include "initguid.h"
+#include "uuids.h"
 #include "amstream.h"
 #include "vfwmsgs.h"
 
@@ -228,6 +229,32 @@ static void test_media_streams(void)
     /* Verify no stream is created when using the default renderer for audio stream */
     hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &MSPID_PrimaryAudio, AMMSF_ADDDEFAULTRENDERER, NULL);
     ok((hr == S_OK) || (hr == VFW_E_NO_AUDIO_HARDWARE), "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
+    if (hr == S_OK)
+    {
+        IGraphBuilder* filtergraph = NULL;
+        IBaseFilter* filter = NULL;
+        const WCHAR name[] = {'0','0','0','1',0};
+        CLSID clsid;
+
+        hr = IAMMultiMediaStream_GetFilterGraph(pams, &filtergraph);
+        ok(hr == S_OK, "IAMMultiMediaStream_GetFilterGraph returned: %x\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IGraphBuilder_FindFilterByName(filtergraph, name, &filter);
+            ok(hr == S_OK, "IGraphBuilder_FindFilterByName returned: %x\n", hr);
+        }
+        if (hr == S_OK)
+        {
+            hr = IBaseFilter_GetClassID(filter, &clsid);
+            ok(hr == S_OK, "IGraphBuilder_FindFilterByName returned: %x\n", hr);
+        }
+        if (hr == S_OK)
+            ok(IsEqualGUID(&clsid, &CLSID_DSoundRender), "Got wrong CLSID\n");
+        if (filter)
+            IBaseFilter_Release(filter);
+        if (filtergraph)
+            IGraphBuilder_Release(filtergraph);
+    }
     hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryAudio, &audio_stream);
     ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
 
