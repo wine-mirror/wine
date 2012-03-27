@@ -1520,6 +1520,21 @@ static void get_family_names( FT_Face ft_face, WCHAR **name, WCHAR **english, BO
     }
 }
 
+/****************************************************************
+ * NB This function stores the ptrs to the strings to save copying.
+ * Don't free them after calling.
+ */
+static Family *create_family( WCHAR *name, WCHAR *english_name )
+{
+    Family *family = HeapAlloc( GetProcessHeap(), 0, sizeof(*family) );
+    family->FamilyName = name;
+    family->EnglishName = english_name;
+    list_init( &family->faces );
+    family->replacement = &family->faces;
+
+    return family;
+}
+
 static Family *get_family( FT_Face ft_face, BOOL vertical )
 {
     Family *family;
@@ -1531,11 +1546,7 @@ static Family *get_family( FT_Face ft_face, BOOL vertical )
 
     if (!family)
     {
-        family = HeapAlloc( GetProcessHeap(), 0, sizeof(*family) );
-        family->FamilyName = strdupW( name );
-        family->EnglishName = english_name ? strdupW( english_name ) : NULL;
-        list_init( &family->faces );
-        family->replacement = &family->faces;
+        family = create_family( name, english_name );
         list_add_tail( &font_list, &family->entry );
 
         if (english_name)
@@ -1548,8 +1559,11 @@ static Family *get_family( FT_Face ft_face, BOOL vertical )
             add_font_subst( &font_subst_list, subst, 0 );
         }
     }
-    HeapFree( GetProcessHeap(), 0, name );
-    HeapFree( GetProcessHeap(), 0, english_name );
+    else
+    {
+        HeapFree( GetProcessHeap(), 0, name );
+        HeapFree( GetProcessHeap(), 0, english_name );
+    }
 
     return family;
 }
