@@ -171,8 +171,6 @@ static void test_media_streams(void)
     IMediaStream *video_stream = NULL;
     IMediaStream *audio_stream = NULL;
     IMediaStream *dummy_stream;
-    IDirectDrawMediaStream *ddraw_stream = NULL;
-    IDirectDrawStreamSample *ddraw_sample = NULL;
     IMediaStreamFilter* media_stream_filter = NULL;
 
     if (!create_ammultimediastream())
@@ -191,6 +189,12 @@ static void test_media_streams(void)
     ok(hr == E_POINTER, "IAMMultiMediaStream_GetFilter returned: %x\n", hr);
     hr = IAMMultiMediaStream_GetFilter(pams, &media_stream_filter);
     ok(hr == S_OK, "IAMMultiMediaStream_GetFilter returned: %x\n", hr);
+
+    /* Verify behaviour with invalid purpose id */
+    hr = IAMMultiMediaStream_GetMediaStream(pams, &IID_IUnknown, &dummy_stream);
+    ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
+    hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &IID_IUnknown, 0, NULL);
+    ok(hr == MS_E_PURPOSEID, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
 
     /* Verify there is no video media stream */
     hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &video_stream);
@@ -220,6 +224,38 @@ static void test_media_streams(void)
         ok(dummy_stream == video_stream, "Got wrong returned pointer %p, expected %p\n", dummy_stream, video_stream);
         if (SUCCEEDED(hr))
             IMediaStream_Release(dummy_stream);
+    }
+
+    /* Check interfaces and samples for video */
+    if (video_stream)
+    {
+        IAMMediaStream* am_media_stream;
+        IAudioMediaStream* audio_media_stream;
+        IDirectDrawMediaStream *ddraw_stream = NULL;
+        IDirectDrawStreamSample *ddraw_sample = NULL;
+
+        hr = IMediaStream_QueryInterface(video_stream, &IID_IAMMediaStream, (LPVOID*)&am_media_stream);
+        todo_wine ok(hr == S_OK, "IMediaStream_QueryInterface returned: %x\n", hr);
+        todo_wine ok((void*)am_media_stream == (void*)video_stream, "Not same interface, got %p expected %p\n", am_media_stream, video_stream);
+        if (hr == S_OK)
+            IAMMediaStream_Release(am_media_stream);
+
+        hr = IMediaStream_QueryInterface(video_stream, &IID_IAudioMediaStream, (LPVOID*)&audio_media_stream);
+        ok(hr == E_NOINTERFACE, "IMediaStream_QueryInterface returned: %x\n", hr);
+
+        hr = IMediaStream_QueryInterface(video_stream, &IID_IDirectDrawMediaStream, (LPVOID*)&ddraw_stream);
+        ok(hr == S_OK, "IMediaStream_QueryInterface returned: %x\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &ddraw_sample);
+            todo_wine ok(hr==S_OK, "IDirectDrawMediaStream_CreateSample returned: %x\n", hr);
+        }
+
+        if (ddraw_sample)
+            IDirectDrawMediaSample_Release(ddraw_sample);
+        if (ddraw_stream)
+            IDirectDrawMediaStream_Release(ddraw_stream);
     }
 
     /* Verify there is no audio media stream */
@@ -274,28 +310,46 @@ static void test_media_streams(void)
             IMediaStream_Release(dummy_stream);
     }
 
-    /* Verify behaviour with invalid purpose id */
-    hr = IAMMultiMediaStream_GetMediaStream(pams, &IID_IUnknown, &dummy_stream);
-    ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
-    hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &IID_IUnknown, 0, NULL);
-    ok(hr == MS_E_PURPOSEID, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
-
-    if (video_stream)
+   /* Check interfaces and samples for audio */
+    if (audio_stream)
     {
-        hr = IMediaStream_QueryInterface(video_stream, &IID_IDirectDrawMediaStream, (LPVOID*)&ddraw_stream);
-        ok(hr == S_OK, "IMediaStream_QueryInterface returned: %x\n", hr);
+        IAMMediaStream* am_media_stream;
+        IDirectDrawMediaStream* ddraw_stream = NULL;
+        IAudioMediaStream* audio_media_stream = NULL;
+        IAudioStreamSample *audio_sample = NULL;
+
+        hr = IMediaStream_QueryInterface(audio_stream, &IID_IAMMediaStream, (LPVOID*)&am_media_stream);
+        todo_wine ok(hr == S_OK, "IMediaStream_QueryInterface returned: %x\n", hr);
+        todo_wine ok((void*)am_media_stream == (void*)audio_stream, "Not same interface, got %p expected %p\n", am_media_stream, video_stream);
+        if (hr == S_OK)
+            IAMMediaStream_Release(am_media_stream);
+
+        hr = IMediaStream_QueryInterface(audio_stream, &IID_IDirectDrawMediaStream, (LPVOID*)&ddraw_stream);
+        todo_wine ok(hr == E_NOINTERFACE, "IMediaStream_QueryInterface returned: %x\n", hr);
+
+        hr = IMediaStream_QueryInterface(audio_stream, &IID_IAudioMediaStream, (LPVOID*)&audio_media_stream);
+        todo_wine ok(hr == S_OK, "IMediaStream_QueryInterface returned: %x\n", hr);
 
         if (SUCCEEDED(hr))
         {
-            hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &ddraw_sample);
-            todo_wine ok(hr==S_OK, "IDirectDrawMediaStream_CreateSample returned: %x\n", hr);
+            IAudioData* audio_data = NULL;
+            hr = CoCreateInstance(&CLSID_AMAudioData, NULL, CLSCTX_INPROC_SERVER, &IID_IAudioData, (void **)&audio_data);
+            todo_wine ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
+
+            hr = IAudioMediaStream_CreateSample(audio_media_stream, NULL, 0, &audio_sample);
+            todo_wine ok(hr == E_POINTER, "IAudioMediaStream_CreateSample returned: %x\n", hr);
+            hr = IAudioMediaStream_CreateSample(audio_media_stream, audio_data, 0, &audio_sample);
+            todo_wine ok(hr == S_OK, "IAudioMediaStream_CreateSample returned: %x\n", hr);
+
+            if (audio_data)
+                IAudioData_Release(audio_data);
+            if (audio_sample)
+                IAudioStreamSample_Release(audio_sample);
+            if (audio_media_stream)
+                IAudioMediaStream_Release(audio_media_stream);
         }
     }
 
-    if (ddraw_sample)
-        IDirectDrawMediaSample_Release(ddraw_sample);
-    if (ddraw_stream)
-        IDirectDrawMediaStream_Release(ddraw_stream);
     if (video_stream)
         IMediaStream_Release(video_stream);
     if (audio_stream)
