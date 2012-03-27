@@ -1605,6 +1605,69 @@ static inline int get_bitmap_internal_leading( FT_Face ft_face )
     return internal_leading;
 }
 
+static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
+{
+    TT_OS2 *os2;
+    FT_UInt dummy;
+    CHARSETINFO csi;
+    FT_WinFNT_HeaderRec winfnt_header;
+    int i;
+
+    memset( fs, 0, sizeof(*fs) );
+
+    os2 = pFT_Get_Sfnt_Table( ft_face, ft_sfnt_os2 );
+    if (os2)
+    {
+        fs->fsUsb[0] = os2->ulUnicodeRange1;
+        fs->fsUsb[1] = os2->ulUnicodeRange2;
+        fs->fsUsb[2] = os2->ulUnicodeRange3;
+        fs->fsUsb[3] = os2->ulUnicodeRange4;
+
+        if (os2->version == 0)
+        {
+            if (pFT_Get_First_Char( ft_face, &dummy ) < 0x100)
+                fs->fsCsb[0] = FS_LATIN1;
+            else
+                fs->fsCsb[0] = FS_SYMBOL;
+        }
+        else
+        {
+            fs->fsCsb[0] = os2->ulCodePageRange1;
+            fs->fsCsb[1] = os2->ulCodePageRange2;
+        }
+    }
+    else
+    {
+        if (!pFT_Get_WinFNT_Header( ft_face, &winfnt_header ))
+        {
+            TRACE("pix_h %d charset %d dpi %dx%d pt %d\n", winfnt_header.pixel_height, winfnt_header.charset,
+                  winfnt_header.vertical_resolution,winfnt_header.horizontal_resolution, winfnt_header.nominal_point_size);
+            if (TranslateCharsetInfo( (DWORD*)(UINT_PTR)winfnt_header.charset, &csi, TCI_SRCCHARSET ))
+                *fs = csi.fs;
+        }
+    }
+
+    if (fs->fsCsb[0] == 0)
+    {
+        /* let's see if we can find any interesting cmaps */
+        for (i = 0; i < ft_face->num_charmaps; i++)
+        {
+            switch (ft_face->charmaps[i]->encoding)
+            {
+            case FT_ENCODING_UNICODE:
+            case FT_ENCODING_APPLE_ROMAN:
+                fs->fsCsb[0] |= FS_LATIN1;
+                break;
+            case FT_ENCODING_MS_SYMBOL:
+                fs->fsCsb[0] |= FS_SYMBOL;
+                break;
+            default:
+                break;
+            }
+        }
+    }
+}
+
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
@@ -1616,10 +1679,8 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
     WCHAR *StyleW;
 
     do {
-        TT_OS2 *pOS2;
         Face *face;
         struct list *face_elem_ptr;
-        FT_WinFNT_HeaderRec winfnt_header;
         FONTSIGNATURE fs;
         My_FT_Bitmap_Size *size = NULL;
         FT_Fixed version;
@@ -1631,32 +1692,7 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
 
         StyleW = towstr(CP_ACP, ft_face->style_name);
 
-        memset(&fs, 0, sizeof(fs));
-
-        pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
-        if(pOS2) {
-            fs.fsCsb[0] = pOS2->ulCodePageRange1;
-            fs.fsCsb[1] = pOS2->ulCodePageRange2;
-            fs.fsUsb[0] = pOS2->ulUnicodeRange1;
-            fs.fsUsb[1] = pOS2->ulUnicodeRange2;
-            fs.fsUsb[2] = pOS2->ulUnicodeRange3;
-            fs.fsUsb[3] = pOS2->ulUnicodeRange4;
-            if(pOS2->version == 0) {
-                FT_UInt dummy;
-
-                if(pFT_Get_First_Char( ft_face, &dummy ) < 0x100)
-                    fs.fsCsb[0] |= FS_LATIN1;
-                else
-                    fs.fsCsb[0] |= FS_SYMBOL;
-            }
-        }
-        else if(!pFT_Get_WinFNT_Header(ft_face, &winfnt_header)) {
-            CHARSETINFO csi;
-            TRACE("pix_h %d charset %d dpi %dx%d pt %d\n", winfnt_header.pixel_height, winfnt_header.charset,
-                  winfnt_header.vertical_resolution,winfnt_header.horizontal_resolution, winfnt_header.nominal_point_size);
-            if(TranslateCharsetInfo((DWORD*)(UINT_PTR)winfnt_header.charset, &csi, TCI_SRCCHARSET))
-                fs = csi.fs;
-        }
+        get_fontsig( ft_face, &fs );
 
         version = get_font_version( ft_face );
         LIST_FOR_EACH(face_elem_ptr, &family->faces) {
@@ -1725,26 +1761,6 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
               face->fs.fsCsb[0], face->fs.fsCsb[1],
               face->fs.fsUsb[0], face->fs.fsUsb[1],
               face->fs.fsUsb[2], face->fs.fsUsb[3]);
-
-        if(face->fs.fsCsb[0] == 0)
-        {
-            int i;
-
-            /* let's see if we can find any interesting cmaps */
-            for(i = 0; i < ft_face->num_charmaps; i++) {
-                switch(ft_face->charmaps[i]->encoding) {
-                case FT_ENCODING_UNICODE:
-                case FT_ENCODING_APPLE_ROMAN:
-			face->fs.fsCsb[0] |= FS_LATIN1;
-                    break;
-                case FT_ENCODING_MS_SYMBOL:
-                    face->fs.fsCsb[0] |= FS_SYMBOL;
-                    break;
-                default:
-                    break;
-                }
-            }
-        }
 
         if(flags & ADDFONT_ADD_TO_CACHE)
             add_face_to_cache(face);
