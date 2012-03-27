@@ -56,7 +56,7 @@ typedef struct {
 
 static BOOL use_gecko_script(HTMLWindow *window)
 {
-    DWORD zone, scheme;
+    DWORD zone;
     HRESULT hres;
 
     hres = IInternetSecurityManager_MapUrlToZone(window->secmgr, window->url, &zone, 0);
@@ -66,11 +66,7 @@ static BOOL use_gecko_script(HTMLWindow *window)
     }
 
     TRACE("zone %d\n", zone);
-    if(zone == URLZONE_LOCAL_MACHINE || zone == URLZONE_TRUSTED || !window->uri)
-        return FALSE;
-
-    hres = IUri_GetScheme(window->uri, &scheme);
-    return FAILED(hres) || scheme != URL_SCHEME_ABOUT;
+    return zone == URLZONE_UNTRUSTED;
 }
 
 static void notify_travellog_update(HTMLDocumentObj *doc)
