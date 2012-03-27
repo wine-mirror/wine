@@ -37,7 +37,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
 typedef struct {
     BaseFilter filter;
-
+    ULONG nb_streams;
+    IMediaStream** streams;
 } IMediaStreamFilterImpl;
 
 static inline IMediaStreamFilterImpl *impl_from_IMediaStreamFilter(IMediaStreamFilter *iface)
@@ -89,7 +90,12 @@ static ULONG WINAPI MediaStreamFilterImpl_Release(IMediaStreamFilter *iface)
     TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
 
     if (!refCount)
+    {
+        int i;
+        for (i = 0; i < This->nb_streams; i++)
+            IMediaStream_Release(This->streams[i]);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return refCount;
 }
@@ -170,16 +176,43 @@ static HRESULT WINAPI MediaStreamFilterImpl_QueryVendorInfo(IMediaStreamFilter *
 
 static HRESULT WINAPI MediaStreamFilterImpl_AddMediaStream(IMediaStreamFilter* iface, IAMMediaStream *pAMMediaStream)
 {
-    FIXME("(%p)->(%p): Stub!\n", iface, pAMMediaStream);
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
+    IMediaStream** streams;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pAMMediaStream);
+
+    streams = CoTaskMemRealloc(This->streams, (This->nb_streams + 1) * sizeof(IMediaStream*));
+    if (!streams)
+        return E_OUTOFMEMORY;
+    This->streams = streams;
+    This->streams[This->nb_streams] = (IMediaStream*)pAMMediaStream;
+    This->nb_streams++;
+
+    IMediaStream_AddRef((IMediaStream*)pAMMediaStream);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaStreamFilterImpl_GetMediaStream(IMediaStreamFilter* iface, REFMSPID idPurpose, IMediaStream **ppMediaStream)
 {
-    FIXME("(%p)->(%s,%p): Stub!\n", iface, debugstr_guid(idPurpose), ppMediaStream);
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
+    MSPID purpose_id;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(idPurpose), ppMediaStream);
+
+    for (i = 0; i < This->nb_streams; i++)
+    {
+        IMediaStream_GetInformation(This->streams[i], &purpose_id, NULL);
+        if (IsEqualIID(&purpose_id, idPurpose))
+        {
+            *ppMediaStream = This->streams[i];
+            IMediaStream_AddRef(*ppMediaStream);
+            return S_OK;
+        }
+    }
+
+    return MS_E_NOSTREAM;
 }
 
 static HRESULT WINAPI MediaStreamFilterImpl_EnumMediaStreams(IMediaStreamFilter* iface, LONG Index, IMediaStream **ppMediaStream)
