@@ -670,19 +670,39 @@ static HRESULT WINAPI IQueryAssociations_fnGetKey(
  *  Success: S_OK. pszOut contains the data, pcbOut contains its length.
  *  Failure: An HRESULT error code indicating the error.
  */
-static HRESULT WINAPI IQueryAssociations_fnGetData(
-  IQueryAssociations *iface,
-  ASSOCF cfFlags,
-  ASSOCDATA assocdata,
-  LPCWSTR pszExtra,
-  LPVOID pvOut,
-  DWORD *pcbOut)
+static HRESULT WINAPI IQueryAssociations_fnGetData(IQueryAssociations *iface,
+        ASSOCF cfFlags, ASSOCDATA assocdata, LPCWSTR pszExtra, LPVOID pvOut,
+        DWORD *pcbOut)
 {
-  IQueryAssociationsImpl *This = impl_from_IQueryAssociations(iface);
+    static const WCHAR edit_flags[] = {'E','d','i','t','F','l','a','g','s',0};
 
-  FIXME("(%p,0x%8x,0x%8x,%s,%p,%p)-stub!\n", This, cfFlags, assocdata,
-        debugstr_w(pszExtra), pvOut, pcbOut);
-  return E_NOTIMPL;
+    IQueryAssociationsImpl *This = impl_from_IQueryAssociations(iface);
+    void *data;
+    DWORD size;
+    HRESULT hres;
+
+    TRACE("(%p,0x%8x,0x%8x,%s,%p,%p)\n", This, cfFlags, assocdata,
+            debugstr_w(pszExtra), pvOut, pcbOut);
+
+    if(cfFlags)
+        FIXME("Unsupported flags: %x\n", cfFlags);
+
+    switch(assocdata) {
+    case ASSOCDATA_EDITFLAGS:
+        if(!This->hkeyProgID)
+            return HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION);
+
+        hres = ASSOC_GetValue(This->hkeyProgID, edit_flags, &data, &size);
+        if(FAILED(hres) || !pcbOut)
+            return hres;
+
+        hres = ASSOC_ReturnData(pvOut, pcbOut, data, size);
+        HeapFree(GetProcessHeap(), 0, data);
+        return hres;
+    default:
+        FIXME("Unsupported ASSOCDATA value: %d\n", assocdata);
+        return E_NOTIMPL;
+    }
 }
 
 /**************************************************************************
