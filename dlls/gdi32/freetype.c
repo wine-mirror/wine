@@ -1668,6 +1668,15 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
     }
 }
 
+static inline void free_face( Face *face )
+{
+    HeapFree( GetProcessHeap(), 0, face->file );
+    HeapFree( GetProcessHeap(), 0, face->StyleName );
+    HeapFree( GetProcessHeap(), 0, face->FullName );
+    HeapFree( GetProcessHeap(), 0, face->cached_enum_data );
+    HeapFree( GetProcessHeap(), 0, face );
+}
+
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
@@ -1709,10 +1718,7 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
                 } else {
                     TRACE("Replacing original with this one\n");
                     list_remove(&face->entry);
-                    HeapFree(GetProcessHeap(), 0, face->file);
-                    HeapFree(GetProcessHeap(), 0, face->StyleName);
-                    HeapFree(GetProcessHeap(), 0, face->FullName);
-                    HeapFree(GetProcessHeap(), 0, face);
+                    free_face( face );
                     break;
                 }
             }
