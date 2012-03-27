@@ -148,12 +148,17 @@ static void stack_popn(exec_ctx_t *ctx, unsigned n)
 static HRESULT stack_pop_number(exec_ctx_t *ctx, VARIANT *r)
 {
     VARIANT *v;
+    double n;
     HRESULT hres;
 
     v = stack_pop(ctx);
-    hres = to_number(ctx->script, v, ctx->ei, r);
+    hres = to_number(ctx->script, v, ctx->ei, &n);
     VariantClear(v);
-    return hres;
+    if(FAILED(hres))
+        return hres;
+
+    num_set_val(r, n);
+    return S_OK;
 }
 
 static HRESULT stack_pop_object(exec_ctx_t *ctx, IDispatch **r)
@@ -1526,13 +1531,13 @@ static HRESULT add_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcep
         if(V_VT(&r) != VT_BSTR)
             SysFreeString(rstr);
     }else {
-        VARIANT nl, nr;
+        double nl, nr;
 
         hres = to_number(ctx, &l, ei, &nl);
         if(SUCCEEDED(hres)) {
             hres = to_number(ctx, &r, ei, &nr);
             if(SUCCEEDED(hres))
-                num_set_val(retv, num_val(&nl) + num_val(&nr));
+                num_set_val(retv, nl + nr);
         }
     }
 
@@ -1872,18 +1877,19 @@ static HRESULT interp_minus(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.4.6 */
 static HRESULT interp_tonum(exec_ctx_t *ctx)
 {
-    VARIANT *v, num;
+    VARIANT *v;
+    double n;
     HRESULT hres;
 
     TRACE("\n");
 
     v = stack_pop(ctx);
-    hres = to_number(ctx->script, v, ctx->ei, &num);
+    hres = to_number(ctx->script, v, ctx->ei, &n);
     VariantClear(v);
     if(FAILED(hres))
         return hres;
 
-    return stack_push(ctx, &num);
+    return stack_push_number(ctx, n);
 }
 
 /* ECMA-262 3rd Edition    11.3.1 */
@@ -1903,11 +1909,12 @@ static HRESULT interp_postinc(exec_ctx_t *ctx)
 
     hres = disp_propget(ctx->script, obj, id, &v, ctx->ei);
     if(SUCCEEDED(hres)) {
-        VARIANT n, inc;
+        VARIANT inc;
+        double n;
 
         hres = to_number(ctx->script, &v, ctx->ei, &n);
         if(SUCCEEDED(hres)) {
-            num_set_val(&inc, num_val(&n)+(double)arg);
+            num_set_val(&inc, n+(double)arg);
             hres = disp_propput(ctx->script, obj, id, &inc, ctx->ei);
         }
         if(FAILED(hres))
@@ -1937,12 +1944,12 @@ static HRESULT interp_preinc(exec_ctx_t *ctx)
 
     hres = disp_propget(ctx->script, obj, id, &v, ctx->ei);
     if(SUCCEEDED(hres)) {
-        VARIANT n;
+        double n;
 
         hres = to_number(ctx->script, &v, ctx->ei, &n);
         VariantClear(&v);
         if(SUCCEEDED(hres)) {
-            num_set_val(&v, num_val(&n)+(double)arg);
+            num_set_val(&v, n+(double)arg);
             hres = disp_propput(ctx->script, obj, id, &v, ctx->ei);
         }
     }
@@ -1980,22 +1987,30 @@ static HRESULT equal_values(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jse
 
     if(V_VT(lval) == VT_BSTR && is_num_vt(V_VT(rval))) {
         VARIANT v;
+        double n;
         HRESULT hres;
 
-        hres = to_number(ctx, lval, ei, &v);
+        hres = to_number(ctx, lval, ei, &n);
         if(FAILED(hres))
             return hres;
+
+        /* FIXME: optimize */
+        num_set_val(&v, n);
 
         return equal_values(ctx, &v, rval, ei, ret);
     }
 
     if(V_VT(rval) == VT_BSTR && is_num_vt(V_VT(lval))) {
         VARIANT v;
+        double n;
         HRESULT hres;
 
-        hres = to_number(ctx, rval, ei, &v);
+        hres = to_number(ctx, rval, ei, &n);
         if(FAILED(hres))
             return hres;
+
+        /* FIXME: optimize */
+        num_set_val(&v, n);
 
         return equal_values(ctx, lval, &v, ei, ret);
     }
@@ -2138,7 +2153,8 @@ static HRESULT interp_neq2(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.8.5 */
 static HRESULT less_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, BOOL greater, jsexcept_t *ei, BOOL *ret)
 {
-    VARIANT l, r, ln, rn;
+    double ln, rn;
+    VARIANT l, r;
     HRESULT hres;
 
     hres = to_primitive(ctx, lval, ei, &l, NO_HINT);
@@ -2166,15 +2182,7 @@ static HRESULT less_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, BOOL g
     if(FAILED(hres))
         return hres;
 
-    if(V_VT(&ln) == VT_I4 && V_VT(&rn) == VT_I4) {
-        *ret = (V_I4(&ln) < V_I4(&rn)) ^ greater;
-    }else  {
-        DOUBLE ld = num_val(&ln);
-        DOUBLE rd = num_val(&rn);
-
-        *ret = !isnan(ld) && !isnan(rd) && ((ld < rd) ^ greater);
-    }
-
+    *ret = !isnan(ln) && !isnan(rn) && ((ln < rn) ^ greater);
     return S_OK;
 }
 

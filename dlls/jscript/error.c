@@ -234,18 +234,16 @@ static HRESULT error_constr(script_ctx_t *ctx, WORD flags, DISPPARAMS *dp,
     HRESULT hres;
 
     if(arg_cnt(dp)) {
-        VARIANT numv;
+        double n;
 
-        hres = to_number(ctx, get_arg(dp, 0), ei, &numv);
-        if(FAILED(hres) || (V_VT(&numv)==VT_R8 && isnan(V_R8(&numv))))
+        hres = to_number(ctx, get_arg(dp, 0), ei, &n);
+        if(FAILED(hres)) /* FIXME: really? */
+            n = ret_nan();
+        if(isnan(n))
             hres = to_string(ctx, get_arg(dp, 0), ei, &msg);
-        else if(V_VT(&numv) == VT_I4)
-            num = V_I4(&numv);
-        else
-            num = V_R8(&numv);
-
         if(FAILED(hres))
             return hres;
+        num = n;
     }
 
     if(arg_cnt(dp)>1 && !msg) {

@@ -61,8 +61,7 @@ static const WCHAR tanW[] = {'t','a','n',0};
 static HRESULT Math_abs(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    DOUBLE d;
+    double d;
     HRESULT hres;
 
     TRACE("\n");
@@ -73,11 +72,10 @@ static HRESULT Math_abs(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &d);
     if(FAILED(hres))
         return hres;
 
-    d = num_val(&v);
     if(retv)
         num_set_val(retv, d < 0.0 ? -d : d);
     return S_OK;
@@ -86,7 +84,7 @@ static HRESULT Math_abs(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 static HRESULT Math_acos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double x;
     HRESULT hres;
 
     TRACE("\n");
@@ -96,12 +94,11 @@ static HRESULT Math_acos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
     if(retv) {
-        DOUBLE x = num_val(&v);
         if(x < -1.0 || x > 1.0)
             num_set_nan(retv);
         else
@@ -113,7 +110,7 @@ static HRESULT Math_acos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
 static HRESULT Math_asin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double x;
     HRESULT hres;
 
     TRACE("\n");
@@ -123,12 +120,11 @@ static HRESULT Math_asin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
     if(retv) {
-        DOUBLE x = num_val(&v);
         if(x < -1.0 || x > 1.0)
             num_set_nan(retv);
         else
@@ -140,7 +136,7 @@ static HRESULT Math_asin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
 static HRESULT Math_atan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double x;
     HRESULT hres;
 
     TRACE("\n");
@@ -150,18 +146,18 @@ static HRESULT Math_atan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
-    if(retv) num_set_val(retv, atan(num_val(&v)));
+    if(retv) num_set_val(retv, atan(x));
     return S_OK;
 }
 
 static HRESULT Math_atan2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v1, v2;
+    double x, y;
     HRESULT hres;
 
     TRACE("\n");
@@ -171,15 +167,15 @@ static HRESULT Math_atan2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v1);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &y);
     if(FAILED(hres))
         return hres;
 
-    hres = to_number(ctx, get_arg(dp, 1), ei, &v2);
+    hres = to_number(ctx, get_arg(dp, 1), ei, &x);
     if(FAILED(hres))
         return hres;
 
-    if(retv) num_set_val(retv, atan2(num_val(&v1), num_val(&v2)));
+    if(retv) num_set_val(retv, atan2(y, x));
     return S_OK;
 }
 
@@ -187,7 +183,7 @@ static HRESULT Math_atan2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
 static HRESULT Math_ceil(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double x;
     HRESULT hres;
 
     TRACE("\n");
@@ -198,19 +194,19 @@ static HRESULT Math_ceil(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
     if(retv)
-        num_set_val(retv, ceil(num_val(&v)));
+        num_set_val(retv, ceil(x));
     return S_OK;
 }
 
 static HRESULT Math_cos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double x;
     HRESULT hres;
 
     TRACE("\n");
@@ -220,18 +216,18 @@ static HRESULT Math_cos(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
-    if(retv) num_set_val(retv, cos(num_val(&v)));
+    if(retv) num_set_val(retv, cos(x));
     return S_OK;
 }
 
 static HRESULT Math_exp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double x;
     HRESULT hres;
 
     TRACE("\n");
@@ -241,18 +237,18 @@ static HRESULT Math_exp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
-    if(retv) num_set_val(retv, exp(num_val(&v)));
+    if(retv) num_set_val(retv, exp(x));
     return S_OK;
 }
 
 static HRESULT Math_floor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double x;
     HRESULT hres;
 
     TRACE("\n");
@@ -263,19 +259,19 @@ static HRESULT Math_floor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
     if(retv)
-        num_set_val(retv, floor(num_val(&v)));
+        num_set_val(retv, floor(x));
     return S_OK;
 }
 
 static HRESULT Math_log(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double x;
     HRESULT hres;
 
     TRACE("\n");
@@ -286,12 +282,11 @@ static HRESULT Math_log(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
     if(retv) {
-        DOUBLE x = num_val(&v);
         if(x < -0.0)
             num_set_nan(retv);
         else
@@ -305,7 +300,6 @@ static HRESULT Math_max(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
         VARIANT *retv, jsexcept_t *ei)
 {
     DOUBLE max, d;
-    VARIANT v;
     DWORD i;
     HRESULT hres;
 
@@ -317,17 +311,15 @@ static HRESULT Math_max(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &max);
     if(FAILED(hres))
         return hres;
 
-    max = num_val(&v);
     for(i=1; i < arg_cnt(dp); i++) {
-        hres = to_number(ctx, get_arg(dp, i), ei, &v);
+        hres = to_number(ctx, get_arg(dp, i), ei, &d);
         if(FAILED(hres))
             return hres;
 
-        d = num_val(&v);
         if(d > max || isnan(d))
             max = d;
     }
@@ -342,7 +334,6 @@ static HRESULT Math_min(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
         VARIANT *retv, jsexcept_t *ei)
 {
     DOUBLE min, d;
-    VARIANT v;
     DWORD i;
     HRESULT hres;
 
@@ -354,17 +345,15 @@ static HRESULT Math_min(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &min);
     if(FAILED(hres))
         return hres;
 
-    min = num_val(&v);
     for(i=1; i < arg_cnt(dp); i++) {
-        hres = to_number(ctx, get_arg(dp, i), ei, &v);
+        hres = to_number(ctx, get_arg(dp, i), ei, &d);
         if(FAILED(hres))
             return hres;
 
-        d = num_val(&v);
         if(d < min || isnan(d))
             min = d;
     }
@@ -378,7 +367,7 @@ static HRESULT Math_min(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 static HRESULT Math_pow(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT x, y;
+    double x, y;
     HRESULT hres;
 
     TRACE("\n");
@@ -397,7 +386,7 @@ static HRESULT Math_pow(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
         return hres;
 
     if(retv)
-        num_set_val(retv, pow(num_val(&x), num_val(&y)));
+        num_set_val(retv, pow(x, y));
     return S_OK;
 }
 
@@ -422,7 +411,7 @@ static HRESULT Math_random(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPP
 static HRESULT Math_round(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double x;
     HRESULT hres;
 
     TRACE("\n");
@@ -432,19 +421,19 @@ static HRESULT Math_round(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPA
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
     if(retv)
-        num_set_val(retv, floor(num_val(&v)+0.5));
+        num_set_val(retv, floor(x+0.5));
     return S_OK;
 }
 
 static HRESULT Math_sin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double x;
     HRESULT hres;
 
     TRACE("\n");
@@ -454,18 +443,18 @@ static HRESULT Math_sin(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
-    if(retv) num_set_val(retv, sin(num_val(&v)));
+    if(retv) num_set_val(retv, sin(x));
     return S_OK;
 }
 
 static HRESULT Math_sqrt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double x;
     HRESULT hres;
 
     TRACE("\n");
@@ -475,18 +464,18 @@ static HRESULT Math_sqrt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPAR
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
-    if(retv) num_set_val(retv, sqrt(num_val(&v)));
+    if(retv) num_set_val(retv, sqrt(x));
     return S_OK;
 }
 
 static HRESULT Math_tan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double x;
     HRESULT hres;
 
     TRACE("\n");
@@ -496,11 +485,11 @@ static HRESULT Math_tan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
         return S_OK;
     }
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &x);
     if(FAILED(hres))
         return hres;
 
-    if(retv) num_set_val(retv, tan(num_val(&v)));
+    if(retv) num_set_val(retv, tan(x));
     return S_OK;
 }
 

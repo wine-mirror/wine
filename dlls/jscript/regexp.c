@@ -3522,22 +3522,18 @@ static HRESULT RegExp_multiline(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 static INT index_from_var(script_ctx_t *ctx, VARIANT *v)
 {
     jsexcept_t ei;
-    VARIANT num;
+    double n;
     HRESULT hres;
 
     memset(&ei, 0, sizeof(ei));
-    hres = to_number(ctx, v, &ei, &num);
+    hres = to_number(ctx, v, &ei, &n);
     if(FAILED(hres)) { /* FIXME: Move ignoring exceptions to to_primitive */
         VariantClear(&ei.var);
         return 0;
     }
 
-    if(V_VT(&num) == VT_R8) {
-        DOUBLE d = floor(V_R8(&num));
-        return (DOUBLE)(INT)d == d ? d : 0;
-    }
-
-    return V_I4(&num);
+    n = floor(n);
+    return (double)(INT)n == n ? n : 0;
 }
 
 static HRESULT RegExp_lastIndex(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,

@@ -263,7 +263,7 @@ static const builtin_info_t Number_info = {
 static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT num;
+    double n;
     HRESULT hres;
 
     TRACE("\n");
@@ -278,27 +278,30 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             return S_OK;
         }
 
-        hres = to_number(ctx, get_arg(dp, 0), ei, &num);
+        hres = to_number(ctx, get_arg(dp, 0), ei, &n);
         if(FAILED(hres))
             return hres;
 
         if(retv)
-            *retv = num;
+            num_set_val(retv, n);
         break;
 
     case DISPATCH_CONSTRUCT: {
         jsdisp_t *obj;
+        VARIANT v;
 
         if(arg_cnt(dp)) {
-            hres = to_number(ctx, get_arg(dp, 0), ei, &num);
+            hres = to_number(ctx, get_arg(dp, 0), ei, &n);
             if(FAILED(hres))
                 return hres;
+
+            num_set_val(&v, n);
         }else {
-            V_VT(&num) = VT_I4;
-            V_I4(&num) = 0;
+            V_VT(&v) = VT_I4;
+            V_I4(&v) = 0;
         }
 
-        hres = create_number(ctx, &num, &obj);
+        hres = create_number(ctx, &v, &obj);
         if(FAILED(hres))
             return hres;
 

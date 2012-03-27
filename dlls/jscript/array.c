@@ -127,20 +127,15 @@ static HRESULT Array_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
         V_I4(retv) = This->length;
         break;
     case DISPATCH_PROPERTYPUT: {
-        VARIANT num;
         DOUBLE len = -1;
         DWORD i;
         HRESULT hres;
 
-        hres = to_number(ctx, get_arg(dp, 0), ei, &num);
+        hres = to_number(ctx, get_arg(dp, 0), ei, &len);
         if(FAILED(hres))
             return hres;
 
-        if(V_VT(&num) == VT_I4)
-            len = V_I4(&num);
-        else
-            len = floor(V_R8(&num));
-
+        len = floor(len);
         if(len!=(DWORD)len)
             return throw_range_error(ctx, ei, JS_E_INVALID_LENGTH, NULL);
 
@@ -573,7 +568,6 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPA
         VARIANT *retv, jsexcept_t *ei)
 {
     jsdisp_t *arr, *jsthis;
-    VARIANT v;
     DOUBLE range;
     DWORD length, start, end, idx;
     HRESULT hres;
@@ -585,15 +579,11 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPA
         return hres;
 
     if(arg_cnt(dp)) {
-        hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 0), ei, &range);
         if(FAILED(hres))
             return hres;
 
-        if(V_VT(&v) == VT_I4)
-            range = V_I4(&v);
-        else
-            range = floor(V_R8(&v));
-
+        range = floor(range);
         if(-range>length || isnan(range)) start = 0;
         else if(range < 0) start = range+length;
         else if(range <= length) start = range;
@@ -602,15 +592,11 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPA
     else start = 0;
 
     if(arg_cnt(dp)>1) {
-        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &range);
         if(FAILED(hres))
             return hres;
 
-        if(V_VT(&v) == VT_I4)
-            range = V_I4(&v);
-        else
-            range = floor(V_R8(&v));
-
+        range = floor(range);
         if(-range>length) end = 0;
         else if(range < 0) end = range+length;
         else if(range <= length) end = range;
@@ -623,6 +609,8 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPA
         return hres;
 
     for(idx=start; idx<end; idx++) {
+        VARIANT v;
+
         hres = jsdisp_get_idx(jsthis, idx, &v, ei);
         if(hres == DISP_E_UNKNOWNNAME)
             continue;
@@ -653,7 +641,7 @@ static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, VARIANT *v1, VARI
     if(cmp_func) {
         VARIANTARG args[2];
         DISPPARAMS dp = {args, NULL, 2, 0};
-        VARIANT tmp;
+        double n;
         VARIANT res;
 
         args[0] = *v2;
@@ -663,15 +651,14 @@ static HRESULT sort_cmp(script_ctx_t *ctx, jsdisp_t *cmp_func, VARIANT *v1, VARI
         if(FAILED(hres))
             return hres;
 
-        hres = to_number(ctx, &res, ei, &tmp);
+        hres = to_number(ctx, &res, ei, &n);
         VariantClear(&res);
         if(FAILED(hres))
             return hres;
 
-        if(V_VT(&tmp) == VT_I4)
-            *cmp = V_I4(&tmp);
-        else
-            *cmp = V_R8(&tmp) > 0.0 ? 1 : -1;
+        if(n == 0)
+            *cmp = 0;
+        *cmp = n > 0.0 ? 1 : -1;
     }else if(V_VT(v1) == VT_EMPTY) {
         *cmp = V_VT(v2) == VT_EMPTY ? 0 : 1;
     }else if(V_VT(v2) == VT_EMPTY) {

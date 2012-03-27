@@ -312,7 +312,7 @@ static int hex_to_int(WCHAR c)
 }
 
 /* ECMA-262 3rd Edition    9.3.1 */
-static HRESULT str_to_number(BSTR str, VARIANT *ret)
+static HRESULT str_to_number(BSTR str, double *ret)
 {
     const WCHAR *ptr = str;
     BOOL neg = FALSE;
@@ -336,9 +336,9 @@ static HRESULT str_to_number(BSTR str, VARIANT *ret)
             ptr++;
 
         if(*ptr)
-            num_set_nan(ret);
+            *ret = ret_nan();
         else
-            num_set_inf(ret, !neg);
+            *ret = neg ? -ret_inf() : ret_inf();
         return S_OK;
     }
 
@@ -351,7 +351,7 @@ static HRESULT str_to_number(BSTR str, VARIANT *ret)
             ptr++;
         }
 
-        num_set_val(ret, d);
+        *ret = d;
         return S_OK;
     }
 
@@ -390,31 +390,32 @@ static HRESULT str_to_number(BSTR str, VARIANT *ret)
         ptr++;
 
     if(*ptr) {
-        num_set_nan(ret);
+        *ret = ret_nan();
         return S_OK;
     }
 
     if(neg)
         d = -d;
 
-    num_set_val(ret, d);
+    *ret = d;
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    9.3 */
-HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
+HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, double *ret)
 {
     switch(V_VT(v)) {
     case VT_EMPTY:
-        num_set_nan(ret);
+        *ret = ret_nan();
         break;
     case VT_NULL:
-        V_VT(ret) = VT_I4;
-        V_I4(ret) = 0;
+        *ret = 0;
         break;
     case VT_I4:
+        *ret = V_I4(v);
+        break;
     case VT_R8:
-        *ret = *v;
+        *ret = V_R8(v);
         break;
     case VT_BSTR:
         return str_to_number(V_BSTR(v), ret);
@@ -431,8 +432,7 @@ HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
         return hres;
     }
     case VT_BOOL:
-        V_VT(ret) = VT_I4;
-        V_I4(ret) = V_BOOL(v) ? 1 : 0;
+        *ret = V_BOOL(v) ? 1 : 0;
         break;
     default:
         FIXME("unimplemented for vt %d\n", V_VT(v));
@@ -445,20 +445,23 @@ HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
 /* ECMA-262 3rd Edition    9.4 */
 HRESULT to_integer(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
 {
-    VARIANT num;
+    double n;
     HRESULT hres;
 
-    hres = to_number(ctx, v, ei, &num);
+    if(V_VT(v) == VT_I4) {
+        *ret = *v;
+        return S_OK;
+    }
+
+    hres = to_number(ctx, v, ei, &n);
     if(FAILED(hres))
         return hres;
 
-    if(V_VT(&num) == VT_I4) {
-        *ret = num;
-    }else if(isnan(V_R8(&num))) {
+    if(isnan(n)) {
         V_VT(ret) = VT_I4;
         V_I4(ret) = 0;
     }else {
-        num_set_val(ret, V_R8(&num) >= 0.0 ? floor(V_R8(&num)) : -floor(-V_R8(&num)));
+        num_set_val(ret, n >= 0.0 ? floor(n) : -floor(-n));
     }
 
     return S_OK;
@@ -467,34 +470,38 @@ HRESULT to_integer(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
 /* ECMA-262 3rd Edition    9.5 */
 HRESULT to_int32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, INT *ret)
 {
-    VARIANT num;
+    double n;
     HRESULT hres;
 
-    hres = to_number(ctx, v, ei, &num);
+    if(V_VT(v) == VT_I4) {
+        *ret = V_I4(v);
+        return S_OK;
+    }
+
+    hres = to_number(ctx, v, ei, &n);
     if(FAILED(hres))
         return hres;
 
-    if(V_VT(&num) == VT_I4)
-        *ret = V_I4(&num);
-    else
-        *ret = isnan(V_R8(&num)) || isinf(V_R8(&num)) ? 0 : (INT)V_R8(&num);
+    *ret = isnan(n) || isinf(n) ? 0 : n;
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    9.6 */
 HRESULT to_uint32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, DWORD *ret)
 {
-    VARIANT num;
+    double n;
     HRESULT hres;
 
-    hres = to_number(ctx, v, ei, &num);
+    if(V_VT(v) == VT_I4) {
+        *ret = V_I4(v);
+        return S_OK;
+    }
+
+    hres = to_number(ctx, v, ei, &n);
     if(FAILED(hres))
         return hres;
 
-    if(V_VT(&num) == VT_I4)
-        *ret = V_I4(&num);
-    else
-        *ret = isnan(V_R8(&num)) || isinf(V_R8(&num)) ? 0 : (DWORD)V_R8(&num);
+    *ret = isnan(n) || isinf(n) ? 0 : n;
     return S_OK;
 }
 
@@ -679,17 +686,19 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
         }
         break;
     }
-    case VT_R8:
-        hres = to_number(ctx, src, &ei, dst);
-        if(SUCCEEDED(hres) && V_VT(dst) == VT_I4)
-            V_R8(dst) = V_I4(dst);
+    case VT_R8: {
+        double n;
+        hres = to_number(ctx, src, &ei, &n);
+        if(SUCCEEDED(hres))
+            V_R8(dst) = n;
         break;
+    }
     case VT_R4: {
-        VARIANT n;
+        double n;
 
         hres = to_number(ctx, src, &ei, &n);
         if(SUCCEEDED(hres))
-            V_R4(dst) = num_val(&n);
+            V_R4(dst) = n;
         break;
     }
     case VT_BOOL: {

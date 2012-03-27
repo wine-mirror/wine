@@ -1366,7 +1366,7 @@ static HRESULT Date_getTimezoneOffset(script_ctx_t *ctx, vdisp_t *jsthis, WORD f
 static HRESULT Date_setTime(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
+    double n;
     HRESULT hres;
     DateInstance *date;
 
@@ -1378,11 +1378,11 @@ static HRESULT Date_setTime(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, JS_E_MISSING_ARG, NULL);
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &n);
     if(FAILED(hres))
         return hres;
 
-    date->time = time_clip(num_val(&v));
+    date->time = time_clip(n);
 
     if(retv)
         num_set_val(retv, date->time);
@@ -1394,10 +1394,9 @@ static HRESULT Date_setTime(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 static HRESULT Date_setMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
-    DOUBLE t;
+    double n, t;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1407,13 +1406,13 @@ static HRESULT Date_setMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, JS_E_MISSING_ARG, NULL);
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &n);
     if(FAILED(hres))
         return hres;
 
     t = local_time(date->time, date);
     t = make_date(day(t), make_time(hour_from_time(t), min_from_time(t),
-                sec_from_time(t), num_val(&v)));
+                sec_from_time(t), n));
     date->time = time_clip(utc(t, date));
 
     if(retv)
@@ -1426,10 +1425,9 @@ static HRESULT Date_setMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
 static HRESULT Date_setUTCMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
-    DOUBLE t;
+    double n, t;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1439,13 +1437,13 @@ static HRESULT Date_setUTCMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, JS_E_MISSING_ARG, NULL);
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &n);
     if(FAILED(hres))
         return hres;
 
     t = date->time;
     t = make_date(day(t), make_time(hour_from_time(t), min_from_time(t),
-                sec_from_time(t), num_val(&v)));
+                sec_from_time(t), n));
     date->time = time_clip(t);
 
     if(retv)
@@ -1458,10 +1456,9 @@ static HRESULT Date_setUTCMilliseconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
 static HRESULT Date_setSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
-    DOUBLE t, sec, ms;
+    double t, sec, ms;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1473,18 +1470,17 @@ static HRESULT Date_setSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 
     t = local_time(date->time, date);
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &sec);
     if(FAILED(hres))
         return hres;
-    sec = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &ms);
         if(FAILED(hres))
             return hres;
-        ms = num_val(&v);
+    }else {
+        ms = ms_from_time(t);
     }
-    else ms = ms_from_time(t);
 
     t = make_date(day(t), make_time(hour_from_time(t),
                 min_from_time(t), sec, ms));
@@ -1500,10 +1496,9 @@ static HRESULT Date_setSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 static HRESULT Date_setUTCSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
-    DOUBLE t, sec, ms;
+    double t, sec, ms;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1515,18 +1510,17 @@ static HRESULT Date_setUTCSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
     t = date->time;
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &sec);
     if(FAILED(hres))
         return hres;
-    sec = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &ms);
         if(FAILED(hres))
             return hres;
-        ms = num_val(&v);
+    }else {
+        ms = ms_from_time(t);
     }
-    else ms = ms_from_time(t);
 
     t = make_date(day(t), make_time(hour_from_time(t),
                 min_from_time(t), sec, ms));
@@ -1542,10 +1536,9 @@ static HRESULT Date_setUTCSeconds(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 static HRESULT Date_setMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
-    DOUBLE t, min, sec, ms;
+    double t, min, sec, ms;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1557,26 +1550,25 @@ static HRESULT Date_setMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 
     t = local_time(date->time, date);
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &min);
     if(FAILED(hres))
         return hres;
-    min = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &sec);
         if(FAILED(hres))
             return hres;
-        sec = num_val(&v);
+    }else {
+        sec = sec_from_time(t);
     }
-    else sec = sec_from_time(t);
 
     if(arg_cnt(dp) > 2) {
-        hres = to_number(ctx, get_arg(dp, 2), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 2), ei, &ms);
         if(FAILED(hres))
             return hres;
-        ms = num_val(&v);
+    }else {
+        ms = ms_from_time(t);
     }
-    else ms = ms_from_time(t);
 
     t = make_date(day(t), make_time(hour_from_time(t),
                 min, sec, ms));
@@ -1592,10 +1584,9 @@ static HRESULT Date_setMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
-    DOUBLE t, min, sec, ms;
+    double t, min, sec, ms;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1607,26 +1598,25 @@ static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
     t = date->time;
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &min);
     if(FAILED(hres))
         return hres;
-    min = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &sec);
         if(FAILED(hres))
             return hres;
-        sec = num_val(&v);
+    }else {
+        sec = sec_from_time(t);
     }
-    else sec = sec_from_time(t);
 
     if(arg_cnt(dp) > 2) {
-        hres = to_number(ctx, get_arg(dp, 2), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 2), ei, &ms);
         if(FAILED(hres))
             return hres;
-        ms = num_val(&v);
+    }else {
+        ms = ms_from_time(t);
     }
-    else ms = ms_from_time(t);
 
     t = make_date(day(t), make_time(hour_from_time(t),
                 min, sec, ms));
@@ -1642,10 +1632,9 @@ static HRESULT Date_setUTCMinutes(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 static HRESULT Date_setHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
-    DOUBLE t, hour, min, sec, ms;
+    double t, hour, min, sec, ms;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1657,34 +1646,33 @@ static HRESULT Date_setHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 
     t = local_time(date->time, date);
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &hour);
     if(FAILED(hres))
         return hres;
-    hour = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &min);
         if(FAILED(hres))
             return hres;
-        min = num_val(&v);
+    }else {
+        min = min_from_time(t);
     }
-    else min = min_from_time(t);
 
     if(arg_cnt(dp) > 2) {
-        hres = to_number(ctx, get_arg(dp, 2), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 2), ei, &sec);
         if(FAILED(hres))
             return hres;
-        sec = num_val(&v);
+    }else {
+        sec = sec_from_time(t);
     }
-    else sec = sec_from_time(t);
 
     if(arg_cnt(dp) > 3) {
-        hres = to_number(ctx, get_arg(dp, 3), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 3), ei, &ms);
         if(FAILED(hres))
             return hres;
-        ms = num_val(&v);
+    }else {
+        ms = ms_from_time(t);
     }
-    else ms = ms_from_time(t);
 
     t = make_date(day(t), make_time(hour, min, sec, ms));
     date->time = time_clip(utc(t, date));
@@ -1700,9 +1688,8 @@ static HRESULT Date_setUTCHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
         VARIANT *retv, jsexcept_t *ei)
 {
     DateInstance *date;
-    VARIANT v;
+    double t, hour, min, sec, ms;
     HRESULT hres;
-    DOUBLE t, hour, min, sec, ms;
 
     TRACE("\n");
 
@@ -1714,34 +1701,33 @@ static HRESULT Date_setUTCHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
     t = date->time;
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &hour);
     if(FAILED(hres))
         return hres;
-    hour = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &min);
         if(FAILED(hres))
             return hres;
-        min = num_val(&v);
+    }else {
+        min = min_from_time(t);
     }
-    else min = min_from_time(t);
 
     if(arg_cnt(dp) > 2) {
-        hres = to_number(ctx, get_arg(dp, 2), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 2), ei, &sec);
         if(FAILED(hres))
             return hres;
-        sec = num_val(&v);
+    }else {
+        sec = sec_from_time(t);
     }
-    else sec = sec_from_time(t);
 
     if(arg_cnt(dp) > 3) {
-        hres = to_number(ctx, get_arg(dp, 3), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 3), ei, &ms);
         if(FAILED(hres))
             return hres;
-        ms = num_val(&v);
+    }else {
+        ms = ms_from_time(t);
     }
-    else ms = ms_from_time(t);
 
     t = make_date(day(t), make_time(hour, min, sec, ms));
     date->time = time_clip(t);
@@ -1756,10 +1742,9 @@ static HRESULT Date_setUTCHours(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 static HRESULT Date_setDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
-    DOUBLE t;
+    double t, n;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1769,13 +1754,12 @@ static HRESULT Date_setDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, JS_E_MISSING_ARG, NULL);
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &n);
     if(FAILED(hres))
         return hres;
 
     t = local_time(date->time, date);
-    t = make_date(make_day(year_from_time(t), month_from_time(t),
-                num_val(&v)), time_within_day(t));
+    t = make_date(make_day(year_from_time(t), month_from_time(t), n), time_within_day(t));
     date->time = time_clip(utc(t, date));
 
     if(retv)
@@ -1788,10 +1772,9 @@ static HRESULT Date_setDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 static HRESULT Date_setUTCDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
-    DOUBLE t;
+    double t, n;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1801,13 +1784,12 @@ static HRESULT Date_setUTCDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
     if(!arg_cnt(dp))
         return throw_type_error(ctx, ei, JS_E_MISSING_ARG, NULL);
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &n);
     if(FAILED(hres))
         return hres;
 
     t = date->time;
-    t = make_date(make_day(year_from_time(t), month_from_time(t),
-                num_val(&v)), time_within_day(t));
+    t = make_date(make_day(year_from_time(t), month_from_time(t), n), time_within_day(t));
     date->time = time_clip(t);
 
     if(retv)
@@ -1820,10 +1802,9 @@ static HRESULT Date_setUTCDate(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 static HRESULT Date_setMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
     DOUBLE t, month, ddate;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1835,18 +1816,17 @@ static HRESULT Date_setMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 
     t = local_time(date->time, date);
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &month);
     if(FAILED(hres))
         return hres;
-    month = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &ddate);
         if(FAILED(hres))
             return hres;
-        ddate = num_val(&v);
+    }else {
+        ddate = date_from_time(t);
     }
-    else ddate = date_from_time(t);
 
     t = make_date(make_day(year_from_time(t), month, ddate),
             time_within_day(t));
@@ -1862,10 +1842,9 @@ static HRESULT Date_setMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
 static HRESULT Date_setUTCMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
-    DOUBLE t, month, ddate;
+    double t, month, ddate;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1877,18 +1856,17 @@ static HRESULT Date_setUTCMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
     t = date->time;
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &month);
     if(FAILED(hres))
         return hres;
-    month = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &ddate);
         if(FAILED(hres))
             return hres;
-        ddate = num_val(&v);
+    }else {
+        ddate = date_from_time(t);
     }
-    else ddate = date_from_time(t);
 
     t = make_date(make_day(year_from_time(t), month, ddate),
             time_within_day(t));
@@ -1904,10 +1882,9 @@ static HRESULT Date_setUTCMonth(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 static HRESULT Date_setFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
-    DOUBLE t, year, month, ddate;
+    double t, year, month, ddate;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1919,26 +1896,25 @@ static HRESULT Date_setFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
     t = local_time(date->time, date);
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &year);
     if(FAILED(hres))
         return hres;
-    year = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &month);
         if(FAILED(hres))
             return hres;
-        month = num_val(&v);
+    }else {
+        month = month_from_time(t);
     }
-    else month = month_from_time(t);
 
     if(arg_cnt(dp) > 2) {
-        hres = to_number(ctx, get_arg(dp, 2), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 2), ei, &ddate);
         if(FAILED(hres))
             return hres;
-        ddate = num_val(&v);
+    }else {
+        ddate = date_from_time(t);
     }
-    else ddate = date_from_time(t);
 
     t = make_date(make_day(year, month, ddate), time_within_day(t));
     date->time = time_clip(utc(t, date));
@@ -1953,10 +1929,9 @@ static HRESULT Date_setFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 static HRESULT Date_setUTCFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT v;
-    HRESULT hres;
     DateInstance *date;
-    DOUBLE t, year, month, ddate;
+    double t, year, month, ddate;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -1968,26 +1943,25 @@ static HRESULT Date_setUTCFullYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 
     t = date->time;
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &year);
     if(FAILED(hres))
         return hres;
-    year = num_val(&v);
 
     if(arg_cnt(dp) > 1) {
-        hres = to_number(ctx, get_arg(dp, 1), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 1), ei, &month);
         if(FAILED(hres))
             return hres;
-        month = num_val(&v);
+    }else {
+        month = month_from_time(t);
     }
-    else month = month_from_time(t);
 
     if(arg_cnt(dp) > 2) {
-        hres = to_number(ctx, get_arg(dp, 2), ei, &v);
+        hres = to_number(ctx, get_arg(dp, 2), ei, &ddate);
         if(FAILED(hres))
             return hres;
-        ddate = num_val(&v);
+    }else {
+        ddate = date_from_time(t);
     }
-    else ddate = date_from_time(t);
 
     t = make_date(make_day(year, month, ddate), time_within_day(t));
     date->time = time_clip(t);
@@ -2030,7 +2004,6 @@ static HRESULT Date_setYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 {
     DateInstance *date;
     DOUBLE t, year;
-    VARIANT v;
     HRESULT hres;
 
     TRACE("\n");
@@ -2043,11 +2016,10 @@ static HRESULT Date_setYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
 
     t = local_time(date->time, date);
 
-    hres = to_number(ctx, get_arg(dp, 0), ei, &v);
+    hres = to_number(ctx, get_arg(dp, 0), ei, &year);
     if(FAILED(hres))
         return hres;
 
-    year = num_val(&v);
     if(isnan(year)) {
         date->time = year;
         if(retv)
@@ -2170,7 +2142,7 @@ static HRESULT create_date(script_ctx_t *ctx, jsdisp_t *object_prototype, DOUBLE
     return S_OK;
 }
 
-static inline HRESULT date_parse(BSTR input, VARIANT *retv) {
+static inline HRESULT date_parse(BSTR input, double *ret) {
     static const DWORD string_ids[] = { LOCALE_SMONTHNAME12, LOCALE_SMONTHNAME11,
         LOCALE_SMONTHNAME10, LOCALE_SMONTHNAME9, LOCALE_SMONTHNAME8,
         LOCALE_SMONTHNAME7, LOCALE_SMONTHNAME6, LOCALE_SMONTHNAME5,
@@ -2191,15 +2163,15 @@ static inline HRESULT date_parse(BSTR input, VARIANT *retv) {
     DateInstance di;
     DWORD lcid_en;
 
-    if(retv) num_set_nan(retv);
-
     input_len = SysStringLen(input);
     for(i=0; i<input_len; i++) {
         if(input[i] == '(') nest_level++;
         else if(input[i] == ')') {
             nest_level--;
-            if(nest_level<0)
+            if(nest_level<0) {
+                *ret = ret_nan();
                 return S_OK;
+            }
         }
         else if(!nest_level) parse_len++;
     }
@@ -2406,8 +2378,7 @@ static inline HRESULT date_parse(BSTR input, VARIANT *retv) {
         }
     }
 
-    if(retv && i==parse_len && set_year && set_month
-            && set_day && (!set_am || hour<13)) {
+    if(i == parse_len && set_year && set_month && set_day && (!set_am || hour<13)) {
         if(set_am) {
             if(hour == 12) hour = 0;
             if(!am) hour += 12;
@@ -2416,11 +2387,13 @@ static inline HRESULT date_parse(BSTR input, VARIANT *retv) {
         if(!ad) year = -year+1;
         else if(year<100) year += 1900;
 
-        V_VT(retv) = VT_R8;
-        V_R8(retv) = time_clip(make_date(make_day(year, month, day),
+        *ret = time_clip(make_date(make_day(year, month, day),
                     make_time(hour+hour_adjust, min, sec, ms)) + offset*MS_PER_MINUTE);
 
-        if(set_hour_adjust) V_R8(retv) = utc(V_R8(retv), &di);
+        if(set_hour_adjust)
+            *ret = utc(*ret, &di);
+    }else {
+        *ret = ret_nan();
     }
 
     for(i=0; i<sizeof(string_ids)/sizeof(DWORD); i++)
@@ -2434,6 +2407,7 @@ static HRESULT DateConstr_parse(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
         VARIANT *retv, jsexcept_t *ei)
 {
     BSTR parse_str;
+    double n;
     HRESULT hres;
 
     TRACE("\n");
@@ -2448,16 +2422,18 @@ static HRESULT DateConstr_parse(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     if(FAILED(hres))
         return hres;
 
-    hres = date_parse(parse_str, retv);
-
+    hres = date_parse(parse_str, &n);
     SysFreeString(parse_str);
-    return hres;
+    if(FAILED(hres))
+        return hres;
+
+    num_set_val(retv, n);
+    return S_OK;
 }
 
 static HRESULT date_utc(script_ctx_t *ctx, DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei)
 {
-    VARIANT year, month, vdate, hours, minutes, seconds, ms;
-    DOUBLE y;
+    double year, month, vdate, hours, minutes, seconds, ms;
     int arg_no = arg_cnt(dp);
     HRESULT hres;
 
@@ -2467,78 +2443,65 @@ static HRESULT date_utc(script_ctx_t *ctx, DISPPARAMS *dp, VARIANT *retv, jsexce
         hres = to_number(ctx, get_arg(dp, 0), ei, &year);
         if(FAILED(hres))
             return hres;
-        y = num_val(&year);
-        if(0<=y && y<=99)
-            y += 1900;
+        if(0 <= year && year <= 99)
+            year += 1900;
+    }else {
+        year = 1900;
     }
-    else y = 1900;
 
     if(arg_no>1) {
         hres = to_number(ctx, get_arg(dp, 1), ei, &month);
         if(FAILED(hres))
             return hres;
-    }
-    else {
-        V_VT(&month) = VT_R8;
-        V_R8(&month) = 0;
+    }else {
+        month = 0;
     }
 
     if(arg_no>2) {
         hres = to_number(ctx, get_arg(dp, 2), ei, &vdate);
         if(FAILED(hres))
             return hres;
-    }
-    else {
-        V_VT(&vdate) = VT_R8;
-        V_R8(&vdate) = 1;
+    }else {
+        vdate = 1;
     }
 
     if(arg_no>3) {
         hres = to_number(ctx, get_arg(dp, 3), ei, &hours);
         if(FAILED(hres))
             return hres;
-    }
-    else {
-        V_VT(&hours) = VT_R8;
-        V_R8(&hours) = 0;
+    }else {
+        hours = 0;
     }
 
     if(arg_no>4) {
         hres = to_number(ctx, get_arg(dp, 4), ei, &minutes);
         if(FAILED(hres))
             return hres;
-    }
-    else {
-        V_VT(&minutes) = VT_R8;
-        V_R8(&minutes) = 0;
+    }else {
+        minutes = 0;
     }
 
     if(arg_no>5) {
         hres = to_number(ctx, get_arg(dp, 5), ei, &seconds);
         if(FAILED(hres))
             return hres;
-    }
-    else {
-        V_VT(&seconds) = VT_R8;
-        V_R8(&seconds) = 0;
+    }else {
+        seconds = 0;
     }
 
     if(arg_no>6) {
         hres = to_number(ctx, get_arg(dp, 6), ei, &ms);
         if(FAILED(hres))
             return hres;
-    }
-    else {
-        V_VT(&ms) = VT_R8;
-        V_R8(&ms) = 0;
+    } else {
+        ms = 0;
     }
 
     if(retv) {
         V_VT(retv) = VT_R8;
         V_R8(retv) = time_clip(make_date(
-                    make_day(y, num_val(&month), num_val(&vdate)),
-                    make_time(num_val(&hours), num_val(&minutes),
-                    num_val(&seconds), num_val(&ms))));
+                    make_day(year, month, vdate),
+                    make_time(hours, minutes,seconds, ms)));
     }
 
     return S_OK;
@@ -2580,22 +2543,23 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
         /* ECMA-262 3rd Edition    15.9.3.2 */
         case 1: {
-            VARIANT prim, num;
+            VARIANT prim;
+            double n;
 
             hres = to_primitive(ctx, get_arg(dp,0), ei, &prim, NO_HINT);
             if(FAILED(hres))
                 return hres;
 
             if(V_VT(&prim) == VT_BSTR)
-                hres = date_parse(V_BSTR(&prim), &num);
+                hres = date_parse(V_BSTR(&prim), &n);
             else
-                hres = to_number(ctx, &prim, ei, &num);
+                hres = to_number(ctx, &prim, ei, &n);
 
             VariantClear(&prim);
             if(FAILED(hres))
                 return hres;
 
-            hres = create_date(ctx, NULL, time_clip(num_val(&num)), &date);
+            hres = create_date(ctx, NULL, time_clip(n), &date);
             if(FAILED(hres))
                 return hres;
             break;
