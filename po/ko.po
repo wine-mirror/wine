@@ -3440,10 +3440,8 @@ msgid "Expected ')'"
 msgstr "')' 가 필요합니다"
 
 #: jscript.rc:37
-#, fuzzy
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "잘못된 매개변수.\n"
+msgstr "잘못된 문자"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
