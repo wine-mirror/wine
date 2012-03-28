@@ -313,6 +313,7 @@ static BOOL is_inside_epilog(struct cpu_stack_walk* csw, DWORD64 pc,
             }
             return FALSE;
         case 0x83: /* add $n,%rsp */
+            if (!sw_read_mem(csw, pc + 2, &op2, 1)) return FALSE;
             if (op0 == 0x48 && op2 == 0xc4)
             {
                 pc += 4;
@@ -320,6 +321,7 @@ static BOOL is_inside_epilog(struct cpu_stack_walk* csw, DWORD64 pc,
             }
             return FALSE;
         case 0x8d: /* lea n(reg),%rsp */
+            if (!sw_read_mem(csw, pc + 2, &op2, 1)) return FALSE;
             if (op0 & 0x06) return FALSE;  /* rex.RX must be cleared */
             if (((op2 >> 3) & 7) != 4) return FALSE;  /* dest reg mus be %rsp */
             if ((op2 & 7) == 4) return FALSE;  /* no SIB byte allowed */
