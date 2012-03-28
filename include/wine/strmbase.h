@@ -574,6 +574,65 @@ HRESULT WINAPI BaseControlVideoImpl_IsUsingDefaultDestination(IBasicVideo *iface
 #endif
 #endif
 
+/* BaseRenderer Filter */
+typedef struct BaseRendererTag
+{
+	BaseFilter filter;
+
+	BaseInputPin *pInputPin;
+	IUnknown *pPosition;
+	CRITICAL_SECTION csRenderLock;
+
+	const struct BaseRendererFuncTable * pFuncsTable;
+} BaseRenderer;
+
+typedef HRESULT (WINAPI *BaseRenderer_CheckMediaType)(BaseRenderer *This, const AM_MEDIA_TYPE *pmt);
+typedef HRESULT (WINAPI *BaseRenderer_DoRenderSample)(BaseRenderer *This, IMediaSample *pMediaSample);
+typedef VOID (WINAPI *BaseRenderer_OnReceiveFirstSample)(BaseRenderer *This, IMediaSample *pMediaSample);
+typedef VOID (WINAPI *BaseRenderer_OnRenderEnd)(BaseRenderer *This, IMediaSample *pMediaSample);
+typedef VOID (WINAPI *BaseRenderer_OnRenderStart)(BaseRenderer *This, IMediaSample *pMediaSample);
+typedef VOID (WINAPI *BaseRenderer_OnStartStreaming)(BaseRenderer *This);
+typedef VOID (WINAPI *BaseRenderer_OnStopStreaming)(BaseRenderer *This);
+typedef VOID (WINAPI *BaseRenderer_OnWaitEnd)(BaseRenderer *This);
+typedef VOID (WINAPI *BaseRenderer_OnWaitStart)(BaseRenderer *This);
+typedef VOID (WINAPI *BaseRenderer_PrepareRender)(BaseRenderer *This);
+typedef HRESULT (WINAPI *BaseRenderer_ShouldDrawSampleNow)(BaseRenderer *This, IMediaSample *pMediaSample, REFERENCE_TIME *pStartTime, REFERENCE_TIME *pEndTime);
+typedef HRESULT (WINAPI *BaseRenderer_PrepareReceive)(BaseRenderer *This, IMediaSample *pMediaSample);
+typedef HRESULT (WINAPI *BaseRenderer_EndOfStream)(BaseRenderer *This);
+typedef HRESULT (WINAPI *BaseRenderer_EndFlush) (BaseRenderer *This);
+
+typedef struct BaseRendererFuncTable {
+	/* Required */
+	BaseRenderer_CheckMediaType pfnCheckMediaType;
+	BaseRenderer_DoRenderSample pfnDoRenderSample;
+	/* Optional, Data Handlers */
+	BaseRenderer_OnReceiveFirstSample  pfnOnReceiveFirstSample;
+	BaseRenderer_OnRenderEnd  pfnOnRenderEnd;
+	BaseRenderer_OnRenderStart  pfnOnRenderStart;
+	BaseRenderer_OnStartStreaming  pfnOnStartStreaming;
+	BaseRenderer_OnStopStreaming  pfnOnStopStreaming;
+	BaseRenderer_OnWaitEnd  pfnOnWaitEnd;
+	BaseRenderer_OnWaitStart  pfnOnWaitStart;
+	BaseRenderer_PrepareRender  pfnPrepareRender;
+	BaseRenderer_ShouldDrawSampleNow  pfnShouldDrawSampleNow;
+	BaseRenderer_PrepareReceive pfnPrepareReceive;
+	/* Optional, Input Pin */
+	BaseRenderer_EndOfStream pfnEndOfStream;
+	BaseRenderer_EndFlush pfnEndFlush;
+} BaseRendererFuncTable;
+
+HRESULT WINAPI BaseRendererImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
+ULONG   WINAPI BaseRendererImpl_Release(IBaseFilter * iface);
+HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSample);
+HRESULT WINAPI BaseRendererImpl_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin);
+HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface);
+HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart);
+HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface);
+HRESULT WINAPI BaseRendererImpl_EndOfStream(BaseRenderer* iface);
+HRESULT WINAPI BaseRendererImpl_EndFlush(BaseRenderer* iface);
+
+HRESULT WINAPI BaseRenderer_Init(BaseRenderer *This, const IBaseFilterVtbl *Vtbl, IUnknown *pUnkOuter, const CLSID *pClsid, DWORD_PTR DebugInfo, const BaseRendererFuncTable* pBaseFuncsTable);
+
 /* Dll Functions */
 BOOL WINAPI STRMBASE_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv);
 HRESULT WINAPI STRMBASE_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
