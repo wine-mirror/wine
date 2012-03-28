@@ -243,6 +243,8 @@ typedef struct _basic_string_wchar
     MSVCP_size_t res;
 } basic_string_wchar;
 
+basic_string_wchar* __stdcall MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
+
 char* __stdcall MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
 void __stdcall MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
 MSVCP_size_t __stdcall MSVCP_allocator_char_max_size(void*);
