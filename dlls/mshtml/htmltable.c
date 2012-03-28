@@ -128,7 +128,7 @@ static HRESULT WINAPI HTMLTable_get_cols(IHTMLTable *iface, LONG *p)
 static HRESULT WINAPI HTMLTable_put_border(IHTMLTable *iface, VARIANT v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -170,7 +170,7 @@ static HRESULT WINAPI HTMLTable_get_rules(IHTMLTable *iface, BSTR *p)
 static HRESULT WINAPI HTMLTable_put_cellSpacing(IHTMLTable *iface, VARIANT v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -184,7 +184,7 @@ static HRESULT WINAPI HTMLTable_get_cellSpacing(IHTMLTable *iface, VARIANT *p)
 static HRESULT WINAPI HTMLTable_put_cellPadding(IHTMLTable *iface, VARIANT v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -212,7 +212,7 @@ static HRESULT WINAPI HTMLTable_get_background(IHTMLTable *iface, BSTR *p)
 static HRESULT WINAPI HTMLTable_put_bgColor(IHTMLTable *iface, VARIANT v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -226,7 +226,7 @@ static HRESULT WINAPI HTMLTable_get_bgColor(IHTMLTable *iface, VARIANT *p)
 static HRESULT WINAPI HTMLTable_put_borderColor(IHTMLTable *iface, VARIANT v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -240,7 +240,7 @@ static HRESULT WINAPI HTMLTable_get_borderColor(IHTMLTable *iface, VARIANT *p)
 static HRESULT WINAPI HTMLTable_put_borderColorLight(IHTMLTable *iface, VARIANT v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -254,7 +254,7 @@ static HRESULT WINAPI HTMLTable_get_borderColorLight(IHTMLTable *iface, VARIANT 
 static HRESULT WINAPI HTMLTable_put_borderColorDark(IHTMLTable *iface, VARIANT v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -310,7 +310,7 @@ static HRESULT WINAPI HTMLTable_get_rows(IHTMLTable *iface, IHTMLElementCollecti
 static HRESULT WINAPI HTMLTable_put_width(IHTMLTable *iface, VARIANT v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -324,7 +324,7 @@ static HRESULT WINAPI HTMLTable_get_width(IHTMLTable *iface, VARIANT *p)
 static HRESULT WINAPI HTMLTable_put_height(IHTMLTable *iface, VARIANT v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -457,7 +457,7 @@ static HRESULT WINAPI HTMLTable_get_readyState(IHTMLTable *iface, BSTR *p)
 static HRESULT WINAPI HTMLTable_put_onreadystatechange(IHTMLTable *iface, VARIANT v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
