@@ -15339,7 +15339,94 @@ interface IHTMLTableRow : IDispatch
 }
 
 /*****************************************************************************
- *    DispHTMLTable interface
+ *    IHTMLTableCell interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f23d-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLTableCell : IDispatch
+{
+    [propput, id(DISPID_IHTMLTABLECELL_ROWSPAN)]
+    HRESULT rowSpan([in] long v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_ROWSPAN)]
+    HRESULT rowSpan([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLTABLECELL_COLSPAN)]
+    HRESULT colSpan([in] long v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_COLSPAN)]
+    HRESULT colSpan([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLTABLECELL_ALIGN)]
+    HRESULT align([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_ALIGN)]
+    HRESULT align([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLTABLECELL_VALIGN)]
+    HRESULT vAlign([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_VALIGN)]
+    HRESULT vAlign([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLTABLECELL_BGCOLOR)]
+    HRESULT bgColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_BGCOLOR)]
+    HRESULT bgColor([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLECELL_NOWRAP)]
+    HRESULT noWrap([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_NOWRAP)]
+    HRESULT noWrap([retval, out] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLTABLECELL_BACKGROUND)]
+    HRESULT background([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_BACKGROUND)]
+    HRESULT background([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLTABLECELL_BORDERCOLOR)]
+    HRESULT borderColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_BORDERCOLOR)]
+    HRESULT borderColor([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLECELL_BORDERCOLORLIGHT)]
+    HRESULT borderColorLight([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_BORDERCOLORLIGHT)]
+    HRESULT borderColorLight([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLECELL_BORDERCOLORDARK)]
+    HRESULT borderColorDark([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_BORDERCOLORDARK)]
+    HRESULT borderColorDark([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLECELL_WIDTH)]
+    HRESULT width([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_WIDTH)]
+    HRESULT width([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLECELL_HEIGHT)]
+    HRESULT height([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_HEIGHT)]
+    HRESULT height([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLTABLECELL_CELLINDEX)]
+    HRESULT cellIndex([retval, out] long *p);
+}
+
+/*****************************************************************************
+ *    DispHTMLTable dispinterface
  */
 [
     hidden,
