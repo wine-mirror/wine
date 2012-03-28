@@ -11794,8 +11794,10 @@ static void test_MsiGetFileSignatureInformation(void)
     hr = MsiGetFileSignatureInformationA( "signature.bin", 0, NULL, NULL, &len );
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG got 0x%08x\n", hr);
 
+    cert = (const CERT_CONTEXT *)0xdeadbeef;
     hr = MsiGetFileSignatureInformationA( "signature.bin", 0, &cert, NULL, &len );
     todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_FUNCTION_FAILED), "got 0x%08x\n", hr);
+    ok(cert == NULL, "got %p\n", cert);
 
     DeleteFileA( "signature.bin" );
 }

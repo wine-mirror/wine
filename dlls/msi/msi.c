@@ -2580,6 +2580,7 @@ HRESULT WINAPI MsiGetFileSignatureInformationW( LPCWSTR path, DWORD flags, PCCER
     data.dwProvFlags         = 0;
     data.dwUIContext         = WTD_UICONTEXT_INSTALL;
     hr = WinVerifyTrustEx( INVALID_HANDLE_VALUE, &generic_verify_v2, &data );
+    *cert = NULL;
     if (FAILED(hr)) goto done;
 
     if (!(signer = WTHelperGetProvSignerFromChain( data.hWVTStateData, 0, FALSE, 0 )))
