@@ -649,6 +649,7 @@ static HRESULT WINAPI MMDevice_GetId(IMMDevice *iface, WCHAR **itemid)
     wsprintfW( str, formatW, id->Data1, id->Data2, id->Data3,
                id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
                id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
+    TRACE("returning %s\n", wine_dbgstr_w(str));
     return S_OK;
 }
 
@@ -682,24 +683,28 @@ static inline MMDevice *impl_from_IMMEndpoint(IMMEndpoint *iface)
 static HRESULT WINAPI MMEndpoint_QueryInterface(IMMEndpoint *iface, REFIID riid, void **ppv)
 {
     MMDevice *This = impl_from_IMMEndpoint(iface);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
     return IMMDevice_QueryInterface(&This->IMMDevice_iface, riid, ppv);
 }
 
 static ULONG WINAPI MMEndpoint_AddRef(IMMEndpoint *iface)
 {
     MMDevice *This = impl_from_IMMEndpoint(iface);
+    TRACE("(%p)\n", This);
     return IMMDevice_AddRef(&This->IMMDevice_iface);
 }
 
 static ULONG WINAPI MMEndpoint_Release(IMMEndpoint *iface)
 {
     MMDevice *This = impl_from_IMMEndpoint(iface);
+    TRACE("(%p)\n", This);
     return IMMDevice_Release(&This->IMMDevice_iface);
 }
 
 static HRESULT WINAPI MMEndpoint_GetDataFlow(IMMEndpoint *iface, EDataFlow *flow)
 {
     MMDevice *This = impl_from_IMMEndpoint(iface);
+    TRACE("(%p)->(%p)\n", This, flow);
     if (!flow)
         return E_POINTER;
     *flow = This->flow;
@@ -738,6 +743,7 @@ static void MMDevCol_Destroy(MMDevColImpl *This)
 static HRESULT WINAPI MMDevCol_QueryInterface(IMMDeviceCollection *iface, REFIID riid, void **ppv)
 {
     MMDevColImpl *This = impl_from_IMMDeviceCollection(iface);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
     if (!ppv)
         return E_POINTER;
@@ -860,6 +866,7 @@ void MMDevEnum_Free(void)
 static HRESULT WINAPI MMDevEnum_QueryInterface(IMMDeviceEnumerator *iface, REFIID riid, void **ppv)
 {
     MMDevEnumImpl *This = impl_from_IMMDeviceEnumerator(iface);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
     if (!ppv)
         return E_POINTER;
@@ -1090,6 +1097,7 @@ static void MMDevPropStore_Destroy(MMDevPropStore *This)
 static HRESULT WINAPI MMDevPropStore_QueryInterface(IPropertyStore *iface, REFIID riid, void **ppv)
 {
     MMDevPropStore *This = impl_from_IPropertyStore(iface);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
     if (!ppv)
         return E_POINTER;
@@ -1181,7 +1189,7 @@ static HRESULT WINAPI MMDevPropStore_GetAt(IPropertyStore *iface, DWORD prop, PR
 static HRESULT WINAPI MMDevPropStore_GetValue(IPropertyStore *iface, REFPROPERTYKEY key, PROPVARIANT *pv)
 {
     MMDevPropStore *This = impl_from_IPropertyStore(iface);
-    TRACE("(%p)->(\"%s,%u\", %p\n", This, debugstr_guid(&key->fmtid), key ? key->pid : 0, pv);
+    TRACE("(%p)->(\"%s,%u\", %p)\n", This, key ? debugstr_guid(&key->fmtid) : NULL, key ? key->pid : 0, pv);
 
     if (!key || !pv)
         return E_POINTER;
@@ -1206,6 +1214,7 @@ static HRESULT WINAPI MMDevPropStore_GetValue(IPropertyStore *iface, REFPROPERTY
 static HRESULT WINAPI MMDevPropStore_SetValue(IPropertyStore *iface, REFPROPERTYKEY key, REFPROPVARIANT pv)
 {
     MMDevPropStore *This = impl_from_IPropertyStore(iface);
+    TRACE("(%p)->(\"%s,%u\", %p)\n", This, key ? debugstr_guid(&key->fmtid) : NULL, key ? key->pid : 0, pv);
 
     if (!key || !pv)
         return E_POINTER;
@@ -1348,6 +1357,7 @@ static ULONG WINAPI info_device_Release(IMMDevice *iface)
 static HRESULT WINAPI info_device_OpenPropertyStore(IMMDevice *iface,
         DWORD access, IPropertyStore **ppv)
 {
+    TRACE("(static)->(%x, %p)\n", access, ppv);
     *ppv = &info_device_ps;
     return S_OK;
 }
