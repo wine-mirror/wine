@@ -194,20 +194,22 @@ HRESULT vdecl_convert_fvf(
 }
 
 /* IDirect3DVertexDeclaration9 IUnknown parts follow: */
-static HRESULT WINAPI IDirect3DVertexDeclaration9Impl_QueryInterface(LPDIRECT3DVERTEXDECLARATION9 iface, REFIID riid, LPVOID* ppobj) {
-    IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
+static HRESULT WINAPI IDirect3DVertexDeclaration9Impl_QueryInterface(IDirect3DVertexDeclaration9 *iface,
+        REFIID riid, void **out)
+{
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
-
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IDirect3DVertexDeclaration9)) {
+    if (IsEqualGUID(riid, &IID_IDirect3DVertexDeclaration9)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
         IDirect3DVertexDeclaration9_AddRef(iface);
-        *ppobj = This;
+        *out = iface;
         return S_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
-    *ppobj = NULL;
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *out = NULL;
     return E_NOINTERFACE;
 }
 
