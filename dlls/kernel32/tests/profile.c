@@ -504,7 +504,7 @@ static void test_profile_refresh(void)
     /* Cache must be invalidated if file no longer exists and default must be returned */
     SetLastError(0xdeadbeef);
     res = GetPrivateProfileInt(SECTION, KEY, 421, testfile);
-    todo_wine ok( res == 421 ||
+    ok( res == 421 ||
         broken(res == 0 && GetLastError() == 0xdeadbeef), /* Win9x, WinME */
         "Got %d instead of 421\n", res);
 }
