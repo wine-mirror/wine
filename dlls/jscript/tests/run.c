@@ -84,7 +84,7 @@ DEFINE_EXPECT(DeleteMemberByDispID);
 #define DISPID_GLOBAL_OK            0x1004
 #define DISPID_GLOBAL_GETVT         0x1005
 #define DISPID_GLOBAL_TESTOBJ       0x1006
-#define DISPID_GLOBAL_NULL_BSTR     0x1007
+#define DISPID_GLOBAL_GETNULLBSTR   0x1007
 #define DISPID_GLOBAL_NULL_DISP     0x1008
 #define DISPID_GLOBAL_TESTTHIS      0x1009
 #define DISPID_GLOBAL_TESTTHIS2     0x100a
@@ -95,6 +95,7 @@ DEFINE_EXPECT(DeleteMemberByDispID);
 #define DISPID_GLOBAL_ISWIN64       0x100f
 #define DISPID_GLOBAL_PUREDISP      0x1010
 #define DISPID_GLOBAL_TESTPROPDELETE  0x1010
+#define DISPID_GLOBAL_ISNULLBSTR    0x1011
 
 #define DISPID_TESTOBJ_PROP         0x2000
 #define DISPID_TESTOBJ_ONLYDISPID   0x2001
@@ -438,8 +439,12 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_TESTOBJ;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "createNullBSTR")) {
-        *pid = DISPID_GLOBAL_NULL_BSTR;
+    if(!strcmp_wa(bstrName, "getNullBSTR")) {
+        *pid = DISPID_GLOBAL_GETNULLBSTR;
+        return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "isNullBSTR")) {
+        *pid = DISPID_GLOBAL_ISNULLBSTR;
         return S_OK;
     }
     if(!strcmp_wa(bstrName, "nullDisp")) {
@@ -663,11 +668,26 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         V_DISPATCH(pvarRes) = (IDispatch*)&pureDisp;
         return S_OK;
 
-    case DISPID_GLOBAL_NULL_BSTR:
+    case DISPID_GLOBAL_GETNULLBSTR:
         if(pvarRes) {
             V_VT(pvarRes) = VT_BSTR;
             V_BSTR(pvarRes) = NULL;
         }
+        return S_OK;
+
+    case DISPID_GLOBAL_ISNULLBSTR:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+        ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(pdp->rgvarg) = %d\n", V_VT(pdp->rgvarg));
+
+        V_VT(pvarRes) = VT_BOOL;
+        V_BOOL(pvarRes) = V_BSTR(pdp->rgvarg) ? VARIANT_FALSE : VARIANT_TRUE;
         return S_OK;
 
     case DISPID_GLOBAL_ISWIN64:

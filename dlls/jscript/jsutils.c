@@ -320,6 +320,11 @@ static HRESULT str_to_number(BSTR str, double *ret)
 
     static const WCHAR infinityW[] = {'I','n','f','i','n','i','t','y'};
 
+    if(!ptr) {
+        *ret = 0;
+        return S_OK;
+    }
+
     while(isspaceW(*ptr))
         ptr++;
 

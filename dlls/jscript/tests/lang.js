@@ -1238,7 +1238,9 @@ for(var i=0; i<2; i++)
     tmp[i] = /b/;
 ok(tmp[0] != tmp[1], "tmp[0] == tmp [1]");
 
-ok(createNullBSTR() === '', "createNullBSTR() !== ''");
+ok(isNullBSTR(getNullBSTR()), "isNullBSTR(getNullBSTR()) failed\n");
+ok(getNullBSTR() === '', "getNullBSTR() !== ''");
+ok(+getNullBSTR() === 0 , "+getNullBTR() !=== 0");
 
 ok(getVT(nullDisp) === "VT_DISPATCH", "getVT(nullDisp) = " + getVT(nullDisp));
 ok(typeof(nullDisp) === "object", "typeof(nullDisp) = " + typeof(nullDisp));
