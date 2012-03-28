@@ -1789,11 +1789,85 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
           debugstr_w(face->StyleName));
 }
 
+static FT_Face new_ft_face( const char *file, void *font_data_ptr, DWORD font_data_size,
+                            FT_Long face_index, BOOL allow_bitmap )
+{
+    FT_Error err;
+    TT_OS2 *pOS2;
+    FT_Face ft_face;
+
+    if (file)
+    {
+        TRACE("Loading font file %s index %ld\n", debugstr_a(file), face_index);
+        err = pFT_New_Face(library, file, face_index, &ft_face);
+    }
+    else
+    {
+        TRACE("Loading font from ptr %p size %d, index %ld\n", font_data_ptr, font_data_size, face_index);
+        err = pFT_New_Memory_Face(library, font_data_ptr, font_data_size, face_index, &ft_face);
+    }
+
+    if (err != 0)
+    {
+        WARN("Unable to load font %s/%p err = %x\n", debugstr_a(file), font_data_ptr, err);
+        return NULL;
+    }
+
+    /* There are too many bugs in FreeType < 2.1.9 for bitmap font support */
+    if (!FT_IS_SCALABLE( ft_face ) && FT_SimpleVersion < ((2 << 16) | (1 << 8) | (9 << 0)))
+    {
+        WARN("FreeType version < 2.1.9, skipping bitmap font %s/%p\n", debugstr_a(file), font_data_ptr);
+        goto fail;
+    }
+
+    if (!FT_IS_SFNT( ft_face ))
+    {
+        if (FT_IS_SCALABLE( ft_face ) || !allow_bitmap )
+        {
+            WARN("Ignoring font %s/%p\n", debugstr_a(file), font_data_ptr);
+            goto fail;
+        }
+    }
+    else
+    {
+        if (!(pOS2 = pFT_Get_Sfnt_Table( ft_face, ft_sfnt_os2 )) ||
+            !pFT_Get_Sfnt_Table( ft_face, ft_sfnt_hhea ) ||
+            !pFT_Get_Sfnt_Table( ft_face, ft_sfnt_head ))
+        {
+            TRACE("Font %s/%p lacks either an OS2, HHEA or HEAD table.\n"
+                  "Skipping this font.\n", debugstr_a(file), font_data_ptr);
+            goto fail;
+        }
+
+        /* Wine uses ttfs as an intermediate step in building its bitmap fonts;
+           we don't want to load these. */
+        if (!memcmp( pOS2->achVendID, "Wine", sizeof(pOS2->achVendID) ))
+        {
+            FT_ULong len = 0;
+
+            if (!pFT_Load_Sfnt_Table( ft_face, FT_MAKE_TAG('E','B','S','C'), 0, NULL, &len ))
+            {
+                TRACE("Skipping Wine bitmap-only TrueType font %s\n", debugstr_a(file));
+                goto fail;
+            }
+        }
+    }
+
+    if (!ft_face->family_name || !ft_face->style_name)
+    {
+        TRACE("Font %s/%p lacks either a family or style name\n", debugstr_a(file), font_data_ptr);
+        goto fail;
+    }
+
+    return ft_face;
+fail:
+    pFT_Done_Face( ft_face );
+    return NULL;
+}
+
 static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_size, DWORD flags)
 {
     FT_Face ft_face;
-    TT_OS2 *pOS2;
-    FT_Error err;
     FT_Long face_index = 0, num_faces;
     INT ret = 0;
 
@@ -1822,66 +1896,8 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
 #endif /* HAVE_CARBON_CARBON_H */
 
     do {
-        if (file)
-        {
-            TRACE("Loading font file %s index %ld\n", debugstr_a(file), face_index);
-            err = pFT_New_Face(library, file, face_index, &ft_face);
-        } else
-        {
-            TRACE("Loading font from ptr %p size %d, index %ld\n", font_data_ptr, font_data_size, face_index);
-            err = pFT_New_Memory_Face(library, font_data_ptr, font_data_size, face_index, &ft_face);
-        }
-
-	if(err != 0) {
-	    WARN("Unable to load font %s/%p err = %x\n", debugstr_a(file), font_data_ptr, err);
-	    return 0;
-	}
-
-	if(!FT_IS_SFNT(ft_face) && (FT_IS_SCALABLE(ft_face) || !(flags & ADDFONT_FORCE_BITMAP))) { /* for now we'll accept TT/OT or bitmap fonts*/
-	    WARN("Ignoring font %s/%p\n", debugstr_a(file), font_data_ptr);
-	    pFT_Done_Face(ft_face);
-	    return 0;
-	}
-
-        /* There are too many bugs in FreeType < 2.1.9 for bitmap font support */
-        if(!FT_IS_SCALABLE(ft_face) && FT_SimpleVersion < ((2 << 16) | (1 << 8) | (9 << 0))) {
-	    WARN("FreeType version < 2.1.9, skipping bitmap font %s/%p\n", debugstr_a(file), font_data_ptr);
-	    pFT_Done_Face(ft_face);
-	    return 0;
-	}
-
-        if(FT_IS_SFNT(ft_face))
-        {
-            if(!(pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2)) ||
-               !pFT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea) ||
-               !pFT_Get_Sfnt_Table(ft_face, ft_sfnt_head))
-            {
-                TRACE("Font %s/%p lacks either an OS2, HHEA or HEAD table.\n"
-                      "Skipping this font.\n", debugstr_a(file), font_data_ptr);
-                pFT_Done_Face(ft_face);
-                return 0;
-            }
-
-            /* Wine uses ttfs as an intermediate step in building its bitmap fonts;
-               we don't want to load these. */
-            if(!memcmp(pOS2->achVendID, "Wine", sizeof(pOS2->achVendID)))
-            {
-                FT_ULong len = 0;
-
-                if(!pFT_Load_Sfnt_Table(ft_face, FT_MAKE_TAG('E','B','S','C'), 0, NULL, &len))
-                {
-                    TRACE("Skipping Wine bitmap-only TrueType font %s\n", debugstr_a(file));
-                    pFT_Done_Face(ft_face);
-                    return 0;
-                }
-            }
-        }
-
-        if(!ft_face->family_name || !ft_face->style_name) {
-            TRACE("Font %s/%p lacks either a family or style name\n", debugstr_a(file), font_data_ptr);
-            pFT_Done_Face(ft_face);
-            return 0;
-        }
+        ft_face = new_ft_face( file, font_data_ptr, font_data_size, face_index, flags & ADDFONT_FORCE_BITMAP );
+        if (!ft_face) return 0;
 
         if(ft_face->family_name[0] == '.') /* Ignore fonts with names beginning with a dot */
         {
