@@ -10181,6 +10181,12 @@ static void test_installprops(void)
         {
             buf[0] = 0;
             size = MAX_PATH;
+            r = MsiGetProperty(hpkg, "Intel", buf, &size);
+            ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+            ok(buf[0], "property not set\n");
+
+            buf[0] = 0;
+            size = MAX_PATH;
             r = MsiGetProperty(hpkg, "MsiAMD64", buf, &size);
             ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
             ok(buf[0], "property not set\n");
@@ -10251,6 +10257,12 @@ static void test_installprops(void)
             {
                 buf[0] = 0;
                 size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "Intel", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(buf[0], "property not set\n");
+
+                buf[0] = 0;
+                size = MAX_PATH;
                 r = MsiGetProperty(hpkg, "MsiAMD64", buf, &size);
                 ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
                 ok(!buf[0], "property set\n");
@@ -10311,6 +10323,12 @@ static void test_installprops(void)
             }
             else
             {
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "Intel", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(buf[0], "property not set\n");
+
                 buf[0] = 0;
                 size = MAX_PATH;
                 r = MsiGetProperty(hpkg, "MsiAMD64", buf, &size);

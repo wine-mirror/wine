@@ -884,10 +884,9 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 
     GetNativeSystemInfo( &sys_info );
     sprintfW( bufstr, szIntFormat, sys_info.wProcessorLevel );
+    msi_set_property( package->db, szIntel, bufstr );
     if (sys_info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
     {
-        msi_set_property( package->db, szIntel, bufstr );
-
         GetSystemDirectoryW( pth, MAX_PATH );
         PathAddBackslashW( pth );
         msi_set_property( package->db, szSystemFolder, pth );
