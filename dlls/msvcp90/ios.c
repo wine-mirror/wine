@@ -127,6 +127,24 @@ typedef struct {
 } basic_streambuf_char;
 
 typedef struct {
+    const vtable_ptr *vtable;
+    mutex lock;
+    wchar_t *rbuf;
+    wchar_t *wbuf;
+    wchar_t **prbuf;
+    wchar_t **pwbuf;
+    wchar_t *rpos;
+    wchar_t *wpos;
+    wchar_t **prpos;
+    wchar_t **pwpos;
+    int rsize;
+    int wsize;
+    int *prsize;
+    int *pwsize;
+    locale *loc;
+} basic_streambuf_wchar;
+
+typedef struct {
     ios_base child;
     basic_streambuf_char *strbuf;
     struct basic_ostream_char *stream;
@@ -159,6 +177,12 @@ extern const vtable_ptr MSVCP_basic_ios_wchar_vtable;
 /* ??_7?$basic_streambuf@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_streambuf_char_vtable;
 
+/* ??_7?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_streambuf_wchar_vtable;
+
+/* ??_7?$basic_streambuf@GU?$char_traits@G@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_streambuf_short_vtable;
+
 /* ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_char_vtable;
 
@@ -170,6 +194,10 @@ DEFINE_RTTI_DATA(basic_ios_wchar, 0, 2, &ios_base_rtti_base_descriptor, &iosb_rt
         NULL, ".?AV?$basic_ios@_WU?$char_traits@_W@std@@@std@@");
 DEFINE_RTTI_DATA(basic_streambuf_char, 0, 0, NULL, NULL, NULL,
         ".?AV?$basic_streambuf@DU?$char_traits@D@std@@@std@@");
+DEFINE_RTTI_DATA(basic_streambuf_wchar, 0, 0, NULL, NULL, NULL,
+        ".?AV?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@");
+DEFINE_RTTI_DATA(basic_streambuf_short, 0, 0, NULL, NULL, NULL,
+        ".?AV?$basic_streambuf@GU?$char_traits@G@std@@@std@@");
 DEFINE_RTTI_DATA(basic_ostream_char, 4, 3, &basic_ios_char_rtti_base_descriptor, &ios_base_rtti_base_descriptor,
         &iosb_rtti_base_descriptor, ".?AV?$basic_ostream@DU?$char_traits@D@std@@@std@@");
 
@@ -194,6 +222,34 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_char_setbuf)
             VTABLE_ADD_FUNC(basic_streambuf_char_sync)
             VTABLE_ADD_FUNC(basic_streambuf_char_imbue));
+    __ASM_VTABLE(basic_streambuf_wchar,
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_overflow)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_pbackfail)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_showmanyc)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_underflow)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_uflow)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_xsgetn)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar__Xsgetn_s)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_xsputn)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_seekoff)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_seekpos)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_setbuf)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_sync)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
+    __ASM_VTABLE(basic_streambuf_short,
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_overflow)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_pbackfail)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_showmanyc)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_underflow)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_uflow)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_xsgetn)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar__Xsgetn_s)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_xsputn)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_seekoff)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_seekpos)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_setbuf)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_sync)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
     __ASM_VTABLE(basic_ostream_char, "");
 #ifndef __GNUC__
 }
@@ -232,7 +288,7 @@ void __thiscall basic_streambuf_char_setg(basic_streambuf_char *this, char *firs
 }
 
 /* ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXXZ */
-/* ?_Init@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXXZ */
+/* ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXXZ */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Init_empty, 4)
 void __thiscall basic_streambuf_char__Init_empty(basic_streambuf_char *this)
 {
@@ -879,6 +935,825 @@ streamsize __thiscall basic_streambuf_char_sputn(basic_streambuf_char *this, con
 {
     TRACE("(%p %p %lu)\n", this, ptr, count);
     return call_basic_streambuf_char_xsputn(this, ptr, count);
+}
+
+/* ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXPA_W00@Z */
+/* ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEA_W00@Z */
+/* ?setp@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXPAG00@Z */
+/* ?setp@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXPEAG00@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_setp_next, 16)
+void __thiscall basic_streambuf_wchar_setp_next(basic_streambuf_wchar *this, wchar_t *first, wchar_t *next, wchar_t *last)
+{
+    TRACE("(%p %p %p %p)\n", this, first, next, last);
+
+    this->wbuf = first;
+    this->wpos = next;
+    this->wsize = last-next;
+}
+
+/* ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXPA_W0@Z */
+/* ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEA_W0@Z */
+/* ?setp@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXPAG0@Z */
+/* ?setp@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXPEAG0@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_setp, 12)
+void __thiscall basic_streambuf_wchar_setp(basic_streambuf_wchar *this, wchar_t *first, wchar_t *last)
+{
+    basic_streambuf_wchar_setp_next(this, first, first, last);
+}
+
+/* ?setg@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXPA_W00@Z */
+/* ?setg@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEA_W00@Z */
+/* ?setg@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXPAG00@Z */
+/* ?setg@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXPEAG00@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_setg, 16)
+void __thiscall basic_streambuf_wchar_setg(basic_streambuf_wchar *this, wchar_t *first, wchar_t *next, wchar_t *last)
+{
+    TRACE("(%p %p %p %p)\n", this, first, next, last);
+
+    this->rbuf = first;
+    this->rpos = next;
+    this->rsize = last-next;
+}
+
+/* ?_Init@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXXZ */
+/* ?_Init@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXXZ */
+/* ?_Init@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXXZ */
+/* ?_Init@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Init_empty, 4)
+void __thiscall basic_streambuf_wchar__Init_empty(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+
+    this->prbuf = &this->rbuf;
+    this->pwbuf = &this->wbuf;
+    this->prpos = &this->rpos;
+    this->pwpos = &this->wpos;
+    this->prsize = &this->rsize;
+    this->pwsize = &this->wsize;
+
+    basic_streambuf_wchar_setp(this, NULL, NULL);
+    basic_streambuf_wchar_setg(this, NULL, NULL, NULL);
+}
+
+/* ??0?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAE@W4_Uninitialized@1@@Z */
+/* ??0?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAA@W4_Uninitialized@1@@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_ctor_uninitialized, 8)
+basic_streambuf_wchar* __thiscall basic_streambuf_wchar_ctor_uninitialized(basic_streambuf_wchar *this, int uninitialized)
+{
+    TRACE("(%p %d)\n", this, uninitialized);
+    this->vtable = &MSVCP_basic_streambuf_wchar_vtable;
+    mutex_ctor(&this->lock);
+    return this;
+}
+
+/* ??0?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAE@W4_Uninitialized@1@@Z */
+/* ??0?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAA@W4_Uninitialized@1@@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_short_ctor_uninitialized, 8)
+basic_streambuf_wchar* __thiscall basic_streambuf_short_ctor_uninitialized(basic_streambuf_wchar *this, int uninitialized)
+{
+    TRACE("(%p %d)\n", this, uninitialized);
+    basic_streambuf_wchar_ctor_uninitialized(this, uninitialized);
+    this->vtable = &MSVCP_basic_streambuf_short_vtable;
+    return this;
+}
+
+/* ??0?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAE@XZ */
+/* ??0?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_ctor, 4)
+basic_streambuf_wchar* __thiscall basic_streambuf_wchar_ctor(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+
+    this->vtable = &MSVCP_basic_streambuf_wchar_vtable;
+    mutex_ctor(&this->lock);
+    this->loc = MSVCRT_operator_new(sizeof(locale));
+    locale_ctor(this->loc);
+    basic_streambuf_wchar__Init_empty(this);
+
+    return this;
+}
+
+/* ??0?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAE@XZ */
+/* ??0?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_short_ctor, 4)
+basic_streambuf_wchar* __thiscall basic_streambuf_short_ctor(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    basic_streambuf_wchar_ctor(this);
+    this->vtable = &MSVCP_basic_streambuf_short_vtable;
+    return this;
+}
+
+/* ??1?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@UAE@XZ */
+/* ??1?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@UEAA@XZ */
+/* ??1?$basic_streambuf@GU?$char_traits@G@std@@@std@@UAE@XZ */
+/* ??1?$basic_streambuf@GU?$char_traits@G@std@@@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_dtor, 4)
+void __thiscall basic_streambuf_wchar_dtor(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+
+    mutex_dtor(&this->lock);
+    locale_dtor(this->loc);
+    MSVCRT_operator_delete(this->loc);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_streambuf_wchar_vector_dtor, 8)
+basic_streambuf_wchar* __thiscall MSVCP_basic_streambuf_wchar_vector_dtor(basic_streambuf_wchar *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            basic_streambuf_wchar_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        basic_streambuf_wchar_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_streambuf_short_vector_dtor, 8)
+basic_streambuf_wchar* __thiscall MSVCP_basic_streambuf_short_vector_dtor(basic_streambuf_wchar *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    return MSVCP_basic_streambuf_wchar_vector_dtor(this, flags);
+}
+
+/* ?_Gnavail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEHXZ */
+/* ?_Gnavail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEBA_JXZ */
+/* ?_Gnavail@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEHXZ */
+/* ?_Gnavail@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBA_JXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Gnavail, 4)
+streamsize __thiscall basic_streambuf_wchar__Gnavail(const basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return *this->prpos ? *this->prsize : 0;
+}
+
+/* ?_Gndec@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEPA_WXZ */
+/* ?_Gndec@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAPEA_WXZ */
+/* ?_Gndec@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEPAGXZ */
+/* ?_Gndec@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAPEAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Gndec, 4)
+wchar_t* __thiscall basic_streambuf_wchar__Gndec(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    (*this->prsize)++;
+    (*this->prpos)--;
+    return *this->prpos;
+}
+
+/* ?_Gninc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEPA_WXZ */
+/* ?_Gninc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAPEA_WXZ */
+/* ?_Gninc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEPAGXZ */
+/* ?_Gninc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAPEAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Gninc, 4)
+wchar_t* __thiscall basic_streambuf_wchar__Gninc(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    (*this->prsize)--;
+    return (*this->prpos)++;
+}
+
+/* ?_Gnpreinc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEPA_WXZ */
+/* ?_Gnpreinc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAPEA_WXZ */
+/* ?_Gnpreinc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEPAGXZ */
+/* ?_Gnpreinc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAPEAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Gnpreinc, 4)
+wchar_t* __thiscall basic_streambuf_wchar__Gnpreinc(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    (*this->prsize)--;
+    (*this->prpos)++;
+    return *this->prpos;
+}
+
+/* ?_Init@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXPAPA_W0PAH001@Z */
+/* ?_Init@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEAPEA_W0PEAH001@Z */
+/* ?_Init@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXPAPAG0PAH001@Z */
+/* ?_Init@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXPEAPEAG0PEAH001@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Init, 28)
+void __thiscall basic_streambuf_wchar__Init(basic_streambuf_wchar *this, wchar_t **gf, wchar_t **gn, int *gc, wchar_t **pf, wchar_t **pn, int *pc)
+{
+    TRACE("(%p %p %p %p %p %p %p)\n", this, gf, gn, gc, pf, pn, pc);
+
+    this->prbuf = gf;
+    this->pwbuf = pf;
+    this->prpos = gn;
+    this->pwpos = pn;
+    this->prsize = gc;
+    this->pwsize = pc;
+}
+
+/* ?_Lock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
+/* ?_Lock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAXXZ */
+/* ?_Lock@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEXXZ */
+/* ?_Lock@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Lock, 4)
+void __thiscall basic_streambuf_wchar__Lock(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    mutex_lock(&this->lock);
+}
+
+/* ?_Pnavail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEHXZ */
+/* ?_Pnavail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEBA_JXZ */
+/* ?_Pnavail@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEHXZ */
+/* ?_Pnavail@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBA_JXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Pnavail, 4)
+streamsize __thiscall basic_streambuf_wchar__Pnavail(const basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return *this->pwpos ? *this->pwsize : 0;
+}
+
+/* ?_Pninc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEPA_WXZ */
+/* ?_Pninc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAPEA_WXZ */
+/* ?_Pninc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEPAGXZ */
+/* ?_Pninc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAPEAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Pninc, 4)
+wchar_t* __thiscall basic_streambuf_wchar__Pninc(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    (*this->pwsize)--;
+    return (*this->pwpos)++;
+}
+
+/* ?underflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEGXZ */
+/* ?underflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAAGXZ */
+/* ?underflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEGXZ */
+/* ?underflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_underflow, 4)
+#define call_basic_streambuf_wchar_underflow(this) CALL_VTBL_FUNC(this, 16, \
+        unsigned short, (basic_streambuf_wchar*), (this))
+unsigned short __thiscall basic_streambuf_wchar_underflow(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return WEOF;
+}
+
+/* ?uflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEGXZ */
+/* ?uflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAAGXZ */
+/* ?uflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEGXZ */
+/* ?uflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_uflow, 4)
+#define call_basic_streambuf_wchar_uflow(this) CALL_VTBL_FUNC(this, 20, \
+        unsigned short, (basic_streambuf_wchar*), (this))
+unsigned short __thiscall basic_streambuf_wchar_uflow(basic_streambuf_wchar *this)
+{
+    int ret;
+
+    TRACE("(%p)\n", this);
+
+    if(call_basic_streambuf_wchar_underflow(this)==WEOF)
+        return WEOF;
+
+    ret = **this->prpos;
+    (*this->prsize)--;
+    (*this->prpos)++;
+    return ret;
+}
+
+/* ?_Xsgetn_s@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHPA_WIH@Z */
+/* ?_Xsgetn_s@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEA_W_K_J@Z */
+/* ?_Xsgetn_s@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHPAGIH@Z */
+/* ?_Xsgetn_s@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA_JPEAG_K_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Xsgetn_s, 16)
+#define call_basic_streambuf_wchar__Xsgetn_s(this, ptr, size, count) CALL_VTBL_FUNC(this, 28, \
+        streamsize, (basic_streambuf_wchar*, wchar_t*, MSVCP_size_t, streamsize), (this, ptr, size, count))
+streamsize __thiscall basic_streambuf_wchar__Xsgetn_s(basic_streambuf_wchar *this, wchar_t *ptr, MSVCP_size_t size, streamsize count)
+{
+    streamsize copied, chunk;
+
+    TRACE("(%p %p %lu %lu)\n", this, ptr, size, count);
+
+    for(copied=0; copied<count && size;) {
+        chunk = basic_streambuf_wchar__Gnavail(this);
+        if(chunk > count-copied)
+            chunk = count-copied;
+
+        if(chunk) {
+            memcpy_s(ptr+copied, size, *this->prpos, chunk);
+            *this->prpos += chunk;
+            *this->prsize -= chunk;
+            copied += chunk;
+            size -= chunk;
+        }else if((ptr[copied] = call_basic_streambuf_wchar_uflow(this)) != WEOF) {
+            copied++;
+            size--;
+        }else {
+            break;
+        }
+    }
+
+    return copied;
+}
+
+/* ?_Sgetn_s@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEHPA_WIH@Z */
+/* ?_Sgetn_s@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA_JPEA_W_K_J@Z */
+/* ?_Sgetn_s@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEHPAGIH@Z */
+/* ?_Sgetn_s@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA_JPEAG_K_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Sgetn_s, 16)
+streamsize __thiscall basic_streambuf_wchar__Sgetn_s(basic_streambuf_wchar *this, wchar_t *ptr, MSVCP_size_t size, streamsize count)
+{
+    TRACE("(%p %p %lu %lu)\n", this, ptr, size, count);
+    return call_basic_streambuf_wchar__Xsgetn_s(this, ptr, size, count);
+}
+
+/* ?_Unlock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
+/* ?_Unlock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAXXZ */
+/* ?_Unlock@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEXXZ */
+/* ?_Unlock@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Unlock, 4)
+void __thiscall basic_streambuf_wchar__Unlock(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    mutex_unlock(&this->lock);
+}
+
+/* ?eback@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEPA_WXZ */
+/* ?eback@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEBAPEA_WXZ */
+/* ?eback@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEPAGXZ */
+/* ?eback@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBAPEAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_eback, 4)
+wchar_t* __thiscall basic_streambuf_wchar_eback(const basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return *this->prbuf;
+}
+
+/* ?gptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEPA_WXZ */
+/* ?gptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEBAPEA_WXZ */
+/* ?gptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEPAGXZ */
+/* ?gptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBAPEAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_gptr, 4)
+wchar_t* __thiscall basic_streambuf_wchar_gptr(const basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return *this->prpos;
+}
+
+/* ?egptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEPA_WXZ */
+/* ?egptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEBAPEA_WXZ */
+/* ?egptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEPAGXZ */
+/* ?egptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBAPEAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_egptr, 4)
+wchar_t* __thiscall basic_streambuf_wchar_egptr(const basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return *this->prpos+*this->prsize;
+}
+
+/* ?epptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEPA_WXZ */
+/* ?epptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEBAPEA_WXZ */
+/* ?epptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEPAGXZ */
+/* ?epptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBAPEAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_epptr, 4)
+wchar_t* __thiscall basic_streambuf_wchar_epptr(const basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return *this->pwpos+*this->pwsize;
+}
+
+/* ?gbump@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXH@Z */
+/* ?gbump@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXH@Z */
+/* ?gbump@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXH@Z */
+/* ?gbump@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXH@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_gbump, 8)
+void __thiscall basic_streambuf_wchar_gbump(basic_streambuf_wchar *this, int off)
+{
+    TRACE("(%p %d)\n", this, off);
+    *this->prpos += off;
+    *this->prsize -= off;
+}
+
+/* ?getloc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QBE?AVlocale@2@XZ */
+/* ?getloc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEBA?AVlocale@2@XZ */
+/* ?getloc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QBE?AVlocale@2@XZ */
+/* ?getloc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEBA?AVlocale@2@XZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_getloc, 8)
+locale* __thiscall basic_streambuf_wchar_getloc(const basic_streambuf_wchar *this, locale *ret)
+{
+    TRACE("(%p)\n", this);
+    return locale_copy_ctor(ret, this->loc);
+}
+
+/* ?imbue@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEXABVlocale@2@@Z */
+/* ?imbue@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAAXAEBVlocale@2@@Z */
+/* ?imbue@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEXABVlocale@2@@Z */
+/* ?imbue@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAXAEBVlocale@2@@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_imbue, 8)
+#define call_basic_streambuf_wchar_imbue(this, loc) CALL_VTBL_FUNC(this, 52, \
+        void, (basic_streambuf_wchar*, const locale*), (this, loc))
+void __thiscall basic_streambuf_wchar_imbue(basic_streambuf_wchar *this, const locale *loc)
+{
+    TRACE("(%p %p)\n", this, loc);
+}
+
+/* ?overflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEGG@Z */
+/* ?overflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAAGG@Z */
+/* ?overflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEGG@Z */
+/* ?overflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAGG@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_overflow, 8)
+#define call_basic_streambuf_wchar_overflow(this, ch) CALL_VTBL_FUNC(this, 4, \
+        unsigned short, (basic_streambuf_wchar*, unsigned short), (this, ch))
+unsigned short __thiscall basic_streambuf_wchar_overflow(basic_streambuf_wchar *this, unsigned short ch)
+{
+    TRACE("(%p %d)\n", this, ch);
+    return WEOF;
+}
+
+/* ?pbackfail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEGG@Z */
+/* ?pbackfail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAAGG@Z */
+/* ?pbackfail@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEGG@Z */
+/* ?pbackfail@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAGG@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pbackfail, 8)
+#define call_basic_streambuf_wchar_pbackfail(this, ch) CALL_VTBL_FUNC(this, 8, \
+        unsigned short, (basic_streambuf_wchar*, unsigned short), (this, ch))
+unsigned short __thiscall basic_streambuf_wchar_pbackfail(basic_streambuf_wchar *this, unsigned short ch)
+{
+    TRACE("(%p %d)\n", this, ch);
+    return WEOF;
+}
+
+/* ?pbase@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEPA_WXZ */
+/* ?pbase@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEBAPEA_WXZ */
+/* ?pbase@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEPAGXZ */
+/* ?pbase@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBAPEAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pbase, 4)
+wchar_t* __thiscall basic_streambuf_wchar_pbase(const basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return *this->pwbuf;
+}
+
+/* ?pbump@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXH@Z */
+/* ?pbump@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXH@Z */
+/* ?pbump@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXH@Z */
+/* ?pbump@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXH@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pbump, 8)
+void __thiscall basic_streambuf_wchar_pbump(basic_streambuf_wchar *this, int off)
+{
+    TRACE("(%p %d)\n", this, off);
+    *this->pwpos += off;
+    *this->pwsize -= off;
+}
+
+/* ?pptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEPA_WXZ */
+/* ?pptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEBAPEA_WXZ */
+/* ?pptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEPAGXZ */
+/* ?pptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBAPEAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pptr, 4)
+wchar_t* __thiscall basic_streambuf_wchar_pptr(const basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return *this->pwpos;
+}
+
+/* ?pubimbue@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAE?AVlocale@2@ABV32@@Z */
+/* ?pubimbue@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA?AVlocale@2@AEBV32@@Z */
+/* ?pubimbue@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAE?AVlocale@2@ABV32@@Z */
+/* ?pubimbue@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA?AVlocale@2@AEBV32@@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pubimbue, 12)
+locale* __thiscall basic_streambuf_wchar_pubimbue(basic_streambuf_wchar *this, locale *ret, const locale *loc)
+{
+    TRACE("(%p %p)\n", this, loc);
+    memcpy(ret, this->loc, sizeof(locale));
+    call_basic_streambuf_wchar_imbue(this, loc);
+    locale_copy_ctor(this->loc, loc);
+    return ret;
+}
+
+/* ?seekoff@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
+/* ?seekoff@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
+/* ?seekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
+/* ?seekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_seekoff, 20)
+#define call_basic_streambuf_wchar_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 36, \
+        fpos_int*, (basic_streambuf_wchar*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
+fpos_int* __thiscall basic_streambuf_wchar_seekoff(basic_streambuf_wchar *this,
+        fpos_int *ret, streamoff off, int way, int mode)
+{
+    TRACE("(%p %lu %d %d)\n", this, off, way, mode);
+    ret->off = 0;
+    ret->pos = -1;
+    ret->state = 0;
+    return ret;
+}
+
+/* ?pubseekoff@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAE?AV?$fpos@H@2@JHH@Z */
+/* ?pubseekoff@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA?AV?$fpos@H@2@_JHH@Z */
+/* ?pubseekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAE?AV?$fpos@H@2@JHH@Z */
+/* ?pubseekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA?AV?$fpos@H@2@_JHH@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pubseekoff, 20)
+fpos_int* __thiscall basic_streambuf_wchar_pubseekoff(basic_streambuf_wchar *this,
+        fpos_int *ret, streamoff off, int way, int mode)
+{
+    TRACE("(%p %lu %d %d)\n", this, off, way, mode);
+    return call_basic_streambuf_wchar_seekoff(this, ret, off, way, mode);
+}
+
+/* ?pubseekoff@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAE?AV?$fpos@H@2@JII@Z */
+/* ?pubseekoff@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA?AV?$fpos@H@2@_JII@Z */
+/* ?pubseekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAE?AV?$fpos@H@2@JII@Z */
+/* ?pubseekoff@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA?AV?$fpos@H@2@_JII@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pubseekoff_old, 20)
+fpos_int* __thiscall basic_streambuf_wchar_pubseekoff_old(basic_streambuf_wchar *this,
+        fpos_int *ret, streamoff off, unsigned int way, unsigned int mode)
+{
+    TRACE("(%p %lu %d %d)\n", this, off, way, mode);
+    return basic_streambuf_wchar_pubseekoff(this, ret, off, way, mode);
+}
+
+/* ?seekpos@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z */
+/* ?seekpos@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z */
+/* ?seekpos@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z */
+/* ?seekpos@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_seekpos, 36)
+#define call_basic_streambuf_wchar_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 40, \
+        fpos_int*, (basic_streambuf_wchar*, fpos_int*, fpos_int, int), (this, ret, pos, mode))
+fpos_int* __thiscall basic_streambuf_wchar_seekpos(basic_streambuf_wchar *this,
+        fpos_int *ret, fpos_int pos, int mode)
+{
+    TRACE("(%p %s %d)\n", this, debugstr_fpos_int(&pos), mode);
+    ret->off = 0;
+    ret->pos = -1;
+    ret->state = 0;
+    return ret;
+}
+
+/* ?pubseekpos@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAE?AV?$fpos@H@2@V32@H@Z */
+/* ?pubseekpos@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA?AV?$fpos@H@2@V32@H@Z */
+/* ?pubseekpos@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAE?AV?$fpos@H@2@V32@H@Z */
+/* ?pubseekpos@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA?AV?$fpos@H@2@V32@H@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pubseekpos, 36)
+fpos_int* __thiscall basic_streambuf_wchar_pubseekpos(basic_streambuf_wchar *this,
+        fpos_int *ret, fpos_int pos, int mode)
+{
+    TRACE("(%p %s %d)\n", this, debugstr_fpos_int(&pos), mode);
+    return call_basic_streambuf_wchar_seekpos(this, ret, pos, mode);
+}
+
+/* ?pubseekpos@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAE?AV?$fpos@H@2@V32@I@Z */
+/* ?pubseekpos@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA?AV?$fpos@H@2@V32@I@Z */
+/* ?pubseekpos@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAE?AV?$fpos@H@2@V32@I@Z */
+/* ?pubseekpos@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA?AV?$fpos@H@2@V32@I@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pubseekpos_old, 36)
+fpos_int* __thiscall basic_streambuf_wchar_pubseekpos_old(basic_streambuf_wchar *this,
+        fpos_int *ret, fpos_int pos, unsigned int mode)
+{
+    TRACE("(%p %s %d)\n", this, debugstr_fpos_int(&pos), mode);
+    return basic_streambuf_wchar_pubseekpos(this, ret, pos, mode);
+}
+
+/* ?setbuf@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEPAV12@PA_WH@Z */
+/* ?setbuf@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAAPEAV12@PEA_W_J@Z */
+/* ?setbuf@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEPAV12@PAGH@Z */
+/* ?setbuf@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAPEAV12@PEAG_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_setbuf, 12)
+#define call_basic_streambuf_wchar_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 44, \
+        basic_streambuf_wchar*, (basic_streambuf_wchar*, wchar_t*, streamsize), (this, buf, count))
+basic_streambuf_wchar* __thiscall basic_streambuf_wchar_setbuf(basic_streambuf_wchar *this, wchar_t *buf, streamsize count)
+{
+    TRACE("(%p %p %lu)\n", this, buf, count);
+    return this;
+}
+
+/* ?pubsetbuf@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEPAV12@PA_WH@Z */
+/* ?pubsetbuf@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAPEAV12@PEA_W_J@Z */
+/* ?pubsetbuf@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEPAV12@PAGH@Z */
+/* ?pubsetbuf@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAPEAV12@PEAG_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pubsetbuf, 12)
+basic_streambuf_wchar* __thiscall basic_streambuf_wchar_pubsetbuf(basic_streambuf_wchar *this, wchar_t *buf, streamsize count)
+{
+    TRACE("(%p %p %lu)\n", this, buf, count);
+    return call_basic_streambuf_wchar_setbuf(this, buf, count);
+}
+
+/* ?sync@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHXZ */
+/* ?sync@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAAHXZ */
+/* ?sync@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHXZ */
+/* ?sync@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAHXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_sync, 4)
+#define call_basic_streambuf_wchar_sync(this) CALL_VTBL_FUNC(this, 48, \
+        int, (basic_streambuf_wchar*), (this))
+int __thiscall basic_streambuf_wchar_sync(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return 0;
+}
+
+/* ?pubsync@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEHXZ */
+/* ?pubsync@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAHXZ */
+/* ?pubsync@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEHXZ */
+/* ?pubsync@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pubsync, 4)
+int __thiscall basic_streambuf_wchar_pubsync(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return call_basic_streambuf_wchar_sync(this);
+}
+
+/* ?sgetn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEHPA_WH@Z */
+/* ?sgetn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA_JPEA_W_J@Z */
+/* ?sgetn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEHPAGH@Z */
+/* ?sgetn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA_JPEAG_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_sgetn, 12)
+streamsize __thiscall basic_streambuf_wchar_sgetn(basic_streambuf_wchar *this, wchar_t *ptr, streamsize count)
+{
+    TRACE("(%p %p %lu)\n", this, ptr, count);
+    return call_basic_streambuf_wchar__Xsgetn_s(this, ptr, -1, count);
+}
+
+/* ?showmanyc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHXZ */
+/* ?showmanyc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JXZ */
+/* ?showmanyc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHXZ */
+/* ?showmanyc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA_JXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_showmanyc, 4)
+#define call_basic_streambuf_wchar_showmanyc(this) CALL_VTBL_FUNC(this, 12, \
+        streamsize, (basic_streambuf_wchar*), (this))
+streamsize __thiscall basic_streambuf_wchar_showmanyc(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return 0;
+}
+
+/* ?in_avail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEHXZ */
+/* ?in_avail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA_JXZ */
+/* ?in_avail@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEHXZ */
+/* ?in_avail@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA_JXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_in_avail, 4)
+streamsize __thiscall basic_streambuf_wchar_in_avail(basic_streambuf_wchar *this)
+{
+    streamsize ret;
+
+    TRACE("(%p)\n", this);
+
+    ret = basic_streambuf_wchar__Gnavail(this);
+    return ret ? ret : call_basic_streambuf_wchar_showmanyc(this);
+}
+
+/* ?sputbackc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEG_W@Z */
+/* ?sputbackc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAG_W@Z */
+/* ?sputbackc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEGG@Z */
+/* ?sputbackc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAGG@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_sputbackc, 8)
+unsigned short __thiscall basic_streambuf_wchar_sputbackc(basic_streambuf_wchar *this, wchar_t ch)
+{
+    TRACE("(%p %d)\n", this, ch);
+    if(*this->prpos && *this->prpos>*this->prbuf && (*this->prpos)[-1]==ch) {
+        (*this->prsize)++;
+        (*this->prpos)--;
+        return ch;
+    }
+
+    return call_basic_streambuf_wchar_pbackfail(this, ch);
+}
+
+/* ?sputc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEG_W@Z */
+/* ?sputc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAG_W@Z */
+/* ?sputc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEGG@Z */
+/* ?sputc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAHG@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_sputc, 8)
+unsigned short __thiscall basic_streambuf_wchar_sputc(basic_streambuf_wchar *this, wchar_t ch)
+{
+    TRACE("(%p %d)\n", this, ch);
+    return basic_streambuf_wchar__Pnavail(this) ?
+        (*basic_streambuf_wchar__Pninc(this) = ch) :
+        call_basic_streambuf_wchar_overflow(this, ch);
+}
+
+/* ?sungetc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEGXZ */
+/* ?sungetc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAGXZ */
+/* ?sungetc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEGXZ */
+/* ?sungetc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_sungetc, 4)
+unsigned short __thiscall basic_streambuf_wchar_sungetc(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    if(*this->prpos && *this->prpos>*this->prbuf) {
+        (*this->prsize)++;
+        (*this->prpos)--;
+        return **this->prpos;
+    }
+
+    return call_basic_streambuf_wchar_pbackfail(this, WEOF);
+}
+
+/* ?stossc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEXXZ */
+/* ?stossc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAXXZ */
+/* ?stossc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEXXZ */
+/* ?stossc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_stossc, 4)
+void __thiscall basic_streambuf_wchar_stossc(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    if(basic_streambuf_wchar__Gnavail(this))
+        basic_streambuf_wchar__Gninc(this);
+    else
+        call_basic_streambuf_wchar_uflow(this);
+}
+
+/* ?sbumpc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEGXZ */
+/* ?sbumpc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAGXZ */
+/* ?sbumpc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEGXZ */
+/* ?sbumpc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_sbumpc, 4)
+unsigned short __thiscall basic_streambuf_wchar_sbumpc(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return basic_streambuf_wchar__Gnavail(this) ?
+        *basic_streambuf_wchar__Gninc(this) : call_basic_streambuf_wchar_uflow(this);
+}
+
+/* ?sgetc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEGXZ */
+/* ?sgetc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAGXZ */
+/* ?sgetc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEGXZ */
+/* ?sgetc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_sgetc, 4)
+unsigned short __thiscall basic_streambuf_wchar_sgetc(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return basic_streambuf_wchar__Gnavail(this) ?
+        *basic_streambuf_wchar_gptr(this) : call_basic_streambuf_wchar_underflow(this);
+}
+
+/* ?snextc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEGXZ */
+/* ?snextc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAGXZ */
+/* ?snextc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEGXZ */
+/* ?snextc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAGXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_snextc, 4)
+unsigned short __thiscall basic_streambuf_wchar_snextc(basic_streambuf_wchar *this)
+{
+    TRACE("(%p)\n", this);
+
+    if(basic_streambuf_wchar__Gnavail(this) > 1)
+        return *basic_streambuf_wchar__Gnpreinc(this);
+    return basic_streambuf_wchar_sbumpc(this)==WEOF ?
+        WEOF : basic_streambuf_wchar_sgetc(this);
+}
+
+/* ?xsgetn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHPA_WH@Z */
+/* ?xsgetn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEA_W_J@Z */
+/* ?xsgetn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHPAGH@Z */
+/* ?xsgetn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA_JPEAG_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_xsgetn, 12)
+#define call_basic_streambuf_wchar_xsgetn(this, ptr, count) CALL_VTBL_FUNC(this, 24, \
+        streamsize, (basic_streambuf_wchar*, wchar_t*, streamsize), (this, ptr, count))
+streamsize __thiscall basic_streambuf_wchar_xsgetn(basic_streambuf_wchar *this, wchar_t *ptr, streamsize count)
+{
+    TRACE("(%p %p %lu)\n", this, ptr, count);
+    return call_basic_streambuf_wchar__Xsgetn_s(this, ptr, -1, count);
+}
+
+/* ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHPB_WH@Z */
+/* ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEB_W_J@Z */
+/* ?xsputn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHPBGH@Z */
+/* ?xsputn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA_JPEBG_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_xsputn, 12)
+#define call_basic_streambuf_wchar_xsputn(this, ptr, count) CALL_VTBL_FUNC(this, 32, \
+        streamsize, (basic_streambuf_wchar*, const wchar_t*, streamsize), (this, ptr, count))
+streamsize __thiscall basic_streambuf_wchar_xsputn(basic_streambuf_wchar *this, const wchar_t *ptr, streamsize count)
+{
+    streamsize copied, chunk;
+
+    TRACE("(%p %p %lu)\n", this, ptr, count);
+
+    for(copied=0; copied<count;) {
+        chunk = basic_streambuf_wchar__Pnavail(this);
+        if(chunk > count-copied)
+            chunk = count-copied;
+
+        if(chunk) {
+            memcpy(*this->pwpos, ptr+copied, chunk);
+            *this->pwpos += chunk;
+            *this->pwsize -= chunk;
+            copied += chunk;
+        }else if(call_basic_streambuf_wchar_overflow(this, ptr[copied]) != WEOF) {
+            copied++;
+        }else {
+            break;
+        }
+    }
+
+    return copied;
+}
+
+/* ?sputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEHPB_WH@Z */
+/* ?sputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA_JPEB_W_J@Z */
+/* ?sputn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEHPBGH@Z */
+/* ?sputn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA_JPEBG_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_sputn, 12)
+streamsize __thiscall basic_streambuf_wchar_sputn(basic_streambuf_wchar *this, const wchar_t *ptr, streamsize count)
+{
+    TRACE("(%p %p %lu)\n", this, ptr, count);
+    return call_basic_streambuf_wchar_xsputn(this, ptr, count);
 }
 
 /* ??0ios_base@std@@IAE@XZ */
