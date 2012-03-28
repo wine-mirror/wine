@@ -172,7 +172,7 @@ static BOOL fixed_get_input(BYTE usage, BYTE usage_idx, unsigned int *regnum)
 
 /* Context activation is done by the caller. */
 void device_stream_info_from_declaration(struct wined3d_device *device,
-        struct wined3d_stream_info *stream_info, BOOL *fixup)
+        struct wined3d_stream_info *stream_info, BOOL *all_vbo)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
     /* We need to deal with frequency data! */
@@ -233,12 +233,6 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
                 {
                     FIXME("System memory vertex data load offset is negative!\n");
                 }
-            }
-
-            if (fixup)
-            {
-                if (data.buffer_object)
-                    *fixup = TRUE;
             }
         }
         data.addr += element->offset;
@@ -303,6 +297,8 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
     if (!state->user_stream)
     {
         WORD map = stream_info->use_map;
+        if (all_vbo)
+            *all_vbo = TRUE;
 
         /* PreLoad all the vertex buffers. */
         for (i = 0; map; map >>= 1, ++i)
@@ -324,9 +320,16 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
                         + (ptrdiff_t)element->data.addr;
             }
 
+            if (!buffer->buffer_object && all_vbo)
+                *all_vbo = FALSE;
+
             if (buffer->query)
                 device->buffer_queries[device->num_buffer_queries++] = buffer->query;
         }
+    }
+    else if (all_vbo)
+    {
+        *all_vbo = FALSE;
     }
 }
 
@@ -403,7 +406,7 @@ void device_update_stream_info(struct wined3d_device *device, const struct wined
 {
     struct wined3d_stream_info *stream_info = &device->strided_streams;
     const struct wined3d_state *state = &device->stateBlock->state;
-    BOOL fixup = FALSE;
+    BOOL all_vbo;
 
     if (device->up_strided)
     {
@@ -411,16 +414,17 @@ void device_update_stream_info(struct wined3d_device *device, const struct wined
         TRACE("=============================== Strided Input ================================\n");
         device_stream_info_from_strided(gl_info, device->up_strided, stream_info);
         if (TRACE_ON(d3d)) device_trace_strided_stream_info(stream_info);
+        all_vbo = FALSE;
     }
     else
     {
         TRACE("============================= Vertex Declaration =============================\n");
-        device_stream_info_from_declaration(device, stream_info, &fixup);
+        device_stream_info_from_declaration(device, stream_info, &all_vbo);
     }
 
     if (state->vertex_shader && !stream_info->position_transformed)
     {
-        if (state->vertex_declaration->half_float_conv_needed && !fixup)
+        if (state->vertex_declaration->half_float_conv_needed && !all_vbo)
         {
             TRACE("Using drawStridedSlow with vertex shaders for FLOAT16 conversion.\n");
             device->useDrawStridedSlow = TRUE;
@@ -436,7 +440,7 @@ void device_update_stream_info(struct wined3d_device *device, const struct wined
         slow_mask |= -!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
                 & ((1 << WINED3D_FFP_DIFFUSE) | (1 << WINED3D_FFP_SPECULAR));
 
-        if ((stream_info->position_transformed || (stream_info->use_map & slow_mask)) && !fixup)
+        if ((stream_info->position_transformed || (stream_info->use_map & slow_mask)) && !all_vbo)
         {
             device->useDrawStridedSlow = TRUE;
         }
