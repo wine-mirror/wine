@@ -3989,13 +3989,11 @@ static void test_CreateScalableFontResource(void)
     SetLastError(0xdeadbeef);
     ret = CreateScalableFontResource(0, fot_name, "random file name", tmp_path);
     ok(!ret, "CreateScalableFontResource() should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "not expected error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = CreateScalableFontResource(0, fot_name, NULL, ttf_name);
     ok(!ret, "CreateScalableFontResource() should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "not expected error %d\n", GetLastError());
 
     ret = DeleteFile(fot_name);

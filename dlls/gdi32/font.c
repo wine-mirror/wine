@@ -2873,28 +2873,14 @@ BOOL WINAPI CreateScalableFontResourceA( DWORD fHidden,
 /***********************************************************************
  *           CreateScalableFontResourceW   (GDI32.@)
  */
-BOOL WINAPI CreateScalableFontResourceW( DWORD fHidden,
-                                             LPCWSTR lpszResourceFile,
-                                             LPCWSTR lpszFontFile,
-                                             LPCWSTR lpszCurrentPath )
+BOOL WINAPI CreateScalableFontResourceW( DWORD hidden, LPCWSTR resource_file,
+                                         LPCWSTR font_file, LPCWSTR font_path )
 {
-    HANDLE f;
-    FIXME("(%d,%s,%s,%s): stub\n",
-          fHidden, debugstr_w(lpszResourceFile), debugstr_w(lpszFontFile),
-          debugstr_w(lpszCurrentPath) );
+    TRACE("(%d, %s, %s, %s)\n", hidden, debugstr_w(resource_file),
+          debugstr_w(font_file), debugstr_w(font_path) );
 
-    /* fHidden=1 - only visible for the calling app, read-only, not
-     * enumerated with EnumFonts/EnumFontFamilies
-     * lpszCurrentPath can be NULL
-     */
-
-    /* If the output file already exists, return the ERROR_FILE_EXISTS error as specified in MSDN */
-    if ((f = CreateFileW(lpszResourceFile, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0)) != INVALID_HANDLE_VALUE) {
-        CloseHandle(f);
-        SetLastError(ERROR_FILE_EXISTS);
-        return FALSE;
-    }
-    return FALSE; /* create failed */
+    return WineEngCreateScalableFontResource( hidden, resource_file,
+                                              font_file, font_path );
 }
 
 /*************************************************************************
