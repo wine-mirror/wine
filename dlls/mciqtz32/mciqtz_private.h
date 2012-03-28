@@ -32,6 +32,7 @@ typedef struct {
     IGraphBuilder* pgraph;
     IMediaControl* pmctrl;
     IMediaSeeking* seek;
+    IMediaEvent*   mevent;
     IVideoWindow*  vidwin;
     IBasicVideo*   vidbasic;
     DWORD          time_format;

@@ -180,6 +180,12 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
         goto err;
     }
 
+    hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaEvent, (void**)&wma->mevent);
+    if (FAILED(hr)) {
+        TRACE("Cannot get IMediaEvent interface (hr = %x)\n", hr);
+        goto err;
+    }
+
     hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IVideoWindow, (void**)&wma->vidwin);
     if (FAILED(hr)) {
         TRACE("Cannot get IVideoWindow interface (hr = %x)\n", hr);
@@ -246,6 +252,9 @@ err:
     if (wma->pgraph)
         IGraphBuilder_Release(wma->pgraph);
     wma->pgraph = NULL;
+    if (wma->mevent)
+        IMediaEvent_Release(wma->mevent);
+    wma->mevent = NULL;
     if (wma->pmctrl)
         IMediaControl_Release(wma->pmctrl);
     wma->pmctrl = NULL;
@@ -276,6 +285,7 @@ static DWORD MCIQTZ_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
         IUnknown_Release(wma->vidwin);
         IUnknown_Release(wma->vidbasic);
         IUnknown_Release(wma->seek);
+        IMediaEvent_Release(wma->mevent);
         IGraphBuilder_Release(wma->pgraph);
         IMediaControl_Release(wma->pmctrl);
         if (wma->uninit)
@@ -654,9 +664,21 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
             IMediaControl_GetState(wma->pmctrl, -1, &state);
             if (state == State_Stopped)
                 lpParms->dwReturn = MCI_MODE_STOP;
-            else if (state == State_Running)
+            else if (state == State_Running) {
+                LONG code;
+                LONG_PTR p1, p2;
+
                 lpParms->dwReturn = MCI_MODE_PLAY;
-            else if (state == State_Paused)
+
+                do {
+                    hr = IMediaEvent_GetEvent(wma->mevent, &code, &p1, &p2, 0);
+                    if (hr == S_OK && code == EC_COMPLETE){
+                        lpParms->dwReturn = MCI_MODE_STOP;
+                        IMediaControl_Stop(wma->pmctrl);
+                    }
+                } while (hr == S_OK);
+
+            } else if (state == State_Paused)
                 lpParms->dwReturn = MCI_MODE_PAUSE;
             break;
         }
