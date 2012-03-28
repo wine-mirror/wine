@@ -3452,11 +3452,12 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         const struct wined3d_vertex_declaration *declaration, DWORD flags, DWORD dst_fvf)
 {
     struct wined3d_state *state = &device->stateBlock->state;
-    BOOL vbo = FALSE, streamWasUP = state->user_stream;
     struct wined3d_stream_info stream_info;
     const struct wined3d_gl_info *gl_info;
+    BOOL streamWasUP = state->user_stream;
     struct wined3d_context *context;
     struct wined3d_shader *vs;
+    unsigned int i;
     HRESULT hr;
 
     TRACE("device %p, src_start_idx %u, dst_idx %u, vertex_count %u, "
@@ -3477,38 +3478,35 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     vs = state->vertex_shader;
     state->vertex_shader = NULL;
     state->user_stream = FALSE;
-    device_stream_info_from_declaration(device, &stream_info, &vbo);
+    device_stream_info_from_declaration(device, &stream_info, NULL);
     state->user_stream = streamWasUP;
     state->vertex_shader = vs;
 
-    if (vbo || src_start_idx)
+    /* We can't convert FROM a VBO, and vertex buffers used to source into
+     * process_vertices() are unlikely to ever be used for drawing. Release
+     * VBOs in those buffers and fix up the stream_info structure.
+     *
+     * Also apply the start index. */
+    for (i = 0; i < (sizeof(stream_info.elements) / sizeof(*stream_info.elements)); ++i)
     {
-        unsigned int i;
-        /* ProcessVertices can't convert FROM a vbo, and vertex buffers used to source into ProcessVertices are
-         * unlikely to ever be used for drawing. Release vbos in those buffers and fix up the stream_info structure
-         *
-         * Also get the start index in, but only loop over all elements if there's something to add at all.
-         */
-        for (i = 0; i < (sizeof(stream_info.elements) / sizeof(*stream_info.elements)); ++i)
+        struct wined3d_stream_info_element *e;
+
+        if (!(stream_info.use_map & (1 << i)))
+            continue;
+
+        e = &stream_info.elements[i];
+        if (e->data.buffer_object)
         {
-            struct wined3d_stream_info_element *e;
-
-            if (!(stream_info.use_map & (1 << i))) continue;
-
-            e = &stream_info.elements[i];
-            if (e->data.buffer_object)
-            {
-                struct wined3d_buffer *vb = state->streams[e->stream_idx].buffer;
-                e->data.buffer_object = 0;
-                e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, gl_info));
-                ENTER_GL();
-                GL_EXTCALL(glDeleteBuffersARB(1, &vb->buffer_object));
-                vb->buffer_object = 0;
-                LEAVE_GL();
-            }
-            if (e->data.addr)
-                e->data.addr += e->stride * src_start_idx;
+            struct wined3d_buffer *vb = state->streams[e->stream_idx].buffer;
+            e->data.buffer_object = 0;
+            e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, gl_info));
+            ENTER_GL();
+            GL_EXTCALL(glDeleteBuffersARB(1, &vb->buffer_object));
+            vb->buffer_object = 0;
+            LEAVE_GL();
         }
+        if (e->data.addr)
+            e->data.addr += e->stride * src_start_idx;
     }
 
     hr = process_vertices_strided(device, dst_idx, vertex_count,
