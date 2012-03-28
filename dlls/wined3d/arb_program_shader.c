@@ -1913,6 +1913,7 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     char reg_coord[40];
     DWORD reg_sampler_code;
     WORD myflags = 0;
+    BOOL swizzle_coord = FALSE;
 
     /* All versions have a destination register */
     shader_arb_get_dst_param(ins, dst, reg_dest);
@@ -1947,18 +1948,18 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
         if (reg_sampler_code < MAX_TEXTURES)
             flags = priv->cur_ps_args->super.tex_transform >> reg_sampler_code * WINED3D_PSARGS_TEXTRANSFORM_SHIFT;
         if (flags & WINED3D_PSARGS_PROJECTED)
+        {
             myflags |= TEX_PROJ;
+            if ((flags & ~WINED3D_PSARGS_PROJECTED) == WINED3D_TTFF_COUNT3)
+                swizzle_coord = TRUE;
+        }
     }
     else if (shader_version < WINED3D_SHADER_VERSION(2,0))
     {
         enum wined3d_shader_src_modifier src_mod = ins->src[0].modifiers;
         if (src_mod == WINED3DSPSM_DZ)
         {
-            /* TXP cannot handle DZ natively, so move the z coordinate to .w. reg_coord is a read-only
-             * varying register, so we need a temp reg
-             */
-            shader_addline(ins->ctx->buffer, "SWZ TA, %s, x, y, z, z;\n", reg_coord);
-            strcpy(reg_coord, "TA");
+            swizzle_coord = TRUE;
             myflags |= TEX_PROJ;
         } else if(src_mod == WINED3DSPSM_DW) {
             myflags |= TEX_PROJ;
@@ -1967,6 +1968,15 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
         if (ins->flags & WINED3DSI_TEXLD_PROJECT) myflags |= TEX_PROJ;
         if (ins->flags & WINED3DSI_TEXLD_BIAS) myflags |= TEX_BIAS;
     }
+
+    if (swizzle_coord)
+    {
+        /* TXP cannot handle DZ natively, so move the z coordinate to .w.
+         * reg_coord is a read-only varying register, so we need a temp reg */
+        shader_addline(ins->ctx->buffer, "SWZ TA, %s, x, y, z, z;\n", reg_coord);
+        strcpy(reg_coord, "TA");
+    }
+
     shader_hw_sample(ins, reg_sampler_code, reg_dest, reg_coord, myflags, NULL, NULL);
 }
 
