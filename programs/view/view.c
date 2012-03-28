@@ -386,7 +386,10 @@ static void HandleCommandLine(LPWSTR cmdline)
             cmdline++;
             cmdline[lstrlenW(cmdline) - 1] = 0;
         }
+        szFileTitle[0] = 0;
+        GetFileTitleW(cmdline, szFileTitle, sizeof(szFileTitle));
         DoOpenFile(cmdline);
+        UpdateWindowCaption();
     }
 }
 
