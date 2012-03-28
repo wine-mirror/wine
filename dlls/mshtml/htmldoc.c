@@ -494,7 +494,7 @@ static HRESULT WINAPI HTMLDocument_get_plugins(IHTMLDocument2 *iface, IHTMLEleme
 static HRESULT WINAPI HTMLDocument_put_alinkColor(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -508,7 +508,7 @@ static HRESULT WINAPI HTMLDocument_get_alinkColor(IHTMLDocument2 *iface, VARIANT
 static HRESULT WINAPI HTMLDocument_put_bgColor(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -522,7 +522,7 @@ static HRESULT WINAPI HTMLDocument_get_bgColor(IHTMLDocument2 *iface, VARIANT *p
 static HRESULT WINAPI HTMLDocument_put_fgColor(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -536,7 +536,7 @@ static HRESULT WINAPI HTMLDocument_get_fgColor(IHTMLDocument2 *iface, VARIANT *p
 static HRESULT WINAPI HTMLDocument_put_linkColor(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -550,7 +550,7 @@ static HRESULT WINAPI HTMLDocument_get_linkColor(IHTMLDocument2 *iface, VARIANT 
 static HRESULT WINAPI HTMLDocument_put_vlinkColor(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -821,7 +821,7 @@ static HRESULT document_write(HTMLDocument *This, SAFEARRAY *psarray, BOOL ln)
             if(NS_FAILED(nsres))
                 ERR("Write failed: %08x\n", nsres);
         }else {
-            FIXME("vt=%d\n", V_VT(var+i));
+            FIXME("unsupported arg[%d] = %s\n", i, debugstr_variant(var+i));
         }
     }
 
@@ -973,7 +973,7 @@ static HRESULT WINAPI HTMLDocument_execCommand(IHTMLDocument2 *iface, BSTR cmdID
                                 VARIANT_BOOL showUI, VARIANT value, VARIANT_BOOL *pfRet)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)->(%s %x %p)\n", This, debugstr_w(cmdID), showUI, pfRet);
+    FIXME("(%p)->(%s %x %s %p)\n", This, debugstr_w(cmdID), showUI, debugstr_variant(&value), pfRet);
     return E_NOTIMPL;
 }
 
@@ -1012,7 +1012,7 @@ static HRESULT WINAPI HTMLDocument_createElement(IHTMLDocument2 *iface, BSTR eTa
 static HRESULT WINAPI HTMLDocument_put_onhelp(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -1044,7 +1044,7 @@ static HRESULT WINAPI HTMLDocument_get_onclick(IHTMLDocument2 *iface, VARIANT *p
 static HRESULT WINAPI HTMLDocument_put_ondblclick(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -1094,7 +1094,7 @@ static HRESULT WINAPI HTMLDocument_get_onkeydown(IHTMLDocument2 *iface, VARIANT 
 static HRESULT WINAPI HTMLDocument_put_onkeypress(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -1127,7 +1127,7 @@ static HRESULT WINAPI HTMLDocument_put_onmousedown(IHTMLDocument2 *iface, VARIAN
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
 
-    TRACE("(%p)->()\n", This);
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     return set_doc_event(This, EVENTID_MOUSEDOWN, &v);
 }
@@ -1145,7 +1145,7 @@ static HRESULT WINAPI HTMLDocument_put_onmousemove(IHTMLDocument2 *iface, VARIAN
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
 
-    TRACE("(%p)->()\n", This);
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     return set_doc_event(This, EVENTID_MOUSEMOVE, &v);
 }
@@ -1181,7 +1181,7 @@ static HRESULT WINAPI HTMLDocument_put_onmouseover(IHTMLDocument2 *iface, VARIAN
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     return set_doc_event(This, EVENTID_MOUSEOVER, &v);
 }
@@ -1216,7 +1216,7 @@ static HRESULT WINAPI HTMLDocument_get_onreadystatechange(IHTMLDocument2 *iface,
 static HRESULT WINAPI HTMLDocument_put_onafterupdate(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -1230,7 +1230,7 @@ static HRESULT WINAPI HTMLDocument_get_onafterupdate(IHTMLDocument2 *iface, VARI
 static HRESULT WINAPI HTMLDocument_put_onrowexit(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -1244,7 +1244,7 @@ static HRESULT WINAPI HTMLDocument_get_onrowexit(IHTMLDocument2 *iface, VARIANT 
 static HRESULT WINAPI HTMLDocument_put_onrowenter(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -1363,7 +1363,7 @@ static HRESULT WINAPI HTMLDocument_get_styleSheets(IHTMLDocument2 *iface,
 static HRESULT WINAPI HTMLDocument_put_onbeforeupdate(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -1377,7 +1377,7 @@ static HRESULT WINAPI HTMLDocument_get_onbeforeupdate(IHTMLDocument2 *iface, VAR
 static HRESULT WINAPI HTMLDocument_put_onerrorupdate(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
