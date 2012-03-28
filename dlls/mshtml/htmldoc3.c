@@ -717,7 +717,7 @@ static HRESULT WINAPI HTMLDocument4_hasFocus(IHTMLDocument4 *iface, VARIANT_BOOL
 static HRESULT WINAPI HTMLDocument4_put_onselectionchange(IHTMLDocument4 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument4(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -784,7 +784,7 @@ static HRESULT WINAPI HTMLDocument4_createRenderStyle(IHTMLDocument4 *iface, BST
 static HRESULT WINAPI HTMLDocument4_put_oncontrolselect(IHTMLDocument4 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument4(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 

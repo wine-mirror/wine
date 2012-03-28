@@ -91,7 +91,7 @@ static HRESULT WINAPI HTMLDocument5_Invoke(IHTMLDocument5 *iface, DISPID dispIdM
 static HRESULT WINAPI HTMLDocument5_put_onmousewheel(IHTMLDocument5 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument5(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -162,7 +162,7 @@ static HRESULT WINAPI HTMLDocument5_createComment(IHTMLDocument5 *iface, BSTR bs
 static HRESULT WINAPI HTMLDocument5_put_onfocusin(IHTMLDocument5 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument5(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -176,7 +176,7 @@ static HRESULT WINAPI HTMLDocument5_get_onfocusin(IHTMLDocument5 *iface, VARIANT
 static HRESULT WINAPI HTMLDocument5_put_onfocusout(IHTMLDocument5 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument5(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -190,7 +190,7 @@ static HRESULT WINAPI HTMLDocument5_get_onfocusout(IHTMLDocument5 *iface, VARIAN
 static HRESULT WINAPI HTMLDocument5_put_onactivate(IHTMLDocument5 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument5(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -204,7 +204,7 @@ static HRESULT WINAPI HTMLDocument5_get_onactivate(IHTMLDocument5 *iface, VARIAN
 static HRESULT WINAPI HTMLDocument5_put_ondeactivate(IHTMLDocument5 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument5(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -218,7 +218,7 @@ static HRESULT WINAPI HTMLDocument5_get_ondeactivate(IHTMLDocument5 *iface, VARI
 static HRESULT WINAPI HTMLDocument5_put_onbeforeactivate(IHTMLDocument5 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument5(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -232,7 +232,7 @@ static HRESULT WINAPI HTMLDocument5_get_onbeforeactivate(IHTMLDocument5 *iface, 
 static HRESULT WINAPI HTMLDocument5_put_onbeforedeactivate(IHTMLDocument5 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument5(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -373,11 +373,10 @@ static HRESULT WINAPI HTMLDocument6_get_onstorage(IHTMLDocument6 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLDocument6_put_onstorage(IHTMLDocument6 *iface,
-        VARIANT p)
+static HRESULT WINAPI HTMLDocument6_put_onstorage(IHTMLDocument6 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument6(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -389,11 +388,10 @@ static HRESULT WINAPI HTMLDocument6_get_onstoragecommit(IHTMLDocument6 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLDocument6_put_onstoragecommit(IHTMLDocument6 *iface,
-        VARIANT p)
+static HRESULT WINAPI HTMLDocument6_put_onstoragecommit(IHTMLDocument6 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument6(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
