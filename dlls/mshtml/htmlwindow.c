@@ -696,7 +696,7 @@ static HRESULT WINAPI HTMLWindow2_close(IHTMLWindow2 *iface)
 static HRESULT WINAPI HTMLWindow2_put_opener(IHTMLWindow2 *iface, VARIANT v)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(v(%d))\n", This, V_VT(&v));
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -872,7 +872,7 @@ static HRESULT WINAPI HTMLWindow2_navigate(IHTMLWindow2 *iface, BSTR url)
 static HRESULT WINAPI HTMLWindow2_put_onfocus(IHTMLWindow2 *iface, VARIANT v)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(v(%d))\n", This, V_VT(&v));
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -886,7 +886,7 @@ static HRESULT WINAPI HTMLWindow2_get_onfocus(IHTMLWindow2 *iface, VARIANT *p)
 static HRESULT WINAPI HTMLWindow2_put_onblur(IHTMLWindow2 *iface, VARIANT v)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(v(%d))\n", This, V_VT(&v));
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -919,7 +919,7 @@ static HRESULT WINAPI HTMLWindow2_put_onbeforeunload(IHTMLWindow2 *iface, VARIAN
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
 
-    TRACE("(%p)->(v(%d))\n", This, V_VT(&v));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     return set_window_event(This, EVENTID_BEFOREUNLOAD, &v);
 }
@@ -936,7 +936,7 @@ static HRESULT WINAPI HTMLWindow2_get_onbeforeunload(IHTMLWindow2 *iface, VARIAN
 static HRESULT WINAPI HTMLWindow2_put_onunload(IHTMLWindow2 *iface, VARIANT v)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(v(%d))\n", This, V_VT(&v));
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -950,7 +950,7 @@ static HRESULT WINAPI HTMLWindow2_get_onunload(IHTMLWindow2 *iface, VARIANT *p)
 static HRESULT WINAPI HTMLWindow2_put_onhelp(IHTMLWindow2 *iface, VARIANT v)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(v(%d))\n", This, V_VT(&v));
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -964,7 +964,7 @@ static HRESULT WINAPI HTMLWindow2_get_onhelp(IHTMLWindow2 *iface, VARIANT *p)
 static HRESULT WINAPI HTMLWindow2_put_onerror(IHTMLWindow2 *iface, VARIANT v)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(v(%d))\n", This, V_VT(&v));
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -996,7 +996,7 @@ static HRESULT WINAPI HTMLWindow2_get_onresize(IHTMLWindow2 *iface, VARIANT *p)
 static HRESULT WINAPI HTMLWindow2_put_onscroll(IHTMLWindow2 *iface, VARIANT v)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(v(%d))\n", This, V_VT(&v));
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -1055,7 +1055,7 @@ static HRESULT WINAPI HTMLWindow2_showHelp(IHTMLWindow2 *iface, BSTR helpURL, VA
         BSTR features)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(%s v(%d) %s)\n", This, debugstr_w(helpURL), V_VT(&helpArg), debugstr_w(features));
+    FIXME("(%p)->(%s %s %s)\n", This, debugstr_w(helpURL), debugstr_variant(&helpArg), debugstr_w(features));
     return E_NOTIMPL;
 }
 
@@ -1157,7 +1157,7 @@ static HRESULT WINAPI HTMLWindow2_clearInterval(IHTMLWindow2 *iface, LONG timerI
 static HRESULT WINAPI HTMLWindow2_put_offscreenBuffering(IHTMLWindow2 *iface, VARIANT v)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(v(%d))\n", This, V_VT(&v));
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -1455,7 +1455,7 @@ static HRESULT window_set_timer(HTMLWindow *This, VARIANT *expr, LONG msec, VARI
         break;
 
     default:
-        FIXME("unimplemented vt=%d\n", V_VT(expr));
+        FIXME("unimplemented expr %s\n", debugstr_variant(expr));
         return E_NOTIMPL;
     }
 
@@ -1473,7 +1473,7 @@ static HRESULT WINAPI HTMLWindow3_setTimeout(IHTMLWindow3 *iface, VARIANT *expre
 {
     HTMLWindow *This = impl_from_IHTMLWindow3(iface);
 
-    TRACE("(%p)->(%p(%d) %d %p %p)\n", This, expression, V_VT(expression), msec, language, timerID);
+    TRACE("(%p)->(%s %d %s %p)\n", This, debugstr_variant(expression), msec, debugstr_variant(language), timerID);
 
     return window_set_timer(This, expression, msec, language, FALSE, timerID);
 }
@@ -1498,7 +1498,7 @@ static HRESULT WINAPI HTMLWindow3_print(IHTMLWindow3 *iface)
 static HRESULT WINAPI HTMLWindow3_put_onbeforeprint(IHTMLWindow3 *iface, VARIANT v)
 {
     HTMLWindow *This = impl_from_IHTMLWindow3(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -1512,7 +1512,7 @@ static HRESULT WINAPI HTMLWindow3_get_onbeforeprint(IHTMLWindow3 *iface, VARIANT
 static HRESULT WINAPI HTMLWindow3_put_onafterprint(IHTMLWindow3 *iface, VARIANT v)
 {
     HTMLWindow *This = impl_from_IHTMLWindow3(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
