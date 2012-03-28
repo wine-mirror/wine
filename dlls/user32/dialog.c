@@ -1278,7 +1278,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
                 else if (DC_HASDEFID == HIWORD(dw = SendMessageW (hwndDlg, DM_GETDEFID, 0, 0)))
                 {
                     HWND hwndDef = DIALOG_IdToHwnd(hwndDlg, LOWORD(dw));
-                    if (hwndDef ? IsWindowEnabled(hwndDef) : LOWORD(dw)==IDOK)
+                    if (!hwndDef || IsWindowEnabled(hwndDef))
                         SendMessageW( hwndDlg, WM_COMMAND, MAKEWPARAM( LOWORD(dw), BN_CLICKED ), (LPARAM)hwndDef);
                 }
                 else
