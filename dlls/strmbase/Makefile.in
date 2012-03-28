@@ -11,6 +11,7 @@ C_SRCS = \
 	qualitycontrol.c \
 	seeking.c \
 	transform.c \
+	video.c \
 	window.c
 
 @MAKE_IMPLIB_RULES@
