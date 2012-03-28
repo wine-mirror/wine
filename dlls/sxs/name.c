@@ -28,6 +28,8 @@
 #include "winsxs.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
+#include "sxs_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sxs);
 
@@ -35,7 +37,17 @@ struct name
 {
     IAssemblyName IAssemblyName_iface;
     LONG   refs;
+    WCHAR *name;
+    WCHAR *arch;
+    WCHAR *token;
+    WCHAR *type;
+    WCHAR *version;
 };
+
+static const WCHAR archW[] = {'p','r','o','c','e','s','s','o','r','A','r','c','h','i','t','e','c','t','u','r','e',0};
+static const WCHAR tokenW[] = {'p','u','b','l','i','c','K','e','y','T','o','k','e','n',0};
+static const WCHAR typeW[] = {'t','y','p','e',0};
+static const WCHAR versionW[] = {'v','e','r','s','i','o','n',0};
 
 static inline struct name *impl_from_IAssemblyName( IAssemblyName *iface )
 {
@@ -79,6 +91,11 @@ static ULONG WINAPI name_Release( IAssemblyName *iface )
     if (!refs)
     {
         TRACE("destroying %p\n", name);
+        HeapFree( GetProcessHeap(), 0, name->name );
+        HeapFree( GetProcessHeap(), 0, name->arch );
+        HeapFree( GetProcessHeap(), 0, name->token );
+        HeapFree( GetProcessHeap(), 0, name->type );
+        HeapFree( GetProcessHeap(), 0, name->version );
         HeapFree( GetProcessHeap(), 0, name );
     }
     return refs;
@@ -117,8 +134,32 @@ static HRESULT WINAPI name_GetDisplayName(
     LPDWORD buflen,
     DWORD flags )
 {
-    FIXME("%p, %p, %p, 0x%08x\n", iface, buffer, buflen, flags);
-    return E_NOTIMPL;
+    static const WCHAR fmtW[] = {',','%','s','=','\"','%','s','\"',0};
+    struct name *name = impl_from_IAssemblyName( iface );
+    WCHAR version[30];
+    unsigned int len;
+
+    TRACE("%p, %p, %p, 0x%08x\n", iface, buffer, buflen, flags);
+
+    if (!buflen || flags) return E_INVALIDARG;
+
+    len = strlenW( name->name ) + 1;
+    if (name->arch)    len += strlenW( archW ) + strlenW( name->arch ) + 4;
+    if (name->token)   len += strlenW( tokenW ) + strlenW( name->token ) + 4;
+    if (name->type)    len += strlenW( typeW ) + strlenW( name->type ) + 4;
+    if (name->version) len += strlenW( versionW ) + strlenW( version ) + 4;
+    if (len > *buflen)
+    {
+        *buflen = len;
+        return HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER );
+    }
+    strcpyW( buffer, name->name );
+    len = strlenW( buffer );
+    if (name->arch)    len += sprintfW( buffer + len, fmtW, archW, name->arch );
+    if (name->token)   len += sprintfW( buffer + len, fmtW, tokenW, name->token );
+    if (name->type)    len += sprintfW( buffer + len, fmtW, typeW, name->type );
+    if (name->version) len += sprintfW( buffer + len, fmtW, versionW, name->version );
+    return S_OK;
 }
 
 static HRESULT WINAPI name_Reserved(
@@ -139,22 +180,85 @@ static HRESULT WINAPI name_Reserved(
     return E_NOTIMPL;
 }
 
+const WCHAR *get_name_attribute( IAssemblyName *iface, enum name_attr_id id )
+{
+    struct name *name = impl_from_IAssemblyName( iface );
+
+    switch (id)
+    {
+    case NAME_ATTR_ID_NAME:    return name->name;
+    case NAME_ATTR_ID_ARCH:    return name->arch;
+    case NAME_ATTR_ID_TOKEN:   return name->token;
+    case NAME_ATTR_ID_TYPE:    return name->type;
+    case NAME_ATTR_ID_VERSION: return name->version;
+    default:
+        ERR("unhandled name attribute %u\n", id);
+        break;
+    }
+    return NULL;
+}
+
 static HRESULT WINAPI name_GetName(
     IAssemblyName *iface,
     LPDWORD buflen,
     WCHAR *buffer )
 {
-    FIXME("%p, %p, %p\n", iface, buflen, buffer);
-    return E_NOTIMPL;
+    const WCHAR *name;
+    int len;
+
+    TRACE("%p, %p, %p\n", iface, buflen, buffer);
+
+    if (!buflen || !buffer) return E_INVALIDARG;
+
+    name = get_name_attribute( iface, NAME_ATTR_ID_NAME );
+    len = strlenW( name ) + 1;
+    if (len > *buflen)
+    {
+        *buflen = len;
+        return HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER );
+    }
+    strcpyW( buffer, name );
+    *buflen = len + 3;
+    return S_OK;
+}
+
+static HRESULT parse_version( WCHAR *version, DWORD *high, DWORD *low )
+{
+    WORD ver[4];
+    WCHAR *p, *q;
+    unsigned int i;
+
+    memset( ver, 0, sizeof(ver) );
+    for (i = 0, p = version; i < 4; i++)
+    {
+        if (!*p) break;
+        q = strchrW( p, '.' );
+        if (q) *q = 0;
+        ver[i] = atolW( p );
+        if (!q && i < 3) break;
+        p = q + 1;
+    }
+    *high = (ver[0] << 16) + ver[1];
+    *low = (ver[2] << 16) + ver[3];
+    return S_OK;
 }
 
 static HRESULT WINAPI name_GetVersion(
     IAssemblyName *iface,
-    LPDWORD hi,
+    LPDWORD high,
     LPDWORD low )
 {
-    FIXME("%p, %p, %p\n", iface, hi, low);
-    return E_NOTIMPL;
+    struct name *name = impl_from_IAssemblyName( iface );
+    WCHAR *version;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p\n", iface, high, low);
+
+    if (!name->version) return HRESULT_FROM_WIN32( ERROR_NOT_FOUND );
+    if (!(version = strdupW( name->version ))) return E_OUTOFMEMORY;
+    hr = parse_version( version, high, low );
+    HeapFree( GetProcessHeap(), 0, version );
+    return hr;
 }
 
 static HRESULT WINAPI name_IsEqual(
@@ -190,6 +294,72 @@ static const IAssemblyNameVtbl name_vtbl =
     name_Clone
 };
 
+static WCHAR *parse_value( const WCHAR *str, unsigned int *len )
+{
+    WCHAR *ret;
+    const WCHAR *p = str;
+
+    if (*p++ != '\"') return NULL;
+    while (*p && *p != '\"') p++;
+    if (!*p) return NULL;
+
+    *len = p - str;
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, *len * sizeof(WCHAR) ))) return NULL;
+    memcpy( ret, str + 1, (*len - 1) * sizeof(WCHAR) );
+    ret[*len - 1] = 0;
+    return ret;
+}
+
+static HRESULT parse_displayname( struct name *name, const WCHAR *displayname )
+{
+    const WCHAR *p, *q;
+    unsigned int len;
+
+    p = q = displayname;
+    while (*q && *q != ',') q++;
+    len = q - p;
+    if (!(name->name = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    memcpy( name->name, p, len * sizeof(WCHAR) );
+    name->name[len] = 0;
+    if (!*q) return S_OK;
+
+    for (;;)
+    {
+        p = ++q;
+        while (*q && *q != '=') q++;
+        if (!*q) return E_INVALIDARG;
+        len = q - p;
+        if (len == sizeof(archW)/sizeof(archW[0]) - 1 && !memcmp( p, archW, len * sizeof(WCHAR) ))
+        {
+            p = ++q;
+            if (!(name->arch = parse_value( p, &len ))) return E_INVALIDARG;
+            q += len;
+        }
+        else if (len == sizeof(tokenW)/sizeof(tokenW[0]) - 1 && !memcmp( p, tokenW, len * sizeof(WCHAR) ))
+        {
+            p = ++q;
+            if (!(name->token = parse_value( p, &len ))) return E_INVALIDARG;
+            q += len;
+        }
+        else if (len == sizeof(typeW)/sizeof(typeW[0]) - 1 && !memcmp( p, typeW, len * sizeof(WCHAR) ))
+        {
+            p = ++q;
+            if (!(name->type = parse_value( p, &len ))) return E_INVALIDARG;
+            q += len;
+        }
+        else if (len == sizeof(versionW)/sizeof(versionW[0]) - 1 && !memcmp( p, versionW, len * sizeof(WCHAR) ))
+        {
+            p = ++q;
+            if (!(name->version = parse_value( p, &len ))) return E_INVALIDARG;
+            q += len;
+        }
+        else return HRESULT_FROM_WIN32( ERROR_SXS_INVALID_ASSEMBLY_IDENTITY_ATTRIBUTE_NAME );
+        while (*q && *q != ',') q++;
+        if (!*q) break;
+    }
+    return S_OK;
+}
+
 /******************************************************************
  *  CreateAssemblyNameObject   (SXS.@)
  */
@@ -200,6 +370,7 @@ HRESULT WINAPI CreateAssemblyNameObject(
     LPVOID reserved )
 {
     struct name *name;
+    HRESULT hr;
 
     TRACE("%p, %s, 0x%08x, %p\n", obj, debugstr_w(assembly), flags, reserved);
 
@@ -215,6 +386,17 @@ HRESULT WINAPI CreateAssemblyNameObject(
     name->IAssemblyName_iface.lpVtbl = &name_vtbl;
     name->refs = 1;
 
+    hr = parse_displayname( name, assembly );
+    if (hr != S_OK)
+    {
+        HeapFree( GetProcessHeap(), 0, name->name );
+        HeapFree( GetProcessHeap(), 0, name->arch );
+        HeapFree( GetProcessHeap(), 0, name->token );
+        HeapFree( GetProcessHeap(), 0, name->type );
+        HeapFree( GetProcessHeap(), 0, name->version );
+        HeapFree( GetProcessHeap(), 0, name );
+        return hr;
+    }
     *obj = &name->IAssemblyName_iface;
     return S_OK;
 }
