@@ -1,0 +1,7 @@
+TESTDLL   = sxs.dll
+IMPORTS   = sxs
+
+C_SRCS = \
+	name.c
+
+@MAKE_TEST_RULES@
