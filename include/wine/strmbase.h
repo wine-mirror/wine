@@ -391,6 +391,44 @@ VOID WINAPI OutputQueue_EOS(OutputQueue *pOutputQueue);
 VOID WINAPI OutputQueue_SendAnyway(OutputQueue *pOutputQueue);
 DWORD WINAPI OutputQueueImpl_ThreadProc(OutputQueue *pOutputQueue);
 
+typedef struct tagBaseWindow
+{
+	HWND hWnd;
+	LONG Width;
+	LONG Height;
+	HINSTANCE hInstance;
+	LPWSTR pClassName;
+	DWORD ClassStyles;
+	DWORD WindowStyles;
+	DWORD WindowStylesEx;
+	HDC hDC;
+
+	const struct BaseWindowFuncTable* pFuncsTable;
+} BaseWindow;
+
+typedef LPWSTR (WINAPI *BaseWindow_GetClassWindowStyles)(BaseWindow *This, DWORD *pClassStyles, DWORD *pWindowStyles, DWORD *pWindowStylesEx);
+typedef BOOL (WINAPI *BaseWindow_PossiblyEatMessage)(BaseWindow *This, UINT uMsg, WPARAM wParam, LPARAM lParam);
+typedef LRESULT (WINAPI *BaseWindow_OnReceiveMessage)(BaseWindow *This, HWND hwnd, INT uMsg, WPARAM wParam, LPARAM lParam);
+typedef BOOL (WINAPI *BaseWindow_OnSize)(BaseWindow *This, LONG Height, LONG Width);
+
+typedef struct BaseWindowFuncTable
+{
+	/* Required */
+	BaseWindow_GetClassWindowStyles pfnGetClassWindowStyles;
+	/* Optional, WinProc Related */
+	BaseWindow_OnReceiveMessage pfnOnReceiveMessage;
+	BaseWindow_PossiblyEatMessage pfnPossiblyEatMessage;
+	BaseWindow_OnSize pfnOnSize;
+} BaseWindowFuncTable;
+
+HRESULT WINAPI BaseWindow_Init(BaseWindow *pBaseWindow, const BaseWindowFuncTable* pFuncsTable);
+HRESULT WINAPI BaseWindow_Destroy(BaseWindow *pBaseWindow);
+
+HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This);
+HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This);
+LRESULT WINAPI BaseWindowImpl_OnReceiveMessage(BaseWindow *This, HWND hwnd, INT uMsg, WPARAM wParam, LPARAM lParam);
+BOOL WINAPI BaseWindowImpl_OnSize(BaseWindow *This, LONG Height, LONG Width);
+
 /* Dll Functions */
 BOOL WINAPI STRMBASE_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv);
 HRESULT WINAPI STRMBASE_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
