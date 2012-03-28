@@ -318,7 +318,7 @@ static HRESULT WINAPI HTMLStyleSheetsCollection_item(IHTMLStyleSheetsCollection 
 {
     HTMLStyleSheetsCollection *This = impl_from_IHTMLStyleSheetsCollection(iface);
 
-    TRACE("(%p)->(%p %p)\n", This, pvarIndex, pvarResult);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(pvarIndex), pvarResult);
 
     switch(V_VT(pvarIndex)) {
     case VT_I4: {
@@ -345,7 +345,7 @@ static HRESULT WINAPI HTMLStyleSheetsCollection_item(IHTMLStyleSheetsCollection 
         return E_NOTIMPL;
 
     default:
-        WARN("Invalid vt=%d\n", V_VT(pvarIndex));
+        WARN("Invalid index %s\n", debugstr_variant(pvarIndex));
     }
 
     return E_INVALIDARG;

@@ -351,7 +351,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     hres = get_client_disp_property(This->doc_obj->client, DISPID_AMBIENT_SILENT, &silent);
     if(SUCCEEDED(hres)) {
         if(V_VT(&silent) != VT_BOOL)
-            WARN("V_VT(silent) = %d\n", V_VT(&silent));
+            WARN("silent = %s\n", debugstr_variant(&silent));
         else if(V_BOOL(&silent))
             FIXME("silent == true\n");
     }
@@ -801,7 +801,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
                 This->doc_obj->usermode = EDITMODE;
             }
         }else {
-            FIXME("V_VT(res)=%d\n", V_VT(&res));
+            FIXME("usermode=%s\n", debugstr_variant(&res));
         }
         return S_OK;
     case DISPID_AMBIENT_DLCONTROL:
@@ -820,7 +820,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
                 hres = E_FAIL;
             }
         }else {
-            FIXME("V_VT(res)=%d\n", V_VT(&res));
+            FIXME("offlineconnected=%s\n", debugstr_variant(&res));
         }
         return S_OK;
     case DISPID_AMBIENT_SILENT:
@@ -836,7 +836,7 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
                 hres = E_FAIL;
             }
         }else {
-            FIXME("V_VT(res)=%d\n", V_VT(&res));
+            FIXME("silent=%s\n", debugstr_variant(&res));
         }
         return S_OK;
     case DISPID_AMBIENT_USERAGENT:

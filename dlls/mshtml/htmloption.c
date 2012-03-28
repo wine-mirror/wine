@@ -510,17 +510,17 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
     if(V_VT(&text) == VT_BSTR)
         IHTMLOptionElement_put_text(*optelem, V_BSTR(&text));
     else if(V_VT(&text) != VT_EMPTY)
-        FIXME("Unsupported text vt=%d\n", V_VT(&text));
+        FIXME("Unsupported text %s\n", debugstr_variant(&text));
 
     if(V_VT(&value) == VT_BSTR)
         IHTMLOptionElement_put_value(*optelem, V_BSTR(&value));
     else if(V_VT(&value) != VT_EMPTY)
-        FIXME("Unsupported value vt=%d\n", V_VT(&value));
+        FIXME("Unsupported value %s\n", debugstr_variant(&value));
 
     if(V_VT(&defaultselected) != VT_EMPTY)
-        FIXME("Unsupported defaultselected vt=%d\n", V_VT(&defaultselected));
+        FIXME("Unsupported defaultselected %s\n", debugstr_variant(&defaultselected));
     if(V_VT(&selected) != VT_EMPTY)
-        FIXME("Unsupported selected vt=%d\n", V_VT(&selected));
+        FIXME("Unsupported selected %s\n", debugstr_variant(&selected));
 
     return S_OK;
 }

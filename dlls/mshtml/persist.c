@@ -289,7 +289,7 @@ void prepare_for_binding(HTMLDocument *This, IMoniker *mon, BOOL navigated_bindi
         hres = get_client_disp_property(This->doc_obj->client, DISPID_AMBIENT_SILENT, &silent);
         if(SUCCEEDED(hres)) {
             if(V_VT(&silent) != VT_BOOL)
-                WARN("V_VT(silent) = %d\n", V_VT(&silent));
+                WARN("silent = %s\n", debugstr_variant(&silent));
             else if(V_BOOL(&silent))
                 FIXME("silent == true\n");
         }
@@ -298,7 +298,7 @@ void prepare_for_binding(HTMLDocument *This, IMoniker *mon, BOOL navigated_bindi
                 DISPID_AMBIENT_OFFLINEIFNOTCONNECTED, &offline);
         if(SUCCEEDED(hres)) {
             if(V_VT(&offline) != VT_BOOL)
-                WARN("V_VT(offline) = %d\n", V_VT(&offline));
+                WARN("offline = %s\n", debugstr_variant(&offline));
             else if(V_BOOL(&offline))
                 FIXME("offline == true\n");
         }

@@ -209,7 +209,7 @@ static HRESULT WINAPI HTMLScriptElement_get_readyState(IHTMLScriptElement *iface
 static HRESULT WINAPI HTMLScriptElement_put_onerror(IHTMLScriptElement *iface, VARIANT v)
 {
     HTMLScriptElement *This = impl_from_IHTMLScriptElement(iface);
-    FIXME("(%p)->(v(%d))\n", This, V_VT(&v));
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 

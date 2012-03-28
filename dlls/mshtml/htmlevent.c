@@ -439,7 +439,7 @@ static HRESULT WINAPI HTMLEventObj_put_returnValue(IHTMLEventObj *iface, VARIANT
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     if(V_VT(&v) != VT_BOOL) {
-        FIXME("unsupported vt %d\n", V_VT(&v));
+        FIXME("unsupported value %s\n", debugstr_variant(&v));
         return DISP_E_BADVARTYPE;
     }
 
@@ -1242,7 +1242,7 @@ HRESULT set_event_handler(event_target_t **event_target, nsIDOMNode *nsnode, HTM
         return set_event_handler_disp(event_target, nsnode, doc, eid, V_DISPATCH(var));
 
     default:
-        FIXME("not supported vt=%d\n", V_VT(var));
+        FIXME("not handler %s\n", debugstr_variant(var));
         /* fall through */
     case VT_EMPTY:
         return E_NOTIMPL;

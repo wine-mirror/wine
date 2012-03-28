@@ -910,14 +910,14 @@ static HRESULT WINAPI HTMLInputTextElement_get_name(IHTMLInputTextElement *iface
 static HRESULT WINAPI HTMLInputTextElement_put_status(IHTMLInputTextElement *iface, VARIANT v)
 {
     HTMLInputElement *This = impl_from_IHTMLInputTextElement(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLInputTextElement_get_status(IHTMLInputTextElement *iface, VARIANT *p)
 {
     HTMLInputElement *This = impl_from_IHTMLInputTextElement(iface);
-    TRACE("(%p)->(v)\n", This);
+    TRACE("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 

@@ -249,7 +249,7 @@ static HRESULT WINAPI HTMLElement3_get_disabled(IHTMLElement3 *iface, VARIANT_BO
         return hres;
 
     if(V_VT(var) != VT_BOOL) {
-        FIXME("vt %d\n", V_VT(var));
+        FIXME("value is %s\n", debugstr_variant(var));
         return E_NOTIMPL;
     }
 

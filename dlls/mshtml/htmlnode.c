@@ -524,7 +524,7 @@ static HRESULT WINAPI HTMLDOMNode_insertBefore(IHTMLDOMNode *iface, IHTMLDOMNode
         break;
     }
     default:
-        FIXME("unimplemented vt %d\n", V_VT(&refChild));
+        FIXME("unimplemented refChild %s\n", debugstr_variant(&refChild));
         return E_NOTIMPL;
     }
 
@@ -727,13 +727,11 @@ static HRESULT WINAPI HTMLDOMNode_put_nodeValue(IHTMLDOMNode *iface, VARIANT v)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
 
-    TRACE("(%p)->()\n", This);
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     switch(V_VT(&v)) {
     case VT_BSTR: {
         nsAString val_str;
-
-        TRACE("bstr %s\n", debugstr_w(V_BSTR(&v)));
 
         nsAString_InitDepend(&val_str, V_BSTR(&v));
         nsIDOMNode_SetNodeValue(This->nsnode, &val_str);
@@ -743,7 +741,7 @@ static HRESULT WINAPI HTMLDOMNode_put_nodeValue(IHTMLDOMNode *iface, VARIANT v)
     }
 
     default:
-        FIXME("unsupported vt %d\n", V_VT(&v));
+        FIXME("unsupported value %s\n", debugstr_variant(&v));
     }
 
     return E_NOTIMPL;

@@ -221,7 +221,7 @@ static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn,
     nsIPrintSettings *settings;
     nsresult nsres;
 
-    TRACE("(%p)->(%d %p %p)\n", This, nCmdexecopt, pvaIn, pvaOut);
+    TRACE("(%p)->(%d %s %p)\n", This, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
 
     if(pvaOut)
         FIXME("unsupported pvaOut\n");
@@ -263,7 +263,7 @@ static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn,
                 case VT_NULL:
                     break;
                 default:
-                    WARN("V_VT(opts) = %d\n", V_VT(opts));
+                    WARN("opts = %s\n", debugstr_variant(opts));
                 }
             }
 
@@ -276,7 +276,7 @@ static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn,
                 case VT_NULL:
                     break;
                 default:
-                    WARN("V_VT(opts) = %d\n", V_VT(opts+1));
+                    WARN("opts[1] = %s\n", debugstr_variant(opts+1));
                 }
             }
 
@@ -287,7 +287,7 @@ static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn,
             break;
         }
         default:
-            FIXME("unsupported vt %x\n", V_VT(pvaIn));
+            FIXME("unsupported arg %s\n", debugstr_variant(pvaIn));
         }
     }
 

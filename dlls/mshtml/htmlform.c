@@ -347,7 +347,7 @@ static HRESULT WINAPI HTMLFormElement_get_onsubmit(IHTMLFormElement *iface, VARI
 static HRESULT WINAPI HTMLFormElement_put_onreset(IHTMLFormElement *iface, VARIANT v)
 {
     HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
-    FIXME("(%p)->(v)\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 

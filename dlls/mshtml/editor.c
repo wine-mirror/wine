@@ -541,7 +541,7 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         char *stra;
 
         if(V_VT(in) != VT_BSTR) {
-            FIXME("Unsupported vt=%d\n", V_VT(out));
+            FIXME("Unsupported fontname %s\n", debugstr_variant(out));
             return E_INVALIDARG;
         }
 
@@ -602,7 +602,7 @@ static HRESULT exec_forecolor(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
 
             nsICommandParams_Release(nsparam);
         }else {
-            FIXME("unsupported in vt=%d\n", V_VT(in));
+            FIXME("unsupported forecolor %s\n", debugstr_variant(in));
         }
 
         update_doc(This, UPDATE_UI);
@@ -641,7 +641,7 @@ static HRESULT exec_fontsize(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
             set_font_size(This, V_BSTR(in));
             break;
         default:
-            FIXME("unsupported vt %d\n", V_VT(in));
+            FIXME("unsupported fontsize %s\n", debugstr_variant(in));
         }
 
         update_doc(This, UPDATE_UI);
@@ -839,7 +839,7 @@ static HRESULT exec_composesettings(HTMLDocument *This, DWORD cmdexecopt, VARIAN
     WCHAR *ptr;
 
     if(out || !in || V_VT(in) != VT_BSTR) {
-        WARN("invalid arg\n");
+        WARN("invalid arg %s\n", debugstr_variant(in));
         return E_INVALIDARG;
     }
 
@@ -948,7 +948,7 @@ static HRESULT exec_setdirty(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     if(V_VT(in) == VT_BOOL)
         set_dirty(This, V_BOOL(in));
     else
-        FIXME("unsupported vt=%d\n", V_VT(in));
+        FIXME("unsupported arg %s\n", debugstr_variant(in));
 
     return S_OK;
 }
