@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-03-14 16:50+0100\n"
-"Last-Translator: Julian Rüger\n"
+"PO-Revision-Date: 2012-03-28 20:12+0200\n"
+"Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
 "MIME-Version: 1.0\n"
@@ -3457,10 +3457,8 @@ msgid "Expected ')'"
 msgstr "')' erwartet"
 
 #: jscript.rc:37
-#, fuzzy
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "Ungültiger Parameter.\n"
+msgstr "Ungültiges Zeichen"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
