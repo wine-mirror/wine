@@ -171,7 +171,7 @@ static BOOL variant_to_nscolor(const VARIANT *v, nsAString *nsstr)
     }
 
     default:
-        FIXME("invalid vt=%d\n", V_VT(v));
+        FIXME("invalid color %s\n", debugstr_variant(v));
     }
 
     return FALSE;
@@ -313,7 +313,7 @@ static HRESULT WINAPI HTMLBodyElement_get_bgProperties(IHTMLBodyElement *iface, 
 static HRESULT WINAPI HTMLBodyElement_put_leftMargin(IHTMLBodyElement *iface, VARIANT v)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -327,7 +327,7 @@ static HRESULT WINAPI HTMLBodyElement_get_leftMargin(IHTMLBodyElement *iface, VA
 static HRESULT WINAPI HTMLBodyElement_put_topMargin(IHTMLBodyElement *iface, VARIANT v)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -341,7 +341,7 @@ static HRESULT WINAPI HTMLBodyElement_get_topMargin(IHTMLBodyElement *iface, VAR
 static HRESULT WINAPI HTMLBodyElement_put_rightMargin(IHTMLBodyElement *iface, VARIANT v)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -355,7 +355,7 @@ static HRESULT WINAPI HTMLBodyElement_get_rightMargin(IHTMLBodyElement *iface, V
 static HRESULT WINAPI HTMLBodyElement_put_bottomMargin(IHTMLBodyElement *iface, VARIANT v)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -386,7 +386,7 @@ static HRESULT WINAPI HTMLBodyElement_put_bgColor(IHTMLBodyElement *iface, VARIA
     nsAString strColor;
     nsresult nsres;
 
-    TRACE("(%p)->()\n", This);
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     if(!variant_to_nscolor(&v, &strColor))
         return S_OK;
@@ -431,7 +431,7 @@ static HRESULT WINAPI HTMLBodyElement_put_text(IHTMLBodyElement *iface, VARIANT 
     nsAString text;
     nsresult nsres;
 
-    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     if(!variant_to_nscolor(&v, &text))
         return S_OK;
@@ -479,7 +479,7 @@ static HRESULT WINAPI HTMLBodyElement_put_link(IHTMLBodyElement *iface, VARIANT 
     nsAString link_str;
     nsresult nsres;
 
-    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     if(!variant_to_nscolor(&v, &link_str))
         return S_OK;
@@ -517,7 +517,7 @@ static HRESULT WINAPI HTMLBodyElement_put_vLink(IHTMLBodyElement *iface, VARIANT
     nsAString vlink_str;
     nsresult nsres;
 
-    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     if(!variant_to_nscolor(&v, &vlink_str))
         return S_OK;
@@ -555,7 +555,7 @@ static HRESULT WINAPI HTMLBodyElement_put_aLink(IHTMLBodyElement *iface, VARIANT
     nsAString alink_str;
     nsresult nsres;
 
-    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     if(!variant_to_nscolor(&v, &alink_str))
         return S_OK;
@@ -590,7 +590,7 @@ static HRESULT WINAPI HTMLBodyElement_get_aLink(IHTMLBodyElement *iface, VARIANT
 static HRESULT WINAPI HTMLBodyElement_put_onload(IHTMLBodyElement *iface, VARIANT v)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -604,7 +604,7 @@ static HRESULT WINAPI HTMLBodyElement_get_onload(IHTMLBodyElement *iface, VARIAN
 static HRESULT WINAPI HTMLBodyElement_put_onunload(IHTMLBodyElement *iface, VARIANT v)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -632,7 +632,7 @@ static HRESULT WINAPI HTMLBodyElement_get_scroll(IHTMLBodyElement *iface, BSTR *
 static HRESULT WINAPI HTMLBodyElement_put_onselect(IHTMLBodyElement *iface, VARIANT v)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
@@ -646,7 +646,7 @@ static HRESULT WINAPI HTMLBodyElement_get_onselect(IHTMLBodyElement *iface, VARI
 static HRESULT WINAPI HTMLBodyElement_put_onbeforeunload(IHTMLBodyElement *iface, VARIANT v)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
