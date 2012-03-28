@@ -325,6 +325,22 @@ static pascal ComponentResult myDataHGetFileTypeOrdering ( DataHandler dh,
     return noErr;
 }
 
+typedef struct {
+    const CFStringRef fname;
+    const int sig_length;
+    const BYTE sig[10];
+} signature;
+
+static const signature stream_sigs[] = {
+    {CFSTR("video.asf"),4,{0x30,0x26,0xb2,0x75}},
+    {CFSTR("video.mov"),8,{0x00,0x00,0x00,0x14,0x66,0x74,0x79,0x70}},
+    {CFSTR("video.mp4"),8,{0x00,0x00,0x00,0x18,0x66,0x74,0x79,0x70}},
+    {CFSTR("video.m4v"),8,{0x00,0x00,0x00,0x1c,0x66,0x74,0x79,0x70}},
+    {CFSTR("video.flv"),4,{0x46,0x4C,0x56,0x01}},
+    {CFSTR("video.mpg"),3,{0x00,0x00,0x01}},
+    {CFSTR("avideo.rm"),4,{0x2E,0x52,0x4D,0x46}}
+};
+
 static pascal ComponentResult myDataHGetFileName ( DataHandler dh, Str255 str)
 {
     Handle storage = GetComponentInstanceStorage(dh);
@@ -342,7 +358,20 @@ static pascal ComponentResult myDataHGetFileName ( DataHandler dh, Str255 str)
     else if(IsEqualIID(&data->dataRef.streamSubtype, &MEDIASUBTYPE_QTMovie))
         CFStringGetPascalString(CFSTR("video.mov"),str,256,kCFStringEncodingMacRoman);
     else
+    {
+        BYTE header[10] = {0,0,0,0,0,0,0,0,0,0};
+        int i;
+        IAsyncReader_SyncRead(data->dataRef.pReader, 0, 8, header);
+
+        for (i=0; i < sizeof(stream_sigs)/sizeof(signature); i++)
+            if (memcmp(header, stream_sigs[i].sig, stream_sigs[i].sig_length)==0)
+            {
+                CFStringGetPascalString(stream_sigs[i].fname,str,256,kCFStringEncodingMacRoman);
+                return noErr;
+            }
+
         return badComponentSelector;
+    }
 
     return noErr;
 }
