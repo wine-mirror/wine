@@ -15594,6 +15594,143 @@ methods:
 }
 
 /*****************************************************************************
+ *    DispHTMLTableCell dispinterface
+ */
+[
+    hidden,
+    uuid(3050f536-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLTableCell
+{
+properties:
+methods:
+    WINE_HTMLELEMENT_DISPINTERFACE_DECL;
+
+    [propput, id(DISPID_IHTMLTABLECELL_ROWSPAN)]
+    void rowSpan(long v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_ROWSPAN)]
+    long rowSpan();
+
+    [propput, id(DISPID_IHTMLTABLECELL_COLSPAN)]
+    void colSpan(long v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_COLSPAN)]
+    long colSpan();
+
+    [propput, id(DISPID_IHTMLTABLECELL_ALIGN)]
+    void align(BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_ALIGN)]
+    BSTR align();
+
+    [propput, id(DISPID_IHTMLTABLECELL_VALIGN)]
+    void vAlign(BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_VALIGN)]
+    BSTR vAlign();
+
+    [propput, id(DISPID_IHTMLTABLECELL_BGCOLOR)]
+    void bgColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_BGCOLOR)]
+    VARIANT bgColor();
+
+    [propput, id(DISPID_IHTMLTABLECELL_NOWRAP)]
+    void noWrap(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_NOWRAP)]
+    VARIANT_BOOL noWrap();
+
+    [propput, id(DISPID_IHTMLTABLECELL_BACKGROUND)]
+    void background(BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_BACKGROUND)]
+    BSTR background();
+
+    [propput, id(DISPID_IHTMLTABLECELL_BORDERCOLOR)]
+    void borderColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_BORDERCOLOR)]
+    VARIANT borderColor();
+
+    [propput, id(DISPID_IHTMLTABLECELL_BORDERCOLORLIGHT)]
+    void borderColorLight(VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_BORDERCOLORLIGHT)]
+    VARIANT borderColorLight();
+
+    [propput, id(DISPID_IHTMLTABLECELL_BORDERCOLORDARK)]
+    void borderColorDark(VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_BORDERCOLORDARK)]
+    VARIANT borderColorDark();
+
+    [propput, id(DISPID_IHTMLTABLECELL_WIDTH)]
+    void width(VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_WIDTH)]
+    VARIANT width();
+
+    [propput, id(DISPID_IHTMLTABLECELL_HEIGHT)]
+    void height(VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLECELL_HEIGHT)]
+    VARIANT height();
+
+    [propget, id(DISPID_IHTMLTABLECELL_CELLINDEX)]
+    long cellIndex();
+
+    [propput, id(DISPID_IHTMLTABLECELL2_ABBR), displaybind, bindable]
+    void abbr(BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL2_ABBR), displaybind, bindable]
+    BSTR abbr();
+
+    [propput, id(DISPID_IHTMLTABLECELL2_AXIS), displaybind, bindable]
+    void axis(BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL2_AXIS), displaybind, bindable]
+    BSTR axis();
+
+    [propput, id(DISPID_IHTMLTABLECELL2_CH), displaybind, bindable]
+    void ch(BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL2_CH), displaybind, bindable]
+    BSTR ch();
+
+    [propput, id(DISPID_IHTMLTABLECELL2_CHOFF), displaybind, bindable]
+    void chOff(BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL2_CHOFF), displaybind, bindable]
+    BSTR chOff();
+
+    [propput, id(DISPID_IHTMLTABLECELL2_HEADERS), displaybind, bindable]
+    void headers(BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL2_HEADERS), displaybind, bindable]
+    BSTR headers();
+
+    [propput, id(DISPID_IHTMLTABLECELL2_SCOPE), displaybind, bindable]
+    void scope(BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL2_SCOPE), displaybind, bindable]
+    BSTR scope();
+
+    [propput, id(DISPID_IHTMLTABLECELL3_IE9_CH), displaybind, bindable]
+    void ie9_ch(BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL3_IE9_CH), displaybind, bindable]
+    BSTR ie9_ch();
+
+    [propput, id(DISPID_IHTMLTABLECELL3_IE9_CHOFF), displaybind, bindable]
+    void ie9_chOff(BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLECELL3_IE9_CHOFF), displaybind, bindable]
+    BSTR ie9_chOff();
+}
+
+/*****************************************************************************
  *    IHTMLScriptElement interface
  */
 [
