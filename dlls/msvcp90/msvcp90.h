@@ -259,6 +259,7 @@ typedef struct
 } locale;
 
 locale* __thiscall locale_ctor(locale*);
+locale* __thiscall locale_copy_ctor(locale*, const locale*);
 void __thiscall locale_dtor(locale*);
 
 /* class _Lockit */
