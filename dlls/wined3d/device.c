@@ -239,18 +239,6 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
             {
                 if (data.buffer_object)
                     *fixup = TRUE;
-                else if (*fixup && !use_vshader
-                        && (element->usage == WINED3D_DECL_USAGE_COLOR
-                        || element->usage == WINED3D_DECL_USAGE_POSITIONT))
-                {
-                    static BOOL warned = FALSE;
-                    if (!warned)
-                    {
-                        /* This may be bad with the fixed function pipeline. */
-                        FIXME("Missing vbo streams with unfixed colors or transformed position, expect problems\n");
-                        warned = TRUE;
-                    }
-                }
             }
         }
         data.addr += element->offset;
