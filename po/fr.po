@@ -3474,10 +3474,8 @@ msgid "Expected ')'"
 msgstr "« ) » attendu"
 
 #: jscript.rc:37
-#, fuzzy
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "Paramètre non valide.\n"
+msgstr "Caractère non valide"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
