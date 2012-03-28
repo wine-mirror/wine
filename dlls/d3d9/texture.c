@@ -33,20 +33,20 @@ static inline IDirect3DTexture9Impl *impl_from_IDirect3DTexture9(IDirect3DTextur
 static HRESULT WINAPI IDirect3DTexture9Impl_QueryInterface(IDirect3DTexture9 *iface, REFIID riid,
         void **ppobj)
 {
-    IDirect3DTexture9Impl *This = impl_from_IDirect3DTexture9(iface);
-
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
 
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IDirect3DResource9)
-        || IsEqualGUID(riid, &IID_IDirect3DBaseTexture9)
-        || IsEqualGUID(riid, &IID_IDirect3DTexture9)) {
+    if (IsEqualGUID(riid, &IID_IDirect3DTexture9)
+            || IsEqualGUID(riid, &IID_IDirect3DBaseTexture9)
+            || IsEqualGUID(riid, &IID_IDirect3DResource9)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
         IDirect3DTexture9_AddRef(iface);
-        *ppobj = This;
+        *ppobj = iface;
         return S_OK;
     }
 
-    WARN("(%p)->(%s,%p) not found\n", This, debugstr_guid(riid), ppobj);
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
     *ppobj = NULL;
     return E_NOINTERFACE;
 }
