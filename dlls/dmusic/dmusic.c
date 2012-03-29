@@ -138,12 +138,16 @@ static HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD ind
 
     if (index == (nb_midi_in + nb_midi_out + 1))
     {
-        IDirectMusicSynth8* synth;
-        TRACE("Enumerating port: 'Microsoft Software Synthesizer'\n");
-        CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth8, (void**)&synth);
-        IDirectMusicSynth8_GetPortCaps(synth, port_caps);
-        IDirectMusicSynth8_Release(synth);
-        return S_OK;
+        IDirectMusicSynth8* synth = NULL;
+        HRESULT hr;
+        hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth8, (void**)&synth);
+        if (SUCCEEDED(hr))
+            IDirectMusicSynth8_GetPortCaps(synth, port_caps);
+        if (SUCCEEDED(hr))
+            TRACE("Enumerating port: %s\n", debugstr_w(port_caps->wszDescription));
+        if (synth)
+            IDirectMusicSynth8_Release(synth);
+        return hr;
     }
 
     return S_FALSE;
