@@ -73,6 +73,7 @@ static HRESULT navigate_anchor_window(HTMLAnchorElement *This, const WCHAR *targ
 static HRESULT navigate_anchor(HTMLAnchorElement *This)
 {
     nsAString href_str, target_str;
+    HTMLWindow *window = NULL;
     nsresult nsres;
     HRESULT hres = E_FAIL;
 
@@ -87,14 +88,18 @@ static HRESULT navigate_anchor(HTMLAnchorElement *This)
 
         nsAString_GetData(&target_str, &target);
         if(*target && strcmpiW(target, _selfW)) {
-            if(strcmpiW(target, _parentW) && strcmpiW(target, _topW)) {
-                hres = navigate_anchor_window(This, target);
+            if(!strcmpiW(target, _topW)) {
+                TRACE("target _top\n");
+                get_top_window(This->element.node.doc->basedoc.window, &window);
+            }else if(!strcmpiW(target, _parentW)) {
+                FIXME("Navigating to target _parent is not implemented\n");
+                nsAString_Finish(&target_str);
+                return S_OK;
             }else {
-                FIXME("Navigating to target %s is not implemented\n", debugstr_w(target));
-                hres = S_OK;
+                hres = navigate_anchor_window(This, target);
+                nsAString_Finish(&target_str);
+                return hres;
             }
-            nsAString_Finish(&target_str);
-            return hres;
         }
     }
     nsAString_Finish(&target_str);
@@ -106,7 +111,8 @@ static HRESULT navigate_anchor(HTMLAnchorElement *This)
 
         nsAString_GetData(&href_str, &href);
         if(*href) {
-            HTMLWindow *window = This->element.node.doc->basedoc.window;
+            if(!window)
+                window = This->element.node.doc->basedoc.window;
             hres = navigate_url(window, href, window->url);
         }else {
             TRACE("empty href\n");

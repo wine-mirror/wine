@@ -107,6 +107,14 @@ static HRESULT get_location(HTMLWindow *This, HTMLLocation **ret)
     return S_OK;
 }
 
+void get_top_window(HTMLWindow *window, HTMLWindow **ret)
+{
+    HTMLWindow *iter;
+
+    for(iter = window; iter->parent; iter = iter->parent);
+    *ret = iter;
+}
+
 static inline HRESULT set_window_event(HTMLWindow *window, eventid_t eid, VARIANT *var)
 {
     if(!window->doc) {
@@ -838,13 +846,12 @@ static HRESULT WINAPI HTMLWindow2_get_self(IHTMLWindow2 *iface, IHTMLWindow2 **p
 static HRESULT WINAPI HTMLWindow2_get_top(IHTMLWindow2 *iface, IHTMLWindow2 **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    HTMLWindow *curr;
+    HTMLWindow *top;
+
     TRACE("(%p)->(%p)\n", This, p);
 
-    curr = This;
-    while(curr->parent)
-        curr = curr->parent;
-    *p = &curr->IHTMLWindow2_iface;
+    get_top_window(This, &top);
+    *p = &top->IHTMLWindow2_iface;
     IHTMLWindow2_AddRef(*p);
 
     return S_OK;
