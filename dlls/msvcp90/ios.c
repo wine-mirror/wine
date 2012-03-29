@@ -1942,13 +1942,13 @@ void __thiscall ios_base_clear_reraise(ios_base *this, IOSB_iostate state, MSVCP
 {
     TRACE("(%p %x %x)\n", this, state, reraise);
 
-    if(reraise) {
-        FIXME("reraise is not supported\n");
-        return;
-    }
-
     this->state = state & IOSTATE_mask;
-    if(this->state & this->except & IOSTATE_eofbit)
+    if(!(this->state & this->except))
+        return;
+
+    if(reraise)
+        throw_exception(EXCEPTION_RERAISE, NULL);
+    else if(this->state & this->except & IOSTATE_eofbit)
         throw_exception(EXCEPTION_FAILURE, "eofbit is set");
     else if(this->state & this->except & IOSTATE_failbit)
         throw_exception(EXCEPTION_FAILURE, "failbit is set");

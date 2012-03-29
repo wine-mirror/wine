@@ -684,6 +684,8 @@ void throw_exception(exception_type et, const char *str)
     const char *addr = str;
 
     switch(et) {
+    case EXCEPTION_RERAISE:
+        _CxxThrowException(NULL, NULL);
     case EXCEPTION: {
         exception e;
         MSVCP_exception_ctor(&e, &addr);
