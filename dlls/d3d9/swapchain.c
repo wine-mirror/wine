@@ -28,18 +28,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 /* IDirect3DSwapChain IUnknown parts follow: */
 static HRESULT WINAPI IDirect3DSwapChain9Impl_QueryInterface(LPDIRECT3DSWAPCHAIN9 iface, REFIID riid, LPVOID* ppobj)
 {
-    IDirect3DSwapChain9Impl *This = (IDirect3DSwapChain9Impl *)iface;
-
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
 
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IDirect3DSwapChain9)) {
+    if (IsEqualGUID(riid, &IID_IDirect3DSwapChain9)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
         IDirect3DSwapChain9_AddRef(iface);
-        *ppobj = This;
+        *ppobj = iface;
         return S_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
     *ppobj = NULL;
     return E_NOINTERFACE;
 }
