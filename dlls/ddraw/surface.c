@@ -232,7 +232,8 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
         return S_OK;
     }
 
-    ERR("No interface\n");
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
     return E_NOINTERFACE;
 }
 
