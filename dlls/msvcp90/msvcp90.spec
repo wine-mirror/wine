@@ -2834,8 +2834,8 @@
 @ stub -arch=win64 ?_Tidy@?$time_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEAAXXZ
 @ stub -arch=win32 ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AAEXXZ
 @ stub -arch=win64 ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEAAXXZ
-@ cdecl -arch=win32 ?_Tidy@ios_base@std@@AAAXXZ() ios_base_Tidy
-@ cdecl -arch=win64 ?_Tidy@ios_base@std@@AEAAXXZ() ios_base_Tidy
+@ cdecl -arch=win32 ?_Tidy@ios_base@std@@AAAXXZ(ptr) ios_base_Tidy
+@ cdecl -arch=win64 ?_Tidy@ios_base@std@@AEAAXXZ(ptr) ios_base_Tidy
 @ stub -arch=win32 ?_Tidy@strstreambuf@std@@IAEXXZ
 @ stub -arch=win64 ?_Tidy@strstreambuf@std@@IEAAXXZ
 @ thiscall -arch=win32 ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_streambuf_char__Unlock
@@ -3788,12 +3788,12 @@
 @ cdecl -arch=win64 ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA?AV?$_String_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@@Z(ptr ptr ptr) basic_string_wchar_erase_iter
 @ thiscall -arch=win32 ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@II@Z(ptr long long) MSVCP_basic_string_wchar_erase
 @ cdecl -arch=win64 ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@_K0@Z(ptr long long) MSVCP_basic_string_wchar_erase
-@ thiscall -arch=win32 ?exceptions@ios_base@std@@QAEXH@Z(ptr long) ios_base_exception_set
-@ cdecl -arch=win64 ?exceptions@ios_base@std@@QEAAXH@Z(ptr long) ios_base_exception_set
-@ thiscall -arch=win32 ?exceptions@ios_base@std@@QAEXI@Z(ptr long) ios_base_exception_set_unsigned
-@ cdecl -arch=win64 ?exceptions@ios_base@std@@QEAAXI@Z(ptr long) ios_base_exception_set_unsigned
-@ thiscall -arch=win32 ?exceptions@ios_base@std@@QBEHXZ(ptr) ios_base_exception_get
-@ cdecl -arch=win64 ?exceptions@ios_base@std@@QEBAHXZ(ptr) ios_base_exception_get
+@ thiscall -arch=win32 ?exceptions@ios_base@std@@QAEXH@Z(ptr long) ios_base_exceptions_set
+@ cdecl -arch=win64 ?exceptions@ios_base@std@@QEAAXH@Z(ptr long) ios_base_exceptions_set
+@ thiscall -arch=win32 ?exceptions@ios_base@std@@QAEXI@Z(ptr long) ios_base_exceptions_set_unsigned
+@ cdecl -arch=win64 ?exceptions@ios_base@std@@QEAAXI@Z(ptr long) ios_base_exceptions_set_unsigned
+@ thiscall -arch=win32 ?exceptions@ios_base@std@@QBEHXZ(ptr) ios_base_exceptions_get
+@ cdecl -arch=win64 ?exceptions@ios_base@std@@QEBAHXZ(ptr) ios_base_exceptions_get
 @ cdecl ?exp@?$_Ctraits@M@std@@SAMM@Z(float) std_Ctraits_float_exp
 @ cdecl ?exp@?$_Ctraits@N@std@@SANN@Z(double) std_Ctraits_double_exp
 @ cdecl ?exp@?$_Ctraits@O@std@@SAOO@Z(double) std_Ctraits_long_double_exp

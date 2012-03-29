@@ -163,7 +163,8 @@ typedef enum __exception_type {
     EXCEPTION_LENGTH_ERROR,
     EXCEPTION_OUT_OF_RANGE,
     EXCEPTION_INVALID_ARGUMENT,
-    EXCEPTION_RUNTIME_ERROR
+    EXCEPTION_RUNTIME_ERROR,
+    EXCEPTION_FAILURE,
 } exception_type;
 void throw_exception(exception_type, const char *);
 
@@ -260,6 +261,7 @@ typedef struct
 
 locale* __thiscall locale_ctor(locale*);
 locale* __thiscall locale_copy_ctor(locale*, const locale*);
+locale* __thiscall locale_operator_assign(locale*, const locale*);
 void __thiscall locale_dtor(locale*);
 
 /* class _Lockit */
