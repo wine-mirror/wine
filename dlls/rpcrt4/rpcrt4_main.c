@@ -138,6 +138,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         break;
 
     case DLL_PROCESS_DETACH:
+        if (lpvReserved) break; /* do nothing if process is shutting down */
         RPCRT4_destroy_all_protseqs();
         RPCRT4_ServerFreeAllRegisteredAuthInfo();
         DeleteCriticalSection(&uuid_cs);
