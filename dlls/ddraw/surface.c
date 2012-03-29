@@ -142,8 +142,7 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
     if(!riid)
         return DDERR_INVALIDPARAMS;
 
-    if (IsEqualGUID(riid, &IID_IUnknown)
-     || IsEqualGUID(riid, &IID_IDirectDrawSurface7) )
+    if (IsEqualGUID(riid, &IID_IDirectDrawSurface7))
     {
         IDirectDrawSurface7_AddRef(iface);
         *obj = iface;
@@ -175,7 +174,8 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
         return S_OK;
     }
 
-    if (IsEqualGUID(riid, &IID_IDirectDrawSurface))
+    if (IsEqualGUID(riid, &IID_IDirectDrawSurface)
+            || IsEqualGUID(riid, &IID_IUnknown))
     {
         IDirectDrawSurface_AddRef(&This->IDirectDrawSurface_iface);
         *obj = &This->IDirectDrawSurface_iface;
