@@ -3520,13 +3520,53 @@ GpStatus WINGDIPAPI GdipGetEncoderParameterListSize(GpImage *image,
     return NotImplemented;
 }
 
+static PixelFormat get_16bpp_format(HBITMAP hbm)
+{
+    BITMAPV4HEADER bmh;
+    HDC hdc;
+    PixelFormat result;
+
+    hdc = CreateCompatibleDC(NULL);
+
+    memset(&bmh, 0, sizeof(bmh));
+    bmh.bV4Size = sizeof(bmh);
+    bmh.bV4Width = 1;
+    bmh.bV4Height = 1;
+    bmh.bV4V4Compression = BI_BITFIELDS;
+    bmh.bV4BitCount = 16;
+
+    GetDIBits(hdc, hbm, 0, 0, NULL, (BITMAPINFO*)&bmh, DIB_RGB_COLORS);
+
+    if (bmh.bV4RedMask == 0x7c00 &&
+        bmh.bV4GreenMask == 0x3e0 &&
+        bmh.bV4BlueMask == 0x1f)
+    {
+        result = PixelFormat16bppRGB555;
+    }
+    else if (bmh.bV4RedMask == 0xf800 &&
+        bmh.bV4GreenMask == 0x7e0 &&
+        bmh.bV4BlueMask == 0x1f)
+    {
+        result = PixelFormat16bppRGB565;
+    }
+    else
+    {
+        FIXME("unrecognized bitfields %x,%x,%x\n", bmh.bV4RedMask,
+            bmh.bV4GreenMask, bmh.bV4BlueMask);
+        result = PixelFormatUndefined;
+    }
+
+    DeleteDC(hdc);
+
+    return result;
+}
+
 /*****************************************************************************
  * GdipCreateBitmapFromHBITMAP [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBitmap** bitmap)
 {
     BITMAP bm;
-    DIBSECTION dib;
     GpStatus retval;
     PixelFormat format;
     BitmapData lockeddata;
@@ -3552,35 +3592,10 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
             format = PixelFormat8bppIndexed;
             break;
         case 16:
-        {
-            if (GetObjectA(hbm, sizeof(dib), &dib) == sizeof(dib))
-            {
-                if (dib.dsBitfields[0] == 0x7c00 &&
-                    dib.dsBitfields[1] == 0x3e0 &&
-                    dib.dsBitfields[2] == 0x1f)
-                {
-                    format = PixelFormat16bppRGB555;
-                }
-                else if (dib.dsBitfields[0] == 0xf800 &&
-                    dib.dsBitfields[1] == 0x7e0 &&
-                    dib.dsBitfields[2] == 0x1f)
-                {
-                    format = PixelFormat16bppRGB565;
-                }
-                else
-                {
-                    FIXME("unrecognized bitfields %x,%x,%x\n", dib.dsBitfields[0],
-                        dib.dsBitfields[1], dib.dsBitfields[2]);
-                    return InvalidParameter;
-                }
-            }
-            else
-            {
-                FIXME("unimplemented for 16-bit ddb\n");
+            format = get_16bpp_format(hbm);
+            if (format == PixelFormatUndefined)
                 return InvalidParameter;
-            }
             break;
-        }
         case 24:
             format = PixelFormat24bppRGB;
             break;
