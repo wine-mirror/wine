@@ -151,8 +151,6 @@ struct IDirectMusicPortImpl {
   DMUSIC_PRIVATE_CHANNEL_GROUP group[1];
 };
 
-extern HRESULT WINAPI IDirectMusicPortImpl_Activate (LPDIRECTMUSICPORT iface, BOOL fActive) DECLSPEC_HIDDEN;
-
 /** Internal factory */
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps) DECLSPEC_HIDDEN;
 

@@ -193,7 +193,7 @@ static HRESULT WINAPI IDirectMusic8Impl_Activate (LPDIRECTMUSIC8 iface, BOOL fEn
 	
 	FIXME("(%p, %d): stub\n", This, fEnable);
 	for (i = 0; i < This->nrofports; i++) {
-            IDirectMusicPortImpl_Activate(This->ppPorts[i], fEnable);
+            IDirectMusicPort_Activate(This->ppPorts[i], fEnable);
 	}
 	
 	return S_OK;

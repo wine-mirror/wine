@@ -157,7 +157,8 @@ static HRESULT WINAPI IDirectMusicPortImpl_GetNumChannelGroups (LPDIRECTMUSICPOR
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicPortImpl_Activate (LPDIRECTMUSICPORT iface, BOOL fActive) {
+static HRESULT WINAPI IDirectMusicPortImpl_Activate (LPDIRECTMUSICPORT iface, BOOL fActive)
+{
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
 	TRACE("(%p, %d)\n", This, fActive);
 	This->fActive = fActive;
