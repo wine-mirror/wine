@@ -16,6 +16,9 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+#include <stdio.h>
+
 #include "dmusic_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
@@ -66,45 +69,84 @@ static ULONG WINAPI IDirectMusic8Impl_Release (LPDIRECTMUSIC8 iface) {
 }
 
 /* IDirectMusic8Impl IDirectMusic part: */
-static HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD dwIndex, LPDMUS_PORTCAPS pPortCaps) {
-	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
-	TRACE("(%p, %d, %p)\n", This, dwIndex, pPortCaps);
-	if (NULL == pPortCaps) { return E_POINTER; }
-	/* i guess the first port shown is always software synthesizer */
-	if (dwIndex == 0) 
-	{
-		IDirectMusicSynth8* synth;
-		TRACE("enumerating 'Microsoft Software Synthesizer' port\n");
-		CoCreateInstance (&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth8, (void**)&synth);
-		IDirectMusicSynth8_GetPortCaps (synth, pPortCaps);
-		IDirectMusicSynth8_Release (synth);
-		return S_OK;
-	}
+static HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD index, LPDMUS_PORTCAPS port_caps)
+{
+    IDirectMusic8Impl *This = (IDirectMusic8Impl*)iface;
+    ULONG nb_midi_out;
+    ULONG nb_midi_in;
+    const WCHAR emulated[] = {' ','[','E','m','u','l','a','t','e','d',']',0};
 
-/* it seems that the rest of devices are obtained thru dmusic32.EnumLegacyDevices...*sigh*...which is undocumented*/
-#if 0
-	int numMIDI = midiOutGetNumDevs();
-	int numWAVE = waveOutGetNumDevs();
-	int i;
-	/* then return digital sound ports */
-	for (i = 1; i <= numWAVE; i++)
-	{
-		TRACE("enumerating 'digital sound' ports\n");	
-		if (i == dwIndex)
-		{
-			DirectSoundEnumerateA(register_waveport, pPortCaps);
-			return S_OK;	
-		}
-	}
-	/* finally, list all *real* MIDI ports*/
-	for (i = numWAVE + 1; i <= numWAVE + numMIDI; i++) 
-	{
-		TRACE("enumerating 'real MIDI' ports\n");		
-		if (i == dwIndex)
-			FIXME("Found MIDI port, but *real* MIDI ports not supported yet\n");
-	}
-#endif	
-	return S_FALSE;
+    TRACE("(%p, %d, %p)\n", This, index, port_caps);
+
+    if (!port_caps)
+        return E_POINTER;
+
+    /* NOTE: It seems some native versions get the rest of devices through dmusic32.EnumLegacyDevices...*sigh*...which is undocumented */
+
+    /* NOTE: Should we enum wave devices ? Native does not seem to */
+
+    /* Fill common port caps for winmm ports */
+    port_caps->dwType = DMUS_PORT_WINMM_DRIVER;
+    port_caps->dwMemorySize = 0;
+    port_caps->dwMaxChannelGroups = 1;
+    port_caps->dwMaxVoices = 0;
+    port_caps->dwMaxAudioChannels = 0;
+    port_caps->dwEffectFlags = DMUS_EFFECT_NONE;
+    /* Fake port GUID */
+    port_caps->guidPort = IID_IUnknown;
+    port_caps->guidPort.Data1 = index + 1;
+
+    nb_midi_out = midiOutGetNumDevs();
+
+    if (index == 0)
+    {
+        MIDIOUTCAPSW caps;
+        midiOutGetDevCapsW(MIDI_MAPPER, &caps, sizeof(caps));
+        strcpyW(port_caps->wszDescription, caps.szPname);
+        strcatW(port_caps->wszDescription, emulated);
+        port_caps->dwFlags = DMUS_PC_SHAREABLE;
+        port_caps->dwClass = DMUS_PC_OUTPUTCLASS;
+        TRACE("Enumerating port: %s\n", debugstr_w(port_caps->wszDescription));
+        return S_OK;
+    }
+
+    if (index < (nb_midi_out + 1))
+    {
+        MIDIOUTCAPSW caps;
+        midiOutGetDevCapsW(index - 1, &caps, sizeof(caps));
+        strcpyW(port_caps->wszDescription, caps.szPname);
+        strcatW(port_caps->wszDescription, emulated);
+        port_caps->dwFlags = DMUS_PC_SHAREABLE | DMUS_PC_EXTERNAL;
+        port_caps->dwClass = DMUS_PC_OUTPUTCLASS;
+        TRACE("Enumerating port: %s\n", debugstr_w(port_caps->wszDescription));
+        return S_OK;
+    }
+
+    nb_midi_in = midiInGetNumDevs();
+
+    if (index < (nb_midi_in + nb_midi_out + 1))
+    {
+        MIDIINCAPSW caps;
+        midiInGetDevCapsW(index - nb_midi_out - 1, &caps, sizeof(caps));
+        strcpyW(port_caps->wszDescription, caps.szPname);
+        strcatW(port_caps->wszDescription, emulated);
+        port_caps->dwFlags = DMUS_PC_EXTERNAL;
+        port_caps->dwClass = DMUS_PC_INPUTCLASS;
+        TRACE("Enumerating port: %s\n", debugstr_w(port_caps->wszDescription));
+        return S_OK;
+    }
+
+    if (index == (nb_midi_in + nb_midi_out + 1))
+    {
+        IDirectMusicSynth8* synth;
+        TRACE("Enumerating port: 'Microsoft Software Synthesizer'\n");
+        CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth8, (void**)&synth);
+        IDirectMusicSynth8_GetPortCaps(synth, port_caps);
+        IDirectMusicSynth8_Release(synth);
+        return S_OK;
+    }
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI IDirectMusic8Impl_CreateMusicBuffer (LPDIRECTMUSIC8 iface, LPDMUS_BUFFERDESC pBufferDesc, LPDIRECTMUSICBUFFER** ppBuffer, LPUNKNOWN pUnkOuter) {
