@@ -3204,7 +3204,7 @@ MSVCP_size_t __cdecl num_get_short__Getcat(const locale_facet **facet, const loc
 /* ?_Getffld@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@1AEBVlocale@2@@Z */
 /* ?_Getffld@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@1ABVlocale@2@@Z */
 /* ?_Getffld@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@1AEBVlocale@2@@Z */
-int __cdecl num_get_wchar__Getffld(char *dest, istreambuf_iterator_wchar *first,
+int __cdecl num_get_wchar__Getffld(num_get *this, char *dest, istreambuf_iterator_wchar *first,
     istreambuf_iterator_wchar *last, const locale *loc)
 {
     FIXME("(%p %p %p %p) stub\n", dest, first, last, loc);
@@ -3215,7 +3215,7 @@ int __cdecl num_get_wchar__Getffld(char *dest, istreambuf_iterator_wchar *first,
 /* ?_Getffldx@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@1AEAVios_base@2@PEAH@Z */
 /* ?_Getffldx@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@1AAVios_base@2@PAH@Z */
 /* ?_Getffldx@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@1AEAVios_base@2@PEAH@Z */
-int __cdecl num_get_wchar__Getffldx(char *dest, istreambuf_iterator_wchar *first,
+int __cdecl num_get_wchar__Getffldx(num_get *this, char *dest, istreambuf_iterator_wchar *first,
     istreambuf_iterator_wchar *last, struct _ios_base *ios, int *phexexp)
 {
     FIXME("(%p %p %p %p %p) stub\n", dest, first, last, ios, phexexp);
@@ -3226,7 +3226,7 @@ int __cdecl num_get_wchar__Getffldx(char *dest, istreambuf_iterator_wchar *first
 /* ?_Getifld@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@1HAEBVlocale@2@@Z */
 /* ?_Getifld@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@1HABVlocale@2@@Z */
 /* ?_Getifld@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@1HAEBVlocale@2@@Z */
-int __cdecl num_get_wchar__Getifld(char *dest, istreambuf_iterator_wchar *first,
+int __cdecl num_get_wchar__Getifld(num_get *this, char *dest, istreambuf_iterator_wchar *first,
     istreambuf_iterator_wchar *last, int fmtflags, const locale *loc)
 {
     FIXME("(%p %p %p %04x %p) stub\n", dest, first, last, fmtflags, loc);
@@ -3572,7 +3572,7 @@ MSVCP_size_t __cdecl num_get_char__Getcat(const locale_facet **facet, const loca
 
 /* ?_Getffld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1ABVlocale@2@@Z */
 /* ?_Getffld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1AEBVlocale@2@@Z */
-int __cdecl num_get_char__Getffld(char *dest, istreambuf_iterator_char *first,
+int __cdecl num_get_char__Getffld(num_get *this, char *dest, istreambuf_iterator_char *first,
     istreambuf_iterator_char *last, const locale *loc)
 {
     FIXME("(%p %p %p %p) stub\n", dest, first, last, loc);
@@ -3581,7 +3581,7 @@ int __cdecl num_get_char__Getffld(char *dest, istreambuf_iterator_char *first,
 
 /* ?_Getffldx@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1AAVios_base@2@PAH@Z */
 /* ?_Getffldx@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1AEAVios_base@2@PEAH@Z */
-int __cdecl num_get_char__Getffldx(char *dest, istreambuf_iterator_char *first,
+int __cdecl num_get_char__Getffldx(num_get *this, char *dest, istreambuf_iterator_char *first,
     istreambuf_iterator_char *last, struct _ios_base *ios, int *phexexp)
 {
     FIXME("(%p %p %p %p %p) stub\n", dest, first, last, ios, phexexp);
@@ -3590,7 +3590,7 @@ int __cdecl num_get_char__Getffldx(char *dest, istreambuf_iterator_char *first,
 
 /* ?_Getifld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1HABVlocale@2@@Z */
 /* ?_Getifld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1HAEBVlocale@2@@Z */
-int __cdecl num_get_char__Getifld(char *dest, istreambuf_iterator_char *first,
+int __cdecl num_get_char__Getifld(num_get *this, char *dest, istreambuf_iterator_char *first,
     istreambuf_iterator_char *last, int fmtflags, const locale *loc)
 {
     FIXME("(%p %p %p %04x %p) stub\n", dest, first, last, fmtflags, loc);
