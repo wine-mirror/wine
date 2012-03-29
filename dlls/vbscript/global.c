@@ -603,6 +603,7 @@ static HRESULT Global_InStr(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VA
     VARIANT *startv, *str1v, *str2v;
     BSTR str1, str2;
     int start, ret;
+    HRESULT hres;
 
     TRACE("\n");
 
@@ -625,18 +626,9 @@ static HRESULT Global_InStr(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VA
     }
 
     if(startv) {
-        /* FIXME: Move to helper */
-        switch(V_VT(startv)) {
-        case VT_I2:
-            start = V_I2(startv);
-            break;
-        case VT_I4:
-            start = V_I4(startv);
-            break;
-        default:
-            FIXME("unsupported start %s\n", debugstr_variant(startv));
-            return E_NOTIMPL;
-        }
+        hres = to_int(startv, &start);
+        if(FAILED(hres))
+            return hres;
         if(--start < 0) {
             FIXME("start %d\n", start);
             return E_FAIL;
