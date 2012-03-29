@@ -124,4 +124,25 @@ Call ok(isNull(x), "InStr returned " & x)
 x = InStr(2, null, "abcd")
 Call ok(isNull(x), "InStr returned " & x)
 
+Sub TestMid(str, start, len, ex)
+    x = Mid(str, start, len)
+    Call ok(x = ex, "Mid(" & str & ", " & start & ", " & len & ") = " & x & " expected " & ex)
+End Sub
+
+Sub TestMid2(str, start, ex)
+    x = Mid(str, start)
+    Call ok(x = ex, "Mid(" & str & ", " & start & ") = " & x & " expected " & ex)
+End Sub
+
+TestMid "test", 2, 2, "es"
+TestMid "test", 2, 4, "est"
+TestMid "test", 1, 2, "te"
+TestMid "test", 1, 0, ""
+TestMid "test", 1, 0, ""
+TestMid "test", 5, 2, ""
+TestMid2 "test", 1, "test"
+TestMid2 "test", 2, "est"
+TestMid2 "test", 4, "t"
+TestMid2 "test", 5, ""
+
 Call reportSuccess()
