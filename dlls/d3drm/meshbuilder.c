@@ -32,6 +32,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
+static HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj);
+
+typedef struct {
+    IDirect3DRMMesh IDirect3DRMMesh_iface;
+    LONG ref;
+} IDirect3DRMMeshImpl;
+
 typedef struct {
     D3DVALUE u;
     D3DVALUE v;
@@ -272,6 +279,11 @@ char templates[] = {
 "DWORD bRightHanded;"
 "}"
 };
+
+static inline IDirect3DRMMeshImpl *impl_from_IDirect3DRMMesh(IDirect3DRMMesh *iface)
+{
+    return CONTAINING_RECORD(iface, IDirect3DRMMeshImpl, IDirect3DRMMesh_iface);
+}
 
 static inline IDirect3DRMMeshBuilderImpl *impl_from_IDirect3DRMMeshBuilder2(IDirect3DRMMeshBuilder2 *iface)
 {
@@ -831,9 +843,9 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_CreateMesh(IDirect3DRMMeshBuil
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, ppMesh);
+    TRACE("(%p)->(%p)\n", This, ppMesh);
 
-    return E_NOTIMPL;
+    return Direct3DRMMesh_create(ppMesh);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder2Impl_GenerateNormals2(IDirect3DRMMeshBuilder2* iface,
@@ -1730,9 +1742,9 @@ static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_CreateMesh(IDirect3DRMMeshBuil
 {
     IDirect3DRMMeshBuilderImpl *This = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, Mesh);
+    TRACE("(%p)->(%p)\n", This, Mesh);
 
-    return E_NOTIMPL;
+    return Direct3DRMMesh_create(Mesh);
 }
 
 static HRESULT WINAPI IDirect3DRMMeshBuilder3Impl_GetFace(IDirect3DRMMeshBuilder3* iface,
@@ -2053,6 +2065,384 @@ HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown** ppObj)
         *ppObj = (IUnknown*)&object->IDirect3DRMMeshBuilder3_iface;
     else
         *ppObj = (IUnknown*)&object->IDirect3DRMMeshBuilder2_iface;
+
+    return S_OK;
+}
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI IDirect3DRMMeshImpl_QueryInterface(IDirect3DRMMesh* iface,
+                                                         REFIID riid, void** ppvObject)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppvObject);
+
+    *ppvObject = NULL;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IDirect3DRMMesh))
+    {
+        *ppvObject = &This->IDirect3DRMMesh_iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IDirect3DRMMesh_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI IDirect3DRMMeshImpl_AddRef(IDirect3DRMMesh* iface)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p): AddRef from %d\n", This, ref - 1);
+
+    return ref;
+}
+
+static ULONG WINAPI IDirect3DRMMeshImpl_Release(IDirect3DRMMesh* iface)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p): ReleaseRef to %d\n", This, ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+/*** IDirect3DRMObject methods ***/
+static HRESULT WINAPI IDirect3DRMMeshImpl_Clone(IDirect3DRMMesh* iface,
+                                                LPUNKNOWN pUnkOuter, REFIID riid,
+                                                LPVOID *ppvObj)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%p,%s,%p): stub\n", This, pUnkOuter, debugstr_guid(riid), ppvObj);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_AddDestroyCallback(IDirect3DRMMesh* iface,
+                                                             D3DRMOBJECTCALLBACK cb,
+                                                             LPVOID argument)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%p,%p): stub\n", This, cb, argument);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_DeleteDestroyCallback(IDirect3DRMMesh* iface,
+                                                                 D3DRMOBJECTCALLBACK cb,
+                                                                 LPVOID argument)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%p,%p): stub\n", This, cb, argument);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_SetAppData(IDirect3DRMMesh* iface,
+                                                     DWORD data)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u): stub\n", This, data);
+
+    return E_NOTIMPL;
+}
+
+static DWORD WINAPI IDirect3DRMMeshImpl_GetAppData(IDirect3DRMMesh* iface)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(): stub\n", This);
+
+    return 0;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_SetName(IDirect3DRMMesh* iface,
+                                                  LPCSTR pName)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%s): stub\n", This, pName);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_GetName(IDirect3DRMMesh* iface,
+                                                  LPDWORD lpdwSize, LPSTR lpName)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%p,%p): stub\n", This, lpdwSize, lpName);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_GetClassName(IDirect3DRMMesh* iface,
+                                                       LPDWORD lpdwSize, LPSTR lpName)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%p,%p): stub\n", This, lpdwSize, lpName);
+
+    return E_NOTIMPL;
+}
+
+/*** IDirect3DRMMesh methods ***/
+static HRESULT WINAPI IDirect3DRMMeshImpl_Scale(IDirect3DRMMesh* iface,
+                                                D3DVALUE sx, D3DVALUE sy, D3DVALUE sz)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%f,%f,%f): stub\n", This, sx, sy,sz);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_Translate(IDirect3DRMMesh* iface,
+                                                    D3DVALUE tx, D3DVALUE ty, D3DVALUE tz)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%f,%f,%f): stub\n", This, tx, ty,tz);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_GetBox(IDirect3DRMMesh* iface,
+                                                 D3DRMBOX * box)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%p): stub\n", This, box);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_AddGroup(IDirect3DRMMesh* iface,
+                                                   unsigned vCount, unsigned fCount, unsigned vPerFace,
+                                                   unsigned *fData, D3DRMGROUPINDEX *returnId)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u,%u,%u,%p,%p): stub\n", This, vCount, fCount, vPerFace, fData, returnId);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_SetVertices(IDirect3DRMMesh* iface,
+                                                      D3DRMGROUPINDEX id, unsigned index, unsigned count,
+                                                      D3DRMVERTEX *values)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u,%u,%u,%p): stub\n", This, id, index, count, values);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupColor(IDirect3DRMMesh* iface,
+                                                        D3DRMGROUPINDEX id, D3DCOLOR value)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u,%x): stub\n", This, id, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupColorRGB(IDirect3DRMMesh* iface,
+                                                           D3DRMGROUPINDEX id, D3DVALUE red, D3DVALUE green, D3DVALUE blue)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u,%f,%f,%f): stub\n", This, id, red, green, blue);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupMapping(IDirect3DRMMesh* iface,
+                                                          D3DRMGROUPINDEX id, D3DRMMAPPING value)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u,%u): stub\n", This, id, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupQuality(IDirect3DRMMesh* iface,
+                                                          D3DRMGROUPINDEX id, D3DRMRENDERQUALITY value)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u,%u): stub\n", This, id, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupMaterial(IDirect3DRMMesh* iface,
+                                                           D3DRMGROUPINDEX id, LPDIRECT3DRMMATERIAL value)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u,%p): stub\n", This, id, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_SetGroupTexture(IDirect3DRMMesh* iface,
+                                                          D3DRMGROUPINDEX id, LPDIRECT3DRMTEXTURE value)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u,%p): stub\n", This, id, value);
+
+    return E_NOTIMPL;
+}
+
+static DWORD WINAPI IDirect3DRMMeshImpl_GetGroupCount(IDirect3DRMMesh* iface)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(): stub\n", This);
+
+    return 0;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroup(IDirect3DRMMesh* iface,
+                                                   D3DRMGROUPINDEX id, unsigned *vCount, unsigned *fCount, unsigned *vPerFace,
+                                                   DWORD *fDataSize, unsigned *fData)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u,%p,%p,%p,%p,%p): stub\n", This, id, vCount, fCount, vPerFace, fDataSize, fData);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_GetVertices(IDirect3DRMMesh* iface,
+                                                      D3DRMGROUPINDEX id, DWORD index, DWORD count, D3DRMVERTEX *returnPtr)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u,%u,%u,%p): stub\n", This, id, index, count, returnPtr);
+
+    return E_NOTIMPL;
+}
+
+static D3DCOLOR WINAPI IDirect3DRMMeshImpl_GetGroupColor(IDirect3DRMMesh* iface, D3DRMGROUPINDEX id)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u): stub\n", This, id);
+
+    return 0;
+}
+
+static D3DRMMAPPING WINAPI IDirect3DRMMeshImpl_GetGroupMapping(IDirect3DRMMesh* iface, D3DRMGROUPINDEX id)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u): stub\n", This, id);
+
+    return 0;
+}
+static D3DRMRENDERQUALITY WINAPI IDirect3DRMMeshImpl_GetGroupQuality(IDirect3DRMMesh* iface, D3DRMGROUPINDEX id)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u): stub\n", This, id);
+
+    return 0;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroupMaterial(IDirect3DRMMesh* iface,
+                                                           D3DRMGROUPINDEX id, LPDIRECT3DRMMATERIAL *returnPtr)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u,%p): stub\n", This, id, returnPtr);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMMeshImpl_GetGroupTexture(IDirect3DRMMesh* iface,
+                                                          D3DRMGROUPINDEX id, LPDIRECT3DRMTEXTURE *returnPtr)
+{
+    IDirect3DRMMeshImpl *This = impl_from_IDirect3DRMMesh(iface);
+
+    FIXME("(%p)->(%u,%p): stub\n", This, id, returnPtr);
+
+    return E_NOTIMPL;
+}
+
+static const struct IDirect3DRMMeshVtbl Direct3DRMMesh_Vtbl =
+{
+    /*** IUnknown methods ***/
+    IDirect3DRMMeshImpl_QueryInterface,
+    IDirect3DRMMeshImpl_AddRef,
+    IDirect3DRMMeshImpl_Release,
+    /*** IDirect3DRMObject methods ***/
+    IDirect3DRMMeshImpl_Clone,
+    IDirect3DRMMeshImpl_AddDestroyCallback,
+    IDirect3DRMMeshImpl_DeleteDestroyCallback,
+    IDirect3DRMMeshImpl_SetAppData,
+    IDirect3DRMMeshImpl_GetAppData,
+    IDirect3DRMMeshImpl_SetName,
+    IDirect3DRMMeshImpl_GetName,
+    IDirect3DRMMeshImpl_GetClassName,
+    /*** IDirect3DRMMesh methods ***/
+    IDirect3DRMMeshImpl_Scale,
+    IDirect3DRMMeshImpl_Translate,
+    IDirect3DRMMeshImpl_GetBox,
+    IDirect3DRMMeshImpl_AddGroup,
+    IDirect3DRMMeshImpl_SetVertices,
+    IDirect3DRMMeshImpl_SetGroupColor,
+    IDirect3DRMMeshImpl_SetGroupColorRGB,
+    IDirect3DRMMeshImpl_SetGroupMapping,
+    IDirect3DRMMeshImpl_SetGroupQuality,
+    IDirect3DRMMeshImpl_SetGroupMaterial,
+    IDirect3DRMMeshImpl_SetGroupTexture,
+    IDirect3DRMMeshImpl_GetGroupCount,
+    IDirect3DRMMeshImpl_GetGroup,
+    IDirect3DRMMeshImpl_GetVertices,
+    IDirect3DRMMeshImpl_GetGroupColor,
+    IDirect3DRMMeshImpl_GetGroupMapping,
+    IDirect3DRMMeshImpl_GetGroupQuality,
+    IDirect3DRMMeshImpl_GetGroupMaterial,
+    IDirect3DRMMeshImpl_GetGroupTexture
+};
+
+static HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj)
+{
+    IDirect3DRMMeshImpl* object;
+
+    TRACE("(%p)\n", obj);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DRMMeshImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->IDirect3DRMMesh_iface.lpVtbl = &Direct3DRMMesh_Vtbl;
+    object->ref = 1;
+
+    *obj = &object->IDirect3DRMMesh_iface;
 
     return S_OK;
 }
