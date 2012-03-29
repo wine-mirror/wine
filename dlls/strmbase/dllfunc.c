@@ -362,7 +362,10 @@ HRESULT WINAPI STRMBASE_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *
 
     if (i == g_cTemplates)
     {
-        ERR("%s: no class found.\n", debugstr_guid(rclsid));
+        char dllname[MAX_PATH];
+        if (!GetModuleFileNameA(g_hInst, dllname, sizeof(dllname)))
+            strcpy(dllname, "???");
+        ERR("%s: no class found in %s.\n", debugstr_guid(rclsid), dllname);
         return CLASS_E_CLASSNOTAVAILABLE;
     }
     else if (!pList->m_lpfnNew)
