@@ -153,6 +153,11 @@ static char data_d3drm_load[] =
 " 0.1; 0.2; 0.3;,\n"
 " 1;\n"
 " 3; 0, 1, 2;;\n"
+"}\n"
+"Frame Scene\n"
+"{\n"
+" {Object1}\n"
+" {Object2}\n"
 "}\n";
 
 static void test_MeshBuilder(void)
@@ -604,7 +609,8 @@ static int nb_objects = 0;
 static const GUID* refiids[] =
 {
     &IID_IDirect3DRMMeshBuilder,
-    &IID_IDirect3DRMMeshBuilder
+    &IID_IDirect3DRMMeshBuilder,
+    &IID_IDirect3DRMFrame
 };
 
 void __cdecl object_load_callback(LPDIRECT3DRMOBJECT object, REFIID objectguid, LPVOID arg)
@@ -620,16 +626,16 @@ static void test_d3drm_load(void)
     HRESULT hr;
     LPDIRECT3DRM pD3DRM;
     D3DRMLOADMEMORY info;
-    const GUID* req_refiids[] = { &IID_IDirect3DRMMeshBuilder };
+    const GUID* req_refiids[] = { &IID_IDirect3DRMMeshBuilder, &IID_IDirect3DRMFrame };
 
     hr = pDirect3DRMCreate(&pD3DRM);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
 
     info.lpMemory = data_d3drm_load;
     info.dSize = strlen(data_d3drm_load);
-    hr = IDirect3DRM_Load(pD3DRM, &info, NULL, (GUID**)req_refiids, 1, D3DRMLOAD_FROMMEMORY, object_load_callback, (LPVOID)0xdeadbeef, NULL, NULL, NULL);
+    hr = IDirect3DRM_Load(pD3DRM, &info, NULL, (GUID**)req_refiids, 2, D3DRMLOAD_FROMMEMORY, object_load_callback, (LPVOID)0xdeadbeef, NULL, NULL, NULL);
     ok(hr == D3DRM_OK, "Cannot load data (hr = %x)\n", hr);
-    ok(nb_objects == 2, "Should have loaded 2 objects (got %d)\n", nb_objects);
+    ok(nb_objects == 3, "Should have loaded 3 objects (got %d)\n", nb_objects);
 
     IDirect3DRM_Release(pD3DRM);
 }
