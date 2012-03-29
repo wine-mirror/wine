@@ -54,7 +54,7 @@ typedef struct _CMD_LIST {
 } CMD_LIST;
 
 void WCMD_assoc (const WCHAR *, BOOL);
-void WCMD_batch (WCHAR *, WCHAR *, int, WCHAR *, HANDLE);
+void WCMD_batch (WCHAR *, WCHAR *, BOOL, WCHAR *, HANDLE);
 void WCMD_call (WCHAR *command);
 void WCMD_change_tty (void);
 void WCMD_choice (const WCHAR *);
@@ -86,7 +86,7 @@ void WCMD_print_error (void);
 void WCMD_pushd (const WCHAR *command);
 void WCMD_remove_dir (WCHAR *command);
 void WCMD_rename (void);
-void WCMD_run_program (WCHAR *command, int called);
+void WCMD_run_program (WCHAR *command, BOOL called);
 void WCMD_setlocal (const WCHAR *command);
 void WCMD_setshow_date (void);
 void WCMD_setshow_default (const WCHAR *command);

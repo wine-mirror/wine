@@ -40,8 +40,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(cmd);
  * a label to goto once opened.
  */
 
-void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HANDLE pgmHandle) {
-
+void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HANDLE pgmHandle)
+{
   HANDLE h = INVALID_HANDLE_VALUE;
   BATCH_CONTEXT *prev_context;
 
@@ -583,7 +583,7 @@ void WCMD_call (WCHAR *command) {
 
   /* Run other program if no leading ':' */
   if (*command != ':') {
-    WCMD_run_program(command, 1);
+    WCMD_run_program(command, TRUE);
   } else {
 
     WCHAR gotoLabel[MAX_PATH];
@@ -600,7 +600,7 @@ void WCMD_call (WCHAR *command) {
       li.u.LowPart = SetFilePointer(context -> h, li.u.LowPart,
                      &li.u.HighPart, FILE_CURRENT);
 
-      WCMD_batch (param1, command, 1, gotoLabel, context->h);
+      WCMD_batch (param1, command, TRUE, gotoLabel, context->h);
 
       SetFilePointer(context -> h, li.u.LowPart,
                      &li.u.HighPart, FILE_BEGIN);

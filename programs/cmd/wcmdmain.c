@@ -993,8 +993,8 @@ static void init_msvcrt_io_block(STARTUPINFOW* st)
  *          findexecutable to achieve this which is left untouched.
  */
 
-void WCMD_run_program (WCHAR *command, int called) {
-
+void WCMD_run_program (WCHAR *command, BOOL called)
+{
   WCHAR  temp[MAX_PATH];
   WCHAR  pathtosearch[MAXSTRING];
   WCHAR *pathposn;
@@ -1585,7 +1585,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         break;
       default:
         prev_echo_mode = echo_mode;
-        WCMD_run_program (whichcmd, 0);
+        WCMD_run_program (whichcmd, FALSE);
         echo_mode = prev_echo_mode;
     }
     HeapFree( GetProcessHeap(), 0, cmd );
@@ -2336,19 +2336,19 @@ int wmain (int argc, WCHAR *argvW[])
       argsLeft = args;
       for (arg = argvW; argsLeft>0; arg++,argsLeft--)
       {
-          int has_space,bcount;
+          BOOL has_space = FALSE;
+          int bcount;
           WCHAR* a;
 
-          has_space=0;
           bcount=0;
           a=*arg;
-          if( !*a ) has_space=1;
+          if( !*a ) has_space = TRUE;
           while (*a!='\0') {
               if (*a=='\\') {
                   bcount++;
               } else {
                   if (*a==' ' || *a=='\t') {
-                      has_space=1;
+                      has_space = TRUE;
                   } else if (*a=='"') {
                       /* doubling of '\' preceding a '"',
                        * plus escaping of said '"'
@@ -2395,20 +2395,19 @@ int wmain (int argc, WCHAR *argvW[])
       argsLeft = args;
       for (arg = argvW; argsLeft>0; arg++,argsLeft--)
       {
-          int has_space,has_quote;
+          BOOL has_space = FALSE, has_quote = FALSE;
           WCHAR* a;
 
           /* Check for quotes and spaces in this argument */
-          has_space=has_quote=0;
           a=*arg;
-          if( !*a ) has_space=1;
+          if( !*a ) has_space = TRUE;
           while (*a!='\0') {
               if (*a==' ' || *a=='\t') {
-                  has_space=1;
+                  has_space = TRUE;
                   if (has_quote)
                       break;
               } else if (*a=='"') {
-                  has_quote=1;
+                  has_quote = TRUE;
                   if (has_space)
                       break;
               }

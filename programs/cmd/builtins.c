@@ -1416,7 +1416,7 @@ void WCMD_give_help (const WCHAR *command)
         static const WCHAR helpW[] = {' ', '/','?','\0'};
         strcpyW(cmd, command);
         strcatW(cmd, helpW);
-        WCMD_run_program(cmd, 0);
+        WCMD_run_program(cmd, FALSE);
         return;
       }
     }
