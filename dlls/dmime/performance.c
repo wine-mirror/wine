@@ -238,15 +238,18 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANC
 	  This->pDirectMusic = (IDirectMusic8*) *ppDirectMusic;
 	  IDirectMusic8_AddRef(This->pDirectMusic);
 	} else {
-	  /* app allows the performance to initialise itself and needs a pointer to object*/
-          CoCreateInstance (&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic8, (void**)&This->pDirectMusic);
-	  if (ppDirectMusic) {
-	    *ppDirectMusic = (LPDIRECTMUSIC) This->pDirectMusic;
-	    IDirectMusic8_AddRef((LPDIRECTMUSIC8) *ppDirectMusic);
-	  }
-	}
-	
-	return S_OK;
+        HRESULT hr;
+        /* App enables the performance to initialize itself and needs a pointer to object */
+        hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic8, (void**)&This->pDirectMusic);
+        if (FAILED(hr))
+            return hr;
+        if (ppDirectMusic) {
+            *ppDirectMusic = (LPDIRECTMUSIC)This->pDirectMusic;
+            IDirectMusic8_AddRef((LPDIRECTMUSIC8)*ppDirectMusic);
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_PlaySegment (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicSegment* pSegment, DWORD dwFlags, __int64 i64StartTime, IDirectMusicSegmentState** ppSegmentState) {
