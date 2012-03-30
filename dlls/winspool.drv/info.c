@@ -773,6 +773,14 @@ static LPCWSTR get_basename_from_name(LPCWSTR name)
     return name;
 }
 
+static void free_printer_entry( opened_printer_t *printer )
+{
+    /* the queue is shared, so don't free that here */
+    HeapFree( GetProcessHeap(), 0, printer->printername );
+    HeapFree( GetProcessHeap(), 0, printer->name );
+    HeapFree( GetProcessHeap(), 0, printer );
+}
+
 /******************************************************************
  *  get_opened_printer_entry
  *  Get the first place empty in the opened printer table
@@ -883,11 +891,8 @@ static HANDLE get_opened_printer_entry(LPWSTR name, LPPRINTER_DEFAULTSW pDefault
 end:
     LeaveCriticalSection(&printer_handles_cs);
     if (!handle && printer) {
-        /* Something failed: Free all resources */
-        HeapFree(GetProcessHeap(), 0, printer->printername);
-        HeapFree(GetProcessHeap(), 0, printer->name);
         if (!queue) HeapFree(GetProcessHeap(), 0, printer->queue);
-        HeapFree(GetProcessHeap(), 0, printer);
+        free_printer_entry( printer );
     }
 
     return (HANDLE)handle;
@@ -2722,9 +2727,7 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
             HeapFree(GetProcessHeap(), 0, printer->queue);
         }
 
-        HeapFree(GetProcessHeap(), 0, printer->printername);
-        HeapFree(GetProcessHeap(), 0, printer->name);
-        HeapFree(GetProcessHeap(), 0, printer);
+        free_printer_entry( printer );
         printer_handles[i - 1] = NULL;
         ret = TRUE;
     }
