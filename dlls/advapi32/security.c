@@ -5105,16 +5105,53 @@ BOOL WINAPI CreatePrivateObjectSecurity(
         HANDLE Token,
         PGENERIC_MAPPING GenericMapping )
 {
-    FIXME("%p %p %p %d %p %p - stub\n", ParentDescriptor, CreatorDescriptor,
-          NewDescriptor, IsDirectoryObject, Token, GenericMapping);
+    SECURITY_DESCRIPTOR_RELATIVE *relative;
+    DWORD needed, offset;
+    BYTE *buffer;
 
-    return FALSE;
+    FIXME("%p %p %p %d %p %p - returns fake SECURITY_DESCRIPTOR\n", ParentDescriptor,
+          CreatorDescriptor, NewDescriptor, IsDirectoryObject, Token, GenericMapping);
+
+    needed = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+    needed += sizeof(sidWorld);
+    needed += sizeof(sidWorld);
+    needed += WINE_SIZE_OF_WORLD_ACCESS_ACL;
+    needed += WINE_SIZE_OF_WORLD_ACCESS_ACL;
+
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, needed ))) return FALSE;
+    relative = (SECURITY_DESCRIPTOR_RELATIVE *)buffer;
+    if (!InitializeSecurityDescriptor( relative, SECURITY_DESCRIPTOR_REVISION ))
+    {
+        HeapFree( GetProcessHeap(), 0, buffer );
+        return FALSE;
+    }
+    relative->Control |= SE_SELF_RELATIVE;
+    offset = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+
+    memcpy( buffer + offset, &sidWorld, sizeof(sidWorld) );
+    relative->Owner = offset;
+    offset += sizeof(sidWorld);
+
+    memcpy( buffer + offset, &sidWorld, sizeof(sidWorld) );
+    relative->Group = offset;
+    offset += sizeof(sidWorld);
+
+    GetWorldAccessACL( (ACL *)(buffer + offset) );
+    relative->Dacl = offset;
+    offset += WINE_SIZE_OF_WORLD_ACCESS_ACL;
+
+    GetWorldAccessACL( (ACL *)(buffer + offset) );
+    relative->Sacl = offset;
+
+    *NewDescriptor = relative;
+    return TRUE;
 }
 
 BOOL WINAPI DestroyPrivateObjectSecurity( PSECURITY_DESCRIPTOR* ObjectDescriptor )
 {
     FIXME("%p - stub\n", ObjectDescriptor);
 
+    HeapFree( GetProcessHeap(), 0, *ObjectDescriptor );
     return TRUE;
 }
 
