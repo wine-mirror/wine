@@ -2185,10 +2185,8 @@ msgstr ""
 "återkallade eller betrodda certifikat:"
 
 #: cryptui.rc:296
-#, fuzzy
-#| msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
-msgstr "Standard för kryptografisk meddelandesyntax/PKCS #7-meddelande (.p7b)"
+msgstr "Standard för kryptografisk meddelandesyntax/PKCS #7-meddelande (*.p7b)"
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
@@ -2333,22 +2331,17 @@ msgid "Select the format you want to use:"
 msgstr "Välj formatet du vill använda:"
 
 #: cryptui.rc:405
-#, fuzzy
-#| msgid "&DER-encoded X.509 (.cer)"
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr "&DER-kodad X.509 (.cer)"
+msgstr "&DER-kodad X.509 (*.cer)"
 
 #: cryptui.rc:407
-#, fuzzy
-#| msgid "Ba&se64-encoded X.509 (.cer):"
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "Ba&se64-kodad X.509 (.cer):"
+msgstr "Ba&se64-kodad X.509 (*.cer):"
 
 #: cryptui.rc:409
-#, fuzzy
-#| msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr "Standard för &kryptografisk meddelandesyntax/PKCS #7 (.p7b)"
+msgstr ""
+"Standard för &kryptografisk meddelandesyntax/PKCS #7-meddelande (*.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
@@ -3448,10 +3441,8 @@ msgid "Expected ')'"
 msgstr "')' förväntades"
 
 #: jscript.rc:37
-#, fuzzy
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "Ogiltig parameter.\n"
+msgstr "Ogiltigt tecken"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
@@ -12620,9 +12611,8 @@ msgid "Select an executable file"
 msgstr "Välj en körbar fil"
 
 #: winecfg.rc:66
-#, fuzzy
 msgid "Autodetect"
-msgstr "Upptäck aut&omatiskt"
+msgstr "Upptäck automatiskt"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
