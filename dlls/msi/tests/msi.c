@@ -57,6 +57,8 @@ static UINT (WINAPI *pMsiGetPatchInfoExA)
     (LPCSTR, LPCSTR, LPCSTR, MSIINSTALLCONTEXT, LPCSTR, LPSTR, DWORD *);
 static UINT (WINAPI *pMsiEnumProductsExA)
     (LPCSTR, LPCSTR, DWORD, DWORD, CHAR[39], MSIINSTALLCONTEXT *, LPSTR, LPDWORD);
+static UINT (WINAPI *pMsiEnumComponentsExA)
+    (LPCSTR, DWORD, DWORD, CHAR[39], MSIINSTALLCONTEXT *, LPSTR, LPDWORD);
 
 static void init_functionpointers(void)
 {
@@ -79,6 +81,7 @@ static void init_functionpointers(void)
     GET_PROC(hmsi, MsiUseFeatureExA)
     GET_PROC(hmsi, MsiGetPatchInfoExA)
     GET_PROC(hmsi, MsiEnumProductsExA)
+    GET_PROC(hmsi, MsiEnumComponentsExA)
 
     GET_PROC(hadvapi32, ConvertSidToStringSidA)
     GET_PROC(hadvapi32, RegDeleteKeyExA)
@@ -11953,6 +11956,169 @@ static void test_MsiEnumProductsEx(void)
     LocalFree( usersid );
 }
 
+static void test_MsiEnumComponents(void)
+{
+    UINT r;
+    int found1, found2;
+    DWORD index;
+    char comp1[39], comp2[39], guid[39];
+    char comp_squashed1[33], comp_squashed2[33];
+    char keypath1[MAX_PATH], keypath2[MAX_PATH];
+    REGSAM access = KEY_ALL_ACCESS;
+    char *usersid = get_user_sid();
+    HKEY key1 = NULL, key2 = NULL;
+
+    create_test_guid( comp1, comp_squashed1 );
+    create_test_guid( comp2, comp_squashed2 );
+
+    if (is_wow64) access |= KEY_WOW64_64KEY;
+
+    strcpy( keypath1, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\" );
+    strcat( keypath1, "S-1-5-18\\Components\\" );
+    strcat( keypath1, comp_squashed1 );
+
+    r = RegCreateKeyExA( HKEY_LOCAL_MACHINE, keypath1, 0, NULL, 0, access, NULL, &key1, NULL );
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        goto done;
+    }
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+
+    strcpy( keypath2, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\" );
+    strcat( keypath2, usersid );
+    strcat( keypath2, "\\Components\\" );
+    strcat( keypath2, comp_squashed2 );
+
+    r = RegCreateKeyExA( HKEY_LOCAL_MACHINE, keypath2, 0, NULL, 0, access, NULL, &key2, NULL );
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        goto done;
+    }
+
+    r = MsiEnumComponentsA( 0, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "got %u\n", r );
+
+    index = 0;
+    guid[0] = 0;
+    found1 = found2 = 0;
+    while (!MsiEnumComponentsA( index, guid ))
+    {
+        if (!strcmp( guid, comp1 )) found1 = 1;
+        if (!strcmp( guid, comp2 )) found2 = 1;
+        ok( guid[0], "empty guid\n" );
+        guid[0] = 0;
+        index++;
+    }
+    ok( found1, "comp1 not found\n" );
+    ok( found2, "comp2 not found\n" );
+
+done:
+    delete_key( key1, "", access );
+    delete_key( key2, "", access );
+    RegCloseKey( key1 );
+    RegCloseKey( key2 );
+    LocalFree( usersid );
+}
+
+static void test_MsiEnumComponentsEx(void)
+{
+    UINT r;
+    int found1, found2;
+    DWORD len, index;
+    MSIINSTALLCONTEXT context;
+    char comp1[39], comp2[39], guid[39], sid[128];
+    char comp_squashed1[33], comp_squashed2[33];
+    char keypath1[MAX_PATH], keypath2[MAX_PATH];
+    HKEY key1 = NULL, key2 = NULL;
+    REGSAM access = KEY_ALL_ACCESS;
+    char *usersid = get_user_sid();
+
+    if (!pMsiEnumComponentsExA)
+    {
+        win_skip( "MsiEnumComponentsExA not implemented\n" );
+        return;
+    }
+    create_test_guid( comp1, comp_squashed1 );
+    create_test_guid( comp2, comp_squashed2 );
+
+    if (is_wow64) access |= KEY_WOW64_64KEY;
+
+    strcpy( keypath1, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\" );
+    strcat( keypath1, "S-1-5-18\\Components\\" );
+    strcat( keypath1, comp_squashed1 );
+
+    r = RegCreateKeyExA( HKEY_LOCAL_MACHINE, keypath1, 0, NULL, 0, access, NULL, &key1, NULL );
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        goto done;
+    }
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+
+    strcpy( keypath2, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\" );
+    strcat( keypath2, usersid );
+    strcat( keypath2, "\\Components\\" );
+    strcat( keypath2, comp_squashed2 );
+
+    r = RegCreateKeyExA( HKEY_LOCAL_MACHINE, keypath2, 0, NULL, 0, access, NULL, &key2, NULL );
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        goto done;
+    }
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+    r = RegSetValueExA( key2, comp_squashed2, 0, REG_SZ, (const BYTE *)"c:\\doesnotexist",
+                        sizeof("c:\\doesnotexist"));
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+
+    index = 0;
+    guid[0] = 0;
+    context = 0xdeadbeef;
+    sid[0] = 0;
+    len = sizeof(sid);
+    found1 = found2 = 0;
+    while (!pMsiEnumComponentsExA( "S-1-1-0", MSIINSTALLCONTEXT_ALL, index, guid, &context, sid, &len ))
+    {
+        if (!strcmp( comp1, guid ))
+        {
+            ok( context == MSIINSTALLCONTEXT_MACHINE, "got %u\n", context );
+            ok( !sid[0], "got \"%s\"\n", sid );
+            ok( !len, "unexpected length %u\n", len );
+            found1 = 1;
+        }
+        if (!strcmp( comp2, guid ))
+        {
+            ok( context == MSIINSTALLCONTEXT_USERUNMANAGED, "got %u\n", context );
+            ok( sid[0], "empty sid\n" );
+            ok( len == strlen(sid), "unexpected length %u\n", len );
+            found2 = 1;
+        }
+        index++;
+        guid[0] = 0;
+        context = 0xdeadbeef;
+        sid[0] = 0;
+        len = sizeof(sid);
+    }
+    ok( found1, "comp1 not found\n" );
+    ok( found2, "comp2 not found\n" );
+
+    r = pMsiEnumComponentsExA( NULL, 0, 0, NULL, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "got %u\n", r );
+
+    r = pMsiEnumComponentsExA( NULL, MSIINSTALLCONTEXT_ALL, 0, NULL, NULL, sid, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "got %u\n", r );
+
+done:
+    RegDeleteValueA( key2, comp_squashed2 );
+    delete_key( key1, "", access );
+    delete_key( key2, "", access );
+    RegCloseKey( key1 );
+    RegCloseKey( key2 );
+    LocalFree( usersid );
+}
+
 START_TEST(msi)
 {
     init_functionpointers();
@@ -11986,6 +12152,8 @@ START_TEST(msi)
         test_MsiGetPatchInfo();
         test_MsiEnumProducts();
         test_MsiEnumProductsEx();
+        test_MsiEnumComponents();
+        test_MsiEnumComponentsEx();
     }
     test_MsiGetFileVersion();
     test_MsiGetFileSignatureInformation();
