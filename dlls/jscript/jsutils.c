@@ -125,13 +125,18 @@ void *jsheap_alloc(jsheap_t *heap, DWORD size)
 
 void *jsheap_grow(jsheap_t *heap, void *mem, DWORD size, DWORD inc)
 {
+    void *ret;
+
     if(mem == (BYTE*)heap->blocks[heap->last_block] + heap->offset-size
        && heap->offset+inc < block_size(heap->last_block)) {
         heap->offset += inc;
         return mem;
     }
 
-    return jsheap_alloc(heap, size+inc);
+    ret = jsheap_alloc(heap, size+inc);
+    if(ret) /* FIXME: avoid coppying for custom blocks */
+        memcpy(ret, mem, size);
+    return ret;
 }
 
 void jsheap_clear(jsheap_t *heap)
