@@ -68,7 +68,7 @@ static void test_dmusic(void)
 
     /* Test creation of default port with GUID_NULL */
     hr = IDirectMusic_CreatePort(dmusic, &GUID_NULL, &port_params, &port, NULL);
-    todo_wine ok(hr == S_OK, "IDirectMusic_CreatePort returned: %x\n", hr);
+    ok(hr == S_OK, "IDirectMusic_CreatePort returned: %x\n", hr);
 
     port_caps.dwSize = sizeof(port_caps);
     while (IDirectMusic_EnumPort(dmusic, index, &port_caps) == S_OK)

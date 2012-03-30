@@ -123,31 +123,43 @@ static HRESULT WINAPI IDirectMusic8Impl_CreateMusicBuffer (LPDIRECTMUSIC8 iface,
 
 static HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT* ppPort, LPUNKNOWN pUnkOuter) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
-	int i/*, j*/;
+	int i;
 	DMUS_PORTCAPS PortCaps;
 	IDirectMusicPort* pNewPort = NULL;
-	HRESULT hr = E_FAIL;
+	HRESULT hr;
+	GUID default_port;
+	const GUID *request_port = rclsidPort;
 
-	TRACE("(%p, %s, %p, %p, %p)\n", This, debugstr_dmguid(rclsidPort), pPortParams, ppPort, pUnkOuter);	
+	TRACE("(%p, %s, %p, %p, %p)\n", This, debugstr_dmguid(rclsidPort), pPortParams, ppPort, pUnkOuter);
+
+	if(!rclsidPort)
+		return E_POINTER;
+
 	ZeroMemory(&PortCaps, sizeof(DMUS_PORTCAPS));
 	PortCaps.dwSize = sizeof(DMUS_PORTCAPS);
 
-	for (i = 0; S_FALSE != IDirectMusic8Impl_EnumPort(iface, i, &PortCaps); i++) {				
-		if (IsEqualCLSID (rclsidPort, &PortCaps.guidPort)) {
+	if(IsEqualGUID(request_port, &GUID_NULL)){
+		hr = IDirectMusic8_GetDefaultPort(iface, &default_port);
+		if(FAILED(hr))
+			return hr;
+		request_port = &default_port;
+	}
+
+	for (i = 0; S_FALSE != IDirectMusic8Impl_EnumPort(iface, i, &PortCaps); i++) {
+		if (IsEqualCLSID (request_port, &PortCaps.guidPort)) {
 			hr = DMUSIC_CreateDirectMusicPortImpl(&IID_IDirectMusicPort, (LPVOID*) &pNewPort, (LPUNKNOWN) This, pPortParams, &PortCaps);
 			if (FAILED(hr)) {
-                          *ppPort = NULL;
+			  *ppPort = NULL;
 			  return hr;
 			}
 			This->nrofports++;
 			if (!This->ppPorts) This->ppPorts = HeapAlloc(GetProcessHeap(), 0, sizeof(LPDIRECTMUSICPORT) * This->nrofports);
-			else This->ppPorts = HeapReAlloc(GetProcessHeap(), 0, This->ppPorts, sizeof(LPDIRECTMUSICPORT) * This->nrofports); 			
+			else This->ppPorts = HeapReAlloc(GetProcessHeap(), 0, This->ppPorts, sizeof(LPDIRECTMUSICPORT) * This->nrofports);
 			This->ppPorts[This->nrofports - 1] = pNewPort;
 			*ppPort = pNewPort;
-			return S_OK;			
+			return S_OK;
 		}
 	}
-	/* FIXME: place correct error here */
 	return E_NOINTERFACE;
 }
 
