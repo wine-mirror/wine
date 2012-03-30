@@ -181,6 +181,9 @@ extern const vtable_ptr MSVCP_basic_ios_char_vtable;
 /* ??_7?$basic_ios@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ios_wchar_vtable;
 
+/* ??_7?$basic_ios@GU?$char_traits@G@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_ios_short_vtable;
+
 /* ??_7?$basic_streambuf@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_streambuf_char_vtable;
 
@@ -199,6 +202,8 @@ DEFINE_RTTI_DATA(basic_ios_char, 0, 2, &ios_base_rtti_base_descriptor, &iosb_rtt
         NULL, ".?AV?$basic_ios@DU?$char_traits@D@std@@@std@@");
 DEFINE_RTTI_DATA(basic_ios_wchar, 0, 2, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         NULL, ".?AV?$basic_ios@_WU?$char_traits@_W@std@@@std@@");
+DEFINE_RTTI_DATA(basic_ios_short, 0, 2, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        NULL, ".?AV?$basic_ios@GU?$char_traits@G@std@@@std@@");
 DEFINE_RTTI_DATA(basic_streambuf_char, 0, 0, NULL, NULL, NULL,
         ".?AV?$basic_streambuf@DU?$char_traits@D@std@@@std@@");
 DEFINE_RTTI_DATA(basic_streambuf_wchar, 0, 0, NULL, NULL, NULL,
@@ -215,6 +220,7 @@ void __asm_dummy_vtables(void) {
     __ASM_VTABLE(ios_base, "");
     __ASM_VTABLE(basic_ios_char, "");
     __ASM_VTABLE(basic_ios_wchar, "");
+    __ASM_VTABLE(basic_ios_short, "");
     __ASM_VTABLE(basic_streambuf_char,
             VTABLE_ADD_FUNC(basic_streambuf_char_overflow)
             VTABLE_ADD_FUNC(basic_streambuf_char_pbackfail)
@@ -2567,8 +2573,20 @@ basic_ios_wchar* __thiscall basic_ios_wchar_ctor(basic_ios_wchar *this)
         return this;
 }
 
+/* ??0?$basic_ios@GU?$char_traits@G@std@@@std@@IAE@XZ */
+/* ??0?$basic_ios@GU?$char_traits@G@std@@@std@@IEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_ios_short_ctor, 4)
+basic_ios_wchar* __thiscall basic_ios_short_ctor(basic_ios_wchar *this)
+{
+    basic_ios_wchar_ctor(this);
+    this->base.vtable = &MSVCP_basic_ios_short_vtable;
+    return this;
+}
+
 /* ?init@?$basic_ios@_WU?$char_traits@_W@std@@@std@@IAEXPAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@_N@Z */
 /* ?init@?$basic_ios@_WU?$char_traits@_W@std@@@std@@IEAAXPEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@_N@Z */
+/* ?init@?$basic_ios@GU?$char_traits@G@std@@@std@@IAEXPAV?$basic_streambuf@GU?$char_traits@G@std@@@2@_N@Z */
+/* ?init@?$basic_ios@GU?$char_traits@G@std@@@std@@IEAAXPEAV?$basic_streambuf@GU?$char_traits@G@std@@@2@_N@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_init, 12)
 void __thiscall basic_ios_wchar_init(basic_ios_wchar *this, basic_streambuf_wchar *streambuf, MSVCP_bool isstd)
 {
@@ -2597,8 +2615,20 @@ basic_ios_wchar* __thiscall basic_ios_wchar_ctor_streambuf(basic_ios_wchar *this
     return this;
 }
 
+/* ??0?$basic_ios@GU?$char_traits@G@std@@@std@@QAE@PAV?$basic_streambuf@GU?$char_traits@G@std@@@1@@Z */
+/* ??0?$basic_ios@GU?$char_traits@G@std@@@std@@QEAA@PEAV?$basic_streambuf@GU?$char_traits@G@std@@@1@@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_short_ctor_streambuf, 8)
+basic_ios_wchar* __thiscall basic_ios_short_ctor_streambuf(basic_ios_wchar *this, basic_streambuf_wchar *strbuf)
+{
+    basic_ios_wchar_ctor_streambuf(this, strbuf);
+    this->base.vtable = &MSVCP_basic_ios_short_vtable;
+    return this;
+}
+
 /* ??1?$basic_ios@_WU?$char_traits@_W@std@@@std@@UAE@XZ */
 /* ??1?$basic_ios@_WU?$char_traits@_W@std@@@std@@UEAA@XZ */
+/* ??1?$basic_ios@GU?$char_traits@G@std@@@std@@UAE@XZ */
+/* ??1?$basic_ios@GU?$char_traits@G@std@@@std@@UEAA@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_dtor, 4)
 void __thiscall basic_ios_wchar_dtor(basic_ios_wchar *this)
 {
@@ -2626,8 +2656,16 @@ basic_ios_wchar* __thiscall MSVCP_basic_ios_wchar_vector_dtor(basic_ios_wchar *t
     return this;
 }
 
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_ios_short_vector_dtor, 8)
+basic_ios_wchar* __thiscall MSVCP_basic_ios_short_vector_dtor(basic_ios_wchar *this, unsigned int flags)
+{
+    return MSVCP_basic_ios_wchar_vector_dtor(this, flags);
+}
+
 /* ?clear@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEXH_N@Z */
 /* ?clear@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAXH_N@Z */
+/* ?clear@?$basic_ios@GU?$char_traits@G@std@@@std@@QAEXH_N@Z */
+/* ?clear@?$basic_ios@GU?$char_traits@G@std@@@std@@QEAAXH_N@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_clear_reraise, 12)
 void __thiscall basic_ios_wchar_clear_reraise(basic_ios_wchar *this, IOSB_iostate state, MSVCP_bool reraise)
 {
@@ -2637,6 +2675,8 @@ void __thiscall basic_ios_wchar_clear_reraise(basic_ios_wchar *this, IOSB_iostat
 
 /* ?clear@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEXI@Z */
 /* ?clear@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAXI@Z */
+/* ?clear@?$basic_ios@GU?$char_traits@G@std@@@std@@QAEXI@Z */
+/* ?clear@?$basic_ios@GU?$char_traits@G@std@@@std@@QEAAXI@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_clear, 8)
 void __thiscall basic_ios_wchar_clear(basic_ios_wchar *this, unsigned int state)
 {
@@ -2645,6 +2685,8 @@ void __thiscall basic_ios_wchar_clear(basic_ios_wchar *this, unsigned int state)
 
 /* ?copyfmt@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEAAV12@ABV12@@Z */
 /* ?copyfmt@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@AEBV12@@Z */
+/* ?copyfmt@?$basic_ios@GU?$char_traits@G@std@@@std@@QAEAAV12@ABV12@@Z */
+/* ?copyfmt@?$basic_ios@GU?$char_traits@G@std@@@std@@QEAAAEAV12@AEBV12@@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_copyfmt, 8)
 basic_ios_wchar* __thiscall basic_ios_wchar_copyfmt(basic_ios_wchar *this, basic_ios_wchar *copy)
 {
@@ -2660,6 +2702,8 @@ basic_ios_wchar* __thiscall basic_ios_wchar_copyfmt(basic_ios_wchar *this, basic
 
 /* ?fill@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAE_W_W@Z */
 /* ?fill@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAA_W_W@Z */
+/* ?fill@?$basic_ios@GU?$char_traits@G@std@@@std@@QAEGG@Z */
+/* ?fill@?$basic_ios@GU?$char_traits@G@std@@@std@@QEAAGG@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_fill_set, 8)
 wchar_t __thiscall basic_ios_wchar_fill_set(basic_ios_wchar *this, wchar_t fill)
 {
@@ -2673,6 +2717,8 @@ wchar_t __thiscall basic_ios_wchar_fill_set(basic_ios_wchar *this, wchar_t fill)
 
 /* ?fill@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBE_WXZ */
 /* ?fill@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEBA_WXZ */
+/* ?fill@?$basic_ios@GU?$char_traits@G@std@@@std@@QBEGXZ */
+/* ?fill@?$basic_ios@GU?$char_traits@G@std@@@std@@QEBAGXZ */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_fill_get, 4)
 wchar_t __thiscall basic_ios_wchar_fill_get(basic_ios_wchar *this)
 {
@@ -2682,6 +2728,8 @@ wchar_t __thiscall basic_ios_wchar_fill_get(basic_ios_wchar *this)
 
 /* ?imbue@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAE?AVlocale@2@ABV32@@Z */
 /* ?imbue@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAA?AVlocale@2@AEBV32@@Z */
+/* ?imbue@?$basic_ios@GU?$char_traits@G@std@@@std@@QAE?AVlocale@2@ABV32@@Z */
+/* ?imbue@?$basic_ios@GU?$char_traits@G@std@@@std@@QEAA?AVlocale@2@AEBV32@@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_imbue, 12)
 locale *__thiscall basic_ios_wchar_imbue(basic_ios_wchar *this, locale *ret, const locale *loc)
 {
@@ -2696,6 +2744,8 @@ locale *__thiscall basic_ios_wchar_imbue(basic_ios_wchar *this, locale *ret, con
 
 /* ?narrow@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBED_WD@Z */
 /* ?narrow@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEBAD_WD@Z */
+/* ?narrow@?$basic_ios@GU?$char_traits@G@std@@@std@@QBEDGD@Z */
+/* ?narrow@?$basic_ios@GU?$char_traits@G@std@@@std@@QEBADGD@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_narrow, 12)
 char __thiscall basic_ios_wchar_narrow(basic_ios_wchar *this, wchar_t ch, char def)
 {
@@ -2705,6 +2755,8 @@ char __thiscall basic_ios_wchar_narrow(basic_ios_wchar *this, wchar_t ch, char d
 
 /* ?rdbuf@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEPAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@PAV32@@Z */
 /* ?rdbuf@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAPEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@PEAV32@@Z */
+/* ?rdbuf@?$basic_ios@GU?$char_traits@G@std@@@std@@QAEPAV?$basic_streambuf@GU?$char_traits@G@std@@@2@PAV32@@Z */
+/* ?rdbuf@?$basic_ios@GU?$char_traits@G@std@@@std@@QEAAPEAV?$basic_streambuf@GU?$char_traits@G@std@@@2@PEAV32@@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_rdbuf_set, 8)
 basic_streambuf_wchar* __thiscall basic_ios_wchar_rdbuf_set(basic_ios_wchar *this, basic_streambuf_wchar *streambuf)
 {
@@ -2719,6 +2771,8 @@ basic_streambuf_wchar* __thiscall basic_ios_wchar_rdbuf_set(basic_ios_wchar *thi
 
 /* ?rdbuf@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBEPAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@XZ */
 /* ?rdbuf@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEBAPEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@XZ */
+/* ?rdbuf@?$basic_ios@GU?$char_traits@G@std@@@std@@QBEPAV?$basic_streambuf@GU?$char_traits@G@std@@@2@XZ */
+/* ?rdbuf@?$basic_ios@GU?$char_traits@G@std@@@std@@QEBAPEAV?$basic_streambuf@GU?$char_traits@G@std@@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_rdbuf_get, 4)
 basic_streambuf_wchar* __thiscall basic_ios_wchar_rdbuf_get(const basic_ios_wchar *this)
 {
@@ -2728,6 +2782,8 @@ basic_streambuf_wchar* __thiscall basic_ios_wchar_rdbuf_get(const basic_ios_wcha
 
 /* ?setstate@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEXH_N@Z */
 /* ?setstate@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAXH_N@Z */
+/* ?setstate@?$basic_ios@GU?$char_traits@G@std@@@std@@QAEXH_N@Z */
+/* ?setstate@?$basic_ios@GU?$char_traits@G@std@@@std@@QEAAXH_N@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_setstate_reraise, 12)
 void __thiscall basic_ios_wchar_setstate_reraise(basic_ios_wchar *this, IOSB_iostate state, MSVCP_bool reraise)
 {
@@ -2739,6 +2795,8 @@ void __thiscall basic_ios_wchar_setstate_reraise(basic_ios_wchar *this, IOSB_ios
 
 /* ?setstate@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEXI@Z */
 /* ?setstate@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAXI@Z */
+/* ?setstate@?$basic_ios@GU?$char_traits@G@std@@@std@@QAEXI@Z */
+/* ?setstate@?$basic_ios@GU?$char_traits@G@std@@@std@@QEAAXI@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_setstate, 8)
 void __thiscall basic_ios_wchar_setstate(basic_ios_wchar *this, IOSB_iostate state)
 {
@@ -2747,6 +2805,8 @@ void __thiscall basic_ios_wchar_setstate(basic_ios_wchar *this, IOSB_iostate sta
 
 /* ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEPAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@PAV32@@Z */
 /* ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAPEAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@PEAV32@@Z */
+/* ?tie@?$basic_ios@GU?$char_traits@G@std@@@std@@QAEPAV?$basic_ostream@GU?$char_traits@G@std@@@2@PAV32@@Z */
+/* ?tie@?$basic_ios@GU?$char_traits@G@std@@@std@@QEAAPEAV?$basic_ostream@GU?$char_traits@G@std@@@2@PEAV32@@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_tie_set, 8)
 basic_ostream_wchar* __thiscall basic_ios_wchar_tie_set(basic_ios_wchar *this, basic_ostream_wchar *ostream)
 {
@@ -2760,6 +2820,8 @@ basic_ostream_wchar* __thiscall basic_ios_wchar_tie_set(basic_ios_wchar *this, b
 
 /* ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBEPAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@XZ */
 /* ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEBAPEAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@XZ */
+/* ?tie@?$basic_ios@GU?$char_traits@G@std@@@std@@QBEPAV?$basic_ostream@GU?$char_traits@G@std@@@2@XZ */
+/* ?tie@?$basic_ios@GU?$char_traits@G@std@@@std@@QEBAPEAV?$basic_ostream@GU?$char_traits@G@std@@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_tie_get, 4)
 basic_ostream_wchar* __thiscall basic_ios_wchar_tie_get(const basic_ios_wchar *this)
 {
@@ -2769,6 +2831,8 @@ basic_ostream_wchar* __thiscall basic_ios_wchar_tie_get(const basic_ios_wchar *t
 
 /* ?widen@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBE_WD@Z */
 /* ?widen@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEBA_WD@Z */
+/* ?widen@?$basic_ios@GU?$char_traits@G@std@@@std@@QBEGD@Z */
+/* ?widen@?$basic_ios@GU?$char_traits@G@std@@@std@@QEBAGD@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_widen, 8)
 wchar_t __thiscall basic_ios_wchar_widen(basic_ios_wchar *this, char ch)
 {
