@@ -6700,3 +6700,71 @@ cleanup:
 
     return hr;
 }
+
+/*************************************************************************
+ * D3DXOptimizeFaces    (D3DX9_36.@)
+ *
+ * Re-orders the faces so the vertex cache is used optimally.
+ *
+ * PARAMS
+ *   indices           [I] Pointer to an index buffer belonging to a mesh.
+ *   num_faces         [I] Number of faces in the mesh.
+ *   num_vertices      [I] Number of vertices in the mesh.
+ *   indices_are_32bit [I] Specifies whether indices are 32- or 16-bit.
+ *   face_remap        [I/O] The new order the faces should be drawn in.
+ *
+ * RETURNS
+ *   Success: D3D_OK.
+ *   Failure: D3DERR_INVALIDCALL.
+ *
+ * BUGS
+ *   The face re-ordering does not use the vertex cache optimally.
+ *
+ */
+HRESULT WINAPI D3DXOptimizeFaces(LPCVOID indices,
+                                 UINT num_faces,
+                                 UINT num_vertices,
+                                 BOOL indices_are_32bit,
+                                 DWORD *face_remap)
+{
+    UINT i;
+    UINT j = num_faces - 1;
+    UINT limit_16_bit = 2 << 15; /* According to MSDN */
+    HRESULT hr = D3D_OK;
+
+    FIXME("(%p, %u, %u, %s, %p): semi-stub. Face order will not be optimal.\n",
+          indices, num_faces, num_vertices,
+          indices_are_32bit ? "TRUE" : "FALSE", face_remap);
+
+    if (!indices_are_32bit && num_faces >= limit_16_bit)
+    {
+        WARN("Number of faces must be less than %d when using 16-bit indices.\n",
+             limit_16_bit);
+        hr = D3DERR_INVALIDCALL;
+        goto error;
+    }
+
+    if (!face_remap)
+    {
+        WARN("Face remap pointer is NULL.\n");
+        hr = D3DERR_INVALIDCALL;
+        goto error;
+    }
+
+    /* The faces are drawn in reverse order for simple meshes. This ordering
+     * is not optimal for complicated meshes, but will not break anything
+     * either. The ordering should be changed to take advantage of the vertex
+     * cache on the graphics card.
+     *
+     * TODO Re-order to take advantage of vertex cache.
+     */
+    for (i = 0; i < num_faces; i++)
+    {
+        face_remap[i] = j--;
+    }
+
+    return D3D_OK;
+
+error:
+    return hr;
+}
