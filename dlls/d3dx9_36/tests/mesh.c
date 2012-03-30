@@ -10047,6 +10047,160 @@ cleanup:
     free_test_context(test_context);
 }
 
+static void test_optimize_faces(void)
+{
+    HRESULT hr;
+    UINT i;
+    DWORD smallest_face_remap;
+    /* mesh0
+     *
+     * 0--1
+     * | /
+     * |/
+     * 2
+     */
+    const DWORD indices0[] = {0, 1, 2};
+    const UINT num_faces0 = 1;
+    const UINT num_vertices0 = 3;
+    const DWORD exp_face_remap0[] = {0};
+    /* mesh1
+     *
+     * 0--1 3
+     * | / /|
+     * |/ / |
+     * 2 5--4
+     */
+    const DWORD indices1[] = {0, 1, 2, 3, 4, 5};
+    const UINT num_faces1 = 2;
+    const UINT num_vertices1 = 6;
+    const DWORD exp_face_remap1[] = {1, 0};
+    /* mesh2
+     *
+     * 0--1
+     * | /|
+     * |/ |
+     * 2--3
+     */
+    const DWORD indices2[] = {0, 1, 2, 1, 3, 2};
+    const UINT num_faces2 = 2;
+    const UINT num_vertices2 = 4;
+    const DWORD exp_face_remap2[] = {1, 0};
+    /* mesh3
+     *
+     * 0--1
+     * | /|
+     * |/ |
+     * 2--3
+     * | /|
+     * |/ |
+     * 4--5
+     */
+    const DWORD indices3[] = {0, 1, 2, 1, 3, 2, 2, 3, 4, 3, 4, 5};
+    const UINT num_faces3 = 4;
+    const UINT num_vertices3 = 6;
+    const DWORD exp_face_remap3[] = {3, 2, 1, 0};
+    /* mesh4
+     *
+     * 0--1
+     * | /|
+     * |/ |
+     * 2--3
+     * | /|
+     * |/ |
+     * 4--5
+     */
+    const WORD indices4[] = {0, 1, 2, 1, 3, 2, 2, 3, 4, 3, 4, 5};
+    const UINT num_faces4 = 4;
+    const UINT num_vertices4 = 6;
+    const DWORD exp_face_remap4[] = {3, 2, 1, 0};
+    /* Test cases are stored in the tc array */
+    struct
+    {
+        const VOID *indices;
+        const UINT num_faces;
+        const UINT num_vertices;
+        const BOOL indices_are_32bit;
+        const DWORD *exp_face_remap;
+    }
+    tc[] =
+    {
+        {
+            indices0,
+            num_faces0,
+            num_vertices0,
+            TRUE,
+            exp_face_remap0
+        },
+        {
+            indices1,
+            num_faces1,
+            num_vertices1,
+            TRUE,
+            exp_face_remap1
+        },
+        {
+            indices2,
+            num_faces2,
+            num_vertices2,
+            TRUE,
+            exp_face_remap2
+        },
+        {
+            indices3,
+            num_faces3,
+            num_vertices3,
+            TRUE,
+            exp_face_remap3
+        },
+        {
+            indices4,
+            num_faces4,
+            num_vertices4,
+            FALSE,
+            exp_face_remap4
+        },
+    };
+
+    /* Go through all test cases */
+    for (i = 0; i < ARRAY_SIZE(tc); i++)
+    {
+        DWORD j;
+        DWORD *face_remap;
+        face_remap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                               tc[i].num_faces*sizeof(face_remap));
+
+        hr = D3DXOptimizeFaces(tc[i].indices, tc[i].num_faces,
+                               tc[i].num_vertices, tc[i].indices_are_32bit,
+                               face_remap);
+        ok(hr == D3D_OK, "D3DXOptimizeFaces test case %d failed. "
+           "Got %x\n, expected D3D_OK", i, hr);
+
+        /* Compare face remap with expected face remap */
+        for (j = 0; j < tc[i].num_faces; j++)
+        {
+            ok(tc[i].exp_face_remap[j] == face_remap[j],
+               "Test case %d: Got face %d at %d, expected %d\n", i,
+               face_remap[j], j, tc[i].exp_face_remap[j]);
+        }
+
+        HeapFree(GetProcessHeap(), 0, face_remap);
+    }
+
+    /* face_remap must not be NULL */
+    hr = D3DXOptimizeFaces(tc[0].indices, tc[0].num_faces,
+                           tc[0].num_vertices, tc[0].indices_are_32bit,
+                           NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXOptimizeFaces passed NULL face_remap "
+       "pointer. Got %x\n, expected D3DERR_INVALIDCALL\n", hr);
+
+    /* Number of faces must be smaller than 2^15 */
+    hr = D3DXOptimizeFaces(tc[0].indices, 2 << 15,
+                           tc[0].num_vertices, FALSE,
+                           &smallest_face_remap);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXOptimizeFaces should not accept 2^15 "
+    "faces when using 16-bit indices. Got %x\n, expected D3DERR_INVALIDCALL\n", hr);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -10072,4 +10226,5 @@ START_TEST(mesh)
     test_weld_vertices();
     test_clone_mesh();
     test_valid_mesh();
+    test_optimize_faces();
 }
