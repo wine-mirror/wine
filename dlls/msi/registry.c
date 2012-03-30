@@ -1235,6 +1235,218 @@ UINT WINAPI MsiEnumComponentsW(DWORD index, LPWSTR lpguid)
     return r;
 }
 
+UINT WINAPI MsiEnumComponentsExA( LPCSTR user_sid, DWORD ctx, DWORD index, CHAR guid[39],
+                                  MSIINSTALLCONTEXT *installed_ctx, LPSTR sid, LPDWORD sid_len )
+{
+    UINT r;
+    WCHAR *user_sidW = NULL, *sidW = NULL, guidW[GUID_SIZE];
+
+    TRACE("%s, %u, %u, %p, %p, %p, %p\n", debugstr_a(user_sid), ctx, index, guid, installed_ctx,
+          sid, sid_len);
+
+    if (sid && !sid_len) return ERROR_INVALID_PARAMETER;
+    if (user_sid && !(user_sidW = strdupAtoW( user_sid ))) return ERROR_OUTOFMEMORY;
+    if (sid && !(sidW = msi_alloc( *sid_len * sizeof(WCHAR) )))
+    {
+        msi_free( user_sidW );
+        return ERROR_OUTOFMEMORY;
+    }
+    r = MsiEnumComponentsExW( user_sidW, ctx, index, guidW, installed_ctx, sidW, sid_len );
+    if (r == ERROR_SUCCESS)
+    {
+        if (guid) WideCharToMultiByte( CP_ACP, 0, guidW, GUID_SIZE, guid, GUID_SIZE, NULL, NULL );
+        if (sid) WideCharToMultiByte( CP_ACP, 0, sidW, *sid_len + 1, sid, *sid_len + 1, NULL, NULL );
+    }
+    msi_free( user_sidW );
+    msi_free( sidW );
+    return r;
+}
+
+static UINT fetch_machine_component( DWORD ctx, DWORD index, DWORD *idx, WCHAR guid[39],
+                                     MSIINSTALLCONTEXT *installed_ctx, LPWSTR sid, LPDWORD sid_len )
+{
+    static const WCHAR componentsW[] =
+        {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+         'I','n','s','t','a','l','l','e','r','\\','U','s','e','r','D','a','t','a','\\',
+         'S','-','1','-','5','-','1','8','\\','C','o','m','p','o','n','e','n','t','s',0};
+    UINT r = ERROR_SUCCESS;
+    WCHAR component[GUID_SIZE];
+    DWORD i = 0, len_component;
+    REGSAM access = KEY_ENUMERATE_SUB_KEYS | KEY_WOW64_64KEY;
+    HKEY key_components;
+
+    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, componentsW, 0, access, &key_components ))
+        return ERROR_NO_MORE_ITEMS;
+
+    len_component = sizeof(component)/sizeof(component[0]);
+    while (!RegEnumKeyExW( key_components, i, component, &len_component, NULL, NULL, NULL, NULL ))
+    {
+        if (*idx == index) goto found;
+        (*idx)++;
+        len_component = sizeof(component)/sizeof(component[0]);
+        i++;
+    }
+    RegCloseKey( key_components );
+    return ERROR_NO_MORE_ITEMS;
+
+found:
+    if (sid_len)
+    {
+        if (*sid_len < 1)
+        {
+            *sid_len = 1;
+            r = ERROR_MORE_DATA;
+        }
+        else if (sid)
+        {
+            *sid_len = 0;
+            sid[0] = 0;
+        }
+    }
+    if (guid) unsquash_guid( component, guid );
+    if (installed_ctx) *installed_ctx = MSIINSTALLCONTEXT_MACHINE;
+    RegCloseKey( key_components );
+    return r;
+}
+
+static UINT fetch_user_component( const WCHAR *usersid, DWORD ctx, DWORD index, DWORD *idx,
+                                  WCHAR guid[39], MSIINSTALLCONTEXT *installed_ctx, LPWSTR sid,
+                                  LPDWORD sid_len )
+{
+    static const WCHAR userdataW[] =
+        {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+         'I','n','s','t','a','l','l','e','r','\\','U','s','e','r','D','a','t','a',0};
+    static const WCHAR componentsW[] = {'\\','C','o','m','p','o','n','e','n','t','s',0};
+    UINT r = ERROR_SUCCESS;
+    WCHAR path[MAX_PATH], component[GUID_SIZE], user[128];
+    DWORD i = 0, j = 0, len_component, len_user;
+    REGSAM access = KEY_ENUMERATE_SUB_KEYS | KEY_WOW64_64KEY;
+    HKEY key_users, key_components;
+
+    if (ctx == MSIINSTALLCONTEXT_USERMANAGED) /* FIXME: were to find these? */
+        return ERROR_NO_MORE_ITEMS;
+
+    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, userdataW, 0, access, &key_users ))
+        return ERROR_NO_MORE_ITEMS;
+
+    len_user = sizeof(user)/sizeof(user[0]);
+    while (!RegEnumKeyExW( key_users, i, user, &len_user, NULL, NULL, NULL, NULL ))
+    {
+        if ((strcmpW( usersid, szAllSid ) && strcmpW( usersid, user )) ||
+            !strcmpW( szLocalSid, user ))
+        {
+            i++;
+            len_user = sizeof(user)/sizeof(user[0]);
+            continue;
+        }
+        strcpyW( path, user );
+        strcatW( path, componentsW );
+        if (RegOpenKeyExW( key_users, path, 0, access, &key_components ))
+        {
+            i++;
+            len_user = sizeof(user)/sizeof(user[0]);
+            continue;
+        }
+        len_component = sizeof(component)/sizeof(component[0]);
+        while (!RegEnumKeyExW( key_components, j, component, &len_component, NULL, NULL, NULL, NULL ))
+        {
+            if (*idx == index) goto found;
+            (*idx)++;
+            len_component = sizeof(component)/sizeof(component[0]);
+            j++;
+        }
+        RegCloseKey( key_components );
+        len_user = sizeof(user)/sizeof(user[0]);
+        i++;
+    }
+    RegCloseKey( key_users );
+    return ERROR_NO_MORE_ITEMS;
+
+found:
+    if (sid_len)
+    {
+        if (*sid_len < len_user + 1)
+        {
+            *sid_len = len_user + 1;
+            r = ERROR_MORE_DATA;
+        }
+        else if (sid)
+        {
+            *sid_len = len_user;
+            strcpyW( sid, user );
+        }
+    }
+    if (guid) unsquash_guid( component, guid );
+    if (installed_ctx) *installed_ctx = ctx;
+    RegCloseKey( key_components );
+    RegCloseKey( key_users );
+    return r;
+}
+
+static UINT enum_components( const WCHAR *usersid, DWORD ctx, DWORD index, DWORD *idx, WCHAR guid[39],
+                             MSIINSTALLCONTEXT *installed_ctx, LPWSTR sid, LPDWORD sid_len )
+{
+    UINT r = ERROR_NO_MORE_ITEMS;
+    WCHAR *user = NULL;
+
+    if (!usersid)
+    {
+        usersid = user = get_user_sid();
+        if (!user) return ERROR_FUNCTION_FAILED;
+    }
+    if (ctx & MSIINSTALLCONTEXT_USERMANAGED)
+    {
+        r = fetch_user_component( usersid, MSIINSTALLCONTEXT_USERMANAGED, index, idx, guid,
+                                  installed_ctx, sid, sid_len );
+        if (r != ERROR_NO_MORE_ITEMS) goto done;
+    }
+    if (ctx & MSIINSTALLCONTEXT_USERUNMANAGED)
+    {
+        r = fetch_user_component( usersid, MSIINSTALLCONTEXT_USERUNMANAGED, index, idx, guid,
+                                  installed_ctx, sid, sid_len );
+        if (r != ERROR_NO_MORE_ITEMS) goto done;
+    }
+    if (ctx & MSIINSTALLCONTEXT_MACHINE)
+    {
+        r = fetch_machine_component( MSIINSTALLCONTEXT_MACHINE, index, idx, guid, installed_ctx,
+                                     sid, sid_len );
+        if (r != ERROR_NO_MORE_ITEMS) goto done;
+    }
+
+done:
+    LocalFree( user );
+    return r;
+}
+
+UINT WINAPI MsiEnumComponentsExW( LPCWSTR user_sid, DWORD ctx, DWORD index, WCHAR guid[39],
+                                  MSIINSTALLCONTEXT *installed_ctx, LPWSTR sid, LPDWORD sid_len )
+{
+    UINT r;
+    DWORD idx = 0;
+    static DWORD last_index;
+
+    TRACE("%s, %u, %u, %p, %p, %p, %p\n", debugstr_w(user_sid), ctx, index, guid, installed_ctx,
+          sid, sid_len);
+
+    if ((sid && !sid_len) || !ctx || (user_sid && ctx == MSIINSTALLCONTEXT_MACHINE))
+        return ERROR_INVALID_PARAMETER;
+
+    if (index && index - last_index != 1)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!index) last_index = 0;
+
+    r = enum_components( user_sid, ctx, index, &idx, guid, installed_ctx, sid, sid_len );
+    if (r == ERROR_SUCCESS)
+        last_index = index;
+    else
+        last_index = 0;
+
+    return r;
+}
+
 UINT WINAPI MsiEnumClientsA(LPCSTR szComponent, DWORD index, LPSTR szProduct)
 {
     DWORD r;
