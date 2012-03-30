@@ -96,6 +96,7 @@ typedef struct {
     HANDLE backend_printer;
     jobqueue_t *queue;
     started_doc_t *doc;
+    DEVMODEW *devmode;
 } opened_printer_t;
 
 typedef struct {
@@ -778,6 +779,7 @@ static void free_printer_entry( opened_printer_t *printer )
     /* the queue is shared, so don't free that here */
     HeapFree( GetProcessHeap(), 0, printer->printername );
     HeapFree( GetProcessHeap(), 0, printer->name );
+    HeapFree( GetProcessHeap(), 0, printer->devmode );
     HeapFree( GetProcessHeap(), 0, printer );
 }
 
@@ -871,6 +873,9 @@ static HANDLE get_opened_printer_entry(LPWSTR name, LPPRINTER_DEFAULTSW pDefault
         handle = 0;
         goto end;
     }
+
+    if (pDefault && pDefault->pDevMode)
+        printer->devmode = dup_devmode( pDefault->pDevMode );
 
     if(queue)
         printer->queue = queue;
