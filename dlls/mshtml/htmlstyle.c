@@ -885,16 +885,7 @@ static HRESULT WINAPI HTMLStyle_put_color(IHTMLStyle *iface, VARIANT v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    switch(V_VT(&v)) {
-    case VT_BSTR:
-        TRACE("%s\n", debugstr_w(V_BSTR(&v)));
-        return set_style_attr(This, STYLEID_COLOR, V_BSTR(&v), 0);
-
-    default:
-        FIXME("unsupported vt=%d\n", V_VT(&v));
-    }
-
-    return E_NOTIMPL;
+    return set_nsstyle_attr_var(This->nsstyle, STYLEID_COLOR, &v, ATTR_HEX_INT);
 }
 
 static HRESULT WINAPI HTMLStyle_get_color(IHTMLStyle *iface, VARIANT *p)
@@ -903,8 +894,7 @@ static HRESULT WINAPI HTMLStyle_get_color(IHTMLStyle *iface, VARIANT *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    V_VT(p) = VT_BSTR;
-    return get_style_attr(This, STYLEID_COLOR, &V_BSTR(p));
+    return get_nsstyle_attr_var(This->nsstyle, STYLEID_COLOR, p, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_put_background(IHTMLStyle *iface, BSTR v)

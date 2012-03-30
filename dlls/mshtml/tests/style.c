@@ -572,6 +572,18 @@ static void test_body_style(IHTMLStyle *style)
     ok(V_VT(&v) == VT_BSTR, "V_VT(color) = %d\n", V_VT(&v));
     ok(!V_BSTR(&v), "V_BSTR(color) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
 
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0xfdfd;
+    hres = IHTMLStyle_put_color(style, v);
+    ok(hres == S_OK, "put_color failed: %08x\n", hres);
+
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLStyle_get_color(style, &v);
+    ok(hres == S_OK, "get_color failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(color) = %d\n", V_VT(&v));
+    todo_wine
+    ok(!strcmp_wa(V_BSTR(&v), "#00fdfd"), "V_BSTR(color) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
     b = 0xfefe;
     hres = IHTMLStyle_get_textDecorationUnderline(style, &b);
     ok(hres == S_OK, "get_textDecorationUnderline failed: %08x\n", hres);
