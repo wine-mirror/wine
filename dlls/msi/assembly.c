@@ -262,13 +262,13 @@ static BOOL is_assembly_installed( IAssemblyCache *cache, const WCHAR *display_n
 
     memset( &info, 0, sizeof(info) );
     info.cbAssemblyInfo = sizeof(info);
-    hr = IAssemblyCache_QueryAssemblyInfo( cache, QUERYASMINFO_FLAG_GETSIZE, display_name, &info );
-    if (hr != HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER ))
+    hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, display_name, &info );
+    if (hr == S_OK /* sxs version */ || hr == HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER ))
     {
-        TRACE("QueryAssemblyInfo returned 0x%08x\n", hr);
-        return FALSE;
+        return (info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED);
     }
-    return (info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED);
+    TRACE("QueryAssemblyInfo returned 0x%08x\n", hr);
+    return FALSE;
 }
 
 static const WCHAR clr_version_v10[] = {'v','1','.','0','.','3','7','0','5',0};
