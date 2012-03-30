@@ -242,7 +242,7 @@ static HANDLE service_open_pipe(void)
             break;
         if (GetLastError() != ERROR_PIPE_BUSY)
             break;
-    } while (WaitNamedPipeW(szPipe, NMPWAIT_WAIT_FOREVER));
+    } while (WaitNamedPipeW(szPipe, NMPWAIT_USE_DEFAULT_WAIT));
     HeapFree(GetProcessHeap(), 0, szPipe);
 
     return handle;
@@ -366,7 +366,7 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
 
     if (pipe==INVALID_HANDLE_VALUE)
     {
-        ERR("failed to create control pipe error = %d\n", GetLastError());
+        WARN("failed to create control pipe error = %d\n", GetLastError());
         return 0;
     }
 
