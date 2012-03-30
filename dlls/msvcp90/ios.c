@@ -154,16 +154,21 @@ typedef struct {
 } basic_ios_char;
 
 typedef struct {
-    ios_base child;
-    /*basic_streambuf_wchar*/void *strbuf;
-    /*basic_ostream_wchar*/void *stream;
-    char fillch;
+    ios_base base;
+    basic_streambuf_wchar *strbuf;
+    struct _basic_ostream_wchar *stream;
+    wchar_t fillch;
 } basic_ios_wchar;
 
 typedef struct _basic_ostream_char {
     const int *vbtable;
     basic_ios_char base;
 } basic_ostream_char;
+
+typedef struct _basic_ostream_wchar {
+    const int *vbtable;
+    basic_ios_char base;
+} basic_ostream_wchar;
 
 extern const vtable_ptr MSVCP_iosb_vtable;
 
@@ -2555,17 +2560,41 @@ char __thiscall basic_ios_char_widen(basic_ios_char *this, char ch)
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_ctor, 4)
 basic_ios_wchar* __thiscall basic_ios_wchar_ctor(basic_ios_wchar *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+        TRACE("(%p)\n", this);
+
+        ios_base_ctor(&this->base);
+        this->base.vtable = &MSVCP_basic_ios_wchar_vtable;
+        return this;
+}
+
+/* ?init@?$basic_ios@_WU?$char_traits@_W@std@@@std@@IAEXPAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@_N@Z */
+/* ?init@?$basic_ios@_WU?$char_traits@_W@std@@@std@@IEAAXPEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_wchar_init, 12)
+void __thiscall basic_ios_wchar_init(basic_ios_wchar *this, basic_streambuf_wchar *streambuf, MSVCP_bool isstd)
+{
+    TRACE("(%p %p %x)\n", this, streambuf, isstd);
+    ios_base_Init(&this->base);
+    this->strbuf = streambuf;
+    this->stream = NULL;
+    this->fillch = ' ';
+
+    if(!streambuf)
+        ios_base_setstate(&this->base, IOSTATE_badbit);
+
+    if(isstd)
+        FIXME("standard streams not handled yet\n");
 }
 
 /* ??0?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAE@PAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@@Z */
 /* ??0?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAA@PEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@@Z */
-DEFINE_THISCALL_WRAPPER(basic_ios_wchar_copy_ctor, 8)
-basic_ios_wchar* __thiscall basic_ios_wchar_copy_ctor(basic_ios_wchar *this, const basic_ios_wchar *copy)
+DEFINE_THISCALL_WRAPPER(basic_ios_wchar_ctor_streambuf, 8)
+basic_ios_wchar* __thiscall basic_ios_wchar_ctor_streambuf(basic_ios_wchar *this, basic_streambuf_wchar *strbuf)
 {
-    FIXME("(%p %p) stub\n", this, copy);
-    return NULL;
+    TRACE("(%p %p)\n", this, strbuf);
+
+    basic_ios_wchar_ctor(this);
+    basic_ios_wchar_init(this, strbuf, FALSE);
+    return this;
 }
 
 /* ??1?$basic_ios@_WU?$char_traits@_W@std@@@std@@UAE@XZ */
@@ -2573,7 +2602,8 @@ basic_ios_wchar* __thiscall basic_ios_wchar_copy_ctor(basic_ios_wchar *this, con
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_dtor, 4)
 void __thiscall basic_ios_wchar_dtor(basic_ios_wchar *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    ios_base_dtor(&this->base);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_ios_wchar_vector_dtor, 8)
@@ -2601,7 +2631,8 @@ basic_ios_wchar* __thiscall MSVCP_basic_ios_wchar_vector_dtor(basic_ios_wchar *t
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_clear_reraise, 12)
 void __thiscall basic_ios_wchar_clear_reraise(basic_ios_wchar *this, IOSB_iostate state, MSVCP_bool reraise)
 {
-    FIXME("(%p %x %x) stub\n", this, state, reraise);
+    TRACE("(%p %x %x)\n", this, state, reraise);
+    ios_base_clear_reraise(&this->base, state | (this->strbuf ? IOSTATE_goodbit : IOSTATE_badbit), reraise);
 }
 
 /* ?clear@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEXI@Z */
@@ -2617,8 +2648,14 @@ void __thiscall basic_ios_wchar_clear(basic_ios_wchar *this, unsigned int state)
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_copyfmt, 8)
 basic_ios_wchar* __thiscall basic_ios_wchar_copyfmt(basic_ios_wchar *this, basic_ios_wchar *copy)
 {
-    FIXME("(%p %p) stub\n", this, copy);
-    return NULL;
+    TRACE("(%p %p)\n", this, copy);
+    if(this == copy)
+        return this;
+
+    this->stream = copy->stream;
+    this->fillch = copy->fillch;
+    ios_base_copyfmt(&this->base, &copy->base);
+    return this;
 }
 
 /* ?fill@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAE_W_W@Z */
@@ -2626,8 +2663,12 @@ basic_ios_wchar* __thiscall basic_ios_wchar_copyfmt(basic_ios_wchar *this, basic
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_fill_set, 8)
 wchar_t __thiscall basic_ios_wchar_fill_set(basic_ios_wchar *this, wchar_t fill)
 {
-    FIXME("(%p %c) stub\n", this, fill);
-    return 0;
+    wchar_t ret = this->fillch;
+
+    TRACE("(%p %c)\n", this, fill);
+
+    this->fillch = fill;
+    return ret;
 }
 
 /* ?fill@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBE_WXZ */
@@ -2635,8 +2676,8 @@ wchar_t __thiscall basic_ios_wchar_fill_set(basic_ios_wchar *this, wchar_t fill)
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_fill_get, 4)
 wchar_t __thiscall basic_ios_wchar_fill_get(basic_ios_wchar *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->fillch;
 }
 
 /* ?imbue@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAE?AVlocale@2@ABV32@@Z */
@@ -2644,16 +2685,13 @@ wchar_t __thiscall basic_ios_wchar_fill_get(basic_ios_wchar *this)
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_imbue, 12)
 locale *__thiscall basic_ios_wchar_imbue(basic_ios_wchar *this, locale *ret, const locale *loc)
 {
-    FIXME("(%p %p %p) stub\n", this, ret, loc);
-    return ret;
-}
+    TRACE("(%p %p %p)\n", this, ret, loc);
 
-/* ?init@?$basic_ios@_WU?$char_traits@_W@std@@@std@@IAEXPAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@_N@Z */
-/* ?init@?$basic_ios@_WU?$char_traits@_W@std@@@std@@IEAAXPEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@_N@Z */
-DEFINE_THISCALL_WRAPPER(basic_ios_wchar_init, 12)
-void __thiscall basic_ios_wchar_init(basic_ios_wchar *this, /*basic_streambuf_wchar*/void *streambuf, MSVCP_bool isstd)
-{
-    FIXME("(%p %p %x) stub\n", this, streambuf, isstd);
+    if(this->strbuf)
+        return basic_streambuf_wchar_pubimbue(this->strbuf, ret, loc);
+
+    locale_copy_ctor(ret, loc);
+    return ret;
 }
 
 /* ?narrow@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBED_WD@Z */
@@ -2668,19 +2706,24 @@ char __thiscall basic_ios_wchar_narrow(basic_ios_wchar *this, wchar_t ch, char d
 /* ?rdbuf@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEPAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@PAV32@@Z */
 /* ?rdbuf@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAPEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@PEAV32@@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_rdbuf_set, 8)
-/*basic_streambuf_wchar*/void* __thiscall basic_ios_wchar_rdbuf_set(basic_ios_wchar *this, /*basic_streambuf_wchar*/void *streambuf)
+basic_streambuf_wchar* __thiscall basic_ios_wchar_rdbuf_set(basic_ios_wchar *this, basic_streambuf_wchar *streambuf)
 {
-    FIXME("(%p %p) stub\n", this, streambuf);
-    return NULL;
+    basic_streambuf_wchar *ret = this->strbuf;
+
+    TRACE("(%p %p)\n", this, streambuf);
+
+    this->strbuf = streambuf;
+    basic_ios_wchar_clear(this, IOSTATE_goodbit);
+    return ret;
 }
 
 /* ?rdbuf@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBEPAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@XZ */
 /* ?rdbuf@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEBAPEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_rdbuf_get, 4)
-/*basic_streambuf_wchar*/void* __thiscall basic_ios_wchar_rdbuf_get(const basic_ios_wchar *this)
+basic_streambuf_wchar* __thiscall basic_ios_wchar_rdbuf_get(const basic_ios_wchar *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return this->strbuf;
 }
 
 /* ?setstate@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEXH_N@Z */
@@ -2688,7 +2731,10 @@ DEFINE_THISCALL_WRAPPER(basic_ios_wchar_rdbuf_get, 4)
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_setstate_reraise, 12)
 void __thiscall basic_ios_wchar_setstate_reraise(basic_ios_wchar *this, IOSB_iostate state, MSVCP_bool reraise)
 {
-    FIXME("(%p %x %x) stub\n", this, state, reraise);
+    TRACE("(%p %x %x)\n", this, state, reraise);
+
+    if(state != IOSTATE_goodbit)
+        basic_ios_wchar_clear_reraise(this, this->base.state | state, reraise);
 }
 
 /* ?setstate@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEXI@Z */
@@ -2702,19 +2748,23 @@ void __thiscall basic_ios_wchar_setstate(basic_ios_wchar *this, IOSB_iostate sta
 /* ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEPAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@PAV32@@Z */
 /* ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAPEAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@PEAV32@@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_tie_set, 8)
-/*basic_ostream_wchar*/void* __thiscall basic_ios_wchar_tie_set(basic_ios_wchar *this, /*basic_ostream_wchar*/void *ostream)
+basic_ostream_wchar* __thiscall basic_ios_wchar_tie_set(basic_ios_wchar *this, basic_ostream_wchar *ostream)
 {
-    FIXME("(%p %p) stub\n", this, ostream);
-    return NULL;
+    basic_ostream_wchar *ret = this->stream;
+
+    TRACE("(%p %p)\n", this, ostream);
+
+    this->stream = ostream;
+    return ret;
 }
 
 /* ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBEPAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@XZ */
 /* ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEBAPEAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ios_wchar_tie_get, 4)
-/*basic_ostream_wchar*/void* __thiscall basic_ios_wchar_tie_get(const basic_ios_wchar *this)
+basic_ostream_wchar* __thiscall basic_ios_wchar_tie_get(const basic_ios_wchar *this)
 {
-    FIXME("(%p)\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return this->stream;
 }
 
 /* ?widen@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBE_WD@Z */
