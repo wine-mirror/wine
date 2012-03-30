@@ -1205,7 +1205,9 @@ UINT WINAPI MsiEnumComponentsA(DWORD index, LPSTR lpguid)
     DWORD r;
     WCHAR szwGuid[GUID_SIZE];
 
-    TRACE("%d %p\n", index, lpguid);
+    TRACE("%u, %p\n", index, lpguid);
+
+    if (!lpguid) return ERROR_INVALID_PARAMETER;
 
     r = MsiEnumComponentsW(index, szwGuid);
     if( r == ERROR_SUCCESS )
@@ -1216,23 +1218,11 @@ UINT WINAPI MsiEnumComponentsA(DWORD index, LPSTR lpguid)
 
 UINT WINAPI MsiEnumComponentsW(DWORD index, LPWSTR lpguid)
 {
-    HKEY hkey;
-    REGSAM access = KEY_WOW64_64KEY | KEY_ALL_ACCESS;
-    WCHAR szKeyName[SQUISH_GUID_SIZE];
-    DWORD r;
+    TRACE("%u, %p\n", index, lpguid);
 
-    TRACE("%d %p\n", index, lpguid);
+    if (!lpguid) return ERROR_INVALID_PARAMETER;
 
-    r = RegCreateKeyExW(HKEY_LOCAL_MACHINE, szInstaller_Components, 0, NULL, 0, access, NULL, &hkey, NULL);
-    if( r != ERROR_SUCCESS )
-        return ERROR_NO_MORE_ITEMS;
-
-    r = RegEnumKeyW(hkey, index, szKeyName, SQUISH_GUID_SIZE);
-    if( r == ERROR_SUCCESS )
-        unsquash_guid(szKeyName, lpguid);
-
-    RegCloseKey(hkey);
-    return r;
+    return MsiEnumComponentsExW( szAllSid, MSIINSTALLCONTEXT_ALL, index, lpguid, NULL, NULL, NULL );
 }
 
 UINT WINAPI MsiEnumComponentsExA( LPCSTR user_sid, DWORD ctx, DWORD index, CHAR guid[39],
