@@ -1190,6 +1190,109 @@ static WCHAR *get_face_name(FT_Face ft_face, FT_UShort name_id, FT_UShort langua
     return ret;
 }
 
+static inline BOOL faces_equal( const Face *f1, const Face *f2 )
+{
+    if (strcmpiW( f1->StyleName, f2->StyleName )) return FALSE;
+    if (f1->scalable) return TRUE;
+    if (f2->size.y_ppem != f2->size.y_ppem) return FALSE;
+    return !memcmp( &f1->fs, &f2->fs, sizeof(f1->fs) );
+}
+
+static inline void free_face( Face *face )
+{
+    HeapFree( GetProcessHeap(), 0, face->file );
+    HeapFree( GetProcessHeap(), 0, face->StyleName );
+    HeapFree( GetProcessHeap(), 0, face->FullName );
+    HeapFree( GetProcessHeap(), 0, face->cached_enum_data );
+    HeapFree( GetProcessHeap(), 0, face );
+}
+
+static inline void free_family( Family *family )
+{
+    Face *face, *cursor2;
+
+    LIST_FOR_EACH_ENTRY_SAFE( face, cursor2, &family->faces, Face, entry )
+    {
+        list_remove( &face->entry );
+        free_face( face );
+    }
+    HeapFree( GetProcessHeap(), 0, family->FamilyName );
+    HeapFree( GetProcessHeap(), 0, family->EnglishName );
+    HeapFree( GetProcessHeap(), 0, family );
+}
+
+static inline int style_order(const Face *face)
+{
+    switch (face->ntmFlags & (NTM_REGULAR | NTM_BOLD | NTM_ITALIC))
+    {
+    case NTM_REGULAR:
+        return 0;
+    case NTM_BOLD:
+        return 1;
+    case NTM_ITALIC:
+        return 2;
+    case NTM_BOLD | NTM_ITALIC:
+        return 3;
+    default:
+        WARN("Don't know how to order font %s %s with flags 0x%08x\n",
+             debugstr_w(face->family->FamilyName),
+             debugstr_w(face->StyleName),
+             face->ntmFlags);
+        return 9999;
+    }
+}
+
+static BOOL insert_face_in_family_list( Face *face, Family *family )
+{
+    Face *cursor;
+
+    LIST_FOR_EACH_ENTRY( cursor, &family->faces, Face, entry )
+    {
+        if (faces_equal( face, cursor ))
+        {
+            TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
+                  debugstr_w(family->FamilyName), debugstr_w(face->StyleName),
+                  cursor->font_version, face->font_version);
+
+            if (face->font_version <= cursor->font_version)
+            {
+                TRACE("Original font is newer so skipping this one\n");
+                return FALSE;
+            }
+            else
+            {
+                TRACE("Replacing original with this one\n");
+                list_add_before( &cursor->entry, &face->entry );
+                face->family = family;
+                list_remove( &cursor->entry);
+                free_face( cursor );
+                return TRUE;
+            }
+        }
+
+        if (style_order( face ) < style_order( cursor )) break;
+    }
+
+    list_add_before( &cursor->entry, &face->entry );
+    face->family = family;
+    return TRUE;
+}
+
+/****************************************************************
+ * NB This function stores the ptrs to the strings to save copying.
+ * Don't free them after calling.
+ */
+static Family *create_family( WCHAR *name, WCHAR *english_name )
+{
+    Family * const family = HeapAlloc( GetProcessHeap(), 0, sizeof(*family) );
+    family->FamilyName = name;
+    family->EnglishName = english_name;
+    list_init( &family->faces );
+    family->replacement = &family->faces;
+
+    return family;
+}
+
 static LONG reg_load_dword(HKEY hkey, const WCHAR *value, DWORD *data)
 {
     DWORD type, needed;
@@ -1222,7 +1325,6 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family)
         RegQueryValueExA(hkey_face, "File Name", NULL, NULL, (BYTE*)face->file, &needed);
 
         face->StyleName = strdupW(face_name);
-        face->family = family;
         face->vertical = (family->FamilyName[0] == '@');
 
         if(RegQueryValueExW(hkey_face, face_full_name_value, NULL, NULL, NULL, &needed) == ERROR_SUCCESS)
@@ -1272,10 +1374,7 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family)
               face->fs.fsUsb[0], face->fs.fsUsb[1],
               face->fs.fsUsb[2], face->fs.fsUsb[3]);
 
-        if(!italic && !bold)
-            list_add_head(&family->faces, &face->entry);
-        else
-            list_add_tail(&family->faces, &face->entry);
+        insert_face_in_family_list(face, family);
 
         TRACE("Added font %s %s\n", debugstr_w(family->FamilyName), debugstr_w(face->StyleName));
     }
@@ -1330,11 +1429,7 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
             RegQueryValueExW(hkey_family, english_name_value, NULL, NULL, (BYTE*)english_family, &size);
         }
 
-        family = HeapAlloc(GetProcessHeap(), 0, sizeof(*family));
-        family->FamilyName = strdupW(family_name);
-        family->EnglishName = english_family;
-        list_init(&family->faces);
-        family->replacement = &family->faces;
+        family = create_family(strdupW(family_name), english_family);
         list_add_tail(&font_list, &family->entry);
 
         if(english_family)
@@ -1443,30 +1538,6 @@ static void add_face_to_cache(Face *face)
     RegCloseKey(hkey_font_cache);
 }
 
-static inline int TestStyles(DWORD flags, DWORD styles)
-{
-    return (flags & styles) == styles;
-}
-
-static inline int style_order(Face *face)
-{
-    if (TestStyles(face->ntmFlags, NTM_BOLD | NTM_ITALIC))
-        return 3;
-    if (TestStyles(face->ntmFlags, NTM_ITALIC))
-        return 2;
-    if (TestStyles(face->ntmFlags, NTM_BOLD))
-        return 1;
-    if (TestStyles(face->ntmFlags, NTM_REGULAR))
-        return 0;
-
-    WARN("Don't know how to order font %s %s with flags 0x%08x\n",
-         debugstr_w(face->family->FamilyName),
-         debugstr_w(face->StyleName),
-         face->ntmFlags);
-
-    return 9999;
-}
-
 static WCHAR *prepend_at(WCHAR *family)
 {
     WCHAR *str;
@@ -1503,21 +1574,6 @@ static void get_family_names( FT_Face ft_face, WCHAR **name, WCHAR **english, BO
         *name = prepend_at( *name );
         *english = prepend_at( *english );
     }
-}
-
-/****************************************************************
- * NB This function stores the ptrs to the strings to save copying.
- * Don't free them after calling.
- */
-static Family *create_family( WCHAR *name, WCHAR *english_name )
-{
-    Family *family = HeapAlloc( GetProcessHeap(), 0, sizeof(*family) );
-    family->FamilyName = name;
-    family->EnglishName = english_name;
-    list_init( &family->faces );
-    family->replacement = &family->faces;
-
-    return family;
 }
 
 static Family *get_family( FT_Face ft_face, BOOL vertical )
@@ -1653,29 +1709,6 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
     }
 }
 
-static inline void free_face( Face *face )
-{
-    HeapFree( GetProcessHeap(), 0, face->file );
-    HeapFree( GetProcessHeap(), 0, face->StyleName );
-    HeapFree( GetProcessHeap(), 0, face->FullName );
-    HeapFree( GetProcessHeap(), 0, face->cached_enum_data );
-    HeapFree( GetProcessHeap(), 0, face );
-}
-
-static inline void free_family( Family *family )
-{
-    Face *face, *cursor2;
-
-    LIST_FOR_EACH_ENTRY_SAFE( face, cursor2, &family->faces, Face, entry )
-    {
-        list_remove( &face->entry );
-        free_face( face );
-    }
-    HeapFree( GetProcessHeap(), 0, family->FamilyName );
-    HeapFree( GetProcessHeap(), 0, family->EnglishName );
-    HeapFree( GetProcessHeap(), 0, family );
-}
-
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
@@ -1736,50 +1769,6 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
           face->fs.fsUsb[2], face->fs.fsUsb[3]);
 
     return face;
-}
-
-static inline BOOL faces_equal( Face *f1, Face *f2 )
-{
-    if (strcmpiW( f1->StyleName, f2->StyleName )) return FALSE;
-    if (f1->scalable) return TRUE;
-    if (f2->size.y_ppem != f2->size.y_ppem) return FALSE;
-    return !memcmp( &f1->fs, &f2->fs, sizeof(f1->fs) );
-}
-
-static BOOL insert_face_in_family_list( Face *face, Family *family )
-{
-    Face *cursor;
-
-    LIST_FOR_EACH_ENTRY( cursor, &family->faces, Face, entry )
-    {
-        if (faces_equal( face, cursor ))
-        {
-            TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
-                  debugstr_w(family->FamilyName), debugstr_w(face->StyleName),
-                  cursor->font_version, face->font_version);
-
-            if (face->font_version <= cursor->font_version)
-            {
-                TRACE("Original font is newer so skipping this one\n");
-                return FALSE;
-            }
-            else
-            {
-                TRACE("Replacing original with this one\n");
-                list_add_before( &cursor->entry, &face->entry );
-                face->family = family;
-                list_remove( &cursor->entry);
-                free_face( cursor );
-                return TRUE;
-            }
-        }
-
-        if (style_order( face ) < style_order( cursor )) break;
-    }
-
-    list_add_before( &cursor->entry, &face->entry );
-    face->family = family;
-    return TRUE;
 }
 
 static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr, DWORD font_data_size,
