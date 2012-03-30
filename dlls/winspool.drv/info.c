@@ -338,6 +338,16 @@ static LPSTR strdupWtoA( LPCWSTR str )
     return ret;
 }
 
+static DEVMODEW *dup_devmode( const DEVMODEW *dm )
+{
+    DEVMODEW *ret;
+
+    if (!dm) return NULL;
+    ret = HeapAlloc( GetProcessHeap(), 0, dm->dmSize + dm->dmDriverExtra );
+    if (ret) memcpy( ret, dm, dm->dmSize + dm->dmDriverExtra );
+    return ret;
+}
+
 /******************************************************************
  * verify, that the filename is a local file
  *
@@ -2888,7 +2898,6 @@ BOOL WINAPI SetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level,
 {
     BOOL ret = FALSE;
     job_t *job;
-    DWORD size;
 
     TRACE("(%p, %d, %d, %p, %d)\n", hPrinter, JobId, Level, pJob, Command);
     FIXME("Ignoring everything other than document title\n");
@@ -2915,14 +2924,7 @@ BOOL WINAPI SetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level,
         HeapFree(GetProcessHeap(), 0, job->document_title);
         job->document_title = strdupW(info2->pDocument);
         HeapFree(GetProcessHeap(), 0, job->devmode);
-        if (info2->pDevMode)
-        {
-            size = info2->pDevMode->dmSize + info2->pDevMode->dmDriverExtra;
-            job->devmode = HeapAlloc(GetProcessHeap(), 0, size);
-            memcpy(job->devmode, info2->pDevMode, size);
-        }
-        else
-            job->devmode = NULL;
+        job->devmode = dup_devmode( info2->pDevMode );
         break;
       }
     case 3:
