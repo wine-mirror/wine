@@ -2002,8 +2002,7 @@ static HRESULT WINAPI HTMLStyle_get_width(IHTMLStyle *iface, VARIANT *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    V_VT(p) = VT_BSTR;
-    return get_style_attr(This, STYLEID_WIDTH, &V_BSTR(p));
+    return get_nsstyle_attr_var(This->nsstyle, STYLEID_WIDTH, p, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_put_height(IHTMLStyle *iface, VARIANT v)
@@ -2710,8 +2709,8 @@ static HRESULT WINAPI HTMLStyle_setAttribute(IHTMLStyle *iface, BSTR strAttribut
     HRESULT hres;
     DISPID dispid;
 
-    TRACE("(%p)->(%s v%d %08x)\n", This, debugstr_w(strAttributeName),
-           V_VT(&AttributeValue), lFlags);
+    TRACE("(%p)->(%s %s %08x)\n", This, debugstr_w(strAttributeName),
+          debugstr_variant(&AttributeValue), lFlags);
 
     if(!strAttributeName)
         return E_INVALIDARG;
