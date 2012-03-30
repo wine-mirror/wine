@@ -1256,6 +1256,18 @@ static void test_body_style(IHTMLStyle *style)
     ok(!V_BSTR(&v), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("red");
+    hres = IHTMLStyle_put_backgroundColor(style, v);
+    ok(hres == S_OK, "put_backgroundColor failed: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle_get_backgroundColor(style, &v);
+    ok(hres == S_OK, "get_backgroundColor: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "type failed: %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "red"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     /* padding */
     hres = IHTMLStyle_get_padding(style, &str);
     ok(hres == S_OK, "get_padding failed: %08x\n", hres);

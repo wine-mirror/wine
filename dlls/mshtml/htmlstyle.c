@@ -921,30 +921,16 @@ static HRESULT WINAPI HTMLStyle_put_backgroundColor(IHTMLStyle *iface, VARIANT v
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    switch(V_VT(&v)) {
-    case VT_BSTR:
-        return set_style_attr(This, STYLEID_BACKGROUND_COLOR, V_BSTR(&v), 0);
-    case VT_I4: {
-        WCHAR value[10];
-        static const WCHAR format[] = {'#','%','0','6','x',0};
-
-        wsprintfW(value, format, V_I4(&v));
-        return set_style_attr(This, STYLEID_BACKGROUND_COLOR, value, 0);
-    }
-    default:
-        FIXME("unsupported vt %d\n", V_VT(&v));
-    }
-
-    return S_OK;
+    return set_nsstyle_attr_var(This->nsstyle, STYLEID_BACKGROUND_COLOR, &v, ATTR_HEX_INT);
 }
 
 static HRESULT WINAPI HTMLStyle_get_backgroundColor(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
+
     TRACE("(%p)->(%p)\n", This, p);
 
-    V_VT(p) = VT_BSTR;
-    return get_style_attr(This, STYLEID_BACKGROUND_COLOR, &V_BSTR(p));
+    return get_nsstyle_attr_var(This->nsstyle, STYLEID_BACKGROUND_COLOR, p, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_put_backgroundImage(IHTMLStyle *iface, BSTR v)
