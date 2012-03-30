@@ -620,8 +620,8 @@
 @ stub -arch=win64 ??0?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QEAA@XZ
 @ thiscall -arch=win32 ??0?$basic_ios@DU?$char_traits@D@std@@@std@@IAE@XZ(ptr) basic_ios_char_ctor
 @ cdecl -arch=win64 ??0?$basic_ios@DU?$char_traits@D@std@@@std@@IEAA@XZ(ptr) basic_ios_char_ctor
-@ thiscall -arch=win32 ??0?$basic_ios@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z(ptr ptr) basic_ios_char_copy_ctor
-@ cdecl -arch=win64 ??0?$basic_ios@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z(ptr ptr) basic_ios_char_copy_ctor
+@ thiscall -arch=win32 ??0?$basic_ios@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z(ptr ptr) basic_ios_char_ctor_streambuf
+@ cdecl -arch=win64 ??0?$basic_ios@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z(ptr ptr) basic_ios_char_ctor_streambuf
 @ stub -arch=win32 ??0?$basic_ios@GU?$char_traits@G@std@@@std@@IAE@XZ
 @ stub -arch=win64 ??0?$basic_ios@GU?$char_traits@G@std@@@std@@IEAA@XZ
 @ stub -arch=win32 ??0?$basic_ios@GU?$char_traits@G@std@@@std@@QAE@PAV?$basic_streambuf@GU?$char_traits@G@std@@@1@@Z
