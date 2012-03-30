@@ -1485,6 +1485,21 @@ static void test_QueryAssemblyInfo(void)
     ok(info.cchBuf == lstrlenW(asmpath) + 1,
        "Expected %d, got %d\n", lstrlenW(asmpath) + 1, info.cchBuf);
 
+    /* no flags, display name is "wine, Version=1.0.0.0" */
+    INIT_ASM_INFO();
+    info.pszCurrentAssemblyPathBuf = NULL;
+    info.cchBuf = 0;
+    lstrcpyW(name, wine);
+    lstrcatW(name, commasep);
+    lstrcatW(name, ver);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, name, &info);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER),
+       "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got %08x\n", hr);
+    ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
+       "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
+    ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
+       "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
+
     /* uninstall the assembly from the GAC */
     disp = 0xf00dbad;
     hr = IAssemblyCache_UninstallAssembly(cache, 0, wine, NULL, &disp);
