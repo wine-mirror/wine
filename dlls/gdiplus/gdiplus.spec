@@ -459,7 +459,7 @@
 459 stdcall GdipResetLineTransform(ptr)
 460 stdcall GdipResetPageTransform(ptr)
 461 stdcall GdipResetPath(ptr)
-462 stub GdipResetPathGradientTransform
+462 stdcall GdipResetPathGradientTransform(ptr)
 463 stdcall GdipResetPenTransform(ptr)
 464 stdcall GdipResetTextureTransform(ptr)
 465 stdcall GdipResetWorldTransform(ptr)

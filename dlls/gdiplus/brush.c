@@ -1656,14 +1656,14 @@ GpStatus WINGDIPAPI GdipSetPathGradientWrapMode(GpPathGradient *grad,
 GpStatus WINGDIPAPI GdipSetPathGradientTransform(GpPathGradient *grad,
     GpMatrix *matrix)
 {
-    static int calls;
-
     TRACE("(%p,%p)\n", grad, matrix);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!grad || !matrix)
+        return InvalidParameter;
 
-    return NotImplemented;
+    memcpy(grad->transform, matrix, sizeof(GpMatrix));
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetPathGradientTransform(GpPathGradient *grad,
@@ -1682,53 +1682,55 @@ GpStatus WINGDIPAPI GdipGetPathGradientTransform(GpPathGradient *grad,
 GpStatus WINGDIPAPI GdipMultiplyPathGradientTransform(GpPathGradient *grad,
     GDIPCONST GpMatrix *matrix, GpMatrixOrder order)
 {
-    static int calls;
-
     TRACE("(%p,%p,%i)\n", grad, matrix, order);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!grad)
+        return InvalidParameter;
 
-    return NotImplemented;
+    return GdipMultiplyMatrix(grad->transform, matrix, order);
+}
+
+GpStatus WINGDIPAPI GdipResetPathGradientTransform(GpPathGradient *grad)
+{
+    TRACE("(%p)\n", grad);
+
+    if (!grad)
+        return InvalidParameter;
+
+    return GdipSetMatrixElements(grad->transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 }
 
 GpStatus WINGDIPAPI GdipRotatePathGradientTransform(GpPathGradient *grad,
     REAL angle, GpMatrixOrder order)
 {
-    static int calls;
-
     TRACE("(%p,%0.2f,%i)\n", grad, angle, order);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!grad)
+        return InvalidParameter;
 
-    return NotImplemented;
+    return GdipRotateMatrix(grad->transform, angle, order);
 }
 
 GpStatus WINGDIPAPI GdipScalePathGradientTransform(GpPathGradient *grad,
     REAL sx, REAL sy, GpMatrixOrder order)
 {
-    static int calls;
-
     TRACE("(%p,%0.2f,%0.2f,%i)\n", grad, sx, sy, order);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!grad)
+        return InvalidParameter;
 
-    return NotImplemented;
+    return GdipScaleMatrix(grad->transform, sx, sy, order);
 }
 
 GpStatus WINGDIPAPI GdipTranslatePathGradientTransform(GpPathGradient *grad,
     REAL dx, REAL dy, GpMatrixOrder order)
 {
-    static int calls;
-
     TRACE("(%p,%0.2f,%0.2f,%i)\n", grad, dx, dy, order);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!grad)
+        return InvalidParameter;
 
-    return NotImplemented;
+    return GdipTranslateMatrix(grad->transform, dx, dy, order);
 }
 
 GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
