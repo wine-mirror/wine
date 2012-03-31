@@ -87,7 +87,7 @@ static void test_find_url_cache_entriesA(void)
         if (!ret)
             break;
     }
-    ok(found, "committed url cache entry not found during enumeration\n");
+    ok(found, "Committed url cache entry not found during enumeration\n");
 
     ret = FindCloseUrlCache(hEnumHandle);
     ok(ret, "FindCloseUrlCache failed with error %d\n", GetLastError());
@@ -494,7 +494,7 @@ static void test_urlcacheA(void)
     cbCacheEntryInfo = 0;
     SetLastError(0xdeadbeef);
     ret = GetUrlCacheEntryInfo(TEST_URL, NULL, &cbCacheEntryInfo);
-    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
+    ok(!ret, "GetUrlCacheEntryInfo should have failed\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
     lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
@@ -647,7 +647,7 @@ static void test_urlcacheA(void)
     cbCacheEntryInfo = 0;
     SetLastError(0xdeadbeef);
     ret = GetUrlCacheEntryInfo(TEST_URL, NULL, &cbCacheEntryInfo);
-    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
+    ok(!ret, "GetUrlCacheEntryInfo should have failed\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
     lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
@@ -657,7 +657,7 @@ static void test_urlcacheA(void)
        "expected cache entry type NORMAL_CACHE_ENTRY | STICKY_CACHE_ENTRY, got %d (0x%08x)\n",
        lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
     ok(U(*lpCacheEntryInfo).dwExemptDelta == 86400,
-       "expected dwExemptDelta 864000, got %d\n",
+       "expected dwExemptDelta 86400, got %d\n",
        U(*lpCacheEntryInfo).dwExemptDelta);
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
     if (pDeleteUrlCacheEntryA)
@@ -679,7 +679,7 @@ static void test_urlcacheA(void)
     cbCacheEntryInfo = 0;
     SetLastError(0xdeadbeef);
     ret = GetUrlCacheEntryInfo(TEST_URL, NULL, &cbCacheEntryInfo);
-    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
+    ok(!ret, "GetUrlCacheEntryInfo should have failed\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
     lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
@@ -689,7 +689,7 @@ static void test_urlcacheA(void)
        "expected cache entry type NORMAL_CACHE_ENTRY | STICKY_CACHE_ENTRY, got %d (0x%08x)\n",
        lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
     ok(U(*lpCacheEntryInfo).dwExemptDelta == 86400,
-       "expected dwExemptDelta 864000, got %d\n",
+       "expected dwExemptDelta 86400, got %d\n",
        U(*lpCacheEntryInfo).dwExemptDelta);
     U(*lpCacheEntryInfo).dwExemptDelta = 0;
     ret = SetUrlCacheEntryInfoA(TEST_URL, lpCacheEntryInfo,
