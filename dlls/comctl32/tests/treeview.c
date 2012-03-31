@@ -204,6 +204,20 @@ static const struct message parent_expand_seq[] = {
     { 0 }
 };
 
+static const struct message parent_expand_kb_seq[] = {
+    { WM_NOTIFY, sent|id|optional, 0, 0, TVN_KEYDOWN },
+    { WM_NOTIFY, sent|id, 0, 0, TVN_ITEMEXPANDINGA },
+    { WM_NOTIFY, sent|id, 0, 0, TVN_ITEMEXPANDEDA },
+    { WM_CHANGEUISTATE, sent|optional },
+    { 0 }
+};
+
+static const struct message parent_expand_empty_kb_seq[] = {
+    { WM_NOTIFY, sent|id|optional, 0, 0, TVN_KEYDOWN },
+    { WM_CHANGEUISTATE, sent|optional },
+    { 0 }
+};
+
 static const struct message parent_singleexpand_seq[] = {
     { WM_NOTIFY, sent|id, 0, 0, TVN_SELCHANGINGA },
     { WM_NOTIFY, sent|id, 0, 0, TVN_SELCHANGEDA },
@@ -1421,6 +1435,31 @@ static void test_expandnotify(void)
     ret = SendMessageA(hTree, TVM_EXPAND, TVE_TOGGLE, (LPARAM)hRoot);
     expect(TRUE, ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "toggle node (collapse)", FALSE);
+
+    DestroyWindow(hTree);
+
+    /* some keyboard events are also translated to expand */
+    hTree = create_treeview_control(0);
+    fill_tree(hTree);
+
+    /* preselect root node here */
+    ret = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
+    expect(TRUE, ret);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hTree, WM_KEYDOWN, VK_ADD, 0);
+    expect(FALSE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_expand_kb_seq, "expand node", FALSE);
+
+    /* go to child */
+    ret = SendMessageA(hTree, WM_KEYDOWN, VK_RIGHT, 0);
+    expect(FALSE, ret);
+
+    /* try to expand child that doesn't have children itself */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hTree, WM_KEYDOWN, VK_ADD, 0);
+    expect(FALSE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_expand_empty_kb_seq, "expand node with no children", TRUE);
 
     DestroyWindow(hTree);
 }
