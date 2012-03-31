@@ -597,6 +597,9 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
             GdipDeletePath(path);
     }
 
+    if (stat == Ok)
+        (*grad)->wrap = wrap;
+
     return stat;
 }
 
@@ -626,6 +629,9 @@ GpStatus WINGDIPAPI GdipCreatePathGradientI(GDIPCONST GpPoint* points,
         if (stat != Ok)
             GdipDeletePath(path);
     }
+
+    if (stat == Ok)
+        (*grad)->wrap = wrap;
 
     return stat;
 }
