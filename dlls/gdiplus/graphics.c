@@ -1192,6 +1192,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         INT min_y, max_y, min_x, max_x;
         INT x, y;
         ARGB outer_color;
+        static int transform_fixme_once;
 
         if (fill->focus.X != 0.0 || fill->focus.Y != 0.0)
         {
@@ -1219,6 +1220,17 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
             static int once;
             if (!once++)
                 FIXME("path gradient preset blend not implemented\n");
+        }
+
+        if (!transform_fixme_once)
+        {
+            BOOL is_identity=TRUE;
+            GdipIsMatrixIdentity(fill->transform, &is_identity);
+            if (!is_identity)
+            {
+                FIXME("path gradient transform not implemented\n");
+                transform_fixme_once = 1;
+            }
         }
 
         stat = GdipClonePath(fill->path, &flat_path);
