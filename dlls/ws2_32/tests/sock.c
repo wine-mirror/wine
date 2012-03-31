@@ -4504,7 +4504,7 @@ static void test_AcceptEx(void)
     struct timeval timeout = {0,10}; /* wait for 10 milliseconds */
     int got, conn1, i;
     DWORD bytesReturned, connect_time;
-    char buffer[1024];
+    char buffer[1024], ipbuffer[32];
     OVERLAPPED overlapped;
     int iret, localSize = sizeof(struct sockaddr_in), remoteSize = localSize;
     BOOL bret;
@@ -4720,15 +4720,17 @@ static void test_AcceptEx(void)
     pGetAcceptExSockaddrs(buffer, 2, sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
                           (struct sockaddr **)&readBindAddress, &localSize,
                           (struct sockaddr **)&readRemoteAddress, &remoteSize);
+    strcpy( ipbuffer, inet_ntoa(readBindAddress->sin_addr));
     ok( readBindAddress->sin_addr.s_addr == bindAddress.sin_addr.s_addr,
             "Local socket address is different %s != %s\n",
-            inet_ntoa(readBindAddress->sin_addr), inet_ntoa(bindAddress.sin_addr));
+            ipbuffer, inet_ntoa(bindAddress.sin_addr));
     ok( readBindAddress->sin_port == bindAddress.sin_port,
             "Local socket port is different: %d != %d\n",
             readBindAddress->sin_port, bindAddress.sin_port);
+    strcpy( ipbuffer, inet_ntoa(readRemoteAddress->sin_addr));
     ok( readRemoteAddress->sin_addr.s_addr == peerAddress.sin_addr.s_addr,
             "Remote socket address is different %s != %s\n",
-            inet_ntoa(readRemoteAddress->sin_addr), inet_ntoa(peerAddress.sin_addr));
+            ipbuffer, inet_ntoa(peerAddress.sin_addr));
     ok( readRemoteAddress->sin_port == peerAddress.sin_port,
             "Remote socket port is different: %d != %d\n",
             readRemoteAddress->sin_port, peerAddress.sin_port);
