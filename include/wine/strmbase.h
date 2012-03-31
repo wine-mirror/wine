@@ -582,6 +582,7 @@ typedef struct BaseRendererTag
 	BaseInputPin *pInputPin;
 	IUnknown *pPosition;
 	CRITICAL_SECTION csRenderLock;
+	HANDLE evComplete;
 
 	const struct BaseRendererFuncTable * pFuncsTable;
 } BaseRenderer;
@@ -599,7 +600,10 @@ typedef VOID (WINAPI *BaseRenderer_PrepareRender)(BaseRenderer *This);
 typedef HRESULT (WINAPI *BaseRenderer_ShouldDrawSampleNow)(BaseRenderer *This, IMediaSample *pMediaSample, REFERENCE_TIME *pStartTime, REFERENCE_TIME *pEndTime);
 typedef HRESULT (WINAPI *BaseRenderer_PrepareReceive)(BaseRenderer *This, IMediaSample *pMediaSample);
 typedef HRESULT (WINAPI *BaseRenderer_EndOfStream)(BaseRenderer *This);
+typedef HRESULT (WINAPI *BaseRenderer_BeginFlush) (BaseRenderer *This);
 typedef HRESULT (WINAPI *BaseRenderer_EndFlush) (BaseRenderer *This);
+typedef HRESULT (WINAPI *BaseRenderer_BreakConnect) (BaseRenderer *This);
+typedef HRESULT (WINAPI *BaseRenderer_CompleteConnect) (BaseRenderer *This, IPin *pReceivePin);
 
 typedef struct BaseRendererFuncTable {
 	/* Required */
@@ -617,7 +621,10 @@ typedef struct BaseRendererFuncTable {
 	BaseRenderer_ShouldDrawSampleNow  pfnShouldDrawSampleNow;
 	BaseRenderer_PrepareReceive pfnPrepareReceive;
 	/* Optional, Input Pin */
+	BaseRenderer_CompleteConnect pfnCompleteConnect;
+	BaseRenderer_BreakConnect pfnBreakConnect;
 	BaseRenderer_EndOfStream pfnEndOfStream;
+	BaseRenderer_BeginFlush pfnBeginFlush;
 	BaseRenderer_EndFlush pfnEndFlush;
 } BaseRendererFuncTable;
 
@@ -628,7 +635,9 @@ HRESULT WINAPI BaseRendererImpl_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **
 HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface);
 HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart);
 HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface);
+HRESULT WINAPI BaseRendererImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState);
 HRESULT WINAPI BaseRendererImpl_EndOfStream(BaseRenderer* iface);
+HRESULT WINAPI BaseRendererImpl_BeginFlush(BaseRenderer* iface);
 HRESULT WINAPI BaseRendererImpl_EndFlush(BaseRenderer* iface);
 
 HRESULT WINAPI BaseRenderer_Init(BaseRenderer *This, const IBaseFilterVtbl *Vtbl, IUnknown *pUnkOuter, const CLSID *pClsid, DWORD_PTR DebugInfo, const BaseRendererFuncTable* pBaseFuncsTable);

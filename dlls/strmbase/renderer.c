@@ -47,6 +47,46 @@ static inline BaseRenderer *impl_from_BaseFilter(BaseFilter *iface)
     return CONTAINING_RECORD(iface, BaseRenderer, filter);
 }
 
+static HRESULT WINAPI BaseRenderer_InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
+{
+    BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
+    BaseRenderer *renderer = impl_from_IBaseFilter(This->pin.pinInfo.pFilter);
+    HRESULT hr = S_OK;
+
+    TRACE("(%p/%p)->(%p, %p)\n", This, renderer, pReceivePin, pmt);
+
+    EnterCriticalSection(This->pin.pCritSec);
+    hr = BaseInputPinImpl_ReceiveConnection(iface, pReceivePin, pmt);
+    if (SUCCEEDED(hr))
+    {
+        if (renderer->pFuncsTable->pfnCompleteConnect)
+            hr = renderer->pFuncsTable->pfnCompleteConnect(renderer, pReceivePin);
+    }
+    LeaveCriticalSection(This->pin.pCritSec);
+
+    return hr;
+}
+
+static HRESULT WINAPI BaseRenderer_InputPin_Disconnect(IPin * iface)
+{
+    BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
+    BaseRenderer *renderer = impl_from_IBaseFilter(This->pin.pinInfo.pFilter);
+    HRESULT hr;
+
+    TRACE("(%p/%p)\n", This, renderer);
+
+    EnterCriticalSection(This->pin.pCritSec);
+    hr = BasePinImpl_Disconnect(iface);
+    if (SUCCEEDED(hr))
+    {
+        if (renderer->pFuncsTable->pfnBreakConnect)
+            hr = renderer->pFuncsTable->pfnBreakConnect(renderer);
+    }
+    LeaveCriticalSection(This->pin.pCritSec);
+
+    return hr;
+}
+
 static HRESULT WINAPI BaseRenderer_InputPin_EndOfStream(IPin * iface)
 {
     HRESULT hr = S_OK;
@@ -69,6 +109,31 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndOfStream(IPin * iface)
     LeaveCriticalSection(This->pin.pCritSec);
     LeaveCriticalSection(&pFilter->csRenderLock);
     LeaveCriticalSection(&pFilter->filter.csFilter);
+    return hr;
+}
+
+static HRESULT WINAPI BaseRenderer_InputPin_BeginFlush(IPin * iface)
+{
+    BaseInputPin* This = impl_BaseInputPin_from_IPin(iface);
+    BaseRenderer *pFilter = impl_from_IBaseFilter(This->pin.pinInfo.pFilter);
+    HRESULT hr = S_OK;
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    EnterCriticalSection(&pFilter->filter.csFilter);
+    EnterCriticalSection(&pFilter->csRenderLock);
+    EnterCriticalSection(This->pin.pCritSec);
+    hr = BaseInputPinImpl_BeginFlush(iface);
+    if (SUCCEEDED(hr))
+    {
+        if (pFilter->pFuncsTable->pfnBeginFlush)
+            hr = pFilter->pFuncsTable->pfnBeginFlush(pFilter);
+        else
+            hr = BaseRendererImpl_BeginFlush(pFilter);
+    }
+    LeaveCriticalSection(This->pin.pCritSec);
+    LeaveCriticalSection(&pFilter->filter.csFilter);
+    LeaveCriticalSection(&pFilter->csRenderLock);
     return hr;
 }
 
@@ -103,8 +168,8 @@ static const IPinVtbl BaseRenderer_InputPin_Vtbl =
     BasePinImpl_AddRef,
     BaseInputPinImpl_Release,
     BaseInputPinImpl_Connect,
-    BaseInputPinImpl_ReceiveConnection,
-    BasePinImpl_Disconnect,
+    BaseRenderer_InputPin_ReceiveConnection,
+    BaseRenderer_InputPin_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,
@@ -114,7 +179,7 @@ static const IPinVtbl BaseRenderer_InputPin_Vtbl =
     BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     BaseRenderer_InputPin_EndOfStream,
-    BaseInputPinImpl_BeginFlush,
+    BaseRenderer_InputPin_BeginFlush,
     BaseRenderer_InputPin_EndFlush,
     BaseInputPinImpl_NewSegment
 };
@@ -188,6 +253,7 @@ HRESULT WINAPI BaseRenderer_Init(BaseRenderer * This, const IBaseFilterVtbl *Vtb
 
         InitializeCriticalSection(&This->csRenderLock);
         This->csRenderLock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": BaseRenderer.csRenderLock");
+        This->evComplete = CreateEventW(NULL, TRUE, TRUE, NULL);
     }
 
     return hr;
@@ -225,6 +291,7 @@ ULONG WINAPI BaseRendererImpl_Release(IBaseFilter* iface)
 
         This->csRenderLock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csRenderLock);
+        CloseHandle(This->evComplete);
     }
     return refCount;
 }
@@ -233,8 +300,23 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
 {
     HRESULT hr = S_OK;
     REFERENCE_TIME start, stop;
+    AM_MEDIA_TYPE *pmt;
 
     TRACE("(%p)->%p\n", This, pSample);
+
+    if (This->pInputPin->end_of_stream || This->pInputPin->flushing)
+        return S_FALSE;
+
+    if (This->filter.state == State_Stopped)
+        return VFW_E_WRONG_STATE;
+
+    if (IMediaSample_GetMediaType(pSample, &pmt) == S_OK)
+    {
+        if (FAILED(This->pFuncsTable->pfnCheckMediaType(This, pmt)))
+        {
+            return VFW_E_TYPE_NOT_ACCEPTED;
+        }
+    }
 
     if (This->pFuncsTable->pfnPrepareReceive)
         hr = This->pFuncsTable->pfnPrepareReceive(This, pSample);
@@ -254,6 +336,8 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
     {
         if (This->pFuncsTable->pfnOnReceiveFirstSample)
             This->pFuncsTable->pfnOnReceiveFirstSample(This, pSample);
+
+        SetEvent(This->evComplete);
     }
 
     /* Wait for render Time */
@@ -281,8 +365,6 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
             return S_OK;
         }
     }
-    if (This->pInputPin->flushing || This->pInputPin->end_of_stream)
-        hr = S_FALSE;
 
     if (SUCCEEDED(hr))
         hr = This->pFuncsTable->pfnDoRenderSample(This, pSample);
@@ -322,6 +404,7 @@ HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface)
         if (This->pFuncsTable->pfnOnStopStreaming)
             This->pFuncsTable->pfnOnStopStreaming(This);
         This->filter.state = State_Stopped;
+        SetEvent(This->evComplete);
     }
     LeaveCriticalSection(&This->csRenderLock);
 
@@ -338,6 +421,9 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     This->filter.rtStreamStart = tStart;
     if (This->filter.state == State_Running)
         goto out;
+
+    SetEvent(This->evComplete);
+
     if (This->pInputPin->pin.pConnectedTo)
     {
         This->pInputPin->end_of_stream = 0;
@@ -376,13 +462,36 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
      if (This->filter.state != State_Paused)
         {
             if (This->filter.state == State_Stopped)
+            {
+                if (This->pInputPin->pin.pConnectedTo)
+                    ResetEvent(This->evComplete);
                 This->pInputPin->end_of_stream = 0;
+            }
+            else if (This->pFuncsTable->pfnOnStopStreaming)
+                This->pFuncsTable->pfnOnStopStreaming(This);
             This->filter.state = State_Paused;
         }
     }
     LeaveCriticalSection(&This->csRenderLock);
 
     return S_OK;
+}
+
+HRESULT WINAPI BaseRendererImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
+{
+    HRESULT hr;
+    BaseRenderer *This = impl_from_IBaseFilter(iface);
+
+    TRACE("(%p)->(%d, %p)\n", This, dwMilliSecsTimeout, pState);
+
+    if (WaitForSingleObject(This->evComplete, dwMilliSecsTimeout) == WAIT_TIMEOUT)
+        hr = VFW_S_STATE_INTERMEDIATE;
+    else
+        hr = S_OK;
+
+    BaseFilterImpl_GetState(iface, dwMilliSecsTimeout, pState);
+
+    return hr;
 }
 
 HRESULT WINAPI BaseRendererImpl_EndOfStream(BaseRenderer* iface)
@@ -403,8 +512,15 @@ HRESULT WINAPI BaseRendererImpl_EndOfStream(BaseRenderer* iface)
         }
     }
     RendererPosPassThru_EOS(iface->pPosition);
+    SetEvent(iface->evComplete);
 
     return hr;
+}
+
+HRESULT WINAPI BaseRendererImpl_BeginFlush(BaseRenderer* iface)
+{
+    TRACE("(%p)\n", iface);
+    return S_OK;
 }
 
 HRESULT WINAPI BaseRendererImpl_EndFlush(BaseRenderer* iface)
