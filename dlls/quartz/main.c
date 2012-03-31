@@ -34,8 +34,6 @@ static DWORD dll_ref = 0;
 /* For the moment, do nothing here. */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
-    if (fdwReason == DLL_PROCESS_DETACH)
-        video_unregister_windowclass();
     return QUARTZ_DllMain( hInstDLL, fdwReason, lpv );
 }
 
