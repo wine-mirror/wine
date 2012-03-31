@@ -517,6 +517,9 @@ static GpStatus create_path_gradient(GpPath *path, GpPathGradient **grad)
     if(!path || !grad)
         return InvalidParameter;
 
+    if (path->pathdata.Count < 2)
+        return OutOfMemory;
+
     GdipGetPathWorldBounds(path, &bounds, NULL, NULL);
 
     *grad = GdipAlloc(sizeof(GpPathGradient));
