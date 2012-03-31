@@ -509,7 +509,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngleI(GDIPCONST GpRect* rect
                                         wrap, line);
 }
 
-static GpStatus create_path_gradient(GpPath *path, GpPathGradient **grad)
+static GpStatus create_path_gradient(GpPath *path, ARGB centercolor, GpPathGradient **grad)
 {
     GpRectF bounds;
     GpStatus stat;
@@ -554,7 +554,7 @@ static GpStatus create_path_gradient(GpPath *path, GpPathGradient **grad)
     (*grad)->path = path;
 
     (*grad)->brush.bt = BrushTypePathGradient;
-    (*grad)->centercolor = 0xffffffff;
+    (*grad)->centercolor = centercolor;
     (*grad)->wrap = WrapModeClamp;
     (*grad)->gamma = FALSE;
     /* FIXME: this should be set to the "centroid" of the path by default */
@@ -591,7 +591,7 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
         stat = GdipAddPathLine2(path, points, count);
 
         if (stat == Ok)
-            stat = create_path_gradient(path, grad);
+            stat = create_path_gradient(path, 0xff000000, grad);
 
         if (stat != Ok)
             GdipDeletePath(path);
@@ -621,7 +621,7 @@ GpStatus WINGDIPAPI GdipCreatePathGradientI(GDIPCONST GpPoint* points,
         stat = GdipAddPathLine2I(path, points, count);
 
         if (stat == Ok)
-            stat = create_path_gradient(path, grad);
+            stat = create_path_gradient(path, 0xff000000, grad);
 
         if (stat != Ok)
             GdipDeletePath(path);
@@ -648,7 +648,7 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
 
     if (stat == Ok)
     {
-        stat = create_path_gradient(new_path, grad);
+        stat = create_path_gradient(new_path, 0xffffffff, grad);
 
         if (stat != Ok)
             GdipDeletePath(new_path);
