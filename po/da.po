@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
+"PO-Revision-Date: 2012-04-09 10:14+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: Danish\n"
@@ -126,7 +126,7 @@ msgid ""
 msgstr ""
 "Wine kunne ikke finde Gecko Pakken, som er nødvendig for at få "
 "applikationers indlejring af HTML til at fungere korrekt. Wine kan "
-"automatisk downloade, og installere det for dig.\n"
+"automatisk hente, og installere det for dig.\n"
 "\n"
 "Bemærk: Det anbefales at bruge distributions pakker i stedet. Se http://wiki."
 "winehq.org/Gecko for flere detaljer."
@@ -225,7 +225,7 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
-"Uventet kontrolsum af downloadet fil. Afbryder installation af korrupt fil."
+"Uventet kontrolsum af hentet fil. Afbryder installation af korrupt fil."
 
 #: avifil32.rc:39
 msgid "Compress options"
@@ -1096,7 +1096,7 @@ msgstr "Ingen toner; "
 
 #: comdlg32.rc:99
 msgid "Page punt; "
-msgstr ""
+msgstr "Side skub; "
 
 #: comdlg32.rc:100
 msgid "Interrupted by user; "
@@ -1201,11 +1201,11 @@ msgstr "Nøgle anvendelsesbegrænsning"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr ""
+msgstr "Emne alternativt navn"
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
-msgstr ""
+msgstr "Udsteder alternativt navn"
 
 #: crypt32.rc:32
 msgid "Basic Constraints"
@@ -1221,7 +1221,7 @@ msgstr "Certifikatpolitikker"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr ""
+msgstr "Emne nøgle identificering"
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
@@ -1229,7 +1229,7 @@ msgstr "CRL årsagskode"
 
 #: crypt32.rc:37
 msgid "CRL Distribution Points"
-msgstr ""
+msgstr "CRL distributions punkter"
 
 #: crypt32.rc:38
 msgid "Enhanced Key Usage"
@@ -1237,7 +1237,7 @@ msgstr "Forbedret nøgle brug"
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
-msgstr ""
+msgstr "Autoritets informations adgang"
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
@@ -1249,11 +1249,11 @@ msgstr "Næste opdateringsplacering"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr ""
+msgstr "Ja eller Nej tillid"
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr "Email adresse"
+msgstr "E-mail adresse"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
@@ -1265,19 +1265,19 @@ msgstr "Indholdstype"
 
 #: crypt32.rc:46
 msgid "Message Digest"
-msgstr ""
+msgstr "Besked kontrolsum"
 
 #: crypt32.rc:47
 msgid "Signing Time"
-msgstr ""
+msgstr "Underskrifts tidspunkt"
 
 #: crypt32.rc:48
 msgid "Counter Sign"
-msgstr ""
+msgstr "Bekræftelsesunderskrift"
 
 #: crypt32.rc:49
 msgid "Challenge Password"
-msgstr ""
+msgstr "Udfordrings kodeord"
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
@@ -1302,55 +1302,55 @@ msgstr "Brugermeddelelse"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr ""
+msgstr "Online certifikat status protokol"
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
-msgstr ""
+msgstr "Certificerings autoritets udsteder"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr ""
+msgstr "Certificerings skabelon navn"
 
 #: crypt32.rc:58
 msgid "Certificate Type"
-msgstr ""
+msgstr "Certifikat type"
 
 #: crypt32.rc:59
 msgid "Certificate Manifold"
-msgstr ""
+msgstr "Certifikat manifold"
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
-msgstr ""
+msgstr "Netscape cert type"
 
 #: crypt32.rc:61
 msgid "Netscape Base URL"
-msgstr ""
+msgstr "Netscape grund URL"
 
 #: crypt32.rc:62
 msgid "Netscape Revocation URL"
-msgstr ""
+msgstr "Netscape tilbagekaldelses URL"
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
-msgstr ""
+msgstr "Netscape CA tilbagekaldelses URL"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
-msgstr ""
+msgstr "Netscape Cert fornyelses URL"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
-msgstr ""
+msgstr "Netscape CA politik URL"
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
-msgstr ""
+msgstr "Netscape SSL værtsnavn"
 
 #: crypt32.rc:67
 msgid "Netscape Comment"
-msgstr ""
+msgstr "Netscape bemærkning"
 
 #: crypt32.rc:68
 msgid "Country/Region"
@@ -1406,27 +1406,27 @@ msgstr "Serienummer"
 
 #: crypt32.rc:81
 msgid "CA Version"
-msgstr ""
+msgstr "CA version"
 
 #: crypt32.rc:82
 msgid "Cross CA Version"
-msgstr ""
+msgstr "Kryds CA version"
 
 #: crypt32.rc:83
 msgid "Serialized Signature Serial Number"
-msgstr ""
+msgstr "Serialiseret signatur serie nummer"
 
 #: crypt32.rc:84
 msgid "Principal Name"
-msgstr ""
+msgstr "Hovednavn"
 
 #: crypt32.rc:85
 msgid "Windows Product Update"
-msgstr ""
+msgstr "Windows produkt opdatering"
 
 #: crypt32.rc:86
 msgid "Enrollment Name Value Pair"
-msgstr ""
+msgstr "Indskrivningsnavn værdi par"
 
 #: crypt32.rc:87
 msgid "OS Version"
@@ -1434,23 +1434,23 @@ msgstr "Styresystemsversion"
 
 #: crypt32.rc:88
 msgid "Enrollment CSP"
-msgstr ""
+msgstr "Indskrivnings CSP"
 
 #: crypt32.rc:89
 msgid "CRL Number"
-msgstr ""
+msgstr "CRL nummer"
 
 #: crypt32.rc:90
 msgid "Delta CRL Indicator"
-msgstr ""
+msgstr "Delta CRL indikator"
 
 #: crypt32.rc:91
 msgid "Issuing Distribution Point"
-msgstr ""
+msgstr "Udstedende distributions punkt"
 
 #: crypt32.rc:92
 msgid "Freshest CRL"
-msgstr ""
+msgstr "Nyeste CRL"
 
 #: crypt32.rc:93
 msgid "Name Constraints"
@@ -1458,7 +1458,7 @@ msgstr "Navnebegrænsninger"
 
 #: crypt32.rc:94
 msgid "Policy Mappings"
-msgstr ""
+msgstr "Politik tilknytninger"
 
 #: crypt32.rc:95
 msgid "Policy Constraints"
@@ -1470,27 +1470,27 @@ msgstr "Krydscertifikat fordelingspoint"
 
 #: crypt32.rc:97
 msgid "Application Policies"
-msgstr ""
+msgstr "Applikation politikker"
 
 #: crypt32.rc:98
 msgid "Application Policy Mappings"
-msgstr ""
+msgstr "Applikation politik tilknytninger"
 
 #: crypt32.rc:99
 msgid "Application Policy Constraints"
-msgstr ""
+msgstr "Applikation politik begrænsninger"
 
 #: crypt32.rc:100
 msgid "CMC Data"
-msgstr ""
+msgstr "CMC data"
 
 #: crypt32.rc:101
 msgid "CMC Response"
-msgstr ""
+msgstr "CMC svar"
 
 #: crypt32.rc:102
 msgid "Unsigned CMC Request"
-msgstr ""
+msgstr "Usigneret CMC forespørgelse"
 
 #: crypt32.rc:103
 msgid "CMC Status Info"
@@ -1506,59 +1506,59 @@ msgstr "CMC attributter"
 
 #: crypt32.rc:106
 msgid "PKCS 7 Data"
-msgstr ""
+msgstr "PKCS 7 data"
 
 #: crypt32.rc:107
 msgid "PKCS 7 Signed"
-msgstr ""
+msgstr "PKCS 7 signeret"
 
 #: crypt32.rc:108
 msgid "PKCS 7 Enveloped"
-msgstr ""
+msgstr "PKCS 7 indpakket"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Signed Enveloped"
-msgstr ""
+msgstr "PKCS 7 signeret indpakning"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Digested"
-msgstr ""
+msgstr "PKCS 7 kontrolleret"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Encrypted"
-msgstr ""
+msgstr "PKCS 7 kodet"
 
 #: crypt32.rc:112
 msgid "Previous CA Certificate Hash"
-msgstr ""
+msgstr "Tidligere CA certifikat kontrolsum"
 
 #: crypt32.rc:113
 msgid "Virtual Base CRL Number"
-msgstr ""
+msgstr "Virtuel base CRL nummer"
 
 #: crypt32.rc:114
 msgid "Next CRL Publish"
-msgstr ""
+msgstr "Næste CRL udgivelse"
 
 #: crypt32.rc:115
 msgid "CA Encryption Certificate"
-msgstr ""
+msgstr "CA krypterings certifikat"
 
 #: crypt32.rc:116 cryptui.rc:145
 msgid "Key Recovery Agent"
-msgstr ""
+msgstr "Nøgle rednings agent"
 
 #: crypt32.rc:117
 msgid "Certificate Template Information"
-msgstr ""
+msgstr "Certifikat skabelon information"
 
 #: crypt32.rc:118
 msgid "Enterprise Root OID"
-msgstr ""
+msgstr "Virksomheds rod OID"
 
 #: crypt32.rc:119
 msgid "Dummy Signer"
-msgstr ""
+msgstr "Dummy underskriver"
 
 #: crypt32.rc:120
 msgid "Encrypted Private Key"
@@ -1566,43 +1566,43 @@ msgstr "Krypteret privatnøgle"
 
 #: crypt32.rc:121
 msgid "Published CRL Locations"
-msgstr ""
+msgstr "Oplyste CRL steder"
 
 #: crypt32.rc:122
 msgid "Enforce Certificate Chain Policy"
-msgstr ""
+msgstr "Kræv certifikat kæde politik"
 
 #: crypt32.rc:123
 msgid "Transaction Id"
-msgstr ""
+msgstr "Transaktionsid"
 
 #: crypt32.rc:124
 msgid "Sender Nonce"
-msgstr ""
+msgstr "Afsender engangskodeord"
 
 #: crypt32.rc:125
 msgid "Recipient Nonce"
-msgstr ""
+msgstr "Modtager engangskodeord"
 
 #: crypt32.rc:126
 msgid "Reg Info"
-msgstr ""
+msgstr "Reg info"
 
 #: crypt32.rc:127
 msgid "Get Certificate"
-msgstr ""
+msgstr "Hent certifikat"
 
 #: crypt32.rc:128
 msgid "Get CRL"
-msgstr ""
+msgstr "Hent CRL"
 
 #: crypt32.rc:129
 msgid "Revoke Request"
-msgstr ""
+msgstr "Tilbagekaldelses forespørgelse"
 
 #: crypt32.rc:130
 msgid "Query Pending"
-msgstr ""
+msgstr "Forespørgelse venter"
 
 #: crypt32.rc:131 cryptui.rc:92
 msgid "Certificate Trust List"
@@ -1610,11 +1610,11 @@ msgstr "Certifikat tillidsliste"
 
 #: crypt32.rc:132
 msgid "Archived Key Certificate Hash"
-msgstr ""
+msgstr "Arkiveret nøgle certifikat kontrolsum"
 
 #: crypt32.rc:133
 msgid "Private Key Usage Period"
-msgstr ""
+msgstr "Privat nøgle brugsperiode"
 
 #: crypt32.rc:134
 msgid "Client Information"
@@ -1622,123 +1622,123 @@ msgstr "Klientinformation"
 
 #: crypt32.rc:135
 msgid "Server Authentication"
-msgstr ""
+msgstr "Server autenfisering"
 
 #: crypt32.rc:136
 msgid "Client Authentication"
-msgstr ""
+msgstr "Klient autenfisering"
 
 #: crypt32.rc:137
 msgid "Code Signing"
-msgstr ""
+msgstr "Kode signering"
 
 #: crypt32.rc:138
 msgid "Secure Email"
-msgstr "Sikker email"
+msgstr "Sikker e-mail"
 
 #: crypt32.rc:139
 msgid "Time Stamping"
-msgstr ""
+msgstr "Tidsstempling"
 
 #: crypt32.rc:140
 msgid "Microsoft Trust List Signing"
-msgstr ""
+msgstr "Microsoft tillids liste signering"
 
 #: crypt32.rc:141
 msgid "Microsoft Time Stamping"
-msgstr ""
+msgstr "Microsoft tidsstempling"
 
 #: crypt32.rc:142
 msgid "IP security end system"
-msgstr ""
+msgstr "IP sikkerheds slutsystem"
 
 #: crypt32.rc:143
 msgid "IP security tunnel termination"
-msgstr ""
+msgstr "IP sikkerheds tunnel terminering"
 
 #: crypt32.rc:144
 msgid "IP security user"
-msgstr ""
+msgstr "IP sikkerheds bruger"
 
 #: crypt32.rc:145
 msgid "Encrypting File System"
-msgstr ""
+msgstr "Krypteret filsystem"
 
 #: crypt32.rc:146 cryptui.rc:130
 msgid "Windows Hardware Driver Verification"
-msgstr ""
+msgstr "Windows hardware driver verificering"
 
 #: crypt32.rc:147 cryptui.rc:131
 msgid "Windows System Component Verification"
-msgstr ""
+msgstr "Windwos system komponent verifikation"
 
 #: crypt32.rc:148 cryptui.rc:132
 msgid "OEM Windows System Component Verification"
-msgstr ""
+msgstr "OEM Windows system komponent verifikation"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Embedded Windows System Component Verification"
-msgstr ""
+msgstr "Indlejret windows system komponent verifikation"
 
 #: crypt32.rc:150 cryptui.rc:140
 msgid "Key Pack Licenses"
-msgstr ""
+msgstr "Nøgle pakke licens"
 
 #: crypt32.rc:151 cryptui.rc:141
 msgid "License Server Verification"
-msgstr ""
+msgstr "Licens server verifikation"
 
 #: crypt32.rc:152 cryptui.rc:143
 msgid "Smart Card Logon"
-msgstr ""
+msgstr "Smart card login"
 
 #: crypt32.rc:153 cryptui.rc:139
 msgid "Digital Rights"
-msgstr ""
+msgstr "Digitale rettigheder"
 
 #: crypt32.rc:154 cryptui.rc:135
 msgid "Qualified Subordination"
-msgstr ""
+msgstr "Kvalificeret underenhed"
 
 #: crypt32.rc:155 cryptui.rc:136
 msgid "Key Recovery"
-msgstr ""
+msgstr "Nøgle genskabelse"
 
 #: crypt32.rc:156 cryptui.rc:137
 msgid "Document Signing"
-msgstr ""
+msgstr "Dokument underskriver"
 
 #: crypt32.rc:157
 msgid "IP security IKE intermediate"
-msgstr ""
+msgstr "IP sikkerhed IKE mægler"
 
 #: crypt32.rc:158 cryptui.rc:129
 msgid "File Recovery"
-msgstr ""
+msgstr "Fil genoprettelse"
 
 #: crypt32.rc:159 cryptui.rc:134
 msgid "Root List Signer"
-msgstr ""
+msgstr "Hoved liste underskriver"
 
 #: crypt32.rc:160
 msgid "All application policies"
-msgstr ""
+msgstr "Alle applikations politikker"
 
 #: crypt32.rc:161 cryptui.rc:146
 msgid "Directory Service Email Replication"
-msgstr ""
+msgstr "Opslag service email replikering"
 
 #: crypt32.rc:162 cryptui.rc:142
 msgid "Certificate Request Agent"
-msgstr ""
+msgstr "Certifikat forespørger agent"
 
 #: crypt32.rc:163 cryptui.rc:138
 msgid "Lifetime Signing"
-msgstr ""
+msgstr "Livstid underskrift"
 
 #: crypt32.rc:164
 msgid "All issuance policies"
-msgstr ""
+msgstr "Alle udstedelses politikker"
 
 #: crypt32.rc:169
 msgid "Trusted Root Certification Authorities"
@@ -1750,7 +1750,7 @@ msgstr "Personlig"
 
 #: crypt32.rc:171
 msgid "Intermediate Certification Authorities"
-msgstr ""
+msgstr "Mellemliggende certifikation myndigheder"
 
 #: crypt32.rc:172
 msgid "Other People"
@@ -1766,11 +1766,11 @@ msgstr "Utroværdige certifikater"
 
 #: crypt32.rc:179
 msgid "KeyID="
-msgstr ""
+msgstr "Nøgle ID="
 
 #: crypt32.rc:180
 msgid "Certificate Issuer"
-msgstr ""
+msgstr "Certifikat udsteder"
 
 #: crypt32.rc:181
 msgid "Certificate Serial Number="
@@ -1782,7 +1782,7 @@ msgstr "Andet navn="
 
 #: crypt32.rc:183
 msgid "Email Address="
-msgstr "Email adresse="
+msgstr "E-mail adresse="
 
 #: crypt32.rc:184
 msgid "DNS Name="
@@ -1814,7 +1814,7 @@ msgstr "Ukendt nøgle brug"
 
 #: crypt32.rc:191
 msgid "Subject Type="
-msgstr ""
+msgstr "Emne type="
 
 #: crypt32.rc:192
 msgctxt "Certificate Authority"
@@ -1840,7 +1840,7 @@ msgstr "Information ikke tilgængelig"
 
 #: crypt32.rc:197
 msgid "Authority Info Access"
-msgstr ""
+msgstr "Myndighed info adgang"
 
 #: crypt32.rc:198
 msgid "Access Method="
@@ -1849,15 +1849,15 @@ msgstr "Adgangsmetode="
 #: crypt32.rc:199
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
-msgstr ""
+msgstr "OCSP"
 
 #: crypt32.rc:200
 msgid "CA Issuers"
-msgstr ""
+msgstr "CA udstedere"
 
 #: crypt32.rc:201
 msgid "Unknown Access Method"
-msgstr ""
+msgstr "Ukendt adgangsmetode"
 
 #: crypt32.rc:202
 msgid "Alternative Name"
@@ -1865,11 +1865,11 @@ msgstr "Alternativ navn"
 
 #: crypt32.rc:203
 msgid "CRL Distribution Point"
-msgstr ""
+msgstr "CRL distributions punkt"
 
 #: crypt32.rc:204
 msgid "Distribution Point Name"
-msgstr ""
+msgstr "Distribution punkt navn"
 
 #: crypt32.rc:205
 msgid "Full Name"
@@ -1885,23 +1885,23 @@ msgstr "CRL grund="
 
 #: crypt32.rc:208
 msgid "CRL Issuer"
-msgstr ""
+msgstr "CRL udsteder"
 
 #: crypt32.rc:209
 msgid "Key Compromise"
-msgstr ""
+msgstr "Nøgle kompromiteret"
 
 #: crypt32.rc:210
 msgid "CA Compromise"
-msgstr ""
+msgstr "CA kompromiteret"
 
 #: crypt32.rc:211
 msgid "Affiliation Changed"
-msgstr ""
+msgstr "Tilknytning ændring"
 
 #: crypt32.rc:212
 msgid "Superseded"
-msgstr ""
+msgstr "Afløst"
 
 #: crypt32.rc:213
 msgid "Operation Ceased"
@@ -1909,7 +1909,7 @@ msgstr "Operation ophørt"
 
 #: crypt32.rc:214
 msgid "Certificate Hold"
-msgstr ""
+msgstr "Certifikat hold"
 
 #: crypt32.rc:215
 msgid "Financial Information="
@@ -1941,15 +1941,15 @@ msgstr "Digital signatur"
 
 #: crypt32.rc:222
 msgid "Non-Repudiation"
-msgstr ""
+msgstr "Uafviselig"
 
 #: crypt32.rc:223
 msgid "Key Encipherment"
-msgstr ""
+msgstr "Nøgle indkodning"
 
 #: crypt32.rc:224
 msgid "Data Encipherment"
-msgstr ""
+msgstr "Data indkodning"
 
 #: crypt32.rc:225
 msgid "Key Agreement"
@@ -1957,35 +1957,35 @@ msgstr "Nøgle aftale"
 
 #: crypt32.rc:226
 msgid "Certificate Signing"
-msgstr ""
+msgstr "Certifikat underskrift"
 
 #: crypt32.rc:227
 msgid "Off-line CRL Signing"
-msgstr ""
+msgstr "Offline CRL underskrift"
 
 #: crypt32.rc:228
 msgid "CRL Signing"
-msgstr ""
+msgstr "CRL underskrift"
 
 #: crypt32.rc:229
 msgid "Encipher Only"
-msgstr ""
+msgstr "Kun krypter"
 
 #: crypt32.rc:230
 msgid "Decipher Only"
-msgstr ""
+msgstr "Kun dekrypter"
 
 #: crypt32.rc:231
 msgid "SSL Client Authentication"
-msgstr ""
+msgstr "SSL klient authentificering"
 
 #: crypt32.rc:232
 msgid "SSL Server Authentication"
-msgstr ""
+msgstr "SSL server authentificering"
 
 #: crypt32.rc:233
 msgid "S/MIME"
-msgstr ""
+msgstr "S/MIME"
 
 #: crypt32.rc:234
 msgid "Signature"
@@ -1993,15 +1993,15 @@ msgstr "Signatur"
 
 #: crypt32.rc:235
 msgid "SSL CA"
-msgstr ""
+msgstr "SSL CA"
 
 #: crypt32.rc:236
 msgid "S/MIME CA"
-msgstr ""
+msgstr "S/MIME CA"
 
 #: crypt32.rc:237
 msgid "Signature CA"
-msgstr ""
+msgstr "Signatur CA"
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
@@ -2009,23 +2009,23 @@ msgstr "Certifikatpolitik"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr ""
+msgstr "Politik identifikation: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Politik kvalificering info"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Politik kvalificering id="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Kvalifikator"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Notits reference"
 
 #: cryptdlg.rc:35
 msgid "Organization="
@@ -2123,6 +2123,8 @@ msgstr "Tilføj formål"
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
 msgstr ""
+"Tilføj objekt identifikator (OID) for det cerifikat formål du ønsker at "
+"tilføje"
 
 #: cryptui.rc:265 cryptui.rc:66
 msgid "Select Certificate Store"
@@ -2161,8 +2163,8 @@ msgstr ""
 "certifikatlager.\n"
 "\n"
 "Et certifikat kan bruges til at identificere dig eller den computer, som du "
-"kommunikerer med.  Det kan også bruges til godkendelse og til at underskrive "
-"beskeder.  Certifikatlagre er samlinger af certifikater, certifikat "
+"kommunikerer med. Det kan også bruges til godkendelse og til at underskrive "
+"beskeder. Certifikatlagre er samlinger af certifikater, certifikat "
 "tilbagekaldelseslister og certifikat troværdighedslister.\n"
 "\n"
 "For at fortsætte, klik næste."
@@ -2189,11 +2191,11 @@ msgstr "Kryptografisk meddelelses syntaks standard/PKCS #7 meddelelse (*.p7b)"
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
-msgstr ""
+msgstr "Personlig information udveksling/PKCS #12 (*.pfx; *.p12)"
 
 #: cryptui.rc:300 cryptui.rc:78 cryptui.rc:159
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr ""
+msgstr "Microsoft serialiseret certifikat lager (*.sst)"
 
 #: cryptui.rc:308
 msgid ""
@@ -2213,7 +2215,7 @@ msgstr "&Placer alle certifikater i følgende lager:"
 
 #: cryptui.rc:322
 msgid "Completing the Certificate Import Wizard"
-msgstr "Færdiggører certifikat importeringsguiden"
+msgstr "Færdiggør certifikat importeringsguiden"
 
 #: cryptui.rc:324
 msgid "You have successfully completed the Certificate Import Wizard."
@@ -2275,11 +2277,11 @@ msgstr "&Certifikatformål:"
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
 msgid "Certificate Export Wizard"
-msgstr "Certifikateksporteringsguide"
+msgstr "Certifikat eksporteringsguide"
 
 #: cryptui.rc:370
 msgid "Welcome to the Certificate Export Wizard"
-msgstr "Velkommen til certifikateksporteringsguiden"
+msgstr "Velkommen til certifikat eksporteringsguide"
 
 #: cryptui.rc:373
 msgid ""
@@ -2298,8 +2300,8 @@ msgstr ""
 "certifikatlager til en fil.\n"
 "\n"
 "Et certifikat kan blive brugt til at identificere dig eller den computer, "
-"som du kommunikerer med.  Det kan også bruges til godkendelse og til at "
-"underskrive beskeder.  Certifikatlagre er samlinger af certifikater, "
+"som du kommunikerer med. Det kan også bruges til godkendelse og til at "
+"underskrive beskeder. Certifikatlagre er samlinger af certifikater, "
 "certifikat tilbagekaldelseslister og certifikat troværdighedslister.\n"
 "\n"
 "For at fortsætte, klik næste."
@@ -2338,11 +2340,11 @@ msgstr "&DER-kodet X.509 (*.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr ""
+msgstr "Ba&se64 kodet X.509 (*.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr ""
+msgstr "Kryptografisk meddelelse syntaks standard/PKCS #7 meddelelse (*.p7b)"
 
 #: cryptui.rc:411
 msgid "&Include all certificates in the certification path if possible"
@@ -2350,15 +2352,15 @@ msgstr "&Inkluder alle certifikater i certifikationstien, hvis muligt"
 
 #: cryptui.rc:413
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr ""
+msgstr "&Personlig information udveksling/PKCS #12 (*.pfx)"
 
 #: cryptui.rc:415
 msgid "Incl&ude all certificates in the certification path if possible"
-msgstr ""
+msgstr "Inkluder alle certifikater i certifikat stilisten hvis muligt"
 
 #: cryptui.rc:417
 msgid "&Enable strong encryption"
-msgstr ""
+msgstr "&Aktiver stærk kyptering"
 
 #: cryptui.rc:419
 msgid "Delete the private &key if the export is successful"
@@ -2402,7 +2404,7 @@ msgstr "Dette certifikat kunne ikke valideres til et troværdigt rodcertifikat."
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
-msgstr "Dette certifikat's udsteder kunne ikke findes."
+msgstr "Dette certifikats udsteder kunne ikke findes."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
@@ -2502,15 +2504,15 @@ msgstr "Offentlig nøgle"
 
 #: cryptui.rc:58
 msgid "%1 (%2!d! bits)"
-msgstr ""
+msgstr "%1 (%2!d! bits)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
-msgstr ""
+msgstr "SHA1 hash"
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
-msgstr ""
+msgstr "Udvidet nøgle brug (egenskab)"
 
 #: cryptui.rc:61
 msgid "Friendly name"
@@ -2526,11 +2528,11 @@ msgstr "Certifikat egenskaber"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr ""
+msgstr "Angiv venligst et OID på formen 1.2.3.4"
 
 #: cryptui.rc:65
 msgid "The OID you entered already exists."
-msgstr ""
+msgstr "OID'et du angav findes allerede."
 
 #: cryptui.rc:67
 msgid "Please select a certificate store."
@@ -2566,23 +2568,23 @@ msgstr ""
 
 #: cryptui.rc:74
 msgid "X.509 Certificate (*.cer; *.crt)"
-msgstr ""
+msgstr "X.509 certifikater (*.cer; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
-msgstr ""
+msgstr "Personlig informationsudveksling (*.pfx; *.p12)"
 
 #: cryptui.rc:76 cryptui.rc:155
 msgid "Certificate Revocation List (*.crl)"
-msgstr ""
+msgstr "Certifikat tilbagekaldelsesliste (*.crl)"
 
 #: cryptui.rc:77 cryptui.rc:156
 msgid "Certificate Trust List (*.stl)"
-msgstr ""
+msgstr "Certificat tillids liste (*.stl)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 meddelelser (*.spc; *.p7b)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -2626,11 +2628,11 @@ msgstr "Certifikat tilbagekaldelsesliste"
 
 #: cryptui.rc:93
 msgid "CMS/PKCS #7 Message"
-msgstr ""
+msgstr "CMS/PKCS #7 meddelelse"
 
 #: cryptui.rc:94
 msgid "Personal Information Exchange"
-msgstr ""
+msgstr "Personlig informations udveksling"
 
 #: cryptui.rc:96
 msgid "The import was successful."
@@ -2834,19 +2836,19 @@ msgstr "Filen findes allerede. Vil du erstatte den?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr ""
+msgstr "DER-kodet binær X.509 (*.cer)"
 
 #: cryptui.rc:154
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr ""
+msgstr "Base64 kodet X.509 (*.cer)"
 
 #: cryptui.rc:157
 msgid "CMS/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 meddelelse (*.p7b)"
 
 #: cryptui.rc:158
 msgid "Personal Information Exchange (*.pfx)"
-msgstr ""
+msgstr "Personlig informations udveksling (*.pfx)"
 
 #: cryptui.rc:160
 msgid "File Format"
@@ -2918,7 +2920,7 @@ msgstr "Standard MidiOut Enhed"
 
 #: dinput.rc:40
 msgid "Configure Devices"
-msgstr "Konfigurer enheder"
+msgstr "Konfigurér enheder"
 
 #: dinput.rc:45
 msgid "Reset"
@@ -2958,7 +2960,7 @@ msgstr "Regional indstilling"
 
 #: dxdiagn.rc:26
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr "%1!u!MB brugt, %2!d!MB ledig"
+msgstr "%1!u!MB brugt, %2!u!MB ledig"
 
 #: gdi32.rc:25
 msgid "Western"
@@ -3018,7 +3020,7 @@ msgstr "Kinesisk BIG5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Hangul(Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
@@ -3038,7 +3040,7 @@ msgstr "Importer valgte"
 
 #: gphoto2.rc:32
 msgid "Preview"
-msgstr "Forhåndsvisning"
+msgstr "Forhånd visning"
 
 #: gphoto2.rc:33
 msgid "Import All"
@@ -3287,7 +3289,7 @@ msgstr "Historik"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr "Du kan slette cachede sider, cookies og andet data."
+msgstr "Du kan slette gemte sider, cookies og andet data."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
@@ -3307,7 +3309,7 @@ msgid ""
 "Cached copies of webpages, images and certificates."
 msgstr ""
 "Midlertidige internet filer\n"
-"Cachede kopier af sider, billeder og certifikater."
+"Gemte kopier af sider, billeder og certifikater."
 
 #: inetcpl.rc:70
 msgid ""
@@ -3373,7 +3375,7 @@ msgstr "Internet indstillinger"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
-msgstr "Konfigurer Wine Internet Browser og relaterede indstillinger"
+msgstr "Konfigurér Wine Internet Browser og relaterede indstillinger"
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
@@ -3393,7 +3395,7 @@ msgstr "&Lav"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr "Medium"
+msgstr "Mellem"
 
 #: inetcpl.rc:35
 msgid "Increased"
@@ -3413,7 +3415,7 @@ msgstr "Ugyldig procedure kald eller argument"
 
 #: jscript.rc:27
 msgid "Subscript out of range"
-msgstr "Indekset er uden for rækkevidde"
+msgstr "Indekset er uden for grænserne"
 
 #: jscript.rc:28
 msgid "Object required"
@@ -3452,10 +3454,8 @@ msgid "Expected ')'"
 msgstr "Forventet ')'"
 
 #: jscript.rc:37
-#, fuzzy
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "Ugyldig parameter.\n"
+msgstr "Ugyldig karakter"
 
 #: jscript.rc:38
 msgid "Unterminated string constant"
@@ -3827,15 +3827,15 @@ msgstr "For mange semaforer.\n"
 
 #: winerror.mc:381
 msgid "Exclusive semaphore already owned.\n"
-msgstr "Eksklusive Semaforer er allerede tildelt ejer.\n"
+msgstr "Eksklusiv semafor er allerede tildelt ejer.\n"
 
 #: winerror.mc:386
 msgid "Semaphore is set.\n"
-msgstr "Semaforere er indstillet.\n"
+msgstr "Semafor er sat.\n"
 
 #: winerror.mc:391
 msgid "Too many semaphore requests.\n"
-msgstr "Alt for mange Semaforere anmodninger.\n"
+msgstr "Alt for mange semafor anmodninger.\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time.\n"
@@ -3843,11 +3843,11 @@ msgstr "Ugyldig ved interrupt tid.\n"
 
 #: winerror.mc:401
 msgid "Semaphore owner died.\n"
-msgstr "Semaforernes ejer døde.\n"
+msgstr "Semaforens ejer døde.\n"
 
 #: winerror.mc:406
 msgid "Semaphore user limit.\n"
-msgstr "Semaforernes bruger begrænset.\n"
+msgstr "Semaforens bruger begrænsning.\n"
 
 #: winerror.mc:411
 msgid "Insert disk for drive %1.\n"
@@ -3859,7 +3859,7 @@ msgstr "Drev låst.\n"
 
 #: winerror.mc:421
 msgid "Broken pipe.\n"
-msgstr "ødelagt rør.\n"
+msgstr "Ødelagt rør.\n"
 
 #: winerror.mc:426
 msgid "Open failed.\n"
@@ -3895,7 +3895,7 @@ msgstr "Kald til funktion, ikke implementeret.\n"
 
 #: winerror.mc:471
 msgid "Semaphore timeout.\n"
-msgstr "Semaforernes tid udløb.\n"
+msgstr "Semaforens ventetid udløb.\n"
 
 #: winerror.mc:476
 msgid "Insufficient buffer.\n"
@@ -3927,7 +3927,7 @@ msgstr "Ingen Børn at vente på.\n"
 
 #: winerror.mc:511
 msgid "Child process has not completed.\n"
-msgstr "Børne proces er ikke færdig.\n"
+msgstr "Børneproces er ikke færdig.\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle.\n"
@@ -3946,7 +3946,7 @@ msgid "Drive is already JOINed.\n"
 msgstr "Drev er allerede JOINed.\n"
 
 #: winerror.mc:541
-msgid "Drive is already SUBSTed.\n"
+msgid "Drive is already SUBST-ed.\n"
 msgstr "Drev er allerede erstattet.\n"
 
 #: winerror.mc:546
@@ -4095,7 +4095,7 @@ msgstr "Ugyldigt flag nummer.\n"
 
 #: winerror.mc:726
 msgid "Semaphore name not found.\n"
-msgstr "Semaforernes  navn ikke fundet.\n"
+msgstr "Semaforens navn blev ikke fundet.\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1.\n"
@@ -4295,7 +4295,7 @@ msgstr "Ugyldig adresse.\n"
 
 #: winerror.mc:976
 msgid "Arithmetic overflow.\n"
-msgstr "Arimetisk overløb.\n"
+msgstr "Aritmetisk overløb.\n"
 
 #: winerror.mc:981
 msgid "Pipe connected.\n"
@@ -4520,11 +4520,11 @@ msgstr "Tjeneste afhængighed slettet.\n"
 #: winerror.mc:1256
 msgid "Boot already accepted as last-good config.\n"
 msgstr ""
-"Boot er allerede accepteret som sidst kendte, fungerende konfiguration.\n"
+"Genstart er allerede accepteret som sidst kendte, fungerende konfiguration.\n"
 
 #: winerror.mc:1261
 msgid "Service not started since last boot.\n"
-msgstr "Tjeneste ikke startet siden sidste boot.\n"
+msgstr "Tjeneste ikke startet siden sidste genstart.\n"
 
 #: winerror.mc:1266
 msgid "Duplicate service name.\n"
@@ -4676,7 +4676,7 @@ msgstr "Ikke nok server hukommelse.\n"
 
 #: winerror.mc:1451
 msgid "Possible deadlock.\n"
-msgstr "Mulige deadlock.\n"
+msgstr "Mulig evig løkke.\n"
 
 #: winerror.mc:1456
 msgid "Incorrect alignment.\n"
@@ -4752,7 +4752,7 @@ msgstr "Magasinet er ikke tilstede.\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization.\n"
-msgstr ""
+msgstr "Enheden skal reinitaliseres.\n"
 
 #: winerror.mc:1551
 msgid "The device requires cleaning.\n"
@@ -4812,11 +4812,11 @@ msgstr "Journalen er ikke aktiv.\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found.\n"
-msgstr ""
+msgstr "Potentiel ens fil fundet.\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted.\n"
-msgstr ""
+msgstr "Journal indgangen blev slettet.\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name.\n"
@@ -5024,7 +5024,7 @@ msgstr "Kun understøttet når forbundet.\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed.\n"
-msgstr ""
+msgstr "Udfør handling selvom ingenting blev ændret.\n"
 
 #: winerror.mc:1896
 msgid "The user profile is invalid.\n"
@@ -5080,11 +5080,11 @@ msgstr "Kan ikke deaktivere obligatorisk gruppe.\n"
 
 #: winerror.mc:1961
 msgid "No logon servers available.\n"
-msgstr "Ingen logon-servere til rådighed.\n"
+msgstr "Ingen login servere til rådighed.\n"
 
 #: winerror.mc:1966
 msgid "No such logon session.\n"
-msgstr "Der findes ikke et sådan logonsession.\n"
+msgstr "Der findes ikke en sådan login session.\n"
 
 #: winerror.mc:1971
 msgid "No such privilege.\n"
@@ -5140,7 +5140,7 @@ msgstr "Kodeordsbegrænsning.\n"
 
 #: winerror.mc:2036
 msgid "Logon failure.\n"
-msgstr "Logonfejl.\n"
+msgstr "Login fejl.\n"
 
 #: winerror.mc:2041
 msgid "Account restriction.\n"
@@ -5280,7 +5280,7 @@ msgstr "Forkert deskriptor format.\n"
 
 #: winerror.mc:2211
 msgid "Not a logon process.\n"
-msgstr "Ikke en logonproces.\n"
+msgstr "Ikke en login proces.\n"
 
 #: winerror.mc:2216
 msgid "Logon session ID exists.\n"
@@ -5292,11 +5292,11 @@ msgstr "Ukendt godkendelsespakke.\n"
 
 #: winerror.mc:2226
 msgid "Bad logon session state.\n"
-msgstr "Forkert logonsessions tilstand.\n"
+msgstr "Forkert login session tilstand.\n"
 
 #: winerror.mc:2231
 msgid "Logon session ID collision.\n"
-msgstr "Logon session ID kollision.\n"
+msgstr "Login session ID kollision.\n"
 
 #: winerror.mc:2236
 msgid "Invalid logon type.\n"
@@ -5448,7 +5448,7 @@ msgstr "Ugyldig DWP handle.\n"
 
 #: winerror.mc:2426
 msgid "Can't create top-level child window.\n"
-msgstr "Kan ikke oprette top-niveau børne vindue.\n"
+msgstr "Kan ikke oprette top-niveau børnevindue.\n"
 
 #: winerror.mc:2431
 msgid "Can't find window class.\n"
@@ -5488,7 +5488,7 @@ msgstr "Private dialog indeks.\n"
 
 #: winerror.mc:2476
 msgid "List box ID not found.\n"
-msgstr "Listbox ID ikke fundet.\n"
+msgstr "Liste boks ID ikke fundet.\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters.\n"
@@ -5552,7 +5552,7 @@ msgstr "Hook procedure ikke installeret.\n"
 
 #: winerror.mc:2556
 msgid "Invalid list box message.\n"
-msgstr "Ugyldig listbox besked.\n"
+msgstr "Ugyldig liste boks besked.\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent.\n"
@@ -5560,7 +5560,7 @@ msgstr "Ugyldig LB_SETCOUNT sendt.\n"
 
 #: winerror.mc:2566
 msgid "No tab stops on this list box.\n"
-msgstr "Ingen tabstops på denne listbox.\n"
+msgstr "Ingen tabstops på denne liste boks.\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread.\n"
@@ -5568,7 +5568,7 @@ msgstr "Kan ikke ødelægge objekt ejet af en anden tråd.\n"
 
 #: winerror.mc:2576
 msgid "Child window menus not allowed.\n"
-msgstr "Børne vindue menuer ikke tilladt.\n"
+msgstr "Børnevindue menuer ikke tilladt.\n"
 
 #: winerror.mc:2581
 msgid "Window has no system menu.\n"
@@ -5576,7 +5576,7 @@ msgstr "Vindue har ikke en system menu.\n"
 
 #: winerror.mc:2586
 msgid "Invalid message box style.\n"
-msgstr "Ugyldig messagebox stil.\n"
+msgstr "Ugyldig meddelelses boks stil.\n"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter.\n"
@@ -5592,7 +5592,7 @@ msgstr "Vindue handles har forskellige forældre.\n"
 
 #: winerror.mc:2606
 msgid "Not a child window.\n"
-msgstr "Ikke et børne vindue.\n"
+msgstr "Ikke et børnevindue.\n"
 
 #: winerror.mc:2611
 msgid "Invalid GW command.\n"
@@ -5604,7 +5604,7 @@ msgstr "Ugyldig tråd ID.\n"
 
 #: winerror.mc:2621
 msgid "Not an MDI child window.\n"
-msgstr "Ikke et MDI child vindue.\n"
+msgstr "Ikke et MDI børnevindue.\n"
 
 #: winerror.mc:2626
 msgid "Popup menu already active.\n"
@@ -5744,7 +5744,7 @@ msgstr "Produkt afinstalleret.\n"
 
 #: winerror.mc:2796
 msgid "Invalid query syntax.\n"
-msgstr "Ugyldig forespørgelses syntaks.\n"
+msgstr "Ugyldig forespørgelse syntaks.\n"
 
 #: winerror.mc:2801
 msgid "Invalid field.\n"
@@ -6104,7 +6104,7 @@ msgstr "RPC intern-fejl.\n"
 
 #: winerror.mc:3251
 msgid "RPC divide-by-zero.\n"
-msgstr "RPC divideret-med-nul.\n"
+msgstr "RPC divideret med nul.\n"
 
 #: winerror.mc:3256
 msgid "Address error.\n"
@@ -6112,15 +6112,15 @@ msgstr "Adresse fejl.\n"
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero.\n"
-msgstr ""
+msgstr "Flydende tal divideret med nul.\n"
 
 #: winerror.mc:3266
 msgid "Floating-point underflow.\n"
-msgstr ""
+msgstr "Flydende tal underløb.\n"
 
 #: winerror.mc:3271
 msgid "Floating-point overflow.\n"
-msgstr ""
+msgstr "Flydende tal overløb.\n"
 
 #: winerror.mc:3276
 msgid "No more entries.\n"
@@ -6152,7 +6152,7 @@ msgstr "Kan ikke få fat i kald handle.\n"
 
 #: winerror.mc:3311
 msgid "Null reference pointer.\n"
-msgstr ""
+msgstr "Null reference pegepind.\n"
 
 #: winerror.mc:3316
 msgid "Enumeration value out of range.\n"
@@ -6172,7 +6172,7 @@ msgstr "Ugyldig bruger buffer.\n"
 
 #: winerror.mc:3336
 msgid "Unrecognised media.\n"
-msgstr "Ukendt media.\n"
+msgstr "Ukendt medie.\n"
 
 #: winerror.mc:3341
 msgid "No trust secret.\n"
@@ -6192,7 +6192,7 @@ msgstr "Fejl i tillidsforholdet.\n"
 
 #: winerror.mc:3361
 msgid "Trust logon failure.\n"
-msgstr "Tillids logon fejl.\n"
+msgstr "Tillids login fejl.\n"
 
 #: winerror.mc:3366
 msgid "RPC call already in progress.\n"
@@ -6667,6 +6667,35 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
+"Windows Installer %s\n"
+"\n"
+"Brug:\n"
+"msiexec command {krævet parameter} [valgfrit parameter]\n"
+"\n"
+"Installer et produkt:\n"
+"\t/i {pakke|produkt_kode} [egenskab]\n"
+"\t/package {pakke|produkt_kode} [egenskab]\n"
+"\t/a pakke [egenskab]\n"
+"Reparer en installation:\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {pakke|produkt_kode}\n"
+"Fjern et produkt:\n"
+"\t/uninstall {pakke|produkt_kode} [egenskab]\n"
+"\t/x {pakke|produkt_kode} [egenskab]\n"
+"Udbyd et produkt:\n"
+"\t/j[u|m] pakke [/t transform] [/g sprogid]\n"
+"Tilføj en rettelse:\n"
+"\t/p rettelsespakke [egenskab]\n"
+"\t/p rettelsespakke /a pakke [egenskab]\n"
+"Log og UI modifikatorer for ovenstående kommandoer:\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfil\n"
+"\t/q{|n|b|r|f|n+|b+|b-}\n"
+"Registrér MSI service:\n"
+"\t/y\n"
+"Afregistrér MSI service:\n"
+"\t/z\n"
+"Vis denne hjælp:\n"
+"\t/help\n"
+"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
@@ -6926,7 +6955,7 @@ msgstr "Radio knap"
 
 #: oleacc.rc:73
 msgid "combo box"
-msgstr "Kombo boks"
+msgstr "Kombi boks"
 
 #: oleacc.rc:74
 msgid "drop down"
@@ -7107,11 +7136,11 @@ msgid ""
 "control."
 msgstr ""
 "Filen ser ikke ud til at være et gyldig OLE modul. Kunne ikke registrere OLE "
-"control'en."
+"kontrol."
 
 #: oledlg.rc:29
 msgid "Add Control"
-msgstr "Tilføj control"
+msgstr "Tilføj kontrol"
 
 #: oledlg.rc:34
 msgid "Inserts the contents of the clipboard into your document as %s."
@@ -7139,7 +7168,7 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"Indsætter indholdet fra udklipsholderen ind i dokumentet som %s. Dataen er "
+"Indsætter indholdet fra udklipsholderen ind i dokumentet som %s. Data er "
 "koblet til kildefilen så ændringer også sker i dit dokument."
 
 #: oledlg.rc:38
@@ -7240,7 +7269,7 @@ msgstr "Kopierer filer..."
 
 #: setupapi.rc:42
 msgid "Destination:"
-msgstr ""
+msgstr "Mål:"
 
 #: setupapi.rc:49
 msgid "Files Needed"
@@ -7312,7 +7341,7 @@ msgstr "&Vis kildekode"
 
 #: shdoclc.rc:53
 msgid "&Encoding"
-msgstr "K&oding"
+msgstr "K&odning"
 
 #: shdoclc.rc:55
 msgid "Pr&int"
@@ -7403,7 +7432,7 @@ msgstr "&Række"
 
 #: shdoclc.rc:104
 msgid "&Column"
-msgstr "&Kolone"
+msgstr "&Kolonne"
 
 #: shdoclc.rc:105
 msgid "&Table"
@@ -7664,7 +7693,7 @@ msgstr "&Afslut"
 
 #: shell32.rc:127
 msgid "&About Control Panel"
-msgstr "&Om Kontrolpanelet..."
+msgstr "&Om Kontrolpanelet"
 
 #: shell32.rc:270 shell32.rc:285
 msgid "Browse for Folder"
@@ -7672,7 +7701,7 @@ msgstr "Søg efter mappe"
 
 #: shell32.rc:290
 msgid "Folder:"
-msgstr ""
+msgstr "Mappe:"
 
 #: shell32.rc:296
 msgid "&Make New Folder"
@@ -7818,7 +7847,7 @@ msgstr "Start op"
 
 #: shell32.rc:204
 msgid "Start Menu"
-msgstr ""
+msgstr "Start menu"
 
 #: shell32.rc:205
 msgid "My Music"
@@ -7835,7 +7864,7 @@ msgstr "Skrivebord"
 
 #: shell32.rc:208
 msgid "NetHood"
-msgstr ""
+msgstr "Nabonetværk"
 
 #: shell32.rc:209
 msgid "Templates"
@@ -7843,15 +7872,15 @@ msgstr "Skabeloner"
 
 #: shell32.rc:210
 msgid "PrintHood"
-msgstr ""
+msgstr "Printnetværk"
 
 #: shell32.rc:211 winhlp32.rc:45
 msgid "History"
-msgstr ""
+msgstr "Historie"
 
 #: shell32.rc:212
 msgid "Program Files"
-msgstr ""
+msgstr "Programmer"
 
 #: shell32.rc:214
 msgid "My Pictures"
@@ -8045,7 +8074,7 @@ msgstr "Program Filer (*.exe)"
 #: shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
 msgstr ""
-"Der er ikke noget Windows program, konfigureret til at åbne denne type fil."
+"Der er ikke konfigureret noget Windows program til at åbne denne type af fil."
 
 #: shell32.rc:243
 msgid "Are you sure you wish to permanently delete '%1'?"
@@ -8106,7 +8135,7 @@ msgstr ""
 "\n"
 "Wine udgives i håb om at det er nyttigt, men UDEN NOGEN GARANTI; ikke engang "
 "den antydede garanti om HANDELSEGNETHED eller EGNETHED TIL ET SPECIELT "
-"FORMÅL.  Se «GNU Lesser General Public License» for flere detaljer.\n"
+"FORMÅL. Se «GNU Lesser General Public License» for flere detaljer.\n"
 "\n"
 "Du skal have modtaget et eksemplar af «GNU Lesser General Public License» "
 "sammen med dette program; hvis ikke, skriv til: the Free Software "
@@ -8402,7 +8431,7 @@ msgstr ""
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
-"Ugyldig MCI enheds ID. Brug ID'et som returneres når MCI-enhetdn åbnes."
+"Ugyldig MCI enheds ID. Brug ID'et som returneres når MCI-enheden åbnes."
 
 #: winmm.rc:57
 msgid "The driver cannot recognize the specified command parameter."
@@ -8867,7 +8896,7 @@ msgstr "&filnavn:"
 
 #: winspool.rc:28
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "Filen findes allerede.  Vælg «OK» for at overskrive den."
+msgstr "Filen findes allerede. Vælg «OK» for at overskrive den."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -9055,7 +9084,7 @@ msgstr "Lokal fejl"
 
 #: wldap32.rc:110
 msgid "Encoding Error"
-msgstr "Kodings fejl"
+msgstr "Kodnings fejl"
 
 #: wldap32.rc:111
 msgid "Decoding Error"
@@ -9067,7 +9096,7 @@ msgstr "Tidsafbrud"
 
 #: wldap32.rc:113
 msgid "Auth Unknown"
-msgstr "Ukendt autentikering"
+msgstr "Ukendt autentificering"
 
 #: wldap32.rc:114
 msgid "Filter Error"
@@ -9146,6 +9175,24 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - Viser eller ændrer fil attributer.\n"
+"\n"
+"Syntaks:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [drev:][sti][filnavn]\n"
+"       [/S [/D]]\n"
+"\n"
+"Hvor:\n"
+"\n"
+"  +   Sætter en attribut.\n"
+"  -   Nulstiller en attribut.\n"
+"  R   Skrivebeskyttet fil attribut.\n"
+"  A   Arkiv fil attribut.\n"
+"  S   System fil attribut.\n"
+"  H   Skjult fil attribut.\n"
+"  [drev:][sti][filnavn]\n"
+"      Specificer en fil eller filer som attrib skal behandle.\n"
+"  /S  Processer matchende filer i den nuværende mappe og undermapper.\n"
+"  /D  Processer også mapper.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -9177,7 +9224,7 @@ msgstr "&Altid øverst"
 
 #: clock.rc:42
 msgid "&About Clock"
-msgstr "&Om Ur..."
+msgstr "&Om Ur"
 
 #: clock.rc:48
 msgid "Clock"
@@ -9223,7 +9270,7 @@ msgstr "COPY <filnavn> kopierer en fil.\n"
 
 #: cmd.rc:46
 msgid "CTTY changes the input/output device.\n"
-msgstr "CTTY ændrer input/output enheden\n"
+msgstr "CTTY ændrer input/output enheden.\n"
 
 #: cmd.rc:47
 msgid "DATE shows or changes the system date.\n"
@@ -9289,7 +9336,7 @@ msgid ""
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
-"GOTO-kommandoen flytter kørslen til et andet sted i en batchfil.\n"
+"GOTO kommandoen flytter kørslen til et andet sted i en batchfil.\n"
 "\n"
 "Etiketten som er destination til GOTO kan være op til 255 tegn langt, men "
 "må\n"
@@ -9449,8 +9496,7 @@ msgid ""
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
 "En kommandolinje som begynder med REM (efterfulgt af et mellemrum)\n"
-"udfører ingen handling, og kan derfor bruges som kommentar i en batch\n"
-"fil.\n"
+"udfører ingen handling, og kan derfor bruges som kommentar i en batchfil.\n"
 
 #: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
@@ -9495,7 +9541,7 @@ msgstr ""
 "\n"
 "SET <variabel>=<værdi>\n"
 "\n"
-"<variabel> og <værdi> er tekststrenge. Der må ikke være mellemrum\n"
+"hvor <variabel> og <værdi> er tekststrenge. Der må ikke være mellemrum\n"
 "før lighedstegnet, og variabelnavnet kan heller ikke indeholde mellemrum.\n"
 "\n"
 "I Wine er miljøvariablene i det underliggende operativsystemet\n"
@@ -9554,7 +9600,7 @@ msgstr "TIME sætter eller viser systemets tid.\n"
 
 #: cmd.rc:202
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr "TITLE <streng> angiver titelen for CMD-vinduet.\n"
+msgstr "TITLE <streng> angiver titlen for kommando vinduet.\n"
 
 #: cmd.rc:206
 msgid ""
@@ -9586,7 +9632,7 @@ msgstr ""
 
 #: cmd.rc:218
 msgid "VER displays the version of cmd you are running.\n"
-msgstr "VER viser CMD's versionnummer\n"
+msgstr "VER viser hvilken version af cmd du kører.\n"
 
 #: cmd.rc:220
 msgid "VOL shows the volume label of a disk device.\n"
@@ -9597,6 +9643,8 @@ msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
+"ENDLOCAL afslutter en lokal ændring af miljø variable i en batcfil\n"
+"som blev startet af en foregående SETLOCAL.\n"
 
 #: cmd.rc:232
 msgid ""
@@ -9607,6 +9655,13 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL starter en lokal ændring af miljø variable i en batchfil.\n"
+"\n"
+"Miljø variable ændringer gjort efter en SETLOCAL er lokale i en batchfil, "
+"og\n"
+"er aktive indtil den næste ENDLOCAL bliver mødt eller slutning af filen,\n"
+"hvad der end kommer først. På dette tidspunkt genskabes tidligere miljø\n"
+"variable værdier.\n"
 
 #: cmd.rc:235
 msgid ""
@@ -9633,7 +9688,7 @@ msgid ""
 msgstr ""
 "ASSOC viser eller ændrer filendelse tilknytninger.\n"
 "\n"
-"Syntaks: ASSOC [.ext[=[filtype]]]\n"
+"Syntaks: ASSOC [.endelse[=[filtype]]]\n"
 "\n"
 "ASSOC uden parametre viser de nuværende tilknytninger.\n"
 "Hvis der kun angives filendelse, vises den nuværende tilknytning.\n"
@@ -9653,11 +9708,21 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE viser eller ændrer åbnings kommandoer tilknyttet en fil type.\n"
+"\n"
+"Syntaks: FTYPE [filtype[=[åbnings kommando]]]\n"
+"\n"
+"Uden parametre vises filtyper for hvilken en åbnings kommando allerede er "
+"defineret.\n"
+"Hvis brugt med kun en filtype, vises den tilknyttede åbnings kommando "
+"streng, hvis der en.\n"
+"Angives ingen åbnings kommando efter lighedstegnet fjernes åbnings "
+"kommandoen der er tilknyttet den angivne fil type\n"
 
 #: cmd.rc:258
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
-"MORE lader dig bladre gennem indholdet af filer eller inddata fra en pipe.\n"
+"MORE lader dig bladre gennem indhold af filer eller inddata fra et rør.\n"
 
 #: cmd.rc:262
 msgid ""
@@ -9665,6 +9730,9 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
+"CHOICE viser en tekst og venter indtil brugeren\n"
+"trykker en godkendt tast fra en valg liste.\n"
+"CHIOCE bliver hovedsaglig brug til menu valg i en batchfil.\n"
 
 #: cmd.rc:266
 msgid ""
@@ -9717,7 +9785,7 @@ msgid ""
 msgstr ""
 "Indbyggede kommandoer i CMD:\n"
 "ASSOC\t\tViser eller ændrer filudvidelse tilknytninger\n"
-"ATTRIB\t\tViser eller ændrer DOS-filattributter\n"
+"ATTRIB\t\tViser eller ændrer DOS filattributter\n"
 "CALL\t\tKald en batchfil inde i en anden\n"
 "CD (CHDIR)\tSkifter arbejdsmappe\n"
 "CHOICE\t\tVenter på et tastetryk udfra en angivet liste\n"
@@ -9728,17 +9796,17 @@ msgstr ""
 "DEL (ERASE)\tSletter en eller flere filer\n"
 "DIR\t\tViser indholdet i en mappe\n"
 "ECHO\t\tKopierer tekst direkte til uddata\n"
-"ENDLOCAL\tAfslut lokal miljø ændringer i en batch fil\n"
+"ENDLOCAL\tAfslut lokal miljø ændringer i en batchfil\n"
 "FTYPE\t\tVis eller ændrer filendelser tilknytninger til kommandoer\n"
 "HELP\t\tViser en kort hjælpebeskrivelse om et emne\n"
 "MD (MKDIR)\tLaver en mappe\n"
 "MORE\t\tViser fil eller resultat i sider\n"
 "MOVE\t\tFlytter en eller flere filer, eller en mappestruktur\n"
 "PATH\t\tÆndrer eller viser søgestien\n"
-"PAUSE\t\tLav pause i udførelsen af batch filer\n"
+"PAUSE\t\tLav pause i udførelsen af batchfil\n"
 "POPD\t\tÆndrer arbejdsmappe til den sidst lagrede med PUSHD\n"
 "PROMPT\t\tÆndrer kommando-tekststregnen\n"
-"PUSHD\t\tLagrer den gælgende arbejdsmappe og ændrer til ny\n"
+"PUSHD\t\tLagrer den gældende arbejdsmappe og ændrer til ny\n"
 "REN (RENAME)\tOmdøber fil\n"
 "RD (RMDIR)\tSletter en mappe\n"
 "SET\t\tSætter eller viser miljøvariabler\n"
@@ -9749,9 +9817,10 @@ msgstr ""
 "TYPE\t\tViser indholdet i en fil\n"
 "VER\t\tViser CMD's versionnummer\n"
 "VOL\t\tViser volumenavnet for et drev\n"
+"XCOPY\t\tKopierer kilde filer eller mapper til en destination\n"
 "EXIT\t\tAfslutter CMD\n"
 "\n"
-"Skriv «HELP <kommando>» for mere information om kommandoerne ovenover\n"
+"Skriv «HELP <kommando>» for mere information om kommandoerne ovenover.\n"
 
 #: cmd.rc:306
 msgid "Are you sure?"
@@ -9829,7 +9898,7 @@ msgstr "Kunne ikke åbne «%1»\n"
 
 #: cmd.rc:326
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "Kan ikke kalde batch label udenfor batchscriptet\n"
+msgstr "Kan ikke kalde batch label udenfor batchfil\n"
 
 #: cmd.rc:327 xcopy.rc:42
 msgctxt "All key"
@@ -9890,15 +9959,15 @@ msgstr "Mere? "
 
 #: cmd.rc:340
 msgid "The input line is too long.\n"
-msgstr ""
+msgstr "Input linjen er for lang.\n"
 
 #: cmd.rc:341
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Volume i drev %1!c! er %2\n"
 
 #: cmd.rc:342
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Volume in drev %1!c! har intet navn.\n"
 
 #: cmd.rc:343
 msgid " (Yes|No)"
@@ -9918,7 +9987,7 @@ msgstr "Brug: dxdiag [/whql:off | /whql:on] [/t filnavn | /x filnavn]"
 
 #: explorer.rc:28
 msgid "Wine Explorer"
-msgstr "Wine Explorer"
+msgstr "Wine Stifinder"
 
 #: explorer.rc:29
 msgid "Location:"
@@ -9926,7 +9995,7 @@ msgstr "Placering:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr "Brug: hostnavn\n"
+msgstr "Brug: værtsnavn\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
@@ -9949,7 +10018,7 @@ msgstr "Fejl: Ukendt eller ugyldig kommandolinje parametrer angivet\n"
 
 #: ipconfig.rc:29
 msgid "%1 adapter %2\n"
-msgstr ""
+msgstr "%1 kort %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -9961,27 +10030,27 @@ msgstr "Forbindelsespecifikt DNS suffiks"
 
 #: ipconfig.rc:34
 msgid "Hostname"
-msgstr "Hostname"
+msgstr "Værtsnavn"
 
 #: ipconfig.rc:35
 msgid "Node type"
-msgstr ""
+msgstr "Node type"
 
 #: ipconfig.rc:36
 msgid "Broadcast"
-msgstr ""
+msgstr "Rundkast"
 
 #: ipconfig.rc:37
 msgid "Peer-to-peer"
-msgstr ""
+msgstr "Peer-to-peer"
 
 #: ipconfig.rc:38
 msgid "Mixed"
-msgstr ""
+msgstr "Blandet"
 
 #: ipconfig.rc:39
 msgid "Hybrid"
-msgstr ""
+msgstr "Hybrid"
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
@@ -10115,7 +10184,7 @@ msgstr "Forbindelse mistet"
 
 #: net.rc:47
 msgid "A network error occurred"
-msgstr "Der opstod en netværks fejl."
+msgstr "Der opstod en netværks fejl"
 
 #: net.rc:48
 msgid "Connection is being made"
@@ -10224,7 +10293,7 @@ msgstr "Side&fod:"
 
 #: notepad.rc:104
 msgid "Margins (millimeters)"
-msgstr "Margener (millimetre):"
+msgstr "Margener (millimetre)"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -10256,7 +10325,7 @@ msgstr "F"
 #: notepad.rc:132 wordpad.rc:277
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:133 wordpad.rc:286
 msgctxt "accelerator New"
@@ -10391,11 +10460,11 @@ msgstr "&CoCreateInstance flag"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "&Ind-proces server"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "Ind-proces bearbejder"
 
 #: oleview.rc:43
 msgid "&Local server"
@@ -10451,7 +10520,7 @@ msgstr "Opdate&r\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
-msgstr "&Om OleView"
+msgstr "&Om OleViser"
 
 #: oleview.rc:79
 msgid "&Save as..."
@@ -10479,7 +10548,7 @@ msgstr "Systemindstillinger"
 
 #: oleview.rc:169
 msgid "&Enable Distributed COM"
-msgstr "Anvend distribu&eret  COM"
+msgstr "Anvend distribu&eret COM"
 
 #: oleview.rc:170
 msgid "Enable &Remote Connections (Win95 only)"
@@ -10527,7 +10596,7 @@ msgstr "Grænseflade viser for IPersistStream"
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
-msgstr "OleView"
+msgstr "OleViser"
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
@@ -10535,7 +10604,7 @@ msgstr "ITypeLib viser"
 
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
-msgstr "OleView - objektviser for OLE/COM"
+msgstr "OleViser - objektviser for OLE/COM"
 
 #: oleview.rc:97
 msgid "version 1.0"
@@ -10612,11 +10681,11 @@ msgstr "Vis programinformation, versionsnummer og ophavsret"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "Spørg efter en ind-process server når CoGetClassObject kaldes"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "Spørg efter en ind-proces bearbejder npr CoGetClassObject kaldes"
 
 #: oleview.rc:115
 msgid "Ask for a local server when calling CoGetClassObject"
@@ -10998,11 +11067,11 @@ msgstr "&DWORD værdi"
 
 #: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
-msgstr "&Flerstrengsværdi"
+msgstr "&Flerstrenget værdi"
 
 #: regedit.rc:52 regedit.rc:103
 msgid "&Expandable String Value"
-msgstr "&Udvidvar Strengværdi"
+msgstr "&Udvidbar strengværdi"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -11118,7 +11187,7 @@ msgstr "Rediger binær"
 
 #: regedit.rc:303
 msgid "Edit Multi String"
-msgstr "Rediger flerstreng"
+msgstr "Rediger flerstrenget"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
@@ -11309,7 +11378,7 @@ msgstr "Kunne ikke tilgå nøglen '%s'"
 
 #: regedit.rc:149
 msgid "Adds a new multi string value"
-msgstr "Tilføj en ny flerstrengsværdi"
+msgstr "Tilføj en ny flerstrenget værdi"
 
 #: regedit.rc:171
 msgid "Exports selected branch of the registry to a text file"
@@ -11407,7 +11476,7 @@ msgstr "S&kjul når minimeret"
 
 #: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
-msgstr "Vi&s 16-bits job"
+msgstr "Vi&s 16-bit job"
 
 #: taskmgr.rc:54
 msgid "&Refresh Now"
@@ -11780,7 +11849,7 @@ msgstr "&Hukommelsesbrug"
 
 #: taskmgr.rc:531
 msgid "Memory Usage &Delta"
-msgstr "Hukommelsesbrug-&delta"
+msgstr "Hukommelsesforbrug &delta"
 
 #: taskmgr.rc:533
 msgid "Pea&k Memory Usage"
@@ -11860,7 +11929,7 @@ msgstr "I/O Andre Bytes"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
-msgstr ""
+msgstr "Lav en ny opgave"
 
 #: taskmgr.rc:187
 msgid "Runs a new program"
@@ -12097,11 +12166,11 @@ msgstr "VM Størrelse"
 
 #: taskmgr.rc:287
 msgid "Paged Pool"
-msgstr ""
+msgstr "Side pulje"
 
 #: taskmgr.rc:288
 msgid "NP Pool"
-msgstr ""
+msgstr "Låst side pulje"
 
 #: taskmgr.rc:289
 msgid "Base Pri"
@@ -12684,11 +12753,11 @@ msgstr ""
 
 #: winecfg.rc:90
 msgid "Controls Background"
-msgstr "Controls baggrund"
+msgstr "Kontrol baggrund"
 
 #: winecfg.rc:91
 msgid "Controls Text"
-msgstr "Controls tekst"
+msgstr "Kontrol tekst"
 
 #: winecfg.rc:93
 msgid "Menu Background"
@@ -12764,7 +12833,7 @@ msgstr "Inaktiv kant"
 
 #: winecfg.rc:111
 msgid "Controls Shadow"
-msgstr "Controls skygge"
+msgstr "Kontrol skygge"
 
 #: winecfg.rc:112
 msgid "Gray Text"
@@ -12776,11 +12845,11 @@ msgstr "Markeret controls"
 
 #: winecfg.rc:114
 msgid "Controls Dark Shadow"
-msgstr "Controls mørk skygge"
+msgstr "Kontrol mørk skygge"
 
 #: winecfg.rc:115
 msgid "Controls Light"
-msgstr "Controls lys"
+msgstr "Kontrol lys"
 
 #: winecfg.rc:116
 msgid "Controls Alternate Background"
@@ -12824,7 +12893,7 @@ msgstr "S&tore"
 
 #: wineconsole.rc:65
 msgid "Control"
-msgstr "Control"
+msgstr "Kontrol"
 
 #: wineconsole.rc:66
 msgid "Popup menu"
@@ -12836,7 +12905,7 @@ msgstr "Kontrol"
 
 #: wineconsole.rc:68
 msgid "S&hift"
-msgstr "S&hift"
+msgstr "S&kift"
 
 #: wineconsole.rc:69
 msgid "Quick edit"
@@ -13010,7 +13079,7 @@ msgstr ""
 "  --backend={user|curses} Vælges user vil det frembringe et nyt vindue. "
 "Vælges curses\n"
 "                          vil det prøve at ændre det nuværende terminal "
-"vindue til en Wine konsol\n"
+"vindue til en Wine konsol.\n"
 
 #: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
@@ -13027,7 +13096,7 @@ msgstr ""
 "\n"
 "Eksempel:\n"
 "  wineconsole cmd\n"
-"Starter Wine kommandoprompten i en Wine konsol\n"
+"Starter Wine kommandoprompten i en Wine konsol.\n"
 "\n"
 
 #: winedbg.rc:46
@@ -13086,7 +13155,7 @@ msgstr "(Uidentificerede)"
 
 #: winedbg.rc:40
 msgid "Saving failed"
-msgstr "Gemning mislykkedes"
+msgstr "Gem mislykkedes"
 
 #: winedbg.rc:41
 msgid "Loading detailed information, please wait..."
@@ -13122,7 +13191,7 @@ msgstr "Tilslut &netværksdrev..."
 
 #: winefile.rc:42
 msgid "&Disconnect Network Drive"
-msgstr "Frakobl netværks&drev"
+msgstr "Frakoble netværks&drev"
 
 #: winefile.rc:48
 msgid "&Name"
@@ -13251,7 +13320,7 @@ msgstr "Versioninformation"
 #: winefile.rc:194
 msgctxt "accelerator Fullscreen"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: winefile.rc:87
 msgid "Applying font settings"
@@ -13283,7 +13352,7 @@ msgstr "Ikke implementeret endnu"
 
 #: winefile.rc:106
 msgid "CDate"
-msgstr "C-dato"
+msgstr "O-dato"
 
 #: winefile.rc:107
 msgid "ADate"
@@ -13745,7 +13814,7 @@ msgstr "Printerfiler (*.prn)"
 
 #: wordpad.rc:150
 msgid "Center"
-msgstr "Midterstillet"
+msgstr "Midt stillet"
 
 #: wordpad.rc:156
 msgid "Text"
@@ -13964,14 +14033,15 @@ msgstr ""
 "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
 "\n"
 "hvor:\n"
+"\n"
 "[/I]  Antag at destinationen er en mappe hvis destinationen ikke\n"
 "\tfindes og 2 eller flere filer bliver kopieret.\n"
 "[/S]  Kopier mapper og undermapper.\n"
 "[/E]  Kopier mapper og undermapper, også tomme mapper.\n"
 "[/Q]  Vær stille: vis ikke filnavne under kopiering.\n"
 "[/F]  Fil hele kilde- og målnavn under kopiering.\n"
-"[/L]  Simulér operationen; vis kun, gør intet.\n"
-"[/W]  Spørg før koperingen starter.\n"
+"[/L]  Simuler operationen; vis kun, gør intet.\n"
+"[/W]  Spørg før kopieringen starter.\n"
 "[/T]  Lav tom mappestruktur; kopier ikke filer.\n"
 "[/Y]  Spørg ikke om filer skal overskrives.\n"
 "[/-Y] Spørg om filer skal overskrives.\n"
@@ -13981,10 +14051,10 @@ msgstr ""
 "[/R]  Overskriv filer som er skrivebeskyttet.\n"
 "[/H]  Kopier skjulte filer og systemfiler.\n"
 "[/C]  Fortsæt selv om det opstår fejl under kopieringen.\n"
-"[/A]  Kopier ikke filer som er markeret som arkiv.\n"
-"[/M]  Kopier kun filer som er markeret som akriv; fjerner denne markering.\n"
+"[/A]  Kopier kun filer som er markeret med arkiv attribut.\n"
+"[/M]  Kopier kun filer som er markeret med arkiv attribut; fjerner arkiv\n"
+"\tattributen.\n"
 "[/D | /D:m-d-å] Kopier kun nye filer eller dem som er ændret efter\n"
-"\t\tden opgivne dato.\n"
-"\t\tHvis ingen dato opgives kopieres kun de filer hvor\n"
-"\t\tdestinationen er ældre end kilden\n"
+"\t\tden opgivne dato. Hvis ingen dato opgives kopieres kun de filer hvor\n"
+"\t\tdestinationen er ældre end kilden.\n"
 "\n"
