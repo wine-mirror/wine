@@ -54,9 +54,19 @@ typedef struct ACMWrapperImpl
 
 static const IBaseFilterVtbl ACMWrapper_Vtbl;
 
+static inline ACMWrapperImpl *impl_from_TransformFilter( TransformFilter *iface )
+{
+    return CONTAINING_RECORD(iface, ACMWrapperImpl, tf.filter);
+}
+
+static inline ACMWrapperImpl *impl_from_IBaseFilter( IBaseFilter *iface )
+{
+    return CONTAINING_RECORD(iface, ACMWrapperImpl, tf.filter.IBaseFilter_iface);
+}
+
 static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSample)
 {
-    ACMWrapperImpl* This = (ACMWrapperImpl*)tf;
+    ACMWrapperImpl* This = impl_from_TransformFilter(tf);
     AM_MEDIA_TYPE amt;
     IMediaSample* pOutSample = NULL;
     DWORD cbDstStream, cbSrcStream;
@@ -244,7 +254,7 @@ error:
 
 static HRESULT WINAPI ACMWrapper_SetMediaType(TransformFilter *tf, PIN_DIRECTION dir, const AM_MEDIA_TYPE * pmt)
 {
-    ACMWrapperImpl* This = (ACMWrapperImpl *)tf;
+    ACMWrapperImpl* This = impl_from_TransformFilter(tf);
     MMRESULT res;
 
     TRACE("(%p)->(%i %p)\n", This, dir, pmt);
@@ -301,7 +311,7 @@ static HRESULT WINAPI ACMWrapper_SetMediaType(TransformFilter *tf, PIN_DIRECTION
 
 static HRESULT WINAPI ACMWrapper_CompleteConnect(TransformFilter *tf, PIN_DIRECTION dir, IPin *pin)
 {
-    ACMWrapperImpl* This = (ACMWrapperImpl *)tf;
+    ACMWrapperImpl* This = impl_from_TransformFilter(tf);
     MMRESULT res;
     HACMSTREAM drv;
 
@@ -325,7 +335,7 @@ static HRESULT WINAPI ACMWrapper_CompleteConnect(TransformFilter *tf, PIN_DIRECT
 
 static HRESULT WINAPI ACMWrapper_BreakConnect(TransformFilter *tf, PIN_DIRECTION dir)
 {
-    ACMWrapperImpl *This = (ACMWrapperImpl *)tf;
+    ACMWrapperImpl *This = impl_from_TransformFilter(tf);
 
     TRACE("(%p)->(%i)\n", This,dir);
 
@@ -343,7 +353,7 @@ static HRESULT WINAPI ACMWrapper_BreakConnect(TransformFilter *tf, PIN_DIRECTION
 
 static HRESULT WINAPI ACMWrapper_DecideBufferSize(TransformFilter *tf, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
-    ACMWrapperImpl *pACM = (ACMWrapperImpl*)tf;
+    ACMWrapperImpl *pACM = impl_from_TransformFilter(tf);
     ALLOCATOR_PROPERTIES actual;
 
     if (!ppropInputRequest->cbAlign)
@@ -394,7 +404,7 @@ HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv)
         ISeekingPassThru *passthru;
         hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)This, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&This->seekthru_unk);
         IUnknown_QueryInterface(This->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-        ISeekingPassThru_Init(passthru, FALSE, (IPin*)This->tf.ppPins[0]);
+        ISeekingPassThru_Init(passthru, FALSE, This->tf.ppPins[0]);
         ISeekingPassThru_Release(passthru);
     }
 
@@ -407,7 +417,7 @@ HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv)
 static HRESULT WINAPI ACMWrapper_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
     HRESULT hr;
-    ACMWrapperImpl *This = (ACMWrapperImpl *)iface;
+    ACMWrapperImpl *This = impl_from_IBaseFilter(iface);
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
 
     if (IsEqualIID(riid, &IID_IMediaSeeking))
