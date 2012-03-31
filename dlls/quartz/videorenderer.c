@@ -51,23 +51,19 @@ static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl;
 typedef struct VideoRendererImpl
 {
     BaseRenderer renderer;
+    BaseControlWindow baseControlWindow;
+
     const IBasicVideoVtbl * IBasicVideo_vtbl;
-    const IVideoWindowVtbl * IVideoWindow_vtbl;
     const IUnknownVtbl * IInner_vtbl;
     const IAMFilterMiscFlagsVtbl *IAMFilterMiscFlags_vtbl;
 
     BOOL init;
     HANDLE hThread;
 
-    BaseWindow baseWindow;
-
     DWORD ThreadID;
     HANDLE hEvent;
 /* hEvent == evComplete? */
     BOOL ThreadResult;
-    HWND hWndMsgDrain;
-    HWND hWndOwner;
-    BOOL AutoShow;
     RECT SourceRect;
     RECT DestRect;
     RECT WindowPos;
@@ -81,7 +77,7 @@ typedef struct VideoRendererImpl
 
 static inline VideoRendererImpl *impl_from_BaseWindow(BaseWindow *iface)
 {
-    return CONTAINING_RECORD(iface, VideoRendererImpl, baseWindow);
+    return CONTAINING_RECORD(iface, VideoRendererImpl, baseControlWindow.baseWindow);
 }
 
 static inline VideoRendererImpl *impl_from_BaseRenderer(BaseRenderer *iface)
@@ -94,6 +90,11 @@ static inline VideoRendererImpl *impl_from_IBaseFilter(IBaseFilter *iface)
     return CONTAINING_RECORD(iface, VideoRendererImpl, renderer.filter.IBaseFilter_iface);
 }
 
+static inline VideoRendererImpl *impl_from_IVideoWindow(IVideoWindow *iface)
+{
+    return CONTAINING_RECORD(iface, VideoRendererImpl, baseControlWindow.IVideoWindow_iface);
+}
+
 static DWORD WINAPI MessageLoop(LPVOID lpParameter)
 {
     VideoRendererImpl* This = lpParameter;
@@ -102,7 +103,7 @@ static DWORD WINAPI MessageLoop(LPVOID lpParameter)
 
     TRACE("Starting message loop\n");
 
-    if (FAILED(BaseWindowImpl_PrepareWindow(&This->baseWindow)))
+    if (FAILED(BaseWindowImpl_PrepareWindow(&This->baseControlWindow.baseWindow)))
     {
         This->ThreadResult = FALSE;
         SetEvent(This->hEvent);
@@ -151,8 +152,8 @@ static BOOL CreateRenderingSubsystem(VideoRendererImpl* This)
 static void VideoRenderer_AutoShowWindow(VideoRendererImpl *This) {
     if (!This->init && (!This->WindowPos.right || !This->WindowPos.top))
     {
-        DWORD style = GetWindowLongW(This->baseWindow.hWnd, GWL_STYLE);
-        DWORD style_ex = GetWindowLongW(This->baseWindow.hWnd, GWL_EXSTYLE);
+        DWORD style = GetWindowLongW(This->baseControlWindow.baseWindow.hWnd, GWL_STYLE);
+        DWORD style_ex = GetWindowLongW(This->baseControlWindow.baseWindow.hWnd, GWL_EXSTYLE);
 
         if (!This->WindowPos.right)
         {
@@ -168,20 +169,20 @@ static void VideoRenderer_AutoShowWindow(VideoRendererImpl *This) {
         AdjustWindowRectEx(&This->WindowPos, style, TRUE, style_ex);
 
         TRACE("WindowPos: %d %d %d %d\n", This->WindowPos.left, This->WindowPos.top, This->WindowPos.right, This->WindowPos.bottom);
-        SetWindowPos(This->baseWindow.hWnd, NULL,
+        SetWindowPos(This->baseControlWindow.baseWindow.hWnd, NULL,
             This->WindowPos.left,
             This->WindowPos.top,
             This->WindowPos.right - This->WindowPos.left,
             This->WindowPos.bottom - This->WindowPos.top,
             SWP_NOZORDER|SWP_NOMOVE|SWP_DEFERERASE);
 
-        GetClientRect(This->baseWindow.hWnd, &This->DestRect);
+        GetClientRect(This->baseControlWindow.baseWindow.hWnd, &This->DestRect);
     }
     else if (!This->init)
         This->DestRect = This->WindowPos;
     This->init = TRUE;
-    if (This->AutoShow)
-        ShowWindow(This->baseWindow.hWnd, SW_SHOW);
+    if (This->baseControlWindow.AutoShow)
+        ShowWindow(This->baseControlWindow.baseWindow.hWnd, SW_SHOW);
 }
 
 static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, DWORD size)
@@ -222,7 +223,7 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     TRACE("biCompression = %s\n", debugstr_an((LPSTR)&(bmiHeader->biCompression), 4));
     TRACE("biSizeImage = %d\n", bmiHeader->biSizeImage);
 
-    if (!This->baseWindow.hDC) {
+    if (!This->baseControlWindow.baseWindow.hDC) {
         ERR("Cannot get DC from window!\n");
         return E_FAIL;
     }
@@ -230,7 +231,7 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     TRACE("Src Rect: %d %d %d %d\n", This->SourceRect.left, This->SourceRect.top, This->SourceRect.right, This->SourceRect.bottom);
     TRACE("Dst Rect: %d %d %d %d\n", This->DestRect.left, This->DestRect.top, This->DestRect.right, This->DestRect.bottom);
 
-    StretchDIBits(This->baseWindow.hDC, This->DestRect.left, This->DestRect.top, This->DestRect.right -This->DestRect.left,
+    StretchDIBits(This->baseControlWindow.baseWindow.hDC, This->DestRect.left, This->DestRect.top, This->DestRect.right -This->DestRect.left,
                   This->DestRect.bottom - This->DestRect.top, This->SourceRect.left, This->SourceRect.top,
                   This->SourceRect.right - This->SourceRect.left, This->SourceRect.bottom - This->SourceRect.top,
                   data, (BITMAPINFO *)bmiHeader, DIB_RGB_COLORS, SRCCOPY);
@@ -378,9 +379,9 @@ static VOID WINAPI VideoRenderer_OnStopStreaming(BaseRenderer* iface)
     TRACE("(%p)->()\n", This);
 
     SetEvent(This->hEvent);
-    if (This->AutoShow)
+    if (This->baseControlWindow.AutoShow)
         /* Black it out */
-        RedrawWindow(This->baseWindow.hWnd, NULL, NULL, RDW_INVALIDATE|RDW_ERASE);
+        RedrawWindow(This->baseControlWindow.baseWindow.hWnd, NULL, NULL, RDW_INVALIDATE|RDW_ERASE);
 }
 
 static VOID WINAPI VideoRenderer_OnStartStreaming(BaseRenderer* iface)
@@ -399,7 +400,6 @@ static VOID WINAPI VideoRenderer_OnStartStreaming(BaseRenderer* iface)
     }
 }
 
-
 static LPWSTR WINAPI VideoRenderer_GetClassWindowStyles(BaseWindow *This, DWORD *pClassStyles, DWORD *pWindowStyles, DWORD *pWindowStylesEx)
 {
     static const WCHAR classnameW[] = { 'W','i','n','e',' ','A','c','t','i','v','e','M','o','v','i','e',' ','C','l','a','s','s',0 };
@@ -411,45 +411,16 @@ static LPWSTR WINAPI VideoRenderer_GetClassWindowStyles(BaseWindow *This, DWORD 
     return (LPWSTR)classnameW;
 }
 
-static BOOL WINAPI VideoRenderer_PossiblyEatMessage(BaseWindow *iface, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static RECT WINAPI VideoRenderer_GetDefaultRect(BaseWindow *iface)
 {
     VideoRendererImpl *This = impl_from_BaseWindow(iface);
+    static RECT defRect;
 
-    if (This->hWndMsgDrain)
-    {
-        switch(uMsg)
-        {
-            case WM_KEYDOWN:
-            case WM_KEYUP:
-            case WM_LBUTTONDBLCLK:
-            case WM_LBUTTONDOWN:
-            case WM_LBUTTONUP:
-            case WM_MBUTTONDBLCLK:
-            case WM_MBUTTONDOWN:
-            case WM_MBUTTONUP:
-            case WM_MOUSEACTIVATE:
-            case WM_MOUSEMOVE:
-            case WM_NCLBUTTONDBLCLK:
-            case WM_NCLBUTTONDOWN:
-            case WM_NCLBUTTONUP:
-            case WM_NCMBUTTONDBLCLK:
-            case WM_NCMBUTTONDOWN:
-            case WM_NCMBUTTONUP:
-            case WM_NCMOUSEMOVE:
-            case WM_NCRBUTTONDBLCLK:
-            case WM_NCRBUTTONDOWN:
-            case WM_NCRBUTTONUP:
-            case WM_RBUTTONDBLCLK:
-            case WM_RBUTTONDOWN:
-            case WM_RBUTTONUP:
-                PostMessageW(This->hWndMsgDrain, uMsg, wParam, lParam);
-                return TRUE;
-                break;
-            default:
-                break;
-        }
-    }
-    return FALSE;
+    defRect.left = defRect.top = 0;
+    defRect.right = This->VideoWidth;
+    defRect.bottom = This->VideoHeight;
+
+    return defRect;
 }
 
 static BOOL WINAPI VideoRenderer_OnSize(BaseWindow *iface, LONG Width, LONG Height)
@@ -463,7 +434,7 @@ static BOOL WINAPI VideoRenderer_OnSize(BaseWindow *iface, LONG Width, LONG Heig
         This->DestRect.top,
         This->DestRect.right - This->DestRect.left,
         This->DestRect.bottom - This->DestRect.top);
-    return TRUE;
+    return BaseWindowImpl_OnSize(iface, Width, Height);
 }
 
 static const BaseRendererFuncTable BaseFuncTable = {
@@ -490,9 +461,9 @@ static const BaseRendererFuncTable BaseFuncTable = {
 
 static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
     VideoRenderer_GetClassWindowStyles,
+    VideoRenderer_GetDefaultRect,
     NULL,
-    NULL,
-    VideoRenderer_PossiblyEatMessage,
+    BaseControlWindowImpl_PossiblyEatMessage,
     VideoRenderer_OnSize
 };
 
@@ -512,15 +483,11 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pVideoRenderer->IInner_vtbl = &IInner_VTable;
     pVideoRenderer->IAMFilterMiscFlags_vtbl = &IAMFilterMiscFlags_Vtbl;
     pVideoRenderer->IBasicVideo_vtbl = &IBasicVideo_VTable;
-    pVideoRenderer->IVideoWindow_vtbl = &IVideoWindow_VTable;
 
     pVideoRenderer->init = 0;
-    pVideoRenderer->AutoShow = 1;
     ZeroMemory(&pVideoRenderer->SourceRect, sizeof(RECT));
     ZeroMemory(&pVideoRenderer->DestRect, sizeof(RECT));
     ZeroMemory(&pVideoRenderer->WindowPos, sizeof(RECT));
-    pVideoRenderer->hWndMsgDrain = pVideoRenderer->hWndOwner = NULL;
-    pVideoRenderer->WindowStyle = WS_OVERLAPPED;
 
     hr = BaseRenderer_Init(&pVideoRenderer->renderer, &VideoRenderer_Vtbl, pUnkOuter, &CLSID_VideoRenderer, (DWORD_PTR)(__FILE__ ": VideoRendererImpl.csFilter"), &BaseFuncTable);
 
@@ -528,7 +495,8 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
         goto fail;
 
     *ppv = pVideoRenderer;
-    hr = BaseWindow_Init(&pVideoRenderer->baseWindow, &renderer_BaseWindowFuncTable);
+
+    hr = BaseControlWindow_Init(&pVideoRenderer->baseControlWindow, &IVideoWindow_VTable, &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.filter.csFilter, &pVideoRenderer->renderer.pInputPin->pin, &renderer_BaseWindowFuncTable);
     if (FAILED(hr))
         goto fail;
 
@@ -563,7 +531,7 @@ static HRESULT WINAPI VideoRendererInner_QueryInterface(IUnknown * iface, REFIID
     else if (IsEqualIID(riid, &IID_IBasicVideo))
         *ppv = &This->IBasicVideo_vtbl;
     else if (IsEqualIID(riid, &IID_IVideoWindow))
-        *ppv = &This->IVideoWindow_vtbl;
+        *ppv = &This->baseControlWindow.IVideoWindow_iface;
     else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
         *ppv = &This->IAMFilterMiscFlags_vtbl;
     else
@@ -605,7 +573,7 @@ static ULONG WINAPI VideoRendererInner_Release(IUnknown * iface)
 
     if (!refCount)
     {
-        BaseWindowImpl_DoneWithWindow(&This->baseWindow);
+        BaseWindowImpl_DoneWithWindow(&This->baseControlWindow.baseWindow);
         PostThreadMessageW(This->ThreadID, WM_QUIT, 0, 0);
         WaitForSingleObject(This->hThread, INFINITE);
         CloseHandle(This->hThread);
@@ -1125,7 +1093,7 @@ static HRESULT WINAPI Basicvideo_SetDefaultDestinationPosition(IBasicVideo *ifac
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    if (!GetClientRect(This->baseWindow.hWnd, &rect))
+    if (!GetClientRect(This->baseControlWindow.baseWindow.hWnd, &rect))
         return E_FAIL;
     
     This->SourceRect.left = 0;
@@ -1289,7 +1257,7 @@ static const IBasicVideoVtbl IBasicVideo_VTable =
 static HRESULT WINAPI Videowindow_QueryInterface(IVideoWindow *iface,
 						 REFIID riid,
 						 LPVOID*ppvObj) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
+    VideoRendererImpl *This = impl_from_IVideoWindow(iface);
 
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
 
@@ -1297,7 +1265,7 @@ static HRESULT WINAPI Videowindow_QueryInterface(IVideoWindow *iface,
 }
 
 static ULONG WINAPI Videowindow_AddRef(IVideoWindow *iface) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
+    VideoRendererImpl *This = impl_from_IVideoWindow(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -1305,399 +1273,16 @@ static ULONG WINAPI Videowindow_AddRef(IVideoWindow *iface) {
 }
 
 static ULONG WINAPI Videowindow_Release(IVideoWindow *iface) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
+    VideoRendererImpl *This = impl_from_IVideoWindow(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
     return VideoRenderer_Release(&This->renderer.filter.IBaseFilter_iface);
 }
 
-/*** IDispatch methods ***/
-static HRESULT WINAPI Videowindow_GetTypeInfoCount(IVideoWindow *iface,
-						   UINT*pctinfo) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pctinfo);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_GetTypeInfo(IVideoWindow *iface,
-					      UINT iTInfo,
-					      LCID lcid,
-					      ITypeInfo**ppTInfo) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%d, %d, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_GetIDsOfNames(IVideoWindow *iface,
-						REFIID riid,
-						LPOLESTR*rgszNames,
-						UINT cNames,
-						LCID lcid,
-						DISPID*rgDispId) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%s (%p), %p, %d, %d, %p): stub !!!\n", This, iface, debugstr_guid(riid), riid, rgszNames, cNames, lcid, rgDispId);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_Invoke(IVideoWindow *iface,
-					 DISPID dispIdMember,
-					 REFIID riid,
-					 LCID lcid,
-					 WORD wFlags,
-					 DISPPARAMS*pDispParams,
-					 VARIANT*pVarResult,
-					 EXCEPINFO*pExepInfo,
-					 UINT*puArgErr) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%d, %s (%p), %d, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember, debugstr_guid(riid), riid, lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
-
-    return S_OK;
-}
-
-/*** IVideoWindow methods ***/
-static HRESULT WINAPI Videowindow_put_Caption(IVideoWindow *iface,
-					      BSTR strCaption) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%s (%p))\n", This, iface, debugstr_w(strCaption), strCaption);
-
-    if (!SetWindowTextW(This->baseWindow.hWnd, strCaption))
-        return E_FAIL;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_Caption(IVideoWindow *iface,
-					      BSTR *strCaption) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, strCaption);
-
-    GetWindowTextW(This->baseWindow.hWnd, (LPWSTR)strCaption, 100);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_WindowStyle(IVideoWindow *iface,
-                                                  LONG WindowStyle) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-    LONG old;
-
-    old = GetWindowLongW(This->baseWindow.hWnd, GWL_STYLE);
-
-    TRACE("(%p/%p)->(%x -> %x)\n", This, iface, old, WindowStyle);
-
-    if (WindowStyle & (WS_DISABLED|WS_HSCROLL|WS_ICONIC|WS_MAXIMIZE|WS_MINIMIZE|WS_VSCROLL))
-        return E_INVALIDARG;
-
-    SetWindowLongW(This->baseWindow.hWnd, GWL_STYLE, WindowStyle);
-    SetWindowPos(This->baseWindow.hWnd,0,0,0,0,0,SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOZORDER);
-    This->WindowStyle = WindowStyle;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_WindowStyle(IVideoWindow *iface,
-                                                  LONG *WindowStyle) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, WindowStyle);
-
-    *WindowStyle = This->WindowStyle;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_WindowStyleEx(IVideoWindow *iface,
-                                                    LONG WindowStyleEx) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%d)\n", This, iface, WindowStyleEx);
-
-    if (!SetWindowLongW(This->baseWindow.hWnd, GWL_EXSTYLE, WindowStyleEx))
-        return E_FAIL;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_WindowStyleEx(IVideoWindow *iface,
-                                                    LONG *WindowStyleEx) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, WindowStyleEx);
-
-    *WindowStyleEx = GetWindowLongW(This->baseWindow.hWnd, GWL_EXSTYLE);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_AutoShow(IVideoWindow *iface,
-                                               LONG AutoShow) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%d)\n", This, iface, AutoShow);
-
-    This->AutoShow = AutoShow;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_AutoShow(IVideoWindow *iface,
-                                               LONG *AutoShow) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, AutoShow);
-
-    *AutoShow = This->AutoShow;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_WindowState(IVideoWindow *iface,
-                                                  LONG WindowState) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%d)\n", This, iface, WindowState);
-    ShowWindow(This->baseWindow.hWnd, WindowState);
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_WindowState(IVideoWindow *iface,
-                                                  LONG *WindowState) {
-    WINDOWPLACEMENT place;
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    place.length = sizeof(place);
-    GetWindowPlacement(This->baseWindow.hWnd, &place);
-    TRACE("(%p/%p)->(%p)\n", This, iface, WindowState);
-    *WindowState = place.showCmd;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_BackgroundPalette(IVideoWindow *iface,
-                                                        LONG BackgroundPalette) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%d): stub !!!\n", This, iface, BackgroundPalette);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_BackgroundPalette(IVideoWindow *iface,
-                                                        LONG *pBackgroundPalette) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pBackgroundPalette);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_Visible(IVideoWindow *iface,
-                                              LONG Visible) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%d)\n", This, iface, Visible);
-
-    ShowWindow(This->baseWindow.hWnd, Visible ? SW_SHOW : SW_HIDE);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_Visible(IVideoWindow *iface,
-                                              LONG *pVisible) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pVisible);
-
-    *pVisible = IsWindowVisible(This->baseWindow.hWnd);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_Left(IVideoWindow *iface,
-                                           LONG Left) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%d)\n", This, iface, Left);
-
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, Left, This->WindowPos.top, 0, 0, SWP_NOZORDER|SWP_NOSIZE))
-        return E_FAIL;
-
-    This->WindowPos.left = Left;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_Left(IVideoWindow *iface,
-                                           LONG *pLeft) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pLeft);
-
-    *pLeft = This->WindowPos.left;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_Width(IVideoWindow *iface,
-                                            LONG Width) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%d)\n", This, iface, Width);
-
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, 0, 0, Width, This->WindowPos.bottom-This->WindowPos.top, SWP_NOZORDER|SWP_NOMOVE))
-        return E_FAIL;
-
-    This->WindowPos.right = This->WindowPos.left + Width;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_Width(IVideoWindow *iface,
-                                            LONG *pWidth) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pWidth);
-
-    *pWidth = This->WindowPos.right - This->WindowPos.left;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_Top(IVideoWindow *iface,
-                                          LONG Top) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%d)\n", This, iface, Top);
-
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, This->WindowPos.left, Top, 0, 0, SWP_NOZORDER|SWP_NOSIZE))
-        return E_FAIL;
-
-    This->WindowPos.top = Top;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_Top(IVideoWindow *iface,
-                                          LONG *pTop) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pTop);
-
-    *pTop = This->WindowPos.top;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_Height(IVideoWindow *iface,
-                                             LONG Height) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%d)\n", This, iface, Height);
-
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, 0, 0, This->WindowPos.right-This->WindowPos.left, Height, SWP_NOZORDER|SWP_NOMOVE))
-        return E_FAIL;
-
-    This->WindowPos.bottom = This->WindowPos.top + Height;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_Height(IVideoWindow *iface,
-                                             LONG *pHeight) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pHeight);
-
-    *pHeight = This->WindowPos.bottom - This->WindowPos.top;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_Owner(IVideoWindow *iface,
-					    OAHWND Owner) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%08x)\n", This, iface, (DWORD) Owner);
-
-    This->hWndOwner = (HWND)Owner;
-    SetParent(This->baseWindow.hWnd, This->hWndOwner);
-    if (This->WindowStyle & WS_CHILD)
-    {
-        LONG old = GetWindowLongW(This->baseWindow.hWnd, GWL_STYLE);
-        if (old != This->WindowStyle)
-        {
-            SetWindowLongW(This->baseWindow.hWnd, GWL_STYLE, This->WindowStyle);
-            SetWindowPos(This->baseWindow.hWnd,0,0,0,0,0,SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOZORDER);
-        }
-    }
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_Owner(IVideoWindow *iface,
-					    OAHWND *Owner) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, Owner);
-
-    *(HWND*)Owner = This->hWndOwner;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_MessageDrain(IVideoWindow *iface,
-						   OAHWND Drain) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%08x)\n", This, iface, (DWORD) Drain);
-
-    This->hWndMsgDrain = (HWND)Drain;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_MessageDrain(IVideoWindow *iface,
-						   OAHWND *Drain) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, Drain);
-
-    *Drain = (OAHWND)This->hWndMsgDrain;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_get_BorderColor(IVideoWindow *iface,
-                                                  LONG *Color) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, Color);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_put_BorderColor(IVideoWindow *iface,
-                                                  LONG Color) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%d): stub !!!\n", This, iface, Color);
-
-    return S_OK;
-}
-
 static HRESULT WINAPI Videowindow_get_FullScreenMode(IVideoWindow *iface,
                                                      LONG *FullScreenMode) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
+    VideoRendererImpl *This = impl_from_IVideoWindow(iface);
 
     FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, FullScreenMode);
 
@@ -1706,160 +1291,26 @@ static HRESULT WINAPI Videowindow_get_FullScreenMode(IVideoWindow *iface,
 
 static HRESULT WINAPI Videowindow_put_FullScreenMode(IVideoWindow *iface,
                                                      LONG FullScreenMode) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
+    VideoRendererImpl *This = impl_from_IVideoWindow(iface);
 
     FIXME("(%p/%p)->(%d): stub !!!\n", This, iface, FullScreenMode);
 
     if (FullScreenMode) {
-        ShowWindow(This->baseWindow.hWnd, SW_HIDE);
-        SetParent(This->baseWindow.hWnd, 0);
-        SetWindowLongW(This->baseWindow.hWnd, GWL_STYLE, WS_POPUP);
-        SetWindowPos(This->baseWindow.hWnd,HWND_TOP,0,0,GetSystemMetrics(SM_CXSCREEN),GetSystemMetrics(SM_CYSCREEN),SWP_SHOWWINDOW);
-        GetWindowRect(This->baseWindow.hWnd, &This->DestRect);
+        This->WindowStyle = GetWindowLongW(This->baseControlWindow.baseWindow.hWnd, GWL_STYLE);
+        ShowWindow(This->baseControlWindow.baseWindow.hWnd, SW_HIDE);
+        SetParent(This->baseControlWindow.baseWindow.hWnd, 0);
+        SetWindowLongW(This->baseControlWindow.baseWindow.hWnd, GWL_STYLE, WS_POPUP);
+        SetWindowPos(This->baseControlWindow.baseWindow.hWnd,HWND_TOP,0,0,GetSystemMetrics(SM_CXSCREEN),GetSystemMetrics(SM_CYSCREEN),SWP_SHOWWINDOW);
+        GetWindowRect(This->baseControlWindow.baseWindow.hWnd, &This->DestRect);
         This->WindowPos = This->DestRect;
     } else {
-        ShowWindow(This->baseWindow.hWnd, SW_HIDE);
-        SetParent(This->baseWindow.hWnd, This->hWndOwner);
-        SetWindowLongW(This->baseWindow.hWnd, GWL_STYLE, This->WindowStyle);
-        GetClientRect(This->baseWindow.hWnd, &This->DestRect);
-        SetWindowPos(This->baseWindow.hWnd,0,This->DestRect.left,This->DestRect.top,This->DestRect.right,This->DestRect.bottom,SWP_NOZORDER|SWP_SHOWWINDOW);
+        ShowWindow(This->baseControlWindow.baseWindow.hWnd, SW_HIDE);
+        SetParent(This->baseControlWindow.baseWindow.hWnd, This->baseControlWindow.hwndOwner);
+        SetWindowLongW(This->baseControlWindow.baseWindow.hWnd, GWL_STYLE, This->WindowStyle);
+        GetClientRect(This->baseControlWindow.baseWindow.hWnd, &This->DestRect);
+        SetWindowPos(This->baseControlWindow.baseWindow.hWnd,0,This->DestRect.left,This->DestRect.top,This->DestRect.right,This->DestRect.bottom,SWP_NOZORDER|SWP_SHOWWINDOW);
         This->WindowPos = This->DestRect;
     }
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_SetWindowForeground(IVideoWindow *iface,
-                                                      LONG Focus) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-    BOOL ret;
-    IPin* pPin;
-    HRESULT hr;
-
-    TRACE("(%p/%p)->(%d)\n", This, iface, Focus);
-
-    if ((Focus != FALSE) && (Focus != TRUE))
-        return E_INVALIDARG;
-
-    hr = IPin_ConnectedTo(&This->renderer.pInputPin->pin.IPin_iface, &pPin);
-    if ((hr != S_OK) || !pPin)
-        return VFW_E_NOT_CONNECTED;
-
-    if (Focus)
-        ret = SetForegroundWindow(This->baseWindow.hWnd);
-    else
-        ret = SetWindowPos(This->baseWindow.hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
-
-    if (!ret)
-        return E_FAIL;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_NotifyOwnerMessage(IVideoWindow *iface,
-						     OAHWND hwnd,
-                                                     LONG uMsg,
-						     LONG_PTR wParam,
-						     LONG_PTR lParam) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%08lx, %d, %08lx, %08lx)\n", This, iface, hwnd, uMsg, wParam, lParam);
-
-    if (!PostMessageW(This->baseWindow.hWnd, uMsg, wParam, lParam))
-        return E_FAIL;
-    
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_SetWindowPosition(IVideoWindow *iface,
-                                                    LONG Left,
-                                                    LONG Top,
-                                                    LONG Width,
-                                                    LONG Height) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%d, %d, %d, %d)\n", This, iface, Left, Top, Width, Height);
-
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, Left, Top, Width, Height, SWP_NOZORDER))
-        return E_FAIL;
-
-    This->WindowPos.left = Left;
-    This->WindowPos.top = Top;
-    This->WindowPos.right = Left + Width;
-    This->WindowPos.bottom = Top + Height;
-    
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_GetWindowPosition(IVideoWindow *iface,
-                                                    LONG *pLeft,
-                                                    LONG *pTop,
-                                                    LONG *pWidth,
-                                                    LONG *pHeight) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    TRACE("(%p/%p)->(%p, %p, %p, %p)\n", This, iface, pLeft, pTop, pWidth, pHeight);
-
-    *pLeft = This->WindowPos.left;
-    *pTop = This->WindowPos.top;
-    *pWidth = This->WindowPos.right - This->WindowPos.left;
-    *pHeight = This->WindowPos.bottom - This->WindowPos.top;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_GetMinIdealImageSize(IVideoWindow *iface,
-                                                       LONG *pWidth,
-                                                       LONG *pHeight) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%p, %p): semi stub !!!\n", This, iface, pWidth, pHeight);
-
-    *pWidth = This->VideoWidth;
-    *pHeight = This->VideoHeight;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_GetMaxIdealImageSize(IVideoWindow *iface,
-                                                       LONG *pWidth,
-                                                       LONG *pHeight) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%p, %p): semi stub !!!\n", This, iface, pWidth, pHeight);
-
-    *pWidth = This->VideoWidth;
-    *pHeight = This->VideoHeight;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_GetRestorePosition(IVideoWindow *iface,
-                                                     LONG *pLeft,
-                                                     LONG *pTop,
-                                                     LONG *pWidth,
-                                                     LONG *pHeight) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%p, %p, %p, %p): stub !!!\n", This, iface, pLeft, pTop, pWidth, pHeight);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_HideCursor(IVideoWindow *iface,
-                                             LONG HideCursor) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%d): stub !!!\n", This, iface, HideCursor);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI Videowindow_IsCursorHidden(IVideoWindow *iface,
-                                                 LONG *CursorHidden) {
-    ICOM_THIS_MULTI(VideoRendererImpl, IVideoWindow_vtbl, iface);
-
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, CursorHidden);
 
     return S_OK;
 }
@@ -1869,49 +1320,49 @@ static const IVideoWindowVtbl IVideoWindow_VTable =
     Videowindow_QueryInterface,
     Videowindow_AddRef,
     Videowindow_Release,
-    Videowindow_GetTypeInfoCount,
-    Videowindow_GetTypeInfo,
-    Videowindow_GetIDsOfNames,
-    Videowindow_Invoke,
-    Videowindow_put_Caption,
-    Videowindow_get_Caption,
-    Videowindow_put_WindowStyle,
-    Videowindow_get_WindowStyle,
-    Videowindow_put_WindowStyleEx,
-    Videowindow_get_WindowStyleEx,
-    Videowindow_put_AutoShow,
-    Videowindow_get_AutoShow,
-    Videowindow_put_WindowState,
-    Videowindow_get_WindowState,
-    Videowindow_put_BackgroundPalette,
-    Videowindow_get_BackgroundPalette,
-    Videowindow_put_Visible,
-    Videowindow_get_Visible,
-    Videowindow_put_Left,
-    Videowindow_get_Left,
-    Videowindow_put_Width,
-    Videowindow_get_Width,
-    Videowindow_put_Top,
-    Videowindow_get_Top,
-    Videowindow_put_Height,
-    Videowindow_get_Height,
-    Videowindow_put_Owner,
-    Videowindow_get_Owner,
-    Videowindow_put_MessageDrain,
-    Videowindow_get_MessageDrain,
-    Videowindow_get_BorderColor,
-    Videowindow_put_BorderColor,
+    BaseControlWindowImpl_GetTypeInfoCount,
+    BaseControlWindowImpl_GetTypeInfo,
+    BaseControlWindowImpl_GetIDsOfNames,
+    BaseControlWindowImpl_Invoke,
+    BaseControlWindowImpl_put_Caption,
+    BaseControlWindowImpl_get_Caption,
+    BaseControlWindowImpl_put_WindowStyle,
+    BaseControlWindowImpl_get_WindowStyle,
+    BaseControlWindowImpl_put_WindowStyleEx,
+    BaseControlWindowImpl_get_WindowStyleEx,
+    BaseControlWindowImpl_put_AutoShow,
+    BaseControlWindowImpl_get_AutoShow,
+    BaseControlWindowImpl_put_WindowState,
+    BaseControlWindowImpl_get_WindowState,
+    BaseControlWindowImpl_put_BackgroundPalette,
+    BaseControlWindowImpl_get_BackgroundPalette,
+    BaseControlWindowImpl_put_Visible,
+    BaseControlWindowImpl_get_Visible,
+    BaseControlWindowImpl_put_Left,
+    BaseControlWindowImpl_get_Left,
+    BaseControlWindowImpl_put_Width,
+    BaseControlWindowImpl_get_Width,
+    BaseControlWindowImpl_put_Top,
+    BaseControlWindowImpl_get_Top,
+    BaseControlWindowImpl_put_Height,
+    BaseControlWindowImpl_get_Height,
+    BaseControlWindowImpl_put_Owner,
+    BaseControlWindowImpl_get_Owner,
+    BaseControlWindowImpl_put_MessageDrain,
+    BaseControlWindowImpl_get_MessageDrain,
+    BaseControlWindowImpl_get_BorderColor,
+    BaseControlWindowImpl_put_BorderColor,
     Videowindow_get_FullScreenMode,
     Videowindow_put_FullScreenMode,
-    Videowindow_SetWindowForeground,
-    Videowindow_NotifyOwnerMessage,
-    Videowindow_SetWindowPosition,
-    Videowindow_GetWindowPosition,
-    Videowindow_GetMinIdealImageSize,
-    Videowindow_GetMaxIdealImageSize,
-    Videowindow_GetRestorePosition,
-    Videowindow_HideCursor,
-    Videowindow_IsCursorHidden
+    BaseControlWindowImpl_SetWindowForeground,
+    BaseControlWindowImpl_NotifyOwnerMessage,
+    BaseControlWindowImpl_SetWindowPosition,
+    BaseControlWindowImpl_GetWindowPosition,
+    BaseControlWindowImpl_GetMinIdealImageSize,
+    BaseControlWindowImpl_GetMaxIdealImageSize,
+    BaseControlWindowImpl_GetRestorePosition,
+    BaseControlWindowImpl_HideCursor,
+    BaseControlWindowImpl_IsCursorHidden
 };
 
 static VideoRendererImpl *from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface) {
