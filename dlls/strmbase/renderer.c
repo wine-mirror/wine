@@ -82,6 +82,7 @@ static HRESULT WINAPI BaseRenderer_InputPin_Disconnect(IPin * iface)
         if (renderer->pFuncsTable->pfnBreakConnect)
             hr = renderer->pFuncsTable->pfnBreakConnect(renderer);
     }
+    BaseRendererImpl_ClearPendingSample(renderer);
     LeaveCriticalSection(This->pin.pCritSec);
 
     return hr;
@@ -254,6 +255,9 @@ HRESULT WINAPI BaseRenderer_Init(BaseRenderer * This, const IBaseFilterVtbl *Vtb
         InitializeCriticalSection(&This->csRenderLock);
         This->csRenderLock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": BaseRenderer.csRenderLock");
         This->evComplete = CreateEventW(NULL, TRUE, TRUE, NULL);
+        This->ThreadSignal = CreateEventW(NULL, TRUE, TRUE, NULL);
+        This->RenderEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+        This->pMediaSample = NULL;
     }
 
     return hr;
@@ -291,7 +295,11 @@ ULONG WINAPI BaseRendererImpl_Release(IBaseFilter* iface)
 
         This->csRenderLock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csRenderLock);
+
+        BaseRendererImpl_ClearPendingSample(This);
         CloseHandle(This->evComplete);
+        CloseHandle(This->ThreadSignal);
+        CloseHandle(This->RenderEvent);
     }
     return refCount;
 }
@@ -317,6 +325,9 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
             return VFW_E_TYPE_NOT_ACCEPTED;
         }
     }
+
+    This->pMediaSample = pSample;
+    IMediaSample_AddRef(pSample);
 
     if (This->pFuncsTable->pfnPrepareReceive)
         hr = This->pFuncsTable->pfnPrepareReceive(This, pSample);
@@ -368,6 +379,8 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
 
     if (SUCCEEDED(hr))
         hr = This->pFuncsTable->pfnDoRenderSample(This, pSample);
+
+    BaseRendererImpl_ClearPendingSample(This);
     LeaveCriticalSection(&This->csRenderLock);
 
     return hr;
@@ -405,6 +418,8 @@ HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface)
             This->pFuncsTable->pfnOnStopStreaming(This);
         This->filter.state = State_Stopped;
         SetEvent(This->evComplete);
+        SetEvent(This->ThreadSignal);
+        SetEvent(This->RenderEvent);
     }
     LeaveCriticalSection(&This->csRenderLock);
 
@@ -423,6 +438,7 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
         goto out;
 
     SetEvent(This->evComplete);
+    ResetEvent(This->ThreadSignal);
 
     if (This->pInputPin->pin.pConnectedTo)
     {
@@ -443,6 +459,9 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     {
         if (This->pFuncsTable->pfnOnStartStreaming)
             This->pFuncsTable->pfnOnStartStreaming(This);
+        if (This->filter.state == State_Stopped)
+            BaseRendererImpl_ClearPendingSample(This);
+        SetEvent(This->RenderEvent);
         This->filter.state = State_Running;
     }
 out:
@@ -469,9 +488,14 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
             }
             else if (This->pFuncsTable->pfnOnStopStreaming)
                 This->pFuncsTable->pfnOnStopStreaming(This);
+
+            if (This->filter.state == State_Stopped)
+                BaseRendererImpl_ClearPendingSample(This);
+            ResetEvent(This->RenderEvent);
             This->filter.state = State_Paused;
         }
     }
+    ResetEvent(This->ThreadSignal);
     LeaveCriticalSection(&This->csRenderLock);
 
     return S_OK;
@@ -520,6 +544,9 @@ HRESULT WINAPI BaseRendererImpl_EndOfStream(BaseRenderer* iface)
 HRESULT WINAPI BaseRendererImpl_BeginFlush(BaseRenderer* iface)
 {
     TRACE("(%p)\n", iface);
+    BaseRendererImpl_ClearPendingSample(iface);
+    SetEvent(iface->ThreadSignal);
+    SetEvent(iface->RenderEvent);
     return S_OK;
 }
 
@@ -527,5 +554,17 @@ HRESULT WINAPI BaseRendererImpl_EndFlush(BaseRenderer* iface)
 {
     TRACE("(%p)\n", iface);
     RendererPosPassThru_ResetMediaTime(iface->pPosition);
+    ResetEvent(iface->ThreadSignal);
+    ResetEvent(iface->RenderEvent);
+    return S_OK;
+}
+
+HRESULT WINAPI BaseRendererImpl_ClearPendingSample(BaseRenderer *iface)
+{
+    if (iface->pMediaSample)
+    {
+        IMediaSample_Release(iface->pMediaSample);
+        iface->pMediaSample = NULL;
+    }
     return S_OK;
 }

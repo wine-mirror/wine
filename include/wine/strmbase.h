@@ -583,6 +583,9 @@ typedef struct BaseRendererTag
 	IUnknown *pPosition;
 	CRITICAL_SECTION csRenderLock;
 	HANDLE evComplete;
+	HANDLE ThreadSignal;
+	HANDLE RenderEvent;
+	IMediaSample *pMediaSample;
 
 	const struct BaseRendererFuncTable * pFuncsTable;
 } BaseRenderer;
@@ -639,6 +642,7 @@ HRESULT WINAPI BaseRendererImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsT
 HRESULT WINAPI BaseRendererImpl_EndOfStream(BaseRenderer* iface);
 HRESULT WINAPI BaseRendererImpl_BeginFlush(BaseRenderer* iface);
 HRESULT WINAPI BaseRendererImpl_EndFlush(BaseRenderer* iface);
+HRESULT WINAPI BaseRendererImpl_ClearPendingSample(BaseRenderer *iface);
 
 HRESULT WINAPI BaseRenderer_Init(BaseRenderer *This, const IBaseFilterVtbl *Vtbl, IUnknown *pUnkOuter, const CLSID *pClsid, DWORD_PTR DebugInfo, const BaseRendererFuncTable* pBaseFuncsTable);
 
