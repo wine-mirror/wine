@@ -1207,6 +1207,20 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
                 FIXME("path gradient gamma correction not implemented\n");
         }
 
+        if (fill->blendcount)
+        {
+            static int once;
+            if (!once++)
+                FIXME("path gradient blend not implemented\n");
+        }
+
+        if (fill->pblendcount)
+        {
+            static int once;
+            if (!once++)
+                FIXME("path gradient preset blend not implemented\n");
+        }
+
         stat = GdipClonePath(fill->path, &flat_path);
 
         if (stat != Ok)
