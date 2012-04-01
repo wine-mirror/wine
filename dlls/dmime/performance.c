@@ -1178,8 +1178,13 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPerformanceImpl (LPCGUID lpcGUID, LPVOID 
 
 	TRACE("(%p,%p,%p)\n", lpcGUID, ppobj, pUnkOuter);
 
+        if (pUnkOuter) {
+                *ppobj = NULL;
+                return CLASS_E_NOAGGREGATION;
+        }
+
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPerformance8Impl));
-	if (NULL == obj) 	{
+        if (NULL == obj) {
 		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
