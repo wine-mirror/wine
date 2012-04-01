@@ -195,6 +195,50 @@ static void test_createport(void)
     IDirectMusicPerformance_Release(perf);
 }
 
+static void test_COM(void)
+{
+    IDirectMusicPerformance *dmp = (IDirectMusicPerformance*)0xdeadbeef;
+    IDirectMusicPerformance *dmp2;
+    IDirectMusicPerformance8 *dmp8;
+    ULONG refcount;
+    HRESULT hr;
+
+    /* COM aggregation */
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, (IUnknown*)&dmp, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&dmp);
+    ok(hr == CLASS_E_NOAGGREGATION,
+            "DirectMusicPerformance create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+    ok(!dmp, "dmp = %p\n", dmp);
+
+    /* Invalid RIID */
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectSound, (void**)&dmp);
+    ok(hr == E_NOINTERFACE,
+            "DirectMusicPerformance create failed: %08x, expected E_NOINTERFACE\n", hr);
+
+    /* Same refcount */
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicPerformance, (void**)&dmp);
+    ok(hr == S_OK, "DirectMusicPerformance create failed: %08x, expected S_OK\n", hr);
+    refcount = IDirectMusicPerformance_AddRef(dmp);
+    ok (refcount == 2, "refcount == %u, expected 2\n", refcount);
+    hr = IDirectMusicPerformance_QueryInterface(dmp, &IID_IDirectMusicPerformance2, (void**)&dmp2);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectMusicPerformance2 failed: %08x\n", hr);
+    IDirectMusicPerformance_AddRef(dmp);
+    refcount = IDirectMusicPerformance_Release(dmp);
+    ok (refcount == 3, "refcount == %u, expected 3\n", refcount);
+    hr = IDirectMusicPerformance_QueryInterface(dmp, &IID_IDirectMusicPerformance8, (void**)&dmp8);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectMusicPerformance8 failed: %08x\n", hr);
+    refcount = IDirectMusicPerformance_Release(dmp);
+    ok (refcount == 3, "refcount == %u, expected 3\n", refcount);
+    refcount = IDirectMusicPerformance8_Release(dmp8);
+    ok (refcount == 2, "refcount == %u, expected 2\n", refcount);
+    refcount = IDirectMusicPerformance_Release(dmp2);
+    ok (refcount == 1, "refcount == %u, expected 1\n", refcount);
+    refcount = IDirectMusicPerformance_Release(dmp);
+    ok (refcount == 0, "refcount == %u, expected 0\n", refcount);
+}
+
 START_TEST( performance )
 {
     HRESULT hr;
@@ -211,6 +255,7 @@ START_TEST( performance )
         return;
     }
 
+    test_COM();
     test_createport();
 
     CoUninitialize();
