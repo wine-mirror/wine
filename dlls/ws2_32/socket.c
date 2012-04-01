@@ -4298,6 +4298,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IPV6_DONTFRAG:
             FIXME("IPV6_DONTFRAG is silently ignored!\n");
             return 0;
+        case WS_IPV6_PROTECTION_LEVEL:
+            FIXME("IPV6_PROTECTION_LEVEL is ignored!\n");
+            return 0;
         default:
             FIXME("Unknown IPPROTO_IPV6 optname 0x%08x\n", optname);
             return SOCKET_ERROR;
