@@ -222,21 +222,21 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
         return E_NOINTERFACE;
     }
 
-    if (IsEqualGUID( &IID_IDirect3DTexture2, riid)
-            || IsEqualGUID(&IID_IDirect3DTexture, riid))
+    if (This->version != 7)
     {
+        if (IsEqualGUID(&IID_IDirect3DTexture2, riid))
+        {
+            IDirect3DTexture2_AddRef(&This->IDirect3DTexture2_iface);
+            *obj = &This->IDirect3DTexture2_iface;
+            return S_OK;
+        }
+
         if (IsEqualGUID( &IID_IDirect3DTexture, riid ))
         {
+            IDirect3DTexture2_AddRef(&This->IDirect3DTexture_iface);
             *obj = &This->IDirect3DTexture_iface;
-            TRACE(" returning Direct3DTexture interface at %p.\n", *obj);
+            return S_OK;
         }
-        else
-        {
-            *obj = &This->IDirect3DTexture2_iface;
-            TRACE(" returning Direct3DTexture2 interface at %p.\n", *obj);
-        }
-        IUnknown_AddRef( (IUnknown *) *obj);
-        return S_OK;
     }
 
     WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
