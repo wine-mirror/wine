@@ -151,6 +151,7 @@ struct ddraw_surface
 
     LONG                     ref7, ref4, ref3, ref2, ref1, iface_count, gamma_count;
     IUnknown                *ifaceToRelease;
+    IUnknown *texture_outer;
 
     int                     version;
 

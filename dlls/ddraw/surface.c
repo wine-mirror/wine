@@ -429,7 +429,7 @@ static ULONG WINAPI d3d_texture2_AddRef(IDirect3DTexture2 *iface)
 
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface1_AddRef(&surface->IDirectDrawSurface_iface);
+    return IUnknown_AddRef(surface->texture_outer);
 }
 
 static ULONG WINAPI d3d_texture1_AddRef(IDirect3DTexture *iface)
@@ -438,7 +438,7 @@ static ULONG WINAPI d3d_texture1_AddRef(IDirect3DTexture *iface)
 
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface1_AddRef(&surface->IDirectDrawSurface_iface);
+    return IUnknown_AddRef(surface->texture_outer);
 }
 
 /*****************************************************************************
@@ -659,18 +659,20 @@ static ULONG WINAPI ddraw_gamma_control_Release(IDirectDrawGammaControl *iface)
 
 static ULONG WINAPI d3d_texture2_Release(IDirect3DTexture2 *iface)
 {
-    struct ddraw_surface *This = impl_from_IDirect3DTexture2(iface);
+    struct ddraw_surface *surface = impl_from_IDirect3DTexture2(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface1_Release(&This->IDirectDrawSurface_iface);
+    return IUnknown_Release(surface->texture_outer);
 }
 
 static ULONG WINAPI d3d_texture1_Release(IDirect3DTexture *iface)
 {
-    struct ddraw_surface *This = impl_from_IDirect3DTexture(iface);
+    struct ddraw_surface *surface = impl_from_IDirect3DTexture(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface1_Release(&This->IDirectDrawSurface_iface);
+    return IUnknown_Release(surface->texture_outer);
 }
 
 /*****************************************************************************
@@ -5733,14 +5735,17 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
     if (version == 7)
     {
         surface->ref7 = 1;
+        surface->texture_outer = (IUnknown *)&surface->IDirectDrawSurface7_iface;
     }
     else if (version == 4)
     {
         surface->ref4 = 1;
+        surface->texture_outer = (IUnknown *)&surface->IDirectDrawSurface4_iface;
     }
     else
     {
         surface->ref1 = 1;
+        surface->texture_outer = (IUnknown *)&surface->IDirectDrawSurface_iface;
     }
 
     copy_to_surfacedesc2(&surface->surface_desc, desc);
