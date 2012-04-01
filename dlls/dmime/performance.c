@@ -22,6 +22,38 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
+typedef struct IDirectMusicPerformance8Impl {
+    IDirectMusicPerformance8 IDirectMusicPerformance8_iface;
+    LONG ref;
+    /* IDirectMusicPerformanceImpl fields */
+    IDirectMusic8 *pDirectMusic;
+    IDirectSound *pDirectSound;
+    IDirectMusicGraph *pToolGraph;
+    DMUS_AUDIOPARAMS pParams;
+    /* global parameters */
+    BOOL fAutoDownload;
+    char cMasterGrooveLevel;
+    float fMasterTempo;
+    long lMasterVolume;
+    /* performance channels */
+    DMUSIC_PRIVATE_PCHANNEL PChannel[32];
+    /* IDirectMusicPerformance8Impl fields */
+    IDirectMusicAudioPath *pDefaultPath;
+    HANDLE hNotification;
+    REFERENCE_TIME rtMinimum;
+    REFERENCE_TIME rtLatencyTime;
+    DWORD dwBumperLength;
+    DWORD dwPrepareTime;
+    /** Message Processing */
+    HANDLE procThread;
+    DWORD procThreadId;
+    REFERENCE_TIME procThreadStartTime;
+    BOOL procThreadTicStarted;
+    CRITICAL_SECTION safe;
+    struct DMUS_PMSGItem *head;
+    struct DMUS_PMSGItem *imm_head;
+} IDirectMusicPerformance8Impl;
+
 typedef struct DMUS_PMSGItem DMUS_PMSGItem;
 struct DMUS_PMSGItem {
   DMUS_PMSGItem* next;
