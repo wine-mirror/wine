@@ -191,6 +191,13 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
         return S_OK;
     }
 
+    if (IsEqualGUID(riid, &IID_IDirectDrawColorControl))
+    {
+        WARN("Color control not implemented.\n");
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
     if (IsEqualGUID(riid, &IID_D3DDEVICE_WineD3D)
             || IsEqualGUID(riid, &IID_IDirect3DHALDevice)
             || IsEqualGUID(riid, &IID_IDirect3DRGBDevice))
