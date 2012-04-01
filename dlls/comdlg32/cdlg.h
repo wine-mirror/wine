@@ -31,9 +31,6 @@ extern HINSTANCE	COMDLG32_hInstance DECLSPEC_HIDDEN;
 void	COMDLG32_SetCommDlgExtendedError(DWORD err) DECLSPEC_HIDDEN;
 LPVOID	COMDLG32_AllocMem(int size) __WINE_ALLOC_SIZE(1) DECLSPEC_HIDDEN;
 
-/* handle<-handle16 conversion */
-#define HINSTANCE_32(h16)           ((HINSTANCE)(ULONG_PTR)(h16))
-
 /* Find/Replace local definitions */
 
 #define FR_WINE_UNICODE		0x80000000
