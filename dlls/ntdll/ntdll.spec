@@ -1244,6 +1244,7 @@
 # @ stub _CIsin
 # @ stub _CIsqrt
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr)
+@ stdcall -private -arch=x86_64 -norelay __chkstk()
 # @ stub __isascii
 # @ stub __iscsym
 # @ stub __iscsymf
