@@ -215,7 +215,7 @@ static UINT copy_install_file(MSIPACKAGE *package, MSIFILE *file, LPWSTR source)
             MoveFileExW(tmpfileW, file->TargetPath, MOVEFILE_DELAY_UNTIL_REBOOT))
         {
             file->state = msifs_installed;
-            package->need_reboot = 1;
+            package->need_reboot_at_end = 1;
             gle = ERROR_SUCCESS;
         }
         else

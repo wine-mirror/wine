@@ -477,7 +477,7 @@ static INT_PTR cabinet_copy_file(FDINOTIFICATIONTYPE fdint,
                 MoveFileExW(path, NULL, MOVEFILE_DELAY_UNTIL_REBOOT) &&
                 MoveFileExW(tmpfileW, path, MOVEFILE_DELAY_UNTIL_REBOOT))
             {
-                data->package->need_reboot = 1;
+                data->package->need_reboot_at_end = 1;
             }
             else
             {

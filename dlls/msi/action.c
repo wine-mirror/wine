@@ -6883,7 +6883,7 @@ static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
 static UINT ACTION_ScheduleReboot( MSIPACKAGE *package )
 {
     TRACE("\n");
-    package->need_reboot = 1;
+    package->need_reboot_at_end = 1;
     return ERROR_SUCCESS;
 }
 
@@ -7508,7 +7508,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     }
     msi_free( reinstall );
 
-    if (rc == ERROR_SUCCESS && package->need_reboot)
+    if (rc == ERROR_SUCCESS && package->need_reboot_at_end)
         return ERROR_SUCCESS_REBOOT_REQUIRED;
 
     return rc;

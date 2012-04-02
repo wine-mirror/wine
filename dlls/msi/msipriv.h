@@ -406,7 +406,7 @@ typedef struct tagMSIPACKAGE
     unsigned char scheduled_action_running : 1;
     unsigned char commit_action_running : 1;
     unsigned char rollback_action_running : 1;
-    unsigned char need_reboot : 1;
+    unsigned char need_reboot_at_end : 1;
     unsigned char need_rollback : 1;
 } MSIPACKAGE;
 
