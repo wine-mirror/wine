@@ -72,14 +72,6 @@ typedef struct
 
 typedef struct
 {
-    const IEnumMonikerVtbl *lpVtbl;
-    LONG ref;
-    DWORD index;
-    HKEY hkey;
-} EnumMonikerImpl;
-
-typedef struct
-{
     const IMonikerVtbl *lpVtbl;
     LONG ref;
     HKEY hkey;
