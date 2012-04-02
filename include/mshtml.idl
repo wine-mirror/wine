@@ -9657,7 +9657,63 @@ methods:
 }
 
 /*****************************************************************************
- *    DispHTMLUnknownElement interface
+ *    DispHTMLMetaElement dispinterface
+ */
+[
+    hidden,
+    uuid(3050f517-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLMetaElement
+{
+properties:
+methods:
+    WINE_HTMLELEMENT_DISPINTERFACE_DECL;
+
+    [propput, id(DISPID_IHTMLMETAELEMENT_HTTPEQUIV), displaybind, bindable]
+    void httpEquiv(BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT_HTTPEQUIV), displaybind, bindable]
+    BSTR httpEquiv();
+
+    [propput, id(DISPID_IHTMLMETAELEMENT_CONTENT), displaybind, bindable]
+    void content(BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT_CONTENT), displaybind, bindable]
+    BSTR content();
+
+    [propput, id(DISPID_IHTMLMETAELEMENT_NAME), displaybind, bindable]
+    void name(BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT_NAME), displaybind, bindable]
+    BSTR name();
+
+    [propput, id(DISPID_IHTMLMETAELEMENT_URL), displaybind, bindable]
+    void url(BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT_URL), displaybind, bindable]
+    BSTR url();
+
+    [propput, id(DISPID_IHTMLMETAELEMENT_CHARSET), displaybind, bindable]
+    void charset(BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT_CHARSET), displaybind, bindable]
+    BSTR charset();
+
+    [propput, id(DISPID_IHTMLMETAELEMENT2_SCHEME), displaybind, bindable]
+    void scheme(BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT2_SCHEME), displaybind, bindable]
+    BSTR scheme();
+
+    [propput, id(DISPID_IHTMLMETAELEMENT3_IE8_URL)]
+    void ie8_url(BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT3_IE8_URL)]
+    BSTR ie8_url();
+}
+
+/*****************************************************************************
+ *    DispHTMLUnknownElement dispinterface
  */
 [
     hidden,
