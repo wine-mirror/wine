@@ -405,37 +405,6 @@ RtlDeleteSecurityObject( PSECURITY_DESCRIPTOR *ObjectDescriptor )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-/**************************************************************************
- *                 _chkstk				[NTDLL.@]
- *
- * Glorified "enter xxxx".
- */
-#ifdef __i386__
-__ASM_STDCALL_FUNC( _chkstk, 0,
-                   "negl %eax\n\t"
-                   "addl %esp,%eax\n\t"
-                   "xchgl %esp,%eax\n\t"
-                   "movl 0(%eax),%eax\n\t"  /* copy return address from old location */
-                   "movl %eax,0(%esp)\n\t"
-                   "ret" )
-#endif
-
-/**************************************************************************
- *                 _alloca_probe		        [NTDLL.@]
- *
- * Glorified "enter xxxx".
- */
-#ifdef __i386__
-__ASM_STDCALL_FUNC( _alloca_probe, 0,
-                   "negl %eax\n\t"
-                   "addl %esp,%eax\n\t"
-                   "xchgl %esp,%eax\n\t"
-                   "movl 0(%eax),%eax\n\t"  /* copy return address from old location */
-                   "movl %eax,0(%esp)\n\t"
-                   "ret" )
-#endif
-
-
 /******************************************************************************
  *  RtlInitializeGenericTable           [NTDLL.@]
  */
