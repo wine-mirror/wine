@@ -484,10 +484,9 @@ static const WCHAR wine_fonts_key[] = {'S','o','f','t','w','a','r','e','\\','W',
 static const WCHAR wine_fonts_cache_key[] = {'C','a','c','h','e',0};
 static const WCHAR english_name_value[] = {'E','n','g','l','i','s','h',' ','N','a','m','e',0};
 static const WCHAR face_index_value[] = {'I','n','d','e','x',0};
-static const WCHAR face_italic_value[] = {'I','t','a','l','i','c',0};
-static const WCHAR face_bold_value[] = {'B','o','l','d',0};
+static const WCHAR face_ntmflags_value[] = {'N','t','m','f','l','a','g','s',0};
 static const WCHAR face_version_value[] = {'V','e','r','s','i','o','n',0};
-static const WCHAR face_external_value[] = {'E','x','t','e','r','n','a','l',0};
+static const WCHAR face_vertical_value[] = {'V','e','r','t','i','c','a','l',0};
 static const WCHAR face_height_value[] = {'H','e','i','g','h','t',0};
 static const WCHAR face_width_value[] = {'W','i','d','t','h',0};
 static const WCHAR face_size_value[] = {'S','i','z','e',0};
@@ -1316,7 +1315,6 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family)
        key of a bunch of non-scalable strikes */
     if(RegQueryValueExA(hkey_face, "File Name", NULL, NULL, NULL, &needed) == ERROR_SUCCESS)
     {
-        DWORD italic, bold;
         Face *face;
         face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
         face->cached_enum_data = NULL;
@@ -1325,7 +1323,6 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family)
         RegQueryValueExA(hkey_face, "File Name", NULL, NULL, (BYTE*)face->file, &needed);
 
         face->StyleName = strdupW(face_name);
-        face->vertical = (family->FamilyName[0] == '@');
 
         if(RegQueryValueExW(hkey_face, face_full_name_value, NULL, NULL, NULL, &needed) == ERROR_SUCCESS)
         {
@@ -1337,10 +1334,9 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family)
             face->FullName = NULL;
 
         reg_load_dword(hkey_face, face_index_value, (DWORD*)&face->face_index);
-        reg_load_dword(hkey_face, face_italic_value, &italic);
-        reg_load_dword(hkey_face, face_bold_value, &bold);
+        reg_load_dword(hkey_face, face_ntmflags_value, &face->ntmFlags);
         reg_load_dword(hkey_face, face_version_value, (DWORD*)&face->font_version);
-        reg_load_dword(hkey_face, face_external_value, (DWORD*)&face->external);
+        reg_load_dword(hkey_face, face_vertical_value, (DWORD*)&face->vertical);
 
         needed = sizeof(face->fs);
         RegQueryValueExW(hkey_face, face_font_sig_value, NULL, NULL, (BYTE*)&face->fs, &needed);
@@ -1363,11 +1359,6 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family)
                   face->size.height, face->size.width, face->size.size >> 6,
                   face->size.x_ppem >> 6, face->size.y_ppem >> 6);
         }
-
-        face->ntmFlags = 0;
-        if (italic) face->ntmFlags |= NTM_ITALIC;
-        if (bold) face->ntmFlags |= NTM_BOLD;
-        if (face->ntmFlags == 0) face->ntmFlags = NTM_REGULAR;
 
         TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
               face->fs.fsCsb[0], face->fs.fsCsb[1],
@@ -1517,10 +1508,9 @@ static void add_face_to_cache(Face *face)
                        (strlenW(face->FullName) + 1) * sizeof(WCHAR));
 
     reg_save_dword(hkey_face, face_index_value, face->face_index);
-    reg_save_dword(hkey_face, face_italic_value, (face->ntmFlags & NTM_ITALIC) != 0);
-    reg_save_dword(hkey_face, face_bold_value, (face->ntmFlags & NTM_BOLD) != 0);
+    reg_save_dword(hkey_face, face_ntmflags_value, face->ntmFlags);
     reg_save_dword(hkey_face, face_version_value, face->font_version);
-    reg_save_dword(hkey_face, face_external_value, face->external);
+    reg_save_dword(hkey_face, face_vertical_value, face->vertical);
 
     RegSetValueExW(hkey_face, face_font_sig_value, 0, REG_BINARY, (BYTE*)&face->fs, sizeof(face->fs));
 
