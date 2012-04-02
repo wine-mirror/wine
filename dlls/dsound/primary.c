@@ -353,7 +353,7 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 	HRESULT err = DSERR_BUFFERLOST;
 	int i;
 	WAVEFORMATEX *old_fmt;
-	WAVEFORMATEXTENSIBLE *fmtex;
+	WAVEFORMATEXTENSIBLE *fmtex, *passed_fmtex = (WAVEFORMATEXTENSIBLE*)passed_fmt;
 	BOOL forced = (device->priolevel == DSSCL_WRITEPRIMARY);
 
 	TRACE("(%p,%p)\n", device, passed_fmt);
@@ -380,6 +380,11 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 			passed_fmt->nBlockAlign != passed_fmt->nChannels * passed_fmt->wBitsPerSample / 8)
 		return DSERR_INVALIDPARAM;
 
+	if(passed_fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
+		if(passed_fmtex->Samples.wValidBitsPerSample > passed_fmtex->Format.wBitsPerSample)
+			return DSERR_INVALIDPARAM;
+	}
+
 	/* **** */
 	RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
 	EnterCriticalSection(&(device->mixlock));
@@ -392,6 +397,13 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 		old_fmt = NULL;
 		err = DSERR_OUTOFMEMORY;
 		goto done;
+	}
+
+	if(device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
+		if(fmtex->Samples.wValidBitsPerSample == 0){
+			TRACE("Correcting 0 valid bits per sample\n");
+			fmtex->Samples.wValidBitsPerSample = fmtex->Format.wBitsPerSample;
+		}
 	}
 
 	DSOUND_PrimaryClose(device);
@@ -427,6 +439,8 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 	device->pwfx->wBitsPerSample = 32;
 	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
 	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	if(device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+		fmtex->Samples.wValidBitsPerSample = device->pwfx->wBitsPerSample;
 	err = DSOUND_ReopenDevice(device, FALSE);
 	if(SUCCEEDED(err))
 		goto opened;
@@ -434,6 +448,8 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 	device->pwfx->wBitsPerSample = 16;
 	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
 	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	if(device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+		fmtex->Samples.wValidBitsPerSample = device->pwfx->wBitsPerSample;
 	err = DSOUND_ReopenDevice(device, FALSE);
 	if(SUCCEEDED(err))
 		goto opened;
@@ -441,6 +457,8 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 	device->pwfx->wBitsPerSample = 8;
 	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
 	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	if(device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+		fmtex->Samples.wValidBitsPerSample = device->pwfx->wBitsPerSample;
 	err = DSOUND_ReopenDevice(device, FALSE);
 	if(SUCCEEDED(err))
 		goto opened;
@@ -449,6 +467,8 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 	device->pwfx->wBitsPerSample = passed_fmt->wBitsPerSample;
 	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
 	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	if(device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+		fmtex->Samples.wValidBitsPerSample = device->pwfx->wBitsPerSample;
 	err = DSOUND_ReopenDevice(device, FALSE);
 	if(SUCCEEDED(err))
 		goto opened;
@@ -456,6 +476,8 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 	device->pwfx->wBitsPerSample = 32;
 	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
 	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	if(device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+		fmtex->Samples.wValidBitsPerSample = device->pwfx->wBitsPerSample;
 	err = DSOUND_ReopenDevice(device, FALSE);
 	if(SUCCEEDED(err))
 		goto opened;
@@ -463,6 +485,8 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 	device->pwfx->wBitsPerSample = 16;
 	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
 	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	if(device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+		fmtex->Samples.wValidBitsPerSample = device->pwfx->wBitsPerSample;
 	err = DSOUND_ReopenDevice(device, FALSE);
 	if(SUCCEEDED(err))
 		goto opened;
@@ -470,6 +494,8 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 	device->pwfx->wBitsPerSample = 8;
 	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
 	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	if(device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+		fmtex->Samples.wValidBitsPerSample = device->pwfx->wBitsPerSample;
 	err = DSOUND_ReopenDevice(device, FALSE);
 	if(SUCCEEDED(err))
 		goto opened;
