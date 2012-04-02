@@ -4003,9 +4003,6 @@ static void test_CreateScalableFontResource(void)
 todo_wine
     ok(!ret, "RemoveFontResourceEx() should fail\n");
 
-    /* FIXME: since CreateScalableFontResource is a stub further testing is impossible */
-    if (ret) return;
-
     /* test public font resource */
     SetLastError(0xdeadbeef);
     ret = CreateScalableFontResource(0, fot_name, ttf_name, NULL);
@@ -4022,11 +4019,11 @@ todo_wine
     ok(ret, "font wine_test should be enumerated\n");
 
     ret = pRemoveFontResourceExA(fot_name, FR_PRIVATE, 0);
+todo_wine
     ok(!ret, "RemoveFontResourceEx() with not matching flags should fail\n");
 
     SetLastError(0xdeadbeef);
     ret = pRemoveFontResourceExA(fot_name, 0, 0);
-todo_wine
     ok(ret, "RemoveFontResourceEx() error %d\n", GetLastError());
 
     ret = is_truetype_font_installed("wine_test");
