@@ -239,6 +239,9 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
 
     WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
 
+    if (This->version != 7)
+        return E_INVALIDARG;
+
     return E_NOINTERFACE;
 }
 
