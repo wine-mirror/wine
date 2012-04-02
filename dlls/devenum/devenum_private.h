@@ -72,7 +72,7 @@ typedef struct
 
 typedef struct
 {
-    const IMonikerVtbl *lpVtbl;
+    IMoniker IMoniker_iface;
     LONG ref;
     HKEY hkey;
 } MediaCatMoniker;

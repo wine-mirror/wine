@@ -136,10 +136,10 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
             strcatW(wszRegKeyName, pszBetween);
 
             if (RegCreateKeyW(hbasekey, wszRegKeyName, &pMoniker->hkey) == ERROR_SUCCESS)
-                *ppmkOut = (LPMONIKER)pMoniker;
+                *ppmkOut = &pMoniker->IMoniker_iface;
             else
             {
-                IMoniker_Release((LPMONIKER)pMoniker);
+                IMoniker_Release(&pMoniker->IMoniker_iface);
                 res = MK_E_NOOBJECT;
             }
         }
