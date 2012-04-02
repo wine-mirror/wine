@@ -814,7 +814,7 @@ UINT WINAPI MsiSetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode, BOOL fState)
     switch (iRunMode)
     {
     case MSIRUNMODE_REBOOTATEND:
-        package->need_reboot_at_end = 1;
+        package->need_reboot_at_end = (fState != 0);
         r = ERROR_SUCCESS;
         break;
 
