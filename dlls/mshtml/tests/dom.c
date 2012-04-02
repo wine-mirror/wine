@@ -47,6 +47,7 @@ static const char range_test2_str[] =
     "<html><body>abc<hr />123<br /><hr />def</body></html>";
 static const char elem_test_str[] =
     "<html><head><title>test</title><style id=\"styleid\">.body { margin-right: 0px; }</style>"
+    "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"
     "<body onload=\"Testing()\">text test<!-- a comment -->"
     "<a id=\"a\" href=\"http://test\" name=\"x\">link</a>"
     "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" title=\"test title\" />"
@@ -113,7 +114,8 @@ typedef enum {
     ET_FRAME,
     ET_OBJECT,
     ET_EMBED,
-    ET_DIV
+    ET_DIV,
+    ET_META
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -307,6 +309,13 @@ static const IID * const title_iids[] = {
     NULL
 };
 
+static const IID * const meta_iids[] = {
+    ELEM_IFACES,
+    &IID_IHTMLMetaElement,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 static const IID * const object_iids[] = {
     ELEM_IFACES,
     &IID_IHTMLObjectElement,
@@ -416,7 +425,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"FRAME",     frame_iids,       &DIID_DispHTMLFrameElement},
     {"OBJECT",    object_iids,      &DIID_DispHTMLObjectElement},
     {"EMBED",     embed_iids,       &DIID_DispHTMLEmbed},
-    {"DIV",       elem_iids,        NULL}
+    {"DIV",       elem_iids,        NULL},
+    {"META",      meta_iids,        &DIID_DispHTMLMetaElement}
 };
 
 static const char *dbgstr_guid(REFIID riid)
@@ -4910,6 +4920,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_HEAD,
         ET_TITLE,
         ET_STYLE,
+        ET_META,
         ET_BODY,
         ET_COMMENT,
         ET_A,

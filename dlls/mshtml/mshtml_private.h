@@ -92,6 +92,7 @@ typedef struct event_target_t event_target_t;
     XDIID(DispHTMLImg) \
     XDIID(DispHTMLInputElement) \
     XDIID(DispHTMLLocation) \
+    XDIID(DispHTMLMetaElement) \
     XDIID(DispHTMLNavigator) \
     XDIID(DispHTMLObjectElement) \
     XDIID(DispHTMLOptionElement) \
@@ -148,6 +149,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLImgElement) \
     XIID(IHTMLInputElement) \
     XIID(IHTMLLocation) \
+    XIID(IHTMLMetaElement) \
     XIID(IHTMLMimeTypesCollection) \
     XIID(IHTMLObjectElement) \
     XIID(IHTMLObjectElement2) \
@@ -777,6 +779,7 @@ HRESULT HTMLIFrame_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DE
 HRESULT HTMLStyleElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLImgElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLInputElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
+HRESULT HTMLMetaElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLObjectElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLOptionElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLScriptElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
