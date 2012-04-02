@@ -1788,6 +1788,47 @@ static void test_TVM_GETNEXTITEM(void)
     DestroyWindow(hTree);
 }
 
+static void test_TVM_HITTEST(void)
+{
+    HWND hTree;
+    LRESULT ret;
+    RECT rc;
+    TVHITTESTINFO ht;
+
+    hTree = create_treeview_control(0);
+    fill_tree(hTree);
+
+    *(HTREEITEM*)&rc = hRoot;
+    ret = SendMessage(hTree, TVM_GETITEMRECT, TRUE, (LPARAM)&rc);
+    expect(TRUE, (BOOL)ret);
+
+    ht.pt.x = rc.left-1;
+    ht.pt.y = rc.top;
+
+    ret = SendMessage(hTree, TVM_HITTEST, 0, (LPARAM)&ht);
+    ok((HTREEITEM)ret == hRoot, "got %p, expected %p\n", (HTREEITEM)ret, hRoot);
+    ok(ht.hItem == hRoot, "got %p, expected %p\n", ht.hItem, hRoot);
+    ok(ht.flags == TVHT_ONITEMBUTTON, "got %d, expected %d\n", ht.flags, TVHT_ONITEMBUTTON);
+
+    ret = SendMessageA(hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)hRoot);
+    expect(TRUE, (BOOL)ret);
+
+    *(HTREEITEM*)&rc = hChild;
+    ret = SendMessage(hTree, TVM_GETITEMRECT, TRUE, (LPARAM)&rc);
+    expect(TRUE, (BOOL)ret);
+
+    ht.pt.x = rc.left-1;
+    ht.pt.y = rc.top;
+
+    ret = SendMessage(hTree, TVM_HITTEST, 0, (LPARAM)&ht);
+    ok((HTREEITEM)ret == hChild, "got %p, expected %p\n", (HTREEITEM)ret, hChild);
+    ok(ht.hItem == hChild, "got %p, expected %p\n", ht.hItem, hChild);
+    /* Wine returns item button here, but this item has no button */
+    todo_wine ok(ht.flags == TVHT_ONITEMINDENT, "got %d, expected %d\n", ht.flags, TVHT_ONITEMINDENT);
+
+    DestroyWindow(hTree);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -1859,6 +1900,7 @@ START_TEST(treeview)
     test_htreeitem_layout();
     test_TVS_CHECKBOXES();
     test_TVM_GETNEXTITEM();
+    test_TVM_HITTEST();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
