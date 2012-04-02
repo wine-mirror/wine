@@ -32,17 +32,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
-#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
-
 static const IMediaSeekingVtbl IMediaSeekingPassThru_Vtbl;
 
 typedef struct PassThruImpl {
-    const ISeekingPassThruVtbl *IPassThru_vtbl;
-    const IUnknownVtbl *IInner_vtbl;
-    const IMediaSeekingVtbl *IMediaSeeking_vtbl;
+    IUnknown  IUnknown_inner;
+    ISeekingPassThru ISeekingPassThru_iface;
+    IMediaSeeking IMediaSeeking_iface;
 
     LONG ref;
-    IUnknown * pUnkOuter;
+    IUnknown * outer_unk;
     IPin * pin;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
@@ -52,10 +50,25 @@ typedef struct PassThruImpl {
     REFERENCE_TIME time_earliest;
 } PassThruImpl;
 
+static inline PassThruImpl *impl_from_IUnknown_inner(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, PassThruImpl, IUnknown_inner);
+}
+
+static inline PassThruImpl *impl_from_ISeekingPassThru(ISeekingPassThru *iface)
+{
+    return CONTAINING_RECORD(iface, PassThruImpl, ISeekingPassThru_iface);
+}
+
+static inline PassThruImpl *impl_from_IMediaSeeking(IMediaSeeking *iface)
+{
+    return CONTAINING_RECORD(iface, PassThruImpl, IMediaSeeking_iface);
+}
+
 static HRESULT WINAPI SeekInner_QueryInterface(IUnknown * iface,
 					  REFIID riid,
 					  LPVOID *ppvObj) {
-    ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
+    PassThruImpl *This = impl_from_IUnknown_inner(iface);
     TRACE("(%p)->(%s (%p), %p)\n", This, debugstr_guid(riid), riid, ppvObj);
 
     if (This->bAggregatable)
@@ -63,13 +76,13 @@ static HRESULT WINAPI SeekInner_QueryInterface(IUnknown * iface,
 
     if (IsEqualGUID(&IID_IUnknown, riid))
     {
-        *ppvObj = &(This->IInner_vtbl);
+        *ppvObj = &(This->IUnknown_inner);
         TRACE("   returning IUnknown interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_ISeekingPassThru, riid)) {
-        *ppvObj = &(This->IPassThru_vtbl);
+        *ppvObj = &(This->ISeekingPassThru_iface);
         TRACE("   returning ISeekingPassThru interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IMediaSeeking, riid)) {
-        *ppvObj = &(This->IMediaSeeking_vtbl);
+        *ppvObj = &(This->IMediaSeeking_iface);
         TRACE("   returning IMediaSeeking interface (%p)\n", *ppvObj);
     } else {
         *ppvObj = NULL;
@@ -82,7 +95,7 @@ static HRESULT WINAPI SeekInner_QueryInterface(IUnknown * iface,
 }
 
 static ULONG WINAPI SeekInner_AddRef(IUnknown * iface) {
-    ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
+    PassThruImpl *This = impl_from_IUnknown_inner(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->(): new ref = %d\n", This, ref);
@@ -91,7 +104,7 @@ static ULONG WINAPI SeekInner_AddRef(IUnknown * iface) {
 }
 
 static ULONG WINAPI SeekInner_Release(IUnknown * iface) {
-    ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
+    PassThruImpl *This = impl_from_IUnknown_inner(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(): new ref = %d\n", This, ref);
@@ -118,18 +131,18 @@ static HRESULT SeekOuter_QueryInterface(PassThruImpl *This, REFIID riid, LPVOID 
     if (This->bAggregatable)
         This->bUnkOuterValid = TRUE;
 
-    if (This->pUnkOuter)
+    if (This->outer_unk)
     {
         if (This->bAggregatable)
-            return IUnknown_QueryInterface(This->pUnkOuter, riid, ppv);
+            return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 
         if (IsEqualIID(riid, &IID_IUnknown))
         {
             HRESULT hr;
 
-            IUnknown_AddRef((IUnknown *)&(This->IInner_vtbl));
-            hr = IUnknown_QueryInterface((IUnknown *)&(This->IInner_vtbl), riid, ppv);
-            IUnknown_Release((IUnknown *)&(This->IInner_vtbl));
+            IUnknown_AddRef((IUnknown *)&(This->IUnknown_inner));
+            hr = IUnknown_QueryInterface((IUnknown *)&(This->IUnknown_inner), riid, ppv);
+            IUnknown_Release((IUnknown *)&(This->IUnknown_inner));
             This->bAggregatable = TRUE;
             return hr;
         }
@@ -138,26 +151,26 @@ static HRESULT SeekOuter_QueryInterface(PassThruImpl *This, REFIID riid, LPVOID 
         return E_NOINTERFACE;
     }
 
-    return IUnknown_QueryInterface((IUnknown *)&(This->IInner_vtbl), riid, ppv);
+    return IUnknown_QueryInterface((IUnknown *)&(This->IUnknown_inner), riid, ppv);
 }
 
 static ULONG SeekOuter_AddRef(PassThruImpl *This)
 {
-    if (This->pUnkOuter && This->bUnkOuterValid)
-        return IUnknown_AddRef(This->pUnkOuter);
-    return IUnknown_AddRef((IUnknown *)&(This->IInner_vtbl));
+    if (This->outer_unk && This->bUnkOuterValid)
+        return IUnknown_AddRef(This->outer_unk);
+    return IUnknown_AddRef((IUnknown *)&(This->IUnknown_inner));
 }
 
 static ULONG SeekOuter_Release(PassThruImpl *This)
 {
-    if (This->pUnkOuter && This->bUnkOuterValid)
-        return IUnknown_Release(This->pUnkOuter);
-    return IUnknown_Release((IUnknown *)&(This->IInner_vtbl));
+    if (This->outer_unk && This->bUnkOuterValid)
+        return IUnknown_Release(This->outer_unk);
+    return IUnknown_Release((IUnknown *)&(This->IUnknown_inner));
 }
 
 static HRESULT WINAPI SeekingPassThru_QueryInterface(ISeekingPassThru *iface, REFIID riid, LPVOID *ppvObj)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IPassThru_vtbl, iface);
+    PassThruImpl *This = impl_from_ISeekingPassThru(iface);
 
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
 
@@ -166,7 +179,7 @@ static HRESULT WINAPI SeekingPassThru_QueryInterface(ISeekingPassThru *iface, RE
 
 static ULONG WINAPI SeekingPassThru_AddRef(ISeekingPassThru *iface)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IPassThru_vtbl, iface);
+    PassThruImpl *This = impl_from_ISeekingPassThru(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -175,7 +188,7 @@ static ULONG WINAPI SeekingPassThru_AddRef(ISeekingPassThru *iface)
 
 static ULONG WINAPI SeekingPassThru_Release(ISeekingPassThru *iface)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IPassThru_vtbl, iface);
+    PassThruImpl *This = impl_from_ISeekingPassThru(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -184,7 +197,7 @@ static ULONG WINAPI SeekingPassThru_Release(ISeekingPassThru *iface)
 
 static HRESULT WINAPI SeekingPassThru_Init(ISeekingPassThru *iface, BOOL renderer, IPin *pin)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IPassThru_vtbl, iface);
+    PassThruImpl *This = impl_from_ISeekingPassThru(iface);
 
     TRACE("(%p/%p)->(%d, %p)\n", This, iface, renderer, pin);
 
@@ -229,12 +242,12 @@ HRESULT WINAPI PosPassThru_Construct(IUnknown *pUnkOuter, LPVOID *ppPassThru)
     if (!fimpl)
         return E_OUTOFMEMORY;
 
-    fimpl->pUnkOuter = pUnkOuter;
+    fimpl->outer_unk = pUnkOuter;
     fimpl->bUnkOuterValid = FALSE;
     fimpl->bAggregatable = FALSE;
-    fimpl->IInner_vtbl = &IInner_VTable;
-    fimpl->IPassThru_vtbl = &ISeekingPassThru_Vtbl;
-    fimpl->IMediaSeeking_vtbl = &IMediaSeekingPassThru_Vtbl;
+    fimpl->IUnknown_inner.lpVtbl = &IInner_VTable;
+    fimpl->ISeekingPassThru_iface.lpVtbl = &ISeekingPassThru_Vtbl;
+    fimpl->IMediaSeeking_iface.lpVtbl = &IMediaSeekingPassThru_Vtbl;
     fimpl->ref = 1;
     fimpl->pin = NULL;
     fimpl->timevalid = 0;
@@ -245,7 +258,7 @@ HRESULT WINAPI PosPassThru_Construct(IUnknown *pUnkOuter, LPVOID *ppPassThru)
 
 static HRESULT WINAPI MediaSeekingPassThru_QueryInterface(IMediaSeeking *iface, REFIID riid, LPVOID *ppvObj)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
 
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
 
@@ -254,7 +267,7 @@ static HRESULT WINAPI MediaSeekingPassThru_QueryInterface(IMediaSeeking *iface, 
 
 static ULONG WINAPI MediaSeekingPassThru_AddRef(IMediaSeeking *iface)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
 
     TRACE("(%p/%p)->()\n", iface, This);
 
@@ -263,7 +276,7 @@ static ULONG WINAPI MediaSeekingPassThru_AddRef(IMediaSeeking *iface)
 
 static ULONG WINAPI MediaSeekingPassThru_Release(IMediaSeeking *iface)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
 
     TRACE("(%p/%p)->()\n", iface, This);
 
@@ -286,7 +299,7 @@ static HRESULT get_connected(PassThruImpl *This, IMediaSeeking **seek) {
 
 static HRESULT WINAPI MediaSeekingPassThru_GetCapabilities(IMediaSeeking * iface, DWORD * pCapabilities)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%p)\n", iface, This, pCapabilities);
@@ -302,7 +315,7 @@ static HRESULT WINAPI MediaSeekingPassThru_GetCapabilities(IMediaSeeking * iface
 
 static HRESULT WINAPI MediaSeekingPassThru_CheckCapabilities(IMediaSeeking * iface, DWORD * pCapabilities)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%p)\n", iface, This, pCapabilities);
@@ -318,7 +331,7 @@ static HRESULT WINAPI MediaSeekingPassThru_CheckCapabilities(IMediaSeeking * ifa
 
 static HRESULT WINAPI MediaSeekingPassThru_IsFormatSupported(IMediaSeeking * iface, const GUID * pFormat)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%s)\n", iface, This, debugstr_guid(pFormat));
@@ -334,7 +347,7 @@ static HRESULT WINAPI MediaSeekingPassThru_IsFormatSupported(IMediaSeeking * ifa
 
 static HRESULT WINAPI MediaSeekingPassThru_QueryPreferredFormat(IMediaSeeking * iface, GUID * pFormat)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%p)\n", iface, This, pFormat);
@@ -350,7 +363,7 @@ static HRESULT WINAPI MediaSeekingPassThru_QueryPreferredFormat(IMediaSeeking * 
 
 static HRESULT WINAPI MediaSeekingPassThru_GetTimeFormat(IMediaSeeking * iface, GUID * pFormat)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%p)\n", iface, This, pFormat);
@@ -366,7 +379,7 @@ static HRESULT WINAPI MediaSeekingPassThru_GetTimeFormat(IMediaSeeking * iface, 
 
 static HRESULT WINAPI MediaSeekingPassThru_IsUsingTimeFormat(IMediaSeeking * iface, const GUID * pFormat)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%s)\n", iface, This, debugstr_guid(pFormat));
@@ -382,7 +395,7 @@ static HRESULT WINAPI MediaSeekingPassThru_IsUsingTimeFormat(IMediaSeeking * ifa
 
 static HRESULT WINAPI MediaSeekingPassThru_SetTimeFormat(IMediaSeeking * iface, const GUID * pFormat)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%s)\n", iface, This, debugstr_guid(pFormat));
@@ -398,7 +411,7 @@ static HRESULT WINAPI MediaSeekingPassThru_SetTimeFormat(IMediaSeeking * iface, 
 
 static HRESULT WINAPI MediaSeekingPassThru_GetDuration(IMediaSeeking * iface, LONGLONG * pDuration)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%p)\n", iface, This, pDuration);
@@ -414,7 +427,7 @@ static HRESULT WINAPI MediaSeekingPassThru_GetDuration(IMediaSeeking * iface, LO
 
 static HRESULT WINAPI MediaSeekingPassThru_GetStopPosition(IMediaSeeking * iface, LONGLONG * pStop)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%p)\n", iface, This, pStop);
@@ -430,7 +443,7 @@ static HRESULT WINAPI MediaSeekingPassThru_GetStopPosition(IMediaSeeking * iface
 
 static HRESULT WINAPI MediaSeekingPassThru_GetCurrentPosition(IMediaSeeking * iface, LONGLONG * pCurrent)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr = S_OK;
     TRACE("(%p/%p)->(%p)\n", iface, This, pCurrent);
@@ -458,7 +471,7 @@ static HRESULT WINAPI MediaSeekingPassThru_GetCurrentPosition(IMediaSeeking * if
 
 static HRESULT WINAPI MediaSeekingPassThru_ConvertTimeFormat(IMediaSeeking * iface, LONGLONG * pTarget, const GUID * pTargetFormat, LONGLONG Source, const GUID * pSourceFormat)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%p,%s,%x%08x,%s)\n", iface, This, pTarget, debugstr_guid(pTargetFormat), (DWORD)(Source>>32), (DWORD)Source, debugstr_guid(pSourceFormat));
@@ -474,7 +487,7 @@ static HRESULT WINAPI MediaSeekingPassThru_ConvertTimeFormat(IMediaSeeking * ifa
 
 static HRESULT WINAPI MediaSeekingPassThru_SetPositions(IMediaSeeking * iface, LONGLONG * pCurrent, DWORD dwCurrentFlags, LONGLONG * pStop, DWORD dwStopFlags)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%p,%x,%p,%x)\n", iface, This, pCurrent, dwCurrentFlags, pStop, dwStopFlags);
@@ -489,7 +502,7 @@ static HRESULT WINAPI MediaSeekingPassThru_SetPositions(IMediaSeeking * iface, L
 
 static HRESULT WINAPI MediaSeekingPassThru_GetPositions(IMediaSeeking * iface, LONGLONG * pCurrent, LONGLONG * pStop)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%p, %p)\n", iface, This, pCurrent, pStop);
@@ -505,7 +518,7 @@ static HRESULT WINAPI MediaSeekingPassThru_GetPositions(IMediaSeeking * iface, L
 
 static HRESULT WINAPI MediaSeekingPassThru_GetAvailable(IMediaSeeking * iface, LONGLONG * pEarliest, LONGLONG * pLatest)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%p,%p)\n", iface, This, pEarliest, pLatest);
@@ -521,7 +534,7 @@ static HRESULT WINAPI MediaSeekingPassThru_GetAvailable(IMediaSeeking * iface, L
 
 static HRESULT WINAPI MediaSeekingPassThru_SetRate(IMediaSeeking * iface, double dRate)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%e)\n", iface, This, dRate);
@@ -537,7 +550,7 @@ static HRESULT WINAPI MediaSeekingPassThru_SetRate(IMediaSeeking * iface, double
 
 static HRESULT WINAPI MediaSeekingPassThru_GetRate(IMediaSeeking * iface, double * dRate)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p/%p)->(%p)\n", iface, This, dRate);
@@ -553,7 +566,7 @@ static HRESULT WINAPI MediaSeekingPassThru_GetRate(IMediaSeeking * iface, double
 
 static HRESULT WINAPI MediaSeekingPassThru_GetPreroll(IMediaSeeking * iface, LONGLONG * pPreroll)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PassThruImpl *This = impl_from_IMediaSeeking(iface);
     IMediaSeeking *seek;
     HRESULT hr;
     TRACE("(%p)\n", pPreroll);
@@ -569,7 +582,7 @@ static HRESULT WINAPI MediaSeekingPassThru_GetPreroll(IMediaSeeking * iface, LON
 
 HRESULT WINAPI RendererPosPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
+    PassThruImpl *This = impl_from_IUnknown_inner(iface);
     EnterCriticalSection(&This->time_cs);
     This->time_earliest = start;
     This->timevalid = 1;
@@ -579,7 +592,7 @@ HRESULT WINAPI RendererPosPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_
 
 HRESULT WINAPI RendererPosPassThru_ResetMediaTime(IUnknown *iface)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
+    PassThruImpl *This = impl_from_IUnknown_inner(iface);
     EnterCriticalSection(&This->time_cs);
     This->timevalid = 0;
     LeaveCriticalSection(&This->time_cs);
@@ -588,10 +601,10 @@ HRESULT WINAPI RendererPosPassThru_ResetMediaTime(IUnknown *iface)
 
 HRESULT WINAPI RendererPosPassThru_EOS(IUnknown *iface)
 {
-    ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
+    PassThruImpl *This = impl_from_IUnknown_inner(iface);
     REFERENCE_TIME time;
     HRESULT hr;
-    hr = IMediaSeeking_GetStopPosition((IMediaSeeking*)&This->IMediaSeeking_vtbl, &time);
+    hr = IMediaSeeking_GetStopPosition(&This->IMediaSeeking_iface, &time);
     EnterCriticalSection(&This->time_cs);
     if (SUCCEEDED(hr)) {
         This->timevalid = 1;
