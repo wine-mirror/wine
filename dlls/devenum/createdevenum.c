@@ -59,24 +59,24 @@ static HRESULT DEVENUM_CreateSpecialCategories(void);
 /**********************************************************************
  * DEVENUM_ICreateDevEnum_QueryInterface (also IUnknown)
  */
-static HRESULT WINAPI DEVENUM_ICreateDevEnum_QueryInterface(
-    ICreateDevEnum * iface,
-    REFIID riid,
-    LPVOID *ppvObj)
+static HRESULT WINAPI DEVENUM_ICreateDevEnum_QueryInterface(ICreateDevEnum *iface, REFIID riid,
+        void **ppv)
 {
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (ppvObj == NULL) return E_POINTER;
+    if (!ppv)
+        return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
 	IsEqualGUID(riid, &IID_ICreateDevEnum))
     {
-        *ppvObj = iface;
+        *ppv = iface;
 	DEVENUM_ICreateDevEnum_AddRef(iface);
 	return S_OK;
     }
 
     FIXME("- no interface IID: %s\n", debugstr_guid(riid));
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
@@ -463,9 +463,9 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     HKEY hkey;
     HKEY hbasekey;
     HRESULT hr;
-    CreateDevEnumImpl *This = (CreateDevEnumImpl *)iface;
 
-    TRACE("(%p)->(%s, %p, %x)\n\tDeviceClass:\t%s\n", This, debugstr_guid(clsidDeviceClass), ppEnumMoniker, dwFlags, debugstr_guid(clsidDeviceClass));
+    TRACE("(%p)->(%s, %p, %x)\n\tDeviceClass:\t%s\n", iface, debugstr_guid(clsidDeviceClass),
+          ppEnumMoniker, dwFlags, debugstr_guid(clsidDeviceClass));
 
     if (!ppEnumMoniker)
         return E_POINTER;
@@ -519,7 +519,7 @@ static const ICreateDevEnumVtbl ICreateDevEnum_Vtbl =
 /**********************************************************************
  * static CreateDevEnum instance
  */
-CreateDevEnumImpl DEVENUM_CreateDevEnum = { &ICreateDevEnum_Vtbl };
+CreateDevEnumImpl DEVENUM_CreateDevEnum = { { &ICreateDevEnum_Vtbl } };
 
 /**********************************************************************
  * DEVENUM_CreateAMCategoryKey (INTERNAL)

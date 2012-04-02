@@ -62,7 +62,7 @@ typedef struct
 
 typedef struct
 {
-    const ICreateDevEnumVtbl *lpVtbl;
+    ICreateDevEnum ICreateDevEnum_iface;
 } CreateDevEnumImpl;
 
 typedef struct
