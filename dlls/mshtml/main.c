@@ -49,7 +49,7 @@ DWORD mshtml_tls = TLS_OUT_OF_INDEXES;
 
 static HINSTANCE shdoclc = NULL;
 static HDC display_dc;
-static LPWSTR status_strings[NUM_STATUS_STRINGS];
+static WCHAR *status_strings[IDS_STATUS_LAST-IDS_STATUS_FIRST+1];
 
 static void thread_detach(void)
 {
@@ -68,7 +68,7 @@ static void thread_detach(void)
 static void free_strings(void)
 {
     int i;
-    for(i = 0; i < NUM_STATUS_STRINGS; i++)
+    for(i = 0; i < sizeof(status_strings)/sizeof(*status_strings); i++)
         heap_free(status_strings[i]);
 }
 
@@ -89,30 +89,29 @@ static void process_detach(void)
 
 void set_statustext(HTMLDocumentObj* doc, INT id, LPCWSTR arg)
 {
-    int index = id - IDS_STATUS_DONE;
-    LPWSTR p = status_strings[index];
+    int index = id - IDS_STATUS_FIRST;
+    WCHAR *p = status_strings[index];
+    DWORD len;
 
     if(!doc->frame)
         return;
 
-    if(!p)
-    {
-        DWORD len = 255;
+    if(!p) {
+        len = 255;
         p = heap_alloc(len * sizeof(WCHAR));
-        len = LoadStringW(hInst, id, p, len);
-        len++;
+        len = LoadStringW(hInst, id, p, len) + 1;
         p = heap_realloc(p, len * sizeof(WCHAR));
-        if(InterlockedCompareExchangePointer((void**)&status_strings[index], p, NULL))
-        {
+        if(InterlockedCompareExchangePointer((void**)&status_strings[index], p, NULL)) {
             heap_free(p);
             p = status_strings[index];
         }
     }
 
-    if(arg)
-    {
-        DWORD len = lstrlenW(p) + lstrlenW(arg) - 1;
-        LPWSTR buf = heap_alloc(len * sizeof(WCHAR));
+    if(arg) {
+        WCHAR *buf;
+
+        len = lstrlenW(p) + lstrlenW(arg) - 1;
+        buf = heap_alloc(len * sizeof(WCHAR));
 
         snprintfW(buf, len, p, arg);
 
