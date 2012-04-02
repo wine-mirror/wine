@@ -9611,6 +9611,84 @@ interface IHTMLTitleElement : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLMetaElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f203-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLMetaElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLMETAELEMENT_HTTPEQUIV), displaybind, bindable]
+    HRESULT httpEquiv([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT_HTTPEQUIV), displaybind, bindable]
+    HRESULT httpEquiv([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLMETAELEMENT_CONTENT), displaybind, bindable]
+    HRESULT content([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT_CONTENT), displaybind, bindable]
+    HRESULT content([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLMETAELEMENT_NAME), displaybind, bindable]
+    HRESULT name([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT_NAME), displaybind, bindable]
+    HRESULT name([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLMETAELEMENT_URL), displaybind, bindable]
+    HRESULT url([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT_URL), displaybind, bindable]
+    HRESULT url([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLMETAELEMENT_CHARSET), displaybind, bindable]
+    HRESULT charset([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT_CHARSET), displaybind, bindable]
+    HRESULT charset([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLMetaElement2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f81f-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLMetaElement2 : IDispatch
+{
+    [propput, id(DISPID_IHTMLMETAELEMENT2_SCHEME), displaybind, bindable]
+    HRESULT scheme([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT2_SCHEME), displaybind, bindable]
+    HRESULT scheme([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLMetaElement3 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510495-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLMetaElement3 : IDispatch
+{
+    [propput, id(DISPID_IHTMLMETAELEMENT3_IE8_URL)]
+    HRESULT url([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLMETAELEMENT3_IE8_URL)]
+    HRESULT url([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
  *    DispHTMLHeadElement interface
  */
 [
