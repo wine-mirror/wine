@@ -536,6 +536,12 @@ static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
     if (rc != ERROR_SUCCESS)
         ERR("Execution halted, action %s returned %i\n", debugstr_w(action), rc);
 
+    if (package->need_reboot_now)
+    {
+        TRACE("action %s asked for immediate reboot, suspending installation\n",
+              debugstr_w(action));
+        rc = ACTION_ForceReboot( package );
+    }
     return rc;
 }
 
