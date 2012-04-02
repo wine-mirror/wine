@@ -186,38 +186,39 @@ static inline IDirect3DDevice9Impl *impl_from_IDirect3DDevice9Ex(IDirect3DDevice
     return CONTAINING_RECORD(iface, IDirect3DDevice9Impl, IDirect3DDevice9Ex_iface);
 }
 
-static HRESULT WINAPI IDirect3DDevice9Impl_QueryInterface(IDirect3DDevice9Ex *iface, REFIID riid,
-        void **ppobj)
+static HRESULT WINAPI IDirect3DDevice9Impl_QueryInterface(IDirect3DDevice9Ex *iface, REFIID riid, void **out)
 {
-    IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
-
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IDirect3DDevice9)) {
+    if (IsEqualGUID(riid, &IID_IDirect3DDevice9)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
         IDirect3DDevice9Ex_AddRef(iface);
-        *ppobj = This;
-        TRACE("Returning IDirect3DDevice9 interface at %p\n", *ppobj);
+        *out = iface;
         return S_OK;
-    } else if(IsEqualGUID(riid, &IID_IDirect3DDevice9Ex)) {
-        /* Find out if the creating d3d9 interface was created with Direct3DCreate9Ex.
-         * It doesn't matter with which function the device was created. */
-
-        if (This->d3d_parent->extended)
-        {
-            *ppobj = iface;
-            IDirect3DDevice9Ex_AddRef((IDirect3DDevice9Ex *) *ppobj);
-            TRACE("Returning IDirect3DDevice9Ex interface at %p\n", *ppobj);
-            return S_OK;
-        } else {
-            WARN("IDirect3D9 instance wasn't created with CreateDirect3D9Ex, returning E_NOINTERFACE\n");
-            *ppobj = NULL;
-            return E_NOINTERFACE;
-        }
     }
 
-    WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
-    *ppobj = NULL;
+    if (IsEqualGUID(riid, &IID_IDirect3DDevice9Ex))
+    {
+        IDirect3DDevice9Impl *device = impl_from_IDirect3DDevice9Ex(iface);
+
+        /* Find out if the creating d3d9 interface was created with Direct3DCreate9Ex.
+         * It doesn't matter with which function the device was created. */
+        if (!device->d3d_parent->extended)
+        {
+            WARN("IDirect3D9 instance wasn't created with CreateDirect3D9Ex, returning E_NOINTERFACE.\n");
+            *out = NULL;
+            return E_NOINTERFACE;
+        }
+
+        IDirect3DDevice9Ex_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *out = NULL;
     return E_NOINTERFACE;
 }
 
