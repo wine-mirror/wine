@@ -198,32 +198,30 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
         return E_NOINTERFACE;
     }
 
-    if (IsEqualGUID(riid, &IID_D3DDEVICE_WineD3D)
-            || IsEqualGUID(riid, &IID_IDirect3DHALDevice)
-            || IsEqualGUID(riid, &IID_IDirect3DRGBDevice))
+    if (This->version != 7)
     {
-        IDirect3DDevice7 *d3d;
-        IDirect3DDeviceImpl *device_impl;
-
-        /* Call into IDirect3D7 for creation */
-        IDirect3D7_CreateDevice(&This->ddraw->IDirect3D7_iface, riid, &This->IDirectDrawSurface7_iface,
-                &d3d);
-
-        if (d3d)
+        if (IsEqualGUID(riid, &IID_D3DDEVICE_WineD3D)
+                || IsEqualGUID(riid, &IID_IDirect3DHALDevice)
+                || IsEqualGUID(riid, &IID_IDirect3DRGBDevice))
         {
-            device_impl = impl_from_IDirect3DDevice7(d3d);
+            IDirect3DDeviceImpl *device_impl;
+            IDirect3DDevice7 *device;
+            HRESULT hr;
+
+            hr = IDirect3D7_CreateDevice(&This->ddraw->IDirect3D7_iface, riid,
+                    &This->IDirectDrawSurface7_iface, &device);
+            if (FAILED(hr))
+            {
+                WARN("Failed to create device, hr %#x.\n", hr);
+                return hr;
+            }
+
+            device_impl = impl_from_IDirect3DDevice7(device);
             device_impl->from_surface = TRUE;
             *obj = &device_impl->IDirect3DDevice_iface;
-            TRACE("(%p) Returning IDirect3DDevice interface at %p\n", This, *obj);
             return S_OK;
         }
 
-        WARN("Unable to create a IDirect3DDevice instance, returning E_NOINTERFACE\n");
-        return E_NOINTERFACE;
-    }
-
-    if (This->version != 7)
-    {
         if (IsEqualGUID(&IID_IDirect3DTexture2, riid))
         {
             IDirect3DTexture2_AddRef(&This->IDirect3DTexture2_iface);
