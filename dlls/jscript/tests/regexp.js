@@ -580,4 +580,7 @@ ok(i === 1, "String.prototype.seatch.apply(obj, 'b') = " + i);
 i = " undefined ".search();
 ok(i === null, "' undefined '.search() = " + i);
 
+tmp = "=)".replace(/=/, "?");
+ok(tmp === "?)", "'=)'.replace(/=/, '?') = " + tmp);
+
 reportSuccess();

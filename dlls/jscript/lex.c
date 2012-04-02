@@ -963,8 +963,7 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
 
     TRACE("\n");
 
-    while(*ctx->ptr != '/')
-        ctx->ptr--;
+    while(*--ctx->ptr != '/');
 
     re = ++ctx->ptr;
     while(ctx->ptr < ctx->end && *ctx->ptr != '/') {
