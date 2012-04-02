@@ -2311,7 +2311,7 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf, LPD
     memcpy(job->filename, filename, (len + 1) * sizeof(WCHAR));
     job->document_title = strdupW(default_doc_title);
     job->printer_name = strdupW(printer->name);
-    job->devmode = NULL;
+    job->devmode = dup_devmode( printer->devmode );
     list_add_tail(&printer->queue->jobs, &job->entry);
 
     *pcbNeeded = (len + 1) * sizeof(WCHAR) + sizeof(*addjob);
