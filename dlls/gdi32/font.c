@@ -3454,10 +3454,15 @@ static void *map_file( const WCHAR *filename, LARGE_INTEGER *size )
     file = CreateFileW( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
     if (file == INVALID_HANDLE_VALUE) return NULL;
 
-    GetFileSizeEx( file, size );
+    if (!GetFileSizeEx( file, size ) || size->u.HighPart)
+    {
+        CloseHandle( file );
+        return NULL;
+    }
+
     mapping = CreateFileMappingW( file, NULL, PAGE_READONLY, 0, 0, NULL );
     CloseHandle( file );
-    if (mapping == NULL) return NULL;
+    if (!mapping) return NULL;
 
     ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
     CloseHandle( mapping );
@@ -3478,7 +3483,6 @@ static WCHAR *get_scalable_filename( const WCHAR *res )
 
     if (!ptr) return NULL;
 
-    if (size.u.HighPart) goto fail;
     if (size.u.LowPart < sizeof( *dos )) goto fail;
     dos = (const IMAGE_DOS_HEADER *)ptr;
     if (dos->e_magic != IMAGE_DOS_SIGNATURE) goto fail;
