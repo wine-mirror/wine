@@ -1887,7 +1887,7 @@ static void test_Session(IDispatch *pSession)
     ok(hr == S_OK, "Session_ModePut failed, hresult 0x%08x\n", hr);
 
     hr = Session_ModePut(pSession, MSIRUNMODE_REBOOTNOW, TRUE);
-    todo_wine ok(hr == S_OK, "Session_ModePut failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_ModePut failed, hresult 0x%08x\n", hr);
     if (hr == DISP_E_EXCEPTION) ok_exception(hr, szModeFlag);
 
     hr = Session_ModeGet(pSession, MSIRUNMODE_REBOOTNOW, &bool);
@@ -1895,7 +1895,7 @@ static void test_Session(IDispatch *pSession)
     ok(bool, "Reboot now mode is %d, expected 1\n", bool);
 
     hr = Session_ModePut(pSession, MSIRUNMODE_REBOOTNOW, FALSE);  /* set it again so we don't reboot */
-    todo_wine ok(hr == S_OK, "Session_ModePut failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Session_ModePut failed, hresult 0x%08x\n", hr);
     if (hr == DISP_E_EXCEPTION) ok_exception(hr, szModeFlag);
 
     hr = Session_ModePut(pSession, MSIRUNMODE_MAINTENANCE, TRUE);

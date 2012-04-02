@@ -764,6 +764,10 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
         r = package->need_reboot_at_end;
         break;
 
+    case MSIRUNMODE_REBOOTNOW:
+        r = package->need_reboot_now;
+        break;
+
     case MSIRUNMODE_LOGENABLED:
         r = (package->log_file != INVALID_HANDLE_VALUE);
         break;
@@ -819,8 +823,8 @@ UINT WINAPI MsiSetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode, BOOL fState)
         break;
 
     case MSIRUNMODE_REBOOTNOW:
-        FIXME("unimplemented run mode: %d\n", iRunMode);
-        r = ERROR_FUNCTION_FAILED;
+        package->need_reboot_now = (fState != 0);
+        r = ERROR_SUCCESS;
         break;
 
     default:
