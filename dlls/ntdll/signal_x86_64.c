@@ -1483,6 +1483,14 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
 }
 
 
+/**************************************************************************
+ *		__chkstk (NTDLL.@)
+ *
+ * Supposed to touch all the stack pages, but we shouldn't need that.
+ */
+__ASM_GLOBAL_FUNC( __chkstk, "ret" );
+
+
 /***********************************************************************
  *		RtlCaptureContext (NTDLL.@)
  */
