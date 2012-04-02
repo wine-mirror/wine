@@ -442,7 +442,7 @@ static HRESULT WINAPI Gstreamer_transform_QOS(TransformFilter *iface, IBaseFilte
     if (qm.Late < 0 && -qm.Late > qm.TimeStamp)
         late = -qm.TimeStamp;
     gst_pad_push_event(This->my_sink, gst_event_new_qos(1000. / qm.Proportion, late * 100, qm.TimeStamp * 100));
-    return QualityControlImpl_Notify((IQualityControl*)&iface->qcimpl, sender, qm);
+    return TransformFilterImpl_Notify(iface, sender, qm);
 }
 
 static HRESULT Gstreamer_transform_create(IUnknown *punkout, const CLSID *clsid, const char *name, const TransformFilterFuncTable *vtbl, void **obj)

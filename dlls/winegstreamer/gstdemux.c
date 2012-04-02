@@ -73,6 +73,7 @@ typedef struct GSTImpl {
 
 struct GSTOutPin {
     BaseOutputPin pin;
+    IQualityControl IQualityControl_iface;
 
     GstPad *their_src;
     GstPad *my_sink;
@@ -80,7 +81,6 @@ struct GSTOutPin {
     AM_MEDIA_TYPE * pmt;
     HANDLE caps_event;
     GstSegment *segment;
-    QualityControlImpl qcimpl;
     SourceSeeking seek;
 };
 
@@ -1395,9 +1395,31 @@ static const IMediaSeekingVtbl GST_Seeking_Vtbl =
     SourceSeekingImpl_GetPreroll
 };
 
+static inline GSTOutPin *impl_from_IQualityControl( IQualityControl *iface )
+{
+    return (GSTOutPin*)CONTAINING_RECORD(iface, GSTOutPin, IQualityControl_iface);
+}
+
+HRESULT WINAPI GST_QualityControl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv)
+{
+    GSTOutPin *pin = impl_from_IQualityControl(iface);
+    return IPin_QueryInterface((IPin*)pin, riid, ppv);
+}
+
+ULONG WINAPI GST_QualityControl_AddRef(IQualityControl *iface)
+{
+    GSTOutPin *pin = impl_from_IQualityControl(iface);
+    return IPin_AddRef((IPin*)pin);
+}
+
+ULONG WINAPI GST_QualityControl_Release(IQualityControl *iface)
+{
+    GSTOutPin *pin = impl_from_IQualityControl(iface);
+    return IPin_Release((IPin*)pin);
+}
+
 static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm) {
-    QualityControlImpl *This = (QualityControlImpl*)iface;
-    GSTOutPin *pin = (GSTOutPin*)This->self;
+    GSTOutPin *pin = impl_from_IQualityControl(iface);
     REFERENCE_TIME late = qm.Late;
     if (qm.Late < 0 && -qm.Late > qm.TimeStamp)
         late = -qm.TimeStamp;
@@ -1405,12 +1427,18 @@ static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFil
     return S_OK;
 }
 
+HRESULT WINAPI GST_QualityControl_SetSink(IQualityControl *iface, IQualityControl *tonotify)
+{
+    /* Do nothing */
+    return S_OK;
+}
+
 static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl = {
-    QualityControlImpl_QueryInterface,
-    QualityControlImpl_AddRef,
-    QualityControlImpl_Release,
+    GST_QualityControl_QueryInterface,
+    GST_QualityControl_AddRef,
+    GST_QualityControl_Release,
     GST_QualityControl_Notify,
-    QualityControlImpl_SetSink
+    GST_QualityControl_SetSink
 };
 
 static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **ppv) {
@@ -1427,7 +1455,7 @@ static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
         *ppv = &This->seek;
     else if (IsEqualIID(riid, &IID_IQualityControl))
-        *ppv = &This->qcimpl;
+        *ppv = &This->IQualityControl_iface;
 
     if (*ppv) {
         IUnknown_AddRef((IUnknown *)(*ppv));
@@ -1555,8 +1583,7 @@ static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDI
         pin->caps_event = CreateEventW(NULL, 0, 0, NULL);
         pin->segment = gst_segment_new();
         This->cStreams++;
-        QualityControlImpl_init(&pin->qcimpl, NULL, (IBaseFilter*)pin);
-        pin->qcimpl.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
+        pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
         SourceSeeking_Init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop, GST_ChangeCurrent, GST_ChangeRate, &This->filter.csFilter);
         BaseFilterImpl_IncrementPinVersion((BaseFilter*)This);
     } else

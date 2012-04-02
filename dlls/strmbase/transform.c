@@ -35,6 +35,7 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/strmbase.h"
+#include "strmbase_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
@@ -233,8 +234,7 @@ static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* p
         if (FAILED(hr))
             ERR("Cannot create output pin (%x)\n", hr);
         else {
-            QualityControlImpl_init(&pTransformFilter->qcimpl, pTransformFilter->ppPins[0], &pTransformFilter->filter.IBaseFilter_iface);
-            pTransformFilter->qcimpl.lpVtbl = &TransformFilter_QualityControl_Vtbl;
+            QualityControlImpl_Create( pTransformFilter->ppPins[0], &pTransformFilter->filter.IBaseFilter_iface, &pTransformFilter->qcimpl);
         }
     }
     if (FAILED(hr))
@@ -278,7 +278,7 @@ HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, REFIID ri
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
 
     if (IsEqualIID(riid, &IID_IQualityControl))  {
-        *ppv = (IQualityControl*)&This->qcimpl;
+        *ppv = (IQualityControl*)This->qcimpl;
         IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
     }
@@ -322,6 +322,7 @@ ULONG WINAPI TransformFilterImpl_Release(IBaseFilter * iface)
         This->csReceive.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csReceive);
         FreeMediaType(&This->pmt);
+        QualityControlImpl_Destroy(This->qcimpl);
         CoTaskMemFree(This);
 
         return 0;
@@ -399,6 +400,11 @@ HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStar
     LeaveCriticalSection(&This->csReceive);
 
     return hr;
+}
+
+HRESULT WINAPI TransformFilterImpl_Notify(TransformFilter *iface, IBaseFilter *sender, Quality qm)
+{
+    return QualityControlImpl_Notify((IQualityControl*)&iface->qcimpl, sender, qm);
 }
 
 /** IBaseFilter implementation **/
@@ -602,7 +608,7 @@ static HRESULT WINAPI TransformFilter_QualityControlImpl_Notify(IQualityControl 
     if (This->pFuncsTable->pfnNotify)
         return This->pFuncsTable->pfnNotify(This, sender, qm);
     else
-        return QualityControlImpl_Notify(iface, sender, qm);
+        return TransformFilterImpl_Notify(This, sender, qm);
 }
 
 static const IQualityControlVtbl TransformFilter_QualityControl_Vtbl = {

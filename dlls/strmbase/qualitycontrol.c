@@ -27,6 +27,7 @@
 
 #include "dshow.h"
 #include "wine/strmbase.h"
+#include "strmbase_private.h"
 
 #include "uuids.h"
 #include "wine/debug.h"
@@ -35,11 +36,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase_qc);
 
-void QualityControlImpl_init(QualityControlImpl *This, IPin *input, IBaseFilter *self) {
+HRESULT QualityControlImpl_Create(IPin *input, IBaseFilter *self, QualityControlImpl **ppv) {
+    QualityControlImpl *This;
+    *ppv = HeapAlloc(GetProcessHeap(),0,sizeof(QualityControlImpl));
+    if (!ppv)
+        return E_OUTOFMEMORY;
+    This = *ppv;
     This->input = input;
     This->self = self;
     This->tonotify = NULL;
     This->clock = NULL;
+    return S_OK;
+}
+
+HRESULT QualityControlImpl_Destroy(QualityControlImpl *This)
+{
+    return HeapFree(GetProcessHeap(),0,This);
 }
 
 HRESULT WINAPI QualityControlImpl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv) {

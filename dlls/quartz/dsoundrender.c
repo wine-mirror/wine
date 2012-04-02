@@ -407,7 +407,7 @@ static HRESULT WINAPI DSoundRender_DoRenderSample(BaseRenderer *iface, IMediaSam
         q.Proportion = 1.;
         q.Late = jitter;
         q.TimeStamp = tStart;
-        IQualityControl_Notify((IQualityControl *)&This->renderer.qcimpl, (IBaseFilter*)This, q);
+        IQualityControl_Notify((IQualityControl *)This->renderer.qcimpl, (IBaseFilter*)This, q);
     }
     return hr;
 }
