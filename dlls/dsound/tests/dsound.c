@@ -1253,6 +1253,7 @@ static HRESULT test_invalid_fmts(LPGUID lpGuid)
 
     if (rc==DS_OK && primary!=NULL) {
         WAVEFORMATEX wfx;
+        WAVEFORMATEXTENSIBLE fmtex;
 
         wfx.wFormatTag = WAVE_FORMAT_PCM;
         wfx.nChannels = 0;
@@ -1350,6 +1351,45 @@ static HRESULT test_invalid_fmts(LPGUID lpGuid)
         wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign + 1;
         rc = IDirectSoundBuffer_SetFormat(primary, &wfx);
         ok(rc == S_OK, "SetFormat: %08x\n", rc);
+
+        fmtex.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+        fmtex.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+        fmtex.Format.nChannels = 2;
+        fmtex.Format.nSamplesPerSec = 44100;
+        fmtex.Format.wBitsPerSample = 16;
+        fmtex.Format.nBlockAlign = fmtex.Format.nChannels * fmtex.Format.wBitsPerSample / 8;
+        fmtex.Format.nAvgBytesPerSec = fmtex.Format.nSamplesPerSec * fmtex.Format.nBlockAlign;
+        fmtex.Samples.wValidBitsPerSample = 0;
+        fmtex.dwChannelMask = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+        fmtex.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+        rc = IDirectSoundBuffer_SetFormat(primary, (WAVEFORMATEX*)&fmtex);
+        ok(rc == S_OK, "SetFormat: %08x\n", rc);
+
+        fmtex.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+        fmtex.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+        fmtex.Format.nChannels = 2;
+        fmtex.Format.nSamplesPerSec = 44100;
+        fmtex.Format.wBitsPerSample = 24;
+        fmtex.Format.nBlockAlign = fmtex.Format.nChannels * fmtex.Format.wBitsPerSample / 8;
+        fmtex.Format.nAvgBytesPerSec = fmtex.Format.nSamplesPerSec * fmtex.Format.nBlockAlign;
+        fmtex.Samples.wValidBitsPerSample = 20;
+        fmtex.dwChannelMask = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+        fmtex.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+        rc = IDirectSoundBuffer_SetFormat(primary, (WAVEFORMATEX*)&fmtex);
+        ok(rc == S_OK, "SetFormat: %08x\n", rc);
+
+        fmtex.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+        fmtex.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+        fmtex.Format.nChannels = 2;
+        fmtex.Format.nSamplesPerSec = 44100;
+        fmtex.Format.wBitsPerSample = 24;
+        fmtex.Format.nBlockAlign = fmtex.Format.nChannels * fmtex.Format.wBitsPerSample / 8;
+        fmtex.Format.nAvgBytesPerSec = fmtex.Format.nSamplesPerSec * fmtex.Format.nBlockAlign;
+        fmtex.Samples.wValidBitsPerSample = 32;
+        fmtex.dwChannelMask = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+        fmtex.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+        rc = IDirectSoundBuffer_SetFormat(primary, (WAVEFORMATEX*)&fmtex);
+        ok(rc == E_INVALIDARG, "SetFormat: %08x\n", rc);
 
         IDirectSoundBuffer_Release(primary);
     }
