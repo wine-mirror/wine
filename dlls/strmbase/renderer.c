@@ -47,6 +47,14 @@ static inline BaseRenderer *impl_from_BaseFilter(BaseFilter *iface)
     return CONTAINING_RECORD(iface, BaseRenderer, filter);
 }
 
+static const IQualityControlVtbl Renderer_QualityControl_Vtbl = {
+    QualityControlImpl_QueryInterface,
+    QualityControlImpl_AddRef,
+    QualityControlImpl_Release,
+    QualityControlImpl_Notify,
+    QualityControlImpl_SetSink
+};
+
 static HRESULT WINAPI BaseRenderer_InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
     BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
@@ -258,6 +266,9 @@ HRESULT WINAPI BaseRenderer_Init(BaseRenderer * This, const IBaseFilterVtbl *Vtb
         This->ThreadSignal = CreateEventW(NULL, TRUE, TRUE, NULL);
         This->RenderEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
         This->pMediaSample = NULL;
+
+        QualityControlImpl_init(&This->qcimpl, &This->pInputPin->pin.IPin_iface, &This->filter.IBaseFilter_iface);
+        This->qcimpl.lpVtbl = &Renderer_QualityControl_Vtbl;
     }
 
     return hr;
@@ -269,6 +280,12 @@ HRESULT WINAPI BaseRendererImpl_QueryInterface(IBaseFilter* iface, REFIID riid, 
 
     if (IsEqualIID(riid, &IID_IMediaSeeking))
         return IUnknown_QueryInterface(This->pPosition, riid, ppv);
+    else if (IsEqualIID(riid, &IID_IQualityControl))
+    {
+        *ppv = &This->qcimpl.lpVtbl;
+        IUnknown_AddRef((IUnknown *)(*ppv));
+        return S_OK;
+    }
     else
         return BaseFilterImpl_QueryInterface(iface, riid, ppv);
 }
@@ -365,7 +382,9 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
         {
             if (This->pFuncsTable->pfnOnWaitStart)
                 This->pFuncsTable->pfnOnWaitStart(This);
-            /* TODO: Wait */
+
+            hr = QualityControlRender_WaitFor(&This->qcimpl, pSample, This->RenderEvent);
+
             if (This->pFuncsTable->pfnOnWaitEnd)
                 This->pFuncsTable->pfnOnWaitEnd(This);
         }
@@ -378,7 +397,13 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
     }
 
     if (SUCCEEDED(hr))
+    {
+        QualityControlRender_BeginRender(&This->qcimpl);
         hr = This->pFuncsTable->pfnDoRenderSample(This, pSample);
+        QualityControlRender_EndRender(&This->qcimpl);
+    }
+
+    QualityControlRender_DoQOS(&This->qcimpl);
 
     BaseRendererImpl_ClearPendingSample(This);
     LeaveCriticalSection(&This->csRenderLock);
@@ -457,6 +482,7 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     }
     if (SUCCEEDED(hr))
     {
+        QualityControlRender_Start(&This->qcimpl, This->filter.rtStreamStart);
         if (This->pFuncsTable->pfnOnStartStreaming)
             This->pFuncsTable->pfnOnStartStreaming(This);
         if (This->filter.state == State_Stopped)
@@ -500,6 +526,19 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
 
     return S_OK;
 }
+
+HRESULT WINAPI BaseRendererImpl_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock)
+{
+    BaseRenderer *This = impl_from_IBaseFilter(iface);
+    HRESULT hr;
+
+    EnterCriticalSection(&This->filter.csFilter);
+    QualityControlRender_SetClock(&This->qcimpl, clock);
+    hr = BaseFilterImpl_SetSyncSource(iface, clock);
+    LeaveCriticalSection(&This->filter.csFilter);
+    return hr;
+}
+
 
 HRESULT WINAPI BaseRendererImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
 {
@@ -553,6 +592,7 @@ HRESULT WINAPI BaseRendererImpl_BeginFlush(BaseRenderer* iface)
 HRESULT WINAPI BaseRendererImpl_EndFlush(BaseRenderer* iface)
 {
     TRACE("(%p)\n", iface);
+    QualityControlRender_Start(&iface->qcimpl, iface->filter.rtStreamStart);
     RendererPosPassThru_ResetMediaTime(iface->pPosition);
     ResetEvent(iface->ThreadSignal);
     ResetEvent(iface->RenderEvent);

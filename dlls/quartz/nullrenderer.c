@@ -239,7 +239,7 @@ static const IBaseFilterVtbl NullRenderer_Vtbl =
     BaseRendererImpl_Pause,
     BaseRendererImpl_Run,
     BaseRendererImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
+    BaseRendererImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
     BaseRendererImpl_FindPin,

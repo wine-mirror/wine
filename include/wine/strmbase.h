@@ -587,6 +587,9 @@ typedef struct BaseRendererTag
 	HANDLE RenderEvent;
 	IMediaSample *pMediaSample;
 
+	IQualityControl *pQSink;
+	QualityControlImpl qcimpl;
+
 	const struct BaseRendererFuncTable * pFuncsTable;
 } BaseRenderer;
 
@@ -638,6 +641,7 @@ HRESULT WINAPI BaseRendererImpl_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **
 HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface);
 HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart);
 HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface);
+HRESULT WINAPI BaseRendererImpl_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock);
 HRESULT WINAPI BaseRendererImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState);
 HRESULT WINAPI BaseRendererImpl_EndOfStream(BaseRenderer* iface);
 HRESULT WINAPI BaseRendererImpl_BeginFlush(BaseRenderer* iface);

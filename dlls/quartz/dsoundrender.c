@@ -49,13 +49,6 @@ static const IReferenceClockVtbl IReferenceClock_Vtbl;
 static const IMediaSeekingVtbl IMediaSeeking_Vtbl;
 static const IAMDirectSoundVtbl IAMDirectSound_Vtbl;
 static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl;
-static const IQualityControlVtbl DSoundRender_QualityControl_Vtbl = {
-    QualityControlImpl_QueryInterface,
-    QualityControlImpl_AddRef,
-    QualityControlImpl_Release,
-    QualityControlImpl_Notify,
-    QualityControlImpl_SetSink
-};
 
 typedef struct DSoundRenderImpl
 {
@@ -65,8 +58,6 @@ typedef struct DSoundRenderImpl
     const IReferenceClockVtbl *IReferenceClock_vtbl;
     const IAMDirectSoundVtbl *IAMDirectSound_vtbl;
     const IAMFilterMiscFlagsVtbl *IAMFilterMiscFlags_vtbl;
-
-    QualityControlImpl qcimpl;
 
     IDirectSound8 *dsound;
     LPDIRECTSOUNDBUFFER dsbuffer;
@@ -322,6 +313,13 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, REFERENCE_TIM
     return S_OK;
 }
 
+static HRESULT WINAPI DSoundRender_ShouldDrawSampleNow(BaseRenderer *This, IMediaSample *pMediaSample, REFERENCE_TIME *pStartTime, REFERENCE_TIME *pEndTime)
+{
+    /* We time ourselves do not use the base renderers timing */
+    return S_OK;
+}
+
+
 HRESULT WINAPI DSoundRender_PrepareReceive(BaseRenderer *iface, IMediaSample *pSample)
 {
     DSoundRenderImpl *This = impl_from_BaseRenderer(iface);
@@ -409,7 +407,7 @@ static HRESULT WINAPI DSoundRender_DoRenderSample(BaseRenderer *iface, IMediaSam
         q.Proportion = 1.;
         q.Late = jitter;
         q.TimeStamp = tStart;
-        IQualityControl_Notify((IQualityControl *)&This->qcimpl, (IBaseFilter*)This, q);
+        IQualityControl_Notify((IQualityControl *)&This->renderer.qcimpl, (IBaseFilter*)This, q);
     }
     return hr;
 }
@@ -455,7 +453,6 @@ static VOID WINAPI DSoundRender_OnStartStreaming(BaseRenderer * iface)
 
     if (This->renderer.pInputPin->pin.pConnectedTo)
     {
-        QualityControlRender_Start(&This->qcimpl, This->renderer.filter.rtStreamStart);
         if (This->renderer.filter.state == State_Paused)
         {
             /* Unblock our thread, state changing from paused to running doesn't need a reset for state change */
@@ -604,7 +601,6 @@ static HRESULT WINAPI DSoundRender_EndFlush(BaseRenderer* iface)
         IDirectSoundBuffer_Unlock(This->dsbuffer, buffer, size, NULL, 0);
         This->writepos = This->buf_size;
     }
-    QualityControlRender_Start(&This->qcimpl, This->renderer.filter.rtStreamStart);
 
     return S_OK;
 }
@@ -621,7 +617,7 @@ static const BaseRendererFuncTable BaseFuncTable = {
     NULL,
     NULL,
     NULL,
-    NULL,
+    DSoundRender_ShouldDrawSampleNow,
     DSoundRender_PrepareReceive,
     /**/
     DSoundRender_CompleteConnect,
@@ -687,8 +683,6 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
             return HRESULT_FROM_WIN32(GetLastError());
         }
 
-        QualityControlImpl_init(&pDSoundRender->qcimpl, (IPin*)pDSoundRender->renderer.pInputPin, (IBaseFilter*)pDSoundRender);
-        pDSoundRender->qcimpl.lpVtbl = &DSoundRender_QualityControl_Vtbl;
         *ppv = pDSoundRender;
     }
     else
@@ -715,8 +709,6 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
         *ppv = &This->IAMDirectSound_vtbl;
     else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
         *ppv = &This->IAMFilterMiscFlags_vtbl;
-    else if (IsEqualIID(riid, &IID_IQualityControl))
-        *ppv = &This->qcimpl;
     else
     {
         HRESULT hr;
@@ -782,7 +774,7 @@ static const IBaseFilterVtbl DSoundRender_Vtbl =
     BaseRendererImpl_Pause,
     BaseRendererImpl_Run,
     BaseRendererImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
+    BaseRendererImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
     BaseRendererImpl_FindPin,
