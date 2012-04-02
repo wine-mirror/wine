@@ -409,15 +409,15 @@ INT PSDRV_EndPage( PHYSDEV dev )
 
 
 /************************************************************************
- *           PSDRV_StartDocA
+ *           PSDRV_StartDoc
  */
-static INT PSDRV_StartDocA( PHYSDEV dev, const DOCINFOA *doc )
+INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-    DOC_INFO_1A di;
+    DOC_INFO_1W di;
 
-    TRACE("(%p, %p) => %s, %s, %s\n", physDev, doc, debugstr_a(doc->lpszDocName),
-        debugstr_a(doc->lpszOutput), debugstr_a(doc->lpszDatatype));
+    TRACE("(%p, %p) => %s, %s, %s\n", physDev, doc, debugstr_w(doc->lpszDocName),
+        debugstr_w(doc->lpszOutput), debugstr_w(doc->lpszDatatype));
 
     if(physDev->job.id) {
         FIXME("hJob != 0. Now what?\n");
@@ -431,21 +431,21 @@ static INT PSDRV_StartDocA( PHYSDEV dev, const DOCINFOA *doc )
         return 0;
     }
 
-    di.pDocName = (LPSTR) doc->lpszDocName;
+    di.pDocName = (LPWSTR) doc->lpszDocName;
     di.pDatatype = NULL;
 
     if(doc->lpszOutput)
-        di.pOutputFile = (LPSTR) doc->lpszOutput;
+        di.pOutputFile = (LPWSTR) doc->lpszOutput;
     else if(physDev->job.output)
         di.pOutputFile = physDev->job.output;
     else
         di.pOutputFile = NULL;
 
-    TRACE("using output: %s\n", debugstr_a(di.pOutputFile));
+    TRACE("using output: %s\n", debugstr_w(di.pOutputFile));
 
     /* redirection located in HKCU\Software\Wine\Printing\Spooler
        is done during winspool.drv,ScheduleJob */
-    physDev->job.id = StartDocPrinterA(physDev->job.hprinter, 1, (LPBYTE) &di);
+    physDev->job.id = StartDocPrinterW(physDev->job.hprinter, 1, (LPBYTE) &di);
     if(!physDev->job.id) {
         WARN("StartDocPrinter() failed: %d\n", GetLastError());
         ClosePrinter(physDev->job.hprinter);
@@ -458,57 +458,13 @@ static INT PSDRV_StartDocA( PHYSDEV dev, const DOCINFOA *doc )
     physDev->job.in_passthrough = FALSE;
     physDev->job.had_passthrough_rect = FALSE;
     if(doc->lpszDocName) {
-        physDev->job.DocName = HeapAlloc(GetProcessHeap(), 0, strlen(doc->lpszDocName)+1);
-        strcpy(physDev->job.DocName, doc->lpszDocName);
+        INT len = WideCharToMultiByte( CP_ACP, 0, doc->lpszDocName, -1, NULL, 0, NULL, NULL );
+        physDev->job.DocName = HeapAlloc( GetProcessHeap(), 0, len );
+        WideCharToMultiByte( CP_ACP, 0, doc->lpszDocName, -1, physDev->job.DocName, len, NULL, NULL );
     } else
         physDev->job.DocName = NULL;
 
     return physDev->job.id;
-}
-
-/************************************************************************
- *           PSDRV_StartDoc
- */
-INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
-{
-    DOCINFOA docA;
-    INT ret, len;
-    LPSTR docname = NULL, output = NULL, datatype = NULL;
-
-    TRACE("(%p, %p) => %d,%s,%s,%s\n", dev, doc, doc->cbSize, debugstr_w(doc->lpszDocName),
-        debugstr_w(doc->lpszOutput), debugstr_w(doc->lpszDatatype));
-
-    docA.cbSize = doc->cbSize;
-    if (doc->lpszDocName)
-    {
-        len = WideCharToMultiByte( CP_ACP, 0, doc->lpszDocName, -1, NULL, 0, NULL, NULL );
-        if ((docname = HeapAlloc( GetProcessHeap(), 0, len )))
-            WideCharToMultiByte( CP_ACP, 0, doc->lpszDocName, -1, docname, len, NULL, NULL );
-    }
-    if (doc->lpszOutput)
-    {
-        len = WideCharToMultiByte( CP_ACP, 0, doc->lpszOutput, -1, NULL, 0, NULL, NULL );
-        if ((output = HeapAlloc( GetProcessHeap(), 0, len )))
-            WideCharToMultiByte( CP_ACP, 0, doc->lpszOutput, -1, output, len, NULL, NULL );
-    }
-    if (doc->lpszDatatype)
-    {
-        len = WideCharToMultiByte( CP_ACP, 0, doc->lpszDatatype, -1, NULL, 0, NULL, NULL );
-        if ((datatype = HeapAlloc( GetProcessHeap(), 0, len )))
-            WideCharToMultiByte( CP_ACP, 0, doc->lpszDatatype, -1, datatype, len, NULL, NULL );
-    }
-    docA.lpszDocName = docname;
-    docA.lpszOutput = output;
-    docA.lpszDatatype = datatype;
-    docA.fwType = doc->fwType;
-
-    ret = PSDRV_StartDocA(dev, &docA);
-
-    HeapFree( GetProcessHeap(), 0, docname );
-    HeapFree( GetProcessHeap(), 0, output );
-    HeapFree( GetProcessHeap(), 0, datatype );
-
-    return ret;
 }
 
 /************************************************************************

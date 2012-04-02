@@ -346,7 +346,7 @@ typedef struct {
 typedef struct {
     DWORD		id;             /* Job id */
     HANDLE              hprinter;       /* Printer handle */
-    LPSTR		output;		/* Output file/port */
+    LPWSTR              output;	        /* Output file/port */
     LPSTR               DocName;        /* Document Name */
     BOOL		banding;        /* Have we received a NEXTBAND */
     BOOL		OutOfPage;      /* Page header not sent yet */

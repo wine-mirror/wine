@@ -41,6 +41,7 @@
 #include "winnls.h"
 #include "psdrv.h"
 #include "winspool.h"
+#include "wine/unicode.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -171,6 +172,17 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     return TRUE;
 }
 
+static inline WCHAR *strdupW( const WCHAR *str )
+{
+    int size;
+    WCHAR *ret;
+
+    if (!str) return NULL;
+    size = (strlenW( str ) + 1) * sizeof(WCHAR);
+    ret = HeapAlloc( GetProcessHeap(), 0, size );
+    if (ret) memcpy( ret, str, size );
+    return ret;
+}
 
 static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 {
@@ -355,11 +367,7 @@ static BOOL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 
     if (!(physDev = create_psdrv_physdev( pi ))) return FALSE;
 
-    if (output && *output) {
-        INT len = WideCharToMultiByte( CP_ACP, 0, output, -1, NULL, 0, NULL, NULL );
-        if ((physDev->job.output = HeapAlloc( PSDRV_Heap, 0, len )))
-            WideCharToMultiByte( CP_ACP, 0, output, -1, physDev->job.output, len, NULL, NULL );
-    }
+    if (output && *output) physDev->job.output = strdupW( output );
 
     if(initData) {
         DEVMODEA *devmodeA = DEVMODEdupWtoA(PSDRV_Heap, initData);
