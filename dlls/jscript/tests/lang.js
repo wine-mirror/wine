@@ -719,6 +719,13 @@ case false:
 }
 ok(state === "default", "state = " + state);
 
+switch(1) {
+case 2:
+    ok(false, "unexpected case 2");
+case 3:
+    ok(false, "unexpected case 3");
+}
+
 tmp = eval("1");
 ok(tmp === 1, "eval(\"1\") !== 1");
 eval("{ ok(tmp === 1, 'eval: tmp !== 1'); } tmp = 2;");
