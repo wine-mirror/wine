@@ -67,7 +67,7 @@ typedef struct
 
 typedef struct
 {
-    const IParseDisplayNameVtbl *lpVtbl;
+    IParseDisplayName IParseDisplayName_iface;
 } ParseDisplayNameImpl;
 
 typedef struct
