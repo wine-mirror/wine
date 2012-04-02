@@ -30,8 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 
-static ULONG WINAPI DEVENUM_IPropertyBag_AddRef(LPPROPERTYBAG iface);
-
 typedef struct
 {
     IEnumMoniker IEnumMoniker_iface;
@@ -68,7 +66,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_QueryInterface(
         IsEqualGUID(riid, &IID_IPropertyBag))
     {
         *ppvObj = iface;
-        DEVENUM_IPropertyBag_AddRef(iface);
+        IPropertyBag_AddRef(iface);
         return S_OK;
     }
 
