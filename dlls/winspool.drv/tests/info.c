@@ -2871,6 +2871,115 @@ static void test_IsValidDevmodeW(void)
     ok(br == FALSE, "Got %d\n", br);
 }
 
+static void test_OpenPrinter_defaults(void)
+{
+    HANDLE printer;
+    BOOL ret;
+    DWORD needed;
+    short default_size;
+    ADDJOB_INFO_1 *add_job;
+    JOB_INFO_2 *job_info;
+    DEVMODE my_dm;
+    PRINTER_DEFAULTS prn_def;
+    PRINTER_INFO_2 *pi;
+
+    if (!default_printer)
+    {
+        skip("There is no default printer installed\n");
+        return;
+    }
+
+    /* Printer opened with NULL defaults.  Retrieve default paper size
+       and confirm that jobs have this size. */
+
+    ret = OpenPrinter( default_printer, &printer, NULL );
+    if (!ret)
+    {
+        skip("Unable to open the default printer (%s)\n", default_printer);
+        return;
+    }
+
+    ret = GetPrinter( printer, 2, NULL, 0, &needed );
+    ok( !ret, "got %d\n", ret );
+    pi = HeapAlloc( GetProcessHeap(), 0, needed );
+    ret = GetPrinter( printer, 2, (BYTE *)pi, needed, &needed );
+    ok( ret, "got %d\n", ret );
+    default_size = pi->pDevMode->u1.s1.dmPaperSize;
+    HeapFree( GetProcessHeap(), 0, pi );
+
+    ret = AddJob( printer, 1, NULL, 0, &needed );
+    ok( !ret, "got %d\n", ret );
+    add_job = HeapAlloc( GetProcessHeap(), 0, needed );
+    ret = AddJob( printer, 1, (BYTE *)add_job, needed, &needed );
+    ok( ret, "got %d\n", ret );
+
+    ret = GetJob( printer, add_job->JobId, 2, NULL, 0, &needed );
+    ok( !ret, "got %d\n", ret );
+    job_info = HeapAlloc( GetProcessHeap(), 0, needed );
+    ret = GetJob( printer, add_job->JobId, 2, (BYTE *)job_info, needed, &needed );
+    ok( ret, "got %d\n", ret );
+
+todo_wine
+    ok( job_info->pDevMode != NULL, "got NULL devmode\n");
+    if (job_info->pDevMode)
+        ok( job_info->pDevMode->u1.s1.dmPaperSize == default_size, "got %d default %d\n",
+            job_info->pDevMode->u1.s1.dmPaperSize, default_size );
+
+    HeapFree( GetProcessHeap(), 0, job_info );
+    ScheduleJob( printer, add_job->JobId ); /* remove the empty job */
+    HeapFree( GetProcessHeap(), 0, add_job );
+    ClosePrinter( printer );
+
+    /* Printer opened with something other than the default paper size. */
+
+    memset( &my_dm, 0, sizeof(my_dm) );
+    my_dm.dmSize = sizeof(my_dm);
+    my_dm.dmFields = DM_PAPERSIZE;
+    my_dm.u1.s1.dmPaperSize = (default_size == DMPAPER_A4) ? DMPAPER_LETTER : DMPAPER_A4;
+
+    prn_def.pDatatype = NULL;
+    prn_def.pDevMode = &my_dm;
+    prn_def.DesiredAccess = PRINTER_ACCESS_USE;
+
+    ret = OpenPrinter( default_printer, &printer, &prn_def );
+    ok( ret, "got %d\n", ret );
+
+    /* GetPrinter stills returns default size */
+    ret = GetPrinter( printer, 2, NULL, 0, &needed );
+    ok( !ret, "got %d\n", ret );
+    pi = HeapAlloc( GetProcessHeap(), 0, needed );
+    ret = GetPrinter( printer, 2, (BYTE *)pi, needed, &needed );
+    ok( ret, "got %d\n", ret );
+    ok( pi->pDevMode->u1.s1.dmPaperSize == default_size, "got %d default %d\n",
+        pi->pDevMode->u1.s1.dmPaperSize, default_size );
+
+    HeapFree( GetProcessHeap(), 0, pi );
+
+    /* However the GetJob has the new size */
+    ret = AddJob( printer, 1, NULL, 0, &needed );
+    ok( !ret, "got %d\n", ret );
+    add_job = HeapAlloc( GetProcessHeap(), 0, needed );
+    ret = AddJob( printer, 1, (BYTE *)add_job, needed, &needed );
+    ok( ret, "got %d\n", ret );
+
+    ret = GetJob( printer, add_job->JobId, 2, NULL, 0, &needed );
+    ok( !ret, "got %d\n", ret );
+    job_info = HeapAlloc( GetProcessHeap(), 0, needed );
+    ret = GetJob( printer, add_job->JobId, 2, (BYTE *)job_info, needed, &needed );
+    ok( ret, "got %d\n", ret );
+
+    ok( job_info->pDevMode->dmFields == DM_PAPERSIZE, "got %08x\n",
+        job_info->pDevMode->dmFields );
+    ok( job_info->pDevMode->u1.s1.dmPaperSize == my_dm.u1.s1.dmPaperSize,
+        "got %d new size %d\n",
+        job_info->pDevMode->u1.s1.dmPaperSize, my_dm.u1.s1.dmPaperSize );
+
+    HeapFree( GetProcessHeap(), 0, job_info );
+    ScheduleJob( printer, add_job->JobId ); /* remove the empty job */
+    HeapFree( GetProcessHeap(), 0, add_job );
+    ClosePrinter( printer );
+}
+
 START_TEST(info)
 {
     hwinspool = GetModuleHandleA("winspool.drv");
@@ -2919,6 +3028,7 @@ START_TEST(info)
     test_XcvDataW_MonitorUI();
     test_XcvDataW_PortIsValid();
     test_IsValidDevmodeW();
+    test_OpenPrinter_defaults();
 
     /* Cleanup our temporary file */
     DeleteFileA(tempfileA);
