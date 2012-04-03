@@ -3259,6 +3259,22 @@ static void _test_meta_name(unsigned line, IUnknown *unk, const char *exname)
     IHTMLMetaElement_Release(meta);
 }
 
+#define test_meta_content(a,b) _test_meta_content(__LINE__,a,b)
+static void _test_meta_content(unsigned line, IUnknown *unk, const char *excontent)
+{
+    IHTMLMetaElement *meta;
+    BSTR content = NULL;
+    HRESULT hres;
+
+
+    meta = _get_metaelem_iface(line, unk);
+    hres = IHTMLMetaElement_get_content(meta, &content);
+    ok_(__FILE__,line)(hres == S_OK, "get_content failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(content, excontent), "content = %s, expected %s\n", wine_dbgstr_w(content), excontent);
+    SysFreeString(content);
+    IHTMLMetaElement_Release(meta);
+}
+
 #define get_elem_doc(e) _get_elem_doc(__LINE__,e)
 static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
 {
@@ -5289,6 +5305,7 @@ static void test_elems(IHTMLDocument2 *doc)
     elem = get_doc_elem_by_id(doc, "metaid");
     if(elem) {
         test_meta_name((IUnknown*)elem, "meta name");
+        test_meta_content((IUnknown*)elem, "text/html; charset=utf-8");
         IHTMLElement_Release(elem);
     }
 
