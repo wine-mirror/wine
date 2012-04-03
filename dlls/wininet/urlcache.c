@@ -1323,7 +1323,7 @@ static DWORD URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, 
 
     DWORD key = URLCache_HashKey(lpszUrl);
     DWORD offset = (key & (HASHTABLE_NUM_ENTRIES-1)) * HASHTABLE_BLOCKSIZE;
-    HASH_CACHEFILE_ENTRY * pHashEntry;
+    HASH_CACHEFILE_ENTRY * pHashEntry, *pHashPrev = NULL;
     DWORD dwHashTableNumber = 0;
     DWORD error;
 
@@ -1334,6 +1334,8 @@ static DWORD URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, 
          pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHashEntry->dwAddressNext))
     {
         int i;
+        pHashPrev = pHashEntry;
+
         if (pHashEntry->dwHashTableNumber != dwHashTableNumber++)
         {
             ERR("not right hash table number (%d) expected %d\n", pHashEntry->dwHashTableNumber, dwHashTableNumber);
@@ -1357,7 +1359,7 @@ static DWORD URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, 
             }
         }
     }
-    error = URLCache_CreateHashTable(pHeader, pHashEntry, &pHashEntry);
+    error = URLCache_CreateHashTable(pHeader, pHashPrev, &pHashEntry);
     if (error != ERROR_SUCCESS)
         return error;
 
