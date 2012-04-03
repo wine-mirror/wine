@@ -49,6 +49,7 @@ typedef struct
 {
     BaseRenderer renderer;
     BaseControlWindow baseControlWindow;
+    BaseControlVideo baseControlVideo;
 
     IUnknown IUnknown_inner;
 
@@ -56,6 +57,11 @@ typedef struct
     IUnknown * outer_unk;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
+
+    RECT source_rect;
+    RECT target_rect;
+    LONG VideoWidth;
+    LONG VideoHeight;
 } VMR9Impl;
 
 static inline VMR9Impl *impl_from_inner_IUnknown(IUnknown *iface)
@@ -71,6 +77,16 @@ static inline VMR9Impl *impl_from_BaseWindow( BaseWindow *wnd )
 static inline VMR9Impl *impl_from_IVideoWindow( IVideoWindow *iface)
 {
     return CONTAINING_RECORD(iface, VMR9Impl, baseControlWindow.IVideoWindow_iface);
+}
+
+static inline VMR9Impl *impl_from_BaseControlVideo( BaseControlVideo *cvid )
+{
+    return CONTAINING_RECORD(cvid, VMR9Impl, baseControlVideo);
+}
+
+static inline VMR9Impl *impl_from_IBasicVideo( IBasicVideo *iface)
+{
+    return CONTAINING_RECORD(iface, VMR9Impl, baseControlVideo.IBasicVideo_iface);
 }
 
 static HRESULT WINAPI VMR9_DoRenderSample(BaseRenderer *iface, IMediaSample * pSample)
@@ -127,6 +143,9 @@ static HRESULT WINAPI VMR9_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TY
 
         This->bmiheader = format->bmiHeader;
         TRACE("Resolution: %dx%d\n", format->bmiHeader.biWidth, format->bmiHeader.biHeight);
+        This->source_rect.right = This->VideoWidth = format->bmiHeader.biWidth;
+        This->source_rect.bottom = This->VideoHeight = format->bmiHeader.biHeight;
+        This->source_rect.top = This->source_rect.left = 0;
     }
     else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2))
     {
@@ -135,6 +154,9 @@ static HRESULT WINAPI VMR9_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TY
         This->bmiheader = format->bmiHeader;
 
         TRACE("Resolution: %dx%d\n", format->bmiHeader.biWidth, format->bmiHeader.biHeight);
+        This->source_rect.right = This->VideoWidth = format->bmiHeader.biWidth;
+        This->source_rect.bottom = This->VideoHeight = format->bmiHeader.biHeight;
+        This->source_rect.top = This->source_rect.left = 0;
     }
     else
     {
@@ -187,12 +209,204 @@ static LPWSTR WINAPI VMR9_GetClassWindowStyles(BaseWindow *This, DWORD *pClassSt
     return classnameW;
 }
 
+static RECT WINAPI VMR9_GetDefaultRect(BaseWindow *This)
+{
+    VMR9Impl* pVMR9 = impl_from_BaseWindow(This);
+    static RECT defRect;
+
+    defRect.left = defRect.top = 0;
+    defRect.right = pVMR9->VideoWidth;
+    defRect.bottom = pVMR9->VideoHeight;
+
+    return defRect;
+}
+
+static BOOL WINAPI VMR9_OnSize(BaseWindow *This, LONG Width, LONG Height)
+{
+    VMR9Impl* pVMR9 = impl_from_BaseWindow(This);
+
+    TRACE("WM_SIZE %d %d\n", Width, Height);
+    GetClientRect(This->hWnd, &pVMR9->target_rect);
+    TRACE("WM_SIZING: DestRect=(%d,%d),(%d,%d)\n",
+        pVMR9->target_rect.left,
+        pVMR9->target_rect.top,
+        pVMR9->target_rect.right - pVMR9->target_rect.left,
+        pVMR9->target_rect.bottom - pVMR9->target_rect.top);
+    return BaseWindowImpl_OnSize(This, Width, Height);
+}
+
 static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
     VMR9_GetClassWindowStyles,
-    BaseWindowImpl_GetDefaultRect,
+    VMR9_GetDefaultRect,
     NULL,
     BaseControlWindowImpl_PossiblyEatMessage,
-    NULL,
+    VMR9_OnSize,
+};
+
+HRESULT WINAPI VMR9_GetSourceRect(BaseControlVideo* This, RECT *pSourceRect)
+{
+    VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
+    CopyRect(pSourceRect,&pVMR9->source_rect);
+    return S_OK;
+}
+
+HRESULT WINAPI VMR9_GetStaticImage(BaseControlVideo* This, LONG *pBufferSize, LONG *pDIBImage)
+{
+    VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
+    BITMAPINFOHEADER *bmiHeader;
+    LONG needed_size;
+    AM_MEDIA_TYPE *amt = &pVMR9->renderer.pInputPin->pin.mtCurrent;
+    char *ptr;
+
+    FIXME("(%p/%p)->(%p, %p): partial stub\n", pVMR9, This, pBufferSize, pDIBImage);
+
+    EnterCriticalSection(&pVMR9->renderer.filter.csFilter);
+
+    if (!pVMR9->renderer.pMediaSample)
+    {
+         LeaveCriticalSection(&pVMR9->renderer.filter.csFilter);
+         return (pVMR9->renderer.filter.state == State_Paused ? E_UNEXPECTED : VFW_E_NOT_PAUSED);
+    }
+
+    if (IsEqualIID(&amt->formattype, &FORMAT_VideoInfo))
+    {
+        bmiHeader = &((VIDEOINFOHEADER *)amt->pbFormat)->bmiHeader;
+    }
+    else if (IsEqualIID(&amt->formattype, &FORMAT_VideoInfo2))
+    {
+        bmiHeader = &((VIDEOINFOHEADER2 *)amt->pbFormat)->bmiHeader;
+    }
+    else
+    {
+        FIXME("Unknown type %s\n", debugstr_guid(&amt->subtype));
+        LeaveCriticalSection(&pVMR9->renderer.filter.csFilter);
+        return VFW_E_RUNTIME_ERROR;
+    }
+
+    needed_size = bmiHeader->biSize;
+    needed_size += IMediaSample_GetActualDataLength(pVMR9->renderer.pMediaSample);
+
+    if (!pDIBImage)
+    {
+        *pBufferSize = needed_size;
+        LeaveCriticalSection(&pVMR9->renderer.filter.csFilter);
+        return S_OK;
+    }
+
+    if (needed_size < *pBufferSize)
+    {
+        ERR("Buffer too small %u/%u\n", needed_size, *pBufferSize);
+        LeaveCriticalSection(&pVMR9->renderer.filter.csFilter);
+        return E_FAIL;
+    }
+    *pBufferSize = needed_size;
+
+    memcpy(pDIBImage, bmiHeader, bmiHeader->biSize);
+    IMediaSample_GetPointer(pVMR9->renderer.pMediaSample, (BYTE **)&ptr);
+    memcpy((char *)pDIBImage + bmiHeader->biSize, ptr, IMediaSample_GetActualDataLength(pVMR9->renderer.pMediaSample));
+
+    LeaveCriticalSection(&pVMR9->renderer.filter.csFilter);
+    return S_OK;
+}
+
+HRESULT WINAPI VMR9_GetTargetRect(BaseControlVideo* This, RECT *pTargetRect)
+{
+    VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
+    CopyRect(pTargetRect,&pVMR9->target_rect);
+    return S_OK;
+}
+
+VIDEOINFOHEADER* WINAPI VMR9_GetVideoFormat(BaseControlVideo* This)
+{
+    VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
+    AM_MEDIA_TYPE *pmt;
+
+    TRACE("(%p/%p)\n", pVMR9, This);
+
+    pmt = &pVMR9->renderer.pInputPin->pin.mtCurrent;
+    if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)) {
+        return (VIDEOINFOHEADER*)pmt->pbFormat;
+    } else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2)) {
+        static VIDEOINFOHEADER vih;
+        VIDEOINFOHEADER2 *vih2 = (VIDEOINFOHEADER2*)pmt->pbFormat;
+        memcpy(&vih,vih2,sizeof(VIDEOINFOHEADER));
+        memcpy(&vih.bmiHeader, &vih2->bmiHeader, sizeof(BITMAPINFOHEADER));
+        return &vih;
+    } else {
+        ERR("Unknown format type %s\n", qzdebugstr_guid(&pmt->formattype));
+        return NULL;
+    }
+}
+
+HRESULT WINAPI VMR9_IsDefaultSourceRect(BaseControlVideo* This)
+{
+    VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
+    FIXME("(%p/%p)->(): stub !!!\n", pVMR9, This);
+
+    return S_OK;
+}
+
+HRESULT WINAPI VMR9_IsDefaultTargetRect(BaseControlVideo* This)
+{
+    VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
+    FIXME("(%p/%p)->(): stub !!!\n", pVMR9, This);
+
+    return S_OK;
+}
+
+HRESULT WINAPI VMR9_SetDefaultSourceRect(BaseControlVideo* This)
+{
+    VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
+
+    pVMR9->source_rect.left = 0;
+    pVMR9->source_rect.top = 0;
+    pVMR9->source_rect.right = pVMR9->VideoWidth;
+    pVMR9->source_rect.bottom = pVMR9->VideoHeight;
+
+    return S_OK;
+}
+
+HRESULT WINAPI VMR9_SetDefaultTargetRect(BaseControlVideo* This)
+{
+    RECT rect;
+    VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
+
+    if (!GetClientRect(pVMR9->baseControlWindow.baseWindow.hWnd, &rect))
+        return E_FAIL;
+
+    pVMR9->target_rect.left = 0;
+    pVMR9->target_rect.top = 0;
+    pVMR9->target_rect.right = rect.right;
+    pVMR9->target_rect.bottom = rect.bottom;
+
+    return S_OK;
+}
+
+HRESULT WINAPI VMR9_SetSourceRect(BaseControlVideo* This, RECT *pSourceRect)
+{
+    VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
+    CopyRect(&pVMR9->source_rect,pSourceRect);
+    return S_OK;
+}
+
+HRESULT WINAPI VMR9_SetTargetRect(BaseControlVideo* This, RECT *pTargetRect)
+{
+    VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
+    CopyRect(&pVMR9->target_rect,pTargetRect);
+    return S_OK;
+}
+
+static const BaseControlVideoFuncTable renderer_BaseControlVideoFuncTable = {
+    VMR9_GetSourceRect,
+    VMR9_GetStaticImage,
+    VMR9_GetTargetRect,
+    VMR9_GetVideoFormat,
+    VMR9_IsDefaultSourceRect,
+    VMR9_IsDefaultTargetRect,
+    VMR9_SetDefaultSourceRect,
+    VMR9_SetDefaultTargetRect,
+    VMR9_SetSourceRect,
+    VMR9_SetTargetRect
 };
 
 static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LPVOID * ppv)
@@ -209,6 +423,8 @@ static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LP
         *ppv = &This->IUnknown_inner;
     else if (IsEqualIID(riid, &IID_IVideoWindow))
         *ppv = &This->baseControlWindow.IVideoWindow_iface;
+    else if (IsEqualIID(riid, &IID_IBasicVideo))
+        *ppv = &This->baseControlVideo.IBasicVideo_iface;
     else
     {
         HRESULT hr;
@@ -223,8 +439,6 @@ static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LP
         return S_OK;
     }
 
-    else if (IsEqualIID(riid, &IID_IBasicVideo))
-        FIXME("No interface for IID_IBasicVideo\n");
     else if (IsEqualIID(riid, &IID_IBasicVideo2))
         FIXME("No interface for IID_IBasicVideo2\n");
     else if (IsEqualIID(riid, &IID_IVMRWindowlessControl9))
@@ -445,6 +659,77 @@ static const IVideoWindowVtbl IVideoWindow_VTable =
     BaseControlWindowImpl_IsCursorHidden
 };
 
+/*** IUnknown methods ***/
+static HRESULT WINAPI Basicvideo_QueryInterface(IBasicVideo *iface, REFIID riid, LPVOID * ppvObj)
+{
+    VMR9Impl *This = impl_from_IBasicVideo(iface);
+
+    TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
+
+    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppvObj);
+}
+
+static ULONG WINAPI Basicvideo_AddRef(IBasicVideo *iface)
+{
+    VMR9Impl *This = impl_from_IBasicVideo(iface);
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static ULONG WINAPI Basicvideo_Release(IBasicVideo *iface)
+{
+    VMR9Impl *This = impl_from_IBasicVideo(iface);
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static const IBasicVideoVtbl IBasicVideo_VTable =
+{
+    Basicvideo_QueryInterface,
+    Basicvideo_AddRef,
+    Basicvideo_Release,
+    BaseControlVideoImpl_GetTypeInfoCount,
+    BaseControlVideoImpl_GetTypeInfo,
+    BaseControlVideoImpl_GetIDsOfNames,
+    BaseControlVideoImpl_Invoke,
+    BaseControlVideoImpl_get_AvgTimePerFrame,
+    BaseControlVideoImpl_get_BitRate,
+    BaseControlVideoImpl_get_BitErrorRate,
+    BaseControlVideoImpl_get_VideoWidth,
+    BaseControlVideoImpl_get_VideoHeight,
+    BaseControlVideoImpl_put_SourceLeft,
+    BaseControlVideoImpl_get_SourceLeft,
+    BaseControlVideoImpl_put_SourceWidth,
+    BaseControlVideoImpl_get_SourceWidth,
+    BaseControlVideoImpl_put_SourceTop,
+    BaseControlVideoImpl_get_SourceTop,
+    BaseControlVideoImpl_put_SourceHeight,
+    BaseControlVideoImpl_get_SourceHeight,
+    BaseControlVideoImpl_put_DestinationLeft,
+    BaseControlVideoImpl_get_DestinationLeft,
+    BaseControlVideoImpl_put_DestinationWidth,
+    BaseControlVideoImpl_get_DestinationWidth,
+    BaseControlVideoImpl_put_DestinationTop,
+    BaseControlVideoImpl_get_DestinationTop,
+    BaseControlVideoImpl_put_DestinationHeight,
+    BaseControlVideoImpl_get_DestinationHeight,
+    BaseControlVideoImpl_SetSourcePosition,
+    BaseControlVideoImpl_GetSourcePosition,
+    BaseControlVideoImpl_SetDefaultSourcePosition,
+    BaseControlVideoImpl_SetDestinationPosition,
+    BaseControlVideoImpl_GetDestinationPosition,
+    BaseControlVideoImpl_SetDefaultDestinationPosition,
+    BaseControlVideoImpl_GetVideoSize,
+    BaseControlVideoImpl_GetVideoPaletteEntries,
+    BaseControlVideoImpl_GetCurrentImage,
+    BaseControlVideoImpl_IsUsingDefaultSource,
+    BaseControlVideoImpl_IsUsingDefaultDestination
+};
+
 HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
 {
     HRESULT hr;
@@ -469,7 +754,13 @@ HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
     if (FAILED(hr))
         goto fail;
 
+    hr = BaseControlVideo_Init(&pVMR9->baseControlVideo, &IBasicVideo_VTable, &pVMR9->renderer.filter, &pVMR9->renderer.filter.csFilter, &pVMR9->renderer.pInputPin->pin, &renderer_BaseControlVideoFuncTable);
+    if (FAILED(hr))
+        goto fail;
+
     *ppv = (LPVOID)pVMR9;
+    ZeroMemory(&pVMR9->source_rect, sizeof(RECT));
+    ZeroMemory(&pVMR9->target_rect, sizeof(RECT));
     TRACE("Created at %p\n", pVMR9);
     return hr;
 
