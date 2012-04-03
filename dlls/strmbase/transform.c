@@ -235,6 +235,7 @@ static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* p
             ERR("Cannot create output pin (%x)\n", hr);
         else {
             QualityControlImpl_Create( pTransformFilter->ppPins[0], &pTransformFilter->filter.IBaseFilter_iface, &pTransformFilter->qcimpl);
+            pTransformFilter->qcimpl->IQualityControl_iface.lpVtbl = &TransformFilter_QualityControl_Vtbl;
         }
     }
     if (FAILED(hr))
@@ -404,7 +405,7 @@ HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStar
 
 HRESULT WINAPI TransformFilterImpl_Notify(TransformFilter *iface, IBaseFilter *sender, Quality qm)
 {
-    return QualityControlImpl_Notify((IQualityControl*)&iface->qcimpl, sender, qm);
+    return QualityControlImpl_Notify((IQualityControl*)iface->qcimpl, sender, qm);
 }
 
 /** IBaseFilter implementation **/
