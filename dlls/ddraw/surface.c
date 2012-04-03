@@ -204,21 +204,19 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
                 || IsEqualGUID(riid, &IID_IDirect3DHALDevice)
                 || IsEqualGUID(riid, &IID_IDirect3DRGBDevice))
         {
-            IDirect3DDeviceImpl *device_impl;
-            IDirect3DDevice7 *device;
+            IDirect3DDeviceImpl *device;
             HRESULT hr;
 
-            hr = IDirect3D7_CreateDevice(&This->ddraw->IDirect3D7_iface, riid,
-                    &This->IDirectDrawSurface7_iface, &device);
+            wined3d_mutex_lock();
+            hr = d3d_device_create(This->ddraw, This, 1, &device);
+            wined3d_mutex_unlock();
             if (FAILED(hr))
             {
                 WARN("Failed to create device, hr %#x.\n", hr);
                 return hr;
             }
 
-            device_impl = impl_from_IDirect3DDevice7(device);
-            device_impl->from_surface = TRUE;
-            *obj = &device_impl->IDirect3DDevice_iface;
+            *obj = &device->IDirect3DDevice_iface;
             return S_OK;
         }
 

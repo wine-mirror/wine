@@ -4426,50 +4426,17 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
     TRACE("iface %p, riid %s, surface %p, device %p.\n", iface, debugstr_guid(riid), surface, device);
 
     wined3d_mutex_lock();
-    *device = NULL;
-
-    /* Fail device creation if non-opengl surfaces are used. */
-    if (DefaultSurfaceType != WINED3D_SURFACE_TYPE_OPENGL)
+    hr = d3d_device_create(ddraw, target, 7, &object);
+    if (SUCCEEDED(hr))
+        *device = &object->IDirect3DDevice7_iface;
+    else
     {
-        ERR("The application wants to create a Direct3D device, but non-opengl surfaces are set in the registry.\n");
-        ERR("Please set the surface implementation to opengl or autodetection to allow 3D rendering.\n");
-
-        /* We only hit this path if a default surface is set in the registry. Incorrect autodetection
-         * is caught in CreateSurface or QueryInterface. */
-        wined3d_mutex_unlock();
-        return DDERR_NO3D;
+        WARN("Failed to create device, hr %#x.\n", hr);
+        *device = NULL;
     }
-
-    if (ddraw->d3ddevice)
-    {
-        FIXME("Only one Direct3D device per DirectDraw object supported.\n");
-        wined3d_mutex_unlock();
-        return DDERR_INVALIDPARAMS;
-    }
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-    {
-        ERR("Failed to allocate device memory.\n");
-        wined3d_mutex_unlock();
-        return DDERR_OUTOFMEMORY;
-    }
-
-    hr = d3d_device_init(object, ddraw, target);
-    if (FAILED(hr))
-    {
-        WARN("Failed to initialize device, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        wined3d_mutex_unlock();
-        return hr;
-    }
-
-    TRACE("Created device %p.\n", object);
-    *device = &object->IDirect3DDevice7_iface;
-
     wined3d_mutex_unlock();
 
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3d3_CreateDevice(IDirect3D3 *iface, REFCLSID riid,
@@ -4477,22 +4444,25 @@ static HRESULT WINAPI d3d3_CreateDevice(IDirect3D3 *iface, REFCLSID riid,
 {
     struct ddraw_surface *surface_impl = unsafe_impl_from_IDirectDrawSurface4(surface);
     struct ddraw *ddraw = impl_from_IDirect3D3(iface);
-    IDirect3DDevice7 *device7;
     IDirect3DDeviceImpl *device_impl;
     HRESULT hr;
 
     TRACE("iface %p, riid %s, surface %p, device %p, outer_unknown %p.\n",
             iface, debugstr_guid(riid), surface, device, outer_unknown);
 
-    if (outer_unknown) return CLASS_E_NOAGGREGATION;
+    if (outer_unknown)
+        return CLASS_E_NOAGGREGATION;
 
-    hr = d3d7_CreateDevice(&ddraw->IDirect3D7_iface, riid,
-            surface_impl ? &surface_impl->IDirectDrawSurface7_iface : NULL, device ? &device7 : NULL);
+    wined3d_mutex_lock();
+    hr = d3d_device_create(ddraw, surface_impl, 3, &device_impl);
     if (SUCCEEDED(hr))
-    {
-        device_impl = impl_from_IDirect3DDevice7(device7);
         *device = &device_impl->IDirect3DDevice3_iface;
+    else
+    {
+        WARN("Failed to create device, hr %#x.\n", hr);
+        *device = NULL;
     }
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -4502,20 +4472,22 @@ static HRESULT WINAPI d3d2_CreateDevice(IDirect3D2 *iface, REFCLSID riid,
 {
     struct ddraw_surface *surface_impl = unsafe_impl_from_IDirectDrawSurface(surface);
     struct ddraw *ddraw = impl_from_IDirect3D2(iface);
-    IDirect3DDevice7 *device7;
     IDirect3DDeviceImpl *device_impl;
     HRESULT hr;
 
     TRACE("iface %p, riid %s, surface %p, device %p.\n",
             iface, debugstr_guid(riid), surface, device);
 
-    hr = d3d7_CreateDevice(&ddraw->IDirect3D7_iface, riid,
-            surface_impl ? &surface_impl->IDirectDrawSurface7_iface : NULL, device ? &device7 : NULL);
+    wined3d_mutex_lock();
+    hr = d3d_device_create(ddraw, surface_impl, 2, &device_impl);
     if (SUCCEEDED(hr))
-    {
-        device_impl = impl_from_IDirect3DDevice7(device7);
         *device = &device_impl->IDirect3DDevice2_iface;
+    else
+    {
+        WARN("Failed to create device, hr %#x.\n", hr);
+        *device = NULL;
     }
+    wined3d_mutex_unlock();
 
     return hr;
 }

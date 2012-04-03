@@ -278,7 +278,8 @@ struct IDirect3DDeviceImpl
     IDirect3DDevice3 IDirect3DDevice3_iface;
     IDirect3DDevice2 IDirect3DDevice2_iface;
     IDirect3DDevice IDirect3DDevice_iface;
-    LONG                    ref;
+    LONG ref;
+    UINT version;
 
     /* Other object connections */
     struct wined3d_device *wined3d_device;
@@ -293,7 +294,6 @@ struct IDirect3DDeviceImpl
 
     /* Required to keep track which of two available texture blending modes in d3ddevice3 is used */
     BOOL legacyTextureBlending;
-    BOOL from_surface;
 
     D3DMATRIX legacy_projection;
     D3DMATRIX legacy_clipspace;
@@ -315,8 +315,8 @@ struct IDirect3DDeviceImpl
     D3DMATRIXHANDLE          world, proj, view;
 };
 
-HRESULT d3d_device_init(IDirect3DDeviceImpl *device, struct ddraw *ddraw,
-        struct ddraw_surface *target) DECLSPEC_HIDDEN;
+HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target,
+        UINT version, IDirect3DDeviceImpl **device) DECLSPEC_HIDDEN;
 
 /* The IID */
 extern const GUID IID_D3DDEVICE_WineD3D DECLSPEC_HIDDEN;

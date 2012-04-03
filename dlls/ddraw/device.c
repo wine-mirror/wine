@@ -33,6 +33,7 @@
 #include "ddraw_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 /* The device ID */
 const GUID IID_D3DDEVICE_WineD3D = {
@@ -180,7 +181,7 @@ IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
     }
 
     /* DirectDrawSurface */
-    else if (IsEqualGUID(&IID_IDirectDrawSurface, refiid) && This->from_surface)
+    else if (IsEqualGUID(&IID_IDirectDrawSurface, refiid) && This->version == 1)
     {
         *obj = &This->target->IDirectDrawSurface_iface;
         TRACE("Returning IDirectDrawSurface interface %p.\n", *obj);
@@ -7015,7 +7016,8 @@ enum wined3d_depth_buffer_type IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DD
     return WINED3D_ZB_TRUE;
 }
 
-HRESULT d3d_device_init(IDirect3DDeviceImpl *device, struct ddraw *ddraw, struct ddraw_surface *target)
+static HRESULT d3d_device_init(IDirect3DDeviceImpl *device, struct ddraw *ddraw,
+        struct ddraw_surface *target, UINT version)
 {
     static const D3DMATRIX ident =
     {
@@ -7035,6 +7037,7 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, struct ddraw *ddraw, struct
     device->IDirect3DDevice2_iface.lpVtbl = &d3d_device2_vtbl;
     device->IDirect3DDevice_iface.lpVtbl = &d3d_device1_vtbl;
     device->ref = 1;
+    device->version = version;
     device->ddraw = ddraw;
     device->target = target;
     list_init(&device->viewport_list);
@@ -7089,6 +7092,49 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, struct ddraw *ddraw, struct
 
     wined3d_device_set_render_state(ddraw->wined3d_device, WINED3D_RS_ZENABLE,
             IDirect3DDeviceImpl_UpdateDepthStencil(device));
+
+    return D3D_OK;
+}
+
+HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target,
+        UINT version, IDirect3DDeviceImpl **device)
+{
+    IDirect3DDeviceImpl *object;
+    HRESULT hr;
+
+    TRACE("ddraw %p, target %p, version %u, device %p.\n", ddraw, target, version, device);
+
+    if (DefaultSurfaceType != WINED3D_SURFACE_TYPE_OPENGL)
+    {
+        ERR_(winediag)("The application wants to create a Direct3D device, "
+                "but the current DirectDrawRenderer does not support this.\n");
+
+        return DDERR_NO3D;
+    }
+
+    if (ddraw->d3ddevice)
+    {
+        FIXME("Only one Direct3D device per DirectDraw object supported.\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate device memory.\n");
+        return DDERR_OUTOFMEMORY;
+    }
+
+    hr = d3d_device_init(object, ddraw, target, version);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize device, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created device %p.\n", object);
+    *device = object;
 
     return D3D_OK;
 }
