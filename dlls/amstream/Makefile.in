@@ -3,6 +3,7 @@ IMPORTS   = strmiids strmbase uuid ole32 advapi32
 
 C_SRCS = \
 	amstream.c \
+	audiodata.c \
 	main.c \
 	mediastream.c \
 	mediastreamfilter.c

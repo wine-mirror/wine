@@ -334,7 +334,7 @@ static void test_media_streams(void)
         {
             IAudioData* audio_data = NULL;
             hr = CoCreateInstance(&CLSID_AMAudioData, NULL, CLSCTX_INPROC_SERVER, &IID_IAudioData, (void **)&audio_data);
-            todo_wine ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
+            ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
 
             hr = IAudioMediaStream_CreateSample(audio_media_stream, NULL, 0, &audio_sample);
             todo_wine ok(hr == E_POINTER, "IAudioMediaStream_CreateSample returned: %x\n", hr);

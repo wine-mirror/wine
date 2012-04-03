@@ -30,8 +30,10 @@
 #include "winuser.h"
 #include "dshow.h"
 #include "mmstream.h"
+#include "austream.h"
 
 HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT AMAudioData_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT MediaStreamFilter_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT mediastream_create(IMultiMediaStream *Parent, const MSPID *pPurposeId,
         STREAM_TYPE StreamType, IMediaStream **ppMediaStream) DECLSPEC_HIDDEN;
