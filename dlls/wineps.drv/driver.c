@@ -291,6 +291,18 @@ static void (WINAPI *pInitCommonControls) (void);
 static HPROPSHEETPAGE (WINAPI *pCreatePropertySheetPage) (LPCPROPSHEETPAGEW);
 static int (WINAPI *pPropertySheet) (LPCPROPSHEETHEADERW);
 
+static PRINTERINFO *PSDRV_FindPrinterInfoA(LPCSTR name)
+{
+    int len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
+    WCHAR *nameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    PRINTERINFO *pi;
+
+    MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, len );
+    pi = PSDRV_FindPrinterInfo( nameW );
+    HeapFree( GetProcessHeap(), 0, nameW );
+
+    return pi;
+}
 
  /******************************************************************
  *         PSDRV_ExtDeviceMode
@@ -326,7 +338,7 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
                         LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
                         LPSTR lpszProfile, DWORD dwMode)
 {
-  PRINTERINFO *pi = PSDRV_FindPrinterInfo(lpszDevice);
+  PRINTERINFO *pi = PSDRV_FindPrinterInfoA(lpszDevice);
   if(!pi) return -1;
 
   TRACE("(Driver=%s, hwnd=%p, devOut=%p, Device='%s', Port='%s', devIn=%p, Profile='%s', Mode=%04x)\n",
@@ -419,7 +431,7 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
   PRINTERINFO *pi;
   DEVMODEA *lpdm;
   DWORD ret;
-  pi = PSDRV_FindPrinterInfo(lpszDevice);
+  pi = PSDRV_FindPrinterInfoA(lpszDevice);
 
   TRACE("%s %s %s, %u, %p, %p\n", debugstr_a(lpszDriver), debugstr_a(lpszDevice),
         debugstr_a(lpszPort), fwCapability, lpszOutput, lpDevMode);

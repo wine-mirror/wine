@@ -327,18 +327,12 @@ static BOOL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 {
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi;
-    DWORD len;
-    char *deviceA;
 
     TRACE("(%s %s %s %p)\n", debugstr_w(driver), debugstr_w(device),
                              debugstr_w(output), initData);
 
     if (!device) return FALSE;
-    len = WideCharToMultiByte(CP_ACP, 0, device, -1, NULL, 0, NULL, NULL);
-    deviceA = HeapAlloc(GetProcessHeap(), 0, len);
-    WideCharToMultiByte(CP_ACP, 0, device, -1, deviceA, len, NULL, NULL);
-    pi = PSDRV_FindPrinterInfo(deviceA);
-    HeapFree(GetProcessHeap(), 0, deviceA);
+    pi = PSDRV_FindPrinterInfo( device );
     if(!pi) return FALSE;
 
     if(!pi->Fonts) {
@@ -376,7 +370,7 @@ static BOOL PSDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
     HDC hdc = (*pdev)->hdc;
     PSDRV_PDEVICE *physDev, *orig_dev = get_psdrv_dev( orig );
-    PRINTERINFO *pi = PSDRV_FindPrinterInfo( orig_dev->pi->FriendlyName );
+    PRINTERINFO *pi = PSDRV_FindPrinterInfo( orig_dev->pi->friendly_name );
 
     if (!pi) return FALSE;
     if (!(physDev = create_psdrv_physdev( pi ))) return FALSE;
@@ -540,7 +534,7 @@ static INT PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 /**********************************************************************
  *		PSDRV_FindPrinterInfo
  */
-PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
+PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 {
     static PRINTERINFO *PSDRV_PrinterList;
     DWORD type = REG_BINARY, needed, res, dwPaperSize;
@@ -550,31 +544,36 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     HANDLE hPrinter = 0;
     const char *ppd = NULL;
     DWORD ppdType;
-    char* ppdFileName = NULL;
+    char *ppdFileName = NULL, *nameA = NULL;
     HKEY hkey;
     BOOL using_default_devmode = FALSE;
+    int len;
 
-    TRACE("'%s'\n", name);
+    TRACE("'%s'\n", debugstr_w(name));
 
     /*
      *	If this loop completes, last will point to the 'next' element of the
      *	final PRINTERINFO in the list
      */
     for( ; pi; last = &pi->next, pi = pi->next)
-        if(!strcmp(pi->FriendlyName, name))
+        if(!strcmpW(pi->friendly_name, name))
 	    return pi;
 
     pi = *last = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*pi) );
     if (pi == NULL)
     	return NULL;
 
-    if (!(pi->FriendlyName = HeapAlloc( PSDRV_Heap, 0, strlen(name)+1 ))) goto fail;
-    strcpy( pi->FriendlyName, name );
+    if (!(pi->friendly_name = HeapAlloc( PSDRV_Heap, 0, (strlenW(name)+1)*sizeof(WCHAR) ))) goto fail;
+    strcpyW( pi->friendly_name, name );
 
-    if (OpenPrinterA (pi->FriendlyName, &hPrinter, NULL) == 0) {
-        ERR ("OpenPrinterA failed with code %i\n", GetLastError ());
+    if (OpenPrinterW( pi->friendly_name, &hPrinter, NULL ) == 0) {
+        ERR ("OpenPrinter failed with code %i\n", GetLastError ());
         goto cleanup;
     }
+
+    len = WideCharToMultiByte( CP_ACP, 0, name, -1, NULL, 0, NULL, NULL );
+    nameA = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, name, -1, nameA, len, NULL, NULL );
 
     needed = 0;
     res = GetPrinterDataExA(hPrinter, NULL, default_devmodeA, &type, NULL, 0, &needed);
@@ -585,7 +584,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
             goto closeprinter;
 
         *pi->Devmode = DefaultDevmode;
-        lstrcpynA((LPSTR)pi->Devmode->dmPublic.dmDeviceName,name,CCHDEVICENAME);
+        lstrcpynA((LPSTR)pi->Devmode->dmPublic.dmDeviceName, nameA, CCHDEVICENAME);
         using_default_devmode = TRUE;
     }
     else {
@@ -604,7 +603,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 
 	pcupsGetPPD = wine_dlsym(cupshandle, "cupsGetPPD", NULL, 0);
 	if (pcupsGetPPD) {
-	    ppd = pcupsGetPPD(name);
+	    ppd = pcupsGetPPD( nameA );
 
 	    if (ppd) {
 		needed=strlen(ppd)+1;
@@ -615,7 +614,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 		/* we should unlink() that file later */
 	    } else {
 		res = ERROR_FILE_NOT_FOUND;
-		WARN("Did not find ppd for %s\n",name);
+		WARN("Did not find ppd for %s\n", debugstr_w(name));
 	    }
 	}
     }
@@ -636,8 +635,8 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     {
         const char* value_name;
 
-        if (RegQueryValueExA(hkey, name, 0, NULL, NULL, &needed) == ERROR_SUCCESS) {
-            value_name=name;
+        if (RegQueryValueExA(hkey, nameA, 0, NULL, NULL, &needed) == ERROR_SUCCESS) {
+            value_name=nameA;
         } else if (RegQueryValueExA(hkey, "generic", 0, NULL, NULL, &needed) == ERROR_SUCCESS) {
             value_name="generic";
         } else {
@@ -660,7 +659,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
         else
         {
             res = ERROR_FILE_NOT_FOUND;
-            ERR ("Error %i getting PPD file name for printer '%s'\n", res, name);
+            ERR ("Error %i getting PPD file name for printer '%s'\n", res, debugstr_w(name));
             goto closeprinter;
         }
         ppdFileName = HeapAlloc( PSDRV_Heap, 0, strlen(data_dir) + strlen(filename) + 1 );
@@ -726,7 +725,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     if (res == ERROR_SUCCESS)
 	pi->Devmode->dmPublic.u1.s1.dmPaperSize = (SHORT) dwPaperSize;
     else if (res == ERROR_FILE_NOT_FOUND)
-	TRACE ("No 'Paper Size' for printer '%s'\n", name);
+	TRACE ("No 'Paper Size' for printer '%s'\n", debugstr_w(name));
     else {
 	ERR ("GetPrinterDataA returned %i\n", res);
 	goto closeprinter;
@@ -749,7 +748,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     res = EnumPrinterDataExA (hPrinter, "PrinterDriverData\\FontSubTable", NULL,
 	    0, &needed, &pi->FontSubTableSize);
     if (res == ERROR_SUCCESS || res == ERROR_FILE_NOT_FOUND) {
-	TRACE ("No 'FontSubTable' for printer '%s'\n", name);
+	TRACE ("No 'FontSubTable' for printer '%s'\n", debugstr_w(name));
     }
     else if (res == ERROR_MORE_DATA) {
 	pi->FontSubTable = HeapAlloc (PSDRV_Heap, 0, needed);
@@ -794,6 +793,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	}
 
     }
+    HeapFree( GetProcessHeap(), 0, nameA );
     if (ppd) unlink(ppd);
     return pi;
 
@@ -802,10 +802,11 @@ closeprinter:
 cleanup:
     HeapFree(PSDRV_Heap, 0, ppdFileName);
     HeapFree(PSDRV_Heap, 0, pi->FontSubTable);
-    HeapFree(PSDRV_Heap, 0, pi->FriendlyName);
+    HeapFree(PSDRV_Heap, 0, pi->friendly_name);
     HeapFree(PSDRV_Heap, 0, pi->Devmode);
 fail:
     HeapFree(PSDRV_Heap, 0, pi);
+    HeapFree( GetProcessHeap(), 0, nameA );
     if (ppd) unlink(ppd);
     *last = NULL;
     return NULL;

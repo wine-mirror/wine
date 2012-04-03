@@ -242,7 +242,7 @@ numInstalledOptions of OPTIONs
 } PSDRV_DEVMODEA;
 
 typedef struct _tagPI {
-    char		    *FriendlyName;
+    WCHAR                   *friendly_name;
     PPD			    *ppd;
     PSDRV_DEVMODEA	    *Devmode;
     FONTFAMILY		    *Fonts;
@@ -471,7 +471,7 @@ extern void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 			 PRINTERINFO *pi) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_GetFontMetrics(void) DECLSPEC_HIDDEN;
 extern PPD *PSDRV_ParsePPD(char *fname) DECLSPEC_HIDDEN;
-extern PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name) DECLSPEC_HIDDEN;
+extern PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name) DECLSPEC_HIDDEN;
 extern const AFM *PSDRV_FindAFMinList(FONTFAMILY *head, LPCSTR name) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm,
 	BOOL *p_added) DECLSPEC_HIDDEN;

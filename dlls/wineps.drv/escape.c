@@ -425,9 +425,9 @@ INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
     }
 
     /* FIXME: use PRINTER_DEFAULTS here */
-    if(!OpenPrinterA(physDev->pi->FriendlyName, &physDev->job.hprinter, NULL)) {
+    if(!OpenPrinterW( physDev->pi->friendly_name, &physDev->job.hprinter, NULL )) {
         WARN("OpenPrinter(%s, ...) failed: %d\n",
-            debugstr_a(physDev->pi->FriendlyName), GetLastError());
+            debugstr_w(physDev->pi->friendly_name), GetLastError());
         return 0;
     }
 
