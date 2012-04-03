@@ -54,6 +54,7 @@ typedef struct
     IUnknown IUnknown_inner;
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IVMRFilterConfig9 IVMRFilterConfig9_iface;
+    IVMRWindowlessControl9 IVMRWindowlessControl9_iface;
 
     IVMRSurfaceAllocatorEx9 *allocator;
     IVMRImagePresenter9 *presenter;
@@ -66,6 +67,9 @@ typedef struct
     BOOL bAggregatable;
 
     DWORD_PTR cookie;
+
+    /* for Windowless Mode */
+    HWND hWndClippingWindow;
 
     RECT source_rect;
     RECT target_rect;
@@ -106,6 +110,11 @@ static inline VMR9Impl *impl_from_IAMFilterMiscFlags( IAMFilterMiscFlags *iface)
 static inline VMR9Impl *impl_from_IVMRFilterConfig9( IVMRFilterConfig9 *iface)
 {
     return CONTAINING_RECORD(iface, VMR9Impl, IVMRFilterConfig9_iface);
+}
+
+static inline VMR9Impl *impl_from_IVMRWindowlessControl9( IVMRWindowlessControl9 *iface)
+{
+    return CONTAINING_RECORD(iface, VMR9Impl, IVMRWindowlessControl9_iface);
 }
 
 static HRESULT WINAPI VMR9_DoRenderSample(BaseRenderer *iface, IMediaSample * pSample)
@@ -448,6 +457,8 @@ static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LP
         *ppv = &This->IAMFilterMiscFlags_iface;
     else if (IsEqualIID(riid, &IID_IVMRFilterConfig9))
         *ppv = &This->IVMRFilterConfig9_iface;
+    else if (IsEqualIID(riid, &IID_IVMRWindowlessControl9) && This->mode == VMR9Mode_Windowless)
+        *ppv = &This->IVMRWindowlessControl9_iface;
     else
     {
         HRESULT hr;
@@ -913,6 +924,189 @@ static const IVMRFilterConfig9Vtbl VMR9_FilterConfig_Vtbl =
     VMR9FilterConfig_GetRenderingMode
 };
 
+static HRESULT WINAPI VMR9WindowlessControl_QueryInterface(IVMRWindowlessControl9 *iface, REFIID riid, LPVOID * ppv)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+}
+
+static ULONG WINAPI VMR9WindowlessControl_AddRef(IVMRWindowlessControl9 *iface)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static ULONG WINAPI VMR9WindowlessControl_Release(IVMRWindowlessControl9 *iface)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_GetNativeVideoSize(IVMRWindowlessControl9 *iface, LONG *width, LONG *height, LONG *arwidth, LONG *arheight)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+    TRACE("(%p/%p)->(%p, %p, %p, %p)\n", iface, This, width, height, arwidth, arheight);
+
+    if (!width || !height || !arwidth || !arheight)
+    {
+        ERR("Got no pointer\n");
+        return E_POINTER;
+    }
+
+    *width = This->bmiheader.biWidth;
+    *height = This->bmiheader.biHeight;
+    *arwidth = This->bmiheader.biWidth;
+    *arheight = This->bmiheader.biHeight;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_GetMinIdealVideoSize(IVMRWindowlessControl9 *iface, LONG *width, LONG *height)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_GetMaxIdealVideoSize(IVMRWindowlessControl9 *iface, LONG *width, LONG *height)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_SetVideoPosition(IVMRWindowlessControl9 *iface, const RECT *source, const RECT *dest)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+
+    TRACE("(%p/%p)->(%p, %p)\n", iface, This, source, dest);
+
+    EnterCriticalSection(&This->renderer.filter.csFilter);
+
+    if (source)
+        This->source_rect = *source;
+    if (dest)
+    {
+        This->target_rect = *dest;
+        if (This->baseControlWindow.baseWindow.hWnd)
+        {
+            FIXME("Output rectangle: starting at %dx%d, up to point %dx%d\n", dest->left, dest->top, dest->right, dest->bottom);
+            SetWindowPos(This->baseControlWindow.baseWindow.hWnd, NULL, dest->left, dest->top, dest->right - dest->left,
+                         dest->bottom-dest->top, SWP_NOACTIVATE|SWP_NOCOPYBITS|SWP_NOOWNERZORDER|SWP_NOREDRAW);
+        }
+    }
+
+    LeaveCriticalSection(&This->renderer.filter.csFilter);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_GetVideoPosition(IVMRWindowlessControl9 *iface, RECT *source, RECT *dest)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+
+    if (source)
+        *source = This->source_rect;
+
+    if (dest)
+        *dest = This->target_rect;
+
+    FIXME("(%p/%p)->(%p/%p) stub\n", iface, This, source, dest);
+    return S_OK;
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_GetAspectRatioMode(IVMRWindowlessControl9 *iface, DWORD *mode)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_SetAspectRatioMode(IVMRWindowlessControl9 *iface, DWORD mode)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_SetVideoClippingWindow(IVMRWindowlessControl9 *iface, HWND hwnd)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+
+    TRACE("(%p/%p)->(%p)\n", iface, This, hwnd);
+
+    EnterCriticalSection(&This->renderer.filter.csFilter);
+    This->hWndClippingWindow = hwnd;
+    if (!hwnd)
+        IVMRSurfaceAllocatorEx9_TerminateDevice(This->allocator, This->cookie);
+    LeaveCriticalSection(&This->renderer.filter.csFilter);
+    return S_OK;
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_RepaintVideo(IVMRWindowlessControl9 *iface, HWND hwnd, HDC hdc)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_DisplayModeChanged(IVMRWindowlessControl9 *iface)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_GetCurrentImage(IVMRWindowlessControl9 *iface, BYTE **dib)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_SetBorderColor(IVMRWindowlessControl9 *iface, COLORREF color)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9WindowlessControl_GetBorderColor(IVMRWindowlessControl9 *iface, COLORREF *color)
+{
+    VMR9Impl *This = impl_from_IVMRWindowlessControl9(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static const IVMRWindowlessControl9Vtbl VMR9_WindowlessControl_Vtbl =
+{
+    VMR9WindowlessControl_QueryInterface,
+    VMR9WindowlessControl_AddRef,
+    VMR9WindowlessControl_Release,
+    VMR9WindowlessControl_GetNativeVideoSize,
+    VMR9WindowlessControl_GetMinIdealVideoSize,
+    VMR9WindowlessControl_GetMaxIdealVideoSize,
+    VMR9WindowlessControl_SetVideoPosition,
+    VMR9WindowlessControl_GetVideoPosition,
+    VMR9WindowlessControl_GetAspectRatioMode,
+    VMR9WindowlessControl_SetAspectRatioMode,
+    VMR9WindowlessControl_SetVideoClippingWindow,
+    VMR9WindowlessControl_RepaintVideo,
+    VMR9WindowlessControl_DisplayModeChanged,
+    VMR9WindowlessControl_GetCurrentImage,
+    VMR9WindowlessControl_SetBorderColor,
+    VMR9WindowlessControl_GetBorderColor
+};
+
 HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
 {
     HRESULT hr;
@@ -933,7 +1127,9 @@ HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
     pVMR9->mode = 0;
     pVMR9->allocator = NULL;
     pVMR9->presenter = NULL;
+    pVMR9->hWndClippingWindow = NULL;
     pVMR9->IVMRFilterConfig9_iface.lpVtbl = &VMR9_FilterConfig_Vtbl;
+    pVMR9->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
 
     hr = BaseRenderer_Init(&pVMR9->renderer, &VMR9_Vtbl, outer_unk, &CLSID_VideoMixingRenderer9, (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
     if (FAILED(hr))
