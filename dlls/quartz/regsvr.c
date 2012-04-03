@@ -958,6 +958,18 @@ static struct regsvr_filter const filter_list[] = {
             { 0xFFFFFFFF },
         }
     },
+    {   &CLSID_VideoMixingRenderer9,
+        &CLSID_LegacyAmFilterCategory,
+        {'V','i','d','e','o',' ','M','i','x','i','n','g',' ','R','e','n','d','e','r','e','r',' ','9',0},
+        0x200000,
+        {   {   REG_PINFLAG_B_RENDERER,
+                {   { &MEDIATYPE_Video, &GUID_NULL },
+                    { NULL }
+                },
+            },
+            { 0xFFFFFFFF },
+        }
+    },
     {   &CLSID_DSoundRender,
         &CLSID_LegacyAmFilterCategory,
         {'A','u','d','i','o',' ','R','e','n','d','e','r','e','r',0},

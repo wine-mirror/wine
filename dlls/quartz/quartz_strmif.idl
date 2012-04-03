@@ -150,3 +150,10 @@ coclass ACMWrapper { interface IBaseFilter; }
     uuid(d51bd5a1-7548-11cf-a520-0080c77ef58a)
 ]
 coclass WAVEParser { interface IBaseFilter; }
+
+[
+    helpstring("Video Mixing Renderer 9"),
+    threading(both),
+    uuid(51b4abf3-748f-4e3b-a276-c828330e926a)
+]
+coclass VideoMixingRenderer9 { interface IBaseFilter; }
