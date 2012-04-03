@@ -53,11 +53,19 @@ typedef struct
 
     IUnknown IUnknown_inner;
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
+    IVMRFilterConfig9 IVMRFilterConfig9_iface;
 
+    IVMRSurfaceAllocatorEx9 *allocator;
+    IVMRImagePresenter9 *presenter;
+    BOOL allocator_is_ex;
+
+    VMR9Mode mode;
     BITMAPINFOHEADER bmiheader;
     IUnknown * outer_unk;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
+
+    DWORD_PTR cookie;
 
     RECT source_rect;
     RECT target_rect;
@@ -93,6 +101,11 @@ static inline VMR9Impl *impl_from_IBasicVideo( IBasicVideo *iface)
 static inline VMR9Impl *impl_from_IAMFilterMiscFlags( IAMFilterMiscFlags *iface)
 {
     return CONTAINING_RECORD(iface, VMR9Impl, IAMFilterMiscFlags_iface);
+}
+
+static inline VMR9Impl *impl_from_IVMRFilterConfig9( IVMRFilterConfig9 *iface)
+{
+    return CONTAINING_RECORD(iface, VMR9Impl, IVMRFilterConfig9_iface);
 }
 
 static HRESULT WINAPI VMR9_DoRenderSample(BaseRenderer *iface, IMediaSample * pSample)
@@ -433,6 +446,8 @@ static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LP
         *ppv = &This->baseControlVideo.IBasicVideo_iface;
     else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
         *ppv = &This->IAMFilterMiscFlags_iface;
+    else if (IsEqualIID(riid, &IID_IVMRFilterConfig9))
+        *ppv = &This->IVMRFilterConfig9_iface;
     else
     {
         HRESULT hr;
@@ -493,6 +508,11 @@ static ULONG WINAPI VMR9Inner_Release(IUnknown * iface)
     if (!refCount)
     {
         TRACE("Destroying\n");
+
+        if (This->allocator)
+            IVMRSurfaceAllocator9_Release(This->allocator);
+        if (This->presenter)
+            IVMRImagePresenter9_Release(This->presenter);
 
         CoTaskMemFree(This);
     }
@@ -762,6 +782,137 @@ static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl = {
     AMFilterMiscFlags_GetMiscFlags
 };
 
+static HRESULT WINAPI VMR9FilterConfig_QueryInterface(IVMRFilterConfig9 *iface, REFIID riid, LPVOID * ppv)
+{
+    VMR9Impl *This = impl_from_IVMRFilterConfig9(iface);
+    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+}
+
+static ULONG WINAPI VMR9FilterConfig_AddRef(IVMRFilterConfig9 *iface)
+{
+    VMR9Impl *This = impl_from_IVMRFilterConfig9(iface);
+    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static ULONG WINAPI VMR9FilterConfig_Release(IVMRFilterConfig9 *iface)
+{
+    VMR9Impl *This = impl_from_IVMRFilterConfig9(iface);
+    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static HRESULT WINAPI VMR9FilterConfig_SetImageCompositor(IVMRFilterConfig9 *iface, IVMRImageCompositor9 *compositor)
+{
+    VMR9Impl *This = impl_from_IVMRFilterConfig9(iface);
+
+    FIXME("(%p/%p)->(%p) stub\n", iface, This, compositor);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9FilterConfig_SetNumberOfStreams(IVMRFilterConfig9 *iface, DWORD max)
+{
+    VMR9Impl *This = impl_from_IVMRFilterConfig9(iface);
+
+    FIXME("(%p/%p)->(%u) stub\n", iface, This, max);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9FilterConfig_GetNumberOfStreams(IVMRFilterConfig9 *iface, DWORD *max)
+{
+    VMR9Impl *This = impl_from_IVMRFilterConfig9(iface);
+
+    FIXME("(%p/%p)->(%p) stub\n", iface, This, max);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9FilterConfig_SetRenderingPrefs(IVMRFilterConfig9 *iface, DWORD renderflags)
+{
+    VMR9Impl *This = impl_from_IVMRFilterConfig9(iface);
+
+    FIXME("(%p/%p)->(%u) stub\n", iface, This, renderflags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9FilterConfig_GetRenderingPrefs(IVMRFilterConfig9 *iface, DWORD *renderflags)
+{
+    VMR9Impl *This = impl_from_IVMRFilterConfig9(iface);
+
+    FIXME("(%p/%p)->(%p) stub\n", iface, This, renderflags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface, DWORD mode)
+{
+    HRESULT hr = S_OK;
+    VMR9Impl *This = impl_from_IVMRFilterConfig9(iface);
+
+    TRACE("(%p/%p)->(%u)\n", iface, This, mode);
+
+    EnterCriticalSection(&This->renderer.filter.csFilter);
+    if (This->mode)
+    {
+        LeaveCriticalSection(&This->renderer.filter.csFilter);
+        return VFW_E_WRONG_STATE;
+    }
+
+    if (This->allocator)
+        IVMRSurfaceAllocator9_Release(This->allocator);
+    if (This->presenter)
+        IVMRImagePresenter9_Release(This->presenter);
+
+    This->allocator = NULL;
+    This->presenter = NULL;
+
+    switch (mode)
+    {
+    case VMR9Mode_Windowed:
+    case VMR9Mode_Windowless:
+        This->allocator = NULL;
+        This->presenter = NULL;
+        This->allocator_is_ex = 0;
+        This->cookie = ~0;
+        break;
+    case VMR9Mode_Renderless:
+        break;
+    default:
+        LeaveCriticalSection(&This->renderer.filter.csFilter);
+        return E_INVALIDARG;
+    }
+
+    This->mode = mode;
+    LeaveCriticalSection(&This->renderer.filter.csFilter);
+    return hr;
+}
+
+static HRESULT WINAPI VMR9FilterConfig_GetRenderingMode(IVMRFilterConfig9 *iface, DWORD *mode)
+{
+    VMR9Impl *This = impl_from_IVMRFilterConfig9(iface);
+
+    TRACE("(%p/%p)->(%p) stub\n", iface, This, mode);
+    if (!mode)
+        return E_POINTER;
+
+    if (This->mode)
+        *mode = This->mode;
+    else
+        *mode = VMR9Mode_Windowed;
+
+    return S_OK;
+}
+
+static const IVMRFilterConfig9Vtbl VMR9_FilterConfig_Vtbl =
+{
+    VMR9FilterConfig_QueryInterface,
+    VMR9FilterConfig_AddRef,
+    VMR9FilterConfig_Release,
+    VMR9FilterConfig_SetImageCompositor,
+    VMR9FilterConfig_SetNumberOfStreams,
+    VMR9FilterConfig_GetNumberOfStreams,
+    VMR9FilterConfig_SetRenderingPrefs,
+    VMR9FilterConfig_GetRenderingPrefs,
+    VMR9FilterConfig_SetRenderingMode,
+    VMR9FilterConfig_GetRenderingMode
+};
+
 HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
 {
     HRESULT hr;
@@ -778,6 +929,11 @@ HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
     pVMR9->bAggregatable = FALSE;
     pVMR9->IUnknown_inner.lpVtbl = &IInner_VTable;
     pVMR9->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
+
+    pVMR9->mode = 0;
+    pVMR9->allocator = NULL;
+    pVMR9->presenter = NULL;
+    pVMR9->IVMRFilterConfig9_iface.lpVtbl = &VMR9_FilterConfig_Vtbl;
 
     hr = BaseRenderer_Init(&pVMR9->renderer, &VMR9_Vtbl, outer_unk, &CLSID_VideoMixingRenderer9, (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
     if (FAILED(hr))
