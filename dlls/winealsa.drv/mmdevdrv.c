@@ -150,6 +150,14 @@ static struct list g_sessions = LIST_INIT(g_sessions);
 static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
 static const char defname[] = "default";
 
+static const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
+    'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
+    'w','i','n','e','a','l','s','a','.','d','r','v',0};
+static const WCHAR drv_key_devicesW[] = {'S','o','f','t','w','a','r','e','\\',
+    'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
+    'w','i','n','e','a','l','s','a','.','d','r','v','\\','d','e','v','i','c','e','s',0};
+static const WCHAR guidW[] = {'g','u','i','d',0};
+
 static const IAudioClientVtbl AudioClient_Vtbl;
 static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
 static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl;
@@ -243,6 +251,79 @@ int WINAPI AUDDRV_GetPriority(void)
     return Priority_Neutral;
 }
 
+static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
+        GUID *guid)
+{
+    HKEY key;
+    BOOL opened = FALSE;
+    LONG lr;
+
+    if(!drv_key){
+        lr = RegCreateKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, NULL, 0, KEY_WRITE,
+                    NULL, &drv_key, NULL);
+        if(lr != ERROR_SUCCESS){
+            ERR("RegCreateKeyEx(drv_key) failed: %u\n", lr);
+            return;
+        }
+        opened = TRUE;
+    }
+
+    lr = RegCreateKeyExW(drv_key, key_name, 0, NULL, 0, KEY_WRITE,
+                NULL, &key, NULL);
+    if(lr != ERROR_SUCCESS){
+        ERR("RegCreateKeyEx(%s) failed: %u\n", wine_dbgstr_w(key_name), lr);
+        goto exit;
+    }
+
+    lr = RegSetValueExW(key, guidW, 0, REG_BINARY, (BYTE*)guid,
+                sizeof(GUID));
+    if(lr != ERROR_SUCCESS)
+        ERR("RegSetValueEx(%s\\guid) failed: %u\n", wine_dbgstr_w(key_name), lr);
+
+    RegCloseKey(key);
+exit:
+    if(opened)
+        RegCloseKey(drv_key);
+}
+
+static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
+{
+    HKEY key = NULL, dev_key;
+    DWORD type, size = sizeof(*guid);
+    WCHAR key_name[256];
+
+    if(flow == eCapture)
+        key_name[0] = '1';
+    else
+        key_name[0] = '0';
+    key_name[1] = ',';
+    MultiByteToWideChar(CP_UNIXCP, 0, device, -1, key_name + 2,
+            (sizeof(key_name) / sizeof(*key_name)) - 2);
+
+    if(RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_WRITE|KEY_READ, &key) == ERROR_SUCCESS){
+        if(RegOpenKeyExW(key, key_name, 0, KEY_READ, &dev_key) == ERROR_SUCCESS){
+            if(RegQueryValueExW(dev_key, guidW, 0, &type,
+                        (BYTE*)guid, &size) == ERROR_SUCCESS){
+                if(type == REG_BINARY){
+                    RegCloseKey(dev_key);
+                    RegCloseKey(key);
+                    return;
+                }
+                ERR("Invalid type for device %s GUID: %u; ignoring and overwriting\n",
+                        wine_dbgstr_w(key_name), type);
+            }
+            RegCloseKey(dev_key);
+        }
+    }
+
+    CoCreateGuid(guid);
+
+    set_device_guid(flow, key, key_name, guid);
+
+    if(key)
+        RegCloseKey(key);
+}
+
 static BOOL alsa_try_open(const char *devnode, snd_pcm_stream_t stream)
 {
     snd_pcm_t *handle;
@@ -258,8 +339,9 @@ static BOOL alsa_try_open(const char *devnode, snd_pcm_stream_t stream)
     return TRUE;
 }
 
-static HRESULT alsa_get_card_devices(snd_pcm_stream_t stream, WCHAR **ids, char **keys,
-        UINT *num, snd_ctl_t *ctl, int card, const WCHAR *cardnameW)
+static HRESULT alsa_get_card_devices(EDataFlow flow, snd_pcm_stream_t stream,
+        WCHAR **ids, GUID **guids, UINT *num, snd_ctl_t *ctl, int card,
+        const WCHAR *cardnameW)
 {
     static const WCHAR dashW[] = {' ','-',' ',0};
     int err, device;
@@ -294,7 +376,7 @@ static HRESULT alsa_get_card_devices(snd_pcm_stream_t stream, WCHAR **ids, char 
         if(!alsa_try_open(devnode, stream))
             continue;
 
-        if(ids && keys){
+        if(ids && guids){
             DWORD len, cardlen;
 
             devname = snd_pcm_info_get_name(info);
@@ -319,13 +401,13 @@ static HRESULT alsa_get_card_devices(snd_pcm_stream_t stream, WCHAR **ids, char 
             MultiByteToWideChar(CP_UNIXCP, 0, devname, -1, ids[*num] + cardlen,
                     len - cardlen);
 
-            keys[*num] = HeapAlloc(GetProcessHeap(), 0, 32);
-            if(!keys[*num]){
+            guids[*num] = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
+            if(!guids[*num]){
                 HeapFree(GetProcessHeap(), 0, info);
                 HeapFree(GetProcessHeap(), 0, ids[*num]);
                 return E_OUTOFMEMORY;
             }
-            memcpy(keys[*num], devnode, sizeof(devnode));
+            get_device_guid(flow, devnode, guids[*num]);
         }
 
         ++(*num);
@@ -340,12 +422,9 @@ static HRESULT alsa_get_card_devices(snd_pcm_stream_t stream, WCHAR **ids, char 
     return S_OK;
 }
 
-static void get_reg_devices(snd_pcm_stream_t stream, WCHAR **ids, char **keys,
-        UINT *num)
+static void get_reg_devices(EDataFlow flow, snd_pcm_stream_t stream, WCHAR **ids,
+        GUID **guids, UINT *num)
 {
-    static const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
-        'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
-        'w','i','n','e','a','l','s','a','.','d','r','v',0};
     static const WCHAR ALSAOutputDevices[] = {'A','L','S','A','O','u','t','p','u','t','D','e','v','i','c','e','s',0};
     static const WCHAR ALSAInputDevices[] = {'A','L','S','A','I','n','p','u','t','D','e','v','i','c','e','s',0};
     HKEY key;
@@ -371,14 +450,13 @@ static void get_reg_devices(snd_pcm_stream_t stream, WCHAR **ids, char **keys,
                 WideCharToMultiByte(CP_UNIXCP, 0, p, -1, devname, sizeof(devname), NULL, NULL);
 
                 if(alsa_try_open(devname, stream)){
-                    if(ids && keys){
+                    if(ids && guids){
                         len = lstrlenW(p) + 1;
                         ids[*num] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
                         memcpy(ids[*num], p, len * sizeof(WCHAR));
 
-                        len = strlen(devname) + 1;
-                        keys[*num] = HeapAlloc(GetProcessHeap(), 0, len);
-                        memcpy(keys[*num], devname, len);
+                        guids[*num] = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
+                        get_device_guid(flow, devname, guids[*num]);
                     }
                     ++*num;
                 }
@@ -391,7 +469,7 @@ static void get_reg_devices(snd_pcm_stream_t stream, WCHAR **ids, char **keys,
     }
 }
 
-static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
+static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, GUID **guids,
         UINT *num)
 {
     snd_pcm_stream_t stream = (flow == eRender ? SND_PCM_STREAM_PLAYBACK :
@@ -402,16 +480,16 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
     *num = 0;
 
     if(alsa_try_open(defname, stream)){
-        if(ids && keys){
+        if(ids && guids){
             *ids = HeapAlloc(GetProcessHeap(), 0, sizeof(defaultW));
             memcpy(*ids, defaultW, sizeof(defaultW));
-            *keys = HeapAlloc(GetProcessHeap(), 0, sizeof(defname));
-            memcpy(*keys, defname, sizeof(defname));
+            *guids = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
+            get_device_guid(flow, defname, *guids);
         }
         ++*num;
     }
 
-    get_reg_devices(stream, ids, keys, num);
+    get_reg_devices(flow, stream, ids, guids, num);
 
     for(err = snd_card_next(&card); card != -1 && err >= 0;
             err = snd_card_next(&card)){
@@ -434,7 +512,7 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
             static const WCHAR nameW[] = {'U','n','k','n','o','w','n',' ','s','o','u','n','d','c','a','r','d',0};
             WARN("Unable to get card name for ALSA device %s: %d (%s)\n",
                     cardpath, err, snd_strerror(err));
-            alsa_get_card_devices(stream, ids, keys, num, ctl, card, nameW);
+            alsa_get_card_devices(flow, stream, ids, guids, num, ctl, card, nameW);
         }else{
             len = MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, NULL, 0);
             cardnameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
@@ -446,7 +524,7 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
             }
             MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, cardnameW, len);
 
-            alsa_get_card_devices(stream, ids, keys, num, ctl, card, cardnameW);
+            alsa_get_card_devices(flow, stream, ids, guids, num, ctl, card, cardnameW);
 
             HeapFree(GetProcessHeap(), 0, cardnameW);
             free(cardname);
@@ -462,12 +540,12 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
     return S_OK;
 }
 
-HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
+HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID ***guids,
         UINT *num, UINT *def_index)
 {
     HRESULT hr;
 
-    TRACE("%d %p %p %p %p\n", flow, ids, keys, num, def_index);
+    TRACE("%d %p %p %p %p\n", flow, ids, guids, num, def_index);
 
     hr = alsa_enum_devices(flow, NULL, NULL, num);
     if(FAILED(hr))
@@ -476,29 +554,29 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
     if(*num == 0)
     {
         *ids = NULL;
-        *keys = NULL;
+        *guids = NULL;
         return S_OK;
     }
 
     *ids = HeapAlloc(GetProcessHeap(), 0, *num * sizeof(WCHAR *));
-    *keys = HeapAlloc(GetProcessHeap(), 0, *num * sizeof(char *));
-    if(!*ids || !*keys){
+    *guids = HeapAlloc(GetProcessHeap(), 0, *num * sizeof(GUID *));
+    if(!*ids || !*guids){
         HeapFree(GetProcessHeap(), 0, *ids);
-        HeapFree(GetProcessHeap(), 0, *keys);
+        HeapFree(GetProcessHeap(), 0, *guids);
         return E_OUTOFMEMORY;
     }
 
     *def_index = 0;
 
-    hr = alsa_enum_devices(flow, *ids, *keys, num);
+    hr = alsa_enum_devices(flow, *ids, *guids, num);
     if(FAILED(hr)){
         int i;
         for(i = 0; i < *num; ++i){
             HeapFree(GetProcessHeap(), 0, (*ids)[i]);
-            HeapFree(GetProcessHeap(), 0, (*keys)[i]);
+            HeapFree(GetProcessHeap(), 0, (*guids)[i]);
         }
         HeapFree(GetProcessHeap(), 0, *ids);
-        HeapFree(GetProcessHeap(), 0, *keys);
+        HeapFree(GetProcessHeap(), 0, *guids);
         return E_OUTOFMEMORY;
     }
 
@@ -588,16 +666,84 @@ static snd_config_t *make_handle_underrun_config(const char *name)
     return lconf;
 }
 
-HRESULT WINAPI AUDDRV_GetAudioEndpoint(const char *key, IMMDevice *dev,
-        EDataFlow dataflow, IAudioClient **out)
+static BOOL get_alsa_name_by_guid(GUID *guid, char *name, DWORD name_size, EDataFlow *flow)
+{
+    HKEY devices_key;
+    UINT i = 0;
+    WCHAR key_name[256];
+    DWORD key_name_size;
+
+    if(RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_READ, &devices_key) != ERROR_SUCCESS){
+        ERR("No devices found in registry?\n");
+        return FALSE;
+    }
+
+    while(1){
+        HKEY key;
+        DWORD size, type;
+        GUID reg_guid;
+
+        key_name_size = sizeof(key_name);
+        if(RegEnumKeyExW(devices_key, i, key_name, &key_name_size, NULL,
+                NULL, NULL, NULL) != ERROR_SUCCESS)
+            break;
+
+        if(RegOpenKeyExW(devices_key, key_name, 0, KEY_READ, &key) != ERROR_SUCCESS){
+            WARN("Couldn't open key: %s\n", wine_dbgstr_w(key_name));
+            continue;
+        }
+
+        size = sizeof(reg_guid);
+        if(RegQueryValueExW(key, guidW, 0, &type,
+                    (BYTE*)&reg_guid, &size) == ERROR_SUCCESS){
+            if(IsEqualGUID(&reg_guid, guid)){
+                RegCloseKey(key);
+                RegCloseKey(devices_key);
+
+                TRACE("Found matching device key: %s\n", wine_dbgstr_w(key_name));
+
+                if(key_name[0] == '0')
+                    *flow = eRender;
+                else if(key_name[0] == '1')
+                    *flow = eCapture;
+                else{
+                    ERR("Unknown device type: %c\n", key_name[0]);
+                    return FALSE;
+                }
+
+                WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, name, name_size, NULL, NULL);
+
+                return TRUE;
+            }
+        }
+
+        RegCloseKey(key);
+
+        ++i;
+    }
+
+    RegCloseKey(devices_key);
+
+    WARN("No matching device in registry for GUID %s\n", debugstr_guid(guid));
+
+    return FALSE;
+}
+
+HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, EDataFlow unused_flow,
+        IAudioClient **out)
 {
     ACImpl *This;
     int err;
     snd_pcm_stream_t stream;
     snd_config_t *lconf;
     static int handle_underrun = 1;
+    char alsa_name[256];
+    EDataFlow dataflow;
 
-    TRACE("\"%s\" %p %d %p\n", key, dev, dataflow, out);
+    TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
+
+    if(!get_alsa_name_by_guid(guid, alsa_name, sizeof(alsa_name), &dataflow))
+        return AUDCLNT_E_DEVICE_INVALIDATED;
 
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ACImpl));
     if(!This)
@@ -620,24 +766,24 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(const char *key, IMMDevice *dev,
     }
 
     This->dataflow = dataflow;
-    if(handle_underrun && ((lconf = make_handle_underrun_config(key)))){
-        err = snd_pcm_open_lconf(&This->pcm_handle, key, stream, SND_PCM_NONBLOCK, lconf);
-        TRACE("Opening PCM device \"%s\" with handle_underrun: %d\n", key, err);
+    if(handle_underrun && ((lconf = make_handle_underrun_config(alsa_name)))){
+        err = snd_pcm_open_lconf(&This->pcm_handle, alsa_name, stream, SND_PCM_NONBLOCK, lconf);
+        TRACE("Opening PCM device \"%s\" with handle_underrun: %d\n", alsa_name, err);
         snd_config_delete(lconf);
         /* Pulse <= 2010 returns EINVAL, it does not know handle_underrun. */
         if(err == -EINVAL){
             ERR_(winediag)("PulseAudio \"%s\" %d without handle_underrun. Audio may hang."
-                           " Please upgrade to alsa_plugins >= 1.0.24\n", key, err);
+                           " Please upgrade to alsa_plugins >= 1.0.24\n", alsa_name, err);
             handle_underrun = 0;
         }
     }else
         err = -EINVAL;
     if(err == -EINVAL){
-        err = snd_pcm_open(&This->pcm_handle, key, stream, SND_PCM_NONBLOCK);
+        err = snd_pcm_open(&This->pcm_handle, alsa_name, stream, SND_PCM_NONBLOCK);
     }
     if(err < 0){
         HeapFree(GetProcessHeap(), 0, This);
-        WARN("Unable to open PCM \"%s\": %d (%s)\n", key, err, snd_strerror(err));
+        WARN("Unable to open PCM \"%s\": %d (%s)\n", alsa_name, err, snd_strerror(err));
         switch(err){
         case -EBUSY:
             return AUDCLNT_E_DEVICE_IN_USE;
