@@ -3275,6 +3275,22 @@ static void _test_meta_content(unsigned line, IUnknown *unk, const char *exconte
     IHTMLMetaElement_Release(meta);
 }
 
+#define test_meta_httpequiv(a,b) _test_meta_httpequiv(__LINE__,a,b)
+static void _test_meta_httpequiv(unsigned line, IUnknown *unk, const char *exval)
+{
+    IHTMLMetaElement *meta;
+    BSTR val = NULL;
+    HRESULT hres;
+
+
+    meta = _get_metaelem_iface(line, unk);
+    hres = IHTMLMetaElement_get_httpEquiv(meta, &val);
+    ok_(__FILE__,line)(hres == S_OK, "get_httpEquiv failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(val, exval), "httpEquiv = %s, expected %s\n", wine_dbgstr_w(val), exval);
+    SysFreeString(val);
+    IHTMLMetaElement_Release(meta);
+}
+
 #define get_elem_doc(e) _get_elem_doc(__LINE__,e)
 static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
 {
@@ -5306,6 +5322,7 @@ static void test_elems(IHTMLDocument2 *doc)
     if(elem) {
         test_meta_name((IUnknown*)elem, "meta name");
         test_meta_content((IUnknown*)elem, "text/html; charset=utf-8");
+        test_meta_httpequiv((IUnknown*)elem, "Content-Type");
         IHTMLElement_Release(elem);
     }
 

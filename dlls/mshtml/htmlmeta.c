@@ -104,8 +104,19 @@ static HRESULT WINAPI HTMLMetaElement_put_httpEquiv(IHTMLMetaElement *iface, BST
 static HRESULT WINAPI HTMLMetaElement_get_httpEquiv(IHTMLMetaElement *iface, BSTR *p)
 {
     HTMLMetaElement *This = impl_from_IHTMLMetaElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString httpequiv_str, val_str;
+    nsresult nsres;
+
+    static const PRUnichar httpEquivW[] = {'h','t','t','p','-','e','q','u','i','v',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_InitDepend(&httpequiv_str, httpEquivW);
+    nsAString_Init(&val_str, NULL);
+    nsres = nsIDOMHTMLElement_GetAttribute(This->element.nselem, &httpequiv_str, &val_str);
+    nsAString_Finish(&httpequiv_str);
+
+    return return_nsstr(nsres, &val_str, p);
 }
 
 static HRESULT WINAPI HTMLMetaElement_put_content(IHTMLMetaElement *iface, BSTR v)
