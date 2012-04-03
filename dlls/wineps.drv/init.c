@@ -412,7 +412,7 @@ static BOOL PSDRV_DeleteDC( PHYSDEV dev )
     TRACE("\n");
 
     HeapFree( PSDRV_Heap, 0, physDev->Devmode );
-    HeapFree( PSDRV_Heap, 0, physDev->job.output );
+    HeapFree( GetProcessHeap(), 0, physDev->job.output );
     HeapFree( PSDRV_Heap, 0, physDev );
 
     return TRUE;
