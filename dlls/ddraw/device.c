@@ -190,7 +190,7 @@ IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
     /* Unknown interface */
     else
     {
-        ERR("(%p)->(%s, %p): No interface found\n", This, debugstr_guid(refiid), obj);
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(refiid));
         return E_NOINTERFACE;
     }
 
