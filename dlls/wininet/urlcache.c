@@ -1401,7 +1401,7 @@ static DWORD URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_
     (*ppHash)->dwHashTableNumber = pPrevHash ? pPrevHash->dwHashTableNumber + 1 : 0;
     for (i = 0; i < HASHTABLE_SIZE; i++)
     {
-        (*ppHash)->HashTable[i].dwOffsetEntry = 0;
+        (*ppHash)->HashTable[i].dwOffsetEntry = HASHTABLE_FREE;
         (*ppHash)->HashTable[i].dwHashKey = HASHTABLE_FREE;
     }
     return ERROR_SUCCESS;
