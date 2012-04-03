@@ -275,11 +275,11 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 /***********************************************************
  *      DEVMODEdupWtoA
  *
- * Creates an ascii copy of supplied devmode on heap
+ * Creates an ascii copy of supplied devmode on the process heap
  *
  * Copied from dlls/winspool/info.c until full unicodification
  */
-static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
+static LPDEVMODEA DEVMODEdupWtoA( const DEVMODEW *dmW )
 {
     LPDEVMODEA dmA;
     DWORD size;
@@ -290,7 +290,7 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
     if(!dmW) return NULL;
     Formname = (dmW->dmSize > off_formname);
     size = dmW->dmSize - CCHDEVICENAME - (Formname ? CCHFORMNAME : 0);
-    dmA = HeapAlloc(heap, HEAP_ZERO_MEMORY, size + dmW->dmDriverExtra);
+    dmA = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size + dmW->dmDriverExtra );
     WideCharToMultiByte(CP_ACP, 0, dmW->dmDeviceName, -1, (LPSTR)dmA->dmDeviceName,
 			CCHDEVICENAME, NULL, NULL);
     if(!Formname) {
@@ -315,13 +315,13 @@ static PSDRV_PDEVICE *create_psdrv_physdev( PRINTERINFO *pi )
 {
     PSDRV_PDEVICE *physDev;
 
-    physDev = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*physDev) );
+    physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) );
     if (!physDev) return NULL;
 
-    physDev->Devmode = HeapAlloc( PSDRV_Heap, 0, sizeof(PSDRV_DEVMODEA) );
+    physDev->Devmode = HeapAlloc( GetProcessHeap(), 0, sizeof(PSDRV_DEVMODEA) );
     if (!physDev->Devmode)
     {
-        HeapFree( PSDRV_Heap, 0, physDev );
+        HeapFree( GetProcessHeap(), 0, physDev );
 	return NULL;
     }
 
@@ -370,9 +370,9 @@ static BOOL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
     if (output && *output) physDev->job.output = strdupW( output );
 
     if(initData) {
-        DEVMODEA *devmodeA = DEVMODEdupWtoA(PSDRV_Heap, initData);
+        DEVMODEA *devmodeA = DEVMODEdupWtoA( initData );
         PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)devmodeA, pi);
-        HeapFree(PSDRV_Heap, 0, devmodeA);
+        HeapFree( GetProcessHeap(), 0, devmodeA );
     }
 
     PSDRV_UpdateDevCaps(physDev);
@@ -411,9 +411,9 @@ static BOOL PSDRV_DeleteDC( PHYSDEV dev )
 
     TRACE("\n");
 
-    HeapFree( PSDRV_Heap, 0, physDev->Devmode );
+    HeapFree( GetProcessHeap(), 0, physDev->Devmode );
     HeapFree( GetProcessHeap(), 0, physDev->job.output );
-    HeapFree( PSDRV_Heap, 0, physDev );
+    HeapFree( GetProcessHeap(), 0, physDev );
 
     return TRUE;
 }
@@ -427,9 +427,9 @@ static HDC PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
     if(lpInitData) {
-        DEVMODEA *devmodeA = DEVMODEdupWtoA(PSDRV_Heap, lpInitData);
+        DEVMODEA *devmodeA = DEVMODEdupWtoA( lpInitData );
         PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)devmodeA, physDev->pi);
-        HeapFree(PSDRV_Heap, 0, devmodeA);
+        HeapFree( GetProcessHeap(), 0, devmodeA );
         PSDRV_UpdateDevCaps(physDev);
     }
     return dev->hdc;
