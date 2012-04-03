@@ -47,7 +47,7 @@ static const char range_test2_str[] =
     "<html><body>abc<hr />123<br /><hr />def</body></html>";
 static const char elem_test_str[] =
     "<html><head><title>test</title><style id=\"styleid\">.body { margin-right: 0px; }</style>"
-    "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"
+    "<meta id=\"metaid\" name=\"meta name\" http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"
     "<body onload=\"Testing()\">text test<!-- a comment -->"
     "<a id=\"a\" href=\"http://test\" name=\"x\">link</a>"
     "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" title=\"test title\" />"
@@ -837,6 +837,17 @@ static IHTMLStyleElement *_get_style_iface(unsigned line, IUnknown *unk)
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLStyleElement, (void**)&obj);
     ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLStyleElement: %08x\n", hres);
     return obj;
+}
+
+#define get_metaelem_iface(u) _get_metaelem_iface(__LINE__,u)
+static IHTMLMetaElement *_get_metaelem_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLMetaElement *ret;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLMetaElement, (void**)&ret);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLMetaElement: %08x\n", hres);
+    return ret;
 }
 
 #define test_node_name(u,n) _test_node_name(__LINE__,u,n)
@@ -3232,6 +3243,22 @@ static void _test_form_elements(unsigned line, IUnknown *unk)
     IHTMLFormElement_Release(form);
 }
 
+#define test_meta_name(a,b) _test_meta_name(__LINE__,a,b)
+static void _test_meta_name(unsigned line, IUnknown *unk, const char *exname)
+{
+    IHTMLMetaElement *meta;
+    BSTR name = NULL;
+    HRESULT hres;
+
+
+    meta = _get_metaelem_iface(line, unk);
+    hres = IHTMLMetaElement_get_name(meta, &name);
+    ok_(__FILE__,line)(hres == S_OK, "get_name failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(name, exname), "name = %s, expected %s\n", wine_dbgstr_w(name), exname);
+    SysFreeString(name);
+    IHTMLMetaElement_Release(meta);
+}
+
 #define get_elem_doc(e) _get_elem_doc(__LINE__,e)
 static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
 {
@@ -5256,6 +5283,12 @@ static void test_elems(IHTMLDocument2 *doc)
         test_anchor_put_target((IUnknown*)elem, NULL);
         test_anchor_get_target((IUnknown*)elem, NULL);
 
+        IHTMLElement_Release(elem);
+    }
+
+    elem = get_doc_elem_by_id(doc, "metaid");
+    if(elem) {
+        test_meta_name((IUnknown*)elem, "meta name");
         IHTMLElement_Release(elem);
     }
 

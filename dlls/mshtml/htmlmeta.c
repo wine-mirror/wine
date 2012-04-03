@@ -132,8 +132,19 @@ static HRESULT WINAPI HTMLMetaElement_put_name(IHTMLMetaElement *iface, BSTR v)
 static HRESULT WINAPI HTMLMetaElement_get_name(IHTMLMetaElement *iface, BSTR *p)
 {
     HTMLMetaElement *This = impl_from_IHTMLMetaElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString name_str, val_str;
+    nsresult nsres;
+
+    static const PRUnichar nameW[] = {'n','a','m','e',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_InitDepend(&name_str, nameW);
+    nsAString_Init(&val_str, NULL);
+    nsres = nsIDOMHTMLElement_GetAttribute(This->element.nselem, &name_str, &val_str);
+    nsAString_Finish(&name_str);
+
+    return return_nsstr(nsres, &val_str, p);
 }
 
 static HRESULT WINAPI HTMLMetaElement_put_url(IHTMLMetaElement *iface, BSTR v)
