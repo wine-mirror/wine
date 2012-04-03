@@ -117,50 +117,6 @@ IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
         *obj = iface;
     }
 
-    /* Check DirectDraw Interfaces. */
-    else if( IsEqualGUID( &IID_IDirectDraw7, refiid ) )
-    {
-        *obj = &This->ddraw->IDirectDraw7_iface;
-        TRACE("(%p) Returning IDirectDraw7 interface at %p\n", This, *obj);
-    }
-    else if ( IsEqualGUID( &IID_IDirectDraw4, refiid ) )
-    {
-        *obj = &This->ddraw->IDirectDraw4_iface;
-        TRACE("(%p) Returning IDirectDraw4 interface at %p\n", This, *obj);
-    }
-    else if ( IsEqualGUID( &IID_IDirectDraw2, refiid ) )
-    {
-        *obj = &This->ddraw->IDirectDraw2_iface;
-        TRACE("(%p) Returning IDirectDraw2 interface at %p\n", This, *obj);
-    }
-    else if( IsEqualGUID( &IID_IDirectDraw, refiid ) )
-    {
-        *obj = &This->ddraw->IDirectDraw_iface;
-        TRACE("(%p) Returning IDirectDraw interface at %p\n", This, *obj);
-    }
-
-    /* Direct3D */
-    else if ( IsEqualGUID( &IID_IDirect3D  , refiid ) )
-    {
-        *obj = &This->ddraw->IDirect3D_iface;
-        TRACE("(%p) Returning IDirect3D interface at %p\n", This, *obj);
-    }
-    else if ( IsEqualGUID( &IID_IDirect3D2 , refiid ) )
-    {
-        *obj = &This->ddraw->IDirect3D2_iface;
-        TRACE("(%p) Returning IDirect3D2 interface at %p\n", This, *obj);
-    }
-    else if ( IsEqualGUID( &IID_IDirect3D3 , refiid ) )
-    {
-        *obj = &This->ddraw->IDirect3D3_iface;
-        TRACE("(%p) Returning IDirect3D3 interface at %p\n", This, *obj);
-    }
-    else if ( IsEqualGUID( &IID_IDirect3D7 , refiid ) )
-    {
-        *obj = &This->ddraw->IDirect3D7_iface;
-        TRACE("(%p) Returning IDirect3D7 interface at %p\n", This, *obj);
-    }
-
     /* Direct3DDevice */
     else if ( IsEqualGUID( &IID_IDirect3DDevice  , refiid ) )
     {
