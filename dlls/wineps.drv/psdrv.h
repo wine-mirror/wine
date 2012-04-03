@@ -28,6 +28,7 @@
 #include "wingdi.h"
 #include "winspool.h"
 
+#include "wine/unicode.h"
 #include "wine/gdi_driver.h"
 #include "wine/list.h"
 
@@ -347,7 +348,7 @@ typedef struct {
     DWORD		id;             /* Job id */
     HANDLE              hprinter;       /* Printer handle */
     LPWSTR              output;	        /* Output file/port */
-    LPSTR               DocName;        /* Document Name */
+    LPWSTR              doc_name;       /* Document Name */
     BOOL		banding;        /* Have we received a NEXTBAND */
     BOOL		OutOfPage;      /* Page header not sent yet */
     INT			PageNo;
@@ -491,7 +492,7 @@ extern void PSDRV_CreateColor( PHYSDEV dev, PSCOLOR *pscolor,
 		     COLORREF wincolor ) DECLSPEC_HIDDEN;
 extern char PSDRV_UnicodeToANSI(int u) DECLSPEC_HIDDEN;
 
-extern INT PSDRV_WriteHeader( PHYSDEV dev, LPCSTR title ) DECLSPEC_HIDDEN;
+extern INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title ) DECLSPEC_HIDDEN;
 extern INT PSDRV_WriteFooter( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern INT PSDRV_WriteNewPage( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern INT PSDRV_WriteEndPage( PHYSDEV dev ) DECLSPEC_HIDDEN;
@@ -580,5 +581,16 @@ extern DWORD ASCII85_encode(BYTE *in_buf, DWORD len, BYTE *out_buf) DECLSPEC_HID
 	setlocale(LC_NUMERIC,tmplocale);			\
 } while (0)
 
+static inline WCHAR *strdupW( const WCHAR *str )
+{
+    int size;
+    WCHAR *ret;
+
+    if (!str) return NULL;
+    size = (strlenW( str ) + 1) * sizeof(WCHAR);
+    ret = HeapAlloc( GetProcessHeap(), 0, size );
+    if (ret) memcpy( ret, str, size );
+    return ret;
+}
 
 #endif

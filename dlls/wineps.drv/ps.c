@@ -241,17 +241,22 @@ static INT PSDRV_WriteFeature(PHYSDEV dev, LPCSTR feature, LPCSTR value, LPCSTR 
  * in brackets.  Truncate string to represent at most 0x80 characters.
  *
  */
-static char *escape_title(LPCSTR str)
+static char *escape_title(LPCWSTR wstr)
 {
-    char *ret, *cp;
+    char *ret, *cp, *str;
     int i, extra = 0;
 
-    if(!str)
+    if(!wstr)
     {
         ret = HeapAlloc(GetProcessHeap(), 0, 1);
         *ret = '\0';
         return ret;
     }
+
+    i = WideCharToMultiByte( CP_ACP, 0, wstr, -1, NULL, 0, NULL, NULL );
+    str = HeapAlloc( GetProcessHeap(), 0, i );
+    if (!str) return NULL;
+    WideCharToMultiByte( CP_ACP, 0, wstr, -1, str, i, NULL, NULL );
 
     for(i = 0; i < 0x80 && str[i]; i++)
     {
@@ -264,7 +269,7 @@ static char *escape_title(LPCSTR str)
         ret = HeapAlloc(GetProcessHeap(), 0, i + 1);
         memcpy(ret, str, i);
         ret[i] = '\0';
-        return ret;
+        goto done;
     }
 
     extra += 2; /* two for the brackets */
@@ -285,11 +290,14 @@ static char *escape_title(LPCSTR str)
     }
     *cp++ = ')';
     *cp = '\0';
+
+done:
+    HeapFree( GetProcessHeap(), 0, str );
     return ret;
 }
 
 
-INT PSDRV_WriteHeader( PHYSDEV dev, LPCSTR title )
+INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char *buf, *escaped_title;
@@ -299,7 +307,7 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCSTR title )
     int win_duplex;
     int llx, lly, urx, ury;
 
-    TRACE("%s\n", debugstr_a(title));
+    TRACE("%s\n", debugstr_w(title));
 
     escaped_title = escape_title(title);
     buf = HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) +

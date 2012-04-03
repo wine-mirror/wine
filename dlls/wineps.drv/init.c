@@ -41,7 +41,6 @@
 #include "winnls.h"
 #include "psdrv.h"
 #include "winspool.h"
-#include "wine/unicode.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -170,18 +169,6 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     }
 
     return TRUE;
-}
-
-static inline WCHAR *strdupW( const WCHAR *str )
-{
-    int size;
-    WCHAR *ret;
-
-    if (!str) return NULL;
-    size = (strlenW( str ) + 1) * sizeof(WCHAR);
-    ret = HeapAlloc( GetProcessHeap(), 0, size );
-    if (ret) memcpy( ret, str, size );
-    return ret;
 }
 
 static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )

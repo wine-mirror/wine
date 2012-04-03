@@ -378,7 +378,7 @@ INT PSDRV_StartPage( PHYSDEV dev )
     }
 
     if(physDev->job.PageNo++ == 0) {
-        if(!PSDRV_WriteHeader( dev, physDev->job.DocName ))
+        if(!PSDRV_WriteHeader( dev, physDev->job.doc_name ))
             return 0;
     }
 
@@ -457,12 +457,7 @@ INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
     physDev->job.quiet = FALSE;
     physDev->job.in_passthrough = FALSE;
     physDev->job.had_passthrough_rect = FALSE;
-    if(doc->lpszDocName) {
-        INT len = WideCharToMultiByte( CP_ACP, 0, doc->lpszDocName, -1, NULL, 0, NULL, NULL );
-        physDev->job.DocName = HeapAlloc( GetProcessHeap(), 0, len );
-        WideCharToMultiByte( CP_ACP, 0, doc->lpszDocName, -1, physDev->job.DocName, len, NULL, NULL );
-    } else
-        physDev->job.DocName = NULL;
+    physDev->job.doc_name = strdupW( doc->lpszDocName );
 
     return physDev->job.id;
 }
@@ -492,8 +487,8 @@ INT PSDRV_EndDoc( PHYSDEV dev )
     ClosePrinter(physDev->job.hprinter);
     physDev->job.hprinter = NULL;
     physDev->job.id = 0;
-    HeapFree(GetProcessHeap(), 0, physDev->job.DocName);
-    physDev->job.DocName = NULL;
+    HeapFree( GetProcessHeap(), 0, physDev->job.doc_name );
+    physDev->job.doc_name = NULL;
 
     return ret;
 }
