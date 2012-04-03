@@ -177,6 +177,14 @@ typedef struct _SessionMgr {
     IMMDevice *device;
 } SessionMgr;
 
+static const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
+    'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
+    'w','i','n','e','c','o','r','e','a','u','d','i','o','.','d','r','v',0};
+static const WCHAR drv_key_devicesW[] = {'S','o','f','t','w','a','r','e','\\',
+    'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
+    'w','i','n','e','c','o','r','e','a','u','d','i','o','.','d','r','v','\\','d','e','v','i','c','e','s',0};
+static const WCHAR guidW[] = {'g','u','i','d',0};
+
 static HANDLE g_timer_q;
 
 static CRITICAL_SECTION g_sessions_lock;
@@ -273,8 +281,83 @@ int WINAPI AUDDRV_GetPriority(void)
     return Priority_Neutral;
 }
 
+static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
+        GUID *guid)
+{
+    HKEY key;
+    BOOL opened = FALSE;
+    LONG lr;
+
+    if(!drv_key){
+        lr = RegCreateKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, NULL, 0, KEY_WRITE,
+                    NULL, &drv_key, NULL);
+        if(lr != ERROR_SUCCESS){
+            ERR("RegCreateKeyEx(drv_key) failed: %u\n", lr);
+            return;
+        }
+        opened = TRUE;
+    }
+
+    lr = RegCreateKeyExW(drv_key, key_name, 0, NULL, 0, KEY_WRITE,
+                NULL, &key, NULL);
+    if(lr != ERROR_SUCCESS){
+        ERR("RegCreateKeyEx(%s) failed: %u\n", wine_dbgstr_w(key_name), lr);
+        goto exit;
+    }
+
+    lr = RegSetValueExW(key, guidW, 0, REG_BINARY, (BYTE*)guid,
+                sizeof(GUID));
+    if(lr != ERROR_SUCCESS)
+        ERR("RegSetValueEx(%s\\guid) failed: %u\n", wine_dbgstr_w(key_name), lr);
+
+    RegCloseKey(key);
+exit:
+    if(opened)
+        RegCloseKey(drv_key);
+}
+
+static void get_device_guid(EDataFlow flow, AudioDeviceID device, GUID *guid)
+{
+    HKEY key = NULL, dev_key;
+    DWORD type, size = sizeof(*guid);
+    WCHAR key_name[256];
+
+    static const WCHAR key_fmt[] = {'%','u',0};
+
+    if(flow == eCapture)
+        key_name[0] = '1';
+    else
+        key_name[0] = '0';
+    key_name[1] = ',';
+
+    sprintfW(key_name + 2, key_fmt, device);
+
+    if(RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_WRITE|KEY_READ, &key) == ERROR_SUCCESS){
+        if(RegOpenKeyExW(key, key_name, 0, KEY_READ, &dev_key) == ERROR_SUCCESS){
+            if(RegQueryValueExW(dev_key, guidW, 0, &type,
+                        (BYTE*)guid, &size) == ERROR_SUCCESS){
+                if(type == REG_BINARY){
+                    RegCloseKey(dev_key);
+                    RegCloseKey(key);
+                    return;
+                }
+                ERR("Invalid type for device %s GUID: %u; ignoring and overwriting\n",
+                        wine_dbgstr_w(key_name), type);
+            }
+            RegCloseKey(dev_key);
+        }
+    }
+
+    CoCreateGuid(guid);
+
+    set_device_guid(flow, key, key_name, guid);
+
+    if(key)
+        RegCloseKey(key);
+}
+
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
-        AudioDeviceID ***keys, UINT *num, UINT *def_index)
+        GUID ***guids, UINT *num, UINT *def_index)
 {
     UInt32 devsize, size;
     AudioDeviceID *devices;
@@ -330,7 +413,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
         return E_OUTOFMEMORY;
     }
 
-    *keys = HeapAlloc(GetProcessHeap(), 0, ndevices * sizeof(AudioDeviceID *));
+    *guids = HeapAlloc(GetProcessHeap(), 0, ndevices * sizeof(GUID *));
     if(!*ids){
         HeapFree(GetProcessHeap(), 0, *ids);
         HeapFree(GetProcessHeap(), 0, devices);
@@ -363,9 +446,9 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
             HeapFree(GetProcessHeap(), 0, devices);
             for(j = 0; j < *num; ++j){
                 HeapFree(GetProcessHeap(), 0, (*ids)[j]);
-                HeapFree(GetProcessHeap(), 0, (*keys)[j]);
+                HeapFree(GetProcessHeap(), 0, (*guids)[j]);
             }
-            HeapFree(GetProcessHeap(), 0, *keys);
+            HeapFree(GetProcessHeap(), 0, *guids);
             HeapFree(GetProcessHeap(), 0, *ids);
             return E_OUTOFMEMORY;
         }
@@ -408,35 +491,35 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
             HeapFree(GetProcessHeap(), 0, devices);
             for(j = 0; j < *num; ++j){
                 HeapFree(GetProcessHeap(), 0, (*ids)[j]);
-                HeapFree(GetProcessHeap(), 0, (*keys)[j]);
+                HeapFree(GetProcessHeap(), 0, (*guids)[j]);
             }
             HeapFree(GetProcessHeap(), 0, *ids);
-            HeapFree(GetProcessHeap(), 0, *keys);
+            HeapFree(GetProcessHeap(), 0, *guids);
             return E_OUTOFMEMORY;
         }
         CFStringGetCharacters(name, CFRangeMake(0, len - 1), (UniChar*)(*ids)[*num]);
         ((*ids)[*num])[len - 1] = 0;
         CFRelease(name);
 
-        (*keys)[*num] = HeapAlloc(GetProcessHeap(), 0, sizeof(AudioDeviceID));
-        if(!(*keys)[*num]){
+        (*guids)[*num] = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
+        if(!(*guids)[*num]){
             HeapFree(GetProcessHeap(), 0, devices);
             HeapFree(GetProcessHeap(), 0, (*ids)[*num]);
             for(j = 0; j < *num; ++j){
                 HeapFree(GetProcessHeap(), 0, (*ids)[j]);
-                HeapFree(GetProcessHeap(), 0, (*keys)[j]);
+                HeapFree(GetProcessHeap(), 0, (*guids)[j]);
             }
             HeapFree(GetProcessHeap(), 0, *ids);
-            HeapFree(GetProcessHeap(), 0, *keys);
+            HeapFree(GetProcessHeap(), 0, *guids);
             return E_OUTOFMEMORY;
         }
-        *(*keys)[*num] = devices[i];
+        get_device_guid(flow, devices[i], (*guids)[*num]);
 
         if(*def_index == (UINT)-1 && devices[i] == default_id)
             *def_index = *num;
 
         TRACE("device %u: id %s key %u%s\n", *num, debugstr_w((*ids)[*num]),
-              (unsigned int)*(*keys)[*num], (*def_index == *num) ? " (default)" : "");
+              (unsigned int)devices[i], (*def_index == *num) ? " (default)" : "");
 
         (*num)++;
     }
@@ -449,12 +532,80 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
     return S_OK;
 }
 
-HRESULT WINAPI AUDDRV_GetAudioEndpoint(AudioDeviceID *adevid, IMMDevice *dev,
-        EDataFlow dataflow, IAudioClient **out)
+static BOOL get_deviceid_by_guid(GUID *guid, AudioDeviceID *id, EDataFlow *flow)
+{
+    HKEY devices_key;
+    UINT i = 0;
+    WCHAR key_name[256];
+    DWORD key_name_size;
+
+    if(RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_READ, &devices_key) != ERROR_SUCCESS){
+        ERR("No devices in registry?\n");
+        return FALSE;
+    }
+
+    while(1){
+        HKEY key;
+        DWORD size, type;
+        GUID reg_guid;
+
+        key_name_size = sizeof(key_name);
+        if(RegEnumKeyExW(devices_key, i, key_name, &key_name_size, NULL,
+                NULL, NULL, NULL) != ERROR_SUCCESS)
+            break;
+
+        if(RegOpenKeyExW(devices_key, key_name, 0, KEY_READ, &key) != ERROR_SUCCESS){
+            WARN("Couldn't open key: %s\n", wine_dbgstr_w(key_name));
+            continue;
+        }
+
+        size = sizeof(reg_guid);
+        if(RegQueryValueExW(key, guidW, 0, &type,
+                    (BYTE*)&reg_guid, &size) == ERROR_SUCCESS){
+            if(IsEqualGUID(&reg_guid, guid)){
+                RegCloseKey(key);
+                RegCloseKey(devices_key);
+
+                TRACE("Found matching device key: %s\n", wine_dbgstr_w(key_name));
+
+                if(key_name[0] == '0')
+                    *flow = eRender;
+                else if(key_name[0] == '1')
+                    *flow = eCapture;
+                else{
+                    ERR("Unknown device type: %c\n", key_name[0]);
+                    return FALSE;
+                }
+
+                *id = strtoulW(key_name + 2, NULL, 10);
+
+                return TRUE;
+            }
+        }
+
+        RegCloseKey(key);
+
+        ++i;
+    }
+
+    RegCloseKey(devices_key);
+
+    WARN("No matching device in registry for GUID %s\n", debugstr_guid(guid));
+
+    return FALSE;
+}
+
+HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
+        EDataFlow unused_dataflow, IAudioClient **out)
 {
     ACImpl *This;
+    AudioDeviceID adevid;
+    EDataFlow dataflow;
 
-    TRACE("%u %p %d %p\n", (unsigned int)*adevid, dev, dataflow, out);
+    TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
+
+    if(!get_deviceid_by_guid(guid, &adevid, &dataflow))
+        return AUDCLNT_E_DEVICE_INVALIDATED;
 
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ACImpl));
     if(!This)
@@ -487,7 +638,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(AudioDeviceID *adevid, IMMDevice *dev,
     list_init(&This->queued_buffers);
     list_init(&This->queued_bufinfos);
 
-    This->adevid = *adevid;
+    This->adevid = adevid;
 
     *out = &This->IAudioClient_iface;
     IAudioClient_AddRef(&This->IAudioClient_iface);
