@@ -1899,10 +1899,6 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter, LPPRINTER_DEFAU
 {
 
     TRACE("(%s, %p, %p)\n", debugstr_w(lpPrinterName), phPrinter, pDefault);
-    if (pDefault) {
-        FIXME("PRINTER_DEFAULTS ignored => %s,%p,0x%08x\n",
-        debugstr_w(pDefault->pDatatype), pDefault->pDevMode, pDefault->DesiredAccess);
-    }
 
     if(!phPrinter) {
         /* NT: FALSE with ERROR_INVALID_PARAMETER, 9x: TRUE */
