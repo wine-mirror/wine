@@ -811,6 +811,8 @@ static BOOL URLCache_FindFirstFreeEntry(URLCACHE_HEADER * pHeader, DWORD dwBlock
             for (index = 0; index < dwBlocksNeeded; index++)
                 URLCache_Allocation_BlockAllocate(AllocationTable, dwBlockNumber + index);
             *ppEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + ENTRY_START_OFFSET + dwBlockNumber * BLOCKSIZE);
+            for (index = 0; index < dwBlocksNeeded * BLOCKSIZE / sizeof(DWORD); index++)
+                ((DWORD*)*ppEntry)[index] = 0xdeadbeef;
             (*ppEntry)->dwBlocksUsed = dwBlocksNeeded;
             return TRUE;
         }
@@ -1398,6 +1400,7 @@ static DWORD URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_
         pHeader->dwOffsetFirstHashTable = dwOffset;
     (*ppHash)->CacheFileEntry.dwSignature = HASH_SIGNATURE;
     (*ppHash)->CacheFileEntry.dwBlocksUsed = 0x20;
+    (*ppHash)->dwAddressNext = 0;
     (*ppHash)->dwHashTableNumber = pPrevHash ? pPrevHash->dwHashTableNumber + 1 : 0;
     for (i = 0; i < HASHTABLE_SIZE; i++)
     {
