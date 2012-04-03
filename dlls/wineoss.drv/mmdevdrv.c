@@ -146,6 +146,24 @@ typedef struct _SessionMgr {
     IMMDevice *device;
 } SessionMgr;
 
+typedef struct _OSSDevice {
+    EDataFlow flow;
+    char devnode[OSS_DEVNODE_SIZE];
+    GUID guid;
+
+    struct list entry;
+} OSSDevice;
+
+static struct list g_devices = LIST_INIT(g_devices);
+
+static const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
+    'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
+    'w','i','n','e','o','s','s','.','d','r','v',0};
+static const WCHAR drv_key_devicesW[] = {'S','o','f','t','w','a','r','e','\\',
+    'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
+    'w','i','n','e','o','s','s','.','d','r','v','\\','d','e','v','i','c','e','s',0};
+static const WCHAR guidW[] = {'g','u','i','d',0};
+
 static HANDLE g_timer_q;
 
 static CRITICAL_SECTION g_sessions_lock;
@@ -232,8 +250,17 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         break;
 
     case DLL_PROCESS_DETACH:
-        DeleteCriticalSection(&g_sessions_lock);
-        break;
+        {
+            OSSDevice *iter, *iter2;
+
+            DeleteCriticalSection(&g_sessions_lock);
+
+            LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &g_devices, OSSDevice, entry){
+                HeapFree(GetProcessHeap(), 0, iter);
+            }
+
+            break;
+        }
     }
     return TRUE;
 }
@@ -286,6 +313,79 @@ int WINAPI AUDDRV_GetPriority(void)
     return Priority_Preferred;
 }
 
+static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
+        GUID *guid)
+{
+    HKEY key;
+    BOOL opened = FALSE;
+    LONG lr;
+
+    if(!drv_key){
+        lr = RegCreateKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, NULL, 0, KEY_WRITE,
+                    NULL, &drv_key, NULL);
+        if(lr != ERROR_SUCCESS){
+            ERR("RegCreateKeyEx(drv_key) failed: %u\n", lr);
+            return;
+        }
+        opened = TRUE;
+    }
+
+    lr = RegCreateKeyExW(drv_key, key_name, 0, NULL, 0, KEY_WRITE,
+                NULL, &key, NULL);
+    if(lr != ERROR_SUCCESS){
+        ERR("RegCreateKeyEx(%s) failed: %u\n", wine_dbgstr_w(key_name), lr);
+        goto exit;
+    }
+
+    lr = RegSetValueExW(key, guidW, 0, REG_BINARY, (BYTE*)guid,
+                sizeof(GUID));
+    if(lr != ERROR_SUCCESS)
+        ERR("RegSetValueEx(%s\\guid) failed: %u\n", wine_dbgstr_w(key_name), lr);
+
+    RegCloseKey(key);
+exit:
+    if(opened)
+        RegCloseKey(drv_key);
+}
+
+static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
+{
+    HKEY key = NULL, dev_key;
+    DWORD type, size = sizeof(*guid);
+    WCHAR key_name[256];
+
+    if(flow == eCapture)
+        key_name[0] = '1';
+    else
+        key_name[0] = '0';
+    key_name[1] = ',';
+    MultiByteToWideChar(CP_UNIXCP, 0, device, -1, key_name + 2,
+            (sizeof(key_name) / sizeof(*key_name)) - 2);
+
+    if(RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_WRITE|KEY_READ, &key) == ERROR_SUCCESS){
+        if(RegOpenKeyExW(key, key_name, 0, KEY_READ, &dev_key) == ERROR_SUCCESS){
+            if(RegQueryValueExW(dev_key, guidW, 0, &type,
+                        (BYTE*)guid, &size) == ERROR_SUCCESS){
+                if(type == REG_BINARY){
+                    RegCloseKey(dev_key);
+                    RegCloseKey(key);
+                    return;
+                }
+                ERR("Invalid type for device %s GUID: %u; ignoring and overwriting\n",
+                        wine_dbgstr_w(key_name), type);
+            }
+            RegCloseKey(dev_key);
+        }
+    }
+
+    CoCreateGuid(guid);
+
+    set_device_guid(flow, key, key_name, guid);
+
+    if(key)
+        RegCloseKey(key);
+}
+
 static const char *oss_clean_devnode(const char *devnode)
 {
     static char ret[OSS_DEVNODE_SIZE];
@@ -309,11 +409,13 @@ static const char *oss_clean_devnode(const char *devnode)
     return ret;
 }
 
-static UINT get_default_index(EDataFlow flow, char **keys, UINT num)
+static UINT get_default_index(EDataFlow flow)
 {
-    int fd = -1, err, i;
+    int fd = -1, err;
+    UINT i;
     oss_audioinfo ai;
     const char *devnode;
+    OSSDevice *dev_item;
 
     if(flow == eRender)
         fd = open("/dev/dsp", O_WRONLY | O_NONBLOCK);
@@ -336,22 +438,27 @@ static UINT get_default_index(EDataFlow flow, char **keys, UINT num)
 
     TRACE("Default devnode: %s\n", ai.devnode);
     devnode = oss_clean_devnode(ai.devnode);
-    for(i = 0; i < num; ++i)
-        if(!strcmp(devnode, keys[i]))
-            return i;
+    i = 0;
+    LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry){
+        if(dev_item->flow == flow){
+            if(!strcmp(devnode, dev_item->devnode))
+                return i;
+            ++i;
+        }
+    }
 
     WARN("Couldn't find default device! Choosing first.\n");
     return 0;
 }
 
-HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
+HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID ***guids,
         UINT *num, UINT *def_index)
 {
-    int i, j, mixer_fd;
+    int i, mixer_fd;
     oss_sysinfo sysinfo;
     static int print_once = 0;
 
-    TRACE("%d %p %p %p\n", flow, ids, num, def_index);
+    TRACE("%d %p %p %p %p\n", flow, ids, guids, num, def_index);
 
     mixer_fd = open("/dev/mixer", O_RDONLY, 0);
     if(mixer_fd < 0){
@@ -390,12 +497,13 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
     }
 
     *ids = HeapAlloc(GetProcessHeap(), 0, sysinfo.numaudios * sizeof(WCHAR *));
-    *keys = HeapAlloc(GetProcessHeap(), 0, sysinfo.numaudios * sizeof(char *));
+    *guids = HeapAlloc(GetProcessHeap(), 0, sysinfo.numaudios * sizeof(GUID *));
 
     *num = 0;
     for(i = 0; i < sysinfo.numaudios; ++i){
         oss_audioinfo ai = {0};
         const char *devnode;
+        OSSDevice *dev_item;
         int fd;
 
         ai.dev = i;
@@ -408,10 +516,11 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
         devnode = oss_clean_devnode(ai.devnode);
 
         /* check for duplicates */
-        for(j = 0; j < *num; ++j)
-            if(!strcmp(devnode, (*keys)[j]))
+        LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry){
+            if(dev_item->flow == flow && !strcmp(devnode, dev_item->devnode))
                 break;
-        if(j != *num)
+        }
+        if(&dev_item->entry != &g_devices)
             continue;
 
         if(flow == eRender)
@@ -429,36 +538,45 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
                 (flow == eRender && (ai.caps & PCM_CAP_OUTPUT))){
             size_t len;
 
-            (*keys)[*num] = HeapAlloc(GetProcessHeap(), 0,
-                    strlen(devnode) + 1);
-            if(!(*keys)[*num]){
+            dev_item = HeapAlloc(GetProcessHeap(), 0, sizeof(*dev_item));
+
+            dev_item->flow = flow;
+            get_device_guid(flow, devnode, &dev_item->guid);
+            strcpy(dev_item->devnode, devnode);
+
+            (*guids)[*num] = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
+            if(!(*guids)[*num]){
                 for(i = 0; i < *num; ++i){
                     HeapFree(GetProcessHeap(), 0, (*ids)[i]);
-                    HeapFree(GetProcessHeap(), 0, (*keys)[i]);
+                    HeapFree(GetProcessHeap(), 0, (*guids)[i]);
                 }
                 HeapFree(GetProcessHeap(), 0, *ids);
-                HeapFree(GetProcessHeap(), 0, *keys);
+                HeapFree(GetProcessHeap(), 0, *guids);
+                HeapFree(GetProcessHeap(), 0, dev_item);
                 close(mixer_fd);
                 return E_OUTOFMEMORY;
             }
-            strcpy((*keys)[*num], devnode);
+            *(*guids)[*num] = dev_item->guid;
 
             len = MultiByteToWideChar(CP_UNIXCP, 0, ai.name, -1, NULL, 0);
             (*ids)[*num] = HeapAlloc(GetProcessHeap(), 0,
                     len * sizeof(WCHAR));
             if(!(*ids)[*num]){
-                HeapFree(GetProcessHeap(), 0, (*keys)[*num]);
+                HeapFree(GetProcessHeap(), 0, (*guids)[*num]);
                 for(i = 0; i < *num; ++i){
                     HeapFree(GetProcessHeap(), 0, (*ids)[i]);
-                    HeapFree(GetProcessHeap(), 0, (*keys)[i]);
+                    HeapFree(GetProcessHeap(), 0, (*guids)[i]);
                 }
                 HeapFree(GetProcessHeap(), 0, *ids);
-                HeapFree(GetProcessHeap(), 0, *keys);
+                HeapFree(GetProcessHeap(), 0, *guids);
+                HeapFree(GetProcessHeap(), 0, dev_item);
                 close(mixer_fd);
                 return E_OUTOFMEMORY;
             }
             MultiByteToWideChar(CP_UNIXCP, 0, ai.name, -1,
                     (*ids)[*num], len);
+
+            list_add_tail(&g_devices, &dev_item->entry);
 
             (*num)++;
         }
@@ -466,49 +584,65 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
 
     close(mixer_fd);
 
-    *def_index = get_default_index(flow, *keys, *num);
+    *def_index = get_default_index(flow);
 
     return S_OK;
 }
 
-HRESULT WINAPI AUDDRV_GetAudioEndpoint(char *devnode, IMMDevice *dev,
-        EDataFlow dataflow, IAudioClient **out)
+const OSSDevice *get_ossdevice_from_guid(const GUID *guid)
+{
+    OSSDevice *dev_item;
+    LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry)
+        if(IsEqualGUID(guid, &dev_item->guid))
+            return dev_item;
+    return NULL;
+}
+
+HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
+        EDataFlow unused_dataflow, IAudioClient **out)
 {
     ACImpl *This;
+    const OSSDevice *oss_dev;
 
-    TRACE("%s %p %d %p\n", devnode, dev, dataflow, out);
+    TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
+
+    oss_dev = get_ossdevice_from_guid(guid);
+    if(!oss_dev){
+        WARN("Unknown GUID: %s\n", debugstr_guid(guid));
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
 
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ACImpl));
     if(!This)
         return E_OUTOFMEMORY;
 
-    if(dataflow == eRender)
-        This->fd = open(devnode, O_WRONLY | O_NONBLOCK, 0);
-    else if(dataflow == eCapture)
-        This->fd = open(devnode, O_RDONLY | O_NONBLOCK, 0);
+    if(oss_dev->flow == eRender)
+        This->fd = open(oss_dev->devnode, O_WRONLY | O_NONBLOCK, 0);
+    else if(oss_dev->flow == eCapture)
+        This->fd = open(oss_dev->devnode, O_RDONLY | O_NONBLOCK, 0);
     else{
         HeapFree(GetProcessHeap(), 0, This);
         return E_INVALIDARG;
     }
     if(This->fd < 0){
-        WARN("Unable to open device %s: %d (%s)\n", devnode, errno,
+        WARN("Unable to open device %s: %d (%s)\n", oss_dev->devnode, errno,
                 strerror(errno));
         HeapFree(GetProcessHeap(), 0, This);
         return AUDCLNT_E_DEVICE_INVALIDATED;
     }
 
-    This->dataflow = dataflow;
+    This->dataflow = oss_dev->flow;
 
     This->ai.dev = -1;
     if(ioctl(This->fd, SNDCTL_ENGINEINFO, &This->ai) < 0){
-        WARN("Unable to get audio info for device %s: %d (%s)\n", devnode,
+        WARN("Unable to get audio info for device %s: %d (%s)\n", oss_dev->devnode,
                 errno, strerror(errno));
         close(This->fd);
         HeapFree(GetProcessHeap(), 0, This);
         return E_FAIL;
     }
 
-    strcpy(This->devnode, devnode);
+    strcpy(This->devnode, oss_dev->devnode);
 
     TRACE("OSS audioinfo:\n");
     TRACE("devnode: %s\n", This->ai.devnode);
