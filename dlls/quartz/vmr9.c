@@ -55,6 +55,7 @@ typedef struct
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IVMRFilterConfig9 IVMRFilterConfig9_iface;
     IVMRWindowlessControl9 IVMRWindowlessControl9_iface;
+    IVMRSurfaceAllocatorNotify9 IVMRSurfaceAllocatorNotify9_iface;
 
     IVMRSurfaceAllocatorEx9 *allocator;
     IVMRImagePresenter9 *presenter;
@@ -115,6 +116,11 @@ static inline VMR9Impl *impl_from_IVMRFilterConfig9( IVMRFilterConfig9 *iface)
 static inline VMR9Impl *impl_from_IVMRWindowlessControl9( IVMRWindowlessControl9 *iface)
 {
     return CONTAINING_RECORD(iface, VMR9Impl, IVMRWindowlessControl9_iface);
+}
+
+static inline VMR9Impl *impl_from_IVMRSurfaceAllocatorNotify9( IVMRSurfaceAllocatorNotify9 *iface)
+{
+    return CONTAINING_RECORD(iface, VMR9Impl, IVMRSurfaceAllocatorNotify9_iface);
 }
 
 static HRESULT WINAPI VMR9_DoRenderSample(BaseRenderer *iface, IMediaSample * pSample)
@@ -459,6 +465,8 @@ static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LP
         *ppv = &This->IVMRFilterConfig9_iface;
     else if (IsEqualIID(riid, &IID_IVMRWindowlessControl9) && This->mode == VMR9Mode_Windowless)
         *ppv = &This->IVMRWindowlessControl9_iface;
+    else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocatorNotify9) && This->mode == VMR9Mode_Renderless)
+        *ppv = &This->IVMRSurfaceAllocatorNotify9_iface;
     else
     {
         HRESULT hr;
@@ -1107,6 +1115,104 @@ static const IVMRWindowlessControl9Vtbl VMR9_WindowlessControl_Vtbl =
     VMR9WindowlessControl_GetBorderColor
 };
 
+static HRESULT WINAPI VMR9SurfaceAllocatorNotify_QueryInterface(IVMRSurfaceAllocatorNotify9 *iface, REFIID riid, LPVOID * ppv)
+{
+    VMR9Impl *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+}
+
+static ULONG WINAPI VMR9SurfaceAllocatorNotify_AddRef(IVMRSurfaceAllocatorNotify9 *iface)
+{
+    VMR9Impl *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static ULONG WINAPI VMR9SurfaceAllocatorNotify_Release(IVMRSurfaceAllocatorNotify9 *iface)
+{
+    VMR9Impl *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AdviseSurfaceAllocator(IVMRSurfaceAllocatorNotify9 *iface, DWORD_PTR id, IVMRSurfaceAllocator9 *alloc)
+{
+    VMR9Impl *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+
+    /* FIXME: This code is not tested!!! */
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    This->cookie = id;
+
+    if (This->presenter)
+        return VFW_E_WRONG_STATE;
+
+    if (FAILED(IUnknown_QueryInterface(alloc, &IID_IVMRImagePresenter9, (void **)&This->presenter)))
+        return E_NOINTERFACE;
+
+    if (SUCCEEDED(IUnknown_QueryInterface(alloc, &IID_IVMRSurfaceAllocatorEx9, (void **)&This->allocator)))
+        This->allocator_is_ex = 1;
+    else
+    {
+        This->allocator = (IVMRSurfaceAllocatorEx9 *)alloc;
+        IUnknown_AddRef(alloc);
+        This->allocator_is_ex = 0;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI VMR9SurfaceAllocatorNotify_SetD3DDevice(IVMRSurfaceAllocatorNotify9 *iface, IDirect3DDevice9 *device, HMONITOR monitor)
+{
+    VMR9Impl *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9SurfaceAllocatorNotify_ChangeD3DDevice(IVMRSurfaceAllocatorNotify9 *iface, IDirect3DDevice9 *device, HMONITOR monitor)
+{
+    VMR9Impl *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfaceAllocatorNotify9 *iface, VMR9AllocationInfo *allocinfo, DWORD *numbuffers, IDirect3DSurface9 **surface)
+{
+    VMR9Impl *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+
+    FIXME("(%p/%p)->(%p, %p => %u, %p) semi-stub\n", iface, This, allocinfo, numbuffers, (numbuffers ? *numbuffers : 0), surface);
+
+    if (!allocinfo || !numbuffers || !surface)
+        return E_POINTER;
+
+    if (!*numbuffers || *numbuffers < allocinfo->MinBuffers)
+    {
+        ERR("Invalid number of buffers?\n");
+        return E_INVALIDARG;
+    }
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR9SurfaceAllocatorNotify_NotifyEvent(IVMRSurfaceAllocatorNotify9 *iface, LONG code, LONG_PTR param1, LONG_PTR param2)
+{
+    VMR9Impl *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static const IVMRSurfaceAllocatorNotify9Vtbl IVMRSurfaceAllocatorNotify9_Vtbl =
+{
+    VMR9SurfaceAllocatorNotify_QueryInterface,
+    VMR9SurfaceAllocatorNotify_AddRef,
+    VMR9SurfaceAllocatorNotify_Release,
+    VMR9SurfaceAllocatorNotify_AdviseSurfaceAllocator,
+    VMR9SurfaceAllocatorNotify_SetD3DDevice,
+    VMR9SurfaceAllocatorNotify_ChangeD3DDevice,
+    VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper,
+    VMR9SurfaceAllocatorNotify_NotifyEvent
+};
+
 HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
 {
     HRESULT hr;
@@ -1130,6 +1236,7 @@ HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
     pVMR9->hWndClippingWindow = NULL;
     pVMR9->IVMRFilterConfig9_iface.lpVtbl = &VMR9_FilterConfig_Vtbl;
     pVMR9->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
+    pVMR9->IVMRSurfaceAllocatorNotify9_iface.lpVtbl = &IVMRSurfaceAllocatorNotify9_Vtbl;
 
     hr = BaseRenderer_Init(&pVMR9->renderer, &VMR9_Vtbl, outer_unk, &CLSID_VideoMixingRenderer9, (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
     if (FAILED(hr))
