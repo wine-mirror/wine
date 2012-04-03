@@ -48,6 +48,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 typedef struct
 {
     BaseRenderer renderer;
+    BaseControlWindow baseControlWindow;
+
     IUnknown IUnknown_inner;
 
     BITMAPINFOHEADER bmiheader;
@@ -59,6 +61,16 @@ typedef struct
 static inline VMR9Impl *impl_from_inner_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, VMR9Impl, IUnknown_inner);
+}
+
+static inline VMR9Impl *impl_from_BaseWindow( BaseWindow *wnd )
+{
+    return CONTAINING_RECORD(wnd, VMR9Impl, baseControlWindow.baseWindow);
+}
+
+static inline VMR9Impl *impl_from_IVideoWindow( IVideoWindow *iface)
+{
+    return CONTAINING_RECORD(iface, VMR9Impl, baseControlWindow.IVideoWindow_iface);
 }
 
 static HRESULT WINAPI VMR9_DoRenderSample(BaseRenderer *iface, IMediaSample * pSample)
@@ -164,6 +176,25 @@ static const BaseRendererFuncTable BaseFuncTable = {
     NULL,
 };
 
+static LPWSTR WINAPI VMR9_GetClassWindowStyles(BaseWindow *This, DWORD *pClassStyles, DWORD *pWindowStyles, DWORD *pWindowStylesEx)
+{
+    static WCHAR classnameW[] = { 'I','V','M','R','9',' ','C','l','a','s','s', 0 };
+
+    *pClassStyles = 0;
+    *pWindowStyles = WS_SIZEBOX;
+    *pWindowStylesEx = 0;
+
+    return classnameW;
+}
+
+static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
+    VMR9_GetClassWindowStyles,
+    BaseWindowImpl_GetDefaultRect,
+    NULL,
+    BaseControlWindowImpl_PossiblyEatMessage,
+    NULL,
+};
+
 static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LPVOID * ppv)
 {
     VMR9Impl *This = impl_from_inner_IUnknown(iface);
@@ -176,6 +207,8 @@ static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LP
 
     if (IsEqualIID(riid, &IID_IUnknown))
         *ppv = &This->IUnknown_inner;
+    else if (IsEqualIID(riid, &IID_IVideoWindow))
+        *ppv = &This->baseControlWindow.IVideoWindow_iface;
     else
     {
         HRESULT hr;
@@ -194,8 +227,6 @@ static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LP
         FIXME("No interface for IID_IBasicVideo\n");
     else if (IsEqualIID(riid, &IID_IBasicVideo2))
         FIXME("No interface for IID_IBasicVideo2\n");
-    else if (IsEqualIID(riid, &IID_IVideoWindow))
-        FIXME("No interface for IID_IVideoWindow\n");
     else if (IsEqualIID(riid, &IID_IVMRWindowlessControl9))
         ;
     else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocatorNotify9))
@@ -336,6 +367,84 @@ static const IBaseFilterVtbl VMR9_Vtbl =
     BaseFilterImpl_QueryVendorInfo
 };
 
+/*** IUnknown methods ***/
+static HRESULT WINAPI Videowindow_QueryInterface(IVideoWindow *iface, REFIID riid, LPVOID*ppvObj)
+{
+    VMR9Impl *This = impl_from_IVideoWindow(iface);
+
+    TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
+
+    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppvObj);
+}
+
+static ULONG WINAPI Videowindow_AddRef(IVideoWindow *iface)
+{
+    VMR9Impl *This = impl_from_IVideoWindow(iface);
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static ULONG WINAPI Videowindow_Release(IVideoWindow *iface)
+{
+    VMR9Impl *This = impl_from_IVideoWindow(iface);
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static const IVideoWindowVtbl IVideoWindow_VTable =
+{
+    Videowindow_QueryInterface,
+    Videowindow_AddRef,
+    Videowindow_Release,
+    BaseControlWindowImpl_GetTypeInfoCount,
+    BaseControlWindowImpl_GetTypeInfo,
+    BaseControlWindowImpl_GetIDsOfNames,
+    BaseControlWindowImpl_Invoke,
+    BaseControlWindowImpl_put_Caption,
+    BaseControlWindowImpl_get_Caption,
+    BaseControlWindowImpl_put_WindowStyle,
+    BaseControlWindowImpl_get_WindowStyle,
+    BaseControlWindowImpl_put_WindowStyleEx,
+    BaseControlWindowImpl_get_WindowStyleEx,
+    BaseControlWindowImpl_put_AutoShow,
+    BaseControlWindowImpl_get_AutoShow,
+    BaseControlWindowImpl_put_WindowState,
+    BaseControlWindowImpl_get_WindowState,
+    BaseControlWindowImpl_put_BackgroundPalette,
+    BaseControlWindowImpl_get_BackgroundPalette,
+    BaseControlWindowImpl_put_Visible,
+    BaseControlWindowImpl_get_Visible,
+    BaseControlWindowImpl_put_Left,
+    BaseControlWindowImpl_get_Left,
+    BaseControlWindowImpl_put_Width,
+    BaseControlWindowImpl_get_Width,
+    BaseControlWindowImpl_put_Top,
+    BaseControlWindowImpl_get_Top,
+    BaseControlWindowImpl_put_Height,
+    BaseControlWindowImpl_get_Height,
+    BaseControlWindowImpl_put_Owner,
+    BaseControlWindowImpl_get_Owner,
+    BaseControlWindowImpl_put_MessageDrain,
+    BaseControlWindowImpl_get_MessageDrain,
+    BaseControlWindowImpl_get_BorderColor,
+    BaseControlWindowImpl_put_BorderColor,
+    BaseControlWindowImpl_get_FullScreenMode,
+    BaseControlWindowImpl_put_FullScreenMode,
+    BaseControlWindowImpl_SetWindowForeground,
+    BaseControlWindowImpl_NotifyOwnerMessage,
+    BaseControlWindowImpl_SetWindowPosition,
+    BaseControlWindowImpl_GetWindowPosition,
+    BaseControlWindowImpl_GetMinIdealImageSize,
+    BaseControlWindowImpl_GetMaxIdealImageSize,
+    BaseControlWindowImpl_GetRestorePosition,
+    BaseControlWindowImpl_HideCursor,
+    BaseControlWindowImpl_IsCursorHidden
+};
+
 HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
 {
     HRESULT hr;
@@ -353,17 +462,19 @@ HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
     pVMR9->IUnknown_inner.lpVtbl = &IInner_VTable;
 
     hr = BaseRenderer_Init(&pVMR9->renderer, &VMR9_Vtbl, outer_unk, &CLSID_VideoMixingRenderer9, (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
+    if (FAILED(hr))
+        goto fail;
 
-    if (SUCCEEDED(hr))
-    {
-        *ppv = (LPVOID)pVMR9;
-        TRACE("Created at %p\n", pVMR9);
-    }
-    else
-    {
-        BaseRendererImpl_Release(&pVMR9->renderer.filter.IBaseFilter_iface);
-        CoTaskMemFree(pVMR9);
-    }
+    hr = BaseControlWindow_Init(&pVMR9->baseControlWindow, &IVideoWindow_VTable, &pVMR9->renderer.filter, &pVMR9->renderer.filter.csFilter, &pVMR9->renderer.pInputPin->pin, &renderer_BaseWindowFuncTable);
+    if (FAILED(hr))
+        goto fail;
 
+    *ppv = (LPVOID)pVMR9;
+    TRACE("Created at %p\n", pVMR9);
+    return hr;
+
+fail:
+    BaseRendererImpl_Release(&pVMR9->renderer.filter.IBaseFilter_iface);
+    CoTaskMemFree(pVMR9);
     return hr;
 }
