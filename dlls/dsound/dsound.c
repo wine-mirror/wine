@@ -1203,10 +1203,6 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
         return DSERR_OUTOFMEMORY;
     }
 
-    /* We rely on the sound driver to return the actual sound format of
-     * the device if it does not support 22050x8x2 and is given the
-     * WAVE_DIRECTSOUND flag.
-     */
     device->pwfx->wFormatTag = WAVE_FORMAT_PCM;
     device->pwfx->nSamplesPerSec = ds_default_sample_rate;
     device->pwfx->wBitsPerSample = ds_default_bits_per_sample;
