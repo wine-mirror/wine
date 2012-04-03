@@ -60,17 +60,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
-#define ENTRY_START_OFFSET  0x4000
-#define DIR_LENGTH          8
-#define BLOCKSIZE           128
-#define HASHTABLE_SIZE      448
-#define HASHTABLE_BLOCKSIZE 7
-#define HASHTABLE_FREE      3
+#define ENTRY_START_OFFSET      0x4000
+#define DIR_LENGTH              8
+#define BLOCKSIZE               128
+#define HASHTABLE_SIZE          448
+#define HASHTABLE_NUM_ENTRIES   64 /* this needs to be power of 2, that divides HASHTABLE_SIZE */
+#define HASHTABLE_BLOCKSIZE     (HASHTABLE_SIZE / HASHTABLE_NUM_ENTRIES)
 #define ALLOCATION_TABLE_OFFSET 0x250
-#define ALLOCATION_TABLE_SIZE   (0x1000 - ALLOCATION_TABLE_OFFSET)
-#define HASHTABLE_NUM_ENTRIES   (HASHTABLE_SIZE / HASHTABLE_BLOCKSIZE)
+#define ALLOCATION_TABLE_SIZE   (ENTRY_START_OFFSET - ALLOCATION_TABLE_OFFSET)
 #define NEWFILE_NUM_BLOCKS	0xd80
 #define NEWFILE_SIZE		(NEWFILE_NUM_BLOCKS * BLOCKSIZE + ENTRY_START_OFFSET)
+
+#define HASHTABLE_URL           0
+#define HASHTABLE_LEAK          1
+#define HASHTABLE_LOCK          2
+#define HASHTABLE_FREE          3
+#define HASHTABLE_REDR          5
+#define HASHTABLE_FLAG_BITS     4
 
 #define DWORD_SIG(a,b,c,d)  (a | (b << 8) | (c << 16) | (d << 24))
 #define URL_SIGNATURE   DWORD_SIG('U','R','L',' ')
@@ -1200,19 +1206,19 @@ static BOOL URLCache_FindHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, struct
      *  each block therefore contains a chain of 7 key/offset pairs
      * how position in table is calculated:
      *  1. the url is hashed in helper function
-     *  2. the key % 64 * 8 is the offset
-     *  3. the key in the hash table is the hash key aligned to 64
+     *  2. the key % HASHTABLE_NUM_ENTRIES is the bucket number
+     *  3. bucket number * HASHTABLE_BLOCKSIZE is offset of the bucket
      *
      * note:
      *  there can be multiple hash tables in the file and the offset to
      *  the next one is stored in the header of the hash table
      */
     DWORD key = URLCache_HashKey(lpszUrl);
-    DWORD offset = (key % HASHTABLE_NUM_ENTRIES) * sizeof(struct _HASH_ENTRY);
+    DWORD offset = (key & (HASHTABLE_NUM_ENTRIES-1)) * HASHTABLE_BLOCKSIZE;
     HASH_CACHEFILE_ENTRY * pHashEntry;
     DWORD dwHashTableNumber = 0;
 
-    key = (key / HASHTABLE_NUM_ENTRIES) * HASHTABLE_NUM_ENTRIES;
+    key >>= HASHTABLE_FLAG_BITS;
 
     for (pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHeader->dwOffsetFirstHashTable);
          URLCache_IsHashEntryValid(pHeader, pHashEntry);
@@ -1234,7 +1240,7 @@ static BOOL URLCache_FindHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, struct
         for (i = 0; i < HASHTABLE_BLOCKSIZE; i++)
         {
             struct _HASH_ENTRY * pHashElement = &pHashEntry->HashTable[offset + i];
-            if (key == (pHashElement->dwHashKey / HASHTABLE_NUM_ENTRIES) * HASHTABLE_NUM_ENTRIES)
+            if (key == pHashElement->dwHashKey>>HASHTABLE_FLAG_BITS)
             {
                 /* FIXME: we should make sure that this is the right element
                  * before returning and claiming that it is. We can do this
@@ -1268,20 +1274,17 @@ static BOOL URLCache_FindHashW(LPCURLCACHE_HEADER pHeader, LPCWSTR lpszUrl, stru
 }
 
 /***********************************************************************
- *           URLCache_HashEntrySetUse (Internal)
+ *           URLCache_HashEntrySetFlags (Internal)
  *
- *  Searches all the hash tables in the index for the given URL and
- * sets the use count (stored or'ed with key)
+ *  Sets special bits in hash key
  *
  * RETURNS
- *    TRUE if the entry was found
- *    FALSE if the entry could not be found
+ *    nothing
  *
  */
-static BOOL URLCache_HashEntrySetUse(struct _HASH_ENTRY * pHashEntry, DWORD dwUseCount)
+static void URLCache_HashEntrySetFlags(struct _HASH_ENTRY * pHashEntry, DWORD dwFlag)
 {
-    pHashEntry->dwHashKey = dwUseCount | (pHashEntry->dwHashKey / HASHTABLE_NUM_ENTRIES) * HASHTABLE_NUM_ENTRIES;
-    return TRUE;
+    pHashEntry->dwHashKey = (pHashEntry->dwHashKey >> HASHTABLE_FLAG_BITS << HASHTABLE_FLAG_BITS) | dwFlag;
 }
 
 /***********************************************************************
@@ -1314,17 +1317,17 @@ static BOOL URLCache_DeleteEntryFromHash(struct _HASH_ENTRY * pHashEntry)
  *    Any other Win32 error code if the entry could not be added
  *
  */
-static DWORD URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, DWORD dwOffsetEntry)
+static DWORD URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, DWORD dwOffsetEntry, DWORD dwFieldType)
 {
     /* see URLCache_FindEntryInHash for structure of hash tables */
 
     DWORD key = URLCache_HashKey(lpszUrl);
-    DWORD offset = (key % HASHTABLE_NUM_ENTRIES) * sizeof(struct _HASH_ENTRY);
+    DWORD offset = (key & (HASHTABLE_NUM_ENTRIES-1)) * HASHTABLE_BLOCKSIZE;
     HASH_CACHEFILE_ENTRY * pHashEntry;
     DWORD dwHashTableNumber = 0;
     DWORD error;
 
-    key = (key / HASHTABLE_NUM_ENTRIES) * HASHTABLE_NUM_ENTRIES;
+    key = ((key >> HASHTABLE_FLAG_BITS) << HASHTABLE_FLAG_BITS) + dwFieldType;
 
     for (pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHeader->dwOffsetFirstHashTable);
          URLCache_IsHashEntryValid(pHeader, pHashEntry);
@@ -2010,7 +2013,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
 
     pUrlEntry->dwHitRate++;
     pUrlEntry->dwUseCount++;
-    URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
+    URLCache_HashEntrySetFlags(pHashEntry, HASHTABLE_LOCK);
     GetSystemTimeAsFileTime(&pUrlEntry->LastAccessTime);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
@@ -2111,7 +2114,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
 
     pUrlEntry->dwHitRate++;
     pUrlEntry->dwUseCount++;
-    URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
+    URLCache_HashEntrySetFlags(pHashEntry, HASHTABLE_LOCK);
     GetSystemTimeAsFileTime(&pUrlEntry->LastAccessTime);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
@@ -2227,7 +2230,8 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
         return FALSE;
     }
     pUrlEntry->dwUseCount--;
-    URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
+    if (!pUrlEntry->dwUseCount)
+        URLCache_HashEntrySetFlags(pHashEntry, HASHTABLE_URL);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
@@ -2298,7 +2302,8 @@ BOOL WINAPI UnlockUrlCacheEntryFileW( LPCWSTR lpszUrlName, DWORD dwReserved )
         return FALSE;
     }
     pUrlEntry->dwUseCount--;
-    URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
+    if (!pUrlEntry->dwUseCount)
+        URLCache_HashEntrySetFlags(pHashEntry, HASHTABLE_URL);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
@@ -2777,7 +2782,7 @@ static BOOL CommitUrlCacheEntryInternal(
         strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetFileExtension), lpszFileExtensionA);
 
     error = URLCache_AddEntryToHash(pHeader, lpszUrlNameA,
-        (DWORD)((LPBYTE)pUrlEntry - (LPBYTE)pHeader));
+        (DWORD)((LPBYTE)pUrlEntry - (LPBYTE)pHeader), HASHTABLE_URL);
     if (error != ERROR_SUCCESS)
         URLCache_DeleteEntry(pHeader, &pUrlEntry->CacheFileEntry);
     else
