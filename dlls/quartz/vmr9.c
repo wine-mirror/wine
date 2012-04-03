@@ -52,6 +52,7 @@ typedef struct
     BaseControlVideo baseControlVideo;
 
     IUnknown IUnknown_inner;
+    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
 
     BITMAPINFOHEADER bmiheader;
     IUnknown * outer_unk;
@@ -87,6 +88,11 @@ static inline VMR9Impl *impl_from_BaseControlVideo( BaseControlVideo *cvid )
 static inline VMR9Impl *impl_from_IBasicVideo( IBasicVideo *iface)
 {
     return CONTAINING_RECORD(iface, VMR9Impl, baseControlVideo.IBasicVideo_iface);
+}
+
+static inline VMR9Impl *impl_from_IAMFilterMiscFlags( IAMFilterMiscFlags *iface)
+{
+    return CONTAINING_RECORD(iface, VMR9Impl, IAMFilterMiscFlags_iface);
 }
 
 static HRESULT WINAPI VMR9_DoRenderSample(BaseRenderer *iface, IMediaSample * pSample)
@@ -425,6 +431,8 @@ static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LP
         *ppv = &This->baseControlWindow.IVideoWindow_iface;
     else if (IsEqualIID(riid, &IID_IBasicVideo))
         *ppv = &This->baseControlVideo.IBasicVideo_iface;
+    else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
+        *ppv = &This->IAMFilterMiscFlags_iface;
     else
     {
         HRESULT hr;
@@ -445,8 +453,6 @@ static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LP
         ;
     else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocatorNotify9))
         ;
-    else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-        FIXME("No interface for IID_IAMFilterMiscFlags\n");
     else if (IsEqualIID(riid, &IID_IMediaPosition))
         FIXME("No interface for IID_IMediaPosition\n");
     else if (IsEqualIID(riid, &IID_IQualProp))
@@ -730,6 +736,32 @@ static const IBasicVideoVtbl IBasicVideo_VTable =
     BaseControlVideoImpl_IsUsingDefaultDestination
 };
 
+static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid, void **ppv) {
+    VMR9Impl *This = impl_from_IAMFilterMiscFlags(iface);
+    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+}
+
+static ULONG WINAPI AMFilterMiscFlags_AddRef(IAMFilterMiscFlags *iface) {
+    VMR9Impl *This = impl_from_IAMFilterMiscFlags(iface);
+    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static ULONG WINAPI AMFilterMiscFlags_Release(IAMFilterMiscFlags *iface) {
+    VMR9Impl *This = impl_from_IAMFilterMiscFlags(iface);
+    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static ULONG WINAPI AMFilterMiscFlags_GetMiscFlags(IAMFilterMiscFlags *iface) {
+    return AM_FILTER_MISC_FLAGS_IS_RENDERER;
+}
+
+static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl = {
+    AMFilterMiscFlags_QueryInterface,
+    AMFilterMiscFlags_AddRef,
+    AMFilterMiscFlags_Release,
+    AMFilterMiscFlags_GetMiscFlags
+};
+
 HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
 {
     HRESULT hr;
@@ -745,6 +777,7 @@ HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
     pVMR9->bUnkOuterValid = FALSE;
     pVMR9->bAggregatable = FALSE;
     pVMR9->IUnknown_inner.lpVtbl = &IInner_VTable;
+    pVMR9->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
 
     hr = BaseRenderer_Init(&pVMR9->renderer, &VMR9_Vtbl, outer_unk, &CLSID_VideoMixingRenderer9, (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
     if (FAILED(hr))
