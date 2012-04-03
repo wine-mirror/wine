@@ -7299,7 +7299,7 @@ static BOOL get_job_info_2(job_t *job, JOB_INFO_2W *ji2, LPBYTE buf, DWORD cbBuf
         else
         {
             /* align DEVMODE to a DWORD boundary */
-            shift= (4 - ( (DWORD_PTR) ptr & 3)) & 3;
+            shift = (4 - (*pcbNeeded & 3)) & 3;
             size += shift;
 
             if (size <= left)
@@ -7308,7 +7308,7 @@ static BOOL get_job_info_2(job_t *job, JOB_INFO_2W *ji2, LPBYTE buf, DWORD cbBuf
                 memcpy(ptr, devmode, size-shift);
                 ji2->pDevMode = (LPDEVMODEW)ptr;
                 if (!unicode) HeapFree(GetProcessHeap(), 0, dmA);
-                ptr += size;
+                ptr += size-shift;
                 left -= size;
             }
             else
