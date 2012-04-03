@@ -2309,6 +2309,7 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf, LPD
     len = strlenW(filename);
     job->filename = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
     memcpy(job->filename, filename, (len + 1) * sizeof(WCHAR));
+    job->portname = NULL;
     job->document_title = strdupW(default_doc_title);
     job->printer_name = strdupW(printer->name);
     job->devmode = dup_devmode( printer->devmode );
