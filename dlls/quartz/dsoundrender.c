@@ -54,10 +54,10 @@ typedef struct DSoundRenderImpl
 {
     BaseRenderer renderer;
 
-    const IBasicAudioVtbl *IBasicAudio_vtbl;
-    const IReferenceClockVtbl *IReferenceClock_vtbl;
-    const IAMDirectSoundVtbl *IAMDirectSound_vtbl;
-    const IAMFilterMiscFlagsVtbl *IAMFilterMiscFlags_vtbl;
+    IBasicAudio IBasicAudio_iface;
+    IReferenceClock IReferenceClock_iface;
+    IAMDirectSound IAMDirectSound_iface;
+    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
 
     IDirectSound8 *dsound;
     LPDIRECTSOUNDBUFFER dsbuffer;
@@ -84,6 +84,26 @@ static inline DSoundRenderImpl *impl_from_BaseRenderer(BaseRenderer *iface)
 static inline DSoundRenderImpl *impl_from_IBaseFilter(IBaseFilter *iface)
 {
     return CONTAINING_RECORD(iface, DSoundRenderImpl, renderer.filter.IBaseFilter_iface);
+}
+
+static inline DSoundRenderImpl *impl_from_IBasicAudio(IBasicAudio *iface)
+{
+    return CONTAINING_RECORD(iface, DSoundRenderImpl, IBasicAudio_iface);
+}
+
+static inline DSoundRenderImpl *impl_from_IReferenceClock(IReferenceClock *iface)
+{
+    return CONTAINING_RECORD(iface, DSoundRenderImpl, IReferenceClock_iface);
+}
+
+static inline DSoundRenderImpl *impl_from_IAMDirectSound(IAMDirectSound *iface)
+{
+    return CONTAINING_RECORD(iface, DSoundRenderImpl, IAMDirectSound_iface);
+}
+
+static inline DSoundRenderImpl *impl_from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface)
+{
+    return CONTAINING_RECORD(iface, DSoundRenderImpl, IAMFilterMiscFlags_iface);
 }
 
 static REFERENCE_TIME time_from_pos(DSoundRenderImpl *This, DWORD pos) {
@@ -149,7 +169,7 @@ static HRESULT DSoundRender_GetWritePos(DSoundRenderImpl *This, DWORD *ret_write
 
     DSoundRender_UpdatePositions(This, &writepos, &min_writepos);
     playpos = This->last_playpos;
-    if (This->renderer.filter.pClock == (IReferenceClock*)&This->IReferenceClock_vtbl) {
+    if (This->renderer.filter.pClock == &This->IReferenceClock_iface) {
         max_lag = min_lag;
         cur = This->play_time + time_from_pos(This, playpos);
         cur -= This->renderer.filter.rtStreamStart;
@@ -646,10 +666,10 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     hr = BaseRenderer_Init(&pDSoundRender->renderer, &DSoundRender_Vtbl, (IUnknown*)pDSoundRender, &CLSID_DSoundRender, (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter"), &BaseFuncTable);
 
-    pDSoundRender->IBasicAudio_vtbl = &IBasicAudio_Vtbl;
-    pDSoundRender->IReferenceClock_vtbl = &IReferenceClock_Vtbl;
-    pDSoundRender->IAMDirectSound_vtbl = &IAMDirectSound_Vtbl;
-    pDSoundRender->IAMFilterMiscFlags_vtbl = &IAMFilterMiscFlags_Vtbl;
+    pDSoundRender->IBasicAudio_iface.lpVtbl = &IBasicAudio_Vtbl;
+    pDSoundRender->IReferenceClock_iface.lpVtbl = &IReferenceClock_Vtbl;
+    pDSoundRender->IAMDirectSound_iface.lpVtbl = &IAMDirectSound_Vtbl;
+    pDSoundRender->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
 
     if (SUCCEEDED(hr))
     {
@@ -702,13 +722,13 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IBasicAudio))
-        *ppv = &This->IBasicAudio_vtbl;
+        *ppv = &This->IBasicAudio_iface;
     else if (IsEqualIID(riid, &IID_IReferenceClock))
-        *ppv = &This->IReferenceClock_vtbl;
+        *ppv = &This->IReferenceClock_iface;
     else if (IsEqualIID(riid, &IID_IAMDirectSound))
-        *ppv = &This->IAMDirectSound_vtbl;
+        *ppv = &This->IAMDirectSound_iface;
     else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-        *ppv = &This->IAMFilterMiscFlags_vtbl;
+        *ppv = &This->IAMFilterMiscFlags_iface;
     else
     {
         HRESULT hr;
@@ -751,7 +771,7 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
             IDirectSound_Release(This->dsound);
         This->dsound = NULL;
 
-        This->IBasicAudio_vtbl = NULL;
+        This->IBasicAudio_iface.lpVtbl = NULL;
 
         CloseHandle(This->blocked);
 
@@ -787,7 +807,7 @@ static const IBaseFilterVtbl DSoundRender_Vtbl =
 static HRESULT WINAPI Basicaudio_QueryInterface(IBasicAudio *iface,
 						REFIID riid,
 						LPVOID*ppvObj) {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
 
@@ -795,7 +815,7 @@ static HRESULT WINAPI Basicaudio_QueryInterface(IBasicAudio *iface,
 }
 
 static ULONG WINAPI Basicaudio_AddRef(IBasicAudio *iface) {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -803,7 +823,7 @@ static ULONG WINAPI Basicaudio_AddRef(IBasicAudio *iface) {
 }
 
 static ULONG WINAPI Basicaudio_Release(IBasicAudio *iface) {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -813,7 +833,7 @@ static ULONG WINAPI Basicaudio_Release(IBasicAudio *iface) {
 /*** IDispatch methods ***/
 static HRESULT WINAPI Basicaudio_GetTypeInfoCount(IBasicAudio *iface,
 						  UINT*pctinfo) {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pctinfo);
 
@@ -824,7 +844,7 @@ static HRESULT WINAPI Basicaudio_GetTypeInfo(IBasicAudio *iface,
 					     UINT iTInfo,
 					     LCID lcid,
 					     ITypeInfo**ppTInfo) {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->(%d, %d, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
 
@@ -837,7 +857,7 @@ static HRESULT WINAPI Basicaudio_GetIDsOfNames(IBasicAudio *iface,
 					       UINT cNames,
 					       LCID lcid,
 					       DISPID*rgDispId) {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->(%s (%p), %p, %d, %d, %p): stub !!!\n", This, iface, debugstr_guid(riid), riid, rgszNames, cNames, lcid, rgDispId);
 
@@ -853,7 +873,7 @@ static HRESULT WINAPI Basicaudio_Invoke(IBasicAudio *iface,
 					VARIANT*pVarResult,
 					EXCEPINFO*pExepInfo,
 					UINT*puArgErr) {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->(%d, %s (%p), %d, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember, debugstr_guid(riid), riid, lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
 
@@ -863,7 +883,7 @@ static HRESULT WINAPI Basicaudio_Invoke(IBasicAudio *iface,
 /*** IBasicAudio methods ***/
 static HRESULT WINAPI Basicaudio_put_Volume(IBasicAudio *iface,
                                             LONG lVolume) {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->(%d)\n", This, iface, lVolume);
 
@@ -881,7 +901,7 @@ static HRESULT WINAPI Basicaudio_put_Volume(IBasicAudio *iface,
 
 static HRESULT WINAPI Basicaudio_get_Volume(IBasicAudio *iface,
                                             LONG *plVolume) {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, plVolume);
 
@@ -894,7 +914,7 @@ static HRESULT WINAPI Basicaudio_get_Volume(IBasicAudio *iface,
 
 static HRESULT WINAPI Basicaudio_put_Balance(IBasicAudio *iface,
                                              LONG lBalance) {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->(%d)\n", This, iface, lBalance);
 
@@ -912,7 +932,7 @@ static HRESULT WINAPI Basicaudio_put_Balance(IBasicAudio *iface,
 
 static HRESULT WINAPI Basicaudio_get_Balance(IBasicAudio *iface,
                                              LONG *plBalance) {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IBasicAudio_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, plBalance);
 
@@ -964,7 +984,7 @@ static DWORD WINAPI DSoundAdviseThread(LPVOID lpParam) {
         BOOL ret;
         struct dsoundrender_timer *prev = &head, *cur;
 
-        hr = IReferenceClock_GetTime((IReferenceClock*) &This->IReferenceClock_vtbl, &curtime);
+        hr = IReferenceClock_GetTime(&This->IReferenceClock_iface, &curtime);
         if (FAILED(hr)) {
             FIXME("Could not get time: %08x\n", hr);
             continue;
@@ -1033,7 +1053,7 @@ static HRESULT WINAPI ReferenceClock_QueryInterface(IReferenceClock *iface,
 						REFIID riid,
 						LPVOID*ppvObj)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
 
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
 
@@ -1042,7 +1062,7 @@ static HRESULT WINAPI ReferenceClock_QueryInterface(IReferenceClock *iface,
 
 static ULONG WINAPI ReferenceClock_AddRef(IReferenceClock *iface)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -1051,7 +1071,7 @@ static ULONG WINAPI ReferenceClock_AddRef(IReferenceClock *iface)
 
 static ULONG WINAPI ReferenceClock_Release(IReferenceClock *iface)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -1062,7 +1082,7 @@ static ULONG WINAPI ReferenceClock_Release(IReferenceClock *iface)
 static HRESULT WINAPI ReferenceClock_GetTime(IReferenceClock *iface,
                                              REFERENCE_TIME *pTime)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
     HRESULT hr = E_FAIL;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pTime);
@@ -1089,7 +1109,7 @@ static HRESULT WINAPI ReferenceClock_AdviseTime(IReferenceClock *iface,
                                                 HEVENT hEvent,
                                                 DWORD_PTR *pdwAdviseCookie)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
     REFERENCE_TIME when = rtBaseTime + rtStreamTime;
     REFERENCE_TIME future;
     TRACE("(%p/%p)->(%s, %s, %p, %p)\n", This, iface, wine_dbgstr_longlong(rtBaseTime), wine_dbgstr_longlong(rtStreamTime), (void*)hEvent, pdwAdviseCookie);
@@ -1133,7 +1153,7 @@ static HRESULT WINAPI ReferenceClock_AdvisePeriodic(IReferenceClock *iface,
                                                     HSEMAPHORE hSemaphore,
                                                     DWORD_PTR *pdwAdviseCookie)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
     struct dsoundrender_timer *t;
 
     TRACE("(%p/%p)->(%s, %s, %p, %p)\n", This, iface, wine_dbgstr_longlong(rtStartTime), wine_dbgstr_longlong(rtPeriodTime), (void*)hSemaphore, pdwAdviseCookie);
@@ -1168,7 +1188,7 @@ static HRESULT WINAPI ReferenceClock_AdvisePeriodic(IReferenceClock *iface,
 static HRESULT WINAPI ReferenceClock_Unadvise(IReferenceClock *iface,
                                               DWORD_PTR dwAdviseCookie)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IReferenceClock_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, (void*)dwAdviseCookie);
     if (!This->advisethread || !dwAdviseCookie)
@@ -1193,7 +1213,7 @@ static HRESULT WINAPI AMDirectSound_QueryInterface(IAMDirectSound *iface,
 						REFIID riid,
 						LPVOID*ppvObj)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IAMDirectSound_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IAMDirectSound(iface);
 
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
 
@@ -1202,7 +1222,7 @@ static HRESULT WINAPI AMDirectSound_QueryInterface(IAMDirectSound *iface,
 
 static ULONG WINAPI AMDirectSound_AddRef(IAMDirectSound *iface)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IAMDirectSound_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IAMDirectSound(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -1211,7 +1231,7 @@ static ULONG WINAPI AMDirectSound_AddRef(IAMDirectSound *iface)
 
 static ULONG WINAPI AMDirectSound_Release(IAMDirectSound *iface)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IAMDirectSound_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IAMDirectSound(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -1221,7 +1241,7 @@ static ULONG WINAPI AMDirectSound_Release(IAMDirectSound *iface)
 /*** IAMDirectSound methods ***/
 static HRESULT WINAPI AMDirectSound_GetDirectSoundInterface(IAMDirectSound *iface,  IDirectSound **ds)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IAMDirectSound_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IAMDirectSound(iface);
 
     FIXME("(%p/%p)->(%p): stub\n", This, iface, ds);
 
@@ -1230,7 +1250,7 @@ static HRESULT WINAPI AMDirectSound_GetDirectSoundInterface(IAMDirectSound *ifac
 
 static HRESULT WINAPI AMDirectSound_GetPrimaryBufferInterface(IAMDirectSound *iface, IDirectSoundBuffer **buf)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IAMDirectSound_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IAMDirectSound(iface);
 
     FIXME("(%p/%p)->(%p): stub\n", This, iface, buf);
 
@@ -1239,7 +1259,7 @@ static HRESULT WINAPI AMDirectSound_GetPrimaryBufferInterface(IAMDirectSound *if
 
 static HRESULT WINAPI AMDirectSound_GetSecondaryBufferInterface(IAMDirectSound *iface, IDirectSoundBuffer **buf)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IAMDirectSound_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IAMDirectSound(iface);
 
     FIXME("(%p/%p)->(%p): stub\n", This, iface, buf);
 
@@ -1248,7 +1268,7 @@ static HRESULT WINAPI AMDirectSound_GetSecondaryBufferInterface(IAMDirectSound *
 
 static HRESULT WINAPI AMDirectSound_ReleaseDirectSoundInterface(IAMDirectSound *iface, IDirectSound *ds)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IAMDirectSound_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IAMDirectSound(iface);
 
     FIXME("(%p/%p)->(%p): stub\n", This, iface, ds);
 
@@ -1257,7 +1277,7 @@ static HRESULT WINAPI AMDirectSound_ReleaseDirectSoundInterface(IAMDirectSound *
 
 static HRESULT WINAPI AMDirectSound_ReleasePrimaryBufferInterface(IAMDirectSound *iface, IDirectSoundBuffer *buf)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IAMDirectSound_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IAMDirectSound(iface);
 
     FIXME("(%p/%p)->(%p): stub\n", This, iface, buf);
 
@@ -1266,7 +1286,7 @@ static HRESULT WINAPI AMDirectSound_ReleasePrimaryBufferInterface(IAMDirectSound
 
 static HRESULT WINAPI AMDirectSound_ReleaseSecondaryBufferInterface(IAMDirectSound *iface, IDirectSoundBuffer *buf)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IAMDirectSound_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IAMDirectSound(iface);
 
     FIXME("(%p/%p)->(%p): stub\n", This, iface, buf);
 
@@ -1275,7 +1295,7 @@ static HRESULT WINAPI AMDirectSound_ReleaseSecondaryBufferInterface(IAMDirectSou
 
 static HRESULT WINAPI AMDirectSound_SetFocusWindow(IAMDirectSound *iface, HWND hwnd, BOOL bgsilent)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IAMDirectSound_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IAMDirectSound(iface);
 
     FIXME("(%p/%p)->(%p,%d): stub\n", This, iface, hwnd, bgsilent);
 
@@ -1284,7 +1304,7 @@ static HRESULT WINAPI AMDirectSound_SetFocusWindow(IAMDirectSound *iface, HWND h
 
 static HRESULT WINAPI AMDirectSound_GetFocusWindow(IAMDirectSound *iface, HWND hwnd)
 {
-    ICOM_THIS_MULTI(DSoundRenderImpl, IAMDirectSound_vtbl, iface);
+    DSoundRenderImpl *This = impl_from_IAMDirectSound(iface);
 
     FIXME("(%p/%p)->(%p): stub\n", This, iface, hwnd);
 
@@ -1306,22 +1326,18 @@ static const IAMDirectSoundVtbl IAMDirectSound_Vtbl =
     AMDirectSound_GetFocusWindow
 };
 
-static DSoundRenderImpl *from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface) {
-    return (DSoundRenderImpl*)((char*)iface - offsetof(DSoundRenderImpl, IAMFilterMiscFlags_vtbl));
-}
-
 static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid, void **ppv) {
-    DSoundRenderImpl *This = from_IAMFilterMiscFlags(iface);
+    DSoundRenderImpl *This = impl_from_IAMFilterMiscFlags(iface);
     return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
 }
 
 static ULONG WINAPI AMFilterMiscFlags_AddRef(IAMFilterMiscFlags *iface) {
-    DSoundRenderImpl *This = from_IAMFilterMiscFlags(iface);
+    DSoundRenderImpl *This = impl_from_IAMFilterMiscFlags(iface);
     return IUnknown_AddRef((IUnknown*)This);
 }
 
 static ULONG WINAPI AMFilterMiscFlags_Release(IAMFilterMiscFlags *iface) {
-    DSoundRenderImpl *This = from_IAMFilterMiscFlags(iface);
+    DSoundRenderImpl *This = impl_from_IAMFilterMiscFlags(iface);
     return IUnknown_Release((IUnknown*)This);
 }
 
