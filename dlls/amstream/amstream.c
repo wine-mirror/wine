@@ -211,13 +211,13 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetDuration(IAMMultiMediaStream* i
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_Seek(IAMMultiMediaStream* iface, STREAM_TIME SeekTime)
+static HRESULT WINAPI IAMMultiMediaStreamImpl_Seek(IAMMultiMediaStream* iface, STREAM_TIME seek_time)
 {
     IAMMultiMediaStreamImpl *This = impl_from_IAMMultiMediaStream(iface);
 
-    FIXME("(%p/%p)->() stub!\n", This, iface);
+    TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(seek_time));
 
-    return E_NOTIMPL;
+    return IMediaSeeking_SetPositions(This->media_seeking, &seek_time, AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
 }
 
 static HRESULT WINAPI IAMMultiMediaStreamImpl_GetEndOfStream(IAMMultiMediaStream* iface, HANDLE* phEOS)
