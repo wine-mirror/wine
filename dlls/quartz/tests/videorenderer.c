@@ -77,11 +77,11 @@ static void test_query_interface(void)
     RELEASE_EXPECT(pDirectDrawVideo, 1);
     QI_SUCCEED(pVideoRenderer, IID_IKsPropertySet, pKsPropertySet);
     RELEASE_EXPECT(pKsPropertySet, 1);
-    QI_SUCCEED(pVideoRenderer, IID_IMediaPosition, pMediaPosition);
-    RELEASE_EXPECT(pMediaPosition, 1);
     QI_SUCCEED(pVideoRenderer, IID_IQualProp, pQualProp);
     RELEASE_EXPECT(pQualProp, 1);
     }
+    QI_SUCCEED(pVideoRenderer, IID_IMediaPosition, pMediaPosition);
+    RELEASE_EXPECT(pMediaPosition, 1);
     QI_SUCCEED(pVideoRenderer, IID_IVideoWindow, pVideoWindow);
     RELEASE_EXPECT(pVideoWindow, 1);
 }

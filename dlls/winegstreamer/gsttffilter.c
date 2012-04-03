@@ -838,7 +838,7 @@ static HRESULT WINAPI GSTTf_QueryInterface(IBaseFilter * iface, REFIID riid, LPV
     GstTfImpl *This = (GstTfImpl*)iface;
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
 
-    if (IsEqualIID(riid, &IID_IMediaSeeking))
+    if (IsEqualIID(riid, &IID_IMediaSeeking) || IsEqualIID(riid, &IID_IMediaPosition))
         return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
 
     hr = TransformFilterImpl_QueryInterface(iface, riid, ppv);

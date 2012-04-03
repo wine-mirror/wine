@@ -148,9 +148,9 @@ static void test_query_interface(void)
         ok(hr == S_OK, "Couldn't load default device: %08x\n", hr);
     }
     RELEASE_EXPECT(ppb, 1);
+    }
     QI_SUCCEED(pDSRender, IID_IMediaPosition, pMediaPosition);
     RELEASE_EXPECT(pMediaPosition, 1);
-    }
     QI_SUCCEED(pDSRender, IID_IQualityControl, pQualityControl);
     RELEASE_EXPECT(pQualityControl, 1);
 }

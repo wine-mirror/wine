@@ -279,7 +279,7 @@ HRESULT WINAPI BaseRendererImpl_QueryInterface(IBaseFilter* iface, REFIID riid, 
 {
     BaseRenderer *This = impl_from_IBaseFilter(iface);
 
-    if (IsEqualIID(riid, &IID_IMediaSeeking))
+    if (IsEqualIID(riid, &IID_IMediaSeeking) || IsEqualIID(riid, &IID_IMediaPosition))
         return IUnknown_QueryInterface(This->pPosition, riid, ppv);
     else if (IsEqualIID(riid, &IID_IQualityControl))
     {
