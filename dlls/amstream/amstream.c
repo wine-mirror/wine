@@ -184,13 +184,19 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetState(IAMMultiMediaStream* ifac
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_SetState(IAMMultiMediaStream* iface, STREAM_STATE NewState)
+static HRESULT WINAPI IAMMultiMediaStreamImpl_SetState(IAMMultiMediaStream* iface, STREAM_STATE new_state)
 {
     IAMMultiMediaStreamImpl *This = impl_from_IAMMultiMediaStream(iface);
+    HRESULT hr = E_INVALIDARG;
 
-    FIXME("(%p/%p)->() stub!\n", This, iface);
+    TRACE("(%p/%p)->(%u)\n", This, iface, new_state);
 
-    return E_NOTIMPL;
+    if (STREAMSTATE_RUN)
+        hr = IMediaControl_Run(This->media_control);
+    else if (STREAMSTATE_STOP)
+        hr = IMediaControl_Stop(This->media_control);
+
+    return hr;
 }
 
 static HRESULT WINAPI IAMMultiMediaStreamImpl_GetTime(IAMMultiMediaStream* iface, STREAM_TIME* pCurrentTime)
