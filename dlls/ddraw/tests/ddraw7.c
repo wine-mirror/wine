@@ -16,6 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#define COBJMACROS
 
 #include "wine/test.h"
 #include <limits.h>
@@ -1434,6 +1435,146 @@ static void test_ck_rgba(void)
     DestroyWindow(window);
 }
 
+struct qi_test
+{
+    REFIID iid;
+    REFIID refcount_iid;
+    HRESULT hr;
+};
+
+static void test_qi(const char *test_name, IUnknown *base_iface,
+        REFIID refcount_iid, const struct qi_test *tests, UINT entry_count)
+{
+    ULONG refcount, expected_refcount;
+    IUnknown *iface1, *iface2;
+    HRESULT hr;
+    UINT i, j;
+
+    for (i = 0; i < entry_count; ++i)
+    {
+        hr = IUnknown_QueryInterface(base_iface, tests[i].iid, (void **)&iface1);
+        ok(hr == tests[i].hr, "Got hr %#x for test \"%s\" %u.\n", hr, test_name, i);
+        if (SUCCEEDED(hr))
+        {
+            for (j = 0; j < entry_count; ++j)
+            {
+                hr = IUnknown_QueryInterface(iface1, tests[j].iid, (void **)&iface2);
+                ok(hr == tests[j].hr, "Got hr %#x for test \"%s\" %u, %u.\n", hr, test_name, i, j);
+                if (SUCCEEDED(hr))
+                {
+                    expected_refcount = 0;
+                    if (IsEqualGUID(refcount_iid, tests[j].refcount_iid))
+                        ++expected_refcount;
+                    if (IsEqualGUID(tests[i].refcount_iid, tests[j].refcount_iid))
+                        ++expected_refcount;
+                    refcount = IUnknown_Release(iface2);
+                    ok(refcount == expected_refcount, "Got refcount %u for test \"%s\" %u, %u, expected %u.\n",
+                            refcount, test_name, i, j, expected_refcount);
+                }
+            }
+
+            expected_refcount = 0;
+            if (IsEqualGUID(refcount_iid, tests[i].refcount_iid))
+                ++expected_refcount;
+            refcount = IUnknown_Release(iface1);
+            ok(refcount == expected_refcount, "Got refcount %u for test \"%s\" %u, expected %u.\n",
+                    refcount, test_name, i, expected_refcount);
+        }
+    }
+}
+
+static void test_surface_qi(void)
+{
+    static const struct qi_test tests[] =
+    {
+        {&IID_IDirect3DTexture2,        NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DTexture,         NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawGammaControl,  &IID_IDirectDrawGammaControl,   S_OK         },
+        {&IID_IDirectDrawColorControl,  NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawSurface7,      &IID_IDirectDrawSurface7,       S_OK         },
+        {&IID_IDirectDrawSurface4,      &IID_IDirectDrawSurface4,       S_OK         },
+        {&IID_IDirectDrawSurface3,      &IID_IDirectDrawSurface3,       S_OK         },
+        {&IID_IDirectDrawSurface2,      &IID_IDirectDrawSurface2,       S_OK         },
+        {&IID_IDirectDrawSurface,       &IID_IDirectDrawSurface,        S_OK         },
+        {&IID_IDirect3DDevice7,         NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DDevice3,         NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DDevice2,         NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DDevice,          NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DRampDevice,      NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DRGBDevice,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DHALDevice,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DMMXDevice,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DRefDevice,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DTnLHalDevice,    NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DNullDevice,      NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3D7,               NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3D3,               NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3D2,               NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3D,                NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDraw7,             NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDraw4,             NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDraw3,             NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDraw2,             NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDraw,              NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DLight,           NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DMaterial,        NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DMaterial2,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DMaterial3,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DExecuteBuffer,   NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DViewport,        NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DViewport2,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DViewport3,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DVertexBuffer,    NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DVertexBuffer7,   NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawPalette,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawClipper,       NULL,                           E_NOINTERFACE},
+        {&IID_IUnknown,                 &IID_IDirectDrawSurface,        S_OK         },
+    };
+
+    IDirectDrawSurface7 *surface;
+    DDSURFACEDESC2 surface_desc;
+    IDirect3DDevice7 *device;
+    IDirectDraw7 *ddraw;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    /* Try to create a D3D device to see if the ddraw implementation supports
+     * D3D. 64-bit ddraw in particular doesn't seem to support D3D, and
+     * doesn't support e.g. the IDirect3DTexture interfaces. */
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    IDirect3DDevice_Release(device);
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    surface_desc.dwWidth = 512;
+    surface_desc.dwHeight = 512;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    test_qi("surface_qi", (IUnknown *)surface, &IID_IDirectDrawSurface7, tests, sizeof(tests) / sizeof(*tests));
+
+    IDirectDrawSurface7_Release(surface);
+    IDirectDraw7_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -1454,4 +1595,5 @@ START_TEST(ddraw7)
     test_texture_load_ckey();
     test_zenable();
     test_ck_rgba();
+    test_surface_qi();
 }
