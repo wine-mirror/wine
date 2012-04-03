@@ -451,7 +451,7 @@ static UINT get_default_index(EDataFlow flow)
     return 0;
 }
 
-HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID ***guids,
+HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
         UINT *num, UINT *def_index)
 {
     int i, mixer_fd;
@@ -497,7 +497,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID ***guids
     }
 
     *ids = HeapAlloc(GetProcessHeap(), 0, sysinfo.numaudios * sizeof(WCHAR *));
-    *guids = HeapAlloc(GetProcessHeap(), 0, sysinfo.numaudios * sizeof(GUID *));
+    *guids = HeapAlloc(GetProcessHeap(), 0, sysinfo.numaudios * sizeof(GUID));
 
     *num = 0;
     for(i = 0; i < sysinfo.numaudios; ++i){
@@ -544,29 +544,14 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID ***guids
             get_device_guid(flow, devnode, &dev_item->guid);
             strcpy(dev_item->devnode, devnode);
 
-            (*guids)[*num] = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
-            if(!(*guids)[*num]){
-                for(i = 0; i < *num; ++i){
-                    HeapFree(GetProcessHeap(), 0, (*ids)[i]);
-                    HeapFree(GetProcessHeap(), 0, (*guids)[i]);
-                }
-                HeapFree(GetProcessHeap(), 0, *ids);
-                HeapFree(GetProcessHeap(), 0, *guids);
-                HeapFree(GetProcessHeap(), 0, dev_item);
-                close(mixer_fd);
-                return E_OUTOFMEMORY;
-            }
-            *(*guids)[*num] = dev_item->guid;
+            (*guids)[*num] = dev_item->guid;
 
             len = MultiByteToWideChar(CP_UNIXCP, 0, ai.name, -1, NULL, 0);
             (*ids)[*num] = HeapAlloc(GetProcessHeap(), 0,
                     len * sizeof(WCHAR));
             if(!(*ids)[*num]){
-                HeapFree(GetProcessHeap(), 0, (*guids)[*num]);
-                for(i = 0; i < *num; ++i){
+                for(i = 0; i < *num; ++i)
                     HeapFree(GetProcessHeap(), 0, (*ids)[i]);
-                    HeapFree(GetProcessHeap(), 0, (*guids)[i]);
-                }
                 HeapFree(GetProcessHeap(), 0, *ids);
                 HeapFree(GetProcessHeap(), 0, *guids);
                 HeapFree(GetProcessHeap(), 0, dev_item);
@@ -599,7 +584,7 @@ const OSSDevice *get_ossdevice_from_guid(const GUID *guid)
 }
 
 HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
-        EDataFlow unused_dataflow, IAudioClient **out)
+        IAudioClient **out)
 {
     ACImpl *This;
     const OSSDevice *oss_dev;

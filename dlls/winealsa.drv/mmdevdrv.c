@@ -340,7 +340,7 @@ static BOOL alsa_try_open(const char *devnode, snd_pcm_stream_t stream)
 }
 
 static HRESULT alsa_get_card_devices(EDataFlow flow, snd_pcm_stream_t stream,
-        WCHAR **ids, GUID **guids, UINT *num, snd_ctl_t *ctl, int card,
+        WCHAR **ids, GUID *guids, UINT *num, snd_ctl_t *ctl, int card,
         const WCHAR *cardnameW)
 {
     static const WCHAR dashW[] = {' ','-',' ',0};
@@ -401,13 +401,7 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, snd_pcm_stream_t stream,
             MultiByteToWideChar(CP_UNIXCP, 0, devname, -1, ids[*num] + cardlen,
                     len - cardlen);
 
-            guids[*num] = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
-            if(!guids[*num]){
-                HeapFree(GetProcessHeap(), 0, info);
-                HeapFree(GetProcessHeap(), 0, ids[*num]);
-                return E_OUTOFMEMORY;
-            }
-            get_device_guid(flow, devnode, guids[*num]);
+            get_device_guid(flow, devnode, &guids[*num]);
         }
 
         ++(*num);
@@ -423,7 +417,7 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, snd_pcm_stream_t stream,
 }
 
 static void get_reg_devices(EDataFlow flow, snd_pcm_stream_t stream, WCHAR **ids,
-        GUID **guids, UINT *num)
+        GUID *guids, UINT *num)
 {
     static const WCHAR ALSAOutputDevices[] = {'A','L','S','A','O','u','t','p','u','t','D','e','v','i','c','e','s',0};
     static const WCHAR ALSAInputDevices[] = {'A','L','S','A','I','n','p','u','t','D','e','v','i','c','e','s',0};
@@ -455,8 +449,7 @@ static void get_reg_devices(EDataFlow flow, snd_pcm_stream_t stream, WCHAR **ids
                         ids[*num] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
                         memcpy(ids[*num], p, len * sizeof(WCHAR));
 
-                        guids[*num] = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
-                        get_device_guid(flow, devname, guids[*num]);
+                        get_device_guid(flow, devname, &guids[*num]);
                     }
                     ++*num;
                 }
@@ -469,7 +462,7 @@ static void get_reg_devices(EDataFlow flow, snd_pcm_stream_t stream, WCHAR **ids
     }
 }
 
-static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, GUID **guids,
+static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, GUID *guids,
         UINT *num)
 {
     snd_pcm_stream_t stream = (flow == eRender ? SND_PCM_STREAM_PLAYBACK :
@@ -483,8 +476,7 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, GUID **guids,
         if(ids && guids){
             *ids = HeapAlloc(GetProcessHeap(), 0, sizeof(defaultW));
             memcpy(*ids, defaultW, sizeof(defaultW));
-            *guids = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
-            get_device_guid(flow, defname, *guids);
+            get_device_guid(flow, defname, guids);
         }
         ++*num;
     }
@@ -540,7 +532,7 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, GUID **guids,
     return S_OK;
 }
 
-HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID ***guids,
+HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
         UINT *num, UINT *def_index)
 {
     HRESULT hr;
@@ -559,7 +551,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID ***guids
     }
 
     *ids = HeapAlloc(GetProcessHeap(), 0, *num * sizeof(WCHAR *));
-    *guids = HeapAlloc(GetProcessHeap(), 0, *num * sizeof(GUID *));
+    *guids = HeapAlloc(GetProcessHeap(), 0, *num * sizeof(GUID));
     if(!*ids || !*guids){
         HeapFree(GetProcessHeap(), 0, *ids);
         HeapFree(GetProcessHeap(), 0, *guids);
@@ -571,10 +563,8 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID ***guids
     hr = alsa_enum_devices(flow, *ids, *guids, num);
     if(FAILED(hr)){
         int i;
-        for(i = 0; i < *num; ++i){
+        for(i = 0; i < *num; ++i)
             HeapFree(GetProcessHeap(), 0, (*ids)[i]);
-            HeapFree(GetProcessHeap(), 0, (*guids)[i]);
-        }
         HeapFree(GetProcessHeap(), 0, *ids);
         HeapFree(GetProcessHeap(), 0, *guids);
         return E_OUTOFMEMORY;
@@ -729,8 +719,7 @@ static BOOL get_alsa_name_by_guid(GUID *guid, char *name, DWORD name_size, EData
     return FALSE;
 }
 
-HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, EDataFlow unused_flow,
-        IAudioClient **out)
+HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient **out)
 {
     ACImpl *This;
     int err;

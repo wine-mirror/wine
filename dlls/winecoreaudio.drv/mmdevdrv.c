@@ -357,7 +357,7 @@ static void get_device_guid(EDataFlow flow, AudioDeviceID device, GUID *guid)
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
-        GUID ***guids, UINT *num, UINT *def_index)
+        GUID **guids, UINT *num, UINT *def_index)
 {
     UInt32 devsize, size;
     AudioDeviceID *devices;
@@ -413,7 +413,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
         return E_OUTOFMEMORY;
     }
 
-    *guids = HeapAlloc(GetProcessHeap(), 0, ndevices * sizeof(GUID *));
+    *guids = HeapAlloc(GetProcessHeap(), 0, ndevices * sizeof(GUID));
     if(!*ids){
         HeapFree(GetProcessHeap(), 0, *ids);
         HeapFree(GetProcessHeap(), 0, devices);
@@ -444,10 +444,8 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
         buffers = HeapAlloc(GetProcessHeap(), 0, size);
         if(!buffers){
             HeapFree(GetProcessHeap(), 0, devices);
-            for(j = 0; j < *num; ++j){
+            for(j = 0; j < *num; ++j)
                 HeapFree(GetProcessHeap(), 0, (*ids)[j]);
-                HeapFree(GetProcessHeap(), 0, (*guids)[j]);
-            }
             HeapFree(GetProcessHeap(), 0, *guids);
             HeapFree(GetProcessHeap(), 0, *ids);
             return E_OUTOFMEMORY;
@@ -489,10 +487,8 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
         if(!(*ids)[*num]){
             CFRelease(name);
             HeapFree(GetProcessHeap(), 0, devices);
-            for(j = 0; j < *num; ++j){
+            for(j = 0; j < *num; ++j)
                 HeapFree(GetProcessHeap(), 0, (*ids)[j]);
-                HeapFree(GetProcessHeap(), 0, (*guids)[j]);
-            }
             HeapFree(GetProcessHeap(), 0, *ids);
             HeapFree(GetProcessHeap(), 0, *guids);
             return E_OUTOFMEMORY;
@@ -501,19 +497,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
         ((*ids)[*num])[len - 1] = 0;
         CFRelease(name);
 
-        (*guids)[*num] = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
-        if(!(*guids)[*num]){
-            HeapFree(GetProcessHeap(), 0, devices);
-            HeapFree(GetProcessHeap(), 0, (*ids)[*num]);
-            for(j = 0; j < *num; ++j){
-                HeapFree(GetProcessHeap(), 0, (*ids)[j]);
-                HeapFree(GetProcessHeap(), 0, (*guids)[j]);
-            }
-            HeapFree(GetProcessHeap(), 0, *ids);
-            HeapFree(GetProcessHeap(), 0, *guids);
-            return E_OUTOFMEMORY;
-        }
-        get_device_guid(flow, devices[i], (*guids)[*num]);
+        get_device_guid(flow, devices[i], &(*guids)[*num]);
 
         if(*def_index == (UINT)-1 && devices[i] == default_id)
             *def_index = *num;
@@ -595,8 +579,7 @@ static BOOL get_deviceid_by_guid(GUID *guid, AudioDeviceID *id, EDataFlow *flow)
     return FALSE;
 }
 
-HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
-        EDataFlow unused_dataflow, IAudioClient **out)
+HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient **out)
 {
     ACImpl *This;
     AudioDeviceID adevid;

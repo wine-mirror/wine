@@ -50,9 +50,9 @@ typedef struct _DriverFuncs {
      * it is the caller's responsibility to free both arrays, and
      *   all of the elements in both arrays with HeapFree() */
     HRESULT WINAPI (*pGetEndpointIDs)(EDataFlow flow, WCHAR ***ids,
-            void ***keys, UINT *num, UINT *default_index);
+            GUID **guids, UINT *num, UINT *default_index);
     HRESULT WINAPI (*pGetAudioEndpoint)(void *key, IMMDevice *dev,
-            EDataFlow dataflow, IAudioClient **out);
+            IAudioClient **out);
     HRESULT WINAPI (*pGetAudioSessionManager)(IMMDevice *device,
             IAudioSessionManager2 **out);
 } DriverFuncs;
@@ -70,7 +70,6 @@ typedef struct MMDevice {
     DWORD state;
     GUID devguid;
     WCHAR *drv_id;
-    void *key;
 } MMDevice;
 
 extern HRESULT AudioClient_Create(MMDevice *parent, IAudioClient **ppv) DECLSPEC_HIDDEN;
