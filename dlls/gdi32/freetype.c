@@ -3403,7 +3403,6 @@ static void init_font_list(void)
     DWORD valuelen, datalen, i = 0, type, dlen, vlen;
     WCHAR windowsdir[MAX_PATH];
     char *unixname;
-    const char *home;
     const char *data_dir;
 
     delete_external_font_keys();
@@ -3509,6 +3508,7 @@ static void init_font_list(void)
                 ptr = valueA;
                 while (ptr)
                 {
+                    const char* home;
                     LPSTR next = strchr( ptr, ':' );
                     if (next) *next++ = 0;
                     if (ptr[0] == '~' && ptr[1] == '/' && (home = getenv( "HOME" )) &&
@@ -3529,21 +3529,6 @@ static void init_font_list(void)
         }
         RegCloseKey(hkey);
     }
-
-#ifdef __APPLE__
-    /* Mac default font locations. */
-    ReadFontDir( "/Library/Fonts", TRUE );
-    ReadFontDir( "/Network/Library/Fonts", TRUE );
-    ReadFontDir( "/System/Library/Fonts", TRUE );
-    if ((home = getenv( "HOME" )))
-    {
-        unixname = HeapAlloc( GetProcessHeap(), 0, strlen(home)+15 );
-        strcpy( unixname, home );
-        strcat( unixname, "/Library/Fonts" );
-        ReadFontDir( unixname, TRUE);
-        HeapFree( GetProcessHeap(), 0, unixname );
-    }
-#endif
 }
 
 static BOOL move_to_front(const WCHAR *name)
