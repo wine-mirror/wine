@@ -68,6 +68,9 @@ static const WCHAR ondragW[] = {'o','n','d','r','a','g',0};
 static const WCHAR dragstartW[] = {'d','r','a','g','s','t','a','r','t',0};
 static const WCHAR ondragstartW[] = {'o','n','d','r','a','g','s','t','a','r','t',0};
 
+static const WCHAR errorW[] = {'e','r','r','o','r',0};
+static const WCHAR onerrorW[] = {'o','n','e','r','r','o','r',0};
+
 static const WCHAR focusW[] = {'f','o','c','u','s',0};
 static const WCHAR onfocusW[] = {'o','n','f','o','c','u','s',0};
 
@@ -160,6 +163,8 @@ static const event_info_t event_info[] = {
         EVENT_CANCELABLE},
     {dragstartW,         ondragstartW,         EVENTT_MOUSE,  DISPID_EVMETH_ONDRAGSTART,
         EVENT_CANCELABLE},
+    {errorW,             onerrorW,             EVENTT_NONE,   DISPID_EVMETH_ONERROR,
+        0},
     {focusW,             onfocusW,             EVENTT_HTML,   DISPID_EVMETH_ONFOCUS,
         EVENT_DEFAULTLISTENER},
     {keydownW,           onkeydownW,           EVENTT_KEY,    DISPID_EVMETH_ONKEYDOWN,

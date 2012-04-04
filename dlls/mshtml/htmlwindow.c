@@ -971,15 +971,19 @@ static HRESULT WINAPI HTMLWindow2_get_onhelp(IHTMLWindow2 *iface, VARIANT *p)
 static HRESULT WINAPI HTMLWindow2_put_onerror(IHTMLWindow2 *iface, VARIANT v)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+
+    FIXME("(%p)->(%s) semi-stub\n", This, debugstr_variant(&v));
+
+    return set_window_event(This, EVENTID_ERROR, &v);
 }
 
 static HRESULT WINAPI HTMLWindow2_get_onerror(IHTMLWindow2 *iface, VARIANT *p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_window_event(This, EVENTID_ERROR, p);
 }
 
 static HRESULT WINAPI HTMLWindow2_put_onresize(IHTMLWindow2 *iface, VARIANT v)
