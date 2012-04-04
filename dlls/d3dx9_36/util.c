@@ -166,8 +166,8 @@ const PixelFormatDesc *get_format_info(D3DFORMAT format)
 {
     unsigned int i = 0;
     while(formats[i].format != format && formats[i].format != D3DFMT_UNKNOWN) i++;
-    if(formats[i].format == D3DFMT_UNKNOWN)
-        FIXME("Unknown format %#x\n", format);
+    if (formats[i].format == D3DFMT_UNKNOWN)
+        FIXME("Unknown format %#x (as FOURCC %s).\n", format, debugstr_an((const char *)&format, 4));
     return &formats[i];
 }
 
