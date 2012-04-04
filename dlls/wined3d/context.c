@@ -1638,6 +1638,26 @@ static void set_blit_dimension(UINT width, UINT height)
     checkGLcall("glViewport");
 }
 
+static void context_get_rt_size(const struct wined3d_context *context, SIZE *size)
+{
+    const struct wined3d_surface *rt = context->current_rt;
+
+    if (rt->container.type == WINED3D_CONTAINER_SWAPCHAIN
+            && rt->container.u.swapchain->front_buffer == rt)
+    {
+        RECT window_size;
+
+        GetClientRect(context->win_handle, &window_size);
+        size->cx = window_size.right - window_size.left;
+        size->cy = window_size.bottom - window_size.top;
+
+        return;
+    }
+
+    size->cx = rt->resource.width;
+    size->cy = rt->resource.height;
+}
+
 /*****************************************************************************
  * SetupForBlit
  *
@@ -1659,21 +1679,24 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
 {
     int i;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    UINT width = context->current_rt->resource.width;
-    UINT height = context->current_rt->resource.height;
     DWORD sampler;
+    SIZE rt_size;
 
     TRACE("Setting up context %p for blitting\n", context);
-    if(context->last_was_blit) {
-        if(context->blit_w != width || context->blit_h != height) {
+
+    context_get_rt_size(context, &rt_size);
+
+    if (context->last_was_blit)
+    {
+        if (context->blit_w != rt_size.cx || context->blit_h != rt_size.cy)
+        {
             ENTER_GL();
-            set_blit_dimension(width, height);
+            set_blit_dimension(rt_size.cx, rt_size.cy);
             LEAVE_GL();
-            context->blit_w = width; context->blit_h = height;
-            /* No need to dirtify here, the states are still dirtified because they weren't
-             * applied since the last SetupForBlit call. Otherwise last_was_blit would not
-             * be set
-             */
+            context->blit_w = rt_size.cx;
+            context->blit_h = rt_size.cy;
+            /* No need to dirtify here, the states are still dirtified because
+             * they weren't applied since the last SetupForBlit() call. */
         }
         TRACE("Context is already set up for blitting, nothing to do\n");
         return;
@@ -1839,12 +1862,13 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
     glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)");
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_CLIPPING));
 
-    set_blit_dimension(width, height);
+    set_blit_dimension(rt_size.cx, rt_size.cy);
     device->frag_pipe->enable_extension(FALSE);
 
     LEAVE_GL();
 
-    context->blit_w = width; context->blit_h = height;
+    context->blit_w = rt_size.cx;
+    context->blit_h = rt_size.cy;
     context_invalidate_state(context, STATE_VIEWPORT);
     context_invalidate_state(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
 }
