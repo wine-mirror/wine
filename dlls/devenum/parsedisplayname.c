@@ -153,4 +153,4 @@ static const IParseDisplayNameVtbl IParseDisplayName_Vtbl =
 };
 
 /* The one instance of this class */
-ParseDisplayNameImpl DEVENUM_ParseDisplayName = { { &IParseDisplayName_Vtbl } };
+IParseDisplayName DEVENUM_ParseDisplayName = { &IParseDisplayName_Vtbl };

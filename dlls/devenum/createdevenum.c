@@ -519,7 +519,7 @@ static const ICreateDevEnumVtbl ICreateDevEnum_Vtbl =
 /**********************************************************************
  * static CreateDevEnum instance
  */
-CreateDevEnumImpl DEVENUM_CreateDevEnum = { { &ICreateDevEnum_Vtbl } };
+ICreateDevEnum DEVENUM_CreateDevEnum = { &ICreateDevEnum_Vtbl };
 
 /**********************************************************************
  * DEVENUM_CreateAMCategoryKey (INTERNAL)
