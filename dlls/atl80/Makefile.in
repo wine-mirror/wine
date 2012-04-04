@@ -1,0 +1,3 @@
+MODULE = atl80.dll
+
+@MAKE_DLL_RULES@
