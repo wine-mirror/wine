@@ -9832,12 +9832,12 @@ msgstr "Ви впевнені?"
 #: cmd.rc:307 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
-msgstr ""
+msgstr "Т"
 
 #: cmd.rc:308 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
-msgstr ""
+msgstr "Н"
 
 #: cmd.rc:309
 msgid "File association missing for extension %1\n"
@@ -9906,7 +9906,7 @@ msgstr "Не можу викликати мітку пакету за межам
 #: cmd.rc:327 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr ""
+msgstr "В"
 
 #: cmd.rc:328
 msgid "Delete %1?"
@@ -9974,11 +9974,11 @@ msgstr "Том в приводі %1!c! не має мітки.\n"
 
 #: cmd.rc:343
 msgid " (Yes|No)"
-msgstr ""
+msgstr " (Так|Ні)"
 
 #: cmd.rc:344
 msgid " (Yes|No|All)"
-msgstr ""
+msgstr " (Так|Ні|Всі)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -13962,15 +13962,15 @@ msgid ""
 "(F - File, D - Directory)\n"
 msgstr ""
 "'%1' є файлом чи директорією?\n"
-"(F - Файл, D - Директорія)\n"
+"(Ф - Файл, Д - Директорія)\n"
 
 #: xcopy.rc:35
 msgid "%1? (Yes|No)\n"
-msgstr ""
+msgstr "%1? (Так|Ні)\n"
 
 #: xcopy.rc:36
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Переписати %1? (Yes|No|All)\n"
+msgstr "Переписати %1? (Так|Ні|Всі)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
@@ -13983,12 +13983,12 @@ msgstr "Помилка читання '%1'\n"
 #: xcopy.rc:43
 msgctxt "File key"
 msgid "F"
-msgstr ""
+msgstr "Ф"
 
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr ""
+msgstr "Д"
 
 #: xcopy.rc:77
 msgid ""
