@@ -530,6 +530,31 @@ static INT PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     }
 }
 
+static PRINTER_ENUM_VALUESA *load_font_sub_table( HANDLE printer, DWORD *num_entries )
+{
+    DWORD res, needed, num;
+    PRINTER_ENUM_VALUESA *table = NULL;
+    static const char fontsubkey[] = "PrinterDriverData\\FontSubTable";
+
+    *num_entries = 0;
+
+    res = EnumPrinterDataExA( printer, fontsubkey, NULL, 0, &needed, &num );
+    if (res != ERROR_MORE_DATA) return NULL;
+
+    table = HeapAlloc( PSDRV_Heap, 0, needed );
+    if (!table) return NULL;
+
+    res = EnumPrinterDataExA( printer, fontsubkey, (LPBYTE)table, needed, &needed, &num );
+    if (res != ERROR_SUCCESS)
+    {
+        HeapFree( PSDRV_Heap, 0, table );
+        return NULL;
+    }
+
+    *num_entries = num;
+    return table;
+}
+
 static struct list printer_list = LIST_INIT( printer_list );
 
 /**********************************************************************
@@ -742,35 +767,9 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
             pi->Devmode->dmPublic.dmDuplex = DMDUP_SIMPLEX;
     }
 
-    res = EnumPrinterDataExA (hPrinter, "PrinterDriverData\\FontSubTable", NULL,
-	    0, &needed, &pi->FontSubTableSize);
-    if (res == ERROR_SUCCESS || res == ERROR_FILE_NOT_FOUND) {
-	TRACE ("No 'FontSubTable' for printer '%s'\n", debugstr_w(name));
-    }
-    else if (res == ERROR_MORE_DATA) {
-	pi->FontSubTable = HeapAlloc (PSDRV_Heap, 0, needed);
-	if (pi->FontSubTable == NULL) {
-	    ERR ("Failed to allocate %i bytes from heap\n", needed);
-	    goto closeprinter;
-	}
+    pi->FontSubTable = load_font_sub_table( hPrinter, &pi->FontSubTableSize );
 
-	res = EnumPrinterDataExA (hPrinter, "PrinterDriverData\\FontSubTable",
-		(LPBYTE) pi->FontSubTable, needed, &needed,
-		&pi->FontSubTableSize);
-	if (res != ERROR_SUCCESS) {
-	    ERR ("EnumPrinterDataExA returned %i\n", res);
-	    goto closeprinter;
-	}
-    }
-    else {
-	ERR("EnumPrinterDataExA returned %i\n", res);
-	goto closeprinter;
-    }
-
-    if (ClosePrinter (hPrinter) == 0) {
-	ERR ("ClosePrinter failed with code %i\n", GetLastError ());
-	goto cleanup;
-    }
+    ClosePrinter( hPrinter );
 
     pi->Fonts = NULL;
 
