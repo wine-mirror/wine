@@ -89,7 +89,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             return FALSE;    /* prefer native version */
         case DLL_PROCESS_ATTACH:
             init_cxx_funcs();
-            set_exception_vtable();
             init_lockit();
             break;
         case DLL_PROCESS_DETACH:

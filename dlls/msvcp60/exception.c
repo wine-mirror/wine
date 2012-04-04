@@ -61,6 +61,7 @@ typedef struct __cxx_exception_type
 void WINAPI _CxxThrowException(exception*,const cxx_exception_type*);
 
 /* vtables */
+extern const vtable_ptr MSVCP_exception_vtable;
 /* ??_7bad_alloc@std@@6B@ */
 extern const vtable_ptr MSVCP_bad_alloc_vtable;
 /* ??_7logic_error@std@@6B@ */
@@ -73,19 +74,12 @@ extern const vtable_ptr MSVCP_invalid_argument_vtable;
 /* ??_7runtime_error@std@@6B@ */
 extern const vtable_ptr MSVCP_runtime_error_vtable;
 
-/* exception class data */
-static type_info exception_type_info = {
-    NULL, /* set by set_exception_vtable */
-    NULL,
-    ".?AVexception@std@@"
-};
-
 DEFINE_THISCALL_WRAPPER(MSVCP_exception_ctor, 8)
 exception* __thiscall MSVCP_exception_ctor(exception *this, const char *name)
 {
     TRACE("(%p %s)\n", this, name);
 
-    this->vtable = exception_type_info.vtable;
+    this->vtable = &MSVCP_exception_vtable;
     if(name) {
         unsigned int name_len = strlen(name) + 1;
         this->name = malloc(name_len);
@@ -104,7 +98,7 @@ exception* __thiscall MSVCP_exception_copy_ctor(exception *this, const exception
     TRACE("(%p,%p)\n", this, rhs);
 
     if(!rhs->do_free) {
-        this->vtable = exception_type_info.vtable;
+        this->vtable = &MSVCP_exception_vtable;
         this->name = rhs->name;
         this->do_free = FALSE;
     } else
@@ -117,10 +111,32 @@ DEFINE_THISCALL_WRAPPER(MSVCP_exception_dtor,4)
 void __thiscall MSVCP_exception_dtor(exception *this)
 {
     TRACE("(%p)\n", this);
-    this->vtable = exception_type_info.vtable;
+    this->vtable = &MSVCP_exception_vtable;
     if(this->do_free)
         free(this->name);
 }
+
+DEFINE_THISCALL_WRAPPER(MSVCP_exception_vector_dtor, 8)
+void * __thiscall MSVCP_exception_vector_dtor(exception *this, unsigned int flags)
+{
+    TRACE("%p %x\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            MSVCP_exception_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        MSVCP_exception_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+DEFINE_RTTI_DATA(exception, 0, 0, NULL, NULL, NULL, ".?AVexception@std@@");
 
 /* ?_Doraise@bad_alloc@std@@MBEXXZ */
 /* ?_Doraise@bad_alloc@std@@MEBAXXZ */
@@ -145,13 +161,6 @@ const char* __thiscall MSVCP_exception_what(exception * this)
     return this->name ? this->name : "Unknown exception";
 }
 
-static const rtti_base_descriptor exception_rtti_base_descriptor = {
-    &exception_type_info,
-    0,
-    { 0, -1, 0 },
-    0
-};
-
 static const cxx_type_info exception_cxx_type_info = {
     0,
     &exception_type_info,
@@ -175,12 +184,6 @@ static const cxx_exception_type exception_cxx_type = {
     NULL,
     &exception_cxx_type_table
 };
-
-void set_exception_vtable(void)
-{
-    HMODULE hmod = GetModuleHandleA("msvcrt.dll");
-    exception_type_info.vtable = (void*)GetProcAddress(hmod, "??_7exception@@6B@");
-}
 
 /* bad_alloc class data */
 typedef exception bad_alloc;
@@ -700,6 +703,9 @@ const char* __thiscall MSVCP_runtime_error_what(runtime_error *this)
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
+    __ASM_VTABLE(exception,
+            VTABLE_ADD_FUNC(MSVCP_exception_what)
+            VTABLE_ADD_FUNC(MSVCP_exception__Doraise));
     __ASM_VTABLE(bad_alloc,
             VTABLE_ADD_FUNC(MSVCP_exception_what)
             VTABLE_ADD_FUNC(MSVCP_exception__Doraise));
