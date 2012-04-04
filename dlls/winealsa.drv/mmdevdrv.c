@@ -339,11 +339,60 @@ static BOOL alsa_try_open(const char *devnode, snd_pcm_stream_t stream)
     return TRUE;
 }
 
+static WCHAR *construct_device_id(EDataFlow flow, const WCHAR *chunk1, const char *chunk2)
+{
+    WCHAR *ret;
+    const WCHAR *prefix;
+    DWORD len_wchars = 0, chunk1_len, copied = 0, prefix_len;
+
+    static const WCHAR dashW[] = {' ','-',' ',0};
+    static const size_t dashW_len = (sizeof(dashW) / sizeof(*dashW)) - 1;
+    static const WCHAR outW[] = {'O','u','t',':',' ',0};
+    static const WCHAR inW[] = {'I','n',':',' ',0};
+
+    if(flow == eRender){
+        prefix = outW;
+        prefix_len = (sizeof(outW) / sizeof(*outW)) - 1;
+        len_wchars += prefix_len;
+    }else{
+        prefix = inW;
+        prefix_len = (sizeof(inW) / sizeof(*inW)) - 1;
+        len_wchars += prefix_len;
+    }
+    if(chunk1){
+        chunk1_len = strlenW(chunk1);
+        len_wchars += chunk1_len;
+    }
+    if(chunk1 && chunk2)
+        len_wchars += dashW_len;
+    if(chunk2)
+        len_wchars += MultiByteToWideChar(CP_UNIXCP, 0, chunk2, -1, NULL, 0) - 1;
+    len_wchars += 1; /* NULL byte */
+
+    ret = HeapAlloc(GetProcessHeap(), 0, len_wchars * sizeof(WCHAR));
+
+    memcpy(ret, prefix, prefix_len * sizeof(WCHAR));
+    copied += prefix_len;
+    if(chunk1){
+        memcpy(ret + copied, chunk1, chunk1_len * sizeof(WCHAR));
+        copied += chunk1_len;
+    }
+    if(chunk1 && chunk2){
+        memcpy(ret + copied, dashW, dashW_len * sizeof(WCHAR));
+        copied += dashW_len;
+    }
+    if(chunk2){
+        MultiByteToWideChar(CP_UNIXCP, 0, chunk2, -1, ret + copied, len_wchars - copied);
+    }else
+        ret[copied] = 0;
+
+    return ret;
+}
+
 static HRESULT alsa_get_card_devices(EDataFlow flow, snd_pcm_stream_t stream,
         WCHAR **ids, GUID *guids, UINT *num, snd_ctl_t *ctl, int card,
         const WCHAR *cardnameW)
 {
-    static const WCHAR dashW[] = {' ','-',' ',0};
     int err, device;
     snd_pcm_info_t *info;
 
@@ -377,8 +426,6 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, snd_pcm_stream_t stream,
             continue;
 
         if(ids && guids){
-            DWORD len, cardlen;
-
             devname = snd_pcm_info_get_name(info);
             if(!devname){
                 WARN("Unable to get device name for card %d, device %d\n", card,
@@ -386,21 +433,7 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, snd_pcm_stream_t stream,
                 continue;
             }
 
-            cardlen = lstrlenW(cardnameW);
-            len = MultiByteToWideChar(CP_UNIXCP, 0, devname, -1, NULL, 0);
-            len += lstrlenW(dashW);
-            len += cardlen;
-            ids[*num] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-            if(!ids[*num]){
-                HeapFree(GetProcessHeap(), 0, info);
-                return E_OUTOFMEMORY;
-            }
-            memcpy(ids[*num], cardnameW, cardlen * sizeof(WCHAR));
-            memcpy(ids[*num] + cardlen, dashW, lstrlenW(dashW) * sizeof(WCHAR));
-            cardlen += lstrlenW(dashW);
-            MultiByteToWideChar(CP_UNIXCP, 0, devname, -1, ids[*num] + cardlen,
-                    len - cardlen);
-
+            ids[*num] = construct_device_id(flow, cardnameW, devname);
             get_device_guid(flow, devnode, &guids[*num]);
         }
 
@@ -423,7 +456,7 @@ static void get_reg_devices(EDataFlow flow, snd_pcm_stream_t stream, WCHAR **ids
     static const WCHAR ALSAInputDevices[] = {'A','L','S','A','I','n','p','u','t','D','e','v','i','c','e','s',0};
     HKEY key;
     WCHAR reg_devices[256];
-    DWORD size = sizeof(reg_devices), type, len;
+    DWORD size = sizeof(reg_devices), type;
     const WCHAR *value_name = (stream == SND_PCM_STREAM_PLAYBACK) ? ALSAOutputDevices : ALSAInputDevices;
 
     /* @@ Wine registry key: HKCU\Software\Wine\Drivers\winealsa.drv */
@@ -445,10 +478,7 @@ static void get_reg_devices(EDataFlow flow, snd_pcm_stream_t stream, WCHAR **ids
 
                 if(alsa_try_open(devname, stream)){
                     if(ids && guids){
-                        len = lstrlenW(p) + 1;
-                        ids[*num] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-                        memcpy(ids[*num], p, len * sizeof(WCHAR));
-
+                        ids[*num] = construct_device_id(flow, p, NULL);
                         get_device_guid(flow, devname, &guids[*num]);
                     }
                     ++*num;
@@ -474,8 +504,7 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, GUID *guids,
 
     if(alsa_try_open(defname, stream)){
         if(ids && guids){
-            *ids = HeapAlloc(GetProcessHeap(), 0, sizeof(defaultW));
-            memcpy(*ids, defaultW, sizeof(defaultW));
+            *ids = construct_device_id(flow, defaultW, NULL);
             get_device_guid(flow, defname, guids);
         }
         ++*num;
