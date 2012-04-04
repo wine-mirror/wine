@@ -58,19 +58,19 @@ static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
 static HRESULT WINAPI IDirectDrawClassFactoryImpl_QueryInterface(IClassFactory *iface, REFIID riid,
         void **obj)
 {
-    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
-
-    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), obj);
+    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IClassFactory))
     {
         IClassFactory_AddRef(iface);
-        *obj = This;
+        *obj = iface;
         return S_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),obj);
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *obj = NULL;
     return E_NOINTERFACE;
 }
 
