@@ -2629,11 +2629,8 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, source_elements_t *source
 
     assert(ctx->script->exec_ctx == ctx);
     ctx->script->exec_ctx = prev_ctx;
-
-    if(FAILED(hres)) {
-        VariantClear(&val);
+    if(FAILED(hres))
         return hres;
-    }
 
     if(retv)
         *retv = val;
