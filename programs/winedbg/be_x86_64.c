@@ -638,6 +638,13 @@ static int be_x86_64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
     return TRUE;
 }
 
+static int be_x86_64_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
+                                   unsigned is_signed, LONGLONG val)
+{
+    /* this is simple as we're on a little endian CPU */
+    return memory_write_value(lvalue, size, &val);
+}
+
 struct backend_cpu be_x86_64 =
 {
     IMAGE_FILE_MACHINE_AMD64,
@@ -663,5 +670,6 @@ struct backend_cpu be_x86_64 =
     be_x86_64_adjust_pc_for_break,
     be_x86_64_fetch_integer,
     be_x86_64_fetch_float,
+    be_x86_64_store_integer,
 };
 #endif

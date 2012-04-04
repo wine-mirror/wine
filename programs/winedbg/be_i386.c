@@ -772,6 +772,13 @@ static int be_i386_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
     return TRUE;
 }
 
+static int be_i386_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
+                                 unsigned is_signed, LONGLONG val)
+{
+    /* this is simple as we're on a little endian CPU */
+    return memory_write_value(lvalue, size, &val);
+}
+
 struct backend_cpu be_i386 =
 {
     IMAGE_FILE_MACHINE_I386,
@@ -797,5 +804,6 @@ struct backend_cpu be_i386 =
     be_i386_adjust_pc_for_break,
     be_i386_fetch_integer,
     be_i386_fetch_float,
+    be_i386_store_integer,
 };
 #endif

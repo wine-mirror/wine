@@ -241,6 +241,13 @@ static int be_arm_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
     return FALSE;
 }
 
+static int be_arm_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
+                                unsigned is_signed, LONGLONG val)
+{
+    dbg_printf("be_arm_store_integer: not done\n");
+    return FALSE;
+}
+
 struct backend_cpu be_arm =
 {
     IMAGE_FILE_MACHINE_ARMV7,
@@ -266,5 +273,6 @@ struct backend_cpu be_arm =
     be_arm_adjust_pc_for_break,
     be_arm_fetch_integer,
     be_arm_fetch_float,
+    be_arm_store_integer,
 };
 #endif
