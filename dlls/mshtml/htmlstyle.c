@@ -1350,32 +1350,16 @@ static HRESULT WINAPI HTMLStyle_put_verticalAlign(IHTMLStyle *iface, VARIANT v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    switch(V_VT(&v)) {
-    case VT_BSTR:
-        return set_style_attr(This, STYLEID_VERTICAL_ALIGN, V_BSTR(&v), 0);
-    default:
-        FIXME("not implemented vt %d\n", V_VT(&v));
-        return E_NOTIMPL;
-    }
-
-    return S_OK;
+    return set_nsstyle_attr_var(This->nsstyle, STYLEID_VERTICAL_ALIGN, &v, ATTR_FIX_PX);
 }
 
 static HRESULT WINAPI HTMLStyle_get_verticalAlign(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    BSTR ret;
-    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hres = get_style_attr(This, STYLEID_VERTICAL_ALIGN, &ret);
-    if(FAILED(hres))
-        return hres;
-
-    V_VT(p) = VT_BSTR;
-    V_BSTR(p) = ret;
-    return S_OK;
+    return get_nsstyle_attr_var(This->nsstyle, STYLEID_VERTICAL_ALIGN, p, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textTransform(IHTMLStyle *iface, BSTR v)

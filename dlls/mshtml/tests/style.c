@@ -1022,6 +1022,19 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "middle"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 100;
+    hres = IHTMLStyle_put_verticalAlign(style, v);
+    ok(hres == S_OK, "put_vertivalAlign failed: %08x\n", hres);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_verticalAlign(style, &v);
+    ok(hres == S_OK, "get_verticalAlign failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "100px"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     str = (void*)0xdeadbeef;
     hres = IHTMLStyle_get_textAlign(style, &str);
     ok(hres == S_OK, "get_textAlign failed: %08x\n", hres);
@@ -2099,7 +2112,7 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     hres = IHTMLCurrentStyle_get_verticalAlign(current_style, &v);
     ok(hres == S_OK, "get_verticalAlign failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
-    ok(!strcmp_wa(V_BSTR(&v), "middle"), "get_verticalAlign returned %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!strcmp_wa(V_BSTR(&v), "100px"), "get_verticalAlign returned %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     hres = IHTMLCurrentStyle_get_marginRight(current_style, &v);
