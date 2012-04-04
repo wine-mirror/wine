@@ -458,6 +458,9 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
     oss_sysinfo sysinfo;
     static int print_once = 0;
 
+    static const WCHAR outW[] = {'O','u','t',':',' ',0};
+    static const WCHAR inW[] = {'I','n',':',' ',0};
+
     TRACE("%d %p %p %p %p\n", flow, ids, guids, num, def_index);
 
     mixer_fd = open("/dev/mixer", O_RDONLY, 0);
@@ -536,7 +539,8 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
 
         if((flow == eCapture && (ai.caps & PCM_CAP_INPUT)) ||
                 (flow == eRender && (ai.caps & PCM_CAP_OUTPUT))){
-            size_t len;
+            size_t len, prefix_len;
+            const WCHAR *prefix;
 
             dev_item = HeapAlloc(GetProcessHeap(), 0, sizeof(*dev_item));
 
@@ -547,6 +551,15 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
             (*guids)[*num] = dev_item->guid;
 
             len = MultiByteToWideChar(CP_UNIXCP, 0, ai.name, -1, NULL, 0);
+            if(flow == eRender){
+                prefix = outW;
+                prefix_len = (sizeof(outW) / sizeof(*outW)) - 1;
+                len += prefix_len;
+            }else{
+                prefix = inW;
+                prefix_len = (sizeof(inW) / sizeof(*inW)) - 1;
+                len += prefix_len;
+            }
             (*ids)[*num] = HeapAlloc(GetProcessHeap(), 0,
                     len * sizeof(WCHAR));
             if(!(*ids)[*num]){
@@ -558,8 +571,9 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
                 close(mixer_fd);
                 return E_OUTOFMEMORY;
             }
+            memcpy((*ids)[*num], prefix, prefix_len * sizeof(WCHAR));
             MultiByteToWideChar(CP_UNIXCP, 0, ai.name, -1,
-                    (*ids)[*num], len);
+                    (*ids)[*num] + prefix_len, len - prefix_len);
 
             list_add_tail(&g_devices, &dev_item->entry);
 
