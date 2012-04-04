@@ -191,9 +191,9 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_SetState(IAMMultiMediaStream* ifac
 
     TRACE("(%p/%p)->(%u)\n", This, iface, new_state);
 
-    if (STREAMSTATE_RUN)
+    if (new_state == STREAMSTATE_RUN)
         hr = IMediaControl_Run(This->media_control);
-    else if (STREAMSTATE_STOP)
+    else if (new_state == STREAMSTATE_STOP)
         hr = IMediaControl_Stop(This->media_control);
 
     return hr;
