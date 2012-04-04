@@ -2296,9 +2296,9 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
     return TRUE;
 }
 
+#ifdef SONAME_LIBFONTCONFIG
 static void load_fontconfig_fonts(void)
 {
-#ifdef SONAME_LIBFONTCONFIG
     void *fc_handle = NULL;
     FcConfig *config;
     FcPattern *pat;
@@ -2364,9 +2364,125 @@ LOAD_FUNCPTR(FcPatternGetString);
     pFcObjectSetDestroy(os);
     pFcPatternDestroy(pat);
  sym_not_found:
-#endif
     return;
 }
+
+#elif defined(HAVE_CARBON_CARBON_H)
+
+static void load_mac_font_callback(const void *value, void *context)
+{
+    CFStringRef pathStr = value;
+    CFIndex len;
+    char* path;
+
+    len = CFStringGetMaximumSizeOfFileSystemRepresentation(pathStr);
+    path = HeapAlloc(GetProcessHeap(), 0, len);
+    if (path && CFStringGetFileSystemRepresentation(pathStr, path, len))
+    {
+        TRACE("font file %s\n", path);
+        AddFontToList(path, NULL, 0, ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE);
+    }
+    HeapFree(GetProcessHeap(), 0, path);
+}
+
+static void load_mac_fonts(void)
+{
+    CFStringRef removeDupesKey;
+    CFBooleanRef removeDupesValue;
+    CFDictionaryRef options;
+    CTFontCollectionRef col;
+    CFArrayRef descs;
+    CFMutableSetRef paths;
+    CFIndex i;
+
+    removeDupesKey = kCTFontCollectionRemoveDuplicatesOption;
+    removeDupesValue = kCFBooleanTrue;
+    options = CFDictionaryCreate(NULL, (const void**)&removeDupesKey, (const void**)&removeDupesValue, 1,
+                                 &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    col = CTFontCollectionCreateFromAvailableFonts(options);
+    if (options) CFRelease(options);
+    if (!col)
+    {
+        WARN("CTFontCollectionCreateFromAvailableFonts failed\n");
+        return;
+    }
+
+    descs = CTFontCollectionCreateMatchingFontDescriptors(col);
+    CFRelease(col);
+    if (!descs)
+    {
+        WARN("CTFontCollectionCreateMatchingFontDescriptors failed\n");
+        return;
+    }
+
+    paths = CFSetCreateMutable(NULL, 0, &kCFTypeSetCallBacks);
+    if (!paths)
+    {
+        WARN("CFSetCreateMutable failed\n");
+        CFRelease(descs);
+        return;
+    }
+
+    for (i = 0; i < CFArrayGetCount(descs); i++)
+    {
+        CTFontDescriptorRef desc;
+        CTFontRef font;
+        ATSFontRef atsFont;
+        OSStatus status;
+        FSRef fsref;
+        CFURLRef url;
+        CFStringRef ext;
+        CFStringRef path;
+
+        desc = CFArrayGetValueAtIndex(descs, i);
+
+        /* CTFontDescriptor doesn't support kCTFontURLAttribute until 10.6, so
+           we have to go CFFontDescriptor -> CTFont -> ATSFont -> FSRef -> CFURL. */
+        font = CTFontCreateWithFontDescriptor(desc, 0, NULL);
+        if (!font) continue;
+
+        atsFont = CTFontGetPlatformFont(font, NULL);
+        if (!atsFont)
+        {
+            CFRelease(font);
+            continue;
+        }
+
+        status = ATSFontGetFileReference(atsFont, &fsref);
+        CFRelease(font);
+        if (status != noErr) continue;
+
+        url = CFURLCreateFromFSRef(NULL, &fsref);
+        if (!url) continue;
+
+        ext = CFURLCopyPathExtension(url);
+        if (ext)
+        {
+            BOOL skip = (CFStringCompare(ext, CFSTR("pfa"), kCFCompareCaseInsensitive) == kCFCompareEqualTo ||
+                         CFStringCompare(ext, CFSTR("pfb"), kCFCompareCaseInsensitive) == kCFCompareEqualTo);
+            CFRelease(ext);
+            if (skip)
+            {
+                CFRelease(url);
+                continue;
+            }
+        }
+
+        path = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
+        CFRelease(url);
+        if (!path) continue;
+
+        CFSetAddValue(paths, path);
+        CFRelease(path);
+    }
+
+    CFRelease(descs);
+
+    CFSetApplyFunction(paths, load_mac_font_callback, NULL);
+    CFRelease(paths);
+}
+
+#endif
 
 static BOOL load_font_from_data_dir(LPCWSTR file)
 {
@@ -3138,7 +3254,11 @@ static void init_font_list(void)
         RegCloseKey(hkey);
     }
 
+#ifdef SONAME_LIBFONTCONFIG
     load_fontconfig_fonts();
+#elif defined(HAVE_CARBON_CARBON_H)
+    load_mac_fonts();
+#endif
 
     /* then look in any directories that we've specified in the config file */
     /* @@ Wine registry key: HKCU\Software\Wine\Fonts */

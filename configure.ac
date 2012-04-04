@@ -43,8 +43,7 @@ AC_ARG_WITH(cups,      AS_HELP_STRING([--without-cups],[do not use CUPS]))
 AC_ARG_WITH(curses,    AS_HELP_STRING([--without-curses],[do not use (n)curses]),
             [if test "x$withval" = "xno"; then ac_cv_header_ncurses_h=no; ac_cv_header_curses_h=no; fi])
 AC_ARG_WITH(dbus,      AS_HELP_STRING([--without-dbus],[do not use DBus (dynamic device support)]))
-AC_ARG_WITH(fontconfig,AS_HELP_STRING([--without-fontconfig],[do not use fontconfig]),
-            [if test "x$withval" = "xno"; then ac_cv_header_fontconfig_fontconfig_h=no; fi])
+AC_ARG_WITH(fontconfig,AS_HELP_STRING([--without-fontconfig],[do not use fontconfig]))
 AC_ARG_WITH(freetype,  AS_HELP_STRING([--without-freetype],[do not use the FreeType library]))
 AC_ARG_WITH(gettext,   AS_HELP_STRING([--without-gettext],[do not use gettext]))
 AC_ARG_WITH(gettextpo, AS_HELP_STRING([--with-gettextpo],[use the GetTextPO library to rebuild po files]),
@@ -142,6 +141,7 @@ case $host in
       AC_SUBST(TARGETFLAGS,"-m32")
       enable_win16=${enable_win16:-yes}
     fi
+    with_fontconfig=${with_fontconfig:-no}
     ;;
   x86_64*)
     if test "x$enable_win64" != "xyes" -a "$cross_compiling" != "yes"
@@ -380,6 +380,8 @@ AC_SUBST(XLIB,"")
 AC_SUBST(OPENGL_LIBS,"")
 
 dnl **** Check for header files ****
+
+test "x$with_fontconfig" != "xno" || ac_cv_header_fontconfig_fontconfig_h=no
 
 AC_SYS_LARGEFILE()
 

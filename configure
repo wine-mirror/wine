@@ -2561,7 +2561,7 @@ fi
 
 # Check whether --with-fontconfig was given.
 if test "${with_fontconfig+set}" = set; then :
-  withval=$with_fontconfig; if test "x$withval" = "xno"; then ac_cv_header_fontconfig_fontconfig_h=no; fi
+  withval=$with_fontconfig;
 fi
 
 
@@ -4058,6 +4058,7 @@ case $host in
 
       enable_win16=${enable_win16:-yes}
     fi
+    with_fontconfig=${with_fontconfig:-no}
     ;;
   x86_64*)
     if test "x$enable_win64" != "xyes" -a "$cross_compiling" != "yes"
@@ -5277,6 +5278,8 @@ XLIB=""
 OPENGL_LIBS=""
 
 
+
+test "x$with_fontconfig" != "xno" || ac_cv_header_fontconfig_fontconfig_h=no
 
 # Check whether --enable-largefile was given.
 if test "${enable_largefile+set}" = set; then :
