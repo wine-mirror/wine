@@ -9,4 +9,7 @@ C_SRCS = \
 	qtutils.c \
 	qtvdecoder.c
 
+RC_SRCS = \
+	rsrc.rc
+
 @MAKE_DLL_RULES@

@@ -34,6 +34,7 @@
 #include "objbase.h"
 #include "uuids.h"
 #include "strmif.h"
+#include "rpcproxy.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -42,6 +43,7 @@
 #include "initguid.h"
 DEFINE_GUID(CLSID_QTVDecoder, 0x683DDACB, 0x4354, 0x490C, 0xA0,0x58, 0xE0,0x5A,0xD0,0xF2,0x05,0x37);
 DEFINE_GUID(CLSID_QTSplitter,    0xD0E70E49, 0x5927, 0x4894, 0xA3,0x86, 0x35,0x94,0x60,0xEE,0x87,0xC9);
+DEFINE_GUID(WINESUBTYPE_QTSplitter,    0xFFFFFFFF, 0x5927, 0x4894, 0xA3,0x86, 0x35,0x94,0x60,0xEE,0x87,0xC9);
 
 WINE_DEFAULT_DEBUG_CHANNEL(qtdecoder);
 
@@ -59,7 +61,8 @@ static const AMOVIESETUP_MEDIATYPE amfMTvideo[] =
 static const AMOVIESETUP_MEDIATYPE amfMTaudio[] =
 {   { &MEDIATYPE_Audio, &MEDIASUBTYPE_NULL } };
 static const AMOVIESETUP_MEDIATYPE amfMTstream[] =
-{   { &MEDIATYPE_Stream, &MEDIASUBTYPE_NULL } };
+{   { &MEDIATYPE_Stream, &WINESUBTYPE_QTSplitter},
+    { &MEDIATYPE_Stream, &MEDIASUBTYPE_NULL } };
 
 static const AMOVIESETUP_PIN amfQTVPin[] =
 {   {   wNull,
@@ -84,7 +87,7 @@ static const AMOVIESETUP_PIN amfQTDPin[] =
         FALSE, FALSE, FALSE, FALSE,
         &GUID_NULL,
         NULL,
-        1,
+        2,
         amfMTstream
     },
     {
@@ -139,12 +142,14 @@ FactoryTemplate const g_Templates[] = {
 };
 
 int g_cTemplates = sizeof(g_Templates) / sizeof(g_Templates[0]);
+static HINSTANCE hInst = NULL;
 
 /***********************************************************************
  *    Dll EntryPoint (wineqtdecoder.@)
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
+    hInst = hInstDLL;
     return STRMBASE_DllMain(hInstDLL,fdwReason,lpv);
 }
 
@@ -161,8 +166,12 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
+    HRESULT hr;
     TRACE("()\n");
-    return AMovieDllRegisterServer2(TRUE);
+    hr = AMovieDllRegisterServer2(TRUE);
+    if (SUCCEEDED(hr))
+        hr = __wine_register_resources(hInst);
+    return hr;
 }
 
 /***********************************************************************
@@ -170,8 +179,12 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
+    HRESULT hr;
     TRACE("\n");
-    return AMovieDllRegisterServer2(FALSE);
+    hr = AMovieDllRegisterServer2(FALSE);
+    if (SUCCEEDED(hr))
+        hr = __wine_unregister_resources(hInst);
+    return hr;
 }
 
 /***********************************************************************
