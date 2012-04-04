@@ -168,19 +168,19 @@ static inline IDirectDrawFactoryImpl *impl_from_IDirectDrawFactory(IDirectDrawFa
 static HRESULT WINAPI IDirectDrawFactoryImpl_QueryInterface(IDirectDrawFactory *iface, REFIID riid,
         void **obj)
 {
-    IDirectDrawFactoryImpl *This = impl_from_IDirectDrawFactory(iface);
-
-    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), obj);
+    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirectDrawFactory))
     {
         IDirectDrawFactory_AddRef(iface);
-        *obj = This;
+        *obj = iface;
         return S_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),obj);
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *obj = NULL;
     return E_NOINTERFACE;
 }
 
