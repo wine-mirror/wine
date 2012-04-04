@@ -483,7 +483,7 @@ static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *heade
 
 static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin, ALLOCATOR_PROPERTIES *props)
 {
-    PullPin *pPin = (PullPin *)iface;
+    PullPin *pPin = impl_PullPin_from_IPin(iface);
     MPEGSplitterImpl *This = (MPEGSplitterImpl*)pPin->pin.pinInfo.pFilter;
     HRESULT hr;
     LONGLONG pos = 0; /* in bytes */
@@ -705,7 +705,7 @@ static HRESULT WINAPI MPEGSplitter_seek(IMediaSeeking *iface)
         TRACE("Moving sound to %08u bytes!\n", (DWORD)bytepos);
 
         EnterCriticalSection(&pin->thread_lock);
-        IPin_BeginFlush((IPin *)pin);
+        IPin_BeginFlush(&pin->pin.IPin_iface);
 
         /* Make sure this is done while stopped, BeginFlush takes care of this */
         EnterCriticalSection(&This->Parser.filter.csFilter);
@@ -718,7 +718,7 @@ static HRESULT WINAPI MPEGSplitter_seek(IMediaSeeking *iface)
         LeaveCriticalSection(&This->Parser.filter.csFilter);
 
         TRACE("Done flushing\n");
-        IPin_EndFlush((IPin *)pin);
+        IPin_EndFlush(&pin->pin.IPin_iface);
         LeaveCriticalSection(&pin->thread_lock);
     }
     return hr;

@@ -122,3 +122,9 @@ HRESULT WINAPI PullPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE
 HRESULT PullPin_StartProcessing(PullPin * This);
 HRESULT PullPin_PauseProcessing(PullPin * This);
 HRESULT PullPin_WaitForStateChange(PullPin * This, DWORD dwMilliseconds);
+
+/* COM helpers */
+static inline PullPin *impl_PullPin_from_IPin( IPin *iface )
+{
+    return CONTAINING_RECORD(iface, PullPin, pin.IPin_iface);
+}

@@ -559,7 +559,7 @@ static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, AVISTDINDEX **ind
     if (!pIndex)
         return E_OUTOFMEMORY;
 
-    IAsyncReader_SyncRead(((PullPin *)This->Parser.ppPins[0])->pReader, qwOffset, cb, (BYTE *)pIndex);
+    IAsyncReader_SyncRead((impl_PullPin_from_IPin(This->Parser.ppPins[0]))->pReader, qwOffset, cb, (BYTE *)pIndex);
     rest = cb - sizeof(AVISUPERINDEX) + sizeof(RIFFCHUNK) + sizeof(pIndex->aIndex);
 
     TRACE("FOURCC: %s\n", debugstr_an((char *)&pIndex->fcc, 4));
@@ -1019,7 +1019,7 @@ static HRESULT AVISplitter_Disconnect(LPVOID iface);
 /* FIXME: fix leaks on failure here */
 static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, ALLOCATOR_PROPERTIES *props)
 {
-    PullPin *This = (PullPin *)iface;
+    PullPin *This = impl_PullPin_from_IPin(iface);
     HRESULT hr;
     RIFFLIST list;
     LONGLONG pos = 0; /* in bytes */
@@ -1301,7 +1301,7 @@ static HRESULT WINAPI AVISplitter_seek(IMediaSeeking *iface)
 
     EnterCriticalSection(&pPin->thread_lock);
     /* Send a flush to all output pins */
-    IPin_BeginFlush((IPin *)pPin);
+    IPin_BeginFlush(&pPin->pin.IPin_iface);
 
     /* Make sure this is done while stopped, BeginFlush takes care of this */
     EnterCriticalSection(&This->Parser.filter.csFilter);
@@ -1401,7 +1401,7 @@ static HRESULT WINAPI AVISplitter_seek(IMediaSeeking *iface)
     LeaveCriticalSection(&This->Parser.filter.csFilter);
 
     TRACE("Done flushing\n");
-    IPin_EndFlush((IPin *)pPin);
+    IPin_EndFlush(&pPin->pin.IPin_iface);
     LeaveCriticalSection(&pPin->thread_lock);
 
     return S_OK;

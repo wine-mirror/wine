@@ -254,7 +254,7 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
 {
     PIN_DIRECTION pindirReceive;
     HRESULT hr = S_OK;
-    PullPin *This = (PullPin *)iface;
+    PullPin *This = impl_PullPin_from_IPin(iface);
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, pReceivePin, pmt);
     dump_AM_MEDIA_TYPE(pmt);
@@ -344,7 +344,7 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
 
 HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
-    PullPin *This = (PullPin *)iface;
+    PullPin *This = impl_PullPin_from_IPin(iface);
 
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
 
@@ -373,7 +373,7 @@ HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 
 ULONG WINAPI PullPin_Release(IPin *iface)
 {
-    PullPin *This = (PullPin *)iface;
+    PullPin *This = impl_PullPin_from_IPin(iface);
     ULONG refCount = InterlockedDecrement(&This->pin.refCount);
 
     TRACE("(%p)->() Release from %d\n", This, refCount + 1);
@@ -449,7 +449,7 @@ static void PullPin_Thread_Process(PullPin *This)
 
     if (This->rtCurrent >= This->rtStop)
     {
-        IPin_EndOfStream((IPin *)This);
+        IPin_EndOfStream(&This->pin.IPin_iface);
         return;
     }
 
@@ -717,7 +717,7 @@ HRESULT PullPin_WaitForStateChange(PullPin * This, DWORD dwMilliseconds)
 
 HRESULT WINAPI PullPin_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
 {
-    PullPin *This = (PullPin *)iface;
+    PullPin *This = impl_PullPin_from_IPin(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pmt);
 
@@ -726,7 +726,7 @@ HRESULT WINAPI PullPin_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
 
 HRESULT WINAPI PullPin_EndOfStream(IPin * iface)
 {
-    PullPin *This = (PullPin *)iface;
+    PullPin *This = impl_PullPin_from_IPin(iface);
     HRESULT hr = S_FALSE;
 
     TRACE("(%p)->()\n", iface);
@@ -741,7 +741,7 @@ HRESULT WINAPI PullPin_EndOfStream(IPin * iface)
 
 HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
 {
-    PullPin *This = (PullPin *)iface;
+    PullPin *This = impl_PullPin_from_IPin(iface);
     TRACE("(%p)->()\n", This);
 
     EnterCriticalSection(This->pin.pCritSec);
@@ -775,7 +775,7 @@ HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
 
 HRESULT WINAPI PullPin_EndFlush(IPin * iface)
 {
-    PullPin *This = (PullPin *)iface;
+    PullPin *This = impl_PullPin_from_IPin(iface);
 
     TRACE("(%p)->()\n", iface);
 
@@ -806,7 +806,7 @@ HRESULT WINAPI PullPin_EndFlush(IPin * iface)
 HRESULT WINAPI PullPin_Disconnect(IPin *iface)
 {
     HRESULT hr;
-    PullPin *This = (PullPin *)iface;
+    PullPin *This = impl_PullPin_from_IPin(iface);
 
     TRACE("()\n");
 

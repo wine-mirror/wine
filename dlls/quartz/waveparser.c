@@ -215,7 +215,7 @@ static HRESULT WINAPI WAVEParserImpl_seek(IMediaSeeking *iface)
     TRACE("Moving sound to %08u bytes!\n", (DWORD)BYTES_FROM_MEDIATIME(bytepos));
 
     EnterCriticalSection(&pPin->thread_lock);
-    IPin_BeginFlush((IPin *)pPin);
+    IPin_BeginFlush(&pPin->pin.IPin_iface);
 
     /* Make sure this is done while stopped, BeginFlush takes care of this */
     EnterCriticalSection(&This->Parser.filter.csFilter);
@@ -231,7 +231,7 @@ static HRESULT WINAPI WAVEParserImpl_seek(IMediaSeeking *iface)
     LeaveCriticalSection(&This->Parser.filter.csFilter);
 
     TRACE("Done flushing\n");
-    IPin_EndFlush((IPin *)pPin);
+    IPin_EndFlush(&pPin->pin.IPin_iface);
     LeaveCriticalSection(&pPin->thread_lock);
 
     return S_OK;
@@ -239,7 +239,7 @@ static HRESULT WINAPI WAVEParserImpl_seek(IMediaSeeking *iface)
 
 static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, ALLOCATOR_PROPERTIES *props)
 {
-    PullPin *This = (PullPin *)iface;
+    PullPin *This = impl_PullPin_from_IPin(iface);
     HRESULT hr;
     RIFFLIST list;
     RIFFCHUNK chunk;
