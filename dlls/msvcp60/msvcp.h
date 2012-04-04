@@ -83,7 +83,7 @@ extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
 #define DEFINE_RTTI_DATA(name, off, base_classes, cl1, cl2, cl3, mangled_name) \
 static const type_info name ## _type_info = { \
-    &MSVCP_ ## name ## _vtable, \
+    &MSVCP_type_info_vtable, \
     NULL, \
     mangled_name \
 }; \

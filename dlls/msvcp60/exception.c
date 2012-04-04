@@ -61,6 +61,7 @@ typedef struct __cxx_exception_type
 void WINAPI _CxxThrowException(exception*,const cxx_exception_type*);
 
 /* vtables */
+extern const vtable_ptr MSVCP_type_info_vtable;
 extern const vtable_ptr MSVCP_exception_vtable;
 /* ??_7bad_alloc@std@@6B@ */
 extern const vtable_ptr MSVCP_bad_alloc_vtable;
@@ -73,6 +74,33 @@ extern const vtable_ptr MSVCP_out_of_range_vtable;
 extern const vtable_ptr MSVCP_invalid_argument_vtable;
 /* ??_7runtime_error@std@@6B@ */
 extern const vtable_ptr MSVCP_runtime_error_vtable;
+
+static void MSVCP_type_info_dtor(type_info * _this)
+{
+    free(_this->name);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_type_info_vector_dtor,8)
+void * __thiscall MSVCP_type_info_vector_dtor(type_info * _this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", _this, flags);
+    if (flags & 2)
+    {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)_this - 1;
+
+        for (i = *ptr - 1; i >= 0; i--) MSVCP_type_info_dtor(_this + i);
+        MSVCRT_operator_delete(ptr);
+    }
+    else
+    {
+        MSVCP_type_info_dtor(_this);
+        if (flags & 1) MSVCRT_operator_delete(_this);
+    }
+    return _this;
+}
+
+DEFINE_RTTI_DATA( type_info, 0, 0, NULL, NULL, NULL, ".?AVtype_info@@" );
 
 DEFINE_THISCALL_WRAPPER(MSVCP_exception_ctor, 8)
 exception* __thiscall MSVCP_exception_ctor(exception *this, const char *name)
@@ -703,6 +731,7 @@ const char* __thiscall MSVCP_runtime_error_what(runtime_error *this)
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
+    __ASM_VTABLE(type_info,"");
     __ASM_VTABLE(exception,
             VTABLE_ADD_FUNC(MSVCP_exception_what)
             VTABLE_ADD_FUNC(MSVCP_exception__Doraise));
