@@ -241,14 +241,15 @@ numInstalledOptions of OPTIONs
 
 } PSDRV_DEVMODEA;
 
-typedef struct _tagPI {
+typedef struct
+{
+    struct list             entry;
     WCHAR                   *friendly_name;
     PPD			    *ppd;
     PSDRV_DEVMODEA	    *Devmode;
     FONTFAMILY		    *Fonts;
     PPRINTER_ENUM_VALUESA   FontSubTable;
     DWORD		    FontSubTableSize;
-    struct _tagPI	    *next;
 } PRINTERINFO;
 
 typedef struct {

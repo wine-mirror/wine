@@ -530,15 +530,15 @@ static INT PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     }
 }
 
+static struct list printer_list = LIST_INIT( printer_list );
 
 /**********************************************************************
  *		PSDRV_FindPrinterInfo
  */
 PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 {
-    static PRINTERINFO *PSDRV_PrinterList;
     DWORD type = REG_BINARY, needed, res, dwPaperSize;
-    PRINTERINFO *pi = PSDRV_PrinterList, **last = &PSDRV_PrinterList;
+    PRINTERINFO *pi;
     FONTNAME *font;
     const AFM *afm;
     HANDLE hPrinter = 0;
@@ -551,17 +551,14 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 
     TRACE("'%s'\n", debugstr_w(name));
 
-    /*
-     *	If this loop completes, last will point to the 'next' element of the
-     *	final PRINTERINFO in the list
-     */
-    for( ; pi; last = &pi->next, pi = pi->next)
-        if(!strcmpW(pi->friendly_name, name))
-	    return pi;
+    LIST_FOR_EACH_ENTRY( pi, &printer_list, PRINTERINFO, entry )
+    {
+        if (!strcmpW( pi->friendly_name, name ))
+            return pi;
+    }
 
-    pi = *last = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*pi) );
-    if (pi == NULL)
-    	return NULL;
+    pi = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*pi) );
+    if (pi == NULL) return NULL;
 
     if (!(pi->friendly_name = HeapAlloc( PSDRV_Heap, 0, (strlenW(name)+1)*sizeof(WCHAR) ))) goto fail;
     strcpyW( pi->friendly_name, name );
@@ -775,7 +772,6 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 	goto cleanup;
     }
 
-    pi->next = NULL;
     pi->Fonts = NULL;
 
     for(font = pi->ppd->InstalledFonts; font; font = font->next) {
@@ -795,6 +791,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     }
     HeapFree( GetProcessHeap(), 0, nameA );
     if (ppd) unlink(ppd);
+    list_add_head( &printer_list, &pi->entry );
     return pi;
 
 closeprinter:
@@ -808,7 +805,6 @@ fail:
     HeapFree(PSDRV_Heap, 0, pi);
     HeapFree( GetProcessHeap(), 0, nameA );
     if (ppd) unlink(ppd);
-    *last = NULL;
     return NULL;
 }
 
