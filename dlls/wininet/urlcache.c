@@ -72,7 +72,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define NEWFILE_SIZE		(NEWFILE_NUM_BLOCKS * BLOCKSIZE + ENTRY_START_OFFSET)
 
 #define HASHTABLE_URL           0
-#define HASHTABLE_LEAK          1
+#define HASHTABLE_DEL           1
 #define HASHTABLE_LOCK          2
 #define HASHTABLE_FREE          3
 #define HASHTABLE_REDR          5
@@ -838,11 +838,10 @@ static BOOL URLCache_DeleteEntry(LPURLCACHE_HEADER pHeader, CACHEFILE_ENTRY * pE
     BYTE * AllocationTable = (LPBYTE)pHeader + ALLOCATION_TABLE_OFFSET;
 
     /* update allocation table */
-    dwStartBlock = ((DWORD)((BYTE *)pEntry - (BYTE *)pHeader)) / BLOCKSIZE;
+    dwStartBlock = ((DWORD)((BYTE *)pEntry - (BYTE *)pHeader) - ENTRY_START_OFFSET) / BLOCKSIZE;
     for (dwBlock = dwStartBlock; dwBlock < dwStartBlock + pEntry->dwBlocksUsed; dwBlock++)
         URLCache_Allocation_BlockFree(AllocationTable, dwBlock);
 
-    ZeroMemory(pEntry, pEntry->dwBlocksUsed * BLOCKSIZE);
     return TRUE;
 }
 
@@ -1302,8 +1301,7 @@ static void URLCache_HashEntrySetFlags(struct _HASH_ENTRY * pHashEntry, DWORD dw
  */
 static BOOL URLCache_DeleteEntryFromHash(struct _HASH_ENTRY * pHashEntry)
 {
-    pHashEntry->dwHashKey = HASHTABLE_FREE;
-    pHashEntry->dwOffsetEntry = HASHTABLE_FREE;
+    pHashEntry->dwHashKey = HASHTABLE_DEL;
     return TRUE;
 }
 
@@ -1353,7 +1351,7 @@ static DWORD URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, 
         for (i = 0; i < HASHTABLE_BLOCKSIZE; i++)
         {
             struct _HASH_ENTRY * pHashElement = &pHashEntry->HashTable[offset + i];
-            if (pHashElement->dwHashKey == HASHTABLE_FREE) /* if the slot is free */
+            if (pHashElement->dwHashKey==HASHTABLE_FREE || pHashElement->dwHashKey==HASHTABLE_DEL) /* if the slot is free */
             {
                 pHashElement->dwHashKey = key;
                 pHashElement->dwOffsetEntry = dwOffsetEntry;
@@ -1459,7 +1457,7 @@ static BOOL URLCache_EnumHashTableEntries(LPCURLCACHE_HEADER pHeader, const HASH
 {
     for (; *index < HASHTABLE_SIZE ; (*index)++)
     {
-        if (pHashEntry->HashTable[*index].dwHashKey == HASHTABLE_FREE)
+        if (pHashEntry->HashTable[*index].dwHashKey==HASHTABLE_FREE || pHashEntry->HashTable[*index].dwHashKey==HASHTABLE_DEL)
             continue;
 
         *ppHashEntry = &pHashEntry->HashTable[*index];
