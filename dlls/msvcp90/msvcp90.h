@@ -83,7 +83,7 @@ extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
 #define DEFINE_RTTI_DATA(name, off, base_classes, cl1, cl2, cl3, mangled_name) \
 static const type_info name ## _type_info = { \
-    &MSVCP_ ## name ## _vtable, \
+    &MSVCP_type_info_vtable, \
     NULL, \
     mangled_name \
 }; \
@@ -176,6 +176,8 @@ typedef struct __type_info
     char              *name;         /* Unmangled name, allocated lazily */
     char               mangled[128]; /* Variable length, but we declare it large enough for static RTTI */
 } type_info;
+
+extern const vtable_ptr MSVCP_type_info_vtable;
 
 /* offsets for computing the this pointer */
 typedef struct
