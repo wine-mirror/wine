@@ -1,3 +1,5 @@
 MODULE = atl80.dll
 
+C_SRCS = atl80.c
+
 @MAKE_DLL_RULES@

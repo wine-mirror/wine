@@ -48,7 +48,7 @@
 58 stdcall AtlModuleAddTermFunc(ptr ptr long) atl.AtlModuleAddTermFunc
 59 stub AtlAxCreateControlLic
 60 stub AtlAxCreateControlLicEx
-61 stub AtlCreateRegistrar
+61 stdcall AtlCreateRegistrar(ptr)
 62 stub AltWinModuleRegisterClassExW
 63 stub AltWinModuleRegisterClassExA
 64 stub AltCallTermFunc
