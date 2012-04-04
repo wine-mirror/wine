@@ -179,6 +179,12 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 }
 
 
+typedef struct
+{
+    PRINTERINFO *pi;
+    PSDRV_DEVMODEA *dlgdm;
+} PSDRV_DLGINFO;
+
 /****************************************************************
  *       PSDRV_PaperDlgProc
  *
@@ -360,8 +366,8 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
     HPROPSHEETPAGE hpsp[1];
     PROPSHEETPAGEW psp;
     PROPSHEETHEADERW psh;
-    PSDRV_DLGINFO *di;
-    PSDRV_DEVMODEA *dlgdm;
+    PSDRV_DLGINFO di;
+    PSDRV_DEVMODEA dlgdm;
     static const WCHAR PAPERW[] = {'P','A','P','E','R','\0'};
     static const WCHAR SetupW[] = {'S','e','t','u','p','\0'};
 
@@ -372,17 +378,15 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
 						    "CreatePropertySheetPageW");
     pPropertySheet = (void*)GetProcAddress(hinstComctl32, "PropertySheetW");
     memset(&psp,0,sizeof(psp));
-    dlgdm = HeapAlloc( PSDRV_Heap, 0, sizeof(*dlgdm) );
-    *dlgdm = *pi->Devmode;
-    di = HeapAlloc( PSDRV_Heap, 0, sizeof(*di) );
-    di->pi = pi;
-    di->dlgdm = dlgdm;
+    dlgdm = *pi->Devmode;
+    di.pi = pi;
+    di.dlgdm = &dlgdm;
     psp.dwSize = sizeof(psp);
     psp.hInstance = PSDRV_hInstance;
     psp.u.pszTemplate = PAPERW;
     psp.u2.pszIcon = NULL;
     psp.pfnDlgProc = PSDRV_PaperDlgProc;
-    psp.lParam = (LPARAM)di;
+    psp.lParam = (LPARAM)&di;
     hpsp[0] = pCreatePropertySheetPage(&psp);
 
     memset(&psh, 0, sizeof(psh));

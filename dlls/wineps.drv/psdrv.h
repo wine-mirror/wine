@@ -385,11 +385,6 @@ typedef struct
     int                 pathdepth;
 } PSDRV_PDEVICE;
 
-typedef struct {
-    PRINTERINFO *pi;
-    PSDRV_DEVMODEA *dlgdm;
-} PSDRV_DLGINFO;
-
 static inline PSDRV_PDEVICE *get_psdrv_dev( PHYSDEV dev )
 {
     return (PSDRV_PDEVICE *)dev;
