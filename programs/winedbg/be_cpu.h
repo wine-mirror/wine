@@ -112,6 +112,8 @@ struct backend_cpu
     int                 (*fetch_integer)(const struct dbg_lvalue* lvalue, unsigned size, unsigned is_signed, LONGLONG*);
     /* Reads a real from memory and stores it inside a long double */
     int                 (*fetch_float)(const struct dbg_lvalue* lvalue, unsigned size, long double*);
+    /* Writes an integer to memory */
+    int                 (*store_integer)(const struct dbg_lvalue* lvalue, unsigned size, unsigned is_signed, LONGLONG);
 };
 
 extern struct backend_cpu*      be_cpu;

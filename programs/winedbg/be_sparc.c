@@ -148,6 +148,13 @@ static int be_sparc_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
     return FALSE;
 }
 
+static int be_sparc_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
+                                  unsigned is_signed, LONGLONG val)
+{
+    dbg_printf("be_sparc_store_integer: not done\n");
+    return FALSE;
+}
+
 struct backend_cpu be_sparc =
 {
     IMAGE_FILE_MACHINE_SPARC,
@@ -173,5 +180,6 @@ struct backend_cpu be_sparc =
     be_sparc_adjust_pc_for_break,
     be_sparc_fetch_integer,
     be_sparc_fetch_float,
+    be_sparc_store_integer,
 };
 #endif

@@ -204,7 +204,7 @@ disassemble_command:
     ;
 
 set_command:
-      tSET lvalue_addr '=' expr_rvalue { memory_write_value(&$2, sizeof(int), &$4); }
+      tSET lvalue_addr '=' expr_lvalue { types_store_value(&$2, &$4); }
     | tSET '+' tIDENTIFIER      { info_wine_dbg_channel(TRUE, NULL, $3); }
     | tSET '+' tALL             { info_wine_dbg_channel(TRUE, NULL, "all"); }
     | tSET '-' tIDENTIFIER      { info_wine_dbg_channel(FALSE, NULL, $3); }

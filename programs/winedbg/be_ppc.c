@@ -173,6 +173,13 @@ static int be_ppc_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
     return FALSE;
 }
 
+static int be_ppc_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
+                                unsigned is_signed, LONGLONG val)
+{
+    dbg_printf("be_ppc_store_integer: not done\n");
+    return FALSE;
+}
+
 struct backend_cpu be_ppc =
 {
     IMAGE_FILE_MACHINE_POWERPC,
@@ -198,5 +205,6 @@ struct backend_cpu be_ppc =
     be_ppc_adjust_pc_for_break,
     be_ppc_fetch_integer,
     be_ppc_fetch_float,
+    be_ppc_store_integer,
 };
 #endif

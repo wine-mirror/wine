@@ -53,12 +53,14 @@ BOOL types_get_real_type(struct dbg_type* type, DWORD* tag)
  * Given a lvalue, try to get an integral (or pointer/address) value
  * out of it
  */
-LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue, unsigned* psize)
+LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue,
+                                   unsigned* psize, BOOL *issigned)
 {
     LONGLONG            rtn;
     DWORD               tag, bt;
     DWORD64             size;
     struct dbg_type     type = lvalue->type;
+    BOOL                s = FALSE;
 
     if (!types_get_real_type(&type, &tag))
         RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
@@ -69,6 +71,7 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue, unsigned* ps
     }
 
     if (psize) *psize = 0;
+    if (issigned) *issigned = FALSE;
     switch (tag)
     {
     case SymTagBaseType:
@@ -87,30 +90,31 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue, unsigned* ps
         {
         case btChar:
         case btInt:
-            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, TRUE, &rtn))
+            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, s = TRUE, &rtn))
                 RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
             break;
         case btUInt:
-            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, FALSE, &rtn))
+            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, s = FALSE, &rtn))
                 RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
             break;
         case btFloat:
             RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
         }
         if (psize) *psize = (unsigned)size;
+        if (issigned) *issigned = s;
         break;
     case SymTagPointerType:
-        if (!be_cpu->fetch_integer(lvalue, sizeof(void*), FALSE, &rtn))
+        if (!be_cpu->fetch_integer(lvalue, sizeof(void*), s = FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagArrayType:
     case SymTagUDT:
-        if (!be_cpu->fetch_integer(lvalue, sizeof(unsigned), FALSE, &rtn))
+        if (!be_cpu->fetch_integer(lvalue, sizeof(unsigned), s = FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagEnum:
         /* FIXME: we don't handle enum size */
-        if (!be_cpu->fetch_integer(lvalue, sizeof(unsigned), FALSE, &rtn))
+        if (!be_cpu->fetch_integer(lvalue, sizeof(unsigned), s = FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagFunctionType:
@@ -133,7 +137,7 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue, unsigned* ps
  */
 long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
 {
-    return types_extract_as_longlong(lvalue, NULL);
+    return types_extract_as_longlong(lvalue, NULL, NULL);
 }
 
 /******************************************************************
@@ -150,8 +154,25 @@ void types_extract_as_address(const struct dbg_lvalue* lvalue, ADDRESS64* addr)
     else
     {
         addr->Mode = AddrModeFlat;
-        addr->Offset = types_extract_as_longlong(lvalue, NULL);
+        addr->Offset = types_extract_as_longlong(lvalue, NULL, NULL);
     }
+}
+
+BOOL types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lvalue_from)
+{
+    LONGLONG    val;
+    DWORD64     size;
+    BOOL        is_signed;
+
+    if (!types_get_info(&lvalue_to->type, TI_GET_LENGTH, &size)) return FALSE;
+    if (sizeof(val) < size)
+    {
+        dbg_printf("Unsufficient size\n");
+        return FALSE;
+    }
+    /* FIXME: should support floats as well */
+    val = types_extract_as_longlong(lvalue_from, NULL, &is_signed);
+    return be_cpu->store_integer(lvalue_to, size, is_signed, val);
 }
 
 /******************************************************************
