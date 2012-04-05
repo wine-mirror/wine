@@ -2678,6 +2678,14 @@ static BOOL CommitUrlCacheEntryInternal(
 
     if (URLCache_FindHash(pHeader, lpszUrlNameA, &pHashEntry))
     {
+        if ((pHashEntry->dwHashKey & ((1<<HASHTABLE_FLAG_BITS)-1)) == HASHTABLE_LOCK)
+        {
+            /* FIXME: implement timeout object unlocking */
+            FIXME("Trying to overwrite locked entry\n");
+            SetLastError(ERROR_SHARING_VIOLATION);
+            goto cleanup;
+        }
+
         FIXME("entry already in cache - don't know what to do!\n");
 /*
  *        SetLastError(ERROR_FILE_NOT_FOUND);
