@@ -1585,54 +1585,105 @@ static void convert_driverinfo_W_to_A(LPBYTE out, LPBYTE pDriversW,
 
 
 /***********************************************************
- *             PRINTER_INFO_2AtoW
- * Creates a unicode copy of PRINTER_INFO_2A on heap
+ *             printer_info_AtoW
  */
-static LPPRINTER_INFO_2W PRINTER_INFO_2AtoW(HANDLE heap, LPPRINTER_INFO_2A piA)
+static void *printer_info_AtoW( const void *data, DWORD level )
 {
-    LPPRINTER_INFO_2W piW;
+    void *ret;
     UNICODE_STRING usBuffer;
 
-    if(!piA) return NULL;
-    piW = HeapAlloc(heap, 0, sizeof(*piW));
-    memcpy(piW, piA, sizeof(*piW)); /* copy everything first */
-    
-    piW->pServerName = asciitounicode(&usBuffer,piA->pServerName);
-    piW->pPrinterName = asciitounicode(&usBuffer,piA->pPrinterName);
-    piW->pShareName = asciitounicode(&usBuffer,piA->pShareName);
-    piW->pPortName = asciitounicode(&usBuffer,piA->pPortName);
-    piW->pDriverName = asciitounicode(&usBuffer,piA->pDriverName);
-    piW->pComment = asciitounicode(&usBuffer,piA->pComment);
-    piW->pLocation = asciitounicode(&usBuffer,piA->pLocation);
-    piW->pDevMode = piA->pDevMode ? GdiConvertToDevmodeW(piA->pDevMode) : NULL;
-    piW->pSepFile = asciitounicode(&usBuffer,piA->pSepFile);
-    piW->pPrintProcessor = asciitounicode(&usBuffer,piA->pPrintProcessor);
-    piW->pDatatype = asciitounicode(&usBuffer,piA->pDatatype);
-    piW->pParameters = asciitounicode(&usBuffer,piA->pParameters);
-    return piW;
+    if (!data) return NULL;
+
+    if (level < 1 || level > 9) return NULL;
+
+    ret = HeapAlloc( GetProcessHeap(), 0, pi_sizeof[level] );
+    if (!ret) return NULL;
+
+    memcpy( ret, data, pi_sizeof[level] ); /* copy everything first */
+
+    switch (level)
+    {
+    case 2:
+    {
+        const PRINTER_INFO_2A *piA = (const PRINTER_INFO_2A *)data;
+        PRINTER_INFO_2W *piW = (PRINTER_INFO_2W *)ret;
+
+        piW->pServerName = asciitounicode( &usBuffer, piA->pServerName );
+        piW->pPrinterName = asciitounicode( &usBuffer, piA->pPrinterName );
+        piW->pShareName = asciitounicode( &usBuffer, piA->pShareName );
+        piW->pPortName = asciitounicode( &usBuffer, piA->pPortName );
+        piW->pDriverName = asciitounicode( &usBuffer, piA->pDriverName );
+        piW->pComment = asciitounicode( &usBuffer, piA->pComment );
+        piW->pLocation = asciitounicode( &usBuffer, piA->pLocation );
+        piW->pDevMode = piA->pDevMode ? GdiConvertToDevmodeW( piA->pDevMode ) : NULL;
+        piW->pSepFile = asciitounicode( &usBuffer, piA->pSepFile );
+        piW->pPrintProcessor = asciitounicode( &usBuffer, piA->pPrintProcessor );
+        piW->pDatatype = asciitounicode( &usBuffer, piA->pDatatype );
+        piW->pParameters = asciitounicode( &usBuffer, piA->pParameters );
+        break;
+    }
+
+    case 8:
+    case 9:
+    {
+        const PRINTER_INFO_9A *piA = (const PRINTER_INFO_9A *)data;
+        PRINTER_INFO_9W *piW = (PRINTER_INFO_9W *)ret;
+
+        piW->pDevMode = piA->pDevMode ? GdiConvertToDevmodeW( piA->pDevMode ) : NULL;
+        break;
+    }
+
+    default:
+        FIXME( "Unhandled level %d\n", level );
+        HeapFree( GetProcessHeap(), 0, ret );
+        return NULL;
+    }
+
+    return ret;
 }
 
 /***********************************************************
- *       FREE_PRINTER_INFO_2W
- * Free PRINTER_INFO_2W and all strings
+ *       free_printer_info
  */
-static void FREE_PRINTER_INFO_2W(HANDLE heap, LPPRINTER_INFO_2W piW)
+static void free_printer_info( void *data, DWORD level )
 {
-    if(!piW) return;
+    if (!data) return;
 
-    HeapFree(heap,0,piW->pServerName);
-    HeapFree(heap,0,piW->pPrinterName);
-    HeapFree(heap,0,piW->pShareName);
-    HeapFree(heap,0,piW->pPortName);
-    HeapFree(heap,0,piW->pDriverName);
-    HeapFree(heap,0,piW->pComment);
-    HeapFree(heap,0,piW->pLocation);
-    HeapFree(heap,0,piW->pDevMode);
-    HeapFree(heap,0,piW->pSepFile);
-    HeapFree(heap,0,piW->pPrintProcessor);
-    HeapFree(heap,0,piW->pDatatype);
-    HeapFree(heap,0,piW->pParameters);
-    HeapFree(heap,0,piW);
+    switch (level)
+    {
+    case 2:
+    {
+        PRINTER_INFO_2W *piW = (PRINTER_INFO_2W *)data;
+
+        HeapFree( GetProcessHeap(), 0, piW->pServerName );
+        HeapFree( GetProcessHeap(), 0, piW->pPrinterName );
+        HeapFree( GetProcessHeap(), 0, piW->pShareName );
+        HeapFree( GetProcessHeap(), 0, piW->pPortName );
+        HeapFree( GetProcessHeap(), 0, piW->pDriverName );
+        HeapFree( GetProcessHeap(), 0, piW->pComment );
+        HeapFree( GetProcessHeap(), 0, piW->pLocation );
+        HeapFree( GetProcessHeap(), 0, piW->pDevMode );
+        HeapFree( GetProcessHeap(), 0, piW->pSepFile );
+        HeapFree( GetProcessHeap(), 0, piW->pPrintProcessor );
+        HeapFree( GetProcessHeap(), 0, piW->pDatatype );
+        HeapFree( GetProcessHeap(), 0, piW->pParameters );
+        break;
+    }
+
+    case 8:
+    case 9:
+    {
+        PRINTER_INFO_9W *piW = (PRINTER_INFO_9W *)data;
+
+        HeapFree( GetProcessHeap(), 0, piW->pDevMode );
+        break;
+    }
+
+    default:
+        FIXME( "Unhandled level %d\n", level );
+    }
+
+    HeapFree( GetProcessHeap(), 0, data );
     return;
 }
 
@@ -2679,11 +2730,11 @@ HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 	return 0;
     }
     pwstrNameW = asciitounicode(&pNameW,pName);
-    piW = PRINTER_INFO_2AtoW(GetProcessHeap(), piA);
+    piW = printer_info_AtoW( piA, Level );
 
     ret = AddPrinterW(pwstrNameW, Level, (LPBYTE)piW);
 
-    FREE_PRINTER_INFO_2W(GetProcessHeap(), piW);
+    free_printer_info( piW, Level );
     RtlFreeUnicodeString(&pNameW);
     return ret;
 }
