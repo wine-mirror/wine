@@ -159,6 +159,7 @@ struct ddraw_surface
     struct ddraw *ddraw;
     struct wined3d_surface *wined3d_surface;
     struct wined3d_texture *wined3d_texture;
+    IDirect3DDeviceImpl *device1;
 
     /* This implementation handles attaching surfaces to other surfaces */
     struct ddraw_surface *next_attached;
@@ -278,10 +279,11 @@ struct IDirect3DDeviceImpl
     IDirect3DDevice3 IDirect3DDevice3_iface;
     IDirect3DDevice2 IDirect3DDevice2_iface;
     IDirect3DDevice IDirect3DDevice_iface;
+    IUnknown IUnknown_inner;
     LONG ref;
     UINT version;
 
-    /* Other object connections */
+    IUnknown *outer_unknown;
     struct wined3d_device *wined3d_device;
     struct ddraw *ddraw;
     struct wined3d_buffer *indexbuffer;
@@ -316,7 +318,7 @@ struct IDirect3DDeviceImpl
 };
 
 HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target,
-        UINT version, IDirect3DDeviceImpl **device) DECLSPEC_HIDDEN;
+        UINT version, IDirect3DDeviceImpl **device, IUnknown *outer_unknown) DECLSPEC_HIDDEN;
 
 /* The IID */
 extern const GUID IID_D3DDEVICE_WineD3D DECLSPEC_HIDDEN;

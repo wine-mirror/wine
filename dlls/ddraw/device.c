@@ -75,178 +75,169 @@ static inline WORD d3d_fpu_setup(void)
     return oldcw;
 }
 
-/*****************************************************************************
- * IUnknown Methods. Common for Version 1, 2, 3 and 7
- *****************************************************************************/
-
-/*****************************************************************************
- * IDirect3DDevice7::QueryInterface
- *
- * Used to query other interfaces from a Direct3DDevice interface.
- * It can return interface pointers to all Direct3DDevice versions as well
- * as IDirectDraw and IDirect3D. For a link to QueryInterface
- * rules see ddraw.c, IDirectDraw7::QueryInterface
- *
- * Exists in Version 1, 2, 3 and 7
- *
- * Params:
- *  refiid: Interface ID queried for
- *  obj: Used to return the interface pointer
- *
- * Returns:
- *  D3D_OK or E_NOINTERFACE
- *
- *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
-                                     REFIID refiid,
-                                     void **obj)
+static inline IDirect3DDeviceImpl *impl_from_IUnknown(IUnknown *iface)
 {
-    IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice7(iface);
+    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IUnknown_inner);
+}
 
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(refiid), obj);
+static HRESULT WINAPI d3d_device_inner_QueryInterface(IUnknown *iface, REFIID riid, void **out)
+{
+    IDirect3DDeviceImpl *device = impl_from_IUnknown(iface);
 
-    /* According to COM docs, if the QueryInterface fails, obj should be set to NULL */
-    *obj = NULL;
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    if(!refiid)
+    if (!riid)
+    {
+        *out = NULL;
         return DDERR_INVALIDPARAMS;
-
-    if ( IsEqualGUID( &IID_IUnknown, refiid ) )
-    {
-        *obj = iface;
     }
 
-    if (This->version == 7)
+    if (IsEqualGUID(&IID_IUnknown, riid))
     {
-        if (IsEqualGUID(&IID_IDirect3DDevice7, refiid))
-            *obj = iface;
+        IDirect3DDevice7_AddRef(&device->IDirect3DDevice7_iface);
+        *out = &device->IDirect3DDevice7_iface;
+        return S_OK;
     }
-    else if (IsEqualGUID(&IID_IDirect3DDevice3, refiid) && This->version == 3)
-        *obj = &This->IDirect3DDevice3_iface;
-    else if (IsEqualGUID(&IID_IDirect3DDevice2, refiid) && This->version >= 2)
-        *obj = &This->IDirect3DDevice2_iface;
-    else if (IsEqualGUID(&IID_IDirect3DDevice, refiid))
-        *obj = &This->IDirect3DDevice_iface;
-    else if (IsEqualGUID(&IID_IDirectDrawSurface, refiid) && This->version == 1)
-        *obj = &This->target->IDirectDrawSurface_iface;
+
+    if (device->version == 7)
+    {
+        if (IsEqualGUID(&IID_IDirect3DDevice7, riid))
+        {
+            IDirect3DDevice7_AddRef(&device->IDirect3DDevice7_iface);
+            *out = &device->IDirect3DDevice7_iface;
+            return S_OK;
+        }
+    }
     else
     {
-        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(refiid));
-        return E_NOINTERFACE;
+        if (IsEqualGUID(&IID_IDirect3DDevice3, riid) && device->version == 3)
+        {
+            IDirect3DDevice3_AddRef(&device->IDirect3DDevice3_iface);
+            *out = &device->IDirect3DDevice3_iface;
+            return S_OK;
+        }
+
+        if (IsEqualGUID(&IID_IDirect3DDevice2, riid) && device->version >= 2)
+        {
+            IDirect3DDevice2_AddRef(&device->IDirect3DDevice2_iface);
+            *out = &device->IDirect3DDevice2_iface;
+            return S_OK;
+        }
+
+        if (IsEqualGUID(&IID_IDirect3DDevice, riid))
+        {
+            IDirect3DDevice_AddRef(&device->IDirect3DDevice_iface);
+            *out = &device->IDirect3DDevice_iface;
+            return S_OK;
+        }
     }
 
-    /* AddRef the returned interface */
-    IUnknown_AddRef( (IUnknown *) *obj);
-    return D3D_OK;
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI IDirect3DDeviceImpl_3_QueryInterface(IDirect3DDevice3 *iface, REFIID riid,
-        void **obj)
+static HRESULT WINAPI IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface, REFIID riid, void **out)
 {
-    IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice3(iface);
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obj);
+    IDirect3DDeviceImpl *device = impl_from_IDirect3DDevice7(iface);
 
-    return IDirect3DDevice7_QueryInterface(&This->IDirect3DDevice7_iface, riid, obj);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    return IUnknown_QueryInterface(device->outer_unknown, riid, out);
 }
 
-static HRESULT WINAPI IDirect3DDeviceImpl_2_QueryInterface(IDirect3DDevice2 *iface, REFIID riid,
-        void **obj)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_QueryInterface(IDirect3DDevice3 *iface, REFIID riid, void **out)
 {
-    IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice2(iface);
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obj);
+    IDirect3DDeviceImpl *device = impl_from_IDirect3DDevice3(iface);
 
-    return IDirect3DDevice7_QueryInterface(&This->IDirect3DDevice7_iface, riid, obj);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    return IUnknown_QueryInterface(device->outer_unknown, riid, out);
 }
 
-static HRESULT WINAPI IDirect3DDeviceImpl_1_QueryInterface(IDirect3DDevice *iface, REFIID riid,
-        void **obp)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_QueryInterface(IDirect3DDevice2 *iface, REFIID riid, void **out)
 {
-    IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice(iface);
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obp);
+    IDirect3DDeviceImpl *device = impl_from_IDirect3DDevice2(iface);
 
-    return IDirect3DDevice7_QueryInterface(&This->IDirect3DDevice7_iface, riid, obp);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    return IUnknown_QueryInterface(device->outer_unknown, riid, out);
 }
 
-/*****************************************************************************
- * IDirect3DDevice7::AddRef
- *
- * Increases the refcount....
- * The most exciting Method, definitely
- *
- * Exists in Version 1, 2, 3 and 7
- *
- * Returns:
- *  The new refcount
- *
- *****************************************************************************/
-static ULONG WINAPI
-IDirect3DDeviceImpl_7_AddRef(IDirect3DDevice7 *iface)
+static HRESULT WINAPI IDirect3DDeviceImpl_1_QueryInterface(IDirect3DDevice *iface, REFIID riid, void **out)
 {
-    IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice7(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    IDirect3DDeviceImpl *device = impl_from_IDirect3DDevice(iface);
 
-    TRACE("%p increasing refcount to %u.\n", This, ref);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    return IUnknown_QueryInterface(device->outer_unknown, riid, out);
+}
+
+static ULONG WINAPI d3d_device_inner_AddRef(IUnknown *iface)
+{
+    IDirect3DDeviceImpl *device = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedIncrement(&device->ref);
+
+    TRACE("%p increasing refcount to %u.\n", device, ref);
 
     return ref;
 }
 
-static ULONG WINAPI IDirect3DDeviceImpl_3_AddRef(IDirect3DDevice3 *iface)
+static ULONG WINAPI IDirect3DDeviceImpl_7_AddRef(IDirect3DDevice7 *iface)
 {
-    IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice3(iface);
+    IDirect3DDeviceImpl *device = impl_from_IDirect3DDevice7(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return IDirect3DDevice7_AddRef(&This->IDirect3DDevice7_iface);
+    return IUnknown_AddRef(device->outer_unknown);
+}
+
+static ULONG WINAPI IDirect3DDeviceImpl_3_AddRef(IDirect3DDevice3 *iface)
+{
+    IDirect3DDeviceImpl *device = impl_from_IDirect3DDevice3(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IUnknown_AddRef(device->outer_unknown);
 }
 
 static ULONG WINAPI IDirect3DDeviceImpl_2_AddRef(IDirect3DDevice2 *iface)
 {
-    IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice2(iface);
+    IDirect3DDeviceImpl *device = impl_from_IDirect3DDevice2(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return IDirect3DDevice7_AddRef(&This->IDirect3DDevice7_iface);
+    return IUnknown_AddRef(device->outer_unknown);
 }
 
 static ULONG WINAPI IDirect3DDeviceImpl_1_AddRef(IDirect3DDevice *iface)
 {
-    IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice(iface);
+    IDirect3DDeviceImpl *device = impl_from_IDirect3DDevice(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return IDirect3DDevice7_AddRef(&This->IDirect3DDevice7_iface);
+    return IUnknown_AddRef(device->outer_unknown);
 }
 
-/*****************************************************************************
- * IDirect3DDevice7::Release
- *
- * Decreases the refcount of the interface
- * When the refcount is reduced to 0, the object is destroyed.
- *
- * Exists in Version 1, 2, 3 and 7
- *
- * Returns:d
- *  The new refcount
- *
- *****************************************************************************/
-static ULONG WINAPI
-IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
+static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
 {
-    IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice7(iface);
+    IDirect3DDeviceImpl *This = impl_from_IUnknown(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p decreasing refcount to %u.\n", This, ref);
 
-    /* This method doesn't destroy the WineD3DDevice, because it's still in use for
-     * 2D rendering. IDirectDrawSurface7::Release will destroy the WineD3DDevice
-     * when the render target is released
-     */
-    if (ref == 0)
+    /* This method doesn't destroy the wined3d device, because it's still in
+     * use for 2D rendering. IDirectDrawSurface7::Release will destroy the
+     * wined3d device when the render target is released. */
+    if (!ref)
     {
         DWORD i;
 
         wined3d_mutex_lock();
 
         /* There is no need to unset any resources here, wined3d will take
-         * care of that on Uninit3D(). */
+         * care of that on uninit_3d(). */
 
         /* Free the index buffer. */
         wined3d_buffer_decref(This->indexbuffer);
@@ -256,7 +247,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         wined3d_device_set_render_target(This->wined3d_device, 0,
                 This->ddraw->wined3d_frontbuffer, TRUE);
 
-        /* Release the WineD3DDevice. This won't destroy it. */
+        /* Release the wined3d device. This won't destroy it. */
         if (!wined3d_device_decref(This->wined3d_device))
             ERR("The wined3d device (%p) was destroyed unexpectedly.\n", This->wined3d_device);
 
@@ -291,7 +282,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
                 {
                     /* No FIXME here because this might happen because of sloppy applications. */
                     WARN("Leftover stateblock handle %#x (%p), deleting.\n", i + 1, entry->object);
-                    IDirect3DDevice7_DeleteStateBlock(iface, i + 1);
+                    IDirect3DDevice7_DeleteStateBlock(&This->IDirect3DDevice7_iface, i + 1);
                     break;
                 }
 
@@ -312,10 +303,9 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         ddraw_handle_table_destroy(&This->handle_table);
 
         TRACE("Releasing target %p.\n", This->target);
-        /* Release the render target and the WineD3D render target
-         * (See IDirect3D7::CreateDevice for more comments on this)
-         */
-        IDirectDrawSurface7_Release(&This->target->IDirectDrawSurface7_iface);
+        /* Release the render target. */
+        if (This->version != 1)
+            IDirectDrawSurface7_Release(&This->target->IDirectDrawSurface7_iface);
         TRACE("Target release done\n");
 
         This->ddraw->d3ddevice = NULL;
@@ -329,28 +319,40 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
     return ref;
 }
 
-static ULONG WINAPI IDirect3DDeviceImpl_3_Release(IDirect3DDevice3 *iface)
+static ULONG WINAPI IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
 {
-    IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice3(iface);
+    IDirect3DDeviceImpl *device = impl_from_IDirect3DDevice7(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return IDirect3DDevice7_Release(&This->IDirect3DDevice7_iface);
+    return IUnknown_Release(device->outer_unknown);
+}
+
+static ULONG WINAPI IDirect3DDeviceImpl_3_Release(IDirect3DDevice3 *iface)
+{
+    IDirect3DDeviceImpl *device = impl_from_IDirect3DDevice3(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IUnknown_Release(device->outer_unknown);
 }
 
 static ULONG WINAPI IDirect3DDeviceImpl_2_Release(IDirect3DDevice2 *iface)
 {
-    IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice2(iface);
+    IDirect3DDeviceImpl *device = impl_from_IDirect3DDevice2(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return IDirect3DDevice7_Release(&This->IDirect3DDevice7_iface);
+    return IUnknown_Release(device->outer_unknown);
 }
 
 static ULONG WINAPI IDirect3DDeviceImpl_1_Release(IDirect3DDevice *iface)
 {
-    IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice(iface);
+    IDirect3DDeviceImpl *device = impl_from_IDirect3DDevice(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return IDirect3DDevice7_Release(&This->IDirect3DDevice7_iface);
+    return IUnknown_Release(device->outer_unknown);
 }
 
 /*****************************************************************************
@@ -6898,6 +6900,13 @@ static const struct IDirect3DDeviceVtbl d3d_device1_vtbl =
     IDirect3DDeviceImpl_1_GetDirect3D
 };
 
+static const struct IUnknownVtbl d3d_device_inner_vtbl =
+{
+    d3d_device_inner_QueryInterface,
+    d3d_device_inner_AddRef,
+    d3d_device_inner_Release,
+};
+
 IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice7(IDirect3DDevice7 *iface)
 {
     if (!iface) return NULL;
@@ -6959,7 +6968,7 @@ enum wined3d_depth_buffer_type IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DD
 }
 
 static HRESULT d3d_device_init(IDirect3DDeviceImpl *device, struct ddraw *ddraw,
-        struct ddraw_surface *target, UINT version)
+        struct ddraw_surface *target, UINT version, IUnknown *outer_unknown)
 {
     static const D3DMATRIX ident =
     {
@@ -6978,8 +6987,15 @@ static HRESULT d3d_device_init(IDirect3DDeviceImpl *device, struct ddraw *ddraw,
     device->IDirect3DDevice3_iface.lpVtbl = &d3d_device3_vtbl;
     device->IDirect3DDevice2_iface.lpVtbl = &d3d_device2_vtbl;
     device->IDirect3DDevice_iface.lpVtbl = &d3d_device1_vtbl;
+    device->IUnknown_inner.lpVtbl = &d3d_device_inner_vtbl;
     device->ref = 1;
     device->version = version;
+
+    if (outer_unknown)
+        device->outer_unknown = outer_unknown;
+    else
+        device->outer_unknown = &device->IUnknown_inner;
+
     device->ddraw = ddraw;
     device->target = target;
     list_init(&device->viewport_list);
@@ -7028,7 +7044,8 @@ static HRESULT d3d_device_init(IDirect3DDeviceImpl *device, struct ddraw *ddraw,
      *
      * In most cases, those surfaces are the same anyway, but this will simply
      * add another ref which is released when the device is destroyed. */
-    IDirectDrawSurface7_AddRef(&target->IDirectDrawSurface7_iface);
+    if (version != 1)
+        IDirectDrawSurface7_AddRef(&target->IDirectDrawSurface7_iface);
 
     ddraw->d3ddevice = device;
 
@@ -7039,12 +7056,13 @@ static HRESULT d3d_device_init(IDirect3DDeviceImpl *device, struct ddraw *ddraw,
 }
 
 HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target,
-        UINT version, IDirect3DDeviceImpl **device)
+        UINT version, IDirect3DDeviceImpl **device, IUnknown *outer_unknown)
 {
     IDirect3DDeviceImpl *object;
     HRESULT hr;
 
-    TRACE("ddraw %p, target %p, version %u, device %p.\n", ddraw, target, version, device);
+    TRACE("ddraw %p, target %p, version %u, device %p, outer_unknown %p.\n",
+            ddraw, target, version, device, outer_unknown);
 
     if (DefaultSurfaceType != WINED3D_SURFACE_TYPE_OPENGL)
     {
@@ -7067,7 +7085,7 @@ HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target,
         return DDERR_OUTOFMEMORY;
     }
 
-    hr = d3d_device_init(object, ddraw, target, version);
+    hr = d3d_device_init(object, ddraw, target, version, outer_unknown);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);

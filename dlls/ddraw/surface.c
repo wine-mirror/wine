@@ -204,19 +204,23 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
                 || IsEqualGUID(riid, &IID_IDirect3DHALDevice)
                 || IsEqualGUID(riid, &IID_IDirect3DRGBDevice))
         {
-            IDirect3DDeviceImpl *device;
-            HRESULT hr;
-
             wined3d_mutex_lock();
-            hr = d3d_device_create(This->ddraw, This, 1, &device);
-            wined3d_mutex_unlock();
-            if (FAILED(hr))
+            if (!This->device1)
             {
-                WARN("Failed to create device, hr %#x.\n", hr);
-                return hr;
+                HRESULT hr = d3d_device_create(This->ddraw, This, 1, &This->device1,
+                        (IUnknown *)&This->IDirectDrawSurface_iface);
+                if (FAILED(hr))
+                {
+                    This->device1 = NULL;
+                    wined3d_mutex_unlock();
+                    WARN("Failed to create device, hr %#x.\n", hr);
+                    return hr;
+                }
             }
+            wined3d_mutex_unlock();
 
-            *obj = &device->IDirect3DDevice_iface;
+            IDirect3DDevice_AddRef(&This->device1->IDirect3DDevice_iface);
+            *obj = &This->device1->IDirect3DDevice_iface;
             return S_OK;
         }
 
@@ -502,6 +506,8 @@ static void ddraw_surface_cleanup(struct ddraw_surface *surface)
         }
     }
 
+    if (surface->device1)
+        IUnknown_Release(&surface->device1->IUnknown_inner);
     ifaceToRelease = surface->ifaceToRelease;
 
     /* Destroy the root surface. */

@@ -3523,7 +3523,6 @@ static void FindDevice(void)
         hr = IDirectDrawSurface_QueryInterface(Surface1, &IID_IDirect3DHALDevice, (void **)&d3dhal);
         /* Currently Wine only supports the creation of one Direct3D device
          * for a given DirectDraw instance. */
-        todo_wine
         ok(SUCCEEDED(hr) || broken(hr == DDERR_INVALIDPIXELFORMAT) /* XP/Win2003 Wow64 on VMware */,
            "Expected IDirectDrawSurface::QueryInterface to succeed, got 0x%08x\n", hr);
 
