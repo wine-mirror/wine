@@ -518,14 +518,14 @@ static void testGetModuleHandleEx(void)
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExA( 0, NULL, NULL );
     error = GetLastError();
-    todo_wine ok( !ret, "unexpected success\n" );
-    todo_wine ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExA( 0, "kernel32", NULL );
     error = GetLastError();
-    todo_wine ok( !ret, "unexpected success\n" );
-    todo_wine ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
     SetLastError( 0xdeadbeef );
     mod = (HMODULE)0xdeadbeef;
@@ -545,14 +545,14 @@ static void testGetModuleHandleEx(void)
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExW( 0, NULL, NULL );
     error = GetLastError();
-    todo_wine ok( !ret, "unexpected success\n" );
-    todo_wine ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExW( 0, kernel32W, NULL );
     error = GetLastError();
-    todo_wine ok( !ret, "unexpected success\n" );
-    todo_wine ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
     SetLastError( 0xdeadbeef );
     mod = (HMODULE)0xdeadbeef;
@@ -572,14 +572,14 @@ static void testGetModuleHandleEx(void)
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NULL, NULL );
     error = GetLastError();
-    todo_wine ok( !ret, "unexpected success\n" );
-    todo_wine ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, "kernel32", NULL );
     error = GetLastError();
-    todo_wine ok( !ret, "unexpected success\n" );
-    todo_wine ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
     SetLastError( 0xdeadbeef );
     mod = (HMODULE)0xdeadbeef;
@@ -598,14 +598,14 @@ static void testGetModuleHandleEx(void)
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NULL, NULL );
     error = GetLastError();
-    todo_wine ok( !ret, "unexpected success\n" );
-    todo_wine ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, kernel32W, NULL );
     error = GetLastError();
-    todo_wine ok( !ret, "unexpected success\n" );
-    todo_wine ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
     SetLastError( 0xdeadbeef );
     mod = (HMODULE)0xdeadbeef;
@@ -626,14 +626,14 @@ static void testGetModuleHandleEx(void)
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, NULL, NULL );
     error = GetLastError();
-    todo_wine ok( !ret, "unexpected success\n" );
-    todo_wine ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)mod_kernel32, NULL );
     error = GetLastError();
-    todo_wine ok( !ret, "unexpected success\n" );
-    todo_wine ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
     SetLastError( 0xdeadbeef );
     mod = (HMODULE)0xdeadbeef;
@@ -653,14 +653,14 @@ static void testGetModuleHandleEx(void)
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, NULL, NULL );
     error = GetLastError();
-    todo_wine ok( !ret, "unexpected success\n" );
-    todo_wine ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)mod_kernel32, NULL );
     error = GetLastError();
-    todo_wine ok( !ret, "unexpected success\n" );
-    todo_wine ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
     SetLastError( 0xdeadbeef );
     mod = (HMODULE)0xdeadbeef;
