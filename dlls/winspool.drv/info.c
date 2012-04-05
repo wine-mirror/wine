@@ -349,6 +349,46 @@ static DEVMODEW *dup_devmode( const DEVMODEW *dm )
     return ret;
 }
 
+/***********************************************************
+ * DEVMODEdupWtoA
+ * Creates an ansi copy of supplied devmode
+ */
+static DEVMODEA *DEVMODEdupWtoA( const DEVMODEW *dmW )
+{
+    LPDEVMODEA dmA;
+    DWORD size;
+
+    if (!dmW) return NULL;
+    size = dmW->dmSize - CCHDEVICENAME -
+                        ((dmW->dmSize > FIELD_OFFSET( DEVMODEW, dmFormName )) ? CCHFORMNAME : 0);
+
+    dmA = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size + dmW->dmDriverExtra );
+    if (!dmA) return NULL;
+
+    WideCharToMultiByte( CP_ACP, 0, dmW->dmDeviceName, -1,
+                         (LPSTR)dmA->dmDeviceName, CCHDEVICENAME, NULL, NULL );
+
+    if (FIELD_OFFSET( DEVMODEW, dmFormName ) >= dmW->dmSize)
+    {
+        memcpy( &dmA->dmSpecVersion, &dmW->dmSpecVersion,
+                dmW->dmSize - FIELD_OFFSET( DEVMODEW, dmSpecVersion ) );
+    }
+    else
+    {
+        memcpy( &dmA->dmSpecVersion, &dmW->dmSpecVersion,
+                FIELD_OFFSET( DEVMODEW, dmFormName ) - FIELD_OFFSET( DEVMODEW, dmSpecVersion ) );
+        WideCharToMultiByte( CP_ACP, 0, dmW->dmFormName, -1,
+                             (LPSTR)dmA->dmFormName, CCHFORMNAME, NULL, NULL );
+
+        memcpy( &dmA->dmLogPixels, &dmW->dmLogPixels, dmW->dmSize - FIELD_OFFSET( DEVMODEW, dmLogPixels ) );
+    }
+
+    dmA->dmSize = size;
+    memcpy( (char *)dmA + dmA->dmSize, (const char *)dmW + dmW->dmSize, dmW->dmDriverExtra );
+    return dmA;
+}
+
+
 /******************************************************************
  * verify, that the filename is a local file
  *
@@ -710,6 +750,26 @@ static inline DWORD set_reg_szW(HKEY hkey, const WCHAR *keyname, const WCHAR *va
                               (lstrlenW(value) + 1) * sizeof(WCHAR));
     else
         return ERROR_FILE_NOT_FOUND;
+}
+
+static inline DWORD set_reg_devmode( HKEY key, const WCHAR *name, const DEVMODEW *dm )
+{
+    DEVMODEA *dmA = DEVMODEdupWtoA( dm );
+    DWORD ret = ERROR_FILE_NOT_FOUND;
+
+    /* FIXME: Write DEVMODEA not DEVMODEW into reg.  This is what win9x does
+       and we support these drivers.  NT writes DEVMODEW so somehow
+       we'll need to distinguish between these when we support NT
+       drivers */
+
+    if (dmA)
+    {
+        ret = RegSetValueExW( key, name, 0, REG_BINARY,
+                              (LPBYTE)dmA, dmA->dmSize + dmA->dmDriverExtra );
+        HeapFree( GetProcessHeap(), 0, dmA );
+    }
+
+    return ret;
 }
 
 /******************************************************************
@@ -1100,44 +1160,6 @@ static LPDEVMODEW DEVMODEcpyAtoW(DEVMODEW *dmW, const DEVMODEA *dmA)
     memcpy((char *)dmW + dmW->dmSize, (const char *)dmA + dmA->dmSize,
 	   dmA->dmDriverExtra);
     return dmW;
-}
-
-/***********************************************************
- * DEVMODEdupWtoA
- * Creates an ansi copy of supplied devmode
- */
-static LPDEVMODEA DEVMODEdupWtoA(const DEVMODEW *dmW)
-{
-    LPDEVMODEA dmA;
-    DWORD size;
-
-    if (!dmW) return NULL;
-    size = dmW->dmSize - CCHDEVICENAME -
-                        ((dmW->dmSize > FIELD_OFFSET(DEVMODEW, dmFormName)) ? CCHFORMNAME : 0);
-
-    dmA = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size + dmW->dmDriverExtra);
-    if (!dmA) return NULL;
-
-    WideCharToMultiByte(CP_ACP, 0, dmW->dmDeviceName, -1,
-                        (LPSTR)dmA->dmDeviceName, CCHDEVICENAME, NULL, NULL);
-
-    if (FIELD_OFFSET(DEVMODEW, dmFormName) >= dmW->dmSize) {
-        memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
-               dmW->dmSize - FIELD_OFFSET(DEVMODEW, dmSpecVersion));
-    }
-    else
-    {
-        memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
-               FIELD_OFFSET(DEVMODEW, dmFormName) - FIELD_OFFSET(DEVMODEW, dmSpecVersion));
-        WideCharToMultiByte(CP_ACP, 0, dmW->dmFormName, -1,
-                            (LPSTR)dmA->dmFormName, CCHFORMNAME, NULL, NULL);
-
-        memcpy(&dmA->dmLogPixels, &dmW->dmLogPixels, dmW->dmSize - FIELD_OFFSET(DEVMODEW, dmLogPixels));
-    }
-
-    dmA->dmSize = size;
-    memcpy((char *)dmA + dmA->dmSize, (const char *)dmW + dmW->dmSize, dmW->dmDriverExtra);
-    return dmA;
 }
 
 /******************************************************************
@@ -2560,8 +2582,7 @@ static void set_devices_and_printerports(PRINTER_INFO_2W *pi)
 HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 {
     PRINTER_INFO_2W *pi = (PRINTER_INFO_2W *) pPrinter;
-    LPDEVMODEA dmA;
-    LPDEVMODEW dmW;
+    LPDEVMODEW dm;
     HANDLE retval;
     HKEY hkeyPrinter, hkeyPrinters, hkeyDriver, hkeyDrivers;
     LONG size;
@@ -2643,7 +2664,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
      *
      * FIXME:
      * Note that DocumentPropertiesW will briefly try to open the printer we
-     * just create to find a DEVMODEA struct (it will use the WINEPS default
+     * just create to find a DEVMODE struct (it will use the WINEPS default
      * one in case it is not there, so we are ok).
      */
     size = DocumentPropertiesW(0, 0, pi->pPrinterName, NULL, NULL, 0);
@@ -2653,37 +2674,27 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	size = sizeof(DEVMODEW);
     }
     if(pi->pDevMode)
-        dmW = pi->pDevMode;
+        dm = pi->pDevMode;
     else
     {
-        dmW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-        dmW->dmSize = size;
-        if (0>DocumentPropertiesW(0,0,pi->pPrinterName,dmW,NULL,DM_OUT_BUFFER))
+        dm = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
+        dm->dmSize = size;
+        if (DocumentPropertiesW(0, 0, pi->pPrinterName, dm, NULL, DM_OUT_BUFFER) < 0)
         {
             WARN("DocumentPropertiesW on printer %s failed!\n", debugstr_w(pi->pPrinterName));
-            HeapFree(GetProcessHeap(),0,dmW);
-            dmW=NULL;
+            HeapFree( GetProcessHeap(), 0, dm );
+            dm = NULL;
         }
         else
         {
             /* set devmode to printer name */
-            lstrcpynW(dmW->dmDeviceName, pi->pPrinterName, CCHDEVICENAME);
+            lstrcpynW( dm->dmDeviceName, pi->pPrinterName, CCHDEVICENAME );
         }
     }
 
-    /* Write DEVMODEA not DEVMODEW into reg.  This is what win9x does
-       and we support these drivers.  NT writes DEVMODEW so somehow
-       we'll need to distinguish between these when we support NT
-       drivers */
-    if (dmW)
-    {
-        dmA = DEVMODEdupWtoA(dmW);
-        RegSetValueExW(hkeyPrinter, default_devmodeW, 0, REG_BINARY,
-                       (LPBYTE)dmA, dmA->dmSize + dmA->dmDriverExtra);
-        HeapFree(GetProcessHeap(), 0, dmA);
-        if(!pi->pDevMode)
-            HeapFree(GetProcessHeap(), 0, dmW);
-    }
+    set_reg_devmode( hkeyPrinter, default_devmodeW, dm );
+    if (!pi->pDevMode) HeapFree( GetProcessHeap(), 0, dm );
+
     set_reg_szW(hkeyPrinter, DescriptionW, pi->pComment);
     set_reg_szW(hkeyPrinter, LocationW, pi->pLocation);
     set_reg_szW(hkeyPrinter, NameW, pi->pPrinterName);
