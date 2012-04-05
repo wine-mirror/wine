@@ -1200,17 +1200,16 @@ static nsrefcnt NSAPI nsAsyncVerifyRedirectCallback_Release(nsIAsyncVerifyRedire
 static nsresult NSAPI nsAsyncVerifyRedirectCallback_AsyncOnChannelRedirect(nsIAsyncVerifyRedirectCallback *iface, nsresult result)
 {
     nsRedirectCallback *This = impl_from_nsIAsyncVerifyRedirectCallback(iface);
+    nsChannel *old_nschannel;
+    nsresult nsres;
 
     TRACE("(%p)->(%08x)\n", This, result);
 
-    if(This->bsc->nschannel)
-        nsIHttpChannel_Release(&This->bsc->nschannel->nsIHttpChannel_iface);
+    old_nschannel = This->bsc->nschannel;
     nsIChannel_AddRef(&This->nschannel->nsIHttpChannel_iface);
     This->bsc->nschannel = This->nschannel;
 
     if(This->nschannel->load_group) {
-        nsresult nsres;
-
         nsres = nsILoadGroup_AddRequest(This->nschannel->load_group, (nsIRequest*)&This->nschannel->nsIHttpChannel_iface,
                 NULL);
         if(NS_FAILED(nsres))
@@ -1226,6 +1225,14 @@ static nsresult NSAPI nsAsyncVerifyRedirectCallback_AsyncOnChannelRedirect(nsIAs
         }else {
             WARN("Could not get IUri from nsWineURI\n");
         }
+    }
+
+    if(old_nschannel) {
+        nsres = nsILoadGroup_RemoveRequest(old_nschannel->load_group,
+                (nsIRequest*)&old_nschannel->nsIHttpChannel_iface, NULL, NS_OK);
+        if(NS_FAILED(nsres))
+            ERR("RemoveRequest failed: %08x\n", nsres);
+        nsIHttpChannel_Release(&old_nschannel->nsIHttpChannel_iface);
     }
 
     return NS_OK;
@@ -1480,6 +1487,8 @@ static HRESULT handle_redirect(nsChannelBSC *This, const WCHAR *new_url)
 
     hres = create_redirect_nschannel(new_url, This->nschannel, &new_channel);
     if(SUCCEEDED(hres)) {
+        TRACE("%p %p->%p\n", This, This->nschannel, new_channel);
+
         hres = create_redirect_callback(new_channel, This, &callback);
         nsIChannel_Release(&new_channel->nsIHttpChannel_iface);
     }
