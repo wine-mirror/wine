@@ -2727,7 +2727,8 @@ static BOOL CommitUrlCacheEntryInternal(
             goto cleanup;
         }
 
-        lpszLocalFileName += (DIR_LENGTH + 1); /* "1234WXYZ\" */
+        lpszLocalFileName += DIR_LENGTH + 1;
+        pchLocalFileName += DIR_LENGTH + 1;
     }
 
     dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(lpszUrlNameA) + 1);
@@ -2800,7 +2801,7 @@ static BOOL CommitUrlCacheEntryInternal(
 
     strcpy((LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl, lpszUrlNameA);
     if (dwOffsetLocalFileName)
-        strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetLocalFileName), pchLocalFileName + DIR_LENGTH + 1);
+        strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetLocalFileName), pchLocalFileName);
     if (dwOffsetHeader)
         memcpy((LPBYTE)pUrlEntry + dwOffsetHeader, lpHeaderInfo, dwHeaderSize);
     if (dwOffsetFileExtension)
