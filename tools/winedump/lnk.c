@@ -67,6 +67,7 @@ typedef enum {
 #define EXP_SPECIAL_FOLDER_SIG  0xa0000005
 #define EXP_DARWIN_ID_SIG       0xa0000006
 #define EXP_SZ_ICON_SIG         0xa0000007
+#define EXP_PROPERTYSTORAGE_SIG 0xa0000009
 
 typedef struct tagDATABLOCKHEADER
 {
@@ -98,6 +99,22 @@ typedef struct tagLINK_SZ_BLOCK
     CHAR  bufA[MAX_PATH];
     WCHAR bufW[MAX_PATH];
 } LINK_SZ_BLOCK;
+
+typedef struct tagLINK_PROPERTYSTORAGE_GUID
+{
+    DWORD size;
+    DWORD magic;
+    GUID fmtid;
+} LINK_PROPERTYSTORAGE_GUID;
+
+typedef struct tagLINK_PROPERTYSTORAGE_VALUE
+{
+    DWORD size;
+    DWORD pid;
+    BYTE unknown8;
+    DWORD vt;
+    DWORD unknown25;
+} LINK_PROPERTYSTORAGE_VALUE;
 
 typedef struct _LOCATION_INFO
 {
@@ -386,6 +403,94 @@ static int dump_darwin_id(const DATABLOCK_HEADER* bhdr)
     return 0;
 }
 
+static void dump_property_storage_value(const LINK_PROPERTYSTORAGE_VALUE *lnk_value_hdr,
+    DWORD data_size)
+{
+    int got_terminator = 0, i, value_size;
+    const unsigned char *value;
+
+    while (data_size >= sizeof(DWORD))
+    {
+        if (!lnk_value_hdr->size)
+        {
+            got_terminator = 1;
+            break;
+        }
+
+        if (lnk_value_hdr->size > data_size || lnk_value_hdr->size < sizeof(*lnk_value_hdr))
+        {
+            printf("  size: %d (invald)\n", lnk_value_hdr->size);
+            return;
+        }
+
+        printf("  pid: %d\n", lnk_value_hdr->pid);
+        printf("    unknown8: %d\n", lnk_value_hdr->unknown8);
+        printf("    vartype: %d\n", lnk_value_hdr->vt);
+        printf("    unknown25: %d\n", lnk_value_hdr->unknown25);
+
+        value_size = lnk_value_hdr->size - sizeof(*lnk_value_hdr);
+        value = (const unsigned char*)(lnk_value_hdr+1);
+
+        printf("    value (%2d bytes) : ",value_size);
+        for(i=0; i<value_size; i++)
+            printf("%02x ",value[i]);
+        printf("\n\n");
+
+        data_size -= lnk_value_hdr->size;
+        lnk_value_hdr = (void*)((char*)lnk_value_hdr + lnk_value_hdr->size);
+    }
+
+    if (!got_terminator)
+        printf("  missing terminator!\n");
+}
+
+static int dump_property_storage(const DATABLOCK_HEADER* bhdr)
+{
+    int data_size;
+    const LINK_PROPERTYSTORAGE_GUID *lnk_guid_hdr;
+    int got_terminator = 0;
+
+    printf("Property Storage\n");
+    printf("--------------\n\n");
+
+    data_size=bhdr->cbSize-sizeof(*bhdr);
+
+    lnk_guid_hdr=(void*)((const char*)bhdr+sizeof(*bhdr));
+
+    while (data_size >= sizeof(DWORD))
+    {
+        if (!lnk_guid_hdr->size)
+        {
+            got_terminator = 1;
+            break;
+        }
+
+        if (lnk_guid_hdr->size > data_size || lnk_guid_hdr->size < sizeof(*lnk_guid_hdr))
+        {
+            printf("size: %d (invald)\n", lnk_guid_hdr->size);
+            return 1;
+        }
+
+        if (lnk_guid_hdr->magic != 0x53505331)
+            printf("magic: %x\n", lnk_guid_hdr->magic);
+
+        printf("fmtid: %s\n", get_guid_str(&lnk_guid_hdr->fmtid));
+
+        dump_property_storage_value((void*)(lnk_guid_hdr + 1), lnk_guid_hdr->size - sizeof(*lnk_guid_hdr));
+
+        data_size -= lnk_guid_hdr->size;
+
+        lnk_guid_hdr = (void*)((char*)lnk_guid_hdr + lnk_guid_hdr->size);
+    }
+
+    if (!got_terminator)
+        printf("missing terminator!\n");
+
+    printf("\n");
+
+    return 0;
+}
+
 static int dump_raw_block(const DATABLOCK_HEADER* bhdr)
 {
     int data_size;
@@ -538,6 +643,9 @@ void lnk_dump(void)
             break;
         case EXP_DARWIN_ID_SIG:
             dump_darwin_id(bhdr);
+            break;
+        case EXP_PROPERTYSTORAGE_SIG:
+            dump_property_storage(bhdr);
             break;
         default:
             dump_raw_block(bhdr);
