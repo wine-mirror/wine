@@ -72,6 +72,7 @@ DEFINE_EXPECT(iframe_onreadystatechange_interactive);
 DEFINE_EXPECT(iframe_onreadystatechange_complete);
 DEFINE_EXPECT(iframedoc_onreadystatechange);
 DEFINE_EXPECT(img_onload);
+DEFINE_EXPECT(img_onerror);
 DEFINE_EXPECT(input_onfocus);
 DEFINE_EXPECT(form_onsubmit);
 DEFINE_EXPECT(form_onclick);
@@ -927,6 +928,17 @@ static HRESULT WINAPI img_onload(IDispatchEx *iface, DISPID id, LCID lcid, WORD 
 
 EVENT_HANDLER_FUNC_OBJ(img_onload);
 
+static HRESULT WINAPI img_onerror(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(img_onerror);
+    test_event_args(&DIID_DispHTMLImg, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_src("IMG");
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(img_onerror);
+
 static HRESULT WINAPI input_onfocus(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
@@ -1675,6 +1687,18 @@ static void test_imgload(IHTMLDocument2 *doc)
     ok(V_DISPATCH(&v) == (IDispatch*)&img_onload_obj, "V_DISPATCH(onload) != onloadkFunc\n");
     VariantClear(&v);
 
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&img_onerror_obj;
+    hres = IHTMLImgElement_put_onerror(img, v);
+    ok(hres == S_OK, "put_onerror failed: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLImgElement_get_onerror(img, &v);
+    ok(hres == S_OK, "get_onerror failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(onerror) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) == (IDispatch*)&img_onerror_obj, "V_DISPATCH(onerror) != onerrorFunc\n");
+    VariantClear(&v);
+
     str = a2bstr("http://www.winehq.org/images/winehq_logo_text.png");
     hres = IHTMLImgElement_put_src(img, str);
     ok(hres == S_OK, "put_src failed: %08x\n", hres);
@@ -1683,6 +1707,17 @@ static void test_imgload(IHTMLDocument2 *doc)
     SET_EXPECT(img_onload);
     pump_msgs(&called_img_onload);
     CHECK_CALLED(img_onload);
+
+    SET_EXPECT(img_onerror);
+
+    str = a2bstr("about:blank");
+    hres = IHTMLImgElement_put_src(img, str);
+    ok(hres == S_OK, "put_src failed: %08x\n", hres);
+    SysFreeString(str);
+
+    pump_msgs(&called_img_onerror); /* FIXME: should not be needed */
+
+    CHECK_CALLED(img_onerror);
 
     IHTMLImgElement_Release(img);
 }
