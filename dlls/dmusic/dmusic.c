@@ -142,7 +142,7 @@ static HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD ind
         HRESULT hr;
         hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth8, (void**)&synth);
         if (SUCCEEDED(hr))
-            IDirectMusicSynth8_GetPortCaps(synth, port_caps);
+            hr = IDirectMusicSynth8_GetPortCaps(synth, port_caps);
         if (SUCCEEDED(hr))
             TRACE("Enumerating port: %s\n", debugstr_w(port_caps->wszDescription));
         if (synth)
