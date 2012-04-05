@@ -1575,6 +1575,72 @@ static void test_surface_qi(void)
     DestroyWindow(window);
 }
 
+static void test_device_qi(void)
+{
+    static const struct qi_test tests[] =
+    {
+        {&IID_IDirect3DTexture2,        NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DTexture,         NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawGammaControl,  NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawColorControl,  NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawSurface7,      NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawSurface4,      NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawSurface3,      NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawSurface2,      NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawSurface,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DDevice7,         &IID_IDirect3DDevice7,          S_OK         },
+        {&IID_IDirect3DDevice3,         NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DDevice2,         NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DDevice,          NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DRampDevice,      NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DRGBDevice,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DHALDevice,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DMMXDevice,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DRefDevice,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DTnLHalDevice,    NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DNullDevice,      NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3D7,               NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3D3,               NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3D2,               NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3D,                NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDraw7,             NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDraw4,             NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDraw3,             NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDraw2,             NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDraw,              NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DLight,           NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DMaterial,        NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DMaterial2,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DMaterial3,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DExecuteBuffer,   NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DViewport,        NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DViewport2,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DViewport3,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DVertexBuffer,    NULL,                           E_NOINTERFACE},
+        {&IID_IDirect3DVertexBuffer7,   NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawPalette,       NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawClipper,       NULL,                           E_NOINTERFACE},
+        {&IID_IUnknown,                 &IID_IDirect3DDevice7,          S_OK         },
+    };
+
+    IDirect3DDevice7 *device;
+    HWND window;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    test_qi("device_qi", (IUnknown *)device, &IID_IDirect3DDevice7, tests, sizeof(tests) / sizeof(*tests));
+
+    IDirect3DDevice7_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -1596,4 +1662,5 @@ START_TEST(ddraw7)
     test_zenable();
     test_ck_rgba();
     test_surface_qi();
+    test_device_qi();
 }

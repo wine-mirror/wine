@@ -1459,6 +1459,81 @@ static void test_surface_qi(void)
     DestroyWindow(window);
 }
 
+static void test_device_qi(void)
+{
+    static const struct qi_test tests[] =
+    {
+        {&IID_IDirect3DTexture2,        &IID_IDirectDrawSurface,        S_OK         },
+        {&IID_IDirect3DTexture,         &IID_IDirectDrawSurface,        S_OK         },
+        {&IID_IDirectDrawGammaControl,  &IID_IDirectDrawGammaControl,   S_OK         },
+        {&IID_IDirectDrawColorControl,  NULL,                           E_NOINTERFACE},
+        {&IID_IDirectDrawSurface7,      &IID_IDirectDrawSurface7,       S_OK         },
+        {&IID_IDirectDrawSurface4,      &IID_IDirectDrawSurface4,       S_OK         },
+        {&IID_IDirectDrawSurface3,      &IID_IDirectDrawSurface3,       S_OK         },
+        {&IID_IDirectDrawSurface2,      &IID_IDirectDrawSurface2,       S_OK         },
+        {&IID_IDirectDrawSurface,       &IID_IDirectDrawSurface,        S_OK         },
+        {&IID_IDirect3DDevice7,         NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DDevice3,         NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DDevice2,         NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DDevice,          NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DHALDevice,       &IID_IDirectDrawSurface,        S_OK         },
+        {&IID_IDirect3D7,               NULL,                           E_INVALIDARG },
+        {&IID_IDirect3D3,               NULL,                           E_INVALIDARG },
+        {&IID_IDirect3D2,               NULL,                           E_INVALIDARG },
+        {&IID_IDirect3D,                NULL,                           E_INVALIDARG },
+        {&IID_IDirectDraw7,             NULL,                           E_INVALIDARG },
+        {&IID_IDirectDraw4,             NULL,                           E_INVALIDARG },
+        {&IID_IDirectDraw3,             NULL,                           E_INVALIDARG },
+        {&IID_IDirectDraw2,             NULL,                           E_INVALIDARG },
+        {&IID_IDirectDraw,              NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DLight,           NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DMaterial,        NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DMaterial2,       NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DMaterial3,       NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DExecuteBuffer,   NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DViewport,        NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DViewport2,       NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DViewport3,       NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DVertexBuffer,    NULL,                           E_INVALIDARG },
+        {&IID_IDirect3DVertexBuffer7,   NULL,                           E_INVALIDARG },
+        {&IID_IDirectDrawPalette,       NULL,                           E_INVALIDARG },
+        {&IID_IDirectDrawClipper,       NULL,                           E_INVALIDARG },
+        {&IID_IUnknown,                 &IID_IDirectDrawSurface,        S_OK         },
+    };
+
+
+    IDirect3DDevice *device;
+    IDirectDraw *ddraw;
+    HWND window;
+
+    if (!GetProcAddress(GetModuleHandleA("ddraw.dll"), "DirectDrawCreateEx"))
+    {
+        win_skip("DirectDrawCreateEx not available, skipping test.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create ddraw object, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create D3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    test_qi("device_qi", (IUnknown *)device, &IID_IDirectDrawSurface, tests, sizeof(tests) / sizeof(*tests));
+
+    IDirect3DDevice_Release(device);
+    IDirectDraw_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     test_coop_level_create_device_window();
@@ -1470,4 +1545,5 @@ START_TEST(ddraw1)
     test_zenable();
     test_ck_rgba();
     test_surface_qi();
+    test_device_qi();
 }
