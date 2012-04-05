@@ -2840,11 +2840,22 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
 /*****************************************************************************
  *          SetPrinterA  [WINSPOOL.@]
  */
-BOOL WINAPI SetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
-                           DWORD Command)
+BOOL WINAPI SetPrinterA( HANDLE printer, DWORD level, LPBYTE data, DWORD command )
 {
-    FIXME("(%p,%d,%p,%d): stub\n",hPrinter,Level,pPrinter,Command);
-    return FALSE;
+    BYTE *dataW = data;
+    BOOL ret;
+
+    if (level != 0)
+    {
+        dataW = printer_info_AtoW( data, level );
+        if (!dataW) return FALSE;
+    }
+
+    ret = SetPrinterW( printer, level, dataW, command );
+
+    if (dataW != data) free_printer_info( dataW, level );
+
+    return ret;
 }
 
 /*****************************************************************************
