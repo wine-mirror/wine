@@ -420,15 +420,19 @@ static HRESULT WINAPI HTMLImgElement_get_onload(IHTMLImgElement *iface, VARIANT 
 static HRESULT WINAPI HTMLImgElement_put_onerror(IHTMLImgElement *iface, VARIANT v)
 {
     HTMLImgElement *This = impl_from_IHTMLImgElement(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->()\n", This);
+
+    return set_node_event(&This->element.node, EVENTID_ERROR, &v);
 }
 
 static HRESULT WINAPI HTMLImgElement_get_onerror(IHTMLImgElement *iface, VARIANT *p)
 {
     HTMLImgElement *This = impl_from_IHTMLImgElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_node_event(&This->element.node, EVENTID_ERROR, p);
 }
 
 static HRESULT WINAPI HTMLImgElement_put_onabort(IHTMLImgElement *iface, VARIANT v)

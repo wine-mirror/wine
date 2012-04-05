@@ -164,7 +164,7 @@ static const event_info_t event_info[] = {
     {dragstartW,         ondragstartW,         EVENTT_MOUSE,  DISPID_EVMETH_ONDRAGSTART,
         EVENT_CANCELABLE},
     {errorW,             onerrorW,             EVENTT_NONE,   DISPID_EVMETH_ONERROR,
-        0},
+        EVENT_NODEHANDLER},
     {focusW,             onfocusW,             EVENTT_HTML,   DISPID_EVMETH_ONFOCUS,
         EVENT_DEFAULTLISTENER},
     {keydownW,           onkeydownW,           EVENTT_KEY,    DISPID_EVMETH_ONKEYDOWN,
@@ -195,7 +195,7 @@ static const event_info_t event_info[] = {
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE}
 };
 
-static const eventid_t node_handled_list[] = { EVENTID_LOAD };
+static const eventid_t node_handled_list[] = { EVENTID_ERROR, EVENTID_LOAD };
 
 eventid_t str_to_eid(LPCWSTR str)
 {
