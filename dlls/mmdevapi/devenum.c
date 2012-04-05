@@ -629,7 +629,7 @@ static HRESULT WINAPI MMDevice_GetId(IMMDevice *iface, WCHAR **itemid)
     MMDevice *This = impl_from_IMMDevice(iface);
     WCHAR *str;
     GUID *id = &This->devguid;
-    static const WCHAR formatW[] = { '{','0','.','0','.','0','.','0','0','0','0','0','0','0','0','}','.',
+    static const WCHAR formatW[] = { '{','0','.','0','.','%','u','.','0','0','0','0','0','0','0','0','}','.',
                                      '{','%','0','8','X','-','%','0','4','X','-',
                                      '%','0','4','X','-','%','0','2','X','%','0','2','X','-',
                                      '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',
@@ -641,7 +641,7 @@ static HRESULT WINAPI MMDevice_GetId(IMMDevice *iface, WCHAR **itemid)
     *itemid = str = CoTaskMemAlloc(56 * sizeof(WCHAR));
     if (!str)
         return E_OUTOFMEMORY;
-    wsprintfW( str, formatW, id->Data1, id->Data2, id->Data3,
+    wsprintfW( str, formatW, This->flow, id->Data1, id->Data2, id->Data3,
                id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
                id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
     TRACE("returning %s\n", wine_dbgstr_w(str));
