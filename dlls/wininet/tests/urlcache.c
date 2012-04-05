@@ -571,9 +571,7 @@ static void test_urlcacheA(void)
     if (pDeleteUrlCacheEntryA)
     {
         ret = pDeleteUrlCacheEntryA(TEST_URL);
-        todo_wine
         ok(!ret, "Expected failure\n");
-        todo_wine
         ok(GetLastError() == ERROR_SHARING_VIOLATION,
            "Expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
         check_file_exists(filenameA);
@@ -582,9 +580,7 @@ static void test_urlcacheA(void)
     lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
     memset(lpCacheEntryInfo, 0, cbCacheEntryInfo);
     ret = GetUrlCacheEntryInfo(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo);
-    todo_wine
     ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
-    todo_wine
     ok(lpCacheEntryInfo->CacheEntryType & DELETED_CACHE_ENTRY,
         "CacheEntryType hasn't DELETED_CACHE_ENTRY set, (flags %08x)\n",
         lpCacheEntryInfo->CacheEntryType);
@@ -594,7 +590,6 @@ static void test_urlcacheA(void)
     {
         check_file_exists(filenameA);
         ret = pUnlockUrlCacheEntryFileA(TEST_URL, 0);
-        todo_wine
         ok(ret, "UnlockUrlCacheEntryFileA failed: %d\n", GetLastError());
         /* By unlocking the already-deleted cache entry, the file associated
          * with it is deleted..

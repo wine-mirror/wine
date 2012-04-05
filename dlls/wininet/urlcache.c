@@ -2139,7 +2139,17 @@ static BOOL DeleteUrlCacheEntryInternal(LPURLCACHE_HEADER pHeader,
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
+
     pUrlEntry = (URL_CACHEFILE_ENTRY *)pEntry;
+    if ((pHashEntry->dwHashKey & ((1<<HASHTABLE_FLAG_BITS)-1)) == HASHTABLE_LOCK)
+    {
+        /* FIXME: implement timeout object unlocking */
+        TRACE("Trying to delete locked entry\n");
+        pUrlEntry->CacheEntryType |= DELETED_CACHE_ENTRY;
+        SetLastError(ERROR_SHARING_VIOLATION);
+        return FALSE;
+    }
+
     if (pUrlEntry->CacheDir < pHeader->DirectoryCount)
     {
         if (pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles)
@@ -2234,7 +2244,11 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
     }
     pUrlEntry->dwUseCount--;
     if (!pUrlEntry->dwUseCount)
+    {
         URLCache_HashEntrySetFlags(pHashEntry, HASHTABLE_URL);
+        if (pUrlEntry->CacheEntryType & DELETED_CACHE_ENTRY)
+            DeleteUrlCacheEntryInternal(pHeader, pHashEntry);
+    }
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
