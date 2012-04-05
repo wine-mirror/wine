@@ -417,6 +417,12 @@ static const struct
     MSIFILEHASHINFO hash;
 } hash_data[] =
 {
+    { "", 0,
+      { HASHSIZE,
+        { 0, 0, 0, 0 },
+      },
+    },
+
     { "abc", 0,
       { HASHSIZE,
         { 0x98500190, 0xb04fd23c, 0x7d3f96d6, 0x727fe128 },
