@@ -4013,24 +4013,34 @@ UINT WINAPI MsiGetFileHashW( LPCWSTR szFilePath, DWORD dwOptions,
     }
     length = GetFileSize( handle, NULL );
 
-    mapping = CreateFileMappingW( handle, NULL, PAGE_READONLY, 0, 0, NULL );
-    if (mapping)
+    if (length)
     {
-        p = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, length );
-        if (p)
+        mapping = CreateFileMappingW( handle, NULL, PAGE_READONLY, 0, 0, NULL );
+        if (mapping)
         {
-            MD5_CTX ctx;
+            p = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, length );
+            if (p)
+            {
+                MD5_CTX ctx;
 
-            MD5Init( &ctx );
-            MD5Update( &ctx, p, length );
-            MD5Final( &ctx );
-            UnmapViewOfFile( p );
+                MD5Init( &ctx );
+                MD5Update( &ctx, p, length );
+                MD5Final( &ctx );
+                UnmapViewOfFile( p );
 
-            memcpy( pHash->dwData, ctx.digest, sizeof pHash->dwData );
-            r = ERROR_SUCCESS;
+                memcpy( pHash->dwData, ctx.digest, sizeof pHash->dwData );
+                r = ERROR_SUCCESS;
+            }
+            CloseHandle( mapping );
         }
-        CloseHandle( mapping );
     }
+    else
+    {
+        /* Empty file -> set hash to 0 */
+        memset( pHash->dwData, 0, sizeof pHash->dwData );
+        r = ERROR_SUCCESS;
+    }
+
     CloseHandle( handle );
 
     return r;
