@@ -786,11 +786,11 @@ static inline void URLCache_Allocation_BlockAllocate(BYTE * AllocationTable, DWO
  * sets ppEntry to point to it.
  *
  * RETURNS
- *    TRUE if it had enough space
- *    FALSE if it couldn't find enough space
+ *    ERROR_SUCCESS when free memory block was found
+ *    Any other Win32 error code if the entry could not be added
  *
  */
-static BOOL URLCache_FindFirstFreeEntry(URLCACHE_HEADER * pHeader, DWORD dwBlocksNeeded, CACHEFILE_ENTRY ** ppEntry)
+static DWORD URLCache_FindFirstFreeEntry(URLCACHE_HEADER * pHeader, DWORD dwBlocksNeeded, CACHEFILE_ENTRY ** ppEntry)
 {
     LPBYTE AllocationTable = (LPBYTE)pHeader + ALLOCATION_TABLE_OFFSET;
     DWORD dwBlockNumber;
@@ -814,11 +814,11 @@ static BOOL URLCache_FindFirstFreeEntry(URLCACHE_HEADER * pHeader, DWORD dwBlock
             for (index = 0; index < dwBlocksNeeded * BLOCKSIZE / sizeof(DWORD); index++)
                 ((DWORD*)*ppEntry)[index] = 0xdeadbeef;
             (*ppEntry)->dwBlocksUsed = dwBlocksNeeded;
-            return TRUE;
+            return ERROR_SUCCESS;
         }
     }
-    FIXME("Grow file\n");
-    return FALSE;
+
+    return ERROR_HANDLE_DISK_FULL;
 }
 
 /***********************************************************************
@@ -1381,14 +1381,11 @@ static DWORD URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, 
  */
 static DWORD URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_ENTRY *pPrevHash, HASH_CACHEFILE_ENTRY **ppHash)
 {
-    DWORD dwOffset;
+    DWORD dwOffset, error;
     int i;
 
-    if (!URLCache_FindFirstFreeEntry(pHeader, 0x20, (CACHEFILE_ENTRY **)ppHash))
-    {
-        FIXME("no free space for hash table\n");
-        return ERROR_DISK_FULL;
-    }
+    if ((error = URLCache_FindFirstFreeEntry(pHeader, 0x20, (CACHEFILE_ENTRY **)ppHash)) != ERROR_SUCCESS)
+        return error;
 
     dwOffset = (BYTE *)*ppHash - (BYTE *)pHeader;
 
@@ -2755,12 +2752,8 @@ static BOOL CommitUrlCacheEntryInternal(
         dwBytesNeeded += BLOCKSIZE;
     }
 
-    if (!URLCache_FindFirstFreeEntry(pHeader, dwBytesNeeded / BLOCKSIZE, &pEntry))
-    {
-        ERR("no free entries\n");
-        error = ERROR_DISK_FULL;
+    if ((error = URLCache_FindFirstFreeEntry(pHeader, dwBytesNeeded / BLOCKSIZE, &pEntry)) != ERROR_SUCCESS)
         goto cleanup;
-    }
 
     /* FindFirstFreeEntry fills in blocks used */
     pUrlEntry = (URL_CACHEFILE_ENTRY *)pEntry;
