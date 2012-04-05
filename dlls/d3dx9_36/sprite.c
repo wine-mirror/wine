@@ -69,17 +69,21 @@ static inline ID3DXSpriteImpl *impl_from_ID3DXSprite(ID3DXSprite *iface)
     return CONTAINING_RECORD(iface, ID3DXSpriteImpl, ID3DXSprite_iface);
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_QueryInterface(ID3DXSprite *iface, REFIID riid, void **object)
+static HRESULT WINAPI ID3DXSpriteImpl_QueryInterface(ID3DXSprite *iface, REFIID riid, void **out)
 {
-    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    TRACE("(%p): QueryInterface from %s\n", This, debugstr_guid(riid));
-    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ID3DXSprite)) {
+    if (IsEqualGUID(riid, &IID_ID3DXSprite)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
         IUnknown_AddRef(iface);
-        *object=This;
+        *out = iface;
         return S_OK;
     }
-    WARN("(%p)->(%s, %p): not found\n", iface, debugstr_guid(riid), *object);
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *out = NULL;
     return E_NOINTERFACE;
 }
 
