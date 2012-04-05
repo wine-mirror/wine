@@ -1291,7 +1291,12 @@ static const IPersistStreamVtbl DirectMusicSegment8_PersistStream_Vtbl = {
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicSegmentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
   IDirectMusicSegment8Impl* obj;
-  
+
+  if (pUnkOuter) {
+    *ppobj = NULL;
+    return CLASS_E_NOAGGREGATION;
+  }
+
   obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSegment8Impl));
   if (NULL == obj) {
     *ppobj = NULL;
