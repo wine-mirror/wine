@@ -95,11 +95,13 @@ DEFINE_EXPECT(wrapped_func);
 
 enum {
     TEST_FLASH,
-    TEST_NOQUICKACT
+    TEST_NOQUICKACT,
+    TEST_DISPONLY
 };
 
 static HWND container_hwnd, plugin_hwnd;
 static int plugin_behavior;
+static BOOL no_quickact;
 
 #define TESTACTIVEX_CLSID "{178fc163-f585-4e24-9c13-4bb7f6680746}"
 
@@ -1204,24 +1206,24 @@ static void init_wrapped_iface(void)
 static HRESULT ax_qi(REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IOleControl)) {
-        *ppv = &OleControl;
+        *ppv = plugin_behavior == TEST_DISPONLY ? NULL : &OleControl;
     }else if(IsEqualGUID(riid, &IID_IQuickActivate)) {
-        *ppv = plugin_behavior == TEST_NOQUICKACT ? NULL : &QuickActivate;
+        *ppv = no_quickact ? NULL : &QuickActivate;
     }else if(IsEqualGUID(riid, &IID_IPersistPropertyBag)) {
-        *ppv = plugin_behavior == TEST_NOQUICKACT ? NULL : &PersistPropertyBag;
+        *ppv = no_quickact ? NULL : &PersistPropertyBag;
     }else if(IsEqualGUID(riid, &IID_IDispatch)) {
         *ppv = &Dispatch;
     }else if(IsEqualGUID(riid, &IID_IViewObject) || IsEqualGUID(riid, &IID_IViewObject2)
             || IsEqualGUID(riid, &IID_IViewObjectEx)) {
-        *ppv = &ViewObjectEx;
+        *ppv = plugin_behavior == TEST_DISPONLY ? NULL : &ViewObjectEx;
     }else if(IsEqualGUID(riid, &IID_IOleObject)) {
-        *ppv = &OleObject;
+        *ppv = plugin_behavior == TEST_DISPONLY ? NULL : &OleObject;
     }else if(IsEqualGUID(riid, &IID_ITestActiveX)) {
         CHECK_EXPECT(QI_ITestActiveX);
         *ppv = &wrapped_iface;
     }else  if(IsEqualGUID(riid, &IID_IOleWindow) || IsEqualGUID(riid, &IID_IOleInPlaceObject)
        || IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid)) {
-        *ppv = &OleInPlaceObjectWindowless;
+        *ppv = plugin_behavior == TEST_DISPONLY ? NULL : &OleInPlaceObjectWindowless;
     }else {
         trace("QI %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -2081,11 +2083,18 @@ static void release_doc(IHTMLDocument2 *doc)
     }
 }
 
+static void init_test(int behavior)
+{
+    plugin_behavior = behavior;
+
+    no_quickact = behavior == TEST_NOQUICKACT || behavior == TEST_DISPONLY;
+}
+
 static void test_flash_ax(void)
 {
     IHTMLDocument2 *doc;
 
-    plugin_behavior = TEST_FLASH;
+    init_test(TEST_FLASH);
 
     /*
      * We pump messages until both document is loaded and plugin instance is created.
@@ -2147,7 +2156,7 @@ static void test_noquickact_ax(void)
 {
     IHTMLDocument2 *doc;
 
-    plugin_behavior = TEST_NOQUICKACT;
+    init_test(TEST_NOQUICKACT);
 
     SET_EXPECT(CreateInstance);
     SET_EXPECT(FreezeEvents_TRUE);
@@ -2186,6 +2195,23 @@ static void test_noquickact_ax(void)
     CHECK_CALLED(InPlaceDeactivate);
     CHECK_CALLED(Close);
     CHECK_CALLED(SetClientSite_NULL);
+}
+
+static void test_nooleobj_ax(void)
+{
+    IHTMLDocument2 *doc;
+
+    init_test(TEST_DISPONLY);
+
+    SET_EXPECT(CreateInstance);
+    SET_EXPECT(Invoke_READYSTATE);
+
+    doc = create_doc(object_ax_str, &called_CreateInstance);
+
+    CHECK_CALLED(CreateInstance);
+    CHECK_CALLED(Invoke_READYSTATE);
+
+    release_doc(doc);
 }
 
 static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -2305,6 +2331,8 @@ START_TEST(activex)
         test_flash_ax();
         trace("Testing plugin without IQuickActivate iface...\n");
         test_noquickact_ax();
+        trace("Testing plugin with IDispatch iface only...\n");
+        test_nooleobj_ax();
         init_registry(FALSE);
     }else {
         skip("Could not register ActiveX\n");

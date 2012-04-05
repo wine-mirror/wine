@@ -185,9 +185,9 @@ static void activate_plugin(PluginHost *host)
 {
     IClientSecurity *client_security;
     IQuickActivate *quick_activate;
+    IOleObject *ole_obj = NULL;
     IOleCommandTarget *cmdtrg;
     IViewObjectEx *view_obj;
-    IOleObject *ole_obj;
     IDispatchEx *dispex;
     IDispatch *disp;
     RECT rect;
@@ -223,29 +223,28 @@ static void activate_plugin(PluginHost *host)
         IQuickActivate_Release(quick_activate);
         if(FAILED(hres))
             FIXME("QuickActivate failed: %08x\n", hres);
-
-        load_plugin(host);
     }else {
         DWORD status = 0;
 
         hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IOleObject, (void**)&ole_obj);
-        if(FAILED(hres)) {
-            FIXME("Plugin does not support IOleObject\n");
-            return;
+        if(SUCCEEDED(hres)) {
+            hres = IOleObject_GetMiscStatus(ole_obj, DVASPECT_CONTENT, &status);
+            TRACE("GetMiscStatus returned %08x %x\n", hres, status);
+
+            hres = IOleObject_SetClientSite(ole_obj, &host->IOleClientSite_iface);
+            IOleObject_Release(ole_obj);
+            if(FAILED(hres)) {
+                FIXME("SetClientSite failed: %08x\n", hres);
+                return;
+            }
+        }else {
+            TRACE("Plugin does not support IOleObject\n");
         }
+    }
 
-        hres = IOleObject_GetMiscStatus(ole_obj, DVASPECT_CONTENT, &status);
-        TRACE("GetMiscStatus returned %08x %x\n", hres, status);
+    load_plugin(host);
 
-        hres = IOleObject_SetClientSite(ole_obj, &host->IOleClientSite_iface);
-        IOleObject_Release(ole_obj);
-        if(FAILED(hres)) {
-            FIXME("SetClientSite failed: %08x\n", hres);
-            return;
-        }
-
-        load_plugin(host);
-
+    if(ole_obj) {
         hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IViewObjectEx, (void**)&view_obj);
         if(SUCCEEDED(hres)) {
             DWORD view_status = 0;
@@ -288,11 +287,13 @@ static void activate_plugin(PluginHost *host)
         return;
     }
 
-    get_pos_rect(host, &rect);
-    hres = IOleObject_DoVerb(ole_obj, OLEIVERB_INPLACEACTIVATE, NULL, &host->IOleClientSite_iface, 0, host->hwnd, &rect);
-    IOleObject_Release(ole_obj);
-    if(FAILED(hres))
-        WARN("DoVerb failed: %08x\n", hres);
+    if(ole_obj) {
+        get_pos_rect(host, &rect);
+        hres = IOleObject_DoVerb(ole_obj, OLEIVERB_INPLACEACTIVATE, NULL, &host->IOleClientSite_iface, 0, host->hwnd, &rect);
+        IOleObject_Release(ole_obj);
+        if(FAILED(hres))
+            WARN("DoVerb failed: %08x\n", hres);
+    }
 
     if(host->ip_object) {
         HWND hwnd;
@@ -390,7 +391,7 @@ HRESULT get_plugin_dispid(HTMLPluginContainer *plugin_container, WCHAR *name, DI
     }else if(plugin_container->props_len == plugin_container->props_size) {
         DISPID *new_props;
 
-        new_props = heap_realloc(plugin_container->props, plugin_container->props_size*2);
+        new_props = heap_realloc(plugin_container->props, plugin_container->props_size*2*sizeof(DISPID));
         if(!new_props)
             return E_OUTOFMEMORY;
 
