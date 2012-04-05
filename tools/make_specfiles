@@ -110,6 +110,10 @@ my @dll_groups =
   "vcomp",
   "vcomp100",
  ],
+ [
+  "atl",
+  "atl80",
+ ],
 );
 
 my $update_flags = 0;
