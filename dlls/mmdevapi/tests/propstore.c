@@ -64,6 +64,23 @@ static void test_propertystore(IPropertyStore *store)
     ok(pv.vt == VT_EMPTY, "Key should not be found\n");
 }
 
+static void test_deviceinterface(IPropertyStore *store)
+{
+    HRESULT hr;
+    PROPVARIANT pv;
+
+    static const PROPERTYKEY deviceinterface_key = {
+        {0x233164c8, 0x1b2c, 0x4c7d, {0xbc, 0x68, 0xb6, 0x71, 0x68, 0x7a, 0x25, 0x67}}, 1
+    };
+
+    pv.vt = VT_EMPTY;
+    hr = IPropertyStore_GetValue(store, &deviceinterface_key, &pv);
+    ok(hr == S_OK, "GetValue failed: %08x\n", hr);
+    ok(pv.vt == VT_LPWSTR, "Got wrong variant type: 0x%x\n", pv.vt);
+    trace("device interface: %s\n", wine_dbgstr_w(pv.u.pwszVal));
+    CoTaskMemFree(pv.u.pwszVal);
+}
+
 START_TEST(propstore)
 {
     HRESULT hr;
@@ -109,6 +126,7 @@ START_TEST(propstore)
     if (store)
     {
         test_propertystore(store);
+        test_deviceinterface(store);
         IPropertyStore_Release(store);
     }
     IMMDevice_Release(dev);

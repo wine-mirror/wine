@@ -268,6 +268,10 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
     WCHAR guidstr[39];
     DWORD i;
 
+    static const PROPERTYKEY deviceinterface_key = {
+        {0x233164c8, 0x1b2c, 0x4c7d, {0xbc, 0x68, 0xb6, 0x71, 0x68, 0x7a, 0x25, 0x67}}, 1
+    };
+
     for (i = 0; i < MMDevice_count; ++i)
     {
         MMDevice *device = MMDevice_head[i];
@@ -319,10 +323,15 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
         if (!RegCreateKeyExW(key, reg_properties, 0, NULL, 0, KEY_WRITE|KEY_READ, NULL, &keyprop, NULL))
         {
             PROPVARIANT pv;
+
             pv.vt = VT_LPWSTR;
             pv.u.pwszVal = name;
             MMDevice_SetPropValue(id, flow, (const PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv);
             MMDevice_SetPropValue(id, flow, (const PROPERTYKEY*)&DEVPKEY_Device_DeviceDesc, &pv);
+
+            pv.u.pwszVal = guidstr;
+            MMDevice_SetPropValue(id, flow, &deviceinterface_key, &pv);
+
             RegCloseKey(keyprop);
         }
         RegCloseKey(key);
