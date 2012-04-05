@@ -117,33 +117,19 @@ IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
         *obj = iface;
     }
 
-    /* Direct3DDevice */
-    else if ( IsEqualGUID( &IID_IDirect3DDevice  , refiid ) )
+    if (This->version == 7)
     {
-        *obj = &This->IDirect3DDevice_iface;
-        TRACE("(%p) Returning IDirect3DDevice interface at %p\n", This, *obj);
+        if (IsEqualGUID(&IID_IDirect3DDevice7, refiid))
+            *obj = iface;
     }
-    else if ( IsEqualGUID( &IID_IDirect3DDevice2  , refiid ) ) {
-        *obj = &This->IDirect3DDevice2_iface;
-        TRACE("(%p) Returning IDirect3DDevice2 interface at %p\n", This, *obj);
-    }
-    else if ( IsEqualGUID( &IID_IDirect3DDevice3  , refiid ) ) {
+    else if (IsEqualGUID(&IID_IDirect3DDevice3, refiid) && This->version == 3)
         *obj = &This->IDirect3DDevice3_iface;
-        TRACE("(%p) Returning IDirect3DDevice3 interface at %p\n", This, *obj);
-    }
-    else if ( IsEqualGUID( &IID_IDirect3DDevice7  , refiid ) ) {
-        *obj = &This->IDirect3DDevice7_iface;
-        TRACE("(%p) Returning IDirect3DDevice7 interface at %p\n", This, *obj);
-    }
-
-    /* DirectDrawSurface */
+    else if (IsEqualGUID(&IID_IDirect3DDevice2, refiid) && This->version >= 2)
+        *obj = &This->IDirect3DDevice2_iface;
+    else if (IsEqualGUID(&IID_IDirect3DDevice, refiid))
+        *obj = &This->IDirect3DDevice_iface;
     else if (IsEqualGUID(&IID_IDirectDrawSurface, refiid) && This->version == 1)
-    {
         *obj = &This->target->IDirectDrawSurface_iface;
-        TRACE("Returning IDirectDrawSurface interface %p.\n", *obj);
-    }
-
-    /* Unknown interface */
     else
     {
         WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(refiid));
