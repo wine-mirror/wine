@@ -919,8 +919,8 @@ static void wave_out_test_device(UINT_PTR device)
     nameA=NULL;
     rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACESIZE,
                       (DWORD_PTR)&size, 0);
-    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALPARAM ||
-       rc==MMSYSERR_NOTSUPPORTED,
+    ok(rc==MMSYSERR_NOERROR || broken(rc==MMSYSERR_INVALPARAM ||
+       rc==MMSYSERR_NOTSUPPORTED),
        "waveOutMessage(%s): failed to get interface size, rc=%s\n",
        dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {

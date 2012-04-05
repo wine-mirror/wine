@@ -169,6 +169,13 @@ typedef struct _WINMM_ControlDetails {
     DWORD flags;
 } WINMM_ControlDetails;
 
+typedef struct _WINMM_QueryInterfaceInfo {
+    BOOL is_out;
+    UINT index;
+    WCHAR *str;
+    UINT *len_bytes;
+} WINMM_QueryInterfaceInfo;
+
 static LRESULT WOD_Open(WINMM_OpenInfo *info);
 static LRESULT WOD_Close(HWAVEOUT hwave);
 static LRESULT WID_Open(WINMM_OpenInfo *info);
@@ -2014,6 +2021,92 @@ static LRESULT MXD_SetControlDetails(WINMM_ControlDetails *details)
     return MMSYSERR_NOERROR;
 }
 
+static LRESULT DRV_QueryDeviceInterface(WINMM_QueryInterfaceInfo *info)
+{
+    WINMM_MMDevice *mmdevice;
+    IMMDevice *device;
+    IPropertyStore *ps;
+    PROPVARIANT pv;
+    DWORD len_bytes;
+    HRESULT hr;
+
+    static const PROPERTYKEY deviceinterface_key = {
+        {0x233164c8, 0x1b2c, 0x4c7d, {0xbc, 0x68, 0xb6, 0x71, 0x68, 0x7a, 0x25, 0x67}}, 1
+    };
+
+    if(WINMM_IsMapper(info->index)){
+        if(info->str){
+            if(*info->len_bytes < sizeof(WCHAR))
+                return MMSYSERR_INVALPARAM;
+            *info->str = 0;
+        }else
+            *info->len_bytes = sizeof(WCHAR);
+        return MMSYSERR_NOERROR;
+    }
+
+    if(info->is_out){
+        if(info->index >= g_outmmdevices_count)
+            return MMSYSERR_INVALHANDLE;
+
+        mmdevice = &g_out_mmdevices[info->index];
+    }else{
+        if(info->index >= g_inmmdevices_count)
+            return MMSYSERR_INVALHANDLE;
+
+        mmdevice = &g_in_mmdevices[info->index];
+    }
+
+    hr = IMMDeviceEnumerator_GetDevice(g_devenum, mmdevice->dev_id,
+            &device);
+    if(FAILED(hr)){
+        WARN("Device %s unavailable: %08x\n", wine_dbgstr_w(mmdevice->dev_id), hr);
+        return MMSYSERR_ERROR;
+    }
+
+    hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
+    if(FAILED(hr)){
+        WARN("OpenPropertyStore failed: %08x\n", hr);
+        IMMDevice_Release(device);
+        return MMSYSERR_ERROR;
+    }
+
+    PropVariantInit(&pv);
+    hr = IPropertyStore_GetValue(ps, &deviceinterface_key, &pv);
+    if(FAILED(hr)){
+        WARN("GetValue failed: %08x\n", hr);
+        IPropertyStore_Release(ps);
+        IMMDevice_Release(device);
+        return MMSYSERR_ERROR;
+    }
+    if(pv.vt != VT_LPWSTR){
+        WARN("Got unexpected property type: %u\n", pv.vt);
+        PropVariantClear(&pv);
+        IPropertyStore_Release(ps);
+        IMMDevice_Release(device);
+        return MMSYSERR_ERROR;
+    }
+
+    len_bytes = (lstrlenW(pv.u.pwszVal) + 1) * sizeof(WCHAR);
+
+    if(info->str){
+        if(len_bytes > *info->len_bytes){
+            PropVariantClear(&pv);
+            IPropertyStore_Release(ps);
+            IMMDevice_Release(device);
+            return MMSYSERR_INVALPARAM;
+        }
+
+        memcpy(info->str, pv.u.pwszVal, len_bytes);
+    }else
+        *info->len_bytes = len_bytes;
+
+    PropVariantClear(&pv);
+    IPropertyStore_Release(ps);
+    IMMDevice_Release(device);
+
+    return MMSYSERR_NOERROR;
+}
+
 static LRESULT CALLBACK WINMM_DevicesMsgProc(HWND hwnd, UINT msg, WPARAM wparam,
         LPARAM lparam)
 {
@@ -2030,6 +2123,9 @@ static LRESULT CALLBACK WINMM_DevicesMsgProc(HWND hwnd, UINT msg, WPARAM wparam,
         return MXD_GetControlDetails((WINMM_ControlDetails*)wparam);
     case MXDM_SETCONTROLDETAILS:
         return MXD_SetControlDetails((WINMM_ControlDetails*)wparam);
+    case DRV_QUERYDEVICEINTERFACESIZE:
+    case DRV_QUERYDEVICEINTERFACE:
+        return DRV_QueryDeviceInterface((WINMM_QueryInterfaceInfo*)wparam);
     }
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
@@ -2781,6 +2877,21 @@ static UINT WINMM_QueryInstanceID(UINT device, WCHAR *str, DWORD_PTR len,
     return MMSYSERR_NOERROR;
 }
 
+static UINT get_device_interface(UINT msg, BOOL is_out, UINT index, WCHAR *out, ULONG *out_len)
+{
+    WINMM_QueryInterfaceInfo info;
+
+    if(!WINMM_StartDevicesThread())
+        return MMSYSERR_ERROR;
+
+    info.is_out = is_out;
+    info.index = index;
+    info.str = out;
+    info.len_bytes = out_len;
+
+    return SendMessageW(g_devices_hwnd, msg, (DWORD_PTR)&info, 0);
+}
+
 /**************************************************************************
  * 				waveOutMessage 		[WINMM.@]
  */
@@ -2795,6 +2906,15 @@ UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
                 (DWORD_PTR*)dwParam1, TRUE);
     case DRV_QUERYFUNCTIONINSTANCEID:
         return WINMM_QueryInstanceID(HandleToULong(hWaveOut), (WCHAR*)dwParam1, dwParam2, TRUE);
+    case DRV_QUERYDEVICEINTERFACESIZE:
+        return get_device_interface(DRV_QUERYDEVICEINTERFACESIZE, TRUE, HandleToULong(hWaveOut),
+                NULL, (ULONG*)dwParam1);
+    case DRV_QUERYDEVICEINTERFACE:
+        {
+            ULONG size = dwParam2;
+            return get_device_interface(DRV_QUERYDEVICEINTERFACE, TRUE, HandleToULong(hWaveOut),
+                    (WCHAR*)dwParam1, &size);
+        }
     case DRV_QUERYMAPPABLE:
         return MMSYSERR_NOERROR;
     case DRVM_MAPPER_PREFERRED_GET:
@@ -3185,6 +3305,15 @@ UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
                 (DWORD_PTR*)dwParam1, FALSE);
     case DRV_QUERYFUNCTIONINSTANCEID:
         return WINMM_QueryInstanceID(HandleToULong(hWaveIn), (WCHAR*)dwParam1, dwParam2, FALSE);
+    case DRV_QUERYDEVICEINTERFACESIZE:
+        return get_device_interface(DRV_QUERYDEVICEINTERFACESIZE, FALSE, HandleToULong(hWaveIn),
+                NULL, (ULONG*)dwParam1);
+    case DRV_QUERYDEVICEINTERFACE:
+        {
+            ULONG size = dwParam2;
+            return get_device_interface(DRV_QUERYDEVICEINTERFACE, FALSE, HandleToULong(hWaveIn),
+                    (WCHAR*)dwParam1, &size);
+        }
     case DRV_QUERYMAPPABLE:
         return MMSYSERR_NOERROR;
     case DRVM_MAPPER_PREFERRED_GET:
