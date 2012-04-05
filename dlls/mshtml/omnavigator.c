@@ -578,8 +578,11 @@ static HRESULT WINAPI OmNavigator_get_plugins(IOmNavigator *iface, IHTMLPluginsC
 static HRESULT WINAPI OmNavigator_get_cookieEnabled(IOmNavigator *iface, VARIANT_BOOL *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+
+    *p = VARIANT_TRUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI OmNavigator_get_opsProfile(IOmNavigator *iface, IHTMLOpsProfile **p)
