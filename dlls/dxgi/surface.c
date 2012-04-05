@@ -43,7 +43,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_inner_QueryInterface(IUnknown *ifa
             || IsEqualGUID(riid, &IID_IUnknown))
     {
         IDXGISurface_AddRef(&This->IDXGISurface_iface);
-        *object = This;
+        *object = &This->IDXGISurface_iface;
         return S_OK;
     }
 
