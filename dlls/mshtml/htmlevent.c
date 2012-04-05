@@ -1191,15 +1191,16 @@ static HRESULT ensure_nsevent_handler(HTMLDocumentNode *doc, event_target_t *eve
 
 void detach_events(HTMLDocumentNode *doc)
 {
-    int i;
+    if(doc->event_vector) {
+        int i;
 
-    if(!doc->event_vector)
-        return;
-
-    for(i=0; i < EVENTID_LAST; i++) {
-        if(doc->event_vector[i])
-            detach_nsevent(doc, event_info[i].name);
+        for(i=0; i < EVENTID_LAST; i++) {
+            if(doc->event_vector[i])
+                detach_nsevent(doc, event_info[i].name);
+        }
     }
+
+    release_nsevents(doc);
 }
 
 

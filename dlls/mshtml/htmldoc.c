@@ -2046,8 +2046,6 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
     detach_events(This);
     if(This->body_event_target)
         release_event_target(This->body_event_target);
-    if(This->nsevent_listener)
-        release_nsevents(This);
     if(This->catmgr)
         ICatInformation_Release(This->catmgr);
 

@@ -37,6 +37,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static const PRUnichar blurW[]      = {'b','l','u','r',0};
+static const PRUnichar focusW[]     = {'f','o','c','u','s',0};
+static const PRUnichar keypressW[]  = {'k','e','y','p','r','e','s','s',0};
+static const PRUnichar loadW[]      = {'l','o','a','d',0};
+
 typedef struct {
     nsIDOMEventListener nsIDOMEventListener_iface;
     nsDocumentEventListener *This;
@@ -363,7 +368,7 @@ void add_nsevent_listener(HTMLDocumentNode *doc, nsIDOMNode *nsnode, LPCWSTR typ
     nsIDOMEventTarget_Release(target);
 }
 
-void detach_nsevent(HTMLDocumentNode *doc, const WCHAR *type)
+static void detach_nslistener(HTMLDocumentNode *doc, const WCHAR *type, nsEventListener *listener, cpp_bool is_capture)
 {
     nsIDOMEventTarget *target;
     nsAString type_str;
@@ -380,22 +385,35 @@ void detach_nsevent(HTMLDocumentNode *doc, const WCHAR *type)
 
     nsAString_InitDepend(&type_str, type);
     nsres = nsIDOMEventTarget_RemoveEventListener(target, &type_str,
-            &doc->nsevent_listener->htmlevent_listener.nsIDOMEventListener_iface, TRUE);
+            &listener->nsIDOMEventListener_iface, is_capture);
     nsAString_Finish(&type_str);
     nsIDOMEventTarget_Release(target);
     if(NS_FAILED(nsres))
         ERR("RemoveEventTarget failed: %08x\n", nsres);
 }
 
+void detach_nsevent(HTMLDocumentNode *doc, const WCHAR *type)
+{
+    detach_nslistener(doc, type, &doc->nsevent_listener->htmlevent_listener, TRUE);
+}
+
 void release_nsevents(HTMLDocumentNode *doc)
 {
+    nsDocumentEventListener *listener = doc->nsevent_listener;
+
     TRACE("%p %p\n", doc, doc->nsevent_listener);
 
-    if(doc->nsevent_listener) {
-        doc->nsevent_listener->doc = NULL;
-        release_listener(doc->nsevent_listener);
-        doc->nsevent_listener = NULL;
-    }
+    if(!listener)
+        return;
+
+    detach_nslistener(doc, blurW,     &listener->blur_listener,     TRUE);
+    detach_nslistener(doc, focusW,    &listener->focus_listener,    TRUE);
+    detach_nslistener(doc, keypressW, &listener->keypress_listener, FALSE);
+    detach_nslistener(doc, loadW,     &listener->load_listener,     TRUE);
+
+    listener->doc = NULL;
+    release_listener(listener);
+    doc->nsevent_listener = NULL;
 }
 
 void init_nsevents(HTMLDocumentNode *doc)
@@ -403,11 +421,6 @@ void init_nsevents(HTMLDocumentNode *doc)
     nsDocumentEventListener *listener;
     nsIDOMEventTarget *target;
     nsresult nsres;
-
-    static const PRUnichar wsz_blur[]      = {'b','l','u','r',0};
-    static const PRUnichar wsz_focus[]     = {'f','o','c','u','s',0};
-    static const PRUnichar wsz_keypress[]  = {'k','e','y','p','r','e','s','s',0};
-    static const PRUnichar wsz_load[]      = {'l','o','a','d',0};
 
     listener = heap_alloc(sizeof(nsDocumentEventListener));
     if(!listener)
@@ -432,10 +445,10 @@ void init_nsevents(HTMLDocumentNode *doc)
         return;
     }
 
-    init_event(target, wsz_blur,     &listener->blur_listener.nsIDOMEventListener_iface,     TRUE);
-    init_event(target, wsz_focus,    &listener->focus_listener.nsIDOMEventListener_iface,    TRUE);
-    init_event(target, wsz_keypress, &listener->keypress_listener.nsIDOMEventListener_iface, FALSE);
-    init_event(target, wsz_load,     &listener->load_listener.nsIDOMEventListener_iface,     TRUE);
+    init_event(target, blurW,     &listener->blur_listener.nsIDOMEventListener_iface,     TRUE);
+    init_event(target, focusW,    &listener->focus_listener.nsIDOMEventListener_iface,    TRUE);
+    init_event(target, keypressW, &listener->keypress_listener.nsIDOMEventListener_iface, FALSE);
+    init_event(target, loadW,     &listener->load_listener.nsIDOMEventListener_iface,     TRUE);
 
     nsIDOMEventTarget_Release(target);
 }
