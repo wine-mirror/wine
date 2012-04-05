@@ -540,7 +540,7 @@ static void testGetModuleHandleEx(void)
     error = GetLastError();
     ok( !ret, "unexpected success\n" );
     ok( error == ERROR_MOD_NOT_FOUND, "got %u\n", error );
-    todo_wine ok( mod == NULL, "got %p\n", mod );
+    ok( mod == NULL, "got %p\n", mod );
 
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExW( 0, NULL, NULL );
@@ -567,7 +567,7 @@ static void testGetModuleHandleEx(void)
     error = GetLastError();
     ok( !ret, "unexpected success\n" );
     ok( error == ERROR_MOD_NOT_FOUND, "got %u\n", error );
-    todo_wine ok( mod == NULL, "got %p\n", mod );
+    ok( mod == NULL, "got %p\n", mod );
 
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NULL, NULL );
@@ -593,7 +593,7 @@ static void testGetModuleHandleEx(void)
     error = GetLastError();
     ok( !ret, "unexpected success\n" );
     ok( error == ERROR_MOD_NOT_FOUND, "got %u\n", error );
-    todo_wine ok( mod == NULL, "got %p\n", mod );
+    ok( mod == NULL, "got %p\n", mod );
 
     SetLastError( 0xdeadbeef );
     ret = pGetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NULL, NULL );
@@ -619,7 +619,7 @@ static void testGetModuleHandleEx(void)
     error = GetLastError();
     ok( !ret, "unexpected success\n" );
     ok( error == ERROR_MOD_NOT_FOUND, "got %u\n", error );
-    todo_wine ok( mod == NULL, "got %p\n", mod );
+    ok( mod == NULL, "got %p\n", mod );
 
     mod_kernel32 = LoadLibraryA( "kernel32" );
 

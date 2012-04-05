@@ -548,7 +548,9 @@ BOOL WINAPI GetModuleHandleExW( DWORD flags, LPCWSTR name, HMODULE *module )
         !(flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT))
         LdrUnlockLoaderLock( 0, magic );
 
-    *module = ret;
+    if (status == STATUS_SUCCESS) *module = ret;
+    else *module = NULL;
+
     return (status == STATUS_SUCCESS);
 }
 
