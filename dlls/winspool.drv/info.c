@@ -2243,16 +2243,6 @@ BOOL WINAPI DeletePortW (LPWSTR pName, HWND hWnd, LPWSTR pPortName)
 }
 
 /******************************************************************************
- *    SetPrinterW  [WINSPOOL.@]
- */
-BOOL WINAPI SetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter, DWORD Command)
-{
-    FIXME("(%p, %d, %p, %d): stub\n", hPrinter, Level, pPrinter, Command);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/******************************************************************************
  *    WritePrinter  [WINSPOOL.@]
  */
 BOOL WINAPI WritePrinter(HANDLE hPrinter, LPVOID pBuf, DWORD cbBuf, LPDWORD pcWritten)
@@ -2866,6 +2856,47 @@ BOOL WINAPI SetPrinterA( HANDLE printer, DWORD level, LPBYTE data, DWORD command
 
     if (dataW != data) free_printer_info( dataW, level );
 
+    return ret;
+}
+
+static BOOL set_printer_9( HKEY key, const PRINTER_INFO_9W *pi )
+{
+    if (!pi->pDevMode) return FALSE;
+
+    set_reg_devmode( key, Default_DevModeW, pi->pDevMode );
+    return TRUE;
+}
+
+/******************************************************************************
+ *    SetPrinterW  [WINSPOOL.@]
+ */
+BOOL WINAPI SetPrinterW( HANDLE printer, DWORD level, LPBYTE data, DWORD command )
+{
+    HKEY key;
+    BOOL ret = FALSE;
+
+    TRACE( "(%p, %d, %p, %d)\n", printer, level, data, command );
+
+    if (command != 0) FIXME( "Ignoring command %d\n", command );
+
+    if (WINSPOOL_GetOpenedPrinterRegKey( printer, &key ))
+        return FALSE;
+
+    switch (level)
+    {
+    case 9:
+    {
+        PRINTER_INFO_9W *pi = (PRINTER_INFO_9W *)data;
+        ret = set_printer_9( key, pi );
+        break;
+    }
+
+    default:
+        FIXME( "Unimplemented level %d\n", level );
+        SetLastError( ERROR_INVALID_LEVEL );
+    }
+
+    RegCloseKey( key );
     return ret;
 }
 
