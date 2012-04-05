@@ -1180,6 +1180,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
         set_installed_prop( package );
         set_installer_properties( package );
 
+        package->ui_level = gUILevel;
         sprintfW( uilevel, fmtW, gUILevel & INSTALLUILEVEL_MASK );
         msi_set_property(package->db, szUILevel, uilevel);
 

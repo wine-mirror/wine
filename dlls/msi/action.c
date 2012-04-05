@@ -480,7 +480,7 @@ UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
 
 static BOOL needs_ui_sequence(MSIPACKAGE *package)
 {
-    return (gUILevel & INSTALLUILEVEL_MASK) >= INSTALLUILEVEL_REDUCED;
+    return (package->ui_level & INSTALLUILEVEL_MASK) >= INSTALLUILEVEL_REDUCED;
 }
 
 UINT msi_set_context(MSIPACKAGE *package)
@@ -2954,7 +2954,7 @@ static UINT ITERATE_LaunchConditions(MSIRECORD *row, LPVOID param)
     r = MSI_EvaluateConditionW(package,cond);
     if (r == MSICONDITION_FALSE)
     {
-        if ((gUILevel & INSTALLUILEVEL_MASK) != INSTALLUILEVEL_NONE)
+        if ((package->ui_level & INSTALLUILEVEL_MASK) != INSTALLUILEVEL_NONE)
         {
             LPWSTR deformated;
             message = MSI_RecordGetString(row,2);

@@ -389,6 +389,7 @@ typedef struct tagMSIPACKAGE
     LPWSTR localfile;
     BOOL delete_on_close;
 
+    INSTALLUILEVEL ui_level;
     UINT CurrentInstallState;
     msi_dialog *dialog;
     LPWSTR next_dialog;
