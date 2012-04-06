@@ -233,7 +233,8 @@ static const IDirectMusicSynth8Vtbl DirectMusicSynth8_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter)
+{
 	IDirectMusicSynth8Impl *obj;
 	
 	TRACE("(%p,%p,%p)\n", lpcGUID, ppobj, pUnkOuter);
@@ -249,12 +250,12 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl (LPCGUID lpcGUID, LPVOID* ppobj
 	obj->pCaps.dwFlags = DMUS_PC_DLS | DMUS_PC_SOFTWARESYNTH | DMUS_PC_DIRECTSOUND | DMUS_PC_DLS2 | DMUS_PC_AUDIOPATH | DMUS_PC_WAVE;
 	obj->pCaps.guidPort = CLSID_DirectMusicSynth;
 	obj->pCaps.dwClass = DMUS_PC_OUTPUTCLASS;
-	obj->pCaps.dwType = DMUS_PORT_WINMM_DRIVER;
+	obj->pCaps.dwType = DMUS_PORT_USER_MODE_SYNTH;
 	obj->pCaps.dwMemorySize = DMUS_PC_SYSTEMMEMORY;
 	obj->pCaps.dwMaxChannelGroups = 1000;
 	obj->pCaps.dwMaxVoices = 1000;
-	obj->pCaps.dwMaxAudioChannels = -1;
-	obj->pCaps.dwEffectFlags = DMUS_EFFECT_REVERB | DMUS_EFFECT_CHORUS | DMUS_EFFECT_DELAY;
+	obj->pCaps.dwMaxAudioChannels = 2;
+	obj->pCaps.dwEffectFlags = DMUS_EFFECT_REVERB;
 	MultiByteToWideChar (CP_ACP, 0, "Microsoft Synthesizer", -1, obj->pCaps.wszDescription, sizeof(obj->pCaps.wszDescription)/sizeof(WCHAR));
 	/* assign latency clock */
 	/*DMUSIC_CreateReferenceClockImpl (&IID_IReferenceClock, (LPVOID*)&This->pLatencyClock, NULL); */
