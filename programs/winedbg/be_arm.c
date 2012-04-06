@@ -22,7 +22,7 @@
 
 #include "debugger.h"
 
-#if defined(__arm__)
+#if defined(__arm__) && !defined(__ARMEB__)
 
 static unsigned be_arm_get_addr(HANDLE hThread, const CONTEXT* ctx,
                                 enum be_cpu_addr bca, ADDRESS64* addr)
@@ -258,8 +258,8 @@ static int be_arm_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
 static int be_arm_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
                                 unsigned is_signed, LONGLONG val)
 {
-    dbg_printf("be_arm_store_integer: not done\n");
-    return FALSE;
+    /* this is simple if we're on a little endian CPU */
+    return memory_write_value(lvalue, size, &val);
 }
 
 struct backend_cpu be_arm =
