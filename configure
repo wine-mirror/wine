@@ -15024,6 +15024,7 @@ wine_fn_config_test dlls/dmloader/tests dmloader_test
 wine_fn_config_dll dmscript enable_dmscript
 wine_fn_config_dll dmstyle enable_dmstyle
 wine_fn_config_dll dmsynth enable_dmsynth
+wine_fn_config_test dlls/dmsynth/tests dmsynth_test
 wine_fn_config_dll dmusic enable_dmusic
 wine_fn_config_test dlls/dmusic/tests dmusic_test
 wine_fn_config_dll dmusic32 enable_dmusic32 implib
