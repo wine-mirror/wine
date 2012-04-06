@@ -517,31 +517,38 @@ static LPWSTR user_agent;
 
 static void ensure_useragent(void)
 {
-    DWORD size = sizeof(DWORD), res, type;
-    HKEY hkey;
+    OSVERSIONINFOW info = {sizeof(info)};
+    const WCHAR *os_type, *is_nt;
+    WCHAR buf[512];
+    BOOL is_wow;
 
-    static const WCHAR user_agentW[] = {'U','s','e','r',' ','A','g','e','n','t',0};
+    static const WCHAR formatW[] =
+        {'M','o','z','i','l','l','a','/','4','.','0',
+         ' ','(','c','o','m','p','a','t','i','b','l','e',';',
+         ' ','M','S','I','E',' ','8','.','0',';',
+         ' ','W','i','n','d','o','w','s',' ','%','s','%','d','.','%','d',';',
+         ' ','%','s',';',' ','T','r','i','d','e','n','t','/','5','.','0',')',0};
+    static const WCHAR ntW[] = {'N','T',' ',0};
+    static const WCHAR win32W[] = {'W','i','n','3','2',0};
+    static const WCHAR win64W[] = {'W','i','n','6','4',0};
+    static const WCHAR wow64W[] = {'W','O','W','6','4',0};
+    static const WCHAR emptyW[] = {0};
 
     if(user_agent)
         return;
 
-    res = RegOpenKeyW(HKEY_CURRENT_USER, internet_settings_keyW, &hkey);
-    if(res != ERROR_SUCCESS)
-        return;
+    GetVersionExW(&info);
+    is_nt = info.dwPlatformId == VER_PLATFORM_WIN32_NT ? ntW : emptyW;
 
-    res = RegQueryValueExW(hkey, user_agentW, NULL, &type, NULL, &size);
-    if(res == ERROR_SUCCESS && type == REG_SZ) {
-        user_agent = heap_alloc(size);
-        res = RegQueryValueExW(hkey, user_agentW, NULL, &type, (LPBYTE)user_agent, &size);
-        if(res != ERROR_SUCCESS) {
-            heap_free(user_agent);
-            user_agent = NULL;
-        }
-    }else {
-        WARN("Could not find User Agent value: %u\n", res);
-    }
+    if(sizeof(void*) == 8)
+        os_type = win64W;
+    else if(IsWow64Process(GetCurrentProcess(), &is_wow) && is_wow)
+        os_type = wow64W;
+    else
+        os_type = win32W;
 
-    RegCloseKey(hkey);
+    sprintfW(buf, formatW, is_nt, info.dwMajorVersion, info.dwMinorVersion, os_type);
+    user_agent = heap_strdupW(buf);
 }
 
 LPWSTR get_useragent(void)
