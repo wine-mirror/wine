@@ -148,15 +148,16 @@ HRESULT WINAPI DllCanUnloadNow(void)
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
-    if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSynth) && IsEqualIID (riid, &IID_IClassFactory)) {
-                *ppv = &Synth_CF;
-		IClassFactory_AddRef((IClassFactory*)*ppv);
-		return S_OK;		
-	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicSynth) && IsEqualIID (riid, &IID_IClassFactory)) {
-                *ppv = &SynthSink_CF;
-		IClassFactory_AddRef((IClassFactory*)*ppv);
-		return S_OK;		
-	} 
+
+    if (IsEqualCLSID(rclsid, &CLSID_DirectMusicSynth) && IsEqualIID(riid, &IID_IClassFactory)) {
+        *ppv = &Synth_CF;
+        IClassFactory_AddRef((IClassFactory*)*ppv);
+        return S_OK;
+    } else if (IsEqualCLSID(rclsid, &CLSID_DirectMusicSynthSink) && IsEqualIID(riid, &IID_IClassFactory)) {
+        *ppv = &SynthSink_CF;
+        IClassFactory_AddRef((IClassFactory*)*ppv);
+        return S_OK;
+    }
 
     WARN("(%s,%s,%p): no interface found.\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;

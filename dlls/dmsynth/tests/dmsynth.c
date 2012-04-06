@@ -43,7 +43,7 @@ static void test_dmsynth(void)
     }
 
     hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynthSink, (LPVOID*)&dmsynth_sink);
-    todo_wine ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
+    ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
 
     if (dmsynth_sink)
         IDirectMusicSynthSink_Release(dmsynth_sink);
