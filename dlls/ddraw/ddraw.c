@@ -1964,8 +1964,8 @@ static HRESULT WINAPI ddraw7_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
     struct wined3d_display_mode mode;
-    static DWORD cur_scanline;
     static BOOL hide = FALSE;
+    DWORD time, frame_progress, lines;
 
     TRACE("iface %p, line %p.\n", iface, Scanline);
 
@@ -1982,11 +1982,20 @@ static HRESULT WINAPI ddraw7_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
 
     /* Fake the line sweeping of the monitor */
     /* FIXME: We should synchronize with a source to keep the refresh rate */
-    *Scanline = cur_scanline++;
-    /* Assume 20 scan lines in the vertical blank */
-    if (cur_scanline >= mode.height + 20)
-        cur_scanline = 0;
 
+    /* Simulate a 60Hz display */
+    time = GetTickCount();
+    frame_progress = time & 15; /* time % (1000 / 60) */
+    if (!frame_progress)
+    {
+        *Scanline = 0;
+        return DDERR_VERTICALBLANKINPROGRESS;
+    }
+
+    /* Convert frame_progress to estimated scan line. Return any line from
+     * block determined by time. Some lines may be never returned */
+    lines = mode.height / 15;
+    *Scanline = (frame_progress - 1) * lines + time % lines;
     return DD_OK;
 }
 
