@@ -259,9 +259,9 @@ phase                   {return INSTR_PHASE;        }
 vs\.1\.0|vs_1_0         {return VER_VS10;       }
 vs\.1\.1|vs_1_1         {return VER_VS11;       }
 
-vs_2_0                  {return VER_VS20;       }
-vs_2_x                  {return VER_VS2X;       }
-vs_3_0                  {return VER_VS30;       }
+vs\.2\.0|vs_2_0         {return VER_VS20;       }
+vs\.2\.x|vs_2_x         {return VER_VS2X;       }
+vs\.3\.0|vs_3_0         {return VER_VS30;       }
 
 ps\.1\.0|ps_1_0         {return VER_PS10;       }
 ps\.1\.1|ps_1_1         {return VER_PS11;       }
@@ -269,9 +269,9 @@ ps\.1\.2|ps_1_2         {return VER_PS12;       }
 ps\.1\.3|ps_1_3         {return VER_PS13;       }
 ps\.1\.4|ps_1_4         {return VER_PS14;       }
 
-ps_2_0                  {return VER_PS20;       }
-ps_2_x                  {return VER_PS2X;       }
-ps_3_0                  {return VER_PS30;       }
+ps\.2\.0|ps_2_0         {return VER_PS20;       }
+ps\.2\.x|ps_2_x         {return VER_PS2X;       }
+ps\.3\.0|ps_3_0         {return VER_PS30;       }
 
 {DOT}                   {return yytext[0];      }
 {COMPONENT}             {

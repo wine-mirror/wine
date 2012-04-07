@@ -129,7 +129,7 @@ static void ps_1_1_test(void) {
             {0xffff0101, 0x00000001, 0x8e0f0000, 0x80e40001, 0x0000ffff}
         },
         {   /* shader 2 */
-            "ps.1.1\n"
+            "ps_1_1\n"
             "def c2, 0, 0., 0, 0.\n",
             {0xffff0101, 0x00000051, 0xa00f0002, 0x00000000, 0x00000000, 0x00000000,
              0x00000000, 0x0000ffff}
@@ -273,7 +273,7 @@ static void vs_1_1_test(void) {
             {0xfffe0101, 0x00000006, 0x800f0000, 0x90000000, 0x0000ffff}
         },
         {   /* shader 25 */
-            "vs_1_1\n"
+            "vs.1.1\n"
             "rsq r0, v0.x\n",
             {0xfffe0101, 0x00000007, 0x800f0000, 0x90000000, 0x0000ffff}
         },
@@ -511,7 +511,7 @@ static void ps_1_3_test(void) {
              0x0000ffff}
         },
         {   /* shader 35 */
-            "ps_1_3\n"
+            "ps.1.3\n"
             "tex t0\n"
             "texdp3tex_x8 t1, t0\n",
             {0xffff0103, 0x00000042, 0xb00f0000, 0x00000053, 0xb30f0001, 0xb0e40000,
@@ -623,7 +623,7 @@ static void ps_1_4_test(void) {
             {0xffff0104, 0x00000057, 0x810f0005, 0x0000ffff}
         },
         {   /* shader 18 */
-            "ps_1_4\n"
+            "ps.1.4\n"
             "bem_d2 r1, c0, r0\n",
             {0xffff0104, 0x00000059, 0x8f0f0001, 0xa0e40000, 0x80e40000, 0x0000ffff}
         },
@@ -814,7 +814,7 @@ static void vs_2_0_test(void) {
             {0xfffe0200, 0x01000019, 0xa0e41003, 0x0000001c, 0x0100001e, 0xa0e41003, 0x0000001c, 0x0000ffff}
         },
         {   /* shader 29: labels up to 2047 are accepted even in vs_2_0 */
-            "vs_2_0\n"
+            "vs.2.0\n"
             "call l2047\n",
             {0xfffe0200, 0x01000019, 0xa0e417ff, 0x0000ffff}
         },
@@ -872,7 +872,7 @@ static void vs_2_x_test(void) {
              0x0100001e, 0xa0e41000, 0x0000001c, 0x0000ffff}
         },
         {   /* shader 6 */
-            "vs_2_x\n"
+            "vs.2.x\n"
             "rep i0\n"
             "breakp p0.w\n"
             "endrep\n",
@@ -946,7 +946,7 @@ static void ps_2_0_test(void) {
              0xb0e40001, 0xa0e40802, 0x0000ffff}
         },
         {   /* shader 10 */
-            "ps_2_0\n"
+            "ps.2.0\n"
             "dcl_2d s2\n"
             "texldb r0, t1, s2\n",
             {0xffff0200, 0x0200001f, 0x90000000, 0xa00f0802, 0x03020042, 0x800f0000,
@@ -1082,7 +1082,7 @@ static void ps_2_x_test(void) {
              0x00000027, 0x0000ffff}
         },
         {   /* shader 16 */
-            "ps_2_x\n"
+            "ps.2.x\n"
             "call l2047\n"
             "ret\n"
             "label l2047\n"
@@ -1169,7 +1169,7 @@ static void vs_3_0_test(void) {
              0x3f000000, 0x0000ffff}
         },
         {   /* shader 14: no register number checks with relative addressing */
-            "vs_3_0\n"
+            "vs.3.0\n"
             "add r0, v20[aL], r2\n",
             {0xfffe0300, 0x04000002, 0x800f0000, 0x90e42014, 0xf0e40800, 0x80e40002,
              0x0000ffff}
@@ -1257,7 +1257,7 @@ static void ps_3_0_test(void) {
             {0xffff0300, 0x0200001f, 0x90000000, 0xa04f0800, 0x0000ffff}
         },
         {   /* shader 14 */
-            "ps_3_0\n"
+            "ps.3.0\n"
             "dcl_2d_pp s0\n",
             {0xffff0300, 0x0200001f, 0x90000000, 0xa02f0800, 0x0000ffff}
         },
