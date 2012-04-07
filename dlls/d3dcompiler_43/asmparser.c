@@ -548,7 +548,8 @@ static void asmparser_instr(struct asm_parser *This, DWORD opcode,
         case BWRITERSIO_TEX:
             /* this encodes both the tex PS 1.x instruction and the
                texld 1.4/2.0+ instruction */
-            if(This->shader->version == BWRITERPS_VERSION(1, 1) ||
+            if(This->shader->version == BWRITERPS_VERSION(1, 0) ||
+               This->shader->version == BWRITERPS_VERSION(1, 1) ||
                This->shader->version == BWRITERPS_VERSION(1, 2) ||
                This->shader->version == BWRITERPS_VERSION(1, 3)) {
                 asmparser_tex(This, mod, shift, dst);
