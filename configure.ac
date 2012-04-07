@@ -1384,11 +1384,17 @@ WINE_NOTICE_WITH(cms,[test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" != "yes"],
 dnl **** Check for FreeType 2 ****
 if test "x$with_freetype" != "xno"
 then
-    AC_CHECK_PROGS(ft_devel,[freetype-config freetype2-config],no)
-    if test "$ft_devel" != "no"
+    if test "$PKG_CONFIG" != "false"
     then
-        ac_freetype_incl=`$ft_devel --cflags`
-        ac_freetype_libs=`$ft_devel --libs`
+        ac_freetype_incl="`$PKG_CONFIG --cflags freetype2 2>/dev/null`"
+        ac_freetype_libs="`$PKG_CONFIG --libs freetype2 2>/dev/null`"
+    else
+        AC_CHECK_PROGS(ft_devel,[freetype-config freetype2-config],no)
+        if test "$ft_devel" != "no"
+        then
+            ac_freetype_incl=`$ft_devel --cflags`
+            ac_freetype_libs=`$ft_devel --libs`
+        fi
     fi
     ac_freetype_libs=${ac_freetype_libs:-"-lfreetype"}
     WINE_CHECK_SONAME(freetype,FT_Init_FreeType,[ft_lib=yes],[ft_lib=no],[$ac_freetype_libs])
