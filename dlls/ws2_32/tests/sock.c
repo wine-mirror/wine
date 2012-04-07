@@ -2730,10 +2730,50 @@ static void test_getsockname(void)
 
 static void test_dns(void)
 {
-    struct hostent *h;
+    struct hostent *h, *he, host;
+    union memaddress
+    {
+        char *chr;
+        void *mem;
+    } addr;
+    char **ptr;
+    int acount;
+    void *ip_addr, *alias_addr;
 
     h = gethostbyname("");
     ok(h != NULL, "gethostbyname(\"\") failed with %d\n", h_errno);
+
+    if(h) host = *h;
+
+    /* Use an address with valid alias names if possible */
+    he = gethostbyname("source.winehq.org");
+    if(he)
+        h = he;
+    else if (h)
+        h = &host;
+    else
+    {
+        skip("Can't test the hostent structure because gethostbyname failed\n");
+        return;
+    }
+
+    /* The returned struct must be allocated in a very strict way. First we need to
+     * count how many aliases there are because they must be located right after
+     * the struct hostent size. Knowing the amount of aliases we know the exact
+     * location of the first IP returned. Rule valid for >= XP, for older OS's
+     * it's somewhat the opposite. */
+    for(ptr = h->h_aliases, acount = 1; *ptr; ptr++) acount++;
+
+    addr.mem = h + 1;
+    alias_addr = addr.mem;
+
+    todo_wine ok(h->h_aliases == alias_addr || broken(h->h_addr_list == alias_addr /* <= W2K */ ),
+       "hostent->h_aliases should be in %p, it is in %p\n", alias_addr, h->h_aliases);
+
+    addr.chr += sizeof(h->h_aliases) * acount;
+    ip_addr = addr.mem;
+    todo_wine ok(h->h_addr_list == ip_addr || broken(h->h_addr_list == alias_addr /* <= W2K */ ),
+       "hostent->h_addr_list should be in %p, it is in %p\n", ip_addr, h->h_addr_list);
 }
 
 /* Our winsock headers don't define gethostname because it conflicts with the
