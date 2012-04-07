@@ -10262,7 +10262,12 @@ fi
 
 if test "x$with_freetype" != "xno"
 then
-    for ac_prog in freetype-config freetype2-config
+    if test "$PKG_CONFIG" != "false"
+    then
+        ac_freetype_incl="`$PKG_CONFIG --cflags freetype2 2>/dev/null`"
+        ac_freetype_libs="`$PKG_CONFIG --libs freetype2 2>/dev/null`"
+    else
+        for ac_prog in freetype-config freetype2-config
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -10305,10 +10310,11 @@ fi
 done
 test -n "$ft_devel" || ft_devel="no"
 
-    if test "$ft_devel" != "no"
-    then
-        ac_freetype_incl=`$ft_devel --cflags`
-        ac_freetype_libs=`$ft_devel --libs`
+        if test "$ft_devel" != "no"
+        then
+            ac_freetype_incl=`$ft_devel --cflags`
+            ac_freetype_libs=`$ft_devel --libs`
+        fi
     fi
     ac_freetype_libs=${ac_freetype_libs:-"-lfreetype"}
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lfreetype" >&5
