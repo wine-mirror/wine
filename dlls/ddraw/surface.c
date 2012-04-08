@@ -4467,6 +4467,7 @@ static HRESULT WINAPI ddraw_surface7_GetPalette(IDirectDrawSurface7 *iface, IDir
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
     struct wined3d_palette *wined3d_palette;
+    struct ddraw_palette *palette_impl;
     HRESULT hr = DD_OK;
 
     TRACE("iface %p, palette %p.\n", iface, Pal);
@@ -4478,7 +4479,8 @@ static HRESULT WINAPI ddraw_surface7_GetPalette(IDirectDrawSurface7 *iface, IDir
     wined3d_palette = wined3d_surface_get_palette(surface->wined3d_surface);
     if (wined3d_palette)
     {
-        *Pal = wined3d_palette_get_parent(wined3d_palette);
+        palette_impl = wined3d_palette_get_parent(wined3d_palette);
+        *Pal = &palette_impl->IDirectDrawPalette_iface;
         IDirectDrawPalette_AddRef(*Pal);
     }
     else
