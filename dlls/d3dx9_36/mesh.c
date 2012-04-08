@@ -96,16 +96,14 @@ static inline ID3DXMeshImpl *impl_from_ID3DXMesh(ID3DXMesh *iface)
 
 static HRESULT WINAPI ID3DXMeshImpl_QueryInterface(ID3DXMesh *iface, REFIID riid, LPVOID *object)
 {
-    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
-
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), object);
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_ID3DXBaseMesh) ||
         IsEqualGUID(riid, &IID_ID3DXMesh))
     {
         iface->lpVtbl->AddRef(iface);
-        *object = This;
+        *object = iface;
         return S_OK;
     }
 
