@@ -547,6 +547,7 @@
 551 stub -noname IShellFolder_CompareIDs
 
 @ stdcall AssocCreate(int128 ptr ptr)
+@ stdcall AssocGetPerceivedType(wstr ptr ptr ptr)
 @ stdcall AssocIsDangerous(long)
 @ stdcall AssocQueryKeyA(long long str ptr ptr)
 @ stdcall AssocQueryKeyW(long long wstr ptr ptr)
