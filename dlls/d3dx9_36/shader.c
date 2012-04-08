@@ -658,18 +658,16 @@ static DWORD calc_bytes(D3DXCONSTANT_DESC *desc)
 }
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI ID3DXConstantTableImpl_QueryInterface(ID3DXConstantTable *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI ID3DXConstantTableImpl_QueryInterface(ID3DXConstantTable *iface, REFIID riid, void **out)
 {
-    struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
-
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObject);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_ID3DXBuffer) ||
         IsEqualGUID(riid, &IID_ID3DXConstantTable))
     {
         ID3DXConstantTable_AddRef(iface);
-        *ppvObject = This;
+        *out = iface;
         return S_OK;
     }
 
