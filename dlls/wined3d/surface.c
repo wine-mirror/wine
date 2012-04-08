@@ -6177,7 +6177,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         mem = surface->resource.allocatedMemory;
     }
 
-    data.buffer_object = surface->flags & SFLAG_PBO ? surface->pbo : 0;
+    data.buffer_object = surface->pbo;
     data.addr = mem;
     surface_upload_data(surface, gl_info, &format, &src_rect, src_pitch, &dst_point, srgb, &data);
 
