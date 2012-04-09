@@ -2471,6 +2471,7 @@ static HRESULT WINAPI ddraw7_GetSurfaceFromDC(IDirectDraw7 *iface, HDC hdc,
 {
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
     struct wined3d_surface *wined3d_surface;
+    struct ddraw_surface *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, dc %p, surface %p.\n", iface, hdc, Surface);
@@ -2485,7 +2486,8 @@ static HRESULT WINAPI ddraw7_GetSurfaceFromDC(IDirectDraw7 *iface, HDC hdc,
         return DDERR_NOTFOUND;
     }
 
-    *Surface = wined3d_surface_get_parent(wined3d_surface);
+    surface_impl = wined3d_surface_get_parent(wined3d_surface);
+    *Surface = &surface_impl->IDirectDrawSurface7_iface;
     IDirectDrawSurface7_AddRef(*Surface);
     TRACE("Returning surface %p.\n", Surface);
     return DD_OK;
