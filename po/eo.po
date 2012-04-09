@@ -8621,7 +8621,7 @@ msgstr "&Elira dosiernomo:"
 
 #: winspool.rc:28
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "La elira dosiero jam ekzistas.  Klaki sur 'Bone' por anstataŭi ĝin."
+msgstr "La elira dosiero jam ekzistas. Klaki sur 'Bone' por anstataŭi ĝin."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
