@@ -40,15 +40,13 @@ static inline ID3DXLineImpl *impl_from_ID3DXLine(ID3DXLine *iface)
 /*** IUnknown methods ***/
 static HRESULT WINAPI ID3DXLineImpl_QueryInterface(ID3DXLine* iface, REFIID riid, LPVOID* object)
 {
-    ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
-
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), object);
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_ID3DXLine))
     {
         ID3DXLine_AddRef(iface);
-        *object = This;
+        *object = iface;
         return S_OK;
     }
 
