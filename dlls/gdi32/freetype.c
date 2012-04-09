@@ -1193,7 +1193,7 @@ static inline BOOL faces_equal( const Face *f1, const Face *f2 )
 {
     if (strcmpiW( f1->StyleName, f2->StyleName )) return FALSE;
     if (f1->scalable) return TRUE;
-    if (f2->size.y_ppem != f2->size.y_ppem) return FALSE;
+    if (f1->size.y_ppem != f2->size.y_ppem) return FALSE;
     return !memcmp( &f1->fs, &f2->fs, sizeof(f1->fs) );
 }
 
