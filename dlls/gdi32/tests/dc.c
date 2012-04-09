@@ -345,6 +345,8 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
     unsigned int i;
     WORD ramp[3][256];
     BOOL ret;
+    RECT clip;
+    UINT type;
 
     if (GetObjectType( hdc ) == OBJ_METADC)
     {
@@ -358,6 +360,8 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
         ok( !ret, "GetDeviceGammaRamp succeeded on %s\n", descr );
         ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
             "wrong error %u on %s\n", GetLastError(), descr );
+        type = GetClipBox( hdc, &clip );
+        ok( type == ERROR, "GetClipBox returned %d on %s\n", type, descr );
     }
     else
     {
@@ -371,7 +375,16 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
         ok( !ret, "GetDeviceGammaRamp succeeded on %s\n", descr );
         ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
             "wrong error %u on %s\n", GetLastError(), descr );
+        type = GetClipBox( hdc, &clip );
+        ok( type == SIMPLEREGION, "GetClipBox returned %d on memdc for %s\n", type, descr );
     }
+
+    type = GetClipBox( ref_dc, &clip );
+    ok( type == SIMPLEREGION, "GetClipBox returned %d on %s\n", type, descr );
+    ok( clip.left == 0 && clip.top == 0 &&
+        clip.right == GetDeviceCaps( ref_dc, DESKTOPHORZRES ) &&
+        clip.bottom == GetDeviceCaps( ref_dc, DESKTOPVERTRES ),
+        "GetClipBox returned %d,%d,%d,%d on %s\n", clip.left, clip.top, clip.right, clip.bottom, descr );
 
     if (GetObjectType( hdc ) == OBJ_MEMDC)
     {
@@ -400,6 +413,12 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
         ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
             "wrong error %u on %s\n", GetLastError(), descr );
 
+        type = GetClipBox( hdc, &clip );
+        ok( type == SIMPLEREGION, "GetClipBox returned %d on memdc for %s\n", type, descr );
+        ok( clip.left == 0 && clip.top == 0 && clip.right == 16 && clip.bottom == 16,
+            "GetClipBox returned %d,%d,%d,%d on memdc for %s\n",
+            clip.left, clip.top, clip.right, clip.bottom, descr );
+
         SelectObject( hdc, old );
         DeleteObject( dib );
     }
@@ -412,7 +431,7 @@ static void test_CreateCompatibleDC(void)
     HBITMAP bitmap;
     INT caps;
 
-    screen_dc = GetDC( 0 );
+    screen_dc = CreateDC( "DISPLAY", NULL, NULL, NULL );
     bitmap = CreateBitmap( 10, 10, 1, 1, NULL );
 
     /* Create a DC compatible with the screen */
@@ -456,7 +475,7 @@ static void test_CreateCompatibleDC(void)
     DeleteMetaFile( CloseMetaFile( hdcMetafile ));
 
     DeleteObject( bitmap );
-    ReleaseDC( 0, screen_dc );
+    DeleteDC( screen_dc );
 }
 
 static void test_DC_bitmap(void)
