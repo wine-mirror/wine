@@ -1255,12 +1255,14 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
 
             if (face->font_version <= cursor->font_version)
             {
-                TRACE("Original font is newer so skipping this one\n");
+                TRACE("Original font %s is newer so skipping %s\n",
+                      debugstr_a(cursor->file), debugstr_a(face->file));
                 return FALSE;
             }
             else
             {
-                TRACE("Replacing original with this one\n");
+                TRACE("Replacing original %s with %s\n",
+                      debugstr_a(cursor->file), debugstr_a(face->file));
                 list_add_before( &cursor->entry, &face->entry );
                 face->family = family;
                 list_remove( &cursor->entry);
@@ -1268,6 +1270,8 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
                 return TRUE;
             }
         }
+        else
+            TRACE("Adding new %s\n", debugstr_a(face->file));
 
         if (style_order( face ) < style_order( cursor )) break;
     }
