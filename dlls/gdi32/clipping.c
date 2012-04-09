@@ -409,7 +409,11 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
         if (get_dc_visrect( dc, &visrect ) && !intersect_rect( rect, rect, &visrect ))
             ret = NULLREGION;
     }
-    else ret = get_dc_visrect( dc, rect ) ? SIMPLEREGION : NULLREGION;
+    else
+    {
+        ret = is_rect_empty( &dc->vis_rect ) ? ERROR : SIMPLEREGION;
+        *rect = dc->vis_rect;
+    }
 
     if (dc->layout & LAYOUT_RTL)
     {
