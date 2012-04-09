@@ -4431,7 +4431,7 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
 {
     struct ddraw_surface *target = unsafe_impl_from_IDirectDrawSurface7(surface);
     struct ddraw *ddraw = impl_from_IDirect3D7(iface);
-    IDirect3DDeviceImpl *object;
+    struct d3d_device *object;
     HRESULT hr;
 
     TRACE("iface %p, riid %s, surface %p, device %p.\n", iface, debugstr_guid(riid), surface, device);
@@ -4455,7 +4455,7 @@ static HRESULT WINAPI d3d3_CreateDevice(IDirect3D3 *iface, REFCLSID riid,
 {
     struct ddraw_surface *surface_impl = unsafe_impl_from_IDirectDrawSurface4(surface);
     struct ddraw *ddraw = impl_from_IDirect3D3(iface);
-    IDirect3DDeviceImpl *device_impl;
+    struct d3d_device *device_impl;
     HRESULT hr;
 
     TRACE("iface %p, riid %s, surface %p, device %p, outer_unknown %p.\n",
@@ -4483,7 +4483,7 @@ static HRESULT WINAPI d3d2_CreateDevice(IDirect3D2 *iface, REFCLSID riid,
 {
     struct ddraw_surface *surface_impl = unsafe_impl_from_IDirectDrawSurface(surface);
     struct ddraw *ddraw = impl_from_IDirect3D2(iface);
-    IDirect3DDeviceImpl *device_impl;
+    struct d3d_device *device_impl;
     HRESULT hr;
 
     TRACE("iface %p, riid %s, surface %p, device %p.\n",

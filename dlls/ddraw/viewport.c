@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
  * Helper functions
  *****************************************************************************/
 
-static void update_clip_space(IDirect3DDeviceImpl *device,
+static void update_clip_space(struct d3d_device *device,
         struct wined3d_vec3 *scale, struct wined3d_vec3 *offset)
 {
     D3DMATRIX clip_space =

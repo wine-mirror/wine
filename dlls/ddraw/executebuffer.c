@@ -69,7 +69,7 @@ static void _dump_D3DEXECUTEBUFFERDESC(const D3DEXECUTEBUFFERDESC *lpDesc) {
  *
  *****************************************************************************/
 HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
-        IDirect3DDeviceImpl *lpDevice, struct d3d_viewport *viewport)
+        struct d3d_device *device, struct d3d_viewport *viewport)
 {
     /* DWORD bs = This->desc.dwBufferSize; */
     DWORD vs = This->data.dwVertexOffset;
@@ -79,7 +79,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
 
     char *instr = (char *)This->desc.lpData + is;
 
-    if (viewport->active_device != lpDevice)
+    if (viewport->active_device != device)
     {
         WARN("Viewport %p active device is %p.\n",
                 viewport, viewport->active_device);
@@ -156,8 +156,8 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
                 /* IDirect3DDevices have color keying always enabled -
                  * enable it before drawing. This overwrites any ALPHA*
                  * render state. */
-                wined3d_device_set_render_state(lpDevice->wined3d_device, WINED3D_RS_COLORKEYENABLE, 1);
-                IDirect3DDevice7_DrawIndexedPrimitive(&lpDevice->IDirect3DDevice7_iface,
+                wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_COLORKEYENABLE, 1);
+                IDirect3DDevice7_DrawIndexedPrimitive(&device->IDirect3DDevice7_iface,
                         D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX, tl_vx, 0, This->indices, count * 3, 0);
 	    } break;
 
@@ -175,9 +175,9 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
                     D3DMATRIXMULTIPLY *ci = (D3DMATRIXMULTIPLY *)instr;
                     D3DMATRIX *a, *b, *c;
 
-                    a = ddraw_get_object(&lpDevice->handle_table, ci->hDestMatrix - 1, DDRAW_HANDLE_MATRIX);
-                    b = ddraw_get_object(&lpDevice->handle_table, ci->hSrcMatrix1 - 1, DDRAW_HANDLE_MATRIX);
-                    c = ddraw_get_object(&lpDevice->handle_table, ci->hSrcMatrix2 - 1, DDRAW_HANDLE_MATRIX);
+                    a = ddraw_get_object(&device->handle_table, ci->hDestMatrix - 1, DDRAW_HANDLE_MATRIX);
+                    b = ddraw_get_object(&device->handle_table, ci->hSrcMatrix1 - 1, DDRAW_HANDLE_MATRIX);
+                    c = ddraw_get_object(&device->handle_table, ci->hSrcMatrix2 - 1, DDRAW_HANDLE_MATRIX);
 
                     if (!a || !b || !c)
                     {
@@ -203,7 +203,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
                     D3DSTATE *ci = (D3DSTATE *)instr;
                     D3DMATRIX *m;
 
-                    m = ddraw_get_object(&lpDevice->handle_table, ci->u2.dwArg[0] - 1, DDRAW_HANDLE_MATRIX);
+                    m = ddraw_get_object(&device->handle_table, ci->u2.dwArg[0] - 1, DDRAW_HANDLE_MATRIX);
                     if (!m)
                     {
                         ERR("Invalid matrix handle %#x.\n", ci->u2.dwArg[0]);
@@ -211,12 +211,12 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
                     else
                     {
                         if (ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_WORLD)
-                            lpDevice->world = ci->u2.dwArg[0];
+                            device->world = ci->u2.dwArg[0];
                         if (ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_VIEW)
-                            lpDevice->view = ci->u2.dwArg[0];
+                            device->view = ci->u2.dwArg[0];
                         if (ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_PROJECTION)
-                            lpDevice->proj = ci->u2.dwArg[0];
-                        IDirect3DDevice7_SetTransform(&lpDevice->IDirect3DDevice7_iface,
+                            device->proj = ci->u2.dwArg[0];
+                        IDirect3DDevice7_SetTransform(&device->IDirect3DDevice7_iface,
                                 ci->u1.dtstTransformStateType, m);
                     }
 
@@ -239,7 +239,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
                     {
                         struct d3d_material *m;
 
-                        m = ddraw_get_object(&lpDevice->handle_table, ci->u2.dwArg[0] - 1, DDRAW_HANDLE_MATERIAL);
+                        m = ddraw_get_object(&device->handle_table, ci->u2.dwArg[0] - 1, DDRAW_HANDLE_MATERIAL);
                         if (!m)
                             ERR("Invalid material handle %#x.\n", ci->u2.dwArg[0]);
                         else
@@ -283,7 +283,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
 				break;
 			}
 
-                        IDirect3DDevice7_SetRenderState(&lpDevice->IDirect3DDevice7_iface, rs, ci->u2.dwArg[0]);
+                        IDirect3DDevice7_SetRenderState(&device->IDirect3DDevice7_iface, rs, ci->u2.dwArg[0]);
 		    }
 
 		    instr += size;
@@ -292,7 +292,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
 
 	    case D3DOP_STATERENDER: {
 	        int i;
-                IDirect3DDevice2 *d3d_device2 = &lpDevice->IDirect3DDevice2_iface;
+                IDirect3DDevice2 *d3d_device2 = &device->IDirect3DDevice2_iface;
 		TRACE("STATERENDER      (%d)\n", count);
 
 		for (i = 0; i < count; i++) {
@@ -315,11 +315,11 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
 
                 /* Get the transform and world matrix */
                 /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
-                wined3d_device_get_transform(lpDevice->wined3d_device,
+                wined3d_device_get_transform(device->wined3d_device,
                         D3DTRANSFORMSTATE_VIEW, (struct wined3d_matrix *)&view_mat);
-                wined3d_device_get_transform(lpDevice->wined3d_device,
+                wined3d_device_get_transform(device->wined3d_device,
                         D3DTRANSFORMSTATE_PROJECTION, (struct wined3d_matrix *)&proj_mat);
-                wined3d_device_get_transform(lpDevice->wined3d_device,
+                wined3d_device_get_transform(device->wined3d_device,
                         WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)&world_mat);
 
 		for (i = 0; i < count; i++) {
@@ -837,7 +837,7 @@ static const struct IDirect3DExecuteBufferVtbl d3d_execute_buffer_vtbl =
 };
 
 HRESULT d3d_execute_buffer_init(IDirect3DExecuteBufferImpl *execute_buffer,
-        IDirect3DDeviceImpl *device, D3DEXECUTEBUFFERDESC *desc)
+        struct d3d_device *device, D3DEXECUTEBUFFERDESC *desc)
 {
     execute_buffer->IDirect3DExecuteBuffer_iface.lpVtbl = &d3d_execute_buffer_vtbl;
     execute_buffer->ref = 1;

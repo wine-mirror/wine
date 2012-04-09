@@ -1619,10 +1619,8 @@ static HRESULT ddraw_surface_attach_surface(struct ddraw_surface *This, struct d
     This->next_attached = Surf;
 
     /* Check if the WineD3D depth stencil needs updating */
-    if(This->ddraw->d3ddevice)
-    {
-        IDirect3DDeviceImpl_UpdateDepthStencil(This->ddraw->d3ddevice);
-    }
+    if (This->ddraw->d3ddevice)
+        d3d_device_update_depth_stencil(This->ddraw->d3ddevice);
 
     wined3d_mutex_unlock();
 
@@ -1823,7 +1821,7 @@ static HRESULT ddraw_surface_delete_attached_surface(struct ddraw_surface *surfa
 
     /* Check if the wined3d depth stencil needs updating. */
     if (surface->ddraw->d3ddevice)
-        IDirect3DDeviceImpl_UpdateDepthStencil(surface->ddraw->d3ddevice);
+        d3d_device_update_depth_stencil(surface->ddraw->d3ddevice);
     wined3d_mutex_unlock();
 
     /* Set attached_iface to NULL before releasing it, the surface may go
@@ -4968,7 +4966,7 @@ static HRESULT WINAPI d3d_texture2_GetHandle(IDirect3DTexture2 *iface,
         IDirect3DDevice2 *device, D3DTEXTUREHANDLE *handle)
 {
     struct ddraw_surface *surface = impl_from_IDirect3DTexture2(iface);
-    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice2(device);
+    struct d3d_device *device_impl = unsafe_impl_from_IDirect3DDevice2(device);
 
     TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 
@@ -4999,7 +4997,7 @@ static HRESULT WINAPI d3d_texture1_GetHandle(IDirect3DTexture *iface,
         IDirect3DDevice *device, D3DTEXTUREHANDLE *handle)
 {
     struct ddraw_surface *surface = impl_from_IDirect3DTexture(iface);
-    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice(device);
+    struct d3d_device *device_impl = unsafe_impl_from_IDirect3DDevice(device);
 
     TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 

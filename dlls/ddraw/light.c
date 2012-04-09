@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
  *****************************************************************************/
 static void light_update(struct d3d_light *light)
 {
-    IDirect3DDeviceImpl *device;
+    struct d3d_device *device;
 
     TRACE("light %p.\n", light);
 
@@ -52,7 +52,7 @@ static void light_update(struct d3d_light *light)
  *****************************************************************************/
 void light_activate(struct d3d_light *light)
 {
-    IDirect3DDeviceImpl *device;
+    struct d3d_device *device;
 
     TRACE("light %p.\n", light);
 
@@ -76,7 +76,7 @@ void light_activate(struct d3d_light *light)
  *****************************************************************************/
 void light_deactivate(struct d3d_light *light)
 {
-    IDirect3DDeviceImpl *device;
+    struct d3d_device *device;
 
     TRACE("light %p.\n", light);
 

@@ -309,7 +309,7 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexB
 {
     IDirect3DVertexBufferImpl *This = impl_from_IDirect3DVertexBuffer7(iface);
     IDirect3DVertexBufferImpl *Src = unsafe_impl_from_IDirect3DVertexBuffer7(SrcBuffer);
-    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice7(device);
+    struct d3d_device *device_impl = unsafe_impl_from_IDirect3DDevice7(device);
     BOOL oldClip, doClip;
     HRESULT hr;
 
@@ -360,7 +360,7 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_1_ProcessVertices(IDirect3DVerte
 {
     IDirect3DVertexBufferImpl *This = impl_from_IDirect3DVertexBuffer(iface);
     IDirect3DVertexBufferImpl *Src = unsafe_impl_from_IDirect3DVertexBuffer(SrcBuffer);
-    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice3(device);
+    struct d3d_device *device_impl = unsafe_impl_from_IDirect3DDevice3(device);
 
     TRACE("iface %p, vertex_op %#x, dst_idx %u, count %u, src_buffer %p, src_idx %u, device %p, flags %#x.\n",
             iface, VertexOp, DestIndex, Count, SrcBuffer, SrcIndex, device, Flags);
@@ -459,7 +459,7 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_1_Optimize(IDirect3DVertexBuffer
         IDirect3DDevice3 *device, DWORD Flags)
 {
     IDirect3DVertexBufferImpl *This = impl_from_IDirect3DVertexBuffer(iface);
-    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice3(device);
+    struct d3d_device *device_impl = unsafe_impl_from_IDirect3DDevice3(device);
 
     TRACE("iface %p, device %p, flags %#x.\n", iface, device, Flags);
 

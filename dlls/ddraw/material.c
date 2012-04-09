@@ -297,7 +297,7 @@ static HRESULT WINAPI d3d_material3_GetHandle(IDirect3DMaterial3 *iface,
         IDirect3DDevice3 *device, D3DMATERIALHANDLE *handle)
 {
     struct d3d_material *material = impl_from_IDirect3DMaterial3(iface);
-    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice3(device);
+    struct d3d_device *device_impl = unsafe_impl_from_IDirect3DDevice3(device);
 
     TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 
@@ -326,7 +326,7 @@ static HRESULT WINAPI d3d_material2_GetHandle(IDirect3DMaterial2 *iface,
         IDirect3DDevice2 *device, D3DMATERIALHANDLE *handle)
 {
     struct d3d_material *material = impl_from_IDirect3DMaterial2(iface);
-    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice2(device);
+    struct d3d_device *device_impl = unsafe_impl_from_IDirect3DDevice2(device);
 
     TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 
@@ -338,7 +338,7 @@ static HRESULT WINAPI d3d_material1_GetHandle(IDirect3DMaterial *iface,
         IDirect3DDevice *device, D3DMATERIALHANDLE *handle)
 {
     struct d3d_material *material = impl_from_IDirect3DMaterial(iface);
-    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice(device);
+    struct d3d_device *device_impl = unsafe_impl_from_IDirect3DDevice(device);
 
     TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 
