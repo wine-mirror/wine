@@ -1124,6 +1124,75 @@ static const char *sha1_graphics_1[] =
     NULL
 };
 
+static const RECT graphics_bounds[] =
+{
+    { 0, 0, 0, 0 },
+    { 10, 3, 219, 101 },
+    { 100, 100, 301, 301 },
+    { 0, 0, 201, 201 },
+    { 10, 10, 110, 320 },
+    { 10, 99, 300, 200 },
+    { 99, 12, 201, 200 },
+    { 90, 110, 300, 200 },
+    { 90, 90, 210, 200 },
+    { 10, 99, 300, 200 },
+    { 10, 99, 300, 200 },
+    { 99, 12, 201, 200 },
+    { 99, 11, 201, 200 },
+    { 90, 110, 300, 200 },
+    { 90, 110, 300, 200 },
+    { 10, 10, 365, 405 },
+    { 10, 10, 365, 405 },
+    { 10, 10, 365, 405 },
+    { 10, 10, 365, 405 },
+    { 10, 10, 365, 405 },
+    { 10, 10, 365, 405 },
+    { 10, 10, 365, 405 },
+    { 10, 10, 365, 405 },
+    { 10, 10, 350, 251 },
+    { 10, 10, 300, 200 },
+    { 300, 10, 9, 260 },
+    { 10, 10, 435, 405 },
+    { 10, 10, 120, 120 },
+    { 10, 10, 110, 110 },
+    { 10, 10, 120, 110 },
+    { 10, 10, 110, 120 },
+    { 10, 10, 120, 120 },
+    { 10, 10, 110, 110 },
+    { 10, 10, 120, 110 },
+    { 10, 10, 110, 120 },
+    { 100, 100, 356, 356 },
+    { 100, 100, 356, 356 },
+    { 50, 50, 306, 306 },
+    { 100, 100, 356, 356 },
+    { 100, 100, 356, 356 },
+    { 100, 100, 356, 356 },
+    { 100, 100, 356, 356 },
+    { 100, 100, 356, 356 },
+    { 100, 100, 356, 356 },
+    { 100, 100, 356, 356 },
+    { 100, 100, 356, 356 },
+    { 100, 100, 356, 356 },
+    { 100, 100, 356, 356 },
+    { 100, 100, 356, 356 },
+    { 10, 10, 416, 26 },
+    { 10, 8, 60, 104 },
+    { 0, 10, 511, 306 },
+    { 0, 10, 512, 306 },
+    { 1, 1, 300, 512 },
+    { 0, 0, 500, 512 },
+    { 5, 5, 206, 206 },
+    { 45, 45, 256, 256 },
+    { 86, 86, 215, 215 },
+    { 8, 0, 392, 231 },
+    { 8, 0, 392, 231 },
+    { 0, 0, 60, 20 },
+    { 0, 0, 512, 512 },
+    { -1, -1, -1, -1 }  /* the end */
+};
+
+static const char **current_sha1;
+static const RECT *current_bounds;
 static const char *dst_format;
 
 static inline DWORD get_stride(BITMAPINFO *bmi)
@@ -1170,7 +1239,49 @@ static char *hash_dib(BITMAPINFO *bmi, void *bits)
     return buf;
 }
 
-static void compare_hash_broken_todo(BITMAPINFO *bmi, BYTE *bits, const char ***sha1, const char *info, int num_broken, BOOL todo)
+static void reset_bounds( HDC hdc )
+{
+    current_bounds = graphics_bounds;
+    SetBoundsRect( hdc, NULL, DCB_RESET | DCB_ENABLE );
+}
+
+static void compare_bounds( HDC hdc, const char *info )
+{
+    RECT rect;
+
+    GetBoundsRect( hdc, &rect, DCB_RESET );
+
+    if (current_bounds->left == -1 &&
+        current_bounds->top == -1 &&
+        current_bounds->right == -1 &&
+        current_bounds->bottom == -1)
+    {
+        ok( 0, "missing bounds, got { %d, %d, %d, %d },\n", rect.left, rect.top, rect.right, rect.bottom );
+        return;
+    }
+
+    if (current_bounds->left == 0 && current_bounds->top == 0 &&
+        current_bounds->right == 0 && current_bounds->bottom == 0)
+        ok( !memcmp( current_bounds, &rect, sizeof(RECT) ),
+            "%s: %s: expected bounds %d,%d,%d,%d got %d,%d,%d,%d\n", dst_format, info,
+            current_bounds->left, current_bounds->top, current_bounds->right, current_bounds->bottom,
+            rect.left, rect.top, rect.right, rect.bottom );
+    else
+        todo_wine
+        ok( !memcmp( current_bounds, &rect, sizeof(RECT) ),
+            "%s: %s: expected bounds %d,%d,%d,%d got %d,%d,%d,%d\n", dst_format, info,
+            current_bounds->left, current_bounds->top, current_bounds->right, current_bounds->bottom,
+            rect.left, rect.top, rect.right, rect.bottom );
+    current_bounds++;
+}
+
+static void skip_compare( int count )
+{
+    current_sha1 += count;
+    current_bounds++;
+}
+
+static void compare_hash_broken_todo(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char *info, int num_broken, BOOL todo)
 {
     char *hash = hash_dib(bmi, bits);
     BOOL ok_cond;
@@ -1187,33 +1298,35 @@ static void compare_hash_broken_todo(BITMAPINFO *bmi, BYTE *bits, const char ***
 
     for(i = 0; i <= num_broken; i++)
     {
-        if((*sha1)[i] == NULL)
+        if(current_sha1[i] == NULL)
         {
-            ok((*sha1)[i] != NULL, "missing hash, got \"%s\",\n", hash);
+            ok(current_sha1[i] != NULL, "missing hash, got \"%s\",\n", hash);
             return;
         }
     }
 
-    ok_cond = !strcmp(hash, **sha1);
+    ok_cond = !strcmp(hash, *current_sha1);
 
     for(i = 1; i <= num_broken; i++)
-        ok_cond = ok_cond || broken( !strcmp(hash, (*sha1)[i]) );
+        ok_cond = ok_cond || broken( !strcmp(hash, current_sha1[i]) );
 
     if(todo)
         todo_wine ok( ok_cond, "%s: %s: expected hash %s got %s\n",
-                      dst_format, info, **sha1, hash );
+                      dst_format, info, *current_sha1, hash );
     else
         ok( ok_cond, "%s: %s: expected hash %s got %s\n",
-            dst_format, info, **sha1, hash );
+            dst_format, info, *current_sha1, hash );
 
-    *sha1 += num_broken + 1;
+    current_sha1 += num_broken + 1;
 
     HeapFree(GetProcessHeap(), 0, hash);
+
+    compare_bounds( hdc, info );
 }
 
-static void compare_hash(BITMAPINFO *bmi, BYTE *bits, const char ***sha1, const char *info)
+static void compare_hash(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char *info)
 {
-    compare_hash_broken_todo(bmi, bits, sha1, info, 0, FALSE);
+    compare_hash_broken_todo(hdc, bmi, bits, info, 0, FALSE);
 }
 
 static const RECT bias_check[] =
@@ -1361,7 +1474,7 @@ static inline void solid_patblt( HDC hdc, int x, int y, int width, int height, C
     DeleteObject( SelectObject( hdc, brush ) );
 }
 
-static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sha1)
+static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits)
 {
     char pal_buffer[sizeof(LOGPALETTE) + 255 * sizeof(PALETTEENTRY)];
     LOGPALETTE *pal = (LOGPALETTE *)pal_buffer;
@@ -1388,8 +1501,10 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     blend.BlendOp = AC_SRC_OVER;
     blend.BlendFlags = 0;
 
+    reset_bounds( hdc );
+
     memset(bits, 0xcc, get_dib_size(bmi));
-    compare_hash(bmi, bits, sha1, "empty");
+    compare_hash(hdc, bmi, bits, "empty");
 
     src_dc = CreateCompatibleDC( 0 );
     solid_pen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0xff));
@@ -1409,7 +1524,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         MoveToEx(hdc, 170 + i * 3, 100, NULL);
         LineTo(hdc, 170 + i * 3, 10); /* b -> t */
     }
-    compare_hash(bmi, bits, sha1, "h and v solid lines");
+    compare_hash(hdc, bmi, bits, "h and v solid lines");
 
     /* diagonal lines */
     SetROP2(hdc, R2_COPYPEN);
@@ -1421,14 +1536,14 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         MoveToEx(hdc, 200.5 + 10 * c, 200.5 + 10 * s, NULL);
         LineTo(hdc, 200.5 + 100 * c, 200.5 + 100 * s);
     }
-    compare_hash(bmi, bits, sha1, "diagonal solid lines");
+    compare_hash(hdc, bmi, bits, "diagonal solid lines");
 
     for(i = 0; i < sizeof(bias_check) / sizeof(bias_check[0]); i++)
     {
         MoveToEx(hdc, bias_check[i].left, bias_check[i].top, NULL);
         LineTo(hdc, bias_check[i].right, bias_check[i].bottom);
     }
-    compare_hash(bmi, bits, sha1, "more diagonal solid lines");
+    compare_hash(hdc, bmi, bits, "more diagonal solid lines");
 
     /* solid brush PatBlt */
     solid_brush = CreateSolidBrush(RGB(0x33, 0xaa, 0xff));
@@ -1447,7 +1562,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         }
 
     }
-    compare_hash(bmi, bits, sha1, "solid patblt");
+    compare_hash(hdc, bmi, bits, "solid patblt");
 
     /* clipped lines */
     hrgn = CreateRectRgn(10, 10, 200, 20);
@@ -1463,21 +1578,21 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         MoveToEx(hdc, hline_clips[i].left, hline_clips[i].top, NULL);
         LineTo(hdc, hline_clips[i].right, hline_clips[i].bottom);
     }
-    compare_hash(bmi, bits, sha1, "clipped solid hlines");
+    compare_hash(hdc, bmi, bits, "clipped solid hlines");
 
     for(i = 0; i < sizeof(vline_clips)/sizeof(vline_clips[0]); i++)
     {
         MoveToEx(hdc, vline_clips[i].left, vline_clips[i].top, NULL);
         LineTo(hdc, vline_clips[i].right, vline_clips[i].bottom);
     }
-    compare_hash(bmi, bits, sha1, "clipped solid vlines");
+    compare_hash(hdc, bmi, bits, "clipped solid vlines");
 
     for(i = 0; i < sizeof(line_clips)/sizeof(line_clips[0]); i++)
     {
         MoveToEx(hdc, line_clips[i].left, line_clips[i].top, NULL);
         LineTo(hdc, line_clips[i].right, line_clips[i].bottom);
     }
-    compare_hash(bmi, bits, sha1, "clipped solid diagonal lines");
+    compare_hash(hdc, bmi, bits, "clipped solid diagonal lines");
 
     /* clipped PatBlt */
     for(i = 0; i < sizeof(patblt_clips) / sizeof(patblt_clips[0]); i++)
@@ -1486,7 +1601,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
                patblt_clips[i].right - patblt_clips[i].left,
                patblt_clips[i].bottom - patblt_clips[i].top, PATCOPY);
     }
-    compare_hash(bmi, bits, sha1, "clipped patblt");
+    compare_hash(hdc, bmi, bits, "clipped patblt");
 
     /* clipped dashed lines */
     dashed_pen = CreatePen(PS_DASH, 1, RGB(0xff, 0, 0));
@@ -1499,35 +1614,35 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         MoveToEx(hdc, hline_clips[i].left, hline_clips[i].top, NULL);
         LineTo(hdc, hline_clips[i].right, hline_clips[i].bottom);
     }
-    compare_hash(bmi, bits, sha1, "clipped dashed hlines");
+    compare_hash(hdc, bmi, bits, "clipped dashed hlines");
 
     for(i = 0; i < sizeof(hline_clips)/sizeof(hline_clips[0]); i++)
     {
         MoveToEx(hdc, hline_clips[i].right - 1, hline_clips[i].bottom, NULL);
         LineTo(hdc, hline_clips[i].left - 1, hline_clips[i].top);
     }
-    compare_hash(bmi, bits, sha1, "clipped dashed hlines r -> l");
+    compare_hash(hdc, bmi, bits, "clipped dashed hlines r -> l");
 
     for(i = 0; i < sizeof(vline_clips)/sizeof(vline_clips[0]); i++)
     {
         MoveToEx(hdc, vline_clips[i].left, vline_clips[i].top, NULL);
         LineTo(hdc, vline_clips[i].right, vline_clips[i].bottom);
     }
-    compare_hash(bmi, bits, sha1, "clipped dashed vlines");
+    compare_hash(hdc, bmi, bits, "clipped dashed vlines");
 
     for(i = 0; i < sizeof(vline_clips)/sizeof(vline_clips[0]); i++)
     {
         MoveToEx(hdc, vline_clips[i].right, vline_clips[i].bottom - 1, NULL);
         LineTo(hdc, vline_clips[i].left, vline_clips[i].top - 1);
     }
-    compare_hash(bmi, bits, sha1, "clipped dashed vlines b -> t");
+    compare_hash(hdc, bmi, bits, "clipped dashed vlines b -> t");
 
     for(i = 0; i < sizeof(line_clips)/sizeof(line_clips[0]); i++)
     {
         MoveToEx(hdc, line_clips[i].left, line_clips[i].top, NULL);
         LineTo(hdc, line_clips[i].right, line_clips[i].bottom);
     }
-    compare_hash(bmi, bits, sha1, "clipped dashed diagonal lines");
+    compare_hash(hdc, bmi, bits, "clipped dashed diagonal lines");
 
     SetBkMode(hdc, OPAQUE);
 
@@ -1536,7 +1651,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         MoveToEx(hdc, line_clips[i].left, line_clips[i].top, NULL);
         LineTo(hdc, line_clips[i].right, line_clips[i].bottom);
     }
-    compare_hash(bmi, bits, sha1, "clipped opaque dashed diagonal lines");
+    compare_hash(hdc, bmi, bits, "clipped opaque dashed diagonal lines");
 
     ExtSelectClipRgn(hdc, NULL, RGN_COPY);
 
@@ -1567,9 +1682,9 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         }
     }
     if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed == 256)  /* 8-bpp grayscale broken on NT4 */
-        compare_hash_broken_todo(bmi, bits, sha1, "top-down 8888 dib brush patblt", 1, FALSE);
+        compare_hash_broken_todo(hdc, bmi, bits, "top-down 8888 dib brush patblt", 1, FALSE);
     else
-        compare_hash_broken_todo(bmi, bits, sha1, "top-down 8888 dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
+        compare_hash_broken_todo(hdc, bmi, bits, "top-down 8888 dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
 
     SelectObject(hdc, orig_brush);
     DeleteObject(dib_brush);
@@ -1597,9 +1712,9 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         }
     }
     if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed == 256)  /* 8-bpp grayscale broken on NT4 */
-        compare_hash_broken_todo(bmi, bits, sha1, "bottom-up 8888 dib brush patblt", 1, FALSE);
+        compare_hash_broken_todo(hdc, bmi, bits, "bottom-up 8888 dib brush patblt", 1, FALSE);
     else
-        compare_hash_broken_todo(bmi, bits, sha1, "bottom-up 8888 dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
+        compare_hash_broken_todo(hdc, bmi, bits, "bottom-up 8888 dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
 
     SelectObject(hdc, orig_brush);
     DeleteObject(dib_brush);
@@ -1627,9 +1742,9 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         }
     }
     if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed == 256)  /* 8-bpp grayscale broken on NT4 */
-        compare_hash_broken_todo(bmi, bits, sha1, "top-down 24 bpp brush patblt", 1, FALSE);
+        compare_hash_broken_todo(hdc, bmi, bits, "top-down 24 bpp brush patblt", 1, FALSE);
     else
-        compare_hash_broken_todo(bmi, bits, sha1, "top-down 24 bpp brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
+        compare_hash_broken_todo(hdc, bmi, bits, "top-down 24 bpp brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
 
     SelectObject(hdc, orig_brush);
     DeleteObject(dib_brush);
@@ -1657,9 +1772,9 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         }
     }
     if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed == 256)  /* 8-bpp grayscale broken on NT4 */
-        compare_hash_broken_todo(bmi, bits, sha1, "top-down 555 dib brush patblt", 1, FALSE);
+        compare_hash_broken_todo(hdc, bmi, bits, "top-down 555 dib brush patblt", 1, FALSE);
     else
-        compare_hash_broken_todo(bmi, bits, sha1, "top-down 555 dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
+        compare_hash_broken_todo(hdc, bmi, bits, "top-down 555 dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
 
     SelectObject(hdc, orig_brush);
     DeleteObject(dib_brush);
@@ -1696,7 +1811,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash_broken_todo(bmi, bits, sha1, "top-down 8 bpp dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
+    compare_hash_broken_todo(hdc, bmi, bits, "top-down 8 bpp dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
 
     SelectObject(hdc, orig_brush);
     DeleteObject(dib_brush);
@@ -1718,7 +1833,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash_broken_todo(bmi, bits, sha1, "top-down 4 bpp dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
+    compare_hash_broken_todo(hdc, bmi, bits, "top-down 4 bpp dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
 
     SelectObject(hdc, orig_brush);
     DeleteObject(dib_brush);
@@ -1744,7 +1859,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         }
     }
 
-    compare_hash_broken_todo(bmi, bits, sha1, "top-down 1 bpp dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
+    compare_hash_broken_todo(hdc, bmi, bits, "top-down 1 bpp dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
 
     SelectObject(hdc, orig_brush);
     DeleteObject(dib_brush);
@@ -1768,7 +1883,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         }
     }
 
-    compare_hash_broken_todo(bmi, bits, sha1, "1 bpp ddb brush patblt", dib_is_1bpp ? 3 : 0, dib_is_1bpp);
+    compare_hash_broken_todo(hdc, bmi, bits, "1 bpp ddb brush patblt", dib_is_1bpp ? 3 : 0, dib_is_1bpp);
 
     DeleteObject(bmp);
     SelectObject(hdc, orig_brush);
@@ -1792,20 +1907,20 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         Rectangle(hdc, rectangles[i].left, rectangles[i].top + 150, rectangles[i].right, rectangles[i].bottom + 150);
     }
 
-    compare_hash(bmi, bits, sha1, "rectangles");
+    compare_hash(hdc, bmi, bits, "rectangles");
     SelectObject(hdc, solid_pen);
 
     /* PaintRgn */
 
     PaintRgn(hdc, hrgn);
-    compare_hash(bmi, bits, sha1, "PaintRgn");
+    compare_hash(hdc, bmi, bits, "PaintRgn");
 
     /* RTL rectangles */
 
     if( !pSetLayout )
     {
         win_skip("Don't have SetLayout\n");
-        (*sha1)++;
+        skip_compare(1);
     }
     else
     {
@@ -1813,7 +1928,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         PaintRgn(hdc, hrgn);
         PatBlt(hdc, 10, 250, 10, 10, PATCOPY);
         Rectangle(hdc, 100, 250, 110, 260);
-        compare_hash(bmi, bits, sha1, "rtl");
+        compare_hash(hdc, bmi, bits, "rtl");
 
         pSetLayout(hdc, LAYOUT_LTR);
     }
@@ -1836,7 +1951,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         }
     }
 
-    compare_hash_broken_todo(bmi, bits, sha1, "hatch brushes", 1, FALSE); /* nt4 is different */
+    compare_hash_broken_todo(hdc, bmi, bits, "hatch brushes", 1, FALSE); /* nt4 is different */
 
     /* overlapping blits */
 
@@ -1847,7 +1962,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     Rectangle(hdc, 15, 15, 20, 20);
     Rectangle(hdc, 15, 20, 50, 45);
     BitBlt( hdc, 20, 20, 100, 100, hdc, 10, 10, SRCCOPY );
-    compare_hash(bmi, bits, sha1, "overlapping BitBlt SRCCOPY +x, +y");
+    compare_hash(hdc, bmi, bits, "overlapping BitBlt SRCCOPY +x, +y");
 
     Rectangle(hdc, 10, 10, 100, 100);
     Rectangle(hdc, 20, 15, 30, 40);
@@ -1855,16 +1970,16 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     Rectangle(hdc, 15, 20, 50, 45);
     BitBlt( hdc, 10, 10, 100, 100, hdc, 20, 20, SRCCOPY );
     if (bmi->bmiHeader.biBitCount == 1)  /* Windows gets this one wrong */
-        compare_hash_broken_todo(bmi, bits, sha1, "overlapping BitBlt SRCCOPY -x, -y",1, FALSE);
+        compare_hash_broken_todo(hdc, bmi, bits, "overlapping BitBlt SRCCOPY -x, -y",1, FALSE);
     else
-        compare_hash(bmi, bits, sha1, "overlapping BitBlt SRCCOPY -x, -y");
+        compare_hash(hdc, bmi, bits, "overlapping BitBlt SRCCOPY -x, -y");
 
     Rectangle(hdc, 10, 10, 100, 100);
     Rectangle(hdc, 20, 15, 30, 40);
     Rectangle(hdc, 15, 15, 20, 20);
     Rectangle(hdc, 15, 20, 50, 45);
     BitBlt( hdc, 20, 10, 100, 100, hdc, 10, 20, SRCCOPY );
-    compare_hash(bmi, bits, sha1, "overlapping BitBlt SRCCOPY +x, -y");
+    compare_hash(hdc, bmi, bits, "overlapping BitBlt SRCCOPY +x, -y");
 
     Rectangle(hdc, 10, 10, 100, 100);
     Rectangle(hdc, 20, 15, 30, 40);
@@ -1872,23 +1987,23 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     Rectangle(hdc, 15, 20, 50, 45);
     BitBlt( hdc, 10, 20, 100, 100, hdc, 20, 10, SRCCOPY );
     if (bmi->bmiHeader.biBitCount == 1)  /* Windows gets this one wrong */
-        compare_hash_broken_todo(bmi, bits, sha1, "overlapping BitBlt SRCCOPY -x, +y", 1, FALSE );
+        compare_hash_broken_todo(hdc, bmi, bits, "overlapping BitBlt SRCCOPY -x, +y", 1, FALSE );
     else
-        compare_hash(bmi, bits, sha1, "overlapping BitBlt SRCCOPY -x, +y" );
+        compare_hash(hdc, bmi, bits, "overlapping BitBlt SRCCOPY -x, +y" );
 
     Rectangle(hdc, 10, 10, 100, 100);
     Rectangle(hdc, 20, 15, 30, 40);
     Rectangle(hdc, 15, 15, 20, 20);
     Rectangle(hdc, 15, 20, 50, 45);
     BitBlt( hdc, 20, 20, 100, 100, hdc, 10, 10, PATPAINT );
-    compare_hash(bmi, bits, sha1, "overlapping BitBlt PATPAINT +x, +y");
+    compare_hash(hdc, bmi, bits, "overlapping BitBlt PATPAINT +x, +y");
 
     Rectangle(hdc, 10, 10, 100, 100);
     Rectangle(hdc, 20, 15, 30, 40);
     Rectangle(hdc, 15, 15, 20, 20);
     Rectangle(hdc, 15, 20, 50, 45);
     BitBlt( hdc, 10, 10, 100, 100, hdc, 20, 20, PATPAINT );
-    compare_hash(bmi, bits, sha1, "overlapping BitBlt PATPAINT -x, -y");
+    compare_hash(hdc, bmi, bits, "overlapping BitBlt PATPAINT -x, -y");
 
     Rectangle(hdc, 10, 10, 100, 100);
     Rectangle(hdc, 20, 15, 30, 40);
@@ -1896,16 +2011,16 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     Rectangle(hdc, 15, 20, 50, 45);
     BitBlt( hdc, 20, 10, 100, 100, hdc, 10, 20, PATPAINT );
     if (bmi->bmiHeader.biBitCount >= 24)  /* Windows gets this one wrong */
-        compare_hash_broken_todo(bmi, bits, sha1, "overlapping BitBlt PATPAINT +x, -y", 1, FALSE);
+        compare_hash_broken_todo(hdc, bmi, bits, "overlapping BitBlt PATPAINT +x, -y", 1, FALSE);
     else
-        compare_hash(bmi, bits, sha1, "overlapping BitBlt PATPAINT +x, -y");
+        compare_hash(hdc, bmi, bits, "overlapping BitBlt PATPAINT +x, -y");
 
     Rectangle(hdc, 10, 10, 100, 100);
     Rectangle(hdc, 20, 15, 30, 40);
     Rectangle(hdc, 15, 15, 20, 20);
     Rectangle(hdc, 15, 20, 50, 45);
     BitBlt( hdc, 10, 20, 100, 100, hdc, 20, 10, PATPAINT );
-    compare_hash(bmi, bits, sha1, "overlapping BitBlt PATPAINT -x, +y" );
+    compare_hash(hdc, bmi, bits, "overlapping BitBlt PATPAINT -x, +y" );
 
     /* blitting with 32-bpp BI_RGB source */
 
@@ -1930,22 +2045,22 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
     if (bmi->bmiHeader.biBitCount == 8)  /* broken on NT4 */
-        compare_hash_broken_todo(bmi, bits, sha1, "BitBlt src 32-bpp SRCCOPY", 1, FALSE );
+        compare_hash_broken_todo(hdc, bmi, bits, "BitBlt src 32-bpp SRCCOPY", 1, FALSE );
     else
-        compare_hash(bmi, bits, sha1, "BitBlt src 32-bpp SRCCOPY" );
+        compare_hash(hdc, bmi, bits, "BitBlt src 32-bpp SRCCOPY" );
 
     blend.SourceConstantAlpha = 0xd0;
     blend.AlphaFormat = 0;
     if (pGdiAlphaBlend) pGdiAlphaBlend( hdc, 100, 100, 256, 256, src_dc, 0, 0, 256, 256, blend );
     if (bmi->bmiHeader.biBitCount == 16 && bmi->bmiHeader.biCompression == BI_RGB) /* 555 broken on w2k */
     {
-        if (!pGdiAlphaBlend) (*sha1) += 2;
-        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 32-bpp no alpha", 1, FALSE );
+        if (!pGdiAlphaBlend) skip_compare(2);
+        else compare_hash_broken_todo(hdc, bmi, bits, "AlphaBlend src 32-bpp no alpha", 1, FALSE );
     }
     else
     {
-        if (!pGdiAlphaBlend) (*sha1)++;
-        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 32-bpp no alpha", 0, dib_is_1bpp );
+        if (!pGdiAlphaBlend) skip_compare(1);
+        else compare_hash_broken_todo(hdc, bmi, bits, "AlphaBlend src 32-bpp no alpha", 0, dib_is_1bpp );
     }
 
     blend.SourceConstantAlpha = 0xb0;
@@ -1953,13 +2068,13 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     if (pGdiAlphaBlend) pGdiAlphaBlend( hdc, 50, 50, 256, 256, src_dc, 0, 0, 256, 256, blend );
     if (bmi->bmiHeader.biBitCount == 16 && bmi->bmiHeader.biCompression == BI_RGB) /* 555 broken on w2k */
     {
-        if (!pGdiAlphaBlend) (*sha1) += 2;
-        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 32-bpp alpha", 1, FALSE );
+        if (!pGdiAlphaBlend) skip_compare(2);
+        else compare_hash_broken_todo(hdc, bmi, bits, "AlphaBlend src 32-bpp alpha", 1, FALSE );
     }
     else
     {
-        if (!pGdiAlphaBlend) (*sha1)++;
-        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 32-bpp alpha", 0, dib_is_1bpp );
+        if (!pGdiAlphaBlend) skip_compare(1);
+        else compare_hash_broken_todo(hdc, bmi, bits, "AlphaBlend src 32-bpp alpha", 0, dib_is_1bpp );
     }
 
     /* blitting with 32-bpp r10g10b10 source */
@@ -1982,9 +2097,9 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
     if (bmi->bmiHeader.biBitCount == 8)  /* broken on NT4 */
-        compare_hash_broken_todo(bmi, bits, sha1, "BitBlt src 32-bpp r10g10b10 SRCCOPY", 1, FALSE );
+        compare_hash_broken_todo(hdc, bmi, bits, "BitBlt src 32-bpp r10g10b10 SRCCOPY", 1, FALSE );
     else
-        compare_hash(bmi, bits, sha1, "BitBlt src 32-bpp r10g10b10 SRCCOPY" );
+        compare_hash(hdc, bmi, bits, "BitBlt src 32-bpp r10g10b10 SRCCOPY" );
 
     /* blitting with 32-bpp b6g6r6 source */
 
@@ -2006,9 +2121,9 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
     if (bmi->bmiHeader.biBitCount == 8)  /* broken on NT4 */
-        compare_hash_broken_todo(bmi, bits, sha1, "BitBlt src 32-bpp b6g6r6 SRCCOPY", 1, FALSE );
+        compare_hash_broken_todo(hdc, bmi, bits, "BitBlt src 32-bpp b6g6r6 SRCCOPY", 1, FALSE );
     else
-        compare_hash(bmi, bits, sha1, "BitBlt src 32-bpp b6g6r6 SRCCOPY" );
+        compare_hash(hdc, bmi, bits, "BitBlt src 32-bpp b6g6r6 SRCCOPY" );
 
     /* blitting with 24-bpp source */
 
@@ -2026,22 +2141,22 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
     if (bmi->bmiHeader.biBitCount == 8)  /* broken on NT4 */
-        compare_hash_broken_todo(bmi, bits, sha1, "BitBlt src 24-bpp SRCCOPY", 1, FALSE );
+        compare_hash_broken_todo(hdc, bmi, bits, "BitBlt src 24-bpp SRCCOPY", 1, FALSE );
     else
-        compare_hash(bmi, bits, sha1, "BitBlt src 24-bpp SRCCOPY" );
+        compare_hash(hdc, bmi, bits, "BitBlt src 24-bpp SRCCOPY" );
 
     blend.SourceConstantAlpha = 0xe0;
     blend.AlphaFormat = 0;
     if (pGdiAlphaBlend) pGdiAlphaBlend( hdc, 100, 100, 256, 256, src_dc, 0, 0, 256, 256, blend );
     if (bmi->bmiHeader.biBitCount == 16 && bmi->bmiHeader.biCompression == BI_RGB) /* 555 broken on w2k */
     {
-        if (!pGdiAlphaBlend) (*sha1) += 2;
-        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 24-bpp", 1, FALSE );
+        if (!pGdiAlphaBlend) skip_compare(2);
+        else compare_hash_broken_todo(hdc, bmi, bits, "AlphaBlend src 24-bpp", 1, FALSE );
     }
     else
     {
-        if (!pGdiAlphaBlend) (*sha1)++;
-        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 24-bpp", 0, dib_is_1bpp );
+        if (!pGdiAlphaBlend) skip_compare(1);
+        else compare_hash_broken_todo(hdc, bmi, bits, "AlphaBlend src 24-bpp", 0, dib_is_1bpp );
     }
 
     /* blitting with 16-bpp BI_RGB source */
@@ -2056,9 +2171,9 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
     if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed > 5)  /* broken on NT4 */
-        compare_hash_broken_todo(bmi, bits, sha1, "BitBlt src 16-bpp SRCCOPY", 1, FALSE );
+        compare_hash_broken_todo(hdc, bmi, bits, "BitBlt src 16-bpp SRCCOPY", 1, FALSE );
     else
-        compare_hash(bmi, bits, sha1, "BitBlt src 16-bpp SRCCOPY" );
+        compare_hash(hdc, bmi, bits, "BitBlt src 16-bpp SRCCOPY" );
 
     /* blitting with 16-bpp b4g4r4 source */
 
@@ -2075,9 +2190,9 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
     if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed > 5)  /* broken on NT4 */
-        compare_hash_broken_todo(bmi, bits, sha1, "BitBlt src 16-bpp b4g4r4 SRCCOPY", 1, FALSE );
+        compare_hash_broken_todo(hdc, bmi, bits, "BitBlt src 16-bpp b4g4r4 SRCCOPY", 1, FALSE );
     else
-        compare_hash(bmi, bits, sha1, "BitBlt src 16-bpp b4g4r4 SRCCOPY" );
+        compare_hash(hdc, bmi, bits, "BitBlt src 16-bpp b4g4r4 SRCCOPY" );
 
     /* blitting with 8-bpp source */
 
@@ -2092,20 +2207,20 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             src_bits[y * 256 + x] = 3 * x + 5 * y;
 
     BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
-    compare_hash(bmi, bits, sha1, "BitBlt src 8-bpp SRCCOPY" );
+    compare_hash(hdc, bmi, bits, "BitBlt src 8-bpp SRCCOPY" );
 
     blend.SourceConstantAlpha = 0xd0;
     blend.AlphaFormat = 0;
     if (pGdiAlphaBlend) pGdiAlphaBlend( hdc, 100, 100, 256, 256, src_dc, 0, 0, 256, 256, blend );
     if (bmi->bmiHeader.biBitCount == 16 && bmi->bmiHeader.biCompression == BI_RGB) /* 555 broken on w2k */
     {
-        if (!pGdiAlphaBlend) (*sha1) += 2;
-        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 8-bpp", 1, FALSE );
+        if (!pGdiAlphaBlend) skip_compare(2);
+        else compare_hash_broken_todo(hdc, bmi, bits, "AlphaBlend src 8-bpp", 1, FALSE );
     }
     else
     {
-        if (!pGdiAlphaBlend) (*sha1)++;
-        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 8-bpp", 0, dib_is_1bpp );
+        if (!pGdiAlphaBlend) skip_compare(1);
+        else compare_hash_broken_todo(hdc, bmi, bits, "AlphaBlend src 8-bpp", 0, dib_is_1bpp );
     }
 
     /* blitting with 4-bpp source */
@@ -2120,7 +2235,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             src_bits[(y * 256 + x) / 2] = 7 * x + 3 * y;
 
     BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
-    compare_hash(bmi, bits, sha1, "BitBlt src 4-bpp SRCCOPY" );
+    compare_hash(hdc, bmi, bits, "BitBlt src 4-bpp SRCCOPY" );
 
     /* blitting with 1-bpp source */
 
@@ -2134,20 +2249,20 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             src_bits[(y * 256 + x) / 8] = 7 * x + 3 * y;
 
     BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
-    compare_hash(bmi, bits, sha1, "BitBlt src 1-bpp SRCCOPY" );
+    compare_hash(hdc, bmi, bits, "BitBlt src 1-bpp SRCCOPY" );
 
     blend.SourceConstantAlpha = 0x90;
     blend.AlphaFormat = 0;
     if (pGdiAlphaBlend) pGdiAlphaBlend( hdc, 100, 100, 256, 256, src_dc, 0, 0, 256, 256, blend );
     if (bmi->bmiHeader.biBitCount == 16 && bmi->bmiHeader.biCompression == BI_RGB) /* 555 broken on w2k */
     {
-        if (!pGdiAlphaBlend) (*sha1) += 2;
-        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 1-bpp", 1, FALSE );
+        if (!pGdiAlphaBlend) skip_compare(2);
+        else compare_hash_broken_todo(hdc, bmi, bits, "AlphaBlend src 1-bpp", 1, FALSE );
     }
     else
     {
-        if (!pGdiAlphaBlend) (*sha1)++;
-        else compare_hash(bmi, bits, sha1, "AlphaBlend src 1-bpp" );
+        if (!pGdiAlphaBlend) skip_compare(1);
+        else compare_hash(hdc, bmi, bits, "AlphaBlend src 1-bpp" );
     }
 
     DeleteDC( src_dc );
@@ -2176,7 +2291,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     StretchDIBits( hdc, 200, 10, 7, 7, 0, 1, 7, 7, rle8_data, src_bi, DIB_RGB_COLORS, SRCCOPY );
     StretchDIBits( hdc, 300, 10, 7, 7, 1, 0, 7, 7, rle8_data, src_bi, DIB_RGB_COLORS, SRCCOPY );
     StretchDIBits( hdc, 400, 10, 16, 16, 0, 0, 8, 8, rle8_data, src_bi, DIB_RGB_COLORS, SRCCOPY );
-    compare_hash_broken_todo( bmi, bits, sha1, "rle stretchdibits", 0, dib_is_1bpp );
+    compare_hash_broken_todo(hdc,  bmi, bits, "rle stretchdibits", 0, dib_is_1bpp );
 
     /* 32 bpp StretchDIBits */
 
@@ -2216,7 +2331,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     ret = StretchDIBits( hdc,  60, 100, -2, -2, 2, 3, -2, -2, four_by_four_data, src_bi, DIB_RGB_COLORS, SRCAND );
     ok(ret == -4, "got %d\n", ret);
 
-    compare_hash_broken_todo( bmi, bits, sha1, "stretchdibits", dib_is_8bpp_gray ? 1 : 0, dib_is_8bpp_gray );
+    compare_hash_broken_todo(hdc,  bmi, bits, "stretchdibits", dib_is_8bpp_gray ? 1 : 0, dib_is_8bpp_gray );
 
     /* Solid colors */
     for (i = 0; i < 256; i++)
@@ -2242,7 +2357,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     solid_patblt( hdc,  8, 50, 1, 1, RGB( 0xff, 0, 0 ) );
     solid_patblt( hdc, 10, 50, 1, 1, PALETTERGB( 0xff, 0, 0 ) );
 
-    compare_hash(bmi, bits, sha1, "Colors");
+    compare_hash(hdc, bmi, bits, "Colors");
 
     for (i = 0; i < 256; i++)
     {
@@ -2275,7 +2390,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         }
     }
 
-    compare_hash(bmi, bits, sha1, "SetPixel");
+    compare_hash(hdc, bmi, bits, "SetPixel");
 
     /* gradients */
 
@@ -2331,22 +2446,23 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         pGdiGradientFill( hdc, vrect, 4, rect, 2, GRADIENT_FILL_RECT_V );
 
         if (bmi->bmiHeader.biBitCount <= 8) /* Wine's 8-bit dithering isn't identical to Windows */
-            compare_hash_broken_todo( bmi, bits, sha1, "GdiGradientFill", 0, 1 );
+            compare_hash_broken_todo(hdc,  bmi, bits, "GdiGradientFill", 0, 1 );
         else
-            compare_hash(bmi, bits, sha1, "GdiGradientFill" );
+            compare_hash(hdc, bmi, bits, "GdiGradientFill" );
 
         pGdiGradientFill( hdc, vtri, 7*3, tri, 7, GRADIENT_FILL_TRIANGLE );
         for (i = 0; i < 7*3; i++) vtri[i].y += 100;
         pGdiGradientFill( hdc, vtri, 7*3, tri + 7, 7, GRADIENT_FILL_TRIANGLE );
         if (bmi->bmiHeader.biBitCount <= 8) /* Wine's 8-bit dithering isn't identical to Windows */
-            compare_hash_broken_todo( bmi, bits, sha1, "GdiGradientFill", 0, 1 );
+            compare_hash_broken_todo(hdc,  bmi, bits, "GdiGradientFill", 0, 1 );
         else
-            compare_hash(bmi, bits, sha1, "GdiGradientFill" );
+            compare_hash(hdc, bmi, bits, "GdiGradientFill" );
     }
     else
     {
         win_skip( "GdiGradientFill not supported\n" );
-        *sha1 += 2;
+        skip_compare(1);
+        skip_compare(1);
     }
 
     /* wide pen */
@@ -2360,7 +2476,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         LineTo( hdc, wide_lines[i].right, wide_lines[i].bottom );
     }
 
-    compare_hash(bmi, bits, sha1, "wide pen" );
+    compare_hash(hdc, bmi, bits, "wide pen" );
 
     SelectObject( hdc, orig_pen );
     DeleteObject( wide_pen );
@@ -2374,7 +2490,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     SelectObject( hdc, wide_pen );
 
     Polyline( hdc, poly_lines, sizeof(poly_lines) / sizeof(poly_lines[0]) );
-    compare_hash(bmi, bits, sha1, "wide pen - flat caps, mitred" );
+    compare_hash(hdc, bmi, bits, "wide pen - flat caps, mitred" );
 
     SelectObject( hdc, orig_pen );
     DeleteObject( wide_pen );
@@ -2384,7 +2500,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     SelectObject( hdc, wide_pen );
 
     Polyline( hdc, poly_lines, sizeof(poly_lines) / sizeof(poly_lines[0]) );
-    compare_hash(bmi, bits, sha1, "wide pen - square caps, bevelled" );
+    compare_hash(hdc, bmi, bits, "wide pen - square caps, bevelled" );
 
     SelectObject( hdc, orig_pen );
     DeleteObject( wide_pen );
@@ -2416,7 +2532,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         LineTo( hdc, 20 * i, 200 + i );
     }
     /* NT4 broken for all cases, W2K for 1 bpp only */
-    compare_hash_broken_todo( bmi, bits, sha1, "wide brushed pen", 1 + dib_is_1bpp, dib_is_1bpp );
+    compare_hash_broken_todo(hdc,  bmi, bits, "wide brushed pen", 1 + dib_is_1bpp, dib_is_1bpp );
 
     for (i = 1; i < 20; i++)
     {
@@ -2430,7 +2546,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         LineTo( hdc, 20 * i, 200 + i );
     }
     /* NT4 broken for all cases, W2K for 1 bpp only */
-    compare_hash_broken_todo( bmi, bits, sha1, "dashed wide brushed pen", 1 + dib_is_1bpp, dib_is_1bpp );
+    compare_hash_broken_todo(hdc,  bmi, bits, "dashed wide brushed pen", 1 + dib_is_1bpp, dib_is_1bpp );
 
     DeleteObject(bmp);
     SetTextColor(hdc, old_text);
@@ -2487,7 +2603,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     DeleteObject( hpal );
 
     /* NT4 broken for all cases, W2K for 1 bpp only */
-    compare_hash_broken_todo(bmi, bits, sha1, "PALETTEINDEX", 1 + dib_is_1bpp, dib_is_1bpp );
+    compare_hash_broken_todo(hdc, bmi, bits, "PALETTEINDEX", 1 + dib_is_1bpp, dib_is_1bpp );
 
     /* ExtFloodFill */
 
@@ -2507,7 +2623,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     ret = ExtFloodFill( hdc, 100, 100, RGB( 0, 0xff, 0 ), FLOODFILLSURFACE );
     ok (!ret == !!dib_is_1bpp, "got ret %d\n", ret);
-    compare_hash(bmi, bits, sha1, "flood fill" );
+    compare_hash(hdc, bmi, bits, "flood fill" );
 
     ExtSelectClipRgn( hdc, NULL, RGN_COPY );
 
@@ -2710,7 +2826,6 @@ static void test_simple_graphics(void)
     HDC mem_dc;
     BYTE *bits;
     HBITMAP dib, orig_bm;
-    const char **sha1;
     DIBSECTION ds;
     int i;
 
@@ -2739,8 +2854,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "8888";
-    sha1 = sha1_graphics_a8r8g8b8;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_a8r8g8b8;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -2765,8 +2880,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "8888 - bitfields";
-    sha1 = sha1_graphics_a8r8g8b8_bitfields;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_a8r8g8b8_bitfields;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -2791,8 +2906,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "a8b8g8r8";
-    sha1 = sha1_graphics_a8b8g8r8;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_a8b8g8r8;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -2817,8 +2932,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "r10g10b10";
-    sha1 = sha1_graphics_r10g10b10;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_r10g10b10;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -2843,8 +2958,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "r6g6b6";
-    sha1 = sha1_graphics_r6g6b6;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_r6g6b6;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -2860,8 +2975,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "24";
-    sha1 = sha1_graphics_24;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_24;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -2883,8 +2998,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "r5g5b5";
-    sha1 = sha1_graphics_r5g5b5;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_r5g5b5;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -2908,8 +3023,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "r4g4b4";
-    sha1 = sha1_graphics_r4g4b4;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_r4g4b4;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -2932,8 +3047,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "8 color";
-    sha1 = sha1_graphics_8_color;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_8_color;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -2952,8 +3067,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "8 grayscale";
-    sha1 = sha1_graphics_8_grayscale;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_8_grayscale;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -2986,8 +3101,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "8";
-    sha1 = sha1_graphics_8;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_8;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -3003,8 +3118,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "4";
-    sha1 = sha1_graphics_4;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_4;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -3021,8 +3136,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "4 grayscale";
-    sha1 = sha1_graphics_4_grayscale;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_4_grayscale;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
@@ -3046,8 +3161,8 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "1";
-    sha1 = sha1_graphics_1;
-    draw_graphics(mem_dc, bmi, bits, &sha1);
+    current_sha1 = sha1_graphics_1;
+    draw_graphics(mem_dc, bmi, bits);
     draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
