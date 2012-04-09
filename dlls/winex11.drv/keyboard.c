@@ -994,7 +994,11 @@ static const WORD nonchar_key_vkey[256] =
     VK_END, VK_CLEAR, VK_INSERT, VK_DELETE,
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFA0 */
     0, 0, VK_MULTIPLY, VK_ADD,                                  /* FFA8 */
-    VK_SEPARATOR, VK_SUBTRACT, VK_DECIMAL, VK_DIVIDE,
+    /* Windows always generates VK_DECIMAL for Del/. on keypad while some
+     * X11 keyboard layouts generate XK_KP_Separator instead of XK_KP_Decimal
+     * in order to produce a locale dependent numeric separator.
+     */
+    VK_DECIMAL, VK_SUBTRACT, VK_DECIMAL, VK_DIVIDE,
     VK_NUMPAD0, VK_NUMPAD1, VK_NUMPAD2, VK_NUMPAD3,             /* FFB0 */
     VK_NUMPAD4, VK_NUMPAD5, VK_NUMPAD6, VK_NUMPAD7,
     VK_NUMPAD8, VK_NUMPAD9, 0, 0, 0, VK_OEM_NEC_EQUAL,          /* FFB8 */
@@ -2211,8 +2215,12 @@ UINT CDECL X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 			if ((wCode>=VK_NUMPAD0) && (wCode<=VK_NUMPAD9))
 			  e.keycode = XKeysymToKeycode(e.display, wCode-VK_NUMPAD0+XK_KP_0);
 
-			if (wCode==VK_DECIMAL)
-			  e.keycode = XKeysymToKeycode(e.display, XK_KP_Decimal);
+                        /* Windows always generates VK_DECIMAL for Del/. on keypad while some
+                         * X11 keyboard layouts generate XK_KP_Separator instead of XK_KP_Decimal
+                         * in order to produce a locale dependent numeric separator.
+                         */
+			if (wCode == VK_DECIMAL || wCode == VK_SEPARATOR)
+			  e.keycode = XKeysymToKeycode(e.display, XK_KP_Separator);
 
 			if (!e.keycode)
 			{
@@ -2545,10 +2553,11 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
     if ((virtKey>=VK_NUMPAD0) && (virtKey<=VK_NUMPAD9))
         e.keycode = XKeysymToKeycode(e.display, virtKey-VK_NUMPAD0+XK_KP_0);
 
-    if (virtKey==VK_DECIMAL)
-        e.keycode = XKeysymToKeycode(e.display, XK_KP_Decimal);
-
-    if (virtKey==VK_SEPARATOR)
+    /* Windows always generates VK_DECIMAL for Del/. on keypad while some
+     * X11 keyboard layouts generate XK_KP_Separator instead of XK_KP_Decimal
+     * in order to produce a locale dependent numeric separator.
+     */
+    if (virtKey == VK_DECIMAL || virtKey == VK_SEPARATOR)
         e.keycode = XKeysymToKeycode(e.display, XK_KP_Separator);
 
     if (!e.keycode && virtKey != VK_NONAME)
