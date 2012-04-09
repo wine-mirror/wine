@@ -401,6 +401,9 @@ static const int ws_ipv6_map[][2] =
     MAP_OPTION( IPV6_MULTICAST_LOOP ),
     MAP_OPTION( IPV6_UNICAST_HOPS ),
     MAP_OPTION( IPV6_V6ONLY ),
+#ifdef IPV6_UNICAST_IF
+    MAP_OPTION( IPV6_UNICAST_IF ),
+#endif
 };
 
 static const int ws_af_map[][2] =
@@ -2884,6 +2887,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_IPV6_MULTICAST_LOOP:
         case WS_IPV6_UNICAST_HOPS:
         case WS_IPV6_V6ONLY:
+#ifdef IPV6_UNICAST_IF
+        case WS_IPV6_UNICAST_IF:
+#endif
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
                 return SOCKET_ERROR;
             convert_sockopt(&level, &optname);
@@ -4302,6 +4308,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IPV6_MULTICAST_LOOP:
         case WS_IPV6_UNICAST_HOPS:
         case WS_IPV6_V6ONLY:
+#ifdef IPV6_UNICAST_IF
+        case WS_IPV6_UNICAST_IF:
+#endif
             convert_sockopt(&level, &optname);
             break;
         case WS_IPV6_DONTFRAG:
