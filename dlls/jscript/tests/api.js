@@ -414,6 +414,15 @@ ok(r === "-ret-", "r = " + r + " expected '-ret-'");
 r = "-[test]-".replace("[test]", replaceFunc3, "test");
 ok(r === "-ret-", "r = " + r + " expected '-ret-'");
 
+r = "x,x,x".replace("x", "y");
+ok(r === "y,x,x", "r = " + r + " expected 'y,x,x'");
+
+r = "x,x,x".replace("", "y");
+ok(r === "yx,x,x", "r = " + r + " expected 'yx,x,x'");
+
+r = "x,x,x".replace("", "");
+ok(r === "x,x,x", "r = " + r + " expected 'x,x,x'");
+
 r = "1,2,3".split(",");
 ok(typeof(r) === "object", "typeof(r) = " + typeof(r));
 ok(r.length === 3, "r.length = " + r.length);
