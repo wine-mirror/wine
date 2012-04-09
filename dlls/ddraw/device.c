@@ -4563,6 +4563,7 @@ IDirect3DDeviceImpl_7_GetTexture(IDirect3DDevice7 *iface,
 {
     IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice7(iface);
     struct wined3d_texture *wined3d_texture;
+    struct ddraw_surface *surface;
     HRESULT hr;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, Stage, Texture);
@@ -4582,7 +4583,8 @@ IDirect3DDeviceImpl_7_GetTexture(IDirect3DDevice7 *iface,
         return hr;
     }
 
-    *Texture = wined3d_texture_get_parent(wined3d_texture);
+    surface = wined3d_texture_get_parent(wined3d_texture);
+    *Texture = &surface->IDirectDrawSurface7_iface;
     IDirectDrawSurface7_AddRef(*Texture);
     wined3d_texture_decref(wined3d_texture);
     wined3d_mutex_unlock();
