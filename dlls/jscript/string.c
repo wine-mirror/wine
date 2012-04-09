@@ -961,6 +961,9 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
                 if(FAILED(hres))
                     break;
             }
+
+            if(!regexp)
+                break;
         }
 
         if(SUCCEEDED(hres))
