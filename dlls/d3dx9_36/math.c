@@ -801,17 +801,21 @@ static inline ID3DXMatrixStackImpl *impl_from_ID3DXMatrixStack(ID3DXMatrixStack 
   return CONTAINING_RECORD(iface, ID3DXMatrixStackImpl, ID3DXMatrixStack_iface);
 }
 
-static HRESULT WINAPI ID3DXMatrixStackImpl_QueryInterface(ID3DXMatrixStack *iface, REFIID riid, void **ppobj)
+static HRESULT WINAPI ID3DXMatrixStackImpl_QueryInterface(ID3DXMatrixStack *iface, REFIID riid, void **out)
 {
-    ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
-    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ID3DXMatrixStack))
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualGUID(riid, &IID_ID3DXMatrixStack)
+            || IsEqualGUID(riid, &IID_IUnknown))
     {
-     ID3DXMatrixStack_AddRef(iface);
-     *ppobj = This;
-     return S_OK;
+        ID3DXMatrixStack_AddRef(iface);
+        *out = iface;
+        return S_OK;
     }
-    *ppobj = NULL;
-    WARN("(%p)->(%s,%p), not found\n", This, debugstr_guid(riid), ppobj);
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *out = NULL;
     return E_NOINTERFACE;
 }
 
