@@ -329,6 +329,8 @@ static BOOL alsa_try_open(const char *devnode, snd_pcm_stream_t stream)
     snd_pcm_t *handle;
     int err;
 
+    TRACE("devnode: %s, stream: %d\n", devnode, stream);
+
     if((err = snd_pcm_open(&handle, devnode, stream, SND_PCM_NONBLOCK)) < 0){
         WARN("The device \"%s\" failed to open: %d (%s).\n",
                 devnode, err, snd_strerror(err));
@@ -386,11 +388,13 @@ static WCHAR *construct_device_id(EDataFlow flow, const WCHAR *chunk1, const cha
     }else
         ret[copied] = 0;
 
+    TRACE("Enumerated device: %s\n", wine_dbgstr_w(ret));
+
     return ret;
 }
 
 static HRESULT alsa_get_card_devices(EDataFlow flow, snd_pcm_stream_t stream,
-        WCHAR **ids, GUID *guids, UINT *num, snd_ctl_t *ctl, int card,
+        WCHAR ***ids, GUID **guids, UINT *num, snd_ctl_t *ctl, int card,
         const WCHAR *cardnameW)
 {
     int err, device;
@@ -425,17 +429,23 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, snd_pcm_stream_t stream,
         if(!alsa_try_open(devnode, stream))
             continue;
 
-        if(ids && guids){
-            devname = snd_pcm_info_get_name(info);
-            if(!devname){
-                WARN("Unable to get device name for card %d, device %d\n", card,
-                        device);
-                continue;
-            }
-
-            ids[*num] = construct_device_id(flow, cardnameW, devname);
-            get_device_guid(flow, devnode, &guids[*num]);
+        if(*num){
+            *ids = HeapReAlloc(GetProcessHeap(), 0, *ids, sizeof(WCHAR *) * (*num + 1));
+            *guids = HeapReAlloc(GetProcessHeap(), 0, *guids, sizeof(GUID) * (*num + 1));
+        }else{
+            *ids = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *));
+            *guids = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
         }
+
+        devname = snd_pcm_info_get_name(info);
+        if(!devname){
+            WARN("Unable to get device name for card %d, device %d\n", card,
+                    device);
+            continue;
+        }
+
+        (*ids)[*num] = construct_device_id(flow, cardnameW, devname);
+        get_device_guid(flow, devnode, &(*guids)[*num]);
 
         ++(*num);
     }
@@ -449,8 +459,8 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, snd_pcm_stream_t stream,
     return S_OK;
 }
 
-static void get_reg_devices(EDataFlow flow, snd_pcm_stream_t stream, WCHAR **ids,
-        GUID *guids, UINT *num)
+static void get_reg_devices(EDataFlow flow, snd_pcm_stream_t stream, WCHAR ***ids,
+        GUID **guids, UINT *num)
 {
     static const WCHAR ALSAOutputDevices[] = {'A','L','S','A','O','u','t','p','u','t','D','e','v','i','c','e','s',0};
     static const WCHAR ALSAInputDevices[] = {'A','L','S','A','I','n','p','u','t','D','e','v','i','c','e','s',0};
@@ -477,10 +487,15 @@ static void get_reg_devices(EDataFlow flow, snd_pcm_stream_t stream, WCHAR **ids
                 WideCharToMultiByte(CP_UNIXCP, 0, p, -1, devname, sizeof(devname), NULL, NULL);
 
                 if(alsa_try_open(devname, stream)){
-                    if(ids && guids){
-                        ids[*num] = construct_device_id(flow, p, NULL);
-                        get_device_guid(flow, devname, &guids[*num]);
+                    if(*num){
+                        *ids = HeapReAlloc(GetProcessHeap(), 0, *ids, sizeof(WCHAR *) * (*num + 1));
+                        *guids = HeapReAlloc(GetProcessHeap(), 0, *guids, sizeof(GUID) * (*num + 1));
+                    }else{
+                        *ids = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *));
+                        *guids = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
                     }
+                    (*ids)[*num] = construct_device_id(flow, p, NULL);
+                    get_device_guid(flow, devname, &(*guids)[*num]);
                     ++*num;
                 }
 
@@ -492,7 +507,7 @@ static void get_reg_devices(EDataFlow flow, snd_pcm_stream_t stream, WCHAR **ids
     }
 }
 
-static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, GUID *guids,
+static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR ***ids, GUID **guids,
         UINT *num)
 {
     snd_pcm_stream_t stream = (flow == eRender ? SND_PCM_STREAM_PLAYBACK :
@@ -503,10 +518,10 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, GUID *guids,
     *num = 0;
 
     if(alsa_try_open(defname, stream)){
-        if(ids && guids){
-            *ids = construct_device_id(flow, defaultW, NULL);
-            get_device_guid(flow, defname, guids);
-        }
+        *ids = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *));
+        (*ids)[0] = construct_device_id(flow, defaultW, NULL);
+        *guids = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
+        get_device_guid(flow, defname, &(*guids)[0]);
         ++*num;
     }
 
@@ -568,36 +583,29 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
 
     TRACE("%d %p %p %p %p\n", flow, ids, guids, num, def_index);
 
-    hr = alsa_enum_devices(flow, NULL, NULL, num);
-    if(FAILED(hr))
-        return hr;
+    *ids = NULL;
+    *guids = NULL;
 
-    if(*num == 0)
-    {
-        *ids = NULL;
-        *guids = NULL;
-        return S_OK;
-    }
-
-    *ids = HeapAlloc(GetProcessHeap(), 0, *num * sizeof(WCHAR *));
-    *guids = HeapAlloc(GetProcessHeap(), 0, *num * sizeof(GUID));
-    if(!*ids || !*guids){
-        HeapFree(GetProcessHeap(), 0, *ids);
-        HeapFree(GetProcessHeap(), 0, *guids);
-        return E_OUTOFMEMORY;
-    }
-
-    *def_index = 0;
-
-    hr = alsa_enum_devices(flow, *ids, *guids, num);
+    hr = alsa_enum_devices(flow, ids, guids, num);
     if(FAILED(hr)){
-        int i;
+        UINT i;
         for(i = 0; i < *num; ++i)
             HeapFree(GetProcessHeap(), 0, (*ids)[i]);
         HeapFree(GetProcessHeap(), 0, *ids);
         HeapFree(GetProcessHeap(), 0, *guids);
         return E_OUTOFMEMORY;
     }
+
+    TRACE("Enumerated %u devices\n", *num);
+
+    if(*num == 0){
+        HeapFree(GetProcessHeap(), 0, *ids);
+        *ids = NULL;
+        HeapFree(GetProcessHeap(), 0, *guids);
+        *guids = NULL;
+    }
+
+    *def_index = 0;
 
     return S_OK;
 }
