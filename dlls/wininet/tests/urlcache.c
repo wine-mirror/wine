@@ -69,6 +69,7 @@ static void test_find_url_cache_entriesA(void)
         if (!strcmp(lpCacheEntryInfo->lpszSourceUrlName, TEST_URL))
         {
             found = TRUE;
+            ret = TRUE;
             break;
         }
         SetLastError(0xdeadbeef);
@@ -83,10 +84,10 @@ static void test_find_url_cache_entriesA(void)
                 ret = FindNextUrlCacheEntry(hEnumHandle, lpCacheEntryInfo, &cbCacheEntryInfo);
             }
         }
-        ok(ret, "FindNextUrlCacheEntry failed with error %d\n", GetLastError());
         if (!ret)
             break;
     }
+    ok(ret, "FindNextUrlCacheEntry failed with error %d\n", GetLastError());
     ok(found, "Committed url cache entry not found during enumeration\n");
 
     ret = FindCloseUrlCache(hEnumHandle);
