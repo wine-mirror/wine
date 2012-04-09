@@ -760,6 +760,10 @@ void WINAPI PathRemoveArgsW(LPWSTR lpszPath)
  * PARAMS
  *  lpszPath [I/O] Path to remove the extension from
  *
+ * NOTES
+ *  The NUL terminator must be written only if extension exists
+ *  and if the pointed character is not already NUL.
+ *
  * RETURNS
  *  Nothing.
  */
@@ -770,7 +774,8 @@ void WINAPI PathRemoveExtensionA(LPSTR lpszPath)
   if (lpszPath)
   {
     lpszPath = PathFindExtensionA(lpszPath);
-    *lpszPath = '\0';
+    if (lpszPath && *lpszPath != '\0')
+      *lpszPath = '\0';
   }
 }
 
@@ -786,7 +791,8 @@ void WINAPI PathRemoveExtensionW(LPWSTR lpszPath)
   if (lpszPath)
   {
     lpszPath = PathFindExtensionW(lpszPath);
-    *lpszPath = '\0';
+    if (lpszPath && *lpszPath != '\0')
+      *lpszPath = '\0';
   }
 }
 
