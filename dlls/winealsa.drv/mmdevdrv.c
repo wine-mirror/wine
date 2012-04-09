@@ -710,7 +710,7 @@ static BOOL get_alsa_name_by_guid(GUID *guid, char *name, DWORD name_size, EData
         DWORD size, type;
         GUID reg_guid;
 
-        key_name_size = sizeof(key_name);
+        key_name_size = sizeof(key_name)/sizeof(WCHAR);
         if(RegEnumKeyExW(devices_key, i, key_name, &key_name_size, NULL,
                 NULL, NULL, NULL) != ERROR_SUCCESS)
             break;
