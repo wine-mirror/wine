@@ -100,7 +100,7 @@ typedef struct
  * signal context platform-specific definitions
  */
 
-#ifdef linux
+#if defined (__linux__)
 
 typedef ucontext_t SIGCONTEXT;
 
@@ -178,9 +178,7 @@ __ASM_GLOBAL_FUNC(vm86_enter,
 # define __HAVE_VM86
 #endif
 
-#endif  /* linux */
-
-#ifdef BSDI
+#elif defined (__BSDI__)
 
 #include <machine/frame.h>
 typedef struct trapframe SIGCONTEXT;
@@ -206,9 +204,7 @@ typedef struct trapframe SIGCONTEXT;
 #define FPU_sig(context)     NULL  /* FIXME */
 #define FPUX_sig(context)    NULL  /* FIXME */
 
-#endif /* bsdi */
-
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
 
 #include <machine/trap.h>
 
@@ -239,9 +235,7 @@ typedef struct sigcontext SIGCONTEXT;
 #define FPU_sig(context)     NULL  /* FIXME */
 #define FPUX_sig(context)    NULL  /* FIXME */
 
-#endif  /* __FreeBSD__ */
-
-#ifdef __OpenBSD__
+#elif defined (__OpenBSD__)
 
 typedef struct sigcontext SIGCONTEXT;
 
@@ -273,9 +267,7 @@ typedef struct sigcontext SIGCONTEXT;
 #define T_MCHK T_MACHK
 #define T_XMMFLT T_XFTRAP
 
-#endif  /* __OpenBSD__ */
-
-#if defined(__svr4__) || defined(_SCO_DS) || defined(__sun)
+#elif defined(__svr4__) || defined(_SCO_DS) || defined(__sun)
 
 #ifdef _SCO_DS
 #include <sys/regset.h>
@@ -323,9 +315,7 @@ typedef struct ucontext SIGCONTEXT;
 #define FPU_sig(context)     NULL  /* FIXME */
 #define FPUX_sig(context)    NULL  /* FIXME */
 
-#endif  /* svr4 || SCO_DS */
-
-#ifdef __APPLE__
+#elif defined (__APPLE__)
 # include <sys/ucontext.h>
 
 typedef ucontext_t SIGCONTEXT;
@@ -375,9 +365,7 @@ typedef ucontext_t SIGCONTEXT;
 #define FPUX_sig(context)    ((XMM_SAVE_AREA32 *)&(context)->uc_mcontext->fs.fpu_fcw)
 #endif
 
-#endif /* __APPLE__ */
-
-#if defined(__NetBSD__)
+#elif defined(__NetBSD__)
 # include <sys/ucontext.h>
 # include <sys/types.h>
 # include <signal.h>
@@ -411,7 +399,9 @@ typedef ucontext_t SIGCONTEXT;
 #define T_MCHK T_MCA
 #define T_XMMFLT T_XMM
 
-#endif /* __NetBSD__ */
+#else
+#error You must define the signal context functions for your platform
+#endif /* linux */
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
