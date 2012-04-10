@@ -1761,20 +1761,20 @@ static RECT get_total_extents( HDC hdc, INT x, INT y, UINT flags, UINT aa_flags,
                                LPCWSTR str, UINT count, const INT *dx )
 {
     int i;
-    RECT rect;
+    RECT rect, bounds;
 
-    rect.left = rect.top = INT_MAX;
-    rect.right = rect.bottom = INT_MIN;
+    reset_bounds( &bounds );
     for (i = 0; i < count; i++)
     {
         GLYPHMETRICS metrics;
 
         if (get_glyph_bitmap( hdc, (UINT)str[i], aa_flags, &metrics, NULL )) continue;
 
-        rect.left = min( rect.left, x + metrics.gmptGlyphOrigin.x );
-        rect.top = min( rect.top, y - metrics.gmptGlyphOrigin.y );
-        rect.right = max( rect.right, x + metrics.gmptGlyphOrigin.x + (int)metrics.gmBlackBoxX );
-        rect.bottom = max( rect.bottom, y - metrics.gmptGlyphOrigin.y + (int)metrics.gmBlackBoxY );
+        rect.left   = x + metrics.gmptGlyphOrigin.x;
+        rect.top    = y - metrics.gmptGlyphOrigin.y;
+        rect.right  = rect.left + metrics.gmBlackBoxX;
+        rect.bottom = rect.top  + metrics.gmBlackBoxY;
+        add_bounds_rect( &bounds, &rect );
 
         if (dx)
         {
@@ -1791,7 +1791,7 @@ static RECT get_total_extents( HDC hdc, INT x, INT y, UINT flags, UINT aa_flags,
             y += metrics.gmCellIncY;
         }
     }
-    return rect;
+    return bounds;
 }
 
 /* helper for nulldrv_ExtTextOut */

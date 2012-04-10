@@ -114,6 +114,8 @@ DC *alloc_dc_ptr( WORD magic )
     dc->xformVport2World    = dc->xformWorld2Wnd;
     dc->vport2WorldValid    = TRUE;
 
+    reset_bounds( &dc->bounds );
+
     if (!(dc->hSelf = alloc_gdi_handle( &dc->header, magic, &dc_funcs )))
     {
         HeapFree( GetProcessHeap(), 0, dc );
@@ -1316,21 +1318,23 @@ UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
 
     if (rect)
     {
-        *rect = dc->BoundsRect;
-        ret = is_rect_empty( rect ) ? DCB_RESET : DCB_SET;
-        rect->left = max( rect->left, 0 );
-        rect->top = max( rect->top, 0 );
-        rect->right = min( rect->right, dc->vis_rect.right - dc->vis_rect.left );
-        rect->bottom = min( rect->bottom, dc->vis_rect.bottom - dc->vis_rect.top );
+        if (is_rect_empty( &dc->bounds ))
+        {
+            rect->left = rect->top = rect->right = rect->bottom = 0;
+            ret = DCB_RESET;
+        }
+        else
+        {
+            *rect = dc->bounds;
+            rect->left   = max( rect->left, 0 );
+            rect->top    = max( rect->top, 0 );
+            rect->right  = min( rect->right, dc->vis_rect.right - dc->vis_rect.left );
+            rect->bottom = min( rect->bottom, dc->vis_rect.bottom - dc->vis_rect.top );
+            ret = DCB_SET;
+        }
         DPtoLP( hdc, (POINT *)rect, 2 );
     }
-    if (flags & DCB_RESET)
-    {
-        dc->BoundsRect.left   = 0;
-        dc->BoundsRect.top    = 0;
-        dc->BoundsRect.right  = 0;
-        dc->BoundsRect.bottom = 0;
-    }
+    if (flags & DCB_RESET) reset_bounds( &dc->bounds );
     release_dc_ptr( dc );
     return ret;
 }
@@ -1348,32 +1352,16 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
     ret = (dc->bounds_enabled ? DCB_ENABLE : DCB_DISABLE) |
-           (is_rect_empty( &dc->BoundsRect ) ? DCB_RESET : DCB_SET);
+           (is_rect_empty( &dc->bounds ) ? DCB_RESET : DCB_SET);
 
-    if (flags & DCB_RESET)
-    {
-        dc->BoundsRect.left   = 0;
-        dc->BoundsRect.top    = 0;
-        dc->BoundsRect.right  = 0;
-        dc->BoundsRect.bottom = 0;
-    }
+    if (flags & DCB_RESET) reset_bounds( &dc->bounds );
 
     if ((flags & DCB_ACCUMULATE) && rect)
     {
         RECT rc = *rect;
 
         LPtoDP( hdc, (POINT *)&rc, 2 );
-        if (!is_rect_empty( &rc ))
-        {
-            if (!is_rect_empty( &dc->BoundsRect))
-            {
-                dc->BoundsRect.left   = min( dc->BoundsRect.left, rc.left );
-                dc->BoundsRect.top    = min( dc->BoundsRect.top, rc.top );
-                dc->BoundsRect.right  = max( dc->BoundsRect.right, rc.right );
-                dc->BoundsRect.bottom = max( dc->BoundsRect.bottom, rc.bottom );
-            }
-            else dc->BoundsRect = rc;
-        }
+        add_bounds_rect( &dc->bounds, &rc );
     }
 
     if (flags & DCB_ENABLE) dc->bounds_enabled = TRUE;

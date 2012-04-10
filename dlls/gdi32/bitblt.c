@@ -408,8 +408,7 @@ BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     LPtoDP( dev->hdc, pts, nvert );
 
     /* compute bounding rect of all the rectangles/triangles */
-    dst.visrect.left = dst.visrect.top = INT_MAX;
-    dst.visrect.right = dst.visrect.bottom = INT_MIN;
+    reset_bounds( &dst.visrect );
     for (i = 0; i < ngrad * (mode == GRADIENT_FILL_TRIANGLE ? 3 : 2); i++)
     {
         ULONG v = ((ULONG *)grad_array)[i];

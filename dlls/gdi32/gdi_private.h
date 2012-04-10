@@ -21,6 +21,7 @@
 #ifndef __WINE_GDI_PRIVATE_H
 #define __WINE_GDI_PRIVATE_H
 
+#include <limits.h>
 #include <math.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -149,7 +150,7 @@ typedef struct tagDC
     XFORM         xformWorld2Vport;  /* World-to-viewport transformation */
     XFORM         xformVport2World;  /* Inverse of the above transformation */
     BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
-    RECT          BoundsRect;        /* Current bounding rect */
+    RECT          bounds;            /* Current bounding rect */
 } DC;
 
 /* Certain functions will do no further processing if the driver returns this.
@@ -455,6 +456,21 @@ static inline void get_bounding_rect( RECT *rect, int x, int y, int width, int h
         rect->top = rect->bottom + 1;
         rect->bottom = tmp + 1;
     }
+}
+
+static inline void reset_bounds( RECT *bounds )
+{
+    bounds->left = bounds->top = INT_MAX;
+    bounds->right = bounds->bottom = INT_MIN;
+}
+
+static inline void add_bounds_rect( RECT *bounds, const RECT *rect )
+{
+    if (is_rect_empty( rect )) return;
+    bounds->left   = min( bounds->left, rect->left );
+    bounds->top    = min( bounds->top, rect->top );
+    bounds->right  = max( bounds->right, rect->right );
+    bounds->bottom = max( bounds->bottom, rect->bottom );
 }
 
 static inline int get_bitmap_stride( int width, int bpp )
