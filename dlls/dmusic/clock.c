@@ -99,18 +99,22 @@ static const IReferenceClockVtbl ReferenceClock_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateReferenceClockImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
-	IReferenceClockImpl* clock;
+HRESULT WINAPI DMUSIC_CreateReferenceClockImpl(LPCGUID riid, LPVOID* ret_iface, LPUNKNOWN unkouter)
+{
+    IReferenceClockImpl* clock;
 
-	clock = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IReferenceClockImpl));
-	if (NULL == clock) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
-	clock->lpVtbl = &ReferenceClock_Vtbl;
-	clock->ref = 0; /* will be inited by QueryInterface */
-	clock->rtTime = 0;
-	clock->pClockInfo.dwSize = sizeof (DMUS_CLOCKINFO);
-		
-	return IReferenceClockImpl_QueryInterface ((IReferenceClock *)clock, lpcGUID, ppobj);
+    TRACE("(%p,%p,%p)\n", riid, ret_iface, unkouter);
+
+    clock = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IReferenceClockImpl));
+    if (!clock) {
+        *ret_iface = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    clock->lpVtbl = &ReferenceClock_Vtbl;
+    clock->ref = 0; /* will be inited by QueryInterface */
+    clock->rtTime = 0;
+    clock->pClockInfo.dwSize = sizeof (DMUS_CLOCKINFO);
+
+    return IReferenceClockImpl_QueryInterface((IReferenceClock*)clock, riid, ret_iface);
 }
