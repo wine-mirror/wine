@@ -345,7 +345,7 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
     unsigned int i;
     WORD ramp[3][256];
     BOOL ret;
-    RECT clip;
+    RECT rect;
     UINT type;
 
     if (GetObjectType( hdc ) == OBJ_METADC)
@@ -360,8 +360,15 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
         ok( !ret, "GetDeviceGammaRamp succeeded on %s\n", descr );
         ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
             "wrong error %u on %s\n", GetLastError(), descr );
-        type = GetClipBox( hdc, &clip );
+        type = GetClipBox( hdc, &rect );
         ok( type == ERROR, "GetClipBox returned %d on %s\n", type, descr );
+
+        SetBoundsRect( hdc, NULL, DCB_RESET | DCB_ENABLE );
+        SetMapMode( hdc, MM_TEXT );
+        Rectangle( hdc, 2, 2, 5, 5 );
+        type = GetBoundsRect( hdc, &rect, DCB_RESET );
+        todo_wine
+        ok( !type, "GetBoundsRect succeeded on %s\n", descr );
     }
     else
     {
@@ -375,16 +382,35 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
         ok( !ret, "GetDeviceGammaRamp succeeded on %s\n", descr );
         ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
             "wrong error %u on %s\n", GetLastError(), descr );
-        type = GetClipBox( hdc, &clip );
+        type = GetClipBox( hdc, &rect );
         ok( type == SIMPLEREGION, "GetClipBox returned %d on memdc for %s\n", type, descr );
+
+        SetBoundsRect( hdc, NULL, DCB_RESET | DCB_ENABLE );
+        SetMapMode( hdc, MM_TEXT );
+        Rectangle( hdc, 2, 2, 4, 4 );
+        type = GetBoundsRect( hdc, &rect, DCB_RESET );
+        todo_wine
+        ok( rect.left == 2 && rect.top == 2 && rect.right == 4 && rect.bottom == 4 && type == DCB_SET,
+            "GetBoundsRect returned %d,%d,%d,%d type %x on memdc for %s\n",
+            rect.left, rect.top, rect.right, rect.bottom, type, descr );
     }
 
-    type = GetClipBox( ref_dc, &clip );
+    type = GetClipBox( ref_dc, &rect );
     ok( type == SIMPLEREGION, "GetClipBox returned %d on %s\n", type, descr );
-    ok( clip.left == 0 && clip.top == 0 &&
-        clip.right == GetDeviceCaps( ref_dc, DESKTOPHORZRES ) &&
-        clip.bottom == GetDeviceCaps( ref_dc, DESKTOPVERTRES ),
-        "GetClipBox returned %d,%d,%d,%d on %s\n", clip.left, clip.top, clip.right, clip.bottom, descr );
+    ok( rect.left == 0 && rect.top == 0 &&
+        rect.right == GetDeviceCaps( ref_dc, DESKTOPHORZRES ) &&
+        rect.bottom == GetDeviceCaps( ref_dc, DESKTOPVERTRES ),
+        "GetClipBox returned %d,%d,%d,%d on %s\n", rect.left, rect.top, rect.right, rect.bottom, descr );
+
+    SetBoundsRect( ref_dc, NULL, DCB_RESET | DCB_ACCUMULATE );
+    SetMapMode( ref_dc, MM_TEXT );
+    Rectangle( ref_dc, 3, 3, 5, 5 );
+    type = GetBoundsRect( ref_dc, &rect, DCB_RESET );
+    /* it may or may not work on non-memory DCs */
+    ok( (rect.left == 0 && rect.top == 0 && rect.right == 0 && rect.bottom == 0 && type == DCB_RESET) ||
+        (rect.left == 3 && rect.top == 3 && rect.right == 5 && rect.bottom == 5 && type == DCB_SET),
+        "GetBoundsRect returned %d,%d,%d,%d type %x on %s\n",
+        rect.left, rect.top, rect.right, rect.bottom, type, descr );
 
     if (GetObjectType( hdc ) == OBJ_MEMDC)
     {
@@ -413,11 +439,20 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
         ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
             "wrong error %u on %s\n", GetLastError(), descr );
 
-        type = GetClipBox( hdc, &clip );
+        type = GetClipBox( hdc, &rect );
         ok( type == SIMPLEREGION, "GetClipBox returned %d on memdc for %s\n", type, descr );
-        ok( clip.left == 0 && clip.top == 0 && clip.right == 16 && clip.bottom == 16,
+        ok( rect.left == 0 && rect.top == 0 && rect.right == 16 && rect.bottom == 16,
             "GetClipBox returned %d,%d,%d,%d on memdc for %s\n",
-            clip.left, clip.top, clip.right, clip.bottom, descr );
+            rect.left, rect.top, rect.right, rect.bottom, descr );
+
+        SetBoundsRect( hdc, NULL, DCB_RESET | DCB_ENABLE );
+        SetMapMode( hdc, MM_TEXT );
+        Rectangle( hdc, 5, 5, 12, 14 );
+        type = GetBoundsRect( hdc, &rect, DCB_RESET );
+        todo_wine
+        ok( rect.left == 5 && rect.top == 5 && rect.right == 12 && rect.bottom == 14 && type == DCB_SET,
+            "GetBoundsRect returned %d,%d,%d,%d type %x on memdc for %s\n",
+            rect.left, rect.top, rect.right, rect.bottom, type, descr );
 
         SelectObject( hdc, old );
         DeleteObject( dib );
@@ -1022,12 +1057,12 @@ static void test_printer_dc(void)
     ret = GetDeviceCaps( display_memdc, TECHNOLOGY );
     ok( ret == DT_RASDISPLAY, "wrong type %u\n", ret );
 
-    test_device_caps( memdc, hdc, "printer dc" );
-
     bmp = CreateBitmap( 100, 100, 1, GetDeviceCaps( hdc, BITSPIXEL ), NULL );
     orig = SelectObject( memdc, bmp );
     ok( orig != NULL, "SelectObject failed\n" );
     ok( BitBlt( hdc, 10, 10, 20, 20, memdc, 0, 0, SRCCOPY ), "BitBlt failed\n" );
+
+    test_device_caps( memdc, hdc, "printer dc" );
 
     ok( !SelectObject( display_memdc, bmp ), "SelectObject succeeded\n" );
     SelectObject( memdc, orig );
