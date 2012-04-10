@@ -736,15 +736,18 @@ todo_wine
 
 static void test_boundsrect(void)
 {
+    char buffer[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
     HDC hdc;
-    HBITMAP bitmap;
+    HBITMAP bitmap, dib, old;
     RECT rect, expect, set_rect;
     UINT ret;
+    int level;
 
     hdc = CreateCompatibleDC(0);
     ok(hdc != NULL, "CreateCompatibleDC failed\n");
     bitmap = CreateCompatibleBitmap( hdc, 200, 200 );
-    SelectObject( hdc, bitmap );
+    old = SelectObject( hdc, bitmap );
 
     ret = GetBoundsRect(hdc, NULL, 0);
     ok(ret == 0, "Expected GetBoundsRect to return 0, got %u\n", ret);
@@ -874,8 +877,115 @@ static void test_boundsrect(void)
            rect.left, rect.top, rect.right, rect.bottom);
     }
 
+    SetBoundsRect( hdc, NULL, DCB_RESET | DCB_ENABLE );
+    MoveToEx( hdc, 10, 10, NULL );
+    LineTo( hdc, 20, 20 );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    todo_wine
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    SetRect( &expect, 10, 10, 21, 21 );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+    SetRect( &rect, 8, 8, 23, 23 );
+    expect = rect;
+    SetBoundsRect( hdc, &rect, DCB_ACCUMULATE );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+
+    level = SaveDC( hdc );
+    LineTo( hdc, 30, 25 );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    SetRect( &expect, 8, 8, 31, 26 );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+    SetBoundsRect( hdc, NULL, DCB_DISABLE );
+    LineTo( hdc, 40, 40 );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    SetRect( &expect, 8, 8, 31, 26 );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+    SetRect( &rect, 6, 6, 30, 30 );
+    SetBoundsRect( hdc, &rect, DCB_ACCUMULATE );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    SetRect( &expect, 6, 6, 31, 30 );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+
+    RestoreDC( hdc, level );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+    LineTo( hdc, 40, 40 );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+
+    SelectObject( hdc, old );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    SetRect( &expect, 6, 6, 1, 1 );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+    SetBoundsRect( hdc, NULL, DCB_ENABLE );
+    LineTo( hdc, 50, 40 );
+
+    SelectObject( hdc, bitmap );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    SetRect( &expect, 6, 6, 51, 41 );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+    SelectObject( hdc, GetStockObject( NULL_PEN ));
+    LineTo( hdc, 50, 50 );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    SetRect( &expect, 6, 6, 51, 51 );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+
+    memset( buffer, 0, sizeof(buffer) );
+    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info->bmiHeader.biWidth = 64;
+    info->bmiHeader.biHeight = 64;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biBitCount = 8;
+    info->bmiHeader.biCompression = BI_RGB;
+    dib = CreateDIBSection( 0, info, DIB_RGB_COLORS, NULL, NULL, 0 );
+    ok( dib != 0, "failed to create DIB\n" );
+    SelectObject( hdc, dib );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    SetRect( &expect, 6, 6, 51, 51 );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+    LineTo( hdc, 55, 30 );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    SetRect( &expect, 6, 6, 56, 51 );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+    LineTo( hdc, 100, 30 );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    SetRect( &expect, 6, 6, 64, 51 );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+    LineTo( hdc, -100, -100 );
+    ret = GetBoundsRect( hdc, &rect, 0 );
+    ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
+    SetRect( &expect, 0, 0, 64, 51 );
+    todo_wine
+    ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+
     DeleteDC( hdc );
     DeleteObject( bitmap );
+    DeleteObject( dib );
 }
 
 static void test_desktop_colorres(void)
