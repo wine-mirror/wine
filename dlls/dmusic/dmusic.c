@@ -167,7 +167,8 @@ static HRESULT WINAPI IDirectMusic8Impl_CreateMusicBuffer (LPDIRECTMUSIC8 iface,
 	return DMUSIC_CreateDirectMusicBufferImpl(&IID_IDirectMusicBuffer, (LPVOID)ppBuffer, NULL);
 }
 
-static HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT* ppPort, LPUNKNOWN pUnkOuter) {
+static HRESULT WINAPI IDirectMusic8Impl_CreatePort(LPDIRECTMUSIC8 iface, REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT* ppPort, LPUNKNOWN pUnkOuter)
+{
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	int i;
 	DMUS_PORTCAPS PortCaps;
@@ -181,8 +182,17 @@ static HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLS
 	if (TRACE_ON(dmusic))
 		dump_DMUS_PORTPARAMS(pPortParams);
 
-	if(!rclsidPort)
+	if (!rclsidPort)
 		return E_POINTER;
+	if (!pPortParams)
+		return E_INVALIDARG;
+	if (!ppPort)
+		return E_POINTER;
+	if (pUnkOuter)
+		return CLASS_E_NOAGGREGATION;
+
+	if (TRACE_ON(dmusic))
+		dump_DMUS_PORTPARAMS(pPortParams);
 
 	ZeroMemory(&PortCaps, sizeof(DMUS_PORTCAPS));
 	PortCaps.dwSize = sizeof(DMUS_PORTCAPS);

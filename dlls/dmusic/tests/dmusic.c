@@ -66,6 +66,16 @@ static void test_dmusic(void)
     hr = IDirectMusic_SetDirectSound(dmusic, NULL, NULL);
     ok(hr == S_OK, "IDirectMusic_SetDirectSound returned: %x\n", hr);
 
+    /* Check wrong params */
+    hr = IDirectMusic_CreatePort(dmusic, &GUID_NULL, &port_params, &port, (IUnknown*)dmusic);
+    ok(hr == CLASS_E_NOAGGREGATION, "IDirectMusic_CreatePort returned: %x\n", hr);
+    hr = IDirectMusic_CreatePort(dmusic, NULL, &port_params, &port, NULL);
+    ok(hr == E_POINTER, "IDirectMusic_CreatePort returned: %x\n", hr);
+    hr = IDirectMusic_CreatePort(dmusic, &GUID_NULL, NULL, &port, NULL);
+    ok(hr == E_INVALIDARG, "IDirectMusic_CreatePort returned: %x\n", hr);
+    hr = IDirectMusic_CreatePort(dmusic, &GUID_NULL, &port_params, NULL, NULL);
+    ok(hr == E_POINTER, "IDirectMusic_CreatePort returned: %x\n", hr);
+
     /* Test creation of default port with GUID_NULL */
     hr = IDirectMusic_CreatePort(dmusic, &GUID_NULL, &port_params, &port, NULL);
     ok(hr == S_OK, "IDirectMusic_CreatePort returned: %x\n", hr);
