@@ -274,7 +274,7 @@ extern int even_or_odd (DWORD number) DECLSPEC_HIDDEN;
 extern const char *debugstr_fourcc (DWORD fourcc) DECLSPEC_HIDDEN;
 /* returns name of given GUID */
 extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
-/* dump whole DMUS_OBJECTDESC struct */
-extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
+/* Dump whole DMUS_OBJECTDESC struct */
+extern void dump_DMUS_OBJECTDESC(LPDMUS_OBJECTDESC desc) DECLSPEC_HIDDEN;
 
-#endif	/* __WINE_DMUSIC_PRIVATE_H */
+#endif /* __WINE_DMUSIC_PRIVATE_H */

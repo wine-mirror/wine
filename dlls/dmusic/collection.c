@@ -189,9 +189,20 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_GetDescripto
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_SetDescriptor(LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc)
+{
 	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, ObjectVtbl, iface);
-	TRACE("(%p, %p): setting descriptor:\n%s\n", This, pDesc, debugstr_DMUS_OBJECTDESC (pDesc));
+
+	TRACE("(%p, %p)\n", iface, pDesc);
+
+	if (!pDesc)
+		return E_POINTER;
+
+	if (TRACE_ON(dmusic))
+	{
+		TRACE("Setting descriptor:\n");
+		dump_DMUS_OBJECTDESC(pDesc);
+	}
 
 	/* According to MSDN, we should copy only given values, not whole struct */	
 	if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
@@ -223,7 +234,8 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_SetDescripto
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_ParseDescriptor(LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc)
+{
 	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, ObjectVtbl, iface);
 	DMUS_PRIVATE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[1], ListCount[1];
@@ -384,10 +396,14 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_ParseDescrip
 			IStream_Seek (pStream, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
 			return DMUS_E_INVALIDFILE;
 		}
-	}	
-	
-	TRACE(": returning descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC (pDesc));
-	
+	}
+
+	if (TRACE_ON(dmusic))
+	{
+		TRACE("Returning descriptor:\n");
+		dump_DMUS_OBJECTDESC(pDesc);
+	}
+
 	return S_OK;
 }
 
