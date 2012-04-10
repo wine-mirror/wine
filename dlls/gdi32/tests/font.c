@@ -328,7 +328,7 @@ static void test_bitmap_font(void)
     SIZE size_orig;
     INT ret, i, width_orig, height_orig, scale, lfWidth;
 
-    hdc = GetDC(0);
+    hdc = CreateCompatibleDC(0);
 
     /* "System" has only 1 pixel size defined, otherwise the test breaks */
     ret = EnumFontFamiliesA(hdc, "System", font_enum_proc, (LPARAM)&bitmap_lf);
@@ -402,7 +402,7 @@ static void test_bitmap_font(void)
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
 
-    ReleaseDC(0, hdc);
+    DeleteDC(hdc);
 }
 
 /* Test how GDI scales outline font metrics */
@@ -668,6 +668,7 @@ static INT CALLBACK find_font_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DW
     return 1; /* continue enumeration */
 }
 
+#define FH_SCALE 0x80000000
 static void test_bitmap_font_metrics(void)
 {
     static const struct font_data
@@ -678,8 +679,31 @@ static void test_bitmap_font_metrics(void)
         BYTE first_char, last_char, def_char, break_char;
         DWORD ansi_bitfield;
         WORD skip_lang_id;
+        int scaled_height;
     } fd[] =
     {
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 6, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, 0, 13 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 6, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 13 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 8, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, 0, 13 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 8, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 13 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 10, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, 0, 13 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 10, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 13 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 14, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, 0, 13 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 14, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 13 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 18, 13, 3, 3, 0, 7, 14, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, 0, 16 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 18, 13, 3, 3, 0, 7, 14, 96, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 16 },
+
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 6, 13, 3, 3, 0, 7, 14, 120, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, 0, 16 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 6, 13, 3, 3, 0, 7, 14, 120, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 16 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 8, 13, 3, 3, 0, 7, 14, 120, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, 0, 16 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 8, 13, 3, 3, 0, 7, 14, 120, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 16 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 10, 13, 3, 3, 0, 7, 14, 120, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, 0, 16 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 10, 13, 3, 3, 0, 7, 14, 120, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 16 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 14, 13, 3, 3, 0, 7, 14, 120, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, 0, 16 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 14, 13, 3, 3, 0, 7, 14, 120, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 16 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 18, 13, 3, 3, 0, 7, 14, 120, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, 0, 16 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 18, 13, 3, 3, 0, 7, 14, 120, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 16 },
+
         { "MS Sans Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2 },
         { "MS Sans Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC },
         { "MS Sans Serif", FW_NORMAL, 16, 13, 3, 3, 0, 7, 14, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2 },
@@ -794,36 +818,65 @@ static void test_bitmap_font_metrics(void)
         { "Fixedsys", FW_NORMAL, 16, 12, 4, 3, 0, 8, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_CYRILLIC },
         { "FixedSys", FW_NORMAL, 18, 16, 2, 0, 0, 8, 16, 96, 0, 0, 0, 0, FS_JISJAPAN },
 
-        /* The 120dpi version still has its dpi marked as 96 */
-        { "Fixedsys", FW_NORMAL, 20, 16, 4, 2, 0, 10, 10, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC }
+        { "Fixedsys", FW_NORMAL, 20, 16, 4, 2, 0, 10, 10, 120, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC }
 
         /* FIXME: add "Terminal" */
     };
+    static const int font_log_pixels[] = { 96, 120 };
     HDC hdc;
     LOGFONT lf;
     HFONT hfont, old_hfont;
     TEXTMETRIC tm;
-    INT ret, i;
+    INT ret, i, expected_cs, screen_log_pixels, diff, font_res;
     WORD system_lang_id;
+    char face_name[LF_FACESIZE];
+    CHARSETINFO csi;
 
     system_lang_id = PRIMARYLANGID(GetSystemDefaultLangID());
+    trace("system language id %04x\n", system_lang_id);
+
+    expected_cs = GetACP();
+    if (!TranslateCharsetInfo(ULongToPtr(expected_cs), &csi, TCI_SRCCODEPAGE))
+    {
+        skip("TranslateCharsetInfo failed for code page %d\n", expected_cs);
+        return;
+    }
+    expected_cs = csi.ciCharset;
+    trace("ACP %d -> charset %d\n", GetACP(), expected_cs);
 
     hdc = CreateCompatibleDC(0);
     assert(hdc);
 
+    trace("logpixelsX %d, logpixelsY %d\n", GetDeviceCaps(hdc, LOGPIXELSX),
+          GetDeviceCaps(hdc, LOGPIXELSY));
+
+    screen_log_pixels = GetDeviceCaps(hdc, LOGPIXELSY);
+    diff = 32768;
+    font_res = 0;
+    for (i = 0; i < sizeof(font_log_pixels)/sizeof(font_log_pixels[0]); i++)
+    {
+        int new_diff = abs(font_log_pixels[i] - screen_log_pixels);
+        if (new_diff < diff)
+        {
+            diff = new_diff;
+            font_res = font_log_pixels[i];
+        }
+    }
+    trace("best font resolution is %d\n", font_res);
+
     for (i = 0; i < sizeof(fd)/sizeof(fd[0]); i++)
     {
-        int bit;
+        int bit, height;
 
         memset(&lf, 0, sizeof(lf));
 
-        lf.lfHeight = fd[i].height;
+        height = fd[i].height & ~FH_SCALE;
+        lf.lfHeight = height;
         strcpy(lf.lfFaceName, fd[i].face_name);
 
         for(bit = 0; bit < 32; bit++)
         {
             DWORD fs[2];
-            CHARSETINFO csi;
             BOOL bRet;
 
             fs[0] = 1L << bit;
@@ -832,34 +885,78 @@ static void test_bitmap_font_metrics(void)
             if(!TranslateCharsetInfo( fs, &csi, TCI_SRCFONTSIG )) continue;
 
             lf.lfCharSet = csi.ciCharset;
+            trace("looking for %s height %d charset %d\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet);
             ret = EnumFontFamiliesEx(hdc, &lf, find_font_proc, (LPARAM)&lf, 0);
-            if (ret) continue;
+            if (fd[i].height & FH_SCALE)
+                ok(ret, "scaled font height %d should not be enumerated\n", height);
+            else
+            {
+                if (font_res == fd[i].dpi && lf.lfCharSet == expected_cs)
+                {
+                    if (ret) /* FIXME: Remove once Wine is fixed */
+                        todo_wine ok(!ret, "%s height %d charset %d dpi %d should be enumerated\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet, fd[i].dpi);
+                    else
+                        ok(!ret, "%s height %d charset %d dpi %d should be enumerated\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet, fd[i].dpi);
+                }
+            }
+            if (ret && !(fd[i].height & FH_SCALE))
+                continue;
 
             hfont = create_font(lf.lfFaceName, &lf);
             old_hfont = SelectObject(hdc, hfont);
             bRet = GetTextMetrics(hdc, &tm);
             ok(bRet, "GetTextMetrics error %d\n", GetLastError());
+
+            SetLastError(0xdeadbeef);
+            ret = GetTextFace(hdc, sizeof(face_name), face_name);
+            ok(ret, "GetTextFace error %u\n", GetLastError());
+
+            SetLastError(0xdeadbeef);
+            ret = GetTextCharset(hdc);
+
+            if (lstrcmp(face_name, fd[i].face_name) != 0)
+            {
+                ok(ret != ANSI_CHARSET, "font charset should not be ANSI_CHARSET\n");
+                ok(ret != expected_cs, "font charset %d should not be %d\n", ret, expected_cs);
+                trace("Skipping replacement %s height %d charset %d\n", face_name, tm.tmHeight, tm.tmCharSet);
+                SelectObject(hdc, old_hfont);
+                DeleteObject(hfont);
+                continue;
+            }
+
+            ok(ret == expected_cs, "got charset %d, expected %d\n", ret, expected_cs);
+
+            trace("created %s, height %d charset %x dpi %d\n", face_name, tm.tmHeight, tm.tmCharSet, tm.tmDigitizedAspectX);
+            trace("expected %s, height %d scaled_hight %d, dpi %d\n", fd[i].face_name, height, fd[i].scaled_height, fd[i].dpi);
+
             if(fd[i].dpi == tm.tmDigitizedAspectX)
             {
-                trace("found font %s, height %d charset %x dpi %d\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet, fd[i].dpi);
+                trace("matched %s, height %d charset %x dpi %d\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet, fd[i].dpi);
                 if (fd[i].skip_lang_id == 0 || system_lang_id != fd[i].skip_lang_id)
                 {
-                    ok(tm.tmWeight == fd[i].weight, "%s(%d): tm.tmWeight %d != %d\n", fd[i].face_name, fd[i].height, tm.tmWeight, fd[i].weight);
-                    ok(tm.tmHeight == fd[i].height, "%s(%d): tm.tmHeight %d != %d\n", fd[i].face_name, fd[i].height, tm.tmHeight, fd[i].height);
-                    ok(tm.tmAscent == fd[i].ascent, "%s(%d): tm.tmAscent %d != %d\n", fd[i].face_name, fd[i].height, tm.tmAscent, fd[i].ascent);
-                    ok(tm.tmDescent == fd[i].descent, "%s(%d): tm.tmDescent %d != %d\n", fd[i].face_name, fd[i].height, tm.tmDescent, fd[i].descent);
-                    ok(tm.tmInternalLeading == fd[i].int_leading, "%s(%d): tm.tmInternalLeading %d != %d\n", fd[i].face_name, fd[i].height, tm.tmInternalLeading, fd[i].int_leading);
-                    ok(tm.tmExternalLeading == fd[i].ext_leading, "%s(%d): tm.tmExternalLeading %d != %d\n", fd[i].face_name, fd[i].height, tm.tmExternalLeading, fd[i].ext_leading);
-                    ok(tm.tmAveCharWidth == fd[i].ave_char_width, "%s(%d): tm.tmAveCharWidth %d != %d\n", fd[i].face_name, fd[i].height, tm.tmAveCharWidth, fd[i].ave_char_width);
-                    ok(tm.tmFirstChar == fd[i].first_char, "%s(%d): tm.tmFirstChar = %02x\n", fd[i].face_name, fd[i].height, tm.tmFirstChar);
-                    ok(tm.tmLastChar == fd[i].last_char, "%s(%d): tm.tmLastChar = %02x\n", fd[i].face_name, fd[i].height, tm.tmLastChar);
-                    ok(tm.tmDefaultChar == fd[i].def_char, "%s(%d): tm.tmDefaultChar = %02x\n", fd[i].face_name, fd[i].height, tm.tmDefaultChar);
-                    ok(tm.tmBreakChar == fd[i].break_char, "%s(%d): tm.tmBreakChar = %02x\n", fd[i].face_name, fd[i].height, tm.tmBreakChar);
+                    ok(tm.tmWeight == fd[i].weight, "%s(%d): tm.tmWeight %d != %d\n", fd[i].face_name, height, tm.tmWeight, fd[i].weight);
+                    if (fd[i].height & FH_SCALE)
+                        ok(tm.tmHeight == fd[i].scaled_height, "%s(%d): tm.tmHeight %d != %d\n", fd[i].face_name, height, tm.tmHeight, fd[i].scaled_height);
+                    else
+                        ok(tm.tmHeight == fd[i].height, "%s(%d): tm.tmHeight %d != %d\n", fd[i].face_name, fd[i].height, tm.tmHeight, fd[i].height);
+                    ok(tm.tmAscent == fd[i].ascent, "%s(%d): tm.tmAscent %d != %d\n", fd[i].face_name, height, tm.tmAscent, fd[i].ascent);
+                    ok(tm.tmDescent == fd[i].descent, "%s(%d): tm.tmDescent %d != %d\n", fd[i].face_name, height, tm.tmDescent, fd[i].descent);
+                    ok(tm.tmInternalLeading == fd[i].int_leading, "%s(%d): tm.tmInternalLeading %d != %d\n", fd[i].face_name, height, tm.tmInternalLeading, fd[i].int_leading);
+                    ok(tm.tmExternalLeading == fd[i].ext_leading, "%s(%d): tm.tmExternalLeading %d != %d\n", fd[i].face_name, height, tm.tmExternalLeading, fd[i].ext_leading);
+                    ok(tm.tmAveCharWidth == fd[i].ave_char_width, "%s(%d): tm.tmAveCharWidth %d != %d\n", fd[i].face_name, height, tm.tmAveCharWidth, fd[i].ave_char_width);
+                    ok(tm.tmFirstChar == fd[i].first_char, "%s(%d): tm.tmFirstChar = %02x\n", fd[i].face_name, height, tm.tmFirstChar);
+                    ok(tm.tmLastChar == fd[i].last_char, "%s(%d): tm.tmLastChar = %02x\n", fd[i].face_name, height, tm.tmLastChar);
+                    /* Substitutions like MS Sans Serif,0=MS Sans Serif,204
+                       make default char test fail */
+                    if (tm.tmCharSet == lf.lfCharSet)
+                        ok(tm.tmDefaultChar == fd[i].def_char, "%s(%d): tm.tmDefaultChar = %02x\n", fd[i].face_name, height, tm.tmDefaultChar);
+                    ok(tm.tmBreakChar == fd[i].break_char, "%s(%d): tm.tmBreakChar = %02x\n", fd[i].face_name, height, tm.tmBreakChar);
+                    ok(tm.tmCharSet == expected_cs || tm.tmCharSet == ANSI_CHARSET, "%s(%d): tm.tmCharSet %d != %d\n", fd[i].face_name, height, tm.tmCharSet, expected_cs);
 
                     /* Don't run the max char width test on System/ANSI_CHARSET.  We have extra characters in our font
                        that make the max width bigger */
                     if(strcmp(lf.lfFaceName, "System") || lf.lfCharSet != ANSI_CHARSET)
-                        ok(tm.tmMaxCharWidth == fd[i].max_char_width, "%s(%d): tm.tmMaxCharWidth %d != %d\n", fd[i].face_name, fd[i].height, tm.tmMaxCharWidth, fd[i].max_char_width);
+                        ok(tm.tmMaxCharWidth == fd[i].max_char_width, "%s(%d): tm.tmMaxCharWidth %d != %d\n", fd[i].face_name, height, tm.tmMaxCharWidth, fd[i].max_char_width);
                 }
                 else
                     skip("Skipping font metrics test for system langid 0x%x\n",
