@@ -443,32 +443,17 @@ static BOOL WINAPI IDirect3DDevice9Impl_ShowCursor(IDirect3DDevice9Ex *iface, BO
 static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_CreateAdditionalSwapChain(IDirect3DDevice9Ex *iface,
         D3DPRESENT_PARAMETERS *present_parameters, IDirect3DSwapChain9 **swapchain)
 {
-    IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
+    IDirect3DDevice9Impl *device = impl_from_IDirect3DDevice9Ex(iface);
     IDirect3DSwapChain9Impl *object;
     HRESULT hr;
 
     TRACE("iface %p, present_parameters %p, swapchain %p.\n",
             iface, present_parameters, swapchain);
 
-    object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-    {
-        ERR("Failed to allocate swapchain memory.\n");
-        return E_OUTOFMEMORY;
-    }
+    if (SUCCEEDED(hr = d3d9_swapchain_create(device, present_parameters, &object)))
+        *swapchain = (IDirect3DSwapChain9 *)object;
 
-    hr = swapchain_init(object, This, present_parameters);
-    if (FAILED(hr))
-    {
-        WARN("Failed to initialize swapchain, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    TRACE("Created swapchain %p.\n", object);
-    *swapchain = (IDirect3DSwapChain9 *)object;
-
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_GetSwapChain(IDirect3DDevice9Ex *iface,
@@ -3291,7 +3276,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
 {
     struct IDirect3DDevice9Impl *device = device_from_device_parent(device_parent);
     D3DPRESENT_PARAMETERS local_parameters;
-    IDirect3DSwapChain9 *d3d_swapchain;
+    IDirect3DSwapChain9Impl *d3d_swapchain;
     HRESULT hr;
 
     TRACE("device_parent %p, desc %p, swapchain %p\n", device_parent, desc, swapchain);
@@ -3312,8 +3297,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
     local_parameters.FullScreen_RefreshRateInHz = desc->refresh_rate;
     local_parameters.PresentationInterval = desc->swap_interval;
 
-    hr = IDirect3DDevice9Impl_CreateAdditionalSwapChain(&device->IDirect3DDevice9Ex_iface,
-            &local_parameters, &d3d_swapchain);
+    hr = d3d9_swapchain_create(device, &local_parameters, &d3d_swapchain);
     if (FAILED(hr))
     {
         WARN("Failed to create swapchain, hr %#x.\n", hr);
@@ -3321,7 +3305,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
         return hr;
     }
 
-    *swapchain = ((IDirect3DSwapChain9Impl *)d3d_swapchain)->wined3d_swapchain;
+    *swapchain = d3d_swapchain->wined3d_swapchain;
     wined3d_swapchain_incref(*swapchain);
     IDirect3DSwapChain9_Release((IDirect3DSwapChain9 *)d3d_swapchain);
 

@@ -211,8 +211,8 @@ typedef struct IDirect3DSwapChain9Impl
     IDirect3DDevice9Ex *parentDevice;
 } IDirect3DSwapChain9Impl;
 
-HRESULT swapchain_init(IDirect3DSwapChain9Impl *swapchain, IDirect3DDevice9Impl *device,
-        D3DPRESENT_PARAMETERS *present_parameters) DECLSPEC_HIDDEN;
+HRESULT d3d9_swapchain_create(IDirect3DDevice9Impl *device, D3DPRESENT_PARAMETERS *present_parameters,
+        IDirect3DSwapChain9Impl **swapchain) DECLSPEC_HIDDEN;
 
 /* ----------------- */
 /* IDirect3DSurface9 */
