@@ -77,6 +77,9 @@ static const WCHAR onfocusW[] = {'o','n','f','o','c','u','s',0};
 static const WCHAR keydownW[] = {'k','e','y','d','o','w','n',0};
 static const WCHAR onkeydownW[] = {'o','n','k','e','y','d','o','w','n',0};
 
+static const WCHAR keypressW[] = {'k','e','y','p','r','e','s','s',0};
+static const WCHAR onkeypressW[] = {'o','n','k','e','y','p','r','e','s','s',0};
+
 static const WCHAR keyupW[] = {'k','e','y','u','p',0};
 static const WCHAR onkeyupW[] = {'o','n','k','e','y','u','p',0};
 
@@ -168,6 +171,8 @@ static const event_info_t event_info[] = {
     {focusW,             onfocusW,             EVENTT_HTML,   DISPID_EVMETH_ONFOCUS,
         EVENT_DEFAULTLISTENER},
     {keydownW,           onkeydownW,           EVENTT_KEY,    DISPID_EVMETH_ONKEYDOWN,
+        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {keypressW,          onkeypressW,          EVENTT_KEY,    DISPID_EVMETH_ONKEYPRESS,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {keyupW,             onkeyupW,             EVENTT_KEY,    DISPID_EVMETH_ONKEYUP,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
