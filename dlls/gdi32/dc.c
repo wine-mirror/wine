@@ -336,7 +336,6 @@ INT nulldrv_SaveDC( PHYSDEV dev )
     DC *newdc, *dc = get_nulldrv_dc( dev );
 
     if (!(newdc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*newdc )))) return 0;
-    newdc->flags            = dc->flags;
     newdc->layout           = dc->layout;
     newdc->hPen             = dc->hPen;
     newdc->hBrush           = dc->hBrush;
@@ -379,7 +378,6 @@ INT nulldrv_SaveDC( PHYSDEV dev )
     newdc->vportExtY        = dc->vportExtY;
     newdc->virtual_res      = dc->virtual_res;
     newdc->virtual_size     = dc->virtual_size;
-    newdc->BoundsRect       = dc->BoundsRect;
     newdc->gdiFont          = dc->gdiFont;
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
@@ -428,7 +426,6 @@ BOOL nulldrv_RestoreDC( PHYSDEV dev, INT level )
 
     if (!PATH_RestorePath( dc, dcs )) return FALSE;
 
-    dc->flags            = dcs->flags;
     dc->layout           = dcs->layout;
     dc->hDevice          = dcs->hDevice;
     dc->ROPmode          = dcs->ROPmode;
@@ -456,8 +453,6 @@ BOOL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->xformWorld2Vport = dcs->xformWorld2Vport;
     dc->xformVport2World = dcs->xformVport2World;
     dc->vport2WorldValid = dcs->vport2WorldValid;
-    dc->BoundsRect       = dcs->BoundsRect;
-
     dc->wndOrgX          = dcs->wndOrgX;
     dc->wndOrgY          = dcs->wndOrgY;
     dc->wndExtX          = dcs->wndExtX;
