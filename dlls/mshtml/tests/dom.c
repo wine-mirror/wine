@@ -4483,6 +4483,7 @@ static void test_window(IHTMLDocument2 *doc)
     IHTMLDocument2 *doc2 = NULL;
     IDispatch *disp;
     IUnknown *unk;
+    VARIANT v;
     BSTR str;
     HRESULT hres;
 
@@ -4544,6 +4545,11 @@ static void test_window(IHTMLDocument2 *doc)
     ok(!strcmp_wa(str, "[object]") ||
        !strcmp_wa(str, "[object Window]") /* win7 ie9 */, "toString returned %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLWindow2_get_opener(window, &v);
+    ok(hres == S_OK, "get_opener failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(opener) = %d\n", V_VT(&v));
 
     test_window_name(window, NULL);
     set_window_name(window, "test");
