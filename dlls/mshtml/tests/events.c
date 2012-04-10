@@ -74,6 +74,7 @@ DEFINE_EXPECT(iframedoc_onreadystatechange);
 DEFINE_EXPECT(img_onload);
 DEFINE_EXPECT(img_onerror);
 DEFINE_EXPECT(input_onfocus);
+DEFINE_EXPECT(input_onblur);
 DEFINE_EXPECT(form_onsubmit);
 DEFINE_EXPECT(form_onclick);
 DEFINE_EXPECT(submit_onclick);
@@ -950,6 +951,17 @@ static HRESULT WINAPI input_onfocus(IDispatchEx *iface, DISPID id, LCID lcid, WO
 
 EVENT_HANDLER_FUNC_OBJ(input_onfocus);
 
+static HRESULT WINAPI input_onblur(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(input_onblur);
+    test_event_args(&DIID_DispHTMLInputElement, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_src("INPUT");
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(input_onblur);
+
 static HRESULT WINAPI form_onsubmit(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
@@ -1767,6 +1779,17 @@ static void test_focus(IHTMLDocument2 *doc)
     pump_msgs(NULL);
     CHECK_CALLED(input_onfocus);
     ok(hres == S_OK, "focus failed: %08x\n", hres);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&input_onblur_obj;
+    hres = IHTMLElement2_put_onblur(elem2, v);
+    ok(hres == S_OK, "put_onblur failed: %08x\n", hres);
+
+    SET_EXPECT(input_onblur);
+    hres = IHTMLElement2_blur(elem2);
+    pump_msgs(NULL);
+    CHECK_CALLED(input_onblur);
+    ok(hres == S_OK, "blur failed: %08x\n", hres);
 
     if(!winetest_interactive)
         ShowWindow(container_hwnd, SW_HIDE);

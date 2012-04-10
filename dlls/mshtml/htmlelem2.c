@@ -776,8 +776,17 @@ static HRESULT WINAPI HTMLElement2_get_onresize(IHTMLElement2 *iface, VARIANT *p
 static HRESULT WINAPI HTMLElement2_blur(IHTMLElement2 *iface)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)\n", This);
+
+    nsres = nsIDOMHTMLElement_Blur(This->nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("Blur failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_addFilter(IHTMLElement2 *iface, IUnknown *pUnk)
