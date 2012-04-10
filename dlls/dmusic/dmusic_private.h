@@ -276,5 +276,7 @@ extern const char *debugstr_fourcc (DWORD fourcc) DECLSPEC_HIDDEN;
 extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
 /* Dump whole DMUS_OBJECTDESC struct */
 extern void dump_DMUS_OBJECTDESC(LPDMUS_OBJECTDESC desc) DECLSPEC_HIDDEN;
+/* Dump whole DMUS_PORTPARAMS struct */
+extern void dump_DMUS_PORTPARAMS(LPDMUS_PORTPARAMS params) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DMUSIC_PRIVATE_H */
