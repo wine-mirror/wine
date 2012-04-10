@@ -659,7 +659,7 @@ static HRESULT WINAPI d3d_device1_CreateExecuteBuffer(IDirect3DDevice *iface,
         D3DEXECUTEBUFFERDESC *buffer_desc, IDirect3DExecuteBuffer **ExecuteBuffer, IUnknown *outer_unknown)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice(iface);
-    IDirect3DExecuteBufferImpl* object;
+    struct d3d_execute_buffer *object;
     HRESULT hr;
 
     TRACE("iface %p, buffer_desc %p, buffer %p, outer_unknown %p.\n",
@@ -669,10 +669,10 @@ static HRESULT WINAPI d3d_device1_CreateExecuteBuffer(IDirect3DDevice *iface,
         return CLASS_E_NOAGGREGATION;
 
     /* Allocate the new Execute Buffer */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DExecuteBufferImpl));
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if(!object)
     {
-        ERR("Out of memory when allocating a IDirect3DExecuteBufferImpl structure\n");
+        ERR("Failed to allocate execute buffer memory.\n");
         return DDERR_OUTOFMEMORY;
     }
 
@@ -710,7 +710,7 @@ static HRESULT WINAPI d3d_device1_Execute(IDirect3DDevice *iface,
         IDirect3DExecuteBuffer *ExecuteBuffer, IDirect3DViewport *viewport, DWORD flags)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice(iface);
-    IDirect3DExecuteBufferImpl *buffer = unsafe_impl_from_IDirect3DExecuteBuffer(ExecuteBuffer);
+    struct d3d_execute_buffer *buffer = unsafe_impl_from_IDirect3DExecuteBuffer(ExecuteBuffer);
     struct d3d_viewport *viewport_impl = unsafe_impl_from_IDirect3DViewport(viewport);
     HRESULT hr;
 

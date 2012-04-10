@@ -40,7 +40,6 @@
 extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HIDDEN;
 
 /* Typdef the interfaces */
-typedef struct IDirect3DExecuteBufferImpl IDirect3DExecuteBufferImpl;
 typedef struct IDirect3DVertexBufferImpl  IDirect3DVertexBufferImpl;
 
 extern DWORD force_refresh_rate DECLSPEC_HIDDEN;
@@ -488,7 +487,7 @@ void d3d_viewport_init(struct d3d_viewport *viewport, struct ddraw *ddraw) DECLS
 /*****************************************************************************
  * IDirect3DExecuteBuffer - Wraps to D3D7
  *****************************************************************************/
-struct IDirect3DExecuteBufferImpl
+struct d3d_execute_buffer
 {
     IDirect3DExecuteBuffer IDirect3DExecuteBuffer_iface;
     LONG ref;
@@ -510,12 +509,12 @@ struct IDirect3DExecuteBufferImpl
     BOOL                 need_free;
 };
 
-HRESULT d3d_execute_buffer_init(IDirect3DExecuteBufferImpl *execute_buffer,
+HRESULT d3d_execute_buffer_init(struct d3d_execute_buffer *execute_buffer,
         struct d3d_device *device, D3DEXECUTEBUFFERDESC *desc) DECLSPEC_HIDDEN;
-IDirect3DExecuteBufferImpl *unsafe_impl_from_IDirect3DExecuteBuffer(IDirect3DExecuteBuffer *iface) DECLSPEC_HIDDEN;
+struct d3d_execute_buffer *unsafe_impl_from_IDirect3DExecuteBuffer(IDirect3DExecuteBuffer *iface) DECLSPEC_HIDDEN;
 
 /* The execute function */
-HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *execute_buffer,
+HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *execute_buffer,
         struct d3d_device *device, struct d3d_viewport *viewport) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
