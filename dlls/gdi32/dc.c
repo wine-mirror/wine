@@ -1318,6 +1318,10 @@ UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
     {
         *rect = dc->BoundsRect;
         ret = is_rect_empty( rect ) ? DCB_RESET : DCB_SET;
+        rect->left = max( rect->left, 0 );
+        rect->top = max( rect->top, 0 );
+        rect->right = min( rect->right, dc->vis_rect.right - dc->vis_rect.left );
+        rect->bottom = min( rect->bottom, dc->vis_rect.bottom - dc->vis_rect.top );
         DPtoLP( hdc, (POINT *)rect, 2 );
     }
     if (flags & DCB_RESET)

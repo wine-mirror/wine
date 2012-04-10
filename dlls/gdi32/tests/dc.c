@@ -930,7 +930,6 @@ static void test_boundsrect(void)
     ret = GetBoundsRect( hdc, &rect, 0 );
     ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
     SetRect( &expect, 6, 6, 1, 1 );
-    todo_wine
     ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
     SetBoundsRect( hdc, NULL, DCB_ENABLE );
     LineTo( hdc, 50, 40 );
