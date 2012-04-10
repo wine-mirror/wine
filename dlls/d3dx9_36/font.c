@@ -43,17 +43,21 @@ static inline ID3DXFontImpl *impl_from_ID3DXFont(ID3DXFont *iface)
     return CONTAINING_RECORD(iface, ID3DXFontImpl, ID3DXFont_iface);
 }
 
-static HRESULT WINAPI ID3DXFontImpl_QueryInterface(ID3DXFont *iface, REFIID riid, void **object)
+static HRESULT WINAPI ID3DXFontImpl_QueryInterface(ID3DXFont *iface, REFIID riid, void **out)
 {
-    ID3DXFontImpl *This=impl_from_ID3DXFont(iface);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    TRACE("(%p): QueryInterface from %s\n", This, debugstr_guid(riid));
-    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ID3DXFont)) {
+    if (IsEqualGUID(riid, &IID_ID3DXFont)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
         IUnknown_AddRef(iface);
-        *object=This;
+        *out = iface;
         return S_OK;
     }
-    WARN("(%p)->(%s, %p): not found\n", iface, debugstr_guid(riid), *object);
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *out = NULL;
     return E_NOINTERFACE;
 }
 
