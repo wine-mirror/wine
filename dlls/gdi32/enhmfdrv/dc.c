@@ -515,43 +515,5 @@ INT EMFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
 
-    switch(cap) {
-
-    case HORZRES:
-        return physDev->horzres;
-    case VERTRES:
-        return physDev->vertres;
-    case LOGPIXELSX:
-        return physDev->logpixelsx;
-    case LOGPIXELSY:
-        return physDev->logpixelsy;
-    case HORZSIZE:
-        return physDev->horzsize;
-    case VERTSIZE:
-        return physDev->vertsize;
-    case BITSPIXEL:
-        return physDev->bitspixel;
-    case TEXTCAPS:
-        return physDev->textcaps;
-    case RASTERCAPS:
-        return physDev->rastercaps;
-    case TECHNOLOGY:
-        return physDev->technology;
-    case PLANES:
-        return physDev->planes;
-    case NUMCOLORS:
-        return physDev->numcolors;
-    case CURVECAPS:
-        return (CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES | CC_WIDE |
-                CC_STYLED | CC_WIDESTYLED | CC_INTERIORS | CC_ROUNDRECT);
-    case LINECAPS:
-        return (LC_POLYLINE | LC_MARKER | LC_POLYMARKER | LC_WIDE |
-                LC_STYLED | LC_WIDESTYLED | LC_INTERIORS);
-    case POLYGONALCAPS:
-        return (PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON | PC_SCANLINE |
-                PC_WIDE | PC_STYLED | PC_WIDESTYLED | PC_INTERIORS);
-    default:
-        FIXME("Unimplemented cap %d\n", cap);
-	return 0;
-    }
+    return GetDeviceCaps( physDev->ref_dc, cap );
 }

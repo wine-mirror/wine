@@ -39,15 +39,8 @@ typedef struct
     HANDLE     hFile;              /* Handle for disk based MetaFile */
     HBRUSH     dc_brush;
     HPEN       dc_pen;
-    INT        horzres, vertres;
-    INT        horzsize, vertsize;
-    INT        logpixelsx, logpixelsy;
-    INT        bitspixel;
-    INT        textcaps;
-    INT        rastercaps;
-    INT        technology;
-    INT        planes;
-    INT        numcolors;
+    HDC        ref_dc;             /* Reference device */
+    HDC        screen_dc;          /* Screen DC if no reference device specified */
     INT        restoring;          /* RestoreDC counter */
 } EMFDRV_PDEVICE;
 

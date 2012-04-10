@@ -383,7 +383,10 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
         ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
             "wrong error %u on %s\n", GetLastError(), descr );
         type = GetClipBox( hdc, &rect );
-        ok( type == SIMPLEREGION, "GetClipBox returned %d on memdc for %s\n", type, descr );
+        if (GetObjectType( hdc ) == OBJ_ENHMETADC)
+            todo_wine ok( type == SIMPLEREGION, "GetClipBox returned %d on memdc for %s\n", type, descr );
+        else
+            ok( type == SIMPLEREGION, "GetClipBox returned %d on memdc for %s\n", type, descr );
 
         SetBoundsRect( hdc, NULL, DCB_RESET | DCB_ENABLE );
         SetMapMode( hdc, MM_TEXT );
@@ -494,8 +497,7 @@ static void test_CreateCompatibleDC(void)
     ok( SelectObject( hNewDC, bitmap ) != 0, "SelectObject failed\n" );
     caps = GetDeviceCaps( hdcMetafile, TECHNOLOGY );
     ok( caps == DT_RASDISPLAY, "wrong caps %u\n", caps );
-    caps = GetDeviceCaps( hNewDC, TECHNOLOGY );
-    ok( caps == DT_RASDISPLAY, "wrong caps %u\n", caps );
+    test_device_caps( hdcMetafile, hdc, "enhmetafile dc" );
     DeleteDC( hNewDC );
     DeleteEnhMetaFile( CloseEnhMetaFile( hdcMetafile ));
     ReleaseDC( 0, hdc );
@@ -1144,7 +1146,7 @@ done:
 
 static void test_printer_dc(void)
 {
-    HDC memdc, display_memdc;
+    HDC memdc, display_memdc, enhmf_dc;
     HBITMAP orig, bmp;
     DWORD ret;
     HDC hdc = create_printer_dc();
@@ -1187,6 +1189,11 @@ static void test_printer_dc(void)
 
     ret = GetPixel( hdc, 0, 0 );
     ok( ret == CLR_INVALID, "wrong pixel value %x\n", ret );
+
+    enhmf_dc = CreateEnhMetaFileA( hdc, NULL, NULL, NULL );
+    ok(enhmf_dc != 0, "CreateEnhMetaFileA failed\n");
+    test_device_caps( enhmf_dc, hdc, "enhmetafile printer dc" );
+    DeleteEnhMetaFile( CloseEnhMetaFile( enhmf_dc ));
 
     DeleteDC( memdc );
     DeleteDC( display_memdc );
