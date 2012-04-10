@@ -1277,6 +1277,7 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSourc
     else if (LOFlags == D3DRMLOAD_FROMFILE)
     {
         load_options = DXFILELOAD_FROMFILE;
+        TRACE("Loading from file %s\n", debugstr_a(ObjSource));
     }
     else
     {
