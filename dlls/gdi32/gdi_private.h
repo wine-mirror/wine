@@ -89,6 +89,9 @@ typedef struct tagDC
     DWORD_PTR    dwHookData;
     DCHOOKPROC   hookProc;         /* DC hook */
 
+    BOOL         bounds_enabled:1; /* bounds tracking is enabled */
+    BOOL         path_open:1;      /* path is currently open (only for saved DCs) */
+
     INT          wndOrgX;          /* Window origin */
     INT          wndOrgY;
     INT          wndExtX;          /* Window extent */
@@ -148,10 +151,6 @@ typedef struct tagDC
     BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
     RECT          BoundsRect;        /* Current bounding rect */
 } DC;
-
-  /* DC flags */
-#define DC_PATH_OPEN     0x0001   /* DC path is open (only set on saved DCs) */
-#define DC_BOUNDS_ENABLE 0x0008   /* Bounding rectangle tracking is enabled */
 
 /* Certain functions will do no further processing if the driver returns this.
    Used by mfdrv for example. */

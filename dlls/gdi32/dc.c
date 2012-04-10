@@ -1347,7 +1347,7 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
     if ((flags & DCB_ENABLE) && (flags & DCB_DISABLE)) return 0;
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
-    ret = ((dc->flags & DC_BOUNDS_ENABLE) ? DCB_ENABLE : DCB_DISABLE) |
+    ret = (dc->bounds_enabled ? DCB_ENABLE : DCB_DISABLE) |
            (is_rect_empty( &dc->BoundsRect ) ? DCB_RESET : DCB_SET);
 
     if (flags & DCB_RESET)
@@ -1376,8 +1376,8 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
         }
     }
 
-    if (flags & DCB_ENABLE) dc->flags |= DC_BOUNDS_ENABLE;
-    if (flags & DCB_DISABLE) dc->flags &= ~DC_BOUNDS_ENABLE;
+    if (flags & DCB_ENABLE) dc->bounds_enabled = TRUE;
+    if (flags & DCB_DISABLE) dc->bounds_enabled = FALSE;
 
     release_dc_ptr( dc );
     return ret;

@@ -867,7 +867,7 @@ BOOL PATH_SavePath( DC *dst, DC *src )
     else if ((physdev = find_path_physdev( src )))
     {
         if (!(dst->path = copy_gdi_path( physdev->path ))) return FALSE;
-        dst->flags |= DC_PATH_OPEN;
+        dst->path_open = TRUE;
     }
     else dst->path = NULL;
     return TRUE;
@@ -877,7 +877,7 @@ BOOL PATH_RestorePath( DC *dst, DC *src )
 {
     struct path_physdev *physdev = find_path_physdev( dst );
 
-    if (src->path && (src->flags & DC_PATH_OPEN))
+    if (src->path && src->path_open)
     {
         if (!physdev)
         {
@@ -887,7 +887,7 @@ BOOL PATH_RestorePath( DC *dst, DC *src )
         else free_gdi_path( physdev->path );
 
         physdev->path = src->path;
-        src->flags &= ~DC_PATH_OPEN;
+        src->path_open = FALSE;
         src->path = NULL;
     }
     else if (physdev)
