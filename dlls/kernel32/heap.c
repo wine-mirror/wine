@@ -1305,7 +1305,7 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
  * roughly how much they are able to allocate
  *
  * RETURNS
- *	None
+ *      None
  */
 VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpBuffer )
 {
@@ -1333,13 +1333,14 @@ VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpBuffer )
     {
         lpBuffer->dwTotalPhys = min( memstatus.ullTotalPhys, MAXDWORD );
         lpBuffer->dwAvailPhys = min( memstatus.ullAvailPhys, MAXDWORD );
-        lpBuffer->dwTotalPageFile = min( memstatus.ullTotalPageFile, MAXDWORD );
+        /* Limit value for apps that do not expect so much memory. Remove last 512 kb to make Sacrifice demo happy. */
+        lpBuffer->dwTotalPageFile = min( memstatus.ullTotalPageFile, 0xfff7ffff );
         lpBuffer->dwAvailPageFile = min( memstatus.ullAvailPageFile, MAXDWORD );
         lpBuffer->dwTotalVirtual = min( memstatus.ullTotalVirtual, MAXDWORD );
         lpBuffer->dwAvailVirtual = min( memstatus.ullAvailVirtual, MAXDWORD );
 
     }
-    else	/* duplicate NT bug */
+    else /* duplicate NT bug */
     {
         lpBuffer->dwTotalPhys = memstatus.ullTotalPhys;
         lpBuffer->dwAvailPhys = memstatus.ullAvailPhys;
