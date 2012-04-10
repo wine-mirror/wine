@@ -205,7 +205,7 @@ HRESULT volume_init(IDirect3DVolume9Impl *volume, IDirect3DDevice9Impl *device, 
 typedef struct IDirect3DSwapChain9Impl
 {
     /* IUnknown fields */
-    const IDirect3DSwapChain9Vtbl *lpVtbl;
+    IDirect3DSwapChain9 IDirect3DSwapChain9_iface;
     LONG                    ref;
     struct wined3d_swapchain *wined3d_swapchain;
     IDirect3DDevice9Ex *parentDevice;

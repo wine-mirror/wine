@@ -451,7 +451,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_CreateAdditionalSwa
             iface, present_parameters, swapchain);
 
     if (SUCCEEDED(hr = d3d9_swapchain_create(device, present_parameters, &object)))
-        *swapchain = (IDirect3DSwapChain9 *)object;
+        *swapchain = &object->IDirect3DSwapChain9_iface;
 
     return hr;
 }
@@ -3307,7 +3307,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
 
     *swapchain = d3d_swapchain->wined3d_swapchain;
     wined3d_swapchain_incref(*swapchain);
-    IDirect3DSwapChain9_Release((IDirect3DSwapChain9 *)d3d_swapchain);
+    IDirect3DSwapChain9_Release(&d3d_swapchain->IDirect3DSwapChain9_iface);
 
     /* Copy back the presentation parameters */
     desc->backbuffer_width = local_parameters.BackBufferWidth;
