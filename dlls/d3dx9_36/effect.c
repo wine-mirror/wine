@@ -5917,15 +5917,13 @@ static inline struct ID3DXEffectPoolImpl *impl_from_ID3DXEffectPool(ID3DXEffectP
 /*** IUnknown methods ***/
 static HRESULT WINAPI ID3DXEffectPoolImpl_QueryInterface(ID3DXEffectPool *iface, REFIID riid, void **object)
 {
-    struct ID3DXEffectPoolImpl *This = impl_from_ID3DXEffectPool(iface);
-
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), object);
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_ID3DXEffectPool))
     {
-        This->ID3DXEffectPool_iface.lpVtbl->AddRef(iface);
-        *object = This;
+        iface->lpVtbl->AddRef(iface);
+        *object = iface;
         return S_OK;
     }
 
