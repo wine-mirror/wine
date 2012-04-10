@@ -491,6 +491,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
     NULL,                               /* pGdiRealizationInfo */
+    NULL,                               /* pGetBoundsRect */
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
     X11DRV_GetCharWidth,                /* pGetCharWidth */

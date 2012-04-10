@@ -101,6 +101,7 @@ struct gdi_dc_funcs
     BOOL     (*pFrameRgn)(PHYSDEV,HRGN,HBRUSH,INT,INT);
     BOOL     (*pGdiComment)(PHYSDEV,UINT,CONST BYTE*);
     BOOL     (*pGdiRealizationInfo)(PHYSDEV,void*);
+    UINT     (*pGetBoundsRect)(PHYSDEV,RECT*,UINT);
     BOOL     (*pGetCharABCWidths)(PHYSDEV,UINT,UINT,LPABC);
     BOOL     (*pGetCharABCWidthsI)(PHYSDEV,UINT,UINT,WORD*,LPABC);
     BOOL     (*pGetCharWidth)(PHYSDEV,UINT,UINT,LPINT);
@@ -211,7 +212,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 24
+#define WINE_GDI_DRIVER_VERSION 25
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {

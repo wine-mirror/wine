@@ -2274,6 +2274,7 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
     NULL,                               /* pGdiRealizationInfo */
+    NULL,                               /* pGetBoundsRect */
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
     NULL,                               /* pGetCharWidth */

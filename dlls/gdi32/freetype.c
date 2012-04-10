@@ -7772,6 +7772,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
     freetype_GdiRealizationInfo,        /* pGdiRealizationInfo */
+    NULL,                               /* pGetBoundsRect */
     freetype_GetCharABCWidths,          /* pGetCharABCWidths */
     freetype_GetCharABCWidthsI,         /* pGetCharABCWidthsI */
     freetype_GetCharWidth,              /* pGetCharWidth */

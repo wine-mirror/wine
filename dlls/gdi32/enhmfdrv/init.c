@@ -75,6 +75,7 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     EMFDRV_FrameRgn,                 /* pFrameRgn */
     EMFDRV_GdiComment,               /* pGdiComment */
     NULL,                            /* pGdiRealizationInfo */
+    NULL,                            /* pGetBoundsRect */
     NULL,                            /* pGetCharABCWidths */
     NULL,                            /* pGetCharABCWidthsI */
     NULL,                            /* pGetCharWidth */

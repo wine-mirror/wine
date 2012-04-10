@@ -222,6 +222,22 @@ void update_dc( DC *dc )
 
 
 /***********************************************************************
+ *           fetch_device_bounds
+ *
+ * Fetch and clear the device-specific bounds, and add them to the DC if necessary.
+ */
+static BOOL fetch_device_bounds( DC *dc )
+{
+    RECT rect;
+    PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetBoundsRect );
+    UINT ret = physdev->funcs->pGetBoundsRect( physdev, &rect, DCB_RESET );
+
+    if (dc->bounds_enabled && ret == DCB_SET) add_bounds_rect( &dc->bounds, &rect );
+    return ret;
+}
+
+
+/***********************************************************************
  *           DC_DeleteObject
  */
 static BOOL DC_DeleteObject( HGDIOBJ handle )
@@ -1316,6 +1332,12 @@ UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
 
     if ( !dc ) return 0;
 
+    if (!fetch_device_bounds( dc ))
+    {
+        release_dc_ptr( dc );
+        return 0;
+    }
+
     if (rect)
     {
         if (is_rect_empty( &dc->bounds ))
@@ -1350,6 +1372,12 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 
     if ((flags & DCB_ENABLE) && (flags & DCB_DISABLE)) return 0;
     if (!(dc = get_dc_ptr( hdc ))) return 0;
+
+    if (!fetch_device_bounds( dc ))
+    {
+        release_dc_ptr( dc );
+        return 0;
+    }
 
     ret = (dc->bounds_enabled ? DCB_ENABLE : DCB_DISABLE) |
            (is_rect_empty( &dc->bounds ) ? DCB_RESET : DCB_SET);

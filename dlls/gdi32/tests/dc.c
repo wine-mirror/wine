@@ -367,7 +367,6 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
         SetMapMode( hdc, MM_TEXT );
         Rectangle( hdc, 2, 2, 5, 5 );
         type = GetBoundsRect( hdc, &rect, DCB_RESET );
-        todo_wine
         ok( !type, "GetBoundsRect succeeded on %s\n", descr );
     }
     else
