@@ -745,6 +745,7 @@ static HRESULT QT_RemoveOutputPins(QTSplitter *This)
 
     if (This->pVideo_Pin)
     {
+        OutputQueue_Destroy(This->pVideo_Pin->queue);
         hr = BaseOutputPinImpl_BreakConnect(&This->pVideo_Pin->pin);
         TRACE("Disconnect: %08x\n", hr);
         IPin_Release(&This->pVideo_Pin->pin.pin.IPin_iface);
@@ -752,6 +753,7 @@ static HRESULT QT_RemoveOutputPins(QTSplitter *This)
     }
     if (This->pAudio_Pin)
     {
+        OutputQueue_Destroy(This->pAudio_Pin->queue);
         hr = BaseOutputPinImpl_BreakConnect(&This->pAudio_Pin->pin);
         TRACE("Disconnect: %08x\n", hr);
         IPin_Release(&This->pAudio_Pin->pin.pin.IPin_iface);
@@ -1269,7 +1271,6 @@ static ULONG WINAPI QTOutPin_Release(IPin *iface)
     {
         DeleteMediaType(This->pmt);
         FreeMediaType(&This->pin.pin.mtCurrent);
-        OutputQueue_Destroy(This->queue);
         CoTaskMemFree(This);
         return 0;
     }
