@@ -427,7 +427,7 @@ char* CDECL _Getdays(void)
 
     TRACE("\n");
 
-    size = cur->str[2*7]-cur->str[0];
+    size = cur->str.names.short_mon[0]-cur->str.names.short_wday[0];
     out = MSVCRT_malloc(size+1);
     if(!out)
         return NULL;
@@ -435,13 +435,13 @@ char* CDECL _Getdays(void)
     size = 0;
     for(i=0; i<7; i++) {
         out[size++] = ':';
-        len = strlen(cur->str[i]);
-        memcpy(&out[size], cur->str[i], len);
+        len = strlen(cur->str.names.short_wday[i]);
+        memcpy(&out[size], cur->str.names.short_wday[i], len);
         size += len;
 
         out[size++] = ':';
-        len = strlen(cur->str[7+i]);
-        memcpy(&out[size], cur->str[7+i], len);
+        len = strlen(cur->str.names.wday[i]);
+        memcpy(&out[size], cur->str.names.wday[i], len);
         size += len;
     }
     out[size] = '\0';
@@ -454,15 +454,13 @@ char* CDECL _Getdays(void)
  */
 char* CDECL _Getmonths(void)
 {
-    static const int months_offset = 14;
-
     MSVCRT___lc_time_data *cur = get_locinfo()->lc_time_curr;
     int i, len, size;
     char *out;
 
     TRACE("\n");
 
-    size = cur->str[months_offset+2*12]-cur->str[months_offset];
+    size = cur->str.names.am-cur->str.names.short_mon[0];
     out = MSVCRT_malloc(size+1);
     if(!out)
         return NULL;
@@ -470,13 +468,13 @@ char* CDECL _Getmonths(void)
     size = 0;
     for(i=0; i<12; i++) {
         out[size++] = ':';
-        len = strlen(cur->str[months_offset+i]);
-        memcpy(&out[size], cur->str[months_offset+i], len);
+        len = strlen(cur->str.names.short_mon[i]);
+        memcpy(&out[size], cur->str.names.short_mon[i], len);
         size += len;
 
         out[size++] = ':';
-        len = strlen(cur->str[months_offset+12+i]);
-        memcpy(&out[size], cur->str[months_offset+12+i], len);
+        len = strlen(cur->str.names.mon[i]);
+        memcpy(&out[size], cur->str.names.mon[i], len);
         size += len;
     }
     out[size] = '\0';
@@ -494,8 +492,8 @@ void* CDECL _Gettnames(void)
 
     TRACE("\n");
 
-    for(i=0; i<sizeof(cur->str)/sizeof(cur->str[0]); i++)
-        size += strlen(cur->str[i])+1;
+    for(i=0; i<sizeof(cur->str.str)/sizeof(cur->str.str[0]); i++)
+        size += strlen(cur->str.str[i])+1;
 
     ret = MSVCRT_malloc(size);
     if(!ret)
@@ -503,8 +501,8 @@ void* CDECL _Gettnames(void)
     memcpy(ret, cur, size);
 
     size = 0;
-    for(i=0; i<sizeof(cur->str)/sizeof(cur->str[0]); i++) {
-        ret->str[i] = &ret->data[size];
+    for(i=0; i<sizeof(cur->str.str)/sizeof(cur->str.str[0]); i++) {
+        ret->str.str[i] = &ret->data[size];
         size += strlen(&ret->data[size])+1;
     }
 
@@ -1244,7 +1242,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 
     ret = 0;
     for(i=0; i<sizeof(time_data)/sizeof(time_data[0]); i++) {
-        loc->locinfo->lc_time_curr->str[i] = &loc->locinfo->lc_time_curr->data[ret];
+        loc->locinfo->lc_time_curr->str.str[i] = &loc->locinfo->lc_time_curr->data[ret];
         if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
             memcpy(&loc->locinfo->lc_time_curr->data[ret], cloc_short_date, sizeof(cloc_short_date));
             ret += sizeof(cloc_short_date);
