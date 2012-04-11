@@ -877,30 +877,46 @@ MSVCRT_size_t CDECL MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
     return len;
 }
 
+static char* asctime_buf(char *buf, const struct MSVCRT_tm *mstm)
+{
+    static const char wday[7][4] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    static const char month[12][4] = {"Jan", "Feb", "Mar", "Apr", "May",
+        "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+    if (mstm->tm_sec<0 || mstm->tm_sec>59
+            || mstm->tm_min<0 || mstm->tm_min>59
+            || mstm->tm_hour<0 || mstm->tm_hour>23
+            || mstm->tm_mon<0 || mstm->tm_mon>11
+            || mstm->tm_wday<0 || mstm->tm_wday>6
+            || mstm->tm_year<0 || mstm->tm_mday<0
+            || mstm->tm_mday>MonthLengths[IsLeapYear(1900+mstm->tm_year)][mstm->tm_mon]) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return NULL;
+    }
+
+    MSVCRT__snprintf(buf, 26, "%s %s %02d %02d:%02d:%02d %c%03d\n", wday[mstm->tm_wday],
+            month[mstm->tm_mon], mstm->tm_mday, mstm->tm_hour, mstm->tm_min,
+            mstm->tm_sec, '1'+(mstm->tm_year+900)/1000, (900+mstm->tm_year)%1000);
+    return buf;
+}
+
 /*********************************************************************
  *		asctime (MSVCRT.@)
  */
 char * CDECL MSVCRT_asctime(const struct MSVCRT_tm *mstm)
 {
-    char bufferA[30];
-    WCHAR bufferW[30];
-
     thread_data_t *data = msvcrt_get_thread_data();
-    struct tm tm;
 
-    msvcrt_tm_to_unix( &tm, mstm );
+    /* asctime returns date in format that always has exactly 26 characters */
+    if (!data->asctime_buffer) {
+        data->asctime_buffer = MSVCRT_malloc(26);
+        if (!data->asctime_buffer) {
+            *MSVCRT__errno() = MSVCRT_ENOMEM;
+            return NULL;
+        }
+    }
 
-    if (!data->asctime_buffer)
-        data->asctime_buffer = MSVCRT_malloc( 30 ); /* ought to be enough */
-
-#ifdef HAVE_ASCTIME_R
-    asctime_r( &tm, bufferA );
-#else
-    strcpy( bufferA, asctime(&tm) );
-#endif
-    MultiByteToWideChar( CP_UNIXCP, 0, bufferA, -1, bufferW, 30 );
-    WideCharToMultiByte( CP_ACP, 0, bufferW, -1, data->asctime_buffer, 30, NULL, NULL );
-    return data->asctime_buffer;
+    return asctime_buf(data->asctime_buffer, mstm);
 }
 
 /*********************************************************************
@@ -908,23 +924,27 @@ char * CDECL MSVCRT_asctime(const struct MSVCRT_tm *mstm)
  */
 int CDECL MSVCRT_asctime_s(char* time, MSVCRT_size_t size, const struct MSVCRT_tm *mstm)
 {
-    char* asc;
-    unsigned int len;
-
-    if (!MSVCRT_CHECK_PMT(time != NULL) || !MSVCRT_CHECK_PMT(mstm != NULL)) {
+    if (!MSVCRT_CHECK_PMT(time != NULL)
+            || !MSVCRT_CHECK_PMT(mstm != NULL)
+            || !MSVCRT_CHECK_PMT(size >= 26)) {
+        if (time && size)
+            time[0] = 0;
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
     }
 
-    asc = MSVCRT_asctime(mstm);
-    len = strlen(asc) + 1;
-
-    if(!MSVCRT_CHECK_PMT(size >= len)) {
-        *MSVCRT__errno() = MSVCRT_ERANGE;
-        return MSVCRT_ERANGE;
+    if (!MSVCRT_CHECK_PMT(mstm->tm_sec>=0) || !MSVCRT_CHECK_PMT(mstm->tm_sec<60)
+            || !MSVCRT_CHECK_PMT(mstm->tm_min>=0) || !MSVCRT_CHECK_PMT(mstm->tm_min<60)
+            || !MSVCRT_CHECK_PMT(mstm->tm_hour>=0) || !MSVCRT_CHECK_PMT(mstm->tm_hour<24)
+            || !MSVCRT_CHECK_PMT(mstm->tm_mon>=0) || !MSVCRT_CHECK_PMT(mstm->tm_mon<12)
+            || !MSVCRT_CHECK_PMT(mstm->tm_wday>=0) || !MSVCRT_CHECK_PMT(mstm->tm_wday<7)
+            || !MSVCRT_CHECK_PMT(mstm->tm_year>=0) || !MSVCRT_CHECK_PMT(mstm->tm_mday>=0)
+            || !MSVCRT_CHECK_PMT(mstm->tm_mday <= MonthLengths[IsLeapYear(1900+mstm->tm_year)][mstm->tm_mon])) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
     }
 
-    strcpy(time, asc);
+    asctime_buf(time, mstm);
     return 0;
 }
 

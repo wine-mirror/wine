@@ -48,6 +48,7 @@ static int*       (__cdecl *p__daylight)(void);
 static int*       (__cdecl *p___p__daylight)(void);
 static size_t     (__cdecl *p_strftime)(char *, size_t, const char *, const struct tm *);
 static size_t     (__cdecl *p_wcsftime)(wchar_t *, size_t, const wchar_t *, const struct tm *);
+static char*      (__cdecl *p_asctime)(const struct tm *);
 
 static void init(void)
 {
@@ -65,6 +66,7 @@ static void init(void)
     p___p__daylight = (void*)GetProcAddress(hmod, "__p__daylight");
     p_strftime = (void*)GetProcAddress(hmod, "strftime");
     p_wcsftime = (void*)GetProcAddress(hmod, "wcsftime");
+    p_asctime = (void*)GetProcAddress(hmod, "asctime");
 }
 
 static int get_test_year(time_t *start)
@@ -612,6 +614,71 @@ todo_wine
     ok(strcmp(bufA, buf) == 0, "expected %s, got %s\n", bufA, buf);
 }
 
+static void test_asctime(void)
+{
+    struct tm* gmt_tm;
+    time_t gmt;
+    char *ret;
+
+    if(!p_asctime || !p_gmtime)
+    {
+        win_skip("asctime or gmtime is not available\n");
+        return;
+    }
+
+    gmt = 0;
+    gmt_tm = p_gmtime(&gmt);
+    ret = p_asctime(gmt_tm);
+    ok(!strcmp(ret, "Thu Jan 01 00:00:00 1970\n"), "asctime retunred %s\n", ret);
+
+    gmt = 312433121;
+    gmt_tm = p_gmtime(&gmt);
+    ret = p_asctime(gmt_tm);
+    ok(!strcmp(ret, "Mon Nov 26 02:58:41 1979\n"), "asctime retunred %s\n", ret);
+
+    /* Week day is only checked if it's in 0..6 range */
+    gmt_tm->tm_wday = 3;
+    ret = p_asctime(gmt_tm);
+    ok(!strcmp(ret, "Wed Nov 26 02:58:41 1979\n"), "asctime returned %s\n", ret);
+
+    errno = 0xdeadbeef;
+    gmt_tm->tm_wday = 7;
+    ret = p_asctime(gmt_tm);
+    ok(!ret || broken(!ret[0]), "asctime returned %s\n", ret);
+    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
+
+    /* Year day is ignored */
+    gmt_tm->tm_wday = 3;
+    gmt_tm->tm_yday = 1300;
+    ret = p_asctime(gmt_tm);
+    ok(!strcmp(ret, "Wed Nov 26 02:58:41 1979\n"), "asctime returned %s\n", ret);
+
+    /* Dates that can't be displayed using 26 characters are broken */
+    gmt_tm->tm_mday = 28;
+    gmt_tm->tm_year = 8100;
+    ret = p_asctime(gmt_tm);
+    ok(!strcmp(ret, "Wed Nov 28 02:58:41 :000\n"), "asctime returned %s\n", ret);
+
+    gmt_tm->tm_year = 264100;
+    ret = p_asctime(gmt_tm);
+    ok(!strcmp(ret, "Wed Nov 28 02:58:41 :000\n"), "asctime returned %s\n", ret);
+
+    /* asctime works from year 1900 */
+    errno = 0xdeadbeef;
+    gmt_tm->tm_year = -1;
+    ret = p_asctime(gmt_tm);
+    ok(!ret || broken(!strcmp(ret, "Wed Nov 28 02:58:41 190/\n")), "asctime returned %s\n", ret);
+    ok(errno==EINVAL || broken(errno == 0xdeadbeef), "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    gmt_tm->tm_mon = 1;
+    gmt_tm->tm_mday = 30;
+    gmt_tm->tm_year = 79;
+    ret = p_asctime(gmt_tm);
+    ok(!ret || broken(!strcmp(ret, "Wed Feb 30 02:58:41 1979\n")), "asctime returned %s\n", ret);
+    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
+}
+
 START_TEST(time)
 {
     init();
@@ -628,4 +695,5 @@ START_TEST(time)
     test_localtime32_s();
     test_localtime64_s();
     test_daylight();
+    test_asctime();
 }
