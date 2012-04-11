@@ -954,19 +954,20 @@ int CDECL MSVCRT_asctime_s(char* time, MSVCRT_size_t size, const struct MSVCRT_t
 MSVCRT_wchar_t * CDECL MSVCRT__wasctime(const struct MSVCRT_tm *mstm)
 {
     thread_data_t *data = msvcrt_get_thread_data();
-    struct tm tm;
-    char buffer[30];
+    char buffer[26];
 
-    msvcrt_tm_to_unix( &tm, mstm );
+    if(!data->wasctime_buffer) {
+        data->wasctime_buffer = MSVCRT_malloc(26*sizeof(MSVCRT_wchar_t));
+        if(!data->wasctime_buffer) {
+            *MSVCRT__errno() = MSVCRT_ENOMEM;
+            return NULL;
+        }
+    }
 
-    if (!data->wasctime_buffer)
-        data->wasctime_buffer = MSVCRT_malloc( 30*sizeof(MSVCRT_wchar_t) ); /* ought to be enough */
-#ifdef HAVE_ASCTIME_R
-    asctime_r( &tm, buffer );
-#else
-    strcpy( buffer, asctime(&tm) );
-#endif
-    MultiByteToWideChar( CP_UNIXCP, 0, buffer, -1, data->wasctime_buffer, 30 );
+    if(!asctime_buf(buffer, mstm))
+        return NULL;
+
+    MultiByteToWideChar(CP_ACP, 0, buffer, -1, data->wasctime_buffer, 26);
     return data->wasctime_buffer;
 }
 
@@ -975,23 +976,22 @@ MSVCRT_wchar_t * CDECL MSVCRT__wasctime(const struct MSVCRT_tm *mstm)
  */
 int CDECL MSVCRT__wasctime_s(MSVCRT_wchar_t* time, MSVCRT_size_t size, const struct MSVCRT_tm *mstm)
 {
-    WCHAR* asc;
-    unsigned int len;
+    char buffer[26];
+    int ret;
 
-    if (!MSVCRT_CHECK_PMT(time != NULL) || !MSVCRT_CHECK_PMT(mstm != NULL)) {
+    if(!MSVCRT_CHECK_PMT(time != NULL)
+            || !MSVCRT_CHECK_PMT(mstm != NULL)
+            || !MSVCRT_CHECK_PMT(size >= 26)) {
+        if(time && size)
+            time[0] = 0;
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return MSVCRT_EINVAL;
     }
 
-    asc = MSVCRT__wasctime(mstm);
-    len = (strlenW(asc) + 1) * sizeof(WCHAR);
-
-    if(!MSVCRT_CHECK_PMT(size >= len)) {
-        *MSVCRT__errno() = MSVCRT_ERANGE;
-        return MSVCRT_ERANGE;
-    }
-
-    strcpyW(time, asc);
+    ret = MSVCRT_asctime_s(buffer, sizeof(buffer), mstm);
+    if(!ret)
+        return ret;
+    MultiByteToWideChar(CP_ACP, 0, buffer, -1, time, size);
     return 0;
 }
 
