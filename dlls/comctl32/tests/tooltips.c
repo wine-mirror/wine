@@ -322,6 +322,11 @@ static void test_gettext(void)
         toolinfoA.lpszText = bufA;
         SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
         ok(strcmp(toolinfoA.lpszText, "") == 0, "lpszText should be an empty string\n");
+
+        toolinfoA.lpszText = bufA;
+        SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&toolinfoA);
+        ok(toolinfoA.lpszText == NULL,
+           "expected NULL, got %p", toolinfoA.lpszText);
     }
     else
     {
@@ -355,6 +360,12 @@ static void test_gettext(void)
         SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
         ok(strcmp(toolinfoA.lpszText, testtipA) == 0, "lpszText should be an empty string\n");
 
+        memset(bufA, 0x1f, sizeof(bufA));
+        toolinfoA.lpszText = bufA;
+        SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&toolinfoA);
+        ok(strcmp(toolinfoA.lpszText, testtipA) == 0,
+           "expected %s, got %p\n", testtipA, toolinfoA.lpszText);
+
         length = SendMessage(hwnd, WM_GETTEXTLENGTH, 0, 0);
         ok(length == 0, "Expected 0, got %d\n", length);
     }
@@ -378,6 +389,11 @@ static void test_gettext(void)
         SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
         ok(strcmp(toolinfoA.lpszText, testcallbackA) == 0,
            "lpszText should be an (%s) string\n", testcallbackA);
+
+        toolinfoA.lpszText = bufA;
+        SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&toolinfoA);
+        ok(toolinfoA.lpszText == LPSTR_TEXTCALLBACKA,
+           "expected LPSTR_TEXTCALLBACKA, got %p\n", toolinfoA.lpszText);
     }
 
     DestroyWindow(hwnd);

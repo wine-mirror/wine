@@ -943,6 +943,21 @@ TOOLTIPS_GetToolFromPoint (const TOOLTIPS_INFO *infoPtr, HWND hwnd, const POINT 
     return -1;
 }
 
+static inline void
+TOOLTIPS_CopyInfoT (const TTTOOL_INFO *toolPtr, TTTOOLINFOW *ti, BOOL isW)
+{
+    if (ti->lpszText) {
+        if (toolPtr->lpszText == NULL ||
+            IS_INTRESOURCE(toolPtr->lpszText) ||
+            toolPtr->lpszText == LPSTR_TEXTCALLBACKW)
+            ti->lpszText = toolPtr->lpszText;
+        else if (isW)
+            strcpyW (ti->lpszText, toolPtr->lpszText);
+        else
+            WideCharToMultiByte(CP_ACP, 0, toolPtr->lpszText, -1,
+                                (LPSTR)ti->lpszText, INFOTIPSIZE, NULL, NULL);
+    }
+}
 
 static BOOL
 TOOLTIPS_IsWindowActive (HWND hwnd)
@@ -1199,8 +1214,7 @@ TOOLTIPS_EnumToolsT (const TOOLTIPS_INFO *infoPtr, UINT uIndex, TTTOOLINFOW *ti,
     ti->uId      = toolPtr->uId;
     ti->rect     = toolPtr->rect;
     ti->hinst    = toolPtr->hinst;
-/*    ti->lpszText = toolPtr->lpszText; */
-    ti->lpszText = NULL;  /* FIXME */
+    TOOLTIPS_CopyInfoT (toolPtr, ti, isW);
 
     if (ti->cbSize >= TTTOOLINFOA_V2_SIZE)
 	ti->lParam = toolPtr->lParam;
@@ -1246,8 +1260,7 @@ TOOLTIPS_GetCurrentToolT (const TOOLTIPS_INFO *infoPtr, TTTOOLINFOW *ti, BOOL is
 	    ti->uFlags   = toolPtr->uFlags;
 	    ti->rect     = toolPtr->rect;
 	    ti->hinst    = toolPtr->hinst;
-/*	    ti->lpszText = toolPtr->lpszText; */
-	    ti->lpszText = NULL;  /* FIXME */
+	    TOOLTIPS_CopyInfoT (toolPtr, ti, isW);
 
 	    if (ti->cbSize >= TTTOOLINFOW_V2_SIZE)
 		ti->lParam = toolPtr->lParam;
@@ -1385,8 +1398,7 @@ TOOLTIPS_GetToolInfoT (const TOOLTIPS_INFO *infoPtr, TTTOOLINFOW *ti, BOOL isW)
     ti->uFlags   = toolPtr->uFlags;
     ti->rect     = toolPtr->rect;
     ti->hinst    = toolPtr->hinst;
-/*    lpToolInfo->lpszText = toolPtr->lpszText; */
-    ti->lpszText = NULL;  /* FIXME */
+    TOOLTIPS_CopyInfoT (toolPtr, ti, isW);
 
     if (ti->cbSize >= TTTOOLINFOW_V2_SIZE)
 	ti->lParam = toolPtr->lParam;
@@ -1420,8 +1432,7 @@ TOOLTIPS_HitTestT (const TOOLTIPS_INFO *infoPtr, LPTTHITTESTINFOW lptthit,
 	lptthit->ti.uId      = toolPtr->uId;
 	lptthit->ti.rect     = toolPtr->rect;
 	lptthit->ti.hinst    = toolPtr->hinst;
-/*	lptthit->ti.lpszText = toolPtr->lpszText; */
-	lptthit->ti.lpszText = NULL;  /* FIXME */
+	TOOLTIPS_CopyInfoT (toolPtr, &lptthit->ti, isW);
 	if (lptthit->ti.cbSize >= TTTOOLINFOW_V2_SIZE)
 	    lptthit->ti.lParam   = toolPtr->lParam;
     }
