@@ -631,7 +631,9 @@ PPD *PSDRV_ParsePPD(char *fname)
     }
 
     ppd->ColorDevice = CD_NotSpecified;
-    list_init(&ppd->PageSizes);
+
+    list_init( &ppd->InstalledFonts );
+    list_init( &ppd->PageSizes );
 
     /*
      *	The Windows PostScript drivers create the following "virtual bin" for
@@ -678,23 +680,13 @@ PPD *PSDRV_ParsePPD(char *fname)
                 WARN("failed to parse DefaultResolution %s\n", debugstr_a(tuple.value));
 	}
 
-	else if(!strcmp("*Font", tuple.key)) {
-	    FONTNAME *fn;
-
-	    for(fn = ppd->InstalledFonts; fn && fn->next; fn = fn->next)
-	        ;
-	    if(!fn) {
-	        ppd->InstalledFonts = HeapAlloc(PSDRV_Heap,
-					       HEAP_ZERO_MEMORY, sizeof(*fn));
-		fn = ppd->InstalledFonts;
-	    } else {
-	       fn->next = HeapAlloc(PSDRV_Heap,
-					       HEAP_ZERO_MEMORY, sizeof(*fn));
-	       fn = fn->next;
-	    }
-	    fn->Name = tuple.option;
-	    tuple.option = NULL;
-	}
+        else if(!strcmp("*Font", tuple.key))
+        {
+            FONTNAME *fn = HeapAlloc( PSDRV_Heap, 0, sizeof(*fn) );
+            fn->Name = tuple.option;
+            tuple.option = NULL;
+            list_add_tail( &ppd->InstalledFonts, &fn->entry );
+        }
 
 	else if(!strcmp("*DefaultFont", tuple.key)) {
 	    ppd->DefaultFont = tuple.value;
@@ -985,8 +977,8 @@ PPD *PSDRV_ParsePPD(char *fname)
 	OPTION *option;
 	OPTIONENTRY *optionEntry;
 
-	for(fn = ppd->InstalledFonts; fn; fn = fn->next)
-	    TRACE("'%s'\n", fn->Name);
+        LIST_FOR_EACH_ENTRY( fn, &ppd->InstalledFonts, FONTNAME, entry )
+            TRACE("'%s'\n", fn->Name);
 
 	LIST_FOR_EACH_ENTRY(page, &ppd->PageSizes, PAGESIZE, entry) {
 	    TRACE("'%s' aka '%s' (%d) invoked by '%s'\n", page->Name,

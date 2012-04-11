@@ -118,9 +118,10 @@ typedef struct _tagFONTFAMILY {
 extern FONTFAMILY   *PSDRV_AFMFontList DECLSPEC_HIDDEN;
 extern const AFM    *const PSDRV_BuiltinAFMs[] DECLSPEC_HIDDEN;     /* last element is NULL */
 
-typedef struct _tagFONTNAME {
+typedef struct
+{
+    struct list          entry;
     char		*Name;
-    struct _tagFONTNAME *next;
 } FONTNAME;
 
 typedef struct {
@@ -213,7 +214,7 @@ typedef struct {
     char		*JCLToPSInterpreter;
     char		*JCLEnd;
     char		*DefaultFont;
-    FONTNAME		*InstalledFonts; /* ptr to a list of FontNames */
+    struct list         InstalledFonts;
     struct list         PageSizes;
     PAGESIZE            *DefaultPageSize;
     OPTION		*InstalledOptions;

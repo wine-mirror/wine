@@ -773,7 +773,8 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 
     pi->Fonts = NULL;
 
-    for(font = pi->ppd->InstalledFonts; font; font = font->next) {
+    LIST_FOR_EACH_ENTRY( font, &pi->ppd->InstalledFonts, FONTNAME, entry )
+    {
         afm = PSDRV_FindAFMinList(PSDRV_AFMFontList, font->Name);
 	if(!afm) {
 	    TRACE( "Couldn't find AFM file for installed printer font '%s' - "
