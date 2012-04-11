@@ -4479,7 +4479,7 @@ static void test_body_funs(IHTMLBodyElement *body)
 
 static void test_window(IHTMLDocument2 *doc)
 {
-    IHTMLWindow2 *window, *window2, *self;
+    IHTMLWindow2 *window, *window2, *self, *parent;
     IHTMLDocument2 *doc2 = NULL;
     IDispatch *disp;
     IUnknown *unk;
@@ -4528,7 +4528,6 @@ static void test_window(IHTMLDocument2 *doc)
     ok(self == window2, "self != window2\n");
 
     IHTMLWindow2_Release(window2);
-    IHTMLWindow2_Release(self);
 
     disp = NULL;
     hres = IHTMLDocument2_get_Script(doc, &disp);
@@ -4550,6 +4549,14 @@ static void test_window(IHTMLDocument2 *doc)
     hres = IHTMLWindow2_get_opener(window, &v);
     ok(hres == S_OK, "get_opener failed: %08x\n", hres);
     ok(V_VT(&v) == VT_EMPTY, "V_VT(opener) = %d\n", V_VT(&v));
+
+    parent = NULL;
+    hres = IHTMLWindow2_get_parent(window, &parent);
+    ok(hres == S_OK, "get_parent failed: %08x\n", hres);
+    ok(parent != NULL, "parent == NULL\n");
+    ok(parent == self, "parent != window\n");
+    IHTMLWindow2_Release(parent);
+    IHTMLWindow2_Release(self);
 
     test_window_name(window, NULL);
     set_window_name(window, "test");

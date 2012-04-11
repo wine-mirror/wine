@@ -779,14 +779,14 @@ static HRESULT WINAPI HTMLWindow2_get_name(IHTMLWindow2 *iface, BSTR *p)
 static HRESULT WINAPI HTMLWindow2_get_parent(IHTMLWindow2 *iface, IHTMLWindow2 **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
+
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->parent) {
-        *p = &This->parent->IHTMLWindow2_iface;
-        IHTMLWindow2_AddRef(*p);
-    }else
-        *p = NULL;
+    if(!This->parent)
+        return IHTMLWindow2_get_self(&This->IHTMLWindow2_iface, p);
 
+    *p = &This->parent->IHTMLWindow2_iface;
+    IHTMLWindow2_AddRef(*p);
     return S_OK;
 }
 
