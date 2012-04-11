@@ -113,7 +113,6 @@ static const LOGFONTA DefaultLogFont = {
     DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, ""
 };
 
-static const CHAR default_devmodeA[] = "Default DevMode";
 static const struct gdi_dc_funcs psdrv_funcs;
 
 /*********************************************************************
@@ -610,6 +609,14 @@ static PSDRV_DEVMODEA *get_devmode( HANDLE printer, const char *nameA, BOOL *is_
     return dm;
 }
 
+static BOOL set_devmode( HANDLE printer, PSDRV_DEVMODEA *dm )
+{
+    PRINTER_INFO_9A info;
+    info.pDevMode = &dm->dmPublic;
+
+    return SetPrinterA( printer, 9, (BYTE *)&info, 0 );
+}
+
 static struct list printer_list = LIST_INIT( printer_list );
 
 /**********************************************************************
@@ -761,8 +768,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 	    PSDRV_MergeDevmodes(pi->Devmode, &dm, pi);
 	}
 
-        SetPrinterDataExA(hPrinter, NULL, default_devmodeA, REG_BINARY,
-                            (LPBYTE)pi->Devmode, sizeof(DefaultDevmode));
+        set_devmode( hPrinter, pi->Devmode );
     }
 
     if(pi->ppd->DefaultPageSize) { /* We'll let the ppd override the devmode */
