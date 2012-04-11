@@ -168,12 +168,13 @@ typedef struct _tagOPTION { /* Treat bool as a special case of pickone */
     struct _tagOPTION		*next;
 } OPTION;
 
-typedef struct _tagCONSTRAINT {
+typedef struct
+{
+    struct list                 entry;
     char			*Feature1;
     char			*Value1;
     char			*Feature2;
     char			*Value2;
-    struct _tagCONSTRAINT	*next;
 } CONSTRAINT;
 
 typedef struct _tagINPUTSLOT {
@@ -218,7 +219,7 @@ typedef struct {
     struct list         PageSizes;
     PAGESIZE            *DefaultPageSize;
     OPTION		*InstalledOptions;
-    CONSTRAINT		*Constraints;
+    struct list         Constraints;
     INPUTSLOT		*InputSlots;
     RASTERIZEROPTION    TTRasterizer;
     DUPLEX              *Duplexes;

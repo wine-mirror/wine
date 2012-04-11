@@ -634,6 +634,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 
     list_init( &ppd->InstalledFonts );
     list_init( &ppd->PageSizes );
+    list_init( &ppd->Constraints );
 
     /*
      *	The Windows PostScript drivers create the following "virtual bin" for
@@ -812,23 +813,19 @@ PPD *PSDRV_ParsePPD(char *fname)
 		  ppd->LandscapeOrientation);
 	}
 
-	else if(!strcmp("*UIConstraints", tuple.key)) {
+        else if(!strcmp("*UIConstraints", tuple.key))
+        {
 	    char *start;
-	    CONSTRAINT *con, **insert = &ppd->Constraints;
-
-	    while(*insert)
-	        insert = &((*insert)->next);
-
-	    con = *insert = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY,
-				       sizeof(*con) );
+            CONSTRAINT *con = HeapAlloc( PSDRV_Heap, 0, sizeof(*con) );
 
 	    start = tuple.value;
-
 	    con->Feature1 = PSDRV_PPDGetWord(start, &start);
 	    con->Value1 = PSDRV_PPDGetWord(start, &start);
 	    con->Feature2 = PSDRV_PPDGetWord(start, &start);
 	    con->Value2 = PSDRV_PPDGetWord(start, &start);
-	}
+
+            list_add_tail( &ppd->Constraints, &con->entry );
+        }
 
 	else if (!strcmp("*InputSlot", tuple.key))
 	{
@@ -992,7 +989,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 		      page->PaperDimension->x, page->PaperDimension->y);
 	}
 
-	for(con = ppd->Constraints; con; con = con->next)
+        LIST_FOR_EACH_ENTRY( con, &ppd->Constraints, CONSTRAINT, entry )
 	    TRACE("CONSTRAINTS@ %s %s %s %s\n", con->Feature1,
 		  con->Value1, con->Feature2, con->Value2);
 
