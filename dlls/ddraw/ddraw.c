@@ -4527,7 +4527,7 @@ static HRESULT WINAPI d3d7_CreateVertexBuffer(IDirect3D7 *iface, D3DVERTEXBUFFER
         IDirect3DVertexBuffer7 **vertex_buffer, DWORD flags)
 {
     struct ddraw *ddraw = impl_from_IDirect3D7(iface);
-    IDirect3DVertexBufferImpl *object;
+    struct d3d_vertex_buffer *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, vertex_buffer %p, flags %#x.\n",
@@ -4551,7 +4551,7 @@ static HRESULT WINAPI d3d3_CreateVertexBuffer(IDirect3D3 *iface, D3DVERTEXBUFFER
         IDirect3DVertexBuffer **vertex_buffer, DWORD flags, IUnknown *outer_unknown)
 {
     struct ddraw *ddraw = impl_from_IDirect3D3(iface);
-    IDirect3DVertexBufferImpl *object;
+    struct d3d_vertex_buffer *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, vertex_buffer %p, flags %#x, outer_unknown %p.\n",

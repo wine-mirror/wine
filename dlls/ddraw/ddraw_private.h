@@ -38,10 +38,6 @@
 #include "wine/wined3d.h"
 
 extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HIDDEN;
-
-/* Typdef the interfaces */
-typedef struct IDirect3DVertexBufferImpl  IDirect3DVertexBufferImpl;
-
 extern DWORD force_refresh_rate DECLSPEC_HIDDEN;
 
 /*****************************************************************************
@@ -520,7 +516,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *execute_buffer,
 /*****************************************************************************
  * IDirect3DVertexBuffer
  *****************************************************************************/
-struct IDirect3DVertexBufferImpl
+struct d3d_vertex_buffer
 {
     IDirect3DVertexBuffer7 IDirect3DVertexBuffer7_iface;
     IDirect3DVertexBuffer IDirect3DVertexBuffer_iface;
@@ -536,10 +532,10 @@ struct IDirect3DVertexBufferImpl
     DWORD                fvf;
 };
 
-HRESULT d3d_vertex_buffer_create(IDirect3DVertexBufferImpl **vertex_buf, struct ddraw *ddraw,
+HRESULT d3d_vertex_buffer_create(struct d3d_vertex_buffer **buffer, struct ddraw *ddraw,
         D3DVERTEXBUFFERDESC *desc) DECLSPEC_HIDDEN;
-IDirect3DVertexBufferImpl *unsafe_impl_from_IDirect3DVertexBuffer(IDirect3DVertexBuffer *iface) DECLSPEC_HIDDEN;
-IDirect3DVertexBufferImpl *unsafe_impl_from_IDirect3DVertexBuffer7(IDirect3DVertexBuffer7 *iface) DECLSPEC_HIDDEN;
+struct d3d_vertex_buffer *unsafe_impl_from_IDirect3DVertexBuffer(IDirect3DVertexBuffer *iface) DECLSPEC_HIDDEN;
+struct d3d_vertex_buffer *unsafe_impl_from_IDirect3DVertexBuffer7(IDirect3DVertexBuffer7 *iface) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * Helper functions from utils.c
