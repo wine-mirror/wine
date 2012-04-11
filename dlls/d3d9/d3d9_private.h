@@ -395,8 +395,8 @@ typedef struct IDirect3DVertexDeclaration9Impl {
 } IDirect3DVertexDeclaration9Impl;
 
 void IDirect3DVertexDeclaration9Impl_Destroy(LPDIRECT3DVERTEXDECLARATION9 iface) DECLSPEC_HIDDEN;
-HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration9Impl *declaration,
-        IDirect3DDevice9Impl *device, const D3DVERTEXELEMENT9 *elements) DECLSPEC_HIDDEN;
+HRESULT d3d9_vertex_declaration_create(IDirect3DDevice9Impl *device,
+        const D3DVERTEXELEMENT9 *elements, IDirect3DVertexDeclaration9Impl **declaration) DECLSPEC_HIDDEN;
 
 /* ---------------------- */
 /* IDirect3DVertexShader9 */

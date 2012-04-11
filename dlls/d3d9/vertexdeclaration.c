@@ -367,7 +367,7 @@ static HRESULT convert_to_wined3d_declaration(const D3DVERTEXELEMENT9 *d3d9_elem
     return D3D_OK;
 }
 
-HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration9Impl *declaration,
+static HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration9Impl *declaration,
         IDirect3DDevice9Impl *device, const D3DVERTEXELEMENT9 *elements)
 {
     struct wined3d_vertex_element *wined3d_elements;
@@ -410,6 +410,33 @@ HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration9Impl *declaration,
 
     declaration->parentDevice = &device->IDirect3DDevice9Ex_iface;
     IDirect3DDevice9Ex_AddRef(declaration->parentDevice);
+
+    return D3D_OK;
+}
+
+HRESULT d3d9_vertex_declaration_create(IDirect3DDevice9Impl *device,
+        const D3DVERTEXELEMENT9 *elements, IDirect3DVertexDeclaration9Impl **declaration)
+{
+    IDirect3DVertexDeclaration9Impl *object;
+    HRESULT hr;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate vertex declaration memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = vertexdeclaration_init(object, device, elements);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created vertex declaration %p.\n", object);
+    *declaration = object;
 
     return D3D_OK;
 }

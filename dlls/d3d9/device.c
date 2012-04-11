@@ -2073,7 +2073,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_ProcessVertices(IDirect3DDevice9Ex *i
 static HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexDeclaration(IDirect3DDevice9Ex *iface,
         const D3DVERTEXELEMENT9 *elements, IDirect3DVertexDeclaration9 **declaration)
 {
-    IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
+    IDirect3DDevice9Impl *device = impl_from_IDirect3DDevice9Ex(iface);
     IDirect3DVertexDeclaration9Impl *object;
     HRESULT hr;
 
@@ -2085,25 +2085,10 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexDeclaration(IDirect3DDevi
         return D3DERR_INVALIDCALL;
     }
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-    {
-        ERR("Failed to allocate vertex declaration memory.\n");
-        return E_OUTOFMEMORY;
-    }
+    if (SUCCEEDED(hr = d3d9_vertex_declaration_create(device, elements, &object)))
+        *declaration = (IDirect3DVertexDeclaration9 *)object;
 
-    hr = vertexdeclaration_init(object, This, elements);
-    if (FAILED(hr))
-    {
-        WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    TRACE("Created vertex declaration %p.\n", object);
-    *declaration = (IDirect3DVertexDeclaration9 *)object;
-
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DDevice9Impl_SetVertexDeclaration(IDirect3DDevice9Ex *iface,
