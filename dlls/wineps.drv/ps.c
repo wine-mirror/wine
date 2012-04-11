@@ -350,7 +350,7 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
         write_spool(dev, copies_buf, strlen(copies_buf));
     }
 
-    for(slot = physDev->pi->ppd->InputSlots; slot; slot = slot->next) {
+    LIST_FOR_EACH_ENTRY( slot, &physDev->pi->ppd->InputSlots, INPUTSLOT, entry ) {
         if(slot->WinBin == physDev->Devmode->dmPublic.u1.s1.dmDefaultSource) {
 	    if(slot->InvocationString) {
 	        PSDRV_WriteFeature(dev, "*InputSlot", slot->Name,

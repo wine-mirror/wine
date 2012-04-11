@@ -116,20 +116,21 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 	TRACE("Changing Copies to %d\n", dm2->dmPublic.u1.s1.dmCopies);
     }
 
-    if(dm2->dmPublic.dmFields & DM_DEFAULTSOURCE) {
+    if (dm2->dmPublic.dmFields & DM_DEFAULTSOURCE)
+    {
         INPUTSLOT *slot;
 
-	for(slot = pi->ppd->InputSlots; slot; slot = slot->next) {
+        LIST_FOR_EACH_ENTRY( slot, &pi->ppd->InputSlots, INPUTSLOT, entry )
 	    if(slot->WinBin == dm2->dmPublic.u1.s1.dmDefaultSource)
 	        break;
-	}
-	if(slot) {
+
+        if (&slot->entry != &pi->ppd->InputSlots)
+        {
 	    dm1->dmPublic.u1.s1.dmDefaultSource = dm2->dmPublic.u1.s1.dmDefaultSource;
 	    TRACE("Changing bin to '%s'\n", slot->FullName);
-	} else {
-	  TRACE("Trying to change to unsupported bin %d\n",
-		dm2->dmPublic.u1.s1.dmDefaultSource);
 	}
+        else
+            TRACE("Trying to change to unsupported bin %d\n", dm2->dmPublic.u1.s1.dmDefaultSource);
     }
 
    if (dm2->dmPublic.dmFields & DM_DEFAULTSOURCE )
@@ -512,9 +513,12 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
       WORD *wp = (WORD *)lpszOutput;
       int i = 0;
 
-      for(slot = pi->ppd->InputSlots; slot; slot = slot->next, i++)
-	if(lpszOutput != NULL)
-	  *wp++ = slot->WinBin;
+      LIST_FOR_EACH_ENTRY( slot, &pi->ppd->InputSlots, INPUTSLOT, entry )
+      {
+          i++;
+          if (lpszOutput != NULL)
+              *wp++ = slot->WinBin;
+      }
       return i;
     }
 
@@ -524,11 +528,15 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
       char *cp = lpszOutput;
       int i = 0;
 
-      for(slot = pi->ppd->InputSlots; slot; slot = slot->next, i++)
-	if(lpszOutput != NULL) {
-	  lstrcpynA(cp, slot->FullName, 24);
-	  cp += 24;
-	}
+      LIST_FOR_EACH_ENTRY( slot, &pi->ppd->InputSlots, INPUTSLOT, entry )
+      {
+          i++;
+          if (lpszOutput != NULL)
+          {
+              lstrcpynA( cp, slot->FullName, 24 );
+              cp += 24;
+          }
+      }
       return i;
     }
 

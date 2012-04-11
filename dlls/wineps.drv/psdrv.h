@@ -177,12 +177,13 @@ typedef struct
     char			*Value2;
 } CONSTRAINT;
 
-typedef struct _tagINPUTSLOT {
+typedef struct
+{
+    struct list                 entry;
     const char			*Name;
     const char			*FullName;
     char			*InvocationString;
     WORD			WinBin; /* eg DMBIN_LOWER */
-    struct _tagINPUTSLOT	*next;
 } INPUTSLOT;
 
 typedef enum _RASTERIZEROPTION
@@ -220,7 +221,7 @@ typedef struct {
     PAGESIZE            *DefaultPageSize;
     OPTION		*InstalledOptions;
     struct list         Constraints;
-    INPUTSLOT		*InputSlots;
+    struct list         InputSlots;
     RASTERIZEROPTION    TTRasterizer;
     DUPLEX              *Duplexes;
     DUPLEX              *DefaultDuplex;

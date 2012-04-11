@@ -583,23 +583,19 @@ static BOOL parse_resolution(const char *str, SIZE *sz)
  *	PSDRV_AddSlot
  *
  */
-static INT PSDRV_AddSlot(PPD *ppd, LPCSTR szName, LPCSTR szFullName,
+static BOOL PSDRV_AddSlot(PPD *ppd, LPCSTR szName, LPCSTR szFullName,
 	LPSTR szInvocationString, WORD wWinBin)
 {
-    INPUTSLOT	*slot, **insert = &ppd->InputSlots;
-
-    while (*insert)
-	insert = &((*insert)->next);
-
-    slot = *insert = HeapAlloc(PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(INPUTSLOT));
-    if (!slot) return 1;
+    INPUTSLOT *slot = HeapAlloc( PSDRV_Heap, 0, sizeof(INPUTSLOT) );
+    if (!slot) return FALSE;
 
     slot->Name = szName;
     slot->FullName = szFullName;
     slot->InvocationString = szInvocationString;
     slot->WinBin = wWinBin;
 
-    return 0;
+    list_add_tail( &ppd->InputSlots, &slot->entry );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -635,13 +631,13 @@ PPD *PSDRV_ParsePPD(char *fname)
     list_init( &ppd->InstalledFonts );
     list_init( &ppd->PageSizes );
     list_init( &ppd->Constraints );
+    list_init( &ppd->InputSlots );
 
     /*
      *	The Windows PostScript drivers create the following "virtual bin" for
      *	every PostScript printer
      */
-    if (PSDRV_AddSlot(ppd, NULL, "Automatically Select", NULL,
-	    DMBIN_FORMSOURCE))
+    if (!PSDRV_AddSlot( ppd, NULL, "Automatically Select", NULL, DMBIN_FORMSOURCE ))
     {
 	HeapFree (PSDRV_Heap, 0, ppd);
 	fclose(fp);
@@ -1002,7 +998,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 		      optionEntry->FullName, optionEntry->InvocationString);
 	}
 
-	for(slot = ppd->InputSlots; slot; slot = slot->next)
+        LIST_FOR_EACH_ENTRY( slot, &ppd->InputSlots, INPUTSLOT, entry )
 	    TRACE("INPUTSLOTS '%s' Name '%s' (%d) Invocation '%s'\n",
 		  debugstr_a(slot->Name), slot->FullName, slot->WinBin,
 		  debugstr_a(slot->InvocationString));
