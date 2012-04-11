@@ -66,6 +66,7 @@ MAKE_FUNCPTR(jpeg_CreateCompress);
 MAKE_FUNCPTR(jpeg_CreateDecompress);
 MAKE_FUNCPTR(jpeg_destroy_compress);
 MAKE_FUNCPTR(jpeg_destroy_decompress);
+MAKE_FUNCPTR(jpeg_finish_compress);
 MAKE_FUNCPTR(jpeg_read_header);
 MAKE_FUNCPTR(jpeg_read_scanlines);
 MAKE_FUNCPTR(jpeg_resync_to_restart);
@@ -90,6 +91,7 @@ static void *load_libjpeg(void)
         LOAD_FUNCPTR(jpeg_CreateDecompress);
         LOAD_FUNCPTR(jpeg_destroy_compress);
         LOAD_FUNCPTR(jpeg_destroy_decompress);
+        LOAD_FUNCPTR(jpeg_finish_compress);
         LOAD_FUNCPTR(jpeg_read_header);
         LOAD_FUNCPTR(jpeg_read_scanlines);
         LOAD_FUNCPTR(jpeg_resync_to_restart);
@@ -734,6 +736,7 @@ typedef struct JpegEncoder {
     int frame_initialized;
     int started_compress;
     int lines_written;
+    int frame_committed;
     UINT width, height;
     double xres, yres;
     const jpeg_compress_format *format;
@@ -1066,8 +1069,33 @@ static HRESULT WINAPI JpegEncoder_Frame_WriteSource(IWICBitmapFrameEncode *iface
 
 static HRESULT WINAPI JpegEncoder_Frame_Commit(IWICBitmapFrameEncode *iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    JpegEncoder *This = impl_from_IWICBitmapFrameEncode(iface);
+    jmp_buf jmpbuf;
+    TRACE("(%p)\n", iface);
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->started_compress || This->lines_written != This->height || This->frame_committed)
+    {
+        LeaveCriticalSection(&This->lock);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    /* set up setjmp/longjmp error handling */
+    if (setjmp(jmpbuf))
+    {
+        LeaveCriticalSection(&This->lock);
+        return E_FAIL;
+    }
+    This->cinfo.client_data = &jmpbuf;
+
+    pjpeg_finish_compress(&This->cinfo);
+
+    This->frame_committed = TRUE;
+
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI JpegEncoder_Frame_GetMetadataQueryWriter(IWICBitmapFrameEncode *iface,
@@ -1333,6 +1361,7 @@ HRESULT JpegEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->frame_initialized = 0;
     This->started_compress = 0;
     This->lines_written = 0;
+    This->frame_committed = 0;
     This->width = This->height = 0;
     This->xres = This->yres = 0.0;
     This->format = NULL;
