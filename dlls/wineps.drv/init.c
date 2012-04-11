@@ -555,6 +555,61 @@ static PRINTER_ENUM_VALUESA *load_font_sub_table( HANDLE printer, DWORD *num_ent
     return table;
 }
 
+static PSDRV_DEVMODEA *get_printer_devmode( HANDLE printer )
+{
+    DWORD needed, dm_size;
+    BOOL res;
+    PRINTER_INFO_9A *info;
+    PSDRV_DEVMODEA *dm;
+
+    GetPrinterA( printer, 9, NULL, 0, &needed );
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
+
+    info = HeapAlloc( PSDRV_Heap, 0, needed );
+    res = GetPrinterA( printer, 9, (BYTE *)info, needed, &needed );
+    if (!res || !info->pDevMode)
+    {
+        HeapFree( PSDRV_Heap, 0, info );
+        return NULL;
+    }
+
+    /* sanity check the sizes */
+    dm_size = info->pDevMode->dmSize + info->pDevMode->dmDriverExtra;
+    if ((char *)info->pDevMode - (char *)info + dm_size > needed)
+    {
+        HeapFree( PSDRV_Heap, 0, info );
+        return NULL;
+    }
+
+    dm = (PSDRV_DEVMODEA*)info;
+    memmove( dm, info->pDevMode, dm_size );
+    return dm;
+}
+
+static PSDRV_DEVMODEA *get_devmode( HANDLE printer, const char *nameA, BOOL *is_default )
+{
+    PSDRV_DEVMODEA *dm = get_printer_devmode( printer );
+
+    *is_default = FALSE;
+
+    if (dm && dm->dmPublic.dmSize + dm->dmPublic.dmDriverExtra >= sizeof(DefaultDevmode))
+    {
+        TRACE( "Retrieved devmode from winspool\n" );
+        return dm;
+    }
+    HeapFree( PSDRV_Heap, 0, dm );
+
+    TRACE( "Using default devmode\n" );
+    dm = HeapAlloc( PSDRV_Heap, 0, sizeof(DefaultDevmode) );
+    if (dm)
+    {
+        *dm = DefaultDevmode;
+        lstrcpynA((LPSTR)dm->dmPublic.dmDeviceName, nameA, CCHDEVICENAME);
+        *is_default = TRUE;
+    }
+    return dm;
+}
+
 static struct list printer_list = LIST_INIT( printer_list );
 
 /**********************************************************************
@@ -562,7 +617,7 @@ static struct list printer_list = LIST_INIT( printer_list );
  */
 PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 {
-    DWORD type = REG_BINARY, needed, res, dwPaperSize;
+    DWORD needed, res, dwPaperSize;
     PRINTERINFO *pi;
     FONTNAME *font;
     const AFM *afm;
@@ -597,27 +652,8 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     nameA = HeapAlloc( GetProcessHeap(), 0, len );
     WideCharToMultiByte( CP_ACP, 0, name, -1, nameA, len, NULL, NULL );
 
-    needed = 0;
-    res = GetPrinterDataExA(hPrinter, NULL, default_devmodeA, &type, NULL, 0, &needed);
-
-    if (needed < sizeof(DefaultDevmode)) {
-        pi->Devmode = HeapAlloc( PSDRV_Heap, 0, sizeof(DefaultDevmode) );
-        if (pi->Devmode == NULL)
-            goto closeprinter;
-
-        *pi->Devmode = DefaultDevmode;
-        lstrcpynA((LPSTR)pi->Devmode->dmPublic.dmDeviceName, nameA, CCHDEVICENAME);
-        using_default_devmode = TRUE;
-    }
-    else {
-        pi->Devmode = HeapAlloc( PSDRV_Heap, 0, needed );
-        if (pi->Devmode == NULL)
-            goto closeprinter;
-
-        GetPrinterDataExA(hPrinter, NULL, default_devmodeA, &type, (LPBYTE)pi->Devmode, needed, &needed);
-    }
-
-
+    pi->Devmode = get_devmode( hPrinter, nameA, &using_default_devmode );
+    if (!pi->Devmode) goto closeprinter;
 
 #ifdef SONAME_LIBCUPS
     if (cupshandle != (void*)-1) {
