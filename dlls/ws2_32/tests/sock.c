@@ -2730,7 +2730,7 @@ static void test_getsockname(void)
 
 static void test_dns(void)
 {
-    struct hostent *h, *he, host;
+    struct hostent *h;
     union memaddress
     {
         char *chr;
@@ -2738,20 +2738,13 @@ static void test_dns(void)
     } addr;
     char **ptr;
     int acount;
-    void *ip_addr, *alias_addr;
 
     h = gethostbyname("");
     ok(h != NULL, "gethostbyname(\"\") failed with %d\n", h_errno);
 
-    if(h) host = *h;
-
     /* Use an address with valid alias names if possible */
-    he = gethostbyname("source.winehq.org");
-    if(he)
-        h = he;
-    else if (h)
-        h = &host;
-    else
+    h = gethostbyname("source.winehq.org");
+    if(!h)
     {
         skip("Can't test the hostent structure because gethostbyname failed\n");
         return;
@@ -2762,18 +2755,26 @@ static void test_dns(void)
      * the struct hostent size. Knowing the amount of aliases we know the exact
      * location of the first IP returned. Rule valid for >= XP, for older OS's
      * it's somewhat the opposite. */
-    for(ptr = h->h_aliases, acount = 1; *ptr; ptr++) acount++;
-
     addr.mem = h + 1;
-    alias_addr = addr.mem;
+    if(h->h_addr_list == addr.mem) /* <= W2K */
+    {
+        skip("Skipping hostent tests since this OS is unsupported\n");
+        return;
+    }
 
-    todo_wine ok(h->h_aliases == alias_addr || broken(h->h_addr_list == alias_addr /* <= W2K */ ),
-       "hostent->h_aliases should be in %p, it is in %p\n", alias_addr, h->h_aliases);
+    todo_wine ok(h->h_aliases == addr.mem,
+       "hostent->h_aliases should be in %p, it is in %p\n", addr.mem, h->h_aliases);
 
-    addr.chr += sizeof(h->h_aliases) * acount;
-    ip_addr = addr.mem;
-    todo_wine ok(h->h_addr_list == ip_addr || broken(h->h_addr_list == alias_addr /* <= W2K */ ),
-       "hostent->h_addr_list should be in %p, it is in %p\n", ip_addr, h->h_addr_list);
+    for(ptr = h->h_aliases, acount = 1; *ptr; ptr++) acount++;
+    addr.chr += sizeof(*ptr) * acount;
+    todo_wine ok(h->h_addr_list == addr.mem,
+       "hostent->h_addr_list should be in %p, it is in %p\n", addr.mem, h->h_addr_list);
+
+    for(ptr = h->h_addr_list, acount = 1; *ptr; ptr++) acount++;
+
+    addr.chr += sizeof(*ptr) * acount;
+    todo_wine ok(h->h_addr_list[0] == addr.mem,
+       "hostent->h_addr_list[0] should be in %p, it is in %p\n", addr.mem, h->h_addr_list[0]);
 }
 
 /* Our winsock headers don't define gethostname because it conflicts with the
