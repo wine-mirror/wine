@@ -737,6 +737,7 @@ typedef struct JpegEncoder {
     int started_compress;
     int lines_written;
     int frame_committed;
+    int committed;
     UINT width, height;
     double xres, yres;
     const jpeg_compress_format *format;
@@ -1306,8 +1307,22 @@ static HRESULT WINAPI JpegEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
 static HRESULT WINAPI JpegEncoder_Commit(IWICBitmapEncoder *iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    JpegEncoder *This = impl_from_IWICBitmapEncoder(iface);
+    TRACE("(%p)\n", iface);
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->frame_committed || This->committed)
+    {
+        LeaveCriticalSection(&This->lock);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    This->committed = TRUE;
+
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI JpegEncoder_GetMetadataQueryWriter(IWICBitmapEncoder *iface,
@@ -1362,6 +1377,7 @@ HRESULT JpegEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->started_compress = 0;
     This->lines_written = 0;
     This->frame_committed = 0;
+    This->committed = 0;
     This->width = This->height = 0;
     This->xres = This->yres = 0.0;
     This->format = NULL;
