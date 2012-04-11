@@ -701,6 +701,21 @@ HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     return ret;
 }
 
+typedef struct jpeg_compress_format {
+    const WICPixelFormatGUID *guid;
+    int bpp;
+    int num_components;
+    J_COLOR_SPACE color_space;
+    int swap_rgb;
+} jpeg_compress_format;
+
+static const jpeg_compress_format compress_formats[] = {
+    { &GUID_WICPixelFormat24bppBGR, 24, 3, JCS_RGB, 1 },
+    { &GUID_WICPixelFormat32bppCMYK, 32, 4, JCS_CMYK },
+    { &GUID_WICPixelFormat8bppGray, 8, 1, JCS_GRAYSCALE },
+    { 0 }
+};
+
 typedef struct JpegEncoder {
     IWICBitmapEncoder IWICBitmapEncoder_iface;
     IWICBitmapFrameEncode IWICBitmapFrameEncode_iface;
@@ -713,6 +728,7 @@ typedef struct JpegEncoder {
     int frame_initialized;
     int started_compress;
     UINT width, height;
+    const jpeg_compress_format *format;
     IStream *stream;
     CRITICAL_SECTION lock;
     BYTE dest_buffer[1024];
@@ -865,8 +881,32 @@ static HRESULT WINAPI JpegEncoder_Frame_SetResolution(IWICBitmapFrameEncode *ifa
 static HRESULT WINAPI JpegEncoder_Frame_SetPixelFormat(IWICBitmapFrameEncode *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%s): stub\n", iface, debugstr_guid(pPixelFormat));
-    return E_NOTIMPL;
+    JpegEncoder *This = impl_from_IWICBitmapFrameEncode(iface);
+    int i;
+    TRACE("(%p,%s)\n", iface, debugstr_guid(pPixelFormat));
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->frame_initialized || This->started_compress)
+    {
+        LeaveCriticalSection(&This->lock);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    for (i=0; compress_formats[i].guid; i++)
+    {
+        if (memcmp(compress_formats[i].guid, pPixelFormat, sizeof(GUID)) == 0)
+            break;
+    }
+
+    if (!compress_formats[i].guid) i = 0;
+
+    This->format = &compress_formats[i];
+    memcpy(pPixelFormat, This->format->guid, sizeof(GUID));
+
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI JpegEncoder_Frame_SetColorContexts(IWICBitmapFrameEncode *iface,
@@ -1173,6 +1213,7 @@ HRESULT JpegEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->frame_initialized = 0;
     This->started_compress = 0;
     This->width = This->height = 0;
+    This->format = NULL;
     This->stream = NULL;
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JpegEncoder.lock");
