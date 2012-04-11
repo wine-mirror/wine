@@ -632,6 +632,7 @@ PPD *PSDRV_ParsePPD(char *fname)
     list_init( &ppd->PageSizes );
     list_init( &ppd->Constraints );
     list_init( &ppd->InputSlots );
+    list_init( &ppd->Duplexes );
 
     /*
      *	The Windows PostScript drivers create the following "virtual bin" for
@@ -869,27 +870,24 @@ PPD *PSDRV_ParsePPD(char *fname)
 	    TRACE("*TTRasterizer = %d\n", ppd->TTRasterizer);
 	}
 
-        else if(!strcmp("*Duplex", tuple.key)) {
-            DUPLEX **duplex;
-            for(duplex = &ppd->Duplexes; *duplex; duplex = &(*duplex)->next)
-                ;
-            *duplex = HeapAlloc(GetProcessHeap(), 0, sizeof(**duplex));
-            (*duplex)->Name = tuple.option;
-            (*duplex)->FullName = tuple.opttrans;
-            (*duplex)->InvocationString = tuple.value;
-            (*duplex)->next = NULL;
+        else if(!strcmp("*Duplex", tuple.key))
+        {
+            DUPLEX *duplex = HeapAlloc( GetProcessHeap(), 0, sizeof(*duplex) );
+            duplex->Name = tuple.option;
+            duplex->FullName = tuple.opttrans;
+            duplex->InvocationString = tuple.value;
             if(!strcasecmp("None", tuple.option) || !strcasecmp("False", tuple.option)
                || !strcasecmp("Simplex", tuple.option))
-                (*duplex)->WinDuplex = DMDUP_SIMPLEX;
+                duplex->WinDuplex = DMDUP_SIMPLEX;
             else if(!strcasecmp("DuplexNoTumble", tuple.option))
-                (*duplex)->WinDuplex = DMDUP_VERTICAL;
+                duplex->WinDuplex = DMDUP_VERTICAL;
             else if(!strcasecmp("DuplexTumble", tuple.option))
-                (*duplex)->WinDuplex = DMDUP_HORIZONTAL;
+                duplex->WinDuplex = DMDUP_HORIZONTAL;
             else if(!strcasecmp("Notcapable", tuple.option))
-                (*duplex)->WinDuplex = 0;
+                duplex->WinDuplex = 0;
             else {
                 FIXME("Unknown option %s for *Duplex defaulting to simplex\n", tuple.option);
-                (*duplex)->WinDuplex = DMDUP_SIMPLEX;
+                duplex->WinDuplex = DMDUP_SIMPLEX;
             }
             tuple.option = tuple.opttrans = tuple.value = NULL;
         }
@@ -945,10 +943,13 @@ PPD *PSDRV_ParsePPD(char *fname)
     }
 
     ppd->DefaultDuplex = NULL;
-    if(default_duplex) {
+    if (default_duplex)
+    {
 	DUPLEX *duplex;
-	for(duplex = ppd->Duplexes; duplex; duplex = duplex->next) {
-            if(!strcmp(duplex->Name, default_duplex)) {
+	LIST_FOR_EACH_ENTRY( duplex, &ppd->Duplexes, DUPLEX, entry )
+        {
+            if (!strcmp(duplex->Name, default_duplex))
+            {
                 ppd->DefaultDuplex = duplex;
                 TRACE("DefaultDuplex: %s\n", duplex->Name);
                 break;
@@ -956,8 +957,9 @@ PPD *PSDRV_ParsePPD(char *fname)
         }
         HeapFree(PSDRV_Heap, 0, default_duplex);
     }
-    if(!ppd->DefaultDuplex) {
-        ppd->DefaultDuplex = ppd->Duplexes;
+    if (!ppd->DefaultDuplex)
+    {
+        ppd->DefaultDuplex = LIST_ENTRY( list_head( &ppd->Duplexes ), DUPLEX, entry );
         TRACE("Setting DefaultDuplex to first in list\n");
     }
 

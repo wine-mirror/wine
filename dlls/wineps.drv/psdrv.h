@@ -189,12 +189,13 @@ typedef struct
 typedef enum _RASTERIZEROPTION
   {RO_None, RO_Accept68K, RO_Type42, RO_TrueImage} RASTERIZEROPTION;
 
-typedef struct _tagDUPLEX {
+typedef struct
+{
+    struct list                 entry;
     char                        *Name;
     char                        *FullName;
     char                        *InvocationString;
     WORD                        WinDuplex; /* eg DMDUP_SIMPLEX */
-    struct _tagDUPLEX           *next;
 } DUPLEX;
 
 /* Many Mac OS X based ppd files don't include a *ColorDevice line, so
@@ -223,7 +224,7 @@ typedef struct {
     struct list         Constraints;
     struct list         InputSlots;
     RASTERIZEROPTION    TTRasterizer;
-    DUPLEX              *Duplexes;
+    struct list         Duplexes;
     DUPLEX              *DefaultDuplex;
 } PPD;
 

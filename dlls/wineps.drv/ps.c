@@ -372,7 +372,8 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
 
     win_duplex = physDev->Devmode->dmPublic.dmFields & DM_DUPLEX ?
         physDev->Devmode->dmPublic.dmDuplex : 0;
-    for(duplex = physDev->pi->ppd->Duplexes; duplex; duplex = duplex->next) {
+    LIST_FOR_EACH_ENTRY( duplex, &physDev->pi->ppd->Duplexes, DUPLEX, entry )
+    {
         if(duplex->WinDuplex == win_duplex) {
 	    if(duplex->InvocationString) {
 	        PSDRV_WriteFeature(dev, "*Duplex", duplex->Name,

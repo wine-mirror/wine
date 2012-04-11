@@ -195,7 +195,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
                                            WPARAM wParam, LPARAM lParam)
 {
   PSDRV_DLGINFO *di;
-  int i, Cursel = 0;
+  int i, Cursel;
   PAGESIZE *ps;
   DUPLEX *duplex;
 
@@ -204,7 +204,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
     di = (PSDRV_DLGINFO*)((PROPSHEETPAGEA*)lParam)->lParam;
     SetWindowLongPtrW(hwnd, DWLP_USER, (LONG_PTR)di);
 
-    i = 0;
+    i = Cursel = 0;
     LIST_FOR_EACH_ENTRY(ps, &di->pi->ppd->PageSizes, PAGESIZE, entry) {
       SendDlgItemMessageA(hwnd, IDD_PAPERS, LB_INSERTSTRING, i,
 			  (LPARAM)ps->FullName);
@@ -219,16 +219,21 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
 		     DMORIENT_PORTRAIT ? IDD_ORIENT_PORTRAIT :
 		     IDD_ORIENT_LANDSCAPE);
 
-    if(!di->pi->ppd->Duplexes) {
+    if (list_empty( &di->pi->ppd->Duplexes ))
+    {
         ShowWindow(GetDlgItem(hwnd, IDD_DUPLEX), SW_HIDE);
         ShowWindow(GetDlgItem(hwnd, IDD_DUPLEX_NAME), SW_HIDE);        
-    } else {
-        Cursel = 0;
-        for(duplex = di->pi->ppd->Duplexes, i = 0; duplex; duplex = duplex->next, i++) {
+    }
+    else
+    {
+        i = Cursel = 0;
+        LIST_FOR_EACH_ENTRY( duplex, &di->pi->ppd->Duplexes, DUPLEX, entry )
+        {
             SendDlgItemMessageA(hwnd, IDD_DUPLEX, CB_INSERTSTRING, i,
                                 (LPARAM)(duplex->FullName ? duplex->FullName : duplex->Name));
             if(di->pi->Devmode->dmPublic.dmDuplex == duplex->WinDuplex)
                 Cursel = i;
+            i++;
         }
         SendDlgItemMessageA(hwnd, IDD_DUPLEX, CB_SETCURSEL, Cursel, 0);
     }
@@ -261,8 +266,12 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
     case IDD_DUPLEX:
       if(HIWORD(wParam) == CBN_SELCHANGE) {
 	Cursel = SendDlgItemMessageA(hwnd, LOWORD(wParam), CB_GETCURSEL, 0, 0);
-	for(i = 0, duplex = di->pi->ppd->Duplexes; i < Cursel; i++, duplex = duplex->next)
-	  ;
+        i = 0;
+        LIST_FOR_EACH_ENTRY( duplex, &di->pi->ppd->Duplexes, DUPLEX, entry )
+        {
+            if (i >= Cursel) break;
+            i++;
+        }
         TRACE("Setting duplex to item %d Winduplex = %d\n", Cursel, duplex->WinDuplex);
         di->dlgdm->dmPublic.dmDuplex = duplex->WinDuplex;
         SendMessageW(GetParent(hwnd), PSM_CHANGED, 0, 0);
