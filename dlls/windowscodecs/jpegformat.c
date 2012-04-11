@@ -528,8 +528,27 @@ static HRESULT WINAPI JpegDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *if
 static HRESULT WINAPI JpegDecoder_Frame_GetResolution(IWICBitmapFrameDecode *iface,
     double *pDpiX, double *pDpiY)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, pDpiX, pDpiY);
-    return E_NOTIMPL;
+    JpegDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->cinfo.density_unit == 2) /* pixels per centimeter */
+    {
+        *pDpiX = This->cinfo.X_density * 2.54;
+        *pDpiY = This->cinfo.Y_density * 2.54;
+    }
+    else
+    {
+        /* 1 = pixels per inch, 0 = unknown */
+        *pDpiX = This->cinfo.X_density;
+        *pDpiY = This->cinfo.Y_density;
+    }
+
+    LeaveCriticalSection(&This->lock);
+
+    TRACE("(%p)->(%0.2f,%0.2f)\n", iface, *pDpiX, *pDpiY);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI JpegDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
