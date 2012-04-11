@@ -3757,15 +3757,13 @@ static inline struct ID3DXEffectCompilerImpl *impl_from_ID3DXEffectCompiler(ID3D
 /*** IUnknown methods ***/
 static HRESULT WINAPI ID3DXEffectCompilerImpl_QueryInterface(ID3DXEffectCompiler *iface, REFIID riid, void **object)
 {
-    struct ID3DXEffectCompilerImpl *This = impl_from_ID3DXEffectCompiler(iface);
-
-    TRACE("iface %p, riid %s, object %p\n", This, debugstr_guid(riid), object);
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_ID3DXEffectCompiler))
     {
-        This->ID3DXEffectCompiler_iface.lpVtbl->AddRef(iface);
-        *object = This;
+        iface->lpVtbl->AddRef(iface);
+        *object = iface;
         return S_OK;
     }
 
