@@ -153,21 +153,6 @@ typedef struct _BANDINFOSTRUCT
     RECT GraphicsRect;
 } BANDINFOSTRUCT, *PBANDINFOSTRUCT;
 
-typedef struct _tagOPTIONENTRY {
-    char			*Name;		/* eg "True" */
-    char			*FullName;	/* eg "Installed" */
-    char			*InvocationString; /* Often NULL */
-    struct _tagOPTIONENTRY	*next;
-} OPTIONENTRY;
-
-typedef struct _tagOPTION { /* Treat bool as a special case of pickone */
-    char			*OptionName;	/* eg "*Option1" */
-    char			*FullName;	/* eg "Envelope Feeder" */
-    char			*DefaultOption; /* eg "False" */
-    OPTIONENTRY			*Options;
-    struct _tagOPTION		*next;
-} OPTION;
-
 typedef struct
 {
     struct list                 entry;
@@ -220,7 +205,6 @@ typedef struct {
     struct list         InstalledFonts;
     struct list         PageSizes;
     PAGESIZE            *DefaultPageSize;
-    OPTION		*InstalledOptions;
     struct list         Constraints;
     struct list         InputSlots;
     RASTERIZEROPTION    TTRasterizer;

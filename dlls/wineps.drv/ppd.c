@@ -969,8 +969,6 @@ PPD *PSDRV_ParsePPD(char *fname)
 	PAGESIZE *page;
 	CONSTRAINT *con;
 	INPUTSLOT *slot;
-	OPTION *option;
-	OPTIONENTRY *optionEntry;
 
         LIST_FOR_EACH_ENTRY( fn, &ppd->InstalledFonts, FONTNAME, entry )
             TRACE("'%s'\n", fn->Name);
@@ -990,15 +988,6 @@ PPD *PSDRV_ParsePPD(char *fname)
         LIST_FOR_EACH_ENTRY( con, &ppd->Constraints, CONSTRAINT, entry )
 	    TRACE("CONSTRAINTS@ %s %s %s %s\n", con->Feature1,
 		  con->Value1, con->Feature2, con->Value2);
-
-	for(option = ppd->InstalledOptions; option; option = option->next) {
-	    TRACE("OPTION: %s %s %s\n", option->OptionName,
-		  option->FullName, option->DefaultOption);
-	    for(optionEntry = option->Options; optionEntry;
-		optionEntry = optionEntry->next)
-	        TRACE("\tOPTIONENTRY: %s %s %s\n", optionEntry->Name,
-		      optionEntry->FullName, optionEntry->InvocationString);
-	}
 
         LIST_FOR_EACH_ENTRY( slot, &ppd->InputSlots, INPUTSLOT, entry )
 	    TRACE("INPUTSLOTS '%s' Name '%s' (%d) Invocation '%s'\n",
