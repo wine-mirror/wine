@@ -173,7 +173,7 @@ static void _dump_DICUSTOMFORCE(LPCDICUSTOMFORCE frc)
     }
 }
 
-static void _dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid)
+static void _dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid, DWORD dwFlags)
 {
     unsigned int i;
     DWORD type = _typeFromGUID(guid);
@@ -188,26 +188,38 @@ static void _dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid)
     _dump_DIEFFECT_flags(eff->dwFlags); 
     TRACE("  - dwDuration: %d\n", eff->dwDuration);
     TRACE("  - dwGain: %d\n", eff->dwGain);
+
     if (eff->dwGain > 10000)
-	WARN("dwGain is out of range (>10,000)\n");
+        WARN("dwGain is out of range (>10,000)\n");
+
     TRACE("  - dwTriggerButton: %d\n", eff->dwTriggerButton);
     TRACE("  - dwTriggerRepeatInterval: %d\n", eff->dwTriggerRepeatInterval);
-    TRACE("  - cAxes: %d\n", eff->cAxes);
-    TRACE("  - rgdwAxes: %p\n", eff->rgdwAxes);
-    if (TRACE_ON(dinput) && eff->rgdwAxes) {
-	TRACE("    ");	
-	for (i = 0; i < eff->cAxes; ++i)
-	    TRACE("%d ", eff->rgdwAxes[i]);
-	TRACE("\n");
-    }
     TRACE("  - rglDirection: %p\n", eff->rglDirection);
-    TRACE("  - lpEnvelope: %p\n", eff->lpEnvelope);
     TRACE("  - cbTypeSpecificParams: %d\n", eff->cbTypeSpecificParams);
     TRACE("  - lpvTypeSpecificParams: %p\n", eff->lpvTypeSpecificParams);
+
+    /* Only trace some members if dwFlags indicates they have data */
+    if (dwFlags & DIEP_AXES) {
+        TRACE("  - cAxes: %d\n", eff->cAxes);
+        TRACE("  - rgdwAxes: %p\n", eff->rgdwAxes);
+
+        if (TRACE_ON(dinput) && eff->rgdwAxes) {
+            TRACE("    ");
+            for (i = 0; i < eff->cAxes; ++i)
+                TRACE("%d ", eff->rgdwAxes[i]);
+            TRACE("\n");
+        }
+    }
+
+    if (dwFlags & DIEP_ENVELOPE) {
+        TRACE("  - lpEnvelope: %p\n", eff->lpEnvelope);
+        if (eff->lpEnvelope != NULL)
+            _dump_DIENVELOPE(eff->lpEnvelope);
+    }
+
     if (eff->dwSize > sizeof(DIEFFECT_DX5))
-    	TRACE("  - dwStartDelay: %d\n", eff->dwStartDelay);
-    if (eff->lpEnvelope != NULL)
-	_dump_DIENVELOPE(eff->lpEnvelope);
+        TRACE("  - dwStartDelay: %d\n", eff->dwStartDelay);
+
     if (type == DIEFT_CONSTANTFORCE) {
 	if (eff->cbTypeSpecificParams != sizeof(DICONSTANTFORCE)) {
 	    WARN("Effect claims to be a constant force but the type-specific params are the wrong size!\n"); 
@@ -539,7 +551,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
 
     TRACE("(this=%p,%p,%d)\n", This, peff, dwFlags);
 
-    _dump_DIEFFECT(peff, &This->guid);
+    _dump_DIEFFECT(peff, &This->guid, dwFlags);
 
     if ((dwFlags & ~DIEP_NORESTART & ~DIEP_NODOWNLOAD & ~DIEP_START) == 0) {
 	/* set everything */
