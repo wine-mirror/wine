@@ -156,6 +156,12 @@ typedef struct IDirect3D9Impl
 
 void filter_caps(D3DCAPS9* pCaps) DECLSPEC_HIDDEN;
 
+struct fvf_declaration
+{
+    struct wined3d_vertex_declaration *decl;
+    DWORD fvf;
+};
+
 /*****************************************************************************
  * IDirect3DDevice9 implementation structure
  */
@@ -169,8 +175,8 @@ typedef struct IDirect3DDevice9Impl
     /* Avoids recursion with nested ReleaseRef to 0 */
     BOOL                          inDestruction;
 
-    IDirect3DVertexDeclaration9  **convertedDecls;
-    unsigned int                 numConvertedDecls, declArraySize;
+    struct fvf_declaration *fvf_decls;
+    UINT fvf_decl_count, fvf_decl_size;
 
     BOOL                          notreset;
     BOOL                          in_scene;
@@ -394,7 +400,6 @@ typedef struct IDirect3DVertexDeclaration9Impl {
   LPDIRECT3DDEVICE9EX parentDevice;
 } IDirect3DVertexDeclaration9Impl;
 
-void IDirect3DVertexDeclaration9Impl_Destroy(LPDIRECT3DVERTEXDECLARATION9 iface) DECLSPEC_HIDDEN;
 HRESULT d3d9_vertex_declaration_create(IDirect3DDevice9Impl *device,
         const D3DVERTEXELEMENT9 *elements, IDirect3DVertexDeclaration9Impl **declaration) DECLSPEC_HIDDEN;
 

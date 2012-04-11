@@ -219,30 +219,15 @@ static ULONG WINAPI IDirect3DVertexDeclaration9Impl_AddRef(LPDIRECT3DVERTEXDECLA
 
     TRACE("%p increasing refcount to %u.\n", iface, ref);
 
-    if(ref == 1) {
+    if (ref == 1)
+    {
         IDirect3DDevice9Ex_AddRef(This->parentDevice);
-        if (!This->convFVF)
-        {
-            wined3d_mutex_lock();
-            wined3d_vertex_declaration_incref(This->wineD3DVertexDeclaration);
-            wined3d_mutex_unlock();
-        }
+        wined3d_mutex_lock();
+        wined3d_vertex_declaration_incref(This->wineD3DVertexDeclaration);
+        wined3d_mutex_unlock();
     }
 
     return ref;
-}
-
-void IDirect3DVertexDeclaration9Impl_Destroy(LPDIRECT3DVERTEXDECLARATION9 iface) {
-    IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
-
-    if(This->ref != 0) {
-        /* Should not happen unless wine has a bug or the application releases references it does not own */
-        ERR("Destroying vdecl with ref != 0\n");
-    }
-
-    wined3d_mutex_lock();
-    wined3d_vertex_declaration_decref(This->wineD3DVertexDeclaration);
-    wined3d_mutex_unlock();
 }
 
 static ULONG WINAPI IDirect3DVertexDeclaration9Impl_Release(LPDIRECT3DVERTEXDECLARATION9 iface) {
@@ -251,12 +236,12 @@ static ULONG WINAPI IDirect3DVertexDeclaration9Impl_Release(LPDIRECT3DVERTEXDECL
 
     TRACE("%p decreasing refcount to %u.\n", iface, ref);
 
-    if (ref == 0) {
+    if (!ref)
+    {
         IDirect3DDevice9Ex *parentDevice = This->parentDevice;
-
-        if(!This->convFVF) {
-            IDirect3DVertexDeclaration9Impl_Destroy(iface);
-        }
+        wined3d_mutex_lock();
+        wined3d_vertex_declaration_decref(This->wineD3DVertexDeclaration);
+        wined3d_mutex_unlock();
 
         /* Release the device last, as it may cause the device to be destroyed. */
         IDirect3DDevice9Ex_Release(parentDevice);
