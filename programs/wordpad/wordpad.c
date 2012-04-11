@@ -835,7 +835,7 @@ static void ShowWriteError(DWORD Code)
     MessageBoxW(hMainWnd, Message, wszAppTitle, MB_ICONEXCLAMATION | MB_OK);
 }
 
-static void DoSaveFile(LPCWSTR wszSaveFileName, WPARAM format)
+static BOOL DoSaveFile(LPCWSTR wszSaveFileName, WPARAM format)
 {
     HANDLE hFile;
     EDITSTREAM stream;
@@ -847,7 +847,7 @@ static void DoSaveFile(LPCWSTR wszSaveFileName, WPARAM format)
     if(hFile == INVALID_HANDLE_VALUE)
     {
         ShowWriteError(GetLastError());
-        return;
+        return FALSE;
     }
 
     if(format == (SF_TEXT | SF_UNICODE))
@@ -859,7 +859,7 @@ static void DoSaveFile(LPCWSTR wszSaveFileName, WPARAM format)
         if(writeOut != sizeof(unicode))
         {
             CloseHandle(hFile);
-            return;
+            return FALSE;
         }
     }
 
@@ -879,16 +879,18 @@ static void DoSaveFile(LPCWSTR wszSaveFileName, WPARAM format)
         gt.codepage = 1200;
 
         if(SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0))
-            return;
+            return FALSE;
     }
 
     lstrcpyW(wszFileName, wszSaveFileName);
     set_caption(wszFileName);
     SendMessageW(hEditorWnd, EM_SETMODIFY, FALSE, 0);
     set_fileformat(format);
+
+    return TRUE;
 }
 
-static void DialogSaveFile(void)
+static BOOL DialogSaveFile(void)
 {
     OPENFILENAMEW sfn;
 
@@ -912,19 +914,11 @@ static void DialogSaveFile(void)
         {
             if(MessageBoxWithResStringW(hMainWnd, MAKEINTRESOURCEW(STRING_SAVE_LOSEFORMATTING),
                            wszAppTitle, MB_YESNO | MB_ICONEXCLAMATION) != IDYES)
-            {
                 continue;
-            } else
-            {
-                DoSaveFile(sfn.lpstrFile, fileformat_flags(sfn.nFilterIndex-1));
-                break;
-            }
-        } else
-        {
-            DoSaveFile(sfn.lpstrFile, fileformat_flags(sfn.nFilterIndex-1));
-            break;
         }
+        return DoSaveFile(sfn.lpstrFile, fileformat_flags(sfn.nFilterIndex-1));
     }
+    return FALSE;
 }
 
 static BOOL prompt_save_changes(void)
@@ -971,10 +965,8 @@ static BOOL prompt_save_changes(void)
 
             case IDYES:
                 if(wszFileName[0])
-                    DoSaveFile(wszFileName, fileFormat);
-                else
-                    DialogSaveFile();
-                return TRUE;
+                    return DoSaveFile(wszFileName, fileFormat);
+                return DialogSaveFile();
 
             default:
                 return FALSE;
