@@ -1260,18 +1260,10 @@ static void compare_bounds( HDC hdc, const char *info )
         return;
     }
 
-    if (current_bounds->left == 0 && current_bounds->top == 0 &&
-        current_bounds->right == 0 && current_bounds->bottom == 0)
-        ok( !memcmp( current_bounds, &rect, sizeof(RECT) ),
-            "%s: %s: expected bounds %d,%d,%d,%d got %d,%d,%d,%d\n", dst_format, info,
-            current_bounds->left, current_bounds->top, current_bounds->right, current_bounds->bottom,
-            rect.left, rect.top, rect.right, rect.bottom );
-    else
-        todo_wine
-        ok( !memcmp( current_bounds, &rect, sizeof(RECT) ),
-            "%s: %s: expected bounds %d,%d,%d,%d got %d,%d,%d,%d\n", dst_format, info,
-            current_bounds->left, current_bounds->top, current_bounds->right, current_bounds->bottom,
-            rect.left, rect.top, rect.right, rect.bottom );
+    ok( !memcmp( current_bounds, &rect, sizeof(RECT) ),
+        "%s: %s: expected bounds %d,%d,%d,%d got %d,%d,%d,%d\n", dst_format, info,
+        current_bounds->left, current_bounds->top, current_bounds->right, current_bounds->bottom,
+        rect.left, rect.top, rect.right, rect.bottom );
     current_bounds++;
 }
 

@@ -298,6 +298,21 @@ int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct cl
     return clip_rects->count;
 }
 
+void add_clipped_bounds( RECT *bounds, const RECT *rect, HRGN clip )
+{
+    const WINEREGION *region;
+    RECT rc;
+
+    if (clip)
+    {
+        if (!(region = get_wine_region( clip ))) return;
+        if (!rect) add_bounds_rect( bounds, &region->extents );
+        else if (intersect_rect( &rc, rect, &region->extents )) add_bounds_rect( bounds, &rc );
+        release_wine_region( clip );
+    }
+    else if (rect) add_bounds_rect( bounds, rect );
+}
+
 /**********************************************************************
  *	     dibdrv_CreateDC
  */
@@ -310,6 +325,7 @@ static BOOL dibdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
     clear_dib_info(&pdev->dib);
     clear_dib_info(&pdev->brush.dib);
     clear_dib_info(&pdev->pen_brush.dib);
+    reset_bounds( &pdev->bounds );
     push_dc_driver( dev, &pdev->dev, &dib_driver );
     return TRUE;
 }
@@ -376,6 +392,19 @@ static void dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
     TRACE("(%p, %p)\n", dev, rgn);
 
     pdev->clip = rgn;
+}
+
+/***********************************************************************
+ *           dibdrv_GetBoundsRect
+ */
+static UINT dibdrv_GetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+
+    if (is_rect_empty( &pdev->bounds )) return DCB_RESET;
+    if (rect) *rect = pdev->bounds;
+    if (flags & DCB_RESET) reset_bounds( &pdev->bounds );
+    return DCB_SET;
 }
 
 /***********************************************************************
@@ -599,7 +628,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
     NULL,                               /* pGdiRealizationInfo */
-    NULL,                               /* pGetBoundsRect */
+    dibdrv_GetBoundsRect,               /* pGetBoundsRect */
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
     NULL,                               /* pGetCharWidth */

@@ -86,6 +86,50 @@ static BOOL get_pen_device_rect( dibdrv_physdev *dev, RECT *rect, int left, int 
     return TRUE;
 }
 
+static void add_pen_lines_bounds( dibdrv_physdev *dev, int count, const POINT *points, HRGN rgn )
+{
+    const WINEREGION *region;
+    RECT bounds, rect;
+    int width = 0;
+
+    reset_bounds( &bounds );
+
+    if (dev->pen_uses_region)
+    {
+        /* Windows uses some heuristics to estimate the distance from the point that will be painted */
+        width = dev->pen_width + 2;
+        if (dev->pen_join == PS_JOIN_MITER)
+        {
+            width *= 5;
+            if (dev->pen_endcap == PS_ENDCAP_SQUARE) width = (width * 3 + 1) / 2;
+        }
+        else
+        {
+            if (dev->pen_endcap == PS_ENDCAP_SQUARE) width -= width / 4;
+            else width = (width + 1) / 2;
+        }
+
+        /* in case the heuristics are wrong, add the actual region too */
+        if ((region = get_wine_region( rgn )))
+        {
+            add_bounds_rect( &bounds, &region->extents );
+            release_wine_region( rgn );
+        }
+    }
+
+    while (count-- > 0)
+    {
+        rect.left   = points->x - width;
+        rect.top    = points->y - width;
+        rect.right  = points->x + width + 1;
+        rect.bottom = points->y + width + 1;
+        add_bounds_rect( &bounds, &rect );
+        points++;
+    }
+
+    add_clipped_bounds( &dev->bounds, &bounds, dev->clip );
+}
+
 /* compute the points for the first quadrant of an ellipse, counterclockwise from the x axis */
 /* 'data' must contain enough space, (width+height)/2 is a reasonable upper bound */
 static int ellipse_first_quadrant( int width, int height, POINT *data )
@@ -299,6 +343,7 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 
     reset_dash_origin( pdev );
     pdev->pen_lines( pdev, count, points, extra_lines > 0, outline );
+    add_pen_lines_bounds( pdev, count, points, outline );
 
     if (interior)
     {
@@ -384,7 +429,8 @@ static inline void get_text_bkgnd_masks( dibdrv_physdev *pdev, rop_mask *mask )
 
 static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHMETRICS *metrics,
                         const struct gdi_image_bits *image, DWORD text_color,
-                        const struct intensity_range *ranges, const struct clipped_rects *clipped_rects )
+                        const struct intensity_range *ranges, const struct clipped_rects *clipped_rects,
+                        RECT *bounds )
 {
     int i;
     RECT rect, clipped_rect;
@@ -401,6 +447,7 @@ static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHME
     rect.top    = origin->y  - metrics->gmptGlyphOrigin.y;
     rect.right  = rect.left  + metrics->gmBlackBoxX;
     rect.bottom = rect.top   + metrics->gmBlackBoxY;
+    add_bounds_rect( bounds, &rect );
 
     for (i = 0; i < clipped_rects->count; i++)
     {
@@ -590,15 +637,18 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     struct clipped_rects clipped_rects;
     UINT aa_flags, i;
     POINT origin;
+    RECT bounds;
     DWORD text_color, err;
     struct intensity_range ranges[17];
 
     init_clipped_rects( &clipped_rects );
+    reset_bounds( &bounds );
 
     if (flags & ETO_OPAQUE)
     {
         rop_mask bkgnd_color;
         get_text_bkgnd_masks( pdev, &bkgnd_color );
+        add_bounds_rect( &bounds, rect );
         get_clipped_rects( &pdev->dib, rect, pdev->clip, &clipped_rects );
         pdev->dib.funcs->solid_rects( &pdev->dib, clipped_rects.count, clipped_rects.rects,
                                       bkgnd_color.and, bkgnd_color.xor );
@@ -632,7 +682,9 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         err = get_glyph_bitmap( dev->hdc, (UINT)str[i], aa_flags, &metrics, &image );
         if (err) continue;
 
-        if (image.ptr) draw_glyph( pdev, &origin, &metrics, &image, text_color, ranges, &clipped_rects );
+        if (image.ptr)
+            draw_glyph( pdev, &origin, &metrics, &image, text_color, ranges, &clipped_rects, &bounds );
+
         if (image.free) image.free( &image );
 
         if (dx)
@@ -651,6 +703,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
             origin.y += metrics.gmCellIncY;
         }
     }
+    add_clipped_bounds( &pdev->bounds, &bounds, pdev->clip );
 
 done:
     free_clipped_rects( &clipped_rects );
@@ -760,6 +813,7 @@ BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 
     fill_row( &pdev->dib, pdev->clip, &row, pixel, type, rgn );
 
+    add_clipped_bounds( &pdev->bounds, NULL, rgn );
     brush_region( pdev, rgn );
 
     DeleteObject( rgn );
@@ -824,6 +878,7 @@ BOOL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
     reset_dash_origin(pdev);
 
     ret = pdev->pen_lines(pdev, 2, pts, FALSE, region);
+    add_pen_lines_bounds( pdev, 2, pts, region );
 
     if (region)
     {
@@ -853,6 +908,7 @@ BOOL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 
     TRACE("(%p, %d, %d, %d, %d, %06x)\n", dev, dst->x, dst->y, dst->width, dst->height, rop);
 
+    add_bounds_rect( &pdev->bounds, &dst->visrect );
     return brush_rect( pdev, &pdev->brush, &dst->visrect, pdev->clip, get_rop2_from_rop(rop) );
 }
 
@@ -864,9 +920,11 @@ BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     const WINEREGION *region;
     int i;
-    RECT rect;
+    RECT rect, bounds;
 
     TRACE("%p, %p\n", dev, rgn);
+
+    reset_bounds( &bounds );
 
     region = get_wine_region( rgn );
     if(!region) return FALSE;
@@ -875,10 +933,12 @@ BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
     {
         rect = get_device_rect( dev->hdc, region->rects[i].left, region->rects[i].top,
                                 region->rects[i].right, region->rects[i].bottom, FALSE );
+        add_bounds_rect( &bounds, &rect );
         brush_rect( pdev, &pdev->brush, &rect, pdev->clip, GetROP2( dev->hdc ) );
     }
 
     release_wine_region( rgn );
+    add_clipped_bounds( &pdev->bounds, &bounds, pdev->clip );
     return TRUE;
 }
 
@@ -927,6 +987,7 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
         pdev->pen_lines( pdev, counts[i], points + pos, TRUE, outline );
         pos += counts[i];
     }
+    add_pen_lines_bounds( pdev, total, points, outline );
 
     if (interior)
     {
@@ -977,6 +1038,7 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
         pdev->pen_lines( pdev, counts[i], points + pos, FALSE, outline );
         pos += counts[i];
     }
+    add_pen_lines_bounds( pdev, total, points, outline );
 
     if (outline)
     {
@@ -1048,6 +1110,7 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     }
 
     pdev->pen_lines(pdev, 4, pts, TRUE, outline);
+    add_pen_lines_bounds( pdev, 4, pts, outline );
 
     if (outline)
     {
@@ -1168,6 +1231,7 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 
     reset_dash_origin( pdev );
     pdev->pen_lines( pdev, count, points, TRUE, outline );
+    add_pen_lines_bounds( pdev, count, points, outline );
 
     if (interior)
     {
@@ -1213,6 +1277,7 @@ COLORREF dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
     rect.top =  pt.y;
     rect.right = rect.left + 1;
     rect.bottom = rect.top + 1;
+    add_clipped_bounds( &pdev->bounds, &rect, pdev->clip );
 
     /* SetPixel doesn't do the 1bpp massaging like other fg colors */
     pixel = get_pixel_color( pdev, color, FALSE );
