@@ -510,17 +510,6 @@ void* CDECL _Gettnames(void)
 }
 
 /*********************************************************************
- *		_Strftime (MSVCRT.@)
- */
-const char* CDECL _Strftime(char *out, unsigned int len, const char *fmt,
-                            const void *tm, void *foo)
-{
-  /* FIXME: */
-  TRACE("(%p %d %s %p %p) stub\n", out, len, fmt, tm, foo);
-  return "";
-}
-
-/*********************************************************************
  *		__crtLCMapStringA (MSVCRT.@)
  */
 int CDECL __crtLCMapStringA(

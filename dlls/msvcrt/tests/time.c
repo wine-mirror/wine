@@ -600,12 +600,9 @@ static void test_strftime(void)
     ok(gmt_tm != NULL, "gmtime failed\n");
 
     retA = strftime(bufA, 256, "%c", gmt_tm);
-todo_wine {
     ok(retA == 17, "expected 17, got %ld\n", retA);
     ok(strcmp(bufA, expected) == 0, "expected %s, got %s\n", expected, bufA);
-}
     retW = wcsftime(bufW, 256, cW, gmt_tm);
-todo_wine
     ok(retW == 17, "expected 17, got %ld\n", retW);
     ok(retA == retW, "expected %ld, got %ld\n", retA, retW);
     buf[0] = 0;
