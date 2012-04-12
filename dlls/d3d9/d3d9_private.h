@@ -23,6 +23,7 @@
 #ifndef __WINE_D3D9_PRIVATE_H
 #define __WINE_D3D9_PRIVATE_H
 
+#include <assert.h>
 #include <stdarg.h>
 
 #define NONAMELESSUNION
@@ -386,7 +387,7 @@ HRESULT stateblock_init(IDirect3DStateBlock9Impl *stateblock, IDirect3DDevice9Im
  */
 typedef struct IDirect3DVertexDeclaration9Impl {
   /* IUnknown fields */
-  const IDirect3DVertexDeclaration9Vtbl *lpVtbl;
+  IDirect3DVertexDeclaration9 IDirect3DVertexDeclaration9_iface;
   LONG    ref;
 
   D3DVERTEXELEMENT9 *elements;
@@ -402,6 +403,8 @@ typedef struct IDirect3DVertexDeclaration9Impl {
 
 HRESULT d3d9_vertex_declaration_create(IDirect3DDevice9Impl *device,
         const D3DVERTEXELEMENT9 *elements, IDirect3DVertexDeclaration9Impl **declaration) DECLSPEC_HIDDEN;
+IDirect3DVertexDeclaration9Impl *unsafe_impl_from_IDirect3DVertexDeclaration9(
+        IDirect3DVertexDeclaration9 *iface) DECLSPEC_HIDDEN;
 
 /* ---------------------- */
 /* IDirect3DVertexShader9 */
