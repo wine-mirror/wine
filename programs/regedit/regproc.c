@@ -1018,12 +1018,13 @@ static void REGPROC_export_binary(WCHAR **line_buf, DWORD *line_buf_size, DWORD 
     /* - The 2 spaces that concat places at the start of the
      *   line effectively reduce the space available for data.
      * - If the value name and hex prefix are very long
-     *   ( > REG_FILE_HEX_LINE_LEN) then we may overestimate
+     *   ( > REG_FILE_HEX_LINE_LEN) or *line_len divides
+     *   without a remainder then we may overestimate
      *   the needed number of lines by one. But that's ok.
-     * - The trailing linefeed takes the place of a comma so
-     *   it's accounted for already.
+     * - The trailing '\r' takes the place of a comma so
+     *   we only need to add 1 for the trailing '\n'
      */
-    *line_len += *line_len / (REG_FILE_HEX_LINE_LEN - concat_prefix) * concat_len;
+    *line_len += *line_len / (REG_FILE_HEX_LINE_LEN - concat_prefix) * concat_len + 1;
     REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len);
     lstrcpyW(*line_buf + hex_pos, hex_prefix);
     if (value_size)
