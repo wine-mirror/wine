@@ -473,7 +473,8 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
 	if(lpszOutput != NULL)
 	  *wp++ = ps->WinPage;
       }
-      return i;
+      ret = i;
+      break;
     }
 
   case DC_PAPERSIZE:
@@ -492,7 +493,8 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
 	  pt++;
 	}
       }
-      return i;
+      ret = i;
+      break;
     }
 
   case DC_PAPERNAMES:
@@ -510,11 +512,13 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
 	  cp += 64;
 	}
       }
-      return i;
+      ret = i;
+      break;
     }
 
   case DC_ORIENTATION:
-    return pi->ppd->LandscapeOrientation ? pi->ppd->LandscapeOrientation : 90;
+    ret = pi->ppd->LandscapeOrientation ? pi->ppd->LandscapeOrientation : 90;
+    break;
 
   case DC_BINS:
     {
@@ -528,7 +532,8 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
           if (lpszOutput != NULL)
               *wp++ = slot->WinBin;
       }
-      return i;
+      ret = i;
+      break;
     }
 
   case DC_BINNAMES:
@@ -546,12 +551,14 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
               cp += 24;
           }
       }
-      return i;
+      ret = i;
+      break;
     }
 
   case DC_BINADJUST:
     FIXME("DC_BINADJUST: stub.\n");
-    return DCBA_FACEUPNONE;
+    ret = DCBA_FACEUPNONE;
+    break;
 
   case DC_ENUMRESOLUTIONS:
     {
@@ -561,41 +568,49 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
 	lp[0] = pi->ppd->DefaultResolution;
 	lp[1] = pi->ppd->DefaultResolution;
       }
-      return 1;
+      ret = 1;
+      break;
     }
 
   /* Windows returns 9999 too */
   case DC_COPIES:
     TRACE("DC_COPIES: returning 9999\n");
-    return 9999;
+    ret = 9999;
+    break;
 
   case DC_DRIVER:
-    return lpdm->dmDriverVersion;
+    ret = lpdm->dmDriverVersion;
+    break;
 
   case DC_DATATYPE_PRODUCED:
     FIXME("DATA_TYPE_PRODUCED: stub.\n");
-    return -1; /* simulate that the driver supports 'RAW' */
+    ret = -1; /* simulate that the driver supports 'RAW' */
+    break;
 
   case DC_DUPLEX:
     ret = 0;
     if(pi->ppd->DefaultDuplex && pi->ppd->DefaultDuplex->WinDuplex != 0)
       ret = 1;
     TRACE("DC_DUPLEX: returning %d\n", ret);
-    return ret;
+    break;
 
   case DC_EMF_COMPLIANT:
     FIXME("DC_EMF_COMPLIANT: stub.\n");
-    return -1; /* simulate that the driver do not support EMF */
+    ret = -1; /* simulate that the driver do not support EMF */
+    break;
 
   case DC_EXTRA:
-    return lpdm->dmDriverExtra;
+    ret = lpdm->dmDriverExtra;
+    break;
 
   case DC_FIELDS:
-    return lpdm->dmFields;
+    ret = lpdm->dmFields;
+    break;
 
   case DC_FILEDEPENDENCIES:
     FIXME("DC_FILEDEPENDENCIES: stub.\n");
-    return 0;
+    ret = 0;
+    break;
 
   case DC_MAXEXTENT:
     {
@@ -607,7 +622,8 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
           if (ps->PaperDimension->x > x) x = ps->PaperDimension->x;
           if (ps->PaperDimension->y > y) y = ps->PaperDimension->y;
       }
-      return MAKELONG( paper_size_from_points(x), paper_size_from_points(y) );
+      ret = MAKELONG( paper_size_from_points(x), paper_size_from_points(y) );
+      break;
     }
 
   case DC_MINEXTENT:
@@ -620,50 +636,60 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
           if (ps->PaperDimension->x < x) x = ps->PaperDimension->x;
           if (ps->PaperDimension->y < y) y = ps->PaperDimension->y;
       }
-      return MAKELONG( paper_size_from_points(x), paper_size_from_points(y) );
+      ret = MAKELONG( paper_size_from_points(x), paper_size_from_points(y) );
+      break;
     }
 
   case DC_SIZE:
-    return lpdm->dmSize;
+    ret = lpdm->dmSize;
+    break;
 
   case DC_TRUETYPE:
     FIXME("DC_TRUETYPE: stub\n");
-    return DCTT_SUBDEV;
+    ret = DCTT_SUBDEV;
+    break;
 
   case DC_VERSION:
-    return lpdm->dmSpecVersion;
+    ret = lpdm->dmSpecVersion;
+    break;
 
   /* We'll just return false here, very few printers can collate anyway */
   case DC_COLLATE:
     TRACE("DC_COLLATE: returning FALSE\n");
-    return FALSE;
+    ret = FALSE;
+    break;
 
   /* Printer supports colour printing - 1 if yes, 0 if no (Win2k/XP only) */
   case DC_COLORDEVICE:
-    return (pi->ppd->ColorDevice != CD_False) ? TRUE : FALSE;
+    ret = (pi->ppd->ColorDevice != CD_False) ? TRUE : FALSE;
+    break;
 
   /* Identification number of the printer manufacturer for use with ICM (Win9x only) */
   case DC_MANUFACTURER:
     FIXME("DC_MANUFACTURER: stub\n");
-    return -1;
-    
+    ret = -1;
+    break;
+
   /* Identification number of the printer model for use with ICM (Win9x only) */
   case DC_MODEL:
     FIXME("DC_MODEL: stub\n");
-    return -1;
-    
+    ret = -1;
+    break;
+
   /* Nonzero if the printer supports stapling, zero otherwise (Win2k/XP only) */
   case DC_STAPLE: /* WINVER >= 0x0500 */
     FIXME("DC_STAPLE: stub\n");
-    return -1;
-    
+    ret = -1;
+    break;
+
   /* Returns an array of 64-character string buffers containing the names of the paper forms
    * available for use, unless pOutput is NULL.  The return value is the number of paper forms.
    * (Win2k/XP only)
    */
   case DC_MEDIAREADY: /* WINVER >= 0x0500 */
     FIXME("DC_MEDIAREADY: stub\n");
-    return -1;
+    ret = -1;
+    break;
 
   /* Returns an array of 64-character string buffers containing the names of the supported
    * media types, unless pOutput is NULL.  The return value is the number of supported.
@@ -671,14 +697,16 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
    */
   case DC_MEDIATYPENAMES: /* WINVER >= 0x0501 */
     FIXME("DC_MEDIATYPENAMES: stub\n");
-    return -1;
-    
+    ret = -1;
+    break;
+
   /* Returns an array of DWORD values which represent the supported media types, unless
    * pOutput is NULL.  The return value is the number of supported media types. (XP only)
    */
   case DC_MEDIATYPES: /* WINVER >= 0x0501 */
     FIXME("DC_MEDIATYPES: stub\n");
-    return -1;
+    ret = -1;
+    break;
 
   /* Returns an array of DWORD values, each representing a supported number of document
    * pages per printed page, unless pOutput is NULL.  The return value is the number of
@@ -686,8 +714,9 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
    */
   case DC_NUP:
     FIXME("DC_NUP: stub\n");
-    return -1;
-    
+    ret = -1;
+    break;
+
   /* Returns an array of 32-character string buffers containing a list of printer description
    * languages supported by the printer, unless pOutput is NULL.  The return value is
    * number of array entries. (Win2k/XP only)
@@ -695,34 +724,41 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
    
   case DC_PERSONALITY: /* WINVER >= 0x0500 */
     FIXME("DC_PERSONALITY: stub\n");
-    return -1;
-    
+    ret = -1;
+    break;
+
   /* Returns the amount of printer memory in kilobytes. (Win2k/XP only) */
   case DC_PRINTERMEM: /* WINVER >= 0x0500 */
     FIXME("DC_PRINTERMEM: stub\n");
-    return -1;
-    
+    ret = -1;
+    break;
+
   /* Returns the printer's print rate in PRINTRATEUNIT units. (Win2k/XP only) */
   case DC_PRINTRATE: /* WINVER >= 0x0500 */
     FIXME("DC_PRINTRATE: stub\n");
-    return -1;
-    
+    ret = -1;
+    break;
+
   /* Returns the printer's print rate in pages per minute. (Win2k/XP only) */
   case DC_PRINTRATEPPM: /* WINVER >= 0x0500 */
     FIXME("DC_PRINTRATEPPM: stub\n");
-    return -1;
-   
+    ret = -1;
+    break;
+
   /* Returns the printer rate unit used for DC_PRINTRATE, which is one of
    * PRINTRATEUNIT_{CPS,IPM,LPM,PPM} (Win2k/XP only)
    */  
   case DC_PRINTRATEUNIT: /* WINVER >= 0x0500 */
     FIXME("DC_PRINTRATEUNIT: stub\n");
-    return -1;
-    
+    ret = -1;
+    break;
+
   default:
     FIXME("Unsupported capability %d\n", fwCapability);
+    ret = -1;
   }
-  return -1;
+
+  return ret;
 }
 
 #if 0
