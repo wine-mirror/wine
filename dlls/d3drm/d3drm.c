@@ -1353,7 +1353,6 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSourc
         {
             BOOL requested = FALSE;
             HRESULT hr;
-            LPDIRECT3DRMMESHBUILDER3 pMeshBuilder;
 
             TRACE("Found TID_D3DRMMesh\n");
 
@@ -1361,26 +1360,31 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSourc
                 if (IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMeshBuilder) ||
                     IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMeshBuilder2) ||
                     IsEqualGUID(GUIDs[i], &IID_IDirect3DRMMeshBuilder3))
+                {
                     requested = TRUE;
+                    break;
+                }
 
             if (requested)
             {
+                LPDIRECT3DRMMESHBUILDER3 meshbuilder;
+
                 FIXME("Load mesh data and notify application\n");
 
-                hr = IDirect3DRM3_CreateMeshBuilder(iface, &pMeshBuilder);
+                hr = IDirect3DRM3_CreateMeshBuilder(iface, &meshbuilder);
                 if (SUCCEEDED(hr))
                 {
-                    LPDIRECT3DRMMESHBUILDER3 pMeshBuilder3;
+                    LPDIRECT3DRMOBJECT object = NULL;
 
-                    hr = IDirect3DRMMeshBuilder3_QueryInterface(pMeshBuilder, &IID_IDirect3DRMMeshBuilder3, (void**)&pMeshBuilder3);
+                    hr = IDirect3DRMMeshBuilder3_QueryInterface(meshbuilder, GUIDs[i], (void**)&object);
                     if (SUCCEEDED(hr))
                     {
-                        hr = load_mesh_data(pMeshBuilder3, pData);
-                        IDirect3DRMMeshBuilder3_Release(pMeshBuilder3);
+                        hr = load_mesh_data(meshbuilder, pData);
+                        if (SUCCEEDED(hr))
+                            LoadProc(object, GUIDs[i], ArgLP);
+                        IDirect3DRMObject_Release(object);
                     }
-                    if (SUCCEEDED(hr))
-                        LoadProc((LPDIRECT3DRMOBJECT)pMeshBuilder3, &IID_IDirect3DRMMeshBuilder, ArgLP);
-                    IDirect3DRMMeshBuilder_Release(pMeshBuilder3);
+                    IDirect3DRMMeshBuilder3_Release(meshbuilder);
                 }
 
                 if (FAILED(hr))
@@ -1391,7 +1395,6 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSourc
         {
             BOOL requested = FALSE;
             HRESULT hr;
-            LPDIRECT3DRMFRAME3 frame;
 
             TRACE("Found TID_D3DRMFrame\n");
 
@@ -1399,21 +1402,33 @@ static HRESULT WINAPI IDirect3DRM3Impl_Load(IDirect3DRM3* iface, LPVOID ObjSourc
                 if (IsEqualGUID(GUIDs[i], &IID_IDirect3DRMFrame) ||
                     IsEqualGUID(GUIDs[i], &IID_IDirect3DRMFrame2) ||
                     IsEqualGUID(GUIDs[i], &IID_IDirect3DRMFrame3))
+                {
                     requested = TRUE;
+                    break;
+                }
 
             if (requested)
             {
+                LPDIRECT3DRMFRAME3 frame;
+
                 FIXME("Fake frame data and notify application\n");
 
                 hr = IDirect3DRM3_CreateFrame(iface, NULL, &frame);
                 if (SUCCEEDED(hr))
                 {
-                    LoadProc((LPDIRECT3DRMOBJECT)frame, &IID_IDirect3DRMFrame, ArgLP);
+                    LPDIRECT3DRMOBJECT object;
+
+                    hr = IDirect3DRMFrame3_QueryInterface(frame, GUIDs[i], (void**)&object);
+                    if (SUCCEEDED(hr))
+                    {
+                        LoadProc(object, GUIDs[i], ArgLP);
+                        IDirect3DRMObject_Release(object);
+                    }
                     IDirect3DRMFrame3_Release(frame);
                 }
 
                 if (FAILED(hr))
-                    ERR("Cannot process mesh\n");
+                    ERR("Cannot process frame\n");
 
             }
         }
