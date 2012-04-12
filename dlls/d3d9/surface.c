@@ -285,16 +285,21 @@ static HRESULT WINAPI IDirect3DSurface9Impl_GetDesc(IDirect3DSurface9 *iface, D3
 }
 
 static HRESULT WINAPI IDirect3DSurface9Impl_LockRect(IDirect3DSurface9 *iface,
-        D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
+        D3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
 {
     IDirect3DSurface9Impl *This = impl_from_IDirect3DSurface9(iface);
+    struct wined3d_map_desc map_desc;
     HRESULT hr;
 
-    TRACE("iface %p, locked_rect %p, rect %p, flags %#x.\n", iface, pLockedRect, pRect, Flags);
+    TRACE("iface %p, locked_rect %p, rect %s, flags %#x.\n",
+            iface, locked_rect, wine_dbgstr_rect(rect), flags);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_map(This->wined3d_surface, (struct wined3d_mapped_rect *)pLockedRect, pRect, Flags);
+    hr = wined3d_surface_map(This->wined3d_surface, &map_desc, rect, flags);
     wined3d_mutex_unlock();
+
+    locked_rect->Pitch = map_desc.row_pitch;
+    locked_rect->pBits = map_desc.data;
 
     return hr;
 }

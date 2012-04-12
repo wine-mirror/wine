@@ -216,18 +216,22 @@ static HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(IDirect3DVolume9 *iface, D3DV
 }
 
 static HRESULT WINAPI IDirect3DVolume9Impl_LockBox(IDirect3DVolume9 *iface,
-        D3DLOCKED_BOX *pLockedVolume, const D3DBOX *pBox, DWORD Flags)
+        D3DLOCKED_BOX *locked_box, const D3DBOX *box, DWORD flags)
 {
     IDirect3DVolume9Impl *This = impl_from_IDirect3DVolume9(iface);
+    struct wined3d_map_desc map_desc;
     HRESULT hr;
 
     TRACE("iface %p, locked_box %p, box %p, flags %#x.\n",
-            iface, pLockedVolume, pBox, Flags);
+            iface, locked_box, box, flags);
 
     wined3d_mutex_lock();
-    hr = wined3d_volume_map(This->wined3d_volume, (struct wined3d_mapped_box *)pLockedVolume,
-            (const struct wined3d_box *)pBox, Flags);
+    hr = wined3d_volume_map(This->wined3d_volume, &map_desc, (const struct wined3d_box *)box, flags);
     wined3d_mutex_unlock();
+
+    locked_box->RowPitch = map_desc.row_pitch;
+    locked_box->SlicePitch = map_desc.slice_pitch;
+    locked_box->pBits = map_desc.data;
 
     return hr;
 }

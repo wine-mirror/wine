@@ -363,7 +363,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UIN
         D3D10_MAP map_type, UINT map_flags, D3D10_MAPPED_TEXTURE3D *mapped_texture)
 {
     struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
-    struct wined3d_mapped_box wined3d_map_desc;
+    struct wined3d_map_desc wined3d_map_desc;
     struct wined3d_resource *sub_resource;
     HRESULT hr;
 

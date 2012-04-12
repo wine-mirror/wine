@@ -237,24 +237,28 @@ static HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(IDirect3DSurface8 *iface, D3
 }
 
 static HRESULT WINAPI IDirect3DSurface8Impl_LockRect(IDirect3DSurface8 *iface,
-        D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
+        D3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
 {
     IDirect3DSurface8Impl *This = impl_from_IDirect3DSurface8(iface);
+    struct wined3d_map_desc map_desc;
     HRESULT hr;
 
-    TRACE("iface %p, locked_rect %p, rect %p, flags %#x.\n", iface, pLockedRect, pRect, Flags);
+    TRACE("iface %p, locked_rect %p, rect %s, flags %#x.\n",
+            iface, locked_rect, wine_dbgstr_rect(rect), flags);
 
     wined3d_mutex_lock();
-    if (pRect) {
+    if (rect)
+    {
         D3DSURFACE_DESC desc;
         IDirect3DSurface8_GetDesc(iface, &desc);
 
-        if ((pRect->left < 0)
-                || (pRect->top < 0)
-                || (pRect->left >= pRect->right)
-                || (pRect->top >= pRect->bottom)
-                || (pRect->right > desc.Width)
-                || (pRect->bottom > desc.Height)) {
+        if ((rect->left < 0)
+                || (rect->top < 0)
+                || (rect->left >= rect->right)
+                || (rect->top >= rect->bottom)
+                || (rect->right > desc.Width)
+                || (rect->bottom > desc.Height))
+        {
             WARN("Trying to lock an invalid rectangle, returning D3DERR_INVALIDCALL\n");
             wined3d_mutex_unlock();
 
@@ -262,8 +266,11 @@ static HRESULT WINAPI IDirect3DSurface8Impl_LockRect(IDirect3DSurface8 *iface,
         }
     }
 
-    hr = wined3d_surface_map(This->wined3d_surface, (struct wined3d_mapped_rect *)pLockedRect, pRect, Flags);
+    hr = wined3d_surface_map(This->wined3d_surface, &map_desc, rect, flags);
     wined3d_mutex_unlock();
+
+    locked_rect->Pitch = map_desc.row_pitch;
+    locked_rect->pBits = map_desc.data;
 
     return hr;
 }

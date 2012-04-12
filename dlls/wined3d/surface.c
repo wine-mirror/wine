@@ -3571,7 +3571,7 @@ static inline const struct d3dfmt_convertor_desc *find_convertor(enum wined3d_fo
  *****************************************************************************/
 static struct wined3d_surface *surface_convert_format(struct wined3d_surface *source, enum wined3d_format_id to_fmt)
 {
-    struct wined3d_mapped_rect src_map, dst_map;
+    struct wined3d_map_desc src_map, dst_map;
     const struct d3dfmt_convertor_desc *conv;
     struct wined3d_surface *ret = NULL;
     HRESULT hr;
@@ -3698,12 +3698,12 @@ HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
 }
 
 HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
-        struct wined3d_mapped_rect *mapped_rect, const RECT *rect, DWORD flags)
+        struct wined3d_map_desc *map_desc, const RECT *rect, DWORD flags)
 {
     const struct wined3d_format *format = surface->resource.format;
 
-    TRACE("surface %p, mapped_rect %p, rect %s, flags %#x.\n",
-            surface, mapped_rect, wine_dbgstr_rect(rect), flags);
+    TRACE("surface %p, map_desc %p, rect %s, flags %#x.\n",
+            surface, map_desc, wine_dbgstr_rect(rect), flags);
 
     if (surface->flags & SFLAG_LOCKED)
     {
@@ -3750,13 +3750,14 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     surface->surface_ops->surface_map(surface, rect, flags);
 
     if (format->flags & WINED3DFMT_FLAG_BROKEN_PITCH)
-        mapped_rect->row_pitch = surface->resource.width * format->byte_count;
+        map_desc->row_pitch = surface->resource.width * format->byte_count;
     else
-        mapped_rect->row_pitch = wined3d_surface_get_pitch(surface);
+        map_desc->row_pitch = wined3d_surface_get_pitch(surface);
+    map_desc->slice_pitch = 0;
 
     if (!rect)
     {
-        mapped_rect->data = surface->resource.allocatedMemory;
+        map_desc->data = surface->resource.allocatedMemory;
         surface->lockedRect.left = 0;
         surface->lockedRect.top = 0;
         surface->lockedRect.right = surface->resource.width;
@@ -3768,14 +3769,14 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         {
             /* Compressed textures are block based, so calculate the offset of
              * the block that contains the top-left pixel of the locked rectangle. */
-            mapped_rect->data = surface->resource.allocatedMemory
-                    + ((rect->top / format->block_height) * mapped_rect->row_pitch)
+            map_desc->data = surface->resource.allocatedMemory
+                    + ((rect->top / format->block_height) * map_desc->row_pitch)
                     + ((rect->left / format->block_width) * format->block_byte_count);
         }
         else
         {
-            mapped_rect->data = surface->resource.allocatedMemory
-                    + (mapped_rect->row_pitch * rect->top)
+            map_desc->data = surface->resource.allocatedMemory
+                    + (map_desc->row_pitch * rect->top)
                     + (rect->left * format->byte_count);
         }
         surface->lockedRect.left = rect->left;
@@ -3785,14 +3786,14 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     }
 
     TRACE("Locked rect %s.\n", wine_dbgstr_rect(&surface->lockedRect));
-    TRACE("Returning memory %p, pitch %u.\n", mapped_rect->data, mapped_rect->row_pitch);
+    TRACE("Returning memory %p, pitch %u.\n", map_desc->data, map_desc->row_pitch);
 
     return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
 {
-    struct wined3d_mapped_rect map;
+    struct wined3d_map_desc map;
     HRESULT hr;
 
     TRACE("surface %p, dc %p.\n", surface, dc);
@@ -6613,7 +6614,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
     const struct wined3d_format *src_format, *dst_format;
     struct wined3d_surface *orig_src = src_surface;
-    struct wined3d_mapped_rect dst_map, src_map;
+    struct wined3d_map_desc dst_map, src_map;
     const BYTE *sbase = NULL;
     HRESULT hr = WINED3D_OK;
     const BYTE *sbuf;
