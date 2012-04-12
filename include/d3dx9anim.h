@@ -192,10 +192,10 @@ DECLARE_INTERFACE(ID3DXLoadUserData)
 #define INTERFACE ID3DXSaveUserData
 DECLARE_INTERFACE(ID3DXSaveUserData)
 {
-    STDMETHOD(AddFrameChildData)(CONST LPD3DXFRAME *frame, LPD3DXFILESAVEOBJECT save_obj,
-            LPD3DXFILESAVEDATA frame_data) PURE;
-    STDMETHOD(AddMeshChildData)(CONST LPD3DXMESHCONTAINER *mesh_container,
-            LPD3DXFILESAVEOBJECT save_obj, LPD3DXFILESAVEDATA mesh_data) PURE;
+    STDMETHOD(AddFrameChildData)(const D3DXFRAME *frame,
+            ID3DXFileSaveObject *save_obj, ID3DXFileSaveData *frame_data) PURE;
+    STDMETHOD(AddMeshChildData)(const D3DXMESHCONTAINER *mesh_container,
+            ID3DXFileSaveObject *save_obj, ID3DXFileSaveData *mesh_data) PURE;
     STDMETHOD(AddTopLevelDataObjectsPre)(LPD3DXFILESAVEOBJECT save_obj) PURE;
     STDMETHOD(AddTopLevelDataObjectsPost)(LPD3DXFILESAVEOBJECT save_obj) PURE;
     STDMETHOD(RegisterTemplates)(LPD3DXFILE xfile) PURE;
