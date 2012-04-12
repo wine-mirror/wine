@@ -608,7 +608,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 
     if (OpenPrinterW( pi->friendly_name, &hPrinter, NULL ) == 0) {
         ERR ("OpenPrinter failed with code %i\n", GetLastError ());
-        goto cleanup;
+        goto fail;
     }
 
     len = WideCharToMultiByte( CP_ACP, 0, name, -1, NULL, 0, NULL, NULL );
@@ -616,7 +616,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     WideCharToMultiByte( CP_ACP, 0, name, -1, nameA, len, NULL, NULL );
 
     pi->Devmode = get_devmode( hPrinter, name, &using_default_devmode );
-    if (!pi->Devmode) goto closeprinter;
+    if (!pi->Devmode) goto fail;
 
 #ifdef SONAME_LIBCUPS
     if (cupshandle != (void*)-1) {
@@ -681,7 +681,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
         {
             res = ERROR_FILE_NOT_FOUND;
             ERR ("Error %i getting PPD file name for printer '%s'\n", res, debugstr_w(name));
-            goto closeprinter;
+            goto fail;
         }
         ppdFileName = HeapAlloc( PSDRV_Heap, 0, strlen(data_dir) + strlen(filename) + 1 );
         strcpy( ppdFileName, data_dir );
@@ -704,7 +704,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     if(!pi->ppd) {
 	MESSAGE("Couldn't find PPD file '%s', expect a crash now!\n",
 	    ppdFileName);
-	goto closeprinter;
+	goto fail;
     }
 
     /* Some gimp-print ppd files don't contain a DefaultResolution line
@@ -748,7 +748,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 	TRACE ("No 'Paper Size' for printer '%s'\n", debugstr_w(name));
     else {
 	ERR ("GetPrinterDataA returned %i\n", res);
-	goto closeprinter;
+	goto fail;
     }
 
     /* Duplex is indicated by the setting of the DM_DUPLEX bit in dmFields.
@@ -767,10 +767,6 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 
     pi->FontSubTable = load_font_sub_table( hPrinter, &pi->FontSubTableSize );
 
-    ClosePrinter( hPrinter );
-
-    pi->Fonts = NULL;
-
     LIST_FOR_EACH_ENTRY( font, &pi->ppd->InstalledFonts, FONTNAME, entry )
     {
         afm = PSDRV_FindAFMinList(PSDRV_AFMFontList, font->Name);
@@ -782,24 +778,23 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 	    BOOL added;
 	    if (PSDRV_AddAFMtoList(&pi->Fonts, afm, &added) == FALSE) {
 	    	PSDRV_FreeAFMList(pi->Fonts);
-		goto cleanup;
+		goto fail;
 	    }
 	}
 
     }
+    ClosePrinter( hPrinter );
     HeapFree( GetProcessHeap(), 0, nameA );
     if (ppd) unlink(ppd);
     list_add_head( &printer_list, &pi->entry );
     return pi;
 
-closeprinter:
-    ClosePrinter(hPrinter);
-cleanup:
+fail:
+    if (hPrinter) ClosePrinter( hPrinter );
     HeapFree(PSDRV_Heap, 0, ppdFileName);
     HeapFree(PSDRV_Heap, 0, pi->FontSubTable);
     HeapFree(PSDRV_Heap, 0, pi->friendly_name);
     HeapFree(PSDRV_Heap, 0, pi->Devmode);
-fail:
     HeapFree(PSDRV_Heap, 0, pi);
     HeapFree( GetProcessHeap(), 0, nameA );
     if (ppd) unlink(ppd);
