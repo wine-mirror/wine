@@ -415,6 +415,7 @@ INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     DOC_INFO_1W di;
+    PRINTER_DEFAULTSW prn_def;
 
     TRACE("(%p, %p) => %s, %s, %s\n", physDev, doc, debugstr_w(doc->lpszDocName),
         debugstr_w(doc->lpszOutput), debugstr_w(doc->lpszDatatype));
@@ -424,8 +425,12 @@ INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
 	return 0;
     }
 
-    /* FIXME: use PRINTER_DEFAULTS here */
-    if(!OpenPrinterW( physDev->pi->friendly_name, &physDev->job.hprinter, NULL )) {
+    prn_def.pDatatype = NULL;
+    prn_def.pDevMode = &physDev->pi->Devmode->dmPublic;
+    prn_def.DesiredAccess = PRINTER_ACCESS_USE;
+
+    if (!OpenPrinterW( physDev->pi->friendly_name, &physDev->job.hprinter, &prn_def ))
+    {
         WARN("OpenPrinter(%s, ...) failed: %d\n",
             debugstr_w(physDev->pi->friendly_name), GetLastError());
         return 0;
