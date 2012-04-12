@@ -1116,15 +1116,13 @@ static inline struct ID3DXBaseEffectImpl *impl_from_ID3DXBaseEffect(ID3DXBaseEff
 /*** IUnknown methods ***/
 static HRESULT WINAPI ID3DXBaseEffectImpl_QueryInterface(ID3DXBaseEffect *iface, REFIID riid, void **object)
 {
-    struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-
-    TRACE("iface %p, riid %s, object %p\n", This, debugstr_guid(riid), object);
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_ID3DXBaseEffect))
     {
-        This->ID3DXBaseEffect_iface.lpVtbl->AddRef(iface);
-        *object = This;
+        iface->lpVtbl->AddRef(iface);
+        *object = iface;
         return S_OK;
     }
 
