@@ -406,7 +406,7 @@ static HRESULT IDirectMusicBandImpl_IPersistStream_ParseInstrument (LPPERSISTSTR
       TRACE_(dmfile)(" - dwNoteRanges[2]: %u\n", inst.dwNoteRanges[2]);
       TRACE_(dmfile)(" - dwNoteRanges[3]: %u\n", inst.dwNoteRanges[3]);
       TRACE_(dmfile)(" - dwPChannel: %u\n", inst.dwPChannel);
-      TRACE_(dmfile)(" - dwFlags: %u\n", inst.dwFlags);
+      TRACE_(dmfile)(" - dwFlags: %x\n", inst.dwFlags);
       TRACE_(dmfile)(" - bPan: %u\n", inst.bPan);
       TRACE_(dmfile)(" - bVolume: %u\n", inst.bVolume);
       TRACE_(dmfile)(" - nTranspose: %d\n", inst.nTranspose);
