@@ -57,6 +57,14 @@ static char const tbl_dataops[][4] = {
     "mov", "bic", "mvn"
 };
 
+static char const tbl_hiops_t[][4] = {
+"add", "cmp", "mov", "bx"
+};
+
+static char const tbl_immops_t[][4] = {
+"mov", "cmp", "add", "sub"
+};
+
 static UINT db_get_inst(void* addr, int size)
 {
     UINT result = 0;
@@ -249,6 +257,93 @@ static UINT arm_disasm_coprocdatatrans(UINT inst)
     return 0;
 }
 
+static WORD thumb_disasm_hireg(WORD inst)
+{
+    short dst = inst & 0x07;
+    short src = (inst >> 3) & 0x07;
+    short h2  = (inst >> 6) & 0x01;
+    short h1  = (inst >> 7) & 0x01;
+    short op  = (inst >> 8) & 0x03;
+
+    if (h1) dst += 8;
+    if (h2) src += 8;
+
+    if (op == 3)
+        dbg_printf("\n\tb%sx\tr%u", h1?"l":"", src);
+    else
+        dbg_printf("\n\t%s\tr%u, r%u", tbl_hiops_t[op], dst, src);
+
+    return 0;
+}
+
+static WORD thumb_disasm_blocktrans(WORD inst)
+{
+    short lrpc = (inst >> 8)  & 0x01;
+    short load = (inst >> 11) & 0x01;
+    short i;
+    short last;
+
+    for (i=7;i>=0;i--)
+        if ((inst>>i) & 1) break;
+    last = i;
+
+    dbg_printf("\n\t%s\t{", load ? "pop" : "push");
+
+    for (i=0;i<=7;i++)
+        if ((inst>>i) & 1)
+        {
+            if (i == last) dbg_printf("r%u", i);
+            else dbg_printf("r%u, ", i);
+        }
+    if (lrpc)
+        dbg_printf(", %s", load ? "pc" : "lr");
+
+    dbg_printf("}");
+    return 0;
+}
+
+static WORD thumb_disasm_swi(WORD inst)
+{
+    WORD comment = inst & 0x00ff;
+    dbg_printf("\n\tswi\t#%d", comment);
+    return 0;
+}
+
+static WORD thumb_disasm_nop(WORD inst)
+{
+    dbg_printf("\n\tnop");
+    return 0;
+}
+
+static WORD thumb_disasm_ldrpcrel(WORD inst)
+{
+    WORD offset = (inst & 0xff) << 2;
+    dbg_printf("\n\tldr\tr%u, [pc, #%u]", (inst >> 8) & 0x07, offset);
+    return 0;
+}
+
+static WORD thumb_disasm_ldrsprel(WORD inst)
+{
+    WORD offset = (inst & 0xff) << 2;
+    dbg_printf("\n\t%s\tr%u, [sp, #%u]", (inst & 0x0800)?"ldr":"str", (inst >> 8) & 0x07, offset);
+    return 0;
+}
+
+static WORD thumb_disasm_ldrimm(WORD inst)
+{
+    WORD offset = (inst & 0x07c0) >> 6;
+    dbg_printf("\n\t%s%s\tr%u, [r%u, #%u]", (inst & 0x0800)?"ldr":"str", (inst & 0x1000)?"b":"",
+               inst & 0x07, (inst >> 3) & 0x07, (inst & 0x1000)?offset:(offset << 2));
+    return 0;
+}
+
+static WORD thumb_disasm_immop(WORD inst)
+{
+    WORD op = (inst >> 11) & 0x03;
+    dbg_printf("\n\t%s\tr%u, #%u", tbl_immops_t[op], (inst >> 8) & 0x07, inst & 0xff);
+    return 0;
+}
+
 struct inst_arm
 {
         UINT mask;
@@ -269,6 +364,25 @@ static const struct inst_arm tbl_arm[] = {
     { 0x00000000, 0x00000000, NULL }
 };
 
+struct inst_thumb16
+{
+        WORD mask;
+        WORD pattern;
+        WORD (*func)(WORD);
+};
+
+static const struct inst_thumb16 tbl_thumb16[] = {
+    { 0xfc00, 0x4400, thumb_disasm_hireg },
+    { 0xf600, 0xb400, thumb_disasm_blocktrans },
+    { 0xf800, 0x4800, thumb_disasm_ldrpcrel },
+    { 0xf000, 0x9000, thumb_disasm_ldrsprel },
+    { 0xe000, 0x6000, thumb_disasm_ldrimm },
+    { 0xe000, 0x2000, thumb_disasm_immop },
+    { 0xff00, 0xdf00, thumb_disasm_swi },
+    { 0xff00, 0xbf00, thumb_disasm_nop },
+    { 0x0000, 0x0000, NULL }
+};
+
 /***********************************************************************
  *              disasm_one_insn
  *
@@ -278,7 +392,9 @@ static const struct inst_arm tbl_arm[] = {
 void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
 {
     struct inst_arm *a_ptr = (struct inst_arm *)&tbl_arm;
+    struct inst_thumb16 *t_ptr = (struct inst_thumb16 *)&tbl_thumb16;
     UINT inst;
+    WORD tinst;
     int size;
     int matched = 0;
 
@@ -323,8 +439,29 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
     }
     else
     {
-        dbg_printf("\n\tThumb disassembling not yet implemented\n");
-        addr->Offset += size;
+        tinst = inst;
+        while (t_ptr->func) {
+                if ((tinst & t_ptr->mask) ==  t_ptr->pattern) {
+                        matched = 1;
+                        break;
+                }
+                t_ptr++;
+        }
+
+        if (!matched) {
+                dbg_printf("\n\tUnknown Instruction: %08x\n", tinst);
+                addr->Offset += size;
+                return;
+        }
+        else
+        {
+            if (!t_ptr->func(tinst))
+            {
+                dbg_printf("\n");
+                addr->Offset += size;
+            }
+        }
+        return;
     }
 }
 
