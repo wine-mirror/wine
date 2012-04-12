@@ -213,7 +213,7 @@ typedef struct {
 } PPD;
 
 typedef struct {
-    DEVMODEA			dmPublic;
+    DEVMODEW			dmPublic;
     struct _tagdocprivate {
       int dummy;
     }				dmDocPrivate;
@@ -227,14 +227,14 @@ numInstalledOptions of OPTIONs
 
 */
 
-} PSDRV_DEVMODEA;
+} PSDRV_DEVMODE;
 
 typedef struct
 {
     struct list             entry;
     WCHAR                   *friendly_name;
     PPD			    *ppd;
-    PSDRV_DEVMODEA	    *Devmode;
+    PSDRV_DEVMODE	    *Devmode;
     FONTFAMILY		    *Fonts;
     PPRINTER_ENUM_VALUESA   FontSubTable;
     DWORD		    FontSubTableSize;
@@ -356,7 +356,7 @@ typedef struct
     PSCOLOR		bkColor;
     PSCOLOR		inkColor;	/* Last colour set */
     JOB			job;
-    PSDRV_DEVMODEA	*Devmode;
+    PSDRV_DEVMODE	*Devmode;
     PRINTERINFO		*pi;
     SIZE                PageSize;      /* Physical page size in device units */
     RECT                ImageableArea; /* Imageable area in device units */
@@ -451,7 +451,7 @@ extern INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
-extern void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
+extern void PSDRV_MergeDevmodes(PSDRV_DEVMODE *dm1, PSDRV_DEVMODE *dm2,
 			 PRINTERINFO *pi) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_GetFontMetrics(void) DECLSPEC_HIDDEN;
 extern PPD *PSDRV_ParsePPD(char *fname) DECLSPEC_HIDDEN;

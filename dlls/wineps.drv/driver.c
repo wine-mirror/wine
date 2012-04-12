@@ -52,8 +52,7 @@ static inline int paper_size_from_points( float size )
  * Updates dm1 with some fields from dm2
  *
  */
-void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
-			 PRINTERINFO *pi)
+void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, PSDRV_DEVMODE *dm2, PRINTERINFO *pi )
 {
     /* some sanity checks here on dm2 */
 
@@ -183,7 +182,7 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 typedef struct
 {
     PRINTERINFO *pi;
-    PSDRV_DEVMODEA *dlgdm;
+    PSDRV_DEVMODE *dlgdm;
 } PSDRV_DLGINFO;
 
 /****************************************************************
@@ -320,6 +319,47 @@ static PRINTERINFO *PSDRV_FindPrinterInfoA(LPCSTR name)
     return pi;
 }
 
+/***********************************************************
+ *      DEVMODEdupWtoA
+ *
+ * Creates an ascii copy of supplied devmode on the process heap
+ *
+ * Copied from dlls/winspool/info.c until full unicodification
+ */
+static DEVMODEA *DEVMODEdupWtoA( const DEVMODEW *dmW )
+{
+    DEVMODEA *dmA;
+    DWORD size;
+    BOOL formname;
+    /* there is no pointer dereference here, if your code checking tool complains it's broken */
+    ptrdiff_t off_formname = (const char *)dmW->dmFormName - (const char *)dmW;
+
+    if (!dmW) return NULL;
+    formname = (dmW->dmSize > off_formname);
+    size = dmW->dmSize - CCHDEVICENAME - (formname ? CCHFORMNAME : 0);
+    dmA = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size + dmW->dmDriverExtra );
+    WideCharToMultiByte( CP_ACP, 0, dmW->dmDeviceName, -1, (LPSTR)dmA->dmDeviceName,
+                         CCHDEVICENAME, NULL, NULL );
+    if (!formname)
+    {
+        memcpy( &dmA->dmSpecVersion, &dmW->dmSpecVersion,
+                dmW->dmSize - CCHDEVICENAME * sizeof(WCHAR) );
+    }
+    else
+    {
+        memcpy( &dmA->dmSpecVersion, &dmW->dmSpecVersion,
+               off_formname - CCHDEVICENAME * sizeof(WCHAR) );
+        WideCharToMultiByte( CP_ACP, 0, dmW->dmFormName, -1, (LPSTR)dmA->dmFormName,
+                             CCHFORMNAME, NULL, NULL );
+        memcpy( &dmA->dmLogPixels, &dmW->dmLogPixels, dmW->dmSize -
+                (off_formname + CCHFORMNAME * sizeof(WCHAR)) );
+    }
+    dmA->dmSize = size;
+    memcpy( (char *)dmA + dmA->dmSize, (const char *)dmW + dmW->dmSize,
+            dmW->dmDriverExtra );
+    return dmA;
+}
+
  /******************************************************************
  *         PSDRV_ExtDeviceMode
  *
@@ -362,12 +402,15 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
 
   /* If dwMode == 0, return size of DEVMODE structure */
   if(!dwMode)
-    return pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra;
+      return pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra - CCHDEVICENAME - CCHFORMNAME;
 
   /* If DM_MODIFY is set, change settings in accordance with lpdmInput */
-  if((dwMode & DM_MODIFY) && lpdmInput) {
+  if((dwMode & DM_MODIFY) && lpdmInput)
+  {
+    DEVMODEW *dmW = GdiConvertToDevmodeW( lpdmInput );
     TRACE("DM_MODIFY set. devIn->dmFields = %08x\n", lpdmInput->dmFields);
-    PSDRV_MergeDevmodes(pi->Devmode, (PSDRV_DEVMODEA *)lpdmInput, pi);
+    if (dmW) PSDRV_MergeDevmodes(pi->Devmode, (PSDRV_DEVMODE *)dmW, pi);
+    HeapFree( GetProcessHeap(), 0, dmW );
   }
 
   /* If DM_PROMPT is set, present modal dialog box */
@@ -377,7 +420,7 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
     PROPSHEETPAGEW psp;
     PROPSHEETHEADERW psh;
     PSDRV_DLGINFO di;
-    PSDRV_DEVMODEA dlgdm;
+    PSDRV_DEVMODE dlgdm;
     static const WCHAR PAPERW[] = {'P','A','P','E','R','\0'};
     static const WCHAR SetupW[] = {'S','e','t','u','p','\0'};
 
@@ -417,7 +460,11 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
   /* If DM_COPY is set, should write settings to lpdmOutput */
   if((dwMode & DM_COPY) || (dwMode & DM_UPDATE)) {
     if (lpdmOutput)
-        memcpy(lpdmOutput, pi->Devmode, pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra );
+    {
+        DEVMODEA *dmA = DEVMODEdupWtoA( &pi->Devmode->dmPublic );
+        if (dmA) memcpy( lpdmOutput, dmA, dmA->dmSize + dmA->dmDriverExtra );
+        HeapFree( GetProcessHeap(), 0, dmA );
+    }
     else
         FIXME("lpdmOutput is NULL what should we do??\n");
   }
@@ -443,7 +490,7 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
                                WORD fwCapability, LPSTR lpszOutput, LPDEVMODEA lpDevMode)
 {
   PRINTERINFO *pi;
-  DEVMODEA *lpdm;
+  DEVMODEW *lpdm;
   DWORD ret;
   pi = PSDRV_FindPrinterInfoA(lpszDevice);
 
@@ -456,7 +503,8 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
       return 0;
   }
 
-  lpdm = lpDevMode ? lpDevMode : (DEVMODEA *)pi->Devmode;
+  lpdm = &pi->Devmode->dmPublic;
+  if (lpDevMode) lpdm = GdiConvertToDevmodeW( lpDevMode );
 
   switch(fwCapability) {
 
@@ -758,6 +806,7 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
     ret = -1;
   }
 
+  if (lpDevMode) HeapFree( GetProcessHeap(), 0, lpdm );
   return ret;
 }
 

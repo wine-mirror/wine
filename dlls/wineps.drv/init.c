@@ -50,14 +50,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 static void *cupshandle = NULL;
 #endif
 
-static const PSDRV_DEVMODEA DefaultDevmode =
+static const PSDRV_DEVMODE DefaultDevmode =
 {
   { /* dmPublic */
-/* dmDeviceName */	"Wine PostScript Driver",
+/* dmDeviceName */      {'W','i','n','e',' ','P','o','s','t','S','c','r','i','p','t',' ','D','r','i','v','e','r',0},
 /* dmSpecVersion */	0x30a,
 /* dmDriverVersion */	0x001,
-/* dmSize */		sizeof(DEVMODEA),
-/* dmDriverExtra */	sizeof(PSDRV_DEVMODEA)-sizeof(DEVMODEA),
+/* dmSize */		sizeof(DEVMODEW),
+/* dmDriverExtra */	sizeof(PSDRV_DEVMODE)-sizeof(DEVMODEW),
 /* dmFields */		DM_ORIENTATION | DM_PAPERSIZE | DM_SCALE |
 			DM_COPIES | DM_DEFAULTSOURCE | DM_COLOR |
 		        DM_YRESOLUTION | DM_TTOPTION,
@@ -78,7 +78,7 @@ static const PSDRV_DEVMODEA DefaultDevmode =
 /* dmYResolution */	0,
 /* dmTTOption */	DMTT_SUBDEV,
 /* dmCollate */		0,
-/* dmFormName */	"",
+/* dmFormName */        {},
 /* dmUnusedPadding */   0,
 /* dmBitsPerPel */	0,
 /* dmPelsWidth */	0,
@@ -257,46 +257,6 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 	  physDev->horzRes, physDev->vertRes);
 }
 
-
-/***********************************************************
- *      DEVMODEdupWtoA
- *
- * Creates an ascii copy of supplied devmode on the process heap
- *
- * Copied from dlls/winspool/info.c until full unicodification
- */
-static LPDEVMODEA DEVMODEdupWtoA( const DEVMODEW *dmW )
-{
-    LPDEVMODEA dmA;
-    DWORD size;
-    BOOL Formname;
-    /* there is no pointer dereference here, if your code checking tool complains it's broken */
-    ptrdiff_t off_formname = (const char *)dmW->dmFormName - (const char *)dmW;
-
-    if(!dmW) return NULL;
-    Formname = (dmW->dmSize > off_formname);
-    size = dmW->dmSize - CCHDEVICENAME - (Formname ? CCHFORMNAME : 0);
-    dmA = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size + dmW->dmDriverExtra );
-    WideCharToMultiByte(CP_ACP, 0, dmW->dmDeviceName, -1, (LPSTR)dmA->dmDeviceName,
-			CCHDEVICENAME, NULL, NULL);
-    if(!Formname) {
-      memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
-	     dmW->dmSize - CCHDEVICENAME * sizeof(WCHAR));
-    } else {
-      memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
-	     off_formname - CCHDEVICENAME * sizeof(WCHAR));
-      WideCharToMultiByte(CP_ACP, 0, dmW->dmFormName, -1, (LPSTR)dmA->dmFormName,
-			  CCHFORMNAME, NULL, NULL);
-      memcpy(&dmA->dmLogPixels, &dmW->dmLogPixels, dmW->dmSize -
-	     (off_formname + CCHFORMNAME * sizeof(WCHAR)));
-    }
-    dmA->dmSize = size;
-    memcpy((char *)dmA + dmA->dmSize, (const char *)dmW + dmW->dmSize,
-	   dmW->dmDriverExtra);
-    return dmA;
-}
-
-
 static PSDRV_PDEVICE *create_psdrv_physdev( PRINTERINFO *pi )
 {
     PSDRV_PDEVICE *physDev;
@@ -304,7 +264,7 @@ static PSDRV_PDEVICE *create_psdrv_physdev( PRINTERINFO *pi )
     physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) );
     if (!physDev) return NULL;
 
-    physDev->Devmode = HeapAlloc( GetProcessHeap(), 0, sizeof(PSDRV_DEVMODEA) );
+    physDev->Devmode = HeapAlloc( GetProcessHeap(), 0, sizeof(PSDRV_DEVMODE) );
     if (!physDev->Devmode)
     {
         HeapFree( GetProcessHeap(), 0, physDev );
@@ -349,11 +309,8 @@ static BOOL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 
     if (output && *output) physDev->job.output = strdupW( output );
 
-    if(initData) {
-        DEVMODEA *devmodeA = DEVMODEdupWtoA( initData );
-        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)devmodeA, pi);
-        HeapFree( GetProcessHeap(), 0, devmodeA );
-    }
+    if(initData)
+        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODE *)initData, pi);
 
     PSDRV_UpdateDevCaps(physDev);
     SelectObject( (*pdev)->hdc, PSDRV_DefaultFont );
@@ -406,10 +363,9 @@ static HDC PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
-    if(lpInitData) {
-        DEVMODEA *devmodeA = DEVMODEdupWtoA( lpInitData );
-        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)devmodeA, physDev->pi);
-        HeapFree( GetProcessHeap(), 0, devmodeA );
+    if (lpInitData)
+    {
+        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODE *)lpInitData, physDev->pi);
         PSDRV_UpdateDevCaps(physDev);
     }
     return dev->hdc;
@@ -554,18 +510,18 @@ static PRINTER_ENUM_VALUESA *load_font_sub_table( HANDLE printer, DWORD *num_ent
     return table;
 }
 
-static PSDRV_DEVMODEA *get_printer_devmode( HANDLE printer )
+static PSDRV_DEVMODE *get_printer_devmode( HANDLE printer )
 {
     DWORD needed, dm_size;
     BOOL res;
-    PRINTER_INFO_9A *info;
-    PSDRV_DEVMODEA *dm;
+    PRINTER_INFO_9W *info;
+    PSDRV_DEVMODE *dm;
 
-    GetPrinterA( printer, 9, NULL, 0, &needed );
+    GetPrinterW( printer, 9, NULL, 0, &needed );
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
 
     info = HeapAlloc( PSDRV_Heap, 0, needed );
-    res = GetPrinterA( printer, 9, (BYTE *)info, needed, &needed );
+    res = GetPrinterW( printer, 9, (BYTE *)info, needed, &needed );
     if (!res || !info->pDevMode)
     {
         HeapFree( PSDRV_Heap, 0, info );
@@ -580,14 +536,14 @@ static PSDRV_DEVMODEA *get_printer_devmode( HANDLE printer )
         return NULL;
     }
 
-    dm = (PSDRV_DEVMODEA*)info;
+    dm = (PSDRV_DEVMODE*)info;
     memmove( dm, info->pDevMode, dm_size );
     return dm;
 }
 
-static PSDRV_DEVMODEA *get_devmode( HANDLE printer, const char *nameA, BOOL *is_default )
+static PSDRV_DEVMODE *get_devmode( HANDLE printer, const WCHAR *name, BOOL *is_default )
 {
-    PSDRV_DEVMODEA *dm = get_printer_devmode( printer );
+    PSDRV_DEVMODE *dm = get_printer_devmode( printer );
 
     *is_default = FALSE;
 
@@ -603,18 +559,18 @@ static PSDRV_DEVMODEA *get_devmode( HANDLE printer, const char *nameA, BOOL *is_
     if (dm)
     {
         *dm = DefaultDevmode;
-        lstrcpynA((LPSTR)dm->dmPublic.dmDeviceName, nameA, CCHDEVICENAME);
+        lstrcpynW( (WCHAR *)dm->dmPublic.dmDeviceName, name, CCHDEVICENAME );
         *is_default = TRUE;
     }
     return dm;
 }
 
-static BOOL set_devmode( HANDLE printer, PSDRV_DEVMODEA *dm )
+static BOOL set_devmode( HANDLE printer, PSDRV_DEVMODE *dm )
 {
-    PRINTER_INFO_9A info;
+    PRINTER_INFO_9W info;
     info.pDevMode = &dm->dmPublic;
 
-    return SetPrinterA( printer, 9, (BYTE *)&info, 0 );
+    return SetPrinterW( printer, 9, (BYTE *)&info, 0 );
 }
 
 static struct list printer_list = LIST_INIT( printer_list );
@@ -659,7 +615,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     nameA = HeapAlloc( GetProcessHeap(), 0, len );
     WideCharToMultiByte( CP_ACP, 0, name, -1, nameA, len, NULL, NULL );
 
-    pi->Devmode = get_devmode( hPrinter, nameA, &using_default_devmode );
+    pi->Devmode = get_devmode( hPrinter, name, &using_default_devmode );
     if (!pi->Devmode) goto closeprinter;
 
 #ifdef SONAME_LIBCUPS
@@ -761,7 +717,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 
 	if(GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IPAPERSIZE | LOCALE_RETURN_NUMBER,
 			  (LPWSTR)&papersize, sizeof(papersize)/sizeof(WCHAR))) {
-	    PSDRV_DEVMODEA dm;
+	    PSDRV_DEVMODE dm;
 	    memset(&dm, 0, sizeof(dm));
 	    dm.dmPublic.dmFields = DM_PAPERSIZE;
 	    dm.dmPublic.u1.s1.dmPaperSize = papersize;
@@ -772,7 +728,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
     }
 
     if(pi->ppd->DefaultPageSize) { /* We'll let the ppd override the devmode */
-        PSDRV_DEVMODEA dm;
+        PSDRV_DEVMODE dm;
         memset(&dm, 0, sizeof(dm));
         dm.dmPublic.dmFields = DM_PAPERSIZE;
         dm.dmPublic.u1.s1.dmPaperSize = pi->ppd->DefaultPageSize->WinPage;
