@@ -634,6 +634,10 @@ PPD *PSDRV_ParsePPD(char *fname)
     list_init( &ppd->InputSlots );
     list_init( &ppd->Duplexes );
 
+    /* Some gimp-print ppd files don't contain a DefaultResolution line
+       so default to 300 */
+    ppd->DefaultResolution = 300;
+
     /*
      *	The Windows PostScript drivers create the following "virtual bin" for
      *	every PostScript printer

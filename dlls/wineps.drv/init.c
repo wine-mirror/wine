@@ -707,11 +707,6 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 	goto fail;
     }
 
-    /* Some gimp-print ppd files don't contain a DefaultResolution line
-       set it to 300 if it's not specified */
-    if(pi->ppd->DefaultResolution == 0)
-        pi->ppd->DefaultResolution = 300;
-
     if(using_default_devmode) {
         DWORD papersize;
 
