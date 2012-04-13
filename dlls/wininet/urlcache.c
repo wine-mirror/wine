@@ -420,6 +420,7 @@ static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer, DWORD b
 		{
 		    dwError = GetLastError();
 		}
+                dwFileSize = new_file_size;
 		CloseHandle(hMapping);
 	    }
 	    else
@@ -438,8 +439,8 @@ static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer, DWORD b
 
     }
 
-    pContainer->file_size = new_file_size;
-    wsprintfW(wszFilePath, wszMappingFormat, pContainer->path, wszIndex, new_file_size);
+    pContainer->file_size = dwFileSize;
+    wsprintfW(wszFilePath, wszMappingFormat, pContainer->path, wszIndex, dwFileSize);
     URLCache_PathToObjectName(wszFilePath, '_');
     pContainer->hMapping = OpenFileMappingW(FILE_MAP_WRITE, FALSE, wszFilePath);
     if (!pContainer->hMapping)
