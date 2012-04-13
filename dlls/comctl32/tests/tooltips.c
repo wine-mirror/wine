@@ -668,7 +668,7 @@ static void test_longtextA(void)
         toolinfoA.lpszText = bufA;
         SendMessageA(hwnd, TTM_ENUMTOOLSA, 0, (LPARAM)&toolinfoA);
         textlen = lstrlenA(toolinfoA.lpszText);
-        todo_wine ok(textlen == 80, "lpszText has %d chars\n", textlen);
+        ok(textlen == 80, "lpszText has %d chars\n", textlen);
         ok(toolinfoA.uId == 0x1234ABCD,
            "uId should be retrieved, got %p\n", (void*)toolinfoA.uId);
 
@@ -678,7 +678,7 @@ static void test_longtextA(void)
         toolinfoA.lpszText = bufA;
         SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&toolinfoA);
         textlen = lstrlenA(toolinfoA.lpszText);
-        todo_wine ok(textlen == 80, "lpszText has %d chars\n", textlen);
+        ok(textlen == 80, "lpszText has %d chars\n", textlen);
 
         memset(bufA, 0, sizeof(bufA));
         toolinfoA.hwnd = NULL;
@@ -686,7 +686,7 @@ static void test_longtextA(void)
         toolinfoA.lpszText = bufA;
         SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
         textlen = lstrlenA(toolinfoA.lpszText);
-        todo_wine ok(textlen == 80, "lpszText has %d chars\n", textlen);
+        ok(textlen == 80, "lpszText has %d chars\n", textlen);
     }
 
     DestroyWindow(hwnd);
