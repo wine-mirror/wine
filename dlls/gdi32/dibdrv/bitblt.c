@@ -573,7 +573,7 @@ static DWORD blend_rect( dib_info *dst, const RECT *dst_rect, const dib_info *sr
 
 /* compute y-ordered, device coords vertices for a horizontal rectangle gradient */
 static void get_gradient_hrect_vertices( const GRADIENT_RECT *rect, const TRIVERTEX *vert,
-                                         const POINT *dev_pts, TRIVERTEX v[2] )
+                                         const POINT *dev_pts, TRIVERTEX v[2], RECT *bounds )
 {
     int v0 = rect->UpperLeft;
     int v1 = rect->LowerRight;
@@ -585,15 +585,15 @@ static void get_gradient_hrect_vertices( const GRADIENT_RECT *rect, const TRIVER
     }
     v[0]   = vert[v0];
     v[1]   = vert[v1];
-    v[0].x = dev_pts[v0].x;
-    v[1].x = dev_pts[v1].x;
-    v[0].y = min( dev_pts[v0].y, dev_pts[v1].y );
-    v[1].y = max( dev_pts[v0].y, dev_pts[v1].y );
+    bounds->left   = v[0].x = dev_pts[v0].x;
+    bounds->right  = v[1].x = dev_pts[v1].x;
+    bounds->top    = v[0].y = min( dev_pts[v0].y, dev_pts[v1].y );
+    bounds->bottom = v[1].y = max( dev_pts[v0].y, dev_pts[v1].y );
 }
 
 /* compute y-ordered, device coords vertices for a vertical rectangle gradient */
 static void get_gradient_vrect_vertices( const GRADIENT_RECT *rect, const TRIVERTEX *vert,
-                                         const POINT *dev_pts, TRIVERTEX v[2] )
+                                         const POINT *dev_pts, TRIVERTEX v[2], RECT *bounds )
 {
     int v0 = rect->UpperLeft;
     int v1 = rect->LowerRight;
@@ -605,15 +605,15 @@ static void get_gradient_vrect_vertices( const GRADIENT_RECT *rect, const TRIVER
     }
     v[0]   = vert[v0];
     v[1]   = vert[v1];
-    v[0].x = min( dev_pts[v0].x, dev_pts[v1].x );
-    v[1].x = max( dev_pts[v0].x, dev_pts[v1].x );
-    v[0].y = dev_pts[v0].y;
-    v[1].y = dev_pts[v1].y;
+    bounds->left   = v[0].x = min( dev_pts[v0].x, dev_pts[v1].x );
+    bounds->right  = v[1].x = max( dev_pts[v0].x, dev_pts[v1].x );
+    bounds->top    = v[0].y = dev_pts[v0].y;
+    bounds->bottom = v[1].y = dev_pts[v1].y;
 }
 
 /* compute y-ordered, device coords vertices for a triangle gradient */
 static void get_gradient_triangle_vertices( const GRADIENT_TRIANGLE *tri, const TRIVERTEX *vert,
-                                            const POINT *dev_pts, TRIVERTEX v[3] )
+                                            const POINT *dev_pts, TRIVERTEX v[3], RECT *bounds )
 {
     int v0, v1, v2;
 
@@ -644,31 +644,19 @@ static void get_gradient_triangle_vertices( const GRADIENT_TRIANGLE *tri, const 
     v[1].x = dev_pts[v1].x;
     v[2].x = dev_pts[v2].x;
     v[2].y = dev_pts[v2].y;
+    bounds->left   = min( v[0].x, min( v[1].x, v[2].x ));
+    bounds->top    = v[0].y;
+    bounds->right  = max( v[0].x, max( v[1].x, v[2].x ));
+    bounds->bottom = v[2].y;
 }
 
-static BOOL gradient_rect( dib_info *dib, TRIVERTEX *v, int mode, HRGN clip )
+static BOOL gradient_rect( dib_info *dib, TRIVERTEX *v, int mode, HRGN clip, const RECT *bounds )
 {
     int i;
     struct clipped_rects clipped_rects;
-    RECT rect;
     BOOL ret = TRUE;
 
-    if (mode == GRADIENT_FILL_TRIANGLE)
-    {
-        rect.left   = min( v[0].x, min( v[1].x, v[2].x ));
-        rect.top    = v[0].y;
-        rect.right  = max( v[0].x, max( v[1].x, v[2].x ));
-        rect.bottom = v[2].y;
-    }
-    else
-    {
-        rect.left   = v[0].x;
-        rect.top    = v[0].y;
-        rect.right  = v[1].x;
-        rect.bottom = v[1].y;
-    }
-
-    if (!get_clipped_rects( dib, &rect, clip, &clipped_rects )) return TRUE;
+    if (!get_clipped_rects( dib, bounds, clip, &clipped_rects )) return TRUE;
     for (i = 0; i < clipped_rects.count; i++)
     {
         if (!(ret = dib->funcs->gradient_rect( dib, &clipped_rects.rects[i], v, mode ))) break;
@@ -1298,12 +1286,8 @@ DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_a
     case GRADIENT_FILL_RECT_H:
         for (i = 0; i < ngrad; i++, rect++)
         {
-            get_gradient_hrect_vertices( rect, vert_array, dev_pts, vert );
-            gradient_rect( &dib, vert, mode, 0 );
-            rc.left   = vert[0].x;
-            rc.top    = vert[0].y;
-            rc.right  = vert[1].x;
-            rc.bottom = vert[1].y;
+            get_gradient_hrect_vertices( rect, vert_array, dev_pts, vert, &rc );
+            gradient_rect( &dib, vert, mode, 0, &rc );
             add_rect_to_region( rgn, &rc );
         }
         break;
@@ -1311,12 +1295,8 @@ DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_a
     case GRADIENT_FILL_RECT_V:
         for (i = 0; i < ngrad; i++, rect++)
         {
-            get_gradient_vrect_vertices( rect, vert_array, dev_pts, vert );
-            gradient_rect( &dib, vert, mode, 0 );
-            rc.left   = vert[0].x;
-            rc.top    = vert[0].y;
-            rc.right  = vert[1].x;
-            rc.bottom = vert[1].y;
+            get_gradient_vrect_vertices( rect, vert_array, dev_pts, vert, &rc );
+            gradient_rect( &dib, vert, mode, 0, &rc );
             add_rect_to_region( rgn, &rc );
         }
         break;
@@ -1324,8 +1304,8 @@ DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_a
     case GRADIENT_FILL_TRIANGLE:
         for (i = 0; i < ngrad; i++, tri++)
         {
-            get_gradient_triangle_vertices( tri, vert_array, dev_pts, vert );
-            if (gradient_rect( &dib, vert, mode, 0 ))
+            get_gradient_triangle_vertices( tri, vert_array, dev_pts, vert, &rc );
+            if (gradient_rect( &dib, vert, mode, 0, &rc ))
             {
                 for (y = vert[0].y; y < vert[2].y; y++)
                 {
@@ -1405,6 +1385,7 @@ BOOL dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     unsigned int i;
     POINT *pts;
     TRIVERTEX vert[3];
+    RECT bounds;
     BOOL ret = TRUE;
 
     if (!(pts = HeapAlloc( GetProcessHeap(), 0, nvert * sizeof(*pts) ))) return FALSE;
@@ -1420,33 +1401,33 @@ BOOL dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     case GRADIENT_FILL_RECT_H:
         for (i = 0; i < ngrad; i++, rect++)
         {
-            get_gradient_hrect_vertices( rect, vert_array, pts, vert );
+            get_gradient_hrect_vertices( rect, vert_array, pts, vert, &bounds );
             /* Windows bug: no alpha on a8r8g8b8 created with bitfields */
             if (pdev->dib.funcs == &funcs_8888 && pdev->dib.compression == BI_BITFIELDS)
                 vert[0].Alpha = vert[1].Alpha = 0;
-            gradient_rect( &pdev->dib, vert, mode, pdev->clip );
+            gradient_rect( &pdev->dib, vert, mode, pdev->clip, &bounds );
         }
         break;
 
     case GRADIENT_FILL_RECT_V:
         for (i = 0; i < ngrad; i++, rect++)
         {
-            get_gradient_vrect_vertices( rect, vert_array, pts, vert );
+            get_gradient_vrect_vertices( rect, vert_array, pts, vert, &bounds );
             /* Windows bug: no alpha on a8r8g8b8 created with bitfields */
             if (pdev->dib.funcs == &funcs_8888 && pdev->dib.compression == BI_BITFIELDS)
                 vert[0].Alpha = vert[1].Alpha = 0;
-            gradient_rect( &pdev->dib, vert, mode, pdev->clip );
+            gradient_rect( &pdev->dib, vert, mode, pdev->clip, &bounds );
         }
         break;
 
     case GRADIENT_FILL_TRIANGLE:
         for (i = 0; i < ngrad; i++, tri++)
         {
-            get_gradient_triangle_vertices( tri, vert_array, pts, vert );
+            get_gradient_triangle_vertices( tri, vert_array, pts, vert, &bounds );
             /* Windows bug: no alpha on a8r8g8b8 created with bitfields */
             if (pdev->dib.funcs == &funcs_8888 && pdev->dib.compression == BI_BITFIELDS)
                 vert[0].Alpha = vert[1].Alpha = vert[2].Alpha = 0;
-            if (!gradient_rect( &pdev->dib, vert, mode, pdev->clip )) ret = FALSE;
+            if (!gradient_rect( &pdev->dib, vert, mode, pdev->clip, &bounds )) ret = FALSE;
         }
         break;
     }
