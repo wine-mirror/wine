@@ -171,6 +171,8 @@ typedef struct
 #define ICON_HEIGHT 16
 #define ICON_WIDTH  16
 
+#define MAX_TEXT_SIZE_A 80 /* maximum retriving text size by ANSI message */
+
 static LRESULT CALLBACK
 TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uId, DWORD_PTR dwRef);
 
@@ -954,8 +956,9 @@ TOOLTIPS_CopyInfoT (const TTTOOL_INFO *toolPtr, TTTOOLINFOW *ti, BOOL isW)
         else if (isW)
             strcpyW (ti->lpszText, toolPtr->lpszText);
         else
+            /* ANSI version, the buffer is maximum 80 bytes without null. */
             WideCharToMultiByte(CP_ACP, 0, toolPtr->lpszText, -1,
-                                (LPSTR)ti->lpszText, INFOTIPSIZE, NULL, NULL);
+                                (LPSTR)ti->lpszText, MAX_TEXT_SIZE_A, NULL, NULL);
     }
 }
 
@@ -1341,12 +1344,13 @@ TOOLTIPS_GetTextT (const TOOLTIPS_INFO *infoPtr, TTTOOLINFOW *ti, BOOL isW)
 
         /* NB this API is broken, there is no way for the app to determine
            what size buffer it requires nor a way to specify how long the
-           one it supplies is.  We'll assume it's up to INFOTIPSIZE */
+           one it supplies is.  According to the test result, it's up to
+           80 bytes by the ANSI version. */
 
         buffer[0] = '\0';
         TOOLTIPS_GetTipText(infoPtr, nTool, buffer);
         WideCharToMultiByte(CP_ACP, 0, buffer, -1, (LPSTR)ti->lpszText,
-                                                   INFOTIPSIZE, NULL, NULL);
+                                                   MAX_TEXT_SIZE_A, NULL, NULL);
     }
 
     return 0;
