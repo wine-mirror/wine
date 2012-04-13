@@ -352,7 +352,6 @@ static HRESULT WINAPI HTMLElement_get_className(IHTMLElement *iface, BSTR *p)
     HTMLElement *This = impl_from_IHTMLElement(iface);
     nsAString class_str;
     nsresult nsres;
-    HRESULT hres = S_OK;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -363,20 +362,7 @@ static HRESULT WINAPI HTMLElement_get_className(IHTMLElement *iface, BSTR *p)
 
     nsAString_Init(&class_str, NULL);
     nsres = nsIDOMHTMLElement_GetClassName(This->nselem, &class_str);
-
-    if(NS_SUCCEEDED(nsres)) {
-        const PRUnichar *class;
-        nsAString_GetData(&class_str, &class);
-        *p = *class ? SysAllocString(class) : NULL;
-    }else {
-        ERR("GetClassName failed: %08x\n", nsres);
-        hres = E_FAIL;
-    }
-
-    nsAString_Finish(&class_str);
-
-    TRACE("className=%s\n", debugstr_w(*p));
-    return hres;
+    return return_nsstr(nsres, &class_str, p);
 }
 
 static HRESULT WINAPI HTMLElement_put_id(IHTMLElement *iface, BSTR v)
@@ -404,34 +390,24 @@ static HRESULT WINAPI HTMLElement_put_id(IHTMLElement *iface, BSTR v)
 static HRESULT WINAPI HTMLElement_get_id(IHTMLElement *iface, BSTR *p)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    const PRUnichar *id;
     nsAString id_str;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = NULL;
-
-    if(!This->nselem)
+    if(!This->nselem) {
+        *p = NULL;
         return S_OK;
+    }
 
     nsAString_Init(&id_str, NULL);
     nsres = nsIDOMHTMLElement_GetId(This->nselem, &id_str);
-    nsAString_GetData(&id_str, &id);
-
-    if(NS_FAILED(nsres))
-        ERR("GetId failed: %08x\n", nsres);
-    else if(*id)
-        *p = SysAllocString(id);
-
-    nsAString_Finish(&id_str);
-    return S_OK;
+    return return_nsstr(nsres, &id_str, p);
 }
 
 static HRESULT WINAPI HTMLElement_get_tagName(IHTMLElement *iface, BSTR *p)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    const PRUnichar *tag;
     nsAString tag_str;
     nsresult nsres;
 
@@ -443,21 +419,12 @@ static HRESULT WINAPI HTMLElement_get_tagName(IHTMLElement *iface, BSTR *p)
         WARN("NULL nselem, assuming comment\n");
 
         *p = SysAllocString(comment_tagW);
-        return S_OK;
+        return *p ? S_OK : E_OUTOFMEMORY;
     }
 
     nsAString_Init(&tag_str, NULL);
     nsres = nsIDOMHTMLElement_GetTagName(This->nselem, &tag_str);
-    if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&tag_str, &tag);
-        *p = SysAllocString(tag);
-    }else {
-        ERR("GetTagName failed: %08x\n", nsres);
-        *p = NULL;
-    }
-    nsAString_Finish(&tag_str);
-
-    return S_OK;
+    return return_nsstr(nsres, &tag_str, p);
 }
 
 static HRESULT WINAPI HTMLElement_get_parentElement(IHTMLElement *iface, IHTMLElement **p)
@@ -787,17 +754,7 @@ static HRESULT WINAPI HTMLElement_get_title(IHTMLElement *iface, BSTR *p)
 
     nsAString_Init(&title_str, NULL);
     nsres = nsIDOMHTMLElement_GetTitle(This->nselem, &title_str);
-    if(NS_SUCCEEDED(nsres)) {
-        const PRUnichar *title;
-
-        nsAString_GetData(&title_str, &title);
-        *p = *title ? SysAllocString(title) : NULL;
-    }else {
-        ERR("GetTitle failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    return S_OK;
+    return return_nsstr(nsres, &title_str, p);
 }
 
 static HRESULT WINAPI HTMLElement_put_language(IHTMLElement *iface, BSTR v)
@@ -1018,18 +975,7 @@ static HRESULT WINAPI HTMLElement_get_innerHTML(IHTMLElement *iface, BSTR *p)
 
     nsAString_Init(&html_str, NULL);
     nsres = nsIDOMHTMLElement_GetInnerHTML(This->nselem, &html_str);
-    if(NS_SUCCEEDED(nsres)) {
-        const PRUnichar *html;
-
-        nsAString_GetData(&html_str, &html);
-        *p = *html ? SysAllocString(html) : NULL;
-    }else {
-        FIXME("SetInnerHtml failed %08x\n", nsres);
-        *p = NULL;
-    }
-
-    nsAString_Finish(&html_str);
-    return S_OK;
+    return return_nsstr(nsres, &html_str, p);
 }
 
 static HRESULT WINAPI HTMLElement_put_innerText(IHTMLElement *iface, BSTR v)
