@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include "wine/debug.h"
 
 #define COBJMACROS
@@ -33,6 +34,9 @@ typedef struct {
     IDirect3DRMFrame2 IDirect3DRMFrame2_iface;
     IDirect3DRMFrame3 IDirect3DRMFrame3_iface;
     LONG ref;
+    ULONG nb_children;
+    ULONG children_capacity;
+    IDirect3DRMFrame3** children;
 } IDirect3DRMFrameImpl;
 
 static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame2(IDirect3DRMFrame2 *iface)
@@ -44,6 +48,8 @@ static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame3(IDirect3DRMFrame
 {
     return CONTAINING_RECORD(iface, IDirect3DRMFrameImpl, IDirect3DRMFrame3_iface);
 }
+
+static inline IDirect3DRMFrameImpl *unsafe_impl_from_IDirect3DRMFrame2(IDirect3DRMFrame2 *iface);
 
 /*** IUnknown methods ***/
 static HRESULT WINAPI IDirect3DRMFrame2Impl_QueryInterface(IDirect3DRMFrame2* iface,
@@ -89,11 +95,17 @@ static ULONG WINAPI IDirect3DRMFrame2Impl_Release(IDirect3DRMFrame2* iface)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
+    ULONG i;
 
     TRACE("(%p)->(): new ref = %d\n", This, ref);
 
     if (!ref)
+    {
+        for (i = 0; i < This->nb_children; i++)
+            IDirect3DRMFrame3_Release(This->children[i]);
+        HeapFree(GetProcessHeap(), 0, This->children);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -185,10 +197,16 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_AddChild(IDirect3DRMFrame2* iface,
                                                      LPDIRECT3DRMFRAME child)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    IDirect3DRMFrameImpl *frame;
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, child);
+    TRACE("(%p/%p)->(%p)\n", iface, This, child);
 
-    return E_NOTIMPL;
+    frame = unsafe_impl_from_IDirect3DRMFrame2((LPDIRECT3DRMFRAME2)child);
+
+    if (!frame)
+        return D3DRMERR_BADOBJECT;
+
+    return IDirect3DRMFrame3_AddChild(&This->IDirect3DRMFrame3_iface, &frame->IDirect3DRMFrame3_iface);
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_AddLight(IDirect3DRMFrame2* iface,
@@ -928,7 +946,6 @@ static const struct IDirect3DRMFrame2Vtbl Direct3DRMFrame2_Vtbl =
     IDirect3DRMFrame2Impl_GetHierarchyBox
 };
 
-
 /*** IUnknown methods ***/
 static HRESULT WINAPI IDirect3DRMFrame3Impl_QueryInterface(IDirect3DRMFrame3* iface,
                                                            REFIID riid, void** object)
@@ -1036,10 +1053,45 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddChild(IDirect3DRMFrame3* iface,
                                                      LPDIRECT3DRMFRAME3 child)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    ULONG i;
+    IDirect3DRMFrame3** children;
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, child);
+    TRACE("(%p/%p)->(%p)\n", iface, This, child);
 
-    return E_NOTIMPL;
+    if (!child)
+        return D3DRMERR_BADOBJECT;
+
+    /* Check if already existing and return gracefully without increasing ref count */
+    for (i = 0; i < This->nb_children; i++)
+        if (This->children[i] == child)
+            return D3DRM_OK;
+
+    if ((This->nb_children + 1) > This->children_capacity)
+    {
+        ULONG new_capacity;
+
+        if (!This->children_capacity)
+        {
+            new_capacity = 16;
+            children = HeapAlloc(GetProcessHeap(), 0, new_capacity * sizeof(IDirect3DRMFrame3*));
+        }
+        else
+        {
+            new_capacity = This->children_capacity * 2;
+            children = HeapReAlloc(GetProcessHeap(), 0, This->children, new_capacity * sizeof(IDirect3DRMFrame3*));
+        }
+
+        if (!children)
+            return E_OUTOFMEMORY;
+
+        This->children_capacity = new_capacity;
+        This->children = children;
+    }
+
+    This->children[This->nb_children++] = child;
+    IDirect3DRMFrame3_AddRef(child);
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_AddLight(IDirect3DRMFrame3* iface,
@@ -1926,6 +1978,15 @@ static const struct IDirect3DRMFrame3Vtbl Direct3DRMFrame3_Vtbl =
     IDirect3DRMFrame3Impl_SetMaterialOverride,
     IDirect3DRMFrame3Impl_GetMaterialOverride
 };
+
+static inline IDirect3DRMFrameImpl *unsafe_impl_from_IDirect3DRMFrame2(IDirect3DRMFrame2 *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &Direct3DRMFrame2_Vtbl);
+
+    return impl_from_IDirect3DRMFrame2(iface);
+}
 
 HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown** ppObj)
 {
