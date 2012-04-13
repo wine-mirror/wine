@@ -293,21 +293,8 @@ static HRESULT WINAPI HTMLBodyElement_get_background(IHTMLBodyElement *iface, BS
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&background_str, NULL);
-
     nsres = nsIDOMHTMLBodyElement_GetBackground(This->nsbody, &background_str);
-    if(NS_SUCCEEDED(nsres)) {
-        const PRUnichar *background;
-        nsAString_GetData(&background_str, &background);
-        *p = *background ? SysAllocString(background) : NULL;
-    }else {
-        ERR("GetBackground failed: %08x\n", nsres);
-        *p = NULL;
-    }
-
-    nsAString_Finish(&background_str);
-
-    TRACE("*p = %s\n", debugstr_w(*p));
-    return S_OK;
+    return return_nsstr(nsres, &background_str, p);
 }
 
 static HRESULT WINAPI HTMLBodyElement_put_bgProperties(IHTMLBodyElement *iface, BSTR v)
