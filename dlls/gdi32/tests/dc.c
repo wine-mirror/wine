@@ -744,7 +744,7 @@ static void test_boundsrect(void)
     HBITMAP bitmap, dib, old;
     RECT rect, expect, set_rect;
     UINT ret;
-    int level;
+    int i, level;
 
     hdc = CreateCompatibleDC(0);
     ok(hdc != NULL, "CreateCompatibleDC failed\n");
@@ -952,8 +952,8 @@ static void test_boundsrect(void)
 
     memset( buffer, 0, sizeof(buffer) );
     info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    info->bmiHeader.biWidth = 64;
-    info->bmiHeader.biHeight = 64;
+    info->bmiHeader.biWidth = 256;
+    info->bmiHeader.biHeight = 256;
     info->bmiHeader.biPlanes = 1;
     info->bmiHeader.biBitCount = 8;
     info->bmiHeader.biCompression = BI_RGB;
@@ -971,18 +971,65 @@ static void test_boundsrect(void)
     SetRect( &expect, 6, 6, 56, 51 );
     todo_wine
     ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
-    LineTo( hdc, 100, 30 );
+    LineTo( hdc, 300, 30 );
     ret = GetBoundsRect( hdc, &rect, 0 );
     ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
-    SetRect( &expect, 6, 6, 64, 51 );
+    SetRect( &expect, 6, 6, 256, 51 );
     todo_wine
     ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
-    LineTo( hdc, -100, -100 );
+    LineTo( hdc, -300, -300 );
     ret = GetBoundsRect( hdc, &rect, 0 );
     ok( ret == DCB_SET, "GetBoundsRect returned %x\n", ret );
-    SetRect( &expect, 0, 0, 64, 51 );
+    SetRect( &expect, 0, 0, 256, 51 );
     todo_wine
     ok( EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom );
+
+    /* test the wide pen heuristics */
+    SetBoundsRect( hdc, NULL, DCB_ENABLE | DCB_RESET );
+    for (i = 0; i < 1000; i++)
+    {
+        static const UINT endcaps[3] = { PS_ENDCAP_ROUND, PS_ENDCAP_SQUARE, PS_ENDCAP_FLAT };
+        static const UINT joins[3] = { PS_JOIN_ROUND, PS_JOIN_BEVEL, PS_JOIN_MITER };
+        LOGBRUSH brush = { BS_SOLID, RGB(0,0,0), 0 };
+        UINT join = joins[i % 3];
+        UINT endcap = endcaps[(i / 3) % 3];
+        INT inflate, width = 1 + i / 9;
+        HPEN pen = ExtCreatePen( PS_GEOMETRIC | join | endcap | PS_SOLID, width, &brush, 0, NULL );
+        HPEN old = SelectObject( hdc, pen );
+        MoveToEx( hdc, 100, 100, NULL );
+        LineTo( hdc, 160, 100 );
+        LineTo( hdc, 100, 160 );
+        LineTo( hdc, 160, 160 );
+        GetBoundsRect( hdc, &rect, DCB_RESET );
+        SetRect( &expect, 100, 100, 161, 161 );
+
+        inflate = width + 2;
+        if (join == PS_JOIN_MITER)
+        {
+            inflate *= 5;
+            if (endcap == PS_ENDCAP_SQUARE)
+                InflateRect( &expect, (inflate * 3 + 1) / 2, (inflate * 3 + 1) / 2 );
+            else
+                InflateRect( &expect, inflate, inflate );
+        }
+        else
+        {
+            if (endcap == PS_ENDCAP_SQUARE)
+                InflateRect( &expect, inflate - inflate / 4, inflate - inflate / 4 );
+            else
+                InflateRect( &expect, (inflate + 1) / 2, (inflate + 1) / 2 );
+        }
+        expect.left   = max( expect.left, 0 );
+        expect.top    = max( expect.top, 0 );
+        expect.right  = min( expect.right, 256 );
+        expect.bottom = min( expect.bottom, 256 );
+        todo_wine
+        ok( EqualRect(&rect, &expect),
+            "Got %d,%d,%d,%d expected %d,%d,%d,%d %u/%x/%x\n",
+            rect.left, rect.top, rect.right, rect.bottom,
+            expect.left, expect.top, expect.right, expect.bottom, width, endcap, join );
+        DeleteObject( SelectObject( hdc, old ));
+    }
 
     DeleteDC( hdc );
     DeleteObject( bitmap );
