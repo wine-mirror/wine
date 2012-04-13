@@ -153,23 +153,13 @@ static HRESULT WINAPI HTMLOptionElement_get_value(IHTMLOptionElement *iface, BST
 {
     HTMLOptionElement *This = impl_from_IHTMLOptionElement(iface);
     nsAString value_str;
-    const PRUnichar *value;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&value_str, NULL);
     nsres = nsIDOMHTMLOptionElement_GetValue(This->nsoption, &value_str);
-    if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&value_str, &value);
-        *p = SysAllocString(value);
-    }else {
-        ERR("GetValue failed: %08x\n", nsres);
-        *p = NULL;
-    }
-    nsAString_Finish(&value_str);
-
-    return S_OK;
+    return return_nsstr(nsres, &value_str, p);
 }
 
 static HRESULT WINAPI HTMLOptionElement_put_defaultSelected(IHTMLOptionElement *iface, VARIANT_BOOL v)
@@ -253,23 +243,13 @@ static HRESULT WINAPI HTMLOptionElement_get_text(IHTMLOptionElement *iface, BSTR
 {
     HTMLOptionElement *This = impl_from_IHTMLOptionElement(iface);
     nsAString text_str;
-    const PRUnichar *text;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&text_str, NULL);
     nsres = nsIDOMHTMLOptionElement_GetText(This->nsoption, &text_str);
-    if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&text_str, &text);
-        *p = SysAllocString(text);
-    }else {
-        ERR("GetText failed: %08x\n", nsres);
-        *p = NULL;
-    }
-    nsAString_Finish(&text_str);
-
-    return S_OK;
+    return return_nsstr(nsres, &text_str, p);
 }
 
 static HRESULT WINAPI HTMLOptionElement_get_form(IHTMLOptionElement *iface, IHTMLFormElement **p)

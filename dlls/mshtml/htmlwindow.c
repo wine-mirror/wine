@@ -750,30 +750,12 @@ static HRESULT WINAPI HTMLWindow2_get_name(IHTMLWindow2 *iface, BSTR *p)
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
     nsAString name_str;
     nsresult nsres;
-    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&name_str, NULL);
     nsres = nsIDOMWindow_GetName(This->nswindow, &name_str);
-    if(NS_SUCCEEDED(nsres)) {
-        const PRUnichar *name;
-
-        nsAString_GetData(&name_str, &name);
-        if(*name) {
-            *p = SysAllocString(name);
-            hres = *p ? S_OK : E_OUTOFMEMORY;
-        }else {
-            *p = NULL;
-            hres = S_OK;
-        }
-    }else {
-        ERR("GetName failed: %08x\n", nsres);
-        hres = E_FAIL;
-    }
-    nsAString_Finish(&name_str);
-
-    return hres;
+    return return_nsstr(nsres, &name_str, p);
 }
 
 static HRESULT WINAPI HTMLWindow2_get_parent(IHTMLWindow2 *iface, IHTMLWindow2 **p)

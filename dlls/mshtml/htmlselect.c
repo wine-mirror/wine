@@ -266,26 +266,14 @@ static HRESULT WINAPI HTMLSelectElement_get_selectedIndex(IHTMLSelectElement *if
 static HRESULT WINAPI HTMLSelectElement_get_type(IHTMLSelectElement *iface, BSTR *p)
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
-    const PRUnichar *type;
     nsAString type_str;
     nsresult nsres;
-    HRESULT hres = S_OK;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&type_str, NULL);
     nsres = nsIDOMHTMLSelectElement_GetType(This->nsselect, &type_str);
-    if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&type_str, &type);
-        *p = *type ? SysAllocString(type) : NULL;
-    }else {
-        ERR("GetType failed: %08x\n", nsres);
-        hres = E_FAIL;
-    }
-
-    nsAString_Finish(&type_str);
-
-    return hres;
+    return return_nsstr(nsres, &type_str, p);
 }
 
 static HRESULT WINAPI HTMLSelectElement_put_value(IHTMLSelectElement *iface, BSTR v)
@@ -309,25 +297,13 @@ static HRESULT WINAPI HTMLSelectElement_get_value(IHTMLSelectElement *iface, BST
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
     nsAString value_str;
-    const PRUnichar *value = NULL;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&value_str, NULL);
-
     nsres = nsIDOMHTMLSelectElement_GetValue(This->nsselect, &value_str);
-    if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&value_str, &value);
-        *p = *value ? SysAllocString(value) : NULL;
-    }else {
-        ERR("GetValue failed: %08x\n", nsres);
-    }
-
-    nsAString_Finish(&value_str);
-
-    TRACE("value=%s\n", debugstr_w(*p));
-    return S_OK;
+    return return_nsstr(nsres, &value_str, p);
 }
 
 static HRESULT WINAPI HTMLSelectElement_put_disabled(IHTMLSelectElement *iface, VARIANT_BOOL v)

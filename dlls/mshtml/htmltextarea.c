@@ -135,25 +135,13 @@ static HRESULT WINAPI HTMLTextAreaElement_get_value(IHTMLTextAreaElement *iface,
 {
     HTMLTextAreaElement *This = impl_from_IHTMLTextAreaElement(iface);
     nsAString value_str;
-    const PRUnichar *value;
     nsresult nsres;
-    HRESULT hres = S_OK;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&value_str, NULL);
-
     nsres = nsIDOMHTMLTextAreaElement_GetValue(This->nstextarea, &value_str);
-    if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&value_str, &value);
-        *p = *value ? SysAllocString(value) : NULL;
-    }else {
-        ERR("GetValue failed: %08x\n", nsres);
-        hres = E_FAIL;
-    }
-
-    nsAString_Finish(&value_str);
-    return hres;
+    return return_nsstr(nsres, &value_str, p);
 }
 
 static HRESULT WINAPI HTMLTextAreaElement_put_name(IHTMLTextAreaElement *iface, BSTR v)
@@ -167,25 +155,13 @@ static HRESULT WINAPI HTMLTextAreaElement_get_name(IHTMLTextAreaElement *iface, 
 {
     HTMLTextAreaElement *This = impl_from_IHTMLTextAreaElement(iface);
     nsAString name_str;
-    const PRUnichar *name;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&name_str, NULL);
-
     nsres = nsIDOMHTMLTextAreaElement_GetName(This->nstextarea, &name_str);
-    if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&name_str, &name);
-        *p = SysAllocString(name);
-    }else {
-        ERR("GetName failed: %08x\n", nsres);
-    }
-
-    nsAString_Finish(&name_str);
-
-    TRACE("%s\n", debugstr_w(*p));
-    return S_OK;
+    return return_nsstr(nsres, &name_str, p);
 }
 
 static HRESULT WINAPI HTMLTextAreaElement_put_status(IHTMLTextAreaElement *iface, VARIANT v)

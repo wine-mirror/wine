@@ -136,25 +136,13 @@ static HRESULT WINAPI HTMLInputElement_get_type(IHTMLInputElement *iface, BSTR *
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsAString type_str;
-    const PRUnichar *type;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&type_str, NULL);
     nsres = nsIDOMHTMLInputElement_GetType(This->nsinput, &type_str);
-
-    if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&type_str, &type);
-        *p = SysAllocString(type);
-    }else {
-        ERR("GetType failed: %08x\n", nsres);
-    }
-
-    nsAString_Finish(&type_str);
-
-    TRACE("type=%s\n", debugstr_w(*p));
-    return S_OK;
+    return return_nsstr(nsres, &type_str, p);
 }
 
 static HRESULT WINAPI HTMLInputElement_put_value(IHTMLInputElement *iface, BSTR v)
@@ -210,25 +198,13 @@ static HRESULT WINAPI HTMLInputElement_get_name(IHTMLInputElement *iface, BSTR *
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsAString name_str;
-    const PRUnichar *name;
     nsresult nsres;
-    HRESULT hres = S_OK;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&name_str, NULL);
-
     nsres = nsIDOMHTMLInputElement_GetName(This->nsinput, &name_str);
-    if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&name_str, &name);
-        *p = *name ? SysAllocString(name) : NULL;
-    }else {
-        ERR("GetName failed: %08x\n", nsres);
-        hres = E_FAIL;
-    }
-
-    nsAString_Finish(&name_str);
-    return hres;
+    return return_nsstr(nsres, &name_str, p);
 }
 
 static HRESULT WINAPI HTMLInputElement_put_status(IHTMLInputElement *iface, VARIANT_BOOL v)

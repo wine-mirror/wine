@@ -240,7 +240,6 @@ static HRESULT WINAPI HTMLScriptElement_put_type(IHTMLScriptElement *iface, BSTR
 static HRESULT WINAPI HTMLScriptElement_get_type(IHTMLScriptElement *iface, BSTR *p)
 {
     HTMLScriptElement *This = impl_from_IHTMLScriptElement(iface);
-    const PRUnichar *nstype;
     nsAString nstype_str;
     nsresult nsres;
 
@@ -248,14 +247,7 @@ static HRESULT WINAPI HTMLScriptElement_get_type(IHTMLScriptElement *iface, BSTR
 
     nsAString_Init(&nstype_str, NULL);
     nsres = nsIDOMHTMLScriptElement_GetType(This->nsscript, &nstype_str);
-    if(NS_FAILED(nsres))
-        ERR("GetType failed: %08x\n", nsres);
-
-    nsAString_GetData(&nstype_str, &nstype);
-    *p = *nstype ? SysAllocString(nstype) : NULL;
-    nsAString_Finish(&nstype_str);
-
-    return S_OK;
+    return return_nsstr(nsres, &nstype_str, p);
 }
 
 static const IHTMLScriptElementVtbl HTMLScriptElementVtbl = {

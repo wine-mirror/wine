@@ -155,41 +155,21 @@ static HRESULT WINAPI HTMLFrameBase_get_name(IHTMLFrameBase *iface, BSTR *p)
 {
     HTMLFrameBase *This = impl_from_IHTMLFrameBase(iface);
     nsAString nsstr;
-    const PRUnichar *strdata;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->nsframe) {
-        nsAString_Init(&nsstr, NULL);
-        nsres = nsIDOMHTMLFrameElement_GetName(This->nsframe, &nsstr);
-    }else if(This->nsiframe) {
-        nsAString_Init(&nsstr, NULL);
-        nsres = nsIDOMHTMLIFrameElement_GetName(This->nsiframe, &nsstr);
-    }else {
+    if(!This->nsframe && !This->nsiframe) {
         ERR("No attached ns frame object\n");
         return E_UNEXPECTED;
     }
 
-    if(NS_FAILED(nsres)) {
-        ERR("GetName failed: 0x%08x\n", nsres);
-        nsAString_Finish(&nsstr);
-        return E_FAIL;
-    }
-
-    nsAString_GetData(&nsstr, &strdata);
-    if(*strdata) {
-        *p = SysAllocString(strdata);
-        if(!*p) {
-            nsAString_Finish(&nsstr);
-            return E_OUTOFMEMORY;
-        }
-    }else
-        *p = NULL;
-
-    nsAString_Finish(&nsstr);
-
-    return S_OK;
+    nsAString_Init(&nsstr, NULL);
+    if(This->nsframe)
+        nsres = nsIDOMHTMLFrameElement_GetName(This->nsframe, &nsstr);
+    else
+        nsres = nsIDOMHTMLIFrameElement_GetName(This->nsiframe, &nsstr);
+    return return_nsstr(nsres, &nsstr, p);
 }
 
 static HRESULT WINAPI HTMLFrameBase_put_border(IHTMLFrameBase *iface, VARIANT v)
