@@ -894,6 +894,7 @@ PPD *PSDRV_ParsePPD(char *fname)
                 duplex->WinDuplex = DMDUP_SIMPLEX;
             }
             tuple.option = tuple.opttrans = tuple.value = NULL;
+            list_add_tail( &ppd->Duplexes, &duplex->entry );
         }
 
         else if(!strcmp("*DefaultDuplex", tuple.key)) {
