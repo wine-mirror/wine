@@ -796,7 +796,6 @@ static HRESULT WINAPI Gstreamer_AudioConvert_SetMediaType(TransformFilter *tf, P
                                    NULL);
 
     hr = Gstreamer_transform_ConnectInput(This, amt, capsin, capsout);
-    FIXME("%08x\n", hr);
     gst_caps_unref(capsin);
     gst_caps_unref(capsout);
 
