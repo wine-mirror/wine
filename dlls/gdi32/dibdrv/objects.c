@@ -2162,17 +2162,3 @@ BOOL brush_rect(dibdrv_physdev *pdev, dib_brush *brush, const RECT *rect, HRGN c
     free_clipped_rects( &clipped_rects );
     return ret;
 }
-
-/* paint a region with the brush (note: the region can be modified) */
-BOOL brush_region( dibdrv_physdev *pdev, HRGN region )
-{
-    if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
-    return brush_rect( pdev, &pdev->brush, NULL, region, GetROP2( pdev->dev.hdc ));
-}
-
-/* paint a region with the pen (note: the region can be modified) */
-BOOL pen_region( dibdrv_physdev *pdev, HRGN region )
-{
-    if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
-    return brush_rect( pdev, &pdev->pen_brush, NULL, region, GetROP2( pdev->dev.hdc ));
-}

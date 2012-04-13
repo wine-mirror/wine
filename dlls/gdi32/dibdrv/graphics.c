@@ -26,6 +26,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
 
+/* paint a region with the brush (note: the region can be modified) */
+static BOOL brush_region( dibdrv_physdev *pdev, HRGN region )
+{
+    if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
+    return brush_rect( pdev, &pdev->brush, NULL, region, GetROP2( pdev->dev.hdc ));
+}
+
+/* paint a region with the pen (note: the region can be modified) */
+static BOOL pen_region( dibdrv_physdev *pdev, HRGN region )
+{
+    if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
+    return brush_rect( pdev, &pdev->pen_brush, NULL, region, GetROP2( pdev->dev.hdc ));
+}
+
 static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom, BOOL rtl_correction )
 {
     RECT rect;
@@ -813,7 +827,6 @@ BOOL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
 
     if (region)
     {
-        if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
         ret = pen_region( pdev, region );
         DeleteObject( region );
     }
@@ -968,7 +981,6 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
 
     if (outline)
     {
-        if (pdev->clip) CombineRgn( outline, outline, pdev->clip, RGN_AND );
         ret = pen_region( pdev, outline );
         DeleteObject( outline );
     }
