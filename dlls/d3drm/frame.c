@@ -482,10 +482,16 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteChild(IDirect3DRMFrame2* iface
                                                         LPDIRECT3DRMFRAME frame)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
+    IDirect3DRMFrameImpl *child;
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, frame);
+    TRACE("(%p/%p)->(%p)\n", iface, This, frame);
 
-    return E_NOTIMPL;
+    child = unsafe_impl_from_IDirect3DRMFrame2((LPDIRECT3DRMFRAME2)frame);
+
+    if (!child)
+        return D3DRMERR_BADOBJECT;
+
+    return IDirect3DRMFrame3_DeleteChild(&This->IDirect3DRMFrame3_iface, &child->IDirect3DRMFrame3_iface);
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteLight(IDirect3DRMFrame2* iface,
@@ -1358,10 +1364,26 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteChild(IDirect3DRMFrame3* iface
                                                         LPDIRECT3DRMFRAME3 frame)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    ULONG i;
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, frame);
+    TRACE("(%p/%p)->(%p)\n", iface, This, frame);
 
-    return E_NOTIMPL;
+    if (!frame)
+        return D3DRMERR_BADOBJECT;
+
+    /* Check if child exists */
+    for (i = 0; i < This->nb_children; i++)
+        if (This->children[i] == frame)
+            break;
+
+    if (i == This->nb_children)
+        return D3DRMERR_BADVALUE;
+
+    memmove(This->children + i, This->children + i + 1, sizeof(IDirect3DRMFrame3*) * (This->nb_children - 1 - i));
+    IDirect3DRMFrame3_Release(frame);
+    This->nb_children--;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteLight(IDirect3DRMFrame3* iface,

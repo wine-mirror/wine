@@ -450,7 +450,7 @@ static void test_Frame(void)
     CHECK_REFCOUNT(pFrameP1, 1);
 
     hr = IDirect3DRMFrame_DeleteChild(pFrameP1, NULL);
-    todo_wine ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
+    ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameP1, 1);
 
     /* Add child to first parent */
@@ -547,7 +547,7 @@ static void test_Frame(void)
 
     /* Delete child */
     hr = IDirect3DRMFrame_DeleteChild(pFrameP2, pFrameC);
-    todo_wine ok(hr == D3DRM_OK, "Cannot delete child frame (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Cannot delete child frame (hr = %x)\n", hr);
     todo_wine CHECK_REFCOUNT(pFrameC, 1);
 
     pArray = NULL;
