@@ -66,12 +66,18 @@ static void test_hglobal_storage_stat(void)
     r = CreateILockBytesOnHGlobal( NULL, TRUE, &ilb );
     ok( r == S_OK, "CreateILockBytesOnHGlobal failed\n");
 
+    r = StgIsStorageILockBytes( ilb );
+    ok( r == S_FALSE, "StgIsStorageILockBytes should have failed\n");
+
     mode = STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE;/*0x1012*/
     r = StgCreateDocfileOnILockBytes( ilb, mode, 0,  &stg );
     ok( r == S_OK, "StgCreateDocfileOnILockBytes failed\n");
 
     r = WriteClassStg( stg, &test_stg_cls );
     ok( r == S_OK, "WriteClassStg failed\n");
+
+    r = StgIsStorageILockBytes( ilb );
+    ok( r == S_OK, "StgIsStorageILockBytes failed\n");
 
     memset( &stat, 0, sizeof stat );
     r = IStorage_Stat( stg, &stat, 0 );

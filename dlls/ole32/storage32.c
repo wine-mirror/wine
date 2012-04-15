@@ -7846,15 +7846,16 @@ HRESULT WINAPI StgSetTimes(OLECHAR const *str, FILETIME const *pctime,
  */
 HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt)
 {
-  BYTE sig[8];
+  BYTE sig[sizeof(STORAGE_magic)];
   ULARGE_INTEGER offset;
+  ULONG read = 0;
 
   offset.u.HighPart = 0;
   offset.u.LowPart  = 0;
 
-  ILockBytes_ReadAt(plkbyt, offset, sig, sizeof(sig), NULL);
+  ILockBytes_ReadAt(plkbyt, offset, sig, sizeof(sig), &read);
 
-  if (memcmp(sig, STORAGE_magic, sizeof(STORAGE_magic)) == 0)
+  if (read == sizeof(sig) && memcmp(sig, STORAGE_magic, sizeof(sig)) == 0)
     return S_OK;
 
   return S_FALSE;
