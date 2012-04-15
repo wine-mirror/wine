@@ -44,6 +44,11 @@ static BOOL db_display = FALSE;
 #define get_cond(ins)           tbl_cond[(ins >> 28) & 0x0f]
 #define get_nibble(ins, num)    ((ins >> (num * 4)) & 0x0f)
 
+static char const tbl_regs[][4] = {
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10",
+    "fp", "ip", "sp", "lr", "pc", "cpsr"
+};
+
 static char const tbl_addrmode[][3] = {
     "da", "ia", "db", "ib"
 };
@@ -93,7 +98,7 @@ static UINT arm_disasm_branch(UINT inst)
     if (offset & 0x02000000) offset |= 0xfc000000;
     offset += 8;
 
-    dbg_printf("\n\tb%s%s\t#%d/0x%08x", link ? "l" : "", get_cond(inst), offset, offset);
+    dbg_printf("\n\tb%s%s\t#%d", link ? "l" : "", get_cond(inst), offset);
     return 0;
 }
 
@@ -113,22 +118,21 @@ static UINT arm_disasm_dataprocessing(UINT inst)
     }
 
     dbg_printf("\n\t%s%s%s", tbl_dataops[opcode], condcodes ? "s" : "", get_cond(inst));
+    dbg_printf("\t%s, ", tbl_regs[get_nibble(inst, 3)]);
     if (no_op1)
     {
         if (immediate)
-            dbg_printf("\tr%u, #%u", get_nibble(inst, 3),
-                       ROR32(inst & 0xff, 2 * get_nibble(inst, 2)));
+            dbg_printf("#%u", ROR32(inst & 0xff, 2 * get_nibble(inst, 2)));
         else
-            dbg_printf("\tr%u, r%u", get_nibble(inst, 3), get_nibble(inst, 0));
+            dbg_printf("%s", tbl_regs[get_nibble(inst, 0)]);
     }
     else
     {
         if (immediate)
-            dbg_printf("\tr%u, r%u, #%u", get_nibble(inst, 3), get_nibble(inst, 4),
+            dbg_printf("%s, #%u", tbl_regs[get_nibble(inst, 4)],
                        ROR32(inst & 0xff, 2 * get_nibble(inst, 2)));
         else
-            dbg_printf("\tr%u, r%u, r%u", get_nibble(inst, 3), get_nibble(inst, 4),
-                       get_nibble(inst, 0));
+            dbg_printf("%s, %s", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
     }
     return 0;
 }
@@ -147,20 +151,20 @@ static UINT arm_disasm_singletrans(UINT inst)
 
     dbg_printf("\n\t%s%s%s%s", load ? "ldr" : "str", byte ? "b" : "", writeback ? "t" : "",
                get_cond(inst));
-    dbg_printf("\tr%u, ", get_nibble(inst, 3));
+    dbg_printf("\t%s, ", tbl_regs[get_nibble(inst, 3)]);
     if (indexing)
     {
         if (immediate)
-            dbg_printf("[r%u, #%d]", get_nibble(inst, 4), offset);
+            dbg_printf("[%s, #%d]", tbl_regs[get_nibble(inst, 4)], offset);
         else
-            dbg_printf("[r%u, r%u]", get_nibble(inst, 4), get_nibble(inst, 0));
+            dbg_printf("[%s, %s]", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
     }
     else
     {
         if (immediate)
-            dbg_printf("[r%u], #%d", get_nibble(inst, 4), offset);
+            dbg_printf("[%s], #%d", tbl_regs[get_nibble(inst, 4)], offset);
         else
-            dbg_printf("[r%u], r%u", get_nibble(inst, 4), get_nibble(inst, 0));
+            dbg_printf("[%s], %s", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
     }
     return 0;
 }
@@ -180,20 +184,20 @@ static UINT arm_disasm_halfwordtrans(UINT inst)
 
     dbg_printf("\n\t%s%s%s%s%s", load ? "ldr" : "str", sign ? "s" : "",
                halfword ? "h" : (sign ? "b" : ""), writeback ? "t" : "", get_cond(inst));
-    dbg_printf("\tr%u, ", get_nibble(inst, 3));
+    dbg_printf("\t%s, ", tbl_regs[get_nibble(inst, 3)]);
     if (indexing)
     {
         if (immediate)
-            dbg_printf("[r%u, #%d]", get_nibble(inst, 4), offset);
+            dbg_printf("[%s, #%d]", tbl_regs[get_nibble(inst, 4)], offset);
         else
-            dbg_printf("[r%u, r%u]", get_nibble(inst, 4), get_nibble(inst, 0));
+            dbg_printf("[%s, %s]", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
     }
     else
     {
         if (immediate)
-            dbg_printf("[r%u], #%d", get_nibble(inst, 4), offset);
+            dbg_printf("[%s], #%d", tbl_regs[get_nibble(inst, 4)], offset);
         else
-            dbg_printf("[r%u], r%u", get_nibble(inst, 4), get_nibble(inst, 0));
+            dbg_printf("[%s], %s", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
     }
     return 0;
 }
@@ -213,13 +217,13 @@ static UINT arm_disasm_blocktrans(UINT inst)
             break;
         }
 
-    dbg_printf("\n\t%s%s%s\tr%u%s, {", load ? "ldm" : "stm", tbl_addrmode[addrmode], get_cond(inst),
-               get_nibble(inst, 4), writeback ? "!" : "");
+    dbg_printf("\n\t%s%s%s\t%s%s, {", load ? "ldm" : "stm", tbl_addrmode[addrmode], get_cond(inst),
+               tbl_regs[get_nibble(inst, 4)], writeback ? "!" : "");
     for (i=0;i<=15;i++)
         if ((inst>>i) & 1)
         {
-            if (i == last) dbg_printf("r%u", i);
-            else dbg_printf("r%u, ", i);
+            if (i == last) dbg_printf("%s", tbl_regs[i]);
+            else dbg_printf("%s, ", tbl_regs[i]);
         }
     dbg_printf("}%s", psr ? "^" : "");
     return 0;
@@ -241,8 +245,8 @@ static UINT arm_disasm_coproctrans(UINT inst)
     WORD load   = (inst >> 20) & 0x01;
     WORD CP_Opc = (inst >> 21) & 0x07;
 
-    dbg_printf("\n\t%s%s\t%u, %u, r%u, cr%u, cr%u, {%u}", load ? "mrc" : "mcr", get_cond(inst), CPnum,
-               CP, get_nibble(inst, 3), CRn, CRm, CP_Opc);
+    dbg_printf("\n\t%s%s\t%u, %u, %s, cr%u, cr%u, {%u}", load ? "mrc" : "mcr", get_cond(inst), CPnum,
+               CP, tbl_regs[get_nibble(inst, 3)], CRn, CRm, CP_Opc);
     return 0;
 }
 
@@ -275,9 +279,9 @@ static UINT arm_disasm_coprocdatatrans(UINT inst)
 
     dbg_printf("\n\t%s%s%s", load ? "ldc" : "stc", translen ? "l" : "", get_cond(inst));
     if (indexing)
-        dbg_printf("\t%u, cr%u, [r%u, #%d]%s", CPnum, CRd, get_nibble(inst, 4), offset, writeback?"!":"");
+        dbg_printf("\t%u, cr%u, [%s, #%d]%s", CPnum, CRd, tbl_regs[get_nibble(inst, 4)], offset, writeback?"!":"");
     else
-        dbg_printf("\t%u, cr%u, [r%u], #%d", CPnum, CRd, get_nibble(inst, 4), offset);
+        dbg_printf("\t%u, cr%u, [%s], #%d", CPnum, CRd, tbl_regs[get_nibble(inst, 4)], offset);
     return 0;
 }
 
@@ -293,9 +297,9 @@ static WORD thumb_disasm_hireg(WORD inst, ADDRESS64 *addr)
     if (h2) src += 8;
 
     if (op == 3)
-        dbg_printf("\n\tb%sx\tr%u", h1?"l":"", src);
+        dbg_printf("\n\tb%sx\t%s", h1?"l":"", tbl_regs[src]);
     else
-        dbg_printf("\n\t%s\tr%u, r%u", tbl_hiops_t[op], dst, src);
+        dbg_printf("\n\t%s\t%s, %s", tbl_hiops_t[op], tbl_regs[dst], tbl_regs[src]);
 
     return 0;
 }
@@ -316,8 +320,8 @@ static WORD thumb_disasm_blocktrans(WORD inst, ADDRESS64 *addr)
     for (i=0;i<=7;i++)
         if ((inst>>i) & 1)
         {
-            if (i == last) dbg_printf("r%u", i);
-            else dbg_printf("r%u, ", i);
+            if (i == last) dbg_printf("%s", tbl_regs[i]);
+            else dbg_printf("%s, ", tbl_regs[i]);
         }
     if (lrpc)
         dbg_printf(", %s", load ? "pc" : "lr");
@@ -356,29 +360,29 @@ static WORD thumb_disasm_nop(WORD inst, ADDRESS64 *addr)
 static WORD thumb_disasm_ldrpcrel(WORD inst, ADDRESS64 *addr)
 {
     WORD offset = (inst & 0xff) << 2;
-    dbg_printf("\n\tldr\tr%u, [pc, #%u]", (inst >> 8) & 0x07, offset);
+    dbg_printf("\n\tldr\t%s, [pc, #%u]", tbl_regs[(inst >> 8) & 0x07], offset);
     return 0;
 }
 
 static WORD thumb_disasm_ldrsprel(WORD inst, ADDRESS64 *addr)
 {
     WORD offset = (inst & 0xff) << 2;
-    dbg_printf("\n\t%s\tr%u, [sp, #%u]", (inst & 0x0800)?"ldr":"str", (inst >> 8) & 0x07, offset);
+    dbg_printf("\n\t%s\t%s, [sp, #%u]", (inst & 0x0800)?"ldr":"str", tbl_regs[(inst >> 8) & 0x07], offset);
     return 0;
 }
 
 static WORD thumb_disasm_ldrimm(WORD inst, ADDRESS64 *addr)
 {
     WORD offset = (inst & 0x07c0) >> 6;
-    dbg_printf("\n\t%s%s\tr%u, [r%u, #%u]", (inst & 0x0800)?"ldr":"str", (inst & 0x1000)?"b":"",
-               inst & 0x07, (inst >> 3) & 0x07, (inst & 0x1000)?offset:(offset << 2));
+    dbg_printf("\n\t%s%s\t%s, [%s, #%u]", (inst & 0x0800)?"ldr":"str", (inst & 0x1000)?"b":"",
+               tbl_regs[inst & 0x07], tbl_regs[(inst >> 3) & 0x07], (inst & 0x1000)?offset:(offset << 2));
     return 0;
 }
 
 static WORD thumb_disasm_immop(WORD inst, ADDRESS64 *addr)
 {
     WORD op = (inst >> 11) & 0x03;
-    dbg_printf("\n\t%s\tr%u, #%u", tbl_immops_t[op], (inst >> 8) & 0x07, inst & 0xff);
+    dbg_printf("\n\t%s\t%s, #%u", tbl_immops_t[op], tbl_regs[(inst >> 8) & 0x07], inst & 0xff);
     return 0;
 }
 
