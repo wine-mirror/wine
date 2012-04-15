@@ -61,33 +61,33 @@ static const struct ID3D10EffectTypeVtbl d3d10_effect_type_vtbl;
 static struct d3d10_effect_technique null_technique = {{&d3d10_effect_technique_vtbl}};
 static struct d3d10_effect_pass null_pass = {{&d3d10_effect_pass_vtbl}};
 static struct d3d10_effect_type null_type = {{&d3d10_effect_type_vtbl}};
-static struct d3d10_effect_variable null_local_buffer = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl,
+static struct d3d10_effect_variable null_local_buffer = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_variable = {&d3d10_effect_variable_vtbl,
+static struct d3d10_effect_variable null_variable = {{&d3d10_effect_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_scalar_variable = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl,
+static struct d3d10_effect_variable null_scalar_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_vector_variable = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl,
+static struct d3d10_effect_variable null_vector_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_matrix_variable = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl,
+static struct d3d10_effect_variable null_matrix_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_string_variable = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_string_variable_vtbl,
+static struct d3d10_effect_variable null_string_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_string_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_shader_resource_variable = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl,
+static struct d3d10_effect_variable null_shader_resource_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_render_target_view_variable = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_render_target_view_variable_vtbl,
+static struct d3d10_effect_variable null_render_target_view_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_render_target_view_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_depth_stencil_view_variable = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_view_variable_vtbl,
+static struct d3d10_effect_variable null_depth_stencil_view_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_view_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_shader_variable = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl,
+static struct d3d10_effect_variable null_shader_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_blend_variable = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_blend_variable_vtbl,
+static struct d3d10_effect_variable null_blend_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_blend_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_depth_stencil_variable = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_variable_vtbl,
+static struct d3d10_effect_variable null_depth_stencil_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_rasterizer_variable = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_rasterizer_variable_vtbl,
+static struct d3d10_effect_variable null_rasterizer_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_rasterizer_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_sampler_variable = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_sampler_variable_vtbl,
+static struct d3d10_effect_variable null_sampler_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_sampler_variable_vtbl},
         &null_local_buffer, &null_type};
 
 /* anonymous_shader_type and anonymous_shader */
@@ -101,14 +101,19 @@ static struct d3d10_effect_type anonymous_ps_type = {{&d3d10_effect_type_vtbl},
         anonymous_pixelshader_name, D3D10_SVT_PIXELSHADER, D3D10_SVC_OBJECT};
 static struct d3d10_effect_type anonymous_gs_type = {{&d3d10_effect_type_vtbl},
         anonymous_geometryshader_name, D3D10_SVT_GEOMETRYSHADER, D3D10_SVC_OBJECT};
-static struct d3d10_effect_variable anonymous_vs = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl,
+static struct d3d10_effect_variable anonymous_vs = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl},
         &null_local_buffer, &anonymous_vs_type, &null_shader_variable, anonymous_name};
-static struct d3d10_effect_variable anonymous_ps = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl,
+static struct d3d10_effect_variable anonymous_ps = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl},
         &null_local_buffer, &anonymous_ps_type, &null_shader_variable, anonymous_name};
-static struct d3d10_effect_variable anonymous_gs = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl,
+static struct d3d10_effect_variable anonymous_gs = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl},
         &null_local_buffer, &anonymous_gs_type, &null_shader_variable, anonymous_name};
 
 static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, const char *data, DWORD offset);
+
+static inline struct d3d10_effect_variable *impl_from_ID3D10EffectVariable(ID3D10EffectVariable *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_effect_variable, ID3D10EffectVariable_iface);
+}
 
 static BOOL copy_name(const char *ptr, char **name)
 {
@@ -615,30 +620,32 @@ static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, cons
 
 static void set_variable_vtbl(struct d3d10_effect_variable *v)
 {
+    const ID3D10EffectVariableVtbl **vtbl = &v->ID3D10EffectVariable_iface.lpVtbl;
+
     switch (v->type->type_class)
     {
         case D3D10_SVC_SCALAR:
-            v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl;
+            *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl;
             break;
 
         case D3D10_SVC_VECTOR:
-            v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl;
+            *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl;
             break;
 
         case D3D10_SVC_MATRIX_ROWS:
         case D3D10_SVC_MATRIX_COLUMNS:
-            v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl;
+            *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl;
             break;
 
         case D3D10_SVC_STRUCT:
-            v->vtbl = &d3d10_effect_variable_vtbl;
+            *vtbl = &d3d10_effect_variable_vtbl;
             break;
 
         case D3D10_SVC_OBJECT:
             switch(v->type->basetype)
             {
                 case D3D10_SVT_STRING:
-                    v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_string_variable_vtbl;
+                    *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_string_variable_vtbl;
                     break;
 
                 case D3D10_SVT_TEXTURE1D:
@@ -650,49 +657,49 @@ static void set_variable_vtbl(struct d3d10_effect_variable *v)
                 case D3D10_SVT_TEXTURE3D:
                 case D3D10_SVT_TEXTURECUBE:
                 case D3D10_SVT_BUFFER: /* Either resource or constant buffer. */
-                    v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl;
+                    *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl;
                     break;
 
                 case D3D10_SVT_RENDERTARGETVIEW:
-                    v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_render_target_view_variable_vtbl;
+                    *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_render_target_view_variable_vtbl;
                     break;
 
                 case D3D10_SVT_DEPTHSTENCILVIEW:
-                    v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_view_variable_vtbl;
+                    *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_view_variable_vtbl;
                     break;
 
                 case D3D10_SVT_DEPTHSTENCIL:
-                    v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_variable_vtbl;
+                    *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_variable_vtbl;
                     break;
 
                 case D3D10_SVT_VERTEXSHADER:
                 case D3D10_SVT_GEOMETRYSHADER:
                 case D3D10_SVT_PIXELSHADER:
-                    v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl;
+                    *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl;
                     break;
 
                 case D3D10_SVT_BLEND:
-                    v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_blend_variable_vtbl;
+                    *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_blend_variable_vtbl;
                     break;
 
                 case D3D10_SVT_RASTERIZER:
-                    v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_rasterizer_variable_vtbl;
+                    *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_rasterizer_variable_vtbl;
                     break;
 
                 case D3D10_SVT_SAMPLER:
-                    v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_sampler_variable_vtbl;
+                    *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_sampler_variable_vtbl;
                     break;
 
                 default:
                     FIXME("Unhandled basetype %s.\n", debug_d3d10_shader_variable_type(v->type->basetype));
-                    v->vtbl = &d3d10_effect_variable_vtbl;
+                    *vtbl = &d3d10_effect_variable_vtbl;
                     break;
             }
             break;
 
         default:
             FIXME("Unhandled type class %s.\n", debug_d3d10_shader_variable_class(v->type->type_class));
-            v->vtbl = &d3d10_effect_variable_vtbl;
+            *vtbl = &d3d10_effect_variable_vtbl;
             break;
     }
 }
@@ -1597,7 +1604,7 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
     for (i = 0; i < e->local_buffer_count; ++i)
     {
         struct d3d10_effect_variable *l = &e->local_buffers[i];
-        l->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl;
+        l->ID3D10EffectVariable_iface.lpVtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl;
         l->effect = e;
         l->buffer = &null_local_buffer;
 
@@ -1610,7 +1617,7 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         struct d3d10_effect_variable *v = &e->local_variables[i];
 
         v->effect = e;
-        v->vtbl = &d3d10_effect_variable_vtbl;
+        v->ID3D10EffectVariable_iface.lpVtbl = &d3d10_effect_variable_vtbl;
         v->buffer = &null_local_buffer;
 
         hr = parse_fx10_local_variable(v, &ptr, data);
@@ -2076,7 +2083,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
             struct d3d10_effect_variable *v = &l->members[index];
 
             TRACE("Returning variable %p.\n", v);
-            return (ID3D10EffectVariable *)v;
+            return &v->ID3D10EffectVariable_iface;
         }
         index -= l->type->member_count;
     }
@@ -2086,12 +2093,12 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
         struct d3d10_effect_variable *v = &This->local_variables[index];
 
         TRACE("Returning variable %p.\n", v);
-        return (ID3D10EffectVariable *)v;
+        return &v->ID3D10EffectVariable_iface;
     }
 
     WARN("Invalid index specified\n");
 
-    return (ID3D10EffectVariable *)&null_variable;
+    return &null_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableByName(ID3D10Effect *iface, LPCSTR name)
@@ -2104,7 +2111,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
     if (!name)
     {
         WARN("Invalid name specified\n");
-        return (ID3D10EffectVariable *)&null_variable;
+        return &null_variable.ID3D10EffectVariable_iface;
     }
 
     for (i = 0; i < This->local_buffer_count; ++i)
@@ -2119,7 +2126,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
             if (!strcmp(v->name, name))
             {
                 TRACE("Returning variable %p.\n", v);
-                return (ID3D10EffectVariable *)v;
+                return &v->ID3D10EffectVariable_iface;
             }
         }
     }
@@ -2131,13 +2138,13 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
         if (!strcmp(v->name, name))
         {
             TRACE("Returning variable %p.\n", v);
-            return (ID3D10EffectVariable *)v;
+            return &v->ID3D10EffectVariable_iface;
         }
     }
 
     WARN("Invalid name specified\n");
 
-    return (ID3D10EffectVariable *)&null_variable;
+    return &null_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableBySemantic(ID3D10Effect *iface,
@@ -2151,7 +2158,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
     if (!semantic)
     {
         WARN("Invalid semantic specified\n");
-        return (ID3D10EffectVariable *)&null_variable;
+        return &null_variable.ID3D10EffectVariable_iface;
     }
 
     for (i = 0; i < This->local_buffer_count; ++i)
@@ -2166,7 +2173,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
             if (!strcmp(v->semantic, semantic))
             {
                 TRACE("Returning variable %p.\n", v);
-                return (ID3D10EffectVariable *)v;
+                return &v->ID3D10EffectVariable_iface;
             }
         }
     }
@@ -2178,13 +2185,13 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
         if (!strcmp(v->semantic, semantic))
         {
             TRACE("Returning variable %p.\n", v);
-            return (ID3D10EffectVariable *)v;
+            return &v->ID3D10EffectVariable_iface;
         }
     }
 
     WARN("Invalid semantic specified\n");
 
-    return (ID3D10EffectVariable *)&null_variable;
+    return &null_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqueByIndex(ID3D10Effect *iface,
@@ -2326,14 +2333,14 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_Ge
     if (index >= This->annotation_count)
     {
         WARN("Invalid index specified\n");
-        return (ID3D10EffectVariable *)&null_variable;
+        return &null_variable.ID3D10EffectVariable_iface;
     }
 
     a = &This->annotations[index];
 
     TRACE("Returning annotation %p, %s\n", a, debugstr_a(a->name));
 
-    return (ID3D10EffectVariable *)a;
+    return &a->ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_GetAnnotationByName(
@@ -2350,13 +2357,13 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_Ge
         if (!strcmp(a->name, name))
         {
             TRACE("Returning annotation %p\n", a);
-            return (ID3D10EffectVariable *)a;
+            return &a->ID3D10EffectVariable_iface;
         }
     }
 
     WARN("Invalid name specified\n");
 
-    return (ID3D10EffectVariable *)&null_variable;
+    return &null_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPassByIndex(ID3D10EffectTechnique *iface,
@@ -2607,14 +2614,14 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnno
     if (index >= This->annotation_count)
     {
         WARN("Invalid index specified\n");
-        return (ID3D10EffectVariable *)&null_variable;
+        return &null_variable.ID3D10EffectVariable_iface;
     }
 
     a = &This->annotations[index];
 
     TRACE("Returning annotation %p, %s\n", a, debugstr_a(a->name));
 
-    return (ID3D10EffectVariable *)a;
+    return &a->ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnnotationByName(ID3D10EffectPass *iface,
@@ -2631,13 +2638,13 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnno
         if (!strcmp(a->name, name))
         {
             TRACE("Returning annotation %p\n", a);
-            return (ID3D10EffectVariable *)a;
+            return &a->ID3D10EffectVariable_iface;
         }
     }
 
     WARN("Invalid name specified\n");
 
-    return (ID3D10EffectVariable *)&null_variable;
+    return &null_variable.ID3D10EffectVariable_iface;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface, UINT flags)
@@ -2687,12 +2694,12 @@ static BOOL STDMETHODCALLTYPE d3d10_effect_variable_IsValid(ID3D10EffectVariable
 {
     TRACE("iface %p\n", iface);
 
-    return (struct d3d10_effect_variable *)iface != &null_variable;
+    return impl_from_ID3D10EffectVariable(iface) != &null_variable;
 }
 
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_variable_GetType(ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -2702,7 +2709,7 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_variable_GetType
 static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetDesc(ID3D10EffectVariable *iface,
         D3D10_EFFECT_VARIABLE_DESC *desc)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p, desc %p\n", iface, desc);
 
@@ -2737,7 +2744,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetDesc(ID3D10EffectVaria
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetAnnotationByIndex(
         ID3D10EffectVariable *iface, UINT index)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
     struct d3d10_effect_variable *a;
 
     TRACE("iface %p, index %u\n", iface, index);
@@ -2745,20 +2752,20 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
     if (index >= This->annotation_count)
     {
         WARN("Invalid index specified\n");
-        return (ID3D10EffectVariable *)&null_variable;
+        return &null_variable.ID3D10EffectVariable_iface;
     }
 
     a = &This->annotations[index];
 
     TRACE("Returning annotation %p, %s\n", a, debugstr_a(a->name));
 
-    return (ID3D10EffectVariable *)a;
+    return &a->ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetAnnotationByName(
         ID3D10EffectVariable *iface, LPCSTR name)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
     unsigned int i;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
@@ -2769,19 +2776,19 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
         if (!strcmp(a->name, name))
         {
             TRACE("Returning annotation %p\n", a);
-            return (ID3D10EffectVariable *)a;
+            return &a->ID3D10EffectVariable_iface;
         }
     }
 
     WARN("Invalid name specified\n");
 
-    return (ID3D10EffectVariable *)&null_variable;
+    return &null_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberByIndex(
         ID3D10EffectVariable *iface, UINT index)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
     struct d3d10_effect_variable *m;
 
     TRACE("iface %p, index %u\n", iface, index);
@@ -2789,20 +2796,20 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
     if (index >= This->type->member_count)
     {
         WARN("Invalid index specified\n");
-        return (ID3D10EffectVariable *)&null_variable;
+        return &null_variable.ID3D10EffectVariable_iface;
     }
 
     m = &This->members[index];
 
     TRACE("Returning member %p, %s\n", m, debugstr_a(m->name));
 
-    return (ID3D10EffectVariable *)m;
+    return &m->ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberByName(
         ID3D10EffectVariable *iface, LPCSTR name)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
     unsigned int i;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
@@ -2810,7 +2817,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
     if (!name)
     {
         WARN("Invalid name specified\n");
-        return (ID3D10EffectVariable *)&null_variable;
+        return &null_variable.ID3D10EffectVariable_iface;
     }
 
     for (i = 0; i < This->type->member_count; ++i)
@@ -2822,20 +2829,20 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
             if (!strcmp(m->name, name))
             {
                 TRACE("Returning member %p\n", m);
-                return (ID3D10EffectVariable *)m;
+                return &m->ID3D10EffectVariable_iface;
             }
         }
     }
 
     WARN("Invalid name specified\n");
 
-    return (ID3D10EffectVariable *)&null_variable;
+    return &null_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberBySemantic(
         ID3D10EffectVariable *iface, LPCSTR semantic)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
     unsigned int i;
 
     TRACE("iface %p, semantic %s.\n", iface, debugstr_a(semantic));
@@ -2843,7 +2850,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
     if (!semantic)
     {
         WARN("Invalid semantic specified\n");
-        return (ID3D10EffectVariable *)&null_variable;
+        return &null_variable.ID3D10EffectVariable_iface;
     }
 
     for (i = 0; i < This->type->member_count; ++i)
@@ -2855,20 +2862,20 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
             if (!strcmp(m->semantic, semantic))
             {
                 TRACE("Returning member %p\n", m);
-                return (ID3D10EffectVariable *)m;
+                return &m->ID3D10EffectVariable_iface;
             }
         }
     }
 
     WARN("Invalid semantic specified\n");
 
-    return (ID3D10EffectVariable *)&null_variable;
+    return &null_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetElement(
         ID3D10EffectVariable *iface, UINT index)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
     struct d3d10_effect_variable *v;
 
     TRACE("iface %p, index %u\n", iface, index);
@@ -2876,20 +2883,20 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
     if (index >= This->type->element_count)
     {
         WARN("Invalid index specified\n");
-        return (ID3D10EffectVariable *)&null_variable;
+        return &null_variable.ID3D10EffectVariable_iface;
     }
 
     v = &This->elements[index];
 
     TRACE("Returning element %p, %s\n", v, debugstr_a(v->name));
 
-    return (ID3D10EffectVariable *)v;
+    return &v->ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_variable_GetParentConstantBuffer(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -2899,169 +2906,169 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_variab
 static struct ID3D10EffectScalarVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsScalar(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl)
-        return (ID3D10EffectScalarVariable *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_scalar_variable_vtbl)
+        return (ID3D10EffectScalarVariable *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectScalarVariable *)&null_scalar_variable;
+    return (ID3D10EffectScalarVariable *)&null_scalar_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectVectorVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsVector(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl)
-        return (ID3D10EffectVectorVariable *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_vector_variable_vtbl)
+        return (ID3D10EffectVectorVariable *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectVectorVariable *)&null_vector_variable;
+    return (ID3D10EffectVectorVariable *)&null_vector_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectMatrixVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsMatrix(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl)
-        return (ID3D10EffectMatrixVariable *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_matrix_variable_vtbl)
+        return (ID3D10EffectMatrixVariable *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectMatrixVariable *)&null_matrix_variable;
+    return (ID3D10EffectMatrixVariable *)&null_matrix_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectStringVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsString(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_string_variable_vtbl)
-        return (ID3D10EffectStringVariable *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_string_variable_vtbl)
+        return (ID3D10EffectStringVariable *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectStringVariable *)&null_string_variable;
+    return (ID3D10EffectStringVariable *)&null_string_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectShaderResourceVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsShaderResource(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl)
-        return (ID3D10EffectShaderResourceVariable *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl)
+        return (ID3D10EffectShaderResourceVariable *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectShaderResourceVariable *)&null_shader_resource_variable;
+    return (ID3D10EffectShaderResourceVariable *)&null_shader_resource_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectRenderTargetViewVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsRenderTargetView(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_render_target_view_variable_vtbl)
-        return (ID3D10EffectRenderTargetViewVariable *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_render_target_view_variable_vtbl)
+        return (ID3D10EffectRenderTargetViewVariable *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectRenderTargetViewVariable *)&null_render_target_view_variable;
+    return (ID3D10EffectRenderTargetViewVariable *)&null_render_target_view_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectDepthStencilViewVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsDepthStencilView(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_view_variable_vtbl)
-        return (ID3D10EffectDepthStencilViewVariable *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_view_variable_vtbl)
+        return (ID3D10EffectDepthStencilViewVariable *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectDepthStencilViewVariable *)&null_depth_stencil_view_variable;
+    return (ID3D10EffectDepthStencilViewVariable *)&null_depth_stencil_view_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_variable_AsConstantBuffer(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl)
-        return (ID3D10EffectConstantBuffer *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl)
+        return (ID3D10EffectConstantBuffer *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectConstantBuffer *)&null_local_buffer;
+    return (ID3D10EffectConstantBuffer *)&null_local_buffer.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectShaderVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsShader(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl)
-        return (ID3D10EffectShaderVariable *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl)
+        return (ID3D10EffectShaderVariable *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectShaderVariable *)&null_shader_variable;
+    return (ID3D10EffectShaderVariable *)&null_shader_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectBlendVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsBlend(ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_blend_variable_vtbl)
-        return (ID3D10EffectBlendVariable *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_blend_variable_vtbl)
+        return (ID3D10EffectBlendVariable *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectBlendVariable *)&null_blend_variable;
+    return (ID3D10EffectBlendVariable *)&null_blend_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectDepthStencilVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsDepthStencil(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_variable_vtbl)
-        return (ID3D10EffectDepthStencilVariable *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_variable_vtbl)
+        return (ID3D10EffectDepthStencilVariable *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectDepthStencilVariable *)&null_depth_stencil_variable;
+    return (ID3D10EffectDepthStencilVariable *)&null_depth_stencil_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectRasterizerVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsRasterizer(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_rasterizer_variable_vtbl)
-        return (ID3D10EffectRasterizerVariable *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_rasterizer_variable_vtbl)
+        return (ID3D10EffectRasterizerVariable *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectRasterizerVariable *)&null_rasterizer_variable;
+    return (ID3D10EffectRasterizerVariable *)&null_rasterizer_variable.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectSamplerVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsSampler(
         ID3D10EffectVariable *iface)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p\n", iface);
 
-    if (This->vtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_sampler_variable_vtbl)
-        return (ID3D10EffectSamplerVariable *)This;
+    if (This->ID3D10EffectVariable_iface.lpVtbl == (const ID3D10EffectVariableVtbl *)&d3d10_effect_sampler_variable_vtbl)
+        return (ID3D10EffectSamplerVariable *)&This->ID3D10EffectVariable_iface;
 
-    return (ID3D10EffectSamplerVariable *)&null_sampler_variable;
+    return (ID3D10EffectSamplerVariable *)&null_sampler_variable.ID3D10EffectVariable_iface;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_SetRawValue(ID3D10EffectVariable *iface,

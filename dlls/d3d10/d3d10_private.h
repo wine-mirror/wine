@@ -126,7 +126,7 @@ struct d3d10_effect_type_member
 /* ID3D10EffectVariable */
 struct d3d10_effect_variable
 {
-    const struct ID3D10EffectVariableVtbl *vtbl;
+    ID3D10EffectVariable ID3D10EffectVariable_iface;
 
     struct d3d10_effect_variable *buffer;
     struct d3d10_effect_type *type;
