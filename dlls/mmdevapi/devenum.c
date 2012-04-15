@@ -301,8 +301,7 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
     }else if(cur->ref > 0)
         WARN("Modifying an MMDevice with postitive reference count!\n");
 
-    if(cur->drv_id)
-        HeapFree(GetProcessHeap(), 0, cur->drv_id);
+    HeapFree(GetProcessHeap(), 0, cur->drv_id);
     cur->drv_id = name;
 
     cur->flow = flow;
