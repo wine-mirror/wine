@@ -371,7 +371,7 @@ static BSTR find_element_uri(saxlocator *locator, const xmlChar *uri)
 /* used to localize version dependent error check behaviour */
 static inline BOOL sax_callback_failed(saxlocator *This, HRESULT hr)
 {
-    return This->saxreader->version >= MSXML6 ? FAILED(hr) : hr != S_OK;
+    return This->saxreader->version >= MSXML4 ? FAILED(hr) : hr != S_OK;
 }
 
 /* index value -1 means it tries to loop for a first time */
@@ -1158,7 +1158,7 @@ static void libxmlStartDocument(void *ctx)
     saxlocator *This = ctx;
     HRESULT hr;
 
-    if(This->saxreader->version >= MSXML6)
+    if (This->saxreader->version >= MSXML4)
     {
         const xmlChar *p = This->pParserCtxt->input->cur-1;
         update_position(This, FALSE);
@@ -1190,7 +1190,7 @@ static void libxmlEndDocument(void *ctx)
     saxlocator *This = ctx;
     HRESULT hr;
 
-    if(This->saxreader->version >= MSXML6) {
+    if (This->saxreader->version >= MSXML4) {
         update_position(This, FALSE);
         if(This->column > 1)
             This->line++;
@@ -1232,7 +1232,7 @@ static void libxmlStartElementNS(
     update_position(This, TRUE);
     if(*(This->pParserCtxt->input->cur) == '/')
         This->column++;
-    if(This->saxreader->version < MSXML6)
+    if(This->saxreader->version < MSXML4)
         This->column++;
 
     element = alloc_element_entry(localname, prefix, nb_namespaces, namespaces);
@@ -1301,7 +1301,8 @@ static void libxmlEndElementNS(
 
     update_position(This, FALSE);
     p = This->pParserCtxt->input->cur;
-    if(This->saxreader->version >= MSXML6)
+
+    if (This->saxreader->version >= MSXML4)
     {
         p--;
         while(p>This->pParserCtxt->input->base && *p!='>')
@@ -1418,7 +1419,7 @@ static void libxmlCharacters(
             end++;
         }
 
-        if(This->saxreader->version >= MSXML6)
+        if (This->saxreader->version >= MSXML4)
         {
             xmlChar *p;
 
@@ -1454,7 +1455,7 @@ static void libxmlCharacters(
             return;
         }
 
-        if(This->saxreader->version < MSXML6)
+        if (This->saxreader->version < MSXML4)
             This->column += end-cur;
 
         if(lastEvent)
@@ -2022,10 +2023,10 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
     locator->pParserCtxt = NULL;
     locator->publicId = NULL;
     locator->systemId = NULL;
-    locator->line = (reader->version>=MSXML6 ? 1 : 0);
+    locator->line = reader->version < MSXML4 ? 0 : 1;
     locator->column = 0;
     locator->ret = S_OK;
-    if(locator->saxreader->version >= MSXML6)
+    if (locator->saxreader->version >= MSXML6)
         locator->namespaceUri = SysAllocString(w3xmlns);
     else
         locator->namespaceUri = SysAllocStringLen(NULL, 0);

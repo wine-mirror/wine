@@ -1,8 +1,9 @@
 /*
- * XML test
+ * SAXReader/MXWriter tests
  *
  * Copyright 2008 Piotr Caban
  * Copyright 2011 Thomas Mullaly
+ * Copyright 2012 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -45,6 +46,23 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
 }
 
+struct msxmlsupported_data_t
+{
+    const GUID *clsid;
+    const char *name;
+    BOOL supported;
+};
+
+static BOOL is_clsid_supported(const GUID *clsid, const struct msxmlsupported_data_t *table)
+{
+    while (table->clsid)
+    {
+        if (table->clsid == clsid) return table->supported;
+        table++;
+    }
+    return FALSE;
+}
+
 static BSTR alloc_str_from_narrow(const char *str)
 {
     int len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
@@ -71,6 +89,62 @@ static void free_bstrs(void)
     alloced_bstrs_count = 0;
 }
 
+static void test_saxstr(const char *file, unsigned line, BSTR str, const char *expected, int todo, int *failcount)
+{
+    int len, lenexp, cmp;
+    WCHAR buf[1024];
+
+    len = SysStringLen(str);
+
+    if (!expected) {
+        if (str && todo)
+        {
+            (*failcount)++;
+            todo_wine
+            ok_(file, line) (!str, "got %p, expected null str\n", str);
+        }
+        else
+            ok_(file, line) (!str, "got %p, expected null str\n", str);
+
+        if (len && todo)
+        {
+            (*failcount)++;
+            todo_wine
+            ok_(file, line) (len == 0, "got len %d, expected 0\n", len);
+        }
+        else
+            ok_(file, line) (len == 0, "got len %d, expected 0\n", len);
+        return;
+    }
+
+    lenexp = strlen(expected);
+    if (lenexp != len && todo)
+    {
+        (*failcount)++;
+        todo_wine
+        ok_(file, line) (lenexp == len, "len %d (%s), expected %d (%s)\n", len, wine_dbgstr_wn(str, len), lenexp, expected);
+    }
+    else
+        ok_(file, line) (lenexp == len, "len %d (%s), expected %d (%s)\n", len, wine_dbgstr_wn(str, len), lenexp, expected);
+
+    /* exit earlier on length mismatch */
+    if (lenexp != len) return;
+
+    MultiByteToWideChar(CP_ACP, 0, expected, -1, buf, sizeof(buf)/sizeof(WCHAR));
+
+    cmp = memcmp(str, buf, lenexp*sizeof(WCHAR));
+    if (cmp && todo)
+    {
+        (*failcount)++;
+        todo_wine
+        ok_(file, line) (!cmp, "unexpected str %s, expected %s\n",
+                         wine_dbgstr_wn(str, len), expected);
+    }
+    else
+        ok_(file, line) (!cmp, "unexpected str %s, expected %s\n",
+                             wine_dbgstr_wn(str, len), expected);
+}
+
 typedef enum _CH {
     CH_ENDTEST,
     CH_PUTDOCUMENTLOCATOR,
@@ -86,8 +160,362 @@ typedef enum _CH {
     CH_SKIPPEDENTITY,
     EH_ERROR,
     EH_FATALERROR,
-    EG_IGNORABLEWARNING
+    EG_IGNORABLEWARNING,
+    EVENT_LAST
 } CH;
+
+static const char *event_names[EVENT_LAST] = {
+    "endtest",
+    "putDocumentLocator",
+    "startDocument",
+    "endDocument",
+    "startPrefixMapping",
+    "endPrefixMapping",
+    "startElement",
+    "endElement",
+    "characters",
+    "ignorableWhitespace",
+    "processingIntruction",
+    "skippedEntity",
+    "error",
+    "fatalError",
+    "ignorableWarning"
+};
+
+struct attribute_entry {
+    const char *uri;
+    const char *local;
+    const char *qname;
+    const char *value;
+
+    /* used for actual call data only, null for expected call data */
+    BSTR uriW;
+    BSTR localW;
+    BSTR qnameW;
+    BSTR valueW;
+};
+
+struct call_entry {
+    CH id;
+    int line;
+    int column;
+    HRESULT ret;
+    const char *arg1;
+    const char *arg2;
+    const char *arg3;
+
+    /* allocated once at startElement callback */
+    struct attribute_entry *attributes;
+    int attr_count;
+
+    /* used for actual call data only, null for expected call data */
+    BSTR arg1W;
+    BSTR arg2W;
+    BSTR arg3W;
+};
+
+struct call_sequence
+{
+    int count;
+    int size;
+    struct call_entry *sequence;
+};
+
+#define CONTENT_HANDLER_INDEX 0
+#define NUM_CALL_SEQUENCES    1
+static struct call_sequence *sequences[NUM_CALL_SEQUENCES];
+
+static void init_call_entry(ISAXLocator *locator, struct call_entry *call)
+{
+    memset(call, 0, sizeof(*call));
+    ISAXLocator_getLineNumber(locator, &call->line);
+    ISAXLocator_getColumnNumber(locator, &call->column);
+}
+
+static void add_call(struct call_sequence **seq, int sequence_index,
+    const struct call_entry *call)
+{
+    struct call_sequence *call_seq = seq[sequence_index];
+
+    if (!call_seq->sequence)
+    {
+        call_seq->size = 10;
+        call_seq->sequence = HeapAlloc(GetProcessHeap(), 0,
+                                      call_seq->size * sizeof (struct call_entry));
+    }
+
+    if (call_seq->count == call_seq->size)
+    {
+        call_seq->size *= 2;
+        call_seq->sequence = HeapReAlloc(GetProcessHeap(), 0,
+                                        call_seq->sequence,
+                                        call_seq->size * sizeof (struct call_entry));
+    }
+
+    assert(call_seq->sequence);
+
+    call_seq->sequence[call_seq->count].id     = call->id;
+    call_seq->sequence[call_seq->count].line   = call->line;
+    call_seq->sequence[call_seq->count].column = call->column;
+    call_seq->sequence[call_seq->count].arg1W  = call->arg1W;
+    call_seq->sequence[call_seq->count].arg2W  = call->arg2W;
+    call_seq->sequence[call_seq->count].arg3W  = call->arg3W;
+    call_seq->sequence[call_seq->count].ret    = call->ret;
+    call_seq->sequence[call_seq->count].attr_count = call->attr_count;
+    call_seq->sequence[call_seq->count].attributes = call->attributes;
+
+    call_seq->count++;
+}
+
+static inline void flush_sequence(struct call_sequence **seg, int sequence_index)
+{
+    int i;
+
+    struct call_sequence *call_seq = seg[sequence_index];
+
+    for (i = 0; i < call_seq->count; i++)
+    {
+        int j;
+
+        for (j = 0; j < call_seq->sequence[i].attr_count; j++)
+        {
+            SysFreeString(call_seq->sequence[i].attributes[j].uriW);
+            SysFreeString(call_seq->sequence[i].attributes[j].localW);
+            SysFreeString(call_seq->sequence[i].attributes[j].qnameW);
+        }
+
+        SysFreeString(call_seq->sequence[i].arg1W);
+        SysFreeString(call_seq->sequence[i].arg2W);
+        SysFreeString(call_seq->sequence[i].arg3W);
+    }
+
+    HeapFree(GetProcessHeap(), 0, call_seq->sequence);
+    call_seq->sequence = NULL;
+    call_seq->count = call_seq->size = 0;
+}
+
+static inline void flush_sequences(struct call_sequence **seq, int n)
+{
+    int i;
+    for (i = 0; i < n; i++)
+        flush_sequence(seq, i);
+}
+
+static const char *get_event_name(CH event)
+{
+    return event_names[event];
+}
+
+static void compare_attributes(const struct call_entry *actual, const struct call_entry *expected, const char *context,
+    int todo, const char *file, int line, int *failcount)
+{
+    int i, lenexp = 0;
+
+    /* attribute count is not stored for expected data */
+    if (expected->attributes)
+    {
+        struct attribute_entry *ptr = expected->attributes;
+        while (ptr->uri) { lenexp++; ptr++; };
+    }
+
+    /* check count first and exit earlier */
+    if (actual->attr_count != lenexp && todo)
+    {
+        (*failcount)++;
+        todo_wine
+            ok_(file, line) (FALSE, "%s: in event %s expecting attr count %d got %d\n",
+                context, get_event_name(actual->id), lenexp, actual->attr_count);
+    }
+    else
+        ok_(file, line) (actual->attr_count == lenexp, "%s: in event %s expecting attr count %d got %d\n",
+            context, get_event_name(actual->id), lenexp, actual->attr_count);
+
+    if (actual->attr_count != lenexp) return;
+
+    /* now compare all attributes strings */
+    for (i = 0; i < actual->attr_count; i++)
+    {
+        test_saxstr(file, line, actual->attributes[i].uriW,   expected->attributes[i].uri, todo, failcount);
+        test_saxstr(file, line, actual->attributes[i].localW, expected->attributes[i].local, todo, failcount);
+        test_saxstr(file, line, actual->attributes[i].qnameW, expected->attributes[i].qname, todo, failcount);
+        test_saxstr(file, line, actual->attributes[i].valueW, expected->attributes[i].value, todo, failcount);
+    }
+}
+
+static void ok_sequence_(struct call_sequence **seq, int sequence_index,
+    const struct call_entry *expected, const char *context, int todo,
+    const char *file, int line)
+{
+    struct call_sequence *call_seq = seq[sequence_index];
+    static const struct call_entry end_of_sequence = { CH_ENDTEST };
+    const struct call_entry *actual, *sequence;
+    int failcount = 0;
+
+    add_call(seq, sequence_index, &end_of_sequence);
+
+    sequence = call_seq->sequence;
+    actual = sequence;
+
+    while (expected->id != CH_ENDTEST && actual->id != CH_ENDTEST)
+    {
+        if (expected->id == actual->id)
+        {
+            /* always test position data */
+            if (expected->line != actual->line && todo)
+            {
+                todo_wine
+                {
+                    failcount++;
+                    ok_(file, line) (FALSE,
+                        "%s: in event %s expecting line %d got %d\n",
+                        context, get_event_name(actual->id), expected->line, actual->line);
+                }
+            }
+            else
+            {
+                ok_(file, line) (expected->line == actual->line,
+                   "%s: in event %s expecting line %d got %d\n",
+                   context, get_event_name(actual->id), expected->line, actual->line);
+            }
+
+            if (expected->column != actual->column && todo)
+            {
+                todo_wine
+                {
+                    failcount++;
+                    ok_(file, line) (FALSE,
+                        "%s: in event %s expecting column %d got %d\n",
+                        context, get_event_name(actual->id), expected->column, actual->column);
+                }
+            }
+            else
+            {
+                ok_(file, line) (expected->column == actual->column,
+                   "%s: in event %s expecting column %d got %d\n",
+                   context, get_event_name(actual->id), expected->column, actual->column);
+            }
+
+            switch (actual->id)
+            {
+            case CH_PUTDOCUMENTLOCATOR:
+            case CH_STARTDOCUMENT:
+            case CH_ENDDOCUMENT:
+                break;
+            case CH_STARTPREFIXMAPPING:
+                /* prefix, uri */
+                test_saxstr(file, line, actual->arg1W, expected->arg1, todo, &failcount);
+                test_saxstr(file, line, actual->arg2W, expected->arg2, todo, &failcount);
+                break;
+            case CH_ENDPREFIXMAPPING:
+                /* prefix */
+                test_saxstr(file, line, actual->arg1W, expected->arg1, todo, &failcount);
+                break;
+            case CH_STARTELEMENT:
+                /* compare attributes */
+                compare_attributes(actual, expected, context, todo, file, line, &failcount);
+                /* fallthrough */
+            case CH_ENDELEMENT:
+                /* uri, localname, qname */
+                test_saxstr(file, line, actual->arg1W, expected->arg1, todo, &failcount);
+                test_saxstr(file, line, actual->arg2W, expected->arg2, todo, &failcount);
+                test_saxstr(file, line, actual->arg3W, expected->arg3, todo, &failcount);
+                break;
+            case CH_CHARACTERS:
+            case CH_IGNORABLEWHITESPACE:
+                /* char data */
+                test_saxstr(file, line, actual->arg1W, expected->arg1, todo, &failcount);
+                break;
+            case CH_PROCESSINGINSTRUCTION:
+                /* target, data */
+                test_saxstr(file, line, actual->arg1W, expected->arg1, todo, &failcount);
+                test_saxstr(file, line, actual->arg2W, expected->arg2, todo, &failcount);
+                break;
+            case CH_SKIPPEDENTITY:
+                /* name */
+                test_saxstr(file, line, actual->arg1W, expected->arg1, todo, &failcount);
+                break;
+            case EH_FATALERROR:
+                /* test return value only */
+                if (expected->ret != actual->ret && todo)
+                {
+                     failcount++;
+                     ok_(file, line) (FALSE,
+                         "%s: in event %s expecting ret 0x%08x got 0x%08x\n",
+                         context, get_event_name(actual->id), expected->ret, actual->ret);
+                }
+                else
+                     ok_(file, line) (expected->ret == actual->ret,
+                         "%s: in event %s expecting ret 0x%08x got 0x%08x\n",
+                         context, get_event_name(actual->id), expected->ret, actual->ret);
+                break;
+            case EH_ERROR:
+            case EG_IGNORABLEWARNING:
+            default:
+                ok(0, "%s: callback not handled, %s\n", context, get_event_name(actual->id));
+            }
+            expected++;
+            actual++;
+        }
+        else if (todo)
+        {
+            failcount++;
+            todo_wine
+            {
+                ok_(file, line) (FALSE, "%s: call %s was expected, but got call %s instead\n",
+                    context, get_event_name(expected->id), get_event_name(actual->id));
+            }
+
+            flush_sequence(seq, sequence_index);
+            return;
+        }
+        else
+        {
+            ok_(file, line) (FALSE, "%s: call %s was expected, but got call %s instead\n",
+                context, get_event_name(expected->id), get_event_name(actual->id));
+            expected++;
+            actual++;
+        }
+    }
+
+    if (todo)
+    {
+        todo_wine
+        {
+            if (expected->id != CH_ENDTEST || actual->id != CH_ENDTEST)
+            {
+                failcount++;
+                ok_(file, line) (FALSE, "%s: the call sequence is not complete: expected %s - actual %s\n",
+                    context, get_event_name(expected->id), get_event_name(actual->id));
+            }
+        }
+    }
+    else if (expected->id != CH_ENDTEST || actual->id != CH_ENDTEST)
+    {
+        ok_(file, line) (FALSE, "%s: the call sequence is not complete: expected %s - actual %s\n",
+            context, get_event_name(expected->id), get_event_name(actual->id));
+    }
+
+    if (todo && !failcount) /* succeeded yet marked todo */
+    {
+        todo_wine
+        {
+            ok_(file, line)(TRUE, "%s: marked \"todo_wine\" but succeeds\n", context);
+        }
+    }
+
+    flush_sequence(seq, sequence_index);
+}
+
+#define ok_sequence(seq, index, exp, contx, todo) \
+        ok_sequence_(seq, index, (exp), (contx), (todo), __FILE__, __LINE__)
+
+static void init_call_sequences(struct call_sequence **seq, int n)
+{
+    int i;
+
+    for (i = 0; i < n; i++)
+        seq[i] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct call_sequence));
+}
 
 static const WCHAR szSimpleXML[] = {
 '<','?','x','m','l',' ','v','e','r','s','i','o','n','=','\"','1','.','0','\"',' ','?','>','\n',
@@ -97,7 +525,7 @@ static const WCHAR szSimpleXML[] = {
 '<','/','B','a','n','k','A','c','c','o','u','n','t','>','\n','\0'
 };
 
-static const WCHAR szCarriageRetTest[] = {
+static const WCHAR carriage_ret_test[] = {
 '<','?','x','m','l',' ','v','e','r','s','i','o','n','=','"','1','.','0','"','?','>','\r','\n',
 '<','B','a','n','k','A','c','c','o','u','n','t','>','\r','\n',
 '\t','<','N','u','m','b','e','r','>','1','2','3','4','<','/','N','u','m','b','e','r','>','\r','\n',
@@ -119,7 +547,7 @@ static const CHAR szUtf8XML[] =
 static const char utf8xml2[] =
 "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\r\n";
 
-static const CHAR szTestXML[] =
+static const CHAR testXML[] =
 "<?xml version=\"1.0\" ?>\n"
 "<BankAccount>\n"
 "   <Number>1234</Number>\n"
@@ -132,130 +560,233 @@ static const CHAR szTestAttributes[] =
 "<node1 xmlns:p=\"test\" />"
 "</document>\n";
 
-typedef struct _contenthandlercheck {
-    CH id;
-    int line;
-    int column;
-    int line_v6;
-    int column_v6;
-    const char *arg1;
-    const char *arg2;
-    const char *arg3;
-    HRESULT ret;
-} content_handler_test;
-
-static content_handler_test contentHandlerTest1[] = {
-    { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0 },
-    { CH_STARTDOCUMENT, 0, 0, 1, 22 },
-    { CH_STARTELEMENT, 2, 14, 2, 13, "", "BankAccount", "BankAccount" },
-    { CH_CHARACTERS, 2, 14, 3, 4, "\n   " },
-    { CH_STARTELEMENT, 3, 12, 3, 11, "", "Number", "Number" },
-    { CH_CHARACTERS, 3, 12, 3, 16, "1234" },
-    { CH_ENDELEMENT, 3, 18, 3, 24, "", "Number", "Number" },
-    { CH_CHARACTERS, 3, 25, 4, 4, "\n   " },
-    { CH_STARTELEMENT, 4, 10, 4, 9, "", "Name", "Name" },
-    { CH_CHARACTERS, 4, 10, 4, 22, "Captain Ahab" },
-    { CH_ENDELEMENT, 4, 24, 4, 28, "", "Name", "Name" },
-    { CH_CHARACTERS, 4, 29, 5, 1, "\n" },
-    { CH_ENDELEMENT, 5, 3, 5, 14, "", "BankAccount", "BankAccount" },
-    { CH_ENDDOCUMENT, 0, 0, 6, 0 },
+static struct call_entry content_handler_test1[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, S_OK },
+    { CH_STARTDOCUMENT, 0, 0, S_OK },
+    { CH_STARTELEMENT, 2, 14, S_OK, "", "BankAccount", "BankAccount" },
+    { CH_CHARACTERS, 2, 14, S_OK, "\n   " },
+    { CH_STARTELEMENT, 3, 12, S_OK, "", "Number", "Number" },
+    { CH_CHARACTERS, 3, 12, S_OK, "1234" },
+    { CH_ENDELEMENT, 3, 18, S_OK, "", "Number", "Number" },
+    { CH_CHARACTERS, 3, 25, S_OK, "\n   " },
+    { CH_STARTELEMENT, 4, 10, S_OK, "", "Name", "Name" },
+    { CH_CHARACTERS, 4, 10, S_OK, "Captain Ahab" },
+    { CH_ENDELEMENT, 4, 24, S_OK, "", "Name", "Name" },
+    { CH_CHARACTERS, 4, 29, S_OK, "\n" },
+    { CH_ENDELEMENT, 5, 3, S_OK, "", "BankAccount", "BankAccount" },
+    { CH_ENDDOCUMENT, 0, 0, S_OK},
     { CH_ENDTEST }
 };
 
-static content_handler_test contentHandlerTest2[] = {
-    { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0 },
-    { CH_STARTDOCUMENT, 0, 0, 1, 21 },
-    { CH_STARTELEMENT, 2, 14, 2, 13, "", "BankAccount", "BankAccount" },
-    { CH_CHARACTERS, 2, 14, 3, 0, "\n" },
-    { CH_CHARACTERS, 2, 16, 3, 2, "\t" },
-    { CH_STARTELEMENT, 3, 10, 3, 9, "", "Number", "Number" },
-    { CH_CHARACTERS, 3, 10, 3, 14, "1234" },
-    { CH_ENDELEMENT, 3, 16, 3, 22, "", "Number", "Number" },
-    { CH_CHARACTERS, 3, 23, 4, 0, "\n" },
-    { CH_CHARACTERS, 3, 25, 4, 2, "\t" },
-    { CH_STARTELEMENT, 4, 8, 4, 7, "", "Name", "Name" },
-    { CH_CHARACTERS, 4, 8, 4, 20, "Captain Ahab" },
-    { CH_ENDELEMENT, 4, 22, 4, 26, "", "Name", "Name" },
-    { CH_CHARACTERS, 4, 27, 5, 0, "\n" },
-    { CH_ENDELEMENT, 5, 3, 5, 14, "", "BankAccount", "BankAccount" },
-    { CH_ENDDOCUMENT, 0, 0, 6, 0 },
+/* applies to versions 4 and 6 */
+static struct call_entry content_handler_test1_alternate[] = {
+    { CH_PUTDOCUMENTLOCATOR, 1, 0, S_OK },
+    { CH_STARTDOCUMENT, 1, 22, S_OK },
+    { CH_STARTELEMENT, 2, 13, S_OK, "", "BankAccount", "BankAccount" },
+    { CH_CHARACTERS, 3, 4, S_OK, "\n   " },
+    { CH_STARTELEMENT, 3, 11, S_OK, "", "Number", "Number" },
+    { CH_CHARACTERS, 3, 16, S_OK, "1234" },
+    { CH_ENDELEMENT, 3, 24, S_OK, "", "Number", "Number" },
+    { CH_CHARACTERS, 4, 4, S_OK, "\n   " },
+    { CH_STARTELEMENT, 4, 9, S_OK, "", "Name", "Name" },
+    { CH_CHARACTERS, 4, 22, S_OK, "Captain Ahab" },
+    { CH_ENDELEMENT, 4, 28, S_OK, "", "Name", "Name" },
+    { CH_CHARACTERS, 5, 1, S_OK, "\n" },
+    { CH_ENDELEMENT, 5, 14, S_OK, "", "BankAccount", "BankAccount" },
+    { CH_ENDDOCUMENT, 6, 0, S_OK },
     { CH_ENDTEST }
 };
 
-static content_handler_test contentHandlerTestError[] = {
-    { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0, NULL, NULL, NULL, E_FAIL },
-    { EH_FATALERROR, 0, 0, 0, 0, NULL, NULL, NULL, E_FAIL },
+static struct call_entry content_handler_test2[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, S_OK },
+    { CH_STARTDOCUMENT, 0, 0, S_OK },
+    { CH_STARTELEMENT, 2, 14, S_OK, "", "BankAccount", "BankAccount" },
+    { CH_CHARACTERS, 2, 14, S_OK, "\n" },
+    { CH_CHARACTERS, 2, 16, S_OK, "\t" },
+    { CH_STARTELEMENT, 3, 10, S_OK, "", "Number", "Number" },
+    { CH_CHARACTERS, 3, 10, S_OK, "1234" },
+    { CH_ENDELEMENT, 3, 16, S_OK, "", "Number", "Number" },
+    { CH_CHARACTERS, 3, 23, S_OK, "\n" },
+    { CH_CHARACTERS, 3, 25, S_OK, "\t" },
+    { CH_STARTELEMENT, 4, 8, S_OK, "", "Name", "Name" },
+    { CH_CHARACTERS, 4, 8, S_OK, "Captain Ahab" },
+    { CH_ENDELEMENT, 4, 22, S_OK, "", "Name", "Name" },
+    { CH_CHARACTERS, 4, 27, S_OK, "\n" },
+    { CH_ENDELEMENT, 5, 3, S_OK, "", "BankAccount", "BankAccount" },
+    { CH_ENDDOCUMENT, 0, 0, S_OK },
     { CH_ENDTEST }
 };
 
-static content_handler_test contentHandlerTestCallbackResults[] = {
-    { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0, NULL, NULL, NULL, S_FALSE },
-    { CH_STARTDOCUMENT, 0, 0, 1, 22, NULL, NULL, NULL, S_FALSE },
-    { EH_FATALERROR, 0, 0, 0, 0, NULL, NULL, NULL, S_FALSE },
+static struct call_entry content_handler_test2_alternate[] = {
+    { CH_PUTDOCUMENTLOCATOR, 1, 0, S_OK },
+    { CH_STARTDOCUMENT, 1, 21, S_OK },
+    { CH_STARTELEMENT, 2, 13, S_OK, "", "BankAccount", "BankAccount" },
+    { CH_CHARACTERS, 3, 0, S_OK, "\n" },
+    { CH_CHARACTERS, 3, 2, S_OK, "\t" },
+    { CH_STARTELEMENT, 3, 9, S_OK, "", "Number", "Number" },
+    { CH_CHARACTERS, 3, 14, S_OK, "1234" },
+    { CH_ENDELEMENT, 3, 22, S_OK, "", "Number", "Number" },
+    { CH_CHARACTERS, 4, 0, S_OK, "\n" },
+    { CH_CHARACTERS, 4, 2, S_OK, "\t" },
+    { CH_STARTELEMENT, 4, 7, S_OK, "", "Name", "Name" },
+    { CH_CHARACTERS, 4, 20, S_OK, "Captain Ahab" },
+    { CH_ENDELEMENT, 4, 26, S_OK, "", "Name", "Name" },
+    { CH_CHARACTERS, 5, 0, S_OK, "\n" },
+    { CH_ENDELEMENT, 5, 14, S_OK, "", "BankAccount", "BankAccount" },
+    { CH_ENDDOCUMENT, 6, 0, S_OK },
     { CH_ENDTEST }
 };
 
-static content_handler_test contentHandlerTestCallbackResult6[] = {
-    { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0, NULL, NULL, NULL, S_FALSE },
-    { CH_STARTDOCUMENT, 0, 0, 1, 22, NULL, NULL, NULL, S_FALSE },
-    { CH_STARTELEMENT, 2, 14, 2, 13, "", "BankAccount", "BankAccount", S_FALSE },
-    { CH_CHARACTERS, 2, 14, 3, 4, "\n   ", NULL, NULL, S_FALSE },
-    { CH_STARTELEMENT, 3, 12, 3, 11, "", "Number", "Number", S_FALSE },
-    { CH_CHARACTERS, 3, 12, 3, 16, "1234", NULL, NULL, S_FALSE },
-    { CH_ENDELEMENT, 3, 18, 3, 24, "", "Number", "Number", S_FALSE },
-    { CH_CHARACTERS, 3, 25, 4, 4, "\n   ", NULL, NULL, S_FALSE },
-    { CH_STARTELEMENT, 4, 10, 4, 9, "", "Name", "Name", S_FALSE },
-    { CH_CHARACTERS, 4, 10, 4, 22, "Captain Ahab", NULL, NULL, S_FALSE },
-    { CH_ENDELEMENT, 4, 24, 4, 28, "", "Name", "Name", S_FALSE },
-    { CH_CHARACTERS, 4, 29, 5, 1, "\n", NULL, NULL, S_FALSE },
-    { CH_ENDELEMENT, 5, 3, 5, 14, "", "BankAccount", "BankAccount", S_FALSE },
-    { CH_ENDDOCUMENT, 0, 0, 6, 0, NULL, NULL, NULL, S_FALSE },
+static struct call_entry content_handler_testerror[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, E_FAIL },
+    { EH_FATALERROR, 0, 0, E_FAIL },
     { CH_ENDTEST }
 };
 
-static content_handler_test contentHandlerTestAttributes[] = {
-    { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0 },
-    { CH_STARTDOCUMENT, 0, 0, 1, 22 },
-    { CH_STARTPREFIXMAPPING, 2, 96, 2, 95, "test", "prefix_test" },
-    { CH_STARTPREFIXMAPPING, 2, 96, 2, 95, "", "prefix" },
-    { CH_STARTELEMENT, 2, 96, 2, 95, "prefix", "document", "document" },
-    { CH_CHARACTERS, 2, 96, 3, 1, "\n" },
-    { CH_STARTPREFIXMAPPING, 3, 25, 3, 24, "p", "test" },
-    { CH_STARTELEMENT, 3, 25, 3, 24, "prefix", "node1", "node1" },
-    { CH_ENDELEMENT, 3, 25, 3, 24, "prefix", "node1", "node1" },
-    { CH_ENDPREFIXMAPPING, 3, 25, 3, 24, "p" },
-    { CH_ENDELEMENT, 3, 27, 3, 35, "prefix", "document", "document" },
-    { CH_ENDPREFIXMAPPING, 3, 27, 3, 35, "" },
-    { CH_ENDPREFIXMAPPING, 3, 27, 3, 35, "test" },
-    { CH_ENDDOCUMENT, 0, 0, 4, 0 },
+static struct call_entry content_handler_testerror_alternate[] = {
+    { CH_PUTDOCUMENTLOCATOR, 1, 0, E_FAIL },
+    { EH_FATALERROR, 1, 0, E_FAIL },
     { CH_ENDTEST }
 };
 
-static content_handler_test contentHandlerTestAttributes6[] = {
-    { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0 },
-    { CH_STARTDOCUMENT, 0, 0, 1, 22 },
-    { CH_STARTPREFIXMAPPING, 2, 96, 2, 95, "test", "prefix_test" },
-    { CH_STARTPREFIXMAPPING, 2, 96, 2, 95, "", "prefix" },
-    { CH_STARTELEMENT, 2, 96, 2, 95, "prefix", "document", "document" },
-    { CH_CHARACTERS, 2, 96, 3, 1, "\n" },
-    { CH_STARTPREFIXMAPPING, 3, 25, 3, 24, "p", "test" },
-    { CH_STARTELEMENT, 3, 25, 3, 24, "prefix", "node1", "node1" },
-    { CH_ENDELEMENT, 3, 25, 3, 24, "prefix", "node1", "node1" },
-    { CH_ENDPREFIXMAPPING, 3, 25, 3, 24, "p" },
-    { CH_ENDELEMENT, 3, 27, 3, 35, "prefix", "document", "document" },
-    { CH_ENDPREFIXMAPPING, 3, 27, 3, 35, "test" },
-    { CH_ENDPREFIXMAPPING, 3, 27, 3, 35, "" },
-    { CH_ENDDOCUMENT, 0, 0, 4, 0 },
+static struct call_entry content_handler_test_callback_rets[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, S_FALSE },
+    { CH_STARTDOCUMENT, 0, 0, S_FALSE },
+    { EH_FATALERROR, 0, 0, S_FALSE },
     { CH_ENDTEST }
 };
 
-static content_handler_test xmlspaceattr_test[] = {
-    { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0 },
-    { CH_STARTDOCUMENT, 0, 0, 1, 39 },
-    { CH_STARTELEMENT, 1, 64, 1, 63, "", "a", "a" },
-    { CH_CHARACTERS, 1, 64, 1, 80, " Some text data " },
-    { CH_ENDELEMENT, 1, 82, 1, 83, "", "a", "a" },
-    { CH_ENDDOCUMENT, 0, 0, 1, 83 },
+static struct call_entry content_handler_test_callback_rets_alt[] = {
+    { CH_PUTDOCUMENTLOCATOR, 1, 0, S_FALSE },
+    { CH_STARTDOCUMENT, 1, 22, S_FALSE },
+    { CH_STARTELEMENT, 2, 13, S_FALSE, "", "BankAccount", "BankAccount" },
+    { CH_CHARACTERS, 3, 4, S_FALSE, "\n   " },
+    { CH_STARTELEMENT, 3, 11, S_FALSE, "", "Number", "Number" },
+    { CH_CHARACTERS, 3, 16, S_FALSE, "1234" },
+    { CH_ENDELEMENT, 3, 24, S_FALSE, "", "Number", "Number" },
+    { CH_CHARACTERS, 4, 4, S_FALSE, "\n   " },
+    { CH_STARTELEMENT, 4, 9, S_FALSE, "", "Name", "Name" },
+    { CH_CHARACTERS, 4, 22, S_FALSE, "Captain Ahab" },
+    { CH_ENDELEMENT, 4, 28, S_FALSE, "", "Name", "Name" },
+    { CH_CHARACTERS, 5, 1, S_FALSE, "\n" },
+    { CH_ENDELEMENT, 5, 14, S_FALSE, "", "BankAccount", "BankAccount" },
+    { CH_ENDDOCUMENT, 6, 0, S_FALSE },
+    { CH_ENDTEST }
+};
+
+static struct attribute_entry ch_attributes1[] = {
+    { "", "", "xmlns:test", "prefix_test" },
+    { "", "", "xmlns", "prefix" },
+    { "prefix_test", "arg1", "test:arg1", "arg1" },
+    { "", "arg2", "arg2", "arg2" },
+    { "prefix_test", "ar3", "test:ar3", "arg3" },
+    { NULL }
+};
+
+static struct attribute_entry ch_attributes2[] = {
+    { "", "", "xmlns:p", "test" },
+    { NULL }
+};
+
+static struct call_entry content_handler_test_attributes[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, S_OK },
+    { CH_STARTDOCUMENT, 0, 0, S_OK },
+    { CH_STARTPREFIXMAPPING, 2, 96, S_OK, "test", "prefix_test" },
+    { CH_STARTPREFIXMAPPING, 2, 96, S_OK, "", "prefix" },
+    { CH_STARTELEMENT, 2, 96, S_OK, "prefix", "document", "document", ch_attributes1 },
+    { CH_CHARACTERS, 2, 96, S_OK, "\n" },
+    { CH_STARTPREFIXMAPPING, 3, 25, S_OK, "p", "test" },
+    { CH_STARTELEMENT, 3, 25, S_OK, "prefix", "node1", "node1", ch_attributes2 },
+    { CH_ENDELEMENT, 3, 25, S_OK, "prefix", "node1", "node1" },
+    { CH_ENDPREFIXMAPPING, 3, 25, S_OK, "p" },
+    { CH_ENDELEMENT, 3, 27, S_OK, "prefix", "document", "document" },
+    { CH_ENDPREFIXMAPPING, 3, 27, S_OK, "" },
+    { CH_ENDPREFIXMAPPING, 3, 27, S_OK, "test" },
+    { CH_ENDDOCUMENT, 0, 0 },
+    { CH_ENDTEST }
+};
+
+static struct attribute_entry ch_attributes_alt_4[] = {
+    { "prefix_test", "arg1", "test:arg1", "arg1" },
+    { "", "arg2", "arg2", "arg2" },
+    { "prefix_test", "ar3", "test:ar3", "arg3" },
+    { "", "", "xmlns:test", "prefix_test" },
+    { "", "", "xmlns", "prefix" },
+    { NULL }
+};
+
+static struct call_entry content_handler_test_attributes_alternate_4[] = {
+    { CH_PUTDOCUMENTLOCATOR, 1, 0, S_OK },
+    { CH_STARTDOCUMENT, 1, 22, S_OK },
+    { CH_STARTPREFIXMAPPING, 2, 95, S_OK, "test", "prefix_test" },
+    { CH_STARTPREFIXMAPPING, 2, 95, S_OK, "", "prefix" },
+    { CH_STARTELEMENT, 2, 95, S_OK, "prefix", "document", "document", ch_attributes_alt_4 },
+    { CH_CHARACTERS, 3, 1, S_OK, "\n" },
+    { CH_STARTPREFIXMAPPING, 3, 24, S_OK, "p", "test" },
+    { CH_STARTELEMENT, 3, 24, S_OK, "prefix", "node1", "node1", ch_attributes2 },
+    { CH_ENDELEMENT, 3, 24, S_OK, "prefix", "node1", "node1" },
+    { CH_ENDPREFIXMAPPING, 3, 24, S_OK, "p" },
+    { CH_ENDELEMENT, 3, 35, S_OK, "prefix", "document", "document" },
+    { CH_ENDPREFIXMAPPING, 3, 35, S_OK, "test" },
+    { CH_ENDPREFIXMAPPING, 3, 35, S_OK, "" },
+    { CH_ENDDOCUMENT, 4, 0, S_OK },
+    { CH_ENDTEST }
+};
+
+static struct attribute_entry ch_attributes_alt_6[] = {
+    { "prefix_test", "arg1", "test:arg1", "arg1" },
+    { "", "arg2", "arg2", "arg2" },
+    { "prefix_test", "ar3", "test:ar3", "arg3" },
+    { "http://www.w3.org/2000/xmlns/", "", "xmlns:test", "prefix_test" },
+    { "http://www.w3.org/2000/xmlns/", "", "xmlns", "prefix" },
+    { NULL }
+};
+
+static struct attribute_entry ch_attributes2_6[] = {
+    { "http://www.w3.org/2000/xmlns/", "", "xmlns:p", "test" },
+    { NULL }
+};
+
+static struct call_entry content_handler_test_attributes_alternate_6[] = {
+    { CH_PUTDOCUMENTLOCATOR, 1, 0, S_OK },
+    { CH_STARTDOCUMENT, 1, 22, S_OK },
+    { CH_STARTPREFIXMAPPING, 2, 95, S_OK, "test", "prefix_test" },
+    { CH_STARTPREFIXMAPPING, 2, 95, S_OK, "", "prefix" },
+    { CH_STARTELEMENT, 2, 95, S_OK, "prefix", "document", "document", ch_attributes_alt_6 },
+    { CH_CHARACTERS, 3, 1, S_OK, "\n" },
+    { CH_STARTPREFIXMAPPING, 3, 24, S_OK, "p", "test" },
+    { CH_STARTELEMENT, 3, 24, S_OK, "prefix", "node1", "node1", ch_attributes2_6 },
+    { CH_ENDELEMENT, 3, 24, S_OK, "prefix", "node1", "node1" },
+    { CH_ENDPREFIXMAPPING, 3, 24, S_OK, "p" },
+    { CH_ENDELEMENT, 3, 35, S_OK, "prefix", "document", "document" },
+    { CH_ENDPREFIXMAPPING, 3, 35, S_OK, "test" },
+    { CH_ENDPREFIXMAPPING, 3, 35, S_OK, "" },
+    { CH_ENDDOCUMENT, 4, 0, S_OK },
+    { CH_ENDTEST }
+};
+
+static struct attribute_entry xmlspace_attrs[] = {
+    { "http://www.w3.org/XML/1998/namespace", "space", "xml:space", "preserve" },
+    { NULL }
+};
+
+static struct call_entry xmlspaceattr_test[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, S_OK },
+    { CH_STARTDOCUMENT, 0, 0, S_OK },
+    { CH_STARTELEMENT, 1, 64, S_OK, "", "a", "a", xmlspace_attrs },
+    { CH_CHARACTERS, 1, 64, S_OK, " Some text data " },
+    { CH_ENDELEMENT, 1, 82, S_OK, "", "a", "a" },
+    { CH_ENDDOCUMENT, 0, 0, S_OK },
+    { CH_ENDTEST }
+};
+
+static struct call_entry xmlspaceattr_test_alternate[] = {
+    { CH_PUTDOCUMENTLOCATOR, 1, 0, S_OK },
+    { CH_STARTDOCUMENT, 1, 39, S_OK },
+    { CH_STARTELEMENT, 1, 63, S_OK, "", "a", "a", xmlspace_attrs },
+    { CH_CHARACTERS, 1, 80, S_OK, " Some text data " },
+    { CH_ENDELEMENT, 1, 83, S_OK, "", "a", "a" },
+    { CH_ENDDOCUMENT, 1, 83, S_OK },
     { CH_ENDTEST }
 };
 
@@ -263,49 +794,21 @@ static const char xmlspace_attr[] =
     "<?xml version=\"1.0\" encoding=\"UTF-16\"?>"
     "<a xml:space=\"preserve\"> Some text data </a>";
 
-static content_handler_test *expectCall;
+static struct call_entry *expectCall;
 static ISAXLocator *locator;
 int msxml_version;
 
-static void test_saxstr(unsigned line, const WCHAR *szStr, int nStr, const char *szTest)
+static void set_expected_seq(struct call_entry *expected)
 {
-    WCHAR buf[1024];
-    int len;
-
-    if(!szTest) {
-        ok_(__FILE__,line) (szStr == NULL, "szStr != NULL\n");
-        ok_(__FILE__,line) (nStr == 0, "nStr = %d, expected 0\n", nStr);
-        return;
-    }
-
-    len = strlen(szTest);
-    ok_(__FILE__,line) (len == nStr, "nStr = %d, expected %d (%s)\n", nStr, len, szTest);
-    if(len != nStr) {
-        ok_(__FILE__,line)(0, "got string %s, expected %s\n", wine_dbgstr_wn(szStr, nStr), szTest);
-        return;
-    }
-
-    MultiByteToWideChar(CP_ACP, 0, szTest, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    ok_(__FILE__,line) (!memcmp(szStr, buf, len*sizeof(WCHAR)), "unexpected szStr %s, expected %s\n",
-                        wine_dbgstr_wn(szStr, nStr), szTest);
+    expectCall = expected;
 }
 
-static BOOL test_expect_call(CH id)
+/* to be called once on each tested callback return */
+static HRESULT get_expected_ret(void)
 {
-    ok(expectCall->id == id, "unexpected call %d, expected %d\n", id, expectCall->id);
-    return expectCall->id == id;
-}
-
-static void test_locator(unsigned line, int loc_line, int loc_column)
-{
-    int rcolumn, rline;
-    ISAXLocator_getLineNumber(locator, &rline);
-    ISAXLocator_getColumnNumber(locator, &rcolumn);
-
-    ok_(__FILE__,line) (rline == loc_line,
-            "unexpected line %d, expected %d\n", rline, loc_line);
-    ok_(__FILE__,line) (rcolumn == loc_column,
-            "unexpected column %d, expected %d\n", rcolumn, loc_column);
+    HRESULT hr = expectCall->ret;
+    if (expectCall->id != CH_ENDTEST) expectCall++;
+    return hr;
 }
 
 static HRESULT WINAPI contentHandler_QueryInterface(
@@ -343,16 +846,17 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
         ISAXContentHandler* iface,
         ISAXLocator *pLocator)
 {
+    struct call_entry call;
     HRESULT hr;
 
-    if(!test_expect_call(CH_PUTDOCUMENTLOCATOR))
-        return E_FAIL;
-
     locator = pLocator;
-    test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
-            msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
 
-    if(msxml_version >= 6) {
+    memset(&call, 0, sizeof(call));
+    init_call_entry(locator, &call);
+    call.id = CH_PUTDOCUMENTLOCATOR;
+    add_call(sequences, CONTENT_HANDLER_INDEX, &call);
+
+    if (msxml_version >= 6) {
         ISAXAttributes *attr, *attr1;
         IMXAttributes *mxattr;
 
@@ -372,300 +876,205 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
         ISAXAttributes_Release(attr1);
     }
 
-    return (expectCall++)->ret;
+    return get_expected_ret();
 }
 
 static ISAXAttributes *test_attr_ptr;
 static HRESULT WINAPI contentHandler_startDocument(
         ISAXContentHandler* iface)
 {
-    if(!test_expect_call(CH_STARTDOCUMENT))
-        return E_FAIL;
+    struct call_entry call;
+
+    init_call_entry(locator, &call);
+    call.id = CH_STARTDOCUMENT;
+    add_call(sequences, CONTENT_HANDLER_INDEX, &call);
 
     test_attr_ptr = NULL;
-    test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
-            msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
 
-    return (expectCall++)->ret;
+    return get_expected_ret();
 }
 
 static HRESULT WINAPI contentHandler_endDocument(
         ISAXContentHandler* iface)
 {
-    if(!test_expect_call(CH_ENDDOCUMENT))
-        return E_FAIL;
+    struct call_entry call;
 
-    if(expectCall == xmlspaceattr_test+5 && msxml_version>=6) {
-    todo_wine
-        test_locator(__LINE__, expectCall->line_v6, expectCall->column_v6);
-    }
-    else
-        test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
-                msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
+    init_call_entry(locator, &call);
+    call.id = CH_ENDDOCUMENT;
+    add_call(sequences, CONTENT_HANDLER_INDEX, &call);
 
-    return (expectCall++)->ret;
+    return get_expected_ret();
 }
 
 static HRESULT WINAPI contentHandler_startPrefixMapping(
         ISAXContentHandler* iface,
-        const WCHAR *pPrefix,
-        int nPrefix,
-        const WCHAR *pUri,
-        int nUri)
+        const WCHAR *prefix, int prefix_len,
+        const WCHAR *uri, int uri_len)
 {
-    if(!test_expect_call(CH_STARTPREFIXMAPPING))
-        return E_FAIL;
+    struct call_entry call;
 
-    test_saxstr(__LINE__, pPrefix, nPrefix, expectCall->arg1);
-    test_saxstr(__LINE__, pUri, nUri, expectCall->arg2);
-    test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
-            msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
+    init_call_entry(locator, &call);
+    call.id = CH_STARTPREFIXMAPPING;
+    call.arg1W = SysAllocStringLen(prefix, prefix_len);
+    call.arg2W = SysAllocStringLen(uri, uri_len);
+    add_call(sequences, CONTENT_HANDLER_INDEX, &call);
 
-    return (expectCall++)->ret;
+    return get_expected_ret();
 }
 
 static HRESULT WINAPI contentHandler_endPrefixMapping(
         ISAXContentHandler* iface,
-        const WCHAR *pPrefix,
-        int nPrefix)
+        const WCHAR *prefix, int len)
 {
-    if(!test_expect_call(CH_ENDPREFIXMAPPING))
-        return E_FAIL;
+    struct call_entry call;
 
-    test_saxstr(__LINE__, pPrefix, nPrefix, expectCall->arg1);
-    test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
-            msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
+    init_call_entry(locator, &call);
+    call.id = CH_ENDPREFIXMAPPING;
+    call.arg1W = SysAllocStringLen(prefix, len);
+    add_call(sequences, CONTENT_HANDLER_INDEX, &call);
 
-    return (expectCall++)->ret;
+    return get_expected_ret();
 }
 
 static HRESULT WINAPI contentHandler_startElement(
         ISAXContentHandler* iface,
-        const WCHAR *pNamespaceUri,
-        int nNamespaceUri,
-        const WCHAR *pLocalName,
-        int nLocalName,
-        const WCHAR *pQName,
-        int nQName,
-        ISAXAttributes *pAttr)
+        const WCHAR *uri, int uri_len,
+        const WCHAR *localname, int local_len,
+        const WCHAR *qname, int qname_len,
+        ISAXAttributes *saxattr)
 {
+    struct call_entry call;
     IMXAttributes *mxattr;
-    HRESULT hres;
+    HRESULT hr;
     int len;
 
-    hres = ISAXAttributes_QueryInterface(pAttr, &IID_IMXAttributes, (void**)&mxattr);
-    EXPECT_HR(hres, E_NOINTERFACE);
+    hr = ISAXAttributes_QueryInterface(saxattr, &IID_IMXAttributes, (void**)&mxattr);
+    EXPECT_HR(hr, E_NOINTERFACE);
 
-    if(!test_expect_call(CH_STARTELEMENT))
-        return E_FAIL;
-
-    test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, expectCall->arg1);
-    test_saxstr(__LINE__, pLocalName, nLocalName, expectCall->arg2);
-    test_saxstr(__LINE__, pQName, nQName, expectCall->arg3);
-    test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
-            msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
+    init_call_entry(locator, &call);
+    call.id = CH_STARTELEMENT;
+    call.arg1W = SysAllocStringLen(uri, uri_len);
+    call.arg2W = SysAllocStringLen(localname, local_len);
+    call.arg3W = SysAllocStringLen(qname, qname_len);
 
     if(!test_attr_ptr)
-        test_attr_ptr = pAttr;
-    ok(test_attr_ptr == pAttr, "Multiple ISAXAttributes instances are used (%p %p)\n", test_attr_ptr, pAttr);
+        test_attr_ptr = saxattr;
+    ok(test_attr_ptr == saxattr, "Multiple ISAXAttributes instances are used (%p %p)\n", test_attr_ptr, saxattr);
 
-    if(expectCall == contentHandlerTestAttributes+4) {
-        const WCHAR *uri_ptr = NULL;
+    /* store actual attributes */
+    len = 0;
+    hr = ISAXAttributes_getLength(saxattr, &len);
+    EXPECT_HR(hr, S_OK);
+
+    if (len)
+    {
         int i;
-        /* msxml3 returns attributes and namespaces in the input order */
-        hres = ISAXAttributes_getLength(pAttr, &len);
-        ok(hres == S_OK, "getLength returned %x\n", hres);
-        ok(len == 5, "Incorrect number of attributes: %d\n", len);
-        ok(msxml_version < 6, "wrong msxml_version: %d\n", msxml_version);
 
-        for(i=0; i<len; i++) {
-            hres = ISAXAttributes_getName(pAttr, i, &pNamespaceUri, &nNamespaceUri,
-                    &pLocalName, &nLocalName, &pQName, &nQName);
-            ok(hres == S_OK, "getName returned %x\n", hres);
+        struct attribute_entry *attr;
+        attr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len*sizeof(struct attribute_entry));
 
-            if(nQName == 4) {
-                todo_wine ok(i==3, "Incorrect attributes order\n");
-                test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "");
-                test_saxstr(__LINE__, pLocalName, nLocalName, "arg2");
-                test_saxstr(__LINE__, pQName, nQName, "arg2");
-            } else if(nQName == 5) {
-                todo_wine ok(i==1, "Incorrect attributes order\n");
-                test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "");
-                test_saxstr(__LINE__, pLocalName, nLocalName, "");
-                test_saxstr(__LINE__, pQName, nQName, "xmlns");
-            } else if(nQName == 8) {
-                todo_wine ok(i==4, "Incorrect attributes order\n");
-                test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "prefix_test");
-                test_saxstr(__LINE__, pLocalName, nLocalName, "ar3");
-                test_saxstr(__LINE__, pQName, nQName, "test:ar3");
-                ok(uri_ptr == pNamespaceUri, "Incorrect NamespaceUri pointer\n");
-            } else if(nQName == 9) {
-                todo_wine ok(i==2, "Incorrect attributes order\n");
-                test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "prefix_test");
-                test_saxstr(__LINE__, pLocalName, nLocalName, "arg1");
-                test_saxstr(__LINE__, pQName, nQName, "test:arg1");
-                uri_ptr = pNamespaceUri;
-            } else if(nQName == 10) {
-                todo_wine ok(i==0, "Incorrect attributes order\n");
-                test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "");
-                test_saxstr(__LINE__, pLocalName, nLocalName, "");
-                test_saxstr(__LINE__, pQName, nQName, "xmlns:test");
-            } else {
-                ok(0, "Unexpected attribute\n");
-            }
+        for (i = 0; i < len; i++)
+        {
+            const WCHAR *value;
+            int value_len;
+
+            hr = ISAXAttributes_getName(saxattr, i, &uri, &uri_len,
+                &localname, &local_len, &qname, &qname_len);
+            EXPECT_HR(hr, S_OK);
+
+            hr = ISAXAttributes_getValue(saxattr, i, &value, &value_len);
+            EXPECT_HR(hr, S_OK);
+
+            attr[i].uriW   = SysAllocStringLen(uri, uri_len);
+            attr[i].localW = SysAllocStringLen(localname, local_len);
+            attr[i].qnameW = SysAllocStringLen(qname, qname_len);
+            attr[i].valueW = SysAllocStringLen(value, value_len);
         }
-    } else if(expectCall == contentHandlerTestAttributes6+4) {
-        const WCHAR *uri_ptr;
 
-        /* msxml6 returns attributes first and then namespaces */
-        hres = ISAXAttributes_getLength(pAttr, &len);
-        ok(hres == S_OK, "getLength returned %x\n", hres);
-        ok(len == 5, "Incorrect number of attributes: %d\n", len);
-        ok(msxml_version >= 6, "wrong msxml_version: %d\n", msxml_version);
-
-        hres = ISAXAttributes_getName(pAttr, 0, &pNamespaceUri, &nNamespaceUri,
-                &pLocalName, &nLocalName, &pQName, &nQName);
-        ok(hres == S_OK, "getName returned %x\n", hres);
-        test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "prefix_test");
-        test_saxstr(__LINE__, pLocalName, nLocalName, "arg1");
-        test_saxstr(__LINE__, pQName, nQName, "test:arg1");
-        uri_ptr = pNamespaceUri;
-
-        hres = ISAXAttributes_getName(pAttr, 1, &pNamespaceUri, &nNamespaceUri,
-                &pLocalName, &nLocalName, &pQName, &nQName);
-        ok(hres == S_OK, "getName returned %x\n", hres);
-        test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "");
-        test_saxstr(__LINE__, pLocalName, nLocalName, "arg2");
-        test_saxstr(__LINE__, pQName, nQName, "arg2");
-
-        hres = ISAXAttributes_getName(pAttr, 2, &pNamespaceUri, &nNamespaceUri,
-                &pLocalName, &nLocalName, &pQName, &nQName);
-        ok(hres == S_OK, "getName returned %x\n", hres);
-        test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "prefix_test");
-        test_saxstr(__LINE__, pLocalName, nLocalName, "ar3");
-        test_saxstr(__LINE__, pQName, nQName, "test:ar3");
-        ok(uri_ptr == pNamespaceUri, "Incorrect NamespaceUri pointer\n");
-
-        hres = ISAXAttributes_getName(pAttr, 3, &pNamespaceUri, &nNamespaceUri,
-                &pLocalName, &nLocalName, &pQName, &nQName);
-        ok(hres == S_OK, "getName returned %x\n", hres);
-        test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "http://www.w3.org/2000/xmlns/");
-        test_saxstr(__LINE__, pLocalName, nLocalName, "");
-        test_saxstr(__LINE__, pQName, nQName, "xmlns:test");
-
-        hres = ISAXAttributes_getName(pAttr, 4, &pNamespaceUri, &nNamespaceUri,
-                &pLocalName, &nLocalName, &pQName, &nQName);
-        ok(hres == S_OK, "getName returned %x\n", hres);
-        test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "http://www.w3.org/2000/xmlns/");
-        test_saxstr(__LINE__, pLocalName, nLocalName, "");
-        test_saxstr(__LINE__, pQName, nQName, "xmlns");
-    } else if(expectCall == xmlspaceattr_test+2) {
-        const WCHAR *value;
-        int valuelen;
-
-        hres = ISAXAttributes_getLength(pAttr, &len);
-        EXPECT_HR(hres, S_OK);
-        ok(len == 1, "Incorrect number of attributes: %d\n", len);
-
-        hres = ISAXAttributes_getName(pAttr, 0, &pNamespaceUri, &nNamespaceUri,
-                &pLocalName, &nLocalName, &pQName, &nQName);
-        EXPECT_HR(hres, S_OK);
-        test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "http://www.w3.org/XML/1998/namespace");
-        test_saxstr(__LINE__, pLocalName, nLocalName, "space");
-        test_saxstr(__LINE__, pQName, nQName, "xml:space");
-
-        hres = ISAXAttributes_getValue(pAttr, 0, &value, &valuelen);
-        EXPECT_HR(hres, S_OK);
-        test_saxstr(__LINE__, value, valuelen, "preserve");
+        call.attributes = attr;
+        call.attr_count = len;
     }
 
-    return (expectCall++)->ret;
+    add_call(sequences, CONTENT_HANDLER_INDEX, &call);
+
+    return get_expected_ret();
 }
 
 static HRESULT WINAPI contentHandler_endElement(
         ISAXContentHandler* iface,
-        const WCHAR *pNamespaceUri,
-        int nNamespaceUri,
-        const WCHAR *pLocalName,
-        int nLocalName,
-        const WCHAR *pQName,
-        int nQName)
+        const WCHAR *uri, int uri_len,
+        const WCHAR *localname, int local_len,
+        const WCHAR *qname, int qname_len)
 {
-    if(!test_expect_call(CH_ENDELEMENT))
-        return E_FAIL;
+    struct call_entry call;
 
-    test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, expectCall->arg1);
-    test_saxstr(__LINE__, pLocalName, nLocalName, expectCall->arg2);
-    test_saxstr(__LINE__, pQName, nQName, expectCall->arg3);
-    test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
-            msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
+    init_call_entry(locator, &call);
+    call.id = CH_ENDELEMENT;
+    call.arg1W = SysAllocStringLen(uri, uri_len);
+    call.arg2W = SysAllocStringLen(localname, local_len);
+    call.arg3W = SysAllocStringLen(qname, qname_len);
+    add_call(sequences, CONTENT_HANDLER_INDEX, &call);
 
-    return (expectCall++)->ret;
+    return get_expected_ret();
 }
 
 static HRESULT WINAPI contentHandler_characters(
         ISAXContentHandler* iface,
-        const WCHAR *pChars,
-        int nChars)
+        const WCHAR *chars,
+        int len)
 {
-    if(!test_expect_call(CH_CHARACTERS))
-        return E_FAIL;
+    struct call_entry call;
 
-    test_saxstr(__LINE__, pChars, nChars, expectCall->arg1);
-    test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
-            msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
+    init_call_entry(locator, &call);
+    call.id = CH_CHARACTERS;
+    call.arg1W = SysAllocStringLen(chars, len);
+    add_call(sequences, CONTENT_HANDLER_INDEX, &call);
 
-    return (expectCall++)->ret;
+    return get_expected_ret();
 }
 
 static HRESULT WINAPI contentHandler_ignorableWhitespace(
         ISAXContentHandler* iface,
-        const WCHAR *pChars,
-        int nChars)
+        const WCHAR *chars, int len)
 {
-    if(!test_expect_call(CH_IGNORABLEWHITESPACE))
-        return E_FAIL;
+    struct call_entry call;
 
-    test_saxstr(__LINE__, pChars, nChars, expectCall->arg1);
-    test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
-            msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
+    init_call_entry(locator, &call);
+    call.id = CH_IGNORABLEWHITESPACE;
+    call.arg1W = SysAllocStringLen(chars, len);
+    add_call(sequences, CONTENT_HANDLER_INDEX, &call);
 
-    return (expectCall++)->ret;
+    return get_expected_ret();
 }
 
 static HRESULT WINAPI contentHandler_processingInstruction(
         ISAXContentHandler* iface,
-        const WCHAR *pTarget,
-        int nTarget,
-        const WCHAR *pData,
-        int nData)
+        const WCHAR *target, int target_len,
+        const WCHAR *data, int data_len)
 {
-    if(!test_expect_call(CH_PROCESSINGINSTRUCTION))
-        return E_FAIL;
+    struct call_entry call;
 
-    test_saxstr(__LINE__, pTarget, nTarget, expectCall->arg1);
-    test_saxstr(__LINE__, pData, nData, expectCall->arg2);
-    test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
-            msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
+    init_call_entry(locator, &call);
+    call.id = CH_PROCESSINGINSTRUCTION;
+    call.arg1W = SysAllocStringLen(target, target_len);
+    call.arg2W = SysAllocStringLen(data, data_len);
+    add_call(sequences, CONTENT_HANDLER_INDEX, &call);
 
-    return (expectCall++)->ret;
+    return get_expected_ret();
 }
 
 static HRESULT WINAPI contentHandler_skippedEntity(
         ISAXContentHandler* iface,
-        const WCHAR *pName,
-        int nName)
+        const WCHAR *name, int len)
 {
-    if(!test_expect_call(CH_SKIPPEDENTITY))
-        return E_FAIL;
+    struct call_entry call;
 
-    test_saxstr(__LINE__, pName, nName, expectCall->arg1);
-    test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
-            msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
+    init_call_entry(locator, &call);
+    call.id = CH_SKIPPEDENTITY;
+    call.arg1W = SysAllocStringLen(name, len);
 
-    return (expectCall++)->ret;
+    return get_expected_ret();
 }
-
 
 static const ISAXContentHandlerVtbl contentHandlerVtbl =
 {
@@ -731,15 +1140,18 @@ static HRESULT WINAPI isaxerrorHandler_error(
 static HRESULT WINAPI isaxerrorHandler_fatalError(
         ISAXErrorHandler* iface,
         ISAXLocator *pLocator,
-        const WCHAR *pErrorMessage,
-        HRESULT hrErrorCode)
+        const WCHAR *message,
+        HRESULT hr)
 {
-    if(!test_expect_call(EH_FATALERROR))
-        return E_FAIL;
+    struct call_entry call;
 
-    ok(hrErrorCode == expectCall->ret, "hrErrorCode = %x, expected %x\n", hrErrorCode, expectCall->ret);
+    init_call_entry(locator, &call);
+    call.id  = EH_FATALERROR;
+    call.ret = hr;
 
-    expectCall++;
+    add_call(sequences, CONTENT_HANDLER_INDEX, &call);
+
+    get_expected_ret();
     return S_OK;
 }
 
@@ -1287,197 +1699,278 @@ static const IStreamVtbl StreamVtbl = {
 
 static IStream mxstream = { &StreamVtbl };
 
-static void test_saxreader(int version)
+static struct msxmlsupported_data_t reader_support_data[] =
 {
+    { &CLSID_SAXXMLReader,   "SAXReader"   },
+    { &CLSID_SAXXMLReader30, "SAXReader30" },
+    { &CLSID_SAXXMLReader40, "SAXReader40" },
+    { &CLSID_SAXXMLReader60, "SAXReader60" },
+    { NULL }
+};
+
+static void test_saxreader(void)
+{
+    const struct msxmlsupported_data_t *table = reader_support_data;
     HRESULT hr;
     ISAXXMLReader *reader = NULL;
     VARIANT var;
-    ISAXContentHandler *lpContentHandler;
+    ISAXContentHandler *content;
     ISAXErrorHandler *lpErrorHandler;
-    SAFEARRAY *pSA;
+    SAFEARRAY *sa;
     SAFEARRAYBOUND SADim[1];
-    char *pSAData = NULL;
-    IStream *iStream;
+    char *ptr = NULL;
+    IStream *stream;
     ULARGE_INTEGER liSize;
     LARGE_INTEGER liPos;
-    ULONG bytesWritten;
+    ULONG written;
     HANDLE file;
     static const CHAR testXmlA[] = "test.xml";
     static const WCHAR testXmlW[] = {'t','e','s','t','.','x','m','l',0};
-    IXMLDOMDocument *domDocument;
-    BSTR bstrData;
-    VARIANT_BOOL vBool;
+    IXMLDOMDocument *doc;
+    BSTR str;
+    VARIANT_BOOL v;
 
-    msxml_version = version;
-    if(version == 3) {
-        hr = CoCreateInstance(&CLSID_SAXXMLReader30, NULL, CLSCTX_INPROC_SERVER,
-                &IID_ISAXXMLReader, (LPVOID*)&reader);
-    } else if(version == 6) {
-        hr = CoCreateInstance(&CLSID_SAXXMLReader60, NULL, CLSCTX_INPROC_SERVER,
-                &IID_ISAXXMLReader, (LPVOID*)&reader);
-        if(hr == REGDB_E_CLASSNOTREG) {
-            win_skip("SAXXMLReader6 not registered\n");
-            return;
-        }
-    } else {
-        hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
-                &IID_ISAXXMLReader, (LPVOID*)&reader);
-    }
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-
-    if(version != 6) {
-        hr = ISAXXMLReader_getContentHandler(reader, NULL);
-        ok(hr == E_POINTER, "Expected E_POINTER, got %08x\n", hr);
-
-        hr = ISAXXMLReader_getErrorHandler(reader, NULL);
-        ok(hr == E_POINTER, "Expected E_POINTER, got %08x\n", hr);
-    }
-
-    hr = ISAXXMLReader_getContentHandler(reader, &lpContentHandler);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(lpContentHandler == NULL, "Expected %p, got %p\n", NULL, lpContentHandler);
-
-    hr = ISAXXMLReader_getErrorHandler(reader, &lpErrorHandler);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(lpErrorHandler == NULL, "Expected %p, got %p\n", NULL, lpErrorHandler);
-
-    hr = ISAXXMLReader_putContentHandler(reader, NULL);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-
-    hr = ISAXXMLReader_putContentHandler(reader, &contentHandler);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-
-    hr = ISAXXMLReader_putErrorHandler(reader, &errorHandler);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-
-    hr = ISAXXMLReader_getContentHandler(reader, &lpContentHandler);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(lpContentHandler == &contentHandler, "Expected %p, got %p\n", &contentHandler, lpContentHandler);
-
-    V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = SysAllocString(szSimpleXML);
-
-    expectCall = contentHandlerTest1;
-    hr = ISAXXMLReader_parse(reader, var);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    test_expect_call(CH_ENDTEST);
-
-    VariantClear(&var);
-
-    SADim[0].lLbound= 0;
-    SADim[0].cElements= sizeof(szTestXML)-1;
-    pSA = SafeArrayCreate(VT_UI1, 1, SADim);
-    SafeArrayAccessData(pSA, (void**)&pSAData);
-    memcpy(pSAData, szTestXML, sizeof(szTestXML)-1);
-    SafeArrayUnaccessData(pSA);
-    V_VT(&var) = VT_ARRAY|VT_UI1;
-    V_ARRAY(&var) = pSA;
-
-    expectCall = contentHandlerTest1;
-    hr = ISAXXMLReader_parse(reader, var);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    test_expect_call(CH_ENDTEST);
-
-    SafeArrayDestroy(pSA);
-
-    CreateStreamOnHGlobal(NULL, TRUE, &iStream);
-    liSize.QuadPart = strlen(szTestXML);
-    IStream_SetSize(iStream, liSize);
-    IStream_Write(iStream, szTestXML, strlen(szTestXML), &bytesWritten);
-    liPos.QuadPart = 0;
-    IStream_Seek(iStream, liPos, STREAM_SEEK_SET, NULL);
-    V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
-    V_UNKNOWN(&var) = (IUnknown*)iStream;
-
-    expectCall = contentHandlerTest1;
-    hr = ISAXXMLReader_parse(reader, var);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    test_expect_call(CH_ENDTEST);
-
-    IStream_Release(iStream);
-
-    CreateStreamOnHGlobal(NULL, TRUE, &iStream);
-    liSize.QuadPart = strlen(szTestAttributes);
-    IStream_SetSize(iStream, liSize);
-    IStream_Write(iStream, szTestAttributes, strlen(szTestAttributes), &bytesWritten);
-    liPos.QuadPart = 0;
-    IStream_Seek(iStream, liPos, STREAM_SEEK_SET, NULL);
-    V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
-    V_UNKNOWN(&var) = (IUnknown*)iStream;
-
-    if(version >= 6)
-        expectCall = contentHandlerTestAttributes6;
-    else
-        expectCall = contentHandlerTestAttributes;
-    hr = ISAXXMLReader_parse(reader, var);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    test_expect_call(CH_ENDTEST);
-
-    IStream_Release(iStream);
-
-    V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = SysAllocString(szCarriageRetTest);
-
-    expectCall = contentHandlerTest2;
-    hr = ISAXXMLReader_parse(reader, var);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    test_expect_call(CH_ENDTEST);
-
-    VariantClear(&var);
-
-    file = CreateFileA(testXmlA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
-    WriteFile(file, szTestXML, sizeof(szTestXML)-1, &bytesWritten, NULL);
-    CloseHandle(file);
-
-    expectCall = contentHandlerTest1;
-    hr = ISAXXMLReader_parseURL(reader, testXmlW);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    test_expect_call(CH_ENDTEST);
-
-    expectCall = contentHandlerTestError;
-    hr = ISAXXMLReader_parseURL(reader, testXmlW);
-    ok(hr == E_FAIL, "Expected E_FAIL, got %08x\n", hr);
-    test_expect_call(CH_ENDTEST);
-
-    if(version >= 6)
-        expectCall = contentHandlerTestCallbackResult6;
-    else
-        expectCall = contentHandlerTestCallbackResults;
-    hr = ISAXXMLReader_parseURL(reader, testXmlW);
-    ok(hr == (version>=6 ? S_OK : S_FALSE), "Expected S_FALSE, got %08x\n", hr);
-    test_expect_call(CH_ENDTEST);
-
-    DeleteFileA(testXmlA);
-
-    hr = CoCreateInstance(&CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IXMLDOMDocument, (LPVOID*)&domDocument);
-    if(FAILED(hr))
+    while (table->clsid)
     {
-        skip("Failed to create DOMDocument instance\n");
-        return;
+        struct call_entry *test_seq;
+
+        if (!is_clsid_supported(table->clsid, reader_support_data))
+        {
+            table++;
+            continue;
+        }
+
+        hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER, &IID_ISAXXMLReader, (void**)&reader);
+        EXPECT_HR(hr, S_OK);
+
+        msxml_version = IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60) ? 6 : 0;
+
+        /* crashes on old versions */
+        if (!IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) &&
+            !IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+        {
+            hr = ISAXXMLReader_getContentHandler(reader, NULL);
+            EXPECT_HR(hr, E_POINTER);
+
+            hr = ISAXXMLReader_getErrorHandler(reader, NULL);
+            EXPECT_HR(hr, E_POINTER);
+        }
+
+        hr = ISAXXMLReader_getContentHandler(reader, &content);
+        EXPECT_HR(hr, S_OK);
+        ok(content == NULL, "Expected %p, got %p\n", NULL, content);
+
+        hr = ISAXXMLReader_getErrorHandler(reader, &lpErrorHandler);
+        EXPECT_HR(hr, S_OK);
+        ok(lpErrorHandler == NULL, "Expected %p, got %p\n", NULL, lpErrorHandler);
+
+        hr = ISAXXMLReader_putContentHandler(reader, NULL);
+        EXPECT_HR(hr, S_OK);
+
+        hr = ISAXXMLReader_putContentHandler(reader, &contentHandler);
+        EXPECT_HR(hr, S_OK);
+
+        hr = ISAXXMLReader_putErrorHandler(reader, &errorHandler);
+        EXPECT_HR(hr, S_OK);
+
+        hr = ISAXXMLReader_getContentHandler(reader, &content);
+        EXPECT_HR(hr, S_OK);
+        ok(content == &contentHandler, "Expected %p, got %p\n", &contentHandler, content);
+
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = SysAllocString(szSimpleXML);
+
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+            test_seq = content_handler_test1_alternate;
+        else
+            test_seq = content_handler_test1;
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parse(reader, var);
+        EXPECT_HR(hr, S_OK);
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test 1", FALSE);
+
+        VariantClear(&var);
+
+        SADim[0].lLbound = 0;
+        SADim[0].cElements = sizeof(testXML)-1;
+        sa = SafeArrayCreate(VT_UI1, 1, SADim);
+        SafeArrayAccessData(sa, (void**)&ptr);
+        memcpy(ptr, testXML, sizeof(testXML)-1);
+        SafeArrayUnaccessData(sa);
+        V_VT(&var) = VT_ARRAY|VT_UI1;
+        V_ARRAY(&var) = sa;
+
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parse(reader, var);
+        EXPECT_HR(hr, S_OK);
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test 1: from safe array", FALSE);
+
+        SafeArrayDestroy(sa);
+
+        CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        liSize.QuadPart = strlen(testXML);
+        IStream_SetSize(stream, liSize);
+        IStream_Write(stream, testXML, strlen(testXML), &written);
+        liPos.QuadPart = 0;
+        IStream_Seek(stream, liPos, STREAM_SEEK_SET, NULL);
+        V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
+        V_UNKNOWN(&var) = (IUnknown*)stream;
+
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parse(reader, var);
+        EXPECT_HR(hr, S_OK);
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test 1: from stream", FALSE);
+
+        IStream_Release(stream);
+
+        CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        liSize.QuadPart = strlen(szTestAttributes);
+        IStream_SetSize(stream, liSize);
+        IStream_Write(stream, szTestAttributes, strlen(szTestAttributes), &written);
+        liPos.QuadPart = 0;
+        IStream_Seek(stream, liPos, STREAM_SEEK_SET, NULL);
+        V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
+        V_UNKNOWN(&var) = (IUnknown*)stream;
+
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40))
+            test_seq = content_handler_test_attributes_alternate_4;
+        else if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+            test_seq = content_handler_test_attributes_alternate_6;
+        else
+            test_seq = content_handler_test_attributes;
+
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parse(reader, var);
+        EXPECT_HR(hr, S_OK);
+
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40))
+            ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test attributes", TRUE);
+        else if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+            ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test attributes", FALSE);
+        else
+            ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test attributes", TRUE);
+
+        IStream_Release(stream);
+
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = SysAllocString(carriage_ret_test);
+
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+            test_seq = content_handler_test2_alternate;
+        else
+            test_seq = content_handler_test2;
+
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parse(reader, var);
+        EXPECT_HR(hr, S_OK);
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test 2", FALSE);
+
+        VariantClear(&var);
+
+        /* from file url */
+        file = CreateFileA(testXmlA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
+        WriteFile(file, testXML, sizeof(testXML)-1, &written, NULL);
+        CloseHandle(file);
+
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+            test_seq = content_handler_test1_alternate;
+        else
+            test_seq = content_handler_test1;
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parseURL(reader, testXmlW);
+        EXPECT_HR(hr, S_OK);
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test 1: from file url", FALSE);
+
+        /* error handler */
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+            test_seq = content_handler_testerror_alternate;
+        else
+            test_seq = content_handler_testerror;
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parseURL(reader, testXmlW);
+        EXPECT_HR(hr, E_FAIL);
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test error", FALSE);
+
+        /* callback ret values */
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+        {
+            test_seq = content_handler_test_callback_rets_alt;
+            set_expected_seq(test_seq);
+            hr = ISAXXMLReader_parseURL(reader, testXmlW);
+            EXPECT_HR(hr, S_OK);
+        }
+        else
+        {
+            test_seq = content_handler_test_callback_rets;
+            set_expected_seq(test_seq);
+            hr = ISAXXMLReader_parseURL(reader, testXmlW);
+            EXPECT_HR(hr, S_FALSE);
+        }
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content callback ret values", FALSE);
+
+        DeleteFileA(testXmlA);
+
+        /* parse from IXMLDOMDocument */
+        hr = CoCreateInstance(&CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IXMLDOMDocument, (void**)&doc);
+        EXPECT_HR(hr, S_OK);
+
+        str = SysAllocString(szSimpleXML);
+        hr = IXMLDOMDocument_loadXML(doc, str, &v);
+        EXPECT_HR(hr, S_OK);
+
+        V_VT(&var) = VT_UNKNOWN;
+        V_UNKNOWN(&var) = (IUnknown*)doc;
+
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+            test_seq = content_handler_test2_alternate;
+        else
+            test_seq = content_handler_test2;
+
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parse(reader, var);
+        EXPECT_HR(hr, S_OK);
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "parse from IXMLDOMDocument", FALSE);
+        IXMLDOMDocument_Release(doc);
+
+        /* xml:space test */
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+        {
+            test_seq = xmlspaceattr_test_alternate;
+        }
+        else
+            test_seq = xmlspaceattr_test;
+
+        set_expected_seq(test_seq);
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = _bstr_(xmlspace_attr);
+        hr = ISAXXMLReader_parse(reader, var);
+        EXPECT_HR(hr, S_OK);
+
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+        {
+            ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "xml:space handling", TRUE);
+        }
+        else
+            ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "xml:space handling", FALSE);
+
+        ISAXXMLReader_Release(reader);
+        table++;
     }
-    bstrData = SysAllocString(szSimpleXML);
-    hr = IXMLDOMDocument_loadXML(domDocument, bstrData, &vBool);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    V_VT(&var) = VT_UNKNOWN;
-    V_UNKNOWN(&var) = (IUnknown*)domDocument;
 
-    expectCall = contentHandlerTest2;
-    hr = ISAXXMLReader_parse(reader, var);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    test_expect_call(CH_ENDTEST);
-    IXMLDOMDocument_Release(domDocument);
-
-    expectCall = xmlspaceattr_test;
-    V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = _bstr_(xmlspace_attr);
-    hr = ISAXXMLReader_parse(reader, var);
-    EXPECT_HR(hr, S_OK);
-    test_expect_call(CH_ENDTEST);
+    return;
 
     ISAXXMLReader_Release(reader);
-    SysFreeString(bstrData);
+    SysFreeString(str);
     free_bstrs();
 }
 
@@ -1744,16 +2237,10 @@ static void test_mxwriter_handlers(void)
     IMXWriter_Release(writer);
 }
 
-struct msxmlsupported_data_t
-{
-    const GUID *clsid;
-    const char *name;
-    BOOL supported;
-};
 
 static struct msxmlsupported_data_t mxwriter_support_data[] =
 {
-    { &CLSID_MXXMLWriter,   "MXXMLWriter" },
+    { &CLSID_MXXMLWriter,   "MXXMLWriter"   },
     { &CLSID_MXXMLWriter30, "MXXMLWriter30" },
     { &CLSID_MXXMLWriter40, "MXXMLWriter40" },
     { &CLSID_MXXMLWriter60, "MXXMLWriter60" },
@@ -1762,22 +2249,12 @@ static struct msxmlsupported_data_t mxwriter_support_data[] =
 
 static struct msxmlsupported_data_t mxattributes_support_data[] =
 {
-    { &CLSID_SAXAttributes,   "SAXAttributes" },
+    { &CLSID_SAXAttributes,   "SAXAttributes"   },
     { &CLSID_SAXAttributes30, "SAXAttributes30" },
     { &CLSID_SAXAttributes40, "SAXAttributes40" },
     { &CLSID_SAXAttributes60, "SAXAttributes60" },
     { NULL }
 };
-
-static BOOL is_clsid_supported(const GUID *clsid, const struct msxmlsupported_data_t *table)
-{
-    while (table->clsid)
-    {
-        if (table->clsid == clsid) return table->supported;
-        table++;
-    }
-    return FALSE;
-}
 
 struct mxwriter_props_t
 {
@@ -2287,37 +2764,18 @@ static const struct writer_startendelement_t writer_startendelement[] = {
     { NULL }
 };
 
-static void get_mxwriter_support_data(struct msxmlsupported_data_t *table)
+static void get_class_support_data(struct msxmlsupported_data_t *table, REFIID riid)
 {
     while (table->clsid)
     {
-        IMXWriter *writer;
+        IUnknown *unk;
         HRESULT hr;
 
-        hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IMXWriter, (void**)&writer);
-        if (hr == S_OK) IMXWriter_Release(writer);
+        hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER, riid, (void**)&unk);
+        if (hr == S_OK) IUnknown_Release(unk);
 
         table->supported = hr == S_OK;
         if (hr != S_OK) win_skip("class %s not supported\n", table->name);
-
-        table++;
-    }
-}
-
-static void get_mxattributes_support_data(struct msxmlsupported_data_t *table)
-{
-    while (table->clsid)
-    {
-        IMXAttributes *attr;
-        HRESULT hr;
-
-        hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IMXAttributes, (void**)&attr);
-        if (hr == S_OK) IMXAttributes_Release(attr);
-
-        table->supported = hr == S_OK;
-        if (hr != S_OK) skip("class %s not supported\n", table->name);
 
         table++;
     }
@@ -3737,16 +4195,18 @@ START_TEST(saxreader)
     }
     ISAXXMLReader_Release(reader);
 
-    test_saxreader(0);
-    test_saxreader(3);
-    test_saxreader(6);
+    init_call_sequences(sequences, NUM_CALL_SEQUENCES);
+
+    get_class_support_data(reader_support_data, &IID_ISAXXMLReader);
+
+    test_saxreader();
     test_saxreader_properties();
     test_saxreader_features();
     test_encoding();
     test_dispex();
 
     /* MXXMLWriter tests */
-    get_mxwriter_support_data(mxwriter_support_data);
+    get_class_support_data(mxwriter_support_data, &IID_IMXWriter);
     if (is_clsid_supported(&CLSID_MXXMLWriter, mxwriter_support_data))
     {
         test_mxwriter_handlers();
@@ -3768,7 +4228,7 @@ START_TEST(saxreader)
         win_skip("MXXMLWriter not supported\n");
 
     /* SAXAttributes tests */
-    get_mxattributes_support_data(mxattributes_support_data);
+    get_class_support_data(mxattributes_support_data, &IID_IMXAttributes);
     if (is_clsid_supported(&CLSID_SAXAttributes, mxattributes_support_data))
     {
         test_mxattr_qi();
