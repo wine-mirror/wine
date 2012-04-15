@@ -139,7 +139,7 @@ static UINT arm_disasm_singletrans(UINT inst)
     short writeback = (inst >> 21) & 0x01;
     short byte      = (inst >> 22) & 0x01;
     short direction = (inst >> 23) & 0x01;
-    /* FIXME: what to do with bit 24 (indexing) */
+    short indexing  = (inst >> 24) & 0x01;
     short immediate = !((inst >> 25) & 0x01);
     short offset    = inst & 0x0fff;
 
@@ -147,11 +147,21 @@ static UINT arm_disasm_singletrans(UINT inst)
 
     dbg_printf("\n\t%s%s%s%s", load ? "ldr" : "str", byte ? "b" : "", writeback ? "t" : "",
                get_cond(inst));
-    if (immediate)
-        dbg_printf("\tr%u, [r%u, #%d]", get_nibble(inst, 3), get_nibble(inst, 4), offset);
+    dbg_printf("\tr%u, ", get_nibble(inst, 3));
+    if (indexing)
+    {
+        if (immediate)
+            dbg_printf("[r%u, #%d]", get_nibble(inst, 4), offset);
+        else
+            dbg_printf("[r%u, r%u]", get_nibble(inst, 4), get_nibble(inst, 0));
+    }
     else
-        dbg_printf("\tr%u, r%u, r%u", get_nibble(inst, 3), get_nibble(inst, 4),
-                   get_nibble(inst, 0));
+    {
+        if (immediate)
+            dbg_printf("[r%u], #%d", get_nibble(inst, 4), offset);
+        else
+            dbg_printf("[r%u], r%u", get_nibble(inst, 4), get_nibble(inst, 0));
+    }
     return 0;
 }
 
@@ -163,17 +173,28 @@ static UINT arm_disasm_halfwordtrans(UINT inst)
     short writeback = (inst >> 21) & 0x01;
     short immediate = (inst >> 22) & 0x01;
     short direction = (inst >> 23) & 0x01;
-    /* FIXME: what to do with bit 24 (indexing) */
+    short indexing  = (inst >> 24) & 0x01;
     short offset    = ((inst >> 4) & 0xf0) + (inst & 0x0f);
 
     if (!direction) offset *= -1;
 
     dbg_printf("\n\t%s%s%s%s%s", load ? "ldr" : "str", sign ? "s" : "",
                halfword ? "h" : (sign ? "b" : ""), writeback ? "t" : "", get_cond(inst));
-    if (immediate)
-        dbg_printf("\tr%u, r%u, #%d", get_nibble(inst, 3), get_nibble(inst, 4), offset);
+    dbg_printf("\tr%u, ", get_nibble(inst, 3));
+    if (indexing)
+    {
+        if (immediate)
+            dbg_printf("[r%u, #%d]", get_nibble(inst, 4), offset);
+        else
+            dbg_printf("[r%u, r%u]", get_nibble(inst, 4), get_nibble(inst, 0));
+    }
     else
-        dbg_printf("\tr%u, r%u, r%u", get_nibble(inst, 3), get_nibble(inst, 4), get_nibble(inst, 0));
+    {
+        if (immediate)
+            dbg_printf("[r%u], #%d", get_nibble(inst, 4), offset);
+        else
+            dbg_printf("[r%u], r%u", get_nibble(inst, 4), get_nibble(inst, 0));
+    }
     return 0;
 }
 
@@ -207,7 +228,7 @@ static UINT arm_disasm_blocktrans(UINT inst)
 static UINT arm_disasm_swi(UINT inst)
 {
     UINT comment = inst & 0x00ffffff;
-    dbg_printf("\n\tswi%s\t#%d/0x%08x", get_cond(inst), comment, comment);
+    dbg_printf("\n\tswi%s\t#%d", get_cond(inst), comment);
     return 0;
 }
 
@@ -244,16 +265,19 @@ static UINT arm_disasm_coprocdatatrans(UINT inst)
     WORD CPnum  = (inst >> 8)  & 0x0f;
     WORD CRd    = (inst >> 12) & 0x0f;
     WORD load      = (inst >> 20) & 0x01;
-    /* FIXME: what to do with bit 21 (writeback) */
+    WORD writeback = (inst >> 21) & 0x01;
     WORD translen  = (inst >> 22) & 0x01;
     WORD direction = (inst >> 23) & 0x01;
-    /* FIXME: what to do with bit 24 (indexing) */
+    WORD indexing  = (inst >> 24) & 0x01;
     short offset    = (inst & 0xff) << 2;
 
     if (!direction) offset *= -1;
 
     dbg_printf("\n\t%s%s%s", load ? "ldc" : "stc", translen ? "l" : "", get_cond(inst));
-    dbg_printf("\t%u, cr%u, [r%u, #%d]", CPnum, CRd, get_nibble(inst, 4), offset);
+    if (indexing)
+        dbg_printf("\t%u, cr%u, [r%u, #%d]%s", CPnum, CRd, get_nibble(inst, 4), offset, writeback?"!":"");
+    else
+        dbg_printf("\t%u, cr%u, [r%u], #%d", CPnum, CRd, get_nibble(inst, 4), offset);
     return 0;
 }
 
