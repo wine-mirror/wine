@@ -377,7 +377,7 @@ static inline BOOL sax_callback_failed(saxlocator *This, HRESULT hr)
 /* index value -1 means it tries to loop for a first time */
 static inline BOOL iterate_endprefix_index(saxlocator *This, const element_entry *element, int *i)
 {
-    if (This->saxreader->version >= MSXML6)
+    if (This->saxreader->version >= MSXML4)
     {
         if (*i == -1) *i = 0; else ++*i;
         return *i < element->ns_count;

@@ -1844,9 +1844,8 @@ static void test_saxreader(void)
         hr = ISAXXMLReader_parse(reader, var);
         EXPECT_HR(hr, S_OK);
 
-        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40))
-            ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test attributes", TRUE);
-        else if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
             ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test attributes", FALSE);
         else
             ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test attributes", TRUE);
