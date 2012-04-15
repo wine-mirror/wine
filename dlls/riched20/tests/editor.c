@@ -6366,7 +6366,7 @@ static void test_format_rect(void)
 
     /* Reset to default rect and check how the format rect adjusts to window
      * resize and how it copes with very small windows */
-    SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)NULL);
+    SendMessageA(hwnd, EM_SETRECT, 0, 0);
 
     MoveWindow(hwnd, 0, 0, 100, 30, FALSE);
     GetClientRect(hwnd, &clientRect);
