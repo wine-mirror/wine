@@ -194,7 +194,6 @@ BOOL WINAPI BaseControlWindowImpl_PossiblyEatMessage(BaseWindow *This, UINT uMsg
             case WM_RBUTTONUP:
                 PostMessageW(pControlWindow->hwndDrain, uMsg, wParam, lParam);
                 return TRUE;
-                break;
             default:
                 break;
         }
