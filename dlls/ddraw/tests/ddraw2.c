@@ -294,6 +294,35 @@ static void destroy_viewport(IDirect3DDevice2 *device, IDirect3DViewport2 *viewp
     IDirect3DViewport2_Release(viewport);
 }
 
+static IDirect3DMaterial2 *create_diffuse_material(IDirect3DDevice2 *device, float r, float g, float b, float a)
+{
+    IDirect3DMaterial2 *material;
+    D3DMATERIAL mat;
+    IDirect3D2 *d3d;
+    HRESULT hr;
+
+    hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    hr = IDirect3D2_CreateMaterial(d3d, &material, NULL);
+    ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
+    memset(&mat, 0, sizeof(mat));
+    mat.dwSize = sizeof(mat);
+    U1(U(mat).diffuse).r = r;
+    U2(U(mat).diffuse).g = g;
+    U3(U(mat).diffuse).b = b;
+    U4(U(mat).diffuse).a = a;
+    hr = IDirect3DMaterial2_SetMaterial(material, &mat);
+    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
+    IDirect3D2_Release(d3d);
+
+    return material;
+}
+
+static void destroy_material(IDirect3DMaterial2 *material)
+{
+    IDirect3DMaterial2_Release(material);
+}
+
 static HRESULT CALLBACK restore_callback(IDirectDrawSurface *surface, DDSURFACEDESC *desc, void *context)
 {
     HRESULT hr = IDirectDrawSurface_Restore(surface);
@@ -615,7 +644,6 @@ static void test_coop_level_d3d_state(void)
     IDirect3DDevice2 *device;
     D3DMATERIAL material;
     IDirectDraw2 *ddraw;
-    IDirect3D2 *d3d;
     D3DCOLOR color;
     DWORD value;
     HWND window;
@@ -637,22 +665,9 @@ static void test_coop_level_d3d_state(void)
         return;
     }
 
-    hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
-    hr = IDirect3D2_CreateMaterial(d3d, &background, NULL);
-    ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
-    IDirect3D2_Release(d3d);
-
+    background = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
     viewport = create_viewport(device, 0, 0, 640, 480);
 
-    memset(&material, 0, sizeof(material));
-    material.dwSize = sizeof(material);
-    U1(U(material).diffuse).r = 1.0f;
-    U2(U(material).diffuse).g = 0.0f;
-    U3(U(material).diffuse).b = 0.0f;
-    U4(U(material).diffuse).a = 1.0f;
-    hr = IDirect3DMaterial2_SetMaterial(background, &material);
-    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
     hr = IDirect3DMaterial2_GetHandle(background, device, &background_handle);
     ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
     hr = IDirect3DViewport2_SetBackground(viewport, background_handle);
@@ -704,7 +719,7 @@ static void test_coop_level_d3d_state(void)
     ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
 
     destroy_viewport(device, viewport);
-    IDirect3DMaterial2_Release(background);
+    destroy_material(background);
     IDirectDrawSurface_Release(surface);
     IDirectDrawSurface_Release(rt);
     IDirect3DDevice2_Release(device);
@@ -727,7 +742,6 @@ static void test_surface_interface_mismatch(void)
     HRESULT hr;
     D3DCOLOR color;
     HWND window;
-    D3DMATERIAL material;
     D3DMATERIALHANDLE background_handle;
     D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
 
@@ -800,19 +814,9 @@ static void test_surface_interface_mismatch(void)
     if (FAILED(hr))
         goto cleanup;
 
-    hr = IDirect3D2_CreateMaterial(d3d, &background, NULL);
-    ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
-
+    background = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
     viewport = create_viewport(device, 0, 0, 640, 480);
 
-    memset(&material, 0, sizeof(material));
-    material.dwSize = sizeof(material);
-    U1(U(material).diffuse).r = 1.0f;
-    U2(U(material).diffuse).g = 0.0f;
-    U3(U(material).diffuse).b = 0.0f;
-    U4(U(material).diffuse).a = 1.0f;
-    hr = IDirect3DMaterial2_SetMaterial(background, &material);
-    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
     hr = IDirect3DMaterial2_GetHandle(background, device, &background_handle);
     ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
     hr = IDirect3DViewport2_SetBackground(viewport, background_handle);
@@ -826,7 +830,8 @@ static void test_surface_interface_mismatch(void)
 cleanup:
     if (viewport)
         destroy_viewport(device, viewport);
-    if (background) IDirect3DMaterial2_Release(background);
+    if (background)
+        destroy_material(background);
     if (surface3) IDirectDrawSurface3_Release(surface3);
     if (surface) IDirectDrawSurface_Release(surface);
     if (device) IDirect3DDevice2_Release(device);
@@ -887,14 +892,12 @@ static void test_depth_blit(void)
     unsigned int i, j;
     D3DCOLOR color;
     HRESULT hr;
-    IDirect3D2 *d3d;
     IDirectDraw2 *ddraw;
     DDBLTFX fx;
     HWND window;
     D3DRECT d3drect;
     IDirect3DMaterial2 *background;
     D3DMATERIALHANDLE background_handle;
-    D3DMATERIAL material;
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -911,11 +914,6 @@ static void test_depth_blit(void)
         DestroyWindow(window);
         return;
     }
-
-    hr = IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d);
-    ok(SUCCEEDED(hr), "Failed to get Direct3D2 interface, hr %#x.\n", hr);
-    hr = IDirect3D2_CreateMaterial(d3d, &background, NULL);
-    ok(SUCCEEDED(hr), "Failed to create a material, hr %#x.\n", hr);
 
     ds1 = get_depth_stencil(device);
 
@@ -934,18 +932,11 @@ static void test_depth_blit(void)
     hr = IDirectDraw2_CreateSurface(ddraw, &ddsd_new, &ds3, NULL);
     ok(SUCCEEDED(hr), "Failed to create a surface, hr %#x.\n", hr);
 
+    background = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
     viewport = create_viewport(device, 0, 0, ddsd_existing.dwWidth, ddsd_existing.dwHeight);
     hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to activate the viewport, hr %#x.\n", hr);
 
-    memset(&material, 0, sizeof(material));
-    material.dwSize = sizeof(material);
-    U1(U(material).diffuse).r = 1.0f;
-    U2(U(material).diffuse).g = 0.0f;
-    U3(U(material).diffuse).b = 0.0f;
-    U4(U(material).diffuse).a = 1.0f;
-    hr = IDirect3DMaterial2_SetMaterial(background, &material);
-    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
     hr = IDirect3DMaterial2_GetHandle(background, device, &background_handle);
     ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
     hr = IDirect3DViewport2_SetBackground(viewport, background_handle);
@@ -1055,8 +1046,7 @@ static void test_depth_blit(void)
     IDirectDrawSurface_Release(rt);
 
     destroy_viewport(device, viewport);
-    IDirect3DMaterial2_Release(background);
-    IDirect3D2_Release(d3d);
+    destroy_material(background);
     IDirect3DDevice2_Release(device);
     IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
@@ -1264,9 +1254,7 @@ static void test_zenable(void)
     IDirect3DViewport2 *viewport;
     IDirect3DDevice2 *device;
     IDirectDrawSurface *rt;
-    D3DMATERIAL material;
     IDirectDraw2 *ddraw;
-    IDirect3D2 *d3d;
     D3DCOLOR color;
     HWND window;
     HRESULT hr;
@@ -1289,23 +1277,11 @@ static void test_zenable(void)
         return;
     }
 
-    hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
-    hr = IDirect3D2_CreateMaterial(d3d, &background, NULL);
-    ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
-
+    background = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
     viewport = create_viewport(device, 0, 0, 640, 480);
     hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
 
-    memset(&material, 0, sizeof(material));
-    material.dwSize = sizeof(material);
-    U1(U(material).diffuse).r = 1.0f;
-    U2(U(material).diffuse).g = 0.0f;
-    U3(U(material).diffuse).b = 0.0f;
-    U4(U(material).diffuse).a = 1.0f;
-    hr = IDirect3DMaterial2_SetMaterial(background, &material);
-    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
     hr = IDirect3DMaterial2_GetHandle(background, device, &background_handle);
     ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
     hr = IDirect3DViewport2_SetBackground(viewport, background_handle);
@@ -1339,8 +1315,7 @@ static void test_zenable(void)
     IDirectDrawSurface_Release(rt);
 
     destroy_viewport(device, viewport);
-    IDirect3DMaterial2_Release(background);
-    IDirect3D2_Release(d3d);
+    destroy_material(background);
     IDirect3DDevice2_Release(device);
     IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
@@ -1389,9 +1364,7 @@ static void test_ck_rgba(void)
     DDSURFACEDESC surface_desc;
     IDirect3DDevice2 *device;
     IDirectDrawSurface *rt;
-    D3DMATERIAL material;
     IDirectDraw2 *ddraw;
-    IDirect3D2 *d3d;
     D3DCOLOR color;
     HWND window;
     DDBLTFX fx;
@@ -1413,29 +1386,15 @@ static void test_ck_rgba(void)
         return;
     }
 
-    hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
-
+    background = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
     viewport = create_viewport(device, 0, 0, 640, 480);
     hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
 
-    hr = IDirect3D2_CreateMaterial(d3d, &background, NULL);
-    ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
-    memset(&material, 0, sizeof(material));
-    material.dwSize = sizeof(material);
-    U1(U(material).diffuse).r = 1.0f;
-    U2(U(material).diffuse).g = 0.0f;
-    U3(U(material).diffuse).b = 0.0f;
-    U4(U(material).diffuse).a = 1.0f;
-    hr = IDirect3DMaterial2_SetMaterial(background, &material);
-    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
     hr = IDirect3DMaterial2_GetHandle(background, device, &background_handle);
     ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
     hr = IDirect3DViewport2_SetBackground(viewport, background_handle);
     ok(SUCCEEDED(hr), "Failed to set viewport background, hr %#x.\n", hr);
-
-    IDirect3D2_Release(d3d);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
@@ -1527,7 +1486,7 @@ static void test_ck_rgba(void)
     ok(SUCCEEDED(hr), "Failed to unset texture, hr %#x.\n", hr);
     IDirectDrawSurface_Release(surface);
     destroy_viewport(device, viewport);
-    IDirect3DMaterial2_Release(background);
+    destroy_material(background);
     IDirect3DDevice2_Release(device);
     IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
