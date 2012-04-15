@@ -203,9 +203,10 @@ static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device *ifac
 
     for (i = 0; i < buffer_count; ++i)
     {
+        struct d3d10_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
+
         wined3d_device_set_stream_source(This->wined3d_device, start_slot,
-                buffers[i] ? ((struct d3d10_buffer *)buffers[i])->wined3d_buffer : NULL,
-                offsets[i], strides[i]);
+                buffer ? buffer->wined3d_buffer : NULL, offsets[i], strides[i]);
     }
 }
 
@@ -213,12 +214,13 @@ static void STDMETHODCALLTYPE d3d10_device_IASetIndexBuffer(ID3D10Device *iface,
         ID3D10Buffer *buffer, DXGI_FORMAT format, UINT offset)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
+    struct d3d10_buffer *buffer_impl = unsafe_impl_from_ID3D10Buffer(buffer);
 
     TRACE("iface %p, buffer %p, format %s, offset %u.\n",
             iface, buffer, debug_dxgi_format(format), offset);
 
     wined3d_device_set_index_buffer(This->wined3d_device,
-            buffer ? ((struct d3d10_buffer *)buffer)->wined3d_buffer : NULL,
+            buffer_impl ? buffer_impl->wined3d_buffer : NULL,
             wined3dformat_from_dxgi_format(format));
     if (offset) FIXME("offset %u not supported.\n", offset);
 }
@@ -644,7 +646,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device *iface,
         return hr;
     }
 
-    *buffer = (ID3D10Buffer *)object;
+    *buffer = &object->ID3D10Buffer_iface;
 
     TRACE("Created ID3D10Buffer %p\n", object);
 

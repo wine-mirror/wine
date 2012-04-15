@@ -21,6 +21,8 @@
 
 #include "wine/debug.h"
 
+#include <assert.h>
+
 #define COBJMACROS
 #include "winbase.h"
 #include "wingdi.h"
@@ -111,7 +113,7 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_devic
 /* ID3D10Buffer */
 struct d3d10_buffer
 {
-    const struct ID3D10BufferVtbl *vtbl;
+    ID3D10Buffer ID3D10Buffer_iface;
     LONG refcount;
 
     struct wined3d_buffer *wined3d_buffer;
@@ -119,6 +121,7 @@ struct d3d10_buffer
 
 HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *device,
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data) DECLSPEC_HIDDEN;
+struct d3d10_buffer *unsafe_impl_from_ID3D10Buffer(ID3D10Buffer *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10DepthStencilView */
 struct d3d10_depthstencil_view

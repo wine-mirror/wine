@@ -19,7 +19,6 @@
 
 #include "config.h"
 #include "wine/port.h"
-#include <assert.h>
 
 #define NONAMELESSUNION
 #include "d3d10core_private.h"

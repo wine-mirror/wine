@@ -24,11 +24,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
+static inline struct d3d10_buffer *impl_from_ID3D10Buffer(ID3D10Buffer *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_buffer, ID3D10Buffer_iface);
+}
+
 /* IUnknown methods */
 
-static HRESULT STDMETHODCALLTYPE d3d10_buffer_QueryInterface(ID3D10Buffer *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE d3d10_buffer_QueryInterface(ID3D10Buffer *iface, REFIID riid, void **out)
 {
-    TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
     if (IsEqualGUID(riid, &IID_ID3D10Buffer)
             || IsEqualGUID(riid, &IID_ID3D10Resource)
@@ -36,40 +41,38 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_QueryInterface(ID3D10Buffer *iface
             || IsEqualGUID(riid, &IID_IUnknown))
     {
         IUnknown_AddRef(iface);
-        *object = iface;
+        *out = iface;
         return S_OK;
     }
 
     WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
 
-    *object = NULL;
+    *out = NULL;
     return E_NOINTERFACE;
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_buffer_AddRef(ID3D10Buffer *iface)
 {
-    struct d3d10_buffer *This = (struct d3d10_buffer *)iface;
-    ULONG refcount = InterlockedIncrement(&This->refcount);
+    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+    ULONG refcount = InterlockedIncrement(&buffer->refcount);
 
-    TRACE("%p increasing refcount to %u\n", This, refcount);
+    TRACE("%p increasing refcount to %u.\n", buffer, refcount);
 
     if (refcount == 1)
-        wined3d_buffer_incref(This->wined3d_buffer);
+        wined3d_buffer_incref(buffer->wined3d_buffer);
 
     return refcount;
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_buffer_Release(ID3D10Buffer *iface)
 {
-    struct d3d10_buffer *This = (struct d3d10_buffer *)iface;
-    ULONG refcount = InterlockedDecrement(&This->refcount);
+    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+    ULONG refcount = InterlockedDecrement(&buffer->refcount);
 
-    TRACE("%p decreasing refcount to %u\n", This, refcount);
+    TRACE("%p decreasing refcount to %u.\n", buffer, refcount);
 
     if (!refcount)
-    {
-        wined3d_buffer_decref(This->wined3d_buffer);
-    }
+        wined3d_buffer_decref(buffer->wined3d_buffer);
 
     return refcount;
 }
@@ -132,7 +135,7 @@ static UINT STDMETHODCALLTYPE d3d10_buffer_GetEvictionPriority(ID3D10Buffer *ifa
 
 static HRESULT STDMETHODCALLTYPE d3d10_buffer_Map(ID3D10Buffer *iface, D3D10_MAP map_type, UINT map_flags, void **data)
 {
-    struct d3d10_buffer *buffer = (struct d3d10_buffer *)iface;
+    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
 
     TRACE("iface %p, map_type %u, map_flags %#x, data %p.\n", iface, map_type, map_flags, data);
 
@@ -146,9 +149,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_Map(ID3D10Buffer *iface, D3D10_MAP
 
 static void STDMETHODCALLTYPE d3d10_buffer_Unmap(ID3D10Buffer *iface)
 {
+    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+
     TRACE("iface %p.\n", iface);
 
-    wined3d_buffer_unmap(((struct d3d10_buffer *)iface)->wined3d_buffer);
+    wined3d_buffer_unmap(buffer->wined3d_buffer);
 }
 
 static void STDMETHODCALLTYPE d3d10_buffer_GetDesc(ID3D10Buffer *iface, D3D10_BUFFER_DESC *desc)
@@ -177,6 +182,14 @@ static const struct ID3D10BufferVtbl d3d10_buffer_vtbl =
     d3d10_buffer_GetDesc,
 };
 
+struct d3d10_buffer *unsafe_impl_from_ID3D10Buffer(ID3D10Buffer *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d10_buffer_vtbl);
+    return CONTAINING_RECORD(iface, struct d3d10_buffer, ID3D10Buffer_iface);
+}
+
 static void STDMETHODCALLTYPE d3d10_buffer_wined3d_object_released(void *parent)
 {
     HeapFree(GetProcessHeap(), 0, parent);
@@ -193,7 +206,7 @@ HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *devi
     struct wined3d_buffer_desc wined3d_desc;
     HRESULT hr;
 
-    buffer->vtbl = &d3d10_buffer_vtbl;
+    buffer->ID3D10Buffer_iface.lpVtbl = &d3d10_buffer_vtbl;
     buffer->refcount = 1;
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
