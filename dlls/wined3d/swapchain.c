@@ -145,10 +145,17 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
             swapchain, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect),
             dst_window_override, dirty_region, flags);
 
+    if (!swapchain->back_buffers)
+    {
+        WARN("Swapchain doesn't have a backbuffer, returning WINED3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     wined3d_swapchain_set_window(swapchain, dst_window_override);
 
-    return swapchain->swapchain_ops->swapchain_present(swapchain,
-            src_rect, dst_rect, dirty_region, flags);
+    swapchain->swapchain_ops->swapchain_present(swapchain, src_rect, dst_rect, dirty_region, flags);
+
+    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapchain *swapchain,
@@ -446,7 +453,7 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
     }
 }
 
-static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT *src_rect_in,
+static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT *src_rect_in,
         const RECT *dst_rect_in, const RGNDATA *dirty_region, DWORD flags)
 {
     struct wined3d_surface *back_buffer = swapchain->back_buffers[0];
@@ -461,7 +468,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
     {
         context_release(context);
         WARN("Invalid context, skipping present.\n");
-        return WINED3D_OK;
+        return;
     }
 
     gl_info = context->gl_info;
@@ -685,9 +692,6 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
     }
 
     context_release(context);
-
-    TRACE("returning\n");
-    return WINED3D_OK;
 }
 
 static const struct wined3d_swapchain_ops swapchain_gl_ops =
@@ -740,16 +744,11 @@ void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *r
     ReleaseDC(window, dst_dc);
 }
 
-static HRESULT swapchain_gdi_present(struct wined3d_swapchain *swapchain, const RECT *src_rect_in,
+static void swapchain_gdi_present(struct wined3d_swapchain *swapchain, const RECT *src_rect_in,
         const RECT *dst_rect_in, const RGNDATA *dirty_region, DWORD flags)
 {
     struct wined3d_surface *front, *back;
 
-    if (!swapchain->back_buffers)
-    {
-        WARN("Swapchain doesn't have a backbuffer, returning WINED3DERR_INVALIDCALL\n");
-        return WINED3DERR_INVALIDCALL;
-    }
     front = swapchain->front_buffer;
     back = swapchain->back_buffers[0];
 
@@ -806,8 +805,6 @@ static HRESULT swapchain_gdi_present(struct wined3d_swapchain *swapchain, const 
     }
 
     x11_copy_to_screen(swapchain, NULL);
-
-    return WINED3D_OK;
 }
 
 static const struct wined3d_swapchain_ops swapchain_gdi_ops =

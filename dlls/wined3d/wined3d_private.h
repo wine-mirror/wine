@@ -2443,7 +2443,7 @@ struct wined3d_rendertarget_view
 
 struct wined3d_swapchain_ops
 {
-    HRESULT (*swapchain_present)(struct wined3d_swapchain *swapchain, const RECT *src_rect,
+    void (*swapchain_present)(struct wined3d_swapchain *swapchain, const RECT *src_rect,
             const RECT *dst_rect, const RGNDATA *dirty_region, DWORD flags);
 };
 
