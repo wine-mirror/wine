@@ -6447,8 +6447,9 @@ static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d
     const RECT draw_rect = {0, 0, dst_surface->resource.width, dst_surface->resource.height};
     struct wined3d_fb_state fb = {&dst_surface, NULL};
 
-    return device_clear_render_targets(device, 1, &fb,
-            1, dst_rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
+    device_clear_render_targets(device, 1, &fb, 1, dst_rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
+
+    return WINED3D_OK;
 }
 
 /* Do not call while under the GL lock. */
@@ -6458,8 +6459,9 @@ static HRESULT ffp_blit_depth_fill(struct wined3d_device *device,
     const RECT draw_rect = {0, 0, surface->resource.width, surface->resource.height};
     struct wined3d_fb_state fb = {NULL, surface};
 
-    return device_clear_render_targets(device, 0, &fb,
-            1, rect, &draw_rect, WINED3DCLEAR_ZBUFFER, 0, depth, 0);
+    device_clear_render_targets(device, 0, &fb, 1, rect, &draw_rect, WINED3DCLEAR_ZBUFFER, 0, depth, 0);
+
+    return WINED3D_OK;
 }
 
 const struct blit_shader ffp_blit =  {

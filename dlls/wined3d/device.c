@@ -637,7 +637,7 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
 }
 
 /* Do not call while under the GL lock. */
-HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count, const struct wined3d_fb_state *fb,
+void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, const struct wined3d_fb_state *fb,
         UINT rect_count, const RECT *rects, const RECT *draw_rect, DWORD flags, const struct wined3d_color *color,
         float depth, DWORD stencil)
 {
@@ -673,7 +673,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
     {
         context_release(context);
         WARN("Invalid context, skipping clear.\n");
-        return WINED3D_OK;
+        return;
     }
 
     if (target)
@@ -702,7 +702,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
     {
         context_release(context);
         WARN("Failed to apply clear state, skipping clear.\n");
-        return WINED3D_OK;
+        return;
     }
 
     ENTER_GL();
@@ -819,8 +819,6 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
-
-    return WINED3D_OK;
 }
 
 ULONG CDECL wined3d_device_incref(struct wined3d_device *device)
@@ -3958,10 +3956,10 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
     }
 
     wined3d_get_draw_rect(&device->stateBlock->state, &draw_rect);
+    device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
+            &device->fb, rect_count, rects, &draw_rect, flags, color, depth, stencil);
 
-    return device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
-            &device->fb, rect_count, rects,
-            &draw_rect, flags, color, depth, stencil);
+    return WINED3D_OK;
 }
 
 void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,
