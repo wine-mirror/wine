@@ -1113,11 +1113,11 @@ LSTATUS WINAPI RegDeleteKeyExA( HKEY hkey, LPCSTR name, REGSAM access, DWORD res
     {
         if (!is_version_nt()) /* win95 does recursive key deletes */
         {
-            CHAR name[MAX_PATH];
+            CHAR sub[MAX_PATH];
 
-            while(!RegEnumKeyA(tmp, 0, name, sizeof(name)))
+            while(!RegEnumKeyA(tmp, 0, sub, sizeof(sub)))
             {
-                if(RegDeleteKeyExA(tmp, name, access, reserved))  /* recurse */
+                if(RegDeleteKeyExA(tmp, sub, access, reserved))  /* recurse */
                     break;
             }
         }
