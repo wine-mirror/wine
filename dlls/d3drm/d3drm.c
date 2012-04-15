@@ -1452,8 +1452,6 @@ end:
         IDirectXFile_Release(pDXFile);
 
     return ret;
-
-    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirect3DRM3Impl_Tick(IDirect3DRM3* iface, D3DVALUE tick)
