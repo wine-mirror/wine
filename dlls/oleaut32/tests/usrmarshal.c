@@ -1286,7 +1286,7 @@ static void test_marshal_VARIANT(void)
     next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
     ok(next == buffer + expected, "got %p expect %p\n", next, buffer + expected);
     ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-    ok(SafeArrayGetDim(V_ARRAY(&v)) == SafeArrayGetDim(V_ARRAY(&v)), "array dims differ\n");  
+    ok(SafeArrayGetDim(V_ARRAY(&v)) == SafeArrayGetDim(V_ARRAY(&v2)), "array dims differ\n");
     SafeArrayGetLBound(V_ARRAY(&v), 1, &bound);
     SafeArrayGetLBound(V_ARRAY(&v2), 1, &bound2);
     ok(bound == bound2, "array lbounds differ\n");
@@ -1329,7 +1329,7 @@ static void test_marshal_VARIANT(void)
     next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
     ok(next == buffer + expected, "got %p expect %p\n", next, buffer + expected);
     ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-    ok(SafeArrayGetDim(*V_ARRAYREF(&v)) == SafeArrayGetDim(*V_ARRAYREF(&v)), "array dims differ\n");  
+    ok(SafeArrayGetDim(*V_ARRAYREF(&v)) == SafeArrayGetDim(*V_ARRAYREF(&v2)), "array dims differ\n");
     SafeArrayGetLBound(*V_ARRAYREF(&v), 1, &bound);
     SafeArrayGetLBound(*V_ARRAYREF(&v2), 1, &bound2);
     ok(bound == bound2, "array lbounds differ\n");
