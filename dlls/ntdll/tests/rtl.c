@@ -1154,7 +1154,7 @@ static void test_RtlIpv4AddressToString(void)
     CHAR buffer[20];
     CHAR *res;
     IN_ADDR ip;
-    DWORD len;
+    DWORD_PTR len;
 
     if (!pRtlIpv4AddressToStringA)
     {
@@ -1175,7 +1175,7 @@ static void test_RtlIpv4AddressToString(void)
 
     res = pRtlIpv4AddressToStringA(&ip, NULL);
     ok( (res == (char *)~0) ||
-        broken(res == (char *)0 + len),        /* XP and w2003 */
+        broken(res == (char *)len),        /* XP and w2003 */
         "got %p (expected ~0)\n", res);
 
     if (0) {
