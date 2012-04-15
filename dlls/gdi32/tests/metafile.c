@@ -1640,7 +1640,7 @@ static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr
         eto1 = (EMRPOLYBEZIER16*)emr1;
         eto2 = (EMRPOLYBEZIER16*)emr2;
 
-        diff = eto1->cpts != eto1->cpts;
+        diff = eto1->cpts != eto2->cpts;
         if(!diff)
             diff = memcmp(eto1->apts, eto2->apts, eto1->cpts * sizeof(POINTS));
     }
@@ -1651,7 +1651,7 @@ static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr
         eto1 = (EMRPOLYBEZIER*)emr1;
         eto2 = (EMRPOLYBEZIER*)emr2;
 
-        diff = eto1->cptl != eto1->cptl;
+        diff = eto1->cptl != eto2->cptl;
         if(!diff)
             diff = memcmp(eto1->aptl, eto2->aptl, eto1->cptl * sizeof(POINTL));
     }
