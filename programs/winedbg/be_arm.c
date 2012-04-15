@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2003 Marcus Meissner
  *                2004 Eric Pouech
- *                2010, 2011 André Hentschel
+ *           2010-2012 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -257,7 +257,7 @@ static UINT arm_disasm_coprocdatatrans(UINT inst)
     return 0;
 }
 
-static WORD thumb_disasm_hireg(WORD inst)
+static WORD thumb_disasm_hireg(WORD inst, ADDRESS64 *addr)
 {
     short dst = inst & 0x07;
     short src = (inst >> 3) & 0x07;
@@ -276,7 +276,7 @@ static WORD thumb_disasm_hireg(WORD inst)
     return 0;
 }
 
-static WORD thumb_disasm_blocktrans(WORD inst)
+static WORD thumb_disasm_blocktrans(WORD inst, ADDRESS64 *addr)
 {
     short lrpc = (inst >> 8)  & 0x01;
     short load = (inst >> 11) & 0x01;
@@ -302,34 +302,48 @@ static WORD thumb_disasm_blocktrans(WORD inst)
     return 0;
 }
 
-static WORD thumb_disasm_swi(WORD inst)
+static WORD thumb_disasm_longbl(WORD inst, ADDRESS64 *addr)
+{
+    WORD inst2;
+    UINT offset = (inst & 0x07ff) << 12;
+
+    addr->Offset += 2;
+    inst2 = db_get_inst( memory_to_linear_addr(addr), 2 );
+    if (!((inst2 & 0xf800) == 0xf800)) return inst;
+
+    offset += (inst2 & 0x07ff) << 1;
+    dbg_printf("\tbl\t%08x", offset);
+    return 0;
+}
+
+static WORD thumb_disasm_swi(WORD inst, ADDRESS64 *addr)
 {
     WORD comment = inst & 0x00ff;
     dbg_printf("\n\tswi\t#%d", comment);
     return 0;
 }
 
-static WORD thumb_disasm_nop(WORD inst)
+static WORD thumb_disasm_nop(WORD inst, ADDRESS64 *addr)
 {
     dbg_printf("\n\tnop");
     return 0;
 }
 
-static WORD thumb_disasm_ldrpcrel(WORD inst)
+static WORD thumb_disasm_ldrpcrel(WORD inst, ADDRESS64 *addr)
 {
     WORD offset = (inst & 0xff) << 2;
     dbg_printf("\n\tldr\tr%u, [pc, #%u]", (inst >> 8) & 0x07, offset);
     return 0;
 }
 
-static WORD thumb_disasm_ldrsprel(WORD inst)
+static WORD thumb_disasm_ldrsprel(WORD inst, ADDRESS64 *addr)
 {
     WORD offset = (inst & 0xff) << 2;
     dbg_printf("\n\t%s\tr%u, [sp, #%u]", (inst & 0x0800)?"ldr":"str", (inst >> 8) & 0x07, offset);
     return 0;
 }
 
-static WORD thumb_disasm_ldrimm(WORD inst)
+static WORD thumb_disasm_ldrimm(WORD inst, ADDRESS64 *addr)
 {
     WORD offset = (inst & 0x07c0) >> 6;
     dbg_printf("\n\t%s%s\tr%u, [r%u, #%u]", (inst & 0x0800)?"ldr":"str", (inst & 0x1000)?"b":"",
@@ -337,7 +351,7 @@ static WORD thumb_disasm_ldrimm(WORD inst)
     return 0;
 }
 
-static WORD thumb_disasm_immop(WORD inst)
+static WORD thumb_disasm_immop(WORD inst, ADDRESS64 *addr)
 {
     WORD op = (inst >> 11) & 0x03;
     dbg_printf("\n\t%s\tr%u, #%u", tbl_immops_t[op], (inst >> 8) & 0x07, inst & 0xff);
@@ -368,12 +382,13 @@ struct inst_thumb16
 {
         WORD mask;
         WORD pattern;
-        WORD (*func)(WORD);
+        WORD (*func)(WORD, ADDRESS64*);
 };
 
 static const struct inst_thumb16 tbl_thumb16[] = {
     { 0xfc00, 0x4400, thumb_disasm_hireg },
     { 0xf600, 0xb400, thumb_disasm_blocktrans },
+    { 0xf800, 0xf000, thumb_disasm_longbl },
     { 0xf800, 0x4800, thumb_disasm_ldrpcrel },
     { 0xf000, 0x9000, thumb_disasm_ldrsprel },
     { 0xe000, 0x6000, thumb_disasm_ldrimm },
@@ -455,7 +470,7 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
         }
         else
         {
-            if (!t_ptr->func(tinst))
+            if (!t_ptr->func(tinst, addr))
             {
                 dbg_printf("\n");
                 addr->Offset += size;
