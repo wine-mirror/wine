@@ -52,6 +52,16 @@ static BSTR a2bstr(const char *str)
     return ret;
 }
 
+#define test_var_bstr(a,b) _test_var_bstr(__LINE__,a,b)
+static void _test_var_bstr(unsigned line, const VARIANT *v, const char *expect)
+{
+    ok_(__FILE__,line)(V_VT(v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(v));
+    if(expect)
+        ok_(__FILE__,line)(!strcmp_wa(V_BSTR(v), expect), "V_BSTR(v) = %s, expected %s\n", wine_dbgstr_w(V_BSTR(v)), expect);
+    else
+        ok_(__FILE__,line)(!V_BSTR(v), "V_BSTR(v) = %s, expected NULL\n", wine_dbgstr_w(V_BSTR(v)));
+}
+
 #define get_elem2_iface(u) _get_elem2_iface(__LINE__,u)
 static IHTMLElement2 *_get_elem2_iface(unsigned line, IUnknown *unk)
 {
@@ -305,6 +315,22 @@ static void test_style2(IHTMLStyle2 *style2)
     ok(hres == S_OK, "get_direction failed: %08x\n", hres);
     ok(!strcmp_wa(str, "ltr"), "str = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    /* bottom */
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle2_get_bottom(style2, &v);
+    ok(hres == S_OK, "get_bottom failed: %08x\n", hres);
+    test_var_bstr(&v, NULL);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 4;
+    hres = IHTMLStyle2_put_bottom(style2, v);
+    ok(hres == S_OK, "put_bottom failed: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle2_get_bottom(style2, &v);
+    ok(hres == S_OK, "get_bottom failed: %08x\n", hres);
+    test_var_bstr(&v, "4px");
 }
 
 static void test_style3(IHTMLStyle3 *style3)
