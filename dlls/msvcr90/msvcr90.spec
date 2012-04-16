@@ -348,9 +348,9 @@
 @ cdecl _beep(long long) msvcrt._beep
 @ cdecl _beginthread(ptr long ptr) msvcrt._beginthread
 @ cdecl _beginthreadex(ptr long ptr ptr long ptr) msvcrt._beginthreadex
-@ stub _byteswap_uint64
-@ stub _byteswap_ulong
-@ stub _byteswap_ushort
+@ cdecl _byteswap_uint64(int64)
+@ cdecl _byteswap_ulong(long)
+@ cdecl _byteswap_ushort(long)
 @ cdecl _c_exit() msvcrt._c_exit
 @ cdecl _cabs(long) msvcrt._cabs
 @ cdecl _callnewh(long) msvcrt._callnewh

@@ -109,6 +109,7 @@ static int (__cdecl *p_fileno)(FILE*);
 static int (__cdecl *p_feof)(FILE*);
 static int (__cdecl *p_ferror)(FILE*);
 static int (__cdecl *p_flsbuf)(int, FILE*);
+static unsigned long (__cdecl *p_byteswap_ulong)(unsigned long);
 
 
 /* type info */
@@ -286,6 +287,7 @@ static BOOL init(void)
     SET(p_feof, "feof");
     SET(p_ferror, "ferror");
     SET(p_flsbuf, "_flsbuf");
+    SET(p_byteswap_ulong, "_byteswap_ulong");
     if (sizeof(void *) == 8)
     {
         SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z");
@@ -1137,6 +1139,17 @@ static void test_nonblocking_file_access(void)
     p_unlink("test_file");
 }
 
+static void test_byteswap(void)
+{
+    unsigned long ret;
+
+    ret = p_byteswap_ulong(0x12345678);
+    ok(ret == 0x78563412, "ret = %lx\n", ret);
+
+    ret = p_byteswap_ulong(0);
+    ok(ret == 0, "ret = %lx\n", ret);
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -1159,4 +1172,5 @@ START_TEST(msvcr90)
     test_getptd();
     test__vswprintf_l();
     test_nonblocking_file_access();
+    test_byteswap();
 }
