@@ -42,6 +42,7 @@ static const WCHAR friendlyname_valuename[] = {'F','r','i','e','n','d','l','y','
 static const WCHAR pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
 static const WCHAR containerformat_valuename[] = {'C','o','n','t','a','i','n','e','r','F','o','r','m','a','t',0};
 static const WCHAR vendor_valuename[] = {'V','e','n','d','o','r',0};
+static const WCHAR version_valuename[] = {'V','e','r','s','i','o','n',0};
 
 static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
     UINT buffer_size, WCHAR *buffer, UINT *actual_size)
@@ -210,8 +211,12 @@ static HRESULT WINAPI BitmapDecoderInfo_GetVendorGUID(IWICBitmapDecoderInfo *ifa
 static HRESULT WINAPI BitmapDecoderInfo_GetVersion(IWICBitmapDecoderInfo *iface, UINT cchVersion,
     WCHAR *wzVersion, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchVersion, wzVersion, pcchActual);
-    return E_NOTIMPL;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchVersion, wzVersion, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, version_valuename,
+        cchVersion, wzVersion, pcchActual);
 }
 
 static HRESULT WINAPI BitmapDecoderInfo_GetSpecVersion(IWICBitmapDecoderInfo *iface, UINT cchSpecVersion,
@@ -667,8 +672,12 @@ static HRESULT WINAPI BitmapEncoderInfo_GetVendorGUID(IWICBitmapEncoderInfo *ifa
 static HRESULT WINAPI BitmapEncoderInfo_GetVersion(IWICBitmapEncoderInfo *iface, UINT cchVersion,
     WCHAR *wzVersion, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchVersion, wzVersion, pcchActual);
-    return E_NOTIMPL;
+    BitmapEncoderInfo *This = impl_from_IWICBitmapEncoderInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchVersion, wzVersion, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, version_valuename,
+        cchVersion, wzVersion, pcchActual);
 }
 
 static HRESULT WINAPI BitmapEncoderInfo_GetSpecVersion(IWICBitmapEncoderInfo *iface, UINT cchSpecVersion,
@@ -949,8 +958,12 @@ static HRESULT WINAPI FormatConverterInfo_GetVendorGUID(IWICFormatConverterInfo 
 static HRESULT WINAPI FormatConverterInfo_GetVersion(IWICFormatConverterInfo *iface, UINT cchVersion,
     WCHAR *wzVersion, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchVersion, wzVersion, pcchActual);
-    return E_NOTIMPL;
+    FormatConverterInfo *This = impl_from_IWICFormatConverterInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchVersion, wzVersion, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, version_valuename,
+        cchVersion, wzVersion, pcchActual);
 }
 
 static HRESULT WINAPI FormatConverterInfo_GetSpecVersion(IWICFormatConverterInfo *iface, UINT cchSpecVersion,
@@ -1166,8 +1179,12 @@ static HRESULT WINAPI PixelFormatInfo_GetVendorGUID(IWICPixelFormatInfo2 *iface,
 static HRESULT WINAPI PixelFormatInfo_GetVersion(IWICPixelFormatInfo2 *iface, UINT cchVersion,
     WCHAR *wzVersion, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchVersion, wzVersion, pcchActual);
-    return E_NOTIMPL;
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchVersion, wzVersion, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, version_valuename,
+        cchVersion, wzVersion, pcchActual);
 }
 
 static HRESULT WINAPI PixelFormatInfo_GetSpecVersion(IWICPixelFormatInfo2 *iface, UINT cchSpecVersion,
