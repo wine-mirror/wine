@@ -214,8 +214,8 @@ static void test_pixelformat_info(void)
 
     len = 0xdeadbeef;
     hr = IWICComponentInfo_GetVersion(info, 0, NULL, &len);
-    todo_wine ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
-    todo_wine ok(len == 0, "invalid length 0x%x\n", len); /* version does not apply to pixel formats */
+    ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
+    ok(len == 0, "invalid length 0x%x\n", len); /* version does not apply to pixel formats */
 
     IWICComponentInfo_Release(info);
 }

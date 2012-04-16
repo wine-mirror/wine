@@ -59,6 +59,12 @@ static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
     ret = RegGetValueW(classkey, NULL, value, RRF_RT_REG_SZ|RRF_NOEXPAND, NULL,
         buffer, &cbdata);
 
+    if (ret == ERROR_FILE_NOT_FOUND)
+    {
+        *actual_size = 0;
+        return S_OK;
+    }
+
     if (ret == 0 || ret == ERROR_MORE_DATA)
         *actual_size = cbdata/sizeof(WCHAR);
 
