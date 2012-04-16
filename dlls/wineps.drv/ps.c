@@ -34,8 +34,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
+static const char psadobe[] =
+"%!PS-Adobe-3.0\n";
+
+static const char media[] = "%cupsJobTicket: media=";
+static const char cups_one_sided[] = "%cupsJobTicket: sides=one-sided\n";
+static const char cups_two_sided_long[] = "%cupsJobTicket: sides=two-sided-long-edge\n";
+static const char cups_two_sided_short[] = "%cupsJobTicket: sides=two-sided-short-edge\n";
+static const char *cups_duplexes[3] =
+{
+    cups_one_sided,         /* DMDUP_SIMPLEX */
+    cups_two_sided_long,    /* DMDUP_VERTICAL */
+    cups_two_sided_short    /* DMDUP_HORIZONTAL */
+};
+
 static const char psheader[] = /* title llx lly urx ury */
-"%%!PS-Adobe-3.0\n"
 "%%%%Creator: Wine PostScript Driver\n"
 "%%%%Title: %s\n"
 "%%%%BoundingBox: %d %d %d %d\n"
@@ -296,6 +309,40 @@ done:
     return ret;
 }
 
+struct ticket_info
+{
+    PAGESIZE *page;
+    DUPLEX *duplex;
+};
+
+static void write_cups_job_ticket( PHYSDEV dev, const struct ticket_info *info )
+{
+    char buf[256];
+    int len;
+
+    if (info->page && info->page->InvocationString)
+    {
+        len = sizeof(media) + strlen( info->page->Name ) + 1;
+        if (len <= sizeof(buf))
+        {
+            memcpy( buf, media, sizeof(media) );
+            strcat( buf, info->page->Name );
+            strcat( buf, "\n");
+            write_spool( dev, buf, len - 1 );
+        }
+        else
+            WARN( "paper name %s will be too long for DSC\n", info->page->Name );
+    }
+
+    if (info->duplex && info->duplex->InvocationString)
+    {
+        if (info->duplex->WinDuplex >= 1 && info->duplex->WinDuplex <= 3)
+        {
+            const char *str = cups_duplexes[ info->duplex->WinDuplex - 1 ];
+            write_spool( dev, str, strlen( str ) );
+        }
+    }
+}
 
 INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
 {
@@ -306,8 +353,19 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
     DUPLEX *duplex = find_duplex( physDev->pi->ppd, physDev->Devmode );
     int llx, lly, urx, ury;
     int ret, len;
+    struct ticket_info ticket_info = { page, duplex };
 
     TRACE("%s\n", debugstr_w(title));
+
+    len = strlen( psadobe );
+    ret = write_spool( dev, psadobe, len );
+    if (ret != len)
+    {
+        WARN("WriteSpool error\n");
+        return 0;
+    }
+
+    write_cups_job_ticket( dev, &ticket_info );
 
     escaped_title = escape_title(title);
     buf = HeapAlloc( GetProcessHeap(), 0, sizeof(psheader) +
@@ -330,13 +388,8 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
     HeapFree(GetProcessHeap(), 0, escaped_title);
 
     len = strlen( buf );
-    ret = write_spool( dev, buf, len );
+    write_spool( dev, buf, len );
     HeapFree( GetProcessHeap(), 0, buf );
-    if (ret != len)
-    {
-        WARN("WriteSpool error\n");
-        return 0;
-    }
 
     write_spool( dev, psbeginprolog, strlen(psbeginprolog) );
     write_spool( dev, psprolog, strlen(psprolog) );
