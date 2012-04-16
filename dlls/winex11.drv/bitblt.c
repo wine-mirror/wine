@@ -749,6 +749,7 @@ void execute_rop( X11DRV_PDEVICE *physdev, Pixmap src_pixmap, GC gc, const RECT 
     XFreePixmap( gdi_display, pixmaps[DST] );
     if (pixmaps[TMP]) XFreePixmap( gdi_display, pixmaps[TMP] );
     wine_tsx11_unlock();
+    add_device_bounds( physdev, visrect );
 }
 
 /***********************************************************************
@@ -800,6 +801,7 @@ BOOL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
                     dst->visrect.right - dst->visrect.left,
                     dst->visrect.bottom - dst->visrect.top );
     wine_tsx11_unlock();
+    add_device_bounds( physDev, &dst->visrect );
     return TRUE;
 }
 
@@ -829,6 +831,8 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     width  = dst->visrect.right - dst->visrect.left;
     height = dst->visrect.bottom - dst->visrect.top;
     opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
+
+    add_device_bounds( physDevDst, &dst->visrect );
 
     /* a few optimizations for single-op ROPs */
     if (!opcode[1] && OP_SRCDST(opcode[0]) == OP_ARGS(SRC,DST))
@@ -1302,6 +1306,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
             }
 
             if (restore_region) restore_clipping_region( physdev );
+            add_device_bounds( physdev, &dst->visrect );
         }
         image->data = NULL;
     }

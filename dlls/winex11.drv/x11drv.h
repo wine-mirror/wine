@@ -26,6 +26,7 @@
 # error You must include config.h to use this header
 #endif
 
+#include <limits.h>
 #include <stdarg.h>
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
@@ -122,6 +123,7 @@ typedef struct
     Drawable      drawable;
     RECT          dc_rect;       /* DC rectangle relative to drawable */
     RECT          drawable_rect; /* Drawable rectangle relative to screen */
+    RECT          bounds;        /* Graphics bounds */
     HRGN          region;        /* Device region (visible region & clip region) */
     X_PHYSPEN     pen;
     X_PHYSBRUSH   brush;
@@ -138,6 +140,21 @@ typedef struct
 static inline X11DRV_PDEVICE *get_x11drv_dev( PHYSDEV dev )
 {
     return (X11DRV_PDEVICE *)dev;
+}
+
+static inline void reset_bounds( RECT *bounds )
+{
+    bounds->left = bounds->top = INT_MAX;
+    bounds->right = bounds->bottom = INT_MIN;
+}
+
+static inline void add_bounds_rect( RECT *bounds, const RECT *rect )
+{
+    if (rect->left >= rect->right || rect->top >= rect->bottom) return;
+    bounds->left   = min( bounds->left, rect->left );
+    bounds->top    = min( bounds->top, rect->top );
+    bounds->right  = max( bounds->right, rect->right );
+    bounds->bottom = max( bounds->bottom, rect->bottom );
 }
 
 extern X_PHYSBITMAP BITMAP_stock_phys_bitmap DECLSPEC_HIDDEN;  /* phys bitmap for the default stock bitmap */
@@ -234,6 +251,7 @@ extern DWORD copy_image_bits( BITMAPINFO *info, BOOL is_r8g8b8, XImage *image,
 extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp ) DECLSPEC_HIDDEN;
 extern BOOL add_extra_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern void restore_clipping_region( X11DRV_PDEVICE *dev ) DECLSPEC_HIDDEN;
+extern void add_device_bounds( X11DRV_PDEVICE *dev, const RECT *rect ) DECLSPEC_HIDDEN;
 
 extern void execute_rop( X11DRV_PDEVICE *physdev, Pixmap src_pixmap, GC gc, const RECT *visrect, DWORD rop ) DECLSPEC_HIDDEN;
 

@@ -2256,6 +2256,7 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
 void flush_gl_drawable(X11DRV_PDEVICE *physDev)
 {
     int w, h;
+    RECT rect;
 
     if (!physDev->gl_copy || !physDev->current_pf)
         return;
@@ -2275,6 +2276,8 @@ void flush_gl_drawable(X11DRV_PDEVICE *physDev)
         XCopyArea(gdi_display, src, physDev->drawable, physDev->gc, 0, 0, w, h,
                   physDev->dc_rect.left, physDev->dc_rect.top);
         wine_tsx11_unlock();
+        SetRect( &rect, 0, 0, w, h );
+        add_device_bounds( physDev, &rect );
     }
 }
 
