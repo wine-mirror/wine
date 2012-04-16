@@ -201,12 +201,10 @@ static void test_pixelformat_info(void)
     ok(hr == S_OK, "GetSigningStatus failed, hr=%x\n", hr);
     ok(signing == WICComponentSigned, "unexpected signing status 0x%x\n", signing);
 
-    todo_wine
-    {
     len = 0xdeadbeef;
     hr = IWICComponentInfo_GetSpecVersion(info, 0, NULL, &len);
-    ok(hr == S_OK, "GetSpecVersion failed, hr=%x\n", hr);
-    ok(len == 0, "invalid length 0x%x\n", len); /* spec version does not apply to pixel formats */
+    todo_wine ok(hr == S_OK, "GetSpecVersion failed, hr=%x\n", hr);
+    todo_wine ok(len == 0, "invalid length 0x%x\n", len); /* spec version does not apply to pixel formats */
 
     memset(&guid, 0xaa, sizeof(guid));
     hr = IWICComponentInfo_GetVendorGUID(info, &guid);
@@ -216,9 +214,8 @@ static void test_pixelformat_info(void)
 
     len = 0xdeadbeef;
     hr = IWICComponentInfo_GetVersion(info, 0, NULL, &len);
-    ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
-    ok(len == 0, "invalid length 0x%x\n", len); /* version does not apply to pixel formats */
-    }
+    todo_wine ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
+    todo_wine ok(len == 0, "invalid length 0x%x\n", len); /* version does not apply to pixel formats */
 
     IWICComponentInfo_Release(info);
 }
