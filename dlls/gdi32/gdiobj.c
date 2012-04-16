@@ -699,7 +699,7 @@ void *free_gdi_handle( HGDIOBJ handle )
     GDIOBJHDR *object = NULL;
     int i;
 
-    i = ((ULONG_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
+    i = (HandleToULong(handle) >> 2) - FIRST_LARGE_HANDLE;
     if (i >= 0 && i < MAX_LARGE_HANDLES)
     {
         EnterCriticalSection( &gdi_section );
@@ -732,7 +732,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD type )
 
     EnterCriticalSection( &gdi_section );
 
-    i = ((UINT_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
+    i = (HandleToULong(handle) >> 2) - FIRST_LARGE_HANDLE;
     if (i >= 0 && i < MAX_LARGE_HANDLES)
     {
         ptr = large_handles[i];
