@@ -3946,7 +3946,7 @@ msgid "Drive is already JOINed.\n"
 msgstr "Drev er allerede JOINed.\n"
 
 #: winerror.mc:541
-msgid "Drive is already SUBST-ed.\n"
+msgid "Drive is already SUBSTed.\n"
 msgstr "Drev er allerede erstattet.\n"
 
 #: winerror.mc:546
