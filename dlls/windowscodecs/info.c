@@ -161,6 +161,7 @@ static HRESULT WINAPI BitmapDecoderInfo_GetComponentType(IWICBitmapDecoderInfo *
     WICComponentType *pType)
 {
     TRACE("(%p,%p)\n", iface, pType);
+    if (!pType) return E_INVALIDARG;
     *pType = WICDecoder;
     return S_OK;
 }
@@ -610,6 +611,7 @@ static HRESULT WINAPI BitmapEncoderInfo_GetComponentType(IWICBitmapEncoderInfo *
     WICComponentType *pType)
 {
     TRACE("(%p,%p)\n", iface, pType);
+    if (!pType) return E_INVALIDARG;
     *pType = WICEncoder;
     return S_OK;
 }
@@ -884,6 +886,7 @@ static HRESULT WINAPI FormatConverterInfo_GetComponentType(IWICFormatConverterIn
     WICComponentType *pType)
 {
     TRACE("(%p,%p)\n", iface, pType);
+    if (!pType) return E_INVALIDARG;
     *pType = WICPixelFormatConverter;
     return S_OK;
 }
