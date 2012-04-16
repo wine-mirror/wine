@@ -67,6 +67,20 @@ PAGESIZE *find_pagesize( PPD *ppd, PSDRV_DEVMODE *dm )
     return NULL;
 }
 
+DUPLEX *find_duplex( PPD *ppd, PSDRV_DEVMODE *dm )
+{
+    DUPLEX *duplex;
+    WORD win_duplex = dm->dmPublic.dmFields & DM_DUPLEX ? dm->dmPublic.dmDuplex : 0;
+
+    if (win_duplex == 0) return NULL; /* Not capable */
+
+    LIST_FOR_EACH_ENTRY( duplex, &ppd->Duplexes, DUPLEX, entry )
+        if (duplex->WinDuplex == win_duplex)
+            return duplex;
+
+    return NULL;
+}
+
 /************************************************************************
  *
  *		PSDRV_MergeDevmodes
