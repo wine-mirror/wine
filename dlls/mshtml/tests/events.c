@@ -78,7 +78,9 @@ DEFINE_EXPECT(input_onblur);
 DEFINE_EXPECT(form_onsubmit);
 DEFINE_EXPECT(form_onclick);
 DEFINE_EXPECT(submit_onclick);
+DEFINE_EXPECT(submit_onclick_cancel);
 DEFINE_EXPECT(submit_onclick_attached);
+DEFINE_EXPECT(submit_onclick_attached_check_cancel);
 DEFINE_EXPECT(submit_onclick_setret);
 
 static HWND container_hwnd = NULL;
@@ -429,6 +431,7 @@ static void _test_event_shiftkey(unsigned line, IHTMLEventObj *event, VARIANT_BO
     ok_(__FILE__,line)(b == exval, "shiftKey = %x, expected %x\n", b, exval);
 }
 
+#define test_event_cancelbubble(a,b) _test_event_cancelbubble(__LINE__,a,b)
 static void _test_event_cancelbubble(unsigned line, IHTMLEventObj *event, VARIANT_BOOL exval)
 {
     VARIANT_BOOL b;
@@ -1015,6 +1018,27 @@ static HRESULT WINAPI submit_onclick_attached(IDispatchEx *iface, DISPID id, LCI
 
 EVENT_HANDLER_FUNC_OBJ(submit_onclick_attached);
 
+static HRESULT WINAPI submit_onclick_attached_check_cancel(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    IHTMLEventObj *event;
+    HRESULT hres;
+
+    CHECK_EXPECT(submit_onclick_attached_check_cancel);
+    test_attached_event_args(id, wFlags, pdp, pvarRes, pei);
+    test_event_src("INPUT");
+
+    event = NULL;
+    hres = IHTMLWindow2_get_event(window, &event);
+    ok(hres == S_OK, "get_event failed: %08x\n", hres);
+    ok(event != NULL, "event == NULL\n");
+
+    test_event_cancelbubble(event, VARIANT_TRUE);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(submit_onclick_attached_check_cancel);
+
 static VARIANT onclick_retval, onclick_event_retval;
 
 static HRESULT WINAPI submit_onclick_setret(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
@@ -1041,6 +1065,33 @@ static HRESULT WINAPI submit_onclick_setret(IDispatchEx *iface, DISPID id, LCID 
 }
 
 EVENT_HANDLER_FUNC_OBJ(submit_onclick_setret);
+
+static HRESULT WINAPI submit_onclick_cancel(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    IHTMLEventObj *event;
+    HRESULT hres;
+
+    CHECK_EXPECT(submit_onclick_cancel);
+    test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_src("INPUT");
+
+    event = NULL;
+    hres = IHTMLWindow2_get_event(window, &event);
+    ok(hres == S_OK, "get_event failed: %08x\n", hres);
+    ok(event != NULL, "event == NULL\n");
+
+    test_event_cancelbubble(event, VARIANT_FALSE);
+
+    hres = IHTMLEventObj_put_cancelBubble(event, VARIANT_TRUE);
+    ok(hres == S_OK, "put_returnValue failed: %08x\n", hres);
+    IHTMLEventObj_Release(event);
+
+    test_event_cancelbubble(event, VARIANT_TRUE);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(submit_onclick_cancel);
 
 static HRESULT WINAPI iframedoc_onreadystatechange(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
@@ -1929,6 +1980,23 @@ static void test_submit(IHTMLDocument2 *doc)
     ok(hres == S_OK, "click failed: %08x\n", hres);
     CHECK_CALLED(submit_onclick_setret);
     CHECK_CALLED(form_onclick);
+
+    elem_attach_event((IUnknown*)submit, "onclick", (IDispatch*)&submit_onclick_attached_obj);
+    elem_attach_event((IUnknown*)submit, "onclick", (IDispatch*)&submit_onclick_attached_check_cancel_obj);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&submit_onclick_cancel_obj;
+    hres = IHTMLElement_put_onclick(submit, v);
+    ok(hres == S_OK, "put_onclick failed: %08x\n", hres);
+
+    SET_EXPECT(submit_onclick_cancel);
+    SET_EXPECT(submit_onclick_attached_check_cancel);
+    SET_EXPECT(submit_onclick_attached);
+    hres = IHTMLElement_click(submit);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+    CHECK_CALLED(submit_onclick_cancel);
+    CHECK_CALLED(submit_onclick_attached_check_cancel);
+    CHECK_CALLED(submit_onclick_attached);
 
     IHTMLElement_Release(submit);
 }

@@ -250,6 +250,7 @@ typedef struct {
     const event_info_t *type;
     nsIDOMEvent *nsevent;
     BOOL prevent_default;
+    BOOL cancel_bubble;
 } HTMLEventObj;
 
 static inline HTMLEventObj *impl_from_IHTMLEventObj(IHTMLEventObj *iface)
@@ -471,17 +472,20 @@ static HRESULT WINAPI HTMLEventObj_get_returnValue(IHTMLEventObj *iface, VARIANT
 static HRESULT WINAPI HTMLEventObj_put_cancelBubble(IHTMLEventObj *iface, VARIANT_BOOL v)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, v);
+
+    This->cancel_bubble = !!v;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_cancelBubble(IHTMLEventObj *iface, VARIANT_BOOL *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = VARIANT_FALSE;
+    *p = This->cancel_bubble ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
 }
 
@@ -1016,7 +1020,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
                 call_event_handlers(doc, event_obj, *get_node_event_target(node),
                         node->cp_container, eid, (IDispatch*)&node->IHTMLDOMNode_iface);
 
-            if(!(event_info[eid].flags & EVENT_BUBBLE))
+            if(!(event_info[eid].flags & EVENT_BUBBLE) || (event_obj && event_obj->cancel_bubble))
                 break;
 
             nsIDOMNode_GetParentNode(nsnode, &parent);
@@ -1028,7 +1032,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
             nsIDOMNode_GetNodeType(nsnode, &node_type);
         }while(node_type == ELEMENT_NODE);
 
-        if(!(event_info[eid].flags & EVENT_BUBBLE))
+        if(!(event_info[eid].flags & EVENT_BUBBLE) || (event_obj && event_obj->cancel_bubble))
             break;
 
     case DOCUMENT_NODE:
@@ -1076,7 +1080,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
 
             if(node && node->vtbl->handle_event) {
                 hres = node->vtbl->handle_event(node, eid, nsevent, &prevent_default);
-                if(FAILED(hres) || prevent_default)
+                if(FAILED(hres) || prevent_default || (event_obj && event_obj->cancel_bubble))
                     break;
             }
 
