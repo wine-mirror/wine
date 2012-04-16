@@ -47,6 +47,7 @@ static const WCHAR metadataformat_valuename[] = {'M','e','t','a','d','a','t','a'
 static const WCHAR vendor_valuename[] = {'V','e','n','d','o','r',0};
 static const WCHAR version_valuename[] = {'V','e','r','s','i','o','n',0};
 static const WCHAR bitsperpixel_valuename[] = {'B','i','t','L','e','n','g','t','h',0};
+static const WCHAR channelcount_valuename[] = {'C','h','a','n','n','e','l','C','o','u','n','t',0};
 
 static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
     UINT buffer_size, WCHAR *buffer, UINT *actual_size)
@@ -1263,8 +1264,11 @@ static HRESULT WINAPI PixelFormatInfo_GetBitsPerPixel(IWICPixelFormatInfo2 *ifac
 static HRESULT WINAPI PixelFormatInfo_GetChannelCount(IWICPixelFormatInfo2 *iface,
     UINT *puiChannelCount)
 {
-    FIXME("(%p,%p): stub\n", iface, puiChannelCount);
-    return E_NOTIMPL;
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+
+    TRACE("(%p,%p)\n", iface, puiChannelCount);
+
+    return ComponentInfo_GetDWORDValue(This->classkey, channelcount_valuename, puiChannelCount);
 }
 
 static HRESULT WINAPI PixelFormatInfo_GetChannelMask(IWICPixelFormatInfo2 *iface,
