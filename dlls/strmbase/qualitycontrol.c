@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(strmbase_qc);
 HRESULT QualityControlImpl_Create(IPin *input, IBaseFilter *self, QualityControlImpl **ppv) {
     QualityControlImpl *This;
     *ppv = HeapAlloc(GetProcessHeap(),0,sizeof(QualityControlImpl));
-    if (!ppv)
+    if (!*ppv)
         return E_OUTOFMEMORY;
     This = *ppv;
     This->input = input;
