@@ -474,8 +474,10 @@ static void *cupshandle;
 
 #define CUPS_FUNCS \
     DO_FUNC(cupsFreeDests); \
+    DO_FUNC(cupsFreeOptions); \
     DO_FUNC(cupsGetDests); \
     DO_FUNC(cupsGetPPD); \
+    DO_FUNC(cupsParseOptions); \
     DO_FUNC(cupsPrintFile);
 
 #define DO_FUNC(f) static typeof(f) *p##f
@@ -7617,6 +7619,37 @@ static BOOL schedule_lpr(LPCWSTR printer_name, LPCWSTR filename)
     return r;
 }
 
+#ifdef SONAME_LIBCUPS
+/*****************************************************************************
+ *          get_cups_jobs_ticket_options
+ *
+ * Explicitly set CUPS options based on any %cupsJobTicket lines.
+ * The CUPS scheduler only looks for these in Print-File requests, and since
+ * cupsPrintFile uses Create-Job / Send-Document, the ticket lines don't get
+ * parsed.
+ */
+static int get_cups_job_ticket_options( const char *file, int num_options, cups_option_t **options )
+{
+    FILE *fp = fopen( file, "r" );
+    char buf[257]; /* DSC max of 256 + '\0' */
+    const char *ps_adobe = "%!PS-Adobe-";
+    const char *cups_job = "%cupsJobTicket:";
+
+    if (!fp) return num_options;
+    if (!fgets( buf, sizeof(buf), fp )) goto end;
+    if (strncmp( buf, ps_adobe, strlen( ps_adobe ) )) goto end;
+    while (fgets( buf, sizeof(buf), fp ))
+    {
+        if (strncmp( buf, cups_job, strlen( cups_job ) )) break;
+        num_options = pcupsParseOptions( buf + strlen( cups_job ), num_options, options );
+    }
+
+end:
+    fclose( fp );
+    return num_options;
+}
+#endif
+
 /*****************************************************************************
  *          schedule_cups
  */
@@ -7628,6 +7661,8 @@ static BOOL schedule_cups(LPCWSTR printer_name, LPCWSTR filename, LPCWSTR docume
         char *unixname, *queue, *unix_doc_title;
         DWORD len;
         BOOL ret;
+        int num_options = 0, i;
+        cups_option_t *options = NULL;
 
         if(!(unixname = wine_get_unix_file_name(filename)))
             return FALSE;
@@ -7640,8 +7675,16 @@ static BOOL schedule_cups(LPCWSTR printer_name, LPCWSTR filename, LPCWSTR docume
         unix_doc_title = HeapAlloc(GetProcessHeap(), 0, len);
         WideCharToMultiByte(CP_UNIXCP, 0, document_title, -1, unix_doc_title, len, NULL, NULL);
 
-        TRACE("printing via cups\n");
-        ret = pcupsPrintFile(queue, unixname, unix_doc_title, 0, NULL);
+        num_options = get_cups_job_ticket_options( unixname, num_options, &options );
+
+        TRACE( "printing via cups with options:\n" );
+        for (i = 0; i < num_options; i++)
+            TRACE( "\t%d: %s = %s\n", i, options[i].name, options[i].value );
+
+        ret = pcupsPrintFile( queue, unixname, unix_doc_title, num_options, options );
+
+        pcupsFreeOptions( num_options, options );
+
         HeapFree(GetProcessHeap(), 0, unix_doc_title);
         HeapFree(GetProcessHeap(), 0, queue);
         HeapFree(GetProcessHeap(), 0, unixname);
