@@ -312,6 +312,7 @@ static HRESULT WINAPI IDirect3DCubeTexture8Impl_LockRect(IDirect3DCubeTexture8 *
 {
     IDirect3DCubeTexture8Impl *texture = impl_from_IDirect3DCubeTexture8(iface);
     struct wined3d_resource *sub_resource;
+    IDirect3DSurface8Impl *surface_impl;
     UINT sub_resource_idx;
     HRESULT hr;
 
@@ -323,8 +324,10 @@ static HRESULT WINAPI IDirect3DCubeTexture8Impl_LockRect(IDirect3DCubeTexture8 *
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, sub_resource_idx)))
         hr = D3DERR_INVALIDCALL;
     else
-        hr = IDirect3DSurface8_LockRect((IDirect3DSurface8 *)wined3d_resource_get_parent(sub_resource),
-                locked_rect, rect, flags);
+    {
+        surface_impl = wined3d_resource_get_parent(sub_resource);
+        hr = IDirect3DSurface8_LockRect(&surface_impl->IDirect3DSurface8_iface, locked_rect, rect, flags);
+    }
     wined3d_mutex_unlock();
 
     return hr;
