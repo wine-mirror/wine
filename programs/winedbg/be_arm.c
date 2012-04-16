@@ -102,12 +102,19 @@ static UINT arm_disasm_branch(UINT inst)
     return 0;
 }
 
+static UINT arm_disasm_branchreg(UINT inst)
+{
+    dbg_printf("\n\tb%s\t%s", get_cond(inst), tbl_regs[get_nibble(inst, 0)]);
+    return 0;
+}
+
 static UINT arm_disasm_dataprocessing(UINT inst)
 {
     short condcodes = (inst >> 20) & 0x01;
     short opcode    = (inst >> 21) & 0x0f;
     short immediate = (inst >> 25) & 0x01;
     short no_op1    = (opcode & 0x0d) == 0x0d;
+    short no_dst    = (opcode & 0x0c) == 0x08;
 
     /* check for nop */
     if (get_nibble(inst, 3) == 15 /* r15 */ && condcodes == 0 &&
@@ -118,7 +125,9 @@ static UINT arm_disasm_dataprocessing(UINT inst)
     }
 
     dbg_printf("\n\t%s%s%s", tbl_dataops[opcode], condcodes ? "s" : "", get_cond(inst));
-    dbg_printf("\t%s, ", tbl_regs[get_nibble(inst, 3)]);
+    if (!no_dst) dbg_printf("\t%s, ", tbl_regs[get_nibble(inst, 3)]);
+    else dbg_printf("\t");
+
     if (no_op1)
     {
         if (immediate)
@@ -395,9 +404,10 @@ struct inst_arm
 
 static const struct inst_arm tbl_arm[] = {
     { 0x0e000000, 0x0a000000, arm_disasm_branch },
+    { 0x0e000090, 0x00000090, arm_disasm_halfwordtrans },
+    { 0x0fffff00, 0x012fff00, arm_disasm_branchreg },
     { 0x0c000000, 0x00000000, arm_disasm_dataprocessing },
     { 0x0c000000, 0x04000000, arm_disasm_singletrans },
-    { 0x0e000090, 0x00000090, arm_disasm_halfwordtrans },
     { 0x0e000000, 0x08000000, arm_disasm_blocktrans },
     { 0x0f000000, 0x0f000000, arm_disasm_swi },
     { 0x0f000010, 0x0e000010, arm_disasm_coproctrans },
