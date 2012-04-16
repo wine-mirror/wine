@@ -707,7 +707,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateTexture(IDirect3DDevice8 *iface
     }
 
     TRACE("Created texture %p.\n", object);
-    *texture = &object->IDirect3DTexture8_iface;
+    *texture = (IDirect3DTexture8 *)&object->IDirect3DBaseTexture8_iface;
 
     return D3D_OK;
 }
@@ -748,7 +748,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateCubeTexture(IDirect3DDevice8 *i
         UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DCubeTexture8 **texture)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DCubeTexture8Impl *object;
+    struct d3d8_texture *object;
     HRESULT hr;
 
     TRACE("iface %p, edge_length %u, levels %u, usage %#x, format %#x, pool %#x, texture %p.\n",
@@ -770,7 +770,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateCubeTexture(IDirect3DDevice8 *i
     }
 
     TRACE("Created cube texture %p.\n", object);
-    *texture = &object->IDirect3DCubeTexture8_iface;
+    *texture = (IDirect3DCubeTexture8 *)&object->IDirect3DBaseTexture8_iface;
 
     return hr;
 }

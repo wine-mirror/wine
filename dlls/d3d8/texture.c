@@ -25,7 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
 static inline struct d3d8_texture *impl_from_IDirect3DTexture8(IDirect3DTexture8 *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d8_texture, IDirect3DTexture8_iface);
+    return CONTAINING_RECORD(iface, struct d3d8_texture, IDirect3DBaseTexture8_iface);
 }
 
 static HRESULT WINAPI d3d8_texture_2d_QueryInterface(IDirect3DTexture8 *iface, REFIID riid, void **out)
@@ -402,7 +402,7 @@ HRESULT texture_init(struct d3d8_texture *texture, IDirect3DDevice8Impl *device,
 {
     HRESULT hr;
 
-    texture->IDirect3DTexture8_iface.lpVtbl = &Direct3DTexture8_Vtbl;
+    texture->IDirect3DBaseTexture8_iface.lpVtbl = (const IDirect3DBaseTexture8Vtbl *)&Direct3DTexture8_Vtbl;
     texture->refcount = 1;
 
     wined3d_mutex_lock();
