@@ -469,11 +469,18 @@ static BOOL add_printer_driver(WCHAR *name)
 }
 
 #ifdef SONAME_LIBCUPS
-static typeof(cupsFreeDests) *pcupsFreeDests;
-static typeof(cupsGetDests)  *pcupsGetDests;
-static typeof(cupsGetPPD)    *pcupsGetPPD;
-static typeof(cupsPrintFile) *pcupsPrintFile;
+
 static void *cupshandle;
+
+#define CUPS_FUNCS \
+    DO_FUNC(cupsFreeDests); \
+    DO_FUNC(cupsGetDests); \
+    DO_FUNC(cupsGetPPD); \
+    DO_FUNC(cupsPrintFile);
+
+#define DO_FUNC(f) static typeof(f) *p##f
+CUPS_FUNCS;
+#undef DO_FUNC
 
 static BOOL CUPS_LoadPrinters(void)
 {
@@ -493,15 +500,9 @@ static BOOL CUPS_LoadPrinters(void)
     }
     TRACE("%p: %s loaded\n", cupshandle, SONAME_LIBCUPS);
 
-#define DYNCUPS(x) 					\
-    	p##x = wine_dlsym(cupshandle, #x, NULL,0);	\
-	if (!p##x) return FALSE;
-
-    DYNCUPS(cupsFreeDests);
-    DYNCUPS(cupsGetPPD);
-    DYNCUPS(cupsGetDests);
-    DYNCUPS(cupsPrintFile);
-#undef DYNCUPS
+#define DO_FUNC(x) p##x = wine_dlsym( cupshandle, #x, NULL, 0 ); if (!p##x) return FALSE;
+    CUPS_FUNCS;
+#undef DO_FUNC
 
     if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
        ERROR_SUCCESS) {
