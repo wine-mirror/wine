@@ -60,6 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(browseui);
 
 typedef struct tagProgressDialog {
     IProgressDialog IProgressDialog_iface;
+    IOleWindow IOleWindow_iface;
     LONG refCount;
     CRITICAL_SECTION cs;
     HWND hwnd;
@@ -77,6 +78,11 @@ typedef struct tagProgressDialog {
 static inline ProgressDialog *impl_from_IProgressDialog(IProgressDialog *iface)
 {
     return CONTAINING_RECORD(iface, ProgressDialog, IProgressDialog_iface);
+}
+
+static inline ProgressDialog *impl_from_IOleWindow(IOleWindow *iface)
+{
+    return CONTAINING_RECORD(iface, ProgressDialog, IOleWindow_iface);
 }
 
 static void set_buffer(LPWSTR *buffer, LPCWSTR string)
@@ -268,11 +274,19 @@ static void ProgressDialog_Destructor(ProgressDialog *This)
 static HRESULT WINAPI ProgressDialog_QueryInterface(IProgressDialog *iface, REFIID iid, LPVOID *ppvOut)
 {
     ProgressDialog *This = impl_from_IProgressDialog(iface);
-    *ppvOut = NULL;
 
+    TRACE("(%p, %s, %p)\n", iface, debugstr_guid(iid), ppvOut);
+    if (!ppvOut)
+        return E_POINTER;
+
+    *ppvOut = NULL;
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IProgressDialog))
     {
-        *ppvOut = This;
+        *ppvOut = iface;
+    }
+    else if (IsEqualIID(iid, &IID_IOleWindow))
+    {
+        *ppvOut = &This->IOleWindow_iface;
     }
 
     if (*ppvOut)
@@ -495,6 +509,53 @@ static const IProgressDialogVtbl ProgressDialogVtbl =
     ProgressDialog_Timer
 };
 
+static HRESULT WINAPI OleWindow_QueryInterface(IOleWindow *iface, REFIID iid, LPVOID *ppvOut)
+{
+    ProgressDialog *This = impl_from_IOleWindow(iface);
+    return ProgressDialog_QueryInterface(&This->IProgressDialog_iface, iid, ppvOut);
+}
+
+static ULONG WINAPI OleWindow_AddRef(IOleWindow *iface)
+{
+    ProgressDialog *This = impl_from_IOleWindow(iface);
+    return ProgressDialog_AddRef(&This->IProgressDialog_iface);
+}
+
+static ULONG WINAPI OleWindow_Release(IOleWindow *iface)
+{
+    ProgressDialog *This = impl_from_IOleWindow(iface);
+    return ProgressDialog_Release(&This->IProgressDialog_iface);
+}
+
+static HRESULT WINAPI OleWindow_GetWindow(IOleWindow* iface, HWND* phwnd)
+{
+    ProgressDialog *This = impl_from_IOleWindow(iface);
+
+    TRACE("(%p, %p)\n", This, phwnd);
+    EnterCriticalSection(&This->cs);
+    *phwnd = This->hwnd;
+    LeaveCriticalSection(&This->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI OleWindow_ContextSensitiveHelp(IOleWindow* iface, BOOL fEnterMode)
+{
+    ProgressDialog *This = impl_from_IOleWindow(iface);
+
+    FIXME("(%p, %d): stub\n", This, fEnterMode);
+    return E_NOTIMPL;
+}
+
+static const IOleWindowVtbl OleWindowVtbl =
+{
+    OleWindow_QueryInterface,
+    OleWindow_AddRef,
+    OleWindow_Release,
+    OleWindow_GetWindow,
+    OleWindow_ContextSensitiveHelp
+};
+
+
 HRESULT ProgressDialog_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 {
     ProgressDialog *This;
@@ -506,6 +567,7 @@ HRESULT ProgressDialog_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
         return E_OUTOFMEMORY;
 
     This->IProgressDialog_iface.lpVtbl = &ProgressDialogVtbl;
+    This->IOleWindow_iface.lpVtbl = &OleWindowVtbl;
     This->refCount = 1;
     InitializeCriticalSection(&This->cs);
     This->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ProgressDialog.cs");
