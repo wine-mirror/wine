@@ -685,7 +685,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateTexture(IDirect3DDevice8 *iface
         D3DPOOL pool, IDirect3DTexture8 **texture)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DTexture8Impl *object;
+    struct d3d8_texture *object;
     HRESULT hr;
 
     TRACE("iface %p, width %u, height %u, levels %u, usage %#x, format %#x, pool %#x, texture %p.\n",
