@@ -809,9 +809,56 @@ static void test_MapViewOfFile(void)
     ok( GetLastError() == ERROR_SUCCESS, "CreateFileMappingA set error %d\n", GetLastError() );
     CloseHandle(mapping);
 
+    ret = IsBadReadPtr(ptr, MAPPING_SIZE);
+    ok( !ret, "memory is not accessible\n" );
     SetLastError(0xdeadbeef);
     ret = UnmapViewOfFile(ptr);
     ok( ret, "UnmapViewOfFile failed with error %d\n", GetLastError() );
+    ret = IsBadReadPtr(ptr, MAPPING_SIZE);
+    ok( ret, "memory is accessible\n" );
+
+    SetLastError(0xdeadbeef);
+    file = CreateFileA(testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok( file != INVALID_HANDLE_VALUE, "CreateFile error %u\n", GetLastError() );
+    SetFilePointer(file, 4096, NULL, FILE_BEGIN);
+    SetEndOfFile(file);
+
+    SetLastError(0xdeadbeef);
+    mapping = CreateFileMappingA(file, NULL, PAGE_READWRITE, 0, MAPPING_SIZE, name);
+    ok( mapping != 0, "CreateFileMappingA failed with error %d\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ptr = MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, 0);
+    ok( ptr != NULL, "MapViewOfFile failed with error %d\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    map2 = OpenFileMappingA(FILE_MAP_READ, FALSE, name);
+    ok( map2 != 0, "OpenFileMappingA failed with error %d\n", GetLastError() );
+    CloseHandle(map2);
+    CloseHandle(mapping);
+
+    SetLastError(0xdeadbeef);
+    map2 = OpenFileMappingA(FILE_MAP_READ, FALSE, name);
+    todo_wine
+    ok( map2 == 0, "OpenFileMappingA succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "OpenFileMappingA set error %d\n", GetLastError() );
+    CloseHandle(map2);
+    SetLastError(0xdeadbeef);
+    mapping = CreateFileMappingA(file, NULL, PAGE_READWRITE, 0, MAPPING_SIZE, name);
+    ok( mapping != 0, "CreateFileMappingA failed\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_SUCCESS, "CreateFileMappingA set error %d\n", GetLastError() );
+    CloseHandle(mapping);
+
+    ret = IsBadReadPtr(ptr, MAPPING_SIZE);
+    ok( !ret, "memory is not accessible\n" );
+    SetLastError(0xdeadbeef);
+    ret = UnmapViewOfFile(ptr);
+    ok( ret, "UnmapViewOfFile failed with error %d\n", GetLastError() );
+    ret = IsBadReadPtr(ptr, MAPPING_SIZE);
+    ok( ret, "memory is accessible\n" );
+
+    CloseHandle(file);
+    DeleteFileA(testfile);
 }
 
 static void test_NtMapViewOfSection(void)
