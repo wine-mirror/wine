@@ -1853,28 +1853,8 @@ BOOL WINAPI GetRTTAndHopCount(IPAddr DestIpAddress, PULONG HopCount, ULONG MaxHo
  */
 DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
 {
-    DWORD ret;
-    PMIB_TCPTABLE table;
-
     TRACE("pTcpTable %p, pdwSize %p, bOrder %d\n", pTcpTable, pdwSize, bOrder);
-
-    if (!pdwSize) return ERROR_INVALID_PARAMETER;
-
-    ret = AllocateAndGetTcpTableFromStack(&table, bOrder, GetProcessHeap(), 0);
-    if (!ret) {
-        DWORD size = FIELD_OFFSET( MIB_TCPTABLE, table[table->dwNumEntries] );
-        if (!pTcpTable || *pdwSize < size) {
-          *pdwSize = size;
-          ret = ERROR_INSUFFICIENT_BUFFER;
-        }
-        else {
-          *pdwSize = size;
-          memcpy(pTcpTable, table, size);
-        }
-        HeapFree(GetProcessHeap(), 0, table);
-    }
-    TRACE("returning %d\n", ret);
-    return ret;
+    return GetExtendedTcpTable(pTcpTable, pdwSize, bOrder, AF_INET, TCP_TABLE_BASIC_ALL, 0);
 }
 
 /******************************************************************
