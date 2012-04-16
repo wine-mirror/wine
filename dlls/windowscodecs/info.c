@@ -1122,8 +1122,15 @@ static HRESULT WINAPI PixelFormatInfo_GetCLSID(IWICPixelFormatInfo2 *iface, CLSI
 
 static HRESULT WINAPI PixelFormatInfo_GetSigningStatus(IWICPixelFormatInfo2 *iface, DWORD *pStatus)
 {
-    FIXME("(%p,%p): stub\n", iface, pStatus);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, pStatus);
+
+    if (!pStatus)
+        return E_INVALIDARG;
+
+    /* Pixel formats don't require code, so they are considered signed. */
+    *pStatus = WICComponentSigned;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PixelFormatInfo_GetAuthor(IWICPixelFormatInfo2 *iface, UINT cchAuthor,

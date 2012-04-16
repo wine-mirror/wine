@@ -194,8 +194,6 @@ static void test_pixelformat_info(void)
     ok(hr == S_OK, "GetFriendlyName failed, hr=%x\n", hr);
     ok(len < 255 && len > 0, "invalid length 0x%x\n", len);
 
-    todo_wine
-    {
     hr = IWICComponentInfo_GetSigningStatus(info, NULL);
     ok(hr == E_INVALIDARG, "GetSigningStatus failed, hr=%x\n", hr);
 
@@ -203,6 +201,8 @@ static void test_pixelformat_info(void)
     ok(hr == S_OK, "GetSigningStatus failed, hr=%x\n", hr);
     ok(signing == WICComponentSigned, "unexpected signing status 0x%x\n", signing);
 
+    todo_wine
+    {
     len = 0xdeadbeef;
     hr = IWICComponentInfo_GetSpecVersion(info, 0, NULL, &len);
     ok(hr == S_OK, "GetSpecVersion failed, hr=%x\n", hr);
