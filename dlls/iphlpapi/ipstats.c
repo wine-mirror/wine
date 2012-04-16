@@ -27,6 +27,9 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/types.h>
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
 #ifdef HAVE_ALIAS_H
 #include <alias.h>
 #endif
@@ -129,11 +132,14 @@
 #define ADVANCE(x, n) (x += ROUNDUP(((struct sockaddr *)n)->sa_len))
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #define NONAMELESSUNION
 #include "ifenum.h"
 #include "ipstats.h"
 
 #include "wine/debug.h"
+#include "wine/server.h"
 
 #ifndef HAVE_NETINET_TCP_FSM_H
 #define TCPS_ESTABLISHED  1
@@ -1616,16 +1622,46 @@ DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable, BOOL bOr
     return ret;
 }
 
+static DWORD get_tcp_table_sizes( TCP_TABLE_CLASS class, DWORD row_count, DWORD *row_size )
+{
+    DWORD table_size;
 
-static MIB_TCPTABLE *append_tcp_row( HANDLE heap, DWORD flags, MIB_TCPTABLE *table,
-                                     DWORD *count, const MIB_TCPROW *row )
+    switch (class)
+    {
+    case TCP_TABLE_BASIC_LISTENER:
+    case TCP_TABLE_BASIC_CONNECTIONS:
+    case TCP_TABLE_BASIC_ALL:
+    {
+        table_size = FIELD_OFFSET(MIB_TCPTABLE, table[row_count]);
+        if (row_size) *row_size = sizeof(MIB_TCPROW);
+        break;
+    }
+    case TCP_TABLE_OWNER_PID_LISTENER:
+    case TCP_TABLE_OWNER_PID_CONNECTIONS:
+    case TCP_TABLE_OWNER_PID_ALL:
+    {
+        table_size = FIELD_OFFSET(MIB_TCPTABLE_OWNER_PID, table[row_count]);
+        if (row_size) *row_size = sizeof(MIB_TCPROW_OWNER_PID);
+        break;
+    }
+    default:
+        ERR("unhandled class %u\n", class);
+        return 0;
+    }
+    return table_size;
+}
+
+static MIB_TCPTABLE *append_tcp_row( TCP_TABLE_CLASS class, HANDLE heap, DWORD flags,
+                                     MIB_TCPTABLE *table, DWORD *count,
+                                     const MIB_TCPROW_OWNER_PID *row, DWORD row_size )
 {
     if (table->dwNumEntries >= *count)
     {
         MIB_TCPTABLE *new_table;
-        DWORD new_count = table->dwNumEntries * 2;
+        DWORD new_count = table->dwNumEntries * 2, new_table_size;
 
-        if (!(new_table = HeapReAlloc( heap, flags, table, FIELD_OFFSET(MIB_TCPTABLE, table[new_count] ))))
+        new_table_size = get_tcp_table_sizes( class, new_count, NULL );
+        if (!(new_table = HeapReAlloc( heap, flags, table, new_table_size )))
         {
             HeapFree( heap, 0, table );
             return NULL;
@@ -1633,7 +1669,8 @@ static MIB_TCPTABLE *append_tcp_row( HANDLE heap, DWORD flags, MIB_TCPTABLE *tab
         *count = new_count;
         table = new_table;
     }
-    memcpy( &table->table[table->dwNumEntries++], row, sizeof(*row) );
+    memcpy( (char *)table->table + (table->dwNumEntries * row_size), row, row_size );
+    table->dwNumEntries++;
     return table;
 }
 
@@ -1659,7 +1696,6 @@ static inline MIB_TCP_STATE TCPStateToMIBState (int state)
    }
 }
 
-
 static int compare_tcp_rows(const void *a, const void *b)
 {
     const MIB_TCPROW *rowA = a;
@@ -1673,36 +1709,118 @@ static int compare_tcp_rows(const void *a, const void *b)
     return ntohs ((unsigned short)rowA->dwRemotePort) - ntohs ((unsigned short)rowB->dwRemotePort);
 }
 
+struct pid_map
+{
+    unsigned int pid;
+    unsigned int unix_pid;
+};
 
-/******************************************************************
- *    AllocateAndGetTcpTableFromStack (IPHLPAPI.@)
- *
- * Get the TCP connection table.
- * Like GetTcpTable(), but allocate the returned table from heap.
- *
- * PARAMS
- *  ppTcpTable [Out] pointer into which the MIB_TCPTABLE is
- *                   allocated and returned.
- *  bOrder     [In]  whether to sort the table
- *  heap       [In]  heap from which the table is allocated
- *  flags      [In]  flags to HeapAlloc
- *
- * RETURNS
- *  ERROR_INVALID_PARAMETER if ppTcpTable is NULL, whatever GetTcpTable()
- *  returns otherwise.
- */
-DWORD WINAPI AllocateAndGetTcpTableFromStack( PMIB_TCPTABLE *ppTcpTable, BOOL bOrder,
-                                              HANDLE heap, DWORD flags)
+static struct pid_map *get_pid_map( unsigned int *num_entries )
+{
+    HANDLE snapshot = NULL;
+    struct pid_map *map;
+    unsigned int i = 0, count = 16, size = count * sizeof(*map);
+    NTSTATUS ret;
+
+    if (!(map = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
+
+    SERVER_START_REQ( create_snapshot )
+    {
+        req->flags      = SNAP_PROCESS;
+        req->attributes = 0;
+        if (!(ret = wine_server_call( req )))
+            snapshot = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    *num_entries = 0;
+    while (ret == STATUS_SUCCESS)
+    {
+        SERVER_START_REQ( next_process )
+        {
+            req->handle = wine_server_obj_handle( snapshot );
+            req->reset = (i == 0);
+            if (!(ret = wine_server_call( req )))
+            {
+                if (i >= count)
+                {
+                    struct pid_map *new_map;
+                    count *= 2;
+                    size = count * sizeof(*new_map);
+
+                    if (!(new_map = HeapReAlloc( GetProcessHeap(), 0, map, size )))
+                    {
+                        HeapFree( GetProcessHeap(), 0, map );
+                        map = NULL;
+                        goto done;
+                    }
+                    map = new_map;
+                }
+                map[i].pid = reply->pid;
+                map[i].unix_pid = reply->unix_pid;
+                (*num_entries)++;
+                i++;
+            }
+        }
+        SERVER_END_REQ;
+    }
+
+done:
+    NtClose( snapshot );
+    return map;
+}
+
+static unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entries, int inode )
+{
+#ifdef __linux__
+    unsigned int i, len_socket;
+    char socket[32];
+
+    sprintf( socket, "socket:[%d]", inode );
+    len_socket = strlen( socket );
+    for (i = 0; i < num_entries; i++)
+    {
+        char dir[32];
+        struct dirent *dirent;
+        DIR *dirfd;
+
+        sprintf( dir, "/proc/%u/fd", map[i].unix_pid );
+        if ((dirfd = opendir( dir )))
+        {
+            while ((dirent = readdir( dirfd )))
+            {
+                char link[sizeof(dirent->d_name) + 32], name[32];
+                int len;
+
+                sprintf( link, "/proc/%u/fd/%s", map[i].unix_pid, dirent->d_name );
+                if ((len = readlink( link, name, 32 )) > 0) name[len] = 0;
+                if (len == len_socket && !strcmp( socket, name ))
+                {
+                    closedir( dirfd );
+                    return map[i].pid;
+                }
+            }
+            closedir( dirfd );
+        }
+    }
+    return 0;
+#else
+    FIXME( "not implemented\n" );
+    return 0;
+#endif
+}
+
+DWORD build_tcp_table( TCP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE heap, DWORD flags,
+                       DWORD *size )
 {
     MIB_TCPTABLE *table;
-    MIB_TCPROW row;
-    DWORD ret = NO_ERROR, count = 16;
+    MIB_TCPROW_OWNER_PID row;
+    DWORD ret = NO_ERROR, count = 16, table_size, row_size;
 
-    TRACE("table %p, bOrder %d, heap %p, flags 0x%08x\n", ppTcpTable, bOrder, heap, flags);
+    if (!(table_size = get_tcp_table_sizes( class, count, &row_size )))
+        return ERROR_INVALID_PARAMETER;
 
-    if (!ppTcpTable) return ERROR_INVALID_PARAMETER;
-
-    if (!(table = HeapAlloc( heap, flags, FIELD_OFFSET(MIB_TCPTABLE, table[count] ))))
+    if (!(table = HeapAlloc( heap, flags, table_size )))
         return ERROR_OUTOFMEMORY;
 
     table->dwNumEntries = 0;
@@ -1714,21 +1832,30 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack( PMIB_TCPTABLE *ppTcpTable, BOOL bO
         if ((fp = fopen("/proc/net/tcp", "r")))
         {
             char buf[512], *ptr;
-            DWORD dummy;
+            struct pid_map *map = NULL;
+            unsigned int dummy, num_entries = 0;
+            int inode;
+
+            if (class == TCP_TABLE_OWNER_PID_ALL) map = get_pid_map( &num_entries );
 
             /* skip header line */
             ptr = fgets(buf, sizeof(buf), fp);
             while ((ptr = fgets(buf, sizeof(buf), fp)))
             {
-                if (sscanf( ptr, "%x: %x:%x %x:%x %x", &dummy, &row.dwLocalAddr, &row.dwLocalPort,
-                            &row.dwRemoteAddr, &row.dwRemotePort, &row.u.dwState ) != 6)
+                if (sscanf( ptr, "%x: %x:%x %x:%x %x %*s %*s %*s %*s %*s %d", &dummy,
+                            &row.dwLocalAddr, &row.dwLocalPort, &row.dwRemoteAddr,
+                            &row.dwRemotePort, &row.dwState, &inode ) != 7)
                     continue;
                 row.dwLocalPort = htons( row.dwLocalPort );
                 row.dwRemotePort = htons( row.dwRemotePort );
-                row.u.State = TCPStateToMIBState( row.u.dwState );
-                if (!(table = append_tcp_row( heap, flags, table, &count, &row )))
+                row.dwState = TCPStateToMIBState( row.dwState );
+                if (class == TCP_TABLE_OWNER_PID_ALL)
+                    row.dwOwningPid = find_owning_pid( map, num_entries, inode );
+
+                if (!(table = append_tcp_row( class, heap, flags, table, &count, &row, row_size )))
                     break;
             }
+            HeapFree( GetProcessHeap(), 0, map );
             fclose( fp );
         }
         else ret = ERROR_NOT_SUPPORTED;
@@ -1749,8 +1876,9 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack( PMIB_TCPTABLE *ppTcpTable, BOOL bO
                     row.dwLocalPort = htons( entry->tcpConnLocalPort );
                     row.dwRemoteAddr = entry->tcpConnRemAddress;
                     row.dwRemotePort = htons( entry->tcpConnRemPort );
-                    row.u.dwState = entry->tcpConnState;
-                    if (!(table = append_tcp_row( heap, flags, table, &count, &row ))) break;
+                    row.dwState = entry->tcpConnState;
+                    if (!(table = append_tcp_row( class, heap, flags, table, &count, &row, row_size )))
+                        break;
                 }
                 HeapFree( GetProcessHeap(), 0, data );
             }
@@ -1828,8 +1956,9 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack( PMIB_TCPTABLE *ppTcpTable, BOOL bO
             row.dwLocalPort = pINData->inp_lport;
             row.dwRemoteAddr = pINData->inp_faddr.s_addr;
             row.dwRemotePort = pINData->inp_fport;
-            row.u.State = TCPStateToMIBState (pTCPData->t_state);
-            if (!(table = append_tcp_row( heap, flags, table, &count, &row ))) break;
+            row.dwState = TCPStateToMIBState (pTCPData->t_state);
+            if (!(table = append_tcp_row( class, heap, flags, table, &count, &row, row_size )))
+                break;
         }
 
     done:
@@ -1843,11 +1972,38 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack( PMIB_TCPTABLE *ppTcpTable, BOOL bO
     if (!table) return ERROR_OUTOFMEMORY;
     if (!ret)
     {
-        if (bOrder && table->dwNumEntries)
-            qsort( table->table, table->dwNumEntries, sizeof(row), compare_tcp_rows );
-        *ppTcpTable = table;
+        if (order && table->dwNumEntries)
+            qsort( table->table, table->dwNumEntries, row_size, compare_tcp_rows );
+        *tablep = table;
     }
     else HeapFree( heap, flags, table );
+    if (size) *size = get_tcp_table_sizes( class, count, NULL );
     TRACE( "returning ret %u table %p\n", ret, table );
     return ret;
+}
+
+/******************************************************************
+ *    AllocateAndGetTcpTableFromStack (IPHLPAPI.@)
+ *
+ * Get the TCP connection table.
+ * Like GetTcpTable(), but allocate the returned table from heap.
+ *
+ * PARAMS
+ *  ppTcpTable [Out] pointer into which the MIB_TCPTABLE is
+ *                   allocated and returned.
+ *  bOrder     [In]  whether to sort the table
+ *  heap       [In]  heap from which the table is allocated
+ *  flags      [In]  flags to HeapAlloc
+ *
+ * RETURNS
+ *  ERROR_INVALID_PARAMETER if ppTcpTable is NULL, whatever GetTcpTable()
+ *  returns otherwise.
+ */
+DWORD WINAPI AllocateAndGetTcpTableFromStack( PMIB_TCPTABLE *ppTcpTable, BOOL bOrder,
+                                              HANDLE heap, DWORD flags )
+{
+    TRACE("table %p, bOrder %d, heap %p, flags 0x%08x\n", ppTcpTable, bOrder, heap, flags);
+
+    if (!ppTcpTable) return ERROR_INVALID_PARAMETER;
+    return build_tcp_table( TCP_TABLE_BASIC_ALL, (void **)ppTcpTable, bOrder, heap, flags, NULL );
 }
