@@ -1665,8 +1665,23 @@ static HRESULT WINAPI MXAttributes_addAttributeFromIndex(IMXAttributes *iface,
 static HRESULT WINAPI MXAttributes_clear(IMXAttributes *iface)
 {
     mxattributes *This = impl_from_IMXAttributes( iface );
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    int i;
+
+    TRACE("(%p)\n", This);
+
+    for (i = 0; i < This->length; i++)
+    {
+        SysFreeString(This->attr[i].qname);
+        SysFreeString(This->attr[i].local);
+        SysFreeString(This->attr[i].uri);
+        SysFreeString(This->attr[i].type);
+        SysFreeString(This->attr[i].value);
+        memset(&This->attr[i], 0, sizeof(mxattribute));
+    }
+
+    This->length = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MXAttributes_removeAttribute(IMXAttributes *iface, int index)
