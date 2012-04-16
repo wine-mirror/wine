@@ -37,6 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 static const WCHAR mimetypes_valuename[] = {'M','i','m','e','T','y','p','e','s',0};
+static const WCHAR author_valuename[] = {'A','u','t','h','o','r',0};
 static const WCHAR pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
 static const WCHAR containerformat_valuename[] = {'C','o','n','t','a','i','n','e','r','F','o','r','m','a','t',0};
 
@@ -186,8 +187,12 @@ static HRESULT WINAPI BitmapDecoderInfo_GetSigningStatus(IWICBitmapDecoderInfo *
 static HRESULT WINAPI BitmapDecoderInfo_GetAuthor(IWICBitmapDecoderInfo *iface, UINT cchAuthor,
     WCHAR *wzAuthor, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchAuthor, wzAuthor, pcchActual);
-    return E_NOTIMPL;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchAuthor, wzAuthor, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, author_valuename,
+        cchAuthor, wzAuthor, pcchActual);
 }
 
 static HRESULT WINAPI BitmapDecoderInfo_GetVendorGUID(IWICBitmapDecoderInfo *iface, GUID *pguidVendor)
@@ -631,8 +636,12 @@ static HRESULT WINAPI BitmapEncoderInfo_GetSigningStatus(IWICBitmapEncoderInfo *
 static HRESULT WINAPI BitmapEncoderInfo_GetAuthor(IWICBitmapEncoderInfo *iface, UINT cchAuthor,
     WCHAR *wzAuthor, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchAuthor, wzAuthor, pcchActual);
-    return E_NOTIMPL;
+    BitmapEncoderInfo *This = impl_from_IWICBitmapEncoderInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchAuthor, wzAuthor, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, author_valuename,
+        cchAuthor, wzAuthor, pcchActual);
 }
 
 static HRESULT WINAPI BitmapEncoderInfo_GetVendorGUID(IWICBitmapEncoderInfo *iface, GUID *pguidVendor)
@@ -901,8 +910,12 @@ static HRESULT WINAPI FormatConverterInfo_GetSigningStatus(IWICFormatConverterIn
 static HRESULT WINAPI FormatConverterInfo_GetAuthor(IWICFormatConverterInfo *iface, UINT cchAuthor,
     WCHAR *wzAuthor, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchAuthor, wzAuthor, pcchActual);
-    return E_NOTIMPL;
+    FormatConverterInfo *This = impl_from_IWICFormatConverterInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchAuthor, wzAuthor, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, author_valuename,
+        cchAuthor, wzAuthor, pcchActual);
 }
 
 static HRESULT WINAPI FormatConverterInfo_GetVendorGUID(IWICFormatConverterInfo *iface, GUID *pguidVendor)
@@ -1099,8 +1112,12 @@ static HRESULT WINAPI PixelFormatInfo_GetSigningStatus(IWICPixelFormatInfo2 *ifa
 static HRESULT WINAPI PixelFormatInfo_GetAuthor(IWICPixelFormatInfo2 *iface, UINT cchAuthor,
     WCHAR *wzAuthor, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchAuthor, wzAuthor, pcchActual);
-    return E_NOTIMPL;
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchAuthor, wzAuthor, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, author_valuename,
+        cchAuthor, wzAuthor, pcchActual);
 }
 
 static HRESULT WINAPI PixelFormatInfo_GetVendorGUID(IWICPixelFormatInfo2 *iface, GUID *pguidVendor)
