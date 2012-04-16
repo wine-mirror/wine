@@ -45,6 +45,17 @@ static inline int paper_size_from_points( float size )
     return size * 254 / 72;
 }
 
+INPUTSLOT *find_slot( PPD *ppd, PSDRV_DEVMODE *dm )
+{
+    INPUTSLOT *slot;
+
+    LIST_FOR_EACH_ENTRY( slot, &ppd->InputSlots, INPUTSLOT, entry )
+        if (slot->WinBin == dm->dmPublic.u1.s1.dmDefaultSource)
+            return slot;
+
+    return NULL;
+}
+
 /************************************************************************
  *
  *		PSDRV_MergeDevmodes
@@ -117,13 +128,9 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, PSDRV_DEVMODE *dm2, PRINTERINFO *p
 
     if (dm2->dmPublic.dmFields & DM_DEFAULTSOURCE)
     {
-        INPUTSLOT *slot;
+        INPUTSLOT *slot = find_slot( pi->ppd, dm2 );
 
-        LIST_FOR_EACH_ENTRY( slot, &pi->ppd->InputSlots, INPUTSLOT, entry )
-	    if(slot->WinBin == dm2->dmPublic.u1.s1.dmDefaultSource)
-	        break;
-
-        if (&slot->entry != &pi->ppd->InputSlots)
+        if (slot)
         {
 	    dm1->dmPublic.u1.s1.dmDefaultSource = dm2->dmPublic.u1.s1.dmDefaultSource;
 	    TRACE("Changing bin to '%s'\n", slot->FullName);

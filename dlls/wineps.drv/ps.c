@@ -301,7 +301,7 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char *buf, *escaped_title;
-    INPUTSLOT *slot;
+    INPUTSLOT *slot = find_slot( physDev->pi->ppd, physDev->Devmode );
     PAGESIZE *page;
     DUPLEX *duplex;
     int win_duplex;
@@ -350,15 +350,8 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
         write_spool(dev, copies_buf, strlen(copies_buf));
     }
 
-    LIST_FOR_EACH_ENTRY( slot, &physDev->pi->ppd->InputSlots, INPUTSLOT, entry ) {
-        if(slot->WinBin == physDev->Devmode->dmPublic.u1.s1.dmDefaultSource) {
-	    if(slot->InvocationString) {
-	        PSDRV_WriteFeature(dev, "*InputSlot", slot->Name,
-			     slot->InvocationString);
-		break;
-	    }
-	}
-    }
+    if (slot && slot->InvocationString)
+        PSDRV_WriteFeature( dev, "*InputSlot", slot->Name, slot->InvocationString );
 
     LIST_FOR_EACH_ENTRY(page, &physDev->pi->ppd->PageSizes, PAGESIZE, entry) {
         if(page->WinPage == physDev->Devmode->dmPublic.u1.s1.dmPaperSize) {
