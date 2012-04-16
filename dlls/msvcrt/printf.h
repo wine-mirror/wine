@@ -525,11 +525,13 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, pf_args(args_ctx, pos,
                             VT_I8, valist).get_longlong);
             else if(flags.Format=='d' || flags.Format=='i')
-                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, pf_args(args_ctx, pos,
-                            VT_INT, valist).get_int);
+                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, flags.IntegerLength!='h' ?
+                        pf_args(args_ctx, pos, VT_INT, valist).get_int :
+                        (short)pf_args(args_ctx, pos, VT_INT, valist).get_int);
             else
-                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, (unsigned)pf_args(
-                            args_ctx, pos, VT_INT, valist).get_int);
+                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, flags.IntegerLength!='h' ?
+                        (unsigned)pf_args(args_ctx, pos, VT_INT, valist).get_int :
+                        (unsigned short)pf_args(args_ctx, pos, VT_INT, valist).get_int);
 
 #ifdef PRINTF_WIDE
             i = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, tmp, -1, &flags, locinfo);
