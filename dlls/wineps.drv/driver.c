@@ -56,6 +56,17 @@ INPUTSLOT *find_slot( PPD *ppd, PSDRV_DEVMODE *dm )
     return NULL;
 }
 
+PAGESIZE *find_pagesize( PPD *ppd, PSDRV_DEVMODE *dm )
+{
+    PAGESIZE *page;
+
+    LIST_FOR_EACH_ENTRY( page, &ppd->PageSizes, PAGESIZE, entry )
+        if (page->WinPage == dm->dmPublic.u1.s1.dmPaperSize)
+            return page;
+
+    return NULL;
+}
+
 /************************************************************************
  *
  *		PSDRV_MergeDevmodes
@@ -78,14 +89,12 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, PSDRV_DEVMODE *dm2, PRINTERINFO *p
     }
 
     /* NB PaperWidth is always < PaperLength */
-    if(dm2->dmPublic.dmFields & DM_PAPERSIZE) {
-        PAGESIZE *page;
+    if (dm2->dmPublic.dmFields & DM_PAPERSIZE)
+    {
+        PAGESIZE *page = find_pagesize( pi->ppd, dm2 );
 
-	LIST_FOR_EACH_ENTRY(page, &pi->ppd->PageSizes, PAGESIZE, entry) {
-	    if(page->WinPage == dm2->dmPublic.u1.s1.dmPaperSize)
-	        break;
-	}
-	if(&page->entry != &pi->ppd->PageSizes ) {
+        if (page)
+        {
 	    dm1->dmPublic.u1.s1.dmPaperSize = dm2->dmPublic.u1.s1.dmPaperSize;
 	    dm1->dmPublic.u1.s1.dmPaperWidth  = paper_size_from_points( page->PaperDimension->x );
 	    dm1->dmPublic.u1.s1.dmPaperLength = paper_size_from_points( page->PaperDimension->y );
@@ -94,11 +103,12 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, PSDRV_DEVMODE *dm2, PRINTERINFO *p
 	    TRACE("Changing page to %s %d x %d\n", page->FullName,
 		  dm1->dmPublic.u1.s1.dmPaperWidth,
 		  dm1->dmPublic.u1.s1.dmPaperLength );
-	} else {
-	    TRACE("Trying to change to unsupported pagesize %d\n",
-		      dm2->dmPublic.u1.s1.dmPaperSize);
 	}
-    } else if((dm2->dmPublic.dmFields & DM_PAPERLENGTH) &&
+        else
+            TRACE("Trying to change to unsupported pagesize %d\n", dm2->dmPublic.u1.s1.dmPaperSize);
+    }
+
+    else if((dm2->dmPublic.dmFields & DM_PAPERLENGTH) &&
        (dm2->dmPublic.dmFields & DM_PAPERWIDTH)) {
         dm1->dmPublic.u1.s1.dmPaperLength = dm2->dmPublic.u1.s1.dmPaperLength;
         dm1->dmPublic.u1.s1.dmPaperWidth = dm2->dmPublic.u1.s1.dmPaperWidth;

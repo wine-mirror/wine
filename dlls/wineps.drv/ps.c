@@ -302,7 +302,7 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char *buf, *escaped_title;
     INPUTSLOT *slot = find_slot( physDev->pi->ppd, physDev->Devmode );
-    PAGESIZE *page;
+    PAGESIZE *page = find_pagesize( physDev->pi->ppd, physDev->Devmode );
     DUPLEX *duplex;
     int win_duplex;
     int llx, lly, urx, ury;
@@ -353,15 +353,8 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
     if (slot && slot->InvocationString)
         PSDRV_WriteFeature( dev, "*InputSlot", slot->Name, slot->InvocationString );
 
-    LIST_FOR_EACH_ENTRY(page, &physDev->pi->ppd->PageSizes, PAGESIZE, entry) {
-        if(page->WinPage == physDev->Devmode->dmPublic.u1.s1.dmPaperSize) {
-	    if(page->InvocationString) {
-	        PSDRV_WriteFeature(dev, "*PageSize", page->Name,
-			     page->InvocationString);
-		break;
-	    }
-	}
-    }
+    if (page && page->InvocationString)
+        PSDRV_WriteFeature( dev, "*PageSize", page->Name, page->InvocationString );
 
     win_duplex = physDev->Devmode->dmPublic.dmFields & DM_DUPLEX ?
         physDev->Devmode->dmPublic.dmDuplex : 0;
