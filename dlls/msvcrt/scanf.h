@@ -198,8 +198,14 @@ _FUNCTION_ {
 	    /* read prefix (if any) */
 	    while (!prefix_finished) {
 		switch(*format) {
-		case 'h': h_prefix = 1; break;
-		case 'l': l_prefix = 1; break;
+		case 'h': h_prefix++; break;
+		case 'l':
+                    if(*(format+1) == 'l') {
+                        I64_prefix = 1;
+                        format++;
+                    }
+                    l_prefix = 1;
+                    break;
 		case 'w': w_prefix = 1; break;
 		case 'L': L_prefix = 1; break;
 		case 'I':
@@ -294,7 +300,7 @@ _FUNCTION_ {
 #define _SET_NUMBER_(type) *va_arg(ap, type*) = negative ? -cur : cur
 			if (I64_prefix) _SET_NUMBER_(LONGLONG);
 			else if (l_prefix) _SET_NUMBER_(LONG);
-			else if (h_prefix) _SET_NUMBER_(short int);
+			else if (h_prefix == 1) _SET_NUMBER_(short int);
 			else _SET_NUMBER_(int);
 		    }
                 }
