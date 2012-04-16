@@ -4175,6 +4175,101 @@ static void test_mxattr_qi(void)
     IVBSAXAttributes_Release(vbsaxattr2);
 }
 
+static struct msxmlsupported_data_t saxattr_support_data[] =
+{
+    { &CLSID_SAXAttributes,   "SAXAttributes"   },
+    { &CLSID_SAXAttributes30, "SAXAttributes30" },
+    { &CLSID_SAXAttributes40, "SAXAttributes40" },
+    { &CLSID_SAXAttributes60, "SAXAttributes60" },
+    { NULL }
+};
+
+static void test_mxattr_localname(void)
+{
+    static const WCHAR localname1W[] = {'l','o','c','a','l','n','a','m','e','1',0};
+    static const WCHAR localnameW[] = {'l','o','c','a','l','n','a','m','e',0};
+    static const WCHAR uri1W[] = {'u','r','i','1',0};
+    static const WCHAR uriW[] = {'u','r','i',0};
+
+    const struct msxmlsupported_data_t *table = saxattr_support_data;
+
+    while (table->clsid)
+    {
+        ISAXAttributes *saxattr;
+        IMXAttributes *mxattr;
+        HRESULT hr;
+        int index;
+
+        if (!is_clsid_supported(table->clsid, mxattributes_support_data))
+        {
+            table++;
+            continue;
+        }
+
+        hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXAttributes, (void**)&mxattr);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IMXAttributes_QueryInterface(mxattr, &IID_ISAXAttributes, (void**)&saxattr);
+        EXPECT_HR(hr, S_OK);
+
+        hr = ISAXAttributes_getIndexFromName(saxattr, NULL, 0, NULL, 0, &index);
+        EXPECT_HR(hr, E_INVALIDARG);
+
+        /* add some ambiguos attribute names */
+        hr = IMXAttributes_addAttribute(mxattr, _bstr_("uri"), _bstr_("localname"),
+            _bstr_("a:localname"), _bstr_(""), _bstr_("value"));
+        EXPECT_HR(hr, S_OK);
+        hr = IMXAttributes_addAttribute(mxattr, _bstr_("uri"), _bstr_("localname"),
+            _bstr_("b:localname"), _bstr_(""), _bstr_("value"));
+        EXPECT_HR(hr, S_OK);
+
+        index = -1;
+        hr = ISAXAttributes_getIndexFromName(saxattr, uriW, lstrlenW(uriW), localnameW, lstrlenW(localnameW), &index);
+        EXPECT_HR(hr, S_OK);
+        ok(index == 0, "%s: got index %d\n", table->name, index);
+
+        index = -1;
+        hr = ISAXAttributes_getIndexFromName(saxattr, uri1W, lstrlenW(uri1W), localnameW, lstrlenW(localnameW), &index);
+        EXPECT_HR(hr, E_INVALIDARG);
+        ok(index == -1, "%s: got index %d\n", table->name, index);
+
+        index = -1;
+        hr = ISAXAttributes_getIndexFromName(saxattr, uriW, lstrlenW(uriW), localname1W, lstrlenW(localname1W), &index);
+        EXPECT_HR(hr, E_INVALIDARG);
+        ok(index == -1, "%s: got index %d\n", table->name, index);
+
+        if (IsEqualGUID(table->clsid, &CLSID_SAXAttributes) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXAttributes30))
+        {
+            hr = ISAXAttributes_getIndexFromName(saxattr, NULL, 0, NULL, 0, NULL);
+            EXPECT_HR(hr, E_POINTER);
+
+            hr = ISAXAttributes_getIndexFromName(saxattr, uriW, lstrlenW(uriW), localname1W, lstrlenW(localname1W), NULL);
+            EXPECT_HR(hr, E_POINTER);
+        }
+        else
+        {
+            hr = ISAXAttributes_getIndexFromName(saxattr, NULL, 0, NULL, 0, NULL);
+            EXPECT_HR(hr, E_INVALIDARG);
+
+            hr = ISAXAttributes_getIndexFromName(saxattr, uriW, lstrlenW(uriW), localname1W, lstrlenW(localname1W), NULL);
+            EXPECT_HR(hr, E_INVALIDARG);
+        }
+
+        hr = ISAXAttributes_getIndexFromName(saxattr, uriW, lstrlenW(uriW), NULL, 0, &index);
+        EXPECT_HR(hr, E_INVALIDARG);
+
+        hr = ISAXAttributes_getIndexFromName(saxattr, NULL, 0, localname1W, lstrlenW(localname1W), &index);
+        EXPECT_HR(hr, E_INVALIDARG);
+
+        table++;
+
+        ISAXAttributes_Release(saxattr);
+        IMXAttributes_Release(mxattr);
+    }
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -4233,6 +4328,7 @@ START_TEST(saxreader)
         test_mxattr_qi();
         test_mxattr_addAttribute();
         test_mxattr_clear();
+        test_mxattr_localname();
         test_mxattr_dispex();
     }
     else

@@ -1827,13 +1827,33 @@ static HRESULT WINAPI SAXAttributes_getName(ISAXAttributes *iface, int nIndex, c
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI SAXAttributes_getIndexFromName(ISAXAttributes *iface, const WCHAR * pUri, int cUriLength,
-    const WCHAR * pLocalName, int cocalNameLength, int * index)
+static HRESULT WINAPI SAXAttributes_getIndexFromName(ISAXAttributes *iface, const WCHAR *uri, int uri_len,
+    const WCHAR *name, int len, int *index)
 {
     mxattributes *This = impl_from_ISAXAttributes( iface );
-    FIXME("(%p)->(%s:%d %s:%d %p): stub\n", This, debugstr_wn(pUri, cUriLength), cUriLength,
-        debugstr_wn(pLocalName, cocalNameLength), cocalNameLength, index);
-    return E_NOTIMPL;
+    int i;
+
+    TRACE("(%p)->(%s:%d %s:%d %p)\n", This, debugstr_wn(uri, uri_len), uri_len,
+        debugstr_wn(name, len), len, index);
+
+    if (!index && (This->class_version == MSXML_DEFAULT || This->class_version == MSXML3))
+        return E_POINTER;
+
+    if (!uri || !name || !index) return E_INVALIDARG;
+
+    for (i = 0; i < This->length; i++)
+    {
+        if (uri_len != SysStringLen(This->attr[i].uri)) continue;
+        if (strncmpW(uri, This->attr[i].uri, uri_len)) continue;
+
+        if (len != SysStringLen(This->attr[i].local)) continue;
+        if (strncmpW(name, This->attr[i].local, len)) continue;
+
+        *index = i;
+        return S_OK;
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI SAXAttributes_getIndexFromQName(ISAXAttributes *iface, const WCHAR *qname,
