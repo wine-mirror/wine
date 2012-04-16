@@ -242,6 +242,19 @@ static void _test_style_set_csstext(unsigned line, IHTMLStyle *style, const char
     SysFreeString(tmp);
 }
 
+#define test_style_remove_attribute(a,b,c) _test_style_remove_attribute(__LINE__,a,b,c)
+static void _test_style_remove_attribute(unsigned line, IHTMLStyle *style, const char *attr, VARIANT_BOOL exb)
+{
+    BSTR str = a2bstr(attr);
+    VARIANT_BOOL b = 100;
+    HRESULT hres;
+
+    hres = IHTMLStyle_removeAttribute(style, str, 1, &b);
+    SysFreeString(str);
+    ok_(__FILE__,line)(hres == S_OK, "removeAttribute failed: %08x\n", hres);
+    ok_(__FILE__,line)(b == exb, "removeAttribute returned %x, expected %x\n", b, exb);
+}
+
 static void test_set_csstext(IHTMLStyle *style)
 {
     VARIANT v;
@@ -1883,6 +1896,13 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(str, "always"), "pageBreakBefore = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
+    test_style_remove_attribute(style, "pageBreakBefore", VARIANT_TRUE);
+    test_style_remove_attribute(style, "pageBreakBefore", VARIANT_FALSE);
+
+    hres = IHTMLStyle_get_pageBreakBefore(style, &str);
+    ok(hres == S_OK, "get_pageBreakBefore failed: %08x\n", hres);
+    ok(!str, "pageBreakBefore = %s\n", wine_dbgstr_w(str));
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
@@ -1984,6 +2004,11 @@ static void test_style_filters(IHTMLElement *elem)
     test_style_filter(style, "alpha(opacity=100)");
     set_style_filter(style, "xxx(a,b,c) alpha(opacity=100)");
     set_style_filter(style, NULL);
+    set_style_filter(style, "alpha(opacity=100)");
+    test_style_remove_attribute(style, "filter", VARIANT_TRUE);
+    test_style_remove_attribute(style, "filter", VARIANT_FALSE);
+    test_style_filter(style, NULL);
+
 
     IHTMLCurrentStyle2_Release(current_style2);
     IHTMLStyle_Release(style);

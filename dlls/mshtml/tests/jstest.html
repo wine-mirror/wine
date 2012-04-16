@@ -62,6 +62,16 @@ function test_document_name_as_index() {
     ok(!("formid" in document), "formid is in document");
 }
 
+function test_remove_style_attribute() {
+    var s = document.body.style, b;
+
+    s.somevar = "test";
+    b = s.removeAttribute("somevar", 1);
+    ok(b, "removeAttribute returned " + b + " expected true");
+    b = s.removeAttribute("somevar", 1);
+    ok(b === false, "removeAttribute returned " + b + " expected false");
+}
+
 var globalVar = false;
 
 function runTest() {
@@ -75,6 +85,7 @@ function runTest() {
     test_select_index();
     test_createDocumentFragment();
     test_document_name_as_index();
+    test_remove_style_attribute();
 
     var r = window.execScript("globalVar = true;");
     ok(r === undefined, "execScript returned " + r);
