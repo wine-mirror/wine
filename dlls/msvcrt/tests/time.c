@@ -704,6 +704,32 @@ static void test_strftime(void)
     ok(retA == 2, "expected 2, got %ld\n", retA);
     ok(!strcmp(bufA, "AM"), "got %s\n", bufA);
 
+    retA = strftime(bufA, 256, "%U", gmt_tm);
+    ok(retA == 2, "expected 2, got %ld\n", retA);
+    ok(!strcmp(bufA, "00"), "got %s\n", bufA);
+
+    retA = strftime(bufA, 256, "%W", gmt_tm);
+    ok(retA == 2, "expected 2, got %ld\n", retA);
+    ok(!strcmp(bufA, "00"), "got %s\n", bufA);
+
+    gmt_tm->tm_wday = 0;
+    retA = strftime(bufA, 256, "%U", gmt_tm);
+    ok(retA == 2, "expected 2, got %ld\n", retA);
+    ok(!strcmp(bufA, "01"), "got %s\n", bufA);
+
+    retA = strftime(bufA, 256, "%W", gmt_tm);
+    ok(retA == 2, "expected 2, got %ld\n", retA);
+    ok(!strcmp(bufA, "00"), "got %s\n", bufA);
+
+    gmt_tm->tm_yday = 365;
+    retA = strftime(bufA, 256, "%U", gmt_tm);
+    ok(retA == 2, "expected 2, got %ld\n", retA);
+    ok(!strcmp(bufA, "53"), "got %s\n", bufA);
+
+    retA = strftime(bufA, 256, "%W", gmt_tm);
+    ok(retA == 2, "expected 2, got %ld\n", retA);
+    ok(!strcmp(bufA, "52"), "got %s\n", bufA);
+
     gmt_tm->tm_mon = 1;
     gmt_tm->tm_mday = 30;
     retA = strftime(bufA, 256, "%c", gmt_tm);

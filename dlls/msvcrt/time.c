@@ -1077,9 +1077,19 @@ MSVCRT_size_t CDECL _Strftime(char *str, MSVCRT_size_t max, const char *format,
             break;
         case 'U':
         case 'W':
-            FIXME("format %c not yet supported (%x)\n", *format, alternate);
-            str[0] = 0;
-            return 0;
+            if(mstm->tm_wday<0 || mstm->tm_wday>6 || mstm->tm_yday<0 || mstm->tm_yday>365)
+                goto einval_error;
+            if(*format == 'U')
+                tmp = mstm->tm_wday;
+            else if(!mstm->tm_wday)
+                tmp = 6;
+            else
+                tmp = mstm->tm_wday-1;
+
+            tmp = mstm->tm_yday/7 + (tmp<=mstm->tm_yday%7);
+            if(!strftime_int(str, &ret, max, tmp, alternate ? 0 : 2, 0, 53))
+                return 0;
+            break;
         case '%':
             str[ret++] = '%';
             break;
