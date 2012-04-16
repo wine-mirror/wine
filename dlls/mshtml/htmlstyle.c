@@ -173,10 +173,12 @@ static const WCHAR attrWordWrap[] =
 static const WCHAR attrZIndex[] =
     {'z','-','i','n','d','e','x',0};
 
-static const struct{
+typedef struct {
     const WCHAR *name;
     DISPID dispid;
-} style_tbl[] = {
+} style_tbl_entry_t;
+
+static const style_tbl_entry_t style_tbl[] = {
     {attrBackground,           DISPID_IHTMLSTYLE_BACKGROUND},
     {attrBackgroundColor,      DISPID_IHTMLSTYLE_BACKGROUNDCOLOR},
     {attrBackgroundImage,      DISPID_IHTMLSTYLE_BACKGROUNDIMAGE},
@@ -263,6 +265,26 @@ static const WCHAR valBlink[] =
 
 static const WCHAR px_formatW[] = {'%','d','p','x',0};
 static const WCHAR emptyW[] = {0};
+
+static const style_tbl_entry_t *lookup_style_tbl(const WCHAR *name)
+{
+    int c, i, min = 0, max = sizeof(style_tbl)/sizeof(*style_tbl)-1;
+
+    while(min <= max) {
+        i = (min+max)/2;
+
+        c = strcmpW(style_tbl[i].name, name);
+        if(!c)
+            return style_tbl+i;
+
+        if(c > 0)
+            max = i-1;
+        else
+            min = i+1;
+    }
+
+    return NULL;
+}
 
 static LPWSTR fix_px_value(LPCWSTR val)
 {
@@ -2929,21 +2951,12 @@ static const IHTMLStyleVtbl HTMLStyleVtbl = {
 
 static HRESULT HTMLStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
-    int c, i, min=0, max = sizeof(style_tbl)/sizeof(*style_tbl)-1;
+    const style_tbl_entry_t *style_entry;
 
-    while(min <= max) {
-        i = (min+max)/2;
-
-        c = strcmpW(style_tbl[i].name, name);
-        if(!c) {
-            *dispid = style_tbl[i].dispid;
-            return S_OK;
-        }
-
-        if(c > 0)
-            max = i-1;
-        else
-            min = i+1;
+    style_entry = lookup_style_tbl(name);
+    if(style_entry) {
+        *dispid = style_entry->dispid;
+        return S_OK;
     }
 
     return DISP_E_UNKNOWNNAME;
