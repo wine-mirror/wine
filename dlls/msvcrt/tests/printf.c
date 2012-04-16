@@ -607,6 +607,16 @@ static void test_sprintf( void )
     r = sprintf(buffer, format);
     ok(!strcmp(buffer,"%0"), "failed: \"%s\"\n", buffer);
     ok( r==2, "return count wrong\n");
+
+    format = "%hx";
+    r = sprintf(buffer, format, 0x12345);
+    ok(!strcmp(buffer,"2345"), "failed \"%s\"\n", buffer);
+
+    format = "%hhx";
+    r = sprintf(buffer, format, 0x123);
+    ok(!strcmp(buffer,"123"), "failed: \"%s\"\n", buffer);
+    r = sprintf(buffer, format, 0x12345);
+    ok(!strcmp(buffer,"2345"), "failed \"%s\"\n", buffer);
 }
 
 static void test_swprintf( void )
