@@ -100,8 +100,7 @@ static void test_dmusic(void)
 
     if (port)
         IDirectMusicPort_Release(port);
-    if (dmusic)
-        IDirectMusic_Release(dmusic);
+    IDirectMusic_Release(dmusic);
 }
 
 START_TEST(dmusic)
