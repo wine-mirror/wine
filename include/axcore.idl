@@ -21,7 +21,9 @@ cpp_quote("#define CHARS_IN_GUID 39")
 
 /* GetTimeFormat is defined in winnls.h as
  * either the W or A suffixed version */
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
 cpp_quote("#undef GetTimeFormat")
+cpp_quote("#endif")
 
 typedef struct _AMMediaType
 {
@@ -472,6 +474,7 @@ cpp_quote("#define AM_GBF_PREVFRAMESKIPPED 1")
 cpp_quote("#define AM_GBF_NOTASYNCPOINT 2")
 
 cpp_quote("#define AM_GBF_NOWAIT 4")
+cpp_quote("#define AM_GBF_NODDSURFACELOCK 8")
 
 [
 object,
