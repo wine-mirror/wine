@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 static const WCHAR mimetypes_valuename[] = {'M','i','m','e','T','y','p','e','s',0};
 static const WCHAR author_valuename[] = {'A','u','t','h','o','r',0};
+static const WCHAR friendlyname_valuename[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
 static const WCHAR pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
 static const WCHAR containerformat_valuename[] = {'C','o','n','t','a','i','n','e','r','F','o','r','m','a','t',0};
 
@@ -219,8 +220,12 @@ static HRESULT WINAPI BitmapDecoderInfo_GetSpecVersion(IWICBitmapDecoderInfo *if
 static HRESULT WINAPI BitmapDecoderInfo_GetFriendlyName(IWICBitmapDecoderInfo *iface, UINT cchFriendlyName,
     WCHAR *wzFriendlyName, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchFriendlyName, wzFriendlyName, pcchActual);
-    return E_NOTIMPL;
+    BitmapDecoderInfo *This = impl_from_IWICBitmapDecoderInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchFriendlyName, wzFriendlyName, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, friendlyname_valuename,
+        cchFriendlyName, wzFriendlyName, pcchActual);
 }
 
 static HRESULT WINAPI BitmapDecoderInfo_GetContainerFormat(IWICBitmapDecoderInfo *iface,
@@ -669,8 +674,12 @@ static HRESULT WINAPI BitmapEncoderInfo_GetSpecVersion(IWICBitmapEncoderInfo *if
 static HRESULT WINAPI BitmapEncoderInfo_GetFriendlyName(IWICBitmapEncoderInfo *iface, UINT cchFriendlyName,
     WCHAR *wzFriendlyName, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchFriendlyName, wzFriendlyName, pcchActual);
-    return E_NOTIMPL;
+    BitmapEncoderInfo *This = impl_from_IWICBitmapEncoderInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchFriendlyName, wzFriendlyName, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, friendlyname_valuename,
+        cchFriendlyName, wzFriendlyName, pcchActual);
 }
 
 static HRESULT WINAPI BitmapEncoderInfo_GetContainerFormat(IWICBitmapEncoderInfo *iface,
@@ -944,8 +953,12 @@ static HRESULT WINAPI FormatConverterInfo_GetSpecVersion(IWICFormatConverterInfo
 static HRESULT WINAPI FormatConverterInfo_GetFriendlyName(IWICFormatConverterInfo *iface, UINT cchFriendlyName,
     WCHAR *wzFriendlyName, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchFriendlyName, wzFriendlyName, pcchActual);
-    return E_NOTIMPL;
+    FormatConverterInfo *This = impl_from_IWICFormatConverterInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchFriendlyName, wzFriendlyName, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, friendlyname_valuename,
+        cchFriendlyName, wzFriendlyName, pcchActual);
 }
 
 static HRESULT WINAPI FormatConverterInfo_GetPixelFormats(IWICFormatConverterInfo *iface,
@@ -1147,8 +1160,12 @@ static HRESULT WINAPI PixelFormatInfo_GetSpecVersion(IWICPixelFormatInfo2 *iface
 static HRESULT WINAPI PixelFormatInfo_GetFriendlyName(IWICPixelFormatInfo2 *iface, UINT cchFriendlyName,
     WCHAR *wzFriendlyName, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchFriendlyName, wzFriendlyName, pcchActual);
-    return E_NOTIMPL;
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchFriendlyName, wzFriendlyName, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, friendlyname_valuename,
+        cchFriendlyName, wzFriendlyName, pcchActual);
 }
 
 static HRESULT WINAPI PixelFormatInfo_GetFormatGUID(IWICPixelFormatInfo2 *iface,

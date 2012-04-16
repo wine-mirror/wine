@@ -189,13 +189,13 @@ static void test_pixelformat_info(void)
     ok(hr == S_OK, "GetComponentType failed, hr=%x\n", hr);
     ok(componenttype == WICPixelFormat, "unexpected component type 0x%x\n", componenttype);
 
-    todo_wine
-    {
     len = 0xdeadbeef;
     hr = IWICComponentInfo_GetFriendlyName(info, 0, NULL, &len);
     ok(hr == S_OK, "GetFriendlyName failed, hr=%x\n", hr);
     ok(len < 255 && len > 0, "invalid length 0x%x\n", len);
 
+    todo_wine
+    {
     hr = IWICComponentInfo_GetSigningStatus(info, NULL);
     ok(hr == E_INVALIDARG, "GetSigningStatus failed, hr=%x\n", hr);
 
