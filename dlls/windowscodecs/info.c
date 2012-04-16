@@ -1006,6 +1006,220 @@ static HRESULT FormatConverterInfo_Constructor(HKEY classkey, REFCLSID clsid, IW
     return S_OK;
 }
 
+typedef struct {
+    IWICPixelFormatInfo2 IWICPixelFormatInfo2_iface;
+    LONG ref;
+    HKEY classkey;
+    CLSID clsid;
+} PixelFormatInfo;
+
+static inline PixelFormatInfo *impl_from_IWICPixelFormatInfo2(IWICPixelFormatInfo2 *iface)
+{
+    return CONTAINING_RECORD(iface, PixelFormatInfo, IWICPixelFormatInfo2_iface);
+}
+
+static HRESULT WINAPI PixelFormatInfo_QueryInterface(IWICPixelFormatInfo2 *iface, REFIID iid,
+    void **ppv)
+{
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICComponentInfo, iid) ||
+        IsEqualIID(&IID_IWICPixelFormatInfo, iid) ||
+        IsEqualIID(&IID_IWICPixelFormatInfo2 ,iid))
+    {
+        *ppv = This;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI PixelFormatInfo_AddRef(IWICPixelFormatInfo2 *iface)
+{
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI PixelFormatInfo_Release(IWICPixelFormatInfo2 *iface)
+{
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        RegCloseKey(This->classkey);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetComponentType(IWICPixelFormatInfo2 *iface,
+    WICComponentType *pType)
+{
+    TRACE("(%p,%p)\n", iface, pType);
+    *pType = WICPixelFormat;
+    return S_OK;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetCLSID(IWICPixelFormatInfo2 *iface, CLSID *pclsid)
+{
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+    TRACE("(%p,%p)\n", iface, pclsid);
+
+    if (!pclsid)
+        return E_INVALIDARG;
+
+    memcpy(pclsid, &This->clsid, sizeof(CLSID));
+
+    return S_OK;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetSigningStatus(IWICPixelFormatInfo2 *iface, DWORD *pStatus)
+{
+    FIXME("(%p,%p): stub\n", iface, pStatus);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetAuthor(IWICPixelFormatInfo2 *iface, UINT cchAuthor,
+    WCHAR *wzAuthor, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchAuthor, wzAuthor, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetVendorGUID(IWICPixelFormatInfo2 *iface, GUID *pguidVendor)
+{
+    FIXME("(%p,%p): stub\n", iface, pguidVendor);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetVersion(IWICPixelFormatInfo2 *iface, UINT cchVersion,
+    WCHAR *wzVersion, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchVersion, wzVersion, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetSpecVersion(IWICPixelFormatInfo2 *iface, UINT cchSpecVersion,
+    WCHAR *wzSpecVersion, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchSpecVersion, wzSpecVersion, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetFriendlyName(IWICPixelFormatInfo2 *iface, UINT cchFriendlyName,
+    WCHAR *wzFriendlyName, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchFriendlyName, wzFriendlyName, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetFormatGUID(IWICPixelFormatInfo2 *iface,
+    GUID *pFormat)
+{
+    FIXME("(%p,%p): stub\n", iface, pFormat);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetColorContext(IWICPixelFormatInfo2 *iface,
+    IWICColorContext **ppIColorContext)
+{
+    FIXME("(%p,%p): stub\n", iface, ppIColorContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetBitsPerPixel(IWICPixelFormatInfo2 *iface,
+    UINT *puiBitsPerPixel)
+{
+    FIXME("(%p,%p): stub\n", iface, puiBitsPerPixel);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetChannelCount(IWICPixelFormatInfo2 *iface,
+    UINT *puiChannelCount)
+{
+    FIXME("(%p,%p): stub\n", iface, puiChannelCount);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetChannelMask(IWICPixelFormatInfo2 *iface,
+    UINT uiChannelIndex, UINT cbMaskBuffer, BYTE *pbMaskBuffer, UINT *pcbActual)
+{
+    FIXME("(%p,%u,%u,%p,%p): stub\n", iface, uiChannelIndex, cbMaskBuffer, pbMaskBuffer, pcbActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PixelFormatInfo_SupportsTransparency(IWICPixelFormatInfo2 *iface,
+    BOOL *pfSupportsTransparency)
+{
+    FIXME("(%p,%p): stub\n", iface, pfSupportsTransparency);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PixelFormatInfo_GetNumericRepresentation(IWICPixelFormatInfo2 *iface,
+    WICPixelFormatNumericRepresentation *pNumericRepresentation)
+{
+    FIXME("(%p,%p): stub\n", iface, pNumericRepresentation);
+    return E_NOTIMPL;
+}
+
+static const IWICPixelFormatInfo2Vtbl PixelFormatInfo_Vtbl = {
+    PixelFormatInfo_QueryInterface,
+    PixelFormatInfo_AddRef,
+    PixelFormatInfo_Release,
+    PixelFormatInfo_GetComponentType,
+    PixelFormatInfo_GetCLSID,
+    PixelFormatInfo_GetSigningStatus,
+    PixelFormatInfo_GetAuthor,
+    PixelFormatInfo_GetVendorGUID,
+    PixelFormatInfo_GetVersion,
+    PixelFormatInfo_GetSpecVersion,
+    PixelFormatInfo_GetFriendlyName,
+    PixelFormatInfo_GetFormatGUID,
+    PixelFormatInfo_GetColorContext,
+    PixelFormatInfo_GetBitsPerPixel,
+    PixelFormatInfo_GetChannelCount,
+    PixelFormatInfo_GetChannelMask,
+    PixelFormatInfo_SupportsTransparency,
+    PixelFormatInfo_GetNumericRepresentation
+};
+
+static HRESULT PixelFormatInfo_Constructor(HKEY classkey, REFCLSID clsid, IWICComponentInfo **ppIInfo)
+{
+    PixelFormatInfo *This;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(PixelFormatInfo));
+    if (!This)
+    {
+        RegCloseKey(classkey);
+        return E_OUTOFMEMORY;
+    }
+
+    This->IWICPixelFormatInfo2_iface.lpVtbl = &PixelFormatInfo_Vtbl;
+    This->ref = 1;
+    This->classkey = classkey;
+    memcpy(&This->clsid, clsid, sizeof(CLSID));
+
+    *ppIInfo = (IWICComponentInfo*)This;
+    return S_OK;
+}
+
 static const WCHAR clsid_keyname[] = {'C','L','S','I','D',0};
 static const WCHAR instance_keyname[] = {'I','n','s','t','a','n','c','e',0};
 
@@ -1019,6 +1233,7 @@ static const struct category categories[] = {
     {WICDecoder, &CATID_WICBitmapDecoders, BitmapDecoderInfo_Constructor},
     {WICEncoder, &CATID_WICBitmapEncoders, BitmapEncoderInfo_Constructor},
     {WICPixelFormatConverter, &CATID_WICFormatConverters, FormatConverterInfo_Constructor},
+    {WICPixelFormat, &CATID_WICPixelFormats, PixelFormatInfo_Constructor},
     {0}
 };
 
