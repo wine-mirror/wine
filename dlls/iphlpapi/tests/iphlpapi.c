@@ -66,6 +66,7 @@ typedef DWORD (WINAPI *GetPerAdapterInfoFunc)(ULONG,PIP_PER_ADAPTER_INFO,PULONG)
 typedef DWORD (WINAPI *GetAdaptersAddressesFunc)(ULONG,ULONG,PVOID,PIP_ADAPTER_ADDRESSES,PULONG);
 typedef DWORD (WINAPI *NotifyAddrChangeFunc)(PHANDLE,LPOVERLAPPED);
 typedef BOOL  (WINAPI *CancelIPChangeNotifyFunc)(LPOVERLAPPED);
+typedef DWORD (WINAPI *GetExtendedTcpTableFunc)(PVOID,PDWORD,BOOL,ULONG,TCP_TABLE_CLASS,ULONG);
 
 static GetNumberOfInterfacesFunc gGetNumberOfInterfaces = NULL;
 static GetIpAddrTableFunc gGetIpAddrTable = NULL;
@@ -87,6 +88,7 @@ static GetPerAdapterInfoFunc gGetPerAdapterInfo = NULL;
 static GetAdaptersAddressesFunc gGetAdaptersAddresses = NULL;
 static NotifyAddrChangeFunc gNotifyAddrChange = NULL;
 static CancelIPChangeNotifyFunc gCancelIPChangeNotify = NULL;
+static GetExtendedTcpTableFunc gGetExtendedTcpTable = NULL;
 
 static void loadIPHlpApi(void)
 {
@@ -130,6 +132,8 @@ static void loadIPHlpApi(void)
      hLibrary, "NotifyAddrChange");
     gCancelIPChangeNotify = (CancelIPChangeNotifyFunc)GetProcAddress(
      hLibrary, "CancelIPChangeNotify");
+    gGetExtendedTcpTable = (GetExtendedTcpTableFunc)GetProcAddress(
+     hLibrary, "GetExtendedTcpTable");
   }
 }
 
@@ -154,6 +158,7 @@ static void freeIPHlpApi(void)
     gGetUdpTable = NULL;
     gNotifyAddrChange = NULL;
     gCancelIPChangeNotify = NULL;
+    gGetExtendedTcpTable = NULL;
     FreeLibrary(hLibrary);
     hLibrary = NULL;
   }
@@ -970,6 +975,39 @@ static void test_GetAdaptersAddresses(void)
     HeapFree(GetProcessHeap(), 0, ptr);
 }
 
+static void test_GetExtendedTcpTable(void)
+{
+    DWORD ret, size;
+    MIB_TCPTABLE *table;
+    MIB_TCPTABLE_OWNER_PID *table_pid;
+
+    if (!gGetExtendedTcpTable)
+    {
+        win_skip("GetExtendedTcpTable not available\n");
+        return;
+    }
+    ret = gGetExtendedTcpTable( NULL, NULL, TRUE, AF_INET, TCP_TABLE_BASIC_ALL, 0 );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+    size = 0;
+    ret = gGetExtendedTcpTable( NULL, &size, TRUE, AF_INET, TCP_TABLE_BASIC_ALL, 0 );
+    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
+
+    table = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = gGetExtendedTcpTable( table, &size, TRUE, AF_INET, TCP_TABLE_BASIC_ALL, 0 );
+    ok( ret == ERROR_SUCCESS, "got %u\n", ret );
+    HeapFree( GetProcessHeap(), 0, table );
+
+    size = 0;
+    ret = gGetExtendedTcpTable( NULL, &size, TRUE, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0 );
+    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
+
+    table_pid = HeapAlloc( GetProcessHeap(), 0, size );
+    ret = gGetExtendedTcpTable( table_pid, &size, TRUE, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0 );
+    ok( ret == ERROR_SUCCESS, "got %u\n", ret );
+    HeapFree( GetProcessHeap(), 0, table_pid );
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -987,6 +1025,7 @@ START_TEST(iphlpapi)
 
     testWin2KFunctions();
     test_GetAdaptersAddresses();
+    test_GetExtendedTcpTable();
     freeIPHlpApi();
   }
 }
