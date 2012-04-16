@@ -726,6 +726,16 @@ case 3:
     ok(false, "unexpected case 3");
 }
 
+(function() {
+    var i=0;
+
+    switch(1) {
+    case 1:
+        i++;
+    }
+    return i;
+})();
+
 tmp = eval("1");
 ok(tmp === 1, "eval(\"1\") !== 1");
 eval("{ ok(tmp === 1, 'eval: tmp !== 1'); } tmp = 2;");
