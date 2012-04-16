@@ -1577,6 +1577,7 @@ enum char_info_mode
     int          threads;       /* number of threads */
     int          priority;      /* process priority */
     int          handles;       /* number of handles */
+    int          unix_pid;      /* Unix pid */
     VARARG(filename,unicode_str); /* file name of main exe */
 @END
 

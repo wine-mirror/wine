@@ -117,6 +117,7 @@ static int snapshot_next_process( struct snapshot *snapshot, struct next_process
     reply->threads  = ptr->threads;
     reply->priority = ptr->priority;
     reply->handles  = ptr->handles;
+    reply->unix_pid = ptr->process->unix_pid;
     if ((exe_module = get_process_exe_module( ptr->process )) && exe_module->filename)
     {
         data_size_t len = min( exe_module->namelen, get_reply_max_size() );

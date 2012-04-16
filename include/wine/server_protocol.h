@@ -2052,7 +2052,9 @@ struct next_process_reply
     int          threads;
     int          priority;
     int          handles;
+    int          unix_pid;
     /* VARARG(filename,unicode_str); */
+    char __pad_36[4];
 };
 
 
@@ -5646,6 +5648,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 431
+#define SERVER_PROTOCOL_VERSION 432
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
