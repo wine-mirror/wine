@@ -46,6 +46,7 @@ static const WCHAR containerformat_valuename[] = {'C','o','n','t','a','i','n','e
 static const WCHAR metadataformat_valuename[] = {'M','e','t','a','d','a','t','a','F','o','r','m','a','t',0};
 static const WCHAR vendor_valuename[] = {'V','e','n','d','o','r',0};
 static const WCHAR version_valuename[] = {'V','e','r','s','i','o','n',0};
+static const WCHAR bitsperpixel_valuename[] = {'B','i','t','L','e','n','g','t','h',0};
 
 static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
     UINT buffer_size, WCHAR *buffer, UINT *actual_size)
@@ -104,6 +105,27 @@ static HRESULT ComponentInfo_GetGUIDValue(HKEY classkey, LPCWSTR value,
     hr = CLSIDFromString(guid_string, result);
 
     return hr;
+}
+
+static HRESULT ComponentInfo_GetDWORDValue(HKEY classkey, LPCWSTR value,
+    DWORD *result)
+{
+    LONG ret;
+    DWORD cbdata = sizeof(DWORD);
+
+    if (!result)
+        return E_INVALIDARG;
+
+    ret = RegGetValueW(classkey, NULL, value, RRF_RT_DWORD, NULL,
+        result, &cbdata);
+
+    if (ret == ERROR_FILE_NOT_FOUND)
+    {
+        *result = 0;
+        return S_OK;
+    }
+
+    return HRESULT_FROM_WIN32(ret);
 }
 
 typedef struct {
@@ -1231,8 +1253,11 @@ static HRESULT WINAPI PixelFormatInfo_GetColorContext(IWICPixelFormatInfo2 *ifac
 static HRESULT WINAPI PixelFormatInfo_GetBitsPerPixel(IWICPixelFormatInfo2 *iface,
     UINT *puiBitsPerPixel)
 {
-    FIXME("(%p,%p): stub\n", iface, puiBitsPerPixel);
-    return E_NOTIMPL;
+    PixelFormatInfo *This = impl_from_IWICPixelFormatInfo2(iface);
+
+    TRACE("(%p,%p)\n", iface, puiBitsPerPixel);
+
+    return ComponentInfo_GetDWORDValue(This->classkey, bitsperpixel_valuename, puiBitsPerPixel);
 }
 
 static HRESULT WINAPI PixelFormatInfo_GetChannelCount(IWICPixelFormatInfo2 *iface,
