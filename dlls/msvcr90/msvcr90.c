@@ -366,3 +366,28 @@ int CDECL MSVCR90__vswprintf_p(wchar_t *buffer, size_t length, const wchar_t *fo
 {
     return _vswprintf_p_l(buffer, length, format, NULL, args);
 }
+
+/*********************************************************************
+ *              _byteswap_ushort (MSVCR90.@)
+ */
+unsigned short CDECL _byteswap_ushort(unsigned short s)
+{
+    return (s<<8) + (s>>8);
+}
+
+/*********************************************************************
+ *              _byteswap_ulong (MSVCR90.@)
+ */
+unsigned long CDECL _byteswap_ulong(unsigned long l)
+{
+    return (l<<24) + ((l<<8)&0xFF0000) + ((l>>8)&0xFF00) + (l>>24);
+}
+
+/*********************************************************************
+ *              _byteswap_uint64 (MSVCR90.@)
+ */
+unsigned __int64 CDECL _byteswap_uint64(unsigned __int64 i)
+{
+    return (i<<56) + ((i&0xFF00)<<40) + ((i&0xFF0000)<<24) + ((i&0xFF000000)<<8) +
+        ((i>>8)&0xFF000000) + ((i>>24)&0xFF0000) + ((i>>40)&0xFF00) + (i>>56);
+}
