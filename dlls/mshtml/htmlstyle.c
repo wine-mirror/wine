@@ -2748,9 +2748,57 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
                                                 LONG lFlags, VARIANT_BOOL *pfSuccess)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName),
-         lFlags, pfSuccess);
-    return E_NOTIMPL;
+    const style_tbl_entry_t *style_entry;
+    nsAString name_str, ret_str;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
+
+    style_entry = lookup_style_tbl(strAttributeName);
+    if(!style_entry) {
+        DISPID dispid;
+        unsigned i;
+
+        hres = IDispatchEx_GetDispID(&This->dispex.IDispatchEx_iface, strAttributeName,
+                (lFlags&1) ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
+        if(hres != S_OK) {
+            *pfSuccess = VARIANT_FALSE;
+            return S_OK;
+        }
+
+        for(i=0; i < sizeof(style_tbl)/sizeof(*style_tbl); i++) {
+            if(dispid == style_tbl[i].dispid)
+                break;
+        }
+
+        if(i == sizeof(style_tbl)/sizeof(*style_tbl))
+            return remove_prop(&This->dispex, strAttributeName, pfSuccess);
+        style_entry = style_tbl+i;
+    }
+
+    /* filter property is a special case */
+    if(style_entry->dispid == DISPID_IHTMLSTYLE_FILTER) {
+        *pfSuccess = This->elem->filter && *This->elem->filter ? VARIANT_TRUE : VARIANT_FALSE;
+        heap_free(This->elem->filter);
+        This->elem->filter = NULL;
+        update_filter(This);
+        return S_OK;
+    }
+
+    nsAString_InitDepend(&name_str, style_entry->name);
+    nsAString_Init(&ret_str, NULL);
+    nsres = nsIDOMCSSStyleDeclaration_RemoveProperty(This->nsstyle, &name_str, &ret_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *ret;
+        nsAString_GetData(&ret_str, &ret);
+        *pfSuccess = *ret ? VARIANT_TRUE : VARIANT_FALSE;
+    }else {
+        ERR("RemoveProperty failed: %08x\n", nsres);
+    }
+    nsAString_Finish(&name_str);
+    nsAString_Finish(&ret_str);
+    return NS_SUCCEEDED(nsres) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI HTMLStyle_toString(IHTMLStyle *iface, BSTR *String)
