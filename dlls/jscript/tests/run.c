@@ -64,6 +64,8 @@ DEFINE_EXPECT(global_propdelete_d);
 DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
 DEFINE_EXPECT(global_notexists_d);
+DEFINE_EXPECT(global_propargput_d);
+DEFINE_EXPECT(global_propargput_i);
 DEFINE_EXPECT(puredisp_prop_d);
 DEFINE_EXPECT(puredisp_noprop_d);
 DEFINE_EXPECT(testobj_delete);
@@ -96,6 +98,7 @@ DEFINE_EXPECT(DeleteMemberByDispID);
 #define DISPID_GLOBAL_PUREDISP      0x1010
 #define DISPID_GLOBAL_TESTPROPDELETE  0x1010
 #define DISPID_GLOBAL_ISNULLBSTR    0x1011
+#define DISPID_GLOBAL_PROPARGPUT    0x1012
 
 #define DISPID_TESTOBJ_PROP         0x2000
 #define DISPID_TESTOBJ_ONLYDISPID   0x2001
@@ -502,7 +505,21 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         return S_OK;
     }
 
-    if(strict_dispid_check)
+    if(!strcmp_wa(bstrName, "propArgPutG")) {
+        CHECK_EXPECT(global_propargput_d);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_GLOBAL_PROPARGPUT;
+        return S_OK;
+    }
+
+    if(!strcmp_wa(bstrName, "propArgPutO")) {
+        CHECK_EXPECT(global_propargput_d);
+        test_grfdex(grfdex, fdexNameEnsure|fdexNameCaseSensitive);
+        *pid = DISPID_GLOBAL_PROPARGPUT;
+        return S_OK;
+    }
+
+    if(strict_dispid_check && strcmp_wa(bstrName, "t"))
         ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
 }
@@ -817,6 +834,28 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
             V_I4(pvarRes) = pdp->cArgs;
         }
 
+        return S_OK;
+
+    case DISPID_GLOBAL_PROPARGPUT:
+        CHECK_EXPECT(global_propargput_i);
+        ok(wFlags == INVOKE_PROPERTYPUT, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg != NULL\n");
+        ok(pdp->rgdispidNamedArgs != NULL, "rgdispidNamedArgs == NULL\n");
+        ok(pdp->cArgs == 3, "cArgs = %d\n", pdp->cArgs);
+        ok(pdp->cNamedArgs == 1, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pdp->rgdispidNamedArgs[0] == DISPID_PROPERTYPUT, "pdp->rgdispidNamedArgs[0] = %d\n", pdp->rgdispidNamedArgs[0]);
+        ok(!pvarRes, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_I4, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_I4(pdp->rgvarg) == 2, "V_I4(psp->rgvargs) = %d\n", V_I4(pdp->rgvarg));
+
+        ok(V_VT(pdp->rgvarg+1) == VT_I4, "V_VT(psp->rgvargs+1) = %d\n", V_VT(pdp->rgvarg+1));
+        ok(V_I4(pdp->rgvarg+1) == 1, "V_I4(psp->rgvargs+1) = %d\n", V_I4(pdp->rgvarg+1));
+
+        ok(V_VT(pdp->rgvarg+2) == VT_I4, "V_VT(psp->rgvargs+2) = %d\n", V_VT(pdp->rgvarg+2));
+        ok(V_I4(pdp->rgvarg+2) == 0, "V_I4(psp->rgvargs+2) = %d\n", V_I4(pdp->rgvarg+2));
         return S_OK;
 
     case DISPID_GLOBAL_OBJECT_FLAG: {
@@ -1607,6 +1646,18 @@ static BOOL run_tests(void)
     parse_script_a("ok(typeof(testObj.onlyDispID) === 'unknown', 'unexpected typeof(testObj.onlyDispID)');");
     CHECK_CALLED(testobj_onlydispid_d);
     CHECK_CALLED(testobj_onlydispid_i);
+
+    SET_EXPECT(global_propargput_d);
+    SET_EXPECT(global_propargput_i);
+    parse_script_a("var t=0; propArgPutG(t++, t++) = t++;");
+    CHECK_CALLED(global_propargput_d);
+    CHECK_CALLED(global_propargput_i);
+
+    SET_EXPECT(global_propargput_d);
+    SET_EXPECT(global_propargput_i);
+    parse_script_a("var t=0; test.propArgPutO(t++, t++) = t++;");
+    CHECK_CALLED(global_propargput_d);
+    CHECK_CALLED(global_propargput_i);
 
     run_from_res("lang.js");
     run_from_res("api.js");
