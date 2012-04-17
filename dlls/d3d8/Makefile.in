@@ -4,7 +4,6 @@ IMPORTS   = dxguid uuid wined3d
 
 C_SRCS = \
 	buffer.c \
-	cubetexture.c \
 	d3d8_main.c \
 	device.c \
 	directx.c \
