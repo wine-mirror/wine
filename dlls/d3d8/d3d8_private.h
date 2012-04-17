@@ -101,7 +101,6 @@ void fixup_caps(WINED3DCAPS *pWineCaps) DECLSPEC_HIDDEN;
 
 /* Direct3D8 Interfaces: */
 typedef struct IDirect3DBaseTexture8Impl IDirect3DBaseTexture8Impl;
-typedef struct IDirect3DVolumeTexture8Impl IDirect3DVolumeTexture8Impl;
 typedef struct IDirect3D8Impl IDirect3D8Impl;
 typedef struct IDirect3DDevice8Impl IDirect3DDevice8Impl;
 typedef struct IDirect3DIndexBuffer8Impl IDirect3DIndexBuffer8Impl;
@@ -323,22 +322,7 @@ HRESULT cubetexture_init(struct d3d8_texture *texture, IDirect3DDevice8Impl *dev
 HRESULT texture_init(struct d3d8_texture *texture, IDirect3DDevice8Impl *device,
         UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 
-/* ----------------------- */
-/* IDirect3DVolumeTexture8 */
-/* ----------------------- */
-
-/*****************************************************************************
- * IDirect3DVolumeTexture8 implementation structure
- */
-struct IDirect3DVolumeTexture8Impl
-{
-    IDirect3DVolumeTexture8 IDirect3DVolumeTexture8_iface;
-    LONG ref;
-    struct wined3d_texture *wined3d_texture;
-    IDirect3DDevice8 *parentDevice;
-};
-
-HRESULT volumetexture_init(IDirect3DVolumeTexture8Impl *texture, IDirect3DDevice8Impl *device,
+HRESULT volumetexture_init(struct d3d8_texture *texture, IDirect3DDevice8Impl *device,
         UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 
 struct d3d8_vertex_declaration
