@@ -1091,78 +1091,48 @@ BOOL X11DRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
 }
 
 /**********************************************************************
- *          X11DRV_Polyline
- */
-BOOL X11DRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
-{
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-    int i;
-    XPoint *points;
-
-    if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * count )))
-    {
-        WARN("No memory to convert POINTs to XPoints!\n");
-        return FALSE;
-    }
-    for (i = 0; i < count; i++)
-    {
-        POINT tmp = pt[i];
-        LPtoDP(dev->hdc, &tmp, 1);
-        points[i].x = physDev->dc_rect.left + tmp.x;
-        points[i].y = physDev->dc_rect.top + tmp.y;
-    }
-
-    if (X11DRV_SetupGCForPen ( physDev ))
-    {
-        wine_tsx11_lock();
-        XDrawLines( gdi_display, physDev->drawable, physDev->gc,
-                    points, count, CoordModeOrigin );
-        wine_tsx11_unlock();
-    }
-
-    HeapFree( GetProcessHeap(), 0, points );
-    return TRUE;
-}
-
-
-/**********************************************************************
  *          X11DRV_Polygon
  */
 BOOL X11DRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     int i;
-    XPoint *points;
+    POINT *points;
+    XPoint *xpoints;
 
-    if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * (count+1) )))
+    points = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*pt) );
+    if (!points) return FALSE;
+    memcpy( points, pt, count * sizeof(*pt) );
+    LPtoDP( dev->hdc, points, count );
+
+    if (!(xpoints = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * (count+1) )))
     {
-        WARN("No memory to convert POINTs to XPoints!\n");
+        HeapFree( GetProcessHeap(), 0, points );
         return FALSE;
     }
     for (i = 0; i < count; i++)
     {
-        POINT tmp = pt[i];
-        LPtoDP(dev->hdc, &tmp, 1);
-        points[i].x = physDev->dc_rect.left + tmp.x;
-        points[i].y = physDev->dc_rect.top + tmp.y;
+        xpoints[i].x = physDev->dc_rect.left + points[i].x;
+        xpoints[i].y = physDev->dc_rect.top + points[i].y;
     }
-    points[count] = points[0];
+    xpoints[count] = xpoints[0];
 
     if (X11DRV_SetupGCForBrush( physDev ))
     {
         wine_tsx11_lock();
         XFillPolygon( gdi_display, physDev->drawable, physDev->gc,
-                      points, count+1, Complex, CoordModeOrigin);
+                      xpoints, count+1, Complex, CoordModeOrigin);
         wine_tsx11_unlock();
     }
     if (X11DRV_SetupGCForPen ( physDev ))
     {
         wine_tsx11_lock();
         XDrawLines( gdi_display, physDev->drawable, physDev->gc,
-                    points, count+1, CoordModeOrigin );
+                    xpoints, count+1, CoordModeOrigin );
         wine_tsx11_unlock();
     }
 
+    HeapFree( GetProcessHeap(), 0, xpoints );
     HeapFree( GetProcessHeap(), 0, points );
     return TRUE;
 }
@@ -1174,48 +1144,68 @@ BOOL X11DRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 BOOL X11DRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygons )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-    HRGN hrgn;
+    DWORD total = 0, max = 0, pos, i;
+    POINT *points;
+    BOOL ret = FALSE;
 
-    /* FIXME: The points should be converted to device coords before */
-    /* creating the region. */
+    for (i = 0; i < polygons; i++)
+    {
+        if (counts[i] < 2) return FALSE;
+        if (counts[i] > max) max = counts[i];
+        total += counts[i];
+    }
 
-    hrgn = CreatePolyPolygonRgn( pt, counts, polygons, GetPolyFillMode( dev->hdc ) );
-    X11DRV_PaintRgn( dev, hrgn );
-    DeleteObject( hrgn );
+    points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
+    if (!points) return FALSE;
+    memcpy( points, pt, total * sizeof(*pt) );
+    LPtoDP( dev->hdc, points, total );
 
-      /* Draw the outline of the polygons */
+    if (X11DRV_SetupGCForBrush( physDev ))
+    {
+        XRectangle *rect;
+        HRGN hrgn = CreatePolyPolygonRgn( points, counts, polygons, GetPolyFillMode( dev->hdc ) );
+        RGNDATA *data = X11DRV_GetRegionData( hrgn, 0 );
+
+        DeleteObject( hrgn );
+        if (!data) goto done;
+        rect = (XRectangle *)data->Buffer;
+        for (i = 0; i < data->rdh.nCount; i++)
+        {
+            rect[i].x += physDev->dc_rect.left;
+            rect[i].y += physDev->dc_rect.top;
+        }
+
+        wine_tsx11_lock();
+        XFillRectangles( gdi_display, physDev->drawable, physDev->gc, rect, data->rdh.nCount );
+        wine_tsx11_unlock();
+        HeapFree( GetProcessHeap(), 0, data );
+    }
 
     if (X11DRV_SetupGCForPen ( physDev ))
     {
-	unsigned int i;
-	int j, max = 0;
-	XPoint *points;
+        XPoint *xpoints;
+        int j;
 
-	for (i = 0; i < polygons; i++) if (counts[i] > max) max = counts[i];
-        if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * (max+1) )))
+        if (!(xpoints = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * (max + 1) ))) goto done;
+        for (i = pos = 0; i < polygons; pos += counts[i++])
         {
-            WARN("No memory to convert POINTs to XPoints!\n");
-            return FALSE;
-        }
-	for (i = 0; i < polygons; i++)
-	{
-	    for (j = 0; j < counts[i]; j++)
-	    {
-                POINT tmp = *pt;
-                LPtoDP(dev->hdc, &tmp, 1);
-                points[j].x = physDev->dc_rect.left + tmp.x;
-                points[j].y = physDev->dc_rect.top + tmp.y;
-		pt++;
-	    }
-	    points[j] = points[0];
+            for (j = 0; j < counts[i]; j++)
+            {
+                xpoints[j].x = physDev->dc_rect.left + points[pos + j].x;
+                xpoints[j].y = physDev->dc_rect.top + points[pos + j].y;
+            }
+	    xpoints[j] = xpoints[0];
             wine_tsx11_lock();
-            XDrawLines( gdi_display, physDev->drawable, physDev->gc,
-                        points, j + 1, CoordModeOrigin );
+            XDrawLines( gdi_display, physDev->drawable, physDev->gc, xpoints, j + 1, CoordModeOrigin );
             wine_tsx11_unlock();
-	}
-	HeapFree( GetProcessHeap(), 0, points );
+        }
+        HeapFree( GetProcessHeap(), 0, xpoints );
     }
-    return TRUE;
+    ret = TRUE;
+
+done:
+    HeapFree( GetProcessHeap(), 0, points );
+    return ret;
 }
 
 
@@ -1225,35 +1215,44 @@ BOOL X11DRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT p
 BOOL X11DRV_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polylines )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    DWORD total = 0, max = 0, pos, i, j;
+    POINT *points;
+
+    for (i = 0; i < polylines; i++)
+    {
+        if (counts[i] < 2) return FALSE;
+        if (counts[i] > max) max = counts[i];
+        total += counts[i];
+    }
+
+    points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
+    if (!points) return FALSE;
+    memcpy( points, pt, total * sizeof(*pt) );
+    LPtoDP( dev->hdc, points, total );
 
     if (X11DRV_SetupGCForPen ( physDev ))
     {
-        unsigned int i, j, max = 0;
-        XPoint *points;
+        XPoint *xpoints;
 
-        for (i = 0; i < polylines; i++) if (counts[i] > max) max = counts[i];
-        if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * max )))
+        if (!(xpoints = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * max )))
         {
-            WARN("No memory to convert POINTs to XPoints!\n");
+            HeapFree( GetProcessHeap(), 0, points );
             return FALSE;
         }
-        for (i = 0; i < polylines; i++)
+        for (i = pos = 0; i < polylines; pos += counts[i++])
         {
             for (j = 0; j < counts[i]; j++)
             {
-                POINT tmp = *pt;
-                LPtoDP(dev->hdc, &tmp, 1);
-                points[j].x = physDev->dc_rect.left + tmp.x;
-                points[j].y = physDev->dc_rect.top + tmp.y;
-                pt++;
+                xpoints[j].x = physDev->dc_rect.left + points[pos + j].x;
+                xpoints[j].y = physDev->dc_rect.top + points[pos + j].y;
             }
             wine_tsx11_lock();
-            XDrawLines( gdi_display, physDev->drawable, physDev->gc,
-                        points, j, CoordModeOrigin );
+            XDrawLines( gdi_display, physDev->drawable, physDev->gc, xpoints, j, CoordModeOrigin );
             wine_tsx11_unlock();
         }
-	HeapFree( GetProcessHeap(), 0, points );
+        HeapFree( GetProcessHeap(), 0, xpoints );
     }
+    HeapFree( GetProcessHeap(), 0, points );
     return TRUE;
 }
 
