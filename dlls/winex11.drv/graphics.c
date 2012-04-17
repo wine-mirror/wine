@@ -1377,9 +1377,7 @@ BOOL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillTy
     {
         unsigned long pixel = X11DRV_PALETTE_ToPhysical( physDev, color );
 
-          /* ROP mode is always GXcopy for flood-fill */
         wine_tsx11_lock();
-        XSetFunction( gdi_display, physDev->gc, GXcopy );
         X11DRV_InternalFloodFill(image, physDev,
                                  pt.x - rect.left,
                                  pt.y - rect.top,
