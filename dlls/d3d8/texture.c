@@ -276,6 +276,7 @@ static HRESULT WINAPI d3d8_texture_2d_GetSurfaceLevel(IDirect3DTexture8 *iface,
 {
     struct d3d8_texture *texture = impl_from_IDirect3DTexture8(iface);
     struct wined3d_resource *sub_resource;
+    IDirect3DSurface8Impl *surface_impl;
 
     TRACE("iface %p, level %u, surface %p.\n", iface, level, surface);
 
@@ -286,7 +287,8 @@ static HRESULT WINAPI d3d8_texture_2d_GetSurfaceLevel(IDirect3DTexture8 *iface,
         return D3DERR_INVALIDCALL;
     }
 
-    *surface = wined3d_resource_get_parent(sub_resource);
+    surface_impl = wined3d_resource_get_parent(sub_resource);
+    *surface = &surface_impl->IDirect3DSurface8_iface;
     IDirect3DSurface8_AddRef(*surface);
     wined3d_mutex_unlock();
 
