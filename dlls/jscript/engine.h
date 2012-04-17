@@ -64,6 +64,7 @@ typedef struct {
     X(and,        1, 0,0)                  \
     X(array,      1, 0,0)                  \
     X(assign,     1, 0,0)                  \
+    X(assign_call,1, ARG_UINT,   0)       \
     X(bool,       1, ARG_INT,    0)        \
     X(bneg,       1, 0,0)                  \
     X(call,       1, ARG_UINT,   ARG_UINT) \

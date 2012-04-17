@@ -2382,6 +2382,35 @@ static HRESULT interp_assign(exec_ctx_t *ctx)
     return stack_push(ctx, v);
 }
 
+/* JScript extension */
+static HRESULT interp_assign_call(exec_ctx_t *ctx)
+{
+    const unsigned arg = ctx->code->instrs[ctx->ip].arg1.uint;
+    DISPID propput_dispid = DISPID_PROPERTYPUT;
+    IDispatch *disp;
+    DISPPARAMS dp;
+    VARIANT *v;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("%u\n", arg);
+
+    disp = stack_topn_objid(ctx, arg+1, &id);
+    if(!disp)
+        return throw_reference_error(ctx->script, ctx->ei, JS_E_ILLEGAL_ASSIGN, NULL);
+
+    jsstack_to_dp(ctx, arg+1, &dp);
+    dp.cNamedArgs = 1;
+    dp.rgdispidNamedArgs = &propput_dispid;
+    hres = disp_call(ctx->script, disp, id, DISPATCH_PROPERTYPUT, &dp, NULL, ctx->ei);
+    if(FAILED(hres))
+        return hres;
+
+    v = stack_pop(ctx);
+    stack_popn(ctx, arg+2);
+    return stack_push(ctx, v);
+}
+
 static HRESULT interp_undefined(exec_ctx_t *ctx)
 {
     VARIANT v;

@@ -1030,6 +1030,11 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, DIS
 
     jsdisp = iface_to_jsdisp((IUnknown*)disp);
     if(jsdisp) {
+        if(flags & DISPATCH_PROPERTYPUT) {
+            FIXME("disp_call(propput) on builtin object\n");
+            return E_FAIL;
+        }
+
         hres = jsdisp_call(jsdisp, id, flags, dp, retv, ei);
         jsdisp_release(jsdisp);
         return hres;

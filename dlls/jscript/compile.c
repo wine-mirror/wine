@@ -607,9 +607,43 @@ static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t
 
 static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_t *expr, jsop_t op)
 {
+    BOOL use_throw_path = FALSE;
+    unsigned arg_cnt = 0;
     HRESULT hres;
 
-    if(!is_memberid_expr(expr->expression1->type)) {
+    if(expr->expression1->type == EXPR_CALL) {
+        call_expression_t *call_expr = (call_expression_t*)expr->expression1;
+        argument_t *arg;
+
+        if(op != OP_LAST) {
+            FIXME("op %d not supported on parametrized assign expressions\n", op);
+            return E_NOTIMPL;
+        }
+
+        if(is_memberid_expr(call_expr->expression->type) && call_expr->argument_list) {
+            hres = compile_memberid_expression(ctx, call_expr->expression, fdexNameEnsure);
+            if(FAILED(hres))
+                return hres;
+
+            for(arg = call_expr->argument_list; arg; arg = arg->next) {
+                hres = compile_expression(ctx, arg->expr);
+                if(FAILED(hres))
+                    return hres;
+                arg_cnt++;
+            }
+        }else {
+            use_throw_path = TRUE;
+        }
+    }else if(is_memberid_expr(expr->expression1->type)) {
+        hres = compile_memberid_expression(ctx, expr->expression1, fdexNameEnsure);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        use_throw_path = TRUE;
+    }
+
+    if(use_throw_path) {
+        /* Illegal assignment: evaluate and throw */
         hres = compile_expression(ctx, expr->expression1);
         if(FAILED(hres))
             return hres;
@@ -624,10 +658,6 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
         return push_instr_uint(ctx, OP_throw_ref, JS_E_ILLEGAL_ASSIGN);
     }
 
-    hres = compile_memberid_expression(ctx, expr->expression1, fdexNameEnsure);
-    if(FAILED(hres))
-        return hres;
-
     if(op != OP_LAST && !push_instr(ctx, OP_refval))
         return E_OUTOFMEMORY;
 
@@ -637,6 +667,9 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
 
     if(op != OP_LAST && !push_instr(ctx, op))
         return E_OUTOFMEMORY;
+
+    if(arg_cnt)
+        return push_instr_uint(ctx, OP_assign_call, arg_cnt);
 
     if(!push_instr(ctx, OP_assign))
         return E_OUTOFMEMORY;
