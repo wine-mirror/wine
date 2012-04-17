@@ -2307,8 +2307,6 @@ ProcessCharSet(REGlobalData *gData, RECharSet *charSet)
         }
         if (inRange) {
             if (gData->regexp->flags & JSREG_FOLD) {
-                int i;
-
                 assert(rangeStart <= thisCh);
                 for (i = rangeStart; i <= thisCh; i++) {
                     WCHAR uch, dch;
