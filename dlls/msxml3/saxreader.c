@@ -241,6 +241,11 @@ static const WCHAR FeatureNamespacesW[] = {
     '/','n','a','m','e','s','p','a','c','e','s',0
 };
 
+static const WCHAR FeatureNamespacePrefixesW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
+    '/','n','a','m','e','s','p','a','c','e','-','p','r','e','f','i','x','e','s',0
+};
+
 static inline HRESULT set_feature_value(saxreader *reader, saxreader_features feature, VARIANT_BOOL value)
 {
     if (value == VARIANT_TRUE)
@@ -2752,6 +2757,9 @@ static HRESULT WINAPI saxxmlreader_getFeature(
     if (!strcmpW(FeatureNamespacesW, feature))
         return get_feature_value(This, Namespaces, value);
 
+    if (!strcmpW(FeatureNamespacePrefixesW, feature))
+        return get_feature_value(This, NamespacePrefixes, value);
+
     FIXME("(%p)->(%s %p) stub\n", This, debugstr_w(feature), value);
     return E_NOTIMPL;
 }
@@ -3188,7 +3196,7 @@ HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *outer, LPVOID *ppOb
     reader->pool.pool = NULL;
     reader->pool.index = 0;
     reader->pool.len = 0;
-    reader->features = Namespaces;
+    reader->features = Namespaces | NamespacePrefixes;
     reader->version = version;
 
     init_dispex(&reader->dispex, (IUnknown*)&reader->IVBSAXXMLReader_iface, &saxreader_dispex);

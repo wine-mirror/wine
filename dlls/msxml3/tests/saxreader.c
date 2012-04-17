@@ -2109,7 +2109,11 @@ static void test_saxreader_features(void)
         value = 0xc;
         hr = ISAXXMLReader_getFeature(reader, _bstr_("http://xml.org/sax/features/namespaces"), &value);
         EXPECT_HR(hr, S_OK);
+        ok(entry->value == value, "%s: got wrong default value %x, expected %x\n", entry->clsid, value, entry->value);
 
+        value = 0xc;
+        hr = ISAXXMLReader_getFeature(reader, _bstr_("http://xml.org/sax/features/namespace-prefixes"), &value);
+        EXPECT_HR(hr, S_OK);
         ok(entry->value == value, "%s: got wrong default value %x, expected %x\n", entry->clsid, value, entry->value);
 
         ISAXXMLReader_Release(reader);
