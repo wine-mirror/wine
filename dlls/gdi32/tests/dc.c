@@ -403,11 +403,15 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
     }
 
     type = GetClipBox( ref_dc, &rect );
-    ok( type == SIMPLEREGION, "GetClipBox returned %d on %s\n", type, descr );
-    ok( rect.left == 0 && rect.top == 0 &&
-        rect.right == GetDeviceCaps( ref_dc, DESKTOPHORZRES ) &&
-        rect.bottom == GetDeviceCaps( ref_dc, DESKTOPVERTRES ),
-        "GetClipBox returned %d,%d,%d,%d on %s\n", rect.left, rect.top, rect.right, rect.bottom, descr );
+    if (type != COMPLEXREGION)  /* region can be complex on multi-monitor setups */
+    {
+        ok( type == SIMPLEREGION, "GetClipBox returned %d on %s\n", type, descr );
+        ok( rect.left == 0 && rect.top == 0 &&
+            rect.right == GetDeviceCaps( ref_dc, DESKTOPHORZRES ) &&
+            rect.bottom == GetDeviceCaps( ref_dc, DESKTOPVERTRES ),
+            "GetClipBox returned %d,%d,%d,%d on %s\n",
+            rect.left, rect.top, rect.right, rect.bottom, descr );
+    }
 
     SetBoundsRect( ref_dc, NULL, DCB_RESET | DCB_ACCUMULATE );
     SetMapMode( ref_dc, MM_TEXT );
