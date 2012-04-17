@@ -1473,7 +1473,6 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
             handle = CreateFileW( profile->pProfileData, flags, sharing, NULL, creation, 0, NULL );
         else
         {
-            DWORD size;
             WCHAR *path;
 
             if (!GetColorDirectoryW( NULL, NULL, &size ) && GetLastError() == ERROR_MORE_DATA)
