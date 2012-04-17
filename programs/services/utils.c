@@ -82,8 +82,7 @@ DWORD load_reg_string(HKEY hKey, LPCWSTR szValue, BOOL bExpand, LPWSTR *output)
     if (type == REG_EXPAND_SZ)
     {
         LPWSTR str;
-        DWORD size = ExpandEnvironmentStringsW(buf, NULL, 0);
-        if (size == 0)
+        if (!(size = ExpandEnvironmentStringsW(buf, NULL, 0)))
         {
             err = GetLastError();
             goto failed;
