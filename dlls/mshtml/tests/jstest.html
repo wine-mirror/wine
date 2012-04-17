@@ -60,6 +60,14 @@ function test_document_name_as_index() {
     var e = document.getElementById("formid");
     ok(!!e, "e is null");
     ok(!("formid" in document), "formid is in document");
+
+    document.body.innerHTML = '<form name="formname"></form>';
+    ok("formname" in window, "formname' is not in window");
+    ok(typeof(window.formname) === "object", "typeof(window.formname) = " + typeof(window.formname));
+    window.formname = 1;
+    ok(window.formname === 1, "window.formname = " + window.formname);
+    formname = 2;
+    ok(window.formname === 2, "window.formname = " + window.formname);
 }
 
 function test_remove_style_attribute() {

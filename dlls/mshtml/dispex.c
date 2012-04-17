@@ -480,6 +480,19 @@ HRESULT dispex_get_dprop_ref(DispatchEx *This, const WCHAR *name, BOOL alloc, VA
     return S_OK;
 }
 
+HRESULT dispex_get_dynid(DispatchEx *This, const WCHAR *name, DISPID *id)
+{
+    dynamic_prop_t *prop;
+    HRESULT hres;
+
+    hres = get_dynamic_prop(This, name, fdexNameEnsure, &prop);
+    if(FAILED(hres))
+        return hres;
+
+    *id = DISPID_DYNPROP_0 + (prop - This->dynamic_data->props);
+    return S_OK;
+}
+
 static HRESULT dispex_value(DispatchEx *This, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {

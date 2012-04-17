@@ -2461,21 +2461,40 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
         IDispatch_Release(disp);
         break;
     }
-    case GLOBAL_ELEMENTVAR: {
-        IHTMLElement *elem;
+    case GLOBAL_ELEMENTVAR:
+        switch(flags) {
+        case DISPATCH_PROPERTYGET: {
+            IHTMLElement *elem;
 
-        hres = IHTMLDocument3_getElementById(&This->doc->basedoc.IHTMLDocument3_iface,
-                                             prop->name, &elem);
-        if(FAILED(hres))
-            return hres;
+            hres = IHTMLDocument3_getElementById(&This->doc->basedoc.IHTMLDocument3_iface,
+                    prop->name, &elem);
+            if(FAILED(hres))
+                return hres;
 
-        if(!elem)
-            return DISP_E_MEMBERNOTFOUND;
+            if(!elem)
+                return DISP_E_MEMBERNOTFOUND;
 
-        V_VT(res) = VT_DISPATCH;
-        V_DISPATCH(res) = (IDispatch*)elem;
-        break;
-    }
+            V_VT(res) = VT_DISPATCH;
+            V_DISPATCH(res) = (IDispatch*)elem;
+            return S_OK;
+        }
+        case DISPATCH_PROPERTYPUT: {
+            DISPID dispex_id;
+
+            hres = dispex_get_dynid(&This->dispex, prop->name, &dispex_id);
+            if(FAILED(hres))
+                return hres;
+
+            prop->type = GLOBAL_DISPEXVAR;
+            prop->id = dispex_id;
+            return IDispatchEx_InvokeEx(&This->dispex.IDispatchEx_iface, dispex_id, 0, flags, params, res, ei, caller);
+        }
+        default:
+            FIXME("Not suppoted flags: %x\n", flags);
+            return E_NOTIMPL;
+        }
+    case GLOBAL_DISPEXVAR:
+        return IDispatchEx_InvokeEx(&This->dispex.IDispatchEx_iface, prop->id, 0, flags, params, res, ei, caller);
     default:
         ERR("invalid type %d\n", prop->type);
         hres = DISP_E_MEMBERNOTFOUND;

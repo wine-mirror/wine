@@ -229,6 +229,7 @@ BOOL dispex_query_interface(DispatchEx*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**) DECLSPEC_HIDDEN;
 HRESULT get_dispids(tid_t,DWORD*,DISPID**) DECLSPEC_HIDDEN;
 HRESULT remove_prop(DispatchEx*,BSTR,VARIANT_BOOL*) DECLSPEC_HIDDEN;
+HRESULT dispex_get_dynid(DispatchEx*,const WCHAR*,DISPID*) DECLSPEC_HIDDEN;
 void release_typelib(void) DECLSPEC_HIDDEN;
 HRESULT get_htmldoc_classinfo(ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
 
@@ -248,7 +249,8 @@ typedef struct ScriptHost ScriptHost;
 
 typedef enum {
     GLOBAL_SCRIPTVAR,
-    GLOBAL_ELEMENTVAR
+    GLOBAL_ELEMENTVAR,
+    GLOBAL_DISPEXVAR
 } global_prop_type_t;
 
 typedef struct {
