@@ -171,10 +171,10 @@ static void DEVENUM_ReadPinTypes(HKEY hkeyPinKey, REGFILTERPINS *rgPin)
         for (i1 = 0; i1 < dwMinorTypes; i1++)
         {
             WCHAR wszMinorTypeName[64];
-            DWORD cName = sizeof(wszMinorTypeName) / sizeof(WCHAR);
             CLSID *clsMajorType = NULL, *clsMinorType = NULL;
             HRESULT hr;
 
+            cName = sizeof(wszMinorTypeName) / sizeof(WCHAR);
             if (RegEnumKeyExW(hkeyMajorType, i1, wszMinorTypeName, &cName, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) continue;
 
             clsMinorType = CoTaskMemAlloc(sizeof(CLSID));
@@ -349,7 +349,6 @@ static HRESULT DEVENUM_RegisterLegacyAmFilters(void)
             HKEY hkeyCategoryBaseKey;
             WCHAR wszRegKey[MAX_PATH];
             HKEY hkeyInstance = NULL;
-            HRESULT hr;
 
             if (RegEnumKeyExW(hkeyFilter, i, wszFilterSubkeyName, &cName, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) continue;
 
