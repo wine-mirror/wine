@@ -592,7 +592,6 @@ BOOL BIDI_Reorder(
 
         if (lpGlyphs && doGlyphs)
         {
-            int j;
             BYTE runOrder[maxItems];
             int visOrder[maxItems];
             SCRIPT_ITEM *curItem;
