@@ -1527,7 +1527,6 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
 	    case 0x88:
                 {
                     BYTE    type = format[1];
-                    LONG    size;
 
                     /* FIXME: we don't use 'BYTE    pos = (*format - 0x86);' for the image position */
                     format += 2;
@@ -2078,9 +2077,9 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
 	    
             if (hlpfile->windows)
             {
-                unsigned flags = GET_USHORT(ptr, 4);
                 HLPFILE_WINDOWINFO* wi = &hlpfile->windows[hlpfile->numWindows - 1];
 
+                flags = GET_USHORT(ptr, 4);
                 if (flags & 0x0001) strcpy(wi->type, &str[2]);
                 else wi->type[0] = '\0';
                 if (flags & 0x0002) strcpy(wi->name, &str[12]);
