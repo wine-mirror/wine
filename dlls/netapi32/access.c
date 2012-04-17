@@ -294,7 +294,6 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
     {
         PUSER_INFO_10 ui;
         PUSER_INFO_0 ui0;
-        NET_API_STATUS status;
         /* sizes of the field buffers in WCHARS */
         int name_sz, comment_sz, usr_comment_sz, full_name_sz;
 
@@ -339,7 +338,6 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
         static const WCHAR homedirW[] = {'H','O','M','E',0};
         PUSER_INFO_1 ui;
         PUSER_INFO_0 ui0;
-        NET_API_STATUS status;
         /* sizes of the field buffers in WCHARS */
         int name_sz, password_sz, home_dir_sz, comment_sz, script_path_sz;
 
