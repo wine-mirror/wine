@@ -344,6 +344,22 @@ static void test_style2(IHTMLStyle2 *style2)
     hres = IHTMLStyle2_get_bottom(style2, &v);
     ok(hres == S_OK, "get_bottom failed: %08x\n", hres);
     test_var_bstr(&v, "4px");
+
+    /* overflowX */
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle2_get_overflowX(style2, &str);
+    ok(hres == S_OK, "get_overflowX failed: %08x\n", hres);
+    ok(!str, "overflowX = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("hidden");
+    hres = IHTMLStyle2_put_overflowX(style2, str);
+    ok(hres == S_OK, "put_overflowX failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle2_get_overflowX(style2, &str);
+    ok(hres == S_OK, "get_overflowX failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "hidden"), "overflowX = %s\n", wine_dbgstr_w(str));
 }
 
 static void test_style3(IHTMLStyle3 *style3)
