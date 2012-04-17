@@ -1381,8 +1381,6 @@ static LRESULT COMBOEX_DrawItem (const COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT con
 	item = infoPtr->edit;
 
 	if (infoPtr->hwndEdit) {
-	    INT len;
-
 	    /* free previous text of edit item */
 	    COMBOEX_FreeText(item);
 	    item->mask &= ~CBEIF_TEXT;
@@ -2076,7 +2074,6 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 		 * For EN_CHANGE this issues the same calls and messages
 		 *  as the native seems to do.
 		 */
-		WCHAR edit_text[260];
 		LPCWSTR lastwrk;
                 cmp_func_t cmptext = get_cmp_func(infoPtr);
 
