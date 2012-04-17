@@ -62,6 +62,10 @@ static char const tbl_dataops[][4] = {
     "mov", "bic", "mvn"
 };
 
+static char const tbl_shifts[][4] = {
+    "lsl", "lsr", "asr", "ror"
+};
+
 static char const tbl_hiops_t[][4] = {
 "add", "cmp", "mov", "bx"
 };
@@ -140,8 +144,16 @@ static UINT arm_disasm_dataprocessing(UINT inst)
         if (immediate)
             dbg_printf("%s, #%u", tbl_regs[get_nibble(inst, 4)],
                        ROR32(inst & 0xff, 2 * get_nibble(inst, 2)));
-        else
+        else if (((inst >> 4) & 0xff) == 0x00) /* no shift */
             dbg_printf("%s, %s", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        else if (((inst >> 4) & 0x09) == 0x01) /* register shift */
+            dbg_printf("%s, %s, %s %s", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)],
+                       tbl_shifts[(inst >> 5) & 0x03], tbl_regs[(inst >> 8) & 0x0f]);
+        else if (((inst >> 4) & 0x01) == 0x00) /* immediate shift */
+            dbg_printf("%s, %s, %s #%d", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)],
+                       tbl_shifts[(inst >> 5) & 0x03], (inst >> 7) & 0x1f);
+        else
+            return inst;
     }
     return 0;
 }
@@ -165,15 +177,25 @@ static UINT arm_disasm_singletrans(UINT inst)
     {
         if (immediate)
             dbg_printf("[%s, #%d]", tbl_regs[get_nibble(inst, 4)], offset);
-        else
+        else if (((inst >> 4) & 0xff) == 0x00) /* no shift */
             dbg_printf("[%s, %s]", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        else if (((inst >> 4) & 0x01) == 0x00) /* immediate shift (there's no register shift) */
+            dbg_printf("[%s, %s, %s #%d]", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)],
+                       tbl_shifts[(inst >> 5) & 0x03], (inst >> 7) & 0x1f);
+        else
+            return inst;
     }
     else
     {
         if (immediate)
             dbg_printf("[%s], #%d", tbl_regs[get_nibble(inst, 4)], offset);
-        else
+        else if (((inst >> 4) & 0xff) == 0x00) /* no shift */
             dbg_printf("[%s], %s", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
+        else if (((inst >> 4) & 0x01) == 0x00) /* immediate shift (there's no register shift) */
+            dbg_printf("[%s], %s, %s #%d", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)],
+                       tbl_shifts[(inst >> 5) & 0x03], (inst >> 7) & 0x1f);
+        else
+            return inst;
     }
     return 0;
 }
