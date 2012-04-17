@@ -136,6 +136,8 @@ static const WCHAR attrOverflow[] =
     {'o','v','e','r','f','l','o','w',0};
 static const WCHAR attrOverflowX[] =
     {'o','v','e','r','f','l','o','w','-','x',0};
+static const WCHAR attrOverflowY[] =
+    {'o','v','e','r','f','l','o','w','-','y',0};
 static const WCHAR attrPadding[] =
     {'p','a','d','d','i','n','g',0};
 static const WCHAR attrPaddingBottom[] =
@@ -232,6 +234,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {attrMinHeight,            DISPID_IHTMLSTYLE4_MINHEIGHT},
     {attrOverflow,             DISPID_IHTMLSTYLE_OVERFLOW},
     {attrOverflowX,            DISPID_IHTMLSTYLE2_OVERFLOWX},
+    {attrOverflowY,            DISPID_IHTMLSTYLE2_OVERFLOWY},
     {attrPadding,              DISPID_IHTMLSTYLE_PADDING},
     {attrPaddingBottom,        DISPID_IHTMLSTYLE_PADDINGBOTTOM},
     {attrPaddingLeft,          DISPID_IHTMLSTYLE_PADDINGLEFT},

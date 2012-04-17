@@ -360,6 +360,22 @@ static void test_style2(IHTMLStyle2 *style2)
     hres = IHTMLStyle2_get_overflowX(style2, &str);
     ok(hres == S_OK, "get_overflowX failed: %08x\n", hres);
     ok(!strcmp_wa(str, "hidden"), "overflowX = %s\n", wine_dbgstr_w(str));
+
+    /* overflowY */
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle2_get_overflowY(style2, &str);
+    ok(hres == S_OK, "get_overflowY failed: %08x\n", hres);
+    ok(!str, "overflowY = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("hidden");
+    hres = IHTMLStyle2_put_overflowY(style2, str);
+    ok(hres == S_OK, "put_overflowY failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle2_get_overflowY(style2, &str);
+    ok(hres == S_OK, "get_overflowY failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "hidden"), "overflowX = %s\n", wine_dbgstr_w(str));
 }
 
 static void test_style3(IHTMLStyle3 *style3)
