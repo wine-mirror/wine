@@ -667,7 +667,7 @@ static void test_MapViewOfFile(void)
     ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
     ok(info.BaseAddress == ptr, "BaseAddress should have been %p but was %p instead\n", ptr, info.BaseAddress);
     ok(info.AllocationBase == ptr, "AllocationBase should have been %p but was %p instead\n", ptr, info.AllocationBase);
-    ok(info.RegionSize == MAPPING_SIZE, "RegionSize should have been 0x%x but was 0x%x\n", MAPPING_SIZE, (unsigned int)info.RegionSize);
+    ok(info.RegionSize == MAPPING_SIZE, "RegionSize should have been 0x%x but was 0x%lx\n", MAPPING_SIZE, info.RegionSize);
     ok(info.State == MEM_RESERVE, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
     if (info.Type == MEM_PRIVATE)  /* win9x is different for uncommitted mappings */
     {
@@ -695,7 +695,7 @@ static void test_MapViewOfFile(void)
         ok(info.AllocationProtect == PAGE_READWRITE,
            "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
         ok(info.RegionSize == MAPPING_SIZE,
-           "RegionSize should have been 0x%x but was 0x%x\n", MAPPING_SIZE, (unsigned int)info.RegionSize);
+           "RegionSize should have been 0x%x but was 0x%lx\n", MAPPING_SIZE, info.RegionSize);
         ok(info.State == MEM_RESERVE,
            "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
         ok(info.Protect == 0,
@@ -711,7 +711,7 @@ static void test_MapViewOfFile(void)
     ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
     ok(info.BaseAddress == ptr, "BaseAddress should have been %p but was %p instead\n", ptr, info.BaseAddress);
     ok(info.AllocationBase == ptr, "AllocationBase should have been %p but was %p instead\n", ptr, info.AllocationBase);
-    ok(info.RegionSize == 0x10000, "RegionSize should have been 0x10000 but was 0x%x\n", (unsigned int)info.RegionSize);
+    ok(info.RegionSize == 0x10000, "RegionSize should have been 0x10000 but was 0x%lx\n", info.RegionSize);
     ok(info.State == MEM_COMMIT, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
     ok(info.Protect == PAGE_READONLY, "Protect should have been 0 instead of 0x%x\n", info.Protect);
     if (info.Type == MEM_PRIVATE)  /* win9x is different for uncommitted mappings */
@@ -740,11 +740,11 @@ static void test_MapViewOfFile(void)
         ok(info.AllocationProtect == PAGE_READWRITE,
            "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
         ok(info.RegionSize == 0x10000,
-           "RegionSize should have been 0x10000 but was 0x%x\n", (unsigned int)info.RegionSize);
+           "RegionSize should have been 0x10000 but was 0x%lx\n", info.RegionSize);
         ok(info.State == MEM_COMMIT,
-           "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
+           "State should have been MEM_COMMIT instead of 0x%x\n", info.State);
         ok(info.Protect == PAGE_READWRITE,
-           "Protect should have been 0 instead of 0x%x\n", info.Protect);
+           "Protect should have been PAGE_READWRITE instead of 0x%x\n", info.Protect);
         ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
     }
 
