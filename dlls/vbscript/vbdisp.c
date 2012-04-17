@@ -543,7 +543,7 @@ HRESULT disp_get_id(IDispatch *disp, BSTR name, vbdisp_invoke_type_t invoke_type
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(FAILED(hres)) {
-        TRACE("unsing IDispatch\n");
+        TRACE("using IDispatch\n");
         return IDispatch_GetIDsOfNames(disp, &IID_NULL, &name, 1, 0, id);
     }
 
