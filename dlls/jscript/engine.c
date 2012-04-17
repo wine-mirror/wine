@@ -364,7 +364,7 @@ static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, BSTR name, DWORD 
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(FAILED(hres)) {
-        TRACE("unsing IDispatch\n");
+        TRACE("using IDispatch\n");
 
         *id = 0;
         return IDispatch_GetIDsOfNames(disp, &IID_NULL, &name, 1, 0, id);

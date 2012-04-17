@@ -491,7 +491,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
     if(!l) {
         if(*ctx->ptr == 'x' || *ctx->ptr == 'X') {
             if(++ctx->ptr == ctx->end) {
-                ERR("unexpexted end of file\n");
+                ERR("unexpected end of file\n");
                 return 0;
             }
 

@@ -135,7 +135,7 @@ void *jsheap_grow(jsheap_t *heap, void *mem, DWORD size, DWORD inc)
     }
 
     ret = jsheap_alloc(heap, size+inc);
-    if(ret) /* FIXME: avoid coppying for custom blocks */
+    if(ret) /* FIXME: avoid copying for custom blocks */
         memcpy(ret, mem, size);
     return ret;
 }

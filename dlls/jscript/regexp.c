@@ -3491,7 +3491,7 @@ static HRESULT RegExp_source(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
         break;
     }
     default:
-        FIXME("Unimplemnted flags %x\n", flags);
+        FIXME("Unimplemented flags %x\n", flags);
         return E_NOTIMPL;
     }
 

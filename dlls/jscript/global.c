@@ -99,7 +99,7 @@ static inline BOOL is_uri_unescaped(WCHAR c)
     return c < 128 && uri_char_table[c] == 2;
 }
 
-/* Check that the character is one of the 69 nonblank characters as defined by ECMA-262 B.2.1 */
+/* Check that the character is one of the 69 non-blank characters as defined by ECMA-262 B.2.1 */
 static inline BOOL is_ecma_nonblank(const WCHAR c)
 {
     return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
