@@ -38,6 +38,10 @@
 /* PROCESS_ALL_ACCESS in Vista+ PSDKs is incompatible with older Windows versions */
 #define PROCESS_ALL_ACCESS_NT4 (PROCESS_ALL_ACCESS & ~0xf000)
 
+#ifndef EVENT_QUERY_STATE
+#define EVENT_QUERY_STATE 0x0001
+#endif
+
 /* copied from Wine winternl.h - not included in the Windows SDK */
 typedef enum _OBJECT_INFORMATION_CLASS {
     ObjectBasicInformation,
@@ -3992,6 +3996,9 @@ static void validate_default_security_descriptor(SECURITY_DESCRIPTOR *sd)
     ACL *acl;
     void *sid;
 
+    ret = IsValidSecurityDescriptor(sd);
+    ok(ret, "security descriptor is not valid\n");
+
     present = -1;
     defaulted = -1;
     acl = (void *)0xdeadbeef;
@@ -4041,12 +4048,12 @@ static void test_default_handle_security(HANDLE token, HANDLE handle, GENERIC_MA
     length = needed;
     sd = HeapAlloc(GetProcessHeap(), 0, length);
 
-    needed = 0;
+    needed = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = GetKernelObjectSecurity(handle, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
                                   sd, length, &needed);
     ok(ret, "GetKernelObjectSecurity error %d\n", GetLastError());
-    ok(needed == length, "GetKernelObjectSecurity should return required buffer length\n");
+    ok(needed == length, "GetKernelObjectSecurity should return %u instead of %u\n", length, needed);
 
     validate_default_security_descriptor(sd);
 
@@ -4058,7 +4065,7 @@ static void test_default_handle_security(HANDLE token, HANDLE handle, GENERIC_MA
 todo_wine {
     ok(ret, "AccessCheck error %d\n", GetLastError());
     ok(status == 1, "expected 1, got %d\n", status);
-    ok(granted == mapping->GenericAll, "expected %#x, got %#x\n", mapping->GenericAll, granted);
+    ok(granted == mapping->GenericAll, "expected all access %#x, got %#x\n", mapping->GenericAll, granted);
 }
     priv_set_len = sizeof(priv_set);
     granted = 0xdeadbeef;
@@ -4080,13 +4087,44 @@ todo_wine {
     ok(status == 0, "expected 0, got %d\n", status);
     ok(granted == 0, "expected 0, got %#x\n", granted);
 }
+    priv_set_len = sizeof(priv_set);
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = AccessCheck(sd, token, mapping->GenericRead, mapping, &priv_set, &priv_set_len, &granted, &status);
+todo_wine {
+    ok(ret, "AccessCheck error %d\n", GetLastError());
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == mapping->GenericRead, "expected read access %#x, got %#x\n", mapping->GenericRead, granted);
+}
+    priv_set_len = sizeof(priv_set);
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = AccessCheck(sd, token, mapping->GenericWrite, mapping, &priv_set, &priv_set_len, &granted, &status);
+todo_wine {
+    ok(ret, "AccessCheck error %d\n", GetLastError());
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == mapping->GenericWrite, "expected write access %#x, got %#x\n", mapping->GenericWrite, granted);
+}
+    priv_set_len = sizeof(priv_set);
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = AccessCheck(sd, token, mapping->GenericExecute, mapping, &priv_set, &priv_set_len, &granted, &status);
+todo_wine {
+    ok(ret, "AccessCheck error %d\n", GetLastError());
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == mapping->GenericExecute, "expected execute access %#x, got %#x\n", mapping->GenericExecute, granted);
+}
     HeapFree(GetProcessHeap(), 0, sd);
 }
 
 static void test_mutex_security(HANDLE token)
 {
     HANDLE mutex;
-    GENERIC_MAPPING mapping = { STANDARD_RIGHTS_READ, STANDARD_RIGHTS_WRITE,
+    GENERIC_MAPPING mapping = { STANDARD_RIGHTS_READ | MUTANT_QUERY_STATE | SYNCHRONIZE,
+                                STANDARD_RIGHTS_WRITE | MUTEX_MODIFY_STATE | SYNCHRONIZE,
                                 STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
                                 STANDARD_RIGHTS_ALL | MUTEX_ALL_ACCESS };
 
@@ -4107,7 +4145,8 @@ static void test_mutex_security(HANDLE token)
 static void test_event_security(HANDLE token)
 {
     HANDLE event;
-    GENERIC_MAPPING mapping = { STANDARD_RIGHTS_READ, STANDARD_RIGHTS_WRITE,
+    GENERIC_MAPPING mapping = { STANDARD_RIGHTS_READ | EVENT_QUERY_STATE | SYNCHRONIZE,
+                                STANDARD_RIGHTS_WRITE | EVENT_MODIFY_STATE | SYNCHRONIZE,
                                 STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
                                 STANDARD_RIGHTS_ALL | EVENT_ALL_ACCESS };
 
