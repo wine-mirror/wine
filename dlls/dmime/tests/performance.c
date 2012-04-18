@@ -82,6 +82,20 @@ static HRESULT test_InitAudio(void)
 
     IDirectMusicPerformance8_Release(idmusicperformance);
 
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IDirectMusicPerformance8,
+            (void**)&idmusicperformance);
+    ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
+
+    hr = IDirectMusicPerformance8_InitAudio(idmusicperformance, NULL, NULL,
+            NULL, 0, 64, 0, NULL);
+    ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
+
+    hr = IDirectMusicPerformance8_CloseDown(idmusicperformance);
+    ok(hr == S_OK, "CloseDown failed: %08x\n", hr);
+
+    IDirectMusicPerformance8_Release(idmusicperformance);
+
     return S_OK;
 }
 

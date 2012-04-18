@@ -945,7 +945,8 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio(IDirectMusicPerform
 	  This->pParams.dwFeatures = dwFlags;
 	  This->pParams.clsidDefaultSynth = CLSID_DirectMusicSynthSink;
 	}
-	hr = IDirectMusicPerformance8_CreateStandardAudioPath(iface, dwDefaultPathType, dwPChannelCount, FALSE, &This->pDefaultPath);
+	if(dwDefaultPathType != 0)
+		hr = IDirectMusicPerformance8_CreateStandardAudioPath(iface, dwDefaultPathType, dwPChannelCount, FALSE, &This->pDefaultPath);
 
 	PostMessageToProcessMsgThread(This, PROCESSMSG_START);
 
@@ -1096,7 +1097,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath(IDire
 
 	*ppNewPath = pPath;
 	
-	TRACE(" returning IDirectMusicPerformance interface at %p.\n", *ppNewPath);
+	TRACE(" returning IDirectMusicAudioPath interface at %p.\n", *ppNewPath);
 
 	return IDirectMusicAudioPath_Activate(*ppNewPath, fActivate);
 }
