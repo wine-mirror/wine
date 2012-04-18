@@ -2791,11 +2791,11 @@ START_TEST(script)
     if(winetest_interactive || ! is_ie_hardened()) {
         if(register_script_engine()) {
             test_simple_script();
-            run_js_tests();
             init_registry(FALSE);
         }else {
             skip("Could not register TestScript engine\n");
         }
+        run_js_tests();
     }else {
         skip("IE running in Enhanced Security Configuration\n");
     }
