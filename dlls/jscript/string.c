@@ -868,6 +868,9 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
                 }
                 if(FAILED(hres))
                     break;
+
+                if(!match.len)
+                    cp++;
             }else {
                 match.str = strstrW(cp, match_str);
                 if(!match.str)

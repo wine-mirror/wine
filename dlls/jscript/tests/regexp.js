@@ -583,4 +583,13 @@ ok(i === null, "' undefined '.search() = " + i);
 tmp = "=)".replace(/=/, "?");
 ok(tmp === "?)", "'=)'.replace(/=/, '?') = " + tmp);
 
+tmp = "   ".replace(/^\s*|\s*$/g, "y");
+ok(tmp === "yy", '"   ".replace(/^\s*|\s*$/g, "y") = ' + tmp);
+
+tmp = "xxx".replace(/^\s*|\s*$/g, "");
+ok(tmp === "xxx", '"xxx".replace(/^\s*|\s*$/g, "y") = ' + tmp);
+
+tmp = "xxx".replace(/^\s*|\s*$/g, "y");
+ok(tmp === "yxxxy", '"xxx".replace(/^\s*|\s*$/g, "y") = ' + tmp);
+
 reportSuccess();
