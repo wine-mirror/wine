@@ -70,6 +70,11 @@ static char const tbl_hiops_t[][4] = {
 "add", "cmp", "mov", "bx"
 };
 
+static char const tbl_aluops_t[][4] = {
+    "and", "eor", "lsl", "lsr", "asr", "adc", "sbc", "ror", "tst", "neg", "cmp", "cmn", "orr",
+    "mul", "bic", "mvn"
+};
+
 static char const tbl_immops_t[][4] = {
 "mov", "cmp", "add", "sub"
 };
@@ -335,6 +340,17 @@ static WORD thumb_disasm_hireg(WORD inst, ADDRESS64 *addr)
     return 0;
 }
 
+static WORD thumb_disasm_aluop(WORD inst, ADDRESS64 *addr)
+{
+    short dst = inst & 0x07;
+    short src = (inst >> 3) & 0x07;
+    short op  = (inst >> 6) & 0x0f;
+
+    dbg_printf("\n\t%s\t%s, %s", tbl_aluops_t[op], tbl_regs[dst], tbl_regs[src]);
+
+    return 0;
+}
+
 static WORD thumb_disasm_blocktrans(WORD inst, ADDRESS64 *addr)
 {
     short lrpc = (inst >> 8)  & 0x01;
@@ -371,7 +387,14 @@ static WORD thumb_disasm_longbl(WORD inst, ADDRESS64 *addr)
     if (!((inst2 & 0xf800) == 0xf800)) return inst;
 
     offset += (inst2 & 0x07ff) << 1;
-    dbg_printf("\tbl\t%08x", offset);
+    dbg_printf("\n\tbl\t%08x", offset);
+    return 0;
+}
+
+static WORD thumb_disasm_condbranch(WORD inst, ADDRESS64 *addr)
+{
+    WORD offset = inst & 0x00ff;
+    dbg_printf("\n\tb%s\t%04x", tbl_cond[(inst >> 8) & 0x0f], offset);
     return 0;
 }
 
@@ -402,6 +425,16 @@ static WORD thumb_disasm_ldrsprel(WORD inst, ADDRESS64 *addr)
     return 0;
 }
 
+static WORD thumb_disasm_addsprel(WORD inst, ADDRESS64 *addr)
+{
+    WORD offset = (inst & 0x7f) << 2;
+    if ((inst >> 7) & 0x01)
+        dbg_printf("\n\tsub\tsp, sp, #%u", offset);
+    else
+        dbg_printf("\n\tadd\tsp, sp, #%u", offset);
+    return 0;
+}
+
 static WORD thumb_disasm_ldrimm(WORD inst, ADDRESS64 *addr)
 {
     WORD offset = (inst & 0x07c0) >> 6;
@@ -414,6 +447,28 @@ static WORD thumb_disasm_immop(WORD inst, ADDRESS64 *addr)
 {
     WORD op = (inst >> 11) & 0x03;
     dbg_printf("\n\t%s\t%s, #%u", tbl_immops_t[op], tbl_regs[(inst >> 8) & 0x07], inst & 0xff);
+    return 0;
+}
+
+static WORD thumb_disasm_addsub(WORD inst, ADDRESS64 *addr)
+{
+    WORD op = (inst >> 9) & 0x01;
+    WORD immediate = (inst >> 10) & 0x01;
+
+    dbg_printf("\n\t%s\t%s, %s, ", op ? "sub" : "add",
+               tbl_regs[inst & 0x07], tbl_regs[(inst >> 3) & 0x07]);
+    if (immediate)
+        dbg_printf("#%d", (inst >> 6) & 0x07);
+    else
+        dbg_printf("%s", tbl_regs[(inst >> 6) & 0x07]);
+    return 0;
+}
+
+static WORD thumb_disasm_movshift(WORD inst, ADDRESS64 *addr)
+{
+    WORD op = (inst >> 11) & 0x03;
+    dbg_printf("\n\t%s\t%s, %s, #%u", tbl_shifts[op],
+               tbl_regs[inst & 0x07], tbl_regs[(inst >> 3) & 0x07], (inst >> 6) & 0x1f);
     return 0;
 }
 
@@ -447,14 +502,20 @@ struct inst_thumb16
 
 static const struct inst_thumb16 tbl_thumb16[] = {
     { 0xfc00, 0x4400, thumb_disasm_hireg },
+    { 0xfc00, 0x4000, thumb_disasm_aluop },
     { 0xf600, 0xb400, thumb_disasm_blocktrans },
     { 0xf800, 0xf000, thumb_disasm_longbl },
+    { 0xf000, 0xd000, thumb_disasm_condbranch },
     { 0xf800, 0x4800, thumb_disasm_ldrpcrel },
     { 0xf000, 0x9000, thumb_disasm_ldrsprel },
+    { 0xff00, 0xb000, thumb_disasm_addsprel },
     { 0xe000, 0x6000, thumb_disasm_ldrimm },
     { 0xe000, 0x2000, thumb_disasm_immop },
+    { 0xf000, 0xd000, thumb_disasm_condbranch },
     { 0xff00, 0xdf00, thumb_disasm_swi },
     { 0xff00, 0xbf00, thumb_disasm_nop },
+    { 0xfc00, 0x1c00, thumb_disasm_addsub },
+    { 0xe000, 0x0000, thumb_disasm_movshift },
     { 0x0000, 0x0000, NULL }
 };
 
