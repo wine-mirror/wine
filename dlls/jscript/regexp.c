@@ -3322,7 +3322,7 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
     REGlobalData gData;
     DWORD matchlen;
 
-    gData.cpbegin = *cp;
+    gData.cpbegin = str;
     gData.cpend = str + len;
     gData.start = *cp-str;
     gData.skipped = 0;
@@ -3384,7 +3384,7 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
                 (*parens)[i].str = NULL;
                 (*parens)[i].len = 0;
             }else {
-                (*parens)[i].str = *cp + result->parens[i].index;
+                (*parens)[i].str = str + result->parens[i].index;
                 (*parens)[i].len = result->parens[i].length;
             }
         }
