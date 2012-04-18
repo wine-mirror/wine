@@ -477,7 +477,8 @@ LPWSTR WINAPI StrCatW(LPWSTR lpszStr, LPCWSTR lpszSrc)
 {
   TRACE("(%s,%s)\n", debugstr_w(lpszStr), debugstr_w(lpszSrc));
 
-  strcatW(lpszStr, lpszSrc);
+  if (lpszStr && lpszSrc)
+    strcatW(lpszStr, lpszSrc);
   return lpszStr;
 }
 
@@ -497,7 +498,8 @@ LPWSTR WINAPI StrCpyW(LPWSTR lpszStr, LPCWSTR lpszSrc)
 {
   TRACE("(%p,%s)\n", lpszStr, debugstr_w(lpszSrc));
 
-  strcpyW(lpszStr, lpszSrc);
+  if (lpszStr && lpszSrc)
+    strcpyW(lpszStr, lpszSrc);
   return lpszStr;
 }
 
