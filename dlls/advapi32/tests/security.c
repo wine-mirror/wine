@@ -4053,7 +4053,7 @@ static void test_default_handle_security(HANDLE token, HANDLE handle, GENERIC_MA
     ret = GetKernelObjectSecurity(handle, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
                                   sd, length, &needed);
     ok(ret, "GetKernelObjectSecurity error %d\n", GetLastError());
-    ok(needed == length, "GetKernelObjectSecurity should return %u instead of %u\n", length, needed);
+    ok(needed == length || needed == 0 /* file, pipe */, "GetKernelObjectSecurity should return %u instead of %u\n", length, needed);
 
     validate_default_security_descriptor(sd);
 
@@ -4164,6 +4164,36 @@ static void test_event_security(HANDLE token)
     CloseHandle(event);
 }
 
+#define WINE_TEST_PIPE "\\\\.\\pipe\\WineTestPipe"
+static void test_named_pipe_security(HANDLE token)
+{
+    HANDLE pipe, file;
+    GENERIC_MAPPING mapping = { FILE_GENERIC_READ,
+                                FILE_GENERIC_WRITE,
+                                FILE_GENERIC_EXECUTE,
+                                STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS };
+
+    SetLastError(0xdeadbeef);
+    pipe = CreateNamedPipe(WINE_TEST_PIPE, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE,
+                           PIPE_TYPE_BYTE | PIPE_NOWAIT, PIPE_UNLIMITED_INSTANCES,
+                           0, 0, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(pipe != INVALID_HANDLE_VALUE, "CreateNamedPipe error %d\n", GetLastError());
+
+    test_default_handle_security(token, pipe, &mapping);
+
+    SetLastError(0xdeadbeef);
+    file = CreateFile(WINE_TEST_PIPE, FILE_ALL_ACCESS, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+    CloseHandle(file);
+
+    CloseHandle(pipe);
+
+    SetLastError(0xdeadbeef);
+    file = CreateFile("\\\\.\\pipe\\", FILE_ALL_ACCESS, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE || broken(file == INVALID_HANDLE_VALUE) /* before Vista */, "CreateFile error %d\n", GetLastError());
+    CloseHandle(file);
+}
+
 static BOOL validate_impersonation_token(HANDLE token, DWORD *token_type)
 {
     DWORD ret, needed;
@@ -4236,6 +4266,7 @@ static void test_kernel_objects_security(void)
 
     test_mutex_security(token);
     test_event_security(token);
+    test_named_pipe_security(token);
     /* FIXME: test other kernel object types */
 
     CloseHandle(process_token);
