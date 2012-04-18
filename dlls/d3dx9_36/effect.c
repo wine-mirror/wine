@@ -1623,7 +1623,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetValue(ID3DXBaseEffect *iface, D3DXH
         return E_FAIL;
     }
 
-    if (data && param->bytes >= bytes)
+    if (data && param->bytes <= bytes)
     {
         switch (param->type)
         {
@@ -1631,8 +1631,8 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetValue(ID3DXBaseEffect *iface, D3DXH
             case D3DXPT_BOOL:
             case D3DXPT_INT:
             case D3DXPT_FLOAT:
-                TRACE("Copy %u bytes\n", bytes);
-                memcpy(param->data, data, bytes);
+                TRACE("Copy %u bytes\n", param->bytes);
+                memcpy(param->data, data, param->bytes);
                 break;
 
             default:
@@ -3580,7 +3580,7 @@ static HRESULT WINAPI ID3DXEffectImpl_SetStateManager(ID3DXEffect *iface, LPD3DX
     TRACE("iface %p, manager %p\n", This, manager);
 
     if (manager) IUnknown_AddRef(manager);
-    if (This->manager) IUnknown_Release(This->manager);    
+    if (This->manager) IUnknown_Release(This->manager);
 
     This->manager = manager;
 
