@@ -276,6 +276,7 @@ static HRESULT WINAPI d3d8_texture_3d_GetVolumeLevel(IDirect3DVolumeTexture8 *if
 {
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
     struct wined3d_resource *sub_resource;
+    IDirect3DVolume8Impl *volume_impl;
 
     TRACE("iface %p, level %u, volume %p.\n", iface, level, volume);
 
@@ -286,7 +287,8 @@ static HRESULT WINAPI d3d8_texture_3d_GetVolumeLevel(IDirect3DVolumeTexture8 *if
         return D3DERR_INVALIDCALL;
     }
 
-    *volume = wined3d_resource_get_parent(sub_resource);
+    volume_impl = wined3d_resource_get_parent(sub_resource);
+    *volume = &volume_impl->IDirect3DVolume8_iface;
     IDirect3DVolume8_AddRef(*volume);
     wined3d_mutex_unlock();
 
