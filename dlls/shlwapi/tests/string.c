@@ -407,16 +407,28 @@ static void test_StrCpyW(void)
   WCHAR szSrc[256];
   WCHAR szBuff[256];
   const StrFormatSizeResult* result = StrFormatSize_results;
-
+  LPWSTR lpRes;
 
   while(result->value)
   {
     MultiByteToWideChar(0,0,result->byte_size_64,-1,szSrc,sizeof(szSrc)/sizeof(WCHAR));
 
-    StrCpyW(szBuff, szSrc);
-    ok(!StrCmpW(szSrc, szBuff), "Copied string %s wrong\n", result->byte_size_64);
+    lpRes = StrCpyW(szBuff, szSrc);
+    ok(!StrCmpW(szSrc, szBuff) && lpRes == szBuff, "Copied string %s wrong\n", result->byte_size_64);
     result++;
   }
+
+  /* this test crashes on win2k SP4 */
+  /*lpRes = StrCpyW(szBuff, NULL);*/
+  /*ok(lpRes == szBuff, "Wrong return value: got %p expected %p\n", lpRes, szBuff);*/
+
+  /* this test crashes on win2k SP4 */
+  /*lpRes = StrCpyW(NULL, szSrc);*/
+  /*ok(lpRes == NULL, "Wrong return value: got %p expected NULL\n", lpRes);*/
+
+  /* this test crashes on win2k SP4 */
+  /*lpRes = StrCpyW(NULL, NULL);*/
+  /*ok(lpRes == NULL, "Wrong return value: got %p expected NULL\n", lpRes);*/
 }
 
 static void test_StrChrNW(void)
