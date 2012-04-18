@@ -1695,6 +1695,8 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
              * effect->lpVtbl->SetMatrixArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
              * effect->lpVtbl->SetMatrixTranspose(effect, parameter, NULL);
              * effect->lpVtbl->SetMatrixTransposeArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
+             * effect->lpVtbl->GetValue(effect, parameter, NULL, res_desc->Bytes);
+             * effect->lpVtbl->SetValue(effect, parameter, NULL, res_desc->Bytes);
              */
             hr = effect->lpVtbl->SetBool(effect, NULL, bvalue);
             ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBool failed, got %#x, expected %#x\n",
@@ -1834,6 +1836,22 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
             hr = effect->lpVtbl->GetMatrixTransposeArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposeArray failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetValue(effect, NULL, input_value, res_desc->Bytes);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetValue failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->SetValue(effect, parameter, input_value, res_desc->Bytes - 1);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetValue failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetValue(effect, NULL, input_value, res_desc->Bytes);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetValue failed, got %#x, expected %#x\n",
+                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+            hr = effect->lpVtbl->GetValue(effect, parameter, input_value, res_desc->Bytes - 1);
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetValue failed, got %#x, expected %#x\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             test_effect_parameter_value_GetTestGroup(&res[k], effect, &blob[res_value_offset], parameter, i);
