@@ -52,6 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 typedef enum
 {
+    FeatureUnknown               = 0,
     ExhaustiveErrors             = 1 << 1,
     ExternalGeneralEntities      = 1 << 2,
     ExternalParameterEntities    = 1 << 3,
@@ -67,7 +68,77 @@ typedef enum
     UseInlineSchema              = 1 << 13,
     UseSchemaLocation            = 1 << 14,
     LexicalHandlerParEntities    = 1 << 15
-} saxreader_features;
+} saxreader_feature;
+
+/* feature names */
+static const WCHAR FeatureExternalGeneralEntitiesW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/',
+    'f','e','a','t','u','r','e','s','/','e','x','t','e','r','n','a','l','-','g','e','n','e','r','a','l',
+    '-','e','n','t','i','t','i','e','s',0
+};
+
+static const WCHAR FeatureExternalParameterEntitiesW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
+    '/','e','x','t','e','r','n','a','l','-','p','a','r','a','m','e','t','e','r','-','e','n','t','i','t','i','e','s',0
+};
+
+static const WCHAR FeatureLexicalHandlerParEntitiesW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
+    '/','l','e','x','i','c','a','l','-','h','a','n','d','l','e','r','/','p','a','r','a','m','e','t','e','r','-','e','n','t','i','t','i','e','s',0
+};
+
+static const WCHAR FeatureProhibitDTDW[] = {
+    'p','r','o','h','i','b','i','t','-','d','t','d',0
+};
+
+static const WCHAR FeatureNamespacesW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
+    '/','n','a','m','e','s','p','a','c','e','s',0
+};
+
+static const WCHAR FeatureNamespacePrefixesW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
+    '/','n','a','m','e','s','p','a','c','e','-','p','r','e','f','i','x','e','s',0
+};
+
+struct saxreader_feature_pair
+{
+    saxreader_feature feature;
+    const WCHAR *name;
+};
+
+static const struct saxreader_feature_pair saxreader_feature_map[] = {
+    { ExternalGeneralEntities, FeatureExternalGeneralEntitiesW },
+    { ExternalParameterEntities, FeatureExternalParameterEntitiesW },
+    { LexicalHandlerParEntities, FeatureLexicalHandlerParEntitiesW },
+    { NamespacePrefixes, FeatureNamespacePrefixesW },
+    { Namespaces, FeatureNamespacesW },
+    { ProhibitDTD, FeatureProhibitDTDW }
+};
+
+static saxreader_feature get_saxreader_feature(const WCHAR *name)
+{
+    int min, max, n, c;
+
+    min = 0;
+    max = sizeof(saxreader_feature_map)/sizeof(struct saxreader_feature_pair) - 1;
+
+    while (min <= max)
+    {
+        n = (min+max)/2;
+
+        c = strcmpW(saxreader_feature_map[n].name, name);
+        if (!c)
+            return saxreader_feature_map[n].feature;
+
+        if (c > 0)
+            max = n-1;
+        else
+            min = n+1;
+    }
+
+    return FeatureUnknown;
+}
 
 struct bstrpool
 {
@@ -109,7 +180,7 @@ typedef struct
     xmlSAXHandler sax;
     BOOL isParsing;
     struct bstrpool pool;
-    saxreader_features features;
+    saxreader_feature features;
     MSXML_VERSION version;
 } saxreader;
 
@@ -215,38 +286,7 @@ static const WCHAR PropertyXMLDeclVersionW[] = {
     'x','m','l','d','e','c','l','-','v','e','r','s','i','o','n',0
 };
 
-/* feature names */
-static const WCHAR FeatureExternalGeneralEntitiesW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/',
-    'f','e','a','t','u','r','e','s','/','e','x','t','e','r','n','a','l','-','g','e','n','e','r','a','l',
-    '-','e','n','t','i','t','i','e','s',0
-};
-
-static const WCHAR FeatureExternalParameterEntitiesW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
-    '/','e','x','t','e','r','n','a','l','-','p','a','r','a','m','e','t','e','r','-','e','n','t','i','t','i','e','s',0
-};
-
-static const WCHAR FeatureLexicalHandlerParEntitiesW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
-    '/','l','e','x','i','c','a','l','-','h','a','n','d','l','e','r','/','p','a','r','a','m','e','t','e','r','-','e','n','t','i','t','i','e','s',0
-};
-
-static const WCHAR FeatureProhibitDTDW[] = {
-    'p','r','o','h','i','b','i','t','-','d','t','d',0
-};
-
-static const WCHAR FeatureNamespacesW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
-    '/','n','a','m','e','s','p','a','c','e','s',0
-};
-
-static const WCHAR FeatureNamespacePrefixesW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
-    '/','n','a','m','e','s','p','a','c','e','-','p','r','e','f','i','x','e','s',0
-};
-
-static inline HRESULT set_feature_value(saxreader *reader, saxreader_features feature, VARIANT_BOOL value)
+static inline HRESULT set_feature_value(saxreader *reader, saxreader_feature feature, VARIANT_BOOL value)
 {
     if (value == VARIANT_TRUE)
         reader->features |=  feature;
@@ -256,7 +296,7 @@ static inline HRESULT set_feature_value(saxreader *reader, saxreader_features fe
     return S_OK;
 }
 
-static inline HRESULT get_feature_value(const saxreader *reader, saxreader_features feature, VARIANT_BOOL *value)
+static inline HRESULT get_feature_value(const saxreader *reader, saxreader_feature feature, VARIANT_BOOL *value)
 {
     *value = reader->features & feature ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
@@ -2749,52 +2789,49 @@ static HRESULT WINAPI saxxmlreader_Invoke(
 /*** IVBSAXXMLReader methods ***/
 static HRESULT WINAPI saxxmlreader_getFeature(
     IVBSAXXMLReader* iface,
-    const WCHAR *feature,
+    const WCHAR *feature_name,
     VARIANT_BOOL *value)
 {
     saxreader *This = impl_from_IVBSAXXMLReader( iface );
+    saxreader_feature feature;
 
-    if (!strcmpW(FeatureNamespacesW, feature))
-        return get_feature_value(This, Namespaces, value);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(feature_name), value);
 
-    if (!strcmpW(FeatureNamespacePrefixesW, feature))
-        return get_feature_value(This, NamespacePrefixes, value);
+    feature = get_saxreader_feature(feature_name);
+    if (feature == Namespaces || feature == NamespacePrefixes)
+        return get_feature_value(This, feature, value);
 
-    FIXME("(%p)->(%s %p) stub\n", This, debugstr_w(feature), value);
+    FIXME("(%p)->(%s %p) stub\n", This, debugstr_w(feature_name), value);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI saxxmlreader_putFeature(
     IVBSAXXMLReader* iface,
-    const WCHAR *feature,
+    const WCHAR *feature_name,
     VARIANT_BOOL value)
 {
     saxreader *This = impl_from_IVBSAXXMLReader( iface );
+    saxreader_feature feature;
 
-    TRACE("(%p)->(%s %x)\n", This, debugstr_w(feature), value);
+    TRACE("(%p)->(%s %x)\n", This, debugstr_w(feature_name), value);
 
-    if (!strcmpW(FeatureExternalGeneralEntitiesW, feature) && value == VARIANT_FALSE)
-        return set_feature_value(This, ExternalGeneralEntities, value);
+    feature = get_saxreader_feature(feature_name);
 
-    if (!strcmpW(FeatureExternalParameterEntitiesW, feature) && value == VARIANT_FALSE)
-        return set_feature_value(This, ExternalParameterEntities, value);
-
-    if (!strcmpW(FeatureLexicalHandlerParEntitiesW, feature))
+    /* accepted cases */
+    if ((feature == ExternalGeneralEntities   && value == VARIANT_FALSE) ||
+        (feature == ExternalParameterEntities && value == VARIANT_FALSE) ||
+        (feature == Namespaces                && value == VARIANT_TRUE ))
     {
-        FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature), value);
-        return set_feature_value(This, LexicalHandlerParEntities, value);
+        return set_feature_value(This, feature, value);
     }
 
-    if (!strcmpW(FeatureProhibitDTDW, feature))
+    if (feature == LexicalHandlerParEntities || feature == ProhibitDTD)
     {
-        FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature), value);
-        return set_feature_value(This, ProhibitDTD, value);
+        FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature_name), value);
+        return set_feature_value(This, feature, value);
     }
 
-    if (!strcmpW(FeatureNamespacesW, feature) && value == VARIANT_TRUE)
-        return set_feature_value(This, Namespaces, value);
-
-    FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature), value);
+    FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature_name), value);
     return E_NOTIMPL;
 }
 
