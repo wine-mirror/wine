@@ -1137,6 +1137,16 @@ static const IDirect3DVolumeTexture8Vtbl Direct3DVolumeTexture8_Vtbl =
     d3d8_texture_3d_AddDirtyBox
 };
 
+struct d3d8_texture *unsafe_impl_from_IDirect3DBaseTexture8(IDirect3DBaseTexture8 *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == (const IDirect3DBaseTexture8Vtbl *)&Direct3DTexture8_Vtbl
+            || iface->lpVtbl == (const IDirect3DBaseTexture8Vtbl *)&Direct3DCubeTexture8_Vtbl
+            || iface->lpVtbl == (const IDirect3DBaseTexture8Vtbl *)&Direct3DVolumeTexture8_Vtbl);
+    return CONTAINING_RECORD(iface, struct d3d8_texture, IDirect3DBaseTexture8_iface);
+}
+
 static void STDMETHODCALLTYPE d3d8_texture_wined3d_object_destroyed(void *parent)
 {
     HeapFree(GetProcessHeap(), 0, parent);

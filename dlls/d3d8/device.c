@@ -1032,14 +1032,17 @@ static HRESULT WINAPI IDirect3DDevice8Impl_UpdateTexture(IDirect3DDevice8 *iface
         IDirect3DBaseTexture8 *src_texture, IDirect3DBaseTexture8 *dst_texture)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
+    struct d3d8_texture *src_impl, *dst_impl;
     HRESULT hr;
 
     TRACE("iface %p, src_texture %p, dst_texture %p.\n", iface, src_texture, dst_texture);
 
+    src_impl = unsafe_impl_from_IDirect3DBaseTexture8(src_texture);
+    dst_impl = unsafe_impl_from_IDirect3DBaseTexture8(dst_texture);
+
     wined3d_mutex_lock();
     hr = wined3d_device_update_texture(This->wined3d_device,
-            ((IDirect3DBaseTexture8Impl *)src_texture)->wined3d_texture,
-            ((IDirect3DBaseTexture8Impl *)dst_texture)->wined3d_texture);
+            src_impl->wined3d_texture, dst_impl->wined3d_texture);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1732,17 +1735,20 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetTexture(IDirect3DDevice8 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI IDirect3DDevice8Impl_SetTexture(IDirect3DDevice8 *iface, DWORD Stage,
-        IDirect3DBaseTexture8 *pTexture)
+static HRESULT WINAPI IDirect3DDevice8Impl_SetTexture(IDirect3DDevice8 *iface, DWORD stage,
+        IDirect3DBaseTexture8 *texture)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
+    struct d3d8_texture *texture_impl;
     HRESULT hr;
 
-    TRACE("iface %p, stage %u, texture %p.\n", iface, Stage, pTexture);
+    TRACE("iface %p, stage %u, texture %p.\n", iface, stage, texture);
+
+    texture_impl = unsafe_impl_from_IDirect3DBaseTexture8(texture);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_texture(This->wined3d_device, Stage,
-            pTexture ? ((IDirect3DBaseTexture8Impl *)pTexture)->wined3d_texture : NULL);
+    hr = wined3d_device_set_texture(This->wined3d_device, stage,
+            texture_impl ? texture_impl->wined3d_texture : NULL);
     wined3d_mutex_unlock();
 
     return hr;

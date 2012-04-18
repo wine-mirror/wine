@@ -23,6 +23,7 @@
 #ifndef __WINE_D3D8_PRIVATE_H
 #define __WINE_D3D8_PRIVATE_H
 
+#include <assert.h>
 #include <stdarg.h>
 
 #define NONAMELESSUNION
@@ -293,21 +294,6 @@ HRESULT indexbuffer_init(IDirect3DIndexBuffer8Impl *buffer, IDirect3DDevice8Impl
         UINT size, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 IDirect3DIndexBuffer8Impl *unsafe_impl_from_IDirect3DIndexBuffer8(IDirect3DIndexBuffer8 *iface) DECLSPEC_HIDDEN;
 
-/* --------------------- */
-/* IDirect3DBaseTexture8 */
-/* --------------------- */
-
-/*****************************************************************************
- * IDirect3DBaseTexture8 implementation structure
- */
-struct IDirect3DBaseTexture8Impl
-{
-    /* IUnknown fields */
-    const IDirect3DBaseTexture8Vtbl *lpVtbl;
-    LONG                   ref;
-    struct wined3d_texture *wined3d_texture;
-};
-
 struct d3d8_texture
 {
     IDirect3DBaseTexture8 IDirect3DBaseTexture8_iface;
@@ -318,12 +304,11 @@ struct d3d8_texture
 
 HRESULT cubetexture_init(struct d3d8_texture *texture, IDirect3DDevice8Impl *device,
         UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-
 HRESULT texture_init(struct d3d8_texture *texture, IDirect3DDevice8Impl *device,
         UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
-
 HRESULT volumetexture_init(struct d3d8_texture *texture, IDirect3DDevice8Impl *device,
         UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
+struct d3d8_texture *unsafe_impl_from_IDirect3DBaseTexture8(IDirect3DBaseTexture8 *iface) DECLSPEC_HIDDEN;
 
 struct d3d8_vertex_declaration
 {
