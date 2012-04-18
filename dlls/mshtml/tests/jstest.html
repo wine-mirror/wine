@@ -80,6 +80,17 @@ function test_remove_style_attribute() {
     ok(b === false, "removeAttribute returned " + b + " expected false");
 }
 
+function test_clone_node() {
+    var elem, cloned;
+
+    elem = document.getElementById("divid");
+    elem.style.filter = "alpha(opacity=50)";
+    ok(elem.style.filter === "alpha(opacity=50)", "elem.style.filter = " + elem.style.filter);
+
+    cloned = elem.cloneNode(true);
+    ok(cloned.style.filter === "alpha(opacity=50)", "cloned.style.filter = " + cloned.style.filter);
+}
+
 var globalVar = false;
 
 function runTest() {
@@ -91,6 +102,7 @@ function runTest() {
     test_removeAttribute(document.getElementById("divid"));
     test_removeAttribute(document.body);
     test_select_index();
+    test_clone_node();
     test_createDocumentFragment();
     test_document_name_as_index();
     test_remove_style_attribute();

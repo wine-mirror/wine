@@ -269,7 +269,7 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
     DISPPARAMS dispParams;
     EXCEPINFO excep;
 
-    TRACE("(%p)->(%s . %08x)\n", This, debugstr_w(strAttributeName), lFlags);
+    TRACE("(%p)->(%s %s %08x)\n", This, debugstr_w(strAttributeName), debugstr_variant(&AttributeValue), lFlags);
 
     hres = IDispatchEx_GetDispID(&This->node.dispex.IDispatchEx_iface, strAttributeName,
             fdexNameCaseInsensitive | fdexNameEnsure, &dispid);
@@ -1626,6 +1626,14 @@ HRESULT HTMLElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **
     hres = HTMLElement_Create(This->node.doc, nsnode, FALSE, &new_elem);
     if(FAILED(hres))
         return hres;
+
+    if(This->filter) {
+        new_elem->filter = heap_strdupW(This->filter);
+        if(!new_elem->filter) {
+            IHTMLElement_Release(&This->IHTMLElement_iface);
+            return E_OUTOFMEMORY;
+        }
+    }
 
     IHTMLElement_AddRef(&new_elem->IHTMLElement_iface);
     *ret = &new_elem->node;
