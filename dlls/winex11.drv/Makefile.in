@@ -9,7 +9,6 @@ C_SRCS = \
 	bitmap.c \
 	brush.c \
 	clipboard.c \
-	codepage.c \
 	desktop.c \
 	event.c \
 	graphics.c \
@@ -23,12 +22,10 @@ C_SRCS = \
 	scroll.c \
 	settings.c \
 	systray.c \
-	text.c \
 	window.c \
 	wintab.c \
 	x11drv_main.c \
 	xdnd.c \
-	xfont.c \
 	xim.c \
 	xinerama.c \
 	xrandr.c \

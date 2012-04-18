@@ -27,7 +27,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "x11drv.h"
-#include "x11font.h"
 #include "ddrawi.h"
 #include "wine/debug.h"
 
@@ -42,10 +41,6 @@ static int horz_size;     /* horz. size of screen in millimeters */
 static int vert_size;     /* vert. size of screen in millimeters */
 static int palette_size;
 static int device_init_done;
-unsigned int text_caps = (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
-                          TC_CR_ANY | TC_SA_DOUBLE | TC_SA_INTEGER |
-                          TC_SA_CONTIN | TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE);
-                          /* X11R6 adds TC_SF_X_YINDEP, Xrender adds TC_VA_ABLE */
 
 
 static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
@@ -102,9 +97,6 @@ static void device_init(void)
     log_pixels_x = log_pixels_y = get_dpi();
     horz_size = MulDiv( screen_width, 254, log_pixels_x * 10 );
     vert_size = MulDiv( screen_height, 254, log_pixels_y * 10 );
-
-    /* Initialize fonts and text caps */
-    X11DRV_FONT_Init(log_pixels_x, log_pixels_y);
 }
 
 /**********************************************************************
@@ -247,7 +239,9 @@ static INT X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
         return (PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON | PC_SCANLINE |
                 PC_WIDE | PC_STYLED | PC_WIDESTYLED | PC_INTERIORS);
     case TEXTCAPS:
-        return text_caps;
+        return (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
+                TC_CR_ANY | TC_SF_X_YINDEP | TC_SA_DOUBLE | TC_SA_INTEGER |
+                TC_SA_CONTIN | TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE | TC_VA_ABLE);
     case CLIPCAPS:
         return CP_REGION;
     case COLORRES:
@@ -338,15 +332,6 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     return TRUE;
                 }
                 break;
-            case X11DRV_GET_FONT:
-                if (out_count >= sizeof(Font))
-                {
-                    fontObject* pfo = XFONT_GetFontObject( physDev->font );
-		    if (pfo == NULL) return FALSE;
-                    *(Font *)out_data = pfo->fs->fid;
-                    return TRUE;
-                }
-                break;
             case X11DRV_SET_DRAWABLE:
                 if (in_count >= sizeof(struct x11drv_escape_set_drawable))
                 {
@@ -427,6 +412,7 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     return TRUE;
                 }
                 break;
+            case X11DRV_GET_FONT:
             case X11DRV_GET_DCE:
             case X11DRV_SET_DCE:
             case X11DRV_SYNC_PIXMAP:
@@ -476,14 +462,14 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
-    X11DRV_EnumFonts,                   /* pEnumFonts */
+    NULL,                               /* pEnumFonts */
     X11DRV_EnumICMProfiles,             /* pEnumICMProfiles */
     NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
     X11DRV_ExtEscape,                   /* pExtEscape */
     X11DRV_ExtFloodFill,                /* pExtFloodFill */
     NULL,                               /* pExtSelectClipRgn */
-    X11DRV_ExtTextOut,                  /* pExtTextOut */
+    NULL,                               /* pExtTextOut */
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
     NULL,                               /* pFlattenPath */
@@ -494,7 +480,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pGetBoundsRect */
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
-    X11DRV_GetCharWidth,                /* pGetCharWidth */
+    NULL,                               /* pGetCharWidth */
     X11DRV_GetDeviceCaps,               /* pGetDeviceCaps */
     X11DRV_GetDeviceGammaRamp,          /* pGetDeviceGammaRamp */
     NULL,                               /* pGetFontData */
@@ -510,10 +496,10 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_GetPixelFormat,              /* pGetPixelFormat */
     X11DRV_GetSystemPaletteEntries,     /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextCharsetInfo */
-    X11DRV_GetTextExtentExPoint,        /* pGetTextExtentExPoint */
+    NULL,                               /* pGetTextExtentExPoint */
     NULL,                               /* pGetTextExtentExPointI */
     NULL,                               /* pGetTextFace */
-    X11DRV_GetTextMetrics,              /* pGetTextMetrics */
+    NULL,                               /* pGetTextMetrics */
     X11DRV_GradientFill,                /* pGradientFill */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
@@ -547,7 +533,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_SelectBitmap,                /* pSelectBitmap */
     X11DRV_SelectBrush,                 /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
-    X11DRV_SelectFont,                  /* pSelectFont */
+    NULL,                               /* pSelectFont */
     NULL,                               /* pSelectPalette */
     X11DRV_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetArcDirection */

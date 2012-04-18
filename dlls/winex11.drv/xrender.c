@@ -38,8 +38,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-int using_client_side_fonts = FALSE;
-
 WINE_DEFAULT_DEBUG_CHANNEL(xrender);
 
 #ifdef SONAME_LIBXRENDER
@@ -364,8 +362,6 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 {
     int event_base, i;
     BOOL ok;
-
-    using_client_side_fonts = client_side_with_render || client_side_with_core;
 
     if (!client_side_with_render) return NULL;
     if (!(xrender_handle = wine_dlopen(SONAME_LIBXRENDER, RTLD_NOW, NULL, 0))) return NULL;
@@ -1109,50 +1105,39 @@ void X11DRV_XRender_Finalize(void)
  */
 static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont )
 {
+    LFANDSIZE lfsz;
     struct xrender_physdev *physdev = get_xrender_dev( dev );
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectFont );
     HFONT ret = next->funcs->pSelectFont( next, hfont );
 
     if (!ret) return 0;
 
-    if (physdev->x11dev->has_gdi_font)
-    {
-        LFANDSIZE lfsz;
+    GetObjectW( hfont, sizeof(lfsz.lf), &lfsz.lf );
 
-        GetObjectW( hfont, sizeof(lfsz.lf), &lfsz.lf );
+    TRACE("h=%d w=%d weight=%d it=%d charset=%d name=%s\n",
+          lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
+          lfsz.lf.lfItalic, lfsz.lf.lfCharSet, debugstr_w(lfsz.lf.lfFaceName));
+    lfsz.lf.lfWidth = abs( lfsz.lf.lfWidth );
+    lfsz.devsize.cx = X11DRV_XWStoDS( dev->hdc, lfsz.lf.lfWidth );
+    lfsz.devsize.cy = X11DRV_YWStoDS( dev->hdc, lfsz.lf.lfHeight );
 
-        TRACE("h=%d w=%d weight=%d it=%d charset=%d name=%s\n",
-              lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
-              lfsz.lf.lfItalic, lfsz.lf.lfCharSet, debugstr_w(lfsz.lf.lfFaceName));
-        lfsz.lf.lfWidth = abs( lfsz.lf.lfWidth );
-        lfsz.devsize.cx = X11DRV_XWStoDS( dev->hdc, lfsz.lf.lfWidth );
-        lfsz.devsize.cy = X11DRV_YWStoDS( dev->hdc, lfsz.lf.lfHeight );
+    GetTransform( dev->hdc, 0x204, &lfsz.xform );
+    TRACE("font transform %f %f %f %f\n", lfsz.xform.eM11, lfsz.xform.eM12,
+          lfsz.xform.eM21, lfsz.xform.eM22);
 
-        GetTransform( dev->hdc, 0x204, &lfsz.xform );
-        TRACE("font transform %f %f %f %f\n", lfsz.xform.eM11, lfsz.xform.eM12,
-              lfsz.xform.eM21, lfsz.xform.eM22);
+    if (GetGraphicsMode( dev->hdc ) == GM_COMPATIBLE && lfsz.xform.eM11 * lfsz.xform.eM22 < 0)
+        lfsz.lf.lfOrientation = -lfsz.lf.lfOrientation;
 
-        if (GetGraphicsMode( dev->hdc ) == GM_COMPATIBLE && lfsz.xform.eM11 * lfsz.xform.eM22 < 0)
-            lfsz.lf.lfOrientation = -lfsz.lf.lfOrientation;
+    /* Not used fields, would break hashing */
+    lfsz.xform.eDx = lfsz.xform.eDy = 0;
 
-        /* Not used fields, would break hashing */
-        lfsz.xform.eDx = lfsz.xform.eDy = 0;
+    lfsz_calc_hash(&lfsz);
 
-        lfsz_calc_hash(&lfsz);
-
-        EnterCriticalSection(&xrender_cs);
-        if (physdev->cache_index != -1)
-            dec_ref_cache( physdev->cache_index );
-        physdev->cache_index = GetCacheEntry( dev->hdc, &lfsz );
-        LeaveCriticalSection(&xrender_cs);
-    }
-    else
-    {
-        EnterCriticalSection( &xrender_cs );
-        if (physdev->cache_index != -1) dec_ref_cache( physdev->cache_index );
-        physdev->cache_index = -1;
-        LeaveCriticalSection( &xrender_cs );
-    }
+    EnterCriticalSection(&xrender_cs);
+    if (physdev->cache_index != -1)
+        dec_ref_cache( physdev->cache_index );
+    physdev->cache_index = GetCacheEntry( dev->hdc, &lfsz );
+    LeaveCriticalSection(&xrender_cs);
     return ret;
 }
 
@@ -1695,12 +1680,6 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     POINT offset, desired, current;
     int render_op = PictOpOver;
     XRenderColor col;
-
-    if (!physdev->x11dev->has_gdi_font)
-    {
-        dev = GET_NEXT_PHYSDEV( dev, pExtTextOut );
-        return dev->funcs->pExtTextOut( dev, x, y, flags, lprect, wstr, count, lpDx );
-    }
 
     get_xrender_color( physdev, GetTextColor( physdev->dev.hdc ), &col );
     pict = get_xrender_picture( physdev, 0, (flags & ETO_CLIPPED) ? lprect : NULL );

@@ -233,7 +233,6 @@ MAKE_FUNCPTR(glXMakeCurrent)
 MAKE_FUNCPTR(glXSwapBuffers)
 MAKE_FUNCPTR(glXQueryExtension)
 MAKE_FUNCPTR(glXQueryVersion)
-MAKE_FUNCPTR(glXUseXFont)
 
 /* GLX 1.1 */
 MAKE_FUNCPTR(glXGetClientString)
@@ -478,7 +477,6 @@ static BOOL has_opengl(void)
     LOAD_FUNCPTR(glXSwapBuffers);
     LOAD_FUNCPTR(glXQueryExtension);
     LOAD_FUNCPTR(glXQueryVersion);
-    LOAD_FUNCPTR(glXUseXFont);
 
     /* GLX 1.1 */
     LOAD_FUNCPTR(glXGetClientString);
@@ -2199,22 +2197,10 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
  */
 BOOL X11DRV_wglUseFontBitmapsA(PHYSDEV dev, DWORD first, DWORD count, DWORD listBase)
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-     Font fid = physDev->font;
-
-     TRACE("(%p, %d, %d, %d) using font %ld\n", dev->hdc, first, count, listBase, fid);
+     TRACE("(%p, %d, %d, %d)\n", dev->hdc, first, count, listBase);
 
      if (!has_opengl()) return FALSE;
-
-     if (fid == 0) {
-         return internal_wglUseFontBitmaps(dev->hdc, first, count, listBase, GetGlyphOutlineA);
-     }
-
-     wine_tsx11_lock();
-     /* I assume that the glyphs are at the same position for X and for Windows */
-     pglXUseXFont(fid, first, count, listBase);
-     wine_tsx11_unlock();
-     return TRUE;
+     return internal_wglUseFontBitmaps(dev->hdc, first, count, listBase, GetGlyphOutlineA);
 }
 
 /**
@@ -2224,24 +2210,10 @@ BOOL X11DRV_wglUseFontBitmapsA(PHYSDEV dev, DWORD first, DWORD count, DWORD list
  */
 BOOL X11DRV_wglUseFontBitmapsW(PHYSDEV dev, DWORD first, DWORD count, DWORD listBase)
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-     Font fid = physDev->font;
-
-     TRACE("(%p, %d, %d, %d) using font %ld\n", dev->hdc, first, count, listBase, fid);
+     TRACE("(%p, %d, %d, %d)\n", dev->hdc, first, count, listBase);
 
      if (!has_opengl()) return FALSE;
-
-     if (fid == 0) {
-         return internal_wglUseFontBitmaps(dev->hdc, first, count, listBase, GetGlyphOutlineW);
-     }
-
-     WARN("Using the glX API for the WCHAR variant - some characters may come out incorrectly !\n");
-
-     wine_tsx11_lock();
-     /* I assume that the glyphs are at the same position for X and for Windows */
-     pglXUseXFont(fid, first, count, listBase);
-     wine_tsx11_unlock();
-     return TRUE;
+     return internal_wglUseFontBitmaps(dev->hdc, first, count, listBase, GetGlyphOutlineW);
 }
 
 /* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */

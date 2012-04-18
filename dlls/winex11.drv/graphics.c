@@ -43,7 +43,6 @@
 #include "winreg.h"
 
 #include "x11drv.h"
-#include "x11font.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -464,37 +463,6 @@ static BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev )
     return TRUE;
 }
 
-
-/***********************************************************************
- *           X11DRV_SetupGCForText
- *
- * Setup physDev->gc for text drawing operations.
- * Return FALSE if the font is null, TRUE otherwise.
- */
-BOOL X11DRV_SetupGCForText( X11DRV_PDEVICE *physDev )
-{
-    XFontStruct* xfs = XFONT_GetFontStruct( physDev->font );
-
-    if( xfs )
-    {
-	XGCValues val;
-
-	val.function   = GXcopy;  /* Text is always GXcopy */
-	val.foreground = X11DRV_PALETTE_ToPhysical( physDev, GetTextColor(physDev->dev.hdc) );
-	val.background = X11DRV_PALETTE_ToPhysical( physDev, GetBkColor(physDev->dev.hdc) );
-	val.fill_style = FillSolid;
-	val.font       = xfs->fid;
-
-        wine_tsx11_lock();
-        XChangeGC( gdi_display, physDev->gc,
-		   GCFunction | GCForeground | GCBackground | GCFillStyle |
-		   GCFont, &val );
-        wine_tsx11_unlock();
-	return TRUE;
-    }
-    WARN("Physical font failure\n" );
-    return FALSE;
-}
 
 /***********************************************************************
  *           X11DRV_XWStoDS
