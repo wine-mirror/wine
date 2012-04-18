@@ -300,6 +300,7 @@ static HRESULT WINAPI d3d8_texture_3d_LockBox(IDirect3DVolumeTexture8 *iface,
 {
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
     struct wined3d_resource *sub_resource;
+    IDirect3DVolume8Impl *volume_impl;
     HRESULT hr;
 
     TRACE("iface %p, level %u, locked_box %p, box %p, flags %#x.\n",
@@ -309,8 +310,10 @@ static HRESULT WINAPI d3d8_texture_3d_LockBox(IDirect3DVolumeTexture8 *iface,
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, level)))
         hr = D3DERR_INVALIDCALL;
     else
-        hr = IDirect3DVolume8_LockBox((IDirect3DVolume8 *)wined3d_resource_get_parent(sub_resource),
-                locked_box, box, flags);
+    {
+        volume_impl = wined3d_resource_get_parent(sub_resource);
+        hr = IDirect3DVolume8_LockBox(&volume_impl->IDirect3DVolume8_iface, locked_box, box, flags);
+    }
     wined3d_mutex_unlock();
 
     return hr;
