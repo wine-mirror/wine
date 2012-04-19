@@ -535,7 +535,7 @@ static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
     wined3d_resource_get_desc(resource, &desc);
     if (desc.pool == WINED3D_POOL_DEFAULT)
     {
-        IDirect3DSurface8 *surface;
+        IDirect3DSurface8Impl *surface;
 
         if (desc.resource_type != WINED3D_RTYPE_SURFACE)
         {
@@ -544,9 +544,7 @@ static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
         }
 
         surface = wined3d_resource_get_parent(resource);
-
-        IDirect3DSurface8_AddRef(surface);
-        if (IDirect3DSurface8_Release(surface))
+        if (surface->ref)
         {
             WARN("Surface %p (resource %p) in pool D3DPOOL_DEFAULT blocks the Reset call.\n", surface, resource);
             return D3DERR_DEVICELOST;
