@@ -3109,7 +3109,7 @@ msgstr ""
 
 #: ieframe.rc:36
 msgid "Pr&int..."
-msgstr "&Yazdır"
+msgstr "&Yazdır..."
 
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
@@ -9021,7 +9021,7 @@ msgstr "Sa&yısal"
 
 #: clock.rc:32 notepad.rc:50 winecfg.rc:289 winefile.rc:60 wordpad.rc:81
 msgid "&Font..."
-msgstr "&Yazıtipi"
+msgstr "&Yazıtipi..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -9041,7 +9041,7 @@ msgstr "&Her zaman üstte"
 
 #: clock.rc:42
 msgid "&About Clock"
-msgstr "&Saat Hakkında..."
+msgstr "&Saat Hakkında"
 
 #: clock.rc:48
 msgid "Clock"
@@ -12674,7 +12674,7 @@ msgstr "&Renk"
 
 #: wineconsole.rc:97
 msgid "Configuration"
-msgstr "Yapılandırma "
+msgstr "Yapılandırma"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
@@ -12883,7 +12883,7 @@ msgstr "Ye&niden Adlandır..."
 
 #: winefile.rc:31
 msgid "Propert&ies\tAlt+Enter"
-msgstr "&Özellikler...\tAlt+Enter"
+msgstr "&Özellikler\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
