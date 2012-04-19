@@ -12782,9 +12782,9 @@ msgid ""
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
-"se não tem uma unidade C. Isto não é nada bom.\n"
+"Se não tem uma unidade C. Isto não é nada bom.\n"
 "\n"
-"Certifique-se que clica em  ?Adicionar? no separador Unidades para criar "
+"Certifique-se que clica em 'Adicionar' no separador Unidades para criar "
 "uma!\n"
 
 #: winecfg.rc:90
