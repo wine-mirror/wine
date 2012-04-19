@@ -178,8 +178,7 @@ msgid ""
 "entry for this program from the registry?"
 msgstr ""
 "Spuštění odinstalování %s selhalo, možná příčína je předchozí smazání "
-"aplikace.\n"
-"Přejete si odstranit záznam odinstalace tohoto programu z registru?"
+"aplikace. Přejete si odstranit záznam odinstalace tohoto programu z registru?"
 
 #: appwiz.rc:33
 #, fuzzy
@@ -1205,7 +1204,7 @@ msgid ""
 msgstr ""
 "Zapnutý Caps Lock může způsobit nesprávné zadání hesla.\n"
 "\n"
-"Stiskněte klávesu Caps Lock na své klávesnici pro vypnutí funkce Caps Lock "
+"Stiskněte klávesu Caps Lock na své klávesnici pro vypnutí funkce Caps Lock\n"
 "před napsáním hesla."
 
 #: credui.rc:31
