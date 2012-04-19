@@ -809,7 +809,7 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
             }
             else memcpy( conn->peek_msg, buf, ret );
         }
-        *recvd = ret;
+        *recvd += ret;
         return TRUE;
 #else
         return FALSE;
