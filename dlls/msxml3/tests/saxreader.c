@@ -2198,12 +2198,7 @@ static void test_saxreader_features(void)
             value = 0xd;
             hr = ISAXXMLReader_getFeature(reader, _bstr_(*name), &value);
             EXPECT_HR(hr, S_OK);
-            if (IsEqualGUID(entry->guid, &CLSID_SAXXMLReader40) ||
-                IsEqualGUID(entry->guid, &CLSID_SAXXMLReader60))
-            todo_wine
-                ok(entry->value2 == value, "%s: got wrong value %x, expected %x\n", entry->clsid, value, entry->value2);
-            else
-                ok(entry->value2 == value, "%s: got wrong value %x, expected %x\n", entry->clsid, value, entry->value2);
+            ok(entry->value2 == value, "%s: got wrong value %x, expected %x\n", entry->clsid, value, entry->value2);
 
             hr = ISAXXMLReader_putFeature(reader, _bstr_(*name), VARIANT_FALSE);
             EXPECT_HR(hr, S_OK);

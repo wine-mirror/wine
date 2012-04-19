@@ -288,6 +288,12 @@ static const WCHAR PropertyXMLDeclVersionW[] = {
 
 static inline HRESULT set_feature_value(saxreader *reader, saxreader_feature feature, VARIANT_BOOL value)
 {
+    /* handling of non-VARIANT_* values is version dependent */
+    if ((reader->version <  MSXML4) && (value != VARIANT_TRUE))
+        value = VARIANT_FALSE;
+    if ((reader->version >= MSXML4) && (value != VARIANT_FALSE))
+        value = VARIANT_TRUE;
+
     if (value == VARIANT_TRUE)
         reader->features |=  feature;
     else
