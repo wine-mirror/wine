@@ -50,7 +50,7 @@ msgstr "&Modifi..."
 #: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:191
 #: winecfg.rc:228 wordpad.rc:245
 msgid "&Remove"
-msgstr "&Forigi..."
+msgstr "&Forigi"
 
 #: appwiz.rc:72
 msgid "Support Information"
@@ -127,7 +127,7 @@ msgstr ""
 
 #: appwiz.rc:106
 msgid "&Install"
-msgstr "&Instali..."
+msgstr "&Instali"
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
 #: comdlg32.rc:165 comdlg32.rc:187 comdlg32.rc:205 comdlg32.rc:227
@@ -2211,7 +2211,7 @@ msgstr "&Importi..."
 
 #: cryptui.rc:342 regedit.rc:109
 msgid "&Export..."
-msgstr "&Eksporti"
+msgstr "&Eksporti..."
 
 #: cryptui.rc:344
 msgid "&Advanced..."
@@ -2242,7 +2242,7 @@ msgstr ""
 
 #: cryptui.rc:358
 msgid "&Certificate purposes:"
-msgstr "&Atestilaj celoj"
+msgstr "&Atestilaj celoj:"
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
@@ -3215,7 +3215,7 @@ msgstr ""
 
 #: inetcpl.rc:57
 msgid "&Settings..."
-msgstr "&Agordo"
+msgstr "&Agordo..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
@@ -3268,7 +3268,7 @@ msgstr ""
 
 #: inetcpl.rc:111
 msgid "Certificates..."
-msgstr "Atestiloj"
+msgstr "Atestiloj..."
 
 #: inetcpl.rc:112
 msgid "Publishers..."
@@ -4676,7 +4676,7 @@ msgstr ""
 
 #: winerror.mc:1556
 msgid "The device door is open.\n"
-msgstr "La printila pordo estas malfermita;\n"
+msgstr "La printila pordo estas malfermita.\n"
 
 #: winerror.mc:1561
 msgid "The device is not connected.\n"
@@ -9674,7 +9674,7 @@ msgstr "Malkonektita"
 
 #: net.rc:47
 msgid "A network error occurred"
-msgstr "Okazis reta eraro."
+msgstr "Okazis reta eraro"
 
 #: net.rc:48
 msgid "Connection is being made"
@@ -10383,7 +10383,7 @@ msgstr ""
 
 #: progman.rc:180
 msgid "Change &icon..."
-msgstr "Aranĝi &piktogramojn"
+msgstr "Aranĝi &piktogramojn..."
 
 #: progman.rc:189
 msgid "Change Icon"
@@ -12071,7 +12071,7 @@ msgstr "(Neniu)"
 
 #: winecfg.rc:83
 msgid "Audio test failed!"
-msgstr "Sona provo malsukcesis"
+msgstr "Sona provo malsukcesis!"
 
 #: winecfg.rc:85
 msgid "(System default)"
@@ -12698,7 +12698,7 @@ msgstr "Kop&irajto::"
 
 #: winefile.rc:170
 msgid "Size:"
-msgstr "Grando"
+msgstr "Grando:"
 
 #: winefile.rc:174
 msgid "H&idden"
@@ -13098,7 +13098,7 @@ msgstr "Alinea formato"
 
 #: wordpad.rc:224
 msgid "Indentation"
-msgstr "Deŝovo..."
+msgstr "Deŝovo"
 
 #: wordpad.rc:225 wordpad.rc:148
 msgid "Left"
