@@ -2092,7 +2092,7 @@ msgstr "Avis de non-responsabilité"
 
 #: cryptui.rc:228
 msgid "More &Info"
-msgstr "&Infos complémentaires"
+msgstr "Plus d'&Infos"
 
 #: cryptui.rc:236
 msgid "&Friendly name:"
@@ -6296,7 +6296,7 @@ msgstr "Il n'y a plus de liaisons.\n"
 
 #: winerror.mc:3446
 msgid "Can't logon with interdomain trust account.\n"
-msgstr "Ne peut se connecter avec un compte d'approbation interdomaines.\n"
+msgstr "Ne peut se connecter avec un compte d'approbation inter-domaines.\n"
 
 #: winerror.mc:3451
 msgid "Can't logon with workstation trust account.\n"
@@ -6458,7 +6458,7 @@ msgstr "Pilote invalide.\n"
 
 #: winerror.mc:3646
 msgid "Invalid object resolver set.\n"
-msgstr "Jeu de solveurs d'objets invalide.\n"
+msgstr "Jeu de résolveurs d'objets invalide.\n"
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send.\n"
@@ -8293,7 +8293,7 @@ msgstr "&Taille du papier :"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr "Recto-verso :"
+msgstr "Recto verso :"
 
 #: wininet.rc:39 wininet.rc:59
 msgid "Realm"
@@ -10693,7 +10693,7 @@ msgstr ""
 
 #: oleview.rc:178
 msgid "Default Interface Viewer"
-msgstr "Visionneur d'interface par défaut"
+msgstr "Visionneuse d'interface par défaut"
 
 #: oleview.rc:181
 msgid "Interface"
@@ -10709,7 +10709,7 @@ msgstr "&Afficher les informations de type"
 
 #: oleview.rc:191
 msgid "IPersist Interface Viewer"
-msgstr "Visionneur d'interface IPersist"
+msgstr "Visionneuse d'interface IPersist"
 
 #: oleview.rc:194 oleview.rc:206
 msgid "Class Name:"
@@ -10721,7 +10721,7 @@ msgstr "CLSID :"
 
 #: oleview.rc:203
 msgid "IPersistStream Interface Viewer"
-msgstr "Visionneur d'interface IPersistStream"
+msgstr "Visionneuse d'interface IPersistStream"
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
@@ -11983,7 +11983,7 @@ msgstr "Nom de l'&image"
 
 #: taskmgr.rc:523
 msgid "&PID (Process Identifier)"
-msgstr "&PID (ident. de processus)"
+msgstr "&PID (Identifiant de processus)"
 
 #: taskmgr.rc:525
 msgid "&CPU Usage"
@@ -12023,7 +12023,7 @@ msgstr "Octets de lecture E/S"
 
 #: taskmgr.rc:543
 msgid "&Session ID"
-msgstr "Identi&ficateur de session"
+msgstr "Identi&fiant de session"
 
 #: taskmgr.rc:545
 msgid "User &Name"
@@ -12848,7 +12848,7 @@ msgstr "Sélectionnez un fichier exécutable"
 
 #: winecfg.rc:66
 msgid "Autodetect"
-msgstr "Autodétection"
+msgstr "Auto-détection"
 
 #: winecfg.rc:67
 msgid "Local hard disk"
@@ -13748,7 +13748,7 @@ msgstr "&Rétablir\tCtrl+Y"
 
 #: wordpad.rc:47
 msgid "&Clear\tDel"
-msgstr "&Effacer\tDel"
+msgstr "&Effacer\tSuppr"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
