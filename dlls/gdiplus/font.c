@@ -190,9 +190,6 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     (*font)->lfw.lfUnderline = logfont->lfUnderline;
     (*font)->lfw.lfStrikeOut = logfont->lfStrikeOut;
 
-    (*font)->pixel_size = (*font)->emSize = logfont->lfHeight;
-    (*font)->unit = UnitPixel;
-
     hfont = CreateFontIndirectW(&(*font)->lfw);
     oldfont = SelectObject(hdc, hfont);
     GetTextMetricsW(hdc, &textmet);
@@ -201,6 +198,8 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     (*font)->lfw.lfWeight = textmet.tmWeight;
     (*font)->lfw.lfCharSet = textmet.tmCharSet;
 
+    (*font)->pixel_size = (*font)->emSize = textmet.tmHeight;
+    (*font)->unit = UnitPixel;
     (*font)->height = 1; /* FIXME: need NEWTEXTMETRIC.ntmSizeEM here */
     (*font)->line_spacing = textmet.tmAscent + textmet.tmDescent + textmet.tmExternalLeading;
 
