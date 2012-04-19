@@ -621,7 +621,9 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
     }
 
     V_VT(retv) = VT_R8;
-    V_R8(retv) = (double)(positive?d:-d)*pow(10, exp);
+    if(!positive)
+        d = -d;
+    V_R8(retv) = (exp>0 ? d*pow(10, exp) : d/pow(10, -exp));
     return S_OK;
 }
 

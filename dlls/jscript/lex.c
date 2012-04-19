@@ -474,7 +474,7 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
         else exp += e;
     }
 
-    *literal = new_double_literal(ctx, (DOUBLE)d*pow(10, exp));
+    *literal = new_double_literal(ctx, exp>=0 ? d*pow(10, exp) : d/pow(10, -exp));
     return tNumericLiteral;
 }
 
