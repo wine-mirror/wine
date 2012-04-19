@@ -767,7 +767,7 @@ msgstr "文件名:"
 
 #: comdlg32.rc:484
 msgid "Files of type:"
-msgstr "文件类型"
+msgstr "文件类型:"
 
 #: comdlg32.rc:29
 msgid "File not found"
@@ -2041,7 +2041,7 @@ msgstr "显示(&S):"
 
 #: cryptui.rc:202
 msgid "&Edit Properties..."
-msgstr "编辑属性(&E)"
+msgstr "编辑属性(&E)..."
 
 #: cryptui.rc:203
 msgid "&Copy to File..."
@@ -2061,7 +2061,7 @@ msgstr "查看证书(&V)"
 
 #: cryptui.rc:215
 msgid "Certificate &status:"
-msgstr "证书状态(&S)"
+msgstr "证书状态(&S):"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
@@ -2211,7 +2211,7 @@ msgstr "导出(&E)..."
 
 #: cryptui.rc:344
 msgid "&Advanced..."
-msgstr "高级(&A)"
+msgstr "高级(&A)..."
 
 #: cryptui.rc:345
 msgid "Certificate intended purposes"
@@ -3285,7 +3285,7 @@ msgstr ""
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
-msgstr "此区域的安全设置"
+msgstr "此区域的安全设置: "
 
 #: inetcpl.rc:31
 msgid "Custom"
@@ -10314,7 +10314,7 @@ msgstr "复制(&C)...\tF8"
 
 #: progman.rc:35
 msgid "&Properties\tAlt+Enter"
-msgstr "属性(&P)...\tAlt+Enter"
+msgstr "属性(&P)\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
