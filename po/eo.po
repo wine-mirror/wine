@@ -5796,7 +5796,9 @@ msgstr "Finpunkto ne estis trovita.\n"
 msgid "Invalid timeout value.\n"
 msgstr ""
 
+# FIXME: Invalid formatting directive
 #: winerror.mc:2981
+#, fuzzy
 msgid "Object UUID not found.\n"
 msgstr "Mi ne trovis la objektan UUID-on %s.\n"
 
