@@ -116,6 +116,7 @@ MAKE_FUNCPTR( SSL_connect );
 MAKE_FUNCPTR( SSL_shutdown );
 MAKE_FUNCPTR( SSL_write );
 MAKE_FUNCPTR( SSL_read );
+MAKE_FUNCPTR( SSL_pending );
 MAKE_FUNCPTR( SSL_get_error );
 MAKE_FUNCPTR( SSL_get_ex_new_index );
 MAKE_FUNCPTR( SSL_get_ex_data );
@@ -459,6 +460,7 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( SSL_shutdown );
     LOAD_FUNCPTR( SSL_write );
     LOAD_FUNCPTR( SSL_read );
+    LOAD_FUNCPTR( SSL_pending );
     LOAD_FUNCPTR( SSL_get_error );
     LOAD_FUNCPTR( SSL_get_ex_new_index );
     LOAD_FUNCPTR( SSL_get_ex_data );
@@ -834,7 +836,7 @@ BOOL netconn_query_data_available( netconn_t *conn, DWORD *available )
     if (conn->secure)
     {
 #ifdef SONAME_LIBSSL
-        if (conn->peek_msg) *available = conn->peek_len;
+        *available = pSSL_pending( conn->ssl_conn ) + conn->peek_len;
 #endif
         return TRUE;
     }
