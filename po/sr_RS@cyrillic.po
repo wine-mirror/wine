@@ -3561,10 +3561,15 @@ msgid "URI to be decoded is incorrect"
 msgstr "URI садржи неисправне знакове"
 
 #: jscript.rc:57
+#, fuzzy
+msgid "Number of fraction digits is out of range"
+msgstr "Потпис је ван домета.\n"
+
+#: jscript.rc:58
 msgid "Array length must be a finite positive integer"
 msgstr "Низ дужине мора бити коначан позитиван цео број"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Array object expected"
 msgstr "Очекивани низ објекта"
 

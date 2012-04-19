@@ -3559,10 +3559,16 @@ msgid "URI to be decoded is incorrect"
 msgstr "L'URI da decodificare non è corretto"
 
 #: jscript.rc:57
+#, fuzzy
+#| msgid "Enumeration value out of range.\n"
+msgid "Number of fraction digits is out of range"
+msgstr "Valore dell'enumerazione fuori portata.\n"
+
+#: jscript.rc:58
 msgid "Array length must be a finite positive integer"
 msgstr "La lunghezza dell'array deve essere un intero finito e positivo"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Array object expected"
 msgstr "Previsto un oggetto array"
 

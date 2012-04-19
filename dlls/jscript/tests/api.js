@@ -1018,10 +1018,33 @@ tmp = Array.prototype.slice.call(obj, 1, 2);
 ok(tmp.length === 1, "tmp.length = " + tmp.length);
 ok(tmp[0] === 2, "tmp[0] = " + tmp[0]);
 
-var num = new Number(2);
-ok(num.toString() === "2", "num(2).toString !== 2");
-var num = new Number();
-ok(num.toString() === "0", "num().toString !== 0");
+tmp = (new Number(2)).toString();
+ok(tmp === "2", "num(2).toString = " + tmp);
+tmp = (new Number()).toString();
+ok(tmp === "0", "num().toString = " + tmp);
+tmp = (new Number(5.5)).toString(2);
+ok(tmp === "101.1", "num(5.5).toString(2) = " + tmp);
+
+tmp = (new Number(3)).toFixed(3);
+ok(tmp === "3.000", "num(3).toFixed(3) = " + tmp);
+tmp = (new Number(1.76)).toFixed(1);
+ok(tmp === "1.8", "num(1.76).toFixed(1) = " + tmp);
+tmp = (new Number(7.92)).toFixed(5);
+ok(tmp === "7.92000", "num(7.92).toFixed(5) = " + tmp);
+tmp = (new Number(2.88)).toFixed();
+ok(tmp === "3", "num(2.88).toFixed = " + tmp);
+tmp = (new Number(-2.5)).toFixed();
+ok(tmp === "-3", "num(-2.5).toFixed = " + tmp);
+tmp = (new Number(1000000000000000128)).toFixed(0);
+//todo_wine ok(tmp === "1000000000000000100", "num(1000000000000000128) = " + tmp);
+tmp = (new Number(3.14).toFixed(NaN));
+ok(tmp === "3", "num(3.14).toFixed = " + tmp);
+tmp = (new Number(0.95).toFixed(1));
+ok(tmp === "1.0", "num(0.95).toFixed(1) = " + tmp);
+tmp = (new Number(1e900)).toFixed(0);
+ok(tmp === "Infinity", "num(1000000000000000128) = " + tmp);
+tmp = (new Number(0.12345678901234567890123)).toFixed(20);
+ok(tmp === "0.12345678901234568000", "num(0.12345678901234567890123) = " + tmp);
 
 ok(Number() === 0, "Number() = " + Number());
 ok(Number(false) === 0, "Number(false) = " + Number(false));
@@ -1994,7 +2017,8 @@ var exception_array = {
 
     E_ILLEGAL_ASSIGN:  { type: "ReferenceError", number: -2146823280 },
 
-    E_SUBSCRIPT_OUT_OF_RANGE:  {type: "RangeError", number: -2146828279 },
+    E_FRACTION_DIGITS_OUT_OF_RANGE:  {type: "RangeError", number: -2146823262 },
+    E_SUBSCRIPT_OUT_OF_RANGE:        {type: "RangeError", number: -2146828279 },
 
     E_REGEXP_SYNTAX_ERROR:  { type: "RegExpError", number: -2146823271 },
 
@@ -2027,8 +2051,10 @@ testException(function() {createArray().getItem(3);}, "E_SUBSCRIPT_OUT_OF_RANGE"
 testException(function() {date.setTime();}, "E_ARG_NOT_OPT");
 testException(function() {date.setYear();}, "E_ARG_NOT_OPT");
 testException(function() {arr.test();}, "E_NO_PROPERTY");
-testException(function() {arr.toString = Number.prototype.toString; arr.toString();}, "E_NOT_NUM");
+testException(function() {Number.prototype.toString.call(arr);}, "E_NOT_NUM");
+testException(function() {Number.prototype.toFixed.call(arr);}, "E_NOT_NUM");
 testException(function() {(new Number(3)).toString(1);}, "E_INVALID_CALL_ARG");
+testException(function() {(new Number(3)).toFixed(21);}, "E_FRACTION_DIGITS_OUT_OF_RANGE");
 testException(function() {not_existing_variable.something();}, "E_UNDEFINED");
 testException(function() {date();}, "E_NOT_FUNC");
 testException(function() {arr();}, "E_NOT_FUNC");

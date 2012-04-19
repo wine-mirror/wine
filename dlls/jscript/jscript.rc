@@ -54,6 +54,7 @@ STRINGTABLE
     IDS_REGEXP_SYNTAX_ERROR "Syntax error in regular expression"
     IDS_URI_INVALID_CODING  "URI to be decoded is incorrect"
     IDS_URI_INVALID_CHAR    "URI to be encoded contains invalid characters"
+    IDS_FRACTION_DIGITS_OUT_OF_RANGE "Number of fraction digits is out of range"
     IDS_INVALID_LENGTH      "Array length must be a finite positive integer"
     IDS_ARRAY_EXPECTED      "Array object expected"
 }

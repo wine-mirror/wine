@@ -3580,10 +3580,16 @@ msgid "URI to be decoded is incorrect"
 msgstr "De te decoderen URI is niet correct"
 
 #: jscript.rc:57
+#, fuzzy
+#| msgid "Enumeration value out of range.\n"
+msgid "Number of fraction digits is out of range"
+msgstr "Opsommingsaantal buiten bereik.\n"
+
+#: jscript.rc:58
 msgid "Array length must be a finite positive integer"
 msgstr "Array lengte moet een eindig, positief geheel getal zijn"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Array object expected"
 msgstr "Array object verwacht"
 

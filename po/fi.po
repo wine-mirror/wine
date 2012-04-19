@@ -3526,10 +3526,16 @@ msgid "URI to be decoded is incorrect"
 msgstr "Dekoodattava URI on virheellinen"
 
 #: jscript.rc:57
+#, fuzzy
+#| msgid "Enumeration value out of range.\n"
+msgid "Number of fraction digits is out of range"
+msgstr "Arvo on luettelon ulkopuolella.\n"
+
+#: jscript.rc:58
 msgid "Array length must be a finite positive integer"
 msgstr "Taulukon pituuden täytyy olla positiivinen kokonaisluku"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Array object expected"
 msgstr "Odotettiin taulukkoa"
 

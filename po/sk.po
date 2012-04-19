@@ -3459,10 +3459,14 @@ msgid "URI to be decoded is incorrect"
 msgstr ""
 
 #: jscript.rc:57
-msgid "Array length must be a finite positive integer"
+msgid "Number of fraction digits is out of range"
 msgstr ""
 
 #: jscript.rc:58
+msgid "Array length must be a finite positive integer"
+msgstr ""
+
+#: jscript.rc:59
 msgid "Array object expected"
 msgstr ""
 

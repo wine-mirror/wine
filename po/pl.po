@@ -3551,10 +3551,16 @@ msgid "URI to be decoded is incorrect"
 msgstr "URI do dekodowania jest niepoprawny"
 
 #: jscript.rc:57
+#, fuzzy
+#| msgid "Enumeration value out of range.\n"
+msgid "Number of fraction digits is out of range"
+msgstr "Wartość typu wyliczeniowego poza zakresem.\n"
+
+#: jscript.rc:58
 msgid "Array length must be a finite positive integer"
 msgstr "Długość tablicy musi być skończoną dodatnią liczbą stałą"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Array object expected"
 msgstr "Oczekiwany obiekt tablicowy"
 

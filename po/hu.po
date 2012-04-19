@@ -3551,10 +3551,16 @@ msgid "URI to be decoded is incorrect"
 msgstr "A kódolandó URI érvénytelen karaktereket tartalmaz"
 
 #: jscript.rc:57
+#, fuzzy
+#| msgid "Enumeration value out of range.\n"
+msgid "Number of fraction digits is out of range"
+msgstr "Felsorolási érték határon kívül esik.\n"
+
+#: jscript.rc:58
 msgid "Array length must be a finite positive integer"
 msgstr "A tömb hosszának egy véges pozitív egész számnak kell lennie"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Array object expected"
 msgstr "Tömb objektumot vártam"
 

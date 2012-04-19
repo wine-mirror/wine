@@ -3531,10 +3531,16 @@ msgid "URI to be decoded is incorrect"
 msgstr "デコードされるURIが正しくありません"
 
 #: jscript.rc:57
+#, fuzzy
+#| msgid "Enumeration value out of range.\n"
+msgid "Number of fraction digits is out of range"
+msgstr "列挙値が範囲外です。\n"
+
+#: jscript.rc:58
 msgid "Array length must be a finite positive integer"
 msgstr "配列の長さは有限の正整数でなければなりません"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Array object expected"
 msgstr "配列オブジェクトを期待していました"
 

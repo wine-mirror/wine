@@ -3533,10 +3533,14 @@ msgid "URI to be decoded is incorrect"
 msgstr "URI care trebuie codificat conține caractere nevalide"
 
 #: jscript.rc:57
+msgid "Number of fraction digits is out of range"
+msgstr ""
+
+#: jscript.rc:58
 msgid "Array length must be a finite positive integer"
 msgstr "Lungimea unei matrice trebuie să fie un număr întreg pozitiv"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Array object expected"
 msgstr "Se așteaptă un obiect matrice"
 
