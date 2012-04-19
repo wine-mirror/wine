@@ -425,18 +425,17 @@ void invalidate_dce( HWND hwnd, const RECT *extra_rect )
         if (dce->hwnd == hwnd || IsChild( hwnd, dce->hwnd ))
         {
             make_dc_dirty( dce );
+            continue;
         }
-        else  /* otherwise check if the window rectangle intersects this DCE window */
+
+        /* otherwise check if the window rectangle intersects this DCE window */
+        if (hwndScope == dce->hwnd || IsChild( hwndScope, dce->hwnd ))
         {
-            if (hwndScope == GetDesktopWindow() ||
-                hwndScope == dce->hwnd || IsChild( hwndScope, dce->hwnd ))
-            {
-                RECT dce_rect, tmp;
-                GetWindowRect( dce->hwnd, &dce_rect );
-                if (IntersectRect( &tmp, &dce_rect, &window_rect ) ||
-                    (extra_rect && IntersectRect( &tmp, &dce_rect, extra_rect )))
-                    make_dc_dirty( dce );
-            }
+            RECT dce_rect, tmp;
+            GetWindowRect( dce->hwnd, &dce_rect );
+            if (IntersectRect( &tmp, &dce_rect, &window_rect ) ||
+                (extra_rect && IntersectRect( &tmp, &dce_rect, extra_rect )))
+                make_dc_dirty( dce );
         }
     }
     USER_Unlock();
