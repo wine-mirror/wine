@@ -326,7 +326,7 @@ static void test_gettext(void)
         toolinfoA.lpszText = bufA;
         SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&toolinfoA);
         ok(toolinfoA.lpszText == NULL,
-           "expected NULL, got %p", toolinfoA.lpszText);
+           "expected NULL, got %p\n", toolinfoA.lpszText);
     }
     else
     {
