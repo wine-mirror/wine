@@ -2752,9 +2752,7 @@ msgstr ""
 
 #: cryptui.rc:152
 msgid "The specified file already exists. Do you want to replace it?"
-msgstr ""
-"Dosiero estas jam ekzistanta.\n"
-"Ĉu vi volas anstataŭi ĝin?"
+msgstr "Dosiero estas jam ekzistanta. Ĉu vi volas anstataŭi ĝin?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -7951,6 +7949,7 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "Dosiero jam ekzistas je vojo %1.\n"
+"\n"
 "Ĉu vi volas anstataŭi ĝin?"
 
 #: shell32.rc:247
@@ -7960,6 +7959,7 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "Dosierujo jam ekzistas je %1.\n"
+"\n"
 "Ĉu vi volas anstataŭi ĝin?"
 
 #: shell32.rc:248
