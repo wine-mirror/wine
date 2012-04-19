@@ -3706,10 +3706,16 @@ msgid "Number of fraction digits is out of range"
 msgstr "Enum-verdien er utenfor rekkevidde.\n"
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Enumeration value out of range.\n"
+msgid "Precision is out of range"
+msgstr "Enum-verdien er utenfor rekkevidde.\n"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "Rekkens lengde må være et endelig, positivt tall"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "Forventet rekke-objekt"
 

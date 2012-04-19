@@ -3463,10 +3463,16 @@ msgid "Number of fraction digits is out of range"
 msgstr ""
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Print range"
+msgid "Precision is out of range"
+msgstr "Rozsah tlače"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr ""
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr ""
 

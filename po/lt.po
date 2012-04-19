@@ -3546,10 +3546,16 @@ msgid "Number of fraction digits is out of range"
 msgstr "Išvardijimo reikšmė ne tarp rėžių.\n"
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Subscript out of range"
+msgid "Precision is out of range"
+msgstr "Indeksas nepatenka į rėžius"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "Masyvo dydis turi būti teigiamas sveikasis skaičius"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "Tikėtasi masyvo objekto"
 

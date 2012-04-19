@@ -3532,10 +3532,16 @@ msgid "Number of fraction digits is out of range"
 msgstr "Arvo on luettelon ulkopuolella.\n"
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Subscript out of range"
+msgid "Precision is out of range"
+msgstr "Indeksi alueen ulkopuolella"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "Taulukon pituuden täytyy olla positiivinen kokonaisluku"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "Odotettiin taulukkoa"
 

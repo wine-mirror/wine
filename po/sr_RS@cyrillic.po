@@ -3566,10 +3566,16 @@ msgid "Number of fraction digits is out of range"
 msgstr "Потпис је ван домета.\n"
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Subscript out of range"
+msgid "Precision is out of range"
+msgstr "Потпис је ван домета"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "Низ дужине мора бити коначан позитиван цео број"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "Очекивани низ објекта"
 

@@ -3557,10 +3557,16 @@ msgid "Number of fraction digits is out of range"
 msgstr "Wartość typu wyliczeniowego poza zakresem.\n"
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Subscript out of range"
+msgid "Precision is out of range"
+msgstr "Indeks dolny poza zakresem"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "Długość tablicy musi być skończoną dodatnią liczbą stałą"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "Oczekiwany obiekt tablicowy"
 

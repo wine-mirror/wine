@@ -3560,10 +3560,16 @@ msgid "Number of fraction digits is out of range"
 msgstr "Valeur d'énumération hors plage.\n"
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Subscript out of range"
+msgid "Precision is out of range"
+msgstr "Indice hors limites"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "La longueur d'un tableau doit être un entier positif"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "Objet tableau attendu"
 

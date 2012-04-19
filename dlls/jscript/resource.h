@@ -55,5 +55,6 @@
 #define IDS_URI_INVALID_CHAR                0x13A0
 #define IDS_URI_INVALID_CODING              0x13A1
 #define IDS_FRACTION_DIGITS_OUT_OF_RANGE    0x13A2
+#define IDS_PRECISION_OUT_OF_RANGE          0x13A3
 #define IDS_INVALID_LENGTH                  0x13A5
 #define IDS_ARRAY_EXPECTED                  0x13A7

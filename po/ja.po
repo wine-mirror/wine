@@ -3537,10 +3537,16 @@ msgid "Number of fraction digits is out of range"
 msgstr "列挙値が範囲外です。\n"
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Subscript out of range"
+msgid "Precision is out of range"
+msgstr "添字が範囲外です"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "配列の長さは有限の正整数でなければなりません"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "配列オブジェクトを期待していました"
 

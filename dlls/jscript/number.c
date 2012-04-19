@@ -440,8 +440,51 @@ static HRESULT Number_toExponential(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
 static HRESULT Number_toPrecision(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    NumberInstance *number;
+    INT prec = 0, size;
+    DOUBLE val;
+    BSTR str;
+    HRESULT hres;
+
+    if(!(number = number_this(jsthis)))
+        return throw_type_error(ctx, ei, JS_E_NUMBER_EXPECTED, NULL);
+
+    if(arg_cnt(dp)) {
+        hres = to_int32(ctx, get_arg(dp, 0), ei, &prec);
+        if(FAILED(hres))
+            return hres;
+
+        if(prec<1 || prec>21)
+            return throw_range_error(ctx, ei, JS_E_PRECISION_OUT_OF_RANGE, NULL);
+    }
+
+    val = number->value;
+    if(isinf(val) || isnan(val) || !prec) {
+        VARIANT v;
+
+        num_set_val(&v, val);
+        hres = to_string(ctx, &v, ei, &str);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        if(val != 0)
+            size = floor(log10(val>0 ? val : -val)) + 1;
+        else
+            size = 1;
+
+        if(size > prec)
+            number_to_exponential(val, prec-1, &str);
+        else
+            number_to_fixed(val, prec-size, &str);
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = str;
+    }else {
+        SysFreeString(str);
+    }
+    return S_OK;
 }
 
 static HRESULT Number_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,

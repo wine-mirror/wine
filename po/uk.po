@@ -3546,10 +3546,16 @@ msgid "Number of fraction digits is out of range"
 msgstr ""
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Subscript out of range"
+msgid "Precision is out of range"
+msgstr "Індекс поза діапазоном"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "Довжиною масиву повинне бути скінченне додатнє ціле число"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "Очікується об'єкт Array"
 

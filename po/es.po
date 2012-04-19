@@ -3556,10 +3556,16 @@ msgid "Number of fraction digits is out of range"
 msgstr "Valor de la enumeración fuera de rango.\n"
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Subscript out of range"
+msgid "Precision is out of range"
+msgstr "Subíndice fuera de rango"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "La longitud del array debe ser un entero positivo finito"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "Objeto array esperado"
 

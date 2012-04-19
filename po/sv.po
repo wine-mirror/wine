@@ -3527,10 +3527,16 @@ msgid "Number of fraction digits is out of range"
 msgstr "Uppräkningsvärde utanför giltigt intervall.\n"
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Subscript out of range"
+msgid "Precision is out of range"
+msgstr "Index utanför giltigt intervall"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "Array-längd måste vara ett positivt ändligt heltal"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "Array-objekt förväntades"
 

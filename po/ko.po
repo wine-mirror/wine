@@ -3526,10 +3526,16 @@ msgid "Number of fraction digits is out of range"
 msgstr "열거 값이 범위를 벗어남.\n"
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Subscript out of range"
+msgid "Precision is out of range"
+msgstr "첨자가 범위를 벗어남"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "배열 길이는 반드시  한정된 양의 정수이어야 함"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "배열 객체가 필요함"
 

@@ -3557,10 +3557,16 @@ msgid "Number of fraction digits is out of range"
 msgstr "Felsorolási érték határon kívül esik.\n"
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Subscript out of range"
+msgid "Precision is out of range"
+msgstr "Érvénytelen alszkript"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "A tömb hosszának egy véges pozitív egész számnak kell lennie"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "Tömb objektumot vártam"
 

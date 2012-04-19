@@ -3543,10 +3543,16 @@ msgid "Number of fraction digits is out of range"
 msgstr "Aufzählungswert außerhalb des Bereichs.\n"
 
 #: jscript.rc:58
+#, fuzzy
+#| msgid "Subscript out of range"
+msgid "Precision is out of range"
+msgstr "Index außerhalb des Bereichs"
+
+#: jscript.rc:59
 msgid "Array length must be a finite positive integer"
 msgstr "Array-Größe muss eine natürliche Zahl sein"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Array object expected"
 msgstr "Array Objekt erwartet"
 
