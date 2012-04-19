@@ -332,6 +332,12 @@ static WORD thumb_disasm_hireg(WORD inst, ADDRESS64 *addr)
     if (h1) dst += 8;
     if (h2) src += 8;
 
+    if (op == 2 && dst == src) /* mov rx, rx */
+    {
+        dbg_printf("\n\tnop");
+        return 0;
+    }
+
     if (op == 3)
         dbg_printf("\n\tb%sx\t%s", h1?"l":"", tbl_regs[src]);
     else
@@ -395,6 +401,15 @@ static WORD thumb_disasm_condbranch(WORD inst, ADDRESS64 *addr)
 {
     WORD offset = inst & 0x00ff;
     dbg_printf("\n\tb%s\t%04x", tbl_cond[(inst >> 8) & 0x0f], offset);
+    return 0;
+}
+
+static WORD thumb_disasm_loadadr(WORD inst, ADDRESS64 *addr)
+{
+    WORD src = (inst >> 11) & 0x01;
+    WORD offset = (inst & 0xff) << 2;
+
+    dbg_printf("\n\tadd\t%s, %s, #%d", tbl_regs[(inst >> 8) & 0x07], src ? "sp" : "pc", offset);
     return 0;
 }
 
@@ -506,6 +521,7 @@ static const struct inst_thumb16 tbl_thumb16[] = {
     { 0xf600, 0xb400, thumb_disasm_blocktrans },
     { 0xf800, 0xf000, thumb_disasm_longbl },
     { 0xf000, 0xd000, thumb_disasm_condbranch },
+    { 0xf000, 0xa000, thumb_disasm_loadadr },
     { 0xf800, 0x4800, thumb_disasm_ldrpcrel },
     { 0xf000, 0x9000, thumb_disasm_ldrsprel },
     { 0xff00, 0xb000, thumb_disasm_addsprel },
@@ -514,7 +530,7 @@ static const struct inst_thumb16 tbl_thumb16[] = {
     { 0xf000, 0xd000, thumb_disasm_condbranch },
     { 0xff00, 0xdf00, thumb_disasm_swi },
     { 0xff00, 0xbf00, thumb_disasm_nop },
-    { 0xfc00, 0x1c00, thumb_disasm_addsub },
+    { 0xf800, 0x1800, thumb_disasm_addsub },
     { 0xe000, 0x0000, thumb_disasm_movshift },
     { 0x0000, 0x0000, NULL }
 };
@@ -538,7 +554,7 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
     DWORD_PTR* pval;
 
     if (!memory_get_register(CV_ARM_CPSR, &pval, tmp, sizeof(tmp)))
-        dbg_printf("\n\tmemory_get_register failed: %s\n",tmp);
+        dbg_printf("\n\tmemory_get_register failed: %s", tmp);
     else
         db_disasm_thumb=(*pval & 0x20)?TRUE:FALSE;
 
@@ -559,17 +575,14 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
         }
 
         if (!matched) {
-                dbg_printf("\n\tUnknown Instruction: %08x\n", inst);
+                dbg_printf("\n\tUnknown Instruction: %08x", inst);
                 addr->Offset += size;
                 return;
         }
         else
         {
             if (!a_ptr->func(inst))
-            {
-                dbg_printf("\n");
                 addr->Offset += size;
-            }
             return;
         }
     }
@@ -585,17 +598,14 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
         }
 
         if (!matched) {
-                dbg_printf("\n\tUnknown Instruction: %08x\n", tinst);
+                dbg_printf("\n\tUnknown Instruction: %04x", tinst);
                 addr->Offset += size;
                 return;
         }
         else
         {
             if (!t_ptr->func(tinst, addr))
-            {
-                dbg_printf("\n");
                 addr->Offset += size;
-            }
         }
         return;
     }
