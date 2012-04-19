@@ -138,6 +138,72 @@ static HRESULT create_file(const char *filename, const unsigned char *data, cons
     return D3DERR_INVALIDCALL;
 }
 
+#define DDS_CAPS 0x00000001
+#define DDS_HEIGHT 0x00000002
+#define DDS_WIDTH 0x00000004
+#define DDS_PIXELFORMAT 0x00001000
+
+#define DDSCAPS_TEXTURE 0x00001000
+
+#define DDSPF_ALPHAPIXELS 0x00000001
+#define DDSPF_ALPHA 0x00000002
+#define DDSPF_FOURCC 0x00000004
+#define DDSPF_RGB 0x00000040
+#define DDSPF_LUMINANCE 0x00020000
+
+static void check_dds_pixel_format(DWORD flags, DWORD fourcc, DWORD bpp,
+                                   DWORD rmask, DWORD gmask, DWORD bmask, DWORD amask,
+                                   D3DFORMAT expected_format)
+{
+    HRESULT hr;
+    D3DXIMAGE_INFO info;
+    struct
+    {
+        DWORD magic;
+        DWORD size;
+        DWORD flags;
+        DWORD height;
+        DWORD width;
+        DWORD padding[14];
+        struct
+        {
+            DWORD size;
+            DWORD flags;
+            DWORD fourcc;
+            DWORD bpp;
+            DWORD rmask;
+            DWORD gmask;
+            DWORD bmask;
+            DWORD amask;
+        } pixel_format;
+        DWORD caps;
+        DWORD padding2[4];
+        BYTE data[256];
+    } dds;
+
+    memset(&dds, 0, sizeof(dds));
+
+    dds.magic = MAKEFOURCC('D','D','S',' ');
+    dds.size = 124;
+    dds.flags = DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT;
+    dds.height = 4;
+    dds.width = 4;
+    dds.pixel_format.size = sizeof(dds.pixel_format);
+    dds.pixel_format.flags = flags;
+    dds.pixel_format.fourcc = fourcc;
+    dds.pixel_format.bpp = bpp;
+    dds.pixel_format.rmask = rmask;
+    dds.pixel_format.gmask = gmask;
+    dds.pixel_format.bmask = bmask;
+    dds.pixel_format.amask = amask;
+    dds.caps = DDSCAPS_TEXTURE;
+
+    hr = D3DXGetImageInfoFromFileInMemory(&dds, sizeof(dds), &info);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x for pixel format %#x, expected %#x\n", hr, expected_format, D3D_OK);
+    if (SUCCEEDED(hr))
+        ok(info.Format == expected_format, "D3DXGetImageInfoFromFileInMemory returned format %#x, expected %#x\n", info.Format, expected_format);
+}
+
 static void test_D3DXGetImageInfo(void)
 {
     HRESULT hr;
@@ -309,7 +375,34 @@ static void test_D3DXGetImageInfo(void)
             ok(info.ResourceType == D3DRTYPE_VOLUMETEXTURE, "Got resource type %#x, expected %#x\n", info.ResourceType, D3DRTYPE_VOLUMETEXTURE);
             ok(info.ImageFileFormat == D3DXIFF_DDS, "Got image file format %#x, expected %#x\n", info.ImageFileFormat, D3DXIFF_DDS);
         } else skip("Couldn't get image info from volume map in memory\n");
+
+        check_dds_pixel_format(DDSPF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0, D3DFMT_DXT1);
+        check_dds_pixel_format(DDSPF_FOURCC, MAKEFOURCC('D','X','T','2'), 0, 0, 0, 0, 0, D3DFMT_DXT2);
+        check_dds_pixel_format(DDSPF_FOURCC, MAKEFOURCC('D','X','T','3'), 0, 0, 0, 0, 0, D3DFMT_DXT3);
+        check_dds_pixel_format(DDSPF_FOURCC, MAKEFOURCC('D','X','T','4'), 0, 0, 0, 0, 0, D3DFMT_DXT4);
+        check_dds_pixel_format(DDSPF_FOURCC, MAKEFOURCC('D','X','T','5'), 0, 0, 0, 0, 0, D3DFMT_DXT5);
+        check_dds_pixel_format(DDSPF_FOURCC, MAKEFOURCC('R','G','B','G'), 0, 0, 0, 0, 0, D3DFMT_R8G8_B8G8);
+        check_dds_pixel_format(DDSPF_FOURCC, MAKEFOURCC('G','R','G','B'), 0, 0, 0, 0, 0, D3DFMT_G8R8_G8B8);
+        check_dds_pixel_format(DDSPF_FOURCC, MAKEFOURCC('U','Y','V','Y'), 0, 0, 0, 0, 0, D3DFMT_UYVY);
+        check_dds_pixel_format(DDSPF_RGB, 0, 16, 0xf800, 0x07e0, 0x001f, 0, D3DFMT_R5G6B5);
+        check_dds_pixel_format(DDSPF_RGB | DDSPF_ALPHAPIXELS, 0, 16, 0x7c00, 0x03e0, 0x001f, 0x8000, D3DFMT_A1R5G5B5);
+        check_dds_pixel_format(DDSPF_RGB | DDSPF_ALPHAPIXELS, 0, 16, 0x0f00, 0x00f0, 0x000f, 0xf000, D3DFMT_A4R4G4B4);
+        check_dds_pixel_format(DDSPF_RGB, 0, 8, 0xe0, 0x1c, 0x03, 0, D3DFMT_R3G3B2);
+        check_dds_pixel_format(DDSPF_ALPHA, 0, 8, 0, 0, 0, 0xff, D3DFMT_A8);
+        check_dds_pixel_format(DDSPF_RGB | DDSPF_ALPHAPIXELS, 0, 16, 0x00e0, 0x001c, 0x0003, 0xff00, D3DFMT_A8R3G3B2);
+        check_dds_pixel_format(DDSPF_RGB, 0, 16, 0xf00, 0x0f0, 0x00f, 0, D3DFMT_X4R4G4B4);
+        check_dds_pixel_format(DDSPF_RGB | DDSPF_ALPHAPIXELS, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000, D3DFMT_A2B10G10R10);
+        check_dds_pixel_format(DDSPF_RGB | DDSPF_ALPHAPIXELS, 0, 32, 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000, D3DFMT_A2R10G10B10);
+        check_dds_pixel_format(DDSPF_RGB | DDSPF_ALPHAPIXELS, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000, D3DFMT_A8R8G8B8);
+        check_dds_pixel_format(DDSPF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0, D3DFMT_X8R8G8B8);
+        check_dds_pixel_format(DDSPF_RGB, 0, 32, 0x0000ffff, 0xffff0000, 0, 0, D3DFMT_G16R16);
+        check_dds_pixel_format(DDSPF_LUMINANCE, 0, 8, 0xff, 0, 0, 0, D3DFMT_L8);
+        check_dds_pixel_format(DDSPF_LUMINANCE | DDSPF_ALPHAPIXELS, 0, 16, 0x00ff, 0, 0, 0xff00, D3DFMT_A8L8);
+        check_dds_pixel_format(DDSPF_LUMINANCE | DDSPF_ALPHAPIXELS, 0, 8, 0x0f, 0, 0, 0xf0, D3DFMT_A4L4);
     }
+
+    hr = D3DXGetImageInfoFromFileInMemory(dds_16bit, sizeof(dds_16bit) - 1, &info);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
 
     /* cleanup */
