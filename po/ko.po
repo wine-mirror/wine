@@ -2009,7 +2009,7 @@ msgstr "인증 방침"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "접근 키 식별자:"
+msgstr "접근 키 식별자: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -7262,8 +7262,7 @@ msgid ""
 "Insert the manufacturer's installation disk, and then\n"
 "make sure the correct drive is selected below"
 msgstr ""
-"제작사의 설치 디스크를 삽입하고, 아래의 선택된 드라이브가 올바른지 확인하시"
-"오 "
+"제작사의 설치 디스크를 삽입하고, 아래의 선택된 드라이브가 올바른지 확인하시오"
 
 #: setupapi.rc:54
 msgid "Copy manufacturer's files from:"
