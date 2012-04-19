@@ -9585,6 +9585,7 @@ msgstr ""
 "un subdirectorio.\n"
 
 #: cmd.rc:160
+#, fuzzy
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr ""
 "RMDIR <directorio> es la versión corta de RMDIR. Este comando borra un "
