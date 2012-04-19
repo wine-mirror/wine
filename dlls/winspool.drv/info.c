@@ -995,6 +995,21 @@ static LPCWSTR get_opened_printer_name(HANDLE hprn)
     return printer->name;
 }
 
+static DWORD open_printer_reg_key( const WCHAR *name, HKEY *key )
+{
+    HKEY printers;
+    DWORD err;
+
+    *key = NULL;
+    err = RegCreateKeyW( HKEY_LOCAL_MACHINE, PrintersW, &printers );
+    if (err) return err;
+
+    err = RegOpenKeyW( printers, name, key );
+    if (err) err = ERROR_INVALID_PRINTER_NAME;
+    RegCloseKey( printers );
+    return err;
+}
+
 /******************************************************************
  *  WINSPOOL_GetOpenedPrinterRegKey
  *
@@ -1002,24 +1017,9 @@ static LPCWSTR get_opened_printer_name(HANDLE hprn)
 static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
 {
     LPCWSTR name = get_opened_printer_name(hPrinter);
-    DWORD ret;
-    HKEY hkeyPrinters;
 
     if(!name) return ERROR_INVALID_HANDLE;
-
-    if((ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters)) !=
-       ERROR_SUCCESS)
-        return ret;
-
-    if(RegOpenKeyW(hkeyPrinters, name, phkey) != ERROR_SUCCESS)
-    {
-        ERR("Can't find opened printer %s in registry\n",
-            debugstr_w(name));
-        RegCloseKey(hkeyPrinters);
-        return ERROR_INVALID_PRINTER_NAME; /* ? */
-    }
-    RegCloseKey(hkeyPrinters);
-    return ERROR_SUCCESS;
+    return open_printer_reg_key( name, phkey );
 }
 
 void WINSPOOL_LoadSystemPrinters(void)
@@ -3872,30 +3872,18 @@ static BOOL WINSPOOL_GetPrinter_9(HKEY hkeyPrinter, PRINTER_INFO_9W *pi9, LPBYTE
 BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 			DWORD cbBuf, LPDWORD pcbNeeded)
 {
-    LPCWSTR name;
-    DWORD size, needed = 0;
+    DWORD size, needed = 0, err;
     LPBYTE ptr = NULL;
-    HKEY hkeyPrinter, hkeyPrinters;
+    HKEY hkeyPrinter;
     BOOL ret;
 
     TRACE("(%p,%d,%p,%d,%p)\n",hPrinter,Level,pPrinter,cbBuf, pcbNeeded);
 
-    if (!(name = get_opened_printer_name(hPrinter))) {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
-    }
-
-    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
-       ERROR_SUCCESS) {
-        ERR("Can't create Printers key\n");
-	return FALSE;
-    }
-    if(RegOpenKeyW(hkeyPrinters, name, &hkeyPrinter) != ERROR_SUCCESS)
+    err = WINSPOOL_GetOpenedPrinterRegKey( hPrinter, &hkeyPrinter );
+    if (err)
     {
-        ERR("Can't find opened printer %s in registry\n", debugstr_w(name));
-	RegCloseKey(hkeyPrinters);
-        SetLastError(ERROR_INVALID_PRINTER_NAME); /* ? */
-	return FALSE;
+        SetLastError( err );
+        return FALSE;
     }
 
     switch(Level) {
@@ -4016,13 +4004,11 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
     default:
         FIXME("Unimplemented level %d\n", Level);
         SetLastError(ERROR_INVALID_LEVEL);
-	RegCloseKey(hkeyPrinters);
 	RegCloseKey(hkeyPrinter);
 	return FALSE;
     }
 
     RegCloseKey(hkeyPrinter);
-    RegCloseKey(hkeyPrinters);
 
     TRACE("returning %d needed = %d\n", ret, needed);
     if(pcbNeeded) *pcbNeeded = needed;
@@ -4559,7 +4545,7 @@ BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
     WCHAR DriverName[100];
     DWORD ret, type, size, needed = 0;
     LPBYTE ptr = NULL;
-    HKEY hkeyPrinter, hkeyPrinters, hkeyDrivers;
+    HKEY hkeyPrinter, hkeyDrivers;
     const printenv_t * env;
 
     TRACE("(%p,%s,%d,%p,%d,%p)\n",hPrinter,debugstr_w(pEnvironment),
@@ -4581,24 +4567,19 @@ BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
     env = validate_envW(pEnvironment);
     if (!env) return FALSE;     /* SetLastError() is in validate_envW */
 
-    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
-       ERROR_SUCCESS) {
-        ERR("Can't create Printers key\n");
-	return FALSE;
+    ret = open_printer_reg_key( name, &hkeyPrinter );
+    if (ret)
+    {
+        ERR( "Can't find opened printer %s in registry\n", debugstr_w(name) );
+        SetLastError( ret );
+        return FALSE;
     }
-    if(RegOpenKeyW(hkeyPrinters, name, &hkeyPrinter)
-       != ERROR_SUCCESS) {
-        ERR("Can't find opened printer %s in registry\n", debugstr_w(name));
-	RegCloseKey(hkeyPrinters);
-        SetLastError(ERROR_INVALID_PRINTER_NAME); /* ? */
-	return FALSE;
-    }
+
     size = sizeof(DriverName);
     DriverName[0] = 0;
     ret = RegQueryValueExW(hkeyPrinter, Printer_DriverW, 0, &type,
 			   (LPBYTE)DriverName, &size);
     RegCloseKey(hkeyPrinter);
-    RegCloseKey(hkeyPrinters);
     if(ret != ERROR_SUCCESS) {
         ERR("Can't get DriverName for printer %s\n", debugstr_w(name));
 	return FALSE;
