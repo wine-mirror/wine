@@ -9463,12 +9463,12 @@ msgstr ""
 #: cmd.rc:307 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
-msgstr ""
+msgstr "O"
 
 #: cmd.rc:308 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
-msgstr ""
+msgstr "N"
 
 #: cmd.rc:309
 msgid "File association missing for extension %1\n"
@@ -9538,7 +9538,7 @@ msgstr ""
 #: cmd.rc:327 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr ""
+msgstr "V"
 
 #: cmd.rc:328
 #, fuzzy
@@ -9609,11 +9609,11 @@ msgstr ""
 
 #: cmd.rc:343
 msgid " (Yes|No)"
-msgstr ""
+msgstr " (Áno|Nie)"
 
 #: cmd.rc:344
 msgid " (Yes|No|All)"
-msgstr ""
+msgstr " (Áno|Nie|Všetky)"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
