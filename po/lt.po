@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-03-26 21:02+0300\n"
+"PO-Revision-Date: 2012-04-19 22:52+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -3540,16 +3540,12 @@ msgid "URI to be decoded is incorrect"
 msgstr "Dekoduojamas URI yra neteisingas"
 
 #: jscript.rc:57
-#, fuzzy
-#| msgid "Enumeration value out of range.\n"
 msgid "Number of fraction digits is out of range"
-msgstr "Išvardijimo reikšmė ne tarp rėžių.\n"
+msgstr "Trupmeninės dalies skaitmenų skaičius nepatenka į rėžius"
 
 #: jscript.rc:58
-#, fuzzy
-#| msgid "Subscript out of range"
 msgid "Precision is out of range"
-msgstr "Indeksas nepatenka į rėžius"
+msgstr "Tikslumas nepatenka į rėžius"
 
 #: jscript.rc:59
 msgid "Array length must be a finite positive integer"
