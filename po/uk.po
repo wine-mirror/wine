@@ -9764,7 +9764,9 @@ msgstr ""
 "EXIT завершує поточну сесію командного рядка та повертає вас\n"
 "до операційної системи чи оболонки, з якої ви запустили cmd.\n"
 
+# FIXME: Missing CHOICE
 #: cmd.rc:304
+#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
