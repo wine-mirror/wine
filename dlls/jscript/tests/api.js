@@ -1046,6 +1046,21 @@ ok(tmp === "Infinity", "num(1000000000000000128) = " + tmp);
 tmp = (new Number(0.12345678901234567890123)).toFixed(20);
 ok(tmp === "0.12345678901234568000", "num(0.12345678901234567890123) = " + tmp);
 
+tmp = (new Number(2)).toExponential(3);
+ok(tmp === "2.000e+0", "num(2).toExponential(3) = " + tmp);
+tmp = (new Number(1.17e-32)).toExponential(20);
+ok(tmp === "1.17000000000000000000e-32", "num(1.17e-32).toExponential(20) = " + tmp);
+tmp = (new Number(0)).toExponential(7);
+ok(tmp === "0.0000000e+0", "num(0).toExponential(7) = " + tmp);
+tmp = (new Number(0)).toExponential(0);
+ok(tmp === "0e+0", "num(0).toExponential() = " + tmp);
+tmp = (new Number(-13.7567)).toExponential();
+ok(tmp === "-1.37567e+1", "num(-13.7567).toExponential() = " + tmp);
+tmp = (new Number(-32.1)).toExponential();
+ok(tmp === "-3.21e+1", "num(-32.1).toExponential() = " + tmp);
+tmp = (new Number(4723.4235)).toExponential();
+ok(tmp === "4.7234235e+3", "num(4723.4235).toExponential() = " + tmp);
+
 ok(Number() === 0, "Number() = " + Number());
 ok(Number(false) === 0, "Number(false) = " + Number(false));
 ok(Number("43") === 43, "Number('43') = " + Number("43"));
