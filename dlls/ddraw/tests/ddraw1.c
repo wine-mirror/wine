@@ -329,6 +329,18 @@ static IDirect3DViewport *create_viewport(IDirect3DDevice *device, UINT x, UINT 
     return viewport;
 }
 
+static void viewport_set_background(IDirect3DDevice *device, IDirect3DViewport *viewport,
+        IDirect3DMaterial *material)
+{
+    D3DMATERIALHANDLE material_handle;
+    HRESULT hr;
+
+    hr = IDirect3DMaterial2_GetHandle(material, device, &material_handle);
+    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+    hr = IDirect3DViewport2_SetBackground(viewport, material_handle);
+    ok(SUCCEEDED(hr), "Failed to set viewport background, hr %#x.\n", hr);
+}
+
 static void destroy_viewport(IDirect3DDevice *device, IDirect3DViewport *viewport)
 {
     HRESULT hr;
@@ -681,7 +693,6 @@ static void test_clipper_blt(void)
 static void test_coop_level_d3d_state(void)
 {
     D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
-    D3DMATERIALHANDLE background_handle;
     IDirectDrawSurface *rt, *surface;
     IDirect3DMaterial *background;
     IDirect3DViewport *viewport;
@@ -710,11 +721,7 @@ static void test_coop_level_d3d_state(void)
 
     background = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
     viewport = create_viewport(device, 0, 0, 640, 480);
-
-    hr = IDirect3DMaterial_GetHandle(background, device, &background_handle);
-    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
-    hr = IDirect3DViewport_SetBackground(viewport, background_handle);
-    ok(SUCCEEDED(hr), "Failed to set viewport background, hr %#x.\n", hr);
+    viewport_set_background(device, viewport, background);
 
     hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
@@ -771,7 +778,6 @@ static void test_surface_interface_mismatch(void)
     HRESULT hr;
     D3DCOLOR color;
     HWND window;
-    D3DMATERIALHANDLE background_handle;
     D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
@@ -845,11 +851,7 @@ static void test_surface_interface_mismatch(void)
 
     background = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
     viewport = create_viewport(device, 0, 0, 640, 480);
-
-    hr = IDirect3DMaterial_GetHandle(background, device, &background_handle);
-    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
-    hr = IDirect3DViewport_SetBackground(viewport, background_handle);
-    ok(SUCCEEDED(hr), "Failed to set viewport background, hr %#x.\n", hr);
+    viewport_set_background(device, viewport, background);
 
     hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
     ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
@@ -992,7 +994,6 @@ static void test_zenable(void)
         {{640.0f}, {  0.0f}, { 1.5f}, {1.0f}, {0xff00ff00}, {0x00000000}, {0.0f}, {0.0f}},
     };
     IDirect3DExecuteBuffer *execute_buffer;
-    D3DMATERIALHANDLE background_handle;
     D3DEXECUTEBUFFERDESC exec_desc;
     IDirect3DMaterial *background;
     IDirect3DViewport *viewport;
@@ -1026,11 +1027,7 @@ static void test_zenable(void)
 
     background = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
     viewport = create_viewport(device, 0, 0, 640, 480);
-
-    hr = IDirect3DMaterial_GetHandle(background, device, &background_handle);
-    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
-    hr = IDirect3DViewport_SetBackground(viewport, background_handle);
-    ok(SUCCEEDED(hr), "Failed to set viewport background, hr %#x.\n", hr);
+    viewport_set_background(device, viewport, background);
 
     memset(&exec_desc, 0, sizeof(exec_desc));
     exec_desc.dwSize = sizeof(exec_desc);
@@ -1128,7 +1125,6 @@ static void test_ck_rgba(void)
     };
 
     IDirect3DExecuteBuffer *execute_buffer;
-    D3DMATERIALHANDLE background_handle;
     D3DTEXTUREHANDLE texture_handle;
     D3DEXECUTEBUFFERDESC exec_desc;
     IDirect3DMaterial *background;
@@ -1162,11 +1158,7 @@ static void test_ck_rgba(void)
 
     background = create_diffuse_material(device, 1.0, 0.0f, 0.0f, 1.0f);
     viewport = create_viewport(device, 0, 0, 640, 480);
-
-    hr = IDirect3DMaterial_GetHandle(background, device, &background_handle);
-    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
-    hr = IDirect3DViewport_SetBackground(viewport, background_handle);
-    ok(SUCCEEDED(hr), "Failed to set viewport background, hr %#x.\n", hr);
+    viewport_set_background(device, viewport, background);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
