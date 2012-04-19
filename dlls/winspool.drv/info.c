@@ -1022,10 +1022,56 @@ static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
     return open_printer_reg_key( name, phkey );
 }
 
+static void old_printer_check( BOOL delete_phase )
+{
+    PRINTER_INFO_5W* pi;
+    DWORD needed, type, num, delete, i, size;
+    const DWORD one = 1;
+    HKEY key;
+    HANDLE hprn;
+
+    EnumPrintersW( PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num );
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return;
+
+    pi = HeapAlloc( GetProcessHeap(), 0, needed );
+    EnumPrintersW( PRINTER_ENUM_LOCAL, NULL, 5, (LPBYTE)pi, needed, &needed, &num );
+    for (i = 0; i < num; i++)
+    {
+        if (strncmpW( pi[i].pPortName, CUPS_Port, strlenW(CUPS_Port) ) &&
+            strncmpW( pi[i].pPortName, LPR_Port, strlenW(LPR_Port) ))
+            continue;
+
+        if (open_printer_reg_key( pi[i].pPrinterName, &key )) continue;
+
+        if (!delete_phase)
+        {
+            RegSetValueExW( key, May_Delete_Value, 0, REG_DWORD, (LPBYTE)&one, sizeof(one) );
+            RegCloseKey( key );
+        }
+        else
+        {
+            delete = 0;
+            size = sizeof( delete );
+            RegQueryValueExW( key, May_Delete_Value, NULL, &type, (LPBYTE)&delete, &size );
+            RegCloseKey( key );
+            if (delete)
+            {
+                TRACE( "Deleting old printer %s\n", debugstr_w(pi[i].pPrinterName) );
+                if (OpenPrinterW( pi[i].pPrinterName, &hprn, NULL ))
+                {
+                    DeletePrinter( hprn );
+                    ClosePrinter( hprn );
+                }
+                DeletePrinterDriverExW( NULL, NULL, pi[i].pPrinterName, 0, 0 );
+            }
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, pi);
+}
+
 void WINSPOOL_LoadSystemPrinters(void)
 {
     HKEY                hkey, hkeyPrinters;
-    HANDLE              hprn;
     DWORD               needed, num, i;
     WCHAR               PrinterName[256];
     BOOL                done = FALSE;
@@ -1034,7 +1080,7 @@ void WINSPOOL_LoadSystemPrinters(void)
        problems later if they don't.  If one is found to be missed we create one
        and set it equal to the name of the key */
     if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) == ERROR_SUCCESS) {
-        if(RegQueryInfoKeyA(hkeyPrinters, NULL, NULL, NULL, &num, NULL, NULL,
+        if(RegQueryInfoKeyW(hkeyPrinters, NULL, NULL, NULL, &num, NULL, NULL,
                             NULL, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
             for(i = 0; i < num; i++) {
                 if(RegEnumKeyW(hkeyPrinters, i, PrinterName, sizeof(PrinterName)/sizeof(PrinterName[0])) == ERROR_SUCCESS) {
@@ -1050,31 +1096,7 @@ void WINSPOOL_LoadSystemPrinters(void)
         RegCloseKey(hkeyPrinters);
     }
 
-    /* We want to avoid calling AddPrinter on printers as much as
-       possible, because on cups printers this will (eventually) lead
-       to a call to cupsGetPPD which takes forever, even with non-cups
-       printers AddPrinter takes a while.  So we'll tag all printers that
-       were automatically added last time around, if they still exist
-       we'll leave them be otherwise we'll delete them. */
-    if (EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num) && needed) {
-        PRINTER_INFO_5A* pi = HeapAlloc(GetProcessHeap(), 0, needed);
-        if(EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, (LPBYTE)pi, needed, &needed, &num)) {
-            for(i = 0; i < num; i++) {
-                if(pi[i].pPortName == NULL || !strncmp(pi[i].pPortName,"CUPS:", 5) || !strncmp(pi[i].pPortName, "LPR:", 4)) {
-                    if(OpenPrinterA(pi[i].pPrinterName, &hprn, NULL)) {
-                        if(WINSPOOL_GetOpenedPrinterRegKey(hprn, &hkey) == ERROR_SUCCESS) {
-                            DWORD dw = 1;
-                            RegSetValueExW(hkey, May_Delete_Value, 0, REG_DWORD, (LPBYTE)&dw, sizeof(dw));
-                            RegCloseKey(hkey);
-                        }
-                        ClosePrinter(hprn);
-                    }
-                }
-            }
-        }
-        HeapFree(GetProcessHeap(), 0, pi);
-    }
-
+    old_printer_check( FALSE );
 
 #ifdef SONAME_LIBCUPS
     done = CUPS_LoadPrinters();
@@ -1083,36 +1105,9 @@ void WINSPOOL_LoadSystemPrinters(void)
     if(!done) /* If we have any CUPS based printers, skip looking for printcap printers */
         PRINTCAP_LoadPrinters();
 
-    /* Now enumerate the list again and delete any printers that are still tagged */
-    EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num);
-    if(needed) {
-        PRINTER_INFO_5A* pi = HeapAlloc(GetProcessHeap(), 0, needed);
-        if(EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, (LPBYTE)pi, needed, &needed, &num)) {
-            for(i = 0; i < num; i++) {
-                if(pi[i].pPortName == NULL || !strncmp(pi[i].pPortName,"CUPS:", 5) || !strncmp(pi[i].pPortName, "LPR:", 4)) {
-                    if(OpenPrinterA(pi[i].pPrinterName, &hprn, NULL)) {
-                        BOOL delete_driver = FALSE;
-                        if(WINSPOOL_GetOpenedPrinterRegKey(hprn, &hkey) == ERROR_SUCCESS) {
-                            DWORD dw, type, size = sizeof(dw);
-                            if(RegQueryValueExW(hkey, May_Delete_Value, NULL, &type, (LPBYTE)&dw, &size) == ERROR_SUCCESS) {
-                                TRACE("Deleting old printer %s\n", pi[i].pPrinterName);
-                                DeletePrinter(hprn);
-                                delete_driver = TRUE;
-                            }
-                            RegCloseKey(hkey);
-                        }
-                        ClosePrinter(hprn);
-                        if(delete_driver)
-                            DeletePrinterDriverExA(NULL, NULL, pi[i].pPrinterName, 0, 0);
-                    }
-                }
-            }
-        }
-        HeapFree(GetProcessHeap(), 0, pi);
-    }
+    old_printer_check( TRUE );
 
     return;
-
 }
 
 /******************************************************************
