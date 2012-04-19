@@ -1166,11 +1166,11 @@ msgstr "mm"
 
 #: credui.rc:42
 msgid "&User name:"
-msgstr "&Uživatelské jméno"
+msgstr "&Uživatelské jméno:"
 
 #: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
-msgstr "&Heslo"
+msgstr "&Heslo:"
 
 #: credui.rc:47
 msgid "&Remember my password"
@@ -12644,7 +12644,7 @@ msgstr "Zobrazit rozšířené možnosti"
 
 #: winecfg.rc:240
 msgid "De&vice:"
-msgstr "&Zařízení"
+msgstr "&Zařízení:"
 
 #: winecfg.rc:242
 msgid "Bro&wse..."
