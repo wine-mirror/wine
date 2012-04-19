@@ -479,7 +479,6 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
         {
             HANDLE  hFile, hMap;
             void*   mapping;
-            DWORD   timestamp;
 
             timestamp = ~mf->dw1;
             size = ~mf->dw2;

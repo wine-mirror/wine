@@ -604,7 +604,6 @@ static inline int stabs_pts_read_method_info(struct ParseTypedefData* ptd)
         if (mthd == '*')
         {
             long int            ofs;
-            struct symt*        dt;
 
             PTS_ABORTIF(ptd, stabs_pts_read_number(ptd, &ofs) == -1);
             PTS_ABORTIF(ptd, *ptd->ptr++ != ';');

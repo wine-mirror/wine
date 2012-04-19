@@ -2188,7 +2188,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     vector_init(&files, sizeof(unsigned), 16);
     while (*traverse.data)
     {
-        unsigned int    dir_index, mod_time, length;
+        unsigned int    dir_index, mod_time;
         const char*     name;
         const char*     dir;
         unsigned*       psrc;
@@ -2199,7 +2199,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
         mod_time = dwarf2_leb128_as_unsigned(&traverse);
         length = dwarf2_leb128_as_unsigned(&traverse);
         dir = *(const char**)vector_at(&dirs, dir_index);
-        TRACE("Got file %s/%s (%u,%u)\n", dir, name, mod_time, length);
+        TRACE("Got file %s/%s (%u,%lu)\n", dir, name, mod_time, length);
         psrc = vector_add(&files, &ctx->pool);
         *psrc = source_new(ctx->module, dir, name);
     }

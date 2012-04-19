@@ -1551,7 +1551,6 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
     int                                 i, length;
     struct symt_block*                  block = NULL;
     struct symt*                        symt;
-    const char*                         name;
     struct symt_compiland*              compiland = NULL;
     struct location                     loc;
 
@@ -1947,9 +1946,13 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 	case S_PROCREF_V1:
 	case S_DATAREF_V1:
 	case S_LPROCREF_V1:
-            name = (const char*)sym + length;
-            length += (*name + 1 + 3) & ~3;
-            break;
+            {
+                const char* name;
+
+                name = (const char*)sym + length;
+                length += (*name + 1 + 3) & ~3;
+                break;
+            }
 
         case S_MSTOOL_V3: /* just to silence a few warnings */
         case S_MSTOOLINFO_V3:
