@@ -77,7 +77,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define HASHTABLE_LOCK          2
 #define HASHTABLE_FREE          3
 #define HASHTABLE_REDR          5
-#define HASHTABLE_FLAG_BITS     4
+#define HASHTABLE_FLAG_BITS     5
 
 #define DWORD_SIG(a,b,c,d)  (a | (b << 8) | (c << 16) | (d << 24))
 #define URL_SIGNATURE   DWORD_SIG('U','R','L',' ')
@@ -1228,7 +1228,7 @@ static DWORD URLCache_HashKey(LPCSTR lpszKey)
     DWORD i;
 
     for (i = 0; i < sizeof(key) / sizeof(key[0]); i++)
-        key[i] = lookupTable[i];
+        key[i] = lookupTable[(*lpszKey + i) & 0xFF];
 
     for (lpszKey++; *lpszKey && ((lpszKey[0] != '/') || (lpszKey[1] != 0)); lpszKey++)
     {
