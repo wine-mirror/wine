@@ -10284,7 +10284,7 @@ msgstr "&Quebrar automática de linha"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr "&Localizar..."
+msgstr "&Procurar...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
