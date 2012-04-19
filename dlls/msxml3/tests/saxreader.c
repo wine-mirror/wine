@@ -554,7 +554,7 @@ static const CHAR testXML[] =
 "   <Name>Captain Ahab</Name>\n"
 "</BankAccount>\n";
 
-static const CHAR szTestAttributes[] =
+static const char test_attributes[] =
 "<?xml version=\"1.0\" ?>\n"
 "<document xmlns:test=\"prefix_test\" xmlns=\"prefix\" test:arg1=\"arg1\" arg2=\"arg2\" test:ar3=\"arg3\">\n"
 "<node1 xmlns:p=\"test\" />"
@@ -733,6 +733,28 @@ static struct call_entry content_handler_test_attributes_alternate_4[] = {
     { CH_ENDTEST }
 };
 
+/* 'namespace' feature switched off */
+static struct attribute_entry ch_attributes_alt_no_ns[] = {
+    { "", "", "xmlns:test", "prefix_test" },
+    { "", "", "xmlns", "prefix" },
+    { "", "", "test:arg1", "arg1" },
+    { "", "", "arg2", "arg2" },
+    { "", "", "test:ar3", "arg3" },
+    { NULL }
+};
+
+static struct call_entry content_handler_test_attributes_alt_no_ns[] = {
+    { CH_PUTDOCUMENTLOCATOR, 1, 0, S_OK },
+    { CH_STARTDOCUMENT, 1, 22, S_OK },
+    { CH_STARTELEMENT, 2, 95, S_OK, "", "", "document", ch_attributes_alt_no_ns },
+    { CH_CHARACTERS, 3, 1, S_OK, "\n" },
+    { CH_STARTELEMENT, 3, 24, S_OK, "", "", "node1", ch_attributes2 },
+    { CH_ENDELEMENT, 3, 24, S_OK, "", "", "node1" },
+    { CH_ENDELEMENT, 3, 35, S_OK, "", "", "document" },
+    { CH_ENDDOCUMENT, 4, 0, S_OK },
+    { CH_ENDTEST }
+};
+
 static struct attribute_entry ch_attributes_alt_6[] = {
     { "prefix_test", "arg1", "test:arg1", "arg1" },
     { "", "arg2", "arg2", "arg2" },
@@ -796,6 +818,7 @@ static const char xmlspace_attr[] =
 
 static struct call_entry *expectCall;
 static ISAXLocator *locator;
+static ISAXXMLReader *g_reader;
 int msxml_version;
 
 static void set_expected_seq(struct call_entry *expected)
@@ -968,10 +991,15 @@ static HRESULT WINAPI contentHandler_startElement(
 
     if (len)
     {
+        VARIANT_BOOL v;
         int i;
 
         struct attribute_entry *attr;
         attr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len*sizeof(struct attribute_entry));
+
+        v = VARIANT_TRUE;
+        hr = ISAXXMLReader_getFeature(g_reader, _bstr_("http://xml.org/sax/features/namespaces"), &v);
+        EXPECT_HR(hr, S_OK);
 
         for (i = 0; i < len; i++)
         {
@@ -985,8 +1013,18 @@ static HRESULT WINAPI contentHandler_startElement(
             hr = ISAXAttributes_getValue(saxattr, i, &value, &value_len);
             EXPECT_HR(hr, S_OK);
 
-            attr[i].uriW   = SysAllocStringLen(uri, uri_len);
-            attr[i].localW = SysAllocStringLen(localname, local_len);
+            /* if 'namespaces' switched off uri and local name contains garbage */
+            if (v == VARIANT_FALSE && msxml_version > 0)
+            {
+                attr[i].uriW   = SysAllocStringLen(NULL, 0);
+                attr[i].localW = SysAllocStringLen(NULL, 0);
+            }
+            else
+            {
+                attr[i].uriW   = SysAllocStringLen(uri, uri_len);
+                attr[i].localW = SysAllocStringLen(localname, local_len);
+            }
+
             attr[i].qnameW = SysAllocStringLen(qname, qname_len);
             attr[i].valueW = SysAllocStringLen(value, value_len);
         }
@@ -1720,8 +1758,8 @@ static void test_saxreader(void)
     SAFEARRAYBOUND SADim[1];
     char *ptr = NULL;
     IStream *stream;
-    ULARGE_INTEGER liSize;
-    LARGE_INTEGER liPos;
+    ULARGE_INTEGER size;
+    LARGE_INTEGER pos;
     ULONG written;
     HANDLE file;
     static const CHAR testXmlA[] = "test.xml";
@@ -1742,8 +1780,14 @@ static void test_saxreader(void)
 
         hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER, &IID_ISAXXMLReader, (void**)&reader);
         EXPECT_HR(hr, S_OK);
+        g_reader = reader;
 
-        msxml_version = IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60) ? 6 : 0;
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40))
+            msxml_version = 4;
+        else if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+            msxml_version = 6;
+        else
+            msxml_version = 0;
 
         /* crashes on old versions */
         if (!IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) &&
@@ -1809,11 +1853,11 @@ static void test_saxreader(void)
         SafeArrayDestroy(sa);
 
         CreateStreamOnHGlobal(NULL, TRUE, &stream);
-        liSize.QuadPart = strlen(testXML);
-        IStream_SetSize(stream, liSize);
+        size.QuadPart = strlen(testXML);
+        IStream_SetSize(stream, size);
         IStream_Write(stream, testXML, strlen(testXML), &written);
-        liPos.QuadPart = 0;
-        IStream_Seek(stream, liPos, STREAM_SEEK_SET, NULL);
+        pos.QuadPart = 0;
+        IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
         V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
         V_UNKNOWN(&var) = (IUnknown*)stream;
 
@@ -1825,11 +1869,11 @@ static void test_saxreader(void)
         IStream_Release(stream);
 
         CreateStreamOnHGlobal(NULL, TRUE, &stream);
-        liSize.QuadPart = strlen(szTestAttributes);
-        IStream_SetSize(stream, liSize);
-        IStream_Write(stream, szTestAttributes, strlen(szTestAttributes), &written);
-        liPos.QuadPart = 0;
-        IStream_Seek(stream, liPos, STREAM_SEEK_SET, NULL);
+        size.QuadPart = strlen(test_attributes);
+        IStream_SetSize(stream, size);
+        IStream_Write(stream, test_attributes, strlen(test_attributes), &written);
+        pos.QuadPart = 0;
+        IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
         V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
         V_UNKNOWN(&var) = (IUnknown*)stream;
 
@@ -1962,6 +2006,32 @@ static void test_saxreader(void)
         else
             ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "xml:space handling", FALSE);
 
+        /* switch off 'namespaces' feature */
+        hr = ISAXXMLReader_putFeature(reader, _bstr_("http://xml.org/sax/features/namespaces"), VARIANT_FALSE);
+        EXPECT_HR(hr, S_OK);
+
+        CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        size.QuadPart = strlen(test_attributes);
+        IStream_SetSize(stream, size);
+        IStream_Write(stream, test_attributes, strlen(test_attributes), &written);
+        pos.QuadPart = 0;
+        IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+        V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
+        V_UNKNOWN(&var) = (IUnknown*)stream;
+
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+        {
+            test_seq = content_handler_test_attributes_alt_no_ns;
+        }
+        else
+            test_seq = content_handler_test_attributes;
+
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parse(reader, var);
+        EXPECT_HR(hr, S_OK);
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test attributes", TRUE);
+
         ISAXXMLReader_Release(reader);
         table++;
     }
@@ -2078,14 +2148,20 @@ struct feature_ns_entry_t {
     const GUID *guid;
     const char *clsid;
     VARIANT_BOOL value;
+    VARIANT_BOOL value2; /* feature value after feature set to 0xc */
 };
 
 static const struct feature_ns_entry_t feature_ns_entry_data[] = {
-    { &CLSID_SAXXMLReader,   "CLSID_SAXXMLReader",   VARIANT_TRUE },
-    { &CLSID_SAXXMLReader30, "CLSID_SAXXMLReader30", VARIANT_TRUE },
-    { &CLSID_SAXXMLReader40, "CLSID_SAXXMLReader40", VARIANT_TRUE },
-    { &CLSID_SAXXMLReader60, "CLSID_SAXXMLReader60", VARIANT_TRUE },
+    { &CLSID_SAXXMLReader,   "CLSID_SAXXMLReader",   VARIANT_TRUE, VARIANT_FALSE },
+    { &CLSID_SAXXMLReader30, "CLSID_SAXXMLReader30", VARIANT_TRUE, VARIANT_FALSE },
+    { &CLSID_SAXXMLReader40, "CLSID_SAXXMLReader40", VARIANT_TRUE, VARIANT_TRUE },
+    { &CLSID_SAXXMLReader60, "CLSID_SAXXMLReader60", VARIANT_TRUE, VARIANT_TRUE },
     { 0 }
+};
+
+static const char *feature_names[] = {
+    "http://xml.org/sax/features/namespaces",
+    0
 };
 
 static void test_saxreader_features(void)
@@ -2096,6 +2172,7 @@ static void test_saxreader_features(void)
     while (entry->guid)
     {
         VARIANT_BOOL value;
+        const char **name;
         HRESULT hr;
 
         hr = CoCreateInstance(entry->guid, NULL, CLSCTX_INPROC_SERVER, &IID_ISAXXMLReader, (void**)&reader);
@@ -2106,15 +2183,44 @@ static void test_saxreader_features(void)
             continue;
         }
 
-        value = 0xc;
-        hr = ISAXXMLReader_getFeature(reader, _bstr_("http://xml.org/sax/features/namespaces"), &value);
-        EXPECT_HR(hr, S_OK);
-        ok(entry->value == value, "%s: got wrong default value %x, expected %x\n", entry->clsid, value, entry->value);
+        name = feature_names;
+        while (*name)
+        {
+            value = 0xc;
+            hr = ISAXXMLReader_getFeature(reader, _bstr_(*name), &value);
+            EXPECT_HR(hr, S_OK);
+            ok(entry->value == value, "%s: got wrong default value %x, expected %x\n", entry->clsid, value, entry->value);
 
-        value = 0xc;
-        hr = ISAXXMLReader_getFeature(reader, _bstr_("http://xml.org/sax/features/namespace-prefixes"), &value);
-        EXPECT_HR(hr, S_OK);
-        ok(entry->value == value, "%s: got wrong default value %x, expected %x\n", entry->clsid, value, entry->value);
+            value = 0xc;
+            hr = ISAXXMLReader_putFeature(reader, _bstr_(*name), value);
+            EXPECT_HR(hr, S_OK);
+
+            value = 0xd;
+            hr = ISAXXMLReader_getFeature(reader, _bstr_(*name), &value);
+            EXPECT_HR(hr, S_OK);
+            if (IsEqualGUID(entry->guid, &CLSID_SAXXMLReader40) ||
+                IsEqualGUID(entry->guid, &CLSID_SAXXMLReader60))
+            todo_wine
+                ok(entry->value2 == value, "%s: got wrong value %x, expected %x\n", entry->clsid, value, entry->value2);
+            else
+                ok(entry->value2 == value, "%s: got wrong value %x, expected %x\n", entry->clsid, value, entry->value2);
+
+            hr = ISAXXMLReader_putFeature(reader, _bstr_(*name), VARIANT_FALSE);
+            EXPECT_HR(hr, S_OK);
+            value = 0xd;
+            hr = ISAXXMLReader_getFeature(reader, _bstr_(*name), &value);
+            EXPECT_HR(hr, S_OK);
+            ok(value == VARIANT_FALSE, "%s: got wrong value %x, expected VARIANT_FALSE\n", entry->clsid, value);
+
+            hr = ISAXXMLReader_putFeature(reader, _bstr_(*name), VARIANT_TRUE);
+            EXPECT_HR(hr, S_OK);
+            value = 0xd;
+            hr = ISAXXMLReader_getFeature(reader, _bstr_(*name), &value);
+            EXPECT_HR(hr, S_OK);
+            ok(value == VARIANT_TRUE, "%s: got wrong value %x, expected VARIANT_TRUE\n", entry->clsid, value);
+
+            name++;
+        }
 
         ISAXXMLReader_Release(reader);
 

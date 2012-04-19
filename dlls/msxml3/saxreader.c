@@ -302,6 +302,11 @@ static inline HRESULT get_feature_value(const saxreader *reader, saxreader_featu
     return S_OK;
 }
 
+static BOOL is_namespaces_enabled(const saxreader *reader)
+{
+    return (reader->version < MSXML4) || (reader->features & Namespaces);
+}
+
 static inline BOOL has_content_handler(const saxlocator *locator)
 {
     return  (locator->vbInterface && locator->saxreader->vbcontentHandler) ||
@@ -1286,42 +1291,53 @@ static void libxmlStartElementNS(
     if (has_content_handler(This))
     {
         BSTR uri;
-        int i;
 
-        for (i = 0; i < nb_namespaces; i++)
+        if (is_namespaces_enabled(This->saxreader))
         {
-            if(This->vbInterface)
-                hr = IVBSAXContentHandler_startPrefixMapping(
-                        This->saxreader->vbcontentHandler,
-                        &element->ns[i].prefix,
-                        &element->ns[i].uri);
-            else
-                hr = ISAXContentHandler_startPrefixMapping(
-                        This->saxreader->contentHandler,
-                        element->ns[i].prefix,
-                        SysStringLen(element->ns[i].prefix),
-                        element->ns[i].uri,
-                        SysStringLen(element->ns[i].uri));
+            int i;
 
-            if (sax_callback_failed(This, hr))
+            for (i = 0; i < nb_namespaces; i++)
             {
-                format_error_message_from_id(This, hr);
-                return;
+                if (This->vbInterface)
+                    hr = IVBSAXContentHandler_startPrefixMapping(
+                            This->saxreader->vbcontentHandler,
+                            &element->ns[i].prefix,
+                            &element->ns[i].uri);
+                else
+                    hr = ISAXContentHandler_startPrefixMapping(
+                            This->saxreader->contentHandler,
+                            element->ns[i].prefix,
+                            SysStringLen(element->ns[i].prefix),
+                            element->ns[i].uri,
+                            SysStringLen(element->ns[i].uri));
+
+                if (sax_callback_failed(This, hr))
+                {
+                    format_error_message_from_id(This, hr);
+                    return;
+                }
             }
         }
 
         uri = find_element_uri(This, URI);
 
         hr = SAXAttributes_populate(This, nb_namespaces, namespaces, nb_attributes, attributes);
-        if(hr == S_OK)
+        if (hr == S_OK)
         {
-            if(This->vbInterface)
+            BSTR local;
+
+            if (is_namespaces_enabled(This->saxreader))
+                local = element->local;
+            else
+                uri = local = NULL;
+
+            if (This->vbInterface)
                 hr = IVBSAXContentHandler_startElement(This->saxreader->vbcontentHandler,
-                        &uri, &element->local, &element->qname, &This->IVBSAXAttributes_iface);
+                        &uri, &local, &element->qname, &This->IVBSAXAttributes_iface);
             else
                 hr = ISAXContentHandler_startElement(This->saxreader->contentHandler,
                         uri, SysStringLen(uri),
-                        element->local, SysStringLen(element->local),
+                        local, SysStringLen(local),
                         element->qname, SysStringLen(element->qname),
                         &This->ISAXAttributes_iface);
         }
@@ -1340,9 +1356,8 @@ static void libxmlEndElementNS(
     saxlocator *This = ctx;
     element_entry *element;
     const xmlChar *p;
+    BSTR uri, local;
     HRESULT hr;
-    BSTR uri;
-    int i;
 
     update_position(This, FALSE);
     p = This->pParserCtxt->input->cur;
@@ -1382,15 +1397,20 @@ static void libxmlEndElementNS(
         return;
     }
 
-    if(This->vbInterface)
+    if (is_namespaces_enabled(This->saxreader))
+        local = element->local;
+    else
+        uri = local = NULL;
+
+    if (This->vbInterface)
         hr = IVBSAXContentHandler_endElement(
                 This->saxreader->vbcontentHandler,
-                &uri, &element->local, &element->qname);
+                &uri, &local, &element->qname);
     else
         hr = ISAXContentHandler_endElement(
                 This->saxreader->contentHandler,
                 uri, SysStringLen(uri),
-                element->local, SysStringLen(element->local),
+                local, SysStringLen(local),
                 element->qname, SysStringLen(element->qname));
 
     This->nb_attributes = 0;
@@ -1402,18 +1422,21 @@ static void libxmlEndElementNS(
         return;
     }
 
-    i = -1;
-    while (iterate_endprefix_index(This, element, &i))
+    if (is_namespaces_enabled(This->saxreader))
     {
-        if(This->vbInterface)
-            hr = IVBSAXContentHandler_endPrefixMapping(
-                    This->saxreader->vbcontentHandler, &element->ns[i].prefix);
-        else
-            hr = ISAXContentHandler_endPrefixMapping(
-                    This->saxreader->contentHandler,
-                    element->ns[i].prefix, SysStringLen(element->ns[i].prefix));
+        int i = -1;
+        while (iterate_endprefix_index(This, element, &i))
+        {
+            if (This->vbInterface)
+                hr = IVBSAXContentHandler_endPrefixMapping(
+                        This->saxreader->vbcontentHandler, &element->ns[i].prefix);
+            else
+                hr = ISAXContentHandler_endPrefixMapping(
+                        This->saxreader->contentHandler,
+                        element->ns[i].prefix, SysStringLen(element->ns[i].prefix));
 
-        if (sax_callback_failed(This, hr)) break;
+            if (sax_callback_failed(This, hr)) break;
+       }
     }
 
     if (sax_callback_failed(This, hr))
@@ -2820,7 +2843,7 @@ static HRESULT WINAPI saxxmlreader_putFeature(
     /* accepted cases */
     if ((feature == ExternalGeneralEntities   && value == VARIANT_FALSE) ||
         (feature == ExternalParameterEntities && value == VARIANT_FALSE) ||
-        (feature == Namespaces                && value == VARIANT_TRUE ))
+         feature == Namespaces)
     {
         return set_feature_value(This, feature, value);
     }
