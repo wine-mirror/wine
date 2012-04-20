@@ -926,7 +926,7 @@ static HRESULT RecordImpl_Invoke(
     return S_OK;
 }
 
-HRESULT create_record(MSIHANDLE msiHandle, IDispatch **disp)
+static HRESULT create_record(MSIHANDLE msiHandle, IDispatch **disp)
 {
     AutomationObject *record;
     HRESULT hr;
