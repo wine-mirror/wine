@@ -1160,9 +1160,13 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
     static const WCHAR xmlnsW[] = { 'x','m','l','n','s',0 };
 
     struct _attributes *attrs;
-    int index;
+    int i;
 
-    locator->nb_attributes = nb_namespaces+nb_attributes;
+    /* skip namespace definitions */
+    if ((locator->saxreader->features & NamespacePrefixes) == 0)
+        nb_namespaces = 0;
+
+    locator->nb_attributes = nb_namespaces + nb_attributes;
     if(locator->nb_attributes > locator->attributesSize)
     {
         attrs = heap_realloc(locator->attributes, sizeof(struct _attributes)*locator->nb_attributes*2);
@@ -1178,31 +1182,31 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
         attrs = locator->attributes;
     }
 
-    for(index=0; index<nb_namespaces; index++)
+    for (i = 0; i < nb_namespaces; i++)
     {
-        attrs[nb_attributes+index].szLocalname = SysAllocStringLen(NULL, 0);
-        attrs[nb_attributes+index].szURI = locator->namespaceUri;
-        attrs[nb_attributes+index].szValue = bstr_from_xmlChar(xmlNamespaces[2*index+1]);
-        if(!xmlNamespaces[2*index])
-            attrs[nb_attributes+index].szQName = SysAllocString(xmlnsW);
+        attrs[nb_attributes+i].szLocalname = SysAllocStringLen(NULL, 0);
+        attrs[nb_attributes+i].szURI = locator->namespaceUri;
+        attrs[nb_attributes+i].szValue = bstr_from_xmlChar(xmlNamespaces[2*i+1]);
+        if(!xmlNamespaces[2*i])
+            attrs[nb_attributes+i].szQName = SysAllocString(xmlnsW);
         else
-            attrs[nb_attributes+index].szQName = QName_from_xmlChar(xmlns, xmlNamespaces[2*index]);
+            attrs[nb_attributes+i].szQName = QName_from_xmlChar(xmlns, xmlNamespaces[2*i]);
     }
 
-    for(index=0; index<nb_attributes; index++)
+    for (i = 0; i < nb_attributes; i++)
     {
         static const xmlChar xmlA[] = "xml";
 
-        if (xmlStrEqual(xmlAttributes[index*5+1], xmlA))
-            attrs[index].szURI = bstr_from_xmlChar(xmlAttributes[index*5+2]);
+        if (xmlStrEqual(xmlAttributes[i*5+1], xmlA))
+            attrs[i].szURI = bstr_from_xmlChar(xmlAttributes[i*5+2]);
         else
-            attrs[index].szURI = find_element_uri(locator, xmlAttributes[index*5+2]);
+            attrs[i].szURI = find_element_uri(locator, xmlAttributes[i*5+2]);
 
-        attrs[index].szLocalname = bstr_from_xmlChar(xmlAttributes[index*5]);
-        attrs[index].szValue = bstr_from_xmlCharN(xmlAttributes[index*5+3],
-                xmlAttributes[index*5+4]-xmlAttributes[index*5+3]);
-        attrs[index].szQName = QName_from_xmlChar(xmlAttributes[index*5+1],
-                xmlAttributes[index*5]);
+        attrs[i].szLocalname = bstr_from_xmlChar(xmlAttributes[i*5]);
+        attrs[i].szValue = bstr_from_xmlCharN(xmlAttributes[i*5+3],
+                xmlAttributes[i*5+4]-xmlAttributes[i*5+3]);
+        attrs[i].szQName = QName_from_xmlChar(xmlAttributes[i*5+1],
+                xmlAttributes[i*5]);
     }
 
     return S_OK;
@@ -2849,7 +2853,8 @@ static HRESULT WINAPI saxxmlreader_putFeature(
     /* accepted cases */
     if ((feature == ExternalGeneralEntities   && value == VARIANT_FALSE) ||
         (feature == ExternalParameterEntities && value == VARIANT_FALSE) ||
-         feature == Namespaces)
+         feature == Namespaces ||
+         feature == NamespacePrefixes)
     {
         return set_feature_value(This, feature, value);
     }

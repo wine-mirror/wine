@@ -787,6 +787,50 @@ static struct call_entry content_handler_test_attributes_alternate_6[] = {
     { CH_ENDTEST }
 };
 
+/* 'namespaces' is on, 'namespace-prefixes' if off */
+static struct attribute_entry ch_attributes_no_prefix[] = {
+    { "prefix_test", "arg1", "test:arg1", "arg1" },
+    { "", "arg2", "arg2", "arg2" },
+    { "prefix_test", "ar3", "test:ar3", "arg3" },
+    { NULL }
+};
+
+static struct call_entry content_handler_test_attributes_alt_no_prefix[] = {
+    { CH_PUTDOCUMENTLOCATOR, 1, 0, S_OK },
+    { CH_STARTDOCUMENT, 1, 22, S_OK },
+    { CH_STARTPREFIXMAPPING, 2, 95, S_OK, "test", "prefix_test" },
+    { CH_STARTPREFIXMAPPING, 2, 95, S_OK, "", "prefix" },
+    { CH_STARTELEMENT, 2, 95, S_OK, "prefix", "document", "document", ch_attributes_no_prefix },
+    { CH_CHARACTERS, 3, 1, S_OK, "\n" },
+    { CH_STARTPREFIXMAPPING, 3, 24, S_OK, "p", "test" },
+    { CH_STARTELEMENT, 3, 24, S_OK, "prefix", "node1", "node1", NULL },
+    { CH_ENDELEMENT, 3, 24, S_OK, "prefix", "node1", "node1" },
+    { CH_ENDPREFIXMAPPING, 3, 24, S_OK, "p" },
+    { CH_ENDELEMENT, 3, 35, S_OK, "prefix", "document", "document" },
+    { CH_ENDPREFIXMAPPING, 3, 35, S_OK, "test" },
+    { CH_ENDPREFIXMAPPING, 3, 35, S_OK, "" },
+    { CH_ENDDOCUMENT, 4, 0, S_OK },
+    { CH_ENDTEST }
+};
+
+static struct call_entry content_handler_test_attributes_no_prefix[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, S_OK },
+    { CH_STARTDOCUMENT, 0, 0, S_OK },
+    { CH_STARTPREFIXMAPPING, 2, 96, S_OK, "test", "prefix_test" },
+    { CH_STARTPREFIXMAPPING, 2, 96, S_OK, "", "prefix" },
+    { CH_STARTELEMENT, 2, 96, S_OK, "prefix", "document", "document", ch_attributes_no_prefix },
+    { CH_CHARACTERS, 2, 96, S_OK, "\n" },
+    { CH_STARTPREFIXMAPPING, 3, 25, S_OK, "p", "test" },
+    { CH_STARTELEMENT, 3, 25, S_OK, "prefix", "node1", "node1", NULL },
+    { CH_ENDELEMENT, 3, 25, S_OK, "prefix", "node1", "node1" },
+    { CH_ENDPREFIXMAPPING, 3, 25, S_OK, "p" },
+    { CH_ENDELEMENT, 3, 27, S_OK, "prefix", "document", "document" },
+    { CH_ENDPREFIXMAPPING, 3, 27, S_OK, "" },
+    { CH_ENDPREFIXMAPPING, 3, 27, S_OK, "test" },
+    { CH_ENDDOCUMENT, 0, 0 },
+    { CH_ENDTEST }
+};
+
 static struct attribute_entry xmlspace_attrs[] = {
     { "http://www.w3.org/XML/1998/namespace", "space", "xml:space", "preserve" },
     { NULL }
@@ -1765,12 +1809,12 @@ static void test_saxreader(void)
     static const CHAR testXmlA[] = "test.xml";
     static const WCHAR testXmlW[] = {'t','e','s','t','.','x','m','l',0};
     IXMLDOMDocument *doc;
-    BSTR str;
     VARIANT_BOOL v;
 
     while (table->clsid)
     {
         struct call_entry *test_seq;
+        BSTR str;
 
         if (!is_clsid_supported(table->clsid, reader_support_data))
         {
@@ -1967,6 +2011,7 @@ static void test_saxreader(void)
         str = SysAllocString(szSimpleXML);
         hr = IXMLDOMDocument_loadXML(doc, str, &v);
         EXPECT_HR(hr, S_OK);
+        SysFreeString(str);
 
         V_VT(&var) = VT_UNKNOWN;
         V_UNKNOWN(&var) = (IUnknown*)doc;
@@ -2031,15 +2076,42 @@ static void test_saxreader(void)
         hr = ISAXXMLReader_parse(reader, var);
         EXPECT_HR(hr, S_OK);
         ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test attributes", TRUE);
+        hr = ISAXXMLReader_putFeature(reader, _bstr_("http://xml.org/sax/features/namespaces"), VARIANT_TRUE);
+        EXPECT_HR(hr, S_OK);
+
+        /* switch off 'namespace-prefixes' feature */
+        hr = ISAXXMLReader_putFeature(reader, _bstr_("http://xml.org/sax/features/namespace-prefixes"), VARIANT_FALSE);
+        EXPECT_HR(hr, S_OK);
+
+        CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        size.QuadPart = strlen(test_attributes);
+        IStream_SetSize(stream, size);
+        IStream_Write(stream, test_attributes, strlen(test_attributes), &written);
+        pos.QuadPart = 0;
+        IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+        V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
+        V_UNKNOWN(&var) = (IUnknown*)stream;
+
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+        {
+            test_seq = content_handler_test_attributes_alt_no_prefix;
+        }
+        else
+            test_seq = content_handler_test_attributes_no_prefix;
+
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parse(reader, var);
+        EXPECT_HR(hr, S_OK);
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test attributes", FALSE);
+
+        hr = ISAXXMLReader_putFeature(reader, _bstr_("http://xml.org/sax/features/namespace-prefixes"), VARIANT_TRUE);
+        EXPECT_HR(hr, S_OK);
 
         ISAXXMLReader_Release(reader);
         table++;
     }
 
-    return;
-
-    ISAXXMLReader_Release(reader);
-    SysFreeString(str);
     free_bstrs();
 }
 
@@ -2161,6 +2233,7 @@ static const struct feature_ns_entry_t feature_ns_entry_data[] = {
 
 static const char *feature_names[] = {
     "http://xml.org/sax/features/namespaces",
+    "http://xml.org/sax/features/namespace-prefixes",
     0
 };
 
