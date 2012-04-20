@@ -567,7 +567,7 @@ static BOOL CUPS_LoadPrinters(void)
     }
     pcupsFreeDests(nrofdests, dests);
     RegCloseKey(hkeyPrinters);
-    return hadprinter;
+    return TRUE;
 }
 #endif
 
