@@ -1646,10 +1646,10 @@ static void test_MsiQueryComponentState(void)
     ok(state == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", state);
     ok(error == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", error);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01", 3);
+    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01:", 4);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    /* bad INSTALLSTATE_SOURCE */
+    /* registry component */
     state = MAGIC_ERROR;
     SetLastError(0xdeadbeef);
     r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE, component, &state);

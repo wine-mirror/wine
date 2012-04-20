@@ -2217,7 +2217,7 @@ UINT WINAPI MsiQueryComponentStateW(LPCWSTR szProductCode,
     else
     {
         if (lstrlenW(val) > 2 &&
-            val[0] >= '0' && val[0] <= '9' && val[1] >= '0' && val[1] <= '9')
+            val[0] >= '0' && val[0] <= '9' && val[1] >= '0' && val[1] <= '9' && val[2] != ':')
         {
             *pdwState = INSTALLSTATE_SOURCE;
         }
