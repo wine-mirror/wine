@@ -403,6 +403,16 @@ RECT WINAPI BaseWindowImpl_GetDefaultRect(BaseWindow *This);
 LRESULT WINAPI BaseWindowImpl_OnReceiveMessage(BaseWindow *This, HWND hwnd, INT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI BaseWindowImpl_OnSize(BaseWindow *This, LONG Height, LONG Width);
 
+typedef struct{
+    ITypeInfo *pTypeInfo;
+} BaseDispatch;
+
+HRESULT WINAPI BaseDispatch_Init(BaseDispatch *This, REFIID riid);
+HRESULT WINAPI BaseDispatch_Destroy(BaseDispatch *This);
+HRESULT WINAPI BaseDispatchImpl_GetIDsOfNames(BaseDispatch *This, REFIID riid, OLECHAR **rgszNames, UINT cNames, LCID lcid, DISPID *rgdispid);
+HRESULT WINAPI BaseDispatchImpl_GetTypeInfo(BaseDispatch *This, REFIID riid, UINT itinfo, LCID lcid, ITypeInfo **pptinfo);
+HRESULT WINAPI BaseDispatchImpl_GetTypeInfoCount(BaseDispatch *This, UINT *pctinfo);
+
 #ifdef __IVideoWindow_FWD_DEFINED__
 typedef struct tagBaseControlWindow
 {
