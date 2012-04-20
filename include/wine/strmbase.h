@@ -418,6 +418,7 @@ typedef struct tagBaseControlWindow
 {
 	BaseWindow baseWindow;
 	IVideoWindow IVideoWindow_iface;
+	BaseDispatch baseDispatch;
 
 	BOOL AutoShow;
 	HWND hwndDrain;
@@ -428,6 +429,7 @@ typedef struct tagBaseControlWindow
 } BaseControlWindow;
 
 HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *pControlWindow, const IVideoWindowVtbl *lpVtbl, BaseFilter *owner, CRITICAL_SECTION *lock, BasePin* pPin, const BaseWindowFuncTable* pFuncsTable);
+HRESULT WINAPI BaseControlWindow_Destroy(BaseControlWindow *pControlWindow);
 
 BOOL WINAPI BaseControlWindowImpl_PossiblyEatMessage(BaseWindow *This, UINT uMsg, WPARAM wParam, LPARAM lParam);
 HRESULT WINAPI BaseControlWindowImpl_GetTypeInfoCount(IVideoWindow *iface, UINT*pctinfo);
