@@ -2363,7 +2363,7 @@ static UINT fetch_user_product( const WCHAR *match, const WCHAR *usersid, DWORD 
         }
         strcpyW( path, user );
         strcatW( path, subkey );
-        if ((r = RegOpenKeyExW( key_users, path, 0, access, &key_products )))
+        if (RegOpenKeyExW( key_users, path, 0, access, &key_products ))
         {
             i++;
             len_user = sizeof(user)/sizeof(user[0]);
