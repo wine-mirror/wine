@@ -592,4 +592,10 @@ ok(tmp === "xxx", '"xxx".replace(/^\s*|\s*$/g, "y") = ' + tmp);
 tmp = "xxx".replace(/^\s*|\s*$/g, "y");
 ok(tmp === "yxxxy", '"xxx".replace(/^\s*|\s*$/g, "y") = ' + tmp);
 
+tmp = "x/y".replace(/[/]/, "*");
+ok(tmp === "x*y", '"x/y".replace(/[/]/, "*") = ' + tmp);
+
+tmp = "x/y".replace(/[xy/]/g, "*");
+ok(tmp === "***", '"x/y".replace(/[xy/]/, "*") = ' + tmp);
+
 reportSuccess();

@@ -957,6 +957,7 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
 literal_t *parse_regexp(parser_ctx_t *ctx)
 {
     const WCHAR *re, *flags_ptr;
+    BOOL in_class = FALSE;
     DWORD re_len, flags;
     literal_t *ret;
     HRESULT hres;
@@ -965,14 +966,29 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
 
     while(*--ctx->ptr != '/');
 
+    /* Simple regexp pre-parser; '/' if used in char class does not terminate regexp literal */
     re = ++ctx->ptr;
-    while(ctx->ptr < ctx->end && *ctx->ptr != '/') {
-        if(*ctx->ptr++ == '\\' && ctx->ptr < ctx->end)
-            ctx->ptr++;
+    while(ctx->ptr < ctx->end) {
+        if(*ctx->ptr == '\\') {
+            if(++ctx->ptr == ctx->end)
+                break;
+        }else if(in_class) {
+            if(*ctx->ptr == '\n')
+                break;
+            if(*ctx->ptr == ']')
+                in_class = FALSE;
+        }else {
+            if(*ctx->ptr == '/')
+                break;
+
+            if(*ctx->ptr == '[')
+                in_class = TRUE;
+        }
+        ctx->ptr++;
     }
 
-    if(ctx->ptr == ctx->end) {
-        WARN("unexpected end of file\n");
+    if(ctx->ptr == ctx->end || *ctx->ptr != '/') {
+        WARN("pre-parsing failed\n");
         return NULL;
     }
 
