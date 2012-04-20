@@ -993,7 +993,7 @@ static void test_pathgradientcenterpoint(void)
     expect(Ok, status);
 }
 
-void test_pathgradientpresetblend(void)
+static void test_pathgradientpresetblend(void)
 {
     static const GpPointF path_points[] = {{0,0}, {3,0}, {0,4}};
     GpStatus status;
