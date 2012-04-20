@@ -43,43 +43,51 @@ HRESULT WINAPI BaseControlVideo_Init(BaseControlVideo *pControlVideo, const IBas
     pControlVideo->pPin = pPin;
     pControlVideo->pFuncsTable = pFuncsTable;
 
-    return S_OK;
-}
-
-HRESULT WINAPI BaseControlVideoImpl_GetTypeInfoCount(IBasicVideo *iface, UINT*pctinfo)
-{
-    BaseControlVideo *This = impl_from_IBasicVideo(iface);
-
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pctinfo);
+    BaseDispatch_Init(&pControlVideo->baseDispatch, &IID_IBasicVideo);
 
     return S_OK;
 }
 
-HRESULT WINAPI BaseControlVideoImpl_GetTypeInfo(IBasicVideo *iface, UINT iTInfo, LCID lcid, ITypeInfo**ppTInfo)
+HRESULT WINAPI BaseControlVideo_Destroy(BaseControlVideo *pControlVideo)
 {
-    BaseControlVideo *This = impl_from_IBasicVideo(iface);
-
-    FIXME("(%p/%p)->(%d, %d, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
-
-    return S_OK;
+    return BaseDispatch_Destroy(&pControlVideo->baseDispatch);
 }
 
-HRESULT WINAPI BaseControlVideoImpl_GetIDsOfNames(IBasicVideo *iface, REFIID riid, LPOLESTR*rgszNames, UINT cNames, LCID lcid, DISPID*rgDispId)
+HRESULT WINAPI BaseControlVideoImpl_GetTypeInfoCount(IBasicVideo *iface, UINT *pctinfo)
 {
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
-    FIXME("(%p/%p)->(%s (%p), %p, %d, %d, %p): stub !!!\n", This, iface, debugstr_guid(riid), riid, rgszNames, cNames, lcid, rgDispId);
-
-    return S_OK;
+    return BaseDispatchImpl_GetTypeInfoCount(&This->baseDispatch, pctinfo);
 }
 
-HRESULT WINAPI BaseControlVideoImpl_Invoke(IBasicVideo *iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS*pDispParams, VARIANT*pVarResult, EXCEPINFO*pExepInfo, UINT*puArgErr)
+HRESULT WINAPI BaseControlVideoImpl_GetTypeInfo(IBasicVideo *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
-    FIXME("(%p/%p)->(%d, %s (%p), %d, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember, debugstr_guid(riid), riid, lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
+    return BaseDispatchImpl_GetTypeInfo(&This->baseDispatch, &IID_NULL, iTInfo, lcid, ppTInfo);
+}
 
-    return S_OK;
+HRESULT WINAPI BaseControlVideoImpl_GetIDsOfNames(IBasicVideo *iface, REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    BaseControlVideo *This = impl_from_IBasicVideo(iface);
+
+    return BaseDispatchImpl_GetIDsOfNames(&This->baseDispatch, riid, rgszNames, cNames, lcid, rgDispId);
+}
+
+HRESULT WINAPI BaseControlVideoImpl_Invoke(IBasicVideo *iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExepInfo, UINT *puArgErr)
+{
+    BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    HRESULT hr = S_OK;
+    ITypeInfo *pTypeInfo;
+
+    hr = BaseDispatchImpl_GetTypeInfo(&This->baseDispatch, riid, 1, lcid, &pTypeInfo);
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(pTypeInfo, &This->IBasicVideo_iface, dispIdMember, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
+        ITypeInfo_Release(pTypeInfo);
+    }
+
+    return hr;
 }
 
 HRESULT WINAPI BaseControlVideoImpl_get_AvgTimePerFrame(IBasicVideo *iface, REFTIME *pAvgTimePerFrame)

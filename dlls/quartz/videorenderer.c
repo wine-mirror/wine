@@ -753,6 +753,7 @@ static ULONG WINAPI VideoRendererInner_Release(IUnknown * iface)
     if (!refCount)
     {
         BaseControlWindow_Destroy(&This->baseControlWindow);
+        BaseControlVideo_Destroy(&This->baseControlVideo);
         PostThreadMessageW(This->ThreadID, WM_QUIT, 0, 0);
         WaitForSingleObject(This->hThread, INFINITE);
         CloseHandle(This->hThread);
