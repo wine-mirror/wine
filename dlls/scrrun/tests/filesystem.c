@@ -29,7 +29,7 @@
 #include "initguid.h"
 #include "scrrun.h"
 
-void test_interfaces(void)
+static void test_interfaces(void)
 {
     HRESULT hr;
     IDispatch *disp;
