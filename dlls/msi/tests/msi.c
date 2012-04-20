@@ -11882,6 +11882,13 @@ static void test_MsiEnumProductsEx(void)
     ok( len == sizeof(sid), "got %u\n", len );
     ok( !sid[0], "got %s\n", sid );
 
+    sid[0] = 0;
+    len = 0;
+    r = pMsiEnumProductsExA( NULL, usersid, MSIINSTALLCONTEXT_USERUNMANAGED, 0, NULL, NULL, sid, &len );
+    ok( r == ERROR_MORE_DATA, "got %u\n", r );
+    ok( len, "length unchanged\n" );
+    ok( !sid[0], "got %s\n", sid );
+
     guid[0] = 0;
     context = 0xdeadbeef;
     sid[0] = 0;
