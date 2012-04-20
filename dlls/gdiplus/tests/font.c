@@ -24,10 +24,9 @@
 #include "gdiplus.h"
 #include "wine/test.h"
 
-#define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
-#define expectf(expected, got) ok(fabs(expected - got) < 0.0001, "Expected %.2f, got %.2f\n", expected, got)
+#define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
+#define expectf(expected, got) ok(fabs(expected - got) < 0.0001, "Expected %f, got %f\n", expected, got)
 
-static const WCHAR arial[] = {'A','r','i','a','l','\0'};
 static const WCHAR nonexistent[] = {'T','h','i','s','F','o','n','t','s','h','o','u','l','d','N','o','t','E','x','i','s','t','\0'};
 static const WCHAR MSSansSerif[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
 static const WCHAR MicrosoftSansSerif[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
@@ -50,12 +49,7 @@ static void test_createfont(void)
     expect (FontFamilyNotFound, stat);
     stat = GdipDeleteFont(font);
     expect (InvalidParameter, stat);
-    stat = GdipCreateFontFamilyFromName(arial, NULL, &fontfamily);
-    if(stat == FontFamilyNotFound)
-    {
-        skip("Arial not installed\n");
-        return;
-    }
+    stat = GdipCreateFontFamilyFromName(Tahoma, NULL, &fontfamily);
     expect (Ok, stat);
     stat = GdipCreateFont(fontfamily, 12, FontStyleRegular, UnitPoint, &font);
     expect (Ok, stat);
@@ -67,7 +61,7 @@ static void test_createfont(void)
     expect(Ok, stat);
     stat = GdipGetFamilyName(fontfamily2, familyname, 0);
     expect(Ok, stat);
-    ok (lstrcmpiW(arial, familyname) == 0, "Expected arial, got %s\n",
+    ok (lstrcmpiW(Tahoma, familyname) == 0, "Expected Tahoma, got %s\n",
             wine_dbgstr_w(familyname));
     stat = GdipDeleteFontFamily(fontfamily2);
     expect(Ok, stat);
@@ -110,14 +104,9 @@ static void test_logfont(void)
     stat = GdipCreateFontFromLogfontA(hdc, &lfa, &font);
     expect(NotTrueTypeFont, stat);
 
-    lstrcpyA(lfa.lfFaceName, "Arial");
+    lstrcpyA(lfa.lfFaceName, "Tahoma");
 
     stat = GdipCreateFontFromLogfontA(hdc, &lfa, &font);
-    if (stat == FileNotFound)
-    {
-        skip("Arial not installed.\n");
-        return;
-    }
     expect(Ok, stat);
     stat = GdipGetLogFontA(font, graphics, &lfa2);
     expect(Ok, stat);
@@ -146,7 +135,7 @@ static void test_logfont(void)
     lfa.lfItalic = lfa.lfUnderline = lfa.lfStrikeOut = TRUE;
 
     memset(&lfa2, 0xff, sizeof(LOGFONTA));
-    lstrcpyA(lfa.lfFaceName, "Arial");
+    lstrcpyA(lfa.lfFaceName, "Tahoma");
 
     stat = GdipCreateFontFromLogfontA(hdc, &lfa, &font);
     expect(Ok, stat);
@@ -186,7 +175,7 @@ static void test_fontfamily (void)
     GpStatus stat;
 
     /* FontFamily cannot be NULL */
-    stat = GdipCreateFontFamilyFromName (arial , NULL, NULL);
+    stat = GdipCreateFontFamilyFromName (Tahoma , NULL, NULL);
     expect (InvalidParameter, stat);
 
     /* FontFamily must be able to actually find the family.
@@ -200,17 +189,12 @@ static void test_fontfamily (void)
     expect (FontFamilyNotFound, stat);
     if(stat == Ok) GdipDeleteFontFamily(family);
 
-    stat = GdipCreateFontFamilyFromName (arial, NULL, &family);
-    if(stat == FontFamilyNotFound)
-    {
-        skip("Arial not installed\n");
-        return;
-    }
+    stat = GdipCreateFontFamilyFromName (Tahoma, NULL, &family);
     expect (Ok, stat);
 
     stat = GdipGetFamilyName (family, itsName, LANG_NEUTRAL);
     expect (Ok, stat);
-    expect (0, lstrcmpiW(itsName, arial));
+    expect (0, lstrcmpiW(itsName, Tahoma));
 
     if (0)
     {
@@ -226,7 +210,7 @@ static void test_fontfamily (void)
     GdipDeleteFontFamily(family);
     stat = GdipGetFamilyName(clonedFontFamily, itsName, LANG_NEUTRAL);
     expect(Ok, stat);
-    expect(0, lstrcmpiW(itsName, arial));
+    expect(0, lstrcmpiW(itsName, Tahoma));
 
     GdipDeleteFontFamily(clonedFontFamily);
 }
@@ -237,28 +221,25 @@ static void test_fontfamily_properties (void)
     GpStatus stat;
     UINT16 result = 0;
 
-    stat = GdipCreateFontFamilyFromName(arial, NULL, &FontFamily);
-    if(stat == FontFamilyNotFound)
-        skip("Arial not installed\n");
-    else
-    {
-        stat = GdipGetLineSpacing(FontFamily, FontStyleRegular, &result);
-        expect(Ok, stat);
-        ok (result == 2355, "Expected 2355, got %d\n", result);
-        result = 0;
-        stat = GdipGetEmHeight(FontFamily, FontStyleRegular, &result);
-        expect(Ok, stat);
-        ok(result == 2048, "Expected 2048, got %d\n", result);
-        result = 0;
-        stat = GdipGetCellAscent(FontFamily, FontStyleRegular, &result);
-        expect(Ok, stat);
-        ok(result == 1854, "Expected 1854, got %d\n", result);
-        result = 0;
-        stat = GdipGetCellDescent(FontFamily, FontStyleRegular, &result);
-        expect(Ok, stat);
-        ok(result == 434, "Expected 434, got %d\n", result);
-        GdipDeleteFontFamily(FontFamily);
-    }
+    stat = GdipCreateFontFamilyFromName(Tahoma, NULL, &FontFamily);
+    expect(Ok, stat);
+
+    stat = GdipGetLineSpacing(FontFamily, FontStyleRegular, &result);
+    expect(Ok, stat);
+    ok (result == 2472, "Expected 2472, got %d\n", result);
+    result = 0;
+    stat = GdipGetEmHeight(FontFamily, FontStyleRegular, &result);
+    expect(Ok, stat);
+    ok(result == 2048, "Expected 2048, got %d\n", result);
+    result = 0;
+    stat = GdipGetCellAscent(FontFamily, FontStyleRegular, &result);
+    expect(Ok, stat);
+    ok(result == 2049, "Expected 2049, got %d\n", result);
+    result = 0;
+    stat = GdipGetCellDescent(FontFamily, FontStyleRegular, &result);
+    expect(Ok, stat);
+    ok(result == 423, "Expected 423, got %d\n", result);
+    GdipDeleteFontFamily(FontFamily);
 
     stat = GdipCreateFontFamilyFromName(TimesNewRoman, NULL, &FontFamily);
     if(stat == FontFamilyNotFound)
@@ -363,12 +344,7 @@ static void test_heightgivendpi(void)
     GpFontFamily* fontfamily = NULL;
     REAL height;
 
-    stat = GdipCreateFontFamilyFromName(arial, NULL, &fontfamily);
-    if(stat == FontFamilyNotFound)
-    {
-        skip("Arial not installed\n");
-        return;
-    }
+    stat = GdipCreateFontFamilyFromName(Tahoma, NULL, &fontfamily);
     expect(Ok, stat);
 
     stat = GdipCreateFont(fontfamily, 30, FontStyleRegular, UnitPixel, &font);
@@ -382,7 +358,7 @@ static void test_heightgivendpi(void)
 
     stat = GdipGetFontHeightGivenDPI(font, 96, &height);
     expect(Ok, stat);
-    expectf((REAL)34.497070, height);
+    expectf(36.210938, height);
     GdipDeleteFont(font);
 
     height = 12345;
@@ -390,7 +366,7 @@ static void test_heightgivendpi(void)
     expect(Ok, stat);
     stat = GdipGetFontHeightGivenDPI(font, 96, &height);
     expect(Ok, stat);
-    expectf((REAL)34.497070, height);
+    expectf(36.210938, height);
     GdipDeleteFont(font);
 
     height = 12345;
@@ -398,7 +374,7 @@ static void test_heightgivendpi(void)
     expect(Ok, stat);
     stat = GdipGetFontHeightGivenDPI(font, 96, &height);
     expect(Ok, stat);
-    expectf((REAL)45.996094, height);
+    expectf(48.281250, height);
     GdipDeleteFont(font);
 
     height = 12345;
@@ -406,7 +382,7 @@ static void test_heightgivendpi(void)
     expect(Ok, stat);
     stat = GdipGetFontHeightGivenDPI(font, 96, &height);
     expect(Ok, stat);
-    expectf((REAL)3311.718750, height);
+    expectf(3476.250000, height);
     GdipDeleteFont(font);
 
     height = 12345;
@@ -414,7 +390,7 @@ static void test_heightgivendpi(void)
     expect(Ok, stat);
     stat = GdipGetFontHeightGivenDPI(font, 96, &height);
     expect(Ok, stat);
-    expectf((REAL)11.039062, height);
+    expectf(11.587500, height);
     GdipDeleteFont(font);
 
     height = 12345;
@@ -422,7 +398,7 @@ static void test_heightgivendpi(void)
     expect(Ok, stat);
     stat = GdipGetFontHeightGivenDPI(font, 96, &height);
     expect(Ok, stat);
-    expectf((REAL)130.382614, height);
+    expectf(136.860245, height);
     GdipDeleteFont(font);
 
     GdipDeleteFontFamily(fontfamily);
