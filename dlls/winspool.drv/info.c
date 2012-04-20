@@ -2812,6 +2812,8 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
 {
     LPCWSTR lpNameW = get_opened_printer_name(hPrinter);
     HKEY hkeyPrinters, hkey;
+    WCHAR def[MAX_PATH];
+    DWORD size = sizeof( def ) / sizeof( def[0] );
 
     if(!lpNameW) {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -2833,6 +2835,18 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
         RegDeleteValueW(hkey, lpNameW);
         RegCloseKey(hkey);
     }
+
+    if (GetDefaultPrinterW( def, &size ) && !strcmpW( def, lpNameW ))
+    {
+        WriteProfileStringW( windowsW, deviceW, NULL );
+        if (!RegCreateKeyW( HKEY_CURRENT_USER, user_default_reg_key, &hkey ))
+        {
+            RegDeleteValueW( hkey, deviceW );
+            RegCloseKey( hkey );
+        }
+        SetDefaultPrinterW( NULL );
+    }
+
     return TRUE;
 }
 
