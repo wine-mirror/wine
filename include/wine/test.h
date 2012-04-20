@@ -590,7 +590,9 @@ static LONG CALLBACK exc_filter( EXCEPTION_POINTERS *ptrs )
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
+#ifdef __GNUC__
 void _fpreset(void) {} /* override the mingw fpu init code */
+#endif
 
 /* main function */
 int main( int argc, char **argv )
