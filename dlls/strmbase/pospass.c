@@ -40,6 +40,7 @@ typedef struct PassThruImpl {
     ISeekingPassThru ISeekingPassThru_iface;
     IMediaSeeking IMediaSeeking_iface;
     IMediaPosition IMediaPosition_iface;
+    BaseDispatch baseDispatch;
 
     LONG ref;
     IUnknown * outer_unk;
@@ -121,6 +122,7 @@ static ULONG WINAPI SeekInner_Release(IUnknown * iface) {
 
     if (ref == 0)
     {
+        BaseDispatch_Destroy(&This->baseDispatch);
         This->time_cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->time_cs);
         CoTaskMemFree(This);
@@ -264,6 +266,7 @@ HRESULT WINAPI PosPassThru_Construct(IUnknown *pUnkOuter, LPVOID *ppPassThru)
     fimpl->timevalid = 0;
     InitializeCriticalSection(&fimpl->time_cs);
     fimpl->time_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PassThruImpl.time_cs");
+    BaseDispatch_Init(&fimpl->baseDispatch, &IID_IMediaPosition);
     return S_OK;
 }
 
@@ -681,36 +684,37 @@ static HRESULT WINAPI MediaPositionPassThru_GetTypeInfoCount(IMediaPosition *ifa
 {
     PassThruImpl *This = impl_from_IMediaPosition(iface);
 
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pctinfo);
-    *pctinfo = 0;
-
-    return S_OK;
+    return BaseDispatchImpl_GetTypeInfoCount(&This->baseDispatch, pctinfo);
 }
 
 static HRESULT WINAPI MediaPositionPassThru_GetTypeInfo(IMediaPosition *iface, UINT iTInfo, LCID lcid, ITypeInfo**ppTInfo)
 {
     PassThruImpl *This = impl_from_IMediaPosition(iface);
 
-    FIXME("(%p/%p)->(%d, %d, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
-
-    return S_OK;
+    return BaseDispatchImpl_GetTypeInfo(&This->baseDispatch, &IID_NULL, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI MediaPositionPassThru_GetIDsOfNames(IMediaPosition *iface, REFIID riid, LPOLESTR*rgszNames, UINT cNames, LCID lcid, DISPID*rgDispId)
 {
     PassThruImpl *This = impl_from_IMediaPosition(iface);
 
-    FIXME("(%p/%p)->(%s (%p), %p, %d, %d, %p): stub !!!\n", This, iface, debugstr_guid(riid), riid, rgszNames, cNames, lcid, rgDispId);
-
-    return S_OK;
+    return BaseDispatchImpl_GetIDsOfNames(&This->baseDispatch, riid, rgszNames, cNames, lcid, rgDispId);
 }
 
 static HRESULT WINAPI MediaPositionPassThru_Invoke(IMediaPosition *iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS*pDispParams, VARIANT*pVarResult, EXCEPINFO*pExepInfo, UINT*puArgErr)
 {
     PassThruImpl *This = impl_from_IMediaPosition(iface);
-    FIXME("(%p/%p)->(%d, %s (%p), %d, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember, debugstr_guid(riid), riid, lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
+    HRESULT hr = S_OK;
+    ITypeInfo *pTypeInfo;
 
-    return S_OK;
+    hr = BaseDispatchImpl_GetTypeInfo(&This->baseDispatch, riid, 1, lcid, &pTypeInfo);
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(pTypeInfo, &This->IMediaPosition_iface, dispIdMember, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
+        ITypeInfo_Release(pTypeInfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI MediaPositionPassThru_get_Duration(IMediaPosition *iface, REFTIME *plength)
