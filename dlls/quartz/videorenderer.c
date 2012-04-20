@@ -249,7 +249,7 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     return S_OK;
 }
 
-HRESULT WINAPI VideoRenderer_ShouldDrawSampleNow(BaseRenderer *This, IMediaSample *pSample, REFERENCE_TIME *pStartTime, REFERENCE_TIME *pEndTime)
+static HRESULT WINAPI VideoRenderer_ShouldDrawSampleNow(BaseRenderer *This, IMediaSample *pSample, REFERENCE_TIME *pStartTime, REFERENCE_TIME *pEndTime)
 {
     /* Preroll means the sample isn't shown, this is used for key frames and things like that */
     if (IMediaSample_IsPreroll(pSample) == S_OK)
@@ -477,14 +477,14 @@ static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
     VideoRenderer_OnSize
 };
 
-HRESULT WINAPI VideoRenderer_GetSourceRect(BaseControlVideo* iface, RECT *pSourceRect)
+static HRESULT WINAPI VideoRenderer_GetSourceRect(BaseControlVideo* iface, RECT *pSourceRect)
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
     CopyRect(pSourceRect,&This->SourceRect);
     return S_OK;
 }
 
-HRESULT WINAPI VideoRenderer_GetStaticImage(BaseControlVideo* iface, LONG *pBufferSize, LONG *pDIBImage)
+static HRESULT WINAPI VideoRenderer_GetStaticImage(BaseControlVideo* iface, LONG *pBufferSize, LONG *pDIBImage)
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
     BITMAPINFOHEADER *bmiHeader;
@@ -543,14 +543,14 @@ HRESULT WINAPI VideoRenderer_GetStaticImage(BaseControlVideo* iface, LONG *pBuff
     return S_OK;
 }
 
-HRESULT WINAPI VideoRenderer_GetTargetRect(BaseControlVideo* iface, RECT *pTargetRect)
+static HRESULT WINAPI VideoRenderer_GetTargetRect(BaseControlVideo* iface, RECT *pTargetRect)
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
     CopyRect(pTargetRect,&This->DestRect);
     return S_OK;
 }
 
-VIDEOINFOHEADER* WINAPI VideoRenderer_GetVideoFormat(BaseControlVideo* iface)
+static VIDEOINFOHEADER* WINAPI VideoRenderer_GetVideoFormat(BaseControlVideo* iface)
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
     AM_MEDIA_TYPE *pmt;
@@ -572,7 +572,7 @@ VIDEOINFOHEADER* WINAPI VideoRenderer_GetVideoFormat(BaseControlVideo* iface)
     }
 }
 
-HRESULT WINAPI VideoRenderer_IsDefaultSourceRect(BaseControlVideo* iface)
+static HRESULT WINAPI VideoRenderer_IsDefaultSourceRect(BaseControlVideo* iface)
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
     FIXME("(%p/%p)->(): stub !!!\n", This, iface);
@@ -580,7 +580,7 @@ HRESULT WINAPI VideoRenderer_IsDefaultSourceRect(BaseControlVideo* iface)
     return S_OK;
 }
 
-HRESULT WINAPI VideoRenderer_IsDefaultTargetRect(BaseControlVideo* iface)
+static HRESULT WINAPI VideoRenderer_IsDefaultTargetRect(BaseControlVideo* iface)
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
     FIXME("(%p/%p)->(): stub !!!\n", This, iface);
@@ -588,7 +588,7 @@ HRESULT WINAPI VideoRenderer_IsDefaultTargetRect(BaseControlVideo* iface)
     return S_OK;
 }
 
-HRESULT WINAPI VideoRenderer_SetDefaultSourceRect(BaseControlVideo* iface)
+static HRESULT WINAPI VideoRenderer_SetDefaultSourceRect(BaseControlVideo* iface)
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
 
@@ -600,7 +600,7 @@ HRESULT WINAPI VideoRenderer_SetDefaultSourceRect(BaseControlVideo* iface)
     return S_OK;
 }
 
-HRESULT WINAPI VideoRenderer_SetDefaultTargetRect(BaseControlVideo* iface)
+static HRESULT WINAPI VideoRenderer_SetDefaultTargetRect(BaseControlVideo* iface)
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
     RECT rect;
@@ -616,14 +616,14 @@ HRESULT WINAPI VideoRenderer_SetDefaultTargetRect(BaseControlVideo* iface)
     return S_OK;
 }
 
-HRESULT WINAPI VideoRenderer_SetSourceRect(BaseControlVideo* iface, RECT *pSourceRect)
+static HRESULT WINAPI VideoRenderer_SetSourceRect(BaseControlVideo* iface, RECT *pSourceRect)
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
     CopyRect(&This->SourceRect,pSourceRect);
     return S_OK;
 }
 
-HRESULT WINAPI VideoRenderer_SetTargetRect(BaseControlVideo* iface, RECT *pTargetRect)
+static HRESULT WINAPI VideoRenderer_SetTargetRect(BaseControlVideo* iface, RECT *pTargetRect)
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
     CopyRect(&This->DestRect,pTargetRect);

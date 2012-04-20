@@ -202,7 +202,7 @@ static HRESULT WINAPI VMR9_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TY
     return S_OK;
 }
 
-HRESULT WINAPI VMR9_ShouldDrawSampleNow(BaseRenderer *This, IMediaSample *pSample, REFERENCE_TIME *pStartTime, REFERENCE_TIME *pEndTime)
+static HRESULT WINAPI VMR9_ShouldDrawSampleNow(BaseRenderer *This, IMediaSample *pSample, REFERENCE_TIME *pStartTime, REFERENCE_TIME *pEndTime)
 {
     /* Preroll means the sample isn't shown, this is used for key frames and things like that */
     if (IMediaSample_IsPreroll(pSample) == S_OK)
@@ -277,14 +277,14 @@ static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
     VMR9_OnSize,
 };
 
-HRESULT WINAPI VMR9_GetSourceRect(BaseControlVideo* This, RECT *pSourceRect)
+static HRESULT WINAPI VMR9_GetSourceRect(BaseControlVideo* This, RECT *pSourceRect)
 {
     VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
     CopyRect(pSourceRect,&pVMR9->source_rect);
     return S_OK;
 }
 
-HRESULT WINAPI VMR9_GetStaticImage(BaseControlVideo* This, LONG *pBufferSize, LONG *pDIBImage)
+static HRESULT WINAPI VMR9_GetStaticImage(BaseControlVideo* This, LONG *pBufferSize, LONG *pDIBImage)
 {
     VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
     BITMAPINFOHEADER *bmiHeader;
@@ -343,14 +343,14 @@ HRESULT WINAPI VMR9_GetStaticImage(BaseControlVideo* This, LONG *pBufferSize, LO
     return S_OK;
 }
 
-HRESULT WINAPI VMR9_GetTargetRect(BaseControlVideo* This, RECT *pTargetRect)
+static HRESULT WINAPI VMR9_GetTargetRect(BaseControlVideo* This, RECT *pTargetRect)
 {
     VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
     CopyRect(pTargetRect,&pVMR9->target_rect);
     return S_OK;
 }
 
-VIDEOINFOHEADER* WINAPI VMR9_GetVideoFormat(BaseControlVideo* This)
+static VIDEOINFOHEADER* WINAPI VMR9_GetVideoFormat(BaseControlVideo* This)
 {
     VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
     AM_MEDIA_TYPE *pmt;
@@ -372,7 +372,7 @@ VIDEOINFOHEADER* WINAPI VMR9_GetVideoFormat(BaseControlVideo* This)
     }
 }
 
-HRESULT WINAPI VMR9_IsDefaultSourceRect(BaseControlVideo* This)
+static HRESULT WINAPI VMR9_IsDefaultSourceRect(BaseControlVideo* This)
 {
     VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
     FIXME("(%p/%p)->(): stub !!!\n", pVMR9, This);
@@ -380,7 +380,7 @@ HRESULT WINAPI VMR9_IsDefaultSourceRect(BaseControlVideo* This)
     return S_OK;
 }
 
-HRESULT WINAPI VMR9_IsDefaultTargetRect(BaseControlVideo* This)
+static HRESULT WINAPI VMR9_IsDefaultTargetRect(BaseControlVideo* This)
 {
     VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
     FIXME("(%p/%p)->(): stub !!!\n", pVMR9, This);
@@ -388,7 +388,7 @@ HRESULT WINAPI VMR9_IsDefaultTargetRect(BaseControlVideo* This)
     return S_OK;
 }
 
-HRESULT WINAPI VMR9_SetDefaultSourceRect(BaseControlVideo* This)
+static HRESULT WINAPI VMR9_SetDefaultSourceRect(BaseControlVideo* This)
 {
     VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
 
@@ -400,7 +400,7 @@ HRESULT WINAPI VMR9_SetDefaultSourceRect(BaseControlVideo* This)
     return S_OK;
 }
 
-HRESULT WINAPI VMR9_SetDefaultTargetRect(BaseControlVideo* This)
+static HRESULT WINAPI VMR9_SetDefaultTargetRect(BaseControlVideo* This)
 {
     RECT rect;
     VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
@@ -416,14 +416,14 @@ HRESULT WINAPI VMR9_SetDefaultTargetRect(BaseControlVideo* This)
     return S_OK;
 }
 
-HRESULT WINAPI VMR9_SetSourceRect(BaseControlVideo* This, RECT *pSourceRect)
+static HRESULT WINAPI VMR9_SetSourceRect(BaseControlVideo* This, RECT *pSourceRect)
 {
     VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
     CopyRect(&pVMR9->source_rect,pSourceRect);
     return S_OK;
 }
 
-HRESULT WINAPI VMR9_SetTargetRect(BaseControlVideo* This, RECT *pTargetRect)
+static HRESULT WINAPI VMR9_SetTargetRect(BaseControlVideo* This, RECT *pTargetRect)
 {
     VMR9Impl* pVMR9 = impl_from_BaseControlVideo(This);
     CopyRect(&pVMR9->target_rect,pTargetRect);

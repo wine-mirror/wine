@@ -340,7 +340,7 @@ static HRESULT WINAPI DSoundRender_ShouldDrawSampleNow(BaseRenderer *This, IMedi
 }
 
 
-HRESULT WINAPI DSoundRender_PrepareReceive(BaseRenderer *iface, IMediaSample *pSample)
+static HRESULT WINAPI DSoundRender_PrepareReceive(BaseRenderer *iface, IMediaSample *pSample)
 {
     DSoundRenderImpl *This = impl_from_BaseRenderer(iface);
     HRESULT hr;
