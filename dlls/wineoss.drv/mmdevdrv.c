@@ -588,7 +588,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
     return S_OK;
 }
 
-const OSSDevice *get_ossdevice_from_guid(const GUID *guid)
+static const OSSDevice *get_ossdevice_from_guid(const GUID *guid)
 {
     OSSDevice *dev_item;
     LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry)
