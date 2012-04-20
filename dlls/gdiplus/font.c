@@ -148,7 +148,7 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
 
     lfw->lfHeight = (*font)->pixel_size * -1;
 
-    lfw->lfWeight = style & FontStyleBold ? 700 : 400;
+    lfw->lfWeight = style & FontStyleBold ? FW_BOLD : FW_REGULAR;
     lfw->lfItalic = style & FontStyleItalic;
     lfw->lfUnderline = style & FontStyleUnderline;
     lfw->lfStrikeOut = style & FontStyleStrikeout;
@@ -340,10 +340,10 @@ GpStatus WINGDIPAPI GdipGetFontStyle(GpFont *font, INT *style)
     if (!(font && style))
         return InvalidParameter;
 
-    if (font->lfw.lfWeight > 400)
+    if (font->lfw.lfWeight > FW_REGULAR)
         *style = FontStyleBold;
     else
-        *style = 0;
+        *style = FontStyleRegular;
     if (font->lfw.lfItalic)
         *style |= FontStyleItalic;
     if (font->lfw.lfUnderline)
