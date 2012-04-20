@@ -11819,7 +11819,7 @@ static void test_MsiEnumProductsEx(void)
     char product0[39], product1[39], product2[39], product3[39], guid[39], sid[128];
     char product_squashed1[33], product_squashed2[33], product_squashed3[33];
     char keypath1[MAX_PATH], keypath2[MAX_PATH], keypath3[MAX_PATH];
-    HKEY key1, key2, key3;
+    HKEY key1 = NULL, key2 = NULL, key3 = NULL;
     REGSAM access = KEY_ALL_ACCESS;
     char *usersid = get_user_sid();
 
@@ -11837,8 +11837,7 @@ static void test_MsiEnumProductsEx(void)
     if (r == ERROR_ACCESS_DENIED)
     {
         skip( "insufficient rights\n" );
-        LocalFree( usersid );
-        return;
+        goto done;
     }
     ok( r == ERROR_SUCCESS, "got %u\n", r );
 
@@ -11919,8 +11918,7 @@ static void test_MsiEnumProductsEx(void)
     if (r == ERROR_ACCESS_DENIED)
     {
         skip( "insufficient rights\n" );
-        LocalFree( usersid );
-        return;
+        goto done;
     }
     ok( r == ERROR_SUCCESS, "got %u\n", r );
     ok( guid[0], "empty guid\n" );
@@ -11960,6 +11958,7 @@ static void test_MsiEnumProductsEx(void)
         len = sizeof(sid);
     }
 
+done:
     delete_key( key1, "", access );
     delete_key( key2, "", access );
     delete_key( key3, "", access );
