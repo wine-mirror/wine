@@ -2144,7 +2144,7 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
     HRESULT hr;
 
     hr = SAXLocator_create(This, &locator, vbInterface);
-    if(FAILED(hr))
+    if (FAILED(hr))
         return hr;
 
     if (size >= 4)
@@ -2163,22 +2163,44 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
         }
     }
 
+    /* if libxml2 detection failed try to guess */
+    if (encoding == XML_CHAR_ENCODING_NONE)
+    {
+        const WCHAR *ptr = (WCHAR*)buffer;
+        /* xml declaration with possibly specfied encoding will be still handled by parser */
+        if ((size >= 2) && *ptr == '<' && ptr[1] != '?')
+        {
+            enc_name = (xmlChar*)xmlGetCharEncodingName(XML_CHAR_ENCODING_UTF16LE);
+            encoding = XML_CHAR_ENCODING_UTF16LE;
+        }
+    }
+    else if (encoding == XML_CHAR_ENCODING_UTF8)
+        enc_name = (xmlChar*)xmlGetCharEncodingName(encoding);
+    else
+        enc_name = NULL;
+
     locator->pParserCtxt = xmlCreateMemoryParserCtxt(buffer, size);
-    if(!locator->pParserCtxt)
+    if (!locator->pParserCtxt)
     {
         ISAXLocator_Release(&locator->ISAXLocator_iface);
         return E_FAIL;
     }
 
-    if (encoding == XML_CHAR_ENCODING_UTF8)
+    if (enc_name)
+    {
         locator->pParserCtxt->encoding = xmlStrdup(enc_name);
+        if (encoding == XML_CHAR_ENCODING_UTF16LE) {
+            TRACE("switching to %s\n", enc_name);
+            xmlSwitchEncoding(locator->pParserCtxt, encoding);
+        }
+    }
 
     xmlFree(locator->pParserCtxt->sax);
     locator->pParserCtxt->sax = &locator->saxreader->sax;
     locator->pParserCtxt->userData = locator;
 
     This->isParsing = TRUE;
-    if(xmlParseDocument(locator->pParserCtxt)==-1 && locator->ret==S_OK)
+    if(xmlParseDocument(locator->pParserCtxt) == -1 && locator->ret == S_OK)
         hr = E_FAIL;
     else
         hr = locator->ret;

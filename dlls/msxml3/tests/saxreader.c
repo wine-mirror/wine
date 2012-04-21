@@ -2317,18 +2317,20 @@ static const struct enc_test_entry_t encoding_test_data[] = {
     { 0 }
 };
 
-static void test_encoding(void)
+static void test_saxreader_encoding(void)
 {
     const struct enc_test_entry_t *entry = encoding_test_data;
     static const WCHAR testXmlW[] = {'t','e','s','t','.','x','m','l',0};
     static const CHAR testXmlA[] = "test.xml";
-    ISAXXMLReader *reader;
-    DWORD written;
-    HANDLE file;
-    HRESULT hr;
 
     while (entry->guid)
     {
+        ISAXXMLReader *reader;
+        VARIANT input;
+        DWORD written;
+        HANDLE file;
+        HRESULT hr;
+
         hr = CoCreateInstance(entry->guid, NULL, CLSCTX_INPROC_SERVER, &IID_ISAXXMLReader, (void**)&reader);
         if (hr != S_OK)
         {
@@ -2349,8 +2351,16 @@ static void test_encoding(void)
             ok(hr == entry->hr, "Expected 0x%08x, got 0x%08x. CLSID %s\n", entry->hr, hr, entry->clsid);
 
         DeleteFileA(testXmlA);
+
+        /* try BSTR input with no BOM or '<?xml' instruction */
+        V_VT(&input) = VT_BSTR;
+        V_BSTR(&input) = _bstr_("<element></element>");
+        hr = ISAXXMLReader_parse(reader, input);
+        EXPECT_HR(hr, S_OK);
+
         ISAXXMLReader_Release(reader);
 
+        free_bstrs();
         entry++;
     }
 }
@@ -4474,7 +4484,7 @@ START_TEST(saxreader)
     test_saxreader();
     test_saxreader_properties();
     test_saxreader_features();
-    test_encoding();
+    test_saxreader_encoding();
     test_dispex();
 
     /* MXXMLWriter tests */
