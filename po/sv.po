@@ -7894,14 +7894,12 @@ msgid "Links"
 msgstr "Länkar"
 
 #: shell32.rc:223
-#, fuzzy
 msgid "Slide Shows"
-msgstr "Bilder\\Slide Shows"
+msgstr "Bildspel"
 
 #: shell32.rc:224
-#, fuzzy
 msgid "Playlists"
-msgstr "Musik\\Playlists"
+msgstr "Spellistor"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -7916,24 +7914,20 @@ msgid "Model"
 msgstr "Modell"
 
 #: shell32.rc:225
-#, fuzzy
 msgid "Sample Music"
-msgstr "Musik\\Sample Music"
+msgstr "Exempelmusik"
 
 #: shell32.rc:226
-#, fuzzy
 msgid "Sample Pictures"
-msgstr "Bilder\\Sample Pictures"
+msgstr "Exempelbilder"
 
 #: shell32.rc:227
-#, fuzzy
 msgid "Sample Playlists"
-msgstr "Musik\\Sample Playlists"
+msgstr "Exempelspellistor"
 
 #: shell32.rc:228
-#, fuzzy
 msgid "Sample Videos"
-msgstr "Videoklipp\\Sample Videos"
+msgstr "Exempelvideoklipp"
 
 #: shell32.rc:229
 msgid "Saved Games"
