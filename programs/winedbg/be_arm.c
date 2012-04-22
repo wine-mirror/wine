@@ -99,7 +99,17 @@ static UINT db_get_inst(void* addr, int size)
     return result;
 }
 
-static UINT arm_disasm_branch(UINT inst)
+static void db_printsym(unsigned int addr)
+{
+    ADDRESS64   a;
+
+    a.Mode   = AddrModeFlat;
+    a.Offset = addr;
+
+    print_address(&a, TRUE);
+}
+
+static UINT arm_disasm_branch(UINT inst, ADDRESS64 *addr)
 {
     short link = (inst >> 24) & 0x01;
     int offset = (inst << 2) & 0x03ffffff;
@@ -107,17 +117,18 @@ static UINT arm_disasm_branch(UINT inst)
     if (offset & 0x02000000) offset |= 0xfc000000;
     offset += 8;
 
-    dbg_printf("\n\tb%s%s\t#%d", link ? "l" : "", get_cond(inst), offset);
+    dbg_printf("\n\tb%s%s\t", link ? "l" : "", get_cond(inst));
+    db_printsym(addr->Offset + offset);
     return 0;
 }
 
-static UINT arm_disasm_branchreg(UINT inst)
+static UINT arm_disasm_branchreg(UINT inst, ADDRESS64 *addr)
 {
     dbg_printf("\n\tb%s\t%s", get_cond(inst), tbl_regs[get_nibble(inst, 0)]);
     return 0;
 }
 
-static UINT arm_disasm_dataprocessing(UINT inst)
+static UINT arm_disasm_dataprocessing(UINT inst, ADDRESS64 *addr)
 {
     short condcodes = (inst >> 20) & 0x01;
     short opcode    = (inst >> 21) & 0x0f;
@@ -163,7 +174,7 @@ static UINT arm_disasm_dataprocessing(UINT inst)
     return 0;
 }
 
-static UINT arm_disasm_singletrans(UINT inst)
+static UINT arm_disasm_singletrans(UINT inst, ADDRESS64 *addr)
 {
     short load      = (inst >> 20) & 0x01;
     short writeback = (inst >> 21) & 0x01;
@@ -205,7 +216,7 @@ static UINT arm_disasm_singletrans(UINT inst)
     return 0;
 }
 
-static UINT arm_disasm_halfwordtrans(UINT inst)
+static UINT arm_disasm_halfwordtrans(UINT inst, ADDRESS64 *addr)
 {
     short halfword  = (inst >> 5)  & 0x01;
     short sign      = (inst >> 6)  & 0x01;
@@ -238,7 +249,7 @@ static UINT arm_disasm_halfwordtrans(UINT inst)
     return 0;
 }
 
-static UINT arm_disasm_blocktrans(UINT inst)
+static UINT arm_disasm_blocktrans(UINT inst, ADDRESS64 *addr)
 {
     short load      = (inst >> 20) & 0x01;
     short writeback = (inst >> 21) & 0x01;
@@ -265,14 +276,14 @@ static UINT arm_disasm_blocktrans(UINT inst)
     return 0;
 }
 
-static UINT arm_disasm_swi(UINT inst)
+static UINT arm_disasm_swi(UINT inst, ADDRESS64 *addr)
 {
     UINT comment = inst & 0x00ffffff;
     dbg_printf("\n\tswi%s\t#%d", get_cond(inst), comment);
     return 0;
 }
 
-static UINT arm_disasm_coproctrans(UINT inst)
+static UINT arm_disasm_coproctrans(UINT inst, ADDRESS64 *addr)
 {
     WORD CRm    = inst & 0x0f;
     WORD CP     = (inst >> 5)  & 0x07;
@@ -286,7 +297,7 @@ static UINT arm_disasm_coproctrans(UINT inst)
     return 0;
 }
 
-static UINT arm_disasm_coprocdataop(UINT inst)
+static UINT arm_disasm_coprocdataop(UINT inst, ADDRESS64 *addr)
 {
     WORD CRm    = inst & 0x0f;
     WORD CP     = (inst >> 5)  & 0x07;
@@ -300,7 +311,7 @@ static UINT arm_disasm_coprocdataop(UINT inst)
     return 0;
 }
 
-static UINT arm_disasm_coprocdatatrans(UINT inst)
+static UINT arm_disasm_coprocdatatrans(UINT inst, ADDRESS64 *addr)
 {
     WORD CPnum  = (inst >> 8)  & 0x0f;
     WORD CRd    = (inst >> 12) & 0x0f;
@@ -393,14 +404,16 @@ static WORD thumb_disasm_longbl(WORD inst, ADDRESS64 *addr)
     if (!((inst2 & 0xf800) == 0xf800)) return inst;
 
     offset += (inst2 & 0x07ff) << 1;
-    dbg_printf("\n\tbl\t%08x", offset);
+    dbg_printf("\n\tbl\t");
+    db_printsym(addr->Offset + offset);
     return 0;
 }
 
 static WORD thumb_disasm_condbranch(WORD inst, ADDRESS64 *addr)
 {
     WORD offset = inst & 0x00ff;
-    dbg_printf("\n\tb%s\t%04x", tbl_cond[(inst >> 8) & 0x0f], offset);
+    dbg_printf("\n\tb%s\t", tbl_cond[(inst >> 8) & 0x0f]);
+    db_printsym(addr->Offset + offset);
     return 0;
 }
 
@@ -491,7 +504,7 @@ struct inst_arm
 {
         UINT mask;
         UINT pattern;
-        UINT (*func)(UINT);
+        UINT (*func)(UINT, ADDRESS64*);
 };
 
 static const struct inst_arm tbl_arm[] = {
@@ -581,7 +594,7 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
         }
         else
         {
-            if (!a_ptr->func(inst))
+            if (!a_ptr->func(inst, addr))
                 addr->Offset += size;
             return;
         }
