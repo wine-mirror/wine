@@ -452,7 +452,6 @@ static char *build_command_line( char **argv )
             *p++='"';
         if (has_quote) {
             int bcount;
-            char* a;
 
             bcount=0;
             a=*arg;
