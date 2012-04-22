@@ -305,28 +305,13 @@ typedef struct IDirect3DBaseTexture9Impl
 
 struct d3d9_texture
 {
-    IDirect3DTexture9 IDirect3DTexture9_iface;
+    IDirect3DBaseTexture9 IDirect3DBaseTexture9_iface;
     LONG refcount;
     struct wined3d_texture *wined3d_texture;
     IDirect3DDevice9Ex *parent_device;
 };
 
-/* --------------------- */
-/* IDirect3DCubeTexture9 */
-/* --------------------- */
-
-/*****************************************************************************
- * IDirect3DCubeTexture9 implementation structure
- */
-typedef struct IDirect3DCubeTexture9Impl
-{
-    IDirect3DCubeTexture9 IDirect3DCubeTexture9_iface;
-    LONG ref;
-    struct wined3d_texture *wined3d_texture;
-    IDirect3DDevice9Ex *parentDevice;
-}  IDirect3DCubeTexture9Impl;
-
-HRESULT cubetexture_init(IDirect3DCubeTexture9Impl *texture, IDirect3DDevice9Impl *device,
+HRESULT cubetexture_init(struct d3d9_texture *texture, IDirect3DDevice9Impl *device,
         UINT edge_length, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
 HRESULT texture_init(struct d3d9_texture *texture, IDirect3DDevice9Impl *device,
         UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
