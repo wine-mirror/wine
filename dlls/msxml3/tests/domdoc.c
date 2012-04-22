@@ -10741,12 +10741,9 @@ todo_wine {
     len = 100;
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns1 uri"), 0, buffW, &len);
-todo_wine
     EXPECT_HR(hr, S_OK);
-    if (hr == S_OK) {
     ok(!lstrcmpW(buffW, _bstr_("ns1")), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
-    }
 
     hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns2"), _bstr_("ns2 uri"));
     EXPECT_HR(hr, S_OK);
@@ -10766,22 +10763,16 @@ todo_wine
     len = 100;
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns2 uri"), 0, buffW, &len);
-todo_wine
     EXPECT_HR(hr, S_OK);
-    if (hr == S_OK) {
     ok(!lstrcmpW(buffW, _bstr_("ns2")), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
-    }
 
     len = 100;
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns1 uri"), 0, buffW, &len);
-todo_wine
     EXPECT_HR(hr, S_OK);
-    if (hr == S_OK) {
     ok(!lstrcmpW(buffW, _bstr_("ns1")), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
-    }
 
     hr = IMXNamespaceManager_popContext(nsmgr);
     EXPECT_HR(hr, S_OK);

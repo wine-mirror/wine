@@ -144,16 +144,20 @@ static HRESULT get_declared_prefix_idx(const struct nscontext *ctxt, LONG index,
 }
 
 /* returned stored pointer, caller needs to copy it */
-static HRESULT get_declared_prefix_uri(const struct nscontext *ctxt, const WCHAR *uri, BSTR *prefix)
+static HRESULT get_declared_prefix_uri(const struct list *ctxts, const WCHAR *uri, BSTR *prefix)
 {
-    int i;
+    struct nscontext *ctxt;
 
-    for (i = 0; i < ctxt->count; i++)
-        if (!strcmpW(ctxt->ns[i].uri, uri))
-        {
-            *prefix = ctxt->ns[i].prefix;
-            return S_OK;
-        }
+    LIST_FOR_EACH_ENTRY(ctxt, ctxts, struct nscontext, entry)
+    {
+        int i;
+        for (i = 0; i < ctxt->count; i++)
+            if (!strcmpW(ctxt->ns[i].uri, uri))
+            {
+                *prefix = ctxt->ns[i].prefix;
+                return S_OK;
+            }
+    }
 
     *prefix = NULL;
     return E_FAIL;
@@ -321,7 +325,6 @@ static HRESULT WINAPI namespacemanager_getPrefix(IMXNamespaceManager *iface,
     const WCHAR *uri, LONG index, WCHAR *prefix, int *prefix_len)
 {
     namespacemanager *This = impl_from_IMXNamespaceManager( iface );
-    struct nscontext *ctxt;
     HRESULT hr;
     BSTR prfx;
 
@@ -329,9 +332,7 @@ static HRESULT WINAPI namespacemanager_getPrefix(IMXNamespaceManager *iface,
 
     if (!uri || !*uri || !prefix_len) return E_INVALIDARG;
 
-    ctxt = LIST_ENTRY(list_head(&This->ctxts), struct nscontext, entry);
-
-    hr = get_declared_prefix_uri(ctxt, uri, &prfx);
+    hr = get_declared_prefix_uri(&This->ctxts, uri, &prfx);
     if (hr == S_OK)
     {
         /* TODO: figure out what index argument is for */
