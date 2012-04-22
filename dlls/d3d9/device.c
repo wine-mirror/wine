@@ -676,7 +676,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateTexture(IDirect3DDevice9Ex *ifa
         D3DPOOL pool, IDirect3DTexture9 **texture, HANDLE *shared_handle)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DTexture9Impl *object;
+    struct d3d9_texture *object;
     BOOL set_mem = FALSE;
     HRESULT hr;
 
