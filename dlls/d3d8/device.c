@@ -1172,6 +1172,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetDepthStencilSurface(IDirect3DDevic
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     struct wined3d_surface *wined3d_surface;
+    IDirect3DSurface8Impl *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, depth_stencil %p.\n", iface, ppZStencilSurface);
@@ -1184,7 +1185,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetDepthStencilSurface(IDirect3DDevic
     hr = wined3d_device_get_depth_stencil(This->wined3d_device, &wined3d_surface);
     if (SUCCEEDED(hr))
     {
-        *ppZStencilSurface = wined3d_surface_get_parent(wined3d_surface);
+        surface_impl = wined3d_surface_get_parent(wined3d_surface);
+        *ppZStencilSurface = &surface_impl->IDirect3DSurface8_iface;
         IDirect3DSurface8_AddRef(*ppZStencilSurface);
         wined3d_surface_decref(wined3d_surface);
     }
