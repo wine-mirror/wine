@@ -1818,13 +1818,31 @@ static HRESULT WINAPI SAXAttributes_getQName(ISAXAttributes *iface, int index, c
     return S_OK;
 }
 
-static HRESULT WINAPI SAXAttributes_getName(ISAXAttributes *iface, int nIndex, const WCHAR **pUri, int *pUriLength,
-    const WCHAR ** pLocalName, int * pLocalNameSize, const WCHAR ** pQName, int * pQNameLength)
+static HRESULT WINAPI SAXAttributes_getName(ISAXAttributes *iface, int index, const WCHAR **uri, int *uri_len,
+    const WCHAR **local, int *local_len, const WCHAR **qname, int *qname_len)
 {
     mxattributes *This = impl_from_ISAXAttributes( iface );
-    FIXME("(%p)->(%d %p %p %p %p %p %p): stub\n", This, nIndex, pUri, pUriLength, pLocalName, pLocalNameSize,
-        pQName, pQNameLength);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p %p %p %p %p %p)\n", This, index, uri, uri_len, local, local_len, qname, qname_len);
+
+    if (index >= This->length || index < 0)
+        return E_INVALIDARG;
+
+    if (!uri || !uri_len || !local || !local_len || !qname || !qname_len)
+        return E_POINTER;
+
+    *uri_len = SysStringLen(This->attr[index].uri);
+    *uri = This->attr[index].uri;
+
+    *local_len = SysStringLen(This->attr[index].local);
+    *local = This->attr[index].local;
+
+    *qname_len = SysStringLen(This->attr[index].qname);
+    *qname = This->attr[index].qname;
+
+    TRACE("(%s, %s, %s)\n", debugstr_w(*uri), debugstr_w(*local), debugstr_w(*qname));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXAttributes_getIndexFromName(ISAXAttributes *iface, const WCHAR *uri, int uri_len,
