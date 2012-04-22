@@ -1139,6 +1139,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetRenderTarget(IDirect3DDevice8 *ifa
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     struct wined3d_surface *wined3d_surface;
+    IDirect3DSurface8Impl *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, render_target %p.\n", iface, ppRenderTarget);
@@ -1151,7 +1152,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetRenderTarget(IDirect3DDevice8 *ifa
     hr = wined3d_device_get_render_target(This->wined3d_device, 0, &wined3d_surface);
     if (SUCCEEDED(hr) && wined3d_surface)
     {
-        *ppRenderTarget = wined3d_surface_get_parent(wined3d_surface);
+        surface_impl = wined3d_surface_get_parent(wined3d_surface);
+        *ppRenderTarget = &surface_impl->IDirect3DSurface8_iface;
         IDirect3DSurface8_AddRef(*ppRenderTarget);
         wined3d_surface_decref(wined3d_surface);
     }
