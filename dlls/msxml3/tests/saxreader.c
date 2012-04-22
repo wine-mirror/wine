@@ -4193,6 +4193,15 @@ static void test_mxattr_addAttribute(void)
 
                 hr = ISAXAttributes_getValueFromQName(saxattr, _bstr_(table->qname), 0, &value, NULL);
                 EXPECT_HR(hr, E_INVALIDARG);
+
+                hr = ISAXAttributes_getValueFromName(saxattr, NULL, 0, NULL, 0, NULL, NULL);
+                EXPECT_HR(hr, E_INVALIDARG);
+
+                hr = ISAXAttributes_getValueFromName(saxattr, _bstr_(table->uri), 0, NULL, 0, NULL, NULL);
+                EXPECT_HR(hr, E_INVALIDARG);
+
+                hr = ISAXAttributes_getValueFromName(saxattr, _bstr_(table->uri), 0, NULL, 0, &value, NULL);
+                EXPECT_HR(hr, E_INVALIDARG);
             }
             else
             {
@@ -4211,10 +4220,41 @@ static void test_mxattr_addAttribute(void)
 
                 hr = ISAXAttributes_getValueFromQName(saxattr, _bstr_(table->qname), strlen(table->qname), NULL, &len);
                 EXPECT_HR(hr, E_POINTER);
+
+                hr = ISAXAttributes_getValueFromName(saxattr, NULL, 0, NULL, 0, NULL, NULL);
+                EXPECT_HR(hr, E_POINTER);
+
+                hr = ISAXAttributes_getValueFromName(saxattr, _bstr_(table->uri), 0, NULL, 0, NULL, NULL);
+                EXPECT_HR(hr, E_POINTER);
+
+                hr = ISAXAttributes_getValueFromName(saxattr, _bstr_(table->uri), 0, NULL, 0, &value, NULL);
+                EXPECT_HR(hr, E_POINTER);
+
+                hr = ISAXAttributes_getValueFromName(saxattr, _bstr_(table->uri), 0, _bstr_(table->local), 0, &value, NULL);
+                EXPECT_HR(hr, E_POINTER);
+
+                hr = ISAXAttributes_getValueFromName(saxattr, _bstr_(table->uri), 0, _bstr_(table->local), 0, NULL, &len);
+                EXPECT_HR(hr, E_POINTER);
+
+                hr = ISAXAttributes_getValueFromName(saxattr, _bstr_(table->uri), strlen(table->uri), _bstr_(table->local),
+                    strlen(table->local), NULL, NULL);
+                EXPECT_HR(hr, E_POINTER);
             }
 
             hr = ISAXAttributes_getValueFromQName(saxattr, _bstr_(table->qname), strlen(table->qname), &value, &len);
             EXPECT_HR(hr, S_OK);
+            ok(!lstrcmpW(_bstr_(table->value), value), "%d: got %s, expected %s\n", i, wine_dbgstr_w(value),
+                table->value);
+            ok(lstrlenW(value) == len, "%d: got wrong value length %d\n", i, len);
+
+            if (table->uri) {
+                hr = ISAXAttributes_getValueFromName(saxattr, _bstr_(table->uri), strlen(table->uri),
+                    _bstr_(table->local), strlen(table->local), &value, &len);
+                EXPECT_HR(hr, S_OK);
+                ok(!lstrcmpW(_bstr_(table->value), value), "%d: got %s, expected %s\n", i, wine_dbgstr_w(value),
+                    table->value);
+                ok(lstrlenW(value) == len, "%d: got wrong value length %d\n", i, len);
+            }
         }
 
         len = -1;

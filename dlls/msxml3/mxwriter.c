@@ -1934,13 +1934,24 @@ static HRESULT WINAPI SAXAttributes_getValue(ISAXAttributes *iface, int index, c
     return S_OK;
 }
 
-static HRESULT WINAPI SAXAttributes_getValueFromName(ISAXAttributes *iface, const WCHAR * pUri,
-    int nUri, const WCHAR * pLocalName, int nLocalName, const WCHAR ** pValue, int * nValue)
+static HRESULT WINAPI SAXAttributes_getValueFromName(ISAXAttributes *iface, const WCHAR *uri,
+    int uri_len, const WCHAR *name, int name_len, const WCHAR **value, int *value_len)
 {
     mxattributes *This = impl_from_ISAXAttributes( iface );
-    FIXME("(%p)->(%s:%d %s:%d %p %p): stub\n", This, debugstr_wn(pUri, nUri), nUri,
-        debugstr_wn(pLocalName, nLocalName), nLocalName, pValue, nValue);
-    return E_NOTIMPL;
+    HRESULT hr;
+    int index;
+
+    TRACE("(%p)->(%s:%d %s:%d %p %p)\n", This, debugstr_wn(uri, uri_len), uri_len,
+        debugstr_wn(name, name_len), name_len, value, value_len);
+
+    if (!uri || !name || !value || !value_len)
+        return (This->class_version == MSXML_DEFAULT || This->class_version == MSXML3) ? E_POINTER : E_INVALIDARG;
+
+    hr = ISAXAttributes_getIndexFromName(iface, uri, uri_len, name, name_len, &index);
+    if (hr == S_OK)
+        hr = ISAXAttributes_getValue(iface, index, value, value_len);
+
+    return hr;
 }
 
 static HRESULT WINAPI SAXAttributes_getValueFromQName(ISAXAttributes *iface, const WCHAR *qname,
