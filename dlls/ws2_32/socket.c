@@ -2759,7 +2759,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             static const int MAX_IRDA_DEVICES = 10;
             char buf[sizeof(struct irda_device_list) +
                      (MAX_IRDA_DEVICES - 1) * sizeof(struct irda_device_info)];
-            int fd, res;
+            int res;
             socklen_t len = sizeof(buf);
 
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
