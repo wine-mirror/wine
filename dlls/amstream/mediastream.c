@@ -45,6 +45,7 @@ static inline IDirectDrawMediaStreamImpl *impl_from_IDirectDrawMediaStream(IDire
     return CONTAINING_RECORD(iface, IDirectDrawMediaStreamImpl, IDirectDrawMediaStream_iface);
 }
 
+/*** IUnknown methods ***/
 static HRESULT WINAPI IDirectDrawMediaStreamImpl_QueryInterface(IDirectDrawMediaStream *iface,
         REFIID riid, void **ppv)
 {
@@ -153,6 +154,7 @@ static HRESULT WINAPI IDirectDrawMediaStreamImpl_SendEndOfStream(IDirectDrawMedi
     return S_FALSE;
 }
 
+/*** IDirectDrawMediaStream methods ***/
 static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetFormat(IDirectDrawMediaStream *iface,
         DDSURFACEDESC *pDDSDCurrent, IDirectDrawPalette **ppDirectDrawPalette,
         DDSURFACEDESC *pDDSDDesired, DWORD *pdwFlags)
@@ -207,15 +209,18 @@ static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetTimePerFrame(IDirectDrawMedi
 
 static const struct IDirectDrawMediaStreamVtbl DirectDrawMediaStream_Vtbl =
 {
+    /*** IUnknown methods ***/
     IDirectDrawMediaStreamImpl_QueryInterface,
     IDirectDrawMediaStreamImpl_AddRef,
     IDirectDrawMediaStreamImpl_Release,
+    /*** IMediaStream methods ***/
     IDirectDrawMediaStreamImpl_GetMultiMediaStream,
     IDirectDrawMediaStreamImpl_GetInformation,
     IDirectDrawMediaStreamImpl_SetSameFormat,
     IDirectDrawMediaStreamImpl_AllocateSample,
     IDirectDrawMediaStreamImpl_CreateSharedSample,
     IDirectDrawMediaStreamImpl_SendEndOfStream,
+    /*** IDirectDrawMediaStream methods ***/
     IDirectDrawMediaStreamImpl_GetFormat,
     IDirectDrawMediaStreamImpl_SetFormat,
     IDirectDrawMediaStreamImpl_GetDirectDraw,
@@ -224,7 +229,7 @@ static const struct IDirectDrawMediaStreamVtbl DirectDrawMediaStream_Vtbl =
     IDirectDrawMediaStreamImpl_GetTimePerFrame
 };
 
-HRESULT mediastream_create(IMultiMediaStream *Parent, const MSPID *pPurposeId,
+HRESULT ddrawmediastream_create(IMultiMediaStream *Parent, const MSPID *pPurposeId,
         STREAM_TYPE StreamType, IMediaStream **ppMediaStream)
 {
     IDirectDrawMediaStreamImpl *object;

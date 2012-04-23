@@ -35,7 +35,7 @@
 HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT AMAudioData_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT MediaStreamFilter_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
-HRESULT mediastream_create(IMultiMediaStream *Parent, const MSPID *pPurposeId,
+HRESULT ddrawmediastream_create(IMultiMediaStream *Parent, const MSPID *pPurposeId,
         STREAM_TYPE StreamType, IMediaStream **ppMediaStream) DECLSPEC_HIDDEN;
 
 #endif /* __AMSTREAM_PRIVATE_INCLUDED__ */
