@@ -106,7 +106,7 @@ struct IDirectMusic8Impl {
  */
 struct IDirectMusicBufferImpl {
     /* IUnknown fields */
-    const IDirectMusicBufferVtbl *lpVtbl;
+    IDirectMusicBuffer IDirectMusicBuffer_iface;
     LONG ref;
 
     /* IDirectMusicBufferImpl fields */
