@@ -148,6 +148,8 @@ static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *d
     MonoObject *appdomain_object;
     IUnknown *unk;
 
+    This->mono->mono_thread_attach(domain);
+
     assembly = This->mono->mono_domain_assembly_open(domain, "mscorlib");
     if (!assembly)
     {
@@ -560,6 +562,8 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
 
     hr = E_FAIL;
 
+    This->mono->mono_thread_attach(domain);
+
     filenameA = WtoA(pwzAssemblyPath);
     assembly = This->mono->mono_domain_assembly_open(domain, filenameA);
     if (!assembly)
@@ -658,6 +662,8 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
 
     if (SUCCEEDED(hr))
     {
+        This->mono->mono_thread_attach(domain);
+
         type = This->mono->mono_reflection_type_from_name(nameA, NULL);
         if (!type)
         {
@@ -705,7 +711,9 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
  *
  * NOTE: The IUnknown* is created with a reference to the object.
  * Until they have a reference, objects must be in the stack to prevent the
- * garbage collector from freeing them. */
+ * garbage collector from freeing them.
+ *
+ * mono_thread_attach must have already been called for this thread. */
 HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *obj,
     IUnknown **ppUnk)
 {
@@ -1024,6 +1032,8 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
             char *classA;
 
             hr = CLASS_E_CLASSNOTAVAILABLE;
+
+            host->mono->mono_thread_attach(domain);
 
             filenameA = WtoA(filename);
             assembly = host->mono->mono_domain_assembly_open(domain, filenameA);

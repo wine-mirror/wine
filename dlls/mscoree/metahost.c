@@ -186,6 +186,7 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
         LOAD_MONO_FUNCTION(mono_set_dirs);
         LOAD_MONO_FUNCTION(mono_stringify_assembly_name);
         LOAD_MONO_FUNCTION(mono_string_new);
+        LOAD_MONO_FUNCTION(mono_thread_attach);
 
         /* GLib imports obsoleted by the 2.0 ABI */
         if (This->mono_abi_version == 1)
