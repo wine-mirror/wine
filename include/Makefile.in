@@ -239,6 +239,7 @@ SRCDIR_INCLUDES = \
 	dls2.h \
 	dmdls.h \
 	dmerror.h \
+	dmksctrl.h \
 	dmo.h \
 	dmoreg.h \
 	dmort.h \
