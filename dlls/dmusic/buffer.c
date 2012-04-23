@@ -53,6 +53,7 @@ static ULONG WINAPI IDirectMusicBufferImpl_Release (LPDIRECTMUSICBUFFER iface) {
 	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
 	if (!refCount) {
+		HeapFree(GetProcessHeap(), 0, This->data);
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 
@@ -159,17 +160,37 @@ static const IDirectMusicBufferVtbl DirectMusicBuffer_Vtbl = {
 	IDirectMusicBufferImpl_SetUsedBytes
 };
 
-/* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicBufferImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
-	IDirectMusicBufferImpl* dmbuff;
-	
-	dmbuff = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicBufferImpl));
-	if (NULL == dmbuff) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
-	dmbuff->lpVtbl = &DirectMusicBuffer_Vtbl;
-	dmbuff->ref = 0; /* will be inited by QueryInterface */
-	
-	return IDirectMusicBufferImpl_QueryInterface ((LPDIRECTMUSICBUFFER)dmbuff, lpcGUID, ppobj);
+HRESULT WINAPI DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID* ret_iface)
+{
+    IDirectMusicBufferImpl* dmbuffer;
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", desc, ret_iface);
+
+    *ret_iface = NULL;
+
+    dmbuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicBufferImpl));
+    if (!dmbuffer)
+        return E_OUTOFMEMORY;
+
+    dmbuffer->lpVtbl = &DirectMusicBuffer_Vtbl;
+    dmbuffer->ref = 0; /* Will be inited by QueryInterface */
+
+    memcpy(&dmbuffer->format, &desc->guidBufferFormat, sizeof(GUID));
+    dmbuffer->size = (desc->cbBuffer + 3) & ~3; /* Buffer size must be multiple of 4 bytes */
+
+    dmbuffer->data = HeapAlloc(GetProcessHeap(), 0, dmbuffer->size);
+    if (!dmbuffer->data) {
+        HeapFree(GetProcessHeap(), 0, dmbuffer);
+        return E_OUTOFMEMORY;
+    }
+
+    hr = IDirectMusicBufferImpl_QueryInterface((LPDIRECTMUSICBUFFER)dmbuffer, &IID_IDirectMusicBuffer, ret_iface);
+    if (FAILED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, dmbuffer->data);
+        HeapFree(GetProcessHeap(), 0, dmbuffer);
+    }
+
+    return hr;
 }

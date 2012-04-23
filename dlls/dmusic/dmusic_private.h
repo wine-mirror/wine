@@ -75,13 +75,16 @@ typedef struct DMUSIC_PRIVATE_CHANNEL_GROUP_ {
 /*****************************************************************************
  * ClassFactory
  */
+
+/* CLSID */
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicBufferImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl(LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+
+/* Internal */
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID* ret_iface) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicDownloadedInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicDownloadImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI DMUSIC_CreateReferenceClockImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
@@ -102,11 +105,14 @@ struct IDirectMusic8Impl {
  * IDirectMusicBufferImpl implementation structure
  */
 struct IDirectMusicBufferImpl {
-  /* IUnknown fields */
-  const IDirectMusicBufferVtbl *lpVtbl;
-  LONG           ref;
+    /* IUnknown fields */
+    const IDirectMusicBufferVtbl *lpVtbl;
+    LONG ref;
 
-  /* IDirectMusicBufferImpl fields */
+    /* IDirectMusicBufferImpl fields */
+    GUID format;
+    DWORD size;
+    LPBYTE data;
 };
 
 /*****************************************************************************
