@@ -4783,6 +4783,34 @@ static void doc_write(IHTMLDocument2 *doc, BOOL ln, const char *text)
     SafeArrayDestroy(sa);
 }
 
+static void doc_complex_write(IHTMLDocument2 *doc)
+{
+    SAFEARRAYBOUND dim = {5, 0};
+    SAFEARRAY *sa;
+    VARIANT *args;
+    HRESULT hres;
+
+    sa = SafeArrayCreate(VT_VARIANT, 1, &dim);
+    SafeArrayAccessData(sa, (void**)&args);
+
+    V_VT(args) = VT_BSTR;
+    V_BSTR(args) = a2bstr("<body i4val=\"");
+    V_VT(args+1) = VT_I4;
+    V_I4(args+1) = 4;
+    V_VT(args+2) = VT_BSTR;
+    V_BSTR(args+2) = a2bstr("\" r8val=\"");
+    V_VT(args+3) = VT_R8;
+    V_R8(args+3) = 3.14;
+    V_VT(args+4) = VT_BSTR;
+    V_BSTR(args+4) = a2bstr("\">");
+    SafeArrayUnaccessData(sa);
+
+    hres = IHTMLDocument2_write(doc, sa);
+    ok(hres == S_OK, "write failed: %08x\n", hres);
+
+    SafeArrayDestroy(sa);
+}
+
 static void test_frame_doc(IUnknown *frame_elem, BOOL iframe)
 {
     IHTMLDocument2 *window_doc, *elem_doc;
@@ -4823,6 +4851,7 @@ static void test_iframe_elem(IHTMLElement *elem)
     IHTMLDocument2 *content_doc, *owner_doc;
     IHTMLElementCollection *col;
     IHTMLWindow2 *content_window;
+    IHTMLElement *body;
     IDispatch *disp;
     VARIANT errv;
     BSTR str;
@@ -4854,13 +4883,20 @@ static void test_iframe_elem(IHTMLElement *elem)
     ok(iface_cmp((IUnknown*)disp, (IUnknown*)content_window), "disp != content_window\n");
     IDispatch_Release(disp);
 
-    doc_write(content_doc, FALSE, "<html><head><title>test</title></head><body><br /></body>");
+    doc_write(content_doc, FALSE, "<html><head><title>test</title></head>");
+    doc_complex_write(content_doc);
+    doc_write(content_doc, TRUE, "<br />");
     doc_write(content_doc, TRUE, "</html>");
 
     hres = IHTMLDocument2_get_all(content_doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
     test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
     IHTMLElementCollection_Release(col);
+
+    body = doc_get_body(content_doc);
+    test_elem_attr(body, "i4val", "4");
+    test_elem_attr(body, "r8val", "3.14");
+    IHTMLElement_Release(body);
 
     hres = IHTMLDocument2_close(content_doc);
     ok(hres == S_OK, "close failed: %08x\n", hres);
