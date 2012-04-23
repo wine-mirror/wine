@@ -129,6 +129,7 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_GetBackBuffer(IDirect3DSwapChain9 
 {
     IDirect3DSwapChain9Impl *swapchain = impl_from_IDirect3DSwapChain9(iface);
     struct wined3d_surface *wined3d_surface = NULL;
+    IDirect3DSurface9Impl *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, backbuffer_idx %u, backbuffer_type %#x, backbuffer %p.\n",
@@ -139,7 +140,8 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_GetBackBuffer(IDirect3DSwapChain9 
             iBackBuffer, (enum wined3d_backbuffer_type)Type, &wined3d_surface);
     if (SUCCEEDED(hr) && wined3d_surface)
     {
-       *ppBackBuffer = wined3d_surface_get_parent(wined3d_surface);
+       surface_impl = wined3d_surface_get_parent(wined3d_surface);
+       *ppBackBuffer = &surface_impl->IDirect3DSurface9_iface;
        IDirect3DSurface9_AddRef(*ppBackBuffer);
        wined3d_surface_decref(wined3d_surface);
     }
