@@ -385,7 +385,9 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
             if (This->pFuncsTable->pfnOnWaitStart)
                 This->pFuncsTable->pfnOnWaitStart(This);
 
+            LeaveCriticalSection(&This->csRenderLock);
             hr = QualityControlRender_WaitFor(This->qcimpl, pSample, This->RenderEvent);
+            EnterCriticalSection(&This->csRenderLock);
 
             if (This->pFuncsTable->pfnOnWaitEnd)
                 This->pFuncsTable->pfnOnWaitEnd(This);
