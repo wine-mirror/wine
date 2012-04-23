@@ -3133,11 +3133,7 @@ static UINT get_file_version( const WCHAR *path, WCHAR *verbuf, DWORD *verlen,
                               WCHAR *langbuf, DWORD *langlen )
 {
     static const WCHAR szVersionResource[] = {'\\',0};
-    static const WCHAR szVersionFormat[] = {
-        '%','d','.','%','d','.','%','d','.','%','d',0};
-    static const WCHAR szLangResource[] = {
-        '\\','V','a','r','F','i','l','e','I','n','f','o','\\',
-        'T','r','a','n','s','l','a','t','i','o','n',0};
+    static const WCHAR szVersionFormat[] = {'%','d','.','%','d','.','%','d','.','%','d',0};
     static const WCHAR szLangFormat[] = {'%','d',0};
     UINT ret = ERROR_SUCCESS;
     DWORD len, error;
