@@ -188,3 +188,4 @@
 253 stub FixMAPI@0
 254 stdcall FGetComponentPath(str str ptr long long) mapi32.FGetComponentPath
 255 stdcall FGetComponentPath@20(str str ptr long long) mapi32.FGetComponentPath
+256 stdcall MAPISendMailW(long long ptr long long) mapi32.MAPISendMailW
