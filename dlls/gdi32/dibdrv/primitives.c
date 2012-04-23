@@ -5319,8 +5319,8 @@ static void shrink_row_4(const dib_info *dst_dib, const POINT *dst_start,
                          const struct stretch_params *params, int mode,
                          BOOL keep_dst)
 {
-    BYTE *dst_ptr = get_pixel_ptr_8( dst_dib, dst_start->x, dst_start->y );
-    BYTE *src_ptr = get_pixel_ptr_8( src_dib, src_start->x, src_start->y );
+    BYTE *dst_ptr = get_pixel_ptr_4( dst_dib, dst_start->x, dst_start->y );
+    BYTE *src_ptr = get_pixel_ptr_4( src_dib, src_start->x, src_start->y );
     int err = params->err_start;
     int width, dst_x = dst_start->x, src_x = src_start->x;
     struct rop_codes codes;
@@ -5330,12 +5330,12 @@ static void shrink_row_4(const dib_info *dst_dib, const POINT *dst_start,
     rop_codes_from_stretch_mode( mode, &codes );
     for (width = params->length; width; width--)
     {
-        if (new_pix && !keep_dst) do_rop_mask_8( dst_ptr, 0, init_val, (dst_x & 1) ? 0xf0 : 0x0f );
+        if (new_pix && !keep_dst) do_rop_mask_8( dst_ptr, 0, init_val, (dst_x & 1) ? 0x0f : 0xf0 );
 
         if (src_x & 1) src_val = (*src_ptr & 0x0f) | (*src_ptr << 4);
         else src_val = (*src_ptr & 0xf0) | (*src_ptr >> 4);
 
-        do_rop_codes_mask_8( dst_ptr, src_val, &codes, (dst_x & 1) ? 0xf0 : 0x0f );
+        do_rop_codes_mask_8( dst_ptr, src_val, &codes, (dst_x & 1) ? 0x0f : 0xf0 );
         new_pix = FALSE;
 
         if ((src_x & ~1) != ((src_x + params->src_inc) & ~1))
