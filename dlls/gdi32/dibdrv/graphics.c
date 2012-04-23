@@ -675,7 +675,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         free_clipped_rects( &clipped_rects );
         get_clipped_rects( &pdev->dib, NULL, pdev->clip, &clipped_rects );
     }
-    if (!clipped_rects.count) return TRUE;
+    if (!clipped_rects.count) goto done;
 
     text_color = get_pixel_color( pdev, GetTextColor( pdev->dev.hdc ), TRUE );
     get_aa_ranges( pdev->dib.funcs->pixel_to_colorref( &pdev->dib, text_color ), ranges );
@@ -712,9 +712,9 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
             origin.y += metrics.gmCellIncY;
         }
     }
-    add_clipped_bounds( pdev, &bounds, pdev->clip );
 
 done:
+    add_clipped_bounds( pdev, &bounds, pdev->clip );
     free_clipped_rects( &clipped_rects );
     return TRUE;
 }
