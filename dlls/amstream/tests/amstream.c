@@ -325,10 +325,10 @@ static void test_media_streams(void)
             IAMMediaStream_Release(am_media_stream);
 
         hr = IMediaStream_QueryInterface(audio_stream, &IID_IDirectDrawMediaStream, (LPVOID*)&ddraw_stream);
-        todo_wine ok(hr == E_NOINTERFACE, "IMediaStream_QueryInterface returned: %x\n", hr);
+        ok(hr == E_NOINTERFACE, "IMediaStream_QueryInterface returned: %x\n", hr);
 
         hr = IMediaStream_QueryInterface(audio_stream, &IID_IAudioMediaStream, (LPVOID*)&audio_media_stream);
-        todo_wine ok(hr == S_OK, "IMediaStream_QueryInterface returned: %x\n", hr);
+        ok(hr == S_OK, "IMediaStream_QueryInterface returned: %x\n", hr);
 
         if (SUCCEEDED(hr))
         {

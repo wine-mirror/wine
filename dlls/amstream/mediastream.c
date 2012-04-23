@@ -1,7 +1,7 @@
 /*
- * Implementation of IMediaStream Interface
+ * Implementation of IMediaStream Interfaces
  *
- * Copyright 2005, 2008 Christian Costa
+ * Copyright 2005, 2008, 2012 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -251,6 +251,206 @@ HRESULT ddrawmediastream_create(IMultiMediaStream *Parent, const MSPID *pPurpose
     object->StreamType = StreamType;
 
     *ppMediaStream = (IMediaStream*)&object->IDirectDrawMediaStream_iface;
+
+    return S_OK;
+}
+
+typedef struct {
+    IAudioMediaStream IAudioMediaStream_iface;
+    LONG ref;
+    IMultiMediaStream* parent;
+    MSPID purpose_id;
+    STREAM_TYPE stream_type;
+} IAudioMediaStreamImpl;
+
+static inline IAudioMediaStreamImpl *impl_from_IAudioMediaStream(IAudioMediaStream *iface)
+{
+    return CONTAINING_RECORD(iface, IAudioMediaStreamImpl, IAudioMediaStream_iface);
+}
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI IAudioMediaStreamImpl_QueryInterface(IAudioMediaStream *iface,
+        REFIID riid, void **ret_iface)
+{
+    IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
+
+    TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ret_iface);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IMediaStream) ||
+        IsEqualGUID(riid, &IID_IAudioMediaStream))
+    {
+        IAudioMediaStream_AddRef(iface);
+        *ret_iface = iface;
+        return S_OK;
+    }
+
+    *ret_iface = NULL;
+
+    ERR("(%p/%p)->(%s,%p),not found\n", iface, This, debugstr_guid(riid), ret_iface);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IAudioMediaStreamImpl_AddRef(IAudioMediaStream *iface)
+{
+    IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p/%p): new ref = %u\n", iface, This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI IAudioMediaStreamImpl_Release(IAudioMediaStream *iface)
+{
+    IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p/%p): new ref = %u\n", iface, This, ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+/*** IMediaStream methods ***/
+static HRESULT WINAPI IAudioMediaStreamImpl_GetMultiMediaStream(IAudioMediaStream *iface,
+        IMultiMediaStream** multimedia_stream)
+{
+    IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
+
+    FIXME("(%p/%p)->(%p) stub!\n", iface, This, multimedia_stream);
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI IAudioMediaStreamImpl_GetInformation(IAudioMediaStream *iface,
+        MSPID *purpose_id, STREAM_TYPE *type)
+{
+    IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
+
+    TRACE("(%p/%p)->(%p,%p)\n", iface, This, purpose_id, type);
+
+    if (purpose_id)
+        *purpose_id = This->purpose_id;
+    if (type)
+        *type = This->stream_type;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI IAudioMediaStreamImpl_SetSameFormat(IAudioMediaStream *iface,
+        IMediaStream *stream_format, DWORD flags)
+{
+    IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
+
+    FIXME("(%p/%p)->(%p,%x) stub!\n", iface, This, stream_format, flags);
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI IAudioMediaStreamImpl_AllocateSample(IAudioMediaStream *iface,
+        DWORD flags, IStreamSample **sample)
+{
+    IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
+
+    FIXME("(%p/%p)->(%x,%p) stub!\n", iface, This, flags, sample);
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI IAudioMediaStreamImpl_CreateSharedSample(IAudioMediaStream *iface,
+        IStreamSample *existing_sample, DWORD flags, IStreamSample **sample)
+{
+    IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
+
+    FIXME("(%p/%p)->(%p,%x,%p) stub!\n", iface, This, existing_sample, flags, sample);
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI IAudioMediaStreamImpl_SendEndOfStream(IAudioMediaStream *iface,
+        DWORD flags)
+{
+    IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
+
+    FIXME("(%p/%p)->(%x) stub!\n", iface, This, flags);
+
+    return S_FALSE;
+}
+
+/*** IAudioMediaStream methods ***/
+static HRESULT WINAPI IAudioMediaStreamImpl_GetFormat(IAudioMediaStream *iface, WAVEFORMATEX *wave_format_current)
+{
+    IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
+
+    FIXME("(%p/%p)->(%p) stub!\n", iface, This, wave_format_current);
+
+    return E_NOTIMPL;
+
+}
+
+static HRESULT WINAPI IAudioMediaStreamImpl_SetFormat(IAudioMediaStream *iface, const WAVEFORMATEX *wave_format)
+{
+    IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
+
+    FIXME("(%p/%p)->(%p) stub!\n", iface, This, wave_format);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IAudioMediaStreamImpl_CreateSample(IAudioMediaStream *iface, IAudioData *audio_data,
+                                                         DWORD flags, IAudioStreamSample **sample)
+{
+    IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
+
+    FIXME("(%p/%p)->(%p,%u,%p) stub!\n", iface, This, audio_data, flags, sample);
+
+    return E_NOTIMPL;
+}
+
+static const struct IAudioMediaStreamVtbl AudioMediaStream_Vtbl =
+{
+    /*** IUnknown methods ***/
+    IAudioMediaStreamImpl_QueryInterface,
+    IAudioMediaStreamImpl_AddRef,
+    IAudioMediaStreamImpl_Release,
+    /*** IMediaStream methods ***/
+    IAudioMediaStreamImpl_GetMultiMediaStream,
+    IAudioMediaStreamImpl_GetInformation,
+    IAudioMediaStreamImpl_SetSameFormat,
+    IAudioMediaStreamImpl_AllocateSample,
+    IAudioMediaStreamImpl_CreateSharedSample,
+    IAudioMediaStreamImpl_SendEndOfStream,
+    /*** IAudioMediaStream methods ***/
+    IAudioMediaStreamImpl_GetFormat,
+    IAudioMediaStreamImpl_SetFormat,
+    IAudioMediaStreamImpl_CreateSample
+};
+
+HRESULT audiomediastream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
+        STREAM_TYPE stream_type, IMediaStream **media_stream)
+{
+    IAudioMediaStreamImpl *object;
+
+    TRACE("(%p,%s,%p)\n", parent, debugstr_guid(purpose_id), media_stream);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAudioMediaStreamImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->IAudioMediaStream_iface.lpVtbl = &AudioMediaStream_Vtbl;
+    object->ref = 1;
+
+    object->parent = parent;
+    object->purpose_id = *purpose_id;
+    object->stream_type = stream_type;
+
+    *media_stream = (IMediaStream*)&object->IAudioMediaStream_iface;
 
     return S_OK;
 }
