@@ -2383,6 +2383,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(IDirect3DDevice8 *iface,
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     struct wined3d_buffer *retIndexData = NULL;
+    IDirect3DIndexBuffer8Impl *buffer_impl;
     HRESULT hr;
 
     TRACE("iface %p, buffer %p, base_vertex_index %p.\n", iface, ppIndexData, pBaseVertexIndex);
@@ -2397,7 +2398,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(IDirect3DDevice8 *iface,
     hr = wined3d_device_get_index_buffer(This->wined3d_device, &retIndexData);
     if (SUCCEEDED(hr) && retIndexData)
     {
-        *ppIndexData = wined3d_buffer_get_parent(retIndexData);
+        buffer_impl = wined3d_buffer_get_parent(retIndexData);
+        *ppIndexData = &buffer_impl->IDirect3DIndexBuffer8_iface;
         IDirect3DIndexBuffer8_AddRef(*ppIndexData);
         wined3d_buffer_decref(retIndexData);
     } else {
