@@ -1976,6 +1976,7 @@ typedef struct _GraphicsContainerItem {
     UINT textcontrast;
     GpMatrix* worldtrans;
     GpRegion* clip;
+    INT origin_x, origin_y;
 } GraphicsContainerItem;
 
 static GpStatus init_container(GraphicsContainerItem** container,
@@ -1997,6 +1998,8 @@ static GpStatus init_container(GraphicsContainerItem** container,
     (*container)->unit = graphics->unit;
     (*container)->textcontrast = graphics->textcontrast;
     (*container)->pixeloffset = graphics->pixeloffset;
+    (*container)->origin_x = graphics->origin_x;
+    (*container)->origin_y = graphics->origin_y;
 
     sts = GdipCloneMatrix(graphics->worldtrans, &(*container)->worldtrans);
     if(sts != Ok){
@@ -2055,6 +2058,8 @@ static GpStatus restore_container(GpGraphics* graphics,
     graphics->unit = container->unit;
     graphics->textcontrast = container->textcontrast;
     graphics->pixeloffset = container->pixeloffset;
+    graphics->origin_x = container->origin_x;
+    graphics->origin_y = container->origin_y;
 
     return Ok;
 }
@@ -5499,23 +5504,28 @@ GpStatus WINGDIPAPI GdipSetRenderingOrigin(GpGraphics *graphics, INT x, INT y)
     TRACE("(%p,%i,%i)\n", graphics, x, y);
 
     if (!(calls++))
-        FIXME("not implemented\n");
+        FIXME("value is unused in rendering\n");
 
-    return NotImplemented;
+    if (!graphics)
+        return InvalidParameter;
+
+    graphics->origin_x = x;
+    graphics->origin_y = y;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetRenderingOrigin(GpGraphics *graphics, INT *x, INT *y)
 {
-    static int calls;
-
     TRACE("(%p,%p,%p)\n", graphics, x, y);
 
-    if (!(calls++))
-        FIXME("not implemented\n");
+    if (!graphics || !x || !y)
+        return InvalidParameter;
 
-    *x = *y = 0;
+    *x = graphics->origin_x;
+    *y = graphics->origin_y;
 
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetSmoothingMode(GpGraphics *graphics, SmoothingMode mode)
