@@ -41,6 +41,7 @@ typedef struct MAPI_FUNCTIONS {
     LPMAPIRESOLVENAME    MAPIResolveName;
     LPMAPISAVEMAIL       MAPISaveMail;
     LPMAPISENDMAIL       MAPISendMail;
+    LPMAPISENDMAILW      MAPISendMailW;
     LPMAPISENDDOCUMENTS  MAPISendDocuments;
     LPMAPIUNINITIALIZE   MAPIUninitialize;
 

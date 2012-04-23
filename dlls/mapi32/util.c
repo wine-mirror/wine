@@ -1075,6 +1075,7 @@ void load_mapi_providers(void)
         mapiFunctions.MAPISaveMail = (void*) GetProcAddress(mapi_provider, "MAPISaveMail");
         mapiFunctions.MAPISendDocuments = (void*) GetProcAddress(mapi_provider, "MAPISendDocuments");
         mapiFunctions.MAPISendMail = (void*) GetProcAddress(mapi_provider, "MAPISendMail");
+        mapiFunctions.MAPISendMailW = (void*) GetProcAddress(mapi_provider, "MAPISendMailW");
     }
 
     /* Extended MAPI functions */

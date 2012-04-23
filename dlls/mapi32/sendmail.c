@@ -408,6 +408,34 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
     return MAPI_E_NOT_SUPPORTED;
 }
 
+/**************************************************************************
+ *  MAPISendMailW	(MAPI32.256)
+ *
+ * Send a mail.
+ *
+ * PARAMS
+ *  session  [I] Handle to a MAPI session.
+ *  uiparam  [I] Parent window handle.
+ *  message  [I] Pointer to a MAPIMessageW structure.
+ *  flags    [I] Flags.
+ *  reserved [I] Reserved, pass 0.
+ *
+ * RETURNS
+ *  Success: SUCCESS_SUCCESS
+ *  Failure: MAPI_E_FAILURE
+ *
+ */
+ULONG WINAPI MAPISendMailW(LHANDLE session, ULONG_PTR uiparam,
+    lpMapiMessageW message, FLAGS flags, ULONG reserved)
+{
+    /* Check to see if we have a Simple MAPI provider loaded */
+    if (mapiFunctions.MAPISendMailW)
+        return mapiFunctions.MAPISendMailW(session, uiparam, message, flags, reserved);
+
+    WARN("STUB\n");
+    return MAPI_E_NOT_SUPPORTED;
+}
+
 ULONG WINAPI MAPISendDocuments(ULONG_PTR uiparam, LPSTR delim, LPSTR paths,
     LPSTR filenames, ULONG reserved)
 {
