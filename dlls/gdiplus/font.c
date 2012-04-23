@@ -779,7 +779,7 @@ GpStatus WINGDIPAPI GdipGetLineSpacing(GDIPCONST GpFontFamily *family,
 static INT CALLBACK font_has_style_proc(const LOGFONTW *elf,
                             const TEXTMETRICW *ntm, DWORD type, LPARAM lParam)
 {
-    INT fontstyle=0;
+    INT fontstyle = FontStyleRegular;
 
     if (!ntm) return 1;
 
