@@ -731,7 +731,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateVolumeTexture(IDirect3DDevice9E
         D3DPOOL pool, IDirect3DVolumeTexture9 **texture, HANDLE *shared_handle)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DVolumeTexture9Impl *object;
+    struct d3d9_texture *object;
     HRESULT hr;
 
     TRACE("iface %p, width %u, height %u, depth %u, levels %u\n",
@@ -758,7 +758,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateVolumeTexture(IDirect3DDevice9E
     }
 
     TRACE("Created volume texture %p.\n", object);
-    *texture = &object->IDirect3DVolumeTexture9_iface;
+    *texture = (IDirect3DVolumeTexture9 *)&object->IDirect3DBaseTexture9_iface;
 
     return D3D_OK;
 }
