@@ -2112,7 +2112,7 @@ UINT WINAPI MsiQueryComponentStateA(LPCSTR szProductCode,
 static BOOL msi_comp_find_prod_key(LPCWSTR prodcode, MSIINSTALLCONTEXT context)
 {
     UINT r;
-    HKEY hkey;
+    HKEY hkey = NULL;
 
     r = MSIREG_OpenProductKey(prodcode, NULL, context, &hkey, FALSE);
     RegCloseKey(hkey);
