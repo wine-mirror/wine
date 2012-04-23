@@ -2690,6 +2690,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetStreamSource(IDirect3DDevice8 *ifa
         UINT StreamNumber, IDirect3DVertexBuffer8 **pStream, UINT *pStride)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
+    IDirect3DVertexBuffer8Impl *buffer_impl;
     struct wined3d_buffer *retStream = NULL;
     HRESULT hr;
 
@@ -2705,7 +2706,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetStreamSource(IDirect3DDevice8 *ifa
             &retStream, 0 /* Offset in bytes */, pStride);
     if (SUCCEEDED(hr) && retStream)
     {
-        *pStream = wined3d_buffer_get_parent(retStream);
+        buffer_impl = wined3d_buffer_get_parent(retStream);
+        *pStream = &buffer_impl->IDirect3DVertexBuffer8_iface;
         IDirect3DVertexBuffer8_AddRef(*pStream);
         wined3d_buffer_decref(retStream);
     }
