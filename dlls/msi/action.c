@@ -1620,16 +1620,19 @@ static void ACTION_GetComponentInstallStates(MSIPACKAGE *package)
         r = MsiQueryComponentStateW( package->ProductCode, NULL,
                                      MSIINSTALLCONTEXT_USERMANAGED, comp->ComponentId,
                                      &comp->Installed );
-        if (r != ERROR_SUCCESS)
-            r = MsiQueryComponentStateW( package->ProductCode, NULL,
-                                         MSIINSTALLCONTEXT_USERUNMANAGED, comp->ComponentId,
-                                         &comp->Installed );
-        if (r != ERROR_SUCCESS)
-            r = MsiQueryComponentStateW( package->ProductCode, NULL,
-                                         MSIINSTALLCONTEXT_MACHINE, comp->ComponentId,
-                                         &comp->Installed );
-        if (r != ERROR_SUCCESS)
-            comp->Installed = INSTALLSTATE_ABSENT;
+        if (r == ERROR_SUCCESS) continue;
+
+        r = MsiQueryComponentStateW( package->ProductCode, NULL,
+                                     MSIINSTALLCONTEXT_USERUNMANAGED, comp->ComponentId,
+                                     &comp->Installed );
+        if (r == ERROR_SUCCESS) continue;
+
+        r = MsiQueryComponentStateW( package->ProductCode, NULL,
+                                     MSIINSTALLCONTEXT_MACHINE, comp->ComponentId,
+                                     &comp->Installed );
+        if (r == ERROR_SUCCESS) continue;
+
+        comp->Installed = INSTALLSTATE_ABSENT;
     }
 }
 
