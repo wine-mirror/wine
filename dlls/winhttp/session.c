@@ -917,6 +917,14 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     TRACE("%p, %s, %s, %s, %s, %p, 0x%08x\n", hconnect, debugstr_w(verb), debugstr_w(object),
           debugstr_w(version), debugstr_w(referrer), types, flags);
 
+    if(types && TRACE_ON(winhttp)) {
+        const WCHAR **iter;
+
+        TRACE("accept types:\n");
+        for(iter = types; *iter; iter++)
+            TRACE("    %s\n", debugstr_w(*iter));
+    }
+
     if (!(connect = (connect_t *)grab_object( hconnect )))
     {
         set_last_error( ERROR_INVALID_HANDLE );
