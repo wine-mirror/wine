@@ -5048,7 +5048,7 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     font = alloc_font();
 
     if(face->scalable) {
-        height = -2048; /* 2048 is the most common em size */
+        height = 100;
         width = 0;
     } else {
         height = face->size.y_ppem >> 6;

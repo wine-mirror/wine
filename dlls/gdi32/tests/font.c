@@ -2058,6 +2058,7 @@ static INT CALLBACK arial_enum_proc(const LOGFONT *lf, const TEXTMETRIC *tm, DWO
     struct enum_font_data *efd = (struct enum_font_data *)lParam;
 
     ok(lf->lfHeight == tm->tmHeight, "lfHeight %d != tmHeight %d\n", lf->lfHeight, tm->tmHeight);
+    ok(lf->lfHeight > 0 && lf->lfHeight < 200, "enumerated font height %d\n", lf->lfHeight);
 
     if (type != TRUETYPE_FONTTYPE) return 1;
     if (0) /* Disabled to limit console spam */
@@ -2076,6 +2077,7 @@ static INT CALLBACK arial_enum_procw(const LOGFONTW *lf, const TEXTMETRICW *tm, 
     struct enum_font_dataW *efd = (struct enum_font_dataW *)lParam;
 
     ok(lf->lfHeight == tm->tmHeight, "lfHeight %d != tmHeight %d\n", lf->lfHeight, tm->tmHeight);
+    ok(lf->lfHeight > 0 && lf->lfHeight < 200, "enumerated font height %d\n", lf->lfHeight);
 
     if (type != TRUETYPE_FONTTYPE) return 1;
     if (0) /* Disabled to limit console spam */
