@@ -172,6 +172,10 @@ static inline void strcpynAtoW( WCHAR *dst, const char *src, size_t n )
     if (n) *dst = 0;
 }
 
+static inline unsigned short get_table_entry( const unsigned short *table, WCHAR ch )
+{
+    return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
+}
 
 /***********************************************************************
  *		get_lcid_codepage
@@ -3895,10 +3899,174 @@ INT WINAPI IdnToAscii(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cchUnicodeCha
 INT WINAPI IdnToNameprepUnicode(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cchUnicodeChar,
                                 LPWSTR lpNameprepCharStr, INT cchNameprepChar)
 {
-    FIXME("%x %p %d %p %d\n", dwFlags, lpUnicodeCharStr, cchUnicodeChar,
+    enum {
+        UNASSIGNED = 0x1,
+        PROHIBITED = 0x2,
+        BIDI_RAL   = 0x4,
+        BIDI_L     = 0x8
+    };
+
+    extern const unsigned short nameprep_char_type[];
+    extern const WCHAR nameprep_mapping[];
+    const WCHAR *ptr;
+    WORD flags;
+    WCHAR *map_str, *norm_str, ch;
+    DWORD i, map_len, norm_len, mask;
+    BOOL have_bidi_ral = FALSE, prohibit_bidi_ral = FALSE, ascii_only = TRUE;
+
+    TRACE("%x %p %d %p %d\n", dwFlags, lpUnicodeCharStr, cchUnicodeChar,
         lpNameprepCharStr, cchNameprepChar);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+
+    if(dwFlags & ~(IDN_ALLOW_UNASSIGNED|IDN_USE_STD3_ASCII_RULES)) {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return 0;
+    }
+
+    if(!lpUnicodeCharStr || cchUnicodeChar<-1) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if(cchUnicodeChar == -1)
+        cchUnicodeChar = strlenW(lpUnicodeCharStr)+1;
+    if(!cchUnicodeChar || (cchUnicodeChar==1 && lpUnicodeCharStr[0]==0)) {
+        SetLastError(ERROR_INVALID_NAME);
+        return 0;
+    }
+
+    for(i=0; i<cchUnicodeChar; i++) {
+        ch = lpUnicodeCharStr[i];
+        if(ch > 0x8f) {
+            ascii_only = FALSE;
+            continue;
+        }
+
+        if(i==cchUnicodeChar-1 && !ch)
+            continue;
+        if(!ch) {
+            SetLastError(ERROR_INVALID_NAME);
+            return 0;
+        }
+
+        if((dwFlags&IDN_USE_STD3_ASCII_RULES) == 0)
+            continue;
+        if((ch>='a' && ch<='z') || (ch>='A' && ch<='Z')
+                || (ch>='0' && ch<='9') || ch=='-')
+            continue;
+
+        SetLastError(ERROR_INVALID_NAME);
+        return 0;
+    }
+
+    if((dwFlags&IDN_USE_STD3_ASCII_RULES) &&
+            (lpUnicodeCharStr[0]=='-' || lpUnicodeCharStr[cchUnicodeChar-1]=='-' ||
+             (cchUnicodeChar>1 && lpUnicodeCharStr[cchUnicodeChar-1]==0 &&
+              lpUnicodeCharStr[cchUnicodeChar-2]=='-'))) {
+        SetLastError(ERROR_INVALID_NAME);
+        return 0;
+    }
+
+    if(ascii_only) {
+        if(!lpNameprepCharStr)
+            return cchUnicodeChar;
+        if(cchNameprepChar < cchUnicodeChar) {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return 0;
+        }
+        memcpy(lpNameprepCharStr, lpUnicodeCharStr, cchUnicodeChar*sizeof(WCHAR));
+        return cchUnicodeChar;
+    }
+
+    map_len = 0;
+    for(i=0; i<cchUnicodeChar; i++) {
+        ch = lpUnicodeCharStr[i];
+        ptr = nameprep_mapping + nameprep_mapping[ch>>8];
+        ptr = nameprep_mapping + ptr[(ch>>4)&0x0f] + 3*(ch&0x0f);
+
+        if(!ptr[0]) map_len++;
+        else if(!ptr[1]) map_len++;
+        else if(!ptr[2]) map_len += 2;
+        else if(ptr[0]!=0xffff || ptr[1]!=0xffff || ptr[2]!=0xffff) map_len += 3;
+    }
+    map_str = HeapAlloc(GetProcessHeap(), 0, map_len*sizeof(WCHAR));
+    if(!map_str) {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return 0;
+    }
+    map_len = 0;
+    for(i=0; i<cchUnicodeChar; i++) {
+        ch = lpUnicodeCharStr[i];
+        ptr = nameprep_mapping + nameprep_mapping[ch>>8];
+        ptr = nameprep_mapping + ptr[(ch>>4)&0x0f] + 3*(ch&0x0f);
+
+        if(!ptr[0]) {
+            map_str[map_len++] = ch;
+        }else if(!ptr[1]) {
+            map_str[map_len++] = ptr[0];
+        }else if(!ptr[2]) {
+            map_str[map_len++] = ptr[0];
+            map_str[map_len++] = ptr[1];
+        }else if(ptr[0]!=0xffff || ptr[1]!=0xffff || ptr[2]!=0xffff) {
+            map_str[map_len++] = ptr[0];
+            map_str[map_len++] = ptr[1];
+            map_str[map_len++] = ptr[2];
+        }
+    }
+
+    norm_len = FoldStringW(MAP_FOLDCZONE, map_str, map_len, lpNameprepCharStr, cchNameprepChar);
+    if(lpNameprepCharStr) {
+        norm_str = lpNameprepCharStr;
+    }else {
+        norm_str = HeapAlloc(GetProcessHeap(), 0, norm_len*sizeof(WCHAR));
+        if(!norm_str) {
+            HeapFree(GetProcessHeap(), 0, map_str);
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return 0;
+        }
+        FoldStringW(MAP_FOLDCZONE, map_str, map_len, norm_str, norm_len);
+    }
+    HeapFree(GetProcessHeap(), 0, map_str);
+
+    mask = PROHIBITED;
+    if((dwFlags&IDN_ALLOW_UNASSIGNED) == 0)
+        mask |= UNASSIGNED;
+    for(i=0; i<norm_len; i++) {
+        ch = norm_str[i];
+        flags = get_table_entry( nameprep_char_type, ch );
+
+        if(flags & mask) {
+            if(norm_str != lpNameprepCharStr)
+                HeapFree(GetProcessHeap(), 0, norm_str);
+            SetLastError((flags & PROHIBITED) ? ERROR_INVALID_NAME : ERROR_NO_UNICODE_TRANSLATION);
+            return 0;
+        }
+
+        if(flags & BIDI_RAL)
+            have_bidi_ral = TRUE;
+        if(flags & BIDI_L)
+            prohibit_bidi_ral = TRUE;
+    }
+
+    if(have_bidi_ral) {
+        ch = norm_str[0];
+        flags = get_table_entry( nameprep_char_type, ch );
+        if((flags & BIDI_RAL) == 0)
+            prohibit_bidi_ral = TRUE;
+
+        ch = norm_str[norm_len-1];
+        flags = get_table_entry( nameprep_char_type, ch );
+        if((flags & BIDI_RAL) == 0)
+            prohibit_bidi_ral = TRUE;
+    }
+
+    if(norm_str != lpNameprepCharStr)
+        HeapFree(GetProcessHeap(), 0, norm_str);
+
+    if(have_bidi_ral && prohibit_bidi_ral) {
+        SetLastError(ERROR_INVALID_NAME);
+        return 0;
+    }
+    return norm_len;
 }
 
 /******************************************************************************
