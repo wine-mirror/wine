@@ -109,7 +109,7 @@ static HRESULT exec_global_code(JScript *This, bytecode_t *code)
     IActiveScriptSite_OnEnterScript(This->site);
 
     memset(&jsexcept, 0, sizeof(jsexcept));
-    hres = exec_source(exec_ctx, code, code->parser->source, FALSE, &jsexcept, NULL);
+    hres = exec_source(exec_ctx, code, &code->global_code, FALSE, &jsexcept, NULL);
     VariantClear(&jsexcept.var);
     exec_release(exec_ctx);
 
@@ -836,7 +836,7 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
         return hres;
     }
 
-    hres = create_source_function(This->ctx, code, NULL, code->parser->source, NULL, NULL, 0, &dispex);
+    hres = create_source_function(This->ctx, code, NULL, &code->global_code, NULL, NULL, 0, &dispex);
     release_bytecode(code);
     if(FAILED(hres))
         return hres;

@@ -52,6 +52,7 @@ typedef struct {
     unsigned labels_cnt;
 
     statement_ctx_t *stat_ctx;
+    function_code_t *func;
 } compiler_ctx_t;
 
 static const struct {
@@ -811,18 +812,13 @@ static HRESULT compile_object_literal(compiler_ctx_t *ctx, property_value_expres
 
 static HRESULT compile_function_expression(compiler_ctx_t *ctx, function_expression_t *expr)
 {
-    unsigned instr;
-
     /* FIXME: not exactly right */
-    if(expr->identifier)
+    if(expr->identifier) {
+        ctx->func->func_cnt++;
         return push_instr_bstr(ctx, OP_ident, expr->identifier);
+    }
 
-    instr = push_instr(ctx, OP_func);
-    if(!instr)
-        return E_OUTOFMEMORY;
-
-    instr_ptr(ctx, instr)->arg1.func = expr;
-    return S_OK;
+    return push_instr_uint(ctx, OP_func, ctx->func->func_cnt++);
 }
 
 static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr, BOOL *no_ret)
@@ -1775,15 +1771,16 @@ static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source)
     return S_OK;
 }
 
-static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, BOOL from_eval)
+static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, BOOL from_eval, function_code_t *func)
 {
     function_declaration_t *iter;
-    unsigned off;
+    unsigned off, i;
     HRESULT hres;
 
     TRACE("\n");
 
     off = ctx->code_off;
+    ctx->func = func;
     hres = compile_block_statement(ctx, source->statement);
     if(FAILED(hres))
         return hres;
@@ -1798,14 +1795,21 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     if(TRACE_ON(jscript_disas))
         dump_code(ctx, off);
 
-    source->instr_off = off;
+    func->instr_off = off;
+    func->source_elements = source;
 
-    for(iter = source->functions; iter; iter = iter->next) {
-        hres = compile_function(ctx, iter->expr->source_elements, FALSE);
+    func->funcs = heap_alloc_zero(func->func_cnt * sizeof(*func->funcs));
+    if(!func->funcs)
+        return E_OUTOFMEMORY;
+
+    for(iter = source->functions, i=0; iter; iter = iter->next, i++) {
+        hres = compile_function(ctx, iter->expr->source_elements, FALSE, func->funcs+i);
         if(FAILED(hres))
             return hres;
+        func->funcs[i].expr = iter->expr;
     }
 
+    assert(i == func->func_cnt);
     return S_OK;
 }
 
@@ -1835,7 +1839,7 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimi
 
     compiler.code->parser = compiler.parser;
 
-    hres = compile_function(&compiler, compiler.parser->source, from_eval);
+    hres = compile_function(&compiler, compiler.parser->source, from_eval, &compiler.code->global_code);
     if(FAILED(hres)) {
         release_bytecode(compiler.code);
         return hres;

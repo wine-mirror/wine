@@ -377,7 +377,7 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DIS
         return throw_syntax_error(ctx, ei, hres, NULL);
     }
 
-    hres = exec_source(ctx->exec_ctx, code, code->parser->source, TRUE, ei, retv);
+    hres = exec_source(ctx->exec_ctx, code, &code->global_code, TRUE, ei, retv);
 
     release_bytecode(code);
     return hres;

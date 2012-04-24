@@ -81,7 +81,7 @@ typedef struct {
     X(eq,         1, 0,0)                  \
     X(eq2,        1, 0,0)                  \
     X(forin,      0, ARG_ADDR,   0)        \
-    X(func,       1, ARG_FUNC,   0)        \
+    X(func,       1, ARG_UINT,   0)        \
     X(gt,         1, 0,0)                  \
     X(gteq,       1, 0,0)                  \
     X(ident,      1, ARG_BSTR,   0)        \
@@ -147,7 +147,6 @@ typedef union {
     LONG lng;
     WCHAR *str;
     unsigned uint;
-    function_expression_t *func; /* FIXME */
 } instr_arg_t;
 
 typedef enum {
@@ -167,11 +166,23 @@ typedef struct {
     instr_arg_t arg2;
 } instr_t;
 
+typedef struct _function_code_t {
+    unsigned instr_off;
+
+    function_expression_t *expr; /* FIXME */
+    source_elements_t *source_elements; /* FIXME */
+
+    unsigned func_cnt;
+    struct _function_code_t *funcs;
+} function_code_t;
+
 typedef struct _bytecode_t {
     LONG ref;
 
     instr_t *instrs;
     jsheap_t heap;
+
+    function_code_t global_code;
 
     WCHAR *source;
 
@@ -232,6 +243,7 @@ struct _exec_ctx_t {
     scope_chain_t *scope_chain;
     jsdisp_t *var_disp;
     IDispatch *this_obj;
+    function_code_t *func_code;
     BOOL is_global;
 
     VARIANT *stack;
@@ -250,11 +262,11 @@ static inline void exec_addref(exec_ctx_t *ctx)
 
 void exec_release(exec_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT create_exec_ctx(script_ctx_t*,IDispatch*,jsdisp_t*,scope_chain_t*,BOOL,exec_ctx_t**) DECLSPEC_HIDDEN;
-HRESULT exec_source(exec_ctx_t*,bytecode_t*,source_elements_t*,BOOL,jsexcept_t*,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT exec_source(exec_ctx_t*,bytecode_t*,function_code_t*,BOOL,jsexcept_t*,VARIANT*) DECLSPEC_HIDDEN;
 
 typedef struct _parameter_t parameter_t;
 
-HRESULT create_source_function(script_ctx_t*,bytecode_t*,parameter_t*,source_elements_t*,scope_chain_t*,
+HRESULT create_source_function(script_ctx_t*,bytecode_t*,parameter_t*,function_code_t*,scope_chain_t*,
         const WCHAR*,DWORD,jsdisp_t**) DECLSPEC_HIDDEN;
 
 typedef enum {
@@ -494,7 +506,6 @@ struct _source_elements_t {
     statement_t *statement_tail;
     function_declaration_t *functions;
     var_list_t *variables;
-    unsigned instr_off;
 };
 
 struct _function_expression_t {

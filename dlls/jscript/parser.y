@@ -293,7 +293,7 @@ Statement
         : Block                 { $$ = $1; }
         | VariableStatement     { $$ = $1; }
         | EmptyStatement        { $$ = $1; }
-        | FunctionExpression    { $$ = new_statement(ctx, STAT_EMPTY, 0); }
+        | FunctionExpression    { $$ = new_expression_statement(ctx, $1); }
         | ExpressionStatement   { $$ = $1; }
         | IfStatement           { $$ = $1; }
         | IterationStatement    { $$ = $1; }
@@ -1468,7 +1468,6 @@ static source_elements_t *new_source_elements(parser_ctx_t *ctx)
     source_elements_t *ret = parser_alloc(ctx, sizeof(source_elements_t));
 
     memset(ret, 0, sizeof(*ret));
-    ret->instr_off = 0;
 
     return ret;
 }
