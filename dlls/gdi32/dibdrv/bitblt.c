@@ -1221,7 +1221,7 @@ DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
             else
             {
                 last_row.top = dst_start.y - v_params.dst_inc;
-                last_row.bottom = dst_start.y;
+                last_row.bottom = last_row.top + 1;
                 this_row = last_row;
                 offset_rect( &this_row, 0, v_params.dst_inc );
                 copy_rect( &dst_dib, &this_row, &dst_dib, &last_row, NULL, R2_COPYPEN );
