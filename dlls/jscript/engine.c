@@ -814,7 +814,7 @@ static HRESULT interp_func(exec_ctx_t *ctx)
     expr = ctx->func_code->funcs[func_idx].expr;
 
     hres = create_source_function(ctx->script, ctx->code, expr->parameter_list, ctx->func_code->funcs+func_idx,
-            ctx->scope_chain, expr->src_str, expr->src_len, &dispex);
+            ctx->scope_chain, &dispex);
     if(FAILED(hres))
         return hres;
 
@@ -2629,7 +2629,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, BO
 
         expr = func->funcs[i].expr;
         hres = create_source_function(ctx->script, code, expr->parameter_list, func->funcs+i,
-                ctx->scope_chain, expr->src_str, expr->src_len, &func_obj);
+                ctx->scope_chain, &func_obj);
         if(FAILED(hres))
             return hres;
 

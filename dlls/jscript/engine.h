@@ -173,6 +173,9 @@ typedef struct _function_code_t {
     function_expression_t *expr; /* FIXME */
     source_elements_t *source_elements; /* FIXME */
 
+    const WCHAR *source;
+    unsigned source_len;
+
     unsigned func_cnt;
     struct _function_code_t *funcs;
 } function_code_t;
@@ -268,7 +271,7 @@ HRESULT exec_source(exec_ctx_t*,bytecode_t*,function_code_t*,BOOL,jsexcept_t*,VA
 typedef struct _parameter_t parameter_t;
 
 HRESULT create_source_function(script_ctx_t*,bytecode_t*,parameter_t*,function_code_t*,scope_chain_t*,
-        const WCHAR*,DWORD,jsdisp_t**) DECLSPEC_HIDDEN;
+        jsdisp_t**) DECLSPEC_HIDDEN;
 
 typedef enum {
     LT_INT,

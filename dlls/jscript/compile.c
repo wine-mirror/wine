@@ -1804,6 +1804,11 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
             return E_OUTOFMEMORY;
     }
 
+    if(func_expr) {
+        func->source = func_expr->src_str;
+        func->source_len = func_expr->src_len;
+    }
+
     func->source_elements = source;
     func->expr = func_expr;
 

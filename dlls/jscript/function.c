@@ -32,8 +32,6 @@ typedef struct {
     scope_chain_t *scope_chain;
     bytecode_t *code;
     function_code_t *func_code;
-    const WCHAR *src_str;
-    DWORD src_len;
     DWORD length;
     jsdisp_t *arguments;
 } FunctionInstance;
@@ -303,7 +301,7 @@ static HRESULT function_to_string(FunctionInstance *function, BSTR *ret)
         memcpy(str + sizeof(native_prefixW)/sizeof(WCHAR), function->name, name_len*sizeof(WCHAR));
         memcpy(str + sizeof(native_prefixW)/sizeof(WCHAR) + name_len, native_suffixW, sizeof(native_suffixW));
     }else {
-        str = SysAllocStringLen(function->src_str, function->src_len);
+        str = SysAllocStringLen(function->func_code->source, function->func_code->source_len);
         if(!str)
             return E_OUTOFMEMORY;
     }
@@ -661,7 +659,7 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
 }
 
 HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, parameter_t *parameters, function_code_t *func_code,
-        scope_chain_t *scope_chain, const WCHAR *src_str, DWORD src_len, jsdisp_t **ret)
+        scope_chain_t *scope_chain, jsdisp_t **ret)
 {
     FunctionInstance *function;
     jsdisp_t *prototype;
@@ -697,9 +695,6 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, parameter_t 
     for(iter = parameters; iter; iter = iter->next)
         length++;
     function->length = length;
-
-    function->src_str = src_str;
-    function->src_len = src_len;
 
     *ret = &function->dispex;
     return S_OK;
@@ -786,8 +781,7 @@ static HRESULT construct_function(script_ctx_t *ctx, DISPPARAMS *dp, jsexcept_t 
     }
     expr = code->global_code.funcs[0].expr;
 
-    hres = create_source_function(ctx, code, expr->parameter_list, code->global_code.funcs, NULL, expr->src_str,
-            expr->src_len, &function);
+    hres = create_source_function(ctx, code, expr->parameter_list, code->global_code.funcs, NULL, &function);
     release_bytecode(code);
     if(FAILED(hres))
         return hres;
