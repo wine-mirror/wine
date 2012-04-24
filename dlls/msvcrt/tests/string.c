@@ -688,6 +688,16 @@ static void test_wcscpy_s(void)
     ok(ret == STRUNCATE, "expected STRUNCATE got %d\n", ret);
     ok(szDest[4] == 0, "szDest[4] not 0\n");
     ok(!memcmp(szDest, szLongText, 4*sizeof(WCHAR)), "szDest = %s\n", wine_dbgstr_w(szDest));
+
+    ret = p_wcsncpy_s(NULL, 0, (void*)0xdeadbeef, 0);
+    ok(ret == 0, "ret = %d\n", ret);
+
+    szDestShort[0] = '1';
+    szDestShort[1] = 0;
+    ret = p_wcsncpy_s(szDestShort+1, 4, szDestShort, -1);
+    ok(ret == STRUNCATE, "expected ERROR_SUCCESS got %d\n", ret);
+    ok(szDestShort[0]=='1' && szDestShort[1]=='1' && szDestShort[2]=='1' && szDestShort[3]=='1',
+            "szDestShort = %s\n", wine_dbgstr_w(szDestShort));
 }
 
 static void test__wcsupr_s(void)
