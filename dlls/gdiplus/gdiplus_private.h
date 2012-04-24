@@ -377,7 +377,7 @@ struct GpFontCollection{
 };
 
 struct GpFontFamily{
-    NEWTEXTMETRICW tmw;
+    OUTLINETEXTMETRICW otm;
     WCHAR FamilyName[LF_FACESIZE];
 };
 
