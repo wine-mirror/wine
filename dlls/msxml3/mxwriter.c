@@ -1787,12 +1787,20 @@ static HRESULT WINAPI SAXAttributes_getLength(ISAXAttributes *iface, int *length
     return S_OK;
 }
 
-static HRESULT WINAPI SAXAttributes_getURI(ISAXAttributes *iface, int nIndex, const WCHAR **pUrl,
-    int *pUriSize)
+static HRESULT WINAPI SAXAttributes_getURI(ISAXAttributes *iface, int index, const WCHAR **uri,
+    int *len)
 {
     mxattributes *This = impl_from_ISAXAttributes( iface );
-    FIXME("(%p)->(%d %p %p): stub\n", This, nIndex, pUrl, pUriSize);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p %p)\n", This, index, uri, len);
+
+    if (index >= This->length || index < 0) return E_INVALIDARG;
+    if (!uri || !len) return E_POINTER;
+
+    *len = SysStringLen(This->attr[index].uri);
+    *uri = This->attr[index].uri;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXAttributes_getLocalName(ISAXAttributes *iface, int index, const WCHAR **name,
