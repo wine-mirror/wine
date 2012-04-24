@@ -161,12 +161,16 @@ static HRESULT WINAPI IDirectMusicBufferImpl_GetMaxBytes(LPDIRECTMUSICBUFFER ifa
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicBufferImpl_GetBufferFormat(LPDIRECTMUSICBUFFER iface, LPGUID pGuidFormat)
+static HRESULT WINAPI IDirectMusicBufferImpl_GetBufferFormat(LPDIRECTMUSICBUFFER iface, LPGUID format)
 {
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
 
-    FIXME("(%p, %p): stub\n", This, pGuidFormat);
+    TRACE("(%p)->(%p)\n", iface, format);
 
+    if (!format)
+        return E_POINTER;
+
+    *format = This->format;
     return S_OK;
 }
 
