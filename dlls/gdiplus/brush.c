@@ -1432,14 +1432,35 @@ GpStatus WINGDIPAPI GdipSetLineWrapMode(GpLineGradient *line,
 GpStatus WINGDIPAPI GdipSetPathGradientBlend(GpPathGradient *brush, GDIPCONST REAL *blend,
     GDIPCONST REAL *pos, INT count)
 {
-    static int calls;
+    REAL *new_blendfac, *new_blendpos;
 
     TRACE("(%p,%p,%p,%i)\n", brush, blend, pos, count);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if(!brush || !blend || !pos || count <= 0 ||
+       (count >= 2 && (pos[0] != 0.0f || pos[count-1] != 1.0f)))
+        return InvalidParameter;
 
-    return NotImplemented;
+    new_blendfac = GdipAlloc(count * sizeof(REAL));
+    new_blendpos = GdipAlloc(count * sizeof(REAL));
+
+    if (!new_blendfac || !new_blendpos)
+    {
+        GdipFree(new_blendfac);
+        GdipFree(new_blendpos);
+        return OutOfMemory;
+    }
+
+    memcpy(new_blendfac, blend, count * sizeof(REAL));
+    memcpy(new_blendpos, pos, count * sizeof(REAL));
+
+    GdipFree(brush->blendfac);
+    GdipFree(brush->blendpos);
+
+    brush->blendcount = count;
+    brush->blendfac = new_blendfac;
+    brush->blendpos = new_blendpos;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetPathGradientLinearBlend(GpPathGradient *brush,
