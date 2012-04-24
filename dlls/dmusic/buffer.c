@@ -152,11 +152,16 @@ static HRESULT WINAPI IDirectMusicBufferImpl_GetUsedBytes(LPDIRECTMUSICBUFFER if
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicBufferImpl_GetMaxBytes(LPDIRECTMUSICBUFFER iface, LPDWORD pcb)
+static HRESULT WINAPI IDirectMusicBufferImpl_GetMaxBytes(LPDIRECTMUSICBUFFER iface, LPDWORD max_bytes)
 {
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
 
-    FIXME("(%p, %p): stub\n", This, pcb);
+    TRACE("(%p)->(%p)\n", iface, max_bytes);
+
+    if (!max_bytes)
+        return E_POINTER;
+
+    *max_bytes = This->size;
 
     return S_OK;
 }
