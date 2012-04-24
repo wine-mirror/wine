@@ -876,6 +876,37 @@ static void test_gradientsurroundcolorcount(void)
     expect(Ok, status);
     expect(2, count);
 
+    /* If all colors are the same, count is set to 1. */
+    color[0] = color[1] = 0;
+    count = 2;
+    status = GdipSetPathGradientSurroundColorsWithCount(grad, color, &count);
+    expect(Ok, status);
+    expect(2, count);
+
+    color[0] = color[1] = color[2] = 0xdeadbeef;
+    count = 2;
+    status = GdipGetPathGradientSurroundColorsWithCount(grad, color, &count);
+    expect(Ok, status);
+    expect(1, count);
+    expect(0x00000000, color[0]);
+    expect(0x00000000, color[1]);
+    expect(0xdeadbeef, color[2]);
+
+    color[0] = color[1] = 0xff00ff00;
+    count = 2;
+    status = GdipSetPathGradientSurroundColorsWithCount(grad, color, &count);
+    expect(Ok, status);
+    expect(2, count);
+
+    color[0] = color[1] = color[2] = 0xdeadbeef;
+    count = 2;
+    status = GdipGetPathGradientSurroundColorsWithCount(grad, color, &count);
+    expect(Ok, status);
+    expect(1, count);
+    expect(0xff00ff00, color[0]);
+    expect(0xff00ff00, color[1]);
+    expect(0xdeadbeef, color[2]);
+
     count = 0;
     status = GdipSetPathGradientSurroundColorsWithCount(grad, color, &count);
     expect(InvalidParameter, status);

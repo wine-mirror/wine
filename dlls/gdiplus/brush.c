@@ -1699,6 +1699,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientSurroundColorsWithCount(GpPathGradient
     *grad, GDIPCONST ARGB *argb, INT *count)
 {
     ARGB *new_surroundcolors;
+    INT i, num_colors;
 
     TRACE("(%p,%p,%p)\n", grad, argb, count);
 
@@ -1706,16 +1707,29 @@ GpStatus WINGDIPAPI GdipSetPathGradientSurroundColorsWithCount(GpPathGradient
         (*count > grad->path->pathdata.Count))
         return InvalidParameter;
 
-    new_surroundcolors = GdipAlloc(*count * sizeof(ARGB));
+    num_colors = *count;
+
+    /* If all colors are the same, only store 1 color. */
+    if (*count > 1)
+    {
+        for (i=1; i < num_colors; i++)
+            if (argb[i] != argb[i-1])
+                break;
+
+        if (i == num_colors)
+            num_colors = 1;
+    }
+
+    new_surroundcolors = GdipAlloc(num_colors * sizeof(ARGB));
     if (!new_surroundcolors)
         return OutOfMemory;
 
-    memcpy(new_surroundcolors, argb, *count * sizeof(ARGB));
+    memcpy(new_surroundcolors, argb, num_colors * sizeof(ARGB));
 
     GdipFree(grad->surroundcolors);
 
     grad->surroundcolors = new_surroundcolors;
-    grad->surroundcolorcount = *count;
+    grad->surroundcolorcount = num_colors;
 
     return Ok;
 }
