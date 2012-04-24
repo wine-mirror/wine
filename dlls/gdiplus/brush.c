@@ -578,10 +578,10 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
 
     TRACE("(%p, %d, %d, %p)\n", points, count, wrap, grad);
 
-    if(!points || !grad)
+    if(!grad)
         return InvalidParameter;
 
-    if(count <= 0)
+    if(!points || count <= 0)
         return OutOfMemory;
 
     stat = GdipCreatePath(FillModeAlternate, &path);
@@ -611,10 +611,10 @@ GpStatus WINGDIPAPI GdipCreatePathGradientI(GDIPCONST GpPoint* points,
 
     TRACE("(%p, %d, %d, %p)\n", points, count, wrap, grad);
 
-    if(!points || !grad)
+    if(!grad)
         return InvalidParameter;
 
-    if(count <= 0)
+    if(!points || count <= 0)
         return OutOfMemory;
 
     stat = GdipCreatePath(FillModeAlternate, &path);
