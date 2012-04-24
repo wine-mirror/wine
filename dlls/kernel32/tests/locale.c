@@ -2102,6 +2102,18 @@ static void test_FoldStringW(void)
   {
     'W','i','n','e',0x0348,0x0551,0x1323,0x280d,'W','i','n','e','\0'
   };
+  static const WCHAR foldczone_todo_src[] =
+  {
+      0x3c5,0x308,0x6a,0x30c,0xa0,0xaa,0
+  };
+  static const WCHAR foldczone_todo_dst[] =
+  {
+      0x3cb,0x1f0,' ','a',0
+  };
+  static const WCHAR foldczone_todo_broken_dst[] =
+  {
+      0x3cb,0x1f0,0xa0,0xaa,0
+  };
   static const WCHAR ligatures_src[] =
   {
     'W',    'i',    'n',    'e',    0x03a6, 0x03b9, 0x03bd, 0x03b5,
@@ -2245,6 +2257,13 @@ static void test_FoldStringW(void)
      "Got %d, error %d\n", ret, GetLastError());
   ok(!memcmp(dst, foldczone_dst, sizeof(foldczone_dst)),
      "MAP_FOLDCZONE: Expanded incorrectly\n");
+
+  ret = pFoldStringW(MAP_FOLDCZONE|MAP_PRECOMPOSED, foldczone_todo_src, -1, dst, 256);
+  todo_wine ok(ret == sizeof(foldczone_todo_dst)/sizeof(foldczone_todo_dst[0]),
+          "Got %d, error %d\n", ret, GetLastError());
+  todo_wine ok(!memcmp(dst, foldczone_todo_dst, sizeof(foldczone_todo_dst))
+          || broken(!memcmp(dst, foldczone_todo_broken_dst, sizeof(foldczone_todo_broken_dst))),
+          "MAP_FOLDCZONE: Expanded incorrectly (%s)\n", wine_dbgstr_w(dst));
 
   /* MAP_EXPAND_LIGATURES */
   SetLastError(0);
