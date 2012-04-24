@@ -76,6 +76,7 @@ static INT  (WINAPI *pLCIDToLocaleName)(LCID, LPWSTR, INT, DWORD);
 static INT (WINAPI *pFoldStringA)(DWORD, LPCSTR, INT, LPSTR, INT);
 static INT (WINAPI *pFoldStringW)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static BOOL (WINAPI *pIsValidLanguageGroup)(LGRPID, DWORD);
+static INT (WINAPI *pIdnToNameprepUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 
 static void InitFunctionPointers(void)
 {
@@ -89,6 +90,7 @@ static void InitFunctionPointers(void)
   pIsValidLanguageGroup = (void*)GetProcAddress(hKernel32, "IsValidLanguageGroup");
   pEnumUILanguagesA = (void*)GetProcAddress(hKernel32, "EnumUILanguagesA");
   pEnumSystemLocalesEx = (void*)GetProcAddress(hKernel32, "EnumSystemLocalesEx");
+  pIdnToNameprepUnicode = (void*)GetProcAddress(hKernel32, "IdnToNameprepUnicode");
 }
 
 #define eq(received, expected, label, type) \
@@ -2826,6 +2828,159 @@ static void test_GetStringTypeW(void)
         ok(types[i] & C1_SPACE || broken(types[i] == C1_CNTRL) || broken(types[i] == 0), "incorrect types returned for %x -> (%x does not have %x)\n",space_special[i], types[i], C1_SPACE );
 }
 
+static void test_IdnToNameprepUnicode(void)
+{
+    struct {
+        DWORD in_len;
+        const WCHAR in[64];
+        DWORD ret;
+        const WCHAR out[64];
+        DWORD flags;
+        DWORD err;
+        DWORD todo;
+    } test_data[] = {
+        {
+            5, {'t','e','s','t',0},
+            5, {'t','e','s','t',0},
+            0, 0xdeadbeef
+        },
+        {
+            3, {'a',0xe111,'b'},
+            0, {0},
+            0, ERROR_INVALID_NAME
+        },
+        {
+            4, {'t',0,'e',0},
+            0, {0},
+            0, ERROR_INVALID_NAME
+        },
+        {
+            1, {'T',0},
+            1, {'T',0},
+            0, 0xdeadbeef
+        },
+        {
+            1, {0},
+            0, {0},
+            0, ERROR_INVALID_NAME
+        },
+        {
+            6, {' ','-','/','[',']',0},
+            6, {' ','-','/','[',']',0},
+            0, 0xdeadbeef
+        },
+        {
+            3, {'a','-','a'},
+            3, {'a','-','a'},
+            IDN_USE_STD3_ASCII_RULES, 0xdeadbeef
+        },
+        {
+            3, {'a','a','-'},
+            0, {0},
+            IDN_USE_STD3_ASCII_RULES, ERROR_INVALID_NAME
+        },
+        { /* FoldString is not working as expected when MAP_FOLDCZONE is specified (composition+compatibility) */
+            10, {'T',0xdf,0x130,0x143,0x37a,0x6a,0x30c,' ',0xaa,0},
+            12, {'t','s','s','i',0x307,0x144,' ',0x3b9,0x1f0,' ','a',0},
+            0, 0xdeadbeef, TRUE
+        },
+        {
+            11, {'t',0xad,0x34f,0x1806,0x180b,0x180c,0x180d,0x200b,0x200c,0x200d,0},
+            2, {'t',0},
+            0, 0xdeadbeef
+        },
+        { /* Another example of incorrectly working FoldString (composition) */
+            2, {0x3b0, 0},
+            2, {0x3b0, 0},
+            0, 0xdeadbeef, TRUE
+        },
+        {
+            2, {0x221, 0},
+            0, {0},
+            0, ERROR_NO_UNICODE_TRANSLATION
+        },
+        {
+            2, {0x221, 0},
+            2, {0x221, 0},
+            IDN_ALLOW_UNASSIGNED, 0xdeadbeef
+        },
+    };
+
+    WCHAR buf[1024];
+    DWORD i, ret, err;
+
+    if (!pIdnToNameprepUnicode)
+    {
+        win_skip("IdnToNameprepUnicode is not available\n");
+        return;
+    }
+
+    ret = pIdnToNameprepUnicode(0, test_data[0].in,
+            test_data[0].in_len, NULL, 0);
+    ok(ret == test_data[0].ret, "ret = %d\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = pIdnToNameprepUnicode(0, test_data[1].in,
+            test_data[1].in_len, NULL, 0);
+    err = GetLastError();
+    ok(ret == test_data[1].ret, "ret = %d\n", ret);
+    ok(err == test_data[1].err, "err = %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ret = pIdnToNameprepUnicode(0, test_data[0].in, -1,
+            buf, sizeof(buf)/sizeof(WCHAR));
+    err = GetLastError();
+    ok(ret == test_data[0].ret, "ret = %d\n", ret);
+    ok(err == 0xdeadbeef, "err = %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ret = pIdnToNameprepUnicode(0, test_data[0].in, -2,
+            buf, sizeof(buf)/sizeof(WCHAR));
+    err = GetLastError();
+    ok(ret == 0, "ret = %d\n", ret);
+    ok(err == ERROR_INVALID_PARAMETER, "err = %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ret = pIdnToNameprepUnicode(0, test_data[0].in, 0,
+            buf, sizeof(buf)/sizeof(WCHAR));
+    err = GetLastError();
+    ok(ret == 0, "ret = %d\n", ret);
+    ok(err == ERROR_INVALID_NAME, "err = %d\n", err);
+
+    ret = pIdnToNameprepUnicode(IDN_ALLOW_UNASSIGNED|IDN_USE_STD3_ASCII_RULES,
+            test_data[0].in, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(ret == test_data[0].ret, "ret = %d\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = pIdnToNameprepUnicode(0, NULL, 0, NULL, 0);
+    err = GetLastError();
+    ok(ret == 0, "ret = %d\n", ret);
+    ok(err == ERROR_INVALID_PARAMETER, "err = %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ret = pIdnToNameprepUnicode(4, NULL, 0, NULL, 0);
+    err = GetLastError();
+    ok(ret == 0, "ret = %d\n", ret);
+    ok(err == ERROR_INVALID_FLAGS, "err = %d\n", err);
+
+    for (i=0; i<sizeof(test_data)/sizeof(*test_data); i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = pIdnToNameprepUnicode(test_data[i].flags, test_data[i].in,
+                test_data[i].in_len, buf, sizeof(buf)/sizeof(WCHAR));
+        err = GetLastError();
+        if(!test_data[i].todo) {
+            ok(ret == test_data[i].ret, "%d) ret = %d\n", i, ret);
+            ok(err == test_data[i].err, "%d) err = %d\n", i, err);
+            ok(!memcmp(test_data[i].out, buf, ret*sizeof(WCHAR)),
+                    "%d) buf = %s\n", i, wine_dbgstr_wn(buf, ret));
+        }else {
+            todo_wine ok(!memcmp(test_data[i].out, buf, ret*sizeof(WCHAR)),
+                    "%d) buf = %s\n", i, wine_dbgstr_wn(buf, ret));
+        }
+    }
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
@@ -2853,6 +3008,7 @@ START_TEST(locale)
   test_EnumUILanguageA();
   test_GetCPInfo();
   test_GetStringTypeW();
+  test_IdnToNameprepUnicode();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }
