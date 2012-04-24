@@ -1739,6 +1739,48 @@ static void widen_open_figure(GpPath *path, GpPen *pen, int start, int end,
     (*last_point)->type |= PathPointTypeCloseSubpath;
 }
 
+static void widen_closed_figure(GpPath *path, GpPen *pen, int start, int end,
+    path_list_node_t **last_point)
+{
+    int i;
+    path_list_node_t *prev_point;
+
+    if (end <= start+1)
+        return;
+
+    /* left outline */
+    prev_point = *last_point;
+
+    widen_joint(&path->pathdata.Points[end], &path->pathdata.Points[start],
+        &path->pathdata.Points[start+1], pen, last_point);
+
+    for (i=start+1; i<end; i++)
+        widen_joint(&path->pathdata.Points[i-1], &path->pathdata.Points[i],
+            &path->pathdata.Points[i+1], pen, last_point);
+
+    widen_joint(&path->pathdata.Points[end-1], &path->pathdata.Points[end],
+        &path->pathdata.Points[start], pen, last_point);
+
+    prev_point->next->type = PathPointTypeStart;
+    (*last_point)->type |= PathPointTypeCloseSubpath;
+
+    /* right outline */
+    prev_point = *last_point;
+
+    widen_joint(&path->pathdata.Points[start], &path->pathdata.Points[end],
+        &path->pathdata.Points[end-1], pen, last_point);
+
+    for (i=end-1; i>start; i--)
+        widen_joint(&path->pathdata.Points[i+1], &path->pathdata.Points[i],
+            &path->pathdata.Points[i-1], pen, last_point);
+
+    widen_joint(&path->pathdata.Points[start+1], &path->pathdata.Points[start],
+        &path->pathdata.Points[end], pen, last_point);
+
+    prev_point->next->type = PathPointTypeStart;
+    (*last_point)->type |= PathPointTypeCloseSubpath;
+}
+
 GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     REAL flatness)
 {
@@ -1795,7 +1837,7 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
 
             if ((type&PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
             {
-                FIXME("closed figures unimplemented\n");
+                widen_closed_figure(flat_path, pen, subpath_start, i, &last_point);
             }
             else if (i == flat_path->pathdata.Count-1 ||
                 (flat_path->pathdata.Types[i+1]&PathPointTypePathTypeMask) == PathPointTypeStart)
