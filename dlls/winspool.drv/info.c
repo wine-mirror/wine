@@ -494,6 +494,7 @@ static BOOL CUPS_LoadPrinters(void)
     HKEY hkeyPrinter, hkeyPrinters;
     char    loaderror[256];
     WCHAR   nameW[MAX_PATH];
+    HANDLE  added_printer;
 
     cupshandle = wine_dlopen(SONAME_LIBCUPS, RTLD_NOW, loaderror, sizeof(loaderror));
     if (!cupshandle) {
@@ -548,10 +549,10 @@ static BOOL CUPS_LoadPrinters(void)
             pi2.pShareName      = emptyStringW;
             pi2.pSepFile        = emptyStringW;
 
-            if (!AddPrinterW(NULL, 2, (LPBYTE)&pi2)) {
-                if (GetLastError() != ERROR_PRINTER_ALREADY_EXISTS)
-                    ERR("printer '%s' not added by AddPrinter (error %d)\n", debugstr_w(nameW), GetLastError());
-            }
+            added_printer = AddPrinterW( NULL, 2, (LPBYTE)&pi2 );
+            if (added_printer) ClosePrinter( added_printer );
+            else if (GetLastError() != ERROR_PRINTER_ALREADY_EXISTS)
+                ERR( "printer '%s' not added by AddPrinter (error %d)\n", debugstr_w(nameW), GetLastError() );
         }
 	HeapFree(GetProcessHeap(),0,port);
 
@@ -571,8 +572,8 @@ static BOOL CUPS_LoadPrinters(void)
 }
 #endif
 
-static BOOL
-PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
+static BOOL PRINTCAP_ParseEntry( const char *pent, BOOL isfirst )
+{
     PRINTER_INFO_2A	pinfo2a;
     const char	*r;
     size_t		name_len;
@@ -581,6 +582,7 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
     char *port = NULL, *env_default;
     HKEY hkeyPrinter, hkeyPrinters;
     WCHAR devnameW[MAX_PATH];
+    HANDLE added_printer;
 
     while (isspace(*pent)) pent++;
     r = strchr(pent,':');
@@ -678,10 +680,10 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
         pinfo2a.pShareName      = share_name;
         pinfo2a.pSepFile        = sep_file;
 
-        if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
-            if (GetLastError()!=ERROR_PRINTER_ALREADY_EXISTS)
-                ERR("%s not added by AddPrinterA (%d)\n",name,GetLastError());
-        }
+        added_printer = AddPrinterA( NULL, 2, (LPBYTE)&pinfo2a );
+        if (added_printer) ClosePrinter( added_printer );
+        else if (GetLastError() != ERROR_PRINTER_ALREADY_EXISTS)
+            ERR( "printer '%s' not added by AddPrinter (error %d)\n", debugstr_a(name), GetLastError() );
     }
     RegCloseKey(hkeyPrinters);
 
