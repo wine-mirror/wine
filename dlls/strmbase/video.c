@@ -156,7 +156,7 @@ HRESULT WINAPI BaseControlVideoImpl_get_VideoHeight(IBasicVideo *iface, LONG *pV
     TRACE("(%p/%p)->(%p)\n", This, iface, pVideoHeight);
 
     vih = This->pFuncsTable->pfnGetVideoFormat(This);
-    *pVideoHeight = vih->bmiHeader.biHeight;
+    *pVideoHeight = abs(vih->bmiHeader.biHeight);
 
     return S_OK;
 }
