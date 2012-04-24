@@ -1466,14 +1466,33 @@ GpStatus WINGDIPAPI GdipSetPathGradientBlend(GpPathGradient *brush, GDIPCONST RE
 GpStatus WINGDIPAPI GdipSetPathGradientLinearBlend(GpPathGradient *brush,
     REAL focus, REAL scale)
 {
-    static int calls;
+    REAL factors[3];
+    REAL positions[3];
+    int num_points = 0;
 
     TRACE("(%p,%0.2f,%0.2f)\n", brush, focus, scale);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!brush) return InvalidParameter;
 
-    return NotImplemented;
+    if (focus != 0.0)
+    {
+        factors[num_points] = 0.0;
+        positions[num_points] = 0.0;
+        num_points++;
+    }
+
+    factors[num_points] = scale;
+    positions[num_points] = focus;
+    num_points++;
+
+    if (focus != 1.0)
+    {
+        factors[num_points] = 0.0;
+        positions[num_points] = 1.0;
+        num_points++;
+    }
+
+    return GdipSetPathGradientBlend(brush, factors, positions, num_points);
 }
 
 GpStatus WINGDIPAPI GdipSetPathGradientPresetBlend(GpPathGradient *brush,
