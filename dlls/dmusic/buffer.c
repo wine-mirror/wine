@@ -125,11 +125,16 @@ static HRESULT WINAPI IDirectMusicBufferImpl_GetNextEvent(LPDIRECTMUSICBUFFER if
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicBufferImpl_GetRawBufferPtr(LPDIRECTMUSICBUFFER iface, LPBYTE* ppData)
+static HRESULT WINAPI IDirectMusicBufferImpl_GetRawBufferPtr(LPDIRECTMUSICBUFFER iface, LPBYTE* data)
 {
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
 
-    FIXME("(%p, %p): stub\n", This, ppData);
+    TRACE("(%p)->(%p)\n", iface, data);
+
+    if (!data)
+        return E_POINTER;
+
+    *data = This->data;
 
     return S_OK;
 }
