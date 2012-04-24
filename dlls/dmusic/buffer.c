@@ -41,33 +41,33 @@ static HRESULT WINAPI IDirectMusicBufferImpl_QueryInterface(LPDIRECTMUSICBUFFER 
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirectMusicBufferImpl_AddRef (LPDIRECTMUSICBUFFER iface)
+static ULONG WINAPI IDirectMusicBufferImpl_AddRef(LPDIRECTMUSICBUFFER iface)
 {
-	IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
-	ULONG refCount = InterlockedIncrement(&This->ref);
+    IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
-	DMUSIC_LockModule();
+    DMUSIC_LockModule();
 
-	return refCount;
+    return ref;
 }
 
 static ULONG WINAPI IDirectMusicBufferImpl_Release(LPDIRECTMUSICBUFFER iface)
 {
-	IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
-	ULONG refCount = InterlockedDecrement(&This->ref);
+    IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
-	if (!refCount) {
-		HeapFree(GetProcessHeap(), 0, This->data);
-		HeapFree(GetProcessHeap(), 0, This);
-	}
+    if (!ref) {
+        HeapFree(GetProcessHeap(), 0, This->data);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
 
-	DMUSIC_UnlockModule();
-	
-	return refCount;
+    DMUSIC_UnlockModule();
+
+    return ref;
 }
 
 /* IDirectMusicBufferImpl IDirectMusicBuffer part: */
