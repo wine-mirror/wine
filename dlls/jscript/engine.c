@@ -2624,7 +2624,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, BO
         jsdisp_t *func_obj;
         VARIANT var;
 
-        if(!func->funcs[i].expr->identifier)
+        if(!func->funcs[i].name)
             continue;
 
         expr = func->funcs[i].expr;
@@ -2634,7 +2634,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, BO
             return hres;
 
         var_set_jsdisp(&var, func_obj);
-        hres = jsdisp_propput_name(ctx->var_disp, expr->identifier, &var, ei);
+        hres = jsdisp_propput_name(ctx->var_disp, func->funcs[i].name, &var, ei);
         jsdisp_release(func_obj);
         if(FAILED(hres))
             return hres;

@@ -1771,7 +1771,8 @@ static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source)
     return S_OK;
 }
 
-static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, BOOL from_eval, function_code_t *func)
+static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, function_expression_t *func_expr,
+        BOOL from_eval, function_code_t *func)
 {
     function_declaration_t *iter;
     unsigned off, i;
@@ -1796,17 +1797,24 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
         dump_code(ctx, off);
 
     func->instr_off = off;
+
+    if(func_expr && func_expr->identifier) {
+        func->name = compiler_alloc_bstr(ctx, func_expr->identifier);
+        if(!func->name)
+            return E_OUTOFMEMORY;
+    }
+
     func->source_elements = source;
+    func->expr = func_expr;
 
     func->funcs = heap_alloc_zero(func->func_cnt * sizeof(*func->funcs));
     if(!func->funcs)
         return E_OUTOFMEMORY;
 
     for(iter = source->functions, i=0; iter; iter = iter->next, i++) {
-        hres = compile_function(ctx, iter->expr->source_elements, FALSE, func->funcs+i);
+        hres = compile_function(ctx, iter->expr->source_elements, iter->expr, FALSE, func->funcs+i);
         if(FAILED(hres))
             return hres;
-        func->funcs[i].expr = iter->expr;
     }
 
     assert(i == func->func_cnt);
@@ -1839,7 +1847,7 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimi
 
     compiler.code->parser = compiler.parser;
 
-    hres = compile_function(&compiler, compiler.parser->source, from_eval, &compiler.code->global_code);
+    hres = compile_function(&compiler, compiler.parser->source, NULL, from_eval, &compiler.code->global_code);
     if(FAILED(hres)) {
         release_bytecode(compiler.code);
         return hres;

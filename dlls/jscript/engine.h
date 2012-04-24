@@ -167,6 +167,7 @@ typedef struct {
 } instr_t;
 
 typedef struct _function_code_t {
+    BSTR name;
     unsigned instr_off;
 
     function_expression_t *expr; /* FIXME */
