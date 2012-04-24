@@ -342,6 +342,7 @@ struct tagGdiFont {
     SHORT yMax;
     SHORT yMin;
     DWORD ntmFlags;
+    UINT ntmCellHeight, ntmAvgWidth;
     FONTSIGNATURE fs;
     GdiFont *base_font;
     VOID *GSUB_Table;
@@ -5070,6 +5071,8 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
         memcpy(&pntm->ntmTm, &font->potm->otmTextMetrics, sizeof(TEXTMETRICW));
 
         pntm->ntmTm.ntmSizeEM = font->potm->otmEMSquare;
+        pntm->ntmTm.ntmCellHeight = font->ntmCellHeight;
+        pntm->ntmTm.ntmAvgWidth = font->ntmAvgWidth;
 
         lstrcpynW(pelf->elfLogFont.lfFaceName,
                  (WCHAR*)((char*)font->potm + (ULONG_PTR)font->potm->otmpFamilyName),
@@ -5086,6 +5089,8 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
         get_text_metrics(font, (TEXTMETRICW *)&pntm->ntmTm);
 
         pntm->ntmTm.ntmSizeEM = pntm->ntmTm.tmHeight - pntm->ntmTm.tmInternalLeading;
+        pntm->ntmTm.ntmCellHeight = pntm->ntmTm.tmHeight;
+        pntm->ntmTm.ntmAvgWidth = pntm->ntmTm.tmAveCharWidth;
 
         lstrcpynW(pelf->elfLogFont.lfFaceName, face->family->FamilyName, LF_FACESIZE);
         if (face->FullName)
@@ -5096,8 +5101,6 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     }
 
     pntm->ntmTm.ntmFlags = face->ntmFlags;
-    pntm->ntmTm.ntmCellHeight = pntm->ntmTm.tmHeight;
-    pntm->ntmTm.ntmAvgWidth = pntm->ntmTm.tmAveCharWidth;
     pntm->ntmFontSig = face->fs;
 
     pelf->elfScript[0] = '\0'; /* This will get set in WineEngEnumFonts */
@@ -6611,9 +6614,10 @@ static BOOL get_outline_text_metrics(GdiFont *font)
 
     pPost = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_post); /* we can live with this failing */
 
-    TRACE("OS/2 winA = %d winD = %d typoA = %d typoD = %d typoLG = %d FT_Face a = %d, d = %d, h = %d: HORZ a = %d, d = %d lg = %d maxY = %ld minY = %ld\n",
+    TRACE("OS/2 winA = %d winD = %d typoA = %d typoD = %d typoLG = %d avgW %d FT_Face a = %d, d = %d, h = %d: HORZ a = %d, d = %d lg = %d maxY = %ld minY = %ld\n",
 	  pOS2->usWinAscent, pOS2->usWinDescent,
 	  pOS2->sTypoAscender, pOS2->sTypoDescender, pOS2->sTypoLineGap,
+	  pOS2->xAvgCharWidth,
 	  ft_face->ascender, ft_face->descender, ft_face->height,
 	  pHori->Ascender, pHori->Descender, pHori->Line_Gap,
 	  ft_face->bbox.yMax, ft_face->bbox.yMin);
@@ -6630,6 +6634,9 @@ static BOOL get_outline_text_metrics(GdiFont *font)
         ascent = pOS2->usWinAscent;
         descent = pOS2->usWinDescent;
     }
+
+    font->ntmCellHeight = ascent + descent;
+    font->ntmAvgWidth = pOS2->xAvgCharWidth;
 
     if(font->yMax) {
 	TM.tmAscent = font->yMax;
