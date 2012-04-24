@@ -125,7 +125,7 @@ static const IDirectMusicInstrumentVtbl DirectMusicInstrument_Instrument_Vtbl = 
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
 	IDirectMusicInstrumentImpl* dminst;
 	
 	dminst = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicInstrumentImpl));
@@ -238,7 +238,7 @@ static HRESULT load_instrument(IDirectMusicInstrumentImpl *This, IStream *stream
 
 /* aux. function that completely loads instrument; my tests indicate that it's 
    called somewhere around IDirectMusicCollection_GetInstrument */
-HRESULT WINAPI IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT iface, LPSTREAM stream)
+HRESULT IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT iface, LPSTREAM stream)
 {
     ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, InstrumentVtbl, iface);
     LARGE_INTEGER move;

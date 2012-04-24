@@ -207,7 +207,7 @@ static const IDirectMusicBufferVtbl DirectMusicBuffer_Vtbl = {
 	IDirectMusicBufferImpl_SetUsedBytes
 };
 
-HRESULT WINAPI DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID* ret_iface)
+HRESULT DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID* ret_iface)
 {
     IDirectMusicBufferImpl* dmbuffer;
     HRESULT hr;

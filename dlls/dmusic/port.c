@@ -361,7 +361,7 @@ static const IDirectMusicThruVtbl DirectMusicThru_Vtbl = {
 	IDirectMusicThruImpl_ThruChannel
 };
 
-HRESULT WINAPI DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps) {
+HRESULT DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps) {
 	IDirectMusicPortImpl *obj;
 	HRESULT hr = E_FAIL;
 	UINT j;

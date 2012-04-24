@@ -73,7 +73,7 @@ static const IDirectMusicDownloadedInstrumentVtbl DirectMusicDownloadedInstrumen
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicDownloadedInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT DMUSIC_CreateDirectMusicDownloadedInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
 	IDirectMusicDownloadedInstrumentImpl* dmdlinst;
 	
 	dmdlinst = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicDownloadedInstrumentImpl));
