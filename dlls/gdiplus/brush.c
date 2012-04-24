@@ -647,8 +647,11 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
 
     TRACE("(%p, %p)\n", path, grad);
 
-    if(!path || !grad)
+    if(!grad)
         return InvalidParameter;
+
+    if (!path)
+        return OutOfMemory;
 
     stat = GdipClonePath((GpPath*)path, &new_path);
 
