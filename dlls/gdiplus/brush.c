@@ -1520,7 +1520,7 @@ GpStatus WINGDIPAPI GdipGetPathGradientPresetBlend(GpPathGradient *brush,
 GpStatus WINGDIPAPI GdipGetPathGradientPresetBlendCount(GpPathGradient *brush,
     INT *count)
 {
-    FIXME("(%p,%p): stub\n", brush, count);
+    TRACE("(%p,%p)\n", brush, count);
 
     if (!brush || !count)
         return InvalidParameter;
