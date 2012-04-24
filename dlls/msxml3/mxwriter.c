@@ -1795,12 +1795,20 @@ static HRESULT WINAPI SAXAttributes_getURI(ISAXAttributes *iface, int nIndex, co
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI SAXAttributes_getLocalName(ISAXAttributes *iface, int nIndex, const WCHAR **localName,
-    int *length)
+static HRESULT WINAPI SAXAttributes_getLocalName(ISAXAttributes *iface, int index, const WCHAR **name,
+    int *len)
 {
     mxattributes *This = impl_from_ISAXAttributes( iface );
-    FIXME("(%p)->(%d %p %p): stub\n", This, nIndex, localName, length);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p %p)\n", This, index, name, len);
+
+    if (index >= This->length || index < 0) return E_INVALIDARG;
+    if (!name || !len) return E_POINTER;
+
+    *len = SysStringLen(This->attr[index].local);
+    *name = This->attr[index].local;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXAttributes_getQName(ISAXAttributes *iface, int index, const WCHAR **qname, int *length)
