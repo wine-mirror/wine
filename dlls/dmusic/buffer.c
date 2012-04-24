@@ -27,18 +27,23 @@ static inline IDirectMusicBufferImpl *impl_from_IDirectMusicBuffer(IDirectMusicB
 }
 
 /* IDirectMusicBufferImpl IUnknown part: */
-static HRESULT WINAPI IDirectMusicBufferImpl_QueryInterface(LPDIRECTMUSICBUFFER iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IDirectMusicBufferImpl_QueryInterface(LPDIRECTMUSICBUFFER iface, REFIID riid, LPVOID *ret_iface)
 {
-	IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
-	TRACE("(%p, (%s, %p)\n",This,debugstr_dmguid(riid),ppobj);
-	if (IsEqualIID (riid, &IID_IUnknown) 
-		|| IsEqualIID (riid, &IID_IDirectMusicBuffer)) {
-		IUnknown_AddRef(iface);
-		*ppobj = This;
-		return S_OK;
-	}
-	WARN("(%p, (%s, %p): not found\n",This,debugstr_dmguid(riid),ppobj);
-	return E_NOINTERFACE;
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IDirectMusicBuffer))
+    {
+        IDirectMusicBuffer_AddRef(iface);
+        *ret_iface = iface;
+        return S_OK;
+    }
+
+    *ret_iface = NULL;
+
+    WARN("(%p)->(%s, %p): not found\n", iface, debugstr_dmguid(riid), ret_iface);
+
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI IDirectMusicBufferImpl_AddRef(LPDIRECTMUSICBUFFER iface)
