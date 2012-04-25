@@ -562,6 +562,11 @@ static INT nulldrv_SetBkMode( PHYSDEV dev, INT mode )
     return mode;
 }
 
+static UINT nulldrv_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
+{
+    return DCB_RESET;
+}
+
 static COLORREF nulldrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
 {
     return color;
@@ -825,6 +830,7 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SetArcDirection,            /* pSetArcDirection */
     nulldrv_SetBkColor,                 /* pSetBkColor */
     nulldrv_SetBkMode,                  /* pSetBkMode */
+    nulldrv_SetBoundsRect,              /* pSetBoundsRect */
     nulldrv_SetDCBrushColor,            /* pSetDCBrushColor */
     nulldrv_SetDCPenColor,              /* pSetDCPenColor */
     nulldrv_SetDIBitsToDevice,          /* pSetDIBitsToDevice */

@@ -408,6 +408,18 @@ static UINT dibdrv_GetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 }
 
 /***********************************************************************
+ *           dibdrv_SetBoundsRect
+ */
+static UINT dibdrv_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+
+    if (is_rect_empty( &pdev->bounds )) return DCB_RESET;
+    if (flags & DCB_RESET) reset_bounds( &pdev->bounds );
+    return DCB_SET;
+}
+
+/***********************************************************************
  *           dibdrv_ChoosePixelFormat
  */
 static INT dibdrv_ChoosePixelFormat( PHYSDEV dev, const PIXELFORMATDESCRIPTOR *pfd )
@@ -690,6 +702,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSetArcDirection */
     NULL,                               /* pSetBkColor */
     NULL,                               /* pSetBkMode */
+    dibdrv_SetBoundsRect,               /* pSetBoundsRect */
     dibdrv_SetDCBrushColor,             /* pSetDCBrushColor */
     dibdrv_SetDCPenColor,               /* pSetDCPenColor */
     NULL,                               /* pSetDIBitsToDevice */

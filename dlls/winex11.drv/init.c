@@ -214,6 +214,19 @@ static UINT X11DRV_GetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 
 
 /***********************************************************************
+ *           X11DRV_SetBoundsRect
+ */
+static UINT X11DRV_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
+{
+    X11DRV_PDEVICE *pdev = get_x11drv_dev( dev );
+
+    if (IsRectEmpty( &pdev->bounds )) return DCB_RESET;
+    if (flags & DCB_RESET) reset_bounds( &pdev->bounds );
+    return DCB_SET;
+}
+
+
+/***********************************************************************
  *           GetDeviceCaps    (X11DRV.@)
  */
 static INT X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
@@ -565,6 +578,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pSetArcDirection */
     NULL,                               /* pSetBkColor */
     NULL,                               /* pSetBkMode */
+    X11DRV_SetBoundsRect,               /* pSetBoundsRect */
     X11DRV_SetDCBrushColor,             /* pSetDCBrushColor */
     X11DRV_SetDCPenColor,               /* pSetDCPenColor */
     NULL,                               /* pSetDIBitsToDevice */

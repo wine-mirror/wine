@@ -69,6 +69,15 @@ static UINT MFDRV_GetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 
 
 /******************************************************************
+ *         MFDRV_SetBoundsRect
+ */
+static UINT MFDRV_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
+{
+    return 0;
+}
+
+
+/******************************************************************
  *         MFDRV_GetDeviceCaps
  *
  *A very simple implementation that returns DT_METAFILE
@@ -191,6 +200,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pSetArcDirection */
     MFDRV_SetBkColor,                /* pSetBkColor */
     MFDRV_SetBkMode,                 /* pSetBkMode */
+    MFDRV_SetBoundsRect,             /* pSetBoundsRect */
     MFDRV_SetDCBrushColor,           /* pSetDCBrushColor*/
     MFDRV_SetDCPenColor,             /* pSetDCPenColor*/
     MFDRV_SetDIBitsToDevice,         /* pSetDIBitsToDevice */

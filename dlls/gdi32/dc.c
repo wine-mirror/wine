@@ -222,22 +222,6 @@ void update_dc( DC *dc )
 
 
 /***********************************************************************
- *           fetch_device_bounds
- *
- * Fetch and clear the device-specific bounds, and add them to the DC if necessary.
- */
-static BOOL fetch_device_bounds( DC *dc )
-{
-    RECT rect;
-    PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetBoundsRect );
-    UINT ret = physdev->funcs->pGetBoundsRect( physdev, &rect, DCB_RESET );
-
-    if (dc->bounds_enabled && ret == DCB_SET) add_bounds_rect( &dc->bounds, &rect );
-    return ret;
-}
-
-
-/***********************************************************************
  *           DC_DeleteObject
  */
 static BOOL DC_DeleteObject( HGDIOBJ handle )
@@ -262,6 +246,8 @@ void DC_InitDC( DC* dc )
     SelectObject( dc->hSelf, dc->hFont );
     update_dc_clipping( dc );
     SetVirtualResolution( dc->hSelf, 0, 0, 0, 0 );
+    physdev = GET_DC_PHYSDEV( dc, pSetBoundsRect );
+    physdev->funcs->pSetBoundsRect( physdev, &dc->bounds, dc->bounds_enabled ? DCB_ENABLE : DCB_DISABLE );
 }
 
 
@@ -1327,16 +1313,21 @@ HCOLORSPACE WINAPI SetColorSpace( HDC hDC, HCOLORSPACE hColorSpace )
  */
 UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
 {
-    UINT ret = 0;
+    PHYSDEV physdev;
+    RECT device_rect;
+    UINT ret;
     DC *dc = get_dc_ptr( hdc );
 
     if ( !dc ) return 0;
 
-    if (!fetch_device_bounds( dc ))
+    physdev = GET_DC_PHYSDEV( dc, pGetBoundsRect );
+    ret = physdev->funcs->pGetBoundsRect( physdev, &device_rect, DCB_RESET );
+    if (!ret)
     {
         release_dc_ptr( dc );
         return 0;
     }
+    if (dc->bounds_enabled && ret == DCB_SET) add_bounds_rect( &dc->bounds, &device_rect );
 
     if (rect)
     {
@@ -1356,6 +1347,8 @@ UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
         }
         DPtoLP( hdc, (POINT *)rect, 2 );
     }
+    else ret = 0;
+
     if (flags & DCB_RESET) reset_bounds( &dc->bounds );
     release_dc_ptr( dc );
     return ret;
@@ -1367,20 +1360,23 @@ UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
  */
 UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 {
+    PHYSDEV physdev;
     UINT ret;
     DC *dc;
 
     if ((flags & DCB_ENABLE) && (flags & DCB_DISABLE)) return 0;
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
-    if (!fetch_device_bounds( dc ))
+    physdev = GET_DC_PHYSDEV( dc, pSetBoundsRect );
+    ret = physdev->funcs->pSetBoundsRect( physdev, &dc->bounds, flags );
+    if (!ret)
     {
         release_dc_ptr( dc );
         return 0;
     }
 
     ret = (dc->bounds_enabled ? DCB_ENABLE : DCB_DISABLE) |
-           (is_rect_empty( &dc->bounds ) ? DCB_RESET : DCB_SET);
+          (is_rect_empty( &dc->bounds ) ? ret & DCB_SET : DCB_SET);
 
     if (flags & DCB_RESET) reset_bounds( &dc->bounds );
 

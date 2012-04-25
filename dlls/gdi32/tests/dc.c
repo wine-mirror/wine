@@ -368,6 +368,8 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
         Rectangle( hdc, 2, 2, 5, 5 );
         type = GetBoundsRect( hdc, &rect, DCB_RESET );
         ok( !type, "GetBoundsRect succeeded on %s\n", descr );
+        type = SetBoundsRect( hdc, &rect, DCB_RESET | DCB_ENABLE );
+        ok( !type, "SetBoundsRect succeeded on %s\n", descr );
     }
     else
     {
@@ -387,7 +389,8 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
         else
             ok( type == SIMPLEREGION, "GetClipBox returned %d on memdc for %s\n", type, descr );
 
-        SetBoundsRect( hdc, NULL, DCB_RESET | DCB_ENABLE );
+        type = SetBoundsRect( hdc, NULL, DCB_RESET | DCB_ENABLE );
+        ok( type == (DCB_RESET | DCB_DISABLE), "SetBoundsRect returned %x\n", type );
         SetMapMode( hdc, MM_TEXT );
         Rectangle( hdc, 2, 2, 4, 4 );
         type = GetBoundsRect( hdc, &rect, DCB_RESET );
