@@ -1706,12 +1706,12 @@ HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UI
 
     if (buffer)
     {
-        InterlockedIncrement(&buffer->bind_count);
+        InterlockedIncrement(&buffer->resource.bind_count);
         wined3d_buffer_incref(buffer);
     }
     if (prev_buffer)
     {
-        InterlockedDecrement(&prev_buffer->bind_count);
+        InterlockedDecrement(&prev_buffer->resource.bind_count);
         wined3d_buffer_decref(prev_buffer);
     }
 
@@ -2338,12 +2338,12 @@ HRESULT CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
         device_invalidate_state(device, STATE_INDEXBUFFER);
         if (buffer)
         {
-            InterlockedIncrement(&buffer->bind_count);
+            InterlockedIncrement(&buffer->resource.bind_count);
             wined3d_buffer_incref(buffer);
         }
         if (prev_buffer)
         {
-            InterlockedDecrement(&prev_buffer->bind_count);
+            InterlockedDecrement(&prev_buffer->resource.bind_count);
             wined3d_buffer_decref(prev_buffer);
         }
     }
@@ -3681,7 +3681,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
 
     if (texture)
     {
-        LONG bind_count = InterlockedIncrement(&texture->bind_count);
+        LONG bind_count = InterlockedIncrement(&texture->resource.bind_count);
 
         wined3d_texture_incref(texture);
 
@@ -3703,7 +3703,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
 
     if (prev)
     {
-        LONG bind_count = InterlockedDecrement(&prev->bind_count);
+        LONG bind_count = InterlockedDecrement(&prev->resource.bind_count);
 
         wined3d_texture_decref(prev);
 

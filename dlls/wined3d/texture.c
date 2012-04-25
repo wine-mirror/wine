@@ -502,7 +502,7 @@ DWORD CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod)
 
         texture->texture_rgb.states[WINED3DTEXSTA_MAXMIPLEVEL] = ~0U;
         texture->texture_srgb.states[WINED3DTEXSTA_MAXMIPLEVEL] = ~0U;
-        if (texture->bind_count)
+        if (texture->resource.bind_count)
             device_invalidate_state(texture->resource.device, STATE_SAMPLER(texture->sampler));
     }
 
@@ -1056,7 +1056,7 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
 
     /* TODO: Use already acquired context when possible. */
     context = context_acquire(device, NULL);
-    if (texture->bind_count > 0)
+    if (texture->resource.bind_count > 0)
     {
         BOOL texture_srgb = texture->flags & WINED3D_TEXTURE_IS_SRGB;
         BOOL sampler_srgb = texture_srgb_mode(texture, srgb);

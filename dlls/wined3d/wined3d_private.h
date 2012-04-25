@@ -1837,6 +1837,7 @@ struct wined3d_resource_ops
 struct wined3d_resource
 {
     LONG ref;
+    LONG bind_count;
     struct wined3d_device *device;
     enum wined3d_resource_type type;
     const struct wined3d_format *format;
@@ -1929,7 +1930,6 @@ struct wined3d_texture
     float pow2_matrix[16];
     UINT lod;
     enum wined3d_texture_filter_type filter_type;
-    LONG bind_count;
     DWORD sampler;
     DWORD flags;
     const struct min_lookup *min_mip_lookup;
@@ -2408,7 +2408,6 @@ struct wined3d_buffer
     GLenum buffer_object_usage;
     GLenum buffer_type_hint;
     UINT buffer_object_size;
-    LONG bind_count;
     DWORD flags;
 
     LONG lock_count;
