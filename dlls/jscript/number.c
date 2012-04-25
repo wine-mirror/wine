@@ -206,9 +206,12 @@ static inline void number_to_exponential(double val, int prec, BSTR *out)
         str[size++] = '-';
         dec_point = -dec_point;
     }
-    for(str[size]='0', size+=exp_size-1; dec_point>0; dec_point/=10)
-        str[size--] = '0'+dec_point%10;
-    size += exp_size+1;
+    size += exp_size;
+    do {
+        str[--size] = '0'+dec_point%10;
+        dec_point /= 10;
+    }while(dec_point>0);
+    size += exp_size;
     str[size] = 0;
 
     *out = str;
