@@ -28,7 +28,6 @@ typedef struct {
     builtin_invoke_t value_proc;
     const WCHAR *name;
     DWORD flags;
-    parameter_t *parameters;
     scope_chain_t *scope_chain;
     bytecode_t *code;
     function_code_t *func_code;
@@ -75,7 +74,6 @@ static IDispatch *get_this(DISPPARAMS *dp)
 static HRESULT init_parameters(jsdisp_t *var_disp, FunctionInstance *function, DISPPARAMS *dp,
         jsexcept_t *ei)
 {
-    parameter_t *param;
     VARIANT var_empty;
     DWORD cargs, i=0;
     HRESULT hres;
@@ -83,13 +81,11 @@ static HRESULT init_parameters(jsdisp_t *var_disp, FunctionInstance *function, D
     V_VT(&var_empty) = VT_EMPTY;
     cargs = arg_cnt(dp);
 
-    for(param = function->parameters; param; param = param->next) {
-        hres = jsdisp_propput_name(var_disp, param->identifier,
+    for(i=0; i < function->func_code->param_cnt; i++) {
+        hres = jsdisp_propput_name(var_disp, function->func_code->params[i],
                 i < cargs ? get_arg(dp,i) : &var_empty, ei);
         if(FAILED(hres))
             return hres;
-
-        i++;
     }
 
     return S_OK;
@@ -658,13 +654,11 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
     return S_OK;
 }
 
-HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, parameter_t *parameters, function_code_t *func_code,
+HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_code_t *func_code,
         scope_chain_t *scope_chain, jsdisp_t **ret)
 {
     FunctionInstance *function;
     jsdisp_t *prototype;
-    parameter_t *iter;
-    DWORD length = 0;
     HRESULT hres;
 
     hres = create_object(ctx, NULL, &prototype);
@@ -681,9 +675,6 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, parameter_t 
     if(FAILED(hres))
         return hres;
 
-    function->func_code = func_code;
-    function->parameters = parameters;
-
     if(scope_chain) {
         scope_addref(scope_chain);
         function->scope_chain = scope_chain;
@@ -691,10 +682,8 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, parameter_t 
 
     bytecode_addref(code);
     function->code = code;
-
-    for(iter = parameters; iter; iter = iter->next)
-        length++;
-    function->length = length;
+    function->func_code = func_code;
+    function->length = function->func_code->param_cnt;
 
     *ret = &function->dispex;
     return S_OK;
@@ -702,7 +691,6 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, parameter_t 
 
 static HRESULT construct_function(script_ctx_t *ctx, DISPPARAMS *dp, jsexcept_t *ei, IDispatch **ret)
 {
-    function_expression_t *expr;
     WCHAR *str = NULL, *ptr;
     DWORD argc, len = 0, l;
     bytecode_t *code;
@@ -779,9 +767,8 @@ static HRESULT construct_function(script_ctx_t *ctx, DISPPARAMS *dp, jsexcept_t 
         release_bytecode(code);
         return E_UNEXPECTED;
     }
-    expr = code->global_code.funcs[0].expr;
 
-    hres = create_source_function(ctx, code, expr->parameter_list, code->global_code.funcs, NULL, &function);
+    hres = create_source_function(ctx, code, code->global_code.funcs, NULL, &function);
     release_bytecode(code);
     if(FAILED(hres))
         return hres;

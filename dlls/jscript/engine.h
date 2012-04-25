@@ -170,8 +170,6 @@ typedef struct _function_code_t {
     BSTR name;
     unsigned instr_off;
 
-    function_expression_t *expr; /* FIXME */
-
     const WCHAR *source;
     unsigned source_len;
 
@@ -180,6 +178,9 @@ typedef struct _function_code_t {
 
     unsigned var_cnt;
     BSTR *variables;
+
+    unsigned param_cnt;
+    BSTR *params;
 } function_code_t;
 
 typedef struct _bytecode_t {
@@ -269,11 +270,7 @@ static inline void exec_addref(exec_ctx_t *ctx)
 void exec_release(exec_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT create_exec_ctx(script_ctx_t*,IDispatch*,jsdisp_t*,scope_chain_t*,BOOL,exec_ctx_t**) DECLSPEC_HIDDEN;
 HRESULT exec_source(exec_ctx_t*,bytecode_t*,function_code_t*,BOOL,jsexcept_t*,VARIANT*) DECLSPEC_HIDDEN;
-
-typedef struct _parameter_t parameter_t;
-
-HRESULT create_source_function(script_ctx_t*,bytecode_t*,parameter_t*,function_code_t*,scope_chain_t*,
-        jsdisp_t**) DECLSPEC_HIDDEN;
+HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 
 typedef enum {
     LT_INT,
@@ -501,11 +498,10 @@ struct _expression_t {
     expression_type_t type;
 };
 
-struct _parameter_t {
+typedef struct _parameter_t {
     const WCHAR *identifier;
-
     struct _parameter_t *next;
-};
+} parameter_t;
 
 struct _source_elements_t {
     statement_t *statement;

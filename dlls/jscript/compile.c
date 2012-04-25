@@ -1806,11 +1806,24 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     }
 
     if(func_expr) {
+        parameter_t *param_iter;
+
         func->source = func_expr->src_str;
         func->source_len = func_expr->src_len;
-    }
 
-    func->expr = func_expr;
+        for(param_iter = func_expr->parameter_list; param_iter; param_iter = param_iter->next)
+            func->param_cnt++;
+
+        func->params = compiler_alloc(ctx->code, func->param_cnt * sizeof(*func->params));
+        if(!func->params)
+            return E_OUTOFMEMORY;
+
+        for(param_iter = func_expr->parameter_list, i=0; param_iter; param_iter = param_iter->next, i++) {
+            func->params[i] = compiler_alloc_bstr(ctx, param_iter->identifier);
+            if(!func->params[i])
+                return E_OUTOFMEMORY;
+        }
+    }
 
     func->funcs = compiler_alloc(ctx->code, func->func_cnt * sizeof(*func->funcs));
     if(!func->funcs)

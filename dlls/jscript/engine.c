@@ -804,16 +804,13 @@ static HRESULT interp_end_finally(exec_ctx_t *ctx)
 static HRESULT interp_func(exec_ctx_t *ctx)
 {
     unsigned func_idx = ctx->code->instrs[ctx->ip].arg1.uint;
-    function_expression_t *expr;
     jsdisp_t *dispex;
     VARIANT v;
     HRESULT hres;
 
     TRACE("%d\n", func_idx);
 
-    expr = ctx->func_code->funcs[func_idx].expr;
-
-    hres = create_source_function(ctx->script, ctx->code, expr->parameter_list, ctx->func_code->funcs+func_idx,
+    hres = create_source_function(ctx->script, ctx->code, ctx->func_code->funcs+func_idx,
             ctx->scope_chain, &dispex);
     if(FAILED(hres))
         return hres;
@@ -2619,16 +2616,13 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, BO
     HRESULT hres = S_OK;
 
     for(i = 0; i < func->func_cnt; i++) {
-        function_expression_t *expr;
         jsdisp_t *func_obj;
         VARIANT var;
 
         if(!func->funcs[i].name)
             continue;
 
-        expr = func->funcs[i].expr;
-        hres = create_source_function(ctx->script, code, expr->parameter_list, func->funcs+i,
-                ctx->scope_chain, &func_obj);
+        hres = create_source_function(ctx->script, code, func->funcs+i, ctx->scope_chain, &func_obj);
         if(FAILED(hres))
             return hres;
 
