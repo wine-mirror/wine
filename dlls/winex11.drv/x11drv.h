@@ -123,7 +123,7 @@ typedef struct
     Drawable      drawable;
     RECT          dc_rect;       /* DC rectangle relative to drawable */
     RECT          drawable_rect; /* Drawable rectangle relative to screen */
-    RECT          bounds;        /* Graphics bounds */
+    RECT         *bounds;        /* Graphics bounds */
     HRGN          region;        /* Device region (visible region & clip region) */
     X_PHYSPEN     pen;
     X_PHYSBRUSH   brush;

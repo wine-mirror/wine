@@ -109,6 +109,7 @@ static void add_pen_device_bounds( X11DRV_PDEVICE *dev, const POINT *points, int
     RECT bounds, rect;
     int width = 0;
 
+    if (!dev->bounds) return;
     reset_bounds( &bounds );
 
     if (dev->pen.type & PS_GEOMETRIC || dev->pen.width > 1)

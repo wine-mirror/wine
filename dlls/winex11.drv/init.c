@@ -118,7 +118,6 @@ static X11DRV_PDEVICE *create_x11_physdev( Drawable drawable )
 
     if (!(physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) ))) return NULL;
 
-    reset_bounds( &physDev->bounds );
     wine_tsx11_lock();
     physDev->drawable = drawable;
     physDev->gc = XCreateGC( gdi_display, drawable, 0, NULL );
@@ -192,26 +191,13 @@ void add_device_bounds( X11DRV_PDEVICE *dev, const RECT *rect )
 {
     RECT rc;
 
+    if (!dev->bounds) return;
     if (dev->region && GetRgnBox( dev->region, &rc ))
     {
-        if (IntersectRect( &rc, &rc, rect )) add_bounds_rect( &dev->bounds, &rc );
+        if (IntersectRect( &rc, &rc, rect )) add_bounds_rect( dev->bounds, &rc );
     }
-    else add_bounds_rect( &dev->bounds, rect );
+    else add_bounds_rect( dev->bounds, rect );
 }
-
-/***********************************************************************
- *           dibdrv_GetBoundsRect
- */
-static UINT X11DRV_GetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
-{
-    X11DRV_PDEVICE *pdev = get_x11drv_dev( dev );
-
-    if (IsRectEmpty( &pdev->bounds )) return DCB_RESET;
-    if (rect) *rect = pdev->bounds;
-    if (flags & DCB_RESET) reset_bounds( &pdev->bounds );
-    return DCB_SET;
-}
-
 
 /***********************************************************************
  *           X11DRV_SetBoundsRect
@@ -220,9 +206,9 @@ static UINT X11DRV_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 {
     X11DRV_PDEVICE *pdev = get_x11drv_dev( dev );
 
-    if (IsRectEmpty( &pdev->bounds )) return DCB_RESET;
-    if (flags & DCB_RESET) reset_bounds( &pdev->bounds );
-    return DCB_SET;
+    if (flags & DCB_DISABLE) pdev->bounds = NULL;
+    else if (flags & DCB_ENABLE) pdev->bounds = rect;
+    return DCB_RESET;  /* we don't have device-specific bounds */
 }
 
 
@@ -516,7 +502,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
     NULL,                               /* pGdiRealizationInfo */
-    X11DRV_GetBoundsRect,               /* pGetBoundsRect */
+    NULL,                               /* pGetBoundsRect */
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
     NULL,                               /* pGetCharWidth */
