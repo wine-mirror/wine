@@ -92,6 +92,7 @@ static void add_pen_lines_bounds( dibdrv_physdev *dev, int count, const POINT *p
     RECT bounds, rect;
     int width = 0;
 
+    if (!dev->bounds) return;
     reset_bounds( &bounds );
 
     if (dev->pen_uses_region)
@@ -127,7 +128,7 @@ static void add_pen_lines_bounds( dibdrv_physdev *dev, int count, const POINT *p
         points++;
     }
 
-    add_clipped_bounds( &dev->bounds, &bounds, dev->clip );
+    add_clipped_bounds( dev, &bounds, dev->clip );
 }
 
 /* compute the points for the first quadrant of an ellipse, counterclockwise from the x axis */
@@ -703,7 +704,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
             origin.y += metrics.gmCellIncY;
         }
     }
-    add_clipped_bounds( &pdev->bounds, &bounds, pdev->clip );
+    add_clipped_bounds( pdev, &bounds, pdev->clip );
 
 done:
     free_clipped_rects( &clipped_rects );
@@ -805,7 +806,7 @@ BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 
     if (!is_interior( &pdev->dib, pdev->clip, x, y, pixel, type )) return FALSE;
 
-    rgn = CreateRectRgn( 0, 0, 0, 0 );
+    if (!(rgn = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
     row.left = x;
     row.right = x + 1;
     row.top = y;
@@ -813,7 +814,7 @@ BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 
     fill_row( &pdev->dib, pdev->clip, &row, pixel, type, rgn );
 
-    add_clipped_bounds( &pdev->bounds, NULL, rgn );
+    add_clipped_bounds( pdev, NULL, rgn );
     brush_region( pdev, rgn );
 
     DeleteObject( rgn );
@@ -908,7 +909,7 @@ BOOL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 
     TRACE("(%p, %d, %d, %d, %d, %06x)\n", dev, dst->x, dst->y, dst->width, dst->height, rop);
 
-    add_bounds_rect( &pdev->bounds, &dst->visrect );
+    add_clipped_bounds( pdev, &dst->visrect, 0 );
     return brush_rect( pdev, &pdev->brush, &dst->visrect, pdev->clip, get_rop2_from_rop(rop) );
 }
 
@@ -938,7 +939,7 @@ BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
     }
 
     release_wine_region( rgn );
-    add_clipped_bounds( &pdev->bounds, &bounds, pdev->clip );
+    add_clipped_bounds( pdev, &bounds, pdev->clip );
     return TRUE;
 }
 
@@ -1277,7 +1278,7 @@ COLORREF dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
     rect.top =  pt.y;
     rect.right = rect.left + 1;
     rect.bottom = rect.top + 1;
-    add_clipped_bounds( &pdev->bounds, &rect, pdev->clip );
+    add_clipped_bounds( pdev, &rect, pdev->clip );
 
     /* SetPixel doesn't do the 1bpp massaging like other fg colors */
     pixel = get_pixel_color( pdev, color, FALSE );

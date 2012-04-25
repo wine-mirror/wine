@@ -96,7 +96,7 @@ typedef struct dibdrv_physdev
     dib_brush brush;
 
     HRGN clip;
-    RECT bounds;
+    RECT *bounds;
 
     /* pen */
     DWORD pen_style, pen_endcap, pen_join;
@@ -247,7 +247,7 @@ extern COLORREF make_rgb_colorref( HDC hdc, dib_info *dib, COLORREF color, BOOL 
 extern DWORD get_pixel_color(dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup) DECLSPEC_HIDDEN;
 extern BOOL brush_rect( dibdrv_physdev *pdev, dib_brush *brush, const RECT *rect, HRGN clip, INT rop ) DECLSPEC_HIDDEN;
 extern int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct clipped_rects *clip_rects ) DECLSPEC_HIDDEN;
-extern void add_clipped_bounds( RECT *bounds, const RECT *rect, HRGN clip ) DECLSPEC_HIDDEN;
+extern void add_clipped_bounds( dibdrv_physdev *dev, const RECT *rect, HRGN clip ) DECLSPEC_HIDDEN;
 extern int clip_line(const POINT *start, const POINT *end, const RECT *clip,
                      const bres_params *params, POINT *pt1, POINT *pt2) DECLSPEC_HIDDEN;
 
