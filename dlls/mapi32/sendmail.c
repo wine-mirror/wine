@@ -65,6 +65,21 @@ static LPSTR convert_from_unicode(LPCWSTR wstr)
     return str;
 }
 
+static LPWSTR convert_to_unicode(LPSTR str)
+{
+    LPWSTR wstr;
+    DWORD len;
+
+    if (!str)
+        return NULL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    wstr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, str, -1, wstr, len);
+
+    return wstr;
+}
+
 /*
    Internal function to send a message via Extended MAPI. Wrapper around the Simple
    MAPI function MAPISendMail.
@@ -474,10 +489,55 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
         return mapiFunctions.MAPISendMail(session, uiparam, message, flags, reserved);
 
     /* Check if we have an Extended MAPI provider - if so, use our wrapper */
-#if 0
     if (MAPIInitialize(NULL) == S_OK)
-        return sendmail_extended_mapi(session, uiparam, message, flags);
-#endif
+    {
+        MapiMessageW messageW;
+        ULONG ret;
+
+        ZeroMemory(&messageW, sizeof(MapiMessageW));
+
+        /* Convert the entries we need to Unicode */
+        messageW.lpszSubject = convert_to_unicode(message->lpszSubject);
+        messageW.lpszNoteText = convert_to_unicode(message->lpszNoteText);
+        messageW.nFileCount = message->nFileCount;
+
+        if (message->nFileCount && message->lpFiles)
+        {
+            lpMapiFileDescW filesW;
+            int i;
+
+            filesW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MapiFileDescW) * message->nFileCount);
+
+            for (i = 0; i < message->nFileCount; i++)
+            {
+                filesW[i].lpszPathName = convert_to_unicode(message->lpFiles[i].lpszPathName);
+                filesW[i].lpszFileName = convert_to_unicode(message->lpFiles[i].lpszFileName);
+            }
+
+            messageW.lpFiles = filesW;
+        }
+
+        ret = sendmail_extended_mapi(session, uiparam, &messageW, flags);
+
+        /* Now free everything we allocated */
+        if (message->nFileCount && message->lpFiles)
+        {
+            int i;
+
+            for (i = 0; i < message->nFileCount; i++)
+            {
+                HeapFree(GetProcessHeap(), 0, messageW.lpFiles[i].lpszPathName);
+                HeapFree(GetProcessHeap(), 0, messageW.lpFiles[i].lpszFileName);
+            }
+
+            HeapFree(GetProcessHeap(), 0, messageW.lpFiles);
+        }
+
+        HeapFree(GetProcessHeap(), 0, messageW.lpszSubject);
+        HeapFree(GetProcessHeap(), 0, messageW.lpszNoteText);
+
+        return ret;
+    }
 
     /* Display an error message since we apparently have no mail clients */
     LoadStringW(hInstMAPI32, IDS_NO_MAPI_CLIENT, error_msg, sizeof(error_msg) / sizeof(WCHAR));
