@@ -67,6 +67,7 @@ typedef DWORD (WINAPI *GetAdaptersAddressesFunc)(ULONG,ULONG,PVOID,PIP_ADAPTER_A
 typedef DWORD (WINAPI *NotifyAddrChangeFunc)(PHANDLE,LPOVERLAPPED);
 typedef BOOL  (WINAPI *CancelIPChangeNotifyFunc)(LPOVERLAPPED);
 typedef DWORD (WINAPI *GetExtendedTcpTableFunc)(PVOID,PDWORD,BOOL,ULONG,TCP_TABLE_CLASS,ULONG);
+typedef DWORD (WINAPI *SetTcpEntryFunc)(PMIB_TCPROW);
 
 static GetNumberOfInterfacesFunc gGetNumberOfInterfaces = NULL;
 static GetIpAddrTableFunc gGetIpAddrTable = NULL;
@@ -89,6 +90,7 @@ static GetAdaptersAddressesFunc gGetAdaptersAddresses = NULL;
 static NotifyAddrChangeFunc gNotifyAddrChange = NULL;
 static CancelIPChangeNotifyFunc gCancelIPChangeNotify = NULL;
 static GetExtendedTcpTableFunc gGetExtendedTcpTable = NULL;
+static SetTcpEntryFunc gSetTcpEntry = NULL;
 
 static void loadIPHlpApi(void)
 {
@@ -134,6 +136,8 @@ static void loadIPHlpApi(void)
      hLibrary, "CancelIPChangeNotify");
     gGetExtendedTcpTable = (GetExtendedTcpTableFunc)GetProcAddress(
      hLibrary, "GetExtendedTcpTable");
+    gSetTcpEntry = (SetTcpEntryFunc)GetProcAddress(
+     hLibrary, "SetTcpEntry");
   }
 }
 
@@ -159,6 +163,7 @@ static void freeIPHlpApi(void)
     gNotifyAddrChange = NULL;
     gCancelIPChangeNotify = NULL;
     gGetExtendedTcpTable = NULL;
+    gSetTcpEntry = NULL;
     FreeLibrary(hLibrary);
     hLibrary = NULL;
   }
@@ -651,6 +656,27 @@ static void testGetUdpTable(void)
   }
 }
 
+static void testSetTcpEntry(void)
+{
+    DWORD ret;
+    MIB_TCPROW row;
+
+    memset(&row, 0, sizeof(row));
+    if(0) /* This test crashes in OS >= VISTA */
+    {
+        ret = gSetTcpEntry(NULL);
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u, expected %u\n", ret, ERROR_INVALID_PARAMETER);
+    }
+
+    ret = gSetTcpEntry(&row);
+    todo_wine ok( ret == ERROR_INVALID_PARAMETER, "got %u, expected %u\n", ret, ERROR_INVALID_PARAMETER);
+
+    row.dwState = MIB_TCP_STATE_DELETE_TCB;
+    ret = gSetTcpEntry(&row);
+    todo_wine ok( ret == ERROR_MR_MID_NOT_FOUND || broken(ret == ERROR_INVALID_PARAMETER),
+       "got %u, expected %u\n", ret, ERROR_MR_MID_NOT_FOUND);
+}
+
 /*
 still-to-be-tested NT4-onward functions:
 CreateIpForwardEntry
@@ -664,7 +690,6 @@ SetIpForwardEntry
 SetIpNetEntry
 SetIpStatistics
 SetIpTTL
-SetTcpEntry
 */
 static void testWinNT4Functions(void)
 {
@@ -679,6 +704,7 @@ static void testWinNT4Functions(void)
   testGetUdpStatistics();
   testGetTcpTable();
   testGetUdpTable();
+  testSetTcpEntry();
 }
 
 static void testGetInterfaceInfo(void)
