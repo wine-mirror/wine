@@ -150,6 +150,7 @@ typedef struct
 #define MAPI_E_INVALID_EDITFIELDS       24
 #define MAPI_E_INVALID_RECIPS           25
 #define MAPI_E_NOT_SUPPORTED            26
+#define MAPI_E_UNICODE_NOT_SUPPORTED    27
 
 
 /* MAPILogon */

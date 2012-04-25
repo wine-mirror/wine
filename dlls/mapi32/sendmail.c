@@ -48,16 +48,35 @@ WINE_DEFAULT_DEBUG_CHANNEL(mapi);
 
 #define READ_BUF_SIZE    4096
 
+#define STORE_UNICODE_OK  0x00040000
+
+static LPSTR convert_from_unicode(LPCWSTR wstr)
+{
+    LPSTR str;
+    DWORD len;
+
+    if (!wstr)
+        return NULL;
+
+    len = WideCharToMultiByte(CP_ACP, 0, wstr, -1, NULL, 0, NULL, NULL);
+    str = HeapAlloc(GetProcessHeap(), 0, len);
+    WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, len, NULL, NULL);
+
+    return str;
+}
+
 /*
    Internal function to send a message via Extended MAPI. Wrapper around the Simple
    MAPI function MAPISendMail.
 */
-static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpMapiMessage message,
-    FLAGS flags, ULONG reserved)
+static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpMapiMessageW message,
+    FLAGS flags)
 {
-    ULONG tags[] = {1, PR_IPM_DRAFTS_ENTRYID};
+    ULONG tags[] = {1, 0};
+    char *subjectA = NULL, *bodyA = NULL;
     ULONG retval = MAPI_E_FAILURE;
     IMAPISession *session = NULL;
+    BOOL unicode_aware = FALSE;
     IMAPITable* msg_table;
     LPSRowSet rows = NULL;
     IMsgStore* msg_store;
@@ -134,12 +153,32 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
     /* We don't need this any more */
     FreeProws(rows);
 
+    /* Check if the message store supports Unicode */
+    tags[1] = PR_STORE_SUPPORT_MASK;
+    ret = IMsgStore_GetProps(msg_store, (LPSPropTagArray) tags, 0, &values, &props);
+
+    if ((ret == S_OK) && (props[0].Value.l & STORE_UNICODE_OK))
+        unicode_aware = TRUE;
+    else
+    {
+        /* Don't convert to ANSI */
+        if (flags & MAPI_FORCE_UNICODE)
+        {
+            WARN("No Unicode-capable mail client, and MAPI_FORCE_UNICODE is specified. MAPISendMail failed.\n");
+            retval = MAPI_E_UNICODE_NOT_SUPPORTED;
+            IMsgStore_Release(msg_store);
+            goto logoff;
+        }
+    }
+
     /* First open the inbox, from which the drafts folder can be opened */
     if (IMsgStore_GetReceiveFolder(msg_store, NULL, 0, &entry_len, &entry_id, NULL) == S_OK)
     {
         IMsgStore_OpenEntry(msg_store, entry_len, entry_id, NULL, 0, &obj_type, (LPUNKNOWN*) &folder);
         MAPIFreeBuffer(entry_id);
     }
+
+    tags[1] = PR_IPM_DRAFTS_ENTRYID;
 
     /* Open the drafts folder, or failing that, try asking the message store for the outbox */
     if ((folder == NULL) || ((ret = IMAPIFolder_GetProps(folder, (LPSPropTagArray) tags, 0, &values, &props)) != S_OK))
@@ -175,8 +214,19 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
         /* Set message subject */
         if (message->lpszSubject)
         {
-            p.ulPropTag = PR_SUBJECT_A;
-            p.Value.lpszA = message->lpszSubject;
+            if (unicode_aware)
+            {
+                p.ulPropTag = PR_SUBJECT_W;
+                p.Value.lpszW = message->lpszSubject;
+            }
+            else
+            {
+                subjectA = convert_from_unicode(message->lpszSubject);
+
+                p.ulPropTag = PR_SUBJECT_A;
+                p.Value.lpszA = subjectA;
+            }
+
             IMessage_SetProps(msg, 1, &p, NULL);
         }
 
@@ -185,10 +235,17 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
         {
             LPSTREAM stream = NULL;
 
-            if (IMessage_OpenProperty(msg, PR_BODY_A, &IID_IStream, 0,
+            if (IMessage_OpenProperty(msg, unicode_aware ? PR_BODY_W : PR_BODY_A, &IID_IStream, 0,
                 MAPI_MODIFY | MAPI_CREATE, (LPUNKNOWN*) &stream) == S_OK)
             {
-                IStream_Write(stream, message->lpszNoteText, strlen(message->lpszNoteText)+1, NULL);
+                if (unicode_aware)
+                    IStream_Write(stream, message->lpszNoteText, (lstrlenW(message->lpszNoteText)+1) * sizeof(WCHAR), NULL);
+                else
+                {
+                    bodyA = convert_from_unicode(message->lpszNoteText);
+                    IStream_Write(stream, bodyA, strlen(bodyA)+1, NULL);
+                }
+
                 IStream_Release(stream);
             }
         }
@@ -202,15 +259,16 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
             for (i = 0; i < message->nFileCount; i++)
             {
                 IAttach* attachment = NULL;
+                char *filenameA = NULL;
                 SPropValue prop[4];
-                LPCSTR filename;
+                LPCWSTR filename;
                 HANDLE file;
 
                 if (!message->lpFiles[i].lpszPathName)
                     continue;
 
                 /* Open the attachment for reading */
-                file = CreateFileA(message->lpFiles[i].lpszPathName, GENERIC_READ, FILE_SHARE_READ,
+                file = CreateFileW(message->lpFiles[i].lpszPathName, GENERIC_READ, FILE_SHARE_READ,
                     NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
                 if (file == INVALID_HANDLE_VALUE)
@@ -223,7 +281,7 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
                 {
                     filename = message->lpFiles[i].lpszPathName;
 
-                    for (j = strlen(message->lpFiles[i].lpszPathName)-1; j >= 0; j--)
+                    for (j = lstrlenW(message->lpFiles[i].lpszPathName)-1; j >= 0; j--)
                     {
                         if (message->lpFiles[i].lpszPathName[i] == '\\' ||
                             message->lpFiles[i].lpszPathName[i] == '/')
@@ -234,8 +292,8 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
                     }
                 }
 
-                TRACE("Attachment %d path: '%s'; filename: '%s'\n", i, debugstr_a(message->lpFiles[i].lpszPathName),
-                    debugstr_a(filename));
+                TRACE("Attachment %d path: '%s'; filename: '%s'\n", i, debugstr_w(message->lpFiles[i].lpszPathName),
+                    debugstr_w(filename));
 
                 /* Create the attachment */
                 if (IMessage_CreateAttach(msg, NULL, 0, &num_attach, &attachment) != S_OK)
@@ -250,10 +308,25 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
 
                 prop[0].ulPropTag = PR_ATTACH_METHOD;
                 prop[0].Value.ul = ATTACH_BY_VALUE;
-                prop[1].ulPropTag = PR_ATTACH_LONG_FILENAME_A;
-                prop[1].Value.lpszA = (LPSTR) filename;
-                prop[2].ulPropTag = PR_ATTACH_FILENAME_A;
-                prop[2].Value.lpszA = (LPSTR) filename;
+
+                if (unicode_aware)
+                {
+                    prop[1].ulPropTag = PR_ATTACH_LONG_FILENAME_W;
+                    prop[1].Value.lpszW = (LPWSTR) filename;
+                    prop[2].ulPropTag = PR_ATTACH_FILENAME_W;
+                    prop[2].Value.lpszW = (LPWSTR) filename;
+                }
+                else
+                {
+                    filenameA = convert_from_unicode(filename);
+
+                    prop[1].ulPropTag = PR_ATTACH_LONG_FILENAME_A;
+                    prop[1].Value.lpszA = (LPSTR) filenameA;
+                    prop[2].ulPropTag = PR_ATTACH_FILENAME_A;
+                    prop[2].Value.lpszA = (LPSTR) filenameA;
+
+                }
+
                 prop[3].ulPropTag = PR_RENDERING_POSITION;
                 prop[3].Value.l = -1;
 
@@ -273,7 +346,7 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
                             size += read;
                         }
 
-                        TRACE("%d bytes read, %d bytes written of attachment\n", read, written);
+                        TRACE("%d bytes written of attachment\n", size);
 
                         IStream_Commit(stream, STGC_DEFAULT);
                         IStream_Release(stream);
@@ -289,6 +362,8 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
 
                 CloseHandle(file);
                 IAttach_Release(attachment);
+
+                HeapFree(GetProcessHeap(), 0, filenameA);
             }
         }
 
@@ -360,6 +435,9 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
     if (folder) IMAPIFolder_Release(folder);
     IMsgStore_Release(msg_store);
 
+    HeapFree(GetProcessHeap(), 0, subjectA);
+    HeapFree(GetProcessHeap(), 0, bodyA);
+
 logoff: ;
     IMAPISession_Logoff(session, 0, 0, 0);
     IMAPISession_Release(session);
@@ -396,8 +474,10 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
         return mapiFunctions.MAPISendMail(session, uiparam, message, flags, reserved);
 
     /* Check if we have an Extended MAPI provider - if so, use our wrapper */
+#if 0
     if (MAPIInitialize(NULL) == S_OK)
-        return sendmail_extended_mapi(session, uiparam, message, flags, reserved);
+        return sendmail_extended_mapi(session, uiparam, message, flags);
+#endif
 
     /* Display an error message since we apparently have no mail clients */
     LoadStringW(hInstMAPI32, IDS_NO_MAPI_CLIENT, error_msg, sizeof(error_msg) / sizeof(WCHAR));
@@ -428,11 +508,22 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
 ULONG WINAPI MAPISendMailW(LHANDLE session, ULONG_PTR uiparam,
     lpMapiMessageW message, FLAGS flags, ULONG reserved)
 {
+    WCHAR msg_title[READ_BUF_SIZE], error_msg[READ_BUF_SIZE];
+
     /* Check to see if we have a Simple MAPI provider loaded */
     if (mapiFunctions.MAPISendMailW)
         return mapiFunctions.MAPISendMailW(session, uiparam, message, flags, reserved);
 
-    WARN("STUB\n");
+    /* Check if we have an Extended MAPI provider - if so, use our wrapper */
+    if (MAPIInitialize(NULL) == S_OK)
+        return sendmail_extended_mapi(session, uiparam, message, flags);
+
+    /* Display an error message since we apparently have no mail clients */
+    LoadStringW(hInstMAPI32, IDS_NO_MAPI_CLIENT, error_msg, sizeof(error_msg) / sizeof(WCHAR));
+    LoadStringW(hInstMAPI32, IDS_SEND_MAIL, msg_title, sizeof(msg_title) / sizeof(WCHAR));
+
+    MessageBoxW((HWND) uiparam, error_msg, msg_title, MB_ICONEXCLAMATION);
+
     return MAPI_E_NOT_SUPPORTED;
 }
 
