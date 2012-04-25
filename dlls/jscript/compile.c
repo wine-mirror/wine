@@ -1775,6 +1775,7 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
         BOOL from_eval, function_code_t *func)
 {
     function_declaration_t *iter;
+    var_list_t *var_iter;
     unsigned off, i;
     HRESULT hres;
 
@@ -1809,7 +1810,6 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
         func->source_len = func_expr->src_len;
     }
 
-    func->source_elements = source;
     func->expr = func_expr;
 
     func->funcs = heap_alloc_zero(func->func_cnt * sizeof(*func->funcs));
@@ -1823,6 +1823,20 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     }
 
     assert(i == func->func_cnt);
+
+    for(var_iter = source->variables; var_iter; var_iter = var_iter->next)
+        func->var_cnt++;
+
+    func->variables = compiler_alloc(ctx->code, func->var_cnt * sizeof(*func->variables));
+    if(!func->variables)
+        return E_OUTOFMEMORY;
+
+    for(var_iter = source->variables, i=0; var_iter; var_iter = var_iter->next, i++) {
+        func->variables[i] = compiler_alloc_bstr(ctx, var_iter->identifier);
+        if(!func->variables[i])
+            return E_OUTOFMEMORY;
+    }
+
     return S_OK;
 }
 

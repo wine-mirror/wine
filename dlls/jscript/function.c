@@ -774,7 +774,7 @@ static HRESULT construct_function(script_ctx_t *ctx, DISPPARAMS *dp, jsexcept_t 
     if(FAILED(hres))
         return hres;
 
-    if(code->global_code.func_cnt != 1 || code->parser->source->variables) {
+    if(code->global_code.func_cnt != 1 || code->global_code.var_cnt) {
         ERR("Invalid parser result!\n");
         release_bytecode(code);
         return E_UNEXPECTED;

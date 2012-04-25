@@ -171,13 +171,15 @@ typedef struct _function_code_t {
     unsigned instr_off;
 
     function_expression_t *expr; /* FIXME */
-    source_elements_t *source_elements; /* FIXME */
 
     const WCHAR *source;
     unsigned source_len;
 
     unsigned func_cnt;
     struct _function_code_t *funcs;
+
+    unsigned var_cnt;
+    BSTR *variables;
 } function_code_t;
 
 typedef struct _bytecode_t {

@@ -2614,7 +2614,6 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, BO
         jsexcept_t *ei, VARIANT *retv)
 {
     exec_ctx_t *prev_ctx;
-    var_list_t *var;
     VARIANT val;
     unsigned i;
     HRESULT hres = S_OK;
@@ -2640,19 +2639,14 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, BO
             return hres;
     }
 
-    for(var = func->source_elements->variables; var; var = var->next) {
-        DISPID id = 0;
-        BSTR name;
+    for(i=0; i < func->var_cnt; i++) {
+        if(!ctx->is_global || !lookup_global_members(ctx->script, func->variables[i], NULL)) {
+            DISPID id = 0;
 
-        name = SysAllocString(var->identifier);
-        if(!name)
-            return E_OUTOFMEMORY;
-
-        if(!ctx->is_global || !lookup_global_members(ctx->script, name, NULL))
-            hres = jsdisp_get_id(ctx->var_disp, var->identifier, fdexNameEnsure, &id);
-        SysFreeString(name);
-        if(FAILED(hres))
-            return hres;
+            hres = jsdisp_get_id(ctx->var_disp, func->variables[i], fdexNameEnsure, &id);
+            if(FAILED(hres))
+                return hres;
+        }
     }
 
     prev_ctx = ctx->script->exec_ctx;
