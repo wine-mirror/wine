@@ -53,6 +53,9 @@ typedef struct {
 
     statement_ctx_t *stat_ctx;
     function_code_t *func;
+
+    variable_declaration_t *var_head;
+    variable_declaration_t *var_tail;
 } compiler_ctx_t;
 
 static const struct {
@@ -988,7 +991,19 @@ static HRESULT compile_variable_list(compiler_ctx_t *ctx, variable_declaration_t
     variable_declaration_t *iter;
     HRESULT hres;
 
+    assert(list != NULL);
+
+    if(ctx->var_tail)
+        ctx->var_tail->global_next = list;
+    else
+        ctx->var_head = list;
+
     for(iter = list; iter; iter = iter->next) {
+        ctx->func->var_cnt++;
+        iter->global_next = iter->next;
+        if(!iter->next)
+            ctx->var_tail = iter;
+
         if(!iter->expr)
             continue;
 
@@ -1771,12 +1786,14 @@ static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source)
 static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, function_expression_t *func_expr,
         BOOL from_eval, function_code_t *func)
 {
+    variable_declaration_t *var_iter;
     function_declaration_t *iter;
-    var_list_t *var_iter;
     unsigned off, i;
     HRESULT hres;
 
     TRACE("\n");
+
+    ctx->var_head = ctx->var_tail = NULL;
 
     off = ctx->code_off;
     ctx->func = func;
@@ -1822,6 +1839,18 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
         }
     }
 
+    func->variables = compiler_alloc(ctx->code, func->var_cnt * sizeof(*func->variables));
+    if(!func->variables)
+        return E_OUTOFMEMORY;
+
+    for(var_iter = ctx->var_head, i=0; var_iter; var_iter = var_iter->global_next, i++) {
+        func->variables[i] = compiler_alloc_bstr(ctx, var_iter->identifier);
+        if(!func->variables[i])
+            return E_OUTOFMEMORY;
+    }
+
+    assert(i == func->var_cnt);
+
     func->funcs = compiler_alloc(ctx->code, func->func_cnt * sizeof(*func->funcs));
     if(!func->funcs)
         return E_OUTOFMEMORY;
@@ -1834,19 +1863,6 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     }
 
     assert(i == func->func_cnt);
-
-    for(var_iter = source->variables; var_iter; var_iter = var_iter->next)
-        func->var_cnt++;
-
-    func->variables = compiler_alloc(ctx->code, func->var_cnt * sizeof(*func->variables));
-    if(!func->variables)
-        return E_OUTOFMEMORY;
-
-    for(var_iter = source->variables, i=0; var_iter; var_iter = var_iter->next, i++) {
-        func->variables[i] = compiler_alloc_bstr(ctx, var_iter->identifier);
-        if(!func->variables[i])
-            return E_OUTOFMEMORY;
-    }
 
     return S_OK;
 }

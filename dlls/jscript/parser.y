@@ -1051,19 +1051,11 @@ static statement_t *new_block_statement(parser_ctx_t *ctx, statement_list_t *lis
 static variable_declaration_t *new_variable_declaration(parser_ctx_t *ctx, const WCHAR *identifier, expression_t *expr)
 {
     variable_declaration_t *ret = parser_alloc(ctx, sizeof(variable_declaration_t));
-    var_list_t *var_list = parser_alloc(ctx, sizeof(var_list_t));
 
     ret->identifier = identifier;
     ret->expr = expr;
     ret->next = NULL;
-
-    var_list->identifier = identifier;
-    var_list->next = NULL;
-
-    if(ctx->func_stack->var_tail)
-        ctx->func_stack->var_tail = ctx->func_stack->var_tail->next = var_list;
-    else
-        ctx->func_stack->var_head = ctx->func_stack->var_tail = var_list;
+    ret->global_next = NULL;
 
     return ret;
 }
@@ -1503,7 +1495,6 @@ static void push_func(parser_ctx_t *ctx)
     func_stack_t *new_func = parser_alloc_tmp(ctx, sizeof(func_stack_t));
 
     new_func->func_head = new_func->func_tail = NULL;
-    new_func->var_head = new_func->var_tail = NULL;
 
     new_func->next = ctx->func_stack;
     ctx->func_stack = new_func;
@@ -1512,7 +1503,6 @@ static void push_func(parser_ctx_t *ctx)
 static source_elements_t *function_body_parsed(parser_ctx_t *ctx, source_elements_t *source)
 {
     source->functions = ctx->func_stack->func_head;
-    source->variables = ctx->func_stack->var_head;
     pop_func(ctx);
 
     return source;
@@ -1521,7 +1511,6 @@ static source_elements_t *function_body_parsed(parser_ctx_t *ctx, source_element
 static void program_parsed(parser_ctx_t *ctx, source_elements_t *source)
 {
     source->functions = ctx->func_stack->func_head;
-    source->variables = ctx->func_stack->var_head;
     pop_func(ctx);
 
     ctx->source = source;

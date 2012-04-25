@@ -27,17 +27,9 @@ typedef struct _function_declaration_t {
     struct _function_declaration_t *next;
 } function_declaration_t;
 
-typedef struct _var_list_t {
-    const WCHAR *identifier;
-
-    struct _var_list_t *next;
-} var_list_t;
-
 typedef struct _func_stack {
     function_declaration_t *func_head;
     function_declaration_t *func_tail;
-    var_list_t *var_head;
-    var_list_t *var_tail;
 
     struct _func_stack *next;
 } func_stack_t;
@@ -302,6 +294,7 @@ typedef struct _variable_declaration_t {
     expression_t *expr;
 
     struct _variable_declaration_t *next;
+    struct _variable_declaration_t *global_next; /* for compiler */
 } variable_declaration_t;
 
 typedef enum {
@@ -505,7 +498,6 @@ struct _source_elements_t {
     statement_t *statement;
     statement_t *statement_tail;
     function_declaration_t *functions;
-    var_list_t *variables;
 };
 
 struct _function_expression_t {
