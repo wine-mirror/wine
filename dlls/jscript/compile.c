@@ -1812,9 +1812,10 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
 
     func->expr = func_expr;
 
-    func->funcs = heap_alloc_zero(func->func_cnt * sizeof(*func->funcs));
+    func->funcs = compiler_alloc(ctx->code, func->func_cnt * sizeof(*func->funcs));
     if(!func->funcs)
         return E_OUTOFMEMORY;
+    memset(func->funcs, 0, func->func_cnt * sizeof(*func->funcs));
 
     for(iter = source->functions, i=0; iter; iter = iter->next, i++) {
         hres = compile_function(ctx, iter->expr->source_elements, iter->expr, FALSE, func->funcs+i);
