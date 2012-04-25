@@ -1691,6 +1691,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetTexture(IDirect3DDevice9Ex *iface,
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_texture *wined3d_texture = NULL;
+    struct d3d9_texture *texture_impl;
     HRESULT hr;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, Stage, ppTexture);
@@ -1703,7 +1704,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetTexture(IDirect3DDevice9Ex *iface,
     hr = wined3d_device_get_texture(This->wined3d_device, Stage, &wined3d_texture);
     if (SUCCEEDED(hr) && wined3d_texture)
     {
-        *ppTexture = wined3d_texture_get_parent(wined3d_texture);
+        texture_impl = wined3d_texture_get_parent(wined3d_texture);
+        *ppTexture = &texture_impl->IDirect3DBaseTexture9_iface;
         IDirect3DBaseTexture9_AddRef(*ppTexture);
         wined3d_texture_decref(wined3d_texture);
     }
