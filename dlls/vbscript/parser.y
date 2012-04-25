@@ -71,6 +71,8 @@ static class_decl_t *add_variant_prop(parser_ctx_t*,class_decl_t*,const WCHAR*,u
 
 static statement_t *link_statements(statement_t*,statement_t*);
 
+static const WCHAR propertyW[] = {'p','r','o','p','e','r','t','y',0};
+
 #define STORAGE_IS_PRIVATE    1
 #define STORAGE_IS_DEFAULT    2
 
@@ -129,6 +131,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <uint> Storage Storage_opt
 %type <dim_decl> DimDeclList
 %type <const_decl> ConstDecl ConstDeclList
+%type <string> Identifier
 
 %%
 
@@ -189,25 +192,25 @@ SimpleStatement
     | tON tERROR tRESUME tNEXT              { $$ = new_onerror_statement(ctx, TRUE); CHECK_ERROR; }
     | tON tERROR tGOTO '0'                  { $$ = new_onerror_statement(ctx, FALSE); CHECK_ERROR; }
     | tCONST ConstDeclList                  { $$ = new_const_statement(ctx, $2); CHECK_ERROR; }
-    | tFOR tIdentifier '=' Expression tTO Expression Step_opt tNL StatementsNl_opt tNEXT
+    | tFOR Identifier '=' Expression tTO Expression Step_opt tNL StatementsNl_opt tNEXT
                                             { $$ = new_forto_statement(ctx, $2, $4, $6, $7, $9); CHECK_ERROR; }
-    | tFOR tEACH tIdentifier tIN Expression tNL StatementsNl_opt tNEXT
+    | tFOR tEACH Identifier tIN Expression tNL StatementsNl_opt tNEXT
                                             { $$ = new_foreach_statement(ctx, $3, $5, $7); }
 
 MemberExpression
-    : tIdentifier                           { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
-    | CallExpression '.' tIdentifier        { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
+    : Identifier                            { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
+    | CallExpression '.' Identifier         { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
 
 DimDeclList /* FIXME: Support arrays */
-    : tIdentifier                           { $$ = new_dim_decl(ctx, $1, NULL); CHECK_ERROR; }
-    | tIdentifier ',' DimDeclList           { $$ = new_dim_decl(ctx, $1, $3); CHECK_ERROR; }
+    : Identifier                            { $$ = new_dim_decl(ctx, $1, NULL); CHECK_ERROR; }
+    | Identifier ',' DimDeclList            { $$ = new_dim_decl(ctx, $1, $3); CHECK_ERROR; }
 
 ConstDeclList
     : ConstDecl                             { $$ = $1; }
     | ConstDecl ',' ConstDeclList           { $1->next = $3; $$ = $1; }
 
 ConstDecl
-    : tIdentifier '=' LiteralExpression     { $$ = new_const_decl(ctx, $1, $3); CHECK_ERROR; }
+    : Identifier '=' LiteralExpression      { $$ = new_const_decl(ctx, $1, $3); CHECK_ERROR; }
 
 DoType
     : tWHILE        { $$ = TRUE; }
@@ -326,7 +329,7 @@ ExpExpression
 UnaryExpression
     : LiteralExpression             { $$ = $1; }
     | CallExpression                { $$ = $1; }
-    | tNEW tIdentifier              { $$ = new_new_expression(ctx, $2); CHECK_ERROR; }
+    | tNEW Identifier               { $$ = new_new_expression(ctx, $2); CHECK_ERROR; }
     | '-' UnaryExpression           { $$ = new_unary_expression(ctx, EXPR_NEG, $2); CHECK_ERROR; }
 
 CallExpression
@@ -350,7 +353,7 @@ PrimaryExpression
     | tME                           { $$ = new_expression(ctx, EXPR_ME, 0); CHECK_ERROR; }
 
 ClassDeclaration
-    : tCLASS tIdentifier tNL ClassBody tEND tCLASS tNL      { $4->name = $2; $$ = $4; }
+    : tCLASS Identifier tNL ClassBody tEND tCLASS tNL       { $4->name = $2; $$ = $4; }
 
 ClassBody
     : /* empty */                               { $$ = new_class_decl(ctx); }
@@ -367,9 +370,9 @@ PropertyDecl
                                     { $$ = new_function_decl(ctx, $4, FUNC_PROPSET, $1, $6, $9); CHECK_ERROR; }
 
 FunctionDecl
-    : Storage_opt tSUB tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tSUB
+    : Storage_opt tSUB Identifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tSUB
                                     { $$ = new_function_decl(ctx, $3, FUNC_SUB, $1, $4, $6); CHECK_ERROR; }
-    | Storage_opt tFUNCTION tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tFUNCTION
+    | Storage_opt tFUNCTION Identifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tFUNCTION
                                     { $$ = new_function_decl(ctx, $3, FUNC_FUNCTION, $1, $4, $6); CHECK_ERROR; }
 
 Storage_opt
@@ -390,10 +393,14 @@ ArgumentDeclList
     | ArgumentDecl ',' ArgumentDeclList         { $1->next = $3; $$ = $1; }
 
 ArgumentDecl
-    : tIdentifier                               { $$ = new_argument_decl(ctx, $1, TRUE); }
-    | tBYREF tIdentifier                        { $$ = new_argument_decl(ctx, $2, TRUE); }
-    | tBYVAL tIdentifier                        { $$ = new_argument_decl(ctx, $2, FALSE); }
+    : Identifier                                { $$ = new_argument_decl(ctx, $1, TRUE); }
+    | tBYREF Identifier                         { $$ = new_argument_decl(ctx, $2, TRUE); }
+    | tBYVAL Identifier                         { $$ = new_argument_decl(ctx, $2, FALSE); }
 
+/* 'property' may be both keyword and identifier, depending on context */
+Identifier
+    : tIdentifier    { $$ = $1; }
+    | tPROPERTY      { $$ = propertyW; }
 %%
 
 static int parser_error(const char *str)

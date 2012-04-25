@@ -781,4 +781,36 @@ End Sub
 Call ConstTestSub
 Dim funcconst
 
+' Property may be used as an identifier (although it's a keyword)
+Sub TestProperty
+    Dim Property
+    PROPERTY = true
+    Call ok(property, "property = " & property)
+
+    for property = 1 to 2
+    next
+End Sub
+
+Call TestProperty
+
+Class Property
+    Public Sub Property()
+    End Sub
+
+    Sub Test(byref property)
+    End Sub
+End Class
+
+Class Property2
+    Function Property()
+    End Function
+
+
+    Sub Test(property)
+    End Sub
+
+    Sub Test2(byval property)
+    End Sub
+End Class
+
 reportSuccess()
