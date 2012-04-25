@@ -548,6 +548,27 @@ ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
     return MAPI_E_NOT_SUPPORTED;
 }
 
+static lpMapiRecipDesc convert_recipient_from_unicode(lpMapiRecipDescW recipW, lpMapiRecipDesc dest)
+{
+    lpMapiRecipDesc ret;
+
+    if (!recipW)
+        return NULL;
+
+    if (dest)
+        ret = dest;
+    else
+        ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MapiRecipDesc));
+
+    ret->ulRecipClass = recipW->ulRecipClass;
+    ret->lpszName = convert_from_unicode(recipW->lpszName);
+    ret->lpszAddress = convert_from_unicode(recipW->lpszAddress);
+    ret->ulEIDSize = recipW->ulEIDSize;
+    ret->lpEntryID = recipW->lpEntryID;
+
+    return ret;
+}
+
 /**************************************************************************
  *  MAPISendMailW	(MAPI32.256)
  *
@@ -577,6 +598,105 @@ ULONG WINAPI MAPISendMailW(LHANDLE session, ULONG_PTR uiparam,
     /* Check if we have an Extended MAPI provider - if so, use our wrapper */
     if (MAPIInitialize(NULL) == S_OK)
         return sendmail_extended_mapi(session, uiparam, message, flags);
+
+    if (mapiFunctions.MAPISendMail)
+    {
+        MapiMessage messageA;
+        ULONG ret;
+
+        if (flags & MAPI_FORCE_UNICODE)
+            return MAPI_E_UNICODE_NOT_SUPPORTED;
+
+        /* Convert to ANSI and send to MAPISendMail */
+        ZeroMemory(&messageA, sizeof(MapiMessage));
+
+        messageA.lpszSubject = convert_from_unicode(message->lpszSubject);
+        messageA.lpszNoteText = convert_from_unicode(message->lpszNoteText);
+        messageA.lpszMessageType = convert_from_unicode(message->lpszMessageType);
+        messageA.lpszDateReceived = convert_from_unicode(message->lpszDateReceived);
+        messageA.lpszConversationID = convert_from_unicode(message->lpszConversationID);
+        messageA.flFlags = message->flFlags;
+        messageA.lpOriginator = convert_recipient_from_unicode(message->lpOriginator, NULL);
+        messageA.nRecipCount = message->nRecipCount;
+        messageA.nFileCount = message->nFileCount;
+
+        if (message->nRecipCount && message->lpRecips)
+        {
+            lpMapiRecipDesc recipsA;
+            int i;
+
+            recipsA = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MapiRecipDesc) * message->nRecipCount);
+
+            for (i = 0; i < message->nRecipCount; i++)
+            {
+                convert_recipient_from_unicode(&message->lpRecips[i], &recipsA[i]);
+            }
+
+            messageA.lpRecips = recipsA;
+        }
+
+        if (message->nFileCount && message->lpFiles)
+        {
+            lpMapiFileDesc filesA;
+            int i;
+
+            filesA = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MapiFileDesc) * message->nFileCount);
+
+            for (i = 0; i < message->nFileCount; i++)
+            {
+                filesA[i].flFlags = message->lpFiles[i].flFlags;
+                filesA[i].nPosition = message->lpFiles[i].nPosition;
+                filesA[i].lpszPathName = convert_from_unicode(message->lpFiles[i].lpszPathName);
+                filesA[i].lpszFileName = convert_from_unicode(message->lpFiles[i].lpszFileName);
+                filesA[i].lpFileType = message->lpFiles[i].lpFileType;
+            }
+
+            messageA.lpFiles = filesA;
+        }
+
+        ret = mapiFunctions.MAPISendMail(session, uiparam, &messageA, flags, reserved);
+
+        /* Now free everything we allocated */
+        if (message->lpOriginator)
+        {
+            HeapFree(GetProcessHeap(), 0, messageA.lpOriginator->lpszName);
+            HeapFree(GetProcessHeap(), 0, messageA.lpOriginator->lpszAddress);
+            HeapFree(GetProcessHeap(), 0, messageA.lpOriginator);
+        }
+
+        if (message->nRecipCount && message->lpRecips)
+        {
+            int i;
+
+            for (i = 0; i < message->nRecipCount; i++)
+            {
+                HeapFree(GetProcessHeap(), 0, messageA.lpRecips[i].lpszName);
+                HeapFree(GetProcessHeap(), 0, messageA.lpRecips[i].lpszAddress);
+            }
+
+            HeapFree(GetProcessHeap(), 0, messageA.lpRecips);
+        }
+
+        if (message->nFileCount && message->lpFiles)
+        {
+            int i;
+
+            for (i = 0; i < message->nFileCount; i++)
+            {
+                HeapFree(GetProcessHeap(), 0, messageA.lpFiles[i].lpszPathName);
+                HeapFree(GetProcessHeap(), 0, messageA.lpFiles[i].lpszFileName);
+            }
+
+            HeapFree(GetProcessHeap(), 0, messageA.lpFiles);
+        }
+
+        HeapFree(GetProcessHeap(), 0, messageA.lpszSubject);
+        HeapFree(GetProcessHeap(), 0, messageA.lpszNoteText);
+        HeapFree(GetProcessHeap(), 0, messageA.lpszDateReceived);
+        HeapFree(GetProcessHeap(), 0, messageA.lpszConversationID);
+
+        return ret;
+    }
 
     /* Display an error message since we apparently have no mail clients */
     LoadStringW(hInstMAPI32, IDS_NO_MAPI_CLIENT, error_msg, sizeof(error_msg) / sizeof(WCHAR));
