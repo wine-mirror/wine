@@ -197,8 +197,6 @@ typedef struct _bytecode_t {
     unsigned bstr_pool_size;
     unsigned bstr_cnt;
 
-    parser_ctx_t *parser;
-
     struct _bytecode_t *next;
 } bytecode_t;
 

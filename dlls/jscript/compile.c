@@ -1732,9 +1732,6 @@ void release_bytecode(bytecode_t *code)
     if(--code->ref)
         return;
 
-    if(code->parser)
-        parser_release(code->parser);
-
     for(i=0; i < code->bstr_cnt; i++)
         SysFreeString(code->bstr_pool[i]);
 
@@ -1878,9 +1875,8 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimi
         return hres;
     }
 
-    compiler.code->parser = compiler.parser;
-
     hres = compile_function(&compiler, compiler.parser->source, NULL, from_eval, &compiler.code->global_code);
+    parser_release(compiler.parser);
     if(FAILED(hres)) {
         release_bytecode(compiler.code);
         return hres;
