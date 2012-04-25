@@ -3520,16 +3520,12 @@ msgid "URI to be decoded is incorrect"
 msgstr "해독하는 URI가 올바르지 않음"
 
 #: jscript.rc:57
-#, fuzzy
-#| msgid "Enumeration value out of range.\n"
 msgid "Number of fraction digits is out of range"
-msgstr "열거 값이 범위를 벗어남.\n"
+msgstr "분수 값이 범위를 벗어남"
 
 #: jscript.rc:58
-#, fuzzy
-#| msgid "Subscript out of range"
 msgid "Precision is out of range"
-msgstr "첨자가 범위를 벗어남"
+msgstr "정밀도 범위를 벗어남"
 
 #: jscript.rc:59
 msgid "Array length must be a finite positive integer"
