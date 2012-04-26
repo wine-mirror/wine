@@ -1455,6 +1455,9 @@ static UINT get_registered_local_package( const WCHAR *product, const WCHAR *pac
     if (!strcmpiW( package, unsquashed ))
     {
         WCHAR *filename = msi_reg_get_val_str( props_key, INSTALLPROPERTY_LOCALPACKAGEW );
+        if (!filename)
+            goto done;
+
         strcpyW( localfile, filename );
         msi_free( filename );
         r = ERROR_SUCCESS;
