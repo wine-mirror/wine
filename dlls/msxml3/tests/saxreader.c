@@ -2832,9 +2832,10 @@ static void test_mxwriter_startenddocument(void)
 
 enum startendtype
 {
-    StartElement,
-    EndElement,
-    StartEndElement
+    StartElement    = 0x001,
+    EndElement      = 0x010,
+    StartEndElement = 0x011,
+    DisableEscaping = 0x100
 };
 
 struct writer_startendelement_t {
@@ -2850,6 +2851,7 @@ struct writer_startendelement_t {
 
 static const char startelement_xml[] = "<uri:local a:attr1=\"a1\" attr2=\"a2\" attr3=\"&lt;&amp;&quot;&gt;\">";
 static const char startendelement_xml[] = "<uri:local a:attr1=\"a1\" attr2=\"a2\" attr3=\"&lt;&amp;&quot;&gt;\"/>";
+static const char startendelement_noescape_xml[] = "<uri:local a:attr1=\"a1\" attr2=\"a2\" attr3=\"<&\">\"/>";
 
 static const struct writer_startendelement_t writer_startendelement[] = {
     /* 0 */
@@ -2948,6 +2950,13 @@ static const struct writer_startendelement_t writer_startendelement[] = {
     { &CLSID_MXXMLWriter40, StartEndElement, "", "", "", "</>", S_OK },
     /* 75 */
     { &CLSID_MXXMLWriter60, StartEndElement, "", "", "", "</>", S_OK },
+
+    /* with disabled output escaping */
+    { &CLSID_MXXMLWriter,   StartEndElement | DisableEscaping, "uri", "local", "uri:local", startendelement_noescape_xml, S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter30, StartEndElement | DisableEscaping, "uri", "local", "uri:local", startendelement_noescape_xml, S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter40, StartEndElement | DisableEscaping, "uri", "local", "uri:local", startendelement_xml, S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter60, StartEndElement | DisableEscaping, "uri", "local", "uri:local", startendelement_xml, S_OK, &saxattributes },
+
     { NULL }
 };
 
@@ -2998,23 +3007,21 @@ static void test_mxwriter_startendelement_batch(const struct writer_startendelem
         hr = ISAXContentHandler_startDocument(content);
         EXPECT_HR(hr, S_OK);
 
-        if (table->type == StartElement)
+        if (table->type & DisableEscaping)
+        {
+            hr = IMXWriter_put_disableOutputEscaping(writer, VARIANT_TRUE);
+            EXPECT_HR(hr, S_OK);
+        }
+
+        if (table->type & StartElement)
         {
             hr = ISAXContentHandler_startElement(content, _bstr_(table->uri), lstrlen(table->uri),
                 _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname), table->attr);
             ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
         }
-        else if (table->type == EndElement)
+
+        if (table->type & EndElement)
         {
-            hr = ISAXContentHandler_endElement(content, _bstr_(table->uri), lstrlen(table->uri),
-                _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname));
-            ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
-        }
-        else
-        {
-            hr = ISAXContentHandler_startElement(content, _bstr_(table->uri), lstrlen(table->uri),
-                _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname), table->attr);
-            ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
             hr = ISAXContentHandler_endElement(content, _bstr_(table->uri), lstrlen(table->uri),
                 _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname));
             ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);

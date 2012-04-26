@@ -1019,19 +1019,20 @@ static HRESULT WINAPI SAXContentHandler_startElement(
 
     if (attr)
     {
+        int length, i, escape;
         HRESULT hr;
-        INT length;
-        INT i;
 
         hr = ISAXAttributes_getLength(attr, &length);
         if (FAILED(hr)) return hr;
+
+        escape = This->props[MXWriter_DisableEscaping] == VARIANT_FALSE ||
+            (This->class_version == MSXML4 || This->class_version == MSXML6);
 
         for (i = 0; i < length; i++)
         {
             static const WCHAR eqW[] = {'='};
             const WCHAR *str;
-            WCHAR *escaped;
-            INT len = 0;
+            int len = 0;
 
             hr = ISAXAttributes_getQName(attr, i, &str, &len);
             if (FAILED(hr)) return hr;
@@ -1046,9 +1047,14 @@ static HRESULT WINAPI SAXContentHandler_startElement(
             hr = ISAXAttributes_getValue(attr, i, &str, &len);
             if (FAILED(hr)) return hr;
 
-            escaped = get_escaped_string(str, EscapeValue, &len);
-            write_output_buffer_quoted(This->buffer, escaped, len);
-            heap_free(escaped);
+            if (escape)
+            {
+                WCHAR *escaped = get_escaped_string(str, EscapeValue, &len);
+                write_output_buffer_quoted(This->buffer, escaped, len);
+                heap_free(escaped);
+            }
+            else
+                write_output_buffer_quoted(This->buffer, str, len);
         }
     }
 
