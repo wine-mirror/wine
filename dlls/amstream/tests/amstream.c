@@ -151,7 +151,7 @@ static void test_renderfile(void)
     if (FAILED(hr)) goto error;
 
     hr = IDirectDrawMediaStream_CreateSample(pddstream, NULL, NULL, 0, &pddsample);
-    todo_wine ok(hr==S_OK, "IDirectDrawMediaStream_CreateSample returned: %x\n", hr);
+    ok(hr == S_OK, "IDirectDrawMediaStream_CreateSample returned: %x\n", hr);
 
 error:
     if (pddsample)
@@ -249,7 +249,7 @@ static void test_media_streams(void)
         if (SUCCEEDED(hr))
         {
             hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &ddraw_sample);
-            todo_wine ok(hr==S_OK, "IDirectDrawMediaStream_CreateSample returned: %x\n", hr);
+            ok(hr == S_OK, "IDirectDrawMediaStream_CreateSample returned: %x\n", hr);
         }
 
         if (ddraw_sample)
