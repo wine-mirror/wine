@@ -983,21 +983,34 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
             && destsize.x == srcsize.x
             && destsize.y == srcsize.y) /* Simple copy. */
     {
+        UINT row_block_count = ((srcsize.x + srcformatdesc->block_width - 1) / srcformatdesc->block_width);
+        UINT row_count = (srcsize.y + srcformatdesc->block_height - 1) / srcformatdesc->block_height;
         const BYTE *src_addr;
         BYTE *dst_addr;
-        UINT y;
+        UINT row;
+
+        if (pSrcRect->left & (srcformatdesc->block_width - 1)
+                || pSrcRect->top & (srcformatdesc->block_height - 1)
+                || (pSrcRect->right & (srcformatdesc->block_width - 1)
+                    && srcsize.x != surfdesc.Width)
+                || (pSrcRect->bottom & (srcformatdesc->block_height - 1)
+                    && srcsize.y != surfdesc.Height))
+        {
+            WARN("Source rect %s is misaligned.\n", wine_dbgstr_rect(pSrcRect));
+            return D3DXERR_INVALIDDATA;
+        }
 
         if (FAILED(hr = IDirect3DSurface9_LockRect(pDestSurface, &lockrect, pDestRect, 0)))
             return D3DXERR_INVALIDDATA;
 
         src_addr = pSrcMemory;
-        src_addr += pSrcRect->top * SrcPitch;
-        src_addr += pSrcRect->left * srcformatdesc->bytes_per_pixel;
+        src_addr += (pSrcRect->top / srcformatdesc->block_height) * SrcPitch;
+        src_addr += (pSrcRect->left / srcformatdesc->block_width) * srcformatdesc->block_byte_count;
         dst_addr = lockrect.pBits;
 
-        for (y = 0; y < srcsize.y; ++y)
+        for (row = 0; row < row_count; ++row)
         {
-            memcpy(dst_addr, src_addr, srcsize.x * srcformatdesc->bytes_per_pixel);
+            memcpy(dst_addr, src_addr, row_block_count * srcformatdesc->block_byte_count);
             src_addr += SrcPitch;
             dst_addr += lockrect.Pitch;
         }
@@ -1009,6 +1022,10 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
         if (srcformatdesc->bytes_per_pixel > 4)
             return E_NOTIMPL;
         if (destformatdesc->bytes_per_pixel > 4)
+            return E_NOTIMPL;
+        if (srcformatdesc->block_height != 1 || srcformatdesc->block_width != 1)
+            return E_NOTIMPL;
+        if (destformatdesc->block_height != 1 || destformatdesc->block_width != 1)
             return E_NOTIMPL;
 
         if (FAILED(hr = IDirect3DSurface9_LockRect(pDestSurface, &lockrect, pDestRect, 0)))

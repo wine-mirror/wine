@@ -48,6 +48,9 @@ typedef struct _PixelFormatDesc {
     BYTE bits[4];
     BYTE shift[4];
     UINT bytes_per_pixel;
+    UINT block_width;
+    UINT block_height;
+    UINT block_byte_count;
     FormatType type;
     void (*from_rgba)(const struct vec4 *src, struct vec4 *dst);
     void (*to_rgba)(const struct vec4 *src, struct vec4 *dst);
