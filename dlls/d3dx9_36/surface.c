@@ -957,11 +957,6 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
 
     IDirect3DSurface9_GetDesc(pDestSurface, &surfdesc);
 
-    srcformatdesc = get_format_info(SrcFormat);
-    destformatdesc = get_format_info(surfdesc.Format);
-    if( srcformatdesc->type == FORMAT_UNKNOWN ||  srcformatdesc->bytes_per_pixel > 4) return E_NOTIMPL;
-    if(destformatdesc->type == FORMAT_UNKNOWN || destformatdesc->bytes_per_pixel > 4) return E_NOTIMPL;
-
     srcsize.x = pSrcRect->right - pSrcRect->left;
     srcsize.y = pSrcRect->bottom - pSrcRect->top;
     if( !pDestRect ) {
@@ -976,21 +971,67 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
         if(destsize.x == 0 || destsize.y == 0) return D3D_OK;
     }
 
-    hr = IDirect3DSurface9_LockRect(pDestSurface, &lockrect, pDestRect, 0);
-    if(FAILED(hr)) return D3DXERR_INVALIDDATA;
+    srcformatdesc = get_format_info(SrcFormat);
+    if (srcformatdesc->type == FORMAT_UNKNOWN)
+        return E_NOTIMPL;
 
-    if((dwFilter & 0xF) == D3DX_FILTER_NONE) {
-        copy_simple_data(pSrcMemory, SrcPitch, srcsize, srcformatdesc,
-                         lockrect.pBits, lockrect.Pitch, destsize, destformatdesc,
-                         Colorkey);
-    } else /*if((dwFilter & 0xF) == D3DX_FILTER_POINT) */ {
-        /* always apply a point filter until D3DX_FILTER_LINEAR, D3DX_FILTER_TRIANGLE and D3DX_FILTER_BOX are implemented */
-        point_filter_simple_data(pSrcMemory, SrcPitch, srcsize, srcformatdesc,
-                                 lockrect.pBits, lockrect.Pitch, destsize, destformatdesc,
-                                 Colorkey);
+    destformatdesc = get_format_info(surfdesc.Format);
+    if (destformatdesc->type == FORMAT_UNKNOWN)
+        return E_NOTIMPL;
+
+    if (SrcFormat == surfdesc.Format
+            && destsize.x == srcsize.x
+            && destsize.y == srcsize.y) /* Simple copy. */
+    {
+        const BYTE *src_addr;
+        BYTE *dst_addr;
+        UINT y;
+
+        if (FAILED(hr = IDirect3DSurface9_LockRect(pDestSurface, &lockrect, pDestRect, 0)))
+            return D3DXERR_INVALIDDATA;
+
+        src_addr = pSrcMemory;
+        src_addr += pSrcRect->top * SrcPitch;
+        src_addr += pSrcRect->left * srcformatdesc->bytes_per_pixel;
+        dst_addr = lockrect.pBits;
+
+        for (y = 0; y < srcsize.y; ++y)
+        {
+            memcpy(dst_addr, src_addr, srcsize.x * srcformatdesc->bytes_per_pixel);
+            src_addr += SrcPitch;
+            dst_addr += lockrect.Pitch;
+        }
+
+        IDirect3DSurface9_UnlockRect(pDestSurface);
+    }
+    else /* Stretching or format conversion. */
+    {
+        if (srcformatdesc->bytes_per_pixel > 4)
+            return E_NOTIMPL;
+        if (destformatdesc->bytes_per_pixel > 4)
+            return E_NOTIMPL;
+
+        if (FAILED(hr = IDirect3DSurface9_LockRect(pDestSurface, &lockrect, pDestRect, 0)))
+            return D3DXERR_INVALIDDATA;
+
+        if ((dwFilter & 0xf) == D3DX_FILTER_NONE)
+        {
+            copy_simple_data(pSrcMemory, SrcPitch, srcsize, srcformatdesc,
+                    lockrect.pBits, lockrect.Pitch, destsize, destformatdesc,
+                    Colorkey);
+        }
+        else /* if ((dwFilter & 0xf) == D3DX_FILTER_POINT) */
+        {
+            /* Always apply a point filter until D3DX_FILTER_LINEAR,
+             * D3DX_FILTER_TRIANGLE and D3DX_FILTER_BOX are implemented. */
+            point_filter_simple_data(pSrcMemory, SrcPitch, srcsize, srcformatdesc,
+                    lockrect.pBits, lockrect.Pitch, destsize, destformatdesc,
+                    Colorkey);
+        }
+
+        IDirect3DSurface9_UnlockRect(pDestSurface);
     }
 
-    IDirect3DSurface9_UnlockRect(pDestSurface);
     return D3D_OK;
 }
 
