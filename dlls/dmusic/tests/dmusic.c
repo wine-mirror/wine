@@ -112,6 +112,7 @@ static void test_dmbuffer(void)
     DMUS_BUFFERDESC desc;
     GUID format;
     DWORD size;
+    DWORD bytes;
 
     hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic, (LPVOID*)&dmusic);
     if (hr != S_OK)
@@ -139,6 +140,9 @@ static void test_dmbuffer(void)
     ok(hr == DMUS_E_INVALID_EVENT, "IDirectMusicBuffer_PackStructured returned %x\n", hr);
     hr = IDirectMusicBuffer_PackStructured(dmbuffer, 10, 0, 0x000090); /* note on : chan 0, note 0 & vel 0 */
     ok(hr == S_OK, "IDirectMusicBuffer_PackStructured returned %x\n", hr);
+    hr = IDirectMusicBuffer_GetUsedBytes(dmbuffer, &bytes);
+    ok(hr == S_OK, "IDirectMusicBuffer_GetUsedBytes returned %x\n", hr);
+    ok(bytes == 24, "Buffer size is %u instead of 0\n", bytes);
 
     if (dmbuffer)
         IDirectMusicBuffer_Release(dmbuffer);

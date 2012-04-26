@@ -177,11 +177,16 @@ static HRESULT WINAPI IDirectMusicBufferImpl_GetStartTime(LPDIRECTMUSICBUFFER if
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicBufferImpl_GetUsedBytes(LPDIRECTMUSICBUFFER iface, LPDWORD pcb)
+static HRESULT WINAPI IDirectMusicBufferImpl_GetUsedBytes(LPDIRECTMUSICBUFFER iface, LPDWORD used_bytes)
 {
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
 
-    FIXME("(%p, %p): stub\n", This, pcb);
+    TRACE("(%p)->(%p)\n", iface, used_bytes);
+
+    if (!used_bytes)
+        return E_POINTER;
+
+    *used_bytes = This->write_pos;
 
     return S_OK;
 }
