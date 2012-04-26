@@ -82,7 +82,9 @@ static HRESULT WINAPI IDirectMusicBufferImpl_Flush(LPDIRECTMUSICBUFFER iface)
 {
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
 
-    FIXME("(%p): stub\n", This);
+    TRACE("(%p)->()\n", iface);
+
+    This->write_pos = 0;
 
     return S_OK;
 }
