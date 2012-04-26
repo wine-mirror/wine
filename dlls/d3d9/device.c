@@ -2129,6 +2129,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetVertexDeclaration(IDirect3DDevice9
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_vertex_declaration *wined3d_declaration = NULL;
+    IDirect3DVertexDeclaration9Impl *declaration_impl;
     HRESULT hr;
 
     TRACE("iface %p, declaration %p.\n", iface, declaration);
@@ -2139,7 +2140,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetVertexDeclaration(IDirect3DDevice9
     hr = wined3d_device_get_vertex_declaration(This->wined3d_device, &wined3d_declaration);
     if (SUCCEEDED(hr) && wined3d_declaration)
     {
-        *declaration = wined3d_vertex_declaration_get_parent(wined3d_declaration);
+        declaration_impl = wined3d_vertex_declaration_get_parent(wined3d_declaration);
+        *declaration = &declaration_impl->IDirect3DVertexDeclaration9_iface;
         IDirect3DVertexDeclaration9_AddRef(*declaration);
         wined3d_vertex_declaration_decref(wined3d_declaration);
     }
