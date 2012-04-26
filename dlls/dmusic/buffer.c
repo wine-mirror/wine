@@ -115,9 +115,12 @@ static HRESULT WINAPI IDirectMusicBufferImpl_PackStructured(LPDIRECTMUSICBUFFER 
         return DMUS_E_INVALID_EVENT;
     }
 
+    if (!This->write_pos)
+        This->start_time = ref_time;
+
     header.cbEvent = sizeof(channel_message);
     header.dwChannelGroup = channel_group;
-    header.rtDelta = ref_time;
+    header.rtDelta = ref_time - This->start_time;
     header.dwFlags = DMUS_EVENT_STRUCTURED;
 
     memcpy(This->data + This->write_pos, &header, sizeof(header));
@@ -168,11 +171,18 @@ static HRESULT WINAPI IDirectMusicBufferImpl_GetRawBufferPtr(LPDIRECTMUSICBUFFER
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicBufferImpl_GetStartTime(LPDIRECTMUSICBUFFER iface, LPREFERENCE_TIME prt)
+static HRESULT WINAPI IDirectMusicBufferImpl_GetStartTime(LPDIRECTMUSICBUFFER iface, LPREFERENCE_TIME ref_time)
 {
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
 
-    FIXME("(%p, %p): stub\n", This, prt);
+    TRACE("(%p)->(%p)\n", iface, ref_time);
+
+    if (!ref_time)
+        return E_POINTER;
+    if (!This->write_pos)
+        return DMUS_E_BUFFER_EMPTY;
+
+    *ref_time = This->start_time;
 
     return S_OK;
 }
@@ -218,11 +228,13 @@ static HRESULT WINAPI IDirectMusicBufferImpl_GetBufferFormat(LPDIRECTMUSICBUFFER
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicBufferImpl_SetStartTime(LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt)
+static HRESULT WINAPI IDirectMusicBufferImpl_SetStartTime(LPDIRECTMUSICBUFFER iface, REFERENCE_TIME ref_time)
 {
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
 
-    FIXME("(%p, 0x%s): stub\n", This, wine_dbgstr_longlong(rt));
+    TRACE("(%p)->(0x%s)\n", This, wine_dbgstr_longlong(ref_time));
+
+    This->start_time = ref_time;
 
     return S_OK;
 }

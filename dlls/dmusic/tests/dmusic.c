@@ -113,6 +113,7 @@ static void test_dmbuffer(void)
     GUID format;
     DWORD size;
     DWORD bytes;
+    REFERENCE_TIME time;
 
     hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic, (LPVOID*)&dmusic);
     if (hr != S_OK)
@@ -136,13 +137,29 @@ static void test_dmbuffer(void)
     ok(hr == S_OK, "IDirectMusicBuffer_GetMaxBytes returned %x\n", hr);
     ok(size == 1024, "Buffer size is %u instead of 1024\n", size);
 
-    hr = IDirectMusicBuffer_PackStructured(dmbuffer, 10, 0, 0);
+    hr = IDirectMusicBuffer_GetStartTime(dmbuffer, &time);
+    ok(hr == DMUS_E_BUFFER_EMPTY, "IDirectMusicBuffer_GetStartTime returned %x\n", hr);
+    hr = IDirectMusicBuffer_SetStartTime(dmbuffer, 10);
+    ok(hr == S_OK, "IDirectMusicBuffer_GetStartTime returned %x\n", hr);
+    hr = IDirectMusicBuffer_GetStartTime(dmbuffer, &time);
+    ok(hr == DMUS_E_BUFFER_EMPTY, "IDirectMusicBuffer_GetStartTime returned %x\n", hr);
+
+    hr = IDirectMusicBuffer_PackStructured(dmbuffer, 20, 0, 0);
     ok(hr == DMUS_E_INVALID_EVENT, "IDirectMusicBuffer_PackStructured returned %x\n", hr);
-    hr = IDirectMusicBuffer_PackStructured(dmbuffer, 10, 0, 0x000090); /* note on : chan 0, note 0 & vel 0 */
+    hr = IDirectMusicBuffer_PackStructured(dmbuffer, 20, 0, 0x000090); /* note on : chan 0, note 0 & vel 0 */
     ok(hr == S_OK, "IDirectMusicBuffer_PackStructured returned %x\n", hr);
     hr = IDirectMusicBuffer_GetUsedBytes(dmbuffer, &bytes);
     ok(hr == S_OK, "IDirectMusicBuffer_GetUsedBytes returned %x\n", hr);
     ok(bytes == 24, "Buffer size is %u instead of 0\n", bytes);
+
+    hr = IDirectMusicBuffer_GetStartTime(dmbuffer, &time);
+    ok(hr == S_OK, "IDirectMusicBuffer_GetStartTime returned %x\n", hr);
+    ok(time == 20, "Buffer start time is wrong\n");
+    hr = IDirectMusicBuffer_SetStartTime(dmbuffer, 30);
+    ok(hr == S_OK, "IDirectMusicBuffer_GetStartTime returned %x\n", hr);
+    hr = IDirectMusicBuffer_GetStartTime(dmbuffer, &time);
+    ok(hr == S_OK, "IDirectMusicBuffer_GetStartTime returned %x\n", hr);
+    ok(time == 30, "Buffer start time is wrong\n");
 
     if (dmbuffer)
         IDirectMusicBuffer_Release(dmbuffer);
