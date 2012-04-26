@@ -300,6 +300,7 @@ HRESULT WINAPI BaseControlWindowImpl_put_WindowStyle(IVideoWindow *iface, LONG W
 
     SetWindowLongW(This->baseWindow.hWnd, GWL_STYLE, WindowStyle);
     SetWindowPos(This->baseWindow.hWnd,0,0,0,0,0,SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOZORDER);
+    This->baseWindow.WindowStyles = WindowStyle;
 
     return S_OK;
 }
@@ -310,7 +311,7 @@ HRESULT WINAPI BaseControlWindowImpl_get_WindowStyle(IVideoWindow *iface, LONG *
 
     TRACE("(%p/%p)->(%p)\n", This, iface, WindowStyle);
 
-    *WindowStyle = GetWindowLongW(This->baseWindow.hWnd, GWL_STYLE);
+    *WindowStyle = This->baseWindow.WindowStyles;
 
     return S_OK;
 }
@@ -534,6 +535,15 @@ HRESULT WINAPI BaseControlWindowImpl_put_Owner(IVideoWindow *iface, OAHWND Owner
 
     This->hwndOwner = (HWND)Owner;
     SetParent(This->baseWindow.hWnd, This->hwndOwner);
+    if (This->baseWindow.WindowStyles & WS_CHILD)
+    {
+        LONG old = GetWindowLongW(This->baseWindow.hWnd, GWL_STYLE);
+        if (old != This->baseWindow.WindowStyles)
+        {
+            SetWindowLongW(This->baseWindow.hWnd, GWL_STYLE, This->baseWindow.WindowStyles);
+            SetWindowPos(This->baseWindow.hWnd,0,0,0,0,0,SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOZORDER);
+        }
+    }
 
     return S_OK;
 }

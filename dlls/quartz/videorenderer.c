@@ -72,7 +72,6 @@ typedef struct VideoRendererImpl
     IUnknown * pUnkOuter;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
-    LONG WindowStyle;
 } VideoRendererImpl;
 
 static inline VideoRendererImpl *impl_from_BaseWindow(BaseWindow *iface)
@@ -982,7 +981,7 @@ static HRESULT WINAPI Videowindow_put_FullScreenMode(IVideoWindow *iface,
     FIXME("(%p/%p)->(%d): stub !!!\n", This, iface, FullScreenMode);
 
     if (FullScreenMode) {
-        This->WindowStyle = GetWindowLongW(This->baseControlWindow.baseWindow.hWnd, GWL_STYLE);
+        This->baseControlWindow.baseWindow.WindowStyles = GetWindowLongW(This->baseControlWindow.baseWindow.hWnd, GWL_STYLE);
         ShowWindow(This->baseControlWindow.baseWindow.hWnd, SW_HIDE);
         SetParent(This->baseControlWindow.baseWindow.hWnd, 0);
         SetWindowLongW(This->baseControlWindow.baseWindow.hWnd, GWL_STYLE, WS_POPUP);
@@ -992,7 +991,7 @@ static HRESULT WINAPI Videowindow_put_FullScreenMode(IVideoWindow *iface,
     } else {
         ShowWindow(This->baseControlWindow.baseWindow.hWnd, SW_HIDE);
         SetParent(This->baseControlWindow.baseWindow.hWnd, This->baseControlWindow.hwndOwner);
-        SetWindowLongW(This->baseControlWindow.baseWindow.hWnd, GWL_STYLE, This->WindowStyle);
+        SetWindowLongW(This->baseControlWindow.baseWindow.hWnd, GWL_STYLE, This->baseControlWindow.baseWindow.WindowStyles);
         GetClientRect(This->baseControlWindow.baseWindow.hWnd, &This->DestRect);
         SetWindowPos(This->baseControlWindow.baseWindow.hWnd,0,This->DestRect.left,This->DestRect.top,This->DestRect.right,This->DestRect.bottom,SWP_NOZORDER|SWP_SHOWWINDOW);
         This->WindowPos = This->DestRect;
