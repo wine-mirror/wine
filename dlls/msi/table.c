@@ -2195,9 +2195,6 @@ UINT MSI_CommitTables( MSIDATABASE *db )
         }
     }
 
-    /* force everything to reload next time */
-    free_cached_tables( db );
-
     hr = IStorage_Commit( db->storage, 0 );
     if (FAILED( hr ))
     {

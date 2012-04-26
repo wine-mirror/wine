@@ -8746,6 +8746,52 @@ error:
     DeleteFileA( msifile );
 }
 
+static void test_MsiDatabaseCommit(void)
+{
+    UINT r;
+    MSIHANDLE hdb, hpkg = 0;
+    char buf[32], package[12];
+    DWORD sz;
+
+    hdb = create_package_db();
+    ok( hdb, "failed to create database\n" );
+
+    r = create_property_table( hdb );
+    ok( r == ERROR_SUCCESS, "can't create Property table %u\n", r );
+
+    sprintf( package, "#%u", hdb );
+    r = MsiOpenPackage( package, &hpkg );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+
+    r = MsiSetPropertyA( hpkg, "PROP", "value" );
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+
+    buf[0] = 0;
+    sz = sizeof(buf);
+    r = MsiGetPropertyA( hpkg, "PROP", buf, &sz );
+    ok( r == ERROR_SUCCESS, "MsiGetPropertyA returned %u\n", r );
+    ok( !lstrcmpA( buf, "value" ), "got \"%s\"\n", buf );
+
+    r = MsiDatabaseCommit( hdb );
+    ok( r == ERROR_SUCCESS, "MsiDatabaseCommit returned %u\n", r );
+
+    buf[0] = 0;
+    sz = sizeof(buf);
+    r = MsiGetPropertyA( hpkg, "PROP", buf, &sz );
+    ok( r == ERROR_SUCCESS, "MsiGetPropertyA returned %u\n", r );
+    ok( !lstrcmpA( buf, "value" ), "got \"%s\"\n", buf );
+
+    MsiCloseHandle( hpkg );
+error:
+    MsiCloseHandle( hdb );
+    DeleteFileA( msifile );
+}
+
 START_TEST(package)
 {
     STATEMGRSTATUS status;
@@ -8802,6 +8848,7 @@ START_TEST(package)
     test_MsiApplyMultiplePatches();
     test_MsiApplyPatch();
     test_MsiEnumComponentCosts();
+    test_MsiDatabaseCommit();
 
     if (pSRSetRestorePointA && !pMsiGetComponentPathExA && ret)
     {
