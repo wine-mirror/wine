@@ -46,6 +46,16 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
 }
 
+static LONG get_refcount(void *iface)
+{
+    IUnknown *unk = iface;
+    LONG ref;
+
+    ref = IUnknown_AddRef(unk);
+    IUnknown_Release(unk);
+    return ref-1;
+}
+
 struct msxmlsupported_data_t
 {
     const GUID *clsid;
@@ -1465,34 +1475,54 @@ static const ISAXAttributesVtbl SAXAttributesVtbl =
 
 static ISAXAttributes saxattributes = { &SAXAttributesVtbl };
 
-static int handler_addrefcalled;
-
-static HRESULT WINAPI isaxlexical_QueryInterface(ISAXLexicalHandler* iface, REFIID riid, void **ppvObject)
+struct saxlexicalhandler
 {
-    *ppvObject = NULL;
+    ISAXLexicalHandler ISAXLexicalHandler_iface;
+    LONG ref;
 
-    if(IsEqualGUID(riid, &IID_IUnknown) ||
-       IsEqualGUID(riid, &IID_ISAXLexicalHandler))
+    HRESULT qi_hr; /* ret value for QueryInterface for handler riid */
+};
+
+static inline struct saxlexicalhandler *impl_from_ISAXLexicalHandler( ISAXLexicalHandler *iface )
+{
+    return CONTAINING_RECORD(iface, struct saxlexicalhandler, ISAXLexicalHandler_iface);
+}
+
+static HRESULT WINAPI isaxlexical_QueryInterface(ISAXLexicalHandler* iface, REFIID riid, void **out)
+{
+    struct saxlexicalhandler *handler = impl_from_ISAXLexicalHandler(iface);
+
+    *out = NULL;
+
+    if (IsEqualGUID(riid, &IID_IUnknown))
     {
-        *ppvObject = iface;
+        *out = iface;
+        ok(0, "got unexpected IID_IUnknown query\n");
     }
+    else if (IsEqualGUID(riid, &IID_ISAXLexicalHandler))
+    {
+        if (handler->qi_hr == E_NOINTERFACE) return handler->qi_hr;
+        *out = iface;
+    }
+
+    if (*out)
+        ISAXLexicalHandler_AddRef(iface);
     else
-    {
         return E_NOINTERFACE;
-    }
 
     return S_OK;
 }
 
 static ULONG WINAPI isaxlexical_AddRef(ISAXLexicalHandler* iface)
 {
-    handler_addrefcalled++;
-    return 2;
+    struct saxlexicalhandler *handler = impl_from_ISAXLexicalHandler(iface);
+    return InterlockedIncrement(&handler->ref);
 }
 
 static ULONG WINAPI isaxlexical_Release(ISAXLexicalHandler* iface)
 {
-    return 1;
+    struct saxlexicalhandler *handler = impl_from_ISAXLexicalHandler(iface);
+    return InterlockedDecrement(&handler->ref);
 }
 
 static HRESULT WINAPI isaxlexical_startDTD(ISAXLexicalHandler* iface,
@@ -1556,34 +1586,61 @@ static const ISAXLexicalHandlerVtbl SAXLexicalHandlerVtbl =
    isaxlexical_comment
 };
 
-static ISAXLexicalHandler saxlexicalhandler = { &SAXLexicalHandlerVtbl };
-
-static HRESULT WINAPI isaxdecl_QueryInterface(ISAXDeclHandler* iface, REFIID riid, void **ppvObject)
+static void init_saxlexicalhandler(struct saxlexicalhandler *handler, HRESULT hr)
 {
-    *ppvObject = NULL;
+    handler->ISAXLexicalHandler_iface.lpVtbl = &SAXLexicalHandlerVtbl;
+    handler->ref = 1;
+    handler->qi_hr = hr;
+}
 
-    if(IsEqualGUID(riid, &IID_IUnknown) ||
-       IsEqualGUID(riid, &IID_ISAXDeclHandler))
+struct saxdeclhandler
+{
+    ISAXDeclHandler ISAXDeclHandler_iface;
+    LONG ref;
+
+    HRESULT qi_hr; /* ret value for QueryInterface for handler riid */
+};
+
+static inline struct saxdeclhandler *impl_from_ISAXDeclHandler( ISAXDeclHandler *iface )
+{
+    return CONTAINING_RECORD(iface, struct saxdeclhandler, ISAXDeclHandler_iface);
+}
+
+static HRESULT WINAPI isaxdecl_QueryInterface(ISAXDeclHandler* iface, REFIID riid, void **out)
+{
+    struct saxdeclhandler *handler = impl_from_ISAXDeclHandler(iface);
+
+    *out = NULL;
+
+    if (IsEqualGUID(riid, &IID_IUnknown))
     {
-        *ppvObject = iface;
+        *out = iface;
+        ok(0, "got unexpected IID_IUnknown query\n");
     }
+    else if (IsEqualGUID(riid, &IID_ISAXDeclHandler))
+    {
+        if (handler->qi_hr == E_NOINTERFACE) return handler->qi_hr;
+        *out = iface;
+    }
+
+    if (*out)
+        ISAXDeclHandler_AddRef(iface);
     else
-    {
         return E_NOINTERFACE;
-    }
 
     return S_OK;
 }
 
 static ULONG WINAPI isaxdecl_AddRef(ISAXDeclHandler* iface)
 {
-    handler_addrefcalled++;
-    return 2;
+    struct saxdeclhandler *handler = impl_from_ISAXDeclHandler(iface);
+    return InterlockedIncrement(&handler->ref);
 }
 
 static ULONG WINAPI isaxdecl_Release(ISAXDeclHandler* iface)
 {
-    return 1;
+    struct saxdeclhandler *handler = impl_from_ISAXDeclHandler(iface);
+    return InterlockedDecrement(&handler->ref);
 }
 
 static HRESULT WINAPI isaxdecl_elementDecl(ISAXDeclHandler* iface,
@@ -1628,7 +1685,12 @@ static const ISAXDeclHandlerVtbl SAXDeclHandlerVtbl =
    isaxdecl_externalEntityDecl
 };
 
-static ISAXDeclHandler saxdeclhandler = { &SAXDeclHandlerVtbl };
+static void init_saxdeclhandler(struct saxdeclhandler *handler, HRESULT hr)
+{
+    handler->ISAXDeclHandler_iface.lpVtbl = &SAXDeclHandlerVtbl;
+    handler->ref = 1;
+    handler->qi_hr = hr;
+}
 
 typedef struct mxwriter_write_test_t {
     BOOL        last;
@@ -2121,9 +2183,12 @@ struct saxreader_props_test_t
     IUnknown   *iface;
 };
 
+static struct saxlexicalhandler lexicalhandler;
+static struct saxdeclhandler declhandler;
+
 static const struct saxreader_props_test_t props_test_data[] = {
-    { "http://xml.org/sax/properties/lexical-handler", (IUnknown*)&saxlexicalhandler },
-    { "http://xml.org/sax/properties/declaration-handler", (IUnknown*)&saxdeclhandler },
+    { "http://xml.org/sax/properties/lexical-handler", (IUnknown*)&lexicalhandler.ISAXLexicalHandler_iface },
+    { "http://xml.org/sax/properties/declaration-handler", (IUnknown*)&declhandler.ISAXDeclHandler_iface },
     { 0 }
 };
 
@@ -2143,6 +2208,10 @@ static void test_saxreader_properties(void)
     while (ptr->prop_name)
     {
         VARIANT v;
+        LONG ref;
+
+        init_saxlexicalhandler(&lexicalhandler, S_OK);
+        init_saxdeclhandler(&declhandler, S_OK);
 
         V_VT(&v) = VT_EMPTY;
         V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
@@ -2153,17 +2222,20 @@ static void test_saxreader_properties(void)
 
         V_VT(&v) = VT_UNKNOWN;
         V_UNKNOWN(&v) = ptr->iface;
+        ref = get_refcount(ptr->iface);
         hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
         EXPECT_HR(hr, S_OK);
+        ok(ref < get_refcount(ptr->iface), "expected inreased refcount\n");
 
         V_VT(&v) = VT_EMPTY;
         V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
-        handler_addrefcalled = 0;
+
+        ref = get_refcount(ptr->iface);
         hr = ISAXXMLReader_getProperty(reader, _bstr_(ptr->prop_name), &v);
         EXPECT_HR(hr, S_OK);
         ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
         ok(V_UNKNOWN(&v) == ptr->iface, "got %p\n", V_UNKNOWN(&v));
-        ok(handler_addrefcalled == 1, "AddRef called %d times\n", handler_addrefcalled);
+        ok(ref < get_refcount(ptr->iface), "expected inreased refcount\n");
         VariantClear(&v);
 
         V_VT(&v) = VT_EMPTY;
@@ -2208,6 +2280,18 @@ static void test_saxreader_properties(void)
         EXPECT_HR(hr, S_OK);
         ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
         ok(V_UNKNOWN(&v) == NULL, "got %p\n", V_UNKNOWN(&v));
+
+        /* block QueryInterface on handler riid */
+        init_saxlexicalhandler(&lexicalhandler, E_NOINTERFACE);
+        init_saxdeclhandler(&declhandler, E_NOINTERFACE);
+
+        V_VT(&v) = VT_UNKNOWN;
+        V_UNKNOWN(&v) = ptr->iface;
+        EXPECT_REF(ptr->iface, 1);
+        ref = get_refcount(ptr->iface);
+        hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
+        EXPECT_HR(hr, E_NOINTERFACE);
+        EXPECT_REF(ptr->iface, 1);
 
         ptr++;
     }

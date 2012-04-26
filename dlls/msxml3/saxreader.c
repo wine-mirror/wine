@@ -2575,8 +2575,6 @@ static HRESULT internal_putProperty(
                 }
             break;
         case VT_UNKNOWN:
-            if (V_UNKNOWN(&value)) IUnknown_AddRef(V_UNKNOWN(&value));
-
             if ((vbInterface && This->vbdeclHandler) ||
                (!vbInterface && This->declHandler))
             {
@@ -2586,10 +2584,17 @@ static HRESULT internal_putProperty(
                     ISAXDeclHandler_Release(This->declHandler);
             }
 
-            if (vbInterface)
-                This->vbdeclHandler = (IVBSAXDeclHandler*)V_UNKNOWN(&value);
+            if (V_UNKNOWN(&value))
+            {
+                return vbInterface ?
+                    IVBSAXDeclHandler_QueryInterface(V_UNKNOWN(&value), &IID_IVBSAXDeclHandler, (void**)&This->vbdeclHandler) :
+                    ISAXDeclHandler_QueryInterface(V_UNKNOWN(&value), &IID_ISAXDeclHandler, (void**)&This->declHandler);
+            }
             else
-                This->declHandler = (ISAXDeclHandler*)V_UNKNOWN(&value);
+            {
+                This->vbdeclHandler = NULL;
+                This->declHandler = NULL;
+            }
             break;
         default:
             return E_INVALIDARG;
@@ -2621,8 +2626,6 @@ static HRESULT internal_putProperty(
                 }
             break;
         case VT_UNKNOWN:
-            if (V_UNKNOWN(&value)) IUnknown_AddRef(V_UNKNOWN(&value));
-
             if ((vbInterface && This->vblexicalHandler) ||
                (!vbInterface && This->lexicalHandler))
             {
@@ -2632,10 +2635,18 @@ static HRESULT internal_putProperty(
                     ISAXLexicalHandler_Release(This->lexicalHandler);
             }
 
-            if (vbInterface)
-                This->vblexicalHandler = (IVBSAXLexicalHandler*)V_UNKNOWN(&value);
+            if (V_UNKNOWN(&value))
+            {
+                return vbInterface ?
+                    IVBSAXLexicalHandler_QueryInterface(V_UNKNOWN(&value), &IID_IVBSAXLexicalHandler, (void**)&This->vblexicalHandler) :
+                    ISAXLexicalHandler_QueryInterface(V_UNKNOWN(&value), &IID_ISAXLexicalHandler, (void**)&This->lexicalHandler);
+            }
             else
-                This->lexicalHandler = (ISAXLexicalHandler*)V_UNKNOWN(&value);
+            {
+                This->vblexicalHandler = NULL;
+                This->lexicalHandler = NULL;
+            }
+
             break;
         default:
             return E_INVALIDARG;
