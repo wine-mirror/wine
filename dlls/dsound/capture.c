@@ -705,6 +705,8 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
             HeapFree(GetProcessHeap(), 0, This->pdscbd);
             This->device->capture_buffer = 0;
             HeapFree( GetProcessHeap(), 0, This );
+            if(err == AUDCLNT_E_UNSUPPORTED_FORMAT)
+                return DSERR_BADFORMAT;
             return err;
         }
 
