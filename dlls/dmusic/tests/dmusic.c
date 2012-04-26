@@ -27,6 +27,7 @@
 #include "ole2.h"
 #include "initguid.h"
 #include "dmusici.h"
+#include "dmksctrl.h"
 
 static inline char* debugstr_guid(CONST GUID *id)
 {
@@ -103,11 +104,48 @@ static void test_dmusic(void)
     IDirectMusic_Release(dmusic);
 }
 
+static void test_dmbuffer(void)
+{
+    IDirectMusic *dmusic;
+    IDirectMusicBuffer *dmbuffer = NULL;
+    HRESULT hr;
+    DMUS_BUFFERDESC desc;
+    GUID format;
+    DWORD size;
+
+    hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic, (LPVOID*)&dmusic);
+    if (hr != S_OK)
+    {
+        skip("Cannot create DirectMusic object (%x)\n", hr);
+        return;
+    }
+
+    desc.dwSize = sizeof(DMUS_BUFFERDESC);
+    desc.dwFlags = 0;
+    desc.cbBuffer = 1023;
+    memcpy(&desc.guidBufferFormat, &GUID_NULL, sizeof(GUID));
+
+    hr = IDirectMusic_CreateMusicBuffer(dmusic, &desc, &dmbuffer, NULL);
+    ok(hr == S_OK, "IDirectMusic_CreateMusicBuffer return %x\n", hr);
+
+    hr = IDirectMusicBuffer_GetBufferFormat(dmbuffer, &format);
+    ok(hr == S_OK, "IDirectMusicBuffer_GetBufferFormat returned %x\n", hr);
+    todo_wine ok(IsEqualGUID(&format, &KSDATAFORMAT_SUBTYPE_MIDI), "Wrong format returned %s\n", debugstr_guid(&format));
+    hr = IDirectMusicBuffer_GetMaxBytes(dmbuffer, &size);
+    ok(hr == S_OK, "IDirectMusicBuffer_GetMaxBytes returned %x\n", hr);
+    ok(size == 1024, "Buffer size is %u instead of 1024\n", size);
+
+    if (dmbuffer)
+        IDirectMusicBuffer_Release(dmbuffer);
+    IDirectMusic_Release(dmusic);
+}
+
 START_TEST(dmusic)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     test_dmusic();
+    test_dmbuffer();
 
     CoUninitialize();
 }
