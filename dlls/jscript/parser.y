@@ -29,7 +29,6 @@ static void set_error(parser_ctx_t*,UINT);
 static BOOL explicit_error(parser_ctx_t*,void*,WCHAR);
 static BOOL allow_auto_semicolon(parser_ctx_t*);
 static void program_parsed(parser_ctx_t*,source_elements_t*);
-static source_elements_t *function_body_parsed(parser_ctx_t*,source_elements_t*);
 
 typedef struct _statement_list_t {
     statement_t *head;
@@ -116,12 +115,6 @@ typedef struct _parameter_list_t {
 
 static parameter_list_t *new_parameter_list(parser_ctx_t*,const WCHAR*);
 static parameter_list_t *parameter_list_add(parser_ctx_t*,parameter_list_t*,const WCHAR*);
-
-static void push_func(parser_ctx_t*);
-static inline void pop_func(parser_ctx_t *ctx)
-{
-    ctx->func_stack = ctx->func_stack->next;
-}
 
 static void *new_expression(parser_ctx_t *ctx,expression_type_t,size_t);
 static expression_t *new_function_expression(parser_ctx_t*,const WCHAR*,parameter_list_t*,
@@ -271,11 +264,11 @@ FunctionExpression
                                 { $$ = new_function_expression(ctx, $2, $4, $7, $1, $8-$1+1); }
 
 KFunction
-        : kFUNCTION             { push_func(ctx); $$ = $1; }
+        : kFUNCTION             { $$ = $1; }
 
 /* ECMA-262 3rd Edition    13 */
 FunctionBody
-        : SourceElements        { $$ = function_body_parsed(ctx, $1); }
+        : SourceElements        { $$ = $1; }
 
 /* ECMA-262 3rd Edition    13 */
 FormalParameterList
@@ -1307,23 +1300,13 @@ static expression_t *new_function_expression(parser_ctx_t *ctx, const WCHAR *ide
        parameter_list_t *parameter_list, source_elements_t *source_elements, const WCHAR *src_str, DWORD src_len)
 {
     function_expression_t *ret = new_expression(ctx, EXPR_FUNC, sizeof(*ret));
-    function_declaration_t *decl;
 
     ret->identifier = identifier;
     ret->parameter_list = parameter_list ? parameter_list->head : NULL;
     ret->source_elements = source_elements;
     ret->src_str = src_str;
     ret->src_len = src_len;
-
-    decl = parser_alloc(ctx, sizeof(function_declaration_t));
-
-    decl->expr = ret;
-    decl->next = NULL;
-
-    if(ctx->func_stack->func_tail)
-        ctx->func_stack->func_tail = ctx->func_stack->func_tail->next = decl;
-    else
-        ctx->func_stack->func_head = ctx->func_stack->func_tail = decl;
+    ret->next = NULL;
 
     return &ret->expr;
 }
@@ -1490,29 +1473,8 @@ static statement_list_t *statement_list_add(statement_list_t *list, statement_t 
     return list;
 }
 
-static void push_func(parser_ctx_t *ctx)
-{
-    func_stack_t *new_func = parser_alloc_tmp(ctx, sizeof(func_stack_t));
-
-    new_func->func_head = new_func->func_tail = NULL;
-
-    new_func->next = ctx->func_stack;
-    ctx->func_stack = new_func;
-}
-
-static source_elements_t *function_body_parsed(parser_ctx_t *ctx, source_elements_t *source)
-{
-    source->functions = ctx->func_stack->func_head;
-    pop_func(ctx);
-
-    return source;
-}
-
 static void program_parsed(parser_ctx_t *ctx, source_elements_t *source)
 {
-    source->functions = ctx->func_stack->func_head;
-    pop_func(ctx);
-
     ctx->source = source;
     if(!ctx->lexer_error)
         ctx->hres = S_OK;
@@ -1549,8 +1511,6 @@ HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
 
     mark = jsheap_mark(&ctx->tmp_heap);
     jsheap_init(&parser_ctx->heap);
-
-    push_func(parser_ctx);
 
     parser_parse(parser_ctx);
     jsheap_clear(mark);

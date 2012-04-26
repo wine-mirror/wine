@@ -56,6 +56,9 @@ typedef struct {
 
     variable_declaration_t *var_head;
     variable_declaration_t *var_tail;
+
+    function_expression_t *func_head;
+    function_expression_t *func_tail;
 } compiler_ctx_t;
 
 static const struct {
@@ -815,6 +818,8 @@ static HRESULT compile_object_literal(compiler_ctx_t *ctx, property_value_expres
 
 static HRESULT compile_function_expression(compiler_ctx_t *ctx, function_expression_t *expr)
 {
+    ctx->func_tail = ctx->func_tail ? (ctx->func_tail->next = expr) : (ctx->func_head = expr);
+
     /* FIXME: not exactly right */
     if(expr->identifier) {
         ctx->func->func_cnt++;
@@ -1787,13 +1792,14 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
         BOOL from_eval, function_code_t *func)
 {
     variable_declaration_t *var_iter;
-    function_declaration_t *iter;
+    function_expression_t *iter;
     unsigned off, i;
     HRESULT hres;
 
     TRACE("\n");
 
     ctx->var_head = ctx->var_tail = NULL;
+    ctx->func_head = ctx->func_tail = NULL;
 
     off = ctx->code_off;
     ctx->func = func;
@@ -1856,8 +1862,8 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
         return E_OUTOFMEMORY;
     memset(func->funcs, 0, func->func_cnt * sizeof(*func->funcs));
 
-    for(iter = source->functions, i=0; iter; iter = iter->next, i++) {
-        hres = compile_function(ctx, iter->expr->source_elements, iter->expr, FALSE, func->funcs+i);
+    for(iter = ctx->func_head, i=0; iter; iter = iter->next, i++) {
+        hres = compile_function(ctx, iter->source_elements, iter, FALSE, func->funcs+i);
         if(FAILED(hres))
             return hres;
     }

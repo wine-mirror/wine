@@ -17,22 +17,8 @@
  */
 
 typedef struct _source_elements_t source_elements_t;
-typedef struct _function_expression_t function_expression_t;
 typedef struct _expression_t expression_t;
 typedef struct _statement_t statement_t;
-
-typedef struct _function_declaration_t {
-    function_expression_t *expr;
-
-    struct _function_declaration_t *next;
-} function_declaration_t;
-
-typedef struct _func_stack {
-    function_declaration_t *func_head;
-    function_declaration_t *func_tail;
-
-    struct _func_stack *next;
-} func_stack_t;
 
 typedef struct {
     const WCHAR *begin;
@@ -47,8 +33,6 @@ typedef struct {
     HRESULT hres;
 
     jsheap_t heap;
-
-    func_stack_t *func_stack;
 } parser_ctx_t;
 
 #define OP_LIST                            \
@@ -497,17 +481,18 @@ typedef struct _parameter_t {
 struct _source_elements_t {
     statement_t *statement;
     statement_t *statement_tail;
-    function_declaration_t *functions;
 };
 
-struct _function_expression_t {
+typedef struct _function_expression_t {
     expression_t expr;
     const WCHAR *identifier;
     parameter_t *parameter_list;
     source_elements_t *source_elements;
     const WCHAR *src_str;
     DWORD src_len;
-};
+
+    struct _function_expression_t *next; /* for compiler */
+} function_expression_t;
 
 typedef struct {
     expression_t expr;
