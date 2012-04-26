@@ -18,6 +18,8 @@
  */
 
 #include "dmusic_private.h"
+#include "initguid.h"
+#include "dmksctrl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
@@ -242,7 +244,10 @@ HRESULT DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID* ret_i
     dmbuffer->IDirectMusicBuffer_iface.lpVtbl = &DirectMusicBuffer_Vtbl;
     dmbuffer->ref = 0; /* Will be inited by QueryInterface */
 
-    memcpy(&dmbuffer->format, &desc->guidBufferFormat, sizeof(GUID));
+    if (IsEqualGUID(&desc->guidBufferFormat, &GUID_NULL))
+        dmbuffer->format = KSDATAFORMAT_SUBTYPE_MIDI;
+    else
+        dmbuffer->format = desc->guidBufferFormat;
     dmbuffer->size = (desc->cbBuffer + 3) & ~3; /* Buffer size must be multiple of 4 bytes */
 
     dmbuffer->data = HeapAlloc(GetProcessHeap(), 0, dmbuffer->size);

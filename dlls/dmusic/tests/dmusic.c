@@ -130,7 +130,7 @@ static void test_dmbuffer(void)
 
     hr = IDirectMusicBuffer_GetBufferFormat(dmbuffer, &format);
     ok(hr == S_OK, "IDirectMusicBuffer_GetBufferFormat returned %x\n", hr);
-    todo_wine ok(IsEqualGUID(&format, &KSDATAFORMAT_SUBTYPE_MIDI), "Wrong format returned %s\n", debugstr_guid(&format));
+    ok(IsEqualGUID(&format, &KSDATAFORMAT_SUBTYPE_MIDI), "Wrong format returned %s\n", debugstr_guid(&format));
     hr = IDirectMusicBuffer_GetMaxBytes(dmbuffer, &size);
     ok(hr == S_OK, "IDirectMusicBuffer_GetMaxBytes returned %x\n", hr);
     ok(size == 1024, "Buffer size is %u instead of 1024\n", size);
