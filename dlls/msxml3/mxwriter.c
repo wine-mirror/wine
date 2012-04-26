@@ -1109,7 +1109,7 @@ static HRESULT WINAPI SAXContentHandler_characters(
 
     if (nchars)
     {
-        if (This->cdata)
+        if (This->cdata || This->props[MXWriter_DisableEscaping] == VARIANT_TRUE)
             write_output_buffer(This->buffer, chars, nchars);
         else
         {

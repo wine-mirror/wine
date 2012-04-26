@@ -3248,6 +3248,7 @@ static void test_mxwriter_characters(void)
     {
         ISAXContentHandler *content;
         IMXWriter *writer;
+        VARIANT dest;
         HRESULT hr;
 
         if (!is_clsid_supported(table->clsid, mxwriter_support_data))
@@ -3276,16 +3277,40 @@ static void test_mxwriter_characters(void)
         /* test output */
         if (hr == S_OK)
         {
-            VARIANT dest;
-
             V_VT(&dest) = VT_EMPTY;
             hr = IMXWriter_get_output(writer, &dest);
             EXPECT_HR(hr, S_OK);
             ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
             ok(!lstrcmpW(_bstr_(table->output), V_BSTR(&dest)),
-                "test %d: got wrong content %s, expected %s\n", i, wine_dbgstr_w(V_BSTR(&dest)), table->output);
+                "test %d: got wrong content %s, expected \"%s\"\n", i, wine_dbgstr_w(V_BSTR(&dest)), table->output);
             VariantClear(&dest);
         }
+
+        /* with disabled escaping */
+        V_VT(&dest) = VT_EMPTY;
+        hr = IMXWriter_put_output(writer, dest);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IMXWriter_put_disableOutputEscaping(writer, VARIANT_TRUE);
+        EXPECT_HR(hr, S_OK);
+
+        hr = ISAXContentHandler_characters(content, _bstr_(table->data), strlen(table->data));
+        EXPECT_HR(hr, S_OK);
+
+        /* test output */
+        if (hr == S_OK)
+        {
+            V_VT(&dest) = VT_EMPTY;
+            hr = IMXWriter_get_output(writer, &dest);
+            EXPECT_HR(hr, S_OK);
+            ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+            ok(!lstrcmpW(_bstr_(table->data), V_BSTR(&dest)),
+                "test %d: got wrong content %s, expected \"%s\"\n", i, wine_dbgstr_w(V_BSTR(&dest)), table->data);
+            VariantClear(&dest);
+        }
+
+        ISAXContentHandler_Release(content);
+        IMXWriter_Release(writer);
 
         table++;
         i++;
