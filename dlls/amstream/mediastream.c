@@ -33,6 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
 static HRESULT ddrawstreamsample_create(IDirectDrawMediaStream *parent, IDirectDrawStreamSample **ddraw_stream_sample);
+static HRESULT audiostreamsample_create(IAudioMediaStream *parent, IAudioData *audio_data, IAudioStreamSample **audio_stream_sample);
 
 typedef struct {
     IDirectDrawMediaStream IDirectDrawMediaStream_iface;
@@ -407,9 +408,12 @@ static HRESULT WINAPI IAudioMediaStreamImpl_CreateSample(IAudioMediaStream *ifac
 {
     IAudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p,%u,%p) stub!\n", iface, This, audio_data, flags, sample);
+    TRACE("(%p/%p)->(%p,%u,%p)\n", iface, This, audio_data, flags, sample);
 
-    return E_NOTIMPL;
+    if (!audio_data)
+        return E_POINTER;
+
+    return audiostreamsample_create(iface, audio_data, sample);
 }
 
 static const struct IAudioMediaStreamVtbl AudioMediaStream_Vtbl =
@@ -602,6 +606,148 @@ static HRESULT ddrawstreamsample_create(IDirectDrawMediaStream *parent, IDirectD
     object->parent = (IMediaStream*)parent;
 
     *ddraw_stream_sample = (IDirectDrawStreamSample*)&object->IDirectDrawStreamSample_iface;
+
+    return S_OK;
+}
+
+typedef struct {
+    IAudioStreamSample IAudioStreamSample_iface;
+    LONG ref;
+    IMediaStream *parent;
+    IAudioData *audio_data;
+} IAudioStreamSampleImpl;
+
+static inline IAudioStreamSampleImpl *impl_from_IAudioStreamSample(IAudioStreamSample *iface)
+{
+    return CONTAINING_RECORD(iface, IAudioStreamSampleImpl, IAudioStreamSample_iface);
+}
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI IAudioStreamSampleImpl_QueryInterface(IAudioStreamSample *iface,
+        REFIID riid, void **ret_iface)
+{
+    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), ret_iface);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IStreamSample) ||
+        IsEqualGUID(riid, &IID_IAudioStreamSample))
+    {
+        IAudioStreamSample_AddRef(iface);
+        *ret_iface = iface;
+        return S_OK;
+    }
+
+    *ret_iface = NULL;
+
+    ERR("(%p)->(%s,%p),not found\n", iface, debugstr_guid(riid), ret_iface);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IAudioStreamSampleImpl_AddRef(IAudioStreamSample *iface)
+{
+    IAudioStreamSampleImpl *This = impl_from_IAudioStreamSample(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI IAudioStreamSampleImpl_Release(IAudioStreamSample *iface)
+{
+    IAudioStreamSampleImpl *This = impl_from_IAudioStreamSample(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+/*** IStreamSample methods ***/
+static HRESULT WINAPI IAudioStreamSampleImpl_GetMediaStream(IAudioStreamSample *iface, IMediaStream **media_stream)
+{
+    FIXME("(%p)->(%p): stub\n", iface, media_stream);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IAudioStreamSampleImpl_GetSampleTimes(IAudioStreamSample *iface, STREAM_TIME *start_time,
+                                                                 STREAM_TIME *end_time, STREAM_TIME *current_time)
+{
+    FIXME("(%p)->(%p,%p,%p): stub\n", iface, start_time, end_time, current_time);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IAudioStreamSampleImpl_SetSampleTimes(IAudioStreamSample *iface, const STREAM_TIME *start_time,
+                                                                 const STREAM_TIME *end_time)
+{
+    FIXME("(%p)->(%p,%p): stub\n", iface, start_time, end_time);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IAudioStreamSampleImpl_Update(IAudioStreamSample *iface, DWORD flags, HANDLE event,
+                                                         PAPCFUNC func_APC, DWORD APC_data)
+{
+    FIXME("(%p)->(%x,%p,%p,%u): stub\n", iface, flags, event, func_APC, APC_data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IAudioStreamSampleImpl_CompletionStatus(IAudioStreamSample *iface, DWORD flags, DWORD milliseconds)
+{
+    FIXME("(%p)->(%x,%u): stub\n", iface, flags, milliseconds);
+
+    return E_NOTIMPL;
+}
+
+/*** IAudioStreamSample methods ***/
+static HRESULT WINAPI IAudioStreamSampleImpl_GetAudioData(IAudioStreamSample *iface, IAudioData **audio_data)
+{
+    FIXME("(%p)->(%p): stub\n", iface, audio_data);
+
+    return E_NOTIMPL;
+}
+
+static const struct IAudioStreamSampleVtbl AudioStreamSample_Vtbl =
+{
+    /*** IUnknown methods ***/
+    IAudioStreamSampleImpl_QueryInterface,
+    IAudioStreamSampleImpl_AddRef,
+    IAudioStreamSampleImpl_Release,
+    /*** IStreamSample methods ***/
+    IAudioStreamSampleImpl_GetMediaStream,
+    IAudioStreamSampleImpl_GetSampleTimes,
+    IAudioStreamSampleImpl_SetSampleTimes,
+    IAudioStreamSampleImpl_Update,
+    IAudioStreamSampleImpl_CompletionStatus,
+    /*** IAudioStreamSample methods ***/
+    IAudioStreamSampleImpl_GetAudioData
+};
+
+static HRESULT audiostreamsample_create(IAudioMediaStream *parent, IAudioData *audio_data, IAudioStreamSample **audio_stream_sample)
+{
+    IAudioStreamSampleImpl *object;
+
+    TRACE("(%p)\n", audio_stream_sample);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAudioStreamSampleImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->IAudioStreamSample_iface.lpVtbl = &AudioStreamSample_Vtbl;
+    object->ref = 1;
+    object->parent = (IMediaStream*)parent;
+    object->audio_data = audio_data;
+
+    *audio_stream_sample = (IAudioStreamSample*)&object->IAudioStreamSample_iface;
 
     return S_OK;
 }

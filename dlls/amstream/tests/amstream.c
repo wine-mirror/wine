@@ -337,9 +337,9 @@ static void test_media_streams(void)
             ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
 
             hr = IAudioMediaStream_CreateSample(audio_media_stream, NULL, 0, &audio_sample);
-            todo_wine ok(hr == E_POINTER, "IAudioMediaStream_CreateSample returned: %x\n", hr);
+            ok(hr == E_POINTER, "IAudioMediaStream_CreateSample returned: %x\n", hr);
             hr = IAudioMediaStream_CreateSample(audio_media_stream, audio_data, 0, &audio_sample);
-            todo_wine ok(hr == S_OK, "IAudioMediaStream_CreateSample returned: %x\n", hr);
+            ok(hr == S_OK, "IAudioMediaStream_CreateSample returned: %x\n", hr);
 
             if (audio_data)
                 IAudioData_Release(audio_data);
