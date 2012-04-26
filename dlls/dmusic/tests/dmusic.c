@@ -135,6 +135,11 @@ static void test_dmbuffer(void)
     ok(hr == S_OK, "IDirectMusicBuffer_GetMaxBytes returned %x\n", hr);
     ok(size == 1024, "Buffer size is %u instead of 1024\n", size);
 
+    hr = IDirectMusicBuffer_PackStructured(dmbuffer, 10, 0, 0);
+    ok(hr == DMUS_E_INVALID_EVENT, "IDirectMusicBuffer_PackStructured returned %x\n", hr);
+    hr = IDirectMusicBuffer_PackStructured(dmbuffer, 10, 0, 0x000090); /* note on : chan 0, note 0 & vel 0 */
+    ok(hr == S_OK, "IDirectMusicBuffer_PackStructured returned %x\n", hr);
+
     if (dmbuffer)
         IDirectMusicBuffer_Release(dmbuffer);
     IDirectMusic_Release(dmusic);

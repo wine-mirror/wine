@@ -113,6 +113,7 @@ struct IDirectMusicBufferImpl {
     GUID format;
     DWORD size;
     LPBYTE data;
+    DWORD write_pos;
 };
 
 /*****************************************************************************

@@ -96,11 +96,33 @@ static HRESULT WINAPI IDirectMusicBufferImpl_TotalTime(LPDIRECTMUSICBUFFER iface
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicBufferImpl_PackStructured(LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD dwChannelMessage)
+static HRESULT WINAPI IDirectMusicBufferImpl_PackStructured(LPDIRECTMUSICBUFFER iface, REFERENCE_TIME ref_time, DWORD channel_group, DWORD channel_message)
 {
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
+    DWORD new_write_pos = This->write_pos + sizeof(DMUS_EVENTHEADER) + sizeof(DWORD);
+    DMUS_EVENTHEADER header;
 
-    FIXME("(%p, 0x%s, %d, %d): stub\n", This, wine_dbgstr_longlong(rt), dwChannelGroup, dwChannelMessage);
+    TRACE("(%p)->(0x%s, %u, 0x%x)\n", iface, wine_dbgstr_longlong(ref_time), channel_group, channel_message);
+
+    if (new_write_pos > This->size)
+        return DMUS_E_BUFFER_FULL;
+
+    /* Channel_message 0xZZYYXX is a midi message where XX = status byte, YY = byte 1 and ZZ = byte 2 */
+
+    if (!(channel_message & 0x80))
+    {
+        /* Status byte MSB is always set */
+        return DMUS_E_INVALID_EVENT;
+    }
+
+    header.cbEvent = sizeof(channel_message);
+    header.dwChannelGroup = channel_group;
+    header.rtDelta = ref_time;
+    header.dwFlags = DMUS_EVENT_STRUCTURED;
+
+    memcpy(This->data + This->write_pos, &header, sizeof(header));
+    *(DWORD*)(This->data + This->write_pos + sizeof(header)) = channel_message;
+    This->write_pos = new_write_pos;
 
     return S_OK;
 }
