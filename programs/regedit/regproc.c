@@ -610,7 +610,7 @@ static void processRegEntry(WCHAR* stdInput, BOOL isUnicode)
 
 /******************************************************************************
  * Processes a registry file.
- * Correctly processes comments (in # form), line continuation.
+ * Correctly processes comments (in # and ; form), line continuation.
  *
  * Parameters:
  *   in - input stream to read from
@@ -710,7 +710,7 @@ static void processRegLinesA(FILE *in, char* first_chars)
             }
 
             /* If it is a comment line then discard it and go around again */
-            if (line [0] == '#') {
+            if (line [0] == '#' || line [0] == ';') {
                 s = line;
                 continue;
             }
@@ -837,7 +837,7 @@ static void processRegLinesW(FILE *in)
             }
 
             /* If it is a comment line then discard it and go around again */
-            if (*line == '#') {
+            if (*line == '#' || *line == ';') {
                 if (*s_eol == '\r' && *(s_eol+1) == '\n')
                     line = s_eol + 2;
                 else
