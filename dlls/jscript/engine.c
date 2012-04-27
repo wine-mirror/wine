@@ -2268,7 +2268,7 @@ static HRESULT interp_gteq(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.4.8 */
 static HRESULT interp_bneg(exec_ctx_t *ctx)
 {
-    VARIANT *v, r;
+    VARIANT *v;
     INT i;
     HRESULT hres;
 
@@ -2280,9 +2280,7 @@ static HRESULT interp_bneg(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    V_VT(&r) = VT_I4;
-    V_I4(&r) = ~i;
-    return stack_push(ctx, &r);
+    return stack_push_int(ctx, ~i);
 }
 
 /* ECMA-262 3rd Edition    11.4.9 */
