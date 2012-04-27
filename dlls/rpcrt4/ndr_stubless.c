@@ -626,9 +626,9 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
     {
-        const NDR_PROC_HEADER_RPC *pProcHeader = (const NDR_PROC_HEADER_RPC *)&pFormat[0];
-        stack_size = pProcHeader->stack_size;
-        procedure_number = pProcHeader->proc_num;
+        const NDR_PROC_HEADER_RPC *header_rpc = (const NDR_PROC_HEADER_RPC *)&pFormat[0];
+        stack_size = header_rpc->stack_size;
+        procedure_number = header_rpc->proc_num;
         pFormat += sizeof(NDR_PROC_HEADER_RPC);
     }
     else
@@ -1231,8 +1231,8 @@ LONG WINAPI NdrStubCall2(
 
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
     {
-        const NDR_PROC_HEADER_RPC *pProcHeader = (const NDR_PROC_HEADER_RPC *)&pFormat[0];
-        stack_size = pProcHeader->stack_size;
+        const NDR_PROC_HEADER_RPC *header_rpc = (const NDR_PROC_HEADER_RPC *)&pFormat[0];
+        stack_size = header_rpc->stack_size;
         pFormat += sizeof(NDR_PROC_HEADER_RPC);
 
     }
@@ -1519,9 +1519,9 @@ LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING 
 
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
     {
-        const NDR_PROC_HEADER_RPC *pProcHeader = (const NDR_PROC_HEADER_RPC *)&pFormat[0];
-        async_call_data->stack_size = pProcHeader->stack_size;
-        procedure_number = pProcHeader->proc_num;
+        const NDR_PROC_HEADER_RPC *header_rpc = (const NDR_PROC_HEADER_RPC *)&pFormat[0];
+        async_call_data->stack_size = header_rpc->stack_size;
+        procedure_number = header_rpc->proc_num;
         pFormat += sizeof(NDR_PROC_HEADER_RPC);
     }
     else
