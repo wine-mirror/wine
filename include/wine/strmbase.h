@@ -635,6 +635,22 @@ HRESULT WINAPI BaseRendererImpl_ClearPendingSample(BaseRenderer *iface);
 
 HRESULT WINAPI BaseRenderer_Init(BaseRenderer *This, const IBaseFilterVtbl *Vtbl, IUnknown *pUnkOuter, const CLSID *pClsid, DWORD_PTR DebugInfo, const BaseRendererFuncTable* pBaseFuncsTable);
 
+#ifdef __IBasicAudio_FWD_DEFINED__
+typedef struct tagBasicAudio
+{
+	IBasicAudio IBasicAudio_iface;
+	BaseDispatch baseDispatch;
+} BasicAudio;
+
+HRESULT WINAPI BasicAudio_Init(BasicAudio *This, const IBasicAudioVtbl *Vtbl);
+HRESULT WINAPI BasicAudio_Destroy(BasicAudio *pBasicAudio);
+
+HRESULT WINAPI BasicAudioImpl_GetTypeInfoCount(IBasicAudio *iface, UINT*pctinfo);
+HRESULT WINAPI BasicAudioImpl_GetTypeInfo(IBasicAudio *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo);
+HRESULT WINAPI BasicAudioImpl_GetIDsOfNames(IBasicAudio *iface, REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId);
+HRESULT WINAPI BasicAudioImpl_Invoke(IBasicAudio *iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExepInfo, UINT *puArgErr);
+#endif
+
 /* Dll Functions */
 BOOL WINAPI STRMBASE_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv);
 HRESULT WINAPI STRMBASE_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
