@@ -675,9 +675,11 @@ static DWORD copy_src_bits( dib_info *src, RECT *src_rect )
 
     for (y = 0; y < height; y++)
         memcpy( (char *)ptr + y * stride,
-                (char *)src->bits.ptr + (src_rect->top + y) * src->stride, stride );
+                (char *)src->bits.ptr + (src->rect.top + src_rect->top + y) * src->stride, stride );
     src->stride = stride;
     src->height = height;
+    src->rect.top = 0;
+    src->rect.bottom = height;
     if (src->bits.free) src->bits.free( &src->bits );
     src->bits.is_copy = TRUE;
     src->bits.ptr = ptr;
@@ -694,6 +696,10 @@ static DWORD create_tmp_dib( const dib_info *copy, int width, int height, dib_in
     ret->width = width;
     ret->height = height;
     ret->stride = get_dib_stride( width, ret->bit_count );
+    ret->rect.left   = 0;
+    ret->rect.top    = 0;
+    ret->rect.right  = width;
+    ret->rect.bottom = height;
     ret->bits.ptr = HeapAlloc( GetProcessHeap(), 0, ret->height * ret->stride );
     ret->bits.is_copy = TRUE;
     ret->bits.free = free_heap_bits;
@@ -839,19 +845,23 @@ DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     }
 
     info->bmiHeader.biWidth     = dib->width;
-    info->bmiHeader.biHeight    = dib->stride > 0 ? -dib->height : dib->height;
+    info->bmiHeader.biHeight    = dib->rect.bottom - dib->rect.top;
     info->bmiHeader.biBitCount  = dib->bit_count;
-    info->bmiHeader.biSizeImage = dib->height * abs( dib->stride );
+    info->bmiHeader.biSizeImage = info->bmiHeader.biHeight * abs( dib->stride );
+    if (dib->stride > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
 
     set_color_info( dib, info );
 
     if (bits)
     {
-        bits->ptr = dib->bits.ptr;
         if (dib->stride < 0)
-            bits->ptr = (char *)bits->ptr + (dib->height - 1) * dib->stride;
+            bits->ptr = (char *)dib->bits.ptr + (dib->rect.bottom - 1) * dib->stride;
+        else
+            bits->ptr = (char *)dib->bits.ptr + dib->rect.top * dib->stride;
         bits->is_copy = FALSE;
         bits->free = NULL;
+        src->x += dib->rect.left;
+        offset_rect( &src->visrect, dib->rect.left, 0 );
     }
 
 done:

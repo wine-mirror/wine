@@ -438,11 +438,15 @@ static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHME
     POINT src_origin;
     dib_info glyph_dib;
 
-    glyph_dib.bit_count = 8;
-    glyph_dib.width     = metrics->gmBlackBoxX;
-    glyph_dib.height    = metrics->gmBlackBoxY;
-    glyph_dib.stride    = get_dib_stride( metrics->gmBlackBoxX, 8 );
-    glyph_dib.bits      = *image;
+    glyph_dib.bit_count   = 8;
+    glyph_dib.width       = metrics->gmBlackBoxX;
+    glyph_dib.height      = metrics->gmBlackBoxY;
+    glyph_dib.rect.left   = 0;
+    glyph_dib.rect.top    = 0;
+    glyph_dib.rect.right  = metrics->gmBlackBoxX;
+    glyph_dib.rect.bottom = metrics->gmBlackBoxY;
+    glyph_dib.stride      = get_dib_stride( metrics->gmBlackBoxX, 8 );
+    glyph_dib.bits        = *image;
 
     rect.left   = origin->x  + metrics->gmptGlyphOrigin.x;
     rect.top    = origin->y  - metrics->gmptGlyphOrigin.y;
@@ -587,11 +591,15 @@ BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits
             POINT src_origin;
             dib_info glyph_dib;
 
-            glyph_dib.bit_count = 8;
-            glyph_dib.width     = metrics.gmBlackBoxX;
-            glyph_dib.height    = metrics.gmBlackBoxY;
-            glyph_dib.stride    = get_dib_stride( metrics.gmBlackBoxX, 8 );
-            glyph_dib.bits      = image;
+            glyph_dib.bit_count   = 8;
+            glyph_dib.width       = metrics.gmBlackBoxX;
+            glyph_dib.height      = metrics.gmBlackBoxY;
+            glyph_dib.rect.left   = 0;
+            glyph_dib.rect.top    = 0;
+            glyph_dib.rect.right  = metrics.gmBlackBoxX;
+            glyph_dib.rect.bottom = metrics.gmBlackBoxY;
+            glyph_dib.stride      = get_dib_stride( metrics.gmBlackBoxX, 8 );
+            glyph_dib.bits        = image;
 
             rect.left   = x + metrics.gmptGlyphOrigin.x;
             rect.top    = y - metrics.gmptGlyphOrigin.y;
@@ -783,13 +791,15 @@ static inline void do_next_row( dib_info *dib, HRGN clip, const RECT *row, int o
 static void fill_row( dib_info *dib, HRGN clip, RECT *row, DWORD pixel, UINT type, HRGN rgn )
 {
     while (row->left > 0 && is_interior( dib, clip, row->left - 1, row->top, pixel, type)) row->left--;
-    while (row->right < dib->width && is_interior( dib, clip, row->right, row->top, pixel, type)) row->right++;
+    while (row->right < dib->rect.right - dib->rect.left &&
+           is_interior( dib, clip, row->right, row->top, pixel, type))
+        row->right++;
+
     add_rect_to_region( rgn, row );
 
     if (row->top > 0) do_next_row( dib, clip, row, -1, pixel, type, rgn );
-    if (row->top < dib->height - 1) do_next_row( dib, clip, row, 1, pixel, type, rgn );
-
-    return;
+    if (row->top < dib->rect.bottom - dib->rect.top - 1)
+        do_next_row( dib, clip, row, 1, pixel, type, rgn );
 }
 
 /***********************************************************************
@@ -850,8 +860,8 @@ COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )
     pt.y = y;
     LPtoDP( dev->hdc, &pt, 1 );
 
-    if (pt.x < 0 || pt.x >= pdev->dib.width ||
-        pt.y < 0 || pt.y >= pdev->dib.height)
+    if (pt.x < 0 || pt.x >= pdev->dib.rect.right - pdev->dib.rect.left ||
+        pt.y < 0 || pt.y >= pdev->dib.rect.bottom - pdev->dib.rect.top)
         return CLR_INVALID;
 
     pixel = pdev->dib.funcs->get_pixel( &pdev->dib, pt.x, pt.y );

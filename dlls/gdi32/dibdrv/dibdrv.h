@@ -27,6 +27,7 @@ typedef struct
 {
     int bit_count, width, height;
     int compression;
+    RECT rect;  /* visible rectangle relative to bitmap origin */
     int stride; /* stride in bytes.  Will be -ve for bottom-up dibs (see bits). */
     struct gdi_image_bits bits; /* bits.ptr points to the top-left corner of the dib. */
 

@@ -73,6 +73,10 @@ static void init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
     dib->bit_count    = bi->biBitCount;
     dib->width        = bi->biWidth;
     dib->height       = bi->biHeight;
+    dib->rect.left    = 0;
+    dib->rect.top     = 0;
+    dib->rect.right   = bi->biWidth;
+    dib->rect.bottom  = abs( bi->biHeight );
     dib->compression  = bi->biCompression;
     dib->stride       = get_dib_stride( dib->width, dib->bit_count );
     dib->bits.ptr     = bits;
@@ -267,8 +271,8 @@ int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct cl
 
     rect.left   = 0;
     rect.top    = 0;
-    rect.right  = dib->width;
-    rect.bottom = dib->height;
+    rect.right  = dib->rect.right - dib->rect.left;
+    rect.bottom = dib->rect.bottom - dib->rect.top;
     if (rc && !intersect_rect( &rect, &rect, rc )) return 0;
 
     if (!clip)
@@ -313,6 +317,8 @@ void add_clipped_bounds( dibdrv_physdev *dev, const RECT *rect, HRGN clip )
     }
     else rc = *rect;
 
+    if (is_rect_empty( &rc )) return;
+    offset_rect( &rc, dev->dib.rect.left, dev->dib.rect.top );
     add_bounds_rect( dev->bounds, &rc );
 }
 

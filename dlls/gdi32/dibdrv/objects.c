@@ -1805,6 +1805,10 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOOL
     brush->dib.width  = 8;
     brush->dib.height = 8;
     brush->dib.stride = get_dib_stride( brush->dib.width, brush->dib.bit_count );
+    brush->dib.rect.left   = 0;
+    brush->dib.rect.top    = 0;
+    brush->dib.rect.right  = 8;
+    brush->dib.rect.bottom = 8;
 
     size = brush->dib.height * brush->dib.stride;
 
@@ -1824,6 +1828,10 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOOL
     hatch.bits.ptr = (void *) hatches[brush->hatch];
     hatch.bits.free = hatch.bits.param = NULL;
     hatch.bits.is_copy = FALSE;
+    hatch.rect.left   = 0;
+    hatch.rect.top    = 0;
+    hatch.rect.right  = 8;
+    hatch.rect.bottom = 8;
 
     get_color_masks( pdev, brush->rop, brush->colorref, GetBkMode(pdev->dev.hdc),
                      &fg_mask, &bg_mask );
@@ -1865,7 +1873,6 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     RGBQUAD color_table[2];
-    RECT rect;
     dib_info pattern;
 
     if (!brush->pattern.info)
@@ -1921,6 +1928,7 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
     brush->dib.height = pattern.height;
     brush->dib.width  = pattern.width;
     brush->dib.stride = get_dib_stride( brush->dib.width, brush->dib.bit_count );
+    brush->dib.rect   = pattern.rect;
 
     if (matching_pattern_format( &brush->dib, &pattern ))
     {
@@ -1933,12 +1941,7 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
         brush->dib.bits.ptr     = HeapAlloc( GetProcessHeap(), 0, brush->dib.height * brush->dib.stride );
         brush->dib.bits.is_copy = TRUE;
         brush->dib.bits.free    = free_heap_bits;
-
-        rect.left = rect.top = 0;
-        rect.right = pattern.width;
-        rect.bottom = pattern.height;
-
-        brush->dib.funcs->convert_to(&brush->dib, &pattern, &rect);
+        brush->dib.funcs->convert_to(&brush->dib, &pattern, &pattern.rect);
     }
     return TRUE;
 }
