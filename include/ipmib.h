@@ -192,4 +192,17 @@ typedef struct _MIB_ICMP
     MIBICMPINFO stats;
 } MIB_ICMP, *PMIB_ICMP;
 
+typedef struct _MIBICMPSTATS_EX
+{
+    DWORD dwMsgs;
+    DWORD dwErrors;
+    DWORD rgdwTypeCount[256];
+} MIBICMPSTATS_EX, *PMIBICMPSTATS_EX;
+
+typedef struct _MIB_ICMP_EX
+{
+  MIBICMPSTATS_EX icmpInStats;
+  MIBICMPSTATS_EX icmpOutStats;
+} MIB_ICMP_EX, *PMIB_ICMP_EX;
+
 #endif /* __WINE_IPMIB_H */

@@ -60,6 +60,10 @@ static DWORD (WINAPI *pGetIcmpStatistics)(PMIB_ICMP);
 static DWORD (WINAPI *pGetIpStatistics)(PMIB_IPSTATS);
 static DWORD (WINAPI *pGetTcpStatistics)(PMIB_TCPSTATS);
 static DWORD (WINAPI *pGetUdpStatistics)(PMIB_UDPSTATS);
+static DWORD (WINAPI *pGetIcmpStatisticsEx)(PMIB_ICMP_EX,DWORD);
+static DWORD (WINAPI *pGetIpStatisticsEx)(PMIB_IPSTATS,DWORD);
+static DWORD (WINAPI *pGetTcpStatisticsEx)(PMIB_TCPSTATS,DWORD);
+static DWORD (WINAPI *pGetUdpStatisticsEx)(PMIB_UDPSTATS,DWORD);
 static DWORD (WINAPI *pGetTcpTable)(PMIB_TCPTABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetUdpTable)(PMIB_UDPTABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetPerAdapterInfo)(ULONG,PIP_PER_ADAPTER_INFO,PULONG);
@@ -87,6 +91,10 @@ static void loadIPHlpApi(void)
     pGetIpStatistics = (void *)GetProcAddress(hLibrary, "GetIpStatistics");
     pGetTcpStatistics = (void *)GetProcAddress(hLibrary, "GetTcpStatistics");
     pGetUdpStatistics = (void *)GetProcAddress(hLibrary, "GetUdpStatistics");
+    pGetIcmpStatisticsEx = (void *)GetProcAddress(hLibrary, "GetIcmpStatisticsEx");
+    pGetIpStatisticsEx = (void *)GetProcAddress(hLibrary, "GetIpStatisticsEx");
+    pGetTcpStatisticsEx = (void *)GetProcAddress(hLibrary, "GetTcpStatisticsEx");
+    pGetUdpStatisticsEx = (void *)GetProcAddress(hLibrary, "GetUdpStatisticsEx");
     pGetTcpTable = (void *)GetProcAddress(hLibrary, "GetTcpTable");
     pGetUdpTable = (void *)GetProcAddress(hLibrary, "GetUdpTable");
     pGetPerAdapterInfo = (void *)GetProcAddress(hLibrary, "GetPerAdapterInfo");
@@ -513,6 +521,225 @@ static void testGetUdpStatistics(void)
   }
 }
 
+static void testGetIcmpStatisticsEx(void)
+{
+    DWORD apiReturn;
+    MIB_ICMP_EX stats;
+
+    if (!pGetIcmpStatisticsEx)
+    {
+        skip( "GetIcmpStatisticsEx not available\n" );
+        return;
+    }
+
+    /* Crashes on Vista */
+    if (1) {
+        apiReturn = pGetIcmpStatisticsEx(NULL, AF_INET);
+        ok(apiReturn == ERROR_INVALID_PARAMETER,
+         "GetIcmpStatisticsEx(NULL, AF_INET) returned %d, expected ERROR_INVALID_PARAMETER\n", apiReturn);
+    }
+
+    apiReturn = pGetIcmpStatisticsEx(&stats, AF_INET);
+    ok(apiReturn == NO_ERROR, "GetIcmpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    if (apiReturn == NO_ERROR && winetest_debug > 1)
+    {
+        INT i;
+        trace( "ICMP Ex stats:           %8s %8s\n", "in", "out" );
+        trace( "    dwMsgs:              %8u %8u\n", stats.icmpInStats.dwMsgs, stats.icmpOutStats.dwMsgs );
+        trace( "    dwErrors:            %8u %8u\n", stats.icmpInStats.dwErrors, stats.icmpOutStats.dwErrors );
+        for (i = 0; i < 256; i++)
+            trace( "    rgdwTypeCount[%3i]: %8u %8u\n", i, stats.icmpInStats.rgdwTypeCount[i], stats.icmpOutStats.rgdwTypeCount[i] );
+    }
+
+    apiReturn = pGetIcmpStatisticsEx(&stats, AF_INET6);
+    ok(apiReturn == NO_ERROR, "GetIcmpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    if (apiReturn == NO_ERROR && winetest_debug > 1)
+    {
+        INT i;
+        trace( "ICMP Ex stats:           %8s %8s\n", "in", "out" );
+        trace( "    dwMsgs:              %8u %8u\n", stats.icmpInStats.dwMsgs, stats.icmpOutStats.dwMsgs );
+        trace( "    dwErrors:            %8u %8u\n", stats.icmpInStats.dwErrors, stats.icmpOutStats.dwErrors );
+        for (i = 0; i < 256; i++)
+            trace( "    rgdwTypeCount[%3i]: %8u %8u\n", i, stats.icmpInStats.rgdwTypeCount[i], stats.icmpOutStats.rgdwTypeCount[i] );
+    }
+}
+
+static void testGetIpStatisticsEx(void)
+{
+    DWORD apiReturn;
+    MIB_IPSTATS stats;
+
+    if (!pGetIpStatisticsEx)
+    {
+        skip( "GetIpStatisticsEx not available\n" );
+        return;
+    }
+
+    apiReturn = pGetIpStatisticsEx(NULL, AF_INET);
+    ok(apiReturn == ERROR_INVALID_PARAMETER,
+       "GetIpStatisticsEx(NULL, AF_INET) returned %d, expected ERROR_INVALID_PARAMETER\n", apiReturn);
+
+    apiReturn = pGetIpStatisticsEx(&stats, AF_INET);
+    ok(apiReturn == NO_ERROR, "GetIpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    if (apiReturn == NO_ERROR && winetest_debug > 1)
+    {
+        trace( "IP Ex stats:\n" );
+        trace( "    dwForwarding:      %u\n", U(stats).dwForwarding );
+        trace( "    dwDefaultTTL:      %u\n", stats.dwDefaultTTL );
+        trace( "    dwInReceives:      %u\n", stats.dwInReceives );
+        trace( "    dwInHdrErrors:     %u\n", stats.dwInHdrErrors );
+        trace( "    dwInAddrErrors:    %u\n", stats.dwInAddrErrors );
+        trace( "    dwForwDatagrams:   %u\n", stats.dwForwDatagrams );
+        trace( "    dwInUnknownProtos: %u\n", stats.dwInUnknownProtos );
+        trace( "    dwInDiscards:      %u\n", stats.dwInDiscards );
+        trace( "    dwInDelivers:      %u\n", stats.dwInDelivers );
+        trace( "    dwOutRequests:     %u\n", stats.dwOutRequests );
+        trace( "    dwRoutingDiscards: %u\n", stats.dwRoutingDiscards );
+        trace( "    dwOutDiscards:     %u\n", stats.dwOutDiscards );
+        trace( "    dwOutNoRoutes:     %u\n", stats.dwOutNoRoutes );
+        trace( "    dwReasmTimeout:    %u\n", stats.dwReasmTimeout );
+        trace( "    dwReasmReqds:      %u\n", stats.dwReasmReqds );
+        trace( "    dwReasmOks:        %u\n", stats.dwReasmOks );
+        trace( "    dwReasmFails:      %u\n", stats.dwReasmFails );
+        trace( "    dwFragOks:         %u\n", stats.dwFragOks );
+        trace( "    dwFragFails:       %u\n", stats.dwFragFails );
+        trace( "    dwFragCreates:     %u\n", stats.dwFragCreates );
+        trace( "    dwNumIf:           %u\n", stats.dwNumIf );
+        trace( "    dwNumAddr:         %u\n", stats.dwNumAddr );
+        trace( "    dwNumRoutes:       %u\n", stats.dwNumRoutes );
+    }
+
+    apiReturn = pGetIpStatisticsEx(&stats, AF_INET6);
+    ok(apiReturn == NO_ERROR, "GetIpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    if (apiReturn == NO_ERROR && winetest_debug > 1)
+    {
+        trace( "IP Ex stats:\n" );
+        trace( "    dwForwarding:      %u\n", U(stats).dwForwarding );
+        trace( "    dwDefaultTTL:      %u\n", stats.dwDefaultTTL );
+        trace( "    dwInReceives:      %u\n", stats.dwInReceives );
+        trace( "    dwInHdrErrors:     %u\n", stats.dwInHdrErrors );
+        trace( "    dwInAddrErrors:    %u\n", stats.dwInAddrErrors );
+        trace( "    dwForwDatagrams:   %u\n", stats.dwForwDatagrams );
+        trace( "    dwInUnknownProtos: %u\n", stats.dwInUnknownProtos );
+        trace( "    dwInDiscards:      %u\n", stats.dwInDiscards );
+        trace( "    dwInDelivers:      %u\n", stats.dwInDelivers );
+        trace( "    dwOutRequests:     %u\n", stats.dwOutRequests );
+        trace( "    dwRoutingDiscards: %u\n", stats.dwRoutingDiscards );
+        trace( "    dwOutDiscards:     %u\n", stats.dwOutDiscards );
+        trace( "    dwOutNoRoutes:     %u\n", stats.dwOutNoRoutes );
+        trace( "    dwReasmTimeout:    %u\n", stats.dwReasmTimeout );
+        trace( "    dwReasmReqds:      %u\n", stats.dwReasmReqds );
+        trace( "    dwReasmOks:        %u\n", stats.dwReasmOks );
+        trace( "    dwReasmFails:      %u\n", stats.dwReasmFails );
+        trace( "    dwFragOks:         %u\n", stats.dwFragOks );
+        trace( "    dwFragFails:       %u\n", stats.dwFragFails );
+        trace( "    dwFragCreates:     %u\n", stats.dwFragCreates );
+        trace( "    dwNumIf:           %u\n", stats.dwNumIf );
+        trace( "    dwNumAddr:         %u\n", stats.dwNumAddr );
+        trace( "    dwNumRoutes:       %u\n", stats.dwNumRoutes );
+    }
+}
+
+static void testGetTcpStatisticsEx(void)
+{
+    DWORD apiReturn;
+    MIB_TCPSTATS stats;
+
+    if (!pGetTcpStatisticsEx)
+    {
+        skip( "GetTcpStatisticsEx not available\n" );
+        return;
+    }
+
+    apiReturn = pGetTcpStatisticsEx(NULL, AF_INET);
+    ok(apiReturn == ERROR_INVALID_PARAMETER,
+       "GetTcpStatisticsEx(NULL, AF_INET); returned %d, expected ERROR_INVALID_PARAMETER\n", apiReturn);
+
+    apiReturn = pGetTcpStatisticsEx(&stats, AF_INET);
+    ok(apiReturn == NO_ERROR, "GetTcpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    if (apiReturn == NO_ERROR && winetest_debug > 1)
+    {
+        trace( "TCP stats:\n" );
+        trace( "    dwRtoAlgorithm: %u\n", U(stats).dwRtoAlgorithm );
+        trace( "    dwRtoMin:       %u\n", stats.dwRtoMin );
+        trace( "    dwRtoMax:       %u\n", stats.dwRtoMax );
+        trace( "    dwMaxConn:      %u\n", stats.dwMaxConn );
+        trace( "    dwActiveOpens:  %u\n", stats.dwActiveOpens );
+        trace( "    dwPassiveOpens: %u\n", stats.dwPassiveOpens );
+        trace( "    dwAttemptFails: %u\n", stats.dwAttemptFails );
+        trace( "    dwEstabResets:  %u\n", stats.dwEstabResets );
+        trace( "    dwCurrEstab:    %u\n", stats.dwCurrEstab );
+        trace( "    dwInSegs:       %u\n", stats.dwInSegs );
+        trace( "    dwOutSegs:      %u\n", stats.dwOutSegs );
+        trace( "    dwRetransSegs:  %u\n", stats.dwRetransSegs );
+        trace( "    dwInErrs:       %u\n", stats.dwInErrs );
+        trace( "    dwOutRsts:      %u\n", stats.dwOutRsts );
+        trace( "    dwNumConns:     %u\n", stats.dwNumConns );
+    }
+
+    apiReturn = pGetTcpStatisticsEx(&stats, AF_INET6);
+    ok(apiReturn == NO_ERROR, "GetTcpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    if (apiReturn == NO_ERROR && winetest_debug > 1)
+    {
+        trace( "TCP stats:\n" );
+        trace( "    dwRtoAlgorithm: %u\n", U(stats).dwRtoAlgorithm );
+        trace( "    dwRtoMin:       %u\n", stats.dwRtoMin );
+        trace( "    dwRtoMax:       %u\n", stats.dwRtoMax );
+        trace( "    dwMaxConn:      %u\n", stats.dwMaxConn );
+        trace( "    dwActiveOpens:  %u\n", stats.dwActiveOpens );
+        trace( "    dwPassiveOpens: %u\n", stats.dwPassiveOpens );
+        trace( "    dwAttemptFails: %u\n", stats.dwAttemptFails );
+        trace( "    dwEstabResets:  %u\n", stats.dwEstabResets );
+        trace( "    dwCurrEstab:    %u\n", stats.dwCurrEstab );
+        trace( "    dwInSegs:       %u\n", stats.dwInSegs );
+        trace( "    dwOutSegs:      %u\n", stats.dwOutSegs );
+        trace( "    dwRetransSegs:  %u\n", stats.dwRetransSegs );
+        trace( "    dwInErrs:       %u\n", stats.dwInErrs );
+        trace( "    dwOutRsts:      %u\n", stats.dwOutRsts );
+        trace( "    dwNumConns:     %u\n", stats.dwNumConns );
+    }
+}
+
+static void testGetUdpStatisticsEx(void)
+{
+    DWORD apiReturn;
+    MIB_UDPSTATS stats;
+
+    if (!pGetUdpStatisticsEx)
+    {
+        skip( "GetUdpStatisticsEx not available\n" );
+        return;
+    }
+
+    apiReturn = pGetUdpStatisticsEx(NULL, AF_INET);
+    ok(apiReturn == ERROR_INVALID_PARAMETER,
+       "GetUdpStatisticsEx(NULL, AF_INET); returned %d, expected ERROR_INVALID_PARAMETER\n", apiReturn);
+
+    apiReturn = pGetUdpStatisticsEx(&stats, AF_INET);
+    ok(apiReturn == NO_ERROR, "GetUdpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    if (apiReturn == NO_ERROR && winetest_debug > 1)
+    {
+        trace( "UDP stats:\n" );
+        trace( "    dwInDatagrams:  %u\n", stats.dwInDatagrams );
+        trace( "    dwNoPorts:      %u\n", stats.dwNoPorts );
+        trace( "    dwInErrors:     %u\n", stats.dwInErrors );
+        trace( "    dwOutDatagrams: %u\n", stats.dwOutDatagrams );
+        trace( "    dwNumAddrs:     %u\n", stats.dwNumAddrs );
+    }
+
+    apiReturn = pGetUdpStatisticsEx(&stats, AF_INET6);
+    ok(apiReturn == NO_ERROR, "GetUdpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    if (apiReturn == NO_ERROR && winetest_debug > 1)
+    {
+        trace( "UDP stats:\n" );
+        trace( "    dwInDatagrams:  %u\n", stats.dwInDatagrams );
+        trace( "    dwNoPorts:      %u\n", stats.dwNoPorts );
+        trace( "    dwInErrors:     %u\n", stats.dwInErrors );
+        trace( "    dwOutDatagrams: %u\n", stats.dwOutDatagrams );
+        trace( "    dwNumAddrs:     %u\n", stats.dwNumAddrs );
+    }
+}
+
 static void testGetTcpTable(void)
 {
   if (pGetTcpTable) {
@@ -636,6 +863,10 @@ static void testWinNT4Functions(void)
   testGetIpStatistics();
   testGetTcpStatistics();
   testGetUdpStatistics();
+  testGetIcmpStatisticsEx();
+  testGetIpStatisticsEx();
+  testGetTcpStatisticsEx();
+  testGetUdpStatisticsEx();
   testGetTcpTable();
   testGetUdpTable();
   testSetTcpEntry();
