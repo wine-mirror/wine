@@ -58,20 +58,17 @@ LPWSTR GetItemText(HWND hwndLV, UINT item)
 {
     LPWSTR newStr, curStr;
     unsigned int maxLen = 128;
+    if (item == 0) return NULL; /* first item is ALWAYS a default */
 
     curStr = HeapAlloc(GetProcessHeap(), 0, maxLen * sizeof(WCHAR));
     if (!curStr) return NULL;
-    if (item == 0) { /* first item is ALWAYS a default */
-        HeapFree(GetProcessHeap(), 0, curStr);
-        return NULL;
-    }
     do {
-        ListView_GetItemTextW(hwndLV, item, 0, curStr, maxLen * sizeof(WCHAR));
+        ListView_GetItemTextW(hwndLV, item, 0, curStr, maxLen);
         if (lstrlenW(curStr) < maxLen - 1) return curStr;
-        newStr = HeapReAlloc(GetProcessHeap(), 0, curStr, maxLen * 2 * sizeof(WCHAR));
+        maxLen *= 2;
+        newStr = HeapReAlloc(GetProcessHeap(), 0, curStr, maxLen * sizeof(WCHAR));
         if (!newStr) break;
         curStr = newStr;
-        maxLen *= 2;
     } while (TRUE);
     HeapFree(GetProcessHeap(), 0, curStr);
     return NULL;
