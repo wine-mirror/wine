@@ -1197,23 +1197,21 @@ static void copy_rect_4(const dib_info *dst, const RECT *rc,
 
     if (overlap & OVERLAP_BELOW)
     {
-        dst_start = get_pixel_ptr_4(dst, 0, rc->bottom - 1);
-        src_start = get_pixel_ptr_4(src, 0, origin->y + rc->bottom - rc->top - 1);
+        dst_start = get_pixel_ptr_4(dst, rc->left, rc->bottom - 1);
+        src_start = get_pixel_ptr_4(src, origin->x, origin->y + rc->bottom - rc->top - 1);
         dst_stride = -dst->stride;
         src_stride = -src->stride;
     }
     else
     {
-        dst_start = get_pixel_ptr_4(dst, 0, rc->top);
-        src_start = get_pixel_ptr_4(src, 0, origin->y);
+        dst_start = get_pixel_ptr_4(dst, rc->left, rc->top);
+        src_start = get_pixel_ptr_4(src, origin->x, origin->y);
         dst_stride = dst->stride;
         src_stride = src->stride;
     }
 
     if (rop2 == R2_COPYPEN && (rc->left & 1) == 0 && (origin->x & 1) == 0 && (rc->right & 1) == 0)
     {
-        dst_start += rc->left / 2;
-        src_start += origin->x / 2;
         for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
             memmove( dst_start, src_start, (rc->right - rc->left) / 2 );
         return;
@@ -1223,9 +1221,9 @@ static void copy_rect_4(const dib_info *dst, const RECT *rc,
     for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
     {
         if (overlap & OVERLAP_RIGHT)
-            do_rop_codes_line_rev_4( dst_start, rc->left, src_start, origin->x, &codes, rc->right - rc->left );
+            do_rop_codes_line_rev_4( dst_start, rc->left & 1, src_start, origin->x & 1, &codes, rc->right - rc->left );
         else
-            do_rop_codes_line_4( dst_start, rc->left, src_start, origin->x, &codes, rc->right - rc->left );
+            do_rop_codes_line_4( dst_start, rc->left & 1, src_start, origin->x & 1, &codes, rc->right - rc->left );
     }
 }
 
@@ -1238,23 +1236,21 @@ static void copy_rect_1(const dib_info *dst, const RECT *rc,
 
     if (overlap & OVERLAP_BELOW)
     {
-        dst_start = get_pixel_ptr_1(dst, 0, rc->bottom - 1);
-        src_start = get_pixel_ptr_1(src, 0, origin->y + rc->bottom - rc->top - 1);
+        dst_start = get_pixel_ptr_1(dst, rc->left, rc->bottom - 1);
+        src_start = get_pixel_ptr_1(src, origin->x, origin->y + rc->bottom - rc->top - 1);
         dst_stride = -dst->stride;
         src_stride = -src->stride;
     }
     else
     {
-        dst_start = get_pixel_ptr_1(dst, 0, rc->top);
-        src_start = get_pixel_ptr_1(src, 0, origin->y);
+        dst_start = get_pixel_ptr_1(dst, rc->left, rc->top);
+        src_start = get_pixel_ptr_1(src, origin->x, origin->y);
         dst_stride = dst->stride;
         src_stride = src->stride;
     }
 
     if (rop2 == R2_COPYPEN && (rc->left & 7) == 0 && (origin->x & 7) == 0 && (rc->right & 7) == 0)
     {
-        dst_start += rc->left / 8;
-        src_start += origin->x / 8;
         for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
             memmove( dst_start, src_start, (rc->right - rc->left) / 8 );
         return;
@@ -1264,9 +1260,9 @@ static void copy_rect_1(const dib_info *dst, const RECT *rc,
     for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
     {
         if (overlap & OVERLAP_RIGHT)
-            do_rop_codes_line_rev_1( dst_start, rc->left, src_start, origin->x, &codes, rc->right - rc->left );
+            do_rop_codes_line_rev_1( dst_start, rc->left & 7, src_start, origin->x & 7, &codes, rc->right - rc->left );
         else
-            do_rop_codes_line_1( dst_start, rc->left, src_start, origin->x, &codes, rc->right - rc->left );
+            do_rop_codes_line_1( dst_start, rc->left & 7, src_start, origin->x & 7, &codes, rc->right - rc->left );
     }
 }
 
@@ -3974,17 +3970,17 @@ static void blend_rect_8(const dib_info *dst, const RECT *rc,
 static void blend_rect_4(const dib_info *dst, const RECT *rc,
                          const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
 {
-    DWORD *src_ptr = get_pixel_ptr_32( src, origin->x - rc->left, origin->y );
-    BYTE *dst_ptr = get_pixel_ptr_4( dst, 0, rc->top );
-    int x, y;
+    DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
+    BYTE *dst_ptr = get_pixel_ptr_4( dst, rc->left, rc->top );
+    int i, x, y;
 
     for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride, src_ptr += src->stride / 4)
     {
-        for (x = rc->left; x < rc->right; x++)
+        for (i = 0, x = rc->left & 1; i < rc->right - rc->left; i++, x++)
         {
             DWORD val = ((x & 1) ? dst_ptr[x / 2] : (dst_ptr[x / 2] >> 4)) & 0x0f;
             RGBQUAD rgb = dst->color_table[val];
-            val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[x], blend );
+            val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[i], blend );
             val = rgb_lookup_colortable( dst, val >> 16, val >> 8, val );
             if (x & 1)
                 dst_ptr[x / 2] = val | (dst_ptr[x / 2] & 0xf0);
@@ -3997,17 +3993,17 @@ static void blend_rect_4(const dib_info *dst, const RECT *rc,
 static void blend_rect_1(const dib_info *dst, const RECT *rc,
                          const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
 {
-    DWORD *src_ptr = get_pixel_ptr_32( src, origin->x - rc->left, origin->y );
-    BYTE *dst_ptr = get_pixel_ptr_1( dst, 0, rc->top );
-    int x, y;
+    DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
+    BYTE *dst_ptr = get_pixel_ptr_1( dst, rc->left, rc->top );
+    int i, x, y;
 
     for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride, src_ptr += src->stride / 4)
     {
-        for (x = rc->left; x < rc->right; x++)
+        for (i = 0, x = rc->left & 7; i < rc->right - rc->left; i++, x++)
         {
             DWORD val = (dst_ptr[x / 8] & pixel_masks_1[x % 8]) ? 1 : 0;
             RGBQUAD rgb = dst->color_table[val];
-            val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[x], blend );
+            val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[i], blend );
             val = rgb_to_pixel_colortable(dst, val >> 16, val >> 8, val) ? 0xff : 0;
             dst_ptr[x / 8] = (dst_ptr[x / 8] & ~pixel_masks_1[x % 8]) | (val & pixel_masks_1[x % 8]);
         }
@@ -4140,16 +4136,16 @@ static inline DWORD gradient_triangle_8( const dib_info *dib, const TRIVERTEX *v
 
 static BOOL gradient_rect_8888( const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode )
 {
-    DWORD *ptr = get_pixel_ptr_32( dib, 0, rc->top );
+    DWORD *ptr = get_pixel_ptr_32( dib, rc->left, rc->top );
     int x, y, left, right, det;
 
     switch (mode)
     {
     case GRADIENT_FILL_RECT_H:
-        for (x = rc->left; x < rc->right; x++)
-            ptr[x] = gradient_rgb_8888( v, x - v[0].x, v[1].x - v[0].x );
+        for (x = 0; x < rc->right - rc->left; x++)
+            ptr[x] = gradient_rgb_8888( v, rc->left + x - v[0].x, v[1].x - v[0].x );
 
-        for (y = rc->top + 1, ptr += rc->left; y < rc->bottom; y++, ptr += dib->stride / 4)
+        for (y = rc->top + 1; y < rc->bottom; y++, ptr += dib->stride / 4)
             memcpy( ptr + dib->stride / 4, ptr, (rc->right - rc->left) * 4 );
         break;
 
@@ -4157,7 +4153,7 @@ static BOOL gradient_rect_8888( const dib_info *dib, const RECT *rc, const TRIVE
         for (y = rc->top; y < rc->bottom; y++, ptr += dib->stride / 4)
         {
             DWORD val = gradient_rgb_8888( v, y - v[0].y, v[1].y - v[0].y );
-            for (x = rc->left; x < rc->right; x++) ptr[x] = val;
+            for (x = 0; x < rc->right - rc->left; x++) ptr[x] = val;
         }
         break;
 
@@ -4166,7 +4162,7 @@ static BOOL gradient_rect_8888( const dib_info *dib, const RECT *rc, const TRIVE
         for (y = rc->top; y < rc->bottom; y++, ptr += dib->stride / 4)
         {
             triangle_coords( v, rc, y, &left, &right );
-            for (x = left; x < right; x++) ptr[x] = gradient_triangle_8888( v, x, y, det );
+            for (x = left; x < right; x++) ptr[x - rc->left] = gradient_triangle_8888( v, x, y, det );
         }
         break;
     }
@@ -4175,7 +4171,7 @@ static BOOL gradient_rect_8888( const dib_info *dib, const RECT *rc, const TRIVE
 
 static BOOL gradient_rect_32( const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode )
 {
-    DWORD *ptr = get_pixel_ptr_32( dib, 0, rc->top );
+    DWORD *ptr = get_pixel_ptr_32( dib, rc->left, rc->top );
     int x, y, left, right, det;
 
     switch (mode)
@@ -4183,9 +4179,9 @@ static BOOL gradient_rect_32( const dib_info *dib, const RECT *rc, const TRIVERT
     case GRADIENT_FILL_RECT_H:
         if (dib->red_len == 8 && dib->green_len == 8 && dib->blue_len == 8)
         {
-            for (x = rc->left; x < rc->right; x++)
+            for (x = 0; x < rc->right - rc->left; x++)
             {
-                DWORD val = gradient_rgb_24( v, x - v[0].x, v[1].x - v[0].x );
+                DWORD val = gradient_rgb_24( v, rc->left + x - v[0].x, v[1].x - v[0].x );
                 ptr[x] = ((( val        & 0xff) << dib->blue_shift) |
                           (((val >> 8)  & 0xff) << dib->green_shift) |
                           (((val >> 16) & 0xff) << dib->red_shift));
@@ -4193,16 +4189,16 @@ static BOOL gradient_rect_32( const dib_info *dib, const RECT *rc, const TRIVERT
         }
         else
         {
-            for (x = rc->left; x < rc->right; x++)
+            for (x = 0; x < rc->right - rc->left; x++)
             {
-                DWORD val = gradient_rgb_24( v, x - v[0].x, v[1].x - v[0].x );
+                DWORD val = gradient_rgb_24( v, rc->left + x - v[0].x, v[1].x - v[0].x );
                 ptr[x] = (put_field( val >> 16, dib->red_shift,   dib->red_len )   |
                           put_field( val >> 8,  dib->green_shift, dib->green_len ) |
                           put_field( val,       dib->blue_shift,  dib->blue_len ));
             }
         }
 
-        for (y = rc->top + 1, ptr += rc->left; y < rc->bottom; y++, ptr += dib->stride / 4)
+        for (y = rc->top + 1; y < rc->bottom; y++, ptr += dib->stride / 4)
             memcpy( ptr + dib->stride / 4, ptr, (rc->right - rc->left) * 4 );
         break;
 
@@ -4219,7 +4215,7 @@ static BOOL gradient_rect_32( const dib_info *dib, const RECT *rc, const TRIVERT
                        put_field( val >> 8,  dib->green_shift, dib->green_len ) |
                        put_field( val,       dib->blue_shift,  dib->blue_len ));
 
-            for (x = rc->left; x < rc->right; x++) ptr[x] = val;
+            for (x = 0; x < rc->right - rc->left; x++) ptr[x] = val;
             ptr += dib->stride / 4;
         }
         break;
@@ -4234,17 +4230,17 @@ static BOOL gradient_rect_32( const dib_info *dib, const RECT *rc, const TRIVERT
                 for (x = left; x < right; x++)
                 {
                     DWORD val = gradient_triangle_24( v, x, y, det );
-                    ptr[x] = ((( val        & 0xff) << dib->blue_shift) |
-                              (((val >> 8)  & 0xff) << dib->green_shift) |
-                              (((val >> 16) & 0xff) << dib->red_shift));
+                    ptr[x - rc->left] = ((( val        & 0xff) << dib->blue_shift) |
+                                         (((val >> 8)  & 0xff) << dib->green_shift) |
+                                         (((val >> 16) & 0xff) << dib->red_shift));
                 }
             else
                 for (x = left; x < right; x++)
                 {
                     DWORD val = gradient_triangle_24( v, x, y, det );
-                    ptr[x] = (put_field( val >> 16, dib->red_shift,   dib->red_len )   |
-                              put_field( val >> 8,  dib->green_shift, dib->green_len ) |
-                              put_field( val,       dib->blue_shift,  dib->blue_len ));
+                    ptr[x - rc->left] = (put_field( val >> 16, dib->red_shift,   dib->red_len )   |
+                                         put_field( val >> 8,  dib->green_shift, dib->green_len ) |
+                                         put_field( val,       dib->blue_shift,  dib->blue_len ));
                 }
         }
         break;
@@ -4254,21 +4250,21 @@ static BOOL gradient_rect_32( const dib_info *dib, const RECT *rc, const TRIVERT
 
 static BOOL gradient_rect_24( const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode )
 {
-    BYTE *ptr = get_pixel_ptr_24( dib, 0, rc->top );
+    BYTE *ptr = get_pixel_ptr_24( dib, rc->left, rc->top );
     int x, y, left, right, det;
 
     switch (mode)
     {
     case GRADIENT_FILL_RECT_H:
-        for (x = rc->left; x < rc->right; x++)
+        for (x = 0; x < rc->right - rc->left; x++)
         {
-            DWORD val = gradient_rgb_24( v, x - v[0].x, v[1].x - v[0].x );
+            DWORD val = gradient_rgb_24( v, rc->left + x - v[0].x, v[1].x - v[0].x );
             ptr[x * 3]     = val;
             ptr[x * 3 + 1] = val >> 8;
             ptr[x * 3 + 2] = val >> 16;
         }
 
-        for (y = rc->top + 1, ptr += rc->left * 3; y < rc->bottom; y++, ptr += dib->stride)
+        for (y = rc->top + 1; y < rc->bottom; y++, ptr += dib->stride)
             memcpy( ptr + dib->stride, ptr, (rc->right - rc->left) * 3 );
         break;
 
@@ -4276,7 +4272,7 @@ static BOOL gradient_rect_24( const dib_info *dib, const RECT *rc, const TRIVERT
         for (y = rc->top; y < rc->bottom; y++, ptr += dib->stride)
         {
             DWORD val = gradient_rgb_24( v, y - v[0].y, v[1].y - v[0].y );
-            for (x = rc->left; x < rc->right; x++)
+            for (x = 0; x < rc->right - rc->left; x++)
             {
                 ptr[x * 3]     = val;
                 ptr[x * 3 + 1] = val >> 8;
@@ -4293,9 +4289,9 @@ static BOOL gradient_rect_24( const dib_info *dib, const RECT *rc, const TRIVERT
             for (x = left; x < right; x++)
             {
                 DWORD val = gradient_triangle_24( v, x, y, det );
-                ptr[x * 3]     = val;
-                ptr[x * 3 + 1] = val >> 8;
-                ptr[x * 3 + 2] = val >> 16;
+                ptr[(x - rc->left) * 3]     = val;
+                ptr[(x - rc->left) * 3 + 1] = val >> 8;
+                ptr[(x - rc->left) * 3 + 2] = val >> 16;
             }
         }
         break;
@@ -4305,7 +4301,7 @@ static BOOL gradient_rect_24( const dib_info *dib, const RECT *rc, const TRIVERT
 
 static BOOL gradient_rect_555( const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode )
 {
-    WORD *ptr = get_pixel_ptr_16( dib, 0, rc->top );
+    WORD *ptr = get_pixel_ptr_16( dib, rc->left, rc->top );
     int x, y, left, right, det;
 
     switch (mode)
@@ -4313,8 +4309,8 @@ static BOOL gradient_rect_555( const dib_info *dib, const RECT *rc, const TRIVER
     case GRADIENT_FILL_RECT_H:
         for (y = rc->top; y < min( rc->top + 4, rc->bottom ); y++, ptr += dib->stride / 2)
             for (x = rc->left; x < rc->right; x++)
-                ptr[x] = gradient_rgb_555( v, x - v[0].x, v[1].x - v[0].x, x, y );
-        for (ptr += rc->left; y < rc->bottom; y++, ptr += dib->stride / 2)
+                ptr[x - rc->left] = gradient_rgb_555( v, x - v[0].x, v[1].x - v[0].x, x, y );
+        for ( ; y < rc->bottom; y++, ptr += dib->stride / 2)
             memcpy( ptr, ptr - dib->stride * 2, (rc->right - rc->left) * 2 );
         break;
 
@@ -4323,7 +4319,7 @@ static BOOL gradient_rect_555( const dib_info *dib, const RECT *rc, const TRIVER
         {
             WORD values[4];
             for (x = 0; x < 4; x++) values[x] = gradient_rgb_555( v, y - v[0].y, v[1].y - v[0].y, x, y );
-            for (x = rc->left; x < rc->right; x++) ptr[x] = values[x % 4];
+            for (x = rc->left; x < rc->right; x++) ptr[x - rc->left] = values[x % 4];
         }
         break;
 
@@ -4332,7 +4328,7 @@ static BOOL gradient_rect_555( const dib_info *dib, const RECT *rc, const TRIVER
         for (y = rc->top; y < rc->bottom; y++, ptr += dib->stride / 2)
         {
             triangle_coords( v, rc, y, &left, &right );
-            for (x = left; x < right; x++) ptr[x] = gradient_triangle_555( v, x, y, det );
+            for (x = left; x < right; x++) ptr[x - rc->left] = gradient_triangle_555( v, x, y, det );
         }
         break;
     }
@@ -4341,7 +4337,7 @@ static BOOL gradient_rect_555( const dib_info *dib, const RECT *rc, const TRIVER
 
 static BOOL gradient_rect_16( const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode )
 {
-    WORD *ptr = get_pixel_ptr_16( dib, 0, rc->top );
+    WORD *ptr = get_pixel_ptr_16( dib, rc->left, rc->top );
     int x, y, left, right, det;
 
     switch (mode)
@@ -4351,11 +4347,11 @@ static BOOL gradient_rect_16( const dib_info *dib, const RECT *rc, const TRIVERT
             for (x = rc->left; x < rc->right; x++)
             {
                 WORD val = gradient_rgb_555( v, x - v[0].x, v[1].x - v[0].x, x, y );
-                ptr[x] = (put_field(((val >> 7) & 0xf8) | ((val >> 12) & 0x07), dib->red_shift,   dib->red_len)   |
-                          put_field(((val >> 2) & 0xf8) | ((val >> 7)  & 0x07), dib->green_shift, dib->green_len) |
-                          put_field(((val << 3) & 0xf8) | ((val >> 2)  & 0x07), dib->blue_shift,  dib->blue_len));
+                ptr[x - rc->left] = (put_field(((val >> 7) & 0xf8) | ((val >> 12) & 0x07), dib->red_shift,   dib->red_len)   |
+                                     put_field(((val >> 2) & 0xf8) | ((val >> 7)  & 0x07), dib->green_shift, dib->green_len) |
+                                     put_field(((val << 3) & 0xf8) | ((val >> 2)  & 0x07), dib->blue_shift,  dib->blue_len));
             }
-        for (ptr += rc->left; y < rc->bottom; y++, ptr += dib->stride / 2)
+        for ( ; y < rc->bottom; y++, ptr += dib->stride / 2)
             memcpy( ptr, ptr - dib->stride * 2, (rc->right - rc->left) * 2 );
         break;
 
@@ -4370,7 +4366,7 @@ static BOOL gradient_rect_16( const dib_info *dib, const RECT *rc, const TRIVERT
                              put_field(((val >> 2) & 0xf8) | ((val >> 7)  & 0x07), dib->green_shift, dib->green_len) |
                              put_field(((val << 3) & 0xf8) | ((val >> 2)  & 0x07), dib->blue_shift,  dib->blue_len));
             }
-            for (x = rc->left; x < rc->right; x++) ptr[x] = values[x % 4];
+            for (x = rc->left; x < rc->right; x++) ptr[x - rc->left] = values[x % 4];
         }
         break;
 
@@ -4382,9 +4378,9 @@ static BOOL gradient_rect_16( const dib_info *dib, const RECT *rc, const TRIVERT
             for (x = left; x < right; x++)
             {
                 WORD val = gradient_triangle_555( v, x, y, det );
-                ptr[x] = (put_field(((val >> 7) & 0xf8) | ((val >> 12) & 0x07), dib->red_shift,   dib->red_len)   |
-                          put_field(((val >> 2) & 0xf8) | ((val >> 7)  & 0x07), dib->green_shift, dib->green_len) |
-                          put_field(((val << 3) & 0xf8) | ((val >> 2)  & 0x07), dib->blue_shift,  dib->blue_len));
+                ptr[x - rc->left] = (put_field(((val >> 7) & 0xf8) | ((val >> 12) & 0x07), dib->red_shift,   dib->red_len)   |
+                                     put_field(((val >> 2) & 0xf8) | ((val >> 7)  & 0x07), dib->green_shift, dib->green_len) |
+                                     put_field(((val << 3) & 0xf8) | ((val >> 2)  & 0x07), dib->blue_shift,  dib->blue_len));
             }
         }
         break;
@@ -4394,7 +4390,7 @@ static BOOL gradient_rect_16( const dib_info *dib, const RECT *rc, const TRIVERT
 
 static BOOL gradient_rect_8( const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode )
 {
-    BYTE *ptr = get_pixel_ptr_8( dib, 0, rc->top );
+    BYTE *ptr = get_pixel_ptr_8( dib, rc->left, rc->top );
     int x, y, left, right, det;
 
     switch (mode)
@@ -4402,8 +4398,8 @@ static BOOL gradient_rect_8( const dib_info *dib, const RECT *rc, const TRIVERTE
     case GRADIENT_FILL_RECT_H:
         for (y = rc->top; y < min( rc->top + 16, rc->bottom ); y++, ptr += dib->stride)
             for (x = rc->left; x < rc->right; x++)
-                ptr[x] = gradient_rgb_8( dib, v, x - v[0].x, v[1].x - v[0].x, x, y );
-        for (ptr += rc->left; y < rc->bottom; y++, ptr += dib->stride)
+                ptr[x - rc->left] = gradient_rgb_8( dib, v, x - v[0].x, v[1].x - v[0].x, x, y );
+        for ( ; y < rc->bottom; y++, ptr += dib->stride)
             memcpy( ptr, ptr - dib->stride * 16, rc->right - rc->left );
         break;
 
@@ -4413,7 +4409,7 @@ static BOOL gradient_rect_8( const dib_info *dib, const RECT *rc, const TRIVERTE
             BYTE values[16];
             for (x = 0; x < 16; x++)
                 values[x] = gradient_rgb_8( dib, v, y - v[0].y, v[1].y - v[0].y, x, y );
-            for (x = rc->left; x < rc->right; x++) ptr[x] = values[x % 16];
+            for (x = rc->left; x < rc->right; x++) ptr[x - rc->left] = values[x % 16];
         }
         break;
 
@@ -4422,7 +4418,7 @@ static BOOL gradient_rect_8( const dib_info *dib, const RECT *rc, const TRIVERTE
         for (y = rc->top; y < rc->bottom; y++, ptr += dib->stride)
         {
             triangle_coords( v, rc, y, &left, &right );
-            for (x = left; x < right; x++) ptr[x] = gradient_triangle_8( dib, v, x, y, det );
+            for (x = left; x < right; x++) ptr[x - rc->left] = gradient_triangle_8( dib, v, x, y, det );
         }
         break;
     }
@@ -4431,34 +4427,36 @@ static BOOL gradient_rect_8( const dib_info *dib, const RECT *rc, const TRIVERTE
 
 static BOOL gradient_rect_4( const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode )
 {
-    BYTE *ptr = get_pixel_ptr_4( dib, 0, rc->top );
-    int x, y, left, right, det;
+    BYTE *ptr = get_pixel_ptr_4( dib, rc->left, rc->top );
+    int x, y, left, right, det, pos;
 
     switch (mode)
     {
     case GRADIENT_FILL_RECT_H:
         for (y = rc->top; y < min( rc->top + 16, rc->bottom ); y++, ptr += dib->stride)
         {
-            for (x = rc->left; x < rc->right; x++)
+            for (x = rc->left, pos = rc->left & 1; x < rc->right; x++, pos++)
             {
                 BYTE val = gradient_rgb_8( dib, v, x - v[0].x, v[1].x - v[0].x, x, y );
-                if (x & 1)
-                    ptr[x / 2] = val | (ptr[x / 2] & 0xf0);
+                if (pos & 1)
+                    ptr[pos / 2] = val | (ptr[pos / 2] & 0xf0);
                 else
-                    ptr[x / 2] = (val << 4) | (ptr[x / 2] & 0x0f);
+                    ptr[pos / 2] = (val << 4) | (ptr[pos / 2] & 0x0f);
             }
         }
         for ( ; y < rc->bottom; y++, ptr += dib->stride)
         {
             x = rc->left;
-            if (x & 1)
+            pos = rc->left & 1;
+            if (pos)
             {
-                ptr[x / 2] = (ptr[x / 2 - 16 * dib->stride] & 0x0f) | (ptr[x / 2] & 0xf0);
+                ptr[0] = (ptr[-16 * dib->stride] & 0x0f) | (ptr[0] & 0xf0);
+                pos++;
                 x++;
             }
-            for (; x < rc->right - 1; x += 2) ptr[x / 2] = ptr[x / 2 - 16 * dib->stride];
+            for (; x < rc->right - 1; x += 2, pos += 2) ptr[pos / 2] = ptr[pos / 2 - 16 * dib->stride];
             if (x < rc->right)
-                ptr[x / 2] = (ptr[x / 2] & 0x0f) | (ptr[x / 2 - 16 * dib->stride] & 0xf0);
+                ptr[pos / 2] = (ptr[pos / 2] & 0x0f) | (ptr[pos / 2 - 16 * dib->stride] & 0xf0);
         }
         break;
 
@@ -4468,11 +4466,11 @@ static BOOL gradient_rect_4( const dib_info *dib, const RECT *rc, const TRIVERTE
             BYTE values[16];
             for (x = 0; x < 16; x++)
                 values[x] = gradient_rgb_8( dib, v, y - v[0].y, v[1].y - v[0].y, x, y );
-            for (x = rc->left; x < rc->right; x++)
-                if (x & 1)
-                    ptr[x / 2] = values[x % 16] | (ptr[x / 2] & 0xf0);
+            for (x = rc->left, pos = rc->left & 1; x < rc->right; x++, pos++)
+                if (pos & 1)
+                    ptr[pos / 2] = values[x % 16] | (ptr[pos / 2] & 0xf0);
                 else
-                    ptr[x / 2] = (values[x % 16] << 4) | (ptr[x / 2] & 0x0f);
+                    ptr[pos / 2] = (values[x % 16] << 4) | (ptr[pos / 2] & 0x0f);
         }
         break;
 
@@ -4481,13 +4479,13 @@ static BOOL gradient_rect_4( const dib_info *dib, const RECT *rc, const TRIVERTE
         for (y = rc->top; y < rc->bottom; y++, ptr += dib->stride)
         {
             triangle_coords( v, rc, y, &left, &right );
-            for (x = left; x < right; x++)
+            for (x = left, pos = left - (rc->left & ~1); x < right; x++, pos++)
             {
                 BYTE val = gradient_triangle_8( dib, v, x, y, det );
-                if (x & 1)
-                    ptr[x / 2] = val | (ptr[x / 2] & 0xf0);
+                if (pos & 1)
+                    ptr[pos / 2] = val | (ptr[pos / 2] & 0xf0);
                 else
-                    ptr[x / 2] = (val << 4) | (ptr[x / 2] & 0x0f);
+                    ptr[pos / 2] = (val << 4) | (ptr[pos / 2] & 0x0f);
             }
         }
         break;
@@ -4497,24 +4495,24 @@ static BOOL gradient_rect_4( const dib_info *dib, const RECT *rc, const TRIVERTE
 
 static BOOL gradient_rect_1( const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode )
 {
-    BYTE *ptr = get_pixel_ptr_1( dib, 0, rc->top );
-    int x, y, left, right, det;
+    BYTE *ptr = get_pixel_ptr_1( dib, rc->left, rc->top );
+    int x, y, left, right, det, pos;
 
     switch (mode)
     {
     case GRADIENT_FILL_RECT_H:
         for (y = rc->top; y < min( rc->top + 16, rc->bottom ); y++, ptr += dib->stride)
         {
-            for (x = rc->left; x < rc->right; x++)
+            for (x = rc->left, pos = rc->left & 7; x < rc->right; x++, pos++)
             {
                 BYTE val = gradient_rgb_8( dib, v, x - v[0].x, v[1].x - v[0].x, x, y ) ? 0xff : 0;
-                ptr[x / 8] = (ptr[x / 8] & ~pixel_masks_1[x % 8]) | (val & pixel_masks_1[x % 8]);
+                ptr[pos / 8] = (ptr[pos / 8] & ~pixel_masks_1[pos % 8]) | (val & pixel_masks_1[pos % 8]);
             }
         }
         for ( ; y < rc->bottom; y++, ptr += dib->stride)
-            for (x = rc->left; x < rc->right; x++)
-                ptr[x / 8] = (ptr[x / 8] & ~pixel_masks_1[x % 8]) |
-                             (ptr[x / 8 - 16 * dib->stride] & pixel_masks_1[x % 8]);
+            for (x = rc->left, pos = rc->left & 7; x < rc->right; x++, pos++)
+                ptr[pos / 8] = (ptr[pos / 8] & ~pixel_masks_1[pos % 8]) |
+                               (ptr[pos / 8 - 16 * dib->stride] & pixel_masks_1[pos % 8]);
         break;
 
     case GRADIENT_FILL_RECT_V:
@@ -4523,8 +4521,9 @@ static BOOL gradient_rect_1( const dib_info *dib, const RECT *rc, const TRIVERTE
             BYTE values[16];
             for (x = 0; x < 16; x++)
                 values[x] = gradient_rgb_8( dib, v, y - v[0].y, v[1].y - v[0].y, x, y ) ? 0xff : 0;
-            for (x = rc->left; x < rc->right; x++)
-                ptr[x / 8] = (ptr[x / 8] & ~pixel_masks_1[x % 8]) | (values[x % 16] & pixel_masks_1[x % 8]);
+            for (x = rc->left, pos = rc->left & 7; x < rc->right; x++, pos++)
+                ptr[pos / 8] = (ptr[pos / 8] & ~pixel_masks_1[pos % 8]) |
+                               (values[x % 16] & pixel_masks_1[pos % 8]);
         }
         break;
 
@@ -4533,10 +4532,10 @@ static BOOL gradient_rect_1( const dib_info *dib, const RECT *rc, const TRIVERTE
         for (y = rc->top; y < rc->bottom; y++, ptr += dib->stride)
         {
             triangle_coords( v, rc, y, &left, &right );
-            for (x = left; x < right; x++)
+            for (x = left, pos = left - (rc->left & ~7); x < right; x++, pos++)
             {
                 BYTE val = gradient_triangle_8( dib, v, x, y, det ) ? 0xff : 0;
-                ptr[x / 8] = (ptr[x / 8] & ~pixel_masks_1[x % 8]) | (val & pixel_masks_1[x % 8]);
+                ptr[pos / 8] = (ptr[pos / 8] & ~pixel_masks_1[pos % 8]) | (val & pixel_masks_1[pos % 8]);
             }
         }
         break;
@@ -4737,21 +4736,21 @@ static void draw_glyph_8( const dib_info *dib, const RECT *rect, const dib_info 
 static void draw_glyph_4( const dib_info *dib, const RECT *rect, const dib_info *glyph,
                           const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges )
 {
-    BYTE *dst_ptr = get_pixel_ptr_4( dib, 0, rect->top );
-    const BYTE *glyph_ptr = get_pixel_ptr_8( glyph, origin->x - rect->left, origin->y );
-    int x, y;
+    BYTE *dst_ptr = get_pixel_ptr_4( dib, rect->left, rect->top );
+    const BYTE *glyph_ptr = get_pixel_ptr_8( glyph, origin->x, origin->y );
+    int x, y, pos;
 
     for (y = rect->top; y < rect->bottom; y++)
     {
-        for (x = rect->left; x < rect->right; x++)
+        for (x = 0, pos = rect->left & 1; x < rect->right - rect->left; x++, pos++)
         {
             /* no antialiasing, glyph should only contain 0 or 16. */
             if (glyph_ptr[x] >= 16)
             {
-                if (x & 1)
-                    dst_ptr[x / 2] = text_pixel | (dst_ptr[x / 2] & 0xf0);
+                if (pos & 1)
+                    dst_ptr[pos / 2] = text_pixel | (dst_ptr[pos / 2] & 0xf0);
                 else
-                    dst_ptr[x / 2] = (text_pixel << 4) | (dst_ptr[x / 2] & 0x0f);
+                    dst_ptr[pos / 2] = (text_pixel << 4) | (dst_ptr[pos / 2] & 0x0f);
             }
         }
         dst_ptr += dib->stride;
@@ -4762,18 +4761,19 @@ static void draw_glyph_4( const dib_info *dib, const RECT *rect, const dib_info 
 static void draw_glyph_1( const dib_info *dib, const RECT *rect, const dib_info *glyph,
                           const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges )
 {
-    BYTE *dst_ptr = get_pixel_ptr_1( dib, 0, rect->top );
-    const BYTE *glyph_ptr = get_pixel_ptr_8( glyph, origin->x - rect->left, origin->y );
-    int x, y;
+    BYTE *dst_ptr = get_pixel_ptr_1( dib, rect->left, rect->top );
+    const BYTE *glyph_ptr = get_pixel_ptr_8( glyph, origin->x, origin->y );
+    int x, y, pos;
     BYTE text = (text_pixel & 1) ? 0xff : 0;
 
     for (y = rect->top; y < rect->bottom; y++)
     {
-        for (x = rect->left; x < rect->right; x++)
+        for (x = 0, pos = rect->left & 7; x < rect->right - rect->left; x++, pos++)
         {
             /* no antialiasing, glyph should only contain 0 or 16. */
             if (glyph_ptr[x] >= 16)
-                dst_ptr[x / 8] = (dst_ptr[x / 8] & ~pixel_masks_1[x % 8]) | (text & pixel_masks_1[x % 8]);
+                dst_ptr[pos / 8] = (dst_ptr[pos / 8] & ~pixel_masks_1[pos % 8]) |
+                                   (text & pixel_masks_1[pos % 8]);
         }
         dst_ptr += dib->stride;
         glyph_ptr += glyph->stride;
