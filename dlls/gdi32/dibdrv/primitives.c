@@ -3776,12 +3776,24 @@ static inline BYTE blend_color(BYTE dst, BYTE src, DWORD alpha)
     return (src * alpha + dst * (255 - alpha) + 127) / 255;
 }
 
-static inline DWORD blend_argb( DWORD dst, DWORD src, DWORD alpha )
+static inline DWORD blend_argb_constant_alpha( DWORD dst, DWORD src, DWORD alpha )
 {
     return (blend_color( dst, src, alpha ) |
             blend_color( dst >> 8, src >> 8, alpha ) << 8 |
             blend_color( dst >> 16, src >> 16, alpha ) << 16 |
             blend_color( dst >> 24, src >> 24, alpha ) << 24);
+}
+
+static inline DWORD blend_argb( DWORD dst, DWORD src )
+{
+    BYTE b = (BYTE)src;
+    BYTE g = (BYTE)(src >> 8);
+    BYTE r = (BYTE)(src >> 16);
+    DWORD alpha  = (BYTE)(src >> 24);
+    return ((b     + ((BYTE)dst         * (255 - alpha) + 127) / 255) |
+            (g     + ((BYTE)(dst >> 8)  * (255 - alpha) + 127) / 255) << 8 |
+            (r     + ((BYTE)(dst >> 16) * (255 - alpha) + 127) / 255) << 16 |
+            (alpha + ((BYTE)(dst >> 24) * (255 - alpha) + 127) / 255) << 24);
 }
 
 static inline DWORD blend_argb_alpha( DWORD dst, DWORD src, DWORD alpha )
@@ -3822,13 +3834,20 @@ static void blend_rect_8888(const dib_info *dst, const RECT *rc,
     int x, y;
 
     if (blend.AlphaFormat & AC_SRC_ALPHA)
-        for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
-            for (x = 0; x < rc->right - rc->left; x++)
-                dst_ptr[x] = blend_argb_alpha( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
+    {
+	if (blend.SourceConstantAlpha == 255)
+	    for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
+		for (x = 0; x < rc->right - rc->left; x++)
+		    dst_ptr[x] = blend_argb( dst_ptr[x], src_ptr[x] );
+        else
+	    for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
+		for (x = 0; x < rc->right - rc->left; x++)
+		    dst_ptr[x] = blend_argb_alpha( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
+    }
     else
-        for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
-            for (x = 0; x < rc->right - rc->left; x++)
-                dst_ptr[x] = blend_argb( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
+	for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
+	    for (x = 0; x < rc->right - rc->left; x++)
+		dst_ptr[x] = blend_argb_constant_alpha( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
 }
 
 static void blend_rect_32(const dib_info *dst, const RECT *rc,
