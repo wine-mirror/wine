@@ -866,6 +866,34 @@ static struct call_entry xmlspaceattr_test_alternate[] = {
     { CH_ENDTEST }
 };
 
+/* attribute value normalization test */
+static const char attribute_normalize[] =
+    "<?xml version=\"1.0\" ?>\n"
+    "<a attr1=\" \r \n \tattr_value &#65; \t \r \n\r\n \n\"/>\n";
+
+static struct attribute_entry attribute_norm_attrs[] = {
+    { "", "attr1", "attr1", "      attr_value A         " },
+    { NULL }
+};
+
+static struct call_entry attribute_norm[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, S_OK },
+    { CH_STARTDOCUMENT, 0, 0, S_OK },
+    { CH_STARTELEMENT, 6, 4, S_OK, "", "a", "a", attribute_norm_attrs },
+    { CH_ENDELEMENT, 6, 4, S_OK, "", "a", "a" },
+    { CH_ENDDOCUMENT, 0, 0, S_OK },
+    { CH_ENDTEST }
+};
+
+static struct call_entry attribute_norm_alt[] = {
+    { CH_PUTDOCUMENTLOCATOR, 1, 0, S_OK },
+    { CH_STARTDOCUMENT, 1, 22, S_OK },
+    { CH_STARTELEMENT, 8, 3, S_OK, "", "a", "a", attribute_norm_attrs },
+    { CH_ENDELEMENT, 8, 3, S_OK, "", "a", "a" },
+    { CH_ENDDOCUMENT, 9, 0, S_OK },
+    { CH_ENDTEST }
+};
+
 static const char xmlspace_attr[] =
     "<?xml version=\"1.0\" encoding=\"UTF-16\"?>"
     "<a xml:space=\"preserve\"> Some text data </a>";
@@ -2169,6 +2197,29 @@ static void test_saxreader(void)
 
         hr = ISAXXMLReader_putFeature(reader, _bstr_("http://xml.org/sax/features/namespace-prefixes"), VARIANT_TRUE);
         EXPECT_HR(hr, S_OK);
+
+        /* attribute normalization */
+        CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        size.QuadPart = strlen(attribute_normalize);
+        IStream_SetSize(stream, size);
+        IStream_Write(stream, attribute_normalize, strlen(attribute_normalize), &written);
+        pos.QuadPart = 0;
+        IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+        V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
+        V_UNKNOWN(&var) = (IUnknown*)stream;
+
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
+        {
+            test_seq = attribute_norm_alt;
+        }
+        else
+            test_seq = attribute_norm;
+
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parse(reader, var);
+        EXPECT_HR(hr, S_OK);
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "attribute value normalization", TRUE);
 
         ISAXXMLReader_Release(reader);
         table++;
