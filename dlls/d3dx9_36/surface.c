@@ -95,9 +95,119 @@ struct dds_header
     DWORD reserved2;
 };
 
+static D3DFORMAT dds_fourcc_to_d3dformat(DWORD fourcc)
+{
+    int i;
+    static const DWORD known_fourcc[] = {
+        MAKEFOURCC('U','Y','V','Y'),
+        MAKEFOURCC('Y','U','Y','2'),
+        MAKEFOURCC('R','G','B','G'),
+        MAKEFOURCC('G','R','G','B'),
+        MAKEFOURCC('D','X','T','1'),
+        MAKEFOURCC('D','X','T','2'),
+        MAKEFOURCC('D','X','T','3'),
+        MAKEFOURCC('D','X','T','4'),
+        MAKEFOURCC('D','X','T','5')
+    };
+
+    for (i = 0; i < sizeof(known_fourcc) / sizeof(known_fourcc[0]); i++)
+    {
+        if (known_fourcc[i] == fourcc)
+            return fourcc;
+    }
+
+    WARN("Unknown FourCC %#x\n", fourcc);
+    return D3DFMT_UNKNOWN;
+}
+
+static D3DFORMAT dds_rgb_to_d3dformat(const struct dds_pixel_format *pixel_format)
+{
+    int i;
+    static const struct {
+        DWORD bpp;
+        DWORD rmask;
+        DWORD gmask;
+        DWORD bmask;
+        DWORD amask;
+        D3DFORMAT format;
+    } rgb_pixel_formats[] = {
+        { 8, 0xe0, 0x1c, 0x03, 0, D3DFMT_R3G3B2 },
+        { 16, 0xf800, 0x07e0, 0x001f, 0x0000, D3DFMT_R5G6B5 },
+        { 16, 0x7c00, 0x03e0, 0x001f, 0x8000, D3DFMT_A1R5G5B5 },
+        { 16, 0x7c00, 0x03e0, 0x001f, 0x0000, D3DFMT_X1R5G5B5 },
+        { 16, 0x0f00, 0x00f0, 0x000f, 0xf000, D3DFMT_A4R4G4B4 },
+        { 16, 0x0f00, 0x00f0, 0x000f, 0x0000, D3DFMT_X4R4G4B4 },
+        { 16, 0x00e0, 0x001c, 0x0003, 0xff00, D3DFMT_A8R3G3B2 },
+        { 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000, D3DFMT_R8G8B8 },
+        { 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000, D3DFMT_A8R8G8B8 },
+        { 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000, D3DFMT_X8R8G8B8 },
+        { 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000, D3DFMT_A2B10G10R10 },
+        { 32, 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000, D3DFMT_A2R10G10B10 },
+        { 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000, D3DFMT_G16R16 },
+    };
+
+    for (i = 0; i < sizeof(rgb_pixel_formats) / sizeof(rgb_pixel_formats[0]); i++)
+    {
+        if (rgb_pixel_formats[i].bpp == pixel_format->bpp
+            && rgb_pixel_formats[i].rmask == pixel_format->rmask
+            && rgb_pixel_formats[i].gmask == pixel_format->gmask
+            && rgb_pixel_formats[i].bmask == pixel_format->bmask)
+        {
+            if ((pixel_format->flags & DDS_PF_ALPHA) && rgb_pixel_formats[i].amask == pixel_format->amask)
+                return rgb_pixel_formats[i].format;
+            if (rgb_pixel_formats[i].amask == 0)
+                return rgb_pixel_formats[i].format;
+        }
+    }
+
+    WARN("Unknown RGB pixel format (%#x, %#x, %#x, %#x)\n",
+        pixel_format->rmask, pixel_format->gmask, pixel_format->bmask, pixel_format->amask);
+    return D3DFMT_UNKNOWN;
+}
+
+static D3DFORMAT dds_luminance_to_d3dformat(const struct dds_pixel_format *pixel_format)
+{
+    if (pixel_format->bpp == 8)
+    {
+        if (pixel_format->rmask == 0xff)
+            return D3DFMT_L8;
+        if ((pixel_format->flags & DDS_PF_ALPHA) && pixel_format->rmask == 0x0f && pixel_format->amask == 0xf0)
+            return D3DFMT_A4L4;
+    }
+    if (pixel_format->bpp == 16)
+    {
+        if ((pixel_format->flags & DDS_PF_ALPHA) && pixel_format->rmask == 0x00ff && pixel_format->amask == 0xff00)
+            return D3DFMT_A8L8;
+    }
+
+    WARN("Unknown luminance pixel format (bpp %#x, l %#x, a %#x)\n",
+        pixel_format->bpp, pixel_format->rmask, pixel_format->amask);
+    return D3DFMT_UNKNOWN;
+}
+
+static D3DFORMAT dds_alpha_to_d3dformat(const struct dds_pixel_format *pixel_format)
+{
+    if (pixel_format->bpp == 8 && pixel_format->amask == 0xff)
+        return D3DFMT_A8;
+
+    WARN("Unknown Alpha pixel format (%#x, %#x)\n", pixel_format->bpp, pixel_format->rmask);
+    return D3DFMT_UNKNOWN;
+}
+
 static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pixel_format)
 {
-    FIXME("Pixel format conversion not implemented.\n");
+    if (pixel_format->flags & DDS_PF_FOURCC)
+        return dds_fourcc_to_d3dformat(pixel_format->fourcc);
+    if (pixel_format->flags & DDS_PF_RGB)
+        return dds_rgb_to_d3dformat(pixel_format);
+    if (pixel_format->flags & DDS_PF_LUMINANCE)
+        return dds_luminance_to_d3dformat(pixel_format);
+    if (pixel_format->flags & DDS_PF_ALPHA_ONLY)
+        return dds_alpha_to_d3dformat(pixel_format);
+
+    WARN("Unknown pixel format (fourcc %#x, bpp %#x, r %#x, g %#x, b %#x, a %#x)\n",
+        pixel_format->fourcc, pixel_format->bpp, pixel_format->rmask, pixel_format->gmask,
+        pixel_format->bmask, pixel_format->amask);
     return D3DFMT_UNKNOWN;
 }
 
