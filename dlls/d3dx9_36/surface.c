@@ -729,11 +729,8 @@ static void format_from_vec4(const PixelFormatDesc *format, const struct vec4 *s
  * Pixels outsize the source rect are blacked out.
  * Works only for ARGB formats with 1 - 4 bytes per pixel.
  */
-static void copy_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsize,
-                             CONST PixelFormatDesc *srcformat,
-                             BYTE *dest, UINT destpitch, POINT destsize,
-                             CONST PixelFormatDesc *destformat,
-                             D3DCOLOR colorkey)
+static void copy_simple_data(const BYTE *src, UINT srcpitch, SIZE src_size, const PixelFormatDesc *srcformat,
+        BYTE *dest, UINT destpitch, SIZE dst_size, const PixelFormatDesc *destformat, D3DCOLOR colorkey)
 {
     struct argb_conversion_info conv_info, ck_conv_info;
     const PixelFormatDesc *ck_format = NULL;
@@ -744,8 +741,8 @@ static void copy_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsize,
     ZeroMemory(channels, sizeof(channels));
     init_argb_conversion_info(srcformat, destformat, &conv_info);
 
-    minwidth  = (srcsize.x < destsize.x) ? srcsize.x : destsize.x;
-    minheight = (srcsize.y < destsize.y) ? srcsize.y : destsize.y;
+    minwidth = (src_size.cx < dst_size.cx) ? src_size.cx : dst_size.cx;
+    minheight = (src_size.cy < dst_size.cy) ? src_size.cy : dst_size.cy;
 
     if (colorkey)
     {
@@ -806,11 +803,11 @@ static void copy_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsize,
             destptr += destformat->bytes_per_pixel;
         }
 
-        if(srcsize.x < destsize.x) /* black out remaining pixels */
-            ZeroMemory(destptr, destformat->bytes_per_pixel * (destsize.x - srcsize.x));
+        if (src_size.cx < dst_size.cx) /* black out remaining pixels */
+            memset(destptr, 0, destformat->bytes_per_pixel * (dst_size.cx - src_size.cx));
     }
-    if(srcsize.y < destsize.y) /* black out remaining pixels */
-        ZeroMemory(dest + srcsize.y * destpitch, destpitch * (destsize.y - srcsize.y));
+    if (src_size.cy < dst_size.cy) /* black out remaining pixels */
+        memset(dest + src_size.cy * destpitch, 0, destpitch * (dst_size.cy - src_size.cy));
 }
 
 /************************************************************
@@ -821,11 +818,8 @@ static void copy_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsize,
  * using a point filter.
  * Works only for ARGB formats with 1 - 4 bytes per pixel.
  */
-static void point_filter_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsize,
-                                     CONST PixelFormatDesc *srcformat,
-                                     BYTE *dest, UINT destpitch, POINT destsize,
-                                     CONST PixelFormatDesc *destformat,
-                                     D3DCOLOR colorkey)
+static void point_filter_simple_data(const BYTE *src, UINT srcpitch, SIZE src_size, const PixelFormatDesc *srcformat,
+        BYTE *dest, UINT destpitch, SIZE dst_size, const PixelFormatDesc *destformat, D3DCOLOR colorkey)
 {
     struct argb_conversion_info conv_info, ck_conv_info;
     const PixelFormatDesc *ck_format = NULL;
@@ -843,12 +837,14 @@ static void point_filter_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsi
         init_argb_conversion_info(srcformat, ck_format, &ck_conv_info);
     }
 
-    for(y = 0;y < destsize.y;y++) {
+    for (y = 0; y < dst_size.cy; ++y)
+    {
         BYTE *destptr = dest + y * destpitch;
-        const BYTE *bufptr = src + srcpitch * (y * srcsize.y / destsize.y);
+        const BYTE *bufptr = src + srcpitch * (y * src_size.cy / dst_size.cy);
 
-        for(x = 0;x < destsize.x;x++) {
-            const BYTE *srcptr = bufptr + (x * srcsize.x / destsize.x) * srcformat->bytes_per_pixel;
+        for (x = 0; x < dst_size.cx; ++x)
+        {
+            const BYTE *srcptr = bufptr + (x * src_size.cx / dst_size.cx) * srcformat->bytes_per_pixel;
             DWORD val;
 
             /* extract source color components */
@@ -944,7 +940,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
     CONST PixelFormatDesc *srcformatdesc, *destformatdesc;
     D3DSURFACE_DESC surfdesc;
     D3DLOCKED_RECT lockrect;
-    POINT srcsize, destsize;
+    SIZE src_size, dst_size;
     HRESULT hr;
 
     TRACE("(%p, %p, %p, %p, %x, %u, %p, %p %u, %#x)\n", pDestSurface, pDestPalette, pDestRect, pSrcMemory,
@@ -957,18 +953,22 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
 
     IDirect3DSurface9_GetDesc(pDestSurface, &surfdesc);
 
-    srcsize.x = pSrcRect->right - pSrcRect->left;
-    srcsize.y = pSrcRect->bottom - pSrcRect->top;
-    if( !pDestRect ) {
-        destsize.x = surfdesc.Width;
-        destsize.y = surfdesc.Height;
-    } else {
+    src_size.cx = pSrcRect->right - pSrcRect->left;
+    src_size.cy = pSrcRect->bottom - pSrcRect->top;
+    if (!pDestRect)
+    {
+        dst_size.cx = surfdesc.Width;
+        dst_size.cy = surfdesc.Height;
+    }
+    else
+    {
         if(pDestRect->left > pDestRect->right || pDestRect->right > surfdesc.Width) return D3DERR_INVALIDCALL;
         if(pDestRect->top > pDestRect->bottom || pDestRect->bottom > surfdesc.Height) return D3DERR_INVALIDCALL;
         if(pDestRect->left < 0 || pDestRect->top < 0) return D3DERR_INVALIDCALL;
-        destsize.x = pDestRect->right - pDestRect->left;
-        destsize.y = pDestRect->bottom - pDestRect->top;
-        if(destsize.x == 0 || destsize.y == 0) return D3D_OK;
+        dst_size.cx = pDestRect->right - pDestRect->left;
+        dst_size.cy = pDestRect->bottom - pDestRect->top;
+        if (!dst_size.cx || !dst_size.cy)
+            return D3D_OK;
     }
 
     srcformatdesc = get_format_info(SrcFormat);
@@ -980,11 +980,11 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
         return E_NOTIMPL;
 
     if (SrcFormat == surfdesc.Format
-            && destsize.x == srcsize.x
-            && destsize.y == srcsize.y) /* Simple copy. */
+            && dst_size.cx == src_size.cx
+            && dst_size.cy == src_size.cy) /* Simple copy. */
     {
-        UINT row_block_count = ((srcsize.x + srcformatdesc->block_width - 1) / srcformatdesc->block_width);
-        UINT row_count = (srcsize.y + srcformatdesc->block_height - 1) / srcformatdesc->block_height;
+        UINT row_block_count = ((src_size.cx + srcformatdesc->block_width - 1) / srcformatdesc->block_width);
+        UINT row_count = (src_size.cy + srcformatdesc->block_height - 1) / srcformatdesc->block_height;
         const BYTE *src_addr;
         BYTE *dst_addr;
         UINT row;
@@ -992,9 +992,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
         if (pSrcRect->left & (srcformatdesc->block_width - 1)
                 || pSrcRect->top & (srcformatdesc->block_height - 1)
                 || (pSrcRect->right & (srcformatdesc->block_width - 1)
-                    && srcsize.x != surfdesc.Width)
+                    && src_size.cx != surfdesc.Width)
                 || (pSrcRect->bottom & (srcformatdesc->block_height - 1)
-                    && srcsize.y != surfdesc.Height))
+                    && src_size.cy != surfdesc.Height))
         {
             WARN("Source rect %s is misaligned.\n", wine_dbgstr_rect(pSrcRect));
             return D3DXERR_INVALIDDATA;
@@ -1033,16 +1033,16 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
 
         if ((dwFilter & 0xf) == D3DX_FILTER_NONE)
         {
-            copy_simple_data(pSrcMemory, SrcPitch, srcsize, srcformatdesc,
-                    lockrect.pBits, lockrect.Pitch, destsize, destformatdesc,
+            copy_simple_data(pSrcMemory, SrcPitch, src_size, srcformatdesc,
+                    lockrect.pBits, lockrect.Pitch, dst_size, destformatdesc,
                     Colorkey);
         }
         else /* if ((dwFilter & 0xf) == D3DX_FILTER_POINT) */
         {
             /* Always apply a point filter until D3DX_FILTER_LINEAR,
              * D3DX_FILTER_TRIANGLE and D3DX_FILTER_BOX are implemented. */
-            point_filter_simple_data(pSrcMemory, SrcPitch, srcsize, srcformatdesc,
-                    lockrect.pBits, lockrect.Pitch, destsize, destformatdesc,
+            point_filter_simple_data(pSrcMemory, SrcPitch, src_size, srcformatdesc,
+                    lockrect.pBits, lockrect.Pitch, dst_size, destformatdesc,
                     Colorkey);
         }
 
