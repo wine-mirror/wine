@@ -168,6 +168,14 @@ case $host in
       AC_SUBST(TARGETFLAGS,"-m64")
     fi
     ;;
+  arm*)
+    AC_MSG_CHECKING([whether $CC supports Thumb2])
+    WINE_TRY_ASM_LINK([".syntax unified\n.thumb\nb.w ac_test\n.arm"],[int ac_test(int i) { return i; }], [if (ac_test(1)) return 1],
+                      [AC_MSG_RESULT([yes])],
+                      [AC_MSG_RESULT([no])
+                       AC_MSG_ERROR([You need a target with Thumb2 support to build Wine for ARM.])])
+    CFLAGS="$CFLAGS -marm"
+    ;;
   *-mingw32*|*-cygwin*)
     enable_win16=${enable_win16:-no}
     CFLAGS="$CFLAGS -D_WIN32"
