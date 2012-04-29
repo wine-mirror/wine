@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009-2010 Tony Wasserka
+ * Copyright (C) 2012 Józef Kucia
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,8 +29,131 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 
 /* Wine-specific WIC GUIDs */
-
 DEFINE_GUID(GUID_WineContainerFormatTga, 0x0c44fda1,0xa5c5,0x4298,0x96,0x85,0x47,0x3f,0xc1,0x7c,0xd3,0x22);
+
+/* dds_header.flags */
+#define DDS_CAPS 0x1
+#define DDS_HEIGHT 0x2
+#define DDS_WIDTH 0x2
+#define DDS_PITCH 0x8
+#define DDS_PIXELFORMAT 0x1000
+#define DDS_MIPMAPCOUNT 0x20000
+#define DDS_LINEARSIZE 0x80000
+#define DDS_DEPTH 0x800000
+
+/* dds_header.caps */
+#define DDS_CAPS_COMPLEX 0x8
+#define DDS_CAPS_TEXTURE 0x1000
+#define DDS_CAPS_MIPMAP 0x400000
+
+/* dds_header.caps2 */
+#define DDS_CAPS2_CUBEMAP 0x200
+#define DDS_CAPS2_CUBEMAP_POSITIVEX 0x400
+#define DDS_CAPS2_CUBEMAP_NEGATIVEX 0x800
+#define DDS_CAPS2_CUBEMAP_POSITIVEY 0x1000
+#define DDS_CAPS2_CUBEMAP_NEGATIVEY 0x2000
+#define DDS_CAPS2_CUBEMAP_POSITIVEZ 0x4000
+#define DDS_CAPS2_CUBEMAP_NEGATIVEZ 0x8000
+#define DDS_CAPS2_VOLUME 0x200000
+
+/* dds_pixel_format.flags */
+#define DDS_PF_ALPHA 0x1
+#define DDS_PF_ALPHA_ONLY 0x2
+#define DDS_PF_FOURCC 0x4
+#define DDS_PF_RGB 0x40
+#define DDS_PF_YUV 0x200
+#define DDS_PF_LUMINANCE 0x20000
+
+struct dds_pixel_format
+{
+    DWORD size;
+    DWORD flags;
+    DWORD fourcc;
+    DWORD bpp;
+    DWORD rmask;
+    DWORD gmask;
+    DWORD bmask;
+    DWORD amask;
+};
+
+struct dds_header
+{
+    DWORD signature;
+    DWORD size;
+    DWORD flags;
+    DWORD height;
+    DWORD width;
+    DWORD pitch_or_linear_size;
+    DWORD depth;
+    DWORD miplevels;
+    DWORD reserved[11];
+    struct dds_pixel_format pixel_format;
+    DWORD caps;
+    DWORD caps2;
+    DWORD caps3;
+    DWORD caps4;
+    DWORD reserved2;
+};
+
+static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pixel_format)
+{
+    FIXME("Pixel format conversion not implemented.\n");
+    return D3DFMT_UNKNOWN;
+}
+
+/************************************************************
+* get_image_info_from_dds
+*
+* Fills a D3DXIMAGE_INFO structure with information
+* about a DDS file stored in the memory.
+*
+* PARAMS
+*   buffer  [I] pointer to DDS data
+*   length  [I] size of DDS data
+*   info    [O] pointer to D3DXIMAGE_INFO structure
+*
+* RETURNS
+*   Success: D3D_OK
+*   Failure: D3DXERR_INVALIDDATA
+*
+*/
+static HRESULT get_image_info_from_dds(const void *buffer, DWORD length, D3DXIMAGE_INFO *info)
+{
+   const struct dds_header *header = buffer;
+
+   if (length < sizeof(*header) || !info)
+       return D3DXERR_INVALIDDATA;
+
+   if (header->pixel_format.size != sizeof(header->pixel_format))
+       return D3DXERR_INVALIDDATA;
+
+   info->Width = header->width;
+   info->Height = header->height;
+   info->Depth = 1;
+   info->MipLevels = (header->flags & DDS_MIPMAPCOUNT) ?  header->miplevels : 1;
+
+   info->Format = dds_pixel_format_to_d3dformat(&header->pixel_format);
+   if (info->Format == D3DFMT_UNKNOWN)
+       return D3DXERR_INVALIDDATA;
+
+   if (header->caps2 & DDS_CAPS2_VOLUME)
+   {
+       info->Depth = header->depth;
+       info->ResourceType = D3DRTYPE_VOLUMETEXTURE;
+   }
+   else if (header->caps2 & DDS_CAPS2_CUBEMAP)
+   {
+       info->ResourceType = D3DRTYPE_CUBETEXTURE;
+   }
+   else
+   {
+       info->ResourceType = D3DRTYPE_TEXTURE;
+   }
+
+   info->ImageFileFormat = D3DXIFF_DDS;
+
+   return D3D_OK;
+}
 
 /************************************************************
  * D3DXGetImageInfoFromFileInMemory
@@ -68,6 +192,9 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
     if (!info)
         return D3D_OK;
 
+    if ((datasize >= 4) && !strncmp(data, "DDS ", 4))
+        return get_image_info_from_dds(data, datasize, info);
+
     initresult = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, &IID_IWICImagingFactory, (void**)&factory);
@@ -81,9 +208,7 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
     }
 
     if (FAILED(hr)) {
-        if ((datasize >= 4) && !strncmp(data, "DDS ", 4))
-            FIXME("File type DDS is not supported yet\n");
-        else if ((datasize >= 2) && (!strncmp(data, "P3", 2) || !strncmp(data, "P6", 2)))
+        if ((datasize >= 2) && (!strncmp(data, "P3", 2) || !strncmp(data, "P6", 2)))
             FIXME("File type PPM is not supported yet\n");
         else if ((datasize >= 2) && !strncmp(data, "BM", 2))
             FIXME("File type DIB is not supported yet\n");
