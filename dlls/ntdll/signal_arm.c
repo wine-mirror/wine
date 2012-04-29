@@ -356,20 +356,33 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
     return STATUS_SUCCESS;
 }
 
+extern void raise_func_trampoline_thumb( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func );
+__ASM_GLOBAL_FUNC( raise_func_trampoline_thumb,
+                   ".thumb\n\t"
+                   "blx r2\n\t"
+                   "bkpt")
+
+extern void raise_func_trampoline_arm( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func );
+__ASM_GLOBAL_FUNC( raise_func_trampoline_arm,
+                   ".arm\n\t"
+                   "blx r2\n\t"
+                   "bkpt")
+
 /***********************************************************************
  *           setup_exception_record
  *
  * Setup the exception record and context on the thread stack.
  */
-static EXCEPTION_RECORD *setup_exception_record( SIGCONTEXT *sigcontext, void *stack_ptr, raise_func func )
+static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func func )
 {
     struct stack_layout
     {
         CONTEXT           context;
         EXCEPTION_RECORD  rec;
-    } *stack = stack_ptr;
+    } *stack;
     DWORD exception_code = 0;
 
+    stack = (struct stack_layout *)(SP_sig(sigcontext) & ~3);
     stack--;  /* push the stack_layout structure */
 
     stack->rec.ExceptionRecord  = NULL;
@@ -382,9 +395,13 @@ static EXCEPTION_RECORD *setup_exception_record( SIGCONTEXT *sigcontext, void *s
 
     /* now modify the sigcontext to return to the raise function */
     SP_sig(sigcontext) = (DWORD)stack;
-    PC_sig(sigcontext) = (DWORD)func;
+    if (CPSR_sig(sigcontext) & 0x20)
+        PC_sig(sigcontext) = (DWORD)raise_func_trampoline_thumb;
+    else
+        PC_sig(sigcontext) = (DWORD)raise_func_trampoline_arm;
     REGn_sig(0, sigcontext) = (DWORD)&stack->rec;  /* first arg for raise_func */
     REGn_sig(1, sigcontext) = (DWORD)&stack->context; /* second arg for raise_func */
+    REGn_sig(2, sigcontext) = (DWORD)func; /* the raise_func as third arg for the trampoline */
 
 
     return &stack->rec;
@@ -542,7 +559,6 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
 {
     EXCEPTION_RECORD *rec;
     SIGCONTEXT *context = ucontext;
-    void *stack = (void *) (SP_sig(context) & ~3);
 
     /* check for page fault inside the thread stack */
     if (TRAP_sig(context) == TRAP_ARM_PAGEFLT &&
@@ -553,13 +569,13 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         /* check if this was the last guard page */
         if ((char *)info->si_addr < (char *)NtCurrentTeb()->DeallocationStack + 2*4096)
         {
-            rec = setup_exception_record( context, stack, raise_segv_exception );
+            rec = setup_exception( context, raise_segv_exception );
             rec->ExceptionCode = EXCEPTION_STACK_OVERFLOW;
         }
         return;
     }
 
-    rec = setup_exception_record( context, stack, raise_segv_exception );
+    rec = setup_exception( context, raise_segv_exception );
     if (rec->ExceptionCode == EXCEPTION_STACK_OVERFLOW) return;
 
     switch(TRAP_sig(context))
