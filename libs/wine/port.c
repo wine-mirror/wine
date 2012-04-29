@@ -153,12 +153,7 @@ __ASM_GLOBAL_FUNC( wine_call_on_stack,
                    "mov sp, r2\n\t"     /* stack */
                    "mov r2, r0\n\t"     /* func -> scratch register */
                    "mov r0, r1\n\t"     /* arg */
-#if defined(__thumb__)
                    "blx r2\n\t"         /* call func */
-#else
-                   "mov LR, PC\n\t"     /* return after branch */
-                   "mov PC, r2\n\t"     /* call func */
-#endif
                    "mov sp, r4\n\t"     /* restore old sp from local var */
                    "pop {r4,PC}")       /* fetch return address into pc */
 #elif defined(__sparc__) && defined(__GNUC__)
