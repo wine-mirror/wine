@@ -2492,6 +2492,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetStreamSource(IDirect3DDevice9Ex *i
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_buffer *retStream = NULL;
+    IDirect3DVertexBuffer9Impl *buffer_impl;
     HRESULT hr;
 
     TRACE("iface %p, stream_idx %u, buffer %p, offset %p, stride %p.\n",
@@ -2505,7 +2506,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetStreamSource(IDirect3DDevice9Ex *i
     hr = wined3d_device_get_stream_source(This->wined3d_device, StreamNumber, &retStream, OffsetInBytes, pStride);
     if (SUCCEEDED(hr) && retStream)
     {
-        *pStream = wined3d_buffer_get_parent(retStream);
+        buffer_impl = wined3d_buffer_get_parent(retStream);
+        *pStream = &buffer_impl->IDirect3DVertexBuffer9_iface;
         IDirect3DVertexBuffer9_AddRef(*pStream);
         wined3d_buffer_decref(retStream);
     }
