@@ -605,7 +605,7 @@ static void testSetTcpEntry(void)
     ret = pSetTcpEntry(&row);
     todo_wine ok( ret == ERROR_INVALID_PARAMETER, "got %u, expected %u\n", ret, ERROR_INVALID_PARAMETER);
 
-    row.dwState = MIB_TCP_STATE_DELETE_TCB;
+    U(row).dwState = MIB_TCP_STATE_DELETE_TCB;
     ret = pSetTcpEntry(&row);
     todo_wine ok( ret == ERROR_MR_MID_NOT_FOUND || broken(ret == ERROR_INVALID_PARAMETER),
        "got %u, expected %u\n", ret, ERROR_MR_MID_NOT_FOUND);
