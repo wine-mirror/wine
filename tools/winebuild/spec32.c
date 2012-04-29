@@ -415,6 +415,9 @@ static void output_asm_constructor( const char *constructor )
             output( "\tnop\n" );
             break;
         case CPU_ARM:
+            output( "\tblx %s\n", asm_name(constructor) );
+            output( "\t.arm\n" );
+            break;
         case CPU_POWERPC:
             output( "\tbl %s\n", asm_name(constructor) );
             break;
@@ -458,6 +461,10 @@ void output_module( DLLSPEC *spec )
             output( "\tjmp 1f\n" );
             break;
         case CPU_ARM:
+            output( "\n\t.syntax unified\n" );
+            output( "\n\t.thumb\n" );
+            output( "\tb.w 1f\n" );
+            break;
         case CPU_POWERPC:
             output( "\tb 1f\n" );
             break;
