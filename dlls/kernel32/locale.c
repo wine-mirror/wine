@@ -3910,9 +3910,9 @@ INT WINAPI IdnToNameprepUnicode(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cch
     extern const WCHAR nameprep_mapping[];
     const WCHAR *ptr;
     WORD flags;
-    WCHAR *map_str, *norm_str, ch;
-    DWORD i, map_len, norm_len, mask;
-    BOOL have_bidi_ral = FALSE, prohibit_bidi_ral = FALSE, ascii_only = TRUE;
+    WCHAR buf[64], *map_str, norm_str[64], ch;
+    DWORD i, map_len, norm_len, mask, label_start, label_end, out = 0;
+    BOOL have_bidi_ral, prohibit_bidi_ral, ascii_only;
 
     TRACE("%x %p %d %p %d\n", dwFlags, lpUnicodeCharStr, cchUnicodeChar,
         lpNameprepCharStr, cchNameprepChar);
@@ -3934,139 +3934,178 @@ INT WINAPI IdnToNameprepUnicode(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cch
         return 0;
     }
 
-    for(i=0; i<cchUnicodeChar; i++) {
-        ch = lpUnicodeCharStr[i];
-        if(ch > 0x8f) {
-            ascii_only = FALSE;
-            continue;
-        }
+    for(label_start=0; label_start<cchUnicodeChar;) {
+        ascii_only = TRUE;
+        for(i=label_start; i<cchUnicodeChar; i++) {
+            ch = lpUnicodeCharStr[i];
 
-        if(i==cchUnicodeChar-1 && !ch)
-            continue;
-        if(!ch) {
+            if(i!=cchUnicodeChar-1 && !ch) {
+                SetLastError(ERROR_INVALID_NAME);
+                return 0;
+            }
+            /* check if ch is one of label separators defined in RFC3490 */
+            if(!ch || ch=='.' || ch==0x3002 || ch==0xff0e || ch==0xff61)
+                break;
+
+            if(ch > 0x7f) {
+                ascii_only = FALSE;
+                continue;
+            }
+
+            if((dwFlags&IDN_USE_STD3_ASCII_RULES) == 0)
+                continue;
+            if((ch>='a' && ch<='z') || (ch>='A' && ch<='Z')
+                    || (ch>='0' && ch<='9') || ch=='-')
+                continue;
+
+            SetLastError(ERROR_INVALID_NAME);
+            return 0;
+        }
+        label_end = i;
+        /* last label may be empty */
+        if(label_start==label_end && ch) {
             SetLastError(ERROR_INVALID_NAME);
             return 0;
         }
 
-        if((dwFlags&IDN_USE_STD3_ASCII_RULES) == 0)
+        if((dwFlags&IDN_USE_STD3_ASCII_RULES) && (lpUnicodeCharStr[label_start]=='-' ||
+                    lpUnicodeCharStr[label_end-1]=='-')) {
+            SetLastError(ERROR_INVALID_NAME);
+            return 0;
+        }
+
+        if(ascii_only) {
+            /* maximal label length is 63 characters */
+            if(label_end-label_start > 63) {
+                SetLastError(ERROR_INVALID_NAME);
+                return 0;
+            }
+            if(label_end < cchUnicodeChar)
+                label_end++;
+
+            if(!lpNameprepCharStr) {
+                out += label_end-label_start;
+            }else if(out+label_end-label_start <= cchNameprepChar) {
+                memcpy(lpNameprepCharStr+out, lpUnicodeCharStr+label_start,
+                        (label_end-label_start)*sizeof(WCHAR));
+                if(lpUnicodeCharStr[label_end-1] > 0x7f)
+                    lpNameprepCharStr[out+label_end-label_start-1] = '.';
+                out += label_end-label_start;
+            }else {
+                SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                return 0;
+            }
+
+            label_start = label_end;
             continue;
-        if((ch>='a' && ch<='z') || (ch>='A' && ch<='Z')
-                || (ch>='0' && ch<='9') || ch=='-')
-            continue;
+        }
 
-        SetLastError(ERROR_INVALID_NAME);
-        return 0;
-    }
+        map_len = 0;
+        for(i=label_start; i<label_end; i++) {
+            ch = lpUnicodeCharStr[i];
+            ptr = nameprep_mapping + nameprep_mapping[ch>>8];
+            ptr = nameprep_mapping + ptr[(ch>>4)&0x0f] + 3*(ch&0x0f);
 
-    if((dwFlags&IDN_USE_STD3_ASCII_RULES) &&
-            (lpUnicodeCharStr[0]=='-' || lpUnicodeCharStr[cchUnicodeChar-1]=='-' ||
-             (cchUnicodeChar>1 && lpUnicodeCharStr[cchUnicodeChar-1]==0 &&
-              lpUnicodeCharStr[cchUnicodeChar-2]=='-'))) {
-        SetLastError(ERROR_INVALID_NAME);
-        return 0;
-    }
+            if(!ptr[0]) map_len++;
+            else if(!ptr[1]) map_len++;
+            else if(!ptr[2]) map_len += 2;
+            else if(ptr[0]!=0xffff || ptr[1]!=0xffff || ptr[2]!=0xffff) map_len += 3;
+        }
+        if(map_len*sizeof(WCHAR) > sizeof(buf)) {
+            map_str = HeapAlloc(GetProcessHeap(), 0, map_len*sizeof(WCHAR));
+            if(!map_str) {
+                SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+                return 0;
+            }
+        }else {
+            map_str = buf;
+        }
+        map_len = 0;
+        for(i=label_start; i<label_end; i++) {
+            ch = lpUnicodeCharStr[i];
+            ptr = nameprep_mapping + nameprep_mapping[ch>>8];
+            ptr = nameprep_mapping + ptr[(ch>>4)&0x0f] + 3*(ch&0x0f);
 
-    if(ascii_only) {
-        if(!lpNameprepCharStr)
-            return cchUnicodeChar;
-        if(cchNameprepChar < cchUnicodeChar) {
+            if(!ptr[0]) {
+                map_str[map_len++] = ch;
+            }else if(!ptr[1]) {
+                map_str[map_len++] = ptr[0];
+            }else if(!ptr[2]) {
+                map_str[map_len++] = ptr[0];
+                map_str[map_len++] = ptr[1];
+            }else if(ptr[0]!=0xffff || ptr[1]!=0xffff || ptr[2]!=0xffff) {
+                map_str[map_len++] = ptr[0];
+                map_str[map_len++] = ptr[1];
+                map_str[map_len++] = ptr[2];
+            }
+        }
+
+        norm_len = FoldStringW(MAP_FOLDCZONE, map_str, map_len,
+                norm_str, sizeof(norm_str)/sizeof(WCHAR)-1);
+        if(map_str != buf)
+            HeapFree(GetProcessHeap(), 0, map_str);
+        if(!norm_len) {
+            if(GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+                SetLastError(ERROR_INVALID_NAME);
+            return 0;
+        }
+
+        if(label_end < cchUnicodeChar) {
+            norm_str[norm_len++] = lpUnicodeCharStr[label_end] ? '.' : 0;
+            label_end++;
+        }
+
+        if(!lpNameprepCharStr) {
+            out += norm_len;
+        }else if(out+norm_len <= cchNameprepChar) {
+            memcpy(lpNameprepCharStr+out, norm_str, norm_len*sizeof(WCHAR));
+            out += norm_len;
+        }else {
             SetLastError(ERROR_INSUFFICIENT_BUFFER);
             return 0;
         }
-        memcpy(lpNameprepCharStr, lpUnicodeCharStr, cchUnicodeChar*sizeof(WCHAR));
-        return cchUnicodeChar;
-    }
 
-    map_len = 0;
-    for(i=0; i<cchUnicodeChar; i++) {
-        ch = lpUnicodeCharStr[i];
-        ptr = nameprep_mapping + nameprep_mapping[ch>>8];
-        ptr = nameprep_mapping + ptr[(ch>>4)&0x0f] + 3*(ch&0x0f);
+        have_bidi_ral = prohibit_bidi_ral = FALSE;
+        mask = PROHIBITED;
+        if((dwFlags&IDN_ALLOW_UNASSIGNED) == 0)
+            mask |= UNASSIGNED;
+        for(i=0; i<norm_len; i++) {
+            ch = norm_str[i];
+            flags = get_table_entry( nameprep_char_type, ch );
 
-        if(!ptr[0]) map_len++;
-        else if(!ptr[1]) map_len++;
-        else if(!ptr[2]) map_len += 2;
-        else if(ptr[0]!=0xffff || ptr[1]!=0xffff || ptr[2]!=0xffff) map_len += 3;
-    }
-    map_str = HeapAlloc(GetProcessHeap(), 0, map_len*sizeof(WCHAR));
-    if(!map_str) {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return 0;
-    }
-    map_len = 0;
-    for(i=0; i<cchUnicodeChar; i++) {
-        ch = lpUnicodeCharStr[i];
-        ptr = nameprep_mapping + nameprep_mapping[ch>>8];
-        ptr = nameprep_mapping + ptr[(ch>>4)&0x0f] + 3*(ch&0x0f);
+            if(flags & mask) {
+                SetLastError((flags & PROHIBITED) ? ERROR_INVALID_NAME
+                        : ERROR_NO_UNICODE_TRANSLATION);
+                return 0;
+            }
 
-        if(!ptr[0]) {
-            map_str[map_len++] = ch;
-        }else if(!ptr[1]) {
-            map_str[map_len++] = ptr[0];
-        }else if(!ptr[2]) {
-            map_str[map_len++] = ptr[0];
-            map_str[map_len++] = ptr[1];
-        }else if(ptr[0]!=0xffff || ptr[1]!=0xffff || ptr[2]!=0xffff) {
-            map_str[map_len++] = ptr[0];
-            map_str[map_len++] = ptr[1];
-            map_str[map_len++] = ptr[2];
+            if(flags & BIDI_RAL)
+                have_bidi_ral = TRUE;
+            if(flags & BIDI_L)
+                prohibit_bidi_ral = TRUE;
         }
-    }
 
-    norm_len = FoldStringW(MAP_FOLDCZONE, map_str, map_len, lpNameprepCharStr, cchNameprepChar);
-    if(lpNameprepCharStr) {
-        norm_str = lpNameprepCharStr;
-    }else {
-        norm_str = HeapAlloc(GetProcessHeap(), 0, norm_len*sizeof(WCHAR));
-        if(!norm_str) {
-            HeapFree(GetProcessHeap(), 0, map_str);
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            return 0;
+        if(have_bidi_ral) {
+            ch = norm_str[0];
+            flags = get_table_entry( nameprep_char_type, ch );
+            if((flags & BIDI_RAL) == 0)
+                prohibit_bidi_ral = TRUE;
+
+            ch = norm_str[norm_len-1];
+            flags = get_table_entry( nameprep_char_type, ch );
+            if((flags & BIDI_RAL) == 0)
+                prohibit_bidi_ral = TRUE;
         }
-        FoldStringW(MAP_FOLDCZONE, map_str, map_len, norm_str, norm_len);
-    }
-    HeapFree(GetProcessHeap(), 0, map_str);
 
-    mask = PROHIBITED;
-    if((dwFlags&IDN_ALLOW_UNASSIGNED) == 0)
-        mask |= UNASSIGNED;
-    for(i=0; i<norm_len; i++) {
-        ch = norm_str[i];
-        flags = get_table_entry( nameprep_char_type, ch );
-
-        if(flags & mask) {
-            if(norm_str != lpNameprepCharStr)
-                HeapFree(GetProcessHeap(), 0, norm_str);
-            SetLastError((flags & PROHIBITED) ? ERROR_INVALID_NAME : ERROR_NO_UNICODE_TRANSLATION);
+        if(have_bidi_ral && prohibit_bidi_ral) {
+            SetLastError(ERROR_INVALID_NAME);
             return 0;
         }
 
-        if(flags & BIDI_RAL)
-            have_bidi_ral = TRUE;
-        if(flags & BIDI_L)
-            prohibit_bidi_ral = TRUE;
+        label_start = label_end;
     }
 
-    if(have_bidi_ral) {
-        ch = norm_str[0];
-        flags = get_table_entry( nameprep_char_type, ch );
-        if((flags & BIDI_RAL) == 0)
-            prohibit_bidi_ral = TRUE;
-
-        ch = norm_str[norm_len-1];
-        flags = get_table_entry( nameprep_char_type, ch );
-        if((flags & BIDI_RAL) == 0)
-            prohibit_bidi_ral = TRUE;
-    }
-
-    if(norm_str != lpNameprepCharStr)
-        HeapFree(GetProcessHeap(), 0, norm_str);
-
-    if(have_bidi_ral && prohibit_bidi_ral) {
-        SetLastError(ERROR_INVALID_NAME);
-        return 0;
-    }
-    return norm_len;
+    return out;
 }
 
 /******************************************************************************

@@ -2904,6 +2904,16 @@ static void test_IdnToNameprepUnicode(void)
             2, {0x221, 0},
             IDN_ALLOW_UNASSIGNED, 0xdeadbeef
         },
+        {
+            5, {'a','.','.','a',0},
+            0, {0},
+            0, ERROR_INVALID_NAME
+        },
+        {
+            3, {'a','.',0},
+            3, {'a','.',0},
+            0, 0xdeadbeef
+        },
     };
 
     WCHAR buf[1024];
