@@ -37,6 +37,9 @@ typedef struct {
     ULONG nb_children;
     ULONG children_capacity;
     IDirect3DRMFrame3** children;
+    ULONG nb_visuals;
+    ULONG visuals_capacity;
+    IDirect3DRMVisual** visuals;
 } IDirect3DRMFrameImpl;
 
 static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame2(IDirect3DRMFrame2 *iface)
@@ -279,9 +282,9 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_AddVisual(IDirect3DRMFrame2* iface,
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, vis);
+    TRACE("(%p/%p)->(%p)\n", iface, This, vis);
 
-    return E_NOTIMPL;
+    return IDirect3DRMFrame3_AddVisual(&This->IDirect3DRMFrame3_iface, (LPUNKNOWN)vis);
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_GetChildren(IDirect3DRMFrame2* iface,
@@ -1169,10 +1172,45 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddRotation(IDirect3DRMFrame3* iface
 static HRESULT WINAPI IDirect3DRMFrame3Impl_AddVisual(IDirect3DRMFrame3* iface, LPUNKNOWN vis)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    ULONG i;
+    IDirect3DRMVisual** visuals;
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, vis);
+    TRACE("(%p/%p)->(%p)\n", iface, This, vis);
 
-    return E_NOTIMPL;
+    if (!vis)
+        return D3DRMERR_BADOBJECT;
+
+    /* Check if already existing and return gracefully without increasing ref count */
+    for (i = 0; i < This->nb_visuals; i++)
+        if (This->visuals[i] == (IDirect3DRMVisual*)vis)
+            return D3DRM_OK;
+
+    if ((This->nb_visuals + 1) > This->visuals_capacity)
+    {
+        ULONG new_capacity;
+
+        if (!This->visuals_capacity)
+        {
+            new_capacity = 16;
+            visuals = HeapAlloc(GetProcessHeap(), 0, new_capacity * sizeof(IDirect3DRMVisual*));
+        }
+        else
+        {
+            new_capacity = This->visuals_capacity * 2;
+            visuals = HeapReAlloc(GetProcessHeap(), 0, This->visuals, new_capacity * sizeof(IDirect3DRMVisual*));
+        }
+
+        if (!visuals)
+            return E_OUTOFMEMORY;
+
+        This->visuals_capacity = new_capacity;
+        This->visuals = visuals;
+    }
+
+    This->visuals[This->nb_visuals++] = (IDirect3DRMVisual*)vis;
+    IDirect3DRMVisual_AddRef(vis);
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_GetChildren(IDirect3DRMFrame3* iface,
