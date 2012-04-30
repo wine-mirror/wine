@@ -367,7 +367,7 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 /***********************************************************************
  *		AdjustWindowRect (USER32.@)
  */
-BOOL WINAPI AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
+BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
 {
     return AdjustWindowRectEx( rect, style, menu, 0 );
 }
@@ -376,7 +376,7 @@ BOOL WINAPI AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
 /***********************************************************************
  *		AdjustWindowRectEx (USER32.@)
  */
-BOOL WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
+BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 {
     if (style & WS_ICONIC) return TRUE;
     style &= ~(WS_HSCROLL | WS_VSCROLL);

@@ -2413,7 +2413,7 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
  *
  * See SetWindowLongW.
  */
-LONG WINAPI SetWindowLongA( HWND hwnd, INT offset, LONG newval )
+LONG WINAPI DECLSPEC_HOTPATCH SetWindowLongA( HWND hwnd, INT offset, LONG newval )
 {
     return WIN_SetWindowLong( hwnd, offset, sizeof(LONG), newval, FALSE );
 }
