@@ -407,6 +407,10 @@ static void test_Frame(void)
     LPDIRECT3DRMFRAME pFrameP2;
     LPDIRECT3DRMFRAME pFrameTmp;
     LPDIRECT3DRMFRAMEARRAY pArray;
+    LPDIRECT3DRMMESHBUILDER pMeshBuilder;
+    LPDIRECT3DRMVISUAL pVisual1;
+    LPDIRECT3DRMVISUAL pVisualTmp;
+    LPDIRECT3DRMVISUALARRAY pVisualArray;
     DWORD count;
 
     hr = pDirect3DRMCreate(&pD3DRM);
@@ -595,6 +599,47 @@ static void test_Frame(void)
         IDirect3DRMFrameArray_Release(pArray);
     }
 
+    /* [Add/Delete]Visual with NULL pointer */
+    hr = IDirect3DRMFrame_AddVisual(pFrameP1, NULL);
+    ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
+    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+
+    hr = IDirect3DRMFrame_DeleteVisual(pFrameP1, NULL);
+    ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
+    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+
+    /* Create Visual */
+    hr = IDirect3DRM_CreateMeshBuilder(pD3DRM, &pMeshBuilder);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder interface (hr = %x)\n", hr);
+    pVisual1 = (LPDIRECT3DRMVISUAL)pMeshBuilder;
+
+    /* Add Visual to first parent */
+    hr = IDirect3DRMFrame_AddVisual(pFrameP1, pVisual1);
+    ok(hr == D3DRM_OK, "Cannot add visual (hr = %x)\n", hr);
+    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pVisual1, 2);
+
+    pVisualArray = NULL;
+    hr = IDirect3DRMFrame_GetVisuals(pFrameP1, &pVisualArray);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get visuals (hr = %x)\n", hr);
+    if (pVisualArray)
+    {
+        count = IDirect3DRMVisualArray_GetSize(pVisualArray);
+        ok(count == 1, "count = %u\n", count);
+        hr = IDirect3DRMVisualArray_GetElement(pVisualArray, 0, &pVisualTmp);
+        ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
+        ok(pVisualTmp == pVisual1, "pVisualTmp = %p\n", pVisualTmp);
+        IDirect3DRMVisual_Release(pVisualTmp);
+        IDirect3DRMVisualArray_Release(pVisualArray);
+    }
+
+    /* Delete Visual */
+    hr = IDirect3DRMFrame_DeleteVisual(pFrameP1, pVisual1);
+    ok(hr == D3DRM_OK, "Cannot delete visual (hr = %x)\n", hr);
+    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    IDirect3DRMMeshBuilder_Release(pMeshBuilder);
+
+    /* Cleanup */
     IDirect3DRMMeshBuilder_Release(pFrameP2);
     CHECK_REFCOUNT(pFrameC, 2);
     todo_wine CHECK_REFCOUNT(pFrameP1, 3);
