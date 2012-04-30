@@ -49,6 +49,7 @@ static BOOL  (WINAPI *pEnumProcesses)(DWORD*, DWORD, DWORD*);
 static BOOL  (WINAPI *pEnumProcessModules)(HANDLE, HMODULE*, DWORD, LPDWORD);
 static DWORD (WINAPI *pGetModuleBaseNameA)(HANDLE, HMODULE, LPSTR, DWORD);
 static DWORD (WINAPI *pGetModuleFileNameExA)(HANDLE, HMODULE, LPSTR, DWORD);
+static DWORD (WINAPI *pGetModuleFileNameExW)(HANDLE, HMODULE, LPWSTR, DWORD);
 static BOOL  (WINAPI *pGetModuleInformation)(HANDLE, HMODULE, LPMODULEINFO, DWORD);
 static DWORD (WINAPI *pGetMappedFileNameA)(HANDLE, LPVOID, LPSTR, DWORD);
 static DWORD (WINAPI *pGetMappedFileNameW)(HANDLE, LPVOID, LPWSTR, DWORD);
@@ -67,6 +68,7 @@ static BOOL InitFunctionPtrs(HMODULE hpsapi)
     PSAPI_GET_PROC(EnumProcesses);
     PSAPI_GET_PROC(GetModuleBaseNameA);
     PSAPI_GET_PROC(GetModuleFileNameExA);
+    PSAPI_GET_PROC(GetModuleFileNameExW);
     PSAPI_GET_PROC(GetModuleInformation);
     PSAPI_GET_PROC(GetMappedFileNameA);
     PSAPI_GET_PROC(GetMappedFileNameW);
@@ -471,18 +473,22 @@ static void test_GetModuleFileNameEx(void)
 {
     HMODULE hMod = GetModuleHandle(NULL);
     char szModExPath[MAX_PATH+1], szModPath[MAX_PATH+1];
+    WCHAR buffer[MAX_PATH];
     DWORD ret;
-    
+
     SetLastError(0xdeadbeef);
-    pGetModuleFileNameExA(NULL, hMod, szModExPath, sizeof(szModExPath));
+    ret = pGetModuleFileNameExA(NULL, hMod, szModExPath, sizeof(szModExPath));
+    ok( !ret, "GetModuleFileNameExA succeeded\n" );
     ok(GetLastError() == ERROR_INVALID_HANDLE, "expected error=ERROR_INVALID_HANDLE but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    pGetModuleFileNameExA(hpQI, hMod, szModExPath, sizeof(szModExPath));
+    ret = pGetModuleFileNameExA(hpQI, hMod, szModExPath, sizeof(szModExPath));
+    ok( !ret, "GetModuleFileNameExA succeeded\n" );
     ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    pGetModuleFileNameExA(hpQV, hBad, szModExPath, sizeof(szModExPath));
+    ret = pGetModuleFileNameExA(hpQV, hBad, szModExPath, sizeof(szModExPath));
+    ok( !ret, "GetModuleFileNameExA succeeded\n" );
     ok(GetLastError() == ERROR_INVALID_HANDLE, "expected error=ERROR_INVALID_HANDLE but got %d\n", GetLastError());
 
     ret = pGetModuleFileNameExA(hpQV, NULL, szModExPath, sizeof(szModExPath));
@@ -492,6 +498,34 @@ static void test_GetModuleFileNameEx(void)
     GetModuleFileNameA(NULL, szModPath, sizeof(szModPath));
     ok(!strncmp(szModExPath, szModPath, MAX_PATH), 
        "szModExPath=\"%s\" szModPath=\"%s\"\n", szModExPath, szModPath);
+
+    SetLastError(0xdeadbeef);
+    memset( szModExPath, 0xcc, sizeof(szModExPath) );
+    ret = pGetModuleFileNameExA(hpQV, NULL, szModExPath, 4 );
+    ok( ret == 4, "wrong length %u\n", ret );
+    ok( broken(szModExPath[3]) /*w2kpro*/ || strlen(szModExPath) == 3,
+        "szModExPath=\"%s\" ret=%d\n", szModExPath, ret );
+    ok(GetLastError() == 0xdeadbeef, "got error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetModuleFileNameExA(hpQV, NULL, szModExPath, 0 );
+    ok( ret == 0, "wrong length %u\n", ret );
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memset( buffer, 0xcc, sizeof(buffer) );
+    ret = pGetModuleFileNameExW(hpQV, NULL, buffer, 4 );
+    ok( ret == 4, "wrong length %u\n", ret );
+    ok( broken(buffer[3]) /*w2kpro*/ || lstrlenW(buffer) == 3,
+        "buffer=%s ret=%d\n", wine_dbgstr_w(buffer), ret );
+    ok(GetLastError() == 0xdeadbeef, "got error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    buffer[0] = 0xcc;
+    ret = pGetModuleFileNameExW(hpQV, NULL, buffer, 0 );
+    ok( ret == 0, "wrong length %u\n", ret );
+    ok(GetLastError() == 0xdeadbeef, "got error %d\n", GetLastError());
+    ok( buffer[0] == 0xcc, "buffer modified %s\n", wine_dbgstr_w(buffer) );
 }
 
 static void test_GetModuleBaseName(void)
