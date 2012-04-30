@@ -4616,7 +4616,7 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
         if(session->appInfo->proxy)
             res = HTTP_SecureProxyConnect(request);
         if(res == ERROR_SUCCESS)
-            res = NETCON_secure_connect(request->netconn, session->hostName);
+            res = NETCON_secure_connect(request->netconn);
         if(res != ERROR_SUCCESS)
         {
             WARN("Couldn't connect securely to host\n");

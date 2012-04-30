@@ -114,7 +114,6 @@ static const SSL_METHOD *meth;
 static SSL_METHOD *meth;
 #endif
 static SSL_CTX *ctx;
-static int hostname_idx;
 static int error_idx;
 static int conn_idx;
 
@@ -309,7 +308,6 @@ static DWORD netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
 static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
 {
     SSL *ssl;
-    WCHAR *server;
     BOOL ret = FALSE;
     HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
         CERT_STORE_CREATE_NEW_FLAG, NULL);
@@ -317,7 +315,6 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
 
     ssl = pX509_STORE_CTX_get_ex_data(ctx,
         pSSL_get_ex_data_X509_STORE_CTX_idx());
-    server = pSSL_get_ex_data(ssl, hostname_idx);
     conn = pSSL_get_ex_data(ssl, conn_idx);
     if (store)
     {
@@ -342,7 +339,7 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
         if (!endCert) ret = FALSE;
         if (ret)
         {
-            DWORD_PTR err = netconn_verify_cert(endCert, store, server,
+            DWORD_PTR err = netconn_verify_cert(endCert, store, conn->server->name,
                                                 conn->security_flags);
 
             if (err)
@@ -454,12 +451,6 @@ static DWORD init_openssl(void)
     if(!pSSL_CTX_set_default_verify_paths(ctx)) {
         ERR("SSL_CTX_set_default_verify_paths failed: %s\n",
             pERR_error_string(pERR_get_error(), 0));
-        return ERROR_OUTOFMEMORY;
-    }
-
-    hostname_idx = pSSL_get_ex_new_index(0, (void *)"hostname index", NULL, NULL, NULL);
-    if(hostname_idx == -1) {
-        ERR("SSL_get_ex_new_index failed; %s\n", pERR_error_string(pERR_get_error(), 0));
         return ERROR_OUTOFMEMORY;
     }
 
@@ -692,7 +683,7 @@ int sock_get_error( int err )
  * NETCON_secure_connect
  * Initiates a secure connection over an existing plaintext connection.
  */
-DWORD NETCON_secure_connect(netconn_t *connection, LPWSTR hostname)
+DWORD NETCON_secure_connect(netconn_t *connection)
 {
     DWORD res = ERROR_NOT_SUPPORTED;
 #ifdef SONAME_LIBSSL
@@ -721,13 +712,6 @@ DWORD NETCON_secure_connect(netconn_t *connection, LPWSTR hostname)
         goto fail;
     }
 
-    if (!pSSL_set_ex_data(ssl_s, hostname_idx, hostname))
-    {
-        ERR("SSL_set_ex_data failed: %s\n",
-            pERR_error_string(pERR_get_error(), 0));
-        res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-        goto fail;
-    }
     if (!pSSL_set_ex_data(ssl_s, conn_idx, connection))
     {
         ERR("SSL_set_ex_data failed: %s\n",
