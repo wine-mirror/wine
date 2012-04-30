@@ -1624,6 +1624,7 @@ static HGDIOBJ DIB_SelectObject( HGDIOBJ handle, HDC hdc )
         dc->vis_rect.top    = 0;
         dc->vis_rect.right  = bitmap->dib.dsBm.bmWidth;
         dc->vis_rect.bottom = bitmap->dib.dsBm.bmHeight;
+        dc->device_rect = dc->vis_rect;
         GDI_ReleaseObj( handle );
         DC_InitDC( dc );
         GDI_dec_ref_count( ret );

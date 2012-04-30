@@ -146,13 +146,7 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     }
     get_bounding_rect( &rect, src->x, src->y, src->width, src->height );
 
-    /* source is not clipped */
-    if (dc_src->header.type == OBJ_MEMDC)
-        intersect_rect( &src->visrect, &rect, &dc_src->vis_rect );
-    else
-        src->visrect = rect;  /* FIXME: clip to device size */
-
-    if (is_rect_empty( &src->visrect )) return FALSE;
+    if (!clip_device_rect( dc_src, &src->visrect, &rect )) return FALSE;
     if (is_rect_empty( &dst->visrect )) return FALSE;
 
     return intersect_vis_rectangles( dst, src );
@@ -932,9 +926,9 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
 
         if (src.x < 0 || src.y < 0 || src.width < 0 || src.height < 0 ||
             src.log_width < 0 || src.log_height < 0 ||
-            (dcSrc->header.type == OBJ_MEMDC &&
-             (src.width > dcSrc->vis_rect.right - dcSrc->vis_rect.left - src.x ||
-              src.height > dcSrc->vis_rect.bottom - dcSrc->vis_rect.top - src.y)))
+            (!is_rect_empty( &dcSrc->device_rect ) &&
+             (src.width > dcSrc->device_rect.right - dcSrc->vis_rect.left - src.x ||
+              src.height > dcSrc->device_rect.bottom - dcSrc->vis_rect.top - src.y)))
         {
             WARN( "Invalid src coords: (%d,%d), size %dx%d\n", src.x, src.y, src.width, src.height );
             SetLastError( ERROR_INVALID_PARAMETER );

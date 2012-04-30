@@ -29,15 +29,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(clipping);
 
 
-/* return the DC visible rectangle if not empty */
-static inline BOOL get_dc_visrect( DC *dc, RECT *rect )
+/* return the DC device rectangle if not empty */
+static inline BOOL get_dc_device_rect( DC *dc, RECT *rect )
 {
-    if (dc->header.type != OBJ_MEMDC) return FALSE;
-    rect->left = 0;
-    rect->top = 0;
-    rect->right = dc->vis_rect.right - dc->vis_rect.left;
-    rect->bottom = dc->vis_rect.bottom - dc->vis_rect.top;
-    return TRUE;
+    *rect = dc->device_rect;
+    offset_rect( rect, -dc->vis_rect.left, -dc->vis_rect.top );
+    return !is_rect_empty( rect );
 }
 
 /***********************************************************************
@@ -64,6 +61,20 @@ static inline RECT get_clip_rect( DC * dc, int left, int top, int right, int bot
 }
 
 /***********************************************************************
+ *           clip_device_rect
+ *
+ * Clip a rectangle to the whole DC surface.
+ */
+BOOL clip_device_rect( DC *dc, RECT *dst, const RECT *src )
+{
+    RECT clip;
+
+    if (get_dc_device_rect( dc, &clip )) return intersect_rect( dst, src, &clip );
+    *dst = *src;
+    return TRUE;
+}
+
+/***********************************************************************
  *           clip_visrect
  *
  * Clip a rectangle to the DC visible rect.
@@ -72,11 +83,9 @@ BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src )
 {
     RECT clip;
 
-    if (get_dc_visrect( dc, &clip )) intersect_rect( dst, src, &clip );
-    else *dst = *src;
-
-    if (GetRgnBox( get_dc_region(dc), &clip )) intersect_rect( dst, dst, &clip );
-    return !is_rect_empty( dst );
+    if (!clip_device_rect( dc, dst, src )) return FALSE;
+    if (GetRgnBox( get_dc_region(dc), &clip )) return intersect_rect( dst, dst, &clip );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -117,7 +126,7 @@ static inline void create_default_clip_region( DC * dc )
 {
     RECT rect;
 
-    if (!get_dc_visrect( dc, &rect ))
+    if (!get_dc_device_rect( dc, &rect ))
     {
         rect.left = 0;
         rect.top = 0;
@@ -361,7 +370,7 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
     pt.y = y;
     LPtoDP( hdc, &pt, 1 );
     update_dc( dc );
-    ret = (!get_dc_visrect( dc, &visrect ) ||
+    ret = (!get_dc_device_rect( dc, &visrect ) ||
            (pt.x >= visrect.left && pt.x < visrect.right &&
             pt.y >= visrect.top && pt.y < visrect.bottom));
     if (ret && get_dc_region( dc )) ret = PtInRegion( get_dc_region( dc ), pt.x, pt.y );
@@ -385,7 +394,7 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
     LPtoDP( hdc, (POINT *)&tmpRect, 2 );
 
     update_dc( dc );
-    ret = (!get_dc_visrect( dc, &visrect ) || intersect_rect( &visrect, &visrect, &tmpRect ));
+    ret = (!get_dc_device_rect( dc, &visrect ) || intersect_rect( &visrect, &visrect, &tmpRect ));
     if (ret && get_dc_region( dc )) ret = RectInRegion( get_dc_region( dc ), &tmpRect );
     release_dc_ptr( dc );
     return ret;
@@ -406,7 +415,7 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
     if (get_dc_region( dc ))
     {
         ret = GetRgnBox( get_dc_region( dc ), rect );
-        if (get_dc_visrect( dc, &visrect ) && !intersect_rect( rect, rect, &visrect ))
+        if (get_dc_device_rect( dc, &visrect ) && !intersect_rect( rect, rect, &visrect ))
             ret = NULLREGION;
     }
     else
@@ -492,7 +501,6 @@ INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
 INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
 {
     INT ret = 1;
-    RECT visrect;
     DC *dc = get_dc_ptr( hDC );
 
     if (!dc) return -1;
@@ -516,13 +524,16 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
     case SYSRGN: /* == 4 */
         update_dc( dc );
         if (dc->hVisRgn)
+        {
             CombineRgn( hRgn, dc->hVisRgn, 0, RGN_COPY );
-        else if (get_dc_visrect( dc, &visrect ))
-            SetRectRgn( hRgn, visrect.left, visrect.top, visrect.right, visrect.bottom );
+            /* On Windows NT/2000, the SYSRGN returned is in screen coordinates */
+            if (!(GetVersion() & 0x80000000)) OffsetRgn( hRgn, dc->vis_rect.left, dc->vis_rect.top );
+        }
+        else if (!is_rect_empty( &dc->device_rect ))
+            SetRectRgn( hRgn, dc->device_rect.left, dc->device_rect.top,
+                        dc->device_rect.right, dc->device_rect.bottom );
         else
             ret = 0;
-        /* On Windows NT/2000, the SYSRGN returned is in screen coordinates */
-        if (ret && !(GetVersion() & 0x80000000)) OffsetRgn( hRgn, dc->vis_rect.left, dc->vis_rect.top );
         break;
     default:
         WARN("Unknown code %d\n", iCode);

@@ -698,6 +698,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     dc->vis_rect.top    = 0;
     dc->vis_rect.right  = 1;
     dc->vis_rect.bottom = 1;
+    dc->device_rect = dc->vis_rect;
 
     ret = dc->hSelf;
 
