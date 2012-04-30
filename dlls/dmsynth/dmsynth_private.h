@@ -71,11 +71,11 @@ struct IDirectMusicSynth8Impl {
  * IDirectMusicSynthSinkImpl implementation structure
  */
 struct IDirectMusicSynthSinkImpl {
-  /* IUnknown fields */
-  const IDirectMusicSynthSinkVtbl *lpVtbl;
-  LONG          ref;
+    /* IUnknown fields */
+    IDirectMusicSynthSink IDirectMusicSynthSink_iface;
+    LONG ref;
 
-  /* IDirectMusicSynthSinkImpl fields */
+    /* IDirectMusicSynthSinkImpl fields */
 };
 
 /**********************************************************************
