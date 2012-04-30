@@ -36,6 +36,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(sxs);
 
+static const WCHAR cache_mutex_nameW[] =
+    {'_','_','W','I','N','E','_','S','X','S','_','C','A','C','H','E','_','M','U','T','E','X','_','_',0};
+
 static const WCHAR win32W[] = {'w','i','n','3','2',0};
 static const WCHAR win32_policyW[] = {'w','i','n','3','2','-','p','o','l','i','c','y',0};
 static const WCHAR backslashW[] = {'\\',0};
@@ -44,6 +47,7 @@ struct cache
 {
     IAssemblyCache IAssemblyCache_iface;
     LONG refs;
+    HANDLE lock;
 };
 
 static inline struct cache *impl_from_IAssemblyCache(IAssemblyCache *iface)
@@ -87,6 +91,7 @@ static ULONG WINAPI cache_Release( IAssemblyCache *iface )
     if (!refs)
     {
         TRACE("destroying %p\n", cache);
+        CloseHandle( cache->lock );
         HeapFree( GetProcessHeap(), 0, cache );
     }
     return refs;
@@ -179,6 +184,16 @@ static WCHAR *build_policy_path( const WCHAR *arch, const WCHAR *name, const WCH
     return ret;
 }
 
+static void cache_lock( struct cache *cache )
+{
+    WaitForSingleObject( cache->lock, INFINITE );
+}
+
+static void cache_unlock( struct cache *cache )
+{
+    ReleaseMutex( cache->lock );
+}
+
 #define ASSEMBLYINFO_FLAG_INSTALLED 1
 
 static HRESULT WINAPI cache_QueryAssemblyInfo(
@@ -187,6 +202,7 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
     LPCWSTR assembly_name,
     ASSEMBLY_INFO *info )
 {
+    struct cache *cache = impl_from_IAssemblyCache( iface );
     IAssemblyName *name_obj;
     const WCHAR *arch, *name, *token, *type, *version;
     WCHAR *p, *path = NULL;
@@ -217,6 +233,8 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
         IAssemblyName_Release( name_obj );
         return S_OK;
     }
+    cache_lock( cache );
+
     if (!strcmpW( type, win32W )) path = build_manifest_path( arch, name, token, version );
     else if (!strcmpW( type, win32_policyW )) path = build_policy_path( arch, name, token, version );
     else
@@ -250,6 +268,7 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
 done:
     HeapFree( GetProcessHeap(), 0, path );
     IAssemblyName_Release( name_obj );
+    cache_unlock( cache );
     return hr;
 }
 
@@ -657,12 +676,14 @@ static HRESULT WINAPI cache_InstallAssembly(
     LPCWSTR path,
     LPCFUSION_INSTALL_REFERENCE ref )
 {
+    struct cache *cache = impl_from_IAssemblyCache( iface );
     HRESULT hr, init;
     IXMLDOMDocument *doc = NULL;
     struct assembly *assembly = NULL;
 
     TRACE("%p, 0x%08x, %s, %p\n", iface, flags, debugstr_w(path), ref);
 
+    cache_lock( cache );
     init = CoInitialize( NULL );
 
     hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc );
@@ -683,6 +704,7 @@ done:
     free_assembly( assembly );
     if (doc) IXMLDOMDocument_Release( doc );
     if (SUCCEEDED(init)) CoUninitialize();
+    cache_unlock( cache );
     return hr;
 }
 
@@ -728,6 +750,7 @@ static HRESULT WINAPI cache_UninstallAssembly(
     LPCFUSION_INSTALL_REFERENCE ref,
     ULONG *disp )
 {
+    struct cache *cache = impl_from_IAssemblyCache( iface );
     HRESULT hr, init;
     IXMLDOMDocument *doc = NULL;
     struct assembly *assembly = NULL;
@@ -742,6 +765,7 @@ static HRESULT WINAPI cache_UninstallAssembly(
         FIXME("application reference not supported\n");
         return E_NOTIMPL;
     }
+    cache_lock( cache );
     init = CoInitialize( NULL );
 
     hr = CreateAssemblyNameObject( &name_obj, assembly_name, CANOF_PARSE_DISPLAY_NAME, NULL );
@@ -787,6 +811,7 @@ done:
     free_assembly( assembly );
     if (doc) IXMLDOMDocument_Release( doc );
     if (SUCCEEDED(init)) CoUninitialize();
+    cache_unlock( cache );
     return hr;
 }
 
@@ -822,7 +847,12 @@ HRESULT WINAPI CreateAssemblyCache( IAssemblyCache **obj, DWORD reserved )
 
     cache->IAssemblyCache_iface.lpVtbl = &cache_vtbl;
     cache->refs = 1;
-
+    cache->lock = CreateMutexW( NULL, FALSE, cache_mutex_nameW );
+    if (!cache->lock)
+    {
+        HeapFree( GetProcessHeap(), 0, cache );
+        return HRESULT_FROM_WIN32( GetLastError() );
+    }
     *obj = &cache->IAssemblyCache_iface;
     return S_OK;
 }
