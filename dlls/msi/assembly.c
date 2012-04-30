@@ -425,6 +425,45 @@ UINT msi_install_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
     return ERROR_SUCCESS;
 }
 
+UINT msi_uninstall_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
+{
+    HRESULT hr;
+    IAssemblyCache *cache;
+    MSIASSEMBLY *assembly = comp->assembly;
+    MSIFEATURE *feature = NULL;
+
+    if (comp->assembly->feature)
+        feature = msi_get_loaded_feature( package, comp->assembly->feature );
+
+    if (assembly->application)
+    {
+        if (feature) feature->Action = INSTALLSTATE_ABSENT;
+        return ERROR_SUCCESS;
+    }
+    TRACE("removing %s\n", debugstr_w(assembly->display_name));
+
+    if (assembly->attributes == msidbAssemblyAttributesWin32)
+    {
+        cache = package->cache_sxs;
+        hr = IAssemblyCache_UninstallAssembly( cache, 0, assembly->display_name, NULL, NULL );
+        if (FAILED( hr )) WARN("failed to uninstall assembly 0x%08x\n", hr);
+    }
+    else
+    {
+        unsigned int i;
+        for (i = 0; i < CLR_VERSION_MAX; i++)
+        {
+            if (!assembly->clr_version[i]) continue;
+            cache = package->cache_net[i];
+            hr = IAssemblyCache_UninstallAssembly( cache, 0, assembly->display_name, NULL, NULL );
+            if (FAILED( hr )) WARN("failed to uninstall assembly 0x%08x\n", hr);
+        }
+    }
+    if (feature) feature->Action = INSTALLSTATE_ABSENT;
+    assembly->installed = FALSE;
+    return ERROR_SUCCESS;
+}
+
 static WCHAR *build_local_assembly_path( const WCHAR *filename )
 {
     UINT i;

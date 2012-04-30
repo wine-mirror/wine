@@ -1308,22 +1308,26 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         msi_ui_actiondata( package, szRemoveFiles, uirow );
         msiobj_release( &uirow->hdr );
     }
+
+    msi_init_assembly_caches( package );
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
-        MSIFOLDER *folder;
-
         comp->Action = msi_get_component_action( package, comp );
         if (comp->Action != INSTALLSTATE_ABSENT) continue;
-
-        if (comp->assembly && !comp->assembly->application) continue;
 
         if (comp->Attributes & msidbComponentAttributesPermanent)
         {
             TRACE("permanent component, not removing directory\n");
             continue;
         }
-        folder = msi_get_loaded_folder( package, comp->Directory );
-        remove_folder( folder );
+        if (comp->assembly && !comp->assembly->application)
+            msi_uninstall_assembly( package, comp );
+        else
+        {
+            MSIFOLDER *folder = msi_get_loaded_folder( package, comp->Directory );
+            remove_folder( folder );
+        }
     }
+    msi_destroy_assembly_caches( package );
     return ERROR_SUCCESS;
 }
