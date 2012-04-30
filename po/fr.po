@@ -3554,16 +3554,12 @@ msgid "URI to be decoded is incorrect"
 msgstr "L'URI à décoder est incorrecte"
 
 #: jscript.rc:57
-#, fuzzy
-#| msgid "Enumeration value out of range.\n"
 msgid "Number of fraction digits is out of range"
-msgstr "Valeur d'énumération hors plage.\n"
+msgstr "Nombre de décimales hors plage"
 
 #: jscript.rc:58
-#, fuzzy
-#| msgid "Subscript out of range"
 msgid "Precision is out of range"
-msgstr "Indice hors limites"
+msgstr "Précision hors limites"
 
 #: jscript.rc:59
 msgid "Array length must be a finite positive integer"
