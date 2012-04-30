@@ -4009,3 +4009,9 @@ HRESULT WINAPI KnownFolderManager_Constructor( IUnknown *punk, REFIID riid, void
 
     return foldermanager_create( ppv );
 }
+
+HRESULT WINAPI SHGetKnownFolderIDList(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE token, PIDLIST_ABSOLUTE *pidl)
+{
+        FIXME("%s, 0x%08x, %p, %p\n", debugstr_guid(rfid), flags, token, pidl);
+        return E_NOTIMPL;
+}
