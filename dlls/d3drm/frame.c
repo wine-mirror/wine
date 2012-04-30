@@ -522,9 +522,9 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteVisual(IDirect3DRMFrame2* ifac
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, vis);
+    TRACE("(%p/%p)->(%p)\n", iface, This, vis);
 
-    return E_NOTIMPL;
+    return IDirect3DRMFrame3_DeleteVisual(&This->IDirect3DRMFrame3_iface, (LPUNKNOWN)vis);
 }
 
 static D3DCOLOR WINAPI IDirect3DRMFrame2Impl_GetSceneBackground(IDirect3DRMFrame2* iface)
@@ -1448,10 +1448,26 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteMoveCallback(IDirect3DRMFrame3
 static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteVisual(IDirect3DRMFrame3* iface, LPUNKNOWN vis)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    ULONG i;
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, vis);
+    TRACE("(%p/%p)->(%p)\n", iface, This, vis);
 
-    return E_NOTIMPL;
+    if (!vis)
+        return D3DRMERR_BADOBJECT;
+
+    /* Check if visual exists */
+    for (i = 0; i < This->nb_visuals; i++)
+        if (This->visuals[i] == (IDirect3DRMVisual*)vis)
+            break;
+
+    if (i == This->nb_visuals)
+        return D3DRMERR_BADVALUE;
+
+    memmove(This->visuals + i, This->visuals + i + 1, sizeof(IDirect3DRMVisual*) * (This->nb_visuals - 1 - i));
+    IDirect3DRMVisual_Release(vis);
+    This->nb_visuals--;
+
+    return D3DRM_OK;
 }
 
 static D3DCOLOR WINAPI IDirect3DRMFrame3Impl_GetSceneBackground(IDirect3DRMFrame3* iface)
