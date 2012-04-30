@@ -813,7 +813,7 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct wined3d_rect_pat
      * the stateblock. Beware of VBOs. */
     vs = state->vertex_shader;
     state->vertex_shader = NULL;
-    device_stream_info_from_declaration(This, &stream_info, NULL);
+    device_stream_info_from_declaration(This, &stream_info);
     state->vertex_shader = vs;
 
     e = &stream_info.elements[WINED3D_FFP_POSITION];

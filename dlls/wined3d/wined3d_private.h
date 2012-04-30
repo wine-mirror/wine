@@ -920,7 +920,8 @@ struct wined3d_stream_info_element
 struct wined3d_stream_info
 {
     struct wined3d_stream_info_element elements[MAX_ATTRIBS];
-    BOOL position_transformed;
+    DWORD position_transformed : 1;
+    DWORD all_vbo : 1;
     WORD swizzle_map; /* MAX_ATTRIBS, 16 */
     WORD use_map; /* MAX_ATTRIBS, 16 */
 };
@@ -1802,7 +1803,7 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
 void device_resource_add(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void device_resource_released(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void device_stream_info_from_declaration(struct wined3d_device *device,
-        struct wined3d_stream_info *stream_info, BOOL *fixup) DECLSPEC_HIDDEN;
+        struct wined3d_stream_info *stream_info) DECLSPEC_HIDDEN;
 void device_switch_onscreen_ds(struct wined3d_device *device, struct wined3d_context *context,
         struct wined3d_surface *depth_stencil) DECLSPEC_HIDDEN;
 void device_update_stream_info(struct wined3d_device *device, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
