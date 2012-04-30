@@ -92,17 +92,6 @@ static ULONG WINAPI cache_Release( IAssemblyCache *iface )
     return refs;
 }
 
-static HRESULT WINAPI cache_UninstallAssembly(
-    IAssemblyCache *iface,
-    DWORD flags,
-    LPCWSTR name,
-    LPCFUSION_INSTALL_REFERENCE ref,
-    ULONG *disp )
-{
-    FIXME("%p, 0x%08x, %s, %p, %p\n", iface, flags, debugstr_w(name), ref, disp);
-    return E_NOTIMPL;
-}
-
 static unsigned int build_sxs_path( WCHAR *path )
 {
     static const WCHAR winsxsW[] = {'\\','w','i','n','s','x','s','\\',0};
@@ -691,6 +680,110 @@ static HRESULT WINAPI cache_InstallAssembly(
         hr = install_assembly( path, assembly );
 
 done:
+    free_assembly( assembly );
+    if (doc) IXMLDOMDocument_Release( doc );
+    if (SUCCEEDED(init)) CoUninitialize();
+    return hr;
+}
+
+static HRESULT uninstall_assembly( struct assembly *assembly )
+{
+    WCHAR sxsdir[MAX_PATH], *name, *dirname, *filename;
+    unsigned int len, len_name, len_sxsdir = build_sxs_path( sxsdir );
+    HRESULT hr = E_OUTOFMEMORY;
+    struct file *file;
+
+    name = build_assembly_name( assembly->arch, assembly->name, assembly->token, assembly->version,
+                                &len_name );
+    if (!name) return E_OUTOFMEMORY;
+    if (!(dirname = HeapAlloc( GetProcessHeap(), 0, (len_sxsdir + len_name + 1) * sizeof(WCHAR) )))
+        goto done;
+    strcpyW( dirname, sxsdir );
+    strcpyW( dirname + len_sxsdir, name );
+
+    LIST_FOR_EACH_ENTRY( file, &assembly->files, struct file, entry )
+    {
+        len = len_sxsdir + len_name + 1 + strlenW( file->name );
+        if (!(filename = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) goto done;
+        strcpyW( filename, dirname );
+        strcatW( filename, backslashW );
+        strcatW( filename, file->name );
+
+        if (!DeleteFileW( filename )) WARN( "failed to delete file %u\n", GetLastError() );
+        HeapFree( GetProcessHeap(), 0, filename );
+    }
+    RemoveDirectoryW( dirname );
+    hr = S_OK;
+
+done:
+    HeapFree( GetProcessHeap(), 0, dirname );
+    HeapFree( GetProcessHeap(), 0, name );
+    return hr;
+}
+
+static HRESULT WINAPI cache_UninstallAssembly(
+    IAssemblyCache *iface,
+    DWORD flags,
+    LPCWSTR assembly_name,
+    LPCFUSION_INSTALL_REFERENCE ref,
+    ULONG *disp )
+{
+    HRESULT hr, init;
+    IXMLDOMDocument *doc = NULL;
+    struct assembly *assembly = NULL;
+    IAssemblyName *name_obj = NULL;
+    const WCHAR *arch, *name, *token, *type, *version;
+    WCHAR *p, *path = NULL;
+
+    TRACE("%p, 0x%08x, %s, %p, %p\n", iface, flags, debugstr_w(assembly_name), ref, disp);
+
+    if (ref)
+    {
+        FIXME("application reference not supported\n");
+        return E_NOTIMPL;
+    }
+    init = CoInitialize( NULL );
+
+    hr = CreateAssemblyNameObject( &name_obj, assembly_name, CANOF_PARSE_DISPLAY_NAME, NULL );
+    if (FAILED( hr ))
+        goto done;
+
+    arch = get_name_attribute( name_obj, NAME_ATTR_ID_ARCH );
+    name = get_name_attribute( name_obj, NAME_ATTR_ID_NAME );
+    token = get_name_attribute( name_obj, NAME_ATTR_ID_TOKEN );
+    type = get_name_attribute( name_obj, NAME_ATTR_ID_TYPE );
+    version = get_name_attribute( name_obj, NAME_ATTR_ID_VERSION );
+    if (!arch || !name || !token || !type || !version)
+    {
+        hr = E_INVALIDARG;
+        goto done;
+    }
+    if (!strcmpW( type, win32W )) path = build_manifest_filename( arch, name, token, version );
+    else if (!strcmpW( type, win32_policyW )) path = build_policy_filename( arch, name, token, version );
+    else
+    {
+        hr = E_INVALIDARG;
+        goto done;
+    }
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc );
+    if (hr != S_OK)
+        goto done;
+
+    if ((hr = load_manifest( doc, path )) != S_OK) goto done;
+    if ((hr = parse_assembly( doc, &assembly )) != S_OK) goto done;
+
+    if (!DeleteFileW( path )) WARN( "unable to remove manifest file %u\n", GetLastError() );
+    else if ((p = strrchrW( path, '\\' )))
+    {
+        *p = 0;
+        RemoveDirectoryW( path );
+    }
+    if (!strcmpW( assembly->type, win32W )) hr = uninstall_assembly( assembly );
+
+done:
+    if (name_obj) IAssemblyName_Release( name_obj );
+    HeapFree( GetProcessHeap(), 0, path );
     free_assembly( assembly );
     if (doc) IXMLDOMDocument_Release( doc );
     if (SUCCEEDED(init)) CoUninitialize();
