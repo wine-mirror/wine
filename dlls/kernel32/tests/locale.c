@@ -77,6 +77,7 @@ static INT (WINAPI *pFoldStringA)(DWORD, LPCSTR, INT, LPSTR, INT);
 static INT (WINAPI *pFoldStringW)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static BOOL (WINAPI *pIsValidLanguageGroup)(LGRPID, DWORD);
 static INT (WINAPI *pIdnToNameprepUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
+static INT (WINAPI *pIdnToAscii)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 
 static void InitFunctionPointers(void)
 {
@@ -91,6 +92,7 @@ static void InitFunctionPointers(void)
   pEnumUILanguagesA = (void*)GetProcAddress(hKernel32, "EnumUILanguagesA");
   pEnumSystemLocalesEx = (void*)GetProcAddress(hKernel32, "EnumSystemLocalesEx");
   pIdnToNameprepUnicode = (void*)GetProcAddress(hKernel32, "IdnToNameprepUnicode");
+  pIdnToAscii = (void*)GetProcAddress(hKernel32, "IdnToAscii");
 }
 
 #define eq(received, expected, label, type) \
@@ -2991,6 +2993,71 @@ static void test_IdnToNameprepUnicode(void)
     }
 }
 
+static void test_IdnToAscii(void)
+{
+    struct {
+        DWORD in_len;
+        const WCHAR in[64];
+        DWORD ret;
+        const WCHAR out[64];
+        DWORD flags;
+        DWORD err;
+    } test_data[] = {
+        {
+            5, {'T','e','s','t',0},
+            5, {'T','e','s','t',0},
+            0, 0xdeadbeef
+        },
+        {
+            5, {'T','e',0x017c,'s','t',0},
+            12, {'x','n','-','-','t','e','s','t','-','c','b','b',0},
+            0, 0xdeadbeef
+        },
+        {
+            12, {'t','e',0x0105,'s','t','.','t','e',0x017c,'s','t',0},
+            26, {'x','n','-','-','t','e','s','t','-','c','t','a','.','x','n','-','-','t','e','s','t','-','c','b','b',0},
+            0, 0xdeadbeef
+        },
+        {
+            3, {0x0105,'.',0},
+            9, {'x','n','-','-','2','d','a','.',0},
+            0, 0xdeadbeef
+        },
+        {
+            10, {'h','t','t','p',':','/','/','t',0x0106,0},
+            17, {'x','n','-','-','h','t','t','p',':','/','/','t','-','7','8','a',0},
+            0, 0xdeadbeef
+        },
+        {
+            10, {0x4e3a,0x8bf4,0x4e0d,0x4ed6,0x5011,0x10d,0x11b,0x305c,0x306a,0},
+            35, {'x','n','-','-','b','e','a','2','a','1','6','3','1','a','v','b','a',
+                'v','4','4','t','y','h','a','3','2','b','9','1','e','g','s','2','t',0},
+            0, 0xdeadbeef
+        }
+    };
+
+    WCHAR buf[1024];
+    DWORD i, ret, err;
+
+    if (!pIdnToAscii)
+    {
+        win_skip("IdnToAscii is not available\n");
+        return;
+    }
+
+    for (i=0; i<sizeof(test_data)/sizeof(*test_data); i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = pIdnToAscii(test_data[i].flags, test_data[i].in,
+                test_data[i].in_len, buf, sizeof(buf));
+        err = GetLastError();
+        ok(ret == test_data[i].ret, "%d) ret = %d\n", i, ret);
+        ok(err == test_data[i].err, "%d) err = %d\n", i, err);
+        ok(!memcmp(test_data[i].out, buf, ret*sizeof(WCHAR)),
+                "%d) buf = %s\n", i, wine_dbgstr_wn(buf, ret));
+    }
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
@@ -3019,6 +3086,7 @@ START_TEST(locale)
   test_GetCPInfo();
   test_GetStringTypeW();
   test_IdnToNameprepUnicode();
+  test_IdnToAscii();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }

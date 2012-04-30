@@ -3938,7 +3938,8 @@ INT WINAPI IdnToAscii(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cchUnicodeCha
         INT delta = 0, b = 0, h;
 
         out_label = out;
-        for(i=label_start; i<norm_len && norm_str[i]!='.' && norm_str[i]!='\0'; i++)
+        for(i=label_start; i<norm_len && norm_str[i]!='.' &&
+                norm_str[i]!=0x3002 && norm_str[i]!='\0'; i++)
             if(norm_str[i] < 0x80)
                 b++;
         label_end = i;
@@ -4027,7 +4028,7 @@ INT WINAPI IdnToAscii(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cchUnicodeCha
             if(!lpASCIICharStr) {
                 out++;
             }else if(out+1 <= cchASCIIChar) {
-                lpASCIICharStr[out++] = norm_str[label_end];
+                lpASCIICharStr[out++] = norm_str[label_end] ? '.' : 0;
             }else {
                 HeapFree(GetProcessHeap(), 0, norm_str);
                 SetLastError(ERROR_INSUFFICIENT_BUFFER);
