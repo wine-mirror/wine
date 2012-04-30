@@ -3881,16 +3881,164 @@ BOOL WINAPI IsNormalizedString(NORM_FORM NormForm, LPCWSTR lpString, INT cwLengt
     return FALSE;
 }
 
+enum {
+    BASE = 36,
+    TMIN = 1,
+    TMAX = 26,
+    SKEW = 38,
+    DAMP = 700,
+    INIT_BIAS = 72,
+    INIT_N = 128
+};
+
+static inline INT adapt(INT delta, INT numpoints, BOOL firsttime)
+{
+    INT k;
+
+    delta /= (firsttime ? DAMP : 2);
+    delta += delta/numpoints;
+
+    for(k=0; delta>((BASE-TMIN)*TMAX)/2; k+=BASE)
+        delta /= BASE-TMIN;
+    return k+((BASE-TMIN+1)*delta)/(delta+SKEW);
+}
+
 /******************************************************************************
  *           IdnToAscii (KERNEL32.@)
+ * Implementation of Punycode based on RFC 3492.
  */
 INT WINAPI IdnToAscii(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cchUnicodeChar,
                       LPWSTR lpASCIICharStr, INT cchASCIIChar)
 {
-    FIXME("%x %p %d %p %d\n", dwFlags, lpUnicodeCharStr, cchUnicodeChar,
+    static const WCHAR prefixW[] = {'x','n','-','-'};
+
+    WCHAR *norm_str;
+    INT i, label_start, label_end, norm_len, out_label, out = 0;
+
+    TRACE("%x %p %d %p %d\n", dwFlags, lpUnicodeCharStr, cchUnicodeChar,
         lpASCIICharStr, cchASCIIChar);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+
+    norm_len = IdnToNameprepUnicode(dwFlags, lpUnicodeCharStr, cchUnicodeChar, NULL, 0);
+    if(!norm_len)
+        return 0;
+    norm_str = HeapAlloc(GetProcessHeap(), 0, norm_len*sizeof(WCHAR));
+    if(!norm_str) {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return 0;
+    }
+    norm_len = IdnToNameprepUnicode(dwFlags, lpUnicodeCharStr,
+            cchUnicodeChar, norm_str, norm_len);
+    if(!norm_len) {
+        HeapFree(GetProcessHeap(), 0, norm_str);
+        return 0;
+    }
+
+    for(label_start=0; label_start<norm_len;) {
+        INT n = INIT_N, bias = INIT_BIAS;
+        INT delta = 0, b = 0, h;
+
+        out_label = out;
+        for(i=label_start; i<norm_len && norm_str[i]!='.' && norm_str[i]!='\0'; i++)
+            if(norm_str[i] < 0x80)
+                b++;
+        label_end = i;
+
+        if(b == label_end-label_start) {
+            if(label_end < norm_len)
+                b++;
+            if(!lpASCIICharStr) {
+                out += b;
+            }else if(out+b <= cchASCIIChar) {
+                memcpy(lpASCIICharStr+out, norm_str+label_start, b*sizeof(WCHAR));
+                out += b;
+            }else {
+                HeapFree(GetProcessHeap(), 0, norm_str);
+                SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                return 0;
+            }
+            label_start = label_end+1;
+            continue;
+        }
+
+        if(!lpASCIICharStr) {
+            out += 5+b; /* strlen(xn--...-) */
+        }else if(out+5+b <= cchASCIIChar) {
+            memcpy(lpASCIICharStr+out, prefixW, sizeof(prefixW));
+            out += 4;
+            for(i=label_start; i<label_end; i++)
+                if(norm_str[i] < 0x80)
+                    lpASCIICharStr[out++] = norm_str[i];
+            lpASCIICharStr[out++] = '-';
+        }else {
+            HeapFree(GetProcessHeap(), 0, norm_str);
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return 0;
+        }
+        if(!b)
+            out--;
+
+        for(h=b; h<label_end-label_start;) {
+            INT m = 0xffff, q, k;
+
+            for(i=label_start; i<label_end; i++) {
+                if(norm_str[i]>=n && m>norm_str[i])
+                    m = norm_str[i];
+            }
+            delta += (m-n)*(h+1);
+            n = m;
+
+            for(i=label_start; i<label_end; i++) {
+                if(norm_str[i] < n) {
+                    delta++;
+                }else if(norm_str[i] == n) {
+                    for(q=delta, k=BASE; ; k+=BASE) {
+                        INT t = k<=bias ? TMIN : k>=bias+TMAX ? TMAX : k-bias;
+                        INT disp = q<t ? q : t+(q-t)%(BASE-t);
+                        if(!lpASCIICharStr) {
+                            out++;
+                        }else if(out+1 <= cchASCIIChar) {
+                            lpASCIICharStr[out++] = disp<='z'-'a' ?
+                                'a'+disp : '0'+disp-'z'+'a'-1;
+                        }else {
+                            HeapFree(GetProcessHeap(), 0, norm_str);
+                            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                            return 0;
+                        }
+                        if(q < t)
+                            break;
+                        q = (q-t)/(BASE-t);
+                    }
+                    bias = adapt(delta, h+1, h==b);
+                    delta = 0;
+                    h++;
+                }
+            }
+            delta++;
+            n++;
+        }
+
+        if(out-out_label > 63) {
+            HeapFree(GetProcessHeap(), 0, norm_str);
+            SetLastError(ERROR_INVALID_NAME);
+            return 0;
+        }
+
+        if(label_end < norm_len) {
+            if(!lpASCIICharStr) {
+                out++;
+            }else if(out+1 <= cchASCIIChar) {
+                lpASCIICharStr[out++] = norm_str[label_end];
+            }else {
+                HeapFree(GetProcessHeap(), 0, norm_str);
+                SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                return 0;
+            }
+        }
+        label_start = label_end+1;
+    }
+
+    HeapFree(GetProcessHeap(), 0, norm_str);
+    return out;
 }
 
 /******************************************************************************
