@@ -740,6 +740,7 @@ static HRESULT WINAPI d3d9_texture_cube_GetCubeMapSurface(IDirect3DCubeTexture9 
 {
     struct d3d9_texture *texture = impl_from_IDirect3DCubeTexture9(iface);
     struct wined3d_resource *sub_resource;
+    IDirect3DSurface9Impl *surface_impl;
     UINT sub_resource_idx;
 
     TRACE("iface %p, face %#x, level %u, surface %p.\n", iface, face, level, surface);
@@ -752,7 +753,8 @@ static HRESULT WINAPI d3d9_texture_cube_GetCubeMapSurface(IDirect3DCubeTexture9 
         return D3DERR_INVALIDCALL;
     }
 
-    *surface = wined3d_resource_get_parent(sub_resource);
+    surface_impl = wined3d_resource_get_parent(sub_resource);
+    *surface = &surface_impl->IDirect3DSurface9_iface;
     IDirect3DSurface9_AddRef(*surface);
     wined3d_mutex_unlock();
 
