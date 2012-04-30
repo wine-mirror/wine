@@ -57,7 +57,7 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl (LPCGUID lpcGUID, LP
  */
 struct IDirectMusicSynth8Impl {
   /* IUnknown fields */
-  const IDirectMusicSynth8Vtbl *lpVtbl;
+  IDirectMusicSynth8 IDirectMusicSynth8_iface;
   LONG          ref;
 
   /* IDirectMusicSynth8 fields */
