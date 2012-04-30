@@ -78,6 +78,7 @@ static INT (WINAPI *pFoldStringW)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static BOOL (WINAPI *pIsValidLanguageGroup)(LGRPID, DWORD);
 static INT (WINAPI *pIdnToNameprepUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pIdnToAscii)(DWORD, LPCWSTR, INT, LPWSTR, INT);
+static INT (WINAPI *pIdnToUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 
 static void InitFunctionPointers(void)
 {
@@ -93,6 +94,7 @@ static void InitFunctionPointers(void)
   pEnumSystemLocalesEx = (void*)GetProcAddress(hKernel32, "EnumSystemLocalesEx");
   pIdnToNameprepUnicode = (void*)GetProcAddress(hKernel32, "IdnToNameprepUnicode");
   pIdnToAscii = (void*)GetProcAddress(hKernel32, "IdnToAscii");
+  pIdnToUnicode = (void*)GetProcAddress(hKernel32, "IdnToUnicode");
 }
 
 #define eq(received, expected, label, type) \
@@ -3033,7 +3035,12 @@ static void test_IdnToAscii(void)
             35, {'x','n','-','-','b','e','a','2','a','1','6','3','1','a','v','b','a',
                 'v','4','4','t','y','h','a','3','2','b','9','1','e','g','s','2','t',0},
             0, 0xdeadbeef
-        }
+        },
+        {
+            2, {0x221,0},
+            8, {'x','n','-','-','6','l','a',0},
+            IDN_ALLOW_UNASSIGNED, 0xdeadbeef
+        },
     };
 
     WCHAR buf[1024];
@@ -3049,6 +3056,78 @@ static void test_IdnToAscii(void)
     {
         SetLastError(0xdeadbeef);
         ret = pIdnToAscii(test_data[i].flags, test_data[i].in,
+                test_data[i].in_len, buf, sizeof(buf));
+        err = GetLastError();
+        ok(ret == test_data[i].ret, "%d) ret = %d\n", i, ret);
+        ok(err == test_data[i].err, "%d) err = %d\n", i, err);
+        ok(!memcmp(test_data[i].out, buf, ret*sizeof(WCHAR)),
+                "%d) buf = %s\n", i, wine_dbgstr_wn(buf, ret));
+    }
+}
+
+static void test_IdnToUnicode(void)
+{
+    struct {
+        DWORD in_len;
+        const WCHAR in[64];
+        DWORD ret;
+        const WCHAR out[64];
+        DWORD flags;
+        DWORD err;
+    } test_data[] = {
+        {
+            5, {'T','e','s','.',0},
+            5, {'T','e','s','.',0},
+            0, 0xdeadbeef
+        },
+        {
+            2, {0x105,0},
+            0, {0},
+            0, ERROR_INVALID_NAME
+        },
+        {
+            33, {'x','n','-','-','4','d','b','c','a','g','d','a','h','y','m','b',
+                'x','e','k','h','e','h','6','e','0','a','7','f','e','i','0','b',0},
+            23, {0x05dc,0x05de,0x05d4,0x05d4,0x05dd,0x05e4,0x05e9,0x05d5,0x05d8,
+                0x05dc,0x05d0,0x05de,0x05d3,0x05d1,0x05e8,0x05d9,0x05dd,0x05e2,
+                0x05d1,0x05e8,0x05d9,0x05ea,0},
+            0, 0xdeadbeef
+        },
+        {
+            34, {'t','e','s','t','.','x','n','-','-','k','d','a','9','a','g','5','e',
+                '9','j','n','f','s','j','.','x','n','-','-','p','d','-','f','n','a'},
+            16, {'t','e','s','t','.',0x0105,0x0119,0x015b,0x0107,
+                0x0142,0x00f3,0x017c,'.','p',0x0119,'d'},
+            0, 0xdeadbeef
+        },
+        {
+            64, {'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+                'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+                'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+                'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'},
+            0, {0},
+            0, ERROR_INVALID_NAME
+        },
+        {
+            8, {'x','n','-','-','6','l','a',0},
+            2, {0x221,0},
+            IDN_ALLOW_UNASSIGNED, 0xdeadbeef
+        },
+    };
+
+    WCHAR buf[1024];
+    DWORD i, ret, err;
+
+    if (!pIdnToUnicode)
+    {
+        win_skip("IdnToUnicode is not available\n");
+        return;
+    }
+
+    for (i=0; i<sizeof(test_data)/sizeof(*test_data); i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = pIdnToUnicode(test_data[i].flags, test_data[i].in,
                 test_data[i].in_len, buf, sizeof(buf));
         err = GetLastError();
         ok(ret == test_data[i].ret, "%d) ret = %d\n", i, ret);
@@ -3087,6 +3166,7 @@ START_TEST(locale)
   test_GetStringTypeW();
   test_IdnToNameprepUnicode();
   test_IdnToAscii();
+  test_IdnToUnicode();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }
