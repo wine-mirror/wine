@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(sxs);
 
 static const WCHAR win32W[] = {'w','i','n','3','2',0};
 static const WCHAR win32_policyW[] = {'w','i','n','3','2','-','p','o','l','i','c','y',0};
+static const WCHAR backslashW[] = {'\\',0};
 
 struct cache
 {
@@ -102,48 +103,90 @@ static HRESULT WINAPI cache_UninstallAssembly(
     return E_NOTIMPL;
 }
 
-static void build_sxs_path( WCHAR *path )
+static unsigned int build_sxs_path( WCHAR *path )
 {
     static const WCHAR winsxsW[] = {'\\','w','i','n','s','x','s','\\',0};
-    GetWindowsDirectoryW( path, MAX_PATH );
-    strcatW( path, winsxsW );
+    unsigned int len = GetWindowsDirectoryW( path, MAX_PATH );
+
+    memcpy( path + len, winsxsW, sizeof(winsxsW) );
+    return len + sizeof(winsxsW) / sizeof(winsxsW[0]) - 1;
 }
 
 static WCHAR *build_assembly_name( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
-                                   const WCHAR *version )
+                                   const WCHAR *version, unsigned int *len )
 {
     static const WCHAR fmtW[] =
         {'%','s','_','%','s','_','%','s','_','%','s','_','n','o','n','e','_','d','e','a','d','b','e','e','f',0};
+    unsigned int buflen = sizeof(fmtW) / sizeof(fmtW[0]);
     WCHAR *ret, *p;
-    int len;
 
-    len = strlenW( fmtW );
-    len += strlenW( arch );
-    len += strlenW( name );
-    len += strlenW( token );
-    len += strlenW( version );
-
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
-    sprintfW( ret, fmtW, arch, name, token, version );
+    buflen += strlenW( arch );
+    buflen += strlenW( name );
+    buflen += strlenW( token );
+    buflen += strlenW( version );
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, buflen * sizeof(WCHAR) ))) return NULL;
+    *len = sprintfW( ret, fmtW, arch, name, token, version );
     for (p = ret; *p; p++) *p = tolowerW( *p );
     return ret;
 }
 
-static WCHAR *build_policy_name( const WCHAR *arch, const WCHAR *name, const WCHAR *token )
+static WCHAR *build_manifest_path( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
+                                   const WCHAR *version )
+{
+    static const WCHAR fmtW[] =
+        {'%','s','m','a','n','i','f','e','s','t','s','\\','%','s','.','m','a','n','i','f','e','s','t',0};
+    WCHAR *path = NULL, *ret, sxsdir[MAX_PATH];
+    unsigned int len;
+
+    if (!(path = build_assembly_name( arch, name, token, version, &len ))) return NULL;
+    len += sizeof(fmtW) / sizeof(fmtW[0]);
+    len += build_sxs_path( sxsdir );
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+    {
+        HeapFree( GetProcessHeap(), 0, path );
+        return NULL;
+    }
+    sprintfW( ret, fmtW, sxsdir, path );
+    HeapFree( GetProcessHeap(), 0, path );
+    return ret;
+}
+
+static WCHAR *build_policy_name( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
+                                 unsigned int *len )
 {
     static const WCHAR fmtW[] =
         {'%','s','_','%','s','_','%','s','_','n','o','n','e','_','d','e','a','d','b','e','e','f',0};
+    unsigned int buflen = sizeof(fmtW) / sizeof(fmtW[0]);
     WCHAR *ret, *p;
-    int len;
 
-    len = strlenW( fmtW );
-    len += strlenW( arch );
-    len += strlenW( name );
-    len += strlenW( token );
-
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
-    sprintfW( ret, fmtW, arch, name, token );
+    buflen += strlenW( arch );
+    buflen += strlenW( name );
+    buflen += strlenW( token );
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, buflen * sizeof(WCHAR) ))) return NULL;
+    *len = sprintfW( ret, fmtW, arch, name, token );
     for (p = ret; *p; p++) *p = tolowerW( *p );
+    return ret;
+}
+
+static WCHAR *build_policy_path( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
+                                 const WCHAR *version )
+{
+    static const WCHAR fmtW[] =
+        {'%','s','p','o','l','i','c','i','e','s','\\','%','s','\\','%','s','.','p','o','l','i','c','y',0};
+    WCHAR *path = NULL, *ret, sxsdir[MAX_PATH];
+    unsigned int len;
+
+    if (!(path = build_policy_name( arch, name, token, &len ))) return NULL;
+    len += sizeof(fmtW) / sizeof(fmtW[0]);
+    len += build_sxs_path( sxsdir );
+    len += strlenW( version );
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+    {
+        HeapFree( GetProcessHeap(), 0, path );
+        return NULL;
+    }
+    sprintfW( ret, fmtW, sxsdir, path, version );
+    HeapFree( GetProcessHeap(), 0, path );
     return ret;
 }
 
@@ -155,14 +198,10 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
     LPCWSTR assembly_name,
     ASSEMBLY_INFO *info )
 {
-    static const WCHAR fmt_assemblyW[] =
-        {'%','s','m','a','n','i','f','e','s','t','s','\\','%','s','.','m','a','n','i','f','e','s','t',0};
-    static const WCHAR fmt_policyW[] =
-        {'%','s','p','o','l','i','c','i','e','s','\\','%','s','\\','%','s','.','p','o','l','i','c','y',0};
-    LPASSEMBLYNAME name_obj;
-    unsigned int len;
+    IAssemblyName *name_obj;
     const WCHAR *arch, *name, *token, *type, *version;
-    WCHAR *p, *path = NULL, *full_path = NULL, sxsdir[MAX_PATH];
+    WCHAR *p, *path = NULL;
+    unsigned int len;
     HRESULT hr;
 
     TRACE("%p, 0x%08x, %s, %p\n", iface, flags, debugstr_w(assembly_name), info);
@@ -181,6 +220,7 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
     version = get_name_attribute( name_obj, NAME_ATTR_ID_VERSION );
     if (!arch || !name || !token || !type || !version)
     {
+        IAssemblyName_Release( name_obj );
         return HRESULT_FROM_WIN32( ERROR_SXS_MISSING_ASSEMBLY_IDENTITY_ATTRIBUTE );
     }
     if (!info)
@@ -188,38 +228,26 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
         IAssemblyName_Release( name_obj );
         return S_OK;
     }
-    hr = E_OUTOFMEMORY;
-    build_sxs_path( sxsdir );
-    len = strlenW( sxsdir );
-    if (!strcmpW( type, win32W ))
-    {
-        len += strlenW( fmt_assemblyW );
-        if (!(path = build_assembly_name( arch, name, token, version ))) goto done;
-        len += strlenW( path );
-        if (!(full_path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) goto done;
-        sprintfW( full_path, fmt_assemblyW, sxsdir, path );
-    }
-    else if (!strcmpW( type, win32_policyW ))
-    {
-        len += strlenW( fmt_policyW );
-        if (!(path = build_policy_name( arch, name, token ))) goto done;
-        len += strlenW( path ) + strlenW( version );
-        if (!(full_path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) goto done;
-        sprintfW( full_path, fmt_policyW, sxsdir, path, version );
-    }
+    if (!strcmpW( type, win32W )) path = build_manifest_path( arch, name, token, version );
+    else if (!strcmpW( type, win32_policyW )) path = build_policy_path( arch, name, token, version );
     else
     {
         hr = HRESULT_FROM_WIN32( ERROR_SXS_INVALID_IDENTITY_ATTRIBUTE_VALUE );
         goto done;
     }
+    if (!path)
+    {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
     hr = S_OK;
-    if (GetFileAttributesW( full_path ) != INVALID_FILE_ATTRIBUTES) /* FIXME: better check */
+    if (GetFileAttributesW( path ) != INVALID_FILE_ATTRIBUTES) /* FIXME: better check */
     {
         info->dwAssemblyFlags = ASSEMBLYINFO_FLAG_INSTALLED;
         TRACE("assembly is installed\n");
     }
-    if ((p = strrchrW( full_path, '\\' ))) *p = 0;
-    len = strlenW( full_path ) + 1;
+    if ((p = strrchrW( path, '\\' ))) *p = 0;
+    len = strlenW( path ) + 1;
     if (info->pszCurrentAssemblyPathBuf)
     {
         if (info->cchBuf < len)
@@ -227,11 +255,10 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
             info->cchBuf = len;
             hr = HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER );
         }
-        else strcpyW( info->pszCurrentAssemblyPathBuf, full_path );
+        else strcpyW( info->pszCurrentAssemblyPathBuf, path );
     }
 
 done:
-    HeapFree( GetProcessHeap(), 0, full_path );
     HeapFree( GetProcessHeap(), 0, path );
     IAssemblyName_Release( name_obj );
     return hr;
@@ -456,50 +483,56 @@ done:
     return hr;
 }
 
-static HRESULT install_policy( const WCHAR *manifest, struct assembly *assembly )
+static WCHAR *build_policy_filename( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
+                                     const WCHAR *version )
 {
     static const WCHAR policiesW[] = {'p','o','l','i','c','i','e','s','\\',0};
     static const WCHAR suffixW[] = {'.','p','o','l','i','c','y',0};
-    static const WCHAR backslashW[] = {'\\',0};
-    WCHAR sxsdir[MAX_PATH], *name, *dst;
-    HRESULT hr = E_OUTOFMEMORY;
+    WCHAR sxsdir[MAX_PATH], *ret, *fullname;
+    unsigned int len;
+
+    if (!(fullname = build_policy_name( arch, name, token, &len ))) return NULL;
+    len += build_sxs_path( sxsdir );
+    len += sizeof(policiesW) / sizeof(policiesW[0]) - 1;
+    len += strlenW( version );
+    len += sizeof(suffixW) / sizeof(suffixW[0]) - 1;
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
+    {
+        HeapFree( GetProcessHeap(), 0, fullname );
+        return NULL;
+    }
+    strcpyW( ret, sxsdir );
+    strcatW( ret, policiesW );
+    CreateDirectoryW( ret, NULL );
+    strcatW( ret, name );
+    CreateDirectoryW( ret, NULL );
+    strcatW( ret, backslashW );
+    strcatW( ret, version );
+    strcatW( ret, suffixW );
+
+    HeapFree( GetProcessHeap(), 0, fullname );
+    return ret;
+}
+
+static HRESULT install_policy( const WCHAR *manifest, struct assembly *assembly )
+{
+    WCHAR *dst;
     BOOL ret;
-    int len;
 
     /* FIXME: handle catalog file */
 
-    build_sxs_path( sxsdir );
-    name = build_policy_name( assembly->arch, assembly->name, assembly->token );
-    if (!name) goto done;
-
-    len = strlenW( sxsdir );
-    len += strlenW( policiesW );
-    len += strlenW( name ) + 1;
-    len += strlenW( assembly->version );
-    len += strlenW( suffixW );
-
-    if (!(dst = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) goto done;
-    strcpyW( dst, sxsdir );
-    strcatW( dst, policiesW );
-    CreateDirectoryW( dst, NULL );
-    strcatW( dst, name );
-    CreateDirectoryW( dst, NULL );
-    strcatW( dst, backslashW );
-    strcatW( dst, assembly->version );
-    strcatW( dst, suffixW );
+    dst = build_policy_filename( assembly->arch, assembly->name, assembly->token, assembly->version );
+    if (!dst) return E_OUTOFMEMORY;
 
     ret = CopyFileW( manifest, dst, FALSE );
     HeapFree( GetProcessHeap(), 0, dst );
     if (!ret)
     {
-        hr = HRESULT_FROM_WIN32( GetLastError() );
+        HRESULT hr = HRESULT_FROM_WIN32( GetLastError() );
         WARN("failed to copy policy manifest file 0x%08x\n", hr);
+        return hr;
     }
-    hr = S_OK;
-
-done:
-    HeapFree( GetProcessHeap(), 0, name );
-    return hr;
+    return S_OK;
 }
 
 static WCHAR *build_source_filename( const WCHAR *manifest, struct file *file )
@@ -521,30 +554,64 @@ static WCHAR *build_source_filename( const WCHAR *manifest, struct file *file )
     return src;
 }
 
-static HRESULT install_assembly( const WCHAR *manifest, struct assembly *assembly )
+static WCHAR *build_manifest_filename( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
+                                       const WCHAR *version )
 {
     static const WCHAR manifestsW[] = {'m','a','n','i','f','e','s','t','s','\\',0};
     static const WCHAR suffixW[] = {'.','m','a','n','i','f','e','s','t',0};
-    static const WCHAR backslashW[] = {'\\',0};
+    WCHAR sxsdir[MAX_PATH], *ret, *fullname;
+    unsigned int len;
+
+    if (!(fullname = build_assembly_name( arch, name, token, version, &len ))) return NULL;
+    len += build_sxs_path( sxsdir );
+    len += sizeof(manifestsW) / sizeof(manifestsW[0]) - 1;
+    len += sizeof(suffixW) / sizeof(suffixW[0]) - 1;
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
+    {
+        HeapFree( GetProcessHeap(), 0, fullname );
+        return NULL;
+    }
+    strcpyW( ret, sxsdir );
+    strcatW( ret, manifestsW );
+    strcatW( ret, fullname );
+    strcatW( ret, suffixW );
+
+    HeapFree( GetProcessHeap(), 0, fullname );
+    return ret;
+}
+
+static HRESULT load_manifest( IXMLDOMDocument *doc, const WCHAR *filename )
+{
+    HRESULT hr;
+    VARIANT var;
+    VARIANT_BOOL b;
+    BSTR str;
+
+    str = SysAllocString( filename );
+    VariantInit( &var );
+    V_VT( &var ) = VT_BSTR;
+    V_BSTR( &var ) = str;
+    hr = IXMLDOMDocument_load( doc, var, &b );
+    SysFreeString( str );
+    if (hr != S_OK) return hr;
+    if (!b)
+    {
+        WARN("failed to load manifest\n");
+        return S_FALSE;
+    }
+    return S_OK;
+}
+
+static HRESULT install_assembly( const WCHAR *manifest, struct assembly *assembly )
+{
     WCHAR sxsdir[MAX_PATH], *p, *name, *dst, *src;
+    unsigned int len, len_name, len_sxsdir = build_sxs_path( sxsdir );
     struct file *file;
     HRESULT hr = E_OUTOFMEMORY;
     BOOL ret;
-    int len;
 
-    build_sxs_path( sxsdir );
-    name = build_assembly_name( assembly->arch, assembly->name, assembly->token, assembly->version );
-    if (!name) goto done;
-
-    len = strlenW( sxsdir );
-    len += strlenW( manifestsW );
-    len += strlenW( name );
-    len += strlenW( suffixW );
-    if (!(dst = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) goto done;
-    strcpyW( dst, sxsdir );
-    strcatW( dst, manifestsW );
-    strcatW( dst, name );
-    strcatW( dst, suffixW );
+    dst = build_manifest_filename( assembly->arch, assembly->name, assembly->token, assembly->version );
+    if (!dst) return E_OUTOFMEMORY;
 
     ret = CopyFileW( manifest, dst, FALSE );
     HeapFree( GetProcessHeap(), 0, dst );
@@ -552,22 +619,22 @@ static HRESULT install_assembly( const WCHAR *manifest, struct assembly *assembl
     {
         hr = HRESULT_FROM_WIN32( GetLastError() );
         WARN("failed to copy manifest file 0x%08x\n", hr);
-        goto done;
+        return hr;
     }
+
+    name = build_assembly_name( assembly->arch, assembly->name, assembly->token, assembly->version,
+                                &len_name );
+    if (!name) return E_OUTOFMEMORY;
 
     /* FIXME: this should be a transaction */
     LIST_FOR_EACH_ENTRY( file, &assembly->files, struct file, entry )
     {
-        if (!(src = build_source_filename( manifest, file )))
-        {
-            hr = E_OUTOFMEMORY;
-            goto done;
-        }
-        len = strlenW( sxsdir ) + strlenW( name ) + strlenW( file->name );
+        if (!(src = build_source_filename( manifest, file ))) goto done;
+
+        len = len_sxsdir + len_name + strlenW( file->name );
         if (!(dst = HeapAlloc( GetProcessHeap(), 0, (len + 2) * sizeof(WCHAR) )))
         {
             HeapFree( GetProcessHeap(), 0, src );
-            hr = E_OUTOFMEMORY;
             goto done;
         }
         strcpyW( dst, sxsdir );
@@ -604,9 +671,6 @@ static HRESULT WINAPI cache_InstallAssembly(
     HRESULT hr, init;
     IXMLDOMDocument *doc = NULL;
     struct assembly *assembly = NULL;
-    BSTR str;
-    VARIANT var;
-    VARIANT_BOOL b;
 
     TRACE("%p, 0x%08x, %s, %p\n", iface, flags, debugstr_w(path), ref);
 
@@ -616,23 +680,8 @@ static HRESULT WINAPI cache_InstallAssembly(
     if (hr != S_OK)
         goto done;
 
-    str = SysAllocString( path );
-    VariantInit( &var );
-    V_VT( &var ) = VT_BSTR;
-    V_BSTR( &var ) = str;
-    hr = IXMLDOMDocument_load( doc, var, &b );
-    SysFreeString( str );
-    if (hr != S_OK) goto done;
-    if (!b)
-    {
-        WARN("failed to load manifest\n");
-        hr = S_FALSE;
-        goto done;
-    }
-
-    hr = parse_assembly( doc, &assembly );
-    if (hr != S_OK)
-        goto done;
+    if ((hr = load_manifest( doc, path )) != S_OK) goto done;
+    if ((hr = parse_assembly( doc, &assembly )) != S_OK) goto done;
 
     /* FIXME: verify name attributes */
 
@@ -644,10 +693,7 @@ static HRESULT WINAPI cache_InstallAssembly(
 done:
     free_assembly( assembly );
     if (doc) IXMLDOMDocument_Release( doc );
-
-    if (SUCCEEDED(init))
-        CoUninitialize();
-
+    if (SUCCEEDED(init)) CoUninitialize();
     return hr;
 }
 
