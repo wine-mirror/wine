@@ -1239,17 +1239,26 @@ DWORD WINAPI K32GetModuleFileNameExW(HANDLE process, HMODULE module,
                                      LPWSTR file_name, DWORD size)
 {
     LDR_MODULE ldr_module;
+    DWORD len;
+
+    if (!size) return 0;
 
     if(!get_ldr_module(process, module, &ldr_module))
         return 0;
 
-    size = min(ldr_module.FullDllName.Length / sizeof(WCHAR), size);
+    len = ldr_module.FullDllName.Length / sizeof(WCHAR);
+    if (size <= len)
+    {
+        len = size;
+        size--;
+    }
+
     if (!ReadProcessMemory(process, ldr_module.FullDllName.Buffer,
                            file_name, size * sizeof(WCHAR), NULL))
         return 0;
 
     file_name[size] = 0;
-    return size;
+    return len;
 }
 
 /***********************************************************************
@@ -1259,32 +1268,42 @@ DWORD WINAPI K32GetModuleFileNameExA(HANDLE process, HMODULE module,
                                      LPSTR file_name, DWORD size)
 {
     WCHAR *ptr;
+    DWORD len;
 
     TRACE("(hProcess=%p, hModule=%p, %p, %d)\n", process, module, file_name, size);
 
-    if (!file_name || !size) return 0;
+    if (!file_name || !size)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
 
     if ( process == GetCurrentProcess() )
     {
-        DWORD len = GetModuleFileNameA( module, file_name, size );
+        len = GetModuleFileNameA( module, file_name, size );
         if (size) file_name[size - 1] = '\0';
         return len;
     }
 
     if (!(ptr = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR)))) return 0;
 
-    if (!K32GetModuleFileNameExW(process, module, ptr, size))
+    len = K32GetModuleFileNameExW(process, module, ptr, size);
+    if (!len)
     {
         file_name[0] = '\0';
     }
     else
     {
         if (!WideCharToMultiByte( CP_ACP, 0, ptr, -1, file_name, size, NULL, NULL ))
+        {
             file_name[size - 1] = 0;
+            len = size;
+        }
+        else if (len < size) len = strlen( file_name );
     }
 
     HeapFree(GetProcessHeap(), 0, ptr);
-    return strlen(file_name);
+    return len;
 }
 
 /***********************************************************************
