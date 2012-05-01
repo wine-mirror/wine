@@ -67,7 +67,7 @@ static char const tbl_shifts[][4] = {
 };
 
 static char const tbl_hiops_t[][4] = {
-"add", "cmp", "mov", "bx"
+    "add", "cmp", "mov", "bx"
 };
 
 static char const tbl_aluops_t[][4] = {
@@ -76,7 +76,11 @@ static char const tbl_aluops_t[][4] = {
 };
 
 static char const tbl_immops_t[][4] = {
-"mov", "cmp", "add", "sub"
+    "mov", "cmp", "add", "sub"
+};
+
+static char const tbl_sregops_t[][5] = {
+    "strh", "ldsb", "ldrh", "ldsh"
 };
 
 static UINT db_get_inst(void* addr, int size)
@@ -368,7 +372,7 @@ static WORD thumb_disasm_aluop(WORD inst, ADDRESS64 *addr)
     return 0;
 }
 
-static WORD thumb_disasm_blocktrans(WORD inst, ADDRESS64 *addr)
+static WORD thumb_disasm_pushpop(WORD inst, ADDRESS64 *addr)
 {
     short lrpc = (inst >> 8)  & 0x01;
     short load = (inst >> 11) & 0x01;
@@ -388,7 +392,30 @@ static WORD thumb_disasm_blocktrans(WORD inst, ADDRESS64 *addr)
             else dbg_printf("%s, ", tbl_regs[i]);
         }
     if (lrpc)
-        dbg_printf(", %s", load ? "pc" : "lr");
+        dbg_printf("%s%s", last ? ", " : "", load ? "pc" : "lr");
+
+    dbg_printf("}");
+    return 0;
+}
+
+static WORD thumb_disasm_blocktrans(WORD inst, ADDRESS64 *addr)
+{
+    short load = (inst >> 11) & 0x01;
+    short i;
+    short last;
+
+    for (i=7;i>=0;i--)
+        if ((inst>>i) & 1) break;
+    last = i;
+
+    dbg_printf("\n\t%s\t%s!, {", load ? "ldmia" : "stmia", tbl_regs[(inst >> 8) & 0x07]);
+
+    for (i=0;i<=7;i++)
+        if ((inst>>i) & 1)
+        {
+            if (i == last) dbg_printf("%s", tbl_regs[i]);
+            else dbg_printf("%s, ", tbl_regs[i]);
+        }
 
     dbg_printf("}");
     return 0;
@@ -413,6 +440,18 @@ static WORD thumb_disasm_condbranch(WORD inst, ADDRESS64 *addr)
 {
     WORD offset = inst & 0x00ff;
     dbg_printf("\n\tb%s\t", tbl_cond[(inst >> 8) & 0x0f]);
+    db_printsym(addr->Offset + offset);
+    return 0;
+}
+
+static WORD thumb_disasm_uncondbranch(WORD inst, ADDRESS64 *addr)
+{
+    short offset = (inst & 0x07ff) << 1;
+
+    if (offset & 0x0800) offset |= 0xf000;
+    offset += 4;
+
+    dbg_printf("\n\tb\t");
     db_printsym(addr->Offset + offset);
     return 0;
 }
@@ -468,6 +507,28 @@ static WORD thumb_disasm_ldrimm(WORD inst, ADDRESS64 *addr)
     WORD offset = (inst & 0x07c0) >> 6;
     dbg_printf("\n\t%s%s\t%s, [%s, #%u]", (inst & 0x0800)?"ldr":"str", (inst & 0x1000)?"b":"",
                tbl_regs[inst & 0x07], tbl_regs[(inst >> 3) & 0x07], (inst & 0x1000)?offset:(offset << 2));
+    return 0;
+}
+
+static WORD thumb_disasm_ldrhimm(WORD inst, ADDRESS64 *addr)
+{
+    WORD offset = (inst & 0x07c0) >> 5;
+    dbg_printf("\n\t%s\t%s, [%s, #%u]", (inst & 0x0800)?"ldrh":"strh",
+               tbl_regs[inst & 0x07], tbl_regs[(inst >> 3) & 0x07], offset);
+    return 0;
+}
+
+static WORD thumb_disasm_ldrreg(WORD inst, ADDRESS64 *addr)
+{
+    dbg_printf("\n\t%s%s\t%s, [%s, %s]", (inst & 0x0800)?"ldr":"str", (inst & 0x0400)?"b":"",
+               tbl_regs[inst & 0x07], tbl_regs[(inst >> 3) & 0x07], tbl_regs[(inst >> 6) & 0x07]);
+    return 0;
+}
+
+static WORD thumb_disasm_ldrsreg(WORD inst, ADDRESS64 *addr)
+{
+    dbg_printf("\n\t%s\t%s, [%s, %s]", tbl_sregops_t[(inst >> 10) & 0x03],
+               tbl_regs[inst & 0x07], tbl_regs[(inst >> 3) & 0x07], tbl_regs[(inst >> 6) & 0x07]);
     return 0;
 }
 
@@ -531,16 +592,20 @@ struct inst_thumb16
 static const struct inst_thumb16 tbl_thumb16[] = {
     { 0xfc00, 0x4400, thumb_disasm_hireg },
     { 0xfc00, 0x4000, thumb_disasm_aluop },
-    { 0xf600, 0xb400, thumb_disasm_blocktrans },
+    { 0xf600, 0xb400, thumb_disasm_pushpop },
+    { 0xf000, 0xc000, thumb_disasm_blocktrans },
     { 0xf800, 0xf000, thumb_disasm_longbl },
     { 0xf000, 0xd000, thumb_disasm_condbranch },
+    { 0xf800, 0xe000, thumb_disasm_uncondbranch },
     { 0xf000, 0xa000, thumb_disasm_loadadr },
     { 0xf800, 0x4800, thumb_disasm_ldrpcrel },
     { 0xf000, 0x9000, thumb_disasm_ldrsprel },
     { 0xff00, 0xb000, thumb_disasm_addsprel },
     { 0xe000, 0x6000, thumb_disasm_ldrimm },
+    { 0xf000, 0x8000, thumb_disasm_ldrhimm },
+    { 0xf200, 0x5000, thumb_disasm_ldrreg },
+    { 0xf200, 0x5200, thumb_disasm_ldrsreg },
     { 0xe000, 0x2000, thumb_disasm_immop },
-    { 0xf000, 0xd000, thumb_disasm_condbranch },
     { 0xff00, 0xdf00, thumb_disasm_swi },
     { 0xff00, 0xbf00, thumb_disasm_nop },
     { 0xf800, 0x1800, thumb_disasm_addsub },
