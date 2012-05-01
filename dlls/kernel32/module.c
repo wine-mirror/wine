@@ -1255,18 +1255,20 @@ DWORD WINAPI K32GetModuleFileNameExW(HANDLE process, HMODULE module,
         return 0;
 
     len = ldr_module.FullDllName.Length / sizeof(WCHAR);
-    if (size <= len)
-    {
-        len = size;
-        size--;
-    }
-
     if (!ReadProcessMemory(process, ldr_module.FullDllName.Buffer,
-                           file_name, size * sizeof(WCHAR), NULL))
+                           file_name, min( len, size ) * sizeof(WCHAR), NULL))
         return 0;
 
-    file_name[size] = 0;
-    return len;
+    if (len < size)
+    {
+        file_name[len] = 0;
+        return len;
+    }
+    else
+    {
+        file_name[size - 1] = 0;
+        return size;
+    }
 }
 
 /***********************************************************************
