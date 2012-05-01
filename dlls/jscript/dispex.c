@@ -958,6 +958,15 @@ jsdisp_t *iface_to_jsdisp(IUnknown *iface)
     return ret;
 }
 
+static void ensure_retval_type(VARIANT *v)
+{
+    switch(V_VT(v)) {
+    case VT_I2:
+        V_VT(v) = VT_I4;
+        V_I4(v) = V_I2(v);
+    }
+}
+
 HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *id)
 {
     dispex_prop_t *prop;
@@ -1203,18 +1212,21 @@ HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, VARIANT *val
     }
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-    if(FAILED(hres)) {
+    if(SUCCEEDED(hres)) {
+        hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei,
+                &ctx->jscaller->IServiceProvider_iface);
+        IDispatchEx_Release(dispex);
+    }else {
         ULONG err = 0;
 
         TRACE("using IDispatch\n");
-        return IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei, &err);
+        hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei, &err);
     }
+    if(FAILED(hres))
+        return hres;
 
-    hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei,
-            &ctx->jscaller->IServiceProvider_iface);
-    IDispatchEx_Release(dispex);
-
-    return hres;
+    ensure_retval_type(val);
+    return S_OK;
 }
 
 HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
