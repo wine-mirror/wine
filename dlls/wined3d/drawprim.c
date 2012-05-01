@@ -669,14 +669,24 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
         BOOL emulation = FALSE;
         const struct wined3d_stream_info *stream_info = &device->strided_streams;
         struct wined3d_stream_info stridedlcl;
-        UINT idx_size;
+        UINT idx_size = 0;
 
-        if (!indexed)
-            idx_size = 0;
-        else if (state->index_format == WINED3DFMT_R16_UINT)
-            idx_size = 2;
-        else
-            idx_size = 4;
+        if (indexed)
+        {
+            if (!state->user_stream)
+            {
+                struct wined3d_buffer *index_buffer = state->index_buffer;
+                if (!index_buffer->buffer_object)
+                    idxData = index_buffer->resource.allocatedMemory;
+                else
+                    idxData = NULL;
+            }
+
+            if (state->index_format == WINED3DFMT_R16_UINT)
+                idx_size = 2;
+            else
+                idx_size = 4;
+        }
 
         if (!use_vs(state))
         {

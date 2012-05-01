@@ -4008,14 +4008,11 @@ HRESULT CDECL wined3d_device_draw_primitive(struct wined3d_device *device, UINT 
 
 HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count)
 {
-    struct wined3d_buffer *index_buffer;
-    GLuint vbo;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     TRACE("device %p, start_idx %u, index_count %u.\n", device, start_idx, index_count);
 
-    index_buffer = device->stateBlock->state.index_buffer;
-    if (!index_buffer)
+    if (!device->stateBlock->state.index_buffer)
     {
         /* D3D9 returns D3DERR_INVALIDCALL when DrawIndexedPrimitive is called
          * without an index buffer set. (The first time at least...)
@@ -4036,7 +4033,6 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *devic
         device_invalidate_state(device, STATE_INDEXBUFFER);
         device->stateBlock->state.user_stream = FALSE;
     }
-    vbo = index_buffer->buffer_object;
 
     if (!gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX] &&
         device->stateBlock->state.load_base_vertex_index != device->stateBlock->state.base_vertex_index)
@@ -4045,8 +4041,7 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *devic
         device_invalidate_state(device, STATE_BASEVERTEXINDEX);
     }
 
-    drawPrimitive(device, index_count, start_idx, TRUE,
-            vbo ? NULL : index_buffer->resource.allocatedMemory);
+    drawPrimitive(device, index_count, start_idx, TRUE, NULL);
 
     return WINED3D_OK;
 }
