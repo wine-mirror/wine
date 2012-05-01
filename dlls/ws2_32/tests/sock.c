@@ -5274,6 +5274,58 @@ static void test_WSAAsyncGetServByName(void)
     DestroyWindow(hwnd);
 }
 
+/*
+ * Provide consistent initialization for the AcceptEx IOCP tests.
+ */
+static SOCKET setup_iocp_src(struct sockaddr_in *bindAddress)
+{
+    SOCKET src, ret = INVALID_SOCKET;
+    int iret, socklen;
+
+    src = socket(AF_INET, SOCK_STREAM, 0);
+    if (src == INVALID_SOCKET)
+    {
+        skip("could not create listener socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    memset(bindAddress, 0, sizeof(*bindAddress));
+    bindAddress->sin_family = AF_INET;
+    bindAddress->sin_addr.s_addr = inet_addr("127.0.0.1");
+    iret = bind(src, (struct sockaddr*)bindAddress, sizeof(*bindAddress));
+    if (iret != 0)
+    {
+        skip("failed to bind, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    socklen = sizeof(*bindAddress);
+    iret = getsockname(src, (struct sockaddr*)bindAddress, &socklen);
+    if (iret != 0) {
+        skip("failed to lookup bind address, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    if (set_blocking(src, FALSE))
+    {
+        skip("couldn't make socket non-blocking, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    iret = listen(src, 5);
+    if (iret != 0)
+    {
+        skip("listening failed, errno = %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    ret = src;
+end:
+    if (src != ret && ret == INVALID_SOCKET)
+        closesocket(src);
+    return ret;
+}
+
 static void test_completion_port(void)
 {
     HANDLE previous_port, io_port;
@@ -5289,7 +5341,6 @@ static void test_completion_port(void)
     struct sockaddr_in bindAddress;
     GUID acceptExGuid = WSAID_ACCEPTEX;
     LPFN_ACCEPTEX pAcceptEx = NULL;
-    int socklen;
 
     previous_port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
     ok( previous_port != NULL, "Failed to create completion port %u\n", GetLastError());
@@ -5401,14 +5452,6 @@ static void test_completion_port(void)
     if (dest != INVALID_SOCKET)
         closesocket(dest);
 
-
-    src = socket(AF_INET, SOCK_STREAM, 0);
-    if (src == INVALID_SOCKET)
-    {
-        skip("could not create listener socket, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
     dest = socket(AF_INET, SOCK_STREAM, 0);
     if (dest == INVALID_SOCKET)
     {
@@ -5416,7 +5459,7 @@ static void test_completion_port(void)
         goto end;
     }
 
-    iret = WSAIoctl(src, SIO_GET_EXTENSION_FUNCTION_POINTER, &acceptExGuid, sizeof(acceptExGuid),
+    iret = WSAIoctl(dest, SIO_GET_EXTENSION_FUNCTION_POINTER, &acceptExGuid, sizeof(acceptExGuid),
             &pAcceptEx, sizeof(pAcceptEx), &num_bytes, NULL, NULL);
     if (iret)
     {
@@ -5424,28 +5467,10 @@ static void test_completion_port(void)
         goto end;
     }
 
-    memset(&bindAddress, 0, sizeof(bindAddress));
-    bindAddress.sin_family = AF_INET;
-    bindAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
-    iret = bind(src, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    if (iret != 0)
-    {
-        skip("failed to bind, error %d\n", WSAGetLastError());
-        goto end;
-    }
+    /* Test IOCP response on socket close (IOCP created after AcceptEx) */
 
-    if (set_blocking(src, FALSE))
-    {
-        skip("couldn't make socket non-blocking, error %d\n", WSAGetLastError());
+    if ((src = setup_iocp_src(&bindAddress)) == INVALID_SOCKET)
         goto end;
-    }
-
-    iret = listen(src, 5);
-    if (iret != 0)
-    {
-        skip("listening failed, errno = %d\n", WSAGetLastError());
-        goto end;
-    }
 
     SetLastError(0xdeadbeef);
 
@@ -5485,42 +5510,10 @@ static void test_completion_port(void)
     ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
-    src = socket(AF_INET, SOCK_STREAM, 0);
-    if (src == INVALID_SOCKET)
-    {
-        skip("could not create listener socket, error %d\n", WSAGetLastError());
-        goto end;
-    }
+    /* */
 
-    memset(&bindAddress, 0, sizeof(bindAddress));
-    bindAddress.sin_family = AF_INET;
-    bindAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
-    iret = bind(src, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    if (iret != 0)
-    {
-        skip("failed to bind, error %d\n", WSAGetLastError());
+    if ((src = setup_iocp_src(&bindAddress)) == INVALID_SOCKET)
         goto end;
-    }
-
-    socklen = sizeof(bindAddress);
-    iret = getsockname(src, (struct sockaddr*)&bindAddress, &socklen);
-    if (iret != 0) {
-        skip("failed to lookup bind address, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    if (set_blocking(src, FALSE))
-    {
-        skip("couldn't make socket non-blocking, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    iret = listen(src, 5);
-    if (iret != 0)
-    {
-        skip("listening failed, errno = %d\n", WSAGetLastError());
-        goto end;
-    }
 
     connector = socket(AF_INET, SOCK_STREAM, 0);
     if (connector == INVALID_SOCKET) {
@@ -5575,42 +5568,10 @@ static void test_completion_port(void)
     if (src != INVALID_SOCKET)
         closesocket(dest);
 
-    src = socket(AF_INET, SOCK_STREAM, 0);
-    if (src == INVALID_SOCKET)
-    {
-        skip("could not create listener socket, error %d\n", WSAGetLastError());
-        goto end;
-    }
+    /* */
 
-    memset(&bindAddress, 0, sizeof(bindAddress));
-    bindAddress.sin_family = AF_INET;
-    bindAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
-    iret = bind(src, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    if (iret != 0)
-    {
-        skip("failed to bind, error %d\n", WSAGetLastError());
+    if ((src = setup_iocp_src(&bindAddress)) == INVALID_SOCKET)
         goto end;
-    }
-
-    socklen = sizeof(bindAddress);
-    iret = getsockname(src, (struct sockaddr*)&bindAddress, &socklen);
-    if (iret != 0) {
-        skip("failed to lookup bind address, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    if (set_blocking(src, FALSE))
-    {
-        skip("couldn't make socket non-blocking, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    iret = listen(src, 5);
-    if (iret != 0)
-    {
-        skip("listening failed, errno = %d\n", WSAGetLastError());
-        goto end;
-    }
 
     dest = socket(AF_INET, SOCK_STREAM, 0);
     if (dest == INVALID_SOCKET)
@@ -5675,42 +5636,10 @@ static void test_completion_port(void)
     if (connector != INVALID_SOCKET)
         closesocket(connector);
 
-    src = socket(AF_INET, SOCK_STREAM, 0);
-    if (src == INVALID_SOCKET)
-    {
-        skip("could not create listener socket, error %d\n", WSAGetLastError());
-        goto end;
-    }
+    /* */
 
-    memset(&bindAddress, 0, sizeof(bindAddress));
-    bindAddress.sin_family = AF_INET;
-    bindAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
-    iret = bind(src, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    if (iret != 0)
-    {
-        skip("failed to bind, error %d\n", WSAGetLastError());
+    if ((src = setup_iocp_src(&bindAddress)) == INVALID_SOCKET)
         goto end;
-    }
-
-    socklen = sizeof(bindAddress);
-    iret = getsockname(src, (struct sockaddr*)&bindAddress, &socklen);
-    if (iret != 0) {
-        skip("failed to lookup bind address, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    if (set_blocking(src, FALSE))
-    {
-        skip("couldn't make socket non-blocking, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
-    iret = listen(src, 5);
-    if (iret != 0)
-    {
-        skip("listening failed, errno = %d\n", WSAGetLastError());
-        goto end;
-    }
 
     dest = socket(AF_INET, SOCK_STREAM, 0);
     if (dest == INVALID_SOCKET)
