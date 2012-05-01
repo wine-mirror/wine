@@ -501,13 +501,13 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteChild(IDirect3DRMFrame2* iface
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteLight(IDirect3DRMFrame2* iface,
-                                                        LPDIRECT3DRMLIGHT light)
+                                                          LPDIRECT3DRMLIGHT light)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, light);
+    TRACE("(%p/%p)->(%p)\n", iface, This, light);
 
-    return E_NOTIMPL;
+    return IDirect3DRMFrame3_DeleteLight(&This->IDirect3DRMFrame3_iface, light);
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_DeleteMoveCallback(IDirect3DRMFrame2* iface,
@@ -1463,13 +1463,29 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteChild(IDirect3DRMFrame3* iface
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteLight(IDirect3DRMFrame3* iface,
-                                                        LPDIRECT3DRMLIGHT light)
+                                                          LPDIRECT3DRMLIGHT light)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    ULONG i;
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, light);
+    TRACE("(%p/%p)->(%p)\n", iface, This, light);
 
-    return E_NOTIMPL;
+    if (!light)
+        return D3DRMERR_BADOBJECT;
+
+    /* Check if visual exists */
+    for (i = 0; i < This->nb_lights; i++)
+        if (This->lights[i] == light)
+            break;
+
+    if (i == This->nb_lights)
+        return D3DRMERR_BADVALUE;
+
+    memmove(This->lights + i, This->lights + i + 1, sizeof(IDirect3DRMLight*) * (This->nb_lights - 1 - i));
+    IDirect3DRMLight_Release(light);
+    This->nb_lights--;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteMoveCallback(IDirect3DRMFrame3* iface,
