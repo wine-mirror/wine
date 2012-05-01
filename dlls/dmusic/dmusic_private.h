@@ -91,14 +91,14 @@ extern HRESULT DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, LPVOID* 
  * IDirectMusic8Impl implementation structure
  */
 struct IDirectMusic8Impl {
-  /* IUnknown fields */
-  const IDirectMusic8Vtbl *lpVtbl;
-  LONG           ref;
+    /* IUnknown fields */
+    IDirectMusic8 IDirectMusic8_iface;
+    LONG ref;
 
-  /* IDirectMusicImpl fields */
-  IReferenceClockImpl* pMasterClock;
-  IDirectMusicPort** ppPorts;
-  int nrofports;
+    /* IDirectMusicImpl fields */
+    IReferenceClockImpl* pMasterClock;
+    IDirectMusicPort** ppPorts;
+    int nrofports;
 };
 
 /*****************************************************************************
