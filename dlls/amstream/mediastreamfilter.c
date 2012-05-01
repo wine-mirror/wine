@@ -1,7 +1,7 @@
 /*
  * Implementation of MediaStream Filter
  *
- * Copyright 2008 Christian Costa
+ * Copyright 2008, 2012 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,16 +35,70 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
+typedef struct MediaStreamFilter_InputPin
+{
+    BaseInputPin pin;
+} MediaStreamFilter_InputPin;
+
+static const IPinVtbl MediaStreamFilter_InputPin_Vtbl =
+{
+    BaseInputPinImpl_QueryInterface,
+    BasePinImpl_AddRef,
+    BaseInputPinImpl_Release,
+    BaseInputPinImpl_Connect,
+    BaseInputPinImpl_ReceiveConnection,
+    BasePinImpl_Disconnect,
+    BasePinImpl_ConnectedTo,
+    BasePinImpl_ConnectionMediaType,
+    BasePinImpl_QueryPinInfo,
+    BasePinImpl_QueryDirection,
+    BasePinImpl_QueryId,
+    BasePinImpl_QueryAccept,
+    BasePinImpl_EnumMediaTypes,
+    BasePinImpl_QueryInternalConnections,
+    BaseInputPinImpl_EndOfStream,
+    BaseInputPinImpl_BeginFlush,
+    BaseInputPinImpl_EndFlush,
+    BasePinImpl_NewSegment
+};
+
 typedef struct {
     BaseFilter filter;
     ULONG nb_streams;
     IMediaStream** streams;
+    IPin** pins;
 } IMediaStreamFilterImpl;
 
 static inline IMediaStreamFilterImpl *impl_from_IMediaStreamFilter(IMediaStreamFilter *iface)
 {
     return CONTAINING_RECORD(iface, IMediaStreamFilterImpl, filter);
 }
+
+static HRESULT WINAPI BasePinImpl_CheckMediaType(BasePin *This, const AM_MEDIA_TYPE *pmt)
+{
+    return S_FALSE;
+}
+
+static LONG WINAPI BasePinImp_GetMediaTypeVersion(BasePin *This)
+{
+    return 0;
+}
+
+static HRESULT WINAPI BasePinImp_GetMediaType(BasePin *This, int iPosition, AM_MEDIA_TYPE *amt)
+{
+    return S_FALSE;
+}
+
+static const  BasePinFuncTable input_BaseFuncTable = {
+    BasePinImpl_CheckMediaType,
+    NULL,
+    BasePinImp_GetMediaTypeVersion,
+    BasePinImp_GetMediaType
+};
+
+static const BaseInputPinFuncTable input_BaseInputFuncTable = {
+    NULL
+};
 
 /*** IUnknown methods ***/
 
@@ -93,7 +147,10 @@ static ULONG WINAPI MediaStreamFilterImpl_Release(IMediaStreamFilter *iface)
     {
         int i;
         for (i = 0; i < This->nb_streams; i++)
+        {
             IMediaStream_Release(This->streams[i]);
+            IPin_Release(This->pins[i]);
+        }
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -178,6 +235,11 @@ static HRESULT WINAPI MediaStreamFilterImpl_AddMediaStream(IMediaStreamFilter* i
 {
     IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
     IMediaStream** streams;
+    IPin** pins;
+    MediaStreamFilter_InputPin* pin;
+    HRESULT hr;
+    PIN_INFO info;
+    MSPID purpose_id;
 
     TRACE("(%p)->(%p)\n", iface, pAMMediaStream);
 
@@ -185,6 +247,24 @@ static HRESULT WINAPI MediaStreamFilterImpl_AddMediaStream(IMediaStreamFilter* i
     if (!streams)
         return E_OUTOFMEMORY;
     This->streams = streams;
+    pins = CoTaskMemRealloc(This->pins, (This->nb_streams + 1) * sizeof(IPin*));
+    if (!pins)
+        return E_OUTOFMEMORY;
+    This->pins = pins;
+    info.pFilter = (IBaseFilter*)&This->filter;
+    info.dir = PINDIR_INPUT;
+    hr = IAMMediaStream_GetInformation(pAMMediaStream, &purpose_id, NULL);
+    if (FAILED(hr))
+        return hr;
+    /* Pin name is "I{guid MSPID_PrimaryVideo or MSPID_PrimaryAudio}" */
+    info.achName[0] = 'I';
+    StringFromGUID2(&purpose_id, info.achName + 1, 40);
+    hr = BaseInputPin_Construct(&MediaStreamFilter_InputPin_Vtbl, &info, &input_BaseFuncTable, &input_BaseInputFuncTable, &This->filter.csFilter, NULL, &This->pins[This->nb_streams]);
+    if (FAILED(hr))
+        return hr;
+
+    pin = (MediaStreamFilter_InputPin*)This->pins[This->nb_streams];
+    pin->pin.pin.pinInfo.pFilter = (LPVOID)This;
     This->streams[This->nb_streams] = (IMediaStream*)pAMMediaStream;
     This->nb_streams++;
 
@@ -294,14 +374,22 @@ static const IMediaStreamFilterVtbl MediaStreamFilter_Vtbl =
 
 static IPin* WINAPI MediaStreamFilterImpl_GetPin(BaseFilter *iface, int pos)
 {
-    /* No pins */
+    IMediaStreamFilterImpl* This = (IMediaStreamFilterImpl*)iface;
+
+    if (pos < This->nb_streams)
+    {
+        IPin_AddRef(This->pins[pos]);
+        return This->pins[pos];
+    }
+
     return NULL;
 }
 
 static LONG WINAPI MediaStreamFilterImpl_GetPinCount(BaseFilter *iface)
 {
-    /* No pins */
-    return 0;
+    IMediaStreamFilterImpl* This = (IMediaStreamFilterImpl*)iface;
+
+    return This->nb_streams;
 }
 
 static const BaseFilterFuncTable BaseFuncTable = {
