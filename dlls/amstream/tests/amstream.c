@@ -248,6 +248,13 @@ static void test_media_streams(void)
 
         if (SUCCEEDED(hr))
         {
+            DDSURFACEDESC current_format, desired_format;
+            IDirectDrawPalette *palette;
+            DWORD flags;
+
+            hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current_format, &palette, &desired_format, &flags);
+            ok(hr == MS_E_NOSTREAM, "IDirectDrawoMediaStream_GetFormat returned: %x\n", hr);
+
             hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &ddraw_sample);
             ok(hr == S_OK, "IDirectDrawMediaStream_CreateSample returned: %x\n", hr);
         }
@@ -333,8 +340,15 @@ static void test_media_streams(void)
         if (SUCCEEDED(hr))
         {
             IAudioData* audio_data = NULL;
+            WAVEFORMATEX format;
+
             hr = CoCreateInstance(&CLSID_AMAudioData, NULL, CLSCTX_INPROC_SERVER, &IID_IAudioData, (void **)&audio_data);
             ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
+
+            hr = IAudioMediaStream_GetFormat(audio_media_stream, NULL);
+            ok(hr == E_POINTER, "IAudioMediaStream_GetFormat returned: %x\n", hr);
+            hr = IAudioMediaStream_GetFormat(audio_media_stream, &format);
+            ok(hr == MS_E_NOSTREAM, "IAudioMediaStream_GetFormat returned: %x\n", hr);
 
             hr = IAudioMediaStream_CreateSample(audio_media_stream, NULL, 0, &audio_sample);
             ok(hr == E_POINTER, "IAudioMediaStream_CreateSample returned: %x\n", hr);

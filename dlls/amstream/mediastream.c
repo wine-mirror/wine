@@ -159,13 +159,13 @@ static HRESULT WINAPI IDirectDrawMediaStreamImpl_SendEndOfStream(IDirectDrawMedi
 
 /*** IDirectDrawMediaStream methods ***/
 static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetFormat(IDirectDrawMediaStream *iface,
-        DDSURFACEDESC *pDDSDCurrent, IDirectDrawPalette **ppDirectDrawPalette,
-        DDSURFACEDESC *pDDSDDesired, DWORD *pdwFlags)
+        DDSURFACEDESC *current_format, IDirectDrawPalette **palette,
+        DDSURFACEDESC *desired_format, DWORD *flags)
 {
-    FIXME("(%p)->(%p,%p,%p,%p) stub!\n", iface, pDDSDCurrent, ppDirectDrawPalette, pDDSDDesired,
-            pdwFlags);
+    FIXME("(%p)->(%p,%p,%p,%p) stub!\n", iface, current_format, palette, desired_format,
+            flags);
 
-    return E_NOTIMPL;
+    return MS_E_NOSTREAM;
 
 }
 
@@ -390,7 +390,10 @@ static HRESULT WINAPI IAudioMediaStreamImpl_GetFormat(IAudioMediaStream *iface, 
 
     FIXME("(%p/%p)->(%p) stub!\n", iface, This, wave_format_current);
 
-    return E_NOTIMPL;
+    if (!wave_format_current)
+        return E_POINTER;
+
+    return MS_E_NOSTREAM;
 
 }
 
