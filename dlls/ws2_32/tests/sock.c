@@ -5717,6 +5717,30 @@ static void test_completion_port(void)
     ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
+    /* Test IOCP without AcceptEx */
+
+    if ((src = setup_iocp_src(&bindAddress)) == INVALID_SOCKET)
+        goto end;
+
+    SetLastError(0xdeadbeef);
+
+    io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
+    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+
+    closesocket(src);
+    src = INVALID_SOCKET;
+
+    SetLastError(0xdeadbeef);
+    key = 0xdeadbeef;
+    num_bytes = 0xdeadbeef;
+    olp = (WSAOVERLAPPED *)0xdeadbeef;
+    bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
+    ok(bret == FALSE, "failed to get completion status %u\n", bret);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %lu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(!olp, "Overlapped structure is at %p\n", olp);
+
     /* */
 
     if ((src = setup_iocp_src(&bindAddress)) == INVALID_SOCKET)
