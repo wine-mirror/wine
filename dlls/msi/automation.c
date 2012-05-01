@@ -884,7 +884,7 @@ static HRESULT RecordImpl_Invoke(
             } else if (wFlags & DISPATCH_PROPERTYPUT) {
                 hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
-                hr = DispGetParam(pDispParams, DISPID_PROPERTYPUT, VT_BSTR, &varg1, puArgErr);
+                hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
                 if (FAILED(hr)) return hr;
                 if ((ret = MsiRecordSetStringW(This->msiHandle, V_I4(&varg0), V_BSTR(&varg1))) != ERROR_SUCCESS)
                 {
@@ -905,7 +905,7 @@ static HRESULT RecordImpl_Invoke(
             } else if (wFlags & DISPATCH_PROPERTYPUT) {
                 hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
-                hr = DispGetParam(pDispParams, DISPID_PROPERTYPUT, VT_I4, &varg1, puArgErr);
+                hr = DispGetParam(pDispParams, 1, VT_I4, &varg1, puArgErr);
                 if (FAILED(hr)) return hr;
                 if ((ret = MsiRecordSetInteger(This->msiHandle, V_I4(&varg0), V_I4(&varg1))) != ERROR_SUCCESS)
                 {
@@ -1340,7 +1340,7 @@ static HRESULT SessionImpl_Invoke(
             } else if (wFlags & DISPATCH_PROPERTYPUT) {
                 hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
-                hr = DispGetParam(pDispParams, DISPID_PROPERTYPUT, VT_BSTR, &varg1, puArgErr);
+                hr = DispGetParam(pDispParams, 1, VT_BSTR, &varg1, puArgErr);
                 if (FAILED(hr)) {
                     VariantClear(&varg0);
                     return hr;
@@ -1374,7 +1374,7 @@ static HRESULT SessionImpl_Invoke(
             } else if (wFlags & DISPATCH_PROPERTYPUT) {
                 hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
-                hr = DispGetParam(pDispParams, DISPID_PROPERTYPUT, VT_BOOL, &varg1, puArgErr);
+                hr = DispGetParam(pDispParams, 1, VT_BOOL, &varg1, puArgErr);
                 if (FAILED(hr)) return hr;
                 if ((ret = MsiSetMode(This->msiHandle, V_I4(&varg0), V_BOOL(&varg1))) != ERROR_SUCCESS)
                 {
@@ -1515,7 +1515,7 @@ static HRESULT SessionImpl_Invoke(
             } else if (wFlags & DISPATCH_PROPERTYPUT) {
                 hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
-                hr = DispGetParam(pDispParams, DISPID_PROPERTYPUT, VT_I4, &varg1, puArgErr);
+                hr = DispGetParam(pDispParams, 1, VT_I4, &varg1, puArgErr);
                 if (FAILED(hr)) {
                     VariantClear(&varg0);
                     return hr;
