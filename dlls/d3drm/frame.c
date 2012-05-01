@@ -40,6 +40,9 @@ typedef struct {
     ULONG nb_visuals;
     ULONG visuals_capacity;
     IDirect3DRMVisual** visuals;
+    ULONG nb_lights;
+    ULONG lights_capacity;
+    IDirect3DRMLight** lights;
 } IDirect3DRMFrameImpl;
 
 static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame2(IDirect3DRMFrame2 *iface)
@@ -213,13 +216,13 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_AddChild(IDirect3DRMFrame2* iface,
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_AddLight(IDirect3DRMFrame2* iface,
-                                                     LPDIRECT3DRMLIGHT light)
+                                                       LPDIRECT3DRMLIGHT light)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, light);
+    TRACE("(%p/%p)->(%p)\n", iface, This, light);
 
-    return E_NOTIMPL;
+    return IDirect3DRMFrame3_AddLight(&This->IDirect3DRMFrame3_iface, light);
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_AddMoveCallback(IDirect3DRMFrame2* iface,
@@ -1104,13 +1107,48 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddChild(IDirect3DRMFrame3* iface,
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_AddLight(IDirect3DRMFrame3* iface,
-                                                     LPDIRECT3DRMLIGHT light)
+                                                       LPDIRECT3DRMLIGHT light)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    ULONG i;
+    IDirect3DRMLight** lights;
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, light);
+    TRACE("(%p/%p)->(%p)\n", iface, This, light);
 
-    return E_NOTIMPL;
+    if (!light)
+        return D3DRMERR_BADOBJECT;
+
+    /* Check if already existing and return gracefully without increasing ref count */
+    for (i = 0; i < This->nb_lights; i++)
+        if (This->lights[i] == light)
+            return D3DRM_OK;
+
+    if ((This->nb_lights + 1) > This->lights_capacity)
+    {
+        ULONG new_capacity;
+
+        if (!This->lights_capacity)
+        {
+            new_capacity = 16;
+            lights = HeapAlloc(GetProcessHeap(), 0, new_capacity * sizeof(IDirect3DRMLight*));
+        }
+        else
+        {
+            new_capacity = This->lights_capacity * 2;
+            lights = HeapReAlloc(GetProcessHeap(), 0, This->lights, new_capacity * sizeof(IDirect3DRMLight*));
+        }
+
+        if (!lights)
+            return E_OUTOFMEMORY;
+
+        This->lights_capacity = new_capacity;
+        This->lights = lights;
+    }
+
+    This->lights[This->nb_lights++] = light;
+    IDirect3DRMLight_AddRef(light);
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_AddMoveCallback(IDirect3DRMFrame3* iface,
