@@ -171,18 +171,7 @@ UINT WINAPI SysStringLen(BSTR str)
  */
 UINT WINAPI SysStringByteLen(BSTR str)
 {
-    DWORD* bufferPointer;
-
-     if (!str) return 0;
-    /*
-     * The length of the string (in bytes) is contained in a DWORD placed
-     * just before the BSTR pointer
-     */
-    bufferPointer = (DWORD*)str;
-
-    bufferPointer--;
-
-    return (int)(*bufferPointer);
+    return str ? *((DWORD*)str-1) : 0;
 }
 
 /******************************************************************************
