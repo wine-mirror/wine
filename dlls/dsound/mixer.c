@@ -115,23 +115,21 @@ DWORD DSOUND_bufpos_to_mixpos(const DirectSoundDevice* device, DWORD pos)
  * secmixpos is used to decide which freqAcc is needed
  * overshot tells what the 'actual' secpos is now (optional)
  */
-DWORD DSOUND_secpos_to_bufpos(const IDirectSoundBufferImpl *dsb, DWORD secpos, DWORD secmixpos, DWORD* overshot)
+DWORD DSOUND_secpos_to_bufpos(const IDirectSoundBufferImpl *dsb, DWORD secpos, DWORD secmixpos, float* overshot)
 {
 	DWORD64 framelen = secpos / dsb->pwfx->nBlockAlign;
-	DWORD64 freqAdjust = dsb->freqAdjust;
-	DWORD64 acc, freqAcc;
+	float acc, freqAcc;
 
 	if (secpos < secmixpos)
 		freqAcc = dsb->freqAccNext;
-	else freqAcc = dsb->freqAcc;
-	acc = (framelen << DSOUND_FREQSHIFT) + (freqAdjust - 1 - freqAcc);
-	acc /= freqAdjust;
+	else
+		freqAcc = dsb->freqAcc;
+	acc = ceil((framelen - freqAcc) / dsb->freqAdjust);
 	if (overshot)
 	{
-		DWORD64 oshot = acc * freqAdjust + freqAcc;
-		assert(oshot >= framelen << DSOUND_FREQSHIFT);
-		oshot -= framelen << DSOUND_FREQSHIFT;
-		*overshot = (DWORD)oshot;
+		*overshot = acc * dsb->freqAdjust + freqAcc;
+		assert(*overshot >= framelen);
+		*overshot -= framelen;
 		assert(*overshot < dsb->freqAdjust);
 	}
 	return (DWORD)acc * dsb->device->pwfx->nBlockAlign;
@@ -146,8 +144,7 @@ static DWORD DSOUND_bufpos_to_secpos(const IDirectSoundBufferImpl *dsb, DWORD bu
 	DWORD64 acc;
 
 	framelen = bufpos/oAdv;
-	acc = framelen * (DWORD64)dsb->freqAdjust + (DWORD64)dsb->freqAcc;
-	acc = acc >> DSOUND_FREQSHIFT;
+	acc = ((DWORD64)framelen) * dsb->freqAdjust + dsb->freqAcc;
 	pos = (DWORD)acc * iAdv;
 	if (pos >= dsb->buflen) {
 		/* FIXME: can this happen at all? */
@@ -167,7 +164,7 @@ static void DSOUND_RecalcFreqAcc(IDirectSoundBufferImpl *dsb)
 	if (!dsb->freqneeded) return;
 	dsb->freqAcc = dsb->freqAccNext;
 	dsb->tmp_buffer_len = DSOUND_secpos_to_bufpos(dsb, dsb->buflen, 0, &dsb->freqAccNext);
-	TRACE("New freqadjust: %04x, new buflen: %d\n", dsb->freqAccNext, dsb->tmp_buffer_len);
+	TRACE("New freqadjust: %f, new buflen: %d\n", dsb->freqAccNext, dsb->tmp_buffer_len);
 }
 
 /**
@@ -298,27 +295,33 @@ void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len
 	}
 }
 
+static inline float get_current_sample(const IDirectSoundBufferImpl *dsb,
+        DWORD mixpos, DWORD channel)
+{
+    if (mixpos >= dsb->buflen && !(dsb->playflags & DSBPLAY_LOOPING))
+        return 0.0f;
+    return dsb->get(dsb, mixpos % dsb->buflen, channel);
+}
+
 /**
  * Copy frames from the given input buffer to the given output buffer.
  * Translate 8 <-> 16 bits and mono <-> stereo
  */
 static inline void cp_fields(const IDirectSoundBufferImpl *dsb,
-        UINT ostride, UINT count, UINT freqAcc)
+        UINT ostride, UINT count, float freqAcc)
 {
     DWORD ipos = dsb->sec_mixpos;
     UINT istride = dsb->pwfx->nBlockAlign;
-    UINT adj = dsb->freqAdjust;
-    ULONG adv;
     DWORD opos = 0;
 
     while (count-- > 0) {
         DWORD channel;
         for (channel = 0; channel < dsb->mix_channels; channel++)
-            dsb->put(dsb, opos, channel, dsb->get(dsb, ipos, channel));
-        freqAcc += adj;
-        adv = (freqAcc >> DSOUND_FREQSHIFT);
-        freqAcc &= (1 << DSOUND_FREQSHIFT) - 1;
-        ipos += adv * istride;
+            dsb->put(dsb, opos, channel,
+                get_current_sample(dsb, ipos, channel));
+        freqAcc += dsb->freqAdjust;
+        ipos += ((DWORD)freqAcc) * istride;
+        freqAcc -= truncf(freqAcc);
         opos += ostride;
     }
 }
@@ -355,7 +358,7 @@ static void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD tmp_l
 {
 	INT	oAdvance = dsb->device->pwfx->nBlockAlign;
 	INT	size = tmp_len / oAdvance;
-	DWORD freqAcc;
+	float freqAcc;
 
 	if (dsb->device->tmp_buffer_len < tmp_len || !dsb->device->tmp_buffer)
 	{

@@ -182,7 +182,8 @@ struct IDirectSoundBufferImpl
     DSVOLUMEPAN                 volpan;
     DSBUFFERDESC                dsbd;
     /* used for frequency conversion (PerfectPitch) */
-    ULONG                       freqneeded, freqAdjust, freqAcc, freqAccNext;
+    ULONG                       freqneeded;
+    float freqAcc, freqAccNext, freqAdjust;
     /* used for mixing */
     DWORD                       primary_mixpos, buf_mixpos, sec_mixpos;
     /* IDirectSoundNotify fields */
@@ -296,7 +297,7 @@ void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan) DECLSPEC_HIDDEN;
 void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan) DECLSPEC_HIDDEN;
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb) DECLSPEC_HIDDEN;
-DWORD DSOUND_secpos_to_bufpos(const IDirectSoundBufferImpl *dsb, DWORD secpos, DWORD secmixpos, DWORD* overshot) DECLSPEC_HIDDEN;
+DWORD DSOUND_secpos_to_bufpos(const IDirectSoundBufferImpl *dsb, DWORD secpos, DWORD secmixpos, float *overshot) DECLSPEC_HIDDEN;
 
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2) DECLSPEC_HIDDEN;
 
@@ -314,8 +315,6 @@ HRESULT DSOUND_CaptureCreate8(REFIID riid, LPDIRECTSOUNDCAPTURE8 *ppDSC8) DECLSP
 #define STATE_PLAYING   2
 #define STATE_CAPTURING 2
 #define STATE_STOPPING  3
-
-#define DSOUND_FREQSHIFT (20)
 
 extern CRITICAL_SECTION DSOUND_renderers_lock DECLSPEC_HIDDEN;
 extern CRITICAL_SECTION DSOUND_capturers_lock DECLSPEC_HIDDEN;
