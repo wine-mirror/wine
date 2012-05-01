@@ -233,11 +233,34 @@ static HRESULT WINAPI IDirectMusic8Impl_CreatePort(LPDIRECTMUSIC8 iface, REFCLSI
 
 static HRESULT WINAPI IDirectMusic8Impl_EnumMasterClock(LPDIRECTMUSIC8 iface, DWORD index, LPDMUS_CLOCKINFO clock_info)
 {
-    IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
+    TRACE("(%p)->(%d, %p)\n", iface, index, clock_info);
 
-    FIXME("(%p)->(%d, %p): stub\n", This, index, clock_info);
+    if (!clock_info)
+        return E_POINTER;
 
-    return S_FALSE;
+    if (index > 1)
+        return S_FALSE;
+
+    if (!index)
+    {
+        static const GUID guid_system_clock = { 0x58d58419, 0x71b4, 0x11d1, { 0xa7, 0x4c, 0x00, 0x00, 0xf8, 0x75, 0xac, 0x12 } };
+        static const WCHAR name_system_clock[] = { 'S','y','s','t','e','m',' ','C','l','o','c','k',0 };
+
+        clock_info->ctType = 0;
+        clock_info->guidClock = guid_system_clock;
+        strcpyW(clock_info->wszDescription, name_system_clock);
+    }
+    else
+    {
+        static const GUID guid_dsound_clock = { 0x58d58420, 0x71b4, 0x11d1, { 0xa7, 0x4c, 0x00, 0x00, 0xf8, 0x75, 0xac, 0x12 } };
+        static const WCHAR name_dsound_clock[] = { 'D','i','r','e','c','t','S','o','u','n','d',' ','C','l','o','c','k',0 };
+
+        clock_info->ctType = 0;
+        clock_info->guidClock = guid_dsound_clock;
+        strcpyW(clock_info->wszDescription, name_dsound_clock);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusic8Impl_GetMasterClock(LPDIRECTMUSIC8 iface, LPGUID pguidClock, IReferenceClock** ppReferenceClock)
