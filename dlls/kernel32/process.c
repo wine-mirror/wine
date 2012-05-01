@@ -3856,5 +3856,12 @@ BOOL WINAPI GetProcessDEPPolicy(HANDLE process, LPDWORD flags, PBOOL permanent)
     FIXME("(%p %p %p): stub\n", process, flags, permanent);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
+}
 
+/**********************************************************************
+ *           FlushProcessWriteBuffers     (KERNEL32.@)
+ */
+VOID WINAPI FlushProcessWriteBuffers(void)
+{
+    FIXME(": stub\n");
 }
