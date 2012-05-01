@@ -285,17 +285,22 @@ static HRESULT WINAPI IDirectMusic8Impl_SetMasterClock(LPDIRECTMUSIC8 iface, REF
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusic8Impl_Activate(LPDIRECTMUSIC8 iface, BOOL fEnable)
+static HRESULT WINAPI IDirectMusic8Impl_Activate(LPDIRECTMUSIC8 iface, BOOL enable)
 {
-	IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
-	int i;
-	
-	FIXME("(%p, %d): stub\n", This, fEnable);
-	for (i = 0; i < This->nrofports; i++) {
-            IDirectMusicPort_Activate(This->ppPorts[i], fEnable);
-	}
-	
-	return S_OK;
+    IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
+    int i;
+    HRESULT hr;
+
+    TRACE("(%p)->(%u)\n", This, enable);
+
+    for (i = 0; i < This->nrofports; i++)
+    {
+        hr = IDirectMusicPort_Activate(This->ppPorts[i], enable);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusic8Impl_GetDefaultPort(LPDIRECTMUSIC8 iface, LPGUID pguidPort)
