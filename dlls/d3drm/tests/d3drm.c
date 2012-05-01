@@ -411,6 +411,9 @@ static void test_Frame(void)
     LPDIRECT3DRMVISUAL pVisual1;
     LPDIRECT3DRMVISUAL pVisualTmp;
     LPDIRECT3DRMVISUALARRAY pVisualArray;
+    LPDIRECT3DRMLIGHT pLight1;
+    LPDIRECT3DRMLIGHT pLightTmp;
+    LPDIRECT3DRMLIGHTARRAY pLightArray;
     DWORD count;
 
     hr = pDirect3DRMCreate(&pD3DRM);
@@ -639,13 +642,92 @@ static void test_Frame(void)
     todo_wine CHECK_REFCOUNT(pFrameP1, 3);
     IDirect3DRMMeshBuilder_Release(pMeshBuilder);
 
+    /* [Add/Delete]Light with NULL pointer */
+    hr = IDirect3DRMFrame_AddLight(pFrameP1, NULL);
+    ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
+    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+
+    hr = IDirect3DRMFrame_DeleteLight(pFrameP1, NULL);
+    ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
+    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+
+    /* Create Light */
+    hr = IDirect3DRM_CreateLightRGB(pD3DRM, D3DRMLIGHT_SPOT, 0.1, 0.2, 0.3, &pLight1);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMLight interface (hr = %x)\n", hr);
+
+    /* Add Light to first parent */
+    hr = IDirect3DRMFrame_AddLight(pFrameP1, pLight1);
+    ok(hr == D3DRM_OK, "Cannot add light (hr = %x)\n", hr);
+    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pLight1, 2);
+
+    pLightArray = NULL;
+    hr = IDirect3DRMFrame_GetLights(pFrameP1, &pLightArray);
+    todo_wine ok(hr == D3DRM_OK, "Cannot get lights (hr = %x)\n", hr);
+    if (pLightArray)
+    {
+        count = IDirect3DRMLightArray_GetSize(pLightArray);
+        ok(count == 1, "count = %u\n", count);
+        hr = IDirect3DRMLightArray_GetElement(pLightArray, 0, &pLightTmp);
+        ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
+        ok(pLightTmp == pLight1, "pLightTmp = %p\n", pLightTmp);
+        IDirect3DRMLight_Release(pLightTmp);
+        IDirect3DRMLightArray_Release(pLightArray);
+    }
+
+    /* Delete Light */
+    hr = IDirect3DRMFrame_DeleteLight(pFrameP1, pLight1);
+    ok(hr == D3DRM_OK, "Cannot delete light (hr = %x)\n", hr);
+    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    IDirect3DRMLight_Release(pLight1);
+
     /* Cleanup */
-    IDirect3DRMMeshBuilder_Release(pFrameP2);
+    IDirect3DRMFrame_Release(pFrameP2);
     CHECK_REFCOUNT(pFrameC, 2);
     todo_wine CHECK_REFCOUNT(pFrameP1, 3);
 
-    IDirect3DRMMeshBuilder_Release(pFrameC);
-    IDirect3DRMMeshBuilder_Release(pFrameP1);
+    IDirect3DRMFrame_Release(pFrameC);
+    IDirect3DRMFrame_Release(pFrameP1);
+
+    IDirect3DRM_Release(pD3DRM);
+}
+
+static void test_Light(void)
+{
+    HRESULT hr;
+    LPDIRECT3DRM pD3DRM;
+    LPDIRECT3DRMLIGHT pLight;
+    D3DRMLIGHTTYPE type;
+    D3DCOLOR color;
+
+    hr = pDirect3DRMCreate(&pD3DRM);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRM_CreateLightRGB(pD3DRM, D3DRMLIGHT_SPOT, 0.5, 0.5, 0.5, &pLight);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMLight interface (hr = %x)\n", hr);
+
+    type = IDirect3DRMLight_GetType(pLight);
+    todo_wine ok(type == D3DRMLIGHT_SPOT, "wrong type (%u)\n", type);
+
+    color = IDirect3DRMLight_GetColor(pLight);
+    todo_wine ok(color == 0xff7f7f7f, "wrong color (%x)\n", color);
+
+    hr = IDirect3DRMLight_SetType(pLight, D3DRMLIGHT_POINT);
+    todo_wine ok(hr == D3DRM_OK, "Cannot set type (hr = %x)\n", hr);
+    type = IDirect3DRMLight_GetType(pLight);
+    todo_wine ok(type == D3DRMLIGHT_POINT, "wrong type (%u)\n", type);
+
+    hr = IDirect3DRMLight_SetColor(pLight, 0xff180587);
+    todo_wine ok(hr == D3DRM_OK, "Cannot set color (hr = %x)\n", hr);
+    color = IDirect3DRMLight_GetColor(pLight);
+    todo_wine ok(color == 0xff180587, "wrong color (%x)\n", color);
+
+    hr = IDirect3DRMLight_SetColorRGB(pLight, 0.5, 0.5, 0.5);
+    todo_wine ok(hr == D3DRM_OK, "Cannot set color (hr = %x)\n", hr);
+    color = IDirect3DRMLight_GetColor(pLight);
+    todo_wine ok(color == 0xff7f7f7f, "wrong color (%x)\n", color);
+
+    IDirect3DRMLight_Release(pLight);
 
     IDirect3DRM_Release(pD3DRM);
 }
@@ -693,6 +775,7 @@ START_TEST(d3drm)
     test_MeshBuilder();
     test_MeshBuilder3();
     test_Frame();
+    test_Light();
     test_d3drm_load();
 
     FreeLibrary(d3drm_handle);
