@@ -136,7 +136,7 @@ DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function
     if (FAILED(hr)) goto done;
 
     /* Add the session object */
-    hr = IActiveScript_AddNamedItem(pActiveScript, szSession, SCRIPTITEM_ISVISIBLE);
+    hr = IActiveScript_AddNamedItem(pActiveScript, szSession, SCRIPTITEM_GLOBALMEMBERS);
     if (FAILED(hr)) goto done;
 
     /* Pass the script to the engine */
