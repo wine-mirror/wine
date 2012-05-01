@@ -316,6 +316,7 @@ GpStatus WINGDIPAPI GdipGetFontSize(GpFont *font, REAL *size)
     if (!(font && size)) return InvalidParameter;
 
     *size = font->emSize;
+    TRACE("%s,%d => %f\n", debugstr_w(font->lfw.lfFaceName), font->lfw.lfHeight, *size);
 
     return Ok;
 }
@@ -372,6 +373,7 @@ GpStatus WINGDIPAPI GdipGetFontUnit(GpFont *font, Unit *unit)
     if (!(font && unit)) return InvalidParameter;
 
     *unit = font->unit;
+    TRACE("%s,%d => %d\n", debugstr_w(font->lfw.lfFaceName), font->lfw.lfHeight, *unit);
 
     return Ok;
 }
@@ -412,6 +414,7 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
         return InvalidParameter;
 
     *lfw = font->lfw;
+    TRACE("=> %s,%d\n", debugstr_w(font->lfw.lfFaceName), font->lfw.lfHeight);
 
     return Ok;
 }
@@ -511,6 +514,9 @@ GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, 
             FIXME("Unhandled unit type: %d\n", font->unit);
             return NotImplemented;
     }
+
+    TRACE("%s,%d(unit %d) => %f\n",
+          debugstr_w(font->lfw.lfFaceName), font->lfw.lfHeight, font->unit, *height);
 
     return Ok;
 }
@@ -705,6 +711,7 @@ GpStatus WINGDIPAPI GdipGetCellAscent(GDIPCONST GpFontFamily *family,
     if (!(family && CellAscent)) return InvalidParameter;
 
     *CellAscent = family->otm.otmTextMetrics.tmAscent;
+    TRACE("%d => %u\n", family->otm.otmTextMetrics.tmHeight, *CellAscent);
 
     return Ok;
 }
@@ -717,6 +724,7 @@ GpStatus WINGDIPAPI GdipGetCellDescent(GDIPCONST GpFontFamily *family,
     if (!(family && CellDescent)) return InvalidParameter;
 
     *CellDescent = family->otm.otmTextMetrics.tmDescent;
+    TRACE("%d => %u\n", family->otm.otmTextMetrics.tmHeight, *CellDescent);
 
     return Ok;
 }
@@ -742,6 +750,7 @@ GpStatus WINGDIPAPI GdipGetEmHeight(GDIPCONST GpFontFamily *family, INT style, U
     TRACE("%p (%s), %d, %p\n", family, debugstr_w(family->FamilyName), style, EmHeight);
 
     *EmHeight = family->otm.otmEMSquare;
+    TRACE("%d => %u\n", family->otm.otmTextMetrics.tmHeight, *EmHeight);
 
     return Ok;
 }
@@ -772,6 +781,7 @@ GpStatus WINGDIPAPI GdipGetLineSpacing(GDIPCONST GpFontFamily *family,
     if (style) FIXME("ignoring style\n");
 
     *LineSpacing = family->otm.otmTextMetrics.tmAscent + family->otm.otmTextMetrics.tmDescent + family->otm.otmTextMetrics.tmExternalLeading;
+    TRACE("%d => %u\n", family->otm.otmTextMetrics.tmHeight, *LineSpacing);
 
     return Ok;
 }
