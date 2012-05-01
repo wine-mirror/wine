@@ -7,6 +7,7 @@ C_SRCS = \
 	d3drm_main.c \
 	device.c \
 	frame.c \
+	light.c \
 	math.c \
 	meshbuilder.c \
 	viewport.c
