@@ -108,65 +108,6 @@ DWORD DSOUND_bufpos_to_mixpos(const DirectSoundDevice* device, DWORD pos)
     return ret;
 }
 
-/* NOTE: Not all secpos have to always be mapped to a bufpos, other way around is always the case
- * DWORD64 is used here because a single DWORD wouldn't be big enough to fit the freqAcc for big buffers
- */
-/** This function converts a 'native' sample pointer to a resampled pointer that fits for primary
- * secmixpos is used to decide which freqAcc is needed
- * overshot tells what the 'actual' secpos is now (optional)
- */
-DWORD DSOUND_secpos_to_bufpos(const IDirectSoundBufferImpl *dsb, DWORD secpos, DWORD secmixpos, float* overshot)
-{
-	DWORD64 framelen = secpos / dsb->pwfx->nBlockAlign;
-	float acc, freqAcc;
-
-	if (secpos < secmixpos)
-		freqAcc = dsb->freqAccNext;
-	else
-		freqAcc = dsb->freqAcc;
-	acc = ceil((framelen - freqAcc) / dsb->freqAdjust);
-	if (overshot)
-	{
-		*overshot = acc * dsb->freqAdjust + freqAcc;
-		assert(*overshot >= framelen);
-		*overshot -= framelen;
-		assert(*overshot < dsb->freqAdjust);
-	}
-	return (DWORD)acc * dsb->device->pwfx->nBlockAlign;
-}
-
-/** Convert a resampled pointer that fits for primary to a 'native' sample pointer
- */
-static DWORD DSOUND_bufpos_to_secpos(const IDirectSoundBufferImpl *dsb, DWORD bufpos)
-{
-	DWORD oAdv = dsb->device->pwfx->nBlockAlign, iAdv = dsb->pwfx->nBlockAlign, pos;
-	DWORD64 framelen;
-	DWORD64 acc;
-
-	framelen = bufpos/oAdv;
-	acc = ((DWORD64)framelen) * dsb->freqAdjust + dsb->freqAcc;
-	pos = (DWORD)acc * iAdv;
-	if (pos >= dsb->buflen) {
-		/* FIXME: can this happen at all? */
-		ERR("pos >= dsb->buflen: %d >= %d, capping\n", pos, dsb->buflen);
-		pos = dsb->buflen - iAdv;
-	}
-
-	TRACE("Converted %d/%d to %d/%d\n", bufpos, dsb->tmp_buffer_len, pos, dsb->buflen);
-	return pos;
-}
-
-/**
- * Move freqAccNext to freqAcc, and find new values for buffer length and freqAccNext
- */
-static void DSOUND_RecalcFreqAcc(IDirectSoundBufferImpl *dsb)
-{
-	if (!dsb->freqneeded) return;
-	dsb->freqAcc = dsb->freqAccNext;
-	dsb->tmp_buffer_len = DSOUND_secpos_to_bufpos(dsb, dsb->buflen, 0, &dsb->freqAccNext);
-	TRACE("New freqadjust: %f, new buflen: %d\n", dsb->freqAccNext, dsb->tmp_buffer_len);
-}
-
 /**
  * Recalculate the size for temporary buffer, and new writelead
  * Should be called when one of the following things occur:
@@ -177,8 +118,6 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 {
 	DWORD ichannels = dsb->pwfx->nChannels;
 	DWORD ochannels = dsb->device->pwfx->nChannels;
-	BOOL needremix = TRUE, needresample = (dsb->freq != dsb->device->pwfx->nSamplesPerSec);
-	DWORD bAlign = dsb->pwfx->nBlockAlign, pAlign = dsb->device->pwfx->nBlockAlign;
 	WAVEFORMATEXTENSIBLE *pwfxe;
 	BOOL ieee = FALSE;
 
@@ -193,11 +132,7 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	/* calculate the 10ms write lead */
 	dsb->writelead = (dsb->freq / 100) * dsb->pwfx->nBlockAlign;
 
-	if ((dsb->pwfx->wBitsPerSample == dsb->device->pwfx->wBitsPerSample) &&
-	    (dsb->pwfx->nChannels == dsb->device->pwfx->nChannels) && !needresample && !ieee)
-		needremix = FALSE;
-	dsb->freqAcc = dsb->freqAccNext = 0;
-	dsb->freqneeded = needresample;
+	dsb->freqAcc = 0;
 
 	dsb->get_aux = ieee ? getbpp[4] : getbpp[dsb->pwfx->wBitsPerSample/8 - 1];
 	dsb->put_aux = putbpp[dsb->device->pwfx->wBitsPerSample/8 - 1];
@@ -229,16 +164,6 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 			FIXME("Conversion from %u to %u channels is not implemented, falling back to stereo\n", ichannels, ochannels);
 		dsb->mix_channels = 2;
 	}
-
-	if (needremix)
-	{
-		if (needresample)
-			DSOUND_RecalcFreqAcc(dsb);
-		else
-			dsb->tmp_buffer_len = dsb->buflen / bAlign * pAlign;
-	}
-	else dsb->tmp_buffer_len = dsb->buflen;
-	dsb->buf_mixpos = DSOUND_secpos_to_bufpos(dsb, dsb->sec_mixpos, 0, NULL);
 }
 
 /**
@@ -307,23 +232,34 @@ static inline float get_current_sample(const IDirectSoundBufferImpl *dsb,
  * Copy frames from the given input buffer to the given output buffer.
  * Translate 8 <-> 16 bits and mono <-> stereo
  */
-static inline void cp_fields(const IDirectSoundBufferImpl *dsb,
-        UINT ostride, UINT count, float freqAcc)
+static inline void cp_fields(IDirectSoundBufferImpl *dsb,
+        UINT ostride, UINT count, float *freqAcc)
 {
     DWORD ipos = dsb->sec_mixpos;
-    UINT istride = dsb->pwfx->nBlockAlign;
+    UINT istride = dsb->pwfx->nBlockAlign, i;
     DWORD opos = 0;
 
-    while (count-- > 0) {
+    for (i = 0; i < count; ++i){
         DWORD channel;
         for (channel = 0; channel < dsb->mix_channels; channel++)
             dsb->put(dsb, opos, channel,
                 get_current_sample(dsb, ipos, channel));
-        freqAcc += dsb->freqAdjust;
-        ipos += ((DWORD)freqAcc) * istride;
-        freqAcc -= truncf(freqAcc);
+        *freqAcc += dsb->freqAdjust;
+        ipos += ((DWORD)*freqAcc) * istride;
+        *freqAcc -= truncf(*freqAcc);
         opos += ostride;
     }
+
+    if (ipos >= dsb->buflen) {
+        if (dsb->playflags & DSBPLAY_LOOPING)
+            ipos %= dsb->buflen;
+        else {
+            ipos = 0;
+            dsb->state = STATE_STOPPED;
+        }
+    }
+
+    dsb->sec_mixpos = ipos;
 }
 
 /**
@@ -354,11 +290,10 @@ static inline DWORD DSOUND_BufPtrDiff(DWORD buflen, DWORD ptr1, DWORD ptr2)
  *
  * NOTE: writepos + len <= buflen. When called by mixer, MixOne makes sure of this.
  */
-static void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD tmp_len)
+static void DSOUND_MixToTemporary(IDirectSoundBufferImpl *dsb, DWORD tmp_len)
 {
 	INT	oAdvance = dsb->device->pwfx->nBlockAlign;
 	INT	size = tmp_len / oAdvance;
-	float freqAcc;
 
 	if (dsb->device->tmp_buffer_len < tmp_len || !dsb->device->tmp_buffer)
 	{
@@ -369,10 +304,7 @@ static void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD tmp_l
 			dsb->device->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, tmp_len);
 	}
 
-	DSOUND_secpos_to_bufpos(dsb, dsb->sec_mixpos, dsb->sec_mixpos, &freqAcc);
-
-	/* FIXME: Small problem here when we're overwriting buf_mixpos, it then STILL uses old freqAcc, not sure if it matters or not */
-	cp_fields(dsb, oAdvance, size, freqAcc);
+	cp_fields(dsb, oAdvance, size, &dsb->freqAcc);
 }
 
 /** Apply volume to the given soundbuffer from (primary) position writepos and length len
@@ -458,14 +390,12 @@ static LPBYTE DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, INT len)
  */
 static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD fraglen)
 {
-	INT len = fraglen, ilen;
+	INT len = fraglen;
 	BYTE *ibuf, *volbuf;
 	DWORD oldpos, mixbufpos;
 
-	TRACE("buf_mixpos=%d/%d sec_mixpos=%d/%d\n", dsb->buf_mixpos, dsb->tmp_buffer_len, dsb->sec_mixpos, dsb->buflen);
+	TRACE("sec_mixpos=%d/%d\n", dsb->sec_mixpos, dsb->buflen);
 	TRACE("(%p,%d,%d)\n",dsb,writepos,fraglen);
-
-	assert(dsb->buf_mixpos + len <= dsb->tmp_buffer_len);
 
 	if (len % dsb->device->pwfx->nBlockAlign) {
 		INT nBlockAlign = dsb->device->pwfx->nBlockAlign;
@@ -474,6 +404,8 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	}
 
 	/* Resample buffer to temporary buffer specifically allocated for this purpose, if needed */
+	oldpos = dsb->sec_mixpos;
+
 	DSOUND_MixToTemporary(dsb, len);
 	ibuf = dsb->device->tmp_buffer;
 
@@ -493,31 +425,17 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 		dsb->device->mixfunction(ibuf + todo, dsb->device->mix_buffer, len - todo);
 	}
 
-	oldpos = dsb->sec_mixpos;
-	dsb->buf_mixpos += len;
-
-	if (dsb->buf_mixpos >= dsb->tmp_buffer_len) {
-		if (dsb->playflags & DSBPLAY_LOOPING) {
-			dsb->buf_mixpos -= dsb->tmp_buffer_len;
-		} else {
-			dsb->buf_mixpos = dsb->sec_mixpos = 0;
-			dsb->state = STATE_STOPPED;
-		}
-		DSOUND_RecalcFreqAcc(dsb);
-	}
-
-	dsb->sec_mixpos = DSOUND_bufpos_to_secpos(dsb, dsb->buf_mixpos);
-	ilen = DSOUND_BufPtrDiff(dsb->buflen, dsb->sec_mixpos, oldpos);
 	/* check for notification positions */
 	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY &&
 	    dsb->state != STATE_STARTING) {
+		INT ilen = DSOUND_BufPtrDiff(dsb->buflen, dsb->sec_mixpos, oldpos);
 		DSOUND_CheckEvent(dsb, oldpos, ilen);
 	}
 
 	/* increase mix position */
 	dsb->primary_mixpos += len;
-	if (dsb->primary_mixpos >= dsb->device->buflen)
-		dsb->primary_mixpos -= dsb->device->buflen;
+	dsb->primary_mixpos %= dsb->device->buflen;
+
 	return len;
 }
 
@@ -540,8 +458,8 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mi
 	DWORD primary_done;
 
 	TRACE("(%p,%d,%d)\n",dsb,writepos,mixlen);
-	TRACE("writepos=%d, buf_mixpos=%d, primary_mixpos=%d, mixlen=%d\n", writepos, dsb->buf_mixpos, dsb->primary_mixpos, mixlen);
-	TRACE("looping=%d, leadin=%d, buflen=%d\n", dsb->playflags, dsb->leadin, dsb->tmp_buffer_len);
+	TRACE("writepos=%d, primary_mixpos=%d, mixlen=%d\n", writepos, dsb->primary_mixpos, mixlen);
+	TRACE("looping=%d, leadin=%d\n", dsb->playflags, dsb->leadin);
 
 	/* If leading in, only mix about 20 ms, and 'skip' mixing the rest, for more fluid pointer advancement */
 	if (dsb->leadin && dsb->state == STATE_STARTING)
@@ -561,7 +479,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mi
 	if(mixlen < primary_done)
 	{
 		/* Should *NEVER* happen */
-		ERR("Fatal error. Under/Overflow? primary_done=%d, mixpos=%d/%d (%d/%d), primary_mixpos=%d, writepos=%d, mixlen=%d\n", primary_done,dsb->buf_mixpos,dsb->tmp_buffer_len,dsb->sec_mixpos, dsb->buflen, dsb->primary_mixpos, writepos, mixlen);
+		ERR("Fatal error. Under/Overflow? primary_done=%d, mixpos=%d/%d, primary_mixpos=%d, writepos=%d, mixlen=%d\n", primary_done,dsb->sec_mixpos, dsb->buflen, dsb->primary_mixpos, writepos, mixlen);
 		dsb->primary_mixpos = writepos + mixlen;
 		dsb->primary_mixpos %= dsb->device->buflen;
 		return mixlen;
@@ -578,21 +496,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mi
 	/* First try to mix to the end of the buffer if possible
 	 * Theoretically it would allow for better optimization
 	*/
-	if (mixlen + dsb->buf_mixpos >= dsb->tmp_buffer_len)
-	{
-		DWORD newmixed, mixfirst = dsb->tmp_buffer_len - dsb->buf_mixpos;
-		newmixed = DSOUND_MixInBuffer(dsb, dsb->primary_mixpos, mixfirst);
-		mixlen -= newmixed;
-
-		if (dsb->playflags & DSBPLAY_LOOPING)
-			while (newmixed && mixlen)
-			{
-				mixfirst = (dsb->tmp_buffer_len < mixlen ? dsb->tmp_buffer_len : mixlen);
-				newmixed = DSOUND_MixInBuffer(dsb, dsb->primary_mixpos, mixfirst);
-				mixlen -= newmixed;
-			}
-	}
-	else DSOUND_MixInBuffer(dsb, dsb->primary_mixpos, mixlen);
+	DSOUND_MixInBuffer(dsb, dsb->primary_mixpos, mixlen);
 
 	/* re-calculate the primary done */
 	primary_done = DSOUND_BufPtrDiff(dsb->device->buflen, dsb->primary_mixpos, writepos);

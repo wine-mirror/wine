@@ -516,14 +516,11 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(IDirectSoundBuff
 {
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
 	HRESULT hres = DS_OK;
-	DWORD oldpos;
 
 	TRACE("(%p,%d)\n",This,newpos);
 
 	/* **** */
 	RtlAcquireResourceExclusive(&This->lock, TRUE);
-
-	oldpos = This->sec_mixpos;
 
 	/* start mixing from this new location instead */
 	newpos %= This->buflen;
@@ -532,10 +529,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(IDirectSoundBuff
 
 	/* at this point, do not attempt to reset buffers, mess with primary mix position,
            or anything like that to reduce latency. The data already prebuffered cannot be changed */
-
-	/* position HW buffer if applicable, else just start mixing from new location instead */
-	if (oldpos != newpos)
-		This->buf_mixpos = DSOUND_secpos_to_bufpos(This, newpos, 0, NULL);
 
 	RtlReleaseResource(&This->lock);
 	/* **** */
@@ -909,7 +902,7 @@ HRESULT IDirectSoundBufferImpl_Create(
 
 	/* It's not necessary to initialize values to zero since */
 	/* we allocated this structure with HEAP_ZERO_MEMORY... */
-	dsb->buf_mixpos = dsb->sec_mixpos = 0;
+	dsb->sec_mixpos = 0;
 	dsb->state = STATE_STOPPED;
 
 	dsb->freqAdjust = dsb->freq / (float)device->pwfx->nSamplesPerSec;
@@ -1024,7 +1017,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     dsb->refiks = 0;
     dsb->numIfaces = 0;
     dsb->state = STATE_STOPPED;
-    dsb->buf_mixpos = dsb->sec_mixpos = 0;
+    dsb->sec_mixpos = 0;
     dsb->notifies = NULL;
     dsb->nrofnotifies = 0;
     dsb->device = device;

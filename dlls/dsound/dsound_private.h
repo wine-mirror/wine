@@ -178,14 +178,15 @@ struct IDirectSoundBufferImpl
     DWORD                       playflags,state,leadin;
     DWORD                       writelead,buflen;
     DWORD                       nAvgBytesPerSec;
-    DWORD                       freq, tmp_buffer_len;
+    DWORD                       freq;
     DSVOLUMEPAN                 volpan;
     DSBUFFERDESC                dsbd;
     /* used for frequency conversion (PerfectPitch) */
     ULONG                       freqneeded;
-    float freqAcc, freqAccNext, freqAdjust;
+    float freqAcc, freqAdjust;
     /* used for mixing */
-    DWORD                       primary_mixpos, buf_mixpos, sec_mixpos;
+    DWORD                       primary_mixpos, sec_mixpos;
+
     /* IDirectSoundNotify fields */
     LPDSBPOSITIONNOTIFY         notifies;
     int                         nrofnotifies;
