@@ -47,6 +47,7 @@ static void test_dmusic(void)
     DMUS_PORTCAPS port_caps;
     DMUS_PORTPARAMS port_params;
     IDirectMusicPort *port = NULL;
+    DMUS_CLOCKINFO clock_info;
 
     hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic, (LPVOID*)&dmusic);
     if (hr != S_OK)
@@ -96,6 +97,18 @@ static void test_dmusic(void)
         trace("  dwMaxAudioChannels = %u\n", port_caps.dwMaxAudioChannels);
         trace("  dwEffectFlags      = %x\n", port_caps.dwEffectFlags);
         trace("  wszDescription     = %s\n", wine_dbgstr_w(port_caps.wszDescription));
+        index++;
+    }
+
+    index = 0;
+    clock_info.dwSize = sizeof(clock_info);
+    while (IDirectMusic_EnumMasterClock(dmusic, index, &clock_info) == S_OK)
+    {
+        ok(clock_info.dwSize == sizeof(clock_info), "DMUS_CLOCKINFO dwSize member is wrong (%u)\n", clock_info.dwSize);
+        trace("Clock %u:\n", index);
+        trace("  ctType         = %u\n", clock_info.ctType);
+        trace("  guidClock      = %s\n", debugstr_guid(&clock_info.guidClock));
+        trace("  wszDescription = %s\n", wine_dbgstr_w(clock_info.wszDescription));
         index++;
     }
 
