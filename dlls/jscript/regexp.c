@@ -3531,7 +3531,7 @@ static INT index_from_var(script_ctx_t *ctx, VARIANT *v)
     }
 
     n = floor(n);
-    return (double)(INT)n == n ? n : 0;
+    return is_int32(n) ? n : 0;
 }
 
 static HRESULT RegExp_lastIndex(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,

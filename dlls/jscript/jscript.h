@@ -405,6 +405,19 @@ static inline DOUBLE num_val(const VARIANT *v)
     return V_VT(v) == VT_I4 ? V_I4(v) : V_R8(v);
 }
 
+#ifndef INT32_MIN
+#define INT32_MIN (-2147483647-1)
+#endif
+
+#ifndef INT32_MAX
+#define INT32_MAX (2147483647)
+#endif
+
+static inline BOOL is_int32(double d)
+{
+    return INT32_MIN <= d && d <= INT32_MAX && (double)(int)d == d;
+}
+
 static inline void num_set_int(VARIANT *v, INT i)
 {
     V_VT(v) = VT_I4;
@@ -413,7 +426,7 @@ static inline void num_set_int(VARIANT *v, INT i)
 
 static inline void num_set_val(VARIANT *v, DOUBLE d)
 {
-    if(d == (DOUBLE)(INT)d) {
+    if(is_int32(d)) {
         V_VT(v) = VT_I4;
         V_I4(v) = d;
     }else {
