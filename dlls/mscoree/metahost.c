@@ -165,12 +165,14 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
 } while (0);
 
         LOAD_MONO_FUNCTION(mono_assembly_get_image);
+        LOAD_MONO_FUNCTION(mono_assembly_load_from);
         LOAD_MONO_FUNCTION(mono_assembly_open);
         LOAD_MONO_FUNCTION(mono_config_parse);
         LOAD_MONO_FUNCTION(mono_class_from_mono_type);
         LOAD_MONO_FUNCTION(mono_class_from_name);
         LOAD_MONO_FUNCTION(mono_class_get_method_from_name);
         LOAD_MONO_FUNCTION(mono_domain_assembly_open);
+        LOAD_MONO_FUNCTION(mono_image_open_from_module_handle);
         LOAD_MONO_FUNCTION(mono_install_assembly_preload_hook);
         LOAD_MONO_FUNCTION(mono_jit_exec);
         LOAD_MONO_FUNCTION(mono_jit_init);

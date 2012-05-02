@@ -147,6 +147,7 @@ struct loaded_mono
     BOOL is_shutdown;
 
     MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly);
+    MonoAssembly* (CDECL *mono_assembly_load_from)(MonoImage *image, const char *fname, MonoImageOpenStatus *status);
     MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status);
     MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type);
     MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name);
@@ -154,6 +155,7 @@ struct loaded_mono
     void (CDECL *mono_config_parse)(const char *filename);
     MonoAssembly* (CDECL *mono_domain_assembly_open) (MonoDomain *domain, const char *name);
     void (CDECL *mono_free)(void *);
+    MonoImage* (CDECL *mono_image_open_from_module_handle)(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status);
     void (CDECL *mono_install_assembly_preload_hook)(MonoAssemblyPreLoadFunc func, void *user_data);
     int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
     MonoDomain* (CDECL *mono_jit_init)(const char *file);

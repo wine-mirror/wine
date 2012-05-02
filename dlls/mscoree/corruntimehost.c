@@ -829,7 +829,9 @@ __int32 WINAPI _CorExeMain(void)
     int argc;
     char **argv;
     MonoDomain *domain;
-    MonoAssembly *assembly;
+    MonoImage *image;
+    MonoImageOpenStatus status;
+    MonoAssembly *assembly=NULL;
     WCHAR filename[MAX_PATH];
     char *filenameA;
     ICLRRuntimeInfo *info;
@@ -863,9 +865,21 @@ __int32 WINAPI _CorExeMain(void)
 
         if (SUCCEEDED(hr))
         {
-            assembly = host->mono->mono_domain_assembly_open(domain, filenameA);
+            image = host->mono->mono_image_open_from_module_handle(GetModuleHandleW(NULL),
+                filenameA, 1, &status);
 
-            exit_code = host->mono->mono_jit_exec(domain, assembly, argc, argv);
+            if (image)
+                assembly = host->mono->mono_assembly_load_from(image, filenameA, &status);
+
+            if (assembly)
+            {
+                exit_code = host->mono->mono_jit_exec(domain, assembly, argc, argv);
+            }
+            else
+            {
+                ERR("couldn't load %s, status=%d\n", debugstr_w(filename), status);
+                exit_code = -1;
+            }
 
             RuntimeHost_DeleteDomain(host, domain);
         }
