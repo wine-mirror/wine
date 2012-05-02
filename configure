@@ -15209,6 +15209,7 @@ wine_fn_config_dll mssip32 enable_mssip32
 wine_fn_config_dll mstask enable_mstask
 wine_fn_config_test dlls/mstask/tests mstask_test
 wine_fn_config_dll msvcirt enable_msvcirt
+wine_fn_config_dll msvcm80 enable_msvcm80
 wine_fn_config_dll msvcp100 enable_msvcp100
 wine_fn_config_dll msvcp60 enable_msvcp60
 wine_fn_config_dll msvcp70 enable_msvcp70
