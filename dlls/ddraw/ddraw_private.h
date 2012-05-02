@@ -563,11 +563,11 @@ void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out) DECLSPEC_HIDDEN
 void multiply_matrix(LPD3DMATRIX dest, const D3DMATRIX *src1, const D3DMATRIX *src2) DECLSPEC_HIDDEN;
 
 /* Used for generic dumping */
-typedef struct
+struct flag_info
 {
     DWORD val;
-    const char* name;
-} flag_info;
+    const char *name;
+};
 
 #define FE(x) { x, #x }
 
