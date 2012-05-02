@@ -4817,9 +4817,10 @@ static void scissorrect(struct wined3d_context *context, const struct wined3d_st
 
 static void indexbuffer(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
+    const struct wined3d_stream_info *stream_info = &context->swapchain->device->strided_streams;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    if (state->user_stream || !state->index_buffer)
+    if (state->user_stream || !state->index_buffer || !stream_info->all_vbo)
     {
         GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0));
     }

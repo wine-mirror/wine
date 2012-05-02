@@ -404,6 +404,7 @@ void device_update_stream_info(struct wined3d_device *device, const struct wined
 {
     struct wined3d_stream_info *stream_info = &device->strided_streams;
     const struct wined3d_state *state = &device->stateBlock->state;
+    DWORD prev_all_vbo = stream_info->all_vbo;
 
     if (device->up_strided)
     {
@@ -444,6 +445,16 @@ void device_update_stream_info(struct wined3d_device *device, const struct wined
         {
             device->useDrawStridedSlow = FALSE;
         }
+    }
+
+    if (state->index_buffer && !state->user_stream)
+    {
+        if (prev_all_vbo != stream_info->all_vbo)
+            device_invalidate_state(device, STATE_INDEXBUFFER);
+        if (stream_info->all_vbo)
+            wined3d_buffer_preload(state->index_buffer);
+        else
+            buffer_get_sysmem(state->index_buffer, gl_info);
     }
 }
 

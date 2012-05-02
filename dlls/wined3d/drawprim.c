@@ -676,7 +676,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
             if (!state->user_stream)
             {
                 struct wined3d_buffer *index_buffer = state->index_buffer;
-                if (!index_buffer->buffer_object)
+                if (!index_buffer->buffer_object || !stream_info->all_vbo)
                     idxData = index_buffer->resource.allocatedMemory;
                 else
                     idxData = NULL;
