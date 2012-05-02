@@ -4477,6 +4477,28 @@ static void test_body_funs(IHTMLBodyElement *body)
     VariantClear(&vDefaultbg);
 }
 
+static void test_history(IHTMLWindow2 *window)
+{
+    IOmHistory *history, *history2;
+    HRESULT hres;
+
+    history = NULL;
+    hres = IHTMLWindow2_get_history(window, &history);
+    ok(hres == S_OK, "get_history failed: %08x\n", hres);
+    ok(history != NULL, "history = NULL\n");
+
+    test_disp((IUnknown*)history, &DIID_DispHTMLHistory, "[object]");
+
+    history2 = NULL;
+    hres = IHTMLWindow2_get_history(window, &history2);
+    ok(hres == S_OK, "get_history failed: %08x\n", hres);
+    ok(history2 != NULL, "history2 = NULL\n");
+    ok(iface_cmp((IUnknown*)history, (IUnknown*)history2), "history != history2\n");
+
+    IOmHistory_Release(history2);
+    IOmHistory_Release(history);
+}
+
 static void test_window(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window, *window2, *self, *parent;
@@ -4564,6 +4586,7 @@ static void test_window(IHTMLDocument2 *doc)
     test_screen(window);
     test_window_status(window);
     set_window_status(window, "Test!");
+    test_history(window);
 
     IHTMLWindow2_Release(window);
 }

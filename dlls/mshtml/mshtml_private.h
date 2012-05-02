@@ -88,6 +88,7 @@ typedef struct event_target_t event_target_t;
     XDIID(DispHTMLGenericElement) \
     XDIID(DispHTMLFrameElement) \
     XDIID(DispHTMLHeadElement) \
+    XDIID(DispHTMLHistory) \
     XDIID(DispHTMLIFrame) \
     XDIID(DispHTMLImg) \
     XDIID(DispHTMLInputElement) \
@@ -180,6 +181,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLWindow3) \
     XIID(IHTMLWindow4) \
     XIID(IHTMLWindow6) \
+    XIID(IOmHistory) \
     XIID(IOmNavigator)
 
 typedef enum {
@@ -333,6 +335,7 @@ struct HTMLWindow {
     HTMLImageElementFactory *image_factory;
     HTMLLocation *location;
     IHTMLScreen *screen;
+    IOmHistory *history;
 
     global_prop_t *global_props;
     DWORD global_prop_cnt;
@@ -641,6 +644,7 @@ HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLWindow*) DECLSPEC_HI
 HRESULT HTMLLocation_Create(HTMLWindow*,HTMLLocation**) DECLSPEC_HIDDEN;
 IOmNavigator *OmNavigator_Create(void) DECLSPEC_HIDDEN;
 HRESULT HTMLScreen_Create(IHTMLScreen**) DECLSPEC_HIDDEN;
+HRESULT create_history(IOmHistory**) DECLSPEC_HIDDEN;
 
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_HTMLDocument5_Init(HTMLDocument*) DECLSPEC_HIDDEN;

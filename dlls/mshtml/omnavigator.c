@@ -44,9 +44,169 @@ typedef struct {
     HTMLMimeTypesCollection *mime_types;
 } OmNavigator;
 
-static inline OmNavigator *impl_from_IOmNavigator(IOmNavigator *iface)
+typedef struct {
+    DispatchEx dispex;
+    IOmHistory IOmHistory_iface;
+
+    LONG ref;
+} OmHistory;
+
+static inline OmHistory *impl_from_IOmHistory(IOmHistory *iface)
 {
-    return CONTAINING_RECORD(iface, OmNavigator, IOmNavigator_iface);
+    return CONTAINING_RECORD(iface, OmHistory, IOmHistory_iface);
+}
+
+static HRESULT WINAPI OmHistory_QueryInterface(IOmHistory *iface, REFIID riid, void **ppv)
+{
+    OmHistory *This = impl_from_IOmHistory(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IOmHistory_iface;
+    }else if(IsEqualGUID(&IID_IOmHistory, riid)) {
+        TRACE("(%p)->(IID_IOmHistory %p)\n", This, ppv);
+        *ppv = &This->IOmHistory_iface;
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI OmHistory_AddRef(IOmHistory *iface)
+{
+    OmHistory *This = impl_from_IOmHistory(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI OmHistory_Release(IOmHistory *iface)
+{
+    OmHistory *This = impl_from_IOmHistory(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        release_dispex(&This->dispex);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI OmHistory_GetTypeInfoCount(IOmHistory *iface, UINT *pctinfo)
+{
+    OmHistory *This = impl_from_IOmHistory(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OmHistory_GetTypeInfo(IOmHistory *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    OmHistory *This = impl_from_IOmHistory(iface);
+
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI OmHistory_GetIDsOfNames(IOmHistory *iface, REFIID riid, LPOLESTR *rgszNames, UINT cNames,
+        LCID lcid, DISPID *rgDispId)
+{
+    OmHistory *This = impl_from_IOmHistory(iface);
+
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI OmHistory_Invoke(IOmHistory *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    OmHistory *This = impl_from_IOmHistory(iface);
+
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI OmHistory_get_length(IOmHistory *iface, short *p)
+{
+    OmHistory *This = impl_from_IOmHistory(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OmHistory_back(IOmHistory *iface, VARIANT *pvargdistance)
+{
+    OmHistory *This = impl_from_IOmHistory(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(pvargdistance));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OmHistory_forward(IOmHistory *iface, VARIANT *pvargdistance)
+{
+    OmHistory *This = impl_from_IOmHistory(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(pvargdistance));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OmHistory_go(IOmHistory *iface, VARIANT *pvargdistance)
+{
+    OmHistory *This = impl_from_IOmHistory(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(pvargdistance));
+    return E_NOTIMPL;
+}
+
+static const IOmHistoryVtbl OmHistoryVtbl = {
+    OmHistory_QueryInterface,
+    OmHistory_AddRef,
+    OmHistory_Release,
+    OmHistory_GetTypeInfoCount,
+    OmHistory_GetTypeInfo,
+    OmHistory_GetIDsOfNames,
+    OmHistory_Invoke,
+    OmHistory_get_length,
+    OmHistory_back,
+    OmHistory_forward,
+    OmHistory_go
+};
+
+static const tid_t OmHistory_iface_tids[] = {
+    IOmHistory_tid,
+    0
+};
+static dispex_static_data_t OmHistory_dispex = {
+    NULL,
+    DispHTMLHistory_tid,
+    NULL,
+    OmHistory_iface_tids
+};
+
+
+HRESULT create_history(IOmHistory **ret)
+{
+    OmHistory *history;
+
+    history = heap_alloc_zero(sizeof(*history));
+    if(!history)
+        return E_OUTOFMEMORY;
+
+    init_dispex(&history->dispex, (IUnknown*)&history->IOmHistory_iface, &OmHistory_dispex);
+    history->IOmHistory_iface.lpVtbl = &OmHistoryVtbl;
+    history->ref = 1;
+
+    *ret = &history->IOmHistory_iface;
+    return S_OK;
 }
 
 struct HTMLPluginsCollection {
@@ -345,6 +505,11 @@ static HRESULT create_mime_types_collection(OmNavigator *navigator, HTMLMimeType
 
     *ret = col;
     return S_OK;
+}
+
+static inline OmNavigator *impl_from_IOmNavigator(IOmNavigator *iface)
+{
+    return CONTAINING_RECORD(iface, OmNavigator, IOmNavigator_iface);
 }
 
 static HRESULT WINAPI OmNavigator_QueryInterface(IOmNavigator *iface, REFIID riid, void **ppv)

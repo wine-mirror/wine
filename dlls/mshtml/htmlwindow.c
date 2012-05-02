@@ -690,8 +690,20 @@ static HRESULT WINAPI HTMLWindow2_get_location(IHTMLWindow2 *iface, IHTMLLocatio
 static HRESULT WINAPI HTMLWindow2_get_history(IHTMLWindow2 *iface, IOmHistory **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->history) {
+        HRESULT hres;
+
+        hres = create_history(&This->history);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    IOmHistory_AddRef(This->history);
+    *p = This->history;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_close(IHTMLWindow2 *iface)
