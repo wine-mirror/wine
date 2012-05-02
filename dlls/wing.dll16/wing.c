@@ -178,7 +178,7 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi, SEGPTR *bits)
     TRACE("(%d,%p,%p): create %dx%dx%d bitmap\n", hdc, bmpi, bits,
           bmpi->bmiHeader.biWidth, bmpi->bmiHeader.biHeight, bmpi->bmiHeader.biPlanes);
 
-    hbitmap = CreateDIBSection( HDC_32(hdc), bmpi, BI_RGB, &bits32, 0, 0 );
+    hbitmap = CreateDIBSection( HDC_32(hdc), bmpi, DIB_RGB_COLORS, &bits32, 0, 0 );
     if (hbitmap)
     {
         SEGPTR segptr = alloc_segptr_bits( hbitmap, bits32 );

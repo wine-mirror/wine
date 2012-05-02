@@ -60,7 +60,7 @@ BOOL WINAPI WinGRecommendDIBFormat( BITMAPINFO *bmi )
  */
 HBITMAP WINAPI WinGCreateBitmap( HDC hdc, BITMAPINFO *bmi, void **bits )
 {
-    return CreateDIBSection( hdc, bmi, 0, bits, 0, 0 );
+    return CreateDIBSection( hdc, bmi, DIB_RGB_COLORS, bits, 0, 0 );
 }
 
 /***********************************************************************
