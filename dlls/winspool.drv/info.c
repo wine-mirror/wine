@@ -3992,6 +3992,10 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
       }
 
 
+    case 8:
+        /* 8 is the global default printer info and 9 already gets it instead of the per-user one */
+        /* still, PRINTER_INFO_8W is the same as PRINTER_INFO_9W */
+        /* fall through */
     case 9:
       {
         PRINTER_INFO_9W *pi9 = (PRINTER_INFO_9W *)pPrinter;
