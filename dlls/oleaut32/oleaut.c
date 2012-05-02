@@ -41,6 +41,7 @@
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
+WINE_DECLARE_DEBUG_CHANNEL(heap);
 
 /******************************************************************************
  * BSTR  {OLEAUT32}
@@ -97,6 +98,10 @@ typedef struct {
 
 #define BUCKET_SIZE 16
 
+#define ARENA_INUSE_FILLER     0x55
+#define ARENA_TAIL_FILLER      0xab
+#define ARENA_FREE_FILLER      0xfeeefeee
+
 static bstr_cache_entry_t bstr_cache[0x10000/BUCKET_SIZE];
 
 static inline size_t bstr_alloc_size(size_t size)
@@ -140,6 +145,14 @@ static bstr_t *alloc_bstr(size_t size)
         LeaveCriticalSection(&cs_bstr_cache);
 
         if(cache_entry) {
+            if(WARN_ON(heap)) {
+                size_t tail;
+
+                memset(ret, ARENA_INUSE_FILLER, FIELD_OFFSET(bstr_t, u.ptr[size+sizeof(WCHAR)]));
+                tail = bstr_alloc_size(size) - FIELD_OFFSET(bstr_t, u.ptr[size+sizeof(WCHAR)]);
+                if(tail)
+                    memset(ret->u.ptr+size+sizeof(WCHAR), ARENA_TAIL_FILLER, tail);
+            }
             ret->size = size;
             return ret;
         }
@@ -249,6 +262,13 @@ void WINAPI SysFreeString(BSTR str)
         if(cache_entry->cnt < sizeof(cache_entry->buf)/sizeof(*cache_entry->buf)) {
             cache_entry->buf[(cache_entry->head+cache_entry->cnt)%((sizeof(cache_entry->buf)/sizeof(*cache_entry->buf)))] = bstr;
             cache_entry->cnt++;
+
+            if(WARN_ON(heap)) {
+                unsigned i, n = bstr_alloc_size(bstr->size) / sizeof(DWORD) - 1;
+                bstr->size = ARENA_FREE_FILLER;
+                for(i=0; i<n; i++)
+                    bstr->u.dwptr[i] = ARENA_FREE_FILLER;
+            }
 
             LeaveCriticalSection(&cs_bstr_cache);
             return;
