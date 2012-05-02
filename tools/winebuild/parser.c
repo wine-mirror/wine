@@ -45,7 +45,7 @@ static const char *separator_chars;
 static const char *comment_chars;
 
 /* valid characters in ordinal names */
-static const char valid_ordname_chars[] = "/$:-_@?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+static const char valid_ordname_chars[] = "/$:-_@?<>abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 static const char * const TypeNames[TYPE_NBTYPES] =
 {
