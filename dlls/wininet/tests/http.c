@@ -128,7 +128,7 @@ static const test_data_t test_data[] = {
         "test.winehq.org",
         "/tests/data.php",
         "",
-        TESTF_CHUNKED
+        TESTF_CHUNKED|TESTF_ALLOW_COOKIE
     },
     {
         "http://test.winehq.org/tests/redirect",
@@ -152,7 +152,7 @@ static const test_data_t test_data[] = {
         "test.winehq.org",
         "/tests/post.php",
         "Content-Type: application/x-www-form-urlencoded",
-        0,
+        TESTF_ALLOW_COOKIE,
         "mode=Test",
         "mode => Test\n"
     }
@@ -766,6 +766,7 @@ static void InternetReadFileExA_test(int flags)
         SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
         SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
     }
+    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
     SET_EXPECT2(INTERNET_STATUS_SENDING_REQUEST, 2);
@@ -819,6 +820,7 @@ static void InternetReadFileExA_test(int flags)
         CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
     else
         todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
     /* Sent on WinXP only if first_connection_to_test_url is TRUE, on Win98 always sent */
     CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
     CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
@@ -3318,6 +3320,7 @@ static const struct notification async_send_request_ex_test[] =
     { internet_connect,      INTERNET_STATUS_HANDLE_CREATED, 0 },
     { http_open_request,     INTERNET_STATUS_HANDLE_CREATED, 0 },
     { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, 1, 0, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_COOKIE_SENT, 1, 0, 1 },
     { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, 1, 0, 1 },
     { http_send_request_ex,  INTERNET_STATUS_NAME_RESOLVED, 1, 0, 1 },
     { http_send_request_ex,  INTERNET_STATUS_CONNECTING_TO_SERVER, 1 },
@@ -3341,6 +3344,7 @@ static const struct notification async_send_request_ex_test2[] =
     { internet_connect,      INTERNET_STATUS_HANDLE_CREATED, 0 },
     { http_open_request,     INTERNET_STATUS_HANDLE_CREATED, 0 },
     { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, 1, 0, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_COOKIE_SENT, 1, 0, 1 },
     { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, 1, 0, 1 },
     { http_send_request_ex,  INTERNET_STATUS_NAME_RESOLVED, 1, 0, 1 },
     { http_send_request_ex,  INTERNET_STATUS_CONNECTING_TO_SERVER, 1, 1 },
