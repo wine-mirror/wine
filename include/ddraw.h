@@ -885,7 +885,7 @@ typedef struct _DDPIXELFORMAT {
 #define DDOVER_OVERRIDEBOBWEAVE                 0x00400000
 #define DDOVER_INTERLEAVED                      0x00800000
 
-/* DDCOLORKEY.dwFlags */
+/* DDPIXELFORMAT.dwFlags */
 #define DDPF_ALPHAPIXELS		0x00000001
 #define DDPF_ALPHA			0x00000002
 #define DDPF_FOURCC			0x00000004
