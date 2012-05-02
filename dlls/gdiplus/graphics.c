@@ -131,14 +131,9 @@ static COLORREF get_gdi_brush_color(const GpBrush *brush)
 static HBITMAP create_hatch_bitmap(const GpHatch *hatch)
 {
     HBITMAP hbmp;
-    HDC hdc;
     BITMAPINFOHEADER bmih;
     DWORD *bits;
     int x, y;
-
-    hdc = CreateCompatibleDC(0);
-
-    if (!hdc) return 0;
 
     bmih.biSize = sizeof(bmih);
     bmih.biWidth = 8;
@@ -148,7 +143,7 @@ static HBITMAP create_hatch_bitmap(const GpHatch *hatch)
     bmih.biCompression = BI_RGB;
     bmih.biSizeImage = 0;
 
-    hbmp = CreateDIBSection(hdc, (BITMAPINFO *)&bmih, DIB_RGB_COLORS, (void **)&bits, NULL, 0);
+    hbmp = CreateDIBSection(0, (BITMAPINFO *)&bmih, DIB_RGB_COLORS, (void **)&bits, NULL, 0);
     if (hbmp)
     {
         const char *hatch_data;
@@ -175,7 +170,6 @@ static HBITMAP create_hatch_bitmap(const GpHatch *hatch)
         }
     }
 
-    DeleteDC(hdc);
     return hbmp;
 }
 

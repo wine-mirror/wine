@@ -1372,7 +1372,6 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     GpStatus stat;
     HBITMAP result;
     UINT width, height;
-    HDC hdc;
     BITMAPINFOHEADER bih;
     LPBYTE bits;
     BitmapData lockeddata;
@@ -1395,11 +1394,7 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     bih.biClrUsed = 0;
     bih.biClrImportant = 0;
 
-    hdc = CreateCompatibleDC(NULL);
-    if (!hdc) return GenericError;
-
-    result = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&bits,
-        NULL, 0);
+    result = CreateDIBSection(0, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
 
     if (result)
     {
@@ -1414,8 +1409,6 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     }
     else
         stat = GenericError;
-
-    DeleteDC(hdc);
 
     if (stat != Ok && result)
     {
@@ -1694,7 +1687,6 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     BITMAPINFO* pbmi;
     HBITMAP hbitmap=NULL;
     INT row_size, dib_stride;
-    HDC hdc;
     BYTE *bits=NULL, *own_bits=NULL;
     REAL xres, yres;
     GpStatus stat;
@@ -1739,15 +1731,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
         pbmi->bmiHeader.biClrUsed = 0;
         pbmi->bmiHeader.biClrImportant = 0;
 
-        hdc = CreateCompatibleDC(NULL);
-        if (!hdc) {
-            GdipFree(pbmi);
-            return GenericError;
-        }
+        hbitmap = CreateDIBSection(0, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
 
-        hbitmap = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
-
-        DeleteDC(hdc);
         GdipFree(pbmi);
 
         if (!hbitmap) return GenericError;
