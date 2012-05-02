@@ -10209,6 +10209,33 @@ interface IHTMLLocation : IDispatch
 }
 
 /*****************************************************************************
+ *    DispHTMLHistory dispinterface
+ */
+[
+    hidden,
+    uuid(3050f549-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLHistory
+{
+properties:
+methods:
+    [propget, id(DISPID_IOMHISTORY_LENGTH)]
+    short length();
+
+    [id(DISPID_IOMHISTORY_BACK)]
+    void back([optional, in] VARIANT *pvargdistance);
+
+    [id(DISPID_IOMHISTORY_FORWARD)]
+    void forward([optional, in] VARIANT *pvargdistance);
+
+    [id(DISPID_IOMHISTORY_GO)]
+    void go([optional, in] VARIANT *pvargdistance);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch *constructor();
+}
+
+/*****************************************************************************
  *    DispHTMLLocation dispinterface
  */
 [
