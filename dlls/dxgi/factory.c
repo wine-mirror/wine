@@ -300,7 +300,7 @@ HRESULT dxgi_factory_init(struct dxgi_factory *factory)
     factory->refcount = 1;
 
     EnterCriticalSection(&dxgi_cs);
-    factory->wined3d = wined3d_create(10, 0, factory);
+    factory->wined3d = wined3d_create(10, 0);
     if (!factory->wined3d)
     {
         LeaveCriticalSection(&dxgi_cs);

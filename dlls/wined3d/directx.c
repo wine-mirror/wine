@@ -5031,13 +5031,6 @@ HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx, e
     return WINED3D_OK;
 }
 
-void * CDECL wined3d_get_parent(const struct wined3d *wined3d)
-{
-    TRACE("wined3d %p.\n", wined3d);
-
-    return wined3d->parent;
-}
-
 static void WINE_GLAPI invalid_func(const void *data)
 {
     ERR("Invalid vertex attribute function called\n");
@@ -5506,11 +5499,10 @@ const struct wined3d_parent_ops wined3d_null_parent_ops =
 };
 
 /* Do not call while under the GL lock. */
-HRESULT wined3d_init(struct wined3d *wined3d, UINT version, DWORD flags, void *parent)
+HRESULT wined3d_init(struct wined3d *wined3d, UINT version, DWORD flags)
 {
     wined3d->dxVersion = version;
     wined3d->ref = 1;
-    wined3d->parent = parent;
     wined3d->flags = flags;
 
     if (!InitAdapters(wined3d))

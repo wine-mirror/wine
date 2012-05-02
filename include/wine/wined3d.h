@@ -2009,7 +2009,7 @@ HRESULT __cdecl wined3d_check_device_multisample_type(const struct wined3d *wine
 HRESULT __cdecl wined3d_check_device_type(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id display_format_id,
         enum wined3d_format_id backbuffer_format_id, BOOL windowed);
-struct wined3d * __cdecl wined3d_create(UINT dxVersion, DWORD flags, void *parent);
+struct wined3d * __cdecl wined3d_create(UINT version, DWORD flags);
 ULONG __cdecl wined3d_decref(struct wined3d *wined3d);
 HRESULT __cdecl wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_format_id format_id, UINT mode_idx, struct wined3d_display_mode *mode);
@@ -2023,7 +2023,6 @@ UINT __cdecl wined3d_get_adapter_mode_count(const struct wined3d *wined3d,
 HMONITOR __cdecl wined3d_get_adapter_monitor(const struct wined3d *wined3d, UINT adapter_idx);
 HRESULT __cdecl wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, WINED3DCAPS *caps);
-void * __cdecl wined3d_get_parent(const struct wined3d *wined3d);
 ULONG __cdecl wined3d_incref(struct wined3d *wined3d);
 HRESULT __cdecl wined3d_register_software_device(struct wined3d *wined3d, void *init_function);
 

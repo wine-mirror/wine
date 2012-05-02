@@ -5559,8 +5559,7 @@ HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
     ddraw->orig_width = GetSystemMetrics(SM_CXSCREEN);
     ddraw->orig_height = GetSystemMetrics(SM_CYSCREEN);
 
-    ddraw->wined3d = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS,
-            &ddraw->IDirectDraw7_iface);
+    ddraw->wined3d = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS);
     if (!ddraw->wined3d)
     {
         WARN("Failed to create a wined3d object.\n");

@@ -6,7 +6,7 @@
 @ cdecl wined3d_check_device_format_conversion(ptr long long long long)
 @ cdecl wined3d_check_device_multisample_type(ptr long long long long long ptr)
 @ cdecl wined3d_check_device_type(ptr long long long long long)
-@ cdecl wined3d_create(long long ptr)
+@ cdecl wined3d_create(long long)
 @ cdecl wined3d_decref(ptr)
 @ cdecl wined3d_enum_adapter_modes(ptr long long long ptr)
 @ cdecl wined3d_get_adapter_count(ptr)
@@ -15,7 +15,6 @@
 @ cdecl wined3d_get_adapter_mode_count(ptr long long)
 @ cdecl wined3d_get_adapter_monitor(ptr long)
 @ cdecl wined3d_get_device_caps(ptr long long ptr)
-@ cdecl wined3d_get_parent(ptr)
 @ cdecl wined3d_incref(ptr)
 @ cdecl wined3d_register_software_device(ptr ptr)
 
