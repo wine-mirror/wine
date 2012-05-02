@@ -21,6 +21,10 @@
 #include "windef.h"
 #include "winbase.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcm);
+
 BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 {
     switch (reason)
@@ -32,4 +36,10 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
             DisableThreadLibraryCalls(hdll);
     }
     return TRUE;
+}
+
+/* void __cdecl <CrtImplementationDetails>::DoDllLanguageSupportValidation(void) */
+void __cdecl CrtImplementationDetails_DoDllLanguageSupportValidation(void)
+{
+    FIXME("stub\n");
 }
