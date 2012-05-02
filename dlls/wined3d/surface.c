@@ -377,8 +377,6 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     BITMAPINFO *b_info;
     int extraline = 0;
     DWORD *masks;
-    UINT usage;
-    HDC dc;
 
     TRACE("surface %p.\n", surface);
 
@@ -441,7 +439,6 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     switch (surface->resource.format->id)
     {
         case WINED3DFMT_B8G8R8_UNORM:
-            usage = DIB_RGB_COLORS;
             b_info->bmiHeader.biCompression = BI_RGB;
             break;
 
@@ -457,7 +454,6 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
         case WINED3DFMT_B10G10R10A2_UNORM:
         case WINED3DFMT_B5G6R5_UNORM:
         case WINED3DFMT_R16G16B16A16_UNORM:
-            usage = 0;
             b_info->bmiHeader.biCompression = BI_BITFIELDS;
             masks[0] = format->red_mask;
             masks[1] = format->green_mask;
@@ -467,21 +463,13 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
         default:
             /* Don't know palette */
             b_info->bmiHeader.biCompression = BI_RGB;
-            usage = 0;
             break;
-    }
-
-    if (!(dc = GetDC(0)))
-    {
-        HeapFree(GetProcessHeap(), 0, b_info);
-        return HRESULT_FROM_WIN32(GetLastError());
     }
 
     TRACE("Creating a DIB section with size %dx%dx%d, size=%d.\n",
             b_info->bmiHeader.biWidth, b_info->bmiHeader.biHeight,
             b_info->bmiHeader.biBitCount, b_info->bmiHeader.biSizeImage);
-    surface->dib.DIBsection = CreateDIBSection(dc, b_info, usage, &surface->dib.bitmap_data, 0, 0);
-    ReleaseDC(0, dc);
+    surface->dib.DIBsection = CreateDIBSection(0, b_info, DIB_RGB_COLORS, &surface->dib.bitmap_data, 0, 0);
 
     if (!surface->dib.DIBsection)
     {
