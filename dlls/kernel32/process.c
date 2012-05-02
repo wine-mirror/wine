@@ -3863,5 +3863,8 @@ BOOL WINAPI GetProcessDEPPolicy(HANDLE process, LPDWORD flags, PBOOL permanent)
  */
 VOID WINAPI FlushProcessWriteBuffers(void)
 {
-    FIXME(": stub\n");
+    static int once = 0;
+
+    if (!once++)
+        FIXME(": stub\n");
 }
