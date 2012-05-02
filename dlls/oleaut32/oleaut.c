@@ -81,9 +81,18 @@ static CRITICAL_SECTION_DEBUG cs_bstr_cache_dbg =
 static CRITICAL_SECTION cs_bstr_cache = { &cs_bstr_cache_dbg, -1, 0, 0, 0, 0 };
 
 typedef struct {
+    DWORD size;
+    union {
+        char ptr[1];
+        WCHAR str[1];
+        DWORD dwptr[1];
+    } u;
+} bstr_t;
+
+typedef struct {
     unsigned short head;
     unsigned short cnt;
-    DWORD *buf[6];
+    bstr_t *buf[6];
 } bstr_cache_entry_t;
 
 #define BUCKET_SIZE 16
@@ -92,28 +101,32 @@ static bstr_cache_entry_t bstr_cache[0x10000/BUCKET_SIZE];
 
 static inline size_t bstr_alloc_size(size_t size)
 {
-    return (size+sizeof(DWORD)+BUCKET_SIZE) & ~(BUCKET_SIZE-1);
+    return (FIELD_OFFSET(bstr_t, u.ptr[size]) + sizeof(WCHAR) + BUCKET_SIZE-1) & ~(BUCKET_SIZE-1);
+}
+
+static inline bstr_t *bstr_from_str(BSTR str)
+{
+    return CONTAINING_RECORD(str, bstr_t, u.str);
 }
 
 static inline bstr_cache_entry_t *get_cache_entry(size_t size)
 {
-    unsigned cache_idx = (size+sizeof(DWORD)-1)/BUCKET_SIZE;
+    unsigned cache_idx = FIELD_OFFSET(bstr_t, u.ptr[size-1])/BUCKET_SIZE;
     return bstr_cache_enabled && cache_idx < sizeof(bstr_cache)/sizeof(*bstr_cache)
         ? bstr_cache + cache_idx
         : NULL;
 }
 
-static DWORD *alloc_bstr(size_t size)
+static bstr_t *alloc_bstr(size_t size)
 {
-    bstr_cache_entry_t *cache_entry = get_cache_entry(size);
+    bstr_cache_entry_t *cache_entry = get_cache_entry(size+sizeof(WCHAR));
+    bstr_t *ret;
 
     if(cache_entry) {
-        DWORD *ret = NULL;
-
         EnterCriticalSection(&cs_bstr_cache);
 
         if(!cache_entry->cnt) {
-            cache_entry = get_cache_entry(size+BUCKET_SIZE);
+            cache_entry = get_cache_entry(size+sizeof(WCHAR)+BUCKET_SIZE);
             if(cache_entry && !cache_entry->cnt)
                 cache_entry = NULL;
         }
@@ -126,11 +139,16 @@ static DWORD *alloc_bstr(size_t size)
 
         LeaveCriticalSection(&cs_bstr_cache);
 
-        if(ret)
+        if(cache_entry) {
+            ret->size = size;
             return ret;
+        }
     }
 
-    return HeapAlloc(GetProcessHeap(), 0, bstr_alloc_size(size));
+    ret = HeapAlloc(GetProcessHeap(), 0, bstr_alloc_size(size));
+    if(ret)
+        ret->size = size;
+    return ret;
 }
 
 /******************************************************************************
@@ -152,7 +170,7 @@ static DWORD *alloc_bstr(size_t size)
  */
 UINT WINAPI SysStringLen(BSTR str)
 {
-    return str ? *((DWORD*)str-1)/sizeof(WCHAR) : 0;
+    return str ? bstr_from_str(str)->size/sizeof(WCHAR) : 0;
 }
 
 /******************************************************************************
@@ -171,7 +189,7 @@ UINT WINAPI SysStringLen(BSTR str)
  */
 UINT WINAPI SysStringByteLen(BSTR str)
 {
-    return str ? *((DWORD*)str-1) : 0;
+    return str ? bstr_from_str(str)->size : 0;
 }
 
 /******************************************************************************
@@ -218,19 +236,20 @@ BSTR WINAPI SysAllocString(LPCOLESTR str)
 void WINAPI SysFreeString(BSTR str)
 {
     bstr_cache_entry_t *cache_entry;
-    DWORD *ptr;
+    bstr_t *bstr;
 
     if(!str)
         return;
 
-    ptr = (DWORD*)str-1;
-    cache_entry = get_cache_entry(*ptr+sizeof(WCHAR));
+    bstr = bstr_from_str(str);
+    cache_entry = get_cache_entry(bstr->size+sizeof(WCHAR));
     if(cache_entry) {
         EnterCriticalSection(&cs_bstr_cache);
 
         if(cache_entry->cnt < sizeof(cache_entry->buf)/sizeof(*cache_entry->buf)) {
-            cache_entry->buf[(cache_entry->head+cache_entry->cnt)%((sizeof(cache_entry->buf)/sizeof(*cache_entry->buf)))] = ptr;
+            cache_entry->buf[(cache_entry->head+cache_entry->cnt)%((sizeof(cache_entry->buf)/sizeof(*cache_entry->buf)))] = bstr;
             cache_entry->cnt++;
+
             LeaveCriticalSection(&cs_bstr_cache);
             return;
         }
@@ -238,7 +257,7 @@ void WINAPI SysFreeString(BSTR str)
         LeaveCriticalSection(&cs_bstr_cache);
     }
 
-    HeapFree(GetProcessHeap(), 0, ptr);
+    HeapFree(GetProcessHeap(), 0, bstr);
 }
 
 /******************************************************************************
@@ -259,28 +278,28 @@ void WINAPI SysFreeString(BSTR str)
  */
 BSTR WINAPI SysAllocStringLen(const OLECHAR *str, unsigned int len)
 {
-    DWORD size, *ptr;
-    BSTR ret;
+    bstr_t *bstr;
+    DWORD size;
 
     /* Detect integer overflow. */
     if (len >= ((UINT_MAX-sizeof(WCHAR)-sizeof(DWORD))/sizeof(WCHAR)))
 	return NULL;
 
+    TRACE("%s\n", debugstr_wn(str, len));
+
     size = len*sizeof(WCHAR);
-    ptr = alloc_bstr(size + sizeof(WCHAR));
-    if(!ptr)
+    bstr = alloc_bstr(size);
+    if(!bstr)
         return NULL;
 
-    *ptr = size;
-    ret = (BSTR)(ptr+1);
     if(str) {
-        memcpy(ret, str, size);
-        ret[len] = 0;
+        memcpy(bstr->u.str, str, size);
+        bstr->u.str[len] = 0;
     }else {
-        memset(ret, 0, size+sizeof(WCHAR));
+        memset(bstr->u.str, 0, size+sizeof(WCHAR));
     }
 
-    return ret;
+    return bstr->u.str;
 }
 
 /******************************************************************************
@@ -310,9 +329,9 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* str, unsigned int len)
     if (*old!=NULL) {
       BSTR old_copy = *old;
       DWORD newbytelen = len*sizeof(WCHAR);
-      DWORD *ptr = HeapReAlloc(GetProcessHeap(),0,((DWORD*)*old)-1,bstr_alloc_size(newbytelen+sizeof(WCHAR)));
-      *old = (BSTR)(ptr+1);
-      *ptr = newbytelen;
+      bstr_t *bstr = HeapReAlloc(GetProcessHeap(),0,((DWORD*)*old)-1,bstr_alloc_size(newbytelen));
+      *old = bstr->u.str;
+      bstr->size = newbytelen;
       /* Subtle hidden feature: The old string data is still there
        * when 'in' is NULL!
        * Some Microsoft program needs it.
@@ -352,27 +371,24 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* str, unsigned int len)
  */
 BSTR WINAPI SysAllocStringByteLen(LPCSTR str, UINT len)
 {
-    DWORD *ptr;
-    char *ret;
+    bstr_t *bstr;
 
     /* Detect integer overflow. */
     if (len >= (UINT_MAX-sizeof(WCHAR)-sizeof(DWORD)))
 	return NULL;
 
-    ptr = alloc_bstr(len + sizeof(WCHAR));
-    if(!ptr)
+    bstr = alloc_bstr(len);
+    if(!bstr)
         return NULL;
 
-    *ptr = len;
-    ret = (char*)(ptr+1);
     if(str) {
-        memcpy(ret, str, len);
-        ret[len] = ret[len+1] = 0;
+        memcpy(bstr->u.ptr, str, len);
+        bstr->u.ptr[len] = bstr->u.ptr[len+1] = 0;
     }else {
-        memset(ret, 0, len+sizeof(WCHAR));
+        memset(bstr->u.ptr, 0, len+sizeof(WCHAR));
     }
 
-    return (BSTR)ret;
+    return bstr->u.str;
 }
 
 /******************************************************************************
