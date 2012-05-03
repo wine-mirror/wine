@@ -76,6 +76,7 @@ struct IDirectMusicSynthSinkImpl {
     LONG ref;
 
     /* IDirectMusicSynthSinkImpl fields */
+    IReferenceClock* latency_clock;
 };
 
 /**********************************************************************

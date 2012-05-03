@@ -19,6 +19,8 @@
  */
 
 #include "dmsynth_private.h"
+#include "initguid.h"
+#include "uuids.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
@@ -63,6 +65,8 @@ static ULONG WINAPI IDirectMusicSynthSinkImpl_Release(LPDIRECTMUSICSYNTHSINK ifa
 	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
 	if (!refCount) {
+		if (This->latency_clock)
+			IReferenceClock_Release(This->latency_clock);
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 
@@ -94,7 +98,13 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_GetLatencyClock(LPDIRECTMUSICSYN
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, clock);
+    TRACE("(%p)->(%p)\n", iface, clock);
+
+    if (!clock)
+        return E_POINTER;
+
+    *clock = This->latency_clock;
+    IReferenceClock_AddRef(This->latency_clock);
 
     return S_OK;
 }
@@ -159,17 +169,36 @@ static const IDirectMusicSynthSinkVtbl DirectMusicSynthSink_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
-	IDirectMusicSynthSinkImpl *obj;
-	
-	TRACE("(%p,%p,%p)\n", lpcGUID, ppobj, pUnkOuter);
-	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSynthSinkImpl));
-	if (NULL == obj) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
-	obj->IDirectMusicSynthSink_iface.lpVtbl = &DirectMusicSynthSink_Vtbl;
-	obj->ref = 0;
-	
-	return IDirectMusicSynthSinkImpl_QueryInterface((LPDIRECTMUSICSYNTHSINK)obj, lpcGUID, ppobj);
+HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl(LPCGUID riid, LPVOID* ret_iface, LPUNKNOWN unkouter)
+{
+    IDirectMusicSynthSinkImpl *obj;
+    HRESULT hr;
+
+    TRACE("(%p,%p,%p)\n", riid, ret_iface, unkouter);
+
+    *ret_iface = NULL;
+
+    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSynthSinkImpl));
+    if (!obj)
+        return E_OUTOFMEMORY;
+
+    obj->IDirectMusicSynthSink_iface.lpVtbl = &DirectMusicSynthSink_Vtbl;
+    obj->ref = 0;
+
+    hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER, &IID_IReferenceClock, (LPVOID*)&obj->latency_clock);
+    if (FAILED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, obj);
+        return hr;
+    }
+
+    hr = IDirectMusicSynthSinkImpl_QueryInterface((LPDIRECTMUSICSYNTHSINK)obj, riid, ret_iface);
+    if (FAILED(hr))
+    {
+        IReferenceClock_Release(obj->latency_clock);
+        HeapFree(GetProcessHeap(), 0, obj);
+        return hr;
+    }
+
+    return S_OK;
 }

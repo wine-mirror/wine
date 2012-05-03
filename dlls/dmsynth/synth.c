@@ -64,6 +64,8 @@ static ULONG WINAPI IDirectMusicSynth8Impl_Release(LPDIRECTMUSICSYNTH8 iface)
 	TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
 	if (!refCount) {
+		if (This->pLatencyClock)
+			IReferenceClock_Release(This->pLatencyClock);
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 
@@ -160,9 +162,16 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_GetLatencyClock(LPDIRECTMUSICSYNTH8
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
 
-    TRACE("(%p)->(%p)\n", This, clock);
+    TRACE("(%p)->(%p)\n", iface, clock);
+
+    if (!clock)
+        return E_POINTER;
+
+    if (!This->pSynthSink)
+        return DMUS_E_NOSYNTHSINK;
 
     *clock = This->pLatencyClock;
+    IReferenceClock_AddRef(This->pLatencyClock);
 
     return S_OK;
 }
@@ -182,9 +191,12 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_SetSynthSink(LPDIRECTMUSICSYNTH8 if
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
 
-    TRACE("(%p)->(%p)\n", This, synth_sink);
+    TRACE("(%p)->(%p)\n", iface, synth_sink);
 
     This->pSynthSink = (IDirectMusicSynthSinkImpl*)synth_sink;
+
+    if (synth_sink)
+        return IDirectMusicSynthSink_GetLatencyClock(synth_sink, &This->pLatencyClock);
 
     return S_OK;
 }
@@ -337,8 +349,6 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl (LPCGUID lpcGUID, LPVOID* ppobj
 	obj->pCaps.dwMaxAudioChannels = 2;
 	obj->pCaps.dwEffectFlags = DMUS_EFFECT_REVERB;
 	MultiByteToWideChar (CP_ACP, 0, "Microsoft Synthesizer", -1, obj->pCaps.wszDescription, sizeof(obj->pCaps.wszDescription)/sizeof(WCHAR));
-	/* assign latency clock */
-	/*DMUSIC_CreateReferenceClockImpl (&IID_IReferenceClock, (LPVOID*)&This->pLatencyClock, NULL); */
 
 	return IDirectMusicSynth8Impl_QueryInterface ((LPDIRECTMUSICSYNTH8)obj, lpcGUID, ppobj);
 }
