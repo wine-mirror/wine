@@ -641,24 +641,6 @@ static inline BOOL is_valid_context( Wine_GLContext *ctx )
     return (ptr != NULL);
 }
 
-static Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
-{
-    Drawable ret;
-
-    if(physDev->bitmap)
-    {
-        if (physDev->bitmap->hbitmap == BITMAP_stock_phys_bitmap.hbitmap)
-            ret = physDev->drawable; /* PBuffer */
-        else
-            ret = physDev->bitmap->glxpixmap;
-    }
-    else if(physDev->gl_drawable)
-        ret = physDev->gl_drawable;
-    else
-        ret = physDev->drawable;
-    return ret;
-}
-
 static int describeContext(Wine_GLContext* ctx) {
     int tmp;
     int ctx_vis_id;
@@ -681,7 +663,7 @@ static BOOL describeDrawable(X11DRV_PDEVICE *physDev) {
 
     TRACE(" HDC %p has:\n", physDev->dev.hdc);
     TRACE(" - iPixelFormat %d\n", fmt->iPixelFormat);
-    TRACE(" - Drawable %lx\n", get_glxdrawable(physDev));
+    TRACE(" - Drawable %lx\n", physDev->gl_drawable);
     TRACE(" - FBCONFIG_ID 0x%x\n", fmt->fmt_id);
 
     pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_VISUAL_ID, &tmp);
@@ -1652,7 +1634,7 @@ static BOOL internal_SetPixelFormat(X11DRV_PDEVICE *physDev,
     HWND hwnd;
 
     /* SetPixelFormat is not allowed on the X root_window e.g. GetDC(0) */
-    if(get_glxdrawable(physDev) == root_window)
+    if(physDev->drawable == root_window)
     {
         ERR("Invalid operation on root_window\n");
         return FALSE;
@@ -1940,7 +1922,6 @@ BOOL X11DRV_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
     }
     else
     {
-        Drawable drawable = get_glxdrawable(physDev);
         Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
 
         /* The describe lines below are for debugging purposes only */
@@ -1949,8 +1930,8 @@ BOOL X11DRV_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
             describeContext(ctx);
         }
 
-        TRACE(" make current for drawable %lx, ctx %p\n", drawable, ctx->ctx);
-        ret = pglXMakeCurrent(gdi_display, drawable, ctx->ctx);
+        TRACE(" make current for drawable %lx, ctx %p\n", physDev->gl_drawable, ctx->ctx);
+        ret = pglXMakeCurrent(gdi_display, physDev->gl_drawable, ctx->ctx);
 
         if (ret)
         {
@@ -1961,8 +1942,8 @@ BOOL X11DRV_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
             ctx->tid = GetCurrentThreadId();
             ctx->hdc = hdc;
             ctx->read_hdc = hdc;
-            ctx->drawables[0] = drawable;
-            ctx->drawables[1] = drawable;
+            ctx->drawables[0] = physDev->gl_drawable;
+            ctx->drawables[1] = physDev->gl_drawable;
             ctx->refresh_drawables = FALSE;
 
             if (type == OBJ_MEMDC) pglDrawBuffer(GL_FRONT_LEFT);
@@ -2011,10 +1992,8 @@ BOOL X11DRV_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev, HGLRC 
             ret = FALSE;
         } else {
             Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-            Drawable d_draw = get_glxdrawable(pDrawDev);
-            Drawable d_read = get_glxdrawable(pReadDev);
 
-            ret = pglXMakeContextCurrent(gdi_display, d_draw, d_read, ctx->ctx);
+            ret = pglXMakeContextCurrent(gdi_display, pDrawDev->gl_drawable, pReadDev->gl_drawable, ctx->ctx);
             if (ret)
             {
                 Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
@@ -2024,8 +2003,8 @@ BOOL X11DRV_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev, HGLRC 
                 ctx->tid = GetCurrentThreadId();
                 ctx->hdc = draw_dev->hdc;
                 ctx->read_hdc = read_dev->hdc;
-                ctx->drawables[0] = d_draw;
-                ctx->drawables[1] = d_read;
+                ctx->drawables[0] = pDrawDev->gl_drawable;
+                ctx->drawables[1] = pReadDev->gl_drawable;
                 ctx->refresh_drawables = FALSE;
                 NtCurrentTeb()->glContext = ctx;
             }
@@ -2276,7 +2255,7 @@ void flush_gl_drawable(X11DRV_PDEVICE *physDev)
     int w, h;
     RECT rect;
 
-    if (!physDev->gl_copy || !physDev->current_pf)
+    if (!physDev->gl_copy || !physDev->gl_drawable)
         return;
 
     w = physDev->dc_rect.right - physDev->dc_rect.left;
@@ -2694,6 +2673,7 @@ HDC X11DRV_wglGetPbufferDCARB(PHYSDEV dev, HPBUFFERARB hPbuffer)
      * All formats in our pixelformat list are compatible with each other and the main drawable. */
     physDev->current_pf = object->fmt->iPixelFormat;
     physDev->drawable = object->drawable;
+    physDev->gl_drawable = object->drawable;
     SetRect( &physDev->drawable_rect, 0, 0, object->width, object->height );
     physDev->dc_rect = physDev->drawable_rect;
 
@@ -3806,7 +3786,6 @@ BOOL destroy_glxpixmap(Display *display, XID glxpixmap)
 BOOL X11DRV_SwapBuffers(PHYSDEV dev)
 {
   X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-  GLXDrawable drawable;
   Wine_GLContext *ctx = NtCurrentTeb()->glContext;
 
   if (!has_opengl()) return FALSE;
@@ -3820,14 +3799,12 @@ BOOL X11DRV_SwapBuffers(PHYSDEV dev)
       return FALSE;
   }
 
-  if (!physDev->current_pf)
+  if (!physDev->gl_drawable)
   {
       WARN("Using an invalid drawable, skipping\n");
       SetLastError(ERROR_INVALID_HANDLE);
       return FALSE;
   }
-
-  drawable = get_glxdrawable(physDev);
 
   wine_tsx11_lock();
   sync_context(ctx);
@@ -3841,13 +3818,13 @@ BOOL X11DRV_SwapBuffers(PHYSDEV dev)
            * copying */
           pglFlush();
           if(w > 0 && h > 0)
-              pglXCopySubBufferMESA(gdi_display, drawable, 0, 0, w, h);
+              pglXCopySubBufferMESA(gdi_display, physDev->gl_drawable, 0, 0, w, h);
       }
       else
-          pglXSwapBuffers(gdi_display, drawable);
+          pglXSwapBuffers(gdi_display, physDev->gl_drawable);
   }
   else
-      pglXSwapBuffers(gdi_display, drawable);
+      pglXSwapBuffers(gdi_display, physDev->gl_drawable);
 
   flush_gl_drawable(physDev);
   wine_tsx11_unlock();
