@@ -350,6 +350,7 @@ static HRESULT String_charCodeAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 
     if(arg_cnt(dp) > 0) {
         VARIANT v;
+        double d;
 
         hres = to_integer(ctx, get_arg(dp, 0), ei, &v);
         if(FAILED(hres)) {
@@ -357,13 +358,16 @@ static HRESULT String_charCodeAt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
             return hres;
         }
 
-        if(V_VT(&v) != VT_I4 || V_I4(&v) < 0 || V_I4(&v) >= length) {
-            if(retv) num_set_nan(&v);
+        d = num_val(&v);
+
+        if(!is_int32(d) || d < 0 || d >= length) {
             SysFreeString(val_str);
+            if(retv)
+                num_set_nan(retv);
             return S_OK;
         }
 
-        idx = V_I4(&v);
+        idx = d;
     }
 
     if(retv) {

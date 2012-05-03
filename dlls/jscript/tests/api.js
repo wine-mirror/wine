@@ -329,6 +329,8 @@ tmp = "\052".charCodeAt(0);
 ok(tmp === 0x2A, "'\052'.charCodeAt(0) = " + tmp);
 tmp = "\xa2".charCodeAt(0);
 ok(tmp === 0xA2, "'\xa2'.charCodeAt(0) = " + tmp);
+tmp = "abc".charCodeAt(bigInt);
+ok(isNaN(tmp), "'abc'.charCodeAt(bigInt) = " + tmp);
 
 tmp = "abcd".substring(1,3);
 ok(tmp === "bc", "'abcd'.substring(1,3) = " + tmp);
