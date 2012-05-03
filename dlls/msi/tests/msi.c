@@ -11823,6 +11823,12 @@ static void test_MsiEnumProductsEx(void)
     REGSAM access = KEY_ALL_ACCESS;
     char *usersid = get_user_sid();
 
+    if (!pMsiEnumProductsExA)
+    {
+        win_skip("MsiEnumProductsExA not implemented\n");
+        return;
+    }
+
     create_test_guid( product0, NULL );
     create_test_guid( product1, product_squashed1 );
     create_test_guid( product2, product_squashed2 );
