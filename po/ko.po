@@ -9068,7 +9068,7 @@ msgid "Filter Error"
 msgstr "필터 오류"
 
 #: wldap32.rc:115
-msgid "User Cancelled"
+msgid "User Canceled"
 msgstr "사용자가 취소함"
 
 #: wldap32.rc:116

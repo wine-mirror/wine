@@ -9395,7 +9395,7 @@ msgid "Filter Error"
 msgstr "Greška u filteru"
 
 #: wldap32.rc:115
-msgid "User Cancelled"
+msgid "User Canceled"
 msgstr "Korisnik je otkazan"
 
 #: wldap32.rc:116

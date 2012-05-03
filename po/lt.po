@@ -9122,7 +9122,7 @@ msgid "Filter Error"
 msgstr "Filtro klaida"
 
 #: wldap32.rc:115
-msgid "User Cancelled"
+msgid "User Canceled"
 msgstr "Nutraukta naudotojo"
 
 #: wldap32.rc:116

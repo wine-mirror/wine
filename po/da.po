@@ -9103,7 +9103,7 @@ msgid "Filter Error"
 msgstr "Filter fejl"
 
 #: wldap32.rc:115
-msgid "User Cancelled"
+msgid "User Canceled"
 msgstr "Bruger afbrød"
 
 #: wldap32.rc:116

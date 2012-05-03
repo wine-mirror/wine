@@ -8940,7 +8940,7 @@ msgid "Filter Error"
 msgstr "Süzme Hatası"
 
 #: wldap32.rc:115
-msgid "User Cancelled"
+msgid "User Canceled"
 msgstr "Kullanıcı İptal Etti"
 
 #: wldap32.rc:116

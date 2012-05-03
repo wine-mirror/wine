@@ -9089,7 +9089,7 @@ msgid "Filter Error"
 msgstr "フィルタ エラー"
 
 #: wldap32.rc:115
-msgid "User Cancelled"
+msgid "User Canceled"
 msgstr "ユーザがキャンセル"
 
 #: wldap32.rc:116
