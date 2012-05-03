@@ -473,6 +473,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
             goto abort;
     }
 
+    test_status_code(hor, 0);
+
     trace("HttpSendRequestA -->\n");
     if(test->post_data) {
         post_len = strlen(test->post_data);
@@ -2455,7 +2457,7 @@ static void test_response_without_headers(int port)
     size = sizeof(status);
     SetLastError(0xdeadbeef);
     r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
-    todo_wine ok(r, "HttpQueryInfo failed %u\n", GetLastError());
+    ok(r, "HttpQueryInfo failed %u\n", GetLastError());
     todo_wine ok(status == 200, "expected status 200 got %u\n", status);
 
     buffer[0] = 0;

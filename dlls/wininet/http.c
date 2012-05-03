@@ -3421,6 +3421,34 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
         index = HTTP_GetCustomHeaderIndex(request, header_lookup[request->read_gzip ? HTTP_QUERY_CONTENT_TYPE : level],
                 requested_index,request_only);
         break;
+    case HTTP_QUERY_STATUS_CODE: {
+        DWORD res = ERROR_SUCCESS;
+
+        if(request_only || requested_index)
+            break;
+
+        if(dwInfoLevel & HTTP_QUERY_FLAG_NUMBER) {
+            if(*lpdwBufferLength >= sizeof(DWORD))
+                *(DWORD*)lpBuffer = request->status_code;
+            else
+                res = ERROR_INSUFFICIENT_BUFFER;
+            *lpdwBufferLength = sizeof(DWORD);
+        }else {
+            WCHAR buf[12];
+            DWORD size;
+            static const WCHAR formatW[] = {'%','u',0};
+
+            size = (sprintfW(buf, formatW, request->status_code)+1) * sizeof(WCHAR);
+
+            if(size <= *lpdwBufferLength)
+                memcpy(lpBuffer, buf, size);
+            else
+                res = ERROR_INSUFFICIENT_BUFFER;
+
+            *lpdwBufferLength = size;
+        }
+        return res;
+    }
     default:
         assert (LAST_TABLE_HEADER == (HTTP_QUERY_UNLESS_MODIFIED_SINCE + 1));
 
@@ -3440,7 +3468,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
         return ERROR_HTTP_HEADER_NOT_FOUND;
     }
 
-    if (lpdwIndex && level != HTTP_QUERY_STATUS_CODE) (*lpdwIndex)++;
+    if (lpdwIndex) (*lpdwIndex)++;
 
     /* coalesce value to requested type */
     if (dwInfoLevel & HTTP_QUERY_FLAG_NUMBER && lpBuffer)
