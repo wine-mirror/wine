@@ -107,8 +107,7 @@ static DWORD req_error;
 
 #define TESTF_REDIRECT      0x01
 #define TESTF_COMPRESSED    0x02
-#define TESTF_ALLOW_COOKIE  0x04
-#define TESTF_CHUNKED       0x08
+#define TESTF_CHUNKED       0x04
 
 typedef struct {
     const char *url;
@@ -128,7 +127,7 @@ static const test_data_t test_data[] = {
         "test.winehq.org",
         "/tests/data.php",
         "",
-        TESTF_CHUNKED|TESTF_ALLOW_COOKIE
+        TESTF_CHUNKED
     },
     {
         "http://test.winehq.org/tests/redirect",
@@ -144,7 +143,7 @@ static const test_data_t test_data[] = {
         "www.codeweavers.com",
         "",
         "Accept-Encoding: gzip, deflate",
-        TESTF_COMPRESSED|TESTF_ALLOW_COOKIE
+        TESTF_COMPRESSED
     },
     {
         "http://test.winehq.org/tests/post.php",
@@ -152,7 +151,7 @@ static const test_data_t test_data[] = {
         "test.winehq.org",
         "/tests/post.php",
         "Content-Type: application/x-www-form-urlencoded",
-        TESTF_ALLOW_COOKIE,
+        0,
         "mode=Test",
         "mode => Test\n"
     }
@@ -399,10 +398,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
     CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
     CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
-    if(test->flags & TESTF_ALLOW_COOKIE) {
-        SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
-        SET_OPTIONAL(INTERNET_STATUS_COOKIE_RECEIVED);
-    }
+    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
+    SET_OPTIONAL(INTERNET_STATUS_COOKIE_RECEIVED);
     if (first_connection_to_test_url)
     {
         SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
@@ -456,10 +453,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     }
     HeapFree(GetProcessHeap(), 0, post_data);
 
-    if(test->flags & TESTF_ALLOW_COOKIE) {
-        CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
-        CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_RECEIVED);
-    }
+    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
+    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_RECEIVED);
     if (first_connection_to_test_url)
     {
         if (! proxy_active())
@@ -766,7 +761,7 @@ static void InternetReadFileExA_test(int flags)
         SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
         SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
     }
-    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
+    SET_OPTIONAL2(INTERNET_STATUS_COOKIE_SENT, 2);
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
     SET_EXPECT2(INTERNET_STATUS_SENDING_REQUEST, 2);
@@ -851,7 +846,7 @@ static void InternetReadFileExA_test(int flags)
     SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
     rc = InternetReadFileEx(hor, &inetbuffers, 0, 0xdeadcafe);
     ok(rc, "InternetReadFileEx failed with error %u\n", GetLastError());
-        trace("read %i bytes\n", inetbuffers.dwBufferLength);
+    trace("read %i bytes\n", inetbuffers.dwBufferLength);
     todo_wine
     {
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
