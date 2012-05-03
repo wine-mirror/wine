@@ -740,11 +740,7 @@ DDRAW_dump_pixelformat_flag(DWORD flagmask)
     DDRAW_dump_flags_nolf(flagmask, flags, sizeof(flags)/sizeof(flags[0]));
 }
 
-static void
-DDRAW_dump_members(DWORD flags,
-                   const void* data,
-                   const member_info* mems,
-                   size_t num_mems)
+static void DDRAW_dump_members(DWORD flags, const void *data, const struct member_info *mems, size_t num_mems)
 {
     unsigned int i;
 
@@ -821,32 +817,32 @@ DDRAW_dump_pixelformat(const DDPIXELFORMAT *pf)
 void DDRAW_dump_surface_desc(const DDSURFACEDESC2 *lpddsd)
 {
 #define STRUCT DDSURFACEDESC2
-    static const member_info members[] =
-        {
-            ME(DDSD_HEIGHT, DDRAW_dump_DWORD, dwHeight),
-            ME(DDSD_WIDTH, DDRAW_dump_DWORD, dwWidth),
-            ME(DDSD_PITCH, DDRAW_dump_DWORD, u1 /* lPitch */),
-            ME(DDSD_LINEARSIZE, DDRAW_dump_DWORD, u1 /* dwLinearSize */),
-            ME(DDSD_BACKBUFFERCOUNT, DDRAW_dump_DWORD, dwBackBufferCount),
-            ME(DDSD_MIPMAPCOUNT, DDRAW_dump_DWORD, u2 /* dwMipMapCount */),
-            ME(DDSD_ZBUFFERBITDEPTH, DDRAW_dump_DWORD, u2 /* dwZBufferBitDepth */), /* This is for 'old-style' D3D */
-            ME(DDSD_REFRESHRATE, DDRAW_dump_DWORD, u2 /* dwRefreshRate */),
-            ME(DDSD_ALPHABITDEPTH, DDRAW_dump_DWORD, dwAlphaBitDepth),
-            ME(DDSD_LPSURFACE, DDRAW_dump_PTR, lpSurface),
-            ME(DDSD_CKDESTOVERLAY, DDRAW_dump_DDCOLORKEY, u3 /* ddckCKDestOverlay */),
-            ME(DDSD_CKDESTBLT, DDRAW_dump_DDCOLORKEY, ddckCKDestBlt),
-            ME(DDSD_CKSRCOVERLAY, DDRAW_dump_DDCOLORKEY, ddckCKSrcOverlay),
-            ME(DDSD_CKSRCBLT, DDRAW_dump_DDCOLORKEY, ddckCKSrcBlt),
-            ME(DDSD_PIXELFORMAT, DDRAW_dump_pixelformat, u4 /* ddpfPixelFormat */)
-        };
-    static const member_info members_caps[] =
-        {
-            ME(DDSD_CAPS, DDRAW_dump_DDSCAPS, ddsCaps)
-        };
-    static const member_info members_caps2[] =
-        {
-            ME(DDSD_CAPS, DDRAW_dump_DDSCAPS2, ddsCaps)
-        };
+    static const struct member_info members[] =
+    {
+        ME(DDSD_HEIGHT, DDRAW_dump_DWORD, dwHeight),
+        ME(DDSD_WIDTH, DDRAW_dump_DWORD, dwWidth),
+        ME(DDSD_PITCH, DDRAW_dump_DWORD, u1 /* lPitch */),
+        ME(DDSD_LINEARSIZE, DDRAW_dump_DWORD, u1 /* dwLinearSize */),
+        ME(DDSD_BACKBUFFERCOUNT, DDRAW_dump_DWORD, dwBackBufferCount),
+        ME(DDSD_MIPMAPCOUNT, DDRAW_dump_DWORD, u2 /* dwMipMapCount */),
+        ME(DDSD_ZBUFFERBITDEPTH, DDRAW_dump_DWORD, u2 /* dwZBufferBitDepth */), /* This is for 'old-style' D3D */
+        ME(DDSD_REFRESHRATE, DDRAW_dump_DWORD, u2 /* dwRefreshRate */),
+        ME(DDSD_ALPHABITDEPTH, DDRAW_dump_DWORD, dwAlphaBitDepth),
+        ME(DDSD_LPSURFACE, DDRAW_dump_PTR, lpSurface),
+        ME(DDSD_CKDESTOVERLAY, DDRAW_dump_DDCOLORKEY, u3 /* ddckCKDestOverlay */),
+        ME(DDSD_CKDESTBLT, DDRAW_dump_DDCOLORKEY, ddckCKDestBlt),
+        ME(DDSD_CKSRCOVERLAY, DDRAW_dump_DDCOLORKEY, ddckCKSrcOverlay),
+        ME(DDSD_CKSRCBLT, DDRAW_dump_DDCOLORKEY, ddckCKSrcBlt),
+        ME(DDSD_PIXELFORMAT, DDRAW_dump_pixelformat, u4 /* ddpfPixelFormat */)
+    };
+    static const struct member_info members_caps[] =
+    {
+        ME(DDSD_CAPS, DDRAW_dump_DDSCAPS, ddsCaps)
+    };
+    static const struct member_info members_caps2[] =
+    {
+        ME(DDSD_CAPS, DDRAW_dump_DDSCAPS2, ddsCaps)
+    };
 #undef STRUCT
 
     if (NULL == lpddsd)

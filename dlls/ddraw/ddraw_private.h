@@ -571,13 +571,13 @@ struct flag_info
 
 #define FE(x) { x, #x }
 
-typedef struct
+struct member_info
 {
     DWORD val;
-    const char* name;
+    const char *name;
     void (*func)(const void *);
     ptrdiff_t offset;
-} member_info;
+};
 
 /* Structure copy */
 #define ME(x,f,e) { x, #x, (void (*)(const void *))(f), offsetof(STRUCT, e) }
