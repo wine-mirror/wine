@@ -2521,7 +2521,7 @@ msgstr ""
 
 #: cryptui.rc:82
 msgid "The file format is not recognized. Please select another file."
-msgstr "The file format is not recognized. Please select another file."
+msgstr "The file format is not recognised. Please select another file."
 
 #: cryptui.rc:83
 msgid "Could not open "
@@ -8382,7 +8382,7 @@ msgstr "The device driver is not ready."
 
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
-msgstr "A problem occurred in initializing MCI. Try restarting Windows."
+msgstr "A problem occurred in initialising MCI. Try restarting Windows."
 
 #: winmm.rc:75
 msgid ""
@@ -8661,7 +8661,7 @@ msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
 msgstr ""
-"The device you are trying to record from cannot recognize the current file "
+"The device you are trying to record from cannot recognise the current file "
 "format."
 
 #: winmm.rc:122
@@ -9429,9 +9429,9 @@ msgstr ""
 "start [options] document_filename\n"
 "\n"
 "Options:\n"
-"/M[inimized] Start the program minimized.\n"
-"/MAX[imized] Start the program maximized.\n"
-"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
+"/M[inimized] Start the program minimised.\n"
+"/MAX[imized] Start the program maximised.\n"
+"/R[estored]  Start the program normally (neither minimised nor maximised).\n"
 "/W[ait]      Wait for started program to finish, then exit with its exit "
 "code.\n"
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
@@ -9618,7 +9618,7 @@ msgstr ""
 "DEL (ERASE)\tDelete a file or set of files\n"
 "DIR\t\tList the contents of a directory\n"
 "ECHO\t\tCopy text directly to the console output\n"
-"ENDLOCAL\tEnd localization of environment changes in a batch file\n"
+"ENDLOCAL\tEnd localisation of environment changes in a batch file\n"
 "FTYPE\t\tShow or modify open commands associated with file types\n"
 "HELP\t\tShow brief help details on a topic\n"
 "MD (MKDIR)\tCreate a subdirectory\n"
@@ -9632,7 +9632,7 @@ msgstr ""
 "REN (RENAME)\tRename a file\n"
 "RD (RMDIR)\tDelete a subdirectory\n"
 "SET\t\tSet or show environment variables\n"
-"SETLOCAL\tStart localization of environment changes in a batch file\n"
+"SETLOCAL\tStart localisation of environment changes in a batch file\n"
 "START\t\tStart a program, or open a document in the associated program\n"
 "TIME\t\tSet or show the current system time\n"
 "TITLE\t\tSet the window title for the CMD session\n"
@@ -10693,7 +10693,7 @@ msgstr ""
 
 #: progman.rc:176 progman.rc:212
 msgid "&Minimize at launch"
-msgstr "&Minimize at launch"
+msgstr "&Minimise at launch"
 
 #: progman.rc:180
 msgid "Change &icon..."
