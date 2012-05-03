@@ -568,8 +568,6 @@ static void call_continue(PROTOCOLDATA *protocol_data)
     HRESULT hres;
 
     if(state == STATE_CONNECTING) {
-        if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST)
-            CLEAR_CALLED(ReportProgress_COOKIE_SENT);
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST || tested_protocol == FTP_TEST) {
             if (http_is_first){
                 CLEAR_CALLED(ReportProgress_FINDINGRESOURCE);
@@ -585,6 +583,8 @@ static void call_continue(PROTOCOLDATA *protocol_data)
             CHECK_CALLED(ReportProgress_REDIRECTING);
         state = test_async_req ? STATE_SENDINGREQUEST : STATE_STARTDOWNLOADING;
     }
+    else if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST)
+        CLEAR_CALLED(ReportProgress_COOKIE_SENT);
 
     switch(state) {
     case STATE_SENDINGREQUEST:
@@ -682,12 +682,74 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
     return S_OK;
 }
 
+static const char *status_names[] =
+{
+    "0",
+    "FINDINGRESOURCE",
+    "CONNECTING",
+    "REDIRECTING",
+    "BEGINDOWNLOADDATA",
+    "DOWNLOADINGDATA",
+    "ENDDOWNLOADDATA",
+    "BEGINDOWNLOADCOMPONENTS",
+    "INSTALLINGCOMPONENTS",
+    "ENDDOWNLOADCOMPONENTS",
+    "USINGCACHEDCOPY",
+    "SENDINGREQUEST",
+    "CLASSIDAVAILABLE",
+    "MIMETYPEAVAILABLE",
+    "CACHEFILENAMEAVAILABLE",
+    "BEGINSYNCOPERATION",
+    "ENDSYNCOPERATION",
+    "BEGINUPLOADDATA",
+    "UPLOADINGDATA",
+    "ENDUPLOADINGDATA",
+    "PROTOCOLCLASSID",
+    "ENCODING",
+    "VERIFIEDMIMETYPEAVAILABLE",
+    "CLASSINSTALLLOCATION",
+    "DECODING",
+    "LOADINGMIMEHANDLER",
+    "CONTENTDISPOSITIONATTACH",
+    "FILTERREPORTMIMETYPE",
+    "CLSIDCANINSTANTIATE",
+    "IUNKNOWNAVAILABLE",
+    "DIRECTBIND",
+    "RAWMIMETYPE",
+    "PROXYDETECTING",
+    "ACCEPTRANGES",
+    "COOKIE_SENT",
+    "COMPACT_POLICY_RECEIVED",
+    "COOKIE_SUPPRESSED",
+    "COOKIE_STATE_UNKNOWN",
+    "COOKIE_STATE_ACCEPT",
+    "COOKIE_STATE_REJECT",
+    "COOKIE_STATE_PROMPT",
+    "COOKIE_STATE_LEASH",
+    "COOKIE_STATE_DOWNGRADE",
+    "POLICY_HREF",
+    "P3P_HEADER",
+    "SESSION_COOKIE_RECEIVED",
+    "PERSISTENT_COOKIE_RECEIVED",
+    "SESSION_COOKIES_ALLOWED",
+    "CACHECONTROL",
+    "CONTENTDISPOSITIONFILENAME",
+    "MIMETEXTPLAINMISMATCH",
+    "PUBLISHERAVAILABLE",
+    "DISPLAYNAMEAVAILABLE"
+};
+
 static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, ULONG ulStatusCode,
         LPCWSTR szStatusText)
 {
     static const WCHAR null_guid[] = {'{','0','0','0','0','0','0','0','0','-','0','0','0','0','-',
         '0','0','0','0','-','0','0','0','0','-','0','0','0','0','0','0','0','0','0','0','0','0','}',0};
     static const WCHAR text_plain[] = {'t','e','x','t','/','p','l','a','i','n',0};
+
+    if (ulStatusCode < sizeof(status_names)/sizeof(status_names[0]))
+        trace( "progress: %s %s\n", status_names[ulStatusCode], wine_dbgstr_w(szStatusText) );
+    else
+          trace( "progress: %u %s\n", ulStatusCode, wine_dbgstr_w(szStatusText) );
 
     switch(ulStatusCode) {
     case BINDSTATUS_MIMETYPEAVAILABLE:
