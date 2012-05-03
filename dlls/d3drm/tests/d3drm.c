@@ -423,10 +423,12 @@ static void test_Frame(void)
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameC, 1);
 
+    hr = IDirect3DRMFrame_GetParent(pFrameC, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Should fail and return D3DRM_BADVALUE (hr = %x)\n", hr);
     pFrameTmp = (void*)0xdeadbeef;
     hr = IDirect3DRMFrame_GetParent(pFrameC, &pFrameTmp);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
-    todo_wine ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
+    ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
+    ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
     CHECK_REFCOUNT(pFrameC, 1);
 
     pArray = NULL;
@@ -448,7 +450,7 @@ static void test_Frame(void)
 
     /* GetParent with NULL pointer */
     hr = IDirect3DRMFrame_GetParent(pFrameP1, NULL);
-    todo_wine ok(hr == D3DRMERR_BADVALUE, "Should have returned D3DRMERR_BADVALUE (hr = %x)\n", hr);
+    ok(hr == D3DRMERR_BADVALUE, "Should have returned D3DRMERR_BADVALUE (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameP1, 1);
 
     /* [Add/Delete]Child with NULL pointer */
@@ -463,8 +465,8 @@ static void test_Frame(void)
     /* Add child to first parent */
     pFrameTmp = (void*)0xdeadbeef;
     hr = IDirect3DRMFrame_GetParent(pFrameP1, &pFrameTmp);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
-    todo_wine ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
+    ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
+    ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
 
     hr = IDirect3DRMFrame_AddChild(pFrameP1, pFrameC);
     ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
@@ -487,9 +489,9 @@ static void test_Frame(void)
 
     pFrameTmp = (void*)0xdeadbeef;
     hr = IDirect3DRMFrame_GetParent(pFrameC, &pFrameTmp);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
-    todo_wine ok(pFrameTmp == pFrameP1, "pFrameTmp = %p\n", pFrameTmp);
-    todo_wine CHECK_REFCOUNT(pFrameP1, 2);
+    ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
+    ok(pFrameTmp == pFrameP1, "pFrameTmp = %p\n", pFrameTmp);
+    CHECK_REFCOUNT(pFrameP1, 2);
 
     /* Add child to second parent */
     hr = IDirect3DRM_CreateFrame(pD3DRM, NULL, &pFrameP2);
@@ -497,7 +499,7 @@ static void test_Frame(void)
 
     hr = IDirect3DRMFrame_AddChild(pFrameP2, pFrameC);
     ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameC, 2);
+    CHECK_REFCOUNT(pFrameC, 2);
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
@@ -528,15 +530,15 @@ static void test_Frame(void)
 
     pFrameTmp = (void*)0xdeadbeef;
     hr = IDirect3DRMFrame_GetParent(pFrameC, &pFrameTmp);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
-    todo_wine ok(pFrameTmp == pFrameP2, "pFrameTmp = %p\n", pFrameTmp);
-    todo_wine CHECK_REFCOUNT(pFrameP2, 2);
-    todo_wine CHECK_REFCOUNT(pFrameC, 2);
+    ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
+    ok(pFrameTmp == pFrameP2, "pFrameTmp = %p\n", pFrameTmp);
+    CHECK_REFCOUNT(pFrameP2, 2);
+    CHECK_REFCOUNT(pFrameC, 2);
 
     /* Add child again */
     hr = IDirect3DRMFrame_AddChild(pFrameP2, pFrameC);
     ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameC, 2);
+    CHECK_REFCOUNT(pFrameC, 2);
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
@@ -555,7 +557,7 @@ static void test_Frame(void)
     /* Delete child */
     hr = IDirect3DRMFrame_DeleteChild(pFrameP2, pFrameC);
     ok(hr == D3DRM_OK, "Cannot delete child frame (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameC, 1);
+    CHECK_REFCOUNT(pFrameC, 1);
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
@@ -572,17 +574,17 @@ static void test_Frame(void)
 
     pFrameTmp = (void*)0xdeadbeef;
     hr = IDirect3DRMFrame_GetParent(pFrameC, &pFrameTmp);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
-    todo_wine ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
+    ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
+    ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
 
     /* Add two children */
     hr = IDirect3DRMFrame_AddChild(pFrameP2, pFrameC);
     ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameC, 2);
+    CHECK_REFCOUNT(pFrameC, 2);
 
     hr = IDirect3DRMFrame_AddChild(pFrameP2, pFrameP1);
     ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 3);
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
@@ -605,11 +607,11 @@ static void test_Frame(void)
     /* [Add/Delete]Visual with NULL pointer */
     hr = IDirect3DRMFrame_AddVisual(pFrameP1, NULL);
     ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 3);
 
     hr = IDirect3DRMFrame_DeleteVisual(pFrameP1, NULL);
     ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 3);
 
     /* Create Visual */
     hr = IDirect3DRM_CreateMeshBuilder(pD3DRM, &pMeshBuilder);
@@ -619,7 +621,7 @@ static void test_Frame(void)
     /* Add Visual to first parent */
     hr = IDirect3DRMFrame_AddVisual(pFrameP1, pVisual1);
     ok(hr == D3DRM_OK, "Cannot add visual (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 3);
     CHECK_REFCOUNT(pVisual1, 2);
 
     pVisualArray = NULL;
@@ -639,17 +641,17 @@ static void test_Frame(void)
     /* Delete Visual */
     hr = IDirect3DRMFrame_DeleteVisual(pFrameP1, pVisual1);
     ok(hr == D3DRM_OK, "Cannot delete visual (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 3);
     IDirect3DRMMeshBuilder_Release(pMeshBuilder);
 
     /* [Add/Delete]Light with NULL pointer */
     hr = IDirect3DRMFrame_AddLight(pFrameP1, NULL);
     ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 3);
 
     hr = IDirect3DRMFrame_DeleteLight(pFrameP1, NULL);
     ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 3);
 
     /* Create Light */
     hr = IDirect3DRM_CreateLightRGB(pD3DRM, D3DRMLIGHT_SPOT, 0.1, 0.2, 0.3, &pLight1);
@@ -658,7 +660,7 @@ static void test_Frame(void)
     /* Add Light to first parent */
     hr = IDirect3DRMFrame_AddLight(pFrameP1, pLight1);
     ok(hr == D3DRM_OK, "Cannot add light (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 3);
     CHECK_REFCOUNT(pLight1, 2);
 
     pLightArray = NULL;
@@ -678,13 +680,13 @@ static void test_Frame(void)
     /* Delete Light */
     hr = IDirect3DRMFrame_DeleteLight(pFrameP1, pLight1);
     ok(hr == D3DRM_OK, "Cannot delete light (hr = %x)\n", hr);
-    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 3);
     IDirect3DRMLight_Release(pLight1);
 
     /* Cleanup */
     IDirect3DRMFrame_Release(pFrameP2);
     CHECK_REFCOUNT(pFrameC, 2);
-    todo_wine CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 3);
 
     IDirect3DRMFrame_Release(pFrameC);
     IDirect3DRMFrame_Release(pFrameP1);

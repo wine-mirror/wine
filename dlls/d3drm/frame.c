@@ -30,10 +30,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
-typedef struct {
+typedef struct IDirect3DRMFrameImpl IDirect3DRMFrameImpl;
+
+struct IDirect3DRMFrameImpl {
     IDirect3DRMFrame2 IDirect3DRMFrame2_iface;
     IDirect3DRMFrame3 IDirect3DRMFrame3_iface;
     LONG ref;
+    IDirect3DRMFrameImpl* parent;
     ULONG nb_children;
     ULONG children_capacity;
     IDirect3DRMFrame3** children;
@@ -43,7 +46,7 @@ typedef struct {
     ULONG nb_lights;
     ULONG lights_capacity;
     IDirect3DRMLight** lights;
-} IDirect3DRMFrameImpl;
+};
 
 static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame2(IDirect3DRMFrame2 *iface)
 {
@@ -56,6 +59,7 @@ static inline IDirect3DRMFrameImpl *impl_from_IDirect3DRMFrame3(IDirect3DRMFrame
 }
 
 static inline IDirect3DRMFrameImpl *unsafe_impl_from_IDirect3DRMFrame2(IDirect3DRMFrame2 *iface);
+static inline IDirect3DRMFrameImpl *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface);
 
 /*** IUnknown methods ***/
 static HRESULT WINAPI IDirect3DRMFrame2Impl_QueryInterface(IDirect3DRMFrame2* iface,
@@ -333,9 +337,22 @@ static HRESULT WINAPI IDirect3DRMFrame2Impl_GetParent(IDirect3DRMFrame2* iface,
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame2(iface);
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, frame);
+    TRACE("(%p/%p)->(%p)\n", iface, This, frame);
 
-    return E_NOTIMPL;
+    if (!frame)
+        return D3DRMERR_BADVALUE;
+
+    if (This->parent)
+    {
+        *frame = (LPDIRECT3DRMFRAME)&This->parent->IDirect3DRMFrame2_iface;
+        IDirect3DRMFrame_AddRef(*frame);
+    }
+    else
+    {
+        *frame = NULL;
+    }
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame2Impl_GetPosition(IDirect3DRMFrame2* iface,
@@ -1065,22 +1082,33 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddChild(IDirect3DRMFrame3* iface,
                                                      LPDIRECT3DRMFRAME3 child)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
-    ULONG i;
-    IDirect3DRMFrame3** children;
+    IDirect3DRMFrameImpl *child_obj = unsafe_impl_from_IDirect3DRMFrame3(child);
 
     TRACE("(%p/%p)->(%p)\n", iface, This, child);
 
-    if (!child)
+    if (!child_obj)
         return D3DRMERR_BADOBJECT;
 
-    /* Check if already existing and return gracefully without increasing ref count */
-    for (i = 0; i < This->nb_children; i++)
-        if (This->children[i] == child)
+    if (child_obj->parent)
+    {
+        IDirect3DRMFrame3* parent = &child_obj->parent->IDirect3DRMFrame3_iface;
+
+        if (parent == iface)
+        {
+            /* Passed frame is already a child so return success */
             return D3DRM_OK;
+        }
+        else
+        {
+            /* Remove parent and continue */
+            IDirect3DRMFrame3_DeleteChild(parent, child);
+        }
+    }
 
     if ((This->nb_children + 1) > This->children_capacity)
     {
         ULONG new_capacity;
+        IDirect3DRMFrame3** children;
 
         if (!This->children_capacity)
         {
@@ -1102,6 +1130,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_AddChild(IDirect3DRMFrame3* iface,
 
     This->children[This->nb_children++] = child;
     IDirect3DRMFrame3_AddRef(child);
+    child_obj->parent = This;
 
     return D3DRM_OK;
 }
@@ -1294,9 +1323,22 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_GetParent(IDirect3DRMFrame3* iface,
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, frame);
+    TRACE("(%p/%p)->(%p)\n", iface, This, frame);
 
-    return E_NOTIMPL;
+    if (!frame)
+        return D3DRMERR_BADVALUE;
+
+    if (This->parent)
+    {
+        *frame = &This->parent->IDirect3DRMFrame3_iface;
+        IDirect3DRMFrame_AddRef(*frame);
+    }
+    else
+    {
+        *frame = NULL;
+    }
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI IDirect3DRMFrame3Impl_GetPosition(IDirect3DRMFrame3* iface,
@@ -1440,11 +1482,12 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteChild(IDirect3DRMFrame3* iface
                                                         LPDIRECT3DRMFRAME3 frame)
 {
     IDirect3DRMFrameImpl *This = impl_from_IDirect3DRMFrame3(iface);
+    IDirect3DRMFrameImpl *frame_obj = unsafe_impl_from_IDirect3DRMFrame3(frame);
     ULONG i;
 
     TRACE("(%p/%p)->(%p)\n", iface, This, frame);
 
-    if (!frame)
+    if (!frame_obj)
         return D3DRMERR_BADOBJECT;
 
     /* Check if child exists */
@@ -1457,6 +1500,7 @@ static HRESULT WINAPI IDirect3DRMFrame3Impl_DeleteChild(IDirect3DRMFrame3* iface
 
     memmove(This->children + i, This->children + i + 1, sizeof(IDirect3DRMFrame3*) * (This->nb_children - 1 - i));
     IDirect3DRMFrame3_Release(frame);
+    frame_obj->parent = NULL;
     This->nb_children--;
 
     return D3DRM_OK;
@@ -2116,6 +2160,15 @@ static inline IDirect3DRMFrameImpl *unsafe_impl_from_IDirect3DRMFrame2(IDirect3D
     assert(iface->lpVtbl == &Direct3DRMFrame2_Vtbl);
 
     return impl_from_IDirect3DRMFrame2(iface);
+}
+
+static inline IDirect3DRMFrameImpl *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &Direct3DRMFrame3_Vtbl);
+
+    return impl_from_IDirect3DRMFrame3(iface);
 }
 
 HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown** ppObj)
