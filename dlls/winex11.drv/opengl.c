@@ -1680,6 +1680,7 @@ static BOOL internal_SetPixelFormat(X11DRV_PDEVICE *physDev,
             ERR("Couldn't set format of the window, returning failure\n");
             return FALSE;
         }
+        /* physDev->current_pf will be set by the DCE update */
     }
     else if(physDev->bitmap) {
         if(!(value&GLX_PIXMAP_BIT)) {
@@ -1692,12 +1693,11 @@ static BOOL internal_SetPixelFormat(X11DRV_PDEVICE *physDev,
             WARN("Couldn't create glxpixmap for pixel format %d\n", iPixelFormat);
             return FALSE;
         }
+        physDev->current_pf = iPixelFormat;
     }
     else {
         FIXME("called on a non-window, non-bitmap object?\n");
     }
-
-    physDev->current_pf = iPixelFormat;
 
     if (TRACE_ON(wgl)) {
         int gl_test = 0;
