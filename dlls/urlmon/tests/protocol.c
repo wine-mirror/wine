@@ -583,8 +583,6 @@ static void call_continue(PROTOCOLDATA *protocol_data)
             CHECK_CALLED(ReportProgress_REDIRECTING);
         state = test_async_req ? STATE_SENDINGREQUEST : STATE_STARTDOWNLOADING;
     }
-    else if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST)
-        CLEAR_CALLED(ReportProgress_COOKIE_SENT);
 
     switch(state) {
     case STATE_SENDINGREQUEST:
@@ -2997,6 +2995,9 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
         }
         if(prot == HTTPS_TEST)
             CLEAR_CALLED(ReportProgress_SENDINGREQUEST);
+
+        if (prot == HTTP_TEST || prot == HTTPS_TEST)
+            CLEAR_CALLED(ReportProgress_COOKIE_SENT);
 
         hres = IInternetProtocol_Abort(async_protocol, E_ABORT, 0);
         ok(hres == INET_E_RESULT_DISPATCHED, "Abort failed: %08x\n", hres);
