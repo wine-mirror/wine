@@ -1389,6 +1389,7 @@ static void convert_printerinfo_W_to_A(LPBYTE out, LPBYTE pPrintersW,
                     break;
                 }
 
+            case 8:
             case 9:
                 {
                     PRINTER_INFO_9W * piW = (PRINTER_INFO_9W *) pPrintersW;
