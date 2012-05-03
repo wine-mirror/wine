@@ -52,13 +52,13 @@ const struct wined3d_light WINED3D_default_light =
 /**********************************************************
  * Global variable / Constants follow
  **********************************************************/
-const float identity[] =
-{
+const struct wined3d_matrix identity =
+{{{
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 1.0f, 0.0f,
     0.0f, 0.0f, 0.0f, 1.0f,
-};  /* When needed for comparisons */
+}}};  /* When needed for comparisons */
 
 /* Note that except for WINED3DPT_POINTLIST and WINED3DPT_LINELIST these
  * actually have the same values in GL and D3D. */
@@ -1832,7 +1832,7 @@ HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
      * matrix.  The Projection matrix stay projection matrix. */
 
     if (d3dts == WINED3D_TS_VIEW)
-        device->view_ident = !memcmp(matrix, identity, 16 * sizeof(float));
+        device->view_ident = !memcmp(matrix, &identity, sizeof(identity));
 
     if (d3dts < WINED3D_TS_WORLD_MATRIX(device->adapter->gl_info.limits.blends))
         device_invalidate_state(device, STATE_TRANSFORM(d3dts));

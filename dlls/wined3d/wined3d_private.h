@@ -860,7 +860,7 @@ do {                                                                            
         debug_d3dformat(si->elements[name].format->id), si->elements[name].stream_idx); } while(0)
 
 /* Global variables */
-extern const float identity[16] DECLSPEC_HIDDEN;
+extern const struct wined3d_matrix identity DECLSPEC_HIDDEN;
 
 enum wined3d_ffp_idx
 {
