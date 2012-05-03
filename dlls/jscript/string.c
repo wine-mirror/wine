@@ -1071,6 +1071,7 @@ static HRESULT String_slice(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     BSTR val_str;
     DWORD length;
     INT start=0, end;
+    double d;
     VARIANT v;
     HRESULT hres;
 
@@ -1087,8 +1088,10 @@ static HRESULT String_slice(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
             return hres;
         }
 
-        if(V_VT(&v) == VT_I4) {
-            start = V_I4(&v);
+        d = num_val(&v);
+
+        if(is_int32(d)) {
+            start = d;
             if(start < 0) {
                 start = length + start;
                 if(start < 0)
@@ -1096,11 +1099,9 @@ static HRESULT String_slice(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
             }else if(start > length) {
                 start = length;
             }
-        }else {
-            start = V_R8(&v) < 0.0 ? 0 : length;
+        }else if(d > 0) {
+            start = length;
         }
-    }else {
-        start = 0;
     }
 
     if(arg_cnt(dp) >= 2) {
@@ -1110,8 +1111,10 @@ static HRESULT String_slice(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
             return hres;
         }
 
-        if(V_VT(&v) == VT_I4) {
-            end = V_I4(&v);
+        d = num_val(&v);
+
+        if(is_int32(d)) {
+            end = d;
             if(end < 0) {
                 end = length + end;
                 if(end < 0)
@@ -1120,7 +1123,7 @@ static HRESULT String_slice(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
                 end = length;
             }
         }else {
-            end = V_R8(&v) < 0.0 ? 0 : length;
+            end = d < 0.0 ? 0 : length;
         }
     }else {
         end = length;
