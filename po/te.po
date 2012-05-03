@@ -3637,7 +3637,7 @@ msgid "Too many commands.\n"
 msgstr ""
 
 #: winerror.mc:251
-msgid "Adaptor hardware error.\n"
+msgid "Adapter hardware error.\n"
 msgstr ""
 
 #: winerror.mc:256
@@ -3649,7 +3649,7 @@ msgid "Unexpected network error.\n"
 msgstr ""
 
 #: winerror.mc:266
-msgid "Bad remote adaptor.\n"
+msgid "Bad remote adapter.\n"
 msgstr ""
 
 #: winerror.mc:271
@@ -4262,7 +4262,7 @@ msgid "Invalid flags.\n"
 msgstr ""
 
 #: winerror.mc:1041
-msgid "Unrecognised volume.\n"
+msgid "Unrecognized volume.\n"
 msgstr ""
 
 #: winerror.mc:1046
@@ -4918,7 +4918,7 @@ msgid "Continue work in progress.\n"
 msgstr ""
 
 #: winerror.mc:1866
-msgid "Already initialised.\n"
+msgid "Already initialized.\n"
 msgstr ""
 
 #: winerror.mc:1871
@@ -5950,7 +5950,7 @@ msgid "Invalid authentication identity.\n"
 msgstr ""
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service.\n"
+msgid "Unknown authorization service.\n"
 msgstr ""
 
 #: winerror.mc:3171
@@ -6086,7 +6086,7 @@ msgid "Invalid user buffer.\n"
 msgstr ""
 
 #: winerror.mc:3336
-msgid "Unrecognised media.\n"
+msgid "Unrecognized media.\n"
 msgstr ""
 
 #: winerror.mc:3341
@@ -6230,7 +6230,7 @@ msgid "RPC comm failure.\n"
 msgstr ""
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level.\n"
+msgid "Unsupported authorization level.\n"
 msgstr ""
 
 #: winerror.mc:3521
@@ -6258,7 +6258,7 @@ msgid "Invalid handle operation.\n"
 msgstr ""
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version.\n"
+msgid "Wrong serializing package version.\n"
 msgstr ""
 
 #: winerror.mc:3556

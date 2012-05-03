@@ -246,7 +246,7 @@ Too many commands.
 MessageId=57
 SymbolicName=ERROR_ADAP_HDW_ERR
 Language=ENU
-Adaptor hardware error.
+Adapter hardware error.
 .
 MessageId=58
 SymbolicName=ERROR_BAD_NET_RESP
@@ -261,7 +261,7 @@ Unexpected network error.
 MessageId=60
 SymbolicName=ERROR_BAD_REM_ADAP
 Language=ENU
-Bad remote adaptor.
+Bad remote adapter.
 .
 MessageId=61
 SymbolicName=ERROR_PRINTQ_FULL
@@ -1036,7 +1036,7 @@ Invalid flags.
 MessageId=1005
 SymbolicName=ERROR_UNRECOGNIZED_VOLUME
 Language=ENU
-Unrecognised volume.
+Unrecognized volume.
 .
 MessageId=1006
 SymbolicName=ERROR_FILE_INVALID
@@ -1861,7 +1861,7 @@ Continue work in progress.
 MessageId=1247
 SymbolicName=ERROR_ALREADY_INITIALIZED
 Language=ENU
-Already initialised.
+Already initialized.
 .
 MessageId=1248
 SymbolicName=ERROR_NO_MORE_DEVICES
@@ -3161,7 +3161,7 @@ Invalid authentication identity.
 MessageId=1750
 SymbolicName=RPC_S_UNKNOWN_AUTHZ_SERVICE
 Language=ENU
-Unknown authorisation service.
+Unknown authorization service.
 .
 MessageId=1751
 SymbolicName=EPT_S_INVALID_ENTRY
@@ -3331,7 +3331,7 @@ Invalid user buffer.
 MessageId=1785
 SymbolicName=ERROR_UNRECOGNIZED_MEDIA
 Language=ENU
-Unrecognised media.
+Unrecognized media.
 .
 MessageId=1786
 SymbolicName=ERROR_NO_TRUST_LSA_SECRET
@@ -3511,7 +3511,7 @@ RPC comm failure.
 MessageId=1821
 SymbolicName=RPC_S_UNSUPPORTED_AUTHN_LEVEL
 Language=ENU
-Unsupported authorisation level.
+Unsupported authorization level.
 .
 MessageId=1822
 SymbolicName=RPC_S_NO_PRINC_NAME
@@ -3546,7 +3546,7 @@ Invalid handle operation.
 MessageId=1828
 SymbolicName=RPC_X_WRONG_ES_VERSION
 Language=ENU
-Wrong serialising package version.
+Wrong serializing package version.
 .
 MessageId=1829
 SymbolicName=RPC_X_WRONG_STUB_VERSION

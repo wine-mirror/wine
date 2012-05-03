@@ -3722,7 +3722,7 @@ msgid "Too many commands.\n"
 msgstr "Preveč ukazov.\n"
 
 #: winerror.mc:251
-msgid "Adaptor hardware error.\n"
+msgid "Adapter hardware error.\n"
 msgstr "Napaka strojne opreme prilagodilnika.\n"
 
 #: winerror.mc:256
@@ -3734,7 +3734,7 @@ msgid "Unexpected network error.\n"
 msgstr "Nepričakovana napaka omrežja.\n"
 
 #: winerror.mc:266
-msgid "Bad remote adaptor.\n"
+msgid "Bad remote adapter.\n"
 msgstr "Slab oddaljeni vmesnik.\n"
 
 #: winerror.mc:271
@@ -4346,7 +4346,7 @@ msgid "Invalid flags.\n"
 msgstr "Neveljavne zastavice.\n"
 
 #: winerror.mc:1041
-msgid "Unrecognised volume.\n"
+msgid "Unrecognized volume.\n"
 msgstr "Nepoznan nosilec.\n"
 
 #: winerror.mc:1046
@@ -5002,7 +5002,7 @@ msgid "Continue work in progress.\n"
 msgstr "Nadaljuj z delom v teku.\n"
 
 #: winerror.mc:1866
-msgid "Already initialised.\n"
+msgid "Already initialized.\n"
 msgstr "Že začeto.\n"
 
 #: winerror.mc:1871
@@ -6034,7 +6034,7 @@ msgid "Invalid authentication identity.\n"
 msgstr "Neveljavna istovetnost overitve.\n"
 
 #: winerror.mc:3166
-msgid "Unknown authorisation service.\n"
+msgid "Unknown authorization service.\n"
 msgstr "Neznana storitev overitve.\n"
 
 #: winerror.mc:3171
@@ -6170,7 +6170,7 @@ msgid "Invalid user buffer.\n"
 msgstr "Neveljaven uporabniški medpomnilnik.\n"
 
 #: winerror.mc:3336
-msgid "Unrecognised media.\n"
+msgid "Unrecognized media.\n"
 msgstr "Neprepoznana predstavnost.\n"
 
 #: winerror.mc:3341
@@ -6314,7 +6314,7 @@ msgid "RPC comm failure.\n"
 msgstr "Spodletelo sporazumevanje RPC.\n"
 
 #: winerror.mc:3516
-msgid "Unsupported authorisation level.\n"
+msgid "Unsupported authorization level.\n"
 msgstr "Nepodprta raven overitve.\n"
 
 #: winerror.mc:3521
@@ -6342,7 +6342,7 @@ msgid "Invalid handle operation.\n"
 msgstr "Neveljavno opravilo upravljanja.\n"
 
 #: winerror.mc:3551
-msgid "Wrong serialising package version.\n"
+msgid "Wrong serializing package version.\n"
 msgstr "Napačna različica paketa dajanja v zaporedje.\n"
 
 #: winerror.mc:3556
