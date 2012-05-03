@@ -28,6 +28,7 @@
 #include "initguid.h"
 #include "dmusics.h"
 #include "dmusici.h"
+#include "dmksctrl.h"
 
 static void test_dmsynth(void)
 {
@@ -35,6 +36,8 @@ static void test_dmsynth(void)
     IDirectMusicSynthSink *dmsynth_sink = NULL;
     IReferenceClock* clock_synth = NULL;
     IReferenceClock* clock_sink = NULL;
+    IKsControl* control_synth = NULL;
+    IKsControl* control_sink = NULL;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth, (LPVOID*)&dmsynth);
@@ -46,6 +49,11 @@ static void test_dmsynth(void)
 
     hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynthSink, (LPVOID*)&dmsynth_sink);
     ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
+
+    hr = IDirectMusicSynth_QueryInterface(dmsynth, &IID_IKsControl, (LPVOID*)&control_synth);
+    todo_wine ok(hr == S_OK, "IDirectMusicSynth_QueryInterface returned: %x\n", hr);
+    hr = IDirectMusicSynthSink_QueryInterface(dmsynth_sink, &IID_IKsControl, (LPVOID*)&control_sink);
+    todo_wine ok(hr == S_OK, "IDirectMusicSynthSink_QueryInterface returned: %x\n", hr);
 
     /* Synth has no default clock */
     hr = IDirectMusicSynth_GetLatencyClock(dmsynth, &clock_synth);
@@ -66,6 +74,10 @@ static void test_dmsynth(void)
     ok(clock_synth != NULL, "No clock returned\n");
     ok(clock_synth == clock_sink, "Synth and SynthSink clocks are not the same\n");
 
+    if (control_synth)
+        IDirectMusicSynth_Release(control_synth);
+    if (control_sink)
+        IDirectMusicSynth_Release(control_sink);
     if (clock_synth)
         IReferenceClock_Release(clock_synth);
     if (clock_sink)
