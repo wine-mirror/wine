@@ -1090,7 +1090,7 @@ msgid "Processing; "
 msgstr "Обрађивање; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "Покретање; "
 
 #: comdlg32.rc:96

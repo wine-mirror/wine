@@ -1076,7 +1076,7 @@ msgid "Processing; "
 msgstr "Prebieha spracovanie; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "Inicializácia; "
 
 #: comdlg32.rc:96

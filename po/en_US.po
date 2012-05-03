@@ -1080,8 +1080,8 @@ msgid "Processing; "
 msgstr "Processing; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
-msgstr "Initialising; "
+msgid "Initializing; "
+msgstr "Initializing; "
 
 #: comdlg32.rc:96
 msgid "Warming up; "

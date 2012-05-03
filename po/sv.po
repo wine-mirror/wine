@@ -1079,7 +1079,7 @@ msgid "Processing; "
 msgstr "Behandlar; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "Initierar; "
 
 #: comdlg32.rc:96

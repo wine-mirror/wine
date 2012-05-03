@@ -1082,7 +1082,7 @@ msgid "Processing; "
 msgstr "Feldolgozás; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "Inicializálás; "
 
 #: comdlg32.rc:96

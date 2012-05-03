@@ -1100,7 +1100,7 @@ msgid "Processing; "
 msgstr "Behandler; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "Initaliserer; "
 
 #: comdlg32.rc:96

@@ -1076,7 +1076,7 @@ msgid "Processing; "
 msgstr "Käsitellään; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "Alustetaan; "
 
 #: comdlg32.rc:96

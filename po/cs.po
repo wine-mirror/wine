@@ -1102,7 +1102,7 @@ msgid "Processing; "
 msgstr "Zpracovává se; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "Inicializuje se; "
 
 #: comdlg32.rc:96

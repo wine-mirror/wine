@@ -1084,7 +1084,7 @@ msgid "Processing; "
 msgstr "Traitement en cours ; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "Démarrage en cours ; "
 
 #: comdlg32.rc:96
