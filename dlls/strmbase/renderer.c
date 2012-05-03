@@ -419,7 +419,7 @@ HRESULT WINAPI BaseRendererImpl_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **
 {
     BaseRenderer *This = impl_from_IBaseFilter(iface);
 
-    TRACE("(%p)->(%p,%p)\n", This, debugstr_w(Id), ppPin);
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_w(Id), ppPin);
 
     if (!Id || !ppPin)
         return E_POINTER;
