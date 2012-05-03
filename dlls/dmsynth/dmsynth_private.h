@@ -39,6 +39,7 @@
 #include "dmusici.h"
 #include "dmusicf.h"
 #include "dmusics.h"
+#include "dmksctrl.h"
 
 /*****************************************************************************
  * Interfaces
@@ -56,15 +57,16 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl (LPCGUID lpcGUID, LP
  * IDirectMusicSynth8Impl implementation structure
  */
 struct IDirectMusicSynth8Impl {
-  /* IUnknown fields */
-  IDirectMusicSynth8 IDirectMusicSynth8_iface;
-  LONG          ref;
+    /* IUnknown fields */
+    IDirectMusicSynth8 IDirectMusicSynth8_iface;
+    IKsControl IKsControl_iface;
+    LONG ref;
 
-  /* IDirectMusicSynth8 fields */
-  DMUS_PORTCAPS pCaps;
-  BOOL fActive;
-  IReferenceClock* pLatencyClock;
-  IDirectMusicSynthSinkImpl* pSynthSink;
+    /* IDirectMusicSynth8 fields */
+    DMUS_PORTCAPS pCaps;
+    BOOL fActive;
+    IReferenceClock* pLatencyClock;
+    IDirectMusicSynthSinkImpl* pSynthSink;
 };
 
 /*****************************************************************************

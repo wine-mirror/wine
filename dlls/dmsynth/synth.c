@@ -1,4 +1,5 @@
-/* IDirectMusicSynth8 Implementation
+/*
+ * IDirectMusicSynth8 Implementation
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
  *
@@ -16,6 +17,12 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+#define COBJMACROS
+
+#include "objbase.h"
+#include "initguid.h"
+#include "dmksctrl.h"
 
 #include "dmsynth_private.h"
 
@@ -40,6 +47,12 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_QueryInterface(LPDIRECTMUSICSYNTH8 
 		*ppobj = This;
 		return S_OK;
 	}
+    else if (IsEqualIID(riid, &IID_IKsControl)) {
+		IUnknown_AddRef(iface);
+		*ppobj = &This->IKsControl_iface;
+		return S_OK;
+    }
+
 	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
 	return E_NOINTERFACE;
 }
@@ -324,6 +337,66 @@ static const IDirectMusicSynth8Vtbl DirectMusicSynth8_Vtbl = {
 	IDirectMusicSynth8Impl_AssignChannelToBuses
 };
 
+static inline IDirectMusicSynth8Impl *impl_from_IKsControl(IKsControl *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicSynth8Impl, IKsControl_iface);
+}
+
+static HRESULT WINAPI DMSynthImpl_IKsControl_QueryInterface(IKsControl* iface, REFIID riid, LPVOID *ppobj)
+{
+    IDirectMusicSynth8Impl *This = impl_from_IKsControl(iface);
+
+    return IDirectMusicSynth8Impl_QueryInterface(&This->IDirectMusicSynth8_iface, riid, ppobj);
+}
+
+static ULONG WINAPI DMSynthImpl_IKsControl_AddRef(IKsControl* iface)
+{
+    IDirectMusicSynth8Impl *This = impl_from_IKsControl(iface);
+
+    return IDirectMusicSynth8Impl_AddRef(&This->IDirectMusicSynth8_iface);
+}
+
+static ULONG WINAPI DMSynthImpl_IKsControl_Release(IKsControl* iface)
+{
+    IDirectMusicSynth8Impl *This = impl_from_IKsControl(iface);
+
+    return IDirectMusicSynth8Impl_Release(&This->IDirectMusicSynth8_iface);
+}
+
+static HRESULT WINAPI DMSynthImpl_IKsControl_KsProperty(IKsControl* iface, PKSPROPERTY Property, ULONG PropertyLength, LPVOID PropertyData,
+                                                        ULONG DataLength, ULONG* BytesReturned)
+{
+    FIXME("(%p)->(%p, %u, %p, %u, %p): stub\n", iface, Property, PropertyLength, PropertyData, DataLength, BytesReturned);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DMSynthImpl_IKsControl_KsMethod(IKsControl* iface, PKSMETHOD Method, ULONG MethodLength, LPVOID MethodData,
+                                                      ULONG DataLength, ULONG* BytesReturned)
+{
+    FIXME("(%p)->(%p, %u, %p, %u, %p): stub\n", iface, Method, MethodLength, MethodData, DataLength, BytesReturned);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DMSynthImpl_IKsControl_KsEvent(IKsControl* iface, PKSEVENT Event, ULONG EventLength, LPVOID EventData,
+                                                     ULONG DataLength, ULONG* BytesReturned)
+{
+    FIXME("(%p)->(%p, %u, %p, %u, %p): stub\n", iface, Event, EventLength, EventData, DataLength, BytesReturned);
+
+    return E_NOTIMPL;
+}
+
+
+static const IKsControlVtbl DMSynthImpl_IKsControl_Vtbl = {
+    DMSynthImpl_IKsControl_QueryInterface,
+    DMSynthImpl_IKsControl_AddRef,
+    DMSynthImpl_IKsControl_Release,
+    DMSynthImpl_IKsControl_KsProperty,
+    DMSynthImpl_IKsControl_KsMethod,
+    DMSynthImpl_IKsControl_KsEvent
+};
+
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter)
 {
@@ -336,6 +409,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl (LPCGUID lpcGUID, LPVOID* ppobj
 		return E_OUTOFMEMORY;
 	}
 	obj->IDirectMusicSynth8_iface.lpVtbl = &DirectMusicSynth8_Vtbl;
+	obj->IKsControl_iface.lpVtbl = &DMSynthImpl_IKsControl_Vtbl;
 	obj->ref = 0;
 	/* fill in caps */
 	obj->pCaps.dwSize = sizeof(DMUS_PORTCAPS);

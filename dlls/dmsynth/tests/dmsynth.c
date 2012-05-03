@@ -51,7 +51,7 @@ static void test_dmsynth(void)
     ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
 
     hr = IDirectMusicSynth_QueryInterface(dmsynth, &IID_IKsControl, (LPVOID*)&control_synth);
-    todo_wine ok(hr == S_OK, "IDirectMusicSynth_QueryInterface returned: %x\n", hr);
+    ok(hr == S_OK, "IDirectMusicSynth_QueryInterface returned: %x\n", hr);
     hr = IDirectMusicSynthSink_QueryInterface(dmsynth_sink, &IID_IKsControl, (LPVOID*)&control_sink);
     todo_wine ok(hr == S_OK, "IDirectMusicSynthSink_QueryInterface returned: %x\n", hr);
 
