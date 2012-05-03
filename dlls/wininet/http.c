@@ -5725,6 +5725,7 @@ static INT HTTP_GetResponseHeaders(http_request_t *request, BOOL clear)
             heap_free(request->version);
             heap_free(request->statusText);
 
+            request->status_code = HTTP_STATUS_OK;
             request->version = heap_strdupW(g_szHttp1_0);
             request->statusText = heap_strdupW(szOK);
 

@@ -2426,7 +2426,7 @@ static void test_invalid_response_headers(int port)
 static void test_response_without_headers(int port)
 {
     HINTERNET hi, hc, hr;
-    DWORD r, count, size, status;
+    DWORD r, count, size;
     char buffer[1024];
 
     SetLastError(0xdeadbeef);
@@ -2453,12 +2453,7 @@ static void test_response_without_headers(int port)
     todo_wine ok(count == sizeof page1 - 1, "count was wrong\n");
     todo_wine ok(!memcmp(buffer, page1, sizeof page1), "http data wrong\n");
 
-    status = 0;
-    size = sizeof(status);
-    SetLastError(0xdeadbeef);
-    r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
-    ok(r, "HttpQueryInfo failed %u\n", GetLastError());
-    todo_wine ok(status == 200, "expected status 200 got %u\n", status);
+    test_status_code(hr, 200);
 
     buffer[0] = 0;
     size = sizeof(buffer);
