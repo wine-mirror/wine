@@ -2585,13 +2585,13 @@ static const data_stream_vtbl_t chunked_stream_vtbl = {
 };
 
 /* set the request content length based on the headers */
-static DWORD set_content_length(http_request_t *request, DWORD status_code)
+static DWORD set_content_length(http_request_t *request)
 {
     static const WCHAR szChunked[] = {'c','h','u','n','k','e','d',0};
     WCHAR encoding[20];
     DWORD size;
 
-    if(status_code == HTTP_STATUS_NO_CONTENT) {
+    if(request->status_code == HTTP_STATUS_NO_CONTENT) {
         request->contentLength = request->netconn_stream.content_length = 0;
         return ERROR_SUCCESS;
     }
@@ -4826,7 +4826,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                                     &dwStatusCode,&dwBufferSize,NULL) != ERROR_SUCCESS)
                 dwStatusCode = 0;
 
-            res = set_content_length(request, dwStatusCode);
+            res = set_content_length(request);
             if(res != ERROR_SUCCESS)
                 goto lend;
             if(!request->contentLength)
@@ -5000,7 +5000,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
                             &dwCode,&dwCodeLength,NULL) != ERROR_SUCCESS)
         dwCode = 0;
 
-    if ((res = set_content_length( request, dwCode )) == ERROR_SUCCESS) {
+    if ((res = set_content_length(request)) == ERROR_SUCCESS) {
         if(!request->contentLength)
             http_release_netconn(request, TRUE);
     }
@@ -5691,6 +5691,8 @@ static INT HTTP_GetResponseHeaders(http_request_t *request, BOOL clear)
             if( !status_text )
                 goto lend;
             *status_text++=0;
+
+            request->status_code = atoiW(status_code);
 
             TRACE("version [%s] status code [%s] status text [%s]\n",
                debugstr_w(buffer), debugstr_w(status_code), debugstr_w(status_text) );

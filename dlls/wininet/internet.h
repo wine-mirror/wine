@@ -312,6 +312,7 @@ typedef struct
     DWORD send_timeout;
     DWORD receive_timeout;
     LPWSTR version;
+    DWORD status_code;
     LPWSTR statusText;
     DWORD bytesToWrite;
     DWORD bytesWritten;
