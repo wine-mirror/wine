@@ -433,8 +433,8 @@ static void test_Frame(void)
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameC, &pArray);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
-    todo_wine ok(pArray != NULL, "pArray = %p\n", pArray);
+    ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    ok(pArray != NULL, "pArray = %p\n", pArray);
     if (pArray)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
@@ -475,7 +475,9 @@ static void test_Frame(void)
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP1, &pArray);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    /* In some older version of d3drm, creating IDirect3DRMFrameArray object with GetChildren does not increment refcount of children frames */
+    ok((get_refcount((IUnknown*)pFrameC) == 3) || broken(get_refcount((IUnknown*)pFrameC) == 2), "Invalid refcount. Expected 3 (or 2) got %d\n", get_refcount((IUnknown*)pFrameC)); \
     if (pArray)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
@@ -483,8 +485,11 @@ static void test_Frame(void)
         hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
         ok(hr == D3DRM_OK, "Cannot get element (hr = %x)\n", hr);
         ok(pFrameTmp == pFrameC, "pFrameTmp = %p\n", pFrameTmp);
+        ok((get_refcount((IUnknown*)pFrameC) == 4) || broken(get_refcount((IUnknown*)pFrameC) == 3), "Invalid refcount. Expected 4 (or 3) got %d\n", get_refcount((IUnknown*)pFrameC)); \
         IDirect3DRMFrame_Release(pFrameTmp);
+        ok((get_refcount((IUnknown*)pFrameC) == 3) || broken(get_refcount((IUnknown*)pFrameC) == 2), "Invalid refcount. Expected 3 (or 2) got %d\n", get_refcount((IUnknown*)pFrameC)); \
         IDirect3DRMFrameArray_Release(pArray);
+        CHECK_REFCOUNT(pFrameC, 2);
     }
 
     pFrameTmp = (void*)0xdeadbeef;
@@ -503,7 +508,7 @@ static void test_Frame(void)
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
     if (pArray)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
@@ -517,11 +522,12 @@ static void test_Frame(void)
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP1, &pArray);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
     if (pArray)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
         ok(count == 0, "count = %u\n", count);
+        pFrameTmp = (void*)0xdeadbeef;
         hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
         ok(hr == D3DRMERR_BADVALUE, "Should have returned D3DRMERR_BADVALUE (hr = %x)\n", hr);
         ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
@@ -542,7 +548,7 @@ static void test_Frame(void)
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
     if (pArray)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
@@ -561,11 +567,12 @@ static void test_Frame(void)
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
     if (pArray)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
         ok(count == 0, "count = %u\n", count);
+        pFrameTmp = (void*)0xdeadbeef;
         hr = IDirect3DRMFrameArray_GetElement(pArray, 0, &pFrameTmp);
         ok(hr == D3DRMERR_BADVALUE, "Should have returned D3DRMERR_BADVALUE (hr = %x)\n", hr);
         ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
@@ -588,7 +595,7 @@ static void test_Frame(void)
 
     pArray = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP2, &pArray);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
     if (pArray)
     {
         count = IDirect3DRMFrameArray_GetSize(pArray);
