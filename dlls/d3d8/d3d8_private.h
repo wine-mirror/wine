@@ -110,19 +110,6 @@ typedef struct IDirect3DSwapChain8Impl IDirect3DSwapChain8Impl;
 typedef struct IDirect3DVolume8Impl IDirect3DVolume8Impl;
 typedef struct IDirect3DVertexBuffer8Impl IDirect3DVertexBuffer8Impl;
 
-/* ===========================================================================
-    The interfaces themselves
-   =========================================================================== */
-
-/* ---------- */
-/* IDirect3D8 */
-/* ---------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3D8Vtbl Direct3D8_Vtbl DECLSPEC_HIDDEN;
-
 /*****************************************************************************
  * IDirect3D implementation structure
  */
@@ -132,6 +119,8 @@ struct IDirect3D8Impl
     LONG       ref;
     struct wined3d *WineD3D;
 };
+
+BOOL d3d8_init(IDirect3D8Impl *d3d8) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DDevice8 implementation structure

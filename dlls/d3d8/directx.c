@@ -378,7 +378,7 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(IDirect3D8 *iface, UINT adapte
     return D3D_OK;
 }
 
-const IDirect3D8Vtbl Direct3D8_Vtbl =
+static const struct IDirect3D8Vtbl Direct3D8_Vtbl =
 {
     /* IUnknown */
     IDirect3D8Impl_QueryInterface,
@@ -399,3 +399,17 @@ const IDirect3D8Vtbl Direct3D8_Vtbl =
     IDirect3D8Impl_GetAdapterMonitor,
     IDirect3D8Impl_CreateDevice
 };
+
+BOOL d3d8_init(IDirect3D8Impl *d3d8)
+{
+    d3d8->IDirect3D8_iface.lpVtbl = &Direct3D8_Vtbl;
+    d3d8->ref = 1;
+
+    wined3d_mutex_lock();
+    d3d8->WineD3D = wined3d_create(8, WINED3D_LEGACY_DEPTH_BIAS);
+    wined3d_mutex_unlock();
+    if (!d3d8->WineD3D)
+        return FALSE;
+
+    return TRUE;
+}
