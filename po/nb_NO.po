@@ -11523,7 +11523,7 @@ msgid "Contains commands for editing values or keys"
 msgstr "Inneholder kommandoer for å redigere verdier og nøkler"
 
 #: regedit.rc:136
-msgid "Contains commands for customising the registry window"
+msgid "Contains commands for customizing the registry window"
 msgstr "Inneholder kommanoder for å tilpasse registervinduet"
 
 #: regedit.rc:137

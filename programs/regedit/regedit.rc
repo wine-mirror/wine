@@ -133,7 +133,7 @@ STRINGTABLE
 BEGIN
     ID_REGISTRY_MENU        "Contains commands for working with the whole registry"
     ID_EDIT_MENU            "Contains commands for editing values or keys"
-    ID_VIEW_MENU            "Contains commands for customising the registry window"
+    ID_VIEW_MENU            "Contains commands for customizing the registry window"
     ID_FAVORITES_MENU       "Contains commands for accessing frequently used keys"
     ID_HELP_MENU            "Contains commands for displaying help and information about registry editor"
     ID_EDIT_NEW_MENU        "Contains commands for creating new keys or values"

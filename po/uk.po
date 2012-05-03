@@ -11203,7 +11203,7 @@ msgid "Contains commands for editing values or keys"
 msgstr "Містить команди для редагування значень або ключів"
 
 #: regedit.rc:136
-msgid "Contains commands for customising the registry window"
+msgid "Contains commands for customizing the registry window"
 msgstr "Містить команди для налаштування вікна реєстру"
 
 #: regedit.rc:137

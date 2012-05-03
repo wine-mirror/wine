@@ -11218,7 +11218,7 @@ msgid "Contains commands for editing values or keys"
 msgstr "Pateikiamos komandos raktų ir reikšmių redagavimui"
 
 #: regedit.rc:136
-msgid "Contains commands for customising the registry window"
+msgid "Contains commands for customizing the registry window"
 msgstr "Pateikiamos komandos registro lango adaptavimui"
 
 #: regedit.rc:137

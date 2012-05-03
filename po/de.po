@@ -11275,7 +11275,7 @@ msgid "Contains commands for editing values or keys"
 msgstr "Befehle zum Ändern von Schlüsseln oder Werten"
 
 #: regedit.rc:136
-msgid "Contains commands for customising the registry window"
+msgid "Contains commands for customizing the registry window"
 msgstr "Befehle zum Anpassen des Fensters"
 
 #: regedit.rc:137
