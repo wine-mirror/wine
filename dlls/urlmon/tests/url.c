@@ -1475,7 +1475,8 @@ static void test_WinInetHttpInfo(IWinInetHttpInfo *http_info, DWORD progress)
     size = sizeof(DWORD);
     hres = IWinInetHttpInfo_QueryInfo(http_info, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER,
             &status, &size, NULL, NULL);
-    ok(hres == expect, "hres = %x, expected %x\n", hres, expect);
+    ok(hres == expect || (progress == BINDSTATUS_COOKIE_SENT && hres == S_FALSE),
+       "hres = %x, expected %x\n", hres, expect);
     if(hres == S_OK) {
         if(download_state==BEFORE_DOWNLOAD && progress!=BINDSTATUS_MIMETYPEAVAILABLE)
             ok(status == 0, "status = %d\n", status);
