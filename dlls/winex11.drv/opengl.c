@@ -641,6 +641,24 @@ static inline BOOL is_valid_context( Wine_GLContext *ctx )
     return (ptr != NULL);
 }
 
+static Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
+{
+    Drawable ret;
+
+    if(physDev->bitmap)
+    {
+        if (physDev->bitmap->hbitmap == BITMAP_stock_phys_bitmap.hbitmap)
+            ret = physDev->drawable; /* PBuffer */
+        else
+            ret = physDev->bitmap->glxpixmap;
+    }
+    else if(physDev->gl_drawable)
+        ret = physDev->gl_drawable;
+    else
+        ret = physDev->drawable;
+    return ret;
+}
+
 static int describeContext(Wine_GLContext* ctx) {
     int tmp;
     int ctx_vis_id;
@@ -663,7 +681,7 @@ static BOOL describeDrawable(X11DRV_PDEVICE *physDev) {
 
     TRACE(" HDC %p has:\n", physDev->dev.hdc);
     TRACE(" - iPixelFormat %d\n", fmt->iPixelFormat);
-    TRACE(" - Drawable %p\n", (void*) get_glxdrawable(physDev));
+    TRACE(" - Drawable %lx\n", get_glxdrawable(physDev));
     TRACE(" - FBCONFIG_ID 0x%x\n", fmt->fmt_id);
 
     pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_VISUAL_ID, &tmp);
@@ -1931,7 +1949,7 @@ BOOL X11DRV_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
             describeContext(ctx);
         }
 
-        TRACE(" make current for dis %p, drawable %p, ctx %p\n", gdi_display, (void*) drawable, ctx->ctx);
+        TRACE(" make current for drawable %lx, ctx %p\n", drawable, ctx->ctx);
         ret = pglXMakeCurrent(gdi_display, drawable, ctx->ctx);
 
         if (ret)
@@ -2620,7 +2638,7 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
     wine_tsx11_lock();
     object->drawable = pglXCreatePbuffer(gdi_display, fmt->fbconfig, attribs);
     wine_tsx11_unlock();
-    TRACE("new Pbuffer drawable as %p\n", (void*) object->drawable);
+    TRACE("new Pbuffer drawable as %lx\n", object->drawable);
     if (!object->drawable) {
         SetLastError(ERROR_NO_SYSTEM_RESOURCES);
         goto create_failed; /* unexpected error */
@@ -3298,7 +3316,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
             FIXME("partial stub!\n");
         }
 
-        TRACE("drawable=%p, context=%p\n", (void*)object->drawable, prev_context);
+        TRACE("drawable=%lx, context=%p\n", object->drawable, prev_context);
         tmp_context = pglXCreateNewContext(gdi_display, object->fmt->fbconfig, object->fmt->render_type, prev_context, True);
 
         pglGetIntegerv(object->texture_bind_target, &prev_binded_texture);
@@ -3772,24 +3790,6 @@ static void X11DRV_WineGL_LoadExtensions(void)
 }
 
 
-Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
-{
-    Drawable ret;
-
-    if(physDev->bitmap)
-    {
-        if (physDev->bitmap->hbitmap == BITMAP_stock_phys_bitmap.hbitmap)
-            ret = physDev->drawable; /* PBuffer */
-        else
-            ret = physDev->bitmap->glxpixmap;
-    }
-    else if(physDev->gl_drawable)
-        ret = physDev->gl_drawable;
-    else
-        ret = physDev->drawable;
-    return ret;
-}
-
 BOOL destroy_glxpixmap(Display *display, XID glxpixmap)
 {
     wine_tsx11_lock(); 
@@ -4085,11 +4085,6 @@ BOOL X11DRV_wglSetPixelFormatWINE(PHYSDEV dev, int iPixelFormat, const PIXELFORM
 {
     opengl_error();
     return FALSE;
-}
-
-Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
-{
-    return 0;
 }
 
 BOOL destroy_glxpixmap(Display *display, XID glxpixmap)

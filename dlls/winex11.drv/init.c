@@ -440,15 +440,9 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
             case X11DRV_GET_FONT:
             case X11DRV_GET_DCE:
             case X11DRV_SET_DCE:
+            case X11DRV_GET_GLX_DRAWABLE:
             case X11DRV_SYNC_PIXMAP:
                 FIXME( "%x escape no longer supported\n", *(const enum x11drv_escape_codes *)in_data );
-                break;
-            case X11DRV_GET_GLX_DRAWABLE:
-                if (out_count >= sizeof(Drawable))
-                {
-                    *(Drawable *)out_data = get_glxdrawable(physDev);
-                    return TRUE;
-                }
                 break;
             case X11DRV_FLUSH_GL_DRAWABLE:
                 flush_gl_drawable(physDev);
