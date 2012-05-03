@@ -552,7 +552,8 @@ static void testGetIcmpStatisticsEx(void)
     }
 
     apiReturn = pGetIcmpStatisticsEx(&stats, AF_INET6);
-    ok(apiReturn == NO_ERROR, "GetIcmpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    ok(apiReturn == NO_ERROR || broken(apiReturn == ERROR_NOT_SUPPORTED),
+       "GetIcmpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         INT i;
@@ -610,7 +611,8 @@ static void testGetIpStatisticsEx(void)
     }
 
     apiReturn = pGetIpStatisticsEx(&stats, AF_INET6);
-    ok(apiReturn == NO_ERROR, "GetIpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    ok(apiReturn == NO_ERROR || broken(apiReturn == ERROR_NOT_SUPPORTED),
+       "GetIpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "IP Ex stats:\n" );
@@ -678,7 +680,8 @@ static void testGetTcpStatisticsEx(void)
     }
 
     apiReturn = pGetTcpStatisticsEx(&stats, AF_INET6);
-    ok(apiReturn == NO_ERROR, "GetTcpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    ok(apiReturn == NO_ERROR || broken(apiReturn == ERROR_NOT_SUPPORTED),
+       "GetTcpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "TCP stats:\n" );
@@ -728,7 +731,8 @@ static void testGetUdpStatisticsEx(void)
     }
 
     apiReturn = pGetUdpStatisticsEx(&stats, AF_INET6);
-    ok(apiReturn == NO_ERROR, "GetUdpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    ok(apiReturn == NO_ERROR || broken(apiReturn == ERROR_NOT_SUPPORTED),
+       "GetUdpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "UDP stats:\n" );
