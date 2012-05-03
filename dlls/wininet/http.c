@@ -4964,9 +4964,8 @@ static void AsyncHttpSendRequestProc(WORKREQUEST *workRequest)
 
 static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    INT responseLen;
-    DWORD dwCode, dwCodeLength;
     DWORD dwBufferSize;
+    INT responseLen;
     DWORD res = ERROR_SUCCESS;
 
     if(!request->netconn) {
@@ -4991,11 +4990,6 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
     HTTP_ProcessExpires(request);
     HTTP_ProcessLastModified(request);
 
-    dwCodeLength = sizeof(dwCode);
-    if (HTTP_HttpQueryInfoW(request,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,
-                            &dwCode,&dwCodeLength,NULL) != ERROR_SUCCESS)
-        dwCode = 0;
-
     if ((res = set_content_length(request)) == ERROR_SUCCESS) {
         if(!request->contentLength)
             http_release_netconn(request, TRUE);
@@ -5003,32 +4997,33 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
 
     if (res == ERROR_SUCCESS && !(request->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT))
     {
-        if (dwCode == HTTP_STATUS_REDIRECT ||
-                dwCode == HTTP_STATUS_MOVED ||
-                dwCode == HTTP_STATUS_REDIRECT_METHOD ||
-                dwCode == HTTP_STATUS_REDIRECT_KEEP_VERB)
-        {
+        switch(request->status_code) {
+        case HTTP_STATUS_REDIRECT:
+        case HTTP_STATUS_MOVED:
+        case HTTP_STATUS_REDIRECT_METHOD:
+        case HTTP_STATUS_REDIRECT_KEEP_VERB: {
             WCHAR *new_url, szNewLocation[INTERNET_MAX_URL_LENGTH];
             dwBufferSize=sizeof(szNewLocation);
-            if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_LOCATION, szNewLocation, &dwBufferSize, NULL) == ERROR_SUCCESS)
+            if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_LOCATION, szNewLocation, &dwBufferSize, NULL) != ERROR_SUCCESS)
+                break;
+
+            if (strcmpW(request->verb, szGET) && strcmpW(request->verb, szHEAD) &&
+                request->status_code != HTTP_STATUS_REDIRECT_KEEP_VERB)
             {
-                if (strcmpW(request->verb, szGET) && strcmpW(request->verb, szHEAD) &&
-                    dwCode != HTTP_STATUS_REDIRECT_KEEP_VERB)
-                {
-                    heap_free(request->verb);
-                    request->verb = heap_strdupW(szGET);
-                }
-                drain_content(request);
-                if ((new_url = HTTP_GetRedirectURL( request, szNewLocation )))
-                {
-                    INTERNET_SendCallback(&request->hdr, request->hdr.dwContext, INTERNET_STATUS_REDIRECT,
-                                          new_url, (strlenW(new_url) + 1) * sizeof(WCHAR));
-                    res = HTTP_HandleRedirect(request, new_url);
-                    if (res == ERROR_SUCCESS)
-                        res = HTTP_HttpSendRequestW(request, NULL, 0, NULL, 0, 0, TRUE);
-                    heap_free( new_url );
-                }
+                heap_free(request->verb);
+                request->verb = heap_strdupW(szGET);
             }
+            drain_content(request);
+            if ((new_url = HTTP_GetRedirectURL( request, szNewLocation )))
+            {
+                INTERNET_SendCallback(&request->hdr, request->hdr.dwContext, INTERNET_STATUS_REDIRECT,
+                                      new_url, (strlenW(new_url) + 1) * sizeof(WCHAR));
+                res = HTTP_HandleRedirect(request, new_url);
+                if (res == ERROR_SUCCESS)
+                    res = HTTP_HttpSendRequestW(request, NULL, 0, NULL, 0, 0, TRUE);
+                heap_free( new_url );
+            }
+        }
         }
     }
 
