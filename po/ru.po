@@ -1081,7 +1081,7 @@ msgid "Processing; "
 msgstr "Обработка; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "Подготовка; "
 
 #: comdlg32.rc:96

@@ -1082,7 +1082,7 @@ msgid "Processing; "
 msgstr "処理中 - "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "初期化中 - "
 
 #: comdlg32.rc:96

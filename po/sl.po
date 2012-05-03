@@ -1082,7 +1082,7 @@ msgid "Processing; "
 msgstr "Obdelovanje; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "Začenjanje; "
 
 #: comdlg32.rc:96

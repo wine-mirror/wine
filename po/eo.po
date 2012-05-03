@@ -1071,7 +1071,7 @@ msgid "Processing; "
 msgstr "Procezo; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "Preparado; "
 
 #: comdlg32.rc:96

@@ -1087,7 +1087,7 @@ msgid "Processing; "
 msgstr "Przetwarzanie; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "Inicjowanie; "
 
 #: comdlg32.rc:96

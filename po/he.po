@@ -1084,7 +1084,7 @@ msgid "Processing; "
 msgstr "מעבדת; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "מופעלת; "
 
 #: comdlg32.rc:96

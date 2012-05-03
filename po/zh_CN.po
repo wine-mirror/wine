@@ -1064,7 +1064,7 @@ msgid "Processing; "
 msgstr "正在处理; "
 
 #: comdlg32.rc:95
-msgid "Initialising; "
+msgid "Initializing; "
 msgstr "正在启动; "
 
 #: comdlg32.rc:96
