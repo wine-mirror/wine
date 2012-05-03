@@ -10968,7 +10968,7 @@ msgid "Contains commands for editing values or keys"
 msgstr "Değerleri veya anahtarları düzenlemek için komutları içerir"
 
 #: regedit.rc:136
-msgid "Contains commands for customising the registry window"
+msgid "Contains commands for customizing the registry window"
 msgstr "Kayıt penceresini özelleştirmek için komutları içerir"
 
 #: regedit.rc:137

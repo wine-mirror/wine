@@ -11198,7 +11198,7 @@ msgid "Contains commands for editing values or keys"
 msgstr "키의 값 편집 명령 포함"
 
 #: regedit.rc:136
-msgid "Contains commands for customising the registry window"
+msgid "Contains commands for customizing the registry window"
 msgstr "레지스트리 창 사용자 정의하는 명령 포함"
 
 #: regedit.rc:137

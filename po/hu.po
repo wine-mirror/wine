@@ -11247,7 +11247,7 @@ msgid "Contains commands for editing values or keys"
 msgstr "Parancsokat tartalmaz az érték és kulcsszerkesztéshez"
 
 #: regedit.rc:136
-msgid "Contains commands for customising the registry window"
+msgid "Contains commands for customizing the registry window"
 msgstr ""
 "Parancsokat tartalmaz a regisztrációs adatbázis ablak testreszabásával "
 "kapcsolatban"
