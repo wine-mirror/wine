@@ -475,6 +475,8 @@ tmp = "abcd".indexOf("bc",0,"test");
 ok(tmp === 1, "indexOf = " + tmp);
 tmp = "abcd".indexOf();
 ok(tmp == -1, "indexOf = " + tmp);
+tmp = "abcd".indexOf("b", bigInt);
+ok(tmp == -1, "indexOf = " + tmp);
 
 tmp = "abcd".lastIndexOf("bc",1);
 ok(tmp === 1, "lastIndexOf = " + tmp);

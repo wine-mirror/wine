@@ -494,15 +494,13 @@ static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
 
     if(arg_cnt(dp) >= 2) {
         VARIANT ival;
+        double d;
 
         hres = to_integer(ctx, get_arg(dp,1), ei, &ival);
         if(SUCCEEDED(hres)) {
-            if(V_VT(&ival) == VT_I4)
-                pos = V_VT(&ival) > 0 ? V_I4(&ival) : 0;
-            else
-                pos = V_R8(&ival) > 0.0 ? length : 0;
-            if(pos > length)
-                pos = length;
+            d = num_val(&ival);
+            if(d > 0.0)
+                pos = is_int32(d) ? min((int)d, length) : length;
         }
     }
 
