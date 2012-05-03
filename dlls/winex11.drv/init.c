@@ -343,20 +343,6 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
         {
             switch(*(const enum x11drv_escape_codes *)in_data)
             {
-            case X11DRV_GET_DISPLAY:
-                if (out_count >= sizeof(Display *))
-                {
-                    *(Display **)out_data = gdi_display;
-                    return TRUE;
-                }
-                break;
-            case X11DRV_GET_DRAWABLE:
-                if (out_count >= sizeof(Drawable))
-                {
-                    *(Drawable *)out_data = physDev->drawable;
-                    return TRUE;
-                }
-                break;
             case X11DRV_SET_DRAWABLE:
                 if (in_count >= sizeof(struct x11drv_escape_set_drawable))
                 {
@@ -436,13 +422,6 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     *(HRGN *)out_data = hrgn;
                     return TRUE;
                 }
-                break;
-            case X11DRV_GET_FONT:
-            case X11DRV_GET_DCE:
-            case X11DRV_SET_DCE:
-            case X11DRV_GET_GLX_DRAWABLE:
-            case X11DRV_SYNC_PIXMAP:
-                FIXME( "%x escape no longer supported\n", *(const enum x11drv_escape_codes *)in_data );
                 break;
             case X11DRV_FLUSH_GL_DRAWABLE:
                 flush_gl_drawable(physDev);

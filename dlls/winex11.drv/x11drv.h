@@ -329,16 +329,9 @@ extern void X11DRV_PALETTE_ComputeColorShifts(ColorShifts *shifts, unsigned long
 #define X11DRV_ESCAPE 6789
 enum x11drv_escape_codes
 {
-    X11DRV_GET_DISPLAY,      /* get X11 display for a DC */
-    X11DRV_GET_DRAWABLE,     /* get current drawable for a DC */
-    X11DRV_GET_FONT,         /* get current X font for a DC */
     X11DRV_SET_DRAWABLE,     /* set current drawable for a DC */
     X11DRV_START_EXPOSURES,  /* start graphics exposures */
     X11DRV_END_EXPOSURES,    /* end graphics exposures */
-    X11DRV_GET_DCE,          /* no longer used */
-    X11DRV_SET_DCE,          /* no longer used */
-    X11DRV_GET_GLX_DRAWABLE, /* get current glx drawable for a DC */
-    X11DRV_SYNC_PIXMAP,      /* sync the dibsection to its pixmap */
     X11DRV_FLUSH_GL_DRAWABLE /* flush changes made to the gl drawable */
 };
 
